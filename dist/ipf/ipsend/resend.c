@@ -1,4 +1,4 @@
-/*	$NetBSD: resend.c,v 1.9 2012/01/30 16:12:03 darrenr Exp $	*/
+/*	$NetBSD: resend.c,v 1.10 2012/02/15 17:55:05 riz Exp $	*/
 
 /*
  * resend.c (C) 1995-1998 Darren Reed
@@ -8,12 +8,15 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)resend.c	1.3 1/11/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: resend.c,v 2.15 2008/08/10 05:51:14 darrenr Exp";
+static const char rcsid[] = "@(#)Id: resend.c,v 2.8.2.3 2007/02/17 12:41:51 darrenr Exp";
 #endif
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
+#ifdef __osf__
+# include "radix_ipf_local.h"
+#endif
 #include <net/if.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -35,11 +38,12 @@ static const char rcsid[] = "@(#)Id: resend.c,v 2.15 2008/08/10 05:51:14 darrenr
 
 extern	int	opts;
 
-void	dumppacket __P((ip_t *));
+static	u_char	pbuf[65536];	/* 1 big packet */
+void	printpacket __P((ip_t *));
 
 
-void dumppacket(ip)
-	ip_t	*ip;
+void printpacket(ip)
+ip_t	*ip;
 {
 	tcphdr_t *t;
 	int i, j;
@@ -69,17 +73,16 @@ void dumppacket(ip)
 
 
 int	ip_resend(dev, mtu, r, gwip, datain)
-	char	*dev;
-	int	mtu;
-	struct	in_addr	gwip;
-	struct	ipread	*r;
-	char	*datain;
+char	*dev;
+int	mtu;
+struct	in_addr	gwip;
+struct	ipread	*r;
+char	*datain;
 {
 	ether_header_t	*eh;
 	char	dhost[6];
 	ip_t	*ip;
 	int	fd, wfd = initdevice(dev, 5), len, i;
-	mb_t	mb;
 
 	if (wfd == -1)
 		return -1;
@@ -92,7 +95,7 @@ int	ip_resend(dev, mtu, r, gwip, datain)
 	if (fd < 0)
 		exit(-1);
 
-	ip = (struct ip *)mb.mb_buf;
+	ip = (struct ip *)pbuf;
 	eh = (ether_header_t *)malloc(sizeof(*eh));
 	if(!eh)
 	    {
@@ -108,7 +111,7 @@ int	ip_resend(dev, mtu, r, gwip, datain)
 		return -2;
 	    }
 
-	while ((i = (*r->r_readip)(&mb, NULL, NULL)) > 0)
+	while ((i = (*r->r_readip)((char *)pbuf, sizeof(pbuf), NULL, NULL)) > 0)
 	    {
 		if (!(opts & OPT_RAW)) {
 			len = ntohs(ip->ip_len);
@@ -128,9 +131,9 @@ int	ip_resend(dev, mtu, r, gwip, datain)
 						    IP_HL(ip) << 2);
 			bcopy(ip, (char *)(eh + 1), len);
 			len += sizeof(*eh);
-			dumppacket(ip);
+			printpacket(ip);
 		} else {
-			eh = (ether_header_t *)mb.mb_buf;
+			eh = (ether_header_t *)pbuf;
 			len = i;
 		}
 

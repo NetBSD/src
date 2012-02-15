@@ -1,4 +1,4 @@
-/*	$NetBSD: iptest.c,v 1.7 2012/01/30 16:12:03 darrenr Exp $	*/
+/*	$NetBSD: iptest.c,v 1.8 2012/02/15 17:55:05 riz Exp $	*/
 
 /*
  * ipsend.c (C) 1995-1998 Darren Reed
@@ -8,7 +8,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: iptest.c,v 2.7 2007/12/20 09:35:09 darrenr Exp";
+static const char rcsid[] = "@(#)Id: iptest.c,v 2.6 2004/01/08 13:34:31 darrenr Exp";
 #endif
 #include <sys/param.h>
 #include <sys/types.h>
@@ -63,7 +63,7 @@ int	main __P((int, char **));
 
 
 static void usage(prog)
-	char *prog;
+char *prog;
 {
 	fprintf(stderr, "Usage: %s [options] dest\n\
 \toptions:\n\
@@ -85,8 +85,8 @@ static void usage(prog)
 
 
 int main(argc, argv)
-	int argc;
-	char **argv;
+int argc;
+char **argv;
 {
 	struct	tcpiphdr *ti;
 	struct	in_addr	gwip;

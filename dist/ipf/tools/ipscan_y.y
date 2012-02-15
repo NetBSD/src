@@ -1,7 +1,7 @@
-/*	$NetBSD: ipscan_y.y,v 1.5 2012/01/30 16:12:05 darrenr Exp $	*/
+/*	$NetBSD: ipscan_y.y,v 1.6 2012/02/15 17:55:11 riz Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2001-2004 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
@@ -13,7 +13,6 @@
 #include "kmem.h"
 #include "ipscan_l.h"
 #include "netinet/ip_scan.h"
-#include <ctype.h>
 
 #define	YYDEBUG	1
 

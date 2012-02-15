@@ -1,12 +1,12 @@
-/*	$NetBSD: ip_scan.h,v 1.1.1.4 2012/01/30 16:03:07 darrenr Exp $	*/
+/*	$NetBSD: ip_scan.h,v 1.2 2012/02/15 17:55:04 riz Exp $	*/
 
 /*
- * Copyright (C) 2008 by Darren Reed.
+ * Copyright (C) 1993-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * Id: ip_scan.h,v 2.13.2.1 2012/01/26 05:29:13 darrenr Exp
+ * Id: ip_scan.h,v 2.9.2.2 2006/07/14 06:12:19 darrenr Exp
  */
 
 #ifndef __IP_SCAN_H__
@@ -96,13 +96,13 @@ typedef	struct	ipscanstat	{
 } ipscanstat_t;
 
 
-extern	int ipf_scan_ioctl __P((ipf_main_softc_t *, caddr_t, ioctlcmd_t, int, int, void *));
-extern	int ipf_scan_init __P((void));
-extern	int ipf_scan_attachis __P((struct ipstate *));
-extern	int ipf_scan_attachfr __P((struct frentry *));
-extern	int ipf_scan_detachis __P((struct ipstate *));
-extern	int ipf_scan_detachfr __P((struct frentry *));
-extern	int ipf_scan_packet __P((struct fr_info *, struct ipstate *));
-extern	void ipf_scan_unload __P((ipf_main_softc_t *));
+extern	int fr_scan_ioctl(caddr_t, ioctlcmd_t, int, int, void *);
+extern	int ipsc_init(void);
+extern	int ipsc_attachis(struct ipstate *);
+extern	int ipsc_attachfr(struct frentry *);
+extern	int ipsc_detachis(struct ipstate *);
+extern	int ipsc_detachfr(struct frentry *);
+extern	int ipsc_packet(struct fr_info *, struct ipstate *);
+extern	void fr_scanunload(void);
 
 #endif /* __IP_SCAN_H__ */

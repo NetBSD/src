@@ -1,13 +1,13 @@
-/*	$NetBSD: ipfcomp.c,v 1.6 2012/02/02 19:18:51 darrenr Exp $	*/
+/*	$NetBSD: ipfcomp.c,v 1.7 2012/02/15 17:55:11 riz Exp $	*/
 
 /*
- * Copyright (C) 2012 by Darren Reed.
+ * Copyright (C) 2001-2005 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipfcomp.c,v 1.38.2.3 2012/01/26 06:06:07 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipfcomp.c,v 1.24.2.7 2007/05/01 22:15:00 darrenr Exp";
 #endif
 
 #include "ipf.h"
@@ -63,7 +63,7 @@ static	FILE	*cfile = NULL;
  * required.
  */
 void printc(fr)
-	frentry_t *fr;
+frentry_t *fr;
 {
 	fripf_t *ipf;
 	u_long *ulp;
@@ -71,7 +71,7 @@ void printc(fr)
 	FILE *fp;
 	int i;
 
-	if (fr->fr_family == 6)
+	if (fr->fr_v != 4)
 		return;
 	if ((fr->fr_type != FR_T_IPF) && (fr->fr_type != FR_T_NONE))
 		return;
@@ -87,7 +87,7 @@ void printc(fr)
 	fp = cfile;
 	if (count == 0) {
 		fprintf(fp, "/*\n");
- 		fprintf(fp, "* Copyright (C) 2012 by Darren Reed.\n");
+ 		fprintf(fp, "* Copyright (C) 1993-2000 by Darren Reed.\n");
  		fprintf(fp, "*\n");
  		fprintf(fp, "* Redistribution and use in source and binary forms are permitted\n");
  		fprintf(fp, "* provided that this notice is preserved and due credit is given\n");
@@ -136,9 +136,6 @@ void printc(fr)
 		fprintf(fp, "#endif /* _KERNEL */\n");
 		fprintf(fp, "\n");
 		fprintf(fp, "#ifdef IPFILTER_COMPILED\n");
-		fprintf(fp, "\n");
-		fprintf(fp, "extern ipf_main_softc_t ipfmain;\n");
-		fprintf(fp, "\n");
 	}
 
 	addrule(fp, fr);
@@ -165,14 +162,12 @@ static frgroup_t *groups = NULL;
 
 
 static void addrule(fp, fr)
-	FILE *fp;
-	frentry_t *fr;
+FILE *fp;
+frentry_t *fr;
 {
 	frentry_t *f, **fpp;
 	frgroup_t *g;
 	u_long *ulp;
-	char *ghead;
-	char *gname;
 	char *and;
 	int i;
 
@@ -185,10 +180,8 @@ static void addrule(fp, fr)
 	}
 
 	f->fr_next = NULL;
-	gname = FR_NAME(fr, fr_group);
-
 	for (g = groups; g != NULL; g = g->fg_next)
-		if ((strncmp(g->fg_name, gname, FR_GROUPLEN) == 0) &&
+		if ((strncmp(g->fg_name, f->fr_group, FR_GROUPLEN) == 0) &&
 		    (g->fg_flags == (f->fr_flags & FR_INOUT)))
 			break;
 
@@ -197,7 +190,7 @@ static void addrule(fp, fr)
 		g->fg_next = groups;
 		groups = g;
 		g->fg_head = f;
-		strncpy(g->fg_name, gname, FR_GROUPLEN);
+		bcopy(f->fr_group, g->fg_name, FR_GROUPLEN);
 		g->fg_ref = 0;
 		g->fg_flags = f->fr_flags & FR_INOUT;
 	}
@@ -226,10 +219,10 @@ static u_long ipf%s_rule_data_%s_%u[] = {\n",
 
 	g->fg_ref++;
 
-	if (f->fr_grhead != -1) {
-		ghead = FR_NAME(f, fr_grhead);
+	if (f->fr_grhead != 0) {
 		for (g = groups; g != NULL; g = g->fg_next)
-			if ((strncmp(g->fg_name, ghead, FR_GROUPLEN) == 0) &&
+			if ((strncmp(g->fg_name, f->fr_grhead,
+				     FR_GROUPLEN) == 0) &&
 			    g->fg_flags == (f->fr_flags & FR_INOUT))
 				break;
 		if (g == NULL) {
@@ -237,7 +230,7 @@ static u_long ipf%s_rule_data_%s_%u[] = {\n",
 			g->fg_next = groups;
 			groups = g;
 			g->fg_head = f;
-			strncpy(g->fg_name, ghead, FR_GROUPLEN);
+			bcopy(f->fr_grhead, g->fg_name, FR_GROUPLEN);
 			g->fg_ref = 0;
 			g->fg_flags = f->fr_flags & FR_INOUT;
 		}
@@ -246,7 +239,7 @@ static u_long ipf%s_rule_data_%s_%u[] = {\n",
 
 
 int intcmp(c1, c2)
-	const void *c1, *c2;
+const void *c1, *c2;
 {
 	const mc_t *i1 = (const mc_t *)c1, *i2 = (const mc_t *)c2;
 
@@ -258,17 +251,17 @@ int intcmp(c1, c2)
 
 
 static void indent(fp, in)
-	FILE *fp;
-	int in;
+FILE *fp;
+int in;
 {
 	for (; in; in--)
 		fputc('\t', fp);
 }
 
 static void printeq(fp, var, m, max, v)
-	FILE *fp;
-	char *var;
-	int m, max, v;
+FILE *fp;
+char *var;
+int m, max, v;
 {
 	if (m == max)
 		fprintf(fp, "%s == %#x) {\n", var, v);
@@ -283,9 +276,9 @@ static void printeq(fp, var, m, max, v)
  *             v - required address
  */
 static void printipeq(fp, var, fl, m, v)
-	FILE *fp;
-	char *var;
-	int fl, m, v;
+FILE *fp;
+char *var;
+int fl, m, v;
 {
 	if (m == 0xffffffff)
 		fprintf(fp, "%s ", var);
@@ -297,9 +290,9 @@ static void printipeq(fp, var, fl, m, v)
 
 
 void emit(num, dir, v, fr)
-	int num, dir;
-	void *v;
-	frentry_t *fr;
+int num, dir;
+void *v;
+frentry_t *fr;
 {
 	u_int incnt, outcnt;
 	frgroup_t *g;
@@ -349,8 +342,8 @@ void emit(num, dir, v, fr)
 
 
 static void emitheader(grp, incount, outcount)
-	frgroup_t *grp;
-	u_int incount, outcount;
+frgroup_t *grp;
+u_int incount, outcount;
 {
 	static FILE *fph = NULL;
 	frgroup_t *g;
@@ -389,7 +382,7 @@ extern frentry_t *ipfrule_match_out_%s __P((fr_info_t *, u_32_t *));\n\
 extern frentry_t *ipf_rules_out_%s[%d];\n",
 			grp->fg_name, grp->fg_name, outcount);
 
-		for (g = groups; g != grp; g = g->fg_next)
+		for (g = groups; g != g; g = g->fg_next)
 			if ((strncmp(g->fg_name, grp->fg_name,
 				     FR_GROUPLEN) == 0) &&
 			    g->fg_flags == grp->fg_flags)
@@ -441,11 +434,11 @@ int ipfrule_remove()\n\
 
 
 static void emitGroup(num, dir, v, fr, group, incount, outcount)
-	int num, dir;
-	void *v;
-	frentry_t *fr;
-	char *group;
-	u_int incount, outcount;
+int num, dir;
+void *v;
+frentry_t *fr;
+char *group;
+u_int incount, outcount;
 {
 	static FILE *fp = NULL;
 	static int header[2] = { 0, 0 };
@@ -521,8 +514,9 @@ static void emitGroup(num, dir, v, fr, group, incount, outcount)
 			if ((i & 1) == 0) {
 				fprintf(fp, "\n\t");
 			}
-			fprintf(fp, "(frentry_t *)&in_rule_%s_%d",
-				FR_NAME(f, fr_group), i);
+			fprintf(fp,
+				"(frentry_t *)&in_rule_%s_%d",
+				f->fr_group, i);
 			if (i + 1 < incount)
 				fprintf(fp, ", ");
 			i++;
@@ -540,8 +534,9 @@ static void emitGroup(num, dir, v, fr, group, incount, outcount)
 			if ((i & 1) == 0) {
 				fprintf(fp, "\n\t");
 			}
-			fprintf(fp, "(frentry_t *)&out_rule_%s_%d",
-				FR_NAME(f, fr_group), i);
+			fprintf(fp,
+				"(frentry_t *)&out_rule_%s_%d",
+				f->fr_group, i);
 			if (i + 1 < outcount)
 				fprintf(fp, ", ");
 			i++;
@@ -591,7 +586,7 @@ static void emitGroup(num, dir, v, fr, group, incount, outcount)
 		switch(m[i].c)
 		{
 		case FRC_IFN :
-			if (fr->fr_ifnames[0] != -1)
+			if (*fr->fr_ifname)
 				m[i].s = 1;
 			break;
 		case FRC_V :
@@ -945,11 +940,11 @@ static void emitGroup(num, dir, v, fr, group, incount, outcount)
 	if (fr->fr_flags & FR_QUICK) {
 		fprintf(fp, "return (frentry_t *)&%s_rule_%s_%d;\n",
 			fr->fr_flags & FR_INQUE ? "in" : "out",
-			FR_NAME(fr, fr_group), num);
+			fr->fr_group, num);
 	} else {
 		fprintf(fp, "fr = (frentry_t *)&%s_rule_%s_%d;\n",
 			fr->fr_flags & FR_INQUE ? "in" : "out",
-			FR_NAME(fr, fr_group), num);
+			fr->fr_group, num);
 	}
 	if (n == NULL)
 		n = (mc_t *)malloc(sizeof(*n) * FRC_MAX);
@@ -959,7 +954,7 @@ static void emitGroup(num, dir, v, fr, group, incount, outcount)
 
 
 void printC(dir)
-	int dir;
+int dir;
 {
 	static mc_t *m = NULL;
 	frgroup_t *g;
@@ -982,10 +977,10 @@ void printC(dir)
  * Now print out code to implement all of the rules.
  */
 static void printCgroup(dir, top, m, group)
-	int dir;
-	frentry_t *top;
-	mc_t *m;
-	char *group;
+int dir;
+frentry_t *top;
+mc_t *m;
+char *group;
 {
 	frentry_t *fr, *fr1;
 	int i, n, rn;
@@ -1032,14 +1027,13 @@ static void printCgroup(dir, top, m, group)
 				continue;
 
 			if ((n & 0x0001) &&
-			    !strcmp(fr1->fr_names + fr1->fr_ifnames[0],
-				    fr->fr_names + fr->fr_ifnames[0])) {
+			    !strcmp(fr1->fr_ifname, fr->fr_ifname)) {
 				m[FRC_IFN].e++;
 				m[FRC_IFN].n++;
 			} else
 				n &= ~0x0001;
 
-			if ((n & 0x0002) && (fr1->fr_family == fr->fr_family)) {
+			if ((n & 0x0002) && (fr1->fr_v == fr->fr_v)) {
 				m[FRC_V].e++;
 				m[FRC_V].n++;
 			} else
@@ -1232,10 +1226,10 @@ static void printCgroup(dir, top, m, group)
 }
 
 static void printhooks(fp, in, out, grp)
-	FILE *fp;
-	int in;
-	int out;
-	frgroup_t *grp;
+FILE *fp;
+int in;
+int out;
+frgroup_t *grp;
 {
 	frentry_t *fr;
 	char *group;
@@ -1243,7 +1237,7 @@ static void printhooks(fp, in, out, grp)
 	char *instr;
 
 	group = grp->fg_name;
-	dogrp = 0;
+	dogrp = *group ? 1 : 0;
 
 	if (in && out) {
 		fprintf(stderr,
@@ -1289,24 +1283,18 @@ int ipfrule_add_%s_%s()\n", instr, group);
 
 	fprintf(fp, "\
 		for (j = i + 1; j < max; j++)\n\
-			if (strncmp(fp->fr_names + fp->fr_group,\n\
-				    ipf_rules_%s_%s[j]->fr_names +\n\
+			if (strncmp(fp->fr_group,\n\
 				    ipf_rules_%s_%s[j]->fr_group,\n\
 				    FR_GROUPLEN) == 0) {\n\
-				if (ipf_rules_%s_%s[j] != NULL)\n\
-					ipf_rules_%s_%s[j]->fr_pnext =\n\
-					    &fp->fr_next;\n\
-				fp->fr_pnext = &ipf_rules_%s_%s[j];\n\
 				fp->fr_next = ipf_rules_%s_%s[j];\n\
 				break;\n\
-			}\n", instr, group, instr, group, instr, group,
-			      instr, group, instr, group, instr, group);
+			}\n", instr, group, instr, group);
 	if (dogrp)
 		fprintf(fp, "\
 \n\
-		if (fp->fr_grhead != -1) {\n\
-			fg = fr_addgroup(fp->fr_names + fp->fr_grhead,\n\
-					 fp, FR_INQUE, IPL_LOGIPF, 0);\n\
+		if (fp->fr_grhead != 0) {\n\
+			fg = fr_addgroup(fp->fr_grhead, fp, FR_INQUE,\n\
+					 IPL_LOGIPF, 0);\n\
 			if (fg != NULL)\n\
 				fp->fr_grp = &fg->fg_start;\n\
 		}\n");
@@ -1316,7 +1304,7 @@ int ipfrule_add_%s_%s()\n", instr, group);
 	fp = &ipfrule_%s_%s;\n", instr, group);
 		fprintf(fp, "\
 	bzero((char *)fp, sizeof(*fp));\n\
-	fp->fr_type = FR_T_CALLFUNC_BUILTIN;\n\
+	fp->fr_type = FR_T_CALLFUNC|FR_T_BUILTIN;\n\
 	fp->fr_flags = FR_%sQUE|FR_NOMATCH;\n\
 	fp->fr_data = (void *)ipf_rules_%s_%s[0];\n",
 		(in != 0) ? "IN" : "OUT", instr, group);
@@ -1325,10 +1313,9 @@ int ipfrule_add_%s_%s()\n", instr, group);
 		instr, group);
 
 	fprintf(fp, "\
-	fp->fr_family = AF_INET;\n\
+	fp->fr_v = 4;\n\
 	fp->fr_func = (ipfunc_t)ipfrule_match_%s_%s;\n\
-	err = frrequest(&ipfmain, IPL_LOGIPF, SIOCADDFR, (caddr_t)fp,\n\
-			ipfmain.ipf_active, 0);\n",
+	err = frrequest(IPL_LOGIPF, SIOCADDFR, (caddr_t)fp, fr_active, 0);\n",
 			instr, group);
 	fprintf(fp, "\treturn err;\n}\n");
 
@@ -1361,9 +1348,8 @@ int ipfrule_remove_%s_%s()\n", instr, group);
 		}\n\
 	}\n\
 	if (err == 0)\n\
-		err = frrequest(&ipfmain, IPL_LOGIPF, SIOCDELFR,\n\
-				(caddr_t)&ipfrule_%s_%s,\n\
-				ipfmain.ipf_active, 0);\n",
+		err = frrequest(IPL_LOGIPF, SIOCDELFR,\n\
+				(caddr_t)&ipfrule_%s_%s, fr_active, 0);\n",
 		instr, group, instr, group, instr, group);
 	fprintf(fp, "\
 	if (err)\n\

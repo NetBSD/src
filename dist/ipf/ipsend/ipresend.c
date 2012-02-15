@@ -1,4 +1,4 @@
-/*	$NetBSD: ipresend.c,v 1.6 2012/01/30 16:12:03 darrenr Exp $	*/
+/*	$NetBSD: ipresend.c,v 1.7 2012/02/15 17:55:05 riz Exp $	*/
 
 /*
  * ipresend.c (C) 1995-1998 Darren Reed
@@ -8,7 +8,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipresend.c,v 2.5.2.1 2011/12/10 17:30:02 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipresend.c,v 2.4 2004/01/08 13:34:31 darrenr Exp";
 #endif
 #include <sys/param.h>
 #include <sys/types.h>
@@ -32,7 +32,7 @@ static const char rcsid[] = "@(#)Id: ipresend.c,v 2.5.2.1 2011/12/10 17:30:02 da
 extern	char	*optarg;
 extern	int	optind;
 #ifndef	NO_IPF
-extern	struct	ipread	pcap, iphex, iptext;
+extern	struct	ipread	snoop, pcap, etherf, iphex, tcpd, iptext;
 #endif
 
 int	opts = 0;
@@ -68,7 +68,7 @@ int	main __P((int, char **));
 
 
 static void usage(prog)
-	char	*prog;
+char	*prog;
 {
 	fprintf(stderr, "Usage: %s [options] <-r filename|-R filename>\n\
 \t\t-r filename\tsnoop data file to resend\n\
@@ -83,8 +83,8 @@ static void usage(prog)
 
 
 int main(argc, argv)
-	int	argc;
-	char	**argv;
+int	argc;
+char	**argv;
 {
 	struct	in_addr	gwip;
 	struct	ipread	*ipr = NULL;
@@ -115,11 +115,20 @@ int main(argc, argv)
 			opts |= OPT_RAW;
 			break;
 #ifndef	NO_IPF
+		case 'E' :
+			ipr = &etherf;
+			break;
 		case 'H' :
 			ipr = &iphex;
 			break;
 		case 'P' :
 			ipr = &pcap;
+			break;
+		case 'S' :
+			ipr = &snoop;
+			break;
+		case 'T' :
+			ipr = &tcpd;
 			break;
 		case 'X' :
 			ipr = &iptext;

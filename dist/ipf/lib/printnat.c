@@ -1,7 +1,7 @@
-/*	$NetBSD: printnat.c,v 1.4 2012/01/30 16:12:04 darrenr Exp $	*/
+/*	$NetBSD: printnat.c,v 1.5 2012/02/15 17:55:07 riz Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2002-2005 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
@@ -13,319 +13,230 @@
 
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: printnat.c,v 1.50.2.1 2012/01/26 05:29:16 darrenr Exp";
+static const char rcsid[] = "@(#)Id: printnat.c,v 1.22.2.15 2008/07/24 09:30:35 darrenr Exp";
 #endif
-
 
 /*
  * Print out a NAT rule
  */
-void
-printnat(np, opts)
-	ipnat_t *np;
-	int opts;
+void printnat(np, opts)
+ipnat_t *np;
+int opts;
 {
-	struct protoent *pr;
-	char *base;
-	int proto;
+	struct	protoent	*pr;
+	int	bits;
 
-	if (np->in_flags & IPN_NO)
-		PRINTF("no ");
+	pr = getprotobynumber(np->in_p);
 
 	switch (np->in_redir)
 	{
-	case NAT_REDIRECT|NAT_ENCAP :
-		PRINTF("encap in on");
-		proto = np->in_pr[0];
-		break;
-	case NAT_MAP|NAT_ENCAP :
-		PRINTF("encap out on");
-		proto = np->in_pr[1];
-		break;
-	case NAT_REDIRECT|NAT_DIVERTUDP :
-		PRINTF("divert in on");
-		proto = np->in_pr[0];
-		break;
-	case NAT_MAP|NAT_DIVERTUDP :
-		PRINTF("divert out on");
-		proto = np->in_pr[1];
-		break;
-	case NAT_REDIRECT|NAT_REWRITE :
-		PRINTF("rewrite in on");
-		proto = np->in_pr[0];
-		break;
-	case NAT_MAP|NAT_REWRITE :
-		PRINTF("rewrite out on");
-		proto = np->in_pr[1];
-		break;
 	case NAT_REDIRECT :
-		PRINTF("rdr");
-		proto = np->in_pr[0];
+		printf("rdr");
 		break;
 	case NAT_MAP :
-		PRINTF("map");
-		proto = np->in_pr[1];
+		printf("map");
 		break;
 	case NAT_MAPBLK :
-		PRINTF("map-block");
-		proto = np->in_pr[1];
+		printf("map-block");
 		break;
 	case NAT_BIMAP :
-		PRINTF("bimap");
-		proto = np->in_pr[0];
+		printf("bimap");
 		break;
 	default :
-		FPRINTF(stderr, "unknown value for in_redir: %#x\n",
+		fprintf(stderr, "unknown value for in_redir: %#x\n",
 			np->in_redir);
-		proto = np->in_pr[0];
 		break;
 	}
 
-	pr = getprotobynumber(proto);
-
-	base = np->in_names;
-	if (!strcmp(base + np->in_ifnames[0], "-"))
-		PRINTF(" \"%s\"", base + np->in_ifnames[0]);
+	if (!strcmp(np->in_ifnames[0], "-"))
+		printf(" \"%s\"", np->in_ifnames[0]);
 	else
-		PRINTF(" %s", base + np->in_ifnames[0]);
-	if ((np->in_ifnames[1] != -1) &&
-	    (strcmp(base + np->in_ifnames[0], base + np->in_ifnames[1]) != 0)) {
-		if (!strcmp(base + np->in_ifnames[1], "-"))
-			PRINTF(",\"%s\"", base + np->in_ifnames[1]);
+		printf(" %s", np->in_ifnames[0]);
+	if ((np->in_ifnames[1][0] != '\0') &&
+	    (strncmp(np->in_ifnames[0], np->in_ifnames[1], LIFNAMSIZ) != 0)) {
+		if (!strcmp(np->in_ifnames[1], "-"))
+			printf(",\"%s\"", np->in_ifnames[1]);
 		else
-			PRINTF(",%s", base + np->in_ifnames[1]);
+			printf(",%s", np->in_ifnames[1]);
 	}
 	putchar(' ');
 
-	if (np->in_redir & (NAT_REWRITE|NAT_ENCAP|NAT_DIVERTUDP)) {
-		if ((proto != 0) || (np->in_flags & IPN_TCPUDP)) {
-			PRINTF("proto ");
-			printproto(pr, proto, np);
-			putchar(' ');
-		}
-	}
-
 	if (np->in_flags & IPN_FILTER) {
 		if (np->in_flags & IPN_NOTSRC)
-			PRINTF("! ");
-		PRINTF("from ");
-		printnataddr(np->in_v[0], np->in_names, &np->in_osrc,
-			     np->in_ifnames[0]);
+			printf("! ");
+		printf("from ");
+		if (np->in_redir == NAT_REDIRECT) {
+			printhostmask(4, (u_32_t *)&np->in_srcip,
+				      (u_32_t *)&np->in_srcmsk);
+		} else {
+			printhostmask(4, (u_32_t *)&np->in_inip,
+				      (u_32_t *)&np->in_inmsk);
+		}
 		if (np->in_scmp)
-			printportcmp(proto, &np->in_tuc.ftu_src);
+			printportcmp(np->in_p, &np->in_tuc.ftu_src);
 
 		if (np->in_flags & IPN_NOTDST)
-			PRINTF(" !");
-		PRINTF(" to ");
-		printnataddr(np->in_v[0], np->in_names, &np->in_odst,
-			     np->in_ifnames[0]);
+			printf(" !");
+		printf(" to ");
+		if (np->in_redir == NAT_REDIRECT) {
+			printhostmask(4, (u_32_t *)&np->in_outip,
+				      (u_32_t *)&np->in_outmsk);
+		} else {
+			printhostmask(4, (u_32_t *)&np->in_srcip,
+				      (u_32_t *)&np->in_srcmsk);
+		}
 		if (np->in_dcmp)
-			printportcmp(proto, &np->in_tuc.ftu_dst);
+			printportcmp(np->in_p, &np->in_tuc.ftu_dst);
 	}
 
-	if (np->in_redir & (NAT_ENCAP|NAT_DIVERTUDP)) {
-		PRINTF(" -> src ");
-		printnataddr(np->in_v[1], np->in_names, &np->in_nsrc,
-			     np->in_ifnames[0]);
-		if ((np->in_redir & NAT_DIVERTUDP) != 0)
-			PRINTF(",%u", np->in_spmin);
-		PRINTF(" dst ");
-		printnataddr(np->in_v[1], np->in_names, &np->in_ndst,
-			     np->in_ifnames[0]);
-		if ((np->in_redir & NAT_DIVERTUDP) != 0)
-			PRINTF(",%u udp", np->in_dpmin);
-		PRINTF(";\n");
-
-	} else if (np->in_redir & NAT_REWRITE) {
-		PRINTF(" -> src ");
-		if (np->in_nsrc.na_type == IPLT_DSTLIST) {
-			PRINTF("dstlist/");
-			if (np->in_nsrc.na_subtype == 0)
-				PRINTF("%d", np->in_nsrc.na_num);
-			else
-				PRINTF("%s", base + np->in_nsrc.na_num);
-		} else {
-			printnataddr(np->in_v[1], np->in_names, &np->in_nsrc,
-				     np->in_ifnames[0]);
-		}
-		if ((((np->in_flags & IPN_TCPUDP) != 0)) &&
-		    (np->in_spmin != 0)) {
-			if ((np->in_flags & IPN_FIXEDSPORT) != 0) {
-				PRINTF(",port = %u", np->in_spmin);
-			} else {
-				PRINTF(",%u", np->in_spmin);
-				if (np->in_spmax != np->in_spmin)
-					PRINTF("-%u", np->in_spmax);
-			}
-		}
-		PRINTF(" dst ");
-		if (np->in_ndst.na_type == IPLT_DSTLIST) {
-			PRINTF("dstlist/");
-			if (np->in_ndst.na_subtype == 0)
-				PRINTF("%d", np->in_nsrc.na_num);
-			else
-				PRINTF("%s", base + np->in_ndst.na_num);
-		} else {
-			printnataddr(np->in_v[1], np->in_names, &np->in_ndst,
-				     np->in_ifnames[0]);
-		}
-		if ((((np->in_flags & IPN_TCPUDP) != 0)) &&
-		    (np->in_dpmin != 0)) {
-			if ((np->in_flags & IPN_FIXEDDPORT) != 0) {
-				PRINTF(",port = %u", np->in_dpmin);
-			} else {
-				PRINTF(",%u", np->in_dpmin);
-				if (np->in_dpmax != np->in_dpmin)
-					PRINTF("-%u", np->in_dpmax);
-			}
-		}
-		PRINTF(";\n");
-
-	} else if (np->in_redir == NAT_REDIRECT) {
+	if (np->in_redir == NAT_REDIRECT) {
 		if (!(np->in_flags & IPN_FILTER)) {
-			printnataddr(np->in_v[0], np->in_names, &np->in_odst,
-				     np->in_ifnames[0]);
+			printf("%s", inet_ntoa(np->in_out[0].in4));
+			bits = count4bits(np->in_outmsk);
+			if (bits != -1)
+				printf("/%d", bits);
+			else
+				printf("/%s", inet_ntoa(np->in_out[1].in4));
 			if (np->in_flags & IPN_TCPUDP) {
-				PRINTF(" port %d", np->in_odport);
-				if (np->in_odport != np->in_dtop)
-					PRINTF("-%d", np->in_dtop);
+				printf(" port %d", ntohs(np->in_pmin));
+				if (np->in_pmax != np->in_pmin)
+					printf("-%d", ntohs(np->in_pmax));
 			}
 		}
-		if (np->in_flags & IPN_NO) {
-			putchar(' ');
-			printproto(pr, proto, np);
-			PRINTF(";\n");
-			return;
-		}
-		PRINTF(" -> ");
-		printnataddr(np->in_v[1], np->in_names, &np->in_ndst,
-			     np->in_ifnames[0]);
+		printf(" -> %s", inet_ntoa(np->in_in[0].in4));
+		if (np->in_flags & IPN_SPLIT)
+			printf(",%s", inet_ntoa(np->in_in[1].in4));
+		else if (np->in_inmsk == 0 && np->in_inip == 0)
+			printf("/0");
 		if (np->in_flags & IPN_TCPUDP) {
 			if ((np->in_flags & IPN_FIXEDDPORT) != 0)
-				PRINTF(" port = %d", np->in_dpmin);
-			else {
-				PRINTF(" port %d", np->in_dpmin);
-				if (np->in_dpmin != np->in_dpmax)
-					PRINTF("-%d", np->in_dpmax);
-			}
+				printf(" port = %d", ntohs(np->in_pnext));
+			else
+				printf(" port %d", ntohs(np->in_pnext));
 		}
 		putchar(' ');
-		printproto(pr, proto, np);
+		printproto(pr, np->in_p, np);
 		if (np->in_flags & IPN_ROUNDR)
-			PRINTF(" round-robin");
+			printf(" round-robin");
 		if (np->in_flags & IPN_FRAG)
-			PRINTF(" frag");
+			printf(" frag");
 		if (np->in_age[0] != 0 || np->in_age[1] != 0) {
-			PRINTF(" age %d/%d", np->in_age[0], np->in_age[1]);
+			printf(" age %d/%d", np->in_age[0], np->in_age[1]);
 		}
 		if (np->in_flags & IPN_STICKY)
-			PRINTF(" sticky");
+			printf(" sticky");
 		if (np->in_mssclamp != 0)
-			PRINTF(" mssclamp %d", np->in_mssclamp);
-		if (np->in_plabel != -1)
-			PRINTF(" proxy %s", np->in_names + np->in_plabel);
+			printf(" mssclamp %d", np->in_mssclamp);
+		if (*np->in_plabel != '\0')
+			printf(" proxy %.*s", (int)sizeof(np->in_plabel),
+				np->in_plabel);
 		if (np->in_tag.ipt_tag[0] != '\0')
-			PRINTF(" tag %-.*s", IPFTAG_LEN, np->in_tag.ipt_tag);
-		PRINTF("\n");
+			printf(" tag %-.*s", IPFTAG_LEN, np->in_tag.ipt_tag);
+		printf("\n");
 		if (opts & OPT_DEBUG)
-			PRINTF("\tpmax %u\n", np->in_dpmax);
-
+			printf("\tpmax %u\n", np->in_pmax);
 	} else {
 		int protoprinted = 0;
 
 		if (!(np->in_flags & IPN_FILTER)) {
-			printnataddr(np->in_v[0], np->in_names, &np->in_osrc,
-				     np->in_ifnames[0]);
+			printf("%s/", inet_ntoa(np->in_in[0].in4));
+			bits = count4bits(np->in_inmsk);
+			if (bits != -1)
+				printf("%d", bits);
+			else
+				printf("%s", inet_ntoa(np->in_in[1].in4));
 		}
-		if (np->in_flags & IPN_NO) {
-			putchar(' ');
-			printproto(pr, proto, np);
-			PRINTF(";\n");
-			return;
-		}
-		PRINTF(" -> ");
-		if (np->in_flags & IPN_SIPRANGE) {
-			PRINTF("range ");
-			printnataddr(np->in_v[1], np->in_names, &np->in_nsrc,
-				     np->in_ifnames[0]);
+		printf(" -> ");
+		if (np->in_flags & IPN_IPRANGE) {
+			printf("range %s-", inet_ntoa(np->in_out[0].in4));
+			printf("%s", inet_ntoa(np->in_out[1].in4));
 		} else {
-			printnataddr(np->in_v[1], np->in_names, &np->in_nsrc,
-				     np->in_ifnames[0]);
+			printf("%s/", inet_ntoa(np->in_out[0].in4));
+			bits = count4bits(np->in_outmsk);
+			if (bits != -1)
+				printf("%d", bits);
+			else
+				printf("%s", inet_ntoa(np->in_out[1].in4));
 		}
-		if (np->in_plabel != -1) {
-			PRINTF(" proxy port ");
-			if (np->in_odport != 0) {
+		if (*np->in_plabel != '\0') {
+			printf(" proxy port ");
+			if (np->in_dcmp != 0)
+				np->in_dport = htons(np->in_dport);
+			if (np->in_dport != 0) {
 				char *s;
 
-				s = portname(proto, np->in_odport);
+				s = portname(np->in_p, ntohs(np->in_dport));
 				if (s != NULL)
 					fputs(s, stdout);
 				else
 					fputs("???", stdout);
 			}
-			PRINTF(" %s/", np->in_names + np->in_plabel);
-			printproto(pr, proto, NULL);
+			printf(" %.*s/", (int)sizeof(np->in_plabel),
+				np->in_plabel);
+			printproto(pr, np->in_p, NULL);
 			protoprinted = 1;
 		} else if (np->in_redir == NAT_MAPBLK) {
-			if ((np->in_spmin == 0) &&
+			if ((np->in_pmin == 0) &&
 			    (np->in_flags & IPN_AUTOPORTMAP))
-				PRINTF(" ports auto");
+				printf(" ports auto");
 			else
-				PRINTF(" ports %d", np->in_spmin);
+				printf(" ports %d", np->in_pmin);
 			if (opts & OPT_DEBUG)
-				PRINTF("\n\tip modulous %d", np->in_spmax);
-
-		} else if (np->in_spmin || np->in_spmax) {
+				printf("\n\tip modulous %d", np->in_pmax);
+		} else if (np->in_pmin || np->in_pmax) {
 			if (np->in_flags & IPN_ICMPQUERY) {
-				PRINTF(" icmpidmap ");
+				printf(" icmpidmap ");
 			} else {
-				PRINTF(" portmap ");
+				printf(" portmap ");
 			}
-			printproto(pr, proto, np);
+			printproto(pr, np->in_p, np);
 			protoprinted = 1;
 			if (np->in_flags & IPN_AUTOPORTMAP) {
-				PRINTF(" auto");
+				printf(" auto");
 				if (opts & OPT_DEBUG)
-					PRINTF(" [%d:%d %d %d]",
-					       np->in_spmin, np->in_spmax,
+					printf(" [%d:%d %d %d]",
+					       ntohs(np->in_pmin),
+					       ntohs(np->in_pmax),
 					       np->in_ippip, np->in_ppip);
 			} else {
-				PRINTF(" %d:%d", np->in_spmin, np->in_spmax);
+				printf(" %d:%d", ntohs(np->in_pmin),
+				       ntohs(np->in_pmax));
 			}
 		}
 
 		if (np->in_flags & IPN_FRAG)
-			PRINTF(" frag");
+			printf(" frag");
 		if (np->in_age[0] != 0 || np->in_age[1] != 0) {
-			PRINTF(" age %d/%d", np->in_age[0], np->in_age[1]);
+			printf(" age %d/%d", np->in_age[0], np->in_age[1]);
 		}
 		if (np->in_mssclamp != 0)
-			PRINTF(" mssclamp %d", np->in_mssclamp);
+			printf(" mssclamp %d", np->in_mssclamp);
 		if (np->in_tag.ipt_tag[0] != '\0')
-			PRINTF(" tag %s", np->in_tag.ipt_tag);
-		if (!protoprinted && (np->in_flags & IPN_TCPUDP || proto)) {
+			printf(" tag %s", np->in_tag.ipt_tag);
+		if (!protoprinted && (np->in_flags & IPN_TCPUDP || np->in_p)) {
 			putchar(' ');
-			printproto(pr, proto, np);
+			printproto(pr, np->in_p, np);
 		}
-		PRINTF("\n");
+		if (np->in_flags & IPN_SEQUENTIAL)
+			printf(" sequential");
+		printf("\n");
 		if (opts & OPT_DEBUG) {
 			struct in_addr nip;
 
-			nip.s_addr = htonl(np->in_snip);
+			nip.s_addr = htonl(np->in_nextip.s_addr);
 
-			PRINTF("\tnextip %s pnext %d\n",
-			       inet_ntoa(nip), np->in_spnext);
+			printf("\tnextip %s pnext %d\n",
+			       inet_ntoa(nip), np->in_pnext);
 		}
 	}
 
 	if (opts & OPT_DEBUG) {
-		PRINTF("\tspace %lu use %u hits %lu flags %#x proto %d/%d",
+		printf("\tspace %lu use %u hits %lu flags %#x proto %d hv %d\n",
 			np->in_space, np->in_use, np->in_hits,
-			np->in_flags, np->in_pr[0], np->in_pr[1]);
-		PRINTF(" hv %u/%u\n", np->in_hv[0], np->in_hv[1]);
-		PRINTF("\tifp[0] %p ifp[1] %p apr %p\n",
+			np->in_flags, np->in_p, np->in_hv);
+		printf("\tifp[0] %p ifp[1] %p apr %p\n",
 			np->in_ifps[0], np->in_ifps[1], np->in_apr);
-		PRINTF("\ttqehead %p/%p comment %p\n",
+		printf("\ttqehead %p/%p comment %p\n",
 			np->in_tqehead[0], np->in_tqehead[1], np->in_comment);
 	}
 }

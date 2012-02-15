@@ -1,11 +1,11 @@
-/*	$NetBSD: remove_poolnode.c,v 1.1.1.3 2012/01/30 16:03:25 darrenr Exp $	*/
+/*	$NetBSD: remove_poolnode.c,v 1.2 2012/02/15 17:55:07 riz Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2003 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: remove_poolnode.c,v 1.7.2.1 2012/01/26 05:29:17 darrenr Exp
+ * Id: remove_poolnode.c,v 1.3.2.1 2006/06/16 17:21:16 darrenr Exp
  */
 
 #include <fcntl.h>
@@ -14,18 +14,21 @@
 #include "netinet/ip_lookup.h"
 #include "netinet/ip_pool.h"
 
+static int poolfd = -1;
 
-int
-remove_poolnode(unit, name, node, iocfunc)
-	int unit;
-	char *name;
-	ip_pool_node_t *node;
-	ioctlfunc_t iocfunc;
+
+int remove_poolnode(unit, name, node, iocfunc)
+int unit;
+char *name;
+ip_pool_node_t *node;
+ioctlfunc_t iocfunc;
 {
 	ip_pool_node_t pn;
 	iplookupop_t op;
 
-	if (pool_open() == -1)
+	if ((poolfd == -1) && ((opts & OPT_DONOTHING) == 0))
+		poolfd = open(IPLOOKUP_NAME, O_RDWR);
+	if ((poolfd == -1) && ((opts & OPT_DONOTHING) == 0))
 		return -1;
 
 	op.iplo_unit = unit;
@@ -43,7 +46,7 @@ remove_poolnode(unit, name, node, iocfunc)
 	pn.ipn_info = node->ipn_info;
 	strncpy(pn.ipn_name, node->ipn_name, sizeof(pn.ipn_name));
 
-	if (pool_ioctl(iocfunc, SIOCLOOKUPDELNODE, &op)) {
+	if ((*iocfunc)(poolfd, SIOCLOOKUPDELNODE, &op)) {
 		if ((opts & OPT_DONOTHING) == 0) {
 			perror("remove_pool:SIOCLOOKUPDELNODE");
 			return -1;

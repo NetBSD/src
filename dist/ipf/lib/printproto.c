@@ -1,7 +1,7 @@
-/*	$NetBSD: printproto.c,v 1.1.1.4 2012/01/30 16:03:24 darrenr Exp $	*/
+/*	$NetBSD: printproto.c,v 1.2 2012/02/15 17:55:07 riz Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2005 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
@@ -10,48 +10,47 @@
 
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: printproto.c,v 1.8.2.1 2012/01/26 05:29:17 darrenr Exp";
+static const char rcsid[] = "@(#)Id: printproto.c,v 1.1.2.3 2007/10/27 16:03:39 darrenr Exp";
 #endif
 
 
-void
-printproto(pr, p, np)
-	struct protoent *pr;
-	int p;
-	ipnat_t *np;
+void printproto(pr, p, np)
+struct protoent *pr;
+int p;
+ipnat_t *np;
 {
 	if (np != NULL) {
 		if ((np->in_flags & IPN_TCPUDP) == IPN_TCPUDP)
-			PRINTF("tcp/udp");
+			printf("tcp/udp");
 		else if (np->in_flags & IPN_TCP)
-			PRINTF("tcp");
+			printf("tcp");
 		else if (np->in_flags & IPN_UDP)
-			PRINTF("udp");
+			printf("udp");
 		else if (np->in_flags & IPN_ICMPQUERY)
-			PRINTF("icmp");
+			printf("icmp");
 #ifdef _AIX51
 		/*
 		 * To make up for "ip = 252" and "hopopt = 0" in /etc/protocols
 		 * The IANA has doubled up on the definition of 0 - it is now
 		 * also used for IPv6 hop-opts, so we can no longer rely on
-		 * /etc/protocols providing the correct name->number mapping.
+		 * /etc/protocols providing the correct name->number mapping
 		 */
 #endif
-		else if (np->in_pr[0] == 0)
-			PRINTF("ip");
+		else if (np->in_p == 0)
+			printf("ip");
 		else if (pr != NULL)
-			PRINTF("%s", pr->p_name);
+			printf("%s", pr->p_name);
 		else
-			PRINTF("%d", np->in_pr[0]);
+			printf("%d", np->in_p);
 	} else {
 #ifdef _AIX51
 		if (p == 0)
-			PRINTF("ip");
+			printf("ip");
 		else
 #endif
 		if (pr != NULL)
-			PRINTF("%s", pr->p_name);
+			printf("%s", pr->p_name);
 		else
-			PRINTF("%d", p);
+			printf("%d", p);
 	}
 }

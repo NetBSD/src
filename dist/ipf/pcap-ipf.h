@@ -1,7 +1,7 @@
-/*	$NetBSD: pcap-ipf.h,v 1.1.1.2 2012/01/30 16:03:14 darrenr Exp $	*/
+/*	$NetBSD: pcap-ipf.h,v 1.2 2012/02/15 17:55:04 riz Exp $	*/
 
 /*
- * Copyright (C) 2001 by Darren Reed.
+ * Copyright (C) 1993-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: snit.c,v 1.4 2012/01/30 16:12:03 darrenr Exp $	*/
+/*	$NetBSD: snit.c,v 1.5 2012/02/15 17:55:05 riz Exp $	*/
 
 /*
  * (C)opyright 1992-1998 Darren Reed. (from tcplog)
@@ -55,7 +55,7 @@ static	int	timeout;
 
 
 int	ack_recv(ep)
-	char	*ep;
+char	*ep;
 {
 	struct	tcpiphdr	tip;
 	struct	tcphdr	*tcp;
@@ -74,8 +74,8 @@ int	ack_recv(ep)
 
 
 int	readloop(fd, dst)
-	int 	fd;
-	struct	in_addr dst;
+int 	fd;
+struct	in_addr dst;
 {
 	static	u_char	buf[BUFSPACE];
 	register u_char	*bp, *cp, *bufend;
@@ -114,8 +114,8 @@ int	readloop(fd, dst)
 }
 
 int	initdevice(device, tout)
-	char	*device;
-	int	tout;
+char	*device;
+int	tout;
 {
 	struct	strioctl si;
 	struct	timeval to;

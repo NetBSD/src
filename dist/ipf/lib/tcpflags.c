@@ -1,11 +1,11 @@
-/*	$NetBSD: tcpflags.c,v 1.1.1.3 2012/01/30 16:03:24 darrenr Exp $	*/
+/*	$NetBSD: tcpflags.c,v 1.2 2012/02/15 17:55:07 riz Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2001-2002 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: tcpflags.c,v 1.6.2.1 2012/01/26 05:29:17 darrenr Exp
+ * Id: tcpflags.c,v 1.3.4.1 2006/06/16 17:21:17 darrenr Exp
  */
 
 #include "ipf.h"
@@ -26,7 +26,7 @@ extern	u_char	flags[];
 
 
 u_char tcpflags(flgs)
-	char *flgs;
+char *flgs;
 {
 	u_char tcpf = 0;
 	char *s, *t;

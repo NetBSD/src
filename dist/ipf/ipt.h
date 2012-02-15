@@ -1,40 +1,29 @@
-/*	$NetBSD: ipt.h,v 1.7 2012/01/30 16:12:02 darrenr Exp $	*/
+/*	$NetBSD: ipt.h,v 1.8 2012/02/15 17:55:04 riz Exp $	*/
 
 /*
- * Copyright (C) 2007 by Darren Reed.
+ * Copyright (C) 1993-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ipt.h,v 2.9.2.1 2012/01/26 05:29:13 darrenr Exp
+ * Id: ipt.h,v 2.6.4.2 2006/03/26 23:42:04 darrenr Exp
  */
 
 #ifndef	__IPT_H__
 #define	__IPT_H__
 
-#ifndef	__P
-# define P_DEF
-# ifdef	__STDC__
-#  define	__P(x) x
-# else
-#  define	__P(x) ()
-# endif
-#endif
-
 #include <fcntl.h>
 
 
 struct	ipread	{
-	int	(*r_open) __P((char *));
-	int	(*r_close) __P((void));
-	int	(*r_readip) __P((mb_t *, char **, int *));
+	int	(*r_open)(char *);
+	int	(*r_close)(void);
+	int	(*r_readip)(char *, int, char **, int *);
 	int	r_flags;
 };
 
 #define	R_DO_CKSUM	0x01
 
-#ifdef P_DEF
-# undef	__P
-# undef	P_DEF
-#endif
+extern	void	debug(char *, ...);
+extern	void	verbose(char *, ...);
 
 #endif /* __IPT_H__ */

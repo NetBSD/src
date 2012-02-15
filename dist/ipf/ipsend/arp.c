@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.7 2012/01/30 16:12:03 darrenr Exp $	*/
+/*	$NetBSD: arp.c,v 1.8 2012/02/15 17:55:05 riz Exp $	*/
 
 /*
  * arp.c (C) 1995-1998 Darren Reed
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)arp.c	1.4 1/11/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: arp.c,v 2.12 2008/08/10 05:51:14 darrenr Exp";
+static const char rcsid[] = "@(#)Id: arp.c,v 2.8.2.2 2007/02/17 12:41:50 darrenr Exp";
 #endif
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -17,6 +17,9 @@ static const char rcsid[] = "@(#)Id: arp.c,v 2.12 2008/08/10 05:51:14 darrenr Ex
 #include <sys/ioctl.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
+#ifdef __osf__
+# include "radix_ipf_local.h"
+#endif
 #include <net/if.h>
 #include <netinet/if_ether.h>
 #ifndef	ultrix
@@ -39,7 +42,7 @@ static const char rcsid[] = "@(#)Id: arp.c,v 2.12 2008/08/10 05:51:14 darrenr Ex
  * (4 bytes)
  */
 int	resolve(host, address)
-	char	*host, *address;
+char	*host, *address;
 {
         struct	hostent	*hp;
         u_long	add;
@@ -65,8 +68,8 @@ int	resolve(host, address)
  * some BSD program, I cant remember which.
  */
 int	arp(ip, ether)
-	char	*ip;
-	char	*ether;
+char	*ip;
+char	*ether;
 {
 	static	int	sfd = -1;
 	static	char	ethersave[6], ipsave[4];

@@ -1,17 +1,17 @@
-/*	$NetBSD: ip_pptp_pxy.c,v 1.12 2012/02/01 16:46:28 christos Exp $	*/
+/*	$NetBSD: ip_pptp_pxy.c,v 1.13 2012/02/15 17:55:23 riz Exp $	*/
 
 /*
- * Copyright (C) 2011 by Darren Reed.
+ * Copyright (C) 2002-2003 by Darren Reed
  *
  * Simple PPTP transparent proxy for in-kernel use.  For use with the NAT
  * code.
  *
- * Id: ip_pptp_pxy.c,v 2.38.2.2 2012/01/26 05:29:12 darrenr Exp
+ * Id: ip_pptp_pxy.c,v 2.10.2.18 2008/11/06 21:18:36 darrenr Exp
  *
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_pptp_pxy.c,v 1.12 2012/02/01 16:46:28 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_pptp_pxy.c,v 1.13 2012/02/15 17:55:23 riz Exp $");
 
 #define	IPF_PPTP_PROXY
 
@@ -39,41 +39,53 @@ typedef	struct pptp_hdr {
 #define	PPTP_MTCTL_LINKINFO	15
 
 
-void ipf_p_pptp_main_load(void);
-void ipf_p_pptp_main_unload(void);
-int ipf_p_pptp_new(void *, fr_info_t *, ap_session_t *, nat_t *);
-void ipf_p_pptp_del(ipf_main_softc_t *, ap_session_t *);
-int ipf_p_pptp_inout(void *, fr_info_t *, ap_session_t *, nat_t *);
-void ipf_p_pptp_donatstate(fr_info_t *, nat_t *, pptp_pxy_t *);
-int ipf_p_pptp_message(fr_info_t *, nat_t *, pptp_pxy_t *, pptp_side_t *);
-int ipf_p_pptp_nextmessage(fr_info_t *, nat_t *, pptp_pxy_t *, int);
-int ipf_p_pptp_mctl(fr_info_t *, nat_t *, pptp_pxy_t *, pptp_side_t *);
+int
+ippr_pptp_init(void);
+void
+ippr_pptp_fini(void);
+int
+ippr_pptp_new(fr_info_t *, ap_session_t *, nat_t *);
+void
+ippr_pptp_del(ap_session_t *);
+int
+ippr_pptp_inout(fr_info_t *, ap_session_t *, nat_t *);
+void
+ippr_pptp_donatstate(fr_info_t *, nat_t *, pptp_pxy_t *);
+int
+ippr_pptp_message(fr_info_t *, nat_t *, pptp_pxy_t *, pptp_side_t *);
+int
+ippr_pptp_nextmessage(fr_info_t *, nat_t *, pptp_pxy_t *, int);
+int
+ippr_pptp_mctl(fr_info_t *, nat_t *, pptp_pxy_t *, pptp_side_t *);
 
 static	frentry_t	pptpfr;
 
-static	int	pptp_proxy_init = 0;
-static	int	ipf_p_pptp_debug = 0;
-static	int	ipf_p_pptp_gretimeout = IPF_TTLVAL(120);	/* 2 minutes */
+int	pptp_proxy_init = 0;
+int	ippr_pptp_debug = 0;
+int	ippr_pptp_gretimeout =
+IPF_TTLVAL(120);	/* 2 minutes */
 
 
 /*
  * PPTP application proxy initialization.
  */
-void
-ipf_p_pptp_main_load(void)
+int
+ippr_pptp_init(void)
 {
 	bzero((char *)&pptpfr, sizeof(pptpfr));
 	pptpfr.fr_ref = 1;
-	pptpfr.fr_age[0] = ipf_p_pptp_gretimeout;
-	pptpfr.fr_age[1] = ipf_p_pptp_gretimeout;
+	pptpfr.fr_age[0] = ippr_pptp_gretimeout;
+	pptpfr.fr_age[1] = ippr_pptp_gretimeout;
 	pptpfr.fr_flags = FR_OUTQUE|FR_PASS|FR_QUICK|FR_KEEPSTATE;
 	MUTEX_INIT(&pptpfr.fr_lock, "PPTP proxy rule lock");
 	pptp_proxy_init = 1;
+
+	return 0;
 }
 
 
 void
-ipf_p_pptp_main_unload(void)
+ippr_pptp_fini(void)
 {
 	if (pptp_proxy_init == 1) {
 		MUTEX_DESTROY(&pptpfr.fr_lock);
@@ -89,27 +101,28 @@ ipf_p_pptp_main_unload(void)
  * optimised into puts statements on FreeBSD (this doesn't exist in the kernel)
  */
 int
-ipf_p_pptp_new(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
+ippr_pptp_new(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	pptp_pxy_t *pptp;
-	ipnat_t *ipn, *np;
+	ipnat_t *ipn;
 	ip_t *ip;
 
 	ip = fin->fin_ip;
 
-	if (ipf_nat_outlookup(fin, 0, IPPROTO_GRE, nat->nat_osrcip,
+	if (nat_outlookup(fin, 0, IPPROTO_GRE, nat->nat_inip,
 			  ip->ip_dst) != NULL) {
-		if (ipf_p_pptp_debug > 0)
-			printf("ipf_p_pptp_new: GRE session already exists\n");
+		if (ippr_pptp_debug > 0)
+			printf("ippr_pptp_new: GRE session %s\n",
+			       "already exists");
 		return -1;
 	}
-	np = nat->nat_ptr;
 
-	aps->aps_psiz = sizeof(*pptp) + np->in_namelen;
-	KMALLOCS(aps->aps_data, pptp_pxy_t *, aps->aps_psiz);
+	aps->aps_psiz = sizeof(*pptp);
+	KMALLOCS(aps->aps_data, pptp_pxy_t *, sizeof(*pptp));
 	if (aps->aps_data == NULL) {
-		if (ipf_p_pptp_debug > 0)
-			printf("ipf_p_pptp_new: malloc for aps_data failed\n");
+		if (ippr_pptp_debug > 0)
+			printf("ippr_pptp_new: malloc for aps_data %s\n",
+			       "failed");
 		return -1;
 	}
 
@@ -126,26 +139,23 @@ ipf_p_pptp_new(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 	ipn->in_use = 1;
 	ipn->in_hits = 1;
 	ipn->in_ippip = 1;
-	ipn->in_snip = ntohl(nat->nat_nsrcaddr);
-	ipn->in_nsrcaddr = fin->fin_saddr;
-	ipn->in_dnip = ntohl(nat->nat_ndstaddr);
-	ipn->in_ndstaddr = nat->nat_ndstaddr;
-	ipn->in_redir = np->in_redir;
-	ipn->in_osrcaddr = nat->nat_osrcaddr;
-	ipn->in_odstaddr = nat->nat_odstaddr;
-	ipn->in_osrcmsk = 0xffffffff;
-	ipn->in_nsrcmsk = 0xffffffff;
-	ipn->in_odstmsk = 0xffffffff;
-	ipn->in_ndstmsk = 0xffffffff;
-	MUTEX_INIT(&ipn->in_lock, "pptp proxy NAT rule");
-
-	ipn->in_namelen = np->in_namelen;
-	bcopy(np->in_names, ipn->in_ifnames, ipn->in_namelen);
-	ipn->in_ifnames[0] = np->in_ifnames[0];
-	ipn->in_ifnames[1] = np->in_ifnames[1];
-
-	ipn->in_pr[0] = IPPROTO_GRE;
-	ipn->in_pr[1] = IPPROTO_GRE;
+	if (nat->nat_dir == NAT_OUTBOUND) {
+		ipn->in_nip = ntohl(nat->nat_outip.s_addr);
+		ipn->in_outip = fin->fin_saddr;
+		ipn->in_redir = NAT_MAP;
+	} else if (nat->nat_dir == NAT_INBOUND) {
+		ipn->in_nip = 0;
+		ipn->in_outip = nat->nat_outip.s_addr;
+		ipn->in_redir = NAT_REDIRECT;
+	}
+	ipn->in_inip = nat->nat_inip.s_addr;
+	ipn->in_inmsk = 0xffffffff;
+	ipn->in_outmsk = 0xffffffff;
+	ipn->in_srcip = fin->fin_saddr;
+	ipn->in_srcmsk = 0xffffffff;
+	bcopy(nat->nat_ptr->in_ifnames[0], ipn->in_ifnames[0],
+	      sizeof(ipn->in_ifnames[0]));
+	ipn->in_p = IPPROTO_GRE;
 
 	pptp->pptp_side[0].pptps_wptr = pptp->pptp_side[0].pptps_buffer;
 	pptp->pptp_side[1].pptps_wptr = pptp->pptp_side[1].pptps_buffer;
@@ -154,9 +164,8 @@ ipf_p_pptp_new(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 
 
 void
-ipf_p_pptp_donatstate(fr_info_t *fin, nat_t *nat, pptp_pxy_t *pptp)
+ippr_pptp_donatstate(fr_info_t *fin, nat_t *nat, pptp_pxy_t *pptp)
 {
-	ipf_main_softc_t *softc = fin->fin_main_soft;
 	fr_info_t fi;
 	grehdr_t gre;
 	nat_t *nat2;
@@ -186,48 +195,49 @@ ipf_p_pptp_donatstate(fr_info_t *fin, nat_t *nat, pptp_pxy_t *pptp)
 		fi.fin_flx |= FI_IGNORE;
 		fi.fin_dp = &gre;
 		gre.gr_flags = htons(1 << 13);
-
-		fi.fin_fi.fi_saddr = nat->nat_osrcaddr;
-		fi.fin_fi.fi_daddr = nat->nat_odstaddr;
+		if (fin->fin_out && nat->nat_dir == NAT_INBOUND) {
+			fi.fin_fi.fi_saddr = fin->fin_fi.fi_daddr;
+			fi.fin_fi.fi_daddr = nat->nat_outip.s_addr;
+		} else if (!fin->fin_out && nat->nat_dir == NAT_OUTBOUND) {
+			fi.fin_fi.fi_saddr = nat->nat_inip.s_addr;
+			fi.fin_fi.fi_daddr = fin->fin_fi.fi_saddr;
+		}
 	}
 
 	/*
 	 * Update NAT timeout/create NAT if missing.
 	 */
 	if (nat2 != NULL)
-		ipf_queueback(softc->ipf_ticks, &nat2->nat_tqe);
+		fr_queueback(&nat2->nat_tqe);
 	else {
-#ifdef USE_MUTEXES
-		ipf_nat_softc_t *softn = softc->ipf_nat_soft;
-#endif
-
-		MUTEX_ENTER(&softn->ipf_nat_new);
-		nat2 = ipf_nat_add(&fi, &pptp->pptp_rule, &pptp->pptp_nat,
-				   NAT_SLAVE, nat->nat_dir);
-		MUTEX_EXIT(&softn->ipf_nat_new);
+		MUTEX_ENTER(&ipf_nat_new);
+		nat2 = nat_new(&fi, &pptp->pptp_rule, &pptp->pptp_nat,
+			       NAT_SLAVE, nat->nat_dir);
+		MUTEX_EXIT(&ipf_nat_new);
 		pptp->pptp_nat = nat2;
 		if (nat2 != NULL) {
-			(void) ipf_nat_proto(&fi, nat2, 0);
+			(void) nat_proto(&fi, nat2, 0);
 			MUTEX_ENTER(&nat2->nat_lock);
-			ipf_nat_update(&fi, nat2);
+			nat_update(&fi, nat2);
 			MUTEX_EXIT(&nat2->nat_lock);
 		}
 	}
 
-	READ_ENTER(&softc->ipf_state);
+	READ_ENTER(&ipf_state);
 	if (pptp->pptp_state != NULL) {
-		ipf_queueback(softc->ipf_ticks, &pptp->pptp_state->is_sti);
-		RWLOCK_EXIT(&softc->ipf_state);
+		fr_queueback(&pptp->pptp_state->is_sti);
+		RWLOCK_EXIT(&ipf_state);
 	} else {
-		RWLOCK_EXIT(&softc->ipf_state);
+		RWLOCK_EXIT(&ipf_state);
 		if (nat2 != NULL) {
 			if (nat->nat_dir == NAT_INBOUND)
-				fi.fin_fi.fi_daddr = nat2->nat_ndstaddr;
+				fi.fin_fi.fi_daddr = nat2->nat_inip.s_addr;
 			else
-				fi.fin_fi.fi_saddr = nat2->nat_osrcaddr;
+				fi.fin_fi.fi_saddr = nat2->nat_inip.s_addr;
 		}
 		fi.fin_ifp = NULL;
-		(void) ipf_state_add(softc, &fi, &pptp->pptp_state, 0);
+		pptp->pptp_state = fr_addstate(&fi, &pptp->pptp_state,
+					       0);
 	}
 	ip->ip_p = p;
 	return;
@@ -240,9 +250,9 @@ ipf_p_pptp_donatstate(fr_info_t *fin, nat_t *nat, pptp_pxy_t *pptp)
  * parsing function.
  */
 int
-ipf_p_pptp_nextmessage(fr_info_t *fin, nat_t *nat, pptp_pxy_t *pptp, int rev)
+ippr_pptp_nextmessage(fr_info_t *fin, nat_t *nat, pptp_pxy_t *pptp, int rev)
 {
-	static const char *funcname = "ipf_p_pptp_nextmessage";
+	static const char *funcname = "ippr_pptp_nextmessage";
 	pptp_side_t *pptps;
 	u_32_t start, end;
 	pptp_hdr_t *hdr;
@@ -272,7 +282,7 @@ ipf_p_pptp_nextmessage(fr_info_t *fin, nat_t *nat, pptp_pxy_t *pptp, int rev)
 		return 0;
 
 	if (pptps->pptps_next != start) {
-		if (ipf_p_pptp_debug > 5)
+		if (ippr_pptp_debug > 5)
 			printf("%s: next (%x) != start (%x)\n", funcname,
 				pptps->pptps_next, start);
 		return -1;
@@ -297,7 +307,7 @@ ipf_p_pptp_nextmessage(fr_info_t *fin, nat_t *nat, pptp_pxy_t *pptp, int rev)
 			if (pptps->pptps_bytes == 8) {
 				pptps->pptps_next += 8;
 				if (ntohl(hdr->pptph_cookie) != 0x1a2b3c4d) {
-					if (ipf_p_pptp_debug > 1)
+					if (ippr_pptp_debug > 1)
 						printf("%s: bad cookie (%x)\n",
 						       funcname,
 						       hdr->pptph_cookie);
@@ -321,7 +331,7 @@ ipf_p_pptp_nextmessage(fr_info_t *fin, nat_t *nat, pptp_pxy_t *pptp, int rev)
 			 * bad data packet, anyway.
 			 */
 			if (len > sizeof(pptps->pptps_buffer)) {
-				if (ipf_p_pptp_debug > 3)
+				if (ippr_pptp_debug > 3)
 					printf("%s: message too big (%d)\n",
 					       funcname, len);
 				pptps->pptps_next = pptps->pptps_nexthdr;
@@ -342,7 +352,7 @@ ipf_p_pptp_nextmessage(fr_info_t *fin, nat_t *nat, pptp_pxy_t *pptp, int rev)
 		if (pptps->pptps_len > pptps->pptps_bytes)
 			break;
 
-		ipf_p_pptp_message(fin, nat, pptp, pptps);
+		ippr_pptp_message(fin, nat, pptp, pptps);
 		pptps->pptps_wptr = pptps->pptps_buffer;
 		pptps->pptps_gothdr = 0;
 		pptps->pptps_bytes = 0;
@@ -361,15 +371,14 @@ ipf_p_pptp_nextmessage(fr_info_t *fin, nat_t *nat, pptp_pxy_t *pptp, int rev)
  * handle a complete PPTP message
  */
 int
-ipf_p_pptp_message(fr_info_t *fin, nat_t *nat, pptp_pxy_t *pptp,
-    pptp_side_t *pptps)
+ippr_pptp_message(fr_info_t *fin, nat_t *nat, pptp_pxy_t *pptp, pptp_side_t *pptps)
 {
 	pptp_hdr_t *hdr = (pptp_hdr_t *)pptps->pptps_buffer;
 
 	switch (ntohs(hdr->pptph_type))
 	{
 	case PPTP_MSGTYPE_CTL :
-		ipf_p_pptp_mctl(fin, nat, pptp, pptps);
+		ippr_pptp_mctl(fin, nat, pptp, pptps);
 		break;
 
 	default :
@@ -383,8 +392,7 @@ ipf_p_pptp_message(fr_info_t *fin, nat_t *nat, pptp_pxy_t *pptp,
  * handle a complete PPTP control message
  */
 int
-ipf_p_pptp_mctl(fr_info_t *fin, nat_t *nat, pptp_pxy_t *pptp,
-    pptp_side_t *pptps)
+ippr_pptp_mctl(fr_info_t *fin, nat_t *nat, pptp_pxy_t *pptp, pptp_side_t *pptps)
 {
 	u_short *buffer = (u_short *)(pptps->pptps_buffer);
 	pptp_side_t *pptpo;
@@ -429,7 +437,7 @@ ipf_p_pptp_mctl(fr_info_t *fin, nat_t *nat, pptp_pxy_t *pptp,
 			pptps->pptps_state = PPTP_MTCTL_OUTREP;
 			pptp->pptp_call[0] = buffer[7];
 			pptp->pptp_call[1] = buffer[6];
-			ipf_p_pptp_donatstate(fin, nat, pptp);
+			ippr_pptp_donatstate(fin, nat, pptp);
 		}
 		break;
 	case PPTP_MTCTL_INREQ :
@@ -440,7 +448,7 @@ ipf_p_pptp_mctl(fr_info_t *fin, nat_t *nat, pptp_pxy_t *pptp,
 			pptps->pptps_state = PPTP_MTCTL_INREP;
 			pptp->pptp_call[0] = buffer[7];
 			pptp->pptp_call[1] = buffer[6];
-			ipf_p_pptp_donatstate(fin, nat, pptp);
+			ippr_pptp_donatstate(fin, nat, pptp);
 		}
 		break;
 	case PPTP_MTCTL_INCONNECT :
@@ -469,7 +477,7 @@ ipf_p_pptp_mctl(fr_info_t *fin, nat_t *nat, pptp_pxy_t *pptp,
  * we can.  If they have disappeared, recreate them.
  */
 int
-ipf_p_pptp_inout(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
+ippr_pptp_inout(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	pptp_pxy_t *pptp;
 	tcphdr_t *tcp;
@@ -490,7 +498,7 @@ ipf_p_pptp_inout(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 		pptp->pptp_side[rev].pptps_next = ntohl(tcp->th_seq) + 1;
 		pptp->pptp_side[rev].pptps_nexthdr = ntohl(tcp->th_seq) + 1;
 	}
-	return ipf_p_pptp_nextmessage(fin, nat, (pptp_pxy_t *)aps->aps_data,
+	return ippr_pptp_nextmessage(fin, nat, (pptp_pxy_t *)aps->aps_data,
 				     rev);
 }
 
@@ -499,7 +507,7 @@ ipf_p_pptp_inout(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
  * clean up after ourselves.
  */
 void
-ipf_p_pptp_del(ipf_main_softc_t *softc, ap_session_t *aps)
+ippr_pptp_del(ap_session_t *aps)
 {
 	pptp_pxy_t *pptp;
 
@@ -511,14 +519,15 @@ ipf_p_pptp_del(ipf_main_softc_t *softc, ap_session_t *aps)
 		 * *_del() is on a callback from aps_free(), from nat_delete()
 		 */
 
-		READ_ENTER(&softc->ipf_state);
+		READ_ENTER(&ipf_state);
 		if (pptp->pptp_state != NULL) {
-			ipf_state_setpending(softc, pptp->pptp_state);
+			pptp->pptp_state->is_die = fr_ticks + 1;
+			pptp->pptp_state->is_me = NULL;
+			fr_queuefront(&pptp->pptp_state->is_sti);
 		}
-		RWLOCK_EXIT(&softc->ipf_state);
+		RWLOCK_EXIT(&ipf_state);
 
-		if (pptp->pptp_nat != NULL)
-			ipf_nat_setpending(softc, pptp->pptp_nat);
-		MUTEX_DESTROY(&pptp->pptp_rule.in_lock);
+		pptp->pptp_state = NULL;
+		pptp->pptp_nat = NULL;
 	}
 }

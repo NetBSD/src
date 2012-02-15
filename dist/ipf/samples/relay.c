@@ -1,4 +1,4 @@
-/*	$NetBSD: relay.c,v 1.1.1.4 2012/01/30 16:03:40 darrenr Exp $	*/
+/*	$NetBSD: relay.c,v 1.2 2012/02/15 17:55:08 riz Exp $	*/
 
 /*
  * Sample program to be used as a transparent proxy.
@@ -29,7 +29,7 @@ char	ibuff[RELAY_BUFSZ];
 char	obuff[RELAY_BUFSZ];
 
 int relay(ifd, ofd, rfd)
-	int ifd, ofd, rfd;
+int ifd, ofd, rfd;
 {
 	fd_set	rfds, wfds;
 	char	*irh, *irt, *rrh, *rrt;
@@ -103,8 +103,8 @@ int relay(ifd, ofd, rfd)
 }
 
 main(argc, argv)
-	int argc;
-	char *argv[];
+int argc;
+char *argv[];
 {
 	struct	sockaddr_in	sin;
 	ipfobj_t	obj;

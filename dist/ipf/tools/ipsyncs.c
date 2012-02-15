@@ -1,13 +1,13 @@
-/*	$NetBSD: ipsyncs.c,v 1.1.1.7 2012/01/30 16:03:46 darrenr Exp $	*/
+/*	$NetBSD: ipsyncs.c,v 1.2 2012/02/15 17:55:11 riz Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2001-2006 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipsyncs.c,v 1.13.2.1 2012/01/26 05:29:19 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipsyncs.c,v 1.5.2.6 2009/12/27 06:58:06 darrenr Exp";
 #endif
 #include <sys/types.h>
 #include <sys/time.h>
@@ -54,8 +54,8 @@ static void handleterm(int sig)
 #define BUFFERLEN 1400
 
 int main(argc, argv)
-	int argc;
-	char *argv[];
+int argc;
+char *argv[];
 {
 	int nfd = -1 , lfd = -1;
 	int n1, n2, n3, magic, len, inbuf;
@@ -108,7 +108,6 @@ int main(argc, argv)
 	in.sin_port = 0;
 
 	while(1) {
-
 		if (lfd != -1)
 			close(lfd);
 		if (nfd != -1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdlpi.c,v 1.8 2012/01/30 16:12:03 darrenr Exp $	*/
+/*	$NetBSD: sdlpi.c,v 1.9 2012/02/15 17:55:05 riz Exp $	*/
 
 /*
  * (C)opyright 1992-1998 Darren Reed. (from tcplog)
@@ -27,6 +27,7 @@
 #endif
 #ifdef __osf__
 # include <sys/dlpihdr.h>
+# include "radix_ipf_local.h"
 #else
 # include <sys/dlpi.h>
 #endif
@@ -48,7 +49,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)sdlpi.c	1.3 10/30/95 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: sdlpi.c,v 2.13 2008/08/10 05:51:14 darrenr Exp";
+static const char rcsid[] = "@(#)Id: sdlpi.c,v 2.8.2.3 2009/12/27 06:53:15 darrenr Exp";
 #endif
 
 #define	CHUNKSIZE	8192
@@ -60,8 +61,8 @@ static const char rcsid[] = "@(#)Id: sdlpi.c,v 2.13 2008/08/10 05:51:14 darrenr 
  * interface are included in the header size.
  */
 int	initdevice(device, tout)
-	char	*device;
-	int	tout;
+char	*device;
+int	tout;
 {
 	char	devname[16], *s, buf[256];
 	int	i, fd;
@@ -135,8 +136,8 @@ int	initdevice(device, tout)
  * output an IP packet onto a fd opened for /dev/nit
  */
 int	sendip(fd, pkt, len)
-	int	fd, len;
-	char	*pkt;
+int	fd, len;
+char	*pkt;
 {
 	struct strbuf dbuf, *dp = &dbuf, *cp = NULL;
 	int pri = 0;

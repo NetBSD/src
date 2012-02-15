@@ -1,12 +1,12 @@
-/*	$NetBSD: ip_state.h,v 1.14 2012/02/01 02:21:20 christos Exp $	*/
+/*	$NetBSD: ip_state.h,v 1.15 2012/02/15 17:55:23 riz Exp $	*/
 
 /*
- * Copyright (C) 2011 by Darren Reed.
+ * Copyright (C) 1995-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
- * Id: ip_state.h,v 2.95.2.4 2012/01/26 05:29:13 darrenr Exp
+ * Id: ip_state.h,v 2.68.2.12 2008/11/06 21:18:38 darrenr Exp
  */
 #ifndef _NETINET_IP_STATE_H_
 #define _NETINET_IP_STATE_H_
@@ -26,10 +26,8 @@ struct ipscan;
 # define	IPSTATE_MAX	4013	/* Maximum number of states held */
 #endif
 
-#define	PAIRS(s1,d1,s2,d2)	((((s1) == (s2)) && ((d1) == (d2))) ||\
-				 (((s1) == (d2)) && ((d1) == (s2))))
-#define	IPPAIR(s1,d1,s2,d2)	PAIRS((s1).s_addr, (d1).s_addr, \
-				      (s2).s_addr, (d2).s_addr)
+#define	SEQ_GE(a,b)	((int)((a) - (b)) >= 0)
+#define	SEQ_GT(a,b)	((int)((a) - (b)) > 0)
 
 
 typedef struct ipstate {
@@ -57,7 +55,6 @@ typedef struct ipstate {
 	u_int	is_pass;
 	u_char	is_p;			/* Protocol */
 	u_char	is_v;
-	int	is_family;
 	u_32_t	is_hv;
 	u_32_t	is_tag;
 	u_32_t	is_opt[2];		/* packet options set */
@@ -77,8 +74,6 @@ typedef struct ipstate {
 	u_32_t	is_rulen;		/* rule number when created */
 	u_32_t	is_s0[2];
 	u_short	is_smsk[2];
-	frdest_t	is_dif;
-	frdest_t	is_tifs[2];
 	char	is_group[FR_GROUPLEN];
 	char	is_sbuf[2][16];
 	char	is_ifname[4][LIFNAMSIZ];
@@ -91,6 +86,7 @@ typedef struct ipstate {
 #define	is_daddr	is_dst.in4.s_addr
 #define	is_icmp		is_ps.is_ics
 #define	is_type		is_icmp.ici_type
+#define	is_code		is_icmp.ici_code
 #define	is_tcp		is_ps.is_ts
 #define	is_udp		is_ps.is_us
 #define is_send		is_tcp.ts_data[0].td_end
@@ -122,7 +118,6 @@ typedef struct ipstate {
 #define	IS_ISNSYN			   0x40000
 #define	IS_ISNACK			   0x80000
 #define	IS_STATESYNC			   0x100000
-#define	IS_LOOSE			   0x200000
 /*
  * IS_SC flags are for scan-operations that need to be recognised in state.
  */
@@ -134,7 +129,7 @@ typedef struct ipstate {
 #define	IS_SC_ALL	(IS_SC_MATCHC|IS_SC_MATCHC|IS_SC_CLIENT|IS_SC_SERVER)
 
 /*
- * Flags that can be passed into ipf_addstate
+ * Flags that can be passed into fr_addstate
  */
 #define	IS_INHERITED			0x0fffff00
 
@@ -185,7 +180,6 @@ typedef	struct	ipslog	{
 
 #define	ISL_NEW			0
 #define	ISL_CLONE		1
-#define	ISL_STATECHANGE		2
 #define	ISL_EXPIRE		0xffff
 #define	ISL_FLUSH		0xfffe
 #define	ISL_REMOVE		0xfffd
@@ -196,142 +190,73 @@ typedef	struct	ipslog	{
 
 
 typedef	struct	ips_stat {
-	u_int	iss_active;
-	u_int	iss_active_proto[256];
-	u_long	iss_add_bad;
-	u_long	iss_add_dup;
-	u_long	iss_add_locked;
-	u_long	iss_add_oow;
-	u_long	iss_bucket_full;
-	u_long	iss_check_bad;
-	u_long	iss_check_miss;
-	u_long	iss_check_nattag;
-	u_long	iss_check_notag;
-	u_long	iss_clone_nomem;
-	u_long	iss_cloned;
+	u_long	iss_hits;
+	u_long	iss_miss;
+	u_long	iss_max;
+	u_long	iss_maxref;
+	u_long	iss_tcp;
+	u_long	iss_udp;
+	u_long	iss_icmp;
+	u_long	iss_nomem;
 	u_long	iss_expire;
 	u_long	iss_fin;
-	u_long	iss_flush_all;
-	u_long	iss_flush_closing;
-	u_long	iss_flush_queue;
-	u_long	iss_flush_state;
-	u_long	iss_flush_timeout;
-	u_long	iss_hits;
-	u_long	iss_icmp6_icmperr;
-	u_long	iss_icmp6_miss;
-	u_long	iss_icmp6_notinfo;
-	u_long	iss_icmp6_notquery;
-	u_long	iss_icmp_bad;
-	u_long	iss_icmp_banned;
-	u_long	iss_icmp_headblock;
-	u_long	iss_icmp_hits;
-	u_long	iss_icmp_icmperr;
-	u_long	iss_icmp_miss;
-	u_long	iss_icmp_notquery;
-	u_long	iss_icmp_short;
-	u_long	iss_icmp_toomany;
-	u_int	iss_inuse;
-	ipstate_t *iss_list;
-	u_long	iss_log_fail;
-	u_long	iss_log_ok;
-	u_long	iss_lookup_badifp;
-	u_long	iss_lookup_badport;
-	u_long	iss_lookup_miss;
-	u_long	iss_max;
-	u_long	iss_max_ref;
-	u_long	iss_max_track;
-	u_long	iss_miss_mask;
-	u_long	iss_nomem;
-	u_long	iss_oow;
-	u_long	iss_orphan;
-	u_long	iss_proto[256];
-	u_long	iss_scan_block;
-	u_long	iss_state_max;
-	u_long	iss_state_size;
-	u_long	iss_states[IPF_TCP_NSTATES];
-	ipstate_t **iss_table;
-	u_long	iss_tcp_closing;
-	u_long	iss_tcp_oow;
-	u_long	iss_tcp_rstadd;
-	u_long	iss_tcp_toosmall;
-	u_long	iss_tcp_badopt;
-	u_long	iss_tcp_fsm;
-	u_long	iss_tcp_strict;
-	ipftq_t	*iss_tcptab;
-	u_int	iss_ticks;
+	u_long	iss_active;
+	u_long	iss_logged;
+	u_long	iss_logfail;
+	u_long	iss_inuse;
 	u_long	iss_wild;
-	u_long	iss_winsack;
-	u_int	*iss_bucketlen;
+	u_long	iss_killed;
+	u_long	iss_ticks;
+	u_long	iss_bucketfull;
+	int	iss_statesize;
+	int	iss_statemax;
+	ipstate_t **iss_table;
+	ipstate_t *iss_list;
+	u_long	*iss_bucketlen;
+	ipftq_t	*iss_tcptab;
 } ips_stat_t;
 
 
-typedef struct ipf_state_softc_s {
-	ipfmutex_t	ipf_stinsert;
-	int		ipf_state_logging;
-	int		ipf_state_lock;
-	int		ipf_state_doflush;
-	u_int		ipf_state_inited;
-	u_int		ipf_state_max;
-	u_int		ipf_state_maxbucket;
-	u_int		ipf_state_size;
-	u_int		ipf_state_wm_freq;
-	u_int		ipf_state_wm_high;
-	u_int		ipf_state_wm_low;
-	u_int		ipf_state_wm_last;
-	u_long		*ipf_state_seed;
-	ipstate_t	*ipf_state_list;
-	ipstate_t	**ipf_state_table;
-	ipftuneable_t	*ipf_state_tune;
-	ipftq_t		*ipf_state_usertq;
-	ipftq_t		ipf_state_pending;
-	ipftq_t		ipf_state_deletetq;
-	ipftq_t		ipf_state_udptq;
-	ipftq_t		ipf_state_udpacktq;
-	ipftq_t		ipf_state_iptq;
-	ipftq_t		ipf_state_icmptq;
-	ipftq_t		ipf_state_icmpacktq;
-	ipftq_t		ipf_state_tcptq[IPF_TCP_NSTATES];
-	ips_stat_t	ipf_state_stats;
-} ipf_state_softc_t;
+extern	u_long	fr_tcpidletimeout;
+extern	u_long	fr_tcpclosewait;
+extern	u_long	fr_tcplastack;
+extern	u_long	fr_tcptimeout;
+extern	u_long	fr_tcpclosed;
+extern	u_long	fr_tcptimewait;
+extern	u_long	fr_tcphalfclosed;
+extern	u_long	fr_udptimeout;
+extern	u_long	fr_udpacktimeout;
+extern	u_long	fr_icmptimeout;
+extern	u_long	fr_icmpacktimeout;
+extern	u_long	fr_iptimeout;
+extern	int	fr_statemax;
+extern	int	fr_statesize;
+extern	int	fr_state_lock;
+extern	int	fr_state_maxbucket;
+extern	int	fr_state_maxbucket_reset;
+extern	ipstate_t	*ips_list;
+extern	ipftq_t	*ips_utqe;
+extern	ipftq_t	ips_tqtqb[IPF_TCP_NSTATES];
 
-
-#ifndef _KERNEL
-extern	void	ipf_state_dump(ipf_main_softc_t *, void *);
-#endif
-extern	int	ipf_tcp_age(struct ipftqent *, struct fr_info *,
-				struct ipftq *, int, int);
-extern	int	ipf_tcpinwindow(struct fr_info *, struct tcpdata *,
+extern	int	fr_stateinit(void);
+extern	ipstate_t *fr_addstate(fr_info_t *, ipstate_t **, u_int);
+extern	frentry_t *fr_checkstate(struct fr_info *, u_32_t *);
+extern	ipstate_t *fr_stlookup(fr_info_t *, tcphdr_t *, ipftq_t **);
+extern	void	fr_statesync(void *);
+extern	void	fr_timeoutstate(void);
+extern	int	fr_tcp_age(struct ipftqent *, struct fr_info *,
+				struct ipftq *, int);
+extern	int	fr_tcpinwindow(struct fr_info *, struct tcpdata *,
 				    struct tcpdata *, tcphdr_t *, int);
-
-extern	int	ipf_state_add(ipf_main_softc_t *, fr_info_t *,
-				   ipstate_t **, u_int);
-extern	frentry_t *ipf_state_check(struct fr_info *, u_32_t *);
-extern	void	ipf_state_deref(ipf_main_softc_t *, ipstate_t **);
-extern	void	ipf_state_expire(ipf_main_softc_t *);
-extern	int	ipf_state_flush(ipf_main_softc_t *, int, int);
-extern	ipstate_t *ipf_state_lookup(fr_info_t *, tcphdr_t *, ipftq_t **);
-extern	int	ipf_state_init(void);
-extern	int	ipf_state_insert(ipf_main_softc_t *, struct ipstate *, int);
-extern	int	ipf_state_ioctl(ipf_main_softc_t *, void *, ioctlcmd_t, int, int, void *);
-extern	void	ipf_state_log(ipf_main_softc_t *, struct ipstate *, u_int);
-extern	int	ipf_state_matchflush(ipf_main_softc_t *, void *);
-extern	int	ipf_state_rehash(ipf_main_softc_t *, ipftuneable_t *, ipftuneval_t *);
-extern	void	ipf_state_setqueue(ipf_main_softc_t *, ipstate_t *, int);
-extern	void	ipf_state_setpending(ipf_main_softc_t *, ipstate_t *);
-extern	int	ipf_state_settimeout(struct ipf_main_softc_s *, ipftuneable_t *, ipftuneval_t *);
-extern	void	ipf_state_sync(ipf_main_softc_t *, void *);
-extern	void	ipf_state_update(fr_info_t *, ipstate_t *);
-
-extern	void	ipf_sttab_init(ipf_main_softc_t *, struct ipftq *);
-extern	void	ipf_sttab_destroy(struct ipftq *);
-extern	void	ipf_state_setlock(void *, int);
-extern	int	ipf_state_main_load(void);
-extern	int	ipf_state_main_unload(void);
-extern	void	*ipf_state_soft_create(ipf_main_softc_t *);
-extern	void	ipf_state_soft_destroy(ipf_main_softc_t *, void *);
-extern	int	ipf_state_soft_init(ipf_main_softc_t *, void *);
-extern	int	ipf_state_soft_fini(ipf_main_softc_t *, void *);
-extern	int	ipf_state_main_load(void);
-extern	ipftq_t	*ipf_state_add_tq(ipf_main_softc_t *, int);
+extern	void	fr_stateunload(void);
+extern	void	ipstate_log(struct ipstate *, u_int);
+extern	int	fr_state_ioctl(void *, ioctlcmd_t, int, int, void *);
+extern	void	fr_stinsert(struct ipstate *, int);
+extern	void	fr_sttab_init(struct ipftq *);
+extern	void	fr_sttab_destroy(struct ipftq *);
+extern	void	fr_updatestate(fr_info_t *, ipstate_t *, ipftq_t *);
+extern	void	fr_statederef(ipstate_t **);
+extern	void	fr_setstatequeue(ipstate_t *, int);
+extern	int	fr_state_flush(int, int);
 
 #endif /* _NETINET_IP_STATE_H_ */

@@ -1,11 +1,11 @@
-/*	$NetBSD: ip_proxy.h,v 1.12 2012/02/01 02:21:20 christos Exp $	*/
+/*	$NetBSD: ip_proxy.h,v 1.13 2012/02/15 17:55:23 riz Exp $	*/
 
 /*
- * Copyright (C) 2011 by Darren Reed.
+ * Copyright (C) 1997-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_proxy.h,v 2.46.2.3 2012/01/26 05:29:12 darrenr Exp
+ * Id: ip_proxy.h,v 2.31.2.6 2007/10/26 12:15:13 darrenr Exp
  */
 
 #ifndef _NETINET_IP_PROXY_H_
@@ -52,11 +52,14 @@ typedef	struct ap_session {
 		struct	ap_tcp	apu_tcp;
 		struct	ap_udp	apu_udp;
 	} aps_un;
+	u_int	aps_flags;
 	U_QUAD_T aps_bytes;	/* bytes sent */
 	U_QUAD_T aps_pkts;	/* packets sent */
 	void	*aps_nat;	/* pointer back to nat struct */
 	void	*aps_data;	/* private data */
+	int	aps_p;		/* protocol */
 	int	aps_psiz;	/* size of private data */
+	struct	ap_session	*aps_hnext;
 	struct	ap_session	*aps_next;
 } ap_session_t;
 
@@ -72,7 +75,6 @@ typedef	struct ap_session {
 
 typedef	struct	ap_control {
 	char	apc_label[APR_LABELLEN];
-	char	apc_config[APR_LABELLEN];
 	u_char	apc_p;
 	/*
 	 * The following fields are upto the proxy's apr_ctl routine to deal
@@ -90,36 +92,21 @@ typedef	struct	ap_control {
 	size_t	apc_dsize;
 } ap_ctl_t;
 
-#define	APC_CMD_ADD	0
-#define	APC_CMD_DEL	1
-
 
 typedef	struct	aproxy	{
 	struct	aproxy	*apr_next;
-	struct	aproxy	*apr_parent;
 	char	apr_label[APR_LABELLEN];	/* Proxy label # */
-	u_char	apr_p;				/* protocol */
+	u_char	apr_p;		/* protocol */
+	int	apr_ref;	/* +1 per rule referencing it */
 	int	apr_flags;
-	int	apr_ref;
-	int	apr_clones;
-	void	(* apr_load)(void);
-	void	(* apr_unload)(void);
-	void	*(* apr_create)(ipf_main_softc_t *);
-	void	(* apr_destroy)(ipf_main_softc_t *, void *);
-	int	(* apr_init)(ipf_main_softc_t *, void *);
-	void	(* apr_fini)(ipf_main_softc_t *, void *);
-	int	(* apr_new)(void *, fr_info_t *, ap_session_t *,
-				 struct nat *);
-	void	(* apr_del)(ipf_main_softc_t *, ap_session_t *);
-	int	(* apr_inpkt)(void *, fr_info_t *, ap_session_t *,
-				   struct nat *);
-	int	(* apr_outpkt)(void *, fr_info_t *, ap_session_t *,
-				    struct nat *);
+	int	(* apr_init)(void);
+	void	(* apr_fini)(void);
+	int	(* apr_new)(fr_info_t *, ap_session_t *, struct nat *);
+	void	(* apr_del)(ap_session_t *);
+	int	(* apr_inpkt)(fr_info_t *, ap_session_t *, struct nat *);
+	int	(* apr_outpkt)(fr_info_t *, ap_session_t *, struct nat *);
 	int	(* apr_match)(fr_info_t *, ap_session_t *, struct nat *);
-	int	(* apr_ctl)(ipf_main_softc_t *, void *, ap_ctl_t *);
-	int	(* apr_clear)(struct aproxy *);
-	int	(* apr_flush)(struct aproxy *, int);
-	void	*apr_soft;
+	int	(* apr_ctl)(struct aproxy *, struct ap_control *);
 } aproxy_t;
 
 #define	APR_DELETE	1
@@ -128,37 +115,42 @@ typedef	struct	aproxy	{
 #define	APR_EXIT(x)	(((x) >> 16) & 0xffff)
 #define	APR_INC(x)	((x) & 0xffff)
 
-
-#ifdef _KERNEL
 /*
  * Generic #define's to cover missing things in the kernel
  */
-# ifndef isdigit
-#  define isdigit(x)	((x) >= '0' && (x) <= '9')
-# endif
-# ifndef isupper
-#  define isupper(x)	(((unsigned)(x) >= 'A') && ((unsigned)(x) <= 'Z'))
-# endif
-# ifndef islower
-#  define islower(x)	(((unsigned)(x) >= 'a') && ((unsigned)(x) <= 'z'))
-# endif
-# ifndef isalpha
-#  define isalpha(x)	(isupper(x) || islower(x))
-# endif
-# ifndef toupper
-#  define toupper(x)	(isupper(x) ? (x) : (x) - 'a' + 'A')
-# endif
-# ifndef isspace
-#  define isspace(x)	(((x) == ' ') || ((x) == '\r') || ((x) == '\n') || \
+#ifndef isdigit
+#define isdigit(x)	((x) >= '0' && (x) <= '9')
+#endif
+#ifndef isupper
+#define isupper(x)	(((unsigned)(x) >= 'A') && ((unsigned)(x) <= 'Z'))
+#endif
+#ifndef islower
+#define islower(x)	(((unsigned)(x) >= 'a') && ((unsigned)(x) <= 'z'))
+#endif
+#ifndef isalpha
+#define isalpha(x)	(isupper(x) || islower(x))
+#endif
+#ifndef toupper
+#define toupper(x)	(isupper(x) ? (x) : (x) - 'a' + 'A')
+#endif
+#ifndef isspace
+#define isspace(x)	(((x) == ' ') || ((x) == '\r') || ((x) == '\n') || \
 			 ((x) == '\t') || ((x) == '\b'))
-# endif
-#endif /* _KERNEL */
+#endif
 
 /*
- * For the ftp proxy.
+ * This is the scratch buffer size used to hold strings from the TCP stream
+ * that we may want to parse.  It's an arbitrary size, really, but it must
+ * be at least as large as IPF_FTPBUFSZ.
  */
-#define	FTP_BUFSZ	160
-#define	IPF_FTPBUFSZ	160
+#define	FTP_BUFSZ	120
+
+/*
+ * This buffer, however, doesn't need to be nearly so big.  It just needs to
+ * be able to squeeze in the largest command it needs to rewrite, Which ones
+ * does it rewrite? EPRT, PORT, 227 replies.
+ */
+#define	IPF_FTPBUFSZ	80	/* This *MUST* be >= 53! */
 
 typedef struct  ftpside {
 	char	*ftps_rptr;
@@ -166,17 +158,14 @@ typedef struct  ftpside {
 	void	*ftps_ifp;
 	u_32_t	ftps_seq[2];
 	u_32_t	ftps_len;
-	int	ftps_junk;
+	int	ftps_junk;	/* 2 = no cr/lf yet, 1 = cannot parse */
 	int	ftps_cmds;
-	int	ftps_cmd;
 	char	ftps_buf[FTP_BUFSZ];
 } ftpside_t;
 
 typedef struct  ftpinfo {
 	int 	  	ftp_passok;
 	int		ftp_incok;
-	void		*ftp_pendstate;
-	nat_t		*ftp_pendnat;
 	ftpside_t	ftp_side[2];
 } ftpinfo_t;
 
@@ -194,25 +183,6 @@ typedef	struct	ircinfo {
 	u_32_t	irc_ipnum;
 	u_short	irc_port;
 } ircinfo_t;
-
-
-/*
- * For the rcmd proxy. rcmd_rule must be last for names in ipnat_t
- */
-typedef	struct rcmdinfo	{
-	u_32_t	rcmd_port;	/* Port number seen */
-	u_32_t	rcmd_portseq;	/* Sequence number where port is first seen */
-	ipnat_t	rcmd_rule;	/* Template rule for back connection */
-} rcmdinfo_t;
-
-/*
- * For the DNS "proxy"
- */
-typedef struct dnsinfo {
-        ipfmutex_t	dnsi_lock;
-	u_short		dnsi_id;
-	char		dnsi_buffer[512];
-} dnsinfo_t;
 
 
 /*
@@ -260,7 +230,7 @@ typedef	struct	msnrpcinfo	{
 
 
 /*
- * IPSec proxy. ipsc_rule must be last for names in ipnat_t
+ * IPSec proxy
  */
 typedef	u_32_t	ipsec_cookie_t[2];
 
@@ -268,13 +238,13 @@ typedef struct ipsec_pxy {
 	ipsec_cookie_t	ipsc_icookie;
 	ipsec_cookie_t	ipsc_rcookie;
 	int		ipsc_rckset;
+	ipnat_t		ipsc_rule;
 	nat_t		*ipsc_nat;
 	struct ipstate	*ipsc_state;
-	ipnat_t		ipsc_rule;
 } ipsec_pxy_t;
 
 /*
- * PPTP proxy. pptp_rule must be last for names in ipnat_t
+ * PPTP proxy
  */
 typedef	struct pptp_side {
 	u_32_t		pptps_nexthdr;
@@ -288,11 +258,11 @@ typedef	struct pptp_side {
 } pptp_side_t;
 
 typedef	struct pptp_pxy {
+	ipnat_t		pptp_rule;
 	nat_t		*pptp_nat;
-	struct ipstate 	*pptp_state;
+	struct ipstate	*pptp_state;
 	u_short		pptp_call[2];
 	pptp_side_t	pptp_side[2];
-	ipnat_t		pptp_rule;
 } pptp_pxy_t;
 
 
@@ -468,24 +438,24 @@ typedef struct rpcb_session {
  */
 #define XDRALIGN(x)	((((x) % 4) != 0) ? ((((x) + 3) / 4) * 4) : (x))
 
-extern	int	ipf_proxy_add(void *, aproxy_t *);
-extern	int	ipf_proxy_check(fr_info_t *, struct nat *);
-extern	int	ipf_proxy_ctl(ipf_main_softc_t *, void *, ap_ctl_t *);
-extern	int	ipf_proxy_del(aproxy_t *);
-extern	void	ipf_proxy_flush(void *, int);
-extern	void	ipf_proxy_free(aproxy_t *);
-extern	int	ipf_proxy_init(void);
-extern	int	ipf_proxy_ioctl(ipf_main_softc_t *, void *, ioctlcmd_t, int, void *);
-extern	aproxy_t	*ipf_proxy_lookup(void *, u_int, char *);
-extern	int	ipf_proxy_match(fr_info_t *, struct nat *);
-extern	int	ipf_proxy_new(fr_info_t *, struct nat *);
-extern	int	ipf_proxy_ok(fr_info_t *, tcphdr_t *, struct ipnat *);
-extern	void	aps_free(ipf_main_softc_t *, void *, ap_session_t *);
-extern	int	ipf_proxy_main_load(void);
-extern	int	ipf_proxy_main_unload(void);
-extern	void	*ipf_proxy_soft_create(ipf_main_softc_t *);
-extern	void	ipf_proxy_soft_destroy(ipf_main_softc_t *, void *);
-extern	int	ipf_proxy_soft_init(ipf_main_softc_t *, void *);
-extern	int	ipf_proxy_soft_fini(ipf_main_softc_t *, void *);
+extern	ap_session_t	*ap_sess_tab[AP_SESS_SIZE];
+extern	ap_session_t	*ap_sess_list;
+extern	aproxy_t	ap_proxies[];
+extern	int		ippr_ftp_pasvonly;
+extern	int		ipf_proxy_debug;
+
+extern	int	appr_add(aproxy_t *);
+extern	int	appr_ctl(ap_ctl_t *);
+extern	int	appr_del(aproxy_t *);
+extern	int	appr_init(void);
+extern	void	appr_unload(void);
+extern	int	appr_ok(fr_info_t *, tcphdr_t *, struct ipnat *);
+extern	int	appr_match(fr_info_t *, struct nat *);
+extern	void	appr_free(aproxy_t *);
+extern	void	aps_free(ap_session_t *);
+extern	int	appr_check(fr_info_t *, struct nat *);
+extern	aproxy_t	*appr_lookup(u_int, char *);
+extern	int	appr_new(fr_info_t *, struct nat *);
+extern	int	appr_ioctl(void *, ioctlcmd_t, int, void *);
 
 #endif /* _NETINET_IP_PROXY_H_ */

@@ -1,11 +1,11 @@
-/*	$NetBSD: ipft_sn.c,v 1.1.1.3 2012/01/30 16:03:25 darrenr Exp $	*/
+/*	$NetBSD: ipft_sn.c,v 1.2 2012/02/15 17:55:06 riz Exp $	*/
 
 /*
- * Copyright (C) 2011 by Darren Reed.
+ * Copyright (C) 2000-2003 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ipft_sn.c,v 1.11.2.2 2012/01/26 05:29:15 darrenr Exp
+ * Id: ipft_sn.c,v 1.7.4.1 2006/06/16 17:21:03 darrenr Exp
  */
 
 /*
@@ -16,7 +16,7 @@
 #include "ipt.h"
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ipft_sn.c,v 1.11.2.2 2012/01/26 05:29:15 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipft_sn.c,v 1.7.4.1 2006/06/16 17:21:03 darrenr Exp";
 #endif
 
 struct	llc	{
@@ -44,7 +44,7 @@ static	struct	llc	llcs[SDL_MAX+1] = {
 
 static	int	snoop_open __P((char *));
 static	int	snoop_close __P((void));
-static	int	snoop_readip __P((mb_t *, char **, int *));
+static	int	snoop_readip __P((char *, int, char **, int *));
 
 static	int	sfd = -1, s_type = -1;
 static	int	snoop_read_rec __P((struct snooppkt *));
@@ -53,7 +53,7 @@ struct	ipread	snoop = { snoop_open, snoop_close, snoop_readip, 0 };
 
 
 static	int	snoop_open(fname)
-	char	*fname;
+char	*fname;
 {
 	struct	snoophdr sh;
 	int	fd;
@@ -98,7 +98,7 @@ static	int	snoop_close()
  * in a snoop file.
  */
 static	int	snoop_read_rec(rec)
-	struct	snooppkt *rec;
+struct	snooppkt *rec;
 {
 	int	n, plen, ilen;
 
@@ -125,8 +125,8 @@ static	int	snoop_read_rec(rec)
  * the available buffer, with the number of bytes copied returned.
  */
 static	int	snoop_read(buf, cnt)
-	char	*buf;
-	int	cnt;
+char	*buf;
+int	cnt;
 {
 	struct	snooppkt rec;
 	static	char	*bufp = NULL;
@@ -153,21 +153,15 @@ static	int	snoop_read(buf, cnt)
 /*
  * return only an IP packet read into buf
  */
-static	int	snoop_readip(mb, ifn, dir)
-	mb_t	*mb;
-	char	**ifn;
-	int	*dir;
+static	int	snoop_readip(buf, cnt, ifn, dir)
+char	*buf, **ifn;
+int	cnt, *dir;
 {
 	static	char	*bufp = NULL;
 	struct	snooppkt rec;
 	struct	llc	*l;
 	char	ty[4], *s;
 	int	i, n;
-	char	*buf;
-	int	cnt;
-
-	buf = (char *)mb->mb_buf;
-	cnt = sizeof(mb->mb_buf);
 
 	do {
 		if ((i = snoop_read_rec(&rec)) <= 0)
@@ -198,7 +192,6 @@ static	int	snoop_readip(mb, ifn, dir)
 	s += l->lc_tl;
 	n = MIN(i, cnt);
 	bcopy(s, buf, n);
-	mb->mb_len = n;
 
 	return n;
 }

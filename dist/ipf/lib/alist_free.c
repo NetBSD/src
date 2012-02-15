@@ -1,17 +1,17 @@
-/*	$NetBSD: alist_free.c,v 1.1.1.2 2012/01/30 16:03:23 darrenr Exp $	*/
+/*	$NetBSD: alist_free.c,v 1.2 2012/02/15 17:55:06 riz Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2006 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: alist_free.c,v 1.3.2.1 2012/01/26 05:29:15 darrenr Exp
+ * Id: alist_free.c,v 1.1.2.1 2006/08/25 21:13:04 darrenr Exp
  */
 #include "ipf.h"
 
 void
 alist_free(hosts)
-	alist_t *hosts;
+alist_t *hosts;
 {
 	alist_t *a, *next;
 

@@ -1,11 +1,11 @@
-/*	$NetBSD: ipf_dotuning.c,v 1.6 2012/01/30 16:12:04 darrenr Exp $	*/
+/*	$NetBSD: ipf_dotuning.c,v 1.7 2012/02/15 17:55:06 riz Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2003-2005 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ipf_dotuning.c,v 1.8.2.1 2012/01/26 05:29:15 darrenr Exp
+ * Id: ipf_dotuning.c,v 1.2.4.4 2009/12/27 06:58:06 darrenr Exp
  */
 
 #include "ipf.h"
@@ -13,9 +13,9 @@
 #include <sys/ioctl.h>
 
 void ipf_dotuning(fd, tuneargs, iocfn)
-	int fd;
-	char *tuneargs;
-	ioctlfunc_t iocfn;
+int fd;
+char *tuneargs;
+ioctlfunc_t iocfn;
 {
 	ipfobj_t obj;
 	ipftune_t tu;

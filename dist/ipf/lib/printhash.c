@@ -1,21 +1,22 @@
-/*	$NetBSD: printhash.c,v 1.1.1.4 2012/01/30 16:03:25 darrenr Exp $	*/
+/*	$NetBSD: printhash.c,v 1.2 2012/02/15 17:55:07 riz Exp $	*/
 
 /*
- * Copyright (C) 2010 by Darren Reed.
+ * Copyright (C) 2002-2005 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
 
 #include "ipf.h"
 
+#define	PRINTF	(void)printf
+#define	FPRINTF	(void)fprintf
 
-iphtable_t *
-printhash(hp, copyfunc, name, opts, fields)
-	iphtable_t *hp;
-	copyfunc_t copyfunc;
-	char *name;
-	int opts;
-	wordtab_t *fields;
+
+iphtable_t *printhash(hp, copyfunc, name, opts)
+iphtable_t *hp;
+copyfunc_t copyfunc;
+char *name;
+int opts;
 {
 	iphtent_t *ipep, **table;
 	iphtable_t iph;
@@ -28,8 +29,7 @@ printhash(hp, copyfunc, name, opts, fields)
 	if ((name != NULL) && strncmp(name, iph.iph_name, FR_GROUPLEN))
 		return iph.iph_next;
 
-	if (fields == NULL)
-		printhashdata(hp, opts);
+	printhashdata(hp, opts);
 
 	if ((hp->iph_flags & IPHASH_DELETE) != 0)
 		PRINTF("# ");
@@ -43,7 +43,7 @@ printhash(hp, copyfunc, name, opts, fields)
 		return NULL;
 
 	for (printed = 0, ipep = iph.iph_list; ipep != NULL; ) {
-		ipep = printhashnode(&iph, ipep, copyfunc, opts, fields);
+		ipep = printhashnode(&iph, ipep, copyfunc, opts);
 		printed++;
 	}
 	if (printed == 0)

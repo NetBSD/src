@@ -1,11 +1,11 @@
-/*	$NetBSD: facpri.c,v 1.6 2012/01/30 16:12:04 darrenr Exp $	*/
+/*	$NetBSD: facpri.c,v 1.7 2012/02/15 17:55:06 riz Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2000-2006 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: facpri.c,v 1.14.2.1 2012/01/26 05:29:15 darrenr Exp
+ * Id: facpri.c,v 1.6.2.6 2009/12/27 06:58:06 darrenr Exp
  */
 
 #include <stdio.h>
@@ -22,7 +22,7 @@
 #include "facpri.h"
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: facpri.c,v 1.14.2.1 2012/01/26 05:29:15 darrenr Exp";
+static const char rcsid[] = "@(#)Id: facpri.c,v 1.6.2.6 2009/12/27 06:58:06 darrenr Exp";
 #endif
 
 
@@ -116,22 +116,6 @@ table_t	pris[] = {
 	{ "info", LOG_INFO },		{ "debug", LOG_DEBUG  },
 	{ NULL, 0 }
 };
-
-
-/*
- * map a facility name to its number
- */
-int
-pri_findname(name)
-	char *name;
-{
-	int     i;
-
-	for (i = 0; pris[i].name; i++)
-		if (!strcmp(pris[i].name, name))
-			return pris[i].value;
-	return -1;
-}
 
 
 /*

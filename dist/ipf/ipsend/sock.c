@@ -1,4 +1,4 @@
-/*	$NetBSD: sock.c,v 1.19 2012/01/30 16:12:03 darrenr Exp $	*/
+/*	$NetBSD: sock.c,v 1.20 2012/02/15 17:55:05 riz Exp $	*/
 
 /*
  * sock.c (C) 1995-1998 Darren Reed
@@ -8,7 +8,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)sock.c	1.2 1/11/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: sock.c,v 2.18 2008/08/10 05:51:14 darrenr Exp";
+static const char rcsid[] = "@(#)Id: sock.c,v 2.8.4.9 2009/12/27 06:53:15 darrenr Exp";
 #endif
 #include <sys/param.h>
 #include <sys/types.h>
@@ -69,6 +69,9 @@ typedef int     boolean_t;
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <net/if.h>
+#if defined(__FreeBSD__)
+# include "radix_ipf.h"
+#endif
 #ifndef __osf__
 # include <net/route.h>
 #endif
@@ -114,9 +117,9 @@ static	struct	kinfo_proc	*getproc __P((void));
 
 
 int	kmemcpy(buf, pos, n)
-	char	*buf;
-	void	*pos;
-	int	n;
+char	*buf;
+void	*pos;
+int	n;
 {
 	static	int	kfd = -1;
 	off_t	offset = (u_long)pos;
@@ -194,8 +197,8 @@ static struct proc *getproc()
 
 
 struct	tcpcb	*find_tcp(fd, ti)
-	int	fd;
-	struct	tcpiphdr *ti;
+int	fd;
+struct	tcpiphdr *ti;
 {
 	struct	tcpcb	*t;
 	struct	inpcb	*i;
@@ -285,8 +288,8 @@ static struct kinfo_proc *getproc()
 
 
 struct	tcpcb	*find_tcp(tfd, ti)
-	int	tfd;
-	struct	tcpiphdr *ti;
+int	tfd;
+struct	tcpiphdr *ti;
 {
 	struct	tcpcb	*t;
 	struct	inpcb	*i;
@@ -390,10 +393,10 @@ finderror:
 #endif /* BSD < 199301 */
 
 int	do_socket(dev, mtu, ti, gwip)
-	char	*dev;
-	int	mtu;
-	struct	tcpiphdr *ti;
-	struct	in_addr	gwip;
+char	*dev;
+int	mtu;
+struct	tcpiphdr *ti;
+struct	in_addr	gwip;
 {
 	struct	sockaddr_in	rsin, lsin;
 	struct	tcpcb	*t, tcb;

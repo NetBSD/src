@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_htable.h,v 1.1.1.3 2012/01/30 16:03:04 darrenr Exp $	*/
+/*	$NetBSD: ip_htable.h,v 1.2 2012/02/15 17:55:04 riz Exp $	*/
 
 #ifndef __IP_HTABLE_H__
 #define __IP_HTABLE_H__
@@ -8,34 +8,23 @@
 typedef	struct	iphtent_s	{
 	struct	iphtent_s	*ipe_next, **ipe_pnext;
 	struct	iphtent_s	*ipe_hnext, **ipe_phnext;
-	struct	iphtent_s	*ipe_dnext, **ipe_pdnext;
-	struct	iphtable_s	*ipe_owner;
 	void		*ipe_ptr;
 	i6addr_t	ipe_addr;
 	i6addr_t	ipe_mask;
-	U_QUAD_T	ipe_hits;
-	U_QUAD_T	ipe_bytes;
-	u_long		ipe_die;
-	int		ipe_uid;
 	int		ipe_ref;
 	int		ipe_unit;
-	char		ipe_family;
-	char		ipe_xxx[3];
 	union	{
 		char	ipeu_char[16];
 		u_long	ipeu_long;
 		u_int	ipeu_int;
-	} ipe_un;
+	}ipe_un;
 } iphtent_t;
 
 #define	ipe_value	ipe_un.ipeu_int
 #define	ipe_group	ipe_un.ipeu_char
 
-#define	IPE_V4_HASH_FN(a, m, s)	((((m) ^ (a)) - 1 - ((a) >> 8)) % (s))
-#define	IPE_V6_HASH_FN(a, m, s)	(((((m)[0] ^ (a)[0]) - ((a)[0] >> 8)) + \
-				  (((m)[1] & (a)[1]) - ((a)[1] >> 8)) + \
-				  (((m)[2] & (a)[2]) - ((a)[2] >> 8)) + \
-				  (((m)[3] & (a)[3]) - ((a)[3] >> 8))) % (s))
+#define	IPE_HASH_FN(a, m, s)	(((a) * (m)) % (s))
+
 
 typedef	struct	iphtable_s	{
 	ipfrwlock_t	iph_rwlock;
@@ -48,7 +37,7 @@ typedef	struct	iphtable_s	{
 	u_int	iph_unit;		/* IPL_LOG* */
 	u_int	iph_ref;
 	u_int	iph_type;		/* lookup or group map  - IPHASH_* */
-	u_int	iph_maskset[4];		/* netmasks in use */
+	u_int	iph_masks;		/* IPv4 netmasks in use */
 	char	iph_name[FR_GROUPLEN];	/* hash table number */
 } iphtable_t;
 
@@ -68,11 +57,24 @@ typedef	struct	iphtstat_s	{
 } iphtstat_t;
 
 
-extern void *ipf_iphmfindgroup __P((ipf_main_softc_t *, void *, void *));
-extern iphtable_t *ipf_htable_find __P((void *, int, char *));
-extern ipf_lookup_t ipf_htable_backend;
-#ifndef _KERNEL
-extern	void	ipf_htable_dump __P((ipf_main_softc_t *, void *));
-#endif
+extern iphtable_t *ipf_htables[IPL_LOGSIZE];
+
+extern iphtable_t *fr_existshtable(int, char *);
+extern int fr_clearhtable(iphtable_t *);
+extern void fr_htable_unload(void);
+extern int fr_newhtable(iplookupop_t *);
+extern iphtable_t *fr_findhtable(int, char *);
+extern int fr_removehtable(int, char *);
+extern size_t fr_flushhtable(iplookupflush_t *);
+extern int fr_addhtent(iphtable_t *, iphtent_t *);
+extern int fr_delhtent(iphtable_t *, iphtent_t *);
+extern int fr_derefhtable(iphtable_t *);
+extern int fr_derefhtent(iphtent_t *);
+extern int fr_delhtable(iphtable_t *);
+extern void *fr_iphmfindgroup(void *, void *);
+extern int fr_iphmfindip(void *, int, void *);
+extern int fr_gethtablestat(iplookupop_t *);
+extern int fr_htable_getnext(ipftoken_t *, ipflookupiter_t *);
+extern void fr_htable_iterderef(u_int, int, void *);
 
 #endif /* __IP_HTABLE_H__ */

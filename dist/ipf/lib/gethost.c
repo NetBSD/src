@@ -1,75 +1,44 @@
-/*	$NetBSD: gethost.c,v 1.1.1.5 2012/01/30 16:03:23 darrenr Exp $	*/
+/*	$NetBSD: gethost.c,v 1.2 2012/02/15 17:55:06 riz Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2002-2004 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: gethost.c,v 1.10.2.1 2012/01/26 05:29:15 darrenr Exp
+ * Id: gethost.c,v 1.3.2.3 2009/12/27 06:58:06 darrenr Exp
  */
 
 #include "ipf.h"
 
-int gethost(family, name, hostp)
-	int family;
-	char *name;
-	i6addr_t *hostp;
+int gethost(name, hostp)
+char *name;
+u_32_t *hostp;
 {
 	struct hostent *h;
 	struct netent *n;
 	u_32_t addr;
 
 	if (!strcmp(name, "test.host.dots")) {
-		if (family == AF_INET) {
-			hostp->in4.s_addr = htonl(0xfedcba98);
-		}
-#ifdef USE_INET6
-		if (family == AF_INET6) {
-			hostp->i6[0] = 0xfe80aa55;
-			hostp->i6[1] = 0x12345678;
-			hostp->i6[2] = 0x5a5aa5a5;
-			hostp->i6[3] = 0xfedcba98;
-		}
-#endif
+		*hostp = htonl(0xfedcba98);
 		return 0;
 	}
 
 	if (!strcmp(name, "<thishost>"))
 		name = thishost;
 
-	if (family == AF_INET) {
-		h = gethostbyname(name);
-		if (h != NULL) {
-			if ((h->h_addr != NULL) &&
-			    (h->h_length == sizeof(addr))) {
-				bcopy(h->h_addr, (char *)&addr, sizeof(addr));
-				hostp->in4.s_addr = addr;
-				return 0;
-			}
-		}
-
-		n = getnetbyname(name);
-		if (n != NULL) {
-			hostp->in4.s_addr = htonl(n->n_net & 0xffffffff);
+	h = gethostbyname(name);
+	if (h != NULL) {
+		if ((h->h_addr != NULL) && (h->h_length == sizeof(addr))) {
+			bcopy(h->h_addr, (char *)&addr, sizeof(addr));
+			*hostp = addr;
 			return 0;
 		}
 	}
-#ifdef USE_INET6
-	if (family == AF_INET6) {
-		struct addrinfo hints, *res;
-		struct sockaddr_in6 *sin6;
 
-		bzero((char *)&hints, sizeof(hints));
-		hints.ai_family = PF_INET6;
-
-		getaddrinfo(name, NULL, &hints, &res);
-		if (res != NULL) {
-			sin6 = (struct sockaddr_in6 *)res->ai_addr;
-			hostp->in6 = sin6->sin6_addr;
-			freeaddrinfo(res);
-			return 0;
-		}
+	n = getnetbyname(name);
+	if (n != NULL) {
+		*hostp = (u_32_t)htonl(n->n_net & 0xffffffff);
+		return 0;
 	}
-#endif
 	return -1;
 }

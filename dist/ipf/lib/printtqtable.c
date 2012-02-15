@@ -1,7 +1,7 @@
-/*	$NetBSD: printtqtable.c,v 1.1.1.3 2012/01/30 16:03:25 darrenr Exp $	*/
+/*	$NetBSD: printtqtable.c,v 1.2 2012/02/15 17:55:07 riz Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2007 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
@@ -11,18 +11,17 @@
 #include "ipf.h"
 
 
-void
-printtqtable(table)
-	ipftq_t *table;
+void printtqtable(table)
+ipftq_t *table;
 {
 	int i;
 
-	PRINTF("TCP Entries per state\n");
+	printf("TCP Entries per state\n");
 	for (i = 0; i < IPF_TCP_NSTATES; i++)
-		PRINTF(" %5d", i);
-	PRINTF("\n");
+		printf(" %5d", i);
+	printf("\n");
 
 	for (i = 0; i < IPF_TCP_NSTATES; i++)
-		PRINTF(" %5d", table[i].ifq_ref - 1);
-	PRINTF("\n");
+		printf(" %5d", table[i].ifq_ref - 1);
+	printf("\n");
 }

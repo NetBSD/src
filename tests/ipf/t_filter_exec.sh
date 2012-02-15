@@ -1,4 +1,4 @@
-# $NetBSD: t_filter_exec.sh,v 1.4 2012/02/13 18:52:53 darrenr Exp $
+# $NetBSD: t_filter_exec.sh,v 1.5 2012/02/15 17:55:24 riz Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,22 +33,10 @@
 dotest()
 {
 	h_copydata $1
-	infmt=$2
-	outfmt=$3
-	shift
-	shift
-	shift
-	args=$@
-
-	if [ $outfmt = hex ] ; then
-		output=-x
-	else
-		output=
-	fi
 
 	{ while read rule; do
 		atf_check -x "echo \"$rule\" | ipftest -F \
-$infmt $output -Rbr - -i in $args >>out"
+$2 -Rbr - -i in $4 $5 >>out"
 		echo "--------" >>out
 	done; } <reg
 
@@ -58,21 +46,8 @@ $infmt $output -Rbr - -i in $args >>out"
 mtest()
 {
 	h_copydata $1
-	infmt=$2
-	outfmt=$3
-	shift
-	shift
-	shift
-	args=$@
 
-	if [ $outfmt = hex ] ; then
-		output=-x
-	else
-		output=
-	fi
-
-
-	atf_check -o save:out ipftest -F $infmt $output -Rbr reg -i in $args
+	atf_check -o save:out ipftest -F $2 -Rbr reg -i in
 	echo "--------" >>out
 
 	diff -u exp out || atf_fail "results differ"
@@ -81,26 +56,13 @@ mtest()
 dotest6()
 {
 	h_copydata $(echo ${1} | tr _ .)
-	infmt=$2
-	outfmt=$3
-	shift
-	shift
-	shift
-	args=$@
-
-	if [ $outfmt = hex ] ; then
-		output=-x
-	else
-		output=
-	fi
-
 
 	ipftest -6 -r /dev/null -i /dev/null >/dev/null 2>&1 \
 	    || atf_skip "skipping IPv6 tests"
 
 	{ while read rule; do
 		atf_check -o save:save -x "echo \"$rule\" | \
-ipftest -F $infmt $output -6br - -i in $args"
+ipftest -F $2 -6br - -i in"
 		cat save >>out
 		echo "--------" >>out
 	done; } <reg
@@ -125,14 +87,10 @@ test_case f14 dotest text text
 test_case f15 mtest text text
 test_case f16 mtest text text
 test_case f17 mtest hex hex
-test_case f18 mtest text text -D
-test_case f19 dotest text text -T state_max=3
+test_case f18 mtest text text
+#broken_test_case f19 dotest text text -T fr_statemax=3
 test_case f20 mtest text text
 test_case f24 mtest hex text
-test_case f25 mtest hex text -D
-test_case f26 dotest text text
-test_case f27 dotest hex text
-test_case f30 dotest text text
 test_case ipv6_1 dotest6 hex hex
 test_case ipv6_2 dotest6 hex hex
 test_case ipv6_3 dotest6 hex hex
@@ -159,17 +117,13 @@ atf_init_test_cases()
 	atf_add_test_case f16
 	atf_add_test_case f17
 	atf_add_test_case f18
-	atf_add_test_case f19
 	atf_add_test_case f20
 	atf_add_test_case f24
-	atf_add_test_case f25
-	atf_add_test_case f26
-	atf_add_test_case f27
-	atf_add_test_case f30
 	atf_add_test_case ipv6_1
 	atf_add_test_case ipv6_2
 	atf_add_test_case ipv6_3
 	atf_add_test_case ipv6_5
 	atf_add_test_case ipv6_6
 
+	#atf_add_test_case f19
 }

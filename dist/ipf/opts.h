@@ -1,11 +1,11 @@
-/*	$NetBSD: opts.h,v 1.1.1.2 2012/01/30 16:02:58 darrenr Exp $	*/
+/*	$NetBSD: opts.h,v 1.2 2012/02/15 17:55:04 riz Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2000 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: opts.h,v 2.13.2.1 2012/01/26 05:29:13 darrenr Exp
+ * Id: opts.h,v 2.12 2003/08/14 14:24:27 darrenr Exp
  */
 
 #ifndef	__OPTS_H__
@@ -42,19 +42,10 @@
 #define	OPT_HEX		0x2000000
 #define	OPT_ASCII	0x4000000
 #define	OPT_NORESOLVE	0x8000000
-#define	OPT_DONTOPEN	0x10000000
 
 #define	OPT_STAT	OPT_FRSTATES
 #define	OPT_LIST	OPT_SHOWLIST
 
-
-#ifndef __P
-# ifdef	__STDC__
-#  define	__P(x)	x
-# else
-#  define	__P(x)	()
-# endif
-#endif
 
 #if defined(sun) && !SOLARIS
 # define	STRERROR(x)	sys_errlist[x]

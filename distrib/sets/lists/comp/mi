@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1737 2012/02/13 12:49:25 njoly Exp $
+#	$NetBSD: mi,v 1.1738 2012/02/15 17:55:15 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1904,7 +1904,6 @@
 ./usr/include/netinet/in_var.h			comp-c-include
 ./usr/include/netinet/ip.h			comp-c-include
 ./usr/include/netinet/ip6.h			comp-c-include
-./usr/include/netinet/ipf_rb.h			comp-ipf-include	ipfilter
 ./usr/include/netinet/ip_auth.h			comp-ipf-include	ipfilter
 ./usr/include/netinet/ip_carp.h			comp-c-include
 ./usr/include/netinet/ip_compat.h		comp-c-include
