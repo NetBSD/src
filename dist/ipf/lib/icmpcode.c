@@ -1,11 +1,11 @@
-/*	$NetBSD: icmpcode.c,v 1.8 2012/01/30 16:12:04 darrenr Exp $	*/
+/*	$NetBSD: icmpcode.c,v 1.9 2012/02/15 17:55:06 riz Exp $	*/
 
 /*
- * Copyright (C) 2006 by Darren Reed.
+ * Copyright (C) 2000-2006 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: icmpcode.c,v 1.10.2.1 2012/01/26 05:29:15 darrenr Exp
+ * Id: icmpcode.c,v 1.7.2.5 2006/06/16 17:21:02 darrenr Exp
  */
 
 #include <ctype.h>

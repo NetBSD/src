@@ -1,43 +1,24 @@
-/*	$NetBSD: printip.c,v 1.1.1.3 2012/01/30 16:03:24 darrenr Exp $	*/
+/*	$NetBSD: printip.c,v 1.2 2012/02/15 17:55:07 riz Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2002-2005 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: printip.c,v 1.10.2.1 2012/01/26 05:29:16 darrenr Exp
+ * Id: printip.c,v 1.3.4.1 2006/06/16 17:21:12 darrenr Exp
  */
 
 #include "ipf.h"
 
 
-void
-printip(family, addr)
-	int family;
-	u_32_t *addr;
+void	printip(addr)
+u_32_t	*addr;
 {
 	struct in_addr ipa;
 
-	if (family == AF_INET) {
-		ipa.s_addr = *addr;
-		if (ntohl(ipa.s_addr) < 256)
-			PRINTF("%lu", (u_long)ntohl(ipa.s_addr));
-		else
-			PRINTF("%s", inet_ntoa(ipa));
-	}
-#ifdef AF_INET6
-	else if (family == AF_INET6) {
-		char buf[INET6_ADDRSTRLEN + 1];
-		const char *str;
-
-		buf[0] = '\0';
-		str = inet_ntop(AF_INET6, addr, buf, sizeof(buf) - 1);
-		if (str != NULL)
-			PRINTF("%s", str);
-		else
-			PRINTF("???");
-	}
-#endif
+	ipa.s_addr = *addr;
+	if (ntohl(ipa.s_addr) < 256)
+		printf("%lu", (u_long)ntohl(ipa.s_addr));
 	else
-		PRINTF("?(%d)?", family);
+		printf("%s", inet_ntoa(ipa));
 }

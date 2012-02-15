@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr.c,v 1.4 2012/01/30 16:12:04 darrenr Exp $	*/
+/*	$NetBSD: inet_addr.c,v 1.5 2012/02/15 17:55:06 riz Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1990, 1993
@@ -57,7 +57,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)inet_addr.c	8.1 (Berkeley) 6/17/93";
-static const char rcsid[] = "@(#)Id: inet_addr.c,v 1.12 2004/12/09 19:41:24 darrenr Exp";
+static const char rcsid[] = "@(#)Id: inet_addr.c,v 1.8.2.3 2004/12/09 19:41:20 darrenr Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -74,20 +74,6 @@ static const char rcsid[] = "@(#)Id: inet_addr.c,v 1.12 2004/12/09 19:41:24 darr
 #endif
 #ifndef linux
 int inet_aton __P((const char *, struct in_addr *));
-
-/*
- * Because the ctype(3) posix definition, if used "safely" in code everywhere,
- * would mean all normal code that walks through strings needed casts.  Yuck.
- */
-#define	ISALNUM(x)	isalnum((u_char)(x))
-#define	ISALPHA(x)	isalpha((u_char)(x))
-#define	ISASCII(x)	isascii((u_char)(x))
-#define	ISDIGIT(x)	isdigit((u_char)(x))
-#define	ISPRINT(x)	isprint((u_char)(x))
-#define	ISSPACE(x)	isspace((u_char)(x))
-#define	ISUPPER(x)	isupper((u_char)(x))
-#define	ISXDIGIT(x)	isxdigit((u_char)(x))
-#define	ISLOWER(x)	islower((u_char)(x))
 
 /*
  * Because the ctype(3) posix definition, if used "safely" in code everywhere,
