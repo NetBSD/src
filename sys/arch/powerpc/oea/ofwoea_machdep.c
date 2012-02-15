@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.26 2011/08/04 20:02:48 phx Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.27 2012/02/15 01:56:58 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.26 2011/08/04 20:02:48 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.27 2012/02/15 01:56:58 macallan Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -166,6 +166,7 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 			    sizeof(model_name));
 		model_init();
 	}
+
 	/* Initialize bus_space */
 	ofwoea_bus_space_init();
 
@@ -363,7 +364,7 @@ restore_ofmap(struct ofw_translations *map, int len)
 /*
  * Scan the device tree for ranges, and return them as bitmap 0..15
  */
-
+#ifndef macppc
 static u_int16_t
 ranges_bitmap(int node, u_int16_t bitmap)
 {
@@ -404,22 +405,33 @@ noranges:
 	}
 	return bitmap;
 }
+#endif /* !macppc */
 
 void
 ofwoea_batinit(void)
 {
 #if defined (PPC_OEA)
+
+#ifdef macppc
+	/*
+	 * cover PCI and register space but not the firmware ROM
+	 */
+	oea_batinit(0x80000000, BAT_BL_256M,
+		    0x90000000, BAT_BL_256M,
+		    0xa0000000, BAT_BL_256M,
+		    0xb0000000, BAT_BL_256M,
+		    0xf0000000, BAT_BL_128M,
+		    0xf8000000, BAT_BL_64M,
+		    0);
+#else
         u_int16_t bitmap;
 	int node, i;
 
 	node = OF_finddevice("/");
+
 	bitmap = ranges_bitmap(node, 0);
 	oea_batinit(0);
 
-#ifdef macppc
-	/* XXX this is a macppc-specific hack */
-	bitmap = 0x8f00;
-#endif
 	for (i=1; i < 0x10; i++) {
 		/* skip the three vital SR regions */
 		if (i == USER_SR || i == KERNEL_SR || i == KERNEL2_SR)
@@ -429,6 +441,7 @@ ofwoea_batinit(void)
 			DPRINTF("Batmapped 256M at 0x%x\n", 0x10000000 * i);
 		}
 	}
+#endif
 #endif /* OEA */
 }
 
