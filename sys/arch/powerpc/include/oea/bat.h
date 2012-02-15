@@ -1,4 +1,4 @@
-/*	$NetBSD: bat.h,v 1.16 2012/02/15 01:46:42 matt Exp $	*/
+/*	$NetBSD: bat.h,v 1.17 2012/02/15 04:33:19 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -135,10 +135,10 @@ struct bat {
 	(((pa) & BAT_RPN) | (wimg) | (pp))
 
 #define BAT_VA_MATCH_P(batu,va) \
-  (((~(((batu)&BAT_BL)<<15))&(va)&BAT_EPI)==((batu)&BAT_EPI))
+  (((~(((batu)&(BAT_BL|BAT_XBL))<<15))&(va)&BAT_EPI)==((batu)&BAT_EPI))
 
 #define BAT_PA_MATCH_P(batu,batl,pa) \
-  (((~(((batu)&BAT_BL)<<15))&(pa)&BAT_RPN)==((batl)&BAT_RPN))
+  (((~(((batu)&(BAT_BL|BAT_XBL))<<15))&(pa)&BAT_RPN)==((batl)&BAT_RPN))
 
 #define BAT_VALID_P(batu, msr) \
   (((msr)&PSL_PR)?(((batu)&BAT_Vu)==BAT_Vu):(((batu)&BAT_Vs)==BAT_Vs))
