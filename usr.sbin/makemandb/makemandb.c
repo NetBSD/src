@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.3 2012/02/15 23:35:00 joerg Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.4 2012/02/15 23:36:10 joerg Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.3 2012/02/15 23:35:00 joerg Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.4 2012/02/15 23:36:10 joerg Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -1846,6 +1846,14 @@ free_secbuffs(mandb_rec *rec)
 	free(rec->errors.data);
 }
 
+static void
+replace_hyph(char *str)
+{
+	char *iter = str;
+	while ((iter = strchr(iter, ASCII_HYPH)) != NULL)
+		*iter = '-';
+}
+
 static char *
 parse_escape(const char *str)
 {
@@ -1857,8 +1865,11 @@ parse_escape(const char *str)
 
 	last_backslash = str;
 	backslash = strchr(str, '\\');
-	if (backslash == NULL)
-		return estrdup(str);
+	if (backslash == NULL) {
+		result = estrdup(str);
+		replace_hyph(result);
+		return result;
+	}
 
 	result = emalloc(strlen(str) + 1);
 	iter = result;
@@ -1882,9 +1893,8 @@ parse_escape(const char *str)
 	} while (backslash != NULL);
 	if (last_backslash != NULL)
 		strcpy(iter, last_backslash);
-	iter = result;
-	while ((iter = strchr(iter, ASCII_HYPH)) != NULL)
-		*iter = '-';
+	
+	replace_hyph(result);
 	return result;
 }
 
