@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.62 2012/01/22 17:51:39 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.63 2012/02/15 15:20:53 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.62 2012/01/22 17:51:39 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.63 2012/02/15 15:20:53 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -362,6 +362,11 @@ handle_signal(int sig, siginfo_t *info, void *ctx)
 
 	thunk_sigemptyset(&jump_ucp.uc_sigmask);
 	jump_ucp.uc_flags = _UC_STACK | _UC_CPU | _UC_SIGMASK;
+
+	/* prevent recursive IO signals */
+	if (sig == SIGIO)
+		thunk_sigaddset(&jump_ucp.uc_sigmask, SIGIO);
+
 	thunk_makecontext(&jump_ucp,
 			(void (*)(void)) f,
 		3, (void *) from_userland, (void *) pc, (void *) va);
