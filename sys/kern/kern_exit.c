@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.235 2011/10/09 20:30:37 chs Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.236 2012/02/15 11:59:30 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.235 2011/10/09 20:30:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.236 2012/02/15 11:59:30 martin Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -580,7 +580,12 @@ exit1(struct lwp *l, int rv)
 	 * case these resources are in the PCB.
 	 */
 	cpu_lwp_free(l, 1);
-	pmap_deactivate(l);
+	/*
+	 * A new child of a posix_spawn operation might never have been
+	 * to userland - no pmap deactivation is needed in this case
+	 */
+	if (__predict_true(l->l_proc->p_vmspace != NULL))
+		pmap_deactivate(l);
 
 	/* This process no longer needs to hold the kernel lock. */
 #ifdef notyet
