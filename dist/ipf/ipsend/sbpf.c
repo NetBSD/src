@@ -1,4 +1,4 @@
-/*	$NetBSD: sbpf.c,v 1.10 2012/01/30 20:10:27 darrenr Exp $	*/
+/*	$NetBSD: sbpf.c,v 1.11 2012/02/15 17:55:05 riz Exp $	*/
 
 /*
  * (C)opyright 1995-1998 Darren Reed. (from tcplog)
@@ -30,6 +30,7 @@
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/udp.h>
+#include <netinet/udp_var.h>
 #include <netinet/tcp.h>
 
 #include <stdio.h>
@@ -48,7 +49,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)sbpf.c	1.3 8/25/95 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: sbpf.c,v 2.9 2008/08/10 05:51:14 darrenr Exp";
+static const char rcsid[] = "@(#)Id: sbpf.c,v 2.5.4.2 2009/12/27 06:53:15 darrenr Exp";
 #endif
 
 /*
@@ -59,8 +60,8 @@ static	int	bufsize = 0, timeout = 1;
 
 
 int	initdevice(device, tout)
-	char	*device;
-	int	tout;
+char	*device;
+int	tout;
 {
 	struct	bpf_version bv;
 	struct	timeval to;
@@ -143,8 +144,8 @@ int	initdevice(device, tout)
  * output an IP packet onto a fd opened for /dev/bpf
  */
 int	sendip(fd, pkt, len)
-	int	fd, len;
-	char	*pkt;
+int	fd, len;
+char	*pkt;
 {
 	if (write(fd, pkt, len) == -1)
 	    {

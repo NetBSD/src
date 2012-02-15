@@ -1,19 +1,19 @@
-/*	$NetBSD: fill6bits.c,v 1.1.1.3 2012/01/30 16:03:22 darrenr Exp $	*/
+/*	$NetBSD: fill6bits.c,v 1.2 2012/02/15 17:55:06 riz Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2000-2002 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: fill6bits.c,v 1.8.2.1 2012/01/26 05:29:15 darrenr Exp
+ * Id: fill6bits.c,v 1.5.4.1 2006/06/16 17:20:58 darrenr Exp
  */
 
 #include "ipf.h"
 
 
 void fill6bits(bits, msk)
-	int bits;
-	u_int *msk;
+int bits;
+u_int *msk;
 {
 	if (bits == 0) {
 		msk[0] = 0;

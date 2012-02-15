@@ -1,20 +1,20 @@
-/*	$NetBSD: optname.c,v 1.1.1.3 2012/01/30 16:03:25 darrenr Exp $	*/
+/*	$NetBSD: optname.c,v 1.2 2012/02/15 17:55:06 riz Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2000-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: optname.c,v 1.6.2.1 2012/01/26 05:29:16 darrenr Exp
+ * Id: optname.c,v 1.3.4.1 2006/06/16 17:21:07 darrenr Exp
  */
 
 #include "ipf.h"
 
 
 u_32_t optname(cp, sp, linenum)
-	char ***cp;
-	u_short *sp;
-	int linenum;
+char ***cp;
+u_short *sp;
+int linenum;
 {
 	struct ipopt_names *io, *so;
 	u_long msk = 0;

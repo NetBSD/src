@@ -1,11 +1,11 @@
-/*	$NetBSD: ipft_ef.c,v 1.4 2012/01/30 16:12:04 darrenr Exp $	*/
+/*	$NetBSD: ipft_ef.c,v 1.5 2012/02/15 17:55:06 riz Exp $	*/
 
 /*
- * Copyright (C) 2011 by Darren Reed.
+ * Copyright (C) 2000-2006 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ipft_ef.c,v 1.21.2.2 2012/01/26 05:29:15 darrenr Exp
+ * Id: ipft_ef.c,v 1.14.2.2 2006/06/16 17:21:02 darrenr Exp
  */
 
 /*
@@ -24,17 +24,21 @@ etherfind -n -t
 
 #include "ipf.h"
 #include "ipt.h"
-#include <ctype.h>
+
+#ifndef linux
+#include <netinet/ip_var.h>
+#endif
+#include <netinet/tcpip.h>
 
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipft_ef.c	1.6 2/4/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipft_ef.c,v 1.21.2.2 2012/01/26 05:29:15 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipft_ef.c,v 1.14.2.2 2006/06/16 17:21:02 darrenr Exp";
 #endif
 
 static	int	etherf_open __P((char *));
 static	int	etherf_close __P((void));
-static	int	etherf_readip __P((mb_t *, char **, int *));
+static	int	etherf_readip __P((char *, int, char **, int *));
 
 struct	ipread	etherf = { etherf_open, etherf_close, etherf_readip, 0 };
 
@@ -43,7 +47,7 @@ static	int	efd = -1;
 
 
 static	int	etherf_open(fname)
-	char	*fname;
+char	*fname;
 {
 	if (efd != -1)
 		return efd;
@@ -65,24 +69,15 @@ static	int	etherf_close()
 }
 
 
-static	int	etherf_readip(mb, ifn, dir)
-	mb_t	*mb;
-	char	**ifn;
-	int	*dir;
+static	int	etherf_readip(buf, cnt, ifn, dir)
+char	*buf, **ifn;
+int	cnt, *dir;
 {
-	u_char	pkt[40];
-	tcphdr_t *tcp;
-	ip_t	*ip;
+	struct	tcpiphdr pkt;
+	ip_t	*ip = (ip_t *)&pkt;
 	char	src[16], dst[16], sprt[16], dprt[16];
 	char	lbuf[128], len[8], prot[8], time[8], *s;
 	int	slen, extra = 0, i;
-	char	*buf;
-	int	cnt;
-
-	ip = (ip_t *)pkt;
-	tcp = (tcphdr_t *)(ip + 1);
-	buf = (char *)mb->mb_buf;
-	cnt = sizeof(mb->mb_buf);
 
 	if (!fgets(lbuf, sizeof(lbuf) - 1, efp))
 		return 0;
@@ -103,17 +98,17 @@ static	int	etherf_readip(mb, ifn, dir)
 
 	switch (ip->ip_p) {
 	case IPPROTO_TCP :
-		if (ISDIGIT(*sprt))
-			tcp->th_sport = htons(atoi(sprt) & 65535);
-		if (ISDIGIT(*dprt))
-			tcp->th_dport = htons(atoi(dprt) & 65535);
+		if (isdigit(*sprt))
+			pkt.ti_sport = htons(atoi(sprt) & 65535);
+		if (isdigit(*dprt))
+			pkt.ti_dport = htons(atoi(dprt) & 65535);
 		extra = sizeof(struct tcphdr);
 		break;
 	case IPPROTO_UDP :
-		if (ISDIGIT(*sprt))
-			tcp->th_sport = htons(atoi(sprt) & 65535);
-		if (ISDIGIT(*dprt))
-			tcp->th_dport = htons(atoi(dprt) & 65535);
+		if (isdigit(*sprt))
+			pkt.ti_sport = htons(atoi(sprt) & 65535);
+		if (isdigit(*dprt))
+			pkt.ti_dport = htons(atoi(dprt) & 65535);
 		extra = sizeof(struct udphdr);
 		break;
 #ifdef	IGMP
@@ -136,6 +131,5 @@ static	int	etherf_readip(mb, ifn, dir)
 	slen = IP_HL(ip) + extra;
 	i = MIN(cnt, slen);
 	bcopy((char *)&pkt, buf, i);
-	mb->mb_len = i;
 	return i;
 }
