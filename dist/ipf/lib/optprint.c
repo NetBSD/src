@@ -1,18 +1,18 @@
-/*	$NetBSD: optprint.c,v 1.1.1.4 2012/01/30 16:03:23 darrenr Exp $	*/
+/*	$NetBSD: optprint.c,v 1.2 2012/02/15 17:55:06 riz Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2000-2005 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: optprint.c,v 1.10.2.1 2012/01/26 05:29:16 darrenr Exp
+ * Id: optprint.c,v 1.6.4.2 2006/06/16 17:21:08 darrenr Exp
  */
 #include "ipf.h"
 
 
 void optprint(sec, optmsk, optbits)
-	u_short *sec;
-	u_long optmsk, optbits;
+u_short *sec;
+u_long optmsk, optbits;
 {
 	u_short secmsk = sec[0], secbits = sec[1];
 	struct ipopt_names *io, *so;

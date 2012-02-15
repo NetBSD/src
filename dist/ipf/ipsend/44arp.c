@@ -1,4 +1,4 @@
-/*	$NetBSD: 44arp.c,v 1.7 2012/01/30 16:12:03 darrenr Exp $	*/
+/*	$NetBSD: 44arp.c,v 1.8 2012/02/15 17:55:05 riz Exp $	*/
 
 /*
  * Based upon 4.4BSD's /usr/sbin/arp
@@ -13,6 +13,9 @@
 #endif
 #include <net/if_dl.h>
 #include <net/if_types.h>
+#if defined(__FreeBSD__)
+# include "radix_ipf.h"
+#endif
 #ifndef __osf__
 # include <net/route.h>
 #endif
@@ -41,7 +44,7 @@
  * (4 bytes)
  */
 int	resolve(host, address)
-	char	*host, *address;
+char	*host, *address;
 {
         struct	hostent	*hp;
         u_long	add;
@@ -63,7 +66,7 @@ int	resolve(host, address)
 
 
 int	arp(addr, eaddr)
-	char	*addr, *eaddr;
+char	*addr, *eaddr;
 {
 	int	mib[6];
 	size_t	needed;

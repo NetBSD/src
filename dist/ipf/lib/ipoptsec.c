@@ -1,11 +1,11 @@
-/*	$NetBSD: ipoptsec.c,v 1.1.1.3 2012/01/30 16:03:25 darrenr Exp $	*/
+/*	$NetBSD: ipoptsec.c,v 1.2 2012/02/15 17:55:06 riz Exp $	*/
 
 /*
- * Copyright (C) 2011 by Darren Reed.
+ * Copyright (C) 2001-2002 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ipoptsec.c,v 1.5.2.2 2012/01/26 05:29:16 darrenr Exp
+ * Id: ipoptsec.c,v 1.2.4.1 2006/06/16 17:21:04 darrenr Exp
  */
 
 #include "ipf.h"
@@ -25,19 +25,16 @@ struct	ipopt_names	secclass[] = {
 
 
 u_char seclevel(slevel)
-	char *slevel;
+char *slevel;
 {
 	struct ipopt_names *so;
-
-	if (slevel == NULL || *slevel == '\0')
-		return 0;
 
 	for (so = secclass; so->on_name; so++)
 		if (!strcasecmp(slevel, so->on_name))
 			break;
 
 	if (!so->on_name) {
-		fprintf(stderr, "no such security level: '%s'\n", slevel);
+		fprintf(stderr, "no such security level: %s\n", slevel);
 		return 0;
 	}
 	return (u_char)so->on_value;
@@ -45,7 +42,7 @@ u_char seclevel(slevel)
 
 
 u_char secbit(class)
-	int class;
+int class;
 {
 	struct ipopt_names *so;
 
@@ -54,7 +51,7 @@ u_char secbit(class)
 			break;
 
 	if (!so->on_name) {
-		fprintf(stderr, "no such security class: %d.\n", class);
+		fprintf(stderr, "no such security class: %d\n", class);
 		return 0;
 	}
 	return (u_char)so->on_bit;

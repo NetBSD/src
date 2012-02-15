@@ -1,7 +1,7 @@
-/*	$NetBSD: linux.h,v 1.4 2012/01/30 16:12:03 darrenr Exp $	*/
+/*	$NetBSD: linux.h,v 1.5 2012/02/15 17:55:05 riz Exp $	*/
 
 /*
- * Copyright (C) 1999 by Darren Reed.
+ * Copyright (C) 1995-1998 by Darren Reed.
  *
  * This code may be freely distributed as long as it retains this notice
  * and is not changed in any way.  The author accepts no responsibility
