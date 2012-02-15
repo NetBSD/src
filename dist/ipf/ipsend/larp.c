@@ -1,4 +1,4 @@
-/*	$NetBSD: larp.c,v 1.4 2012/01/30 16:12:03 darrenr Exp $	*/
+/*	$NetBSD: larp.c,v 1.5 2012/02/15 17:55:05 riz Exp $	*/
 
 /*
  * larp.c (C) 1995-1998 Darren Reed
@@ -8,7 +8,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)larp.c	1.1 8/19/95 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: larp.c,v 2.5 2007/12/20 09:35:09 darrenr Exp";
+static const char rcsid[] = "@(#)Id: larp.c,v 2.4 2003/12/01 02:01:16 darrenr Exp";
 #endif
 #include <sys/param.h>
 #include <sys/types.h>
@@ -30,7 +30,7 @@ static const char rcsid[] = "@(#)Id: larp.c,v 2.5 2007/12/20 09:35:09 darrenr Ex
  * (4 bytes)
  */
 int	resolve(host, address)
-	char	*host, *address;
+char	*host, *address;
 {
         struct	hostent	*hp;
         u_long	add;
@@ -56,8 +56,8 @@ int	resolve(host, address)
  * some BSD program, I cant remember which.
  */
 int	arp(ip, ether)
-	char	*ip;
-	char	*ether;
+char	*ip;
+char	*ether;
 {
 	static	int	s = -1;
 	struct	arpreq	ar;

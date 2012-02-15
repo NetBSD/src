@@ -1,7 +1,7 @@
-/*	$NetBSD: ipfs.c,v 1.10 2012/01/30 16:12:05 darrenr Exp $	*/
+/*	$NetBSD: ipfs.c,v 1.11 2012/02/15 17:55:11 riz Exp $	*/
 
 /*
- * Copyright (C) 2008 by Darren Reed.
+ * Copyright (C) 2001-2006 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
@@ -44,7 +44,7 @@
 #include "netinet/ipl.h"
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ipfs.c,v 1.25.2.1 2012/01/26 05:29:18 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipfs.c,v 1.12 2003/12/01 01:56:53 darrenr Exp";
 #endif
 
 #ifndef	IPF_SAVEDIR
@@ -100,7 +100,7 @@ void usage()
  * Change interface names in state information saved out to disk.
  */
 int changestateif(ifs, fname)
-	char *ifs, *fname;
+char *ifs, *fname;
 {
 	int fd, olen, nlen, rw;
 	ipstate_save_t ips;
@@ -163,7 +163,7 @@ int changestateif(ifs, fname)
  * Change interface names in NAT information saved out to disk.
  */
 int changenatif(ifs, fname)
-	char *ifs, *fname;
+char *ifs, *fname;
 {
 	int fd, olen, nlen, rw;
 	nat_save_t ipn;
@@ -198,6 +198,14 @@ int changenatif(ifs, fname)
 			strcpy(nat->nat_ifnames[1], s);
 			rw = 1;
 		}
+		if (!strncmp(nat->nat_ifnames[2], ifs, olen + 1)) {
+			strcpy(nat->nat_ifnames[2], s);
+			rw = 1;
+		}
+		if (!strncmp(nat->nat_ifnames[3], ifs, olen + 1)) {
+			strcpy(nat->nat_ifnames[3], s);
+			rw = 1;
+		}
 		if (rw == 1) {
 			if (lseek(fd, pos, SEEK_SET) != pos) {
 				perror("lseek");
@@ -217,8 +225,8 @@ int changenatif(ifs, fname)
 
 
 int main(argc,argv)
-	int argc;
-	char *argv[];
+int argc;
+char *argv[];
 {
 	int c, lock = -1, devfd = -1, err = 0, rw = -1, ns = -1, set = 0;
 	char *dirname = NULL, *filename = NULL, *ifs = NULL;
@@ -348,7 +356,7 @@ int main(argc,argv)
 
 
 int opendevice(ipfdev)
-	char *ipfdev;
+char *ipfdev;
 {
 	int fd = -1;
 
@@ -366,14 +374,14 @@ int opendevice(ipfdev)
 
 
 void closedevice(fd)
-	int fd;
+int fd;
 {
 	close(fd);
 }
 
 
 int setlock(fd, lock)
-	int fd, lock;
+int fd, lock;
 {
 	if (opts & OPT_VERBOSE)
 		printf("Turn lock %s\n", lock ? "on" : "off");
@@ -390,8 +398,8 @@ int setlock(fd, lock)
 
 
 int writestate(fd, file)
-	int fd;
-	char *file;
+int fd;
+char *file;
 {
 	ipstate_save_t ips, *ipsp;
 	ipfobj_t obj;
@@ -442,8 +450,8 @@ int writestate(fd, file)
 
 
 int readstate(fd, file)
-	int fd;
-	char *file;
+int fd;
+char *file;
 {
 	ipstate_save_t ips, *is, *ipshead = NULL, *is1, *ipstail = NULL;
 	int sfd = -1, i;
@@ -559,8 +567,8 @@ freeipshead:
 
 
 int readnat(fd, file)
-	int fd;
-	char *file;
+int fd;
+char *file;
 {
 	nat_save_t ipn, *in, *ipnhead = NULL, *in1, *ipntail = NULL;
 	ipfobj_t obj;
@@ -706,8 +714,8 @@ freenathead:
 
 
 int writenat(fd, file)
-	int fd;
-	char *file;
+int fd;
+char *file;
 {
 	nat_save_t *ipnp = NULL, *next = NULL;
 	ipfobj_t obj;
@@ -790,7 +798,7 @@ int writenat(fd, file)
 
 
 int writeall(dirname)
-	char *dirname;
+char *dirname;
 {
 	int fd, devfd;
 
@@ -841,7 +849,7 @@ bad:
 
 
 int readall(dirname)
-	char *dirname;
+char *dirname;
 {
 	int fd, devfd;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: slinux.c,v 1.4 2012/01/30 16:12:03 darrenr Exp $	*/
+/*	$NetBSD: slinux.c,v 1.5 2012/02/15 17:55:05 riz Exp $	*/
 
 /*
  * (C)opyright 1992-1998 Darren Reed. (from tcplog)
@@ -43,7 +43,7 @@ static	char	*eth_dev = NULL;
 
 
 int	ack_recv(bp)
-	char	*bp;
+char	*bp;
 {
 	struct	tcpip	tip;
 	tcphdr_t	*tcp;
@@ -61,8 +61,8 @@ int	ack_recv(bp)
 
 
 void	readloop(fd, port, dst)
-	int 	fd, port;
-	struct	in_addr dst;
+int 	fd, port;
+struct	in_addr dst;
 {
 	static	u_char	buf[BUFSPACE];
 	struct	sockaddr dest;
@@ -102,8 +102,8 @@ void	readloop(fd, port, dst)
 }
 
 int	initdevice(dev, tout)
-	char	*dev;
-	int	tout;
+char	*dev;
+int	tout;
 {
 	int fd;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpip.h,v 1.5 2012/01/30 16:12:03 darrenr Exp $	*/
+/*	$NetBSD: tcpip.h,v 1.6 2012/02/15 17:55:05 riz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)tcpip.h	8.1 (Berkeley) 6/10/93
- * Id: tcpip.h,v 2.5 2004/05/26 15:45:48 darrenr Exp
+ * Id: tcpip.h,v 2.2.2.3 2004/05/26 15:45:48 darrenr Exp
  */
 
 #ifndef _NETINET_TCPIP_H_

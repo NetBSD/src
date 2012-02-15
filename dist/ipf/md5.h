@@ -1,4 +1,4 @@
-/*	$NetBSD: md5.h,v 1.1.1.2 2008/05/20 06:44:25 darrenr Exp $	*/
+/*	$NetBSD: md5.h,v 1.2 2012/02/15 17:55:04 riz Exp $	*/
 
 /*
  ***********************************************************************
@@ -41,13 +41,6 @@
 
 #if !defined(__MD5_INCLUDE__) && !defined(_SYS_MD5_H)
 
-#ifndef __P
-# ifdef __STDC__
-#  define	__P(x)	x
-# else
-#  define	__P(x)	()
-# endif
-#endif
 #ifndef __STDC__
 # undef		const
 # define	const
@@ -64,9 +57,9 @@ typedef struct {
   unsigned char digest[16];     /* actual digest after MD5Final call */
 } MD5_CTX;
 
-extern void MD5Init __P((MD5_CTX *));
-extern void MD5Update __P((MD5_CTX *, unsigned char *, unsigned int));
-extern void MD5Final __P((unsigned char *, MD5_CTX *));
+extern void MD5Init(MD5_CTX *);
+extern void MD5Update(MD5_CTX *, unsigned char *, unsigned int);
+extern void MD5Final(unsigned char *, MD5_CTX *);
 
 #define __MD5_INCLUDE__
 #endif /* __MD5_INCLUDE__ */
