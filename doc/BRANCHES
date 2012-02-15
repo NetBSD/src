@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.320 2012/01/25 00:43:03 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.321 2012/02/15 23:05:33 riz Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -224,6 +224,17 @@ Base Tag:	netbsd-5-0-RELEASE
 Maintainer:	5.0 Release Engineering <releng-5@NetBSD.org>
 Scope:		Entire tree. (src + xsrc)
 Notes:		Commits restricted to Release Engineering.
+
+Branch:		netbsd-6
+Description:	The NetBSD 6 release branch
+Status:		Active
+Start Date:	15 Feb 2012
+End Date:
+Base Tag:	netbsd-6-base
+Maintainer:	6.0 Release Engineering <releng-6@NetBSD.org>
+Scope:		Entire tree. (src + xsrc)
+Notes:
+		Commits restricted to Release Engineering.
 
 ########################################################################
 # Individual developers' branches (Active/Dormant):
