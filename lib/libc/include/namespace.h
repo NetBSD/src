@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.149 2011/07/04 07:54:38 manu Exp $	*/
+/*	$NetBSD: namespace.h,v 1.150 2012/02/15 15:49:46 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -439,6 +439,7 @@
 #define lockf			_lockf
 #define lrand48			_lrand48
 #define lseek			_lseek
+#define membar_producer		_membar_producer
 #define mergesort		_mergesort
 #define mi_vector_hash		_mi_vector_hash
 #define mkstemp			_mkstemp
