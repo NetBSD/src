@@ -102,7 +102,7 @@ mips_page_to_pggroup(struct vm_page *pg, size_t ncolors)
 		lcv = VM_FREELIST_DEFAULT;
 	}
 	KDASSERT(lcv == uvm_page_lookup_freelist(pg));
-	KASSERT(lcv < mips_nfreelist);
+	KASSERT((1 << lcv) & mips_freelist_mask);
 	return lcv * ncolors + color;
 #endif
 }
