@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.985 2012/02/16 04:52:49 jmmv Exp $
+# $NetBSD: mi,v 1.986 2012/02/16 12:29:11 wiz Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -742,7 +742,7 @@
 ./usr/bin/who					base-util-bin
 ./usr/bin/whoami				base-util-bin
 ./usr/bin/whois					base-netutil-bin
-./usr/bin/window				base-util-bin		obsolete
+./usr/bin/window				base-obsolete		obsolete
 ./usr/bin/write					base-util-bin
 ./usr/bin/xargs					base-util-bin
 ./usr/bin/xz					base-util-bin
