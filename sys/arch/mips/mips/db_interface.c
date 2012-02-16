@@ -266,7 +266,7 @@ db_kvtophys_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		 * Cast the physical address -- some platforms, while
 		 * being ILP32, may be using 64-bit paddr_t's.
 		 */
-		db_printf("0x%lx -> 0x%" PRIx64 "\n", addr,
+		db_printf("%#"PRIxPTR" -> 0x%" PRIx64 "\n", (intptr_t) addr,
 		    (uint64_t) kvtophys(addr));
 	} else
 		printf("not a kernel virtual address\n");
@@ -672,7 +672,7 @@ db_mfcr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		".set pop 			\n\t"			\
 	    : "=r"(value) : "r"(addr));
 	
-	db_printf("control reg 0x%lx = 0x%" PRIx64 "\n", addr, value);
+	db_printf("control reg %#"PRIx64" = %#" PRIx64 "\n", addr, value);
 }
 
 void
@@ -702,7 +702,7 @@ db_mtcr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		".set pop 			\n\t"			\
 	    :: "r"(value), "r"(addr));
 
-	db_printf("control reg 0x%lx = 0x%lx\n", addr, value);
+	db_printf("control reg %#"PRIx64" = %#"PRIx64"\n", addr, value);
 }
 #endif /* (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0 */
 

@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.22.62.4 2011/04/29 08:26:21 matt Exp $ */
+/* db_machdep.h,v 1.22.62.4 2011/04/29 08:26:21 matt Exp */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -42,7 +42,7 @@
 
 
 typedef	vaddr_t		db_addr_t;	/* address - unsigned */
-typedef	long		db_expr_t;	/* expression - signed */
+typedef	register_t	db_expr_t;	/* expression - signed */
 
 typedef struct reg db_regs_t;
 

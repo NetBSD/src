@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.19.62.3 2011/04/29 08:26:24 matt Exp $	*/
+/*	db_disasm.c,v 1.19.62.3 2011/04/29 08:26:24 matt Exp	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.19.62.3 2011/04/29 08:26:24 matt Exp $");
+__KERNEL_RCSID(0, "db_disasm.c,v 1.19.62.3 2011/04/29 08:26:24 matt Exp");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ static void print_addr(db_addr_t);
 db_addr_t
 db_disasm(db_addr_t loc, bool altfmt)
 {
-	u_int32_t instr;
+	uint32_t instr;
 
 	/*
 	 * Take some care with addresses to not UTLB here as it
@@ -172,7 +172,7 @@ db_disasm(db_addr_t loc, bool altfmt)
 		}
 	}
 	else {
-		instr =  *(u_int32_t *)loc;
+		instr =  *(uint32_t *)(intptr_t)loc;
 	}
 
 	return (db_disasm_insn(instr, loc, altfmt));
@@ -596,7 +596,7 @@ print_addr(db_addr_t loc)
 		if (diff == 0)
 			db_printf("%s", symname);
 		else
-			db_printf("<%s+%lx>", symname, diff);
+			db_printf("<%s+%#"PRIxREGISTER">", symname, diff);
 		db_printf("\t[addr:%#"PRIxVADDR"]", loc);
 	} else {
 		db_printf("%#"PRIxVADDR, loc);

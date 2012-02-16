@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.35.38.5 2011/04/29 08:26:25 matt Exp $	*/
+/*	db_trace.c,v 1.35.38.5 2011/04/29 08:26:25 matt Exp	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.35.38.5 2011/04/29 08:26:25 matt Exp $");
+__KERNEL_RCSID(0, "db_trace.c,v 1.35.38.5 2011/04/29 08:26:25 matt Exp");
 
 #include "opt_ddb.h"
 
@@ -169,7 +169,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	}
 
 	if (lwpaddr) {
-		l = (struct lwp *)addr;
+		l = (struct lwp *)(intptr_t)addr;
 		(*pr)("pid %d.%d ", l->l_proc->p_pid, l->l_lid);
 	} else {
 		/* "trace/t" */
