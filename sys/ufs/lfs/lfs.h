@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.135 2012/01/02 22:10:44 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.136 2012/02/16 02:47:55 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -1027,13 +1027,23 @@ struct lfs_inode_ext {
 /*
  * Estimate number of clean blocks not available for writing because
  * they will contain metadata or overhead.  This is calculated as
- * (dmeta / # dirty segments) * (# clean segments).
+ *
+ *		E = ((C * M / D) * D + (0) * (T - D)) / T
+ * or more simply
+ *		E = (C * M) / T
+ *
+ * where
+ * C is the clean space,
+ * D is the dirty space,
+ * M is the dirty metadata, and
+ * T = C + D is the total space on disk.
+ *
+ * This approximates the old formula of E = C * M / D when D is close to T,
+ * but avoids falsely reporting "disk full" when the sample size (D) is small.
  */
-#define CM_MAG_NUM 3
-#define CM_MAG_DEN 2
 #define LFS_EST_CMETA(F) (int32_t)((					\
-				    (CM_MAG_NUM * ((F)->lfs_dmeta * (int64_t)(F)->lfs_nclean)) / \
-				    (CM_MAG_DEN * ((F)->lfs_nseg - (F)->lfs_nclean))))
+	((F)->lfs_dmeta * (int64_t)(F)->lfs_nclean) / 			\
+	((F)->lfs_nseg)))
 
 /* Estimate total size of the disk not including metadata */
 #define LFS_EST_NONMETA(F) ((F)->lfs_dsize - (F)->lfs_dmeta - LFS_EST_CMETA(F))

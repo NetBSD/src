@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.18 2012/02/02 03:50:32 perseant Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.19 2012/02/16 02:47:54 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.18 2012/02/02 03:50:32 perseant Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.19 2012/02/16 02:47:54 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -496,7 +496,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	if (fs->lfs_resvseg < MIN_RESV_SEGS)
 		fs->lfs_resvseg = MIN_RESV_SEGS;
 
-	if(fs->lfs_nseg < (3 * CM_MAG_NUM * fs->lfs_minfreeseg) / CM_MAG_DEN + 1
+	if(fs->lfs_nseg < (4 * fs->lfs_minfreeseg)
 	   || fs->lfs_nseg < LFS_MIN_SBINTERVAL + 1)
 	{
 		if(seg_size == 0 && ssize > (bsize<<1)) {
