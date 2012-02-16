@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.h,v 1.7.16.4 2012/02/09 03:05:01 matt Exp $	*/
+/*	$NetBSD: uvm_pglist.h,v 1.7.16.5 2012/02/16 04:20:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -55,6 +55,8 @@ LIST_HEAD(pgflist, vm_page);
 struct pgfreelist {
 	u_long pgfl_pages[PGFL_NQUEUES];
 	struct pgflist pgfl_queues[VM_NFREELIST][PGFL_NQUEUES];
+	struct uvm_pggroup *pgfl_pggroups[VM_NFREELIST];
+	struct uvm_pggroup *pgfl_hint;
 
 	/* pagealloc counters */
 	uint64_t pgfl_colorfail;/* pagealloc where we got no page */
