@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.80 2012/02/09 13:38:44 joerg Exp $
+#	$NetBSD: daily,v 1.80.2.1 2012/02/16 19:56:43 riz Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -294,7 +294,7 @@ if checkyesno run_makemandb; then
 	if [ -f /etc/man.conf -a -x /usr/sbin/makemandb ]; then
 		echo ""
 		echo "Updating man page index:"
-		nice -n 5 /usr/sbin/makemandb
+		(umask 022; nice -n 5 /usr/sbin/makemandb)
 	fi
 fi
 
