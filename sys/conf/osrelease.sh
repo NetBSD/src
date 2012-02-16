@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: osrelease.sh,v 1.120 2009/11/15 18:41:08 dsl Exp $
+#	$NetBSD: osrelease.sh,v 1.120.18.1 2012/02/16 18:59:42 riz Exp $
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -67,9 +67,11 @@ rel_mm=${rel_MMmm#${rel_MM}}
 # Get patch from text version
 IFS=.
 set -- - $rel_text
+beta=${3#[0-9]}
+beta=${beta#[0-9]}
 shift 3
 IFS=' '
-set -- $rel_MM ${rel_mm#0} $*
+set -- $rel_MM ${rel_mm#0}$beta $*
 
 case "$option" in
 -m)
