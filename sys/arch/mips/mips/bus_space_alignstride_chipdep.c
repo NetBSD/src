@@ -896,8 +896,10 @@ __BS(unmap)(void *v, bus_space_handle_t h, bus_size_t size, int acct)
 #if !defined(_LP64) || defined(CHIP_EXTENT)
 	bus_addr_t addr = 0;	/* initialize to appease gcc */
 #endif
+#if defined(CHIP_EXTENT) || !defined(_LP64)
+	bool handle_is_km = false;
+#endif
 #ifndef _LP64
-	bool handle_is_km;
 
 	/* determine if h is addr obtained from uvm_km_alloc */
 	handle_is_km = !(MIPS_KSEG0_P(h) || MIPS_KSEG1_P(h));
@@ -936,15 +938,11 @@ __BS(unmap)(void *v, bus_space_handle_t h, bus_size_t size, int acct)
 	if (acct == 0)
 		return;
 
-#ifdef EXTENT_DEBUG
+#if defined(EXTENT_DEBUG) || 1
 	printf("%s: freeing handle %#"PRIxBSH" for %#"PRIxBUSSIZE"\n",
 		__S(__BS(unmap)), h, size);
 #endif
 
-#ifdef _LP64
-	KASSERT(MIPS_XKPHYS_P(h));
-	addr = MIPS_XKPHYS_TO_PHYS(h);
-#else
 	if (handle_is_km == false) {
 		if (MIPS_KSEG0_P(h)) {
 			addr = MIPS_KSEG0_TO_PHYS(h);
@@ -952,11 +950,12 @@ __BS(unmap)(void *v, bus_space_handle_t h, bus_size_t size, int acct)
 		} else if (MIPS_XKPHYS_P(h)) {
 			addr = MIPS_XKPHYS_TO_PHYS(h);
 #endif
-		} else {
+		} else if (MIPS_KSEG1_P(h)) {
 			addr = MIPS_KSEG1_TO_PHYS(h);
+		} else {
+			panic("%s: unknown handle %#"PRIxBSH, __func__, h);
 		}
 	}
-#endif
 
 #ifdef CHIP_W1_BUS_START
 	if (addr >= CHIP_W1_SYS_START(v) && addr <= CHIP_W1_SYS_END(v)) {
