@@ -2392,7 +2392,7 @@ mips_page_physload(vaddr_t vkernstart, vaddr_t vkernend,
 	/*
 	 * Now to get the number of freelists in use.
 	 */
-	mips_nfreelist = popcount32(mips_freelist_mask);
+	mips_nfreelist = 32 - __builtin_clz(mips_freelist_mask);
 }
 
 /* 
