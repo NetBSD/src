@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.223 2012/01/02 22:10:44 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.224 2012/02/16 02:47:55 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.223 2012/01/02 22:10:44 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.224 2012/02/16 02:47:55 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -734,7 +734,6 @@ lfs_segwrite(struct mount *mp, int flags)
 	did_ckp = 0;
 	if (do_ckp || fs->lfs_doifile) {
 		vp = fs->lfs_ivnode;
-		vn_lock(vp, LK_EXCLUSIVE);
 		loopcount = 0;
 		do {
 #ifdef DEBUG
@@ -807,7 +806,6 @@ lfs_segwrite(struct mount *mp, int flags)
 		}
 #endif
 		mutex_exit(vp->v_interlock);
-		VOP_UNLOCK(vp);
 	} else {
 		(void) lfs_writeseg(fs, sp);
 	}
@@ -2603,8 +2601,8 @@ lfs_cluster_aiodone(struct buf *bp)
 		 * XXX KS - Shouldn't we set *both* if both types
 		 * of blocks are present (traverse the dirty list?)
 		 */
-		mutex_enter(&lfs_lock);
 		mutex_enter(vp->v_interlock);
+		mutex_enter(&lfs_lock);
 		if (vp != devvp && vp->v_numoutput == 0 &&
 		    (fbp = LIST_FIRST(&vp->v_dirtyblkhd)) != NULL) {
 			ip = VTOI(vp);
@@ -2616,8 +2614,8 @@ lfs_cluster_aiodone(struct buf *bp)
 				LFS_SET_UINO(ip, IN_MODIFIED);
 		}
 		cv_broadcast(&vp->v_cv);
-		mutex_exit(vp->v_interlock);
 		mutex_exit(&lfs_lock);
+		mutex_exit(vp->v_interlock);
 	}
 
 	/* Fix up the cluster buffer, and release it */
