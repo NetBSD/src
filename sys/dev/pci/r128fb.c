@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.28 2012/01/30 19:41:22 drochner Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.29 2012/02/16 17:33:28 macallan Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.28 2012/01/30 19:41:22 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.29 2012/02/16 17:33:28 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.28 2012/01/30 19:41:22 drochner Exp $")
 #include <dev/rasops/rasops.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
 #include <dev/pci/wsdisplay_pci.h>
+#include <dev/wscons/wsdisplay_glyphcachevar.h>
 
 #include <dev/i2c/i2cvar.h>
 
@@ -93,6 +94,7 @@ struct r128fb_softc {
 	u_char sc_cmap_blue[256];
 	/* engine stuff */
 	uint32_t sc_master_cntl;
+	glyphcache sc_gc;
 };
 
 static int	r128fb_match(device_t, cfdata_t, void *);
@@ -118,7 +120,7 @@ static void	r128fb_init(struct r128fb_softc *);
 static void	r128fb_flush_engine(struct r128fb_softc *);
 static void	r128fb_rectfill(struct r128fb_softc *, int, int, int, int,
 			    uint32_t);
-static void	r128fb_bitblt(struct r128fb_softc *, int, int, int, int, int,
+static void	r128fb_bitblt(void *, int, int, int, int, int,
 			    int, int);
 
 static void	r128fb_cursor(void *, int, int, int);
@@ -309,6 +311,9 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
+	sc->sc_gc.gc_bitblt = r128fb_bitblt;
+	sc->sc_gc.gc_blitcookie = sc;
+	sc->sc_gc.gc_rop = R128_ROP3_S;
 	if (is_console) {
 		vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
 		    &defattr);
@@ -320,6 +325,12 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 		sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
 		sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
 		sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
+		glyphcache_init(&sc->sc_gc, sc->sc_height,
+				sc->sc_width,
+				(0x800000 / sc->sc_stride) - sc->sc_height,
+				ri->ri_font->fontwidth,
+				ri->ri_font->fontheight,
+				defattr);
 		wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, 0,
 		    defattr);
 		vcons_replay_msgbuf(&sc->sc_console_screen);
@@ -329,6 +340,12 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 		 * until someone actually allocates a screen for us
 		 */
 		(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
+		glyphcache_init(&sc->sc_gc, sc->sc_height,
+				sc->sc_width,
+				(0x800000 / sc->sc_stride) - sc->sc_height,
+				ri->ri_font->fontwidth,
+				ri->ri_font->fontheight,
+				defattr);
 	}
 
 	/* no suspend/resume support yet */
@@ -411,6 +428,7 @@ r128fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			if(new_mode == WSDISPLAYIO_MODE_EMUL) {
 				r128fb_init(sc);
 				r128fb_restore_palette(sc);
+				glyphcache_wipe(&sc->sc_gc);
 				r128fb_rectfill(sc, 0, 0, sc->sc_width,
 				    sc->sc_height, ms->scr_ri.ri_devcmap[
 				    (ms->scr_defattr >> 16) & 0xff]);
@@ -549,6 +567,10 @@ r128fb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_ops.cursor = r128fb_cursor;
 	if (FONT_IS_ALPHA(ri->ri_font)) {
 		ri->ri_ops.putchar = r128fb_putchar_aa;
+		printf("before: %08x\n", (uint32_t)sc->sc_gc.gc_attr);
+		ri->ri_ops.allocattr(ri, WS_DEFAULT_FG, WS_DEFAULT_BG,
+		     0, &sc->sc_gc.gc_attr);
+		printf("after: %08x\n", (uint32_t)sc->sc_gc.gc_attr);
 	} else
 		ri->ri_ops.putchar = r128fb_putchar;
 }
@@ -744,9 +766,10 @@ r128fb_rectfill(struct r128fb_softc *sc, int x, int y, int wi, int he,
 }
 
 static void
-r128fb_bitblt(struct r128fb_softc *sc, int xs, int ys, int xd, int yd,
+r128fb_bitblt(void *cookie, int xs, int ys, int xd, int yd,
     int wi, int he, int rop)
 {
+	struct r128fb_softc *sc = cookie;
 	uint32_t dp_cntl = 0;
 
 	r128fb_wait(sc, 5);
@@ -925,6 +948,7 @@ r128fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	int i, x, y, wi, he, r, g, b, aval;
 	int r1, g1, b1, r0, g0, b0, fgo, bgo;
 	uint8_t *data8;
+	int rv;
 
 	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL) 
 		return;
@@ -942,6 +966,10 @@ r128fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 		r128fb_rectfill(sc, x, y, wi, he, bg);
 		return;
 	}
+
+	rv = glyphcache_try(&sc->sc_gc, c, x, y, attr);
+	if (rv == GC_OK)
+		return;
 
 	data8 = WSFONT_GLYPH(c, font);
 
@@ -1013,6 +1041,9 @@ r128fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 		latch = latch << ((4 - (i & 3)) << 3);	
 		bus_space_write_stream_4(sc->sc_memt, sc->sc_regh,
 				    R128_HOST_DATA0, latch);
+	}
+	if (rv == GC_ADD) {
+		glyphcache_add(&sc->sc_gc, c, x, y);
 	}
 }
 
