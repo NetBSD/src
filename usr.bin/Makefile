@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.207 2012/02/07 19:13:31 joerg Exp $
+#	$NetBSD: Makefile,v 1.208 2012/02/16 04:52:47 jmmv Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -31,7 +31,7 @@ SUBDIR= apply asa at audio audiocfg \
 	uniq units unvis unzip usbhidaction usbhidctl users utoppya \
 	uudecode uuencode uuidgen vacation vgrind videoctl vis \
 	vmstat vndcompress w \
-	wall wc what whereis who whois window \
+	wall wc what whereis who whois \
 	write xargs xinstall xlint xstr yes
 
 SUBDIR+= ../external/zlib/pigz/bin/pigz
