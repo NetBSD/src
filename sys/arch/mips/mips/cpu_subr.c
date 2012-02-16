@@ -141,7 +141,7 @@ cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_package_id,
 		const size_t ti_size = roundup2(sizeof(*ti), COHERENCY_UNIT)
 		    + 2*COHERENCY_UNIT;
 		if (cpu_info_offset >= ti_size) {
-			ti = (void *) va;
+			ti = (void *) (va + cpu_info_offset - ti_size);
 		} else {
 			KASSERT(PAGE_SIZE - cpu_info_offset + sizeof(*ci) >= ti_size);
 			ti = (struct pmap_tlb_info *)(va + PAGE_SIZE - ti_size);
@@ -929,6 +929,10 @@ cpu_hatch(struct cpu_info *ci)
 	mips3_cp0_wired_write(0);
 	tlb_invalidate_all();
 	mips3_cp0_wired_write(ti->ti_wired);
+
+#ifdef ENABLE_MIPS_KSEGX
+	pmap_ksegx_bootstrap();
+#endif
 
 	/*
 	 * Setup HWRENA and USERLOCAL COP0 registers (MIPSxxR2).
