@@ -443,6 +443,37 @@ pmap_unmap_ephemeral_page(struct vm_page *pg, vaddr_t va,
 #endif
 }
 
+#ifdef ENABLE_MIPS_KSEGX
+void
+pmap_ksegx_bootstrap(void)
+{
+	const vaddr_t kva_inc = 1 << ((VM_KSEGX_SHIFT - 1) & ~1);
+	const uint32_t tlb_mask = (2 * kva_inc - 1) & 0x1ffffc00;
+
+	if (mips_ksegx_tlb_slot < 0) {
+		mips_ksegx_tlb_slot = pmap_tlb0_info.ti_wired;
+		pmap_tlb0_info.ti_wired += VM_KSEGX_SIZE / (2 * kva_inc);
+		mips3_cp0_wired_write(pmap_tlb0_info.ti_wired);
+	}
+
+	u_int tlb_slot = mips_ksegx_tlb_slot;
+	for (vaddr_t kva = 0;
+	     kva < VM_KSEGX_SIZE;
+	     kva += 2 * kva_inc, tlb_slot++) {
+		extern pt_entry_t mips_ksegx_pte;
+		struct tlbmask tlb = {
+		    .tlb_hi = VM_KSEGX_ADDRESS + kva,
+		    .tlb_lo0 = mips_ksegx_pte.pt_entry
+			+ mips_paddr_to_tlbpfn(kva),
+		    .tlb_lo1 = mips_ksegx_pte.pt_entry
+			+ mips_paddr_to_tlbpfn(kva + kva_inc),
+		    .tlb_mask = tlb_mask,
+		};
+		tlb_write_indexed(tlb_slot, &tlb);
+	}
+}
+#endif
+
 /*
  *	Bootstrap the system enough to run with virtual memory.
  *	firstaddr is the first unused kseg0 address (not page aligned).
@@ -460,22 +491,7 @@ pmap_bootstrap(void)
 	pmap_tlb_info_init(&pmap_tlb0_info);		/* init the lock */
 
 #ifdef ENABLE_MIPS_KSEGX
-	const vaddr_t kva_inc = 1 << ((VM_KSEGX_SHIFT - 1) & ~1);
-	const uint32_t tlb_mask = (2 * kva_inc - 1) & 0x1ffffc00;
-	for (vaddr_t kva = 0; kva < VM_KSEGX_SIZE; kva += 2 * kva_inc) {
-		extern pt_entry_t mips_ksegx_pte;
-		struct tlbmask tlb = {
-		    .tlb_hi = VM_KSEGX_ADDRESS + kva,
-		    .tlb_lo0 = mips_ksegx_pte.pt_entry
-			+ mips_paddr_to_tlbpfn(kva),
-		    .tlb_lo1 = mips_ksegx_pte.pt_entry
-			+ mips_paddr_to_tlbpfn(kva + kva_inc),
-		    .tlb_mask = tlb_mask,
-		};
-		tlb_write_indexed(pmap_tlb0_info.ti_wired, &tlb);
-		pmap_tlb0_info.ti_wired++;
-	}
-	mips3_cp0_wired_write(pmap_tlb0_info.ti_wired);
+	pmap_ksegx_bootstrap();
 #endif
 
 	/*
@@ -918,7 +934,7 @@ pmap_update(struct pmap *pm)
 	kpreempt_disable();
 #ifdef MULTIPROCESSOR
 	u_int pending = atomic_swap_uint(&pm->pm_shootdown_pending, 0);
-	if (pending && pmap_tlb_shootdown_bystanders(pm))
+	if (pending && pmap_tlb_shootdown_bystanders(pm, pending))
 		PMAP_COUNT(shootdown_ipis);
 #endif
 	/*

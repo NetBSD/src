@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.54.26.23 2012/01/19 08:28:48 matt Exp $	*/
+/*	pmap.h,v 1.54.26.23 2012/01/19 08:28:48 matt Exp	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -180,7 +180,7 @@ typedef struct pmap {
 #ifdef MULTIPROCESSOR
 	volatile uint32_t	pm_active;	/* pmap was active on ... */
 	volatile uint32_t	pm_onproc;	/* pmap is active on ... */
-	volatile u_int		pm_shootdown_pending;
+	volatile uint32_t	pm_shootdown_pending;
 #endif
 	union segtab		*pm_segtab;	/* pointers to pages of PTEs */
 	u_int			pm_count;	/* pmap reference count */
@@ -254,6 +254,7 @@ extern vaddr_t mips_virtual_end;
  *	Bootstrap the system enough to run with virtual memory.
  */
 void	pmap_bootstrap(void);
+void	pmap_ksegx_bootstrap(void);
 
 void	pmap_remove_all(pmap_t);
 void	pmap_set_modified(paddr_t);
@@ -262,7 +263,7 @@ void	pmap_procwr(struct proc *, vaddr_t, size_t);
 
 #ifdef MULTIPROCESSOR
 void	pmap_tlb_shootdown_process(void);
-bool	pmap_tlb_shootdown_bystanders(pmap_t pmap);
+bool	pmap_tlb_shootdown_bystanders(pmap_t pmap, uint32_t);
 void	pmap_tlb_info_attach(struct pmap_tlb_info *, struct cpu_info *);
 #endif
 void	pmap_syncicache_page(struct vm_page *, uint32_t);
