@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.52.4.1 2009/02/24 04:05:07 snj Exp $	*/
+/*	db_xxx.c,v 1.52.4.1 2009/02/24 04:05:07 snj Exp	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.52.4.1 2009/02/24 04:05:07 snj Exp $");
+__KERNEL_RCSID(0, "db_xxx.c,v 1.52.4.1 2009/02/24 04:05:07 snj Exp");
 
 #include "opt_kgdb.h"
 
@@ -185,6 +185,7 @@ db_show_all_procs(db_expr_t addr, bool haddr,
 	char db_nbuf[MAXCOMLEN + 1];
 	bool run;
 	int cpuno;
+	int ptrlen = MAX(2 * sizeof(long) + 2, sizeof("STRUCT LWP *")-1);
 
 	if (modif[0] == 0)
 		mode = "l";			/* default == lwp mode */
@@ -202,12 +203,17 @@ db_show_all_procs(db_expr_t addr, bool haddr,
 
 	switch (*mode) {
 	case 'a':
-		db_printf("PID  %10s %18s %18s %18s\n",
-		    "COMMAND", "STRUCT PROC *", "UAREA *", "VMSPACE/VM_MAP");
+		db_printf("PID  %10s %*s %*s %*s\n",
+		    "COMMAND", ptrlen, "STRUCT PROC *",
+		     ptrlen, "UAREA *",
+		     ptrlen, "VMSPACE/VM_MAP");
 		break;
 	case 'l':
-		db_printf("PID   %4s S %3s %9s %18s %18s %-8s\n",
-		    "LID", "CPU", "FLAGS", "STRUCT LWP *", "NAME", "WAIT");
+		db_printf("PID   %4s S %3s %9s %*s %*s %18s %-8s\n",
+		    "LID", "CPU", "FLAGS",
+		     ptrlen, "STRUCT LWP *",
+		     ptrlen, "UAREA *",
+		    "NAME", "WAIT");
 		break;
 	case 'n':
 		db_printf("PID  %8s %8s %10s S %7s %4s %16s %7s\n",
@@ -234,10 +240,11 @@ db_show_all_procs(db_expr_t addr, bool haddr,
 			switch (*mode) {
 
 			case 'a':
-				db_printf("%10.10s %18lx %18lx %18lx\n",
-				    p->p_comm, (long)p,
-				    (long)(l != NULL ? l->l_addr : 0),
-				    (long)p->p_vmspace);
+				db_printf("%10.10s %*lx %*lx %*lx\n",
+				    p->p_comm,
+				    ptrlen, (long)p,
+				    ptrlen, (long)(l != NULL ? l->l_addr : 0),
+				    ptrlen, (long)p->p_vmspace);
 				break;
 			case 'l':
 				 while (l != NULL) {
@@ -255,16 +262,17 @@ db_show_all_procs(db_expr_t addr, bool haddr,
 						cpuno = cpu_index(l->l_cpu);
 					else
 						cpuno = -1;
-					db_printf("%c%4d %d %3d %9x %18lx %18s %-8s\n",
+					db_printf("%c%4d %d %3d %9x %*lx %*lx %18s %-8s\n",
 					    (run ? '>' : ' '), l->l_lid,
-					    l->l_stat, cpuno, l->l_flag, (long)l,
-					    db_nbuf,
+					    l->l_stat, cpuno, l->l_flag,
+					    ptrlen, (long)l,
+					    ptrlen, (long)l->l_addr, db_nbuf,
 					    (l->l_wchan && l->l_wmesg) ?
 					    l->l_wmesg : "");
 
 					l = LIST_NEXT(l, l_sibling);
 					if (l)
-						db_printf("%11s","");
+						db_printf("%5s","");
 				}
 				break;
 			case 'n':
