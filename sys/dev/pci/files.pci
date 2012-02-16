@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.354 2012/01/24 01:58:40 rkujawa Exp $
+#	$NetBSD: files.pci,v 1.355 2012/02/16 17:33:28 macallan Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -837,7 +837,7 @@ file	dev/pci/unichromefb.c		unichromefb needs-flag
 
 # ATI Radeon framebuffer console driver
 # (Note: to enable the BIOS parser, add options RADEON_BIOS_INIT to the config)
-device	radeonfb: wsemuldisplaydev, videomode, rasops8, rasops32, vcons, splash, i2cbus, i2c_bitbang, ddc_read_edid, edid, drm
+device	radeonfb: wsemuldisplaydev, videomode, rasops8, rasops32, vcons, splash, i2cbus, i2c_bitbang, ddc_read_edid, edid, drm, glyphcache
 attach	radeonfb at pci
 file	dev/pci/radeonfb.c	radeonfb
 file	dev/pci/radeonfb_i2c.c	radeonfb
@@ -980,7 +980,7 @@ attach	ichsmb at pci
 file	dev/pci/ichsmb.c		ichsmb
 
 # ATI Rage 128 framebuffer console driver
-device	r128fb: wsemuldisplaydev, rasops8, rasops32, vcons, videomode, i2cbus, i2c_bitbang
+device	r128fb: wsemuldisplaydev, rasops8, rasops32, vcons, videomode, i2cbus, i2c_bitbang, glyphcache
 attach	r128fb at pci
 file	dev/pci/r128fb.c		r128fb
 defflag	opt_r128fb.h	R128FB_DEBUG
@@ -1041,7 +1041,7 @@ defflag	opt_voyager.h	VOYAGER_DEBUG
 include "dev/pci/hdaudio/files.hdaudio"
 
 # Permedia 2 / Sun PGX32 / Raptor
-device	pm2fb: wsemuldisplaydev, rasops8, vcons, videomode, i2cbus, i2c_bitbang
+device	pm2fb: wsemuldisplaydev, rasops8, rasops32, vcons, videomode, i2cbus, i2c_bitbang, ddc_read_edid, edid
 attach	pm2fb at pci
 file	dev/pci/pm2fb.c		pm2fb
 defflag	opt_pm2fb.h	PM2FB_DEBUG

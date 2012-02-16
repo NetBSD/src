@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfbvar.h,v 1.13 2012/01/30 19:41:23 drochner Exp $ */
+/* $NetBSD: radeonfbvar.h,v 1.14 2012/02/16 17:33:28 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -53,6 +53,7 @@
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
+#include <dev/wscons/wsdisplay_glyphcachevar.h>
 #include <dev/videomode/videomode.h>
 #include <dev/videomode/edidvar.h>
 #ifdef SPLASHSCREEN
@@ -191,6 +192,7 @@ struct radeonfb_display {
 	struct vcons_screen	rd_vscreen;
 	struct vcons_data	rd_vd;
 	void (*rd_putchar)(void *, int, int, u_int, long);
+	glyphcache		rd_gc;
 
 #if 0
 	uint8_t			rd_cmap_red[256];
