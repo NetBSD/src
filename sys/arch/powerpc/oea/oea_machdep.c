@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.63 2012/02/15 01:56:57 macallan Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.64 2012/02/16 07:59:46 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.63 2012/02/15 01:56:57 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.64 2012/02/16 07:59:46 matt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -473,11 +473,24 @@ void
 oea_iobat_add(paddr_t pa, register_t len)
 {
 	static int z = 1;
-	const u_int n = __SHIFTOUT(len, (BAT_XBL|BAT_BL) & ~BAT_BL_8M);
+	const u_int n = BAT_BL_TO_SIZE(len) / BAT_BL_TO_SIZE(BAT_BL_8M);
 	const u_int i = BAT_VA2IDX(pa) & -n; /* in case pa was in the middle */
 	const int after_bat3 = (oeacpufeat & OEACPU_HIGHBAT) ? 4 : 8;
 
 	KASSERT(len >= BAT_BL_8M);
+
+	/*
+	 * If the caller wanted a bigger BAT than the hardware supports,
+	 * split it into smaller BATs.
+	 */
+	if (len > BAT_BL_256M && (oeacpufeat & OEACPU_XBSEN) == 0) {
+		u_int xn = BAT_BL_TO_SIZE(len) >> 28;
+		while (xn-- > 0) {
+			oea_iobat_add(pa, BAT_BL_256M);
+			pa += 0x10000000;
+		}
+		return;
+	} 
 
 	const register_t batl = BATL(pa, BAT_I|BAT_G, BAT_PP_RW);
 	const register_t batu = BATU(pa, len, BAT_Vs);
@@ -600,6 +613,7 @@ oea_batinit(paddr_t pa, ...)
 	va_list ap;
 
 	cpuvers = mfpvr() >> 16;
+
 	/*
 	 * we need to call this before zapping BATs so OF calls work
 	 */
