@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.293 2012/01/04 02:48:58 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.294 2012/02/16 02:47:55 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.293 2012/01/04 02:48:58 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.294 2012/02/16 02:47:55 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -2089,7 +2089,6 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	 * (XXX this could be done better.)
 	 */
 	rw_enter(&fs->lfs_iflock, RW_WRITER);
-	vn_lock(ivp, LK_EXCLUSIVE | LK_RETRY);
 	for (i = 0; i < ilast; i++) {
 		bread(ivp, i, fs->lfs_bsize, NOCRED, 0, &bp);
 		brelse(bp, 0);
@@ -2205,7 +2204,6 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	VOP_BWRITE(bp->b_vp, bp);
 
 	/* Let Ifile accesses proceed */
-	VOP_UNLOCK(ivp);
 	rw_exit(&fs->lfs_iflock);
 
     out:

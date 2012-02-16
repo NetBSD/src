@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.121 2012/01/02 22:10:44 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.122 2012/02/16 02:47:55 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.121 2012/01/02 22:10:44 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.122 2012/02/16 02:47:55 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,12 +151,15 @@ static int
 lfs_reservebuf(struct lfs *fs, struct vnode *vp,
     struct vnode *vp2, int n, int bytes)
 {
+	int cantwait;
+
 	ASSERT_MAYBE_SEGLOCK(fs);
 	KASSERT(locked_queue_rcount >= 0);
 	KASSERT(locked_queue_rbytes >= 0);
 
+	cantwait = (VTOI(vp)->i_flag & IN_ADIROP) || fs->lfs_unlockvp == vp;
 	mutex_enter(&lfs_lock);
-	while (n > 0 && !lfs_fits_buf(fs, n, bytes)) {
+	while (!cantwait && n > 0 && !lfs_fits_buf(fs, n, bytes)) {
 		int error;
 
 		lfs_flush(fs, 0, 0);
@@ -213,28 +216,15 @@ lfs_reserveavail(struct lfs *fs, struct vnode *vp,
 	CLEANERINFO *cip;
 	struct buf *bp;
 	int error, slept;
+	int cantwait;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
 	slept = 0;
 	mutex_enter(&lfs_lock);
-	while (fsb > 0 && !lfs_fits(fs, fsb + fs->lfs_ravail + fs->lfs_favail)) {
+	cantwait = (VTOI(vp)->i_flag & IN_ADIROP) || fs->lfs_unlockvp == vp;
+	while (!cantwait && fsb > 0 &&
+	       !lfs_fits(fs, fsb + fs->lfs_ravail + fs->lfs_favail)) {
 		mutex_exit(&lfs_lock);
-#if 0
-		/*
-		 * XXX ideally, we should unlock vnodes here
-		 * because we might sleep very long time.
-		 */
-		VOP_UNLOCK(vp);
-		if (vp2 != NULL) {
-			VOP_UNLOCK(vp2);
-		}
-#else
-		/*
-		 * XXX since we'll sleep for cleaner with vnode lock holding,
-		 * deadlock will occur if cleaner tries to lock the vnode.
-		 * (eg. lfs_markv -> lfs_fastvget -> getnewvnode -> vclean)
-		 */
-#endif
 
 		if (!slept) {
 			DLOG((DLOG_AVAIL, "lfs_reserve: waiting for %ld (bfree = %d,"
@@ -256,10 +246,6 @@ lfs_reserveavail(struct lfs *fs, struct vnode *vp,
 
 		error = mtsleep(&fs->lfs_avail, PCATCH | PUSER, "lfs_reserve",
 				0, &lfs_lock);
-#if 0
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY); /* XXX use lockstatus */
-		vn_lock(vp2, LK_EXCLUSIVE | LK_RETRY); /* XXX use lockstatus */
-#endif
 		if (error) {
 			mutex_exit(&lfs_lock);
 			return error;
@@ -285,7 +271,6 @@ int
 lfs_reserve(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 {
 	int error;
-	int cantwait;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
 	if (vp2) {
@@ -300,30 +285,18 @@ lfs_reserve(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 
 	KASSERT(fsb < 0 || VOP_ISLOCKED(vp));
 	KASSERT(vp2 == NULL || fsb < 0 || VOP_ISLOCKED(vp2));
-	KASSERT(vp2 == NULL || !(VTOI(vp2)->i_flag & IN_ADIROP));
 	KASSERT(vp2 == NULL || vp2 != fs->lfs_unlockvp);
 
-	cantwait = (VTOI(vp)->i_flag & IN_ADIROP) || fs->lfs_unlockvp == vp;
 #ifdef DIAGNOSTIC
-	if (cantwait) {
-		if (fsb > 0)
-			lfs_rescountdirop++;
-		else if (fsb < 0)
-			lfs_rescountdirop--;
-		if (lfs_rescountdirop < 0)
-			panic("lfs_rescountdirop");
-	}
-	else {
-		if (fsb > 0)
-			lfs_rescount++;
-		else if (fsb < 0)
-			lfs_rescount--;
-		if (lfs_rescount < 0)
-			panic("lfs_rescount");
-	}
+	mutex_enter(&lfs_lock);
+	if (fsb > 0)
+		lfs_rescount++;
+	else if (fsb < 0)
+		lfs_rescount--;
+	if (lfs_rescount < 0)
+		panic("lfs_rescount");
+	mutex_exit(&lfs_lock);
 #endif
-	if (cantwait)
-		return 0;
 
 	/*
 	 * XXX
