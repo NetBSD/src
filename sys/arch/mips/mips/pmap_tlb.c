@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.1.2.22 2012/01/19 08:28:50 matt Exp $	*/
+/*	pmap_tlb.c,v 1.1.2.22 2012/01/19 08:28:50 matt Exp	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.22 2012/01/19 08:28:50 matt Exp $");
+__KERNEL_RCSID(0, "pmap_tlb.c,v 1.1.2.22 2012/01/19 08:28:50 matt Exp");
 
 /*
  * Manages address spaces in a TLB.
@@ -221,6 +221,9 @@ pmap_pai_reset(struct pmap_tlb_info *ti, struct pmap_asid_info *pai,
 void
 pmap_tlb_info_evcnt_attach(struct pmap_tlb_info *ti)
 {
+	KDASSERT(ti->ti_name[0] == 't');
+	KDASSERT(ti->ti_name[1] == 'l');
+	KDASSERT(ti->ti_name[2] == 'b');
 	evcnt_attach_dynamic(&ti->ti_evcnt_asid_reinits,
 	    EVCNT_TYPE_MISC, NULL,
 	    ti->ti_name, "asid pool reinit");
@@ -290,6 +293,9 @@ pmap_tlb_info_init(struct pmap_tlb_info *ti)
 	 */
 	ti->ti_wired = (cpu_info_store.ci_tlb_slot >= 0);
 	pmap_tlbs[ti->ti_index] = ti;
+	KDASSERT(ti->ti_name[0] == 't');
+	KDASSERT(ti->ti_name[1] == 'l');
+	KDASSERT(ti->ti_name[2] == 'b');
 #endif /* MULTIPROCESSOR */
 }
 
@@ -300,6 +306,10 @@ pmap_tlb_info_attach(struct pmap_tlb_info *ti, struct cpu_info *ci)
 	KASSERT(!CPU_IS_PRIMARY(ci));
 	KASSERT(ci->ci_data.cpu_idlelwp != NULL);
 	KASSERT(cold);
+
+	KDASSERT(ti->ti_name[0] == 't');
+	KDASSERT(ti->ti_name[1] == 'l');
+	KDASSERT(ti->ti_name[2] == 'b');
 
 	TLBINFO_LOCK(ti);
 	uint32_t cpu_mask = 1 << cpu_index(ci);
@@ -436,10 +446,16 @@ pmap_tlb_shootdown_process(void)
 	struct pmap * const curpmap = curlwp->l_proc->p_vmspace->vm_map.pmap;
 #endif
 
+	KDASSERT(ti->ti_name[0] == 't');
+	KDASSERT(ti->ti_name[1] == 'l');
+	KDASSERT(ti->ti_name[2] == 'b');
+
+#if 0
 	KASSERT(cpu_intr_p());
 	KASSERTMSG(ci->ci_cpl >= IPL_SCHED,
 	    ("%s: cpl (%d) < IPL_SCHED (%d)",
 	    __func__, ci->ci_cpl, IPL_SCHED));
+#endif
 	TLBINFO_LOCK(ti);
 
 	switch (ti->ti_tlbinvop) {
@@ -526,72 +542,14 @@ pmap_tlb_shootdown_process(void)
 	TLBINV_MAP(op, TLBINV_ALLKERNEL, TLBINV_ALL, TLBINV_ALL,	\
 	    TLBINV_ALLKERNEL, TLBINV_ALL)
 
-bool
-pmap_tlb_shootdown_bystanders(pmap_t pm)
+static struct cpu_info *
+pmap_tlb_target_bystander(struct pmap_tlb_info *ti, struct pmap *pm,
+	bool kernel_p)
 {
-	/*
-	 * We don't need to deal our own TLB.
-	 */
-	uint32_t pm_active = pm->pm_active & ~curcpu()->ci_tlb_info->ti_cpu_mask;
-	const bool kernel_p = (pm == pmap_kernel());
-	bool ipi_sent = false;
-
-	/*
-	 * If pm_active gets more bits set, then it's after all our changes
-	 * have been made so they will already be cognizant of them.
-	 */
-
-	for (size_t i = 0; pm_active != 0; i++) {
-		KASSERT(i < pmap_ntlbs);
-		struct pmap_tlb_info * const ti = pmap_tlbs[i];
-		KASSERT(tlbinfo_index(ti) == i);
-		/*
-		 * Skip this TLB if there are no active mappings for it.
-		 */
-		if ((pm_active & ti->ti_cpu_mask) == 0)
-			continue;
-		struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
-		pm_active &= ~ti->ti_cpu_mask;
-		TLBINFO_LOCK(ti);
-		const uint32_t onproc = (pm->pm_onproc & ti->ti_cpu_mask);
-		if (onproc != 0) {
-			if (kernel_p) {
-				ti->ti_tlbinvop =
-				    TLBINV_KERNEL_MAP(ti->ti_tlbinvop);
-				ti->ti_victim = NULL;
-			} else {
-				KASSERT(pai->pai_asid);
-				if (__predict_false(ti->ti_victim == pm)) {
-					KASSERT(ti->ti_tlbinvop == TLBINV_ONE);
-					/*
-					 * We still need to invalidate this one
-					 * ASID so there's nothing to change.
-					 */
-				} else {
-					ti->ti_tlbinvop =
-					    TLBINV_USER_MAP(ti->ti_tlbinvop);
-					if (ti->ti_tlbinvop == TLBINV_ONE)
-						ti->ti_victim = pm;
-					else
-						ti->ti_victim = NULL;
-				}
-			}
-			TLBINFO_UNLOCK(ti);
-			/*
-			 * Now we can send out the shootdown IPIs to a CPU
-			 * that shares this TLB and is currently using this
-			 * pmap.  That CPU will process the IPI and do the
-			 * all the work.  Any other CPUs sharing that TLB
-			 * will take advantage of that work.  pm_onproc might
-			 * change now that we have released the lock but we
-			 * can tolerate spurious shootdowns.
-			 */
-			KASSERT(onproc != 0);
-			u_int j = ffs(onproc) - 1;
-			cpu_send_ipi(cpu_lookup(j), IPI_SHOOTDOWN);
-			ipi_sent = true;
-			continue;
-		}
+	struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
+	TLBINFO_LOCK(ti);
+	const uint32_t onproc = (pm->pm_onproc & ti->ti_cpu_mask);
+	if (onproc == 0) {
 		if (pm->pm_active & ti->ti_cpu_mask) {
 			/*
 			 * If this pmap has an ASID assigned but it's not
@@ -604,6 +562,90 @@ pmap_tlb_shootdown_bystanders(pmap_t pm)
 			//ti->ti_evcnt_lazy_shots.ev_count++;
 		}
 		TLBINFO_UNLOCK(ti);
+		return NULL;
+	}
+	if (kernel_p) {
+		ti->ti_tlbinvop = TLBINV_KERNEL_MAP(ti->ti_tlbinvop);
+		ti->ti_victim = NULL;
+	} else {
+		KASSERT(pai->pai_asid);
+		if (__predict_false(ti->ti_victim == pm)) {
+			KASSERT(ti->ti_tlbinvop == TLBINV_ONE);
+			/*
+			 * We still need to invalidate this one
+			 * ASID so there's nothing to change.
+			 */
+		} else {
+			ti->ti_tlbinvop = TLBINV_USER_MAP(ti->ti_tlbinvop);
+			if (ti->ti_tlbinvop == TLBINV_ONE)
+				ti->ti_victim = pm;
+			else
+				ti->ti_victim = NULL;
+		}
+	}
+	TLBINFO_UNLOCK(ti);
+	/*
+	 * Return a pointer to the cpu_info of one of the tlb_info's cpus
+	 */
+	const u_int j = ffs(onproc) - 1;
+	return cpu_lookup(j);
+}
+
+bool
+pmap_tlb_shootdown_bystanders(pmap_t pm, uint32_t pending)
+{
+	struct cpu_info * const ci = curcpu();
+	struct pmap_tlb_info * const curti = ci->ci_tlb_info;
+	uint32_t pm_active = pm->pm_active & ~curti->ti_cpu_mask;
+	const bool kernel_p = (pm == pmap_kernel());
+	bool ipi_sent = false;
+
+	KDASSERT(curti->ti_name[0] == 't');
+	KDASSERT(curti->ti_name[1] == 'l');
+	KDASSERT(curti->ti_name[2] == 'b');
+
+	if (__predict_false(pending & ~curti->ti_cpu_mask) != 0) {
+		/*
+		 * Now if another cpu (not sharing this tlb_info) wants a
+		 * shootdown, then they must mean us since this pmap is
+		 * obviously active.  But since we cleared their bit, they
+		 * won't know they need to do it.  So we do it ourselves
+		 * and save them from sending an IPI.
+		 */
+		if (pmap_tlb_target_bystander(curti, pm, kernel_p) != NULL)
+			pmap_tlb_shootdown_process();
+	}
+
+	/*
+	 * If pm_active gets more bits set, then it's after all our changes
+	 * have been made so they will already be cognizant of them.
+	 */
+	for (size_t i = 0; pm_active != 0; i++) {
+		KASSERT(i < pmap_ntlbs);
+		struct pmap_tlb_info * const ti = pmap_tlbs[i];
+		KASSERT(tlbinfo_index(ti) == i);
+		/*
+		 * Skip this TLB if there are no active mappings for it.
+		 */
+		if ((pm_active & ti->ti_cpu_mask) == 0) {
+			continue;
+		}
+		pm_active &= ~ti->ti_cpu_mask;
+		struct cpu_info * const ipi_ci =
+		    pmap_tlb_target_bystander(ti, pm, kernel_p);
+		if (ipi_ci != NULL) {
+			/*
+			 * Now we can send out the shootdown IPIs to a CPU
+			 * that shares this TLB and is currently using this
+			 * pmap.  That CPU will process the IPI and do the
+			 * all the work.  Any other CPUs sharing that TLB
+			 * will take advantage of that work.  pm_onproc might
+			 * change now that we have released the lock but we
+			 * can tolerate spurious shootdowns.
+			 */
+			cpu_send_ipi(ipi_ci, IPI_SHOOTDOWN);
+			ipi_sent = true;
+		}
 	}
 
 	return ipi_sent;
@@ -617,6 +659,10 @@ pmap_tlb_update_addr(pmap_t pm, vaddr_t va, uint32_t pt_entry, bool need_ipi)
 	struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
 	int rv = -1;
 
+	KDASSERT(ti->ti_name[0] == 't');
+	KDASSERT(ti->ti_name[1] == 'l');
+	KDASSERT(ti->ti_name[2] == 'b');
+
 	KASSERT(kpreempt_disabled());
 
 	TLBINFO_LOCK(ti);
@@ -627,7 +673,9 @@ pmap_tlb_update_addr(pmap_t pm, vaddr_t va, uint32_t pt_entry, bool need_ipi)
 		pmap_tlb_asid_check();
 	}
 #ifdef MULTIPROCESSOR
-	atomic_or_uint(&pm->pm_shootdown_pending, need_ipi);
+	if (need_ipi && (pm->pm_active & ~ti->ti_cpu_mask) != 0) {
+		atomic_or_uint(&pm->pm_shootdown_pending, 1 << cpu_number());
+	}
 #endif
 	TLBINFO_UNLOCK(ti);
 
@@ -640,6 +688,10 @@ pmap_tlb_invalidate_addr(pmap_t pm, vaddr_t va)
 	struct pmap_tlb_info * const ti = curcpu()->ci_tlb_info;
 	struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
 
+	KDASSERT(ti->ti_name[0] == 't');
+	KDASSERT(ti->ti_name[1] == 'l');
+	KDASSERT(ti->ti_name[2] == 'b');
+
 	KASSERT(kpreempt_disabled());
 
 	TLBINFO_LOCK(ti);
@@ -650,7 +702,9 @@ pmap_tlb_invalidate_addr(pmap_t pm, vaddr_t va)
 		pmap_tlb_asid_check();
 	}
 #ifdef MULTIPROCESSOR
-	(void) atomic_swap_uint(&pm->pm_shootdown_pending, 1);
+	if ((pm->pm_active & ~ti->ti_cpu_mask) != 0) {
+		atomic_or_uint(&pm->pm_shootdown_pending, 1 << cpu_number());
+	}
 #endif
 	TLBINFO_UNLOCK(ti);
 }
@@ -736,6 +790,10 @@ pmap_tlb_asid_acquire(pmap_t pm, struct lwp *l)
 	struct cpu_info * const ci = l->l_cpu;
 	struct pmap_tlb_info * const ti = ci->ci_tlb_info;
 	struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
+
+	KDASSERT(ti->ti_name[0] == 't');
+	KDASSERT(ti->ti_name[1] == 'l');
+	KDASSERT(ti->ti_name[2] == 'b');
 
 	KASSERT(kpreempt_disabled());
 
@@ -831,6 +889,10 @@ pmap_tlb_asid_release_all(struct pmap *pm)
 	for (u_int i = 0; pm->pm_active != 0; i++) {
 		KASSERT(i < pmap_ntlbs);
 		struct pmap_tlb_info * const ti = pmap_tlbs[i];
+		KDASSERT(ti->ti_name[0] == 't');
+		KDASSERT(ti->ti_name[1] == 'l');
+		KDASSERT(ti->ti_name[2] == 'b');
+
 		if (pm->pm_active & ti->ti_cpu_mask) {
 			struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
 			TLBINFO_LOCK(ti);
@@ -846,6 +908,9 @@ pmap_tlb_asid_release_all(struct pmap *pm)
 	 */
 	struct pmap_tlb_info * const ti = curcpu()->ci_tlb_info;
 	struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
+	KDASSERT(ti->ti_name[0] == 't');
+	KDASSERT(ti->ti_name[1] == 'l');
+	KDASSERT(ti->ti_name[2] == 'b');
 	TLBINFO_LOCK(ti);
 	if (pai->pai_asid) {
 		pmap_pai_reset(ti, pai, pm);
