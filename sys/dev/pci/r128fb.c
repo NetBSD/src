@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.29 2012/02/16 17:33:28 macallan Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.30 2012/02/16 20:45:21 macallan Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.29 2012/02/16 17:33:28 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.30 2012/02/16 20:45:21 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -567,10 +567,8 @@ r128fb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_ops.cursor = r128fb_cursor;
 	if (FONT_IS_ALPHA(ri->ri_font)) {
 		ri->ri_ops.putchar = r128fb_putchar_aa;
-		printf("before: %08x\n", (uint32_t)sc->sc_gc.gc_attr);
 		ri->ri_ops.allocattr(ri, WS_DEFAULT_FG, WS_DEFAULT_BG,
 		     0, &sc->sc_gc.gc_attr);
-		printf("after: %08x\n", (uint32_t)sc->sc_gc.gc_attr);
 	} else
 		ri->ri_ops.putchar = r128fb_putchar;
 }
