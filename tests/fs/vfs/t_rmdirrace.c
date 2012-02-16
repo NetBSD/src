@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rmdirrace.c,v 1.8 2011/10/08 13:08:54 njoly Exp $	*/
+/*	$NetBSD: t_rmdirrace.c,v 1.9 2012/02/16 02:47:56 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -68,8 +68,6 @@ race(const atf_tc_t *tc, const char *path)
 	int res, fd, quit;
 	pthread_t th1, th2;
 
-	if (FSTYPE_LFS(tc))
-		atf_tc_expect_signal(-1, "PR kern/43582");
 	if (FSTYPE_SYSVBFS(tc))
 		atf_tc_skip("directories not supported by file system");
 
@@ -103,14 +101,6 @@ race(const atf_tc_t *tc, const char *path)
 	res = rump_sys_fchdir(fd);
 	if (res == -1)
 		atf_tc_fail("fchdir failed");
-
-	/*
-	 * Rarely the LFS test does not crash.  atf currently has no way of
-	 * saying "just chill even if the test doesn't fail", so this
-	 * takes care of it.
-	 */
-	if (FSTYPE_LFS(tc))
-		abort();
 }
 
 ATF_FSAPPLY(race, "rmdir(2) race");
