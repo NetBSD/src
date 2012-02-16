@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.33 2011/09/11 18:38:03 mbalmer Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.34 2012/02/16 23:58:15 christos Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -85,7 +85,7 @@ ${PROG}: ${OBJS} ${DPADD}
 ##### Install rules
 .if !target(kmodinstall)
 .if !defined(KMODULEDIR)
-_OSRELEASE!=	${HOST_SH} $S/conf/osrelease.sh
+_OSRELEASE!=	${HOST_SH} $S/conf/osrelease.sh -k
 # Ensure these are recorded properly in METALOG on unprived installes:
 KMODULEARCHDIR?= ${MACHINE}
 _INST_DIRS=	${DESTDIR}/stand/${KMODULEARCHDIR}
