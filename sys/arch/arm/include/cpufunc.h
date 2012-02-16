@@ -689,19 +689,6 @@ u_int	set_r15(u_int, u_int);
 u_int	get_r15(void);
 #endif /* __PROG32 */
 
-/*
- * Functions to manipulate cpu r13
- * (in arm/arm32/setstack.S)
- */
-
-void set_stackptr	(u_int, u_int);
-u_int get_stackptr	(u_int);
-
-/*
- * Miscellany
- */
-
-int get_pc_str_offset	(void);
 
 /*
  * CPU functions from locore.S
@@ -730,6 +717,24 @@ extern int	arm_dcache_align;
 extern int	arm_dcache_align_mask;
 
 #endif	/* _KERNEL */
+
+#if defined(_KERNEL) || defined(_KMEMUSER)
+/*
+ * Miscellany
+ */
+
+int get_pc_str_offset	(void);
+
+/*
+ * Functions to manipulate cpu r13
+ * (in arm/arm32/setstack.S)
+ */
+
+void set_stackptr	(u_int, u_int);
+u_int get_stackptr	(u_int);
+
+#endif /* _KERNEL || _KMEMUSER */
+
 #endif	/* _ARM32_CPUFUNC_H_ */
 
 /* End of cpufunc.h */
