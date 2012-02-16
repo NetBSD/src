@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.55.14.7 2012/02/13 23:07:31 matt Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.55.14.8 2012/02/16 04:20:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -253,6 +253,8 @@ struct uvm_pggroup {
 	STAILQ_ENTRY(uvm_pggroup) pgrp_uvm_link;
 
 	struct uvmpdpol_groupstate *pgrp_gs;	/* for pdpolicy */
+	u_int pgrp_free_list;	/* pages we manage are on this free_list */
+	u_int pgrp_color;	/* color of the pages we manage */
 
 	/* vm_page counters */
 	u_int pgrp_npages;	/* # of pages we manage */
@@ -276,6 +278,9 @@ struct uvm_pggroup {
 	/* internal stuff */
 	bool pgrp_scan_needed;	/* this color needs pages to be reclaimed */
 
+	uint64_t pgrp_hints;	/* # of hints for this page group */
+	uint64_t pgrp_hintfails; /* # of hints that failed */
+
 	/* page daemon counters */
 	uint64_t pgrp_pgswapout; /* # of pages swapped out */
 	uint64_t pgrp_pdrevs;	/* # of times daemon rev'd clock hand */
@@ -292,6 +297,9 @@ struct uvm_pggroup {
 	uint64_t pgrp_pdreanon;	/* anon pages reactivated due to thresholds */
 	uint64_t pgrp_pdrefile;	/* file pages reactivated due to thresholds */
 	uint64_t pgrp_pdreexec;	/* executable pages reactivated due to thresholds */
+	uint64_t pgrp_pdnullscans; /* # of daemon scanned with no victims */
+	uint64_t pgrp_pdvictims; /* # of pages selected by the daemon */
+	uint64_t pgrp_pdputs; /* # of pages the daemon has "put" */
 };
 
 TAILQ_HEAD(uvm_pggrouplist, uvm_pggroup);

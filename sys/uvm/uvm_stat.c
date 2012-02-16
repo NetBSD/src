@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.31.12.2 2012/02/09 03:05:01 matt Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.31.12.3 2012/02/16 04:20:46 matt Exp $	 */
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.31.12.2 2012/02/09 03:05:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.31.12.3 2012/02/16 04:20:46 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -237,6 +237,8 @@ uvmexp_print(void (*pr)(const char *, ...))
 			    grp->pgrp_active, grp->pgrp_inactive,
 			    grp->pgrp_kmempages, grp->pgrp_anonpages,
 			    grp->pgrp_filepages, grp->pgrp_execpages);
+			(*pr)("        hints=%"PRIu64" (failed=%"PRIu64")\n",
+			    grp->pgrp_hints, grp->pgrp_hintfails);
 		} else {
 			(*pr)("  active=%u, inactive=%u\n",
 			    grp->pgrp_active, grp->pgrp_inactive);
@@ -296,15 +298,22 @@ uvmexp_print(void (*pr)(const char *, ...))
 	(*pr)("    woke=%d\n", uvmexp.pdwoke);
 	STAILQ_FOREACH(grp, &uvm.page_groups, pgrp_uvm_link) {
 		(*pr)("   group#%zd\n", grp - uvm.pggroups);
-		(*pr)("    revs=%"PRIu64", scans=%"PRIu64
-		    ", obscans=%"PRIu64", anscans=%"PRIu64"\n",
-		    grp->pgrp_pdrevs, grp->pgrp_pdscans,
+		(*pr)("    revs=%"PRIu64
+		    ", scans=%"PRIu64
+		    " (null=%"PRIu64
+		    ", obj=%"PRIu64
+		    ", anon=%"PRIu64")\n",
+		    grp->pgrp_pdrevs, grp->pgrp_pdscans, grp->pgrp_pdnullscans,
 		    grp->pgrp_pdobscan, grp->pgrp_pdanscan);
-		(*pr)("    busy=%"PRIu64", freed=%"PRIu64", reactivate=%"PRIu64
+		(*pr)("    victims=%"PRIu64
+		    ", busy=%"PRIu64
+		    ", freed=%"PRIu64
+		    ", reactivate=%"PRIu64
 		    ", deactivate=%"PRIu64"\n",
-		    grp->pgrp_pdbusy, grp->pgrp_pdfreed, grp->pgrp_pdreact,
-		    grp->pgrp_pddeact);
-		(*pr)("    pageouts=%"PRIu64", pending=%"PRIu64
+		    grp->pgrp_pdvictims, grp->pgrp_pdbusy, grp->pgrp_pdfreed,
+		    grp->pgrp_pdreact, grp->pgrp_pddeact);
+		(*pr)("    pageouts=%"PRIu64
+		    ", pending=%"PRIu64
 		    ", paging=%"PRIu64"\n",
 		    grp->pgrp_pdpageouts, grp->pgrp_pdpending,
 		    grp->pgrp_paging);
