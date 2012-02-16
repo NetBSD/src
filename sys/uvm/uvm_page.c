@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.181 2012/02/02 19:43:08 tls Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.182 2012/02/16 11:46:14 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.181 2012/02/02 19:43:08 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.182 2012/02/16 11:46:14 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1126,6 +1126,10 @@ uvm_pagealloc_pgfl(struct uvm_cpu *ucpu, int flist, int try1, int try2,
 		/* cpu, try1 */
 		if ((pg = LIST_FIRST((freeq =
 		    &pgfl->pgfl_buckets[color].pgfl_queues[try1]))) != NULL) {
+			KASSERT(pg->pqflags & PQ_FREE);
+			KASSERT(try1 == PGFL_ZEROS || !(pg->flags & PG_ZERO));
+			KASSERT(try1 == PGFL_UNKNOWN || (pg->flags & PG_ZERO));
+			KASSERT(ucpu == VM_FREE_PAGE_TO_CPU(pg));
 			VM_FREE_PAGE_TO_CPU(pg)->pages[try1]--;
 		    	uvmexp.cpuhit++;
 			goto gotit;
@@ -1133,6 +1137,10 @@ uvm_pagealloc_pgfl(struct uvm_cpu *ucpu, int flist, int try1, int try2,
 		/* global, try1 */
 		if ((pg = LIST_FIRST((freeq =
 		    &gpgfl->pgfl_buckets[color].pgfl_queues[try1]))) != NULL) {
+			KASSERT(pg->pqflags & PQ_FREE);
+			KASSERT(try1 == PGFL_ZEROS || !(pg->flags & PG_ZERO));
+			KASSERT(try1 == PGFL_UNKNOWN || (pg->flags & PG_ZERO));
+			KASSERT(ucpu != VM_FREE_PAGE_TO_CPU(pg));
 			VM_FREE_PAGE_TO_CPU(pg)->pages[try1]--;
 		    	uvmexp.cpumiss++;
 			goto gotit;
@@ -1140,6 +1148,10 @@ uvm_pagealloc_pgfl(struct uvm_cpu *ucpu, int flist, int try1, int try2,
 		/* cpu, try2 */
 		if ((pg = LIST_FIRST((freeq =
 		    &pgfl->pgfl_buckets[color].pgfl_queues[try2]))) != NULL) {
+			KASSERT(pg->pqflags & PQ_FREE);
+			KASSERT(try2 == PGFL_ZEROS || !(pg->flags & PG_ZERO));
+			KASSERT(try2 == PGFL_UNKNOWN || (pg->flags & PG_ZERO));
+			KASSERT(ucpu == VM_FREE_PAGE_TO_CPU(pg));
 			VM_FREE_PAGE_TO_CPU(pg)->pages[try2]--;
 		    	uvmexp.cpuhit++;
 			goto gotit;
@@ -1147,6 +1159,10 @@ uvm_pagealloc_pgfl(struct uvm_cpu *ucpu, int flist, int try1, int try2,
 		/* global, try2 */
 		if ((pg = LIST_FIRST((freeq =
 		    &gpgfl->pgfl_buckets[color].pgfl_queues[try2]))) != NULL) {
+			KASSERT(pg->pqflags & PQ_FREE);
+			KASSERT(try2 == PGFL_ZEROS || !(pg->flags & PG_ZERO));
+			KASSERT(try2 == PGFL_UNKNOWN || (pg->flags & PG_ZERO));
+			KASSERT(ucpu != VM_FREE_PAGE_TO_CPU(pg));
 			VM_FREE_PAGE_TO_CPU(pg)->pages[try2]--;
 		    	uvmexp.cpumiss++;
 			goto gotit;
@@ -1486,7 +1502,7 @@ uvm_pagefree(struct vm_page *pg)
 
 	KASSERT((pg->flags & PG_PAGEOUT) == 0);
 	KASSERT(!(pg->pqflags & PQ_FREE));
-	KASSERT(mutex_owned(&uvm_pageqlock) || !uvmpdpol_pageisqueued_p(pg));
+	//KASSERT(mutex_owned(&uvm_pageqlock) || !uvmpdpol_pageisqueued_p(pg));
 	KASSERT(pg->uobject == NULL || mutex_owned(pg->uobject->vmobjlock));
 	KASSERT(pg->uobject != NULL || pg->uanon == NULL ||
 		mutex_owned(pg->uanon->an_lock));
@@ -1532,6 +1548,7 @@ uvm_pagefree(struct vm_page *pg)
 		if (pg->loan_count) {
 			KASSERT(pg->uobject == NULL);
 			if (pg->uanon == NULL) {
+				KASSERT(mutex_owned(&uvm_pageqlock));
 				uvm_pagedequeue(pg);
 			}
 			return;
@@ -1552,8 +1569,10 @@ uvm_pagefree(struct vm_page *pg)
 	/*
 	 * now remove the page from the queues.
 	 */
-
-	uvm_pagedequeue(pg);
+	if (uvmpdpol_pageisqueued_p(pg)) {
+		KASSERT(mutex_owned(&uvm_pageqlock));
+		uvm_pagedequeue(pg);
+	}
 
 	/*
 	 * if the page was wired, unwire it now.
