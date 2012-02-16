@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.1 2012/02/15 23:46:47 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.2 2012/02/16 19:57:07 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -7,4 +7,16 @@ gnu/usr.bin/groff/tmac/mdoc.local		patched by hand
 sys/sys/param.h					patched by hand
 
 	Welcome to 6.0_BETA!
+
+sys/conf/osrelease.sh				1.121
+
+	Don't eat _BETA or other textual tags after the version.
+	[christos, ticket #3]
+
+UPDATING					1.235
+etc/daily					1.81
+etc/weekly					1.26
+
+	Run makemandb with the normal 022 umask, not the restrictive 077.
+	[joerg, ticket #2]
 
