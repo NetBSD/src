@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.155 2011/11/25 21:27:15 joerg Exp $	 */
+/*	$NetBSD: rtld.c,v 1.156 2012/02/16 23:00:39 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.155 2011/11/25 21:27:15 joerg Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.156 2012/02/16 23:00:39 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -103,6 +103,7 @@ Search_Path    *_rtld_default_paths;
 Search_Path    *_rtld_paths;
 
 Library_Xform  *_rtld_xforms;
+static void    *auxinfo;
 
 /*
  * Global declarations normally provided by crt0.
@@ -349,6 +350,12 @@ _rtld_exit(void)
 	_rtld_exclusive_exit(&mask);
 }
 
+__dso_public void *
+_dlauxinfo(void)
+{
+	return auxinfo;
+}
+
 /*
  * Main entry point for dynamic linking.  The argument is the stack
  * pointer.  The stack is expected to be laid out as described in the
@@ -371,7 +378,6 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 		       *pAUX_ruid, *pAUX_rgid;
 	const AuxInfo  *pAUX_pagesz;
 	char          **env, **oenvp;
-	const AuxInfo  *aux;
 	const AuxInfo  *auxp;
 	Obj_Entry      *obj;
 	Elf_Addr       *const osp = sp;
@@ -421,7 +427,7 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 		dbg(("env[%d] = %p %s", i++, (void *)sp[-1], (char *)sp[-1]));
 #endif
 	}
-	aux = (const AuxInfo *) sp;
+	auxinfo = (AuxInfo *) sp;
 
 	pAUX_base = pAUX_entry = pAUX_execfd = NULL;
 	pAUX_phdr = pAUX_phent = pAUX_phnum = NULL;
@@ -431,7 +437,7 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	execname = NULL;
 
 	/* Digest the auxiliary vector. */
-	for (auxp = aux; auxp->a_type != AT_NULL; ++auxp) {
+	for (auxp = auxinfo; auxp->a_type != AT_NULL; ++auxp) {
 		switch (auxp->a_type) {
 		case AT_BASE:
 			pAUX_base = auxp;
