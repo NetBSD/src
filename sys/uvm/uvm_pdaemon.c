@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.5 2012/02/14 01:12:42 matt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.6 2012/02/16 04:20:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.5 2012/02/14 01:12:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.6 2012/02/16 04:20:45 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -842,8 +842,11 @@ uvmpd_scan_queue(struct uvm_pggroup *grp)
 #if defined(VMSWAP)
 	struct swapcluster swc;
 #endif /* defined(VMSWAP) */
-	int dirtyreacts;
-	int lockownerfail;
+	u_int dirtyreacts;
+	u_int lockownerfail;
+	u_int victims;
+	u_int freed;
+	u_int busy;
 	kmutex_t *slock;
 	UVMHIST_FUNC("uvmpd_scan_queue"); UVMHIST_CALLED(pdhist);
 
@@ -859,8 +862,13 @@ uvmpd_scan_queue(struct uvm_pggroup *grp)
 
 	dirtyreacts = 0;
 	lockownerfail = 0;
+	victims = 0;
+	freed = 0;
+	busy = 0;
 	uvmpdpol_scaninit(grp);
 
+	UVMHIST_LOG(pdhist,"  [%zd]: want free target (%u)",
+	    grp - uvm.pggrous, grp->pgrp_freetarg << 2, 0, 0);
 	while (/* CONSTCOND */ 1) {
 
 		/*
@@ -873,19 +881,20 @@ uvmpd_scan_queue(struct uvm_pggroup *grp)
 #endif /* defined(VMSWAP) */
 		    >= grp->pgrp_freetarg << 2 ||
 		    dirtyreacts == UVMPD_NUMDIRTYREACTS) {
-			UVMHIST_LOG(pdhist,"  [%zd]: met free target (%u + %u >= %u): "
-			    "exit loop", grp - uvm.pggroups,
-			    grp->pgrp_free, grp->pgrp_paging,
-			    grp->pgrp_freetarg << 2);
+			UVMHIST_LOG(pdhist,"  [%zd]: met free target (%u + %u)"
+			    ", dirty reacts %u",
+			    grp - uvm.pggroups, grp->pgrp_free,
+			    grp->pgrp_paging, dirtyreacts);
 			break;
 		}
 
 		pg = uvmpdpol_selectvictim(grp);
 		if (pg == NULL) {
-			UVMHIST_LOG(pdhist,"  [%zd]: selectvictim didn't: "
-			    "exit loop", grp - uvm.pggroups, 0, 0, 0);
+			UVMHIST_LOG(pdhist,"  [%zd]: selectvictim didn't",
+			    grp - uvm.pggroups, 0, 0, 0);
 			break;
 		}
+		victims++;
 		KASSERT(uvmpdpol_pageisqueued_p(pg));
 		KASSERT(pg->wire_count == 0);
 
@@ -932,7 +941,7 @@ uvmpd_scan_queue(struct uvm_pggroup *grp)
 		}
 		if (pg->flags & PG_BUSY) {
 			mutex_exit(slock);
-			grp->pgrp_pdbusy++;
+			busy++;
 			continue;
 		}
 
@@ -967,6 +976,7 @@ uvmpd_scan_queue(struct uvm_pggroup *grp)
 			mutex_exit(&uvm_pageqlock);
 			(void) (uobj->pgops->pgo_put)(uobj, pg->offset,
 			    pg->offset + PAGE_SIZE, PGO_CLEANIT|PGO_FREE);
+			grp->pgrp_pdputs++;
 			mutex_enter(&uvm_pageqlock);
 			continue;
 		}
@@ -989,7 +999,7 @@ uvmpd_scan_queue(struct uvm_pggroup *grp)
 			pageidx = pg->offset >> PAGE_SHIFT;
 			KASSERT(!uvmpdpol_pageisqueued_p(pg));
 			uvm_pagefree(pg);
-			grp->pgrp_pdfreed++;
+			freed++;
 
 			/*
 			 * for anons, we need to remove the page
@@ -1095,6 +1105,14 @@ uvmpd_scan_queue(struct uvm_pggroup *grp)
 		mutex_exit(slock);
 #endif /* defined(VMSWAP) */
 	}
+
+	UVMHIST_LOG(pdhist,"  [%zd] <-- done: %u victims: %u freed, %u busy",
+	    grp - uvm.pggroups, victims, freed, busy);
+
+	grp->pgrp_pdvictims += victims;
+	grp->pgrp_pdnullscans += (victims == 0);
+	grp->pgrp_pdfreed += freed;
+	grp->pgrp_pdbusy += busy;
 
 #if defined(VMSWAP)
 	mutex_exit(&uvm_pageqlock);
