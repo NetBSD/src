@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.22 2010/07/01 02:38:27 rmind Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.23 2012/02/16 02:32:40 christos Exp $	*/
 
 /* 
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,16 +31,19 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.22 2010/07/01 02:38:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.23 2012/02/16 02:32:40 christos Exp $");
 
 #include <sys/proc.h>
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
+#include <arm/pcb.h>
 #include <machine/db_machdep.h>
+#include <machine/vmparam.h>
 
 #include <ddb/db_access.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_sym.h>
+#include <ddb/db_proc.h>
 #include <ddb/db_output.h>
 
 #define INKERNEL(va)	(((vaddr_t)(va)) >= VM_MIN_KERNEL_ADDRESS)
@@ -106,25 +109,36 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 		frame = (u_int32_t *)(DDB_REGS->tf_r11);
 	else {
 		if (trace_thread) {
-			struct proc *p;
 			struct pcb *pcb;
-			struct lwp *l;
+			proc_t p;
+			lwp_t l;
+
 			if (lwpaddr) {
-				l = (struct lwp *)addr;
-				p = l->l_proc;
-				(*pr)("trace: pid %d ", p->p_pid);
+				db_read_bytes(addr, sizeof(l),
+				    (char *)&l);
+				db_read_bytes((db_addr_t)l.l_proc,
+				    sizeof(p), (char *)&p);
+				(*pr)("trace: pid %d ", p.p_pid);
 			} else {
+				proc_t	*pp;
+
 				(*pr)("trace: pid %d ", (int)addr);
-				p = proc_find_raw(addr);
-				if (p == NULL) {
+				if ((pp = db_proc_find((pid_t)addr)) == 0) {
 					(*pr)("not found\n");
 					return;
 				}
-				l = LIST_FIRST(&p->p_lwps);
-				KASSERT(l != NULL);
+				db_read_bytes((db_addr_t)pp, sizeof(p), (char *)&p);
+				addr = (db_addr_t)p.p_lwps.lh_first;
+				db_read_bytes(addr, sizeof(l), (char *)&l);
 			}
-			(*pr)("lid %d ", l->l_lid);
-			pcb = lwp_getpcb(l);
+			(*pr)("lid %d ", l.l_lid);
+			pcb = lwp_getpcb(&l);
+#ifndef _KERNEL
+			struct pcb pcbb;
+			db_read_bytes((db_addr_t)pcb, sizeof(*pcb),
+			    (char *)&pcbb);
+			pcb = &pcbb;
+#endif
 #ifdef acorn26
 			frame = (uint32_t *)(pcb->pcb_sf->sf_r11);
 #else
@@ -143,6 +157,14 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 		int		r;
 		u_int32_t	*rp;
 		const char	*sep;
+
+		lastframe = frame;
+#ifndef _KERNEL
+		uint32_t frameb[4];
+		db_read_bytes((db_addr_t)(frame - 4), sizeof(frameb),
+		    (char *)frameb);
+		frame = frameb + 4;
+#endif
 
 		/*
 		 * In theory, the SCP isn't guaranteed to be in the function
@@ -190,7 +212,6 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 		if (frame[FR_RFP] == 0)
 			break; /* Top of stack */
 
-		lastframe = frame;
 		frame = (u_int32_t *)(frame[FR_RFP]);
 
 		if (INKERNEL((int)frame)) {
