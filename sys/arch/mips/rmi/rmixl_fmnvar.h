@@ -239,7 +239,7 @@ rmixl_cp2_enable(void)
 		"or	%[sr],%[mask]"		"\n\t"
 		"mtc0	%[sr],$%[c0_status]"	"\n\t"
 		".set pop"			"\n\t"
-	    :	[rv] "=r" (rv),
+	    :	[rv] "=&r" (rv),
 		[sr] "=r" (sr)
 	    :	[c0_status] "n" (MIPS_COP_0_STATUS),
 		[mask] "r" (MIPS_SR_COP_2_BIT));
