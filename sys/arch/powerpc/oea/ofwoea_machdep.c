@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.27 2012/02/15 01:56:58 macallan Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.28 2012/02/16 07:59:46 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.27 2012/02/15 01:56:58 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.28 2012/02/16 07:59:46 matt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -416,15 +416,12 @@ ofwoea_batinit(void)
 	/*
 	 * cover PCI and register space but not the firmware ROM
 	 */
-	oea_batinit(0x80000000, BAT_BL_256M,
-		    0x90000000, BAT_BL_256M,
-		    0xa0000000, BAT_BL_256M,
-		    0xb0000000, BAT_BL_256M,
+	oea_batinit(0x80000000, BAT_BL_1G,
 		    0xf0000000, BAT_BL_128M,
 		    0xf8000000, BAT_BL_64M,
 		    0);
 #else
-        u_int16_t bitmap;
+	uint16_t bitmap;
 	int node, i;
 
 	node = OF_finddevice("/");
