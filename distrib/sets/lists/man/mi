@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1379 2012/02/14 17:35:11 plunky Exp $
+# $NetBSD: mi,v 1.1380 2012/02/16 04:52:50 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -573,7 +573,7 @@
 ./usr/share/man/cat1/who.0			man-util-catman		.cat
 ./usr/share/man/cat1/whoami.0			man-util-catman		.cat
 ./usr/share/man/cat1/whois.0			man-netutil-catman	.cat
-./usr/share/man/cat1/window.0			man-util-catman		.cat
+./usr/share/man/cat1/window.0			man-util-catman		obsolete
 ./usr/share/man/cat1/write.0			man-util-catman		.cat
 ./usr/share/man/cat1/x68k/aout2hux.0		man-util-catman		.cat
 ./usr/share/man/cat1/x68k/bellctrl.0		man-util-catman		.cat
@@ -3494,7 +3494,7 @@
 ./usr/share/man/html1/who.html			man-util-htmlman	html
 ./usr/share/man/html1/whoami.html		man-util-htmlman	html
 ./usr/share/man/html1/whois.html		man-netutil-htmlman	html
-./usr/share/man/html1/window.html		man-util-htmlman	html
+./usr/share/man/html1/window.html		man-util-htmlman	obsolete
 ./usr/share/man/html1/write.html		man-util-htmlman	html
 ./usr/share/man/html1/x68k/aout2hux.html	man-util-htmlman	html
 ./usr/share/man/html1/x68k/bellctrl.html	man-util-htmlman	html
@@ -6080,7 +6080,7 @@
 ./usr/share/man/man1/who.1			man-util-man		.man
 ./usr/share/man/man1/whoami.1			man-util-man		.man
 ./usr/share/man/man1/whois.1			man-netutil-man		.man
-./usr/share/man/man1/window.1			man-util-man		.man
+./usr/share/man/man1/window.1			man-util-man		obsolete
 ./usr/share/man/man1/write.1			man-util-man		.man
 ./usr/share/man/man1/x68k/aout2hux.1		man-util-man		.man
 ./usr/share/man/man1/x68k/bellctrl.1		man-util-man		.man
