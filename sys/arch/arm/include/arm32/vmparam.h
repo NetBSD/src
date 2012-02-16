@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.25 2010/11/14 13:33:21 uebayasi Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.26 2012/02/16 02:27:11 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #ifndef _ARM_ARM32_VMPARAM_H_
 #define	_ARM_ARM32_VMPARAM_H_
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_KMEMUSER)
 
 /*
  * Virtual Memory parameters common to all arm32 platforms.
@@ -98,6 +98,6 @@ extern vaddr_t virtual_end;
 #endif
 #endif /* __ASSEMBLER__ */
 
-#endif /* _KERNEL */
+#endif /* _KERNEL || _KMEMUSER */
 
 #endif /* _ARM_ARM32_VMPARAM_H_ */
