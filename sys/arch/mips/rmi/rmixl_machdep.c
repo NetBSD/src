@@ -204,6 +204,7 @@ struct rmixl_config rmixl_configuration = {
 #ifdef ENABLE_MIPS_KSEGX
 pt_entry_t mips_ksegx_pte;
 paddr_t mips_ksegx_start;
+int mips_ksegx_tlb_slot = -1;
 #endif
 
 /*
@@ -847,7 +848,7 @@ rmixl_fixup_curcpu(void)
 			 * just change the instruction bits around it.
 			 */
 			*insnp = insn ^ LOAD_CURCPU ^ MFC0_CURCPU;
-			mips_icache_sync_range((vaddr_t)insnp, 4);
+			mips_icache_sync_range((intptr_t)insnp, 4);
 		}
 	}
 }
