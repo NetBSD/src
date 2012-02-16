@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mandoc.h,v 1.98 2011/11/08 00:15:23 kristaps Exp $ */
+/*	$Vendor-Id: mandoc.h,v 1.99 2012/02/16 20:51:31 joerg Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -418,6 +418,8 @@ struct mparse	 *mparse_alloc(enum mparset,
 void		  mparse_free(struct mparse *);
 void		  mparse_keep(struct mparse *);
 enum mandoclevel  mparse_readfd(struct mparse *, int, const char *);
+enum mandoclevel  mparse_readmem(struct mparse *, const void *, size_t,
+			const char *);
 void		  mparse_reset(struct mparse *);
 void		  mparse_result(struct mparse *, 
 			struct mdoc **, struct man **);
