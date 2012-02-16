@@ -217,6 +217,7 @@
 extern int mips_poolpage_vmfreelist;
 #ifdef ENABLE_MIPS_KSEGX
 extern paddr_t mips_ksegx_start;
+extern int mips_ksegx_tlb_slot;
 #endif
 #endif
 
