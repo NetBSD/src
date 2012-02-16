@@ -37,7 +37,7 @@
 
 #include <mips/asm.h>
 
-RCSID("$NetBSD: cache_r4k_subr.S,v 1.1.2.2 2012/01/19 08:28:49 matt Exp $")
+RCSID("$NetBSD: cache_r4k_subr.S,v 1.1.2.3 2012/02/16 10:44:30 matt Exp $")
 
 #include <mips/cache_r4k.h>
 
@@ -103,7 +103,7 @@ STATIC_LEAF_NOPROFILE(OPNAME(doop))
 	beqz	t0, 3f				# no more to do?
 	 move	ra, ta0				# restore return address
 2:
-	PTR_SRL	t0, INT_SCALESHIFT		# shift to instruction index
+	PTR_SLL	t0, INT_SCALESHIFT		# shift to instruction index
 	PTR_ADDU t9, 32 << INT_SCALESHIFT	# point to end of table
 	PTR_SUBU t9, t0				# backup N cacheops
 	jr	t9				# and do them.
