@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.107 2011/12/02 09:06:49 skrll Exp $	 */
+/*	$NetBSD: rtld.h,v 1.108 2012/02/16 23:00:39 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -330,6 +330,8 @@ __dso_public int dladdr(const void *, Dl_info *);
 __dso_public int dlinfo(void *, int, void *);
 __dso_public int dl_iterate_phdr(int (*)(struct dl_phdr_info *, size_t, void *),
     void *);
+
+__dso_public void *_dlauxinfo(void) __pure;
 
 /* These aren't exported */
 void _rtld_error(const char *, ...)
