@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2012/02/07 19:13:32 joerg Exp $
+# $NetBSD: Makefile,v 1.2 2012/02/16 20:58:55 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -22,8 +22,8 @@ CPPFLAGS+=-I${MDIST} -I${.OBJDIR}
 MDOCMLOBJDIR!=	cd ${MDOCDIR}/lib/libmandoc && ${PRINTOBJDIR}
 MDOCMLLIB=	${MDOCMLOBJDIR}/libmandoc.a
 
-DPADD.makemandb+= 	${MDOCMLLIB}
-LDADD.makemandb+= 	-L${MDOCMLOBJDIR} -lmandoc
+DPADD.makemandb+= 	${MDOCMLLIB} ${LIBARCHIVE} ${LIBBZ2} ${LIBLZMA}
+LDADD.makemandb+= 	-L${MDOCMLOBJDIR} -lmandoc -larchive -lbz2 -llzma
 DPADD+=		${LIBSQLITE3} ${LIBM} ${LIBZ} ${LIBUTIL}
 LDADD+=		-lsqlite3 -lm -lz -lutil
 
