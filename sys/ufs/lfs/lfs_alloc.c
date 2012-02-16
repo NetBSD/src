@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.111 2011/06/12 03:36:01 rmind Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.112 2012/02/16 02:47:55 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.111 2011/06/12 03:36:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.112 2012/02/16 02:47:55 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -207,7 +207,6 @@ lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 	ASSERT_NO_SEGLOCK(fs);
 
 	lfs_seglock(fs, SEGM_PROT);
-	vn_lock(fs->lfs_ivnode, LK_EXCLUSIVE);
 
 	/* Get the head of the freelist. */
 	LFS_GET_HEADFREE(fs, cip, cbp, &new_ino);
@@ -236,7 +235,6 @@ lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 	if (fs->lfs_freehd == LFS_UNUSED_INUM) {
 		if ((error = lfs_extend_ifile(fs, cred)) != 0) {
 			LFS_PUT_HEADFREE(fs, cip, cbp, new_ino);
-			VOP_UNLOCK(fs->lfs_ivnode);
 			lfs_segunlock(fs);
 			return error;
 		}
@@ -252,7 +250,6 @@ lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 	mutex_exit(&lfs_lock);
 	++fs->lfs_nfiles;
 
-	VOP_UNLOCK(fs->lfs_ivnode);
 	lfs_segunlock(fs);
 
 	return lfs_ialloc(fs, pvp, new_ino, new_gen, vpp);
@@ -440,7 +437,6 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	mutex_exit(vp->v_interlock);
 
 	lfs_seglock(fs, SEGM_PROT);
-	vn_lock(fs->lfs_ivnode, LK_EXCLUSIVE);
 
 	lfs_unmark_vnode(vp);
 	mutex_enter(&lfs_lock);
@@ -575,7 +571,6 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	mutex_exit(&lfs_lock);
 	--fs->lfs_nfiles;
 
-	VOP_UNLOCK(fs->lfs_ivnode);
 	lfs_segunlock(fs);
 
 	return (0);
