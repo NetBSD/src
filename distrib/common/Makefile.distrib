@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.distrib,v 1.8 2010/02/07 18:50:49 snj Exp $
+#	$NetBSD: Makefile.distrib,v 1.8.8.1 2012/02/17 00:42:27 riz Exp $
 #
 # Makefile snippet to setup various make variables variables used in distrib/:
 #
@@ -22,6 +22,7 @@ _MAKEFILE_DISTRIB_=1
 DISTRIBDIR=	${NETBSDSRCDIR}/distrib
 DISTRIBREV!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh -s
 DISTRIBVER!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
+MODULEVER!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh -k
 DISTRIBVERDEP=	${NETBSDSRCDIR}/sys/sys/param.h \
 		${NETBSDSRCDIR}/sys/conf/osrelease.sh
 
