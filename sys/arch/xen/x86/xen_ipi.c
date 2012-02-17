@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.9 2011/12/30 12:16:19 cherry Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.10 2012/02/17 18:40:20 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,22 +33,21 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.9 2011/12/30 12:16:19 cherry Exp $"); 
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.10 2012/02/17 18:40:20 bouyer Exp $"); 
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.9 2011/12/30 12:16:19 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.10 2012/02/17 18:40:20 bouyer Exp $");
 
 #include <sys/types.h>
 
 #include <sys/atomic.h>
-#include <sys/mutex.h>
 #include <sys/cpu.h>
+#include <sys/mutex.h>
 #include <sys/device.h>
 #include <sys/xcall.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
 
-#include <machine/cpu.h>
 #ifdef __x86_64__
 #include <machine/fpu.h>
 #else

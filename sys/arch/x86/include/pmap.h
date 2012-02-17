@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.49 2011/12/04 16:24:13 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.50 2012/02/17 18:40:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -165,6 +165,8 @@ struct pmap {
 	uint32_t pm_cpus;		/* mask of CPUs using pmap */
 	uint32_t pm_kernel_cpus;	/* mask of CPUs using kernel part
 					 of pmap */
+	uint32_t pm_xen_ptp_cpus;	/* mask of CPUs which have this pmap's
+					 ptp mapped */
 	uint64_t pm_ncsw;		/* for assertions */
 	struct vm_page *pm_gc_ptp;	/* pages from pmap g/c */
 };

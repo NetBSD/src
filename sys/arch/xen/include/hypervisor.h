@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.36 2011/12/07 15:47:42 cegger Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.37 2012/02/17 18:40:19 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -91,7 +91,6 @@ struct xen_npx_attach_args {
 #include <xen/xen-public/io/netif.h>
 #include <xen/xen-public/io/blkif.h>
 
-#include <machine/cpu.h>
 #include <machine/hypercalls.h>
 
 #undef u8
