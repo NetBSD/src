@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.136 2012/02/05 12:45:40 bouyer Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.137 2012/02/17 16:02:31 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -6027,4 +6027,10 @@ sys/net/route.c					1.126
 	Count length from the beginning of the structure not the sa_data
 	portion.
 	[christos, ticket #1721]
+
+sys/fs/smbfs/smbfs_vnops.c			1.70
+
+	Directory open with NT_SMBS capability require the NOPEN bit to
+	be set too. Fixes directory listing on smbfs mounts.
+	[njoly, ticket #1726]
 
