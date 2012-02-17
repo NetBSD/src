@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.53.2.12 2012/02/05 08:23:41 yamt Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.53.2.13 2012/02/17 08:18:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.2.12 2012/02/05 08:23:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.2.13 2012/02/17 08:18:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -377,7 +377,7 @@ startover:
 			 * it's caller's responsibility to allocate blocks
 			 * beforehand for the overwrite case.
 			 */
-			pg->flags &= ~(PG_RDONLY|PG_HOLE);
+			pg->flags &= ~PG_RDONLY;
 			/*
 			 * mark the page DIRTY.
 			 * otherwise another thread can do putpages and pull
@@ -399,7 +399,7 @@ startover:
 		struct vm_page *pg = pgs[ridx + i];
 
 		if ((pg->flags & PG_FAKE) ||
-		    (memwrite && (pg->flags & (PG_RDONLY|PG_HOLE)) != 0)) {
+		    (memwrite && (pg->flags & PG_RDONLY) != 0)) {
 			break;
 		}
 	}
@@ -527,7 +527,7 @@ startover:
 			size_t b;
 
 			KASSERT((offset & (PAGE_SIZE - 1)) == 0);
-			if ((pgs[pidx]->flags & PG_HOLE)) {
+			if ((pgs[pidx]->flags & PG_RDONLY)) {
 				sawhole = true;
 			}
 			b = MIN(PAGE_SIZE, bytes);
@@ -581,13 +581,13 @@ startover:
 		/*
 		 * if this block isn't allocated, zero it instead of
 		 * reading it.  unless we are going to allocate blocks,
-		 * mark the pages we zeroed PG_HOLE.
+		 * mark the pages we zeroed PG_RDONLY.
 		 */
 
 		if (blkno == (daddr_t)-1) {
 			int holepages = (round_page(offset + iobytes) -
 			    trunc_page(offset)) >> PAGE_SHIFT;
-			UVMHIST_LOG(ubchist, "lbn 0x%x -> HOLE", lbn,0,0,0);
+			UVMHIST_LOG(ubchist, "lbn 0x%x -> RDONLY", lbn,0,0,0);
 
 			sawhole = true;
 			memset((char *)kva + (offset - startoffset), 0,
@@ -597,7 +597,7 @@ startover:
 			if (!blockalloc) {
 				mutex_enter(uobj->vmobjlock);
 				for (i = 0; i < holepages; i++) {
-					pgs[pidx + i]->flags |= PG_HOLE;
+					pgs[pidx + i]->flags |= PG_RDONLY;
 				}
 				mutex_exit(uobj->vmobjlock);
 			}
@@ -650,7 +650,7 @@ loopdone:
 
 	/*
 	 * if this we encountered a hole then we have to do a little more work.
-	 * if blockalloc is false, we marked the page PG_HOLE so that future
+	 * if blockalloc is false, we marked the page PG_RDONLY so that future
 	 * write accesses to the page will fault again.
 	 * if blockalloc is true, we must make sure that the backing store for
 	 * the page is completely allocated while the pages are locked.
@@ -669,7 +669,7 @@ loopdone:
 				if (pg == NULL) {
 					continue;
 				}
-				pg->flags &= ~PG_HOLE;
+				pg->flags &= ~PG_RDONLY;
 				uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
 				UVMHIST_LOG(ubchist, "mark dirty pg %p",
 				    pg,0,0,0);
@@ -734,7 +734,7 @@ out:
 			KASSERT(uvm_pagegetdirty(pg) == UVM_PAGE_STATUS_CLEAN);
 			pg->flags &= ~PG_FAKE;
 		}
-		KASSERT(!blockalloc || (pg->flags & PG_HOLE) == 0);
+		KASSERT(!blockalloc || (pg->flags & PG_RDONLY) == 0);
 		if (i < ridx || i >= ridx + orignmempages || async) {
 			UVMHIST_LOG(ubchist, "unbusy pg %p offset 0x%x",
 			    pg, pg->offset,0,0);

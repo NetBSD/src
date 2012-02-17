@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.73.2.8 2011/11/30 14:33:47 yamt Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.73.2.9 2012/02/17 08:18:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -160,9 +160,8 @@ struct vm_page {
  * is only set when the page is on no queues, and is cleared when the page
  * is placed on the free list.
  *
- * PG_RDONLY and PG_HOLE acts like a "read-only count".  ie. either of
- * them is set, the page should not be mapped writably.  typically
- * they are set by pgo_get to inform the fault handler.
+ * PG_RDONLY is used to indicate that the page should not be mapped writably.
+ * typically they are set by pgo_get to inform the fault handler.
  *
  * if you want to renumber PG_CLEAN and PG_DIRTY, check __CTASSERTs in
  * uvm_page_status.c first.
@@ -178,7 +177,6 @@ struct vm_page {
 #define	PG_RDONLY	0x0080		/* page must be mapped read-only */
 #define	PG_ZERO		0x0100		/* page is pre-zero'd */
 #define	PG_TABLED	0x0200		/* page is in VP table  */
-#define	PG_HOLE		0x0400		/* XXX */
 
 #define PG_PAGER1	0x1000		/* pager-specific flag */
 #define PG_PAGER2	0x2000		/* pager-specific flag */
@@ -186,7 +184,7 @@ struct vm_page {
 #define	UVM_PGFLAGBITS \
 	"\20\1CLEAN\2DIRTY\3BUSY\4WANTED" \
 	"\5PAGEOUT\6RELEASED\7FAKE\10RDONLY" \
-	"\11ZERO\12TABLED\13HOLE" \
+	"\11ZERO\12TABLED" \
 	"\15PAGER1\16PAGER2"
 
 #define PQ_FREE		0x0001		/* page is on free list */
