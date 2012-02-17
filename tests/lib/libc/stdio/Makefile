@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2011/09/11 09:02:46 jruoho Exp $
+# $NetBSD: Makefile,v 1.9 2012/02/17 20:17:38 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -12,5 +12,6 @@ TESTS_C+=	t_fputc
 TESTS_C+=	t_popen
 TESTS_C+=	t_printf
 TESTS_C+=	t_scanf
+COPTS.t_printf.c += -Wno-format-nonliteral
 
 .include <bsd.test.mk>
