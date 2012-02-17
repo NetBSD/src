@@ -1,4 +1,4 @@
-/* $NetBSD: mkubootimage.c,v 1.15 2012/02/17 08:11:28 matt Exp $ */
+/* $NetBSD: mkubootimage.c,v 1.16 2012/02/17 08:28:36 matt Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkubootimage.c,v 1.15 2012/02/17 08:11:28 matt Exp $");
+__RCSID("$NetBSD: mkubootimage.c,v 1.16 2012/02/17 08:28:36 matt Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -343,7 +343,8 @@ main(int argc, char *argv[])
 			num = strtoull(optarg, &ep, 0);
 			if (*ep != '\0' || (errno == ERANGE &&
 			    (num == ULLONG_MAX || num == 0)) ||
-			    (num != (int32_t)num && num != (uint32_t)num))
+			    ((signed long long)num != (int32_t)num &&
+			     num != (uint32_t)num))
 				errx(1, "illegal number -- %s", optarg);
 			image_loadaddr = (uint32_t)num;
 			break;
@@ -353,7 +354,8 @@ main(int argc, char *argv[])
 			num = strtoull(optarg, &ep, 0);
 			if (*ep != '\0' || (errno == ERANGE &&
 			    (num == ULLONG_MAX || num == 0)) ||
-			    (num != (int32_t)num && num != (uint32_t)num))
+			    ((signed long long)num != (int32_t)num &&
+			     num != (uint32_t)num))
 				errx(1, "illegal number -- %s", optarg);
 			image_entrypoint = (uint32_t)num;
 			if (ch == 'E')
