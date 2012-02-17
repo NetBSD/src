@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.321 2012/02/15 23:05:33 riz Exp $
+#	$NetBSD: BRANCHES,v 1.322 2012/02/17 08:24:30 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -621,7 +621,6 @@ Notes:		- maintain object pages in radix tree rather than rb tree.
 			- benchmark
 			- test
 			- make the write clustering fix less kludgy
-			- revert PG_HOLE stuff?
 			- fix or disable the ad-hoc per-cpu statistic
 
 		tested: i386, amd64, nfs, ffs
