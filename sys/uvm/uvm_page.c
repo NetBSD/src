@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.178.2.12 2012/01/04 16:31:17 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.178.2.13 2012/02/17 08:18:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.178.2.12 2012/01/04 16:31:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.178.2.13 2012/02/17 08:18:57 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2110,7 +2110,7 @@ uvm_pagereadonly_p(struct vm_page *pg)
 
 	KASSERT(uobj == NULL || mutex_owned(uobj->vmobjlock));
 	KASSERT(uobj != NULL || mutex_owned(pg->uanon->an_lock));
-	if ((pg->flags & (PG_RDONLY|PG_HOLE)) != 0) {
+	if ((pg->flags & PG_RDONLY) != 0) {
 		return true;
 	}
 	if (uvm_pagegetdirty(pg) == UVM_PAGE_STATUS_CLEAN) {

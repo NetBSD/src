@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.79.2.1 2011/11/02 21:54:00 yamt Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.79.2.2 2012/02/17 08:18:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.79.2.1 2011/11/02 21:54:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.79.2.2 2012/02/17 08:18:57 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -265,13 +265,13 @@ ubc_fault_page(const struct uvm_faultinfo *ufi, const struct ubc_map *umap,
 
 	/*
 	 * Note that a page whose backing store is partially allocated
-	 * is marked as PG_HOLE.
+	 * is marked as PG_RDONLY.
 	 *
 	 * it's a responsibility of ubc_alloc's caller to allocate backing
 	 * blocks before writing to the window.
 	 */
 
-	KASSERT((pg->flags & PG_HOLE) == 0 ||
+	KASSERT((pg->flags & PG_RDONLY) == 0 ||
 	    (access_type & VM_PROT_WRITE) == 0 ||
 	    pg->offset < umap->writeoff ||
 	    pg->offset + PAGE_SIZE > umap->writeoff + umap->writelen);

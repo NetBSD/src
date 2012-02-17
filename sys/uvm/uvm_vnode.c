@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.97.2.4 2012/01/18 02:09:06 yamt Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.97.2.5 2012/02/17 08:18:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.97.2.4 2012/01/18 02:09:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.97.2.5 2012/02/17 08:18:57 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -318,9 +318,9 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 			continue;
 		}
 
-		/* skip PG_RDONLY and PG_HOLE pages if requested */
-		if ((flags & UFP_NORDONLY) &&
-		    (pg->flags & (PG_RDONLY|PG_HOLE))) {
+		/* skip PG_RDONLY pages if requested */
+		if ((flags & UFP_NORDONLY) != 0 &&
+		    (pg->flags & PG_RDONLY) != 0) {
 			UVMHIST_LOG(ubchist, "nordonly",0,0,0,0);
 			goto skip;
 		}
