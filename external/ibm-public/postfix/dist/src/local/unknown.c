@@ -1,4 +1,4 @@
-/*	$NetBSD: unknown.c,v 1.1.1.2 2011/07/31 10:02:41 tron Exp $	*/
+/*	$NetBSD: unknown.c,v 1.1.1.3 2012/02/17 08:36:10 tron Exp $	*/
 
 /*++
 /* NAME
@@ -122,7 +122,8 @@ int     deliver_unknown(LOCAL_STATE state, USER_ATTR usr_attr)
     } else if (dict_errno != 0) {
 	/* Details in the logfile. */
 	dsb_simple(state.msg_attr.why, "4.3.0", "table lookup failure");
-	return (DEL_STAT_DEFER);
+	return (defer_append(BOUNCE_FLAGS(state.request),
+			     BOUNCE_ATTR(state.msg_attr)));
     }
     if (*var_fallback_transport) {
 	state.msg_attr.rcpt.offset = -1L;

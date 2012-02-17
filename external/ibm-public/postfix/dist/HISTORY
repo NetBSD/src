@@ -16695,3 +16695,55 @@ Apologies for any names omitted.
 
 	Portability: OpenBSD 5.x is supported. Files: makedefs,
 	util/sys_defs.h.
+
+	Portability: Dovecot now officially supports more socket
+	types for its authentication server. File:
+	xsasl/xsasl_dovecot_server.c.
+
+20111126
+
+	Bitrot: changes in error reporting to the under-documented
+	OpenLDAP API. Problem reported by Quanah Gibson-Mount. Fix
+	by Viktor Dukhovni. File: global/dict_ldap.c.
+
+20111205
+
+	Bugfix: tlsproxy(8) stored TLS sessions with a serverID of
+	"tlsproxy" instead of "smtpd", wasting an opportunity for
+	session reuse.  File: tlsproxy/tlsproxy.c.
+
+20111211
+
+	Bugfix: missing lookup table entry and terminator, causing
+	proxymap server segfault when postscreen(8) or verify(8)
+	attempted to access their cache via the proxymap server.
+	This could never have worked anyway, because the Postfix
+	2.8 proxymap protocol does not support cache cleanup.  File
+	util/dict.c.
+
+20111226
+
+	Bugfix (introduced 20110426): after lookup error with
+	mailbox_transport_maps, mailbox_command_maps or
+	fallback_transport_maps, the local delivery agent did not
+	log the problem before deferring mail, and produced no defer
+	logfile record. Files: local/mailbox.c, local/unknown.c.
+
+20120127
+
+	Bugfix (introduced: Postfix 2.8): the Postfix client sqlite
+	quoting routine returned the unquoted result instead of the
+	quoted text.  The opportunities for misuse are limited,
+	because Postfix sqlite files are usually owned by root, and
+	Postfix daemons usually run with non-root privileges so
+	they can't corrupt the database. Problem reported by Rob
+	McGee (rob0).  File: global/dict_sqlite.c.
+
+20120130
+
+	Bugfix (introduced: Postfix 2.3): the trace service did not
+	distinguish between notifications for a non-bounce or a
+	bounce message. This code pre-dates DSN support and should
+	have been updated when it was re-purposed to handle DSN
+	SUCCESS notifications. Problem reported by Sabahattin
+	Gucukoglu.  File: bounce/bounce_trace_service.c.
