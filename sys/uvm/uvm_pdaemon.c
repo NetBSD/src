@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.6 2012/02/16 04:20:45 matt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.7 2012/02/17 23:36:04 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.6 2012/02/16 04:20:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.7 2012/02/17 23:36:04 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -170,6 +170,7 @@ uvm_wait(const char *wmsg)
 	uvm_pdinfo.pd_waiters++;
 	wakeup(&uvm.pagedaemon);		/* wake the daemon! */
 	UVM_UNLOCK_AND_WAIT(&uvmexp.free, &uvm_fpageqlock, false, wmsg, timo);
+	uvm_pdinfo.pd_waiters--;
 }
 
 
@@ -372,12 +373,19 @@ uvm_pageout(void *arg)
 		 * active paging, then wait.
 		 */
 		if (pdinfo->pd_waiters == 0
-		    || TAILQ_FIRST(&pdinfo->pd_pendingq) == NULL) {
+		    && TAILQ_FIRST(&pdinfo->pd_pendingq) == NULL) {
 			UVMHIST_LOG(pdhist,"  <<SLEEPING>>",0,0,0,0);
 			UVM_UNLOCK_AND_WAIT(&uvm.pagedaemon,
 			    &uvm_fpageqlock, false, "pgdaemon", 0);
 			uvmexp.pdwoke++;
 			UVMHIST_LOG(pdhist,"  <<WOKE UP>>",0,0,0,0);
+		} else if (TAILQ_FIRST(&pdinfo->pd_pendingq) == NULL) {
+			/*
+			 * Someone is waiting but no group are pending.
+			 * Let's kick ourselves to find groups that need work.
+			 */
+			uvm_kick_pdaemon();
+			mutex_spin_exit(&uvm_fpageqlock);
 		} else {
 			mutex_spin_exit(&uvm_fpageqlock);
 		}
@@ -460,7 +468,6 @@ uvm_pageout(void *arg)
 
 		}
 		if (need_wakeup) {
-			pdinfo->pd_waiters = 0;
 			wakeup(&uvmexp.free);
 		}
 		KASSERT (!need_free || need_wakeup);
@@ -569,7 +576,6 @@ uvm_pageout_done(struct vm_page *pg, bool freed)
 	if (grp->pgrp_free * uvmexp.npggroups <= uvmexp.reserve_kernel) {
 		wakeup(&uvm.pagedaemon);
 	} else {
-		pdinfo->pd_waiters = 0;
 		wakeup(&uvmexp.free);
 	}
 
