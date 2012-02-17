@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.26 2011/11/29 07:43:54 matt Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.27 2012/02/17 23:41:02 matt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -134,7 +134,7 @@
  * If MIN_PAGE_SIZE and MAX_PAGE_SIZE are not equal, then we must use
  * non-constant PAGE_SIZE, et al for LKMs.
  */
-#if (MIN_PAGE_SIZE != MAX_PAGE_SIZE) && defined(_LKM)
+#if (MIN_PAGE_SIZE != MAX_PAGE_SIZE) && (defined(_LKM) || defined(MODULAR))
 #undef PAGE_SIZE
 #undef PAGE_MASK
 #undef PAGE_SHIFT
@@ -145,9 +145,9 @@
  * have ones that are compile-time constants.
  */
 #if !defined(PAGE_SIZE)
-extern int *uvmexp_pagesize;
-extern int *uvmexp_pagemask;
-extern int *uvmexp_pageshift;
+extern const int *const uvmexp_pagesize;
+extern const int *const uvmexp_pagemask;
+extern const int *const uvmexp_pageshift;
 #define	PAGE_SIZE	(*uvmexp_pagesize)	/* size of page */
 #define	PAGE_MASK	(*uvmexp_pagemask)	/* size of page - 1 */
 #define	PAGE_SHIFT	(*uvmexp_pageshift)	/* bits to shift for pages */
