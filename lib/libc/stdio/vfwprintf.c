@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.25 2012/02/17 19:57:53 christos Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.26 2012/02/17 23:58:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.27 2007/01/09 00:28:08 imp Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.25 2012/02/17 19:57:53 christos Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.26 2012/02/17 23:58:36 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1931,7 +1931,7 @@ __grow_type_table (size_t nextarg, enum typeid **typetable, size_t *tablesize)
 	enum typeid *const oldtable = *typetable;
 	const int oldsize = *tablesize;
 	enum typeid *newtable;
-	size_t n, newsize = oldsize * 2;
+	size_t newsize = oldsize * 2;
 
 	if (newsize < nextarg + 1)
 		newsize = nextarg + 1;
