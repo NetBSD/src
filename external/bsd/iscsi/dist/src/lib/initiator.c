@@ -1792,7 +1792,7 @@ text_command_i(initiator_cmd_t * cmd)
 	 * Insert cmd into the hash table, keyed by the tag. The Rx thread
 	 * will
 	 */
-	/* retreive the cmd ptr using the tag from the response PDU. */
+	/* retrieve the cmd ptr using the tag from the response PDU. */
 
 	if (hash_insert(&g_tag_hash, cmd, text_cmd->tag) != 0) {
 		iscsi_err(__FILE__, __LINE__, "hash_insert() failed\n");
@@ -1830,7 +1830,7 @@ login_command_i(initiator_cmd_t * cmd)
 	 * Insert cmd into the hash table, keyed by the tag. The Rx thread
 	 * will
 	 */
-	/* retreive the cmd ptr using the tag from the response PDU. */
+	/* retrieve the cmd ptr using the tag from the response PDU. */
 
 	if (hash_insert(&g_tag_hash, cmd, login_cmd->tag) != 0) {
 		iscsi_err(__FILE__, __LINE__, "hash_insert() failed\n");
@@ -2383,7 +2383,7 @@ logout_command_i(initiator_cmd_t * cmd)
 	 * Insert cmd into the hash table, keyed by the tag. The Rx thread
 	 * will
 	 */
-	/* retreive the cmd ptr using the tag from the response PDU. */
+	/* retrieve the cmd ptr using the tag from the response PDU. */
 
 	if (hash_insert(&g_tag_hash, cmd, logout_cmd->tag) != 0) {
 		iscsi_err(__FILE__, __LINE__, "hash_insert() failed\n");
@@ -2492,7 +2492,7 @@ nop_out_i(initiator_cmd_t * cmd)
 		/*
 		 * Insert cmd into the hash table, keyed by
 		 * nop_out->tag.  Upon receipt of the NOP_IN_T, the Rx
-		 * thread will retreive the cmd ptr using the tag from
+		 * thread will retrieve the cmd ptr using the tag from
 		 * the NOP_IN_T PDU.  */
 
 		if (hash_insert(&g_tag_hash, cmd, nop_out->tag) != 0) {
@@ -2590,7 +2590,7 @@ scsi_command_i(initiator_cmd_t * cmd)
 	 * Insert cmd into the hash table, keyed by scsi_cmd->tag.  The Rx
 	 * thread will
 	 */
-	/* retreive the cmd ptr using the tag from the response PDU. */
+	/* retrieve the cmd ptr using the tag from the response PDU. */
 
 	if (hash_insert(&g_tag_hash, cmd, scsi_cmd->tag) != 0) {
 		iscsi_err(__FILE__, __LINE__, "hash_insert() failed\n");
