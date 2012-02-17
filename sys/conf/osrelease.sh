@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: osrelease.sh,v 1.120.18.1 2012/02/16 18:59:42 riz Exp $
+#	$NetBSD: osrelease.sh,v 1.120.18.2 2012/02/17 00:08:38 riz Exp $
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -54,6 +54,7 @@ done
 #     return the next major number (e.g. for 5.99.nn, return 6)
 # -n: return MM.mm
 # -s: return MMmmpp (no dots)
+# -k: return MM.mm on release branch, MM.mm.pp on current.
 
 option="$1"
 
@@ -74,6 +75,16 @@ IFS=' '
 set -- $rel_MM ${rel_mm#0}$beta $*
 
 case "$option" in
+-k)
+	if [ ${rel_mm#0} = 99 ]
+	then
+		IFS=.
+		echo "$*"
+	else
+		echo "${rel_MM}.${rel_mm#0}"
+	fi
+	;;
+	     
 -m)
 	echo "$(((${rel_MMmm}+1)/100))"
 	;;
