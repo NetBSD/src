@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.3 2012/02/17 00:08:49 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.4 2012/02/17 00:43:14 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -20,6 +20,9 @@ etc/weekly					1.26
 	Run makemandb with the normal 022 umask, not the restrictive 077.
 	[joerg, ticket #2]
 
+distrib/amd64/kmod/Makefile			1.2
+distrib/common/Makefile.distrib			1.9
+distrib/i386/kmod/Makefile			1.11
 distrib/sets/sets.subr				1.136
 share/mk/bsd.kmodule.mk				1.34
 sys/conf/osrelease.sh				1.122
