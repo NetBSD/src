@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.3 2012/02/12 07:30:25 matt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.4 2012/02/17 23:35:31 matt Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
@@ -74,7 +74,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.3 2012/02/12 07:30:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.4 2012/02/17 23:35:31 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -328,6 +328,7 @@ uvmpdpol_pagedeactivate(struct vm_page *pg)
 	struct uvm_pggroup * const grp = uvm_page_to_pggroup(pg);
 	struct uvmpdpol_groupstate * const gs = grp->pgrp_gs;
 
+	KASSERT(!(pg->pqflags & PQ_FREE));
 	KASSERT(mutex_owned(&uvm_pageqlock));
 
 	//KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
@@ -361,6 +362,9 @@ uvmpdpol_pageactivate(struct vm_page *pg)
 	struct uvm_pggroup * const grp = uvm_page_to_pggroup(pg);
 	struct uvmpdpol_groupstate * const gs = grp->pgrp_gs;
 
+	KASSERT(!(pg->pqflags & PQ_FREE));
+	KASSERT(mutex_owned(&uvm_pageqlock));
+
 	uvmpdpol_pagedequeue(pg);
 	TAILQ_INSERT_TAIL(&gs->gs_activeq, pg, pageq.queue);
 	pg->pqflags |= PQ_ACTIVE;
@@ -376,6 +380,8 @@ uvmpdpol_pagedequeue(struct vm_page *pg)
 	struct uvm_pggroup * const grp = uvm_page_to_pggroup(pg);
 	struct uvmpdpol_groupstate * const gs = grp->pgrp_gs;
 
+	KASSERT(!(pg->pqflags & PQ_FREE));
+	KASSERT(mutex_owned(&uvm_pageqlock));
 	//KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
 
 	if (pg->pqflags & PQ_ACTIVE) {
