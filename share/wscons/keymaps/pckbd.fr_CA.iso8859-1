@@ -1,4 +1,4 @@
-# $NetBSD: pckbd.fr_CA.iso8859-1,v 1.1 2006/09/23 02:37:45 jmcneill Exp $
+# $NetBSD: pckbd.fr_CA.iso8859-1,v 1.2 2012/02/17 12:08:12 mbalmer Exp $
 #
 # This is the Candadian French keyboard mapping for wscons and iso8859-1,
 # provided by Matthew Mondor for the NetBSD project through PR kern/23184.
@@ -12,7 +12,7 @@
 # accents (except for eacute and Eacute), which most keyboards sold in Quebec
 # are made for. The labels on the keys match properly. However, an effort was
 # made to not loose any important keys for programming. To do so, pressing the
-# Right Alternate key allows to retreive the standard US mapping for a key.
+# Right Alternate key allows to retrieve the standard US mapping for a key.
 # The exception to this rule consists of V and B which correspond to the
 # French '<<' and '>>' accents when Right Alternate key is used, to respect
 # the standard.
