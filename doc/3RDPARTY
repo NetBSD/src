@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.909 2012/02/10 23:46:25 riz Exp $
+#	$NetBSD: 3RDPARTY,v 1.910 2012/02/17 06:11:29 jruoho Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -25,16 +25,15 @@
 #     remaining lines until the end of the record are notes.
 
 Package:	acpica
-Version:	20110922
-Current Vers:	20110623
+Version:	20110623
+Current Vers:	20120215
 Maintainer:	Intel
 Archive Site:	http://www.acpica.org/downloads/unix2_source_code.php
 Home Page:	http://www.acpica.org/
 Mailing List:	devel@acpica.org
 License:	BSD-like
-Responsible:	jmcneill, jruoho
+Responsible:	jruoho
 Notes:
-The sources were integrated into src/sys/dev/acpi/acpica/Subsystem.
 Please read src/sys/dev/acpi/acpica/README before any modification.
 
 Package:	am-utils [amd]
