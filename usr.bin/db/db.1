@@ -1,6 +1,6 @@
-.\" 	$NetBSD: db.1,v 1.25 2009/01/28 09:11:16 wiz Exp $
+.\" 	$NetBSD: db.1,v 1.26 2012/02/17 11:18:55 apb Exp $
 .\"
-.\" Copyright (c) 2002-2009 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2002-2009,2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -168,7 +168,31 @@ is used.
 Keys are converted to lower case before manipulation.
 .
 .It Fl N
-Do not include the NUL byte at the end of the key or value.
+Include the NUL byte at the end of the key or value.
+.Pp
+By convention, each key and value in the underlying database is
+terminated with a NUL byte, although it is possible to have keys
+or values that are not so terminated.
+Without the
+.Fl N
+option,
+.Nm
+adds a NUL terminator to any keys and values specified on the
+command line or in the input file,
+before searching or modifying the underlying database,
+and removes the last byte (which is usually a NUL terminator)
+before printing any keys and values retreived from the
+underlying database.
+With the
+.Fl N
+option,
+.Nm
+does not add or remove a terminating byte.
+The
+.Fl S , Fl T ,
+and
+.Fl U
+options may be useful to encode the NUL terminator in a readable form.
 .
 .It Fl q
 Quiet operation.
