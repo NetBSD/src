@@ -1,7 +1,7 @@
-/*	$NetBSD: radixtree.c,v 1.17.2.1 2011/11/25 13:58:11 yamt Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.17.2.2 2012/02/17 08:16:55 yamt Exp $	*/
 
 /*-
- * Copyright (c)2011 YAMAMOTO Takashi,
+ * Copyright (c)2011,2012 YAMAMOTO Takashi,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,38 +29,45 @@
 /*
  * radixtree.c
  *
- * this is an implementation of radix tree, whose keys are uint64_t and leafs
+ * Overview:
+ *
+ * This is an implementation of radix tree, whose keys are uint64_t and leafs
  * are user provided pointers.
  *
- * leaf nodes are just void * and this implementation doesn't care about
- * what they actually point to.  however, this implementation has an assumption
- * about their alignment.  specifically, this implementation assumes that their
- * 2 LSBs are zero and uses them internally.
+ * Leaf nodes are just void * and this implementation doesn't care about
+ * what they actually point to.  However, this implementation has an assumption
+ * about their alignment.  Specifically, this implementation assumes that their
+ * 2 LSBs are always zero and uses them for internal accounting.
  *
- * intermediate nodes are automatically allocated and freed internally and
- * basically users don't need to care about them.  only radix_tree_insert_node
- * function can allocate memory for intermediate nodes and thus can fail for
- * ENOMEM.
+ * Intermediate nodes and memory allocation:
  *
- * efficiency:
- * it's designed to work efficiently with dense index distribution.
- * the memory consumption (number of necessary intermediate nodes)
- * heavily depends on index distribution.  basically, more dense index
- * distribution consumes less nodes per item.
- * approximately,
- * the best case: about RADIX_TREE_PTR_PER_NODE items per intermediate node.
- * the worst case: RADIX_TREE_MAX_HEIGHT intermediate nodes per item.
+ * Intermediate nodes are automatically allocated and freed internally and
+ * basically users don't need to care about them.  The allocation is done via
+ * pool_cache_get(9) for _KERNEL, malloc(3) for userland, and alloc() for
+ * _STANDALONE environment.  Only radix_tree_insert_node function can allocatei
+ * memory for intermediate nodes and thus can fail for ENOMEM.
  *
- * gang lookup:
- * this implementation provides a way to lookup many nodes quickly via
+ * Efficiency:
+ *
+ * It's designed to work efficiently with dense index distribution.
+ * The memory consumption (number of necessary intermediate nodes) heavily
+ * depends on the index distribution.  Basically, more dense index distribution
+ * consumes less nodes per item.  Approximately,
+ *  - the best case: about RADIX_TREE_PTR_PER_NODE items per intermediate node.
+ *  - the worst case: RADIX_TREE_MAX_HEIGHT intermediate nodes per item.
+ *
+ * Gang lookup:
+ *
+ * This implementation provides a way to scan many nodes quickly via
  * radix_tree_gang_lookup_node function and its varients.
  *
- * tags:
- * this implementation provides tagging functionality to allow quick
- * scanning of a subset of leaf nodes.  leaf nodes are untagged when
- * inserted into the tree and can be tagged by radix_tree_set_tag function.
- * radix_tree_gang_lookup_tagged_node function and its variants returns
- * only leaf nodes with the given tag.  to reduce amount of nodes to visit for
+ * Tags:
+ *
+ * This implementation provides tagging functionality, which allows quick
+ * scanning of a subset of leaf nodes.  Leaf nodes are untagged when inserted
+ * into the tree and can be tagged by radix_tree_set_tag function.
+ * radix_tree_gang_lookup_tagged_node function and its variants returns only
+ * leaf nodes with the given tag.  To reduce amount of nodes to visit for
  * these functions, this implementation keeps tagging information in internal
  * intermediate nodes and quickly skips uninterested parts of a tree.
  */
@@ -68,7 +75,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.17.2.1 2011/11/25 13:58:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.17.2.2 2012/02/17 08:16:55 yamt Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
@@ -78,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.17.2.1 2011/11/25 13:58:11 yamt Exp 
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.17.2.1 2011/11/25 13:58:11 yamt Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.17.2.2 2012/02/17 08:16:55 yamt Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -219,7 +226,7 @@ path_node(const struct radix_tree * t, const struct radix_tree_path *p,
 /*
  * radix_tree_init_tree:
  *
- * initialize a tree.
+ * Initialize a tree.
  */
 
 void
@@ -231,9 +238,9 @@ radix_tree_init_tree(struct radix_tree *t)
 }
 
 /*
- * radix_tree_init_tree:
+ * radix_tree_fini_tree:
  *
- * clean up a tree.
+ * Finish using a tree.
  */
 
 void
@@ -244,12 +251,25 @@ radix_tree_fini_tree(struct radix_tree *t)
 	KASSERT(t->t_height == 0);
 }
 
+/*
+ * radix_tree_empty_tree_p:
+ *
+ * Return if the tree is empty.
+ */
+
 bool
 radix_tree_empty_tree_p(struct radix_tree *t)
 {
 
 	return t->t_root == NULL;
 }
+
+/*
+ * radix_tree_empty_tree_p:
+ *
+ * Return true if the tree has any nodes with the given tag.  Otherwise
+ * return false.
+ */
 
 bool
 radix_tree_empty_tagged_tree_p(struct radix_tree *t, radix_tree_tagid_t tagid)
@@ -318,6 +338,9 @@ radix_tree_alloc_node(void)
 	struct radix_tree_node *n;
 
 #if defined(_KERNEL)
+	/*
+	 * note that pool_cache_get can block.
+	 */
 	n = pool_cache_get(radix_tree_node_cache, PR_NOWAIT);
 #else /* defined(_KERNEL) */
 #if defined(_STANDALONE)
@@ -492,17 +515,17 @@ radix_tree_lookup_ptr(struct radix_tree *t, uint64_t idx,
 /*
  * radix_tree_insert_node:
  *
- * insert the node at idx.
- * it's illegal to insert NULL.
- * it's illegal to insert a non-aligned pointer.
+ * Insert the node at the given index.
  *
- * this function returns ENOMEM if necessary memory allocation failed.
- * otherwise, this function returns 0.
+ * It's illegal to insert NULL.  It's illegal to insert a non-aligned pointer.
  *
- * note that inserting a node can involves memory allocation for intermediate
- * nodes.  if _KERNEL, it's done with no-sleep IPL_NONE memory allocation.
+ * This function returns ENOMEM if necessary memory allocation failed.
+ * Otherwise, this function returns 0.
  *
- * for the newly inserted node, all tags are cleared.
+ * Note that inserting a node can involves memory allocation for intermediate
+ * nodes.  If _KERNEL, it's done with no-sleep IPL_NONE memory allocation.
+ *
+ * For the newly inserted node, all tags are cleared.
  */
 
 int
@@ -524,11 +547,12 @@ radix_tree_insert_node(struct radix_tree *t, uint64_t idx, void *p)
 /*
  * radix_tree_replace_node:
  *
- * replace a node at the given index with the given node.
- * return the old node.
- * it's illegal to try to replace a node which has not been inserted.
+ * Replace a node at the given index with the given node and return the
+ * replaced one.
  *
- * this function doesn't change tags.
+ * It's illegal to try to replace a node which has not been inserted.
+ *
+ * This function keeps tags intact.
  */
 
 void *
@@ -550,8 +574,9 @@ radix_tree_replace_node(struct radix_tree *t, uint64_t idx, void *p)
 /*
  * radix_tree_remove_node:
  *
- * remove the node at idx.
- * it's illegal to try to remove a node which has not been inserted.
+ * Remove the node at the given index.
+ *
+ * It's illegal to try to remove a node which has not been inserted.
  */
 
 void *
@@ -625,8 +650,8 @@ radix_tree_remove_node(struct radix_tree *t, uint64_t idx)
 /*
  * radix_tree_lookup_node:
  *
- * returns the node at idx.
- * returns NULL if nothing is found at idx.
+ * Returns the node at the given index.
+ * Returns NULL if nothing is found at the given index.
  */
 
 void *
@@ -784,28 +809,30 @@ descend:
 /*
  * radix_tree_gang_lookup_node:
  *
- * search nodes starting from idx in the ascending order.
- * results should be an array large enough to hold maxresults pointers.
- * returns the number of nodes found, up to maxresults.
- * returning less than maxresults means there are no more nodes.
+ * Scan the tree starting from the given index in the ascending order and
+ * return found nodes.
  *
- * if dense == true, this function stops scanning when it founds a hole of
- * indexes.  ie. an index for which radix_tree_lookup_node would returns NULL.
- * if dense == false, this function skips holes and continue scanning until
+ * results should be an array large enough to hold maxresults pointers.
+ * This function returns the number of nodes found, up to maxresults.
+ * Returning less than maxresults means there are no more nodes in the tree.
+ *
+ * If dense == true, this function stops scanning when it founds a hole of
+ * indexes.  I.e. an index for which radix_tree_lookup_node would returns NULL.
+ * If dense == false, this function skips holes and continue scanning until
  * maxresults nodes are found or it reaches the limit of the index range.
  *
- * the result of this function is semantically equivalent to what could be
+ * The result of this function is semantically equivalent to what could be
  * obtained by repeated calls of radix_tree_lookup_node with increasing index.
  * but this function is expected to be computationally cheaper when looking up
- * multiple nodes at once.  especially, it's expected to be much cheaper when
+ * multiple nodes at once.  Especially, it's expected to be much cheaper when
  * node indexes are distributed sparsely.
  *
- * note that this function doesn't return index values of found nodes.
- * thus, in the case of dense == false, if index values are important for
+ * Note that this function doesn't return index values of found nodes.
+ * Thus, in the case of dense == false, if index values are important for
  * a caller, it's the caller's responsibility to check them, typically
  * by examinining the returned nodes using some caller-specific knowledge
  * about them.
- * in the case of dense == true, a node returned via results[N] is always for
+ * In the case of dense == true, a node returned via results[N] is always for
  * the index (idx + N).
  */
 
@@ -822,8 +849,8 @@ radix_tree_gang_lookup_node(struct radix_tree *t, uint64_t idx,
 /*
  * radix_tree_gang_lookup_node_reverse:
  *
- * same as radix_tree_gang_lookup_node except that this one scans the
- * tree in the reverse order.  ie. descending index values.
+ * Same as radix_tree_gang_lookup_node except that this one scans the
+ * tree in the reverse order.  I.e. descending index values.
  */
 
 unsigned int
@@ -839,7 +866,7 @@ radix_tree_gang_lookup_node_reverse(struct radix_tree *t, uint64_t idx,
 /*
  * radix_tree_gang_lookup_tagged_node:
  *
- * same as radix_tree_gang_lookup_node except that this one only returns
+ * Same as radix_tree_gang_lookup_node except that this one only returns
  * nodes tagged with tagid.
  */
 
@@ -859,8 +886,8 @@ radix_tree_gang_lookup_tagged_node(struct radix_tree *t, uint64_t idx,
 /*
  * radix_tree_gang_lookup_tagged_node_reverse:
  *
- * same as radix_tree_gang_lookup_tagged_node except that this one scans the
- * tree in the reverse order.  ie. descending index values.
+ * Same as radix_tree_gang_lookup_tagged_node except that this one scans the
+ * tree in the reverse order.  I.e. descending index values.
  */
 
 unsigned int
@@ -879,8 +906,9 @@ radix_tree_gang_lookup_tagged_node_reverse(struct radix_tree *t, uint64_t idx,
 /*
  * radix_tree_get_tag:
  *
- * return if the tag is set for the node at the given index.  (true if set)
- * it's illegal to call this function for a node which has not been inserted.
+ * Return if the tag is set for the node at the given index.  (true if set)
+ *
+ * It's illegal to call this function for a node which has not been inserted.
  */
 
 bool
@@ -914,8 +942,9 @@ radix_tree_get_tag(struct radix_tree *t, uint64_t idx,
 /*
  * radix_tree_set_tag:
  *
- * set the tag for the node at the given index.
- * it's illegal to call this function for a node which has not been inserted.
+ * Set the tag for the node at the given index.
+ *
+ * It's illegal to call this function for a node which has not been inserted.
  */
 
 void
@@ -948,8 +977,9 @@ radix_tree_set_tag(struct radix_tree *t, uint64_t idx,
 /*
  * radix_tree_clear_tag:
  *
- * clear the tag for the node at the given index.
- * it's illegal to call this function for a node which has not been inserted.
+ * Clear the tag for the node at the given index.
+ *
+ * It's illegal to call this function for a node which has not been inserted.
  */
 
 void
