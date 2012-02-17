@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.43 2012/01/28 00:00:06 rmind Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.44 2012/02/17 23:41:02 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.43 2012/01/28 00:00:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.44 2012/02/17 23:41:02 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,9 +58,9 @@ struct uvmexp uvmexp;	/* decl */
 struct uvm_object *uvm_kernel_object;
 
 #if defined(__uvmexp_pagesize)
-int *uvmexp_pagesize = &uvmexp.pagesize;
-int *uvmexp_pagemask = &uvmexp.pagemask;
-int *uvmexp_pageshift = &uvmexp.pageshift;
+const int * const uvmexp_pagesize = &uvmexp.pagesize;
+const int * const uvmexp_pagemask = &uvmexp.pagemask;
+const int * const uvmexp_pageshift = &uvmexp.pageshift;
 #endif
 
 kmutex_t uvm_pageqlock;
