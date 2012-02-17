@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.135 2012/02/07 19:13:24 joerg Exp $
+#	$NetBSD: sets.subr,v 1.136 2012/02/17 00:00:39 christos Exp $
 #
 
 #
@@ -159,11 +159,7 @@ nlists="base comp etc games man misc $modset $testset text"
 xlists="xbase xcomp xetc xfont xserver"
 extlists="extbase extcomp extetc"
 
-OSRELEASE=`${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh -n`
-# for release branches, use X.Y version, for -current use X.Y.Z
-if [ ! "${OSRELEASE%.99}" = "${OSRELEASE}" ]; then
-	OSRELEASE=`${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh`
-fi
+OSRELEASE=$(${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh -k)
 MODULEDIR="stand/${MACHINE}/${OSRELEASE}/modules"
 SUBST="s#@MODULEDIR@#${MODULEDIR}#g"
 SUBST="${SUBST};s#@OSRELEASE@#${OSRELEASE}#g"
@@ -176,7 +172,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.135 2012/02/07 19:13:24 joerg Exp $
+# 	# $NetBSD: sets.subr,v 1.136 2012/02/17 00:00:39 christos Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -500,7 +496,7 @@ echo_if_exist_foreach()
 print_set_lists()
 {
 	for setname; do
-		list=`list_set_lists $setname`
+		list=$(list_set_lists $setname)
 		for l in $list; do
 			echo $l
 			if $verbose; then
