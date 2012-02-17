@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.61 2012/02/12 14:38:18 jym Exp $	*/
+/*	$NetBSD: clock.c,v 1.62 2012/02/17 19:00:45 bouyer Exp $	*/
 
 /*
  *
@@ -29,7 +29,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.61 2012/02/12 14:38:18 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.62 2012/02/17 19:00:45 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -458,10 +458,13 @@ xen_initclocks(void)
 	 * after a while. Use the one-shot timer every NS_PER_TICK
 	 * and rearm it from the event handler.
 	 */
-	err = HYPERVISOR_vcpu_op(VCPUOP_stop_periodic_timer,
-				 ci->ci_cpuid,
+	if (XEN_MAJOR(xen_version) > 3 || XEN_MINOR(xen_version) > 0) {
+		/* exists only on Xen 3.1 and later */
+		err = HYPERVISOR_vcpu_op(VCPUOP_stop_periodic_timer,
+					 ci->ci_cpuid,
 				 NULL);
-	KASSERT(err == 0);
+		KASSERT(err == 0);
+	}
 
 	err = HYPERVISOR_set_timer_op(
 	    vcpu_system_time[ci->ci_cpuid] + NS_PER_TICK);
