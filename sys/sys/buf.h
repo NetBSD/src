@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.118 2011/11/21 04:36:05 christos Exp $ */
+/*     $NetBSD: buf.h,v 1.119 2012/02/17 08:45:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -73,6 +73,7 @@
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
+#include <sys/rbtree.h>
 #if defined(_KERNEL)
 #include <sys/workqueue.h>
 #endif /* defined(_KERNEL) */
@@ -103,6 +104,7 @@ extern kmutex_t buffer_lock;
 struct buf {
 	union {
 		TAILQ_ENTRY(buf) u_actq;
+		rb_node_t u_rbnode;
 #if defined(_KERNEL) /* u_work is smaller than u_actq. XXX */
 		struct work u_work;
 #endif /* defined(_KERNEL) */
