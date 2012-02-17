@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.24 2011/08/17 09:53:54 christos Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.25 2012/02/17 19:57:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.27 2007/01/09 00:28:08 imp Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.24 2011/08/17 09:53:54 christos Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.25 2012/02/17 19:57:53 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -124,7 +124,7 @@ union arg {
  * Type ids for argument type table.
  */
 enum typeid {
-	T_UNUSED, TP_SHORT, T_INT, T_U_INT, TP_INT,
+	T_UNUSED = 0, TP_SHORT, T_INT, T_U_INT, TP_INT,
 	T_LONG, T_U_LONG, TP_LONG, T_LLONG, T_U_LLONG, TP_LLONG,
 	T_PTRDIFFT, TP_PTRDIFFT, T_SSIZET, T_SIZET, TP_SIZET,
 	T_INTMAXT, T_UINTMAXT, TP_INTMAXT, TP_VOID, TP_CHAR, TP_SCHAR,
@@ -144,7 +144,7 @@ static char	*__wcsconv(wchar_t *, int);
 static int	__sprint(FILE *, struct __suio *);
 #endif
 static int	__find_arguments(const CHAR_T *, va_list, union arg **);
-static int	__grow_type_table(int, enum typeid **, int *);
+static int	__grow_type_table(size_t, enum typeid **, size_t *);
 
 /*
  * Helper function for `fprintf to unbuffered unix file': creates a
@@ -1554,20 +1554,27 @@ __find_arguments(const CHAR_T *fmt0, va_list ap, union arg **argtable)
 {
 	CHAR_T *fmt;		/* format string */
 	int ch;			/* character from fmt */
-	int n, n2;		/* handy integer (short term usage) */
+	size_t n, n2;		/* handy index (short term usage) */
 	CHAR_T *cp;		/* handy char pointer (short term usage) */
 	int flags;		/* flags as above */
 	enum typeid *typetable; /* table of types */
 	enum typeid stattypetable [STATIC_ARG_TBL_SIZE];
-	int tablesize;		/* current size of type table */
-	int tablemax;		/* largest used index in table */
-	int nextarg;		/* 1-based argument index */
+	size_t tablesize;	/* current size of type table */
+	size_t tablemax;	/* largest used index in table */
+	size_t nextarg;		/* 1-based argument index */
+	size_t nitems;		/* number of items we picked from the stack */
 
 	/*
 	 * Add an argument type to the table, expanding if necessary.
+	 * Check for overflow.
 	 */
 #define ADDTYPE(type) \
 	do { \
+		if (nextarg > SIZE_MAX / sizeof(**argtable)) { \
+			if (typetable != stattypetable) \
+				free(typetable); \
+			return -1; \
+		} \
 		if (nextarg >= tablesize) \
 			if (__grow_type_table(nextarg, &typetable, \
 			    &tablesize) == -1) \
@@ -1575,6 +1582,7 @@ __find_arguments(const CHAR_T *fmt0, va_list ap, union arg **argtable)
 		if (nextarg > tablemax) \
 			tablemax = nextarg; \
 		typetable[nextarg++] = type; \
+		nitems++; \
 	} while (/*CONSTCOND*/0)
 
 #define	ADDSARG() \
@@ -1619,7 +1627,7 @@ __find_arguments(const CHAR_T *fmt0, va_list ap, union arg **argtable)
 		cp++; \
 	} \
 	if (*cp == '$') { \
-		int hold = nextarg; \
+		size_t hold = nextarg; \
 		nextarg = n2; \
 		ADDTYPE(T_INT); \
 		nextarg = hold; \
@@ -1628,12 +1636,12 @@ __find_arguments(const CHAR_T *fmt0, va_list ap, union arg **argtable)
 		ADDTYPE(T_INT); \
 	}
 	fmt = (CHAR_T *)__UNCONST(fmt0);
+	memset(stattypetable, 0, sizeof(stattypetable));
 	typetable = stattypetable;
 	tablesize = STATIC_ARG_TBL_SIZE;
 	tablemax = 0; 
 	nextarg = 1;
-	for (n = 0; n < STATIC_ARG_TBL_SIZE; n++)
-		typetable[n] = T_UNUSED;
+	nitems = 1;
 
 	/*
 	 * Scan the format for conversions (`%' character).
@@ -1795,13 +1803,30 @@ reswitch:	switch (ch) {
 	}
 done:
 	/*
+	 * nitems contains the number of arguments we picked from the stack.
+	 * If tablemax is larger, this means that some positional argument,
+	 * tried to pick an argument the number of arguments possibly supplied.
+	 * Since positional arguments are typically used to swap the order of
+	 * the printf arguments and not to pick random arguments from strange
+	 * positions in the stack, we assume that if the positional argument
+	 * is trying to pick beyond the end of arguments, then this is wrong.
+	 * Alternatively we could find a way to figure out when va_arg() runs
+	 * out, but how to do that?
+	 */
+	if (nitems < tablemax) {
+		if (typetable != stattypetable)
+			free(typetable);
+		return -1;
+	}
+	/*
 	 * Build the argument table.
 	 */
 	if (tablemax >= STATIC_ARG_TBL_SIZE) {
-		*argtable = (union arg *)
-		    malloc (sizeof (union arg) * (tablemax + 1));
-		if (*argtable == NULL)
+		*argtable = malloc(sizeof(**argtable) * (tablemax + 1));
+		if (*argtable == NULL) {
+			free(typetable);
 			return -1;
+		}
 	}
 
 	(*argtable) [0].intarg = 0;
@@ -1892,7 +1917,7 @@ done:
 		}
 	}
 
-	if ((typetable != NULL) && (typetable != stattypetable))
+	if (typetable != stattypetable)
 		free (typetable);
 	return 0;
 }
@@ -1901,28 +1926,27 @@ done:
  * Increase the size of the type table.
  */
 static int
-__grow_type_table (int nextarg, enum typeid **typetable, int *tablesize)
+__grow_type_table (size_t nextarg, enum typeid **typetable, size_t *tablesize)
 {
 	enum typeid *const oldtable = *typetable;
 	const int oldsize = *tablesize;
 	enum typeid *newtable;
-	int n, newsize = oldsize * 2;
+	size_t n, newsize = oldsize * 2;
 
 	if (newsize < nextarg + 1)
 		newsize = nextarg + 1;
 	if (oldsize == STATIC_ARG_TBL_SIZE) {
-		if ((newtable = malloc(newsize * sizeof(enum typeid))) == NULL)
+		if ((newtable = malloc(newsize * sizeof(*newtable))) == NULL)
 			return -1;
-		memcpy(newtable, oldtable, oldsize * sizeof(enum typeid));
+		memcpy(newtable, oldtable, oldsize * sizeof(*newtable));
 	} else {
-		newtable = realloc(oldtable, newsize * sizeof(enum typeid));
+		newtable = realloc(oldtable, newsize * sizeof(*newtable));
 		if (newtable == NULL) {
 			free(oldtable);
 			return -1;
 		}
 	}
-	for (n = oldsize; n < newsize; n++)
-		newtable[n] = T_UNUSED;
+	memset(&newtable[oldsize], 0, (newsize - oldsize) * sizeof(*newtable));
 
 	*typetable = newtable;
 	*tablesize = newsize;
