@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.23 2012/02/17 16:44:34 christos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.24 2012/02/17 16:57:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -32,7 +32,7 @@
 #ifndef	_ARM32_VMPARAM_H_
 #define	_ARM32_VMPARAM_H_
 
-#if defined(_KERNEL) || defined(_KEMUSER)
+#if defined(_KERNEL) || defined(_KMEMUSER)
 
 #include <arm/arm32/vmparam.h>
 
