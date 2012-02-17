@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1739 2012/02/16 18:40:29 njoly Exp $
+#	$NetBSD: mi,v 1.1740 2012/02/17 09:44:12 plunky Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9819,6 +9819,7 @@
 ./usr/share/man/cat9/config_deactivate.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/config_defer.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/config_detach.0		comp-sys-catman		.cat
+./usr/share/man/cat9/config_detach_children.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/config_finalize_register.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/config_found.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/config_found_ia.0		comp-sys-catman		.cat
@@ -16013,6 +16014,7 @@
 ./usr/share/man/html9/config_deactivate.html	comp-sys-htmlman	html
 ./usr/share/man/html9/config_defer.html		comp-sys-htmlman	html
 ./usr/share/man/html9/config_detach.html	comp-sys-htmlman	html
+./usr/share/man/html9/config_detach_children.html	comp-sys-htmlman	html
 ./usr/share/man/html9/config_finalize_register.html	comp-sys-htmlman	html
 ./usr/share/man/html9/config_found.html		comp-sys-htmlman	html
 ./usr/share/man/html9/config_found_ia.html	comp-sys-htmlman	html
@@ -22324,6 +22326,7 @@
 ./usr/share/man/man9/config_deactivate.9	comp-sys-man		.man
 ./usr/share/man/man9/config_defer.9		comp-sys-man		.man
 ./usr/share/man/man9/config_detach.9		comp-sys-man		.man
+./usr/share/man/man9/config_detach_children.9	comp-sys-man		.man
 ./usr/share/man/man9/config_finalize_register.9	comp-sys-man		.man
 ./usr/share/man/man9/config_found.9		comp-sys-man		.man
 ./usr/share/man/man9/config_found_ia.9		comp-sys-man		.man
