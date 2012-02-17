@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.23 2012/02/16 02:32:40 christos Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.24 2012/02/17 16:26:51 christos Exp $	*/
 
 /* 
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.23 2012/02/16 02:32:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.24 2012/02/17 16:26:51 christos Exp $");
 
 #include <sys/proc.h>
 #include <arm/armreg.h>
@@ -161,9 +161,9 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 		lastframe = frame;
 #ifndef _KERNEL
 		uint32_t frameb[4];
-		db_read_bytes((db_addr_t)(frame - 4), sizeof(frameb),
+		db_read_bytes((db_addr_t)(frame - 3), sizeof(frameb),
 		    (char *)frameb);
-		frame = frameb + 4;
+		frame = frameb + 3;
 #endif
 
 		/*
@@ -189,7 +189,12 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 #endif
 		(*pr)("\trsp=0x%08x rfp=0x%08x", frame[FR_RSP], frame[FR_RFP]);
 
+#ifndef _KERNEL
+		db_read_bytes((db_addr_t)((u_int32_t *)scp + scp_offset),
+		    sizeof(savecode), (void *)&savecode);
+#else
 		savecode = ((u_int32_t *)scp)[scp_offset];
+#endif
 		if ((savecode & 0x0e100000) == 0x08000000) {
 			/* Looks like an STM */
 			rp = frame - 4;
