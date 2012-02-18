@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.696 2012/02/10 05:57:42 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.696.2.1 2012/02/18 18:05:05 riz Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -525,7 +525,7 @@ MANDIR?=	/usr/share/man
 MANGRP?=	wheel
 MANOWN?=	root
 MANMODE?=	${NONBINMODE}
-MANINSTALL?=	catinstall htmlinstall maninstall
+MANINSTALL?=	${_MANINSTALL}
 
 INFODIR?=	/usr/share/info
 INFOGRP?=	wheel
@@ -881,6 +881,14 @@ MKLDAP:=	no
 .if ${MKMAN} == "no"
 MKCATPAGES:=	no
 MKHTML:=	no
+.endif
+
+_MANINSTALL=	maninstall
+.if ${MKCATPAGES} != "no"
+_MANINSTALL+=	catinstall
+.endif
+.if ${MKHTML} != "no"
+_MANINSTALL+=	htmlinstall
 .endif
 
 .if ${MKLINKLIB} == "no"
