@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.29 2011/12/12 19:03:12 mrg Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.30 2012/02/18 06:29:10 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.29 2011/12/12 19:03:12 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.30 2012/02/18 06:29:10 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -805,6 +805,7 @@ bdev_size(dev_t dev)
 
 	/*
 	 * Don't to try lock the device if we're dumping.
+	 * XXX: is there a better way to test this?
 	 */
 	if ((boothowto & RB_DUMP) == 0)
 		DEV_LOCK(d);
