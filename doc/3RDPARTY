@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.911 2012/02/17 11:15:59 tron Exp $
+#	$NetBSD: 3RDPARTY,v 1.912 2012/02/18 13:44:46 drochner Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -534,21 +534,6 @@ License:	BSD
 Notes:
 Distribution is stripped down to the relevant part.
 
-Package:	libcdk
-Version:	4.9.9-20000407-myc3
-Current Vers:	cdk-4.9.10-20000923
-Maintainer:	mike@vexus.ca
-Archive Site:	http://www.vexus.ca/products/CDK/
-Home Page:	http://www.vexus.ca/products/CDK/
-Responsible:	garbled
-License:	BSD (4-clause)
-Notes:
-Initial port to netbsd curses was done by mycroft.  This is a heavily
-modified version of the released CDK 4.9.9.  The current version has been
-taken over by the Ncurses people, and has a number of changes to it.  It
-might be worthwhile to import at some future date, but for now we should
-leave it alone.  (garbled 1/4/2001)
-
 Package:	libdevmapper
 Version:	1.02.40
 Current Vers:	1.02.40
@@ -1027,17 +1012,6 @@ License:	BSD (3-clause)
 Notes:
 Use the src/external/bsd/tcpdump/dist/tcpdump2netbsd script to prepare source
 tree.
-
-Package:	termcap.src
-Version:	9.13.25
-Current Vers:	11.0.1
-Maintainer:	Eric S. Raymond <terminfo@ccil.org>
-Archive Site:	http://www.catb.org/~esr/terminfo/
-Home Page:	http://www.catb.org/~esr/terminfo/
-Mailing List:
-Responsible:
-License:	Public domain
-Notes:
 
 Package:	TestFloat
 Version:	2a
