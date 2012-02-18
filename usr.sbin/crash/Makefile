@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2012/02/17 12:24:13 martin Exp $
+#	$NetBSD: Makefile,v 1.20 2012/02/18 15:57:06 christos Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -18,11 +18,7 @@ DPADD+=	${LIBUTIL} ${LIBKVM} ${LIBEDIT} ${LIBTERMINFO}
     || (${MACHINE_ARCH} == "arm" && ${MACHINE} != "acorn26") \
     || ${MACHINE_ARCH} == "m68k"
 SRCS+=	db_trace.c
-.if ${MACHINE} == "sparc64"
-SRCS+=	db_interface.c
-.else
 SRCS+=	db_machdep.c
-.endif
 REALCRASH=yes
 .else
 REALCRASH=no
