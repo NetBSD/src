@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.136 2011/10/04 10:35:33 nakayama Exp $
+#	$NetBSD: files.sparc64,v 1.137 2012/02/18 15:56:30 christos Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -245,6 +245,7 @@ file	arch/sparc64/sparc64/ipifuncs.c		multiprocessor
 file	arch/sparc64/sparc64/lock_stubs.s
 
 file	arch/sparc64/sparc64/db_interface.c	ddb | kgdb
+file	arch/sparc64/sparc64/db_machdep.c	ddb
 file	arch/sparc64/sparc64/db_trace.c		ddb
 file	arch/sparc64/sparc64/db_disasm.c	ddb
 file	arch/sparc64/sparc64/db_tlb_access.S	ddb
