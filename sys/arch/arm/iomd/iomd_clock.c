@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.25 2009/01/17 17:06:18 mjf Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.26 2012/02/18 23:51:27 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -47,14 +47,14 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: iomd_clock.c,v 1.25 2009/01/17 17:06:18 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd_clock.c,v 1.26 2012/02/18 23:51:27 rmind Exp $");
 
 #include <sys/systm.h>
+#include <sys/types.h>
 #include <sys/kernel.h>
 #include <sys/time.h>
 #include <sys/timetc.h>
 #include <sys/device.h>
-#include <sys/simplelock.h>
 #include <sys/intr.h>
 
 #include <dev/clock_subr.h>
@@ -92,8 +92,7 @@ static volatile uint32_t timer0_offset;
 static volatile int timer0_ticked;
 /* TODO: Get IRQ status */
 
-static struct simplelock tmr_lock = SIMPLELOCK_INITIALIZER;  /* protect TC timer variables */
-
+static __cpu_simple_lock_t tmr_lock = __SIMPLELOCK_UNLOCKED;
 
 static struct timecounter iomd_timecounter = {
 	iomd_timecounter0_get,
@@ -152,18 +151,18 @@ clockattach(struct device *parent, struct device *self,	void *aux)
 
 
 static void
-tickle_tc(void) 
+tickle_tc(void)
 {
 	if (timer0_count && 
 	    timecounter->tc_get_timecount == iomd_timecounter0_get) {
-		simple_lock(&tmr_lock);
+		__cpu_simple_lock(&tmr_lock);
 		if (timer0_ticked)
 			timer0_ticked    = 0;
 		else {
 			timer0_offset   += timer0_count;
 			timer0_lastcount = 0;
 		}
-		simple_unlock(&tmr_lock);
+		__cpu_simple_unlock(&tmr_lock);
 	}
 
 }
