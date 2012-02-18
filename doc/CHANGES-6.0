@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.4 2012/02/17 00:43:14 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.5 2012/02/18 18:05:52 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -30,4 +30,24 @@ sys/conf/osrelease.sh				1.122
 	Reconcile the various methods of telling what kernel version
 	modules are for.
 	[christos, ticket #6]
+
+etc/man.conf					1.30
+external/bsd/mdocml/Makefile.inc		1.15
+external/bsd/mdocml/dist/mandoc.h		1.2
+external/bsd/mdocml/dist/read.c			1.6
+usr.sbin/makemandb/Makefile			1.2
+usr.sbin/makemandb/apropos.1			1.3
+usr.sbin/makemandb/apropos.c			1.5
+usr.sbin/makemandb/makemandb.c			1.3-1.5
+
+	Various fixes for apropos(1) to restore functionality (including
+	compressed man page support) which had been there prior
+	to importing the new version.
+	[joerg, ticket #4]
+
+share/mk/bsd.README				1.293
+share/mk/bsd.own.mk				1.697
+
+	Derive MANINSTALL from MKCATPAGES and MKHTML.
+	[joerg, ticket #5]
 
