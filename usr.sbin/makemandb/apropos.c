@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.4 2012/02/07 23:03:34 joerg Exp $	*/
+/*	$NetBSD: apropos.c,v 1.4.2.1 2012/02/18 18:03:26 riz Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos.c,v 1.4 2012/02/07 23:03:34 joerg Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.4.2.1 2012/02/18 18:03:26 riz Exp $");
 
 #include <err.h>
 #include <search.h>
@@ -76,6 +76,7 @@ main(int argc, char *argv[])
 	char *errmsg = NULL;
 	char *str;
 	int ch, rc = 0;
+	int s;
 	callback_data cbdata;
 	cbdata.out = stdout;		// the default output stream
 	cbdata.count = 0;
@@ -92,7 +93,7 @@ main(int argc, char *argv[])
 	 * index element in sec_nums is set to the string representing that 
 	 * section number.
 	 */
-	while ((ch = getopt(argc, argv, "123456789Ccn:pS:")) != -1) {
+	while ((ch = getopt(argc, argv, "123456789Ccn:pS:s:")) != -1) {
 		switch (ch) {
 		case '1':
 		case '2':
@@ -120,6 +121,12 @@ main(int argc, char *argv[])
 			break;
 		case 'S':
 			aflags.machine = optarg;
+			break;
+		case 's':
+			s = atoi(optarg);
+			if (s < 1 || s > 9)
+				errx(EXIT_FAILURE, "Invalid section");
+			aflags.sec_nums[s - 1] = 1;
 			break;
 		case '?':
 		default:
@@ -189,8 +196,8 @@ main(int argc, char *argv[])
 	
 	if (cbdata.count == 0) {
 		warnx("No relevant results obtained.\n"
-			  "Please make sure that you spelled all the terms correctly\n"
-			  "Or try using better keywords.");
+			  "Please make sure that you spelled all the terms correctly "
+			  "or try using better keywords.");
 	}
 	return 0;
 }
