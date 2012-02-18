@@ -1,4 +1,4 @@
-.\"	$NetBSD: setkey.8,v 1.32 2012/01/26 21:54:26 wiz Exp $
+.\"	$NetBSD: setkey.8,v 1.33 2012/02/18 13:42:45 drochner Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
 .\" All rights reserved.
@@ -255,6 +255,8 @@ is one of following:
 ESP based on rfc2406
 .It Li esp-old
 ESP based on rfc1827
+.It Li esp-udp
+UDP encapsulated ESP for NAT traversal (rfc3948)
 .It Li ah
 AH based on rfc2402
 .It Li ah-old
