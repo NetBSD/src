@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_reg.h,v 1.3 2011/08/03 16:27:15 matt Exp $	*/
+/*	$NetBSD: ralink_reg.h,v 1.3.6.1 2012/02/18 07:32:41 mrg Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -127,6 +127,18 @@
 #define RA_SYSCTL_RSTSTAT      0x38
 #define RA_SYSCTL_GPIOMODE     0x60
 
+#if defined(RT3050) || defined(RT3052)
+#define	SYSCTL_CFG0_INIC_EE_SDRAM 	__BIT(29)
+#define	SYSCTL_CFG0_INIC_8MB_SDRAM 	__BIT(28)
+#define	SYSCTL_CFG0_GE0_MODE		__BITS(24,25)
+#define	SYSCTL_CFG0_BYPASS_PLL		__BIT(21)
+#define	SYSCTL_CFG0_BE			__BIT(20)
+#define	SYSCTL_CFG0_CPU_CLK_SEL 	__BIT(18)
+#define	SYSCTL_CFG0_BOOT_FROM		__BITS(16,17)
+#define	SYSCTL_CFG0_TEST_CODE		__BITS(8,15)
+#define	SYSCTL_CFG0_SRAM_CS_MODE	__BITS(2,3)
+#define	SYSCTL_CFG0_SDRAM_CLK_DRV	__BIT(0)
+#else
 #define	SYSCTL_CFG0_BE		__BIT(19)
 #define SYSCTL_CFG0_DRAM_SIZE	__BITS(12,14) 
 #define	SYSCTL_CFG0_DRAM_2MB	0
@@ -136,6 +148,7 @@
 #define	SYSCTL_CFG0_DRAM_64MB	4
 #define	SYSCTL_CFG0_DRAM_128MB	5
 #define	SYSCTL_CFG0_DRAM_256MB	6
+#endif
 
 #if defined(RT3883)
 /* 3883 doesn't have memo regs, use teststat instead */

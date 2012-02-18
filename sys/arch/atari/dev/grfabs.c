@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs.c,v 1.17 2009/10/20 19:10:10 snj Exp $	*/
+/*	$NetBSD: grfabs.c,v 1.17.16.1 2012/02/18 07:31:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs.c,v 1.17 2009/10/20 19:10:10 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs.c,v 1.17.16.1 2012/02/18 07:31:38 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,26 +124,26 @@ grf_get_best_mode(dimen_t *dim, u_char depth)
 	return (get_best_display_mode(dim, depth, NULL));
 }
 
-void grf_display_view(v)
-view_t *v;
+void
+grf_display_view(view_t *v)
 {
 	(v->mode->grfabs_funcs->display_view)(v);
 }
 
-void grf_remove_view(v)
-view_t *v;
+void
+grf_remove_view(view_t *v)
 {
 	(v->mode->grfabs_funcs->remove_view)(v);
 }
 
-void grf_save_view(v)
-view_t *v;
+void
+grf_save_view(view_t *v)
 {
 	(v->mode->grfabs_funcs->save_view)(v);
 }
 
-void grf_free_view(v)
-view_t *v;
+void
+grf_free_view(view_t *v)
 {
 	(v->mode->grfabs_funcs->free_view)(v);
 }

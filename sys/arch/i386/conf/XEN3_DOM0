@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.57 2011/11/22 21:25:21 tls Exp $
+#	$NetBSD: XEN3_DOM0,v 1.57.2.1 2012/02/18 07:32:20 mrg Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -44,6 +44,8 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
+
+options 	CPU_UCODE	# cpu ucode loading support
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
@@ -132,7 +134,7 @@ file-system 	TMPFS		# Efficient memory file-system
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

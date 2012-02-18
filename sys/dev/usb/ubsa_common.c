@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa_common.c,v 1.5 2010/11/03 22:34:23 dyoung Exp $	*/
+/*	$NetBSD: ubsa_common.c,v 1.5.12.1 2012/02/18 07:35:07 mrg Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa_common.c,v 1.5 2010/11/03 22:34:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa_common.c,v 1.5.12.1 2012/02/18 07:35:07 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

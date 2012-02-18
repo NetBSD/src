@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.41 2011/10/17 16:35:21 mbalmer Exp $ */
+/*	$NetBSD: if_atu.c,v 1.41.6.1 2012/02/18 07:35:04 mrg Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.41 2011/10/17 16:35:21 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.41.6.1 2012/02/18 07:35:04 mrg Exp $");
 
 
 #include <sys/param.h>

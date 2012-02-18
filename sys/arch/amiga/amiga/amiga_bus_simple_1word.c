@@ -1,4 +1,4 @@
-/* $NetBSD: amiga_bus_simple_1word.c,v 1.6 2011/09/16 10:23:01 rkujawa Exp $ */
+/* $NetBSD: amiga_bus_simple_1word.c,v 1.6.6.1 2012/02/18 07:31:12 mrg Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <machine/pte.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: amiga_bus_simple_1word.c,v 1.6 2011/09/16 10:23:01 rkujawa Exp $");
+__KERNEL_RCSID(1, "$NetBSD: amiga_bus_simple_1word.c,v 1.6.6.1 2012/02/18 07:31:12 mrg Exp $");
 
 #define AMIGA_SIMPLE_BUS_STRIDE 1		/* 1 byte per byte */
 #define AMIGA_SIMPLE_BUS_WORD_METHODS
@@ -55,12 +55,8 @@ int oabs(bsm_absolute_)(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 
 /* ARGSUSED */
 int
-oabs(bsm_absolute_)(tag, address, size, flags, handlep)
-	bus_space_tag_t tag;
-	bus_addr_t address;
-	bus_size_t size;
-	int flags;
-	bus_space_handle_t *handlep;
+oabs(bsm_absolute_)(bus_space_tag_t tag, bus_addr_t address,
+	bus_size_t size, int flags, bus_space_handle_t *handlep)
 {
 	uint32_t pa = kvtop((void*) tag->base);
 	*handlep = tag->base + (address - pa) * AMIGA_SIMPLE_BUS_STRIDE;
@@ -69,9 +65,7 @@ oabs(bsm_absolute_)(tag, address, size, flags, handlep)
 
 /* ARGSUSED */
 u_int32_t
-oabs(bsr4_swap_)(handle, offset)
-	bus_space_handle_t handle;
-	bus_size_t offset;
+oabs(bsr4_swap_)(bus_space_handle_t handle, bus_size_t offset)
 {
 	volatile u_int32_t *p;
 	u_int32_t x;
@@ -84,10 +78,7 @@ oabs(bsr4_swap_)(handle, offset)
 
 /* ARGSUSED */
 void
-oabs(bsw4_swap_)(handle, offset, value)
-	bus_space_handle_t handle;
-	bus_size_t offset;
-	unsigned value;
+oabs(bsw4_swap_)(bus_space_handle_t handle, bus_size_t offset, unsigned value)
 {
 	volatile u_int32_t *p;
 

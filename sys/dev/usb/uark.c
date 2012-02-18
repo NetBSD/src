@@ -1,4 +1,4 @@
-/*	$NetBSD: uark.c,v 1.3 2010/11/04 01:58:07 dyoung Exp $	*/
+/*	$NetBSD: uark.c,v 1.3.12.1 2012/02/18 07:35:07 mrg Exp $	*/
 /*	$OpenBSD: uark.c,v 1.13 2009/10/13 19:33:17 pirofti Exp $	*/
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.24 2011/10/08 06:55:19 kiyohara Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.24.6.1 2012/02/18 07:32:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Frank Wille.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.24 2011/10/08 06:55:19 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.24.6.1 2012/02/18 07:32:50 mrg Exp $");
 
 #include "opt_disksubr.h"
 
@@ -190,8 +190,8 @@ read_dos_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		if (2 > maxslot)
 			maxslot = 2;
 		/* read in disklabel, blkno + 1 for DOS disklabel offset */
-		osdep->cd_labelsector = bsdpartoff + MBR_LABELSECTOR;
-		osdep->cd_labeloffset = MBR_LABELOFFSET;
+		osdep->cd_labelsector = bsdpartoff + LABELSECTOR;
+		osdep->cd_labeloffset = LABELOFFSET;
 		if (read_netbsd_label(dev, strat, lp, osdep))
 			goto done;
 		msg = "no NetBSD disk label";
@@ -430,7 +430,9 @@ read_rdb_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		case ADT_NETBSDROOT:
 			pp = &lp->d_partitions[0];
 			if (pp->p_size) {
+#ifdef DIAGNOSTIC
 				printf("more than one root, ignoring\n");
+#endif
 				osdep->rdblock = RDBNULL; /* invalidate cpulab */
 				continue;
 			}
@@ -438,7 +440,9 @@ read_rdb_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		case ADT_NETBSDSWAP:
 			pp = &lp->d_partitions[1];
 			if (pp->p_size) {
+#ifdef DIAGNOSTIC
 				printf("more than one swap, ignoring\n");
+#endif
 				osdep->rdblock = RDBNULL; /* invalidate cpulab */
 				continue;
 			}
@@ -730,20 +734,6 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	if (lp->d_secpercyl == 0) {
 		return msg = "Zero secpercyl";
 	}
-	bp = geteblk((int)lp->d_secsize);
-
-	bp->b_dev = dev;
-	bp->b_blkno = 0;
-	bp->b_resid = 0;
-	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_READ;
-	bp->b_cylinder = 1 / lp->d_secpercyl;
-	(*strat)(bp);
-
-	if (biowait(bp)) {
-		msg = "I/O error reading block zero";
-		goto done;
-	}
 
 	/* no valid RDB found */
 	osdep->rdblock = RDBNULL;
@@ -753,6 +743,21 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 
 	osdep->cd_labelsector = LABELSECTOR;
 	osdep->cd_labeloffset = LABELOFFSET;
+
+	bp = geteblk((int)lp->d_secsize);
+
+	bp->b_dev = dev;
+	bp->b_blkno = MBR_BBSECTOR;
+	bp->b_resid = 0;
+	bp->b_bcount = lp->d_secsize;
+	bp->b_flags |= B_READ;
+	bp->b_cylinder = MBR_BBSECTOR / lp->d_secpercyl;
+	(*strat)(bp);
+
+	if (biowait(bp)) {
+		msg = "I/O error reading block zero";
+		goto done;
+	}
 
 	if (bswap16(*(u_int16_t *)((char *)bp->b_data + MBR_MAGIC_OFFSET))
 	    == MBR_MAGIC) {
@@ -851,7 +856,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	label = *lp;
 	readdisklabel(dev, strat, &label, osdep);
 
-	/* If RDB was present, we don't support writing them yet. */
+	/* If an RDB was present, we don't support writing it yet. */
 	if (osdep->rdblock != RDBNULL)
 		return EINVAL;
 
@@ -859,7 +864,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	bp = geteblk(lp->d_secsize);
 	bp->b_dev = dev;
 
-	bp->b_blkno = osdep->cd_start + osdep->cd_labelsector;
+	bp->b_blkno = osdep->cd_labelsector;
 	bp->b_cylinder = bp->b_blkno / (lp->d_secsize / DEV_BSIZE) /
 	    lp->d_secpercyl;
 	bp->b_bcount = lp->d_secsize;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.176 2011/09/01 06:40:28 matt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.176.6.1 2012/02/18 07:35:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -138,8 +138,7 @@ typedef voff_t pgoff_t;		/* XXX: number of pages within a uvm object */
 #define UVM_FLAG_AMAPPAD 0x100000 /* for bss: pad amap to reduce allocations */
 #define UVM_FLAG_TRYLOCK 0x200000 /* fail if we can not lock map */
 #define UVM_FLAG_NOWAIT  0x400000 /* not allowed to sleep */
-#define UVM_FLAG_QUANTUM 0x800000 /* entry can never be split later */
-#define UVM_FLAG_WAITVA  0x1000000 /* wait for va */
+#define UVM_FLAG_WAITVA  0x800000 /* wait for va */
 #define UVM_FLAG_VAONLY  0x2000000 /* unmap: no pages are mapped */
 #define UVM_FLAG_COLORMATCH 0x4000000 /* match color given in off */
 
@@ -471,6 +470,9 @@ extern bool vm_page_zero_enable;
 #include <sys/vmmeter.h>
 #include <sys/queue.h>
 #include <sys/lock.h>
+#ifdef _KERNEL
+#include <sys/vmem.h>
+#endif
 #include <uvm/uvm_param.h>
 #include <uvm/uvm_prot.h>
 #include <uvm/uvm_pmap.h>
@@ -530,23 +532,9 @@ struct uvm_coredump_state {
 #define	UVM_COREDUMP_STACK	0x01	/* region is user stack */
 
 /*
- * Structure containig uvm reclaim hooks, uvm_reclaim_list is guarded by
- * uvm_reclaim_lock.
- */
-struct uvm_reclaim_hook {
-	void (*uvm_reclaim_hook)(void);
-	SLIST_ENTRY(uvm_reclaim_hook) uvm_reclaim_next;
-};
-
-void	uvm_reclaim_init(void);
-void	uvm_reclaim_hook_add(struct uvm_reclaim_hook *);
-void	uvm_reclaim_hook_del(struct uvm_reclaim_hook *);
-
-/*
  * the various kernel maps, owned by MD code
  */
 extern struct vm_map *kernel_map;
-extern struct vm_map *kmem_map;
 extern struct vm_map *phys_map;
 
 /*
@@ -555,9 +543,6 @@ extern struct vm_map *phys_map;
 
 #define vm_resident_count(vm) (pmap_resident_count((vm)->vm_map.pmap))
 
-#include <sys/mallocvar.h>
-MALLOC_DECLARE(M_VMMAP);
-MALLOC_DECLARE(M_VMPMAP);
 
 /* vm_machdep.c */
 int		vmapbuf(struct buf *, vsize_t);
@@ -649,13 +634,13 @@ void			uvm_km_free(struct vm_map *, vaddr_t, vsize_t,
 
 struct vm_map		*uvm_km_suballoc(struct vm_map *, vaddr_t *,
 			    vaddr_t *, vsize_t, int, bool,
-			    struct vm_map_kernel *);
-vaddr_t			uvm_km_alloc_poolpage(struct vm_map *, bool);
-void			uvm_km_free_poolpage(struct vm_map *, vaddr_t);
-vaddr_t			uvm_km_alloc_poolpage_cache(struct vm_map *, bool);
-void			uvm_km_free_poolpage_cache(struct vm_map *, vaddr_t);
-void			uvm_km_vacache_init(struct vm_map *,
-			    const char *, size_t);
+			    struct vm_map *);
+#ifdef _KERNEL
+int			uvm_km_kmem_alloc(vmem_t *, vmem_size_t, vm_flag_t,
+			    vmem_addr_t *);
+void			uvm_km_kmem_free(vmem_t *, vmem_addr_t, vmem_size_t);
+bool			uvm_km_va_starved_p(void);
+#endif
 
 /* uvm_map.c */
 int			uvm_map(struct vm_map *, vaddr_t *, vsize_t,

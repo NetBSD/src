@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.S,v 1.20 2011/04/12 18:07:57 matt Exp $   */
+/*	$NetBSD: intvec.S,v 1.20.8.1 2012/02/18 07:33:28 mrg Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -107,7 +107,7 @@ _C_LABEL(rpb):
 	INTVEC(syscall, KSTACK)		# main syscall trap, chmk, 40
 	INTVEC(chmx, KSTACK)		# chme, 44
 	INTVEC(chmx, KSTACK)		# chms, 48
-	INTVEC(chmu, KSTACK)		# chmu, 4C
+	INTVEC(chmx, KSTACK)		# chmu, 4C
 	NOVEC;				# System Backplane Exception/BIerror, 50
 	INTVEC(cmrerr, ISTACK)		# Corrected Memory Read, 54
 	NOVEC;				# System Backplane Alert/RXCD, 58
@@ -224,19 +224,6 @@ SCBENTRY(privinflt)	# Privileged/unimplemented instruction
 	TRAPCALL(resadflt, T_RESADFLT)
 
 /*
- * Use chmu to implement a "fast" _lwp_getprivate.
- */
-SCBENTRY(chmu)
-	cmpl	(%sp), $1
-	bneq	1f
-	mfpr	$PR_SSP, %r0		# get curlwp
-	movl	L_PRIVATE(%r0), %r0	# get l_private
-	addl2	%sp, 4
-	rei
-1:
-	brw	Xchmx
-
-/*
  * default handler for CHME and CHMS
  */
 SCBENTRY(chmx)
@@ -284,6 +271,15 @@ TRAPCALL(breakp, T_BPTFLT)
 TRAPARGC(arithflt, T_ARITHFLT)
 
 SCBENTRY(syscall)			# Main system call
+#if 1
+	cmpl	(%sp), $SYS__lwp_getprivate
+	bneq	1f
+	mfpr	$PR_SSP, %r0		# get curlwp
+	movl	L_PRIVATE(%r0), %r0	# get l_private
+	addl2	$4, %sp			# eat the code
+	rei
+1:
+#endif
 	pushl	$T_SYSCALL
 	pushr	$0xfff
 	mfpr	$PR_USP, -(%sp)

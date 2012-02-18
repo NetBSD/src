@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.27 2011/08/13 02:49:06 jakllsch Exp $ */
+/* $NetBSD: video.c,v 1.27.6.1 2012/02/18 07:34:07 mrg Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.27 2011/08/13 02:49:06 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.27.6.1 2012/02/18 07:34:07 mrg Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -2506,6 +2506,12 @@ video_stream_dequeue(struct video_stream *vs)
 	}
 }
 
+static void
+v4l2buf_set_timestamp(struct v4l2_buffer *buf)
+{
+
+	getmicrotime(&buf->timestamp);
+}
 
 /*
  * write payload data to the appropriate video sample, possibly moving
@@ -2534,6 +2540,8 @@ video_stream_write(struct video_stream *vs,
 	} else if (payload->size > 0) {
 		vb = SIMPLEQ_FIRST(&vs->vs_ingress);
 		buf = vb->vb_buf;
+		if (!buf->bytesused)
+			v4l2buf_set_timestamp(buf);
 		if (payload->size > buf->length - buf->bytesused) {
 			DPRINTF(("video_stream_write: "
 				 "payload would overflow\n"));

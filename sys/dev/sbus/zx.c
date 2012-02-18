@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.38 2010/12/09 04:35:36 uebayasi Exp $	*/
+/*	$NetBSD: zx.c,v 1.38.12.1 2012/02/18 07:34:58 mrg Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.38 2010/12/09 04:35:36 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.38.12.1 2012/02/18 07:34:58 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1179,7 +1179,7 @@ zx_init_screen(void *cookie, struct vcons_screen *scr,
 
 	ri->ri_bits = (void *)sc->sc_pixels;
 	
-	rasops_init(ri, sc->sc_height/8, sc->sc_width/8);
+	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_REVERSE;
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 		    sc->sc_width / ri->ri_font->fontwidth);

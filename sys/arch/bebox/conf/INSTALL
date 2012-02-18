@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.52 2011/11/22 21:25:02 tls Exp $
+#	$NetBSD: INSTALL,v 1.52.2.1 2012/02/18 07:31:40 mrg Exp $
 #
 # First try for BeBox config file
 #
@@ -69,7 +69,7 @@ file-system	PTYFS		# /dev/pts/N support
 # Filesystem options
 options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
-#options 	WAPBL		# File system journaling support - Experimental
+#options 	WAPBL		# File system journaling support
 
 #options 	NFSSERVER
 

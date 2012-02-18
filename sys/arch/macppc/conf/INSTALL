@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.112 2011/11/22 21:25:25 tls Exp $
+#	$NetBSD: INSTALL,v 1.112.2.1 2012/02/18 07:32:34 mrg Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -47,7 +47,7 @@ file-system 	MSDOSFS		# MS-DOS file system
 options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	APPLE_UFS	# Apple UFS support in FFS
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP
@@ -55,7 +55,8 @@ options 	INET6		# IPV6
 options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 
 options 	WSEMUL_VT100	# VT100 / VT220 emulation
-options 	FONT_SONY8x16
+options 	FONT_GALLANT12x22	# big, Sun-like font
+options 	FONT_QVSS8x15		# a smaller font for lower resolutions
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?

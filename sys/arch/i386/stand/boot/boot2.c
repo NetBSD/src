@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.56 2011/11/28 07:56:54 tls Exp $	*/
+/*	$NetBSD: boot2.c,v 1.56.2.1 2012/02/18 07:32:23 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -409,7 +409,7 @@ command_ls(char *arg)
 	const char *save = default_filename;
 
 	default_filename = "/";
-	ufs_ls(arg);
+	ls(arg);
 	default_filename = save;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dfadd.c,v 1.4 2007/02/22 05:46:29 thorpej Exp $	*/
+/*	$NetBSD: dfadd.c,v 1.4.84.1 2012/02/18 07:32:15 mrg Exp $	*/
 
 /*	$OpenBSD: dfadd.c,v 1.4 2001/03/29 03:58:17 mickey Exp $	*/
 
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dfadd.c,v 1.4 2007/02/22 05:46:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dfadd.c,v 1.4.84.1 2012/02/18 07:32:15 mrg Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/dbl_float.h"
@@ -50,10 +50,9 @@ __KERNEL_RCSID(0, "$NetBSD: dfadd.c,v 1.4 2007/02/22 05:46:29 thorpej Exp $");
  * Double_add: add two double precision values.
  */
 int
-dbl_fadd(leftptr, rightptr, dstptr, status)
-    dbl_floating_point *leftptr, *rightptr, *dstptr;
-    unsigned int *status;
-    {
+dbl_fadd(dbl_floating_point *leftptr, dbl_floating_point *rightptr,
+    dbl_floating_point *dstptr, unsigned int *status)
+{
     register unsigned int signless_upper_left, signless_upper_right, save;
     register unsigned int leftp1, leftp2, rightp1, rightp2, extent;
     register unsigned int resultp1 = 0, resultp2 = 0;

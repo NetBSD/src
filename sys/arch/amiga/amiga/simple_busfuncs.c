@@ -1,4 +1,4 @@
-/* $NetBSD: simple_busfuncs.c,v 1.10 2011/09/14 09:19:09 rkujawa Exp $ */
+/* $NetBSD: simple_busfuncs.c,v 1.10.6.1 2012/02/18 07:31:14 mrg Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simple_busfuncs.c,v 1.10 2011/09/14 09:19:09 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simple_busfuncs.c,v 1.10.6.1 2012/02/18 07:31:14 mrg Exp $");
 
 /*
  * Do NOT use this standalone.
@@ -73,12 +73,12 @@ bscr(oabs(bscr1_), u_int8_t);
 /* function definitions */
 /* ARGSUSED */
 int
-oabs(bsm_)(tag, address, size, flags, handlep)
-	bus_space_tag_t tag;
-	bus_addr_t address;
-	bus_size_t size;
-	int flags;
-	bus_space_handle_t *handlep;
+oabs(bsm_)(
+	bus_space_tag_t tag,
+	bus_addr_t address,
+	bus_size_t size,
+	int flags,
+	bus_space_handle_t *handlep)
 {
 	*handlep = tag->base + address * AMIGA_SIMPLE_BUS_STRIDE;
 	return 0;
@@ -86,11 +86,11 @@ oabs(bsm_)(tag, address, size, flags, handlep)
 
 /* ARGSUSED */
 int
-oabs(bsms_)(handle, offset, size, nhandlep)
-	bus_space_handle_t handle;
-	bus_size_t offset;
-	bus_size_t size;
-	bus_space_handle_t *nhandlep;
+oabs(bsms_)(
+	bus_space_handle_t handle,
+	bus_size_t offset,
+	bus_size_t size,
+	bus_space_handle_t *nhandlep)
 {
 	*nhandlep = handle + offset * AMIGA_SIMPLE_BUS_STRIDE;
 	return 0;
@@ -98,17 +98,17 @@ oabs(bsms_)(handle, offset, size, nhandlep)
 
 /* ARGSUSED */
 void
-oabs(bsu_)(handle, size)
-	bus_space_handle_t handle;
-	bus_size_t size;
+oabs(bsu_)(
+	bus_space_handle_t handle,
+	bus_size_t size)
 {
 	return;
 }
 
 u_int8_t
-oabs(bsr1_) (handle, offset)
-	bus_space_handle_t handle;
-	bus_size_t offset;
+oabs(bsr1_)(
+	bus_space_handle_t handle,
+	bus_size_t offset)
 {
 	u_int8_t *p;
 	u_int8_t x;
@@ -120,10 +120,10 @@ oabs(bsr1_) (handle, offset)
 }
 
 void
-oabs(bsw1_)(handle, offset, value)
-	bus_space_handle_t handle;
-	bus_size_t offset;
-	unsigned value;
+oabs(bsw1_)(
+	bus_space_handle_t handle,
+	bus_size_t offset,
+	unsigned value)
 {
 	u_int8_t *p;
 
@@ -133,11 +133,11 @@ oabs(bsw1_)(handle, offset, value)
 }
 
 void
-oabs(bsrm1_)(handle, offset, pointer, count)
-	bus_space_handle_t handle;
-	bus_size_t offset;
-	u_int8_t *pointer;
-	bus_size_t count;
+oabs(bsrm1_)(
+	bus_space_handle_t handle,
+	bus_size_t offset,
+	u_int8_t *pointer,
+	bus_size_t count)
 {
 	volatile u_int8_t *p;
 
@@ -151,11 +151,11 @@ oabs(bsrm1_)(handle, offset, pointer, count)
 }
 
 void
-oabs(bswm1_)(handle, offset, pointer, count)
-	bus_space_handle_t handle;
-	bus_size_t offset;
-	const u_int8_t *pointer;
-	bus_size_t count;
+oabs(bswm1_)(
+	bus_space_handle_t handle,
+	bus_size_t offset,
+	const u_int8_t *pointer,
+	bus_size_t count)
 {
 	volatile u_int8_t *p;
 
@@ -169,11 +169,11 @@ oabs(bswm1_)(handle, offset, pointer, count)
 }
 
 void
-oabs(bsrr1_)(handle, offset, pointer, count)
-	bus_space_handle_t handle;
-	bus_size_t offset;
-	u_int8_t *pointer;
-	bus_size_t count;
+oabs(bsrr1_)(
+	bus_space_handle_t handle,
+	bus_size_t offset,
+	u_int8_t *pointer,
+	bus_size_t count)
 {
 	volatile u_int8_t *p;
 
@@ -188,11 +188,11 @@ oabs(bsrr1_)(handle, offset, pointer, count)
 }
 
 void
-oabs(bswr1_)(handle, offset, pointer, count)
-	bus_space_handle_t handle;
-	bus_size_t offset;
-	const u_int8_t *pointer;
-	bus_size_t count;
+oabs(bswr1_)(
+	bus_space_handle_t handle,
+	bus_size_t offset,
+	const u_int8_t *pointer,
+	bus_size_t count)
 {
 	volatile u_int8_t *p;
 
@@ -207,11 +207,11 @@ oabs(bswr1_)(handle, offset, pointer, count)
 }
 
 void
-oabs(bssr1_)(handle, offset, value, count)
-	bus_space_handle_t handle;
-	bus_size_t offset;
-	unsigned value;
-	bus_size_t count;
+oabs(bssr1_)(
+	bus_space_handle_t handle,
+	bus_size_t offset,
+	unsigned value,
+	bus_size_t count)
 {
 	volatile u_int8_t *p;
 
@@ -226,10 +226,12 @@ oabs(bssr1_)(handle, offset, value, count)
 }
 
 void
-oabs(bscr1_)(handlefrom, from, handleto, to, count)
-	bus_space_handle_t handlefrom, handleto;
-	bus_size_t from, to;
-	bus_size_t count;
+oabs(bscr1_)(
+	bus_space_handle_t handlefrom,
+	bus_size_t from,
+	bus_space_handle_t handleto,
+	bus_size_t to,
+	bus_size_t count)
 {
 	volatile u_int8_t *p, *q;
 
@@ -260,9 +262,9 @@ bssr(oabs(bssr2_), u_int16_t);
 bscr(oabs(bscr2_), u_int16_t);
 
 u_int16_t
-oabs(bsr2_)(handle, offset)
-	bus_space_handle_t handle;
-	bus_size_t offset;
+oabs(bsr2_)(
+	bus_space_handle_t handle,
+	bus_size_t offset)
 {
 	u_int16_t *p;
 	u_int16_t x;
@@ -274,10 +276,10 @@ oabs(bsr2_)(handle, offset)
 }
 
 void
-oabs(bsw2_)(handle, offset, value)
-	bus_space_handle_t handle;
-	bus_size_t offset;
-	unsigned value;
+oabs(bsw2_)(
+	bus_space_handle_t handle,
+	bus_size_t offset,
+	unsigned value)
 {
 	u_int16_t *p;
 
@@ -287,11 +289,11 @@ oabs(bsw2_)(handle, offset, value)
 }
 
 void
-oabs(bsrm2_)(handle, offset, pointer, count)
-	bus_space_handle_t handle;
-	bus_size_t offset;
-	u_int16_t *pointer;
-	bus_size_t count;
+oabs(bsrm2_)(
+	bus_space_handle_t handle,
+	bus_size_t offset,
+	u_int16_t *pointer,
+	bus_size_t count)
 {
 	volatile u_int16_t *p;
 
@@ -305,11 +307,11 @@ oabs(bsrm2_)(handle, offset, pointer, count)
 }
 
 void
-oabs(bswm2_)(handle, offset, pointer, count)
-	bus_space_handle_t handle;
-	bus_size_t offset;
-	const u_int16_t *pointer;
-	bus_size_t count;
+oabs(bswm2_)(
+	bus_space_handle_t handle,
+	bus_size_t offset,
+	const u_int16_t *pointer,
+	bus_size_t count)
 {
 	volatile u_int16_t *p;
 
@@ -323,11 +325,11 @@ oabs(bswm2_)(handle, offset, pointer, count)
 }
 
 void
-oabs(bsrr2_)(handle, offset, pointer, count)
-	bus_space_handle_t handle;
-	bus_size_t offset;
-	u_int16_t *pointer;
-	bus_size_t count;
+oabs(bsrr2_)(
+	bus_space_handle_t handle,
+	bus_size_t offset,
+	u_int16_t *pointer,
+	bus_size_t count)
 {
 	volatile u_int8_t *p;
 
@@ -342,11 +344,11 @@ oabs(bsrr2_)(handle, offset, pointer, count)
 }
 
 void
-oabs(bswr2_)(handle, offset, pointer, count)
-	bus_space_handle_t handle;
-	bus_size_t offset;
-	const u_int16_t *pointer;
-	bus_size_t count;
+oabs(bswr2_)(
+	bus_space_handle_t handle,
+	bus_size_t offset,
+	const u_int16_t *pointer,
+	bus_size_t count)
 {
 	volatile u_int8_t *p;
 
@@ -361,11 +363,11 @@ oabs(bswr2_)(handle, offset, pointer, count)
 }
 
 void
-oabs(bssr2_)(handle, offset, value, count)
-	bus_space_handle_t handle;
-	bus_size_t offset;
-	unsigned value;
-	bus_size_t count;
+oabs(bssr2_)(
+	bus_space_handle_t handle,
+	bus_size_t offset,
+	unsigned value,
+	bus_size_t count)
 {
 	volatile u_int8_t *p;
 
@@ -380,10 +382,12 @@ oabs(bssr2_)(handle, offset, value, count)
 }
 
 void
-oabs(bscr2_)(handlefrom, from, handleto, to, count)
-	bus_space_handle_t handlefrom, handleto;
-	bus_size_t from, to;
-	bus_size_t count;
+oabs(bscr2_)(
+	bus_space_handle_t handlefrom,
+	bus_size_t from,
+	bus_space_handle_t handleto,
+	bus_size_t to,
+	bus_size_t count)
 {
 	volatile u_int8_t *p, *q;
 
@@ -414,9 +418,9 @@ bssr(oabs(bssr4_), u_int32_t);
 bscr(oabs(bscr4_), u_int32_t);
 
 u_int32_t
-oabs(bsr4_)(handle, offset)
-	bus_space_handle_t handle;
-	bus_size_t offset;
+oabs(bsr4_)(
+	bus_space_handle_t handle,
+	bus_size_t offset)
 {
 	u_int32_t *p;
 	u_int32_t x;
@@ -428,10 +432,10 @@ oabs(bsr4_)(handle, offset)
 }
 
 void
-oabs(bsw4_)(handle, offset, value)
-	bus_space_handle_t handle;
-	bus_size_t offset;
-	unsigned value;
+oabs(bsw4_)(
+	bus_space_handle_t handle,
+	bus_size_t offset,
+	unsigned value)
 {
 	u_int32_t *p;
 
@@ -442,11 +446,11 @@ oabs(bsw4_)(handle, offset, value)
 
 
 void
-oabs(bsrm4_)(handle, offset, pointer, count)
-	bus_space_handle_t handle;
-	bus_size_t offset;
-	u_int32_t *pointer;
-	bus_size_t count;
+oabs(bsrm4_)(
+	bus_space_handle_t handle,
+	bus_size_t offset,
+	u_int32_t *pointer,
+	bus_size_t count)
 {
 	volatile u_int32_t *p;
 
@@ -460,11 +464,11 @@ oabs(bsrm4_)(handle, offset, pointer, count)
 }
 
 void
-oabs(bswm4_)(handle, offset, pointer, count)
-	bus_space_handle_t handle;
-	bus_size_t offset;
-	const u_int32_t *pointer;
-	bus_size_t count;
+oabs(bswm4_)(
+	bus_space_handle_t handle,
+	bus_size_t offset,
+	const u_int32_t *pointer,
+	bus_size_t count)
 {
 	volatile u_int32_t *p;
 
@@ -478,11 +482,11 @@ oabs(bswm4_)(handle, offset, pointer, count)
 }
 
 void
-oabs(bsrr4_)(handle, offset, pointer, count)
-	bus_space_handle_t handle;
-	bus_size_t offset;
-	u_int32_t *pointer;
-	bus_size_t count;
+oabs(bsrr4_)(
+	bus_space_handle_t handle,
+	bus_size_t offset,
+	u_int32_t *pointer,
+	bus_size_t count)
 {
 	volatile u_int8_t *p;
 
@@ -497,11 +501,11 @@ oabs(bsrr4_)(handle, offset, pointer, count)
 }
 
 void
-oabs(bswr4_)(handle, offset, pointer, count)
-	bus_space_handle_t handle;
-	bus_size_t offset;
-	const u_int32_t *pointer;
-	bus_size_t count;
+oabs(bswr4_)(
+	bus_space_handle_t handle,
+	bus_size_t offset,
+	const u_int32_t *pointer,
+	bus_size_t count)
 {
 	volatile u_int8_t *p;
 
@@ -516,11 +520,11 @@ oabs(bswr4_)(handle, offset, pointer, count)
 }
 
 void
-oabs(bssr4_)(handle, offset, value, count)
-	bus_space_handle_t handle;
-	bus_size_t offset;
-	unsigned value;
-	bus_size_t count;
+oabs(bssr4_)(
+	bus_space_handle_t handle,
+	bus_size_t offset,
+	unsigned value,
+	bus_size_t count)
 {
 	volatile u_int8_t *p;
 
@@ -535,10 +539,12 @@ oabs(bssr4_)(handle, offset, value, count)
 }
 
 void
-oabs(bscr4_)(handlefrom, from, handleto, to, count)
-	bus_space_handle_t handlefrom, handleto;
-	bus_size_t from, to;
-	bus_size_t count;
+oabs(bscr4_)(
+	bus_space_handle_t handlefrom,
+	bus_size_t from,
+	bus_space_handle_t handleto,
+	bus_size_t to,
+	bus_size_t count)
 {
 	volatile u_int8_t *p, *q;
 

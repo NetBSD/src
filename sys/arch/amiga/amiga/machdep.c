@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.235 2011/11/17 07:45:53 mlelstv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.235.4.1 2012/02/18 07:31:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,7 +48,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.235 2011/11/17 07:45:53 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.235.4.1 2012/02/18 07:31:13 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,6 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.235 2011/11/17 07:45:53 mlelstv Exp $"
 #include <amiga/amiga/cia.h>
 #include <amiga/amiga/cc.h>
 #include <amiga/amiga/memlist.h>
+#include <amiga/amiga/device.h>
 
 #include "fd.h"
 #include "ser.h"
@@ -182,6 +183,10 @@ consinit(void)
 	} else
 #endif
 		custom_chips_init();
+
+	/* preconfigure graphics cards */
+	config_console();
+
 	/*
 	 * Initialize the console before we print anything out.
 	 */
@@ -449,7 +454,6 @@ cpu_dumpconf(void)
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
-	const struct bdevsw *bdev;
 	int nblks;
 	int i;
 	extern int end[];
@@ -510,12 +514,12 @@ cpu_dumpconf(void)
 		m->ram_segs[1].size  = memlist->m_seg[i].ms_size;
 		break;
 	}
-	if ((bdev = bdevsw_lookup(dumpdev)) == NULL) {
+	if (bdevsw_lookup(dumpdev) == NULL) {
 		dumpdev = NODEV;
 		return;
 	}
-	if (bdev->d_psize != NULL) {
-		nblks = (*bdev->d_psize)(dumpdev);
+	nblks = bdev_size(dumpdev);
+	if (nblks > 0) {
 		if (dumpsize > btoc(dbtob(nblks - dumplo)))
 			dumpsize = btoc(dbtob(nblks - dumplo));
 		else if (dumplo == 0)
@@ -577,7 +581,7 @@ dumpsys(void)
 	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
 	    minor(dumpdev), dumplo);
 
-	psize = (*bdev->d_psize)(dumpdev);
+	psize = bdev_size(dumpdev);
 	printf("dump ");
 	if (psize == -1) {
 		printf("area unavailable.\n");

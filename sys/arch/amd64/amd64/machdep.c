@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.171 2011/11/20 18:42:56 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.171.2.1 2012/02/18 07:31:10 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.171 2011/11/20 18:42:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.171.2.1 2012/02/18 07:31:10 mrg Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -278,7 +278,7 @@ vaddr_t lo32_vaddr;
 paddr_t lo32_paddr;
 
 vaddr_t module_start, module_end;
-static struct vm_map_kernel module_map_store;
+static struct vm_map module_map_store;
 extern struct vm_map *module_map;
 vaddr_t kern_end;
 
@@ -386,9 +386,9 @@ cpu_startup(void)
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, false, NULL);
 
-	uvm_map_setup_kernel(&module_map_store, module_start, module_end, 0);
-	module_map_store.vmk_map.pmap = pmap_kernel();
-	module_map = &module_map_store.vmk_map;
+	uvm_map_setup(&module_map_store, module_start, module_end, 0);
+	module_map_store.pmap = pmap_kernel();
+	module_map = &module_map_store;
 
 	/* Say hello. */
 	banner();
@@ -1226,7 +1226,7 @@ dodumpsys(void)
 	    (unsigned long long)major(dumpdev),
 	    (unsigned long long)minor(dumpdev), dumplo);
 
-	psize = (*bdev->d_psize)(dumpdev);
+	psize = bdev_size(dumpdev);
 	printf("dump ");
 	if (psize == -1) {
 		printf("area unavailable\n");
@@ -1323,19 +1323,11 @@ failed:
 void
 cpu_dumpconf(void)
 {
-	const struct bdevsw *bdev;
 	int nblks, dumpblks;	/* size of dump area */
 
 	if (dumpdev == NODEV)
 		goto bad;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL) {
-		dumpdev = NODEV;
-		goto bad;
-	}
-	if (bdev->d_psize == NULL)
-		goto bad;
-	nblks = (*bdev->d_psize)(dumpdev);
+	nblks = bdev_size(dumpdev);
 	if (nblks <= ctod(1))
 		goto bad;
 
@@ -1648,6 +1640,7 @@ init_x86_64(paddr_t first_avail)
 	use_pae = 1; /* PAE always enabled in long mode */
 
 #ifdef XEN
+	mutex_init(&pte_lock, MUTEX_DEFAULT, IPL_VM);
 	pcb->pcb_cr3 = xen_start_info.pt_base - KERNBASE;
 	__PRINTK(("pcb_cr3 0x%lx\n", xen_start_info.pt_base - KERNBASE));
 #endif
@@ -1678,6 +1671,26 @@ init_x86_64(paddr_t first_avail)
 	 * Page 7:	Temporary page map level 4
 	 */
 	avail_start = 8 * PAGE_SIZE;
+
+#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
+
+	/*
+	 * Check to see if we have a memory map from the BIOS (passed
+	 * to us by the boot program.
+	 */
+	bim = lookup_bootinfo(BTINFO_MEMMAP);
+	if (bim != NULL && bim->num > 0)
+		initx86_parse_memmap(bim, iomem_ex);
+
+#endif	/* ! REALBASEMEM && ! REALEXTMEM */
+
+	/*
+	 * If the loop above didn't find any valid segment, fall back to
+	 * former code.
+	 */
+	if (mem_cluster_cnt == 0)
+		initx86_fake_memmap(iomem_ex);
+
 #else	/* XEN */
 	/* Parse Xen command line (replace bootinfo */
 	xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
@@ -1701,25 +1714,6 @@ init_x86_64(paddr_t first_avail)
 		pmap_prealloc_lowmem_ptps();
 
 #ifndef XEN
-#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
-
-	/*
-	 * Check to see if we have a memory map from the BIOS (passed
-	 * to us by the boot program.
-	 */
-	bim = lookup_bootinfo(BTINFO_MEMMAP);
-	if (bim != NULL && bim->num > 0)
-		initx86_parse_memmap(bim, iomem_ex);
-
-#endif	/* ! REALBASEMEM && ! REALEXTMEM */
-
-	/*
-	 * If the loop above didn't find any valid segment, fall back to
-	 * former code.
-	 */
-	if (mem_cluster_cnt == 0)
-		initx86_fake_memmap(iomem_ex);
-
 	initx86_load_memmap(first_avail);
 
 #else	/* XEN */
@@ -2325,5 +2319,26 @@ x86_64_tls_switch(struct lwp *l)
 		HYPERVISOR_set_segment_base(SEGBASE_FS, pcb->pcb_fs);
 		HYPERVISOR_set_segment_base(SEGBASE_GS_USER, pcb->pcb_gs);
 	}
+}
+#endif
+
+#ifdef __HAVE_DIRECT_MAP
+bool
+mm_md_direct_mapped_io(void *addr, paddr_t *paddr)
+{
+	vaddr_t va = (vaddr_t)addr;
+
+	if (va >= PMAP_DIRECT_BASE && va < PMAP_DIRECT_END) {
+		*paddr = PMAP_DIRECT_UNMAP(va);
+		return true;
+	}
+	return false;
+}
+
+bool
+mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)
+{
+	*vaddr = PMAP_DIRECT_MAP(paddr);
+	return true;
 }
 #endif

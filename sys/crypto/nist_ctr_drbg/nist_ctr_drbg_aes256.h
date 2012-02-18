@@ -1,4 +1,4 @@
-/*	$NetBSD: nist_ctr_drbg_aes256.h,v 1.1 2011/11/19 22:51:22 tls Exp $ */
+/*	$NetBSD: nist_ctr_drbg_aes256.h,v 1.1.2.1 2012/02/18 07:34:03 mrg Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -73,8 +73,8 @@ typedef NIST_AES_ENCRYPT_CTX NIST_Key;
  * 10.2 DRBG Mechanism Based on Block Ciphers
  *
  * Table 3 specifies the reseed interval as
- * <= 2^48.  We use 2^32 so we can always be sure it'll fit in an int.
+ * <= 2^48.  We use 2^31 so we can always be sure it'll fit in an int.
  */
-#define NIST_CTR_DRBG_RESEED_INTERVAL   (0xffffffffU)
+#define NIST_CTR_DRBG_RESEED_INTERVAL   (0x7fffffffU)
 
 #endif /* NIST_CTR_DRBG_AES256_H */

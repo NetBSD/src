@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_machdep.c,v 1.17 2011/06/20 17:44:33 matt Exp $	*/
+/*	$NetBSD: ibm4xx_machdep.c,v 1.17.6.1 2012/02/18 07:32:53 mrg Exp $	*/
 /*	Original: ibm40x_machdep.c,v 1.3 2005/01/17 17:19:36 shige Exp $ */
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.17 2011/06/20 17:44:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.17.6.1 2012/02/18 07:32:53 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -197,9 +197,9 @@ ibm4xx_init(vaddr_t startkernel, vaddr_t endkernel, void (*handler)(void))
 
 	for (size_t i = 0; i < __arraycount(trap_table); i++) {
 		trap_copy(trap_table[i].exc_addr, trap_table[i].exc_vector,
-		    trap_table[i].exc_size); 
+		    trap_table[i].exc_size);
 	}
-        
+
 	__syncicache((void *)EXC_RST, EXC_LAST - EXC_RST + 0x100);
 
 	mtspr(SPR_EVPR, 0);		/* Set Exception vector base */
@@ -210,14 +210,14 @@ ibm4xx_init(vaddr_t startkernel, vaddr_t endkernel, void (*handler)(void))
 	/*
 	 * external interrupt handler install
 	 */
-        if (handler)
+	if (handler)
 	    ibm4xx_install_extint(handler);
 
 	/*
 	 * Now enable translation (and machine checks/recoverable interrupts).
 	 */
 	__asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0; isync"
-		      : : "r"(0), "K"(PSL_IR|PSL_DR)); 
+		      : : "r"(0), "K"(PSL_IR|PSL_DR));
 	/* XXXX PSL_ME - With ME set kernel gets stuck... */
 
 	/*
@@ -227,13 +227,13 @@ ibm4xx_init(vaddr_t startkernel, vaddr_t endkernel, void (*handler)(void))
 
 	uvm_setpagesize();
 
-        /*
-         * Initialize pmap module.
-         */
-        pmap_bootstrap(startkernel, endkernel);
+	/*
+	 * Initialize pmap module.
+	 */
+	pmap_bootstrap(startkernel, endkernel);
 
 	/*
-	 * Let's take all the indirect calls via our stubs and patch 
+	 * Let's take all the indirect calls via our stubs and patch
 	 * them to be direct calls.
 	 */
 	cpu_fixup_stubs();

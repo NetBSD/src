@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.20 2011/10/02 19:03:56 jmcneill Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.20.6.1 2012/02/18 07:34:13 mrg Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.20 2011/10/02 19:03:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.20.6.1 2012/02/18 07:34:13 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,27 +283,24 @@ sdtemp_attach(device_t parent, device_t self, void *aux)
 	/* Retrieve and display hardware monitor limits */
 	sdtemp_get_limits(sc->sc_sme, sc->sc_sensor, &sc->sc_deflims,
 	    &sc->sc_defprops);
-	aprint_normal("%s: ", device_xname(self));
+	aprint_normal_dev(self, "Hardware limits: ");
 	i = 0;
 	if (sc->sc_defprops & PROP_WARNMIN) {
-		aprint_normal("low limit %dC",
+		aprint_normal("low %dC",
 		              __UK2C(sc->sc_deflims.sel_warnmin));
 		i++;
 	}
 	if (sc->sc_defprops & PROP_WARNMAX) {
-		aprint_normal("%shigh limit %dC ", (i)?", ":"",
+		aprint_normal("%shigh %dC ", (i)?", ":"",
 			      __UK2C(sc->sc_deflims.sel_warnmax));
 		i++;
 	}
 	if (sc->sc_defprops & PROP_CRITMAX) {
-		aprint_normal("%scritical limit %dC ", (i)?", ":"",
+		aprint_normal("%scritical %dC ", (i)?", ":"",
 			      __UK2C(sc->sc_deflims.sel_critmax));
 		i++;
 	}
-	if (i == 0)
-		aprint_normal("no hardware limits set\n");
-	else
-		aprint_normal("\n");
+	aprint_normal("%s\n", (i)?"":"none set");
 
 	return;
 

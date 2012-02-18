@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.91 2010/11/05 18:07:24 jakllsch Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.91.12.1 2012/02/18 07:34:26 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -161,7 +161,7 @@ int	wdc_dmawait(struct ata_channel *, struct ata_xfer *, int);
 void	wdccommand(struct ata_channel *, u_int8_t, u_int8_t, u_int16_t,
 		   u_int8_t, u_int8_t, u_int8_t, u_int8_t);
 void	wdccommandext(struct ata_channel *, u_int8_t, u_int8_t, u_int64_t,
-		      u_int16_t);
+		      u_int16_t, u_int16_t);
 void	wdccommandshort(struct ata_channel *, int, int);
 void	wdctimeout(void *arg);
 void	wdc_reset_drive(struct ata_drive_datas *, int);

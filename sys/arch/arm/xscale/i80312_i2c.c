@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_i2c.c,v 1.5 2011/07/01 20:32:51 dyoung Exp $	*/
+/*	$NetBSD: i80312_i2c.c,v 1.5.6.1 2012/02/18 07:31:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80312_i2c.c,v 1.5 2011/07/01 20:32:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80312_i2c.c,v 1.5.6.1 2012/02/18 07:31:33 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/mutex.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: i80312_i2c.c,v 1.5 2011/07/01 20:32:51 dyoung Exp $"
 #include <arm/xscale/iopi2creg.h>
 
 static int
-iic312_match(struct device *parent, struct cfdata *cf, void *aux)
+iic312_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct iopxs_attach_args *ia = aux;
 
@@ -70,21 +70,22 @@ iic312_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-iic312_attach(struct device *parent, struct device *self, void *aux)
+iic312_attach(device_t parent, device_t self, void *aux)
 {
-	struct iopiic_softc *sc = (void *) self;
+	struct iopiic_softc *sc = device_private(self);
 	struct iopxs_attach_args *ia = aux;
 	int error;
 
 	aprint_naive(": I2C controller\n");
 	aprint_normal(": I2C controller\n");
 
+	sc->sc_dev = self;
 	sc->sc_st = ia->ia_st;
 	if ((error = bus_space_subregion(sc->sc_st, ia->ia_sh,
 					 ia->ia_offset, ia->ia_size,
 					 &sc->sc_sh)) != 0) {
-		aprint_error("%s: unable to subregion registers, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(self,
+		    "unable to subregion registers, error = %d\n", error);
 		return;
 	}
 
@@ -97,8 +98,8 @@ iic312_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = i80321_intr_establish(ICU_INT_I2C, IPL_BIO,
 					  iopiic_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error("%s: unable to establish interrupt handler\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self,
+		    "unable to establish interrupt handler\n");
 		return;
 	}
 #endif
@@ -117,5 +118,5 @@ iic312_attach(struct device *parent, struct device *self, void *aux)
 	iopiic_attach(sc);
 }
 
-CFATTACH_DECL(iopiic, sizeof(struct iopiic_softc),
+CFATTACH_DECL_NEW(iopiic, sizeof(struct iopiic_softc),
     iic312_match, iic312_attach, NULL, NULL);

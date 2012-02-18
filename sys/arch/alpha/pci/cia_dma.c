@@ -1,4 +1,4 @@
-/* $NetBSD: cia_dma.c,v 1.27 2011/07/01 19:19:49 dyoung Exp $ */
+/* $NetBSD: cia_dma.c,v 1.27.6.1 2012/02/18 07:31:01 mrg Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.27 2011/07/01 19:19:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.27.6.1 2012/02/18 07:31:01 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ cia_dma_init(struct cia_config *ccp)
 	 */
 	alpha_sgmap_init(t, &ccp->cc_sgmap, "cia_sgmap",
 	    CIA_SGMAP_MAPPED_BASE, 0, CIA_SGMAP_MAPPED_SIZE,
-	    sizeof(u_int64_t), NULL, (32*1024));
+	    sizeof(uint64_t), NULL, (32*1024));
 
 	/*
 	 * Set up window 0 as an 8MB SGMAP-mapped window
@@ -194,7 +194,7 @@ cia_dma_init(struct cia_config *ccp)
 	 * the new entries coming in for the spill page.
 	 */
 	if ((ccp->cc_flags & CCF_ISPYXIS) != 0 && ccp->cc_rev <= 1) {
-		u_int64_t *page_table;
+		uint64_t *page_table;
 		int i;
 
 		cia_tlb_invalidate_fn =
@@ -202,7 +202,7 @@ cia_dma_init(struct cia_config *ccp)
 
 		alpha_sgmap_init(t, &cia_pyxis_bug_sgmap,
 		    "pyxis_bug_sgmap", CIA_PYXIS_BUG_BASE, 0,
-		    CIA_PYXIS_BUG_SIZE, sizeof(u_int64_t), NULL,
+		    CIA_PYXIS_BUG_SIZE, sizeof(uint64_t), NULL,
 		    (32*1024));
 
 		REGVAL(CIA_PCI_W2BASE) = CIA_PYXIS_BUG_BASE |
@@ -285,15 +285,14 @@ cia_dma_get_tag(bus_dma_tag_t t, alpha_bus_t bustype)
  * Create a CIA direct-mapped DMA map.
  */
 int
-cia_bus_dmamap_create_direct(t, size, nsegments, maxsegsz, boundary,
-    flags, dmamp)
-	bus_dma_tag_t t;
-	bus_size_t size;
-	int nsegments;
-	bus_size_t maxsegsz;
-	bus_size_t boundary;
-	int flags;
-	bus_dmamap_t *dmamp;
+cia_bus_dmamap_create_direct(
+	bus_dma_tag_t t,
+	bus_size_t size,
+	int nsegments,
+	bus_size_t maxsegsz,
+	bus_size_t boundary,
+	int flags,
+	bus_dmamap_t *dmamp)
 {
 	struct cia_config *ccp = t->_cookie;
 	bus_dmamap_t map;
@@ -425,8 +424,8 @@ cia_tlb_invalidate(void)
 void
 cia_broken_pyxis_tlb_invalidate(void)
 {
-	volatile u_int64_t dummy;
-	u_int32_t ctrl;
+	volatile uint64_t dummy;
+	uint32_t ctrl;
 	int i, s;
 
 	s = splhigh();
@@ -448,7 +447,7 @@ cia_broken_pyxis_tlb_invalidate(void)
 	 * XXX to read more times than there are actual tags!
 	 */
 	for (i = 0; i < CIA_TLB_NTAGS + 4; i++) {
-		dummy = *((volatile u_int64_t *)
+		dummy = *((volatile uint64_t *)
 		    ALPHA_PHYS_TO_K0SEG(CIA_PCI_DENSE + CIA_PYXIS_BUG_BASE +
 		    (i * 65536)));
 	}

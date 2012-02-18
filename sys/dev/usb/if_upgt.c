@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.3 2010/08/25 12:43:56 tsutsui Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.3.14.1 2012/02/18 07:35:06 mrg Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.3 2010/08/25 12:43:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.3.14.1 2012/02/18 07:35:06 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>

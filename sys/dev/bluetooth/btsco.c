@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.25 2011/11/23 23:07:31 jmcneill Exp $	*/
+/*	$NetBSD: btsco.c,v 1.25.2.1 2012/02/18 07:34:10 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.25 2011/11/23 23:07:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.25.2.1 2012/02/18 07:34:10 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -576,7 +576,7 @@ btsco_open(void *hdl, int flags)
 	if (sc->sc_sco != NULL || sc->sc_sco_l != NULL)
 		return EIO;
 
-	mutex_enter(bt_lock);
+	KASSERT(mutex_owned(bt_lock));
 
 	memset(&sa, 0, sizeof(sa));
 	sa.bt_len = sizeof(sa);
@@ -653,8 +653,6 @@ btsco_open(void *hdl, int flags)
 	}
 
 done:
-	mutex_exit(bt_lock);
-
 	DPRINTF("done err=%d, sc_state=%d, sc_mtu=%d\n",
 			err, sc->sc_state, sc->sc_mtu);
 	return err;
@@ -667,7 +665,8 @@ btsco_close(void *hdl)
 
 	DPRINTF("%s\n", sc->sc_name);
 
-	mutex_enter(bt_lock);
+	KASSERT(mutex_owned(bt_lock));
+
 	if (sc->sc_sco != NULL) {
 		sco_disconnect(sc->sc_sco, 0);
 		sco_detach(&sc->sc_sco);
@@ -676,7 +675,6 @@ btsco_close(void *hdl)
 	if (sc->sc_sco_l != NULL) {
 		sco_detach(&sc->sc_sco_l);
 	}
-	mutex_exit(bt_lock);
 
 	if (sc->sc_rx_mbuf != NULL) {
 		m_freem(sc->sc_rx_mbuf);

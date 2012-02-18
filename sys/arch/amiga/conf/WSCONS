@@ -1,4 +1,4 @@
-# $NetBSD: WSCONS,v 1.62 2007/10/17 19:53:14 garbled Exp $
+# $NetBSD: WSCONS,v 1.62.58.1 2012/02/18 07:31:15 mrg Exp $
 
 # GENERIC with wscons(4)
 #
@@ -21,18 +21,24 @@ no grfrt0	at zbus0
 no grfrh0	at zbus0
 no grfcl*	at zbus0
 no grful0	at zbus0
-no grfcv0	at zbus0
 no grfet*	at zbus0
-no grfcv3d0	at zbus0
+#no grfcv0	at zbus0
+#no grfcv3d0	at zbus0
 
+# Disable grf(4) devices for non-wsdisplay drivers.
 no grf0		at grfcc0
 no grf1		at grfrt0
 no grf2		at grfrh0
 no grf3		at grfcl?
 no grf4		at grful0
-no grf5		at grfcv0
 no grf6		at grfet?
-no grf7		at grfcv3d0
+#no grf5	at grfcv0
+#no grf7	at grfcv3d0
+
+wsdisplay*	at grf5 console ?	# wsdisplay on top of grf (CV64)
+wsdisplay*	at grf7 console ?	# wsdisplay on top of grf (CV64/3D)
+
+# Disable ite(4) for all drivers.
 no ite0		at grf0
 no ite1		at grf1
 no ite2		at grf2
@@ -42,5 +48,17 @@ no ite5		at grf5
 no ite6		at grf6
 no ite7		at grf7
 
+# PCI framebuffers
+#genfb*		at pci?			# CyberVisionPPC/BlizzardVisionPPC only
+voodoofb*	at pci?			# 3Dfx Voodoo 3 in G-REX 
+#radeonfb*	at pci?			# untested
+
+# Console support for CyberVisionPPC, BlizzardVisionPPC and 3Dfx Voodoo 3 in 
+# G-REX.
+options		P5PB_CONSOLE
+
+wsdisplay*	at wsemuldisplaydev? console ?
+
 pseudo-device	wsfont			# wsfont(4) dynamic font loading support
 pseudo-device	wsmux			# mouse & keyboard multiplexor
+

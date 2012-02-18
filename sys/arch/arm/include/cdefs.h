@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.3 2007/10/17 19:53:41 garbled Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.3.58.1 2012/02/18 07:31:26 mrg Exp $	*/
 
 #ifndef	_MACHINE_CDEFS_H_
 #define	_MACHINE_CDEFS_H_
@@ -16,5 +16,7 @@
 #if defined (_ARM_ARCH_5) || defined (__ARM_ARCH_4T__)
 #define _ARM_ARCH_4T
 #endif
+
+#define __ALIGNBYTES		(sizeof(int) - 1)
 
 #endif /* !_MACHINE_CDEFS_H_ */

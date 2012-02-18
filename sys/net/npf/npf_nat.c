@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.8 2011/11/19 22:51:25 tls Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.8.2.1 2012/02/18 07:35:38 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.8 2011/11/19 22:51:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.8.2.1 2012/02/18 07:35:38 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -181,14 +181,19 @@ npf_nat_newpolicy(prop_dictionary_t natdict, npf_ruleset_t *nrlset)
 	npf_portmap_t *pm;
 
 	np = kmem_zalloc(sizeof(npf_natpolicy_t), KM_SLEEP);
-	mutex_init(&np->n_lock, MUTEX_DEFAULT, IPL_SOFTNET);
-	cv_init(&np->n_cv, "npfnatcv");
-	LIST_INIT(&np->n_nat_list);
 
 	/* Translation type and flags. */
 	prop_dictionary_get_int32(natdict, "type", &np->n_type);
 	prop_dictionary_get_uint32(natdict, "flags", &np->n_flags);
-	KASSERT(np->n_type == NPF_NATIN || np->n_type == NPF_NATOUT);
+
+	/* Should be exclusively either inbound or outbound NAT. */
+	if (((np->n_type == NPF_NATIN) ^ (np->n_type == NPF_NATOUT)) == 0) {
+		kmem_free(np, sizeof(npf_natpolicy_t));
+		return NULL;
+	}
+	mutex_init(&np->n_lock, MUTEX_DEFAULT, IPL_SOFTNET);
+	cv_init(&np->n_cv, "npfnatcv");
+	LIST_INIT(&np->n_nat_list);
 
 	/* Translation IP. */
 	obj = prop_dictionary_get(natdict, "translation-ip");
@@ -402,6 +407,7 @@ npf_nat_inspect(npf_cache_t *npc, nbuf_t *nbuf, ifnet_t *ifp, const int di)
 	rlset = npf_core_natset();
 	rl = npf_ruleset_inspect(npc, nbuf, rlset, ifp, di, NPF_LAYER_3);
 	if (rl == NULL) {
+		npf_core_exit();
 		return NULL;
 	}
 	np = npf_rule_getnat(rl);

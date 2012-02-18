@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.h,v 1.15 2009/03/14 14:46:11 dsl Exp $	*/
+/*	$NetBSD: keysock.h,v 1.15.16.1 2012/02/18 07:35:45 mrg Exp $	*/
 /*	$KAME: keysock.h,v 1.8 2000/03/27 05:11:06 sumikawa Exp $	*/
 
 /*
@@ -61,9 +61,11 @@
 #define KEY_SENDUP_ONE		0
 #define KEY_SENDUP_ALL		1
 #define KEY_SENDUP_REGISTERED	2
-#define KEY_SENDUP_CANWAIT	4
 
 #ifdef _KERNEL
+
+#define KEY_SENDUP_CANWAIT	4
+
 struct keycb {
 	struct rawcb kp_raw;	/* rawcb */
 	int kp_promisc;		/* promiscuous mode */

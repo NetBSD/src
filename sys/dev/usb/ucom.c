@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.88 2011/11/19 22:51:24 tls Exp $	*/
+/*	$NetBSD: ucom.c,v 1.88.2.1 2012/02/18 07:35:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.88 2011/11/19 22:51:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.88.2.1 2012/02/18 07:35:08 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,10 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.88 2011/11/19 22:51:24 tls Exp $");
 #include <sys/queue.h>
 #include <sys/kauth.h>
 #if defined(__NetBSD__)
-#include "rnd.h"
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 #endif
 
 #include <dev/usb/usb.h>
@@ -129,7 +126,7 @@ struct ucom_softc {
 
 	void			*sc_si;
 
-	struct ucom_methods     *sc_methods;
+	const struct ucom_methods *sc_methods;
 	void                    *sc_parent;
 	int			sc_portno;
 
@@ -146,9 +143,7 @@ struct ucom_softc {
 	int			sc_refcnt;
 	u_char			sc_dying;	/* disconnecting */
 
-#if defined(__NetBSD__) && NRND > 0
 	krndsource_t	sc_rndsource;	/* random source */
-#endif
 };
 
 dev_type_open(ucomopen);
@@ -246,7 +241,7 @@ ucom_attach(device_t parent, device_t self, void *aux)
 	DPRINTF(("ucom_attach: tty_attach %p\n", tp));
 	tty_attach(tp);
 
-#if defined(__NetBSD__) && NRND > 0
+#if defined(__NetBSD__)
 	rnd_attach_source(&sc->sc_rndsource, device_xname(sc->sc_dev),
 			  RND_TYPE_TTY, 0);
 #endif
@@ -320,7 +315,7 @@ ucom_detach(device_t self, int flags)
 	}
 
 	/* Detach the random source */
-#if defined(__NetBSD__) && NRND > 0
+#if defined(__NetBSD__)
 	rnd_detach_source(&sc->sc_rndsource);
 #endif
 
@@ -369,6 +364,10 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 	struct tty *tp;
 	int s, i;
 	int error;
+
+	/* XXX This is a hopefully temporary stopgap for kern/42848. */
+	if ((flag & (FREAD|FWRITE)) != (FREAD|FWRITE))
+		return (EINVAL);
 
 	if (sc == NULL)
 		return (ENXIO);
@@ -656,12 +655,15 @@ ucomwrite(dev_t dev, struct uio *uio, int flag)
 int
 ucompoll(dev_t dev, int events, struct lwp *l)
 {
-	struct ucom_softc *sc = device_lookup_private(&ucom_cd, UCOMUNIT(dev));
-	struct tty *tp = sc->sc_tty;
+	struct ucom_softc *sc;
+	struct tty *tp;
 	int revents;
 
-	if (sc->sc_dying)
+	sc = device_lookup_private(&ucom_cd, UCOMUNIT(dev));
+	if (sc == NULL || sc->sc_dying)
 		return (POLLHUP);
+
+	tp = sc->sc_tty;
 
 	sc->sc_refcnt++;
 	revents = ((*tp->t_linesw->l_poll)(tp, events, l));
@@ -1037,7 +1039,7 @@ ucomstop(struct tty *tp, int flag)
 {
 #if 0
 	/*struct ucom_softc *sc =
-	    device_lookup_private(&ucom_cd, UCOMUNIT(dev));*/
+	    device_lookup_private(&ucom_cd, UCOMUNIT(tp->t_dev));*/
 	int s;
 
 	s = spltty();
@@ -1067,7 +1069,7 @@ ucom_write_status(struct ucom_softc *sc, struct ucom_buffer *ub,
 		break;
 	case USBD_NORMAL_COMPLETION:
 		usbd_get_xfer_status(ub->ub_xfer, NULL, NULL, &cc, NULL);
-#if defined(__NetBSD__) && NRND > 0
+#if defined(__NetBSD__)
 		rnd_add_uint32(&sc->sc_rndsource, cc);
 #endif
 		/*FALLTHROUGH*/
@@ -1243,14 +1245,16 @@ ucomreadcb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 
 	usbd_get_xfer_status(xfer, NULL, (void *)&cp, &cc, NULL);
 
-	if (cc == 0) {
-		aprint_normal_dev(sc->sc_dev,
-		    "ucomreadcb: zero length xfer!\n");
+#ifdef UCOM_DEBUG
+	/* This is triggered by uslsa(4) occasionally. */
+	if ((ucomdebug > 0) && (cc == 0)) {
+		device_printf(sc->sc_dev, "ucomreadcb: zero length xfer!\n");
 	}
+#endif
 
 	KDASSERT(cp == ub->ub_data);
 
-#if defined(__NetBSD__) && NRND > 0
+#if defined(__NetBSD__)
 	rnd_add_uint32(&sc->sc_rndsource, cc);
 #endif
 

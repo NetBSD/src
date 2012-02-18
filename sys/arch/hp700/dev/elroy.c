@@ -1,4 +1,4 @@
-/*	$NetBSD: elroy.c,v 1.11 2011/05/17 17:34:49 dyoung Exp $	*/
+/*	$NetBSD: elroy.c,v 1.11.8.1 2012/02/18 07:32:06 mrg Exp $	*/
 
 /*	$OpenBSD: elroy.c,v 1.5 2009/03/30 21:24:57 kettenis Exp $	*/
 
@@ -454,7 +454,7 @@ elroy_alloc_parent(device_t self, struct pci_attach_args *pa, int io)
 			snprintf(sc->sc_memexname, sizeof(sc->sc_memexname),
 			    "%s_mem", sc->sc_dv.dv_xname);
 			if ((sc->sc_memex = extent_create(sc->sc_memexname,
-			    mem_start, mem_start + ELROY_MEM_WINDOW, M_DEVBUF,
+			    mem_start, mem_start + ELROY_MEM_WINDOW,
 			    NULL, 0, EX_NOWAIT | EX_MALLOCOK)) == NULL) {
 				extent_destroy(sc->sc_ioex);
 				bus_space_free(sc->sc_bt, memh,

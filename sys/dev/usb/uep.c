@@ -1,4 +1,4 @@
-/*	$NetBSD: uep.c,v 1.16 2011/01/24 17:11:17 mbalmer Exp $	*/
+/*	$NetBSD: uep.c,v 1.16.8.1 2012/02/18 07:35:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  *  eGalax USB touchpanel controller driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.16 2011/01/24 17:11:17 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.16.8.1 2012/02/18 07:35:08 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

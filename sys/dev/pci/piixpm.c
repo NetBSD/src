@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.37 2011/10/03 22:33:02 jmcneill Exp $ */
+/* $NetBSD: piixpm.c,v 1.37.6.1 2012/02/18 07:34:50 mrg Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -22,13 +22,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.37 2011/10/03 22:33:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.37.6.1 2012/02/18 07:34:50 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/rwlock.h>
+#include <sys/mutex.h>
 #include <sys/proc.h>
 
 #include <sys/bus.h>
@@ -82,7 +82,7 @@ struct piixpm_softc {
 	pcireg_t		sc_id;
 
 	struct i2c_controller	sc_i2c_tag;
-	krwlock_t		sc_i2c_rwlock;
+	kmutex_t		sc_i2c_mutex;
 	struct {
 		i2c_op_t     op;
 		void *      buf;
@@ -158,7 +158,6 @@ piixpm_attach(device_t parent, device_t self, void *aux)
 	pcireg_t base, conf;
 	pcireg_t pmmisc;
 	pci_intr_handle_t ih;
-	char devinfo[256];
 	const char *intrstr = NULL;
 
 	sc->sc_dev = self;
@@ -166,12 +165,7 @@ piixpm_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 
-	aprint_naive("\n");
-	aprint_normal("\n");
-
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal_dev(self, "%s (rev. 0x%02x)\n", devinfo,
-	    PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo(pa, NULL);
 
 	if (!pmf_device_register(self, piixpm_suspend, piixpm_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -257,7 +251,7 @@ nopowermanagement:
 
 attach_i2c:
 	/* Attach I2C bus */
-	rw_init(&sc->sc_i2c_rwlock);
+	mutex_init(&sc->sc_i2c_mutex, MUTEX_DEFAULT, IPL_NONE);
 	sc->sc_i2c_tag.ic_cookie = sc;
 	sc->sc_i2c_tag.ic_acquire_bus = piixpm_i2c_acquire_bus;
 	sc->sc_i2c_tag.ic_release_bus = piixpm_i2c_release_bus;
@@ -337,6 +331,7 @@ piixpm_sb800_init(struct piixpm_softc *sc, struct pci_attach_args *pa)
 		aprint_error_dev(sc->sc_dev, "can't map smbus I/O space\n");
 		return EBUSY;
 	}
+	aprint_normal_dev(sc->sc_dev, "polling (SB800)\n");
 	sc->sc_poll = 1;
 
 	return 0;
@@ -368,10 +363,9 @@ piixpm_i2c_acquire_bus(void *cookie, int flags)
 {
 	struct piixpm_softc *sc = cookie;
 
-	if (cold || sc->sc_poll || (flags & I2C_F_POLL))
-		return (0);
+	if (!cold)
+		mutex_enter(&sc->sc_i2c_mutex);
 
-	rw_enter(&sc->sc_i2c_rwlock, RW_WRITER);
 	return 0;
 }
 
@@ -380,10 +374,8 @@ piixpm_i2c_release_bus(void *cookie, int flags)
 {
 	struct piixpm_softc *sc = cookie;
 
-	if (cold || sc->sc_poll || (flags & I2C_F_POLL))
-		return;
-
-	rw_exit(&sc->sc_i2c_rwlock);
+	if (!cold)
+		mutex_exit(&sc->sc_i2c_mutex);
 }
 
 static int

@@ -1,27 +1,27 @@
-#	$NetBSD: files.ipsec,v 1.6 2011/11/19 22:51:26 tls Exp $
+#	$NetBSD: files.ipsec,v 1.6.2.1 2012/02/18 07:35:41 mrg Exp $
 
-defflag opt_ipsec.h		IPSEC
+defflag opt_ipsec.h		KAME_IPSEC
 defflag opt_ipsec.h		IPSEC_ESP: des, blowfish, cast128
 defflag opt_ipsec.h		IPSEC_NAT_T
 
-file	netinet6/ah_aesxcbcmac.c	ipsec
-file	netinet6/ah_core.c		ipsec
-file	netinet6/ah_input.c		ipsec
-file	netinet6/ah_output.c		ipsec
+file	netinet6/ah_aesxcbcmac.c	kame_ipsec
+file	netinet6/ah_core.c		kame_ipsec
+file	netinet6/ah_input.c		kame_ipsec
+file	netinet6/ah_output.c		kame_ipsec
 
-file	netinet6/esp_core.c		ipsec & ipsec_esp
-file	netinet6/esp_output.c		ipsec & ipsec_esp
-file	netinet6/esp_input.c		ipsec & ipsec_esp
-file	netinet6/esp_rijndael.c		ipsec & ipsec_esp
-file	netinet6/esp_aesctr.c		ipsec & ipsec_esp
+file	netinet6/esp_core.c		kame_ipsec & ipsec_esp
+file	netinet6/esp_output.c		kame_ipsec & ipsec_esp
+file	netinet6/esp_input.c		kame_ipsec & ipsec_esp
+file	netinet6/esp_rijndael.c		kame_ipsec & ipsec_esp
+file	netinet6/esp_aesctr.c		kame_ipsec & ipsec_esp
 
-file	netinet6/ipcomp_core.c		ipsec
-file	netinet6/ipcomp_input.c		ipsec
-file	netinet6/ipcomp_output.c	ipsec
+file	netinet6/ipcomp_core.c		kame_ipsec
+file	netinet6/ipcomp_input.c		kame_ipsec
+file	netinet6/ipcomp_output.c	kame_ipsec
 
-file	netinet6/ipsec.c		ipsec
+file	netinet6/ipsec.c		kame_ipsec
 
-file	netkey/key.c			ipsec
-file	netkey/key_debug.c		ipsec
-file	netkey/keydb.c			ipsec
-file	netkey/keysock.c		ipsec
+file	netkey/key.c			kame_ipsec
+file	netkey/key_debug.c		kame_ipsec
+file	netkey/keydb.c			kame_ipsec
+file	netkey/keysock.c		kame_ipsec

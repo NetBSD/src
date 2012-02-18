@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_et.c,v 1.28 2009/10/26 19:16:54 cegger Exp $ */
+/*	$NetBSD: grf_et.c,v 1.28.16.1 2012/02/18 07:31:17 mrg Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -37,9 +37,10 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_et.c,v 1.28 2009/10/26 19:16:54 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_et.c,v 1.28.16.1 2012/02/18 07:31:17 mrg Exp $");
 
 #include "grfet.h"
+#include "ite.h"
 #if NGRFET > 0
 
 /*
@@ -300,14 +301,18 @@ grfetattach(struct device *pdp, struct device *dp, void *auxp)
 
 		gp->g_unit = GRF_ET4000_UNIT;
 		gp->g_mode = et_mode;
+#if NITE > 0
 		gp->g_conpri = grfet_cnprobe();
+#endif
 		gp->g_flags = GF_ALIVE;
 
 		/* wakeup the board */
 		et_boardinit(gp);
 
 #ifdef TSENGCONSOLE
+#if NITE > 0
 		grfet_iteinit(gp);
+#endif
 		(void) et_load_mon(gp, &etconsole_mode);
 #endif
 	}
@@ -804,7 +809,9 @@ et_setmonitor(struct grf_softc *gp, struct grfvideo_mode *gv)
 		etconsole_mode.cols = gv->disp_width / etconsole_mode.fx;
 		if (!(gp->g_flags & GF_GRFON))
 			et_load_mon(gp, &etconsole_mode);
+#if NITE > 0
 		ite_reinit(gp->g_itedev);
+#endif
 		return (0);
 	}
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2011/08/16 06:59:19 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5.6.1 2012/02/18 07:31:56 mrg Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2011/08/16 06:59:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5.6.1 2012/02/18 07:31:56 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/boot_flag.h>
@@ -107,13 +107,13 @@ mach_init(void)
 
 	memset(edata, 0, kernend - (vaddr_t)edata);
 
-#ifdef RA_CONSOLE_EARLY
+#ifdef RALINK_CONSOLE_EARLY
 	/*
 	 * set up early console
 	 *  cannot printf until sometime (?) in mips_vector_init
 	 *  meanwhile can use the ra_console_putc primitive if necessary
 	 */
-	ra_console_early();
+	ralink_console_early();
 #endif
 
 	/* set CPU model info for sysctl_hw */

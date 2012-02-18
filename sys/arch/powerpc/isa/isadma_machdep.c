@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.7 2011/07/01 18:59:19 dyoung Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.7.6.1 2012/02/18 07:32:56 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.7 2011/07/01 18:59:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.7.6.1 2012/02/18 07:32:56 mrg Exp $");
 
 #define ISA_DMA_STATS
 
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.7 2011/07/01 18:59:19 dyoung Ex
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 
@@ -182,7 +182,7 @@ _isa_bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	map = *dmamp;
 	map->_dm_cookie = NULL;
 
-	cookiesize = sizeof(struct powerpc_isa_dma_cookie);
+	cookiesize = sizeof(*cookie);
 
 	/*
 	 * ISA only has 24-bits of address space.  This means
@@ -221,8 +221,8 @@ _isa_bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	/*
 	 * Allocate our cookie.
 	 */
-	if ((cookiestore = malloc(cookiesize, M_DMAMAP,
-	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL) {
+	if ((cookiestore = kmem_intr_alloc(cookiesize,
+	    (flags & BUS_DMA_NOWAIT) ? KM_NOSLEEP : KM_SLEEP)) == NULL) {
 		error = ENOMEM;
 		goto out;
 	}
@@ -265,7 +265,11 @@ _isa_bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 	if (cookie->id_flags & ID_HAS_BOUNCE)
 		_isa_dma_free_bouncebuf(t, map);
 
-	free(cookie, M_DMAMAP);
+	size_t cookiesize = sizeof(*cookie);
+	if (cookie->id_flags & ID_MIGHT_NEED_BOUNCE)
+		cookiesize += (sizeof(bus_dma_segment_t) * map->_dm_segcnt);
+
+	kmem_intr_free(cookie, cookiesize);
 	_bus_dmamap_destroy(t, map);
 }
 

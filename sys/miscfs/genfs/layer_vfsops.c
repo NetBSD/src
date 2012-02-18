@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.34 2011/03/06 17:08:36 bouyer Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.34.8.1 2012/02/18 07:35:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.34 2011/03/06 17:08:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.34.8.1 2012/02/18 07:35:36 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -141,10 +141,10 @@ layerfs_root(struct mount *mp, struct vnode **vpp)
 }
 
 int
-layerfs_quotactl(struct mount *mp, prop_dictionary_t dict)
+layerfs_quotactl(struct mount *mp, struct quotactl_args *args)
 {
 
-	return VFS_QUOTACTL(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, dict);
+	return VFS_QUOTACTL(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, args);
 }
 
 int

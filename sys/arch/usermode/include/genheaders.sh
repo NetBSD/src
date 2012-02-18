@@ -20,6 +20,7 @@ HDRS="$HDRS netbsd32_machdep.h"
 HDRS="$HDRS param.h"
 HDRS="$HDRS ptrace.h"
 HDRS="$HDRS wchar_limits.h"
+HDRS="$HDRS cdefs.h"
 
 for hdr in ${HDRS}; do
 	G="_USERMODE_$(echo ${hdr} | sed 's/\./_/g' | tr [a-z] [A-Z])"
@@ -45,15 +46,23 @@ EOF
 
 	# header specific quirks
 	if [ "$hdr" = "disklabel.h" ]; then
+		echo "#include <machine/types.h>" >> ${hdr}
+		echo "#ifndef __HAVE_OLD_DISKLABEL" >> ${hdr}
 		echo "#undef DISKUNIT" >> ${hdr}
 		echo "#undef DISKPART" >> ${hdr}
 		echo "#undef DISKMINOR" >> ${hdr}
+		echo "#endif" >> ${hdr}
 	elif [ "$hdr" = "ptrace.h" ]; then
 		echo "#undef __HAVE_PTRACE_MACHDEP" >> ${hdr}
 		echo "#undef __HAVE_PROCFS_MACHDEP" >> ${hdr}
 	elif [ "$hdr" = "param.h" ]; then
+		echo "#undef UPAGES" >> ${hdr}
+		echo "#define UPAGES 12" >> ${hdr}
 		echo "#undef USPACE" >> ${hdr}
-		echo "#define USPACE (PAGE_SIZE*4)" >> ${hdr}
+		echo "#define USPACE (PAGE_SIZE*UPAGES)" >> ${hdr}
+		echo "" >> ${hdr}
+		echo "#undef NKMEMPAGES_MAX_UNLIMITED" >> ${hdr}
+		echo "#include \"opt_kmempages.h\"" >> ${hdr}
 	fi
 
 	echo >>${hdr}

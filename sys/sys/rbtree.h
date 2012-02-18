@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtree.h,v 1.1 2010/09/25 01:42:40 matt Exp $	*/
+/*	$NetBSD: rbtree.h,v 1.1.18.1 2012/02/18 07:35:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -137,10 +137,8 @@ TAILQ_HEAD(rb_node_qh, rb_node);
  *	return 0 if they are considered same.
  */
 
-typedef signed int (*const rbto_compare_nodes_fn)(void *,
-    const void *, const void *);
-typedef signed int (*const rbto_compare_key_fn)(void *,
-    const void *, const void *);
+typedef signed int (*rbto_compare_nodes_fn)(void *, const void *, const void *);
+typedef signed int (*rbto_compare_key_fn)(void *, const void *, const void *);
 
 typedef struct {
 	rbto_compare_nodes_fn rbto_compare_nodes;

@@ -1,4 +1,4 @@
-/* $NetBSD: ibm561.c,v 1.10 2010/11/13 13:52:01 uebayasi Exp $ */
+/* $NetBSD: ibm561.c,v 1.10.12.1 2012/02/18 07:34:19 mrg Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm561.c,v 1.10 2010/11/13 13:52:01 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm561.c,v 1.10.12.1 2012/02/18 07:34:19 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,11 +133,11 @@ ibm561_funcs(void)
 }
 
 struct ramdac_cookie *
-ibm561_register(v, sched_update, wr, rd)
-	void *v;
-	int (*sched_update)(void *, void (*)(void *));
-	void (*wr)(void *, u_int, u_int8_t);
-	u_int8_t (*rd)(void *, u_int);
+ibm561_register(
+	void *v,
+	int (*sched_update)(void *, void (*)(void *)),
+	void (*wr)(void *, u_int, u_int8_t),
+	u_int8_t (*rd)(void *, u_int))
 {
 	struct ibm561data *data;
 
@@ -158,12 +158,12 @@ ibm561_register(v, sched_update, wr, rd)
 struct ibm561data *saved_console_data;
 
 void
-ibm561_cninit(v, sched_update, wr, rd, dotclock)
-	void *v;
-	int (*sched_update)(void *, void (*)(void *));
-	void (*wr)(void *, u_int, u_int8_t);
-	u_int8_t (*rd)(void *, u_int);
-	u_int dotclock;
+ibm561_cninit(
+	void *v,
+	int (*sched_update)(void *, void (*)(void *)),
+	void (*wr)(void *, u_int, u_int8_t),
+	u_int8_t (*rd)(void *, u_int),
+	u_int dotclock)
 {
 	struct ibm561data tmp, *data = &tmp;
 	memset(data, 0x0, sizeof *data);

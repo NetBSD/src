@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_hash.c,v 1.3 2008/05/05 17:11:17 ad Exp $	*/
+/*	$NetBSD: subr_hash.c,v 1.3.38.1 2012/02/18 07:35:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_hash.c,v 1.3 2008/05/05 17:11:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_hash.c,v 1.3.38.1 2012/02/18 07:35:32 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -58,9 +58,13 @@ hashinit(u_int elements, enum hashtype htype, bool waitok, u_long *hashmask)
 	TAILQ_HEAD(, generic) *hashtbl_tailq;
 	size_t esize;
 	void *p;
-
 	if (elements == 0)
 		panic("hashinit: bad cnt");
+
+#define MAXELEMENTS (1U << ((sizeof(elements) * NBBY) - 1))
+	if (elements > MAXELEMENTS)
+		elements = MAXELEMENTS;
+
 	for (hashsize = 1; hashsize < elements; hashsize <<= 1)
 		continue;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.262 2011/10/08 08:49:07 nakayama Exp $ */
+/*	$NetBSD: machdep.c,v 1.262.6.1 2012/02/18 07:33:17 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,10 +71,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.262 2011/10/08 08:49:07 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.262.6.1 2012/02/18 07:33:17 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
+#include "opt_modular.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
@@ -152,6 +153,11 @@ int sigpid = 0;
 #endif
 
 extern vaddr_t avail_end;
+#ifdef MODULAR
+vaddr_t module_start, module_end;
+static struct vm_map module_map_store;
+extern struct vm_map *module_map;
+#endif
 
 int	physmem;
 
@@ -207,6 +213,12 @@ cpu_startup(void)
 
 #if 0
 	pmap_redzone();
+#endif
+
+#ifdef MODULAR
+	uvm_map_setup(&module_map_store, module_start, module_end, 0);
+	module_map_store.pmap = pmap_kernel();
+	module_map = &module_map_store;
 #endif
 }
 
@@ -698,18 +710,12 @@ long	dumplo = 0;
 void
 cpu_dumpconf(void)
 {
-	const struct bdevsw *bdev;
 	int nblks, dumpblks;
 
 	if (dumpdev == NODEV)
 		/* No usable dump device */
 		return;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL || bdev->d_psize == NULL)
-		/* No usable dump device */
-		return;
-
-	nblks = (*bdev->d_psize)(dumpdev);
+	nblks = bdev_size(dumpdev);
 
 	dumpblks = ctod(physmem) + pmap_dumpsize();
 	if (dumpblks > (nblks - ctod(1)))
@@ -784,7 +790,7 @@ dumpsys(void)
 	printf("\ndumping to dev %" PRId32 ",%" PRId32 " offset %ld\n",
 	    major(dumpdev), minor(dumpdev), dumplo);
 
-	psize = (*bdev->d_psize)(dumpdev);
+	psize = bdev_size(dumpdev);
 	if (psize == -1) {
 		printf("dump area unavailable\n");
 		return;
@@ -2310,7 +2316,7 @@ sparc_bus_map(bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
 		 */
 		io_space = extent_create("IOSPACE",
 					 (u_long)IODEV_BASE, (u_long)IODEV_END,
-					 M_DEVBUF, 0, 0, EX_NOWAIT);
+					 0, 0, EX_NOWAIT);
 
 
 	size = round_page(size);

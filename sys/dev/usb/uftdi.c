@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.48 2011/07/11 20:22:50 matt Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.48.6.1 2012/02/18 07:35:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.48 2011/07/11 20:22:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.48.6.1 2012/02/18 07:35:08 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,6 +153,8 @@ static const struct usb_devno uftdi_devs[] = {
 	{ USB_VENDOR_SEALEVEL, USB_PRODUCT_SEALEVEL_SEAPORT4P3 },
 	{ USB_VENDOR_SEALEVEL, USB_PRODUCT_SEALEVEL_SEAPORT4P4 },
 	{ USB_VENDOR_SIIG2, USB_PRODUCT_SIIG2_US2308 },
+	{ USB_VENDOR_MISC, USB_PRODUCT_MISC_TELLSTICK },
+	{ USB_VENDOR_MISC, USB_PRODUCT_MISC_TELLSTICK_DUO },
 };
 #define uftdi_lookup(v, p) usb_lookup(uftdi_devs, v, p)
 

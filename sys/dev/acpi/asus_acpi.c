@@ -1,4 +1,4 @@
-/* $NetBSD: asus_acpi.c,v 1.22 2011/02/16 09:05:12 jruoho Exp $ */
+/* $NetBSD: asus_acpi.c,v 1.22.8.1 2012/02/18 07:34:07 mrg Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008, 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.22 2011/02/16 09:05:12 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.22.8.1 2012/02/18 07:34:07 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -153,6 +153,7 @@ asus_attach(device_t parent, device_t self, void *opaque)
 
 	strcpy(sc->sc_sensor[ASUS_SENSOR_FAN].desc, "fan");
 	sc->sc_sensor[ASUS_SENSOR_FAN].units = ENVSYS_SFANRPM;
+	sc->sc_sensor[ASUS_SENSOR_FAN].state = ENVSYS_SINVALID;
 	sysmon_envsys_sensor_attach(sc->sc_sme,
 	    &sc->sc_sensor[ASUS_SENSOR_FAN]);
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.203 2011/11/22 21:25:23 tls Exp $
+# $NetBSD: GENERIC,v 1.203.2.1 2012/02/18 07:32:31 mrg Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.203 $"
+#ident 		"GENERIC-$Revision: 1.203.2.1 $"
 
 maxusers	16		# estimated number of users
 
@@ -124,7 +124,7 @@ file-system	TMPFS		# Efficient memory file-system
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -234,7 +234,8 @@ wsmouse* at ams?
 # Centronics printer port
 
 # CSI Hurdler Centronics Parallel Interface
-cpi*	at nubus?
+# CPI_CTC12_IS_TIMECOUNTER	0x01	Run counters 1+2 as timecounter	
+cpi*	at nubus? flags 0x1
 
 
 # Serial Devices

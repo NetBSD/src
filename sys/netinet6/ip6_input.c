@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.133 2011/11/19 22:51:29 tls Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.133.2.1 2012/02/18 07:35:42 mrg Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.133 2011/11/19 22:51:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.133.2.1 2012/02/18 07:35:42 mrg Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -112,7 +112,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.133 2011/11/19 22:51:29 tls Exp $");
 #include <netinet6/in6_ifattach.h>
 #include <netinet6/nd6.h>
 
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 #include <netinet6/ipsec.h>
 #include <netinet6/ipsec_private.h>
 #endif
@@ -161,7 +161,8 @@ percpu_t *ip6stat_percpu;
 static void ip6_init2(void *);
 static struct m_tag *ip6_setdstifaddr(struct mbuf *, const struct in6_ifaddr *);
 
-static int ip6_hopopts_input(u_int32_t *, u_int32_t *, struct mbuf **, int *);
+static int ip6_process_hopopts(struct mbuf *, u_int8_t *, int, u_int32_t *,
+	u_int32_t *);
 static struct mbuf *ip6_pullexthdr(struct mbuf *, size_t, int);
 static void sysctl_net_inet6_ip6_setup(struct sysctllog **);
 
@@ -193,7 +194,7 @@ ip6_init(void)
 	frag6_init();
 	ip6_desync_factor = cprng_fast32() % MAX_TEMP_DESYNC_FACTOR;
 
-	ip6_init2((void *)0);
+	ip6_init2(NULL);
 #ifdef GATEWAY
 	ip6flow_init(ip6_hashsize);
 #endif
@@ -279,7 +280,7 @@ ip6_input(struct mbuf *m)
 	int s, error;
 #endif
 
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 	/*
 	 * should the inner packet be considered authentic?
 	 * see comment in ah4_input().
@@ -351,7 +352,7 @@ ip6_input(struct mbuf *m)
 		goto bad;
 	}
 
-#if defined(IPSEC)
+#if defined(KAME_IPSEC)
 	/* IPv6 fast forwarding is not compatible with IPsec. */
 	m->m_flags &= ~M_CANFASTFWD;
 #else
@@ -374,7 +375,7 @@ ip6_input(struct mbuf *m)
 	 * let ipfilter look at packet on the wire,
 	 * not the decapsulated packet.
 	 */
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 	if (!ipsec_getnhist(m))
 #elif defined(FAST_IPSEC)
 	if (!ipsec_indone(m))
@@ -785,7 +786,7 @@ ip6_input(struct mbuf *m)
 			}
 		}
 
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 		/*
 		 * enforce IPsec policy checking if we are seeing last header.
 		 * note that we do not visit this with protocols with pcb layer
@@ -882,7 +883,7 @@ ip6_getdstifaddr(struct mbuf *m)
  *
  * rtalertp - XXX: should be stored more smart way
  */
-static int
+int
 ip6_hopopts_input(u_int32_t *plenp, u_int32_t *rtalertp, 
 	struct mbuf **mp, int *offp)
 {
@@ -927,7 +928,7 @@ ip6_hopopts_input(u_int32_t *plenp, u_int32_t *rtalertp,
  * (RFC2460 p7), opthead is pointer into data content in m, and opthead to
  * opthead + hbhlen is located in continuous memory region.
  */
-int
+static int
 ip6_process_hopopts(struct mbuf *m, u_int8_t *opthead, int hbhlen, 
 	u_int32_t *rtalertp, u_int32_t *plenp)
 {

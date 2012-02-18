@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_lookup.h,v 1.9 2009/08/19 08:36:11 darrenr Exp $	*/
+/*	$NetBSD: ip_lookup.h,v 1.9.16.1 2012/02/18 07:35:19 mrg Exp $	*/
 
 
 #ifndef __IP_LOOKUP_H__
@@ -88,10 +88,10 @@ typedef	struct	ipflookupiter	{
 #define	IPFLOOKUPITER_NODE	1
 
 
-extern int ip_lookup_init __P((void));
-extern int ip_lookup_ioctl __P((void *, ioctlcmd_t, int, int, void *));
-extern void ip_lookup_unload __P((void));
-extern void ip_lookup_deref __P((int, void *));
-extern void ip_lookup_iterderef __P((u_32_t, void *));
+extern int ip_lookup_init(void);
+extern int ip_lookup_ioctl(void *, ioctlcmd_t, int, int, void *);
+extern void ip_lookup_unload(void);
+extern void ip_lookup_deref(int, void *);
+extern void ip_lookup_iterderef(u_32_t, void *);
 
 #endif /* __IP_LOOKUP_H__ */

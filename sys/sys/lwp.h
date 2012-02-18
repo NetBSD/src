@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.158 2011/11/21 04:36:05 christos Exp $	*/
+/*	$NetBSD: lwp.h,v 1.158.2.1 2012/02/18 07:35:49 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -268,8 +268,8 @@ extern lwp_t		lwp0;		/* LWP for proc0. */
 /*
  * Status values.
  *
- * A note about SRUN and SONPROC: SRUN indicates that a process is
- * runnable but *not* yet running, i.e. is on a run queue.  SONPROC
+ * A note about LSRUN and LSONPROC: LSRUN indicates that a process is
+ * runnable but *not* yet running, i.e. is on a run queue.  LSONPROC
  * indicates that the process is actually executing on a CPU, i.e.
  * it is no longer on a run queue.
  */

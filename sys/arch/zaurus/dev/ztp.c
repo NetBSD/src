@@ -1,4 +1,4 @@
-/*	$NetBSD: ztp.c,v 1.10 2010/02/24 22:37:56 dyoung Exp $	*/
+/*	$NetBSD: ztp.c,v 1.10.14.1 2012/02/18 07:33:51 mrg Exp $	*/
 /* $OpenBSD: zts.c,v 1.9 2005/04/24 18:55:49 uwe Exp $ */
 
 /*
@@ -18,9 +18,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.10 2010/02/24 22:37:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.10.14.1 2012/02/18 07:33:51 mrg Exp $");
 
 #include "lcd.h"
+#include "w100lcd.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -41,11 +42,16 @@ __KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.10 2010/02/24 22:37:56 dyoung Exp $");
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/xscalereg.h>
-#include <arm/xscale/pxa2x0_lcd.h>
 #include <arm/xscale/pxa2x0_gpio.h>
+#if NLCD > 0
+#include <arm/xscale/pxa2x0_lcd.h>
+#endif
+#if NW100LCD > 0
+#include <zaurus/dev/w100var.h>
+#endif
 
+#include <zaurus/zaurus/zaurus_var.h>
 #include <zaurus/dev/zsspvar.h>
-
 #ifdef ZTP_DEBUG
 #define	DPRINTF(s)	printf s
 #else
@@ -64,15 +70,22 @@ __KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.10 2010/02/24 22:37:56 dyoung Exp $");
 
 #define GPIO_TP_INT_C3K		11
 #define GPIO_HSYNC_C3K		22
+#define GPIO_TP_INT_C860	5
+#define GPIO_HSYNC_C860		44
 
 #define POLL_TIMEOUT_RATE0	((hz * 150)/1000)
 #define POLL_TIMEOUT_RATE1	(hz / 100) /* XXX every tick */
 
 #define CCNT_HS_400_VGA_C3K 6250	/* 15.024us */
+#define CCNT_HS_400_VGA_C860 7013	/* 17.615us */
 
-/* XXX need to ask zaurus_lcd.c for the screen dimension */
-#define CURRENT_DISPLAY (&sharp_zaurus_C3000)
-extern const struct lcd_panel_geometry sharp_zaurus_C3000;
+/* XXX need to ask lcd drivers for the screen dimension */
+#if NLCD > 0
+extern const struct lcd_panel_geometry lcd_panel_geometry_c3000;
+#endif
+#if NW100LCD > 0
+extern const struct w100_panel_geometry lcd_panel_geometry_c700;
+#endif
 
 /* Settable via sysctl. */
 int ztp_rawmode;
@@ -106,6 +119,10 @@ struct ztp_softc {
 	int sc_resx;
 	int sc_resy;
 	struct tpcalib_softc sc_tpcalib;
+
+	u_int sc_tp_int_pin;
+	u_int sc_hsync_pin;
+	u_int sc_ccnt_hs;
 };
 
 static int	ztp_match(device_t, cfdata_t, void *);
@@ -114,6 +131,7 @@ static void	ztp_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(ztp, sizeof(struct ztp_softc),
 	ztp_match, ztp_attach, NULL, NULL);
 
+static int	ztp_finalize(device_t);
 static int	ztp_enable(void *);
 static void	ztp_disable(void *);
 static bool	ztp_suspend(device_t dv, const pmf_qual_t *);
@@ -131,7 +149,10 @@ static const struct wsmouse_accessops ztp_accessops = {
 static int
 ztp_match(device_t parent, cfdata_t cf, void *aux)
 {
+	struct zssp_attach_args *aa = aux;
 
+	if (strcmp("ztp", aa->zaa_name))
+		return 0;
 	return 1;
 }
 
@@ -149,6 +170,54 @@ ztp_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->sc_tp_poll, 0);
 	callout_setfunc(&sc->sc_tp_poll, ztp_poll, sc);
 
+	/* defer initialization until all other devices are attached */
+	config_finalize_register(self, ztp_finalize);
+
+	a.accessops = &ztp_accessops;
+	a.accesscookie = sc;
+
+#if NLCD > 0 || NW100LCD > 0	/* XXX */
+#if NLCD > 0
+	if (ZAURUS_ISC1000 || ZAURUS_ISC3000) {
+		sc->sc_resx = lcd_panel_geometry_c3000.panel_height;
+		sc->sc_resy = lcd_panel_geometry_c3000.panel_width;
+	} else
+#endif
+#if NW100LCD > 0
+	if (ZAURUS_ISC860) {
+		sc->sc_resx = lcd_panel_geometry_c700.panel_height;
+		sc->sc_resy = lcd_panel_geometry_c700.panel_width;
+	} else
+#endif
+#endif
+	{
+		sc->sc_resx = 480;	/* XXX */
+		sc->sc_resy = 640;	/* XXX */
+	}
+
+	if (ZAURUS_ISC1000 || ZAURUS_ISC3000) {
+		sc->sc_tp_int_pin = GPIO_TP_INT_C3K;
+		sc->sc_hsync_pin = GPIO_HSYNC_C3K;
+		sc->sc_ccnt_hs = CCNT_HS_400_VGA_C3K;
+	} else {
+		/* C7x0/C860 */
+		sc->sc_tp_int_pin = GPIO_TP_INT_C860;
+		sc->sc_hsync_pin = GPIO_HSYNC_C860;
+		sc->sc_ccnt_hs = CCNT_HS_400_VGA_C860;
+	}
+
+	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
+
+	/* Initialize calibration, set default parameters. */
+	tpcalib_init(&sc->sc_tpcalib);
+	tpcalib_ioctl(&sc->sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
+	    __UNCONST(&ztp_default_calib), 0, 0);
+}
+
+static int
+ztp_finalize(device_t dv)
+{
+
 	/* Initialize ADS7846 Difference Reference mode */
 	(void)zssp_ic_send(ZSSP_IC_ADS7846,
 	    (1<<ADSCTRL_ADR_SH) | (1<<ADSCTRL_STS_SH));
@@ -163,23 +232,7 @@ ztp_attach(device_t parent, device_t self, void *aux)
 	    (5<<ADSCTRL_ADR_SH) | (1<<ADSCTRL_STS_SH));
 	delay(5000);
 
-	a.accessops = &ztp_accessops;
-	a.accesscookie = sc;
-
-#if NLCD > 0
-	sc->sc_resx = CURRENT_DISPLAY->panel_height;
-	sc->sc_resy = CURRENT_DISPLAY->panel_width;
-#else
-	sc->sc_resx = 480;	/* XXX */
-	sc->sc_resy = 640;	/* XXX */
-#endif
-
-	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
-
-	/* Initialize calibration, set default parameters. */
-	tpcalib_init(&sc->sc_tpcalib);
-	tpcalib_ioctl(&sc->sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
-	    __UNCONST(&ztp_default_calib), 0, 0);
+	return 0;
 }
 
 static int
@@ -200,11 +253,11 @@ ztp_enable(void *v)
 		aprint_error_dev(sc->sc_dev,
 		    "couldn't establish power handler\n");
 
-	pxa2x0_gpio_set_function(GPIO_TP_INT_C3K, GPIO_IN);
+	pxa2x0_gpio_set_function(sc->sc_tp_int_pin, GPIO_IN);
 
 	/* XXX */
 	if (sc->sc_gh == NULL) {
-		sc->sc_gh = pxa2x0_gpio_intr_establish(GPIO_TP_INT_C3K,
+		sc->sc_gh = pxa2x0_gpio_intr_establish(sc->sc_tp_int_pin,
 		    IST_EDGE_FALLING, IPL_TTY, ztp_irq, sc);
 	} else {
 		pxa2x0_gpio_intr_unmask(sc->sc_gh);
@@ -252,7 +305,7 @@ ztp_suspend(device_t dv, const pmf_qual_t *qual)
 	(void)zssp_ic_send(ZSSP_IC_ADS7846, (1 << ADSCTRL_PD1_SH) |
 	    (1 << ADSCTRL_ADR_SH) | (1 << ADSCTRL_STS_SH));
 
-	pxa2x0_gpio_set_function(GPIO_TP_INT_C3K, GPIO_OUT | GPIO_SET);
+	pxa2x0_gpio_set_function(sc->sc_tp_int_pin, GPIO_OUT | GPIO_SET);
 
 	return true;
 }
@@ -264,7 +317,7 @@ ztp_resume(device_t dv, const pmf_qual_t *qual)
 
 	DPRINTF(("%s: ztp_resume()\n", device_xname(sc->sc_dev)));
 
-	pxa2x0_gpio_set_function(GPIO_TP_INT_C3K, GPIO_IN);
+	pxa2x0_gpio_set_function(sc->sc_tp_int_pin, GPIO_IN);
 	pxa2x0_gpio_intr_mask(sc->sc_gh);
 
 	/* Enable automatic low power mode. */
@@ -279,17 +332,17 @@ ztp_resume(device_t dv, const pmf_qual_t *qual)
 
 #define HSYNC()								\
 do {									\
-	while (pxa2x0_gpio_get_bit(GPIO_HSYNC_C3K) == 0)		\
+	while (pxa2x0_gpio_get_bit(sc->sc_hsync_pin) == 0)		\
 		continue;						\
-	while (pxa2x0_gpio_get_bit(GPIO_HSYNC_C3K) != 0)		\
+	while (pxa2x0_gpio_get_bit(sc->sc_hsync_pin) != 0)		\
 		continue;						\
 } while (/*CONSTCOND*/0)
 
 static inline uint32_t pxa2x0_ccnt_enable(uint32_t);
 static inline uint32_t pxa2x0_read_ccnt(void);
-static uint32_t ztp_sync_ads784x(int, int, uint32_t);
-static void ztp_sync_send(uint32_t);
-static int ztp_readpos(struct ztp_pos *);
+static uint32_t ztp_sync_ads784x(struct ztp_softc *, int, int, uint32_t);
+static void ztp_sync_send(struct ztp_softc *, uint32_t);
+static int ztp_readpos(struct ztp_softc *, struct ztp_pos *);
 
 static inline uint32_t
 pxa2x0_ccnt_enable(uint32_t reg)
@@ -316,7 +369,8 @@ pxa2x0_read_ccnt(void)
  * Communicate synchronously with the ADS784x touch screen controller.
  */
 static uint32_t
-ztp_sync_ads784x(int dorecv/* XXX */, int dosend/* XXX */, uint32_t cmd)
+ztp_sync_ads784x(struct ztp_softc *sc, int dorecv/* XXX */,
+    int dosend/* XXX */, uint32_t cmd)
 {
 	uint32_t ccen;
 	uint32_t rv = 0;
@@ -334,7 +388,7 @@ ztp_sync_ads784x(int dorecv/* XXX */, int dosend/* XXX */, uint32_t cmd)
 	}
 
 	if (dosend) {
-		ztp_sync_send(cmd);
+		ztp_sync_send(sc, cmd);
 	}
 
 	/* stop clock counter */
@@ -344,13 +398,15 @@ ztp_sync_ads784x(int dorecv/* XXX */, int dosend/* XXX */, uint32_t cmd)
 }
 
 void
-ztp_sync_send(uint32_t cmd)
+ztp_sync_send(struct ztp_softc *sc, uint32_t cmd)
 {
 	volatile uint32_t base, now;
 	uint32_t tck;
 
 	/* XXX */
-	tck = CCNT_HS_400_VGA_C3K - 151;
+	tck = sc->sc_ccnt_hs - 151;
+	/* XXX: for one more delay(1) */
+	tck -= 400;		
 
 	/* send dummy command; discard SSDR */
 	(void)zssp_ic_send(ZSSP_IC_ADS7846, cmd);
@@ -369,14 +425,14 @@ ztp_sync_send(uint32_t cmd)
 }
 
 static int
-ztp_readpos(struct ztp_pos *pos)
+ztp_readpos(struct ztp_softc *sc, struct ztp_pos *pos)
 {
 	int cmd;
 	int t0, t1;
 	int down;
 
 	/* XXX */
-	pxa2x0_gpio_set_function(GPIO_HSYNC_C3K, GPIO_IN);
+	pxa2x0_gpio_set_function(sc->sc_hsync_pin, GPIO_IN);
 
 	/* check that pen is down */
 	cmd = (1 << ADSCTRL_PD0_SH) | (1 << ADSCTRL_PD1_SH) |
@@ -391,30 +447,30 @@ ztp_readpos(struct ztp_pos *pos)
 	/* Y */
 	cmd = (1 << ADSCTRL_PD0_SH) | (1 << ADSCTRL_PD1_SH) |
 	    (1 << ADSCTRL_ADR_SH) | (1 << ADSCTRL_STS_SH);
-	(void)ztp_sync_ads784x(0, 1, cmd);
+	(void)ztp_sync_ads784x(sc, 0, 1, cmd);
 
 	/* Y */
 	cmd = (1 << ADSCTRL_PD0_SH) | (1 << ADSCTRL_PD1_SH) |
 	    (1 << ADSCTRL_ADR_SH) | (1 << ADSCTRL_STS_SH);
-	(void)ztp_sync_ads784x(1, 1, cmd);
+	(void)ztp_sync_ads784x(sc, 1, 1, cmd);
 
 	/* X */
 	cmd = (1 << ADSCTRL_PD0_SH) | (1 << ADSCTRL_PD1_SH) |
 	    (5 << ADSCTRL_ADR_SH) | (1 << ADSCTRL_STS_SH);
-	pos->y = ztp_sync_ads784x(1, 1, cmd);
+	pos->y = ztp_sync_ads784x(sc, 1, 1, cmd);
 	DPRINTF(("ztp_readpos(): y = %d\n", pos->y));
 
 	/* T0 */
 	cmd = (1 << ADSCTRL_PD0_SH) | (1 << ADSCTRL_PD1_SH) |
 	    (3 << ADSCTRL_ADR_SH) | (1 << ADSCTRL_STS_SH);
-	pos->x = ztp_sync_ads784x(1, 1, cmd);
+	pos->x = ztp_sync_ads784x(sc, 1, 1, cmd);
 	DPRINTF(("ztp_readpos(): x = %d\n", pos->x));
 
 	/* T1 */
 	cmd = (1 << ADSCTRL_PD0_SH) | (1 << ADSCTRL_PD1_SH) |
 	    (4 << ADSCTRL_ADR_SH) | (1 << ADSCTRL_STS_SH);
-	t0 = ztp_sync_ads784x(1, 1, cmd);
-	t1 = ztp_sync_ads784x(1, 0, cmd);
+	t0 = ztp_sync_ads784x(sc, 1, 1, cmd);
+	t1 = ztp_sync_ads784x(sc, 1, 0, cmd);
 	DPRINTF(("ztp_readpos(): t0 = %d, t1 = %d\n", t0, t1));
 
 	/* check that pen is still down */
@@ -457,14 +513,14 @@ ztp_irq(void *v)
 
 	s = splhigh();
 
-	pindown = pxa2x0_gpio_get_bit(GPIO_TP_INT_C3K) ? 0 : 1;
+	pindown = pxa2x0_gpio_get_bit(sc->sc_tp_int_pin) ? 0 : 1;
 	DPRINTF(("%s: pindown = %d\n", device_xname(sc->sc_dev), pindown));
 	if (pindown) {
 		pxa2x0_gpio_intr_mask(sc->sc_gh);
 		callout_schedule(&sc->sc_tp_poll, POLL_TIMEOUT_RATE1);
 	}
 
-	down = ztp_readpos(&tp);
+	down = ztp_readpos(sc, &tp);
 	DPRINTF(("%s: x = %d, y = %d, z = %d, down = %d\n",
 	    device_xname(sc->sc_dev), tp.x, tp.y, tp.z, down));
 
@@ -472,7 +528,7 @@ ztp_irq(void *v)
 		pxa2x0_gpio_intr_unmask(sc->sc_gh);
 		callout_schedule(&sc->sc_tp_poll, POLL_TIMEOUT_RATE0);
 	}
-	pxa2x0_gpio_clear_intr(GPIO_TP_INT_C3K);
+	pxa2x0_gpio_clear_intr(sc->sc_tp_int_pin);
 
 	splx(s);
 	

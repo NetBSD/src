@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.49 2011/11/19 22:51:21 tls Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.49.2.1 2012/02/18 07:33:47 mrg Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,10 +50,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.49 2011/11/19 22:51:21 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.49.2.1 2012/02/18 07:33:47 mrg Exp $");
 
 #include "opt_xen.h"
-#include "rnd.h"
+
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -73,15 +73,13 @@ __KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.49 2011/11/19 22:51:21 tls Exp $");
 
 #include <uvm/uvm.h>
 
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
 #include <xen/granttables.h>
-#include <xen/xen3-public/io/blkif.h>
-#include <xen/xen3-public/io/protocols.h>
+#include <xen/xen-public/io/blkif.h>
+#include <xen/xen-public/io/protocols.h>
 
 #include <xen/xenbus.h>
 #include "locators.h"
@@ -95,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.49 2011/11/19 22:51:21 tls Exp $");
 
 #define GRANT_INVALID_REF -1
 
-#define XBD_RING_SIZE __RING_SIZE((blkif_sring_t *)0, PAGE_SIZE)
+#define XBD_RING_SIZE __CONST_RING_SIZE(blkif, PAGE_SIZE)
 
 #define XEN_BSHIFT      9               /* log2(XEN_BSIZE) */
 #define XEN_BSIZE       (1 << XEN_BSHIFT) 
@@ -154,9 +152,7 @@ struct xbd_xenbus_softc {
 	u_long sc_info; /* VDISK_* */
 	u_long sc_handle; /* from backend */
 	int sc_cache_flush; /* backend supports BLKIF_OP_FLUSH_DISKCACHE */
-#if NRND > 0
 	krndsource_t     sc_rnd_source;
-#endif
 };
 
 #if 0
@@ -305,10 +301,8 @@ xbd_xenbus_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-#if NRND > 0
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(self),
 	    RND_TYPE_DISK, RND_FLAG_NO_COLLECT | RND_FLAG_NO_ESTIMATE);
-#endif
 
 	if (!pmf_device_register(self, xbd_xenbus_suspend, xbd_xenbus_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -370,10 +364,8 @@ xbd_xenbus_detach(device_t dev, int flags)
 		/* detach disk */
 		disk_detach(&sc->sc_dksc.sc_dkdev);
 		disk_destroy(&sc->sc_dksc.sc_dkdev);
-#if NRND > 0
 		/* Unhook the entropy source. */
 		rnd_detach_source(&sc->sc_rnd_source);
-#endif
 	}
 
 	hypervisor_mask_event(sc->sc_evtchn);
@@ -720,10 +712,8 @@ next:
 		disk_unbusy(&sc->sc_dksc.sc_dkdev,
 		    (bp->b_bcount - bp->b_resid),
 		    (bp->b_flags & B_READ));
-#if NRND > 0
 		rnd_add_uint32(&sc->sc_rnd_source,
 		    bp->b_blkno);
-#endif
 		biodone(bp);
 		SLIST_INSERT_HEAD(&sc->sc_xbdreq_head, xbdreq, req_next);
 	}
@@ -1064,11 +1054,13 @@ static int
 xbd_map_align(struct xbd_req *req)
 {
 	int s = splvm();
+	int rc;
 
-	req->req_data = (void *)uvm_km_alloc(kmem_map, req->req_bp->b_bcount,
-	    PAGE_SIZE, UVM_KMF_WIRED | UVM_KMF_NOWAIT);
+	rc = uvm_km_kmem_alloc(kmem_va_arena,
+	    req->req_bp->b_bcount, (VM_NOSLEEP | VM_INSTANTFIT),
+	    (vmem_addr_t *)&req->req_data);
 	splx(s);
-	if (__predict_false(req->req_data == NULL))
+	if (__predict_false(rc != 0))
 		return ENOMEM;
 	if ((req->req_bp->b_flags & B_READ) == 0)
 		memcpy(req->req_data, req->req_bp->b_data,
@@ -1084,7 +1076,6 @@ xbd_unmap_align(struct xbd_req *req)
 		memcpy(req->req_bp->b_data, req->req_data,
 		    req->req_bp->b_bcount);
 	s = splvm();
-	uvm_km_free(kmem_map, (vaddr_t)req->req_data, req->req_bp->b_bcount,
-	    UVM_KMF_WIRED);
+	uvm_km_kmem_free(kmem_va_arena, (vaddr_t)req->req_data, req->req_bp->b_bcount);
 	splx(s);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.16 2010/11/03 22:34:24 dyoung Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.16.12.1 2012/02/18 07:35:10 mrg Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.16 2010/11/03 22:34:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.16.12.1 2012/02/18 07:35:10 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

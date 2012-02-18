@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.68 2011/11/06 15:53:04 cherry Exp $	*/
+/*	$NetBSD: trap.c,v 1.68.4.1 2012/02/18 07:31:10 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.68 2011/11/06 15:53:04 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.68.4.1 2012/02/18 07:31:10 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -404,7 +404,7 @@ copyfault:
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_trap = type & ~T_USER;
-		ksi.ksi_addr = (void *)rcr2();
+		ksi.ksi_addr = (void *) frame->tf_rip;
 		switch (type) {
 		case T_PRIVINFLT|T_USER:
 			ksi.ksi_code = ILL_PRVOPC;

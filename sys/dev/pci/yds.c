@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.52 2011/11/24 03:35:59 mrg Exp $	*/
+/*	$NetBSD: yds.c,v 1.52.2.1 2012/02/18 07:34:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.52 2011/11/24 03:35:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.52.2.1 2012/02/18 07:34:54 mrg Exp $");
 
 #include "mpu.h"
 
@@ -740,7 +740,6 @@ yds_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t reg;
 	struct yds_codec_softc *codec;
-	char devinfo[256];
 	int i, r, to;
 	int revision;
 	int ac97_id2;
@@ -749,9 +748,9 @@ yds_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	pa = (struct pci_attach_args *)aux;
 	pc = pa->pa_pc;
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	revision = PCI_REVISION(pa->pa_class);
-	printf(": %s (rev. 0x%02x)\n", devinfo, revision);
+
+	pci_aprint_devinfo(pa, NULL);
 
 	/* Map register to memory */
 	if (pci_mapreg_map(pa, YDS_PCI_MBA, PCI_MAPREG_TYPE_MEM, 0,

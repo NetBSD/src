@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.18 2010/12/20 00:25:24 matt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.18.12.1 2012/02/18 07:31:10 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.18 2010/12/20 00:25:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.18.12.1 2012/02/18 07:31:10 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs)
 		memset(frame, 0, sizeof(*regs));
 		frame->fx_fcw = cw;
 		frame->fx_fsw = 0x0000;
-		frame->fx_ftw = 0xff;
+		frame->fx_ftw = 0x00;	/* abridged tag; all empty */
 		frame->fx_mxcsr = mxcsr;
 		frame->fx_mxcsr_mask = mxcsr_mask;
 		l->l_md.md_flags |= MDP_USEDFPU;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.19 2011/11/19 22:51:21 tls Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.19.2.1 2012/02/18 07:33:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,11 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.19 2011/11/19 22:51:21 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.19.2.1 2012/02/18 07:33:18 mrg Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,9 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.19 2011/11/19 22:51:21 tls Exp $");
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/endian.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -101,9 +98,7 @@ struct ec_softc {
 	u_char sc_colliding;	/* nonzero if the net is colliding */
 	uint32_t sc_backoff_seed;	/* seed for the backoff PRNG */
 
-#if NRND > 0
 	krndsource_t rnd_source;
-#endif
 };
 
 /* Macros to read and write the CSR. */
@@ -249,10 +244,8 @@ ec_attach(device_t parent, device_t self, void *aux)
 	bus_intr_establish(mbma->mbma_bustag, mbma->mbma_pri, IPL_NET, 0,
 	    ec_intr, sc);
 
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(self),
 	    RND_TYPE_NET, 0);
-#endif
 }
 
 /*

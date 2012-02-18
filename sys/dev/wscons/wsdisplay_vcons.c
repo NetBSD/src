@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.26 2011/05/25 06:13:29 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.26.8.1 2012/02/18 07:35:15 mrg Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.26 2011/05/25 06:13:29 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.26.8.1 2012/02/18 07:35:15 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,11 +282,11 @@ vcons_init_screen(struct vcons_data *vd, struct vcons_screen *scr,
 	cnt = ri->ri_rows * ri->ri_cols;
 #endif
 	scr->scr_attrs = (long *)malloc(cnt * (sizeof(long) + 
-	    sizeof(uint16_t)), M_DEVBUF, M_WAITOK);
+	    sizeof(uint32_t)), M_DEVBUF, M_WAITOK);
 	if (scr->scr_attrs == NULL)
 		return ENOMEM;
 
-	scr->scr_chars = (uint16_t *)&scr->scr_attrs[cnt];
+	scr->scr_chars = (uint32_t *)&scr->scr_attrs[cnt];
 
 	ri->ri_ops.allocattr(ri, WS_DEFAULT_FG, WS_DEFAULT_BG, 0, defattr);
 	scr->scr_defattr = *defattr;
@@ -310,7 +310,7 @@ vcons_init_screen(struct vcons_data *vd, struct vcons_screen *scr,
 		if (vd->chars != NULL) free(vd->chars, M_DEVBUF);
 		if (vd->attrs != NULL) free(vd->attrs, M_DEVBUF);
 		vd->cells = size;
-		vd->chars = malloc(size * sizeof(uint16_t), M_DEVBUF, M_WAITOK);
+		vd->chars = malloc(size * sizeof(uint32_t), M_DEVBUF, M_WAITOK);
 		vd->attrs = malloc(size * sizeof(long), M_DEVBUF, M_WAITOK);
 		vcons_invalidate_cache(vd);
 	}
@@ -402,7 +402,7 @@ vcons_do_switch(void *arg)
 void
 vcons_redraw_screen(struct vcons_screen *scr)
 {
-	uint16_t *charptr = scr->scr_chars;
+	uint32_t *charptr = scr->scr_chars;
 	long *attrptr = scr->scr_attrs;
 	struct rasops_info *ri = &scr->scr_ri;
 	struct vcons_data *vd = scr->scr_vd;
@@ -457,7 +457,7 @@ vcons_redraw_screen(struct vcons_screen *scr)
 void
 vcons_update_screen(struct vcons_screen *scr)
 {
-	uint16_t *charptr = scr->scr_chars;
+	uint32_t *charptr = scr->scr_chars;
 	long *attrptr = scr->scr_attrs;
 	struct rasops_info *ri = &scr->scr_ri;
 	struct vcons_data *vd = scr->scr_vd;
@@ -513,7 +513,8 @@ vcons_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
 	struct vcons_data *vd = v;
-	int error;
+	int error = 0;
+
 
 	switch (cmd) {
 	case WSDISPLAYIO_GETWSCHAR:
@@ -524,6 +525,20 @@ vcons_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	case WSDISPLAYIO_PUTWSCHAR:
 		error = vcons_putwschar((struct vcons_screen *)vs,
 			(struct wsdisplay_char *)data);
+		break;
+
+	case WSDISPLAYIO_SET_POLLING: {
+		int poll = *(int *)data;
+
+		/* first call the driver's ioctl handler */
+		if (vd->ioctl != NULL)
+			error = (*vd->ioctl)(v, vs, cmd, data, flag, l);
+		if (poll) {
+			vcons_enable_polling(vd);
+			vcons_hard_switch(LIST_FIRST(&vd->screens));
+		} else
+			vcons_disable_polling(vd);
+		}
 		break;
 
 	default:
@@ -641,12 +656,12 @@ vcons_copycols_buffer(void *cookie, int row, int srccol, int dstcol, int ncols)
 	memmove(&scr->scr_attrs[offset + to], &scr->scr_attrs[offset + from],
 	    ncols * sizeof(long));
 	memmove(&scr->scr_chars[offset + to], &scr->scr_chars[offset + from],
-	    ncols * sizeof(uint16_t));
+	    ncols * sizeof(uint32_t));
 #else
 	memmove(&scr->scr_attrs[to], &scr->scr_attrs[from],
 	    ncols * sizeof(long));
 	memmove(&scr->scr_chars[to], &scr->scr_chars[from],
-	    ncols * sizeof(uint16_t));
+	    ncols * sizeof(uint32_t));
 #endif
 
 #ifdef VCONS_DRAW_INTR
@@ -799,7 +814,7 @@ vcons_copyrows_buffer(void *cookie, int srcrow, int dstrow, int nrows)
 		memmove(&scr->scr_attrs[to], &scr->scr_attrs[from],
 		    scr->scr_offset_to_zero * sizeof(long));
 		memmove(&scr->scr_chars[to], &scr->scr_chars[from],
-		    scr->scr_offset_to_zero * sizeof(uint16_t));
+		    scr->scr_offset_to_zero * sizeof(uint32_t));
 	}
 	from = ri->ri_cols * srcrow + offset;
 	to = ri->ri_cols * dstrow + offset;
@@ -813,7 +828,7 @@ vcons_copyrows_buffer(void *cookie, int srcrow, int dstrow, int nrows)
 	memmove(&scr->scr_attrs[to], &scr->scr_attrs[from],
 	    len * sizeof(long));
 	memmove(&scr->scr_chars[to], &scr->scr_chars[from],
-	    len * sizeof(uint16_t));
+	    len * sizeof(uint32_t));
 
 #ifdef VCONS_DRAW_INTR
 	atomic_inc_uint(&scr->scr_dirty);

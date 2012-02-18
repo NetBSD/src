@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.11 2010/07/11 11:27:47 pooka Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.11.12.1 2012/02/18 07:35:46 mrg Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.11 2010/07/11 11:27:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.11.12.1 2012/02/18 07:35:46 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -322,17 +322,17 @@ pool_prime(struct pool *pp, int nitems)
 }
 
 /* XXX: for tmpfs, shouldn't be here */
-void *pool_page_alloc_nointr(struct pool *, int);
-void pool_page_free_nointr(struct pool *, void *);
+void *pool_page_alloc(struct pool *, int);
+void pool_page_free(struct pool *, void *);
 void *
-pool_page_alloc_nointr(struct pool *pp, int flags)
+pool_page_alloc(struct pool *pp, int flags)
 {
 
 	return pool_get(pp, flags);
 }
 
 void
-pool_page_free_nointr(struct pool *pp, void *item)
+pool_page_free(struct pool *pp, void *item)
 {
 
 	return pool_put(pp, item);

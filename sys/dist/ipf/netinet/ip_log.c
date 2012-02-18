@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_log.c,v 1.14 2010/08/11 11:57:36 pgoyette Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.14.12.1 2012/02/18 07:35:19 mrg Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.14 2010/08/11 11:57:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.14.12.1 2012/02/18 07:35:19 mrg Exp $");
 
 #include <sys/param.h>
 #if defined(KERNEL) || defined(_KERNEL)
@@ -185,7 +185,8 @@ int	ipl_magic[IPL_LOGSIZE] = { IPL_MAGIC, IPL_MAGIC_NAT, IPL_MAGIC_STATE,
 /* Initialise log buffers & pointers.  Also iniialised the CRC to a local   */
 /* secret for use in calculating the "last log checksum".                   */
 /* ------------------------------------------------------------------------ */
-int fr_loginit()
+int
+fr_loginit(void)
 {
 	int	i;
 
@@ -222,7 +223,8 @@ int fr_loginit()
 /*                                                                          */
 /* Clean up any log data that has accumulated without being read.           */
 /* ------------------------------------------------------------------------ */
-void fr_logunload()
+void
+fr_logunload(void)
 {
 	int i;
 
@@ -253,9 +255,8 @@ void fr_logunload()
 /* how much data to copy into the log, including part of the data body if   */
 /* requested.                                                               */
 /* ------------------------------------------------------------------------ */
-int ipflog(fin, flags)
-fr_info_t *fin;
-u_int flags;
+int
+ipflog(fr_info_t *fin, u_int flags)
 {
 	register size_t hlen;
 	int types[2], mlen;
@@ -428,12 +429,8 @@ u_int flags;
 /* miscellaneous packet information, as well as packet data, for reading    */
 /* from the log device.                                                     */
 /* ------------------------------------------------------------------------ */
-int ipllog(dev, fin, items, itemsz, types, cnt)
-int dev;
-fr_info_t *fin;
-void **items;
-size_t *itemsz;
-int *types, cnt;
+int
+ipllog(int dev, fr_info_t *fin, void **items, size_t *itemsz, int *types, int cnt)
 {
 	char *buf, *ptr;
 	iplog_t *ipl;
@@ -547,9 +544,8 @@ int *types, cnt;
 /* NOTE: This function will block and wait for a signal to return data if   */
 /* there is none present.  Asynchronous I/O is not implemented.             */
 /* ------------------------------------------------------------------------ */
-int ipflog_read(unit, uio)
-minor_t unit;
-struct uio *uio;
+int
+ipflog_read(minor_t unit, struct uio *uio)
 {
 	size_t dlen, copied;
 	int error = 0;
@@ -662,8 +658,8 @@ struct uio *uio;
 /*                                                                          */
 /* Deletes all queued up log records for a given output device.             */
 /* ------------------------------------------------------------------------ */
-int ipflog_clear(unit)
-minor_t unit;
+int
+ipflog_clear(minor_t unit)
 {
 	iplog_t *ipl;
 	int used;
@@ -694,8 +690,8 @@ minor_t unit;
 /* Returns an indication of whether or not there is data present in the     */
 /* current buffer for the selected ipf device.                              */
 /* ------------------------------------------------------------------------ */
-int ipflog_canread(unit)
-int unit;
+int
+ipflog_canread(int unit)
 {
 	return iplt[unit] != NULL;
 }

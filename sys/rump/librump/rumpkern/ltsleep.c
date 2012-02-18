@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.28 2010/12/01 14:59:38 pooka Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.28.12.1 2012/02/18 07:35:46 mrg Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 /*
- * Implementation of the ltsleep/mtsleep kernel sleep interface.  There
+ * Implementation of the tsleep/mtsleep kernel sleep interface.  There
  * are two sides to our implementation.  For historic spinlocks we
  * assume the kernel is giantlocked and use kernel giantlock as the
  * wait interlock.  For mtsleep, we use the interlock supplied by
@@ -34,13 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.28 2010/12/01 14:59:38 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.28.12.1 2012/02/18 07:35:46 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
-#include <sys/simplelock.h>
 
 #include <rump/rumpuser.h>
 
@@ -123,13 +122,9 @@ sleeper(wchan_t ident, int timo, kmutex_t *kinterlock)
 }
 
 int
-ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
-	volatile struct simplelock *slock)
+tsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo)
 {
 	int rv, nlocks;
-
-	if (slock)
-		simple_unlock(slock);
 
 	/*
 	 * Since we cannot use slock as the rumpuser interlock,
@@ -142,15 +137,11 @@ ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 	rv = sleeper(ident, timo, NULL);
 	rump_kernel_bigunwrap(nlocks);
 
-	if (slock && (prio & PNORELOCK) == 0)
-		simple_lock(slock);
-
 	return rv;
 }
 
 int
-mtsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
-	kmutex_t *lock)
+mtsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo, kmutex_t *lock)
 {
 	int rv;
 
@@ -161,44 +152,22 @@ mtsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 	return rv;
 }
 
-static void
-do_wakeup(wchan_t ident, bool wakeup_all)
+void
+wakeup(wchan_t ident)
 {
 	struct ltsleeper *ltsp;
 
 	rumpuser_mutex_enter_nowrap(qlock);
 	LIST_FOREACH(ltsp, &sleepers, entries) {
 		if (ltsp->id == ident) {
-			if (wakeup_all) {
-				if (ltsp->iskwait) {
-					cv_broadcast(&ltsp->kcv);
-				} else {
-					rumpuser_cv_broadcast(ltsp->ucv);
-				}
+			if (ltsp->iskwait) {
+				cv_broadcast(&ltsp->kcv);
 			} else {
-				if (ltsp->iskwait) {
-					cv_signal(&ltsp->kcv);
-				} else {
-					rumpuser_cv_signal(ltsp->ucv);
-				}
+				rumpuser_cv_broadcast(ltsp->ucv);
 			}
 		}
 	}
 	rumpuser_mutex_exit(qlock);
-}
-
-void
-wakeup(wchan_t ident)
-{
-
-	do_wakeup(ident, true);
-}
-
-void
-wakeup_one(wchan_t ident)
-{
-
-	do_wakeup(ident, false);
 }
 
 void

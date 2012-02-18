@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.243 2011/11/19 22:51:26 tls Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.243.2.1 2012/02/18 07:35:41 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.243 2011/11/19 22:51:26 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.243.2.1 2012/02/18 07:35:41 mrg Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -146,10 +146,10 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.243 2011/11/19 22:51:26 tls Exp $");
 #include <netinet/tcp_congctl.h>
 #include <netinet/tcpip.h>
 
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 #include <netinet6/ipsec.h>
 #include <netkey/key.h>
-#endif /*IPSEC*/
+#endif /*KAME_IPSEC*/
 
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
@@ -829,7 +829,7 @@ tcp_respond(struct tcpcb *tp, struct mbuf *template, struct mbuf *m,
 		tlen += th->th_off << 2;
 	m->m_len = hlen + tlen;
 	m->m_pkthdr.len = hlen + tlen;
-	m->m_pkthdr.rcvif = (struct ifnet *) 0;
+	m->m_pkthdr.rcvif = NULL;
 	th->th_flags = flags;
 	th->th_urp = 0;
 
@@ -922,8 +922,7 @@ tcp_respond(struct tcpcb *tp, struct mbuf *template, struct mbuf *m,
 #ifdef INET
 	case AF_INET:
 		error = ip_output(m, NULL, ro,
-		    (tp && tp->t_mtudisc ? IP_MTUDISC : 0),
-		    (struct ip_moptions *)0, so);
+		    (tp && tp->t_mtudisc ? IP_MTUDISC : 0), NULL, so);
 		break;
 #endif
 #ifdef INET6
@@ -1275,7 +1274,7 @@ tcp_close(struct tcpcb *tp)
 	callout_destroy(&tp->t_delack_ch);
 	pool_put(&tcpcb_pool, tp);
 
-	return ((struct tcpcb *)0);
+	return NULL;
 }
 
 int
@@ -2220,7 +2219,7 @@ tcp_new_iss1(void *laddr, void *faddr, u_int16_t lport, u_int16_t fport,
 	 */
 	if (tcp_iss_gotten_secret == false) {
 		cprng_strong(kern_cprng,
-			     tcp_iss_secret, sizeof(tcp_iss_secret));
+			     tcp_iss_secret, sizeof(tcp_iss_secret), 0);
 		tcp_iss_gotten_secret = true;
 	}
 
@@ -2309,7 +2308,7 @@ tcp_new_iss1(void *laddr, void *faddr, u_int16_t lport, u_int16_t fport,
 	return (tcp_iss);
 }
 
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(KAME_IPSEC) || defined(FAST_IPSEC)
 /* compute ESP/AH header size for TCP, including outer IP header. */
 size_t
 ipsec4_hdrsiz_tcp(struct tcpcb *tp)

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.96 2011/11/26 04:58:42 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.96.2.1 2012/02/18 07:32:28 mrg Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.96 $"
+#ident 		"GENERIC-$Revision: 1.96.2.1 $"
 
 maxusers	8
 
@@ -96,7 +96,7 @@ file-system	TMPFS		# Efficient memory file-system
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# ffs endian independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 

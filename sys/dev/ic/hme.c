@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.86 2010/04/05 07:19:34 joerg Exp $	*/
+/*	$NetBSD: hme.c,v 1.86.12.1 2012/02/18 07:34:19 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,12 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.86 2010/04/05 07:19:34 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.86.12.1 2012/02/18 07:34:19 mrg Exp $");
 
 /* #define HMEDEBUG */
 
 #include "opt_inet.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,9 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.86 2010/04/05 07:19:34 joerg Exp $");
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -324,10 +321,8 @@ hme_config(struct hme_softc *sc)
 		aprint_error_dev(sc->sc_dev,
 		    "couldn't establish power handler\n");
 
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 			  RND_TYPE_NET, 0);
-#endif
 
 	callout_init(&sc->sc_tick_ch, 0);
 }
@@ -1162,9 +1157,7 @@ hme_intr(void *v)
 	if ((status & HME_SEB_STAT_RXTOHOST) != 0)
 		r |= hme_rint(sc);
 
-#if NRND > 0
 	rnd_add_uint32(&sc->rnd_source, status);
-#endif
 
 	return (r);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.26 2009/11/21 04:16:51 rmind Exp $ */
+/*	$NetBSD: fpu.c,v 1.26.16.1 2012/02/18 07:33:13 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.26 2009/11/21 04:16:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.26.16.1 2012/02/18 07:33:13 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -127,13 +127,14 @@ extern struct emul emul_sunos;
  * unknown FPops do enter the queue, however.
  */
 int
-fpu_cleanup(l, fs)
-	struct lwp *l;
+fpu_cleanup(
+	struct lwp *l,
 #ifndef SUN4U
-	struct fpstate *fs;
+	struct fpstate *fs
 #else /* SUN4U */
-	struct fpstate64 *fs;
+	struct fpstate64 *fs
 #endif /* SUN4U */
+	)
 {
 	int i, fsr = fs->fs_fsr, error;
 	struct proc *p = l->l_proc;

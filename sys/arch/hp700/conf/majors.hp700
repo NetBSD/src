@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hp700,v 1.26 2011/06/30 20:09:30 wiz Exp $
+#	$NetBSD: majors.hp700,v 1.26.6.1 2012/02/18 07:32:05 mrg Exp $
 #
 # Device majors for hp700
 #
@@ -44,6 +44,8 @@ device-major	clockctl	char 39			clockctl
 device-major	audio		char 40			audio
 device-major	ses		char 41			ses
 device-major	pci		char 42			pci
+device-major	wd		char 43  block 11	wd
+device-major	sysmon          char 44                 sysmon_power
 
 device-major	nsmb		char 98			nsmb
 

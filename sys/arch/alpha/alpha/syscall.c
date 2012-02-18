@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.37 2010/12/20 00:25:24 matt Exp $ */
+/* $NetBSD: syscall.c,v 1.37.12.1 2012/02/18 07:30:54 mrg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,17 +65,17 @@
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -89,7 +89,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37 2010/12/20 00:25:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.1 2012/02/18 07:30:54 mrg Exp $");
 
 #include "opt_sa.h"
 
@@ -108,8 +108,8 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37 2010/12/20 00:25:24 matt Exp $");
 #include <machine/alpha.h>
 #include <machine/userret.h>
 
-void	syscall_plain(struct lwp *, u_int64_t, struct trapframe *);
-void	syscall_fancy(struct lwp *, u_int64_t, struct trapframe *);
+void	syscall_plain(struct lwp *, uint64_t, struct trapframe *);
+void	syscall_fancy(struct lwp *, uint64_t, struct trapframe *);
 
 void
 syscall_intern(struct proc *p)
@@ -135,12 +135,12 @@ syscall_intern(struct proc *p)
  * a3, and v0 from the frame before returning to the user process.
  */
 void
-syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
+syscall_plain(struct lwp *l, uint64_t code, struct trapframe *framep)
 {
 	const struct sysent *callp;
 	int error;
-	u_int64_t rval[2];
-	u_int64_t *args, copyargs[10];				/* XXX */
+	uint64_t rval[2];
+	uint64_t *args, copyargs[10];				/* XXX */
 	u_int hidden, nargs;
 	struct proc *p = l->l_proc;
 
@@ -153,7 +153,7 @@ syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 
 #ifdef KERN_SA
 	if (__predict_false((l->l_savp)
-            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+	    && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
 		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
 #endif
 
@@ -179,7 +179,7 @@ syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	switch (nargs) {
 	default:
 		error = copyin((void *)alpha_pal_rdusp(), &copyargs[6],
-		    (nargs - 6) * sizeof(u_int64_t));
+		    (nargs - 6) * sizeof(uint64_t));
 		if (error)
 			goto bad;
 	case 6:	
@@ -229,12 +229,12 @@ syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 }
 
 void
-syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
+syscall_fancy(struct lwp *l, uint64_t code, struct trapframe *framep)
 {
 	const struct sysent *callp;
 	int error;
-	u_int64_t rval[2];
-	u_int64_t *args, copyargs[10];
+	uint64_t rval[2];
+	uint64_t *args, copyargs[10];
 	u_int hidden, nargs;
 	struct proc *p = l->l_proc;
 
@@ -247,7 +247,7 @@ syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 
 #ifdef KERN_SA
 	if (__predict_false((l->l_savp)
-            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+	    && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
 		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
 #endif
 
@@ -273,7 +273,7 @@ syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	switch (nargs) {
 	default:
 		error = copyin((void *)alpha_pal_rdusp(), &copyargs[6],
-		    (nargs - 6) * sizeof(u_int64_t));
+		    (nargs - 6) * sizeof(uint64_t));
 		if (error) {
 			args = copyargs;
 			goto bad;
@@ -341,4 +341,14 @@ child_return(void *arg)
 
 	userret(l);
 	ktrsysret(SYS_fork, 0, 0);
+}
+
+/*
+ * Process the tail end of a posix_spawn() for the child.
+ */
+void
+cpu_spawn_return(struct lwp *l)
+{
+
+	userret(l);
 }

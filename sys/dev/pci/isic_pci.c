@@ -1,4 +1,4 @@
-/* $NetBSD: isic_pci.c,v 1.37 2009/12/06 23:14:05 dyoung Exp $ */
+/* $NetBSD: isic_pci.c,v 1.37.16.1 2012/02/18 07:34:44 mrg Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.37 2009/12/06 23:14:05 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.37.16.1 2012/02/18 07:34:44 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -96,8 +96,8 @@ static const struct isic_pci_product {
 	{ 0, 0, 0, NULL, NULL, NULL },
 };
 
-static const struct isic_pci_product * find_matching_card(pa)
-	struct pci_attach_args *pa;
+static const struct isic_pci_product * find_matching_card(
+    struct pci_attach_args *pa)
 {
 	const struct isic_pci_product * pp = NULL;
 

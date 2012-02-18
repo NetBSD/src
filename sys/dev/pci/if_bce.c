@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.34 2011/11/19 22:51:23 tls Exp $	 */
+/* $NetBSD: if_bce.c,v 1.34.2.1 2012/02/18 07:34:38 mrg Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,10 +35,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.34 2011/11/19 22:51:23 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.34.2.1 2012/02/18 07:34:38 mrg Exp $");
 
 #include "vlan.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,9 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.34 2011/11/19 22:51:23 tls Exp $");
 #include <net/if_ether.h>
 
 #include <net/bpf.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -138,9 +135,7 @@ struct bce_softc {
 	int			bce_txsfree;	/* no. tx slots available */
 	int			bce_txsnext;	/* next available tx slot */
 	callout_t		bce_timeout;
-#if NRND > 0
 	krndsource_t	rnd_source;
-#endif
 };
 
 /* for ring descriptors */
@@ -461,10 +456,8 @@ bce_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "Ethernet address %s\n",
 	    ether_sprintf(sc->enaddr));
 	ether_ifattach(ifp, sc->enaddr);
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(self),
 	    RND_TYPE_NET, 0);
-#endif
 	callout_init(&sc->bce_timeout, 0);
 
 	if (pmf_device_register(self, NULL, bce_resume))
@@ -714,10 +707,7 @@ bce_intr(void *xsc)
 	if (handled) {
 		if (wantinit)
 			bce_init(ifp);
-#if NRND > 0
-		if (RND_ENABLED(&sc->rnd_source))
-			rnd_add_uint32(&sc->rnd_source, intstatus);
-#endif
+		rnd_add_uint32(&sc->rnd_source, intstatus);
 		/* Try to get more packets going. */
 		bce_start(ifp);
 	}

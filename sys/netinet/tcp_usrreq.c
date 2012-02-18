@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.160 2011/06/06 19:15:43 dyoung Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.160.6.1 2012/02/18 07:35:41 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,13 +95,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.160 2011/06/06 19:15:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.160.6.1 2012/02/18 07:35:41 mrg Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_tcp_debug.h"
 #include "opt_mbuftrace.h"
-#include "rnd.h"
+
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,9 +153,9 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.160 2011/06/06 19:15:43 dyoung Exp 
 
 #include "opt_tcp_space.h"
 
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 #include <netinet6/ipsec.h>
-#endif /*IPSEC*/
+#endif /*KAME_IPSEC*/
 
 /*
  * TCP protocol interface to socket abstraction.
@@ -2020,7 +2020,6 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       SYSCTL_DESCR("TCP drop connection"),
 		       sysctl_net_inet_tcp_drop, 0, NULL, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_DROP, CTL_EOL);
-#if NRND > 0
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "iss_hash",
@@ -2029,7 +2028,6 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       NULL, 0, &tcp_do_rfc1948, sizeof(tcp_do_rfc1948),
 		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE,
 		       CTL_EOL);
-#endif
 
 	/* ABC subtree */
 

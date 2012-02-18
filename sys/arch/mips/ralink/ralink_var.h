@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_var.h,v 1.4 2011/08/03 16:26:53 matt Exp $	*/
+/*	$NetBSD: ralink_var.h,v 1.4.6.1 2012/02/18 07:32:41 mrg Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -57,8 +57,8 @@ extern int ra_check_memo_reg(int);
 /* helper defines */
 #define MS_TO_HZ(ms) ((ms) * hz / 1000)
 
-#ifdef RA_CONSOLE_EARLY
-extern void ra_console_early(void);
+#ifdef RALINK_CONSOLE_EARLY
+extern void ralink_console_early(void);
 #endif
 
 #endif	/* _RALINK_VAR_H_ */

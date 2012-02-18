@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.92 2011/10/21 21:35:28 dyoung Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.92.6.1 2012/02/18 07:32:21 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.92 2011/10/21 21:35:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.92.6.1 2012/02/18 07:32:21 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -406,6 +406,12 @@ mainbus_rescan(device_t self, const char *ifattr, const int *locators)
 		mba.mba_pba.pba_pc = NULL;
 		mba.mba_pba.pba_flags = pci_bus_flags();
 		mba.mba_pba.pba_bus = 0;
+		/* XXX On those machines with >1 Host-PCI bridge,
+		 * XXX not every bus > pba_bus is subordinate to pba_bus,
+		 * XXX but this works on many machines, and pba_sub is
+		 * XXX not used today by any critical code, so it is safe
+		 * XXX to be so inclusive at this time.
+		 */
 		mba.mba_pba.pba_sub = 255;
 		mba.mba_pba.pba_bridgetag = NULL;
 #if NACPICA > 0 && defined(ACPI_SCANPCI)

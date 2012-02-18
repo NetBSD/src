@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_sh3.c,v 1.14 2008/04/28 20:23:35 martin Exp $	*/
+/*	$NetBSD: mmu_sh3.c,v 1.14.38.1 2012/02/18 07:33:10 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmu_sh3.c,v 1.14 2008/04/28 20:23:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmu_sh3.c,v 1.14.38.1 2012/02/18 07:33:10 mrg Exp $");
 
 #include <sys/param.h>
 
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: mmu_sh3.c,v 1.14 2008/04/28 20:23:35 martin Exp $");
 
 
 void
-sh3_mmu_start()
+sh3_mmu_start(void)
 {
 
 	/* Zero clear all TLB entries */
@@ -55,7 +55,7 @@ sh3_mmu_start()
 
 
 void
-sh3_tlb_invalidate_all()
+sh3_tlb_invalidate_all(void)
 {
 	uint32_t idx, a;
 	int i, way;

@@ -1,4 +1,4 @@
-/* $NetBSD: pciide.c,v 1.11 2011/11/13 00:06:54 phx Exp $ */
+/* $NetBSD: pciide.c,v 1.11.4.1 2012/02/18 07:33:05 mrg Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -82,7 +82,8 @@ pciide_match(unsigned tag, void *data)
 void *
 pciide_init(unsigned tag, void *data)
 {
-	int native, n;
+	static int cntrl = 0;
+	int native, n, retries;
 	unsigned val;
 	struct dkdev_ata *l;
 
@@ -128,16 +129,37 @@ pciide_init(unsigned tag, void *data)
 	}
 
 	for (n = 0; n < 2; n++) {
-		if (myops->presense && (*myops->presense)(l, n) == 0)
-			l->presense[n] = 0; /* found not exist */
-		else
+		if (myops->presense != NULL && (*myops->presense)(l, n) == 0) {
+			DPRINTF(("channel %d not present\n", n));
+			l->presense[n] = 0;
+			continue;
+		} else if (get_drive_config(cntrl * 2 + n) == 0) {
+			DPRINTF(("channel %d disabled by config\n", n));
+			l->presense[n] = 0;
+			continue;
+		}
+
+		if (atachkpwr(l, n) != ATA_PWR_ACTIVE) {
+			/* drive is probably sleeping, wake it up */
+			for (retries = 0; retries < 10; retries++) {
+				wakeup_drive(l, n);
+				DPRINTF(("channel %d spinning up...\n", n));
+				delay(1000 * 1000);
+				l->presense[n] = perform_atareset(l, n);
+				if (atachkpwr(l, n) == ATA_PWR_ACTIVE)
+					break;
+			}
+		} else {
 			/* check to see whether soft reset works */
+			DPRINTF(("channel %d active\n", n));
 			l->presense[n] = perform_atareset(l, n);
+		}
 
 		if (l->presense[n])
 			printf("channel %d present\n", n);
 	}
 
+	cntrl++;	/* increment controller number for next call */
 	return l;
 }
 

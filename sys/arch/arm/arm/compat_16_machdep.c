@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.13 2011/06/30 20:09:19 wiz Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.13.6.1 2012/02/18 07:31:21 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.13 2011/06/30 20:09:19 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.13.6.1 2012/02/18 07:31:21 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -102,7 +102,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	fp--;
 
 	/* make the stack aligned */
-	fp = (void *)STACKALIGN(fp);
+	fp = (void *)STACK_ALIGN(fp, STACK_ALIGNBYTES);
 
 	/* Save register context. */
 	frame.sf_sc.sc_r0     = tf->tf_r0;

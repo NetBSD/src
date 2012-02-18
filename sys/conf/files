@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1032 2011/11/19 22:51:21 tls Exp $
+#	$NetBSD: files,v 1.1032.2.1 2012/02/18 07:34:02 mrg Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -396,6 +396,10 @@ define	token
 define	sppp
 define	wlan
 define	crypto
+
+# TPM
+device	tpm
+file	dev/ic/tpm.c			tpm			needs-flag
 
 # devices ARPing IPv4 pull this in:
 #
@@ -909,6 +913,10 @@ file	dev/ic/cs4231.c			audiocs
 define	ac97
 file	dev/ic/ac97.c			ac97
 
+# UDA1341 CODEC support
+define	uda1341
+file	dev/ic/uda1341.c		uda1341
+
 # Oki MSM6258 support code
 #
 define msm6258
@@ -1084,6 +1092,7 @@ define drm {}
 include "external/bsd/drm/conf/files.drm"
 include "dev/drm/files.drm"
 
+
 # Definitions for wscons
 # device attributes: display, display with emulator, keyboard, and mouse
 #
@@ -1119,7 +1128,7 @@ file	dev/ic/vga_common.c	vga | vga_rasterconsole
 
 # Integraphics Systems IGA168x and CyberPro framebuffers (linear non-VGA mode)
 #
-device	igsfb: wsemuldisplaydev, wsrasteremulops, rasops8, vcons, videomode
+device	igsfb: wsemuldisplaydev, rasops8, vcons, videomode
 file	dev/ic/igsfb.c			igsfb			needs-flag
 file	dev/ic/igsfb_subr.c		igsfb
 
@@ -1354,6 +1363,7 @@ file	kern/kern_drvctl.c		drvctl		needs-flag
 
 # cpu control
 defpseudo cpuctl
+defflag				CPU_UCODE: firmload
 
 # pass-to-userspace transporter
 defpseudo putter
@@ -1439,8 +1449,7 @@ file	dev/mm.c
 file	dev/mulaw.c			mulaw			needs-flag
 file	dev/nullcons_subr.c		nullcons		needs-flag
 file	dev/radio.c			radio			needs-flag
-file	dev/rnd.c			rnd			needs-flag
-file	dev/rndpool.c			rnd			needs-flag
+file	dev/rndpseudo.c			rnd			needs-flag
 file	dev/sequencer.c			sequencer		needs-flag
 file	dev/video.c			video			needs-flag
 file	dev/vnd.c			vnd			needs-flag
@@ -1499,6 +1508,8 @@ file	kern/kern_prot.c
 file	kern/kern_ras.c
 file	kern/kern_rate.c
 file	kern/kern_resource.c
+file	kern/kern_rndpool.c
+file	kern/kern_rndq.c
 file	kern/kern_runq.c
 file	kern/kern_rwlock.c
 file	kern/kern_rwlock_obj.c
@@ -1611,6 +1622,7 @@ file	kern/vfs_init.c
 file	kern/vfs_lockf.c
 file	kern/vfs_lookup.c
 file	kern/vfs_mount.c
+file	kern/vfs_quotactl.c
 file	kern/vfs_subr.c
 file	kern/vfs_syscalls.c
 file	kern/vfs_trans.c
@@ -1675,7 +1687,7 @@ file	net/route.c
 file	net/rtbl.c
 file	net/rtsock.c
 file	net/slcompress.c		sl | ppp | strip | (irip & irip_vj)
-file	net/zlib.c			(ppp & ppp_deflate) | ipsec | opencrypto | vnd_compression
+file	net/zlib.c			(ppp & ppp_deflate) | kame_ipsec | opencrypto | vnd_compression
 file	netinet/accf_data.c		accf_data
 file	netinet/accf_http.c		accf_http
 file	netinet/cpu_in_cksum.c		(inet | inet6) & !cpu_in_cksum
@@ -1685,7 +1697,7 @@ file	netinet/in4_cksum.c		inet
 file	netinet/in_cksum.c		inet
 file	netinet/in_gif.c		gif & inet
 file	netinet/ip_carp.c		carp & (inet | inet6)	needs-flag
-file	netinet/ip_ecn.c		ipsec | fast_ipsec | gif | stf
+file	netinet/ip_ecn.c		kame_ipsec | fast_ipsec | gif | stf
 file	netinet/ip_encap.c		inet | inet6
 file	netinet/ip_etherip.c		etherip & inet
 file	netinet6/ip6_etherip.c		etherip & inet6

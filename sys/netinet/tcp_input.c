@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.318 2011/11/19 22:51:25 tls Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.318.2.1 2012/02/18 07:35:40 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.318 2011/11/19 22:51:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.318.2.1 2012/02/18 07:35:40 mrg Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -216,17 +216,17 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.318 2011/11/19 22:51:25 tls Exp $");
 #include <netinet/tcp_congctl.h>
 #include <netinet/tcp_debug.h>
 
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 #include <netinet6/ipsec.h>
 #include <netinet6/ipsec_private.h>
 #include <netkey/key.h>
-#endif /*IPSEC*/
+#endif /*KAME_IPSEC*/
 #ifdef INET6
 #include "faith.h"
 #if defined(NFAITH) && NFAITH > 0
 #include <net/if_faith.h>
 #endif
-#endif	/* IPSEC */
+#endif	/* INET6 */
 
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
@@ -1453,7 +1453,7 @@ findpcb:
 			tcp_fields_to_host(th);
 			goto dropwithreset_ratelim;
 		}
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(KAME_IPSEC) || defined(FAST_IPSEC)
 		if (inp && (inp->inp_socket->so_options & SO_ACCEPTCONN) == 0 &&
 		    ipsec4_in_reject(m, inp)) {
 			IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
@@ -1496,7 +1496,7 @@ findpcb:
 			tcp_fields_to_host(th);
 			goto dropwithreset_ratelim;
 		}
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(KAME_IPSEC) || defined(FAST_IPSEC)
 		if (in6p
 		    && (in6p->in6p_socket->so_options & SO_ACCEPTCONN) == 0
 		    && ipsec6_in_reject(m, in6p)) {
@@ -1805,7 +1805,7 @@ findpcb:
 				}
 #endif
 
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(KAME_IPSEC) || defined(FAST_IPSEC)
 				switch (af) {
 #ifdef INET
 				case AF_INET:
@@ -2261,7 +2261,7 @@ after_listen:
 				tp->rcv_scale = tp->request_r_scale;
 			}
 			TCP_REASS_LOCK(tp);
-			(void) tcp_reass(tp, NULL, (struct mbuf *)0, &tlen);
+			(void) tcp_reass(tp, NULL, NULL, &tlen);
 			/*
 			 * if we didn't have to retransmit the SYN,
 			 * use its rtt as our initial srtt & rtt var.
@@ -2585,7 +2585,7 @@ after_listen:
 			tp->rcv_scale = tp->request_r_scale;
 		}
 		TCP_REASS_LOCK(tp);
-		(void) tcp_reass(tp, NULL, (struct mbuf *)0, &tlen);
+		(void) tcp_reass(tp, NULL, NULL, &tlen);
 		tp->snd_wl1 = th->th_seq - 1;
 		/* fall into ... */
 
@@ -3176,7 +3176,7 @@ tcp_signature_getsav(struct mbuf *m, struct tcphdr *th)
 	/*
 	 * Look up an SADB entry which matches the address of the peer.
 	 */
-	sav = KEY_ALLOCSA(&dst, IPPROTO_TCP, htonl(TCP_SIG_SPI));
+	sav = KEY_ALLOCSA(&dst, IPPROTO_TCP, htonl(TCP_SIG_SPI), 0, 0);
 #else
 	if (ip)
 		sav = key_allocsa(AF_INET, (void *)&ip->ip_src,
@@ -4065,7 +4065,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	}
 #endif
 
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(KAME_IPSEC) || defined(FAST_IPSEC)
 	/*
 	 * we make a copy of policy, instead of sharing the policy,
 	 * for better behavior in terms of SA lookup and dead SA removal.

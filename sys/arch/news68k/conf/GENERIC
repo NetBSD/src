@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.108 2011/11/22 21:25:29 tls Exp $
+# $NetBSD: GENERIC,v 1.108.2.1 2012/02/18 07:32:46 mrg Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/news68k/conf/std.news68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.108 $"
+#ident 		"GENERIC-$Revision: 1.108.2.1 $"
 
 maxusers	8
 
@@ -105,7 +105,7 @@ options 	NFSSERVER	# nfs server support
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# ffs endian independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 

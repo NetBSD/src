@@ -1,4 +1,4 @@
-/*	$NetBSD: uyurex.c,v 1.5 2011/10/17 16:44:02 mbalmer Exp $ */
+/*	$NetBSD: uyurex.c,v 1.5.6.1 2012/02/18 07:35:13 mrg Exp $ */
 /*	$OpenBSD: uyurex.c,v 1.3 2010/03/04 03:47:22 deraadt Exp $ */
 
 /*

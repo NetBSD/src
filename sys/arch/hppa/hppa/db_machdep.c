@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.3 2011/01/22 19:35:48 skrll Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.3.8.1 2012/02/18 07:32:13 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.3 2011/01/22 19:35:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.3.8.1 2012/02/18 07:32:13 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
@@ -39,20 +39,94 @@ __KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.3 2011/01/22 19:35:48 skrll Exp $")
 
 #include <ddb/db_command.h>
 #include <ddb/db_output.h>
+#include <ddb/db_variables.h>
+#include <ddb/db_access.h>
+
+db_regs_t	ddb_regs;
+const struct db_variable db_regs[] = {
+	{ "flags",	(long *)&ddb_regs.tf_flags,	FCN_NULL,	NULL },
+	{ "r1",		(long *)&ddb_regs.tf_r1,	FCN_NULL,	NULL },
+	{ "r2(rp)",	(long *)&ddb_regs.tf_rp,	FCN_NULL,	NULL },
+	{ "r3(fp)",	(long *)&ddb_regs.tf_r3,	FCN_NULL,	NULL },
+	{ "r4",		(long *)&ddb_regs.tf_r4,	FCN_NULL,	NULL },
+	{ "r5",		(long *)&ddb_regs.tf_r5,	FCN_NULL,	NULL },
+	{ "r6",		(long *)&ddb_regs.tf_r6,	FCN_NULL,	NULL },
+	{ "r7",		(long *)&ddb_regs.tf_r7,	FCN_NULL,	NULL },
+	{ "r8",		(long *)&ddb_regs.tf_r8,	FCN_NULL,	NULL },
+	{ "r9",		(long *)&ddb_regs.tf_r9,	FCN_NULL,	NULL },
+	{ "r10",	(long *)&ddb_regs.tf_r10,	FCN_NULL,	NULL },
+	{ "r11",	(long *)&ddb_regs.tf_r11,	FCN_NULL,	NULL },
+	{ "r12",	(long *)&ddb_regs.tf_r12,	FCN_NULL,	NULL },
+	{ "r13",	(long *)&ddb_regs.tf_r13,	FCN_NULL,	NULL },
+	{ "r14",	(long *)&ddb_regs.tf_r14,	FCN_NULL,	NULL },
+	{ "r15",	(long *)&ddb_regs.tf_r15,	FCN_NULL,	NULL },
+	{ "r16",	(long *)&ddb_regs.tf_r16,	FCN_NULL,	NULL },
+	{ "r17",	(long *)&ddb_regs.tf_r17,	FCN_NULL,	NULL },
+	{ "r18",	(long *)&ddb_regs.tf_r18,	FCN_NULL,	NULL },
+	{ "r19(t4)",	(long *)&ddb_regs.tf_t4,	FCN_NULL,	NULL },
+	{ "r20(t3)",	(long *)&ddb_regs.tf_t3,	FCN_NULL,	NULL },
+	{ "r21(t2)",	(long *)&ddb_regs.tf_t2,	FCN_NULL,	NULL },
+	{ "r22(t1)",	(long *)&ddb_regs.tf_t1,	FCN_NULL,	NULL },
+	{ "r23(arg3)",	(long *)&ddb_regs.tf_arg3,	FCN_NULL,	NULL },
+	{ "r24(arg2)",	(long *)&ddb_regs.tf_arg2,	FCN_NULL,	NULL },
+	{ "r25(arg1)",	(long *)&ddb_regs.tf_arg1,	FCN_NULL,	NULL },
+	{ "r26(arg0)",	(long *)&ddb_regs.tf_arg0,	FCN_NULL,	NULL },
+	{ "r27(dp)",	(long *)&ddb_regs.tf_dp,	FCN_NULL,	NULL },
+	{ "r28(ret0)",	(long *)&ddb_regs.tf_ret0,	FCN_NULL,	NULL },
+	{ "r29(ret1)",	(long *)&ddb_regs.tf_ret1,	FCN_NULL,	NULL },
+	{ "r30(sp)",	(long *)&ddb_regs.tf_sp,	FCN_NULL,	NULL },
+	{ "r31",	(long *)&ddb_regs.tf_r31,	FCN_NULL,	NULL },
+
+	{ "sar",	(long *)&ddb_regs.tf_sar,	FCN_NULL,	NULL },
+
+	{ "eirr",	(long *)&ddb_regs.tf_eirr,	FCN_NULL,	NULL },
+	{ "eiem",	(long *)&ddb_regs.tf_eiem,	FCN_NULL,	NULL },
+	{ "iir",	(long *)&ddb_regs.tf_iir,	FCN_NULL,	NULL },
+	{ "isr",	(long *)&ddb_regs.tf_isr,	FCN_NULL,	NULL },
+	{ "ior",	(long *)&ddb_regs.tf_ior,	FCN_NULL,	NULL },
+	{ "ipsw",	(long *)&ddb_regs.tf_ipsw,	FCN_NULL,	NULL },
+	{ "iisqh",	(long *)&ddb_regs.tf_iisq_head,	FCN_NULL,	NULL },
+	{ "iioqh",	(long *)&ddb_regs.tf_iioq_head,	FCN_NULL,	NULL },
+	{ "iisqt",	(long *)&ddb_regs.tf_iisq_tail,	FCN_NULL,	NULL },
+	{ "iioqt",	(long *)&ddb_regs.tf_iioq_tail,	FCN_NULL,	NULL },
+
+	{ "sr0",	(long *)&ddb_regs.tf_sr0,	FCN_NULL,	NULL },
+	{ "sr1",	(long *)&ddb_regs.tf_sr1,	FCN_NULL,	NULL },
+	{ "sr2",	(long *)&ddb_regs.tf_sr2,	FCN_NULL,	NULL },
+	{ "sr3",	(long *)&ddb_regs.tf_sr3,	FCN_NULL,	NULL },
+	{ "sr4",	(long *)&ddb_regs.tf_sr4,	FCN_NULL,	NULL },
+	{ "sr5",	(long *)&ddb_regs.tf_sr5,	FCN_NULL,	NULL },
+	{ "sr6",	(long *)&ddb_regs.tf_sr6,	FCN_NULL,	NULL },
+	{ "sr7",	(long *)&ddb_regs.tf_sr7,	FCN_NULL,	NULL },
+
+	{ "pidr1",	(long *)&ddb_regs.tf_pidr1,	FCN_NULL,	NULL },
+	{ "pidr2",	(long *)&ddb_regs.tf_pidr2,	FCN_NULL,	NULL },
+#ifdef pbably_not_worth_it
+	{ "pidr3",	(long *)&ddb_regs.tf_pidr3,	FCN_NULL,	NULL },
+	{ "pidr4",	(long *)&ddb_regs.tf_pidr4,	FCN_NULL,	NULL },
+#endif
+
+	{ "vtop",	(long *)&ddb_regs.tf_vtop,	FCN_NULL,	NULL },
+	{ "cr24",	(long *)&ddb_regs.tf_cr24,	FCN_NULL,	NULL },
+	{ "cr27",	(long *)&ddb_regs.tf_cr27,	FCN_NULL,	NULL },
+	{ "cr28",	(long *)&ddb_regs.tf_cr28,	FCN_NULL,	NULL },
+	{ "cr30",	(long *)&ddb_regs.tf_cr30,	FCN_NULL,	NULL },
+};
+const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD("frame",	db_dump_trap,	0,
 	  "Displays the contents of a trapframe",
-	  "[/u] [addr]",
+	  "[/l] [addr]",
 	  "   addr:\tdisplay this trap frame (current kernel frame otherwise)\n"
-	  "   /u:\tdisplay the current userland trap frame") },
+	  "   /l:\tdisplay the trap frame from lwp") },
 	{ DDB_ADD_CMD(NULL,	NULL,		0, NULL, NULL, NULL) }
 };
 
 void
 db_dump_trap(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
-	struct trapframe *tf;
+	struct trapframe *tf, *ktf, ltf;
 	const char *cp = modif;
 	bool lwpaddr = false;
 	char c;
@@ -66,13 +140,15 @@ db_dump_trap(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	/* Or an arbitrary trapframe */
 	if (have_addr) {
 		if (lwpaddr) {
-			struct lwp *l;
-			
-			l = (struct lwp *)addr;
-			tf = (struct trapframe *)l->l_md.md_regs;
+			lwp_t l;
+
+			db_read_bytes(addr, sizeof(l), (char *)&l);
+			ktf = (struct trapframe *)l.l_md.md_regs;
 		} else {
-			tf = (struct trapframe *)addr;
+			ktf = (struct trapframe *)addr;
 		}
+		db_read_bytes((db_addr_t)ktf, sizeof(ltf), (char *)&ltf);
+		tf = &ltf;
 	}
 
 	db_printf("General registers\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.101 2011/05/03 17:44:31 dyoung Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.101.8.1 2012/02/18 07:35:39 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.101 2011/05/03 17:44:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.101.8.1 2012/02/18 07:35:39 mrg Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -116,14 +116,14 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.101 2011/05/03 17:44:31 dyoung Exp $"
  * TCP/IP protocol family: IP, ICMP, UDP, TCP.
  */
 
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 #include <netinet6/ipsec.h>
 #include <netinet6/ah.h>
 #ifdef IPSEC_ESP
 #include <netinet6/esp.h>
 #endif
 #include <netinet6/ipcomp.h>
-#endif /* IPSEC */
+#endif /* KAME_IPSEC */
 
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
@@ -183,7 +183,7 @@ PR_WRAP_CTLOUTPUT(tcp_ctloutput)
 #define	udp_ctloutput	udp_ctloutput_wrapper
 #define	tcp_ctloutput	tcp_ctloutput_wrapper
 
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(KAME_IPSEC) || defined(FAST_IPSEC)
 PR_WRAP_CTLINPUT(ah4_ctlinput)
 
 #define	ah4_ctlinput	ah4_ctlinput_wrapper
@@ -270,7 +270,7 @@ const struct protosw inetsw[] = {
 	.pr_init = ipflow_poolinit,
 },
 #endif /* GATEWAY */
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inetdomain,
 	.pr_protocol = IPPROTO_AH,
@@ -296,7 +296,7 @@ const struct protosw inetsw[] = {
 	.pr_input = ipcomp4_input,
 	.pr_init = ipcomp4_init,
 },
-#endif /* IPSEC */
+#endif /* KAME_IPSEC */
 #ifdef FAST_IPSEC
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inetdomain,

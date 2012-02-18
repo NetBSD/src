@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.5 2011/04/24 16:27:01 rmind Exp $	*/
+/*	$NetBSD: uhso.c,v 1.5.8.1 2012/02/18 07:35:09 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.5 2011/04/24 16:27:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.5.8.1 2012/02/18 07:35:09 mrg Exp $");
 
 #include "opt_inet.h"
 

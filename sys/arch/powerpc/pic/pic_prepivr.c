@@ -1,4 +1,4 @@
-/* $NetBSD: pic_prepivr.c,v 1.6 2011/06/20 06:21:45 matt Exp $ */
+/* $NetBSD: pic_prepivr.c,v 1.6.6.1 2012/02/18 07:32:59 mrg Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,10 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_prepivr.c,v 1.6 2011/06/20 06:21:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_prepivr.c,v 1.6.6.1 2012/02/18 07:32:59 mrg Exp $");
 
 #include <sys/param.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kernel.h>
 #include <sys/intr.h>
 
@@ -69,7 +69,7 @@ setup_prepivr(int ivrtype)
 	struct pic_ops *pic;
 	uint32_t pivr;
 
-	prepivr = malloc(sizeof(struct i8259_ops), M_DEVBUF, M_NOWAIT);
+	prepivr = kmem_alloc(sizeof(*prepivr), KM_SLEEP);
 	KASSERT(prepivr != NULL);
 	pic = &prepivr->pic;
 

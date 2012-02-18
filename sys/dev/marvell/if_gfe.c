@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.39 2010/11/13 13:52:04 uebayasi Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.39.12.1 2012/02/18 07:34:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,10 +42,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.39 2010/11/13 13:52:04 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.39.12.1 2012/02/18 07:34:30 mrg Exp $");
 
 #include "opt_inet.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -68,9 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.39 2010/11/13 13:52:04 uebayasi Exp $")
 #include <netinet/if_inarp.h>
 #endif
 #include <net/bpf.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -539,10 +536,8 @@ gfe_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
 	bpf_attach(ifp, DLT_EN10MB, sizeof(struct ether_header));
-#if NRND > 0
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(self), RND_TYPE_NET,
 	    0);
-#endif
 	marvell_intr_establish(mva->mva_irq, IPL_NET, gfe_intr, sc);
 }
 

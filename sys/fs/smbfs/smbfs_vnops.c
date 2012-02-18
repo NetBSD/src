@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.77 2010/11/30 10:43:03 dholland Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.77.12.1 2012/02/18 07:35:24 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.77 2010/11/30 10:43:03 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.77.12.1 2012/02/18 07:35:24 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.77 2010/11/30 10:43:03 dholland Ex
 #include <sys/vnode.h>
 #include <sys/lockf.h>
 #include <sys/kauth.h>
+#include <sys/mallocvar.h>
 
 #include <machine/limits.h>
 

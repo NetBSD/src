@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.22 2009/11/07 07:27:41 cegger Exp $	*/
+/*	$NetBSD: stubs.c,v 1.22.16.1 2012/02/18 07:31:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.22 2009/11/07 07:27:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.22.16.1 2012/02/18 07:31:24 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,17 +86,11 @@ struct pcb dumppcb;
 void
 cpu_dumpconf(void)
 {
-	const struct bdevsw *bdev;
 	int nblks, dumpblks;	/* size of dump area */
 
 	if (dumpdev == NODEV)
 		return;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL)
-		panic("dumpconf: bad dumpdev=0x%"PRIx64"", dumpdev);
-	if (bdev->d_psize == NULL)
-		return;
-	nblks = (*bdev->d_psize)(dumpdev);
+	nblks = bdev_size(dumpdev);
 	if (nblks <= ctod(1))
 		return;
 
@@ -248,7 +242,7 @@ dodumpsys(void)
 	bdev = bdevsw_lookup(dumpdev);
 	if (bdev == NULL || bdev->d_psize == NULL)
 		return;
-	psize = (*bdev->d_psize)(dumpdev);
+	psize = bdev_size(dumpdev);
 	printf("dump ");
 	if (psize == -1) {
 		printf("area unavailable\n");

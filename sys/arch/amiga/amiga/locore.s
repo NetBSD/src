@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.154 2011/11/26 14:05:52 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.154.2.1 2012/02/18 07:31:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1229,70 +1229,6 @@ ENTRY(ploadw)
 	ploadw	#1,%a0@				| pre-load translation
 Lploadw040:					| should 68040 do a ptest?
 	rts
-
-#ifdef FPCOPROC
-/*
- * Save and restore 68881 state.
- * Pretty awful looking since our assembler does not
- * recognize FP mnemonics.
- */
-ENTRY(m68881_save)
-	movl	%sp@(4),%a0			| save area pointer
-	fsave	%a0@				| save state
-#if defined(M68020) || defined(M68030) || defined(M68040)
-#ifdef M68060
-	cmpl	#CPU_68060,_C_LABEL(cputype)
-	jeq	Lm68060fpsave
-#endif
-	tstb	%a0@				| null state frame?
-	jeq	Lm68881sdone			| yes, all done
-	fmovem	%fp0-%fp7,%a0@(FPF_REGS)	| save FP general registers
-	fmovem	%fpcr/%fpsr/%fpi,%a0@(FPF_FPCR)	| save FP control registers
-Lm68881sdone:
-	rts
-#endif
-
-#ifdef M68060
-Lm68060fpsave:
-	tstb	%a0@(2)				| null state frame?
-	jeq	Lm68060sdone			| yes, all done
-	fmovem	%fp0-%fp7,%a0@(FPF_REGS)	| save FP general registers
-	fmovem	%fpcr,%a0@(FPF_FPCR)		| save FP control registers
-	fmovem	%fpsr,%a0@(FPF_FPSR)
-	fmovem	%fpi,%a0@(FPF_FPI)
-Lm68060sdone:
-	rts
-#endif
-
-ENTRY(m68881_restore)
-	movl	%sp@(4),%a0			| save area pointer
-#if defined(M68020) || defined(M68030) || defined(M68040)
-#if defined(M68060)
-	cmpl	#CPU_68060,_C_LABEL(cputype)
-	jeq	Lm68060fprestore
-#endif
-	tstb	%a0@				| null state frame?
-	jeq	Lm68881rdone			| yes, easy
-	fmovem	%a0@(FPF_FPCR),%fpcr/%fpsr/%fpi	| restore FP control registers
-	fmovem	%a0@(FPF_REGS),%fp0-%fp7	| restore FP general registers
-Lm68881rdone:
-	frestore %a0@				| restore state
-	rts
-#endif
-
-#ifdef M68060
-Lm68060fprestore:
-	tstb	%a0@(2)				| null state frame?
-	jeq	Lm68060fprdone			| yes, easy
-	fmovem	%a0@(FPF_FPCR),%fpcr		| restore FP control registers
-	fmovem	%a0@(FPF_FPSR),%fpsr
-	fmovem	%a0@(FPF_FPI),%fpi
-	fmovem	%a0@(FPF_REGS),%fp0-%fp7	| restore FP general registers
-Lm68060fprdone:
-	frestore %a0@				| restore state
-	rts
-#endif
-#endif
 
 /*
  * Handle the nitty-gritty of rebooting the machine.

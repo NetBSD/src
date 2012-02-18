@@ -1,4 +1,4 @@
-/*      $NetBSD: xpci_xenbus.c,v 1.8 2011/09/01 15:10:31 christos Exp $      */
+/*      $NetBSD: xpci_xenbus.c,v 1.8.6.1 2012/02/18 07:33:48 mrg Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -26,10 +26,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.8 2011/09/01 15:10:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.8.6.1 2012/02/18 07:33:48 mrg Exp $");
 
 #include "opt_xen.h"
-#include "rnd.h"
+
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.8 2011/09/01 15:10:31 christos Exp
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
 #include <xen/granttables.h>
-#include <xen/xen3-public/io/pciif.h>
+#include <xen/xen-public/io/pciif.h>
 #include <xen/xenbus.h>
 
 #include "locators.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_machdep.c,v 1.25 2011/02/24 08:59:22 skrll Exp $	*/
+/*	$NetBSD: hppa_machdep.c,v 1.25.8.1 2012/02/18 07:32:14 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.25 2011/02/24 08:59:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.25.8.1 2012/02/18 07:32:14 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,7 +201,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 		gr[_REG_PCOQT] = ras_pc + 4;
 	}
 
-	*flags |= _UC_CPU;
+	*flags |= _UC_CPU | _UC_TLSBASE;
 
 	if (l->l_md.md_flags & 0) {
 		return;
@@ -303,9 +303,6 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 			tf->tf_iioq_tail |= HPPA_PC_PRIV_USER;
 		}
 
-		lwp_setprivate(l, (void *)(uintptr_t)gr[_REG_CR27]);
-		tf->tf_cr27	= gr[_REG_CR27];
-
 #if 0
 		tf->tf_sr0	= gr[_REG_SR0];
 		tf->tf_sr1	= gr[_REG_SR1];
@@ -316,6 +313,13 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 #endif
 	}
 
+	/* Restore the private thread context */
+	if (flags & _UC_TLSBASE) {
+		lwp_setprivate(l, (void *)(uintptr_t)gr[_REG_CR27]);
+		tf->tf_cr27	= gr[_REG_CR27];
+	}
+
+	/* Restore the floating point registers */
 	if ((flags & _UC_FPU) != 0) {
 		struct pcb *pcb = lwp_getpcb(l);
 

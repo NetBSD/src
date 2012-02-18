@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2011/01/23 13:17:02 joerg Exp $
+#	$NetBSD: Makefile,v 1.6.8.1 2012/02/18 07:33:51 mrg Exp $
 
 PROG=		zboot
 
@@ -8,6 +8,7 @@ SRCS=		crt0.c
 SRCS+=		boot.c bootinfo.c bootmenu.c conf.c devopen.c diskprobe.c
 SRCS+=		loadfile_zboot.c
 SRCS+=		getsecs.c termios.c unixcons.c unixdev.c unixsys.S
+SRCS+=		pathfs.c
 
 NOMAN=		# defined
 
@@ -18,6 +19,7 @@ CFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 CFLAGS+=	-fno-stack-protector -fno-builtin -ffreestanding
 CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -I${.OBJDIR} -I${S}
 CPPFLAGS+=	-D_STANDALONE -DHEAP_VARIABLE
+CPPFLAGS+=	-DLIBSA_ENABLE_LS_OP
 AFLAGS+=	-D_LOCORE
 LDFLAGS+=	-nostdlib -Bstatic
 
@@ -32,7 +34,7 @@ NEWVERSWHAT?=   "Boot"
 VERSIONFILE?=	${.CURDIR}/version
 
 ### find out what to use for libkern
-KERN_AS=		library
+KERN_AS=	library
 .include "${S}/lib/libkern/Makefile.inc"
 LIBKERN=	${KERNLIB}
 
@@ -43,11 +45,11 @@ LIBZ=		${ZLIB}
 
 ### find out what to use for libsa
 SA_AS=		library
-SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes
+SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes SA_ENABLE_LS_OP=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
-${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${VERSIONFILE}
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
 	    ${VERSIONFILE} ${MACHINE} ${NEWVERSWHAT}
 	${CC} -c vers.c

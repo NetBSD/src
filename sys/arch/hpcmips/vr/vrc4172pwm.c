@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172pwm.c,v 1.20 2005/12/11 12:17:34 christos Exp $	*/
+/*	$NetBSD: vrc4172pwm.c,v 1.20.116.1 2012/02/18 07:32:12 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 SATO Kazumi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4172pwm.c,v 1.20 2005/12/11 12:17:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4172pwm.c,v 1.20.116.1 2012/02/18 07:32:12 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,7 +247,7 @@ vrc4172pwmattach(struct device *parent, struct device *self, void *aux)
  * get platform related brightness paramerters
  */
 struct vrc4172pwm_param *
-vrc4172pwm_getparam()
+vrc4172pwm_getparam(void)
 {
 	struct platid_data *p;
 

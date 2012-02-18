@@ -1,4 +1,4 @@
-#	$NetBSD: T_SH7706LAN,v 1.4 2011/11/22 21:25:13 tls Exp $
+#	$NetBSD: T_SH7706LAN,v 1.4.2.1 2012/02/18 07:32:01 mrg Exp $
 #
 #	TAC T-SH7706LAN Rev.3 config file
 #
@@ -63,7 +63,7 @@ file-system	TMPFS		# Efficient memory file-system
 
 # File system options
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP

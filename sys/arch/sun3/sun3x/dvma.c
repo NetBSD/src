@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.40 2009/11/21 04:16:53 rmind Exp $	*/
+/*	$NetBSD: dvma.c,v 1.40.16.1 2012/02/18 07:33:21 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.40 2009/11/21 04:16:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.40.16.1 2012/02/18 07:33:21 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ dvma_init(void)
 	 * Create the extent map for DVMA pages.
 	 */
 	dvma_extent = extent_create("dvma", DVMA_MAP_BASE,
-	    DVMA_MAP_BASE + (DVMA_MAP_AVAIL - 1), M_DEVBUF,
+	    DVMA_MAP_BASE + (DVMA_MAP_AVAIL - 1),
 	    NULL, 0, EX_NOCOALESCE|EX_NOWAIT);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.100 2011/06/12 03:35:39 rmind Exp $	*/
+/*	$NetBSD: pmap.h,v 1.100.6.1 2012/02/18 07:31:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -869,7 +869,6 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #define	__HAVE_VM_PAGE_MD
 struct vm_page_md {
 	SLIST_HEAD(,pv_entry) pvh_list;		/* pv_entry list */
-	struct simplelock pvh_slock;		/* lock on this head */
 	int pvh_attrs;				/* page attributes */
 	u_int uro_mappings;
 	u_int urw_mappings;
@@ -896,7 +895,6 @@ struct vm_page_md {
 #define	VM_MDPAGE_INIT(pg)						\
 do {									\
 	SLIST_INIT(&(pg)->mdpage.pvh_list);				\
-	simple_lock_init(&(pg)->mdpage.pvh_slock);			\
 	VM_MDPAGE_PVH_ATTRS_INIT(pg);					\
 	(pg)->mdpage.uro_mappings = 0;					\
 	(pg)->mdpage.urw_mappings = 0;					\

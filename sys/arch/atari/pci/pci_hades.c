@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_hades.c,v 1.12 2011/07/01 20:34:06 dyoung Exp $	*/
+/*	$NetBSD: pci_hades.c,v 1.12.6.1 2012/02/18 07:31:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_hades.c,v 1.12 2011/07/01 20:34:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_hades.c,v 1.12.6.1 2012/02/18 07:31:39 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,8 +66,7 @@ static int pci_config_offset(pcitag_t);
 /*
  * Atari_init.c maps the config areas PAGE_SIZE bytes apart....
  */
-static int pci_config_offset(tag)
-pcitag_t	tag;
+static int pci_config_offset(pcitag_t tag)
 {
 	int	device;
 

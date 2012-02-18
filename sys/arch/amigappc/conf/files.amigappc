@@ -1,4 +1,4 @@
-#	$NetBSD: files.amigappc,v 1.24 2011/01/14 12:54:39 phx Exp $
+#	$NetBSD: files.amigappc,v 1.24.12.1 2012/02/18 07:31:20 mrg Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -33,8 +33,8 @@ defflag				LEV6_DEFER
 
 defparam			IOBZCLOCK
 
-file	dev/cons.c				ite | ser
-file	dev/cninit.c				ite | ser
+file	dev/cons.c
+file	dev/cninit.c
 file	arch/amigappc/amigappc/amiga_init.c
 file	arch/amigappc/amigappc/autoconf.c
 file	arch/amigappc/amigappc/machdep.c
@@ -149,11 +149,11 @@ file	arch/amiga/dev/ite.c		ite needs-flag
 file	arch/amiga/dev/kbdmap.c		ite
 file	arch/amiga/dev/kf_custom.c	kfont_custom
 file	arch/amiga/dev/kf_iso8859_1_8x8.c	kfont_cons_iso8859_1 &
-	( ite | amidisplaycc )
+	( ite | wsdisplay )
 file	arch/amiga/dev/kf_iso8859_1_8x11.c	kfont_cons_iso8859_1 &
 	kfont_8x11
 file	arch/amiga/dev/kf_iso8859_2_8x8.c	kfont_cons_iso8859_2 &
-	( ite | amidisplaycc )
+	( ite | wsdisplay )
 file	arch/amiga/dev/kf_iso8859_2_8x11.c	kfont_cons_iso8859_2 &
 	kfont_8x11
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.11 2011/11/29 20:05:30 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.11.2.1 2012/02/18 07:35:38 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #include "testing.h"
 #endif
 
-#define	NPF_VERSION		3
+#define	NPF_VERSION		4
 
 /*
  * Public declarations and definitions.
@@ -68,10 +68,7 @@ typedef uint8_t			npf_netmask_t;
 typedef void			nbuf_t;
 
 struct npf_rproc;
-struct npf_hook;
-
 typedef struct npf_rproc	npf_rproc_t;
-typedef struct npf_hook		npf_hook_t;
 
 /*
  * Packet information cache.
@@ -215,12 +212,6 @@ int		nbuf_store_datum(nbuf_t *, void *, size_t, void *);
 int		nbuf_add_tag(nbuf_t *, uint32_t, uint32_t);
 int		nbuf_find_tag(nbuf_t *, uint32_t, void **);
 
-#if 0
-npf_hook_t *	npf_hook_register(npf_rule_t *,
-		    void (*)(npf_cache_t *, nbuf_t *, void *), void *);
-void		npf_hook_unregister(npf_rule_t *, npf_hook_t *);
-#endif
-
 #endif	/* _KERNEL */
 
 /* Rule attributes. */
@@ -248,7 +239,7 @@ void		npf_hook_unregister(npf_rule_t *, npf_hook_t *);
 
 /* Table types. */
 #define	NPF_TABLE_HASH			1
-#define	NPF_TABLE_RBTREE		2
+#define	NPF_TABLE_TREE			2
 
 /* Layers. */
 #define	NPF_LAYER_2			2
@@ -309,11 +300,11 @@ typedef enum {
 
 #define	IOC_NPF_VERSION		_IOR('N', 100, int)
 #define	IOC_NPF_SWITCH		_IOW('N', 101, int)
-#define	IOC_NPF_RELOAD		_IOW('N', 102, struct plistref)
+#define	IOC_NPF_RELOAD		_IOWR('N', 102, struct plistref)
 #define	IOC_NPF_TABLE		_IOW('N', 103, struct npf_ioctl_table)
 #define	IOC_NPF_STATS		_IOW('N', 104, void *)
 #define	IOC_NPF_SESSIONS_SAVE	_IOR('N', 105, struct plistref)
 #define	IOC_NPF_SESSIONS_LOAD	_IOW('N', 106, struct plistref)
-#define	IOC_NPF_UPDATE_RULE	_IOW('N', 107, struct plistref)
+#define	IOC_NPF_UPDATE_RULE	_IOWR('N', 107, struct plistref)
 
 #endif	/* _NPF_NET_H_ */

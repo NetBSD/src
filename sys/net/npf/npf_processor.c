@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_processor.c,v 1.7 2011/11/29 20:05:30 rmind Exp $	*/
+/*	$NetBSD: npf_processor.c,v 1.7.2.1 2012/02/18 07:35:38 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_processor.c,v 1.7 2011/11/29 20:05:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_processor.c,v 1.7.2.1 2012/02/18 07:35:38 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -283,13 +283,14 @@ cisc_like:
 		cmpval = npf_match_ether(nbuf, d, n, i, &regs[NPF_NREGS - 1]);
 		break;
 	case NPF_OPCODE_IP4MASK:
-		/* Source/destination, network address, subnet mask. */
+		/* Source/destination, network address, subnet. */
 		i_ptr = nc_fetch_word(i_ptr, &d);
 		i_ptr = nc_fetch_double(i_ptr, &addr.s6_addr32[0], &n);
 		cmpval = npf_match_ipmask(npc, nbuf, n_ptr, d, &addr,
 		    (npf_netmask_t)n);
 		break;
 	case NPF_OPCODE_IP6MASK:
+		/* Source/destination, network address, subnet. */
 		i_ptr = nc_fetch_word(i_ptr, &d);
 		i_ptr = nc_fetch_double(i_ptr,
 		    &addr.s6_addr32[0], &addr.s6_addr32[1]);
@@ -451,20 +452,20 @@ jmp_check:
 		error = nc_ptr_check(&iptr, nc, sz, 3, NULL, 0);
 		break;
 	case NPF_OPCODE_IP4MASK:
-		error = nc_ptr_check(&iptr, nc, sz, 3, &val, 1);
+		error = nc_ptr_check(&iptr, nc, sz, 3, &val, 3);
 		if (error) {
 			return error;
 		}
-		if (/* XXX !val ||*/ (val > NPF_MAX_NETMASK && val != NPF_NO_NETMASK)) {
+		if (!val || (val > NPF_MAX_NETMASK && val != NPF_NO_NETMASK)) {
 			return NPF_ERR_INVAL;
 		}
 		break;
 	case NPF_OPCODE_IP6MASK:
-		error = nc_ptr_check(&iptr, nc, sz, 6, &val, 1);
+		error = nc_ptr_check(&iptr, nc, sz, 6, &val, 6);
 		if (error) {
 			return error;
 		}
-		if (/* XXX !val ||*/ (val > NPF_MAX_NETMASK && val != NPF_NO_NETMASK)) {
+		if (!val || (val > NPF_MAX_NETMASK && val != NPF_NO_NETMASK)) {
 			return NPF_ERR_INVAL;
 		}
 		break;
@@ -506,12 +507,13 @@ static inline int
 nc_jmp_check(const void *nc, size_t sz, const uintptr_t jaddr)
 {
 	uintptr_t iaddr = (uintptr_t)nc;
-	size_t _jmp, adv;
-	bool _ret;
 	int error;
 
 	KASSERT(iaddr != jaddr);
 	do {
+		size_t _jmp, adv;
+		bool _ret;
+
 		error = nc_insn_check(iaddr, nc, sz, &adv, &_jmp, &_ret);
 		if (error) {
 			break;

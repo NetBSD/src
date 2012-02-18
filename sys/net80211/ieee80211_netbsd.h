@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.h,v 1.16 2011/10/07 16:51:45 dyoung Exp $ */
+/* $NetBSD: ieee80211_netbsd.h,v 1.16.6.1 2012/02/18 07:35:38 mrg Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -230,7 +230,6 @@ struct ieee80211_michael_event {
 #define	RTM_IEEE80211_REJOIN	108	/* station re-associate (ap mode) */
 
 #ifdef _KERNEL
-#define	__offsetof	offsetof
 #define	ticks	hardclock_ticks
 #define	ovbcopy(__src, __dst, __n)	((void)memmove(__dst, __src, __n))
 

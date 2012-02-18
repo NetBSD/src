@@ -1,4 +1,4 @@
-/*	$NetBSD: sfsub.c,v 1.4 2007/02/22 05:46:31 thorpej Exp $	*/
+/*	$NetBSD: sfsub.c,v 1.4.84.1 2012/02/18 07:32:18 mrg Exp $	*/
 
 /*	$OpenBSD: sfsub.c,v 1.4 2001/03/29 03:58:19 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfsub.c,v 1.4 2007/02/22 05:46:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfsub.c,v 1.4.84.1 2012/02/18 07:32:18 mrg Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/sgl_float.h"
@@ -51,10 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: sfsub.c,v 1.4 2007/02/22 05:46:31 thorpej Exp $");
  * Single_subtract: subtract two single precision values.
  */
 int
-sgl_fsub(leftptr, rightptr, dstptr, status)
-    sgl_floating_point *leftptr, *rightptr, *dstptr;
-    unsigned int *status;
-    {
+sgl_fsub(sgl_floating_point *leftptr, sgl_floating_point *rightptr,
+    sgl_floating_point *dstptr, unsigned int *status)
+{
     register unsigned int left, right, result, extent;
     register unsigned int signless_upper_left, signless_upper_right, save;
 

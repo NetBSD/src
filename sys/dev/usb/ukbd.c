@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.113 2011/11/03 02:41:29 macallan Exp $        */
+/*      $NetBSD: ukbd.c,v 1.113.4.1 2012/02/18 07:35:10 mrg Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.113 2011/11/03 02:41:29 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.113.4.1 2012/02/18 07:35:10 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

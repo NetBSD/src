@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxxvar.h,v 1.17 2011/11/19 22:51:22 tls Exp $	*/
+/*	$NetBSD: smc91cxxvar.h,v 1.17.2.1 2012/02/18 07:34:24 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,11 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "rnd.h"
-
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 struct smc91cxx_softc {
 	struct	device sc_dev;		/* generic device glue */
@@ -60,9 +56,8 @@ struct smc91cxx_softc {
 
 	uint8_t		sc_intmask;
 	uint8_t		sc_txpacketno;		/* cached packetno */
-#if NRND > 0
+
 	krndsource_t rnd_source;
-#endif
 };
 
 #define	SMC_SELECT_BANK(sc, x)						\

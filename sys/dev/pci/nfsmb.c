@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmb.c,v 1.21 2010/05/08 07:41:44 pgoyette Exp $	*/
+/*	$NetBSD: nfsmb.c,v 1.21.12.1 2012/02/18 07:34:45 mrg Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,13 +26,13 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.21 2010/05/08 07:41:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.21.12.1 2012/02/18 07:34:45 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
-#include <sys/rwlock.h>
+#include <sys/mutex.h>
 #include <sys/proc.h>
 
 #include <sys/bus.h>
@@ -73,7 +73,7 @@ struct nfsmb_softc {
 	bus_space_handle_t sc_ioh;
 
 	struct i2c_controller sc_i2c;	/* i2c controller info */
-	krwlock_t sc_rwlock;
+	kmutex_t sc_mutex;
 };
 
 
@@ -141,12 +141,8 @@ nfsmbc_attach(device_t parent, device_t self, void *aux)
 	struct nfsmbc_attach_args nfsmbca;
 	pcireg_t reg;
 	int baseregs[2];
-	char devinfo[256];
 
-	aprint_naive("\n");
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
-	    PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo(pa, NULL);
 
 	sc->sc_dev = self;
 	sc->sc_pc = pa->pa_pc;
@@ -241,7 +237,7 @@ nfsmb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c.ic_write_byte = NULL;
 	sc->sc_i2c.ic_exec = nfsmb_exec;
 
-	rw_init(&sc->sc_rwlock);
+	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_NONE);
 
 	if (bus_space_map(sc->sc_iot, nfsmbcap->nfsmb_addr, NFORCE_SMBSIZE, 0,
 	    &sc->sc_ioh) != 0) {
@@ -265,7 +261,7 @@ nfsmb_acquire_bus(void *cookie, int flags)
 {
 	struct nfsmb_softc *sc = cookie;
 
-	rw_enter(&sc->sc_rwlock, RW_WRITER);
+	mutex_enter(&sc->sc_mutex);
 	return 0;
 }
 
@@ -274,7 +270,7 @@ nfsmb_release_bus(void *cookie, int flags)
 {
 	struct nfsmb_softc *sc = cookie;
 
-	rw_exit(&sc->sc_rwlock);
+	mutex_exit(&sc->sc_mutex);
 }
 
 static int

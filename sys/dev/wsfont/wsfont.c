@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.50 2010/07/22 13:23:02 tsutsui Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.50.12.1 2012/02/18 07:35:17 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.50 2010/07/22 13:23:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.50.12.1 2012/02/18 07:35:17 mrg Exp $");
 
 #include "opt_wsfont.h"
 
@@ -115,7 +115,23 @@ __KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.50 2010/07/22 13:23:02 tsutsui Exp $");
 #include <dev/wsfont/omron12x20.h>
 #endif
 
-/* Make sure we always have at least one font. */
+#ifdef FONT_DEJAVU_SANS_MONO12x22
+#include <dev/wsfont/DejaVu_Sans_Mono_12x22.h>
+#endif
+
+#ifdef FONT_DROID_SANS_MONO12x22
+#include <dev/wsfont/Droid_Sans_Mono_12x22.h>
+#endif
+
+#ifdef FONT_DROID_SANS_MONO9x18
+#include <dev/wsfont/Droid_Sans_Mono_9x18.h>
+#endif
+
+#ifdef FONT_FREEMONO12x22
+#include <dev/wsfont/FreeMono_12x22.h>
+#endif
+
+/* Make sure we always have at least one bitmap font. */
 #ifndef HAVE_FONT
 #define HAVE_FONT 1
 #define FONT_BOLD8x16 1
@@ -195,8 +211,17 @@ static struct font builtin_fonts[] = {
 #ifdef FONT_OMRON12x20
 	{ { NULL, NULL }, &omron12x20, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
-#ifdef FONT_TERMINUS8x16
-	{ { NULL, NULL }, &terminus8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#ifdef FONT_DEJAVU_SANS_MONO12x22
+	{ { NULL, NULL }, &DejaVu_Sans_Mono_12x22, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_DROID_SANS_MONO12x22
+	{ { NULL, NULL }, &Droid_Sans_Mono_12x22, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_DROID_SANS_MONO9x18
+	{ { NULL, NULL }, &Droid_Sans_Mono_9x18, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_FREEMONO12x22
+	{ { NULL, NULL }, &FreeMono_12x22, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 	{ { NULL, NULL }, NULL, 0, 0, 0 },
 };
@@ -244,9 +269,8 @@ static struct	font *wsfont_find0(int, int);
 static struct	font *wsfont_add0(struct wsdisplay_font *, int);
 static void	wsfont_revbit(struct wsdisplay_font *);
 static void	wsfont_revbyte(struct wsdisplay_font *);
-static inline int wsfont_make_cookie(int, int, int);
 
-static inline int
+int
 wsfont_make_cookie(int cident, int bito, int byteo)
 {
 
@@ -482,9 +506,9 @@ wsfont_rotate(int cookie, int rotate)
 	default:
 		return (-1);
 	}
-
+	/* rotation works only with bitmap fonts so far */
 	ncookie = wsfont_find(font->name, font->fontwidth, font->fontheight, 
-	    font->stride, 0, 0);
+	    font->stride, 0, 0, WSFONT_FIND_BITMAP);
 
 	return (ncookie);
 }
@@ -528,8 +552,17 @@ wsfont_find0(int cookie, int mask)
 
 int
 wsfont_matches(struct wsdisplay_font *font, const char *name,
-	       int width, int height, int stride)
+	       int width, int height, int stride, int flags)
 {
+
+	/* first weed out fonts the caller doesn't claim support for */
+	if (FONT_IS_ALPHA(font)) {
+		if ((flags & WSFONT_FIND_ALPHA) == 0)
+			return 0;
+	} else {
+		if ((flags & WSFONT_FIND_BITMAP) == 0)
+			return 0;
+	}
 
 	if (height != 0 && font->fontheight != height)
 		return (0);
@@ -547,16 +580,26 @@ wsfont_matches(struct wsdisplay_font *font, const char *name,
 }
 
 int
-wsfont_find(const char *name, int width, int height, int stride, int bito, int byteo)
+wsfont_find(const char *name, int width, int height, int stride, int bito, int byteo, int flags)
 {
 	struct font *ent;
 
 	TAILQ_FOREACH(ent, &list, chain) {
-		if (wsfont_matches(ent->font, name, width, height, stride))
+		if (wsfont_matches(ent->font, name, width, height, stride, flags))
 			return (wsfont_make_cookie(ent->cookie, bito, byteo));
 	}
 
 	return (-1);
+}
+
+void
+wsfont_walk(void (*matchfunc)(struct wsdisplay_font *, void *, int), void *cookie)
+{
+	struct font *ent;
+
+	TAILQ_FOREACH(ent, &list, chain) {
+		matchfunc(ent->font, cookie, ent->cookie);
+	}
 }
 
 static struct font *
@@ -600,7 +643,7 @@ wsfont_add(struct wsdisplay_font *font, int copy)
 
 	/* Don't allow exact duplicates */
 	if (wsfont_find(font->name, font->fontwidth, font->fontheight,
-	    font->stride, 0, 0) >= 0)
+	    font->stride, 0, 0, WSFONT_FIND_ALL) >= 0)
 		return (EEXIST);
 
 	ent = wsfont_add0(font, copy);

@@ -1,5 +1,5 @@
-/*	$Id: at91dbgu.c,v 1.7 2011/11/04 17:23:05 aymeric Exp $	*/
-/*	$NetBSD: at91dbgu.c,v 1.7 2011/11/04 17:23:05 aymeric Exp $ */
+/*	$Id: at91dbgu.c,v 1.7.4.1 2012/02/18 07:31:24 mrg Exp $	*/
+/*	$NetBSD: at91dbgu.c,v 1.7.4.1 2012/02/18 07:31:24 mrg Exp $ */
 
 /*
  *
@@ -83,13 +83,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.7 2011/11/04 17:23:05 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.7.4.1 2012/02/18 07:31:24 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 
 #include "rnd.h"
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 #include <sys/rnd.h>
 #endif
 
@@ -277,7 +277,7 @@ at91dbgu_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_si = softint_establish(SOFTINT_SERIAL, at91dbgu_soft, sc);
 
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 			  RND_TYPE_TTY, 0);
 #endif
@@ -1138,7 +1138,7 @@ dbgu_intr(void* arg)
 	/* Wake up the poller. */
 	softint_schedule(sc->sc_si);
 #if 0
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 	rnd_add_uint32(&sc->rnd_source, imr ^ sr ^ c);
 #endif
 #endif

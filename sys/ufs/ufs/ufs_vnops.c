@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.206 2011/11/18 21:18:52 christos Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.206.4.1 2012/02/18 07:35:57 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.206 2011/11/18 21:18:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.206.4.1 2012/02/18 07:35:57 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.206 2011/11/18 21:18:52 christos Exp
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
+#include <sys/kmem.h>
 #include <sys/malloc.h>
 #include <sys/dirent.h>
 #include <sys/lockf.h>
@@ -2329,7 +2330,7 @@ ufs_readdir(void *v)
 	struct uio	auio, *uio;
 	struct iovec	aiov;
 	int		error;
-	size_t		count, ccount, rcount;
+	size_t		count, ccount, rcount, cdbufsz, ndbufsz;
 	off_t		off, *ccp;
 	off_t		startoff;
 	size_t		skipbytes;
@@ -2357,12 +2358,13 @@ ufs_readdir(void *v)
 	auio.uio_resid = rcount;
 	UIO_SETUP_SYSSPACE(&auio);
 	auio.uio_rw = UIO_READ;
-	cdbuf = malloc(rcount, M_TEMP, M_WAITOK);
+	cdbufsz = rcount;
+	cdbuf = kmem_alloc(cdbufsz, KM_SLEEP);
 	aiov.iov_base = cdbuf;
 	aiov.iov_len = rcount;
 	error = VOP_READ(vp, &auio, 0, ap->a_cred);
 	if (error != 0) {
-		free(cdbuf, M_TEMP);
+		kmem_free(cdbuf, cdbufsz);
 		return error;
 	}
 
@@ -2371,7 +2373,8 @@ ufs_readdir(void *v)
 	cdp = (struct direct *)(void *)cdbuf;
 	ecdp = (struct direct *)(void *)&cdbuf[rcount];
 
-	ndbuf = malloc(count, M_TEMP, M_WAITOK);
+	ndbufsz = count;
+	ndbuf = kmem_alloc(ndbufsz, KM_SLEEP);
 	ndp = (struct dirent *)(void *)ndbuf;
 	endp = &ndbuf[count];
 
@@ -2445,8 +2448,8 @@ out:
 		}
 	}
 	uio->uio_offset = off;
-	free(ndbuf, M_TEMP);
-	free(cdbuf, M_TEMP);
+	kmem_free(ndbuf, ndbufsz);
+	kmem_free(cdbuf, cdbufsz);
 	*ap->a_eofflag = VTOI(vp)->i_size <= uio->uio_offset;
 	return error;
 }

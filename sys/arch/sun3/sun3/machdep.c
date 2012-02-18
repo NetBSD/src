@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.203 2011/06/14 15:23:19 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.203.6.1 2012/02/18 07:33:21 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.203 2011/06/14 15:23:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.203.6.1 2012/02/18 07:33:21 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -483,23 +483,13 @@ long	dumplo = 0; 		/* blocks */
 void 
 cpu_dumpconf(void)
 {
-	const struct bdevsw *bdev;
 	int devblks;	/* size of dump device in blocks */
 	int dumpblks;	/* size of dump image in blocks */
-	int (*getsize)(dev_t);
 
 	if (dumpdev == NODEV)
 		return;
 
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL) {
-		dumpdev = NODEV;
-		return;
-	}
-	getsize = bdev->d_psize;
-	if (getsize == NULL)
-		return;
-	devblks = (*getsize)(dumpdev);
+	devblks = bdev_size(dumpdev);
 	if (devblks <= ctod(1))
 		return;
 	devblks &= ~(ctod(1)-1);
@@ -568,7 +558,7 @@ dumpsys(void)
 	}
 	savectx(&dumppcb);
 
-	psize = (*(dsw->d_psize))(dumpdev);
+	psize = bdev_size(dumpdev);
 	if (psize == -1) {
 		printf("dump area unavailable\n");
 		return;

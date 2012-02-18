@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool_ki2c.c,v 1.7 2010/12/20 00:25:37 matt Exp $ */
+/*	$NetBSD: dbcool_ki2c.c,v 1.7.12.1 2012/02/18 07:32:35 mrg Exp $ */
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool_ki2c.c,v 1.7 2010/12/20 00:25:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool_ki2c.c,v 1.7.12.1 2012/02/18 07:32:35 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,8 @@ dbcool_ki2c_match(device_t parent, cfdata_t cf, void *aux)
 
 	memset(compat, 0, sizeof(compat));
 	OF_getprop(ka->ka_node, "compatible", compat, sizeof(compat));
-	if (strcmp(compat, "adt7467") != 0 && strcmp(compat, "adt7460") != 0)
+	if (strcmp(compat, "adt7467") != 0 && strcmp(compat, "adt7460") != 0 &&
+	    strcmp(compat, "adm1030") != 0)
 		return 0;
 	
 	return 1;

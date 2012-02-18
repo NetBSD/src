@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rt.c,v 1.54 2009/10/26 19:16:54 cegger Exp $ */
+/*	$NetBSD: grf_rt.c,v 1.54.16.1 2012/02/18 07:31:17 mrg Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -33,9 +33,10 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.54 2009/10/26 19:16:54 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.54.16.1 2012/02/18 07:31:17 mrg Exp $");
 
 #include "grfrt.h"
+#include "ite.h"
 #if NGRFRT > 0
 
 /* Graphics routines for the Retina board,
@@ -864,8 +865,10 @@ grfrtattach(struct device *pdp, struct device *dp, void *auxp)
 		gp->g_unit = GRF_RETINAII_UNIT;
 		gp->g_flags = GF_ALIVE;
 		gp->g_mode = rt_mode;
+#if NITE > 0
 		gp->g_conpri = grfrt_cnprobe();
 		grfrt_iteinit(gp);
+#endif
 		(void)rt_load_mon(gp, current_mon);
 	}
 	if (dp != NULL)

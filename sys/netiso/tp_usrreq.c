@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_usrreq.c,v 1.40 2009/03/18 22:08:57 he Exp $	*/
+/*	$NetBSD: tp_usrreq.c,v 1.40.16.1 2012/02/18 07:35:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.40 2009/03/18 22:08:57 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.40.16.1 2012/02/18 07:35:45 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,7 +212,7 @@ restart:
 		}
 #endif
 		sbunlock(sb);
-		if (so->so_nbio) {
+		if (so->so_state & SS_NBIO) {
 			return EWOULDBLOCK;
 		}
 		sbwait(sb);
@@ -306,7 +306,7 @@ tp_sendoob(struct tp_pcb *tpcb, struct socket *so, struct mbuf *xdata,
 	 */
 	if (sb->sb_mb) {	/* Anything already in eXpedited data
 				 * sockbuf? */
-		if (so->so_nbio) {
+		if (so->so_state & SS_NBIO) {
 			return EWOULDBLOCK;
 		}
 		while (sb->sb_mb) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.66 2011/05/16 13:22:53 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.66.8.1 2012/02/18 07:32:04 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,20 +41,19 @@
 #ifndef _HP300_CPU_H_
 #define	_HP300_CPU_H_
 
-#if defined(_KERNEL)
-
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #endif
 
 /*
- * Exported definitions unique to hp300/68k cpu support.
- */
-
-/*
  * Get common m68k CPU definitions.
  */
 #include <m68k/cpu.h>
+
+#if defined(_KERNEL)
+/*
+ * Exported definitions unique to hp300/68k cpu support.
+ */
 #include <machine/hp300spu.h>
 
 /*

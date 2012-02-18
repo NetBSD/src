@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP12,v 1.12 2011/11/22 21:25:35 tls Exp $
+#	$NetBSD: GENERIC32_IP12,v 1.12.2.1 2012/02/18 07:33:06 mrg Exp $
 #
 # GENERIC32_IP12 machine description file
 # 
@@ -32,7 +32,7 @@ makeoptions	TEXTADDR=0x80002000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.12 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.12.2.1 $"
 
 maxusers	32
 
@@ -116,7 +116,7 @@ file-system	EFS		# Silicon Graphics Extent File System
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

@@ -2,7 +2,7 @@
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.77 2011/11/22 21:25:17 tls Exp $
+#	$NetBSD: TX3912,v 1.77.2.1 2012/02/18 07:32:10 mrg Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -95,7 +95,7 @@ options 	INET6		# IPV6
 #options 	EON		# OSI tunneling over IP
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

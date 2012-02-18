@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.h,v 1.15 2008/04/28 20:23:30 martin Exp $	*/
+/*	$NetBSD: bus_space.h,v 1.15.38.1 2012/02/18 07:32:49 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -520,10 +520,13 @@ static __inline void __CONCAT(bus_space_copy_region_,BYTES)		\
 	 bus_size_t);							\
 									\
 static __inline void							\
-__CONCAT(bus_space_copy_region_,BYTES)(t, h1, o1, h2, o2, c)		\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h1, h2;					\
-	bus_size_t o1, o2, c;						\
+__CONCAT(bus_space_copy_region_,BYTES)(					\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h1,						\
+	bus_size_t o1,							\
+	bus_space_handle_t h2,						\
+	bus_size_t o2,							\
+	bus_size_t c)							\
 {									\
 	bus_size_t o;							\
 									\

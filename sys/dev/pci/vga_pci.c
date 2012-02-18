@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.53 2011/01/22 15:14:28 cegger Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.53.8.1 2012/02/18 07:34:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.53 2011/01/22 15:14:28 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.53.8.1 2012/02/18 07:34:53 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,7 +186,6 @@ vga_pci_attach(device_t parent, device_t self, void *aux)
 	struct vga_pci_softc *psc = device_private(self);
 	struct vga_softc *sc = &psc->sc_vga;
 	struct pci_attach_args *pa = aux;
-	char devinfo[256];
 	int bar, reg;
 
 	sc->sc_dev = self;
@@ -194,10 +193,7 @@ vga_pci_attach(device_t parent, device_t self, void *aux)
 	psc->sc_pcitag = pa->pa_tag;
 	psc->sc_paa = *pa;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_naive("\n");
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
-	    PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo(pa, NULL);
 
 	/*
 	 * Gather info about all the BARs.  These are used to allow

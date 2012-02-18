@@ -1,4 +1,4 @@
-/* $NetBSD: tcp_sack.c,v 1.27 2011/07/17 20:54:53 joerg Exp $ */
+/* $NetBSD: tcp_sack.c,v 1.27.6.1 2012/02/18 07:35:41 mrg Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.27 2011/07/17 20:54:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.27.6.1 2012/02/18 07:35:41 mrg Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -164,7 +164,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.27 2011/07/17 20:54:53 joerg Exp $");
 static struct pool sackhole_pool;
 
 void
-tcp_sack_init()
+tcp_sack_init(void)
 {
 
 	pool_init(&sackhole_pool, sizeof(struct sackhole), 0, 0, 0,

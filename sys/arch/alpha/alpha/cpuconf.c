@@ -1,4 +1,4 @@
-/* $NetBSD: cpuconf.c,v 1.34 2011/06/17 03:55:57 matt Exp $ */
+/* $NetBSD: cpuconf.c,v 1.34.6.1 2012/02/18 07:30:46 mrg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpuconf.c,v 1.34 2011/06/17 03:55:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpuconf.c,v 1.34.6.1 2012/02/18 07:30:46 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -261,7 +261,7 @@ platform_not_configured(void)
 	    cputype);
 	printf("Please build a kernel with \"options %s\" and reboot.\n",
 	    c->option);
-	printf("\n");   
+	printf("\n");
 	panic("platform not configured");
 }
 

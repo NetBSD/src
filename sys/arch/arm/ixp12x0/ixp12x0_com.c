@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.39 2011/07/01 20:27:50 dyoung Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.39.6.1 2012/02/18 07:31:28 mrg Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,13 +66,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.39 2011/07/01 20:27:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.39.6.1 2012/02/18 07:31:28 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 
 #include "rnd.h"
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 #include <sys/rnd.h>
 #endif
 
@@ -236,7 +236,7 @@ ixpcom_attach_subr(struct ixpcom_softc *sc)
 
 	sc->sc_si = softint_establish(SOFTINT_SERIAL, ixpcomsoft, sc);
 
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
 			  RND_TYPE_TTY, 0);
 #endif
@@ -1173,7 +1173,7 @@ ixpcomintr(void* arg)
 	/* Wake up the poller. */
 	softint_schedule(sc->sc_si);
 
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 	rnd_add_uint32(&sc->rnd_source, iir | lsr);
 #endif
 	return (1);

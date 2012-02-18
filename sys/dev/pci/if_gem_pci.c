@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.43 2010/11/13 13:52:06 uebayasi Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.43.12.1 2012/02/18 07:34:39 mrg Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.43 2010/11/13 13:52:06 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.43.12.1 2012/02/18 07:34:39 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,6 @@ gem_pci_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct gem_pci_softc *gsc = device_private(self);
 	struct gem_softc *sc = &gsc->gsc_gem;
-	char devinfo[256];
 	prop_data_t data;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	u_int8_t		*enp;
@@ -171,12 +170,10 @@ gem_pci_attach(device_t parent, device_t self, void *aux)
 #define PROMDATA_PTR_VPD	0x08
 #define PROMDATA_DATA2		0x0a
 
-	aprint_naive(": Ethernet controller\n");
+	pci_aprint_devinfo(pa, "Ethernet controller");
 
 	sc->sc_dev = self;
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	sc->sc_chiprev = PCI_REVISION(pa->pa_class);
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, sc->sc_chiprev);
 
 	/*
 	 * Some Sun GEMs/ERIs do have their intpin register bogusly set to 0,

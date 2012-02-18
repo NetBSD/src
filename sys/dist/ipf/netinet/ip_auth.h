@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.h,v 1.6 2008/05/20 07:08:07 darrenr Exp $	*/
+/*	$NetBSD: ip_auth.h,v 1.6.36.1 2012/02/18 07:35:17 mrg Exp $	*/
 
 /*
  * Copyright (C) 1997-2001 by Darren Reed & Guido Van Rooij.
@@ -57,15 +57,15 @@ extern	int	fr_authend;
 extern	int	fr_authsize;
 extern	int	fr_authused;
 extern	int	fr_auth_lock;
-extern	frentry_t *fr_checkauth __P((fr_info_t *, u_32_t *));
-extern	void	fr_authexpire __P((void));
-extern	int	fr_authinit __P((void));
-extern	void	fr_authunload __P((void));
-extern	int	fr_authflush __P((void));
+extern	frentry_t *fr_checkauth(fr_info_t *, u_32_t *);
+extern	void	fr_authexpire(void);
+extern	int	fr_authinit(void);
+extern	void	fr_authunload(void);
+extern	int	fr_authflush(void);
 extern	mb_t	**fr_authpkts;
-extern	int	fr_newauth __P((mb_t *, fr_info_t *));
-extern	int	fr_preauthcmd __P((ioctlcmd_t, frentry_t *, frentry_t **));
-extern	int	fr_auth_ioctl __P((void *, ioctlcmd_t, int, int, void *));
-extern	int	fr_auth_waiting __P((void));
+extern	int	fr_newauth(mb_t *, fr_info_t *);
+extern	int	fr_preauthcmd(ioctlcmd_t, frentry_t *, frentry_t **);
+extern	int	fr_auth_ioctl(void *, ioctlcmd_t, int, int, void *);
+extern	int	fr_auth_waiting(void);
 
 #endif	/* __IP_AUTH_H__ */

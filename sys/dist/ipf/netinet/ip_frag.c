@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.c,v 1.10 2009/08/19 08:36:10 darrenr Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.10.16.1 2012/02/18 07:35:18 mrg Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -104,7 +104,7 @@ extern struct timeout fr_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.10 2009/08/19 08:36:10 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.10.16.1 2012/02/18 07:35:18 mrg Exp $");
 #else
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.77.2.17 2009/05/13 19:10:57 darrenr Exp";
@@ -135,11 +135,14 @@ int	fr_frag_init = 0;
 u_long	fr_ticks = 0;
 
 
-static INLINE int ipfr_index __P((fr_info_t *, ipfr_t *));
-static ipfr_t *ipfr_newfrag __P((fr_info_t *, u_32_t, ipfr_t **));
-static ipfr_t *fr_fraglookup __P((fr_info_t *, ipfr_t **));
-static void fr_fragdelete __P((ipfr_t *, ipfr_t ***));
-static void fr_fragfree __P((ipfr_t *));
+static INLINE int
+ipfr_index(fr_info_t *, ipfr_t *);
+static ipfr_t *ipfr_newfrag(fr_info_t *, u_32_t, ipfr_t **);
+static ipfr_t *fr_fraglookup(fr_info_t *, ipfr_t **);
+static void
+fr_fragdelete(ipfr_t *, ipfr_t ***);
+static void
+fr_fragfree(ipfr_t *);
 
 
 /* ------------------------------------------------------------------------ */
@@ -149,7 +152,8 @@ static void fr_fragfree __P((ipfr_t *));
 /*                                                                          */
 /* Initialise the hash tables for the fragment cache lookups.               */
 /* ------------------------------------------------------------------------ */
-int fr_fraginit()
+int
+fr_fraginit(void)
 {
 	KMALLOCS(ipfr_heads, ipfr_t **, ipfr_size * sizeof(ipfr_t *));
 	if (ipfr_heads == NULL)
@@ -180,7 +184,8 @@ int fr_fraginit()
 /*                                                                          */
 /* Free all memory allocated whilst running and from initialisation.        */
 /* ------------------------------------------------------------------------ */
-void fr_fragunload()
+void
+fr_fragunload(void)
 {
 	if (fr_frag_init == 1) {
 		fr_fragclear();
@@ -210,7 +215,8 @@ void fr_fragunload()
 /*                                                                          */
 /* Updates ipfr_stats with current information and returns a pointer to it  */
 /* ------------------------------------------------------------------------ */
-ipfrstat_t *fr_fragstats()
+ipfrstat_t *
+fr_fragstats(void)
 {
 	ipfr_stats.ifs_table = ipfr_heads;
 	ipfr_stats.ifs_nattab = ipfr_nattab;
@@ -228,9 +234,8 @@ ipfrstat_t *fr_fragstats()
 /* Compute the index in the fragment table while filling the per packet     */
 /* part of the fragment state.                                              */
 /* ------------------------------------------------------------------------ */
-static INLINE int ipfr_index(fin, frag)
-fr_info_t *fin;
-ipfr_t *frag;
+static INLINE int
+ipfr_index(fr_info_t *fin, ipfr_t *frag)
 {
 	u_int idx;
 
@@ -298,10 +303,8 @@ ipfr_t *frag;
 /* Add a new entry to the fragment cache, registering it as having come     */
 /* through this box, with the result of the filter operation.               */
 /* ------------------------------------------------------------------------ */
-static ipfr_t *ipfr_newfrag(fin, pass, table)
-fr_info_t *fin;
-u_32_t pass;
-ipfr_t *table[];
+static ipfr_t *
+ipfr_newfrag(fr_info_t *fin, u_32_t pass, ipfr_t *table[])
 {
 	ipfr_t *fra, frag;
 	u_int idx, off;
@@ -382,9 +385,8 @@ ipfr_t *table[];
 /*                                                                          */
 /* Add a new entry to the fragment cache table based on the current packet  */
 /* ------------------------------------------------------------------------ */
-int fr_newfrag(fin, pass)
-u_32_t pass;
-fr_info_t *fin;
+int
+fr_newfrag(fr_info_t *fin, u_32_t pass)
 {
 	ipfr_t	*fra;
 
@@ -415,10 +417,8 @@ fr_info_t *fin;
 /* Create a new NAT fragment cache entry based on the current packet and    */
 /* the NAT structure for this "session".                                    */
 /* ------------------------------------------------------------------------ */
-int fr_nat_newfrag(fin, pass, nat)
-fr_info_t *fin;
-u_32_t pass;
-nat_t *nat;
+int
+fr_nat_newfrag(fr_info_t *fin, u_32_t pass, nat_t *nat)
 {
 	ipfr_t	*fra;
 
@@ -449,9 +449,8 @@ nat_t *nat;
 /* Create a new fragment cache entry for this packet and store, as a data   */
 /* pointer, the new IP ID value.                                            */
 /* ------------------------------------------------------------------------ */
-int fr_ipid_newfrag(fin, ipid)
-fr_info_t *fin;
-u_32_t ipid;
+int
+fr_ipid_newfrag(fr_info_t *fin, u_32_t ipid)
 {
 	ipfr_t	*fra;
 
@@ -482,9 +481,8 @@ u_32_t ipid;
 /* Check the fragment cache to see if there is already a record of this     */
 /* packet with its filter result known.                                     */
 /* ------------------------------------------------------------------------ */
-static ipfr_t *fr_fraglookup(fin, table)
-fr_info_t *fin;
-ipfr_t *table[];
+static ipfr_t *
+fr_fraglookup(fr_info_t *fin, ipfr_t *table[])
 {
 	ipfr_t *f, frag;
 	u_int idx;
@@ -587,8 +585,8 @@ ipfr_t *table[];
 /*                                                                          */
 /* Functional interface for NAT lookups of the NAT fragment cache           */
 /* ------------------------------------------------------------------------ */
-nat_t *fr_nat_knownfrag(fin)
-fr_info_t *fin;
+nat_t *
+fr_nat_knownfrag(fr_info_t *fin)
 {
 	nat_t	*nat;
 	ipfr_t	*ipf;
@@ -621,8 +619,8 @@ fr_info_t *fin;
 /*                                                                          */
 /* Functional interface for IP ID lookups of the IP ID fragment cache       */
 /* ------------------------------------------------------------------------ */
-u_32_t fr_ipid_knownfrag(fin)
-fr_info_t *fin;
+u_32_t
+fr_ipid_knownfrag(fr_info_t *fin)
 {
 	ipfr_t	*ipf;
 	u_32_t	id;
@@ -652,9 +650,8 @@ fr_info_t *fin;
 /* match is found, return the rule pointer and flags from the rule, except  */
 /* that if FR_LOGFIRST is set, reset FR_LOG.                                */
 /* ------------------------------------------------------------------------ */
-frentry_t *fr_knownfrag(fin, passp)
-fr_info_t *fin;
-u_32_t *passp;
+frentry_t *
+fr_knownfrag(fr_info_t *fin, u_32_t *passp)
 {
 	frentry_t *fr = NULL;
 	ipfr_t	*fra;
@@ -688,8 +685,8 @@ u_32_t *passp;
 /* Search through all of the fragment cache entries and wherever a pointer  */
 /* is found to match ptr, reset it to NULL.                                 */
 /* ------------------------------------------------------------------------ */
-void fr_forget(ptr)
-void *ptr;
+void
+fr_forget(void *ptr)
 {
 	ipfr_t	*fr;
 
@@ -709,8 +706,8 @@ void *ptr;
 /* Search through all of the fragment cache entries for NAT and wherever a  */
 /* pointer  is found to match ptr, reset it to NULL.                        */
 /* ------------------------------------------------------------------------ */
-void fr_forgetnat(ptr)
-void *ptr;
+void
+fr_forgetnat(void *ptr)
 {
 	ipfr_t	*fr;
 
@@ -733,8 +730,8 @@ void *ptr;
 /* the filter rule it is associated with it if it is no longer used as a    */
 /* result of decreasing the reference count.                                */
 /* ------------------------------------------------------------------------ */
-static void fr_fragdelete(fra, tail)
-ipfr_t *fra, ***tail;
+static void
+fr_fragdelete(ipfr_t *fra, ipfr_t ***tail)
 {
 
 	if (fra->ipfr_next)
@@ -764,8 +761,8 @@ ipfr_t *fra, ***tail;
 /* Take care of the details associated with deleting an entry from the frag */
 /* cache.  Currently this just means bumping stats correctly after freeing  */
 /* ------------------------------------------------------------------------ */
-static void fr_fragfree(fra)
-ipfr_t *fra;
+static void
+fr_fragfree(ipfr_t *fra)
 {
 	KFREE(fra);
 	ipfr_stats.ifs_expire++;
@@ -781,7 +778,8 @@ ipfr_t *fra;
 /* Free memory in use by fragment state information kept.  Do the normal    */
 /* fragment state stuff first and then the NAT-fragment table.              */
 /* ------------------------------------------------------------------------ */
-void fr_fragclear()
+void
+fr_fragclear(void)
 {
 	ipfr_t	*fra;
 	nat_t	*nat;
@@ -818,7 +816,8 @@ void fr_fragclear()
 /*                                                                          */
 /* Expire entries in the fragment cache table that have been there too long */
 /* ------------------------------------------------------------------------ */
-void fr_fragexpire()
+void
+fr_fragexpire(void)
 {
 	ipfr_t	**fp, *fra;
 	nat_t	*nat;
@@ -892,9 +891,11 @@ void fr_fragexpire()
 #if !defined(_KERNEL) || (!SOLARIS && !defined(__hpux) && !defined(__sgi) && \
 			  !defined(__osf__) && !defined(linux))
 # if defined(_KERNEL) && ((BSD >= 199103) || defined(__sgi))
-void fr_slowtimer __P((void *ptr))
+void
+fr_slowtimer(void *ptr)
 # else
-int fr_slowtimer()
+int
+fr_slowtimer(void)
 # endif
 {
 	READ_ENTER(&ipf_global);
@@ -951,17 +952,12 @@ done:
 /* This function is used for both the NAT fragment cache as well as the ipf */
 /* fragment cache - hence the reason for passing in top, tail and lock.     */
 /* ------------------------------------------------------------------------ */
-int fr_nextfrag(token, itp, top, tail
+int
+fr_nextfrag(ipftoken_t *token, ipfgeniter_t *itp, ipfr_t **top, ipfr_t ***tail
 #ifdef USE_MUTEXES
-, lock
+	, ipfrwlock_t *lock
 #endif
 )
-ipftoken_t *token;
-ipfgeniter_t *itp;
-ipfr_t **top, ***tail;
-#ifdef USE_MUTEXES
-ipfrwlock_t *lock;
-#endif
 {
 	ipfr_t *frag, *next, zero;
 	int error = 0;
@@ -1026,15 +1022,12 @@ ipfrwlock_t *lock;
 /* not freed, to enforce the notion that the caller is no longer entitled   */
 /* to use the pointer it is dropping the reference to.                      */
 /* ------------------------------------------------------------------------ */
-void fr_fragderef(frp
+void
+fr_fragderef(ipfr_t **frp
 #ifdef USE_MUTEXES
-, lock
+	, ipfrwlock_t *lock
 #endif
 )
-ipfr_t **frp;
-#ifdef USE_MUTEXES
-ipfrwlock_t *lock;
-#endif
 {
 	ipfr_t *fra;
 

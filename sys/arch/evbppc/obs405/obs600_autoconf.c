@@ -1,4 +1,4 @@
-/*	$NetBSD: obs600_autoconf.c,v 1.4 2011/06/20 17:44:33 matt Exp $	*/
+/*	$NetBSD: obs600_autoconf.c,v 1.4.6.1 2012/02/18 07:31:59 mrg Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  * DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs600_autoconf.c,v 1.4 2011/06/20 17:44:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs600_autoconf.c,v 1.4.6.1 2012/02/18 07:31:59 mrg Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -68,15 +68,12 @@ cpu_configure(void)
 	if (config_rootfound("plb", NULL) == NULL)
 		panic("configure: mainbus not configured");
 
+	pic_finish_setup();
+
 	printf("biomask %x netmask %x ttymask %x\n",
 	    imask[IPL_BIO], imask[IPL_NET], imask[IPL_TTY]);
 
 	(void)spl0();
-
-	/*
-	 * Now allow hardware interrupts.
-	 */
-	__asm volatile ("wrteei 1");
 }
 
 void

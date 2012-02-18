@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.15 2011/11/06 20:20:57 phx Exp $ */
+/* $NetBSD: main.c,v 1.15.4.1 2012/02/18 07:33:05 mrg Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -58,6 +58,9 @@ static const struct bootarg {
 	{ "altboot",	-1 }
 };
 
+/* default PATA drive configuration is "10": single master on first channel */
+static char *drive_config = "10";
+
 void *bootinfo; /* low memory reserved to pass bootinfo structures */
 int bi_size;	/* BOOTINFO_MAXSIZE */
 char *bi_next;
@@ -95,7 +98,7 @@ extern char bootprog_name[], bootprog_rev[];
 extern char newaltboot[], newaltboot_end[];
 
 struct pcidev lata[2];
-struct pcidev lnif[1];
+struct pcidev lnif[2];
 struct pcidev lusb[3];
 int nata, nnif, nusb;
 
@@ -137,7 +140,7 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 		nata = pcilookup(PCI_CLASS_MISCSTORAGE, lata, 2);
 	if (nata == 0)
 		nata = pcilookup(PCI_CLASS_SCSI, lata, 2);
-	nnif = pcilookup(PCI_CLASS_ETH, lnif, 1);
+	nnif = pcilookup(PCI_CLASS_ETH, lnif, 2);
 	nusb = pcilookup(PCI_CLASS_USB, lusb, 3);
 
 #ifdef DEBUG
@@ -153,10 +156,10 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 	}
 	if (nnif == 0)
 		printf("no NET found\n");
-	else {
+	else for (n = 0; n < nnif; n++) {
 		int b, d, f, bdf, pvd;
-		bdf = lnif[0].bdf;
-		pvd = lnif[0].pvd;
+		bdf = lnif[n].bdf;
+		pvd = lnif[n].pvd;
 		pcidecomposetag(bdf, &b, &d, &f);
 		printf("%04x.%04x NET %02d:%02d:%02d\n",
 		    PCI_VENDOR(pvd), PCI_PRODUCT(pvd), b, d, f);
@@ -176,13 +179,6 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 	pcisetup();
 	pcifixup();
 
-	if (dskdv_init(&lata[0]) == 0
-	    || (nata == 2 && dskdv_init(&lata[1]) == 0))
-		printf("IDE/SATA device driver was not found\n");
-
-	if (netif_init(&lnif[0]) == 0)
-		printf("no NET device driver was found\n");
-
 	/*
 	 * When argc is too big then it is probably a pointer, which could
 	 * indicate that we were launched as a Linux kernel module using
@@ -191,10 +187,19 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 	if (argc > MAX_ARGS) {
 		if (argv != NULL) {
 			/*
-			 * initrd image was loaded: assume extremely
-			 * restricted firmware and boot default
+			 * initrd image was loaded:
+			 * check if it contains a valid altboot command line
 			 */
-			argc = 0;
+			char *p = (char *)argv;
+
+			if (strncmp(p, "altboot:", 8) == 0) {
+				*p = 0;
+				for (p = p + 8; *p >= ' '; p++);
+				argc = parse_cmdline(new_argv, MAX_ARGS,
+				    ((char *)argv) + 8, p);
+				argv = new_argv;
+			} else
+				argc = 0;	/* boot default */
 		} else {
 			/* parse standard Linux bootargs */
 			argc = parse_cmdline(new_argv, MAX_ARGS,
@@ -202,6 +207,29 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 			argv = new_argv;
 		}
 	}
+
+	/* look for a PATA drive configuration string under the arguments */
+	for (n = 1; n < argc; n++) {
+		if (strncmp(argv[n], "ide:", 4) == 0 &&
+		    argv[n][4] >= '0' && argv[n][4] <= '2') {
+			drive_config = &argv[n][4];
+			break;
+		}
+	}
+
+	/* intialize a disk driver */
+	for (n = 0; n < nata; n++)
+		if (dskdv_init(&lata[n]) != 0)
+			break;
+	if (n >= nata)
+		printf("IDE/SATA device driver was not found\n");
+
+	/* initialize a network interface */
+	for (n = 0; n < nnif; n++)
+		if (netif_init(&lnif[n]) != 0)
+			break;
+	if (n >= nnif)
+		printf("no NET device driver was found\n");
 
 	/* wait 2s for user to enter interactive mode */
 	for (n = 200; n >= 0; n--) {
@@ -232,6 +260,9 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 
 	/* get boot options and determine bootname */
 	for (n = 1; n < argc; n++) {
+		if (strncmp(argv[n], "ide:", 4) == 0)
+			continue; /* ignore drive configuration argument */
+
 		for (i = 0; i < sizeof(bootargs) / sizeof(bootargs[0]); i++) {
 			if (strncasecmp(argv[n], bootargs[i].name,
 			    strlen(bootargs[i].name)) == 0) {
@@ -484,52 +515,24 @@ module_open(struct boot_module *bm)
 	return fd;
 }
 
-#if 0
-static const char *cmdln[] = {
-	"console=ttyS0,115200 root=/dev/sda1 rw initrd=0x200000,2M",
-	"console=ttyS0,115200 root=/dev/nfs ip=dhcp"
-};
-
-void
-mkatagparams(unsigned addr, char *kcmd)
+/*
+ * Return the drive configuration for the requested channel 'ch'.
+ * Channel 2 is the first channel of the next IDE controller.
+ * 0: for no drive present on channel
+ * 1: for master drive present on channel, no slave
+ * 2: for master and slave drive present
+ */
+int
+get_drive_config(int ch)
 {
-	struct tag {
-		unsigned siz;
-		unsigned tag;
-		unsigned val[1];
-	};
-	struct tag *p;
-#define ATAG_CORE 	0x54410001
-#define ATAG_MEM	0x54410002
-#define ATAG_INITRD	0x54410005
-#define ATAG_CMDLINE	0x54410009
-#define ATAG_NONE	0x00000000
-#define tagnext(p) (struct tag *)((unsigned *)(p) + (p)->siz)
-#define tagsize(n) (2 + (n))
-
-	p = (struct tag *)addr;
-	p->tag = ATAG_CORE;
-	p->siz = tagsize(3);
-	p->val[0] = 0;		/* flags */
-	p->val[1] = 0;		/* pagesize */
-	p->val[2] = 0;		/* rootdev */
-	p = tagnext(p);
-	p->tag = ATAG_MEM;
-	p->siz = tagsize(2);
-	p->val[0] = 64 * 1024 * 1024;
-	p->val[1] = 0;		/* start */
-	p = tagnext(p);
-	if (kcmd != NULL) {
-		p = tagnext(p);
-		p->tag = ATAG_CMDLINE;
-		p->siz = tagsize((strlen(kcmd) + 1 + 3) >> 2);
-		strcpy((void *)p->val, kcmd);
+	if (drive_config != NULL) {
+		if (strlen(drive_config) <= ch)
+			return 0;	/* an unspecified channel is unused */
+		if (drive_config[ch] >= '0' && drive_config[ch] <= '2')
+			return drive_config[ch] - '0';
 	}
-	p = tagnext(p);
-	p->tag = ATAG_NONE;
-	p->siz = 0;
+	return -1;
 }
-#endif
 
 void *
 allocaligned(size_t size, size_t align)

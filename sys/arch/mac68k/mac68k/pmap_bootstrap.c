@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.92 2011/01/02 18:48:06 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.92.12.1 2012/02/18 07:32:33 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.92 2011/01/02 18:48:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.92.12.1 2012/02/18 07:32:33 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -156,6 +156,16 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	kptpa = nextpa;
 	nptpages = Sysptsize +
 		(IIOMAPSIZE + ROMMAPSIZE + VIDMAPSIZE + NPTEPG - 1) / NPTEPG;
+	/*
+	 * New kmem arena is allocated prior to pmap_init(), so we need
+	 * additiona PT pages to account for that allocation, which is based
+	 * on physical memory size.  Just sum up memory and add enough PT
+	 * pages for that size.
+	 */
+	mem_size = 0;
+	for (i = 0; i < numranges; i++)
+		mem_size += high[i] - low[i];
+	nptpages += howmany(m68k_btop(mem_size), NPTEPG);
 	nextpa += nptpages * PAGE_SIZE;
 	
 	for (i = 0; i < numranges; i++)

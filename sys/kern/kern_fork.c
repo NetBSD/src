@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.186 2011/09/02 20:06:29 christos Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.186.6.1 2012/02/18 07:35:29 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.186 2011/09/02 20:06:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.186.6.1 2012/02/18 07:35:29 mrg Exp $");
 
 #include "opt_ktrace.h"
 
@@ -460,8 +460,12 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	LIST_INSERT_HEAD(&parent->p_children, p2, p_sibling);
 	p2->p_exitsig = exitsig;		/* signal for parent on exit */
 
+	/*
+	 * We don't want to tracefork vfork()ed processes because they
+	 * will not receive the SIGTRAP until it is too late.
+	 */
 	tracefork = (p1->p_slflag & (PSL_TRACEFORK|PSL_TRACED)) ==
-	    (PSL_TRACEFORK|PSL_TRACED);
+	    (PSL_TRACEFORK|PSL_TRACED) && (flags && FORK_PPWAIT) == 0;
 	if (tracefork) {
 		p2->p_slflag |= PSL_TRACED;
 		p2->p_opptr = p2->p_pptr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.15 2011/11/19 22:51:23 tls Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.15.2.1 2012/02/18 07:34:31 mrg Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,9 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.15 2011/11/19 22:51:23 tls Exp $");
-
-#include "rnd.h"
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.15.2.1 2012/02/18 07:34:31 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,9 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.15 2011/11/19 22:51:23 tls Exp $");
 #include <netinet/ip.h>
 
 #include <net/bpf.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -215,9 +211,7 @@ struct mvgbe_softc {
 	LIST_HEAD(__mvgbe_jinusehead, mvgbe_jpool_entry) sc_jinuse_listhead;
 	SIMPLEQ_HEAD(__mvgbe_txmaphead, mvgbe_txmap_entry) sc_txmap_head;
 
-#if NRND > 0
 	krndsource_t sc_rnd_source;
-#endif
 };
 
 
@@ -784,10 +778,8 @@ mvgbe_attach(device_t parent, device_t self, void *aux)
 	ether_ifattach(ifp, sc->sc_enaddr);
 	ether_set_ifflags_cb(&sc->sc_ethercom, mvgbe_ifflags_cb);
 
-#if NRND > 0
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dev),
 	    RND_TYPE_NET, 0);
-#endif
 
 	return;
 
@@ -851,10 +843,7 @@ mvgbe_intr(void *arg)
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		mvgbe_start(ifp);
 
-#if NRND > 0
-	if (RND_ENABLED(&sc->sc_rnd_source))
-		rnd_add_uint32(&sc->sc_rnd_source, datum);
-#endif
+	rnd_add_uint32(&sc->sc_rnd_source, datum);
 
 	return claimed;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70 2011/06/12 03:35:47 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.70.6.1 2012/02/18 07:33:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70 2011/06/12 03:35:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70.6.1 2012/02/18 07:33:19 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -358,7 +358,7 @@ cpu_startup(void)
 	 */
 	dvmamap = extent_create("dvmamap",
 	    DVMA_MAP_BASE, DVMA_MAP_BASE + DVMA_MAP_AVAIL,
-	    M_DEVBUF, 0, 0, EX_NOWAIT);
+	    0, 0, EX_NOWAIT);
 	if (dvmamap == NULL)
 		panic("unable to allocate DVMA map");
 
@@ -566,23 +566,13 @@ long	dumplo = 0; 		/* blocks */
 void 
 cpu_dumpconf(void)
 {
-	const struct bdevsw *bdev;
 	int devblks;	/* size of dump device in blocks */
 	int dumpblks;	/* size of dump image in blocks */
-	int (*getsize)(dev_t);
 
 	if (dumpdev == NODEV)
 		return;
 
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL) {
-		dumpdev = NODEV;
-		return;
-	}
-	getsize = bdev->d_psize;
-	if (getsize == NULL)
-		return;
-	devblks = (*getsize)(dumpdev);
+	devblks = bdev_size(dumpdev);
 	if (devblks <= ctod(1))
 		return;
 	devblks &= ~(ctod(1)-1);
@@ -651,7 +641,7 @@ dumpsys(void)
 	}
 	savectx(&dumppcb);
 
-	psize = (*(dsw->d_psize))(dumpdev);
+	psize = bdev_size(dumpdev);
 	if (psize == -1) {
 		printf("dump area unavailable\n");
 		return;

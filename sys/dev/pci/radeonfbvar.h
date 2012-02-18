@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfbvar.h,v 1.11 2011/02/06 23:25:17 jmcneill Exp $ */
+/* $NetBSD: radeonfbvar.h,v 1.11.8.1 2012/02/18 07:34:52 mrg Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -53,6 +53,7 @@
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
+#include <dev/wscons/wsdisplay_glyphcachevar.h>
 #include <dev/videomode/videomode.h>
 #include <dev/videomode/edidvar.h>
 #ifdef SPLASHSCREEN
@@ -191,6 +192,7 @@ struct radeonfb_display {
 	struct vcons_screen	rd_vscreen;
 	struct vcons_data	rd_vd;
 	void (*rd_putchar)(void *, int, int, u_int, long);
+	glyphcache		rd_gc;
 
 #if 0
 	uint8_t			rd_cmap_red[256];
@@ -209,12 +211,10 @@ struct radeon_tmds_pll {
 };
 
 struct radeonfb_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	uint16_t		sc_family;
 	uint16_t		sc_flags;
 	pcireg_t		sc_id;
-
-	char			sc_devinfo[256];
 
 	bus_space_tag_t		sc_regt;
 	bus_space_handle_t	sc_regh;
@@ -343,7 +343,7 @@ struct radeonfb_softc {
 #define	GETBIOS32(sc, r)	\
 	((GETBIOS16(sc, (r) + 2) << 16) | GETBIOS16(sc, (r)))
 
-#define	XNAME(sc)	device_xname(&sc->sc_dev)
+#define	XNAME(sc)	device_xname(sc->sc_dev)
 
 #define	DIVIDE(x,y)	(((x) + (y / 2)) / (y))
 

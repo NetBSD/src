@@ -1,4 +1,4 @@
-/*	$NetBSD: hmevar.h,v 1.22 2011/11/19 22:51:22 tls Exp $	*/
+/*	$NetBSD: hmevar.h,v 1.22.2.1 2012/02/18 07:34:19 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -29,12 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "rnd.h"
 
 #include <sys/callout.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 
 struct hme_ring {
@@ -94,9 +91,7 @@ struct hme_softc {
 	void	(*sc_hwreset)(struct hme_softc *);
 	void	(*sc_hwinit)(struct hme_softc *);
 
-#if NRND > 0
 	krndsource_t	rnd_source;
-#endif
 };
 
 

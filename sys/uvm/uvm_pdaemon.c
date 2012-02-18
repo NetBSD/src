@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.103 2011/06/12 03:36:03 rmind Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.103.6.1 2012/02/18 07:36:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.103 2011/06/12 03:36:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.103.6.1 2012/02/18 07:36:01 mrg Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -108,10 +108,6 @@ static unsigned int uvm_pagedaemon_waiters;
  * XXX hack to avoid hangs when large processes fork.
  */
 u_int uvm_extrapages;
-
-static kmutex_t uvm_reclaim_lock;
-
-SLIST_HEAD(uvm_reclaim_hooks, uvm_reclaim_hook) uvm_reclaim_list;
 
 /*
  * uvm_wait: wait (sleep) for the page daemon to free some pages
@@ -177,7 +173,8 @@ uvm_kick_pdaemon(void)
 
 	if (uvmexp.free + uvmexp.paging < uvmexp.freemin ||
 	    (uvmexp.free + uvmexp.paging < uvmexp.freetarg &&
-	     uvmpdpol_needsscan_p())) {
+	     uvmpdpol_needsscan_p()) ||
+	     uvm_km_va_starved_p()) {
 		wakeup(&uvm.pagedaemon);
 	}
 }
@@ -232,7 +229,6 @@ uvm_pageout(void *arg)
 	int extrapages = 0;
 	struct pool *pp;
 	uint64_t where;
-	struct uvm_reclaim_hook *hook;
 	
 	UVMHIST_FUNC("uvm_pageout"); UVMHIST_CALLED(pdhist);
 
@@ -253,10 +249,13 @@ uvm_pageout(void *arg)
 	 */
 
 	for (;;) {
-		bool needsscan, needsfree;
+		bool needsscan, needsfree, kmem_va_starved;
+
+		kmem_va_starved = uvm_km_va_starved_p();
 
 		mutex_spin_enter(&uvm_fpageqlock);
-		if (uvm_pagedaemon_waiters == 0 || uvmexp.paging > 0) {
+		if ((uvm_pagedaemon_waiters == 0 || uvmexp.paging > 0) &&
+		    !kmem_va_starved) {
 			UVMHIST_LOG(pdhist,"  <<SLEEPING>>",0,0,0,0);
 			UVM_UNLOCK_AND_WAIT(&uvm.pagedaemon,
 			    &uvm_fpageqlock, false, "pgdaemon", 0);
@@ -325,7 +324,7 @@ uvm_pageout(void *arg)
 		 * if we don't need free memory, we're done.
 		 */
 
-		if (!needsfree) 
+		if (!needsfree && !kmem_va_starved)
 			continue;
 
 		/*
@@ -341,12 +340,6 @@ uvm_pageout(void *arg)
 		buf_drain(bufcnt << PAGE_SHIFT);
 		mutex_exit(&bufcache_lock);
 
-		mutex_enter(&uvm_reclaim_lock);
-		SLIST_FOREACH(hook, &uvm_reclaim_list, uvm_reclaim_next) {
-			(*hook->uvm_reclaim_hook)();
-		}
-		mutex_exit(&uvm_reclaim_lock);
-		
 		/*
 		 * complete draining the pools.
 		 */
@@ -1032,43 +1025,3 @@ uvm_estimatepageable(int *active, int *inactive)
 	uvmpdpol_estimatepageable(active, inactive);
 }
 
-void
-uvm_reclaim_init(void)
-{
-	
-	/* Initialize UVM reclaim hooks. */
-	mutex_init(&uvm_reclaim_lock, MUTEX_DEFAULT, IPL_NONE);
-	SLIST_INIT(&uvm_reclaim_list);
-}
-
-void
-uvm_reclaim_hook_add(struct uvm_reclaim_hook *hook)
-{
-
-	KASSERT(hook != NULL);
-	
-	mutex_enter(&uvm_reclaim_lock);
-	SLIST_INSERT_HEAD(&uvm_reclaim_list, hook, uvm_reclaim_next);
-	mutex_exit(&uvm_reclaim_lock);
-}
-
-void
-uvm_reclaim_hook_del(struct uvm_reclaim_hook *hook_entry)
-{
-	struct uvm_reclaim_hook *hook;
-
-	KASSERT(hook_entry != NULL);
-	
-	mutex_enter(&uvm_reclaim_lock);
-	SLIST_FOREACH(hook, &uvm_reclaim_list, uvm_reclaim_next) {
-		if (hook != hook_entry) {
-			continue;
-		}
-
-		SLIST_REMOVE(&uvm_reclaim_list, hook, uvm_reclaim_hook,
-		    uvm_reclaim_next);
-		break;
-	}
-
-	mutex_exit(&uvm_reclaim_lock);
-}

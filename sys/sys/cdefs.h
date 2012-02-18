@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.89 2011/11/05 09:27:06 joerg Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.89.4.1 2012/02/18 07:35:47 mrg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -338,7 +338,9 @@
 #define	__restrict	/* delete __restrict when not supported */
 #elif __STDC_VERSION__ >= 199901L
 #define	__restrict	restrict
-#elif !__GNUC_PREREQ__(2, 92)
+#elif __GNUC_PREREQ__(2, 92)
+#define	__restrict	__restrict__
+#else
 #define	__restrict	/* delete __restrict when not supported */
 #endif
 

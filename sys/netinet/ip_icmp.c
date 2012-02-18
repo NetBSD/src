@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.125 2011/07/17 20:54:53 joerg Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.125.6.1 2012/02/18 07:35:39 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.125 2011/07/17 20:54:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.125.6.1 2012/02/18 07:35:39 mrg Exp $");
 
 #include "opt_ipsec.h"
 
@@ -123,7 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.125 2011/07/17 20:54:53 joerg Exp $");
 #include <netinet/icmp_var.h>
 #include <netinet/icmp_private.h>
 
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 #include <netinet6/ipsec.h>
 #include <netkey/key.h>
 #endif
@@ -425,7 +425,7 @@ icmp_input(struct mbuf *m, ...)
 		goto freeit;
 	}
 	i = hlen + min(icmplen, ICMP_ADVLENMIN);
-	if ((m->m_len < i || M_READONLY(m)) && (m = m_pullup(m, i)) == 0) {
+	if ((m->m_len < i || M_READONLY(m)) && (m = m_pullup(m, i)) == NULL) {
 		ICMP_STATINC(ICMP_STAT_TOOSHORT);
 		return;
 	}
@@ -648,7 +648,7 @@ reflect:
 			rtfree(rt);
 
 		pfctlinput(PRC_REDIRECT_HOST, sintosa(&icmpsrc));
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(KAME_IPSEC) || defined(FAST_IPSEC)
 		key_sa_routechange((struct sockaddr *)&icmpsrc);
 #endif
 		break;
@@ -1111,8 +1111,7 @@ icmp_mtudisc(struct icmp *icp, struct in_addr faddr)
 		struct rtentry *nrt;
 
 		error = rtrequest((int) RTM_ADD, dst,
-		    (struct sockaddr *) rt->rt_gateway,
-		    (struct sockaddr *) 0,
+		    (struct sockaddr *) rt->rt_gateway, NULL,
 		    RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC, &nrt);
 		if (error) {
 			rtfree(rt);

@@ -1,4 +1,4 @@
-/* $NetBSD: grtwo.c,v 1.11 2009/11/22 19:09:15 mbalmer Exp $	 */
+/* $NetBSD: grtwo.c,v 1.11.16.1 2012/02/18 07:33:07 mrg Exp $	 */
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grtwo.c,v 1.11 2009/11/22 19:09:15 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grtwo.c,v 1.11.16.1 2012/02/18 07:33:07 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -476,7 +476,7 @@ grtwo_attach_common(struct grtwo_devconfig * dc, struct gio_attach_args * ga)
 	wsfont_init();
 
 	dc->dc_font = wsfont_find(NULL, 8, 16, 0, WSDISPLAY_FONTORDER_L2R,
-				  WSDISPLAY_FONTORDER_L2R);
+				  WSDISPLAY_FONTORDER_L2R, WSFONT_FIND_BITMAP);
 
 	if (dc->dc_font < 0)
 		panic("grtwo_attach_common: no suitable fonts");

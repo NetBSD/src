@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.91 2011/02/01 19:36:24 chuck Exp $	*/
+/*	$NetBSD: xy.c,v 1.91.8.1 2012/02/18 07:35:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.91 2011/02/01 19:36:24 chuck Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.91.8.1 2012/02/18 07:35:14 mrg Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -355,10 +355,8 @@ xyc_probe(void *arg, bus_space_tag_t tag, bus_space_handle_t handle)
 	return ((xyc_unbusy(xyc, XYC_RESETUSEC) != XY_ERR_FAIL) ? 0 : EIO);
 }
 
-int xycmatch(parent, cf, aux)
-	device_t parent;
-	cfdata_t cf;
-	void *aux;
+int
+xycmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct vme_attach_args	*va = aux;
 	vme_chipset_tag_t	ct = va->va_vct;
@@ -818,11 +816,7 @@ done:
  * xyclose: close device
  */
 int
-xyclose(dev, flag, fmt, l)
-	dev_t   dev;
-	int     flag, fmt;
-	struct lwp *l;
-
+xyclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct xy_softc *xy = device_lookup_private(&xy_cd, DISKUNIT(dev));
 	int     part = DISKPART(dev);
@@ -923,13 +917,7 @@ xy_getkauthreq(u_char cmd)
  * xyioctl: ioctls on XY drives.   based on ioctl's of other netbsd disks.
  */
 int
-xyioctl(dev, command, addr, flag, l)
-	dev_t   dev;
-	u_long  command;
-	void *addr;
-	int     flag;
-	struct lwp *l;
-
+xyioctl(dev_t dev, u_long command, void *addr, int flag, struct lwp *l)
 {
 	struct xy_softc *xy;
 	struct xd_iocmd *xio;
@@ -1122,9 +1110,7 @@ xywrite(dev_t dev, struct uio *uio, int flags)
  */
 
 int
-xysize(dev)
-	dev_t   dev;
-
+xysize(dev_t dev)
 {
 	struct xy_softc *xysc;
 	int     unit, part, size, omask;
@@ -1156,9 +1142,7 @@ xysize(dev)
  */
 
 void
-xystrategy(bp)
-	struct buf *bp;
-
+xystrategy(struct buf *bp)
 {
 	struct xy_softc *xy;
 	int     s, unit;
@@ -1251,9 +1235,7 @@ done:				/* tells upper layers we are done with this
  * xycintr: hardware interrupt.
  */
 int
-xycintr(v)
-	void   *v;
-
+xycintr(void *v)
 {
 	struct xyc_softc *xycsc = v;
 
@@ -1302,11 +1284,7 @@ xyc_rqinit(struct xy_iorq *rq, struct xyc_softc *xyc, struct xy_softc *xy, int m
  */
 
 void
-xyc_rqtopb(iorq, iopb, cmd, subfun)
-	struct xy_iorq *iorq;
-	struct xy_iopb *iopb;
-	int     cmd, subfun;
-
+xyc_rqtopb(struct xy_iorq *iorq, struct xy_iopb *iopb, int cmd, int subfun)
 {
 	u_long  block, dp;
 
@@ -1353,11 +1331,7 @@ xyc_rqtopb(iorq, iopb, cmd, subfun)
  */
 
 int
-xyc_unbusy(xyc, del)
-
-struct xyc *xyc;
-int del;
-
+xyc_unbusy(struct xyc *xyc, int del)
 {
 	while (del-- > 0) {
 		if ((xyc->xyc_csr & XYC_GBSY) == 0)
@@ -1372,12 +1346,8 @@ int del;
  * note that NORM requests are handled separately.
  */
 int
-xyc_cmd(xycsc, cmd, subfn, unit, block, scnt, dptr, fullmode)
-	struct xyc_softc *xycsc;
-	int     cmd, subfn, unit, block, scnt;
-	char   *dptr;
-	int     fullmode;
-
+xyc_cmd(struct xyc_softc *xycsc, int cmd, int subfn, int unit, int block,
+	int scnt, char *dptr, int fullmode)
 {
 	int     submode = XY_STATE(fullmode);
 	struct xy_iorq *iorq = xycsc->ciorq;
@@ -1422,11 +1392,7 @@ start:
  */
 
 int
-xyc_startbuf(xycsc, xysc, bp)
-	struct xyc_softc *xycsc;
-	struct xy_softc *xysc;
-	struct buf *bp;
-
+xyc_startbuf(struct xyc_softc *xycsc, struct xy_softc *xysc, struct buf *bp)
 {
 	int     partno, error;
 	struct xy_iorq *iorq;
@@ -1521,11 +1487,7 @@ xyc_startbuf(xycsc, xysc, bp)
 
 
 int
-xyc_submit_iorq(xycsc, iorq, type)
-	struct xyc_softc *xycsc;
-	struct xy_iorq *iorq;
-	int     type;
-
+xyc_submit_iorq(struct xyc_softc *xycsc, struct xy_iorq *iorq, int type)
 {
 	struct xy_iopb *dmaiopb;
 
@@ -1596,10 +1558,7 @@ xyc_submit_iorq(xycsc, iorq, type)
  */
 
 struct xy_iopb *
-xyc_chain(xycsc, iorq)
-	struct xyc_softc *xycsc;
-	struct xy_iorq *iorq;
-
+xyc_chain(struct xyc_softc *xycsc, struct xy_iorq *iorq)
 {
 	int togo, chain, hand;
 
@@ -1671,10 +1630,7 @@ xyc_chain(xycsc, iorq)
  * the caller is interesting in.
  */
 int
-xyc_piodriver(xycsc, iorq)
-	struct xyc_softc *xycsc;
-	struct xy_iorq  *iorq;
-
+xyc_piodriver(struct xyc_softc *xycsc, struct xy_iorq *iorq)
 {
 	int     nreset = 0;
 	int     retval = 0;
@@ -1732,10 +1688,7 @@ xyc_piodriver(xycsc, iorq)
  * we steal iopb[XYC_CTLIOPB] for this, but we put it back when we are done.
  */
 void
-xyc_xyreset(xycsc, xysc)
-	struct xyc_softc *xycsc;
-	struct xy_softc *xysc;
-
+xyc_xyreset(struct xyc_softc *xycsc, struct xy_softc *xysc)
 {
 	struct xy_iopb tmpiopb;
 	struct xy_iopb *iopb;
@@ -1781,12 +1734,8 @@ xyc_xyreset(xycsc, xysc)
  * a polled request (which is resubmitted)
  */
 int
-xyc_reset(xycsc, quiet, blastmode, error, xysc)
-	struct xyc_softc *xycsc;
-	int     quiet, error;
-	struct xy_iorq *blastmode;
-	struct xy_softc *xysc;
-
+xyc_reset(struct xyc_softc *xycsc, int quiet, struct xy_iorq *blastmode,
+	int error, struct xy_softc *xysc)
 {
 	int     del = 0, lcv, retval = XY_ERR_AOK;
 
@@ -1868,10 +1817,7 @@ xyc_reset(xycsc, quiet, blastmode, error, xysc)
  */
 
 void
-xyc_start(xycsc, iorq)
-	struct xyc_softc *xycsc;
-	struct xy_iorq *iorq;
-
+xyc_start(struct xyc_softc *xycsc, struct xy_iorq *iorq)
 {
 	int lcv;
 	struct xy_softc *xy;
@@ -1892,9 +1838,7 @@ xyc_start(xycsc, iorq)
  */
 
 int
-xyc_remove_iorq(xycsc)
-	struct xyc_softc *xycsc;
-
+xyc_remove_iorq(struct xyc_softc *xycsc)
 {
 	int     errnum, rq, comm, errs;
 	struct xyc *xyc = xycsc->xyc;
@@ -2044,11 +1988,7 @@ xyc_remove_iorq(xycsc)
  *   from that error (otherwise iorq->errnum == iorq->lasterror).
  */
 void
-xyc_perror(iorq, iopb, still_trying)
-	struct xy_iorq *iorq;
-	struct xy_iopb *iopb;
-	int     still_trying;
-
+xyc_perror(struct xy_iorq *iorq, struct xy_iopb *iopb, int still_trying)
 {
 
 	int     error = iorq->lasterror;
@@ -2077,12 +2017,8 @@ xyc_perror(iorq, iopb, still_trying)
  * return AOK if resubmitted, return FAIL if this iopb is done
  */
 int
-xyc_error(xycsc, iorq, iopb, comm)
-	struct xyc_softc *xycsc;
-	struct xy_iorq *iorq;
-	struct xy_iopb *iopb;
-	int     comm;
-
+xyc_error(struct xyc_softc *xycsc, struct xy_iorq *iorq, struct xy_iopb *iopb,
+	int comm)
 {
 	int     errnum = iorq->errnum;
 	int     erract = xyc_entoact(errnum);
@@ -2150,9 +2086,7 @@ xyc_error(xycsc, iorq, iopb, comm)
  * xyc_tick: make sure xy is still alive and ticking (err, kicking).
  */
 void
-xyc_tick(arg)
-	void   *arg;
-
+xyc_tick(void *arg)
 {
 	struct xyc_softc *xycsc = arg;
 	int     lcv, s, reset = 0;
@@ -2187,11 +2121,7 @@ xyc_tick(arg)
  * XXX missing a few commands (see the 7053 driver for ideas)
  */
 int
-xyc_ioctlcmd(xy, dev, xio)
-	struct xy_softc *xy;
-	dev_t   dev;
-	struct xd_iocmd *xio;
-
+xyc_ioctlcmd(struct xy_softc *xy, dev_t dev, struct xd_iocmd *xio)
 {
 	int     s, rqno, dummy = 0;
 	char *dvmabuf = NULL, *buf = NULL;
@@ -2342,10 +2272,7 @@ xyc_e2str(int no)
 }
 
 int
-xyc_entoact(errnum)
-
-int errnum;
-
+xyc_entoact(int errnum)
 {
   switch (errnum) {
     case XY_ERR_FAIL:	case XY_ERR_DERR:	case XY_ERR_IPEN:

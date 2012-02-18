@@ -1,4 +1,4 @@
-/*	$NetBSD: orion.c,v 1.1 2010/10/03 05:49:24 kiyohara Exp $	*/
+/*	$NetBSD: orion.c,v 1.1.18.1 2012/02/18 07:31:29 mrg Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: orion.c,v 1.1 2010/10/03 05:49:24 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: orion.c,v 1.1.18.1 2012/02/18 07:31:29 mrg Exp $");
 
 #define _INTR_PRIVATE
 
@@ -87,7 +87,7 @@ static struct pic_softc orion_pic = {
  *	ready to handle interrupts from devices.
  */
 void
-orion_intr_bootstrap()
+orion_intr_bootstrap(void)
 {
 	extern void (*mvsoc_intr_init)(void);
 
@@ -176,7 +176,7 @@ orion_find_pending_irqs(void)
 void
 orion_getclks(bus_addr_t iobase)
 {
-	static struct {
+	static const struct {
 		int armddrclkval;
 		uint32_t pclk;
 		uint32_t sysclk;
@@ -206,8 +206,6 @@ orion_getclks(bus_addr_t iobase)
 		{ ORION_PMISMPL_ARMDDRCLK_500_125, 500000000, 125000000 },
 		{ ORION_PMISMPL_ARMDDRCLK_500_100, 500000000, 100000000 },
 		{ ORION_PMISMPL_ARMDDRCLK_600_150, 600000000, 150000000 },
-
-		{ 0, 0, 0 },
 	};
 	uint32_t reg, armddrclk, tclk;
 	uint16_t model;
@@ -229,7 +227,7 @@ orion_getclks(bus_addr_t iobase)
 	if (model == PCI_PRODUCT_MARVELL_88F5281)
 		if (reg & ORION_PMISMPL_ARMDDRCLK_H_MASK)
 			armddrclk |= 0x00000010;	/* set to bit4 */
-	for (i = 0; sysclktbl[i].pclk != 0; i++)
+	for (i = 0; i < __arraycount(sysclktbl); i++)
 		if (armddrclk == sysclktbl[i].armddrclkval) {
 			mvPclk = sysclktbl[i].pclk;
 			mvSysclk = sysclktbl[i].sysclk;
@@ -239,7 +237,7 @@ orion_getclks(bus_addr_t iobase)
 	tclk = (reg >> tclk_shift) & ORION_PMISMPL_TCLK_MASK;
 	switch (tclk) {
 	case ORION_PMISMPL_TCLK_133:
-		mvTclk = 133333334;	/* 133MHz */
+		mvTclk = 133333333;	/* 133MHz */
 		break;
 
 	case ORION_PMISMPL_TCLK_150:

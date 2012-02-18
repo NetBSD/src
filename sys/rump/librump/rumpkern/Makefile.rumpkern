@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.113 2011/11/27 00:38:12 tsutsui Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.113.2.1 2012/02/18 07:35:46 mrg Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -12,6 +12,7 @@ LIB=		rump
 	${RUMPTOP}/../uvm					\
 	${RUMPTOP}/../conf					\
 	${RUMPTOP}/../dev					\
+	${RUMPTOP}/../secmodel					\
 	${RUMPTOP}/../secmodel/suser				\
 	${RUMPTOP}/../compat/common
 
@@ -72,6 +73,8 @@ SRCS+=	init_sysctl_base.c	\
 	kern_prot.c		\
 	kern_rate.c		\
 	kern_resource.c		\
+	kern_rndpool.c		\
+	kern_rndq.c		\
 	kern_stub.c		\
 	kern_syscall.c		\
 	kern_sysctl.c		\
@@ -109,6 +112,7 @@ SRCS+=	init_sysctl_base.c	\
 SRCS+=	uvm_aobj.c uvm_readahead.c uvm_object.c
 
 # 4.4BSD secmodel.  selection is hardcoded for now
+SRCS+=	secmodel.c
 SRCS+=	secmodel_suser.c
 
 # the funny bit.  this doesn't really belong here, but helps with the

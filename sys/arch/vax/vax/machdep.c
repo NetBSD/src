@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.182 2011/07/03 02:18:21 matt Exp $	 */
+/* $NetBSD: machdep.c,v 1.182.6.1 2012/02/18 07:33:28 mrg Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.182 2011/07/03 02:18:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.182.6.1 2012/02/18 07:33:28 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -227,20 +227,15 @@ long	dumplo = 0;
 void
 cpu_dumpconf(void)
 {
-	const struct bdevsw *bdev;
-	int		nblks;
+	int	nblks;
 
 	/*
 	 * XXX include the final RAM page which is not included in physmem.
 	 */
 	if (dumpdev == NODEV)
 		return;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL)
-		return;
-	dumpsize = physmem + 1;
-	if (bdev->d_psize != NULL) {
-		nblks = (*bdev->d_psize)(dumpdev);
+	nblks = bdev_size(dumpdev);
+	if (nblks > 0) {
 		if (dumpsize > btoc(dbtob(nblks - dumplo)))
 			dumpsize = btoc(dbtob(nblks - dumplo));
 		else if (dumplo == 0)
@@ -314,7 +309,7 @@ consinit(void)
 	 */
 	KASSERT(iospace != 0);
 	iomap_ex = extent_create("iomap", iospace + VAX_NBPG,
-	    iospace + ((IOSPSZ * VAX_NBPG) - 1), M_DEVBUF,
+	    iospace + ((IOSPSZ * VAX_NBPG) - 1),
 	    (void *) iomap_ex_storage, sizeof(iomap_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
 #ifdef DEBUG
@@ -724,6 +719,18 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	tf->tf_sp = gr[_REG_SP];
 	tf->tf_pc = gr[_REG_PC];
 	tf->tf_psl = gr[_REG_PSL];
+
+	if (flags & _UC_TLSBASE) {
+		void *tlsbase;
+		int error;
+
+		error = copyin((void *)tf->tf_sp, &tlsbase, sizeof(tlsbase));
+		if (error) {
+			return error;
+		}
+		lwp_setprivate(l, tlsbase);
+		tf->tf_sp += sizeof(tlsbase);
+	}
 	return 0;
 }
 

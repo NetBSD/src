@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn8ae.c,v 1.40 2011/06/14 15:34:22 matt Exp $ */
+/* $NetBSD: dec_kn8ae.c,v 1.40.6.1 2012/02/18 07:30:49 mrg Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.40 2011/06/14 15:34:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.40.6.1 2012/02/18 07:30:49 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,9 +79,9 @@ const struct alpha_variation_table dec_kn8ae_variations[] = {
 };
 
 void
-dec_kn8ae_init()
+dec_kn8ae_init(void)
 {
-	u_int64_t variation;
+	uint64_t variation;
 
 	platform.family = "AlphaServer 8400";
 
@@ -99,7 +99,7 @@ dec_kn8ae_init()
 }
 
 void
-dec_kn8ae_cons_init()
+dec_kn8ae_cons_init(void)
 {
 
 	/*
@@ -265,7 +265,7 @@ static void
 clear_tlsb_ebits(int cpuonly)
 {
 	int node;
-	u_int32_t tldev;
+	uint32_t tldev;
 
 	for (node = 0; node <= TLSB_NODE_MAX; ++node) {
 		if ((tlsb_found & (1 << node)) == 0)
@@ -361,7 +361,7 @@ kn8ae_harderr(unsigned long mces, unsigned long type, unsigned long logout, stru
 	printf(fmt1, "Fill Syndrome", mptr->fill_syndrome);
 	printf(fmt1, "Interrupt Status Reg.", mptr->isr);
 	printf("\n");
-	dof_cnt = (ptr->rsvdheader & 0xffffffff00000000) >> 32; 
+	dof_cnt = (ptr->rsvdheader & 0xffffffff00000000) >> 32;
 	cpuwerr = ptr->rsvdheader & 0xffff;
 	
 	printf(fmt1, "CPU W/Error.", cpuwerr);
@@ -396,22 +396,22 @@ kn8ae_harderr(unsigned long mces, unsigned long type, unsigned long logout, stru
 	 *    tlfadr reg of the TIOP or TMEM (depending on type of error,
 	 *    see upcoming code branches) and write data back to location.
 	 *
-         * 4. When the CPU attempts to read the location, another 620 interrupt
-         *    should occur for the CPU at which instant PAL will scrub the
-         *    location. Then the o.s. scrub routine finishes. If the PAL scrubs
+	 * 4. When the CPU attempts to read the location, another 620 interrupt
+	 *    should occur for the CPU at which instant PAL will scrub the
+	 *    location. Then the o.s. scrub routine finishes. If the PAL scrubs
 	 *    the location then the scrubbed flag should be 0 (this is what we
 	 *    expect).
 	 *
-         *    If it's a 1 then the alpha_scrub_long routine did the scrub.
+	 *    If it's a 1 then the alpha_scrub_long routine did the scrub.
 	 *
-         * 5. We renable correctable error logging and continue
+	 * 5. We renable correctable error logging and continue
 	 */
 	printf("WARNING THIS IS NOT DONE YET YOU MAY GET DATA CORRUPTION");
 	clear_tlsb_ebits(0);
 	/*
 	 * Clear error by rewriting register.
 	 */
-        alpha_pal_wrmces(mces);
+	alpha_pal_wrmces(mces);
 }
 
 /*
@@ -439,7 +439,7 @@ kn8ae_softerr(unsigned long mces, unsigned long type, unsigned long logout, stru
 	printf(fmt1, "Fill Syndrome", mptr->fill_syndrome);
 	printf(fmt1, "Interrupt Status Reg.", mptr->isr);
 	printf("\n");
-	dof_cnt = (ptr->rsvdheader & 0xffffffff00000000) >> 32; 
+	dof_cnt = (ptr->rsvdheader & 0xffffffff00000000) >> 32;
 	cpuwerr = ptr->rsvdheader & 0xffff;
 	
 	printf(fmt1, "CPU W/Error.", cpuwerr);
@@ -459,7 +459,7 @@ kn8ae_softerr(unsigned long mces, unsigned long type, unsigned long logout, stru
 	/*
 	 * Clear error by rewriting register.
 	 */
-        alpha_pal_wrmces(mces);
+	alpha_pal_wrmces(mces);
 }
 
 /*

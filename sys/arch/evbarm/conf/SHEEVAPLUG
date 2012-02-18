@@ -1,4 +1,4 @@
-#	$NetBSD: SHEEVAPLUG,v 1.11 2011/11/22 21:25:09 tls Exp $
+#	$NetBSD: SHEEVAPLUG,v 1.11.2.1 2012/02/18 07:31:49 mrg Exp $
 #
 #  This configuration supports for generically Marvell SheevaPlug
 #
@@ -59,7 +59,7 @@ file-system 	TMPFS		# Efficient memory file-system
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
 # It is not recommended for general use.
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental

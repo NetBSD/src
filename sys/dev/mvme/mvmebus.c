@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.c,v 1.17 2009/03/16 23:11:16 dsl Exp $	*/
+/*	$NetBSD: mvmebus.c,v 1.17.16.1 2012/02/18 07:34:32 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.17 2009/03/16 23:11:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.17.16.1 2012/02/18 07:34:32 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -460,18 +460,17 @@ mvmebus_dummy_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 
 /* ARGSUSED */
 int
-mvmebus_dmamap_create(vsc, len, am, datasize, swap, nsegs,
-    segsz, bound, flags, mapp)
-	void *vsc;
-	vme_size_t len;
-	vme_am_t am;
-	vme_datasize_t datasize;
-	vme_swap_t swap;
-	int nsegs;
-	vme_size_t segsz;
-	vme_addr_t bound;
-	int flags;
-	bus_dmamap_t *mapp;
+mvmebus_dmamap_create(
+	void *vsc,
+	vme_size_t len,
+	vme_am_t am,
+	vme_datasize_t datasize,
+	vme_swap_t swap,
+	int nsegs,
+	vme_size_t segsz,
+	vme_addr_t bound,
+	int flags,
+	bus_dmamap_t *mapp)
 {
 	struct mvmebus_softc *sc = vsc;
 	struct mvmebus_dmamap *vmap;

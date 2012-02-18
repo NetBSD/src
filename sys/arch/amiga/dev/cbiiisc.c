@@ -1,4 +1,4 @@
-/*	$NetBSD: cbiiisc.c,v 1.19 2010/12/20 00:25:25 matt Exp $ */
+/*	$NetBSD: cbiiisc.c,v 1.19.12.1 2012/02/18 07:31:15 mrg Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cbiiisc.c,v 1.19 2010/12/20 00:25:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cbiiisc.c,v 1.19.12.1 2012/02/18 07:31:15 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: cbiiisc.c,v 1.19 2010/12/20 00:25:25 matt Exp $");
 #include <amiga/dev/siopreg.h>
 #include <amiga/dev/siopvar.h>
 #include <amiga/dev/zbusvar.h>
+#include <amiga/dev/p5busvar.h>
 
 void cbiiiscattach(struct device *, struct device *, void *);
 int  cbiiiscmatch(struct device *, struct cfdata *, void *);
@@ -99,26 +100,25 @@ CFATTACH_DECL(cbiiisc, sizeof(struct siop_softc),
 int
 cbiiiscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
-	struct zbus_args *zap;
+	struct p5bus_attach_args *p5baa;
 
-	zap = auxp;
-	if (zap->manid == 8512 && zap->prodid == 100)
-		return(1);
-	return(0);
+	p5baa = (struct p5bus_attach_args *) auxp;
+
+	if (strcmp(p5baa->p5baa_name, "cbiiisc") == 0)
+		return 1;
+
+	return 0;
 }
 
 void
 cbiiiscattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	struct siop_softc *sc = (struct siop_softc *)dp;
-	struct zbus_args *zap;
 	siop_regmap_p rp;
         struct scsipi_adapter *adapt = &sc->sc_adapter;
         struct scsipi_channel *chan = &sc->sc_channel;
 
-	printf("\n");
-
-	zap = auxp;
+	aprint_normal(": CyberStorm PPC/Mk-III SCSI host adapter\n");
 
 	sc->sc_siopp = rp = ztwomap(0xf40000);
 	/* siopng_dump_registers(sc); */

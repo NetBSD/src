@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.30 2010/12/20 01:12:44 jakllsch Exp $	 */
+/*	$NetBSD: main.c,v 1.30.12.1 2012/02/18 07:32:24 mrg Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -323,12 +323,8 @@ void
 command_ls(char *arg)
 {
 	char *help = default_filename;
-	if (strcmp(current_fsmode, "ufs")) {
-		printf("UFS only\n");
-		return;
-	}
 	default_filename = "/";
-	ufs_ls(arg);
+	ls(arg);
 	default_filename = help;
 }
 

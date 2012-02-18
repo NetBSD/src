@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.44 2011/11/24 03:35:58 mrg Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.44.2.1 2012/02/18 07:34:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.44 2011/11/24 03:35:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.44.2.1 2012/02/18 07:34:36 mrg Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -381,18 +381,14 @@ cmpci_attach(device_t parent, device_t self, void *aux)
 	struct audio_attach_args aa;
 	pci_intr_handle_t ih;
 	char const *strintr;
-	char devinfo[256];
 	int i, v;
 
 	sc = device_private(self);
 	pa = (struct pci_attach_args *)aux;
-	aprint_naive(": Audio controller\n");
 
 	sc->sc_id = pa->pa_id;
 	sc->sc_class = pa->pa_class;
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
-	    PCI_REVISION(sc->sc_class));
+	pci_aprint_devinfo(pa, "Audio controller");
 	switch (PCI_PRODUCT(sc->sc_id)) {
 	case PCI_PRODUCT_CMEDIA_CMI8338A:
 		/*FALLTHROUGH*/

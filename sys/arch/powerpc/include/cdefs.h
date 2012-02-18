@@ -1,8 +1,8 @@
-/*	$NetBSD: cdefs.h,v 1.6 2002/11/03 22:36:22 matt Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.6.150.1 2012/02/18 07:32:54 mrg Exp $	*/
 
 #ifndef	_POWERPC_CDEFS_H_
 #define	_POWERPC_CDEFS_H_
 
-/* No arch-specific cdefs. */
+#define	__ALIGNBYTES	(sizeof(double) - 1)
 
 #endif /* !_POWERPC_CDEFS_H_ */

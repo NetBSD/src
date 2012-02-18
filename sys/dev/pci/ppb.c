@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.47 2011/10/21 21:35:28 dyoung Exp $	*/
+/*	$NetBSD: ppb.c,v 1.47.6.1 2012/02/18 07:34:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.47 2011/10/21 21:35:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.47.6.1 2012/02/18 07:34:51 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,12 +158,8 @@ ppbattach(device_t parent, device_t self, void *aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	struct pcibus_attach_args pba;
 	pcireg_t busdata;
-	char devinfo[256];
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
-	    PCI_REVISION(pa->pa_class));
-	aprint_naive("\n");
+	pci_aprint_devinfo(pa, NULL);
 
 	sc->sc_pc = pc;
 	sc->sc_tag = pa->pa_tag;

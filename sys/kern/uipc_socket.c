@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.205 2011/07/02 17:53:50 bouyer Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.205.6.1 2012/02/18 07:35:34 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.205 2011/07/02 17:53:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.205.6.1 2012/02/18 07:35:34 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -136,8 +136,6 @@ EVCNT_ATTACH_STATIC(sosend_kvalimit);
 
 #endif /* SOSEND_COUNTERS */
 
-static struct callback_entry sokva_reclaimerentry;
-
 #if defined(SOSEND_NO_LOAN) || defined(MULTIPROCESSOR)
 int sock_loan_thresh = -1;
 #else
@@ -199,7 +197,7 @@ sokvaunreserve(vsize_t len)
  */
 
 vaddr_t
-sokvaalloc(vsize_t len, struct socket *so)
+sokvaalloc(vaddr_t sva, vsize_t len, struct socket *so)
 {
 	vaddr_t lva;
 
@@ -214,7 +212,8 @@ sokvaalloc(vsize_t len, struct socket *so)
 	 * allocate kva.
 	 */
 
-	lva = uvm_km_alloc(kernel_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
+	lva = uvm_km_alloc(kernel_map, len, atop(sva) & uvmexp.colormask,
+	    UVM_KMF_COLORMATCH | UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	if (lva == 0) {
 		sokvaunreserve(len);
 		return (0);
@@ -351,7 +350,7 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 
 	KASSERT(npgs <= M_EXT_MAXPAGES);
 
-	lva = sokvaalloc(len, so);
+	lva = sokvaalloc(sva, len, so);
 	if (lva == 0)
 		return 0;
 
@@ -382,19 +381,6 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 	}
 
 	return (space);
-}
-
-static int
-sokva_reclaim_callback(struct callback_entry *ce, void *obj, void *arg)
-{
-
-	KASSERT(ce == &sokva_reclaimerentry);
-	KASSERT(obj == NULL);
-
-	if (!vm_map_starved_p(kernel_map)) {
-		return CALLBACK_CHAIN_ABORT;
-	}
-	return CALLBACK_CHAIN_CONTINUE;
 }
 
 struct mbuf *
@@ -478,9 +464,6 @@ soinit(void)
 	/* Set the initial adjusted socket buffer size. */
 	if (sb_max_set(sb_max))
 		panic("bad initial sb_max value: %lu", sb_max);
-
-	callback_register(&vm_map_to_kernel(kernel_map)->vmk_reclaim_callback,
-	    &sokva_reclaimerentry, NULL, sokva_reclaim_callback);
 
 	socket_listener = kauth_listen_scope(KAUTH_SCOPE_NETWORK,
 	    socket_listener_cb, NULL);
@@ -589,7 +572,8 @@ fsocreate(int domain, struct socket **sop, int type, int protocol,
 	if ((error = fd_allocfile(&fp, &fd)) != 0)
 		return error;
 	fd_set_exclose(l, fd, (flags & SOCK_CLOEXEC) != 0);
-	fp->f_flag = FREAD|FWRITE|((flags & SOCK_NONBLOCK) ? FNONBLOCK : 0);
+	fp->f_flag = FREAD|FWRITE|((flags & SOCK_NONBLOCK) ? FNONBLOCK : 0)|
+	    ((flags & SOCK_NOSIGPIPE) ? FNOSIGPIPE : 0);
 	fp->f_type = DTYPE_SOCKET;
 	fp->f_ops = &socketops;
 	error = socreate(domain, &so, type, protocol, l, NULL);
@@ -741,7 +725,8 @@ soclose(struct socket *so)
 				goto drop;
 		}
 		if (so->so_options & SO_LINGER) {
-			if ((so->so_state & SS_ISDISCONNECTING) && so->so_nbio)
+			if ((so->so_state & (SS_ISDISCONNECTING|SS_NBIO)) ==
+			    (SS_ISDISCONNECTING|SS_NBIO))
 				goto drop;
 			while (so->so_state & SS_ISCONNECTED) {
 				error = sowait(so, true, so->so_linger * hz);
@@ -961,7 +946,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 		}
 		if (space < resid + clen &&
 		    (atomic || space < so->so_snd.sb_lowat || space < clen)) {
-			if (so->so_nbio) {
+			if ((so->so_state & SS_NBIO) || (flags & MSG_NBIO)) {
 				error = EWOULDBLOCK;
 				goto release;
 			}
@@ -1257,7 +1242,8 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		}
 		if (uio->uio_resid == 0)
 			goto release;
-		if (so->so_nbio || (flags & MSG_DONTWAIT)) {
+		if ((so->so_state & SS_NBIO) ||
+		    (flags & (MSG_DONTWAIT|MSG_NBIO))) {
 			error = EWOULDBLOCK;
 			goto release;
 		}
@@ -1717,6 +1703,7 @@ sosetopt1(struct socket *so, const struct sockopt *sopt)
 	case SO_REUSEPORT:
 	case SO_OOBINLINE:
 	case SO_TIMESTAMP:
+	case SO_NOSIGPIPE:
 #ifdef SO_OTIMESTAMP
 	case SO_OTIMESTAMP:
 #endif
@@ -1917,6 +1904,7 @@ sogetopt1(struct socket *so, struct sockopt *sopt)
 	case SO_BROADCAST:
 	case SO_OOBINLINE:
 	case SO_TIMESTAMP:
+	case SO_NOSIGPIPE:
 #ifdef SO_OTIMESTAMP
 	case SO_OTIMESTAMP:
 #endif

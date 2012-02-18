@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.h,v 1.9 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: ufs.h,v 1.9.114.1 2012/02/18 07:35:36 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,5 +34,3 @@
 FS_DEF(ufs);
 FS_DEF(ffsv1);
 FS_DEF(ffsv2);
-
-void ufs_ls(const char *);

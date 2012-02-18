@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.124 2011/07/10 21:02:37 mhitch Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.124.6.1 2012/02/18 07:31:12 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -38,7 +38,7 @@
 #include "ser.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.124 2011/07/10 21:02:37 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.124.6.1 2012/02/18 07:31:12 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,15 +193,9 @@ int kernel_copyback = 1;
 
 __attribute__ ((no_instrument_function))
 void
-start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
-	boot_part, loadbase)
-	int id;
-	u_int fphystart, fphysize, cphysize;
-	char *esym_addr;
-	u_int flags;
-	u_long inh_sync;
-	u_long boot_part;
-	u_int loadbase;
+start_c(int id, u_int fphystart, u_int fphysize, u_int cphysize,
+	char *esym_addr, u_int flags, u_long inh_sync, u_long boot_part,
+	u_int loadbase)
 {
 	extern char end[];
 	extern u_int protorp[2];
@@ -331,6 +325,16 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 	    ncd = RELOC(ncfdev, int); ncd > 0; ncd--, cd++) {
 		int bd_type = cd->rom.type & (ERT_TYPEMASK | ERTF_MEMLIST);
 
+		/*
+		 * Hack to support p5bus and p5pb on CyberStorm Mk-III / PPC
+		 * and Blizzard PPC. XXX: this hack should only be active if
+		 * non-autoconfiguring CyberVision PPC or BlizzardVision PPC
+		 * was found. 
+		 */
+		if (cd->rom.manid == 8512 && 
+		    (cd->rom.prodid == 100 || cd->rom.prodid == 110)) 
+			RELOC(ZBUSAVAIL, u_int) += m68k_round_page(0x1400000);
+
 		if (bd_type != ERT_ZORROIII &&
 		    (bd_type != ERT_ZORROII || isztwopa(cd->addr)))
 			continue;	/* It's not Z2 or Z3 I/O board */
@@ -345,6 +349,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 		    (cd->rom.flags & ERT_Z3_SSMASK) == 0)
 			cd->size = 0x10000 <<
 			    ((cd->rom.type - 1) & ERT_MEMMASK);
+
 		RELOC(ZBUSAVAIL, u_int) += m68k_round_page(cd->size);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.58 2011/06/20 17:48:46 pgoyette Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.58.6.1 2012/02/18 07:34:22 mrg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.58 2011/06/20 17:48:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.58.6.1 2012/02/18 07:34:22 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/device.h>
+#include <sys/module.h>
 #include <sys/conf.h>
 #include <sys/time.h>
 
@@ -2259,4 +2260,18 @@ as_refresh_temp(struct lm_softc *sc, int n)
 	}
 	DPRINTF(("%s: temp[%d] data=0x%x value_cur=%d\n",
 	    __func__, n, data, sc->sensors[n].value_cur));
+}
+
+MODULE(MODULE_CLASS_DRIVER, lm, NULL);
+
+static int
+lm_modcmd(modcmd_t cmd, void *opaque)
+{
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+	case MODULE_CMD_FINI:
+		return 0;
+	default:
+		return ENOTTY;
+	}
 }

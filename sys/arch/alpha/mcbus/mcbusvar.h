@@ -1,4 +1,4 @@
-/* $NetBSD: mcbusvar.h,v 1.6 2005/12/11 12:16:17 christos Exp $ */
+/* $NetBSD: mcbusvar.h,v 1.6.116.1 2012/02/18 07:31:01 mrg Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -39,10 +39,10 @@
  * The structure used to attach devices to the MCbus.
  */
 struct mcbus_dev_attach_args {
-	u_int8_t	ma_gid;		/* GID of MCBUS (MCBUS #) */
-	u_int8_t	ma_mid;		/* Module ID on MCBUS */
-	u_int8_t	ma_type;	/* Module "type" */
-	u_int8_t	ma_configured;	/* nonzero if configured */
+	uint8_t	ma_gid;		/* GID of MCBUS (MCBUS #) */
+	uint8_t	ma_mid;		/* Module ID on MCBUS */
+	uint8_t	ma_type;	/* Module "type" */
+	uint8_t	ma_configured;	/* nonzero if configured */
 };
 #define	MCBUS_GID_FROM_INSTANCE(unit)	(7 - unit)
 
@@ -54,9 +54,9 @@ struct mcbus_dev_attach_args {
  * like module id and bcache size of the master CPU.
  */
 struct mcbus_cpu_busdep {
-	u_int8_t	mcbus_cpu_mid;	/* MCbus Module ID */
-	u_int8_t	mcbus_bcache;	/* BCache on this CPU */
-	u_int8_t	mcbus_valid;
+	uint8_t	mcbus_cpu_mid;	/* MCbus Module ID */
+	uint8_t	mcbus_bcache;	/* BCache on this CPU */
+	uint8_t	mcbus_valid;
 };
 
 #define	MCBUS_CPU_BCACHE_0MB	0

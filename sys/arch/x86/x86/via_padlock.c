@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.17 2011/11/28 15:22:41 tls Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.17.2.1 2012/02/18 07:33:37 mrg Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,14 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.17 2011/11/28 15:22:41 tls Exp $");
-
-#ifdef _KERNEL_OPT
-# include "rnd.h"
-# if NRND == 0
-#  error padlock requires rnd pseudo-devices
-# endif
-#endif
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.17.2.1 2012/02/18 07:33:37 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,15 +78,16 @@ via_c3_rnd(void *arg)
 {
 	struct via_padlock_softc *sc = arg;
 
-	unsigned int rv, creg0, len = VIAC3_RNG_BUFSIZ;
-	static uint32_t buffer[VIAC3_RNG_BUFSIZ + 2];	/* XXX 2? */
+	uint32_t creg0, len = VIAC3_RNG_BUFSIZ;
+	uint32_t buffer[VIAC3_RNG_BUFSIZ/4 + 1]; /* CPU goes 3 bytes beyond */
+	uint32_t eax, ecx, edi; /* XXX write-only, but necessary it seems */
 
 	/*
 	 * Sadly, we have to monkey with the coprocessor enable and fault
 	 * registers, which are really for the FPU, in order to read
 	 * from the RNG.
 	 *
- 	 * Don't remove CR0_TS from the call below -- comments in the Linux
+	 * Don't remove CR0_TS from the call below -- comments in the Linux
 	 * driver indicate that the xstorerng instruction can generate
 	 * spurious DNA faults though no FPU or SIMD state is changed
 	 * even if such a fault is generated.
@@ -101,7 +95,7 @@ via_c3_rnd(void *arg)
 	 */
 	kpreempt_disable();
 	x86_disable_intr();
-	creg0 = rcr0();	
+	creg0 = rcr0();
 	lcr0(creg0 & ~(CR0_EM|CR0_TS));	/* Permit access to SIMD/FPU path */
 	/*
 	 * Collect the random data from the C3 RNG into our buffer.
@@ -109,16 +103,16 @@ via_c3_rnd(void *arg)
 	 * if we will feed the data to SHA1?) (%edx[0,1] = "11").
 	 */
 	__asm __volatile("rep xstorerng"
-			 : "=a" (rv) : "d" (3), "D" (buffer),
-			 "c" (len * sizeof(int)) : "memory", "cc");
+			 : "=a" (eax), "=c" (ecx), "=D" (edi)
+			 : "d" (3), "D" (buffer), "c" (len)
+			 : "memory", "cc");
 	/* Put CR0 back how it was */
 	lcr0(creg0);
 	x86_enable_intr();
 	kpreempt_enable();
-	rnd_add_data(&sc->sc_rnd_source, buffer, len * sizeof(int),
-		     len * sizeof(int));
+	rnd_add_data(&sc->sc_rnd_source, buffer, len, len * NBBY);
 	callout_reset(&sc->sc_rnd_co, sc->sc_rnd_hz, via_c3_rnd, sc);
-}	
+}
 
 static void
 via_c3_rnd_init(struct via_padlock_softc *sc)

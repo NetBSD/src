@@ -1,4 +1,4 @@
-/* $NetBSD: aubtfwl.c,v 1.1 2011/07/23 20:52:15 jakllsch Exp $ */
+/* $NetBSD: aubtfwl.c,v 1.1.6.1 2012/02/18 07:35:04 mrg Exp $ */
 
 /*
  * Copyright (c) 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aubtfwl.c,v 1.1 2011/07/23 20:52:15 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aubtfwl.c,v 1.1.6.1 2012/02/18 07:35:04 mrg Exp $");
 
 #include <sys/param.h>
 #include <dev/usb/usb.h>

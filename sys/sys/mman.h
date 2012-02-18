@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.42 2008/11/18 22:13:49 ad Exp $	*/
+/*	$NetBSD: mman.h,v 1.42.20.1 2012/02/18 07:35:49 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993

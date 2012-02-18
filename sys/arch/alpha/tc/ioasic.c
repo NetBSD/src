@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.44 2011/07/01 19:19:50 dyoung Exp $ */
+/* $NetBSD: ioasic.c,v 1.44.6.1 2012/02/18 07:31:08 mrg Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,17 +35,17 @@
  * All rights reserved.
  *
  * Author: Keith Bostic, Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -61,7 +61,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.44 2011/07/01 19:19:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.44.6.1 2012/02/18 07:31:08 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -158,7 +158,7 @@ ioasicattach(device_t parent, device_t self, void *aux)
 	ioasicfound = 1;
 
 	sc->sc_dev = self;
-	sc->sc_bst = ta->ta_memt; 
+	sc->sc_bst = ta->ta_memt;
 	if (bus_space_map(ta->ta_memt, ta->ta_addr,
 			0x400000, 0, &sc->sc_bsh)) {
 		printf("%s: unable to map device\n", device_xname(self));
@@ -236,8 +236,8 @@ ioasic_intr_establish(device_t ioa, void *cookie, tc_intrlevel_t level,
 		panic("ioasic_intr_establish: invalid cookie.");
 
 	imsk = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK);
-        imsk |= ioasic_devs[i].iad_intrbits;
-        bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK, imsk);
+	imsk |= ioasic_devs[i].iad_intrbits;
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK, imsk);
 }
 
 void
@@ -286,7 +286,7 @@ ioasic_intr(void *val)
 	register struct ioasic_softc *sc = val;
 	register int ifound;
 	int gifound;
-	u_int32_t sir, osir;
+	uint32_t sir, osir;
 
 	gifound = 0;
 	do {

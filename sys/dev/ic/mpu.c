@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu.c,v 1.18 2011/11/23 23:07:32 jmcneill Exp $	*/
+/*	$NetBSD: mpu.c,v 1.18.2.1 2012/02/18 07:34:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu.c,v 1.18 2011/11/23 23:07:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu.c,v 1.18.2.1 2012/02/18 07:34:22 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,9 +123,9 @@ mpu_waitready(struct mpu_softc *sc)
 {
 	int i;
 
-	KASSERT(mutex_owned(sc->lock));
+	KASSERT(sc->lock == NULL || mutex_owned(sc->lock));
 
-	for(i = 0; i < MPU_MAXWAIT; i++) {
+	for (i = 0; i < MPU_MAXWAIT; i++) {
 		if (!(MPU_GETSTATUS(sc->iot, sc->ioh) & MPU_OUTPUT_BUSY))
 			return 0;
 		delay(10);
@@ -140,14 +140,14 @@ mpu_reset(struct mpu_softc *sc)
 	bus_space_handle_t ioh = sc->ioh;
 	int i;
 
-	KASSERT(mutex_owned(sc->lock));
+	KASSERT(sc->lock == NULL || mutex_owned(sc->lock));
 
 	if (mpu_waitready(sc)) {
 		DPRINTF(("%s: not ready\n", __func__));
 		return EIO;
 	}
 	bus_space_write_1(iot, ioh, MPU_COMMAND, MPU_RESET);
-	for(i = 0; i < 2*MPU_MAXWAIT; i++) {
+	for (i = 0; i < 2*MPU_MAXWAIT; i++) {
 		if (!(MPU_GETSTATUS(iot, ioh) & MPU_INPUT_EMPTY) &&
 		    bus_space_read_1(iot, ioh, MPU_DATA) == MPU_ACK) {
 			return 0;

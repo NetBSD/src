@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.60 2011/07/31 10:00:52 kiyohara Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.60.6.1 2012/02/18 07:33:00 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.60 2011/07/31 10:00:52 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.60.6.1 2012/02/18 07:33:00 mrg Exp $");
 
 #include "opt_altivec.h"
 #include "opt_modular.h"
@@ -280,20 +280,12 @@ long dumplo = -1;			/* blocks */
 void
 cpu_dumpconf(void)
 {
-	const struct bdevsw *bdev;
 	int nblks;		/* size of dump device */
 	int skip;
 
 	if (dumpdev == NODEV)
 		return;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL) {
-		dumpdev = NODEV;
-		return;
-	}
-	if (bdev->d_psize == NULL)
-		return;
-	nblks = (*bdev->d_psize)(dumpdev);
+	nblks = bdev_size(dumpdev);
 	if (nblks <= ctod(1))
 		return;
 
@@ -328,6 +320,17 @@ startlwp(void *arg)
 	KASSERT(error == 0);
 
 	kmem_free(uc, sizeof(ucontext_t));
+	userret(l, tf);
+}
+
+/*
+ * Process the tail end of a posix_spawn() for the child.
+ */
+void
+cpu_spawn_return(struct lwp *l)
+{
+	struct trapframe * const tf = l->l_md.md_utf;
+
 	userret(l, tf);
 }
 

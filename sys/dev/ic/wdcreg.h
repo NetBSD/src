@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcreg.h,v 1.34 2005/12/11 12:21:29 christos Exp $	*/
+/*	$NetBSD: wdcreg.h,v 1.34.114.1 2012/02/18 07:34:26 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -63,6 +63,7 @@
 /* offsets of registers in the auxiliary register region */
 #define	wd_aux_altsts		0	/* alternate fixed disk status (R) */
 #define	wd_aux_ctlr		0	/* fixed disk controller control (W) */
+#define  WDCTL_HOB		 0x80	/* read high order byte */
 #define  WDCTL_4BIT		 0x08	/* use four head bits (wd1003) */
 #define  WDCTL_RST		 0x04	/* reset the controller */
 #define  WDCTL_IDS		 0x02	/* disable controller interrupts */

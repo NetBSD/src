@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.103 2011/09/27 14:24:52 mbalmer Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.103.6.1 2012/02/18 07:35:46 mrg Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.103 2011/09/27 14:24:52 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.103.6.1 2012/02/18 07:35:46 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -668,6 +668,10 @@ rump_vop_lookup(void *v)
 
 	*vpp = NULL;
 
+	rv = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred);
+	if (rv)
+		return rv;
+
 	if ((cnp->cn_flags & ISLASTCN)
 	    && (dvp->v_mount->mnt_flag & MNT_RDONLY)
 	    && (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
@@ -766,7 +770,16 @@ rump_vop_lookup(void *v)
 	if (!rd && (cnp->cn_flags & ISLASTCN) && cnp->cn_nameiop == CREATE) {
 		if (dvp->v_mount->mnt_flag & MNT_RDONLY)
 			return EROFS;
+		rv = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
+		if (rv)
+			return rv;
 		return EJUSTRETURN;
+	}
+
+	if ((cnp->cn_flags & ISLASTCN) && cnp->cn_nameiop == DELETE) {
+		rv = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
+		if (rv)
+			return rv;
 	}
 
 	if (RDENT_ISWHITEOUT(rd)) {
@@ -801,6 +814,37 @@ rump_vop_lookup(void *v)
 	return rv;
 }
 
+static int
+rump_check_possible(struct vnode *vp, struct rumpfs_node *rnode,
+    mode_t mode)
+{
+
+	if ((mode & VWRITE) == 0)
+		return 0;
+
+	switch (vp->v_type) {
+	case VDIR:
+	case VLNK:
+	case VREG:
+		break;
+	default:
+		/* special file is always writable. */
+		return 0;
+	}
+
+	return vp->v_mount->mnt_flag & MNT_RDONLY ? EROFS : 0;
+}
+
+static int
+rump_check_permitted(struct vnode *vp, struct rumpfs_node *rnode,
+    mode_t mode, kauth_cred_t cred)
+{
+	struct vattr *attr = &rnode->rn_va;
+
+	return genfs_can_access(vp->v_type, attr->va_mode, attr->va_uid,
+	    attr->va_gid, mode, cred);
+}
+
 int
 rump_vop_access(void *v)
 {
@@ -811,22 +855,16 @@ rump_vop_access(void *v)
 		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	int mode = ap->a_mode;
+	struct rumpfs_node *rn = vp->v_data;
+	int error;
 
-	if (mode & VWRITE) {
-		switch (vp->v_type) {
-		case VDIR:
-		case VLNK:
-		case VREG:
-			if ((vp->v_mount->mnt_flag & MNT_RDONLY))
-				return EROFS;
-			break;
-		default:
-			break;
-		}
-	}
+	error = rump_check_possible(vp, rn, ap->a_mode);
+	if (error)
+		return error;
 
-	return 0;
+	error = rump_check_permitted(vp, rn, ap->a_mode, ap->a_cred);
+
+	return error;
 }
 
 static int
@@ -857,11 +895,11 @@ rump_vop_setattr(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct vattr *vap = ap->a_vap;
 	struct rumpfs_node *rn = vp->v_data;
+	struct vattr *attr = &rn->rn_va;
+	kauth_cred_t cred = ap->a_cred;
+	int error;
 
 #define SETIFVAL(a,t) if (vap->a != (t)VNOVAL) rn->rn_va.a = vap->a
-	SETIFVAL(va_mode, mode_t);
-	SETIFVAL(va_uid, uid_t);
-	SETIFVAL(va_gid, gid_t);
 	SETIFVAL(va_atime.tv_sec, time_t);
 	SETIFVAL(va_ctime.tv_sec, time_t);
 	SETIFVAL(va_mtime.tv_sec, time_t);
@@ -872,6 +910,31 @@ rump_vop_setattr(void *v)
 	SETIFVAL(va_birthtime.tv_nsec, long);
 	SETIFVAL(va_flags, u_long);
 #undef  SETIFVAL
+
+	if (vap->va_uid != (uid_t)VNOVAL || vap->va_gid != (uid_t)VNOVAL) {
+		uid_t uid =
+		    (vap->va_uid != (uid_t)VNOVAL) ? vap->va_uid : attr->va_uid;
+		gid_t gid =
+		    (vap->va_gid != (gid_t)VNOVAL) ? vap->va_gid : attr->va_gid;
+		error = kauth_authorize_vnode(cred,
+		    KAUTH_VNODE_CHANGE_OWNERSHIP, vp, NULL,
+		    genfs_can_chown(vp, cred, attr->va_uid, attr->va_gid, uid,
+		    gid));
+		if (error)
+			return error;
+		attr->va_uid = uid;
+		attr->va_gid = gid;
+	}
+
+	if (vap->va_mode != (mode_t)VNOVAL) {
+		mode_t mode = vap->va_mode;
+		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY,
+		    vp, NULL, genfs_can_chmod(vp, cred, attr->va_uid,
+		    attr->va_gid, mode));
+		if (error)
+			return error;
+		attr->va_mode = mode;
+	}
 
 	if (vp->v_type == VREG &&
 	    vap->va_size != VSIZENOTSET &&
@@ -1283,6 +1346,9 @@ rump_vop_read(void *v)
 	const int advice = IO_ADV_DECODE(ap->a_ioflag);
 	off_t chunk;
 	int error = 0;
+
+	if (vp->v_type == VDIR)
+		return EISDIR;
 
 	/* et op? */
 	if (rn->rn_flags & RUMPNODE_ET_PHONE_HOST)

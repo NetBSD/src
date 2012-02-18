@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagervar.h,v 1.3 2011/10/18 17:57:40 macallan Exp $	*/
+/*	$NetBSD: voyagervar.h,v 1.3.6.1 2012/02/18 07:34:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 2011 Michael Lorenz
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagervar.h,v 1.3 2011/10/18 17:57:40 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagervar.h,v 1.3.6.1 2012/02/18 07:34:54 mrg Exp $");
 
 #ifndef VOYAGERVAR_H
 #define VOYAGERVAR_H
@@ -45,10 +45,19 @@ struct voyager_attach_args {
 	char			vaa_name[32];
 };
 
+void voyager_twiddle_bits(void *, int, uint32_t, uint32_t);
+
 /* set gpio bits - (register & param1) | param2 */
-void voyager_write_gpio(void *, uint32_t, uint32_t);
+#define voyager_write_gpio(cookie, m_and, m_or) \
+	voyager_twiddle_bits(cookie, SM502_GPIO_DATA0, m_and, m_or)
 /* control gpio pin usage - 0 is gpio, 1 is other stuff ( like PWM ) */
-void voyager_control_gpio(void *, uint32_t, uint32_t);
+#define voyager_control_gpio(cookie, m_and, m_or) \
+	voyager_twiddle_bits(cookie, SM502_GPIO0_CONTROL, m_and, m_or)
+/* gpio direction - 1 is output */
+#define voyager_gpio_dir(cookie, m_and, m_or) \
+	voyager_twiddle_bits(cookie, SM502_GPIO_DIR0, m_and, m_or)
+#define voyager_control_power_0(cookie, m_and, m_or) \
+	voyager_twiddle_bits(cookie, SM502_POWER_MODE0_GATE, m_and, m_or)
 
 void *voyager_establish_intr(device_t, int, int (*)(void *), void *);
 void  voyager_disestablish_intr(device_t, void *);

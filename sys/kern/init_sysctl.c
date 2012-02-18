@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.185 2011/11/20 01:09:14 tls Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.185.2.1 2012/02/18 07:35:26 mrg Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.185 2011/11/20 01:09:14 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.185.2.1 2012/02/18 07:35:26 mrg Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -1396,7 +1396,7 @@ sysctl_kern_urnd(SYSCTLFN_ARGS)
 {
 	int v, rv;
 
-	rv = cprng_strong(sysctl_prng, &v, sizeof(v));
+	rv = cprng_strong(sysctl_prng, &v, sizeof(v), 0);
 	if (rv == sizeof(v)) {
 		struct sysctlnode node = *rnode;
 		node.sysctl_data = &v;

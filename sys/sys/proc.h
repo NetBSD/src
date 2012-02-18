@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.311 2011/10/21 02:07:07 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.311.6.1 2012/02/18 07:35:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -466,10 +466,9 @@ void	proc_sesshold(struct session *);
 void	proc_sessrele(struct session *);
 void	fixjobc(struct proc *, struct pgrp *, int);
 
-int	ltsleep(wchan_t, pri_t, const char *, int, volatile struct simplelock *);
+int	tsleep(wchan_t, pri_t, const char *, int);
 int	mtsleep(wchan_t, pri_t, const char *, int, kmutex_t *);
 void	wakeup(wchan_t);
-void	wakeup_one(wchan_t);
 int	kpause(const char *, bool, int, kmutex_t *);
 void	exit1(struct lwp *, int) __dead;
 int	do_sys_wait(int *, int *, int, struct rusage *);
@@ -486,6 +485,7 @@ void	cpu_lwp_fork(struct lwp *, struct lwp *, void *, size_t,
 	    void (*)(void *), void *);
 void	cpu_lwp_free(struct lwp *, int);
 void	cpu_lwp_free2(struct lwp *);
+void	cpu_spawn_return(struct lwp*);
 
 #ifdef __HAVE_SYSCALL_INTERN
 void	syscall_intern(struct proc *);
@@ -531,10 +531,6 @@ _proclist_skipmarker(struct proc *p0)
 	for ((var) = LIST_FIRST(head);					\
 		((var) = _proclist_skipmarker(var)) != NULL;		\
 		(var) = LIST_NEXT(var, p_list))
-
-/* Compatibility with old, non-interlocked tsleep call */
-#define	tsleep(chan, pri, wmesg, timo)					\
-	ltsleep(chan, pri, wmesg, timo, NULL)
 
 #ifdef KSTACK_CHECK_MAGIC
 void	kstack_setup_magic(const struct lwp *);

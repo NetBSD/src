@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TISDP2430,v 1.18 2011/11/22 21:25:09 tls Exp $
+#	$NetBSD: TISDP2430,v 1.18.2.1 2012/02/18 07:31:50 mrg Exp $
 #
 #	TISDP2430 -- TI OMAP 2430 Eval Board Kernel
 #
@@ -46,7 +46,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options

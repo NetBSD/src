@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.h,v 1.19 2011/02/02 15:13:34 chuck Exp $	*/
+/*	$NetBSD: uvm_km.h,v 1.19.8.1 2012/02/18 07:35:59 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -40,7 +40,8 @@
  * prototypes
  */
 
-void uvm_km_init(vaddr_t, vaddr_t);
+void uvm_km_bootstrap(vaddr_t, vaddr_t);
+void uvm_km_init(void);
 void uvm_km_pgremove(vaddr_t, vaddr_t);
 void uvm_km_pgremove_intrsafe(struct vm_map *, vaddr_t, vaddr_t);
 #if defined(DEBUG)
@@ -48,7 +49,6 @@ void uvm_km_check_empty(struct vm_map *, vaddr_t, vaddr_t);
 #else
 #define	uvm_km_check_empty(a, b, c)	/* nothing */
 #endif /* defined(DEBUG) */
-void uvm_km_va_drain(struct vm_map *, uvm_flag_t);
 
 #endif /* _KERNEL */
 

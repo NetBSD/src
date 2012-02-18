@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.96 2011/01/23 09:44:59 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.96.8.1 2012/02/18 07:32:14 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96 2011/01/23 09:44:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96.8.1 2012/02/18 07:32:14 mrg Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -998,6 +998,19 @@ child_return(void *arg)
 
 	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
 	ktrsysret(SYS_fork, 0, 0);
+#ifdef DEBUG
+	frame_sanity_check(__func__, __LINE__, 0, l->l_md.md_regs, l);
+#endif /* DEBUG */
+}
+
+/*
+ * Process the tail end of a posix_spawn() for the child.
+ */
+void
+cpu_spawn_return(struct lwp *l)
+{
+  	
+	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
 #ifdef DEBUG
 	frame_sanity_check(__func__, __LINE__, 0, l->l_md.md_regs, l);
 #endif /* DEBUG */

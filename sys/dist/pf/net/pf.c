@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.67 2011/11/19 22:51:24 tls Exp $	*/
+/*	$NetBSD: pf.c,v 1.67.2.1 2012/02/18 07:35:22 mrg Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.67 2011/11/19 22:51:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.67.2.1 2012/02/18 07:35:22 mrg Exp $");
 
 #include "pflog.h"
 
@@ -5237,9 +5237,9 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	struct pf_addr		 naddr;
 	struct pf_src_node	*sn = NULL;
 	int			 error = 0;
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 	struct m_tag		*mtag;
-#endif /* IPSEC */
+#endif /* KAME_IPSEC */
 #ifdef __NetBSD__
 	struct pf_mtag		*pf_mtag;
 #endif /* __NetBSD__ */
@@ -5342,7 +5342,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	}
 
 	/* Copied from ip_output. */
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 	/*
 	 * If deferred crypto processing is needed, check that the
 	 * interface supports it.
@@ -5353,7 +5353,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		ipsp_skipcrypto_unmark((struct tdb_ident *)(mtag + 1));
 		goto bad;
 	}
-#endif /* IPSEC */
+#endif /* KAME_IPSEC */
 
 	/* Catch routing changes wrt. hardware checksumming for TCP or UDP. */
 #ifdef __NetBSD__

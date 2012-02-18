@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.238 2011/09/20 14:01:33 chs Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.238.6.1 2012/02/18 07:35:55 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.238 2011/09/20 14:01:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.238.6.1 2012/02/18 07:35:55 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.238 2011/09/20 14:01:33 chs Exp $");
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/ufsmount.h>
+#include <ufs/ufs/ufs_bswap.h>
 #include <ufs/ufs/ufs_extern.h>
 
 #include <uvm/uvm.h>
@@ -363,6 +364,17 @@ lfs_inactive(void *v)
 		return 0;
 	}
 
+#ifdef DEBUG
+	/*
+	 * This might happen on unmount.
+	 * XXX If it happens at any other time, it should be a panic.
+	 */
+	if (ap->a_vp->v_uflag & VU_DIROP) {
+		struct inode *ip = VTOI(ap->a_vp);
+		printf("lfs_inactive: inactivating VU_DIROP? ino = %d\n", (int)ip->i_number);
+	}
+#endif /* DIAGNOSTIC */
+
 	return ufs_inactive(v);
 }
 
@@ -426,7 +438,6 @@ lfs_set_dirop(struct vnode *dvp, struct vnode *vp)
 	}
 
 	if (lfs_dirvcount > LFS_MAX_DIROP) {
-		mutex_exit(&lfs_lock);
 		DLOG((DLOG_DIROP, "lfs_set_dirop: sleeping with dirops=%d, "
 		      "dirvcount=%d\n", fs->lfs_dirops, lfs_dirvcount));
 		if ((error = mtsleep(&lfs_dirvcount,
@@ -438,7 +449,7 @@ lfs_set_dirop(struct vnode *dvp, struct vnode *vp)
 	}
 
 	++fs->lfs_dirops;
-	fs->lfs_doifile = 1;
+	/* fs->lfs_doifile = 1; */ /* XXX why? --ks */
 	mutex_exit(&lfs_lock);
 
 	/* Hold a reference so SET_ENDOP will be happy */
@@ -543,14 +554,18 @@ lfs_mark_vnode(struct vnode *vp)
 	mutex_enter(&lfs_lock);
 	if (!(ip->i_flag & IN_ADIROP)) {
 		if (!(vp->v_uflag & VU_DIROP)) {
+			mutex_exit(&lfs_lock);
 			mutex_enter(vp->v_interlock);
-			(void)lfs_vref(vp);
+			if (lfs_vref(vp) != 0)
+				panic("lfs_mark_vnode: could not vref");
+			mutex_enter(&lfs_lock);
 			++lfs_dirvcount;
 			++fs->lfs_dirvcount;
 			TAILQ_INSERT_TAIL(&fs->lfs_dchainhd, ip, i_lfs_dchain);
 			vp->v_uflag |= VU_DIROP;
 		}
 		++fs->lfs_nadirop;
+		ip->i_flag &= ~IN_CDIROP;
 		ip->i_flag |= IN_ADIROP;
 	} else
 		KASSERT(vp->v_uflag & VU_DIROP);
@@ -562,13 +577,13 @@ lfs_unmark_vnode(struct vnode *vp)
 {
 	struct inode *ip = VTOI(vp);
 
+	mutex_enter(&lfs_lock);
 	if (ip && (ip->i_flag & IN_ADIROP)) {
 		KASSERT(vp->v_uflag & VU_DIROP);
-		mutex_enter(&lfs_lock);
 		--ip->i_lfs->lfs_nadirop;
-		mutex_exit(&lfs_lock);
 		ip->i_flag &= ~IN_ADIROP;
 	}
+	mutex_exit(&lfs_lock);
 }
 
 int
@@ -795,6 +810,188 @@ lfs_link(void *v)
 	return (error);
 }
 
+/* XXX following lifted from ufs_lookup.c */
+#define	FSFMT(vp)	(((vp)->v_mount->mnt_iflag & IMNT_DTYPE) == 0)
+
+/*
+ * Check if either entry referred to by FROM_ULR is within the range
+ * of entries named by TO_ULR.
+ */
+static int
+ulr_overlap(const struct ufs_lookup_results *from_ulr,
+	    const struct ufs_lookup_results *to_ulr)
+{
+	doff_t from_start, from_prevstart;
+	doff_t to_start, to_end;
+
+	/*
+	 * FROM is a DELETE result; offset points to the entry to
+	 * remove and subtracting count gives the previous entry.
+	 */
+	from_start = from_ulr->ulr_offset - from_ulr->ulr_count;
+	from_prevstart = from_ulr->ulr_offset;
+
+	/*
+	 * TO is a RENAME (thus non-DELETE) result; offset points
+	 * to the beginning of a region to write in, and adding
+	 * count gives the end of the region.
+	 */
+	to_start = to_ulr->ulr_offset;
+	to_end = to_ulr->ulr_offset + to_ulr->ulr_count;
+
+	if (from_prevstart >= to_start && from_prevstart < to_end) {
+		return 1;
+	}
+	if (from_start >= to_start && from_start < to_end) {
+		return 1;
+	}
+	return 0;
+}
+
+/*
+ * A virgin directory (no blushing please).
+ */
+static const struct dirtemplate mastertemplate = {
+	0,	12,		DT_DIR,	1,	".",
+	0,	DIRBLKSIZ - 12,	DT_DIR,	2,	".."
+};
+
+/*
+ * Wrapper for relookup that also updates the supplemental results.
+ */
+static int
+do_relookup(struct vnode *dvp, struct ufs_lookup_results *ulr,
+	    struct vnode **vp, struct componentname *cnp)
+{
+	int error;
+
+	error = relookup(dvp, vp, cnp, 0);
+	if (error) {
+		return error;
+	}
+	/* update the supplemental reasults */
+	*ulr = VTOI(dvp)->i_crap;
+	UFS_CHECK_CRAPCOUNTER(VTOI(dvp));
+	return 0;
+}
+
+/*
+ * Lock and relookup a sequence of two directories and two children.
+ *
+ */
+static int
+lock_vnode_sequence(struct vnode *d1, struct ufs_lookup_results *ulr1,
+		    struct vnode **v1_ret, struct componentname *cn1, 
+		    int v1_missing_ok,
+		    int overlap_error,
+		    struct vnode *d2, struct ufs_lookup_results *ulr2,
+		    struct vnode **v2_ret, struct componentname *cn2, 
+		    int v2_missing_ok)
+{
+	struct vnode *v1, *v2;
+	int error;
+
+	KASSERT(d1 != d2);
+
+	vn_lock(d1, LK_EXCLUSIVE | LK_RETRY);
+	if (VTOI(d1)->i_size == 0) {
+		/* d1 has been rmdir'd */
+		VOP_UNLOCK(d1);
+		return ENOENT;
+	}
+	error = do_relookup(d1, ulr1, &v1, cn1);
+	if (v1_missing_ok) {
+		if (error == ENOENT) {
+			/*
+			 * Note: currently if the name doesn't exist,
+			 * relookup succeeds (it intercepts the
+			 * EJUSTRETURN from VOP_LOOKUP) and sets tvp
+			 * to NULL. Therefore, we will never get
+			 * ENOENT and this branch is not needed.
+			 * However, in a saner future the EJUSTRETURN
+			 * garbage will go away, so let's DTRT.
+			 */
+			v1 = NULL;
+			error = 0;
+		}
+	} else {
+		if (error == 0 && v1 == NULL) {
+			/* This is what relookup sets if v1 disappeared. */
+			error = ENOENT;
+		}
+	}
+	if (error) {
+		VOP_UNLOCK(d1);
+		return error;
+	}
+	if (v1 && v1 == d2) {
+		VOP_UNLOCK(d1);
+		VOP_UNLOCK(v1);
+		vrele(v1);
+		return overlap_error;
+	}
+
+	/*
+	 * The right way to do this is to do lookups without locking
+	 * the results, and lock the results afterwards; then at the
+	 * end we can avoid trying to lock v2 if v2 == v1.
+	 *
+	 * However, for the reasons described in the fdvp == tdvp case
+	 * in rename below, we can't do that safely. So, in the case
+	 * where v1 is not a directory, unlock it and lock it again
+	 * afterwards. This is safe in locking order because a
+	 * non-directory can't be above anything else in the tree. If
+	 * v1 *is* a directory, that's not true, but then because d1
+	 * != d2, v1 != v2.
+	 */
+	if (v1 && v1->v_type != VDIR) {
+		VOP_UNLOCK(v1);
+	}
+	vn_lock(d2, LK_EXCLUSIVE | LK_RETRY);
+	if (VTOI(d2)->i_size == 0) {
+		/* d2 has been rmdir'd */
+		VOP_UNLOCK(d2);
+		if (v1 && v1->v_type == VDIR) {
+			VOP_UNLOCK(v1);
+		}
+		VOP_UNLOCK(d1);
+		if (v1) {
+			vrele(v1);
+		}
+		return ENOENT;
+	}
+	error = do_relookup(d2, ulr2, &v2, cn2);
+	if (v2_missing_ok) {
+		if (error == ENOENT) {
+			/* as above */
+			v2 = NULL;
+			error = 0;
+		}
+	} else {
+		if (error == 0 && v2 == NULL) {
+			/* This is what relookup sets if v2 disappeared. */
+			error = ENOENT;
+		}
+	}
+	if (error) {
+		VOP_UNLOCK(d2);
+		if (v1 && v1->v_type == VDIR) {
+			VOP_UNLOCK(v1);
+		}
+		VOP_UNLOCK(d1);
+		if (v1) {
+			vrele(v1);
+		}
+		return error;
+	}
+	if (v1 && v1->v_type != VDIR && v1 != v2) {
+		vn_lock(v1, LK_EXCLUSIVE | LK_RETRY);
+	}
+	*v1_ret = v1;
+	*v2_ret = v2;
+	return 0;
+}
+
 int
 lfs_rename(void *v)
 {
@@ -806,64 +1003,239 @@ lfs_rename(void *v)
 		struct vnode *a_tvp;
 		struct componentname *a_tcnp;
 	} */ *ap = v;
-	struct vnode *tvp, *fvp, *tdvp, *fdvp;
+	struct vnode		*tvp, *tdvp, *fvp, *fdvp;
 	struct componentname *tcnp, *fcnp;
-	int error;
-	struct lfs *fs;
+	struct inode		*ip, *txp, *fxp, *tdp, *fdp;
+	struct mount		*mp;
+	struct direct		*newdir;
+	int			doingdirectory, error, marked;
+	ino_t			oldparent, newparent;
 
-	fs = VTOI(ap->a_fdvp)->i_lfs;
+	struct ufs_lookup_results from_ulr, to_ulr;
+	struct lfs *fs = VTOI(ap->a_fvp)->i_lfs;
+
 	tvp = ap->a_tvp;
 	tdvp = ap->a_tdvp;
-	tcnp = ap->a_tcnp;
 	fvp = ap->a_fvp;
 	fdvp = ap->a_fdvp;
+	tcnp = ap->a_tcnp;
 	fcnp = ap->a_fcnp;
+	doingdirectory = error = 0;
+	oldparent = newparent = 0;
+	marked = 0;
+
+	/* save the supplemental lookup results as they currently exist */
+	from_ulr = VTOI(fdvp)->i_crap;
+	to_ulr = VTOI(tdvp)->i_crap;
+	UFS_CHECK_CRAPCOUNTER(VTOI(fdvp));
+	UFS_CHECK_CRAPCOUNTER(VTOI(tdvp));
+
+	/*
+	 * Owing to VFS oddities we are currently called with tdvp/tvp
+	 * locked and not fdvp/fvp. In a sane world we'd be passed
+	 * tdvp and fdvp only, unlocked, and two name strings. Pretend
+	 * we have a sane world and unlock tdvp and tvp.
+	 */
+	VOP_UNLOCK(tdvp);
+	if (tvp && tvp != tdvp) {
+		VOP_UNLOCK(tvp);
+	}
+
+	/* Also pretend we have a sane world and vrele fvp/tvp. */
+	vrele(fvp);
+	fvp = NULL;
+	if (tvp) {
+		vrele(tvp);
+		tvp = NULL;
+	}
 
 	/*
 	 * Check for cross-device rename.
-	 * If it is, we don't want to set dirops, just error out.
-	 * (In particular note that MARK_VNODE(tdvp) will DTWT on
-	 * a cross-device rename.)
-	 *
-	 * Copied from ufs_rename.
 	 */
-	if ((fvp->v_mount != tdvp->v_mount) ||
-	    (tvp && (fvp->v_mount != tvp->v_mount))) {
+	if (fdvp->v_mount != tdvp->v_mount) {
 		error = EXDEV;
-		goto errout;
+		goto abort;
 	}
 
 	/*
-	 * Check to make sure we're not renaming a vnode onto itself
-	 * (deleting a hard link by renaming one name onto another);
-	 * if we are we can't recursively call VOP_REMOVE since that
-	 * would leave us with an unaccounted-for number of live dirops.
-	 *
-	 * Inline the relevant section of ufs_rename here, *before*
-	 * calling SET_DIROP_REMOVE.
+	 * Reject "." and ".."
 	 */
+	if ((fcnp->cn_flags & ISDOTDOT) || (tcnp->cn_flags & ISDOTDOT) ||
+	    (fcnp->cn_namelen == 1 && fcnp->cn_nameptr[0] == '.') ||
+	    (tcnp->cn_namelen == 1 && tcnp->cn_nameptr[0] == '.')) {
+		error = EINVAL;
+		goto abort;
+	}
+	    
+	/*
+	 * Get locks.
+	 */
+
+	/* paranoia */
+	fcnp->cn_flags |= LOCKPARENT|LOCKLEAF;
+	tcnp->cn_flags |= LOCKPARENT|LOCKLEAF;
+
+	if (fdvp == tdvp) {
+		/* One directory. Lock it and relookup both children. */
+		vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
+
+		if (VTOI(fdvp)->i_size == 0) {
+			/* directory has been rmdir'd */
+			VOP_UNLOCK(fdvp);
+			error = ENOENT;
+			goto abort;
+		}
+
+		error = do_relookup(fdvp, &from_ulr, &fvp, fcnp);
+		if (error == 0 && fvp == NULL) {
+			/* relookup may produce this if fvp disappears */
+			error = ENOENT;
+		}
+		if (error) {
+			VOP_UNLOCK(fdvp);
+			goto abort;
+		}
+
+		/*
+		 * The right way to do this is to look up both children
+		 * without locking either, and then lock both unless they
+		 * turn out to be the same. However, due to deep-seated
+		 * VFS-level issues all lookups lock the child regardless
+		 * of whether LOCKLEAF is set (if LOCKLEAF is not set,
+		 * the child is locked during lookup and then unlocked)
+		 * so it is not safe to look up tvp while fvp is locked.
+		 *
+		 * Unlocking fvp here temporarily is more or less safe,
+		 * because with the directory locked there's not much
+		 * that can happen to it. However, ideally it wouldn't
+		 * be necessary. XXX.
+		 */
+		VOP_UNLOCK(fvp);
+		/* remember fdvp == tdvp so tdvp is locked */
+		error = do_relookup(tdvp, &to_ulr, &tvp, tcnp);
+		if (error && error != ENOENT) {
+			VOP_UNLOCK(fdvp);
+			goto abort;
+		}
+		if (error == ENOENT) {
+			/*
+			 * Note: currently if the name doesn't exist,
+			 * relookup succeeds (it intercepts the
+			 * EJUSTRETURN from VOP_LOOKUP) and sets tvp
+			 * to NULL. Therefore, we will never get
+			 * ENOENT and this branch is not needed.
+			 * However, in a saner future the EJUSTRETURN
+			 * garbage will go away, so let's DTRT.
+			 */
+			tvp = NULL;
+		}
+
+		/* tvp is locked; lock fvp if necessary */
+		if (!tvp || tvp != fvp) {
+			vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY);
+		}
+	} else {
+		int found_fdvp;
+		struct vnode *illegal_fvp;
+
+		/*
+		 * The source must not be above the destination. (If
+		 * it were, the rename would detach a section of the
+		 * tree.)
+		 *
+		 * Look up the tree from tdvp to see if we find fdvp,
+		 * and if so, return the immediate child of fdvp we're
+		 * under; that must not turn out to be the same as
+		 * fvp.
+	 *
+		 * The per-volume rename lock guarantees that the
+		 * result of this check remains true until we finish
+		 * looking up and locking.
+	 */
+		error = ufs_parentcheck(fdvp, tdvp, fcnp->cn_cred,
+					&found_fdvp, &illegal_fvp);
+		if (error) {
+			goto abort;
+		}
+
+		/* Must lock in tree order. */
+
+		if (found_fdvp) {
+			/* fdvp -> fvp -> tdvp -> tvp */
+			error = lock_vnode_sequence(fdvp, &from_ulr,
+						    &fvp, fcnp, 0,
+						    EINVAL,
+						    tdvp, &to_ulr,
+						    &tvp, tcnp, 1);
+		} else {
+			/* tdvp -> tvp -> fdvp -> fvp */
+			error = lock_vnode_sequence(tdvp, &to_ulr,
+						    &tvp, tcnp, 1,
+						    ENOTEMPTY,
+						    fdvp, &from_ulr,
+						    &fvp, fcnp, 0);
+		}
+		if (error) {
+			if (illegal_fvp) {
+				vrele(illegal_fvp);
+			}
+			goto abort;
+		}
+		KASSERT(fvp != NULL);
+
+		if (illegal_fvp && fvp == illegal_fvp) {
+			vrele(illegal_fvp);
+			error = EINVAL;
+			goto abort_withlocks;
+		}
+
+		if (illegal_fvp) {
+			vrele(illegal_fvp);
+		}
+	}
+
+	KASSERT(fdvp && VOP_ISLOCKED(fdvp));
+	KASSERT(fvp && VOP_ISLOCKED(fvp));
+	KASSERT(tdvp && VOP_ISLOCKED(tdvp));
+	KASSERT(tvp == NULL || VOP_ISLOCKED(tvp));
+
+	/* --- everything is now locked --- */
+
 	if (tvp && ((VTOI(tvp)->i_flags & (IMMUTABLE | APPEND)) ||
 		    (VTOI(tdvp)->i_flags & APPEND))) {
 		error = EPERM;
-		goto errout;
+		goto abort_withlocks;
 	}
+
+	/*
+	 * Check if just deleting a link name.
+	 */
 	if (fvp == tvp) {
 		if (fvp->v_type == VDIR) {
 			error = EINVAL;
-			goto errout;
+			goto abort_withlocks;
 		}
 
-		/* Release destination completely. */
+		/* Release destination completely. Leave fdvp locked. */
 		VOP_ABORTOP(tdvp, tcnp);
-		vput(tdvp);
-		vput(tvp);
+		if (fdvp != tdvp) {
+			VOP_UNLOCK(tdvp);
+		}
+		VOP_UNLOCK(tvp);
+		vrele(tdvp);
+		vrele(tvp);
 
 		/* Delete source. */
+		/* XXX: do we really need to relookup again? */
+
+		/*
+		 * fdvp is still locked, but we just unlocked fvp
+		 * (because fvp == tvp) so just decref fvp
+		 */
 		vrele(fvp);
 		fcnp->cn_flags &= ~(MODMASK);
 		fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
 		fcnp->cn_nameiop = DELETE;
-		vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
 		if ((error = relookup(fdvp, &fvp, fcnp, 0))) {
 			vput(fdvp);
 			return (error);
@@ -871,28 +1243,436 @@ lfs_rename(void *v)
 		return (VOP_REMOVE(fdvp, fvp, fcnp));
 	}
 
+	/* The tiny bit of actual LFS code in this function */
 	if ((error = SET_DIROP_REMOVE(tdvp, tvp)) != 0)
-		goto errout;
+		goto abort_withlocks;
 	MARK_VNODE(fdvp);
 	MARK_VNODE(fvp);
+	marked = 1;
 
-	error = ufs_rename(ap);
+	fdp = VTOI(fdvp);
+	ip = VTOI(fvp);
+	if ((nlink_t) ip->i_nlink >= LINK_MAX) {
+		error = EMLINK;
+		goto abort_withlocks;
+	}
+	if ((ip->i_flags & (IMMUTABLE | APPEND)) ||
+		(fdp->i_flags & APPEND)) {
+		error = EPERM;
+		goto abort_withlocks;
+	}
+	if ((ip->i_mode & IFMT) == IFDIR) {
+		/*
+		 * Avoid ".", "..", and aliases of "." for obvious reasons.
+		 */
+		if ((fcnp->cn_namelen == 1 && fcnp->cn_nameptr[0] == '.') ||
+		    fdp == ip ||
+		    (fcnp->cn_flags & ISDOTDOT) ||
+		    (tcnp->cn_flags & ISDOTDOT) ||
+		    (ip->i_flag & IN_RENAME)) {
+			error = EINVAL;
+			goto abort_withlocks;
+		}
+		ip->i_flag |= IN_RENAME;
+		doingdirectory = 1;
+	}
+	oldparent = fdp->i_number;
+	VN_KNOTE(fdvp, NOTE_WRITE);		/* XXXLUKEM/XXX: right place? */
+
+	/*
+	 * Both the directory
+	 * and target vnodes are locked.
+	 */
+	tdp = VTOI(tdvp);
+	txp = NULL;
+	if (tvp)
+		txp = VTOI(tvp);
+
+	mp = fdvp->v_mount;
+	fstrans_start(mp, FSTRANS_SHARED);
+
+	if (oldparent != tdp->i_number)
+		newparent = tdp->i_number;
+
+	/*
+	 * If ".." must be changed (ie the directory gets a new
+	 * parent) the user must have write permission in the source
+	 * so as to be able to change "..".
+	 */
+	if (doingdirectory && newparent) {
+		error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred);
+		if (error)
+			goto out;
+	}
+
+	KASSERT(fdvp != tvp);
+
+	if (newparent) {
+		/* Check for the rename("foo/foo", "foo") case. */
+		if (fdvp == tvp) {
+			error = doingdirectory ? ENOTEMPTY : EISDIR;
+			goto out;
+		}
+	}
+
+	fxp = VTOI(fvp);
+	fdp = VTOI(fdvp);
+
+	error = UFS_WAPBL_BEGIN(fdvp->v_mount);
+	if (error)
+		goto out2;
+
+	/*
+	 * 1) Bump link count while we're moving stuff
+	 *    around.  If we crash somewhere before
+	 *    completing our work, the link count
+	 *    may be wrong, but correctable.
+	 */
+	ip->i_nlink++;
+	DIP_ASSIGN(ip, nlink, ip->i_nlink);
+	ip->i_flag |= IN_CHANGE;
+	if ((error = UFS_UPDATE(fvp, NULL, NULL, UPDATE_DIROP)) != 0) {
+		goto bad;
+	}
+
+	/*
+	 * 2) If target doesn't exist, link the target
+	 *    to the source and unlink the source.
+	 *    Otherwise, rewrite the target directory
+	 *    entry to reference the source inode and
+	 *    expunge the original entry's existence.
+	 */
+	if (txp == NULL) {
+		if (tdp->i_dev != ip->i_dev)
+			panic("rename: EXDEV");
+		/*
+		 * Account for ".." in new directory.
+		 * When source and destination have the same
+		 * parent we don't fool with the link count.
+		 */
+		if (doingdirectory && newparent) {
+			if ((nlink_t)tdp->i_nlink >= LINK_MAX) {
+				error = EMLINK;
+				goto bad;
+			}
+			tdp->i_nlink++;
+			DIP_ASSIGN(tdp, nlink, tdp->i_nlink);
+			tdp->i_flag |= IN_CHANGE;
+			if ((error = UFS_UPDATE(tdvp, NULL, NULL,
+			    UPDATE_DIROP)) != 0) {
+				tdp->i_nlink--;
+				DIP_ASSIGN(tdp, nlink, tdp->i_nlink);
+				tdp->i_flag |= IN_CHANGE;
+				goto bad;
+			}
+		}
+		newdir = pool_cache_get(ufs_direct_cache, PR_WAITOK);
+		ufs_makedirentry(ip, tcnp, newdir);
+		error = ufs_direnter(tdvp, &to_ulr,
+				     NULL, newdir, tcnp, NULL);
+		pool_cache_put(ufs_direct_cache, newdir);
+		if (error != 0) {
+			if (doingdirectory && newparent) {
+				tdp->i_nlink--;
+				DIP_ASSIGN(tdp, nlink, tdp->i_nlink);
+				tdp->i_flag |= IN_CHANGE;
+				(void)UFS_UPDATE(tdvp, NULL, NULL,
+						 UPDATE_WAIT | UPDATE_DIROP);
+			}
+			goto bad;
+		}
+		VN_KNOTE(tdvp, NOTE_WRITE);
+	} else {
+		if (txp->i_dev != tdp->i_dev || txp->i_dev != ip->i_dev)
+			panic("rename: EXDEV");
+		/*
+		 * Short circuit rename(foo, foo).
+		 */
+		if (txp->i_number == ip->i_number)
+			panic("rename: same file");
+		/*
+		 * If the parent directory is "sticky", then the user must
+		 * own the parent directory, or the destination of the rename,
+		 * otherwise the destination may not be changed (except by
+		 * root). This implements append-only directories.
+		 */
+		if ((tdp->i_mode & S_ISTXT) &&
+		    kauth_authorize_generic(tcnp->cn_cred,
+		     KAUTH_GENERIC_ISSUSER, NULL) != 0 &&
+		    kauth_cred_geteuid(tcnp->cn_cred) != tdp->i_uid &&
+		    txp->i_uid != kauth_cred_geteuid(tcnp->cn_cred)) {
+			error = EPERM;
+			goto bad;
+		}
+		/*
+		 * Target must be empty if a directory and have no links
+		 * to it. Also, ensure source and target are compatible
+		 * (both directories, or both not directories).
+		 */
+		if ((txp->i_mode & IFMT) == IFDIR) {
+			if (txp->i_nlink > 2 ||
+			    !ufs_dirempty(txp, tdp->i_number, tcnp->cn_cred)) {
+				error = ENOTEMPTY;
+				goto bad;
+			}
+			if (!doingdirectory) {
+				error = ENOTDIR;
+				goto bad;
+			}
+			cache_purge(tdvp);
+		} else if (doingdirectory) {
+			error = EISDIR;
+			goto bad;
+		}
+		if ((error = ufs_dirrewrite(tdp, to_ulr.ulr_offset,
+		    txp, ip->i_number,
+		    IFTODT(ip->i_mode), doingdirectory && newparent ?
+		    newparent : doingdirectory, IN_CHANGE | IN_UPDATE)) != 0)
+			goto bad;
+		if (doingdirectory) {
+			/*
+			 * Truncate inode. The only stuff left in the directory
+			 * is "." and "..". The "." reference is inconsequential
+			 * since we are quashing it. We have removed the "."
+			 * reference and the reference in the parent directory,
+			 * but there may be other hard links.
+			 */
+			if (!newparent) {
+				tdp->i_nlink--;
+				DIP_ASSIGN(tdp, nlink, tdp->i_nlink);
+				tdp->i_flag |= IN_CHANGE;
+				UFS_WAPBL_UPDATE(tdvp, NULL, NULL, 0);
+			}
+			txp->i_nlink--;
+			DIP_ASSIGN(txp, nlink, txp->i_nlink);
+			txp->i_flag |= IN_CHANGE;
+			if ((error = UFS_TRUNCATE(tvp, (off_t)0, IO_SYNC,
+			    tcnp->cn_cred)))
+				goto bad;
+		}
+		VN_KNOTE(tdvp, NOTE_WRITE);
+		VN_KNOTE(tvp, NOTE_DELETE);
+	}
+
+	/*
+	 * Handle case where the directory entry we need to remove,
+	 * which is/was at from_ulr.ulr_offset, or the one before it,
+	 * which is/was at from_ulr.ulr_offset - from_ulr.ulr_count,
+	 * may have been moved when the directory insertion above
+	 * performed compaction.
+	 */
+	if (tdp->i_number == fdp->i_number &&
+	    ulr_overlap(&from_ulr, &to_ulr)) {
+
+		struct buf *bp;
+		struct direct *ep;
+		struct ufsmount *ump = fdp->i_ump;
+		doff_t curpos;
+		doff_t endsearch;	/* offset to end directory search */
+		uint32_t prev_reclen;
+		int dirblksiz = ump->um_dirblksiz;
+		const int needswap = UFS_MPNEEDSWAP(ump);
+		u_long bmask;
+		int namlen, entryoffsetinblock;
+		char *dirbuf;
+
+		bmask = fdvp->v_mount->mnt_stat.f_iosize - 1;
+
+		/*
+		 * The fcnp entry will be somewhere between the start of
+		 * compaction (to_ulr.ulr_offset) and the original location
+		 * (from_ulr.ulr_offset).
+		 */
+		curpos = to_ulr.ulr_offset;
+		endsearch = from_ulr.ulr_offset + from_ulr.ulr_reclen;
+		entryoffsetinblock = 0;
+
+		/*
+		 * Get the directory block containing the start of
+		 * compaction.
+		 */
+		error = ufs_blkatoff(fdvp, (off_t)to_ulr.ulr_offset, &dirbuf,
+		    &bp, false);
+		if (error)
+			goto bad;
+
+		/*
+		 * Keep existing ulr_count (length of previous record)
+		 * for the case where compaction did not include the
+		 * previous entry but started at the from-entry.
+		 */
+		prev_reclen = from_ulr.ulr_count;
+
+		while (curpos < endsearch) {
+			uint32_t reclen;
+
+			/*
+			 * If necessary, get the next directory block.
+			 *
+			 * dholland 7/13/11 to the best of my understanding
+			 * this should never happen; compaction occurs only
+			 * within single blocks. I think.
+			 */
+			if ((curpos & bmask) == 0) {
+				if (bp != NULL)
+					brelse(bp, 0);
+				error = ufs_blkatoff(fdvp, (off_t)curpos,
+				    &dirbuf, &bp, false);
+				if (error)
+					goto bad;
+				entryoffsetinblock = 0;
+			}
+
+			KASSERT(bp != NULL);
+			ep = (struct direct *)(dirbuf + entryoffsetinblock);
+			reclen = ufs_rw16(ep->d_reclen, needswap);
+
+#if (BYTE_ORDER == LITTLE_ENDIAN)
+			if (FSFMT(fdvp) && needswap == 0)
+				namlen = ep->d_type;
+			else
+				namlen = ep->d_namlen;
+#else
+			if (FSFMT(fdvp) && needswap != 0)
+				namlen = ep->d_type;
+			else
+				namlen = ep->d_namlen;
+#endif
+			if ((ep->d_ino != 0) &&
+			    (ufs_rw32(ep->d_ino, needswap) != WINO) &&
+			    (namlen == fcnp->cn_namelen) &&
+			    memcmp(ep->d_name, fcnp->cn_nameptr, namlen) == 0) {
+				from_ulr.ulr_reclen = reclen;
+				break;
+			}
+			curpos += reclen;
+			entryoffsetinblock += reclen;
+			prev_reclen = reclen;
+		}
+
+		from_ulr.ulr_offset = curpos;
+		from_ulr.ulr_count = prev_reclen;
+
+		KASSERT(curpos <= endsearch);
+
+		/*
+		 * If ulr_offset points to start of a directory block,
+		 * clear ulr_count so ufs_dirremove() doesn't try to
+		 * merge free space over a directory block boundary.
+		 */
+		if ((from_ulr.ulr_offset & (dirblksiz - 1)) == 0)
+			from_ulr.ulr_count = 0;
+
+		brelse(bp, 0);
+	}
+
+	/*
+	 * 3) Unlink the source.
+	 */
+
+#if 0
+	/*
+	 * Ensure that the directory entry still exists and has not
+	 * changed while the new name has been entered. If the source is
+	 * a file then the entry may have been unlinked or renamed. In
+	 * either case there is no further work to be done. If the source
+	 * is a directory then it cannot have been rmdir'ed; The IRENAME
+	 * flag ensures that it cannot be moved by another rename or removed
+	 * by a rmdir.
+	 */
+#endif
+	KASSERT(fxp == ip);
+
+	/*
+	 * If the source is a directory with a new parent, the link
+	 * count of the old parent directory must be decremented and
+	 * ".." set to point to the new parent.
+	 */
+	if (doingdirectory && newparent) {
+		KASSERT(fdp != NULL);
+		ufs_dirrewrite(fxp, mastertemplate.dot_reclen,
+			       fdp, newparent, DT_DIR, 0, IN_CHANGE);
+		cache_purge(fdvp);
+	}
+	error = ufs_dirremove(fdvp, &from_ulr,
+			      fxp, fcnp->cn_flags, 0);
+	fxp->i_flag &= ~IN_RENAME;
+
+	VN_KNOTE(fvp, NOTE_RENAME);
+	goto done;
+
+ out:
+	goto out2;
+
+	/* exit routines from steps 1 & 2 */
+ bad:
+	if (doingdirectory)
+		ip->i_flag &= ~IN_RENAME;
+	ip->i_nlink--;
+	DIP_ASSIGN(ip, nlink, ip->i_nlink);
+	ip->i_flag |= IN_CHANGE;
+	ip->i_flag &= ~IN_RENAME;
+	UFS_WAPBL_UPDATE(fvp, NULL, NULL, 0);
+ done:
+	UFS_WAPBL_END(fdvp->v_mount);
+ out2:
+	/*
+	 * clear IN_RENAME - some exit paths happen too early to go
+	 * through the cleanup done in the "bad" case above, so we
+	 * always do this mini-cleanup here.
+	 */
+	ip->i_flag &= ~IN_RENAME;
+
+	VOP_UNLOCK(fdvp);
+	if (tdvp != fdvp) {
+		VOP_UNLOCK(tdvp);
+	}
+	VOP_UNLOCK(fvp);
+	if (tvp && tvp != fvp) {
+		VOP_UNLOCK(tvp);
+	}
+
+	vrele(fdvp);
+	vrele(tdvp);
+	vrele(fvp);
+	if (tvp) {
+		vrele(tvp);
+	}
+
+	fstrans_done(mp);
+	if (marked) {
 	UNMARK_VNODE(fdvp);
 	UNMARK_VNODE(fvp);
 	SET_ENDOP_REMOVE(fs, tdvp, tvp, "rename");
+	}
 	return (error);
 
-  errout:
-	VOP_ABORTOP(tdvp, ap->a_tcnp); /* XXX, why not in NFS? */
-	if (tdvp == tvp)
+ abort_withlocks:
+	VOP_UNLOCK(fdvp);
+	if (tdvp != fdvp) {
+		VOP_UNLOCK(tdvp);
+	}
+	VOP_UNLOCK(fvp);
+	if (tvp && tvp != fvp) {
+		VOP_UNLOCK(tvp);
+	}
+
+ abort:
+	VOP_ABORTOP(fdvp, fcnp); /* XXX, why not in NFS? */
+	VOP_ABORTOP(tdvp, tcnp); /* XXX, why not in NFS? */
 		vrele(tdvp);
-	else
-		vput(tdvp);
-	if (tvp)
-		vput(tvp);
-	VOP_ABORTOP(fdvp, ap->a_fcnp); /* XXX, why not in NFS? */
+	if (tvp) {
+		vrele(tvp);
+	}
 	vrele(fdvp);
+	if (fvp) {
 	vrele(fvp);
+	}
+	if (marked) {
+		UNMARK_VNODE(fdvp);
+		UNMARK_VNODE(fvp);
+		SET_ENDOP_REMOVE(fs, tdvp, tvp, "rename");
+	}
 	return (error);
 }
 
@@ -1153,7 +1933,8 @@ lfs_strategy(void *v)
 	struct vnode	*vp;
 	struct inode	*ip;
 	daddr_t		tbn;
-	int		i, sn, error, slept;
+#define MAXLOOP 25
+	int		i, sn, error, slept, loopcount;
 
 	bp = ap->a_bp;
 	vp = ap->a_vp;
@@ -1185,6 +1966,7 @@ lfs_strategy(void *v)
 	}
 
 	slept = 1;
+	loopcount = 0;
 	mutex_enter(&lfs_lock);
 	while (slept && fs->lfs_seglock) {
 		mutex_exit(&lfs_lock);
@@ -1213,12 +1995,19 @@ lfs_strategy(void *v)
 				      PRId64 "\n", ip->i_number, bp->b_lblkno));
 				mutex_enter(&lfs_lock);
 				if (LFS_SEGLOCK_HELD(fs) && fs->lfs_iocount) {
-					/* Cleaner can't wait for itself */
-					mtsleep(&fs->lfs_iocount,
-						(PRIBIO + 1) | PNORELOCK,
-						"clean2", 0,
-						&lfs_lock);
+					/*
+					 * Cleaner can't wait for itself.
+					 * Instead, wait for the blocks
+					 * to be written to disk.
+					 * XXX we need pribio in the test
+					 * XXX here.
+					 */
+ 					mtsleep(&fs->lfs_iocount,
+ 						(PRIBIO + 1) | PNORELOCK,
+						"clean2", hz/10 + 1,
+ 						&lfs_lock);
 					slept = 1;
+					++loopcount;
 					break;
 				} else if (fs->lfs_seglock) {
 					mtsleep(&fs->lfs_seglock,
@@ -1232,6 +2021,10 @@ lfs_strategy(void *v)
 			}
 		}
 		mutex_enter(&lfs_lock);
+		if (loopcount > MAXLOOP) {
+			printf("lfs_strategy: breaking out of clean2 loop\n");
+			break;
+		}
 	}
 	mutex_exit(&lfs_lock);
 
@@ -1240,37 +2033,39 @@ lfs_strategy(void *v)
 	return (0);
 }
 
-void
+/*
+ * Inline lfs_segwrite/lfs_writevnodes, but just for dirops.
+ * Technically this is a checkpoint (the on-disk state is valid)
+ * even though we are leaving out all the file data.
+ */
+int
 lfs_flush_dirops(struct lfs *fs)
 {
 	struct inode *ip, *nip;
 	struct vnode *vp;
 	extern int lfs_dostats;
 	struct segment *sp;
+	int flags = 0;
+	int error = 0;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
 	KASSERT(fs->lfs_nadirop == 0);
 
 	if (fs->lfs_ronly)
-		return;
+		return EROFS;
 
 	mutex_enter(&lfs_lock);
 	if (TAILQ_FIRST(&fs->lfs_dchainhd) == NULL) {
 		mutex_exit(&lfs_lock);
-		return;
+		return 0;
 	} else
 		mutex_exit(&lfs_lock);
 
 	if (lfs_dostats)
 		++lfs_stats.flush_invoked;
 
-	/*
-	 * Inline lfs_segwrite/lfs_writevnodes, but just for dirops.
-	 * Technically this is a checkpoint (the on-disk state is valid)
-	 * even though we are leaving out all the file data.
-	 */
 	lfs_imtime(fs);
-	lfs_seglock(fs, SEGM_CKP);
+	lfs_seglock(fs, flags);
 	sp = fs->lfs_sp;
 
 	/*
@@ -1293,6 +2088,8 @@ lfs_flush_dirops(struct lfs *fs)
 		vp = ITOV(ip);
 
 		KASSERT((ip->i_flag & IN_ADIROP) == 0);
+		KASSERT(vp->v_uflag & VU_DIROP);
+		KASSERT(!(vp->v_iflag & VI_XLOCK));
 
 		/*
 		 * All writes to directories come from dirops; all
@@ -1300,9 +2097,7 @@ lfs_flush_dirops(struct lfs *fs)
 		 * cache, which we're not touching.  Reads to files
 		 * and/or directories will not be affected by writing
 		 * directory blocks inodes and file inodes.  So we don't
-		 * really need to lock.	 If we don't lock, though,
-		 * make sure that we don't clear IN_MODIFIED
-		 * unnecessarily.
+		 * really need to lock.
 		 */
 		if (vp->v_iflag & VI_XLOCK) {
 			mutex_enter(&lfs_lock);
@@ -1313,23 +2108,36 @@ lfs_flush_dirops(struct lfs *fs)
 		 */
 		if (vp->v_type != VREG &&
 		    ((ip->i_flag & IN_ALLMOD) || !VPISEMPTY(vp))) {
-			lfs_writefile(fs, sp, vp);
+			error = lfs_writefile(fs, sp, vp);
 			if (!VPISEMPTY(vp) && !WRITEINPROG(vp) &&
 			    !(ip->i_flag & IN_ALLMOD)) {
 			    	mutex_enter(&lfs_lock);
 				LFS_SET_UINO(ip, IN_MODIFIED);
 			    	mutex_exit(&lfs_lock);
 			}
+			if (error && (sp->seg_flags & SEGM_SINGLE)) {
+				mutex_enter(&lfs_lock);
+				error = EAGAIN;
+				break;
+			}
 		}
 		KDASSERT(ip->i_number != LFS_IFILE_INUM);
-		(void) lfs_writeinode(fs, sp, ip);
+		error = lfs_writeinode(fs, sp, ip);
 		mutex_enter(&lfs_lock);
+		if (error && (sp->seg_flags & SEGM_SINGLE)) {
+			error = EAGAIN;
+			break;
+		}
+
 		/*
-		 * XXX
-		 * LK_EXCLOTHER is dead -- what is intended here?
-		 * if (waslocked == LK_EXCLOTHER)
-		 *	LFS_SET_UINO(ip, IN_MODIFIED);
+		 * We might need to update these inodes again,
+		 * for example, if they have data blocks to write.
+		 * Make sure that after this flush, they are still
+		 * marked IN_MODIFIED so that we don't forget to
+		 * write them.
 		 */
+		/* XXX only for non-directories? --KS */
+		LFS_SET_UINO(ip, IN_MODIFIED);
 	}
 	mutex_exit(&lfs_lock);
 	/* We've written all the dirops there are */
@@ -1337,6 +2145,8 @@ lfs_flush_dirops(struct lfs *fs)
 	lfs_finalize_fs_seguse(fs);
 	(void) lfs_writeseg(fs, sp);
 	lfs_segunlock(fs);
+
+	return error;
 }
 
 /*
@@ -1346,29 +2156,30 @@ lfs_flush_dirops(struct lfs *fs)
  * for any reason, just skip it; if we have to wait for the cleaner,
  * abort.  The writer daemon will call us again later.
  */
-void
+int
 lfs_flush_pchain(struct lfs *fs)
 {
 	struct inode *ip, *nip;
 	struct vnode *vp;
 	extern int lfs_dostats;
 	struct segment *sp;
-	int error;
+	int error, error2;
 
 	ASSERT_NO_SEGLOCK(fs);
 
 	if (fs->lfs_ronly)
-		return;
+		return EROFS;
 
 	mutex_enter(&lfs_lock);
 	if (TAILQ_FIRST(&fs->lfs_pchainhd) == NULL) {
 		mutex_exit(&lfs_lock);
-		return;
+		return 0;
 	} else
 		mutex_exit(&lfs_lock);
 
 	/* Get dirops out of the way */
-	lfs_flush_dirops(fs);
+	if ((error = lfs_flush_dirops(fs)) != 0)
+		return error;
 
 	if (lfs_dostats)
 		++lfs_stats.flush_invoked;
@@ -1422,12 +2233,12 @@ lfs_flush_pchain(struct lfs *fs)
 		    	mutex_exit(&lfs_lock);
 		}
 		KDASSERT(ip->i_number != LFS_IFILE_INUM);
-		(void) lfs_writeinode(fs, sp, ip);
+		error2 = lfs_writeinode(fs, sp, ip);
 
 		VOP_UNLOCK(vp);
 		lfs_vunref(vp);
 
-		if (error == EAGAIN) {
+		if (error == EAGAIN || error2 == EAGAIN) {
 			lfs_writeseg(fs, sp);
 			mutex_enter(&lfs_lock);
 			break;
@@ -1437,6 +2248,8 @@ lfs_flush_pchain(struct lfs *fs)
 	mutex_exit(&lfs_lock);
 	(void) lfs_writeseg(fs, sp);
 	lfs_segunlock(fs);
+
+	return 0;
 }
 
 /*
@@ -1682,7 +2495,8 @@ segwait_common:
 		/* Wait for the log to wrap, if asked */
 		if (*(int *)ap->a_data) {
 			mutex_enter(ap->a_vp->v_interlock);
-			lfs_vref(ap->a_vp);
+			if (lfs_vref(ap->a_vp) != 0)
+				panic("LFCNWRAPPASS: lfs_vref failed");
 			VTOI(ap->a_vp)->i_lfs_iflags |= LFSI_WRAPWAIT;
 			log(LOG_NOTICE, "LFCNPASS waiting for log wrap\n");
 			error = mtsleep(&fs->lfs_nowrap, PCATCH | PUSER,
@@ -1746,6 +2560,7 @@ lfs_getpages(void *v)
 static void
 wait_for_page(struct vnode *vp, struct vm_page *pg, const char *label)
 {
+	KASSERT(mutex_owned(vp->v_interlock));
 	if ((pg->flags & PG_BUSY) == 0)
 		return;		/* Nothing to wait for! */
 
@@ -1786,6 +2601,7 @@ static void
 write_and_wait(struct lfs *fs, struct vnode *vp, struct vm_page *pg,
 	       int seglocked, const char *label)
 {
+	KASSERT(mutex_owned(vp->v_interlock));
 #ifndef BUSYWAIT
 	struct inode *ip = VTOI(vp);
 	struct segment *sp = fs->lfs_sp;
@@ -1814,12 +2630,15 @@ write_and_wait(struct lfs *fs, struct vnode *vp, struct vm_page *pg,
 		mutex_enter(vp->v_interlock);
 		wait_for_page(vp, pg, label);
 	}
-	if (label != NULL && count > 1)
-		printf("lfs_putpages[%d]: %s: %sn = %d\n", curproc->p_pid,
-		       label, (count > 0 ? "looping, " : ""), count);
+	if (label != NULL && count > 1) {
+		DLOG((DLOG_PAGE, "lfs_putpages[%d]: %s: %sn = %d\n",
+		      curproc->p_pid, label, (count > 0 ? "looping, " : ""),
+		      count));
+	}
 #else
 	preempt(1);
 #endif
+	KASSERT(mutex_owned(vp->v_interlock));
 }
 
 /*
@@ -1849,6 +2668,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 	int pages_per_block = fs->lfs_bsize >> PAGE_SHIFT;
 	int pagedaemon = (curlwp == uvm.pagedaemon_lwp);
 
+	KASSERT(mutex_owned(vp->v_interlock));
 	ASSERT_MAYBE_SEGLOCK(fs);
   top:
 	by_list = (vp->v_uobj.uo_npages <=
@@ -1891,6 +2711,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 		 */
 		nonexistent = dirty = 0;
 		for (i = 0; i == 0 || i < pages_per_block; i++) {
+			KASSERT(mutex_owned(vp->v_interlock));
 			if (by_list && pages_per_block <= 1) {
 				pgs[i] = pg = curpg;
 			} else {
@@ -1916,13 +2737,16 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 				DLOG((DLOG_PAGE, "lfs_putpages: avoiding 3-way or pagedaemon deadlock\n"));
 				if (pgp)
 					*pgp = pg;
+				KASSERT(mutex_owned(vp->v_interlock));
 				return -1;
 			}
 
 			while (pg->flags & PG_BUSY) {
 				wait_for_page(vp, pg, NULL);
+				KASSERT(mutex_owned(vp->v_interlock));
 				if (i > 0)
 					uvm_page_unbusy(pgs, i);
+				KASSERT(mutex_owned(vp->v_interlock));
 				goto top;
 			}
 			pg->flags |= PG_BUSY;
@@ -1944,6 +2768,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 
 		any_dirty += dirty;
 		KASSERT(nonexistent == 0);
+		KASSERT(mutex_owned(vp->v_interlock));
 
 		/*
 		 * If any are dirty make all dirty; unbusy them,
@@ -1952,8 +2777,10 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 		 * they're on their way to disk.
 		 */
 		for (i = 0; i == 0 || i < pages_per_block; i++) {
+			KASSERT(mutex_owned(vp->v_interlock));
 			pg = pgs[i];
 			KASSERT(!((pg->flags & PG_CLEAN) && (pg->flags & PG_DELWRI)));
+			KASSERT(pg->flags & PG_BUSY);
 			if (dirty) {
 				pg->flags &= ~PG_CLEAN;
 				if (flags & PGO_FREE) {
@@ -1985,6 +2812,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 		}
 	}
 
+	KASSERT(mutex_owned(vp->v_interlock));
 	return any_dirty;
 }
 
@@ -2048,9 +2876,11 @@ lfs_putpages(void *v)
 	struct segment *sp;
 	off_t origoffset, startoffset, endoffset, origendoffset, blkeof;
 	off_t off, max_endoffset;
-	bool seglocked, sync, pagedaemon;
+	bool seglocked, sync, pagedaemon, reclaim;
 	struct vm_page *pg, *busypg;
 	UVMHIST_FUNC("lfs_putpages"); UVMHIST_CALLED(ubchist);
+	int oreclaim = 0;
+	int donewriting = 0;
 #ifdef DEBUG
 	int debug_n_again, debug_n_dirtyclean;
 #endif
@@ -2059,7 +2889,10 @@ lfs_putpages(void *v)
 	ip = VTOI(vp);
 	fs = ip->i_lfs;
 	sync = (ap->a_flags & PGO_SYNCIO) != 0;
+	reclaim = (ap->a_flags & PGO_RECLAIM) != 0;
 	pagedaemon = (curlwp == uvm.pagedaemon_lwp);
+
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	/* Putpages does nothing for metadata. */
 	if (vp == fs->lfs_ivnode || vp->v_type != VREG) {
@@ -2086,6 +2919,8 @@ lfs_putpages(void *v)
 			TAILQ_REMOVE(&fs->lfs_pchainhd, ip, i_lfs_pchain);
 		}
 		mutex_exit(&lfs_lock);
+
+		KASSERT(!mutex_owned(vp->v_interlock));
 		return 0;
 	}
 
@@ -2093,12 +2928,15 @@ lfs_putpages(void *v)
 
 	/*
 	 * Ignore requests to free pages past EOF but in the same block
-	 * as EOF, unless the request is synchronous.  (If the request is
-	 * sync, it comes from lfs_truncate.)
-	 * XXXUBC Make these pages look "active" so the pagedaemon won't
-	 * XXXUBC bother us with them again.
+	 * as EOF, unless the vnode is being reclaimed or the request
+	 * is synchronous.  (If the request is sync, it comes from
+	 * lfs_truncate.)
+	 *
+	 * To avoid being flooded with this request, make these pages
+	 * look "active".
 	 */
-	if (!sync && ap->a_offlo >= ip->i_size && ap->a_offlo < blkeof) {
+	if (!sync && !reclaim &&
+	    ap->a_offlo >= ip->i_size && ap->a_offlo < blkeof) {
 		origoffset = ap->a_offlo;
 		for (off = origoffset; off < blkeof; off += fs->lfs_bsize) {
 			pg = uvm_pagelookup(&vp->v_uobj, off);
@@ -2154,8 +2992,13 @@ lfs_putpages(void *v)
 	 * If not cleaning, just send the pages through genfs_putpages
 	 * to be returned to the pool.
 	 */
-	if (!(ap->a_flags & PGO_CLEANIT))
-		return genfs_putpages(v);
+	if (!(ap->a_flags & PGO_CLEANIT)) {
+		DLOG((DLOG_PAGE, "lfs_putpages: no cleanit vn %p ino %d (flags %x)\n",
+		      vp, (int)ip->i_number, ap->a_flags));
+		int r = genfs_putpages(v);
+		KASSERT(!mutex_owned(vp->v_interlock));
+		return r;
+	}
 
 	/* Set PGO_BUSYFAIL to avoid deadlocks */
 	ap->a_flags |= PGO_BUSYFAIL;
@@ -2169,6 +3012,7 @@ lfs_putpages(void *v)
 #endif
 	do {
 		int r;
+		KASSERT(mutex_owned(vp->v_interlock));
 
 		/* Count the number of dirty pages */
 		r = check_dirty(fs, vp, startoffset, endoffset, blkeof,
@@ -2191,8 +3035,10 @@ lfs_putpages(void *v)
 		r = genfs_do_putpages(vp, startoffset, endoffset,
 				       ap->a_flags & ~PGO_SYNCIO, &busypg);
 		ip->i_lfs_iflags &= ~LFSI_NO_GOP_WRITE;
-		if (r != EDEADLK)
-			return r;
+		if (r != EDEADLK) {
+			KASSERT(!mutex_owned(vp->v_interlock));
+ 			return r;
+		}
 
 		/* One of the pages was busy.  Start over. */
 		mutex_enter(vp->v_interlock);
@@ -2204,8 +3050,8 @@ lfs_putpages(void *v)
 
 #ifdef DEBUG
 	if (debug_n_dirtyclean > TOOMANY)
-		printf("lfs_putpages: dirtyclean: looping, n = %d\n",
-		       debug_n_dirtyclean);
+		DLOG((DLOG_PAGE, "lfs_putpages: dirtyclean: looping, n = %d\n",
+		      debug_n_dirtyclean));
 #endif
 
 	/*
@@ -2228,6 +3074,7 @@ lfs_putpages(void *v)
 		wakeup(&lfs_writer_daemon);
 		mutex_exit(&lfs_lock);
 		preempt();
+		KASSERT(!mutex_owned(vp->v_interlock));
 		return EWOULDBLOCK;
 	}
 
@@ -2239,26 +3086,28 @@ lfs_putpages(void *v)
 	 */
 	if ((ap->a_flags & (PGO_CLEANIT|PGO_LOCKED)) == PGO_CLEANIT &&
 	    (vp->v_uflag & VU_DIROP)) {
-		int locked;
-
 		DLOG((DLOG_PAGE, "lfs_putpages: flushing VU_DIROP\n"));
-		/* XXX VOP_ISLOCKED() may not be used for lock decisions. */
-		locked = (VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+
+ 		lfs_writer_enter(fs, "ppdirop");
+
+		/* Note if we hold the vnode locked */
+		if (VOP_ISLOCKED(vp) == LK_EXCLUSIVE)
+		{
+		    DLOG((DLOG_PAGE, "lfs_putpages: dirop inode already locked\n"));
+		} else {
+		    DLOG((DLOG_PAGE, "lfs_putpages: dirop inode not locked\n"));
+		}
 		mutex_exit(vp->v_interlock);
-		lfs_writer_enter(fs, "ppdirop");
-		if (locked)
-			VOP_UNLOCK(vp); /* XXX why? */
 
 		mutex_enter(&lfs_lock);
 		lfs_flush_fs(fs, sync ? SEGM_SYNC : 0);
 		mutex_exit(&lfs_lock);
 
-		if (locked)
-			VOP_LOCK(vp, LK_EXCLUSIVE);
 		mutex_enter(vp->v_interlock);
 		lfs_writer_leave(fs);
 
-		/* XXX the flush should have taken care of this one too! */
+		/* The flush will have cleaned out this vnode as well,
+		   no need to do more to it. */
 	}
 
 	/*
@@ -2286,14 +3135,22 @@ lfs_putpages(void *v)
 	if (!seglocked) {
 		mutex_exit(vp->v_interlock);
 		error = lfs_seglock(fs, SEGM_PROT | (sync ? SEGM_SYNC : 0));
-		if (error != 0)
-			return error;
+		if (error != 0) {
+			KASSERT(!mutex_owned(vp->v_interlock));
+ 			return error;
+		}
 		mutex_enter(vp->v_interlock);
 		lfs_acquire_finfo(fs, ip->i_number, ip->i_gen);
 	}
 	sp = fs->lfs_sp;
 	KASSERT(sp->vp == NULL);
 	sp->vp = vp;
+
+	/* Note segments written by reclaim; only for debugging */
+	if ((vp->v_iflag & VI_XLOCK) != 0) {
+		sp->seg_flags |= SEGM_RECLAIM;
+		fs->lfs_reclino = ip->i_number;
+	}
 
 	/*
 	 * Ensure that the partial segment is marked SS_DIROP if this
@@ -2313,10 +3170,11 @@ lfs_putpages(void *v)
 #endif
 	do {
 		busypg = NULL;
+		KASSERT(mutex_owned(vp->v_interlock));
 		if (check_dirty(fs, vp, startoffset, endoffset, blkeof,
 				ap->a_flags, 0, &busypg) < 0) {
 			mutex_exit(vp->v_interlock);
-
+			/* XXX why? --ks */
 			mutex_enter(vp->v_interlock);
 			write_and_wait(fs, vp, busypg, seglocked, NULL);
 			if (!seglocked) {
@@ -2330,8 +3188,12 @@ lfs_putpages(void *v)
 		}
 	
 		busypg = NULL;
+		KASSERT(!mutex_owned(&uvm_pageqlock));
+		oreclaim = (ap->a_flags & PGO_RECLAIM);
+		ap->a_flags &= ~PGO_RECLAIM;
 		error = genfs_do_putpages(vp, startoffset, endoffset,
 					   ap->a_flags, &busypg);
+		ap->a_flags |= oreclaim;
 	
 		if (error == EDEADLK || error == EAGAIN) {
 			DLOG((DLOG_PAGE, "lfs_putpages: genfs_putpages returned"
@@ -2339,20 +3201,40 @@ lfs_putpages(void *v)
 			      ip->i_number, fs->lfs_offset,
 			      dtosn(fs, fs->lfs_offset)));
 
-			mutex_enter(vp->v_interlock);
-			write_and_wait(fs, vp, busypg, seglocked, "again");
+			if (oreclaim) {
+				mutex_enter(vp->v_interlock);
+				write_and_wait(fs, vp, busypg, seglocked, "again");
+				mutex_exit(vp->v_interlock);
+			} else {
+				if ((sp->seg_flags & SEGM_SINGLE) &&
+				    fs->lfs_curseg != fs->lfs_startseg)
+					donewriting = 1;
+			}
+		} else if (error) {
+			DLOG((DLOG_PAGE, "lfs_putpages: genfs_putpages returned"
+			      " %d ino %d off %x (seg %d)\n", error,
+			      (int)ip->i_number, fs->lfs_offset,
+			      dtosn(fs, fs->lfs_offset)));
 		}
+		/* genfs_do_putpages loses the interlock */
 #ifdef DEBUG
 		++debug_n_again;
 #endif
-	} while (error == EDEADLK);
+		if (oreclaim && error == EAGAIN) {
+			DLOG((DLOG_PAGE, "vp %p ino %d vi_flags %x a_flags %x avoiding vclean panic\n",
+			      vp, (int)ip->i_number, vp->v_iflag, ap->a_flags));
+			mutex_enter(vp->v_interlock);
+		}
+		if (error == EDEADLK)
+			mutex_enter(vp->v_interlock);
+	} while (error == EDEADLK || (oreclaim && error == EAGAIN));
 #ifdef DEBUG
 	if (debug_n_again > TOOMANY)
-		printf("lfs_putpages: again: looping, n = %d\n", debug_n_again);
+		DLOG((DLOG_PAGE, "lfs_putpages: again: looping, n = %d\n", debug_n_again));
 #endif
 
 	KASSERT(sp != NULL && sp->vp == vp);
-	if (!seglocked) {
+	if (!seglocked && !donewriting) {
 		sp->vp = NULL;
 
 		/* Write indirect blocks as well */
@@ -2376,8 +3258,10 @@ lfs_putpages(void *v)
 	 * If we were called from lfs_writefile, we don't need to clean up
 	 * the FIP or unlock the segment lock.	We're done.
 	 */
-	if (seglocked)
+	if (seglocked) {
+		KASSERT(!mutex_owned(vp->v_interlock));
 		return error;
+	}
 
 	/* Clean up FIP and send it to disk. */
 	lfs_release_finfo(fs);
@@ -2417,6 +3301,7 @@ lfs_putpages(void *v)
 		}
 		mutex_exit(vp->v_interlock);
 	}
+	KASSERT(!mutex_owned(vp->v_interlock));
 	return error;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.25 2011/03/27 18:47:09 martin Exp $ */
+/*	$NetBSD: syscall.c,v 1.25.8.1 2012/02/18 07:33:14 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.25 2011/03/27 18:47:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.25.8.1 2012/02/18 07:33:14 mrg Exp $");
 
 #include "opt_sparc_arch.h"
 #include "opt_multiprocessor.h"
@@ -399,3 +399,14 @@ child_return(void *arg)
 	ktrsysret((l->l_proc->p_lflag & PL_PPWAIT) ? SYS_vfork : SYS_fork,
 	    0, 0);
 }
+
+/*
+ * Process the tail end of a posix_spawn() for the child.
+ */
+void
+cpu_spawn_return(struct lwp *l)
+{
+
+	userret(l, l->l_md.md_tf->tf_pc, 0);
+}
+

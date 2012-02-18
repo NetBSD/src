@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.11 2011/11/23 23:07:36 jmcneill Exp $ */
+/* $NetBSD: hdafg.c,v 1.11.2.1 2012/02/18 07:34:54 mrg Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.11 2011/11/23 23:07:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.11.2.1 2012/02/18 07:34:54 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -241,6 +241,7 @@ struct hdaudio_widget {
 	} w_p;
 	struct {
 		uint32_t		config;
+		uint32_t		biosconfig;
 		uint32_t		cap;
 		uint32_t		ctrl;
 	} w_pin;
@@ -552,6 +553,21 @@ hdafg_widget_pin_dump(struct hdafg_softc *sc)
 	}
 }
 
+static void
+hdafg_widget_setconfig(struct hdaudio_widget *w, uint32_t cfg)
+{
+	struct hdafg_softc *sc = w->w_afg;
+
+	hdaudio_command(sc->sc_codec, w->w_nid,
+	    CORB_SET_CONFIGURATION_DEFAULT_1, (cfg >>  0) & 0xff);
+	hdaudio_command(sc->sc_codec, w->w_nid,
+	    CORB_SET_CONFIGURATION_DEFAULT_2, (cfg >>  8) & 0xff);
+	hdaudio_command(sc->sc_codec, w->w_nid,
+	    CORB_SET_CONFIGURATION_DEFAULT_3, (cfg >> 16) & 0xff);
+	hdaudio_command(sc->sc_codec, w->w_nid,
+	    CORB_SET_CONFIGURATION_DEFAULT_4, (cfg >> 24) & 0xff);
+}
+
 static uint32_t
 hdafg_widget_getconfig(struct hdaudio_widget *w)
 {
@@ -593,6 +609,8 @@ hdafg_widget_pin_parse(struct hdaudio_widget *w)
 
 	w->w_pin.cap = hda_get_wparam(w, PIN_CAPABILITIES);
 	w->w_pin.config = hdafg_widget_getconfig(w);
+	w->w_pin.biosconfig = hdaudio_command(sc->sc_codec, w->w_nid,
+	    CORB_GET_CONFIGURATION_DEFAULT, 0);
 	w->w_pin.ctrl = hdaudio_command(sc->sc_codec, w->w_nid,
 	    CORB_GET_PIN_WIDGET_CONTROL, 0);
 
@@ -657,15 +675,35 @@ hdafg_widget_getcaps(struct hdaudio_widget *w)
 {
 	struct hdafg_softc *sc = w->w_afg;
 	uint32_t wcap, config;
+	bool pcbeep = false;
 
 	wcap = hda_get_wparam(w, AUDIO_WIDGET_CAPABILITIES);
 	config = hdafg_widget_getconfig(w);
 
 	w->w_waspin = false;
 
-	if (sc->sc_has_beepgen == false &&
+	switch (sc->sc_vendor) {
+	case HDA_VENDOR_ANALOG_DEVICES:
+		/*
+		 * help the parser by marking the analog
+		 * beeper as a beep generator
+		 */
+		if (w->w_nid == 0x1a &&
+		    COP_CFG_SEQUENCE(config) == 0x0 &&
+		    COP_CFG_DEFAULT_ASSOCIATION(config) == 0xf &&
+		    COP_CFG_PORT_CONNECTIVITY(config) ==
+		      COP_PORT_FIXED_FUNCTION &&
+		    COP_CFG_DEFAULT_DEVICE(config) ==
+		      COP_DEVICE_OTHER) {
+			pcbeep = true;
+		}
+		break;
+	}
+
+	if (pcbeep ||
+	    (sc->sc_has_beepgen == false &&
 	    COP_CFG_DEFAULT_DEVICE(config) == COP_DEVICE_SPEAKER &&
-	    (wcap & (COP_AWCAP_INAMP_PRESENT|COP_AWCAP_OUTAMP_PRESENT)) == 0) {
+	    (wcap & (COP_AWCAP_INAMP_PRESENT|COP_AWCAP_OUTAMP_PRESENT)) == 0)) {
 		wcap &= ~COP_AWCAP_TYPE_MASK;
 		wcap |= (COP_AWCAP_TYPE_BEEP_GENERATOR << COP_AWCAP_TYPE_SHIFT);
 		w->w_waspin = true;
@@ -732,6 +770,7 @@ hdafg_widget_parse(struct hdaudio_widget *w)
 		break;
 	case COP_AWCAP_TYPE_PIN_COMPLEX:
 		hdafg_widget_pin_parse(w);
+		hdafg_widget_setconfig(w, w->w_pin.config);
 		break;
 	}
 }
@@ -3698,6 +3737,7 @@ hdafg_detach(device_t self, int flags)
 	struct hdaudio_assoc *as = sc->sc_assocs;
 	struct hdaudio_control *ctl = sc->sc_ctls;
 	struct hdaudio_mixer *mx = sc->sc_mixers;
+	int nid;
 
 	callout_halt(&sc->sc_jack_callout, NULL);
 	callout_destroy(&sc->sc_jack_callout);
@@ -3712,6 +3752,15 @@ hdafg_detach(device_t self, int flags)
 		hdaudio_stream_disestablish(sc->sc_audiodev.ad_playback);
 	if (sc->sc_audiodev.ad_capture)
 		hdaudio_stream_disestablish(sc->sc_audiodev.ad_capture);
+
+	/* restore bios pin widget configuration */
+	for (nid = sc->sc_startnode; nid < sc->sc_endnode; nid++) {
+		w = hdafg_widget_lookup(sc, nid);		
+		if (w == NULL || w->w_type != COP_AWCAP_TYPE_PIN_COMPLEX)
+			continue;
+		hdafg_widget_setconfig(w, w->w_pin.biosconfig);
+	}
+
 	if (w)
 		kmem_free(w, sc->sc_nwidgets * sizeof(*w));
 	if (as)
@@ -3752,14 +3801,22 @@ static bool
 hdafg_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct hdafg_softc *sc = device_private(self);
+	struct hdaudio_widget *w;
 	int nid;
 
 	hdaudio_command(sc->sc_codec, sc->sc_nid,
 	    CORB_SET_POWER_STATE, COP_POWER_STATE_D0);
 	hda_delay(100);
-	for (nid = sc->sc_startnode; nid < sc->sc_endnode; nid++)
+	for (nid = sc->sc_startnode; nid < sc->sc_endnode; nid++) {
 		hdaudio_command(sc->sc_codec, nid,
 		    CORB_SET_POWER_STATE, COP_POWER_STATE_D0);
+		w = hdafg_widget_lookup(sc, nid);		
+
+		/* restore pin widget configuration */
+		if (w == NULL || w->w_type != COP_AWCAP_TYPE_PIN_COMPLEX)
+			continue;
+		hdafg_widget_setconfig(w, w->w_pin.config);
+	}
 	hda_delay(1000);
 
 	hdafg_commit(sc);

@@ -1,4 +1,4 @@
-/* $NetBSD: apecs_dma.c,v 1.20 2011/07/01 19:19:49 dyoung Exp $ */
+/* $NetBSD: apecs_dma.c,v 1.20.6.1 2012/02/18 07:31:01 mrg Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs_dma.c,v 1.20 2011/07/01 19:19:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs_dma.c,v 1.20.6.1 2012/02/18 07:31:01 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,7 @@ apecs_dma_init(struct apecs_config *acp)
 	 */
 	alpha_sgmap_init(t, &acp->ac_sgmap, "apecs_sgmap",
 	    APECS_SGMAP_MAPPED_BASE, 0, APECS_SGMAP_MAPPED_SIZE,
-	    sizeof(u_int64_t), NULL, 0);
+	    sizeof(uint64_t), NULL, 0);
 
 	/*
 	 * Set up window 1 as an 8MB SGMAP-mapped window

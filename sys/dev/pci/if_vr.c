@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.108 2011/11/19 22:51:23 tls Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.108.2.1 2012/02/18 07:34:42 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,9 +97,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.108 2011/11/19 22:51:23 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.108.2.1 2012/02/18 07:34:42 mrg Exp $");
 
-#include "rnd.h"
+
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,9 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.108 2011/11/19 22:51:23 tls Exp $");
 #include <sys/socket.h>
 #include <sys/device.h>
 
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_arp.h>
@@ -233,9 +231,7 @@ struct vr_softc {
 	uint32_t	vr_save_membase;
 	uint32_t	vr_save_irq;
 
-#if NRND > 0
 	krndsource_t rnd_source;	/* random source */
-#endif
 };
 
 #define	VR_CDTXADDR(sc, x)	((sc)->vr_cddma + VR_CDTXOFF((x)))
@@ -908,10 +904,7 @@ vr_intr(void *arg)
 
 		handled = 1;
 
-#if NRND > 0
-		if (RND_ENABLED(&sc->rnd_source))
-			rnd_add_uint32(&sc->rnd_source, status);
-#endif
+		rnd_add_uint32(&sc->rnd_source, status);
 
 		if (status & VR_ISR_RX_OK)
 			vr_rxeof(sc);
@@ -1440,7 +1433,6 @@ vr_attach(device_t parent, device_t self, void *aux)
 	struct ifnet *ifp;
 	uint8_t eaddr[ETHER_ADDR_LEN], mac;
 	int i, rseg, error;
-	char devinfo[256];
 
 #define	PCI_CONF_WRITE(r, v)	pci_conf_write(sc->vr_pc, sc->vr_tag, (r), (v))
 #define	PCI_CONF_READ(r)	pci_conf_read(sc->vr_pc, sc->vr_tag, (r))
@@ -1451,10 +1443,7 @@ vr_attach(device_t parent, device_t self, void *aux)
 	sc->vr_id = pa->pa_id;
 	callout_init(&sc->vr_tick_ch, 0);
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_naive("\n");
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
-	    PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo(pa, NULL);
 
 	/*
 	 * Handle power management nonsense.
@@ -1693,10 +1682,9 @@ vr_attach(device_t parent, device_t self, void *aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->vr_enaddr);
-#if NRND > 0
+
 	rnd_attach_source(&sc->rnd_source, device_xname(self),
 	    RND_TYPE_NET, 0);
-#endif
 
 	if (pmf_device_register1(self, NULL, vr_resume, vr_shutdown))
 		pmf_class_network_register(self, ifp);

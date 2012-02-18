@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.23 2011/11/12 23:52:54 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.23.4.1 2012/02/18 07:33:04 mrg Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,6 +57,60 @@ BRD_DECL(iomega);
 BRD_DECL(dlink);
 BRD_DECL(nhnas);
 
+static void brdfixup(void);
+static void setup(void);
+static void send_iomega(int, int, int, int, int, int);
+static inline uint32_t mfmsr(void);
+static inline void mtmsr(uint32_t);
+static inline uint32_t cputype(void);
+static inline u_quad_t mftb(void);
+static void init_uart(unsigned, unsigned, uint8_t);
+static void send_sat(char *);
+static unsigned mpc107memsize(void);
+
+/* UART registers */
+#define RBR		0
+#define THR		0
+#define DLB		0
+#define DMB		1
+#define IER		1
+#define FCR		2
+#define LCR		3
+#define  LCR_DLAB	0x80
+#define  LCR_PEVEN	0x18
+#define  LCR_PNONE	0x00
+#define  LCR_8BITS	0x03
+#define MCR		4
+#define  MCR_RTS	0x02
+#define  MCR_DTR	0x01
+#define LSR		5
+#define  LSR_THRE	0x20
+#define  LSR_DRDY	0x01
+#define DCR		0x11
+#define UART_READ(base, r)	in8(base + (r))
+#define UART_WRITE(base, r, v)	out8(base + (r), (v))
+
+/* MPC106 and MPC824x PCI bridge memory configuration */
+#define MPC106_MEMSTARTADDR1	0x80
+#define MPC106_EXTMEMSTARTADDR1	0x88
+#define MPC106_MEMENDADDR1	0x90
+#define MPC106_EXTMEMENDADDR1	0x98
+#define MPC106_MEMEN		0xa0
+
+/* Iomega StorCenter MC68HC908 microcontroller data packet */
+#define IOMEGA_POWER		0
+#define IOMEGA_LED		1
+#define IOMEGA_FLASH_RATE	2
+#define IOMEGA_FAN		3
+#define IOMEGA_HIGH_TEMP	4
+#define IOMEGA_LOW_TEMP		5
+#define IOMEGA_ID		6
+#define IOMEGA_CHECKSUM		7
+#define IOMEGA_PACKETSIZE	8
+
+/* NH230/231 GPIO */
+#define NHGPIO_WRITE(x)		*((uint8_t *)0x70000000) = x
+
 static struct brdprop brdlist[] = {
     {
 	"sandpoint",
@@ -76,17 +130,16 @@ static struct brdprop brdlist[] = {
 	"kurobox",
 	"KuroBox",
 	BRD_KUROBOX,
-	32768000,
+	0,
 	"eumb", 0x4600, 57600,
-	kurosetup, kurobrdfix, NULL, NULL },
+	kurosetup, kurobrdfix, NULL, kuroreset },
     {
 	"synology",
 	"Synology DS",
 	BRD_SYNOLOGY,
-	33164691,	/* from Synology/Linux source            */
-			/* XXX should be 33165343 for the CS-406 */
+	0,
 	"eumb", 0x4500, 115200,
-	NULL, synobrdfix, NULL, synoreset },
+	synosetup, synobrdfix, NULL, synoreset },
     {
 	"qnap",
 	"QNAP TS",
@@ -111,11 +164,11 @@ static struct brdprop brdlist[] = {
 	NULL, dlinkbrdfix, NULL, NULL },
     {
 	"nhnas",
-	"Netronics NH230/231",
+	"Netronix NH-230/231",
 	BRD_NH230NAS,
-	0,
+	33000000,
 	"eumb", 0x4500, 9600,
-	NULL, nhnasbrdfix, NULL, NULL },
+	NULL, nhnasbrdfix, NULL, nhnasreset },
     {
 	"unknown",
 	"Unknown board",
@@ -125,55 +178,14 @@ static struct brdprop brdlist[] = {
 	NULL, NULL, NULL, NULL }, /* must be the last */
 };
 
-/* Iomega StorCenter MC68HC908 microcontroller data packet */
-#define IOMEGA_POWER		0
-#define IOMEGA_LED		1
-#define IOMEGA_FLASH_RATE	2
-#define IOMEGA_FAN		3
-#define IOMEGA_HIGH_TEMP	4
-#define IOMEGA_LOW_TEMP		5
-#define IOMEGA_ID		6
-#define IOMEGA_CHECKSUM		7
-#define IOMEGA_PACKETSIZE	8
-
 static struct brdprop *brdprop;
 static uint32_t ticks_per_sec, ns_per_tick;
-
-static void brdfixup(void);
-static void setup(void);
-static void send_iomega(int, int, int, int, int, int);
-static inline uint32_t mfmsr(void);
-static inline void mtmsr(uint32_t);
-static inline uint32_t cputype(void);
-static inline u_quad_t mftb(void);
-static void init_uart(unsigned, unsigned, uint8_t);
-static void send_sat(char *);
 
 const unsigned dcache_line_size = 32;		/* 32B linesize */
 const unsigned dcache_range_size = 4 * 1024;	/* 16KB / 4-way */
 
 unsigned uart1base;	/* console */
 unsigned uart2base;	/* optional satellite processor */
-#define RBR		0
-#define THR		0
-#define DLB		0
-#define DMB		1
-#define IER		1
-#define FCR		2
-#define LCR		3
-#define  LCR_DLAB	0x80
-#define  LCR_PEVEN	0x18
-#define  LCR_PNONE	0x00
-#define  LCR_8BITS	0x03
-#define MCR		4
-#define  MCR_RTS	0x02
-#define  MCR_DTR	0x01
-#define LSR		5
-#define  LSR_THRE	0x20
-#define  LSR_DRDY	0x01
-#define DCR		0x11
-#define UART_READ(base, r)	in8(base + (r))
-#define UART_WRITE(base, r, v)	out8(base + (r), (v))
 
 void brdsetup(void);	/* called by entry.S */
 
@@ -656,6 +668,24 @@ kurobrdfix(struct brdprop *brd)
 }
 
 void
+kuroreset()
+{
+
+	send_sat("CCGG");
+	/*NOTREACHED*/
+}
+
+void
+synosetup(struct brdprop *brd)
+{
+
+	if (1) /* 200 and 266MHz models */
+		brd->extclk = 33164691; /* from Synology/Linux source */
+	else   /* 400MHz models XXX how to check? */
+		brd->extclk = 33165343;
+}
+
+void
 synobrdfix(struct brdprop *brd)
 {
 
@@ -719,7 +749,18 @@ void
 nhnasbrdfix(struct brdprop *brd)
 {
 
-	/* illuminate LEDs */
+	/* status LED off, USB-LEDs on, low-speed fan */
+	NHGPIO_WRITE(0x04);
+}
+
+void
+nhnasreset()
+{
+
+	/* status LED on, assert system-reset to all devices */
+	NHGPIO_WRITE(0x02);
+	delay(100000);
+	/*NOTREACHED*/
 }
 
 void
@@ -1002,8 +1043,49 @@ tstchar(void)
 	return (UART_READ(uart1base, LSR) & LSR_DRDY) != 0;
 }
 
-unsigned
-mpc107memsize()
+#define SAR_MASK 0x0ff00000
+#define SAR_SHIFT    20
+#define EAR_MASK 0x30000000
+#define EAR_SHIFT    28
+#define AR(v, s) ((((v) & SAR_MASK) >> SAR_SHIFT) << (s))
+#define XR(v, s) ((((v) & EAR_MASK) >> EAR_SHIFT) << (s))
+static void
+set_mem_bounds(unsigned tag, unsigned bk_en, ...)
+{
+	unsigned mbst, mbxst, mben, mbxen;
+	unsigned start, end;
+	va_list ap;
+	int i, sh;
+
+	va_start(ap, bk_en);
+	mbst = mbxst = mben = mbxen = 0;
+
+	for (i = 0; i < 4; i++) {
+		if ((bk_en & (1U << i)) != 0) {
+			start = va_arg(ap, unsigned);
+			end = va_arg(ap, unsigned);
+		} else {
+			start = 0x3ff00000;
+			end = 0x3fffffff;
+		}
+		sh = i << 3;
+		mbst |= AR(start, sh);
+		mbxst |= XR(start, sh);
+		mben |= AR(end, sh);
+		mbxen |= XR(end, sh);
+	}
+	va_end(ap);
+
+	pcicfgwrite(tag, MPC106_MEMSTARTADDR1, mbst);
+	pcicfgwrite(tag, MPC106_EXTMEMSTARTADDR1, mbxst);
+	pcicfgwrite(tag, MPC106_MEMENDADDR1, mben);
+	pcicfgwrite(tag, MPC106_EXTMEMENDADDR1,	mbxen);
+	pcicfgwrite(tag, MPC106_MEMEN,
+	    (pcicfgread(tag, MPC106_MEMEN) & ~0xff) | (bk_en & 0xff));
+}
+
+static unsigned
+mpc107memsize(void)
 {
 	unsigned bankn, end, n, tag, val;
 
@@ -1011,37 +1093,13 @@ mpc107memsize()
 
 	if (brdtype == BRD_ENCOREPP1) {
 		/* the brd's PPCBOOT looks to have erroneous values */
-		unsigned tbl[] = {
-#define MPC106_MEMSTARTADDR1	0x80
-#define MPC106_EXTMEMSTARTADDR1	0x88
-#define MPC106_MEMENDADDR1	0x90
-#define MPC106_EXTMEMENDADDR1	0x98
-#define MPC106_MEMEN		0xa0
-#define	BK0_S	0x00000000
-#define	BK0_E	(128 << 20) - 1
-#define BK1_S	0x3ff00000
-#define BK1_E	0x3fffffff
-#define BK2_S	0x3ff00000
-#define BK2_E	0x3fffffff
-#define BK3_S	0x3ff00000
-#define BK3_E	0x3fffffff
-#define AR(v, s) ((((v) & SAR_MASK) >> SAR_SHIFT) << (s))
-#define XR(v, s) ((((v) & EAR_MASK) >> EAR_SHIFT) << (s))
-#define SAR_MASK 0x0ff00000
-#define SAR_SHIFT    20
-#define EAR_MASK 0x30000000
-#define EAR_SHIFT    28
-		AR(BK0_S, 0) | AR(BK1_S, 8) | AR(BK2_S, 16) | AR(BK3_S, 24),
-		XR(BK0_S, 0) | XR(BK1_S, 8) | XR(BK2_S, 16) | XR(BK3_S, 24),
-		AR(BK0_E, 0) | AR(BK1_E, 8) | AR(BK2_E, 16) | AR(BK3_E, 24),
-		XR(BK0_E, 0) | XR(BK1_E, 8) | XR(BK2_E, 16) | XR(BK3_E, 24),
-		};
-		tag = pcimaketag(0, 0, 0);
-		pcicfgwrite(tag, MPC106_MEMSTARTADDR1, tbl[0]);
-		pcicfgwrite(tag, MPC106_EXTMEMSTARTADDR1, tbl[1]);
-		pcicfgwrite(tag, MPC106_MEMENDADDR1, tbl[2]);
-		pcicfgwrite(tag, MPC106_EXTMEMENDADDR1,	tbl[3]);
-		pcicfgwrite(tag, MPC106_MEMEN, 1);
+		set_mem_bounds(tag, 1, 0x00000000, (128 << 20) - 1);
+	} else if (brdtype == BRD_NH230NAS) {
+		/*
+		 * PPCBoot sets the end address to 0x7ffffff, although the
+		 * board has just 64MB (0x3ffffff).
+		 */
+		set_mem_bounds(tag, 1, 0x00000000, 0x03ffffff);
 	}
 
 	bankn = 0;
@@ -1051,7 +1109,7 @@ mpc107memsize()
 			break;
 		bankn = n;
 	}
-	bankn = bankn * 8;
+	bankn <<= 3;
 
 	val = pcicfgread(tag, MPC106_EXTMEMENDADDR1);
 	end =  ((val >> bankn) & 0x03) << 28;

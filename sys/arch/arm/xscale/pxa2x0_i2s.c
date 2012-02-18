@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_i2s.c,v 1.10 2011/11/23 23:07:29 jmcneill Exp $	*/
+/*	$NetBSD: pxa2x0_i2s.c,v 1.10.2.1 2012/02/18 07:31:34 mrg Exp $	*/
 /*	$OpenBSD: pxa2x0_i2s.c,v 1.7 2006/04/04 11:45:40 pascoe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2s.c,v 1.10 2011/11/23 23:07:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2s.c,v 1.10.2.1 2012/02/18 07:31:34 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -322,12 +322,10 @@ pxa2x0_i2s_halt_output(void *hdl)
 {
 	struct pxa2x0_i2s_softc *sc = hdl;
 
-	mutex_spin_enter(sc->sc_intr_lock);
 	if (sc->sc_txdma) {
 		pxa2x0_dmac_abort_xfer(sc->sc_txdma->dx);
 		sc->sc_txdma = NULL;
 	}
-	mutex_spin_exit(sc->sc_intr_lock);
 
 	return 0;
 }
@@ -337,12 +335,10 @@ pxa2x0_i2s_halt_input(void *hdl)
 {
 	struct pxa2x0_i2s_softc *sc = hdl;
 
-	mutex_spin_enter(sc->sc_intr_lock);
 	if (sc->sc_rxdma) {
 		pxa2x0_dmac_abort_xfer(sc->sc_rxdma->dx);
 		sc->sc_rxdma = NULL;
 	}
-	mutex_spin_exit(sc->sc_intr_lock);
 
 	return 0;
 }
@@ -368,7 +364,7 @@ pxa2x0_i2s_start_output(void *hdl, void *block, int bsize,
 	}
 	if (p == NULL) {
 		aprint_error("pxa2x0_i2s_start_output: "
-		    "request with bad start address: %p, size: %d)\n",
+		    "request with bad start address: %p, size: %d\n",
 		    block, bsize);
 		return ENXIO;
 	}
@@ -418,7 +414,7 @@ pxa2x0_i2s_start_input(void *hdl, void *block, int bsize,
 	}
 	if (p == NULL) {
 		aprint_error("pxa2x0_i2s_start_input: "
-		    "request with bad start address: %p, size: %d)\n",
+		    "request with bad start address: %p, size: %d\n",
 		    block, bsize);
 		return ENXIO;
 	}

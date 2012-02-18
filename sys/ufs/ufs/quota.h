@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.h,v 1.28 2011/03/25 10:25:17 bouyer Exp $	*/
+/*	$NetBSD: quota.h,v 1.28.8.1 2012/02/18 07:35:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -55,14 +55,14 @@
 
 
 #if !defined(HAVE_NBTOOL_CONFIG_H)
-#include <quota/quotaprop.h>
+#include <sys/quota.h>
 __inline static int __unused
-ufsclass2qtype(int class)
+quota_idtype_to_ufs(int idtype)
 {
-	switch(class) {
-	case QUOTA_CLASS_USER:
+	switch (idtype) {
+	case QUOTA_IDTYPE_USER:
 		return USRQUOTA;
-	case QUOTA_CLASS_GROUP:
+	case QUOTA_IDTYPE_GROUP:
 		return GRPQUOTA;
 	default:
 		return -1;
@@ -70,13 +70,13 @@ ufsclass2qtype(int class)
 }
 
 static __inline int __unused
-qtype2ufsclass(int type)
+quota_idtype_from_ufs(int ufstype)
 {
-	switch(type) {
+	switch (ufstype) {
 	case USRQUOTA:
-		return QUOTA_CLASS_USER;
+		return QUOTA_IDTYPE_USER;
 	case GRPQUOTA:
-		return QUOTA_CLASS_GROUP;
+		return QUOTA_IDTYPE_GROUP;
 	default:
 		return -1;
 	}

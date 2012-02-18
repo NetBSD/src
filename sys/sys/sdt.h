@@ -1,4 +1,4 @@
-/*	$NetBSD: sdt.h,v 1.1 2010/03/01 21:10:13 darran Exp $	*/
+/*	$NetBSD: sdt.h,v 1.1.18.1 2012/02/18 07:35:51 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -33,6 +33,9 @@
 
 #ifndef _SDT_H_
 #define _SDT_H_
+
+/* should be stdint.h, but this works transparently for both user and kernel */
+#include <sys/stdint.h>
 
 #if defined(_KERNEL_OPT)
 #include "opt_dtrace.h"

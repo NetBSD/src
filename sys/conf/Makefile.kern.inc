@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.149 2011/09/25 22:26:33 joerg Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.149.6.1 2012/02/18 07:34:01 mrg Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -65,6 +65,7 @@ DEFWARNINGS?=	yes
 .if (${DEFWARNINGS} == "yes")
 CWARNFLAGS+=	-Wall -Wno-main -Wno-format-zero-length -Wpointer-arith
 CWARNFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes
+CWARNFLAGS+=	-Wold-style-definition
 CWARNFLAGS+=	-Wswitch -Wshadow
 CWARNFLAGS+=	-Wcast-qual -Wwrite-strings
 CWARNFLAGS+=	-Wno-unreachable-code
@@ -74,6 +75,9 @@ CWARNFLAGS+=	-Wno-pointer-sign -Wno-attributes
 	${MACHINE_ARCH} == "sparc64" || ${MACHINE} == "prep"
 CWARNFLAGS+=	-Wextra -Wno-unused-parameter
 .  endif
+.  if ${MACHINE} == "i386" || ${MACHINE_ARCH} == "x86_64"
+CWARNFLAGS+=	-Wold-style-definition
+.  endif
 . endif
 # Add -Wno-sign-compare.  -Wsign-compare is included in -Wall as of GCC 3.3,
 # but our sources aren't up for it yet.
@@ -82,6 +86,9 @@ CWARNFLAGS+=	-Wno-sign-compare
 
 CWARNFLAGS.clang+=	-Wno-unknown-pragmas -Wno-conversion \
 			-Wno-self-assign
+
+CWARNFLAGS.ah_regdomain.c= ${${ACTIVE_CC} == "clang":? \
+    -Wno-shift-count-negative -Wno-shift-count-overflow:}
 
 CFLAGS+=	-ffreestanding -fno-zero-initialized-in-bss
 CFLAGS+=	${DEBUG} ${COPTS}

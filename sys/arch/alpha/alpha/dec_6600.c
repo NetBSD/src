@@ -1,21 +1,21 @@
-/* $NetBSD: dec_6600.c,v 1.32 2011/07/01 19:22:35 dyoung Exp $ */
+/* $NetBSD: dec_6600.c,v 1.32.6.1 2012/02/18 07:30:48 mrg Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.32 2011/07/01 19:22:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.32.6.1 2012/02/18 07:30:48 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ static const char *kgdb_devlist[] = {
 #endif /* KGDB */
 
 void
-dec_6600_init()
+dec_6600_init(void)
 {
 
 	platform.family = "6600";
@@ -121,10 +121,10 @@ dec_6600_init()
 }
 
 static void
-dec_6600_cons_init()
+dec_6600_cons_init(void)
 {
 	struct ctb *ctb;
-	u_int64_t ctbslot;
+	uint64_t ctbslot;
 	struct tsp_config *tsp;
 
 	ctb = (struct ctb *)(((char *)hwrpb) + hwrpb->rpb_ctb_off);
@@ -136,7 +136,7 @@ dec_6600_cons_init()
 	tsp = tsp_init(0, tsp_console_hose);
 
 	switch (ctb->ctb_term_type) {
-	case CTB_PRINTERPORT: 
+	case CTB_PRINTERPORT:
 		/* serial console ... */
 		assert(CTB_TURBOSLOT_HOSE(ctbslot) == 0);
 		/* XXX */
@@ -405,7 +405,7 @@ dec_6600_mcheck(unsigned long vector, struct ev6_logout_area *la)
 static void
 dec_6600_mcheck_sys(unsigned int indent, struct ev6_logout_area *la)
 {
-	struct ev6_logout_sys *ls = 
+	struct ev6_logout_sys *ls =
 		(struct ev6_logout_sys *)ALPHA_LOGOUT_SYSTEM_AREA(&la->la);
 
 #define FMT	"%-30s = 0x%016lx\n"
@@ -438,7 +438,7 @@ dec_6600_mcheck_handler(unsigned long mces, struct trapframe *framep,
 	 * If we expected a machine check, just go handle it in common code.
 	 */
 	mcp = &curcpu()->ci_mcinfo;
-	if (mcp->mc_expected) 
+	if (mcp->mc_expected)
 		machine_check(mces, framep, vector, param);
 
 	dec_6600_mcheck(vector, la);

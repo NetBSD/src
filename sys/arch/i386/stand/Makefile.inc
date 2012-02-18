@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2011/10/11 13:54:00 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.8.6.1 2012/02/18 07:32:23 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -8,5 +8,5 @@ OPT_SIZE.gcc=	-Os -ffreestanding -fomit-frame-pointer
 OPT_SIZE.clang=	-Oz -ffreestanding -fomit-frame-pointer -DNDEBUG \
 		-fno-stack-protector -mno-sse \
 		-mllvm -enable-iv-rewrite=true \
-		-mllvm -stack-alignment=4 -mllvm -realign-stack=false \
+		-mstack-alignment=4 \
 		-mllvm -inline-threshold=3 -mllvm -enable-load-pre=false

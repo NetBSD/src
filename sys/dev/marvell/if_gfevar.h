@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfevar.h,v 1.11 2011/11/19 22:51:23 tls Exp $	*/
+/*	$NetBSD: if_gfevar.h,v 1.11.2.1 2012/02/18 07:34:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -167,8 +167,6 @@ struct gfe_softc {
 	 */
 	struct gfe_rxqueue sc_rxq[4];	/* Hi/MedHi/MedLo/Lo receive queues */
 
-#if NRND > 0 
 	krndsource_t sc_rnd_source;
-#endif
 };
 #endif	/* _IF_GFEVAR_H_ */

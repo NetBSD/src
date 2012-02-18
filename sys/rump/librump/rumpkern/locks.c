@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.54 2011/03/21 16:41:08 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.54.8.1 2012/02/18 07:35:46 mrg Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.54 2011/03/21 16:41:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.54.8.1 2012/02/18 07:35:46 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -222,9 +222,6 @@ void
 rw_downgrade(krwlock_t *rw)
 {
 
-#ifdef LOCKDEBUG
-	KASSERT(!rw_write_held(rw));
-#endif
 	/*
 	 * XXX HACK: How we can downgrade re lock in rump properly.
 	 */

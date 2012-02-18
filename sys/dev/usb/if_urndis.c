@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.1 2011/07/20 19:59:49 jakllsch Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.1.6.1 2012/02/18 07:35:07 mrg Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.1 2011/07/20 19:59:49 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.1.6.1 2012/02/18 07:35:07 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

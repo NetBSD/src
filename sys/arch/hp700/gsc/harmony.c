@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.25 2011/11/24 03:35:56 mrg Exp $	*/
+/*	$NetBSD: harmony.c,v 1.25.2.1 2012/02/18 07:32:06 mrg Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -61,7 +61,7 @@
  * Harmony (CS4215/AD1849 LASI) audio interface.
  */
 
-#include "rnd.h"
+
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -73,9 +73,7 @@
 #include <sys/kmem.h>
 #include <uvm/uvm_extern.h>
 
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
@@ -171,7 +169,6 @@ void harmony_try_more(struct harmony_softc *, int, int,
 static void harmony_empty_input(struct harmony_softc *);
 static void harmony_empty_output(struct harmony_softc *);
 
-#if NRND > 0
 void harmony_acc_tmo(void *);
 #define	ADD_CLKALLICA(sc) do {						\
 	(sc)->sc_acc <<= 1;						\
@@ -180,7 +177,6 @@ void harmony_acc_tmo(void *);
 		rnd_add_uint32(&(sc)->sc_rnd_source,			\
 			       (sc)->sc_acc_num ^= (sc)->sc_acc);	\
 } while(0)
-#endif
 
 int
 harmony_match(device_t parent, struct cfdata *match, void *aux)
@@ -323,14 +319,12 @@ harmony_attach(device_t parent, device_t self, void *aux)
 
 	audio_attach_mi(&harmony_sa_hw_if, sc, sc->sc_dv);
 
-#if NRND > 0
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dv),
 	    RND_TYPE_UNKNOWN, 0);
 
 	callout_init(&sc->sc_acc_tmo, 0);
 	callout_setfunc(&sc->sc_acc_tmo, harmony_acc_tmo, sc);
 	sc->sc_acc_num = 0xa5a5a5a5;
-#endif
 }
 
 void
@@ -350,7 +344,6 @@ harmony_reset_codec(struct harmony_softc *sc)
 	WRITE_REG(sc, HARMONY_RESET, 0);
 }
 
-#if NRND > 0
 void
 harmony_acc_tmo(void *v)
 {
@@ -360,7 +353,6 @@ harmony_acc_tmo(void *v)
 	ADD_CLKALLICA(sc);
 	callout_schedule(&sc->sc_acc_tmo, 1);
 }
-#endif
 
 /*
  * interrupt handler
@@ -374,9 +366,7 @@ harmony_intr(void *vsc)
 
 	sc = vsc;
 	r = 0;
-#if NRND > 0
 	ADD_CLKALLICA(sc);
-#endif
 
 	mutex_spin_enter(&sc->sc_intr_lock);
 
@@ -1221,9 +1211,7 @@ harmony_start_cp(struct harmony_softc *sc, int start)
 		    RCURADD_BUFMASK, &sc->sc_capture);
 	}
 
-#if NRND > 0
 	callout_schedule(&sc->sc_acc_tmo, 1);
-#endif
 }
 
 void

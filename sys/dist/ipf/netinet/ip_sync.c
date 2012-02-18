@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_sync.c,v 1.15 2010/08/11 11:57:36 pgoyette Exp $	*/
+/*	$NetBSD: ip_sync.c,v 1.15.12.1 2012/02/18 07:35:21 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -103,7 +103,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_sync.c,v 1.15 2010/08/11 11:57:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_sync.c,v 1.15.12.1 2012/02/18 07:35:21 mrg Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_sync.c,v 2.40.2.17 2009/12/27 06:55:22 darrenr Exp";
 #endif
@@ -136,9 +136,12 @@ int		ipf_sync_debug = 0;
 
 
 # if !defined(sparc) && !defined(__hppa)
-void ipfsync_tcporder __P((int, struct tcpdata *));
-void ipfsync_natorder __P((int, struct nat *));
-void ipfsync_storder __P((int, struct ipstate *));
+void
+ipfsync_tcporder(int, struct tcpdata *);
+void
+ipfsync_natorder(int, struct nat *);
+void
+ipfsync_storder(int, struct ipstate *);
 # endif
 
 
@@ -150,7 +153,8 @@ void ipfsync_storder __P((int, struct ipstate *));
 /* Initialise all of the locks required for the sync code and initialise    */
 /* any data structures, as required.                                        */
 /* ------------------------------------------------------------------------ */
-int ipfsync_init()
+int
+ipfsync_init(void)
 {
 	RWLOCK_INIT(&ipf_syncstate, "add things to state sync table");
 	RWLOCK_INIT(&ipf_syncnat, "add things to nat sync table");
@@ -177,9 +181,8 @@ int ipfsync_init()
 /* Do byte swapping on values in the TCP state information structure that   */
 /* need to be used at both ends by the host in their native byte order.     */
 /* ------------------------------------------------------------------------ */
-void ipfsync_tcporder(way, td)
-int way;
-tcpdata_t *td;
+void
+ipfsync_tcporder(int way, tcpdata_t *td)
 {
 	if (way) {
 		td->td_maxwin = htons(td->td_maxwin);
@@ -202,9 +205,8 @@ tcpdata_t *td;
 /* Do byte swapping on values in the NAT data structure that need to be     */
 /* used at both ends by the host in their native byte order.                */
 /* ------------------------------------------------------------------------ */
-void ipfsync_natorder(way, n)
-int way;
-nat_t *n;
+void
+ipfsync_natorder(int way, nat_t *n)
 {
 	if (way) {
 		n->nat_age = htonl(n->nat_age);
@@ -231,9 +233,8 @@ nat_t *n;
 /* Do byte swapping on values in the IP state data structure that need to   */
 /* be used at both ends by the host in their native byte order.             */
 /* ------------------------------------------------------------------------ */
-void ipfsync_storder(way, ips)
-int way;
-ipstate_t *ips;
+void
+ipfsync_storder(int way, ipstate_t *ips)
 {
 	ipfsync_tcporder(way, &ips->is_tcp.ts_data[0]);
 	ipfsync_tcporder(way, &ips->is_tcp.ts_data[1]);
@@ -291,8 +292,8 @@ ipstate_t *ips;
 /* Moves data from user space into the kernel and uses it for updating data */
 /* structures in the state/NAT tables.                                      */
 /* ------------------------------------------------------------------------ */
-int ipfsync_write(uio)
-struct uio *uio;
+int
+ipfsync_write(struct uio *uio)
 {
 	synchdr_t sh;
 
@@ -430,8 +431,8 @@ struct uio *uio;
 /* for pending state/NAT updates.  If no data is available, the caller is   */
 /* put to sleep, pending a wakeup from the "lower half" of this code.       */
 /* ------------------------------------------------------------------------ */
-int ipfsync_read(uio)
-struct uio *uio;
+int
+ipfsync_read(struct uio *uio)
 {
 	syncupdent_t *su;
 	synclogent_t *sl;
@@ -523,9 +524,8 @@ struct uio *uio;
 /* create a new state entry or update one.  Deletion is left to the state   */
 /* structures being timed out correctly.                                    */
 /* ------------------------------------------------------------------------ */
-int ipfsync_state(sp, data)
-synchdr_t *sp;
-void *data;
+int
+ipfsync_state(synchdr_t *sp, void *data)
 {
 	synctcp_update_t su;
 	ipstate_t *is, sn;
@@ -686,8 +686,8 @@ void *data;
 /*                                                                          */
 /* Deletes an object from the synclist table and free's its memory.         */
 /* ------------------------------------------------------------------------ */
-void ipfsync_del(sl)
-synclist_t *sl;
+void
+ipfsync_del(synclist_t *sl)
 {
 	WRITE_ENTER(&ipf_syncstate);
 	*sl->sl_pnext = sl->sl_next;
@@ -712,9 +712,8 @@ synclist_t *sl;
 /* create a new NAT entry or update one.  Deletion is left to the NAT       */
 /* structures being timed out correctly.                                    */
 /* ------------------------------------------------------------------------ */
-int ipfsync_nat(sp, data)
-synchdr_t *sp;
-void *data;
+int
+ipfsync_nat(synchdr_t *sp, void *data)
 {
 	syncupdent_t su;
 	nat_t *n, *nat;
@@ -805,10 +804,8 @@ void *data;
 /* Creates a new sync table entry and notifies any sleepers that it's there */
 /* waiting to be processed.                                                 */
 /* ------------------------------------------------------------------------ */
-synclist_t *ipfsync_new(tab, fin, ptr)
-int tab;
-fr_info_t *fin;
-void *ptr;
+synclist_t *
+ipfsync_new(int tab, fr_info_t *fin, void *ptr)
 {
 	synclist_t *sl, *ss;
 	synclogent_t *sle;
@@ -936,10 +933,8 @@ void *ptr;
 /* For outbound packets, only, create an sync update record for the user    */
 /* process to read.                                                         */
 /* ------------------------------------------------------------------------ */
-void ipfsync_update(tab, fin, sl)
-int tab;
-fr_info_t *fin;
-synclist_t *sl;
+void
+ipfsync_update(int tab, fr_info_t *fin, synclist_t *sl)
 {
 	synctcp_update_t *st;
 	syncupdent_t *slu;
@@ -1025,23 +1020,22 @@ synclist_t *sl;
 /* This function currently does not handle any ioctls and so just returns   */
 /* EINVAL on all occasions.                                                 */
 /* ------------------------------------------------------------------------ */
-int fr_sync_ioctl(data, cmd, mode, uid, ctx)
-void * data;
-ioctlcmd_t cmd;
-int mode, uid;
-void *ctx;
+int
+fr_sync_ioctl(void * data, ioctlcmd_t cmd, int mode, int uid, void *ctx)
 {
 	return EINVAL;
 }
 
 
-int ipfsync_canread()
+int
+ipfsync_canread(void)
 {
 	return !((sl_tail == sl_idx) && (su_tail == su_idx));
 }
 
 
-int ipfsync_canwrite()
+int
+ipfsync_canwrite(void)
 {
 	return 1;
 }

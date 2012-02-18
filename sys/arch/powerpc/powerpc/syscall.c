@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.48 2011/04/26 15:51:25 joerg Exp $	*/
+/*	$NetBSD: syscall.c,v 1.48.8.1 2012/02/18 07:33:00 mrg Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -64,7 +64,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.48 2011/04/26 15:51:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.48.8.1 2012/02/18 07:33:00 mrg Exp $");
 
 void
 child_return(void *arg)
@@ -133,7 +133,7 @@ EMULNAME(syscall_plain)(struct trapframe *tf)
 		default:
 			break;
 		}
-		
+
 		callp = p->p_emul->e_sysent +
 		    (code & (EMULNAMEU(SYS_NSYSENT)-1));
 	}
@@ -244,8 +244,8 @@ EMULNAME(syscall_fancy)(struct trapframe *tf)
 	if (argsize > n * sizeof(register_t)) {
 		memcpy(args, params, n * sizeof(register_t));
 		error = copyin(MOREARGS(tf->tf_fixreg[1]),
-		       args + n,
-		       argsize - n * sizeof(register_t));
+		    args + n,
+		    argsize - n * sizeof(register_t));
 		if (error)
 			goto bad;
 		params = args;
@@ -283,6 +283,7 @@ out:
 		break;
 	}
 	trace_exit(realcode, rval, error);
+
 	userret(l, tf);
 }
 

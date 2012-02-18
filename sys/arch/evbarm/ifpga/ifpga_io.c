@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_io.c,v 1.10 2011/07/01 20:39:34 dyoung Exp $ */
+/*	$NetBSD: ifpga_io.c,v 1.10.6.1 2012/02/18 07:31:52 mrg Exp $ */
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_io.c,v 1.10 2011/07/01 20:39:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_io.c,v 1.10.6.1 2012/02/18 07:31:52 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,17 +138,15 @@ struct bus_space ifpga_bs_tag = {
 	bs_notimpl_bs_c_8,
 };
 
-void ifpga_create_io_bs_tag(t, cookie)
-	struct bus_space *t;
-	void *cookie;
+void
+ifpga_create_io_bs_tag(struct bus_space *t, void *cookie)
 {
 	*t = ifpga_bs_tag;
 	t->bs_cookie = cookie;
 }
 
-void ifpga_create_mem_bs_tag(t, cookie)
-	struct bus_space *t;
-	void *cookie;
+void
+ifpga_create_mem_bs_tag(struct bus_space *t, void *cookie)
 {
 	*t = ifpga_bs_tag;
 	t->bs_map = ifpga_mem_bs_map;
@@ -201,14 +199,9 @@ ifpga_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int cacheable, bus_sp
 }
 
 int
-ifpga_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
-    bpap, bshp)
-	void *t;
-	bus_addr_t rstart, rend;
-	bus_size_t size, alignment, boundary;
-	int cacheable;
-	bus_addr_t *bpap;
-	bus_space_handle_t *bshp;
+ifpga_bs_alloc(void *t, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
+	bus_size_t alignment, bus_size_t boundary, int cacheable,
+	bus_addr_t *bpap, bus_space_handle_t *bshp)
 {
 	panic("ifpga_alloc(): Help!");
 }

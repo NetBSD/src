@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_kmguard.h,v 1.1 2009/03/29 10:51:53 ad Exp $	*/
+/*	$NetBSD: uvm_kmguard.h,v 1.1.22.1 2012/02/18 07:35:59 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -33,15 +33,14 @@
 #define	_UVM_KMGUARD_H_
 
 struct uvm_kmguard {
-	u_int	kg_depth;
-	intptr_t *kg_fifo;
-	u_int	kg_rotor;
-	struct	vm_map *kg_map;
+	u_int		kg_depth;
+	intptr_t *	kg_fifo;
+	u_int		kg_rotor;
+	vmem_t *	kg_vmem;
 };
 
-void	uvm_kmguard_init(struct uvm_kmguard *, u_int *, size_t *,
-			 struct vm_map *);
-void	*uvm_kmguard_alloc(struct uvm_kmguard *, size_t, bool);
+void	uvm_kmguard_init(struct uvm_kmguard *, u_int *, size_t *, vmem_t *);
+void *	uvm_kmguard_alloc(struct uvm_kmguard *, size_t, bool);
 bool	uvm_kmguard_free(struct uvm_kmguard *, size_t, void *);
 
 #endif	/* _UVM_KMGUARD_H_ */

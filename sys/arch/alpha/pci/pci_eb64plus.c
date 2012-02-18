@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb64plus.c,v 1.22 2011/04/04 20:37:44 dyoung Exp $ */
+/* $NetBSD: pci_eb64plus.c,v 1.22.8.1 2012/02/18 07:31:05 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,17 +35,17 @@
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb64plus.c,v 1.22 2011/04/04 20:37:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb64plus.c,v 1.22.8.1 2012/02/18 07:31:05 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -113,12 +113,12 @@ pci_eb64plus_pickintr(struct apecs_config *acp)
 	char *cp;
 	int i;
 
-        pc->pc_intr_v = acp;
-        pc->pc_intr_map = dec_eb64plus_intr_map;
-        pc->pc_intr_string = dec_eb64plus_intr_string;
+	pc->pc_intr_v = acp;
+	pc->pc_intr_map = dec_eb64plus_intr_map;
+	pc->pc_intr_string = dec_eb64plus_intr_string;
 	pc->pc_intr_evcnt = dec_eb64plus_intr_evcnt;
-        pc->pc_intr_establish = dec_eb64plus_intr_establish;
-        pc->pc_intr_disestablish = dec_eb64plus_intr_disestablish;
+	pc->pc_intr_establish = dec_eb64plus_intr_establish;
+	pc->pc_intr_disestablish = dec_eb64plus_intr_disestablish;
 
 	/* Not supported on the EB64+. */
 	pc->pc_pciide_compat_intr_establish = NULL;
@@ -147,7 +147,7 @@ pci_eb64plus_pickintr(struct apecs_config *acp)
 #endif
 }
 
-int     
+int
 dec_eb64plus_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pcitag_t bustag = pa->pa_intrtag;
@@ -187,12 +187,12 @@ dec_eb64plus_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 const char *
 dec_eb64plus_intr_string(void *acv, pci_intr_handle_t ih)
 {
-        static char irqstr[15];          /* 11 + 2 + NULL + sanity */
+	static char irqstr[15];          /* 11 + 2 + NULL + sanity */
 
-        if (ih > EB64PLUS_MAX_IRQ)
-                panic("dec_eb64plus_intr_string: bogus eb64+ IRQ 0x%lx", ih);
-        sprintf(irqstr, "eb64+ irq %ld", ih);
-        return (irqstr);
+	if (ih > EB64PLUS_MAX_IRQ)
+	        panic("dec_eb64plus_intr_string: bogus eb64+ IRQ 0x%lx", ih);
+	sprintf(irqstr, "eb64+ irq %ld", ih);
+	return (irqstr);
 }
 
 const struct evcnt *
@@ -231,7 +231,7 @@ dec_eb64plus_intr_disestablish(void *acv, void *cookie)
 	struct alpha_shared_intrhand *ih = cookie;
 	unsigned int irq = ih->ih_num;
 	int s;
- 
+
 	s = splhigh();
 
 	alpha_shared_intr_disestablish(eb64plus_pci_intr, cookie,
@@ -242,14 +242,14 @@ dec_eb64plus_intr_disestablish(void *acv, void *cookie)
 		    IST_NONE);
 		scb_free(0x900 + SCB_IDXTOVEC(irq));
 	}
- 
+
 	splx(s);
 }
 
 void
 eb64plus_iointr(void *arg, unsigned long vec)
 {
-	int irq; 
+	int irq;
 
 	irq = SCB_VECTOIDX(vec - 0x900);
 
@@ -263,7 +263,7 @@ eb64plus_iointr(void *arg, unsigned long vec)
 }
 
 #if 0		/* THIS DOES NOT WORK!  see pci_eb64plus_intr.S. */
-u_int8_t eb64plus_intr_mask[3] = { 0xff, 0xff, 0xff };
+uint8_t eb64plus_intr_mask[3] = { 0xff, 0xff, 0xff };
 
 void
 eb64plus_intr_enable(int irq)

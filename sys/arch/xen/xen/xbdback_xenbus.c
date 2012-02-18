@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.54 2011/12/03 22:36:28 bouyer Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.54.2.1 2012/02/18 07:33:47 mrg Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.54 2011/12/03 22:36:28 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.54.2.1 2012/02/18 07:33:47 mrg Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.54 2011/12/03 22:36:28 bouyer E
 #include <xen/xen_shm.h>
 #include <xen/evtchn.h>
 #include <xen/xenbus.h>
-#include <xen/xen3-public/io/protocols.h>
+#include <xen/xen-public/io/protocols.h>
 
 /* #define XENDEBUG_VBD */
 #ifdef XENDEBUG_VBD

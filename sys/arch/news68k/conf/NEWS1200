@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.51 2011/11/22 21:25:30 tls Exp $
+# 	$NetBSD: NEWS1200,v 1.51.2.1 2012/02/18 07:32:47 mrg Exp $
 
 #	news1200 config file
 #
@@ -74,7 +74,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# ffs endian independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options

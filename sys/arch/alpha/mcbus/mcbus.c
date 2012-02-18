@@ -1,4 +1,4 @@
-/* $NetBSD: mcbus.c,v 1.21 2011/09/25 13:37:20 chs Exp $ */
+/* $NetBSD: mcbus.c,v 1.21.6.1 2012/02/18 07:31:00 mrg Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.21 2011/09/25 13:37:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.21.6.1 2012/02/18 07:31:00 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.21 2011/09/25 13:37:20 chs Exp $");
 
 #define KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 #define	MCPCIA_EXISTS(mid, gid)	\
-	(!badaddr((void *)KV(MCPCIA_BRIDGE_ADDR(gid, mid)), sizeof (u_int32_t)))
+	(!badaddr((void *)KV(MCPCIA_BRIDGE_ADDR(gid, mid)), sizeof (uint32_t)))
 
 extern struct cfdriver mcbus_cd;
 
@@ -66,10 +66,10 @@ struct mcbus_cpu_busdep mcbus_primary;
 static int	mcbusmatch(device_t, cfdata_t, void *);
 static void	mcbusattach(device_t, device_t, void *);
 static int	mcbusprint(void *, const char *);
-static const char *mcbus_node_type_str(u_int8_t);
+static const char *mcbus_node_type_str(uint8_t);
 
 typedef struct {
-	u_int8_t	mcbus_types[MCBUS_MID_MAX];
+	uint8_t	mcbus_types[MCBUS_MID_MAX];
 } mcbus_softc_t;
 
 CFATTACH_DECL_NEW(mcbus, sizeof (mcbus_softc_t),
@@ -211,7 +211,7 @@ mcbusattach(device_t parent, device_t self, void *aux)
 }
 
 static const char *
-mcbus_node_type_str(u_int8_t type)
+mcbus_node_type_str(uint8_t type)
 {
 	switch (type) {
 	case MCBUS_TYPE_RES:

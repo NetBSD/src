@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.38 2011/08/07 21:38:32 rmind Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.38.6.1 2012/02/18 07:35:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 2008, 2011 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.38 2011/08/07 21:38:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.38.6.1 2012/02/18 07:35:33 mrg Exp $");
 
 #include <sys/param.h>
 
@@ -353,8 +353,9 @@ sys__sched_setaffinity(struct lwp *l,
 	for (CPU_INFO_FOREACH(cii, ici)) {
 		struct schedstate_percpu *ispc;
 
-		if (kcpuset_isset(kcset, cpu_index(ici)) == 0)
+		if (!kcpuset_isset(kcset, cpu_index(ici))) {
 			continue;
+		}
 
 		ispc = &ici->ci_schedstate;
 		/* Check that CPU is not in the processor-set */

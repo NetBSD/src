@@ -1,4 +1,4 @@
-/*	$NetBSD: uberry.c,v 1.6 2010/11/03 22:34:23 dyoung Exp $	*/
+/*	$NetBSD: uberry.c,v 1.6.12.1 2012/02/18 07:35:07 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uberry.c,v 1.6 2010/11/03 22:34:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uberry.c,v 1.6.12.1 2012/02/18 07:35:07 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

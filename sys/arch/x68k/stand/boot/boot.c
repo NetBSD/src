@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.16 2011/01/22 19:19:24 joerg Exp $	*/
+/*	$NetBSD: boot.c,v 1.16.8.1 2012/02/18 07:33:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -53,7 +53,7 @@ static void help(void);
 static int get_scsi_host_adapter(void);
 static void doboot(const char *, int);
 static void boot(char *);
-static void ls(char *);
+static void cmd_ls(char *);
 int bootmenu(void);
 void bootmain(int);
 extern int detectmpu(void);
@@ -201,7 +201,7 @@ boot(char *arg)
 }
 
 static void
-ls(char *arg)
+cmd_ls(char *arg)
 {
 	char filename[80];
 
@@ -217,7 +217,7 @@ ls(char *arg)
 		if (*(strchr(arg, ':')+1) == 0)
 			strcat(filename, "/");
 	}
-	ufs_ls(filename);
+	ls(filename);
 	devopen_open_dir = 0;
 }
 
@@ -266,7 +266,7 @@ bootmenu(void)
 		else if ((strcmp("halt", p) == 0) ||(strcmp("reboot", p) == 0))
 			exit(0);
 		else if (strcmp("ls", p) == 0)
-			ls(options);
+			cmd_ls(options);
 		else
 			printf("Unknown command %s\n", p);
 	}

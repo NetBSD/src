@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11 2011/06/18 06:44:25 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11.6.1 2012/02/18 07:31:58 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2011/06/18 06:44:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11.6.1 2012/02/18 07:31:58 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -52,11 +52,6 @@ cpu_configure(void)
 	    imask[IPL_BIO], imask[IPL_NET], imask[IPL_TTY]);
 	
 	(void)spl0();
-
-	/*
-	 * Now allow hardware interrupts.
-	 */
-	__asm volatile ("wrteei 1");
 }
 
 void

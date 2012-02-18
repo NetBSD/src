@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.30 2011/05/16 13:22:53 tsutsui Exp $ */
+/* $NetBSD: cpu.h,v 1.30.8.1 2012/02/18 07:32:28 mrg Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,8 +41,6 @@
 #ifndef _MACHINE_CPU_H
 #define _MACHINE_CPU_H
 
-#if defined(_KERNEL)
-
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #endif
@@ -51,6 +49,9 @@
  * Get common m68k CPU definitions.
  */
 #include <m68k/cpu.h>
+
+#if defined(_KERNEL)
+
 #define M68K_MMU_MOTOROLA
 
 /*

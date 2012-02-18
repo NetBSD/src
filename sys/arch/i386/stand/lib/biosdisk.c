@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.39 2011/09/21 08:57:12 gsutre Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.39.6.1 2012/02/18 07:32:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -404,6 +404,40 @@ check_label(struct biosdisk *d, daddr_t sector)
 }
 
 static int
+read_minix_subp(struct biosdisk *d, struct disklabel* dflt_lbl,
+			int this_ext, daddr_t sector)
+{
+	struct mbr_partition mbr[MBR_PART_COUNT];
+	int i;
+	int typ;
+	struct partition *p;
+
+	if (readsects(&d->ll, sector, 1, d->buf, 0)) {
+#ifdef DISK_DEBUG
+		printf("Error reading MFS sector %d\n", sector);
+#endif
+		return EIO;
+	}
+	if ((uint8_t)d->buf[510] != 0x55 || (uint8_t)d->buf[511] != 0xAA) {
+		return -1;
+	}
+	memcpy(&mbr, ((struct mbr_sector *)d->buf)->mbr_parts, sizeof(mbr));
+	for (i = 0; i < MBR_PART_COUNT; i++) {
+		typ = mbr[i].mbrp_type;
+		if (typ == 0)
+			continue;
+		sector = this_ext + mbr[i].mbrp_start;
+		if (dflt_lbl->d_npartitions >= MAXPARTITIONS)
+			continue;
+		p = &dflt_lbl->d_partitions[dflt_lbl->d_npartitions++];
+		p->p_offset = sector;
+		p->p_size = mbr[i].mbrp_size;
+		p->p_fstype = xlat_mbr_fstype(typ);
+	}
+	return 0;
+}
+
+static int
 read_label(struct biosdisk *d)
 {
 	struct disklabel dflt_lbl;
@@ -452,6 +486,13 @@ read_label(struct biosdisk *d)
 #ifdef DISK_DEBUG
 			printf("ptn type %d in sector %d\n", typ, sector);
 #endif
+                        if (typ == MBR_PTYPE_MINIX_14B) {
+				if (!read_minix_subp(d, &dflt_lbl,
+						   this_ext, sector)) {
+					/* Don't add "container" partition */
+					continue;
+				}
+			}
 			if (typ == MBR_PTYPE_NETBSD) {
 				error = check_label(d, sector);
 				if (error >= 0)

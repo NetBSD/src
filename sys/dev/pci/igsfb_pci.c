@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_pci.c,v 1.22 2011/08/27 20:02:18 martin Exp $ */
+/*	$NetBSD: igsfb_pci.c,v 1.22.6.1 2012/02/18 07:34:44 mrg Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.22 2011/08/27 20:02:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.22.6.1 2012/02/18 07:34:44 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,12 +156,10 @@ igsfb_pci_attach(device_t parent, device_t self, void *aux)
 	struct igsfb_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	int isconsole;
-	char devinfo[256];
 
 	sc->sc_dev = self;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo(pa, NULL);
 
 #if defined(__sparc__) && !defined(KRUPS_FORCE_SERIAL_CONSOLE)
 	/* XXX: this doesn't belong here */

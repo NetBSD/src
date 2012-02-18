@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.61 2011/10/08 11:07:09 elric Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.61.6.1 2012/02/18 07:34:40 mrg Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.96 2010/05/13 09:25:03 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.61 2011/10/08 11:07:09 elric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.61.6.1 2012/02/18 07:34:40 mrg Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -339,11 +339,9 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct pci_attach_args *pa = aux;
 	const char *intrstr;
-	char devinfo[256];
 	pci_intr_handle_t ih;
 	pcireg_t memtype, reg;
 	int i, error;
-	int revision;
 
 	sc->sc_dev = self;
 	sc->sc_pct = pa->pa_pc;
@@ -354,9 +352,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	callout_init(&sc->calib_to, 0);
 	callout_setfunc(&sc->calib_to, iwn_calib_timeout, sc);
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof devinfo);
-	revision = PCI_REVISION(pa->pa_class);
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, revision);
+	pci_aprint_devinfo(pa, NULL);
 
 	/*
 	 * Get the offset of the PCI Express Capability Structure in PCI

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.65 2011/11/22 21:24:51 tls Exp $
+# $NetBSD: GENERIC,v 1.65.2.1 2012/02/18 07:30:42 mrg Exp $
 #
 # GENERIC machine description file
 # 
@@ -69,7 +69,7 @@ options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 options 	NFSSERVER	# Sun NFS-compatible file system server
 options 	FFS_EI		# FFS endianness-independence support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 

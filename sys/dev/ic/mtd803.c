@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.24 2010/04/05 07:19:35 joerg Exp $ */
+/* $NetBSD: mtd803.c,v 1.24.12.1 2012/02/18 07:34:22 mrg Exp $ */
 
 /*-
  *
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.24 2010/04/05 07:19:35 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.24.12.1 2012/02/18 07:34:22 mrg Exp $");
 
 
 #include <sys/param.h>
@@ -175,10 +175,9 @@ mtd_config(struct mtd_softc *sc)
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->eaddr);
 
-#if NRND > 0
 	/* Initialise random source */
-	rnd_attach_source(&sc->rnd_src, device_xname(&sc->dev), RND_TYPE_NET, 0);
-#endif
+	rnd_attach_source(&sc->rnd_src, device_xname(&sc->dev),
+			  RND_TYPE_NET, 0);
 
 	/* Add shutdown hook to reset card when we reboot */
 	sc->sd_hook = shutdownhook_establish(mtd_shutdown, sc);
@@ -737,11 +736,11 @@ mtd_irq_h(void *args)
 
 	for(;;) {
 		status = MTD_READ_4(sc, MTD_ISR);
-#if NRND > 0
+
 		/* Add random seed before masking out bits */
 		if (status)
 			rnd_add_uint32(&sc->rnd_src, status);
-#endif
+
 		status &= MTD_ISR_MASK;
 		if (!status)		/* We didn't ask for this */
 			break;
@@ -890,8 +889,6 @@ mtd_shutdown (void *arg)
 	struct mtd_softc *sc = arg;
 	struct ifnet *ifp = &sc->ethercom.ec_if;
 
-#if NRND > 0
 	rnd_detach_source(&sc->rnd_src);
-#endif
 	mtd_stop(ifp, 1);
 }

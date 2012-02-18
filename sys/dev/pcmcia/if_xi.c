@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.71 2010/04/05 07:21:47 joerg Exp $ */
+/*	$NetBSD: if_xi.c,v 1.71.12.1 2012/02/18 07:34:56 mrg Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.71 2010/04/05 07:21:47 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.71.12.1 2012/02/18 07:34:56 mrg Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -248,9 +248,8 @@ xi_attach(struct xi_softc *sc, u_int8_t *myea)
 		    NULL);
 	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO);
 
-#if NRND > 0
-	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dev), RND_TYPE_NET, 0);
-#endif
+	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dev),
+			  RND_TYPE_NET, 0);
 }
 
 int
@@ -263,9 +262,7 @@ xi_detach(device_t self, int flags)
 
 	xi_disable(sc);
 
-#if NRND > 0
 	rnd_detach_source(&sc->sc_rnd_source);
-#endif
 
 	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
@@ -384,9 +381,7 @@ xi_intr(void *arg)
 		ifp->if_oerrors++;
 
 	/* have handled the interrupt */
-#if NRND > 0
 	rnd_add_uint32(&sc->sc_rnd_source, tx_status);
-#endif
 
 end:
 	/* Reenable interrupts. */

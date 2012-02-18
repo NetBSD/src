@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.4 2011/09/12 12:24:34 reinoud Exp $ */
+/* $NetBSD: intr.h,v 1.4.6.1 2012/02/18 07:33:24 mrg Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,15 +30,23 @@
 #define _ARCH_USERMODE_INCLUDE_INTR_H
 
 #include <machine/intrdefs.h>
+#include <sys/siginfo.h>
 
+/* spl */
 void	splinit(void);
 int	splraise(int);
 void	spllower(int);
-void	spl_intr(int x, void (*func)(void *), void *arg);
 
 #define	spl0()		spllower(IPL_NONE)
 #define splx(x)		spllower(x)
 
+/* traps */
+typedef void (sigfunc_t)(vaddr_t from_userland, vaddr_t pc, vaddr_t va);
+extern void setup_signal_handlers(void);
+extern void  signal_intr_establish(int sig, sigfunc_t f);
+extern void *sigio_intr_establish(int (*)(void *), void *);
+
+/* spl implementation */
 typedef uint8_t ipl_t;
 typedef struct {
 	ipl_t _ipl;
@@ -57,5 +65,7 @@ splraiseipl(ipl_cookie_t icookie)
 }
 
 #include <sys/spl.h>
+
+/* for trap.c */
 
 #endif /* !_ARCH_USERMODE_INCLUDE_INTR_H */

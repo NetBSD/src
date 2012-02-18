@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.46 2011/02/08 20:20:16 rmind Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.46.8.1 2012/02/18 07:32:30 mrg Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.46 2011/02/08 20:20:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.46.8.1 2012/02/18 07:32:30 mrg Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_netbsd.h"
@@ -441,6 +441,17 @@ startlwp(void *arg)
  */
 void
 upcallret(struct lwp *l)
+{
+	struct frame *f = (struct frame *)l->l_md.md_regs;
+
+	machine_userret(l, f, 0);
+}
+
+/*
+ * Process the tail end of a posix_spawn() for the child.
+ */
+void
+cpu_spawn_return(struct lwp *l)
 {
 	struct frame *f = (struct frame *)l->l_md.md_regs;
 

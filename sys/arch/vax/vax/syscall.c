@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.19 2011/07/03 02:18:21 matt Exp $     */
+/*	$NetBSD: syscall.c,v 1.19.6.1 2012/02/18 07:33:29 mrg Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.19 2011/07/03 02:18:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.19.6.1 2012/02/18 07:33:29 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
@@ -157,4 +157,14 @@ child_return(void *arg)
 
 	userret(l, l->l_md.md_utf, 0);
 	ktrsysret(SYS_fork, 0, 0);
+}
+
+/*
+ * Process the tail end of a posix_spawn() for the child.
+ */
+void
+cpu_spawn_return(struct lwp *l)
+{
+
+	userret(l, l->l_md.md_utf, 0);
 }

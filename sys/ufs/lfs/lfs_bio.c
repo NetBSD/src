@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.120 2011/07/11 08:27:40 hannken Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.120.6.1 2012/02/18 07:35:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.120 2011/07/11 08:27:40 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.120.6.1 2012/02/18 07:35:54 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +96,7 @@ int	lfs_subsys_pages     = 0L;	/* Total number LFS-written pages */
 int	lfs_fs_pagetrip	     = 0;	/* # of pages to trip per-fs write */
 int	lfs_writing	     = 0;	/* Set if already kicked off a writer
 					   because of buffer space */
+int	locked_queue_waiters = 0;	/* Number of processes waiting on lq */
 
 /* Lock and condition variables for above. */
 kcondvar_t	locked_queue_cv;
@@ -150,18 +151,25 @@ static int
 lfs_reservebuf(struct lfs *fs, struct vnode *vp,
     struct vnode *vp2, int n, int bytes)
 {
+	int cantwait;
+
 	ASSERT_MAYBE_SEGLOCK(fs);
 	KASSERT(locked_queue_rcount >= 0);
 	KASSERT(locked_queue_rbytes >= 0);
 
+	cantwait = (VTOI(vp)->i_flag & IN_ADIROP) || fs->lfs_unlockvp == vp;
 	mutex_enter(&lfs_lock);
-	while (n > 0 && !lfs_fits_buf(fs, n, bytes)) {
+	while (!cantwait && n > 0 && !lfs_fits_buf(fs, n, bytes)) {
 		int error;
 
 		lfs_flush(fs, 0, 0);
 
+		DLOG((DLOG_AVAIL, "lfs_reservebuf: waiting: count=%d, bytes=%ld\n",
+		      locked_queue_count, locked_queue_bytes));
+		++locked_queue_waiters;
 		error = cv_timedwait_sig(&locked_queue_cv, &lfs_lock,
 		    hz * LFS_BUFWAIT);
+		--locked_queue_waiters;
 		if (error && error != EWOULDBLOCK) {
 			mutex_exit(&lfs_lock);
 			return error;
@@ -171,8 +179,11 @@ lfs_reservebuf(struct lfs *fs, struct vnode *vp,
 	locked_queue_rcount += n;
 	locked_queue_rbytes += bytes;
 
-	if (n < 0)
+	if (n < 0 && locked_queue_waiters > 0) {
+		DLOG((DLOG_AVAIL, "lfs_reservebuf: broadcast: count=%d, bytes=%ld\n",
+		      locked_queue_count, locked_queue_bytes));
 		cv_broadcast(&locked_queue_cv);
+	}
 
 	mutex_exit(&lfs_lock);
 
@@ -205,28 +216,15 @@ lfs_reserveavail(struct lfs *fs, struct vnode *vp,
 	CLEANERINFO *cip;
 	struct buf *bp;
 	int error, slept;
+	int cantwait;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
 	slept = 0;
 	mutex_enter(&lfs_lock);
-	while (fsb > 0 && !lfs_fits(fs, fsb + fs->lfs_ravail + fs->lfs_favail)) {
+	cantwait = (VTOI(vp)->i_flag & IN_ADIROP) || fs->lfs_unlockvp == vp;
+	while (!cantwait && fsb > 0 &&
+	       !lfs_fits(fs, fsb + fs->lfs_ravail + fs->lfs_favail)) {
 		mutex_exit(&lfs_lock);
-#if 0
-		/*
-		 * XXX ideally, we should unlock vnodes here
-		 * because we might sleep very long time.
-		 */
-		VOP_UNLOCK(vp);
-		if (vp2 != NULL) {
-			VOP_UNLOCK(vp2);
-		}
-#else
-		/*
-		 * XXX since we'll sleep for cleaner with vnode lock holding,
-		 * deadlock will occur if cleaner tries to lock the vnode.
-		 * (eg. lfs_markv -> lfs_fastvget -> getnewvnode -> vclean)
-		 */
-#endif
 
 		if (!slept) {
 			DLOG((DLOG_AVAIL, "lfs_reserve: waiting for %ld (bfree = %d,"
@@ -248,10 +246,6 @@ lfs_reserveavail(struct lfs *fs, struct vnode *vp,
 
 		error = mtsleep(&fs->lfs_avail, PCATCH | PUSER, "lfs_reserve",
 				0, &lfs_lock);
-#if 0
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY); /* XXX use lockstatus */
-		vn_lock(vp2, LK_EXCLUSIVE | LK_RETRY); /* XXX use lockstatus */
-#endif
 		if (error) {
 			mutex_exit(&lfs_lock);
 			return error;
@@ -277,7 +271,6 @@ int
 lfs_reserve(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 {
 	int error;
-	int cantwait;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
 	if (vp2) {
@@ -292,30 +285,18 @@ lfs_reserve(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 
 	KASSERT(fsb < 0 || VOP_ISLOCKED(vp));
 	KASSERT(vp2 == NULL || fsb < 0 || VOP_ISLOCKED(vp2));
-	KASSERT(vp2 == NULL || !(VTOI(vp2)->i_flag & IN_ADIROP));
 	KASSERT(vp2 == NULL || vp2 != fs->lfs_unlockvp);
 
-	cantwait = (VTOI(vp)->i_flag & IN_ADIROP) || fs->lfs_unlockvp == vp;
 #ifdef DIAGNOSTIC
-	if (cantwait) {
-		if (fsb > 0)
-			lfs_rescountdirop++;
-		else if (fsb < 0)
-			lfs_rescountdirop--;
-		if (lfs_rescountdirop < 0)
-			panic("lfs_rescountdirop");
-	}
-	else {
-		if (fsb > 0)
-			lfs_rescount++;
-		else if (fsb < 0)
-			lfs_rescount--;
-		if (lfs_rescount < 0)
-			panic("lfs_rescount");
-	}
+	mutex_enter(&lfs_lock);
+	if (fsb > 0)
+		lfs_rescount++;
+	else if (fsb < 0)
+		lfs_rescount--;
+	if (lfs_rescount < 0)
+		panic("lfs_rescount");
+	mutex_exit(&lfs_lock);
 #endif
-	if (cantwait)
-		return 0;
 
 	/*
 	 * XXX
@@ -461,7 +442,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	 */
 	if (fs->lfs_ronly || (fs->lfs_pflags & LFS_PF_CLEAN)) {
 		bp->b_oflags &= ~BO_DELWRI;
-		bp->b_flags |= B_READ;
+		bp->b_flags |= B_READ; /* XXX is this right? --ks */
 		bp->b_error = 0;
 		mutex_enter(&bufcache_lock);
 		LFS_UNLOCK_BUF(bp);
@@ -535,6 +516,7 @@ lfs_flush_fs(struct lfs *fs, int flags)
 	if (lfs_dostats)
 		++lfs_stats.flush_invoked;
 
+	fs->lfs_pdflush = 0;
 	mutex_exit(&lfs_lock);
 	lfs_writer_enter(fs, "fldirop");
 	lfs_segwrite(fs->lfs_ivnode->v_mount, flags);
@@ -689,10 +671,10 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 	/* If there are too many pending dirops, we have to flush them. */
 	if (fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs) ||
 	    lfs_dirvcount > LFS_MAX_DIROP || fs->lfs_diropwait > 0) {
-		flags |= SEGM_CKP;
-	}
-
-	if (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS ||
+		mutex_exit(&lfs_lock);
+		lfs_flush_dirops(fs);
+		mutex_enter(&lfs_lock);
+	} else if (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS ||
 	    locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES ||
 	    lfs_subsys_pages > LFS_MAX_PAGES ||
 	    fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs) ||
@@ -717,8 +699,10 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 			++lfs_stats.wait_exceeded;
 		DLOG((DLOG_AVAIL, "lfs_check: waiting: count=%d, bytes=%ld\n",
 		      locked_queue_count, locked_queue_bytes));
+		++locked_queue_waiters;
 		error = cv_timedwait_sig(&locked_queue_cv, &lfs_lock,
 		    hz * LFS_BUFWAIT);
+		--locked_queue_waiters;
 		if (error != EWOULDBLOCK)
 			break;
 

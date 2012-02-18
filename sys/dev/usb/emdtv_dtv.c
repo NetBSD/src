@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv_dtv.c,v 1.5 2011/08/09 01:42:24 jmcneill Exp $ */
+/* $NetBSD: emdtv_dtv.c,v 1.5.6.1 2012/02/18 07:35:04 mrg Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv_dtv.c,v 1.5 2011/08/09 01:42:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv_dtv.c,v 1.5.6.1 2012/02/18 07:35:04 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,6 +306,7 @@ emdtv_dtv_start_transfer(void *priv,
 	aprint_debug_dev(sc->sc_dev, "allocating isoc xfers (pktsz %d)\n",
 	    sc->sc_isoc_maxpacketsize);
 
+	KERNEL_LOCK(1, curlwp);
 	for (i = 0; i < EMDTV_NXFERS; i++) {
 		sc->sc_ix[i].ix_xfer = usbd_alloc_xfer(sc->sc_udev);
 		sc->sc_ix[i].ix_buf = usbd_alloc_buffer(sc->sc_ix[i].ix_xfer,
@@ -313,6 +314,7 @@ emdtv_dtv_start_transfer(void *priv,
 		aprint_debug_dev(sc->sc_dev, "  ix[%d] xfer %p buf %p\n",
 		    i, sc->sc_ix[i].ix_xfer, sc->sc_ix[i].ix_buf);
 	}
+	KERNEL_UNLOCK_ONE(curlwp);
 
 	aprint_debug_dev(sc->sc_dev, "starting isoc transactions\n");
 
@@ -332,6 +334,7 @@ emdtv_dtv_stop_transfer(void *priv)
 
 	sc->sc_streaming = false;
 
+	KERNEL_LOCK(1, curlwp);
 	if (sc->sc_isoc_pipe != NULL)
 		usbd_abort_pipe(sc->sc_isoc_pipe);
 
@@ -341,6 +344,7 @@ emdtv_dtv_stop_transfer(void *priv)
 			sc->sc_ix[i].ix_xfer = NULL;
 			sc->sc_ix[i].ix_buf = NULL;
 		}
+	KERNEL_UNLOCK_ONE(curlwp);
 
 	sc->sc_dtvsubmitcb = NULL;
 	sc->sc_dtvsubmitarg = NULL;
@@ -378,7 +382,10 @@ emdtv_dtv_isoc_start(struct emdtv_softc *sc, struct emdtv_isoc_xfer *ix)
 			     EMDTV_NFRAMES,
 			     USBD_NO_COPY | USBD_SHORT_XFER_OK,
 			     emdtv_dtv_isoc);
+
+	KERNEL_LOCK(1, curlwp);
 	usbd_transfer(ix->ix_xfer);
+	KERNEL_UNLOCK_ONE(curlwp);
 
 	return 0;
 }

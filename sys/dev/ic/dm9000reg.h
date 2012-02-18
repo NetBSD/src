@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000reg.h,v 1.1 2010/09/08 22:01:29 ahoka Exp $	*/
+/*	$NetBSD: dm9000reg.h,v 1.1.18.1 2012/02/18 07:34:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -195,6 +195,10 @@
 #define DM9000_PHY_PHYID1	0x02
 #define DM9000_PHY_PHYID2 	0x03
 #define DM9000_PHY_ANAR 	0x04
+#define  DM9000_PHY_ANAR_10_HDX	 (1<<5)
+#define  DM9000_PHY_ANAR_10_FDX  (1<<6)
+#define  DM9000_PHY_ANAR_TX_HDX  (1<<7)
+#define  DM9000_PHY_ANAR_TX_FDX  (1<<8)
 #define DM9000_PHY_ANLPAR	0x05
 #define DM9000_PHY_ANER 	0x06
 #define DM9000_PHY_DSCR 	0x16

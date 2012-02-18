@@ -1,4 +1,4 @@
-# 	$NetBSD: files.rasops,v 1.12 2007/02/02 02:10:24 ober Exp $
+# 	$NetBSD: files.rasops,v 1.12.84.1 2012/02/18 07:34:57 mrg Exp $
 
 # Note: `rasops_glue' is only here to force the header file's name
 #       hence it must be mentioned first  (shudder...)
@@ -18,3 +18,5 @@ file dev/rasops/rasops24.c ((rasterconsole | wsdisplay) & rasops24)
 file dev/rasops/rasops32.c ((rasterconsole | wsdisplay) & rasops32)
 
 defflag	opt_rasops.h 	RASOPS_CLIPPING RASOPS_SMALL
+defparam opt_rasops.h	RASOPS_DEFAULT_WIDTH = 80
+defparam opt_rasops.h	RASOPS_DEFAULT_HEIGHT = 25

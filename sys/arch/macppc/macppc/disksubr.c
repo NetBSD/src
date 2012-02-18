@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.47 2009/03/16 23:11:12 dsl Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.47.16.1 2012/02/18 07:32:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.47 2009/03/16 23:11:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.47.16.1 2012/02/18 07:32:36 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,6 +136,8 @@ static int getNamedType(struct part_map_entry *, int,
 static const char *read_mac_label(dev_t, void (*)(struct buf *),
 		struct disklabel *, struct cpu_disklabel *);
 static const char *read_dos_label(dev_t, void (*)(struct buf *),
+		struct disklabel *, struct cpu_disklabel *);
+static const char *read_bsd_label(dev_t, void (*)(struct buf *),
 		struct disklabel *, struct cpu_disklabel *);
 static int get_netbsd_label(dev_t, void (*)(struct buf *),
 		struct disklabel *, struct cpu_disklabel *);
@@ -387,6 +389,78 @@ done:
 	return msg;
 }
 
+/*
+ * Scan the disk buffer in four byte strides for a native BSD
+ * disklabel (different ports have variably-sized bootcode before
+ * the label)
+ */
+static const char *
+read_bsd_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
+    struct cpu_disklabel *osdep)
+{
+	struct disklabel *dlp;
+	struct buf *bp;
+	const char *msg;
+	struct disklabel *blk_start, *blk_end;
+	int size, match;
+	
+	msg = NULL;
+
+	/* 
+	 * Read in the first #(NUM_PARTS + 1) blocks of the disk.
+	 * The native Macintosh partition table starts at 
+	 * sector #1, but we want #0 too for the BSD label.
+	 */
+	size = roundup((NUM_PARTS + 1) << DEV_BSHIFT, lp->d_secsize);
+	bp = geteblk(size);
+
+	bp->b_dev = dev;
+	bp->b_blkno = 0;
+	bp->b_resid = 0;
+	bp->b_bcount = size;
+	bp->b_flags |= B_READ;
+	bp->b_cylinder = 1 / lp->d_secpercyl;
+	(*strat)(bp);
+
+	match = 0;
+	
+	if (biowait(bp)) {
+		msg = "I/O error reading BSD disklabel";
+	} else {
+		/*
+		 * Hunt the label, starting at the beginning of the disk.
+		 * When we find an inconsistent label, report and continue.
+		 */
+		blk_start = (struct disklabel *)bp->b_data;
+		blk_end = (struct disklabel *)((char *)bp->b_data +
+		    (NUM_PARTS << DEV_BSHIFT) - sizeof(struct disklabel));
+
+		for (dlp = blk_start; dlp <= blk_end; 
+		     dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
+			if (dlp->d_magic == DISKMAGIC &&
+			    dlp->d_magic2 == DISKMAGIC) {
+				/* Sanity check */
+				if (dlp->d_npartitions <= MAXPARTITIONS && 
+				    dkcksum(dlp) == 0) {
+					*lp = *dlp;
+					match = -1;
+					break;
+#ifdef DIAGNOSTIC
+				} else {
+					printf("read_bsd_label() found "
+					    "damaged disklabel starting at "
+					    "0x0%p, ignore\n", dlp);
+#endif /* DIAGNOSTIC */
+				}
+			}
+		}
+		if (!match)
+			msg = "BSD disklabel not found";
+	}
+	brelse(bp, 0);
+	return msg;
+}
+
 /* Read MS-DOS partition table.
  *
  * XXX -
@@ -597,8 +671,9 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, stru
 			if (!msg)
 				osdep->cd_start = 0;
 		} else {
-			msg = "no disk label -- NetBSD or Macintosh";
-			osdep->cd_start = 0;	/* XXX for now */
+			msg = read_bsd_label(dev, strat, lp, osdep);
+			if (!msg)
+				osdep->cd_start = 0;	/* XXX for now */
 		}
 	}
 

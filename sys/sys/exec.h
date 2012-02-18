@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.133 2011/03/04 22:25:32 joerg Exp $	*/
+/*	$NetBSD: exec.h,v 1.133.8.1 2012/02/18 07:35:48 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -214,6 +214,8 @@ struct exec_package {
 	struct vnode *ep_interp;        /* vnode of (elf) interpeter */
 	uint32_t ep_pax_flags;		/* pax flags */
 	char	*ep_path;		/* absolute path of executable */
+	void	(*ep_emul_arg_free)(void *);
+					/* free ep_emul_arg */
 };
 #define	EXEC_INDIR	0x0001		/* script handling already done */
 #define	EXEC_HASFD	0x0002		/* holding a shell script */
@@ -268,6 +270,9 @@ int	exec_read_from		(struct lwp *, struct vnode *, u_long off,
 int	exec_setup_stack	(struct lwp *, struct exec_package *);
 
 int	coredump_write		(void *, enum uio_seg, const void *, size_t);
+
+void	exec_free_emul_arg	(struct exec_package *);
+
 /*
  * Machine dependent functions
  */

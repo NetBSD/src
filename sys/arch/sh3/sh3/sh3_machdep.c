@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.96 2011/07/25 21:12:23 dyoung Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.96.6.1 2012/02/18 07:33:10 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.96 2011/07/25 21:12:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.96.6.1 2012/02/18 07:33:10 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -230,7 +230,7 @@ sh_cpu_init(int arch, int product)
  *	Setup proc0 u-area.
  */
 void
-sh_proc0_init()
+sh_proc0_init(void)
 {
 	struct switchframe *sf;
 	vaddr_t u;

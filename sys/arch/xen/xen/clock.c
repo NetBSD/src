@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.57 2011/11/18 06:01:50 cherry Exp $	*/
+/*	$NetBSD: clock.c,v 1.57.4.1 2012/02/18 07:33:45 mrg Exp $	*/
 
 /*
  *
@@ -29,7 +29,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.57 2011/11/18 06:01:50 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.57.4.1 2012/02/18 07:33:45 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.57 2011/11/18 06:01:50 cherry Exp $");
 #include <xen/xen.h>
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
-#include <xen/xen3-public/vcpu.h>
+#include <xen/xen-public/vcpu.h>
 #include <machine/cpu_counter.h>
 
 #include <dev/clock_subr.h>
@@ -237,7 +237,7 @@ xen_wall_time(struct timespec *wt)
 		 * Under Xen3, shadow->ts is the wall time less system time
 		 * get_vcpu_time() will update shadow
 		 */
-		nsec = get_vcpu_time(curcpu());
+		nsec = get_vcpu_time(ci);
 		*wt = shadow->ts;
 		nsec += wt->tv_nsec;
 	} while (!time_values_up_to_date(ci));
@@ -395,7 +395,6 @@ sysctl_xen_timepush(SYSCTLFN_ARGS)
 #endif
 
 /* ARGSUSED */
-/* SMP note: Timecounter uses vcpu0's clock */
 u_int
 xen_get_timecount(struct timecounter *tc)
 {
@@ -420,7 +419,7 @@ static struct evcnt hardclock_called[MAXCPUS];
 void
 xen_initclocks(void)
 {
-	int err, evtch;
+	int err;
 	static bool tcdone = false;
 
 	struct cpu_info *ci = curcpu();
@@ -439,8 +438,6 @@ xen_initclocks(void)
 		callout_init(&xen_timepush_co, 0);
 	}
 #endif
-	evtch = bind_virq_to_evtch(VIRQ_TIMER);
-	aprint_verbose("Xen clock: using event channel %d\n", evtch);
 
 	if (!tcdone) { /* Do this only once */
 		mutex_init(&tmutex, MUTEX_DEFAULT, IPL_CLOCK);
@@ -452,25 +449,26 @@ xen_initclocks(void)
 	if (!tcdone) { /* Do this only once */
 		tc_init(&xen_timecounter);
 	}
+
 	/* The splhigh requirements start here. */
+	xen_resumeclocks(ci);
 
 	/*
 	 * The periodic timer looks buggy, we stop receiving events
 	 * after a while. Use the one-shot timer every NS_PER_TICK
 	 * and rearm it from the event handler.
 	 */
-	err = HYPERVISOR_vcpu_op(VCPUOP_stop_periodic_timer,
-				 ci->ci_cpuid,
+	if (XEN_MAJOR(xen_version) > 3 || XEN_MINOR(xen_version) > 0) {
+		/* exists only on Xen 3.1 and later */
+		err = HYPERVISOR_vcpu_op(VCPUOP_stop_periodic_timer,
+					 ci->ci_cpuid,
 				 NULL);
+		KASSERT(err == 0);
+	}
 
-	KASSERT(err == 0);
 	err = HYPERVISOR_set_timer_op(
 	    vcpu_system_time[ci->ci_cpuid] + NS_PER_TICK);
 	KASSERT(err == 0);
-
-	event_set_handler(evtch, (int (*)(void *))xen_timer_handler,
-	    ci, IPL_CLOCK, "clock");
-	hypervisor_enable_event(evtch);
 
 #ifdef DOM0OPS
 	if (!tcdone) { /* Do this only once */
@@ -491,7 +489,7 @@ xen_initclocks(void)
 }
 
 void
-xen_suspendclocks(void)
+xen_suspendclocks(struct cpu_info *ci)
 {
 	int evtch;
 
@@ -499,13 +497,13 @@ xen_suspendclocks(void)
 	KASSERT(evtch != -1);
 
 	hypervisor_mask_event(evtch);
-	event_remove_handler(evtch, (int (*)(void *))xen_timer_handler, NULL);
+	event_remove_handler(evtch, (int (*)(void *))xen_timer_handler, ci);
 
 	aprint_verbose("Xen clock: removed event channel %d\n", evtch);
 }
 
 void
-xen_resumeclocks(void)
+xen_resumeclocks(struct cpu_info *ci)
 {
 	int evtch;
        
@@ -513,7 +511,7 @@ xen_resumeclocks(void)
 	KASSERT(evtch != -1);
 
 	event_set_handler(evtch, (int (*)(void *))xen_timer_handler,
-	    NULL, IPL_CLOCK, "clock");
+	    ci, IPL_CLOCK, "clock");
 	hypervisor_enable_event(evtch);
 
 	aprint_verbose("Xen clock: using event channel %d\n", evtch);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tra_mca.c,v 1.14 2009/05/12 14:31:00 cegger Exp $	*/
+/*	$NetBSD: if_tra_mca.c,v 1.14.16.1 2012/02/18 07:34:32 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -35,13 +35,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tra_mca.c,v 1.14 2009/05/12 14:31:00 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tra_mca.c,v 1.14.16.1 2012/02/18 07:34:32 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/socket.h>
 #include <sys/syslog.h>
+#include <sys/rnd.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs.h,v 1.7 2008/09/03 22:57:46 gmcgarry Exp $	*/
+/*	$NetBSD: hfs.h,v 1.7.32.1 2012/02/18 07:35:23 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -118,6 +118,7 @@ typedef struct {
 } hfs_libcb_argsread;
 
 #ifdef _KERNEL
+#include <sys/malloc.h>
 
 MALLOC_DECLARE(M_HFSMNT);	/* defined in hfs_vfsops.c */
 

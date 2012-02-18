@@ -1,4 +1,4 @@
-/* $NetBSD: lfsv1.c,v 1.3 2008/11/19 12:36:41 ad Exp $ */
+/* $NetBSD: lfsv1.c,v 1.3.20.1 2012/02/18 07:35:35 mrg Exp $ */
 
 #define	LIBSA_LFS
 #define	REQUIRED_LFS_VERSION	1
@@ -9,6 +9,9 @@
 #define	ufs_write		lfsv1_write
 #define	ufs_seek		lfsv1_seek
 #define	ufs_stat		lfsv1_stat
+#if defined(LIBSA_ENABLE_LS_OP)
+#define	ufs_ls			lfsv1_ls
+#endif
 
 #define	fs_bsize		lfs_ibsize
 #define	IFILE_Vx		IFILE_V1

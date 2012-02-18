@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.53.8.1 2011/12/09 01:52:59 mrg Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.53.8.2 2012/02/18 07:34:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.53.8.1 2011/12/09 01:52:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.53.8.2 2012/02/18 07:34:53 mrg Exp $");
 
 #include "ehci.h"
 
@@ -91,18 +91,13 @@ uhci_pci_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t csr;
 	const char *vendor;
-	char devinfo[256];
 	usbd_status r;
 	int s;
 
 	sc->sc.sc_dev = self;
 	sc->sc.sc_bus.hci_private = sc;
 
-	aprint_naive("\n");
-
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s (rev. 0x%02x)\n",
-		      devinfo, PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo(pa, NULL);
 
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,

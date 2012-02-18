@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_addr_fixup.c,v 1.8 2011/08/28 06:08:15 dyoung Exp $	*/
+/*	$NetBSD: pci_addr_fixup.c,v 1.8.6.1 2012/02/18 07:33:35 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.8 2011/08/28 06:08:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.8.6.1 2012/02/18 07:33:35 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,12 +90,12 @@ pci_addr_fixup(pci_chipset_tag_t pc, int maxbus)
 	pciaddr.extent_mem = extent_create("PCI I/O memory space",
 					   PCIADDR_MEM_START,
 					   PCIADDR_MEM_END,
-					   M_DEVBUF, 0, 0, EX_NOWAIT);
+					   0, 0, EX_NOWAIT);
 	KASSERT(pciaddr.extent_mem);
 	pciaddr.extent_port = extent_create("PCI I/O port space",
 					    PCIADDR_PORT_START,
 					    PCIADDR_PORT_END,
-					    M_DEVBUF, 0, 0, EX_NOWAIT);
+					    0, 0, EX_NOWAIT);
 	KASSERT(pciaddr.extent_port);
 
 	/*

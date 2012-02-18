@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.59 2011/07/18 00:58:52 mrg Exp $	*/
+/*	$NetBSD: qe.c,v 1.59.6.1 2012/02/18 07:34:58 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,13 +66,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.59 2011/07/18 00:58:52 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.59.6.1 2012/02/18 07:34:58 mrg Exp $");
 
 #define QEDEBUG
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,9 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.59 2011/07/18 00:58:52 mrg Exp $");
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>

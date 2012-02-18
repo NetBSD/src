@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.217 2010/05/30 04:38:04 pgoyette Exp $ */
+/*	$NetBSD: st.c,v 1.217.12.1 2012/02/18 07:35:00 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.217 2010/05/30 04:38:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.217.12.1 2012/02/18 07:35:00 mrg Exp $");
 
 #include "opt_scsi.h"
 
@@ -410,10 +410,8 @@ stattach(device_t parent, struct st_softc *st, void *aux)
 
 	st->stats = iostat_alloc(IOSTAT_TAPE, parent, device_xname(&st->sc_dev));
 
-#if NRND > 0
 	rnd_attach_source(&st->rnd_source, device_xname(&st->sc_dev),
 			  RND_TYPE_TAPE, 0);
-#endif
 }
 
 int
@@ -448,10 +446,8 @@ stdetach(device_t self, int flags)
 
 	iostat_free(st->stats);
 
-#if NRND > 0
 	/* Unhook the entropy source. */
 	rnd_detach_source(&st->rnd_source);
-#endif
 
 	return (0);
 }
@@ -1321,9 +1317,7 @@ stdone(struct scsipi_xfer *xs, int error)
 		iostat_unbusy(st->stats, bp->b_bcount,
 			     ((bp->b_flags & B_READ) == B_READ));
 
-#if NRND > 0
 		rnd_add_uint32(&st->rnd_source, bp->b_blkno);
-#endif
 
 		if ((st->flags & ST_POSUPDATED) == 0) {
 			if (error) {

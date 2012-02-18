@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_lookup.c,v 1.16 2010/04/17 21:00:44 darrenr Exp $	*/
+/*	$NetBSD: ip_lookup.c,v 1.16.12.1 2012/02/18 07:35:19 mrg Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Darren Reed.
@@ -67,7 +67,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_lookup.c,v 1.16 2010/04/17 21:00:44 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_lookup.c,v 1.16.12.1 2012/02/18 07:35:19 mrg Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_lookup.c,v 2.35.2.22 2010/01/31 16:22:55 darrenr Exp";
 #endif
@@ -76,14 +76,22 @@ static const char rcsid[] = "@(#)Id: ip_lookup.c,v 2.35.2.22 2010/01/31 16:22:55
 #ifdef	IPFILTER_LOOKUP
 int	ip_lookup_inited = 0;
 
-static int iplookup_addnode __P((void *));
-static int iplookup_delnode __P((void *data));
-static int iplookup_addtable __P((void *));
-static int iplookup_deltable __P((void *));
-static int iplookup_stats __P((void *));
-static int iplookup_flush __P((void *));
-static int iplookup_iterate __P((void *, int, void *));
-static int iplookup_deltok __P((void *, int, void *));
+static int
+iplookup_addnode(void *);
+static int
+iplookup_delnode(void *data);
+static int
+iplookup_addtable(void *);
+static int
+iplookup_deltable(void *);
+static int
+iplookup_stats(void *);
+static int
+iplookup_flush(void *);
+static int
+iplookup_iterate(void *, int, void *);
+static int
+iplookup_deltok(void *, int, void *);
 
 
 /* ------------------------------------------------------------------------ */
@@ -93,7 +101,8 @@ static int iplookup_deltok __P((void *, int, void *));
 /*                                                                          */
 /* Initialise all of the subcomponents of the lookup infrstructure.         */
 /* ------------------------------------------------------------------------ */
-int ip_lookup_init()
+int
+ip_lookup_init(void)
 {
 
 	if (ip_pool_init() == -1)
@@ -116,7 +125,8 @@ int ip_lookup_init()
 /* has been running.  Also, do any other deinitialisation required such     */
 /* ip_lookup_init() can be called again, safely.                            */
 /* ------------------------------------------------------------------------ */
-void ip_lookup_unload()
+void
+ip_lookup_unload(void)
 {
 	ip_pool_fini();
 	fr_htable_unload();
@@ -140,11 +150,8 @@ void ip_lookup_unload()
 /* involves just calling another function to handle the specifics of each   */
 /* command.                                                                 */
 /* ------------------------------------------------------------------------ */
-int ip_lookup_ioctl(data, cmd, mode, uid, ctx)
-void * data;
-ioctlcmd_t cmd;
-int mode, uid;
-void *ctx;
+int
+ip_lookup_ioctl(void * data, ioctlcmd_t cmd, int mode, int uid, void *ctx)
 {
 	int err;
 	SPL_INT(s);
@@ -220,8 +227,8 @@ void *ctx;
 /* parent structure refered to by name exists and if it does, then go on to */
 /* add a node to it.                                                        */
 /* ------------------------------------------------------------------------ */
-static int iplookup_addnode(data)
-void *data;
+static int
+iplookup_addnode(void *data)
 {
 	ip_pool_node_t node, *m;
 	iplookupop_t op;
@@ -295,8 +302,8 @@ void *data;
 /* Delete a node from a lookup table by first looking for the table it is   */
 /* in and then deleting the entry that gets found.                          */
 /* ------------------------------------------------------------------------ */
-static int iplookup_delnode(data)
-void *data;
+static int
+iplookup_delnode(void *data)
 {
 	ip_pool_node_t node, *m;
 	iplookupop_t op;
@@ -364,8 +371,8 @@ void *data;
 /* Create a new lookup table, if one doesn't already exist using the name   */
 /* for this one.                                                            */
 /* ------------------------------------------------------------------------ */
-static int iplookup_addtable(data)
-void *data;
+static int
+iplookup_addtable(void *data)
 {
 	iplookupop_t op;
 	int err;
@@ -422,8 +429,8 @@ void *data;
 /* Decodes ioctl request to remove a particular hash table or pool and      */
 /* calls the relevant function to do the cleanup.                           */
 /* ------------------------------------------------------------------------ */
-static int iplookup_deltable(data)
-void *data;
+static int
+iplookup_deltable(void *data)
 {
 	iplookupop_t op;
 	int err;
@@ -466,8 +473,8 @@ void *data;
 /*                                                                          */
 /* Copy statistical information from inside the kernel back to user space.  */
 /* ------------------------------------------------------------------------ */
-static int iplookup_stats(data)
-void *data;
+static int
+iplookup_stats(void *data)
 {
 	iplookupop_t op;
 	int err;
@@ -505,8 +512,8 @@ void *data;
 /* A flush is called when we want to flush all the nodes from a particular  */
 /* entry in the hash table/pool or want to remove all groups from those.    */
 /* ------------------------------------------------------------------------ */
-static int iplookup_flush(data)
-void *data;
+static int
+iplookup_flush(void *data)
 {
 	int err, unit, num, type;
 	iplookupflush_t flush;
@@ -554,9 +561,8 @@ void *data;
 /* This function organises calling the correct deref function for a given   */
 /* type of object being passed into it.                                     */
 /* ------------------------------------------------------------------------ */
-void ip_lookup_deref(type, ptr)
-int type;
-void *ptr;
+void
+ip_lookup_deref(int type, void *ptr)
 {
 	if (ptr == NULL)
 		return;
@@ -585,10 +591,8 @@ void *ptr;
 /*                                                                          */
 /* Decodes ioctl request to step through either hash tables or pools.       */
 /* ------------------------------------------------------------------------ */
-static int iplookup_iterate(data, uid, ctx)
-void *data;
-int uid;
-void *ctx;
+static int
+iplookup_iterate(void *data, int uid, void *ctx)
 {
 	ipflookupiter_t iter;
 	ipftoken_t *token;
@@ -643,9 +647,8 @@ void *ctx;
 /* Decodes ioctl request to remove a particular hash table or pool and      */
 /* calls the relevant function to do the cleanup.                           */
 /* ------------------------------------------------------------------------ */
-void ip_lookup_iterderef(type, data)
-u_32_t type;
-void *data;
+void
+ip_lookup_iterderef(u_32_t type, void *data)
 {
 	iplookupiterkey_t	key;
 
@@ -679,10 +682,8 @@ void *data;
 /* "key" is a combination of the table type, iterator type and the unit for */
 /* which the token was being used.                                          */
 /* ------------------------------------------------------------------------ */
-static int iplookup_deltok(data, uid, ctx)
-void *data;
-int uid;
-void *ctx;
+static int
+iplookup_deltok(void *data, int uid, void *ctx)
 {
 	int error, key;
 	SPL_INT(s);
@@ -699,11 +700,8 @@ void *ctx;
 #else /* IPFILTER_LOOKUP */
 
 /*ARGSUSED*/
-int ip_lookup_ioctl(data, cmd, mode, uid, ctx)
-void * data;
-ioctlcmd_t cmd;
-int mode, uid;
-void *ctx;
+int
+ip_lookup_ioctl(void * data, ioctlcmd_t cmd, int mode, int uid, void *ctx)
 {
 	return EIO;
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.116 2011/11/03 02:41:29 macallan Exp $
+#	$NetBSD: files.usb,v 1.116.4.1 2012/02/18 07:35:04 mrg Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -90,6 +90,11 @@ file	dev/usb/ukbdmap.c		ukbd | btkbd
 device	ums: hid, wsmousedev
 attach	ums at uhidbus
 file	dev/usb/ums.c			ums
+
+# Touchscreens
+device	uts: hid, wsmousedev, tpcalib
+attach	uts at uhidbus
+file	dev/usb/uts.c			uts
 
 # eGalax USB Touch Panel
 device	uep: wsmousedev, tpcalib
@@ -188,6 +193,11 @@ file	dev/usb/emdtv_ir.c		emdtv
 device	urio
 attach	urio at usbdevif
 file	dev/usb/urio.c			urio			needs-flag
+
+# Apple iPad
+device	uipad
+attach	uipad at usbdevif
+file	dev/usb/uipad.c				uipad
 
 # BlackBerries
 device	uberry
@@ -334,7 +344,7 @@ file	dev/usb/uark.c		uark
 
 # Silicon Labs CP210x serial driver
 device	uslsa: ucombus
-attach	uslsa at usbdevif
+attach	uslsa at usbifif
 file	dev/usb/uslsa.c			uslsa
 
 # WinChipHead CH341/340 serial driver

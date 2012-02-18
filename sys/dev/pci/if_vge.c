@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.51 2010/04/05 07:20:27 joerg Exp $ */
+/* $NetBSD: if_vge.c,v 1.51.12.1 2012/02/18 07:34:42 mrg Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.51 2010/04/05 07:20:27 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.51.12.1 2012/02/18 07:34:42 mrg Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -944,8 +944,7 @@ vge_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	aprint_normal(": VIA VT612X Gigabit Ethernet (rev. %#x)\n",
-	    PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo_fancy(pa, NULL, "VIA VT612X Gigabit Ethernet", 1);
 
 	/* Make sure bus-mastering is enabled */
         pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,

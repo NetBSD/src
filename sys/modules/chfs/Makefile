@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2011/11/24 15:52:24 ahoka Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2012/02/18 07:35:36 mrg Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	${S}/ufs/chfs
 
 CPPFLAGS+=	-DDIAGNOSTIC -DDEBUG -DLOCKDEBUG
-CFLAGS+=	-g
 
 KMOD=	chfs
 SRCS=	ebh.c debug.c chfs_wbuf.c chfs_vnode_cache.c chfs_ihash.c

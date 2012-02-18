@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_sv.c,v 1.14 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: opl_sv.c,v 1.14.38.1 2012/02/18 07:34:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_sv.c,v 1.14 2008/04/28 20:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_sv.c,v 1.14.38.1 2012/02/18 07:34:45 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,6 +76,7 @@ opl_sv_attach(device_t parent, device_t self, void *aux)
 	sc->ioh = ssc->sc_oplioh;
 	sc->iot = ssc->sc_opliot;
 	sc->offs = 0;
+	sc->lock = &ssc->sc_intr_lock;
 	strcpy(sc->syn.name, "SV ");
 	/*sc->spkrctl = 0;
 	  sc->spkrarg = 0;*/

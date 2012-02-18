@@ -1,7 +1,7 @@
-/*	$NetBSD: mpu_isapnp.c,v 1.19 2011/11/24 03:35:58 mrg Exp $	*/
+/*	$NetBSD: mpu_isapnp.c,v 1.19.2.1 2012/02/18 07:34:30 mrg Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_isapnp.c,v 1.19 2011/11/24 03:35:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_isapnp.c,v 1.19.2.1 2012/02/18 07:34:30 mrg Exp $");
 
 #include "midi.h"
 
@@ -71,11 +71,16 @@ mpu_isapnp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_mpu.ioh = ipa->ipa_io[0].h;
 	sc->sc_mpu.lock = &sc->sc_lock;
 
+	mutex_enter(&sc->sc_lock);
+
 	if (!mpu_find(&sc->sc_mpu)) {
 		aprint_error_dev(self, "find failed\n");
+		mutex_exit(&sc->sc_lock);
 		mutex_destroy(&sc->sc_lock);
 		return;
 	}
+
+	mutex_exit(&sc->sc_lock);
 
 	aprint_normal_dev(self, "%s %s\n", ipa->ipa_devident,
 	       ipa->ipa_devclass);

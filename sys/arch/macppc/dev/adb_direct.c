@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.42 2009/03/18 10:22:31 cegger Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.42.16.1 2012/02/18 07:32:35 mrg Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.42 2009/03/18 10:22:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.42.16.1 2012/02/18 07:32:35 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,7 +224,7 @@ int	adb_cuda_serial = 0;		/* the current packet */
 struct callout adb_cuda_tickle_ch;
 struct callout adb_soft_intr_ch;
 
-volatile u_char *Via1Base;
+volatile uint8_t *Via1Base;
 extern int adb_polling;			/* Are we polling? */
 
 void	pm_setup_adb(void);
