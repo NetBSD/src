@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.292 2012/02/07 22:58:49 joerg Exp $
+#	$NetBSD: bsd.README,v 1.292.2.1 2012/02/18 18:05:06 riz Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -512,7 +512,7 @@ MANMODE		Manual mode.  [${NONBINMODE}]
 
 MANINSTALL	Manual installation type.  Space separated list:
 			catinstall, htmlinstall, maninstall
-		[catinstall maninstall htmlinstall]
+		Default value derived from MKCATPAGES and MKHTML.
 
 LDSTATIC	Control program linking; if set blank, link everything
 		dynamically.  If set to "-static", link everything statically.
