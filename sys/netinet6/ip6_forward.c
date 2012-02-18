@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.68 2010/02/04 21:48:35 joerg Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.68.16.1 2012/02/18 07:35:42 mrg Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.68 2010/02/04 21:48:35 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.68.16.1 2012/02/18 07:35:42 mrg Exp $");
 
 #include "opt_gateway.h"
 #include "opt_ipsec.h"
@@ -62,11 +62,11 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.68 2010/02/04 21:48:35 joerg Exp $
 #include <netinet/icmp6.h>
 #include <netinet6/nd6.h>
 
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 #include <netinet6/ipsec.h>
 #include <netinet6/ipsec_private.h>
 #include <netkey/key.h>
-#endif /* IPSEC */
+#endif /* KAME_IPSEC */
 
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
@@ -111,7 +111,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 	struct ifnet *origifp;	/* maybe unnecessary */
 	u_int32_t inzone, outzone;
 	struct in6_addr src_in6, dst_in6;
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 	struct secpolicy *sp = NULL;
 	int ipsecrt = 0;
 #endif
@@ -126,7 +126,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 	 */
 	m->m_pkthdr.csum_flags = 0;
 
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 	/*
 	 * Check AH/ESP integrity.
 	 */
@@ -139,7 +139,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 		m_freem(m);
 		return;
 	}
-#endif /* IPSEC */
+#endif /* KAME_IPSEC */
 
 	/*
 	 * Do not forward packets to multicast destination (should be handled
@@ -185,7 +185,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 	 */
 	mcopy = m_copy(m, 0, imin(m->m_pkthdr.len, ICMPV6_PLD_MAXLEN));
 
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 	/* get a security policy for this packet */
 	sp = ipsec6_getpolicybyaddr(m, IPSEC_DIR_OUTBOUND,
 	    IP_FORWARDING, &error);
@@ -349,7 +349,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 	}
     }
     skip_ipsec:
-#endif /* IPSEC */
+#endif /* KAME_IPSEC */
 #ifdef FAST_IPSEC
 	/* Check the security policy (SP) for the packet */
 
@@ -400,9 +400,9 @@ ip6_forward(struct mbuf *m, int srcrt)
 		return;
 	}
 	dst = satocsin6(rtcache_getdst(&ip6_forward_rt));
-#ifdef IPSEC
+#ifdef KAME_IPSEC
     skip_routing:;
-#endif /* IPSEC */
+#endif /* KAME_IPSEC */
 
 	/*
 	 * Source scope check: if a packet can't be delivered to its
@@ -432,7 +432,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 		return;
 	}
 	if (inzone != outzone
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 	    && !ipsecrt
 #endif
 	    ) {
@@ -497,14 +497,14 @@ ip6_forward(struct mbuf *m, int srcrt)
 		in6_ifstat_inc(rt->rt_ifp, ifs6_in_toobig);
 		if (mcopy) {
 			u_long mtu;
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 			struct secpolicy *xsp;
 			int ipsecerror;
 			size_t ipsechdrsiz;
 #endif
 
 			mtu = IN6_LINKMTU(rt->rt_ifp);
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 			/*
 			 * When we do IPsec tunnel ingress, we need to play
 			 * with the link value (decrement IPsec header size
@@ -547,7 +547,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 	 * modified by a redirect.
 	 */
 	if (rt->rt_ifp == m->m_pkthdr.rcvif && !srcrt && ip6_sendredirects &&
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 	    !ipsecrt &&
 #endif
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0) {

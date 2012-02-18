@@ -1,4 +1,4 @@
-/* $NetBSD: tlsbvar.h,v 1.6 1998/07/08 00:47:53 mjacob Exp $ */
+/* $NetBSD: tlsbvar.h,v 1.6.192.1 2012/02/18 07:31:09 mrg Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -43,9 +43,9 @@
  */
 struct tlsb_dev_attach_args {
 	int		ta_node;	/* node number */
-	u_int16_t	ta_dtype;	/* device type */
-	u_int8_t	ta_swrev;	/* software revision */
-	u_int8_t	ta_hwrev;	/* hardware revision */
+	uint16_t	ta_dtype;	/* device type */
+	uint8_t		ta_swrev;	/* software revision */
+	uint8_t		ta_hwrev;	/* hardware revision */
 };
 
 /*
@@ -54,7 +54,7 @@ struct tlsb_dev_attach_args {
  * as sc_busdep (when there is a cpu_softc to do this to).
  */
 struct tlsb_cpu_busdep {
-	u_int8_t	tcpu_vid;	/* virtual ID of CPU */
+	uint8_t		tcpu_vid;	/* virtual ID of CPU */
 	int		tcpu_node;	/* TurboLaser node */
 };
 

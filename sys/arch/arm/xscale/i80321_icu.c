@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_icu.c,v 1.22 2011/07/01 20:32:51 dyoung Exp $	*/
+/*	$NetBSD: i80321_icu.c,v 1.22.6.1 2012/02/18 07:31:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2006 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.22 2011/07/01 20:32:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.22.6.1 2012/02/18 07:31:33 mrg Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -280,15 +280,23 @@ i80321_intr_init(void)
 	for (i = 0; i < NIRQ; i++) {
 		iq = &intrq[i];
 		TAILQ_INIT(&iq->iq_list);
-
-		evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
-		    NULL, "iop321", i80321_irqnames[i]);
 	}
 
 	i80321_intr_calculate_masks();
 
 	/* Enable IRQs (don't yet use FIQs). */
 	enable_interrupts(I32_bit);
+}
+
+void
+i80321_intr_evcnt_attach(void)
+{
+	for (u_int i = 0; i < NIRQ; i++) {
+		struct intrq *iq = &intrq[i];
+		evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
+		    NULL, "iop321", i80321_irqnames[i]);
+	}
+
 }
 
 void *

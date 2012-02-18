@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.714 2011/11/29 11:12:26 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.714.2.1 2012/02/18 07:32:21 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.714 2011/11/29 11:12:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.714.2.1 2012/02/18 07:32:21 mrg Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1354,9 +1354,6 @@ init386(paddr_t first_avail)
 	cpu_info_primary.ci_pae_l3_pdir = (pd_entry_t *)(rcr3() + KERNBASE);
 #endif /* PAE && !XEN */
 
-#if NISA > 0 || NPCI > 0
-	x86_bus_space_init();
-#endif
 #ifdef XEN
 	xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
 #endif
@@ -1411,7 +1408,14 @@ init386(paddr_t first_avail)
 	 * before the above variables are set.
 	 */
 	initgdt(NULL);
+
+	mutex_init(&pte_lock, MUTEX_DEFAULT, IPL_VM);
 #endif /* XEN */
+
+#if NISA > 0 || NPCI > 0
+	x86_bus_space_init();
+#endif /* NISA > 0 || NPCI > 0 */
+	
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 
 #ifdef DEBUG_MEMLOAD
@@ -1917,3 +1921,38 @@ mm_md_open(dev_t dev, int flag, int mode, struct lwp *l)
 	}
 	return 0;
 }
+
+#ifdef PAE
+void
+cpu_alloc_l3_page(struct cpu_info *ci)
+{
+	int ret;
+	struct pglist pg;
+	struct vm_page *vmap;
+
+	KASSERT(ci != NULL);
+	/*
+	 * Allocate a page for the per-CPU L3 PD. cr3 being 32 bits, PA musts
+	 * resides below the 4GB boundary.
+	 */
+	ret = uvm_pglistalloc(PAGE_SIZE, 0, 0x100000000ULL, 32, 0, &pg, 1, 0);
+	vmap = TAILQ_FIRST(&pg);
+
+	if (ret != 0 || vmap == NULL)
+		panic("%s: failed to allocate L3 pglist for CPU %d (ret %d)\n",
+			__func__, cpu_index(ci), ret);
+
+	ci->ci_pae_l3_pdirpa = vmap->phys_addr;
+
+	ci->ci_pae_l3_pdir = (paddr_t *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+		UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
+	if (ci->ci_pae_l3_pdir == NULL)
+		panic("%s: failed to allocate L3 PD for CPU %d\n",
+			__func__, cpu_index(ci));
+
+	pmap_kenter_pa((vaddr_t)ci->ci_pae_l3_pdir, ci->ci_pae_l3_pdirpa,
+		VM_PROT_READ | VM_PROT_WRITE, 0);
+
+	pmap_update(pmap_kernel());
+}
+#endif /* PAE */

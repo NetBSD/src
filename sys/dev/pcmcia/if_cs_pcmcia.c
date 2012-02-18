@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs_pcmcia.c,v 1.18 2009/05/12 14:42:18 cegger Exp $ */
+/* $NetBSD: if_cs_pcmcia.c,v 1.18.16.1 2012/02/18 07:34:55 mrg Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.18 2009/05/12 14:42:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.18.16.1 2012/02/18 07:34:55 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,10 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.18 2009/05/12 14:42:18 cegger Exp
 #include <sys/socket.h>
 #include <sys/queue.h>
 
-#include "rnd.h"
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_ether.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp.h,v 1.14 2011/09/24 17:18:17 christos Exp $	*/
+/*	$NetBSD: udp.h,v 1.14.6.1 2012/02/18 07:35:41 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -34,15 +34,16 @@
 #ifndef _NETINET_UDP_H_
 #define _NETINET_UDP_H_
 
+#include <sys/types.h>
 /*
  * Udp protocol header.
  * Per RFC 768, September, 1981.
  */
 struct udphdr {
-	u_int16_t uh_sport;		/* source port */
-	u_int16_t uh_dport;		/* destination port */
-	u_int16_t uh_ulen;		/* udp length */
-	u_int16_t uh_sum;		/* udp checksum */
+	uint16_t uh_sport;		/* source port */
+	uint16_t uh_dport;		/* destination port */
+	uint16_t uh_ulen;		/* udp length */
+	uint16_t uh_sum;		/* udp checksum */
 } __packed;
 
 /* socket options for UDP */

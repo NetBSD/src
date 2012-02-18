@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp_var.h,v 1.28 2009/12/07 18:47:24 christos Exp $	*/
+/*	$NetBSD: icmp_var.h,v 1.28.16.1 2012/02/18 07:35:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -46,25 +46,18 @@
 #define	ICMP_STAT_ERROR		0	/* # of calls to icmp_error */
 #define	ICMP_STAT_OLDSHORT	1	/* no error (old ip too short) */
 #define	ICMP_STAT_OLDICMP	2	/* no error (old was icmp) */
-#define	ICMP_STAT_OUTHIST	3	/* # of output messages */
-		/* space for ICMP_MAXTYPE + 1 (19) counters */
-#define	ICMP_STAT_BADCODE	22	/* icmp_code out of range */
-#define	ICMP_STAT_TOOSHORT	23	/* packet < ICMP_MINLEN */
-#define	ICMP_STAT_CHECKSUM	24	/* bad checksum */
-#define	ICMP_STAT_BADLEN	25	/* calculated bound mismatch */
-#define	ICMP_STAT_REFLECT	26	/* number of responses */
-#define	ICMP_STAT_INHIST	27	/* # of input messages */
-		/* space for ICMP_MAXTYPE + 1 (19) counters */
-#define	ICMP_STAT_PMTUCHG	46	/* path MTU changes */
-
-#define	ICMP_STAT_BMCASTECHO	47	/* b/mcast echo requests dropped */
-#define	ICMP_STAT_BMCASTTSTAMP	48	/* b/mcast tstamp requests dropped */
-
-#define	ICMP_NSTATS		49
-
-#if ICMP_MAXTYPE != 18
-#error ICMP_MAXTYPE too large for ICMP statistics
-#endif
+#define	ICMP_STAT_BADCODE	3	/* icmp_code out of range */
+#define	ICMP_STAT_TOOSHORT	4	/* packet < ICMP_MINLEN */
+#define	ICMP_STAT_CHECKSUM	5	/* bad checksum */
+#define	ICMP_STAT_BADLEN	6	/* calculated bound mismatch */
+#define	ICMP_STAT_REFLECT	7	/* number of responses */
+#define	ICMP_STAT_PMTUCHG	8	/* path MTU changes */
+#define	ICMP_STAT_BMCASTECHO	9	/* b/mcast echo requests dropped */
+#define	ICMP_STAT_BMCASTTSTAMP	10	/* b/mcast tstamp requests dropped */
+#define	ICMP_STAT_LAST		16	/* Allow for 5 spare ones */
+#define	ICMP_STAT_OUTHIST	ICMP_STAT_LAST
+#define	ICMP_STAT_INHIST	(ICMP_STAT_LAST + ICMP_MAXTYPE)
+#define	ICMP_NSTATS		(ICMP_STAT_LAST + 2 * ICMP_MAXTYPE)
 
 /*
  * Names for ICMP sysctl objects

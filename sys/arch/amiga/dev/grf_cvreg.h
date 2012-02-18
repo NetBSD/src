@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cvreg.h,v 1.17 2011/05/21 14:49:35 christos Exp $	*/
+/*	$NetBSD: grf_cvreg.h,v 1.17.8.1 2012/02/18 07:31:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -37,7 +37,7 @@
 #include <machine/cpu.h>
 
 /*
- * This is derived from ciruss driver source
+ * This is derived from Cirrus driver source
  */
 
 /* Extension to grfvideo_mode to support text modes.
@@ -56,10 +56,6 @@ struct grfcvtext_mode {
 	unsigned short	fdstart;
 	unsigned short	fdend;
 };
-
-/* maximum console size */
-#define MAXROWS 200
-#define MAXCOLS 200
 
 
 /* read VGA register */
@@ -373,8 +369,7 @@ static inline unsigned char RGfx(volatile void *, short);
 /* Gfx engine busy wait */
 #ifdef _KERNEL
 static inline void
-GfxBusyWait (ba)
-	volatile void *ba;
+GfxBusyWait (volatile void *ba)
 {
 	int test;
 
@@ -386,8 +381,7 @@ GfxBusyWait (ba)
 
 
 static inline void
-GfxFifoWait(ba)
-	volatile void *ba;
+GfxFifoWait(volatile void *ba)
 {
 	int test;
 
@@ -405,9 +399,7 @@ GfxFifoWait(ba)
  */
 
 static inline unsigned char
-RAttr(ba, idx)
-	volatile void *ba;
-	short idx;
+RAttr(volatile void *ba, short idx)
 {
 
 	vgaw(ba, ACT_ADDRESS_W, idx);
@@ -416,31 +408,25 @@ RAttr(ba, idx)
 }
 
 static inline unsigned char
-RSeq(ba, idx)
-	volatile void *ba;
-	short idx;
+RSeq(volatile void *ba, short idx)
 {
 	vgaw(ba, SEQ_ADDRESS, idx);
 	return vgar(ba, SEQ_ADDRESS_R);
 }
 
 static inline unsigned char
-RCrt(ba, idx)
-	volatile void *ba;
-	short idx;
+RCrt(volatile void *ba, short idx)
 {
 	vgaw(ba, CRT_ADDRESS, idx);
 	return vgar(ba, CRT_ADDRESS_R);
 }
 
 static inline unsigned char
-RGfx(ba, idx)
-	volatile void *ba;
-	short idx;
+RGfx(volatile void *ba, short idx)
 {
 	vgaw(ba, GCT_ADDRESS, idx);
 	return vgar(ba, GCT_ADDRESS_R);
 }
 #endif
 
-#endif /* _GRF_RHREG_H */
+#endif /* _GRF_CVREG_H */

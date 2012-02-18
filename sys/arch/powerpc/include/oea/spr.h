@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.1 2010/02/25 23:30:05 matt Exp $	*/
+/*	$NetBSD: spr.h,v 1.1.20.1 2012/02/18 07:32:55 mrg Exp $	*/
 
 #ifndef _POWERPC_OEA_SPR_H_
 #define	_POWERPC_OEA_SPR_H_
@@ -108,6 +108,7 @@
 #define	SPR_DBAT6U		0x23c	/* ..6. Data BAT Reg 6 Upper */
 #define	SPR_DBAT6L		0x23d	/* ..6. Data BAT Reg 6 Lower */
 #define	SPR_DBAT7U		0x23e	/* ..6. Data BAT Reg 7 Upper */
+#define	SPR_DBAT7L		0x23f	/* ..6. Data BAT Reg 7 Upper */
 #define	SPR_UMMCR2		0x3a0	/* ..6. User Monitor Mode Control Register 2 */
 #define	SPR_UMMCR0		0x3a8	/* ..6. User Monitor Mode Control Register 0 */
 #define	SPR_USIA		0x3ab	/* ..6. User Sampled Instruction Address */

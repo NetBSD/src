@@ -1,4 +1,4 @@
-/* $NetBSD: iic_eumb.c,v 1.16 2011/07/01 19:16:06 dyoung Exp $ */
+/* $NetBSD: iic_eumb.c,v 1.16.6.1 2012/02/18 07:33:03 mrg Exp $ */
 
 /*-
  * Copyright (c) 2010,2011 Frank Wille.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iic_eumb.c,v 1.16 2011/07/01 19:16:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iic_eumb.c,v 1.16.6.1 2012/02/18 07:33:03 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -64,6 +64,7 @@ static struct i2cdev rtcmodel[] = {
     { "kurobox",  "rs5c372rtc", 0x32 },
     { "qnap",     "s390rtc",    0x30 },
     { "synology", "rs5c372rtc", 0x32 },
+    { "nhnas",    "pcf8563rtc", 0x51 }
 };
 
 static void add_i2c_child_devices(device_t, const char *);

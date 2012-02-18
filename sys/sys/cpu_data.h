@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.33 2011/02/17 18:32:29 rmind Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.33.8.1 2012/02/18 07:35:48 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -125,6 +125,7 @@ struct cpu_data {
 #define	ci_core_id		ci_data.cpu_core_id
 #define	ci_smt_id		ci_data.cpu_smt_id
 
-int mi_cpu_attach(struct cpu_info *ci);
+void	mi_cpu_init(void);
+int	mi_cpu_attach(struct cpu_info *);
 
 #endif /* _SYS_CPU_DATA_H_ */

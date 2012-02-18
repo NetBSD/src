@@ -1,4 +1,4 @@
-/*	$NetBSD: moscom.c,v 1.5 2010/11/04 01:58:07 dyoung Exp $	*/
+/*	$NetBSD: moscom.c,v 1.5.12.1 2012/02/18 07:35:07 mrg Exp $	*/
 /*	$OpenBSD: moscom.c,v 1.11 2007/10/11 18:33:14 deraadt Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.5 2010/11/04 01:58:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.5.12.1 2012/02/18 07:35:07 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

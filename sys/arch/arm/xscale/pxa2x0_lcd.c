@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_lcd.c,v 1.32 2011/07/01 20:32:51 dyoung Exp $ */
+/* $NetBSD: pxa2x0_lcd.c,v 1.32.6.1 2012/02/18 07:31:34 mrg Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.32 2011/07/01 20:32:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.32.6.1 2012/02/18 07:31:34 mrg Exp $");
 
 #include "opt_pxa2x0_lcd.h"
 
@@ -745,7 +745,8 @@ pxa2x0_lcd_setup_wsscreen(struct pxa2x0_wsscreen_descr *descr,
 	if (fontname) {
 		wsfont_init();
 		cookie = wsfont_find(fontname, 0, 0, 0, 
-		    WSDISPLAY_FONTORDER_L2R, WSDISPLAY_FONTORDER_L2R);
+		    WSDISPLAY_FONTORDER_L2R, WSDISPLAY_FONTORDER_L2R,
+		    WSFONT_FIND_BITMAP);
 		if (cookie < 0 ||
 		    wsfont_lock(cookie, &rinfo.ri_font))
 			return -1;

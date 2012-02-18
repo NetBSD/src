@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.131 2010/04/05 07:19:34 joerg Exp $	*/
+/*	$NetBSD: elink3.c,v 1.131.12.1 2012/02/18 07:34:17 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -62,10 +62,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.131 2010/04/05 07:19:34 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.131.12.1 2012/02/18 07:34:17 mrg Exp $");
 
 #include "opt_inet.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,9 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.131 2010/04/05 07:19:34 joerg Exp $");
 #include <sys/syslog.h>
 #include <sys/select.h>
 #include <sys/device.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -490,10 +487,8 @@ epconfig(struct ep_softc *sc, u_short chipset, u_int8_t *enaddr)
 
 	GO_WINDOW(1);		/* Window 1 is operating window */
 
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 	    RND_TYPE_NET, 0);
-#endif
 
 	sc->tx_start_thresh = 20;	/* probably a good starting point. */
 
@@ -1433,10 +1428,8 @@ epintr(void *arg)
 			epstart(ifp);
 		}
 
-#if NRND > 0
 		if (status)
 			rnd_add_uint32(&sc->rnd_source, status);
-#endif
 	}
 
 	/* no more interrupts */
@@ -2031,9 +2024,7 @@ ep_detach(device_t self, int flags)
 	/* Delete all remaining media. */
 	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
 
-#if NRND > 0
 	rnd_detach_source(&sc->rnd_source);
-#endif
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 

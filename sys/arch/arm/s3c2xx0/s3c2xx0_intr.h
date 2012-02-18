@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2xx0_intr.h,v 1.13 2008/11/19 06:35:55 matt Exp $ */
+/*	$NetBSD: s3c2xx0_intr.h,v 1.13.20.1 2012/02/18 07:31:32 mrg Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -71,6 +71,8 @@
 
 #ifndef _S3C2XX0_INTR_H_
 #define _S3C2XX0_INTR_H_
+
+
 
 #include <arm/cpu.h>
 #include <arm/armreg.h>
@@ -187,6 +189,8 @@ struct intrhand {
 };
 #endif
 
+#define IRQNAMESIZE	sizeof("s3c2xx0 irq xx")
+
 struct s3c2xx0_intr_dispatch {
 #ifdef MULTIPLE_HANDLERS_ON_ONE_IRQ
 	TAILQ_HEAD(,intrhand) list;
@@ -195,7 +199,8 @@ struct s3c2xx0_intr_dispatch {
 #endif
 	void *cookie;		/* NULL for stackframe */
 	int level;
-	/* struct evbnt ev; */
+	struct evcnt ev;
+	char name[IRQNAMESIZE];
 };
 
 /* used by s3c2{80,40,41}0 interrupt handler */

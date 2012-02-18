@@ -430,7 +430,7 @@ extern int      stbi_gif_info_from_file   (FILE *f,                  int *x, int
 #endif
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stb_image.c,v 1.1 2011/02/06 23:13:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stb_image.c,v 1.1.14.1 2012/02/18 07:35:01 mrg Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -4601,16 +4601,30 @@ stbi_uc *stbi_gif_load_from_memory (stbi_uc const *buffer, int len, int *x, int 
 {
    uint8 *u = 0;
    stbi s;
-   stbi_gif g;
+   stbi_gif *pg;
 
-   memset(&g, 0, sizeof(g));
+   #ifdef STBI_SMALL_STACK
+   pg = (stbi_gif *) MALLOC(sizeof(*pg));
+   if (pg == NULL)
+      return NULL;
+   #else
+   stbi_gif g;
+   pg = &g;
+   #endif
+
+   memset(pg, 0, sizeof(*pg));
    start_mem(&s, buffer, len);
-   u = stbi_gif_load_next(&s, &g, comp, req_comp);
+   u = stbi_gif_load_next(&s, pg, comp, req_comp);
    if (u == (void *) 1) u = 0;  // end of animated gif marker
    if (u) {
-      *x = g.w;
-      *y = g.h;
+      *x = pg->w;
+      *y = pg->h;
    }
+
+   #ifdef STBI_SMALL_STACK
+   FREE(pg);
+   #endif
+
    return u;
 }
 

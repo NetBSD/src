@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.72 2011/11/19 22:51:22 tls Exp $	*/
+/*	$NetBSD: comvar.h,v 1.72.2.1 2012/02/18 07:34:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
 #include "opt_com.h"
 #include "opt_kgdb.h"
 
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 #include <sys/rnd.h>
 #endif
 
@@ -227,7 +227,7 @@ struct com_softc {
 
 	struct pps_state sc_pps_state;	/* pps state */
 
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 	krndsource_t  rnd_source;
 #endif
 	kmutex_t		sc_lock;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1 2011/01/26 01:18:51 pooka Exp $	*/
+/*	$NetBSD: bus.h,v 1.1.14.1 2012/02/18 07:31:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -151,18 +151,18 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
  * described by tag/handle/offset and copy into buffer provided.
  */
 
-#define __EMIPS_bus_space_read_multi(BYTES,BITS)				\
+#define __EMIPS_bus_space_read_multi(BYTES,BITS)			\
 static __inline void __CONCAT(bus_space_read_multi_,BYTES)		\
-(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
-	__PB_TYPENAME(BITS) *, size_t);				\
+(bus_space_tag_t, bus_space_handle_t, bus_size_t,			\
+	__PB_TYPENAME(BITS) *, size_t);					\
 									\
 static __inline void							\
-__CONCAT(bus_space_read_multi_,BYTES)(t, h, o, a, c)			\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	__PB_TYPENAME(BITS) *a;						\
-	size_t c;							\
+__CONCAT(bus_space_read_multi_,BYTES)(					\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h,						\
+	bus_size_t o,							\
+	__PB_TYPENAME(BITS) *a,						\
+	size_t c)							\
 {									\
 									\
 	while (c--)							\
@@ -191,16 +191,16 @@ __EMIPS_bus_space_read_multi(4,32)
 
 #define __EMIPS_bus_space_read_region(BYTES,BITS)			\
 static __inline void __CONCAT(bus_space_read_region_,BYTES)		\
-(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
-	__PB_TYPENAME(BITS) *, size_t);				\
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
+	__PB_TYPENAME(BITS) *, size_t);					\
 									\
 static __inline void							\
-__CONCAT(bus_space_read_region_,BYTES)(t, h, o, a, c)			\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	__PB_TYPENAME(BITS) *a;						\
-	size_t c;							\
+__CONCAT(bus_space_read_region_,BYTES)(					\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h,						\
+	bus_size_t o,							\
+	__PB_TYPENAME(BITS) *a,						\
+	size_t c)							\
 {									\
 									\
 	while (c--) {							\
@@ -264,16 +264,16 @@ do {									\
 
 #define __EMIPS_bus_space_write_multi(BYTES,BITS)			\
 static __inline void __CONCAT(bus_space_write_multi_,BYTES)		\
-(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
-	__PB_TYPENAME(BITS) *, size_t);				\
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
+	__PB_TYPENAME(BITS) *, size_t);					\
 									\
 static __inline void							\
-__CONCAT(bus_space_write_multi_,BYTES)(t, h, o, a, c)			\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	__PB_TYPENAME(BITS) *a;						\
-	size_t c;							\
+__CONCAT(bus_space_write_multi_,BYTES)(					\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h,						\
+	bus_size_t o,							\
+	__PB_TYPENAME(BITS) *a,						\
+	size_t c)							\
 {									\
 									\
 	while (c--)							\
@@ -302,16 +302,16 @@ __EMIPS_bus_space_write_multi(4,32)
 
 #define __EMIPS_bus_space_write_region(BYTES,BITS)			\
 static __inline void __CONCAT(bus_space_write_region_,BYTES)		\
-(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
-	__PB_TYPENAME(BITS) *, size_t);				\
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
+	__PB_TYPENAME(BITS) *, size_t);					\
 									\
 static __inline void							\
-__CONCAT(bus_space_write_region_,BYTES)(t, h, o, a, c)			\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	__PB_TYPENAME(BITS) *a;						\
-	size_t c;							\
+__CONCAT(bus_space_write_region_,BYTES)(				\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h,						\
+	bus_size_t o,							\
+	__PB_TYPENAME(BITS) *a,						\
+	size_t c)							\
 {									\
 									\
 	while (c--) {							\
@@ -342,16 +342,16 @@ __EMIPS_bus_space_write_region(4,32)
 
 #define __EMIPS_bus_space_set_multi(BYTES,BITS)				\
 static __inline void __CONCAT(bus_space_set_multi_,BYTES)		\
-(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS), size_t);					\
 									\
 static __inline void							\
-__CONCAT(bus_space_set_multi_,BYTES)(t, h, o, v, c)			\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	__PB_TYPENAME(BITS) v;						\
-	size_t c;							\
+__CONCAT(bus_space_set_multi_,BYTES)(					\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h,						\
+	bus_size_t o,							\
+	__PB_TYPENAME(BITS) v,						\
+	size_t c)							\
 {									\
 									\
 	while (c--)							\
@@ -378,18 +378,18 @@ __EMIPS_bus_space_set_multi(4,32)
  * by tag/handle starting at `offset'.
  */
 
-#define __EMIPS_bus_space_set_region(BYTES,BITS)				\
+#define __EMIPS_bus_space_set_region(BYTES,BITS)			\
 static __inline void __CONCAT(bus_space_set_region_,BYTES)		\
-(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS), size_t);					\
 									\
 static __inline void							\
-__CONCAT(bus_space_set_region_,BYTES)(t, h, o, v, c)			\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	__PB_TYPENAME(BITS) v;						\
-	size_t c;							\
+__CONCAT(bus_space_set_region_,BYTES)(					\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h,						\
+	bus_size_t o,							\
+	__PB_TYPENAME(BITS) v,						\
+	size_t c)							\
 {									\
 									\
 	while (c--) {							\
@@ -421,16 +421,19 @@ __EMIPS_bus_space_set_region(4,32)
 
 #define	__EMIPS_copy_region(BYTES)					\
 static __inline void __CONCAT(bus_space_copy_region_,BYTES)		\
-(bus_space_tag_t,						\
+	(bus_space_tag_t,						\
 	    bus_space_handle_t bsh1, bus_size_t off1,			\
 	    bus_space_handle_t bsh2, bus_size_t off2,			\
 	    bus_size_t count);						\
 									\
 static __inline void							\
-__CONCAT(bus_space_copy_region_,BYTES)(t, h1, o1, h2, o2, c)		\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h1, h2;					\
-	bus_size_t o1, o2, c;						\
+__CONCAT(bus_space_copy_region_,BYTES)(					\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h1,						\
+	bus_size_t o1,							\
+	bus_space_handle_t h2,						\
+	bus_size_t o2,							\
+	bus_size_t c)							\
 {									\
 	bus_size_t o;							\
 									\

@@ -1,4 +1,4 @@
-/*	$NetBSD: ataio.h,v 1.8 2007/03/04 06:03:40 christos Exp $	*/
+/*	$NetBSD: ataio.h,v 1.8.80.1 2012/02/18 07:35:47 mrg Exp $	*/
 
 #ifndef _SYS_ATAIO_H_
 #define _SYS_ATAIO_H_
@@ -26,6 +26,7 @@ typedef struct	atareq {
 #define ATACMD_READ		0x00000001
 #define ATACMD_WRITE		0x00000002
 #define ATACMD_READREG		0x00000004
+#define ATACMD_LBA		0x00000008
 
 /* definitions for the return status (retsts) */
 #define ATACMD_OK	0x00

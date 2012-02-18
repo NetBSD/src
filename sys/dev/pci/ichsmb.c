@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.25 2011/05/15 01:00:52 msaitoh Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.25.8.1 2012/02/18 07:34:38 mrg Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,13 +22,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.25 2011/05/15 01:00:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.25.8.1 2012/02/18 07:34:38 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
-#include <sys/rwlock.h>
+#include <sys/mutex.h>
 #include <sys/proc.h>
 
 #include <sys/bus.h>
@@ -59,7 +59,7 @@ struct ichsmb_softc {
 	int			sc_poll;
 
 	struct i2c_controller	sc_i2c_tag;
-	krwlock_t 		sc_i2c_rwlock;
+	kmutex_t 		sc_i2c_mutex;
 	struct {
 		i2c_op_t     op;
 		void *       buf;
@@ -124,14 +124,10 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 	bus_size_t iosize;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
-	char devinfo[256];
 
 	sc->sc_dev = self;
 
-	aprint_naive("\n");
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
-	    PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo(pa, NULL);
 
 	/* Read configuration */
 	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, LPCIB_SMB_HOSTC);
@@ -170,7 +166,7 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Attach I2C bus */
-	rw_init(&sc->sc_i2c_rwlock);
+	mutex_init(&sc->sc_i2c_mutex, MUTEX_DEFAULT, IPL_NONE);
 	sc->sc_i2c_tag.ic_cookie = sc;
 	sc->sc_i2c_tag.ic_acquire_bus = ichsmb_i2c_acquire_bus;
 	sc->sc_i2c_tag.ic_release_bus = ichsmb_i2c_release_bus;
@@ -190,10 +186,10 @@ ichsmb_i2c_acquire_bus(void *cookie, int flags)
 {
 	struct ichsmb_softc *sc = cookie;
 
-	if (cold || sc->sc_poll || (flags & I2C_F_POLL))
+	if (cold)
 		return 0;
 
-	rw_enter(&sc->sc_i2c_rwlock, RW_WRITER);
+	mutex_enter(&sc->sc_i2c_mutex);
 	return 0;
 }
 
@@ -202,10 +198,10 @@ ichsmb_i2c_release_bus(void *cookie, int flags)
 {
 	struct ichsmb_softc *sc = cookie;
 
-	if (cold || sc->sc_poll || (flags & I2C_F_POLL))
+	if (cold)
 		return;
 
-	rw_exit(&sc->sc_i2c_rwlock);
+	mutex_exit(&sc->sc_i2c_mutex);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.210 2011/10/31 13:16:01 yamt Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.210.6.1 2012/02/18 07:35:39 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.210 2011/10/31 13:16:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.210.6.1 2012/02/18 07:35:39 mrg Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -129,12 +129,12 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.210 2011/10/31 13:16:01 yamt Exp $")
 #include <netinet/ip_mroute.h>
 #endif
 
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 #include <netinet6/ipsec.h>
 #include <netinet6/ipsec_private.h>
 #include <netkey/key.h>
 #include <netkey/key_debug.h>
-#endif /*IPSEC*/
+#endif /*KAME_IPSEC*/
 
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
@@ -187,9 +187,9 @@ ip_output(struct mbuf *m0, ...)
 #ifdef IPSEC_NAT_T
 	int natt_frag = 0;
 #endif
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 	struct secpolicy *sp = NULL;
-#endif /*IPSEC*/
+#endif /*KAME_IPSEC*/
 #ifdef FAST_IPSEC
 	struct inpcb *inp;
 	struct secpolicy *sp = NULL;
@@ -503,7 +503,7 @@ sendit:
 	/* Remember the current ip_len */
 	ip_len = ntohs(ip->ip_len);
 
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 	/* get SP for this packet */
 	if (so == NULL)
 		sp = ipsec4_getpolicybyaddr(m, IPSEC_DIR_OUTBOUND,
@@ -655,7 +655,7 @@ sendit:
 	}
     }
 skip_ipsec:
-#endif /*IPSEC*/
+#endif /*KAME_IPSEC*/
 #ifdef FAST_IPSEC
 	/*
 	 * Check the security policy (SP) for the packet and, if
@@ -816,7 +816,7 @@ spd_done:
 			}
 		}
 
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 		/* clean ipsec history once it goes out of the node */
 		ipsec_delaux(m);
 #endif
@@ -882,10 +882,10 @@ spd_done:
 				ia->ia_ifa.ifa_data.ifad_outbytes +=
 				    ntohs(ip->ip_len);
 #endif
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 			/* clean ipsec history once it goes out of the node */
 			ipsec_delaux(m);
-#endif /* IPSEC */
+#endif /* KAME_IPSEC */
 
 #ifdef IPSEC_NAT_T
 			/*
@@ -896,7 +896,7 @@ spd_done:
 			 */
 			if (natt_frag) {
 				error = ip_output(m, opt,
-				    ro, flags, imo, so, mtu_p);
+				    ro, flags | IP_RAWOUTPUT | IP_NOIPNEWID, imo, so, mtu_p);
 			} else
 #endif /* IPSEC_NAT_T */
 			{
@@ -918,13 +918,13 @@ spd_done:
 done:
 	rtcache_free(&iproute);
 
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 	if (sp != NULL) {
 		KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 			printf("DP ip_output call free SP:%p\n", sp));
 		key_freesp(sp);
 	}
-#endif /* IPSEC */
+#endif /* KAME_IPSEC */
 #ifdef FAST_IPSEC
 	if (sp != NULL)
 		KEY_FREESP(&sp);
@@ -1006,7 +1006,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 			goto sendorfree;
 		}
 		m->m_pkthdr.len = mhlen + len;
-		m->m_pkthdr.rcvif = (struct ifnet *)0;
+		m->m_pkthdr.rcvif = NULL;
 		mhip->ip_sum = 0;
 		KASSERT((m->m_pkthdr.csum_flags & M_CSUM_IPv4) == 0);
 		if (sw_csum & M_CSUM_IPv4) {
@@ -1214,7 +1214,7 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 	struct inpcb *inp = sotoinpcb(so);
 	int optval = 0;
 	int error = 0;
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(KAME_IPSEC) || defined(FAST_IPSEC)
 	struct lwp *l = curlwp;	/*XXX*/
 #endif
 
@@ -1321,7 +1321,7 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			/* INP_UNLOCK(inp); */
 			break;
 
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(KAME_IPSEC) || defined(FAST_IPSEC)
 		case IP_IPSEC_POLICY:
 		    {
 			error = ipsec4_set_policy(inp, sopt->sopt_name,
@@ -1405,7 +1405,7 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			error = sockopt_setint(sopt, optval);
 			break;
 
-#if 0	/* defined(IPSEC) || defined(FAST_IPSEC) */
+#if 0	/* defined(KAME_IPSEC) || defined(FAST_IPSEC) */
 		case IP_IPSEC_POLICY:
 		{
 			struct mbuf *m = NULL;

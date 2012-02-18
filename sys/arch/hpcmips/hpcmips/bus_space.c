@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.30 2011/02/26 12:07:45 tsutsui Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.30.8.1 2012/02/18 07:32:11 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.30 2011/02/26 12:07:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.30.8.1 2012/02/18 07:32:11 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,7 +216,7 @@ hpcmips_init_bus_space(struct bus_space_tag_hpcmips *t,
 	}
 
 	t->extent = (void*)extent_create(t->name, t->base, 
-	    t->base + t->size, M_DEVBUF,
+	    t->base + t->size,
 	    0, 0, EX_NOWAIT);
 	if (!t->extent) {
 		panic("hpcmips_init_bus_space_extent:"

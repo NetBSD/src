@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.44 2011/10/31 12:18:32 yamt Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.44.6.1 2012/02/18 07:35:31 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.44 2011/10/31 12:18:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.44.6.1 2012/02/18 07:35:31 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.44 2011/10/31 12:18:32 yamt Exp $"
 
 static int	sleepq_sigtoerror(lwp_t *, int);
 
-/* General purpose sleep table, used by ltsleep() and condition variables. */
+/* General purpose sleep table, used by mtsleep() and condition variables. */
 sleeptab_t	sleeptab	__cacheline_aligned;
 
 /*

@@ -1,4 +1,4 @@
-#	$NetBSD: AP_MS104_SH4,v 1.3 2011/11/22 21:25:13 tls Exp $
+#	$NetBSD: AP_MS104_SH4,v 1.3.2.1 2012/02/18 07:32:01 mrg Exp $
 #
 #	Alpha project AP-MS104-SH4 config file
 #
@@ -69,7 +69,7 @@ file-system	TMPFS		# Efficient memory file-system
 
 # File system options
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP

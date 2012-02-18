@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.70 2011/06/29 06:00:17 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.70.6.1 2012/02/18 07:32:56 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.70 2011/06/29 06:00:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.70.6.1 2012/02/18 07:32:56 mrg Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.70 2011/06/29 06:00:17 matt Exp $");
 #include <sys/device.h>
 #include <sys/types.h>
 #include <sys/lwp.h>
-#include <sys/malloc.h>
 #include <sys/xcall.h>
 
 #include <uvm/uvm.h>
@@ -269,17 +268,27 @@ cpu_model_init(void)
 	oeacpufeat = 0;
 	
 	if ((vers >= IBMRS64II && vers <= IBM970GX) || vers == MPC620 ||
-		vers == IBMCELL || vers == IBMPOWER6P5)
-		oeacpufeat |= OEACPU_64 | OEACPU_64_BRIDGE | OEACPU_NOBAT;
+		vers == IBMCELL || vers == IBMPOWER6P5) {
+		oeacpufeat |= OEACPU_64;
+		oeacpufeat |= OEACPU_64_BRIDGE;
+		oeacpufeat |= OEACPU_NOBAT;
 	
-	else if (vers == MPC601)
+	} else if (vers == MPC601) {
 		oeacpufeat |= OEACPU_601;
 
-	else if (MPC745X_P(vers) && vers != MPC7450)
-		oeacpufeat |= OEACPU_XBSEN | OEACPU_HIGHBAT | OEACPU_HIGHSPRG;
-
-	else if (vers == IBM750FX || vers == IBM750GX)
+	} else if (MPC745X_P(vers) && vers != MPC7450) {
+		oeacpufeat |= OEACPU_HIGHSPRG;
+		oeacpufeat |= OEACPU_XBSEN;
 		oeacpufeat |= OEACPU_HIGHBAT;
+		/* Enable more and larger BAT registers */
+		register_t hid0 = mfspr(SPR_HID0);
+		hid0 |= HID0_XBSEN;
+		hid0 |= HID0_HIGH_BAT_EN;
+		mtspr(SPR_HID0, hid0);
+
+	} else if (vers == IBM750FX || vers == IBM750GX) {
+		oeacpufeat |= OEACPU_HIGHBAT;
+	}
 }
 
 void
@@ -404,6 +413,7 @@ cpu_attach_common(device_t self, int id)
 	 * and just bail out.
 	 */
 	if (id != 0) {
+		aprint_naive("\n");
 		aprint_normal(": ID %d\n", id);
 		aprint_normal_dev(self,
 		    "processor off-line; "
@@ -440,6 +450,7 @@ cpu_attach_common(device_t self, int id)
 		cpu_setup(self, ci);
 		break;
 	default:
+		aprint_naive("\n");
 		if (id >= CPU_MAXNUM) {
 			aprint_normal(": more than %d cpus?\n", CPU_MAXNUM);
 			panic("cpuattach");
@@ -468,6 +479,7 @@ cpu_setup(device_t self, struct cpu_info *ci)
 	vers = (pvr >> 16) & 0xffff;
 
 	cpu_identify(model, sizeof(model));
+	aprint_naive("\n");
 	aprint_normal(": %s, ID %d%s\n", model,  cpu_number(),
 	    cpu_number() == 0 ? " (primary)" : "");
 
@@ -522,11 +534,6 @@ cpu_setup(device_t self, struct cpu_info *ci)
 		/* Enable the 7450 branch caches */
 		hid0 |= HID0_SGE | HID0_BTIC;
 		hid0 |= HID0_LRSTK | HID0_FOLD | HID0_BHT;
-		/* Enable more and larger BAT registers */
-		if (oeacpufeat & OEACPU_XBSEN)
-			hid0 |= HID0_XBSEN;
-		if (oeacpufeat & OEACPU_HIGHBAT)
-			hid0 |= HID0_HIGH_BAT_EN;
 		/* Disable BTIC on 7450 Rev 2.0 or earlier */
 		if (vers == MPC7450 && (pvr & 0xFFFF) <= 0x0200)
 			hid0 &= ~HID0_BTIC;

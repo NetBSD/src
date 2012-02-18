@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_openpic.c,v 1.6 2011/06/20 06:21:45 matt Exp $ */
+/*	$NetBSD: pic_openpic.c,v 1.6.6.1 2012/02/18 07:32:59 mrg Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,10 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.6 2011/06/20 06:21:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.6.6.1 2012/02/18 07:32:59 mrg Exp $");
 
 #include <sys/param.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kernel.h>
 
 #include <uvm/uvm_extern.h>
@@ -55,7 +55,7 @@ setup_openpic(void *addr, int passthrough)
 	u_int x;
 
 	openpic_base = (void *)addr;
-	opicops = malloc(sizeof(struct openpic_ops), M_DEVBUF, M_NOWAIT);
+	opicops = kmem_alloc(sizeof(*opicops), KM_SLEEP);
 	KASSERT(opicops != NULL);
 	pic = &opicops->pic;
 
@@ -144,9 +144,17 @@ opic_establish_irq(struct pic_ops *pic, int irq, int type, int pri)
 
 	x = irq;
 	x |= OPENPIC_IMASK;
-	x |= (irq == 0) ?
-	    OPENPIC_POLARITY_POSITIVE :	OPENPIC_POLARITY_NEGATIVE;
-	x |= (type == IST_EDGE) ? OPENPIC_SENSE_EDGE : OPENPIC_SENSE_LEVEL;
+
+	if (irq == 0 || type == IST_EDGE_RISING || type == IST_LEVEL_HIGH)
+		x |= OPENPIC_POLARITY_POSITIVE;
+	else
+		x |= OPENPIC_POLARITY_NEGATIVE;
+
+	if (type == IST_EDGE_FALLING || type == IST_EDGE_RISING)
+		x |= OPENPIC_SENSE_EDGE;
+	else
+		x |= OPENPIC_SENSE_LEVEL;
+
 	x |= realpri << OPENPIC_PRIORITY_SHIFT;
 	openpic_write(OPENPIC_SRC_VECTOR(irq), x);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.35 2011/05/24 16:40:21 joerg Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.35.8.1 2012/02/18 07:35:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.35 2011/05/24 16:40:21 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.35.8.1 2012/02/18 07:35:13 mrg Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>

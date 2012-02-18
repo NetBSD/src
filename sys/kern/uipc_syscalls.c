@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.148 2011/11/04 02:13:08 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.148.4.1 2012/02/18 07:35:34 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.148 2011/11/04 02:13:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.148.4.1 2012/02/18 07:35:34 mrg Exp $");
 
 #include "opt_pipe.h"
 
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.148 2011/11/04 02:13:08 christos
 #include <sys/un.h>
 #include <sys/ktrace.h>
 #include <sys/event.h>
+#include <sys/atomic.h>
 #include <sys/kauth.h>
 
 #include <sys/mount.h>
@@ -198,7 +199,7 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock,
 		error = EINVAL;
 		goto bad;
 	}
-	if (so->so_nbio && so->so_qlen == 0) {
+	if ((so->so_state & SS_NBIO) && so->so_qlen == 0) {
 		error = EWOULDBLOCK;
 		goto bad;
 	}
@@ -229,7 +230,8 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock,
 		panic("accept");
 	fp2->f_type = DTYPE_SOCKET;
 	fp2->f_flag = (fp->f_flag & ~clrflags) |
-	    ((flags & SOCK_NONBLOCK) ? FNONBLOCK : 0); 
+	    ((flags & SOCK_NONBLOCK) ? FNONBLOCK : 0)|
+	    ((flags & SOCK_NOSIGPIPE) ? FNOSIGPIPE : 0);
 	fp2->f_ops = &socketops;
 	fp2->f_data = so2;
 	error = soaccept(so2, nam);
@@ -367,7 +369,8 @@ do_sys_connect(struct lwp *l, int fd, struct mbuf *nam)
 	error = soconnect(so, nam, l);
 	if (error)
 		goto bad;
-	if (so->so_nbio && (so->so_state & SS_ISCONNECTING) != 0) {
+	if ((so->so_state & (SS_NBIO|SS_ISCONNECTING)) ==
+	    (SS_NBIO|SS_ISCONNECTING)) {
 		error = EINPROGRESS;
 		goto out;
 	}
@@ -406,7 +409,6 @@ makesocket(struct lwp *l, file_t **fp, int *fd, int flags, int type,
 {
 	int error;
 	struct socket *so;
-	int fnonblock = (flags & SOCK_NONBLOCK) ? FNONBLOCK : 0; 
 
 	if ((error = socreate(domain, &so, type, proto, l, soo)) != 0)
 		return error;
@@ -416,7 +418,9 @@ makesocket(struct lwp *l, file_t **fp, int *fd, int flags, int type,
 		return error;
 	}
 	fd_set_exclose(l, *fd, (flags & SOCK_CLOEXEC) != 0);
-	(*fp)->f_flag = FREAD|FWRITE|fnonblock;
+	(*fp)->f_flag = FREAD|FWRITE|
+	    ((flags & SOCK_NONBLOCK) ? FNONBLOCK : 0)|
+	    ((flags & SOCK_NOSIGPIPE) ? FNOSIGPIPE : 0);
 	(*fp)->f_type = DTYPE_SOCKET;
 	(*fp)->f_ops = &socketops;
 	(*fp)->f_data = so;
@@ -532,6 +536,7 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 	struct iovec	aiov[UIO_SMALLIOV], *iov = aiov, *tiov, *ktriov = NULL;
 	struct mbuf	*to, *control;
 	struct socket	*so;
+	file_t		*fp;
 	struct uio	auio;
 	size_t		len, iovsz;
 	int		i, error;
@@ -605,7 +610,7 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 		memcpy(ktriov, auio.uio_iov, iovsz);
 	}
 
-	if ((error = fd_getsock(s, &so)) != 0)
+	if ((error = fd_getsock1(s, &so, &fp)) != 0)
 		goto bad;
 
 	if (mp->msg_name)
@@ -624,7 +629,8 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 		if (auio.uio_resid != len && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
-		if (error == EPIPE && (flags & MSG_NOSIGNAL) == 0) {
+		if (error == EPIPE && (fp->f_flag & FNOSIGPIPE) == 0 &&
+		    (flags & MSG_NOSIGNAL) == 0) {
 			mutex_enter(proc_lock);
 			psignal(l->l_proc, SIGPIPE);
 			mutex_exit(proc_lock);
@@ -945,6 +951,7 @@ sys_setsockopt(struct lwp *l, const struct sys_setsockopt_args *uap, register_t 
 	} */
 	struct sockopt	sopt;
 	struct socket	*so;
+	file_t		*fp;
 	int		error;
 	unsigned int	len;
 
@@ -955,7 +962,7 @@ sys_setsockopt(struct lwp *l, const struct sys_setsockopt_args *uap, register_t 
 	if (len > MCLBYTES)
 		return (EINVAL);
 
-	if ((error = fd_getsock(SCARG(uap, s), &so)) != 0)
+	if ((error = fd_getsock1(SCARG(uap, s), &so, &fp)) != 0)
 		return (error);
 
 	sockopt_init(&sopt, SCARG(uap, level), SCARG(uap, name), len);
@@ -967,6 +974,10 @@ sys_setsockopt(struct lwp *l, const struct sys_setsockopt_args *uap, register_t 
 	}
 
 	error = sosetopt(so, &sopt);
+	if (so->so_options & SO_NOSIGPIPE)
+		atomic_or_uint(&fp->f_flag, FNOSIGPIPE);
+	else
+		atomic_and_uint(&fp->f_flag, ~FNOSIGPIPE);
 
  out:
 	sockopt_destroy(&sopt);
@@ -987,6 +998,7 @@ sys_getsockopt(struct lwp *l, const struct sys_getsockopt_args *uap, register_t 
 	} */
 	struct sockopt	sopt;
 	struct socket	*so;
+	file_t		*fp;
 	unsigned int	valsize, len;
 	int		error;
 
@@ -997,11 +1009,15 @@ sys_getsockopt(struct lwp *l, const struct sys_getsockopt_args *uap, register_t 
 	} else
 		valsize = 0;
 
-	if ((error = fd_getsock(SCARG(uap, s), &so)) != 0)
+	if ((error = fd_getsock1(SCARG(uap, s), &so, &fp)) != 0)
 		return (error);
 
 	sockopt_init(&sopt, SCARG(uap, level), SCARG(uap, name), 0);
 
+	if (fp->f_flag & FNOSIGPIPE)
+		so->so_options |= SO_NOSIGPIPE;
+	else
+		so->so_options &= ~SO_NOSIGPIPE;
 	error = sogetopt(so, &sopt);
 	if (error)
 		goto out;
@@ -1033,7 +1049,7 @@ pipe1(struct lwp *l, register_t *retval, int flags)
 	int		fd, error;
 	proc_t		*p;
 
-	if (flags & ~(O_CLOEXEC|O_NONBLOCK))
+	if (flags & ~(O_CLOEXEC|O_NONBLOCK|O_NOSIGPIPE))
 		return EINVAL;
 	p = curproc;
 	if ((error = socreate(AF_LOCAL, &rso, SOCK_STREAM, 0, l, NULL)) != 0)

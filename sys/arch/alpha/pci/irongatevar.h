@@ -1,4 +1,4 @@
-/* $NetBSD: irongatevar.h,v 1.5 2011/06/14 15:34:22 matt Exp $ */
+/* $NetBSD: irongatevar.h,v 1.5.6.1 2012/02/18 07:31:03 mrg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ struct irongate_config {
 	struct alpha_bus_dma_tag ic_dmat_pci;
 	struct alpha_bus_dma_tag ic_dmat_isa;
 
-	u_int32_t ic_rev;
+	uint32_t ic_rev;
 
 	struct extent *ic_io_ex, *ic_mem_ex;
 	int	ic_mallocsafe;

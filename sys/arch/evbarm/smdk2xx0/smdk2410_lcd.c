@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_lcd.c,v 1.6 2011/07/01 20:44:21 dyoung Exp $ */
+/*	$NetBSD: smdk2410_lcd.c,v 1.6.6.1 2012/02/18 07:31:53 mrg Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_lcd.c,v 1.6 2011/07/01 20:44:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_lcd.c,v 1.6.6.1 2012/02/18 07:31:53 mrg Exp $");
 
 /*
  * LCD driver for Samsung SMDK2410.
@@ -166,7 +166,7 @@ const struct cdevsw lcd_cdevsw = {
 
 #endif /* NWSDISPLAY */
 
-CFATTACH_DECL(lcd_ssio, sizeof (struct s3c24x0_lcd_softc),  lcd_match,
+CFATTACH_DECL_NEW(lcd_ssio, sizeof (struct s3c24x0_lcd_softc),  lcd_match,
     lcd_attach, NULL, NULL);
 
 int
@@ -214,7 +214,7 @@ static const struct s3c24x0_lcd_panel_info samsung_LTS350Q1 =
 void
 lcd_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct s3c24x0_lcd_softc *sc = (struct s3c24x0_lcd_softc *)self;
+	struct s3c24x0_lcd_softc *sc = device_private(self);
 	bus_space_tag_t iot =  s3c2xx0_softc->sc_iot;
 	bus_space_handle_t gpio_ioh = s3c2xx0_softc->sc_gpio_ioh;
 #if NWSDISPLAY > 0
@@ -224,6 +224,7 @@ lcd_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 
+	sc->sc_dev = self;
 	aprint_normal( "\n" );
 
 	/* setup GPIO ports for LCD */

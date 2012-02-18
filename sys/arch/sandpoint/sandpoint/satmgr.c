@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.13 2011/11/12 23:57:55 phx Exp $ */
+/* $NetBSD: satmgr.c,v 1.13.4.1 2012/02/18 07:33:04 mrg Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -205,6 +205,7 @@ satmgr_attach(device_t parent, device_t self, void *aux)
 	}
 	if (ops == NULL)
 		goto notavail;
+	aprint_naive(": button manager\n");
 	aprint_normal(": button manager (%s)\n", ops->family);
 	sc->sc_ops = ops;
 
@@ -230,8 +231,9 @@ satmgr_attach(device_t parent, device_t self, void *aux)
 	sc->sc_btn_cnt = 0;
 
 	epicirq = (eaa->eumb_unit == 0) ? 24 : 25;
-	intr_establish(epicirq + 16, IST_LEVEL, IPL_SERIAL, hwintr, sc);
-	aprint_normal_dev(self, "interrupting at irq %d\n", epicirq + 16);
+	intr_establish(epicirq + I8259_ICU, IST_LEVEL, IPL_SERIAL, hwintr, sc);
+	aprint_normal_dev(self, "interrupting at irq %d\n",
+	    epicirq + I8259_ICU);
 	sc->sc_si = softint_establish(SOFTINT_SERIAL, swintr, sc);
 
 	CSR_WRITE(sc, IER, 0x7f); /* all but MSR */

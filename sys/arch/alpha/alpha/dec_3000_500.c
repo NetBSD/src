@@ -1,21 +1,21 @@
-/* $NetBSD: dec_3000_500.c,v 1.45 2011/06/14 15:34:21 matt Exp $ */
+/* $NetBSD: dec_3000_500.c,v 1.45.6.1 2012/02/18 07:30:48 mrg Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.45 2011/06/14 15:34:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.45.6.1 2012/02/18 07:30:48 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,9 +77,9 @@ const struct alpha_variation_table dec_3000_500_variations[] = {
 };
 
 void
-dec_3000_500_init()
+dec_3000_500_init(void)
 {
-	u_int64_t variation;
+	uint64_t variation;
 
 	platform.family = "DEC 3000/500 (\"Flamingo\")";
 
@@ -110,7 +110,7 @@ dec_3000_500_init()
 }
 
 static void
-dec_3000_500_cons_init()
+dec_3000_500_cons_init(void)
 {
 	struct ctb *ctb;
 
@@ -254,7 +254,7 @@ dec_3000_500_device_register(device_t dev, void *aux)
 	}
 
 	if (netboot) {
-                if (b->slot == 7 && device_is_a(dev, "le") &&
+	        if (b->slot == 7 && device_is_a(dev, "le") &&
 		    device_is_a(parent, "ioasic")) {
 			/*
 			 * no need to check ioasic_attach_args, since only
@@ -272,5 +272,5 @@ dec_3000_500_device_register(device_t dev, void *aux)
 		/*
 		 * XXX GENERIC SUPPORT FOR TC NETWORK BOARDS
 		 */
-        }
+	}
 }

@@ -1,7 +1,7 @@
-/*	$NetBSD: bufq_priocscan.c,v 1.16 2011/11/07 08:44:16 hannken Exp $	*/
+/*	$NetBSD: bufq_priocscan.c,v 1.16.4.1 2012/02/18 07:35:26 mrg Exp $	*/
 
 /*-
- * Copyright (c)2004,2005,2006,2008,2009 YAMAMOTO Takashi,
+ * Copyright (c)2004,2005,2006,2008,2009,2011,2012 YAMAMOTO Takashi,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.16 2011/11/07 08:44:16 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.16.4.1 2012/02/18 07:35:26 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,98 +35,170 @@ __KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.16 2011/11/07 08:44:16 hannken 
 #include <sys/bufq.h>
 #include <sys/bufq_impl.h>
 #include <sys/kmem.h>
+#include <sys/rbtree.h>
+
+#undef	PRIOCSCAN_USE_GLOBAL_POSITION
 
 /*
  * Cyclical scan (CSCAN)
  */
-TAILQ_HEAD(bqhead, buf);
-struct cscan_queue {
-	struct bqhead cq_head[2];	/* actual lists of buffers */
-	unsigned int cq_idx;		/* current list index */
-	int cq_lastcylinder;		/* b_cylinder of the last request */
-	daddr_t cq_lastrawblkno;	/* b_rawblkno of the last request */
+
+struct cscan_key {
+	daddr_t	k_rawblkno;
+	int k_cylinder;
 };
 
-static inline int cscan_empty(const struct cscan_queue *);
-static void cscan_put(struct cscan_queue *, struct buf *, int);
-static struct buf *cscan_get(struct cscan_queue *, int);
-static void cscan_init(struct cscan_queue *);
+struct cscan_queue {
+	rb_tree_t cq_buffers;		/* ordered list of buffers */
+#if !defined(PRIOCSCAN_USE_GLOBAL_POSITION)
+	struct cscan_key cq_lastkey;	/* key of last request */
+#endif /* !defined(PRIOCSCAN_USE_GLOBAL_POSITION) */
+	int cq_sortby;			/* BUFQ_SORT_MASK */
+	rb_tree_ops_t cq_ops;
+};
 
-static inline int
-cscan_empty(const struct cscan_queue *q)
+static signed int
+buf_cmp(const struct buf *b1, const struct buf *b2, int sortby)
 {
 
-	return TAILQ_EMPTY(&q->cq_head[0]) && TAILQ_EMPTY(&q->cq_head[1]);
+	if (buf_inorder(b2, b1, sortby)) {
+		return 1;	/* b1 > b2 */
+	}
+	if (buf_inorder(b1, b2, sortby)) {
+		return -1;	/* b1 < b2 */
+	}
+	return 0;
+}
+
+/* return positive if n1 > n2 */
+static signed int
+cscan_tree_compare_nodes(void *context, const void *n1, const void *n2)
+{
+	const struct cscan_queue * const q = context;
+	const struct buf * const b1 = n1;
+	const struct buf * const b2 = n2;
+	const int sortby = q->cq_sortby;
+	const int diff = buf_cmp(b1, b2, sortby);
+
+	/*
+	 * XXX rawblkno/cylinder might not be unique.  eg. unbuffered i/o
+	 */
+
+	if (diff != 0) {
+		return diff;
+	}
+
+	/*
+	 * XXX rawblkno/cylinder might not be unique.  eg. unbuffered i/o
+	 */
+	if (b1 > b2) {
+		return 1;
+	}
+	if (b1 < b2) {
+		return -1;
+	}
+	return 0;
+}
+
+/* return positive if n1 > k2 */
+static signed int
+cscan_tree_compare_key(void *context, const void *n1, const void *k2)
+{
+	const struct cscan_queue * const q = context;
+	const struct buf * const b1 = n1;
+	const struct cscan_key * const key = k2;
+	const struct buf tmp = {
+		.b_rawblkno = key->k_rawblkno,
+		.b_cylinder = key->k_cylinder,
+	};
+	const struct buf *b2 = &tmp;
+	const int sortby = q->cq_sortby;
+
+	return buf_cmp(b1, b2, sortby);
+}
+
+static void __unused
+cscan_dump(struct cscan_queue *cq)
+{
+	const int sortby = cq->cq_sortby;
+	struct buf *bp;
+
+	RB_TREE_FOREACH(bp, &cq->cq_buffers) {
+		if (sortby == BUFQ_SORT_RAWBLOCK) {
+			printf(" %jd", (intmax_t)bp->b_rawblkno);
+		} else {
+			printf(" %jd/%jd",
+			    (intmax_t)bp->b_cylinder, (intmax_t)bp->b_rawblkno);
+		}
+	}
+}
+
+static inline bool
+cscan_empty(struct cscan_queue *q)
+{
+
+	/* XXX this might do more work than necessary */
+	return rb_tree_iterate(&q->cq_buffers, NULL, RB_DIR_LEFT) == NULL;
 }
 
 static void
-cscan_put(struct cscan_queue *q, struct buf *bp, int sortby)
+cscan_put(struct cscan_queue *q, struct buf *bp)
 {
-	struct buf tmp;
-	struct buf *it;
-	struct bqhead *bqh;
-	unsigned int idx;
+	struct buf *obp;
 
-	tmp.b_cylinder = q->cq_lastcylinder;
-	tmp.b_rawblkno = q->cq_lastrawblkno;
-
-	if (buf_inorder(bp, &tmp, sortby))
-		idx = 1 - q->cq_idx;
-	else
-		idx = q->cq_idx;
-
-	bqh = &q->cq_head[idx];
-
-	TAILQ_FOREACH(it, bqh, b_actq)
-		if (buf_inorder(bp, it, sortby))
-			break;
-
-	if (it != NULL)
-		TAILQ_INSERT_BEFORE(it, bp, b_actq);
-	else
-		TAILQ_INSERT_TAIL(bqh, bp, b_actq);
+	obp = rb_tree_insert_node(&q->cq_buffers, bp);
+	KASSERT(obp == bp); /* see cscan_tree_compare_nodes */
 }
 
 static struct buf *
-cscan_get(struct cscan_queue *q, int remove)
+cscan_get(struct cscan_queue *q, int remove, struct cscan_key *key)
 {
-	unsigned int idx = q->cq_idx;
-	struct bqhead *bqh;
 	struct buf *bp;
 
-	bqh = &q->cq_head[idx];
-	bp = TAILQ_FIRST(bqh);
-
+	bp = rb_tree_find_node_geq(&q->cq_buffers, key);
+	KDASSERT(bp == NULL || cscan_tree_compare_key(q, bp, key) >= 0);
 	if (bp == NULL) {
-		/* switch queue */
-		idx = 1 - idx;
-		bqh = &q->cq_head[idx];
-		bp = TAILQ_FIRST(bqh);
+		bp = rb_tree_iterate(&q->cq_buffers, NULL, RB_DIR_LEFT);
+		KDASSERT(cscan_tree_compare_key(q, bp, key) < 0);
 	}
-
-	KDASSERT((bp != NULL && !cscan_empty(q)) ||
-	         (bp == NULL && cscan_empty(q)));
-
 	if (bp != NULL && remove) {
-		q->cq_idx = idx;
-		TAILQ_REMOVE(bqh, bp, b_actq);
+#if defined(DEBUG)
+		struct buf *nbp;
+#endif /* defined(DEBUG) */
 
-		q->cq_lastcylinder = bp->b_cylinder;
-		q->cq_lastrawblkno =
-		    bp->b_rawblkno + (bp->b_bcount >> DEV_BSHIFT);
+		rb_tree_remove_node(&q->cq_buffers, bp);
+		/*
+		 * remember the head position.
+		 */
+		key->k_cylinder = bp->b_cylinder;
+		key->k_rawblkno = bp->b_rawblkno + (bp->b_bcount >> DEV_BSHIFT);
+#if defined(DEBUG)
+		nbp = rb_tree_find_node_geq(&q->cq_buffers, key);
+		if (nbp != NULL && cscan_tree_compare_nodes(q, nbp, bp) < 0) {
+			panic("%s: wrong order %p < %p\n", __func__,
+			    nbp, bp);
+		}
+#endif /* defined(DEBUG) */
 	}
-
-	return (bp);
+	return bp;
 }
 
 static void
-cscan_init(struct cscan_queue *q)
+cscan_init(struct cscan_queue *q, int sortby)
 {
+	static const rb_tree_ops_t cscan_tree_ops = {
+		.rbto_compare_nodes = cscan_tree_compare_nodes,
+		.rbto_compare_key = cscan_tree_compare_key,
+		.rbto_node_offset = offsetof(struct buf, b_u.u_rbnode),
+		.rbto_context = NULL,
+	};
 
-	TAILQ_INIT(&q->cq_head[0]);
-	TAILQ_INIT(&q->cq_head[1]);
+	q->cq_sortby = sortby;
+	/* XXX copy ops to workaround rbtree.h API limitation */
+	q->cq_ops = cscan_tree_ops;
+	q->cq_ops.rbto_context = q;
+	rb_tree_init(&q->cq_buffers, &q->cq_ops);
 }
-
 
 /*
  * Per-prioritiy CSCAN.
@@ -144,14 +216,13 @@ struct priocscan_queue {
 struct bufq_priocscan {
 	struct priocscan_queue bq_queue[PRIOCSCAN_NQUEUE];
 
-#if 0
+#if defined(PRIOCSCAN_USE_GLOBAL_POSITION)
 	/*
 	 * XXX using "global" head position can reduce positioning time
 	 * when switching between queues.
 	 * although it might affect against fairness.
 	 */
-	daddr_t bq_lastrawblkno;
-	int bq_lastcylinder;
+	struct cscan_key bq_lastkey;
 #endif
 };
 
@@ -193,10 +264,9 @@ bufq_priocscan_put(struct bufq_state *bufq, struct buf *bp)
 {
 	struct bufq_priocscan *q = bufq->bq_private;
 	struct cscan_queue *cq;
-	const int sortby = bufq->bq_flags & BUFQ_SORT_MASK;
 
 	cq = bufq_priocscan_selectqueue(q, bp);
-	cscan_put(cq, bp, sortby);
+	cscan_put(cq, bp);
 }
 
 static struct buf *
@@ -307,7 +377,13 @@ bufq_priocscan_get(struct bufq_state *bufq, int remove)
 	 * finally, get a request from the selected queue.
 	 */
 	KDASSERT(!cscan_empty(&pq->q_queue));
-	bp = cscan_get(&pq->q_queue, remove);
+	bp = cscan_get(&pq->q_queue, remove,
+#if defined(PRIOCSCAN_USE_GLOBAL_POSITION)
+	    &q->bq_lastkey
+#else /* defined(PRIOCSCAN_USE_GLOBAL_POSITION) */
+	    &pq->q_queue.cq_lastkey
+#endif /* defined(PRIOCSCAN_USE_GLOBAL_POSITION) */
+	    );
 	KDASSERT(bp != NULL);
 	KDASSERT(&pq->q_queue == bufq_priocscan_selectqueue(q, bp));
 
@@ -318,19 +394,20 @@ static struct buf *
 bufq_priocscan_cancel(struct bufq_state *bufq, struct buf *bp)
 {
 	struct bufq_priocscan * const q = bufq->bq_private;
-	unsigned int i, j;
+	unsigned int i;
 
 	for (i = 0; i < PRIOCSCAN_NQUEUE; i++) {
 		struct cscan_queue * const cq = &q->bq_queue[i].q_queue;
-		for (j = 0; j < 2; j++) {
-			struct bqhead * const bqh = &cq->cq_head[j];
-			struct buf *bq;
+		struct buf *it;
 
-			TAILQ_FOREACH(bq, bqh, b_actq) {
-				if (bq == bp) {
-					TAILQ_REMOVE(bqh, bp, b_actq);
-					return bp;
-				}
+		/*
+		 * XXX probably could be faster but the cancel functionality
+		 * is not widely used anyway.
+		 */
+		RB_TREE_FOREACH(it, &cq->cq_buffers) {
+			if (it == bp) {
+				rb_tree_remove_node(&cq->cq_buffers, bp);
+				return bp;
 			}
 		}
 	}
@@ -349,6 +426,7 @@ static void
 bufq_priocscan_init(struct bufq_state *bufq)
 {
 	struct bufq_priocscan *q;
+	const int sortby = bufq->bq_flags & BUFQ_SORT_MASK;
 	unsigned int i;
 
 	bufq->bq_get = bufq_priocscan_get;
@@ -361,6 +439,6 @@ bufq_priocscan_init(struct bufq_state *bufq)
 	for (i = 0; i < PRIOCSCAN_NQUEUE; i++) {
 		struct cscan_queue *cq = &q->bq_queue[i].q_queue;
 
-		cscan_init(cq);
+		cscan_init(cq, sortby);
 	}
 }

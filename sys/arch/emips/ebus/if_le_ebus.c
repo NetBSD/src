@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ebus.c,v 1.3 2011/11/19 22:51:19 tls Exp $	*/
+/*	$NetBSD: if_le_ebus.c,v 1.3.2.1 2012/02/18 07:31:44 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,11 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.3 2011/11/19 22:51:19 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.3.2.1 2012/02/18 07:31:44 mrg Exp $");
 
 #include "opt_inet.h"
 
-#include "rnd.h"
+
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,9 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.3 2011/11/19 22:51:19 tls Exp $");
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
 
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <emips/ebus/ebusvar.h>
 #include <emips/emips/machdep.h>
@@ -114,9 +112,7 @@ struct enic_softc {
 
 	uint8_t sc_enaddr[ETHER_ADDR_LEN];
 	uint8_t sc_pad[2];
-#if NRND > 0
 	krndsource_t	rnd_source;
-#endif
 };
 
 void enic_reset(struct ifnet *);
@@ -226,10 +222,8 @@ enic_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_sh == NULL)
 		panic("enic_attach: cannot establish shutdown hook");
 
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 			  RND_TYPE_NET, 0);
-#endif
 
 	ebus_intr_establish(parent, (void *)ia->ia_cookie, IPL_NET,
 	    enic_intr, sc);
@@ -708,9 +702,7 @@ enic_intr(void *cookie, void *f)
 		isr = sc->sc_regs->Control;
 	}
 
-#if NRND > 0
 	rnd_add_uint32(&sc->rnd_source, isr);
-#endif
 
 	return 1;
 }

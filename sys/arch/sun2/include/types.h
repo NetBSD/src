@@ -1,7 +1,8 @@
-/*	$NetBSD: types.h,v 1.10 2011/06/12 03:35:47 rmind Exp $	*/
+/*	$NetBSD: types.h,v 1.10.6.1 2012/02/18 07:33:19 mrg Exp $	*/
 
 #include <m68k/types.h>
 #define	__HAVE_MM_MD_KERNACC
 #define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 #define	__HAVE_MM_MD_READWRITE
 #define	__HAVE_MM_MD_MMAP
+#define	__HAVE_NO___THREAD

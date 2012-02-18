@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.15 2009/08/19 08:36:11 darrenr Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.15.16.1 2012/02/18 07:35:20 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995-2001, 2003 by Darren Reed.
@@ -421,7 +421,7 @@ extern	u_int	fr_nat_maxbucket;
 extern	u_int	fr_nat_maxbucket_reset;
 extern	int	fr_nat_lock;
 extern	int	fr_nat_doflush;
-extern	void	fr_natsync __P((void *));
+extern	void	fr_natsync(void *);
 extern	u_long	fr_defnatage;
 extern	u_long	fr_defnaticmpage;
 extern	u_long	fr_defnatipage;
@@ -436,40 +436,40 @@ extern	ipftq_t	*nat_utqe;
 extern	natstat_t	nat_stats;
 
 #if defined(__OpenBSD__)
-extern	void	nat_ifdetach __P((void *));
+extern	void	nat_ifdetach(void *);
 #endif
-extern	int	fr_nat_ioctl __P((void *, ioctlcmd_t, int, int, void *));
-extern	int	fr_natinit __P((void));
-extern	nat_t	*nat_new __P((fr_info_t *, ipnat_t *, nat_t **, u_int, int));
-extern	nat_t	*nat_outlookup __P((fr_info_t *, u_int, u_int, struct in_addr,
-				 struct in_addr));
-extern	void	fix_datacksum __P((u_short *, u_32_t));
-extern	nat_t	*nat_inlookup __P((fr_info_t *, u_int, u_int, struct in_addr,
-				struct in_addr));
-extern	nat_t	*nat_tnlookup __P((fr_info_t *, int));
-extern	nat_t	*nat_maplookup __P((void *, u_int, struct in_addr,
-				struct in_addr));
-extern	nat_t	*nat_lookupredir __P((natlookup_t *));
-extern	nat_t	*nat_icmperrorlookup __P((fr_info_t *, int));
-extern	nat_t	*nat_icmperror __P((fr_info_t *, u_int *, int));
-extern	void	nat_delete __P((struct nat *, int));
-extern	int	nat_insert __P((nat_t *, int));
-extern	void	nat_uncreate __P((fr_info_t *));
+extern	int	fr_nat_ioctl(void *, ioctlcmd_t, int, int, void *);
+extern	int	fr_natinit(void);
+extern	nat_t	*nat_new(fr_info_t *, ipnat_t *, nat_t **, u_int, int);
+extern	nat_t	*nat_outlookup(fr_info_t *, u_int, u_int, struct in_addr,
+				 struct in_addr);
+extern	void	fix_datacksum(u_short *, u_32_t);
+extern	nat_t	*nat_inlookup(fr_info_t *, u_int, u_int, struct in_addr,
+				struct in_addr);
+extern	nat_t	*nat_tnlookup(fr_info_t *, int);
+extern	nat_t	*nat_maplookup(void *, u_int, struct in_addr,
+				struct in_addr);
+extern	nat_t	*nat_lookupredir(natlookup_t *);
+extern	nat_t	*nat_icmperrorlookup(fr_info_t *, int);
+extern	nat_t	*nat_icmperror(fr_info_t *, u_int *, int);
+extern	void	nat_delete(struct nat *, int);
+extern	int	nat_insert(nat_t *, int);
+extern	void	nat_uncreate(fr_info_t *);
 
-extern	int	fr_checknatout __P((fr_info_t *, u_32_t *));
-extern	int	fr_natout __P((fr_info_t *, nat_t *, int, u_32_t));
-extern	int	fr_checknatin __P((fr_info_t *, u_32_t *));
-extern	int	fr_natin __P((fr_info_t *, nat_t *, int, u_32_t));
-extern	void	fr_natunload __P((void));
-extern	void	fr_natexpire __P((void));
-extern	void	nat_log __P((struct nat *, u_int));
-extern	void	fix_incksum __P((fr_info_t *, u_short *, u_32_t));
-extern	void	fix_outcksum __P((fr_info_t *, u_short *, u_32_t));
-extern	void	fr_ipnatderef __P((ipnat_t **));
-extern	void	fr_natderef __P((nat_t **));
-extern	u_short	*nat_proto __P((fr_info_t *, nat_t *, u_int));
-extern	void	nat_update __P((fr_info_t *, nat_t *));
-extern	void	fr_setnatqueue __P((nat_t *, int));
-extern	void	fr_hostmapdel __P((hostmap_t **));
+extern	int	fr_checknatout(fr_info_t *, u_32_t *);
+extern	int	fr_natout(fr_info_t *, nat_t *, int, u_32_t);
+extern	int	fr_checknatin(fr_info_t *, u_32_t *);
+extern	int	fr_natin(fr_info_t *, nat_t *, int, u_32_t);
+extern	void	fr_natunload(void);
+extern	void	fr_natexpire(void);
+extern	void	nat_log(struct nat *, u_int);
+extern	void	fix_incksum(fr_info_t *, u_short *, u_32_t);
+extern	void	fix_outcksum(fr_info_t *, u_short *, u_32_t);
+extern	void	fr_ipnatderef(ipnat_t **);
+extern	void	fr_natderef(nat_t **);
+extern	u_short	*nat_proto(fr_info_t *, nat_t *, u_int);
+extern	void	nat_update(fr_info_t *, nat_t *);
+extern	void	fr_setnatqueue(nat_t *, int);
+extern	void	fr_hostmapdel(hostmap_t **);
 
 #endif /* __IP_NAT_H__ */

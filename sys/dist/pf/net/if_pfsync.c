@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pfsync.c,v 1.7 2010/11/05 01:35:58 rmind Exp $	*/
+/*	$NetBSD: if_pfsync.c,v 1.7.12.1 2012/02/18 07:35:22 mrg Exp $	*/
 /*	$OpenBSD: if_pfsync.c,v 1.83 2007/06/26 14:44:12 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.7 2010/11/05 01:35:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.7.12.1 2012/02/18 07:35:22 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -361,7 +361,7 @@ pfsync_input(struct mbuf *m, ...)
 	struct pfsync_state_clr *cp;
 	struct pfsync_state_upd_req *rup;
 	struct pfsync_state_bus *bus;
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 	struct pfsync_tdb *pt;
 #endif
 	struct in_addr src;
@@ -849,7 +849,7 @@ pfsync_input(struct mbuf *m, ...)
 			break;
 		}
 		break;
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 	case PFSYNC_ACT_TDB_UPD:
 		if ((mp = m_pulldown(m, iplen + sizeof(*ph),
 		    count * sizeof(*pt), &offp)) == NULL) {
@@ -1624,7 +1624,7 @@ pfsync_sendout_mbuf(struct pfsync_softc *sc, struct mbuf *m)
 	return (0);
 }
 
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 /* Update an in-kernel tdb. Silently fail if no tdb is found. */
 void
 pfsync_update_net_tdb(struct pfsync_tdb *pt)

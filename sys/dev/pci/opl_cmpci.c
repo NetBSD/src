@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_cmpci.c,v 1.15 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: opl_cmpci.c,v 1.15.38.1 2012/02/18 07:34:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_cmpci.c,v 1.15 2008/04/28 20:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_cmpci.c,v 1.15.38.1 2012/02/18 07:34:45 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,7 @@ opl_cmpci_attach(device_t parent, device_t self, void *aux)
 	sc->ioh = ssc->sc_ioh;
 	sc->iot = ssc->sc_iot;
 	sc->offs = CMPCI_REG_FM_BASE;
+	sc->lock = &ssc->sc_intr_lock;
 	strcpy(sc->syn.name, "CMPCI ");
 
 	opl_attach(sc);

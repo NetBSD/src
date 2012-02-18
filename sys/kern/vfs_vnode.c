@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.14 2011/10/07 09:35:06 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.14.6.1 2012/02/18 07:35:35 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.14 2011/10/07 09:35:06 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.14.6.1 2012/02/18 07:35:35 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -637,6 +637,13 @@ vrelel(vnode_t *vp, int flags)
 
 	KASSERT((vp->v_iflag & VI_XLOCK) == 0);
 
+#ifdef DIAGNOSTIC
+	if ((vp->v_type == VBLK || vp->v_type == VCHR) &&
+	    vp->v_specnode != NULL && vp->v_specnode->sn_opencnt != 0) {
+		vprint("vrelel: missing VOP_CLOSE()", vp);
+	}
+#endif
+
 	/*
 	 * If not clean, deactivate the vnode, but preserve
 	 * our reference across the call to VOP_INACTIVE().
@@ -705,13 +712,6 @@ retry:
 			mutex_exit(vp->v_interlock);
 			return;
 		}
-
-#ifdef DIAGNOSTIC
-		if ((vp->v_type == VBLK || vp->v_type == VCHR) &&
-		    vp->v_specnode != NULL && vp->v_specnode->sn_opencnt != 0) {
-			vprint("vrelel: missing VOP_CLOSE()", vp);
-		}
-#endif
 
 		/*
 		 * The vnode can gain another reference while being

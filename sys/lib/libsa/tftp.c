@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.33 2011/07/30 03:43:20 jakllsch Exp $	 */
+/*	$NetBSD: tftp.c,v 1.33.6.1 2012/02/18 07:35:35 mrg Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -428,6 +428,15 @@ tftp_stat(struct open_file *f, struct stat *sb)
 	sb->st_size = tftp_size_of_file(tftpfile);
 	return 0;
 }
+
+#if defined(LIBSA_ENABLE_LS_OP)
+__compactcall void
+tftp_ls(struct open_file *f, const char *pattern)
+{
+	printf("Currently ls command is unsupported by tftp\n");
+	return;
+}
+#endif
 
 __compactcall off_t
 tftp_seek(struct open_file *f, off_t offset, int where)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.88 2011/11/19 22:51:23 tls Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.88.2.1 2012/02/18 07:34:39 mrg Exp $  */
 /*	$OpenBSD: if_iwi.c,v 1.111 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.88 2011/11/19 22:51:23 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.88.2.1 2012/02/18 07:34:39 mrg Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -203,21 +203,18 @@ iwi_attach(device_t parent, device_t self, void *aux)
 	struct ifnet *ifp = &sc->sc_if;
 	struct pci_attach_args *pa = aux;
 	const char *intrstr;
-	char devinfo[256];
 	bus_space_tag_t memt;
 	bus_space_handle_t memh;
 	pci_intr_handle_t ih;
 	pcireg_t data;
 	uint16_t val;
-	int error, revision, i;
+	int error, i;
 
 	sc->sc_dev = self;
 	sc->sc_pct = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof devinfo);
-	revision = PCI_REVISION(pa->pa_class);
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, revision);
+	pci_aprint_devinfo(pa, NULL);
 
 	/* clear unit numbers allocated to IBSS */
 	sc->sc_unr = 0;

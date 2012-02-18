@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.18 2011/09/23 12:42:15 macallan Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.18.6.1 2012/02/18 07:32:40 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.18 2011/09/23 12:42:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.18.6.1 2012/02/18 07:32:40 mrg Exp $");
 
 #ifdef CHIP_EXTENT
 #include <sys/extent.h>
@@ -1256,7 +1256,7 @@ __BS(init)(bus_space_tag_t t, void *v)
 
 #ifdef CHIP_EXTENT
 	/* XXX WE WANT EXTENT_NOCOALESCE, BUT WE CAN'T USE IT. XXX */
-	ex = extent_create(__S(__BS(bus)), 0x0UL, ~0UL, M_DEVBUF,
+	ex = extent_create(__S(__BS(bus)), 0x0UL, ~0UL, 
 	    (void *)CHIP_EX_STORE(v), CHIP_EX_STORE_SIZE(v), EX_NOWAIT);
 	extent_alloc_region(ex, 0, ~0UL, EX_NOWAIT);
 

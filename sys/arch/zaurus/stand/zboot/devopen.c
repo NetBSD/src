@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.1 2009/03/02 09:33:02 nonaka Exp $	*/
+/*	$NetBSD: devopen.c,v 1.1.22.1 2012/02/18 07:33:52 mrg Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -80,7 +80,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 {
 	struct devsw *dp;
 	char *fsname, *devname;
-	unsigned int dev, ctlr, unit, partition;
+	u_int dev, unit, partition;
 	int biosdev;
 	int error;
 
@@ -88,7 +88,6 @@ devopen(struct open_file *f, const char *fname, char **file)
 	printf("devopen: fname = %s\n", fname ? fname : "(null)");
 #endif
 
-	ctlr = 0;
 	if ((error = parsebootfile(fname, &fsname, &devname, &unit, &partition,
 	    (const char **)file)) != 0) {
 		return error;
@@ -118,13 +117,13 @@ devopen(struct open_file *f, const char *fname, char **file)
 #if defined(UNIX_DEBUG)
 		printf("devopen: bios disk\n");
 #endif
-		return (unixopen(f, biosdev, devname, unit, partition, *file));
+		return unixopen(f, devname, unit, partition, *file);
 	}
 
 #if defined(UNIX_DEBUG)
 	printf("devopen: dev->dv_open()\n");
 #endif
-	if ((error = (*dp->dv_open)(f, ctlr, unit, partition)) == 0) {
+	if ((error = (*dp->dv_open)(f, devname, unit, partition, *file)) == 0) {
 #if defined(UNIX_DEBUG)
 		printf("devopen: dev->dv_open() opened\n");
 #endif

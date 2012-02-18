@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.137 2011/10/31 12:50:50 yamt Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.137.6.1 2012/02/18 07:35:38 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.137 2011/10/31 12:50:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.137.6.1 2012/02/18 07:35:38 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -683,6 +683,10 @@ COMPATNAME(rt_msg1)(int type, struct rt_addrinfo *rtinfo, void *data, int datale
 		dlen = RT_XROUNDUP(sa->sa_len);
 		m_copyback(m, len, sa->sa_len, sa);
 		if (dlen != sa->sa_len) {
+			/*
+			 * Up to 6 + 1 nul's since roundup is to
+			 * sizeof(uint64_t) (8 bytes)
+			 */
 			m_copyback(m, len + sa->sa_len,
 			    dlen - sa->sa_len, "\0\0\0\0\0\0");
 		}
@@ -735,8 +739,13 @@ again:
 		rtinfo->rti_addrs |= (1 << i);
 		dlen = RT_XROUNDUP(sa->sa_len);
 		if (cp) {
-			(void)memcpy(cp, sa, (size_t)dlen);
-			cp += dlen;
+			int diff = dlen - sa->sa_len;
+			(void)memcpy(cp, sa, (size_t)sa->sa_len);
+			cp += sa->sa_len;
+			if (diff > 0) {
+				(void)memset(cp, 0, (size_t)diff);
+				cp += diff;
+			}
 		}
 		len += dlen;
 	}
@@ -854,11 +863,13 @@ COMPATNAME(rt_newaddrmsg)(int cmd, struct ifaddr *ifa, int error,
 	const struct sockaddr *sa;
 	int pass;
 	struct mbuf *m;
-	struct ifnet *ifp = ifa->ifa_ifp;
+	struct ifnet *ifp;
 	struct rt_xmsghdr rtm;
 	struct ifa_xmsghdr ifam;
 	int ncmd;
 
+	KASSERT(ifa != NULL);
+	ifp = ifa->ifa_ifp;
 	COMPATCALL(rt_newaddrmsg, (cmd, ifa, error, rt));
 	if (COMPATNAME(route_info).ri_cb.any_count == 0)
 		return;
@@ -868,7 +879,13 @@ COMPATNAME(rt_newaddrmsg)(int cmd, struct ifaddr *ifa, int error,
 		case cmdpass(RTM_ADD, 1):
 		case cmdpass(RTM_CHANGE, 1):
 		case cmdpass(RTM_DELETE, 2):
+		case cmdpass(RTM_NEWADDR, 1):
+		case cmdpass(RTM_DELADDR, 1):
+		case cmdpass(RTM_CHGADDR, 1):
 			switch (cmd) {
+			case RTM_ADD:
+				ncmd = RTM_NEWADDR;
+				break;
 			case RTM_DELETE:
 				ncmd = RTM_DELADDR;
 				break;
@@ -876,9 +893,10 @@ COMPATNAME(rt_newaddrmsg)(int cmd, struct ifaddr *ifa, int error,
 				ncmd = RTM_CHGADDR;
 				break;
 			default:
-				ncmd = RTM_NEWADDR;
+				ncmd = cmd;
 			}
 			info.rti_info[RTAX_IFA] = sa = ifa->ifa_addr;
+			KASSERT(ifp->if_dl != NULL);
 			info.rti_info[RTAX_IFP] = ifp->if_dl->ifa_addr;
 			info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
 			info.rti_info[RTAX_BRD] = ifa->ifa_dstaddr;

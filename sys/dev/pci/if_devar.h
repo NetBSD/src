@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.56 2011/11/19 22:51:23 tls Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.56.2.1 2012/02/18 07:34:39 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -31,10 +31,7 @@
 
 #if defined(__NetBSD__)
 
-#include "rnd.h"
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #if NetBSD >= 199803
 #define	TULIP_BUS_DMA		1
@@ -694,7 +691,7 @@ struct _tulip_softc_t {
     tulip_srom_connection_t tulip_conntype;
     tulip_desc_t *tulip_rxdescs;
     tulip_desc_t *tulip_txdescs;
-#if defined(__NetBSD__) && NRND > 0
+#if defined(__NetBSD__)
     krndsource_t    tulip_rndsource;
 #endif
 };

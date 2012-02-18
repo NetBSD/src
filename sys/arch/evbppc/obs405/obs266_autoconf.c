@@ -1,4 +1,4 @@
-/*	$NetBSD: obs266_autoconf.c,v 1.6 2011/06/18 06:44:26 matt Exp $	*/
+/*	$NetBSD: obs266_autoconf.c,v 1.6.6.1 2012/02/18 07:31:59 mrg Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  * DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs266_autoconf.c,v 1.6 2011/06/18 06:44:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs266_autoconf.c,v 1.6.6.1 2012/02/18 07:31:59 mrg Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -63,11 +63,6 @@ cpu_configure(void)
 		panic("configure: mainbus not configured");
 
 	(void)spl0();
-
-	/*
-	 * Now allow hardware interrupts.
-	 */
-	__asm volatile ("wrteei 1");
 }
 
 void

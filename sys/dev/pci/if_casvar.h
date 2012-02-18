@@ -1,4 +1,4 @@
-/*	$NetBSD: if_casvar.h,v 1.3 2011/11/19 22:51:23 tls Exp $ */
+/*	$NetBSD: if_casvar.h,v 1.3.2.1 2012/02/18 07:34:38 mrg Exp $ */
 /*	$OpenBSD: if_casvar.h,v 1.6 2009/06/13 12:18:58 kettenis Exp $	*/
 
 /*
@@ -194,9 +194,7 @@ struct cas_softc {
 	int			sc_debug;
 	void			*sc_sh;		/* shutdownhook cookie */
 
-#if NRND > 0
 	krndsource_t	rnd_source;
-#endif
 
 	struct evcnt		sc_ev_intr;
 	enum cas_attach_stage	sc_att_stage;

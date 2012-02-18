@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.40 2011/03/16 21:36:55 plunky Exp $	*/
+/*	$NetBSD: ubt.c,v 1.40.8.1 2012/02/18 07:35:07 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.40 2011/03/16 21:36:55 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.40.8.1 2012/02/18 07:35:07 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -680,7 +680,6 @@ ubt_set_isoc_config(struct ubt_softc *sc)
 		return ENOENT;
 	}
 
-#ifdef DIAGNOSTIC
 	if (rd_size > MLEN) {
 		aprint_error_dev(sc->sc_dev, "rd_size=%d exceeds MLEN\n",
 		    rd_size);
@@ -694,7 +693,6 @@ ubt_set_isoc_config(struct ubt_softc *sc)
 
 		return EOVERFLOW;
 	}
-#endif
 
 	sc->sc_scord_size = rd_size;
 	sc->sc_scord_addr = rd_addr;
@@ -729,8 +727,11 @@ ubt_sysctl_config(SYSCTLFN_ARGS)
 	if (sc->sc_enabled)
 		return EBUSY;
 
+	KERNEL_LOCK(1, curlwp);
 	sc->sc_config = t;
-	return ubt_set_isoc_config(sc);
+	error = ubt_set_isoc_config(sc);
+	KERNEL_UNLOCK_ONE(curlwp);
+	return error;
 }
 
 static void

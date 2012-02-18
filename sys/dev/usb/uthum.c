@@ -1,4 +1,4 @@
-/*	$NetBSD: uthum.c,v 1.6 2010/11/03 22:34:24 dyoung Exp $   */
+/*	$NetBSD: uthum.c,v 1.6.12.1 2012/02/18 07:35:13 mrg Exp $   */
 /*	$OpenBSD: uthum.c,v 1.6 2010/01/03 18:43:02 deraadt Exp $   */
 
 /*

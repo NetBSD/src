@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.6 2011/11/06 13:08:04 tron Exp $	*/
+/*	$NetBSD: npf.c,v 1.6.4.1 2012/02/18 07:35:38 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.6 2011/11/06 13:08:04 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.6.4.1 2012/02/18 07:35:38 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -284,9 +284,6 @@ npf_reload(npf_ruleset_t *rset, npf_tableset_t *tset, npf_ruleset_t *nset)
 	}
 	/* Unlock.  Everything goes "live" now. */
 	rw_exit(&npf_lock);
-
-	/* Turn on/off session tracking accordingly. */
-	npf_session_tracking(true);
 
 	if (onc) {
 		/* Destroy unloaded structures. */

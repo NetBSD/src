@@ -1,7 +1,7 @@
-/*	$NetBSD: zmci.c,v 1.3 2011/06/19 16:20:09 nonaka Exp $	*/
+/*	$NetBSD: zmci.c,v 1.3.6.1 2012/02/18 07:33:50 mrg Exp $	*/
 
 /*-
- * Copyright (c) 2006-2008 NONAKA Kimihiro <nonaka@netbsd.org>
+ * Copyright (C) 2006-2008 NONAKA Kimihiro <nonaka@netbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -13,21 +13,20 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zmci.c,v 1.3 2011/06/19 16:20:09 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zmci.c,v 1.3.6.1 2012/02/18 07:33:50 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -63,6 +62,7 @@ struct zmci_softc {
 	void *sc_detect_ih;
 	int sc_detect_pin;
 	int sc_wp_pin;
+	int sc_power_pin;
 };
 
 static int pxamci_match(device_t, cfdata_t, void *);
@@ -82,9 +82,7 @@ static int
 pxamci_match(device_t parent, cfdata_t cf, void *aux)
 {
 
-	if (ZAURUS_ISC1000 || ZAURUS_ISC3000)
-		return 1;
-	return 0;
+	return 1;
 }
 
 static void
@@ -101,8 +99,13 @@ pxamci_attach(device_t parent, device_t self, void *aux)
 		pxa2x0_gpio_set_function(sc->sc_detect_pin, GPIO_IN);
 		pxa2x0_gpio_set_function(sc->sc_wp_pin, GPIO_IN);
 	} else {
-		/* XXX: C7x0/C8x0 */
-		return;
+		/* C7x0/C860 */
+		sc->sc_detect_pin = C860_GPIO_SD_DETECT_PIN;
+		sc->sc_wp_pin = C860_GPIO_SD_WP_PIN;
+		sc->sc_power_pin = C860_GPIO_SD_POWER_PIN;
+		pxa2x0_gpio_set_function(sc->sc_detect_pin, GPIO_IN);
+		pxa2x0_gpio_set_function(sc->sc_wp_pin, GPIO_IN);
+		pxa2x0_gpio_set_function(sc->sc_power_pin, GPIO_OUT|GPIO_SET);
 	}
 
 	/* Establish SD detect interrupt */
@@ -162,7 +165,10 @@ zmci_set_power(void *arg, uint32_t ocr)
 	struct zmci_softc *sc = (struct zmci_softc *)arg;
 
 	if (ISSET(ocr, MMC_OCR_3_2V_3_3V|MMC_OCR_3_3V_3_4V)) {
-		scoop_set_sdmmc_power(1);
+		if (ZAURUS_ISC3000 || ZAURUS_ISC1000)
+			scoop_set_sdmmc_power(1);
+		else if (ZAURUS_ISC860)
+			pxa2x0_gpio_set_bit(sc->sc_power_pin);
 		return 0;
 	}
 
@@ -173,7 +179,10 @@ zmci_set_power(void *arg, uint32_t ocr)
 	}
 
 	/* power off */
-	scoop_set_sdmmc_power(0);
+	if (ZAURUS_ISC3000 || ZAURUS_ISC1000)
+		scoop_set_sdmmc_power(0);
+	else if(ZAURUS_ISC860)
+		pxa2x0_gpio_clear_bit(sc->sc_power_pin);
 	return 0;
 }
 

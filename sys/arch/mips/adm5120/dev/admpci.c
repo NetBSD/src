@@ -1,4 +1,4 @@
-/* $NetBSD: admpci.c,v 1.8 2011/07/10 23:13:23 matt Exp $ */
+/* $NetBSD: admpci.c,v 1.8.6.1 2012/02/18 07:32:36 mrg Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -61,7 +61,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.8 2011/07/10 23:13:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.8.6.1 2012/02/18 07:32:36 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -233,7 +233,7 @@ admpciattach(device_t parent, device_t self, void *aux)
 #ifdef PCI_NETBSD_CONFIGURE
 	mem_ex = extent_create("pcimem",
 	    ADM5120_BOTTOM, ADM5120_TOP,
-	    M_DEVBUF, NULL, 0, EX_WAITOK);
+	    NULL, 0, EX_WAITOK);
 	(void)extent_alloc_subregion(mem_ex,
 	    ADM5120_BASE_SRAM1, ADM5120_BASE_PCI_MEM - 1,
 	    ADM5120_BASE_PCI_MEM - ADM5120_BASE_SRAM1,
@@ -247,7 +247,7 @@ admpciattach(device_t parent, device_t self, void *aux)
 
 	io_ex = extent_create("pciio",
 	    ADM5120_BASE_PCI_IO, ADM5120_BASE_PCI_CONFADDR - 1,
-	    M_DEVBUF, NULL, 0, EX_WAITOK);
+	    NULL, 0, EX_WAITOK);
 
 	pci_configure_bus(&sc->sc_pc,
 	    io_ex, mem_ex, NULL, 0, mips_cache_info.mci_dcache_align);

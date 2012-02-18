@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.57 2011/12/03 08:20:12 ryo Exp $ */
+/* $NetBSD: esa.c,v 1.57.2.1 2012/02/18 07:34:37 mrg Exp $ */
 
 /*
  * Copyright (c) 2001-2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.57 2011/12/03 08:20:12 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.57.2.1 2012/02/18 07:34:37 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -1008,18 +1008,16 @@ esa_attach(device_t parent, device_t self, void *aux)
 	const struct esa_card_type *card;
 	const char *intrstr;
 	uint32_t data;
-	char devinfo[256];
 	int revision, i, error;
 
 	sc = device_private(self);
 	pa = (struct pci_attach_args *)aux;
 	tag = pa->pa_tag;
 	pc = pa->pa_pc;
-	aprint_naive(": Audio controller\n");
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
+	pci_aprint_devinfo(pa, "Audio controller");
+
 	revision = PCI_REVISION(pa->pa_class);
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, revision);
 
 	for (card = esa_card_types; card->pci_vendor_id; card++)
 		if (PCI_VENDOR(pa->pa_id) == card->pci_vendor_id &&

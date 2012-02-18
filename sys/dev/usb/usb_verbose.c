@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_verbose.c,v 1.4 2010/08/07 21:09:48 christos Exp $ */
+/*	$NetBSD: usb_verbose.c,v 1.4.16.1 2012/02/18 07:35:11 mrg Exp $ */
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_verbose.c,v 1.4 2010/08/07 21:09:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_verbose.c,v 1.4.16.1 2012/02/18 07:35:11 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>

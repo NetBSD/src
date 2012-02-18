@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_ihash.c,v 1.9 2009/03/15 17:15:58 cegger Exp $	*/
+/*	$NetBSD: ntfs_ihash.c,v 1.9.16.1 2012/02/18 07:35:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993, 1995
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_ihash.c,v 1.9 2009/03/15 17:15:58 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_ihash.c,v 1.9.16.1 2012/02/18 07:35:23 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_ihash.c,v 1.9 2009/03/15 17:15:58 cegger Exp $"
 #include <sys/vnode.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
+#include <sys/mallocvar.h>
 
 #include <fs/ntfs/ntfs.h>
 #include <fs/ntfs/ntfs_inode.h>

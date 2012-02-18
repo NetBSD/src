@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state_tcp.c,v 1.1 2011/11/29 20:05:30 rmind Exp $	*/
+/*	$NetBSD: npf_state_tcp.c,v 1.1.2.1 2012/02/18 07:35:38 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.1 2011/11/29 20:05:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.1.2.1 2012/02/18 07:35:38 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -79,7 +79,7 @@ void	npf_state_sample(npf_state_t *);
 /*
  * TCP connection timeout table (in seconds).
  */
-static const u_int npf_tcp_timeouts[] __read_mostly = {
+static u_int npf_tcp_timeouts[] __read_mostly = {
 	/* Closed, timeout nearly immediately. */
 	[NPF_TCPS_CLOSED]	= 10,
 	/* Unsynchronised states. */
@@ -99,71 +99,107 @@ static const u_int npf_tcp_timeouts[] __read_mostly = {
 
 #define	NPF_TCP_MAXACKWIN	66000
 
-#define	TH_STATE_MASK		(TH_SYN | TH_ACK | TH_FIN)
-#define	TH_SYNACK		(TH_SYN | TH_ACK)
-#define	TH_FINACK		(TH_FIN | TH_ACK)
+/*
+ * List of TCP flag cases and conversion of flags to a case (index).
+ */
+
+#define	TCPFC_INVALID		0
+#define	TCPFC_SYN		1
+#define	TCPFC_SYNACK		2
+#define	TCPFC_ACK		3
+#define	TCPFC_FIN		4
+#define	TCPFC_COUNT		5
+
+static inline u_int
+npf_tcpfl2case(const int tcpfl)
+{
+	u_int i, c;
+
+	CTASSERT(TH_FIN == 0x01);
+	CTASSERT(TH_SYN == 0x02);
+	CTASSERT(TH_ACK == 0x10);
+
+	/*
+	 * Flags are shifted to use three least significant bits, thus each
+	 * flag combination has a unique number ranging from 0 to 7, e.g.
+	 * TH_SYN | TH_ACK has number 6, since (0x02 | (0x10 >> 2)) == 6.
+	 * However, the requirement is to have number 0 for invalid cases,
+	 * such as TH_SYN | TH_FIN, and to have the same number for TH_FIN
+	 * and TH_FIN|TH_ACK cases.  Thus, we generate a mask assigning 3
+	 * bits for each number, which contains the actual case numbers:
+	 *
+	 * TCPFC_SYNACK	<< (6 << 2) == 0x2000000 (6 - SYN,ACK)
+	 * TCPFC_FIN	<< (5 << 2) == 0x0400000 (5 - FIN,ACK)
+	 * ...
+	 *
+	 * Hence, OR'ed mask value is 0x2430140.
+	 */
+	i = (tcpfl & (TH_SYN | TH_FIN)) | ((tcpfl & TH_ACK) >> 2);
+	c = (0x2430140 >> (i << 2)) & 7;
+
+	KASSERT(c < TCPFC_COUNT);
+	return c;
+}
 
 /*
  * NPF transition table of a tracked TCP connection.
  *
  * There is a single state, which is changed in the following way:
  *
- * new_state = npf_tcp_fsm[old_state][direction][tcp_flags & TH_STATE_MASK];
+ * new_state = npf_tcp_fsm[old_state][direction][npf_tcpfl2case(tcp_flags)];
  *
  * Note that this state is different from the state in each end (host).
  */
 
-static const int npf_tcp_fsm[NPF_TCP_NSTATES][2][TH_STATE_MASK + 1]
-    __read_mostly = {
+static const int npf_tcp_fsm[NPF_TCP_NSTATES][2][TCPFC_COUNT] = {
 	[NPF_TCPS_CLOSED] = {
 		[NPF_FLOW_FORW] = {
 			/* Handshake (1): initial SYN. */
-			[TH_SYN]	= NPF_TCPS_SYN_SENT,
+			[TCPFC_SYN]	= NPF_TCPS_SYN_SENT,
 		},
 	},
 	[NPF_TCPS_SYN_SENT] = {
 		[NPF_FLOW_FORW] = {
 			/* SYN may be retransmitted. */
-			[TH_SYN]	= NPF_TCPS_OK,
+			[TCPFC_SYN]	= NPF_TCPS_OK,
 		},
 		[NPF_FLOW_BACK] = {
 			/* Handshake (2): SYN-ACK is expected. */
-			[TH_SYNACK]	= NPF_TCPS_SYN_RECEIVED,
+			[TCPFC_SYNACK]	= NPF_TCPS_SYN_RECEIVED,
 			/* Simultaneous initiation - SYN. */
-			[TH_SYN]	= NPF_TCPS_SIMSYN_SENT,
+			[TCPFC_SYN]	= NPF_TCPS_SIMSYN_SENT,
 		},
 	},
 	[NPF_TCPS_SIMSYN_SENT] = {
 		[NPF_FLOW_FORW] = {
 			/* Original SYN re-transmission. */
-			[TH_SYN]	= NPF_TCPS_OK,
+			[TCPFC_SYN]	= NPF_TCPS_OK,
 			/* SYN-ACK response to simultaneous SYN. */
-			[TH_SYNACK]	= NPF_TCPS_SYN_RECEIVED,
+			[TCPFC_SYNACK]	= NPF_TCPS_SYN_RECEIVED,
 		},
 		[NPF_FLOW_BACK] = {
 			/* Simultaneous SYN re-transmission.*/
-			[TH_SYN]	= NPF_TCPS_OK,
+			[TCPFC_SYN]	= NPF_TCPS_OK,
 			/* SYN-ACK response to original SYN. */
-			[TH_SYNACK]	= NPF_TCPS_SYN_RECEIVED,
-			/* FIN may be sent at this point. */
-			[TH_FIN]	= NPF_TCPS_FIN_SEEN,
-			[TH_FINACK]	= NPF_TCPS_FIN_SEEN,
+			[TCPFC_SYNACK]	= NPF_TCPS_SYN_RECEIVED,
+			/* FIN may be sent early. */
+			[TCPFC_FIN]	= NPF_TCPS_FIN_SEEN,
 		},
 	},
 	[NPF_TCPS_SYN_RECEIVED] = {
 		[NPF_FLOW_FORW] = {
 			/* Handshake (3): ACK is expected. */
-			[TH_ACK]	= NPF_TCPS_ESTABLISHED,
-			[TH_FIN]	= NPF_TCPS_CLOSING,
-			[TH_FINACK]	= NPF_TCPS_CLOSING,
+			[TCPFC_ACK]	= NPF_TCPS_ESTABLISHED,
+			/* FIN may be sent early. */
+			[TCPFC_FIN]	= NPF_TCPS_FIN_SEEN,
 		},
 		[NPF_FLOW_BACK] = {
 			/* SYN-ACK may be retransmitted. */
-			[TH_SYNACK]	= NPF_TCPS_OK,
+			[TCPFC_SYNACK]	= NPF_TCPS_OK,
 			/* XXX: ACK of late SYN in simultaneous case? */
-			[TH_ACK]	= NPF_TCPS_OK,
-			/* XXX: Can this happen?
-			[TH_FIN]	= NPF_TCPS_CLOSING, */
+			[TCPFC_ACK]	= NPF_TCPS_OK,
+			/* FIN may be sent early. */
+			[TCPFC_FIN]	= NPF_TCPS_FIN_SEEN,
 		},
 	},
 	[NPF_TCPS_ESTABLISHED] = {
@@ -172,16 +208,14 @@ static const int npf_tcp_fsm[NPF_TCP_NSTATES][2][TH_STATE_MASK + 1]
 		 * FIN packets may have ACK set.
 		 */
 		[NPF_FLOW_FORW] = {
-			[TH_ACK]	= NPF_TCPS_OK,
+			[TCPFC_ACK]	= NPF_TCPS_OK,
 			/* FIN by the sender. */
-			[TH_FIN]	= NPF_TCPS_FIN_SEEN,
-			[TH_FINACK]	= NPF_TCPS_FIN_SEEN,
+			[TCPFC_FIN]	= NPF_TCPS_FIN_SEEN,
 		},
 		[NPF_FLOW_BACK] = {
-			[TH_ACK]	= NPF_TCPS_OK,
+			[TCPFC_ACK]	= NPF_TCPS_OK,
 			/* FIN by the receiver. */
-			[TH_FIN]	= NPF_TCPS_FIN_SEEN,
-			[TH_FINACK]	= NPF_TCPS_FIN_SEEN,
+			[TCPFC_FIN]	= NPF_TCPS_FIN_SEEN,
 		},
 	},
 	[NPF_TCPS_FIN_SEEN] = {
@@ -192,64 +226,58 @@ static const int npf_tcp_fsm[NPF_TCP_NSTATES][2][TH_STATE_MASK + 1]
 		 * case we are closing immediately.
 		 */
 		[NPF_FLOW_FORW] = {
-			[TH_ACK]	= NPF_TCPS_CLOSE_WAIT,
-			[TH_FIN]	= NPF_TCPS_CLOSING,
-			[TH_FINACK]	= NPF_TCPS_CLOSING,
+			[TCPFC_ACK]	= NPF_TCPS_CLOSE_WAIT,
+			[TCPFC_FIN]	= NPF_TCPS_CLOSING,
 		},
 		[NPF_FLOW_BACK] = {
-			[TH_ACK]	= NPF_TCPS_FIN_WAIT,
-			[TH_FIN]	= NPF_TCPS_CLOSING,
-			[TH_FINACK]	= NPF_TCPS_CLOSING,
+			[TCPFC_ACK]	= NPF_TCPS_FIN_WAIT,
+			[TCPFC_FIN]	= NPF_TCPS_CLOSING,
 		},
 	},
 	[NPF_TCPS_CLOSE_WAIT] = {
 		/* Sender has sent the FIN and closed its end. */
 		[NPF_FLOW_FORW] = {
-			[TH_ACK]	= NPF_TCPS_OK,
-			[TH_FIN]	= NPF_TCPS_LAST_ACK,
-			[TH_FINACK]	= NPF_TCPS_LAST_ACK,
+			[TCPFC_ACK]	= NPF_TCPS_OK,
+			[TCPFC_FIN]	= NPF_TCPS_LAST_ACK,
 		},
 		[NPF_FLOW_BACK] = {
-			[TH_ACK]	= NPF_TCPS_OK,
-			[TH_FIN]	= NPF_TCPS_LAST_ACK,
-			[TH_FINACK]	= NPF_TCPS_LAST_ACK,
+			[TCPFC_ACK]	= NPF_TCPS_OK,
+			[TCPFC_FIN]	= NPF_TCPS_LAST_ACK,
 		},
 	},
 	[NPF_TCPS_FIN_WAIT] = {
 		/* Receiver has closed its end. */
 		[NPF_FLOW_FORW] = {
-			[TH_ACK]	= NPF_TCPS_OK,
-			[TH_FIN]	= NPF_TCPS_LAST_ACK,
-			[TH_FINACK]	= NPF_TCPS_LAST_ACK,
+			[TCPFC_ACK]	= NPF_TCPS_OK,
+			[TCPFC_FIN]	= NPF_TCPS_LAST_ACK,
 		},
 		[NPF_FLOW_BACK] = {
-			[TH_ACK]	= NPF_TCPS_OK,
-			[TH_FIN]	= NPF_TCPS_LAST_ACK,
-			[TH_FINACK]	= NPF_TCPS_LAST_ACK,
+			[TCPFC_ACK]	= NPF_TCPS_OK,
+			[TCPFC_FIN]	= NPF_TCPS_LAST_ACK,
 		},
 	},
 	[NPF_TCPS_CLOSING] = {
 		/* Race of FINs - expecting ACK. */
 		[NPF_FLOW_FORW] = {
-			[TH_ACK]	= NPF_TCPS_LAST_ACK,
+			[TCPFC_ACK]	= NPF_TCPS_LAST_ACK,
 		},
 		[NPF_FLOW_BACK] = {
-			[TH_ACK]	= NPF_TCPS_LAST_ACK,
+			[TCPFC_ACK]	= NPF_TCPS_LAST_ACK,
 		},
 	},
 	[NPF_TCPS_LAST_ACK] = {
 		/* FINs exchanged - expecting last ACK. */
 		[NPF_FLOW_FORW] = {
-			[TH_ACK]	= NPF_TCPS_TIME_WAIT,
+			[TCPFC_ACK]	= NPF_TCPS_TIME_WAIT,
 		},
 		[NPF_FLOW_BACK] = {
-			[TH_ACK]	= NPF_TCPS_TIME_WAIT,
+			[TCPFC_ACK]	= NPF_TCPS_TIME_WAIT,
 		},
 	},
 	[NPF_TCPS_TIME_WAIT] = {
 		/* May re-open the connection as per RFC 1122. */
 		[NPF_FLOW_FORW] = {
-			[TH_SYN]	= NPF_TCPS_SYN_SENT,
+			[TCPFC_SYN]	= NPF_TCPS_SYN_SENT,
 		},
 	},
 };
@@ -278,9 +306,9 @@ npf_tcp_inwindow(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst,
 	 *	Rooij G., "Real stateful TCP packet filtering in IP Filter",
 	 *	10th USENIX Security Symposium invited talk, Aug. 2001.
 	 *
-	 * There four boundaries are defined as following:
+	 * There are four boundaries defined as following:
 	 *	I)   SEQ + LEN	<= MAX { SND.ACK + MAX(SND.WIN, 1) }
-	 *	II)  SEQ	>= MAX { SND.SEQ + SND.LEN }
+	 *	II)  SEQ	>= MAX { SND.SEQ + SND.LEN - MAX(RCV.WIN, 1) }
 	 *	III) ACK	<= MAX { RCV.SEQ + RCV.LEN }
 	 *	IV)  ACK	>= MAX { RCV.SEQ + RCV.LEN } - MAXACKWIN
 	 *
@@ -427,7 +455,8 @@ npf_state_tcp(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst, int di)
 
 	/* Look for a transition to a new state. */
 	if (__predict_true((tcpfl & TH_RST) == 0)) {
-		nstate = npf_tcp_fsm[state][di][tcpfl & TH_STATE_MASK];
+		const int flagcase = npf_tcpfl2case(tcpfl);
+		nstate = npf_tcp_fsm[state][di][flagcase];
 	} else if (state == NPF_TCPS_TIME_WAIT) {
 		/* Prevent TIME-WAIT assassination (RFC 1337). */
 		nstate = NPF_TCPS_OK;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcie.c,v 1.8 2011/07/10 23:13:22 matt Exp $	*/
+/*	$NetBSD: rmixl_pcie.c,v 1.8.6.1 2012/02/18 07:32:41 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.8 2011/07/10 23:13:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.8.6.1 2012/02/18 07:32:41 mrg Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -703,12 +703,12 @@ rmixl_pcie_init(struct rmixl_pcie_softc *sc)
 	ioext  = extent_create("pciio",
 		rcp->rc_pci_io_pbase,
 		rcp->rc_pci_io_pbase + rcp->rc_pci_io_size - 1,
-		M_DEVBUF, NULL, 0, EX_NOWAIT);
+		NULL, 0, EX_NOWAIT);
 
 	memext = extent_create("pcimem",
 		rcp->rc_pci_mem_pbase,
 		rcp->rc_pci_mem_pbase + rcp->rc_pci_mem_size - 1,
-		M_DEVBUF, NULL, 0, EX_NOWAIT);
+		NULL, 0, EX_NOWAIT);
 
 	pci_configure_bus(pc, ioext, memext, NULL, 0,
 	    mips_cache_info.mci_dcache_align);

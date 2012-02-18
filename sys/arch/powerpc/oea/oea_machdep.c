@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.60 2011/07/17 20:54:46 joerg Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.60.6.1 2012/02/18 07:32:57 mrg Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.60 2011/07/17 20:54:46 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.60.6.1 2012/02/18 07:32:57 mrg Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.60 2011/07/17 20:54:46 joerg Exp $
 #include <sys/boot_flag.h>
 #include <sys/exec.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>
@@ -81,10 +80,10 @@ __KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.60 2011/07/17 20:54:46 joerg Exp $
 #include <powerpc/altivec.h>
 #include <powerpc/pcb.h>
 
-#include <powerpc/oea/spr.h>
 #include <powerpc/oea/bat.h>
-#include <powerpc/oea/sr_601.h>
 #include <powerpc/oea/cpufeat.h>
+#include <powerpc/oea/spr.h>
+#include <powerpc/oea/sr_601.h>
 
 char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
@@ -97,12 +96,17 @@ struct vm_map *phys_map = NULL;
 static void trap0(void *);
 
 /* XXXSL: The battable is not initialized to non-zero for PPC_OEA64 and PPC_OEA64_BRIDGE */
-struct bat battable[512];
+struct bat battable[BAT_VA2IDX(0xffffffff)+1];
 
 register_t iosrtable[16];	/* I/O segments, for kernel_pmap setup */
 #ifndef MSGBUFADDR
 paddr_t msgbuf_paddr;
 #endif
+
+extern int dsitrap_fix_dbat4[];
+extern int dsitrap_fix_dbat5[];
+extern int dsitrap_fix_dbat6[];
+extern int dsitrap_fix_dbat7[];
 
 void
 oea_init(void (*handler)(void))
@@ -362,6 +366,8 @@ oea_init(void (*handler)(void))
 	 */
 	__syncicache((void *) trapstart,
 	    (uintptr_t) trapend - (uintptr_t) trapstart);
+	__syncicache(dsitrap_fix_dbat4, 16);
+	__syncicache(dsitrap_fix_dbat7, 8);
 #ifdef PPC_OEA601
 
 	/*
@@ -449,35 +455,82 @@ mpc601_ioseg_add(paddr_t pa, register_t len)
 #endif /* PPC_OEA601 */
 
 #if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
+#define	DBAT_SET(n, batl, batu)				\
+	do {						\
+		mtspr(SPR_DBAT##n##L, (batl));		\
+		mtspr(SPR_DBAT##n##U, (batu));		\
+	} while (/*CONSTCOND*/ 0)
+#define	DBAT_RESET(n)	DBAT_SET(n, 0, 0)
+#define	DBATU_GET(n)	mfspr(SPR_DBAT##n##U)
+#define	IBAT_SET(n, batl, batu)				\
+	do {						\
+		mtspr(SPR_IBAT##n##L, (batl));		\
+		mtspr(SPR_IBAT##n##U, (batu));		\
+	} while (/*CONSTCOND*/ 0)
+#define	IBAT_RESET(n)	IBAT_SET(n, 0, 0)
+	
 void
 oea_iobat_add(paddr_t pa, register_t len)
 {
-	static int n = 1;
-	const u_int i = pa >> 28;
-	battable[i].batl = BATL(pa, BAT_I|BAT_G, BAT_PP_RW);
-	battable[i].batu = BATU(pa, len, BAT_Vs);
+	static int z = 1;
+	const u_int n = BAT_BL_TO_SIZE(len) / BAT_BL_TO_SIZE(BAT_BL_8M);
+	const u_int i = BAT_VA2IDX(pa) & -n; /* in case pa was in the middle */
+	const int after_bat3 = (oeacpufeat & OEACPU_HIGHBAT) ? 4 : 8;
+
+	KASSERT(len >= BAT_BL_8M);
+
+	/*
+	 * If the caller wanted a bigger BAT than the hardware supports,
+	 * split it into smaller BATs.
+	 */
+	if (len > BAT_BL_256M && (oeacpufeat & OEACPU_XBSEN) == 0) {
+		u_int xn = BAT_BL_TO_SIZE(len) >> 28;
+		while (xn-- > 0) {
+			oea_iobat_add(pa, BAT_BL_256M);
+			pa += 0x10000000;
+		}
+		return;
+	} 
+
+	const register_t batl = BATL(pa, BAT_I|BAT_G, BAT_PP_RW);
+	const register_t batu = BATU(pa, len, BAT_Vs);
+
+	for (u_int j = 0; j < n; j++) {
+		battable[i + j].batl = batl;
+		battable[i + j].batu = batu;
+	}
 
 	/*
 	 * Let's start loading the BAT registers.
 	 */
-	switch (n) {
+	switch (z) {
 	case 1:
-		__asm volatile ("mtdbatl 1,%0; mtdbatu 1,%1;"
-		    ::	"r"(battable[i].batl),
-			"r"(battable[i].batu));
-		n = 2;
+		DBAT_SET(1, batl, batu);
+		z = 2;
 		break;
 	case 2:
-		__asm volatile ("mtdbatl 2,%0; mtdbatu 2,%1;"
-		    ::	"r"(battable[i].batl),
-			"r"(battable[i].batu));
-		n = 3;
+		DBAT_SET(2, batl, batu);
+		z = 3;
 		break;
 	case 3:
-		__asm volatile ("mtdbatl 3,%0; mtdbatu 3,%1;"
-		    ::	"r"(battable[i].batl),
-			"r"(battable[i].batu));
-		n = 4;
+		DBAT_SET(3, batl, batu);
+		z = after_bat3;			/* no highbat, skip to end */
+		break;
+	case 4:
+		DBAT_SET(4, batl, batu);
+		z = 5;
+		break;
+	case 5:
+		DBAT_SET(5, batl, batu);
+		z = 6;
+		break;
+	case 6:
+		DBAT_SET(6, batl, batu);
+		z = 7;
+		break;
+	case 7:
+		DBAT_SET(7, batl, batu);
+		z = 8;
 		break;
 	default:
 		break;
@@ -487,38 +540,63 @@ oea_iobat_add(paddr_t pa, register_t len)
 void
 oea_iobat_remove(paddr_t pa)
 {
-	register_t batu;
-	int i, n;
+	const u_int i = BAT_VA2IDX(pa);
 
-	n = pa >> ADDR_SR_SHFT;
-	if (!BAT_VA_MATCH_P(battable[n].batu, pa) ||
-	    !BAT_VALID_P(battable[n].batu, PSL_PR))
+	if (!BAT_VA_MATCH_P(battable[i].batu, pa) ||
+	    !BAT_VALID_P(battable[i].batu, PSL_PR))
 		return;
-	battable[n].batl = 0;
-	battable[n].batu = 0;
-#define	BAT_RESET(n) \
-	__asm volatile("mtdbatu %0,%1; mtdbatl %0,%1" :: "n"(n), "r"(0))
-#define	BATU_GET(n, r)	__asm volatile("mfdbatu %0,%1" : "=r"(r) : "n"(n))
+	const int n =
+	    __SHIFTOUT(battable[i].batu, (BAT_XBL|BAT_BL) & ~BAT_BL_8M) + 1;
+	KASSERT((n & (n-1)) == 0);	/* power of 2 */
+	KASSERT((i & (n-1)) == 0);	/* multiple of n */
 
-	for (i=1 ; i<4 ; i++) {
-		switch (i) {
+	memset(&battable[i], 0, n*sizeof(battable[0]));
+
+	const int maxbat = oeacpufeat & OEACPU_HIGHBAT ? 8 : 4;
+	for (u_int k = 1 ; k < maxbat; k++) {
+		register_t batu;
+		switch (k) {
 		case 1:
-			BATU_GET(1, batu);
+			batu = DBATU_GET(1);
 			if (BAT_VA_MATCH_P(batu, pa) &&
 			    BAT_VALID_P(batu, PSL_PR))
-				BAT_RESET(1);
+				DBAT_RESET(1);
 			break;
 		case 2:
-			BATU_GET(2, batu);
+			batu = DBATU_GET(2);
 			if (BAT_VA_MATCH_P(batu, pa) &&
 			    BAT_VALID_P(batu, PSL_PR))
-				BAT_RESET(2);
+				DBAT_RESET(2);
 			break;
 		case 3:
-			BATU_GET(3, batu);
+			batu = DBATU_GET(3);
 			if (BAT_VA_MATCH_P(batu, pa) &&
 			    BAT_VALID_P(batu, PSL_PR))
-				BAT_RESET(3);
+				DBAT_RESET(3);
+			break;
+		case 4:
+			batu = DBATU_GET(4);
+			if (BAT_VA_MATCH_P(batu, pa) &&
+			    BAT_VALID_P(batu, PSL_PR))
+				DBAT_RESET(4);
+			break;
+		case 5:
+			batu = DBATU_GET(5);
+			if (BAT_VA_MATCH_P(batu, pa) &&
+			    BAT_VALID_P(batu, PSL_PR))
+				DBAT_RESET(5);
+			break;
+		case 6:
+			batu = DBATU_GET(6);
+			if (BAT_VA_MATCH_P(batu, pa) &&
+			    BAT_VALID_P(batu, PSL_PR))
+				DBAT_RESET(6);
+			break;
+		case 7:
+			batu = DBATU_GET(7);
+			if (BAT_VA_MATCH_P(batu, pa) &&
+			    BAT_VALID_P(batu, PSL_PR))
+				DBAT_RESET(7);
 			break;
 		default:
 			break;
@@ -535,6 +613,11 @@ oea_batinit(paddr_t pa, ...)
 	va_list ap;
 
 	cpuvers = mfpvr() >> 16;
+
+	/*
+	 * we need to call this before zapping BATs so OF calls work
+	 */
+	mem_regions(&allmem, &availmem);
 
 	/*
 	 * Initialize BAT registers to unmapped to not generate
@@ -558,14 +641,46 @@ oea_batinit(paddr_t pa, ...)
 		} else
 #endif /* PPC_OEA601 */
 		{
-			__asm volatile ("mtibatu 0,%0" :: "r"(0));
-			__asm volatile ("mtibatu 1,%0" :: "r"(0));
-			__asm volatile ("mtibatu 2,%0" :: "r"(0));
-			__asm volatile ("mtibatu 3,%0" :: "r"(0));
-			__asm volatile ("mtdbatu 0,%0" :: "r"(0));
-			__asm volatile ("mtdbatu 1,%0" :: "r"(0));
-			__asm volatile ("mtdbatu 2,%0" :: "r"(0));
-			__asm volatile ("mtdbatu 3,%0" :: "r"(0));
+			DBAT_RESET(0); IBAT_RESET(0);
+			DBAT_RESET(1); IBAT_RESET(1);
+			DBAT_RESET(2); IBAT_RESET(2);
+			DBAT_RESET(3); IBAT_RESET(3);
+			if (oeacpufeat & OEACPU_HIGHBAT) {
+				DBAT_RESET(4); IBAT_RESET(4);
+				DBAT_RESET(5); IBAT_RESET(5);
+				DBAT_RESET(6); IBAT_RESET(6);
+				DBAT_RESET(7); IBAT_RESET(7);
+
+				/*
+				 * Change the first instruction to branch to
+				 * dsitrap_fix_dbat6
+				 */
+				dsitrap_fix_dbat4[0] &= ~0xfffc;
+				dsitrap_fix_dbat4[0]
+				    += (uintptr_t)dsitrap_fix_dbat6
+				     - (uintptr_t)&dsitrap_fix_dbat4[0];
+
+				/*
+				 * Change the second instruction to branch to
+				 * dsitrap_fix_dbat5 if bit 30 (aka bit 1) is
+				 * true.
+				 */
+				dsitrap_fix_dbat4[1] = 0x419e0000
+				    + (uintptr_t)dsitrap_fix_dbat5
+				    - (uintptr_t)&dsitrap_fix_dbat4[1];
+
+				/*
+				 * Change it to load dbat4 instead of dbat2
+				 */
+				dsitrap_fix_dbat4[2] = 0x7fd88ba6;
+				dsitrap_fix_dbat4[3] = 0x7ff98ba6;
+
+				/*
+				 * Change it to load dbat7 instead of dbat3
+				 */
+				dsitrap_fix_dbat7[0] = 0x7fde8ba6;
+				dsitrap_fix_dbat7[1] = 0x7fff8ba6;
+			}
 		}
 	}
 
@@ -599,20 +714,9 @@ oea_batinit(paddr_t pa, ...)
 		__asm volatile ("mtibatu 3,%1; mtibatl 3,%0"
 		    :: "r"(battable[0x01800000 >> 23].batl),
 		       "r"(battable[0x01800000 >> 23].batu));
-	} else
-#endif /* PPC_OEA601 */
-	{
-		/*
-		 * Set up BAT0 to only map the lowest 256 MB area
-		 */
-		battable[0].batl = BATL(0x00000000, BAT_M, BAT_PP_RW);
-		battable[0].batu = BATU(0x00000000, BAT_BL_256M, BAT_Vs);
-
-		__asm volatile ("mtibatl 0,%0; mtibatu 0,%1;"
-				  "mtdbatl 0,%0; mtdbatu 0,%1;"
-		    ::	"r"(battable[0].batl), "r"(battable[0].batu));
 	}
-
+#endif /* PPC_OEA601 */
+	
 	/*
 	 * Now setup other fixed bat registers
 	 *
@@ -647,9 +751,7 @@ oea_batinit(paddr_t pa, ...)
 
 	/*
 	 * Set up battable to map all RAM regions.
-	 * This is here because mem_regions() call needs bat0 set up.
 	 */
-	mem_regions(&allmem, &availmem);
 #ifdef PPC_OEA601
 	if (cpuvers == MPC601) {
 		for (mp = allmem; mp->size; mp++) {
@@ -669,20 +771,55 @@ oea_batinit(paddr_t pa, ...)
 	} else
 #endif
 	{
+		const register_t bat_inc = BAT_IDX2VA(1);
 		for (mp = allmem; mp->size; mp++) {
-			paddr_t paddr = mp->start & 0xf0000000;
-			paddr_t end = mp->start + mp->size;
+			paddr_t paddr = mp->start & -bat_inc;
+			paddr_t end = roundup2(mp->start + mp->size, bat_inc);
 
-			do {
-				u_int ix = paddr >> 28;
+			/*
+			 * If the next entries are adjacent, merge them
+			 * into this one
+			 */
+			while (mp[1].size && end == (mp[1].start & -bat_inc)) {
+				mp++;
+				end = roundup2(mp->start + mp->size, bat_inc);
+			}
 
-				battable[ix].batl =
-				    BATL(paddr, BAT_M, BAT_PP_RW);
-				battable[ix].batu =
-				    BATU(paddr, BAT_BL_256M, BAT_Vs);
-				paddr += SEGMENT_LENGTH;
-			} while (paddr < end);
+			while (paddr < end) {
+				register_t bl = (oeacpufeat & OEACPU_XBSEN
+				    ? BAT_BL_2G
+				    : BAT_BL_256M);
+				psize_t size = BAT_BL_TO_SIZE(bl);
+				u_int n = BAT_VA2IDX(size);
+				u_int i = BAT_VA2IDX(paddr);
+
+				while ((paddr & (size - 1))
+				    || paddr + size > end) {
+					size >>= 1;
+					bl = (bl >> 1) & (BAT_XBL|BAT_BL);
+					n >>= 1;
+				}
+
+				KASSERT(size >= bat_inc);
+				KASSERT(n >= 1);
+				KASSERT(bl >= BAT_BL_8M);
+
+				register_t batl = BATL(paddr, BAT_M, BAT_PP_RW);
+				register_t batu = BATU(paddr, bl, BAT_Vs);
+
+				for (; n-- > 0; i++) {
+					battable[i].batl = batl;
+					battable[i].batu = batu;
+				}
+				paddr += size;
+			}
 		}
+		/*
+		 * Set up BAT0 to only map the lowest area.
+		 */
+		__asm volatile ("mtibatl 0,%0; mtibatu 0,%1;"
+				  "mtdbatl 0,%0; mtdbatu 0,%1;"
+		    ::	"r"(battable[0].batl), "r"(battable[0].batu));
 	}
 }
 #endif /* PPC_OEA || PPC_OEA64_BRIDGE */

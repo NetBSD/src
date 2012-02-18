@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.100 2011/06/26 16:43:12 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.100.6.1 2012/02/18 07:35:51 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -110,6 +110,7 @@ typedef	_BSD_SSIZE_T_	ssize_t;
 
 #define	SOCK_CLOEXEC	0x10000000	/* set close on exec on socket */
 #define	SOCK_NONBLOCK	0x20000000	/* set non blocking i/o socket */
+#define	SOCK_NOSIGPIPE	0x40000000	/* don't send sigpipe */
 #define	SOCK_FLAGS_MASK	0xf0000000	/* flags mask */
 
 /*
@@ -126,6 +127,7 @@ typedef	_BSD_SSIZE_T_	ssize_t;
 #define	SO_OOBINLINE	0x0100		/* leave received OOB data in line */
 #define	SO_REUSEPORT	0x0200		/* allow local address & port reuse */
 /* 	SO_OTIMESTAMP	0x0400		*/
+#define	SO_NOSIGPIPE	0x0800		/* no SIGPIPE from EPIPE */
 #define	SO_ACCEPTFILTER	0x1000		/* there is an accept filter */
 #define	SO_TIMESTAMP	0x2000		/* timestamp received dgram traffic */
 
@@ -492,6 +494,7 @@ struct msghdr {
 #define	MSG_NOSIGNAL	0x0400		/* do not generate SIGPIPE on EOF */
 #if defined(_NETBSD_SOURCE)
 #define	MSG_CMSG_CLOEXEC 0x0800		/* close on exec receiving fd */
+#define	MSG_NBIO	0x1000		/* use non-blocking I/O */
 #endif
 
 /* Extra flags used internally only */
@@ -530,7 +533,7 @@ struct cmsghdr {
  * without (2), we can't guarantee binary compatibility in case of future
  * changes in ALIGNBYTES.
  */
-#define __CMSG_ALIGN(n)	(((n) + __cmsg_alignbytes()) & ~__cmsg_alignbytes())
+#define __CMSG_ALIGN(n)	(((n) + __ALIGNBYTES) & ~__ALIGNBYTES)
 #ifdef _KERNEL
 #define CMSG_ALIGN(n)	__CMSG_ALIGN(n)
 #endif
@@ -541,7 +544,7 @@ struct cmsghdr {
 			    __CMSG_ALIGN(sizeof(struct cmsghdr)) > \
 	    (((char *)(mhdr)->msg_control) + (mhdr)->msg_controllen)) ? \
 	    (struct cmsghdr *)0 : \
-	    (struct cmsghdr *)((char *)(cmsg) + \
+	    (struct cmsghdr *)(void *)((char *)(cmsg) + \
 	        __CMSG_ALIGN((cmsg)->cmsg_len)))
 
 /*
@@ -572,10 +575,6 @@ struct cmsghdr {
 #define	SHUT_RDWR	2		/* Disallow further sends/receives. */
 
 #include <sys/cdefs.h>
-
-__BEGIN_DECLS
-int	__cmsg_alignbytes(void);
-__END_DECLS
 
 #ifdef	_KERNEL
 static inline socklen_t

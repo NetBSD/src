@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.60 2011/11/19 16:41:56 agc Exp $
+# $NetBSD: majors,v 1.60.4.1 2012/02/18 07:34:02 mrg Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -49,4 +49,4 @@ device-major dtv       char 200            dtv
 device-major iic       char 201            iic
 device-major filemon   char 202            filemon
 device-major iscsi     char 203            iscsi
-
+device-major tpm       char 204		   tpm

@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_prcm.c,v 1.2 2011/07/01 20:30:21 dyoung Exp $	*/
+/*	$NetBSD: omap2_prcm.c,v 1.2.6.1 2012/02/18 07:31:29 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Adam Hoka
@@ -28,7 +28,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_prcm.c,v 1.2 2011/07/01 20:30:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_prcm.c,v 1.2.6.1 2012/02/18 07:31:29 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -110,7 +110,7 @@ prcm_write(bus_addr_t module, bus_addr_t reg, uint32_t data)
 }
 
 void
-prcm_cold_reset()
+prcm_cold_reset(void)
 {
 	uint32_t val;
 	

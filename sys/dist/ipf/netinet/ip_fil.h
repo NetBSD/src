@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.19 2010/04/17 21:00:44 darrenr Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.19.12.1 2012/02/18 07:35:18 mrg Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -16,14 +16,6 @@
 
 #ifndef	SOLARIS
 # define SOLARIS (defined(sun) && (defined(__svr4__) || defined(__SVR4)))
-#endif
-
-#ifndef	__P
-# ifdef	__STDC__
-#  define	__P(x)	x
-# else
-#  define	__P(x)	()
-# endif
 #endif
 
 #if defined(__STDC__) || defined(__GNUC__) || defined(_AIX51)
@@ -114,7 +106,7 @@ struct ipscan;
 struct ifnet;
 
 
-typedef	int	(* lookupfunc_t) __P((void *, int, void *));
+typedef	int	(* lookupfunc_t)(void *, int, void *);
 
 /*
  * i6addr is used as a container for both IPv4 and IPv6 addresses, as well
@@ -368,8 +360,8 @@ typedef	struct	fr_info	{
 #define	IPF_IN		0
 #define	IPF_OUT		1
 
-typedef	struct frentry	*(*ipfunc_t) __P((fr_info_t *, u_32_t *));
-typedef	int		(*ipfuncinit_t) __P((struct frentry *));
+typedef	struct frentry	*(*ipfunc_t)(fr_info_t *, u_32_t *);
+typedef	int		(*ipfuncinit_t)(struct frentry *);
 
 typedef	struct	ipfunc_resolve	{
 	char		ipfu_name[32];
@@ -495,7 +487,7 @@ typedef	struct	fripf	{
 #define	FRI_NETMASKED	7	/* network address with netmask from if */
 
 
-typedef	struct	frentry	* (* frentfunc_t) __P((fr_info_t *));
+typedef	struct	frentry	* (* frentfunc_t)(fr_info_t *);
 
 typedef	struct	frentry {
 	ipfmutex_t	fr_lock;
@@ -1264,29 +1256,29 @@ typedef struct ipftoken {
 # define	FR_VERBOSE(verb_pr)
 # define	FR_DEBUG(verb_pr)
 #else
-extern	void	debug __P((char *, ...));
-extern	void	verbose __P((char *, ...));
+extern	void	debug(char *, ...);
+extern	void	verbose(char *, ...);
 # define	FR_VERBOSE(verb_pr)	verbose verb_pr
 # define	FR_DEBUG(verb_pr)	debug verb_pr
 #endif
 
 
 #ifndef	_KERNEL
-extern	int	fr_check __P((struct ip *, int, void *, int, mb_t **));
-extern	int	(*fr_checkp) __P((ip_t *, int, void *, int, mb_t **));
-extern	int	ipf_log __P((void));
-extern	struct	ifnet *get_unit __P((char *, int));
-extern	char	*get_ifname __P((struct ifnet *));
+extern	int	fr_check(struct ip *, int, void *, int, mb_t **);
+extern	int	(*fr_checkp)(ip_t *, int, void *, int, mb_t **);
+extern	int	ipf_log(void);
+extern	struct	ifnet *get_unit(char *, int);
+extern	char	*get_ifname(struct ifnet *);
 # if defined(__NetBSD__) || defined(__OpenBSD__) || \
 	  (_BSDI_VERSION >= 199701) || (__FreeBSD_version >= 300000)
-extern	int	iplioctl __P((int, ioctlcmd_t, void *, int));
+extern	int	iplioctl(int, ioctlcmd_t, void *, int);
 # else
-extern	int	iplioctl __P((int, ioctlcmd_t, void *, int));
+extern	int	iplioctl(int, ioctlcmd_t, void *, int);
 # endif
-extern	int	iplopen __P((dev_t, int));
-extern	int	iplclose __P((dev_t, int));
-extern	void	m_freem __P((mb_t *));
-extern	int	bcopywrap __P((void *, void *, size_t));
+extern	int	iplopen(dev_t, int);
+extern	int	iplclose(dev_t, int);
+extern	void	m_freem(mb_t *);
+extern	int	bcopywrap(void *, void *, size_t);
 #else /* #ifndef _KERNEL */
 # ifdef BSD
 #  if (defined(__NetBSD__) && (__NetBSD_Version__ < 399000000)) || \
@@ -1299,51 +1291,51 @@ extern	int	bcopywrap __P((void *, void *, size_t));
 extern struct selinfo ipfselwait[IPL_LOGSIZE];
 # endif
 # if defined(__NetBSD__) && defined(PFIL_HOOKS)
-extern	void	ipfilterattach __P((int));
+extern	void	ipfilterattach(int);
 # endif
-extern	int	ipl_enable __P((void));
-extern	int	ipl_disable __P((void));
-extern	int	ipf_inject __P((fr_info_t *, mb_t *));
+extern	int	ipl_enable(void);
+extern	int	ipl_disable(void);
+extern	int	ipf_inject(fr_info_t *, mb_t *);
 # ifdef MENTAT
-extern	int	fr_check __P((struct ip *, int, void *, int, void *,
-			      mblk_t **));
+extern	int	fr_check(struct ip *, int, void *, int, void *,
+			      mblk_t **);
 #  if SOLARIS
 #   if SOLARIS2 >= 7
-extern	int	iplioctl __P((dev_t, int, intptr_t, int, cred_t *, int *));
+extern	int	iplioctl(dev_t, int, intptr_t, int, cred_t *, int *);
 #   else
-extern	int	iplioctl __P((dev_t, int, int *, int, cred_t *, int *));
+extern	int	iplioctl(dev_t, int, int *, int, cred_t *, int *);
 #   endif
-extern	int	iplopen __P((dev_t *, int, int, cred_t *));
-extern	int	iplclose __P((dev_t, int, int, cred_t *));
-extern	int	iplread __P((dev_t, uio_t *, cred_t *));
-extern	int	iplwrite __P((dev_t, uio_t *, cred_t *));
+extern	int	iplopen(dev_t *, int, int, cred_t *);
+extern	int	iplclose(dev_t, int, int, cred_t *);
+extern	int	iplread(dev_t, uio_t *, cred_t *);
+extern	int	iplwrite(dev_t, uio_t *, cred_t *);
 #  endif
 #  ifdef __hpux
-extern	int	iplopen __P((dev_t, int, intptr_t, int));
-extern	int	iplclose __P((dev_t, int, int));
-extern	int	iplioctl __P((dev_t, int, void *, int));
-extern	int	iplread __P((dev_t, uio_t *));
-extern	int	iplwrite __P((dev_t, uio_t *));
-extern	int	iplselect __P((dev_t, int));
+extern	int	iplopen(dev_t, int, intptr_t, int);
+extern	int	iplclose(dev_t, int, int);
+extern	int	iplioctl(dev_t, int, void *, int);
+extern	int	iplread(dev_t, uio_t *);
+extern	int	iplwrite(dev_t, uio_t *);
+extern	int	iplselect(dev_t, int);
 #  endif
-extern	int	fr_qout __P((queue_t *, mblk_t *));
+extern	int	fr_qout(queue_t *, mblk_t *);
 # else /* MENTAT */
-extern	int	fr_check __P((struct ip *, int, void *, int, mb_t **));
-extern	int	(*fr_checkp) __P((ip_t *, int, void *, int, mb_t **));
-extern	size_t	mbufchainlen __P((mb_t *));
+extern	int	fr_check(struct ip *, int, void *, int, mb_t **);
+extern	int	(*fr_checkp)(ip_t *, int, void *, int, mb_t **);
+extern	size_t	mbufchainlen(mb_t *);
 #  ifdef	__sgi
 #   include <sys/cred.h>
-extern	int	iplioctl __P((dev_t, int, void *, int, cred_t *, int *));
-extern	int	iplopen __P((dev_t *, int, int, cred_t *));
-extern	int	iplclose __P((dev_t, int, int, cred_t *));
-extern	int	iplread __P((dev_t, uio_t *, cred_t *));
-extern	int	iplwrite __P((dev_t, uio_t *, cred_t *));
-extern	int	ipfilter_sgi_attach __P((void));
-extern	void	ipfilter_sgi_detach __P((void));
-extern	void	ipfilter_sgi_intfsync __P((void));
+extern	int	iplioctl(dev_t, int, void *, int, cred_t *, int *);
+extern	int	iplopen(dev_t *, int, int, cred_t *);
+extern	int	iplclose(dev_t, int, int, cred_t *);
+extern	int	iplread(dev_t, uio_t *, cred_t *);
+extern	int	iplwrite(dev_t, uio_t *, cred_t *);
+extern	int	ipfilter_sgi_attach(void);
+extern	void	ipfilter_sgi_detach(void);
+extern	void	ipfilter_sgi_intfsync(void);
 #  else
 #   ifdef	IPFILTER_LKM
-extern	int	iplidentify __P((char *));
+extern	int	iplidentify(char *);
 #   endif
 #   if (defined(_BSDI_VERSION) && (_BSDI_VERSION >= 199510)) || \
        (defined(__FreeBSD_version) && (__FreeBSD_version >= 220000)) || \
@@ -1352,72 +1344,72 @@ extern	int	iplidentify __P((char *));
         defined(__OpenBSD__) || (__FreeBSD_version >= 300000)
 #     if (__FreeBSD_version >= 500024)
 #      if (__FreeBSD_version >= 502116)
-extern	int	iplioctl __P((struct cdev*, u_long, void *, int, struct thread *));
+extern	int	iplioctl(struct cdev*, u_long, void *, int, struct thread *);
 #      else
-extern	int	iplioctl __P((dev_t, u_long, void *, int, struct thread *));
+extern	int	iplioctl(dev_t, u_long, void *, int, struct thread *);
 #      endif /* __FreeBSD_version >= 502116 */
 #     else
 #      if  (__NetBSD_Version__ >= 499001000)
-extern	int	iplioctl __P((dev_t, u_long, void *, int, struct lwp *));
+extern	int	iplioctl(dev_t, u_long, void *, int, struct lwp *);
 #       else
 #       if  (__NetBSD_Version__ >= 399001400)
-extern	int	iplioctl __P((dev_t, u_long, caddr_t, int, struct lwp *));
+extern	int	iplioctl(dev_t, u_long, caddr_t, int, struct lwp *);
 #       else
-extern	int	iplioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+extern	int	iplioctl(dev_t, u_long, caddr_t, int, struct proc *);
 #       endif
 #      endif
 #     endif /* __FreeBSD_version >= 500024 */
 #    else
-extern	int	iplioctl __P((dev_t, int, void *, int, struct lwp *));
+extern	int	iplioctl(dev_t, int, void *, int, struct lwp *);
 #    endif
 #    if (__FreeBSD_version >= 500024)
 #      if (__FreeBSD_version >= 502116)
-extern	int	iplopen __P((struct cdev*, int, int, struct thread *));
-extern	int	iplclose __P((struct cdev*, int, int, struct thread *));
+extern	int	iplopen(struct cdev*, int, int, struct thread *);
+extern	int	iplclose(struct cdev*, int, int, struct thread *);
 #      else
-extern	int	iplopen __P((dev_t, int, int, struct thread *));
-extern	int	iplclose __P((dev_t, int, int, struct thread *));
+extern	int	iplopen(dev_t, int, int, struct thread *);
+extern	int	iplclose(dev_t, int, int, struct thread *);
 #      endif /* __FreeBSD_version >= 502116 */
 #    else
 #     if  (__NetBSD_Version__ >= 399001400)
-extern	int	iplopen __P((dev_t, int, int, struct lwp *));
-extern	int	iplclose __P((dev_t, int, int, struct lwp *));
+extern	int	iplopen(dev_t, int, int, struct lwp *);
+extern	int	iplclose(dev_t, int, int, struct lwp *);
 #     else
-extern	int	iplopen __P((dev_t, int, int, struct proc *));
-extern	int	iplclose __P((dev_t, int, int, struct proc *));
+extern	int	iplopen(dev_t, int, int, struct proc *);
+extern	int	iplclose(dev_t, int, int, struct proc *);
 #     endif /* __NetBSD_Version__ >= 399001400 */
 #    endif /* __FreeBSD_version >= 500024 */
 #   else
 #    ifdef linux
-extern	int	iplioctl __P((struct inode *, struct file *, u_int, u_long));
+extern	int	iplioctl(struct inode *, struct file *, u_int, u_long);
 #    else
-extern	int	iplopen __P((dev_t, int));
-extern	int	iplclose __P((dev_t, int));
-extern	int	iplioctl __P((dev_t, int, void *, int));
+extern	int	iplopen(dev_t, int);
+extern	int	iplclose(dev_t, int);
+extern	int	iplioctl(dev_t, int, void *, int);
 #    endif
 #   endif /* (_BSDI_VERSION >= 199510) */
 #   if defined(BSD) && (BSD >= 199306)
 #      if (__FreeBSD_version >= 502116)
-extern	int	iplread __P((struct cdev*, struct uio *, int));
-extern	int	iplwrite __P((struct cdev*, struct uio *, int));
+extern	int	iplread(struct cdev*, struct uio *, int);
+extern	int	iplwrite(struct cdev*, struct uio *, int);
 #      else
-extern	int	iplread __P((dev_t, struct uio *, int));
-extern	int	iplwrite __P((dev_t, struct uio *, int));
+extern	int	iplread(dev_t, struct uio *, int);
+extern	int	iplwrite(dev_t, struct uio *, int);
 #      endif /* __FreeBSD_version >= 502116 */
 #   else
 #    ifndef linux
-extern	int	iplread __P((dev_t, struct uio *));
-extern	int	iplwrite __P((dev_t, struct uio *));
+extern	int	iplread(dev_t, struct uio *);
+extern	int	iplwrite(dev_t, struct uio *);
 #    endif
 #   endif /* BSD >= 199306 */
 #  endif /* __ sgi */
 # endif /* MENTAT */
 
 # if defined(__FreeBSD_version)
-extern	int	ipf_pfil_hook __P((void));
-extern	int	ipf_pfil_unhook __P((void));
-extern	void	ipf_event_reg __P((void));
-extern	void	ipf_event_dereg __P((void));
+extern	int	ipf_pfil_hook(void);
+extern	int	ipf_pfil_unhook(void);
+extern	void	ipf_event_reg(void);
+extern	void	ipf_event_dereg(void);
 # endif
 
 #endif /* #ifndef _KERNEL */
@@ -1428,111 +1420,111 @@ extern	ipfrwlock_t	ipf_mutex, ipf_global, ip_poolrw, ipf_ipidfrag;
 extern	ipfrwlock_t	ipf_frag, ipf_state, ipf_nat, ipf_natfrag, ipf_auth;
 extern	ipfrwlock_t	ipf_frcache, ipf_tokens;
 
-extern	char	*memstr __P((const char *, char *, size_t, size_t));
-extern	int	count4bits __P((u_32_t));
-extern	int	frrequest __P((int, ioctlcmd_t, void *, int, int));
-extern	char	*getifname __P((struct ifnet *));
-extern	int	ipfattach __P((void));
-extern	int	ipfdetach __P((void));
-extern	u_short	ipf_cksum __P((u_short *, int));
-extern	int	copyinptr __P((void *, void *, size_t));
-extern	int	copyoutptr __P((void *, void *, size_t));
-extern	int	fr_fastroute __P((mb_t *, mb_t **, fr_info_t *, frdest_t *));
-extern	int	fr_inobj __P((void *, ipfobj_t *, void *, int));
-extern	int	fr_inobjsz __P((void *, void *, int, int));
-extern	int	fr_ioctlswitch __P((int, void *, ioctlcmd_t, int, int, void *));
-extern	int	fr_ipf_ioctl __P((void *, ioctlcmd_t, int, int, void *));
-extern	int	fr_ipftune __P((ioctlcmd_t, void *));
-extern	int	fr_outobj __P((void *, void *, int));
-extern	int	fr_outobjk __P((ipfobj_t *, void *));
-extern	int	fr_outobjsz __P((void *, void *, int, int));
-extern	void	*fr_pullup __P((mb_t *, fr_info_t *, int));
-extern	void	fr_resolvedest __P((struct frdest *, int));
-extern	int	fr_resolvefunc __P((void *));
-extern	void	*fr_resolvenic __P((char *, int));
-extern	int	fr_send_icmp_err __P((int, fr_info_t *, int));
-extern	int	fr_send_reset __P((fr_info_t *));
+extern	char	*memstr(const char *, char *, size_t, size_t);
+extern	int	count4bits(u_32_t);
+extern	int	frrequest(int, ioctlcmd_t, void *, int, int);
+extern	char	*getifname(struct ifnet *);
+extern	int	ipfattach(void);
+extern	int	ipfdetach(void);
+extern	u_short	ipf_cksum(u_short *, int);
+extern	int	copyinptr(void *, void *, size_t);
+extern	int	copyoutptr(void *, void *, size_t);
+extern	int	fr_fastroute(mb_t *, mb_t **, fr_info_t *, frdest_t *);
+extern	int	fr_inobj(void *, ipfobj_t *, void *, int);
+extern	int	fr_inobjsz(void *, void *, int, int);
+extern	int	fr_ioctlswitch(int, void *, ioctlcmd_t, int, int, void *);
+extern	int	fr_ipf_ioctl(void *, ioctlcmd_t, int, int, void *);
+extern	int	fr_ipftune(ioctlcmd_t, void *);
+extern	int	fr_outobj(void *, void *, int);
+extern	int	fr_outobjk(ipfobj_t *, void *);
+extern	int	fr_outobjsz(void *, void *, int, int);
+extern	void	*fr_pullup(mb_t *, fr_info_t *, int);
+extern	void	fr_resolvedest(struct frdest *, int);
+extern	int	fr_resolvefunc(void *);
+extern	void	*fr_resolvenic(char *, int);
+extern	int	fr_send_icmp_err(int, fr_info_t *, int);
+extern	int	fr_send_reset(fr_info_t *);
 #if  (defined(__FreeBSD_version) && (__FreeBSD_version < 501000)) || \
     !defined(_KERNEL) || defined(linux)
-extern	int	ppsratecheck __P((struct timeval *, int *, int));
+extern	int	ppsratecheck(struct timeval *, int *, int);
 #endif
-extern	ipftq_t	*fr_addtimeoutqueue __P((ipftq_t **, u_int));
-extern	void	fr_deletequeueentry __P((ipftqent_t *));
-extern	int	fr_deletetimeoutqueue __P((ipftq_t *));
-extern	void	fr_freetimeoutqueue __P((ipftq_t *));
-extern	void	fr_movequeue __P((ipftqent_t *, ipftq_t *, ipftq_t *));
-extern	void	fr_queueappend __P((ipftqent_t *, ipftq_t *, void *));
-extern	void	fr_queueback __P((ipftqent_t *));
-extern	void	fr_queuefront __P((ipftqent_t *));
-extern	void	fr_checkv4sum __P((fr_info_t *));
-extern	int	fr_checkl4sum __P((fr_info_t *));
-extern	int	fr_ifpfillv4addr __P((int, struct sockaddr_in *,
+extern	ipftq_t	*fr_addtimeoutqueue(ipftq_t **, u_int);
+extern	void	fr_deletequeueentry(ipftqent_t *);
+extern	int	fr_deletetimeoutqueue(ipftq_t *);
+extern	void	fr_freetimeoutqueue(ipftq_t *);
+extern	void	fr_movequeue(ipftqent_t *, ipftq_t *, ipftq_t *);
+extern	void	fr_queueappend(ipftqent_t *, ipftq_t *, void *);
+extern	void	fr_queueback(ipftqent_t *);
+extern	void	fr_queuefront(ipftqent_t *);
+extern	void	fr_checkv4sum(fr_info_t *);
+extern	int	fr_checkl4sum(fr_info_t *);
+extern	int	fr_ifpfillv4addr(int, struct sockaddr_in *,
 				      struct sockaddr_in *, struct in_addr *,
-				      struct in_addr *));
-extern	int	fr_coalesce __P((fr_info_t *));
+				      struct in_addr *);
+extern	int	fr_coalesce(fr_info_t *);
 #ifdef	USE_INET6
-extern	void	fr_checkv6sum __P((fr_info_t *));
-extern	int	fr_ifpfillv6addr __P((int, struct sockaddr_in6 *,
+extern	void	fr_checkv6sum(fr_info_t *);
+extern	int	fr_ifpfillv6addr(int, struct sockaddr_in6 *,
 				      struct sockaddr_in6 *, struct in_addr *,
-				      struct in_addr *));
+				      struct in_addr *);
 #endif
 
-extern	int		fr_addipftune __P((ipftuneable_t *));
-extern	int		fr_delipftune __P((ipftuneable_t *));
+extern	int		fr_addipftune(ipftuneable_t *);
+extern	int		fr_delipftune(ipftuneable_t *);
 
-extern	int	frflush __P((minor_t, int, int));
-extern	void	frsync __P((void *));
-extern	frgroup_t *fr_addgroup __P((char *, void *, u_32_t, minor_t, int));
-extern	int	fr_derefrule __P((frentry_t **));
-extern	void	fr_delgroup __P((char *, minor_t, int));
-extern	frgroup_t *fr_findgroup __P((char *, minor_t, int, frgroup_t ***));
+extern	int	frflush(minor_t, int, int);
+extern	void	frsync(void *);
+extern	frgroup_t *fr_addgroup(char *, void *, u_32_t, minor_t, int);
+extern	int	fr_derefrule(frentry_t **);
+extern	void	fr_delgroup(char *, minor_t, int);
+extern	frgroup_t *fr_findgroup(char *, minor_t, int, frgroup_t ***);
 
-extern	int	fr_loginit __P((void));
-extern	int	ipflog_canread __P((int));
-extern	int	ipflog_clear __P((minor_t));
-extern	int	ipflog_read __P((minor_t, uio_t *));
-extern	int	ipflog __P((fr_info_t *, u_int));
-extern	int	ipllog __P((int, fr_info_t *, void **, size_t *, int *, int));
-extern	void	fr_logunload __P((void));
+extern	int	fr_loginit(void);
+extern	int	ipflog_canread(int);
+extern	int	ipflog_clear(minor_t);
+extern	int	ipflog_read(minor_t, uio_t *);
+extern	int	ipflog(fr_info_t *, u_int);
+extern	int	ipllog(int, fr_info_t *, void **, size_t *, int *, int);
+extern	void	fr_logunload(void);
 
-extern	frentry_t	*fr_acctpkt __P((fr_info_t *, u_32_t *));
-extern	int		fr_copytolog __P((int, char *, int));
-extern	u_short		fr_cksum __P((mb_t *, ip_t *, int, void *, int));
-extern	void		fr_deinitialise __P((void));
-extern	frentry_t 	*fr_dolog __P((fr_info_t *, u_32_t *));
-extern	frentry_t 	*fr_dstgrpmap __P((fr_info_t *, u_32_t *));
-extern	void		fr_fixskip __P((frentry_t **, frentry_t *, int));
-extern	void		fr_forgetifp __P((void *));
-extern	frentry_t 	*fr_getrulen __P((int, char *, u_32_t));
-extern	int		fr_ifpaddr __P((int, int, void *,
-				struct in_addr *, struct in_addr *));
-extern	int		fr_initialise __P((void));
-extern	int		fr_lock __P((void *, int *));
-extern  int		fr_makefrip __P((int, ip_t *, fr_info_t *));
-extern	int		fr_matchtag __P((ipftag_t *, ipftag_t *));
-extern	int		fr_matchicmpqueryreply __P((int, icmpinfo_t *,
-					    struct icmp *, int));
-extern	u_32_t		fr_newisn __P((fr_info_t *));
-extern	u_short		fr_nextipid __P((fr_info_t *));
-extern	int	ipf_queueflush __P((ipftq_delete_fn_t, ipftq_t *, ipftq_t *));
-extern	int		fr_scanlist __P((fr_info_t *, u_32_t));
-extern	frentry_t 	*fr_srcgrpmap __P((fr_info_t *, u_32_t *));
-extern	int		fr_tcpudpchk __P((fr_info_t *, frtuc_t *));
-extern	int		fr_verifysrc __P((fr_info_t *fin));
-extern	int		fr_zerostats __P((void *));
-extern	ipftoken_t	*ipf_findtoken __P((int, int, void *));
-extern	void		ipf_dereftoken __P((ipftoken_t *));
-extern	int		ipf_getnextrule __P((ipftoken_t *, void *));
-extern	void		ipf_expiretokens __P((void));
-extern	void		ipf_freetoken __P((ipftoken_t *));
-extern	int		ipf_deltoken __P((int,int, void *));
-extern	int		ipfsync __P((void));
-extern	int		ipf_genericiter __P((void *, int, void *));
+extern	frentry_t	*fr_acctpkt(fr_info_t *, u_32_t *);
+extern	int		fr_copytolog(int, char *, int);
+extern	u_short		fr_cksum(mb_t *, ip_t *, int, void *, int);
+extern	void		fr_deinitialise(void);
+extern	frentry_t 	*fr_dolog(fr_info_t *, u_32_t *);
+extern	frentry_t 	*fr_dstgrpmap(fr_info_t *, u_32_t *);
+extern	void		fr_fixskip(frentry_t **, frentry_t *, int);
+extern	void		fr_forgetifp(void *);
+extern	frentry_t 	*fr_getrulen(int, char *, u_32_t);
+extern	int		fr_ifpaddr(int, int, void *,
+				struct in_addr *, struct in_addr *);
+extern	int		fr_initialise(void);
+extern	int		fr_lock(void *, int *);
+extern  int		fr_makefrip(int, ip_t *, fr_info_t *);
+extern	int		fr_matchtag(ipftag_t *, ipftag_t *);
+extern	int		fr_matchicmpqueryreply(int, icmpinfo_t *,
+					    struct icmp *, int);
+extern	u_32_t		fr_newisn(fr_info_t *);
+extern	u_short		fr_nextipid(fr_info_t *);
+extern	int	ipf_queueflush(ipftq_delete_fn_t, ipftq_t *, ipftq_t *);
+extern	int		fr_scanlist(fr_info_t *, u_32_t);
+extern	frentry_t 	*fr_srcgrpmap(fr_info_t *, u_32_t *);
+extern	int		fr_tcpudpchk(fr_info_t *, frtuc_t *);
+extern	int		fr_verifysrc(fr_info_t *fin);
+extern	int		fr_zerostats(void *);
+extern	ipftoken_t	*ipf_findtoken(int, int, void *);
+extern	void		ipf_dereftoken(ipftoken_t *);
+extern	int		ipf_getnextrule(ipftoken_t *, void *);
+extern	void		ipf_expiretokens(void);
+extern	void		ipf_freetoken(ipftoken_t *);
+extern	int		ipf_deltoken(int,int, void *);
+extern	int		ipfsync(void);
+extern	int		ipf_genericiter(void *, int, void *);
 #ifndef ipf_random
-extern	u_32_t		ipf_random __P((void));
+extern	u_32_t		ipf_random(void);
 #endif
 #ifdef NEED_LOCAL_RAND
-extern	void		ipf_rand_push __P((void *, int));
+extern	void		ipf_rand_push(void *, int);
 #endif
 
 extern	int	fr_running;
@@ -1564,13 +1556,13 @@ extern	int	icmptoicmp6unreach[ICMP_MAX_UNREACH];
 extern	int	icmpreplytype6[ICMP6_MAXTYPE + 1];
 #endif
 #ifdef	IPFILTER_COMPAT
-extern	int	fr_in_compat __P((ipfobj_t *, void *));
-extern	int	fr_out_compat __P((ipfobj_t *, void *));
+extern	int	fr_in_compat(ipfobj_t *, void *);
+extern	int	fr_out_compat(ipfobj_t *, void *);
 #endif
 extern	int	icmpreplytype4[ICMP_MAXTYPE + 1];
 extern	struct frgroup *ipfgroups[IPL_LOGSIZE][2];
 extern	struct filterstats frstats[];
-extern	frentry_t *ipfrule_match __P((fr_info_t *));
+extern	frentry_t *ipfrule_match(fr_info_t *);
 extern	u_char	ipf_iss_secret[32];
 extern	ipftuneable_t ipf_tuneables[];
 

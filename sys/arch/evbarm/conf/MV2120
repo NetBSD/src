@@ -1,11 +1,11 @@
-#	$NetBSD: MV2120,v 1.3 2011/11/30 20:40:20 jakllsch Exp $
+#	$NetBSD: MV2120,v 1.3.2.1 2012/02/18 07:31:48 mrg Exp $
 #
 #  This configuration supports for HP MV2120/MV5140/MV5150.
 
 include 	"arch/evbarm/conf/std.mv2120"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
-options 	SYMTAB_SPACE="(1024 * 900)"
+options 	SYMTAB_SPACE="(1024 * 912)"
 
 makeoptions	DEBUG="-g"
 
@@ -59,7 +59,7 @@ file-system 	HFS		# experimental - Apple HFS+ (read-only)
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
 # It is not recommended for general use.
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
@@ -157,7 +157,10 @@ options 	USERCONF	# userconf(4) support
 
 config		netbsd		root on ? type ?
 config		netbsd-mvgbe0	root on mvgbe0 type nfs
-#config		netbsd-wd0g	root on wd0g type ffs
+config		netbsd-wd0e	root on wd0e type ?
+config		netbsd-wd0f	root on wd0f type ?
+config		netbsd-wd0g	root on wd0g type ?
+config		netbsd-wd0h	root on wd0h type ?
 
 # The main bus device
 mainbus0 at root

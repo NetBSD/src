@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pserialize.c,v 1.4 2011/08/07 21:38:32 rmind Exp $	*/
+/*	$NetBSD: subr_pserialize.c,v 1.4.6.1 2012/02/18 07:35:32 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.4 2011/08/07 21:38:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.4.6.1 2012/02/18 07:35:32 mrg Exp $");
 
 #include <sys/param.h>
 
@@ -156,7 +156,7 @@ pserialize_perform(pserialize_t psz)
 	 * other processors.
 	 */
 	psz->psz_owner = curlwp;
-	kcpuset_copy(psz->psz_target, kcpuset_attached);
+	kcpuset_copy(psz->psz_target, kcpuset_running);
 	kcpuset_zero(psz->psz_pass);
 
 	mutex_spin_enter(&psz_lock);

@@ -1,4 +1,4 @@
-/* $NetBSD: kcore.h,v 1.3 1998/02/14 00:17:57 cgd Exp $ */
+/* $NetBSD: kcore.h,v 1.3.192.1 2012/02/18 07:30:57 mrg Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -31,9 +31,9 @@
 #define _ALPHA_KCORE_H_
 
 typedef struct cpu_kcore_hdr {
-	u_int64_t	lev1map_pa;		/* PA of Lev1map */
-	u_int64_t	page_size;		/* Page size */
-	u_int64_t	nmemsegs;		/* Number of RAM segments */
+	uint64_t	lev1map_pa;		/* PA of Lev1map */
+	uint64_t	page_size;		/* Page size */
+	uint64_t	nmemsegs;		/* Number of RAM segments */
 #if 0
 	phys_ram_seg_t  memsegs[];		/* RAM segments */
 #endif

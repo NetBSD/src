@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.306 2011/11/23 01:00:52 matt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.306.2.1 2012/02/18 07:36:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.306 2011/11/23 01:00:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.306.2.1 2012/02/18 07:36:00 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -77,7 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.306 2011/11/23 01:00:52 matt Exp $");
 #include <sys/systm.h>
 #include <sys/mman.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
@@ -135,11 +134,6 @@ UVMMAP_EVCNT_DEFINE(mlk_tree)
 UVMMAP_EVCNT_DEFINE(mlk_treeloop)
 UVMMAP_EVCNT_DEFINE(mlk_listloop)
 
-UVMMAP_EVCNT_DEFINE(uke_alloc)
-UVMMAP_EVCNT_DEFINE(uke_free)
-UVMMAP_EVCNT_DEFINE(ukh_alloc)
-UVMMAP_EVCNT_DEFINE(ukh_free)
-
 const char vmmapbsy[] = "vmmapbsy";
 
 /*
@@ -153,9 +147,6 @@ static struct pool_cache uvm_vmspace_cache;
  */
 
 static struct pool_cache uvm_map_entry_cache;
-
-MALLOC_DEFINE(M_VMMAP, "VM map", "VM map structures");
-MALLOC_DEFINE(M_VMPMAP, "VM pmap", "VM pmap");
 
 #ifdef PMAP_GROWKERNEL
 /*
@@ -184,24 +175,14 @@ static int user_va0_disable = __USER_VA0_DISABLE_DEFAULT;
  */
 
 /*
- * VM_MAP_USE_KMAPENT: determine if uvm_kmapent_alloc/free is used
- * for the vm_map.
- */
-extern struct vm_map *pager_map; /* XXX */
-#define	VM_MAP_USE_KMAPENT_FLAGS(flags) \
-	(((flags) & VM_MAP_INTRSAFE) != 0)
-#define	VM_MAP_USE_KMAPENT(map) \
-	(VM_MAP_USE_KMAPENT_FLAGS((map)->flags) || (map) == kernel_map)
-
-/*
  * UVM_ET_ISCOMPATIBLE: check some requirements for map entry merging
  */
+extern struct vm_map *pager_map;
 
 #define	UVM_ET_ISCOMPATIBLE(ent, type, uobj, meflags, \
     prot, maxprot, inh, adv, wire) \
 	((ent)->etype == (type) && \
-	(((ent)->flags ^ (meflags)) & (UVM_MAP_NOMERGE | UVM_MAP_QUANTUM)) \
-	== 0 && \
+	(((ent)->flags ^ (meflags)) & (UVM_MAP_NOMERGE)) == 0 && \
 	(ent)->object.uvm_obj == (uobj) && \
 	(ent)->protection == (prot) && \
 	(ent)->max_protection == (maxprot) && \
@@ -285,10 +266,6 @@ clear_hints(struct vm_map *map, struct vm_map_entry *ent)
 
 static struct vm_map_entry *
 		uvm_mapent_alloc(struct vm_map *, int);
-static struct vm_map_entry *
-		uvm_mapent_alloc_split(struct vm_map *,
-		    const struct vm_map_entry *, int,
-		    struct uvm_mapent_reservation *);
 static void	uvm_mapent_copy(struct vm_map_entry *, struct vm_map_entry *);
 static void	uvm_mapent_free(struct vm_map_entry *);
 #if defined(DEBUG)
@@ -298,10 +275,6 @@ static void	_uvm_mapent_check(const struct vm_map_entry *, const char *,
 #else /* defined(DEBUG) */
 #define	uvm_mapent_check(e)	/* nothing */
 #endif /* defined(DEBUG) */
-static struct vm_map_entry *
-		uvm_kmapent_alloc(struct vm_map *, int);
-static void	uvm_kmapent_free(struct vm_map_entry *);
-static vsize_t	uvm_kmapent_overhead(vsize_t);
 
 static void	uvm_map_entry_unwire(struct vm_map *, struct vm_map_entry *);
 static void	uvm_map_reference_amap(struct vm_map_entry *, int);
@@ -631,10 +604,6 @@ _uvm_tree_sanity(struct vm_map *map)
 }
 #endif /* defined(DEBUG) || defined(DDB) */
 
-#ifdef DIAGNOSTIC
-static struct vm_map *uvm_kmapent_map(struct vm_map_entry *);
-#endif
-
 /*
  * vm_map_lock: acquire an exclusive (write) lock on a map.
  *
@@ -805,49 +774,15 @@ uvm_mapent_alloc(struct vm_map *map, int flags)
 	int pflags = (flags & UVM_FLAG_NOWAIT) ? PR_NOWAIT : PR_WAITOK;
 	UVMHIST_FUNC("uvm_mapent_alloc"); UVMHIST_CALLED(maphist);
 
-	if (VM_MAP_USE_KMAPENT(map)) {
-		me = uvm_kmapent_alloc(map, flags);
-	} else {
-		me = pool_cache_get(&uvm_map_entry_cache, pflags);
-		if (__predict_false(me == NULL))
-			return NULL;
-		me->flags = 0;
-	}
+	me = pool_cache_get(&uvm_map_entry_cache, pflags);
+	if (__predict_false(me == NULL))
+		return NULL;
+	me->flags = 0;
+
 
 	UVMHIST_LOG(maphist, "<- new entry=0x%x [kentry=%d]", me,
 	    ((map->flags & VM_MAP_INTRSAFE) != 0 || map == kernel_map), 0, 0);
 	return (me);
-}
-
-/*
- * uvm_mapent_alloc_split: allocate a map entry for clipping.
- *
- * => map must be locked by caller if UVM_MAP_QUANTUM is set.
- */
-
-static struct vm_map_entry *
-uvm_mapent_alloc_split(struct vm_map *map,
-    const struct vm_map_entry *old_entry, int flags,
-    struct uvm_mapent_reservation *umr)
-{
-	struct vm_map_entry *me;
-
-	KASSERT(!VM_MAP_USE_KMAPENT(map) ||
-	    (old_entry->flags & UVM_MAP_QUANTUM) || !UMR_EMPTY(umr));
-
-	if (old_entry->flags & UVM_MAP_QUANTUM) {
-		struct vm_map_kernel *vmk = vm_map_to_kernel(map);
-
-		KASSERT(vm_map_locked_p(map));
-		me = vmk->vmk_merged_entries;
-		KASSERT(me);
-		vmk->vmk_merged_entries = me->next;
-		KASSERT(me->flags & UVM_MAP_QUANTUM);
-	} else {
-		me = uvm_mapent_alloc(map, flags);
-	}
-
-	return me;
 }
 
 /*
@@ -861,44 +796,7 @@ uvm_mapent_free(struct vm_map_entry *me)
 
 	UVMHIST_LOG(maphist,"<- freeing map entry=0x%x [flags=%d]",
 		me, me->flags, 0, 0);
-	if (me->flags & UVM_MAP_KERNEL) {
-		uvm_kmapent_free(me);
-	} else {
-		pool_cache_put(&uvm_map_entry_cache, me);
-	}
-}
-
-/*
- * uvm_mapent_free_merged: free merged map entry
- *
- * => keep the entry if needed.
- * => caller shouldn't hold map locked if VM_MAP_USE_KMAPENT(map) is true.
- * => map should be locked if UVM_MAP_QUANTUM is set.
- */
-
-static void
-uvm_mapent_free_merged(struct vm_map *map, struct vm_map_entry *me)
-{
-
-	KASSERT(!(me->flags & UVM_MAP_KERNEL) || uvm_kmapent_map(me) == map);
-
-	if (me->flags & UVM_MAP_QUANTUM) {
-		/*
-		 * keep this entry for later splitting.
-		 */
-		struct vm_map_kernel *vmk;
-
-		KASSERT(vm_map_locked_p(map));
-		KASSERT(VM_MAP_IS_KERNEL(map));
-		KASSERT(!VM_MAP_USE_KMAPENT(map) ||
-		    (me->flags & UVM_MAP_KERNEL));
-
-		vmk = vm_map_to_kernel(map);
-		me->next = vmk->vmk_merged_entries;
-		vmk->vmk_merged_entries = me;
-	} else {
-		uvm_mapent_free(me);
-	}
+	pool_cache_put(&uvm_map_entry_cache, me);
 }
 
 /*
@@ -911,23 +809,6 @@ uvm_mapent_copy(struct vm_map_entry *src, struct vm_map_entry *dst)
 
 	memcpy(dst, src, ((char *)&src->uvm_map_entry_stop_copy) -
 	    ((char *)src));
-}
-
-/*
- * uvm_mapent_overhead: calculate maximum kva overhead necessary for
- * map entries.
- *
- * => size and flags are the same as uvm_km_suballoc's ones.
- */
-
-vsize_t
-uvm_mapent_overhead(vsize_t size, int flags)
-{
-
-	if (VM_MAP_USE_KMAPENT_FLAGS(flags)) {
-		return uvm_kmapent_overhead(size);
-	}
-	return 0;
 }
 
 #if defined(DEBUG)
@@ -1031,7 +912,14 @@ uvm_map_init(void)
 	 */
 
 	mutex_init(&uvm_kentry_lock, MUTEX_DRIVER, IPL_VM);
+}
 
+/*
+ * uvm_map_init_caches: init mapping system caches.
+ */
+void
+uvm_map_init_caches(void)
+{
 	/*
 	 * initialize caches.
 	 */
@@ -1089,7 +977,7 @@ uvm_mapent_splitadj(struct vm_map_entry *entry1, struct vm_map_entry *entry2,
 
 void
 uvm_map_clip_start(struct vm_map *map, struct vm_map_entry *entry,
-    vaddr_t start, struct uvm_mapent_reservation *umr)
+    vaddr_t start)
 {
 	struct vm_map_entry *new_entry;
 
@@ -1103,7 +991,7 @@ uvm_map_clip_start(struct vm_map *map, struct vm_map_entry *entry,
 	 * entry BEFORE this one, so that this entry has the specified
 	 * starting address.
 	 */
-	new_entry = uvm_mapent_alloc_split(map, entry, 0, umr);
+	new_entry = uvm_mapent_alloc(map, 0);
 	uvm_mapent_copy(entry, new_entry); /* entry -> new_entry */
 	uvm_mapent_splitadj(new_entry, entry, start);
 	uvm_map_entry_link(map, entry->prev, new_entry);
@@ -1121,8 +1009,7 @@ uvm_map_clip_start(struct vm_map *map, struct vm_map_entry *entry,
  */
 
 void
-uvm_map_clip_end(struct vm_map *map, struct vm_map_entry *entry, vaddr_t end,
-    struct uvm_mapent_reservation *umr)
+uvm_map_clip_end(struct vm_map *map, struct vm_map_entry *entry, vaddr_t end)
 {
 	struct vm_map_entry *new_entry;
 
@@ -1133,23 +1020,12 @@ uvm_map_clip_end(struct vm_map *map, struct vm_map_entry *entry, vaddr_t end,
 	 *	Create a new entry and insert it
 	 *	AFTER the specified entry
 	 */
-	new_entry = uvm_mapent_alloc_split(map, entry, 0, umr);
+	new_entry = uvm_mapent_alloc(map, 0);
 	uvm_mapent_copy(entry, new_entry); /* entry -> new_entry */
 	uvm_mapent_splitadj(entry, new_entry, end);
 	uvm_map_entry_link(map, entry, new_entry);
 
 	uvm_map_check(map, "clip_end leave");
-}
-
-static void
-vm_map_drain(struct vm_map *map, uvm_flag_t flags)
-{
-
-	if (!VM_MAP_IS_KERNEL(map)) {
-		return;
-	}
-
-	uvm_km_va_drain(map, flags);
 }
 
 /*
@@ -1188,7 +1064,6 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 	struct vm_map_entry *new_entry;
 	int error;
 
-	KASSERT((flags & UVM_FLAG_QUANTUM) == 0 || VM_MAP_IS_KERNEL(map));
 	KASSERT((size & PAGE_MASK) == 0);
 
 #ifndef __USER_VA0_IS_SAFE
@@ -1200,20 +1075,13 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 	/*
 	 * for pager_map, allocate the new entry first to avoid sleeping
 	 * for memory while we have the map locked.
-	 *
-	 * Also, because we allocate entries for in-kernel maps
-	 * a bit differently (cf. uvm_kmapent_alloc/free), we need to
-	 * allocate them before locking the map.
 	 */
 
 	new_entry = NULL;
-	if (VM_MAP_USE_KMAPENT(map) || (flags & UVM_FLAG_QUANTUM) ||
-	    map == pager_map) {
+	if (map == pager_map) {
 		new_entry = uvm_mapent_alloc(map, (flags & UVM_FLAG_NOWAIT));
 		if (__predict_false(new_entry == NULL))
 			return ENOMEM;
-		if (flags & UVM_FLAG_QUANTUM)
-			new_entry->flags |= UVM_MAP_QUANTUM;
 	}
 	if (map == pager_map)
 		flags |= UVM_FLAG_NOMERGE;
@@ -1235,6 +1103,13 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 
 	return error;
 }
+
+/*
+ * uvm_map_prepare:
+ *
+ * called with map unlocked.
+ * on success, returns the map locked.
+ */
 
 int
 uvm_map_prepare(struct vm_map *map, vaddr_t start, vsize_t size,
@@ -1307,8 +1182,6 @@ retry:
 		 * recheck the condition.
 		 */
 
-		vm_map_drain(map, flags);
-
 		mutex_enter(&map->misc_lock);
 		while ((map->flags & VM_MAP_WANTVA) != 0 &&
 		   map->timestamp == timestamp) {
@@ -1372,6 +1245,13 @@ retry:
 	return 0;
 }
 
+/*
+ * uvm_map_enter:
+ *
+ * called with map locked.
+ * unlock the map before returning.
+ */
+
 int
 uvm_map_enter(struct vm_map *map, const struct uvm_map_args *args,
     struct vm_map_entry *new_entry)
@@ -1386,8 +1266,6 @@ uvm_map_enter(struct vm_map *map, const struct uvm_map_args *args,
 	const int amapwaitflag = (flags & UVM_FLAG_NOWAIT) ?
 	    AMAP_EXTEND_NOWAIT : 0;
 	const int advice = UVM_ADVICE(flags);
-	const int meflagval = (flags & UVM_FLAG_QUANTUM) ?
-	    UVM_MAP_QUANTUM : 0;
 
 	vaddr_t start = args->uma_start;
 	vsize_t size = args->uma_size;
@@ -1407,11 +1285,7 @@ uvm_map_enter(struct vm_map *map, const struct uvm_map_args *args,
 	UVMHIST_LOG(maphist, "  uobj/offset 0x%x/%d", uobj, uoffset,0,0);
 
 	KASSERT(map->hint == prev_entry); /* bimerge case assumes this */
-
-	if (flags & UVM_FLAG_QUANTUM) {
-		KASSERT(new_entry);
-		KASSERT(new_entry->flags & UVM_MAP_QUANTUM);
-	}
+	KASSERT(vm_map_locked_p(map));
 
 	if (uobj)
 		newetype = UVM_ET_OBJ;
@@ -1435,7 +1309,7 @@ uvm_map_enter(struct vm_map *map, const struct uvm_map_args *args,
 
 	if (prev_entry->end == start &&
 	    prev_entry != &map->header &&
-	    UVM_ET_ISCOMPATIBLE(prev_entry, newetype, uobj, meflagval,
+	    UVM_ET_ISCOMPATIBLE(prev_entry, newetype, uobj, 0,
 	    prot, maxprot, inherit, advice, 0)) {
 
 		if (uobj && prev_entry->offset +
@@ -1492,7 +1366,7 @@ uvm_map_enter(struct vm_map *map, const struct uvm_map_args *args,
 forwardmerge:
 	if (prev_entry->next->start == (start + size) &&
 	    prev_entry->next != &map->header &&
-	    UVM_ET_ISCOMPATIBLE(prev_entry->next, newetype, uobj, meflagval,
+	    UVM_ET_ISCOMPATIBLE(prev_entry->next, newetype, uobj, 0,
 	    prot, maxprot, inherit, advice, 0)) {
 
 		if (uobj && prev_entry->next->offset != uoffset + size)
@@ -1699,27 +1573,17 @@ nomerge:
 
 	error = 0;
 done:
-	if ((flags & UVM_FLAG_QUANTUM) == 0) {
-		/*
-		 * vmk_merged_entries is locked by the map's lock.
-		 */
-		vm_map_unlock(map);
-	}
-	if (new_entry && error == 0) {
-		KDASSERT(merged);
-		uvm_mapent_free_merged(map, new_entry);
-		new_entry = NULL;
-	}
-	if (dead) {
-		KDASSERT(merged);
-		uvm_mapent_free_merged(map, dead);
-	}
-	if ((flags & UVM_FLAG_QUANTUM) != 0) {
-		vm_map_unlock(map);
-	}
-	if (new_entry != NULL) {
+	vm_map_unlock(map);
+
+	if (new_entry) {
 		uvm_mapent_free(new_entry);
 	}
+
+	if (dead) {
+		KDASSERT(merged);
+		uvm_mapent_free(dead);
+	}
+
 	return error;
 }
 
@@ -2292,8 +2156,7 @@ nextgap:
 
 void
 uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
-    struct vm_map_entry **entry_list /* OUT */,
-    struct uvm_mapent_reservation *umr, int flags)
+    struct vm_map_entry **entry_list /* OUT */, int flags)
 {
 	struct vm_map_entry *entry, *first_entry, *next;
 	vaddr_t len;
@@ -2312,7 +2175,7 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 	if (uvm_map_lookup_entry(map, start, &first_entry) == true) {
 		/* clip and go... */
 		entry = first_entry;
-		UVM_MAP_CLIP_START(map, entry, start, umr);
+		UVM_MAP_CLIP_START(map, entry, start);
 		/* critical!  prevents stale hint */
 		SAVE_HINT(map, entry, entry->prev);
 	} else {
@@ -2352,9 +2215,9 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 	 */
 
 	while ((entry != &map->header) && (entry->start < end)) {
-		KASSERT((entry->flags & UVM_MAP_FIRST) == 0);
+		KASSERT((entry->flags & UVM_MAP_STATIC) == 0);
 
-		UVM_MAP_CLIP_END(map, entry, end, umr);
+		UVM_MAP_CLIP_END(map, entry, end);
 		next = entry->next;
 		len = entry->end - entry->start;
 
@@ -2591,8 +2454,8 @@ uvm_map_replace(struct vm_map *map, vaddr_t start, vaddr_t end,
 	 * check to make sure we have a proper blank entry
 	 */
 
-	if (end < oldent->end && !VM_MAP_USE_KMAPENT(map)) {
-		UVM_MAP_CLIP_END(map, oldent, end, NULL);
+	if (end < oldent->end) {
+		UVM_MAP_CLIP_END(map, oldent, end);
 	}
 	if (oldent->start != start || oldent->end != end ||
 	    oldent->object.uvm_obj != NULL || oldent->aref.ar_amap != NULL) {
@@ -2784,7 +2647,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 			 * fudge is zero)
 			 */
 
-			UVM_MAP_CLIP_START(srcmap, entry, start, NULL);
+			UVM_MAP_CLIP_START(srcmap, entry, start);
 			SAVE_HINT(srcmap, srcmap->hint, entry->prev);
 			fudge = 0;
 		}
@@ -2813,7 +2676,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 
 		/* if we are not doing a quick reference, clip it */
 		if ((flags & UVM_EXTRACT_QREF) == 0)
-			UVM_MAP_CLIP_END(srcmap, entry, end, NULL);
+			UVM_MAP_CLIP_END(srcmap, entry, end);
 
 		/* clear needs_copy (allow chunking) */
 		if (UVM_ET_ISNEEDSCOPY(entry)) {
@@ -3062,17 +2925,14 @@ uvm_map_submap(struct vm_map *map, vaddr_t start, vaddr_t end,
     struct vm_map *submap)
 {
 	struct vm_map_entry *entry;
-	struct uvm_mapent_reservation umr;
 	int error;
-
-	uvm_mapent_reserve(map, &umr, 2, 0);
 
 	vm_map_lock(map);
 	VM_MAP_RANGE_CHECK(map, start, end);
 
 	if (uvm_map_lookup_entry(map, start, &entry)) {
-		UVM_MAP_CLIP_START(map, entry, start, &umr);
-		UVM_MAP_CLIP_END(map, entry, end, &umr);	/* to be safe */
+		UVM_MAP_CLIP_START(map, entry, start);
+		UVM_MAP_CLIP_END(map, entry, end);	/* to be safe */
 	} else {
 		entry = NULL;
 	}
@@ -3091,28 +2951,8 @@ uvm_map_submap(struct vm_map *map, vaddr_t start, vaddr_t end,
 	}
 	vm_map_unlock(map);
 
-	uvm_mapent_unreserve(map, &umr);
-
 	return error;
 }
-
-/*
- * uvm_map_setup_kernel: init in-kernel map
- *
- * => map must not be in service yet.
- */
-
-void
-uvm_map_setup_kernel(struct vm_map_kernel *map,
-    vaddr_t vmin, vaddr_t vmax, int flags)
-{
-
-	uvm_map_setup(&map->vmk_map, vmin, vmax, flags);
-	callback_head_init(&map->vmk_reclaim_callback, IPL_VM);
-	LIST_INIT(&map->vmk_kentry_free);
-	map->vmk_merged_entries = NULL;
-}
-
 
 /*
  * uvm_map_protect: change map protection
@@ -3137,7 +2977,7 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 	vm_map_lock(map);
 	VM_MAP_RANGE_CHECK(map, start, end);
 	if (uvm_map_lookup_entry(map, start, &entry)) {
-		UVM_MAP_CLIP_START(map, entry, start, NULL);
+		UVM_MAP_CLIP_START(map, entry, start);
 	} else {
 		entry = entry->next;
 	}
@@ -3182,7 +3022,7 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 	while ((current != &map->header) && (current->start < end)) {
 		vm_prot_t old_prot;
 
-		UVM_MAP_CLIP_END(map, current, end, NULL);
+		UVM_MAP_CLIP_END(map, current, end);
 		old_prot = current->protection;
 		if (set_max)
 			current->protection =
@@ -3293,12 +3133,12 @@ uvm_map_inherit(struct vm_map *map, vaddr_t start, vaddr_t end,
 	VM_MAP_RANGE_CHECK(map, start, end);
 	if (uvm_map_lookup_entry(map, start, &temp_entry)) {
 		entry = temp_entry;
-		UVM_MAP_CLIP_START(map, entry, start, NULL);
+		UVM_MAP_CLIP_START(map, entry, start);
 	}  else {
 		entry = temp_entry->next;
 	}
 	while ((entry != &map->header) && (entry->start < end)) {
-		UVM_MAP_CLIP_END(map, entry, end, NULL);
+		UVM_MAP_CLIP_END(map, entry, end);
 		entry->inheritance = new_inheritance;
 		entry = entry->next;
 	}
@@ -3325,7 +3165,7 @@ uvm_map_advice(struct vm_map *map, vaddr_t start, vaddr_t end, int new_advice)
 	VM_MAP_RANGE_CHECK(map, start, end);
 	if (uvm_map_lookup_entry(map, start, &temp_entry)) {
 		entry = temp_entry;
-		UVM_MAP_CLIP_START(map, entry, start, NULL);
+		UVM_MAP_CLIP_START(map, entry, start);
 	} else {
 		entry = temp_entry->next;
 	}
@@ -3335,7 +3175,7 @@ uvm_map_advice(struct vm_map *map, vaddr_t start, vaddr_t end, int new_advice)
 	 */
 
 	while ((entry != &map->header) && (entry->start < end)) {
-		UVM_MAP_CLIP_END(map, entry, end, NULL);
+		UVM_MAP_CLIP_END(map, entry, end);
 
 		switch (new_advice) {
 		case MADV_NORMAL:
@@ -3464,7 +3304,7 @@ uvm_map_pageable(struct vm_map *map, vaddr_t start, vaddr_t end,
 	 */
 
 	if (new_pageable) {		/* unwire */
-		UVM_MAP_CLIP_START(map, entry, start, NULL);
+		UVM_MAP_CLIP_START(map, entry, start);
 
 		/*
 		 * unwiring.  first ensure that the range to be unwired is
@@ -3492,7 +3332,7 @@ uvm_map_pageable(struct vm_map *map, vaddr_t start, vaddr_t end,
 
 		entry = start_entry;
 		while ((entry != &map->header) && (entry->start < end)) {
-			UVM_MAP_CLIP_END(map, entry, end, NULL);
+			UVM_MAP_CLIP_END(map, entry, end);
 			if (VM_MAPENT_ISWIRED(entry))
 				uvm_map_entry_unwire(map, entry);
 			entry = entry->next;
@@ -3544,8 +3384,8 @@ uvm_map_pageable(struct vm_map *map, vaddr_t start, vaddr_t end,
 				}
 			}
 		}
-		UVM_MAP_CLIP_START(map, entry, start, NULL);
-		UVM_MAP_CLIP_END(map, entry, end, NULL);
+		UVM_MAP_CLIP_START(map, entry, start);
+		UVM_MAP_CLIP_END(map, entry, end);
 		entry->wired_count++;
 
 		/*
@@ -4216,8 +4056,11 @@ uvmspace_exec(struct lwp *l, vaddr_t start, vaddr_t end)
 	 * no races possible in this case.
 	 */
 	if (ovm == NULL) {
-		p->p_vmspace = uvmspace_alloc(start, end);
+		ovm = uvmspace_alloc(start, end);
+		kpreempt_disable();
+		p->p_vmspace = ovm;
 		pmap_activate(l);
+		kpreempt_enable();
 		return;
 	}
 
@@ -4339,7 +4182,7 @@ uvmspace_free(struct vmspace *vm)
 #endif
 	if (map->nentries) {
 		uvm_unmap_remove(map, vm_map_min(map), vm_map_max(map),
-		    &dead_entries, NULL, 0);
+		    &dead_entries, 0);
 		if (dead_entries != NULL)
 			uvm_unmap_detach(dead_entries, 0);
 	}
@@ -4593,354 +4436,6 @@ uvmspace_fork(struct vmspace *vm1)
 
 
 /*
- * in-kernel map entry allocation.
- */
-
-struct uvm_kmapent_hdr {
-	LIST_ENTRY(uvm_kmapent_hdr) ukh_listq;
-	int ukh_nused;
-	struct vm_map_entry *ukh_freelist;
-	struct vm_map *ukh_map;
-	struct vm_map_entry ukh_entries[0];
-};
-
-#define	UVM_KMAPENT_CHUNK				\
-	((PAGE_SIZE - sizeof(struct uvm_kmapent_hdr))	\
-	/ sizeof(struct vm_map_entry))
-
-#define	UVM_KHDR_FIND(entry)	\
-	((struct uvm_kmapent_hdr *)(((vaddr_t)entry) & ~PAGE_MASK))
-
-
-#ifdef DIAGNOSTIC
-static struct vm_map *
-uvm_kmapent_map(struct vm_map_entry *entry)
-{
-	const struct uvm_kmapent_hdr *ukh;
-
-	ukh = UVM_KHDR_FIND(entry);
-	return ukh->ukh_map;
-}
-#endif
-
-static inline struct vm_map_entry *
-uvm_kmapent_get(struct uvm_kmapent_hdr *ukh)
-{
-	struct vm_map_entry *entry;
-
-	KASSERT(ukh->ukh_nused <= UVM_KMAPENT_CHUNK);
-	KASSERT(ukh->ukh_nused >= 0);
-
-	entry = ukh->ukh_freelist;
-	if (entry) {
-		KASSERT((entry->flags & (UVM_MAP_KERNEL | UVM_MAP_KMAPENT))
-		    == UVM_MAP_KERNEL);
-		ukh->ukh_freelist = entry->next;
-		ukh->ukh_nused++;
-		KASSERT(ukh->ukh_nused <= UVM_KMAPENT_CHUNK);
-	} else {
-		KASSERT(ukh->ukh_nused == UVM_KMAPENT_CHUNK);
-	}
-
-	return entry;
-}
-
-static inline void
-uvm_kmapent_put(struct uvm_kmapent_hdr *ukh, struct vm_map_entry *entry)
-{
-
-	KASSERT((entry->flags & (UVM_MAP_KERNEL | UVM_MAP_KMAPENT))
-	    == UVM_MAP_KERNEL);
-	KASSERT(ukh->ukh_nused <= UVM_KMAPENT_CHUNK);
-	KASSERT(ukh->ukh_nused > 0);
-	KASSERT(ukh->ukh_freelist != NULL ||
-	    ukh->ukh_nused == UVM_KMAPENT_CHUNK);
-	KASSERT(ukh->ukh_freelist == NULL ||
-	    ukh->ukh_nused < UVM_KMAPENT_CHUNK);
-
-	ukh->ukh_nused--;
-	entry->next = ukh->ukh_freelist;
-	ukh->ukh_freelist = entry;
-}
-
-/*
- * uvm_kmapent_alloc: allocate a map entry for in-kernel map
- */
-
-static struct vm_map_entry *
-uvm_kmapent_alloc(struct vm_map *map, int flags)
-{
-	struct vm_page *pg;
-	struct uvm_kmapent_hdr *ukh;
-	struct vm_map_entry *entry;
-#ifndef PMAP_MAP_POOLPAGE
-	struct uvm_map_args args;
-	uvm_flag_t mapflags = UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
-	    UVM_INH_NONE, UVM_ADV_RANDOM, flags | UVM_FLAG_NOMERGE);
-	int error;
-#endif
-	vaddr_t va;
-	int i;
-
-	KDASSERT(UVM_KMAPENT_CHUNK > 2);
-	KDASSERT(kernel_map != NULL);
-	KASSERT(vm_map_pmap(map) == pmap_kernel());
-
-	UVMMAP_EVCNT_INCR(uke_alloc);
-	entry = NULL;
-again:
-	/*
-	 * try to grab an entry from freelist.
-	 */
-	mutex_spin_enter(&uvm_kentry_lock);
-	ukh = LIST_FIRST(&vm_map_to_kernel(map)->vmk_kentry_free);
-	if (ukh) {
-		entry = uvm_kmapent_get(ukh);
-		if (ukh->ukh_nused == UVM_KMAPENT_CHUNK)
-			LIST_REMOVE(ukh, ukh_listq);
-	}
-	mutex_spin_exit(&uvm_kentry_lock);
-
-	if (entry)
-		return entry;
-
-	/*
-	 * there's no free entry for this vm_map.
-	 * now we need to allocate some vm_map_entry.
-	 * for simplicity, always allocate one page chunk of them at once.
-	 */
-
-#ifdef PMAP_ALLOC_POOLPAGE
-	pg = PMAP_ALLOC_POOLPAGE(
-	    (flags & UVM_KMF_NOWAIT) != 0 ? UVM_PGA_USERESERVE : 0);
-#else
-	pg = uvm_pagealloc(NULL, 0, NULL,
-	    (flags & UVM_KMF_NOWAIT) != 0 ? UVM_PGA_USERESERVE : 0);
-#endif
-	if (__predict_false(pg == NULL)) {
-		if (flags & UVM_FLAG_NOWAIT)
-			return NULL;
-		uvm_wait("kme_alloc");
-		goto again;
-	}
-
-#ifdef PMAP_MAP_POOLPAGE
-	va = PMAP_MAP_POOLPAGE(VM_PAGE_TO_PHYS(pg));
-	KASSERT(va != 0);
-#else
-	error = uvm_map_prepare(map, 0, PAGE_SIZE, NULL, UVM_UNKNOWN_OFFSET,
-	    VM_PGCOLOR_BUCKET(pg), mapflags | UVM_FLAG_COLORMATCH, &args);
-	if (error) {
-		uvm_pagefree(pg);
-		return NULL;
-	}
-
-	va = args.uma_start;
-
-	pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
-	    VM_PROT_READ|VM_PROT_WRITE, PMAP_KMPAGE);
-	pmap_update(vm_map_pmap(map));
-
-#endif
-	ukh = (void *)va;
-
-	/*
-	 * use the last entry for ukh itsself.
-	 */
-
-	i = UVM_KMAPENT_CHUNK - 1;
-#ifndef PMAP_MAP_POOLPAGE
-	entry = &ukh->ukh_entries[i--];
-	entry->flags = UVM_MAP_KERNEL | UVM_MAP_KMAPENT;
-	error = uvm_map_enter(map, &args, entry);
-	KASSERT(error == 0);
-#endif
-
-	ukh->ukh_nused = UVM_KMAPENT_CHUNK;
-	ukh->ukh_map = map;
-	ukh->ukh_freelist = NULL;
-	for (; i >= 1; i--) {
-		struct vm_map_entry *xentry = &ukh->ukh_entries[i];
-
-		xentry->flags = UVM_MAP_KERNEL;
-		uvm_kmapent_put(ukh, xentry);
-	}
-#ifdef PMAP_MAP_POOLPAGE
-	KASSERT(ukh->ukh_nused == 1);
-#else
-	KASSERT(ukh->ukh_nused == 2);
-#endif
-
-	mutex_spin_enter(&uvm_kentry_lock);
-	LIST_INSERT_HEAD(&vm_map_to_kernel(map)->vmk_kentry_free,
-	    ukh, ukh_listq);
-	mutex_spin_exit(&uvm_kentry_lock);
-
-	/*
-	 * return first entry.
-	 */
-
-	entry = &ukh->ukh_entries[0];
-	entry->flags = UVM_MAP_KERNEL;
-	UVMMAP_EVCNT_INCR(ukh_alloc);
-
-	return entry;
-}
-
-/*
- * uvm_mapent_free: free map entry for in-kernel map
- */
-
-static void
-uvm_kmapent_free(struct vm_map_entry *entry)
-{
-	struct uvm_kmapent_hdr *ukh;
-	struct vm_page *pg;
-	struct vm_map *map;
-#ifndef PMAP_UNMAP_POOLPAGE
-	struct pmap *pmap;
-	struct vm_map_entry *deadentry;
-#endif
-	vaddr_t va;
-	paddr_t pa;
-
-	UVMMAP_EVCNT_INCR(uke_free);
-	ukh = UVM_KHDR_FIND(entry);
-	map = ukh->ukh_map;
-
-	mutex_spin_enter(&uvm_kentry_lock);
-	uvm_kmapent_put(ukh, entry);
-#ifdef PMAP_UNMAP_POOLPAGE
-	if (ukh->ukh_nused > 0) {
-#else
-	if (ukh->ukh_nused > 1) {
-#endif
-		if (ukh->ukh_nused == UVM_KMAPENT_CHUNK - 1)
-			LIST_INSERT_HEAD(
-			    &vm_map_to_kernel(map)->vmk_kentry_free,
-			    ukh, ukh_listq);
-		mutex_spin_exit(&uvm_kentry_lock);
-		return;
-	}
-
-	/*
-	 * now we can free this ukh.
-	 *
-	 * however, keep an empty ukh to avoid ping-pong.
-	 */
-
-	if (LIST_FIRST(&vm_map_to_kernel(map)->vmk_kentry_free) == ukh &&
-	    LIST_NEXT(ukh, ukh_listq) == NULL) {
-		mutex_spin_exit(&uvm_kentry_lock);
-		return;
-	}
-	LIST_REMOVE(ukh, ukh_listq);
-	mutex_spin_exit(&uvm_kentry_lock);
-
-	va = (vaddr_t)ukh;
-
-#ifdef PMAP_UNMAP_POOLPAGE
-	KASSERT(ukh->ukh_nused == 0);
-	pa = PMAP_UNMAP_POOLPAGE(va);
-	KASSERT(pa != 0);
-#else
-	KASSERT(ukh->ukh_nused == 1);
-
-	/*
-	 * remove map entry for ukh itsself.
-	 */
-
-	KASSERT((va & PAGE_MASK) == 0);
-	vm_map_lock(map);
-	uvm_unmap_remove(map, va, va + PAGE_SIZE, &deadentry, NULL, 0);
-	KASSERT(deadentry->flags & UVM_MAP_KERNEL);
-	KASSERT(deadentry->flags & UVM_MAP_KMAPENT);
-	KASSERT(deadentry->next == NULL);
-	KASSERT(deadentry == &ukh->ukh_entries[UVM_KMAPENT_CHUNK - 1]);
-
-	/*
-	 * unmap the page from pmap and free it.
-	 */
-
-	pmap = vm_map_pmap(map);
-	KASSERT(pmap == pmap_kernel());
-	if (!pmap_extract(pmap, va, &pa))
-		panic("%s: no mapping", __func__);
-	pmap_kremove(va, PAGE_SIZE);
-	pmap_update(vm_map_pmap(map));
-	vm_map_unlock(map);
-#endif /* !PMAP_UNMAP_POOLPAGE */
-	pg = PHYS_TO_VM_PAGE(pa);
-	uvm_pagefree(pg);
-	UVMMAP_EVCNT_INCR(ukh_free);
-}
-
-static vsize_t
-uvm_kmapent_overhead(vsize_t size)
-{
-
-	/*
-	 * - the max number of unmerged entries is howmany(size, PAGE_SIZE)
-	 *   as the min allocation unit is PAGE_SIZE.
-	 * - UVM_KMAPENT_CHUNK "kmapent"s are allocated from a page.
-	 *   one of them are used to map the page itself.
-	 */
-
-	return howmany(howmany(size, PAGE_SIZE), (UVM_KMAPENT_CHUNK - 1)) *
-	    PAGE_SIZE;
-}
-
-/*
- * map entry reservation
- */
-
-/*
- * uvm_mapent_reserve: reserve map entries for clipping before locking map.
- *
- * => needed when unmapping entries allocated without UVM_FLAG_QUANTUM.
- * => caller shouldn't hold map locked.
- */
-int
-uvm_mapent_reserve(struct vm_map *map, struct uvm_mapent_reservation *umr,
-    int nentries, int flags)
-{
-
-	umr->umr_nentries = 0;
-
-	if ((flags & UVM_FLAG_QUANTUM) != 0)
-		return 0;
-
-	if (!VM_MAP_USE_KMAPENT(map))
-		return 0;
-
-	while (nentries--) {
-		struct vm_map_entry *ent;
-		ent = uvm_kmapent_alloc(map, flags);
-		if (!ent) {
-			uvm_mapent_unreserve(map, umr);
-			return ENOMEM;
-		}
-		UMR_PUTENTRY(umr, ent);
-	}
-
-	return 0;
-}
-
-/*
- * uvm_mapent_unreserve:
- *
- * => caller shouldn't hold map locked.
- * => never fail or sleep.
- */
-void
-uvm_mapent_unreserve(struct vm_map *map, struct uvm_mapent_reservation *umr)
-{
-
-	while (!UMR_EMPTY(umr))
-		uvm_kmapent_free(UMR_GETENTRY(umr));
-}
-
-/*
  * uvm_mapent_trymerge: try to merge an entry with its neighbors.
  *
  * => called with map locked.
@@ -4958,9 +4453,6 @@ uvm_mapent_trymerge(struct vm_map *map, struct vm_map_entry *entry, int flags)
 	bool copying;
 	int newetype;
 
-	if (VM_MAP_USE_KMAPENT(map)) {
-		return 0;
-	}
 	if (entry->aref.ar_amap != NULL) {
 		return 0;
 	}
@@ -5007,7 +4499,7 @@ uvm_mapent_trymerge(struct vm_map *map, struct vm_map_entry *entry, int flags)
 				entry->etype &= ~UVM_ET_NEEDSCOPY;
 			}
 			uvm_map_check(map, "trymerge forwardmerge");
-			uvm_mapent_free_merged(map, next);
+			uvm_mapent_free(next);
 			merged++;
 		}
 	}
@@ -5048,27 +4540,12 @@ uvm_mapent_trymerge(struct vm_map *map, struct vm_map_entry *entry, int flags)
 				entry->etype &= ~UVM_ET_NEEDSCOPY;
 			}
 			uvm_map_check(map, "trymerge backmerge");
-			uvm_mapent_free_merged(map, prev);
+			uvm_mapent_free(prev);
 			merged++;
 		}
 	}
 
 	return merged;
-}
-
-/*
- * uvm_map_create: create map
- */
-
-struct vm_map *
-uvm_map_create(pmap_t pmap, vaddr_t vmin, vaddr_t vmax, int flags)
-{
-	struct vm_map *result;
-
-	result = malloc(sizeof(struct vm_map), M_VMMAP, M_WAITOK);
-	uvm_map_setup(result, vmin, vmax, flags);
-	result->pmap = pmap;
-	return(result);
 }
 
 /*
@@ -5124,7 +4601,6 @@ void
 uvm_unmap1(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 {
 	struct vm_map_entry *dead_entries;
-	struct uvm_mapent_reservation umr;
 	UVMHIST_FUNC("uvm_unmap"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, "  (map=0x%x, start=0x%x, end=0x%x)",
@@ -5136,11 +4612,9 @@ uvm_unmap1(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 	 * work now done by helper functions.   wipe the pmap's and then
 	 * detach from the dead entries...
 	 */
-	uvm_mapent_reserve(map, &umr, 2, flags);
 	vm_map_lock(map);
-	uvm_unmap_remove(map, start, end, &dead_entries, &umr, flags);
+	uvm_unmap_remove(map, start, end, &dead_entries, flags);
 	vm_map_unlock(map);
-	uvm_mapent_unreserve(map, &umr);
 
 	if (dead_entries != NULL)
 		uvm_unmap_detach(dead_entries, 0);
@@ -5161,15 +4635,6 @@ uvm_map_reference(struct vm_map *map)
 	mutex_enter(&map->misc_lock);
 	map->ref_count++;
 	mutex_exit(&map->misc_lock);
-}
-
-struct vm_map_kernel *
-vm_map_to_kernel(struct vm_map *map)
-{
-
-	KASSERT(VM_MAP_IS_KERNEL(map));
-
-	return (struct vm_map_kernel *)map;
 }
 
 bool

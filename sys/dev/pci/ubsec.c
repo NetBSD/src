@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.26 2011/11/19 22:51:24 tls Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.26.2.1 2012/02/18 07:34:53 mrg Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.26 2011/11/19 22:51:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.26.2.1 2012/02/18 07:34:53 mrg Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -313,9 +313,7 @@ ubsec_attach(device_t parent, device_t self, void *aux)
 		panic("ubsec_attach: impossible");
 	}
 
-	aprint_naive(": Crypto processor\n");
-	aprint_normal(": %s, rev. %d\n", up->ubsec_name,
-	    PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo_fancy(pa, "Crypto processor", up->ubsec_name, 1);
 
 	SIMPLEQ_INIT(&sc->sc_queue);
 	SIMPLEQ_INIT(&sc->sc_qchip);

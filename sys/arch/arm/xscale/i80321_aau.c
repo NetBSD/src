@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_aau.c,v 1.14 2009/01/05 04:39:32 briggs Exp $	*/
+/*	$NetBSD: i80321_aau.c,v 1.14.18.1 2012/02/18 07:31:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_aau.c,v 1.14 2009/01/05 04:39:32 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_aau.c,v 1.14.18.1 2012/02/18 07:31:33 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -139,7 +139,7 @@ static const struct dmover_algdesc aau321_algdescs[] = {
 #define	AAU321_ALGDESC_COUNT	__arraycount(aau321_algdescs)
 
 static int
-aau321_match(struct device *parent, struct cfdata *match, void *aux)
+aau321_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct iopxs_attach_args *ia = aux;
 
@@ -150,22 +150,24 @@ aau321_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-aau321_attach(struct device *parent, struct device *self, void *aux)
+aau321_attach(device_t parent, device_t self, void *aux)
 {
-	struct aau321_softc *sc321 = (void *) self;
+	struct aau321_softc *sc321 = device_private(self);
 	struct iopaau_softc *sc = &sc321->sc_iopaau;
 	struct iopxs_attach_args *ia = aux;
+	const char *xname = device_xname(self);
 	int error;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
 
+	sc->sc_dev = self;
 	sc->sc_st = ia->ia_st;
 	error = bus_space_subregion(sc->sc_st, ia->ia_sh,
 	    ia->ia_offset, ia->ia_size, &sc->sc_sh);
 	if (error) {
 		aprint_error("%s: unable to subregion registers, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		    xname, error);
 		return;
 	}
 
@@ -175,7 +177,7 @@ aau321_attach(struct device *parent, struct device *self, void *aux)
 	    iopaau_intr, sc);
 	if (sc321->sc_error_ih == NULL) {
 		aprint_error("%s: unable to register error interrupt handler\n",
-		    sc->sc_dev.dv_xname);
+		    xname);
 		return;
 	}
 
@@ -183,7 +185,7 @@ aau321_attach(struct device *parent, struct device *self, void *aux)
 	    iopaau_intr, sc);
 	if (sc321->sc_eoc_ih == NULL) {
 		aprint_error("%s: unable to register EOC interrupt handler\n",
-		    sc->sc_dev.dv_xname);
+		    xname);
 		return;
 	}
 
@@ -191,11 +193,11 @@ aau321_attach(struct device *parent, struct device *self, void *aux)
 	    iopaau_intr, sc);
 	if (sc321->sc_eoc_ih == NULL) {
 		aprint_error("%s: unable to register EOT interrupt handler\n",
-		    sc->sc_dev.dv_xname);
+		    xname);
 		return;
 	}
 
-	sc->sc_dmb.dmb_name = sc->sc_dev.dv_xname;
+	sc->sc_dmb.dmb_name = xname;
 	sc->sc_dmb.dmb_speed = 1638400;			/* XXX */
 	sc->sc_dmb.dmb_cookie = sc;
 	sc->sc_dmb.dmb_algdescs = aau321_algdescs;
@@ -217,5 +219,5 @@ aau321_attach(struct device *parent, struct device *self, void *aux)
 	aau321_func_xor_5_8.af_desc_cache = iopaau_desc_8_cache;
 }
 
-CFATTACH_DECL(iopaau, sizeof(struct aau321_softc),
+CFATTACH_DECL_NEW(iopaau, sizeof(struct aau321_softc),
     aau321_match, aau321_attach, NULL, NULL);

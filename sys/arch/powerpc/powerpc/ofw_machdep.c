@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.18 2008/03/27 18:01:08 phx Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.18.42.1 2012/02/18 07:33:00 mrg Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.18 2008/03/27 18:01:08 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.18.42.1 2012/02/18 07:33:00 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.18 2008/03/27 18:01:08 phx Exp $")
 #include <sys/disklabel.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
-#include <sys/malloc.h>
 #include <sys/stat.h>
 #include <sys/systm.h>
 

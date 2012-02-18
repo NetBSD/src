@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.86 2011/03/29 07:48:13 mbalmer Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.86.8.1 2012/02/18 07:35:10 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.86 2011/03/29 07:48:13 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.86.8.1 2012/02/18 07:35:10 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

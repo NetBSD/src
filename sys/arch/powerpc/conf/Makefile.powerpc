@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.48 2011/06/30 18:17:11 matt Exp $
+#	$NetBSD: Makefile.powerpc,v 1.48.6.1 2012/02/18 07:32:52 mrg Exp $
 #
 # Makefile for NetBSD
 #
@@ -115,6 +115,10 @@ SYSTEM_LD_TAIL_EXTRA+=; \
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.bin.gz@}
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.ub@}
 .endif
+.endif
+
+.if !empty(SYSTEM_LD_TAIL_EXTRA_EXTRA)
+SYSTEM_LD_TAIL_EXTRA+= ${SYSTEM_LD_TAIL_EXTRA_EXTRA}
 .endif
 
 ##

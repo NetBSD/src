@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.437 2011/11/19 22:51:25 tls Exp $	*/
+/*	$NetBSD: init_main.c,v 1.437.2.1 2012/02/18 07:35:26 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.437 2011/11/19 22:51:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.437.2.1 2012/02/18 07:35:26 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -116,7 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.437 2011/11/19 22:51:25 tls Exp $");
 
 #include "drvctl.h"
 #include "ksyms.h"
-#include "rnd.h"
+
 #include "sysmon_envsys.h"
 #include "sysmon_power.h"
 #include "sysmon_taskq.h"
@@ -211,6 +211,8 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.437 2011/11/19 22:51:25 tls Exp $");
 #include <sys/pax.h>
 #endif /* PAX_MPROTECT || PAX_SEGVGUARD || PAX_ASLR */
 
+#include <secmodel/secmodel.h>
+
 #include <ufs/ufs/quota.h>
 
 #include <miscfs/genfs/genfs.h>
@@ -302,7 +304,7 @@ main(void)
 	kernel_lock_init();
 	once_init();
 
-	mutex_init(&cpu_lock, MUTEX_DEFAULT, IPL_NONE);
+	mi_cpu_init();
 	kernconfig_lock_init();
 	kthread_sysinit();
 
@@ -345,6 +347,8 @@ main(void)
 
 	/* Initialize the kernel authorization subsystem. */
 	kauth_init();
+
+	secmodel_init();
 
 	spec_init();
 
@@ -993,7 +997,7 @@ start_init(void *arg)
 		/*
 		 * Move out the arg pointers.
 		 */
-		ucp = (void *)STACK_ALIGN(ucp, ALIGNBYTES);
+		ucp = (void *)STACK_ALIGN(ucp, STACK_ALIGNBYTES);
 		uap = (char **)STACK_ALLOC(ucp, sizeof(char *) * 3);
 		SCARG(&args, path) = arg0;
 		SCARG(&args, argp) = uap;

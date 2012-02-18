@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.66 2011/11/23 19:39:11 hannken Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.66.2.1 2012/02/18 07:35:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.66 2011/11/23 19:39:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.66.2.1 2012/02/18 07:35:25 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,9 +101,6 @@ MODULE(MODULE_CLASS_VFS, union, NULL);
 VFS_PROTOS(union);
 
 static struct sysctllog *union_sysctl_log;
-static const char *warn_user =
-    "WARNING: the union file system is experimental\n"
-    "WARNING: it can cause crashes and file system corruption\n";
 
 /*
  * Mount union filesystem
@@ -149,11 +146,6 @@ union_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		 */
 		error = EOPNOTSUPP;
 		goto bad;
-	}
-
-	if (warn_user != NULL) {
-		printf("%s", warn_user);
-		warn_user = NULL;
 	}
 
 	lowerrootvp = mp->mnt_vnodecovered;

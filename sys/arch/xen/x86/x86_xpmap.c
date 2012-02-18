@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.36 2011/11/06 15:18:19 cherry Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.36.4.1 2012/02/18 07:33:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.36 2011/11/06 15:18:19 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.36.4.1 2012/02/18 07:33:45 mrg Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -77,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.36 2011/11/06 15:18:19 cherry Exp $"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/simplelock.h>
+#include <sys/mutex.h>
 
 #include <uvm/uvm.h>
 
@@ -117,6 +117,7 @@ volatile shared_info_t *HYPERVISOR_shared_info;
 /* Xen requires the start_info struct to be page aligned */
 union start_info_union start_info_union __aligned(PAGE_SIZE);
 unsigned long *xpmap_phys_to_machine_mapping;
+kmutex_t pte_lock;
 
 void xen_failsafe_handler(void);
 
@@ -184,8 +185,12 @@ retry:
 	ret = HYPERVISOR_mmu_update_self(xpq_queue, xpq_idx, &ok);
 
 	if (xpq_idx != 0 && ret < 0) {
-		printf("xpq_flush_queue: %d entries (%d successful)\n",
-		    xpq_idx, ok);
+		struct cpu_info *ci;
+		CPU_INFO_ITERATOR cii;
+
+		printf("xpq_flush_queue: %d entries (%d successful) on "
+		    "cpu%d (%ld)\n",
+		    xpq_idx, ok, xpq_cpu()->ci_index, xpq_cpu()->ci_cpuid);
 
 		if (ok != 0) {
 			xpq_queue += ok;
@@ -194,9 +199,23 @@ retry:
 			goto retry;
 		}
 
-		for (i = 0; i < xpq_idx; i++)
-			printf("0x%016" PRIx64 ": 0x%016" PRIx64 "\n",
-			   xpq_queue[i].ptr, xpq_queue[i].val);
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			xpq_queue = xpq_queue_array[ci->ci_cpuid];
+			xpq_idx = xpq_idx_array[ci->ci_cpuid];
+			printf("cpu%d (%ld):\n", ci->ci_index, ci->ci_cpuid);
+			for (i = 0; i < xpq_idx; i++) {
+				printf("  0x%016" PRIx64 ": 0x%016" PRIx64 "\n",
+				   xpq_queue[i].ptr, xpq_queue[i].val);
+			}
+#ifdef __x86_64__
+			for (i = 0; i < PDIR_SLOT_PTE; i++) {
+				if (ci->ci_kpm_pdir[i] == 0)
+					continue;
+				printf(" kpm_pdir[%d]: 0x%" PRIx64 "\n",
+				    i, ci->ci_kpm_pdir[i]);
+			}
+#endif
+		}
 		panic("HYPERVISOR_mmu_update failed, ret: %d\n", ret);
 	}
 	xpq_idx_array[xpq_cpu()->ci_cpuid] = 0;

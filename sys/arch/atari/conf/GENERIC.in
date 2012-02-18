@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.95 2011/11/22 21:25:00 tls Exp $
+#	$NetBSD: GENERIC.in,v 1.95.2.1 2012/02/18 07:31:37 mrg Exp $
 #
 # Generic atari
 #
@@ -14,10 +14,6 @@ include "arch/atari/conf/std.hades"
 #elif defined (MILAN_KERNEL)
 include "arch/atari/conf/std.milan"
 #endif /* TT030_KERNEL / FALCON_KERNEL / HADES_KERNEL / MILAN_KERNEL */
-
-#if defined(SMALL030_KERNEL)
-makeoptions    COPTS="-Os"
-#endif
 
 #if !defined(SMALL030_KERNEL)
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
@@ -132,7 +128,7 @@ file-system	TMPFS		# Efficient memory file-system
 #endif /* !SMALL030_KERNEL */
 
 # File system options
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #if !defined(SMALL030_KERNEL)
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas

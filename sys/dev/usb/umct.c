@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.30 2010/11/03 22:34:24 dyoung Exp $	*/
+/*	$NetBSD: umct.c,v 1.30.12.1 2012/02/18 07:35:10 mrg Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.30 2010/11/03 22:34:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.30.12.1 2012/02/18 07:35:10 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

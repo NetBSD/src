@@ -1,4 +1,4 @@
-/* $NetBSD: bwx.h,v 1.6 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: bwx.h,v 1.6.38.1 2012/02/18 07:30:56 mrg Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,10 +41,10 @@
  * See "Alpha Architecture Handbook, Version 3", DEC order number EC-QD2KB-TE.
  */
 
-static __inline u_int8_t
-alpha_ldbu(volatile u_int8_t *a0)
+static __inline uint8_t
+alpha_ldbu(volatile uint8_t *a0)
 {
-	u_int8_t v0;
+	uint8_t v0;
 
 	__asm volatile("ldbu %0, %1"
 		: "=r" (v0)
@@ -53,10 +53,10 @@ alpha_ldbu(volatile u_int8_t *a0)
 	return (v0);
 }
 
-static __inline u_int16_t
-alpha_ldwu(volatile u_int16_t *a0)
+static __inline uint16_t
+alpha_ldwu(volatile uint16_t *a0)
 {
-	u_int16_t v0;
+	uint16_t v0;
 
 	__asm volatile("ldwu %0, %1"
 		: "=r" (v0)
@@ -66,7 +66,7 @@ alpha_ldwu(volatile u_int16_t *a0)
 }
 
 static __inline void
-alpha_stb(volatile u_int8_t *a0, u_int8_t a1)
+alpha_stb(volatile uint8_t *a0, uint8_t a1)
 {
 
 	__asm volatile("stb %1, %0"
@@ -75,7 +75,7 @@ alpha_stb(volatile u_int8_t *a0, u_int8_t a1)
 }
 
 static __inline void
-alpha_stw(volatile u_int16_t *a0, u_int16_t a1)
+alpha_stw(volatile uint16_t *a0, uint16_t a1)
 {
 
 	__asm volatile("stw %1, %0"
@@ -83,10 +83,10 @@ alpha_stw(volatile u_int16_t *a0, u_int16_t a1)
 		: "r" (a1));
 }
 
-static __inline u_int8_t
-alpha_sextb(u_int8_t a0)
+static __inline uint8_t
+alpha_sextb(uint8_t a0)
 {
-	u_int8_t v0;
+	uint8_t v0;
 
 	__asm volatile("sextb %1, %0"
 		: "=r" (v0)
@@ -95,10 +95,10 @@ alpha_sextb(u_int8_t a0)
 	return (v0);
 }
 
-static __inline u_int16_t
-alpha_sextw(u_int16_t a0)
+static __inline uint16_t
+alpha_sextw(uint16_t a0)
 {
-	u_int16_t v0;
+	uint16_t v0;
 
 	__asm volatile("sextw %1, %0"
 		: "=r" (v0)

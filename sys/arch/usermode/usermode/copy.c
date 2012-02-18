@@ -1,4 +1,4 @@
-/* $NetBSD: copy.c,v 1.5 2011/08/27 17:57:14 reinoud Exp $ */
+/* $NetBSD: copy.c,v 1.5.6.1 2012/02/18 07:33:25 mrg Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,10 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copy.c,v 1.5 2011/08/27 17:57:14 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copy.c,v 1.5.6.1 2012/02/18 07:33:25 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
+#include <machine/thunk.h>
 
 /* XXX until strnlen(3) has been added to the kernel, we *could* panic on it */
 #define strnlen(str, maxlen) min(strlen((str)), maxlen)
@@ -38,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: copy.c,v 1.5 2011/08/27 17:57:14 reinoud Exp $");
 int
 copyin(const void *uaddr, void *kaddr, size_t len)
 {
-	aprint_debug("copyin uaddr %p, kaddr %p, len %d\n", uaddr, kaddr, (int) len);
+//	thunk_printf("copyin uaddr %p, kaddr %p, len %d\n", uaddr, kaddr, (int) len);
 	memcpy(kaddr, uaddr, len);
 	return 0;
 }
@@ -46,7 +47,7 @@ copyin(const void *uaddr, void *kaddr, size_t len)
 int
 copyout(const void *kaddr, void *uaddr, size_t len)
 {
-	aprint_debug("copyout kaddr %p, uaddr %p, len %d\n", kaddr, uaddr, (int) len);
+//	thunk_printf("copyout kaddr %p, uaddr %p, len %d\n", kaddr, uaddr, (int) len);
 	memcpy(uaddr, kaddr, len);
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.79 2011/02/23 08:27:17 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.79.8.1 2012/02/18 07:32:07 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.79 2011/02/23 08:27:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.79.8.1 2012/02/18 07:32:07 mrg Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -1359,7 +1359,9 @@ mbattach(device_t parent, device_t self, void *aux)
 	struct mainbus_softc *sc = device_private(self);
 	struct confargs nca;
 	bus_space_handle_t ioh;
+#if NLCD > 0
 	int err;
+#endif
 
 	sc->sc_dv = self;
 	mb_attached = 1;

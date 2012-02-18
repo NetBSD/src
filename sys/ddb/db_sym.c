@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.61 2011/04/11 04:26:18 mrg Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.61.8.1 2012/02/18 07:34:03 mrg Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.61 2011/04/11 04:26:18 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.61.8.1 2012/02/18 07:34:03 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddbparam.h"
@@ -300,12 +300,7 @@ db_symbol_values(db_sym_t sym, const char **namep, db_expr_t *valuep)
  * bogus symbol associations, e.g. 3 might get some absolute
  * value like _INCLUDE_VERSION or something, therefore we do
  * not accept symbols whose value is zero (and use plain hex).
- * Also, avoid printing as "end+0x????" which is useless.
- * The variable db_lastsym is used instead of "end" in case we
- * add support for symbols in loadable driver modules.
  */
-extern char end[];
-unsigned long	db_lastsym = (unsigned long)end;
 unsigned int	db_maxoff = 0x100000;
 
 void
@@ -325,29 +320,24 @@ db_symstr(char *buf, size_t buflen, db_expr_t off, db_strategy_t strategy)
 		int 		linenum;
 		db_sym_t	cursym;
 
-		if ((unsigned long) off <= db_lastsym) {
-			cursym = db_search_symbol(off, strategy, &d);
-			db_symbol_values(cursym, &name, &value);
-			if (name != NULL &&
-			    ((unsigned int) d < db_maxoff) &&
-			    value != 0) {
-				strlcpy(buf, name, buflen);
-				if (d) {
-					strlcat(buf, "+", buflen);
-					db_format_radix(buf+strlen(buf),
-					    24, d, true);
-				}
-				if (strategy == DB_STGY_PROC) {
-					if ((*db_symformat->sym_line_at_pc)
-					    (NULL, cursym, &filename,
-					    &linenum, off))
-						snprintf(buf + strlen(buf),
-						    buflen - strlen(buf),
-						    " [%s:%d]",
-						    filename, linenum);
-				}
-				return;
+		cursym = db_search_symbol(off, strategy, &d);
+		db_symbol_values(cursym, &name, &value);
+		if (name != NULL && ((unsigned int)d < db_maxoff) &&
+		    value != 0) {
+			strlcpy(buf, name, buflen);
+			if (d) {
+				strlcat(buf, "+", buflen);
+				db_format_radix(buf + strlen(buf), 24, d, true);
 			}
+			if (strategy == DB_STGY_PROC) {
+				if ((*db_symformat->sym_line_at_pc)
+				    (NULL, cursym, &filename, &linenum, off)) {
+					size_t len = strlen(buf);
+					snprintf(buf + len, buflen - len,
+					    " [%s:%d]", filename, linenum);
+				}
+			}
+			return;
 		}
 		strlcpy(buf, db_num_to_str(off), buflen);
 		return;
@@ -402,30 +392,25 @@ db_printsym(db_expr_t off, db_strategy_t strategy,
 		int 		linenum;
 		db_sym_t	cursym;
 
-		if ((unsigned long) off <= db_lastsym) {
-			cursym = db_search_symbol(off, strategy, &d);
-			db_symbol_values(cursym, &name, &value);
-			if (name != NULL &&
-			    ((unsigned int) d < db_maxoff) &&
-			    value != 0) {
-				(*pr)("%s", name);
-				if (d) {
-					char tbuf[24];
+		cursym = db_search_symbol(off, strategy, &d);
+		db_symbol_values(cursym, &name, &value);
+		if (name != NULL && ((unsigned int)d < db_maxoff) &&
+		    value != 0) {
+			(*pr)("%s", name);
+			if (d) {
+				char tbuf[24];
 
-					db_format_radix(tbuf, 24, d, true);
-					(*pr)("+%s", tbuf);
-				}
-				if (strategy == DB_STGY_PROC) {
-					if ((*db_symformat->sym_line_at_pc)
-					    (NULL, cursym, &filename,
-					    &linenum, off))
-						(*pr)(" [%s:%d]",
-						    filename, linenum);
-				}
-				return;
+				db_format_radix(tbuf, 24, d, true);
+				(*pr)("+%s", tbuf);
 			}
+			if (strategy == DB_STGY_PROC) {
+				if ((*db_symformat->sym_line_at_pc)
+				    (NULL, cursym, &filename, &linenum, off))
+					(*pr)(" [%s:%d]", filename, linenum);
+			}
+			return;
 		}
-		(*pr)(db_num_to_str(off));
+		(*pr)("%s", db_num_to_str(off));
 		return;
 	}
 #endif
@@ -452,7 +437,7 @@ db_printsym(db_expr_t off, db_strategy_t strategy,
 		}
 	}
 #endif
-	(*pr)(db_num_to_str(off));
+	(*pr)("%s", db_num_to_str(off));
 	return;
 }
 

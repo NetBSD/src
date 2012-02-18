@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.51 2011/05/17 17:34:54 dyoung Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.51.8.1 2012/02/18 07:34:50 mrg Exp $	*/
 
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.51 2011/05/17 17:34:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.51.8.1 2012/02/18 07:34:50 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -120,28 +120,27 @@ pciide_common_attach(struct pciide_softc *sc, const struct pci_attach_args *pa, 
 #if NATA_DMA
 	pcireg_t csr;
 #endif
-	char devinfo[256];
-	const char *displaydev;
-
-	aprint_naive(": disk controller\n");
+	const char *displaydev = NULL;
+	int dontprint = 0;
 
 	sc->sc_pci_id = pa->pa_id;
 	if (pp == NULL) {
 		/* should only happen for generic pciide devices */
 		sc->sc_pp = &default_product_desc;
-		pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-		displaydev = devinfo;
 	} else {
 		sc->sc_pp = pp;
-		displaydev = sc->sc_pp->ide_name;
+		/* if ide_name == NULL, printf is done in chip-specific map */
+		if (pp->ide_name)
+			displaydev = pp->ide_name;
+		else
+			dontprint = 1;
 	}
 
-	/* if displaydev == NULL, printf is done in chip-specific map */
-	if (displaydev)
-		aprint_normal(": %s (rev. 0x%02x)\n", displaydev,
-		    PCI_REVISION(pa->pa_class));
-	else
-		aprint_normal("\n");
+	if (dontprint) {
+		aprint_naive("disk controller\n");
+		aprint_normal("\n"); /* ??? */
+	} else
+		pci_aprint_devinfo_fancy(pa, "disk controller", displaydev, 1);
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;

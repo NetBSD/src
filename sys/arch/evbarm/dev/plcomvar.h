@@ -1,4 +1,4 @@
-/*	$NetBSD: plcomvar.h,v 1.7 2011/11/19 22:51:19 tls Exp $	*/
+/*	$NetBSD: plcomvar.h,v 1.7.2.1 2012/02/18 07:31:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
 #include "opt_plcom.h"
 #include "opt_kgdb.h"
 
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 #include <sys/rnd.h>
 #endif
 
@@ -133,7 +133,7 @@ struct plcom_softc {
 	pps_info_t ppsinfo;
 	pps_params_t ppsparam;
 
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 	krndsource_t  rnd_source;
 #endif
 	struct simplelock	sc_lock;

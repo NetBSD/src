@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.9 2011/06/20 20:24:28 matt Exp $ */
+/*	$NetBSD: intr.h,v 1.9.6.1 2012/02/18 07:32:54 mrg Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -28,7 +28,7 @@
 
 #ifndef _LOCORE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.9 2011/06/20 20:24:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.9.6.1 2012/02/18 07:32:54 mrg Exp $");
 #endif
 
 #ifndef POWERPC_INTR_MACHDEP_H
@@ -38,21 +38,26 @@ __KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.9 2011/06/20 20:24:28 matt Exp $");
 
 
 /* Interrupt priority `levels'. */
-#define	IPL_NONE	0	/* nothing */
-#define	IPL_SOFTCLOCK	1	/* timeouts */
-#define	IPL_SOFTBIO	2	/* block I/O */
-#define	IPL_SOFTNET	3	/* protocol stacks */
-#define	IPL_SOFTSERIAL	4	/* serial */
-#define	IPL_VM		5	/* memory allocation */
-#define	IPL_SCHED	6
-#define	IPL_HIGH	7	/* everything */
-#define	NIPL		8
+#define	IPL_NONE		0	/* nothing */
+#define	IPL_SOFTCLOCK		1	/* timeouts */
+#define	IPL_SOFTBIO		2	/* block I/O */
+#define	IPL_SOFTNET		3	/* protocol stacks */
+#define	IPL_SOFTSERIAL		4	/* serial */
+#define	IPL_VM			5	/* memory allocation */
+#define	IPL_SCHED		6
+#define	IPL_HIGH		7	/* everything */
+#define	NIPL			8
 
 /* Interrupt sharing types. */
-#define	IST_NONE	0	/* none */
-#define	IST_PULSE	1	/* pulsed */
-#define	IST_EDGE	2	/* edge-triggered */
-#define	IST_LEVEL	3	/* level-triggered */
+#define	IST_NONE		0	/* none */
+#define	IST_PULSE		1	/* pulsed */
+#define	IST_EDGE		2	/* falling edge triggered */
+#define	IST_LEVEL		3	/* low level triggered */
+
+#define IST_EDGE_FALLING	IST_EDGE
+#define IST_EDGE_RISING		4	/* rising edge triggered */
+#define IST_LEVEL_LOW		IST_LEVEL
+#define IST_LEVEL_HIGH		5	/* high level triggered */
 
 #if !defined(_LOCORE)
 void *	intr_establish(int, int, int, int (*)(void *), void *);

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.9 2011/11/22 21:24:57 tls Exp $
+# $NetBSD: GENERIC,v 1.9.2.1 2012/02/18 07:31:20 mrg Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include "arch/amigappc/conf/std.amigappc"
 
 options 	INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.9 $"
+#ident          "GENERIC-$Revision: 1.9.2.1 $"
 
 maxusers	8
 
@@ -121,7 +121,7 @@ file-system	TMPFS		# Efficient memory file-system
 
 # File system options
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas

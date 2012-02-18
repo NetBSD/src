@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.53 2009/10/26 19:16:54 cegger Exp $ */
+/*	$NetBSD: grf_rh.c,v 1.53.16.1 2012/02/18 07:31:17 mrg Exp $ */
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -34,9 +34,10 @@
 #include "opt_retina.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.53 2009/10/26 19:16:54 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.53.16.1 2012/02/18 07:31:17 mrg Exp $");
 
 #include "grfrh.h"
+#include "ite.h"
 #if NGRFRH > 0
 
 /*
@@ -1598,9 +1599,11 @@ grfrhattach(struct device *pdp, struct device *dp, void *auxp)
 		gp->g_fbkva = (volatile char *)zap->va + LM_OFFSET;
 		gp->g_unit = GRF_RETINAIII_UNIT;
 		gp->g_mode = rh_mode;
-		gp->g_conpri = grfrh_cnprobe();
 		gp->g_flags = GF_ALIVE;
+#if NITE > 0
+		gp->g_conpri = grfrh_cnprobe();
 		grfrh_iteinit(gp);
+#endif
 		(void)rh_load_mon(gp, current_mon);
 	}
 	if (dp != NULL)

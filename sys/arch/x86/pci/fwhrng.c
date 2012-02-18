@@ -1,4 +1,4 @@
-/*	$NetBSD: fwhrng.c,v 1.4 2011/11/19 22:51:21 tls Exp $	*/
+/*	$NetBSD: fwhrng.c,v 1.4.2.1 2012/02/18 07:33:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -29,13 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwhrng.c,v 1.4 2011/11/19 22:51:21 tls Exp $");
-
-#include "rnd.h"        
-                            
-#if NRND == 0
-#error fwhrng requires rnd pseudo-device
-#endif  
+__KERNEL_RCSID(0, "$NetBSD: fwhrng.c,v 1.4.2.1 2012/02/18 07:33:34 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

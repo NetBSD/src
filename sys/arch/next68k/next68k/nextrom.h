@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.h,v 1.10 2010/04/24 19:58:13 dbj Exp $	*/
+/*	$NetBSD: nextrom.h,v 1.10.12.1 2012/02/18 07:32:49 mrg Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -224,7 +224,7 @@ void *mon_alloc();
 
 /* Space for onboard RAM
  */
-#define	MAX_PHYS_SEGS	N_SIMM+1
+#define	MAX_PHYS_SEGS	(N_SIMM + 1)
 
 /* Machine types, used in both assembler and C sources. */
 #define	NeXT_CUBE	0
@@ -236,12 +236,12 @@ void *mon_alloc();
 
 #define	ROM_STACK_SIZE	(8192 - 2048)
 
-extern u_char rom_enetaddr[];
-extern u_char rom_boot_dev[];
-extern u_char rom_boot_arg[];
-extern u_char rom_boot_info[];
-extern u_char rom_boot_file[];
-extern u_char rom_bootfile[];
+extern uint8_t rom_enetaddr[];
+extern uint8_t rom_boot_dev[];
+extern uint8_t rom_boot_arg[];
+extern uint8_t rom_boot_info[];
+extern uint8_t rom_boot_file[];
+extern uint8_t rom_bootfile[];
 extern char rom_machine_type;
 
 extern u_int  monbootflag;

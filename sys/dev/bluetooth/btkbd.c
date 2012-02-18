@@ -1,4 +1,4 @@
-/*	$NetBSD: btkbd.c,v 1.11 2009/05/12 12:10:46 cegger Exp $	*/
+/*	$NetBSD: btkbd.c,v 1.11.16.1 2012/02/18 07:34:10 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.11 2009/05/12 12:10:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.11.16.1 2012/02/18 07:34:10 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>

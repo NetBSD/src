@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.228 2011/11/22 21:25:36 tls Exp $
+# $NetBSD: GENERIC,v 1.228.2.1 2012/02/18 07:33:12 mrg Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.228 $"
+#ident 		"GENERIC-$Revision: 1.228.2.1 $"
 
 maxusers	32
 
@@ -67,7 +67,7 @@ options 	WSDISPLAY_SCROLLSUPPORT
 
 # generic options vlid for both wscons and RASTERCONSOLE
 options 	FONT_GALLANT12x22	# the console font
-#options 	FONT_BOLD8x16		# a somewhat smaller font
+options 	FONT_BOLD8x16		# a somewhat smaller font
 
 #### System options that are the same for all ports
 
@@ -210,7 +210,7 @@ file-system	TMPFS		# Efficient memory file-system
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 

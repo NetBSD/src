@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.72 2008/04/28 20:24:04 martin Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.72.38.1 2012/02/18 07:35:32 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2007 The NetBSD Foundation, Inc.
@@ -34,14 +34,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.72 2008/04/28 20:24:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.72.38.1 2012/02/18 07:35:32 mrg Exp $");
 
 #ifdef _KERNEL
 #include "opt_lockdebug.h"
 
 #include <sys/param.h>
 #include <sys/extent.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/pool.h>
 #include <sys/time.h>
 #include <sys/systm.h>
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.72 2008/04/28 20:24:04 martin Exp 
 
 #include <uvm/uvm_extern.h>
 
-#define	KMEM_IS_RUNNING		(kmem_map != NULL)
 #elif defined(_EXTENT_TESTING)
 /*
  * user-land definitions, so it can fit into a testing harness.
@@ -69,15 +68,15 @@ __KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.72 2008/04/28 20:24:04 martin Exp 
  * in subr_extent.c rather than subr_prf.c.
  */
 #define	\
-malloc(s, t, flags)		malloc(s)
+kmem_alloc(s, flags)		malloc(s)
 #define	\
-free(p, t)			free(p)
+kmem_free(p, s)			free(p)
 #define	\
 cv_wait_sig(cv, lock)		(EWOULDBLOCK)
 #define	\
-pool_get(pool, flags)		malloc((pool)->pr_size,0,0)
+pool_get(pool, flags)		kmem_alloc((pool)->pr_size,0)
 #define	\
-pool_put(pool, rp)		free(rp,0)
+pool_put(pool, rp)		kmem_free(rp,0)
 #define	\
 panic(a)			printf(a)
 #define	mutex_init(a, b, c)
@@ -125,13 +124,6 @@ extent_alloc_region_descriptor(struct extent *ex, int flags)
 {
 	struct extent_region *rp;
 	int exflags, error;
-
-	/*
-	 * If the kernel memory allocator is not yet running, we can't
-	 * use it (obviously).
-	 */
-	if (KMEM_IS_RUNNING == 0)
-		flags &= ~EX_MALLOCOK;
 
 	/*
 	 * XXX Make a static, create-time flags word, so we don't
@@ -235,7 +227,7 @@ extent_free_region_descriptor(struct extent *ex, struct extent_region *rp)
  */
 struct extent *
 extent_create(const char *name, u_long start, u_long end,
-    struct malloc_type *mtype, void *storage, size_t storagesize, int flags)
+    void *storage, size_t storagesize, int flags)
 {
 	struct extent *ex;
 	char *cp = storage;
@@ -291,8 +283,8 @@ extent_create(const char *name, u_long start, u_long end,
 			LIST_INSERT_HEAD(&fex->fex_freelist, rp, er_link);
 		}
 	} else {
-		ex = (struct extent *)malloc(sizeof(struct extent),
-		    mtype, (flags & EX_WAITOK) ? M_WAITOK : M_NOWAIT);
+		ex = (struct extent *)kmem_alloc(sizeof(struct extent),
+		    (flags & EX_WAITOK) ? KM_SLEEP : KM_NOSLEEP);
 		if (ex == NULL)
 			return (NULL);
 	}
@@ -304,7 +296,6 @@ extent_create(const char *name, u_long start, u_long end,
 	ex->ex_name = name;
 	ex->ex_start = start;
 	ex->ex_end = end;
-	ex->ex_mtype = mtype;
 	ex->ex_flags = 0;
 	if (fixed_extent)
 		ex->ex_flags |= EXF_FIXED;
@@ -342,7 +333,7 @@ extent_destroy(struct extent *ex)
 
 	/* If we're not a fixed extent, free the extent descriptor itself. */
 	if ((ex->ex_flags & EXF_FIXED) == 0)
-		free(ex, ex->ex_mtype);
+		kmem_free(ex, sizeof(*ex));
 }
 
 /*

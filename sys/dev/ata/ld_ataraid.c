@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.38 2011/06/12 03:35:52 rmind Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.38.6.1 2012/02/18 07:34:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -47,10 +47,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.38 2011/06/12 03:35:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.38.6.1 2012/02/18 07:34:08 mrg Exp $");
 
 #include "bio.h"
-#include "rnd.h"
+
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,9 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.38 2011/06/12 03:35:52 rmind Exp $"
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 #if NBIO > 0
 #include <dev/ata/atavar.h>
 #include <dev/ata/atareg.h>

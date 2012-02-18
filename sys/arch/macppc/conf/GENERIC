@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.294 2011/11/22 21:25:24 tls Exp $
+# $NetBSD: GENERIC,v 1.294.2.1 2012/02/18 07:32:34 mrg Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.294 $"
+#ident 		"GENERIC-$Revision: 1.294.2.1 $"
 
 maxusers	32
 
@@ -108,7 +108,7 @@ file-system	TMPFS		# Efficient memory file-system
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -173,6 +173,7 @@ options 	WS_KERNEL_BG=WSCOL_LIGHT_WHITE
 
 #options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	FONT_GALLANT12x22
+options 	FONT_QVSS8x15		# a smaller font for lower resolutions
 
 # Optional Mac keyboard tweaks
 
@@ -604,7 +605,8 @@ pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	openfirm		# /dev/openfirm
-pseudo-device	wsmux			# mouse and keyboard multiplexor
+pseudo-device	wsmux			# mouse and keyboard multiplexer
+pseudo-device	swwdog			# software watchdog driver - swwdog(4)
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	nsmb			# SMB requester

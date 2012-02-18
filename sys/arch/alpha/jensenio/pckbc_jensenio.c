@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_jensenio.c,v 1.10 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: pckbc_jensenio.c,v 1.10.38.1 2012/02/18 07:31:00 mrg Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pckbc_jensenio.c,v 1.10 2008/04/28 20:23:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_jensenio.c,v 1.10.38.1 2012/02/18 07:31:00 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_jensenio.c,v 1.10 2008/04/28 20:23:11 martin E
 #include <sys/bus.h>
 
 #include <dev/ic/i8042reg.h>
-#include <dev/ic/pckbcvar.h> 
+#include <dev/ic/pckbcvar.h>
 
 #include <dev/eisa/eisavar.h>
 

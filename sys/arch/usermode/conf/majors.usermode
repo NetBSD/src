@@ -1,14 +1,2 @@
-# $NetBSD: majors.usermode,v 1.3 2011/08/25 11:06:29 jmcneill Exp $
-
-device-major	cons		char 0
-device-major	ctty		char 1
-device-major	mem		char 2
-#device-major	wd		char 3
-device-major	swap		char 4	block 1		vmswap
-device-major	pts		char 5			pty
-device-major	ptc		char 6			pty
-device-major	log		char 7
-device-major	com		char 8			com
-device-major	md		char 24	block 17	md
-device-major	wsdisplay	char 47			wsdisplay
-device-major	ld		char 69 block 19	ld
+# $NetBSD: majors.usermode,v 1.3.6.1 2012/02/18 07:33:22 mrg Exp $
+device-major	ttycons		char 159		ttycons

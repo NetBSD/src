@@ -1,4 +1,4 @@
-/* $NetBSD: aupcmcia.c,v 1.7 2011/07/26 22:52:49 dyoung Exp $ */
+/* $NetBSD: aupcmcia.c,v 1.7.6.1 2012/02/18 07:32:38 mrg Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,7 +35,7 @@
 /* #include "pci.h" */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupcmcia.c,v 1.7 2011/07/26 22:52:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupcmcia.c,v 1.7.6.1 2012/02/18 07:32:38 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -107,8 +107,8 @@ static void aupcm_slot_enable(pcmcia_chipset_handle_t);
 static void aupcm_slot_disable(pcmcia_chipset_handle_t);
 static void aupcm_slot_settype(pcmcia_chipset_handle_t, int);
 
-static int aupcm_match(struct device *, struct cfdata *, void *);
-static void aupcm_attach(struct device *, struct device *, void *);
+static int aupcm_match(device_t, struct cfdata *, void *);
+static void aupcm_attach(device_t, device_t, void *);
 
 static void aupcm_event_thread(void *);
 static int aupcm_card_intr(void *);
@@ -133,12 +133,12 @@ struct aupcm_slot {
 	struct mips_bus_space	as_memt;
 	void			*as_wins[AUPCMCIA_NWINS];
 
-	struct device		*as_pcmcia;
+	device_t		as_pcmcia;
 };
 
 /* this structure needs to be exposed... */
 struct aupcm_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	pcmcia_chipset_tag_t	sc_pct;
 
 	void			(*sc_slot_enable)(int);
@@ -175,11 +175,11 @@ static struct pcmcia_chip_functions aupcm_functions = {
 
 static	struct mips_bus_space	aupcm_memt;
 
-CFATTACH_DECL(aupcmcia, sizeof (struct aupcm_softc),
+CFATTACH_DECL_NEW(aupcmcia, sizeof (struct aupcm_softc),
     aupcm_match, aupcm_attach, NULL, NULL);
 
 int
-aupcm_match(struct device *parent, struct cfdata *cf, void *aux)
+aupcm_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct aubus_attach_args	*aa = aux;
 	static int			found = 0;
@@ -196,13 +196,15 @@ aupcm_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-aupcm_attach(struct device *parent, struct device *self, void *aux)
+aupcm_attach(device_t parent, device_t self, void *aux)
 {
 	/* struct aubus_attach_args	*aa = aux; */
-	struct aupcm_softc		*sc = (struct aupcm_softc *)self;
+	struct aupcm_softc		*sc = device_private(self);
 	static int			done = 0;
 	int				slot;
 	struct aupcmcia_machdep		*md;
+
+	sc->sc_dev = self;
 
 	/* initialize bus space */
 	if (done) {
@@ -221,8 +223,7 @@ aupcm_attach(struct device *parent, struct device *self, void *aux)
 	    AU_HIMEM_SPACE_LITTLE_ENDIAN);
 
 	if ((md = aupcmcia_machdep()) == NULL) {
-		printf("\n%s:unable to get machdep structure\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error(": unable to get machdep structure\n");
 		return;
 	}
 
@@ -231,7 +232,8 @@ aupcm_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_slot_disable = md->am_slot_disable;
 	sc->sc_slot_status = md->am_slot_status;
 
-	printf(": Alchemy PCMCIA, %d slots\n", sc->sc_nslots);
+	aprint_normal(": Alchemy PCMCIA, %d slots\n", sc->sc_nslots);
+	aprint_naive("\n");
 
 	sc->sc_pct = (pcmcia_chipset_tag_t)&aupcm_functions;
 
@@ -268,7 +270,7 @@ aupcm_attach(struct device *parent, struct device *self, void *aux)
 		paa.pct = sc->sc_pct;
 		paa.pch = (pcmcia_chipset_handle_t)sp;
 
-		sp->as_pcmcia = config_found(&sc->sc_dev, &paa, aupcm_print);
+		sp->as_pcmcia = config_found(self, &paa, aupcm_print);
 
 		/* if no pcmcia, make sure slot is powered down */
 		if (sp->as_pcmcia == NULL) {
@@ -287,9 +289,9 @@ aupcm_attach(struct device *parent, struct device *self, void *aux)
 	 * for now.  Start by initializing it now.
 	 */
 	if (kthread_create(PRI_NONE, 0, NULL, aupcm_event_thread, sc,
-	    &sc->sc_thread, "%s", sc->sc_dev.dv_xname) != 0)
+	    &sc->sc_thread, "%s", device_xname(sc->sc_dev)) != 0)
 		panic("%s: unable to create event kthread",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 }
 
 int
@@ -387,14 +389,14 @@ aupcm_event_thread(void *arg)
 			if (sc->sc_slot_status(sp->as_slot) != 0) {
 				if (!sp->as_status) {
 					DPRINTF(("%s: card %d insertion\n",
-						    sc->sc_dev.dv_xname, i));
+					    device_xname(sc->sc_dev), i));
 					attach |= (1 << i);
 					sp->as_status = 1;
 				}
 			} else {
 				if (sp->as_status) {
 					DPRINTF(("%s: card %d removal\n",
-						    sc->sc_dev.dv_xname, i));
+					    device_xname(sc->sc_dev), i));
 					detach |= (1 << i);
 					sp->as_status = 0;
 				}
@@ -407,8 +409,7 @@ aupcm_event_thread(void *arg)
 
 			if (detach & (1 << i)) {
 				aupcm_slot_disable(sp);
-				pcmcia_card_detach(sp->as_pcmcia,
-				    DETACH_FORCE);
+				pcmcia_card_detach(sp->as_pcmcia, DETACH_FORCE);
 			} else if (attach & (1 << i)) {
 				/*
 				 * until the function is enabled, don't

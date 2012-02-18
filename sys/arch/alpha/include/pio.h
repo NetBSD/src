@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.9 2011/08/12 22:22:49 dyoung Exp $	*/
+/*	$NetBSD: pio.h,v 1.9.6.1 2012/02/18 07:30:58 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,12 +39,12 @@
 #error This file is for userspace only.
 #else
 struct alpha_pci_io_ops {
-	u_int8_t	(*apio_inb)(bus_addr_t);
-	u_int16_t	(*apio_inw)(bus_addr_t);
-	u_int32_t	(*apio_inl)(bus_addr_t);
-	void		(*apio_outb)(bus_addr_t, u_int8_t);
-	void		(*apio_outw)(bus_addr_t, u_int16_t);
-	void		(*apio_outl)(bus_addr_t, u_int32_t);
+	uint8_t	(*apio_inb)(bus_addr_t);
+	uint16_t	(*apio_inw)(bus_addr_t);
+	uint32_t	(*apio_inl)(bus_addr_t);
+	void		(*apio_outb)(bus_addr_t, uint8_t);
+	void		(*apio_outw)(bus_addr_t, uint16_t);
+	void		(*apio_outl)(bus_addr_t, uint32_t);
 };
 
 #define	inb(addr)	(*alpha_pci_io_switch->apio_inb)((addr))

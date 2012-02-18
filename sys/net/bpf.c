@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.166 2011/08/30 14:22:22 bouyer Exp $	*/
+/*	$NetBSD: bpf.c,v 1.166.6.1 2012/02/18 07:35:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.166 2011/08/30 14:22:22 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.166.6.1 2012/02/18 07:35:37 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -681,8 +681,8 @@ bpf_write(struct file *fp, off_t *offp, struct uio *uio,
 	if (mc != NULL) {
 		if (error == 0)
 			(*ifp->if_input)(ifp, mc);
-	} else
 		m_freem(mc);
+	}
 	splx(s);
 	KERNEL_UNLOCK_ONE(NULL);
 	/*
@@ -1547,12 +1547,13 @@ bpf_hdrlen(struct bpf_d *d)
 #endif
 		return (BPF_WORDALIGN(hdrlen + SIZEOF_BPF_HDR) - hdrlen);
 }
+
 /*
  * Move the packet data from interface memory (pkt) into the
- * store buffer.  Return 1 if it's time to wakeup a listener (buffer full),
- * otherwise 0.  "copy" is the routine called to do the actual data
- * transfer.  memcpy is passed in to copy contiguous chunks, while
- * bpf_mcpy is passed in to copy mbuf chains.  In the latter case,
+ * store buffer. Call the wakeup functions if it's time to wakeup
+ * a listener (buffer full), "cpfn" is the routine called to do the
+ * actual data transfer. memcpy is passed in to copy contiguous chunks,
+ * while bpf_mcpy is passed in to copy mbuf chains.  In the latter case,
  * pkt is really an mbuf.
  */
 static void

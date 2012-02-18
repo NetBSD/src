@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_io.c,v 1.26 2011/04/23 18:14:12 rmind Exp $	*/
+/*	$NetBSD: uvm_io.c,v 1.26.8.1 2012/02/18 07:35:59 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_io.c,v 1.26 2011/04/23 18:14:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_io.c,v 1.26.8.1 2012/02/18 07:35:59 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ uvm_io(struct vm_map *map, struct uio *uio)
 
 		vm_map_lock(kernel_map);
 		uvm_unmap_remove(kernel_map, kva, kva + chunksz, &dead_entries,
-		    NULL, 0);
+		   0);
 		vm_map_unlock(kernel_map);
 		if (dead_entries != NULL)
 			uvm_unmap_detach(dead_entries, AMAP_REFALL);

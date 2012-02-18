@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.40 2009/03/14 15:36:07 dsl Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.40.16.1 2012/02/18 07:32:11 mrg Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx3912video.c,v 1.40 2009/03/14 15:36:07 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx3912video.c,v 1.40.16.1 2012/02/18 07:32:11 mrg Exp $");
 
 #define TX3912VIDEO_DEBUG
 
@@ -366,7 +366,7 @@ tx3912video_framebuffer_alloc(struct video_chip *chip, paddr_t fb_start,
 
 	/* extent V-RAM region */
 	ex = extent_create("Frame buffer address", fb_start, *fb_end,
-	    0, (void *)ex_fixed, sizeof ex_fixed,
+	    (void *)ex_fixed, sizeof ex_fixed,
 	    EX_NOWAIT);
 	if (ex == 0)
 		return (1);

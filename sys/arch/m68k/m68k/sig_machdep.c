@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.46 2011/02/24 04:28:46 joerg Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.46.8.1 2012/02/18 07:32:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,7 +40,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.46 2011/02/24 04:28:46 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.46.8.1 2012/02/18 07:32:30 mrg Exp $");
 
 #define __M68K_SIGNAL_PRIVATE
 
@@ -69,8 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.46 2011/02/24 04:28:46 joerg Exp $
 
 extern short exframesize[];
 struct fpframe m68k_cached_fpu_idle_frame;
-void	m68881_save(struct fpframe *);
-void	m68881_restore(struct fpframe *);
 
 #ifdef DEBUG
 int sigdebug = 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.35 2011/07/01 18:53:46 dyoung Exp $ */
+/* $NetBSD: crmfb.c,v 1.35.6.1 2012/02/18 07:33:07 mrg Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.35 2011/07/01 18:53:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.35.6.1 2012/02/18 07:33:07 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -590,7 +590,7 @@ crmfb_init_screen(void *c, struct vcons_screen *scr, int existing,
 	if (existing)
 		ri->ri_flg |= RI_CLEAR;
 
-	rasops_init(ri, ri->ri_height / 16, ri->ri_width / 8);
+	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 	rasops_reconfig(ri, ri->ri_height / ri->ri_font->fontheight,
 	    ri->ri_width / ri->ri_font->fontwidth);

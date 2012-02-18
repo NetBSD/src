@@ -1,4 +1,4 @@
-/*	$NetBSD: cpi_nubus.c,v 1.5 2011/05/13 22:35:50 rmind Exp $	*/
+/*	$NetBSD: cpi_nubus.c,v 1.5.8.1 2012/02/18 07:32:33 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 Hauke Fath
@@ -25,8 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpi_nubus.c,v 1.5 2011/05/13 22:35:50 rmind Exp $");
-
+__KERNEL_RCSID(0, "$NetBSD: cpi_nubus.c,v 1.5.8.1 2012/02/18 07:32:33 mrg Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -40,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpi_nubus.c,v 1.5 2011/05/13 22:35:50 rmind Exp $");
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/time.h>
+#include <sys/timetc.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/errno.h>
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpi_nubus.c,v 1.5 2011/05/13 22:35:50 rmind Exp $");
 #define M_TRACE_WRITE	0x0010
 #define M_TRACE_IOCTL	0x0020
 #define M_TRACE_STATUS	0x0040
+#define M_TRACE_TCNTR	0x0080
 #define M_TRACE_ALL	0xFFFF
 #define M_TRACE_NONE	0x0000
 
@@ -81,12 +82,12 @@ __KERNEL_RCSID(0, "$NetBSD: cpi_nubus.c,v 1.5 2011/05/13 22:35:50 rmind Exp $");
 #define TRACE_WRITE	(cpi_debug_mask & M_TRACE_WRITE)
 #define TRACE_IOCTL	(cpi_debug_mask & M_TRACE_IOCTL)
 #define TRACE_STATUS	(cpi_debug_mask & M_TRACE_STATUS)
+#define TRACE_TCNTR	(cpi_debug_mask & M_TRACE_TCNTR)
 #define TRACE_ALL	(cpi_debug_mask & M_TRACE_ALL)
 #define TRACE_NONE	(cpi_debug_mask & M_TRACE_NONE)
 
-uint32_t cpi_debug_mask = M_TRACE_NONE /* | M_TRACE_WRITE */ ;
-
-#else
+uint32_t cpi_debug_mask = M_TRACE_NONE /* | M_TRACE_TCNTR | M_TRACE_WRITE */ ;
+#else /* CPI_DEBUG */
 #define TRACE_CONFIG	0
 #define TRACE_OPEN	0
 #define TRACE_CLOSE	0
@@ -94,11 +95,10 @@ uint32_t cpi_debug_mask = M_TRACE_NONE /* | M_TRACE_WRITE */ ;
 #define TRACE_WRITE	0
 #define TRACE_IOCTL	0
 #define TRACE_STATUS	0
+#define TRACE_TCNTR	0
 #define TRACE_ALL	0
 #define TRACE_NONE	0
-#endif
-
-#undef USE_CIO_TIMERS		/* TBD */
+#endif /* CPI_DEBUG */
 
 /* autoconf interface */
 int cpi_nubus_match(device_t, cfdata_t, void *);
@@ -126,14 +126,13 @@ static void cpi_wakeup(void *);
 static int cpi_flush(struct cpi_softc *);
 static void cpi_intr(void *);
 
-#ifdef USE_CIO_TIMERS
-static void cpi_initclock(struct cpi_softc *);
-static u_int cpi_get_timecount(struct timecounter *);
-#endif
-
-static inline void z8536_reg_set(bus_space_tag_t, bus_space_handle_t,
+static void cpi_tc_initclock(struct cpi_softc *);
+static uint cpi_get_timecount(struct timecounter *);
+static uint z8536_read_counter1(bus_space_tag_t, bus_space_handle_t);
+static uint z8536_read_counter2(bus_space_tag_t, bus_space_handle_t);
+static void z8536_reg_set(bus_space_tag_t, bus_space_handle_t,
     uint8_t, uint8_t);
-static inline uint8_t z8536_reg_get(bus_space_tag_t, bus_space_handle_t,
+static uint8_t z8536_reg_get(bus_space_tag_t, bus_space_handle_t,
     uint8_t);
 
 
@@ -191,19 +190,6 @@ const uint8_t cio_init[] = {
 	Z8536_DPPRC, 	0x00,
 	Z8536_SIOCRC, 	0x00,
 
-#ifdef USE_CIO_TIMERS
-	/*
-	 * Counter/Timers 1+2 are joined to form a free-running
-	 * 32 bit timecounter
-	 */
-	Z8536_CTMSR1, 	CTMS_CSC,		
-	Z8536_CTTCR1_MSB, 0x00,		
-	Z8536_CTTCR1_LSB, 0x00,		
-	Z8536_CTMSR2, 	CTMS_CSC,		
-	Z8536_CTTCR2_MSB, 0x00,		
-	Z8536_CTTCR2_LSB, 0x00,		
-#endif /* USE_CIO_TIMERS */
-	
 	/*
 	 * We need Timer 3 for running port A in strobed mode.
 	 *
@@ -215,17 +201,18 @@ const uint8_t cio_init[] = {
 	Z8536_CTTCR3_MSB, 0x00,		
 	Z8536_CTTCR3_LSB, 0x03,		
 
-	/*
-	 * Enable ports A+B+C+CT3
-	 * Set timer 1 to clock timer 2, but not yet enabled.
-	 */
-	Z8536_MCCR,	MCCR_PAE | MCCR_PBE | MCCR_CT1CT2 | MCCR_PC_CT3E,
+	/* Enable ports A+B+C+CT3 */
+	Z8536_MCCR,	MCCR_PAE | MCCR_PBE | MCCR_PC_CT3E,
+	
 	/* Master Interrupt Enable, Disable Lower Chain,
-	 * No Vector, port A+B+CT vectors include status */
+	 * No Interrupt Vector, port A+B+CT vectors include status */
 	Z8536_MICR,  	MICR_MIE | MICR_DLC | MICR_NV | MICR_PAVIS |
 	MICR_PBVIS | MICR_CTVIS,
 	Z8536_PDRB, 	0xFE,	/* Clear printer -RESET */
 };
+
+/* CPI default options */
+/* int	cpi_options = 0 | CPI_CTC12_IS_TIMECOUNTER; */
 
 
 /* 
@@ -254,13 +241,15 @@ cpi_nubus_attach(device_t parent, device_t self, void *aux)
 	int err, ii;
 
 	sc = device_private(self);
+	sc->sc_options = (device_cfdata(self)->cf_flags & CPI_OPTIONS_MASK);
+
 	na = aux;
 	sc->sc_bst = na->na_tag;
 	memcpy(&sc->sc_slot, na->fmt, sizeof(nubus_slot));
 	sc->sc_basepa = (bus_addr_t)NUBUS_SLOT2PA(na->slot);
 
 	/*
-	 * The CIO sits on the MSB (top byte lane) of the 32 bit
+	 * The CIO sits eight bit wide on the top byte lane of
 	 * Nubus, so map 16 byte.
 	 */
 	if (TRACE_CONFIG) {
@@ -287,7 +276,7 @@ cpi_nubus_attach(device_t parent, device_t self, void *aux)
 		z8536_reg_set(sc->sc_bst, sc->sc_bsh, cio_reset[ii],
 		    cio_reset[ii + 1]);
 	
-	delay(1000);		/* Just in case */
+	delay(1000);		/* Give the CIO time to set itself up */
 	for (ii = 0; ii < sizeof(cio_init); ii += 2) {
 		z8536_reg_set(sc->sc_bst, sc->sc_bsh, cio_init[ii],
 		    cio_init[ii + 1]);
@@ -296,16 +285,13 @@ cpi_nubus_attach(device_t parent, device_t self, void *aux)
 	if (TRACE_CONFIG)
 		printf("\tcpi_nubus_attach() done with 8536 CIO setup.\n");
 		
-	/* XXX Get the information strings from the card's ROM */
+	/* XXX Get information strings from the card ROM */
 	aprint_normal(": CSI Hurdler II Centronics\n");
 
-#ifdef USE_CIO_TIMERS	
-	/* Attach CIO timers as timecounters */
-	if (TRACE_CONFIG)
-		printf("\tcpi_nubus_attach() about to attach timers\n");
-	
-	cpi_initclock(sc);
-#endif /* USE_CIO_TIMERS */
+	/* Attach CIO timers 1+2 as timecounter */
+	if (sc->sc_options & CPI_CTC12_IS_TIMECOUNTER) {
+		cpi_tc_initclock(sc);
+	}
 
 	callout_init(&sc->sc_wakeupchan, 0);	/* XXX */
 	
@@ -557,27 +543,12 @@ static void
 cpi_lpreset(struct cpi_softc *sc)
 {
 	uint8_t portb;		/* Centronics -RESET is on port B, bit 0 */
-#ifdef DIRECT_PORT_ACCESS
-	int s;
-	
-	s = spltty();
 
-	portb = bus_space_read_1(sc->sc_bst, sc->sc_bsh, CIO_PORTB);
-	bus_space_write_1(sc->sc_bst, sc->sc_bsh,
-	    CIO_PORTB, portb & ~CPI_RESET);
-	delay(100);
-	portb = bus_space_read_1(sc->sc_bst, sc->sc_bsh, CIO_PORTB);
-	bus_space_write_1(sc->sc_bst, sc->sc_bsh,
-	    CIO_PORTB, portb | CPI_RESET);
-
-	splx(s);
-#else
 	portb = z8536_reg_get(sc->sc_bst, sc->sc_bsh, Z8536_PDRB);
 	z8536_reg_set(sc->sc_bst, sc->sc_bsh, Z8536_PDRB, portb & ~CPI_RESET);
 	delay(100);
 	portb = z8536_reg_get(sc->sc_bst, sc->sc_bsh, Z8536_PDRB);
 	z8536_reg_set(sc->sc_bst, sc->sc_bsh, Z8536_PDRB, portb | CPI_RESET);
-#endif /* DIRECT_PORT_ACCESS */
 }
 
 
@@ -650,88 +621,245 @@ cpi_intr(void *arg)
 		wakeup((void *)sc);
 }
 
-#ifdef USE_CIO_TIMERS
-/*
- * Z8536 CIO timers 1 + 2 used for timecounter(9) support
- */
 static void
-cpi_initclock(struct cpi_softc *sc)
+cpi_tc_initclock(struct cpi_softc *sc)
 {
-	static struct timecounter cpi_timecounter = {
-		.tc_get_timecount = cpi_get_timecount,
-		.tc_poll_pps	  = 0,
-		.tc_counter_mask  = 0x0ffffu,
-		.tc_frequency	  = CLK_FREQ,
-		.tc_name	  = "CPI Z8536 CIO",
-		.tc_quality	  = 50,
-		.tc_priv	  = NULL,
-		.tc_next	  = NULL
-	};
-
+	uint8_t reg;
+	
 	/*
-	 * Set up timers A and B as a single, free-running 32 bit counter
+	 * Set up c/t 1 and 2 as a single, free-running 32 bit counter
 	 */
 
-	/* Disable counters A and B */
+	/* Disable counters 1 and 2 */
 	reg = z8536_reg_get(sc->sc_bst, sc->sc_bsh, Z8536_MCCR);
 	z8536_reg_set(sc->sc_bst, sc->sc_bsh, Z8536_MCCR,
 	    reg & ~(MCCR_CT1E | MCCR_CT2E));
 
 	/* Make sure interrupt enable bits are cleared */
-	z8536_reg_set(sc->sc_bst, sc->sc_bsh, Z8536_CTCSR1,
-	    CTCS_CLR_IE);
-	z8536_reg_set(sc->sc_bst, sc->sc_bsh, Z8536_CTCSR2,
-	    CTCS_CLR_IE);
+	z8536_reg_set(sc->sc_bst, sc->sc_bsh, Z8536_CTCSR1, CTCS_CLR_IE);
+	z8536_reg_set(sc->sc_bst, sc->sc_bsh, Z8536_CTCSR2, CTCS_CLR_IE);
 	
 	/* Initialise counter start values, and set to continuous cycle */
-	z8536_reg_set(sc->sc_bst, sc->sc_bsh, Z8536_CTMSR1, CTMS_CSC);
+	z8536_reg_set(sc->sc_bst, sc->sc_bsh, Z8536_CTMSR1,
+	    CTMS_CSC | CTMS_DCS_PULSE);
 	z8536_reg_set(sc->sc_bst, sc->sc_bsh, Z8536_CTTCR1_MSB, 0x00);
 	z8536_reg_set(sc->sc_bst, sc->sc_bsh, Z8536_CTTCR1_LSB, 0x00);
 	
-	z8536_reg_set(sc->sc_bst, sc->sc_bsh, Z8536_CTMSR2, CTMS_CSC);
+	z8536_reg_set(sc->sc_bst, sc->sc_bsh, Z8536_CTMSR2,
+	    CTMS_CSC | CTMS_DCS_PULSE);
 	z8536_reg_set(sc->sc_bst, sc->sc_bsh, Z8536_CTTCR2_MSB, 0x00);
 	z8536_reg_set(sc->sc_bst, sc->sc_bsh, Z8536_CTTCR2_LSB, 0x00);
 
-	/* Re-enable counters A and B */
+	/* Link counters 1 and 2 */
+	reg = z8536_reg_get(sc->sc_bst, sc->sc_bsh, Z8536_MCCR);
+	z8536_reg_set(sc->sc_bst, sc->sc_bsh, Z8536_MCCR, reg | MCCR_CT1CT2);
+
+	/* Enable and counter pair */
 	reg = z8536_reg_get(sc->sc_bst, sc->sc_bsh, Z8536_MCCR);
 	z8536_reg_set(sc->sc_bst, sc->sc_bsh, Z8536_MCCR,
-	    reg | MCCR_CT1E | MCCR_CT2E | MCCR_CT1CT2);
+	    reg | (MCCR_CT1E | MCCR_CT2E));
 
-	/* Start counters A and B */
+	/* Start c/t 1; c/t 2 gets started by c/t 1 pulse */
 	reg = z8536_reg_get(sc->sc_bst, sc->sc_bsh, Z8536_CTCSR1);
 	z8536_reg_set(sc->sc_bst, sc->sc_bsh, Z8536_CTCSR1,
-	    reg | CTCS_TCB);
-	reg = z8536_reg_get(sc->sc_bst, sc->sc_bsh, Z8536_CTCSR2);
-	z8536_reg_set(sc->sc_bst, sc->sc_bsh, Z8536_CTCSR2,
-	    reg | CTCS_TCB);
+	    CTCSR_MASK(reg | CTCS_TCB | CTCS_GCB));
+
+	if (TRACE_TCNTR) {
+		printf("Before tc_init():\n");
+		reg = z8536_reg_get(sc->sc_bst, sc->sc_bsh, Z8536_CTCSR1);
+		printf("Counter 1 CTCSR setup bits are 0x%03x\n", reg);
+		printf("Counter 1 (LSW) is now 0x%05x\n",
+		    z8536_read_counter1(sc->sc_bst, sc->sc_bsh));
+		reg = z8536_reg_get(sc->sc_bst, sc->sc_bsh, Z8536_CTCSR2);
+		printf("Counter 2 CTCSR setup bits are 0x%03x\n", reg);
+		printf("Counter 2 (MSW) is now 0x%05x\n",
+		    z8536_read_counter2(sc->sc_bst, sc->sc_bsh));
+
+		delay(1000);
+	}
 	
-	tc_init(&cpi_timecounter);
+	sc->sc_timecounter.tc_get_timecount = cpi_get_timecount;
+	sc->sc_timecounter.tc_poll_pps      = 0;
+	sc->sc_timecounter.tc_counter_mask  = ~0u;
+	sc->sc_timecounter.tc_frequency     = CPI_CLK_FREQ;
+	sc->sc_timecounter.tc_name          = "Nubus CPI";
+	sc->sc_timecounter.tc_quality       = 1000;
+	/*
+	 * Squirrel away the device's sc so we can talk
+	 * to the CIO later
+	 */
+	sc->sc_timecounter.tc_priv          = sc;
+	sc->sc_timecounter.tc_next          = NULL;
+        
+        tc_init(&(sc->sc_timecounter));
+	
+	if (TRACE_TCNTR) {
+		delay(1000);
+
+		printf("After tc_init():\n");
+		reg = z8536_reg_get(sc->sc_bst, sc->sc_bsh, Z8536_CTCSR1);
+		printf("Counter 1 CTCSR setup bits are 0x%03x\n", reg);
+		printf("Counter 1 (LSW) is now 0x%05x\n",
+		    z8536_read_counter1(sc->sc_bst, sc->sc_bsh));
+		reg = z8536_reg_get(sc->sc_bst, sc->sc_bsh, Z8536_CTCSR2);
+		printf("Counter 2 CTCSR setup bits are 0x%03x\n", reg);
+		printf("Counter 2 (MSW) is now 0x%05x\n",
+		    z8536_read_counter2(sc->sc_bst, sc->sc_bsh));
+	}
 }
 
 static u_int
 cpi_get_timecount(struct timecounter *tc)
 {
-	uint8_t high, high2, low;
-	int s;
-
+        int s;
+	uint msw, msw2, lsw;
+	uint8_t reg;
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+	
+	bst = ((struct cpi_softc *)tc->tc_priv)->sc_bst;
+	bsh = ((struct cpi_softc *)tc->tc_priv)->sc_bsh;
 	/*
-	 * Make the timer access atomic
+	 * We run CIO counters 1 and 2 in an internally coupled mode,
+	 * where the output of counter 1 (LSW) clocks counter 2 (MSW).
+	 * The counters are buffered, and the buffers have to be
+	 * locked before we can read out a consistent counter
+	 * value. Reading the LSB releases the buffer lock.
 	 *
-	 * XXX How expensive is this? And is it really necessary?
+	 * Unfortunately, there is no such mechanism between MSW and
+	 * LSW of the coupled counter. To ensure a consistent
+	 * read-out, we read the MSW, then the LSW, then re-read the
+	 * MSW and compare with the old value. If we find that the MSW
+	 * has just been incremented, we re-read the LSW. This avoids
+	 * a race that could leave us with a new (just wrapped) LSW
+	 * and an old MSW value.
+	 *
+	 * For simplicity, we roll the procedure into a loop - the
+	 * rollover case is rare.
 	 */
-	s = splhigh();
+	do {
+		
+#define delay(a)
+		
+		/* Guard HW timer access */
+		s = splhigh();
 
-	/* TBD */
+		/* Lock counter 2 latch in preparation for read-out */
+		bus_space_write_1(bst, bsh, CIO_CTRL, Z8536_CTCSR2);
+		delay(1);
+		reg = bus_space_read_1(bst, bsh, CIO_CTRL);
+		bus_space_write_1(bst, bsh, CIO_CTRL, Z8536_CTCSR2);
+		bus_space_write_1(bst, bsh, CIO_CTRL, CTCSR_MASK(reg | CTCS_RCC));
+		
+		/* Read out counter 2 MSB,then LSB (releasing the latch) */
+		bus_space_write_1(bst, bsh, CIO_CTRL, Z8536_CTCCR2_MSB);
+		delay(1);
+		msw = bus_space_read_1(bst, bsh, CIO_CTRL) << 8;
+		bus_space_write_1(bst, bsh, CIO_CTRL, Z8536_CTCCR2_LSB);
+		delay(1);
+		msw |= bus_space_read_1(bst, bsh, CIO_CTRL);
+		
+		/* Lock counter 1 latch in preparation for read-out */
+		bus_space_write_1(bst, bsh, CIO_CTRL, Z8536_CTCSR1);
+		delay(1);
+		reg = bus_space_read_1(bst, bsh, CIO_CTRL);
+		bus_space_write_1(bst, bsh, CIO_CTRL, Z8536_CTCSR1);
+		bus_space_write_1(bst, bsh, CIO_CTRL, CTCSR_MASK(reg |CTCS_RCC));
+		
+		/* Read out counter 1 MSB,then LSB (releasing the latch) */
+		bus_space_write_1(bst, bsh, CIO_CTRL, Z8536_CTCCR1_MSB);
+		delay(1);
+		lsw = bus_space_read_1(bst, bsh, CIO_CTRL) << 8;
+		bus_space_write_1(bst, bsh, CIO_CTRL, Z8536_CTCCR1_LSB);
+		delay(1);
+		lsw |= bus_space_read_1(bst, bsh, CIO_CTRL);
+		
+		/* Lock counter 2 latch in preparation for read-out */
+		bus_space_write_1(bst, bsh, CIO_CTRL, Z8536_CTCSR2);
+		delay(1);
+		reg = bus_space_read_1(bst, bsh, CIO_CTRL);
+		bus_space_write_1(bst, bsh, CIO_CTRL, Z8536_CTCSR2);
+		bus_space_write_1(bst, bsh, CIO_CTRL, CTCSR_MASK(reg | CTCS_RCC));
+		
+		/* Read out counter 2 MSB,then LSB (releasing the latch) */
+		bus_space_write_1(bst, bsh, CIO_CTRL, Z8536_CTCCR2_MSB);
+		delay(1);
+		msw2 = bus_space_read_1(bst, bsh, CIO_CTRL) << 8;
+		bus_space_write_1(bst, bsh, CIO_CTRL, Z8536_CTCCR2_LSB);
+		delay(1);
+		msw2 |= bus_space_read_1(bst, bsh, CIO_CTRL);
+		
+		splx(s);
 
+	} while (msw2 != msw);
+
+	/* timecounter expects an upward counter */
+	return ~0u - ((msw << 16) | lsw);
 }
-#endif /* USE_CIO_TIMERS */
-
 
 /*
- * Z8536 CIO nuts and bolts
+ * Z8536 CIO convenience atomic register getter/setter
  */
 
-static inline void
+static uint
+z8536_read_counter1(bus_space_tag_t bst, bus_space_handle_t bsh)
+{
+	uint8_t reg;
+	uint32_t lsw;
+	int s;
+
+	s = splhigh();
+	
+	/* Lock counter 1 latch in preparation for read-out */
+	bus_space_write_1(bst, bsh, CIO_CTRL, Z8536_CTCSR1);
+	delay(1);
+	reg = bus_space_read_1(bst, bsh, CIO_CTRL);
+	bus_space_write_1(bst, bsh, CIO_CTRL, Z8536_CTCSR1);
+	bus_space_write_1(bst, bsh, CIO_CTRL, CTCSR_MASK(reg | CTCS_RCC));
+		
+	/* Read out counter 1 MSB,then LSB (releasing the latch) */
+	bus_space_write_1(bst, bsh, CIO_CTRL, Z8536_CTCCR1_MSB);
+	delay(1);
+	lsw = bus_space_read_1(bst, bsh, CIO_CTRL) << 8;
+	bus_space_write_1(bst, bsh, CIO_CTRL, Z8536_CTCCR1_LSB);
+	delay(1);
+	lsw |= bus_space_read_1(bst, bsh, CIO_CTRL);
+
+	splx(s);
+
+	return lsw;
+}
+
+static uint
+z8536_read_counter2(bus_space_tag_t bst, bus_space_handle_t bsh)
+{
+	uint8_t reg;
+	uint32_t msw;
+	int s;
+
+	s = splhigh();
+
+	/* Lock counter 2 latch in preparation for read-out */
+	bus_space_write_1(bst, bsh, CIO_CTRL, Z8536_CTCSR2);
+	delay(1);
+	reg = bus_space_read_1(bst, bsh, CIO_CTRL);
+	bus_space_write_1(bst, bsh, CIO_CTRL, Z8536_CTCSR2);
+	bus_space_write_1(bst, bsh, CIO_CTRL, CTCSR_MASK(reg | CTCS_RCC));
+
+	/* Read out counter 2 MSB,then LSB (releasing the latch) */
+	bus_space_write_1(bst, bsh, CIO_CTRL, Z8536_CTCCR2_MSB);
+	delay(1);
+	msw = bus_space_read_1(bst, bsh, CIO_CTRL) << 8;
+	bus_space_write_1(bst, bsh, CIO_CTRL, Z8536_CTCCR2_LSB);
+	delay(1);
+	msw |= bus_space_read_1(bst, bsh, CIO_CTRL);
+
+	splx(s);
+
+	return msw;
+}
+
+static void
 z8536_reg_set(bus_space_tag_t bspace, bus_space_handle_t bhandle,
     uint8_t reg, uint8_t val)
 {
@@ -744,7 +872,7 @@ z8536_reg_set(bus_space_tag_t bspace, bus_space_handle_t bhandle,
 	splx(s);
 }
 
-static inline uint8_t
+static uint8_t
 z8536_reg_get(bus_space_tag_t bspace, bus_space_handle_t bhandle, uint8_t reg)
 {
 	int s;

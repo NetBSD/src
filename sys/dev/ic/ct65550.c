@@ -1,4 +1,4 @@
-/*	$NetBSD: ct65550.c,v 1.2 2011/03/23 04:02:43 macallan Exp $	*/
+/*	$NetBSD: ct65550.c,v 1.2.10.1 2012/02/18 07:34:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct65550.c,v 1.2 2011/03/23 04:02:43 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct65550.c,v 1.2.10.1 2012/02/18 07:34:16 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -821,7 +821,7 @@ chipsfb_init_screen(void *cookie, struct vcons_screen *scr,
 		ri->ri_flg |= RI_CLEAR;
 	}
 
-	rasops_init(ri, sc->height/8, sc->width/8);
+	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 
 	rasops_reconfig(ri, sc->height / ri->ri_font->fontheight,
