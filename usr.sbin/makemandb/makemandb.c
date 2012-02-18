@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.2 2012/02/07 19:17:16 joerg Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.2.2.1 2012/02/18 18:03:26 riz Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.2 2012/02/07 19:17:16 joerg Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.2.2.1 2012/02/18 18:03:26 riz Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -26,6 +26,8 @@ __RCSID("$NetBSD: makemandb.c,v 1.2 2012/02/07 19:17:16 joerg Exp $");
 #include <ctype.h>
 #include <dirent.h>
 #include <err.h>
+#include <archive.h>
+#include <libgen.h>
 #include <md5.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -93,12 +95,13 @@ typedef struct mandb_rec {
 static void append(secbuff *sbuff, const char *src);
 static void init_secbuffs(mandb_rec *);
 static void free_secbuffs(mandb_rec *);
-static int check_md5(const char *, sqlite3 *, const char *, char **);
+static int check_md5(const char *, sqlite3 *, const char *, char **, void *, size_t);
 static void cleanup(mandb_rec *);
 static void set_section(const struct mdoc *, const struct man *, mandb_rec *);
 static void set_machine(const struct mdoc *, mandb_rec *);
 static int insert_into_db(sqlite3 *, mandb_rec *);
-static	void begin_parse(const char *, struct mparse *, mandb_rec *);
+static	void begin_parse(const char *, struct mparse *, mandb_rec *,
+			 const void *, size_t len);
 static void pmdoc_node(const struct mdoc_node *, mandb_rec *);
 static void pmdoc_Nm(const struct mdoc_node *, mandb_rec *);
 static void pmdoc_Nd(const struct mdoc_node *, mandb_rec *);
@@ -291,7 +294,7 @@ main(int argc, char *argv[])
 {
 	FILE *file;
 	const char *sqlstr, *manconf = NULL;
-	char *line, *command;
+	char *line, *command, *parent;
 	char *errmsg;
 	int ch;
 	struct mparse *mp;
@@ -397,6 +400,9 @@ main(int argc, char *argv[])
 	while ((len = getline(&line, &linesize, file)) != -1) {
 		/* Replace the new line character at the end of string with '\0' */
 		line[len - 1] = '\0';
+		parent = estrdup(line);
+		chdir(dirname(parent));
+		free(parent);
 		/* Traverse the man page directories and parse the pages */
 		traversedir(line, db, mp);
 	}
@@ -587,6 +593,59 @@ update_existing_entry(sqlite3 *db, const char *file, const char *hash,
 	sqlite3_finalize(inner_stmt);
 }
 
+/* read_and_decompress --
+ *	Reads the given file into memory. If it is compressed, decompres
+ *	it before returning to the caller.
+ */
+static int
+read_and_decompress(const char *file, void **buf, size_t *len)
+{
+	size_t off;
+	ssize_t r;
+	struct archive *a;
+	struct archive_entry *ae;
+
+	if ((a = archive_read_new()) == NULL)
+		errx(EXIT_FAILURE, "memory allocation failed");
+
+	if (archive_read_support_compression_all(a) != ARCHIVE_OK ||
+	    archive_read_support_format_raw(a) != ARCHIVE_OK ||
+	    archive_read_open_filename(a, file, 65536) != ARCHIVE_OK ||
+	    archive_read_next_header(a, &ae) != ARCHIVE_OK)
+		goto archive_error;
+	*len = 65536;
+	*buf = emalloc(*len);
+	off = 0;
+	for (;;) {
+		r = archive_read_data(a, (char *)*buf + off, *len - off);
+		if (r == ARCHIVE_OK) {
+			archive_read_close(a);
+			*len = off;
+			return 0;
+		}
+		if (r <= 0) {
+			free(*buf);
+			break;
+		}
+		off += r;
+		if (off == *len) {
+			*len *= 2;
+			if (*len < off) {
+				warnx("File too large: %s", file);
+				free(*buf);
+				archive_read_close(a);
+				return -1;
+			}
+			*buf = erealloc(*buf, *len);
+		}
+	}
+
+archive_error:
+	warnx("Error while reading `%s': %s", file, archive_error_string(a));
+	archive_read_close(a);
+	return -1;
+}
+
 /* update_db --
  *	Does an incremental updation of the database by checking the file_cache.
  *	It parses and adds the pages which are present in file_cache,
@@ -601,7 +660,9 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 	sqlite3_stmt *stmt = NULL;
 	const char *file;
 	char *errmsg = NULL;
-	char *buf = NULL;
+	char *md5sum;
+	void *buf;
+	size_t buflen;
 	int new_count = 0;	/* Counter for newly indexed/updated pages */
 	int total_count = 0;	/* Counter for total number of pages */
 	int err_count = 0;	/* Counter for number of failed pages */
@@ -619,14 +680,21 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 		errx(EXIT_FAILURE, "Could not query file cache");
 	}
 
+	buf = NULL;
 	while (sqlite3_step(stmt) == SQLITE_ROW) {
+		free(buf);
 		total_count++;
 		rec->device = sqlite3_column_int64(stmt, 0);
 		rec->inode = sqlite3_column_int64(stmt, 1);
 		rec->mtime = sqlite3_column_int64(stmt, 2);
 		file = (const char *) sqlite3_column_text(stmt, 3);
-		md5_status = check_md5(file, db, "mandb_meta", &buf);
-		assert(buf != NULL);
+		if (read_and_decompress(file, &buf, &buflen)) {
+			err_count++;
+			buf = NULL;
+			continue;
+		}
+		md5_status = check_md5(file, db, "mandb_meta", &md5sum, buf, buflen);
+		assert(md5sum != NULL);
 		if (md5_status == -1) {
 			warnx("An error occurred in checking md5 value"
 			      " for file %s", file);
@@ -642,13 +710,13 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 			struct stat sb;
 			stat(file, &sb);
 			if (S_ISLNK(sb.st_mode)) {
-				free(buf);
+				free(md5sum);
 				link_count++;
 				continue;
 			}
-			update_existing_entry(db, file, buf, rec,
+			update_existing_entry(db, file, md5sum, rec,
 			    &new_count, &link_count, &err_count);
-			free(buf);
+			free(md5sum);
 			continue;
 		}
 
@@ -660,10 +728,10 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 			 */
 			if (mflags.verbosity > 1)
 				printf("Parsing: %s\n", file);
-			rec->md5_hash = buf;
+			rec->md5_hash = md5sum;
 			rec->file_path = estrdup(file);
 			// file_path is freed by insert_into_db itself.
-			begin_parse(file, mp, rec);
+			begin_parse(file, mp, rec, buf, buflen);
 			if (insert_into_db(db, rec) < 0) {
 				warnx("Error in indexing %s", file);
 				err_count++;
@@ -672,7 +740,8 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 			}
 		}
 	}
-	
+	free(buf);
+
 	sqlite3_finalize(stmt);
 	
 	if (mflags.verbosity) {
@@ -711,7 +780,8 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
  *  parses the man page using libmandoc
  */
 static void
-begin_parse(const char *file, struct mparse *mp, mandb_rec *rec)
+begin_parse(const char *file, struct mparse *mp, mandb_rec *rec,
+    const void *buf, size_t len)
 {
 	struct mdoc *mdoc;
 	struct man *man;
@@ -719,7 +789,7 @@ begin_parse(const char *file, struct mparse *mp, mandb_rec *rec)
 
 	rec->xr_found = 0;
 
-	if (mparse_readfd(mp, -1, file) >= MANDOCLEVEL_FATAL) {
+	if (mparse_readmem(mp, buf, len, file) >= MANDOCLEVEL_FATAL) {
 		warnx("%s: Parse failure", file);
 		return;
 	}
@@ -1675,7 +1745,8 @@ insert_into_db(sqlite3 *db, mandb_rec *rec)
  *  1: If the hash exists in the database.
  */
 static int
-check_md5(const char *file, sqlite3 *db, const char *table, char **buf)
+check_md5(const char *file, sqlite3 *db, const char *table, char **md5sum,
+    void *buf, size_t buflen)
 {
 	int rc = 0;
 	int idx = -1;
@@ -1683,8 +1754,8 @@ check_md5(const char *file, sqlite3 *db, const char *table, char **buf)
 	sqlite3_stmt *stmt = NULL;
 
 	assert(file != NULL);
-	*buf = MD5File(file, NULL);
-	if (*buf == NULL) {
+	*md5sum = MD5Data(buf, buflen, NULL);
+	if (*md5sum == NULL) {
 		warn("md5 failed: %s", file);
 		return -1;
 	}
@@ -1694,19 +1765,19 @@ check_md5(const char *file, sqlite3 *db, const char *table, char **buf)
 	rc = sqlite3_prepare_v2(db, sqlstr, -1, &stmt, NULL);
 	if (rc != SQLITE_OK) {
 		free(sqlstr);
-		free(*buf);
-		*buf = NULL;
+		free(*md5sum);
+		*md5sum = NULL;
 		return -1;
 	}
 
 	idx = sqlite3_bind_parameter_index(stmt, ":md5_hash");
-	rc = sqlite3_bind_text(stmt, idx, *buf, -1, NULL);
+	rc = sqlite3_bind_text(stmt, idx, *md5sum, -1, NULL);
 	if (rc != SQLITE_OK) {
 		warnx("%s", sqlite3_errmsg(db));
 		sqlite3_finalize(stmt);
 		free(sqlstr);
-		free(*buf);
-		*buf = NULL;
+		free(*md5sum);
+		*md5sum = NULL;
 		return -1;
 	}
 
@@ -1842,6 +1913,14 @@ free_secbuffs(mandb_rec *rec)
 	free(rec->errors.data);
 }
 
+static void
+replace_hyph(char *str)
+{
+	char *iter = str;
+	while ((iter = strchr(iter, ASCII_HYPH)) != NULL)
+		*iter = '-';
+}
+
 static char *
 parse_escape(const char *str)
 {
@@ -1853,8 +1932,11 @@ parse_escape(const char *str)
 
 	last_backslash = str;
 	backslash = strchr(str, '\\');
-	if (backslash == NULL)
-		return estrdup(str);
+	if (backslash == NULL) {
+		result = estrdup(str);
+		replace_hyph(result);
+		return result;
+	}
 
 	result = emalloc(strlen(str) + 1);
 	iter = result;
@@ -1878,9 +1960,8 @@ parse_escape(const char *str)
 	} while (backslash != NULL);
 	if (last_backslash != NULL)
 		strcpy(iter, last_backslash);
-	iter = result;
-	while ((iter = strchr(iter, ASCII_HYPH)) != NULL)
-		*iter = '-';
+	
+	replace_hyph(result);
 	return result;
 }
 
