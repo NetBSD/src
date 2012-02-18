@@ -1,4 +1,4 @@
-/*	$NetBSD: ffbvar.h,v 1.12 2011/10/31 08:28:46 jdc Exp $	*/
+/*	$NetBSD: ffbvar.h,v 1.12.6.1 2012/02/18 07:33:15 mrg Exp $	*/
 /*	$OpenBSD: creatorvar.h,v 1.6 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -54,6 +54,8 @@ struct ffb_softc {
 	bus_space_tag_t sc_bt;
 	bus_space_handle_t sc_dac_h;
 	bus_space_handle_t sc_fbc_h;
+	bus_space_handle_t sc_sfb32_h;
+	uint32_t *sc_sfb32;
 	bus_addr_t sc_addrs[FFB_NREGS];
 	bus_size_t sc_sizes[FFB_NREGS];
 	int sc_height, sc_width, sc_linebytes, sc_depth;

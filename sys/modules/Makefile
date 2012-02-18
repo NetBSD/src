@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.99 2011/11/24 15:52:24 ahoka Exp $
+#	$NetBSD: Makefile,v 1.99.2.1 2012/02/18 07:35:36 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -61,6 +61,7 @@ SUBDIR+=	puffs
 SUBDIR+=	putter
 SUBDIR+=	scsiverbose
 SUBDIR+=	secmodel_bsd44
+SUBDIR+=	secmodel_extensions
 SUBDIR+=	secmodel_overlay
 SUBDIR+=	securelevel
 SUBDIR+=	smbfs
@@ -189,6 +190,11 @@ SUBDIR+=	viadrm
 SUBDIR+=	aps
 SUBDIR+=	finsio
 SUBDIR+=	itesio
+SUBDIR+=	lm
+SUBDIR+=	lm_isa
+SUBDIR+=	lm_isa_common
+SUBDIR+=	lm_wbsio
+SUBDIR+=	wbsio
 .endif
 
 .if ${MACHINE_CPU} == "m68k"

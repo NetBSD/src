@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.82 2011/01/25 07:17:07 mrg Exp $ */
+/* $NetBSD: tga.c,v 1.82.8.1 2012/02/18 07:34:52 mrg Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.82 2011/01/25 07:17:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.82.8.1 2012/02/18 07:34:52 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -346,10 +346,10 @@ tga_init(bus_space_tag_t memt, pci_chipset_tag_t pc, pcitag_t tag,
 	wsfont_init();
 	/* prefer 8 pixel wide font */
 	cookie = wsfont_find(NULL, 8, 0, 0, WSDISPLAY_FONTORDER_R2L,
-	    WSDISPLAY_FONTORDER_L2R);
+	    WSDISPLAY_FONTORDER_L2R, WSFONT_FIND_BITMAP);
 	if (cookie <= 0)
 		cookie = wsfont_find(NULL, 0, 0, 0, WSDISPLAY_FONTORDER_R2L,
-		    WSDISPLAY_FONTORDER_L2R);
+		    WSDISPLAY_FONTORDER_L2R, WSFONT_FIND_BITMAP);
 	if (cookie <= 0) {
 		printf("tga: no appropriate fonts.\n");
 		return;

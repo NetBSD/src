@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.74 2011/11/17 22:41:55 rmind Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.74.4.1 2012/02/18 07:35:27 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.74 2011/11/17 22:41:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.74.4.1 2012/02/18 07:35:27 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -725,7 +725,7 @@ kqueue1(struct lwp *l, int flags, register_t *retval)
 
 	if ((error = fd_allocfile(&fp, &fd)) != 0)
 		return error;
-	fp->f_flag = FREAD | FWRITE | (flags & FNONBLOCK);
+	fp->f_flag = FREAD | FWRITE | (flags & (FNONBLOCK|FNOSIGPIPE));
 	fp->f_type = DTYPE_KQUEUE;
 	fp->f_ops = &kqueueops;
 	kq = kmem_zalloc(sizeof(*kq), KM_SLEEP);

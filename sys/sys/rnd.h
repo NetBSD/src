@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.26 2011/11/29 03:50:32 tls Exp $	*/
+/*	$NetBSD: rnd.h,v 1.26.2.1 2012/02/18 07:35:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -63,6 +63,7 @@ typedef struct {
 	uint8_t digest[SHA1_DIGEST_LENGTH];
 } rndsave_t;
 
+/* Statistics exposed by RNDGETPOOLSTAT */
 typedef struct
 {
 	uint32_t	poolsize;
@@ -95,9 +96,12 @@ typedef struct {
 #define	RND_TYPE_NET		2	/* source is a network device */
 #define	RND_TYPE_TAPE		3	/* source is a tape drive */
 #define	RND_TYPE_TTY		4	/* source is a tty device */
-#define	RND_TYPE_RNG		5	/* source is a random number
-					   generator */
-#define	RND_TYPE_MAX		5	/* last type id used */
+#define	RND_TYPE_RNG		5	/* source is a hardware RNG */
+#define RND_TYPE_SKEW		6	/* source is skew between clocks */
+#define RND_TYPE_ENV		7	/* source is temp or fan sensor */
+#define RND_TYPE_VM		8	/* source is VM system events */
+#define RND_TYPE_POWER		9	/* source is power events */
+#define	RND_TYPE_MAX		9	/* last type id used */
 
 #ifdef _KERNEL
 /*
@@ -118,7 +122,7 @@ typedef struct krndsource {
         uint32_t        total;          /* entropy from this source */
         uint32_t        type;           /* type */
         uint32_t        flags;          /* flags */
-        void            *state;         /* state informaiton */
+        void            *state;         /* state information */
         size_t          test_cnt;       /* how much test data accumulated? */
         rngtest_t	*test;          /* test data for RNG type sources */
 } krndsource_t;
@@ -152,7 +156,7 @@ uint32_t	rndpool_get_poolsize(void);
 void		rndpool_add_data(rndpool_t *, void *, uint32_t, uint32_t);
 uint32_t	rndpool_extract_data(rndpool_t *, void *, uint32_t, uint32_t);
 void		rnd_init(void);
-void		rnd_add_uint32(krndsource_t *, uint32_t);
+void		_rnd_add_uint32(krndsource_t *, uint32_t);
 void		rnd_add_data(krndsource_t *, const void *const, uint32_t,
 		    uint32_t);
 void		rnd_attach_source(krndsource_t *, const char *,
@@ -163,6 +167,16 @@ void		rndsink_attach(rndsink_t *);
 void		rndsink_detach(rndsink_t *);
 
 void		rnd_seed(void *, size_t);
+
+static inline void
+rnd_add_uint32(krndsource_t *kr, uint32_t val)
+{
+	if (RND_ENABLED(kr)) {
+		_rnd_add_uint32(kr, val);
+	}
+}
+
+extern int	rnd_full;
 
 #endif /* _KERNEL */
 
@@ -197,6 +211,10 @@ typedef struct {
 	uint32_t	mask;		/* mask for the flags we are setting */
 } rndctl_t;
 
+/*
+ * Add entropy to the pool.  len is the data length, in bytes.
+ * entropy is the number of bits of estimated entropy in the data.
+ */
 typedef struct {
 	uint32_t	len;
 	uint32_t	entropy;
@@ -208,6 +226,6 @@ typedef struct {
 #define	RNDGETSRCNAME	_IOWR('R', 103, rndstat_name_t) /* get src by name */
 #define	RNDCTL		_IOW('R',  104, rndctl_t)  /* set/clear source flags */
 #define	RNDADDDATA	_IOW('R',  105, rnddata_t) /* add data to the pool */
-#define	RNDGETPOOLSTAT	_IOR('R',  106, rndpoolstat_t)
+#define	RNDGETPOOLSTAT	_IOR('R',  106, rndpoolstat_t) /* get statistics */
 
 #endif /* !_SYS_RND_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: am79900.c,v 1.22 2010/04/05 07:19:33 joerg Exp $	*/
+/*	$NetBSD: am79900.c,v 1.22.12.1 2012/02/18 07:34:14 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -103,9 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79900.c,v 1.22 2010/04/05 07:19:33 joerg Exp $");
-
-#include "rnd.h"
+__KERNEL_RCSID(0, "$NetBSD: am79900.c,v 1.22.12.1 2012/02/18 07:34:14 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,9 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: am79900.c,v 1.22 2010/04/05 07:19:33 joerg Exp $");
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -470,9 +466,7 @@ am79900_intr(void *arg)
 	if (isr & LE_C0_TINT)
 		am79900_tint(sc);
 
-#if NRND > 0
 	rnd_add_uint32(&sc->rnd_source, isr);
-#endif
 
 	return (1);
 }

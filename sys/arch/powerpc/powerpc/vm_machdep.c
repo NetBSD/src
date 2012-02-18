@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.92 2011/07/02 01:26:29 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.92.6.1 2012/02/18 07:33:01 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.92 2011/07/02 01:26:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.92.6.1 2012/02/18 07:33:01 mrg Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -295,7 +295,7 @@ cpu_uarea_alloc(bool system)
 	 * Allocate a new physically contiguous uarea which can be
 	 * direct-mapped.
 	 */
-	error = uvm_pglistalloc(USPACE, 0, ptoa(physmem), 0, 0, &pglist, 1, 1);
+	error = uvm_pglistalloc(USPACE, 0, ~0UL, 0, 0, &pglist, 1, 1);
 	if (error) {
 		if (!system)
 			return NULL;
@@ -331,7 +331,7 @@ cpu_uarea_free(void *vva)
 		return false;
 
 	/*
-	 * Since the pages are physically contiguous, the vm_page structurs
+	 * Since the pages are physically contiguous, the vm_page structure
 	 * will be as well.
 	 */
 	struct vm_page *pg = PHYS_TO_VM_PAGE(PMAP_UNMAP_POOLPAGE(va));

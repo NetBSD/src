@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci_dma.c,v 1.19 2011/07/19 15:52:29 dyoung Exp $	*/
+/*	$NetBSD: gapspci_dma.c,v 1.19.6.1 2012/02/18 07:31:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gapspci_dma.c,v 1.19 2011/07/19 15:52:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gapspci_dma.c,v 1.19.6.1 2012/02/18 07:31:43 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ gaps_dma_init(struct gaps_softc *sc)
 	 */
 	sc->sc_dma_ex = extent_create("gaps dma",
 	    sc->sc_dmabase, sc->sc_dmabase + (sc->sc_dmasize - 1),
-	    M_DEVBUF, NULL, 0, EX_WAITOK | EXF_NOCOALESCE);
+	    NULL, 0, EX_WAITOK | EXF_NOCOALESCE);
 
 	if (bus_space_map(sc->sc_memt, sc->sc_dmabase, sc->sc_dmasize,
 	    0, &sc->sc_dma_memh) != 0)

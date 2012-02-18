@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.138 2010/11/13 13:52:06 uebayasi Exp $	*/
+/*	$NetBSD: if_de.c,v 1.138.12.1 2012/02/18 07:34:38 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.138 2010/11/13 13:52:06 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.138.12.1 2012/02/18 07:34:38 mrg Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -63,10 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.138 2010/11/13 13:52:06 uebayasi Exp $")
 #endif
 
 #if defined(__NetBSD__)
-#include "rnd.h"
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 #endif
 
 #include <net/if.h>
@@ -4029,9 +4026,7 @@ tulip_intr_handler(
     while ((csr = TULIP_CSR_READ(sc, csr_status)) & sc->tulip_intrmask) {
 #if defined(__NetBSD__) && !defined(TULIP_USE_SOFTINTR)
         if (only_once == 1) {
-#if NRND > 0
 	    rnd_add_uint32(&sc->tulip_rndsource, csr);
-#endif
 	    only_once = 0;
 	}
 #endif
@@ -4159,7 +4154,7 @@ tulip_hardintr_handler(
      */
     tulip_softintr_mask |= (1U << sc->tulip_unit);
 
-#if defined(__NetBSD__) && NRND > 0
+#if defined(__NetBSD__)
     /*
      * This isn't all that random (the value we feed in) but it is
      * better than a constant probably.  It isn't used in entropy
@@ -5146,7 +5141,7 @@ tulip_attach(
 #endif
 #endif /* __bsdi__ */
 
-#if defined(__NetBSD__) && NRND > 0
+#if defined(__NetBSD__)
     rnd_attach_source(&sc->tulip_rndsource, device_xname(&sc->tulip_dev),
 		      RND_TYPE_NET, 0);
 #endif

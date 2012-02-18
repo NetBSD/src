@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.28 2011/03/04 04:48:39 jruoho Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.28.8.1 2012/02/18 07:33:36 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.28 2011/03/04 04:48:39 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.28.8.1 2012/02/18 07:33:36 mrg Exp $");
 
 #include "opt_xen.h"
 
@@ -168,7 +168,7 @@ cpu_probe_amd_cache(struct cpu_info *ci)
 	cai = &ci->ci_cinfo[CAI_DCACHE];
 	cai->cai_totalsize = AMD_L1_ECX_DC_SIZE(descs[2]);
 	cai->cai_associativity = AMD_L1_ECX_DC_ASSOC(descs[2]);
-	cai->cai_linesize = AMD_L1_EDX_IC_LS(descs[2]);
+	cai->cai_linesize = AMD_L1_ECX_DC_LS(descs[2]);
 
 	cai = &ci->ci_cinfo[CAI_ICACHE];
 	cai->cai_totalsize = AMD_L1_EDX_IC_SIZE(descs[3]);

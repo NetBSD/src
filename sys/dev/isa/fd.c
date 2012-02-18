@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.99 2010/11/13 13:52:03 uebayasi Exp $	*/
+/*	$NetBSD: fd.c,v 1.99.12.1 2012/02/18 07:34:27 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2008 The NetBSD Foundation, Inc.
@@ -81,9 +81,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.99 2010/11/13 13:52:03 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.99.12.1 2012/02/18 07:34:27 mrg Exp $");
 
-#include "rnd.h"
 #include "opt_ddb.h"
 
 /*
@@ -116,9 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.99 2010/11/13 13:52:03 uebayasi Exp $");
 #include <sys/fdio.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <prop/proplib.h>
 
@@ -572,10 +569,8 @@ fdattach(device_t parent, device_t self, void *aux)
 	fd->sc_roothook =
 	    mountroothook_establish(fd_mountroot_hook, fd->sc_dev);
 
-#if NRND > 0
 	rnd_attach_source(&fd->rnd_source, device_xname(fd->sc_dev),
 			  RND_TYPE_DISK, 0);
-#endif
 
 	fd_set_properties(fd);
 
@@ -607,9 +602,8 @@ fddetach(device_t self, int flags)
 #if 0 /* XXX need to undo at detach? */
 	fd_set_properties(fd);
 #endif
-#if NRND > 0
+
 	rnd_detach_source(&fd->rnd_source);
-#endif
 
 	disk_detach(&fd->sc_dk);
 	disk_destroy(&fd->sc_dk);
@@ -786,9 +780,7 @@ fdfinish(struct fd_softc *fd, struct buf *bp)
 	bp->b_resid = fd->sc_bcount;
 	fd->sc_skip = 0;
 
-#if NRND > 0
 	rnd_add_uint32(&fd->rnd_source, bp->b_blkno);
-#endif
 
 	biodone(bp);
 	/* turn off motor 5s from now */

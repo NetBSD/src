@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv.c,v 1.4 2011/08/09 01:42:24 jmcneill Exp $ */
+/* $NetBSD: emdtv.c,v 1.4.6.1 2012/02/18 07:35:04 mrg Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.4 2011/08/09 01:42:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.4.6.1 2012/02/18 07:35:04 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -319,7 +319,10 @@ emdtv_read_multi_1(struct emdtv_softc *sc, uint8_t req, uint16_t index,
 	USETW(request.wIndex, index);
 	USETW(request.wLength, count);
 
+	KERNEL_LOCK(1, curlwp);
 	status = usbd_do_request(sc->sc_udev, &request, datap);
+	KERNEL_UNLOCK_ONE(curlwp);
+
 	if (status != USBD_NORMAL_COMPLETION)
 		aprint_error_dev(sc->sc_dev, "couldn't read %x/%x: %s\n",
 		    req, index, usbd_errstr(status));
@@ -347,7 +350,10 @@ emdtv_write_multi_1(struct emdtv_softc *sc, uint8_t req, uint16_t index,
 	USETW(request.wIndex, index);
 	USETW(request.wLength, count);
 
+	KERNEL_LOCK(1, curlwp);
 	status = usbd_do_request(sc->sc_udev, &request, __UNCONST(datap));
+	KERNEL_UNLOCK_ONE(curlwp);
+
 	if (status != USBD_NORMAL_COMPLETION)
 		aprint_error_dev(sc->sc_dev, "couldn't read %x/%x: %s\n",
 		    req, index, usbd_errstr(status));

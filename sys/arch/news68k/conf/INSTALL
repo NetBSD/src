@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.55 2011/11/22 21:25:29 tls Exp $
+# 	$NetBSD: INSTALL,v 1.55.2.1 2012/02/18 07:32:46 mrg Exp $
 
 #	config for bootable floppy kernel
 #
@@ -71,7 +71,7 @@ file-system	MSDOSFS		# MS-DOS FAT file system
 #options 	FFS_EI		# ffs endian independent support
 options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 
 # Networking options
 options 	INET		# Internet protocols

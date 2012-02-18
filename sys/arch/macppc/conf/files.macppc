@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.98 2011/07/13 22:54:33 macallan Exp $
+#	$NetBSD: files.macppc,v 1.98.6.1 2012/02/18 07:32:34 mrg Exp $
 #
 # macppc-specific configuration info
 
@@ -295,4 +295,12 @@ device deq
 attach deq at ki2c
 file arch/macppc/dev/deq.c				deq
 
+device videopll
+attach videopll at iic
+file arch/macppc/dev/videopll.c				videopll needs-flag
+defflag opt_videopll.h VIDEOPLL_DEBUG
 
+device valkyriefb: wsemuldisplaydev, rasops8, vcons, videomode
+attach valkyriefb at mainbus
+file arch/macppc/dev/valkyriefb.c			valkyriefb
+defflag opt_valkyriefb.h VALKYRIEFB_DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.13 2009/12/14 00:46:04 matt Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.13.16.1 2012/02/18 07:32:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -70,5 +70,7 @@
 #define	_MIPS_ISA_MIPS4		4
 #define	_MIPS_ISA_MIPS32	5
 #define	_MIPS_ISA_MIPS64	6
+
+#define	__ALIGNBYTES	7
 
 #endif /* !_MIPS_CDEFS_H_ */

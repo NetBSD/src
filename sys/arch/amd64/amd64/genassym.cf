@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.48 2011/07/01 19:24:14 dyoung Exp $
+#	$NetBSD: genassym.cf,v 1.48.6.1 2012/02/18 07:31:09 mrg Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@ include <machine/i82093var.h>
 endif
 
 ifdef XEN
-include <xen/xen3-public/xen.h>
+include <xen/xen-public/xen.h>
 endif  
 
 include <sys/bus.h>

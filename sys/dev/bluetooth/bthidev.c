@@ -1,4 +1,4 @@
-/*	$NetBSD: bthidev.c,v 1.19 2010/04/28 06:13:51 plunky Exp $	*/
+/*	$NetBSD: bthidev.c,v 1.19.12.1 2012/02/18 07:34:09 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,16 +32,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.19 2010/04/28 06:13:51 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.19.12.1 2012/02/18 07:34:09 mrg Exp $");
 
 #include <sys/param.h>
+#include <sys/condvar.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>
 #include <sys/kernel.h>
+#include <sys/kthread.h>
 #include <sys/queue.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/mutex.h>
 #include <sys/proc.h>
 #include <sys/socketvar.h>
 #include <sys/systm.h>
@@ -83,6 +86,12 @@ struct bthidev_softc {
 	struct l2cap_channel	*sc_int;	/* interrupt channel */
 	struct l2cap_channel	*sc_int_l;	/* interrupt listen */
 
+	MBUFQ_HEAD()		sc_inq;		/* input queue */
+	kmutex_t		sc_lock;	/* input queue lock */
+	kcondvar_t		sc_cv;		/* input queue trigger */
+	lwp_t			*sc_lwp;	/* input queue processor */
+	int			sc_detach;
+
 	LIST_HEAD(,bthidev)	sc_list;	/* child list */
 
 	callout_t		sc_reconnect;
@@ -107,6 +116,8 @@ static int  bthidev_listen(struct bthidev_softc *);
 static int  bthidev_connect(struct bthidev_softc *);
 static int  bthidev_output(struct bthidev *, uint8_t *, int);
 static void bthidev_null(struct bthidev *, uint8_t *, int);
+static void bthidev_process(void *);
+static void bthidev_process_one(struct bthidev_softc *, struct mbuf *);
 
 /* autoconf(9) glue */
 static int  bthidev_match(device_t, cfdata_t, void *);
@@ -188,6 +199,7 @@ bthidev_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->sc_dev = self;
 	LIST_INIT(&sc->sc_list);
+	MBUFQ_INIT(&sc->sc_inq);
 	callout_init(&sc->sc_reconnect, 0);
 	callout_setfunc(&sc->sc_reconnect, bthidev_timeout, sc);
 	sc->sc_state = BTHID_CLOSED;
@@ -196,6 +208,8 @@ bthidev_attach(device_t parent, device_t self, void *aux)
 	sc->sc_intpsm = L2CAP_PSM_HID_INTR;
 
 	sockopt_init(&sc->sc_mode, BTPROTO_L2CAP, SO_L2CAP_LM, 0);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&sc->sc_cv, device_xname(self));
 
 	/*
 	 * extract config from proplist
@@ -280,6 +294,12 @@ bthidev_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
+	if (kthread_create(PRI_NONE, KTHREAD_MUSTJOIN, NULL, bthidev_process,
+	    sc, &sc->sc_lwp, "%s", device_xname(self)) != 0) {
+		aprint_error_dev(self, "failed to create input thread\n");
+		return;
+	}
+
 	for (rep = 0 ; rep <= maxid ; rep++) {
 		if (hid_report_size(desc, dlen, hid_feature, rep) == 0
 		    && hid_report_size(desc, dlen, hid_input, rep) == 0
@@ -362,12 +382,25 @@ bthidev_detach(device_t self, int flags)
 
 	mutex_exit(bt_lock);
 
+	/* kill off the input processor */
+	if (sc->sc_lwp != NULL) {
+		mutex_enter(&sc->sc_lock);
+		sc->sc_detach = 1;
+		cv_signal(&sc->sc_cv);
+		mutex_exit(&sc->sc_lock);
+		kthread_join(sc->sc_lwp);
+		sc->sc_lwp = NULL;
+	}
+
 	/* detach children */
 	while ((hidev = LIST_FIRST(&sc->sc_list)) != NULL) {
 		LIST_REMOVE(hidev, sc_next);
 		config_detach(hidev->sc_dev, flags);
 	}
 
+	MBUFQ_DRAIN(&sc->sc_inq);
+	cv_destroy(&sc->sc_cv);
+	mutex_destroy(&sc->sc_lock);
 	sockopt_destroy(&sc->sc_mode);
 
 	return 0;
@@ -543,6 +576,123 @@ bthidev_connect(struct bthidev_softc *sc)
 
 	sc->sc_state = BTHID_WAIT_CTL;
 	return 0;
+}
+
+/*
+ * The LWP which processes input reports, forwarding to child devices.
+ * We are always either processing input reports, holding the lock, or
+ * waiting for a signal on condvar.
+ */
+static void
+bthidev_process(void *arg)
+{
+	struct bthidev_softc *sc = arg;
+	struct mbuf *m;
+
+	mutex_enter(&sc->sc_lock);
+	while (sc->sc_detach == 0) {
+		MBUFQ_DEQUEUE(&sc->sc_inq, m);
+		if (m == NULL) {
+			cv_wait(&sc->sc_cv, &sc->sc_lock);
+			continue;
+		}
+
+		mutex_exit(&sc->sc_lock);
+		bthidev_process_one(sc, m);
+		m_freem(m);
+		mutex_enter(&sc->sc_lock);
+	}
+	mutex_exit(&sc->sc_lock);
+	kthread_exit(0);
+}
+
+static void
+bthidev_process_one(struct bthidev_softc *sc, struct mbuf *m)
+{
+	struct bthidev *hidev;
+	uint8_t *data;
+	int len;
+
+	if (sc->sc_state != BTHID_OPEN)
+		return;
+
+	if (m->m_pkthdr.len > m->m_len)
+		aprint_error_dev(sc->sc_dev, "truncating HID report\n");
+
+	len = m->m_len;
+	data = mtod(m, uint8_t *);
+
+	switch (BTHID_TYPE(data[0])) {
+	case BTHID_DATA:
+		/*
+		 * data[0] == type / parameter
+		 * data[1] == id
+		 * data[2..len] == report
+		 */
+		if (len < 3)
+			break;
+
+		LIST_FOREACH(hidev, &sc->sc_list, sc_next)
+			if (data[1] == hidev->sc_id)
+				break;
+
+		if (hidev == NULL) {
+			aprint_error_dev(sc->sc_dev,
+			    "report id %d, len = %d ignored\n", data[1], len - 2);
+
+			break;
+		}
+
+		switch (BTHID_DATA_PARAM(data[0])) {
+		case BTHID_DATA_INPUT:
+			(*hidev->sc_input)(hidev, data + 2, len - 2);
+			break;
+
+		case BTHID_DATA_FEATURE:
+			(*hidev->sc_feature)(hidev, data + 2, len - 2);
+			break;
+
+		default:
+			break;
+		}
+
+		break;
+
+	case BTHID_CONTROL:
+		if (len < 1)
+			break;
+
+		switch (BTHID_DATA_PARAM(data[0])) {
+		case BTHID_CONTROL_UNPLUG:
+			aprint_normal_dev(sc->sc_dev, "unplugged\n");
+
+			mutex_enter(bt_lock);
+			/* close interrupt channel */
+			if (sc->sc_int != NULL) {
+				l2cap_disconnect(sc->sc_int, 0);
+				l2cap_detach(&sc->sc_int);
+				sc->sc_int = NULL;
+			}
+
+			/* close control channel */
+			if (sc->sc_ctl != NULL) {
+				l2cap_disconnect(sc->sc_ctl, 0);
+				l2cap_detach(&sc->sc_ctl);
+				sc->sc_ctl = NULL;
+			}
+			mutex_exit(bt_lock);
+
+			break;
+
+		default:
+			break;
+		}
+
+		break;
+
+	default:
+		break;
+	}
 }
 
 /*****************************************************************************
@@ -787,85 +937,23 @@ bthidev_linkmode(void *arg, int new)
 }
 
 /*
- * Receive reports from the protocol stack.
+ * Receive reports from the protocol stack. Because this will be called
+ * with bt_lock held, we queue the mbuf and process it with a kernel thread
  */
 static void
 bthidev_input(void *arg, struct mbuf *m)
 {
 	struct bthidev_softc *sc = arg;
-	struct bthidev *hidev;
-	uint8_t *data;
-	int len;
 
-	if (sc->sc_state != BTHID_OPEN)
-		goto release;
-
-	if (m->m_pkthdr.len > m->m_len)
-		aprint_error_dev(sc->sc_dev, "truncating HID report\n");
-
-	len = m->m_len;
-	data = mtod(m, uint8_t *);
-
-	if (BTHID_TYPE(data[0]) == BTHID_DATA) {
-		/*
-		 * data[0] == type / parameter
-		 * data[1] == id
-		 * data[2..len] == report
-		 */
-		if (len < 3)
-			goto release;
-
-		LIST_FOREACH(hidev, &sc->sc_list, sc_next) {
-			if (data[1] == hidev->sc_id) {
-				switch (BTHID_DATA_PARAM(data[0])) {
-				case BTHID_DATA_INPUT:
-					(*hidev->sc_input)(hidev, data + 2, len - 2);
-					break;
-
-				case BTHID_DATA_FEATURE:
-					(*hidev->sc_feature)(hidev, data + 2, len - 2);
-					break;
-
-				default:
-					break;
-				}
-
-				goto release;
-			}
-		}
-		aprint_error_dev(sc->sc_dev, "report id %d, len = %d ignored\n",
-		    data[1], len - 2);
-
-		goto release;
+	if (sc->sc_state != BTHID_OPEN) {
+		m_freem(m);
+		return;
 	}
 
-	if (BTHID_TYPE(data[0]) == BTHID_CONTROL) {
-		if (len < 1)
-			goto release;
-
-		if (BTHID_DATA_PARAM(data[0]) == BTHID_CONTROL_UNPLUG) {
-			aprint_normal_dev(sc->sc_dev, "unplugged\n");
-
-			/* close interrupt channel */
-			if (sc->sc_int != NULL) {
-				l2cap_disconnect(sc->sc_int, 0);
-				l2cap_detach(&sc->sc_int);
-				sc->sc_int = NULL;
-			}
-
-			/* close control channel */
-			if (sc->sc_ctl != NULL) {
-				l2cap_disconnect(sc->sc_ctl, 0);
-				l2cap_detach(&sc->sc_ctl);
-				sc->sc_ctl = NULL;
-			}
-		}
-
-		goto release;
-	}
-
-release:
-	m_freem(m);
+	mutex_enter(&sc->sc_lock);
+	MBUFQ_ENQUEUE(&sc->sc_inq, m);
+	cv_signal(&sc->sc_cv);
+	mutex_exit(&sc->sc_lock);
 }
 
 /*****************************************************************************

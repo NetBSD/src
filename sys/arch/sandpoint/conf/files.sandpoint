@@ -1,4 +1,4 @@
-#	$NetBSD: files.sandpoint,v 1.29 2011/03/01 09:17:07 phx Exp $
+#	$NetBSD: files.sandpoint,v 1.29.8.1 2012/02/18 07:33:02 mrg Exp $
 #
 # Motorola's "SandPoint" evaluation board and multiplied descendents.
 #
@@ -31,26 +31,41 @@ include "dev/ata/files.ata"
 #
 # Memory Disk for install floppy
 #
-file dev/md_root.c	memory_disk_hooks
+file	dev/md_root.c	memory_disk_hooks
 
 #
 # System bus types
 #
-define mainbus { }
+define	mainbus { }
 device	mainbus: isabus, pcibus, mainbus
 attach	mainbus at root
+
 device	cpu
 attach	cpu at mainbus
 file	arch/sandpoint/sandpoint/mainbus.c	mainbus|cpu needs-flag
 
-device eumb { [ unit = -1 ] }: mainbus
-attach eumb at mainbus
+device	cfi: norbus
+attach	cfi at mainbus with sandpointcfi
+file	arch/sandpoint/sandpoint/flash_cfi.c	sandpointcfi
+
+device	nhpow: sysmon_power, sysmon_taskq, gpiobus
+attach	nhpow at mainbus
+file	arch/sandpoint/sandpoint/nhpow.c	nhpow
+
+device	eumb { [ unit = -1 ] }: mainbus
+attach	eumb at mainbus
 file	arch/sandpoint/sandpoint/eumb.c		eumb
-attach com at eumb with com_eumb
+
+attach	com at eumb with com_eumb
 file	arch/sandpoint/sandpoint/com_eumb.c	com_eumb needs-flag
+
 device	ociic: motoi2c, i2cbus
-attach ociic at eumb with iic_eumb
+attach	ociic at eumb with iic_eumb
 file	arch/sandpoint/sandpoint/iic_eumb.c	iic_eumb
+
+device	satmgr: sysmon_power, sysmon_taskq
+attach	satmgr at eumb
+file	arch/sandpoint/sandpoint/satmgr.c	satmgr
 
 #
 # PCI-only drivers
@@ -103,9 +118,5 @@ device	fd: disk
 attach	fd at fdc
 
 include	"dev/usb/files.usb"
-
-device	satmgr: sysmon_power, sysmon_taskq
-attach	satmgr at eumb
-file	arch/sandpoint/sandpoint/satmgr.c	satmgr
 
 include "arch/powerpc/conf/majors.powerpc"

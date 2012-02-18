@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.63 2011/11/24 03:35:58 mrg Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.63.2.1 2012/02/18 07:34:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.63 2011/11/24 03:35:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.63.2.1 2012/02/18 07:34:36 mrg Exp $");
 
 #include "midi.h"
 
@@ -243,18 +243,14 @@ cs4280_attach(device_t parent, device_t self, void *aux)
 	char const *intrstr;
 	const char *vendor, *product;
 	pcireg_t reg;
-	char devinfo[256];
 	uint32_t mem;
 	int error;
 
 	sc = device_private(self);
 	pa = (struct pci_attach_args *)aux;
 	pc = pa->pa_pc;
-	aprint_naive(": Audio controller\n");
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
-	    PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo(pa, "Audio controller");
 
 	cs_card = cs4280_identify_card(pa);
 	if (cs_card != NULL) {

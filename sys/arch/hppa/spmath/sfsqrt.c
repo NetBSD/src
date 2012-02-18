@@ -1,4 +1,4 @@
-/*	$NetBSD: sfsqrt.c,v 1.4 2007/02/22 05:46:31 thorpej Exp $	*/
+/*	$NetBSD: sfsqrt.c,v 1.4.84.1 2012/02/18 07:32:18 mrg Exp $	*/
 
 /*	$OpenBSD: sfsqrt.c,v 1.5 2001/03/29 03:58:19 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfsqrt.c,v 1.4 2007/02/22 05:46:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfsqrt.c,v 1.4.84.1 2012/02/18 07:32:18 mrg Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/sgl_float.h"
@@ -53,10 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: sfsqrt.c,v 1.4 2007/02/22 05:46:31 thorpej Exp $");
 
 /*ARGSUSED*/
 int
-sgl_fsqrt(srcptr,dstptr,status)
-
-sgl_floating_point *srcptr, *dstptr;
-unsigned int *status;
+sgl_fsqrt(sgl_floating_point *srcptr, sgl_floating_point *dstptr,
+    unsigned int *status)
 {
 	register unsigned int src, result;
 	register int src_exponent, newbit, sum;

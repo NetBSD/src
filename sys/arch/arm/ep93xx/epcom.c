@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.21 2011/07/01 19:31:17 dyoung Exp $ */
+/*	$NetBSD: epcom.c,v 1.21.6.1 2012/02/18 07:31:25 mrg Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,14 +73,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.21 2011/07/01 19:31:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.21.6.1 2012/02/18 07:31:25 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "epcom.h"
 
 #include "rnd.h"
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 #include <sys/rnd.h>
 #endif
 
@@ -237,7 +237,7 @@ epcom_attach_subr(struct epcom_softc *sc)
 
 	sc->sc_si = softint_establish(SOFTINT_SERIAL, epcomsoft, sc);
 
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
 			  RND_TYPE_TTY, 0);
 #endif
@@ -1132,7 +1132,7 @@ epcomintr(void* arg)
 	softint_schedule(sc->sc_si);
 
 #if 0 /* XXX: broken */
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 	rnd_add_uint32(&sc->rnd_source, intr ^ flagr);
 #endif
 #endif

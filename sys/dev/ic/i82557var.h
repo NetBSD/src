@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.49 2011/11/19 22:51:22 tls Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.49.2.1 2012/02/18 07:34:19 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -241,10 +241,7 @@ struct fxp_softc {
 	void	(*sc_disable)(struct fxp_softc *);
 
 	int	sc_eeprom_size;		/* log2 size of EEPROM */
-#if NRND > 0
 	krndsource_t rnd_source;	/* random source */
-#endif
-
 };
 
 #ifdef FXP_EVENT_COUNTERS

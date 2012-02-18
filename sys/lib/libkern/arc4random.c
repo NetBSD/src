@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.29 2011/11/29 13:16:27 drochner Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.29.2.1 2012/02/18 07:35:35 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #include <sys/cdefs.h>
 
 #ifdef _KERNEL
-#include "rnd.h"
+#define NRND 1
 #else
 #define NRND 0
 #endif
@@ -302,7 +302,8 @@ _arc4randbytes(void *p, size_t len)
 	if (!arc4_initialized) {
 		arc4_init();
 		/* avoid conditionalizing locking */
-		return arc4randbytes_unlocked(p, len);
+		arc4randbytes_unlocked(p, len);
+		return;
 	}
 	mutex_spin_enter(&arc4_mtx);
 	arc4randbytes_unlocked(p, len);

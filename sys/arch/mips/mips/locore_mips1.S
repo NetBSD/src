@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.82 2011/05/07 19:15:48 tsutsui Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.82.8.1 2012/02/18 07:32:40 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1265,7 +1265,8 @@ LEAF(MIPSX(tlb_invalidate_asids))
 
 	mfc0	ta0, MIPS_COP_0_TLB_HI		# get va and ASID
 	nop
-	and	ta0, ta0, PG_ASID		# mask off ASID
+	and	ta0, MIPS1_TLB_PID 		# mask off ASID
+	srl	ta0, MIPS1_TLB_PID_SHIFT
 	sltu	ta1, ta0, a0			# < asid_lo
 	bnez	ta1, 2f				# yes, next tlb entry
 	 nop
@@ -1299,7 +1300,8 @@ LEAF(MIPSX(tlb_invalidate_all))
 	mfc0	v1, MIPS_COP_0_STATUS		# save the status register.
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 
-	li	t1, MIPS_KSEG0_START
+	mfc0	t0, MIPS_COP_0_TLB_HI		# save current PID
+	li	t1, MIPS_KSEG0_START		# invalid address
 	mtc0	t1, MIPS_COP_0_TLB_HI		# make entryHi invalid
 	mtc0	zero, MIPS_COP_0_TLB_LOW	# zero out entryLo
 
@@ -1313,6 +1315,7 @@ LEAF(MIPSX(tlb_invalidate_all))
 	bne	t1, a0, 1b
 	 tlbwi					# invalidate the entry
 
+	mtc0	t0, MIPS_COP_0_TLB_HI		# restore PID
 	j	ra
 	 mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 END(MIPSX(tlb_invalidate_all))
@@ -1350,8 +1353,9 @@ LEAF(MIPSX(tlb_record_asids))
 
 	mfc0	t0, MIPS_COP_0_TLB_HI		# get va and ASID
 	nop
-	and	t0, PG_ASID			# mask off ASID
-	srl	t0, MIPS1_TLB_INDEX_SHIFT	# shift to low bits
+	and	t0, MIPS1_TLB_PID
+	srl	t0, MIPS1_TLB_PID_SHIFT		# shift to low bits
+	and	t0, a1				# focus on asid_mask
 
 	srl	a2, t0, 3 + LONG_SCALESHIFT	# drop low 5 bits
 	sll	a2, LONG_SCALESHIFT		# make an index for the bitmap
@@ -1545,6 +1549,8 @@ LEAF_NOPROFILE(MIPSX(cpu_switch_resume))
 	blt	s0, s2, resume
 	nop
 
+	mfc0	t3, MIPS_COP_0_TLB_HI		# save PID
+	nop
 	mtc0	s0, MIPS_COP_0_TLB_HI		# VPN = va
 	nop
 	tlbp					# probe 1st VPN
@@ -1586,6 +1592,8 @@ entry1set:
 	mtc0	a2, MIPS_COP_0_TLB_LOW		# 2nd PFN w/ PG_G
 	nop
 	tlbwi					# set TLB entry #1
+	nop
+	mfc0	t3, MIPS_COP_0_TLB_HI		# restore PID
 
 resume:
 	j	ra

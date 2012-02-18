@@ -1,5 +1,5 @@
-/*	$Id: at91usart.c,v 1.5 2011/07/01 19:31:17 dyoung Exp $	*/
-/*	$NetBSD: at91usart.c,v 1.5 2011/07/01 19:31:17 dyoung Exp $ */
+/*	$Id: at91usart.c,v 1.5.6.1 2012/02/18 07:31:24 mrg Exp $	*/
+/*	$NetBSD: at91usart.c,v 1.5.6.1 2012/02/18 07:31:24 mrg Exp $ */
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -77,13 +77,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91usart.c,v 1.5 2011/07/01 19:31:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91usart.c,v 1.5.6.1 2012/02/18 07:31:24 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 
 #include "rnd.h"
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 #include <sys/rnd.h>
 #endif
 
@@ -303,7 +303,7 @@ at91usart_attach_subr(struct at91usart_softc *sc, struct at91bus_attach_args *sa
 
 	sc->sc_si = softint_establish(SOFTINT_SERIAL, at91usart_soft, sc);
 
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 			  RND_TYPE_TTY, 0);
 #endif

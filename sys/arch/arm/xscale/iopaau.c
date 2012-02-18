@@ -1,4 +1,4 @@
-/*	$NetBSD: iopaau.c,v 1.16 2008/01/05 00:31:55 ad Exp $	*/
+/*	$NetBSD: iopaau.c,v 1.16.48.1 2012/02/18 07:31:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.16 2008/01/05 00:31:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.16.48.1 2012/02/18 07:31:33 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -151,7 +151,7 @@ iopaau_start(struct iopaau_softc *sc)
 			panic("iopaau_start: AAU already active");
 #endif
 
-		DPRINTF(("%s: starting dreq %p\n", sc->sc_dev.dv_xname,
+		DPRINTF(("%s: starting dreq %p\n", device_xname(sc->sc_dev),
 		    dreq));
 
 		bus_space_write_4(sc->sc_st, sc->sc_sh, AAU_ANDAR,
@@ -588,7 +588,7 @@ iopaau_intr(void *arg)
 	/* XXX -- why does this happen? */
 	if (sc->sc_running == NULL) {
 		printf("%s: unexpected interrupt, ASR = 0x%08x\n",
-		    sc->sc_dev.dv_xname, asr);
+		    device_xname(sc->sc_dev), asr);
 		return (1);
 	}
 	dreq = sc->sc_running;
@@ -596,7 +596,7 @@ iopaau_intr(void *arg)
 	/* Stop the AAU. */
 	bus_space_write_4(sc->sc_st, sc->sc_sh, AAU_ACR, 0);
 
-	DPRINTF(("%s: got interrupt for dreq %p\n", sc->sc_dev.dv_xname,
+	DPRINTF(("%s: got interrupt for dreq %p\n", device_xname(sc->sc_dev),
 	    dreq));
 
 	if (__predict_false((asr & AAU_ASR_ETIF) != 0)) {
@@ -609,7 +609,7 @@ iopaau_intr(void *arg)
 	}
 
 	if (__predict_false((asr & AAU_ASR_MA) != 0)) {
-		printf("%s: WARNING: got master abort\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "WARNING: got master abort\n");
 		dreq->dreq_flags |= DMOVER_REQ_ERROR;
 		dreq->dreq_error = EFAULT;
 	}
@@ -628,9 +628,8 @@ iopaau_attach(struct iopaau_softc *sc)
 	error = bus_dmamap_create(sc->sc_dmat, AAU_MAX_XFER, AAU_MAX_SEGS,
 	    AAU_MAX_XFER, AAU_IO_BOUNDARY, 0, &sc->sc_map_out);
 	if (error) {
-		aprint_error(
-		    "%s: unable to create output DMA map, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to create output DMA map, error = %d\n", error);
 		return;
 	}
 
@@ -639,8 +638,9 @@ iopaau_attach(struct iopaau_softc *sc)
 		    AAU_MAX_SEGS, AAU_MAX_XFER, AAU_IO_BOUNDARY, 0,
 		    &sc->sc_map_in[i]);
 		if (error) {
-			aprint_error("%s: unable to create input %d DMA map, "
-			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
+			aprint_error_dev(sc->sc_dev,
+			    "unable to create input %d DMA map, error = %d\n",
+			    i, error);
 			return;
 		}
 	}

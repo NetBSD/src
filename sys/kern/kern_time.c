@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.170 2011/10/27 16:12:52 christos Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.170.6.1 2012/02/18 07:35:31 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.170 2011/10/27 16:12:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.170.6.1 2012/02/18 07:35:31 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -674,7 +674,10 @@ timer_settime(struct ptimer *pt)
 			 * Don't need to check tshzto() return value, here.
 			 * callout_reset() does it for us.
 			 */
-			callout_reset(&pt->pt_ch, tshzto(&pt->pt_time.it_value),
+			callout_reset(&pt->pt_ch,
+			    pt->pt_type == CLOCK_MONOTONIC ?
+			    tshztoup(&pt->pt_time.it_value) :
+			    tshzto(&pt->pt_time.it_value),
 			    realtimerexpire, pt);
 		}
 	} else {
@@ -1004,7 +1007,11 @@ realtimerexpire(void *arg)
 		return;
 	}
 
-	getnanotime(&now);
+	if (pt->pt_type == CLOCK_MONOTONIC) {
+		getnanouptime(&now);
+	} else {
+		getnanotime(&now);
+	}
 	backwards = (timespeccmp(&pt->pt_time.it_value, &now, >));
 	timespecadd(&pt->pt_time.it_value, &pt->pt_time.it_interval, &next);
 	/* Handle the easy case of non-overflown timers first. */
@@ -1031,7 +1038,8 @@ realtimerexpire(void *arg)
 	 * Don't need to check tshzto() return value, here.
 	 * callout_reset() does it for us.
 	 */
-	callout_reset(&pt->pt_ch, tshzto(&pt->pt_time.it_value),
+	callout_reset(&pt->pt_ch, pt->pt_type == CLOCK_MONOTONIC ?
+	    tshztoup(&pt->pt_time.it_value) : tshzto(&pt->pt_time.it_value),
 	    realtimerexpire, pt);
 	mutex_spin_exit(&timer_lock);
 }

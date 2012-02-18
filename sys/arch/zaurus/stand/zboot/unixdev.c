@@ -1,4 +1,4 @@
-/*	$NetBSD: unixdev.c,v 1.2 2011/07/17 20:54:50 joerg Exp $	*/
+/*	$NetBSD: unixdev.c,v 1.2.6.1 2012/02/18 07:33:52 mrg Exp $	*/
 /*	$OpenBSD: unixdev.c,v 1.6 2007/06/16 00:26:33 deraadt Exp $	*/
 
 /*
@@ -73,17 +73,20 @@ unixopen(struct open_file *f, ...)
 	struct diskinfo *dip;
 	char *devname;
 	const char *fname;
-	int dev;
 	u_int unit, partition;
 	int dospart;
 
 	va_start(ap, f);
-	dev = va_arg(ap, int);
 	devname = va_arg(ap, char *);
 	unit = va_arg(ap, u_int);
 	partition = va_arg(ap, u_int);
 	fname = va_arg(ap, char *);
 	va_end(ap);
+
+#ifdef UNIX_DEBUG
+	printf("%s: devname=%s, unit=%d, partition=%d, fname=%s\n",
+	    __func__, devname, unit, partition, fname);
+#endif
 
 	f->f_devdata = NULL;
 
@@ -126,8 +129,44 @@ unixopen(struct open_file *f, ...)
 }
 
 int
+unixpathopen(struct open_file *f, ...)
+{
+	va_list	ap;
+	char *devname;
+	const char *fname;
+	u_int unit, partition;
+
+	va_start(ap, f);
+	devname = va_arg(ap, char *);
+	unit = va_arg(ap, u_int);
+	partition = va_arg(ap, u_int);
+	fname = va_arg(ap, char *);
+	va_end(ap);
+
+#ifdef UNIX_DEBUG
+	printf("%s: devname=%s, unit=%d, partition=%d, fname=%s\n",
+	    __func__, devname, unit, partition, fname);
+#endif
+
+	if (fname == NULL || fname[0] == '\0')
+		return EINVAL;
+
+	f->f_devdata = (void *)uopen(fname, LINUX_O_RDONLY);
+	if ((int)f->f_devdata == -1)
+		return errno;
+
+	bi_del(BTINFO_BOOTDISK);
+
+	return 0;
+}
+
+int
 unixclose(struct open_file *f)
 {
+
+#ifdef UNIX_DEBUG
+	printf("%s\n", __func__);
+#endif
 
 	return uclose((int)f->f_devdata);
 }
@@ -135,6 +174,10 @@ unixclose(struct open_file *f)
 int
 unixioctl(struct open_file *f, u_long cmd, void *data)
 {
+
+#ifdef UNIX_DEBUG
+	printf("%s: cmd=0x%08lx\n", __func__, cmd);
+#endif
 
 	return uioctl((int)f->f_devdata, cmd, data);
 }

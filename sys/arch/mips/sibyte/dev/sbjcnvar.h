@@ -1,4 +1,4 @@
-/* $NetBSD: sbjcnvar.h,v 1.3 2011/02/01 03:16:54 matt Exp $ */
+/* $NetBSD: sbjcnvar.h,v 1.3.8.1 2012/02/18 07:32:42 mrg Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -65,7 +65,7 @@
  */
 
 #include "rnd.h"
-#if NRND > 0 && defined(RND_SBJCN)
+#ifdef RND_SBJCN
 #include <sys/rnd.h>
 #endif
 

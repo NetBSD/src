@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.48 2010/06/16 22:06:53 jmcneill Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.48.12.1 2012/02/18 07:31:23 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.48 2010/06/16 22:06:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.48.12.1 2012/02/18 07:31:23 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -64,71 +64,13 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.48 2010/06/16 22:06:53 jmcneill E
 #define db_printf	printf
 #endif
 
-static long nil;
-
-int db_access_und_sp(const struct db_variable *, db_expr_t *, int);
-int db_access_abt_sp(const struct db_variable *, db_expr_t *, int);
-int db_access_irq_sp(const struct db_variable *, db_expr_t *, int);
 u_int db_fetch_reg(int, db_regs_t *);
 
 int db_trapper(u_int, u_int, trapframe_t *, int);
 
-const struct db_variable db_regs[] = {
-	{ "spsr", (long *)&DDB_REGS->tf_spsr, FCN_NULL, },
-	{ "r0", (long *)&DDB_REGS->tf_r0, FCN_NULL, },
-	{ "r1", (long *)&DDB_REGS->tf_r1, FCN_NULL, },
-	{ "r2", (long *)&DDB_REGS->tf_r2, FCN_NULL, },
-	{ "r3", (long *)&DDB_REGS->tf_r3, FCN_NULL, },
-	{ "r4", (long *)&DDB_REGS->tf_r4, FCN_NULL, },
-	{ "r5", (long *)&DDB_REGS->tf_r5, FCN_NULL, },
-	{ "r6", (long *)&DDB_REGS->tf_r6, FCN_NULL, },
-	{ "r7", (long *)&DDB_REGS->tf_r7, FCN_NULL, },
-	{ "r8", (long *)&DDB_REGS->tf_r8, FCN_NULL, },
-	{ "r9", (long *)&DDB_REGS->tf_r9, FCN_NULL, },
-	{ "r10", (long *)&DDB_REGS->tf_r10, FCN_NULL, },
-	{ "r11", (long *)&DDB_REGS->tf_r11, FCN_NULL, },
-	{ "r12", (long *)&DDB_REGS->tf_r12, FCN_NULL, },
-	{ "usr_sp", (long *)&DDB_REGS->tf_usr_sp, FCN_NULL, },
-	{ "usr_lr", (long *)&DDB_REGS->tf_usr_lr, FCN_NULL, },
-	{ "svc_sp", (long *)&DDB_REGS->tf_svc_sp, FCN_NULL, },
-	{ "svc_lr", (long *)&DDB_REGS->tf_svc_lr, FCN_NULL, },
-	{ "pc", (long *)&DDB_REGS->tf_pc, FCN_NULL, },
-	{ "und_sp", &nil, db_access_und_sp, },
-	{ "abt_sp", &nil, db_access_abt_sp, },
-	{ "irq_sp", &nil, db_access_irq_sp, },
-};
-
-const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
-
 int	db_active = 0;
 db_regs_t ddb_regs;	/* register state */
 
-int
-db_access_und_sp(const struct db_variable *vp, db_expr_t *valp, int rw)
-{
-
-	if (rw == DB_VAR_GET)
-		*valp = get_stackptr(PSR_UND32_MODE);
-	return(0);
-}
-
-int
-db_access_abt_sp(const struct db_variable *vp, db_expr_t *valp, int rw)
-{
-
-	if (rw == DB_VAR_GET)
-		*valp = get_stackptr(PSR_ABT32_MODE);
-	return(0);
-}
-
-int
-db_access_irq_sp(const struct db_variable *vp, db_expr_t *valp, int rw)
-{
-
-	if (rw == DB_VAR_GET)
-		*valp = get_stackptr(PSR_IRQ32_MODE);
-	return(0);
-}
 
 #ifdef DDB
 /*
@@ -360,20 +302,6 @@ cpu_Debugger(void)
 {
 	__asm(".word	0xe7ffffff");
 }
-
-const struct db_command db_machine_command_table[] = {
-	{ DDB_ADD_CMD("frame",	db_show_frame_cmd,	0,
-			"Displays the contents of a trapframe",
-			"[address]",
-			"   address:\taddress of trapfame to display")},
-	{ DDB_ADD_CMD("panic",	db_show_panic_cmd,	0,
-			"Displays the last panic string",
-		     	NULL,NULL) },
-#ifdef ARM32_DB_COMMANDS
-	ARM32_DB_COMMANDS,
-#endif
-	{ DDB_ADD_CMD(NULL,     NULL,           0,NULL,NULL,NULL) }
-};
 
 int
 db_trapper(u_int addr, u_int inst, trapframe_t *frame, int fault_code)

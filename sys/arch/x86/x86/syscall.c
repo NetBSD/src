@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.5 2011/09/04 21:14:49 christos Exp $	*/
+/*	$NetBSD: syscall.c,v 1.5.6.1 2012/02/18 07:33:37 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5 2011/09/04 21:14:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5.6.1 2012/02/18 07:33:37 mrg Exp $");
 
 #include "opt_sa.h"
 
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5 2011/09/04 21:14:49 christos Exp $")
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/ktrace.h>
+#include <sys/mman.h>
 #include <sys/syscall.h>
 #include <sys/syscallvar.h>
 #include <sys/syscall_stats.h>
@@ -87,6 +88,16 @@ child_return(void *arg)
 	ktrsysret(SYS_fork, 0, 0);
 }
 
+/*
+ * Process the tail end of a posix_spawn() for the child.
+ */
+void
+cpu_spawn_return(struct lwp *l)
+{
+
+	userret(l);
+}
+	
 void
 syscall_intern(struct proc *p)
 {
@@ -106,7 +117,7 @@ syscall(struct trapframe *frame)
 	struct proc *p;
 	struct lwp *l;
 	int error;
-	register_t code, rval[2];
+	register_t code, rval[2], rip_call;
 #ifdef __x86_64__
 	/* Verify that the syscall args will fit in the trapframe space */
 	CTASSERT(offsetof(struct trapframe, tf_arg9) >=
@@ -119,6 +130,13 @@ syscall(struct trapframe *frame)
 	l = curlwp;
 	p = l->l_proc;
 	LWP_CACHE_CREDS(l, p);
+
+	/*
+	 * The offset to adjust the PC by depends on whether we entered the
+	 * kernel through the trap or call gate.  We saved the instruction
+	 * size in tf_err on entry.
+	 */
+	rip_call = X86_TF_RIP(frame) - frame->tf_err;
 
 	code = X86_TF_RAX(frame) & (SYS_NSYSENT - 1);
 	callp = p->p_emul->e_sysent + code;
@@ -173,12 +191,7 @@ syscall(struct trapframe *frame)
 	} else {
 		switch (error) {
 		case ERESTART:
-			/*
-			 * The offset to adjust the PC by depends on whether we
-			 * entered the kernel through the trap or call gate.
-			 * We saved the instruction size in tf_err on entry.
-			 */
-			X86_TF_RIP(frame) -= frame->tf_err;
+			X86_TF_RIP(frame) = rip_call;
 			break;
 		case EJUSTRETURN:
 			/* nothing to do */

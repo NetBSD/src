@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio_intr.c,v 1.9 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: jensenio_intr.c,v 1.9.38.1 2012/02/18 07:31:00 mrg Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -31,10 +31,10 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio_intr.c,v 1.9 2008/04/28 20:23:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio_intr.c,v 1.9.38.1 2012/02/18 07:31:00 mrg Exp $");
 
-#include <sys/types.h> 
-#include <sys/param.h> 
+#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
@@ -278,7 +278,7 @@ void
 jensenio_enable_intr(int irq, int onoff)
 {
 	int pic;
-	u_int8_t bit, mask;
+	uint8_t bit, mask;
 
 	pic = irq >> 3;
 	bit = 1 << (irq & 0x7);
@@ -295,7 +295,7 @@ void
 jensenio_setlevel(int irq, int level)
 {
 	int elcr;
-	u_int8_t bit, mask;
+	uint8_t bit, mask;
 
 	elcr = irq >> 3;
 	bit = 1 << (irq & 0x7);

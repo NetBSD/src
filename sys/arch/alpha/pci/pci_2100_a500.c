@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a500.c,v 1.10 2011/04/04 20:37:44 dyoung Exp $ */
+/* $NetBSD: pci_2100_a500.c,v 1.10.8.1 2012/02/18 07:31:04 mrg Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.10 2011/04/04 20:37:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.10.8.1 2012/02/18 07:31:04 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -664,7 +664,7 @@ void
 dec_2100_a500_pic_enable_intr(struct ttwoga_config *tcp, int irq, int onoff)
 {
 	int pic;
-	u_int8_t bit, mask;
+	uint8_t bit, mask;
 
 	pic = irq >> 3;
 	bit = 1 << (irq & 0x7);
@@ -680,7 +680,7 @@ dec_2100_a500_pic_enable_intr(struct ttwoga_config *tcp, int irq, int onoff)
 void
 dec_2100_a500_icic_enable_intr(struct ttwoga_config *tcp, int irq, int onoff)
 {
-	u_int64_t bit, mask;
+	uint64_t bit, mask;
 
 	bit = 1UL << irq;
 
@@ -739,7 +739,7 @@ void
 dec_2100_a500_pic_setlevel(struct ttwoga_config *tcp, int eirq, int level)
 {
 	int elcr;
-	u_int8_t bit, mask;
+	uint8_t bit, mask;
 
 	switch (eirq) {		/* EISA IRQ */
 	case 3:
@@ -784,7 +784,7 @@ dec_2100_a500_pic_setlevel(struct ttwoga_config *tcp, int eirq, int level)
 void
 dec_2100_a500_icic_setlevel(struct ttwoga_config *tcp, int eirq, int level)
 {
-	u_int64_t bit, mask;
+	uint64_t bit, mask;
 
 	switch (eirq) {
 	case 3:

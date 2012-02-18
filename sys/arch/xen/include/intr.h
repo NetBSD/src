@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.33 2011/08/11 17:58:59 cherry Exp $	*/
+/*	$NetBSD: intr.h,v 1.33.6.1 2012/02/18 07:33:38 mrg Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -39,12 +39,13 @@
 #include <xen/xen.h>
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
-#include <machine/cpu.h>
 #include <machine/pic.h>
 #include <sys/evcnt.h>
 
 #include "opt_xen.h"
 
+
+struct cpu_info;
 /*
  * Struct describing an event channel. 
  */
@@ -151,8 +152,6 @@ splraiseipl(ipl_cookie_t icookie)
 /*
  * Stub declarations.
  */
-
-struct cpu_info;
 
 struct pcibus_attach_args;
 

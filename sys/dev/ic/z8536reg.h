@@ -1,4 +1,4 @@
-/*	$NetBSD: z8536reg.h,v 1.2 2008/05/23 10:46:53 hauke Exp $	*/
+/*	$NetBSD: z8536reg.h,v 1.2.44.1 2012/02/18 07:34:26 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 Hauke Fath
@@ -117,6 +117,9 @@
 #define       CTCS_CLR_IP	0xA0  	/* Clear Interrupt Pending */
 #define       CTCS_SET_IE	0xC0  	/* Set Interrupt Enable */
 #define       CTCS_CLR_IE	0xE0  	/* Clear Interrupt Enable */
+
+/* Avoid changing intr bits unintendedly */
+#define	CTCSR_MASK(FLAGS)	((FLAGS) & 0x3f)
 
 /* The port data registers are directly accessible at their own IO address */
 #define Z8536_PDRA         	0x0D	/* Port A Data Register */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.85 2011/11/28 03:13:31 jnemeth Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.85.2.1 2012/02/18 07:35:30 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.85 2011/11/28 03:13:31 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.85.2.1 2012/02/18 07:35:30 mrg Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -795,8 +795,6 @@ module_do_builtin(const char *name, module_t **modp, prop_dictionary_t props)
 	if (modp != NULL) {
 		*modp = mod;
 	}
-	if (mi->mi_class == MODULE_CLASS_SECMODEL)
-		secmodel_register();
 	module_enqueue(mod);
 	return 0;
 }
@@ -1071,9 +1069,6 @@ module_do_load(const char *name, bool isdep, int flags,
 		goto fail;
 	}
 
-	if (mi->mi_class == MODULE_CLASS_SECMODEL)
-		secmodel_register();
-
 	/*
 	 * Good, the module loaded successfully.  Put it onto the
 	 * list and add references to its requisite modules.
@@ -1150,8 +1145,6 @@ module_do_unload(const char *name, bool load_requires_force)
 		    error);
 		return error;
 	}
-	if (mod->mod_info->mi_class == MODULE_CLASS_SECMODEL)
-		secmodel_deregister();
 	module_count--;
 	TAILQ_REMOVE(&module_list, mod, mod_chain);
 	for (i = 0; i < mod->mod_nrequired; i++) {

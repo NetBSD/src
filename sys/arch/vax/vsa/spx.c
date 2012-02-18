@@ -1,4 +1,4 @@
-/*	$NetBSD: spx.c,v 1.4 2010/12/14 23:31:16 matt Exp $ */
+/*	$NetBSD: spx.c,v 1.4.12.1 2012/02/18 07:33:30 mrg Exp $ */
 /*
  * SPX/LCSPX/SPXg/SPXgt accelerated framebuffer driver for NetBSD/VAX
  * Copyright (c) 2005 Blaz Antonic
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spx.c,v 1.4 2010/12/14 23:31:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spx.c,v 1.4.12.1 2012/02/18 07:33:30 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1477,16 +1477,19 @@ spx_init_common(device_t self, struct vsbus_attach_args *va)
 	wsfont_init();
 
 	cookie = wsfont_find(NULL, 12, 21, 0, WSDISPLAY_FONTORDER_R2L,
-			     WSDISPLAY_FONTORDER_L2R);
+			     WSDISPLAY_FONTORDER_L2R, WSFONT_FIND_BITMAP);
 	if (cookie == -1)
-		cookie = wsfont_find(NULL, 16, 0, 0, WSDISPLAY_FONTORDER_R2L, 0);
+		cookie = wsfont_find(NULL, 16, 0, 0, WSDISPLAY_FONTORDER_R2L, 0,
+		    WSFONT_FIND_BITMAP);
 	if (cookie == -1)
-		cookie = wsfont_find(NULL, 12, 0, 0, WSDISPLAY_FONTORDER_R2L, 0);
+		cookie = wsfont_find(NULL, 12, 0, 0, WSDISPLAY_FONTORDER_R2L, 0,
+		    WSFONT_FIND_BITMAP);
 	if (cookie == -1)
-		cookie = wsfont_find(NULL, 8, 0, 0, WSDISPLAY_FONTORDER_R2L, 0);
+		cookie = wsfont_find(NULL, 8, 0, 0, WSDISPLAY_FONTORDER_R2L, 0,
+		    WSFONT_FIND_BITMAP);
 	if (cookie == -1)
 		cookie = wsfont_find(NULL, 0, 0, 0, WSDISPLAY_FONTORDER_R2L,
-				     WSDISPLAY_FONTORDER_L2R);
+		    WSDISPLAY_FONTORDER_L2R, WSFONT_FIND_BITMAP);
 
 	if (cookie == -1 || wsfont_lock(cookie, &wf))
 		panic("spx_common_init: unable to load console font");

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.255 2011/11/25 03:13:06 jakllsch Exp $	*/
+/*	$NetBSD: audio.c,v 1.255.2.1 2012/02/18 07:34:04 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.255 2011/11/25 03:13:06 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.255.2.1 2012/02/18 07:34:04 mrg Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -464,6 +464,7 @@ audioattach(device_t parent, device_t self, void *aux)
 		    AUMODE_PLAY, AU_RING_SIZE);
 		if (error) {
 			sc->hw_if = NULL;
+ 			mutex_exit(sc->sc_lock);
 			aprint_error("audio: could not allocate play buffer\n");
 			return;
 		}
@@ -475,6 +476,7 @@ audioattach(device_t parent, device_t self, void *aux)
 			if (sc->sc_pr.s.start != 0)
 				audio_free_ring(sc, &sc->sc_pr);
 			sc->hw_if = NULL;
+ 			mutex_exit(sc->sc_lock);
 			aprint_error("audio: could not allocate record buffer\n");
 			return;
 		}
@@ -490,9 +492,9 @@ audioattach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_sih_rd = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
+	sc->sc_sih_rd = softint_establish(SOFTINT_SERIAL | SOFTINT_MPSAFE,
 	    audio_softintr_rd, sc);
-	sc->sc_sih_wr = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
+	sc->sc_sih_wr = softint_establish(SOFTINT_SERIAL | SOFTINT_MPSAFE,
 	    audio_softintr_wr, sc);
 
 	iclass = mclass = oclass = rclass = -1;

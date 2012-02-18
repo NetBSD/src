@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.2 2011/07/01 18:22:39 dyoung Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.2.8.1 2012/02/18 07:33:33 mrg Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,11 +40,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.2 2011/07/01 18:22:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.2.8.1 2012/02/18 07:33:33 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/bus.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
@@ -71,8 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.2 2011/07/01 18:22:39 dyoung Exp 
 #include "acpica.h"
 #include "opt_mpbios.h"
 #include "opt_acpi.h"
-
-extern uint32_t cpus_attached;
 
 ACPI_STATUS
 acpi_md_OsInitialize(void)
@@ -280,7 +279,7 @@ acpi_md_OsEnableInterrupt(void)
 uint32_t
 acpi_md_ncpus(void)
 {
-	return popcount32(cpus_attached);
+	return kcpuset_countset(kcpuset_attached);
 }
 
 void

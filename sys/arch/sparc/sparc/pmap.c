@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.347 2011/10/22 21:00:40 mrg Exp $ */
+/*	$NetBSD: pmap.c,v 1.347.6.1 2012/02/18 07:33:14 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.347 2011/10/22 21:00:40 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.347.6.1 2012/02/18 07:33:14 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -880,7 +880,7 @@ pgt_page_alloc(struct pool *pp, int flags)
 		return (NULL);
 
 	/* Allocate virtual memory */
-	va = uvm_km_alloc(kmem_map, PAGE_SIZE, 0, UVM_KMF_VAONLY |
+	va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_VAONLY |
 		((flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT | UVM_KMF_TRYLOCK));
 	if (va == 0) {
 		uvm_pagefree(pg);
@@ -917,7 +917,7 @@ pgt_page_free(struct pool *pp, void *v)
 	KASSERT(rv);
 	uvm_pagefree(PHYS_TO_VM_PAGE(pa));
 	pmap_kremove(va, PAGE_SIZE);
-	uvm_km_free(kmem_map, va, PAGE_SIZE, UVM_KMF_VAONLY);
+	uvm_km_free(kernel_map, va, PAGE_SIZE, UVM_KMF_VAONLY);
 }
 #endif /* SUN4M || SUN4D */
 

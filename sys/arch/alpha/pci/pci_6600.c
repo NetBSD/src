@@ -1,4 +1,4 @@
-/* $NetBSD: pci_6600.c,v 1.23 2011/07/01 19:19:50 dyoung Exp $ */
+/* $NetBSD: pci_6600.c,v 1.23.6.1 2012/02/18 07:31:04 mrg Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.23 2011/07/01 19:19:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.23.6.1 2012/02/18 07:31:04 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,12 +101,12 @@ pci_6600_pickintr(struct tsp_config *pcp)
 	char *cp;
 	int i;
 
-        pc->pc_intr_v = pcp;
-        pc->pc_intr_map = dec_6600_intr_map;
-        pc->pc_intr_string = dec_6600_intr_string;
+	pc->pc_intr_v = pcp;
+	pc->pc_intr_map = dec_6600_intr_map;
+	pc->pc_intr_string = dec_6600_intr_string;
 	pc->pc_intr_evcnt = dec_6600_intr_evcnt;
-        pc->pc_intr_establish = dec_6600_intr_establish;
-        pc->pc_intr_disestablish = dec_6600_intr_disestablish;
+	pc->pc_intr_establish = dec_6600_intr_establish;
+	pc->pc_intr_disestablish = dec_6600_intr_disestablish;
 	pc->pc_pciide_compat_intr_establish = NULL;
 
 	/*
@@ -136,7 +136,7 @@ pci_6600_pickintr(struct tsp_config *pcp)
 	}
 }
 
-int     
+int
 dec_6600_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pcitag_t bustag = pa->pa_intrtag;
@@ -257,7 +257,7 @@ dec_6600_intr_disestablish(void *acv, void *cookie)
 		return;
 	}
 #endif
- 
+
 	s = splhigh();
 
 	alpha_shared_intr_disestablish(dec_6600_pci_intr, cookie, irqtype);
@@ -267,14 +267,14 @@ dec_6600_intr_disestablish(void *acv, void *cookie)
 		    IST_NONE);
 		scb_free(0x900 + SCB_IDXTOVEC(irq));
 	}
- 
+
 	splx(s);
 }
 
 void
 dec_6600_iointr(void *arg, unsigned long vec)
 {
-	int irq; 
+	int irq;
 
 	irq = SCB_VECTOIDX(vec - 0x900);
 

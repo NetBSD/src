@@ -1,4 +1,4 @@
-/*	$NetBSD: zbsdmod.c,v 1.6 2011/05/05 09:07:59 nonaka Exp $	*/
+/*	$NetBSD: zbsdmod.c,v 1.6.8.1 2012/02/18 07:33:53 mrg Exp $	*/
 /*	$OpenBSD: zbsdmod.c,v 1.7 2005/05/02 02:45:29 uwe Exp $	*/
 
 /*
@@ -21,9 +21,21 @@
  * Zaurus NetBSD bootstrap loader.
  */
 
-#include "compat_linux.h"
+#include <sys/cdefs.h>
+#define ELFSIZE 32
+#include <sys/exec_elf.h>
+#include <sys/types.h>
+#include <sys/errno.h>
 
 #include <machine/bootinfo.h>
+
+#include "compat_linux.h"
+
+/* Linux LKM support */
+const char __module_kernel_version[] __attribute__((section(".modinfo"))) =
+    "kernel_version=" UTS_RELEASE;
+const char __module_using_checksums[] __attribute__((section(".modinfo"))) =
+    "using_checksums=1";
 
 #define ZBOOTDEV_MAJOR	99
 #define ZBOOTDEV_MODE	0222
@@ -57,6 +69,11 @@ static struct file_operations fops = {
 	0,			/* check media change */
 	0,			/* revalidate */
 	0,			/* lock */
+	0,			/* sendpage */
+	0,			/* get_unmapped_area */
+#ifdef	MAGIC_ROM_PTR
+	0,			/* romptr */
+#endif	/* MAGIC_ROM_PTR */
 };
 
 static int isopen;
@@ -77,6 +94,7 @@ static int havesyms;
 /* The maximum size of a kernel image is restricted to 5MB. */
 static u_int bsdimage[5242880/sizeof(u_int)];	/* XXX use kmalloc() */
 static char bootargs[BOOTARGS_BUFSIZ];
+static u_int datacacheclean[65536/sizeof(u_int)] __attribute__((aligned(32)));
 
 /*
  * Boot the loaded BSD kernel image, or return if an error is found.
@@ -108,7 +126,7 @@ elf32bsdboot(void)
 			continue;
 
 #define IS_TEXT(p)	(p.p_flags & PF_X)
-#define IS_DATA(p)	((p.p_flags & PF_X) == 0)
+#define IS_DATA(p)	(p.p_flags & PF_W)
 #define IS_BSS(p)	(p.p_filesz < p.p_memsz)
 		/*
 		 * XXX: Assume first address is lowest
@@ -248,17 +266,31 @@ elf32bsdboot(void)
 
 	addr = (int *)(elf->e_entry);
 	__asm volatile (
+		/* Clean D-cache */
+		"mov	r0, %1;"
+		"mov	r1, #65536;"
+		"1:"
+		"ldr	r2, [r0], #32;"
+		"subs	r1, r1, #32;"
+		"bne	1b;"
+		"mcr	p15, 0, r1, c7, c10, 4;" /*drain write and fill buffer*/
+		"mrc	p15, 0, r1, c2, c0, 0;" /* CPWAIT */
+		"mov	r1, r1;"
+		"sub	pc, pc, #4;"
+		/* Disable MMU and jump to kernel entry address */
 		"mov	r0, %0;"
-		"mov	r2, #0;"
-		"mcr	p15, 0, r2, c7, c7, 0;"
-		"mov	r2, r2;"
+		"mcr	p15, 0, r1, c7, c7, 0;" /* flush I+D cache */
+		"mrc	p15, 0, r1, c2, c0, 0;" /* CPWAIT */
+		"mov	r1, r1;"
 		"sub	pc, pc, #4;"
 		"mov	r1, #(0x00000010 | 0x00000020);"
-		"mcr	p15, 0, r1, c1, c0, 0;"
-		"mcr	p15, 0, r2, c8, c7, 0;"
-		"mov	r2, r2;"
-		"sub	pc, pc, #4;"
-		"mov	pc, r0" :: "r"(addr) : "r0","r1","r2");
+		"mcr	p15, 0, r1, c1, c0, 0;" /* Write new control register */
+		"mcr	p15, 0, r1, c8, c7, 0;" /* invalidate I+D TLB */
+		"mcr	p15, 0, r1, c7, c5, 0;" /* invalidate I$ and BTB */
+		"mcr	p15, 0, r1, c7, c10, 4;" /*drain write and fill buffer*/
+		"mrc	p15, 0, r1, c2, c0, 0;" /* CPWAIT_AND_RETURN */
+		"sub	pc, r0, r1, lsr #32;"
+		:: "r" (addr), "r" (datacacheclean) : "r0", "r1", "r2");
 }
 
 /*
@@ -312,7 +344,7 @@ zbsdmod_write(struct file *f, const char *buf, size_t len, loff_t *offp)
 		return 0;
 
 	if (*offp + len >= sizeof(bsdimage))
-		return EFBIG;
+		return -EFBIG;
 
 	memcpy(((char *)bsdimage) + *offp, buf, len);
 
@@ -346,10 +378,8 @@ zbsdmod_close(struct inode *ino, struct file *f)
 		return -EBUSY;
 
 	if (position > 0) {
-		printk("%s: loaded %ld bytes\n", ZBOOTDEV_NAME,
-		    position);
-
-		if (position < BOOTINFO_MAXSIZE) {
+		printk("%s: loaded %ld bytes\n", ZBOOTDEV_NAME, position);
+		if (position < (loff_t)BOOTINFO_MAXSIZE) {
 			*(u_int *)bootargs = BOOTARGS_MAGIC;
 			memcpy(bootargs + sizeof(u_int), bsdimage, position);
 		} else {

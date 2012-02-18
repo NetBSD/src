@@ -1,4 +1,4 @@
-/*	$NetBSD: obs600_machdep.c,v 1.7 2011/06/20 17:44:33 matt Exp $	*/
+/*	$NetBSD: obs600_machdep.c,v 1.7.6.1 2012/02/18 07:31:59 mrg Exp $	*/
 /*	Original: md_machdep.c,v 1.3 2005/01/24 18:47:37 shige Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs600_machdep.c,v 1.7 2011/06/20 17:44:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs600_machdep.c,v 1.7.6.1 2012/02/18 07:31:59 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -215,6 +215,11 @@ cpu_startup(void)
 	 */
 	board_info_init();
 
+	/*
+	 * Now that we have VM, malloc()s are OK in bus_space.
+	 */
+	bus_space_mallocok();
+
 	read_eeprom(sizeof(buf), buf);
 	macaddr = &buf[0];
 	macaddr1 = &buf[8];
@@ -258,11 +263,6 @@ cpu_startup(void)
 	if (prop_dictionary_set(board_properties, "emac1-mii-phy", pn) == false)
 		panic("setting emac1-mii-phy");
 	prop_object_release(pn);
-
-	/*
-	 * Now that we have VM, malloc()s are OK in bus_space.
-	 */
-	bus_space_mallocok();
 
 	/*
 	 * no fake mapiodev
@@ -413,7 +413,9 @@ read_eeprom(int len, char *buf)
 	for ( ; i < 4; i++)
 		(void) bus_space_read_1(bst, bsh, IIC_MDBUF);
 
+#if 0	/* Ooops, can't unmap here... */
 	bus_space_unmap(bst, bsh, IIC_NREG);
+#endif
 
 	return (cnt == len) ? 0 : EINVAL;
 }

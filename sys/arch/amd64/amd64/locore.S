@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.65 2011/05/20 13:32:35 joerg Exp $	*/
+/*	$NetBSD: locore.S,v 1.65.8.1 2012/02/18 07:31:09 mrg Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1290,10 +1290,11 @@ iret_return:
 	jmp	.Losyscall_checkast	/* re-check ASTs */
 
 /*
- * void sse2_idlezero_page(void *pg)
+ * bool sse2_idlezero_page(void *pg)
  *
  * Zero a page without polluting the cache.  Preemption must be
  * disabled by the caller. Abort if a preemption is pending.
+ * Returns true if the page is zeroed, false if not.
  */
 ENTRY(sse2_idlezero_page)
 	pushq	%rbp
@@ -1322,4 +1323,28 @@ ENTRY(sse2_idlezero_page)
 2:
 	sfence
 	popq	%rbp
+	ret
+
+/*
+ * void pagezero(vaddr_t va)
+ *
+ * Zero a page without polluting the cache.
+ */
+
+ENTRY(pagezero)
+	movq	$-PAGE_SIZE,%rdx
+	subq	%rdx,%rdi
+	xorq	%rax,%rax
+1:
+	movnti	%rax,(%rdi,%rdx)
+	movnti	%rax,8(%rdi,%rdx)
+	movnti	%rax,16(%rdi,%rdx)
+	movnti	%rax,24(%rdi,%rdx)
+	movnti	%rax,32(%rdi,%rdx)
+	movnti	%rax,40(%rdi,%rdx)
+	movnti	%rax,48(%rdi,%rdx)
+	movnti	%rax,56(%rdi,%rdx)
+	addq	$64,%rdx
+	jne	1b
+	sfence
 	ret

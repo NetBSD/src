@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.65 2011/07/18 00:31:13 mrg Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.65.6.1 2012/02/18 07:33:13 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.65 2011/07/18 00:31:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.65.6.1 2012/02/18 07:33:13 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -315,7 +315,7 @@ vmeattach_mainbus(device_t parent, device_t self, void *aux)
 		sizeof(vmebus_translations)/sizeof(vmebus_translations[0]);
 
 	vme_dvmamap = extent_create("vmedvma", VME4_DVMA_BASE, VME4_DVMA_END,
-				    M_DEVBUF, 0, 0, EX_NOWAIT);
+				    0, 0, EX_NOWAIT);
 	if (vme_dvmamap == NULL)
 		panic("vme: unable to allocate DVMA map");
 

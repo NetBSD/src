@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.88 2011/08/17 00:59:47 dyoung Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.88.6.1 2012/02/18 07:34:46 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.88 2011/08/17 00:59:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.88.6.1 2012/02/18 07:34:46 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -420,6 +420,32 @@ pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
 		cp += snprintf(cp, ep - cp, ")");
 	}
 }
+
+#ifdef _KERNEL
+void
+pci_aprint_devinfo_fancy(const struct pci_attach_args *pa, const char *naive,
+			 const char *known, int addrev)
+{
+	char devinfo[256];
+
+	if (known) {
+		aprint_normal(": %s", known);
+		if (addrev)
+			aprint_normal(" (rev. 0x%02x)",
+				      PCI_REVISION(pa->pa_class));
+		aprint_normal("\n");
+	} else {
+		pci_devinfo(pa->pa_id, pa->pa_class, 0,
+			    devinfo, sizeof(devinfo));
+		aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
+			      PCI_REVISION(pa->pa_class));
+	}
+	if (naive)
+		aprint_naive(": %s\n", naive);
+	else
+		aprint_naive("\n");
+}
+#endif
 
 /*
  * Print out most of the PCI configuration registers.  Typically used

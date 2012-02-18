@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom_ts.c,v 1.5 2011/07/01 19:11:34 dyoung Exp $ */
+/*	$NetBSD: epcom_ts.c,v 1.5.6.1 2012/02/18 07:31:53 mrg Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom_ts.c,v 1.5 2011/07/01 19:11:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom_ts.c,v 1.5.6.1 2012/02/18 07:31:53 mrg Exp $");
 
 /* Front-end of epcom */
 
@@ -50,14 +50,14 @@ __KERNEL_RCSID(0, "$NetBSD: epcom_ts.c,v 1.5 2011/07/01 19:11:34 dyoung Exp $");
 
 #include <evbarm/tsarm/epcom_tsvar.h>
 
-static int	epcom_ts_match(struct device *, struct cfdata *, void *);
-static void	epcom_ts_attach(struct device *, struct device *, void *);
+static int	epcom_ts_match(device_t, cfdata_t, void *);
+static void	epcom_ts_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(epcom_ts, sizeof(struct epcom_ts_softc),
     epcom_ts_match, epcom_ts_attach, NULL, NULL);
 
 static int
-epcom_ts_match(struct device *parent, struct cfdata *match, void *aux)
+epcom_ts_match(device_t parent, cfdata_t match, void *aux)
 {
 	if (strcmp(match->cf_name, "epcom") == 0)
 		return 1;
@@ -65,12 +65,9 @@ epcom_ts_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-epcom_ts_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;  
-	void *aux;
+epcom_ts_attach(device_t parent, device_t self, void *aux)
 {
-	struct epcom_ts_softc *esc = (struct epcom_ts_softc *)self;
+	struct epcom_ts_softc *esc = device_private(self);
 	struct epcom_softc *sc = &esc->sc_epcom;
 	struct epsoc_attach_args *sa = aux;
 	u_int32_t pwrcnt;
@@ -80,7 +77,7 @@ epcom_ts_attach(parent, self, aux)
 	sc->sc_iot = sa->sa_iot;
 	sc->sc_hwbase = sa->sa_addr;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	bus_space_map(sa->sa_iot, sa->sa_addr, sa->sa_size, 0, &sc->sc_ioh);
 

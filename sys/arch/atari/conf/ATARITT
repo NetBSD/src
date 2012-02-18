@@ -1,5 +1,5 @@
 #
-# $NetBSD: ATARITT,v 1.107 2011/11/22 21:24:59 tls Exp $
+# $NetBSD: ATARITT,v 1.107.2.1 2012/02/18 07:31:36 mrg Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -37,7 +37,7 @@ file-system PUFFS # Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system EXT2FS # second extended file system (linux)
 file-system PTYFS # /dev/pts/N support
 file-system TMPFS # Efficient memory file-system
-options WAPBL # File system journaling support - Experimental
+options WAPBL # File system journaling support
 options NFSSERVER # Network File System server side code
 options PANICWAIT # Require keystroke to dump/reboot
 options DDB # Kernel debugger

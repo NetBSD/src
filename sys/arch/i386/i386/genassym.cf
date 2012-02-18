@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.90 2011/07/01 18:14:15 dyoung Exp $
+#	$NetBSD: genassym.cf,v 1.90.6.1 2012/02/18 07:32:20 mrg Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ include <machine/types.h>
 include <machine/segments.h>
 
 ifdef XEN
-include <xen/xen3-public/sched.h>
+include <xen/xen-public/sched.h>
 endif
 
 if defined(_KERNEL) && defined(_KERNEL_OPT)

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.52 2011/11/22 18:42:57 garbled Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.52.2.1 2012/02/18 07:34:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -34,11 +34,7 @@
  *	FreeBSD Id: if_rlreg.h,v 1.9 1999/06/20 18:56:09 wpaul Exp
  */
 
-#include "rnd.h"
-
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #define RTK_ETHER_ALIGN	2
 #define RTK_RXSTAT_LEN	4
@@ -226,9 +222,8 @@ struct rtk_softc {
 	/* Power management hooks. */
 	int	(*sc_enable)	(struct rtk_softc *);
 	void	(*sc_disable)	(struct rtk_softc *);
-#if NRND > 0
+
 	krndsource_t     rnd_source;
-#endif
 };
 
 #define RE_TX_DESC_CNT(sc)	((sc)->re_ldata.re_tx_desc_cnt)

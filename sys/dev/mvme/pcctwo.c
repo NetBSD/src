@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwo.c,v 1.9 2009/03/14 15:36:19 dsl Exp $	*/
+/*	$NetBSD: pcctwo.c,v 1.9.16.1 2012/02/18 07:34:33 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcctwo.c,v 1.9 2009/03/14 15:36:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcctwo.c,v 1.9.16.1 2012/02/18 07:34:33 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -128,11 +128,12 @@ pcctwoprint(void *aux, const char *cp)
  * pcctwointr_establish: Establish PCCChip2 Interrupt
  */
 void
-pcctwointr_establish(vec, hand, lvl, arg, evcnt)
-	int vec;
-	int (*hand)(void *), lvl;
-	void *arg;
-	struct evcnt *evcnt;
+pcctwointr_establish(
+	int vec,
+	int (*hand)(void *),
+	int lvl,
+	void *arg,
+	struct evcnt *evcnt)
 {
 	int vec2icsr;
 

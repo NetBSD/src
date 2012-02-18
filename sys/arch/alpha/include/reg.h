@@ -1,21 +1,21 @@
-/* $NetBSD: reg.h,v 1.4 2000/06/08 03:10:06 thorpej Exp $ */
+/* $NetBSD: reg.h,v 1.4.170.1 2012/02/18 07:30:59 mrg Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -73,7 +73,7 @@
 #define	R_ZERO	31
 
 struct reg {
-	u_int64_t	r_regs[32];
+	uint64_t	r_regs[32];
 };
 
 /*
@@ -86,8 +86,8 @@ struct reg {
  * That array has to look exactly like 'struct reg' though.
  */
 struct fpreg {
-	u_int64_t	fpr_regs[32];
-	u_int64_t	fpr_cr;
+	uint64_t	fpr_regs[32];
+	uint64_t	fpr_cr;
 };
 
 #ifdef _KERNEL

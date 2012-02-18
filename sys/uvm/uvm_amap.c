@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.104 2011/10/11 23:57:50 yamt Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.104.6.1 2012/02/18 07:35:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.104 2011/10/11 23:57:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.104.6.1 2012/02/18 07:35:58 mrg Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -800,11 +800,11 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int flags,
 			UVMHIST_LOG(maphist, "  chunk amap ==> clip 0x%x->0x%x"
 			    "to 0x%x->0x%x", entry->start, entry->end, startva,
 			    endva);
-			UVM_MAP_CLIP_START(map, entry, startva, NULL);
+			UVM_MAP_CLIP_START(map, entry, startva);
 
 			/* Watch out for endva wrap-around! */
 			if (endva >= startva) {
-				UVM_MAP_CLIP_END(map, entry, endva, NULL);
+				UVM_MAP_CLIP_END(map, entry, endva);
 			}
 		}
 

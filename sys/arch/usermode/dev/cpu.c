@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.47 2011/11/27 21:38:17 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.47.2.1 2012/02/18 07:33:23 mrg Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.47 2011/11/27 21:38:17 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.47.2.1 2012/02/18 07:33:23 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -42,6 +42,9 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.47 2011/11/27 21:38:17 reinoud Exp $");
 #include <sys/cpu.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
+#include <sys/kmem.h>
+#include <sys/kernel.h>
+#include <sys/mount.h>
 
 #include <dev/cons.h>
 
@@ -75,11 +78,18 @@ char cpu_model[48] = "virtual processor";
 typedef struct cpu_softc {
 	device_t	sc_dev;
 	struct cpu_info	*sc_ci;
+
+	ucontext_t	sc_ucp;
+	uint8_t		sc_ucp_stack[PAGE_SIZE];
 } cpu_softc_t;
 
-static struct pcb lwp0pcb;
-static void *msgbuf;
 
+/* statics */
+static struct pcb lwp0pcb;
+static void *um_msgbuf;
+
+
+/* attachment */
 CFATTACH_DECL_NEW(cpu, sizeof(cpu_softc_t), cpu_match, cpu_attach, NULL, NULL);
 
 static int
@@ -101,8 +111,16 @@ cpu_attach(device_t parent, device_t self, void *opaque)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
+	cpu_info_primary.ci_dev = self;
 	sc->sc_dev = self;
 	sc->sc_ci = &cpu_info_primary;
+
+	thunk_getcontext(&sc->sc_ucp);
+	sc->sc_ucp.uc_stack.ss_sp = sc->sc_ucp_stack;
+	sc->sc_ucp.uc_stack.ss_size = PAGE_SIZE - sizeof(register_t);
+	sc->sc_ucp.uc_flags = _UC_STACK | _UC_CPU | _UC_SIGMASK;
+	thunk_sigaddset(&sc->sc_ucp.uc_sigmask, SIGALRM);
+	thunk_sigaddset(&sc->sc_ucp.uc_sigmask, SIGIO);
 }
 
 void
@@ -114,15 +132,28 @@ cpu_configure(void)
 	spl0();
 }
 
+
+/* main guts */
 void
 cpu_reboot(int howto, char *bootstr)
 {
 	extern void usermode_reboot(void);
 
-	splhigh();
+	if (cold)
+		howto |= RB_HALT;
+
+	if ((howto & RB_NOSYNC) == 0)
+		vfs_shutdown();
+	else
+		suspendsched();
+
+	doshutdownhooks();
+	pmf_system_shutdown(boothowto);
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN)
 		thunk_exit(0);
+
+	splhigh();
 
 	if (howto & RB_DUMP)
 		thunk_abort();
@@ -148,11 +179,33 @@ void
 cpu_need_resched(struct cpu_info *ci, int flags)
 {
 	ci->ci_want_resched |= flags;
+	aston(ci);
 }
 
 void
 cpu_need_proftick(struct lwp *l)
 {
+}
+
+static
+void
+cpu_switchto_atomic(lwp_t *oldlwp, lwp_t *newlwp)
+{
+	struct pcb *oldpcb = oldlwp ? lwp_getpcb(oldlwp) : NULL;
+	struct pcb *newpcb = lwp_getpcb(newlwp);
+	struct cpu_info *ci = curcpu();
+
+	ci->ci_stash = oldlwp;
+
+	if (oldpcb)
+		oldpcb->pcb_errno = thunk_geterrno();
+
+	thunk_seterrno(newpcb->pcb_errno);
+
+	curlwp = newlwp;
+	if (thunk_setcontext(&newpcb->pcb_ucp))
+		panic("setcontext failed");
+	/* not reached */
 }
 
 lwp_t *
@@ -161,9 +214,10 @@ cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
 	struct pcb *oldpcb = oldlwp ? lwp_getpcb(oldlwp) : NULL;
 	struct pcb *newpcb = lwp_getpcb(newlwp);
 	struct cpu_info *ci = curcpu();
+	cpu_softc_t *sc = device_private(ci->ci_dev);
 
 #ifdef CPU_DEBUG
-	dprintf_debug("cpu_switchto [%s,pid=%d,lid=%d] -> [%s,pid=%d,lid=%d]\n",
+	thunk_printf_debug("cpu_switchto [%s,pid=%d,lid=%d] -> [%s,pid=%d,lid=%d]\n",
 	    oldlwp ? oldlwp->l_name : "none",
 	    oldlwp ? oldlwp->l_proc->p_pid : -1,
 	    oldlwp ? oldlwp->l_lid : -1,
@@ -171,14 +225,14 @@ cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
 	    newlwp ? newlwp->l_proc->p_pid : -1,
 	    newlwp ? newlwp->l_lid : -1);
 	if (oldpcb) {
-		dprintf_debug("    oldpcb uc_link=%p, uc_stack.ss_sp=%p, "
+		thunk_printf_debug("    oldpcb uc_link=%p, uc_stack.ss_sp=%p, "
 		    "uc_stack.ss_size=%d\n",
 		    oldpcb->pcb_ucp.uc_link,
 		    oldpcb->pcb_ucp.uc_stack.ss_sp,
 		    (int)oldpcb->pcb_ucp.uc_stack.ss_size);
 	}
 	if (newpcb) {
-		dprintf_debug("    newpcb uc_link=%p, uc_stack.ss_sp=%p, "
+		thunk_printf_debug("    newpcb uc_link=%p, uc_stack.ss_sp=%p, "
 		    "uc_stack.ss_size=%d\n",
 		    newpcb->pcb_ucp.uc_link,
 		    newpcb->pcb_ucp.uc_stack.ss_sp,
@@ -186,23 +240,21 @@ cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
 	}
 #endif /* !CPU_DEBUG */
 
-	ci->ci_stash = oldlwp;
+	/* create atomic switcher */
+	thunk_makecontext(&sc->sc_ucp, (void (*)(void)) cpu_switchto_atomic,
+			2, oldlwp, newlwp, NULL);
 
+	KASSERT(sc);
 	if (oldpcb) {
-		oldpcb->pcb_errno = thunk_geterrno();
-		thunk_seterrno(newpcb->pcb_errno);
-		curlwp = newlwp;
-		if (thunk_swapcontext(&oldpcb->pcb_ucp, &newpcb->pcb_ucp))
-			panic("swapcontext failed");
+		thunk_swapcontext(&oldpcb->pcb_ucp, &sc->sc_ucp);
+		/* returns here */
 	} else {
-		thunk_seterrno(newpcb->pcb_errno);
-		curlwp = newlwp;
-		if (thunk_setcontext(&newpcb->pcb_ucp))
-			panic("setcontext failed");
+		thunk_setcontext(&sc->sc_ucp);
+		/* never returns */
 	}
 
 #ifdef CPU_DEBUG
-	dprintf_debug("cpu_switchto: returning %p (was %p)\n", ci->ci_stash, oldlwp);
+	thunk_printf_debug("cpu_switchto: returning %p (was %p)\n", ci->ci_stash, oldlwp);
 #endif
 	return ci->ci_stash;
 }
@@ -211,7 +263,7 @@ void
 cpu_dumpconf(void)
 {
 #ifdef CPU_DEBUG
-	dprintf_debug("cpu_dumpconf\n");
+	thunk_printf_debug("cpu_dumpconf\n");
 #endif
 }
 
@@ -223,19 +275,26 @@ cpu_signotify(struct lwp *l)
 void
 cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 {
-	panic("cpu_getmcontext");
+	struct pcb *pcb = lwp_getpcb(l);
+	ucontext_t *ucp = &pcb->pcb_userret_ucp;
+	
 #ifdef CPU_DEBUG
-	dprintf_debug("cpu_getmcontext\n");
+	thunk_printf_debug("cpu_getmcontext\n");
 #endif
+	memcpy(mcp, &ucp->uc_mcontext, sizeof(mcontext_t));
+	return;
 }
 
 int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
-	panic("cpu_setmcontext");
+	struct pcb *pcb = lwp_getpcb(l);
+	ucontext_t *ucp = &pcb->pcb_userret_ucp;
+
 #ifdef CPU_DEBUG
-	dprintf_debug("cpu_setmcontext\n");
+	thunk_printf_debug("cpu_setmcontext\n");
 #endif
+	memcpy(&ucp->uc_mcontext, mcp, sizeof(mcontext_t));
 	return 0;
 }
 
@@ -247,16 +306,14 @@ cpu_idle(void)
 	if (ci->ci_want_resched)
 		return;
 
-#if notyet
-	thunk_usleep(10000);
-#endif
+	thunk_idle();
 }
 
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
 #ifdef CPU_DEBUG
-	dprintf_debug("cpu_lwp_free (dummy)\n");
+	thunk_printf_debug("cpu_lwp_free (dummy)\n");
 #endif
 }
 
@@ -266,30 +323,19 @@ cpu_lwp_free2(struct lwp *l)
 	struct pcb *pcb = lwp_getpcb(l);
 
 #ifdef CPU_DEBUG
-	dprintf_debug("cpu_lwp_free2\n");
+	thunk_printf_debug("cpu_lwp_free2\n");
 #endif
 
 	if (pcb == NULL)
 		return;
-
-	if (pcb->pcb_needfree) {
-		free(pcb->pcb_ucp.uc_stack.ss_sp, M_TEMP);
-		pcb->pcb_ucp.uc_stack.ss_sp = NULL;
-		pcb->pcb_ucp.uc_stack.ss_size = 0;
-
-		free(pcb->pcb_syscall_ucp.uc_stack.ss_sp, M_TEMP);
-		pcb->pcb_syscall_ucp.uc_stack.ss_sp = NULL;
-		pcb->pcb_syscall_ucp.uc_stack.ss_size = 0;
-
-		pcb->pcb_needfree = false;
-	}
+	/* XXX nothing to do? */
 }
 
 static void
 cpu_lwp_trampoline(ucontext_t *ucp, void (*func)(void *), void *arg)
 {
 #ifdef CPU_DEBUG
-	dprintf_debug("cpu_lwp_trampoline called with func %p, arg %p\n", (void *) func, arg);
+	thunk_printf_debug("cpu_lwp_trampoline called with func %p, arg %p\n", (void *) func, arg);
 #endif
 	/* init lwp */
 	lwp_startup(curcpu()->ci_stash, curlwp);
@@ -305,10 +351,9 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 {
 	struct pcb *pcb1 = lwp_getpcb(l1);
 	struct pcb *pcb2 = lwp_getpcb(l2);
-	void *stack_ucp, *stack_syscall_ucp, *stack_pagefault_ucp;
 
 #ifdef CPU_DEBUG
-	dprintf_debug("cpu_lwp_fork [%s/%p] -> [%s/%p] stack=%p stacksize=%d\n",
+	thunk_printf_debug("cpu_lwp_fork [%s/%p] -> [%s/%p] stack=%p stacksize=%d\n",
 	    l1 ? l1->l_name : "none", l1,
 	    l2 ? l2->l_name : "none", l2,
 	    stack, (int)stacksize);
@@ -320,96 +365,79 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	/* copy the PCB and its switchframes from parent */
 	memcpy(pcb2, pcb1, sizeof(struct pcb));
 
-	stacksize = 16*PAGE_SIZE;
-	stack_ucp           = malloc(stacksize, M_TEMP, M_NOWAIT);
-	stack_syscall_ucp   = malloc(stacksize, M_TEMP, M_NOWAIT);
-	stack_pagefault_ucp = malloc(stacksize, M_TEMP, M_NOWAIT);
-	pcb2->pcb_needfree = true;
-
+	/* refresh context */
 	if (thunk_getcontext(&pcb2->pcb_ucp))
 		panic("getcontext failed");
 
-	/* set up the ucontext for the userland switch */
-	pcb2->pcb_ucp.uc_stack.ss_sp = stack_ucp;
-	pcb2->pcb_ucp.uc_stack.ss_size = stacksize;
-	pcb2->pcb_ucp.uc_flags = _UC_STACK | _UC_CPU;
+	/* recalculate the system stack top */
+	pcb2->sys_stack_top = pcb2->sys_stack + TRAPSTACKSIZE;
+
+	/* get l2 its own stack */
+	pcb2->pcb_ucp.uc_stack.ss_sp = pcb2->sys_stack;
+	pcb2->pcb_ucp.uc_stack.ss_size = pcb2->sys_stack_top - pcb2->sys_stack;
 	pcb2->pcb_ucp.uc_link = &pcb2->pcb_userret_ucp;
+
+	thunk_sigemptyset(&pcb2->pcb_ucp.uc_sigmask);
+	pcb2->pcb_ucp.uc_flags = _UC_STACK | _UC_CPU | _UC_SIGMASK;
 	thunk_makecontext(&pcb2->pcb_ucp,
 	    (void (*)(void)) cpu_lwp_trampoline,
 	    3, &pcb2->pcb_ucp, func, arg);
-
-	/* set up the ucontext for the syscall */
-	pcb2->pcb_syscall_ucp.uc_stack.ss_sp = stack_syscall_ucp;
-	pcb2->pcb_syscall_ucp.uc_stack.ss_size = stacksize;
-	pcb2->pcb_syscall_ucp.uc_flags = _UC_STACK | _UC_CPU;
-	pcb2->pcb_syscall_ucp.uc_link = &pcb2->pcb_userret_ucp;
-	thunk_makecontext(&pcb2->pcb_syscall_ucp, (void (*)(void)) syscall,
-	    0, NULL, NULL, NULL);
-
-	/* set up the ucontext for the pagefault */
-	pcb2->pcb_pagefault_ucp.uc_stack.ss_sp = stack_pagefault_ucp;
-	pcb2->pcb_pagefault_ucp.uc_stack.ss_size = stacksize;
-	pcb2->pcb_pagefault_ucp.uc_flags = _UC_STACK | _UC_CPU;
-	pcb2->pcb_pagefault_ucp.uc_link = &pcb2->pcb_trapret_ucp;
-	thunk_makecontext(&pcb2->pcb_pagefault_ucp, (void (*)(void)) pagefault,
-	    0, NULL, NULL, NULL);
 }
 
 void
 cpu_initclocks(void)
 {
-	struct thunk_itimerval itimer;
+	extern timer_t clock_timerid;
 
-	itimer.it_interval.tv_sec = 0;
-	itimer.it_interval.tv_usec = 1000000 / HZ;
-	itimer.it_value = itimer.it_interval;
-	thunk_setitimer(ITIMER_REAL, &itimer, NULL);
+	thunk_timer_start(clock_timerid, HZ);
 }
 
 void
 cpu_startup(void)
 {
-	size_t stacksize;
-	void *stack_pagefault_ucp;
+	vaddr_t minaddr, maxaddr;
+	size_t msgbufsize = 32 * 1024;
 
-	msgbuf = thunk_malloc(PAGE_SIZE);
-	if (msgbuf == NULL)
+	/* get ourself a message buffer */
+	um_msgbuf = kmem_zalloc(msgbufsize, KM_SLEEP);
+	if (um_msgbuf == NULL)
 		panic("couldn't allocate msgbuf");
-	initmsgbuf(msgbuf, PAGE_SIZE);
+	initmsgbuf(um_msgbuf, msgbufsize);
 
+	/* allocate a submap for physio, 1Mb enough? */
+	minaddr = 0;
+	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+				   1024 * 1024, 0, false, NULL);
+
+	/* say hi! */
 	banner();
 
+	/* init lwp0 */
 	memset(&lwp0pcb, 0, sizeof(lwp0pcb));
-	if (thunk_getcontext(&lwp0pcb.pcb_ucp))
-		panic("getcontext failed");
-	uvm_lwp_setuarea(&lwp0, (vaddr_t)&lwp0pcb);
+	thunk_getcontext(&lwp0pcb.pcb_ucp);
+	thunk_sigemptyset(&lwp0pcb.pcb_ucp.uc_sigmask);
+	lwp0pcb.pcb_ucp.uc_flags = _UC_STACK | _UC_CPU | _UC_SIGMASK;
 
-	/* init trapframes (going nowhere!), maybe a panic func? */
-	memcpy(&lwp0pcb.pcb_syscall_ucp,   &lwp0pcb.pcb_ucp, sizeof(ucontext_t));
-	memcpy(&lwp0pcb.pcb_userret_ucp,   &lwp0pcb.pcb_ucp, sizeof(ucontext_t));
-	memcpy(&lwp0pcb.pcb_pagefault_ucp, &lwp0pcb.pcb_ucp, sizeof(ucontext_t));
-	memcpy(&lwp0pcb.pcb_trapret_ucp,   &lwp0pcb.pcb_ucp, sizeof(ucontext_t));
+	uvm_lwp_setuarea(&lwp0, (vaddr_t) &lwp0pcb);
+	memcpy(&lwp0pcb.pcb_userret_ucp, &lwp0pcb.pcb_ucp, sizeof(ucontext_t));
 
-	/* set up the ucontext for the pagefault */
-	stacksize = 16*PAGE_SIZE;
-	stack_pagefault_ucp = malloc(stacksize, M_TEMP, M_NOWAIT);
-
-	lwp0pcb.pcb_pagefault_ucp.uc_stack.ss_sp = stack_pagefault_ucp;
-	lwp0pcb.pcb_pagefault_ucp.uc_stack.ss_size = stacksize;
-	lwp0pcb.pcb_pagefault_ucp.uc_flags = _UC_STACK | _UC_CPU;
-	lwp0pcb.pcb_pagefault_ucp.uc_link = &lwp0pcb.pcb_userret_ucp;
-	thunk_makecontext(&lwp0pcb.pcb_pagefault_ucp, (void (*)(void)) pagefault,
-	    0, NULL, NULL, NULL);
+	/* set stack top */
+	lwp0pcb.sys_stack_top = lwp0pcb.sys_stack + TRAPSTACKSIZE;
 }
 
 void
 cpu_rootconf(void)
 {
+	extern char *usermode_root_device;
 	device_t rdev;
 
-	rdev = device_find_by_xname("ld0");
-	if (rdev == NULL)
-		rdev = device_find_by_xname("md0");
+	if (usermode_root_device != NULL) {
+		rdev = device_find_by_xname(usermode_root_device);
+	} else {
+		rdev = device_find_by_xname("ld0");
+		if (rdev == NULL)
+			rdev = device_find_by_xname("md0");
+	}
 
 	aprint_normal("boot device: %s\n",
 	    rdev ? device_xname(rdev) : "<unknown>");

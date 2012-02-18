@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.39 2011/07/06 18:46:04 dyoung Exp $	*/
+/*	$NetBSD: types.h,v 1.39.6.1 2012/02/18 07:31:12 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -92,8 +92,15 @@ typedef	volatile unsigned char		__cpu_simple_lock_t;
 #define	__HAVE_INTR_CONTROL
 
 #ifdef _KERNEL_OPT
-#include "opt_xen.h"
 #define	__HAVE_RAS
+
+#include "opt_xen.h"
+#if defined(__x86_64__) && !defined(XEN)
+#define	__HAVE_DIRECT_MAP 1
+#define	__HAVE_MM_MD_DIRECT_MAPPED_IO
+#define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+#define	__HAVE_CPU_UAREA_ROUTINES
+#endif
 #endif
 
 #else	/*	!__x86_64__	*/

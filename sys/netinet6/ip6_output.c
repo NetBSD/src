@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.140 2011/04/25 22:20:59 yamt Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.140.8.1 2012/02/18 07:35:43 mrg Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.140 2011/04/25 22:20:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.140.8.1 2012/02/18 07:35:43 mrg Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -99,11 +99,11 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.140 2011/04/25 22:20:59 yamt Exp $"
 #include <netinet6/ip6protosw.h>
 #include <netinet6/scope6_var.h>
 
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 #include <netinet6/ipsec.h>
 #include <netinet6/ipsec_private.h>
 #include <netkey/key.h>
-#endif /* IPSEC */
+#endif /* KAME_IPSEC */
 
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
@@ -189,12 +189,12 @@ ip6_output(
 	struct route *ro_pmtu = NULL;
 	int hdrsplit = 0;
 	int needipsec = 0;
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 	int needipsectun = 0;
 	struct secpolicy *sp = NULL;
 
 	ip6 = mtod(m, struct ip6_hdr *);
-#endif /* IPSEC */
+#endif /* KAME_IPSEC */
 #ifdef FAST_IPSEC
 	struct secpolicy *sp = NULL;
 	int s;
@@ -244,7 +244,7 @@ ip6_output(
 		MAKE_EXTHDR(opt->ip6po_dest2, &exthdrs.ip6e_dest2);
 	}
 
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 	if ((flags & IPV6_FORWARDING) != 0) {
 		needipsec = 0;
 		goto skippolicycheck;
@@ -300,7 +300,7 @@ ip6_output(
 	}
 
   skippolicycheck:;
-#endif /* IPSEC */
+#endif /* KAME_IPSEC */
 
 	/*
 	 * Calculate the total length of the extension header chain.
@@ -317,10 +317,6 @@ ip6_output(
 #ifdef FAST_IPSEC
 	/* Check the security policy (SP) for the packet */
     
-	/* XXX For moment, we doesn't support packet with extented action */
-	if (optlen !=0)
-		goto freehdrs;
-
 	sp = ipsec6_check_policy(m,so,flags,&needipsec,&error);
 	if (error != 0) {
 		/*
@@ -440,7 +436,7 @@ ip6_output(
 		M_CSUM_DATA_IPv6_HL_SET(m->m_pkthdr.csum_data,
 		    sizeof(struct ip6_hdr) + optlen);
 
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 		if (!needipsec)
 			goto skip_ipsec2;
 
@@ -596,7 +592,7 @@ skip_ipsec2:;
 			ip6->ip6_hlim = ip6_defmcasthlim;
 	}
 
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 	if (needipsec && needipsectun) {
 		struct ipsec_output_state state;
 
@@ -645,7 +641,7 @@ skip_ipsec2:;
 
 		exthdrs.ip6e_ip6 = m;
 	}
-#endif /* IPSEC */
+#endif /* KAME_IPSEC */
 #ifdef FAST_IPSEC
 	if (needipsec) {
 		s = splsoftnet();
@@ -681,7 +677,10 @@ skip_ipsec2:;
 		 * If in6_selectroute() does not return a route entry,
 		 * dst may not have been updated.
 		 */
-		rtcache_setdst(ro, sin6tosa(&dst_sa));
+		error = rtcache_setdst(ro, sin6tosa(&dst_sa));
+		if (error) {
+			goto bad;
+		}
 	}
 
 	/*
@@ -817,7 +816,7 @@ skip_ipsec2:;
 	if ((error = ip6_getpmtu(ro_pmtu, ro, ifp, &finaldst, &mtu,
 	    &alwaysfrag)) != 0)
 		goto bad;
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 	if (needipsectun)
 		mtu = IPV6_MMTU;
 #endif
@@ -858,28 +857,18 @@ skip_ipsec2:;
 	 * it must be examined and processed even by the source node.
 	 * (RFC 2460, section 4.)
 	 */
-	if (exthdrs.ip6e_hbh) {
-		struct ip6_hbh *hbh = mtod(exthdrs.ip6e_hbh, struct ip6_hbh *);
+	if (ip6->ip6_nxt == IPV6_HOPOPTS) {
 		u_int32_t dummy1; /* XXX unused */
 		u_int32_t dummy2; /* XXX unused */
+		int hoff = sizeof(struct ip6_hdr);
 
-		/*
-		 *  XXX: if we have to send an ICMPv6 error to the sender,
-		 *       we need the M_LOOP flag since icmp6_error() expects
-		 *       the IPv6 and the hop-by-hop options header are
-		 *       continuous unless the flag is set.
-		 */
-		m->m_flags |= M_LOOP;
-		m->m_pkthdr.rcvif = ifp;
-		if (ip6_process_hopopts(m, (u_int8_t *)(hbh + 1),
-		    ((hbh->ip6h_len + 1) << 3) - sizeof(struct ip6_hbh),
-		    &dummy1, &dummy2) < 0) {
+		if (ip6_hopopts_input(&dummy1, &dummy2, &m, &hoff)) {
 			/* m was already freed at this point */
 			error = EINVAL;/* better error? */
 			goto done;
 		}
-		m->m_flags &= ~M_LOOP; /* XXX */
-		m->m_pkthdr.rcvif = NULL;
+
+		ip6 = mtod(m, struct ip6_hdr *);
 	}
 
 #ifdef PFIL_HOOKS
@@ -959,7 +948,7 @@ skip_ipsec2:;
 			/* Record statistics for this interface address. */
 			ia6->ia_ifa.ifa_data.ifad_outbytes += m->m_pkthdr.len;
 		}
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 		/* clean ipsec history once it goes out of the node */
 		ipsec_delaux(m);
 #endif
@@ -1120,7 +1109,7 @@ skip_ipsec2:;
 				;
 			mlast->m_next = m_frgpart;
 			m->m_pkthdr.len = len + hlen + sizeof(*ip6f);
-			m->m_pkthdr.rcvif = (struct ifnet *)0;
+			m->m_pkthdr.rcvif = NULL;
 			ip6f->ip6f_reserved = 0;
 			ip6f->ip6f_ident = id;
 			ip6f->ip6f_nxt = nextproto;
@@ -1153,7 +1142,7 @@ sendorfree:
 				ia6->ia_ifa.ifa_data.ifad_outbytes +=
 				    m->m_pkthdr.len;
 			}
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 			/* clean ipsec history once it goes out of the node */
 			ipsec_delaux(m);
 #endif
@@ -1169,10 +1158,10 @@ sendorfree:
 done:
 	rtcache_free(&ip6route);
 
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 	if (sp != NULL)
 		key_freesp(sp);
-#endif /* IPSEC */
+#endif /* KAME_IPSEC */
 #ifdef FAST_IPSEC
 	if (sp != NULL)
 		KEY_FREESP(&sp);
@@ -1832,7 +1821,7 @@ else 					\
 			break;
 
 
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(KAME_IPSEC) || defined(FAST_IPSEC)
 		case IPV6_IPSEC_POLICY:
 			error = ipsec6_set_policy(in6p, optname,
 			    sopt->sopt_data, sopt->sopt_size, kauth_cred_get());
@@ -2016,7 +2005,7 @@ else 					\
 			error = ip6_getmoptions(sopt, in6p->in6p_moptions);
 			break;
 
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(KAME_IPSEC) || defined(FAST_IPSEC)
 		case IPV6_IPSEC_POLICY:
 		    {
 			struct mbuf *m = NULL;
@@ -2337,7 +2326,7 @@ do {								\
 	if (src->type) {					\
 		int hlen = (((struct ip6_ext *)src->type)->ip6e_len + 1) << 3;\
 		dst->type = malloc(hlen, M_IP6OPT, canwait);	\
-		if (dst->type == NULL && canwait == M_NOWAIT)	\
+		if (dst->type == NULL)				\
 			goto bad;				\
 		memcpy(dst->type, src->type, hlen);		\
 	}							\
@@ -2352,14 +2341,14 @@ copypktopts(struct ip6_pktopts *dst, struct ip6_pktopts *src, int canwait)
 	if (src->ip6po_pktinfo) {
 		dst->ip6po_pktinfo = malloc(sizeof(*dst->ip6po_pktinfo),
 		    M_IP6OPT, canwait);
-		if (dst->ip6po_pktinfo == NULL && canwait == M_NOWAIT)
+		if (dst->ip6po_pktinfo == NULL)
 			goto bad;
 		*dst->ip6po_pktinfo = *src->ip6po_pktinfo;
 	}
 	if (src->ip6po_nexthop) {
 		dst->ip6po_nexthop = malloc(src->ip6po_nexthop->sa_len,
 		    M_IP6OPT, canwait);
-		if (dst->ip6po_nexthop == NULL && canwait == M_NOWAIT)
+		if (dst->ip6po_nexthop == NULL)
 			goto bad;
 		memcpy(dst->ip6po_nexthop, src->ip6po_nexthop,
 		    src->ip6po_nexthop->sa_len);
@@ -2389,7 +2378,7 @@ ip6_copypktopts(struct ip6_pktopts *src, int canwait)
 	struct ip6_pktopts *dst;
 
 	dst = malloc(sizeof(*dst), M_IP6OPT, canwait);
-	if (dst == NULL && canwait == M_NOWAIT)
+	if (dst == NULL)
 		return (NULL);
 	ip6_initpktopts(dst);
 

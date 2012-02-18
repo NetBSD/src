@@ -1,4 +1,4 @@
-#	$NetBSD: IQ31244,v 1.54 2011/11/22 21:25:07 tls Exp $
+#	$NetBSD: IQ31244,v 1.54.2.1 2012/02/18 07:31:47 mrg Exp $
 #
 #	IQ31244 -- Intel IQ31244 Evaluation Board Kernel
 #
@@ -49,7 +49,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	NFSSERVER
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.139 2011/06/12 03:36:01 rmind Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.139.6.1 2012/02/18 07:35:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.139 2011/06/12 03:36:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.139.6.1 2012/02/18 07:35:54 mrg Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -708,6 +708,8 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			 */
 			if (v_daddr != LFS_UNUSED_DADDR) {
 				lfs_vunref(vp);
+				if (VTOI(vp)->i_lfs_iflags & LFSI_BMAP)
+					vrecycle(vp, NULL, NULL);
 				numrefed--;
 			}
 
@@ -760,6 +762,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 					continue;
 				} else {
 					KASSERT(VOP_ISLOCKED(vp));
+					VTOI(vp)->i_lfs_iflags |= LFSI_BMAP;
 					VOP_UNLOCK(vp);
 					numrefed++;
 				}
@@ -814,6 +817,9 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	 */
 	if (v_daddr != LFS_UNUSED_DADDR) {
 		lfs_vunref(vp);
+		/* Recycle as above. */
+		if (ip->i_lfs_iflags & LFSI_BMAP)
+			vrecycle(vp, NULL, NULL);
 		numrefed--;
 	}
 
@@ -1123,6 +1129,11 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp,
 	ip = VTOI(vp);
 	ufs_ihashins(ip);
 	mutex_exit(&ufs_hashlock);
+
+#ifdef notyet
+	/* Not found in the cache => this vnode was loaded only for cleaning. */
+	ip->i_lfs_iflags |= LFSI_BMAP;
+#endif
 
 	/*
 	 * XXX

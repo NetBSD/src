@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.18 2011/09/27 01:02:36 jym Exp $ */
+/*	$NetBSD: intr.c,v 1.18.6.1 2012/02/18 07:32:58 mrg Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.18 2011/09/27 01:02:36 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.18.6.1 2012/02/18 07:32:58 mrg Exp $");
 
 #include "opt_interrupt.h"
 #include "opt_multiprocessor.h"
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.18 2011/09/27 01:02:36 jym Exp $");
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <powerpc/psl.h>
 #include <powerpc/pic/picvar.h>
@@ -154,9 +154,9 @@ intr_establish(int hwirq, int type, int ipl, int (*ih_fun)(void *),
 	const int virq = mapirq(hwirq);
 
 	/* no point in sleeping unless someone can free memory. */
-	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
+	ih = kmem_intr_alloc(sizeof(*ih), cold ? KM_NOSLEEP : KM_SLEEP);
 	if (ih == NULL)
-		panic("intr_establish: can't malloc handler info");
+		panic("intr_establish: can't allocate handler info");
 
 	if (!PIC_VIRQ_LEGAL_P(virq) || type == IST_NONE)
 		panic("intr_establish: bogus irq (%d) or type (%d)",
@@ -168,8 +168,10 @@ intr_establish(int hwirq, int type, int ipl, int (*ih_fun)(void *),
 	case IST_NONE:
 		is->is_type = type;
 		break;
-	case IST_EDGE:
-	case IST_LEVEL:
+	case IST_EDGE_FALLING:
+	case IST_EDGE_RISING:
+	case IST_LEVEL_LOW:
+	case IST_LEVEL_HIGH:
 		if (type == is->is_type)
 			break;
 		/* FALLTHROUGH */
@@ -270,7 +272,7 @@ intr_disestablish(void *arg)
 		*q = ih->ih_next;
 	else
 		panic("intr_disestablish: handler not registered");
-	free((void *)ih, M_DEVBUF);
+	kmem_intr_free((void *)ih, sizeof(*ih));
 
 	/*
 	 * Reset the IPL for this source now that we've removed a handler.
@@ -327,8 +329,10 @@ mapirq(int hwirq)
 static const char * const intr_typenames[] = {
    [IST_NONE]  = "none",
    [IST_PULSE] = "pulsed",
-   [IST_EDGE]  = "edge-triggered",
-   [IST_LEVEL] = "level-triggered",
+   [IST_EDGE_FALLING]  = "falling edge triggered",
+   [IST_EDGE_RISING]  = "rising edge triggered",
+   [IST_LEVEL_LOW] = "low level triggered",
+   [IST_LEVEL_HIGH] = "high level triggered",
 };
 
 const char *

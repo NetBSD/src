@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.88 2011/10/12 23:04:22 dholland Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.88.6.1 2012/02/18 07:33:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -68,7 +68,7 @@ typedef uint32_t netbsd32_uintptr_t;
 /* netbsd32_[u]int64 are machine dependent and defined below */
 
 /*
- * machine depedant section; must define:
+ * machine dependant section; must define:
  *	netbsd32_pointer_t
  *		- 32-bit pointer type, normally uint32_t but can be int32_t
  *		  for platforms which rely on sign-extension of pointers
@@ -267,6 +267,67 @@ struct netbsd32_export_args30 {
 
 /* from <sys/poll.h> */
 typedef netbsd32_pointer_t netbsd32_pollfdp_t;
+
+/* from <sys/quotactl.h> */
+typedef netbsd32_pointer_t netbsd32_quotactlargsp_t;
+struct netbsd32_quotactlargs {
+	unsigned qc_op;
+	union {
+		struct {
+			netbsd32_pointer_t qc_info;
+		} stat;
+		struct {
+			int qc_idtype;
+			netbsd32_pointer_t qc_info;
+		} idtypestat;
+		struct {
+			int qc_objtype;
+			netbsd32_pointer_t qc_info;
+		} objtypestat;
+		struct {
+			netbsd32_pointer_t qc_key;
+			netbsd32_pointer_t qc_val;
+		} get;
+		struct {
+			netbsd32_pointer_t qc_key;
+			netbsd32_pointer_t qc_val;
+		} put;
+		struct {
+			netbsd32_pointer_t qc_key;
+		} delete;
+		struct {
+			netbsd32_pointer_t qc_cursor;
+		} cursoropen;
+		struct {
+			netbsd32_pointer_t qc_cursor;
+		} cursorclose;
+		struct {
+			netbsd32_pointer_t qc_cursor;
+			int qc_idtype;
+		} cursorskipidtype;
+		struct {
+			netbsd32_pointer_t qc_cursor;
+			netbsd32_pointer_t qc_keys;
+			netbsd32_pointer_t qc_vals;
+			unsigned qc_maxnum;
+			netbsd32_pointer_t qc_ret;
+		} cursorget;
+		struct {
+			netbsd32_pointer_t qc_cursor;
+			netbsd32_pointer_t qc_ret;
+		} cursoratend;
+		struct {
+			netbsd32_pointer_t qc_cursor;
+		} cursorrewind;
+		struct {
+			int qc_idtype;
+			netbsd32_pointer_t qc_quotafile;
+		} quotaon;
+		struct {
+			int qc_idtype;
+		} quotaoff;
+	} u;
+};
 
 /* from <sys/resource.h> */
 typedef netbsd32_pointer_t netbsd32_rusage50p_t;
@@ -583,6 +644,7 @@ typedef netbsd32_pointer_t netbsd32_stackp_t;
 /* from <sys/socket.h> */
 typedef netbsd32_pointer_t netbsd32_sockaddrp_t;
 typedef netbsd32_pointer_t netbsd32_osockaddrp_t;
+typedef netbsd32_pointer_t netbsd32_socklenp_t;
 
 typedef netbsd32_pointer_t netbsd32_msghdrp_t;
 struct netbsd32_msghdr {

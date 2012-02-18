@@ -1,4 +1,4 @@
-/*	$NetBSD: jmide.c,v 1.11 2011/08/13 16:04:09 jakllsch Exp $	*/
+/*	$NetBSD: jmide.c,v 1.11.6.1 2012/02/18 07:34:44 mrg Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.11 2011/08/13 16:04:09 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.11.6.1 2012/02/18 07:34:44 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,6 @@ jmide_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct jmide_softc *sc = device_private(self);
 	const struct jmide_product *jp;
-        char devinfo[256];
 	const char *intrstr;
         pci_intr_handle_t intrhandle;
 	u_int32_t pcictrl0 = pci_conf_read(pa->pa_pc, pa->pa_tag,
@@ -166,9 +165,7 @@ jmide_attach(device_t parent, device_t self, void *aux)
 	sc->sc_npata = jp->jm_npata;
 	sc->sc_nsata = jp->jm_nsata;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-        aprint_naive(": JMICRON PATA/SATA disk controller\n");
-        aprint_normal(": %s\n", devinfo);
+        pci_aprint_devinfo(pa, "JMICRON PATA/SATA disk controller");
 
 	aprint_normal("%s: ", JM_NAME(sc));
 	if (sc->sc_npata)

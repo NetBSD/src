@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.34 2010/03/24 19:33:51 tnn Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.34.12.1 2012/02/18 07:34:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.34 2010/03/24 19:33:51 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.34.12.1 2012/02/18 07:34:25 mrg Exp $");
 
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
 
@@ -424,10 +424,11 @@ vga_raster_init(struct vga_config *vc, bus_space_tag_t iot,
 
 		/* prefer 8x16 pixel font */
 		cookie = wsfont_find(NULL, 8, 16, 0, WSDISPLAY_FONTORDER_L2R,
-		    0);
+		    0, WSFONT_FIND_BITMAP);
 		if (cookie == -1)
 			cookie = wsfont_find(NULL, 0, 0, 0,
-			    WSDISPLAY_FONTORDER_L2R, WSDISPLAY_FONTORDER_L2R);
+			    WSDISPLAY_FONTORDER_L2R, WSDISPLAY_FONTORDER_L2R,
+			    WSFONT_FIND_BITMAP);
 		if (cookie == -1 || wsfont_lock(cookie, &wf))
 			panic("vga_raster_init: can't load console font");
 		vf->font = wf;
@@ -836,7 +837,8 @@ vga_raster_setup_font(struct vga_config *vc, struct vgascreen *scr)
 	int cookie;
 
 	LIST_FOREACH(vf, &vc->vc_fontlist, next) {
-		if (wsfont_matches(vf->font, 0, 0, scr->type->fontheight, 0)) {
+		if (wsfont_matches(vf->font, 0, 0, scr->type->fontheight, 0,
+		    WSFONT_FIND_BITMAP)) {
 			scr->encoding = vf->font->encoding;
 			LIST_INSERT_HEAD(&scr->fontset, vf, next);
 			return;
@@ -844,7 +846,7 @@ vga_raster_setup_font(struct vga_config *vc, struct vgascreen *scr)
 	}
 
 	cookie = wsfont_find(NULL, 0, scr->type->fontheight, 0,
-	    WSDISPLAY_FONTORDER_L2R, 0);
+	    WSDISPLAY_FONTORDER_L2R, 0, WSFONT_FIND_BITMAP);
 	if (cookie == -1)
 		return;
 

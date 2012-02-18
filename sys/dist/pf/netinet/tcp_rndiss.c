@@ -1,5 +1,5 @@
 /*	$OpenBSD: tcp_subr.c,v 1.98 2007/06/25 12:17:43 markus Exp $	*/
-/*	$NetBSD: tcp_rndiss.c,v 1.3 2011/11/19 22:51:24 tls Exp $	*/
+/*	$NetBSD: tcp_rndiss.c,v 1.3.2.1 2012/02/18 07:35:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_rndiss.c,v 1.3 2011/11/19 22:51:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_rndiss.c,v 1.3.2.1 2012/02/18 07:35:22 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -104,7 +104,7 @@ tcp_rndiss_encrypt(u_int16_t val)
 void
 tcp_rndiss_init(void)
 {
-	cprng_strong(kern_cprng, tcp_rndiss_sbox, sizeof(tcp_rndiss_sbox));
+	cprng_strong(kern_cprng, tcp_rndiss_sbox, sizeof(tcp_rndiss_sbox), 0);
 
 	tcp_rndiss_reseed = time_second + TCP_RNDISS_OUT;
 	tcp_rndiss_msb = tcp_rndiss_msb == 0x8000 ? 0 : 0x8000;

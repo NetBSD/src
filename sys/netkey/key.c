@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.180 2011/11/19 22:51:30 tls Exp $	*/
+/*	$NetBSD: key.c,v 1.180.2.1 2012/02/18 07:35:45 mrg Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.180 2011/11/19 22:51:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.180.2.1 2012/02/18 07:35:45 mrg Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -100,9 +100,6 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.180 2011/11/19 22:51:30 tls Exp $");
 
 #include <net/net_osdep.h>
 
-#ifndef offsetof
-#define offsetof(type, member)	((size_t)(&((type *)0)->member))
-#endif
 #ifndef satosin
 #define satosin(s) ((struct sockaddr_in *)s)
 #endif

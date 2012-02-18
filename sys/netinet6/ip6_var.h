@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.56 2011/11/04 00:22:33 zoltan Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.56.4.1 2012/02/18 07:35:43 mrg Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -241,7 +241,6 @@ struct ip6flow {
 	u_quad_t ip6f_dropped;            /* ENOBUFS returned by if_output */
 	u_quad_t ip6f_forwarded;          /* packets forwarded */
 	u_int ip6f_timer;               /* lifetime timer */
-	time_t ip6f_start;              /* creation time */
 };
 
 #ifdef _KERNEL
@@ -327,8 +326,7 @@ struct m_tag *ip6_findaux(struct mbuf *);
 void	ip6_delaux(struct mbuf *);
 
 int	ip6_mforward(struct ip6_hdr *, struct ifnet *, struct mbuf *);
-int	ip6_process_hopopts(struct mbuf *, u_int8_t *, int, u_int32_t *,
-				 u_int32_t *);
+int	ip6_hopopts_input(u_int32_t *, u_int32_t *, struct mbuf **, int *);
 void	ip6_savecontrol(struct in6pcb *, struct mbuf **, struct ip6_hdr *,
 		struct mbuf *);
 void	ip6_notify_pmtu(struct in6pcb *, const struct sockaddr_in6 *,

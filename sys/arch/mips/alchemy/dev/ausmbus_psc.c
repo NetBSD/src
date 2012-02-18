@@ -1,4 +1,4 @@
-/* $NetBSD: ausmbus_psc.c,v 1.10 2011/07/01 18:39:29 dyoung Exp $ */
+/* $NetBSD: ausmbus_psc.c,v 1.10.6.1 2012/02/18 07:32:38 mrg Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.10 2011/07/01 18:39:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.10.6.1 2012/02/18 07:32:38 mrg Exp $");
 
 #include "locators.h"
 
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.10 2011/07/01 18:39:29 dyoung Exp 
 #include <dev/i2c/i2c_bitbang.h>
 
 struct ausmbus_softc {
-	struct device			sc_dev;
+	device_t			sc_dev;
 
 	/* protocol comoon fields */
 	struct aupsc_controller		sc_ctrl;
@@ -71,10 +71,10 @@ struct ausmbus_softc {
 		val); \
 	delay(100);
 
-static int	ausmbus_match(struct device *, struct cfdata *, void *);
-static void	ausmbus_attach(struct device *, struct device *, void *);
+static int	ausmbus_match(device_t, struct cfdata *, void *);
+static void	ausmbus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ausmbus, sizeof(struct ausmbus_softc),
+CFATTACH_DECL_NEW(ausmbus, sizeof(struct ausmbus_softc),
 	ausmbus_match, ausmbus_attach, NULL, NULL);
 
 /* fuctions for i2c_controller */
@@ -101,7 +101,7 @@ static int	ausmbus_write_byte(void *arg, uint8_t v, int flags);
 
 
 static int
-ausmbus_match(struct device *parent, struct cfdata *cf, void *aux)
+ausmbus_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct aupsc_attach_args *aa = (struct aupsc_attach_args *)aux;
 
@@ -112,13 +112,15 @@ ausmbus_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-ausmbus_attach(struct device *parent, struct device *self, void *aux)
+ausmbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct ausmbus_softc *sc = (struct ausmbus_softc *)self;
+	struct ausmbus_softc *sc = device_private(self);
 	struct aupsc_attach_args *aa = (struct aupsc_attach_args *)aux;
 	struct i2cbus_attach_args iba;
 
 	aprint_normal(": Alchemy PSC SMBus protocol\n");
+
+	sc->sc_dev = self;
 
 	/* Initialize PSC */
 	sc->sc_ctrl = aa->aupsc_ctrl;
@@ -136,7 +138,7 @@ ausmbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_smbus_timeout = 10;
 
 	iba.iba_tag = &sc->sc_i2c;
-	(void) config_found_ia(&sc->sc_dev, "i2cbus", &iba, iicbus_print);
+	(void) config_found_ia(self, "i2cbus", &iba, iicbus_print);
 }
 
 static int

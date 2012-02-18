@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofbreg.h,v 1.1 2006/04/11 16:11:07 macallan Exp $	*/
+/*	$NetBSD: voodoofbreg.h,v 1.1.114.1 2012/02/18 07:34:54 mrg Exp $	*/
 
 /*
  * Copyright 2005, 2006 by Michael Lorenz.
@@ -149,6 +149,18 @@
 #define CLIP0MAX	(0x00100000 + 0x0c)
 #define DSTBASE		(0x00100000 + 0x10)
 #define DSTFORMAT	(0x00100000 + 0x14)
+	#define		FMT_STRIDE_MASK		0x00003fff
+	#define		FMT_MONO		0x00000000
+	#define		FMT_8BIT		0x00010000
+	#define		FMT_16BIT		0x00030000
+	#define		FMT_24BIT		0x00040000
+	#define		FMT_32BIT		0x00050000
+	#define		FMT_422YUYV		0x00080000
+	#define		FMT_422UYVY		0x00090000
+	#define		FMT_PAD_STRIDE		0x00000000
+	#define		FMT_PAD_BYTE		0x00400000
+	#define		FMT_PAD_WORD		0x00800000
+	#define		FMT_PAD_LONG		0x00c00000
 #define SRCBASE		(0x00100000 + 0x34)
 #define COMMANDEXTRA_2D	(0x00100000 + 0x38)
 #define CLIP1MIN	(0x00100000 + 0x4c)
@@ -185,9 +197,9 @@
 #define BIT(x) (1UL << (x))
 
 /* COMMAND_2D reg. values */
-#define ROP_COPY	0xcc     // src
-#define ROP_INVERT      0x55     // NOT dst
-#define ROP_XOR         0x66     // src XOR dst
+#define ROP_COPY	0xccU    // src
+#define ROP_INVERT	0x55U    // NOT dst
+#define ROP_XOR		0x66U    // src XOR dst
 
 #define AUTOINC_DSTX                    BIT(10)
 #define AUTOINC_DSTY                    BIT(11)
@@ -256,6 +268,8 @@
 #define SEQ_INDEX	0x3c4
 #define SEQ_DATA	0x3c5
 #define MISC_W		0x3c2
+	#define		VSYNC_NEG	0x80
+	#define		HSYNC_NEG	0x40
 #define GRA_INDEX	0x3ce
 #define GRA_DATA	0x3cf
 #define ATT_IW		0x3c0

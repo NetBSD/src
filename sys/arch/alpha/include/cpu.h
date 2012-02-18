@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.77 2011/06/14 07:53:29 matt Exp $ */
+/* $NetBSD: cpu.h,v 1.77.6.1 2012/02/18 07:30:57 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -250,7 +250,7 @@ struct trapframe;
 
 int	badaddr(void *, size_t);
 void *	cpu_uarea_alloc(bool);
-void	cpu_uarea_free(void *);
+bool	cpu_uarea_free(void *);
 
 #define	cpu_idle()	/* nothing */
 

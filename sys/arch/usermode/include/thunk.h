@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.35 2011/11/27 21:23:46 reinoud Exp $ */
+/* $NetBSD: thunk.h,v 1.35.2.1 2012/02/18 07:33:25 mrg Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -67,15 +67,30 @@ struct thunk_termios {
 #define THUNK_PROT_WRITE	0x02
 #define THUNK_PROT_EXEC		0x04
 
+#define THUNK_MADV_NORMAL	0x01
+#define THUNK_MADV_RANDOM	0x02
+#define THUNK_MADV_SEQUENTIAL	0x04
+#define THUNK_MADV_WILLNEED	0x08
+#define THUNK_MADV_DONTNEED	0x10
+#define THUNK_MADV_FREE		0x20
+
+
 struct aiocb;
 
-void	dprintf_debug(const char *fmt, ...) __attribute__((__format__(__printf__, 1, 2)));
+void	thunk_printf_debug(const char *fmt, ...) __attribute__((__format__(__printf__, 1, 2)));
+void	thunk_printf(const char *fmt, ...) __attribute__((__format__(__printf__, 1, 2)));
+
+int	thunk_syscallemu_init(void *, void *);
 
 int	thunk_setitimer(int, const struct thunk_itimerval *, struct thunk_itimerval *);
 int	thunk_gettimeofday(struct thunk_timeval *, void *);
 unsigned int thunk_getcounter(void);
 long	thunk_clock_getres_monotonic(void);
 int	thunk_usleep(useconds_t);
+
+timer_t	thunk_timer_attach(void);
+int	thunk_timer_start(timer_t, int);
+int	thunk_timer_getoverrun(timer_t);
 
 void	thunk_exit(int);
 void	thunk_abort(void);
@@ -92,18 +107,24 @@ int	thunk_swapcontext(ucontext_t *, ucontext_t *);
 int	thunk_tcgetattr(int, struct thunk_termios *);
 int	thunk_tcsetattr(int, int, const struct thunk_termios *);
 
+int	thunk_set_stdin_sigio(int);
+int	thunk_pollchar(void);
 int	thunk_getchar(void);
 void	thunk_putchar(int);
 
 int	thunk_execv(const char *, char * const []);
 
 int	thunk_open(const char *, int, mode_t);
-int	thunk_fstat_getsize(int, ssize_t *, ssize_t *);
+int	thunk_close(int);
+int	thunk_fstat_getsize(int, off_t *, ssize_t *);
 ssize_t	thunk_pread(int, void *, size_t, off_t);
 ssize_t	thunk_pwrite(int, const void *, size_t, off_t);
+ssize_t	thunk_read(int, void *, size_t);
+ssize_t	thunk_write(int, const void *, size_t);
 int	thunk_fsync(int);
 int	thunk_mkstemp(char *);
 int	thunk_unlink(const char *);
+pid_t	thunk_getpid(void);
 
 int	thunk_sigaction(int, const struct sigaction *, struct sigaction *);
 int	thunk_sigaltstack(const stack_t *, stack_t *);
@@ -111,6 +132,7 @@ void	thunk_signal(int, void (*)(int));
 int	thunk_sigblock(int);
 int	thunk_sigunblock(int);
 int	thunk_sigemptyset(sigset_t *sa_mask);
+int	thunk_sigfillset(sigset_t *sa_mask);
 void	thunk_sigaddset(sigset_t *sa_mask, int sig);
 int	thunk_sigprocmask(int how, const sigset_t * set, sigset_t *oset);
 int	thunk_atexit(void (*function)(void));
@@ -126,13 +148,103 @@ void *	thunk_sbrk(intptr_t len);
 void *	thunk_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset);
 int	thunk_munmap(void *addr, size_t len);
 int	thunk_mprotect(void *addr, size_t len, int prot);
+int	thunk_madvise(void *addr, size_t len, int behav);
 int	thunk_posix_memalign(void **, size_t, size_t);
+
+int	thunk_idle(void);
 
 char *	thunk_getenv(const char *);
 vaddr_t	thunk_get_vm_min_address(void);
 
-int	thunk_sdl_init(unsigned int, unsigned int, unsigned short);
-void *	thunk_sdl_getfb(size_t);
-int	thunk_sdl_getchar(void);
+int	thunk_getcpuinfo(char *, int *);
+
+int	thunk_getmachine(char *, size_t, char *, size_t);
+
+int	thunk_setown(int);
+
+int	thunk_open_tap(const char *);
+int	thunk_pollin_tap(int, int);
+int	thunk_pollout_tap(int, int);
+
+typedef struct {
+	unsigned int		sample_rate;
+	unsigned int		precision;
+	unsigned int		validbits;
+	unsigned int		channels;
+} thunk_audio_config_t;
+
+int	thunk_audio_open(const char *);
+int	thunk_audio_close(int);
+int	thunk_audio_drain(int);
+int	thunk_audio_config(int, const thunk_audio_config_t *,
+			   const thunk_audio_config_t *);
+int	thunk_audio_pollout(int);
+int	thunk_audio_pollin(int);
+ssize_t	thunk_audio_write(int, const void *, size_t);
+ssize_t	thunk_audio_read(int, void *, size_t);
+
+typedef enum {
+	/* client -> server */
+	THUNK_RFB_SET_PIXEL_FORMAT = 0,
+	THUNK_RFB_SET_ENCODINGS = 2,
+	THUNK_RFB_FRAMEBUFFER_UPDATE_REQUEST = 3,
+	THUNK_RFB_KEY_EVENT = 4,
+	THUNK_RFB_POINTER_EVENT = 5,
+	THUNK_RFB_CLIENT_CUT_TEXT = 6,
+} thunk_rfb_message_t;
+
+typedef struct {
+	thunk_rfb_message_t	message_type;
+	union {
+		struct {
+			uint8_t		down_flag;
+			uint32_t	keysym;
+		} key_event;
+		struct {
+			uint8_t		button_mask;
+			uint16_t	absx;
+			uint16_t	absy;
+		} pointer_event;
+	} data;
+} thunk_rfb_event_t;
+
+
+typedef struct {
+	uint8_t			enc;
+	uint16_t		x, y, w, h;
+	uint16_t		srcx, srcy;
+	uint8_t			pixel[4];
+} thunk_rfb_update_t;
+#define THUNK_RFB_TYPE_RAW	0
+#define THUNK_RFB_TYPE_COPYRECT	1
+#define THUNK_RFB_TYPE_RRE	2		/* rectangle fill */
+
+#define THUNK_RFB_QUEUELEN	128
+
+typedef struct {
+	int			sockfd;
+	int			clientfd;
+	thunk_rfb_event_t	event;
+
+	bool			connected;
+
+	uint16_t		width;
+	uint16_t		height;
+	uint8_t			depth;
+	char			name[64];
+	uint8_t			*framebuf;
+
+	bool			schedule_bell;
+	unsigned int		nupdates;
+	unsigned int		first_mergable;
+	thunk_rfb_update_t	update[THUNK_RFB_QUEUELEN];
+} thunk_rfb_t;
+
+int	thunk_rfb_open(thunk_rfb_t *, uint16_t);
+int	thunk_rfb_poll(thunk_rfb_t *, thunk_rfb_event_t *);
+void	thunk_rfb_bell(thunk_rfb_t *);
+void	thunk_rfb_update(thunk_rfb_t *, int, int, int, int);
+void	thunk_rfb_copyrect(thunk_rfb_t *, int, int, int, int, int, int);
+void	thunk_rfb_fillrect(thunk_rfb_t *, int, int, int, int, uint8_t *);
 
 #endif /* !_ARCH_USERMODE_INCLUDE_THUNK_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.28 2011/05/06 21:48:46 drochner Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.28.8.1 2012/02/18 07:35:45 mrg Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.28 2011/05/06 21:48:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.28.8.1 2012/02/18 07:35:45 mrg Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #include "opt_inet.h"
@@ -152,7 +152,7 @@ ipcomp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 	struct tdb_crypto *tc;
 	struct cryptodesc *crdc;
 	struct cryptop *crp;
-	int hlen = IPCOMP_HLENGTH;
+	int error, hlen = IPCOMP_HLENGTH;
 
 	IPSEC_SPLASSERT_SOFTNET("ipcomp_input");
 
@@ -173,11 +173,22 @@ ipcomp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 		IPCOMP_STATINC(IPCOMP_STAT_CRYPTO);
 		return ENOBUFS;
 	}
+
+	error = m_makewritable(&m, 0, m->m_pkthdr.len, M_NOWAIT);
+	if (error) {
+		DPRINTF(("ipcomp_input: m_makewritable failed\n"));
+		m_freem(m);
+		free(tc, M_XDATA);
+		crypto_freereq(crp);
+		IPCOMP_STATINC(IPCOMP_STAT_CRYPTO);
+		return error;
+	}
+
 	crdc = crp->crp_desc;
 
 	crdc->crd_skip = skip + hlen;
 	crdc->crd_len = m->m_pkthdr.len - (skip + hlen);
-	crdc->crd_inject = skip;
+	crdc->crd_inject = 0; /* unused */
 
 	tc->tc_ptr = 0;
 

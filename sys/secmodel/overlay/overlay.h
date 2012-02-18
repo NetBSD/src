@@ -1,4 +1,4 @@
-/* $NetBSD: overlay.h,v 1.4 2009/10/02 18:50:13 elad Exp $ */
+/* $NetBSD: overlay.h,v 1.4.16.1 2012/02/18 07:35:47 mrg Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -28,6 +28,9 @@
 
 #ifndef _SECMODEL_OVERLAY_OVERLAY_H_
 #define	_SECMODEL_OVERLAY_OVERLAY_H_
+
+#define SECMODEL_OVERLAY_NAME "Overlay security model"
+#define SECMODEL_OVERLAY_ID   "org.netbsd.secmodel.overlay"
 
 void secmodel_overlay_init(void);
 void secmodel_overlay_start(void);

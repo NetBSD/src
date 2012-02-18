@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.45 2011/07/22 14:21:40 jakllsch Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.45.6.1 2012/02/18 07:35:02 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.45 2011/07/22 14:21:40 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.45.6.1 2012/02/18 07:35:02 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.45 2011/07/22 14:21:40 jakllsch E
 #include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/device.h>
+#include <sys/rnd.h>
 
 #include <dev/sysmon/sysmonvar.h>
 #include <prop/proplib.h>
@@ -166,6 +167,8 @@ static int sysmon_power_event_queue_head;
 static int sysmon_power_event_queue_tail;
 static int sysmon_power_event_queue_count;
 
+static krndsource_t sysmon_rndsource;
+
 static SIMPLEQ_HEAD(, power_event_dictionary) pev_dict_list =
     SIMPLEQ_HEAD_INITIALIZER(pev_dict_list);
 
@@ -196,6 +199,10 @@ sysmon_power_init(void)
 	mutex_init(&sysmon_power_event_queue_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sysmon_power_event_queue_cv, "smpower");
 	selinit(&sysmon_power_event_queue_selinfo);
+
+	rnd_attach_source(&sysmon_rndsource, "system-power",
+			  RND_TYPE_POWER, 0);
+
 }
 
 /*
@@ -778,6 +785,8 @@ sysmon_penvsys_event(struct penvsys_state *pes, int event)
 	const char *mystr = NULL;
 
 	KASSERT(pes != NULL);
+
+	rnd_add_uint32(&sysmon_rndsource, pes->pes_type);
 
 	if (sysmon_power_daemon != NULL) {
 		/*

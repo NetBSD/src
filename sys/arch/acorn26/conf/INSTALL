@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.33 2011/11/22 21:24:51 tls Exp $
+# $NetBSD: INSTALL,v 1.33.2.1 2012/02/18 07:30:43 mrg Exp $
 
 # INSTALL configuration, used to generate installation media
 
@@ -50,7 +50,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	NFSSERVER	# Sun NFS-compatible file system server
 options 	FFS_EI		# FFS endianness-independence support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 options 	NFS_V2_ONLY	# Make a smaller NFS
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 

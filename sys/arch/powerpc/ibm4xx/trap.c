@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.62 2011/06/21 06:38:50 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.62.6.1 2012/02/18 07:32:53 mrg Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.62 2011/06/21 06:38:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.62.6.1 2012/02/18 07:32:53 mrg Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -113,7 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.62 2011/06/21 06:38:50 matt Exp $");
 #define	NARGREG		8		/* 8 args are in registers */
 #define	MOREARGS(sp)	((void *)((int)(sp) + 8)) /* more args go here */
 
-static int fix_unaligned(struct lwp *l, struct trapframe *frame);
+static int fix_unaligned(struct lwp *l, struct trapframe *tf);
 
 void trap(struct trapframe *);	/* Called from locore / trap_subr */
 /* Why are these not defined in a header? */
@@ -466,7 +466,7 @@ copyin(const void *udaddr, void *kaddr, size_t len)
 		"   addi %[udaddr],%[udaddr],0x1;"  /* next udaddr byte */
 		"   sync; isync;"
 		"   mtpid %[pid]; sync;"
-		"   stb %[tmp],0(%[kaddr]);"        /* Store kernel byte */  
+		"   stb %[tmp],0(%[kaddr]);"        /* Store kernel byte */
 		"   dcbf 0,%[kaddr];"           /* flush cache */
 		"   addi %[kaddr],%[kaddr],0x1;"
 		"   sync; isync;"
@@ -570,7 +570,7 @@ copyout(const void *kaddr, void *udaddr, size_t len)
 		"   b 3b;"
 		"10:mtpid %[pid]; mtmsr %[msr]; sync; isync;" /* Restore PID and MSR */
 		: [msr] "=&r" (msr), [pid] "=&r" (pid), [tmp] "=&r" (tmp)
-		: [udaddr] "b" (udaddr), [ctx] "b" (ctx), [kaddr] "b" (kaddr), [len] "b" (len), [count] "b" (count)); 
+		: [udaddr] "b" (udaddr), [ctx] "b" (ctx), [kaddr] "b" (kaddr), [len] "b" (len), [count] "b" (count));
 
 	curpcb->pcb_onfault = NULL;
 	return 0;

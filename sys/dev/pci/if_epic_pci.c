@@ -1,4 +1,4 @@
-/*	$NetBSD: if_epic_pci.c,v 1.39 2011/07/26 20:51:24 dyoung Exp $	*/
+/*	$NetBSD: if_epic_pci.c,v 1.39.6.1 2012/02/18 07:34:39 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_epic_pci.c,v 1.39 2011/07/26 20:51:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_epic_pci.c,v 1.39.6.1 2012/02/18 07:34:39 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,16 +167,13 @@ epic_pci_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	aprint_naive(": Ethernet controller\n");
-
 	epp = epic_pci_lookup(pa);
 	if (epp == NULL) {
 		aprint_normal("\n");
 		panic("%s: impossible", __func__);
 	}
 
-	aprint_normal(": %s, rev. %d\n", epp->epp_name,
-	    PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo_fancy(pa, "Ethernet controller", epp->epp_name, 1);
 
 	/* power up chip */
 	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,

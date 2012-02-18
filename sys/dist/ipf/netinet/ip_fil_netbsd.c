@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.56 2010/09/05 12:36:46 mlelstv Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.56.12.1 2012/02/18 07:35:18 mrg Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.56 2010/09/05 12:36:46 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.56.12.1 2012/02/18 07:35:18 mrg Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.67 2009/12/19 05:41:08 darrenr Exp";
@@ -88,7 +88,7 @@ static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.67 2009/12/19 05:4
 #include <sys/md5.h>
 #include <sys/kernel.h>
 #ifdef INET
-extern	int	ip_optcopy __P((struct ip *, struct ip *));
+extern	int	ip_optcopy(struct ip *, struct ip *);
 #endif
 
 #ifdef USE_MUTEXES
@@ -121,16 +121,18 @@ static kauth_listener_t ipf_listener;
 #endif
 
 #if (__NetBSD_Version__ < 399001400)
-extern int ip6_getpmtu __P((struct route_in6 *, struct route_in6 *,
+extern int
+ip6_getpmtu(struct route_in6 *, struct route_in6 *,
 			    struct ifnet *, struct in6_addr *, u_long *,
-			    int *));
+			    int *);
 #endif
 
-static	int	(*fr_savep) __P((ip_t *, int, void *, int, struct mbuf **));
-static	int	fr_send_ip __P((fr_info_t *, mb_t *, mb_t **));
+static	int	(*fr_savep)(ip_t *, int, void *, int, struct mbuf **);
+static	int	fr_send_ip(fr_info_t *, mb_t *, mb_t **);
 #ifdef USE_INET6
-static int ipfr_fastroute6 __P((struct mbuf *, struct mbuf **,
-				fr_info_t *, frdest_t *));
+static int
+ipfr_fastroute6(struct mbuf *, struct mbuf **,
+				fr_info_t *, frdest_t *);
 #endif
 
 #if (__NetBSD_Version__ >= 104040000)
@@ -144,16 +146,18 @@ struct callout fr_slowtimer_ch;
 /*
  * We provide the fr_checkp name just to minimize changes later.
  */
-int (*fr_checkp) __P((ip_t *ip, int hlen, void *ifp, int out, mb_t **mp));
+int (*fr_checkp)(ip_t *ip, int hlen, void *ifp, int out, mb_t **mp);
 #endif /* NETBSD_PF */
 
 #if (__NetBSD_Version__ >= 106080000) && defined(_KERNEL)
 # include <sys/select.h>
 
 # if  (__NetBSD_Version__ >= 399001400)
-int iplpoll __P((dev_t dev, int events, struct lwp *p));
+int
+iplpoll(dev_t dev, int events, struct lwp *p);
 # else
-int iplpoll __P((dev_t dev, int events, struct proc *p));
+int
+iplpoll(dev_t dev, int events, struct proc *p);
 # endif
 
 struct selinfo ipfselwait[IPL_LOGSIZE];
@@ -174,7 +178,8 @@ const struct cdevsw ipl_cdevsw = {
 #if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 105110000)
 # include <net/pfil.h>
 
-static int fr_check_wrapper(void *, struct mbuf **, struct ifnet *, int );
+static int
+fr_check_wrapper(void *, struct mbuf **, struct ifnet *, int );
 
 static int
 fr_check_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp,
@@ -243,7 +248,8 @@ fr_check_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp,
 # ifdef USE_INET6
 #  include <netinet/ip6.h>
 
-static int fr_check_wrapper6(void *, struct mbuf **, struct ifnet *, int );
+static int
+fr_check_wrapper6(void *, struct mbuf **, struct ifnet *, int );
 
 static int
 fr_check_wrapper6(void *arg, struct mbuf **mp, struct ifnet *ifp,
@@ -275,9 +281,11 @@ fr_check_wrapper6(void *arg, struct mbuf **mp, struct ifnet *ifp,
 
 
 # if defined(PFIL_TYPE_IFNET) && defined(PFIL_IFNET)
-static int ipf_pfilsync(void *, struct mbuf **, struct ifnet *, int);
+static int
+ipf_pfilsync(void *, struct mbuf **, struct ifnet *, int);
 
-static int ipf_pfilsync(void *hdr, struct mbuf **mp,
+static int
+ipf_pfilsync(void *hdr, struct mbuf **mp,
     struct ifnet *ifp, int dir)
 {
 	/*
@@ -296,8 +304,8 @@ static int ipf_pfilsync(void *hdr, struct mbuf **mp,
 
 
 #if	defined(IPFILTER_LKM)
-int iplidentify(s)
-char *s;
+int
+iplidentify(char *s)
 {
 	if (strcmp(s, "ipl") == 0)
 		return 1;
@@ -350,7 +358,8 @@ ipfilterattach(int count)
 #endif
 
 
-int ipfattach(void)
+int
+ipfattach(void)
 {
 	SPL_INT(s);
 #if (__NetBSD_Version__ >= 499005500)
@@ -502,7 +511,8 @@ pfil_error:
  * Disable the filter by removing the hooks from the IP input/output
  * stream.
  */
-int ipfdetach(void)
+int
+ipfdetach(void)
 {
 	SPL_INT(s);
 #if (__NetBSD_Version__ >= 499005500)
@@ -604,31 +614,28 @@ int ipfdetach(void)
 /*
  * Filter ioctl interface.
  */
-int iplioctl(dev, cmd, data, mode
+int
+iplioctl(dev_t dev, u_long cmd,
+#if  (__NetBSD_Version__ >= 499001000)
+	void *data,
+#else
+	caddr_t data,
+#endif
+	int mode
 #if (NetBSD >= 199511)
-, p)
 # if  (__NetBSD_Version__ >= 399001400)
-struct lwp *p;
+	, struct lwp *p
 #   if (__NetBSD_Version__ >= 399002000)
 #     define	UID(l)	kauth_cred_getuid((l)->l_cred)
 #  else
 #     define	UID(l)	((l)->l_proc->p_cred->p_ruid)
 #  endif
 # else
-struct proc *p;
+	, struct proc *p
 #  define	UID(p)	((p)->p_cred->p_ruid)
 # endif
-#else
+#endif
 )
-#endif
-dev_t dev;
-u_long cmd;
-#if  (__NetBSD_Version__ >= 499001000)
-void *data;
-#else
-caddr_t data;
-#endif
-int mode;
 {
 	int error = 0, unit = 0;
 	SPL_INT(s);
@@ -669,8 +676,8 @@ int mode;
 
 
 #if 0
-void fr_forgetifp(ifp)
-void *ifp;
+void
+fr_forgetifp(void *ifp)
 {
 	register frentry_t *f;
 
@@ -710,7 +717,8 @@ void *ifp;
 /*
  * routines below for saving IP headers to buffer
  */
-int iplopen(
+int
+iplopen(
     dev_t dev,
     int flags,
 #if (NetBSD >= 199511)
@@ -755,7 +763,8 @@ int iplopen(
 }
 
 
-int iplclose(
+int
+iplclose(
     dev_t dev,
     int flags,
 #if (NetBSD >= 199511)
@@ -783,7 +792,8 @@ int iplclose(
  * called during packet processing and cause an inconsistancy to appear in
  * the filter lists.
  */
-int iplread(
+int
+iplread(
     dev_t dev,
     struct uio *uio,
 #if (BSD >= 199306)
@@ -814,7 +824,8 @@ int iplread(
  * called during packet processing and cause an inconsistancy to appear in
  * the filter lists.
  */
-int iplwrite(
+int
+iplwrite(
     dev_t dev,
     struct uio *uio,
 #if (BSD >= 199306)
@@ -838,8 +849,8 @@ int iplwrite(
  * fr_send_reset - this could conceivably be a call to tcp_respond(), but that
  * requires a large amount of setting up and isn't any more efficient.
  */
-int fr_send_reset(fin)
-fr_info_t *fin;
+int
+fr_send_reset(fr_info_t *fin)
 {
 	struct tcphdr *tcp, *tcp2;
 	int tlen = 0, hlen;
@@ -940,9 +951,8 @@ fr_info_t *fin;
 }
 
 
-static int fr_send_ip(fin, m, mpp)
-fr_info_t *fin;
-mb_t *m, **mpp;
+static int
+fr_send_ip(fr_info_t *fin, mb_t *m, mb_t **mpp)
 {
 	fr_info_t fnew;
 #ifdef INET
@@ -986,7 +996,7 @@ mb_t *m, **mpp;
 	default :
 		return EINVAL;
 	}
-#ifdef IPSEC
+#ifdef KAME_IPSEC
 	m->m_pkthdr.rcvif = NULL;
 #endif
 
@@ -1011,10 +1021,8 @@ mb_t *m, **mpp;
 }
 
 
-int fr_send_icmp_err(type, fin, dst)
-int type;
-fr_info_t *fin;
-int dst;
+int
+fr_send_icmp_err(int type, fr_info_t *fin, int dst)
 {
 	int err, hlen, xtra, iclen, ohlen, avail, code;
 	struct in_addr dst4;
@@ -1200,10 +1208,8 @@ int dst;
  * m0 - pointer to mbuf where the IP packet starts
  * mpp - pointer to the mbuf pointer that is the start of the mbuf chain
  */
-int fr_fastroute(m0, mpp, fin, fdp)
-mb_t *m0, **mpp;
-fr_info_t *fin;
-frdest_t *fdp;
+int
+fr_fastroute(mb_t *m0, mb_t **mpp, fr_info_t *fin, frdest_t *fdp)
 {
 	int error = 0;
 #ifdef INET
@@ -1516,10 +1522,8 @@ bad:
  * or ensure that it is an IPv6 packet that is being forwarded, those are
  * expected to be done by the called (ipfr_fastroute).
  */
-static int ipfr_fastroute6(m0, mpp, fin, fdp)
-struct mbuf *m0, **mpp;
-fr_info_t *fin;
-frdest_t *fdp;
+static int
+ipfr_fastroute6(struct mbuf *m0, struct mbuf **mpp, fr_info_t *fin, frdest_t *fdp)
 {
 # if __NetBSD_Version__ >= 499001100
 	struct route ip6route;
@@ -1639,8 +1643,8 @@ bad:
 #endif	/* INET6 */
 
 
-int fr_verifysrc(fin)
-fr_info_t *fin;
+int
+fr_verifysrc(fr_info_t *fin)
 {
 #if __NetBSD_Version__ >= 499001100
 	struct rtentry *rt;
@@ -1681,10 +1685,8 @@ fr_info_t *fin;
 /*
  * return the first IP Address associated with an interface
  */
-int fr_ifpaddr(v, atype, ifptr, inp, inpmask)
-int v, atype;
-void *ifptr;
-struct in_addr *inp, *inpmask;
+int
+fr_ifpaddr(int v, int atype, void *ifptr, struct in_addr *inp, struct in_addr *inpmask)
 {
 #ifdef USE_INET6
 	struct in6_addr *inp6 = NULL;
@@ -1745,8 +1747,8 @@ struct in_addr *inp, *inpmask;
 }
 
 
-u_32_t fr_newisn(fin)
-fr_info_t *fin;
+u_32_t
+fr_newisn(fr_info_t *fin)
 {
 #if __NetBSD_Version__ >= 105190000	/* 1.5T */
 	size_t asz;
@@ -1808,7 +1810,8 @@ fr_info_t *fin;
 /*                                                                          */
 /* Returns the next IPv4 ID to use for this packet.                         */
 /* ------------------------------------------------------------------------ */
-u_short fr_nextipid(fr_info_t *fin)
+u_short
+fr_nextipid(fr_info_t *fin)
 {
 	static u_short ipid = 0;
 	u_short id;
@@ -1821,8 +1824,8 @@ u_short fr_nextipid(fr_info_t *fin)
 }
 
 
-EXTERN_INLINE void fr_checkv4sum(fin)
-fr_info_t *fin;
+EXTERN_INLINE void
+fr_checkv4sum(fr_info_t *fin)
 {
 #ifdef M_CSUM_TCP_UDP_BAD
 	int manual, pflag, cflags, active;
@@ -1895,8 +1898,8 @@ skipauto:
 
 
 #ifdef USE_INET6
-EXTERN_INLINE void fr_checkv6sum(fin)
-fr_info_t *fin;
+EXTERN_INLINE void
+fr_checkv6sum(fr_info_t *fin)
 {
 # ifdef M_CSUM_TCP_UDP_BAD
 	int manual, pflag, cflags, active;
@@ -1953,8 +1956,8 @@ fr_info_t *fin;
 #endif /* USE_INET6 */
 
 
-size_t mbufchainlen(m0)
-struct mbuf *m0;
+size_t
+mbufchainlen(struct mbuf *m0)
 {
 	size_t len;
 
@@ -1987,10 +1990,8 @@ struct mbuf *m0;
 /* We assume that 'xmin' is a pointer to a buffer that is part of the chain */
 /* of buffers that starts at *fin->fin_mp.                                  */
 /* ------------------------------------------------------------------------ */
-void *fr_pullup(xmin, fin, len)
-mb_t *xmin;
-fr_info_t *fin;
-int len;
+void *
+fr_pullup(mb_t *xmin, fr_info_t *fin, int len)
 {
 	int out = fin->fin_out, dpoff, ipoff;
 	mb_t *m = xmin;
@@ -2085,13 +2086,12 @@ int len;
 }
 
 
-int iplpoll(dev, events, p)
-dev_t dev;
-int events;
 #if  (__NetBSD_Version__ >= 399001400)
-struct lwp *p;
+int
+iplpoll(dev_t dev, int events, struct lwp *p)
 #else
-struct proc *p;
+int
+iplpoll(dev_t dev, int events, struct proc *p)
 #endif
 {
 	u_int unit = GET_MINOR(dev);
@@ -2134,9 +2134,8 @@ struct proc *p;
 }
 
 
-int ipf_inject(fin, m)
-fr_info_t *fin;
-mb_t *m;
+int
+ipf_inject(fr_info_t *fin, mb_t *m)
 {
 	int error;
 

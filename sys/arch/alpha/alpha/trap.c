@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.126 2011/06/07 00:48:30 matt Exp $ */
+/* $NetBSD: trap.c,v 1.126.6.1 2012/02/18 07:30:54 mrg Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.126 2011/06/07 00:48:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.126.6.1 2012/02/18 07:30:54 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,7 +219,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 	vaddr_t onfault;
 	ksiginfo_t ksi;
 	vm_prot_t ftype;
-	u_int64_t ucode;
+	uint64_t ucode;
 	int i, user;
 #if defined(DDB)
 	int call_debugger = 1;
@@ -805,7 +805,7 @@ unaligned_fixup(u_long va, u_long opcode, u_long reg, struct lwp *l)
 	int doprint, dofix, dosigbus, signo;
 	unsigned long *regptr, longdata;
 	int intdata;		/* signed to get extension when storing */
-	u_int16_t worddata;	/* unsigned to _avoid_ extension */
+	uint16_t worddata;	/* unsigned to _avoid_ extension */
 
 	/*
 	 * Read USP into frame in case it's the register to be modified.
@@ -965,7 +965,7 @@ handle_opdec(struct lwp *l, u_long *ucodep)
 {
 	alpha_instruction inst;
 	register_t *regptr, memaddr;
-	u_int64_t inst_pc;
+	uint64_t inst_pc;
 	int sig;
 
 	/*
@@ -1012,7 +1012,7 @@ handle_opdec(struct lwp *l, u_long *ucodep)
 		}
 
 		if (inst.mem_format.opcode == op_ldbu) {
-			u_int8_t b;
+			uint8_t b;
 
 			/* XXX ONLY WORKS ON LITTLE-ENDIAN ALPHA */
 			if (copyin((void *)memaddr, &b, sizeof (b)) != 0)
@@ -1020,7 +1020,7 @@ handle_opdec(struct lwp *l, u_long *ucodep)
 			if (regptr != NULL)
 				*regptr = b;
 		} else if (inst.mem_format.opcode == op_ldwu) {
-			u_int16_t w;
+			uint16_t w;
 
 			/* XXX ONLY WORKS ON LITTLE-ENDIAN ALPHA */
 			if (copyin((void *)memaddr, &w, sizeof (w)) != 0)
@@ -1028,14 +1028,14 @@ handle_opdec(struct lwp *l, u_long *ucodep)
 			if (regptr != NULL)
 				*regptr = w;
 		} else if (inst.mem_format.opcode == op_stw) {
-			u_int16_t w;
+			uint16_t w;
 
 			/* XXX ONLY WORKS ON LITTLE-ENDIAN ALPHA */
 			w = (regptr != NULL) ? *regptr : 0;
 			if (copyout(&w, (void *)memaddr, sizeof (w)) != 0)
 				goto sigsegv;
 		} else if (inst.mem_format.opcode == op_stb) {
-			u_int8_t b;
+			uint8_t b;
 
 			/* XXX ONLY WORKS ON LITTLE-ENDIAN ALPHA */
 			b = (regptr != NULL) ? *regptr : 0;

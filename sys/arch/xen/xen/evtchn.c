@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.56 2011/11/19 17:13:39 cherry Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.56.4.1 2012/02/18 07:33:46 mrg Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.56 2011/11/19 17:13:39 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.56.4.1 2012/02/18 07:33:46 mrg Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.56 2011/11/19 17:13:39 cherry Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/reboot.h>
 #include <sys/mutex.h>
 
@@ -95,10 +95,10 @@ static kmutex_t evtlock[NR_EVENT_CHANNELS];
 static uint8_t evtch_bindcount[NR_EVENT_CHANNELS];
 
 /* event-channel <-> VCPU mapping for IPIs. XXX: redo for SMP. */
-static evtchn_port_t vcpu_ipi_to_evtch[MAX_VIRT_CPUS];
+static evtchn_port_t vcpu_ipi_to_evtch[XEN_LEGACY_MAX_VCPUS];
 
 /* event-channel <-> VCPU mapping for VIRQ_TIMER.  XXX: redo for SMP. */
-static int virq_timer_to_evtch[MAX_VIRT_CPUS];
+static int virq_timer_to_evtch[XEN_LEGACY_MAX_VCPUS];
 
 /* event-channel <-> VIRQ mapping. */
 static int virq_to_evtch[NR_VIRQS];
@@ -148,11 +148,11 @@ events_default_setup(void)
 	int i;
 
 	/* No VCPU -> event mappings. */
-	for (i = 0; i < MAX_VIRT_CPUS; i++)
+	for (i = 0; i < XEN_LEGACY_MAX_VCPUS; i++)
 		vcpu_ipi_to_evtch[i] = -1;
 
 	/* No VIRQ_TIMER -> event mappings. */
-	for (i = 0; i < MAX_VIRT_CPUS; i++)
+	for (i = 0; i < XEN_LEGACY_MAX_VCPUS; i++)
 		virq_timer_to_evtch[i] = -1;
 
 	/* No VIRQ -> event mappings. */
@@ -554,14 +554,15 @@ pirq_establish(int pirq, int evtch, int (*func)(void *), void *arg, int level,
 	struct pintrhand *ih;
 	physdev_op_t physdev_op;
 
-	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
+	ih = kmem_zalloc(sizeof(struct pintrhand),
+	    cold ? KM_NOSLEEP : KM_SLEEP);
 	if (ih == NULL) {
-		printf("pirq_establish: can't malloc handler info\n");
+		printf("pirq_establish: can't allocate handler info\n");
 		return NULL;
 	}
 
 	if (event_set_handler(evtch, pirq_interrupt, ih, level, evname) != 0) {
-		free(ih, M_DEVBUF);
+		kmem_free(ih, sizeof(struct pintrhand));
 		return NULL;
 	}
 
@@ -659,8 +660,7 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 	printf("event_set_handler evtch %d handler %p level %d\n", evtch,
 	       handler, level);
 #endif
-	ih = malloc(sizeof (struct intrhand), M_DEVBUF,
-	    M_WAITOK|M_ZERO);
+	ih = kmem_zalloc(sizeof (struct intrhand), KM_NOSLEEP);
 	if (ih == NULL)
 		panic("can't allocate fixed interrupt source");
 
@@ -685,8 +685,8 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 
 	/* register handler for event channel */
 	if (evtsource[evtch] == NULL) {
-		evts = malloc(sizeof (struct evtsource),
-		    M_DEVBUF, M_WAITOK|M_ZERO);
+		evts = kmem_zalloc(sizeof (struct evtsource),
+		    KM_NOSLEEP);
 		if (evts == NULL)
 			panic("can't allocate fixed interrupt source");
 
@@ -742,8 +742,8 @@ event_set_iplhandler(struct cpu_info *ci,
 
 	KASSERT(ci == ih->ih_cpu);
 	if (ci->ci_isources[level] == NULL) {
-		ipls = malloc(sizeof (struct iplsource),
-		    M_DEVBUF, M_WAITOK|M_ZERO);
+		ipls = kmem_zalloc(sizeof (struct iplsource),
+		    KM_NOSLEEP);
 		if (ipls == NULL)
 			panic("can't allocate fixed interrupt source");
 		ipls->ipl_recurse = xenev_stubs[level].ist_recurse;
@@ -774,7 +774,7 @@ event_remove_handler(int evtch, int (*func)(void *), void *arg)
 	for (ihp = &evts->ev_handlers, ih = evts->ev_handlers;
 	    ih != NULL;
 	    ihp = &ih->ih_evt_next, ih = ih->ih_evt_next) {
-		if (ih->ih_fun == func && ih->ih_arg == arg)
+		if (ih->ih_realfun == func && ih->ih_realarg == arg)
 			break;
 	}
 	if (ih == NULL) {
@@ -789,17 +789,17 @@ event_remove_handler(int evtch, int (*func)(void *), void *arg)
 	for (ihp = &ipls->ipl_handlers, ih = ipls->ipl_handlers;
 	    ih != NULL;
 	    ihp = &ih->ih_ipl_next, ih = ih->ih_ipl_next) {
-		if (ih->ih_fun == func && ih->ih_arg == arg)
+		if (ih->ih_realfun == func && ih->ih_realarg == arg)
 			break;
 	}
 	if (ih == NULL)
 		panic("event_remove_handler");
 	*ihp = ih->ih_ipl_next;
-	free(ih, M_DEVBUF);
+	kmem_free(ih, sizeof (struct intrhand));
 	if (evts->ev_handlers == NULL) {
 		xen_atomic_clear_bit(&ci->ci_evtmask[0], evtch);
 		evcnt_detach(&evts->ev_evcnt);
-		free(evts, M_DEVBUF);
+		kmem_free(evts, sizeof (struct evtsource));
 		evtsource[evtch] = NULL;
 	} else {
 		intr_calculatemasks(evts, evtch, ci);

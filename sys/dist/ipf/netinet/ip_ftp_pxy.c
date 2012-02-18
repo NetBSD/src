@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ftp_pxy.c,v 1.15 2009/08/19 08:36:10 darrenr Exp $	*/
+/*	$NetBSD: ip_ftp_pxy.c,v 1.15.16.1 2012/02/18 07:35:18 mrg Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed
@@ -12,7 +12,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.15 2009/08/19 08:36:10 darrenr Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.15.16.1 2012/02/18 07:35:18 mrg Exp $");
 
 #define	IPF_FTP_PROXY
 
@@ -50,24 +50,41 @@ __KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.15 2009/08/19 08:36:10 darrenr Exp 
  */
 #define	FTPXY_C_PASV	1000
 
-int ippr_ftp_client __P((fr_info_t *, ip_t *, nat_t *, ftpinfo_t *, int));
-int ippr_ftp_complete __P((char *, size_t));
-int ippr_ftp_in __P((fr_info_t *, ap_session_t *, nat_t *));
-int ippr_ftp_init __P((void));
-void ippr_ftp_fini __P((void));
-int ippr_ftp_new __P((fr_info_t *, ap_session_t *, nat_t *));
-int ippr_ftp_out __P((fr_info_t *, ap_session_t *, nat_t *));
-int ippr_ftp_pasv __P((fr_info_t *, ip_t *, nat_t *, ftpinfo_t *, int));
-int ippr_ftp_epsv __P((fr_info_t *, ip_t *, nat_t *, ftpside_t *, int));
-int ippr_ftp_port __P((fr_info_t *, ip_t *, nat_t *, ftpside_t *, int));
-int ippr_ftp_process __P((fr_info_t *, nat_t *, ftpinfo_t *, int));
-int ippr_ftp_server __P((fr_info_t *, ip_t *, nat_t *, ftpinfo_t *, int));
-int ippr_ftp_valid __P((ftpinfo_t *, int, char *, size_t));
-int ippr_ftp_server_valid __P((ftpside_t *, char *, size_t));
-int ippr_ftp_client_valid __P((ftpside_t *, char *, size_t));
-u_short ippr_ftp_atoi __P((char **));
-int ippr_ftp_pasvreply __P((fr_info_t *, ip_t *, nat_t *, ftpside_t *,
-			    u_int, char *, char *, u_int));
+int
+ippr_ftp_client(fr_info_t *, ip_t *, nat_t *, ftpinfo_t *, int);
+int
+ippr_ftp_complete(char *, size_t);
+int
+ippr_ftp_in(fr_info_t *, ap_session_t *, nat_t *);
+int
+ippr_ftp_init(void);
+void
+ippr_ftp_fini(void);
+int
+ippr_ftp_new(fr_info_t *, ap_session_t *, nat_t *);
+int
+ippr_ftp_out(fr_info_t *, ap_session_t *, nat_t *);
+int
+ippr_ftp_pasv(fr_info_t *, ip_t *, nat_t *, ftpinfo_t *, int);
+int
+ippr_ftp_epsv(fr_info_t *, ip_t *, nat_t *, ftpside_t *, int);
+int
+ippr_ftp_port(fr_info_t *, ip_t *, nat_t *, ftpside_t *, int);
+int
+ippr_ftp_process(fr_info_t *, nat_t *, ftpinfo_t *, int);
+int
+ippr_ftp_server(fr_info_t *, ip_t *, nat_t *, ftpinfo_t *, int);
+int
+ippr_ftp_valid(ftpinfo_t *, int, char *, size_t);
+int
+ippr_ftp_server_valid(ftpside_t *, char *, size_t);
+int
+ippr_ftp_client_valid(ftpside_t *, char *, size_t);
+u_short
+ippr_ftp_atoi(char **);
+int
+ippr_ftp_pasvreply(fr_info_t *, ip_t *, nat_t *, ftpside_t *,
+			    u_int, char *, char *, u_int);
 
 
 int	ftp_proxy_init = 0;
@@ -104,7 +121,8 @@ static	ipftuneable_t	ftptune = {
 /*
  * Initialize local structures.
  */
-int ippr_ftp_init()
+int
+ippr_ftp_init(void)
 {
 	bzero((char *)&ftppxyfr, sizeof(ftppxyfr));
 	ftppxyfr.fr_ref = 1;
@@ -117,7 +135,8 @@ int ippr_ftp_init()
 }
 
 
-void ippr_ftp_fini()
+void
+ippr_ftp_fini(void)
 {
 	(void) fr_delipftune(&ftptune);
 
@@ -128,10 +147,8 @@ void ippr_ftp_fini()
 }
 
 
-int ippr_ftp_new(fin, aps, nat)
-fr_info_t *fin;
-ap_session_t *aps;
-nat_t *nat;
+int
+ippr_ftp_new(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	ftpinfo_t *ftp;
 	ftpside_t *f;
@@ -159,12 +176,8 @@ nat_t *nat;
 }
 
 
-int ippr_ftp_port(fin, ip, nat, f, dlen)
-fr_info_t *fin;
-ip_t *ip;
-nat_t *nat;
-ftpside_t *f;
-int dlen;
+int
+ippr_ftp_port(fr_info_t *fin, ip_t *ip, nat_t *nat, ftpside_t *f, int dlen)
 {
 	tcphdr_t *tcp, tcph, *tcp2 = &tcph;
 	char newbuf[IPF_FTPBUFSZ], *s;
@@ -388,12 +401,8 @@ int dlen;
 }
 
 
-int ippr_ftp_client(fin, ip, nat, ftp, dlen)
-fr_info_t *fin;
-nat_t *nat;
-ftpinfo_t *ftp;
-ip_t *ip;
-int dlen;
+int
+ippr_ftp_client(fr_info_t *fin, ip_t *ip, nat_t *nat, ftpinfo_t *ftp, int dlen)
 {
 	char *rptr, *wptr, cmd[6], c;
 	ftpside_t *f;
@@ -459,12 +468,8 @@ int dlen;
 }
 
 
-int ippr_ftp_pasv(fin, ip, nat, ftp, dlen)
-fr_info_t *fin;
-ip_t *ip;
-nat_t *nat;
-ftpinfo_t *ftp;
-int dlen;
+int
+ippr_ftp_pasv(fr_info_t *fin, ip_t *ip, nat_t *nat, ftpinfo_t *ftp, int dlen)
 {
 	u_int a1, a2, a3, a4, data_ip;
 	char newbuf[IPF_FTPBUFSZ];
@@ -598,15 +603,8 @@ int dlen;
 				  newbuf, s, data_ip);
 }
 
-int ippr_ftp_pasvreply(fin, ip, nat, f, port, newmsg, s, data_ip)
-fr_info_t *fin;
-ip_t *ip;
-nat_t *nat;
-ftpside_t *f;
-u_int port;
-char *newmsg;
-char *s;
-u_int data_ip;
+int
+ippr_ftp_pasvreply(fr_info_t *fin, ip_t *ip, nat_t *nat, ftpside_t *f, u_int port, char *newmsg, char *s, u_int data_ip)
 {
 	int inc, off, nflags, sflags;
 	tcphdr_t *tcp, tcph, *tcp2;
@@ -738,12 +736,8 @@ u_int data_ip;
 }
 
 
-int ippr_ftp_server(fin, ip, nat, ftp, dlen)
-fr_info_t *fin;
-ip_t *ip;
-nat_t *nat;
-ftpinfo_t *ftp;
-int dlen;
+int
+ippr_ftp_server(fr_info_t *fin, ip_t *ip, nat_t *nat, ftpinfo_t *ftp, int dlen)
 {
 	char *rptr, *wptr;
 	ftpside_t *f;
@@ -805,10 +799,8 @@ server_cmd_ok:
  * Look to see if the buffer starts with something which we recognise as
  * being the correct syntax for the FTP protocol.
  */
-int ippr_ftp_client_valid(ftps, buf, len)
-ftpside_t *ftps;
-char *buf;
-size_t len;
+int
+ippr_ftp_client_valid(ftpside_t *ftps, char *buf, size_t len)
 {
 	register char *s, c, pc;
 	register size_t i = len;
@@ -882,10 +874,8 @@ bad_client_command:
 }
 
 
-int ippr_ftp_server_valid(ftps, buf, len)
-ftpside_t *ftps;
-char *buf;
-size_t len;
+int
+ippr_ftp_server_valid(ftpside_t *ftps, char *buf, size_t len)
 {
 	register char *s, c, pc;
 	register size_t i = len;
@@ -962,11 +952,8 @@ search_eol:
 }
 
 
-int ippr_ftp_valid(ftp, side, buf, len)
-ftpinfo_t *ftp;
-int side;
-char *buf;
-size_t len;
+int
+ippr_ftp_valid(ftpinfo_t *ftp, int side, char *buf, size_t len)
 {
 	ftpside_t *ftps;
 	int ret;
@@ -989,11 +976,8 @@ size_t len;
  * rv == 0 for inbound processing,
  * rv == 1 for outbound processing.
  */
-int ippr_ftp_process(fin, nat, ftp, rv)
-fr_info_t *fin;
-nat_t *nat;
-ftpinfo_t *ftp;
-int rv;
+int
+ippr_ftp_process(fr_info_t *fin, nat_t *nat, ftpinfo_t *ftp, int rv)
 {
 	int mlen, len, off, inc, i, sel, sel2, ok, ackoff, seqoff, retry;
 	char *rptr, *wptr, *s;
@@ -1312,10 +1296,8 @@ whilemore:
 }
 
 
-int ippr_ftp_out(fin, aps, nat)
-fr_info_t *fin;
-ap_session_t *aps;
-nat_t *nat;
+int
+ippr_ftp_out(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	ftpinfo_t *ftp;
 	int rev;
@@ -1332,10 +1314,8 @@ nat_t *nat;
 }
 
 
-int ippr_ftp_in(fin, aps, nat)
-fr_info_t *fin;
-ap_session_t *aps;
-nat_t *nat;
+int
+ippr_ftp_in(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	ftpinfo_t *ftp;
 	int rev;
@@ -1358,8 +1338,8 @@ nat_t *nat;
  * returning a 16 bit number combining either side of the , as the MSB and
  * LSB.
  */
-u_short ippr_ftp_atoi(ptr)
-char **ptr;
+u_short
+ippr_ftp_atoi(char **ptr)
 {
 	register char *s = *ptr, c;
 	register u_char i = 0, j = 0;
@@ -1383,12 +1363,8 @@ char **ptr;
 }
 
 
-int ippr_ftp_epsv(fin, ip, nat, f, dlen)
-fr_info_t *fin;
-ip_t *ip;
-nat_t *nat;
-ftpside_t *f;
-int dlen;
+int
+ippr_ftp_epsv(fr_info_t *fin, ip_t *ip, nat_t *nat, ftpside_t *f, int dlen)
 {
 	char newbuf[IPF_FTPBUFSZ];
 	char *s;

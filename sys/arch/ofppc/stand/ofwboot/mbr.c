@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.3 2011/08/21 13:08:57 phx Exp $	*/
+/*	$NetBSD: mbr.c,v 1.3.6.1 2012/02/18 07:32:51 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -69,7 +69,7 @@ search_mbr_label(struct of_dev *devp, u_long off, char *buf,
 	}
 #endif
 	if (poff != 0) {
-		if (strategy(devp, F_READ, poff + MBR_LABELSECTOR, DEV_BSIZE,
+		if (strategy(devp, F_READ, poff + LABELSECTOR, DEV_BSIZE,
 		    buf, &read) == 0 && read == DEV_BSIZE)
 			if (getdisklabel(buf, lp) == NULL)
 				return 0;

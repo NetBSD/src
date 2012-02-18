@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0var.h,v 1.3 2005/12/11 12:16:51 christos Exp $ */
+/* $NetBSD: s3c24x0var.h,v 1.3.118.1 2012/02/18 07:31:31 mrg Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -36,9 +36,9 @@
 #include <sys/termios.h>
 
 struct s3c24x0_softc {
-	struct s3c2xx0_softc  sc_sx;
+	struct s3c2xx0_softc	sc_sx;
 
-	bus_space_handle_t  sc_timer_ioh; /* Timer control registers */
+	bus_space_handle_t	sc_timer_ioh; /* Timer control registers */
 };
 
 void	s3c24x0_clock_freq(struct s3c2xx0_softc *);

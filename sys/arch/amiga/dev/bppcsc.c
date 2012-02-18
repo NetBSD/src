@@ -1,4 +1,4 @@
-/*	$NetBSD: bppcsc.c,v 1.1 2011/01/14 10:01:12 phx Exp $ */
+/*	$NetBSD: bppcsc.c,v 1.1.14.1 2012/02/18 07:31:15 mrg Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bppcsc.c,v 1.1 2011/01/14 10:01:12 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bppcsc.c,v 1.1.14.1 2012/02/18 07:31:15 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: bppcsc.c,v 1.1 2011/01/14 10:01:12 phx Exp $");
 #include <amiga/dev/siopreg.h>
 #include <amiga/dev/siopvar.h>
 #include <amiga/dev/zbusvar.h>
+#include <amiga/dev/p5busvar.h>
 
 #define BPPC_SCSI_OFF	0xf40000
 #define BPPC_PUPROM_OFF	0xf00010
@@ -99,15 +100,13 @@ CFATTACH_DECL(bppcsc, sizeof(struct siop_softc),
 int
 bppcscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
-	struct zbus_args *zap;
-	char *p5type; 
+	struct p5bus_attach_args *p5baa;
 
-	zap = auxp;
-	if (zap->manid == 8512 && zap->prodid == 110) {
-		p5type = (char *)__UNVOLATILE(ztwomap(BPPC_PUPROM_OFF));
-		if (p5type[0] == 'I')		/* only "+" model has SCSI */
-			return 1;
-	}
+	p5baa = (struct p5bus_attach_args *) auxp;
+
+	if (strcmp(p5baa->p5baa_name, "bppcsc") == 0)
+		return 1;
+
 	return 0 ;
 }
 

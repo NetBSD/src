@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpvfs,v 1.31 2011/04/02 04:28:58 rmind Exp $
+#	$NetBSD: Makefile.rumpvfs,v 1.31.8.1 2012/02/18 07:35:46 mrg Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -52,7 +52,7 @@ SRCS+=	subr_bufq.c bufq_disksort.c bufq_fcfs.c bufq_priocscan.c	\
 SRCS+=	mfs_miniroot.c
 
 #quota2 plists
-SRCS+= quota1_subr.c
+SRCS+= quota1_subr.c vfs_quotactl.c
 
 # dev
 # firmload is technically part of rumpdev, but it's pure vfs in nature.

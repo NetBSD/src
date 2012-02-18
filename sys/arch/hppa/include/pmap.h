@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.30 2011/06/12 03:35:41 rmind Exp $	*/
+/*	$NetBSD: pmap.h,v 1.30.6.1 2012/02/18 07:32:15 mrg Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -48,6 +48,8 @@
 
 #ifdef	_KERNEL
 
+#define PMAP_NEED_PROCWR
+
 struct pmap {
 	struct uvm_object pm_obj;	/* object (lck by object lock) */
 #define	pm_lock	pm_obj.vmobjlock
@@ -64,6 +66,7 @@ struct pmap {
 #define	PVF_MOD		PTE_PROT(TLB_DIRTY)	/* pg/mp is modified */
 #define	PVF_REF		PTE_PROT(TLB_REFTRAP)	/* pg/mp (inv) is referenced */
 #define	PVF_WRITE	PTE_PROT(TLB_WRITE)	/* pg/mp is writable */
+#define	PVF_EXEC	PTE_PROT(TLB_EXECUTE)	/* pg/mp is executable */
 #define	PVF_UNCACHEABLE	PTE_PROT(TLB_UNCACHEABLE)	/* pg/mp is uncacheable */
 
 #define	HPPA_MAX_PID	0xfffa
@@ -102,9 +105,7 @@ static inline paddr_t hppa_unmap_poolpage(vaddr_t va)
 
 #if defined(HP8000_CPU) || defined(HP8200_CPU) || \
     defined(HP8500_CPU) || defined(HP8600_CPU)
-	ficache(HPPA_SID_KERNEL, va, PAGE_SIZE);
 	pdtlb(HPPA_SID_KERNEL, va);
-	pitlb(HPPA_SID_KERNEL, va);
 #endif
 
 	return (paddr_t)va;
@@ -148,6 +149,8 @@ void pmap_write_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 void pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva);
 void pmap_page_remove(struct vm_page *pg);
 
+void pmap_procwr(struct proc *, vaddr_t, size_t);
+
 static inline void
 pmap_deactivate(struct lwp *l)
 {
@@ -164,7 +167,7 @@ static inline int
 pmap_prot(struct pmap *pmap, int prot)
 {
 	extern u_int hppa_prot[];
-	return (hppa_prot[prot] | (pmap == pmap_kernel()? 0 : TLB_USER));
+	return (hppa_prot[prot] | (pmap == pmap_kernel() ? 0 : TLB_USER));
 }
 
 static inline void
@@ -198,16 +201,14 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 struct pv_entry;
 
 struct vm_page_md {
-	struct pv_entry	*pvh_list;	/* head of list (locked by pvh_lock) */
+	struct pv_entry	*pvh_list;	/* head of list */
 	u_int		pvh_attrs;	/* to preserve ref/mod */
-	int		pvh_aliases;	/* alias counting */
 };
 
 #define	VM_MDPAGE_INIT(pg) \
 do {									\
 	(pg)->mdpage.pvh_list = NULL;					\
 	(pg)->mdpage.pvh_attrs = 0;					\
-	(pg)->mdpage.pvh_aliases = 0;					\
 } while (0)
 
 #endif /* _KERNEL */

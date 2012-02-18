@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.96 2010/11/13 13:52:07 uebayasi Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.96.12.1 2012/02/18 07:34:42 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.96 2010/11/13 13:52:07 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.96.12.1 2012/02/18 07:34:42 mrg Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -65,10 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.96 2010/11/13 13:52:07 uebayasi Exp $");
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
 
-#include "rnd.h"
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -471,10 +468,8 @@ tl_pci_attach(device_t parent, device_t self, void *aux)
 	else
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(self),
 	    RND_TYPE_NET, 0);
-#endif
 }
 
 static void
@@ -1226,10 +1221,7 @@ tl_intr(void *v)
 		/* Ack the interrupt and enable interrupts */
 		TL_HR_WRITE(sc, TL_HOST_CMD, ack | int_type | HOST_CMD_ACK |
 		    HOST_CMD_IntOn);
-#if NRND > 0
-		if (RND_ENABLED(&sc->rnd_source))
-			rnd_add_uint32(&sc->rnd_source, int_reg);
-#endif
+		rnd_add_uint32(&sc->rnd_source, int_reg);
 		return 1;
 	}
 	/* ack = 0 ; interrupt was perhaps not our. Just enable interrupts */

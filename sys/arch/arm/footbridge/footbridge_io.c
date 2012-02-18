@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_io.c,v 1.20 2011/07/01 19:32:28 dyoung Exp $	*/
+/*	$NetBSD: footbridge_io.c,v 1.20.6.1 2012/02/18 07:31:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.20 2011/07/01 19:32:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.20.6.1 2012/02/18 07:31:25 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,18 +138,20 @@ struct bus_space footbridge_bs_tag = {
 	bs_notimpl_bs_c_8,
 };
 
-void footbridge_create_io_bs_tag(t, cookie)
-	struct bus_space *t;
-	void *cookie;
+void
+footbridge_create_io_bs_tag(
+	struct bus_space *t,
+	void *cookie)
 {
 	*t = footbridge_bs_tag;
 	t->bs_cookie = cookie;
 	t->bs_mmap = footbridge_io_bs_mmap;
 }
 
-void footbridge_create_mem_bs_tag(t, cookie)
-	struct bus_space *t;
-	void *cookie;
+void
+footbridge_create_mem_bs_tag(
+	struct bus_space *t,
+	void *cookie)
 {
 	*t = footbridge_bs_tag;
 	t->bs_map = footbridge_mem_bs_map;
@@ -231,14 +233,16 @@ footbridge_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags, bus_s
 }
 
 int
-footbridge_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
-    bpap, bshp)
-	void *t;
-	bus_addr_t rstart, rend;
-	bus_size_t size, alignment, boundary;
-	int cacheable;
-	bus_addr_t *bpap;
-	bus_space_handle_t *bshp;
+footbridge_bs_alloc(
+	void *t,
+	bus_addr_t rstart,
+	bus_addr_t rend,
+	bus_size_t size,
+	bus_size_t alignment,
+	bus_size_t boundary,
+	int cacheable,
+	bus_addr_t *bpap,
+	bus_space_handle_t *bshp)
 {
 	panic("footbridge_alloc(): Help!");
 }

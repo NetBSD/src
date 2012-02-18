@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.53.2.1 2011/12/09 01:53:00 mrg Exp $	*/
+/*	$NetBSD: umidi.c,v 1.53.2.2 2012/02/18 07:35:10 mrg Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.53.2.1 2011/12/09 01:53:00 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.53.2.2 2012/02/18 07:35:10 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -253,6 +253,7 @@ umidi_attach(device_t parent, device_t self, void *aux)
 error:
 	aprint_error_dev(self, "disabled.\n");
 	sc->sc_dying = 1;
+	KERNEL_UNLOCK_ONE(curlwp);
 	return;
 }
 
@@ -336,6 +337,7 @@ umidi_open(void *addr,
 		return EIO;
 
 	mididev->opened = 1;
+	mididev->closing = 0;
 	mididev->flags = flags;
 	if ((mididev->flags & FWRITE) && mididev->out_jack) {
 		err = open_out_jack(mididev->out_jack, arg, ointr);
@@ -361,10 +363,21 @@ umidi_close(void *addr)
 {
 	struct umidi_mididev *mididev = addr;
 
+	/* XXX SMP */
+	mididev->closing = 1;
+
+	KERNEL_LOCK(1, curlwp);
+	mutex_spin_exit(&mididev->sc->sc_lock);
+
 	if ((mididev->flags & FWRITE) && mididev->out_jack)
 		close_out_jack(mididev->out_jack);
 	if ((mididev->flags & FREAD) && mididev->in_jack)
 		close_in_jack(mididev->in_jack);
+
+	/* XXX SMP */
+	mutex_spin_enter(&mididev->sc->sc_lock);
+	KERNEL_UNLOCK_ONE(curlwp);
+
 	mididev->opened = 0;
 }
 
@@ -374,7 +387,7 @@ umidi_channelmsg(void *addr, int status, int channel, u_char *msg,
 {
 	struct umidi_mididev *mididev = addr;
 
-	if (!mididev->out_jack || !mididev->opened)
+	if (!mididev->out_jack || !mididev->opened || !mididev->closing)
 		return EIO;
 	
 	return out_jack_output(mididev->out_jack, msg, len, (status>>4)&0xf);
@@ -386,7 +399,7 @@ umidi_commonmsg(void *addr, int status, u_char *msg, int len)
 	struct umidi_mididev *mididev = addr;
 	int cin;
 
-	if (!mididev->out_jack || !mididev->opened)
+	if (!mididev->out_jack || !mididev->opened || !mididev->closing)
 		return EIO;
 
 	switch ( len ) {
@@ -405,7 +418,7 @@ umidi_sysex(void *addr, u_char *msg, int len)
 	struct umidi_mididev *mididev = addr;
 	int cin;
 
-	if (!mididev->out_jack || !mididev->opened)
+	if (!mididev->out_jack || !mididev->opened || !mididev->closing)
 		return EIO;
 
 	switch ( len ) {
@@ -424,7 +437,7 @@ umidi_rtmsg(void *addr, int d)
 	struct umidi_mididev *mididev = addr;
 	u_char msg = d;
 
-	if (!mididev->out_jack || !mididev->opened)
+	if (!mididev->out_jack || !mididev->opened || !mididev->closing)
 		return EIO;
 
 	return out_jack_output(mididev->out_jack, &msg, 1, 0xf);
@@ -961,17 +974,16 @@ static void
 free_all_jacks(struct umidi_softc *sc)
 {
 	struct umidi_jack *jacks;
+	size_t len;
 
 	mutex_enter(&sc->sc_lock);
-	if (sc->sc_out_jacks)
-		jacks = sc->sc_out_jacks;
-	else
-		jacks = sc->sc_in_jacks;
+	jacks = sc->sc_jacks;
+	len = sizeof(*sc->sc_out_jacks)*(sc->sc_in_num_jacks+sc->sc_out_num_jacks);
 	sc->sc_jacks = sc->sc_in_jacks = sc->sc_out_jacks = NULL;
 	mutex_exit(&sc->sc_lock);
 
 	if (jacks)
-		kmem_free(jacks, sizeof(*sc->sc_out_jacks)*(sc->sc_in_num_jacks+sc->sc_out_num_jacks));
+		kmem_free(jacks, len);
 }
 
 static usbd_status
@@ -998,6 +1010,7 @@ bind_jacks_to_mididev(struct umidi_softc *sc,
 static void
 unbind_jacks_from_mididev(struct umidi_mididev *mididev)
 {
+
 	if ((mididev->flags & FWRITE) && mididev->out_jack)
 		close_out_jack(mididev->out_jack);
 	if ((mididev->flags & FREAD) && mididev->in_jack)
@@ -1121,7 +1134,9 @@ open_in_jack(struct umidi_jack *jack, void *arg, void (*intr)(void *, int))
 	jack->u.in.intr = intr;
 	jack->opened = 1;
 	if (ep->num_open++ == 0 && UE_GET_DIR(ep->addr)==UE_DIR_IN) {
+		KERNEL_LOCK(1, curlwp);
 		err = start_input_transfer(ep);
+		KERNEL_UNLOCK_ONE(curlwp);
 		if (err != USBD_NORMAL_COMPLETION &&
 		    err != USBD_IN_PROGRESS) {
 			ep->num_open--;
@@ -1139,11 +1154,10 @@ close_out_jack(struct umidi_jack *jack)
 	u_int16_t mask;
 	int err;
 
-
 	if (jack->opened) {
 		ep = jack->endpoint;
 		sc = ep->sc;
-		KASSERT(mutex_owned(&sc->sc_lock));
+		mutex_spin_enter(&sc->sc_lock);
 		mask = 1 << (jack->cable_number);
 		while (mask & (ep->this_schedule | ep->next_schedule)) {
 			err = cv_timedwait_sig(&sc->sc_cv, &sc->sc_lock,
@@ -1151,10 +1165,17 @@ close_out_jack(struct umidi_jack *jack)
 			if (err)
 				break;
 		}
-		jack->opened = 0;
-		jack->endpoint->num_open--;
-		ep->this_schedule &= ~mask;
-		ep->next_schedule &= ~mask;
+		/*
+		 * We can re-enter this function from both close() and
+		 * detach().  Make sure only one of them does this part.
+		 */
+		if (jack->opened) {
+			jack->opened = 0;
+			jack->endpoint->num_open--;
+			ep->this_schedule &= ~mask;
+			ep->next_schedule &= ~mask;
+		}
+		mutex_spin_exit(&sc->sc_lock);
 	}
 }
 
@@ -1164,7 +1185,7 @@ close_in_jack(struct umidi_jack *jack)
 	if (jack->opened) {
 		jack->opened = 0;
 		if (--jack->endpoint->num_open == 0) {
-		    usbd_abort_pipe(jack->endpoint->pipe);
+			usbd_abort_pipe(jack->endpoint->pipe);
 		}
 	}
 }

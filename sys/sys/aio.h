@@ -1,4 +1,4 @@
-/*	$NetBSD: aio.h,v 1.11 2011/11/21 04:36:05 christos Exp $	*/
+/*	$NetBSD: aio.h,v 1.11.2.1 2012/02/18 07:35:47 mrg Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -28,6 +28,9 @@
 
 #ifndef _SYS_AIO_H_
 #define _SYS_AIO_H_
+
+#include <sys/types.h>
+#include <sys/signal.h>
 
 /* Returned by aio_cancel() */
 #define AIO_CANCELED		0x1

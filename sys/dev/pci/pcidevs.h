@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1096 2011/10/18 23:23:20 jmcneill Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1096.6.1 2012/02/18 07:34:47 mrg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1101 2011/10/18 23:23:07 jmcneill Exp
+ *	NetBSD: pcidevs,v 1.1102 2012/02/15 16:26:00 tsutsui Exp
  */
 
 /*
@@ -4596,6 +4596,7 @@
 #define	PCI_PRODUCT_VIATECH_VT8363_HB	0x0305		/* VT8363 (Apollo KT133) Host Bridge */
 #define	PCI_PRODUCT_VIATECH_VT3351_HB_0351	0x0351		/* VT3351 Host Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8371_HB	0x0391		/* VT8371 (Apollo KX133) Host Bridge */
+#define	PCI_PRODUCT_VIATECH_VX900_HB	0x0410		/* VX900 Host Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8501_MVP4	0x0501		/* VT8501 (Apollo MVP4) Host Bridge */
 #define	PCI_PRODUCT_VIATECH_VT82C505	0x0505		/* VT82C505 (Pluto) */
 #define	PCI_PRODUCT_VIATECH_VT82C561	0x0561		/* VT82C561 */

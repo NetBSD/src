@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.48 2011/11/29 03:50:31 tls Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.48.2.1 2012/02/18 07:34:37 mrg Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.48 2011/11/29 03:50:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.48.2.1 2012/02/18 07:34:37 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,9 +254,7 @@ hifn_attach(device_t parent, device_t self, void *aux)
 		panic("hifn_attach: impossible");
 	}
 
-	aprint_naive(": Crypto processor\n");
-	aprint_normal(": %s, rev. %d\n", hp->hifn_name,
-	    PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo_fancy(pa, "Crypto processor", hp->hifn_name, 1);
 
 	sc->sc_pci_pc = pa->pa_pc;
 	sc->sc_pci_tag = pa->pa_tag;
@@ -546,11 +544,11 @@ hifn_rng(void *vsc)
 {
 	struct hifn_softc *sc = vsc;
 #ifdef __NetBSD__
-	u_int32_t num[HIFN_RNG_BITSPER * SHA1_DIGEST_LENGTH];
+	uint32_t num[64];
 #else
-	u_int32_t num[2];
+	uint32_t num[2];
 #endif
-	u_int32_t sts;
+	uint32_t sts;
 	int i;
 
 	if (sc->sc_flags & HIFN_IS_7811) {

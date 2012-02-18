@@ -1,4 +1,4 @@
-/* $NetBSD: bt3c.c,v 1.21 2010/02/24 22:38:08 dyoung Exp $ */
+/* $NetBSD: bt3c.c,v 1.21.14.1 2012/02/18 07:34:55 mrg Exp $ */
 
 /*-
  * Copyright (c) 2005 Iain D. Hibbert,
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.21 2010/02/24 22:38:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.21.14.1 2012/02/18 07:34:55 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -596,13 +596,11 @@ bt3c_load_firmware(struct bt3c_softc *sc)
 	}
 
 	size = (size_t)firmware_get_size(fh);
-#ifdef DIAGNOSTIC
 	if (size > 10 * 1024) {	/* sanity check */
 		aprint_error_dev(sc->sc_dev, "insane firmware file size!\n");
 		firmware_close(fh);
 		return EFBIG;
 	}
-#endif
 
 	buf = firmware_malloc(size);
 	KASSERT(buf != NULL);

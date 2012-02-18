@@ -1,4 +1,4 @@
-/* $NetBSD: quota.h,v 1.6 2011/11/25 16:55:05 dholland Exp $ */
+/* $NetBSD: quota.h,v 1.6.2.1 2012/02/18 07:35:50 mrg Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -27,6 +27,45 @@
 
 #ifndef _SYS_QUOTA_H_
 #define _SYS_QUOTA_H_
+
+#include <sys/types.h>
+
+/* quota id types (entities being billed) */
+#define QUOTA_IDTYPE_USER	0
+#define QUOTA_IDTYPE_GROUP	1
+
+/* quota object types (things being limited) */
+#define QUOTA_OBJTYPE_BLOCKS	0
+#define QUOTA_OBJTYPE_FILES	1
+
+/* id value for "default" */
+#define QUOTA_DEFAULTID		((id_t)-1)
+
+/* limit value for "no limit" */
+#define QUOTA_NOLIMIT		((uint64_t)0xffffffffffffffffULL)
+
+/* time value for "no time" */
+#define QUOTA_NOTIME		((time_t)-1)
+
+/*
+ * Semantic restrictions. These are hints applications can use
+ * to help produce comprehensible error diagnostics when something
+ * unsupported is attempted.
+ */
+#define QUOTA_RESTRICT_NEEDSQUOTACHECK	0x1	/* quotacheck(8) required */
+#define QUOTA_RESTRICT_UNIFORMGRACE	0x2	/* grace time is global */
+#define QUOTA_RESTRICT_32BIT		0x4	/* values limited to 2^32 */
+#define QUOTA_RESTRICT_READONLY		0x8	/* updates not supported */
+
+
+/*
+ * Structure used to describe the key part of a quota record.
+ */
+struct quotakey {
+	int qk_idtype;		/* type of id (user, group, etc.) */
+	id_t qk_id;		/* actual id number */
+	int qk_objtype;		/* type of fs object (blocks, files, etc.) */
+};
 
 /*
  * Structure used to describe the value part of a quota record.

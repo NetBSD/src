@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.45 2011/05/20 01:51:36 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.45.8.1 2012/02/18 07:34:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -57,14 +57,14 @@ typedef struct wiseman_addr {
  * and there must be an even multiple of 8 descriptors in the ring.
  */
 typedef struct wiseman_rxdesc {
-	wiseman_addr_t	wrx_addr;	/* buffer address */
+	volatile wiseman_addr_t	wrx_addr;	/* buffer address */
 
-	uint16_t	wrx_len;	/* buffer length */
-	uint16_t	wrx_cksum;	/* checksum (starting at PCSS) */
+	volatile uint16_t	wrx_len;	/* buffer length */
+	volatile uint16_t	wrx_cksum;	/* checksum (starting at PCSS)*/
 
-	uint8_t		wrx_status;	/* Rx status */
-	uint8_t		wrx_errors;	/* Rx errors */
-	uint16_t	wrx_special;	/* special field (VLAN, etc.) */
+	volatile uint8_t	wrx_status;	/* Rx status */
+	volatile uint8_t	wrx_errors;	/* Rx errors */
+	volatile uint16_t	wrx_special;	/* special field (VLAN, etc.) */
 } __packed wiseman_rxdesc_t;
 
 /* wrx_status bits */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.25 2011/07/09 16:03:01 matt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.25.6.1 2012/02/18 07:30:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.25 2011/07/09 16:03:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.25.6.1 2012/02/18 07:30:45 mrg Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h"
@@ -159,9 +159,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	 * Reserve the bottom 64K of the I/O space for ISA devices.
 	 */
 	ioext  = extent_create("pciio",  0x00010000, 0x000effff,
-	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_NOWAIT);
 	memext = extent_create("pcimem", 0x01000000, 0x07ffffff,
-	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_NOWAIT);
 
 	pc = &p4032_configuration.ac_pc;
 #elif defined(ALGOR_P5064)
@@ -171,9 +171,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	 * a bug in the ISA bridge.
 	 */
 	ioext  = extent_create("pciio",  0x00080000, 0x00ffffff,
-	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_NOWAIT);
 	memext = extent_create("pcimem", 0x01000000, 0x07ffffff,
-	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_NOWAIT);
 
 	pc = &p5064_configuration.ac_pc;
 #if defined(PCI_NETBSD_ENABLE_IDE)
@@ -184,9 +184,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	 * Reserve the bottom 64K of the I/O space for ISA devices.
 	 */
 	ioext  = extent_create("pciio",  0x00010000, 0x000effff,
-	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_NOWAIT);
 	memext = extent_create("pcimem", 0x01000000, 0x0affffff,
-	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_NOWAIT);
 
 	pc = &p6032_configuration.ac_pc;
 #if defined(PCI_NETBSD_ENABLE_IDE)

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.103 2011/11/22 21:25:04 tls Exp $
+# $NetBSD: GENERIC,v 1.103.2.1 2012/02/18 07:31:43 mrg Exp $
 #
 # GENERIC machine description file
 # 
@@ -52,7 +52,7 @@ options 	DDB		# in-kernel debugger
 #options 	KGDB			# remote debugger
 #options 	"KGDB_DEVNAME=\"scif\"",KGDB_DEVRATE=57600
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=320000
+options 	SYMTAB_SPACE=330000
 #options 	SYSCALL_DEBUG
 #options 	UVMHIST
 #options 	UVMHIST_PRINT
@@ -93,7 +93,7 @@ file-system	TMPFS		# Efficient memory file-system
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent supoprt
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	NFSSERVER	# Network File System server
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

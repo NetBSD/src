@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.67 2011/06/12 03:36:03 rmind Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.67.6.1 2012/02/18 07:36:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -81,8 +81,11 @@
  * => map must be locked by caller
  */
 
-#define UVM_MAP_CLIP_START(MAP,ENTRY,VA,UMR) { \
-	if ((VA) > (ENTRY)->start) uvm_map_clip_start(MAP,ENTRY,VA,UMR); }
+#define UVM_MAP_CLIP_START(MAP,ENTRY,VA) { \
+	if ((VA) > (ENTRY)->start && (VA) < (ENTRY)->end) { \
+		uvm_map_clip_start(MAP,ENTRY,VA); \
+	} \
+}
 
 /*
  * UVM_MAP_CLIP_END: ensure that the entry ends at or before
@@ -91,8 +94,11 @@
  * => map must be locked by caller
  */
 
-#define UVM_MAP_CLIP_END(MAP,ENTRY,VA,UMR) { \
-	if ((VA) < (ENTRY)->end) uvm_map_clip_end(MAP,ENTRY,VA,UMR); }
+#define UVM_MAP_CLIP_END(MAP,ENTRY,VA) { \
+	if ((VA) > (ENTRY)->start && (VA) < (ENTRY)->end) { \
+		uvm_map_clip_end(MAP,ENTRY,VA); \
+	} \
+}
 
 /*
  * extract flags
@@ -139,15 +145,14 @@ struct vm_map_entry {
 	int			wired_count;	/* can be paged if == 0 */
 	struct vm_aref		aref;		/* anonymous overlay */
 	int			advice;		/* madvise advice */
+	uint32_t		map_attrib;	/* uvm-external map attributes */
 #define uvm_map_entry_stop_copy flags
 	u_int8_t		flags;		/* flags */
 
 #define	UVM_MAP_KERNEL		0x01		/* kernel map entry */
 #define	UVM_MAP_KMAPENT		0x02		/* contains map entries */
-#define	UVM_MAP_FIRST		0x04		/* the first special entry */
-#define	UVM_MAP_QUANTUM		0x08		/* allocated with
-						 * UVM_FLAG_QUANTUM */
-#define	UVM_MAP_NOMERGE		0x10		/* this entry is not mergable */
+#define	UVM_MAP_STATIC		0x04		/* special static entries */
+#define	UVM_MAP_NOMERGE		0x08		/* this entry is not mergable */
 
 };
 
@@ -225,19 +230,6 @@ struct vm_map {
 
 #include <sys/callback.h>
 
-struct vm_map_kernel {
-	struct vm_map vmk_map;
-	LIST_HEAD(, uvm_kmapent_hdr) vmk_kentry_free;
-			/* Freelist of map entry */
-	struct vm_map_entry	*vmk_merged_entries;
-			/* Merged entries, kept for later splitting */
-
-	struct callback_head vmk_reclaim_callback;
-#if !defined(PMAP_MAP_POOLPAGE)
-	struct pool vmk_vacache; /* kva cache */
-	struct pool_allocator vmk_vacache_allocator; /* ... and its allocator */
-#endif
-};
 #endif /* defined(_KERNEL) */
 
 #define	VM_MAP_IS_KERNEL(map)	(vm_map_pmap(map) == pmap_kernel())
@@ -248,19 +240,9 @@ struct vm_map_kernel {
 #define	VM_MAP_WIREFUTURE	0x04		/* rw: wire future mappings */
 #define	VM_MAP_DYING		0x20		/* rw: map is being destroyed */
 #define	VM_MAP_TOPDOWN		0x40		/* ro: arrange map top-down */
-#define	VM_MAP_VACACHE		0x80		/* ro: use kva cache */
 #define	VM_MAP_WANTVA		0x100		/* rw: want va */
 
 #ifdef _KERNEL
-struct uvm_mapent_reservation {
-	struct vm_map_entry *umr_entries[2];
-	int umr_nentries;
-};
-#define	UMR_EMPTY(umr)		((umr) == NULL || (umr)->umr_nentries == 0)
-#define	UMR_GETENTRY(umr)	((umr)->umr_entries[--(umr)->umr_nentries])
-#define	UMR_PUTENTRY(umr, ent)	\
-	(umr)->umr_entries[(umr)->umr_nentries++] = (ent)
-
 struct uvm_map_args {
 	struct vm_map_entry *uma_prev;
 
@@ -295,10 +277,9 @@ void		uvm_map_deallocate(struct vm_map *);
 int		uvm_map_willneed(struct vm_map *, vaddr_t, vaddr_t);
 int		uvm_map_clean(struct vm_map *, vaddr_t, vaddr_t, int);
 void		uvm_map_clip_start(struct vm_map *, struct vm_map_entry *,
-		    vaddr_t, struct uvm_mapent_reservation *);
+		    vaddr_t);
 void		uvm_map_clip_end(struct vm_map *, struct vm_map_entry *,
-		    vaddr_t, struct uvm_mapent_reservation *);
-struct vm_map	*uvm_map_create(pmap_t, vaddr_t, vaddr_t, int);
+		    vaddr_t);
 int		uvm_map_extract(struct vm_map *, vaddr_t, vsize_t,
 		    struct vm_map *, vaddr_t *, int);
 struct vm_map_entry *
@@ -308,37 +289,26 @@ int		uvm_map_inherit(struct vm_map *, vaddr_t, vaddr_t,
 		    vm_inherit_t);
 int		uvm_map_advice(struct vm_map *, vaddr_t, vaddr_t, int);
 void		uvm_map_init(void);
+void		uvm_map_init_caches(void);
 bool		uvm_map_lookup_entry(struct vm_map *, vaddr_t,
 		    struct vm_map_entry **);
 void		uvm_map_reference(struct vm_map *);
 int		uvm_map_reserve(struct vm_map *, vsize_t, vaddr_t, vsize_t,
 		    vaddr_t *, uvm_flag_t);
 void		uvm_map_setup(struct vm_map *, vaddr_t, vaddr_t, int);
-void		uvm_map_setup_kernel(struct vm_map_kernel *,
-		    vaddr_t, vaddr_t, int);
-struct vm_map_kernel *
-		vm_map_to_kernel(struct vm_map *);
 int		uvm_map_submap(struct vm_map *, vaddr_t, vaddr_t,
 		    struct vm_map *);
 void		uvm_unmap1(struct vm_map *, vaddr_t, vaddr_t, int);
 #define	uvm_unmap(map, s, e)	uvm_unmap1((map), (s), (e), 0)
 void		uvm_unmap_detach(struct vm_map_entry *,int);
 void		uvm_unmap_remove(struct vm_map *, vaddr_t, vaddr_t,
-		    struct vm_map_entry **, struct uvm_mapent_reservation *,
-		    int);
+		    struct vm_map_entry **, int);
 
 int		uvm_map_prepare(struct vm_map *, vaddr_t, vsize_t,
 		    struct uvm_object *, voff_t, vsize_t, uvm_flag_t,
 		    struct uvm_map_args *);
 int		uvm_map_enter(struct vm_map *, const struct uvm_map_args *,
 		    struct vm_map_entry *);
-
-int		uvm_mapent_reserve(struct vm_map *,
-		    struct uvm_mapent_reservation *, int, int);
-void		uvm_mapent_unreserve(struct vm_map *,
-		    struct uvm_mapent_reservation *);
-
-vsize_t		uvm_mapent_overhead(vsize_t, int);
 
 int		uvm_mapent_trymerge(struct vm_map *,
 		    struct vm_map_entry *, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: wcfb.c,v 1.8 2011/01/22 15:14:28 cegger Exp $ */
+/*	$NetBSD: wcfb.c,v 1.8.8.1 2012/02/18 07:34:54 mrg Exp $ */
 
 /*-
  * Copyright (c) 2010 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.8 2011/01/22 15:14:28 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.8.8.1 2012/02/18 07:34:54 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,14 +156,11 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 	uint32_t		reg;
 	unsigned long		defattr;
 	bool			is_console = 0;
-	char 			devinfo[256];
 	void *wtf;
 
 	sc->sc_dev = self;
 	sc->putchar = NULL;
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_naive("\n");
-	aprint_normal(": %s\n", devinfo);
+	pci_aprint_devinfo(pa, NULL);
 
 	dict = device_properties(self);
 	prop_dictionary_get_bool(dict, "is_console", &is_console);
@@ -379,7 +376,7 @@ wcfb_init_screen(void *cookie, struct vcons_screen *scr,
 		ri->ri_flg |= RI_CLEAR;
 	}
 
-	rasops_init(ri, sc->sc_height / 8, sc->sc_width / 8);
+	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,

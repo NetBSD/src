@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_i686.c,v 1.24 2011/01/18 17:44:15 jmcneill Exp $ */
+/*	$NetBSD: mtrr_i686.c,v 1.24.10.1 2012/02/18 07:33:37 mrg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.24 2011/01/18 17:44:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.24.10.1 2012/02/18 07:33:37 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -83,6 +83,22 @@ mtrr_raw[] = {
 	{ MSR_MTRRphysMask6, 0 },
 	{ MSR_MTRRphysBase7, 0 },
 	{ MSR_MTRRphysMask7, 0 },
+	{ MSR_MTRRphysBase8, 0 },
+	{ MSR_MTRRphysMask8, 0 },
+	{ MSR_MTRRphysBase9, 0 },
+	{ MSR_MTRRphysMask9, 0 },
+	{ MSR_MTRRphysBase10, 0 },
+	{ MSR_MTRRphysMask10, 0 },
+	{ MSR_MTRRphysBase11, 0 },
+	{ MSR_MTRRphysMask11, 0 },
+	{ MSR_MTRRphysBase12, 0 },
+	{ MSR_MTRRphysMask12, 0 },
+	{ MSR_MTRRphysBase13, 0 },
+	{ MSR_MTRRphysMask13, 0 },
+	{ MSR_MTRRphysBase14, 0 },
+	{ MSR_MTRRphysMask14, 0 },
+	{ MSR_MTRRphysBase15, 0 },
+	{ MSR_MTRRphysMask15, 0 },
 	{ MSR_MTRRfix64K_00000, 0 },
 	{ MSR_MTRRfix16K_80000, 0 },
 	{ MSR_MTRRfix16K_A0000, 0 },
@@ -305,8 +321,8 @@ i686_mtrr_init_first(void)
 		    MTRR_I686_NVAR_MAX, i686_mtrr_vcnt);
 	else if (i686_mtrr_vcnt < MTRR_I686_NVAR_MAX) {
 		for (i = MTRR_I686_NVAR_MAX - i686_mtrr_vcnt; i; i--) {
-			mtrr_raw[16 - (i*2)].msraddr = 0;
-			mtrr_raw[17 - (i*2)].msraddr = 0;
+			mtrr_raw[(MTRR_I686_NVAR_MAX - i) * 2].msraddr = 0;
+			mtrr_raw[(MTRR_I686_NVAR_MAX - i) * 2 + 1].msraddr = 0;
 		}
 	}
 

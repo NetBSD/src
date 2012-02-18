@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.95 2011/06/30 20:09:40 wiz Exp $	*/
+/*	$NetBSD: twe.c,v 1.95.6.1 2012/02/18 07:34:53 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.95 2011/06/30 20:09:40 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.95.6.1 2012/02/18 07:34:53 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1475,7 +1475,7 @@ int
 twe_ccb_map(struct twe_softc *sc, struct twe_ccb *ccb)
 {
 	struct twe_cmd *tc;
-	int flags, nsegs, i, s, rv;
+	int flags, nsegs, i, s, rv, rc;
 	void *data;
 
 	/*
@@ -1484,8 +1484,9 @@ twe_ccb_map(struct twe_softc *sc, struct twe_ccb *ccb)
 	if (((u_long)ccb->ccb_data & (TWE_ALIGNMENT - 1)) != 0) {
 		s = splvm();
 		/* XXX */
-		ccb->ccb_abuf = uvm_km_alloc(kmem_map,
-		    ccb->ccb_datasize, 0, UVM_KMF_NOWAIT|UVM_KMF_WIRED);
+		rc = uvm_km_kmem_alloc(kmem_va_arena,
+		    ccb->ccb_datasize, (VM_NOSLEEP | VM_INSTANTFIT),
+		    (vmem_addr_t *)&ccb->ccb_abuf);
 		splx(s);
 		data = (void *)ccb->ccb_abuf;
 		if ((ccb->ccb_flags & TWE_CCB_DATA_OUT) != 0)
@@ -1506,8 +1507,8 @@ twe_ccb_map(struct twe_softc *sc, struct twe_ccb *ccb)
 		if (ccb->ccb_abuf != (vaddr_t)0) {
 			s = splvm();
 			/* XXX */
-			uvm_km_free(kmem_map, ccb->ccb_abuf,
-			    ccb->ccb_datasize, UVM_KMF_WIRED);
+			uvm_km_kmem_free(kmem_va_arena, ccb->ccb_abuf,
+			    ccb->ccb_datasize);
 			splx(s);
 		}
 		return (rv);
@@ -1592,8 +1593,8 @@ twe_ccb_unmap(struct twe_softc *sc, struct twe_ccb *ccb)
 			    ccb->ccb_datasize);
 		s = splvm();
 		/* XXX */
-		uvm_km_free(kmem_map, ccb->ccb_abuf, ccb->ccb_datasize,
-		    UVM_KMF_WIRED);
+		uvm_km_kmem_free(kmem_va_arena, ccb->ccb_abuf,
+		    ccb->ccb_datasize);
 		splx(s);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.48 2011/10/31 08:28:46 jdc Exp $	*/
+/*	$NetBSD: ffb.c,v 1.48.6.1 2012/02/18 07:33:15 mrg Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.48 2011/10/31 08:28:46 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.48.6.1 2012/02/18 07:33:15 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -633,13 +633,13 @@ ffb_ras_init(struct ffb_softc *sc)
 	DPRINTF(("ffb_ras_init: standard resolution.\n"));
 		fbc = FFB_FBC_XE_OFF;
 	}
-	ffb_ras_fifo_wait(sc, 8);
+	ffb_ras_fifo_wait(sc, 11);
 	DPRINTF(("WID: %08x\n", FBC_READ(sc, FFB_FBC_WID)));
 	FBC_WRITE(sc, FFB_FBC_WID, 0x0);
 	FBC_WRITE(sc, FFB_FBC_PPC,
 	    FBC_PPC_VCE_DIS | FBC_PPC_TBE_OPAQUE | FBC_PPC_ACE_DIS | 
 	    FBC_PPC_APE_DIS | FBC_PPC_DCE_DIS | FBC_PPC_CS_CONST | 
-	    FBC_PPC_XS_WID);
+	    FBC_PPC_ABE_DIS | FBC_PPC_XS_WID);
 	    
 	fbc |= FFB_FBC_WB_A | FFB_FBC_RB_A | FFB_FBC_SB_BOTH |
 	       FFB_FBC_RGBE_MASK;
@@ -651,6 +651,11 @@ ffb_ras_init(struct ffb_softc *sc)
 	FBC_WRITE(sc, FFB_FBC_FONTINC, 0x10000);
 	sc->sc_fg_cache = 0;
 	FBC_WRITE(sc, FFB_FBC_FG, sc->sc_fg_cache);
+	FBC_WRITE(sc, FFB_FBC_BLENDC, FFB_BLENDC_FORCE_ONE |
+				      FFB_BLENDC_DF_ONE_M_A |
+				      FFB_BLENDC_SF_A);
+	FBC_WRITE(sc, FFB_FBC_BLENDC1, 0);
+	FBC_WRITE(sc, FFB_FBC_BLENDC2, 0);
 	ffb_ras_wait(sc);
 }
 
@@ -722,7 +727,11 @@ ffb_ras_erasecols(void *cookie, int row, int col, int n, long attr)
 void
 ffb_ras_fill(struct ffb_softc *sc)
 {
-	ffb_ras_fifo_wait(sc, 2);
+	ffb_ras_fifo_wait(sc, 3);
+	FBC_WRITE(sc, FFB_FBC_PPC,
+	    FBC_PPC_VCE_DIS | FBC_PPC_TBE_OPAQUE | FBC_PPC_ACE_DIS | 
+	    FBC_PPC_APE_DIS | FBC_PPC_DCE_DIS | FBC_PPC_CS_CONST | 
+	    FBC_PPC_ABE_DIS | FBC_PPC_XS_WID);
 	FBC_WRITE(sc, FFB_FBC_ROP, FBC_ROP_NEW);
 	FBC_WRITE(sc, FFB_FBC_DRAWOP, FBC_DRAWOP_RECTANGLE);
 	SYNC;
@@ -755,7 +764,11 @@ ffb_ras_copyrows(void *cookie, int src, int dst, int n)
 	src *= ri->ri_font->fontheight;
 	dst *= ri->ri_font->fontheight;
 
-	ffb_ras_fifo_wait(sc, 8);
+	ffb_ras_fifo_wait(sc, 9);
+	FBC_WRITE(sc, FFB_FBC_PPC,
+	    FBC_PPC_VCE_DIS | FBC_PPC_TBE_OPAQUE | FBC_PPC_ACE_DIS | 
+	    FBC_PPC_APE_DIS | FBC_PPC_DCE_DIS | FBC_PPC_CS_CONST | 
+	    FBC_PPC_ABE_DIS | FBC_PPC_XS_WID);
 	FBC_WRITE(sc, FFB_FBC_ROP, FBC_ROP_OLD | (FBC_ROP_OLD << 8));
 	FBC_WRITE(sc, FFB_FBC_DRAWOP, FBC_DRAWOP_VSCROLL);
 	FBC_WRITE(sc, FFB_FBC_BY, ri->ri_yorigin + src);
@@ -1017,34 +1030,42 @@ ffb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct wsdisplay_font *font = PICK_FONT(ri, c);
 	struct ffb_softc *sc = scr->scr_cookie;
+	void *data;
+	uint32_t fg, bg;
+	int uc, i;
+	int x, y, wi, he;
 	
-	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
-		void *data;
-		uint32_t fg, bg;
-		int uc, i;
-		int x, y, wi, he;
+	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
+		return;
 
-		wi = font->fontwidth;
-		he = font->fontheight;
+	wi = font->fontwidth;
+	he = font->fontheight;
 
-		if (!CHAR_IN_FONT(c, font))
-			return;
-		bg = ri->ri_devcmap[(attr >> 16) & 0xf];
-		fg = ri->ri_devcmap[(attr >> 24) & 0xf];
-		x = ri->ri_xorigin + col * wi;
-		y = ri->ri_yorigin + row * he;
+	if (!CHAR_IN_FONT(c, font))
+		return;
 
-		uc = c - font->firstchar;
-		data = (uint8_t *)font->data + uc * ri->ri_fontscale;
+	bg = ri->ri_devcmap[(attr >> 16) & 0xf];
+	fg = ri->ri_devcmap[(attr >> 24) & 0xf];
+	x = ri->ri_xorigin + col * wi;
+	y = ri->ri_yorigin + row * he;
 
+	uc = c - font->firstchar;
+	data = (uint8_t *)font->data + uc * ri->ri_fontscale;
+
+	if (font->stride < wi) {
+		/* mono bitmap font */
 		ffb_ras_setbg(sc, bg);
 		ffb_ras_setfg(sc, fg);
-		ffb_ras_fifo_wait(sc, 3);
+		ffb_ras_fifo_wait(sc, 4);
 		FBC_WRITE(sc, FFB_FBC_ROP, FBC_ROP_NEW);
 		FBC_WRITE(sc, FFB_FBC_FONTXY, (y << 16) | x);
 		FBC_WRITE(sc, FFB_FBC_FONTW, wi);
+		FBC_WRITE(sc, FFB_FBC_PPC,
+		    FBC_PPC_VCE_DIS | FBC_PPC_TBE_OPAQUE | FBC_PPC_ACE_DIS | 
+		    FBC_PPC_APE_DIS | FBC_PPC_DCE_DIS | FBC_PPC_CS_CONST | 
+		    FBC_PPC_ABE_DIS | FBC_PPC_XS_WID);
 
-		switch (ri->ri_font->stride) {
+		switch (font->stride) {
 			case 1: {
 				uint8_t *data8 = data;
 				uint32_t reg;
@@ -1066,7 +1087,65 @@ ffb_putchar(void *cookie, int row, int col, u_int c, long attr)
 				break;
 			}
 		}
-	}
+	} else {
+		/* alpha font */
+		volatile uint32_t *dest, *ddest;
+		uint32_t alpha = 0x80;
+		uint8_t *data8 = data;
+		int j;
+
+		/* first we erase the background */
+		ffb_ras_fill(sc);
+		ffb_ras_setfg(sc, bg);
+		ffb_ras_fifo_wait(sc, 4);
+		FBC_WRITE(sc, FFB_FBC_BY, y);
+		FBC_WRITE(sc, FFB_FBC_BX, x);
+		FBC_WRITE(sc, FFB_FBC_BH, he);
+		FBC_WRITE(sc, FFB_FBC_BW, wi);
+
+		/* if we draw a space we're done */
+		if (c == ' ') return;
+
+		/* now enable alpha blending */
+		ffb_ras_setfg(sc, fg);
+		ffb_ras_fifo_wait(sc, 2);
+		FBC_WRITE(sc, FFB_FBC_ROP, FBC_ROP_NEW);
+
+		FBC_WRITE(sc, FFB_FBC_PPC,
+		    FBC_PPC_VCE_DIS | FBC_PPC_TBE_OPAQUE | FBC_PPC_ACE_DIS | 
+		    FBC_PPC_APE_DIS | FBC_PPC_DCE_DIS | FBC_PPC_CS_CONST | 
+		    FBC_PPC_ABE_ENA | FBC_PPC_XS_VAR);
+		/*
+		 * we have to wait for both the rectangle drawing op above and
+		 * the FFB_FBC_PPC write to finish before mucking around in
+		 * the SFB aperture
+		 */
+		ffb_ras_wait(sc);
+
+		/* ... and draw the character */
+		dest = sc->sc_sfb32 + 2048 * y + x;
+		for (i = 0; i < he; i++) {
+			ddest = dest;
+			for (j = 0; j < wi; j++) {
+				alpha = *data8;
+				/*
+				 * We set the colour source to constant above
+				 * so we only have to write the alpha channel
+				 * here and the colour comes from the FG
+				 * register. It would be nice if we could
+				 * just use the SFB8X aperture and memcpy()
+				 * the alpha map line by line but for some
+				 * strange reason that will take colour info
+				 * from the framebuffer even if we set the
+				 * FBC_PPC_CS_CONST bit above.
+				 */
+				*ddest = alpha << 24;
+				data8++;
+				ddest++;
+			}
+			dest += 2048;
+		}
+	} 
 }
 
 int
@@ -1097,7 +1176,7 @@ ffb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_linebytes;
-	ri->ri_flg = RI_CENTER;
+	ri->ri_flg = RI_CENTER | RI_ENABLE_ALPHA;
 
 	/*
 	 * we can't accelerate copycols() so instead of falling back to
@@ -1109,7 +1188,7 @@ ffb_init_screen(void *cookie, struct vcons_screen *scr,
 #endif
 	DPRINTF(("ffb_init_screen: addr: %08lx\n",(ulong)ri->ri_bits));
 
-	rasops_init(ri, sc->sc_height/8, sc->sc_width/8);
+	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 		    sc->sc_width / ri->ri_font->fontwidth);

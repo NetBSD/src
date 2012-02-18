@@ -1,4 +1,4 @@
-/*	$NetBSD: divufr.c,v 1.4 2007/02/22 05:46:29 thorpej Exp $	*/
+/*	$NetBSD: divufr.c,v 1.4.84.1 2012/02/18 07:32:16 mrg Exp $	*/
 
 /*	$OpenBSD: divufr.c,v 1.5 2001/03/29 03:58:18 mickey Exp $	*/
 
@@ -42,15 +42,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: divufr.c,v 1.4 2007/02/22 05:46:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: divufr.c,v 1.4.84.1 2012/02/18 07:32:16 mrg Exp $");
 
 #include "md.h"
 
 void
-divufr(opnd1,opnd2,result)
-
-unsigned int opnd1, opnd2;
-struct mdsfu_register *result;
+divufr(unsigned int opnd1, unsigned int opnd2, struct mdsfu_register *result)
 {
 	/* check divisor for zero */
 	if (opnd2 == 0) {

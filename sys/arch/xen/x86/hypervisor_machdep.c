@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.18 2011/12/03 22:41:40 bouyer Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.18.2.1 2012/02/18 07:33:45 mrg Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.18 2011/12/03 22:41:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.18.2.1 2012/02/18 07:33:45 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,10 +295,12 @@ hypervisor_send_event(struct cpu_info *ci, unsigned int ev)
 #endif
 
 	xen_atomic_set_bit(&s->evtchn_pending[0], ev);
-	xen_atomic_set_bit(&vci->evtchn_pending_sel,
-			   ev >> LONG_SHIFT);
 
-	xen_atomic_set_bit(&vci->evtchn_upcall_pending, 0);
+	if (__predict_false(ci == curcpu())) {
+		xen_atomic_set_bit(&vci->evtchn_pending_sel,
+		    ev >> LONG_SHIFT);
+		xen_atomic_set_bit(&vci->evtchn_upcall_pending, 0);
+	}
 
 	xen_atomic_clear_bit(&s->evtchn_mask[0], ev);
 
@@ -338,9 +340,11 @@ hypervisor_unmask_event(unsigned int ev)
 		if (!xen_atomic_test_bit(&ci->ci_evtmask[0], ev))
 			continue;
 		vci = ci->ci_vcpu;
-		if (!xen_atomic_test_and_set_bit(&vci->evtchn_pending_sel,
-		    ev>>LONG_SHIFT))
-			xen_atomic_set_bit(&vci->evtchn_upcall_pending, 0);
+		if (__predict_true(ci == curcpu())) {
+			if (!xen_atomic_test_and_set_bit(&vci->evtchn_pending_sel,
+				ev>>LONG_SHIFT))
+				xen_atomic_set_bit(&vci->evtchn_upcall_pending, 0);
+		}
 		if (!vci->evtchn_upcall_mask) {
 			if (__predict_true(ci == curcpu())) {
 				hypervisor_force_callback();

@@ -1,4 +1,6 @@
-# $NetBSD: files.secmodel,v 1.4 2009/10/02 18:50:13 elad Exp $
+# $NetBSD: files.secmodel,v 1.4.16.1 2012/02/18 07:35:46 mrg Exp $
+
+file	secmodel/secmodel.c
 
 #
 # Traditional 4.4BSD - Superuser ("root" as effective user-id 0)
@@ -9,6 +11,11 @@ include "secmodel/suser/files.suser"
 # Traditional 4.4BSD - Securelevel
 #
 include "secmodel/securelevel/files.securelevel"
+
+#
+# NetBSD Extensions 
+#
+include "secmodel/extensions/files.extensions"
 
 #
 # Traditional NetBSD (derived from 4.4BSD)

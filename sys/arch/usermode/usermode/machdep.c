@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.33 2011/11/27 21:38:17 reinoud Exp $ */
+/* $NetBSD: machdep.c,v 1.33.2.1 2012/02/18 07:33:25 mrg Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,20 +27,27 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Note that this machdep.c uses the `dummy' mcontext_t defined for usermode.
+ * This is basicly a blob of PAGE_SIZE big. We might want to switch over to
+ * non-generic mcontext_t's one day, but will this break non-NetBSD hosts?
+ */
+
+
 #include "opt_memsize.h"
-#include "opt_sdl.h"
-#include "opt_urkelvisor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2011/11/27 21:38:17 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33.2.1 2012/02/18 07:33:25 mrg Exp $");
 
 #include <sys/types.h>
+#include <sys/systm.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/exec.h>
 #include <sys/buf.h>
 #include <sys/boot_flag.h>
 #include <sys/ucontext.h>
+#include <sys/utsname.h>
 #include <machine/pcb.h>
 #include <machine/psl.h>
 
@@ -48,28 +55,59 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2011/11/27 21:38:17 reinoud Exp $")
 #include <uvm/uvm_page.h>
 
 #include <dev/mm.h>
+#include <machine/vmparam.h>
 #include <machine/machdep.h>
 #include <machine/thunk.h>
 
-#if defined(URKELVISOR)
-#include <machine/urkelvisor.h>
+#ifndef MAX_DISK_IMAGES
+#define MAX_DISK_IMAGES	4
 #endif
 
-char machine[] = "usermode";
-char machine_arch[] = "usermode";
+char machine[_SYS_NMLN] = "";
+char machine_arch[_SYS_NMLN] = "";
+char module_machine_usermode[_SYS_NMLN] = "";
+
+struct vm_map *phys_map = NULL;
 
 static char **saved_argv;
-char *usermode_root_image_path = NULL;
+
+char *usermode_disk_image_path[MAX_DISK_IMAGES];
+int usermode_disk_image_path_count = 0;
+
+static char usermode_tap_devicebuf[PATH_MAX] = "";
+char *usermode_tap_device = NULL;
+char *usermode_tap_eaddr = NULL;
+static char usermode_audio_devicebuf[PATH_MAX] = "";
+char *usermode_audio_device = NULL;
+char *usermode_root_device = NULL;
+int usermode_vnc_width = 0;
+int usermode_vnc_height = 0;
+int usermode_vnc_port = -1;
 
 void	main(int argc, char *argv[]);
 void	usermode_reboot(void);
 
+static void
+usage(const char *pn)
+{
+	printf("usage: %s [-acdqsvxz]"
+	    " [net=<tapdev>,<eaddr>]"
+	    " [audio=<audiodev>]"
+	    " [disk=<diskimg> ...]"
+	    " [root=<device>]"
+	    " [vnc=<width>x<height>,<port>]\n",
+	    pn);
+	printf("       (ex. \"%s"
+	    " net=tap0,00:00:be:ef:ca:fe"
+	    " audio=audio0"
+	    " disk=root.fs"
+	    " root=ld0"
+	    " vnc=640x480,5900\")\n", pn);
+}
+
 void
 main(int argc, char *argv[])
 {
-#if defined(SDL)
-	extern int genfb_thunkbus_cnattach(void);
-#endif
 	extern void ttycons_consinit(void);
 	extern void pmap_bootstrap(void);
 	extern void kernmain(void);
@@ -77,14 +115,89 @@ main(int argc, char *argv[])
 
 	saved_argv = argv;
 
-#if defined(SDL)
-	if (genfb_thunkbus_cnattach() == 0)
-#endif
-		ttycons_consinit();
+	/* Get machine and machine_arch from host */
+	thunk_getmachine(machine, sizeof(machine),
+	    machine_arch, sizeof(machine_arch));
+	/* Override module_machine to be ${machine}usermode */
+	snprintf(module_machine_usermode, sizeof(module_machine_usermode),
+	    "%susermode", machine);
+
+	ttycons_consinit();
 
 	for (i = 1; i < argc; i++) {
 		if (argv[i][0] != '-') {
-			usermode_root_image_path = argv[i];
+			if (strncmp(argv[i], "net=", strlen("net=")) == 0) {
+				char *tap = argv[i] + strlen("net=");
+				char *mac = strchr(tap, ',');
+				char *p = usermode_tap_devicebuf;
+				if (mac == NULL) {
+					printf("bad net= format\n");
+					return;
+				}
+				memset(usermode_tap_devicebuf, 0,
+				    sizeof(usermode_tap_devicebuf));
+				if (*tap != '/') {
+					memcpy(p, "/dev/", strlen("/dev/"));
+					p += strlen("/dev/");
+				}
+				for (; *tap != ','; p++, tap++)
+					*p = *tap;
+				usermode_tap_device = usermode_tap_devicebuf;
+				usermode_tap_eaddr = mac + 1;
+			} else if (strncmp(argv[i], "audio=",
+			    strlen("audio=")) == 0) {
+				char *audio = argv[i] + strlen("audio=");
+				if (*audio != '/')
+					snprintf(usermode_audio_devicebuf,
+					    sizeof(usermode_audio_devicebuf),
+					    "/dev/%s", audio);
+				else
+					snprintf(usermode_audio_devicebuf,
+					    sizeof(usermode_audio_devicebuf),
+					    "%s", audio);
+				usermode_audio_device =
+				    usermode_audio_devicebuf;
+			} else if (strncmp(argv[i], "vnc=",
+			    strlen("vnc=")) == 0) {
+				char *vnc = argv[i] + strlen("vnc=");
+				char *w, *h, *p;
+				w = vnc;
+				h = strchr(w, 'x');
+				if (h == NULL) {
+					printf("bad vnc= format\n");
+					return;
+				}
+				*h++ = '\0';
+				p = strchr(h, ',');
+				if (p == NULL) {
+					printf("bad vnc= format\n");
+					return;
+				}
+				*p++ = '\0';
+				usermode_vnc_width = strtoul(w, NULL, 10);
+				usermode_vnc_height = strtoul(h, NULL, 10);
+				usermode_vnc_port = strtoul(p, NULL, 10);
+			} else if (strncmp(argv[i], "disk=",
+			    strlen("disk=")) == 0) {
+				if (usermode_disk_image_path_count ==
+				    MAX_DISK_IMAGES) {
+					printf("too many disk images "
+					    "(increase MAX_DISK_IMAGES)\n");
+					usage(argv[0]);
+					return;
+				}
+				usermode_disk_image_path[
+				    usermode_disk_image_path_count++] =
+				    argv[i] + strlen("disk=");
+			} else if (strncmp(argv[i], "root=",
+			    strlen("root=")) == 0) {
+				usermode_root_device = argv[i] +
+				    strlen("root=");
+			} else {
+				printf("%s: unknown parameter\n", argv[i]);
+				usage(argv[0]);
+				return;
+			}
 			continue;
 		}
 		for (j = 1; argv[i][j] != '\0'; j++) {
@@ -92,8 +205,7 @@ main(int argc, char *argv[])
 			BOOT_FLAG(argv[i][j], r);
 			if (r == 0) {
 				printf("-%c: unknown flag\n", argv[i][j]);
-				printf("usage: %s [-acdqsvxz]\n", argv[0]);
-				printf("       (ex. \"%s -s\")\n", argv[0]);
+				usage(argv[0]);
 				return;
 			}
 			tmpopt |= r;
@@ -105,10 +217,6 @@ main(int argc, char *argv[])
 	uvmexp.ncolors = 2;
 
 	pmap_bootstrap();
-
-#if defined(URKELVISOR)
-	urkelvisor_init();
-#endif
 
 	splinit();
 	splraise(IPL_HIGH);
@@ -141,191 +249,31 @@ consinit(void)
 	printf("NetBSD/usermode startup\n");
 }
 
-void
-sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
-{
-	panic("%s not implemented", __func__);
-}
-
 int
-mm_md_physacc(paddr_t pa, vm_prot_t prog)
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
+	// printf("%s: pa = %p, acc %d\n", __func__, (void *) pa, prot);
+	if (pa >= physmem * PAGE_SIZE)
+		return EFAULT;
 	return 0;
 }
 
 
-#ifdef __i386__
-
-#if 0
-static void dump_regs(ucontext_t *ctx);
-
-static void
-dump_regs(register_t *reg)
-{
-	/* register dump before call */
-	const char *name[] = {"GS", "FS", "ES", "DS", "EDI", "ESI", "EBP", "ESP",
-		"EBX", "EDX", "ECX", "EAX", "TRAPNO", "ERR", "EIP", "CS", "EFL",
-		"UESP", "SS"};
-
-	for (i =0; i < 19; i++)
-		printf("reg[%02d] (%6s) = %"PRIx32"\n", i, name[i], reg[i]);
-}
-#endif
-
-void
-setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
-{
-	struct pcb *pcb = lwp_getpcb(l);
-	ucontext_t *ucp = &pcb->pcb_userret_ucp;
-	uint *reg, i;
-
-#ifdef DEBUG_EXEC
-	printf("setregs called: lwp %p, exec package %p, stack %p\n",
-		l, pack, (void *) stack);
-	printf("current stat of pcb %p\n", pcb);
-	printf("\tpcb->pcb_ucp.uc_stack.ss_sp   = %p\n",
-		pcb->pcb_ucp.uc_stack.ss_sp);
-	printf("\tpcb->pcb_ucp.uc_stack.ss_size = %d\n",
-		(int) pcb->pcb_ucp.uc_stack.ss_size);
-	printf("\tpcb->pcb_userret_ucp.uc_stack.ss_sp   = %p\n",
-		pcb->pcb_userret_ucp.uc_stack.ss_sp);
-	printf("\tpcb->pcb_userret_ucp.uc_stack.ss_size = %d\n",
-		(int) pcb->pcb_userret_ucp.uc_stack.ss_size);
-#endif
-
-	reg = (int *) &ucp->uc_mcontext;
-	for (i = 4; i < 11; i++)
-		reg[i] = 0;
-
-	ucp->uc_stack.ss_sp = (void *) (stack-4);	/* to prevent clearing */
-	ucp->uc_stack.ss_size = 0; //pack->ep_ssize;
-	thunk_makecontext(ucp, (void *) pack->ep_entry, 0, NULL, NULL, NULL);
-
-	/* patch up */
-	reg[ 8] = l->l_proc->p_psstrp;	/* _REG_EBX */
-	reg[17] = (stack);		/* _REG_UESP */
-
-	//dump_regs(reg);
-
-#ifdef DEBUG_EXEC
-	printf("updated pcb %p\n", pcb);
-	printf("\tpcb->pcb_ucp.uc_stack.ss_sp   = %p\n",
-		pcb->pcb_ucp.uc_stack.ss_sp);
-	printf("\tpcb->pcb_ucp.uc_stack.ss_size = %d\n",
-		(int) pcb->pcb_ucp.uc_stack.ss_size);
-	printf("\tpcb->pcb_userret_ucp.uc_stack.ss_sp   = %p\n",
-		pcb->pcb_userret_ucp.uc_stack.ss_sp);
-	printf("\tpcb->pcb_userret_ucp.uc_stack.ss_size = %d\n",
-		(int) pcb->pcb_userret_ucp.uc_stack.ss_size);
-	printf("\tpack->ep_entry                = %p\n",
-		(void *) pack->ep_entry);
-#endif
-}
-
-void
-md_syscall_get_syscallnumber(ucontext_t *ucp, uint32_t *code)
-{
-	uint *reg = (int *) &ucp->uc_mcontext;
-	*code = reg[11];			/* EAX */
-}
-
 int
-md_syscall_getargs(lwp_t *l, ucontext_t *ucp, int nargs, int argsize,
-	register_t *args)
+mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 {
-	uint *reg = (int *) &ucp->uc_mcontext;
-	register_t *sp = (register_t *) reg[17];/* ESP */
-	int ret;
+	const vaddr_t va = (vaddr_t)ptr;
+	extern void *end;
 
-	//dump_regs(reg);
-	ret = copyin(sp + 1, args, argsize);
+	// printf("%s: ptr %p, acc %d\n", __func__, ptr, prot);
+	if (va < kmem_kvm_start)
+		return EFAULT;
+	if ((va >= kmem_kvm_cur_end) && (va < kmem_k_start))
+		return EFAULT;
+	if (va > (vaddr_t) end)
+		return EFAULT;
 
-	return ret;
-}
-
-void
-md_syscall_set_returnargs(lwp_t *l, ucontext_t *ucp,
-	int error, register_t *rval)
-{
-	register_t *reg = (register_t *) &ucp->uc_mcontext;
-
-	reg[16] &= ~PSL_C;		/* EFL */
-	if (error) {
-		rval[0] = error;
-		reg[16] |= PSL_C;	/* EFL */
-	}
-
-	/* set return parameters */
-	reg[11]	= rval[0];		/* EAX */
-	if (!error)
-		reg[ 9] = rval[1];	/* EDX */
-
-	//dump_regs(reg);
-}
-
-int
-md_syscall_check_opcode(void *ptr)
-{
-	uint16_t *p16;
-
-	/* undefined instruction */
-	p16 = (uint16_t *) ptr;
-	if (*p16 == 0xff0f)
-		return 1;
-	if (*p16 == 0xff0b)
-		return 1;
-
-	/* TODO int $80 and sysenter */
+	*handled = true;
 	return 0;
 }
-
-void
-md_syscall_get_opcode(ucontext_t *ucp, uint32_t *opcode)
-{
-	uint *reg = (int *) &ucp->uc_mcontext;
-//	uint8_t  *p8  = (uint8_t *) (reg[14]);
-	uint16_t *p16 = (uint16_t*) (reg[14]);
-
-	*opcode = 0;
-
-	if (*p16 == 0xff0f)
-		*opcode = *p16;
-	if (*p16 == 0xff0b)
-		*opcode = *p16;
-
-	/* TODO int $80 and sysenter */
-}
-
-void
-md_syscall_inc_pc(ucontext_t *ucp, uint32_t opcode)
-{
-	uint *reg = (int *) &ucp->uc_mcontext;
-
-	/* advance program counter */
-	if (opcode == 0xff0f)
-		reg[14] += 2;	/* EIP */
-	if (opcode == 0xff0b)
-		reg[14] += 2;	/* EIP */
-
-	/* TODO int $80 and sysenter */
-}
-
-void
-md_syscall_dec_pc(ucontext_t *ucp, uint32_t opcode)
-{
-	uint *reg = (int *) &ucp->uc_mcontext;
-
-	/* advance program counter */
-	if (opcode == 0xff0f)
-		reg[14] -= 2;	/* EIP */
-	if (opcode == 0xff0b)
-		reg[14] -= 2;	/* EIP */
-
-	/* TODO int $80 and sysenter */
-}
-
-
-#else
-#	error machdep functions not yet ported to this architecture
-#endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.198 2011/11/19 22:51:31 tls Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.198.2.1 2012/02/18 07:35:52 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,6 +45,7 @@
 #include <sys/ucred.h>
 #include <sys/ucontext.h>
 #include <sys/proc.h>
+#include <sys/mallocvar.h>
 #include <uvm/uvm_extern.h>
 
 

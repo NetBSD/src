@@ -1,4 +1,4 @@
-/* $NetBSD: satafisreg.h,v 1.3 2011/11/02 18:41:58 jakllsch Exp $ */
+/* $NetBSD: satafisreg.h,v 1.3.4.1 2012/02/18 07:34:08 mrg Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Jonathan A. Kollasch.
@@ -34,18 +34,18 @@
 #define RHD_FISLEN 20
 #define rhd_c 1 /* Command bit and PM port */
 #define RHD_C 0x80
-#define rhd_command 2 /* wd_command */
-#define rhd_features 3 /* wd_precomp */
-#define rhd_sector 4 /* wd_sector */
-#define rhd_cyl_lo 5 /* wd_cyl_lo */
-#define rhd_cyl_hi 6 /* wd_cyl_hi */
-#define rhd_dh 7 /* wd_sdh */
-#define rhd_sector_exp 8
-#define rhd_cyl_lo_exp 9
-#define rhd_cyl_hi_exp 10
-#define rhd_features_exp 11
-#define rhd_seccnt 12
-#define rhd_seccnt_exp 13
+#define rhd_command 2
+#define rhd_features0 3
+#define rhd_lba0 4
+#define rhd_lba1 5
+#define rhd_lba2 6
+#define rhd_dh 7
+#define rhd_lba3 8
+#define rhd_lba4 9
+#define rhd_lba5 10
+#define rhd_features1 11
+#define rhd_count0 12
+#define rhd_count1 13
 #define rhd_control 15
 
 #define RDH_FISTYPE 0x34
@@ -54,15 +54,15 @@
 #define RDH_I 0x40
 #define rdh_status 2
 #define rdh_error 3
-#define rdh_sector 4 /* wd_sector */
-#define rdh_cyl_lo 5 /* wd_cyl_lo */
-#define rdh_cyl_hi 6 /* wd_cyl_hi */
-#define rdh_dh 7 /* wd_sdh */
-#define rdh_sector_exp 8
-#define rdh_cyl_lo_exp 9
-#define rdh_cyl_hi_exp 10
-#define rdh_seccnt 12
-#define rdh_seccnt_exp 13
+#define rdh_lba0 4
+#define rdh_lba1 5
+#define rdh_lba2 6
+#define rdh_dh 7
+#define rdh_lba3 8
+#define rdh_lba4 9
+#define rdh_lba5 10
+#define rdh_count0 12
+#define rdh_count1 13
 
 #define SDB_FISTYPE 0xA1
 #define SDB_FISLEN 8

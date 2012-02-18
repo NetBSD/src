@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.275 2011/07/12 07:51:34 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.275.6.1 2012/02/18 07:33:17 mrg Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,13 +26,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.275 2011/07/12 07:51:34 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.275.6.1 2012/02/18 07:33:17 mrg Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
+#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -669,6 +670,9 @@ pmap_read_memlist(const char *device, const char *property, void **ml,
 void
 pmap_bootstrap(u_long kernelstart, u_long kernelend)
 {
+#ifdef MODULAR
+	extern vaddr_t module_start, module_end;
+#endif
 	extern char etext[], data_start[];	/* start of data segment */
 	extern int msgbufmapped;
 	struct mem_region *mp, *mp1, *avail, *orig;
@@ -1175,6 +1179,18 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 	}
 
 	vmmap = (vaddr_t)reserve_dumppages((void *)(u_long)vmmap);
+
+#ifdef MODULAR
+	/*
+	 * Reserve 16 MB of VA for module loading. Right now our full
+	 * GENERIC kernel is about 13 MB, so this looks good enough.
+	 * If we make this bigger, we should adjust the KERNEND and
+	 * associated defines in param.h.
+	 */
+	module_start = vmmap;
+	vmmap += 16 * 1024*1024;
+	module_end = vmmap;
+#endif
 
 	/*
 	 * Set up bounds of allocatable memory for vmstat et al.

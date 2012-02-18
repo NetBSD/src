@@ -1,4 +1,4 @@
-#	$NetBSD: files.ipfilter,v 1.12 2010/10/02 20:07:39 bad Exp $
+#	$NetBSD: files.ipfilter,v 1.12.12.1 2012/02/18 07:35:39 mrg Exp $
 
 defflag	opt_ipfilter.h	IPFILTER_LOG		# logging of ip packets
 defflag	opt_ipfilter.h	IPFILTER_DEFAULT_BLOCK

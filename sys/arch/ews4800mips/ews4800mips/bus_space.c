@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.4 2008/04/28 20:23:18 martin Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.4.38.1 2012/02/18 07:32:02 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.4 2008/04/28 20:23:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.4.38.1 2012/02/18 07:32:02 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,7 @@ bus_space_create(bus_space_tag_t t, const char *name,
 		ebs->ebs_size = size;
 	} else {
 		ebs->ebs_extent = extent_create(name, addr, addr + size - 1,
-		    M_DEVBUF, 0, 0, EX_NOWAIT);
+		    0, 0, EX_NOWAIT);
 		if (ebs->ebs_extent == NULL) {
 			panic("%s:: unable to create bus_space for "
 			    "0x%08lx-%#lx", __func__, addr, size);

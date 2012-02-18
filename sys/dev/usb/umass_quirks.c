@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.90 2011/09/20 19:35:46 jakllsch Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.90.6.1 2012/02/18 07:35:10 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.90 2011/09/20 19:35:46 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.90.6.1 2012/02/18 07:35:10 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_umass.h"

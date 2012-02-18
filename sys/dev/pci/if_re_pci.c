@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.40 2010/07/27 21:48:41 jakllsch Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.40.12.1 2012/02/18 07:34:41 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.40 2010/07/27 21:48:41 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.40.12.1 2012/02/18 07:34:41 mrg Exp $");
 
 #include <sys/types.h>
 
@@ -226,8 +226,7 @@ re_pci_attach(device_t parent, device_t self, void *aux)
 	t = re_pci_lookup(pa);
 	KASSERT(t != NULL);
 
-	aprint_normal(": %s (rev. 0x%02x)\n",
-	    t->rtk_name, PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo_fancy(pa, NULL, t->rtk_name, 1);
 
 	if (t->rtk_basetype == RTK_8139CPLUS)
 		sc->sc_quirk |= RTKQ_8139CPLUS;

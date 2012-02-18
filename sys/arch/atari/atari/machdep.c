@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.172 2011/06/12 03:35:39 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.172.6.1 2012/02/18 07:31:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.172 2011/06/12 03:35:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.172.6.1 2012/02/18 07:31:36 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -393,7 +393,6 @@ long		dumplo   = 0;		/* (disk blocks)		*/
 void
 cpu_dumpconf(void)
 {
-	const struct bdevsw *bdev;
 	int	nblks, i;
 
 	for (i = dumpsize = 0; i < NMEM_SEGS; i++) {
@@ -404,13 +403,8 @@ cpu_dumpconf(void)
 	dumpsize = btoc(dumpsize);
 
 	if (dumpdev != NODEV) {
-		bdev = bdevsw_lookup(dumpdev);
-		if (bdev == NULL) {
-			dumpdev = NODEV;
-			return;
-		}
-		if (bdev->d_psize != NULL) {
-			nblks = (*bdev->d_psize)(dumpdev);
+		nblks = bdev_size(dumpdev);
+		if (nblks > 0) {
 			if (dumpsize > btoc(dbtob(nblks - dumplo)))
 				dumpsize = btoc(dbtob(nblks - dumplo));
 			else if (dumplo == 0)

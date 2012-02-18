@@ -1,4 +1,4 @@
-/*	$NetBSD: dfsqrt.c,v 1.4 2007/02/22 05:46:29 thorpej Exp $	*/
+/*	$NetBSD: dfsqrt.c,v 1.4.84.1 2012/02/18 07:32:16 mrg Exp $	*/
 
 /*	$OpenBSD: dfsqrt.c,v 1.5 2001/03/29 03:58:17 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dfsqrt.c,v 1.4 2007/02/22 05:46:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dfsqrt.c,v 1.4.84.1 2012/02/18 07:32:16 mrg Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/dbl_float.h"
@@ -53,10 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: dfsqrt.c,v 1.4 2007/02/22 05:46:29 thorpej Exp $");
 
 /*ARGSUSED*/
 int
-dbl_fsqrt(srcptr,dstptr,status)
-
-dbl_floating_point *srcptr, *dstptr;
-unsigned int *status;
+dbl_fsqrt(dbl_floating_point *srcptr, dbl_floating_point *dstptr,
+    unsigned int *status)
 {
 	register unsigned int srcp1, srcp2, resultp1, resultp2;
 	register unsigned int newbitp1, newbitp2, sump1, sump2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ipsec_pxy.c,v 1.8 2009/08/19 08:36:11 darrenr Exp $	*/
+/*	$NetBSD: ip_ipsec_pxy.c,v 1.8.16.1 2012/02/18 07:35:19 mrg Exp $	*/
 
 /*
  * Copyright (C) 2001-2003 by Darren Reed
@@ -13,17 +13,23 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_ipsec_pxy.c,v 1.8 2009/08/19 08:36:11 darrenr Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_ipsec_pxy.c,v 1.8.16.1 2012/02/18 07:35:19 mrg Exp $");
 
 #define	IPF_IPSEC_PROXY
 
 
-int ippr_ipsec_init __P((void));
-void ippr_ipsec_fini __P((void));
-int ippr_ipsec_new __P((fr_info_t *, ap_session_t *, nat_t *));
-void ippr_ipsec_del __P((ap_session_t *));
-int ippr_ipsec_inout __P((fr_info_t *, ap_session_t *, nat_t *));
-int ippr_ipsec_match __P((fr_info_t *, ap_session_t *, nat_t *));
+int
+ippr_ipsec_init(void);
+void
+ippr_ipsec_fini(void);
+int
+ippr_ipsec_new(fr_info_t *, ap_session_t *, nat_t *);
+void
+ippr_ipsec_del(ap_session_t *);
+int
+ippr_ipsec_inout(fr_info_t *, ap_session_t *, nat_t *);
+int
+ippr_ipsec_match(fr_info_t *, ap_session_t *, nat_t *);
 
 static	frentry_t	ipsecfr;
 static	ipftq_t		*ipsecnattqe;
@@ -36,7 +42,8 @@ int	ipsec_proxy_ttl = 60;
 /*
  * IPSec application proxy initialization.
  */
-int ippr_ipsec_init()
+int
+ippr_ipsec_init(void)
 {
 	bzero((char *)&ipsecfr, sizeof(ipsecfr));
 	ipsecfr.fr_ref = 1;
@@ -64,7 +71,8 @@ int ippr_ipsec_init()
 }
 
 
-void ippr_ipsec_fini()
+void
+ippr_ipsec_fini(void)
 {
 	if (ipsecnattqe != NULL) {
 		if (fr_deletetimeoutqueue(ipsecnattqe) == 0)
@@ -87,10 +95,8 @@ void ippr_ipsec_fini()
 /*
  * Setup for a new IPSEC proxy.
  */
-int ippr_ipsec_new(fin, aps, nat)
-fr_info_t *fin;
-ap_session_t *aps;
-nat_t *nat;
+int
+ippr_ipsec_new(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	ipsec_pxy_t *ipsec;
 	fr_info_t fi;
@@ -194,10 +200,8 @@ nat_t *nat;
  * For outgoing IKE packets.  refresh timeouts for NAT & state entries, if
  * we can.  If they have disappeared, recreate them.
  */
-int ippr_ipsec_inout(fin, aps, nat)
-fr_info_t *fin;
-ap_session_t *aps;
-nat_t *nat;
+int
+ippr_ipsec_inout(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	ipsec_pxy_t *ipsec;
 	fr_info_t fi;
@@ -275,10 +279,8 @@ nat_t *nat;
  * in the same order (not reversed depending on packet flow direction as with
  * UDP/TCP port numbers).
  */
-int ippr_ipsec_match(fin, aps, nat)
-fr_info_t *fin;
-ap_session_t *aps;
-nat_t *nat;
+int
+ippr_ipsec_match(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	ipsec_pxy_t *ipsec;
 	u_32_t cookies[4];
@@ -319,8 +321,8 @@ nat_t *nat;
 /*
  * clean up after ourselves.
  */
-void ippr_ipsec_del(aps)
-ap_session_t *aps;
+void
+ippr_ipsec_del(ap_session_t *aps)
 {
 	ipsec_pxy_t *ipsec;
 

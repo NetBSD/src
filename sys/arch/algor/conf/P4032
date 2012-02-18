@@ -1,4 +1,4 @@
-#	$NetBSD: P4032,v 1.61 2011/11/30 14:34:11 kiyohara Exp $
+#	$NetBSD: P4032,v 1.61.2.1 2012/02/18 07:30:44 mrg Exp $
 #
 # Algorithmics P-4032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P4032-$Revision: 1.61 $"
+#ident 		"P4032-$Revision: 1.61.2.1 $"
 
 maxusers 32
 
@@ -30,7 +30,7 @@ options 	DIAGNOSTIC		# Cheap kernel consistency checks
 options 	DDB			# kernel debugger
 makeoptions	DEBUG="-g"
 #makeoptions	DEBUGLIST="pattern1 pattern2 ..."
-options 	SYMTAB_SPACE=405000
+options 	SYMTAB_SPACE=425000
 
 # File systems
 file-system	FFS		# Fast file system
@@ -47,7 +47,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 options 	NFSSERVER	# Sun NFS-compatible file system server
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options

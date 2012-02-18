@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.255 2010/11/12 07:59:25 uebayasi Exp $ */
+/* $NetBSD: pmap.c,v 1.255.12.1 2012/02/18 07:30:51 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
+/*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -140,7 +140,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.255 2010/11/12 07:59:25 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.255.12.1 2012/02/18 07:30:51 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -757,7 +757,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 #endif
 
 	/*
-	 * Compute the number of pages kmem_map will have.
+	 * Compute the number of pages kmem_arena will have.
 	 */
 	kmeminit_nkmempages();
 
@@ -1090,8 +1090,8 @@ pmap_init(void)
 {
 
 #ifdef DEBUG
-        if (pmapdebug & PDB_FOLLOW)
-                printf("pmap_init()\n");
+	if (pmapdebug & PDB_FOLLOW)
+	        printf("pmap_init()\n");
 #endif
 
 	/* initialize protection array */
@@ -2244,8 +2244,8 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_copy_page(%lx, %lx)\n", src, dst);
 #endif
-        s = (const void *)ALPHA_PHYS_TO_K0SEG(src);
-        d = (void *)ALPHA_PHYS_TO_K0SEG(dst);
+	s = (const void *)ALPHA_PHYS_TO_K0SEG(src);
+	d = (void *)ALPHA_PHYS_TO_K0SEG(dst);
 	memcpy(d, s, PAGE_SIZE);
 }
 
@@ -2634,7 +2634,7 @@ pmap_emulate_reference(struct lwp *l, vaddr_t v, int user, int type)
 	if (!exec && type == ALPHA_MMCSR_FOE) {
 		if (didlock)
 			PMAP_UNLOCK(pmap);
-               return (1);
+	       return (1);
 	}
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW) {
@@ -2738,7 +2738,7 @@ pmap_pv_dump(paddr_t pa)
 	mutex_exit(lock);
 }
 #endif
- 
+
 /*
  * vtophys:
  *
@@ -3477,7 +3477,7 @@ pmap_asn_alloc(pmap_t pmap, long cpu_id)
 		 * ASN is still in the current generation; keep on using it.
 		 */
 #ifdef DEBUG
-		if (pmapdebug & PDB_ASN) 
+		if (pmapdebug & PDB_ASN)
 			printf("pmap_asn_alloc: same generation, keeping %u\n",
 			    pma->pma_asn);
 #endif

@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 2002/11/26 23:30:33 lukem Exp $
+#	$NetBSD: Makefile,v 1.4.148.1 2012/02/18 07:35:45 mrg Exp $
 
 INCSDIR= /usr/include/netkey
 
-INCS=	key.h key_debug.h key_var.h keydb.h keysock.h
+INCS=	keysock.h
 
 .include <bsd.kinc.mk>

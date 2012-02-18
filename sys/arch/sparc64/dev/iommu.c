@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.105 2011/10/08 08:49:07 nakayama Exp $	*/
+/*	$NetBSD: iommu.c,v 1.105.6.1 2012/02/18 07:33:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.105 2011/10/08 08:49:07 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.105.6.1 2012/02/18 07:33:16 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -200,7 +200,7 @@ iommu_init(char *name, struct iommu_state *is, int tsbsize, uint32_t iovabase)
 		(unsigned long long)(is->is_ptsb + size - 1));
 	is->is_dvmamap = extent_create(name,
 	    is->is_dvmabase, is->is_dvmaend,
-	    M_DEVBUF, 0, 0, EX_NOWAIT);
+	    0, 0, EX_NOWAIT);
 	/* XXXMRG Check is_dvmamap is valid. */
 
 	/*

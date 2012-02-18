@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsavar.h,v 1.7 2010/11/03 22:34:23 dyoung Exp $	*/
+/*	$NetBSD: ubsavar.h,v 1.7.12.1 2012/02/18 07:35:07 mrg Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.

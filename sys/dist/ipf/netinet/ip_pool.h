@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_pool.h,v 1.5 2008/05/20 07:08:08 darrenr Exp $	*/
+/*	$NetBSD: ip_pool.h,v 1.5.36.1 2012/02/18 07:35:20 mrg Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -14,7 +14,7 @@
 #if defined(_KERNEL) && !defined(__osf__) && !defined(__hpux) && \
     !defined(linux) && !defined(sun) && !defined(AIX)
 # include <net/radix.h>
-extern void rn_freehead __P((struct radix_node_head *));
+extern void rn_freehead(struct radix_node_head *);
 # define FreeS(p, z)		KFREES(p, z)
 extern int max_keylen;
 #else
@@ -71,22 +71,22 @@ typedef	struct	ip_pool_stat	{
 extern	ip_pool_stat_t	ipoolstat;
 extern	ip_pool_t	*ip_pool_list[IPL_LOGSIZE];
 
-extern	int	ip_pool_search __P((void *, int, void *));
-extern	int	ip_pool_init __P((void));
-extern	void	ip_pool_fini __P((void));
-extern	int	ip_pool_create __P((iplookupop_t *));
-extern	int	ip_pool_insert __P((ip_pool_t *, i6addr_t *, i6addr_t *, int));
-extern	int	ip_pool_remove __P((ip_pool_t *, ip_pool_node_t *));
-extern	int	ip_pool_destroy __P((int, char *));
-extern	void	ip_pool_free __P((ip_pool_t *));
-extern	void	ip_pool_deref __P((ip_pool_t *));
-extern	void	ip_pool_node_deref __P((ip_pool_node_t *));
-extern	void	*ip_pool_find __P((int, char *));
-extern	ip_pool_node_t *ip_pool_findeq __P((ip_pool_t *,
-					  addrfamily_t *, addrfamily_t *));
-extern	int	ip_pool_flush __P((iplookupflush_t *));
-extern	int	ip_pool_statistics __P((iplookupop_t *));
-extern	int	ip_pool_getnext __P((ipftoken_t *, ipflookupiter_t *));
-extern	void	ip_pool_iterderef __P((u_int, int, void *));
+extern	int	ip_pool_search(void *, int, void *);
+extern	int	ip_pool_init(void);
+extern	void	ip_pool_fini(void);
+extern	int	ip_pool_create(iplookupop_t *);
+extern	int	ip_pool_insert(ip_pool_t *, i6addr_t *, i6addr_t *, int);
+extern	int	ip_pool_remove(ip_pool_t *, ip_pool_node_t *);
+extern	int	ip_pool_destroy(int, char *);
+extern	void	ip_pool_free(ip_pool_t *);
+extern	void	ip_pool_deref(ip_pool_t *);
+extern	void	ip_pool_node_deref(ip_pool_node_t *);
+extern	void	*ip_pool_find(int, char *);
+extern	ip_pool_node_t *ip_pool_findeq(ip_pool_t *,
+					  addrfamily_t *, addrfamily_t *);
+extern	int	ip_pool_flush(iplookupflush_t *);
+extern	int	ip_pool_statistics(iplookupop_t *);
+extern	int	ip_pool_getnext(ipftoken_t *, ipflookupiter_t *);
+extern	void	ip_pool_iterderef(u_int, int, void *);
 
 #endif /* __IP_POOL_H__ */

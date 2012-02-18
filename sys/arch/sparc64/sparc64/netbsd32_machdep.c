@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.95 2011/03/04 22:25:29 joerg Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.95.8.1 2012/02/18 07:33:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.95 2011/03/04 22:25:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.95.8.1 2012/02/18 07:33:17 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -779,10 +779,10 @@ cpu_coredump32(struct lwp *l, void *iocookie, struct core32 *chdr)
 void netbsd32_cpu_getmcontext(struct lwp *, mcontext_t  *, unsigned int *);
 
 void
-netbsd32_cpu_getmcontext(l, mcp, flags)
-	struct lwp *l;
-	/* netbsd32_mcontext_t XXX */mcontext_t  *mcp;
-	unsigned int *flags;
+netbsd32_cpu_getmcontext(
+	struct lwp *l,
+	/* netbsd32_mcontext_t XXX */mcontext_t  *mcp,
+	unsigned int *flags)
 {
 #if 0
 /* XXX */
@@ -857,10 +857,10 @@ netbsd32_cpu_getmcontext(l, mcp, flags)
 int netbsd32_cpu_setmcontext(struct lwp *, mcontext_t *, unsigned int);
 
 int
-netbsd32_cpu_setmcontext(l, mcp, flags)
-	struct lwp *l;
-	/* XXX const netbsd32_*/mcontext_t *mcp;
-	unsigned int flags;
+netbsd32_cpu_setmcontext(
+	struct lwp *l,
+	/* XXX const netbsd32_*/mcontext_t *mcp,
+	unsigned int flags)
 {
 #ifdef NOT_YET
 /* XXX */

@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.48 2011/11/24 03:35:58 mrg Exp $	*/
+/*	$NetBSD: autri.c,v 1.48.2.1 2012/02/18 07:34:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.48 2011/11/24 03:35:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.48.2.1 2012/02/18 07:34:35 mrg Exp $");
 
 #include "midi.h"
 
@@ -520,21 +520,18 @@ autri_attach(device_t parent, device_t self, void *aux)
 	struct autri_codec_softc *codec;
 	pci_intr_handle_t ih;
 	char const *intrstr;
-	char devinfo[256];
 	int r;
 	uint32_t reg;
 
 	sc = device_private(self);
 	pa = (struct pci_attach_args *)aux;
 	pc = pa->pa_pc;
-	aprint_naive(": Audio controller\n");
 
 	sc->sc_devid = pa->pa_id;
 	sc->sc_class = pa->pa_class;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
+	pci_aprint_devinfo(pa, "Audio controller");
 	sc->sc_revision = PCI_REVISION(pa->pa_class);
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, sc->sc_revision);
 
 	/* map register to memory */
 	if (pci_mapreg_map(pa, AUTRI_PCI_MEMORY_BASE,

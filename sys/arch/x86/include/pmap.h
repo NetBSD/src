@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.48 2011/11/23 01:16:55 jym Exp $	*/
+/*	$NetBSD: pmap.h,v 1.48.2.1 2012/02/18 07:33:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -165,6 +165,8 @@ struct pmap {
 	uint32_t pm_cpus;		/* mask of CPUs using pmap */
 	uint32_t pm_kernel_cpus;	/* mask of CPUs using kernel part
 					 of pmap */
+	uint32_t pm_xen_ptp_cpus;	/* mask of CPUs which have this pmap's
+					 ptp mapped */
 	uint64_t pm_ncsw;		/* for assertions */
 	struct vm_page *pm_gc_ptp;	/* pages from pmap g/c */
 };
@@ -460,6 +462,27 @@ bool	pmap_extract_ma(pmap_t, vaddr_t, paddr_t *);
  * Hooks for the pool allocator.
  */
 #define	POOL_VTOPHYS(va)	vtophys((vaddr_t) (va))
+
+#ifdef __HAVE_DIRECT_MAP
+
+#define L4_SLOT_DIRECT		509
+#define PDIR_SLOT_DIRECT	L4_SLOT_DIRECT
+
+#define PMAP_DIRECT_BASE	(VA_SIGN_NEG((L4_SLOT_DIRECT * NBPD_L4)))
+#define PMAP_DIRECT_END		(VA_SIGN_NEG(((L4_SLOT_DIRECT + 1) * NBPD_L4)))
+
+#define PMAP_DIRECT_MAP(pa)	((vaddr_t)PMAP_DIRECT_BASE + (pa))
+#define PMAP_DIRECT_UNMAP(va)	((paddr_t)(va) - PMAP_DIRECT_BASE)
+
+/*
+ * Alternate mapping hooks for pool pages.
+ */
+#define PMAP_MAP_POOLPAGE(pa)	PMAP_DIRECT_MAP((pa))
+#define PMAP_UNMAP_POOLPAGE(va)	PMAP_DIRECT_UNMAP((va))
+
+void	pagezero(vaddr_t);
+
+#endif /* __HAVE_DIRECT_MAP */
 
 #endif /* _KERNEL */
 

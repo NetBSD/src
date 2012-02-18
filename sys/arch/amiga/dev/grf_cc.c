@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cc.c,v 1.39 2010/12/20 00:25:25 matt Exp $ */
+/*	$NetBSD: grf_cc.c,v 1.39.12.1 2012/02/18 07:31:16 mrg Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,9 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cc.c,v 1.39 2010/12/20 00:25:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cc.c,v 1.39.12.1 2012/02/18 07:31:16 mrg Exp $");
 
 #include "grfcc.h"
+#include "ite.h"
 #if NGRFCC > 0
 /*
  * currently this is a backward compat hack that interface to
@@ -134,8 +135,10 @@ grfccattach(struct device *pdp, struct device *dp, void *auxp)
 		gp->g_unit = GRF_CC_UNIT;
 		gp->g_flags = GF_ALIVE;
 		gp->g_mode = cc_mode;
+#if NITE > 0
 		gp->g_conpri = grfcc_cnprobe();
 		grfcc_iteinit(gp);
+#endif
 		grf_cc_on(gp);
 	}
 	if (dp != NULL)

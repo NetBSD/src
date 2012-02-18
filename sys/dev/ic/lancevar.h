@@ -1,4 +1,4 @@
-/*	$NetBSD: lancevar.h,v 1.14 2011/11/19 22:51:22 tls Exp $	*/
+/*	$NetBSD: lancevar.h,v 1.14.2.1 2012/02/18 07:34:21 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -30,11 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "rnd.h"
-
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 struct lance_softc {
 	device_t sc_dev;		/* base device glue */
@@ -115,9 +111,7 @@ struct lance_softc {
 #endif
 	uint8_t sc_enaddr[ETHER_ADDR_LEN];
 	uint8_t sc_pad[2];
-#if NRND > 0
 	krndsource_t	rnd_source;
-#endif
 
 	void (*sc_meminit)(struct lance_softc *);
 	void (*sc_start)(struct ifnet *);

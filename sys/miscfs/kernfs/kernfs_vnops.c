@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.143 2010/07/21 09:06:38 hannken Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.143.12.1 2012/02/18 07:35:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.143 2010/07/21 09:06:38 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.143.12.1 2012/02/18 07:35:36 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -941,7 +941,7 @@ kernfs_default_xread(void *v)
 	int error;
 
 	if (ap->a_vp->v_type == VDIR)
-		return (EOPNOTSUPP);
+		return EISDIR;
 
 	off = (int)uio->uio_offset;
 	/* Don't allow negative offsets */

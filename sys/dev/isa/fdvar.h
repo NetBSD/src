@@ -1,4 +1,4 @@
-/* $NetBSD: fdvar.h,v 1.7 2011/11/19 22:51:22 tls Exp $ */
+/* $NetBSD: fdvar.h,v 1.7.2.1 2012/02/18 07:34:27 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,11 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "rnd.h"
-
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 /*
  * Floppies come in various flavors, e.g., 1.2MB vs 1.44MB; here is how
@@ -90,7 +86,5 @@ struct fd_softc {
 	struct bufq_state *sc_q;/* pending I/O requests */
 	int sc_active;		/* number of active I/O operations */
 
-#if NRND > 0
 	krndsource_t	rnd_source;
-#endif
 };

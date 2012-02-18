@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.55 2011/11/13 22:07:00 christos Exp $	*/
+/*	$NetBSD: disk.h,v 1.55.4.1 2012/02/18 07:35:48 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -245,6 +245,7 @@ __link_set_add_data(dkwedge_methods, name ## _ddm)
 #define	DKW_PTYPE_EFS		"efs"
 #define	DKW_PTYPE_NILFS		"nilfs"
 #define	DKW_PTYPE_CGD		"cgd"
+#define	DKW_PTYPE_MINIXFS3	"minixfs3"
 
 /*
  * Disk geometry dictionary.

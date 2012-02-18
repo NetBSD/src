@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.74 2011/11/24 02:54:32 mrg Exp $	*/
+/*	$NetBSD: midi.c,v 1.74.2.1 2012/02/18 07:34:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.74 2011/11/24 02:54:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.74.2.1 2012/02/18 07:34:05 mrg Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -294,6 +294,7 @@ midi_attach(struct midi_softc *sc, device_t parent)
 			device_xname(sc->dev), "rcv incomplete msgs");
 	}
 	
+	aprint_naive("\n");
 	aprint_normal(": %s\n", mi.name);
 }
 

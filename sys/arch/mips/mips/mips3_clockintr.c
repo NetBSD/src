@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_clockintr.c,v 1.12 2011/07/10 23:13:22 matt Exp $	*/
+/*	$NetBSD: mips3_clockintr.c,v 1.12.6.1 2012/02/18 07:32:40 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips3_clockintr.c,v 1.12 2011/07/10 23:13:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips3_clockintr.c,v 1.12.6.1 2012/02/18 07:32:40 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -57,6 +57,11 @@ __KERNEL_RCSID(0, "$NetBSD: mips3_clockintr.c,v 1.12 2011/07/10 23:13:22 matt Ex
  * responsible for blocking and renabling the interrupt in the
  * cpu_intr() routine.
  */
+
+static void mips3_init_cp0_clocks(void);
+void (*initclocks_ptr)(void) = mips3_init_cp0_clocks;
+
+
 void
 mips3_clockintr(struct clockframe *cfp)
 {
@@ -88,7 +93,6 @@ mips3_clockintr(struct clockframe *cfp)
 	 */
 
 	hardclock(cfp);
-
 	/* caller should renable clock interrupts */
 }
 
@@ -96,8 +100,8 @@ mips3_clockintr(struct clockframe *cfp)
  * Start the real-time and statistics clocks. Leave stathz 0 since there
  * are no other timers available.
  */
-void
-mips3_initclocks(void)
+static void
+mips3_init_cp0_clocks(void)
 {
 	struct cpu_info * const ci = curcpu();
 
@@ -105,6 +109,17 @@ mips3_initclocks(void)
 	mips3_cp0_compare_write(ci->ci_next_cp0_clk_intr);
 
 	mips3_init_tc();
+
+}
+
+void
+mips3_initclocks(void)
+{
+	if (initclocks_ptr != NULL) {
+		initclocks_ptr();
+	} else {
+		mips3_init_cp0_clocks();
+	}
 
 	/*
 	 * Now we can enable all interrupts including hardclock(9)

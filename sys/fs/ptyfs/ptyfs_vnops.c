@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.37 2011/11/18 21:18:50 christos Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.37.4.1 2012/02/18 07:35:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.37 2011/11/18 21:18:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.37.4.1 2012/02/18 07:35:24 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -787,6 +787,9 @@ ptyfs_read(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
 	int error;
+
+	if (vp->v_type == VDIR)
+		return EISDIR;
 
 	ptyfs->ptyfs_flag |= PTYFS_ACCESS;
 	/* hardclock() resolution is good enough for ptyfs */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.72 2011/11/21 04:36:05 christos Exp $	*/
+/*	$NetBSD: pool.h,v 1.72.2.1 2012/02/18 07:35:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -67,11 +67,6 @@ struct pool_allocator {
 	uint32_t	pa_refcnt;	/* number of pools using this allocator */
 	int		pa_pagemask;
 	int		pa_pageshift;
-	struct vm_map *pa_backingmap;
-#if defined(_KERNEL)
-	struct vm_map **pa_backingmapptr;
-	SLIST_ENTRY(pool_allocator) pa_q;
-#endif /* defined(_KERNEL) */
 };
 
 LIST_HEAD(pool_pagelist,pool_item_header);
@@ -318,6 +313,7 @@ void		pool_cache_bootstrap(pool_cache_t, size_t, u_int, u_int, u_int,
 		    int (*)(void *, void *, int), void (*)(void *, void *),
 		    void *);
 void		pool_cache_destroy(pool_cache_t);
+void		pool_cache_bootstrap_destroy(pool_cache_t);
 void		*pool_cache_get_paddr(pool_cache_t, int, paddr_t *);
 void		pool_cache_put_paddr(pool_cache_t, void *, paddr_t);
 void		pool_cache_destruct_object(pool_cache_t, void *);

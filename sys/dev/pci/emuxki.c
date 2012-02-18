@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.61 2011/11/24 03:35:58 mrg Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.61.2.1 2012/02/18 07:34:36 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.61 2011/11/24 03:35:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.61.2.1 2012/02/18 07:34:36 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -404,14 +404,12 @@ emuxki_attach(device_t parent, device_t self, void *aux)
 {
 	struct emuxki_softc *sc;
 	struct pci_attach_args *pa;
-	char devinfo[256];
 	pci_intr_handle_t ih;
 	const char *intrstr;
 
 	sc = device_private(self);
 	sc->sc_dev = self;
 	pa = aux;
-	aprint_naive(": Audio controller\n");
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
@@ -424,8 +422,8 @@ emuxki_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": can't map iospace\n");
 		return;
 	}
-	pci_devinfo(pa->pa_id, pa->pa_class, 1, devinfo, sizeof(devinfo));
-	aprint_normal(": %s\n", devinfo);
+
+	pci_aprint_devinfo(pa, "Audio controller");
 
 	sc->sc_pc   = pa->pa_pc;
 	sc->sc_dmat = pa->pa_dmat;

@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.47 2011/11/22 21:25:10 tls Exp $
+#	$NetBSD: TWINTAIL,v 1.47.2.1 2012/02/18 07:31:50 mrg Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -54,7 +54,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options

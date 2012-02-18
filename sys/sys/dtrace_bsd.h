@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_bsd.h,v 1.4 2010/06/04 23:17:28 rmind Exp $	*/
+/*	$NetBSD: dtrace_bsd.h,v 1.4.12.1 2012/02/18 07:35:48 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2007-2008 John Birrell (jb@freebsd.org)
@@ -186,7 +186,7 @@ static inline void kdtrace_thread_dtor(void *, struct lwp *);
 
 /* Return the DTrace process data size compiled in the kernel hooks. */
 static inline size_t
-kdtrace_proc_size()
+kdtrace_proc_size(void)
 {
 
 	return KDTRACE_PROC_SIZE;
@@ -194,7 +194,7 @@ kdtrace_proc_size()
 
 /* Return the DTrace thread data size compiled in the kernel hooks. */
 static inline size_t
-kdtrace_thread_size()
+kdtrace_thread_size(void)
 {
 
 	return KDTRACE_THREAD_SIZE;

@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.65 2009/12/31 02:20:36 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.65.16.1 2012/02/18 07:35:27 mrg Exp $ */
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.65 2009/12/31 02:20:36 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.65.16.1 2012/02/18 07:35:27 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,11 +70,13 @@ __KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.65 2009/12/31 02:20:36 elad Exp $");
 #include <sys/specificdata.h>
 #include <sys/vnode.h>
 
+#include <secmodel/secmodel.h>
+
 /*
  * Secmodel-specific credentials.
  */
 struct kauth_key {
-	const char *ks_secmodel;	/* secmodel */
+	secmodel_t ks_secmodel;		/* secmodel */
 	specificdata_key_t ks_key;	/* key */
 };
 
@@ -144,8 +146,6 @@ static kauth_scope_t kauth_builtin_scope_machdep;
 static kauth_scope_t kauth_builtin_scope_device;
 static kauth_scope_t kauth_builtin_scope_cred;
 static kauth_scope_t kauth_builtin_scope_vnode;
-
-static unsigned int nsecmodels = 0;
 
 static specificdata_domain_t kauth_domain;
 static pool_cache_t kauth_cred_cache;
@@ -507,7 +507,7 @@ kauth_cred_getgroups(kauth_cred_t cred, gid_t *grbuf, size_t len,
 }
 
 int
-kauth_register_key(const char *secmodel, kauth_key_t *result)
+kauth_register_key(secmodel_t secmodel, kauth_key_t *result)
 {
 	kauth_key_t k;
 	specificdata_key_t key;
@@ -993,7 +993,7 @@ kauth_authorize_action(kauth_scope_t scope, kauth_cred_t cred,
 	if (r == KAUTH_RESULT_ALLOW)
 		return (0);
 
-	if (!nsecmodels)
+	if (secmodel_nsecmodels() == 0)
 		return (0);
 
 	return (EPERM);
@@ -1140,24 +1140,4 @@ kauth_cred_hook(kauth_cred_t cred, kauth_action_t action, void *arg0,
 #endif /* DIAGNOSTIC */
 
 	return (r);
-}
-
-void
-secmodel_register(void)
-{
-	KASSERT(nsecmodels + 1 != 0);
-
-	rw_enter(&kauth_lock, RW_WRITER);
-	nsecmodels++;
-	rw_exit(&kauth_lock);
-}
-
-void
-secmodel_deregister(void)
-{
-	KASSERT(nsecmodels != 0);
-
-	rw_enter(&kauth_lock, RW_WRITER);
-	nsecmodels--;
-	rw_exit(&kauth_lock);
 }

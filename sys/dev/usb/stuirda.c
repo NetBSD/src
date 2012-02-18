@@ -1,4 +1,4 @@
-/*	$NetBSD: stuirda.c,v 1.11 2010/11/03 22:34:23 dyoung Exp $	*/
+/*	$NetBSD: stuirda.c,v 1.11.12.1 2012/02/18 07:35:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.11 2010/11/03 22:34:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.11.12.1 2012/02/18 07:35:07 mrg Exp $");
 
 #include <sys/param.h>
 

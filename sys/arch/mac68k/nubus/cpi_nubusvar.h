@@ -1,4 +1,4 @@
-/*	$NetBSD: cpi_nubusvar.h,v 1.2 2008/05/23 10:46:10 hauke Exp $	*/
+/*	$NetBSD: cpi_nubusvar.h,v 1.2.44.1 2012/02/18 07:32:33 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 Hauke Fath
@@ -62,11 +62,24 @@ enum hsk_lines {
 	CPI_ACK = 0x04		/* PC2 */
 };
 
+/*
+ * The CPI board glue logic divides the 10 MHz Nubus clock by 2, and
+ * feeds it to the 8536 CIO (pin 16). The CIO divides the PCLK clock
+ * by 2 internally before providing it to its counters.
+ */
+#define CPI_CLK_FREQ (10000000 / 4)
+
+/* CPI configuration options - we might grow more */
+enum cpi_cf_flags {
+	CPI_CTC12_IS_TIMECOUNTER = 0x01
+};
+#define CPI_OPTIONS_MASK	(CPI_CTC12_IS_TIMECOUNTER)
+
 struct cpi_softc {
         struct device  		sc_dev;
 
 	nubus_slot		sc_slot;	/* Nubus slot number */
-	char			cardname[CPI_CARD_NAME_LEN];
+	char			sc_cardname[CPI_CARD_NAME_LEN];
 
 	bus_addr_t		sc_basepa;	/* base physical address */
 	bus_space_tag_t		sc_bst;
@@ -83,6 +96,10 @@ struct cpi_softc {
         u_char          	*sc_cp;		/* Next byte to send */
 	
         u_char          	sc_lpstate;
+
+	ulong			sc_options;
+	
+	struct timecounter	sc_timecounter;
 };
 
 #endif /* CPI_NUBUSVAR_H */

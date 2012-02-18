@@ -1,4 +1,4 @@
-/*	$NetBSD: zaudio.c,v 1.16 2011/11/23 23:07:30 jmcneill Exp $	*/
+/*	$NetBSD: zaudio.c,v 1.16.2.1 2012/02/18 07:33:50 mrg Exp $	*/
 /*	$OpenBSD: zaurus_audio.c,v 1.8 2005/08/18 13:23:02 robert Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 /*-
- * Copyright (c) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
+ * Copyright (C) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,17 +30,16 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -51,7 +50,7 @@
 #include "opt_zaudio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zaudio.c,v 1.16 2011/11/23 23:07:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zaudio.c,v 1.16.2.1 2012/02/18 07:33:50 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,6 +132,7 @@ static void	zaudio_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(zaudio, sizeof(struct zaudio_softc), 
     zaudio_match, zaudio_attach, NULL, NULL);
 
+static int	zaudio_finalize(device_t);
 static bool	zaudio_suspend(device_t, const pmf_qual_t *);
 static bool	zaudio_resume(device_t, const pmf_qual_t *);
 static void	zaudio_volume_up(device_t);
@@ -320,6 +320,9 @@ zaudio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 
+	if (ZAURUS_ISC860)
+		return 0;	/* XXX for now */
+
 	if (ia->ia_name) {
 		/* direct config - check name */
 		if (strcmp(ia->ia_name, "zaudio") == 0)
@@ -382,7 +385,8 @@ zaudio_attach(device_t parent, device_t self, void *aux)
 	(void) pxa2x0_gpio_intr_establish(GPIO_HP_IN_C3000, IST_EDGE_BOTH,
 	    IPL_BIO, zaudio_jack_intr, sc);
 
-	zaudio_init(sc);
+	/* zaudio_init() implicitly depends on ioexp or scoop */
+	config_finalize_register(self, zaudio_finalize);
 
 	audio_attach_mi(&wm8750_hw_if, sc, self);
 
@@ -404,6 +408,15 @@ fail_i2c:
 	pxa2x0_i2s_detach_sub(&sc->sc_i2s);
 fail_i2s:
 	pmf_device_deregister(self);
+}
+
+static int
+zaudio_finalize(device_t dv)
+{
+	struct zaudio_softc *sc = device_private(dv);
+
+	zaudio_init(sc);
+	return 0;
 }
 
 static bool

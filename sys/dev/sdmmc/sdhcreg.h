@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcreg.h,v 1.3 2011/06/29 06:21:16 matt Exp $	*/
+/*	$NetBSD: sdhcreg.h,v 1.3.6.1 2012/02/18 07:35:01 mrg Exp $	*/
 /*	$OpenBSD: sdhcreg.h,v 1.4 2006/07/30 17:20:40 fgsch Exp $	*/
 
 /*
@@ -73,6 +73,7 @@
 #define  SDHC_CMD_INHIBIT_MASK		0x0003
 #define SDHC_HOST_CTL			0x28
 #define  SDHC_HIGH_SPEED		(1<<2)
+#define  SDHC_8BIT_MODE			(1<<2)	/* ESDHC */
 #define  SDHC_4BIT_MODE			(1<<1)
 #define  SDHC_LED_ON			(1<<0)
 #define SDHC_POWER_CTL			0x29
@@ -87,6 +88,9 @@
 #define SDHC_CLOCK_CTL			0x2c
 #define  SDHC_SDCLK_DIV_SHIFT		8
 #define  SDHC_SDCLK_DIV_MASK		0xff
+#define  SDHC_SDCLK_XDIV_SHIFT		6
+#define  SDHC_SDCLK_XDIV_MASK		0x3
+#define  SDHC_SDCLK_CGM			(1<<5)
 #define  SDHC_SDCLK_DVS_SHIFT		4
 #define  SDHC_SDCLK_DVS_MASK		0xf
 #define  SDHC_SDCLK_ENABLE		(1<<2)
@@ -95,6 +99,7 @@
 #define SDHC_TIMEOUT_CTL		0x2e
 #define  SDHC_TIMEOUT_MAX		0x0e
 #define SDHC_SOFTWARE_RESET		0x2f
+#define  SDHC_INIT_ACTIVE		(1<<3)
 #define  SDHC_RESET_MASK		0x5
 #define  SDHC_RESET_DAT			(1<<2)
 #define  SDHC_RESET_CMD			(1<<1)
@@ -159,6 +164,8 @@
 #define  SDHC_SPEC_VERS_MASK		0xff
 #define  SDHC_VENDOR_VERS_SHIFT		8
 #define  SDHC_VENDOR_VERS_MASK		0xff
+#define	SDHC_DMA_CTL			0x40c	/* eSDHC */
+#define	 SDHC_DMA_SNOOP			0x40
 
 /* SDHC_CAPABILITIES decoding */
 #define SDHC_BASE_FREQ_KHZ(cap)						\

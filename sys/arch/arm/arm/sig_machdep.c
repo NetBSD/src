@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.40 2011/06/30 20:09:19 wiz Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.40.6.1 2012/02/18 07:31:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.40 2011/06/30 20:09:19 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.40.6.1 2012/02/18 07:31:22 mrg Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -108,7 +108,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	fp--;
 	
 	/* make the stack aligned */
-	fp = (struct sigframe_siginfo *)STACKALIGN(fp);
+	fp = (struct sigframe_siginfo *)STACK_ALIGN(fp, STACK_ALIGNBYTES);
 
 	/* populate the siginfo frame */
 	frame.sf_si._info = ksi->ksi_info;

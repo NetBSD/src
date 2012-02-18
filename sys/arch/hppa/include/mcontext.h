@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.6 2011/02/25 14:07:12 joerg Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.6.8.1 2012/02/18 07:32:15 mrg Exp $	*/
 
 #ifndef _HPPA_MCONTEXT_H_
 #define	_HPPA_MCONTEXT_H_
@@ -73,5 +73,6 @@ __lwp_getprivate_fast(void)
 
 #define	_UC_SETSTACK	0x00010000
 #define	_UC_CLRSTACK	0x00020000
+#define	_UC_TLSBASE	0x00040000
 
 #endif /* _HPPA_MCONTEXT_H_ */

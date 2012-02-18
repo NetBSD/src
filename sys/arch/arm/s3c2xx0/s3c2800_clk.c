@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2800_clk.c,v 1.16 2011/07/01 20:31:39 dyoung Exp $ */
+/* $NetBSD: s3c2800_clk.c,v 1.16.6.1 2012/02/18 07:31:32 mrg Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_clk.c,v 1.16 2011/07/01 20:31:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_clk.c,v 1.16.6.1 2012/02/18 07:31:32 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,8 +73,8 @@ static struct timecounter s3c2800_timecounter = {
 	s3c2800_get_timecount,	/* get_timecount */
 	0,			/* no poll_pps */
 	0xffffffff,		/* counter_mask */
-	0,		/* frequency */
-	"s3c23800",		/* name */
+	0,			/* frequency */
+	"s3c2800",		/* name */
 	100,			/* quality */
 	NULL,			/* prev */
 	NULL,			/* next */

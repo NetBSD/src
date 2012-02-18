@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.100 2011/06/12 03:35:41 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.100.6.1 2012/02/18 07:32:07 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100 2011/06/12 03:35:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100.6.1 2012/02/18 07:32:07 mrg Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -259,11 +259,11 @@ struct fpreg lwp0_fpregs;
 
 /* Our exported CPU info */
 struct cpu_info cpus[HPPA_MAXCPUS] = {
-	{
 #ifdef MULTIPROCESSOR
+	{
 		.ci_curlwp = &lwp0,
-#endif
 	},
+#endif
 };
 
 struct vm_map *phys_map = NULL;
@@ -324,21 +324,21 @@ const struct hppa_cpu_info cpu_types[] = {
 	  hpcx,  0,
 	  0, "1.0",
 	  desidhash_x, itlb_x, dtlb_x, itlbna_x, dtlbna_x, tlbd_x,
-	  ibtlb_g, NULL, pbtlb_g }, /* XXXNH check */
+	  ibtlb_g, NULL, pbtlb_g, NULL }, /* XXXNH check */
 #endif
 #ifdef HP7000_CPU
 	{ "PA7000", NULL, "PCXS",
 	  hpcxs,  0,
 	  0, "1.1a",
-	  desidhash_s, itlb_x, dtlb_x, itlbna_x, dtlbna_x, tlbd_x,
-	  ibtlb_g, NULL, pbtlb_g }, /* XXXNH check */
+	  desidhash_s, itlb_s, dtlb_s, itlbna_s, dtlbna_s, tlbd_s,
+	  ibtlb_g, NULL, pbtlb_g, NULL },
 #endif
 #ifdef HP7100_CPU
 	{ "PA7100", "T-Bird", "PCXT",
 	  hpcxt, 0,
 	  HPPA_FTRS_BTLBU, "1.1b",
 	  desidhash_t, itlb_t, dtlb_t, itlbna_t, dtlbna_t, tlbd_t,
-	  ibtlb_g, NULL, pbtlb_g },
+	  ibtlb_g, NULL, pbtlb_g, NULL },
 #endif
 #ifdef HP7100LC_CPU
 	{ "PA7100LC", "Hummingbird", "PCXL",
@@ -352,7 +352,7 @@ const struct hppa_cpu_info cpu_types[] = {
 	  hpcxtp, HPPA_CPU_PCXT2,
 	  HPPA_FTRS_BTLBU, "1.1d",
 	  desidhash_t, itlb_t, dtlb_t, itlbna_t, dtlbna_t, tlbd_t,
-	  ibtlb_g, NULL, pbtlb_g },
+	  ibtlb_g, NULL, pbtlb_g, NULL },
 #endif
 #ifdef HP7300LC_CPU
 	{ "PA7300LC", "Velociraptor", "PCXL2",
@@ -366,51 +366,50 @@ const struct hppa_cpu_info cpu_types[] = {
 	  hpcxu, HPPA_CPU_PCXU,
 	  HPPA_FTRS_W32B, "2.0",
 	  desidhash_u, itlb_u, dtlb_u, itlbna_u, dtlbna_u, tlbd_u,
- 	  ibtlb_u, NULL, pbtlb_u },
+ 	  ibtlb_u, NULL, pbtlb_u, NULL },
 #endif
 #ifdef HP8200_CPU
 	{ "PA8200", "Vulcan", "PCXU+",
 	  hpcxup, HPPA_CPU_PCXUP,
 	  HPPA_FTRS_W32B, "2.0",
 	  desidhash_u, itlb_u, dtlb_u, itlbna_u, dtlbna_u, tlbd_u,
- 	  ibtlb_u, NULL, pbtlb_u },
+ 	  ibtlb_u, NULL, pbtlb_u, NULL },
 #endif
 #ifdef HP8500_CPU
 	{ "PA8500", "Barra'Cuda", "PCXW",
 	  hpcxw, HPPA_CPU_PCXW,
 	  HPPA_FTRS_W32B, "2.0",
 	  desidhash_u, itlb_u, dtlb_u, itlbna_u, dtlbna_u, tlbd_u,
- 	  ibtlb_u, NULL, pbtlb_u },
+ 	  ibtlb_u, NULL, pbtlb_u, NULL },
 #endif
 #ifdef HP8600_CPU
 	{ "PA8600", "Landshark", "PCXW+",
 	  hpcxwp, HPPA_CPU_PCXW2 /*XXX NH */,
 	  HPPA_FTRS_W32B, "2.0",
 	  desidhash_u, itlb_u, dtlb_u, itlbna_u, dtlbna_u, tlbd_u,
- 	  ibtlb_u, NULL, pbtlb_u },
+ 	  ibtlb_u, NULL, pbtlb_u, NULL },
 #endif
 #ifdef HP8700_CPU
 	{ "PA8700", "Piranha", "PCXW2",
 	  hpcxw2, HPPA_CPU_PCXW2,
 	  HPPA_FTRS_W32B, "2.0",
 	  desidhash_u, itlb_u, dtlb_u, itlbna_u, dtlbna_u, tlbd_u,
- 	  ibtlb_u, NULL, pbtlb_u },
+ 	  ibtlb_u, NULL, pbtlb_u, NULL },
 #endif
 #ifdef HP8800_CPU
 	{ "PA8800", "Mako", "Make",
 	  mako, HPPA_CPU_PCXW2,
 	  HPPA_FTRS_W32B, "2.0",
 	  desidhash_u, itlb_u, dtlb_u, itlbna_u, dtlbna_u, tlbd_u,
- 	  ibtlb_u, NULL, pbtlb_u },
+ 	  ibtlb_u, NULL, pbtlb_u, NULL },
 #endif
 #ifdef HP8900_CPU
 	{ "PA8900", "Shortfin", "Shortfin",
 	  mako, HPPA_CPU_PCXW2,
 	  HPPA_FTRS_W32B, "2.0",
 	  desidhash_u, itlb_u, dtlb_u, itlbna_u, dtlbna_u, tlbd_u,
- 	  ibtlb_u, NULL, pbtlb_u },
+ 	  ibtlb_u, NULL, pbtlb_u, NULL },
 #endif
-	{ "" }
 };
 
 void
@@ -450,11 +449,13 @@ hppa_init(paddr_t start, void *bi)
 	if (bi != NULL)
 		memcpy(&bootinfo, bi, sizeof(struct bootinfo));
 
-	pdc_init();	/* init PDC iface, so we can call em easy */
+	/* init PDC iface, so we can call em easy */
+	pdc_init();
 
 	cpu_hzticks = (PAGE0->mem_10msec * 100) / hz;
 
-	delay_init();	/* calculate CPU clock ratio */
+	/* calculate CPU clock ratio */
+	delay_init();
 
 	/* fetch the monarch/"default" cpu hpa */
 	
@@ -513,7 +514,7 @@ hppa_init(paddr_t start, void *bi)
 
 	/* we hope this won't fail */
 	hp700_io_extent = extent_create("io",
-	    HPPA_IOSPACE, 0xffffffff, M_DEVBUF,
+	    HPPA_IOSPACE, 0xffffffff,
 	    (void *)hp700_io_extent_store, sizeof(hp700_io_extent_store),
 	    EX_NOCOALESCE|EX_NOWAIT);
 
@@ -647,7 +648,7 @@ cpuid(void)
 	const struct hppa_cpu_info *p = NULL;
 	const char *model;
 	u_int cpu_version, cpu_features;
-	int error;
+	int error, i;
 
 	/* may the scientific guessing begin */
 	cpu_type = hpc_unknown;
@@ -784,21 +785,25 @@ cpuid(void)
 		pmap_hptsize = 0;
 	}
 
-	if (cpu_version)
-		for (p = cpu_types; p->hci_chip_name; p++) {
+	if (cpu_version) {
+		for (i = 0, p = cpu_types; i < __arraycount(cpu_types);
+		     i++, p++) {
 			if (p->hci_cpuversion == cpu_version)
 				break;
 		}
-	else if (cpu_type != hpc_unknown)
-		for (p = cpu_types; p->hci_chip_name; p++) {
+	} else if (cpu_type != hpc_unknown) {
+		for (i = 0, p = cpu_types; i < __arraycount(cpu_types);
+		     i++, p++) {
 			if (p->hci_cputype == cpu_type)
 				break;
 		}
-	else
-		for (p = cpu_types; p->hci_chip_name; p++) {
+	} else {
+		for (i = 0, p = cpu_types; i < __arraycount(cpu_types);
+		     i++, p++) {
 			if (p->hci_features == cpu_features)
 				break;
 		}
+	}
 
 	hppa_cpu_info = p;
 
@@ -1809,7 +1814,7 @@ dumpsys(void)
 	printf("\ndumping to dev %u,%u offset %ld\n",
 	    major(dumpdev), minor(dumpdev), dumplo);
 
-	psize = (*bdev->d_psize)(dumpdev);
+	psize = bdev_size(dumpdev);
 	printf("dump ");
 	if (psize == -1) {
 		printf("area unavailable\n");
@@ -2029,7 +2034,9 @@ struct blink_lcd_softc {
 	SLIST_HEAD(, blink_lcd) bls_head;
 	int bls_on;
 	struct callout bls_to;
-} blink_sc = { SLIST_HEAD_INITIALIZER(bls_head), 0 };
+} blink_sc = {
+	.bls_head = SLIST_HEAD_INITIALIZER(bls_head)
+};
 
 void
 blink_lcd_register(struct blink_lcd *l)
@@ -2106,7 +2113,24 @@ mm_md_physacc(paddr_t pa, vm_prot_t prot)
 int
 mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 {
+	extern int kernel_text;
+	extern int __data_start;
+	extern int end;
+
+	const vaddr_t ksro = (vaddr_t) &kernel_text;
+	const vaddr_t ksrw = (vaddr_t) &__data_start;
+	const vaddr_t kend = (vaddr_t) end;
+	const vaddr_t v = (vaddr_t)ptr;
 
 	*handled = false;
-	return mm_md_physacc((paddr_t)ptr, prot);
+	if (v >= ksro && v < kend) {
+		*handled = true;
+		if (v < ksrw && (prot & VM_PROT_WRITE)) {
+			return EFAULT;
+		}
+	} else if (v >= kend && atop((paddr_t)v) < physmem) {
+		*handled = true;
+	}
+
+	return 0;
 }

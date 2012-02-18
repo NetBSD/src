@@ -1,4 +1,4 @@
-#	$NetBSD: COMPUTEXEVB,v 1.31 2010/11/23 11:13:58 hannken Exp $
+#	$NetBSD: COMPUTEXEVB,v 1.31.12.1 2012/02/18 07:32:01 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -57,7 +57,7 @@ options 	EXEC_COFF	# 32-bit COFF executables (sh-compiler)
 # File systems
 file-system 	FFS		# UFS
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?

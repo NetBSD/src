@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1101 2011/10/18 23:23:07 jmcneill Exp $
+$NetBSD: pcidevs,v 1.1101.6.1 2012/02/18 07:34:46 mrg Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -4589,6 +4589,7 @@ product VIATECH K8HTB_0		0x0282	K8HTB Host
 product VIATECH VT8363_HB	0x0305	VT8363 (Apollo KT133) Host Bridge
 product VIATECH VT3351_HB_0351	0x0351	VT3351 Host Bridge
 product VIATECH	VT8371_HB	0x0391	VT8371 (Apollo KX133) Host Bridge
+product VIATECH VX900_HB 	0x0410	VX900 Host Bridge
 product VIATECH VT8501_MVP4	0x0501	VT8501 (Apollo MVP4) Host Bridge
 product VIATECH VT82C505	0x0505	VT82C505 (Pluto)
 product VIATECH VT82C561	0x0561	VT82C561

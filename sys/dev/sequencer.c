@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.53 2011/11/23 23:07:31 jmcneill Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.53.2.1 2012/02/18 07:34:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.53 2011/11/23 23:07:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.53.2.1 2012/02/18 07:34:06 mrg Exp $");
 
 #include "sequencer.h"
 
@@ -1326,6 +1326,7 @@ midiseq_open(int unit, int flags)
 	int major;
 	dev_t dev;
 	vnode_t *vp;
+	int oflags;
 	
 	major = devsw_name2chr("midi", NULL, 0);
 	dev = makedev(major, unit);
@@ -1345,9 +1346,11 @@ midiseq_open(int unit, int flags)
 
 	/* Only after we have acquired reference via VOP_OPEN(). */
 	midi_getinfo(dev, &mi);
+	oflags = flags;
 	if ((mi.props & MIDI_PROP_CAN_INPUT) == 0)
 	        flags &= ~FREAD;
 	if ((flags & (FREAD|FWRITE)) == 0) {
+		VOP_CLOSE(vp, oflags, kauth_cred_get());
 		vrele(vp);
 	        return NULL;
 	}

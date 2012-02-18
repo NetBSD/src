@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh3.c,v 1.15 2009/04/30 05:20:30 nonaka Exp $	*/
+/*	$NetBSD: cache_sh3.c,v 1.15.16.1 2012/02/18 07:33:10 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_sh3.c,v 1.15 2009/04/30 05:20:30 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_sh3.c,v 1.15.16.1 2012/02/18 07:33:10 mrg Exp $");
 
 #include "opt_cache.h"
 
@@ -57,7 +57,7 @@ static inline void cache_sh3_op_line_16_nway(int, vaddr_t, uint32_t);
 static inline void cache_sh3_op_8lines_16_nway(int, vaddr_t, uint32_t);
 
 void
-sh3_cache_config()
+sh3_cache_config(void)
 {
 	size_t cache_size;
 	uint32_t r;
@@ -185,7 +185,7 @@ cache_sh3_op_8lines_16_nway(int n, vaddr_t va, uint32_t bits)
 }
 
 void
-sh3_cache_wbinv_all()
+sh3_cache_wbinv_all(void)
 {
 	vaddr_t va;
 
