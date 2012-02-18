@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.130 2012/02/17 07:51:20 apb Exp $
+# $NetBSD: postinstall,v 1.131 2012/02/18 17:49:28 njoly Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1652,9 +1652,9 @@ obsolete_catpages()
 		if [ "$1" = "fix" ]; then
 			rm "$catname"
 			failed=$(( ${failed} + $? ))
-			echo "Removed obsolete cat page $catname"
+			msg "Removed obsolete cat page $catname"
 		else
-			echo "Obsolete cat page $catname"
+			msg "Obsolete cat page $catname"
 			failed=1
 		fi
 	done
