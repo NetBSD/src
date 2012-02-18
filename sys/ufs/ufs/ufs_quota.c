@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.108 2012/02/01 05:43:54 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.109 2012/02/18 06:13:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.108 2012/02/01 05:43:54 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.109 2012/02/18 06:13:23 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.108 2012/02/01 05:43:54 dholland Exp
 
 kmutex_t dqlock;
 kcondvar_t dqcv;
+const char *quotatypes[MAXQUOTAS];
 
 /*
  * Code pertaining to management of the in-core dquot data structures.

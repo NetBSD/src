@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.h,v 1.20 2012/01/29 07:09:52 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.h,v 1.21 2012/02/18 06:13:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -103,7 +103,7 @@ extern kcondvar_t dqcv;
 /*
  * Quota name to error message mapping.
  */
-const char *quotatypes[MAXQUOTAS];
+extern const char *quotatypes[MAXQUOTAS];
 
 int  getinoquota(struct inode *);
 int  dqget(struct vnode *, u_long, struct ufsmount *, int, struct dquot **);
