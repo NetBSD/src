@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560var.h,v 1.8 2010/01/19 22:06:25 pooka Exp $	*/
+/*	$NetBSD: rt2560var.h,v 1.9 2012/02/18 13:38:36 drochner Exp $	*/
 /*	$OpenBSD: rt2560var.h,v 1.2 2006/01/14 12:43:27 damien Exp $  */
 
 /*-
@@ -97,7 +97,7 @@ struct rt2560_node {
 };
 
 struct rt2560_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 
 	struct ieee80211com	sc_ic;
 	int			(*sc_newstate)(struct ieee80211com *,
