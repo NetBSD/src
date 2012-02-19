@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsproxy.c,v 1.1.1.1 2011/03/02 19:32:39 tron Exp $	*/
+/*	$NetBSD: tlsproxy.c,v 1.1.1.1.8.1 2012/02/19 18:28:54 riz Exp $	*/
 
 /*++
 /* NAME
@@ -694,7 +694,7 @@ static void tlsp_start_tls(TLSP_STATE *state)
 			 timeout = 0,		/* unused */
 			 requirecert = (var_tlsp_tls_req_ccert
 					&& var_tlsp_enforce_tls),
-			 serverid = state->service,
+			 serverid = MAIL_SERVICE_SMTPD,	/* XXX */
 			 namaddr = state->remote_endpt,
 			 cipher_grade = cipher_grade,
 			 cipher_exclusions = STR(cipher_exclusions),

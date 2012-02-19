@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_trace_service.c,v 1.1.1.1 2009/06/23 10:08:42 tron Exp $	*/
+/*	$NetBSD: bounce_trace_service.c,v 1.1.1.1.12.1 2012/02/19 18:28:54 riz Exp $	*/
 
 /*++
 /* NAME
@@ -85,8 +85,39 @@ int     bounce_trace_service(int flags, char *service, char *queue_name,
     BOUNCE_INFO *bounce_info;
     int     bounce_status = 1;
     VSTREAM *bounce;
-    VSTRING *new_id = vstring_alloc(10);
+    int     notify_mask = name_mask(VAR_NOTIFY_CLASSES, mail_error_masks,
+				    var_notify_classes);
+    VSTRING *new_id;
     int     count;
+    const char *sender;
+
+    /*
+     * For consistency with fail/delay notifications, send notification for a
+     * non-bounce message as a single-bounce message, send notification for a
+     * single-bounce message as a double-bounce message, and drop requests to
+     * send notification for a double-bounce message.
+     */
+#define NULL_SENDER		MAIL_ADDR_EMPTY	/* special address */
+
+    if (strcasecmp(recipient, mail_addr_double_bounce()) == 0) {
+	msg_info("%s: not sending trace/success notification for "
+		 "double-bounce message", queue_id);
+	return (0);
+    } else if (*recipient == 0) {
+	if ((notify_mask & MAIL_ERROR_2BOUNCE) != 0) {
+	    recipient = var_2bounce_rcpt;
+	    sender = mail_addr_double_bounce();
+	} else {
+	    msg_info("%s: not sending trace/success notification "
+		     "for single-bounce message", queue_id);
+	    if (mail_queue_remove(service, queue_id) && errno != ENOENT)
+		msg_fatal("remove %s %s: %m", service, queue_id);
+	    return (0);
+	}
+    } else {
+	/* Always send notification for non-bounce message. */
+	sender = NULL_SENDER;
+    }
 
     /*
      * Initialize. Open queue file, bounce log, etc.
@@ -128,7 +159,6 @@ int     bounce_trace_service(int flags, char *service, char *queue_name,
 	bounce_mail_free(bounce_info);
 	return (0);
     }
-#define NULL_SENDER		MAIL_ADDR_EMPTY	/* special address */
 #define NULL_TRACE_FLAGS	0
 
     /*
@@ -141,7 +171,8 @@ int     bounce_trace_service(int flags, char *service, char *queue_name,
      * there are fewer potential left-over files to remove up when we create
      * a new queue file.
      */
-    if ((bounce = post_mail_fopen_nowait(NULL_SENDER, recipient,
+    new_id = vstring_alloc(10);
+    if ((bounce = post_mail_fopen_nowait(sender, recipient,
 					 INT_FILT_MASK_BOUNCE,
 					 NULL_TRACE_FLAGS,
 					 new_id)) != 0) {
