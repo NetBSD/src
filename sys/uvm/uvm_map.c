@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.313 2012/02/12 20:28:14 martin Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.314 2012/02/19 00:05:56 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.313 2012/02/12 20:28:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.314 2012/02/19 00:05:56 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -607,8 +607,6 @@ _uvm_tree_sanity(struct vm_map *map)
 /*
  * vm_map_lock: acquire an exclusive (write) lock on a map.
  *
- * => Note that "intrsafe" maps use only exclusive, spin locks.
- *
  * => The locking protocol provides for guaranteed upgrade from shared ->
  *    exclusive by whichever thread currently has the map marked busy.
  *    See "LOCKING PROTOCOL NOTES" in uvm_map.h.  This is horrible; among
@@ -620,24 +618,18 @@ void
 vm_map_lock(struct vm_map *map)
 {
 
-	if ((map->flags & VM_MAP_INTRSAFE) != 0) {
-		mutex_spin_enter(&map->mutex);
-		return;
-	}
-
 	for (;;) {
 		rw_enter(&map->lock, RW_WRITER);
-		if (map->busy == NULL)
+		if (map->busy == NULL || map->busy == curlwp) {
 			break;
-		if (map->busy == curlwp)
-			break;
+		}
 		mutex_enter(&map->misc_lock);
 		rw_exit(&map->lock);
-		if (map->busy != NULL)
+		if (map->busy != NULL) {
 			cv_wait(&map->cv, &map->misc_lock);
+		}
 		mutex_exit(&map->misc_lock);
 	}
-
 	map->timestamp++;
 }
 
@@ -649,15 +641,13 @@ bool
 vm_map_lock_try(struct vm_map *map)
 {
 
-	if ((map->flags & VM_MAP_INTRSAFE) != 0)
-		return mutex_tryenter(&map->mutex);
-	if (!rw_tryenter(&map->lock, RW_WRITER))
+	if (!rw_tryenter(&map->lock, RW_WRITER)) {
 		return false;
+	}
 	if (map->busy != NULL) {
 		rw_exit(&map->lock);
 		return false;
 	}
-
 	map->timestamp++;
 	return true;
 }
@@ -670,13 +660,9 @@ void
 vm_map_unlock(struct vm_map *map)
 {
 
-	if ((map->flags & VM_MAP_INTRSAFE) != 0)
-		mutex_spin_exit(&map->mutex);
-	else {
-		KASSERT(rw_write_held(&map->lock));
-		KASSERT(map->busy == NULL || map->busy == curlwp);
-		rw_exit(&map->lock);
-	}
+	KASSERT(rw_write_held(&map->lock));
+	KASSERT(map->busy == NULL || map->busy == curlwp);
+	rw_exit(&map->lock);
 }
 
 /*
@@ -711,20 +697,16 @@ void
 vm_map_lock_read(struct vm_map *map)
 {
 
-	KASSERT((map->flags & VM_MAP_INTRSAFE) == 0);
-
 	rw_enter(&map->lock, RW_READER);
 }
 
 /*
  * vm_map_unlock_read: release a shared lock on a map.
  */
- 
+
 void
 vm_map_unlock_read(struct vm_map *map)
 {
-
-	KASSERT((map->flags & VM_MAP_INTRSAFE) == 0);
 
 	rw_exit(&map->lock);
 }
@@ -756,11 +738,7 @@ bool
 vm_map_locked_p(struct vm_map *map)
 {
 
-	if ((map->flags & VM_MAP_INTRSAFE) != 0) {
-		return mutex_owned(&map->mutex);
-	} else {
-		return rw_write_held(&map->lock);
-	}
+	return rw_write_held(&map->lock);
 }
 
 /*
@@ -775,14 +753,14 @@ uvm_mapent_alloc(struct vm_map *map, int flags)
 	UVMHIST_FUNC("uvm_mapent_alloc"); UVMHIST_CALLED(maphist);
 
 	me = pool_cache_get(&uvm_map_entry_cache, pflags);
-	if (__predict_false(me == NULL))
+	if (__predict_false(me == NULL)) {
 		return NULL;
+	}
 	me->flags = 0;
 
-
 	UVMHIST_LOG(maphist, "<- new entry=0x%x [kentry=%d]", me,
-	    ((map->flags & VM_MAP_INTRSAFE) != 0 || map == kernel_map), 0, 0);
-	return (me);
+	    (map == kernel_map), 0, 0);
+	return me;
 }
 
 /*
@@ -1131,8 +1109,7 @@ uvm_map_prepare(struct vm_map *map, vaddr_t start, vsize_t size,
 	 * detect a popular device driver bug.
 	 */
 
-	KASSERT(doing_shutdown || curlwp != NULL ||
-	    (map->flags & VM_MAP_INTRSAFE));
+	KASSERT(doing_shutdown || curlwp != NULL);
 
 	/*
 	 * zero-sized mapping doesn't make any sense.
@@ -1156,11 +1133,9 @@ uvm_map_prepare(struct vm_map *map, vaddr_t start, vsize_t size,
 	/*
 	 * figure out where to put new VM range
 	 */
-
 retry:
 	if (vm_map_lock_try(map) == false) {
-		if ((flags & UVM_FLAG_TRYLOCK) != 0 &&
-		    (map->flags & VM_MAP_INTRSAFE) == 0) {
+		if ((flags & UVM_FLAG_TRYLOCK) != 0) {
 			return EAGAIN;
 		}
 		vm_map_lock(map); /* could sleep here */
@@ -4180,6 +4155,7 @@ uvmspace_free(struct vmspace *vm)
 	if (vm->vm_shm != NULL)
 		shmexit(vm);
 #endif
+
 	if (map->nentries) {
 		uvm_unmap_remove(map, vm_map_min(map), vm_map_max(map),
 		    &dead_entries, 0);
@@ -4188,8 +4164,8 @@ uvmspace_free(struct vmspace *vm)
 	}
 	KASSERT(map->nentries == 0);
 	KASSERT(map->size == 0);
+
 	mutex_destroy(&map->misc_lock);
-	mutex_destroy(&map->mutex);
 	rw_destroy(&map->lock);
 	cv_destroy(&map->cv);
 	pmap_destroy(map->pmap);
@@ -4557,7 +4533,6 @@ uvm_mapent_trymerge(struct vm_map *map, struct vm_map_entry *entry, int flags)
 void
 uvm_map_setup(struct vm_map *map, vaddr_t vmin, vaddr_t vmax, int flags)
 {
-	int ipl;
 
 	rb_tree_init(&map->rb_tree, &uvm_map_tree_ops);
 	map->header.next = map->header.prev = &map->header;
@@ -4572,18 +4547,10 @@ uvm_map_setup(struct vm_map *map, vaddr_t vmin, vaddr_t vmax, int flags)
 	map->timestamp = 0;
 	map->busy = NULL;
 
-	if ((flags & VM_MAP_INTRSAFE) != 0) {
-		ipl = IPL_VM;
-	} else {
-		ipl = IPL_NONE;
-	}
-
 	rw_init(&map->lock);
 	cv_init(&map->cv, "vm_map");
-	mutex_init(&map->misc_lock, MUTEX_DRIVER, ipl);
-	mutex_init(&map->mutex, MUTEX_DRIVER, ipl);
+	mutex_init(&map->misc_lock, MUTEX_DRIVER, IPL_NONE);
 }
-
 
 /*
  *   U N M A P   -   m a i n   e n t r y   p o i n t

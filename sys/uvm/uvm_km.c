@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.120 2012/02/10 17:35:47 para Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.121 2012/02/19 00:05:56 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.120 2012/02/10 17:35:47 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.121 2012/02/19 00:05:56 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -499,15 +499,13 @@ uvm_km_check_empty(struct vm_map *map, vaddr_t start, vaddr_t end)
 			panic("uvm_km_check_empty: va %p has pa 0x%llx",
 			    (void *)va, (long long)pa);
 		}
-		if ((map->flags & VM_MAP_INTRSAFE) == 0) {
-			mutex_enter(uvm_kernel_object->vmobjlock);
-			pg = uvm_pagelookup(uvm_kernel_object,
-			    va - vm_map_min(kernel_map));
-			mutex_exit(uvm_kernel_object->vmobjlock);
-			if (pg) {
-				panic("uvm_km_check_empty: "
-				    "has page hashed at %p", (const void *)va);
-			}
+		mutex_enter(uvm_kernel_object->vmobjlock);
+		pg = uvm_pagelookup(uvm_kernel_object,
+		    va - vm_map_min(kernel_map));
+		mutex_exit(uvm_kernel_object->vmobjlock);
+		if (pg) {
+			panic("uvm_km_check_empty: "
+			    "has page hashed at %p", (const void *)va);
 		}
 	}
 }
