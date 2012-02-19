@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.234 2011/11/24 04:17:46 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.235 2012/02/19 21:06:20 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.234 2011/11/24 04:17:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.235 2012/02/19 21:06:20 rmind Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -56,8 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.234 2011/11/24 04:17:46 matt Exp $");
 #include <sys/syscall.h>
 #include <sys/buf.h>
 #include <sys/ktrace.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/kauth.h>
 #include <sys/atomic.h>
 
@@ -413,11 +411,6 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		}
 #endif /* PMAP_FAULTINFO */
 
-		if ((l->l_flag & LW_SA) && (~l->l_pflag & LP_SA_NOBLOCK)) {
-			l->l_savp->savp_faultaddr = (vaddr_t)vaddr;
-			l->l_pflag |= LP_SA_PAGEFAULT;
-		}
-
 		onfault = pcb->pcb_onfault;
 		pcb->pcb_onfault = NULL;
 		if (p->p_emul->e_fault)
@@ -445,7 +438,6 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 			else if (rv == EACCES)
 				rv = EFAULT;
 		}
-		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		if (rv == 0) {
 #ifdef PMAP_FAULTINFO
 			if (pfi->pfi_repeats == 0) {

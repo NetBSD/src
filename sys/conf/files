@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1043 2012/02/02 19:43:01 tls Exp $
+#	$NetBSD: files,v 1.1044 2012/02/19 21:06:45 rmind Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -123,10 +123,9 @@ defparam opt_wapbl.h		WAPBL_DEBUG_PRINT
 
 # compatibility options
 #
-defflag	opt_sa.h		KERN_SA
 defflag opt_compat_netbsd.h	COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_50: COMPAT_NETBSD
-defflag	opt_compat_netbsd.h	COMPAT_40: COMPAT_50, KERN_SA, COMPAT_NETBSD
+defflag	opt_compat_netbsd.h	COMPAT_40: COMPAT_50, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_30: COMPAT_40, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_20: COMPAT_30, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_16: COMPAT_20, COMPAT_NETBSD
@@ -1420,7 +1419,6 @@ include "secmodel/files.secmodel"
 # kernel sources
 #
 file	compat/common/compat_mod.c	compat_netbsd
-file	compat/sa/compat_sa.c
 file	conf/debugsyms.c
 file	dev/auconv.c			auconv | mulaw
 file	dev/audio.c			audio | midi | midibus	needs-flag

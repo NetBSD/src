@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30 2011/10/01 15:59:28 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.31 2012/02/19 21:06:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -93,8 +93,6 @@
 #include <sys/cpu.h>
 #include <sys/exec.h>
 #include <sys/ksyms.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/msgbuf.h>
 #include <sys/mutex.h>
 #include <sys/proc.h>
@@ -773,12 +771,6 @@ setregs(register struct lwp *l, struct exec_package *pack, vaddr_t stack)
 
 void
 sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
-{
-	return;
-}
-
-void
-cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
 	return;
 }

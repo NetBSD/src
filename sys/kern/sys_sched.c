@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.39 2012/01/29 22:55:40 rmind Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.40 2012/02/19 21:06:56 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008, 2011 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.39 2012/01/29 22:55:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.40 2012/02/19 21:06:56 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -53,16 +53,12 @@ __KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.39 2012/01/29 22:55:40 rmind Exp $")
 #include <sys/mutex.h>
 #include <sys/proc.h>
 #include <sys/pset.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/sched.h>
 #include <sys/syscallargs.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/unistd.h>
-
-#include "opt_sa.h"
 
 static struct sysctllog *sched_sysctl_log;
 static kauth_listener_t sched_listener;
@@ -417,15 +413,6 @@ sys__sched_setaffinity(struct lwp *l,
 		goto out;
 	}
 
-#ifdef KERN_SA
-	/* Changing the affinity of a SA process is not supported */
-	if ((p->p_sflag & (PS_SA | PS_WEXIT)) != 0 || p->p_sa != NULL) {
-		mutex_exit(p->p_lock);
-		error = EINVAL;
-		goto out;
-	}
-#endif
-
 	/* Iterate through LWP(s). */
 	lcnt = 0;
 	lid = SCARG(uap, lid);
@@ -535,11 +522,6 @@ sys_sched_yield(struct lwp *l, const void *v, register_t *retval)
 {
 
 	yield();
-#ifdef KERN_SA
-	if (l->l_flag & LW_SA) {
-		sa_preempt(l);
-	}
-#endif
 	return 0;
 }
 

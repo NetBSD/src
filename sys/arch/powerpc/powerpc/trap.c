@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.145 2011/09/27 01:02:36 jym Exp $	*/
+/*	$NetBSD: trap.c,v 1.146 2012/02/19 21:06:25 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.145 2011/09/27 01:02:36 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.146 2012/02/19 21:06:25 rmind Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -43,8 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.145 2011/09/27 01:02:36 jym Exp $");
 #include <sys/proc.h>
 #include <sys/ras.h>
 #include <sys/reboot.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/systm.h>
 #include <sys/kauth.h>
 #include <sys/cpu.h>
@@ -153,11 +151,6 @@ trap(struct trapframe *tf)
 					    trunc_page(va), false)) {
 					return;
 				}
-				if ((l->l_flag & LW_SA)
-				    && (~l->l_pflag & LP_SA_NOBLOCK)) {
-					l->l_savp->savp_faultaddr = va;
-					l->l_pflag |= LP_SA_PAGEFAULT;
-				}
 #if defined(DIAGNOSTIC) && !defined(PPC_OEA64) && !defined (PPC_IBM4XX)
 			} else if ((va >> ADDR_SR_SHFT) == USER_SR) {
 				printf("trap: kernel %s DSI trap @ %#lx by %#lx"
@@ -186,7 +179,6 @@ trap(struct trapframe *tf)
 				 */
 				if (rv == 0)
 					uvm_grow(p, trunc_page(va));
-				l->l_pflag &= ~LP_SA_PAGEFAULT;
 			}
 			if (rv == 0)
 				return;
@@ -243,10 +235,6 @@ trap(struct trapframe *tf)
 			break;
 		}
 
-		if (l->l_flag & LW_SA) {
-			l->l_savp->savp_faultaddr = (vaddr_t)tf->tf_dar;
-			l->l_pflag |= LP_SA_PAGEFAULT;
-		}
 		KASSERT(pcb->pcb_onfault == NULL);
 		rv = uvm_fault(map, trunc_page(tf->tf_dar), ftype);
 		if (rv == 0) {
@@ -254,7 +242,6 @@ trap(struct trapframe *tf)
 			 * Record any stack growth...
 			 */
 			uvm_grow(p, trunc_page(tf->tf_dar));
-			l->l_pflag &= ~LP_SA_PAGEFAULT;
 			break;
 		}
 		ci->ci_ev_udsi_fatal.ev_count++;
@@ -280,7 +267,6 @@ trap(struct trapframe *tf)
 			ksi.ksi_signo = SIGKILL;
 		}
 		(*p->p_emul->e_trapsignal)(l, &ksi);
-		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		break;
 
 	case EXC_ISI:
@@ -313,15 +299,10 @@ trap(struct trapframe *tf)
 			break;
 		}
 
-		if (l->l_flag & LW_SA) {
-			l->l_savp->savp_faultaddr = (vaddr_t)tf->tf_srr0;
-			l->l_pflag |= LP_SA_PAGEFAULT;
-		}
 		ftype = VM_PROT_EXECUTE;
 		KASSERT(pcb->pcb_onfault == NULL);
 		rv = uvm_fault(map, trunc_page(tf->tf_srr0), ftype);
 		if (rv == 0) {
-			l->l_pflag &= ~LP_SA_PAGEFAULT;
 			break;
 		}
 		ci->ci_ev_isi_fatal.ev_count++;
@@ -336,7 +317,6 @@ trap(struct trapframe *tf)
 		ksi.ksi_addr = (void *)tf->tf_srr0;
 		ksi.ksi_code = (rv == EACCES ? SEGV_ACCERR : SEGV_MAPERR);
 		(*p->p_emul->e_trapsignal)(l, &ksi);
-		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		break;
 
 	case EXC_FPU|EXC_USER:

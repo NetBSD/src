@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.441 2012/02/02 19:43:07 tls Exp $	*/
+/*	$NetBSD: init_main.c,v 1.442 2012/02/19 21:06:47 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,14 +97,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.441 2012/02/02 19:43:07 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.442 2012/02/19 21:06:47 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
 #include "opt_modular.h"
 #include "opt_ntp.h"
 #include "opt_pipe.h"
-#include "opt_sa.h"
 #include "opt_syscall_debug.h"
 #include "opt_sysv.h"
 #include "opt_fileassoc.h"
@@ -195,9 +194,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.441 2012/02/02 19:43:07 tls Exp $");
 #include <sys/ktrace.h>
 #endif
 #include <sys/kauth.h>
-#ifdef KERN_SA
-#include <sys/savar.h>
-#endif
 #include <net80211/ieee80211_netbsd.h>
 #ifdef PTRACE
 #include <sys/ptrace.h>
@@ -385,9 +381,6 @@ main(void)
 	cprng_init();		/* initialize cryptographic PRNG */
 
 	/* Initialize process and pgrp structures. */
-#ifdef KERN_SA
-	sa_init();
-#endif
 	procinit();
 	lwpinit();
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.8 2008/10/15 06:51:18 wrstuden Exp $	*/
+/*	$NetBSD: frame.h,v 1.9 2012/02/19 21:06:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,22 +40,6 @@
 #endif
 
 #include <sys/signal.h>
-#include <sys/sa.h>
-
-/*
- * Scheduler activations upcall frame.  Pushed onto user stack before
- * calling an SA upcall.
- */
-
-struct saframe {
-	/* first 4 arguments passed in registers on entry to upcallcode */
-	int		sa_type;	/* A0 */
-	struct sa_t **	sa_sas;		/* A1 */
-	int		sa_events;	/* A2 */
-	int		sa_interrupted;	/* A3 */
-	void *		sa_arg;
-	sa_upcall_t	sa_upcall;
-};
 
 void *getframe(struct lwp *, int, int *);
 #if defined(COMPAT_16) || defined(COMPAT_ULTRIX)

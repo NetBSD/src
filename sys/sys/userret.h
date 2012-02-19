@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.24 2011/06/21 07:20:56 cherry Exp $	*/
+/*	$NetBSD: userret.h,v 1.25 2012/02/19 21:07:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2003, 2006, 2008 The NetBSD Foundation, Inc.
@@ -76,7 +76,6 @@
 static __inline void
 mi_userret(struct lwp *l)
 {
-	struct proc *p = l->l_proc;
 #ifndef __HAVE_PREEMPTION
 	struct cpu_info *ci;
 #endif
@@ -92,8 +91,9 @@ mi_userret(struct lwp *l)
 	 * posted as we are reading unlocked.
 	 */
 #ifdef __HAVE_PREEMPTION
-	if (__predict_false(((l->l_flag & LW_USERRET) | p->p_timerpend) != 0))
+	if (__predict_false(l->l_flag & LW_USERRET)) {
 		lwp_userret(l);
+	}
 	l->l_kpriority = false;
 	/*
 	 * cpu_set_curpri(prio) is a MD optimized version of:
@@ -105,8 +105,7 @@ mi_userret(struct lwp *l)
 	cpu_set_curpri(l->l_priority);	/* XXX this needs to die */
 #else
 	ci = l->l_cpu;
-	if (((l->l_flag & LW_USERRET) | p->p_timerpend |
-	    ci->ci_data.cpu_softints) != 0) {
+	if (((l->l_flag & LW_USERRET) | ci->ci_data.cpu_softints) != 0) {
 		lwp_userret(l);
 		ci = l->l_cpu;
 	}

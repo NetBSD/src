@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.185 2012/01/27 18:53:05 para Exp $	 */
+/* $NetBSD: machdep.c,v 1.186 2012/02/19 21:06:33 rmind Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.185 2012/01/27 18:53:05 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.186 2012/02/19 21:06:33 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -109,7 +109,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.185 2012/01/27 18:53:05 para Exp $");
 #include <sys/ptrace.h>
 #include <sys/reboot.h>
 #include <sys/kauth.h>
-#include <sys/savar.h>	/* for cpu_upcall */
 #include <sys/sysctl.h>
 #include <sys/time.h>
 
@@ -615,52 +614,6 @@ krnunlock(void)
 	KERNEL_UNLOCK_ONE(NULL);
 }
 #endif
-
-void
-cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
-    void *sas, void *ap, void *sp, sa_upcall_t upcall)
-{
-	struct trapframe * const tf = l->l_md.md_utf;
-	uint32_t saframe[11], *fp = saframe;
-
-	sp = (void *)((uintptr_t)sp - sizeof(saframe));
-
-	/*
-	 * We don't bother to save the callee's register mask
-	 * since the function is never expected to return.
-	 */
-
-	/*
-	 * Fake a CALLS stack frame.
-	 */
-	*fp++ = 0;			/* condition handler */
-	*fp++ = 0x20000000;		/* saved regmask & PSW */
-	*fp++ = 0;			/* saved AP */
-	*fp++ = 0;			/* saved FP, new call stack */
-	*fp++ = 0;			/* saved PC, new call stack */
-
-	/*
-	 * Now create the argument list.
-	 */
-	*fp++ = 5;			/* argc = 5 */
-	*fp++ = type;
-	*fp++ = (uintptr_t) sas;
-	*fp++ = nevents;
-	*fp++ = ninterrupted;
-	*fp++ = (uintptr_t) ap;
-
-	if (copyout(&saframe, sp, sizeof(saframe)) != 0) {
-		/* Copying onto the stack didn't work, die. */
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
-	}
-
-	tf->tf_ap = (uintptr_t) sp + 20;
-	tf->tf_sp = (long) sp;
-	tf->tf_fp = (long) sp;
-	tf->tf_pc = (long) upcall + 2;
-	tf->tf_psl = (long) PSL_U | PSL_PREVU;
-}
 
 void
 cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)

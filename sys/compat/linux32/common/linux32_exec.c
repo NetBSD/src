@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec.c,v 1.20 2010/07/07 01:30:35 chs Exp $ */
+/*	$NetBSD: linux32_exec.c,v 1.21 2012/02/19 21:06:38 rmind Exp $ */
 
 /*-
  * Copyright (c) 1994-2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.20 2010/07/07 01:30:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.21 2012/02/19 21:06:38 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,6 @@ struct emul emul_linux32 = {
 	.e_fault =		NULL,
 	.e_vm_default_addr =	netbsd32_vm_default_addr,
 	.e_usertrap =		NULL,
-	.e_sa =			NULL,
 	.e_ucsize =		0,
 	.e_startlwp =		NULL
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.159 2012/01/22 09:11:58 plunky Exp $	*/
+/*	$NetBSD: lwp.h,v 1.160 2012/02/19 21:06:58 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -72,7 +72,6 @@
 #include <sys/pcu.h>
 
 struct lockdebug;
-struct sadata_vp;
 struct sysent;
 
 struct lwp {
@@ -92,7 +91,6 @@ struct lwp {
 	struct bintime 	l_rtime;	/* l: real time */
 	struct bintime	l_stime;	/* l: start time (while ONPROC) */
 	u_int		l_swtime;	/* l: time swapped in or out */
-	u_int		_reserved1;
 	u_int		l_rticks;	/* l: Saved start time of run */
 	u_int		l_rticksum;	/* l: Sum of ticks spent running */
 	u_int		l_slpticks;	/* l: Saved start time of sleep */
@@ -114,7 +112,6 @@ struct lwp {
 	struct lwpctl	*l_lwpctl;	/* p: lwpctl block kernel address */
 	struct lcpage	*l_lcpage;	/* p: lwpctl containing page */
 	kcpuset_t	*l_affinity;	/* l: CPU set for affinity */
-	struct sadata_vp *l_savp;	/* p: SA "virtual processor" */
 
 	/* Synchronisation. */
 	struct turnstile *l_ts;		/* l: current turnstile */
@@ -191,7 +188,6 @@ struct lwp {
 	uintptr_t	l_pfaillock;	/* !: for kernel preemption */
 	_TAILQ_HEAD(,struct lockdebug,volatile) l_ld_locks;/* !: locks held by LWP */
 	int		l_tcgen;	/* !: for timecounter removal */
-	int		l_unused2;	/* !: for future use */
 
 	/* These are only used by 'options SYSCALL_TIMES'. */
 	uint32_t	l_syscall_time;	/* !: time epoch for current syscall */
@@ -220,23 +216,17 @@ extern lwp_t		lwp0;		/* LWP for proc0. */
 #define	LW_IDLE		0x00000001 /* Idle lwp. */
 #define	LW_LWPCTL	0x00000002 /* Adjust lwpctl in userret */
 #define	LW_SINTR	0x00000080 /* Sleep is interruptible. */
-#define	LW_SA_SWITCHING	0x00000100 /* SA LWP in context switch */
 #define	LW_SYSTEM	0x00000200 /* Kernel thread */
-#define	LW_SA		0x00000400 /* Scheduler activations LWP */
 #define	LW_WSUSPEND	0x00020000 /* Suspend before return to user */
 #define	LW_BATCH	0x00040000 /* LWP tends to hog CPU */
 #define	LW_WCORE	0x00080000 /* Stop for core dump on return to user */
 #define	LW_WEXIT	0x00100000 /* Exit before return to user */
-#define	LW_SA_UPCALL	0x00400000 /* SA upcall is pending */
-#define	LW_SA_BLOCKING	0x00800000 /* Blocking in tsleep() */
 #define	LW_PENDSIG	0x01000000 /* Pending signal for us */
 #define	LW_CANCELLED	0x02000000 /* tsleep should not sleep */
 #define	LW_WREBOOT	0x08000000 /* System is rebooting, please suspend */
 #define	LW_UNPARKED	0x10000000 /* Unpark op pending */
-#define	LW_SA_YIELD	0x40000000 /* LWP on VP is yielding */
-#define	LW_SA_IDLE	0x80000000 /* VP is idle */
-#define	LW_RUMP_CLEAR	LW_SA_IDLE /* clear curlwp in rump scheduler */
-#define	LW_RUMP_QEXIT	LW_SA_YIELD/* lwp should exit ASAP */
+#define	LW_RUMP_CLEAR	0x40000000 /* Clear curlwp in RUMP scheduler */
+#define	LW_RUMP_QEXIT	0x80000000 /* LWP should exit ASAP */
 
 /* The second set of flags is kept in l_pflag. */
 #define	LP_KTRACTIVE	0x00000001 /* Executing ktrace operation */
@@ -248,8 +238,6 @@ extern lwp_t		lwp0;		/* LWP for proc0. */
 #define	LP_INTR		0x00000040 /* Soft interrupt handler */
 #define	LP_SYSCTLWRITE	0x00000080 /* sysctl write lock held */
 #define	LP_MUSTJOIN	0x00000100 /* Must join kthread on exit */
-#define	LP_SA_PAGEFAULT	0x00000200 /* SA LWP in pagefault handler */
-#define	LP_SA_NOBLOCK	0x00000400 /* SA don't upcall on block */
 #define	LP_TIMEINTR	0x00010000 /* Time this soft interrupt */
 #define	LP_RUNNING	0x20000000 /* Active on a CPU */
 #define	LP_BOUND	0x80000000 /* Bound to a CPU */
@@ -262,8 +250,8 @@ extern lwp_t		lwp0;		/* LWP for proc0. */
  * Mask indicating that there is "exceptional" work to be done on return to
  * user.
  */
-#define	LW_USERRET (LW_WEXIT|LW_PENDSIG|LW_WREBOOT|LW_WSUSPEND|LW_WCORE|\
-		    LW_SA_BLOCKING|LW_SA_UPCALL|LW_LWPCTL)
+#define	LW_USERRET	\
+    (LW_WEXIT | LW_PENDSIG | LW_WREBOOT | LW_WSUSPEND | LW_WCORE | LW_LWPCTL)
 
 /*
  * Status values.
@@ -306,8 +294,6 @@ void	lwp_sys_init(void);
 
 void	lwp_startup(lwp_t *, lwp_t *);
 void	startlwp(void *);
-void	cpu_setfunc(lwp_t *, void (*)(void *), void *);
-void	upcallret(lwp_t *);
 
 int	lwp_locked(lwp_t *, kmutex_t *);
 void	lwp_setlock(lwp_t *, kmutex_t *);

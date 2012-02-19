@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.297 2012/01/28 12:22:33 rmind Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.298 2012/02/19 21:06:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,11 +69,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.297 2012/01/28 12:22:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.298 2012/02/19 21:06:54 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
-#include "opt_sa.h"
 #include "opt_dtrace.h"
 
 #define	__MUTEX_PRIVATE
@@ -89,8 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.297 2012/01/28 12:22:33 rmind Exp $
 #include <sys/pserialize.h>
 #include <sys/resourcevar.h>
 #include <sys/sched.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscall_stats.h>
 #include <sys/sleepq.h>
 #include <sys/lockdebug.h>
@@ -257,27 +254,6 @@ kpause(const char *wmesg, bool intr, int timo, kmutex_t *mtx)
 
 	return error;
 }
-
-#ifdef KERN_SA
-/*
- * sa_awaken:
- *
- *	We believe this lwp is an SA lwp. If it's yielding,
- * let it know it needs to wake up.
- *
- *	We are called and exit with the lwp locked. We are
- * called in the middle of wakeup operations, so we need
- * to not touch the locks at all.
- */
-void
-sa_awaken(struct lwp *l)
-{
-	/* LOCK_ASSERT(lwp_locked(l, NULL)); */
-
-	if (l == l->l_savp->savp_lwp && l->l_flag & LW_SA_YIELD)
-		l->l_flag &= ~LW_SA_IDLE;
-}
-#endif /* KERN_SA */
 
 /*
  * OBSOLETE INTERFACE
@@ -942,11 +918,6 @@ setrunnable(struct lwp *l)
 	default:
 		panic("setrunnable: lwp %p state was %d", l, l->l_stat);
 	}
-
-#ifdef KERN_SA
-	if (l->l_proc->p_sa)
-		sa_awaken(l);
-#endif /* KERN_SA */
 
 	/*
 	 * If the LWP was sleeping, start it again.

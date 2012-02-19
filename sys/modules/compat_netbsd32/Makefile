@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2011/08/02 17:22:51 joerg Exp $
+#	$NetBSD: Makefile,v 1.8 2012/02/19 21:06:57 rmind Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -7,7 +7,7 @@ KMOD=	compat_netbsd32
 
 CPPFLAGS+=	-DSYSVSHM -DSYSVSEM -DSYSVMSG -DCOMPAT_NETBSD32
 CPPFLAGS+=	-DEXEC_ELF32 -DEXEC_ELF64 -DEXEC_AOUT
-CPPFLAGS+=	-DP1003_1B_SEMAPHORE -DCOREDUMP -DKERN_SA
+CPPFLAGS+=	-DP1003_1B_SEMAPHORE -DCOREDUMP
 
 .PATH:	${S}/compat/netbsd32
 SRCS+=	netbsd32_compat_09.c netbsd32_compat_10.c
@@ -20,7 +20,7 @@ SRCS+=	netbsd32_exec_aout.c netbsd32_exec_elf32.c
 SRCS+=	netbsd32_execve.c netbsd32_fs.c
 SRCS+=	netbsd32_ioctl.c netbsd32_ipc.c
 SRCS+=	netbsd32_lwp.c netbsd32_netbsd.c
-SRCS+=	netbsd32_sa.c netbsd32_select.c
+SRCS+=	netbsd32_select.c
 SRCS+=	netbsd32_sem.c netbsd32_signal.c
 SRCS+=	netbsd32_socket.c netbsd32_syscalls.c
 SRCS+=	netbsd32_sysctl.c netbsd32_sysent.c

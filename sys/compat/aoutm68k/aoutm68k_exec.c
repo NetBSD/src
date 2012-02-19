@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_exec.c,v 1.26 2010/10/15 16:51:09 tsutsui Exp $	*/
+/*	$NetBSD: aoutm68k_exec.c,v 1.27 2012/02/19 21:06:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_exec.c,v 1.26 2010/10/15 16:51:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_exec.c,v 1.27 2012/02/19 21:06:36 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -84,7 +84,6 @@ struct emul emul_netbsd_aoutm68k = {
 	.e_fault =		NULL,
 	.e_vm_default_addr =	uvm_default_mapaddr,
 	.e_usertrap =		NULL,
-	.e_sa =			NULL,
 	.e_ucsize =		0,
 	.e_startlwp =		NULL
 };
