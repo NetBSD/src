@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.34 2012/02/16 23:58:15 christos Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.35 2012/02/19 23:19:37 matt Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -69,11 +69,38 @@ KMODSCRIPT=	$S/../sys/modules/xldscripts/kmodule
 KMODSCRIPT=	${DESTDIR}/usr/libdata/ldscripts/kmodule
 .endif
 
-OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.o/g}
 PROG?=		${KMOD}.kmod
 
 ##### Build rules
 realall:	${PROG}
+
+.if (defined(USE_COMBINE) && ${USE_COMBINE} != "no" && !commands(${_P}) \
+   && !defined(NOCOMBINE.${_P}) && !defined(NOCOMBINE))
+.for f in ${SRCS:N*.h:N*.sh:N*.fth:C/\.[yl]$/.c/g}
+.if (${CPPFLAGS.$f:D1} == "1" || ${CPUFLAGS.$f:D2} == "2" \
+     || ${COPTS.$f:D3} == "3" || ${OBJCOPTS.$f:D4} == "4" \
+     || ${CXXFLAGS.$f:D5} == "5") \
+    || ("${f:M*.[cyl]}" == "" || commands(${f:R:S/$/.o/}))
+XOBJS+=		${f:R:S/$/.o/}
+.else
+XSRCS+=		${f}
+NODPSRCS+=	${f}
+.endif
+.endfor
+
+.if !empty(XOBJS)
+${XOBJS}:	${DPSRCS}
+.endif
+
+${PROG}: ${XOBJS} ${XSRCS} ${DPSRCS} ${DPADD}
+	${_MKTARGET_LINK}
+	${CC} ${LDFLAGS} -nostdlib -MD -combine -r -Wl,-T,${KMODSCRIPT},-d \
+		-o ${.TARGET} ${CFLAGS} ${CPPFLAGS} ${XOBJS} \
+		${XSRCS:@.SRC.@${.ALLSRC:M*.c:M*${.SRC.}}@:O:u} && \
+	echo '.-include "${KMOD}.d"' > .depend
+
+.else
+OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.o/g}
 
 ${OBJS} ${LOBJS}: ${DPSRCS}
 
@@ -81,6 +108,7 @@ ${PROG}: ${OBJS} ${DPADD}
 	${_MKTARGET_LINK}
 	${CC} ${LDFLAGS} -nostdlib -r -Wl,-T,${KMODSCRIPT},-d \
 		-o ${.TARGET} ${OBJS}
+.endif
 
 ##### Install rules
 .if !target(kmodinstall)
