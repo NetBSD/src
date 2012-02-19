@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.53.2.2 2012/02/18 07:35:10 mrg Exp $	*/
+/*	$NetBSD: umidi.c,v 1.53.2.3 2012/02/19 21:01:52 mrg Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.53.2.2 2012/02/18 07:35:10 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.53.2.3 2012/02/19 21:01:52 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -387,7 +387,7 @@ umidi_channelmsg(void *addr, int status, int channel, u_char *msg,
 {
 	struct umidi_mididev *mididev = addr;
 
-	if (!mididev->out_jack || !mididev->opened || !mididev->closing)
+	if (!mididev->out_jack || !mididev->opened || mididev->closing)
 		return EIO;
 	
 	return out_jack_output(mididev->out_jack, msg, len, (status>>4)&0xf);
@@ -399,7 +399,7 @@ umidi_commonmsg(void *addr, int status, u_char *msg, int len)
 	struct umidi_mididev *mididev = addr;
 	int cin;
 
-	if (!mididev->out_jack || !mididev->opened || !mididev->closing)
+	if (!mididev->out_jack || !mididev->opened || mididev->closing)
 		return EIO;
 
 	switch ( len ) {
@@ -418,7 +418,7 @@ umidi_sysex(void *addr, u_char *msg, int len)
 	struct umidi_mididev *mididev = addr;
 	int cin;
 
-	if (!mididev->out_jack || !mididev->opened || !mididev->closing)
+	if (!mididev->out_jack || !mididev->opened || mididev->closing)
 		return EIO;
 
 	switch ( len ) {
@@ -437,7 +437,7 @@ umidi_rtmsg(void *addr, int d)
 	struct umidi_mididev *mididev = addr;
 	u_char msg = d;
 
-	if (!mididev->out_jack || !mididev->opened || !mididev->closing)
+	if (!mididev->out_jack || !mididev->opened || mididev->closing)
 		return EIO;
 
 	return out_jack_output(mididev->out_jack, &msg, 1, 0xf);
