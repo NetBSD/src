@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.52 2012/02/11 23:16:15 martin Exp $	*/
+/*	$NetBSD: syscall.c,v 1.53 2012/02/19 21:06:04 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -71,9 +71,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.52 2012/02/11 23:16:15 martin Exp $");
-
-#include "opt_sa.h"
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.53 2012/02/19 21:06:04 rmind Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -87,7 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.52 2012/02/11 23:16:15 martin Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <sys/savar.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/pcb.h>
@@ -119,12 +116,6 @@ swi_handler(trapframe_t *frame)
 
 #ifdef acorn26
 	frame->tf_pc += INSN_SIZE;
-#endif
-
-#ifdef KERN_SA
-	if (__predict_false((l->l_savp)
-            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
-		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
 #endif
 
 #ifndef THUMB_CODE

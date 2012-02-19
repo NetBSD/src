@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.21 2011/11/21 04:36:06 christos Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.22 2012/02/19 21:07:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -69,7 +69,6 @@ int	sleepq_abort(kmutex_t *, int);
 void	sleepq_changepri(lwp_t *, pri_t);
 void	sleepq_lendpri(lwp_t *, pri_t);
 int	sleepq_block(int, bool);
-void	sleepq_insert(sleepq_t *, lwp_t *, syncobj_t *);
 
 void	sleeptab_init(sleeptab_t *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.2 2009/12/14 00:46:05 matt Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.3 2012/02/19 21:06:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -51,12 +51,10 @@ typedef netbsd32_pointer_t			netbsd32_sigcontextp_t;
 #define	netbsd32_esigcode			esigcode
 
 /*
- * cpu_upcall knows about COMPAT_NETBSD32
- * syscall_intern and setregs don't about COMPAT_NETBSD32.
+ * Note: syscall_intern and setregs do not care about COMPAT_NETBSD32.
  */
 #define	netbsd32_syscall_intern			syscall_intern
 #define	netbsd32_setregs			setregs
-#define	netbsd32_cpu_upcall			cpu_upcall
 
 /* <mips/sysarch.h> */
 struct mips_cacheflush_args32 {
@@ -69,17 +67,6 @@ struct mips_cachectl_args32 {
 	netbsd32_intptr_t va;
 	netbsd32_size_t nbytes;
 	int ctl;
-};
-
-/* <mips/frame.h> */
-struct saframe32 {
-	/* first 4 arguments passed in registers on entry to upcallcode */
-	int			sa_type;	/* A0 */
-	netbsd32_pointer_t	sa_sas;		/* A1 */
-	int			sa_events;	/* A2 */
-	int			sa_interrupted;	/* A3 */
-	netbsd32_pointer_t 	sa_arg;
-	netbsd32_pointer_t	sa_upcall;
 };
 
 #endif /* _MACHINE_NETBSD32_H_ */

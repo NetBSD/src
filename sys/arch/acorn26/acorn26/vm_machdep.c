@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.27 2011/02/10 14:46:45 pooka Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.28 2012/02/19 21:05:58 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* Following is for vmapbuf/vunmapbuf */
+
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.27 2011/02/10 14:46:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.28 2012/02/19 21:05:58 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -133,22 +133,12 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	/* Fabricate a new switchframe */
 	memset(sf, 0, sizeof(*sf));
 
-	cpu_setfunc(l2, func, arg);
-}
-
-void
-cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
-{
-	struct pcb *pcb = lwp_getpcb(l);
-	struct trapframe *tf = pcb->pcb_tf;
-	struct switchframe *sf = (struct switchframe *)tf - 1;
-
 	sf->sf_r13 = (register_t)tf; /* Initial stack pointer */
 	sf->sf_pc  = (register_t)lwp_trampoline | R15_MODE_SVC;
 
-	pcb->pcb_tf = tf;
-	pcb->pcb_sf = sf;
-	pcb->pcb_onfault = NULL;
+	pcb2->pcb_tf = tf;
+	pcb2->pcb_sf = sf;
+	pcb2->pcb_onfault = NULL;
 	sf->sf_r4 = (register_t)func;
 	sf->sf_r5 = (register_t)arg;
 }

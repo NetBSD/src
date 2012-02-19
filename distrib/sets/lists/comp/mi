@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1740 2012/02/17 09:44:12 plunky Exp $
+#	$NetBSD: mi,v 1.1741 2012/02/19 21:05:51 rmind Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2484,8 +2484,8 @@
 ./usr/include/sys/rmd160.h			comp-c-include
 ./usr/include/sys/rnd.h				comp-c-include
 ./usr/include/sys/rwlock.h			comp-c-include
-./usr/include/sys/sa.h				comp-c-include
-./usr/include/sys/satypes.h			comp-c-include
+./usr/include/sys/sa.h				comp-obsolete		obsolete
+./usr/include/sys/satypes.h			comp-obsolete		obsolete
 ./usr/include/sys/scanio.h			comp-c-include
 ./usr/include/sys/sched.h			comp-c-include
 ./usr/include/sys/scsiio.h			comp-c-include

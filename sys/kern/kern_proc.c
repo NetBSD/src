@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.181 2012/02/11 23:16:17 martin Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.182 2012/02/19 21:06:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.181 2012/02/11 23:16:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.182 2012/02/19 21:06:52 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -89,8 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.181 2012/02/11 23:16:17 martin Exp $
 #include <sys/tty.h>
 #include <sys/signalvar.h>
 #include <sys/ras.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/filedesc.h>
 #include "sys/syscall_stats.h"
 #include <sys/kauth.h>
@@ -1567,7 +1565,6 @@ static const u_int sysctl_stflagmap[] = {
 const u_int sysctl_lwpflagmap[] = {
 	LW_SINTR, L_SINTR,
 	LW_SYSTEM, L_SYSTEM,
-	LW_SA, L_SA,	/* WRS ??? */
 	0
 };
 
