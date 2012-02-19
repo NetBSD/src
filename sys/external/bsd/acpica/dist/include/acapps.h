@@ -67,17 +67,22 @@
 #endif
 
 /* Macros for signons and file headers */
+#ifdef ACPI_REPRO
+#define ACPI_DATE "1 Jan 1970"
+#else
+#define ACPI_DATE __DATE__
+#endif
 
 #define ACPI_COMMON_SIGNON(UtilityName) \
     "\n%s\n%s version %8.8X%s [%s]\n%s\n\n", \
     ACPICA_NAME, \
-    UtilityName, ((UINT32) ACPI_CA_VERSION), ACPI_WIDTH, __DATE__, \
+    UtilityName, ((UINT32) ACPI_CA_VERSION), ACPI_WIDTH, ACPI_DATE, \
     ACPICA_COPYRIGHT
 
 #define ACPI_COMMON_HEADER(UtilityName, Prefix) \
     "%s%s\n%s%s version %8.8X%s [%s]\n%s%s\n%s\n", \
     Prefix, ACPICA_NAME, \
-    Prefix, UtilityName, ((UINT32) ACPI_CA_VERSION), ACPI_WIDTH, __DATE__, \
+    Prefix, UtilityName, ((UINT32) ACPI_CA_VERSION), ACPI_WIDTH, ACPI_DATE, \
     Prefix, ACPICA_COPYRIGHT, \
     Prefix
 
