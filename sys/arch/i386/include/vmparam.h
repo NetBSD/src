@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.72 2010/11/14 13:33:21 uebayasi Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.73 2012/02/19 10:39:06 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -100,7 +100,7 @@
 #define	VM_MAX_ADDRESS		\
 	((vaddr_t)((PDIR_SLOT_PTE << L2_SHIFT) + (PDIR_SLOT_PTE << L1_SHIFT)))
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)(PDIR_SLOT_KERN << L2_SHIFT))
-#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)(PDIR_SLOT_APTE << L2_SHIFT))
+#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)((PDIR_SLOT_KERN + NKL2_MAX_ENTRIES) << L2_SHIFT))
 
 /*
  * The address to which unspecified mapping requests default
