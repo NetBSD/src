@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.18 2011/02/18 22:32:28 aymeric Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.19 2012/02/19 17:46:46 tron Exp $	*/
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -6,7 +6,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.18 2011/02/18 22:32:28 aymeric Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.19 2012/02/19 17:46:46 tron Exp $");
 
 /*-
  * Copyright (c) 2003 Grant Beattie <grant@NetBSD.org>
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: perform.c,v 1.1.1.18 2011/02/18 22:32:28 aymeric Exp $");
  */
 
 #include <sys/utsname.h>
+#include <sys/stat.h>
 #if HAVE_ERR_H
 #include <err.h>
 #endif
@@ -169,16 +170,21 @@ static int
 mkdir_p(const char *path)
 {
 	char *p, *cur_end;
-	int done;
+	int done, saved_errno;
+	struct stat sb;
 
 	/*
 	 * Handle the easy case of direct success or
 	 * pre-existing directory first.
 	 */
-	if (mkdir(path, 0777) == 0 || errno == EEXIST)
+	if (mkdir(path, 0777) == 0)
 		return 0;
-	if (errno != ENOENT)
+	if (stat(path, &sb) == 0) {
+		if (S_ISDIR(sb.st_mode))
+			return 0;
+		errno = ENOTDIR;
 		return -1;
+	}
 
 	cur_end = p = xstrdup(path);
 
@@ -198,21 +204,26 @@ mkdir_p(const char *path)
 		done = (*cur_end == '\0');
 		*cur_end = '\0';
 
-		/*
-		 * ENOENT can only happen if something else races us,
-		 * in which case we should better give up.
-		 */
-		if (mkdir(p, 0777) == -1 && errno != EEXIST) {
+		if (mkdir(p, 0777) == -1) {
+			saved_errno = errno;
+			if (stat(path, &sb) == 0) {
+				if (S_ISDIR(sb.st_mode))
+					goto pass;
+				errno = ENOTDIR;
+			} else {
+				errno = saved_errno;
+			}
 			free(p);
 			return -1;
 		}
+pass:
 		if (done)
 			break;
 		*cur_end = '/';
 	}
 
 	free(p);
-	return 0;	
+	return 0;
 }
 
 /*
@@ -382,6 +393,7 @@ check_already_installed(struct pkg_task *pkg)
 	free(filename);
 	if (fd == -1)
 		return 1;
+	close(fd);
 
 	if (ReplaceSame) {
 		struct stat sb;
@@ -411,7 +423,6 @@ check_already_installed(struct pkg_task *pkg)
 		warnx("package `%s' already recorded as installed",
 		      pkg->pkgname);
 	}
-	close(fd);
 	return 0;
 
 }
