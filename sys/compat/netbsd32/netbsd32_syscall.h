@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscall.h,v 1.99 2012/02/01 05:42:17 dholland Exp $ */
+/* $NetBSD: netbsd32_syscall.h,v 1.100 2012/02/19 21:06:41 rmind Exp $ */
 
 /*
  * System call numbers.
@@ -894,24 +894,12 @@
 /* syscall: "netbsd32__lwp_ctl" ret: "int" args: "int" "netbsd32_pointer_t" */
 #define	NETBSD32_SYS_netbsd32__lwp_ctl	325
 
-/* syscall: "netbsd32_sa_register" ret: "int" args: "netbsd32_sa_upcall_t" "netbsd32_sa_upcallp_t" "int" "netbsd32_ssize_t" */
-#define	NETBSD32_SYS_netbsd32_sa_register	330
-
-/* syscall: "netbsd32_sa_stacks" ret: "int" args: "int" "netbsd32_stackp_t" */
-#define	NETBSD32_SYS_netbsd32_sa_stacks	331
-
-/* syscall: "sa_enable" ret: "int" args: */
-#define	NETBSD32_SYS_sa_enable	332
-
-/* syscall: "netbsd32_sa_setconcurrency" ret: "int" args: "int" */
-#define	NETBSD32_SYS_netbsd32_sa_setconcurrency	333
-
-/* syscall: "sa_yield" ret: "int" args: */
-#define	NETBSD32_SYS_sa_yield	334
-
-/* syscall: "netbsd32_sa_preempt" ret: "int" args: "int" */
-#define	NETBSD32_SYS_netbsd32_sa_preempt	335
-
+				/* 330 is obsolete netbsd32_sa_register */
+				/* 331 is obsolete netbsd32_sa_stacks */
+				/* 332 is obsolete sa_enable */
+				/* 333 is obsolete netbsd32_sa_setconcurrency */
+				/* 334 is obsolete sa_yield */
+				/* 335 is obsolete netbsd32_sa_preempt */
 				/* 336 is obsolete sys_sa_unblockyield */
 /* syscall: "netbsd32___sigaction_sigtramp" ret: "int" args: "int" "netbsd32_sigactionp_t" "netbsd32_sigactionp_t" "netbsd32_voidp" "int" */
 #define	NETBSD32_SYS_netbsd32___sigaction_sigtramp	340

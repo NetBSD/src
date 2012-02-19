@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.51 2011/04/11 19:11:08 rmind Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.52 2012/02/19 21:06:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.51 2011/04/11 19:11:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.52 2012/02/19 21:06:52 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -58,8 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.51 2011/04/11 19:11:08 rmind Exp $"
 #include <dev/lockstat.h>
 
 #include <machine/lock.h>
-
-#include "opt_sa.h"
 
 /*
  * When not running a debug kernel, spin mutexes are not much
@@ -429,9 +427,6 @@ mutex_vector_enter(kmutex_t *mtx)
 #ifdef MULTIPROCESSOR
 	u_int count;
 #endif
-#ifdef KERN_SA
-	int f;
-#endif
 	LOCKSTAT_COUNTER(spincnt);
 	LOCKSTAT_COUNTER(slpcnt);
 	LOCKSTAT_TIMER(spintime);
@@ -666,26 +661,12 @@ mutex_vector_enter(kmutex_t *mtx)
 		}
 #endif	/* MULTIPROCESSOR */
 
-#ifdef KERN_SA
-		/*
-		 * Sleeping for a mutex should not generate an upcall.
-		 * So set LP_SA_NOBLOCK to indicate this.
-		 * f indicates if we should clear LP_SA_NOBLOCK when done.
-		 */
-		f = ~curlwp->l_pflag & LP_SA_NOBLOCK;
-		curlwp->l_pflag |= LP_SA_NOBLOCK;
-#endif /* KERN_SA */
-
 		LOCKSTAT_START_TIMER(lsflag, slptime);
 
 		turnstile_block(ts, TS_WRITER_Q, mtx, &mutex_syncobj);
 
 		LOCKSTAT_STOP_TIMER(lsflag, slptime);
 		LOCKSTAT_COUNT(slpcnt, 1);
-
-#ifdef KERN_SA
-		curlwp->l_pflag ^= f;
-#endif /* KERN_SA */
 
 		owner = mtx->mtx_owner;
 	}
