@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.134.2.5 2011/12/09 01:53:00 mrg Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.134.2.6 2012/02/19 21:37:12 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134.2.5 2011/12/09 01:53:00 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134.2.6 2012/02/19 21:37:12 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -881,7 +881,6 @@ usb_insert_transfer(usbd_xfer_handle xfer)
 {
 	usbd_pipe_handle pipe = xfer->pipe;
 	usbd_status err;
-	int s;
 
 	DPRINTFN(5,("usb_insert_transfer: pipe=%p running=%d timeout=%d\n",
 		    pipe, pipe->running, xfer->timeout));
@@ -896,7 +895,6 @@ usb_insert_transfer(usbd_xfer_handle xfer)
 	}
 	xfer->busy_free = XFER_ONQU;
 #endif
-	s = splusb();
 	SIMPLEQ_INSERT_TAIL(&pipe->queue, xfer, next);
 	if (pipe->running)
 		err = USBD_IN_PROGRESS;
@@ -904,7 +902,6 @@ usb_insert_transfer(usbd_xfer_handle xfer)
 		pipe->running = 1;
 		err = USBD_NORMAL_COMPLETION;
 	}
-	splx(s);
 	return (err);
 }
 
