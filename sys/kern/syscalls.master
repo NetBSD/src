@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.256 2012/02/19 17:22:16 matt Exp $
+	$NetBSD: syscalls.master,v 1.257 2012/02/19 17:50:28 matt Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -626,9 +626,8 @@
 328	UNIMPL
 329	UNIMPL
 ; SA system calls.
-330	COMPAT_60 	{ int|sys||sa_register(sa_upcall_t new, \
-				sa_upcall_t *old, int flags, \
-				ssize_t stackinfo_offset); }
+330	COMPAT_60 	{ int|sys||sa_register(void *new, void **old, \
+				int flags, ssize_t stackinfo_offset); }
 331	COMPAT_60 	{ int|sys||sa_stacks(int num, stack_t *stacks); }
 332	COMPAT_60 	{ int|sys||sa_enable(void); }
 333	COMPAT_60 	{ int|sys||sa_setconcurrency(int concurrency); }
