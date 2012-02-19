@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1670 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1670.2.1 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1261,3 +1261,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[dholland 20120212]
 	quotarestore(8): New quota tool quotarestore for loading backups
 		created with quotadump. [dholland 20120212]
+	postfix(1): Import version 2.8.8 [tron 20120217]
