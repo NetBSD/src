@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.73 2011/09/10 16:57:35 apb Exp $
+#	$NetBSD: bsd.dep.mk,v 1.74 2012/02/19 23:19:37 matt Exp $
 
 ##### Basic targets
 realdepend:	beforedepend .depend afterdepend
@@ -16,8 +16,17 @@ MKDEP_SUFFIXES?=	.o
 .if defined(SRCS)							# {
 __acpp_flags=	${_ASM_TRADITIONAL_CPP}
 
-__DPSRCS.all=	${SRCS:C/\.(c|m|s|S|C|cc|cpp|cxx)$/.d/} \
+.if defined(NODPSRCS)
+.for f in ${SRCS} ${DPSRCS}
+.if "${NODPSRCS:M${f}}" == ""
+__DPSRCS.all+=	${f:C/\.(c|m|s|S|C|cc|cpp|cxx)$/.d/}
+.endif
+.endfor
+beforedepend: ${DPSRCS}
+.else
+__DPSRCS.all+=	${SRCS:C/\.(c|m|s|S|C|cc|cpp|cxx)$/.d/} \
 		${DPSRCS:C/\.(c|m|s|S|C|cc|cpp|cxx)$/.d/}
+.endif
 __DPSRCS.d=	${__DPSRCS.all:O:u:M*.d}
 __DPSRCS.notd=	${__DPSRCS.all:O:u:N*.d}
 

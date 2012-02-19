@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.320 2012/01/28 23:13:24 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.321 2012/02/19 23:19:37 matt Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -390,7 +390,37 @@ _LIBS=lib${LIB}.a
 _LIBS=
 .endif
 
+.if ${LIBISPRIVATE} != "no" \
+   && (defined(USE_COMBINE) && ${USE_COMBINE} == "yes" \
+   && !defined(NOCOMBINE))						# {
+.for f in ${SRCS:N*.h:N*.sh:C/\.[yl]$/.c/g}
+COMBINEFLAGS.${LIB}.$f := ${CPPFLAGS.$f:D1} ${CPUFLAGS.$f:D2} ${COPTS.$f:D3} ${OBJCOPTS.$f:D4} ${CXXFLAGS.$f:D5}
+.if empty(COMBINEFLAGS.${LIB}.${f}) && !defined(NOCOMBINE.$f)
+COMBINESRCS+=	${f}
+NODPSRCS+=	${f}
+.else
+OBJS+=  	${f:R:S/$/.o/}
+.endif
+.endfor
+
+.if !empty(COMBINESRCS)
+OBJS+=		lib${LIB}_combine.o
+lib${LIB}_combine.o: ${COMBINESRCS}
+	${_MKTARGET_COMPILE}
+	${COMPILE.c} -MD --combine ${.ALLSRC} -o ${.TARGET}
+.if !defined(CFLAGS) || empty(CFLAGS:M*-g*)
+	${OBJCOPY} -x ${.TARGET}
+.endif
+
+CLEANFILES+=	lib${LIB}_combine.d
+
+.if exists("lib${LIB}_combine.d")
+.include "lib${LIB}_combine.d"
+.endif
+.endif   # empty(XSRCS.${LIB})
+.else							# } {
 OBJS+=${SRCS:N*.h:N*.sh:R:S/$/.o/g}
+.endif							# }
 
 STOBJS+=${OBJS}
 
