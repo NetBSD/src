@@ -1,4 +1,4 @@
-.\"	$NetBSD: dump.8,v 1.63 2012/02/19 19:49:20 christos Exp $
+.\"	$NetBSD: dump.8,v 1.64 2012/02/19 21:32:02 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	 Regents of the University of California.
@@ -299,17 +299,6 @@ If a list of files or subdirectories is being dumped
 (as opposed to an entire file system), then
 .Fl u
 is ignored.
-.It Fl X
-Similar to
-.Fl x
-but uses a file system internal snapshot on the file system to be dumped.
-.It Fl x Ar snap-backup
-Use a snapshot with
-.Ar snap-backup
-as backup for this dump.
-See
-.Xr fss 4
-for more details.
 .It Fl W
 .Nm
 tells the operator what file systems need to be dumped.
@@ -334,6 +323,17 @@ exits immediately.
 Like
 .Fl W ,
 but prints only those file systems which need to be dumped.
+.It Fl X
+Similar to
+.Fl x
+but uses a file system internal snapshot on the file system to be dumped.
+.It Fl x Ar snap-backup
+Use a snapshot with
+.Ar snap-backup
+as backup for this dump.
+See
+.Xr fss 4
+for more details.
 .El
 .Pp
 If
