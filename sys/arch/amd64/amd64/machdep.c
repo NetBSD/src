@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.176 2012/02/19 21:06:00 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.177 2012/02/19 23:15:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.176 2012/02/19 21:06:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.177 2012/02/19 23:15:24 matt Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -217,10 +217,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.176 2012/02/19 21:06:00 rmind Exp $");
 char machine[] = "amd64";		/* CPU "architecture" */
 char machine_arch[] = "x86_64";		/* machine == machine_arch */
 
-/* Our exported CPU info; we have only one right now. */  
-struct cpu_info cpu_info_primary;
-struct cpu_info *cpu_info_list;
-
 extern struct bi_devmatch *x86_alldisks;
 extern int x86_ndisks;
 
@@ -236,7 +232,6 @@ int	cpu_class = CPUCLASS_686;
 struct mtrr_funcs *mtrr_funcs;
 #endif
 
-int	physmem;
 uint64_t	dumpmem_low;
 uint64_t	dumpmem_high;
 int	cpu_class;
