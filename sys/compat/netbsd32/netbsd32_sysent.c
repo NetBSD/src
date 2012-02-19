@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_sysent.c,v 1.98 2012/02/01 05:42:17 dholland Exp $ */
+/* $NetBSD: netbsd32_sysent.c,v 1.99 2012/02/19 21:06:42 rmind Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysent.c,v 1.98 2012/02/01 05:42:17 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysent.c,v 1.99 2012/02/19 21:06:42 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -861,18 +861,18 @@ struct sysent netbsd32_sysent[] = {
 	    sys_nosys },			/* 328 = unimplemented */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 329 = unimplemented */
-	{ ns(struct netbsd32_sa_register_args), 0,
-	    (sy_call_t *)netbsd32_sa_register },/* 330 = netbsd32_sa_register */
-	{ ns(struct netbsd32_sa_stacks_args), 0,
-	    (sy_call_t *)netbsd32_sa_stacks },	/* 331 = netbsd32_sa_stacks */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_sa_enable },	/* 332 = sa_enable */
-	{ ns(struct netbsd32_sa_setconcurrency_args), 0,
-	    (sy_call_t *)netbsd32_sa_setconcurrency },/* 333 = netbsd32_sa_setconcurrency */
+	    sys_nosys },			/* 330 = obsolete netbsd32_sa_register */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_sa_yield },	/* 334 = sa_yield */
-	{ ns(struct netbsd32_sa_preempt_args), 0,
-	    (sy_call_t *)netbsd32_sa_preempt },	/* 335 = netbsd32_sa_preempt */
+	    sys_nosys },			/* 331 = obsolete netbsd32_sa_stacks */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 332 = obsolete sa_enable */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 333 = obsolete netbsd32_sa_setconcurrency */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 334 = obsolete sa_yield */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 335 = obsolete netbsd32_sa_preempt */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 336 = obsolete sys_sa_unblockyield */
 	{ 0, 0, 0,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.36 2011/11/18 03:34:13 christos Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.37 2012/02/19 21:06:57 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,15 +66,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.36 2011/11/18 03:34:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.37 2012/02/19 21:06:57 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 #include <sys/wait.h>
@@ -553,43 +551,44 @@ out:
 int
 sigprocmask1(struct lwp *l, int how, const sigset_t *nss, sigset_t *oss)
 {
-	int more;
-	struct proc *p = l->l_proc;
-	sigset_t *mask;
-	mask = (p->p_sa != NULL) ? &p->p_sa->sa_sigmask : &l->l_sigmask;
+	sigset_t *mask = &l->l_sigmask;
+	bool more;
 
-	KASSERT(mutex_owned(p->p_lock));
+	KASSERT(mutex_owned(l->l_proc->p_lock));
 
-	if (oss)
+	if (oss) {
 		*oss = *mask;
-	if (nss) {
-		switch (how) {
-		case SIG_BLOCK:
-			sigplusset(nss, mask);
-			more = 0;
-			break;
-		case SIG_UNBLOCK:
-			sigminusset(nss, mask);
-			more = 1;
-			break;
-		case SIG_SETMASK:
-			*mask = *nss;
-			more = 1;
-			break;
-		default:
-			return (EINVAL);
-		}
-		sigminusset(&sigcantmask, mask);
-		if (more && sigispending(l, 0)) {
-			/*
-			 * Check for pending signals on return to user.
-			 */
-			lwp_lock(l);
-			l->l_flag |= LW_PENDSIG;
-			lwp_unlock(l);
-		}
 	}
 
+	if (nss == NULL) {
+		return 0;
+	}
+
+	switch (how) {
+	case SIG_BLOCK:
+		sigplusset(nss, mask);
+		more = false;
+		break;
+	case SIG_UNBLOCK:
+		sigminusset(nss, mask);
+		more = true;
+		break;
+	case SIG_SETMASK:
+		*mask = *nss;
+		more = true;
+		break;
+	default:
+		return EINVAL;
+	}
+	sigminusset(&sigcantmask, mask);
+	if (more && sigispending(l, 0)) {
+		/*
+		 * Check for pending signals on return to user.
+		 */
+		lwp_lock(l);
+		l->l_flag |= LW_PENDSIG;
+		lwp_unlock(l);
+	}
 	return 0;
 }
 
@@ -748,13 +747,6 @@ sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
 	sigminusset(&sigcantmask, &l->l_sigwaitset);
 
 	mutex_enter(p->p_lock);
-
-	/* SA processes can have no more than 1 sigwaiter. */
-	if ((p->p_sflag & PS_SA) != 0 && !LIST_EMPTY(&p->p_sigwaiters)) {
-		mutex_exit(p->p_lock);
-		error = EINVAL;
-		goto out;
-	}
 
 	/* Check for pending signals in the process, if no - then in LWP. */
 	if ((signum = sigget(&p->p_sigpend, &ksi, 0, &l->l_sigwaitset)) == 0)
