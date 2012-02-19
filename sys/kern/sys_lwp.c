@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.52 2010/07/07 01:30:37 chs Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.53 2012/02/19 21:06:56 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.52 2010/07/07 01:30:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.53 2012/02/19 21:06:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.52 2010/07/07 01:30:37 chs Exp $");
 #include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
-
-#include "opt_sa.h"
 
 #define	LWP_UNPARK_MAX		1024
 
@@ -86,15 +84,6 @@ sys__lwp_create(struct lwp *l, const struct sys__lwp_create_args *uap,
 	vaddr_t uaddr;
 	ucontext_t *newuc;
 	int error, lid;
-
-#ifdef KERN_SA
-	mutex_enter(p->p_lock);
-	if ((p->p_sflag & (PS_SA | PS_WEXIT)) != 0 || p->p_sa != NULL) {
-		mutex_exit(p->p_lock);
-		return EINVAL;
-	}
-	mutex_exit(p->p_lock);
-#endif
 
 	newuc = kmem_alloc(sizeof(ucontext_t), KM_SLEEP);
 	error = copyin(SCARG(uap, ucp), newuc, p->p_emul->e_ucsize);
@@ -205,14 +194,6 @@ sys__lwp_suspend(struct lwp *l, const struct sys__lwp_suspend_args *uap,
 	int error;
 
 	mutex_enter(p->p_lock);
-
-#ifdef KERN_SA
-	if ((p->p_sflag & PS_SA) != 0 || p->p_sa != NULL) {
-		mutex_exit(p->p_lock);
-		return EINVAL;
-	}
-#endif
-
 	if ((t = lwp_find(p, SCARG(uap, target))) == NULL) {
 		mutex_exit(p->p_lock);
 		return ESRCH;

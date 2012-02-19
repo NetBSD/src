@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.13 2011/09/27 01:02:35 jym Exp $	*/
+/*	$NetBSD: trap.c,v 1.14 2012/02/19 21:06:22 rmind Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,11 +35,10 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_sa.h"
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.13 2011/09/27 01:02:35 jym Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.14 2012/02/19 21:06:22 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,9 +46,6 @@ __KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.13 2011/09/27 01:02:35 jym Exp $");
 #include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/cpu.h>
-#ifdef KERN_SA
-#include <sys/savar.h>
-#endif
 #include <sys/kauth.h>
 #include <sys/ras.h>
 
@@ -167,20 +163,11 @@ pagefault(struct vm_map *map, vaddr_t va, vm_prot_t ftype, bool usertrap)
 //	printf("%s(%p,%#lx,%u,%u)\n", __func__, map, va, ftype, usertrap);
 
 	if (usertrap) {
-#ifdef KERN_SA
-		if (l->l_flag & LW_SA) {
-			l->l_savp->savp_faultaddr = va;
-			l->l_pflag |= LP_SA_PAGEFAULT;
-		}       
-#endif
 		rv = uvm_fault(map, trunc_page(va), ftype);
 		if (rv == 0)
 			uvm_grow(l->l_proc, trunc_page(va));
 		if (rv == EACCES)
 			rv = EFAULT;
-#ifdef KERN_SA
-		l->l_pflag &= ~LP_SA_PAGEFAULT;
-#endif
 	} else {
 		if (cpu_intr_p())
 			return EFAULT;
@@ -193,9 +180,6 @@ pagefault(struct vm_map *map, vaddr_t va, vm_prot_t ftype, bool usertrap)
 		if (map != kernel_map) {
 			if (rv == 0)
 				uvm_grow(l->l_proc, trunc_page(va));
-#ifdef KERN_SA
-			l->l_pflag &= ~LP_SA_PAGEFAULT;
-#endif
 		}
 		if (rv == EACCES)
 			rv = EFAULT;

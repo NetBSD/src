@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.30 2011/03/04 22:25:25 joerg Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.31 2012/02/19 21:06:04 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -75,11 +75,10 @@
 #include "opt_cpuoptions.h"
 #include "opt_cputypes.h"
 #include "opt_arm_debug.h"
-#include "opt_sa.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.30 2011/03/04 22:25:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.31 2012/02/19 21:06:04 rmind Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -88,7 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.30 2011/03/04 22:25:25 joerg Exp $
 #include <sys/ucontext.h>
 #include <sys/evcnt.h>
 #include <sys/cpu.h>
-#include <sys/savar.h>
 
 #ifdef EXEC_AOUT
 #include <sys/exec_aout.h>
@@ -200,64 +198,6 @@ startlwp(void *arg)
 	kmem_free(uc, sizeof(ucontext_t));
 	userret(l);
 }
-
-#ifdef KERN_SA
-/*
- * XXX This is a terrible name.
- */
-void
-upcallret(struct lwp *l)
-{
-
-	userret(l);
-}
-
-/*
- * cpu_upcall:
- *
- *	Send an an upcall to userland.
- */
-void 
-cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
-    void *ap, void *sp, sa_upcall_t upcall)
-{
-	struct trapframe *tf;
-	struct saframe *sf, frame;
-
-	tf = process_frame(l);
-
-	/* Finally, copy out the rest of the frame. */
-#if 0 /* First 4 args in regs (see below). */
-	frame.sa_type = type;
-	frame.sa_sas = sas;
-	frame.sa_events = nevents;
-	frame.sa_interrupted = ninterrupted;
-#endif
-	frame.sa_arg = ap;
-
-	sf = (struct saframe *)sp - 1;
-	if (copyout(&frame, sf, sizeof(frame)) != 0) {
-		/* Copying onto the stack didn't work. Die. */
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
-	}
-
-	tf->tf_r0 = type;
-	tf->tf_r1 = (int) sas;
-	tf->tf_r2 = nevents;
-	tf->tf_r3 = ninterrupted;
-	tf->tf_pc = (int) upcall;
-#ifdef THUMB_CODE
-	if (((int) upcall) & 1)
-		tf->tf_spsr |= PSR_T_bit;
-	else
-		tf->tf_spsr &= ~PSR_T_bit;
-#endif
-	tf->tf_usr_sp = (int) sf;
-	tf->tf_usr_lr = 0;		/* no return */
-}
-
-#endif /* KERN_SA */
 
 void
 cpu_need_resched(struct cpu_info *ci, int flags)
