@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.5 2012/02/18 18:05:52 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.6 2012/02/19 18:45:57 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -50,4 +50,41 @@ share/mk/bsd.own.mk				1.697
 
 	Derive MANINSTALL from MKCATPAGES and MKHTML.
 	[joerg, ticket #5]
+
+doc/3RDPARTY								patch
+doc/CHANGES								patch
+external/ibm-public/postfix/dist/HISTORY				patch
+external/ibm-public/postfix/dist/mantools/get_anchors.pl		patch
+external/ibm-public/postfix/dist/src/bounce/bounce_trace_service.c	patch
+external/ibm-public/postfix/dist/src/global/dict_ldap.c			patch
+external/ibm-public/postfix/dist/src/global/dict_sqlite.c		patch
+external/ibm-public/postfix/dist/src/global/mail_version.h		patch
+external/ibm-public/postfix/dist/src/global/maps.c			patch
+external/ibm-public/postfix/dist/src/local/mailbox.c			patch
+external/ibm-public/postfix/dist/src/local/unknown.c			patch
+external/ibm-public/postfix/dist/src/tlsproxy/tlsproxy.c		patch
+external/ibm-public/postfix/dist/src/util/dict.c			patch
+external/ibm-public/postfix/dist/src/xsasl/xsasl_dovecot_server.c	patch
+
+	Import Postfix 2.8.8.
+	[tron, ticket #7]
+	
+usr.sbin/postinstall/postinstall		1.130
+
+	Add "pwd_mkdb" item, which checks whether /etc/pwd.db is in the
+	new format, and runs "pwd_mkdb -V 1 /etc/master.passwd" to fix it.
+	[apb, ticket #9]
+
+usr.sbin/postinstall/postinstall		1.131
+
+	Use msg for indentation.
+	[apb, ticket #10]
+
+sys/dev/usb/if_udav.c				1.35
+sys/dev/usb/usbdevs				1.608
+sys/dev/usb/usbdevs.h				regen
+sys/dev/usb/usbdevs_data.h			regen
+
+	Add support for the QUAN DM9601.
+	[mbalmer, ticket #11]
 
