@@ -68,7 +68,7 @@
 
 /* Macros for signons and file headers */
 #ifdef ACPI_REPRO
-#define ACPI_DATE "1 Jan 1970"
+#define ACPI_DATE "23 Jun 2011"
 #else
 #define ACPI_DATE __DATE__
 #endif
