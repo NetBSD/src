@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.66 2010/03/11 01:32:59 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.67 2012/02/19 19:49:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.66 2010/03/11 01:32:59 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.67 2012/02/19 19:49:20 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -661,9 +661,9 @@ usage(void)
 	const char *prog = getprogname();
 
 	(void)fprintf(stderr,
-"usage: %s [-0123456789aceFnStuX] [-B records] [-b blocksize]\n"
+"usage: %s [-0123456789aceFinStuX] [-B records] [-b blocksize]\n"
 "            [-d density] [-f file] [-h level] [-k read-blocksize]\n"
-"            [-L label] [-l timeout] [-r read-cache] [-s feet]\n"
+"            [-L label] [-l timeout] [-r cachesize] [-s feet]\n"
 "            [-T date] [-x snap-backup] files-to-dump\n"
 "       %s [-W | -w]\n", prog, prog);
 	exit(X_STARTUP);
