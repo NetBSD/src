@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.48 2012/01/27 19:48:42 para Exp $ */
+/*	$NetBSD: pmap.c,v 1.49 2012/02/19 02:47:53 rmind Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.48 2012/01/27 19:48:42 para Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.49 2012/02/19 02:47:53 rmind Exp $");
 #endif
 
 #include <string.h>
@@ -143,9 +143,8 @@ dump_vm_map(kvm_t *kd, struct kinfo_proc2 *proc,
 		       D(vm_map, vm_map)->hint);
 		printf("%*s    first_free = %p,", indent(2), "",
 		       D(vm_map, vm_map)->first_free);
-		printf(" flags = %x <%s%s%s%s%s >,\n", D(vm_map, vm_map)->flags,
+		printf(" flags = %x <%s%s%s%s >,\n", D(vm_map, vm_map)->flags,
 		       D(vm_map, vm_map)->flags & VM_MAP_PAGEABLE ? " PAGEABLE" : "",
-		       D(vm_map, vm_map)->flags & VM_MAP_INTRSAFE ? " INTRSAFE" : "",
 		       D(vm_map, vm_map)->flags & VM_MAP_WIREFUTURE ? " WIREFUTURE" : "",
 #ifdef VM_MAP_DYING
 		       D(vm_map, vm_map)->flags & VM_MAP_DYING ? " DYING" :
