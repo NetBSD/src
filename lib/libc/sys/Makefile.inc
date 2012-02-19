@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.212 2012/02/13 01:24:03 dholland Exp $
+#	$NetBSD: Makefile.inc,v 1.213 2012/02/19 19:18:40 matt Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -119,8 +119,7 @@ ASM=	access.S acct.S \
 	__quotactl.S \
 	rasctl.S readlinkat.S reboot.S recvfrom.S recvmsg.S rename.S \
 		renameat.S revoke.S rmdir.S \
-	sa_register.S sa_stacks.S sa_enable.S sa_setconcurrency.S sa_yield.S \
-		sa_preempt.S semconfig.S semget.S semop.S \
+	semconfig.S semget.S semop.S \
 		sendmsg.S sendto.S setegid.S setcontext.S seteuid.S setgid.S \
 		setgroups.S __setitimer50.S __setlogin.S setpgid.S \
 		setpriority.S \
@@ -134,6 +133,10 @@ ASM=	access.S acct.S \
 		____semctl50.S __timer_settime50.S \
 	umask.S undelete.S unlink.S unlinkat.S unmount.S __utimes50.S \
 		utimensat.S utrace.S uuidgen.S vadvise.S
+
+# sa compat syscalls
+SAASM+=	sa_register.S sa_stacks.S sa_enable.S sa_setconcurrency.S sa_yield.S \
+		sa_preempt.S
 
 # modules with potentially non default implementations
 ASM_MD=	_lwp_getprivate.S mremap.S 
@@ -180,6 +183,10 @@ ${ASM_GLUE}: ${ASMDEPS}
 ${WEAKASM}: ${ASMDEPS}
 	${_MKTARGET_CREATE}
 	printf '#include "SYS.h"\nWSYSCALL(${.PREFIX},_sys_${.PREFIX})\nWEAK_ALIAS(_${.PREFIX},_sys_${.PREFIX})\n' >${.TARGET}
+
+${SAASM}: ${ASMDEPS}
+	${_MKTARGET_CREATE}
+	printf '#include "SYS.h"\n_SYSCALL(${.PREFIX:S/tmp_//},${.PREFIX:S/tmp_//:S/sa_/compat_60_sa_/})\n' >${.TARGET}
 
 ${NOERR}: ${ASMDEPS}
 	${_MKTARGET_CREATE}
