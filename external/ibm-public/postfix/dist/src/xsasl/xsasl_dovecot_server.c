@@ -1,4 +1,4 @@
-/*	$NetBSD: xsasl_dovecot_server.c,v 1.1.1.3 2011/03/02 19:32:48 tron Exp $	*/
+/*	$NetBSD: xsasl_dovecot_server.c,v 1.1.1.3.6.1 2012/02/19 18:28:54 riz Exp $	*/
 
 /*++
 /* NAME
@@ -372,11 +372,6 @@ XSASL_SERVER_IMPL *xsasl_dovecot_server_init(const char *server_type,
 					             const char *path_info)
 {
     XSASL_DOVECOT_SERVER_IMPL *xp;
-
-    if (strchr(path_info, '/') == 0)
-	msg_warn("when SASL type is \"%s\", SASL path \"%s\" "
-		 "should be a socket pathname",
-		 server_type, path_info);
 
     xp = (XSASL_DOVECOT_SERVER_IMPL *) mymalloc(sizeof(*xp));
     xp->xsasl.create = xsasl_dovecot_server_create;

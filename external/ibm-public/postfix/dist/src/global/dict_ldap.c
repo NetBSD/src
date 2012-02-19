@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_ldap.c,v 1.1.1.3 2011/03/02 19:32:14 tron Exp $	*/
+/*	$NetBSD: dict_ldap.c,v 1.1.1.3.6.1 2012/02/19 18:28:54 riz Exp $	*/
 
 /*++
 /* NAME
@@ -227,6 +227,7 @@
 #include "mail_conf.h"
 
 #if defined(USE_LDAP_SASL) && defined(LDAP_API_FEATURE_X_OPENLDAP)
+
  /*
   * SASL headers, for sasl_interact_t. Either SASL v1 or v2 should be fine.
   */
@@ -244,13 +245,13 @@
 #define DICT_LDAP_DO_SASL(d)	((d)->bind == DICT_LDAP_BIND_SASL)
 
 static const NAME_CODE bindopt_table[] = {
-    CONFIG_BOOL_NO,	DICT_LDAP_BIND_NONE,
-    "none",		DICT_LDAP_BIND_NONE,
-    CONFIG_BOOL_YES,	DICT_LDAP_BIND_SIMPLE,
-    "simple",		DICT_LDAP_BIND_SIMPLE,
+    CONFIG_BOOL_NO, DICT_LDAP_BIND_NONE,
+    "none", DICT_LDAP_BIND_NONE,
+    CONFIG_BOOL_YES, DICT_LDAP_BIND_SIMPLE,
+    "simple", DICT_LDAP_BIND_SIMPLE,
 #ifdef LDAP_API_FEATURE_X_OPENLDAP
 #if defined(USE_LDAP_SASL)
-    "sasl", 		DICT_LDAP_BIND_SASL,
+    "sasl", DICT_LDAP_BIND_SASL,
 #endif
 #endif
     0, -1,
@@ -294,9 +295,9 @@ typedef struct {
 #ifdef LDAP_API_FEATURE_X_OPENLDAP
 #if defined(USE_LDAP_SASL)
     int     sasl;
-    char    *sasl_mechs;
-    char    *sasl_realm;
-    char    *sasl_authz;
+    char   *sasl_mechs;
+    char   *sasl_realm;
+    char   *sasl_authz;
     int     sasl_minssf;
 #endif
     int     ldap_ssl;
@@ -453,28 +454,26 @@ static int dict_ldap_set_errno(LDAP *ld, int rc)
 }
 
 #if defined(USE_LDAP_SASL) && defined(LDAP_API_FEATURE_X_OPENLDAP)
+
  /*
   * Context structure for SASL property callback.
   */
 typedef struct bind_props {
-    char *authcid;
-    char *passwd;
-    char *realm;
-    char *authzid;
+    char   *authcid;
+    char   *passwd;
+    char   *realm;
+    char   *authzid;
 } bind_props;
 
-static int
-ldap_b2_interact(LDAP *ld, unsigned flags, void *props, void *inter)
+static int ldap_b2_interact(LDAP *ld, unsigned flags, void *props, void *inter)
 {
 
     sasl_interact_t *in;
-    bind_props *ctx = (bind_props *)props;
+    bind_props *ctx = (bind_props *) props;
 
-    for (in = inter; in->id != SASL_CB_LIST_END; in++)
-    {
+    for (in = inter; in->id != SASL_CB_LIST_END; in++) {
 	in->result = NULL;
-	switch(in->id)
-	{
+	switch (in->id) {
 	case SASL_CB_GETREALM:
 	    in->result = ctx->realm;
 	    break;
@@ -493,6 +492,7 @@ ldap_b2_interact(LDAP *ld, unsigned flags, void *props, void *inter)
     }
     return LDAP_SUCCESS;
 }
+
 #endif
 
 /* dict_ldap_result - Read and parse LDAP result */
@@ -500,6 +500,7 @@ ldap_b2_interact(LDAP *ld, unsigned flags, void *props, void *inter)
 static int dict_ldap_result(LDAP *ld, int msgid, int timeout, LDAPMessage **res)
 {
     struct timeval mytimeval;
+    int     err;
 
     mytimeval.tv_sec = timeout;
     mytimeval.tv_usec = 0;
@@ -508,9 +509,12 @@ static int dict_ldap_result(LDAP *ld, int msgid, int timeout, LDAPMessage **res)
     if (ldap_result(ld, msgid, GET_ALL, &mytimeval, res) == -1)
 	return (dict_ldap_get_errno(ld));
 
-    if (dict_ldap_get_errno(ld) == LDAP_TIMEOUT) {
-	(void) dict_ldap_abandon(ld, msgid);
-	return (dict_ldap_set_errno(ld, LDAP_TIMEOUT));
+    if ((err = dict_ldap_get_errno(ld)) != LDAP_SUCCESS) {
+	if (err == LDAP_TIMEOUT) {
+	    (void) dict_ldap_abandon(ld, msgid);
+	    return (dict_ldap_set_errno(ld, LDAP_TIMEOUT));
+	}
+	return err;
     }
     return LDAP_SUCCESS;
 }
@@ -531,7 +535,7 @@ static int dict_ldap_bind_sasl(DICT_LDAP *dict_ldap)
     vstring_sprintf(minssf, "minssf=%d", dict_ldap->sasl_minssf);
 
     if ((rc = ldap_set_option(dict_ldap->ld, LDAP_OPT_X_SASL_SECPROPS,
-			       (char *) minssf)) != LDAP_OPT_SUCCESS)
+			      (char *) minssf)) != LDAP_OPT_SUCCESS)
 	return (rc);
 
     props.authcid = dict_ldap->bind_dn;
@@ -540,13 +544,14 @@ static int dict_ldap_bind_sasl(DICT_LDAP *dict_ldap)
     props.authzid = dict_ldap->sasl_authz;
 
     if ((rc = ldap_sasl_interactive_bind_s(dict_ldap->ld, NULL,
-					    dict_ldap->sasl_mechs, NULL, NULL,
-					    LDAP_SASL_QUIET, ldap_b2_interact,
-					    &props)) != LDAP_SUCCESS)
+					   dict_ldap->sasl_mechs, NULL, NULL,
+					   LDAP_SASL_QUIET, ldap_b2_interact,
+					   &props)) != LDAP_SUCCESS)
 	return (rc);
 
     return (LDAP_SUCCESS);
 }
+
 #endif
 
 /* dict_ldap_bind_st - Synchronous simple auth with timeout */
@@ -554,6 +559,7 @@ static int dict_ldap_bind_sasl(DICT_LDAP *dict_ldap)
 static int dict_ldap_bind_st(DICT_LDAP *dict_ldap)
 {
     int     rc;
+    int     err = LDAP_SUCCESS;
     int     msgid;
     LDAPMessage *res;
     struct berval cred;
@@ -569,7 +575,8 @@ static int dict_ldap_bind_st(DICT_LDAP *dict_ldap)
 	return (rc);
 
 #define FREE_RESULT 1
-    return (ldap_parse_sasl_bind_result(dict_ldap->ld, res, 0, FREE_RESULT));
+    rc = ldap_parse_result(dict_ldap->ld, res, &err, 0, 0, 0, 0, FREE_RESULT);
+    return (rc == LDAP_SUCCESS ? err : rc);
 }
 
 /* search_st - Synchronous search with timeout */
@@ -870,6 +877,7 @@ static int dict_ldap_connect(DICT_LDAP *dict_ldap)
 
 #define DN_LOG_VAL(dict_ldap) \
 	((dict_ldap)->bind_dn[0] ? (dict_ldap)->bind_dn : "empty or implicit")
+
     /*
      * If this server requires a bind, do so. Thanks to Sam Tardieu for
      * noticing that the original bind call was broken.
@@ -1875,6 +1883,7 @@ DICT   *dict_ldap_open(const char *ldapsource, int dummy, int dict_flags)
 
 #ifdef LDAP_API_FEATURE_X_OPENLDAP
 #if defined(USE_LDAP_SASL)
+
     /*
      * SASL options
      */
