@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2011/06/28 09:11:33 jruoho Exp $
+# $NetBSD: Makefile,v 1.5 2012/02/19 05:06:41 christos Exp $
 
 .if (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64")
 PROG=	iasl
@@ -13,6 +13,9 @@ TOPDIR=	${NETBSDSRCDIR}/sys/external/bsd/acpica/dist/compiler
 CPPFLAGS+=	-I${TOPDIR}/../include -I${TOPDIR} -I.
 CPPFLAGS+=	-D__NetBSD__ -DACPI_ASL_COMPILER -DACPI_USE_ALTERNATE_TIMEOUT
 CPPFLAGS+=	-D_USE_BERKELEY_YACC
+.if ${MKREPRO:Uno} == "yes"
+CPPFLAGS+=	-DACPI_REPRO
+.endif
 LDADD+=		-ll -ly -lrt -lpthread
 DPADD+=		${LIBL} ${LIBY} ${LIBRT} ${LIBPTHREAD}
 
