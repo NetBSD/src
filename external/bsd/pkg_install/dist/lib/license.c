@@ -1,4 +1,4 @@
-/*	$NetBSD: license.c,v 1.2 2011/04/22 08:19:25 adam Exp $	*/
+/*	$NetBSD: license.c,v 1.3 2012/02/19 17:49:09 tron Exp $	*/
 
 /*-
  * Copyright (c) 2009 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -46,8 +46,9 @@
 #define	HASH_SIZE	521
 
 const char *default_acceptable_licenses =
-    "public-domain "
+    "public-domain unlicense "
     "gnu-fdl-v1.1 gnu-fdl-v1.2 gnu-fdl-v1.3 "
+    "gnu-gpl-v1 "
     "gnu-gpl-v2 gnu-lgpl-v2 gnu-lgpl-v2.1 "
     "gnu-gpl-v3 gnu-lgpl-v3 "
     "original-bsd modified-bsd 2-clause-bsd "
@@ -57,15 +58,20 @@ const char *default_acceptable_licenses =
     "cddl-1.0 "
     "cpl-1.0 "
     "open-font-license "
-    "mpl-1.0 mpl-1.1 "
-    "png-license "
+    "mpl-1.0 mpl-1.1 mpl-2.0 "
+    "php png-license "
     "postgresql-license "
+    "zlib "
     "zpl "
     "python-software-foundation "
     "ipafont "
     "isc "
     "info-zip "
-    "boost-license";
+    "boost-license "
+    "mplusfont "
+    "cc-by-sa-v3.0 "
+    "lppl-1.3c "
+    "epl-v1.0";
 
 #ifdef DEBUG
 static size_t hash_collisions;
