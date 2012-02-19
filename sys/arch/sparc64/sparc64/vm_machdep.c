@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.98 2011/10/08 08:49:07 nakayama Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.99 2012/02/19 21:06:32 rmind Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.98 2011/10/08 08:49:07 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.99 2012/02/19 21:06:32 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -159,21 +159,6 @@ cpu_proc_fork(struct proc *p1, struct proc *p2)
 #ifdef DEBUG
 char cpu_forkname[] = "cpu_lwp_fork()";
 #endif
-
-void setfunc_trampoline(void);
-inline void
-cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
-{
-	struct pcb *npcb = lwp_getpcb(l);
-	struct rwindow *rp;
-
-	rp = (struct rwindow *)((u_long)npcb + TOPFRAMEOFF);
-	rp->rw_local[0] = (long)func;		/* Function to call */
-	rp->rw_local[1] = (long)arg;		/* and its argument */
-
-	npcb->pcb_pc = (long)setfunc_trampoline - 8;
-	npcb->pcb_sp = (long)rp - STACK_OFFSET;
-}
 
 /*
  * Finish a fork operation, with lwp l2 nearly set up.

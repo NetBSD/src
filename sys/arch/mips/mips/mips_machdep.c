@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.252 2012/02/11 23:16:15 martin Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.253 2012/02/19 21:06:18 rmind Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.252 2012/02/11 23:16:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.253 2012/02/19 21:06:18 rmind Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -134,8 +134,6 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.252 2012/02/11 23:16:15 martin Ex
 #include <sys/kcore.h>
 #include <sys/kmem.h>
 #include <sys/ras.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/cpu.h>
 #include <sys/atomic.h>
 #include <sys/ucontext.h>

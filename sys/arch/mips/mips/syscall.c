@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.46 2011/09/27 01:02:34 jym Exp $	*/
+/*	$NetBSD: syscall.c,v 1.47 2012/02/19 21:06:19 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,18 +68,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.46 2011/09/27 01:02:34 jym Exp $");
-
-#if defined(_KERNEL_OPT)
-#include "opt_sa.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.47 2012/02/19 21:06:19 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/endian.h>
 #include <sys/proc.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
 #include <sys/syscallvar.h>
@@ -158,12 +152,6 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t pc)
 	saved_v0 = code = reg->r_regs[_R_V0];
 
 	code -= SYSCALL_SHIFT;
-
-#ifdef KERN_SA
-	if (__predict_false((l->l_savp)
-            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
-		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
-#endif
 
 	if (code == SYS_syscall
 	    || (code == SYS___syscall && abi != _MIPS_BSD_API_O32)) {
