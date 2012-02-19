@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.255 2012/02/19 17:08:02 rmind Exp $
+	$NetBSD: syscalls.master,v 1.256 2012/02/19 17:22:16 matt Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -625,13 +625,15 @@
 327	UNIMPL
 328	UNIMPL
 329	UNIMPL
-; Obsolete SA system calls.  Must remain until libc major version is bumped.
-330	STD 		{ int|sys||sa_register(void); }
-331	STD 		{ int|sys||sa_stacks(void); }
-332	STD 		{ int|sys||sa_enable(void); }
-333	STD 		{ int|sys||sa_setconcurrency(void); }
-334	STD 		{ int|sys||sa_yield(void); }
-335	STD 		{ int|sys||sa_preempt(void); }
+; SA system calls.
+330	COMPAT_60 	{ int|sys||sa_register(sa_upcall_t new, \
+				sa_upcall_t *old, int flags, \
+				ssize_t stackinfo_offset); }
+331	COMPAT_60 	{ int|sys||sa_stacks(int num, stack_t *stacks); }
+332	COMPAT_60 	{ int|sys||sa_enable(void); }
+333	COMPAT_60 	{ int|sys||sa_setconcurrency(int concurrency); }
+334	COMPAT_60 	{ int|sys||sa_yield(void); }
+335	COMPAT_60 	{ int|sys||sa_preempt(int sa_id); }
 336	OBSOL 		sys_sa_unblockyield
 ;
 ; Syscalls 337-339 are reserved for other scheduler activation syscalls.
