@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.125.6.7 2012/02/20 03:27:07 mrg Exp $	*/
+/*	$NetBSD: usb.c,v 1.125.6.8 2012/02/20 04:06:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.125.6.7 2012/02/20 03:27:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.125.6.8 2012/02/20 04:06:13 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -309,8 +309,10 @@ usb_create_event_thread(device_t self)
 	struct usb_taskq *taskq;
 	int i;
 
-	if (kthread_create(PRI_NONE, 0, NULL, usb_event_thread, sc,
-			&sc->sc_event_thread, "%s", device_xname(self))) {
+	if (kthread_create(PRI_NONE,
+	    sc->sc_bus->lock ? KTHREAD_MPSAFE : 0, NULL,
+	    usb_event_thread, sc, &sc->sc_event_thread,
+	    "%s", device_xname(self))) {
 		printf("%s: unable to create event thread for\n",
 		       device_xname(self));
 		panic("usb_create_event_thread");
@@ -326,8 +328,9 @@ usb_create_event_thread(device_t self)
 		cv_init(&taskq->cv, "usbtsk");
 		taskq->taskcreated = 1;
 		taskq->name = taskq_names[i];
-		if (kthread_create(PRI_NONE, 0, NULL, usb_task_thread,
-		    taskq, &taskq->task_thread_lwp, "%s", taskq->name)) {
+		if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
+		    usb_task_thread, taskq, &taskq->task_thread_lwp,
+		    "%s", taskq->name)) {
 			printf("unable to create task thread: %s\n", taskq->name);
 			panic("usb_create_event_thread task");
 		}
