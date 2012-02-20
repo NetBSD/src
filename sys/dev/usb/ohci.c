@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.218.6.8 2011/12/09 01:53:00 mrg Exp $	*/
+/*	$NetBSD: ohci.c,v 1.218.6.9 2012/02/20 02:12:24 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.8 2011/12/09 01:53:00 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.9 2012/02/20 02:12:24 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -1285,9 +1285,9 @@ ohci_softintr(void *v)
 	int i, j, actlen, iframes, uedir;
 	ohci_physaddr_t done;
 
-	DPRINTFN(10,("ohci_softintr: enter\n"));
+	KASSERT(sc->sc_bus.use_polling || mutex_owned(&sc->sc_lock));
 
-	mutex_enter(&sc->sc_lock);
+	DPRINTFN(10,("ohci_softintr: enter\n"));
 
 	sc->sc_bus.intr_context++;
 
@@ -1489,7 +1489,6 @@ ohci_softintr(void *v)
 	}
 
 	sc->sc_bus.intr_context--;
-	mutex_exit(&sc->sc_lock);
 
 	DPRINTFN(10,("ohci_softintr: done:\n"));
 }
@@ -1868,7 +1867,7 @@ ohci_device_request(usbd_xfer_handle xfer)
 }
 
 /*
- * Add an ED to the schedule.  Called at splusb().
+ * Add an ED to the schedule.  Called with USB thread lock held.
  */
 Static void
 ohci_add_ed(ohci_softc_t *sc, ohci_soft_ed_t *sed, ohci_soft_ed_t *head)
@@ -1893,7 +1892,7 @@ ohci_add_ed(ohci_softc_t *sc, ohci_soft_ed_t *sed, ohci_soft_ed_t *head)
 }
 
 /*
- * Remove an ED from the schedule.  Called at splusb().
+ * Remove an ED from the schedule.  Called with USB thread lock held.
  */
 Static void
 ohci_rem_ed(ohci_softc_t *sc, ohci_soft_ed_t *sed, ohci_soft_ed_t *head)
@@ -1928,7 +1927,7 @@ ohci_rem_ed(ohci_softc_t *sc, ohci_soft_ed_t *sed, ohci_soft_ed_t *head)
  */
 
 #define HASH(a) (((a) >> 4) % OHCI_HASH_SIZE)
-/* Called at splusb() */
+/* Called with USB thread lock held. */
 void
 ohci_hash_add_td(ohci_softc_t *sc, ohci_soft_td_t *std)
 {
@@ -1939,7 +1938,7 @@ ohci_hash_add_td(ohci_softc_t *sc, ohci_soft_td_t *std)
 	LIST_INSERT_HEAD(&sc->sc_hash_tds[h], std, hnext);
 }
 
-/* Called at splusb() */
+/* Called with USB thread lock held. */
 void
 ohci_hash_rem_td(ohci_softc_t *sc, ohci_soft_td_t *std)
 {
@@ -1963,7 +1962,7 @@ ohci_hash_find_td(ohci_softc_t *sc, ohci_physaddr_t a)
 	return (NULL);
 }
 
-/* Called at splusb() */
+/* Called with USB thread lock held. */
 void
 ohci_hash_add_itd(ohci_softc_t *sc, ohci_soft_itd_t *sitd)
 {
@@ -1977,7 +1976,7 @@ ohci_hash_add_itd(ohci_softc_t *sc, ohci_soft_itd_t *sitd)
 	LIST_INSERT_HEAD(&sc->sc_hash_itds[h], sitd, hnext);
 }
 
-/* Called at splusb() */
+/* Called with USB thread lock held. */
 void
 ohci_hash_rem_itd(ohci_softc_t *sc, ohci_soft_itd_t *sitd)
 {
@@ -2013,7 +2012,9 @@ ohci_timeout(void *addr)
 	DPRINTF(("ohci_timeout: oxfer=%p\n", oxfer));
 
 	if (sc->sc_dying) {
+		mutex_enter(&sc->sc_lock);
 		ohci_abort_xfer(&oxfer->xfer, USBD_TIMEOUT);
+		mutex_exit(&sc->sc_lock);
 		return;
 	}
 
@@ -2027,10 +2028,13 @@ void
 ohci_timeout_task(void *addr)
 {
 	usbd_xfer_handle xfer = addr;
+	ohci_softc_t *sc = xfer->pipe->device->bus->hci_private;
 
 	DPRINTF(("ohci_timeout_task: xfer=%p\n", xfer));
 
+	mutex_enter(&sc->sc_lock);
 	ohci_abort_xfer(xfer, USBD_TIMEOUT);
+	mutex_exit(&sc->sc_lock);
 }
 
 #ifdef OHCI_DEBUG
@@ -2309,20 +2313,18 @@ ohci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 
 	DPRINTF(("ohci_abort_xfer: xfer=%p pipe=%p sed=%p\n", xfer, opipe,sed));
 
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	if (sc->sc_dying) {
 		/* If we're dying, just do the software part. */
-		mutex_enter(&sc->sc_lock);
 		xfer->status = status;	/* make software ignore it */
 		callout_halt(&xfer->timeout_handle, &sc->sc_lock);
 		usb_transfer_complete(xfer);
-		mutex_exit(&sc->sc_lock);
 		return;
 	}
 
 	if (xfer->device->bus->intr_context || !curproc)
 		panic("ohci_abort_xfer: not in process context");
-
-	mutex_enter(&sc->sc_lock);
 
 	/*
 	 * If an abort is already in progress then just wait for it to
@@ -2432,7 +2434,7 @@ ohci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 		cv_broadcast(&xfer->hccv);
 
 done:
-	mutex_exit(&sc->sc_lock);
+	KASSERT(mutex_owned(&sc->sc_lock));
 }
 
 /*
@@ -2879,14 +2881,14 @@ ohci_root_intr_abort(usbd_xfer_handle xfer)
 {
 	ohci_softc_t *sc = xfer->pipe->device->bus->hci_private;
 
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	if (xfer->pipe->intrxfer == xfer) {
 		DPRINTF(("ohci_root_intr_abort: remove\n"));
 		xfer->pipe->intrxfer = NULL;
 	}
 	xfer->status = USBD_CANCELLED;
-	mutex_enter(&sc->sc_lock);
 	usb_transfer_complete(xfer);
-	mutex_exit(&sc->sc_lock);
 }
 
 /* Close the root pipe. */
@@ -2953,6 +2955,12 @@ ohci_device_ctrl_start(usbd_xfer_handle xfer)
 Static void
 ohci_device_ctrl_abort(usbd_xfer_handle xfer)
 {
+#ifdef DIAGNOSTIC
+	ohci_softc_t *sc = xfer->pipe->device->bus->hci_private;
+#endif
+
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	DPRINTF(("ohci_device_ctrl_abort: xfer=%p\n", xfer));
 	ohci_abort_xfer(xfer, USBD_CANCELLED);
 }
@@ -3115,6 +3123,12 @@ ohci_device_bulk_start(usbd_xfer_handle xfer)
 Static void
 ohci_device_bulk_abort(usbd_xfer_handle xfer)
 {
+#ifdef DIAGNOSTIC
+	ohci_softc_t *sc = xfer->pipe->device->bus->hci_private;
+#endif
+
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	DPRINTF(("ohci_device_bulk_abort: xfer=%p\n", xfer));
 	ohci_abort_xfer(xfer, USBD_CANCELLED);
 }
@@ -3246,6 +3260,12 @@ ohci_device_intr_start(usbd_xfer_handle xfer)
 Static void
 ohci_device_intr_abort(usbd_xfer_handle xfer)
 {
+#ifdef DIAGNOSTIC
+	ohci_softc_t *sc = xfer->pipe->device->bus->hci_private;
+#endif
+
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	if (xfer->pipe->intrxfer == xfer) {
 		DPRINTF(("ohci_device_intr_abort: remove\n"));
 		xfer->pipe->intrxfer = NULL;
@@ -3569,7 +3589,7 @@ ohci_device_isoc_abort(usbd_xfer_handle xfer)
 
 	DPRINTFN(1,("ohci_device_isoc_abort: xfer=%p lock=%p\n", xfer, &sc->sc_lock));
 
-	mutex_enter(&sc->sc_lock);
+	KASSERT(mutex_owned(&sc->sc_lock));
 
 	/* Transfer is already done. */
 	if (xfer->status != USBD_NOT_STARTED &&
@@ -3603,6 +3623,7 @@ ohci_device_isoc_abort(usbd_xfer_handle xfer)
 #endif
 	}
 
+	/* XXXMRG is this ok? */
 	mutex_exit(&sc->sc_lock);
 
 	usb_delay_ms(&sc->sc_bus, OHCI_ITD_NOFFSET);
@@ -3618,7 +3639,7 @@ ohci_device_isoc_abort(usbd_xfer_handle xfer)
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
  done:
-	mutex_exit(&sc->sc_lock);
+	KASSERT(mutex_owned(&sc->sc_lock));
 }
 
 void
