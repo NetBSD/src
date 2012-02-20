@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.134.2.6 2012/02/19 21:37:12 mrg Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.134.2.7 2012/02/20 02:12:24 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134.2.6 2012/02/19 21:37:12 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134.2.7 2012/02/20 02:12:24 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -759,7 +759,7 @@ usbd_ar_pipe(usbd_pipe_handle pipe)
 	return (USBD_NORMAL_COMPLETION);
 }
 
-/* Called at splusb() */
+/* Called with USB thread lock held. */
 void
 usb_transfer_complete(usbd_xfer_handle xfer)
 {
@@ -876,6 +876,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 	}
 }
 
+/* Called with USB thread lock held. */
 usbd_status
 usb_insert_transfer(usbd_xfer_handle xfer)
 {
@@ -905,7 +906,7 @@ usb_insert_transfer(usbd_xfer_handle xfer)
 	return (err);
 }
 
-/* Called at splusb() */
+/* Called with USB thread lock held. */
 void
 usbd_start_next(usbd_pipe_handle pipe)
 {
@@ -925,8 +926,6 @@ usbd_start_next(usbd_pipe_handle pipe)
 	}
 #endif
 
-	KASSERT(pipe->device->bus->lock == NULL || mutex_owned(pipe->device->bus->lock));
-
 	/* Get next request in queue. */
 	xfer = SIMPLEQ_FIRST(&pipe->queue);
 	DPRINTFN(5, ("usbd_start_next: pipe=%p, xfer=%p\n", pipe, xfer));
@@ -944,6 +943,8 @@ usbd_start_next(usbd_pipe_handle pipe)
 			/* XXX do what? */
 		}
 	}
+
+	KASSERT(pipe->device->bus->lock == NULL || mutex_owned(pipe->device->bus->lock));
 }
 
 usbd_status
@@ -1108,6 +1109,9 @@ usbd_dopoll(usbd_interface_handle iface)
 	iface->device->bus->methods->do_poll(iface->device->bus);
 }
 
+/*
+ * XXX use this more???  use_polling it touched manually all over
+ */
 void
 usbd_set_polling(usbd_device_handle dev, int on)
 {
@@ -1117,7 +1121,12 @@ usbd_set_polling(usbd_device_handle dev, int on)
 		dev->bus->use_polling--;
 
 	/* Kick the host controller when switching modes */
-	dev->bus->methods->soft_intr(dev->bus);
+	if (dev->bus->lock)
+		mutex_enter(dev->bus->lock);
+	(*dev->bus->methods->soft_intr)(dev->bus);
+	if (dev->bus->lock)
+		mutex_exit(dev->bus->lock);
+
 }
 
 

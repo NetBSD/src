@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.125.6.5 2011/12/09 01:53:00 mrg Exp $	*/
+/*	$NetBSD: usb.c,v 1.125.6.6 2012/02/20 02:12:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.125.6.5 2011/12/09 01:53:00 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.125.6.6 2012/02/20 02:12:24 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -143,6 +143,7 @@ Static void usb_free_event(struct usb_event *);
 Static void usb_add_event(int, struct usb_event *);
 Static int usb_get_next_event(struct usb_event *);
 Static void usb_async_intr(void *);
+Static void usb_soft_intr(void *);
 
 #ifdef COMPAT_30
 Static void usb_copy_old_devinfo(struct usb_device_info_old *, const struct usb_device_info *);
@@ -243,7 +244,7 @@ usb_doattach(device_t self)
 	/* XXX we should have our own level */
 	sc->sc_bus->soft = softint_establish(
 	    SOFTINT_NET | (mpsafe ? SOFTINT_MPSAFE : 0),
-	    sc->sc_bus->methods->soft_intr, sc->sc_bus);
+	    usb_soft_intr, sc->sc_bus);
 	if (sc->sc_bus->soft == NULL) {
 		aprint_error("%s: can't register softintr\n",
 			     device_xname(self));
@@ -945,10 +946,24 @@ usb_async_intr(void *cookie)
 	mutex_exit(proc_lock);
 }
 
+Static void
+usb_soft_intr(void *arg)
+{
+	usbd_bus_handle bus = arg;
+
+	if (bus->lock)
+		mutex_enter(bus->lock);
+	(*bus->methods->soft_intr)(bus);
+	if (bus->lock)
+		mutex_exit(bus->lock);
+}
+
 void
 usb_schedsoftintr(usbd_bus_handle bus)
 {
+
 	DPRINTFN(10,("usb_schedsoftintr: polling=%d\n", bus->use_polling));
+
 	if (bus->use_polling) {
 		bus->methods->soft_intr(bus);
 	} else {
