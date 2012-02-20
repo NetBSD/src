@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.181.6.7 2012/02/20 03:23:26 mrg Exp $ */
+/*	$NetBSD: ehci.c,v 1.181.6.8 2012/02/20 04:05:44 mrg Exp $ */
 
 /*
  * Copyright (c) 2004-2011 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.6.7 2012/02/20 03:23:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.6.8 2012/02/20 04:05:44 mrg Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3479,8 +3479,8 @@ ehci_device_request(usbd_xfer_handle xfer)
 	/* Insert qTD in QH list. */
 	ehci_set_qh_qtd(sqh, setup); /* also does usb_syncmem(sqh) */
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
-		callout_reset(&(xfer->timeout_handle), (mstohz(xfer->timeout)),
-		    (ehci_timeout), (xfer));
+		callout_reset(&xfer->timeout_handle, mstohz(xfer->timeout),
+		    ehci_timeout, xfer);
 	}
 	ehci_add_intr_list(sc, exfer);
 	xfer->status = USBD_IN_PROGRESS;
@@ -3614,8 +3614,8 @@ ehci_device_bulk_start(usbd_xfer_handle xfer)
 	mutex_enter(&sc->sc_lock);
 	ehci_set_qh_qtd(sqh, data); /* also does usb_syncmem(sqh) */
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
-		callout_reset(&(xfer->timeout_handle), (mstohz(xfer->timeout)),
-		    (ehci_timeout), (xfer));
+		callout_reset(&xfer->timeout_handle, mstohz(xfer->timeout),
+		    ehci_timeout, xfer);
 	}
 	ehci_add_intr_list(sc, exfer);
 	xfer->status = USBD_IN_PROGRESS;
@@ -3798,8 +3798,8 @@ ehci_device_intr_start(usbd_xfer_handle xfer)
 	mutex_enter(&sc->sc_lock);
 	ehci_set_qh_qtd(sqh, data); /* also does usb_syncmem(sqh) */
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
-		callout_reset(&(xfer->timeout_handle), (mstohz(xfer->timeout)),
-		    (ehci_timeout), (xfer));
+		callout_reset(&xfer->timeout_handle, mstohz(xfer->timeout),
+		    ehci_timeout, xfer);
 	}
 	ehci_add_intr_list(sc, exfer);
 	xfer->status = USBD_IN_PROGRESS;
@@ -3902,8 +3902,8 @@ ehci_device_intr_done(usbd_xfer_handle xfer)
 
 		ehci_set_qh_qtd(sqh, data); /* also does usb_syncmem(sqh) */
 		if (xfer->timeout && !sc->sc_bus.use_polling) {
-			callout_reset(&(xfer->timeout_handle),
-			    (mstohz(xfer->timeout)), (ehci_timeout), (xfer));
+			callout_reset(&xfer->timeout_handle,
+			    mstohz(xfer->timeout), ehci_timeout, xfer);
 		}
 
 		xfer->status = USBD_IN_PROGRESS;
