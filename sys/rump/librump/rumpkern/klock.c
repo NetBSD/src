@@ -1,4 +1,4 @@
-/*	$NetBSD: klock.c,v 1.3 2010/12/01 14:59:38 pooka Exp $	*/
+/*	$NetBSD: klock.c,v 1.3.12.1 2012/02/20 22:36:11 mrg Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: klock.c,v 1.3 2010/12/01 14:59:38 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: klock.c,v 1.3.12.1 2012/02/20 22:36:11 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +115,13 @@ _kernel_unlock(int nlocks, int *countp)
 		giantowner = NULL;
 		rumpuser_mutex_exit(rump_giantlock);
 	}
+}
+
+bool
+_kernel_locked_p(void)
+{
+
+	return giantowner == curlwp;
 }
 
 void
