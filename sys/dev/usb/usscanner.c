@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.30.12.1 2012/02/18 07:35:12 mrg Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.30.12.2 2012/02/20 20:35:40 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.30.12.1 2012/02/18 07:35:12 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.30.12.2 2012/02/20 20:35:40 mrg Exp $");
 
 #include "scsibus.h"
 #include <sys/param.h>
@@ -482,7 +482,9 @@ usscanner_intr_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	sc->sc_state = UAS_IDLE;
 
 	s = splbio();
+	KERNEL_LOCK(1, curlwp);
 	scsipi_done(sc->sc_xs);
+	KERNEL_UNLOCK_ONE(curlwp);
 	splx(s);
 }
 
@@ -760,7 +762,9 @@ usscanner_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, 
 
  done:
 		sc->sc_state = UAS_IDLE;
+		KERNEL_LOCK(1, curlwp);
 		scsipi_done(xs);
+		KERNEL_UNLOCK_ONE(curlwp);
 		return;
 
 	case ADAPTER_REQ_GROW_RESOURCES:
