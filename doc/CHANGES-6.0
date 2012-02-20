@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.6 2012/02/19 18:45:57 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.7 2012/02/20 21:17:22 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -87,4 +87,10 @@ sys/dev/usb/usbdevs_data.h			regen
 
 	Add support for the QUAN DM9601.
 	[mbalmer, ticket #11]
+
+sys/dev/usb/umidi.c				1.60
+
+	Fix the reversed logic in several uses of the new 'closing'
+	member introduced in the previous change. From PR 45909.
+	[mrg, ticket #12]
 
