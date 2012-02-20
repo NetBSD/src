@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.9 2012/02/20 21:55:44 sborrill Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.10 2012/02/20 22:05:01 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -123,4 +123,14 @@ tests/lib/libc/gen/posix_spawn/t_fileactions.c	1.3
 	race condition, doublefreeing of memory and memory leaks in
 	error cases.
 	[martin, ticket #14]
+
+usr.sbin/makemandb/apropos.1			1.4
+usr.sbin/makemandb/makemandb.8			1.2
+usr.sbin/makemandb/whatis.c			1.3
+
+	Add reference to whatis(1).
+	SQLite doesn't use the FTS index for equal ops, so force it
+	to do a FTS search first. Drops run time by a factor of 6
+	for "whatis man".
+	[joerg, ticket #15]
 
