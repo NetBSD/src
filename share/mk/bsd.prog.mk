@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.271 2012/02/19 23:19:37 matt Exp $
+#	$NetBSD: bsd.prog.mk,v 1.272 2012/02/20 18:23:50 matt Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -450,7 +450,6 @@ ${_P}: .gdbinit ${LIBCRT0} ${XOBJS.${_P}} ${SRCS.${_P}} ${DPSRCS} ${LIBC} ${LIBC
 	    ${XSRCS.${_P}:@.SRC.@${.ALLSRC:M*.c:M*${.SRC.}}@:O:u} ${XOBJS.${_P}} \
 	    ${_LDADD.${_P}}
 .endif	# defined(DESTDIR)
-	@${SIZE} ${_P}
 .if defined(CTFMERGE)
 	${CTFMERGE} ${CTFMFLAGS} -o ${.TARGET} ${OBJS.${_P}}
 .endif
