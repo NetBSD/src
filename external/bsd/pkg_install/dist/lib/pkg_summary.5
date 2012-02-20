@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_summary.5,v 1.3 2009/05/17 21:31:59 joerg Exp $
+.\"	$NetBSD: pkg_summary.5,v 1.3.12.1 2012/02/20 21:41:30 sborrill Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation
 .\"
@@ -66,6 +66,10 @@ If missing, this package has no dependencies.
 .It Ev DESCRIPTION
 (required) A more detailed description of the package.
 .\" DIGEST
+.It Ev FILE_CKSUM
+(optional) A checksum type supported by
+.Xr digest 1
+and checksum separated by space character.
 .It Ev FILE_NAME
 (optional) The name of the binary package file.
 If not given,
@@ -126,6 +130,7 @@ For example, the following will list this data for all installed packages:
 .Pp
 .Dl "pkg_info -X -a"
 .Sh SEE ALSO
+.Xr digest 1 ,
 .Xr pkg_info 1
 .Sh HISTORY
 The
