@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.181.6.9 2012/02/20 06:50:20 mrg Exp $ */
+/*	$NetBSD: ehci.c,v 1.181.6.10 2012/02/20 22:42:24 mrg Exp $ */
 
 /*
  * Copyright (c) 2004-2011 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.6.9 2012/02/20 06:50:20 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.6.10 2012/02/20 22:42:24 mrg Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3575,6 +3575,8 @@ ehci_device_bulk_start(usbd_xfer_handle xfer)
 		panic("ehci_device_bulk_start: a request");
 #endif
 
+	mutex_enter(&sc->sc_lock);
+
 	len = xfer->length;
 	endpt = epipe->pipe.endpoint->edesc->bEndpointAddress;
 	isread = UE_GET_DIR(endpt) == UE_DIR_IN;
@@ -3588,6 +3590,7 @@ ehci_device_bulk_start(usbd_xfer_handle xfer)
 		DPRINTFN(-1,("ehci_device_bulk_transfer: no memory\n"));
 		xfer->status = err;
 		usb_transfer_complete(xfer);
+		mutex_exit(&sc->sc_lock);
 		return (err);
 	}
 
@@ -3609,7 +3612,6 @@ ehci_device_bulk_start(usbd_xfer_handle xfer)
 	exfer->isdone = 0;
 #endif
 
-	mutex_enter(&sc->sc_lock);
 	ehci_set_qh_qtd(sqh, data); /* also does usb_syncmem(sqh) */
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
 		callout_reset(&xfer->timeout_handle, mstohz(xfer->timeout),
@@ -3759,6 +3761,8 @@ ehci_device_intr_start(usbd_xfer_handle xfer)
 		panic("ehci_device_intr_start: a request");
 #endif
 
+	mutex_enter(&sc->sc_lock);
+
 	len = xfer->length;
 	endpt = epipe->pipe.endpoint->edesc->bEndpointAddress;
 	isread = UE_GET_DIR(endpt) == UE_DIR_IN;
@@ -3772,6 +3776,7 @@ ehci_device_intr_start(usbd_xfer_handle xfer)
 		DPRINTFN(-1, ("ehci_device_intr_start: no memory\n"));
 		xfer->status = err;
 		usb_transfer_complete(xfer);
+		mutex_exit(&sc->sc_lock);
 		return (err);
 	}
 
@@ -3793,7 +3798,6 @@ ehci_device_intr_start(usbd_xfer_handle xfer)
 	exfer->isdone = 0;
 #endif
 
-	mutex_enter(&sc->sc_lock);
 	ehci_set_qh_qtd(sqh, data); /* also does usb_syncmem(sqh) */
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
 		callout_reset(&xfer->timeout_handle, mstohz(xfer->timeout),
