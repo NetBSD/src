@@ -1,4 +1,4 @@
-/*	$NetBSD: spawn.h,v 1.1 2012/02/11 23:31:24 martin Exp $	*/
+/*	$NetBSD: spawn.h,v 1.1.2.1 2012/02/20 21:54:55 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2008 Ed Schouten <ed@FreeBSD.org>
@@ -33,6 +33,7 @@
 
 #include <sys/spawn.h>
 
+__BEGIN_DECLS
 /*
  * Spawn routines
  *

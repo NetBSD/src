@@ -1,4 +1,4 @@
-/* $NetBSD: t_fileactions.c,v 1.2 2012/02/14 00:13:54 martin Exp $ */
+/* $NetBSD: t_fileactions.c,v 1.2.2.1 2012/02/20 21:54:57 sborrill Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -279,12 +279,57 @@ ATF_TC_BODY(t_spawn_fileactions, tc)
 	ATF_REQUIRE(WIFEXITED(status) && WEXITSTATUS(status) == EXIT_SUCCESS);
 }
 
+ATF_TC(t_spawn_empty_fileactions);
+
+ATF_TC_HEAD(t_spawn_empty_fileactions, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "posix_spawn with empty fileactions (PR kern/46038)");
+	atf_tc_set_md_var(tc, "require.progs", "/bin/cat");
+}
+
+ATF_TC_BODY(t_spawn_empty_fileactions, tc)
+{
+	int status, err;
+	pid_t pid;
+	char * const args[2] = { __UNCONST("cat"), NULL };
+	posix_spawn_file_actions_t fa;
+	size_t insize, outsize;
+
+	/*
+	 * try a "cat < testfile > checkfile", but set up stdin/stdout
+	 * already in the parent and pass empty file actions to the child.
+	 */
+	make_testfile(TESTFILE);
+	unlink(CHECKFILE);
+
+	freopen(TESTFILE, "r", stdin);
+	freopen(CHECKFILE, "w", stdout);
+
+	posix_spawn_file_actions_init(&fa);
+	err = posix_spawn(&pid, "/bin/cat", &fa, NULL, args, NULL);
+	posix_spawn_file_actions_destroy(&fa);
+
+	ATF_REQUIRE(err == 0);
+
+	/* ok, wait for the child to finish */
+	waitpid(pid, &status, 0);
+	ATF_REQUIRE(WIFEXITED(status) && WEXITSTATUS(status) == EXIT_SUCCESS);
+
+	/* now check that input and output have the same size */
+	insize = filesize(TESTFILE);
+	outsize = filesize(CHECKFILE);
+	ATF_REQUIRE(insize == strlen(TESTCONTENT));
+	ATF_REQUIRE(insize == outsize);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, t_spawn_fileactions);
 	ATF_TP_ADD_TC(tp, t_spawn_open_nonexistent);
 	ATF_TP_ADD_TC(tp, t_spawn_reopen);
 	ATF_TP_ADD_TC(tp, t_spawn_openmode);
+	ATF_TP_ADD_TC(tp, t_spawn_empty_fileactions);
 
 	return atf_no_error();
 }
