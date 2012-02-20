@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.134.2.8 2012/02/20 05:09:36 mrg Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.134.2.9 2012/02/20 06:50:21 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134.2.8 2012/02/20 05:09:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134.2.9 2012/02/20 06:50:21 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -388,7 +388,7 @@ usbd_alloc_xfer(usbd_device_handle dev)
 		return (NULL);
 	xfer->device = dev;
 	callout_init(&xfer->timeout_handle,
-	    dev->bus->methods->get_locks ? CALLOUT_MPSAFE : 0);
+	    dev->bus->methods->get_lock ? CALLOUT_MPSAFE : 0);
 	cv_init(&xfer->cv, "usbxfer");
 	cv_init(&xfer->hccv, "usbhcxfer");
 	DPRINTFN(5,("usbd_alloc_xfer() = %p\n", xfer));

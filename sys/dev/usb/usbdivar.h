@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.93.8.5 2012/02/20 02:12:24 mrg Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.93.8.6 2012/02/20 06:50:21 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -37,33 +37,32 @@
 /*
  * Discussion about locking in the USB code:
  *
- * There are two locks presented by the host controller: the interrupt lock
- * and the thread lock.  The interrupt lock, either a spin or adaptive mutex,
- * manages hardware state and anything else touched in an interrupt context.
- * The thread lock has everything else.  
+ * This is one lock presented by the host controller: the thread lock.
+ * Host controller drivers are expected to manage interrupt state
+ * internally.
  *
  * List of hardware interface methods, and which locks are held when each
  * is called by this module:
  *
- *	BUS METHOD		INTR	THREAD  NOTES
- *	----------------------- ------- -------	-------------------------
- *	open_pipe		-	-	might want to take thread lock?
- *	soft_intr		-	x	sometimes called with intr lock also held -- perhaps a problem?
- *	do_poll			-	-	might want to take thread lock?
- *	allocm			-	-
- *	freem			-	-
- *	allocx			-	-
- *	freex			-	-
- *	get_locks 		-	-	Called at attach time
+ *	BUS METHOD		THREAD  NOTES
+ *	----------------------- -------	-------------------------
+ *	open_pipe		-	might want to take thread lock?
+ *	soft_intr		x
+ *	do_poll			-	might want to take thread lock?
+ *	allocm			-
+ *	freem			-
+ *	allocx			-
+ *	freex			-
+ *	get_lock 		-	Called at attach time
  *
- *	PIPE METHOD		INTR	THREAD  NOTES
- *	----------------------- ------- -------	-------------------------
- *	transfer		-	-
- *	start			-	-
- *	abort			-	x
- *	close			-	x
- *	cleartoggle		-	-
- *	done			-	x
+ *	PIPE METHOD		THREAD  NOTES
+ *	----------------------- -------	-------------------------
+ *	transfer		-
+ *	start			-	Might want to take this?
+ *	abort			x
+ *	close			x
+ *	cleartoggle		-
+ *	done			x
  *
  * The above semantics are likely to change.
  * 
@@ -99,8 +98,7 @@ struct usbd_bus_methods {
 	void		      (*freem)(struct usbd_bus *, usb_dma_t *);
 	struct usbd_xfer *    (*allocx)(struct usbd_bus *);
 	void		      (*freex)(struct usbd_bus *, struct usbd_xfer *);
-	void		      (*get_locks)(struct usbd_bus *,
-					kmutex_t **, kmutex_t **);
+	void		      (*get_lock)(struct usbd_bus *, kmutex_t **);
 };
 
 struct usbd_pipe_methods {
@@ -147,7 +145,6 @@ struct usbd_bus {
 	const struct usbd_bus_methods *methods;
 	u_int32_t		pipe_size; /* size of a pipe struct */
 	/* Filled by usb driver */
-	kmutex_t		*intr_lock;
 	kmutex_t		*lock;
 	struct usbd_device      *root_hub;
 	usbd_device_handle	devices[USB_MAX_DEVICES];
