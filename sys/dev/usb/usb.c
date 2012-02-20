@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.125.6.6 2012/02/20 02:12:24 mrg Exp $	*/
+/*	$NetBSD: usb.c,v 1.125.6.7 2012/02/20 03:27:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.125.6.6 2012/02/20 02:12:24 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.125.6.7 2012/02/20 03:27:07 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -57,18 +57,18 @@ __KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.125.6.6 2012/02/20 02:12:24 mrg Exp $");
 #include <sys/signalvar.h>
 #include <sys/intr.h>
 #include <sys/module.h>
+#include <sys/mutex.h>
+#include <sys/bus.h>
+#include <sys/once.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
+#include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_verbose.h>
+#include <dev/usb/usb_quirks.h>
 
 #define USB_DEV_MINOR 255
-
-#include <sys/bus.h>
-
-#include <dev/usb/usbdivar.h>
-#include <dev/usb/usb_quirks.h>
 
 #ifdef USB_DEBUG
 #define DPRINTF(x)	if (usbdebug) printf x
@@ -135,6 +135,8 @@ Static SIMPLEQ_HEAD(, usb_event_q) usb_events =
 	SIMPLEQ_HEAD_INITIALIZER(usb_events);
 Static int usb_nevents = 0;
 Static struct selinfo usb_selevent;
+Static kmutex_t usb_event_lock;
+Static kcondvar_t usb_event_cv;
 Static proc_t *usb_async_proc;  /* process that wants USB SIGIO */
 Static void *usb_async_sih;
 Static int usb_dev_open = 0;
@@ -156,6 +158,7 @@ static void usb_attach(device_t, device_t, void *);
 static int usb_detach(device_t, int);
 static int usb_activate(device_t, enum devact);
 static void usb_childdet(device_t, device_t);
+static int usb_once_init(void);
 static void usb_doattach(device_t);
 
 extern struct cfdriver usb_cd;
@@ -174,6 +177,7 @@ usb_match(device_t parent, cfdata_t match, void *aux)
 void
 usb_attach(device_t parent, device_t self, void *aux)
 {
+	static ONCE_DECL(init_control);
 	struct usb_softc *sc = device_private(self);
 	int usbrev;
 
@@ -194,13 +198,23 @@ usb_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal("\n");
 
+	RUN_ONCE(&init_control, usb_once_init);
 	config_interrupts(self, usb_doattach);
+}
+
+static int
+usb_once_init(void)
+{
+
+	selinit(&usb_selevent);
+	mutex_init(&usb_event_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&usb_event_cv, "usbrea");
+	return 0;
 }
 
 static void
 usb_doattach(device_t self)
 {
-	static bool usb_selevent_init;	/* XXX */
 	struct usb_softc *sc = device_private(self);
 	usbd_device_handle dev;
 	usbd_status err;
@@ -208,10 +222,6 @@ usb_doattach(device_t self)
 	struct usb_event *ue;
 	bool mpsafe = sc->sc_bus->methods->get_locks ? true : false;
 
-	if (!usb_selevent_init) {
-		selinit(&usb_selevent);
-		usb_selevent_init = true;
-	}
 	DPRINTF(("usbd_doattach\n"));
 
 	sc->sc_bus->usbctl = self;
@@ -485,7 +495,7 @@ usbread(dev_t dev, struct uio *uio, int flag)
 #ifdef COMPAT_30
 	struct usb_event_old *ueo = NULL;	/* XXXGCC */
 #endif
-	int s, error, n, useold;
+	int error, n, useold;
 
 	if (minor(dev) != USB_DEV_MINOR)
 		return (ENXIO);
@@ -507,7 +517,7 @@ usbread(dev_t dev, struct uio *uio, int flag)
 	}
 
 	error = 0;
-	s = splusb();
+	mutex_enter(&usb_event_lock);
 	for (;;) {
 		n = usb_get_next_event(ue);
 		if (n != 0)
@@ -516,11 +526,11 @@ usbread(dev_t dev, struct uio *uio, int flag)
 			error = EWOULDBLOCK;
 			break;
 		}
-		error = tsleep(&usb_events, PZERO | PCATCH, "usbrea", 0);
+		error = cv_wait_sig(&usb_event_cv, &usb_event_lock);
 		if (error)
 			break;
 	}
-	splx(s);
+	mutex_exit(&usb_event_lock);
 	if (!error) {
 #ifdef COMPAT_30
 		if (useold) { /* copy fields to old struct */
@@ -721,18 +731,18 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 int
 usbpoll(dev_t dev, int events, struct lwp *l)
 {
-	int revents, mask, s;
+	int revents, mask;
 
 	if (minor(dev) == USB_DEV_MINOR) {
 		revents = 0;
 		mask = POLLIN | POLLRDNORM;
 
-		s = splusb();
+		mutex_enter(&usb_event_lock);
 		if (events & mask && usb_nevents > 0)
 			revents |= events & mask;
 		if (revents == 0 && events & mask)
 			selrecord(l, &usb_selevent);
-		splx(s);
+		mutex_exit(&usb_event_lock);
 
 		return (revents);
 	} else {
@@ -743,11 +753,10 @@ usbpoll(dev_t dev, int events, struct lwp *l)
 static void
 filt_usbrdetach(struct knote *kn)
 {
-	int s;
 
-	s = splusb();
+	mutex_enter(&usb_event_lock);
 	SLIST_REMOVE(&usb_selevent.sel_klist, kn, knote, kn_selnext);
-	splx(s);
+	mutex_exit(&usb_event_lock);
 }
 
 static int
@@ -768,7 +777,6 @@ int
 usbkqfilter(dev_t dev, struct knote *kn)
 {
 	struct klist *klist;
-	int s;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
@@ -784,9 +792,9 @@ usbkqfilter(dev_t dev, struct knote *kn)
 
 	kn->kn_hook = NULL;
 
-	s = splusb();
+	mutex_enter(&usb_event_lock);
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
-	splx(s);
+	mutex_exit(&usb_event_lock);
 
 	return (0);
 }
@@ -847,11 +855,13 @@ usb_needs_reattach(usbd_device_handle dev)
 		wakeup(&dev->bus->needs_explore);
 }
 
-/* Called at splusb() */
+/* Called at with usb_event_lock held. */
 int
 usb_get_next_event(struct usb_event *ue)
 {
 	struct usb_event_q *ueq;
+
+	KASSERT(mutex_owned(&usb_event_lock));
 
 	if (usb_nevents <= 0)
 		return (0);
@@ -909,30 +919,29 @@ usb_add_event(int type, struct usb_event *uep)
 {
 	struct usb_event_q *ueq;
 	struct timeval thetime;
-	int s;
 
 	microtime(&thetime);
-	/* Don't want to wait here inside splusb() */
+	/* Don't want to wait here with usb_event_lock held */
 	ueq = (struct usb_event_q *)(void *)uep;
 	ueq->ue = *uep;
 	ueq->ue.ue_type = type;
 	TIMEVAL_TO_TIMESPEC(&thetime, &ueq->ue.ue_time);
 
-	s = splusb();
+	mutex_enter(&usb_event_lock);
 	if (++usb_nevents >= USB_MAX_EVENTS) {
 		/* Too many queued events, drop an old one. */
 		DPRINTFN(-1,("usb: event dropped\n"));
 		(void)usb_get_next_event(0);
 	}
 	SIMPLEQ_INSERT_TAIL(&usb_events, ueq, next);
-	wakeup(&usb_events);
+	cv_signal(&usb_event_cv);
 	selnotify(&usb_selevent, 0, 0);
 	if (usb_async_proc != NULL) {
 		kpreempt_disable();
 		softint_schedule(usb_async_sih);
 		kpreempt_enable();
 	}
-	splx(s);
+	mutex_exit(&usb_event_lock);
 }
 
 Static void
