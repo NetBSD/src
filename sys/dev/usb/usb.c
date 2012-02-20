@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.125.6.8 2012/02/20 04:06:13 mrg Exp $	*/
+/*	$NetBSD: usb.c,v 1.125.6.9 2012/02/20 06:50:21 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.125.6.8 2012/02/20 04:06:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.125.6.9 2012/02/20 06:50:21 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -220,7 +220,7 @@ usb_doattach(device_t self)
 	usbd_status err;
 	int speed;
 	struct usb_event *ue;
-	bool mpsafe = sc->sc_bus->methods->get_locks ? true : false;
+	bool mpsafe = sc->sc_bus->methods->get_lock ? true : false;
 
 	DPRINTF(("usbd_doattach\n"));
 
@@ -240,10 +240,9 @@ usb_doattach(device_t self)
 	}
 
 	if (mpsafe) {
-		sc->sc_bus->methods->get_locks(sc->sc_bus,
-		    &sc->sc_bus->intr_lock, &sc->sc_bus->lock);
+		sc->sc_bus->methods->get_lock(sc->sc_bus, &sc->sc_bus->lock);
 	} else {
-		sc->sc_bus->intr_lock = sc->sc_bus->lock = NULL;
+		sc->sc_bus->lock = NULL;
 	}
 	cv_init(&sc->sc_bus->needs_explore_cv, "usbevt");
 
