@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl-bozo.c,v 1.13 2011/11/18 09:51:31 mrg Exp $	*/
+/*	$NetBSD: ssl-bozo.c,v 1.14 2012/02/20 08:40:46 elric Exp $	*/
 
 /*	$eterna: ssl-bozo.c,v 1.15 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -176,8 +176,8 @@ bozo_ssl_init(bozohttpd_t *httpd)
 		bozo_ssl_err(httpd, EXIT_FAILURE,
 		    "SSL context creation failed");
 
-	if (1 != SSL_CTX_use_certificate_file(sslinfo->ssl_context,
-	    sslinfo->certificate_file, SSL_FILETYPE_PEM))
+	if (1 != SSL_CTX_use_certificate_chain_file(sslinfo->ssl_context,
+	    sslinfo->certificate_file))
 		bozo_ssl_err(httpd, EXIT_FAILURE,
 		    "Unable to use certificate file '%s'",
 		    sslinfo->certificate_file);
