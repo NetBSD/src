@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_ctl.c,v 1.12 2012/02/05 00:37:13 rmind Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.13 2012/02/20 00:18:19 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -37,11 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.12 2012/02/05 00:37:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.13 2012/02/20 00:18:19 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
-#include <sys/kernel.h>
 
 #include <prop/proplib.h>
 
@@ -479,7 +478,7 @@ npfctl_reload(u_long cmd, void *data)
 	 * Finally - reload ruleset, tableset and NAT policies.
 	 * Operation will be performed as a single transaction.
 	 */
-	npf_reload(rlset, tblset, nset);
+	npf_reload(rlset, tblset, nset, flush);
 
 	/* Turn on/off session tracking accordingly. */
 	npf_session_tracking(!flush);
@@ -506,7 +505,9 @@ fail:
 
 	/* Error report. */
 	prop_dictionary_set_int32(errdict, "errno", error);
+#ifdef _KERNEL
 	prop_dictionary_copyout_ioctl(pref, cmd, errdict);
+#endif
 	prop_object_release(errdict);
 	return 0;
 }
@@ -561,7 +562,9 @@ out:		/* Error path. */
 
 	/* Error report. */
 	prop_dictionary_set_int32(errdict, "errno", error);
+#ifdef _KERNEL
 	prop_dictionary_copyout_ioctl(pref, cmd, errdict);
+#endif
 	prop_object_release(errdict);
 	return error;
 }
