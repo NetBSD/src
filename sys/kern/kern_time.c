@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.172 2012/02/19 21:06:55 rmind Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.173 2012/02/20 01:12:42 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.172 2012/02/19 21:06:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.173 2012/02/20 01:12:42 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -1335,7 +1335,7 @@ itimerfire(struct ptimer *pt)
 	 * XXX Can overrun, but we don't do signal queueing yet, anyway.
 	 * XXX Relying on the clock interrupt is stupid.
 	 */
-	if (pt->pt_ev.sigev_notify != SIGEV_SIGNAL) {
+	if (pt->pt_ev.sigev_notify != SIGEV_SIGNAL || pt->pt_queued) {
 		return;
 	}
 	TAILQ_INSERT_TAIL(&timer_queue, pt, pt_chain);
