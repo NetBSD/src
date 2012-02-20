@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.93.8.4 2011/12/09 01:53:00 mrg Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.93.8.5 2012/02/20 02:12:24 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  *	BUS METHOD		INTR	THREAD  NOTES
  *	----------------------- ------- -------	-------------------------
  *	open_pipe		-	-	might want to take thread lock?
- *	soft_intr		-	-	intr lock is taken sometimes, thread lock taken often, but nothing demanded?
+ *	soft_intr		-	x	sometimes called with intr lock also held -- perhaps a problem?
  *	do_poll			-	-	might want to take thread lock?
  *	allocm			-	-
  *	freem			-	-
@@ -60,13 +60,18 @@
  *	----------------------- ------- -------	-------------------------
  *	transfer		-	-
  *	start			-	-
- *	abort			-	-
+ *	abort			-	x
  *	close			-	x
  *	cleartoggle		-	-
  *	done			-	x
  *
  * The above semantics are likely to change.
  * 
+ * USB functions known to expect the thread lock taken include:
+ *    usb_transfer_complete()
+ *    usb_insert_transfer()
+ *    usb_start_next()
+ *
  */
 
 /* From usb_mem.h */

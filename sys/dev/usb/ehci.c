@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.181.6.5 2011/12/09 01:52:59 mrg Exp $ */
+/*	$NetBSD: ehci.c,v 1.181.6.6 2012/02/20 02:12:23 mrg Exp $ */
 
 /*
  * Copyright (c) 2004-2011 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.6.5 2011/12/09 01:52:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.6.6 2012/02/20 02:12:23 mrg Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -744,10 +744,10 @@ ehci_softintr(void *v)
 	ehci_softc_t *sc = bus->hci_private;
 	struct ehci_xfer *ex, *nextex;
 
+	KASSERT(sc->sc_bus.use_polling || mutex_owned(&sc->sc_lock));
+
 	DPRINTFN(10,("%s: ehci_softintr (%d)\n", device_xname(sc->sc_dev),
 		     sc->sc_bus.intr_context));
-
-	mutex_enter(&sc->sc_lock);
 
 	sc->sc_bus.intr_context++;
 
@@ -765,8 +765,8 @@ ehci_softintr(void *v)
 	/* Schedule a callout to catch any dropped transactions. */
 	if ((sc->sc_flags & EHCIF_DROPPED_INTR_WORKAROUND) &&
 	    !TAILQ_EMPTY(&sc->sc_intrhead))
-		callout_reset(&(sc->sc_tmo_intrlist),
-		    (hz), (ehci_intrlist_timeout), (sc));
+		callout_reset(&sc->sc_tmo_intrlist,
+		    hz, ehci_intrlist_timeout, sc);
 
 	if (sc->sc_softwake) {
 		sc->sc_softwake = 0;
@@ -774,8 +774,6 @@ ehci_softintr(void *v)
 	}
 
 	sc->sc_bus.intr_context--;
-
-	mutex_exit(&sc->sc_lock);
 }
 
 /* Check for an interrupt. */
@@ -1116,7 +1114,9 @@ ehci_waitintr(ehci_softc_t *sc, usbd_xfer_handle xfer)
 	/* Timeout */
 	DPRINTF(("ehci_waitintr: timeout\n"));
 	xfer->status = USBD_TIMEOUT;
+	mutex_enter(&sc->sc_lock);
 	usb_transfer_complete(xfer);
+	mutex_exit(&sc->sc_lock);
 	/* XXX should free TD */
 }
 
@@ -1813,7 +1813,7 @@ ehci_open(usbd_pipe_handle pipe)
 }
 
 /*
- * Add an ED to the schedule.  Called at splusb().
+ * Add an ED to the schedule.  Called with USB thread lock held.
  */
 Static void
 ehci_add_qh(ehci_softc_t *sc, ehci_soft_qh_t *sqh, ehci_soft_qh_t *head)
@@ -1841,7 +1841,7 @@ ehci_add_qh(ehci_softc_t *sc, ehci_soft_qh_t *sqh, ehci_soft_qh_t *head)
 }
 
 /*
- * Remove an ED from the schedule.  Called at splusb().
+ * Remove an ED from the schedule.  Called with USB thread lock held.
  */
 Static void
 ehci_rem_qh(ehci_softc_t *sc, ehci_soft_qh_t *sqh, ehci_soft_qh_t *head)
@@ -2600,14 +2600,13 @@ ehci_root_intr_abort(usbd_xfer_handle xfer)
 {
 	ehci_softc_t *sc = xfer->pipe->device->bus->hci_private;
 
-	mutex_enter(&sc->sc_lock);
+	KASSERT(mutex_owned(&sc->sc_lock));
 	if (xfer->pipe->intrxfer == xfer) {
 		DPRINTF(("ehci_root_intr_abort: remove\n"));
 		xfer->pipe->intrxfer = NULL;
 	}
 	xfer->status = USBD_CANCELLED;
 	usb_transfer_complete(xfer);
-	mutex_exit(&sc->sc_lock);
 }
 
 /* Close the root pipe. */
@@ -3003,20 +3002,18 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 
 	DPRINTF(("ehci_abort_xfer: xfer=%p pipe=%p\n", xfer, epipe));
 
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	if (sc->sc_dying) {
 		/* If we're dying, just do the software part. */
-		mutex_enter(&sc->sc_lock);
 		xfer->status = status;	/* make software ignore it */
 		callout_stop(&xfer->timeout_handle);
 		usb_transfer_complete(xfer);
-		mutex_exit(&sc->sc_lock);
 		return;
 	}
 
 	if (xfer->device->bus->intr_context)
 		panic("ehci_abort_xfer: not in process context");
-
-	mutex_enter(&sc->sc_lock);
 
 	/*
 	 * If an abort is already in progress then just wait for it to
@@ -3034,7 +3031,6 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 		xfer->hcflags |= UXFER_ABORTWAIT;
 		while (xfer->hcflags & UXFER_ABORTING)
 			cv_wait(&xfer->hccv, &sc->sc_lock);
-		mutex_exit(&sc->sc_lock);
 		return;
 	}
 	xfer->hcflags |= UXFER_ABORTING;
@@ -3129,7 +3125,7 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 		cv_broadcast(&xfer->hccv);
 	}
 
-	mutex_exit(&sc->sc_lock);
+	KASSERT(mutex_owned(&sc->sc_lock));
 #undef exfer
 }
 
@@ -3149,30 +3145,28 @@ ehci_abort_isoc_xfer(usbd_xfer_handle xfer, usbd_status status)
 
 	DPRINTF(("ehci_abort_isoc_xfer: xfer %p pipe %p\n", xfer, epipe));
 
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	if (sc->sc_dying) {
-		mutex_enter(&sc->sc_lock);
 		xfer->status = status;
 		callout_stop(&xfer->timeout_handle);
 		usb_transfer_complete(xfer);
-		mutex_exit(&sc->sc_lock);
 		return;
 	}
-
-	mutex_enter(&sc->sc_lock);
 
 	if (xfer->hcflags & UXFER_ABORTING) {
 		DPRINTFN(2, ("ehci_abort_isoc_xfer: already aborting\n"));
 
 #ifdef DIAGNOSTIC
 		if (status == USBD_TIMEOUT)
-			printf("ehci_abort_xfer: TIMEOUT while aborting\n");
+			printf("ehci_abort_isoc_xfer: TIMEOUT while aborting\n");
 #endif
 
 		xfer->status = status;
-		DPRINTFN(2, ("ehci_abort_xfer: waiting for abort to finish\n"));
+		DPRINTFN(2, ("ehci_abort_isoc_xfer: waiting for abort to finish\n"));
 		xfer->hcflags |= UXFER_ABORTWAIT;
 		while (xfer->hcflags & UXFER_ABORTING)
-			cv_wait(&xfer->hccv, &sc->sc_intr_lock);
+			cv_wait(&xfer->hccv, &sc->sc_lock);
 		goto done;
 	}
 	xfer->hcflags |= UXFER_ABORTING;
@@ -3200,7 +3194,7 @@ ehci_abort_isoc_xfer(usbd_xfer_handle xfer, usbd_status status)
 
         sc->sc_softwake = 1;
         usb_schedsoftintr(&sc->sc_bus);
-	cv_wait(&sc->sc_softwake_cv, &sc->sc_intr_lock);
+	cv_wait(&sc->sc_softwake_cv, &sc->sc_lock);
 
 #ifdef DIAGNOSTIC
 	exfer->isdone = 1;
@@ -3213,7 +3207,7 @@ ehci_abort_isoc_xfer(usbd_xfer_handle xfer, usbd_status status)
 	}
 
 done:
-	mutex_exit(&sc->sc_lock);
+	KASSERT(mutex_owned(&sc->sc_lock));
 	return;
 }
 
@@ -3231,7 +3225,9 @@ ehci_timeout(void *addr)
 #endif
 
 	if (sc->sc_dying) {
+		mutex_enter(&sc->sc_lock);
 		ehci_abort_xfer(&exfer->xfer, USBD_TIMEOUT);
+		mutex_exit(&sc->sc_lock);
 		return;
 	}
 
@@ -3245,10 +3241,13 @@ Static void
 ehci_timeout_task(void *addr)
 {
 	usbd_xfer_handle xfer = addr;
+	ehci_softc_t *sc = xfer->pipe->device->bus->hci_private;
 
 	DPRINTF(("ehci_timeout_task: xfer=%p\n", xfer));
 
+	mutex_enter(&sc->sc_lock);
 	ehci_abort_xfer(xfer, USBD_TIMEOUT);
+	mutex_exit(&sc->sc_lock);
 }
 
 /************************/
@@ -3533,9 +3532,7 @@ ehci_intrlist_timeout(void *arg)
 	ehci_softc_t *sc = arg;
 
 	DPRINTF(("ehci_intrlist_timeout\n"));
-	mutex_spin_enter(&sc->sc_intr_lock);
 	usb_schedsoftintr(&sc->sc_bus);
-	mutex_spin_exit(&sc->sc_intr_lock);
 }
 
 /************************/
@@ -3714,7 +3711,9 @@ ehci_device_setintr(ehci_softc_t *sc, ehci_soft_qh_t *sqh, int ival)
 
 	sqh->islot = islot;
 	isp = &sc->sc_islots[islot];
+	mutex_enter(&sc->sc_lock);
 	ehci_add_qh(sc, sqh, isp->sqh);
+	mutex_exit(&sc->sc_lock);
 
 	return (USBD_NORMAL_COMPLETION);
 }
