@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.30 2011/11/18 09:51:31 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.31 2012/02/20 09:26:56 elric Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -696,6 +696,9 @@ bozo_read_request(bozohttpd_t *httpd)
 			else if (strcasecmp(hdr->h_header,
 					"if-modified-since") == 0)
 				request->hr_if_modified_since = hdr->h_value;
+			else if (strcasecmp(hdr->h_header,
+					"accept-encoding") == 0)
+				request->hr_accept_encoding = hdr->h_value;
 
 			debug((httpd, DEBUG_FAT, "adding header %s: %s",
 			    hdr->h_header, hdr->h_value));
@@ -1350,6 +1353,53 @@ bad_done:
 }
 
 /*
+ * can_gzip checks if the request supports and prefers gzip encoding.
+ *
+ * XXX: we do not consider the associated q with gzip in making our
+ *      decision which is broken.
+ */
+
+static int
+can_gzip(bozo_httpreq_t *request)
+{
+	const char	*pos;
+	const char	*tmp;
+	size_t		 len;
+
+	/* First we decide if the request can be gzipped at all. */
+
+	/* not if we already are encoded... */
+	tmp = bozo_content_encoding(request, request->hr_file);
+	if (tmp && *tmp)
+		return 0;
+
+	/* not if we are not asking for the whole file... */
+	if (request->hr_last_byte_pos != -1 || request->hr_have_range)
+		return 0;
+
+	/* Then we determine if gzip is on the cards. */
+
+	for (pos = request->hr_accept_encoding; pos && *pos; pos += len) {
+		while (*pos == ' ')
+			pos++;
+
+		len = strcspn(pos, ";,");
+
+		if ((len == 4 && strncasecmp("gzip", pos, 4) == 0) ||
+		    (len == 6 && strncasecmp("x-gzip", pos, 6) == 0))
+			return 1;
+
+		if (pos[len] == ';')
+			len += strcspn(&pos[len], ",");
+
+		if (pos[len])
+			len++;
+	}
+
+	return 0;
+}
+
+/*
  * bozo_process_request does the following:
  *	- check the request is valid
  *	- process cgi-bin if necessary
@@ -1374,9 +1424,21 @@ bozo_process_request(bozo_httpreq_t *request)
 	if (transform_request(request, &isindex) == 0)
 		return;
 
+	fd = -1;
+	encoding = NULL;
+	if (can_gzip(request)) {
+		asprintf(&file, "%s.gz", request->hr_file);
+		fd = open(file, O_RDONLY);
+		if (fd >= 0)
+			encoding = "gzip";
+		free(file);
+	}
+
 	file = request->hr_file;
 
-	fd = open(file, O_RDONLY);
+	if (fd < 0)
+		fd = open(file, O_RDONLY);
+
 	if (fd < 0) {
 		debug((httpd, DEBUG_FAT, "open failed: %s", strerror(errno)));
 		if (errno == EPERM)
@@ -1432,7 +1494,8 @@ bozo_process_request(bozo_httpreq_t *request)
 
 	if (request->hr_proto != httpd->consts.http_09) {
 		type = bozo_content_type(request, file);
-		encoding = bozo_content_encoding(request, file);
+		if (!encoding)
+			encoding = bozo_content_encoding(request, file);
 
 		bozo_print_header(request, &sb, type, encoding);
 		bozo_printf(httpd, "\r\n");

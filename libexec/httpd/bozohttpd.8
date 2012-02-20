@@ -1,4 +1,4 @@
-.\"	$NetBSD: bozohttpd.8,v 1.32 2011/11/18 09:51:31 mrg Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.33 2012/02/20 09:26:56 elric Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.101 2011/11/18 01:25:11 mrg Exp $
 .\"
@@ -408,6 +408,13 @@ To disable SSL SUPPORT compile
 with
 .Dq -DNO_SSL_SUPPORT
 on the compiler command line.
+.Ss COMPRESSION
+.Nm
+supports a very basic form compression.
+.Nm
+will serve the requested file postpended with ``.gz'' if
+it exists, it is readable, the client requested gzip compression, and
+the client did not make a ranged request.
 .Sh FILES
 .Nm
 looks for a couple of special files in directories that allow certain features

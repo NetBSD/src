@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.20 2011/11/18 09:51:31 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.21 2012/02/20 09:26:56 elric Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -128,6 +128,7 @@ typedef struct bozo_httpreq_t {
 	const char *hr_referrer;
 	const char *hr_range;
 	const char *hr_if_modified_since;
+	const char *hr_accept_encoding;
 	int         hr_have_range;
 	off_t       hr_first_byte_pos;
 	off_t       hr_last_byte_pos;
