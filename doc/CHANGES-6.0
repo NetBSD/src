@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.7 2012/02/20 21:17:22 sborrill Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.8 2012/02/20 21:42:13 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -93,4 +93,23 @@ sys/dev/usb/umidi.c				1.60
 	Fix the reversed logic in several uses of the new 'closing'
 	member introduced in the previous change. From PR 45909.
 	[mrg, ticket #12]
+
+doc/3RDPARTY						patch
+doc/CHANGES						patch
+external/bsd/pkg_install/dist/add/perform.c		patch
+external/bsd/pkg_install/dist/delete/pkg_delete.c	patch
+external/bsd/pkg_install/dist/lib/license.c		patch
+external/bsd/pkg_install/dist/lib/opattern.c		patch
+external/bsd/pkg_install/dist/lib/pkg_summary.5		patch
+external/bsd/pkg_install/dist/lib/version.h		patch
+
+	Update "pkg_install" to version 20120128:
+	- pkg_install 20120128:
+	  - Explicitly stat(2) if mkdir failed. errno detection
+	    doesn't work e.g.  on Solaris.
+	  - Provide a stable order for package names that only differ
+	    in the base name, not the version number.
+	- pkg_install 20110805:
+	  - Fix for pkg_delete on NFS from Anthony Mallet.
+	[tron, ticket #13]
 
