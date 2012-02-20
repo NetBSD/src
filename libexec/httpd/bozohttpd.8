@@ -1,4 +1,4 @@
-.\"	$NetBSD: bozohttpd.8,v 1.33 2012/02/20 09:26:56 elric Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.34 2012/02/20 09:45:22 wiz Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.101 2011/11/18 01:25:11 mrg Exp $
 .\"
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 17, 2011
+.Dd February 20, 2012
 .Dt HTTPD 8
 .Os
 .Sh NAME
@@ -412,8 +412,9 @@ on the compiler command line.
 .Nm
 supports a very basic form compression.
 .Nm
-will serve the requested file postpended with ``.gz'' if
-it exists, it is readable, the client requested gzip compression, and
+will serve the requested file postpended with
+.Dq Pa .gz
+if it exists, it is readable, the client requested gzip compression, and
 the client did not make a ranged request.
 .Sh FILES
 .Nm
