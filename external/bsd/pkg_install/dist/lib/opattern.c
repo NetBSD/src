@@ -1,4 +1,4 @@
-/*	$NetBSD: opattern.c,v 1.1.1.2 2009/02/02 20:44:06 joerg Exp $	*/
+/*	$NetBSD: opattern.c,v 1.1.1.2.14.1 2012/02/20 21:41:30 sborrill Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: opattern.c,v 1.1.1.2 2009/02/02 20:44:06 joerg Exp $");
+__RCSID("$NetBSD: opattern.c,v 1.1.1.2.14.1 2012/02/20 21:41:30 sborrill Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -203,6 +203,10 @@ pkg_order(const char *pattern, const char *first_pkg, const char *second_pkg)
 		return pkg_match(pattern, first_pkg) ? 1 : 0;
 
 	if (dewey_cmp(first_version + 1, DEWEY_GT, second_version + 1))
+		return 1;
+	else if (dewey_cmp(first_version + 1, DEWEY_LT, second_version + 1))
+		return 2;
+	else if (strcmp(first_pkg, second_pkg) < 0)
 		return 1;
 	else
 		return 2;
