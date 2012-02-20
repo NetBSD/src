@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.181.6.6 2012/02/20 02:12:23 mrg Exp $ */
+/*	$NetBSD: ehci.c,v 1.181.6.7 2012/02/20 03:23:26 mrg Exp $ */
 
 /*
  * Copyright (c) 2004-2011 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.6.6 2012/02/20 02:12:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.6.7 2012/02/20 03:23:26 mrg Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1932,7 +1932,6 @@ ehci_sync_hc(ehci_softc_t *sc)
 	DPRINTFN(2,("ehci_sync_hc: exit\n"));
 }
 
-/*Call at splusb*/
 Static void
 ehci_rem_free_itd_chain(ehci_softc_t *sc, struct ehci_xfer *exfer)
 {
@@ -2986,6 +2985,7 @@ ehci_close_pipe(usbd_pipe_handle pipe, ehci_soft_qh_t *head)
  * If the transaction has already happened we rely on the ordinary
  * interrupt processing to process it.
  * XXX This is most probably wrong.
+ * XXXMRG this doesn't make sense anymore.
  */
 Static void
 ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
