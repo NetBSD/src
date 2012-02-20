@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.93.8.6 2012/02/20 06:50:21 mrg Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.93.8.7 2012/02/20 22:43:12 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -66,7 +66,8 @@
  *
  * The above semantics are likely to change.
  * 
- * USB functions known to expect the thread lock taken include:
+ * USB functions known to expect the thread lock taken include (this
+ * list is probably not exhaustive):
  *    usb_transfer_complete()
  *    usb_insert_transfer()
  *    usb_start_next()
