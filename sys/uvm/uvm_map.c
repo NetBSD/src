@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.314 2012/02/19 00:05:56 rmind Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.315 2012/02/20 19:14:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.314 2012/02/19 00:05:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.315 2012/02/20 19:14:23 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2221,7 +2221,6 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 			if ((entry->flags & UVM_MAP_KMAPENT) == 0) {
 				uvm_km_pgremove_intrsafe(map, entry->start,
 				    entry->end);
-				pmap_kremove(entry->start, len);
 			}
 		} else if (UVM_ET_ISOBJ(entry) &&
 			   UVM_OBJ_IS_KERN_OBJECT(entry->object.uvm_obj)) {
