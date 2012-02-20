@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.165 2012/02/17 18:40:19 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.166 2012/02/20 20:49:12 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.165 2012/02/17 18:40:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.166 2012/02/20 20:49:12 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1979,7 +1979,7 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes)
 		pmap_pte_set(&pva[index], (pd_entry_t)
 		        (pmap_pa2pte(pa) | PG_u | PG_RW | PG_V));
 #if defined(XEN) && defined(__x86_64__)
-		if(i == PTP_LEVELS && pmap != pmap_kernel()) {
+		if(i == PTP_LEVELS) {
 			/*
 			 * Update the per-cpu PD on all cpus the current
 			 * pmap is active on 
@@ -2090,8 +2090,8 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 	    npde * sizeof(pd_entry_t));
 
 	/* zero the rest */
-	memset(&pdir[PDIR_SLOT_KERN + npde], 0,
-	    (NTOPLEVEL_PDES - (PDIR_SLOT_KERN + npde)) * sizeof(pd_entry_t));
+	memset(&pdir[PDIR_SLOT_KERN + npde], 0, (PAGE_SIZE * PDP_SIZE) -
+	    (PDIR_SLOT_KERN + npde) * sizeof(pd_entry_t));
 
 	if (VM_MIN_KERNEL_ADDRESS != KERNBASE) {
 		int idx = pl_i(KERNBASE, PTP_LEVELS);
@@ -2107,11 +2107,10 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 #ifdef XEN
 	s = splvm();
 	object = (vaddr_t)v;
+	pmap_protect(pmap_kernel(), object, object + (PAGE_SIZE * PDP_SIZE),
+	    VM_PROT_READ);
+	pmap_update(pmap_kernel());
 	for (i = 0; i < PDP_SIZE; i++, object += PAGE_SIZE) {
-		(void) pmap_extract(pmap_kernel(), object, &pdirpa);
-		/* FIXME: This should use pmap_protect() .. */
-		pmap_kenter_pa(object, pdirpa, VM_PROT_READ, 0);
-		pmap_update(pmap_kernel());
 		/*
 		 * pin as L2/L4 page, we have to do the page with the
 		 * PDIR_SLOT_PTE entries last
@@ -2121,6 +2120,7 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 			continue;
 #endif
 
+		(void) pmap_extract(pmap_kernel(), object, &pdirpa);
 #ifdef __x86_64__
 		xpq_queue_pin_l4_table(xpmap_ptom_masked(pdirpa));
 #else
@@ -3779,7 +3779,7 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		pt_entry_t *spte, *epte;
 		int i;
 
-		blockend = (va & L2_FRAME) + NBPD_L2;
+		blockend = x86_round_pdr(va + 1);
 		if (blockend > eva)
 			blockend = eva;
 
