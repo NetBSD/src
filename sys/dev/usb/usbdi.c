@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.134.2.9 2012/02/20 06:50:21 mrg Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.134.2.10 2012/02/20 22:42:47 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134.2.9 2012/02/20 06:50:21 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134.2.10 2012/02/20 22:42:47 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -749,11 +749,7 @@ usbd_ar_pipe(usbd_pipe_handle pipe)
 		DPRINTFN(2,("usbd_ar_pipe: pipe=%p xfer=%p (methods=%p)\n",
 			    pipe, xfer, pipe->methods));
 		/* Make the HC abort it (and invoke the callback). */
-		if (pipe->device->bus->lock)
-			mutex_exit(pipe->device->bus->lock);
 		pipe->methods->abort(xfer);
-		if (pipe->device->bus->lock)
-			mutex_enter(pipe->device->bus->lock);
 		/* XXX only for non-0 usbd_clear_endpoint_stall(pipe); */
 	}
 	pipe->aborting = 0;
