@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.10 2011/11/29 20:05:30 rmind Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.11 2012/02/20 00:18:19 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -34,10 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.10 2011/11/29 20:05:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.11 2012/02/20 00:18:19 rmind Exp $");
 
 #include <sys/param.h>
-#include <sys/kernel.h>
+#include <sys/types.h>
 
 #include <net/pfil.h>
 #include <net/if.h>
