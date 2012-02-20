@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.240.6.7 2012/02/20 02:12:24 mrg Exp $	*/
+/*	$NetBSD: uhci.c,v 1.240.6.8 2012/02/20 03:23:26 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240.6.7 2012/02/20 02:12:24 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240.6.8 2012/02/20 03:23:26 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -1091,7 +1091,7 @@ uhci_rem_loop(uhci_softc_t *sc) {
 	}
 }
 
-/* Add high speed control QH, called at splusb(). */
+/* Add high speed control QH, called with thread lock held. */
 void
 uhci_add_hs_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 {
@@ -1118,7 +1118,7 @@ uhci_add_hs_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 #endif
 }
 
-/* Remove high speed control QH, called at splusb(). */
+/* Remove high speed control QH, called with thread lock held. */
 void
 uhci_remove_hs_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 {
@@ -1168,7 +1168,7 @@ uhci_remove_hs_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 		sc->sc_hctl_end = pqh;
 }
 
-/* Add low speed control QH, called at splusb(). */
+/* Add low speed control QH, called with thread lock held. */
 void
 uhci_add_ls_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 {
@@ -1191,7 +1191,7 @@ uhci_add_ls_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 	sc->sc_lctl_end = sqh;
 }
 
-/* Remove low speed control QH, called at splusb(). */
+/* Remove low speed control QH, called with thread lock held. */
 void
 uhci_remove_ls_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 {
@@ -1225,7 +1225,7 @@ uhci_remove_ls_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 		sc->sc_lctl_end = pqh;
 }
 
-/* Add bulk QH, called at splusb(). */
+/* Add bulk QH, called with thread lock held. */
 void
 uhci_add_bulk(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 {
@@ -1249,7 +1249,7 @@ uhci_add_bulk(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 	uhci_add_loop(sc);
 }
 
-/* Remove bulk QH, called at splusb(). */
+/* Remove bulk QH, called with thread lock held. */
 void
 uhci_remove_bulk(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 {
@@ -2130,6 +2130,8 @@ uhci_device_bulk_abort(usbd_xfer_handle xfer)
  * have happened since the hardware runs concurrently.
  * If the transaction has already happened we rely on the ordinary
  * interrupt processing to process it.
+ * XXX This is most probably wrong.
+ * XXXMRG this doesn't make sense anymore.
  */
 void
 uhci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)

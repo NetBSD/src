@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.218.6.9 2012/02/20 02:12:24 mrg Exp $	*/
+/*	$NetBSD: ohci.c,v 1.218.6.10 2012/02/20 03:23:26 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.9 2012/02/20 02:12:24 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.10 2012/02/20 03:23:26 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -2299,6 +2299,8 @@ ohci_close_pipe(usbd_pipe_handle pipe, ohci_soft_ed_t *head)
  * have happened since the hardware runs concurrently.
  * If the transaction has already happened we rely on the ordinary
  * interrupt processing to process it.
+ * XXX This is most probably wrong.
+ * XXXMRG this doesn't make sense anymore.
  */
 void
 ohci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
