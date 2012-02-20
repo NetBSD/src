@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.4 2012/02/06 00:37:52 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.5 2012/02/20 00:18:19 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.4 2012/02/06 00:37:52 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.5 2012/02/20 00:18:19 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -400,9 +400,8 @@ npfctl_build_group(const char *name, int attr, u_int if_idx)
 	} else if ((attr & attr_di) == 0) {
 		attr |= attr_di;
 	}
-	attr |= (NPF_RULE_PASS | NPF_RULE_FINAL);
 
-	rl = npf_rule_create(name, attr, if_idx);
+	rl = npf_rule_create(name, attr | NPF_RULE_FINAL, if_idx);
 	npf_rule_insert(npf_conf, NULL, rl, NPF_PRI_NEXT);
 	current_group = rl;
 }

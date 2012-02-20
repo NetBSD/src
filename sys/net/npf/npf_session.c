@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_session.c,v 1.10 2011/11/29 20:05:30 rmind Exp $	*/
+/*	$NetBSD: npf_session.c,v 1.11 2012/02/20 00:18:20 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -74,10 +74,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.10 2011/11/29 20:05:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.11 2012/02/20 00:18:20 rmind Exp $");
 
 #include <sys/param.h>
-#include <sys/kernel.h>
+#include <sys/types.h>
 
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -93,7 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.10 2011/11/29 20:05:30 rmind Exp $
 #include <sys/rwlock.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
-#include <sys/types.h>
 
 #include "npf_impl.h"
 
@@ -277,7 +276,7 @@ sess_htable_create(void)
 	npf_sehash_t *stbl, *sh;
 	u_int i;
 
-	stbl = kmem_alloc(SESS_HASH_BUCKETS * sizeof(*sh), KM_SLEEP);
+	stbl = kmem_zalloc(SESS_HASH_BUCKETS * sizeof(*sh), KM_SLEEP);
 	if (stbl == NULL) {
 		return NULL;
 	}
@@ -406,7 +405,10 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
 	npf_sentry_t *sen;
 	npf_session_t *se;
 
-	/* Layer 3 and 4 should be already cached for session tracking. */
+	/*
+	 * If layer 3 and 4 are not cached - protocol is not supported
+	 * or packet is invalid.
+	 */
 	if (!sess_tracking || !npf_iscached(npc, NPC_IP46) ||
 	    !npf_iscached(npc, NPC_LAYER4)) {
 		return NULL;
@@ -491,7 +493,7 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
 /*
  * npf_establish_session: create a new session, insert into the global list.
  *
- * => Sessions is created with the held reference (for caller).
+ * => Session is created with the reference held for the caller.
  */
 npf_session_t *
 npf_session_establish(const npf_cache_t *npc, nbuf_t *nbuf, const int di)
@@ -504,11 +506,14 @@ npf_session_establish(const npf_cache_t *npc, nbuf_t *nbuf, const int di)
 	int proto, sz;
 	bool ok;
 
-	if (!sess_tracking) {
+	/*
+	 * If layer 3 and 4 are not cached - protocol is not supported
+	 * or packet is invalid.
+	 */
+	if (!sess_tracking || !npf_iscached(npc, NPC_IP46) ||
+	    !npf_iscached(npc, NPC_LAYER4)) {
 		return NULL;
 	}
-	KASSERT(npf_iscached(npc, NPC_IP46));
-	KASSERT(npf_iscached(npc, NPC_LAYER4));
 
 	/* Allocate and initialise new state. */
 	se = pool_cache_get(sess_cache, PR_NOWAIT);

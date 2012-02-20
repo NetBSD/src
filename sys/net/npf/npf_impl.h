@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_impl.h,v 1.10 2012/02/06 23:30:14 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.11 2012/02/20 00:18:19 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -91,6 +91,9 @@ typedef npf_table_t *		npf_tableset_t;
  * DEFINITIONS.
  */
 
+#define	NPF_DECISION_BLOCK	0
+#define	NPF_DECISION_PASS	1
+
 typedef bool (*npf_algfunc_t)(npf_cache_t *, nbuf_t *, void *);
 
 #define	NPF_NCODE_LIMIT		1024
@@ -127,7 +130,9 @@ npf_ruleset_t *	npf_core_natset(void);
 npf_tableset_t *npf_core_tableset(void);
 void		npf_core_exit(void);
 bool		npf_core_locked(void);
-void		npf_reload(npf_ruleset_t *, npf_tableset_t *, npf_ruleset_t *);
+bool		npf_default_pass(void);
+void		npf_reload(npf_ruleset_t *, npf_tableset_t *,
+		    npf_ruleset_t *, bool);
 
 void		npflogattach(int);
 void		npflogdetach(void);
