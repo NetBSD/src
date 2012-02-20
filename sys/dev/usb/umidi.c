@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.53.2.3 2012/02/19 21:01:52 mrg Exp $	*/
+/*	$NetBSD: umidi.c,v 1.53.2.4 2012/02/20 05:24:42 mrg Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.53.2.3 2012/02/19 21:01:52 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.53.2.4 2012/02/20 05:24:42 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -363,10 +363,8 @@ umidi_close(void *addr)
 {
 	struct umidi_mididev *mididev = addr;
 
-	/* XXX SMP */
 	mididev->closing = 1;
 
-	KERNEL_LOCK(1, curlwp);
 	mutex_spin_exit(&mididev->sc->sc_lock);
 
 	if ((mididev->flags & FWRITE) && mididev->out_jack)
@@ -376,7 +374,6 @@ umidi_close(void *addr)
 
 	/* XXX SMP */
 	mutex_spin_enter(&mididev->sc->sc_lock);
-	KERNEL_UNLOCK_ONE(curlwp);
 
 	mididev->opened = 0;
 }
@@ -1134,9 +1131,7 @@ open_in_jack(struct umidi_jack *jack, void *arg, void (*intr)(void *, int))
 	jack->u.in.intr = intr;
 	jack->opened = 1;
 	if (ep->num_open++ == 0 && UE_GET_DIR(ep->addr)==UE_DIR_IN) {
-		KERNEL_LOCK(1, curlwp);
 		err = start_input_transfer(ep);
-		KERNEL_UNLOCK_ONE(curlwp);
 		if (err != USBD_NORMAL_COMPLETION &&
 		    err != USBD_IN_PROGRESS) {
 			ep->num_open--;
