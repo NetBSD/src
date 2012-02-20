@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.240.6.8 2012/02/20 03:23:26 mrg Exp $	*/
+/*	$NetBSD: uhci.c,v 1.240.6.9 2012/02/20 04:25:54 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240.6.8 2012/02/20 03:23:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240.6.9 2012/02/20 04:25:54 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -3542,7 +3542,7 @@ uhci_root_ctrl_start(usbd_xfer_handle xfer)
 
 #ifdef DIAGNOSTIC
 	if (!(xfer->rqflags & URQ_REQUEST))
-		panic("uhci_root_ctrl_transfer: not a request");
+		panic("uhci_root_ctrl_start: not a request");
 #endif
 	req = &xfer->request;
 
