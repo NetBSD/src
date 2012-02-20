@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.181.6.8 2012/02/20 04:05:44 mrg Exp $ */
+/*	$NetBSD: ehci.c,v 1.181.6.9 2012/02/20 06:50:20 mrg Exp $ */
 
 /*
  * Copyright (c) 2004-2011 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.6.8 2012/02/20 04:05:44 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.6.9 2012/02/20 06:50:20 mrg Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -153,8 +153,7 @@ Static void		ehci_freem(struct usbd_bus *, usb_dma_t *);
 
 Static usbd_xfer_handle	ehci_allocx(struct usbd_bus *);
 Static void		ehci_freex(struct usbd_bus *, usbd_xfer_handle);
-Static void		ehci_get_locks(struct usbd_bus *, kmutex_t **,
-				       kmutex_t **);
+Static void		ehci_get_lock(struct usbd_bus *, kmutex_t **);
 
 Static usbd_status	ehci_root_ctrl_transfer(usbd_xfer_handle);
 Static usbd_status	ehci_root_ctrl_start(usbd_xfer_handle);
@@ -269,7 +268,7 @@ Static const struct usbd_bus_methods ehci_bus_methods = {
 	.freem =	ehci_freem,
 	.allocx =	ehci_allocx,
 	.freex =	ehci_freex,
-	.get_locks =	ehci_get_locks,
+	.get_lock =	ehci_get_lock,
 };
 
 Static const struct usbd_pipe_methods ehci_root_ctrl_methods = {
@@ -1407,11 +1406,10 @@ ehci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 }
 
 Static void
-ehci_get_locks(struct usbd_bus *bus, kmutex_t **intr, kmutex_t **thread)
+ehci_get_lock(struct usbd_bus *bus, kmutex_t **thread)
 {
 	struct ehci_softc *sc = bus->hci_private;
 
-	*intr = &sc->sc_intr_lock;
 	*thread = &sc->sc_lock;
 }
 

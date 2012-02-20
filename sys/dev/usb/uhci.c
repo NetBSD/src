@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.240.6.9 2012/02/20 04:25:54 mrg Exp $	*/
+/*	$NetBSD: uhci.c,v 1.240.6.10 2012/02/20 06:50:21 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240.6.9 2012/02/20 04:25:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240.6.10 2012/02/20 06:50:21 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -172,8 +172,7 @@ Static void		uhci_freem(struct usbd_bus *, usb_dma_t *);
 
 Static usbd_xfer_handle	uhci_allocx(struct usbd_bus *);
 Static void		uhci_freex(struct usbd_bus *, usbd_xfer_handle);
-Static void		uhci_get_locks(struct usbd_bus *, kmutex_t **,
-				       kmutex_t **);
+Static void		uhci_get_lock(struct usbd_bus *, kmutex_t **);
 
 Static usbd_status	uhci_device_ctrl_transfer(usbd_xfer_handle);
 Static usbd_status	uhci_device_ctrl_start(usbd_xfer_handle);
@@ -291,7 +290,7 @@ const struct usbd_bus_methods uhci_bus_methods = {
 	.freem =	uhci_freem,
 	.allocx =	uhci_allocx,
 	.freex =	uhci_freex,
-	.get_locks =	uhci_get_locks,
+	.get_lock =	uhci_get_lock,
 };
 
 const struct usbd_pipe_methods uhci_root_ctrl_methods = {
@@ -699,11 +698,10 @@ uhci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 }
 
 Static void
-uhci_get_locks(struct usbd_bus *bus, kmutex_t **intr, kmutex_t **thread)
+uhci_get_lock(struct usbd_bus *bus, kmutex_t **thread)
 {
 	struct uhci_softc *sc = bus->hci_private;
 
-	*intr = &sc->sc_intr_lock;
 	*thread = &sc->sc_lock;
 }
 
