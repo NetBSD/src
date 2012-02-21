@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.90 2012/02/17 18:58:51 joerg Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.91 2012/02/21 10:53:08 martin Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -266,10 +266,13 @@
 #define	__BEGIN_EXTERN_C	extern "C" {
 #define	__END_EXTERN_C		}
 #define	__static_cast(x,y)	static_cast<x>(y)
+/* C++ does not allow a __restrict modifier everywhere C99 does */
+#define	__conly_restrict
 #else
 #define	__BEGIN_EXTERN_C
 #define	__END_EXTERN_C
 #define	__static_cast(x,y)	(x)y
+#define	__conly_restrict	__restrict
 #endif
 
 #if __GNUC_PREREQ__(4, 0)
