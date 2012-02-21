@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.166 2012/02/20 20:49:12 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.167 2012/02/21 19:10:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.166 2012/02/20 20:49:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.167 2012/02/21 19:10:13 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -4183,14 +4183,30 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 			pte = pmap_pa2pte(pa) | PG_k | PG_V | PG_RW;
 #ifdef XEN
 			xpq_queue_pte_update(xpmap_ptetomach(&pdep[i]), pte);
-			if (level == PTP_LEVELS) {
 #if defined(PAE) || defined(__x86_64__)
-				if (i >= PDIR_SLOT_KERN) {
+			if (level == PTP_LEVELS && i >= PDIR_SLOT_KERN) {
+				if (__predict_true(
+				    cpu_info_primary.ci_flags & CPUF_PRESENT)) {
 					/* update per-cpu PMDs on all cpus */
 					xen_kpm_sync(pmap_kernel(), i);
+				} else {
+					/*
+					 * too early; update primary CPU
+					 * PMD only (without locks)
+					 */
+#ifdef PAE
+					pd_entry_t *cpu_pdep =
+					    &cpu_info_primary.ci_kpm_pdir[l2tol2(i)];
+#endif
+#ifdef __x86_64__
+					pd_entry_t *cpu_pdep =
+						&cpu_info_primary.ci_kpm_pdir[i];
+#endif
+					xpq_queue_pte_update(
+					    xpmap_ptetomach(cpu_pdep), pte);
 				}
-#endif /* PAE || __x86_64__ */
 			}
+#endif /* PAE || __x86_64__ */
 #else /* XEN */
 			pdep[i] = pte;
 #endif /* XEN */
@@ -4199,7 +4215,7 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 			nkptp[level - 1]++;
 			va += nbpd[level - 1];
 		}
-		pmap_pte_flush();
+		xpq_flush_queue();
 	}
 #ifdef XEN
 	splx(s);

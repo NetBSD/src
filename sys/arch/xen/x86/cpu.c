@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.81 2012/02/17 18:40:20 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.82 2012/02/21 19:10:13 bouyer Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.81 2012/02/17 18:40:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.82 2012/02/21 19:10:13 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -487,7 +487,6 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 	case CPU_ROLE_BP:
 		atomic_or_32(&ci->ci_flags, CPUF_BSP);
 		cpu_identify(ci);
-		cpu_init(ci);
 #if 0
 		x86_errata();
 #endif
