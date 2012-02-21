@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.48 2011/11/06 21:22:23 jym Exp $	*/
+/*	$NetBSD: dd.c,v 1.49 2012/02/21 01:49:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.48 2011/11/06 21:22:23 jym Exp $");
+__RCSID("$NetBSD: dd.c,v 1.49 2012/02/21 01:49:01 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -212,7 +212,10 @@ setup(void)
 	 * record oriented I/O, only need a single buffer.
 	 */
 	if (!(ddflags & (C_BLOCK|C_UNBLOCK))) {
-		if ((in.db = malloc(out.dbsz + in.dbsz - 1)) == NULL) {
+		size_t dbsz = out.dbsz;
+		if (!(ddflags & C_BS))
+			dbsz += in.dbsz - 1;
+		if ((in.db = malloc(dbsz)) == NULL) {
 			err(EXIT_FAILURE, NULL);
 			/* NOTREACHED */
 		}
