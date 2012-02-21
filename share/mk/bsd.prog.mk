@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.272 2012/02/20 18:23:50 matt Exp $
+#	$NetBSD: bsd.prog.mk,v 1.273 2012/02/21 01:41:09 matt Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -475,7 +475,6 @@ ${_P}: .gdbinit ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${D
 	    ${_LDFLAGS.${_P}} ${_LDSTATIC.${_P}} -o ${.TARGET} \
 	    ${OBJS.${_P}} ${_LDADD.${_P}} \
 	    ${_PROGLDOPTS}
-	@${SIZE} ${_P}
 .if defined(CTFMERGE)
 	${CTFMERGE} ${CTFMFLAGS} -o ${.TARGET} ${OBJS.${_P}}
 .endif
