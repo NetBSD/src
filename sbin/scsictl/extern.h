@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.6 2008/04/28 20:23:09 martin Exp $	*/
+/*	$NetBSD: extern.h,v 1.7 2012/02/21 02:19:41 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@ char	*scsi_decode_sense(const unsigned char *, int, char *, size_t);
 void	scsi_print_sense(const char *, const scsireq_t *, int);
 
 /* scsi_subr.c */
-void	scsi_command(int, void *, size_t, void *, size_t, int, int);
+void	scsi_command(int, const void *, size_t, void *, size_t, int, int);
 void	scsi_mode_sense(int, u_int8_t, u_int8_t, void *, size_t);
 void	scsi_mode_select(int, u_int8_t, void *, size_t);
 void	scsi_request_sense(int, void *, size_t);
