@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.131 2012/02/18 17:49:28 njoly Exp $
+# $NetBSD: postinstall,v 1.132 2012/02/21 12:31:18 nakayama Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1135,7 +1135,7 @@ do_pwd_mkdb()
 	if [ "${op}" = "check" ]; then
 		msg "Update format of passwd database"
 		failed=1
-	elif ! ${PWD_MKDB} -V 1 ${DEST_DIR}/etc/master.passwd; then
+	elif ! ${PWD_MKDB} -V 1 -d ${DEST_DIR} ${DEST_DIR}/etc/master.passwd; then
 		msg "Can't update format of passwd database"
 		failed=1
 	else
