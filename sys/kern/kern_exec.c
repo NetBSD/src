@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.343 2012/02/21 03:44:54 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.344 2012/02/21 04:13:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.343 2012/02/21 03:44:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.344 2012/02/21 04:13:22 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_ktrace.h"
@@ -1917,10 +1917,10 @@ spawn_return(void *arg)
 }
 
 static void
-posix_spawn_fa_free(struct posix_spawn_file_actions *fa)
+posix_spawn_fa_free(struct posix_spawn_file_actions *fa, size_t len)
 {
 
-	for (size_t i = 0; i < fa->len; i++) {
+	for (size_t i = 0; i < len; i++) {
 		struct posix_spawn_file_actions_entry *fae = &fa->fae[i];
 		if (fae->fae_action != FAE_OPEN)
 			continue;
@@ -1939,6 +1939,7 @@ posix_spawn_fa_alloc(struct posix_spawn_file_actions **fap,
 	struct posix_spawn_file_actions_entry *fae;
 	char *pbuf = NULL;
 	int error;
+	size_t i = 0;
 
 	fa = kmem_alloc(sizeof(*fa), KM_SLEEP);
 	error = copyin(ufa, fa, sizeof(*fa));
@@ -1955,21 +1956,17 @@ posix_spawn_fa_alloc(struct posix_spawn_file_actions **fap,
 	fae = fa->fae;
 	fa->fae = kmem_alloc(fal, KM_SLEEP);
 	error = copyin(fae, fa->fae, fal);
-	if (error) {
-		fa->len = 0;
+	if (error)
 		goto out;
-	}
 
 	pbuf = PNBUF_GET();
-	for (size_t i = 0; i < fa->len; i++) {
+	for (; i < fa->len; i++) {
 		fae = &fa->fae[i];
 		if (fae->fae_action != FAE_OPEN)
 			continue;
 		error = copyinstr(fae->fae_path, pbuf, MAXPATHLEN, &fal);
-		if (error) {
-			fa->len = i;
+		if (error)
 			goto out;
-		}
 		fae->fae_path = kmem_alloc(fal, KM_SLEEP);
 		memcpy(fae->fae_path, pbuf, fal);
 	}
@@ -1979,7 +1976,7 @@ posix_spawn_fa_alloc(struct posix_spawn_file_actions **fap,
 out:
 	if (pbuf)
 		PNBUF_PUT(pbuf);
-	posix_spawn_fa_free(fa);
+	posix_spawn_fa_free(fa, i);
 	return error;
 }
 
@@ -2281,7 +2278,7 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
 	have_exec_lock = false;
 
 	if (fa)
-		posix_spawn_fa_free(fa);
+		posix_spawn_fa_free(fa, fa->len);
 
 	if (sa) 
 		kmem_free(sa, sizeof(*sa));
@@ -2302,7 +2299,7 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
  		rw_exit(&exec_lock);
  
 	if (fa)
-		posix_spawn_fa_free(fa);
+		posix_spawn_fa_free(fa, fa->len);
 
 	if (sa) 
 		kmem_free(sa, sizeof(*sa));
