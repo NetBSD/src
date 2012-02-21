@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.19 2012/02/19 17:46:46 tron Exp $	*/
+/*	$NetBSD: perform.c,v 1.2 2012/02/21 13:32:45 wiz Exp $	*/
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -6,7 +6,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.19 2012/02/19 17:46:46 tron Exp $");
+__RCSID("$NetBSD: perform.c,v 1.2 2012/02/21 13:32:45 wiz Exp $");
 
 /*-
  * Copyright (c) 2003 Grant Beattie <grant@NetBSD.org>
@@ -206,7 +206,7 @@ mkdir_p(const char *path)
 
 		if (mkdir(p, 0777) == -1) {
 			saved_errno = errno;
-			if (stat(path, &sb) == 0) {
+			if (stat(p, &sb) == 0) {
 				if (S_ISDIR(sb.st_mode))
 					goto pass;
 				errno = ENOTDIR;
