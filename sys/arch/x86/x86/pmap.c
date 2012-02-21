@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.168 2012/02/21 19:25:05 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.169 2012/02/21 21:09:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.168 2012/02/21 19:25:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.169 2012/02/21 21:09:51 rmind Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -998,10 +998,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		panic("%s: PG_PS", __func__);
 #endif
 	if ((opte & (PG_V | PG_U)) == (PG_V | PG_U)) {
-#if defined(DIAGNOSTIC)
-		printf_nolog("%s: mapping already present\n", __func__);
-#endif
 		/* This should not happen. */
+		printf_nolog("%s: mapping already present\n", __func__);
 		kpreempt_disable();
 		pmap_tlb_shootdown(pmap_kernel(), va, opte, TLBSHOOT_KENTER);
 		kpreempt_enable();
@@ -1314,7 +1312,10 @@ pmap_bootstrap(vaddr_t kva_start)
 
 	/*
 	 * Map the direct map.  Use 1GB pages if they are available,
-	 * otherwise use 2MB pages.
+	 * otherwise use 2MB pages.  Note that the unused parts of
+	 * PTPs * must be zero outed, as they might be accessed due
+	 * to speculative execution.  Also, PG_G is not allowed on
+	 * non-leaf PTPs.
 	 */
 
 	lastpa = 0;
