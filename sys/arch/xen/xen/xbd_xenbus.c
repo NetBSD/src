@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.53 2012/02/02 20:11:26 para Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.54 2012/02/21 01:47:50 jakllsch Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.53 2012/02/02 20:11:26 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.54 2012/02/21 01:47:50 jakllsch Exp $");
 
 #include "opt_xen.h"
 
@@ -176,6 +176,8 @@ static void xbd_connect(struct xbd_xenbus_softc *);
 static int  xbd_map_align(struct xbd_req *);
 static void xbd_unmap_align(struct xbd_req *);
 
+static void xbdminphys(struct buf *);
+
 CFATTACH_DECL3_NEW(xbd, sizeof(struct xbd_xenbus_softc),
     xbd_xenbus_match, xbd_xenbus_attach, xbd_xenbus_detach, NULL, NULL, NULL,
     DVF_DETACH_SHUTDOWN);
@@ -213,7 +215,7 @@ static struct dk_intf dkintf_esdi = {
 
 static struct dkdriver xbddkdriver = {
         .d_strategy = xbdstrategy,
-	.d_minphys = minphys,
+	.d_minphys = xbdminphys,
 };
 
 static int
@@ -731,6 +733,15 @@ done:
 	return 1;
 }
 
+static void
+xbdminphys(struct buf *bp)
+{
+	if (bp->b_bcount > (PAGE_SIZE * BLKIF_MAX_SEGMENTS_PER_REQUEST)) {
+		bp->b_bcount = PAGE_SIZE * BLKIF_MAX_SEGMENTS_PER_REQUEST;
+	}
+	minphys(bp);
+}
+
 int
 xbdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
@@ -805,7 +816,7 @@ xbdread(dev_t dev, struct uio *uio, int flags)
 
 	if ((dksc->sc_flags & DKF_INITED) == 0)
 		return ENXIO;
-	return physio(xbdstrategy, NULL, dev, B_READ, minphys, uio);
+	return physio(xbdstrategy, NULL, dev, B_READ, xbdminphys, uio);
 }
 
 int
@@ -819,7 +830,7 @@ xbdwrite(dev_t dev, struct uio *uio, int flags)
 		return ENXIO;
 	if (__predict_false(sc->sc_info & VDISK_READONLY))
 		return EROFS;
-	return physio(xbdstrategy, NULL, dev, B_WRITE, minphys, uio);
+	return physio(xbdstrategy, NULL, dev, B_WRITE, xbdminphys, uio);
 }
 
 int
