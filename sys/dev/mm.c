@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.15 2011/06/16 16:20:28 joerg Exp $	*/
+/*	$NetBSD: mm.c,v 1.16 2012/02/21 21:57:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2008, 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.15 2011/06/16 16:20:28 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.16 2012/02/21 21:57:06 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -89,9 +89,7 @@ mm_init(void)
 	/* Read-only zero-page. */
 	pg = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_WIRED|UVM_KMF_ZERO);
 	KASSERT(pg != 0);
-#if 0
 	pmap_protect(pmap_kernel(), pg, pg + PAGE_SIZE, VM_PROT_READ);
-#endif
 	pmap_update(pmap_kernel());
 	dev_zero_page = (void *)pg;
 
