@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_delete.1.in,v 1.1.1.1 2010/01/30 21:33:33 joerg Exp $
+.\" $NetBSD: pkg_delete.1.in,v 1.1.1.2 2012/02/21 18:25:15 wiz Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
