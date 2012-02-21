@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1741 2012/02/19 21:05:51 rmind Exp $
+#	$NetBSD: mi,v 1.1742 2012/02/21 10:10:43 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1924,6 +1924,7 @@
 ./usr/include/netinet/ip_state.h		comp-ipf-include	ipfilter
 ./usr/include/netinet/ip_sync.h			comp-ipf-include	ipfilter
 ./usr/include/netinet/ip_var.h			comp-c-include
+./usr/include/netinet/ipf_rb.h			comp-obsolete		obsolete
 ./usr/include/netinet/ipl.h			comp-ipf-include	ipfilter
 ./usr/include/netinet/pim.h			comp-c-include
 ./usr/include/netinet/pim_var.h			comp-c-include
@@ -4149,9 +4150,9 @@
 ./usr/libdata/debug/usr/sbin/lpd.debug		comp-lpr-debug		debug
 ./usr/libdata/debug/usr/sbin/lptest.debug	comp-lpr-debug		debug
 ./usr/libdata/debug/usr/sbin/mailwrapper.debug	comp-mailwrapper-debug	debug
-./usr/libdata/debug/usr/sbin/makemandb.debug	comp-makemandb-debug	makemandb,debug
 ./usr/libdata/debug/usr/sbin/makedbm.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/sbin/makefs.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/makemandb.debug	comp-makemandb-debug	makemandb,debug
 ./usr/libdata/debug/usr/sbin/map-mbone.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/mdconfig.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/mdnsd.debug	comp-mdns-debug		mdns,debug
@@ -9637,8 +9638,8 @@
 ./usr/share/man/cat9/aprint_verbose.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/aprint_verbose_dev.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/aprint_verbose_ifnet.0	comp-sys-catman		.cat
-./usr/share/man/cat9/arc4random.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/arc4randbytes.0		comp-sys-catman		.cat
+./usr/share/man/cat9/arc4random.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/arp.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/arp_ifinit.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/arpintr.0			comp-sys-catman		.cat
@@ -9844,16 +9845,16 @@
 ./usr/share/man/cat9/copystr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/coredump_write.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cprng.0			comp-sys-catman		.cat
+./usr/share/man/cat9/cprng_fast.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cprng_fast32.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cprng_fast64.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cprng_strong.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cprng_strong32.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cprng_strong64.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cprng_strong_create.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/cprng_strong_destroy.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/cprng_strong_getflags.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/cprng_strong_setflags.0	comp-sys-catman		.cat
-./usr/share/man/cat9/cprng_strong32.0		comp-sys-catman		.cat
-./usr/share/man/cat9/cprng_strong64.0		comp-sys-catman		.cat
-./usr/share/man/cat9/cprng_fast.0		comp-sys-catman		.cat
-./usr/share/man/cat9/cprng_fast32.0		comp-sys-catman		.cat
-./usr/share/man/cat9/cprng_fast64.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cpu_configure.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cpu_coredump.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cpu_dump.0			comp-sys-catman		.cat
@@ -10471,21 +10472,21 @@
 ./usr/share/man/cat9/pool_cache_get_paddr.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pool_cache_init.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pool_cache_invalidate.0	comp-sys-catman		.cat
-./usr/share/man/cat9/pool_cache_sethiwat.0	comp-sys-catman		.cat
-./usr/share/man/cat9/pool_cache_setlowat.0	comp-sys-catman		.cat
-./usr/share/man/cat9/pool_cache_sethardlimit.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pool_cache_invalidate_local.0	comp-obsolete	obsolete
 ./usr/share/man/cat9/pool_cache_put.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pool_cache_put_paddr.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pool_cache_sethardlimit.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pool_cache_sethiwat.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pool_cache_setlowat.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pool_create.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pool_destroy.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pool_get.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pool_init.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pool_prime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pool_put.0			comp-sys-catman		.cat
+./usr/share/man/cat9/pool_sethardlimit.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pool_sethiwat.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pool_setlowat.0		comp-sys-catman		.cat
-./usr/share/man/cat9/pool_sethardlimit.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/postsig.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/powerhook_disestablish.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/powerhook_establish.0	comp-sys-catman		.cat
@@ -15836,8 +15837,8 @@
 ./usr/share/man/html9/aprint_verbose.html	comp-sys-htmlman	html
 ./usr/share/man/html9/aprint_verbose_dev.html	comp-sys-htmlman	html
 ./usr/share/man/html9/aprint_verbose_ifnet.html	comp-sys-htmlman	html
-./usr/share/man/html9/arc4random.html		comp-sys-htmlman	html
 ./usr/share/man/html9/arc4randbytes.html	comp-sys-htmlman	html
+./usr/share/man/html9/arc4random.html		comp-sys-htmlman	html
 ./usr/share/man/html9/arp.html			comp-sys-htmlman	html
 ./usr/share/man/html9/arp_ifinit.html		comp-sys-htmlman	html
 ./usr/share/man/html9/arpintr.html		comp-sys-htmlman	html
@@ -16038,16 +16039,16 @@
 ./usr/share/man/html9/copystr.html		comp-sys-htmlman	html
 ./usr/share/man/html9/coredump_write.html	comp-sys-htmlman	html
 ./usr/share/man/html9/cprng.html		comp-sys-htmlman	html
+./usr/share/man/html9/cprng_fast.html		comp-sys-htmlman	html
+./usr/share/man/html9/cprng_fast32.html		comp-sys-htmlman	html
+./usr/share/man/html9/cprng_fast64.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cprng_strong.html		comp-sys-htmlman	html
+./usr/share/man/html9/cprng_strong32.html	comp-sys-htmlman	html
+./usr/share/man/html9/cprng_strong64.html	comp-sys-htmlman	html
 ./usr/share/man/html9/cprng_strong_create.html	comp-sys-htmlman	html
 ./usr/share/man/html9/cprng_strong_destroy.html	comp-sys-htmlman	html
 ./usr/share/man/html9/cprng_strong_getflags.html comp-sys-htmlman	html
 ./usr/share/man/html9/cprng_strong_setflags.html comp-sys-htmlman	html
-./usr/share/man/html9/cprng_strong32.html	comp-sys-htmlman	html
-./usr/share/man/html9/cprng_strong64.html	comp-sys-htmlman	html
-./usr/share/man/html9/cprng_fast.html		comp-sys-htmlman	html
-./usr/share/man/html9/cprng_fast32.html		comp-sys-htmlman	html
-./usr/share/man/html9/cprng_fast64.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cpu_configure.html	comp-sys-htmlman	html
 ./usr/share/man/html9/cpu_coredump.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cpu_dump.html		comp-sys-htmlman	html
@@ -16641,21 +16642,21 @@
 ./usr/share/man/html9/pool_cache_get_paddr.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pool_cache_init.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pool_cache_invalidate.html	comp-sys-htmlman	html
-./usr/share/man/html9/pool_cache_sethiwat.html	comp-sys-htmlman	html
-./usr/share/man/html9/pool_cache_setlowat.html	comp-sys-htmlman	html
-./usr/share/man/html9/pool_cache_sethardlimit.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pool_cache_invalidate_local.html	comp-obsolete	obsolete
 ./usr/share/man/html9/pool_cache_put.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pool_cache_put_paddr.html	comp-sys-htmlman	html
+./usr/share/man/html9/pool_cache_sethardlimit.html	comp-sys-htmlman	html
+./usr/share/man/html9/pool_cache_sethiwat.html	comp-sys-htmlman	html
+./usr/share/man/html9/pool_cache_setlowat.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pool_create.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pool_destroy.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pool_get.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pool_init.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pool_prime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pool_put.html		comp-sys-htmlman	html
+./usr/share/man/html9/pool_sethardlimit.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pool_sethiwat.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pool_setlowat.html	comp-sys-htmlman	html
-./usr/share/man/html9/pool_sethardlimit.html	comp-sys-htmlman	html
 ./usr/share/man/html9/postsig.html		comp-sys-htmlman	html
 ./usr/share/man/html9/powerhook_disestablish.html	comp-sys-htmlman	html
 ./usr/share/man/html9/powerhook_establish.html	comp-sys-htmlman	html
@@ -22144,8 +22145,8 @@
 ./usr/share/man/man9/aprint_verbose.9		comp-sys-man		.man
 ./usr/share/man/man9/aprint_verbose_dev.9	comp-sys-man		.man
 ./usr/share/man/man9/aprint_verbose_ifnet.9	comp-sys-man		.man
-./usr/share/man/man9/arc4random.9		comp-sys-man		.man
 ./usr/share/man/man9/arc4randbytes.9		comp-sys-man		.man
+./usr/share/man/man9/arc4random.9		comp-sys-man		.man
 ./usr/share/man/man9/arp.9			comp-sys-man		.man
 ./usr/share/man/man9/arp_ifinit.9		comp-sys-man		.man
 ./usr/share/man/man9/arpintr.9			comp-sys-man		.man
@@ -22351,16 +22352,16 @@
 ./usr/share/man/man9/copystr.9			comp-sys-man		.man
 ./usr/share/man/man9/coredump_write.9		comp-sys-man		.man
 ./usr/share/man/man9/cprng.9			comp-sys-man		.man
+./usr/share/man/man9/cprng_fast.9		comp-sys-man		.man
+./usr/share/man/man9/cprng_fast32.9		comp-sys-man		.man
+./usr/share/man/man9/cprng_fast64.9		comp-sys-man		.man
 ./usr/share/man/man9/cprng_strong.9		comp-sys-man		.man
+./usr/share/man/man9/cprng_strong32.9		comp-sys-man		.man
+./usr/share/man/man9/cprng_strong64.9		comp-sys-man		.man
 ./usr/share/man/man9/cprng_strong_create.9	comp-sys-man		.man
 ./usr/share/man/man9/cprng_strong_destroy.9	comp-sys-man		.man
 ./usr/share/man/man9/cprng_strong_getflags.9	comp-sys-man		.man
 ./usr/share/man/man9/cprng_strong_setflags.9	comp-sys-man		.man
-./usr/share/man/man9/cprng_strong32.9		comp-sys-man		.man
-./usr/share/man/man9/cprng_strong64.9		comp-sys-man		.man
-./usr/share/man/man9/cprng_fast.9		comp-sys-man		.man
-./usr/share/man/man9/cprng_fast32.9		comp-sys-man		.man
-./usr/share/man/man9/cprng_fast64.9		comp-sys-man		.man
 ./usr/share/man/man9/cpu_configure.9		comp-sys-man		.man
 ./usr/share/man/man9/cpu_coredump.9		comp-sys-man		.man
 ./usr/share/man/man9/cpu_dump.9			comp-sys-man		.man
@@ -22978,21 +22979,21 @@
 ./usr/share/man/man9/pool_cache_get_paddr.9	comp-sys-man		.man
 ./usr/share/man/man9/pool_cache_init.9		comp-sys-man		.man
 ./usr/share/man/man9/pool_cache_invalidate.9	comp-sys-man		.man
-./usr/share/man/man9/pool_cache_sethiwat.9	comp-sys-man		.man
-./usr/share/man/man9/pool_cache_setlowat.9	comp-sys-man		.man
-./usr/share/man/man9/pool_cache_sethardlimit.9	comp-sys-man		.man
 ./usr/share/man/man9/pool_cache_invalidate_local.9	comp-obsolete	obsolete
 ./usr/share/man/man9/pool_cache_put.9		comp-sys-man		.man
 ./usr/share/man/man9/pool_cache_put_paddr.9	comp-sys-man		.man
+./usr/share/man/man9/pool_cache_sethardlimit.9	comp-sys-man		.man
+./usr/share/man/man9/pool_cache_sethiwat.9	comp-sys-man		.man
+./usr/share/man/man9/pool_cache_setlowat.9	comp-sys-man		.man
 ./usr/share/man/man9/pool_create.9		comp-sys-man		.man
 ./usr/share/man/man9/pool_destroy.9		comp-sys-man		.man
 ./usr/share/man/man9/pool_get.9			comp-sys-man		.man
 ./usr/share/man/man9/pool_init.9		comp-sys-man		.man
 ./usr/share/man/man9/pool_prime.9		comp-sys-man		.man
 ./usr/share/man/man9/pool_put.9			comp-sys-man		.man
+./usr/share/man/man9/pool_sethardlimit.9	comp-sys-man		.man
 ./usr/share/man/man9/pool_sethiwat.9		comp-sys-man		.man
 ./usr/share/man/man9/pool_setlowat.9		comp-sys-man		.man
-./usr/share/man/man9/pool_sethardlimit.9	comp-sys-man		.man
 ./usr/share/man/man9/postsig.9			comp-sys-man		.man
 ./usr/share/man/man9/powerhook_disestablish.9	comp-sys-man		.man
 ./usr/share/man/man9/powerhook_establish.9	comp-sys-man		.man
