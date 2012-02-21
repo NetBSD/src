@@ -1,8 +1,8 @@
-/*	$NetBSD: cdefs.h,v 1.7 2012/01/20 14:08:06 joerg Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.8 2012/02/21 02:09:35 matt Exp $	*/
 
 #ifndef	_POWERPC_CDEFS_H_
 #define	_POWERPC_CDEFS_H_
 
-#define	__ALIGNBYTES	(sizeof(double) - 1)
+#define	__ALIGNBYTES	(16 - 1)		/* AltiVec */
 
 #endif /* !_POWERPC_CDEFS_H_ */
