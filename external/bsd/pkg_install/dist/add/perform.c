@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.2 2012/02/21 13:32:45 wiz Exp $	*/
+/*	$NetBSD: perform.c,v 1.3 2012/02/21 18:27:05 wiz Exp $	*/
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -6,7 +6,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.2 2012/02/21 13:32:45 wiz Exp $");
+__RCSID("$NetBSD: perform.c,v 1.3 2012/02/21 18:27:05 wiz Exp $");
 
 /*-
  * Copyright (c) 2003 Grant Beattie <grant@NetBSD.org>
