@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.342 2012/02/20 18:18:30 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.343 2012/02/21 03:44:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.342 2012/02/20 18:18:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.343 2012/02/21 03:44:54 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_ktrace.h"
@@ -1926,7 +1926,8 @@ posix_spawn_fa_free(struct posix_spawn_file_actions *fa)
 			continue;
 		kmem_free(fae->fae_path, strlen(fae->fae_path) + 1);
 	}
-	kmem_free(fa->fae, sizeof(*fa->fae));
+	if (fa->len)
+		kmem_free(fa->fae, sizeof(*fa->fae) * fa->len);
 	kmem_free(fa, sizeof(*fa));
 }
 
