@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_subr.c,v 1.13 2012/02/21 02:19:41 jakllsch Exp $	*/
+/*	$NetBSD: scsi_subr.c,v 1.14 2012/02/21 02:22:54 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsi_subr.c,v 1.13 2012/02/21 02:19:41 jakllsch Exp $");
+__RCSID("$NetBSD: scsi_subr.c,v 1.14 2012/02/21 02:22:54 jakllsch Exp $");
 #endif
 
 
@@ -66,6 +66,7 @@ scsi_command(int fd, const void *cmd, size_t cmdlen,
 
 	memset(&req, 0, sizeof(req));
 
+	cmdlen = MIN(cmdlen, sizeof(req.cmd));
 	memcpy(req.cmd, cmd, cmdlen);
 	req.cmdlen = cmdlen;
 	req.databuf = data;
