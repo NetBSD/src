@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.257 2011/12/13 12:26:32 mrg Exp $	*/
+/*	$NetBSD: audio.c,v 1.258 2012/02/21 20:53:34 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.257 2011/12/13 12:26:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.258 2012/02/21 20:53:34 nonaka Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2678,7 +2678,7 @@ audio_mmap(struct audio_softc *sc, off_t off, int prot)
 	paddr_t rv;
 
 	KASSERT(mutex_owned(sc->sc_lock));
-	KASSERT(sc->sc_dvlock < 0);
+	KASSERT(sc->sc_dvlock > 0);
 
 	DPRINTF(("audio_mmap: off=%lld, prot=%d\n", (long long)off, prot));
 	hw = sc->hw_if;
