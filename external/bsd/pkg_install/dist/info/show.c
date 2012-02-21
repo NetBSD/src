@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.2 2011/08/16 08:29:15 christos Exp $	*/
+/*	$NetBSD: show.c,v 1.3 2012/02/21 18:36:16 wiz Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: show.c,v 1.2 2011/08/16 08:29:15 christos Exp $");
+__RCSID("$NetBSD: show.c,v 1.3 2012/02/21 18:36:16 wiz Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
