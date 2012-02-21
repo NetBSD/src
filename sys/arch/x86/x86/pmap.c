@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.167 2012/02/21 19:10:13 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.168 2012/02/21 19:25:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.167 2012/02/21 19:10:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.168 2012/02/21 19:25:05 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -4215,7 +4215,7 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 			nkptp[level - 1]++;
 			va += nbpd[level - 1];
 		}
-		xpq_flush_queue();
+		pmap_pte_flush();
 	}
 #ifdef XEN
 	splx(s);
