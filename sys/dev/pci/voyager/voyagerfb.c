@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.16 2012/01/11 16:07:29 macallan Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.17 2012/02/21 15:26:20 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.16 2012/01/11 16:07:29 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.17 2012/02/21 15:26:20 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.16 2012/01/11 16:07:29 macallan Exp 
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/pci/voyagervar.h>
+#include <dev/wscons/wsdisplay_glyphcachevar.h>
 
 #include "opt_voyagerfb.h"
 
@@ -107,6 +108,8 @@ struct voyagerfb_softc {
 	u_char sc_cmap_red[256];
 	u_char sc_cmap_green[256];
 	u_char sc_cmap_blue[256];
+
+	glyphcache sc_gc;
 };
 
 static int	voyagerfb_match(device_t, cfdata_t, void *);
@@ -135,7 +138,7 @@ static void	voyagerfb_init(struct voyagerfb_softc *);
 
 static void	voyagerfb_rectfill(struct voyagerfb_softc *, int, int, int, int,
 			    uint32_t);
-static void	voyagerfb_bitblt(struct voyagerfb_softc *, int, int, int, int,
+static void	voyagerfb_bitblt(void *, int, int, int, int,
 			    int, int, int);
 
 static void	voyagerfb_cursor(void *, int, int, int);
@@ -273,6 +276,9 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 
 	ri = &sc->sc_console_screen.scr_ri;
 
+	sc->sc_gc.gc_bitblt = voyagerfb_bitblt;
+	sc->sc_gc.gc_blitcookie = sc;
+	sc->sc_gc.gc_rop = ROP_COPY;
 	if (is_console) {
 		vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
 		    &defattr);
@@ -282,8 +288,6 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 		sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
 		sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
 		sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
-		wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, 0,
-		    defattr);
 	} else {
 		/*
 		 * since we're not the console we can postpone the rest
@@ -291,6 +295,15 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 		 */
 		(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 	}
+	glyphcache_init(&sc->sc_gc, sc->sc_height,
+			sc->sc_width,
+			(sc->sc_fbsize / sc->sc_stride) - sc->sc_height,
+			ri->ri_font->fontwidth,
+			ri->ri_font->fontheight,
+			defattr);
+	if (is_console)
+		wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, 0,
+		    defattr);
 
 	j = 0;
 	if (sc->sc_depth <= 8) {
@@ -376,6 +389,7 @@ voyagerfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 #else
 				sc->sc_depth = 8;
 #endif
+				glyphcache_wipe(&sc->sc_gc);
 				voyagerfb_init(sc);
 				voyagerfb_restore_palette(sc);
 				vcons_redraw_screen(ms);
@@ -736,9 +750,10 @@ voyagerfb_rectfill(struct voyagerfb_softc *sc, int x, int y, int wi, int he,
 }
 
 static void
-voyagerfb_bitblt(struct voyagerfb_softc *sc, int xs, int ys, int xd, int yd,
+voyagerfb_bitblt(void *cookie, int xs, int ys, int xd, int yd,
     int wi, int he, int rop)
 {
+	struct voyagerfb_softc *sc = cookie;
 	uint32_t cmd;
 
 	cmd = (rop & 0xf) | SM502_CTRL_USE_ROP2 | SM502_CTRL_CMD_BITBLT |
@@ -841,6 +856,7 @@ voyagerfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	int fg, bg;
 	uint8_t *data;
 	int x, y, wi, he;
+	int rv;
 
 	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
 		return;
@@ -859,6 +875,7 @@ voyagerfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		voyagerfb_rectfill(sc, x, y, wi, he, bg);
 		return;
 	}
+
 	data = WSFONT_GLYPH(c, font);
 	if (!FONT_IS_ALPHA(font)) {
 		/* this is a mono font */
@@ -902,6 +919,10 @@ voyagerfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		int rf, gf, bf, rb, gb, bb;
 		uint32_t pixel;
 
+		rv = glyphcache_try(&sc->sc_gc, c, x, y, attr);
+		if (rv == GC_OK)
+			return;
+
 		cmd = ROP_COPY |
 		      SM502_CTRL_USE_ROP2 |
 		      SM502_CTRL_CMD_HOSTWRT |
@@ -944,6 +965,9 @@ voyagerfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 			if (pad)
 				bus_space_write_4(sc->sc_memt, sc->sc_regh,
 				    SM502_DATAPORT, 0);
+		}
+		if (rv == GC_ADD) {
+			glyphcache_add(&sc->sc_gc, c, x, y);
 		}
 	}
 }
