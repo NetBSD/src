@@ -84,6 +84,8 @@ static void time_init(uint32_t pclk);
 static void bi_init(void *addr);
 static void bi_add(void *new, int type, int size);
 static void parse_mac_address(const char *str, uint8_t *enaddr);
+static void brdsetup(void);
+static void iomux(int, const char *);
 
 extern void* dm9k_init(unsigned int tag, void *macaddr);
 
@@ -95,6 +97,7 @@ extern void netif_match(unsigned int tag, uint8_t *macaddr);
 /*  extern int sdif_init(unsigned int tag);*/
 
 /* Global variables */
+uint32_t socmodel;
 int pclk;
 struct btinfo_rootdevice	bi_rdev;
 
@@ -116,6 +119,10 @@ main(int argc, char *argv[])
 	char *bf;
 	bool kernel_loaded;
 	uint8_t enaddr[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+	socmodel = CSR_READ(S3C2440_GPIO_BASE + GPIO_GSTATUS1);
+
+	brdsetup();
 
 	/* Give some indication that main() has been reached */
 	CLEAR_LEDS();
@@ -144,6 +151,14 @@ main(int argc, char *argv[])
 	/* Let the user know we are alive */
 	printf("\n");
 	printf(">> %s boot2440, revision %s\n", bootprog_name, bootprog_rev);
+	printf("SoC model:");
+	switch (socmodel) {
+	case 0x32440000:
+		printf(" S3C2440"); break;
+	case 0x32440001:
+		printf(" S3C2440A"); break;
+	}
+	printf(" (chipid %08x)\n", socmodel);
 
 	bootinfo = (void*) BOOTINFO_ADDR;
 	bi_init(bootinfo);
@@ -155,8 +170,6 @@ main(int argc, char *argv[])
 	{
 		struct btinfo_bootstring ba;
 		int j, i;
-
-		printf("Argument count: %d\n", argc);
 
 		j = 0;
 		for (i = 0; i < argc; i++) {
@@ -174,9 +187,6 @@ main(int argc, char *argv[])
 				j += strlen(argv[i]);
 			}
 		}
-
-		printf("Boot string: %s\n", ba.bootstring);
-
 		bi_add(&ba, BTINFO_BOOTSTRING, sizeof(ba));
 	}
 
@@ -533,4 +543,94 @@ parse_mac_address(const char *str, uint8_t *enaddr)
 			break;
 		}
 	}
+}
+
+static void
+brdsetup(void)
+{
+/*
+ * MINI2440 pin usage summary
+ *
+ *  B5	output	LED1 control
+ *  B6	output	LED2 control
+ *  B7	output	LED3 control
+ *  B8	output	LED4 control
+ *  G0	EINT8	K1 button
+ *  G3	EINT11	K2 button
+ *  G5	EINT13	K3 button
+ *  G6	EINT14	K4 button
+ *  G7	EINT15	K5 button
+ *  G11	EINT19	K6 button
+ *  F7	EINT7	DM9000 interrupt
+ *  G12	EINT20	camera interrupt
+ *  G8	input	SD card presense detect
+ *  H8	input	SD write protect sense
+ *  B0	TOUT0	buzzer PWM
+ *  B1	TOUT1	LCD backlight PWM
+ *  B2	output	UDA1341 audio L3MODE
+ *  B3	output	UDA1341 audio L3DATA
+ *  B4	output	UDA1341 audio L3LOCK
+ *
+ *  A21, A11, G15, G14, G13: not used.
+ *
+ *      i       input sense
+ *      o       output control
+ *      2       function 2
+ *      3       function 3
+ *      0       output control (A only)
+ *      1       function 1 (A only)
+ *      ./x     no function, not connected or don't-care
+ *  
+ * A ........ .1x11111 1111x111 11111111
+ * B                   .....22o ooooooo2
+ * C                   22222222 22222222
+ * D                   22222222 22222222
+ * E                   22222222 22222222
+ * F                   ........ 22222222
+ * G                   xxx2222i 22232322
+ * H                   .....22i 22222222
+ * J                   ...22222 22222222
+ */
+	iomux('A', "........ .1x11111 1111x111 11111111");
+	iomux('B', ".....22o ooooooo2");
+	iomux('C', "22222222 22222222");
+	iomux('D', "22222222 22222222");
+	iomux('E', "22222222 22222222");
+	iomux('F', "........ 22222222");
+	iomux('G', "xxx2222i 22232322");
+	iomux('H', ".....22i 22222222");
+	iomux('J', "...22222 22222222");
+
+	/* mask all possible external interrupt source [23:3] */
+	CSR_WRITE(S3C2440_GPIO_BASE + GPIO_EINTMASK, ~0);
+}
+
+static void
+iomux(int grp, const char *cnf)
+{
+	uint32_t con;
+	int sft, i, v;
+
+	con = v = 0;
+	sft = (grp != 'A') ? 2 : 1;
+	for (i = 0; cnf[i] != '\0'; i++) {
+		switch (cnf[i]) {
+		case 'i':
+		case '0':
+		case '.':
+		case 'x':
+			v = 0; break;
+		case 'o':
+		case '1':
+			v = 1; break;
+		case '2':
+			v = 2; break;
+		case '3':
+			v = 3; break;
+		default:
+			continue;
+		}
+		con = (con << sft) | v;
+	}
+	CSR_WRITE(S3C2440_GPIO_BASE + 0x10 * (grp - 'A'), con);
 }
