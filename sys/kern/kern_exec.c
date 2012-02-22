@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.339.2.1 2012/02/20 21:54:56 sborrill Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.339.2.2 2012/02/22 18:43:35 riz Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.339.2.1 2012/02/20 21:54:56 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.339.2.2 2012/02/22 18:43:35 riz Exp $");
 
 #include "opt_exec.h"
 #include "opt_ktrace.h"
@@ -1955,6 +1955,70 @@ spawn_return(void *arg)
 	exit1(l, W_EXITCODE(error, SIGABRT));
 }
 
+static void
+posix_spawn_fa_free(struct posix_spawn_file_actions *fa, size_t len)
+{
+
+	for (size_t i = 0; i < len; i++) {
+		struct posix_spawn_file_actions_entry *fae = &fa->fae[i];
+		if (fae->fae_action != FAE_OPEN)
+			continue;
+		kmem_free(fae->fae_path, strlen(fae->fae_path) + 1);
+	}
+	if (fa->len)
+		kmem_free(fa->fae, sizeof(*fa->fae) * fa->len);
+	kmem_free(fa, sizeof(*fa));
+}
+
+static int
+posix_spawn_fa_alloc(struct posix_spawn_file_actions **fap,
+    const struct posix_spawn_file_actions *ufa)
+{
+	struct posix_spawn_file_actions *fa;
+	struct posix_spawn_file_actions_entry *fae;
+	char *pbuf = NULL;
+	int error;
+	size_t i = 0;
+
+	fa = kmem_alloc(sizeof(*fa), KM_SLEEP);
+	error = copyin(ufa, fa, sizeof(*fa));
+	if (error) {
+		fa->fae = NULL;
+		fa->len = 0;
+		goto out;
+	}
+
+	if (fa->len == 0)
+		return 0;
+
+	size_t fal = fa->len * sizeof(*fae);
+	fae = fa->fae;
+	fa->fae = kmem_alloc(fal, KM_SLEEP);
+	error = copyin(fae, fa->fae, fal);
+	if (error)
+		goto out;
+
+	pbuf = PNBUF_GET();
+	for (; i < fa->len; i++) {
+		fae = &fa->fae[i];
+		if (fae->fae_action != FAE_OPEN)
+			continue;
+		error = copyinstr(fae->fae_path, pbuf, MAXPATHLEN, &fal);
+		if (error)
+			goto out;
+		fae->fae_path = kmem_alloc(fal, KM_SLEEP);
+		memcpy(fae->fae_path, pbuf, fal);
+	}
+	PNBUF_PUT(pbuf);
+	*fap = fa;
+	return 0;
+out:
+	if (pbuf)
+		PNBUF_PUT(pbuf);
+	posix_spawn_fa_free(fa, i);
+	return error;
+}
+
 int
 sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
     register_t *retval)
@@ -1971,10 +2035,9 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
 	struct proc *p1, *p2;
 	struct plimit *p1_lim;
 	struct lwp *l2;
-	int error = 0, tnprocs, count, i;
+	int error = 0, tnprocs, count;
 	struct posix_spawn_file_actions *fa = NULL;
 	struct posix_spawnattr *sa = NULL;
-	struct posix_spawn_file_actions_entry *ufa;
 	struct spawn_exec_data *spawn_data;
 	uid_t uid;
 	vaddr_t uaddr;
@@ -2013,53 +2076,18 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
 
 	/* copy in file_actions struct */
 	if (SCARG(uap, file_actions) != NULL) {
-		fa = kmem_alloc(sizeof(struct posix_spawn_file_actions),
-		    KM_SLEEP);
-		error = copyin(SCARG(uap, file_actions), fa,
-		    sizeof(struct posix_spawn_file_actions));
-		if (error) {
-			fa->fae = NULL;
-			goto error_exit;
-		}
-		if (fa->len) {
-			ufa = fa->fae;
-			fa->fae = kmem_alloc(fa->len * 
-			    sizeof(struct posix_spawn_file_actions_entry),
-			    KM_SLEEP);
-			error = copyin(ufa, fa->fae,
-			    fa->len *
-			    sizeof(struct posix_spawn_file_actions_entry));
-			if (error)
-				goto error_exit;
-			for (i = 0; i < fa->len; i++) {
-				if (fa->fae[i].fae_action == FAE_OPEN) {
-					char buf[PATH_MAX];
-					error = copyinstr(fa->fae[i].fae_path,
-					    buf, sizeof(buf), NULL);
-					if (error)
-						break;
-					fa->fae[i].fae_path = kmem_alloc(
-					    strlen(buf)+1, KM_SLEEP);
-					if (fa->fae[i].fae_path == NULL) {
-						error = ENOMEM;
-						break;
-					}
-					strcpy(fa->fae[i].fae_path, buf);
-				}
-			}
-		}
-	}
-	
-	/* copyin posix_spawnattr struct */
-	sa = NULL;
-	if (SCARG(uap, attrp) != NULL) {
-		sa = kmem_alloc(sizeof(struct posix_spawnattr), KM_SLEEP);
-		error = copyin(SCARG(uap, attrp), sa,
-		    sizeof(struct posix_spawnattr));
+		error = posix_spawn_fa_alloc(&fa, SCARG(uap, file_actions));
 		if (error)
 			goto error_exit;
 	}
-	
+
+	/* copyin posix_spawnattr struct */
+	if (SCARG(uap, attrp) != NULL) {
+		sa = kmem_alloc(sizeof(*sa), KM_SLEEP);
+		error = copyin(SCARG(uap, attrp), sa, sizeof(*sa));
+		if (error)
+			goto error_exit;
+	}
 
 	/*
 	 * Do the first part of the exec now, collect state
@@ -2200,18 +2228,12 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
 	/*
 	 * Prepare remaining parts of spawn data
 	 */
-	if (fa != NULL) {
-		if (fa->len) {
-			spawn_data->sed_actions_len = fa->len;
-			spawn_data->sed_actions = fa->fae;
-		}
-		kmem_free(fa, sizeof(*fa));
-		fa = NULL;
+	if (fa && fa->len) {
+		spawn_data->sed_actions_len = fa->len;
+		spawn_data->sed_actions = fa->fae;
 	}
-	if (sa != NULL) {
+	if (sa)
 		spawn_data->sed_attrs = sa;
-		sa = NULL;
-	}
 
 	spawn_data->sed_parent = p1;
 	cv_init(&spawn_data->sed_cv_child_ready, "pspawn");
@@ -2294,21 +2316,11 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
 	rw_exit(&exec_lock);
 	have_exec_lock = false;
 
-	if (spawn_data->sed_actions != NULL) {
-		for (i = 0; i < spawn_data->sed_actions_len; i++) {
-			if (spawn_data->sed_actions[i].fae_action == FAE_OPEN)
-				kmem_free(spawn_data->sed_actions[i].fae_path,
-				    strlen(spawn_data->sed_actions[i].fae_path)
-				    +1);
-		}
-		kmem_free(spawn_data->sed_actions,
-		    spawn_data->sed_actions_len
-		        * sizeof(*spawn_data->sed_actions));
-	}
+	if (fa)
+		posix_spawn_fa_free(fa, fa->len);
 
-	if (spawn_data->sed_attrs != NULL) 
-		kmem_free(spawn_data->sed_attrs,
-		    sizeof(*spawn_data->sed_attrs));
+	if (sa) 
+		kmem_free(sa, sizeof(*sa));
 
 	cv_destroy(&spawn_data->sed_cv_child_ready);
 	mutex_destroy(&spawn_data->sed_mtx_child);
@@ -2325,20 +2337,10 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
  	if (have_exec_lock)
  		rw_exit(&exec_lock);
  
-	if (fa != NULL) {
-		if (fa->fae != NULL) {
-			for (i = 0; i < fa->len; i++) {
-				if (fa->fae->fae_action == FAE_OPEN
-				    && fa->fae->fae_path != NULL)
-					kmem_free(fa->fae->fae_path,
-					    strlen(fa->fae->fae_path)+1);
-			}
-			kmem_free(fa->fae, fa->len * sizeof(*fa->fae));
-		}
-		kmem_free(fa, sizeof(*fa));
-	}
+	if (fa)
+		posix_spawn_fa_free(fa, fa->len);
 
-	if (sa != NULL) 
+	if (sa) 
 		kmem_free(sa, sizeof(*sa));
 
 	(void)chgproccnt(uid, -1);
