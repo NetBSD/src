@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.36 2011/12/07 15:47:42 cegger Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.36.2.1 2012/02/22 18:48:45 riz Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -132,6 +132,10 @@ struct intrframe;
 struct cpu_info;
 void do_hypervisor_callback(struct intrframe *regs);
 void hypervisor_enable_event(unsigned int);
+
+extern int xen_version;
+#define XEN_MAJOR(x) (((x) & 0xffff0000) >> 16)
+#define XEN_MINOR(x) ((x) & 0x0000ffff)
 
 /* hypervisor_machdep.c */
 void hypervisor_send_event(struct cpu_info *, unsigned int);
