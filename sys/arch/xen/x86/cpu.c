@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.82 2012/02/21 19:10:13 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.83 2012/02/22 18:29:31 bouyer Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.82 2012/02/21 19:10:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.83 2012/02/22 18:29:31 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1324,9 +1324,9 @@ pmap_cpu_init_late(struct cpu_info *ci)
 #endif /* __x86_64__ else PAE */
 
 	/* Xen wants R/O */
-	pmap_kenter_pa((vaddr_t)ci->ci_kpm_pdir, ci->ci_kpm_pdirpa,
-	    VM_PROT_READ, 0);
-
+	pmap_protect(pmap_kernel(), (vaddr_t)ci->ci_kpm_pdir,
+	    (vaddr_t)ci->ci_kpm_pdir + PAGE_SIZE, VM_PROT_READ);
+	pmap_update(pmap_kernel());
 #if defined(PAE)
 	/* Initialise L3 entry 3. This mapping is shared across all
 	 * pmaps and is static, ie; loading a new pmap will not update
@@ -1336,8 +1336,9 @@ pmap_cpu_init_late(struct cpu_info *ci)
 	ci->ci_pae_l3_pdir[3] = xpmap_ptom_masked(ci->ci_kpm_pdirpa) | PG_k | PG_V;
 
 	/* Mark L3 R/O (Xen wants this) */
-	pmap_kenter_pa((vaddr_t)ci->ci_pae_l3_pdir, ci->ci_pae_l3_pdirpa,
-		VM_PROT_READ, 0);
+	pmap_protect(pmap_kernel(), (vaddr_t)ci->ci_pae_l3_pdir,
+	    (vaddr_t)ci->ci_pae_l3_pdir + PAGE_SIZE, VM_PROT_READ);
+	pmap_update(pmap_kernel());
 
 	xpq_queue_pin_l3_table(xpmap_ptom_masked(ci->ci_pae_l3_pdirpa));
 
