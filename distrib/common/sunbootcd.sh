@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: sunbootcd.sh,v 1.5 2008/04/30 13:10:48 martin Exp $
+# $NetBSD: sunbootcd.sh,v 1.6 2012/02/22 16:12:34 martin Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -50,7 +50,7 @@ Usage: ${PROGNAME} fsimage sun4 [sun4c [sun4m [sun3|sun4d [sun3x|sun4u]]]]
 	The architecture arguments must be bootable file system image
 	for that architecture, or \`-' if no entry is desired.
 	\`fsimage' is typically an iso9660 file system image, although
-	any time of file system can be used as long as the first 512
+	any type of file system can be used as long as the first 512
 	bytes of the image are not used.  \`fsimage' is modified, and
 	the additional partitions are added in order.  If the same
 	filename is used more than once for different architectures,
