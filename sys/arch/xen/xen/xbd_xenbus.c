@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.55 2012/02/22 16:50:46 jakllsch Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.56 2012/02/22 16:53:46 jakllsch Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.55 2012/02/22 16:50:46 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.56 2012/02/22 16:53:46 jakllsch Exp $");
 
 #include "opt_xen.h"
 
@@ -1017,7 +1017,11 @@ xbdstart(struct dk_softc *dksc, struct buf *bp)
 		bcount = bp->b_bcount;
 		bp->b_resid = 0;
 	}
-	for (seg = 0, bcount = bp->b_bcount; bcount > 0;) {
+	if (bcount > XBD_MAX_XFER) {
+		bp->b_resid += bcount - XBD_MAX_XFER;
+		bcount = XBD_MAX_XFER;
+	}
+	for (seg = 0; bcount > 0;) {
 		pmap_extract_ma(pmap_kernel(), va, &ma);
 		KASSERT((ma & (XEN_BSIZE - 1)) == 0);
 		if (bcount > PAGE_SIZE - off)
