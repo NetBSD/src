@@ -40,7 +40,8 @@
 #ifndef	SDRAM_START
 #define	SDRAM_START	S3C2440_SDRAM_START
 #endif
-	
+
+/* LED1/2/3/4 are manipulated by GPIO B5/6/7/8. */
 #define LED1 (1<<5)
 #define LED2 (1<<6)
 #define LED3 (1<<7)
@@ -50,7 +51,7 @@
 	.global _start
 _start:
 	/* Get arguments from boot-loader (stored in r0 and r1) */
-	adr	r2, bootloader_args
+	adr	r2, Largs
 	stmia	r2, {r0, r1}
 
 	/* Disable interrupt */
@@ -125,7 +126,7 @@ _start:
         bgt     .L1
 
 	
-	adr	r2, bootloader_args
+	adr	r2, Largs
 	ldmia	r2, {r0, r1}
 
 	/* Jump to kernel code in TRUE VA */
@@ -134,11 +135,6 @@ _start:
 Lstart:
 	.word	main
 	
-	.macro clock_data  hdivn, pdivn, mdiv, pdiv, sdiv
-	.word	(\hdivn)<<1 | \pdivn
-	.word	(\mdiv)<<PLLCON_MDIV_SHIFT | (\pdiv)<<PLLCON_PDIV_SHIFT | (\sdiv)<<PLLCON_SDIV_SHIFT
-	.endm
-
 #define MMU_INIT(va,pa,n_sec,attr) \
 	.word	n_sec					    ; \
 	.word	4*((va)>>L1_S_SHIFT)			    ; \
@@ -161,6 +157,5 @@ Lcrtsetup:
 	.word	_end	/* End of BSS */
 	.word	0x30A00000 /* Place stack-bottom at load-point of libsa bootloader */
 
-	.global _C_LABEL(bootloader_args)
-_C_LABEL(bootloader_args):
-	.space	8 /* Two registers */
+Largs:
+	.space	8 /* to save r0/r1 registers */
