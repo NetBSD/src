@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.15 2012/01/23 16:22:58 phx Exp $ */
+/* $NetBSD: satmgr.c,v 1.16 2012/02/22 22:56:44 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -678,11 +678,11 @@ txintr(struct satmgr_softc *sc)
 static void
 startoutput(struct satmgr_softc *sc)
 {
-	int n, ch;
+	int n;
 
 	n = min(sc->sc_wr_cnt, 16);
-	while ((ch = *sc->sc_wr_ptr) && n-- > 0) {
-		CSR_WRITE(sc, THR, ch);
+	while (n-- > 0) {
+		CSR_WRITE(sc, THR, *sc->sc_wr_ptr);
 		if (++sc->sc_wr_ptr == sc->sc_wr_lim)
 			sc->sc_wr_ptr = &sc->sc_wr_buf[0];
 		sc->sc_wr_cnt -= 1;
@@ -933,13 +933,13 @@ iprepcmd(struct satmgr_softc *sc, int pow, int led, int rat, int fan,
 	 * Construct the command packet. Values of -1 (0xff) will be
 	 * replaced later by the current values from the last status.
 	 */
-	*p++ = pow;
-	*p++ = led;
-	*p++ = rat;
-	*p++ = fan;
-	*p++ = fhi;
-	*p++ = flo;
-	*p = 7; /* host id */
+	p[0] = pow;
+	p[1] = led;
+	p[2] = rat;
+	p[3] = fan;
+	p[4] = fhi;
+	p[5] = flo;
+	p[6] = 7; /* host id */
 
 	/* synchronize transmitter, before packet can be sent */
 	callout_reset(&sc->sc_ch_sync, hz / 5, idosync, sc);
