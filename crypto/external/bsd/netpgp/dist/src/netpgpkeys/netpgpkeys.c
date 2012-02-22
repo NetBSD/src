@@ -59,6 +59,7 @@ static const char *usage =
 	"\t--import-key [options] OR\n"
 	"\t--list-keys [options] OR\n"
 	"\t--list-sigs [options] OR\n"
+	"\t--trusted-keys [options] OR\n"
 	"\t--get-key keyid [options] OR\n"
 	"\t--version\n"
 	"where options are:\n"
@@ -81,6 +82,7 @@ enum optdefs {
 	VERSION_CMD,
 	HELP_CMD,
 	GET_KEY,
+	TRUSTED_KEYS,
 
 	/* options */
 	SSHKEYS,
@@ -118,6 +120,8 @@ static struct option options[] = {
 	{"generate",	optional_argument,	NULL,	GENERATE_KEY},
 	{"generate-key", optional_argument,	NULL,	GENERATE_KEY},
 	{"get-key", 	no_argument,		NULL,	GET_KEY},
+	{"trusted-keys",optional_argument,	NULL,	TRUSTED_KEYS},
+	{"trusted",	optional_argument,	NULL,	TRUSTED_KEYS},
 	/* debugging commands */
 	{"help",	no_argument,		NULL,	HELP_CMD},
 	{"version",	no_argument,		NULL,	VERSION_CMD},
@@ -224,6 +228,8 @@ netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 		}
 		(void) fprintf(stderr, "key '%s' not found\n", f);
 		return 0;
+	case TRUSTED_KEYS:
+		return netpgp_match_pubkeys(netpgp, f, stdout);
 	case HELP_CMD:
 	default:
 		print_usage(usage, p->progname);
@@ -249,6 +255,7 @@ setoption(netpgp_t *netpgp, prog_t *p, int val, char *arg, int *homeset)
 	case EXPORT_KEY:
 	case IMPORT_KEY:
 	case GET_KEY:
+	case TRUSTED_KEYS:
 	case HELP_CMD:
 		p->cmd = val;
 		break;
