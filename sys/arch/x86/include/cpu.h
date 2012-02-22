@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.47 2012/02/12 14:38:18 jym Exp $	*/
+/*	$NetBSD: cpu.h,v 1.47.2.1 2012/02/22 18:56:47 riz Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,6 +70,7 @@
 #ifdef XEN
 #include <xen/xen-public/xen.h>
 #include <xen/xen-public/event_channel.h>
+#include <sys/mutex.h>
 #endif /* XEN */
 
 struct intrsource;
@@ -185,6 +186,7 @@ struct cpu_info {
 	/* Currently active user PGD (can't use rcr3() with Xen) */
 	pd_entry_t *	ci_kpm_pdir;	/* per-cpu PMD (va) */
 	paddr_t		ci_kpm_pdirpa;  /* per-cpu PMD (pa) */
+	kmutex_t	ci_kpm_mtx;
 #if defined(__x86_64__)
 	/* per-cpu version of normal_pdes */
 	pd_entry_t *	ci_normal_pdes[3]; /* Ok to hardcode. only for x86_64 && XEN */
@@ -317,7 +319,7 @@ lwp_t   *x86_curlwp(void);
 void cpu_boot_secondary_processors(void);
 void cpu_init_idle_lwps(void);
 void cpu_init_msrs(struct cpu_info *, bool);
-void cpu_load_pmap(struct pmap *);
+void cpu_load_pmap(struct pmap *, struct pmap *);
 void cpu_broadcast_halt(void);
 void cpu_kick(struct cpu_info *);
 

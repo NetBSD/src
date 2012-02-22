@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.96 2011/10/18 05:16:02 jruoho Exp $	*/
+/*	$NetBSD: cpu.c,v 1.96.8.1 2012/02/22 18:56:46 riz Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.96 2011/10/18 05:16:02 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.96.8.1 2012/02/22 18:56:46 riz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -1228,7 +1228,7 @@ x86_cpu_idle_halt(void)
  * Loads pmap for the current CPU.
  */
 void
-cpu_load_pmap(struct pmap *pmap)
+cpu_load_pmap(struct pmap *pmap, struct pmap *oldpmap)
 {
 #ifdef PAE
 	int i, s;

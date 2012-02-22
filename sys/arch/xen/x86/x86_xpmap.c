@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.38 2012/01/12 19:49:37 cherry Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.38.2.1 2012/02/22 18:56:45 riz Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.38 2012/01/12 19:49:37 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.38.2.1 2012/02/22 18:56:45 riz Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -185,8 +185,12 @@ retry:
 	ret = HYPERVISOR_mmu_update_self(xpq_queue, xpq_idx, &ok);
 
 	if (xpq_idx != 0 && ret < 0) {
-		printf("xpq_flush_queue: %d entries (%d successful)\n",
-		    xpq_idx, ok);
+		struct cpu_info *ci;
+		CPU_INFO_ITERATOR cii;
+
+		printf("xpq_flush_queue: %d entries (%d successful) on "
+		    "cpu%d (%ld)\n",
+		    xpq_idx, ok, xpq_cpu()->ci_index, xpq_cpu()->ci_cpuid);
 
 		if (ok != 0) {
 			xpq_queue += ok;
@@ -195,9 +199,23 @@ retry:
 			goto retry;
 		}
 
-		for (i = 0; i < xpq_idx; i++)
-			printf("0x%016" PRIx64 ": 0x%016" PRIx64 "\n",
-			   xpq_queue[i].ptr, xpq_queue[i].val);
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			xpq_queue = xpq_queue_array[ci->ci_cpuid];
+			xpq_idx = xpq_idx_array[ci->ci_cpuid];
+			printf("cpu%d (%ld):\n", ci->ci_index, ci->ci_cpuid);
+			for (i = 0; i < xpq_idx; i++) {
+				printf("  0x%016" PRIx64 ": 0x%016" PRIx64 "\n",
+				   xpq_queue[i].ptr, xpq_queue[i].val);
+			}
+#ifdef __x86_64__
+			for (i = 0; i < PDIR_SLOT_PTE; i++) {
+				if (ci->ci_kpm_pdir[i] == 0)
+					continue;
+				printf(" kpm_pdir[%d]: 0x%" PRIx64 "\n",
+				    i, ci->ci_kpm_pdir[i]);
+			}
+#endif
+		}
 		panic("HYPERVISOR_mmu_update failed, ret: %d\n", ret);
 	}
 	xpq_idx_array[xpq_cpu()->ci_cpuid] = 0;

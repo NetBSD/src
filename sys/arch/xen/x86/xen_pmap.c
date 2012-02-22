@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_pmap.c,v 1.16 2012/01/28 07:19:17 cherry Exp $	*/
+/*	$NetBSD: xen_pmap.c,v 1.16.2.1 2012/02/22 18:56:45 riz Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.16 2012/01/28 07:19:17 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.16.2.1 2012/02/22 18:56:45 riz Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -350,34 +350,7 @@ pmap_kpm_setpte(struct cpu_info *ci, struct pmap *pmap, int index)
 		xpmap_ptetomach(&ci->ci_kpm_pdir[index]),
 		pmap->pm_pdir[index]);
 #endif /* PAE */
-}
-
-static void
-pmap_kpm_sync_xcall(void *arg1, void *arg2)
-{
-	KASSERT(arg1 != NULL);
-	KASSERT(arg2 != NULL);
-
-	struct pmap *pmap = arg1;
-	int index = *(int *)arg2;
-	KASSERT(pmap == pmap_kernel() || index < PDIR_SLOT_PTE);
-	
-	struct cpu_info *ci = xpq_cpu();
-
-#ifdef PAE
-	KASSERTMSG(pmap == pmap_kernel(), "%s not allowed for PAE user pmaps", __func__);
-#endif /* PAE */
-
-	if (__predict_true(pmap != pmap_kernel()) &&
-	    pmap != ci->ci_pmap) {
-		/* User pmap changed. Nothing to do. */
-		return;
-	}
-
-	/* Update per-cpu kpm */
-	pmap_kpm_setpte(ci, pmap, index);
-	pmap_pte_flush();
-	return;
+	xpq_flush_queue();
 }
 
 /*
@@ -387,68 +360,30 @@ pmap_kpm_sync_xcall(void *arg1, void *arg2)
 void
 xen_kpm_sync(struct pmap *pmap, int index)
 {
-	uint64_t where;
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
 	
 	KASSERT(pmap != NULL);
 
 	pmap_pte_flush();
 
-	if (__predict_false(xpq_cpu != &x86_curcpu)) { /* Too early to xcall */
-		CPU_INFO_ITERATOR cii;
-		struct cpu_info *ci;
-		int s = splvm();
-		for (CPU_INFO_FOREACH(cii, ci)) {
-			if (ci == NULL) {
-				continue;
-			}
-			if (pmap == pmap_kernel() ||
-			    ci->ci_cpumask & pmap->pm_cpus) {
-				pmap_kpm_setpte(ci, pmap, index);
-			}
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if (ci == NULL) {
+			continue;
 		}
-		pmap_pte_flush();
-		splx(s);
-		return;
-	}
+		if (pmap != pmap_kernel() &&
+		    (ci->ci_cpumask & pmap->pm_xen_ptp_cpus) == 0)
+			continue;
 
-	if (pmap == pmap_kernel()) {
-		where = xc_broadcast(XC_HIGHPRI,
-		    pmap_kpm_sync_xcall, pmap, &index);
-		xc_wait(where);
-	} else {
-		KASSERT(mutex_owned(pmap->pm_lock));
-		KASSERT(kpreempt_disabled());
-
-		CPU_INFO_ITERATOR cii;
-		struct cpu_info *ci;
-		for (CPU_INFO_FOREACH(cii, ci)) {
-			if (ci == NULL) {
-				continue;
-			}
-			while (ci->ci_cpumask & pmap->pm_cpus) {
-#ifdef MULTIPROCESSOR
-#define CPU_IS_CURCPU(ci) __predict_false((ci) == curcpu())
-#else /* MULTIPROCESSOR */
-#define CPU_IS_CURCPU(ci) __predict_true((ci) == curcpu())
-#endif /* MULTIPROCESSOR */
-#if 0 /* XXX: Race with remote pmap_load() */
-				if (ci->ci_want_pmapload &&
-				    !CPU_IS_CURCPU(ci)) {
-					/*
-					 * XXX: make this more cpu
-					 *  cycle friendly/co-operate
-					 *  with pmap_load()
-					 */
-					continue;
-				    }
-#endif /* 0 */
-				where = xc_unicast(XC_HIGHPRI, pmap_kpm_sync_xcall,
-				    pmap, &index, ci);
-				xc_wait(where);
-				break;
-			}
+		/* take the lock and check again */
+		mutex_enter(&ci->ci_kpm_mtx);
+		if (pmap == pmap_kernel() ||
+		    (ci->ci_cpumask & pmap->pm_xen_ptp_cpus) != 0) {
+			pmap_kpm_setpte(ci, pmap, index);
 		}
+		mutex_exit(&ci->ci_kpm_mtx);
 	}
+	return;
 }
 
 #endif /* PAE || __x86_64__ */
