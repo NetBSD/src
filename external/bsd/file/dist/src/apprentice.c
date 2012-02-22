@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.1.1.3 2011/09/16 20:37:36 christos Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.1.1.4 2012/02/22 17:48:21 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -35,9 +35,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: apprentice.c,v 1.170 2011/06/10 09:23:28 christos Exp $")
+FILE_RCSID("@(#)$File: apprentice.c,v 1.173 2011/12/08 12:38:24 rrt Exp $")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.1.1.3 2011/09/16 20:37:36 christos Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.1.1.4 2012/02/22 17:48:21 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -742,8 +742,7 @@ load_1(struct magic_set *ms, int action, const char *fn, int *errs,
 			break;
 		}
 	}
-	if (line)
-		free(line);
+	free(line);
 	(void)fclose(f);
 }
 
@@ -796,6 +795,7 @@ apprentice_load(struct magic_set *ms, struct magic **magicp, uint32_t *nmagicp,
 				file_oomem(ms,
 				    strlen(fn) + strlen(d->d_name) + 2);
 				errs++;
+				closedir(dir);
 				goto out;
 			}
 			if (stat(mfn, &st) == -1 || !S_ISREG(st.st_mode)) {
@@ -810,6 +810,7 @@ apprentice_load(struct magic_set *ms, struct magic **magicp, uint32_t *nmagicp,
 				    realloc(filearr, mlen))) == NULL) {
 					file_oomem(ms, mlen);
 					free(mfn);
+					closedir(dir);
 					errs++;
 					goto out;
 				}
@@ -1457,8 +1458,8 @@ parse(struct magic_set *ms, struct magic_entry **mentryp, uint32_t *nmentryp,
 						goto bad;
 					m->str_flags |= PSTRING_LENGTH_INCLUDES_ITSELF;
 					break;
-				bad:
 				default:
+				bad:
 					if (ms->flags & MAGIC_CHECK)
 						file_magwarn(ms,
 						    "string extension `%c' "
@@ -2091,7 +2092,7 @@ out:
 	*p = '\0';
 	m->vallen = CAST(unsigned char, (p - origp));
 	if (m->type == FILE_PSTRING)
-		m->vallen += file_pstring_length_size(m);
+		m->vallen += (unsigned char)file_pstring_length_size(m);
 	return s;
 }
 
@@ -2306,7 +2307,7 @@ private int
 apprentice_compile(struct magic_set *ms, struct magic **magicp,
     uint32_t *nmagicp, const char *fn)
 {
-	int fd;
+	int fd = -1;
 	char *dbname;
 	int rv = -1;
 
@@ -2337,7 +2338,8 @@ apprentice_compile(struct magic_set *ms, struct magic **magicp,
 		goto out;
 	}
 
-	(void)close(fd);
+	if (fd != -1)
+		(void)close(fd);
 	rv = 0;
 out:
 	free(dbname);
