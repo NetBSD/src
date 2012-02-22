@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.718 2012/02/19 21:06:08 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.719 2012/02/22 18:35:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.718 2012/02/19 21:06:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.719 2012/02/22 18:35:26 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -542,9 +542,8 @@ i386_switch_context(lwp_t *l)
 
 	pcb = lwp_getpcb(l);
 	ci = curcpu();
-	if (ci->ci_fpused) {
+	if (pcb->pcb_fpcpu != ci) {
 		HYPERVISOR_fpu_taskswitch(1);
-		ci->ci_fpused = 0;
 	}
 
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_esp0);
