@@ -1,4 +1,4 @@
-.\" $NetBSD: pmc.9,v 1.11 2010/05/14 18:52:46 jruoho Exp $
+.\" $NetBSD: pmc.9,v 1.12 2012/02/22 19:04:38 njoly Exp $
 .\"
 .\" Copyright (c) 2002, 2005 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -172,12 +172,12 @@ For example, on an ia32 architecture, it may distinguish between
 .It Fn pmc_save_context "struct lwp *l"
 Saves the PMC context for the current process.
 This is called just before
-.Xr cpu_switch 9 .
+.Xr cpu_switchto 9 .
 If there is kernel PMC state, it must be maintained across this call.
 .It Fn pmc_restore_context "struct lwp *l"
 Restores the PMC context for the current process.
 This is called just after
-.Xr cpu_switch 9
+.Xr cpu_switchto 9
 returns.
 If there is kernel PMC state, it must be maintained across this call.
 .It Fn pmc_enable_counter "struct lwp *l" "int ctr"
