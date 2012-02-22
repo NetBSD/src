@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.60 2011/12/09 11:47:49 cherry Exp $ */
+/* $NetBSD: hypervisor.c,v 1.60.2.1 2012/02/22 18:48:45 riz Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.60 2011/12/09 11:47:49 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.60.2.1 2012/02/22 18:48:45 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,6 +169,8 @@ struct  x86_isa_chipset x86_isa_chipset;
 #endif
 #endif
 
+int xen_version;
+
 /* power management, for save/restore */
 static bool hypervisor_suspend(device_t, const pmf_qual_t *);
 static bool hypervisor_resume(device_t, const pmf_qual_t *);
@@ -201,7 +203,6 @@ hypervisor_vcpu_print(void *aux, const char *parent)
 void
 hypervisor_attach(device_t parent, device_t self, void *aux)
 {
-	int xen_version;
 
 #if NPCI >0
 #ifdef PCI_BUS_FIXUP
@@ -213,8 +214,8 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	xenkernfs_init();
 
 	xen_version = HYPERVISOR_xen_version(XENVER_version, NULL);
-	aprint_normal(": Xen version %d.%d\n", (xen_version & 0xffff0000) >> 16,
-	       xen_version & 0x0000ffff);
+	aprint_normal(": Xen version %d.%d\n", XEN_MAJOR(xen_version),
+	       XEN_MINOR(xen_version));
 
 	xengnt_init();
 	events_init();
