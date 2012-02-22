@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.94 2011/08/02 07:16:56 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.95 2012/02/22 06:29:40 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1091,8 +1091,6 @@ netpgp_match_pubkeys(netpgp_t *netpgp, char *name, void *vp)
 			ALLOC(char *, pubs.v, pubs.size, pubs.c, 10, 10,
 					"netpgp_match_pubkeys", return 0);
 			cc = pgp_sprint_pubkey(key, out, sizeof(out));
-			(void) snprintf(&out[cc], sizeof(out) - cc, "name=%s\n",
-				key->uids[0]);
 			pubs.v[pubs.c++] = netpgp_strdup(out);
 			k += 1;
 		}
