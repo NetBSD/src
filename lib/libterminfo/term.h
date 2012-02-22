@@ -1,4 +1,4 @@
-/* $NetBSD: term.h,v 1.10 2011/10/04 11:01:14 roy Exp $ */
+/* $NetBSD: term.h,v 1.11 2012/02/22 23:11:20 christos Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -1012,7 +1012,7 @@ enum TISTRS{
 #define t_set_bottom_margin_parm(t)	(t)->strs[TICODE_smgbp]
 #define t_set_clock(t)			(t)->strs[TICODE_sclk]
 #define t_set_color_band(t)		(t)->strs[TICODE_setcolor]
-#define t_set_color_paid(t)		(t)->strs[TICODE_scp]
+#define t_set_color_pair(t)		(t)->strs[TICODE_scp]
 #define t_set_foreground(t)		(t)->strs[TICODE_setf]
 #define t_set_left_margin(t)		(t)->strs[TICODE_smgl]
 #define t_set_left_margin_parm(t)	(t)->strs[TICODE_smglp]
@@ -1407,7 +1407,7 @@ enum TISTRS{
 #define set_bottom_margin_parm		 t_set_bottom_margin_parm(cur_term)
 #define set_clock			 t_set_clock(cur_term)
 #define set_color_band			 t_set_color_band(cur_term)
-#define set_color_paid			 t_set_color_paid(cur_term)
+#define set_color_pair			 t_set_color_pair(cur_term)
 #define set_foreground			 t_set_foreground(cur_term)
 #define set_left_margin			 t_set_left_margin(cur_term)
 #define set_left_margin_parm		 t_set_left_margin_parm(cur_term)
