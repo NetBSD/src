@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.164 2012/02/11 18:59:41 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.164.2.1 2012/02/22 18:56:47 riz Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164 2012/02/11 18:59:41 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164.2.1 2012/02/22 18:56:47 riz Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -561,7 +561,6 @@ static void		 pmap_freepage(struct pmap *, struct vm_page *, int);
 static void		 pmap_free_ptp(struct pmap *, struct vm_page *,
 				       vaddr_t, pt_entry_t *,
 				       pd_entry_t * const *);
-static bool		 pmap_is_active(struct pmap *, struct cpu_info *, bool);
 static bool		 pmap_remove_pte(struct pmap *, struct vm_page *,
 					 pt_entry_t *, vaddr_t,
 					 struct pv_entry **);
@@ -680,19 +679,6 @@ pmap_is_curpmap(struct pmap *pmap)
 }
 
 /*
- * pmap_is_active: is this pmap loaded into the specified processor's %cr3?
- */
-
-inline static bool
-pmap_is_active(struct pmap *pmap, struct cpu_info *ci, bool kernel)
-{
-
-	return (pmap == pmap_kernel() ||
-	    (pmap->pm_cpus & ci->ci_cpumask) != 0 ||
-	    (kernel && (pmap->pm_kernel_cpus & ci->ci_cpumask) != 0));
-}
-
-/*
  *	Add a reference to the specified pmap.
  */
 
@@ -781,7 +767,7 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 		ci->ci_tlbstate = TLBSTATE_VALID;
 		atomic_or_32(&pmap->pm_cpus, cpumask);
 		atomic_or_32(&pmap->pm_kernel_cpus, cpumask);
-		cpu_load_pmap(pmap);
+		cpu_load_pmap(pmap, curpmap);
 	}
 	pmap->pm_ncsw = l->l_ncsw;
 	*pmap2 = curpmap;
@@ -2239,6 +2225,7 @@ pmap_create(void)
 	pmap->pm_flags = 0;
 	pmap->pm_cpus = 0;
 	pmap->pm_kernel_cpus = 0;
+	pmap->pm_xen_ptp_cpus = 0;
 	pmap->pm_gc_ptp = NULL;
 
 	/* init the LDT */
@@ -2329,9 +2316,26 @@ pmap_destroy(struct pmap *pmap)
 	}
 
 #ifdef DIAGNOSTIC
-	for (CPU_INFO_FOREACH(cii, ci))
+	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (ci->ci_pmap == pmap)
 			panic("destroying pmap being used");
+#if defined(XEN) && defined(__x86_64__)
+		for (i = 0; i < PDIR_SLOT_PTE; i++) {
+			if (pmap->pm_pdir[i] != 0 &&
+			    ci->ci_kpm_pdir[i] == pmap->pm_pdir[i]) {
+				printf("pmap_destroy(%p) pmap_kernel %p "
+				    "curcpu %d cpu %d ci_pmap %p "
+				    "ci->ci_kpm_pdir[%d]=%" PRIx64
+				    " pmap->pm_pdir[%d]=%" PRIx64 "\n",
+				    pmap, pmap_kernel(), curcpu()->ci_index,
+				    ci->ci_index, ci->ci_pmap,
+				    i, ci->ci_kpm_pdir[i],
+				    i, pmap->pm_pdir[i]);
+				panic("pmap_destroy: used pmap");
+			}
+		}
+#endif
+	}
 #endif /* DIAGNOSTIC */
 
 	/*
@@ -2760,7 +2764,7 @@ pmap_load(void)
 	lldt(pmap->pm_ldt_sel);
 
 	u_int gen = uvm_emap_gen_return();
-	cpu_load_pmap(pmap);
+	cpu_load_pmap(pmap, oldpmap);
 	uvm_emap_update(gen);
 
 	ci->ci_want_pmapload = 0;
@@ -4179,14 +4183,30 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 			pte = pmap_pa2pte(pa) | PG_k | PG_V | PG_RW;
 #ifdef XEN
 			xpq_queue_pte_update(xpmap_ptetomach(&pdep[i]), pte);
-			if (level == PTP_LEVELS) {
 #if defined(PAE) || defined(__x86_64__)
-				if (i >= PDIR_SLOT_KERN) {
+			if (level == PTP_LEVELS && i >= PDIR_SLOT_KERN) {
+				if (__predict_true(
+				    cpu_info_primary.ci_flags & CPUF_PRESENT)) {
 					/* update per-cpu PMDs on all cpus */
 					xen_kpm_sync(pmap_kernel(), i);
+				} else {
+					/*
+					 * too early; update primary CPU
+					 * PMD only (without locks)
+					 */
+#ifdef PAE
+					pd_entry_t *cpu_pdep =
+					    &cpu_info_primary.ci_kpm_pdir[l2tol2(i)];
+#endif
+#ifdef __x86_64__
+					pd_entry_t *cpu_pdep =
+						&cpu_info_primary.ci_kpm_pdir[i];
+#endif
+					xpq_queue_pte_update(
+					    xpmap_ptetomach(cpu_pdep), pte);
 				}
-#endif /* PAE || __x86_64__ */
 			}
+#endif /* PAE || __x86_64__ */
 #else /* XEN */
 			pdep[i] = pte;
 #endif /* XEN */
