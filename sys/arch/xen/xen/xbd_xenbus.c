@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.54 2012/02/21 01:47:50 jakllsch Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.55 2012/02/22 16:50:46 jakllsch Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.54 2012/02/21 01:47:50 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.55 2012/02/22 16:50:46 jakllsch Exp $");
 
 #include "opt_xen.h"
 
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.54 2012/02/21 01:47:50 jakllsch Exp
 #define GRANT_INVALID_REF -1
 
 #define XBD_RING_SIZE __CONST_RING_SIZE(blkif, PAGE_SIZE)
+#define XBD_MAX_XFER (PAGE_SIZE * BLKIF_MAX_SEGMENTS_PER_REQUEST)
 
 #define XEN_BSHIFT      9               /* log2(XEN_BSIZE) */
 #define XEN_BSIZE       (1 << XEN_BSHIFT) 
@@ -736,8 +737,8 @@ done:
 static void
 xbdminphys(struct buf *bp)
 {
-	if (bp->b_bcount > (PAGE_SIZE * BLKIF_MAX_SEGMENTS_PER_REQUEST)) {
-		bp->b_bcount = PAGE_SIZE * BLKIF_MAX_SEGMENTS_PER_REQUEST;
+	if (bp->b_bcount > XBD_MAX_XFER) {
+		bp->b_bcount = XBD_MAX_XFER;
 	}
 	minphys(bp);
 }
