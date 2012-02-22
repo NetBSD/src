@@ -1,4 +1,4 @@
-/*	$NetBSD: spawn.h,v 1.3 2012/02/21 10:54:07 martin Exp $	*/
+/*	$NetBSD: spawn.h,v 1.4 2012/02/22 17:51:01 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 Ed Schouten <ed@FreeBSD.org>
@@ -40,10 +40,10 @@ __BEGIN_DECLS
  */
 int posix_spawn(pid_t * __restrict, const char * __restrict,
     const posix_spawn_file_actions_t *, const posix_spawnattr_t * __restrict,
-    char * const [__conly_restrict], char * const [__conly_restrict]);
+    char * const *__restrict, char * const *__restrict);
 int posix_spawnp(pid_t * __restrict, const char * __restrict,
     const posix_spawn_file_actions_t *, const posix_spawnattr_t * __restrict,
-    char * const [__conly_restrict], char * const [__conly_restrict]);
+    char * const *__restrict, char * const *__restrict);
 
 /*
  * File descriptor actions
