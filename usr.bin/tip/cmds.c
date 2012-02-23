@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.33 2011/09/06 18:33:01 joerg Exp $	*/
+/*	$NetBSD: cmds.c,v 1.34 2012/02/23 23:39:19 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.33 2011/09/06 18:33:01 joerg Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.34 2012/02/23 23:39:19 joerg Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -887,7 +887,7 @@ expand(char aname[])
 	(void)close(pivec[1]);
 	l = read(pivec[0], xname, BUFSIZ);
 	(void)close(pivec[0]);
-	while (wait(&s) != mypid);
+	while (wait(&s) != mypid)
 		;
 	s &= 0377;
 	if (s != 0 && s != SIGPIPE) {
