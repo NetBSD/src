@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.411 2012/01/13 16:05:16 cegger Exp $
+.\"	$NetBSD: options.4,v 1.411.2.1 2012/02/23 18:29:52 riz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -810,10 +810,11 @@ for details.
 .It Cd file-system UDF
 .Bq Em EXPERIMENTAL
 Includes code for the UDF file system commonly found on CD and DVD
-media but also more and more on USB sticks.
-Useful primarily if you have a CD or a DVD drive, be it a read-only
-or a rewritable device.
-Currently only supports read-access.
+media but also on USB sticks.
+Currently supports read and write access upto UDF 2.01 and somewhat limited
+write support for UDF 2.50.
+It is marked experimental since there is no
+.Xr fsck_udf 8 .
 See
 .Xr mount_udf 8
 for details.
