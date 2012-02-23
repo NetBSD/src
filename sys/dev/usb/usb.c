@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.125.6.9 2012/02/20 06:50:21 mrg Exp $	*/
+/*	$NetBSD: usb.c,v 1.125.6.10 2012/02/23 09:25:04 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.125.6.9 2012/02/20 06:50:21 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.125.6.10 2012/02/23 09:25:04 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -420,7 +420,7 @@ usb_event_thread(void *arg)
 		cv_signal(&sc->sc_bus->needs_explore_cv);
 		mutex_exit(sc->sc_bus->lock);
 	} else
-		wakeup(sc);
+		wakeup(sc);	/* XXXSMP ok */
 
 	DPRINTF(("usb_event_thread: exit\n"));
 	kthread_exit(0);
@@ -839,7 +839,7 @@ usb_needs_explore(usbd_device_handle dev)
 		cv_signal(&dev->bus->needs_explore_cv);
 		mutex_exit(dev->bus->lock);
 	} else
-		wakeup(&dev->bus->needs_explore);
+		wakeup(&dev->bus->needs_explore);	/* XXXSMP ok */
 }
 
 void
@@ -854,7 +854,7 @@ usb_needs_reattach(usbd_device_handle dev)
 		cv_signal(&dev->bus->needs_explore_cv);
 		mutex_exit(dev->bus->lock);
 	} else
-		wakeup(&dev->bus->needs_explore);
+		wakeup(&dev->bus->needs_explore);	/* XXXSMP ok */
 }
 
 /* Called at with usb_event_lock held. */
@@ -1038,7 +1038,7 @@ usb_detach(device_t self, int flags)
 			    sc->sc_bus->lock, hz * 60);
 			mutex_exit(sc->sc_bus->lock);
 		} else {
-			wakeup(&sc->sc_bus->needs_explore);
+			wakeup(&sc->sc_bus->needs_explore);	/* XXXSMP ok */
 			tsleep(sc, PWAIT, "usbdet", hz * 60);
 		}
 	}

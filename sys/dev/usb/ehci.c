@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.181.6.10 2012/02/20 22:42:24 mrg Exp $ */
+/*	$NetBSD: ehci.c,v 1.181.6.11 2012/02/23 09:25:04 mrg Exp $ */
 
 /*
  * Copyright (c) 2004-2011 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.6.10 2012/02/20 22:42:24 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.6.11 2012/02/23 09:25:04 mrg Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1406,11 +1406,11 @@ ehci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 }
 
 Static void
-ehci_get_lock(struct usbd_bus *bus, kmutex_t **thread)
+ehci_get_lock(struct usbd_bus *bus, kmutex_t **lock)
 {
 	struct ehci_softc *sc = bus->hci_private;
 
-	*thread = &sc->sc_lock;
+	*lock = &sc->sc_lock;
 }
 
 Static void
@@ -1811,7 +1811,7 @@ ehci_open(usbd_pipe_handle pipe)
 }
 
 /*
- * Add an ED to the schedule.  Called with USB thread lock held.
+ * Add an ED to the schedule.  Called with USB lock held.
  */
 Static void
 ehci_add_qh(ehci_softc_t *sc, ehci_soft_qh_t *sqh, ehci_soft_qh_t *head)
@@ -1839,7 +1839,7 @@ ehci_add_qh(ehci_softc_t *sc, ehci_soft_qh_t *sqh, ehci_soft_qh_t *head)
 }
 
 /*
- * Remove an ED from the schedule.  Called with USB thread lock held.
+ * Remove an ED from the schedule.  Called with USB lock held.
  */
 Static void
 ehci_rem_qh(ehci_softc_t *sc, ehci_soft_qh_t *sqh, ehci_soft_qh_t *head)

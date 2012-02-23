@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.134.2.10 2012/02/20 22:42:47 mrg Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.134.2.11 2012/02/23 09:25:04 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134.2.10 2012/02/20 22:42:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134.2.11 2012/02/23 09:25:04 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -756,7 +756,7 @@ usbd_ar_pipe(usbd_pipe_handle pipe)
 	return (USBD_NORMAL_COMPLETION);
 }
 
-/* Called with USB thread lock held. */
+/* Called with USB lock held. */
 void
 usb_transfer_complete(usbd_xfer_handle xfer)
 {
@@ -861,7 +861,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 		if (pipe->device->bus->lock)
 			cv_broadcast(&xfer->cv);
 		else
-			wakeup(xfer);
+			wakeup(xfer);	/* XXXSMP ok */
 	}
 
 	if (!repeat) {
@@ -873,7 +873,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 	}
 }
 
-/* Called with USB thread lock held. */
+/* Called with USB lock held. */
 usbd_status
 usb_insert_transfer(usbd_xfer_handle xfer)
 {
@@ -903,7 +903,7 @@ usb_insert_transfer(usbd_xfer_handle xfer)
 	return (err);
 }
 
-/* Called with USB thread lock held. */
+/* Called with USB lock held. */
 void
 usbd_start_next(usbd_pipe_handle pipe)
 {
