@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.h,v 1.11.2.1 2012/02/18 07:35:09 mrg Exp $	*/
+/*	$NetBSD: uhidev.h,v 1.11.2.2 2012/02/23 09:31:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,8 +53,9 @@ struct uhidev_softc {
 	u_int sc_nrepid;
 	device_t *sc_subdevs;
 
-	int sc_refcnt;
 	u_char sc_dying;
+
+	kmutex_t sc_lock;		/* protects writes to sc_state */
 };
 
 struct uhidev {
