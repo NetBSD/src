@@ -1,4 +1,4 @@
-/*	$NetBSD: look.c,v 1.15 2011/09/04 20:29:32 joerg Exp $	*/
+/*	$NetBSD: look.c,v 1.16 2012/02/23 22:57:53 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)look.c	8.2 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: look.c,v 1.15 2011/09/04 20:29:32 joerg Exp $");
+__RCSID("$NetBSD: look.c,v 1.16 2012/02/23 22:57:53 joerg Exp $");
 #endif /* not lint */
 
 /*
@@ -218,7 +218,7 @@ look(char *string, char *front, char *back)
  *	more trouble than it's worth.
  */
 #define	SKIP_PAST_NEWLINE(p, back) \
-	while (p < back && *p++ != '\n');
+	while (p < back && *p++ != '\n') continue;
 
 static char *
 binary_search(char *string, char *front, char *back)
