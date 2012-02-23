@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.13 2012/02/23 02:31:50 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.14 2012/02/23 18:39:43 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -400,4 +400,48 @@ sys/arch/xen/xen/if_xennet_xenbus.c		1.59
 
 	Resolve network issue with NetBSD domU on newer Linux dom0.
 	[bouyer, ticket #33]
+
+sys/dev/audio.c					1.258
+
+	kern/45927: fix incorrect assert.
+	[nonaka, ticket #25]
+
+usr.sbin/postinstall/postinstall		1.132
+
+	Pass -d option to pwd_mkdb(8).
+	[nakayama, ticket #26]
+
+etc/rc.d/sysdb					1.23
+
+	Avoid rebuilding services database every boot time.
+	[nakayama, ticket #27]
+
+share/man/man4/options.4			1.412
+
+	Note that UDF is not read-only.
+	[reinoud, ticket #34]
+
+sys/arch/sandpoint/sandpoint/satmgr.c		1.16
+
+	Fix an error which prevents satmgr from sending NUL bytes.
+	[nisimura, ticket #35]
+
+include/spawn.h					1.4 via patch
+lib/libc/gen/posix_spawnp.c			1.2 via patch
+
+	Use C++ compatible declaration for posix_spawn.
+	[martin, ticket #36]
+
+sys/arch/amd64/amd64/db_machdep.c		1.2
+
+	Fix stack backtraces through traps.
+	[chs, ticket #37]
+
+sys/arch/amd64/amd64/machdep.c			1.178
+sys/arch/i386/i386/machdep.c			1.720
+sys/arch/x86/x86/identcpu.c			1.30
+
+	Move XEN CPU feature masking into cpu_probe() so that it's applied
+	to all CPUs, not just the boot CPU.
+	[chs, ticket #38]
 
