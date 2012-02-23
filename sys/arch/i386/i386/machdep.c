@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.719 2012/02/22 18:35:26 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.720 2012/02/23 14:45:55 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.719 2012/02/22 18:35:26 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.720 2012/02/23 14:45:55 chs Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1283,8 +1283,6 @@ init386(paddr_t first_avail)
 
 	uvm_lwp_setuarea(&lwp0, lwp0uarea);
 	pcb = lwp_getpcb(&lwp0);
-
-	cpu_feature[0] &= ~CPUID_FEAT_BLACKLIST;
 
 	cpu_init_msrs(&cpu_info_primary, true);
 
