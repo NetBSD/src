@@ -1,4 +1,4 @@
-/*	$NetBSD: pwmclock.c,v 1.4 2012/02/23 07:37:16 macallan Exp $	*/
+/*	$NetBSD: pwmclock.c,v 1.5 2012/02/23 07:49:42 macallan Exp $	*/
 
 /*
  * Copyright (c) 2011 Michael Lorenz
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pwmclock.c,v 1.4 2012/02/23 07:37:16 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pwmclock.c,v 1.5 2012/02/23 07:49:42 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,8 @@ pwmclock_wait_edge(struct pwmclock_softc *sc)
 {
 	/* clear interrupt */
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PWM1, sc->sc_reg);
-	while ((bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_PWM1) & SM502_PWM_INTR_PENDING) == 0);
+	while ((bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_PWM1) &
+	    SM502_PWM_INTR_PENDING) == 0);
 	return mips3_cp0_count_read();
 }
 
@@ -138,7 +139,8 @@ pwmclock_attach(device_t parent, device_t self, void *aux)
 
 	voyager_establish_intr(parent, 22, pwmclock_intr, sc);
 	reg = voyager_set_pwm(100, 100); /* 100Hz, 10% duty cycle */
-	reg |= SM502_PWM_ENABLE | SM502_PWM_ENABLE_INTR | SM502_PWM_INTR_PENDING;
+	reg |= SM502_PWM_ENABLE | SM502_PWM_ENABLE_INTR |
+	       SM502_PWM_INTR_PENDING;
 	sc->sc_reg = reg;
 	pwmclock = sc;
 	initclocks_ptr = pwmclock_start;
@@ -155,8 +157,10 @@ pwmclock_attach(device_t parent, device_t self, void *aux)
 	/* ok, let's see how far the cycle counter gets between interrupts */
 	DPRINTF("calibrating CPU timer...\n");
 	for (clk = 1; clk < 8; clk++) {
-		REGVAL(LS2F_CHIPCFG0) = (REGVAL(LS2F_CHIPCFG0) & ~LS2FCFG_FREQSCALE_MASK) | clk;
-		bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PWM1, sc->sc_reg);
+		REGVAL(LS2F_CHIPCFG0) =
+		    (REGVAL(LS2F_CHIPCFG0) & ~LS2FCFG_FREQSCALE_MASK) | clk;
+		bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PWM1,
+		    sc->sc_reg);
 		acc = 0;
 		last = pwmclock_wait_edge(sc);
 		for (i = 0; i < 16; i++) {
@@ -169,7 +173,8 @@ pwmclock_attach(device_t parent, device_t self, void *aux)
 	}
 #ifdef PWMCLOCK_DEBUG
 	for (clk = 1; clk < 8; clk++) {
-		aprint_normal_dev(sc->sc_dev, "%d/8: %d\n", clk + 1, sc->sc_scale[clk]);
+		aprint_normal_dev(sc->sc_dev, "%d/8: %d\n", clk + 1,
+		    sc->sc_scale[clk]);
 	}
 #endif
 	sc->sc_step = 7;
@@ -180,13 +185,15 @@ pwmclock_attach(device_t parent, device_t self, void *aux)
 	    &me, 
 	    CTLFLAG_READWRITE, CTLTYPE_NODE, "loongson", NULL, NULL,
 	    0, NULL, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL) != 0)
-		aprint_error_dev(sc->sc_dev, "couldn't create 'loongson' node\n");
-	
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't create 'loongson' node\n");
+
 	if (sysctl_createv(NULL, 0, NULL, 
 	    &freq, 
-	    CTLFLAG_READWRITE, CTLTYPE_NODE, "frequency", NULL, NULL,
-	    0, NULL, 0, CTL_MACHDEP, me->sysctl_num, CTL_CREATE, CTL_EOL) != 0)
-		aprint_error_dev(sc->sc_dev, "couldn't create 'frequency' node\n");
+	    CTLFLAG_READWRITE, CTLTYPE_NODE, "frequency", NULL, NULL, 0, NULL,
+	    0, CTL_MACHDEP, me->sysctl_num, CTL_CREATE, CTL_EOL) != 0)
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't create 'frequency' node\n");
 
 	if (sysctl_createv(NULL, 0, NULL, 
 	    &sysctl_node, 
@@ -195,7 +202,8 @@ pwmclock_attach(device_t parent, device_t self, void *aux)
 	    0, sc, 0, CTL_MACHDEP, me->sysctl_num, freq->sysctl_num, 
 	    CTL_CREATE, CTL_EOL) == 0) {
 	} else
-		aprint_error_dev(sc->sc_dev, "couldn't create 'target' node\n");
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't create 'target' node\n");
 
 	if (sysctl_createv(NULL, 0, NULL, 
 	    &sysctl_node, 
@@ -204,7 +212,8 @@ pwmclock_attach(device_t parent, device_t self, void *aux)
 	    1, sc, 0, CTL_MACHDEP, me->sysctl_num, freq->sysctl_num, 
 	    CTL_CREATE, CTL_EOL) == 0) {
 	} else
-		aprint_error_dev(sc->sc_dev, "couldn't create 'current' node\n");
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't create 'current' node\n");
 
 	if (sysctl_createv(NULL, 0, NULL, 
 	    &sysctl_node, 
@@ -213,7 +222,8 @@ pwmclock_attach(device_t parent, device_t self, void *aux)
 	    2, sc, 0, CTL_MACHDEP, me->sysctl_num, freq->sysctl_num, 
 	    CTL_CREATE, CTL_EOL) == 0) {
 	} else
-		aprint_error_dev(sc->sc_dev, "couldn't create 'available' node\n");
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't create 'available' node\n");
 }
 
 static void
@@ -224,7 +234,8 @@ pwmclock_shutdown(void *cookie)
 	/* just in case the interrupt handler runs again after this */
 	sc->sc_step_wanted = 7;
 	/* set the clock to full speed */
-	REGVAL(LS2F_CHIPCFG0) = (REGVAL(LS2F_CHIPCFG0) & ~LS2FCFG_FREQSCALE_MASK) | 7;
+	REGVAL(LS2F_CHIPCFG0) =
+	    (REGVAL(LS2F_CHIPCFG0) & ~LS2FCFG_FREQSCALE_MASK) | 7;
 }
 
 void
