@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.39 2012/02/20 20:09:09 mrg Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.40 2012/02/23 13:31:13 he Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.39 2012/02/20 20:09:09 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.40 2012/02/23 13:31:13 he Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_umass.h"
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.39 2012/02/20 20:09:09 mrg Exp $"
 #include <sys/bufq.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
+#include <sys/lwp.h>
 #include <sys/malloc.h>
 
 /* SCSI & ATAPI */
