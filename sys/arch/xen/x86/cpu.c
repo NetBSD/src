@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.84 2012/02/23 04:10:51 cherry Exp $	*/
+/*	$NetBSD: cpu.c,v 1.85 2012/02/23 07:30:30 cherry Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.84 2012/02/23 04:10:51 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.85 2012/02/23 07:30:30 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -464,7 +464,6 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 
 		/* Every processor needs to init it's own ipi h/w (similar to lapic) */
 		xen_ipi_init();
-		/* XXX: clock_init() */
 
 		/* Make sure DELAY() is initialized. */
 		DELAY(1);
@@ -477,9 +476,6 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 	case CPU_ROLE_SP:
 		atomic_or_32(&ci->ci_flags, CPUF_SP);
 		cpu_identify(ci);
-#if 0
-		x86_errata();
-#endif
 		x86_cpu_idle_init();
 
 		break;
@@ -487,9 +483,6 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 	case CPU_ROLE_BP:
 		atomic_or_32(&ci->ci_flags, CPUF_BSP);
 		cpu_identify(ci);
-#if 0
-		x86_errata();
-#endif
 		x86_cpu_idle_init();
 
 		break;
@@ -561,23 +554,6 @@ cpu_init(struct cpu_info *ci)
 {
 
 	/*
-	 * On a P6 or above, enable global TLB caching if the
-	 * hardware supports it.
-	 */
-	if (cpu_feature[0] & CPUID_PGE)
-		lcr4(rcr4() | CR4_PGE);	/* enable global TLB caching */
-
-#ifdef XXXMTRR
-	/*
-	 * On a P6 or above, initialize MTRR's if the hardware supports them.
-	 */
-	if (cpu_feature[0] & CPUID_MTRR) {
-		if ((ci->ci_flags & CPUF_AP) == 0)
-			i686_mtrr_init_first();
-		mtrr_init_cpu(ci);
-	}
-#endif
-	/*
 	 * If we have FXSAVE/FXRESTOR, use them.
 	 */
 	if (cpu_feature[0] & CPUID_FXSR) {
@@ -600,8 +576,6 @@ cpu_init(struct cpu_info *ci)
 
 	atomic_or_32(&cpus_running, ci->ci_cpumask);
 	atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
-
-	/* XXX: register vcpu_register_runstate_memory_area, and figure out how to make sure this VCPU is running ? */
 }
 
 
@@ -739,15 +713,13 @@ cpu_hatch(void *v)
 	KASSERT((ci->ci_flags & CPUF_RUNNING) == 0);
 
 	pcb = lwp_getpcb(curlwp);
-	pcb->pcb_cr3 = pmap_pdirpa(pmap_kernel(), 0); /* XXX: consider using pmap_load() ? */
+	pcb->pcb_cr3 = pmap_pdirpa(pmap_kernel(), 0);
 	pcb = lwp_getpcb(ci->ci_data.cpu_idlelwp);
 
 	xen_ipi_init();
 
 	xen_initclocks();
 	
-	/* XXX: lapic_initclocks(); */
-
 #ifdef __x86_64__
 	fpuinit(ci);
 #endif
@@ -760,9 +732,6 @@ cpu_hatch(void *v)
 	s = splhigh();
 	x86_enable_intr();
 	splx(s);
-#if 0
-	x86_errata();
-#endif
 
 	aprint_debug_dev(ci->ci_dev, "running\n");
 
@@ -831,7 +800,7 @@ gdt_prepframes(paddr_t *frames, vaddr_t base, uint32_t entries)
 }
 
 #ifdef __x86_64__
-extern char *ldtstore; /* XXX: Xen MP todo */
+extern char *ldtstore;
 
 static void
 xen_init_amd64_vcpuctxt(struct cpu_info *ci,
@@ -855,12 +824,10 @@ xen_init_amd64_vcpuctxt(struct cpu_info *ci,
 
 	memset(initctx, 0, sizeof *initctx);
 
-	gdt_ents = roundup(gdt_size, PAGE_SIZE) >> PAGE_SHIFT; /* XXX: re-investigate roundup(gdt_size... ) for gdt_ents. */
+	gdt_ents = roundup(gdt_size, PAGE_SIZE) >> PAGE_SHIFT; 
 	KASSERT(gdt_ents <= 16);
 
 	gdt_prepframes(frames, (vaddr_t) ci->ci_gdt, gdt_ents);
-
-	/* XXX: The stuff in here is amd64 specific. move to mptramp.[Sc] ? */
 
 	/* Initialise the vcpu context: We use idle_loop()'s pcb context. */
 
@@ -911,7 +878,7 @@ xen_init_amd64_vcpuctxt(struct cpu_info *ci,
 	initctx->kernel_sp = pcb->pcb_rsp0;
 	initctx->ctrlreg[0] = pcb->pcb_cr0;
 	initctx->ctrlreg[1] = 0; /* "resuming" from kernel - no User cr3. */
-	initctx->ctrlreg[2] = pcb->pcb_cr2; /* XXX: */
+	initctx->ctrlreg[2] = (vaddr_t) targetrip;
 	/* 
 	 * Use pmap_kernel() L4 PD directly, until we setup the
 	 * per-cpu L4 PD in pmap_cpu_init_late()
@@ -953,7 +920,7 @@ xen_init_i386_vcpuctxt(struct cpu_info *ci,
 
 	memset(initctx, 0, sizeof *initctx);
 
-	gdt_ents = roundup(gdt_size, PAGE_SIZE) >> PAGE_SHIFT; /* XXX: re-investigate roundup(gdt_size... ) for gdt_ents. */
+	gdt_ents = roundup(gdt_size, PAGE_SIZE) >> PAGE_SHIFT;
 	KASSERT(gdt_ents <= 16);
 
 	gdt_prepframes(frames, (vaddr_t) ci->ci_gdt, gdt_ents);
@@ -1015,7 +982,7 @@ xen_init_i386_vcpuctxt(struct cpu_info *ci,
 	initctx->kernel_sp = pcb->pcb_esp0;
 	initctx->ctrlreg[0] = pcb->pcb_cr0;
 	initctx->ctrlreg[1] = 0; /* "resuming" from kernel - no User cr3. */
-	initctx->ctrlreg[2] = pcb->pcb_cr2; /* XXX: */
+	initctx->ctrlreg[2] = (vaddr_t) targeteip;
 #ifdef PAE
 	initctx->ctrlreg[3] = xen_pfn_to_cr3(x86_btop(xpmap_ptom(ci->ci_pae_l3_pdirpa)));
 #else /* PAE */
@@ -1081,14 +1048,6 @@ mp_cpu_start(struct cpu_info *ci, vaddr_t target)
 void
 mp_cpu_start_cleanup(struct cpu_info *ci)
 {
-#if 0
-	/*
-	 * Ensure the NVRAM reset byte contains something vaguely sane.
-	 */
-
-	outb(IO_RTC, NVRAM_RESET);
-	outb(IO_RTC+1, NVRAM_RESET_RST);
-#endif
 	if (vcpu_is_up(ci)) {
 		aprint_debug_dev(ci->ci_dev, "is started.\n");
 	}
