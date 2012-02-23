@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.83 2012/02/22 18:29:31 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.84 2012/02/23 04:10:51 cherry Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.83 2012/02/22 18:29:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.84 2012/02/23 04:10:51 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1176,6 +1176,8 @@ x86_cpu_idle_xen(void)
 void
 cpu_load_pmap(struct pmap *pmap, struct pmap *oldpmap)
 {
+	KASSERT(pmap != pmap_kernel());
+	
 #if defined(__x86_64__) || defined(PAE)
 	struct cpu_info *ci = curcpu();
 	uint32_t cpumask = ci->ci_cpumask;
@@ -1226,14 +1228,8 @@ cpu_load_pmap(struct pmap *pmap, struct pmap *oldpmap)
 			}
 		}
 
-		if (__predict_true(pmap != pmap_kernel())) {
-			xen_set_user_pgd(pmap_pdirpa(pmap, 0));
-			ci->ci_xen_current_user_pgd = pmap_pdirpa(pmap, 0);
-		}
-		else {
-			xpq_queue_pt_switch(l4_pd_ma);
-			ci->ci_xen_current_user_pgd = 0;
-		}
+		xen_set_user_pgd(pmap_pdirpa(pmap, 0));
+		ci->ci_xen_current_user_pgd = pmap_pdirpa(pmap, 0);
 
 		tlbflush();
 	}
