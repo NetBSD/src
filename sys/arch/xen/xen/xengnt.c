@@ -1,4 +1,4 @@
-/*      $NetBSD: xengnt.c,v 1.22 2012/02/04 02:00:07 riz Exp $      */
+/*      $NetBSD: xengnt.c,v 1.22.2.1 2012/02/23 21:19:55 riz Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.22 2012/02/04 02:00:07 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.22.2.1 2012/02/23 21:19:55 riz Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -118,10 +118,12 @@ xengnt_resume(void)
 	last_gnt_entry = 0;
 	gnt_nr_grant_frames = 0;
 
+	mutex_enter(&grant_lock);
 	while (gnt_nr_grant_frames < previous_nr_grant_frames) {
 		if (xengnt_more_entries() != 0)
 			panic("xengnt_resume: can't restore grant frames");
 	}
+	mutex_exit(&grant_lock);
 	return true;
 }
 
@@ -133,6 +135,7 @@ xengnt_suspend(void) {
 
 	int i;
 
+	mutex_enter(&grant_lock);
 	KASSERT(gnt_entries[last_gnt_entry] == XENGNT_NO_ENTRY);
 
 	for (i = 0; i < last_gnt_entry; i++) {
@@ -143,7 +146,7 @@ xengnt_suspend(void) {
 	/* Remove virtual => machine mapping */
 	pmap_kremove((vaddr_t)grant_table, gnt_nr_grant_frames * PAGE_SIZE);
 	pmap_update(pmap_kernel());
-
+	mutex_exit(&grant_lock);
 	return true;
 }
 
@@ -159,6 +162,7 @@ xengnt_more_entries(void)
 	u_long *pages;
 	int nframes_new = gnt_nr_grant_frames + 1;
 	int i;
+	KASSERT(mutex_owned(&grant_lock));
 
 	if (gnt_nr_grant_frames == gnt_max_grant_frames)
 		return ENOMEM;
@@ -221,13 +225,11 @@ static grant_ref_t
 xengnt_get_entry(void)
 {
 	grant_ref_t entry;
-	mutex_enter(&grant_lock);
 	static struct timeval xengnt_nonmemtime;
 	static const struct timeval xengnt_nonmemintvl = {5,0};
 
 	if (last_gnt_entry == 0) {
 		if (xengnt_more_entries()) {
-			mutex_exit(&grant_lock);
 			if (ratecheck(&xengnt_nonmemtime, &xengnt_nonmemintvl))
 				printf("xengnt_get_entry: out of grant "
 				    "table entries\n");
@@ -238,7 +240,6 @@ xengnt_get_entry(void)
 	last_gnt_entry--;
 	entry = gnt_entries[last_gnt_entry];
 	gnt_entries[last_gnt_entry] = XENGNT_NO_ENTRY;
-	mutex_exit(&grant_lock);
 	KASSERT(entry != XENGNT_NO_ENTRY);
 	KASSERT(last_gnt_entry >= 0);
 	KASSERT(last_gnt_entry <= gnt_max_grant_frames * NR_GRANT_ENTRIES_PER_PAGE);
@@ -263,11 +264,14 @@ xengnt_free_entry(grant_ref_t entry)
 int
 xengnt_grant_access(domid_t dom, paddr_t ma, int ro, grant_ref_t *entryp)
 {
-	*entryp = xengnt_get_entry();
-	if (__predict_false(*entryp == XENGNT_NO_ENTRY))
-		return ENOMEM;
-
 	mutex_enter(&grant_lock);
+
+	*entryp = xengnt_get_entry();
+	if (__predict_false(*entryp == XENGNT_NO_ENTRY)) {
+		mutex_exit(&grant_lock);
+		return ENOMEM;
+	}
+
 	grant_table[*entryp].frame = ma >> PAGE_SHIFT;
 	grant_table[*entryp].domid = dom;
 	/*
@@ -300,11 +304,14 @@ xengnt_revoke_access(grant_ref_t entry)
 int
 xengnt_grant_transfer(domid_t dom, grant_ref_t *entryp)
 {
-	*entryp = xengnt_get_entry();
-	if (__predict_false(*entryp == XENGNT_NO_ENTRY))
-		return ENOMEM;
-
 	mutex_enter(&grant_lock);
+
+	*entryp = xengnt_get_entry();
+	if (__predict_false(*entryp == XENGNT_NO_ENTRY)) {
+		mutex_exit(&grant_lock);
+		return ENOMEM;
+	}
+
 	grant_table[*entryp].frame = 0;
 	grant_table[*entryp].domid = dom;
 	/*
