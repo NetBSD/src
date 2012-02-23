@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.12 2012/02/23 02:18:54 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.13 2012/02/23 02:31:50 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -389,4 +389,15 @@ dist/openpam/modules/pam_unix/pam_unix.c	delete
 
 	openpam moved to external/bsd, remove old sources.
 	[tron, ticket #20]
+
+sys/dev/raidframe/rf_reconmap.c			1.34
+sys/dev/raidframe/rf_reconstruct.c		1.118
+
+	Handle RAID5_RS correctly.
+	[oster, ticket #23]
+
+sys/arch/xen/xen/if_xennet_xenbus.c		1.59
+
+	Resolve network issue with NetBSD domU on newer Linux dom0.
+	[bouyer, ticket #33]
 
