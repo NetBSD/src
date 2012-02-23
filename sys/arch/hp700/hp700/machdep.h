@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.8 2009/11/03 05:07:25 snj Exp $	*/
+/*	$NetBSD: machdep.h,v 1.9 2012/02/23 21:38:53 skrll Exp $	*/
 
 /*	$OpenBSD: cpufunc.h,v 1.17 2000/05/15 17:22:40 mickey Exp $	*/
 
@@ -95,7 +95,7 @@ void hp700_pagezero_unmap(int);
 /* Blinking the LEDs. */
 #ifdef USELEDS
 #define	_HP700_LED_FREQ		(16)
-extern volatile u_int8_t *machine_ledaddr;
+extern volatile uint8_t *machine_ledaddr;
 extern int machine_ledword, machine_leds;
 extern int _hp700_led_on_cycles[];
 #define hp700_led_blink(i)			\
