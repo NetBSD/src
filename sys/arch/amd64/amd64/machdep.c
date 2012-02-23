@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.175 2012/01/27 19:48:38 para Exp $	*/
+/*	$NetBSD: machdep.c,v 1.175.2.1 2012/02/23 18:37:12 riz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.175 2012/01/27 19:48:38 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.175.2.1 2012/02/23 18:37:12 riz Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1630,8 +1630,6 @@ init_x86_64(paddr_t first_avail)
 
 	__PRINTK(("init_x86_64(0x%lx)\n", first_avail));
 #endif /* XEN */
-
-	cpu_feature[0] &= ~CPUID_FEAT_BLACKLIST;
 
 	cpu_init_msrs(&cpu_info_primary, true);
 

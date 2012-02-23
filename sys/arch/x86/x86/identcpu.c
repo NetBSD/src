@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.29 2012/02/03 05:06:51 yamt Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.29.2.1 2012/02/23 18:37:31 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.29 2012/02/03 05:06:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.29.2.1 2012/02/23 18:37:31 riz Exp $");
 
 #include "opt_xen.h"
 
@@ -700,6 +700,7 @@ cpu_probe(struct cpu_info *ci)
 		wrmsr(MSR_MISC_ENABLE, rdmsr(MSR_MISC_ENABLE) | (1<<3));
 	}
 
+	ci->ci_feat_val[0] &= ~CPUID_FEAT_BLACKLIST;
 	if (ci == &cpu_info_primary) {
 		/* If first. Boot Processor is the cpu_feature reference. */
 		for (i = 0; i < __arraycount(cpu_feature); i++) {
