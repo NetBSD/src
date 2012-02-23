@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.39 2012/02/17 18:40:20 bouyer Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.40 2012/02/23 18:59:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.39 2012/02/17 18:40:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.40 2012/02/23 18:59:21 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -595,12 +595,14 @@ xen_pmap_bootstrap(void)
 	 *  - UAREA
 	 *  - dummy user PGD (x86_64)
 	 *  - HYPERVISOR_shared_info
+	 *  - early_zerop
 	 *  - ISA I/O mem (if needed)
 	 */
 	mapsize += UPAGES * NBPG;
 #ifdef __x86_64__
 	mapsize += NBPG;
 #endif
+	mapsize += NBPG;
 	mapsize += NBPG;
 
 #ifdef DOM0OPS
@@ -690,6 +692,7 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	vaddr_t page, avail, text_end, map_end;
 	int i;
 	extern char __data_start;
+	extern char *early_zerop; /* from pmap.c */
 
 	__PRINTK(("xen_bootstrap_tables(%#" PRIxVADDR ", %#" PRIxVADDR ","
 	    " %d, %d)\n",
@@ -704,12 +707,15 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	 *  UAREA
 	 *  dummy user PGD (x86_64 only)/gdt page (i386 only)
 	 *  HYPERVISOR_shared_info
+	 *  early_zerop
 	 *  ISA I/O mem (if needed)
 	 */
 	map_end = new_pgd + ((new_count + l2_4_count) * NBPG);
 	if (final) {
 		map_end += (UPAGES + 1) * NBPG;
 		HYPERVISOR_shared_info = (shared_info_t *)map_end;
+		map_end += NBPG;
+		early_zerop = (char *)map_end;
 		map_end += NBPG;
 	}
 	/*
