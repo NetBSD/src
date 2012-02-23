@@ -1,4 +1,4 @@
-/*	$NetBSD: posix_spawnp.c,v 1.1 2012/02/11 23:31:24 martin Exp $	*/
+/*	$NetBSD: posix_spawnp.c,v 1.1.2.1 2012/02/23 18:34:33 riz Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: posix_spawnp.c,v 1.1 2012/02/11 23:31:24 martin Exp $");
+__RCSID("$NetBSD: posix_spawnp.c,v 1.1.2.1 2012/02/23 18:34:33 riz Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: posix_spawnp.c,v 1.1 2012/02/11 23:31:24 martin Exp $");
 int posix_spawnp(pid_t * __restrict pid, const char * __restrict file,
     const posix_spawn_file_actions_t *fa,
     const posix_spawnattr_t * __restrict sa,
-    char * const cav[__restrict], char * const env[__restrict])
+    char * const *__restrict cav, char * const *__restrict env)
 {
 	char fpath[FILENAME_MAX], *last, *p;
 	char *path;
