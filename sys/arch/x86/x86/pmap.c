@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.164.2.2 2012/02/22 18:59:05 riz Exp $	*/
+/*	$NetBSD: pmap.c,v 1.164.2.3 2012/02/23 21:17:25 riz Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164.2.2 2012/02/22 18:59:05 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164.2.3 2012/02/23 21:17:25 riz Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -513,7 +513,12 @@ extern int mem_cluster_cnt;
  * special VAs and the PTEs that map them
  */
 static pt_entry_t *csrc_pte, *cdst_pte, *zero_pte, *ptp_pte, *early_zero_pte;
-static char *csrcp, *cdstp, *zerop, *ptpp, *early_zerop;
+static char *csrcp, *cdstp, *zerop, *ptpp;
+#ifdef XEN
+char *early_zerop; /* also referenced from xen_pmap_bootstrap() */
+#else
+static char *early_zerop;
+#endif
 
 #endif
 
@@ -1383,8 +1388,11 @@ pmap_bootstrap(vaddr_t kva_start)
 		 * when it's called for the first time.
 		 * XXXfvdl fix this for MULTIPROCESSOR later.
 		 */
-
+#ifdef XEN
+		/* early_zerop initialized in xen_pmap_bootstrap() */
+#else
 		early_zerop = (void *)(KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2);
+#endif
 		early_zero_pte = PTE_BASE + pl1_i((vaddr_t)early_zerop);
 	}
 
