@@ -1,4 +1,4 @@
-/*	$NetBSD: libmain.c,v 1.1.1.1 2009/10/26 00:26:24 christos Exp $	*/
+/*	$NetBSD: libmain.c,v 1.1.1.1.8.1 2012/02/23 02:11:51 riz Exp $	*/
 
 /* libmain - flex run-time support library "main" function */
 
@@ -23,13 +23,13 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 
-extern int yylex ();
+extern int yylex(void);
 
-int     main (argc, argv)
-     int     argc;
-     char   *argv[];
+int
+/*ARGSUSED*/
+main(int argc, char *argv[])
 {
-	while (yylex () != 0) ;
-
+	while (yylex() != 0)
+		continue;
 	return 0;
 }

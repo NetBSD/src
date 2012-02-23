@@ -1,4 +1,4 @@
-/*	$NetBSD: libyywrap.c,v 1.1.1.1 2009/10/26 00:26:24 christos Exp $	*/
+/*	$NetBSD: libyywrap.c,v 1.1.1.1.8.1 2012/02/23 02:11:51 riz Exp $	*/
 
 /* libyywrap - flex run-time support library "yywrap" function */
 
@@ -23,7 +23,9 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 
-int     yywrap (void)
+int yywrap(void);
+int
+yywrap(void)
 {
 	return 1;
 }
