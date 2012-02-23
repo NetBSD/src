@@ -1,4 +1,4 @@
-/* $NetBSD: dm9000.c,v 1.1 2012/02/22 12:08:41 nisimura Exp $ */
+/* $NetBSD: dm9000.c,v 1.2 2012/02/23 22:20:51 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -324,8 +324,6 @@ dm9k_send(void *dev, char *buf, unsigned int len)
 	return len;
 }
 
-void hexdump16(char *p);
-
 int
 dm9k_recv(void *dev, char *buf, unsigned int maxlen, unsigned int timo)
 {
@@ -348,7 +346,7 @@ dm9k_recv(void *dev, char *buf, unsigned int maxlen, unsigned int timo)
   gotone:
 	CSR_WRITE_1(l, ISR, ISR_PRS); /* clear ISR Rx complete bit */
 	(void) CSR_READ_2(l, MRCMDX); /* dummy read */
-	mark = CSR_READ_2(l, MRCMDX);
+	mark = CSR_READ_2(l, MRCMDX); /* mark in [7:0] */
 	if ((mark & 03) != 01) {
 		stat = CSR_READ_1(l, RSR);
 		printf("dm9k_recv: mark %x, RSR %x\n", mark, stat);
@@ -356,7 +354,7 @@ dm9k_recv(void *dev, char *buf, unsigned int maxlen, unsigned int timo)
 		goto again;
 	}
 
-	stat = CSR_READ_2(l, MRCMD);
+	stat = CSR_READ_2(l, MRCMD); /* stat in [15:8] */
 	len  = CSR_READ_2(l, MRCMD);
 
 	/* should not happen, make sure to discard bcast/mcast frames */
