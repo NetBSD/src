@@ -660,8 +660,8 @@ BUILDING
                    machine, without the need for installation.
 
                    Before ``make live-image'' is attempted, RELEASEDIR must be
-                   populated by ``make release'' or equivalent The build must
-                   have been performed with MKUNPRIVED=yes because ``make
+                   populated by ``make release'' or equivalent.  The build
+                   must have been performed with MKUNPRIVED=yes because ``make
                    install-image'' relies on information in DESTDIR/METALOG.
 
      regression-tests
