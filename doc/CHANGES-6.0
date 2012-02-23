@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.14 2012/02/23 18:39:43 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.15 2012/02/23 21:20:39 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -444,4 +444,16 @@ sys/arch/x86/x86/identcpu.c			1.30
 	Move XEN CPU feature masking into cpu_probe() so that it's applied
 	to all CPUs, not just the boot CPU.
 	[chs, ticket #38]
+
+sys/arch/x86/x86/pmap.c				1.170
+sys/arch/xen/x86/x86_xpmap.c			1.40
+
+	Account for early_zerop when building the bootstrap pages.
+	PR#38699.
+	[bouyer, ticket #39]
+
+sys/arch/xen/xen/xengnt.c			1.23
+
+	Fix locking in xengnt_get_entry() and xengnt_more_entries().
+	[bouyer, ticket #40]
 
