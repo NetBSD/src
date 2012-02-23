@@ -1,4 +1,4 @@
-/*	$NetBSD: pwmclock.c,v 1.3 2012/02/14 22:27:20 macallan Exp $	*/
+/*	$NetBSD: pwmclock.c,v 1.4 2012/02/23 07:37:16 macallan Exp $	*/
 
 /*
  * Copyright (c) 2011 Michael Lorenz
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pwmclock.c,v 1.3 2012/02/14 22:27:20 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pwmclock.c,v 1.4 2012/02/23 07:37:16 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,7 @@ struct pwmclock_softc {
 	uint32_t sc_count;	/* should probably be 64 bit */
 	int sc_step;
 	int sc_step_wanted;
+	void *sc_shutdown_cookie;
 };
 
 static int	pwmclock_match(device_t, cfdata_t, void *);
@@ -88,6 +89,8 @@ void pwmclock_set_speed(struct pwmclock_softc *, int);
 static int  pwmclock_cpuspeed_temp(SYSCTLFN_ARGS);
 static int  pwmclock_cpuspeed_cur(SYSCTLFN_ARGS);
 static int  pwmclock_cpuspeed_available(SYSCTLFN_ARGS);
+
+static void pwmclock_shutdown(void *);
 
 static struct timecounter pwmclock_timecounter = {
 	get_pwmclock_timecount,	/* get_timecount */
@@ -139,6 +142,15 @@ pwmclock_attach(device_t parent, device_t self, void *aux)
 	sc->sc_reg = reg;
 	pwmclock = sc;
 	initclocks_ptr = pwmclock_start;
+
+	/*
+	 * Establish a hook so on shutdown we can set the CPU clock back to
+	 * full speed. This is necessary because PMON doesn't change the 
+	 * clock scale register on a warm boot, the MIPS clock code gets
+	 * confused if we're too slow and the loongson-specific bits run
+	 * too late in the boot process
+	 */
+	sc->sc_shutdown_cookie = shutdownhook_establish(pwmclock_shutdown, sc);
 
 	/* ok, let's see how far the cycle counter gets between interrupts */
 	DPRINTF("calibrating CPU timer...\n");
@@ -202,6 +214,17 @@ pwmclock_attach(device_t parent, device_t self, void *aux)
 	    CTL_CREATE, CTL_EOL) == 0) {
 	} else
 		aprint_error_dev(sc->sc_dev, "couldn't create 'available' node\n");
+}
+
+static void
+pwmclock_shutdown(void *cookie)
+{
+	struct pwmclock_softc *sc = cookie;
+
+	/* just in case the interrupt handler runs again after this */
+	sc->sc_step_wanted = 7;
+	/* set the clock to full speed */
+	REGVAL(LS2F_CHIPCFG0) = (REGVAL(LS2F_CHIPCFG0) & ~LS2FCFG_FREQSCALE_MASK) | 7;
 }
 
 void
