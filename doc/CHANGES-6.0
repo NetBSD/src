@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.11 2012/02/22 19:08:36 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.12 2012/02/23 02:18:54 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -187,4 +187,206 @@ sys/arch/i386/i386/machdep.c			1.719
 
 	Fix FPU corruption occasionally reported on Xen/MP systems.
 	[bouyer, ticket #32]
+
+doc/3RDPARTY					1.912-913 via patch
+
+	Remove stale entries and add "Location" tags that tells where
+	the source lives in the NetBSD tree.
+	[tron, ticket #18]
+
+external/bsd/flex/dist/libmain.c		1.2
+external/bsd/flex/dist/libyywrap.c		1.2
+tools/compat/Makefile				1.56
+usr.bin/lex/COPYING				delete
+usr.bin/lex/FlexLexer.h				delete
+usr.bin/lex/Makefile				delete
+usr.bin/lex/NEWS				delete
+usr.bin/lex/VERSION				delete
+usr.bin/lex/ccl.c				delete
+usr.bin/lex/config.h				delete
+usr.bin/lex/dfa.c				delete
+usr.bin/lex/ecs.c				delete
+usr.bin/lex/flex.1				delete
+usr.bin/lex/flex.skl				delete
+usr.bin/lex/flexdef.h				delete
+usr.bin/lex/gen.c				delete
+usr.bin/lex/initscan.c				delete
+usr.bin/lex/libmain.c				delete
+usr.bin/lex/libyywrap.c				delete
+usr.bin/lex/main.c				delete
+usr.bin/lex/misc.c				delete
+usr.bin/lex/mkskel.sh				delete
+usr.bin/lex/nfa.c				delete
+usr.bin/lex/parse.y				delete
+usr.bin/lex/scan.l				delete
+usr.bin/lex/sym.c				delete
+usr.bin/lex/tblcmp.c				delete
+usr.bin/lex/version.h				delete
+usr.bin/lex/yylex.c				delete
+
+	Remove unused lex sources.
+	[tron, ticket #19]
+
+dist/openpam/CREDITS				delete
+dist/openpam/HISTORY				delete
+dist/openpam/INSTALL				delete
+dist/openpam/LICENSE				delete
+dist/openpam/Makefile.am			delete
+dist/openpam/Makefile.in			delete
+dist/openpam/README				delete
+dist/openpam/RELNOTES				delete
+dist/openpam/aclocal.m4				delete
+dist/openpam/autogen.sh				delete
+dist/openpam/bin/Makefile.am			delete
+dist/openpam/bin/Makefile.in			delete
+dist/openpam/bin/su/Makefile.am			delete
+dist/openpam/bin/su/Makefile.in			delete
+dist/openpam/bin/su/su.c			delete
+dist/openpam/compile				delete
+dist/openpam/config.guess			delete
+dist/openpam/config.h.in			delete
+dist/openpam/config.sub				delete
+dist/openpam/configure				delete
+dist/openpam/configure.ac			delete
+dist/openpam/depcomp				delete
+dist/openpam/doc/Makefile.am			delete
+dist/openpam/doc/Makefile.in			delete
+dist/openpam/doc/man/Makefile.am		delete
+dist/openpam/doc/man/Makefile.in		delete
+dist/openpam/doc/man/openpam.3			delete
+dist/openpam/doc/man/openpam.man		delete
+dist/openpam/doc/man/openpam_borrow_cred.3	delete
+dist/openpam/doc/man/openpam_free_data.3	delete
+dist/openpam/doc/man/openpam_free_envlist.3	delete
+dist/openpam/doc/man/openpam_get_option.3	delete
+dist/openpam/doc/man/openpam_log.3		delete
+dist/openpam/doc/man/openpam_nullconv.3		delete
+dist/openpam/doc/man/openpam_readline.3		delete
+dist/openpam/doc/man/openpam_restore_cred.3	delete
+dist/openpam/doc/man/openpam_set_option.3	delete
+dist/openpam/doc/man/openpam_ttyconv.3		delete
+dist/openpam/doc/man/pam.3			delete
+dist/openpam/doc/man/pam.conf.5			delete
+dist/openpam/doc/man/pam.man			delete
+dist/openpam/doc/man/pam_acct_mgmt.3		delete
+dist/openpam/doc/man/pam_authenticate.3		delete
+dist/openpam/doc/man/pam_chauthtok.3		delete
+dist/openpam/doc/man/pam_close_session.3	delete
+dist/openpam/doc/man/pam_conv.3			delete
+dist/openpam/doc/man/pam_end.3			delete
+dist/openpam/doc/man/pam_error.3		delete
+dist/openpam/doc/man/pam_get_authtok.3		delete
+dist/openpam/doc/man/pam_get_data.3		delete
+dist/openpam/doc/man/pam_get_item.3		delete
+dist/openpam/doc/man/pam_get_user.3		delete
+dist/openpam/doc/man/pam_getenv.3		delete
+dist/openpam/doc/man/pam_getenvlist.3		delete
+dist/openpam/doc/man/pam_info.3			delete
+dist/openpam/doc/man/pam_open_session.3		delete
+dist/openpam/doc/man/pam_prompt.3		delete
+dist/openpam/doc/man/pam_putenv.3		delete
+dist/openpam/doc/man/pam_set_data.3		delete
+dist/openpam/doc/man/pam_set_item.3		delete
+dist/openpam/doc/man/pam_setcred.3		delete
+dist/openpam/doc/man/pam_setenv.3		delete
+dist/openpam/doc/man/pam_sm_acct_mgmt.3		delete
+dist/openpam/doc/man/pam_sm_authenticate.3	delete
+dist/openpam/doc/man/pam_sm_chauthtok.3		delete
+dist/openpam/doc/man/pam_sm_close_session.3	delete
+dist/openpam/doc/man/pam_sm_open_session.3	delete
+dist/openpam/doc/man/pam_sm_setcred.3		delete
+dist/openpam/doc/man/pam_start.3		delete
+dist/openpam/doc/man/pam_strerror.3		delete
+dist/openpam/doc/man/pam_verror.3		delete
+dist/openpam/doc/man/pam_vinfo.3		delete
+dist/openpam/doc/man/pam_vprompt.3		delete
+dist/openpam/include/Makefile.am		delete
+dist/openpam/include/Makefile.in		delete
+dist/openpam/include/security/Makefile.am	delete
+dist/openpam/include/security/Makefile.in	delete
+dist/openpam/include/security/openpam.h		delete
+dist/openpam/include/security/openpam_attr.h	delete
+dist/openpam/include/security/openpam_version.h	delete
+dist/openpam/include/security/pam_appl.h	delete
+dist/openpam/include/security/pam_constants.h	delete
+dist/openpam/include/security/pam_modules.h	delete
+dist/openpam/include/security/pam_types.h	delete
+dist/openpam/install-sh				delete
+dist/openpam/lib/Makefile.am			delete
+dist/openpam/lib/Makefile.in			delete
+dist/openpam/lib/openpam_borrow_cred.c		delete
+dist/openpam/lib/openpam_configure.c		delete
+dist/openpam/lib/openpam_dispatch.c		delete
+dist/openpam/lib/openpam_dynamic.c		delete
+dist/openpam/lib/openpam_findenv.c		delete
+dist/openpam/lib/openpam_free_data.c		delete
+dist/openpam/lib/openpam_free_envlist.c		delete
+dist/openpam/lib/openpam_get_option.c		delete
+dist/openpam/lib/openpam_impl.h			delete
+dist/openpam/lib/openpam_load.c			delete
+dist/openpam/lib/openpam_log.c			delete
+dist/openpam/lib/openpam_nullconv.c		delete
+dist/openpam/lib/openpam_readline.c		delete
+dist/openpam/lib/openpam_restore_cred.c		delete
+dist/openpam/lib/openpam_set_option.c		delete
+dist/openpam/lib/openpam_static.c		delete
+dist/openpam/lib/openpam_ttyconv.c		delete
+dist/openpam/lib/pam_acct_mgmt.c		delete
+dist/openpam/lib/pam_authenticate.c		delete
+dist/openpam/lib/pam_authenticate_secondary.c	delete
+dist/openpam/lib/pam_chauthtok.c		delete
+dist/openpam/lib/pam_close_session.c		delete
+dist/openpam/lib/pam_end.c			delete
+dist/openpam/lib/pam_error.c			delete
+dist/openpam/lib/pam_get_authtok.c		delete
+dist/openpam/lib/pam_get_data.c			delete
+dist/openpam/lib/pam_get_item.c			delete
+dist/openpam/lib/pam_get_mapped_authtok.c	delete
+dist/openpam/lib/pam_get_mapped_username.c	delete
+dist/openpam/lib/pam_get_user.c			delete
+dist/openpam/lib/pam_getenv.c			delete
+dist/openpam/lib/pam_getenvlist.c		delete
+dist/openpam/lib/pam_info.c			delete
+dist/openpam/lib/pam_open_session.c		delete
+dist/openpam/lib/pam_prompt.c			delete
+dist/openpam/lib/pam_putenv.c			delete
+dist/openpam/lib/pam_set_data.c			delete
+dist/openpam/lib/pam_set_item.c			delete
+dist/openpam/lib/pam_set_mapped_authtok.c	delete
+dist/openpam/lib/pam_set_mapped_username.c	delete
+dist/openpam/lib/pam_setcred.c			delete
+dist/openpam/lib/pam_setenv.c			delete
+dist/openpam/lib/pam_sm_acct_mgmt.c		delete
+dist/openpam/lib/pam_sm_authenticate.c		delete
+dist/openpam/lib/pam_sm_authenticate_secondary.c delete
+dist/openpam/lib/pam_sm_chauthtok.c		delete
+dist/openpam/lib/pam_sm_close_session.c		delete
+dist/openpam/lib/pam_sm_get_mapped_authtok.c	delete
+dist/openpam/lib/pam_sm_get_mapped_username.c	delete
+dist/openpam/lib/pam_sm_open_session.c		delete
+dist/openpam/lib/pam_sm_set_mapped_authtok.c	delete
+dist/openpam/lib/pam_sm_set_mapped_username.c	delete
+dist/openpam/lib/pam_sm_setcred.c		delete
+dist/openpam/lib/pam_start.c			delete
+dist/openpam/lib/pam_strerror.c			delete
+dist/openpam/lib/pam_verror.c			delete
+dist/openpam/lib/pam_vinfo.c			delete
+dist/openpam/lib/pam_vprompt.c			delete
+dist/openpam/ltmain.sh				delete
+dist/openpam/misc/gendoc.pl			delete
+dist/openpam/missing				delete
+dist/openpam/modules/Makefile.am		delete
+dist/openpam/modules/Makefile.in		delete
+dist/openpam/modules/pam_deny/Makefile.am	delete
+dist/openpam/modules/pam_deny/Makefile.in	delete
+dist/openpam/modules/pam_deny/pam_deny.c	delete
+dist/openpam/modules/pam_permit/Makefile.am	delete
+dist/openpam/modules/pam_permit/Makefile.in	delete
+dist/openpam/modules/pam_permit/pam_permit.c	delete
+dist/openpam/modules/pam_unix/Makefile.am	delete
+dist/openpam/modules/pam_unix/Makefile.in	delete
+dist/openpam/modules/pam_unix/pam_unix.c	delete
+
+	openpam moved to external/bsd, remove old sources.
+	[tron, ticket #20]
 
