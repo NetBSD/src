@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.240.6.10 2012/02/20 06:50:21 mrg Exp $	*/
+/*	$NetBSD: uhci.c,v 1.240.6.11 2012/02/23 09:25:04 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240.6.10 2012/02/20 06:50:21 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240.6.11 2012/02/23 09:25:04 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -698,11 +698,11 @@ uhci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 }
 
 Static void
-uhci_get_lock(struct usbd_bus *bus, kmutex_t **thread)
+uhci_get_lock(struct usbd_bus *bus, kmutex_t **lock)
 {
 	struct uhci_softc *sc = bus->hci_private;
 
-	*thread = &sc->sc_lock;
+	*lock = &sc->sc_lock;
 }
 
 
@@ -1089,7 +1089,7 @@ uhci_rem_loop(uhci_softc_t *sc) {
 	}
 }
 
-/* Add high speed control QH, called with thread lock held. */
+/* Add high speed control QH, called with lock held. */
 void
 uhci_add_hs_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 {
@@ -1116,7 +1116,7 @@ uhci_add_hs_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 #endif
 }
 
-/* Remove high speed control QH, called with thread lock held. */
+/* Remove high speed control QH, called with lock held. */
 void
 uhci_remove_hs_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 {
@@ -1166,7 +1166,7 @@ uhci_remove_hs_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 		sc->sc_hctl_end = pqh;
 }
 
-/* Add low speed control QH, called with thread lock held. */
+/* Add low speed control QH, called with lock held. */
 void
 uhci_add_ls_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 {
@@ -1189,7 +1189,7 @@ uhci_add_ls_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 	sc->sc_lctl_end = sqh;
 }
 
-/* Remove low speed control QH, called with thread lock held. */
+/* Remove low speed control QH, called with lock held. */
 void
 uhci_remove_ls_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 {
@@ -1223,7 +1223,7 @@ uhci_remove_ls_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 		sc->sc_lctl_end = pqh;
 }
 
-/* Add bulk QH, called with thread lock held. */
+/* Add bulk QH, called with lock held. */
 void
 uhci_add_bulk(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 {
@@ -1247,7 +1247,7 @@ uhci_add_bulk(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 	uhci_add_loop(sc);
 }
 
-/* Remove bulk QH, called with thread lock held. */
+/* Remove bulk QH, called with lock held. */
 void
 uhci_remove_bulk(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 {
@@ -1499,7 +1499,7 @@ uhci_check_intr(uhci_softc_t *sc, uhci_intr_info_t *ii)
 	uhci_idone(ii);
 }
 
-/* Called with USB thread lock held. */
+/* Called with USB lock held. */
 void
 uhci_idone(uhci_intr_info_t *ii)
 {

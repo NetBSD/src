@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.218.6.11 2012/02/20 06:50:21 mrg Exp $	*/
+/*	$NetBSD: ohci.c,v 1.218.6.12 2012/02/23 09:25:04 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.11 2012/02/20 06:50:21 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.12 2012/02/23 09:25:04 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -991,11 +991,11 @@ ohci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 }
 
 Static void
-ohci_get_lock(struct usbd_bus *bus, kmutex_t **thread)
+ohci_get_lock(struct usbd_bus *bus, kmutex_t **lock)
 {
 	struct ohci_softc *sc = bus->hci_private;
 
-	*thread = &sc->sc_lock;
+	*lock = &sc->sc_lock;
 }
 
 /*
@@ -1865,7 +1865,7 @@ ohci_device_request(usbd_xfer_handle xfer)
 }
 
 /*
- * Add an ED to the schedule.  Called with USB thread lock held.
+ * Add an ED to the schedule.  Called with USB lock held.
  */
 Static void
 ohci_add_ed(ohci_softc_t *sc, ohci_soft_ed_t *sed, ohci_soft_ed_t *head)
@@ -1890,7 +1890,7 @@ ohci_add_ed(ohci_softc_t *sc, ohci_soft_ed_t *sed, ohci_soft_ed_t *head)
 }
 
 /*
- * Remove an ED from the schedule.  Called with USB thread lock held.
+ * Remove an ED from the schedule.  Called with USB lock held.
  */
 Static void
 ohci_rem_ed(ohci_softc_t *sc, ohci_soft_ed_t *sed, ohci_soft_ed_t *head)
@@ -1925,7 +1925,7 @@ ohci_rem_ed(ohci_softc_t *sc, ohci_soft_ed_t *sed, ohci_soft_ed_t *head)
  */
 
 #define HASH(a) (((a) >> 4) % OHCI_HASH_SIZE)
-/* Called with USB thread lock held. */
+/* Called with USB lock held. */
 void
 ohci_hash_add_td(ohci_softc_t *sc, ohci_soft_td_t *std)
 {
@@ -1936,7 +1936,7 @@ ohci_hash_add_td(ohci_softc_t *sc, ohci_soft_td_t *std)
 	LIST_INSERT_HEAD(&sc->sc_hash_tds[h], std, hnext);
 }
 
-/* Called with USB thread lock held. */
+/* Called with USB lock held. */
 void
 ohci_hash_rem_td(ohci_softc_t *sc, ohci_soft_td_t *std)
 {
@@ -1960,7 +1960,7 @@ ohci_hash_find_td(ohci_softc_t *sc, ohci_physaddr_t a)
 	return (NULL);
 }
 
-/* Called with USB thread lock held. */
+/* Called with USB lock held. */
 void
 ohci_hash_add_itd(ohci_softc_t *sc, ohci_soft_itd_t *sitd)
 {
@@ -1974,7 +1974,7 @@ ohci_hash_add_itd(ohci_softc_t *sc, ohci_soft_itd_t *sitd)
 	LIST_INSERT_HEAD(&sc->sc_hash_itds[h], sitd, hnext);
 }
 
-/* Called with USB thread lock held. */
+/* Called with USB lock held. */
 void
 ohci_hash_rem_itd(ohci_softc_t *sc, ohci_soft_itd_t *sitd)
 {

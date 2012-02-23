@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.55.12.1 2011/12/08 03:10:09 mrg Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.55.12.2 2012/02/23 09:25:03 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.55.12.1 2011/12/08 03:10:09 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.55.12.2 2012/02/23 09:25:03 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -425,7 +425,7 @@ usbd_bulk_transfer_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	if (xfer->pipe->device->bus->lock)
 		cv_broadcast(&xfer->cv);
 	else
-		wakeup(xfer);
+		wakeup(xfer);	/* XXXSMP ok */
 }
 
 usbd_status
@@ -474,7 +474,7 @@ usbd_intr_transfer_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	if (xfer->pipe->device->bus->lock)
 		cv_broadcast(&xfer->cv);
 	else
-		wakeup(xfer);
+		wakeup(xfer);	/* XXXSMP ok */
 }
 
 usbd_status

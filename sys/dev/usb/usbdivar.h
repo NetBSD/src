@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.93.8.7 2012/02/20 22:43:12 mrg Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.93.8.8 2012/02/23 09:25:03 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -37,28 +37,26 @@
 /*
  * Discussion about locking in the USB code:
  *
- * This is one lock presented by the host controller: the thread lock.
- * Host controller drivers are expected to manage interrupt state
- * internally.
+ * The host controller presents one lock at IPL_USB.
  *
  * List of hardware interface methods, and which locks are held when each
  * is called by this module:
  *
- *	BUS METHOD		THREAD  NOTES
+ *	BUS METHOD		LOCK  NOTES
  *	----------------------- -------	-------------------------
- *	open_pipe		-	might want to take thread lock?
+ *	open_pipe		-	might want to take lock?
  *	soft_intr		x
- *	do_poll			-	might want to take thread lock?
+ *	do_poll			-	might want to take lock?
  *	allocm			-
  *	freem			-
  *	allocx			-
  *	freex			-
  *	get_lock 		-	Called at attach time
  *
- *	PIPE METHOD		THREAD  NOTES
+ *	PIPE METHOD		LOCK  NOTES
  *	----------------------- -------	-------------------------
  *	transfer		-
- *	start			-	Might want to take this?
+ *	start			-	might want to take lock?
  *	abort			x
  *	close			x
  *	cleartoggle		-
@@ -66,8 +64,8 @@
  *
  * The above semantics are likely to change.
  * 
- * USB functions known to expect the thread lock taken include (this
- * list is probably not exhaustive):
+ * USB functions known to expect the lock taken include (this list is
+ * probably not exhaustive):
  *    usb_transfer_complete()
  *    usb_insert_transfer()
  *    usb_start_next()
