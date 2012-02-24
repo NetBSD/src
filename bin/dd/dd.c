@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.42 2008/07/20 00:52:39 lukem Exp $	*/
+/*	$NetBSD: dd.c,v 1.42.10.1 2012/02/24 06:59:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.42 2008/07/20 00:52:39 lukem Exp $");
+__RCSID("$NetBSD: dd.c,v 1.42.10.1 2012/02/24 06:59:43 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,6 +86,7 @@ u_int		files_cnt = 1;		/* # of files to copy */
 uint64_t	progress = 0;		/* display sign of life */
 const u_char	*ctab;			/* conversion table */
 sigset_t	infoset;		/* a set blocking SIGINFO */
+const char	*msgfmt = "posix";	/* default summary() message format */
 
 int
 main(int argc, char *argv[])
@@ -180,7 +181,10 @@ setup(void)
 	 * record oriented I/O, only need a single buffer.
 	 */
 	if (!(ddflags & (C_BLOCK|C_UNBLOCK))) {
-		if ((in.db = malloc(out.dbsz + in.dbsz - 1)) == NULL) {
+		size_t dbsz = out.dbsz;
+		if (!(ddflags & C_BS))
+			dbsz += in.dbsz - 1;
+		if ((in.db = malloc(dbsz)) == NULL) {
 			err(EXIT_FAILURE, NULL);
 			/* NOTREACHED */
 		}
