@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.7 2009/03/18 16:00:11 cegger Exp $	*/
+/*	$NetBSD: mkboot.c,v 1.8 2012/02/24 18:45:20 skrll Exp $	*/
 
 /*	$OpenBSD: mkboot.c,v 1.9 2001/05/17 00:57:55 pvalchev Exp $	*/
 
@@ -101,7 +101,7 @@ struct exec {
 
 #define N_GETMAGIC(ex) \
     ((((ex).a_midmag)&0xffff0000) ? \
-    (ntohl((u_int32_t)((ex).a_midmag))&0xffff) : ((ex).a_midmag))
+    (ntohl((uint32_t)((ex).a_midmag))&0xffff) : ((ex).a_midmag))
 
 #include <stdio.h>
 #include <ctype.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: iplsum.c,v 1.5 2011/02/21 02:31:57 itohy Exp $	*/
+/*	$NetBSD: iplsum.c,v 1.6 2012/02/24 18:45:20 skrll Exp $	*/
 
 /*
  * Calculate 32bit checksum of IPL and store in a certain location
@@ -13,7 +13,7 @@
 #include <netinet/in.h>
 
 #ifndef __BIT_TYPES_DEFINED__
-typedef unsigned int	u_int32_t;
+typedef unsigned int	uint32_t;
 #endif
 
 /* see README.ipl */
@@ -27,9 +27,9 @@ typedef unsigned int	u_int32_t;
 #define BOOTSIZE	(IPLOFF + IPLSIZE)
 #define BOOTBLOCKSIZE	8192
 
-u_int32_t bootblk[BOOTSIZE / sizeof(u_int32_t) + 1];
+uint32_t bootblk[BOOTSIZE / sizeof(uint32_t) + 1];
 
-#define SUMOFF		((IPLOFF + 4) / sizeof(u_int32_t))
+#define SUMOFF		((IPLOFF + 4) / sizeof(uint32_t))
 
 #ifdef __STDC__
 int main(int, char *[]);
@@ -40,7 +40,7 @@ main(int argc, char *argv[])
 {
 	FILE *fp;
 	int len;
-	u_int32_t sum, *p;
+	uint32_t sum, *p;
 	int iploff, iplsumsize;
 
 	if (argc != 3) {
@@ -67,8 +67,8 @@ main(int argc, char *argv[])
 		fprintf(stderr, "%s: bad LIF magic\n", argv[1]);
 		return 1;
 	}
-	iploff = ntohl(bootblk[0xf0 / sizeof(u_int32_t)]);
-	iplsumsize = ntohl(bootblk[0xf4 / sizeof(u_int32_t)]);
+	iploff = ntohl(bootblk[0xf0 / sizeof(uint32_t)]);
+	iplsumsize = ntohl(bootblk[0xf4 / sizeof(uint32_t)]);
 	printf("%d bytes free, ipl offset = %d, ipl sum size = %d\n",
 	    BOOTSIZE - len, iploff, iplsumsize);
 	if (iploff != IPLOFF || iplsumsize <= 0 || iplsumsize % 2048 ||
@@ -79,20 +79,20 @@ main(int argc, char *argv[])
 
 	/* checksum */
 	sum = 0;
-	for (p = bootblk + IPLOFF / sizeof(u_int32_t);
-	    p < bootblk + (IPLOFF + IPL1SIZE) / sizeof(u_int32_t); p++)
+	for (p = bootblk + IPLOFF / sizeof(uint32_t);
+	    p < bootblk + (IPLOFF + IPL1SIZE) / sizeof(uint32_t); p++)
 		sum += ntohl(*p);
 
 	bootblk[SUMOFF] = htonl(ntohl(bootblk[SUMOFF]) - sum);
 
 	/* transfer ipl part 2 */
-	memcpy(bootblk + IPL2ONDISK / sizeof(u_int32_t),
-	    bootblk + (IPLOFF + IPL1SIZE) / sizeof(u_int32_t),
+	memcpy(bootblk + IPL2ONDISK / sizeof(uint32_t),
+	    bootblk + (IPLOFF + IPL1SIZE) / sizeof(uint32_t),
 	    IPL2SIZE);
 
 	/* transfer ipl part 3 */
-	memcpy(bootblk + IPL3ONDISK / sizeof(u_int32_t),
-	    bootblk + (IPLOFF + IPL1SIZE + IPL2SIZE) / sizeof(u_int32_t),
+	memcpy(bootblk + IPL3ONDISK / sizeof(uint32_t),
+	    bootblk + (IPLOFF + IPL1SIZE + IPL2SIZE) / sizeof(uint32_t),
 	    IPL3SIZE);
 
 	/* write file */
