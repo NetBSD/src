@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.61 2012/02/02 19:43:07 tls Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.62 2012/02/24 06:48:24 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,19 +56,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.61 2012/02/02 19:43:07 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.62 2012/02/24 06:48:24 mrg Exp $");
 
-#if defined(__NetBSD__)
 #include "opt_inet.h"
-#elif defined(__OpenBSD__)
-#include "bpfilter.h"
-#endif /* defined(__OpenBSD__) */
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#if !defined(__OpenBSD__)
 #include <sys/callout.h>
-#endif
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
@@ -79,31 +73,15 @@ __KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.61 2012/02/02 19:43:07 tls Exp $");
 #include <sys/rnd.h>
 
 #include <net/if.h>
-#if defined(__NetBSD__)
 #include <net/if_arp.h>
-#endif
 #include <net/if_dl.h>
-
 #include <net/bpf.h>
-
-#if defined(__NetBSD__)
 #include <net/if_ether.h>
+
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #endif
-#endif /* defined(__NetBSD__) */
-
-#if defined(__OpenBSD__)
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/in_var.h>
-#include <netinet/ip.h>
-#include <netinet/if_ether.h>
-#endif
-#endif /* defined(__OpenBSD__) */
-
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -401,11 +379,7 @@ allmulti:
 		sc->cue_mctab[i] = 0;
 
 	/* now program new ones */
-#if defined(__NetBSD__)
 	ETHER_FIRST_MULTI(step, &sc->cue_ec, enm);
-#else
-	ETHER_FIRST_MULTI(step, &sc->arpcom, enm);
-#endif
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo,
 		    enm->enm_addrhi, ETHER_ADDR_LEN) != 0)
@@ -565,9 +539,6 @@ cue_attach(device_t parent, device_t self, void *aux)
 	ifp->if_ioctl = cue_ioctl;
 	ifp->if_start = cue_start;
 	ifp->if_watchdog = cue_watchdog;
-#if defined(__OpenBSD__)
-	ifp->if_snd.ifq_maxlen = IFQ_MAXLEN;
-#endif
 	strncpy(ifp->if_xname, device_xname(sc->cue_dev), IFNAMSIZ);
 
 	IFQ_SET_READY(&ifp->if_snd);
@@ -615,10 +586,8 @@ cue_detach(device_t self, int flags)
 	if (ifp->if_flags & IFF_RUNNING)
 		cue_stop(sc);
 
-#if defined(__NetBSD__)
 	rnd_detach_source(&sc->rnd_source);
 	ether_ifdetach(ifp);
-#endif /* __NetBSD__ */
 
 	if_detach(ifp);
 
@@ -1041,11 +1010,7 @@ cue_init(void *xsc)
 	cue_csr_write_1(sc, CUE_ADVANCED_OPMODES,
 	    CUE_AOP_EMBED_RXLEN | 0x03); /* 1 wait state */
 
-#if defined(__OpenBSD__)
-	eaddr = sc->arpcom.ac_enaddr;
-#elif defined(__NetBSD__)
 	eaddr = CLLADDR(ifp->if_sadl);
-#endif
 	/* Set MAC address */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		cue_csr_write_1(sc, CUE_PAR0 - i, eaddr[i]);
@@ -1159,11 +1124,7 @@ cue_ioctl(struct ifnet *ifp, u_long command, void *data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-#if defined(__NetBSD__)
 			arp_ifinit(ifp, ifa);
-#else
-			arp_ifinit(&sc->arpcom, ifa);
-#endif
 			break;
 #endif /* INET */
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.141 2011/08/24 11:28:50 mbalmer Exp $	*/
+/*	$NetBSD: umass.c,v 1.142 2012/02/24 06:48:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.141 2011/08/24 11:28:50 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.142 2012/02/24 06:48:26 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_umass.h"
@@ -138,17 +138,9 @@ __KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.141 2011/08/24 11:28:50 mbalmer Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#undef KASSERT
-#define KASSERT(cond, msg)
-#elif defined(__FreeBSD__)
-#include <sys/module.h>
-#include <sys/bus.h>
-#include <machine/clock.h>
-#endif
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -656,7 +648,8 @@ umass_childdet(device_t self, device_t child)
 {
 	struct umass_softc *sc = device_private(self);
 
-	KASSERT(child == sc->bus->sc_child, ("assertion child == sc->bus->sc_child failed\n"));
+	KASSERTMSG(child == sc->bus->sc_child,
+		   "assertion child == sc->bus->sc_child failed\n");
 	sc->bus->sc_child = NULL;
 }
 
@@ -849,9 +842,9 @@ umass_reset(struct umass_softc *sc, transfer_cb_f cb, void *priv)
 Static void
 umass_bbb_reset(struct umass_softc *sc, int status)
 {
-	KASSERT(sc->sc_wire & UMASS_WPROTO_BBB,
-		("sc->sc_wire == 0x%02x wrong for umass_bbb_reset\n",
-		sc->sc_wire));
+	KASSERTMSG(sc->sc_wire & UMASS_WPROTO_BBB,
+		   "sc->sc_wire == 0x%02x wrong for umass_bbb_reset\n",
+		   sc->sc_wire);
 
 	if (sc->sc_dying)
 		return;
@@ -898,9 +891,9 @@ umass_bbb_transfer(struct umass_softc *sc, int lun, void *cmd, int cmdlen,
 	DPRINTF(UDMASS_BBB,("%s: umass_bbb_transfer cmd=0x%02x\n",
 		device_xname(sc->sc_dev), *(u_char *)cmd));
 
-	KASSERT(sc->sc_wire & UMASS_WPROTO_BBB,
-		("sc->sc_wire == 0x%02x wrong for umass_bbb_transfer\n",
-		sc->sc_wire));
+	KASSERTMSG(sc->sc_wire & UMASS_WPROTO_BBB,
+		   "sc->sc_wire == 0x%02x wrong for umass_bbb_transfer\n",
+		   sc->sc_wire);
 
 	if (sc->sc_dying)
 		return;
@@ -929,25 +922,27 @@ umass_bbb_transfer(struct umass_softc *sc, int lun, void *cmd, int cmdlen,
 	 */
 
 	/* check the given arguments */
-	KASSERT(datalen == 0 || data != NULL,
-		("%s: datalen > 0, but no buffer",device_xname(sc->sc_dev)));
-	KASSERT(cmdlen <= CBWCDBLENGTH,
-		("%s: cmdlen exceeds CDB length in CBW (%d > %d)",
-			device_xname(sc->sc_dev), cmdlen, CBWCDBLENGTH));
-	KASSERT(dir == DIR_NONE || datalen > 0,
-		("%s: datalen == 0 while direction is not NONE\n",
-			device_xname(sc->sc_dev)));
-	KASSERT(datalen == 0 || dir != DIR_NONE,
-		("%s: direction is NONE while datalen is not zero\n",
-			device_xname(sc->sc_dev)));
-	KASSERT(sizeof(umass_bbb_cbw_t) == UMASS_BBB_CBW_SIZE,
-		("%s: CBW struct does not have the right size (%d vs. %d)\n",
+	KASSERTMSG(datalen == 0 || data != NULL,
+		   "%s: datalen > 0, but no buffer",device_xname(sc->sc_dev));
+	KASSERTMSG(cmdlen <= CBWCDBLENGTH,
+		   "%s: cmdlen exceeds CDB length in CBW (%d > %d)",
+			device_xname(sc->sc_dev), cmdlen, CBWCDBLENGTH);
+	KASSERTMSG(dir == DIR_NONE || datalen > 0,
+		   "%s: datalen == 0 while direction is not NONE\n",
+			device_xname(sc->sc_dev));
+	KASSERTMSG(datalen == 0 || dir != DIR_NONE,
+		   "%s: direction is NONE while datalen is not zero\n",
+			device_xname(sc->sc_dev));
+	/* CTASSERT */
+	KASSERTMSG(sizeof(umass_bbb_cbw_t) == UMASS_BBB_CBW_SIZE,
+		   "%s: CBW struct does not have the right size (%zu vs. %u)\n",
 			device_xname(sc->sc_dev),
-			sizeof(umass_bbb_cbw_t), UMASS_BBB_CBW_SIZE));
-	KASSERT(sizeof(umass_bbb_csw_t) == UMASS_BBB_CSW_SIZE,
-		("%s: CSW struct does not have the right size (%d vs. %d)\n",
+			sizeof(umass_bbb_cbw_t), UMASS_BBB_CBW_SIZE);
+	/* CTASSERT */
+	KASSERTMSG(sizeof(umass_bbb_csw_t) == UMASS_BBB_CSW_SIZE,
+		   "%s: CSW struct does not have the right size (%zu vs. %u)\n",
 			device_xname(sc->sc_dev),
-			sizeof(umass_bbb_csw_t), UMASS_BBB_CSW_SIZE));
+			sizeof(umass_bbb_csw_t), UMASS_BBB_CSW_SIZE);
 
 	/*
 	 * Determine the direction of the data transfer and the length.
@@ -1011,9 +1006,9 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 	usbd_xfer_handle next_xfer;
 	int residue;
 
-	KASSERT(sc->sc_wire & UMASS_WPROTO_BBB,
-		("sc->sc_wire == 0x%02x wrong for umass_bbb_state\n",
-		sc->sc_wire));
+	KASSERTMSG(sc->sc_wire & UMASS_WPROTO_BBB,
+		   "sc->sc_wire == 0x%02x wrong for umass_bbb_state\n",
+		   sc->sc_wire);
 
 	if (sc->sc_dying)
 		return;
@@ -1322,9 +1317,9 @@ Static int
 umass_cbi_adsc(struct umass_softc *sc, char *buffer, int buflen,
 	       usbd_xfer_handle xfer)
 {
-	KASSERT(sc->sc_wire & (UMASS_WPROTO_CBI|UMASS_WPROTO_CBI_I),
-		("sc->sc_wire == 0x%02x wrong for umass_cbi_adsc\n",
-		sc->sc_wire));
+	KASSERTMSG(sc->sc_wire & (UMASS_WPROTO_CBI|UMASS_WPROTO_CBI_I),
+		   "sc->sc_wire == 0x%02x wrong for umass_cbi_adsc\n",
+		   sc->sc_wire);
 
 	if ((sc->sc_cmd == UMASS_CPROTO_RBC) &&
 	    (sc->sc_quirks & UMASS_QUIRK_RBC_PAD_TO_12) != 0 && buflen < 12) {
@@ -1348,9 +1343,9 @@ umass_cbi_reset(struct umass_softc *sc, int status)
 	int i;
 #	define SEND_DIAGNOSTIC_CMDLEN	12
 
-	KASSERT(sc->sc_wire & (UMASS_WPROTO_CBI|UMASS_WPROTO_CBI_I),
-		("sc->sc_wire == 0x%02x wrong for umass_cbi_reset\n",
-		sc->sc_wire));
+	KASSERTMSG(sc->sc_wire & (UMASS_WPROTO_CBI|UMASS_WPROTO_CBI_I),
+		   "sc->sc_wire == 0x%02x wrong for umass_cbi_reset\n",
+		   sc->sc_wire);
 
 	if (sc->sc_dying)
 		return;
@@ -1372,10 +1367,11 @@ umass_cbi_reset(struct umass_softc *sc, int status)
 	DPRINTF(UDMASS_CBI, ("%s: CBI Reset\n",
 		device_xname(sc->sc_dev)));
 
-	KASSERT(sizeof(sc->cbl) >= SEND_DIAGNOSTIC_CMDLEN,
-		("%s: CBL struct is too small (%d < %d)\n",
+	/* CTASSERT */
+	KASSERTMSG(sizeof(sc->cbl) >= SEND_DIAGNOSTIC_CMDLEN,
+		   "%s: CBL struct is too small (%zu < %u)\n",
 			device_xname(sc->sc_dev),
-			sizeof(sc->cbl), SEND_DIAGNOSTIC_CMDLEN));
+			sizeof(sc->cbl), SEND_DIAGNOSTIC_CMDLEN);
 
 	sc->transfer_state = TSTATE_CBI_RESET1;
 	sc->transfer_status = status;
@@ -1402,9 +1398,9 @@ umass_cbi_transfer(struct umass_softc *sc, int lun,
 	DPRINTF(UDMASS_CBI,("%s: umass_cbi_transfer cmd=0x%02x, len=%d\n",
 		device_xname(sc->sc_dev), *(u_char *)cmd, datalen));
 
-	KASSERT(sc->sc_wire & (UMASS_WPROTO_CBI|UMASS_WPROTO_CBI_I),
-		("sc->sc_wire == 0x%02x wrong for umass_cbi_transfer\n",
-		sc->sc_wire));
+	KASSERTMSG(sc->sc_wire & (UMASS_WPROTO_CBI|UMASS_WPROTO_CBI_I),
+		   "sc->sc_wire == 0x%02x wrong for umass_cbi_transfer\n",
+		   sc->sc_wire);
 
 	if (sc->sc_dying)
 		return;
@@ -1430,11 +1426,11 @@ umass_cbi_transfer(struct umass_softc *sc, int lun,
 	 */
 
 	/* check the given arguments */
-	KASSERT(datalen == 0 || data != NULL,
-		("%s: datalen > 0, but no buffer",device_xname(sc->sc_dev)));
-	KASSERT(datalen == 0 || dir != DIR_NONE,
-		("%s: direction is NONE while datalen is not zero\n",
-			device_xname(sc->sc_dev)));
+	KASSERTMSG(datalen == 0 || data != NULL,
+		   "%s: datalen > 0, but no buffer",device_xname(sc->sc_dev));
+	KASSERTMSG(datalen == 0 || dir != DIR_NONE,
+		   "%s: direction is NONE while datalen is not zero\n",
+			device_xname(sc->sc_dev));
 
 	/* store the details for the data transfer phase */
 	sc->transfer_dir = dir;
@@ -1459,9 +1455,9 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 {
 	struct umass_softc *sc = (struct umass_softc *) priv;
 
-	KASSERT(sc->sc_wire & (UMASS_WPROTO_CBI|UMASS_WPROTO_CBI_I),
-		("sc->sc_wire == 0x%02x wrong for umass_cbi_state\n",
-		sc->sc_wire));
+	KASSERTMSG(sc->sc_wire & (UMASS_WPROTO_CBI|UMASS_WPROTO_CBI_I),
+		   "sc->sc_wire == 0x%02x wrong for umass_cbi_state\n",
+		   sc->sc_wire);
 
 	if (sc->sc_dying)
 		return;
