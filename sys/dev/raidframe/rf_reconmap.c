@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.c,v 1.31 2008/05/19 19:49:54 oster Exp $	*/
+/*	$NetBSD: rf_reconmap.c,v 1.31.8.1 2012/02/24 17:58:44 sborrill Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  *************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.31 2008/05/19 19:49:54 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.31.8.1 2012/02/24 17:58:44 sborrill Exp $");
 
 #include "rf_raid.h"
 #include <sys/time.h>
@@ -156,7 +156,14 @@ rf_ReconMapUpdate(RF_Raid_t *raidPtr, RF_ReconMap_t *mapPtr,
 
 		/* do we need to move the queue? */
 		while (i > mapPtr->high_ru) {
+#if 0
 #ifdef DIAGNOSTIC
+			/* XXX: The check below is not valid for
+			 * RAID5_RS.  It is valid for RAID 1 and RAID 5.
+			 * The issue is that we can easily have
+			 * RU_NOTHING entries here too, and those are
+			 * quite correct.
+			 */
 			if (mapPtr->status[mapPtr->head]!=RU_ALL) {
 				printf("\nraid%d: reconmap incorrect -- working on i %" PRIu64 "\n",
 				       raidPtr->raidid, i);
@@ -168,6 +175,7 @@ rf_ReconMapUpdate(RF_Raid_t *raidPtr, RF_ReconMap_t *mapPtr,
 
 				panic("reconmap incorrect");
 			} 
+#endif
 #endif
 			mapPtr->low_ru++;
 			mapPtr->high_ru++;
