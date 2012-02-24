@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3sdhc.c,v 1.3 2011/06/29 06:12:10 matt Exp $	*/
+/*	$NetBSD: pq3sdhc.c,v 1.3.6.1 2012/02/24 09:11:32 mrg Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3sdhc.c,v 1.3 2011/06/29 06:12:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3sdhc.c,v 1.3.6.1 2012/02/24 09:11:32 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,6 @@ static int pq3sdhc_match(device_t, cfdata_t, void *);
 static void pq3sdhc_attach(device_t, device_t, void *);
 
 struct pq3sdhc_softc {
-	struct powerpc_bus_space sc_mybst;
 	struct sdhc_softc	sc;
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
@@ -63,114 +62,6 @@ struct pq3sdhc_softc {
 
 CFATTACH_DECL_NEW(pq3sdhc, sizeof(struct pq3sdhc_softc),
     pq3sdhc_match, pq3sdhc_attach, NULL, NULL);
-
-static uint8_t
-pq3sdhc_read_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
-{
-	const struct pq3sdhc_softc * const sc = (const void *) t;
-	
-	KASSERT((o & -4) != SDHC_DATA);
-
-	const uint32_t v = bus_space_read_4(sc->sc_bst, h, o & -4);
-
-	return v >> ((o & 3) * 8);
-}
-
-static uint16_t
-pq3sdhc_read_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
-{
-	const struct pq3sdhc_softc * const sc = (const void *) t;
-
-	KASSERT((o & 1) == 0);
-	KASSERT((o & -4) != SDHC_DATA);
-
-	uint32_t v = bus_space_read_4(sc->sc_bst, h, o & -4);
-
-	if (__predict_false(o == SDHC_HOST_VER))
-		return v;
-	if (__predict_false(o == SDHC_NINTR_STATUS)) {
-		v |= SDHC_ERROR_INTERRUPT * ((v > 0xffff) != 0);
-		if (v != 0)
-			printf("get(INTR_STATUS)=%#x\n", v);
-	}
-	if (__predict_false(o == SDHC_EINTR_STATUS)) {
-		if (v != 0)
-			printf("get(INTR_STATUS)=%#x\n", v);
-	}
-
-	return v >> ((o & 2) * 8);
-}
-
-static uint32_t
-pq3sdhc_read_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
-{
-	const struct pq3sdhc_softc * const sc = (const void *) t;
-
-	KASSERT((o & 3) == 0);
-
-	uint32_t v = bus_space_read_4(sc->sc_bst, h, o & -4);
-
-	if (__predict_false(o == SDHC_DATA))
-		v = htole32(v);
-
-	return v;
-}
-
-static void
-pq3sdhc_write_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, uint8_t nv)
-{
-	const struct pq3sdhc_softc * const sc = (const void *) t;
-	KASSERT((o & -4) != SDHC_DATA);
-	uint32_t v = bus_space_read_4(sc->sc_bst, h, o & -4);
-	const u_int shift = (o & 3) * 8;
-
-	if (o == SDHC_HOST_CTL) {
-		nv &= ~EDSHC_HOST_CTL_RES;
-	}
-
-	v &= ~(0xff << shift);
-	v |= (nv << shift);
-
-	bus_space_write_4(sc->sc_bst, h, o & -4, v);
-}
-
-static void
-pq3sdhc_write_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, uint16_t nv)
-{
-	const struct pq3sdhc_softc * const sc = (const void *) t;
-	KASSERT((o & 1) == 0);
-	KASSERT((o & -4) != SDHC_DATA);
-	const u_int shift = (o & 2) * 8;
-	uint32_t v;
-
-	/*
-	 * Since NINTR_STATUS and EINTR_STATUS are W1C, don't bother getting
-	 * the previous value since we'd clear them.
-	 */
-	if (__predict_true((o & -4) != SDHC_NINTR_STATUS)) {
-		v = bus_space_read_4(sc->sc_bst, h, o & -4);
-		v &= ~(0xffff << shift);
-		v |= nv << shift;
-	} else {
-		v = nv << shift;
-		printf("put(INTR_STATUS,%#x)\n", v);
-	}
-
-	bus_space_write_4(sc->sc_bst, h, o & -4, v);
-}
-
-static void
-pq3sdhc_write_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, uint32_t v)
-{
-	const struct pq3sdhc_softc * const sc = (const void *) t;
-
-	KASSERT((o & 3) == 0);
-
-	if (__predict_false(o == SDHC_DATA))
-		v = le32toh(v);
-
-	bus_space_write_4(sc->sc_bst, h, o & -4, v);
-}
 
 static int
 pq3sdhc_match(device_t parent, cfdata_t cf, void *aux)
@@ -194,19 +85,12 @@ pq3sdhc_attach(device_t parent, device_t self, void *aux)
 	psc->sc_children |= cna->cna_childmask;
 	sc->sc.sc_dmat = cna->cna_dmat;
 	sc->sc.sc_dev = self;
-	//sc->sc.sc_flags |= SDHC_FLAG_USE_DMA;
-	sc->sc.sc_flags |= SDHC_FLAG_HAVE_DVS;
+	sc->sc.sc_flags |= SDHC_FLAG_USE_DMA;
+	sc->sc.sc_flags |=
+	    SDHC_FLAG_HAVE_DVS | SDHC_FLAG_32BIT_ACCESS | SDHC_FLAG_ENHANCED;
 	sc->sc.sc_host = sc->sc_hosts;
 	sc->sc.sc_clkbase = board_info_get_number("bus-frequency") / 2000;
 	sc->sc_bst = cna->cna_memt;
-	sc->sc_mybst = *cna->cna_memt;
-
-	sc->sc_mybst.pbs_scalar.pbss_read_1 = pq3sdhc_read_1;
-	sc->sc_mybst.pbs_scalar.pbss_read_2 = pq3sdhc_read_2;
-	sc->sc_mybst.pbs_scalar.pbss_read_4 = pq3sdhc_read_4;
-	sc->sc_mybst.pbs_scalar.pbss_write_1 = pq3sdhc_write_1;
-	sc->sc_mybst.pbs_scalar.pbss_write_2 = pq3sdhc_write_2;
-	sc->sc_mybst.pbs_scalar.pbss_write_4 = pq3sdhc_write_4;
 
 	error = bus_space_map(sc->sc_bst, cnl->cnl_addr, cnl->cnl_size, 0,
 	    &sc->sc_bsh);
@@ -229,7 +113,7 @@ pq3sdhc_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "interrupting on irq %d\n",
 	     cnl->cnl_intrs[0]);
 
-	error = sdhc_host_found(&sc->sc, &sc->sc_mybst, sc->sc_bsh,
+	error = sdhc_host_found(&sc->sc, sc->sc_bst, sc->sc_bsh,
 	    cnl->cnl_size);
 	if (error != 0) {
 		aprint_error_dev(self, "couldn't initialize host, error=%d\n",

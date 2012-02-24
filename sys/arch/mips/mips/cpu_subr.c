@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.14 2011/08/16 06:58:15 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.14.6.1 2012/02/24 09:11:31 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,11 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.14 2011/08/16 06:58:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.14.6.1 2012/02/24 09:11:31 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
-#include "opt_sa.h"
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -47,10 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.14 2011/08/16 06:58:15 matt Exp $");
 #include <sys/bitops.h>
 #include <sys/idle.h>
 #include <sys/xcall.h>
-#ifdef KERN_SA
-#include <sys/sa.h>
-#include <sys/savar.h>
-#endif
 
 #include <uvm/uvm.h>
 
@@ -314,75 +309,6 @@ cpu_startup_common(void)
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 }
-
-#ifdef KERN_SA
-/*
- * XXX This is a terrible name.
- */
-void
-upcallret(struct lwp *l)
-{
-	userret(l);
-}
-
-void 
-cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
-    void *sas, void *ap, void *sp, sa_upcall_t upcall)
-{
-	struct trapframe *tf = l->l_md.md_utf;
-	struct saframe frame;
-#ifdef COMPAT_NETBSD32
-	struct saframe32 frame32;
-#endif
-	void *ksf, *usf;
-	size_t sfsz;
-
-#if 0 /* First 4 args in regs (see below). */
-	frame.sa_type = type;
-	frame.sa_sas = sas;
-	frame.sa_events = nevents;
-	frame.sa_interrupted = ninterrupted;
-#endif
-#ifdef COMPAT_NETBSD32
-	switch (l->l_proc->p_md.md_abi) {
-	case _MIPS_BSD_API_O32:
-	case _MIPS_BSD_API_N32:
-		NETBSD32PTR32(frame32.sa_arg, ap);
-		NETBSD32PTR32(frame32.sa_upcall, upcall);
-		ksf = &frame32;
-		usf = (struct saframe32 *)sp - 1;
-		sfsz = sizeof(frame32);
-		break;
-	default:
-#endif
-		frame.sa_arg = ap;
-		frame.sa_upcall = upcall;
-		ksf = &frame;
-		usf = (struct saframe *)sp - 1;
-		sfsz = sizeof(frame);
-#ifdef COMPAT_NETBSD32
-		break;
-	}
-#endif
-
-	if (copyout(ksf, usf, sfsz) != 0) {
-		/* Copying onto the stack didn't work. Die. */
-		mutex_enter(l->l_proc->p_lock);
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
-	}
-
-	tf->tf_regs[_R_PC] = (intptr_t)upcall;
-	tf->tf_regs[_R_SP] = (intptr_t)usf;
-	tf->tf_regs[_R_A0] = type;
-	tf->tf_regs[_R_A1] = (intptr_t)sas;
-	tf->tf_regs[_R_A2] = nevents;
-	tf->tf_regs[_R_A3] = ninterrupted;
-	tf->tf_regs[_R_S8] = 0;
-	tf->tf_regs[_R_RA] = 0;
-	tf->tf_regs[_R_T9] = (intptr_t)upcall;  /* t9=Upcall function*/
-}
-#endif /* KERN_SA */
 
 void
 cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)

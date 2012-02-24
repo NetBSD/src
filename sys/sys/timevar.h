@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.29.12.1 2012/02/18 07:35:52 mrg Exp $	*/
+/*	$NetBSD: timevar.h,v 1.29.12.2 2012/02/24 09:11:51 mrg Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2008 The NetBSD Foundation.
@@ -184,7 +184,7 @@ void	time_init(void);
 void	time_init2(void);
 bool	time_wraps(struct timespec *, struct timespec *);
 
-extern time_t time_second;	/* current second in the epoch */
-extern time_t time_uptime;	/* system uptime in seconds */
+extern volatile time_t time_second;	/* current second in the epoch */
+extern volatile time_t time_uptime;	/* system uptime in seconds */
 
 #endif /* !_SYS_TIMEVAR_H_ */

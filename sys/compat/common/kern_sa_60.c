@@ -1,8 +1,9 @@
-/*	$NetBSD: saframe.h,v 1.7 2008/10/15 06:52:38 wrstuden Exp $ */
-
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Matt Thomas of 3am Software Foundry.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,13 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -33,21 +27,58 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _M68K_SAFRAME_H
-#define _M68K_SAFRAME_H
+#include <sys/cdefs.h>
 
-#include <sys/sa.h>
+__KERNEL_RCSID(1, "$NetBSD: kern_sa_60.c,v 1.1.2.2 2012/02/24 09:11:38 mrg Exp $");
 
-/*
- * Scheduler activations upcall frame
- */
-struct saframe {
-	int		sa_ra;
-	int		sa_type;
-	struct sa_t**	sa_sas;
-	int		sa_events;
-	int		sa_interrupted;
-	void*		sa_arg;
-};
+#include <sys/systm.h>
+#include <sys/syscall.h>
+#include <sys/syscallargs.h>
 
-#endif
+int
+compat_60_sys_sa_register(lwp_t *l,
+	const struct compat_60_sys_sa_register_args *uap,
+	register_t *retval)
+{
+	return sys_nosys(l, uap, retval);
+}
+
+int
+compat_60_sys_sa_stacks(lwp_t *l,
+	const struct compat_60_sys_sa_stacks_args *uap,
+	register_t *retval)
+{
+	return sys_nosys(l, uap, retval);
+}
+
+int
+compat_60_sys_sa_enable(lwp_t *l,
+	const void *uap,
+	register_t *retval)
+{
+	return sys_nosys(l, uap, retval);
+}
+
+int
+compat_60_sys_sa_setconcurrency(lwp_t *l,
+	const struct compat_60_sys_sa_setconcurrency_args *uap,
+	register_t *retval)
+{
+	return sys_nosys(l, uap, retval);
+}
+
+int
+compat_60_sys_sa_yield(lwp_t *l,
+	const void *uap,
+	register_t *retval)
+{
+	return sys_nosys(l, uap, retval);
+}
+
+int
+compat_60_sys_sa_preempt(lwp_t *l,
+	const struct compat_60_sys_sa_preempt_args *uap,
+	register_t *retval)
+{
+	return sys_nosys(l, uap, retval);
+}

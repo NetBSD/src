@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.175.4.1 2012/02/18 07:33:58 mrg Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.175.4.2 2012/02/24 09:11:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.175.4.1 2012/02/18 07:33:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.175.4.2 2012/02/24 09:11:38 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -36,7 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.175.4.1 2012/02/18 07:33:58 mr
 #include "opt_compat_43.h"
 #include "opt_sysv.h"
 #include "opt_syscall_debug.h"
-#include "opt_sa.h"
 #endif
 
 /*
@@ -74,8 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.175.4.1 2012/02/18 07:33:58 mr
 
 #include <uvm/uvm_extern.h>
 
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
 #include <sys/acct.h>
@@ -88,7 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.175.4.1 2012/02/18 07:33:58 mr
 #include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
-#include <compat/netbsd32/netbsd32_sa.h>
 
 #if defined(DDB)
 #include <ddb/ddbvar.h>
@@ -155,11 +151,6 @@ struct emul emul_netbsd32 = {
 	.e_fault =		NULL,
 	.e_vm_default_addr =	netbsd32_vm_default_addr,
 	.e_usertrap =		NULL,
-#if defined(COMPAT_40) && defined(KERN_SA)
-	.e_sa =			&saemul_netbsd32,
-#else
-	.e_sa =			NULL,
-#endif
 	.e_ucsize =		sizeof(ucontext32_t),
 	.e_startlwp =		startlwp32
 };

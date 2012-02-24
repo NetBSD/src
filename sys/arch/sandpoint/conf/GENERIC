@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.61.2.1 2012/02/18 07:33:02 mrg Exp $
+# $NetBSD: GENERIC,v 1.61.2.2 2012/02/24 09:11:33 mrg Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.61.2.1 $"
+#ident 		"GENERIC-$Revision: 1.61.2.2 $"
 
 maxusers	32
 
@@ -58,7 +58,6 @@ options 	DDB
 #options 	TRAP_PANICWAIT
 #options 	PMAPCHECK
 #options 	PMAPDEBUG
-#options 	SYMTAB_SPACE=300000
 options 	MSGBUFSIZE=65536
 
 #makeoptions	DEBUG="-g"
@@ -214,7 +213,6 @@ atabus* at ata?
 wd*		at atabus? drive ? flags 0x0000	# the drives themselves
 
 # PCI network interfaces
-fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 skc*	at pci? dev ? function ?	# Marvell Yukon Gigabit Ethernet

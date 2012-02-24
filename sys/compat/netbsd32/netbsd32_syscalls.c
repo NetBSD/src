@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscalls.c,v 1.95.4.1 2012/02/18 07:33:58 mrg Exp $ */
+/* $NetBSD: netbsd32_syscalls.c,v 1.95.4.2 2012/02/24 09:11:39 mrg Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscalls.c,v 1.95.4.1 2012/02/18 07:33:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscalls.c,v 1.95.4.2 2012/02/24 09:11:39 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -421,12 +421,12 @@ const char *const netbsd32_syscallnames[] = {
 	/* 327 */	"#327 (unimplemented)",
 	/* 328 */	"#328 (unimplemented)",
 	/* 329 */	"#329 (unimplemented)",
-	/* 330 */	"netbsd32_sa_register",
-	/* 331 */	"netbsd32_sa_stacks",
-	/* 332 */	"sa_enable",
-	/* 333 */	"netbsd32_sa_setconcurrency",
-	/* 334 */	"sa_yield",
-	/* 335 */	"netbsd32_sa_preempt",
+	/* 330 */	"#330 (obsolete netbsd32_sa_register)",
+	/* 331 */	"#331 (obsolete netbsd32_sa_stacks)",
+	/* 332 */	"#332 (obsolete sa_enable)",
+	/* 333 */	"#333 (obsolete netbsd32_sa_setconcurrency)",
+	/* 334 */	"#334 (obsolete sa_yield)",
+	/* 335 */	"#335 (obsolete netbsd32_sa_preempt)",
 	/* 336 */	"#336 (obsolete sys_sa_unblockyield)",
 	/* 337 */	"#337 (unimplemented)",
 	/* 338 */	"#338 (unimplemented)",

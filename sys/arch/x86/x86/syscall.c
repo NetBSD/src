@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.5.6.1 2012/02/18 07:33:37 mrg Exp $	*/
+/*	$NetBSD: syscall.c,v 1.5.6.2 2012/02/24 09:11:37 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2009 The NetBSD Foundation, Inc.
@@ -30,16 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5.6.1 2012/02/18 07:33:37 mrg Exp $");
-
-#include "opt_sa.h"
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5.6.2 2012/02/24 09:11:37 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/signal.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/ktrace.h>
 #include <sys/mman.h>
 #include <sys/syscall.h>
@@ -144,12 +140,6 @@ syscall(struct trapframe *frame)
 	SYSCALL_COUNT(syscall_counts, code);
 	SYSCALL_TIME_SYS_ENTRY(l, syscall_times, code);
 
-#ifdef KERN_SA
-	if (__predict_false((l->l_savp)
-	    && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
-		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
-#endif
-
 #ifdef __x86_64__
 	/*
 	 * The first 6 syscall args are passed in rdi, rsi, rdx, r10, r8 and r9
@@ -225,13 +215,6 @@ syscall_vm86(struct trapframe *frame)
 
 	l = curlwp;
 	p = l->l_proc;
-
-#ifdef KERN_SA
-	/* While this is probably not needed, it's probably better to include than not */
-	if (__predict_false((l->l_savp)
-	    && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
-		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
-#endif
 
 	(*p->p_emul->e_trapsignal)(l, &ksi);
 	userret(l);

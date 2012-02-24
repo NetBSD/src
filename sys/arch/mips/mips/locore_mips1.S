@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.82.8.1 2012/02/18 07:32:40 mrg Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.82.8.2 2012/02/24 09:11:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1465,12 +1465,12 @@ END(MIPSX(tlb_enter))
 LEAF(MIPSX(lwp_trampoline))
 	PTR_ADDU sp, -CALLFRAME_SIZ
 
-	# Call lwp_startup(), with args from cpu_switchto()/cpu_setfunc()
+	# Call lwp_startup(), with args from cpu_switchto()/cpu_lwp_fork()
 	move	a0, v0
 	jal	_C_LABEL(lwp_startup)
 	 move	a1, MIPS_CURLWP
 
-	# Call the routine specified by cpu_setfunc()
+	# Call the routine specified by cpu_lwp_fork()
 	jalr	s0
 	 move	a0, s1
 
@@ -1521,18 +1521,6 @@ MIPSX(user_intr_return):
 	rfe
 	.set	at
 END(MIPSX(lwp_trampoline))
-
-/*
- * Like lwp_trampoline, but do not call lwp_startup
- */
-LEAF(MIPSX(setfunc_trampoline))
-	PTR_ADDU sp, -CALLFRAME_SIZ
-
-	# Call the routine specified by cpu_setfunc()
-	PTR_LA	ra, MIPSX(user_return)
-	jr	s0
-	 move	a0, s1
-END(MIPSX(setfunc_trampoline))
 
 /*
  * void mipsN_cpu_switch_resume(struct lwp *newlwp)
@@ -1690,7 +1678,6 @@ END(MIPSX(wbflush))
 _C_LABEL(MIPSX(locore_vec)):
 	PTR_WORD _C_LABEL(MIPSX(cpu_switch_resume))
 	PTR_WORD _C_LABEL(MIPSX(lwp_trampoline))
-	PTR_WORD _C_LABEL(MIPSX(setfunc_trampoline))
 	PTR_WORD _C_LABEL(MIPSX(wbflush))		# wbflush
 	PTR_WORD _C_LABEL(MIPSX(tlb_set_asid))
 	PTR_WORD _C_LABEL(MIPSX(tlb_invalidate_asids))

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.191.2.1 2012/02/18 07:35:58 mrg Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.191.2.2 2012/02/24 09:11:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.191.2.1 2012/02/18 07:35:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.191.2.2 2012/02/24 09:11:51 mrg Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -2399,8 +2399,6 @@ uvm_fault_unwire_locked(struct vm_map *map, vaddr_t start, vaddr_t end)
 	vaddr_t va;
 	paddr_t pa;
 	struct vm_page *pg;
-
-	KASSERT((map->flags & VM_MAP_INTRSAFE) == 0);
 
 	/*
 	 * we assume that the area we are unwiring has actually been wired

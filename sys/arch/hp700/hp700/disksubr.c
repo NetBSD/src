@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.26 2009/05/08 09:33:58 skrll Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.26.16.1 2012/02/24 09:11:28 mrg Exp $	*/
 
 /*	$OpenBSD: disksubr.c,v 1.6 2000/10/18 21:00:34 mickey Exp $	*/
 
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.26 2009/05/08 09:33:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.26.16.1 2012/02/24 09:11:28 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ readbsdlabel(struct buf *bp, void (*strat)(struct buf *), int cyl, int sec,
 {
 	struct disklabel *dlp;
 	const char *msg = NULL;
-	u_int16_t cksum;
+	uint16_t cksum;
 
 	/* don't read the on-disk label if we are in spoofed-only mode */
 	if (spoofonly)

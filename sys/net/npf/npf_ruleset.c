@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ruleset.c,v 1.7.10.1 2012/02/18 07:35:38 mrg Exp $	*/
+/*	$NetBSD: npf_ruleset.c,v 1.7.10.2 2012/02/24 09:11:49 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,10 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.7.10.1 2012/02/18 07:35:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.7.10.2 2012/02/24 09:11:49 mrg Exp $");
 
 #include <sys/param.h>
-#include <sys/kernel.h>
+#include <sys/types.h>
 
 #include <sys/kmem.h>
 #include <sys/queue.h>
@@ -208,7 +208,7 @@ npf_rule_alloc(prop_dictionary_t rldict, npf_rproc_t *rp,
 	int errat __unused;
 
 	/* Allocate a rule structure. */
-	rl = kmem_alloc(sizeof(npf_rule_t), KM_SLEEP);
+	rl = kmem_zalloc(sizeof(npf_rule_t), KM_SLEEP);
 	TAILQ_INIT(&rl->r_subset.rs_queue);
 	rl->r_natp = NULL;
 
@@ -217,14 +217,14 @@ npf_rule_alloc(prop_dictionary_t rldict, npf_rproc_t *rp,
 	rl->r_ncode = nc;
 	rl->r_nc_size = nc_size;
 
-	/* Name (string, optional) */
+	/* Name (optional) */
 	if (prop_dictionary_get_cstring_nocopy(rldict, "name", &rname)) {
 		strlcpy(rl->r_name, rname, NPF_RNAME_LEN);
 	} else {
 		rl->r_name[0] = '\0';
 	}
 
-	/* Attributes, priority and interface ID. */
+	/* Attributes, priority and interface ID (optional). */
 	prop_dictionary_get_uint32(rldict, "attributes", &rl->r_attr);
 	prop_dictionary_get_int32(rldict, "priority", &rl->r_priority);
 	prop_dictionary_get_uint32(rldict, "interface", &rl->r_ifid);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.117 2011/10/14 09:23:30 hannken Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.117.6.1 2012/02/24 09:11:42 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.117 2011/10/14 09:23:30 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.117.6.1 2012/02/24 09:11:42 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -570,6 +570,9 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 	RF_ReconCtrl_t *tmp_reconctrl;
 	RF_ReconEvent_t *event;
 	RF_StripeCount_t incPSID,lastPSID,num_writes,pending_writes,prev;
+#if RF_INCLUDE_RAID5_RS > 0
+	RF_StripeCount_t startPSID,endPSID,aPSID,bPSID,offPSID;
+#endif
 	RF_ReconUnitCount_t RUsPerPU;
 	struct timeval etime, elpsd;
 	unsigned long xor_s, xor_resid_us;
@@ -622,7 +625,17 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 	recon_error = 0;
 	write_error = 0;
 	pending_writes = incPSID;
-	raidPtr->reconControl->lastPSID = incPSID;
+	raidPtr->reconControl->lastPSID = incPSID - 1;
+
+	/* bounds check raidPtr->reconControl->lastPSID and
+	   pending_writes so that we don't attempt to wait for more IO
+	   than can possibly happen */
+
+	if (raidPtr->reconControl->lastPSID > lastPSID)
+		raidPtr->reconControl->lastPSID = lastPSID;
+
+	if (pending_writes > lastPSID)
+		pending_writes = lastPSID;
 
 	/* start the actual reconstruction */
 
@@ -636,6 +649,49 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 		}
 
 		num_writes = 0;
+
+#if RF_INCLUDE_RAID5_RS > 0
+		/* For RAID5 with Rotated Spares we will be 'short'
+		   some number of writes since no writes will get
+		   issued for stripes where the spare is on the
+		   component being rebuilt.  Account for the shortage
+		   here so that we don't hang indefinitely below
+		   waiting for writes to complete that were never
+		   scheduled.
+
+		   XXX: Should be fixed for PARITY_DECLUSTERING and
+		   others too! 
+
+		*/
+
+		if (raidPtr->Layout.numDataCol < 
+		    raidPtr->numCol - raidPtr->Layout.numParityCol) {
+			/* numDataCol is at least 2 less than numCol, so
+			   should be RAID 5 with Rotated Spares */
+
+			/* XXX need to update for RAID 6 */
+			
+			startPSID = raidPtr->reconControl->lastPSID - pending_writes + 1;
+			endPSID = raidPtr->reconControl->lastPSID;
+			
+			offPSID = raidPtr->numCol - col - 1;
+			
+			aPSID = startPSID - startPSID % raidPtr->numCol + offPSID;
+			if (aPSID < startPSID) {
+				aPSID += raidPtr->numCol;
+			}
+			
+			bPSID = endPSID - ((endPSID - offPSID) % raidPtr->numCol);
+			
+			if (aPSID < endPSID) {
+				num_writes = ((bPSID - aPSID) / raidPtr->numCol) + 1;
+			}
+			
+			if ((aPSID == endPSID) && (bPSID == endPSID)) {
+				num_writes++;
+			}
+		}
+#endif
 		
 		/* issue a read for each surviving disk */
 		
@@ -714,7 +770,7 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 #endif
 		}
 
-		/* reads done, wakup any waiters, and then wait for writes */
+		/* reads done, wakeup any waiters, and then wait for writes */
 
 		rf_WakeupHeadSepCBWaiters(raidPtr);
 
@@ -1134,7 +1190,7 @@ IssueNextReadRequest(RF_Raid_t *raidPtr, RF_RowCol_t col)
 			ctrl->ru_count = 0;
 			/* code left over from when head-sep was based on
 			 * parity stripe id */
-			if (ctrl->curPSID >= raidPtr->reconControl->lastPSID) {
+			if (ctrl->curPSID > raidPtr->reconControl->lastPSID) {
 				CheckForNewMinHeadSep(raidPtr, ++(ctrl->headSepCounter));
 				return (RF_RECON_DONE_READS);	/* finito! */
 			}

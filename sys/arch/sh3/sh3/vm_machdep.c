@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.73.6.1 2012/02/18 07:33:10 mrg Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.73.6.2 2012/02/24 09:11:34 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.73.6.1 2012/02/18 07:33:10 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.73.6.2 2012/02/24 09:11:34 mrg Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -158,28 +158,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack,
 	sf = &pcb->pcb_sf;
 	sf->sf_pr  = (int)lwp_trampoline;
 	sf->sf_r10 = (int)l2;	/* "new" lwp for lwp_startup() */
-	sf->sf_r11 = (int)arg;	/* hook function/argument */
-	sf->sf_r12 = (int)func;
-}
-
-
-/*
- * Reset the stack pointer for the lwp and arrange for it to call the
- * specified function with the specified argument on next switch.
- */
-void
-cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
-{
-	struct pcb *pcb = lwp_getpcb(l);
-	struct switchframe *sf = &pcb->pcb_sf;
-
-	sh3_setup_uarea(l);
-
-	l->l_md.md_regs->tf_ssr = PSL_USERSET;
-
-	/* When lwp is switched to, jump to the trampoline */
-	sf->sf_pr  = (int)lwp_trampoline;
-	sf->sf_r10 = (int)l;	/* "new" lwp for lwp_startup() */
 	sf->sf_r11 = (int)arg;	/* hook function/argument */
 	sf->sf_r12 = (int)func;
 }

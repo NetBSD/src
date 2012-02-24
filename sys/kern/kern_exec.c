@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.332.2.1 2012/02/18 07:35:28 mrg Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.332.2.2 2012/02/24 09:11:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.332.2.1 2012/02/18 07:35:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.332.2.2 2012/02/24 09:11:45 mrg Exp $");
 
 #include "opt_exec.h"
 #include "opt_ktrace.h"
@@ -67,7 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.332.2.1 2012/02/18 07:35:28 mrg Exp 
 #include "opt_syscall_debug.h"
 #include "veriexec.h"
 #include "opt_pax.h"
-#include "opt_sa.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,8 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.332.2.1 2012/02/18 07:35:28 mrg Exp 
 #include <sys/pax.h>
 #include <sys/cpu.h>
 #include <sys/module.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
 #if NVERIEXEC > 0
@@ -169,19 +166,6 @@ struct exec_entry {
 void	syscall(void);
 #endif
 
-#ifdef KERN_SA
-static struct sa_emul saemul_netbsd = {
-	sizeof(ucontext_t),
-	sizeof(struct sa_t),
-	sizeof(struct sa_t *),
-	NULL,
-	NULL,
-	cpu_upcall,
-	(void (*)(struct lwp *, void *))getucontext_sa,
-	sa_ucsp
-};
-#endif /* KERN_SA */
-
 /* NetBSD emul struct */
 struct emul emul_netbsd = {
 	.e_name =		"netbsd",
@@ -219,11 +203,6 @@ struct emul emul_netbsd = {
 	.e_fault =		NULL,
 	.e_vm_default_addr =	uvm_default_mapaddr,
 	.e_usertrap =		NULL,
-#ifdef KERN_SA
-	.e_sa =			&saemul_netbsd,
-#else
-	.e_sa =			NULL,
-#endif
 	.e_ucsize =		sizeof(ucontext_t),
 	.e_startlwp =		startlwp
 };
@@ -510,7 +489,6 @@ execve_fetch_element(char * const *array, size_t index, char **value)
 /*
  * exec system call
  */
-/* ARGSUSED */
 int
 sys_execve(struct lwp *l, const struct sys_execve_args *uap, register_t *retval)
 {
@@ -596,7 +574,6 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	char			*dp, *sp;
 	size_t			i, len;
 	struct exec_fakearg	*tmpfap;
-	int			oldlwpflags;
 	u_int			modgen;
 
 	KASSERT(data != NULL);
@@ -626,13 +603,6 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	    KAUTH_GENERIC_ISSUSER, NULL) != 0 && chgproccnt(kauth_cred_getuid(
 	    l->l_cred), 0) > p->p_rlimit[RLIMIT_NPROC].rlim_cur)
 		return EAGAIN;
-
-	oldlwpflags = l->l_flag & (LW_SA | LW_SA_UPCALL);
-	if (l->l_flag & LW_SA) {
-		lwp_lock(l);
-		l->l_flag &= ~(LW_SA | LW_SA_UPCALL);
-		lwp_unlock(l);
-	}
 
 	/*
 	 * Drain existing references and forbid new ones.  The process
@@ -855,9 +825,6 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	PNBUF_PUT(data->ed_resolvedpathbuf);
 
  clrflg:
-	lwp_lock(l);
-	l->l_flag |= oldlwpflags;
-	lwp_unlock(l);
 	rw_exit(&p->p_reflock);
 
 	if (modgen != module_gen && error == ENOEXEC) {
@@ -902,7 +869,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data)
 		aip = &data->ed_arginfo;
 
 	/* Get rid of other LWPs. */
-	if (p->p_sa || p->p_nlwps > 1) {
+	if (p->p_nlwps > 1) {
 		mutex_enter(p->p_lock);
 		exit_lwps(l);
 		mutex_exit(p->p_lock);
@@ -912,12 +879,6 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data)
 	/* Destroy any lwpctl info. */
 	if (p->p_lwpctl != NULL)
 		lwp_ctl_exit();
-
-#ifdef KERN_SA
-	/* Release any SA state. */
-	if (p->p_sa)
-		sa_release(p);
-#endif /* KERN_SA */
 
 	/* Remove POSIX timers */
 	timers_free(p, TIMERS_POSIX);
@@ -1351,8 +1312,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data)
 	ktremul();
 
 	/* Allow new references from the debugger/procfs. */
-	if (!proc_is_new)
-		rw_exit(&p->p_reflock);
+	rw_exit(&p->p_reflock);
 	rw_exit(&exec_lock);
 
 	mutex_enter(proc_lock);
@@ -1777,6 +1737,20 @@ spawn_return(void *arg)
 	size_t i;
 	const struct posix_spawn_file_actions_entry *fae;
 	register_t retval;
+	bool have_reflock;
+
+	/*
+	 * The following actions may block, so we need a temporary
+	 * vmspace - borrow the kernel one
+	 */
+	KPREEMPT_DISABLE(l);
+	l->l_proc->p_vmspace = proc0.p_vmspace;
+	pmap_activate(l);
+	KPREEMPT_ENABLE(l);
+
+	/* don't allow debugger access yet */
+	rw_enter(&l->l_proc->p_reflock, RW_WRITER);
+	have_reflock = true;
 
 	error = 0;
 	/* handle posix_spawn_file_actions */
@@ -1891,18 +1865,17 @@ spawn_return(void *arg)
 		}
 	}
 
-	if (spawn_data->sed_actions != NULL) {
-		for (i = 0; i < spawn_data->sed_actions_len; i++) {
-			fae = &spawn_data->sed_actions[i];
-			if (fae->fae_action == FAE_OPEN)
-				kmem_free(fae->fae_path,
-				    strlen(fae->fae_path)+1);
-		}
-	}
+	/* stop using kernel vmspace */
+	KPREEMPT_DISABLE(l);
+	pmap_deactivate(l);
+	l->l_proc->p_vmspace = NULL;
+	KPREEMPT_ENABLE(l);
+
 
 	/* now do the real exec */
 	rw_enter(&exec_lock, RW_READER);
 	error = execve_runproc(l, &spawn_data->sed_exec);
+	have_reflock = false;
 	if (error == EJUSTRETURN)
 		error = 0;
 	else if (error)
@@ -1920,13 +1893,15 @@ spawn_return(void *arg)
 	return;
 
  report_error:
-	if (spawn_data->sed_actions != NULL) {
-		for (i = 0; i < spawn_data->sed_actions_len; i++) {
-			fae = &spawn_data->sed_actions[i];
-			if (fae->fae_action == FAE_OPEN)
-				kmem_free(fae->fae_path,
-				    strlen(fae->fae_path)+1);
-		}
+	if (have_reflock)
+		rw_exit(&l->l_proc->p_reflock);
+
+	/* stop using kernel vmspace (if we haven't already) */
+	if (l->l_proc->p_vmspace) {
+		KPREEMPT_DISABLE(l);
+		pmap_deactivate(l);
+		l->l_proc->p_vmspace = NULL;
+		KPREEMPT_ENABLE(l);
 	}
 
  	/*
@@ -1939,6 +1914,70 @@ spawn_return(void *arg)
 	mutex_exit(&spawn_data->sed_mtx_child);
 	mutex_enter(l->l_proc->p_lock);
 	exit1(l, W_EXITCODE(error, SIGABRT));
+}
+
+static void
+posix_spawn_fa_free(struct posix_spawn_file_actions *fa, size_t len)
+{
+
+	for (size_t i = 0; i < len; i++) {
+		struct posix_spawn_file_actions_entry *fae = &fa->fae[i];
+		if (fae->fae_action != FAE_OPEN)
+			continue;
+		kmem_free(fae->fae_path, strlen(fae->fae_path) + 1);
+	}
+	if (fa->len)
+		kmem_free(fa->fae, sizeof(*fa->fae) * fa->len);
+	kmem_free(fa, sizeof(*fa));
+}
+
+static int
+posix_spawn_fa_alloc(struct posix_spawn_file_actions **fap,
+    const struct posix_spawn_file_actions *ufa)
+{
+	struct posix_spawn_file_actions *fa;
+	struct posix_spawn_file_actions_entry *fae;
+	char *pbuf = NULL;
+	int error;
+	size_t i = 0;
+
+	fa = kmem_alloc(sizeof(*fa), KM_SLEEP);
+	error = copyin(ufa, fa, sizeof(*fa));
+	if (error) {
+		fa->fae = NULL;
+		fa->len = 0;
+		goto out;
+	}
+
+	if (fa->len == 0)
+		return 0;
+
+	size_t fal = fa->len * sizeof(*fae);
+	fae = fa->fae;
+	fa->fae = kmem_alloc(fal, KM_SLEEP);
+	error = copyin(fae, fa->fae, fal);
+	if (error)
+		goto out;
+
+	pbuf = PNBUF_GET();
+	for (; i < fa->len; i++) {
+		fae = &fa->fae[i];
+		if (fae->fae_action != FAE_OPEN)
+			continue;
+		error = copyinstr(fae->fae_path, pbuf, MAXPATHLEN, &fal);
+		if (error)
+			goto out;
+		fae->fae_path = kmem_alloc(fal, KM_SLEEP);
+		memcpy(fae->fae_path, pbuf, fal);
+	}
+	PNBUF_PUT(pbuf);
+	*fap = fa;
+	return 0;
+out:
+	if (pbuf)
+		PNBUF_PUT(pbuf);
+	posix_spawn_fa_free(fa, i);
+	return error;
 }
 
 int
@@ -1957,10 +1996,9 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
 	struct proc *p1, *p2;
 	struct plimit *p1_lim;
 	struct lwp *l2;
-	int error = 0, tnprocs, count, i;
+	int error = 0, tnprocs, count;
 	struct posix_spawn_file_actions *fa = NULL;
 	struct posix_spawnattr *sa = NULL;
-	struct posix_spawn_file_actions_entry *ufa;
 	struct spawn_exec_data *spawn_data;
 	uid_t uid;
 	vaddr_t uaddr;
@@ -1999,49 +2037,18 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
 
 	/* copy in file_actions struct */
 	if (SCARG(uap, file_actions) != NULL) {
-		fa = kmem_alloc(sizeof(struct posix_spawn_file_actions),
-		    KM_SLEEP);
-		error = copyin(SCARG(uap, file_actions), fa,
-		    sizeof(struct posix_spawn_file_actions));
-		if (error) {
-			fa->fae = NULL;
-			goto error_exit;
-		}
-		ufa = fa->fae;
-		fa->fae = kmem_alloc(fa->len * 
-		    sizeof(struct posix_spawn_file_actions_entry), KM_SLEEP);
-		error = copyin(ufa, fa->fae,
-		    fa->len * sizeof(struct posix_spawn_file_actions_entry));
+		error = posix_spawn_fa_alloc(&fa, SCARG(uap, file_actions));
 		if (error)
 			goto error_exit;
-		for (i = 0; i < fa->len; i++) {
-			if (fa->fae[i].fae_action == FAE_OPEN) {
-				char buf[PATH_MAX];
-				error = copyinstr(fa->fae[i].fae_path, buf,
-				     sizeof(buf), NULL);
-				if (error)
-					break;
-				fa->fae[i].fae_path = kmem_alloc(strlen(buf)+1,
-				     KM_SLEEP);
-				if (fa->fae[i].fae_path == NULL) {
-					error = ENOMEM;
-					break;
-				}
-				strcpy(fa->fae[i].fae_path, buf);
-			}
-		}
 	}
-	
+
 	/* copyin posix_spawnattr struct */
-	sa = NULL;
 	if (SCARG(uap, attrp) != NULL) {
-		sa = kmem_alloc(sizeof(struct posix_spawnattr), KM_SLEEP);
-		error = copyin(SCARG(uap, attrp), sa,
-		    sizeof(struct posix_spawnattr));
+		sa = kmem_alloc(sizeof(*sa), KM_SLEEP);
+		error = copyin(SCARG(uap, attrp), sa, sizeof(*sa));
 		if (error)
 			goto error_exit;
 	}
-	
 
 	/*
 	 * Do the first part of the exec now, collect state
@@ -2182,16 +2189,12 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
 	/*
 	 * Prepare remaining parts of spawn data
 	 */
-	if (fa != NULL) {
+	if (fa && fa->len) {
 		spawn_data->sed_actions_len = fa->len;
 		spawn_data->sed_actions = fa->fae;
-		kmem_free(fa, sizeof(*fa));
-		fa = NULL;
 	}
-	if (sa != NULL) {
+	if (sa)
 		spawn_data->sed_attrs = sa;
-		sa = NULL;
-	}
 
 	spawn_data->sed_parent = p1;
 	cv_init(&spawn_data->sed_cv_child_ready, "pspawn");
@@ -2246,7 +2249,6 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
 #ifdef __HAVE_SYSCALL_INTERN
 	(*p2->p_emul->e_syscall_intern)(p2);
 #endif
-	rw_exit(&p1->p_reflock);
 
 	/*
 	 * Make child runnable, set start time, and add to run queue except
@@ -2271,15 +2273,15 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
 	mutex_exit(&spawn_data->sed_mtx_child);
 	error = spawn_data->sed_error;
 
+	rw_exit(&p1->p_reflock);
 	rw_exit(&exec_lock);
 	have_exec_lock = false;
 
-	if (spawn_data->sed_actions != NULL)
-		kmem_free(spawn_data->sed_actions,
-		    spawn_data->sed_actions_len * sizeof(*spawn_data->sed_actions));
+	if (fa)
+		posix_spawn_fa_free(fa, fa->len);
 
-	if (spawn_data->sed_attrs != NULL) 
-		kmem_free(spawn_data->sed_attrs, sizeof(*spawn_data->sed_attrs));
+	if (sa) 
+		kmem_free(sa, sizeof(*sa));
 
 	cv_destroy(&spawn_data->sed_cv_child_ready);
 	mutex_destroy(&spawn_data->sed_mtx_child);
@@ -2296,13 +2298,10 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
  	if (have_exec_lock)
  		rw_exit(&exec_lock);
  
-	if (fa != NULL) {
-		if (fa->fae != NULL)
-			kmem_free(fa->fae, fa->len * sizeof(*fa->fae));
-		kmem_free(fa, sizeof(*fa));
-	}
+	if (fa)
+		posix_spawn_fa_free(fa, fa->len);
 
-	if (sa != NULL) 
+	if (sa) 
 		kmem_free(sa, sizeof(*sa));
 
 	(void)chgproccnt(uid, -1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.142.2.1 2012/02/18 07:33:37 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.142.2.2 2012/02/24 09:11:36 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.142.2.1 2012/02/18 07:33:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.142.2.2 2012/02/24 09:11:36 mrg Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -513,7 +513,12 @@ extern int mem_cluster_cnt;
  * special VAs and the PTEs that map them
  */
 static pt_entry_t *csrc_pte, *cdst_pte, *zero_pte, *ptp_pte, *early_zero_pte;
-static char *csrcp, *cdstp, *zerop, *ptpp, *early_zerop;
+static char *csrcp, *cdstp, *zerop, *ptpp;
+#ifdef XEN
+char *early_zerop; /* also referenced from xen_pmap_bootstrap() */
+#else
+static char *early_zerop;
+#endif
 
 #endif
 
@@ -998,10 +1003,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		panic("%s: PG_PS", __func__);
 #endif
 	if ((opte & (PG_V | PG_U)) == (PG_V | PG_U)) {
-#if defined(DIAGNOSTIC)
-		printf_nolog("%s: mapping already present\n", __func__);
-#endif
 		/* This should not happen. */
+		printf_nolog("%s: mapping already present\n", __func__);
 		kpreempt_disable();
 		pmap_tlb_shootdown(pmap_kernel(), va, opte, TLBSHOOT_KENTER);
 		kpreempt_enable();
@@ -1314,7 +1317,10 @@ pmap_bootstrap(vaddr_t kva_start)
 
 	/*
 	 * Map the direct map.  Use 1GB pages if they are available,
-	 * otherwise use 2MB pages.
+	 * otherwise use 2MB pages.  Note that the unused parts of
+	 * PTPs * must be zero outed, as they might be accessed due
+	 * to speculative execution.  Also, PG_G is not allowed on
+	 * non-leaf PTPs.
 	 */
 
 	lastpa = 0;
@@ -1383,8 +1389,11 @@ pmap_bootstrap(vaddr_t kva_start)
 		 * when it's called for the first time.
 		 * XXXfvdl fix this for MULTIPROCESSOR later.
 		 */
-
+#ifdef XEN
+		/* early_zerop initialized in xen_pmap_bootstrap() */
+#else
 		early_zerop = (void *)(KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2);
+#endif
 		early_zero_pte = PTE_BASE + pl1_i((vaddr_t)early_zerop);
 	}
 
@@ -1979,7 +1988,7 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes)
 		pmap_pte_set(&pva[index], (pd_entry_t)
 		        (pmap_pa2pte(pa) | PG_u | PG_RW | PG_V));
 #if defined(XEN) && defined(__x86_64__)
-		if(i == PTP_LEVELS && pmap != pmap_kernel()) {
+		if(i == PTP_LEVELS) {
 			/*
 			 * Update the per-cpu PD on all cpus the current
 			 * pmap is active on 
@@ -2090,8 +2099,8 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 	    npde * sizeof(pd_entry_t));
 
 	/* zero the rest */
-	memset(&pdir[PDIR_SLOT_KERN + npde], 0,
-	    (NTOPLEVEL_PDES - (PDIR_SLOT_KERN + npde)) * sizeof(pd_entry_t));
+	memset(&pdir[PDIR_SLOT_KERN + npde], 0, (PAGE_SIZE * PDP_SIZE) -
+	    (PDIR_SLOT_KERN + npde) * sizeof(pd_entry_t));
 
 	if (VM_MIN_KERNEL_ADDRESS != KERNBASE) {
 		int idx = pl_i(KERNBASE, PTP_LEVELS);
@@ -2107,11 +2116,10 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 #ifdef XEN
 	s = splvm();
 	object = (vaddr_t)v;
+	pmap_protect(pmap_kernel(), object, object + (PAGE_SIZE * PDP_SIZE),
+	    VM_PROT_READ);
+	pmap_update(pmap_kernel());
 	for (i = 0; i < PDP_SIZE; i++, object += PAGE_SIZE) {
-		(void) pmap_extract(pmap_kernel(), object, &pdirpa);
-		/* FIXME: This should use pmap_protect() .. */
-		pmap_kenter_pa(object, pdirpa, VM_PROT_READ, 0);
-		pmap_update(pmap_kernel());
 		/*
 		 * pin as L2/L4 page, we have to do the page with the
 		 * PDIR_SLOT_PTE entries last
@@ -2121,6 +2129,7 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 			continue;
 #endif
 
+		(void) pmap_extract(pmap_kernel(), object, &pdirpa);
 #ifdef __x86_64__
 		xpq_queue_pin_l4_table(xpmap_ptom_masked(pdirpa));
 #else
@@ -3779,7 +3788,7 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		pt_entry_t *spte, *epte;
 		int i;
 
-		blockend = (va & L2_FRAME) + NBPD_L2;
+		blockend = x86_round_pdr(va + 1);
 		if (blockend > eva)
 			blockend = eva;
 
@@ -4183,14 +4192,30 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 			pte = pmap_pa2pte(pa) | PG_k | PG_V | PG_RW;
 #ifdef XEN
 			xpq_queue_pte_update(xpmap_ptetomach(&pdep[i]), pte);
-			if (level == PTP_LEVELS) {
 #if defined(PAE) || defined(__x86_64__)
-				if (i >= PDIR_SLOT_KERN) {
+			if (level == PTP_LEVELS && i >= PDIR_SLOT_KERN) {
+				if (__predict_true(
+				    cpu_info_primary.ci_flags & CPUF_PRESENT)) {
 					/* update per-cpu PMDs on all cpus */
 					xen_kpm_sync(pmap_kernel(), i);
+				} else {
+					/*
+					 * too early; update primary CPU
+					 * PMD only (without locks)
+					 */
+#ifdef PAE
+					pd_entry_t *cpu_pdep =
+					    &cpu_info_primary.ci_kpm_pdir[l2tol2(i)];
+#endif
+#ifdef __x86_64__
+					pd_entry_t *cpu_pdep =
+						&cpu_info_primary.ci_kpm_pdir[i];
+#endif
+					xpq_queue_pte_update(
+					    xpmap_ptetomach(cpu_pdep), pte);
 				}
-#endif /* PAE || __x86_64__ */
 			}
+#endif /* PAE || __x86_64__ */
 #else /* XEN */
 			pdep[i] = pte;
 #endif /* XEN */
