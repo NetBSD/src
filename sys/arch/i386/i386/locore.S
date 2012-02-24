@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.95 2011/03/18 15:18:16 joerg Exp $	*/
+/*	$NetBSD: locore.S,v 1.96 2012/02/24 08:06:07 cherry Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -129,7 +129,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.95 2011/03/18 15:18:16 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.96 2012/02/24 08:06:07 cherry Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -238,7 +238,12 @@ _C_LABEL(tablesize):	.long	0
 
 	.space 512
 tmpstk:
-
+#ifdef XEN
+	.align 		PAGE_SIZE, 0x0	# Align on page boundary
+_C_LABEL(tmpgdt):
+	.space 		PAGE_SIZE	# Xen expects a page
+#endif /* XEN */
+	.globl tmpgdt
 #ifndef XEN
 #define	_RELOC(x)	((x) - KERNBASE)
 #else
@@ -786,6 +791,15 @@ start:
 	xorl	%eax,%eax
 	cpuid
 	movl	%eax,RELOC(cpuid_level)
+
+	/*
+	 * Use a temp page. We'll re- add it to uvm(9) once we're
+	 * done using it.
+	 */
+	movl	$RELOC(tmpgdt), %eax
+	pushl	%eax		# start of temporary gdt
+	call	_C_LABEL(initgdt)
+	addl	$4,%esp
 
 	call	xen_pmap_bootstrap
 
