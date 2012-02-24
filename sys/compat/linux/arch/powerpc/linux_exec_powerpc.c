@@ -1,4 +1,4 @@
-/* $NetBSD: linux_exec_powerpc.c,v 1.23 2012/02/03 20:11:53 matt Exp $ */
+/* $NetBSD: linux_exec_powerpc.c,v 1.23.2.1 2012/02/24 16:38:07 riz Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.23 2012/02/03 20:11:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.23.2.1 2012/02/24 16:38:07 riz Exp $");
 
 #define ELFSIZE 32
 
@@ -62,12 +62,9 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.23 2012/02/03 20:11:53 matt
  * Alpha and PowerPC specific linux copyargs function.
  */
 int
-ELFNAME2(linux,copyargs)(l, pack, arginfo, stackp, argp)
-	struct lwp *l;
-	struct exec_package *pack;
-	struct ps_strings *arginfo;
-	char **stackp;
-	void *argp;
+ELFNAME2(linux,copyargs)(struct lwp *l, struct exec_package *pack,
+			 struct ps_strings *arginfo, char **stackp,
+			 void *argp)
 {
 	size_t len;
 	AuxInfo ai[LINUX_ELF_AUX_ENTRIES], *a;
