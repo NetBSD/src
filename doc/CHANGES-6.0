@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.19 2012/02/24 17:19:14 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.20 2012/02/24 17:50:35 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -500,4 +500,12 @@ sys/external/bsd/acpica/dist/include/acapps.h	1.2-3
 
 	Fixes for MKREPRO=yes builds.
 	[go, ticket #48]
+
+external/bsd/pkg_install/dist/lib/version.h		1.9 via patch
+external/bsd/pkg_install/dist/add/perform.c		1.3 via patch
+external/bsd/pkg_install/dist/admin/README		delete
+external/bsd/pkg_install/dist/delete/pkg_delete.1.in	delete
+
+	Sync with the most recent version of pkg_install(1).
+	[wiz, ticket #24]
 
