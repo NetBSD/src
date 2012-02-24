@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_oldfiles.c,v 1.8 2012/02/01 06:12:37 dholland Exp $	*/
+/*	$NetBSD: quota_oldfiles.c,v 1.9 2012/02/24 18:00:09 njoly Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_oldfiles.c,v 1.8 2012/02/01 06:12:37 dholland Exp $");
+__RCSID("$NetBSD: quota_oldfiles.c,v 1.9 2012/02/24 18:00:09 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -203,6 +203,13 @@ __quota_oldfiles_load_fstab(void)
 	if (__quota_oldfiles_fstab_loaded) {
 		return;
 	}
+
+	/*
+	 * Check if fstab file exists before trying to parse it.
+	 * Avoid warnings from {get,set}fsent() if missing.
+	 */
+	if (access(_PATH_FSTAB, F_OK) == -1 && errno == ENOENT)
+		return;
 
 	/*
 	 * XXX: should be able to handle ext2fs quota1 files too
