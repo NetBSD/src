@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18 2011/09/11 10:32:23 jruoho Exp $
+# $NetBSD: Makefile,v 1.19 2012/02/24 14:02:55 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -25,9 +25,9 @@ BINDIR=		${TESTSDIR}
 PROGS+=		h_atexit
 PROGS+=		h_getopt h_getopt_long
 
+COPTS.t_strtod.c+=		-ffloat-store
 LDADD.t_strtod=			-lm
-LDADD.t_getenv_thread=		-lpthread
 
-COPTS+=				-ffloat-store
+LDADD.t_getenv_thread=		-lpthread
 
 .include <bsd.test.mk>
