@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.720 2012/02/23 14:45:55 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.721 2012/02/24 08:06:07 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.720 2012/02/23 14:45:55 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.721 2012/02/24 08:06:07 cherry Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -525,9 +525,6 @@ i386_proc0_tss_ldt_init(void)
 }
 
 #ifdef XEN
-/* Shim for curcpu() until %fs is ready */
-extern struct cpu_info	* (*xpq_cpu)(void);
-
 /*
  * Switch context:
  * - honor CR0_TS in saved CR0 and request DNA exception on FPU use
@@ -553,12 +550,6 @@ i386_switch_context(lwp_t *l)
 			  (union descriptor *) &pcb->pcb_fsd);
 	update_descriptor(&ci->ci_gdt[GUGS_SEL], 
 			  (union descriptor *) &pcb->pcb_gsd);
-
-	/* setup curcpu() to use %fs now */
-	/* XXX: find a way to do this, just once */
-	if (__predict_false(xpq_cpu != x86_curcpu)) {
-		xpq_cpu = x86_curcpu;
-	}
 
 	physop.cmd = PHYSDEVOP_SET_IOPL;
 	physop.u.set_iopl.iopl = pcb->pcb_iopl;
@@ -1077,6 +1068,7 @@ krwlock_t svr4_fasttrap_lock;
 #define MAX_XEN_IDT 128
 trap_info_t xen_idt[MAX_XEN_IDT];
 int xen_idt_idx;
+extern union descriptor tmpgdt[];
 #endif
 
 void cpu_init_idt(void)
@@ -1095,11 +1087,13 @@ void cpu_init_idt(void)
 void
 initgdt(union descriptor *tgdt)
 {
+	KASSERT(tgdt != NULL);
+	
+	gdt = tgdt;
 #ifdef XEN
 	u_long	frames[16];
 #else
 	struct region_descriptor region;
-	gdt = tgdt;
 	memset(gdt, 0, NGDT*sizeof(*gdt));
 #endif /* XEN */
 	/* make gdt gates and memory segments */
@@ -1125,6 +1119,14 @@ initgdt(union descriptor *tgdt)
 	setregion(&region, gdt, NGDT * sizeof(gdt[0]) - 1);
 	lgdt(&region);
 #else /* !XEN */
+	/*
+	 * We jumpstart the bootstrap process a bit so we can update
+	 * page permissions. This is done redundantly later from
+	 * x86_xpmap.c:xen_pmap_bootstrap() - harmless.
+	 */
+	xpmap_phys_to_machine_mapping =
+	    (unsigned long *)xen_start_info.mfn_list;
+
 	frames[0] = xpmap_ptom((uint32_t)gdt - KERNBASE) >> PAGE_SHIFT;
 	{	/*
 		 * Enter the gdt page RO into the kernel map. We can't
@@ -1133,27 +1135,25 @@ initgdt(union descriptor *tgdt)
 		 * the base pointer for curcpu() and curlwp(), both of
 		 * which are in the callpath of pmap_kenter_pa().
 		 * So we mash up our own - this is MD code anyway.
-		 *
-		 * XXX: review this once we have finegrained locking
-		 * for xpq.
 		 */
-		pt_entry_t *pte, npte;
+		pt_entry_t pte;
 		pt_entry_t pg_nx = (cpu_feature[2] & CPUID_NOX ? PG_NX : 0);
 
-		pte = kvtopte((vaddr_t)gdt);
-		npte = pmap_pa2pte((vaddr_t)gdt - KERNBASE);
-		npte |= PG_RO | pg_nx | PG_V;
+		pte = pmap_pa2pte((vaddr_t)gdt - KERNBASE);
+		pte |= PG_k | PG_RO | pg_nx | PG_V;
 
-		xpq_queue_pte_update(xpmap_ptetomach(pte), npte);
-		xpq_flush_queue();
+		if (HYPERVISOR_update_va_mapping((vaddr_t)gdt, pte, UVMF_INVLPG) < 0) {
+			panic("gdt page RO update failed.\n");
+		}
+
 	}
 
 	XENPRINTK(("loading gdt %lx, %d entries\n", frames[0] << PAGE_SHIFT,
 	    NGDT));
 	if (HYPERVISOR_set_gdt(frames, NGDT /* XXX is it right ? */))
 		panic("HYPERVISOR_set_gdt failed!\n");
-	lgdt_finish();
 
+	lgdt_finish();
 #endif /* !XEN */
 }
 
@@ -1364,7 +1364,8 @@ init386(paddr_t first_avail)
 	 * initialised. initgdt() uses pmap_kenter_pa so it can't be called
 	 * before the above variables are set.
 	 */
-	initgdt(NULL);
+
+	initgdt(gdt);
 
 	mutex_init(&pte_lock, MUTEX_DEFAULT, IPL_VM);
 #endif /* XEN */
@@ -1411,6 +1412,24 @@ init386(paddr_t first_avail)
 	uvm_page_physload(atop(avail_start), atop(avail_end),
 	    atop(avail_start), atop(avail_end),
 	    VM_FREELIST_DEFAULT);
+
+	/* Reclaim the boot gdt page - see locore.s */
+	{
+		pt_entry_t pte;
+		pt_entry_t pg_nx = (cpu_feature[2] & CPUID_NOX ? PG_NX : 0);
+
+		pte = pmap_pa2pte((vaddr_t)tmpgdt - KERNBASE);
+		pte |= PG_k | PG_RW | pg_nx | PG_V;
+
+		if (HYPERVISOR_update_va_mapping((vaddr_t)tmpgdt, pte, UVMF_INVLPG) < 0) {
+			panic("tmpgdt page relaim RW update failed.\n");
+		}
+	}
+
+	uvm_page_physload(atop((vaddr_t)tmpgdt), atop((vaddr_t)tmpgdt + PAGE_SIZE),
+	    atop((vaddr_t)tmpgdt), atop((vaddr_t)tmpgdt + PAGE_SIZE),
+	    VM_FREELIST_DEFAULT);
+
 #endif /* !XEN */
 
 	init386_msgbuf();

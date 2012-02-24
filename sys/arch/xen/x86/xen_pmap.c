@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_pmap.c,v 1.17 2012/02/17 18:40:20 bouyer Exp $	*/
+/*	$NetBSD: xen_pmap.c,v 1.18 2012/02/24 08:06:08 cherry Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.17 2012/02/17 18:40:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.18 2012/02/24 08:06:08 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -334,7 +334,6 @@ pmap_unmap_recursive_entries(void)
 
 #if defined(PAE) || defined(__x86_64__)
 
-extern struct cpu_info	* (*xpq_cpu)(void);
 static __inline void
 pmap_kpm_setpte(struct cpu_info *ci, struct pmap *pmap, int index)
 {

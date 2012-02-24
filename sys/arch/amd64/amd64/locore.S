@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.66 2011/12/04 16:24:13 chs Exp $	*/
+/*	$NetBSD: locore.S,v 1.67 2012/02/24 08:06:07 cherry Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -777,6 +777,11 @@ start:
 	xorl	%eax,%eax
 	cpuid
 	movl	%eax,_C_LABEL(cpuid_level)
+
+	movq	$cpu_info_primary, %rdi
+	movq	%rdi, CPU_INFO_SELF(%rdi) /* ci->ci_self = ci */
+	movq	$1, %rsi
+	call	cpu_init_msrs	/* cpu_init_msrs(ci, true); */
 
 	call	xen_pmap_bootstrap
 
