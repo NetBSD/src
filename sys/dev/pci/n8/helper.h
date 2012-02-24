@@ -84,10 +84,10 @@
 
 #include "n8_enqueue_common.h"
 #endif
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/simplelock.h>
 #include "n8_enqueue_common.h"
 
 /* Macros for copying data to and from user space */
@@ -100,13 +100,11 @@
 
 /* ABSTRACT ATOMIC RESOURCE LOCK */
 /* typedef int ATOMICLOCK_t; */
-typedef struct simplelock ATOMICLOCK_t;
-#define N8_AtomicLock(x)     simple_lock(&x)
-#define N8_AtomicUnlock(x)   simple_unlock(&x)
-#define N8_AtomicLockInit(x) simple_lock_init(&x)
+typedef __cpu_simple_lock_t ATOMICLOCK_t;
+#define N8_AtomicLock(x)     __cpu_simple_lock(&x)
+#define N8_AtomicUnlock(x)   __cpu_simple_unlock(&x)
+#define N8_AtomicLockInit(x) __cpu_simple_lock_init(&x)
 #define N8_AtomicLockDel(x)
-
-
 
 /* ABSTRACT BLOCKING MECHANISM */
 #define wait_queue_head_t	atomic_t

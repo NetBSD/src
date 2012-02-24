@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.67.6.1 2012/02/18 07:36:00 mrg Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.67.6.2 2012/02/24 09:11:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -193,8 +193,6 @@ struct vm_map_entry {
  *
  *		VM_MAP_PAGEABLE		r/o static flag; no locking required
  *
- *		VM_MAP_INTRSAFE		r/o static flag; no locking required
- *
  *		VM_MAP_WIREFUTURE	r/w; may only be set or cleared when
  *					map is write-locked.  may be tested
  *					without asserting `flags_lock'.
@@ -212,7 +210,6 @@ struct vm_map {
 	struct pmap *		pmap;		/* Physical map */
 	krwlock_t		lock;		/* Non-intrsafe lock */
 	struct lwp *		busy;		/* LWP holding map busy */
-	kmutex_t		mutex;		/* INTRSAFE lock */
 	kmutex_t		misc_lock;	/* Lock for ref_count, cv */
 	kcondvar_t		cv;		/* For signalling */
 	int			flags;		/* flags */
@@ -236,7 +233,6 @@ struct vm_map {
 
 /* vm_map flags */
 #define	VM_MAP_PAGEABLE		0x01		/* ro: entries are pageable */
-#define	VM_MAP_INTRSAFE		0x02		/* ro: interrupt safe map */
 #define	VM_MAP_WIREFUTURE	0x04		/* rw: wire future mappings */
 #define	VM_MAP_DYING		0x20		/* rw: map is being destroyed */
 #define	VM_MAP_TOPDOWN		0x40		/* ro: arrange map top-down */

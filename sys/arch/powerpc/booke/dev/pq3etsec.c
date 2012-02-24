@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.9 2011/10/13 19:53:30 matt Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.9.6.1 2012/02/24 09:11:32 mrg Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.9 2011/10/13 19:53:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.9.6.1 2012/02/24 09:11:32 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -240,7 +240,7 @@ static void pq3etsec_ifstop(struct ifnet *, int);
 static int pq3etsec_ifioctl(struct ifnet *, u_long, void *);
 
 static int pq3etsec_mapcache_create(struct pq3etsec_softc *,
-    struct pq3etsec_mapcache **, size_t, size_t, size_t, size_t);
+    struct pq3etsec_mapcache **, size_t, size_t, size_t);
 static void pq3etsec_mapcache_destroy(struct pq3etsec_softc *,
     struct pq3etsec_mapcache *);
 static bus_dmamap_t pq3etsec_mapcache_get(struct pq3etsec_softc *,
@@ -544,14 +544,14 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	}
 
 	error = pq3etsec_mapcache_create(sc, &sc->sc_rx_mapcache, 
-	    ETSEC_MAXRXMBUFS, ETSEC_MINRXMBUFS, MCLBYTES, ETSEC_NRXSEGS);
+	    ETSEC_MAXRXMBUFS, MCLBYTES, ETSEC_NRXSEGS);
 	if (error) {
 		aprint_error(": failed to allocate rx dmamaps: %d\n", error);
 		return;
 	}
 
 	error = pq3etsec_mapcache_create(sc, &sc->sc_tx_mapcache, 
-	    ETSEC_MAXTXMBUFS, ETSEC_MAXTXMBUFS, MCLBYTES, ETSEC_NTXSEGS);
+	    ETSEC_MAXTXMBUFS, MCLBYTES, ETSEC_NTXSEGS);
 	if (error) {
 		aprint_error(": failed to allocate tx dmamaps: %d\n", error);
 		return;
@@ -691,6 +691,8 @@ pq3etsec_ifinit(struct ifnet *ifp)
 	struct pq3etsec_softc * const sc = ifp->if_softc;
 	int error = 0;
 
+	KASSERT(!cpu_softintr_p());
+
 	sc->sc_maxfrm = max(ifp->if_mtu + 32, MCLBYTES);
 	if (ifp->if_mtu > ETHERMTU_JUMBO)
 		return error;
@@ -715,8 +717,7 @@ pq3etsec_ifinit(struct ifnet *ifp)
 
 	if (sc->sc_tx_mapcache == NULL) {
 		error = pq3etsec_mapcache_create(sc, &sc->sc_tx_mapcache,
-		    ETSEC_MAXTXMBUFS, ETSEC_MAXTXMBUFS, sc->sc_maxfrm,
-		    ETSEC_NTXSEGS);
+		    ETSEC_MAXTXMBUFS, sc->sc_maxfrm, ETSEC_NTXSEGS);
 		if (error)
 			return error;
 	}
@@ -1104,20 +1105,7 @@ pq3etsec_mapcache_get(
 	struct pq3etsec_softc *sc,
 	struct pq3etsec_mapcache *dmc)
 {
-	if (dmc->dmc_nmaps == 0) {
-		bus_dmamap_t map;
-		int error = bus_dmamap_create(sc->sc_dmat, dmc->dmc_maxmapsize,
-			dmc->dmc_maxseg, dmc->dmc_maxmapsize, 0,
-			BUS_DMA_WAITOK|BUS_DMA_ALLOCNOW, &map);
-		if (error) {
-			aprint_error_dev(sc->sc_dev,
-			    "failed to allocate a %zuB map: %d\n",
-			    dmc->dmc_maxmapsize, error);
-			return NULL;
-		}
-		return map;
-	}
-
+	KASSERT(dmc->dmc_nmaps > 0);
 	KASSERT(dmc->dmc_maps[dmc->dmc_nmaps-1] != NULL);
 	return dmc->dmc_maps[--dmc->dmc_nmaps];
 }
@@ -1152,7 +1140,6 @@ pq3etsec_mapcache_create(
 	struct pq3etsec_softc *sc,
 	struct pq3etsec_mapcache **dmc_p,
 	size_t maxmaps,
-	size_t minmaps,
 	size_t maxmapsize,
 	size_t maxseg)
 {
@@ -1161,19 +1148,19 @@ pq3etsec_mapcache_create(
 	struct pq3etsec_mapcache * const dmc = kmem_zalloc(dmc_size, KM_SLEEP);
 
 	dmc->dmc_maxmaps = maxmaps;
-	dmc->dmc_nmaps = minmaps;
+	dmc->dmc_nmaps = maxmaps;
 	dmc->dmc_maxmapsize = maxmapsize;
 	dmc->dmc_maxseg = maxseg;
 
-	for (u_int i = 0; i < minmaps; i++) {
+	for (u_int i = 0; i < maxmaps; i++) {
 		int error = bus_dmamap_create(sc->sc_dmat, dmc->dmc_maxmapsize,
 		     dmc->dmc_maxseg, dmc->dmc_maxmapsize, 0,
 		     BUS_DMA_WAITOK|BUS_DMA_ALLOCNOW, &dmc->dmc_maps[i]);
 		if (error) {
 			aprint_error_dev(sc->sc_dev,
 			    "failed to creat dma map cache "
-			    "entry %u of %zu (max %zu): %d\n",
-			    i, minmaps, maxmaps, error);
+			    "entry %u of %zu: %d\n",
+			    i, maxmaps, error);
 			while (i-- > 0) {
 				bus_dmamap_destroy(sc->sc_dmat,
 				    dmc->dmc_maps[i]);

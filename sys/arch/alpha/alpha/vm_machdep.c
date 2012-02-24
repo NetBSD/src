@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.108.6.1 2012/02/18 07:30:54 mrg Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.108.6.2 2012/02/24 09:11:26 mrg Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.108.6.1 2012/02/18 07:30:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.108.6.2 2012/02/24 09:11:26 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,24 +157,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		pcb2->pcb_context[7] =
 		    (uint64_t)lwp_trampoline;		/* ra: assembly magic */
 	}
-}
-
-void
-cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
-{
-	struct pcb *pcb = lwp_getpcb(l);
-	extern void setfunc_trampoline(void);
-
-	pcb->pcb_hw.apcb_ksp =
-	    (uint64_t)l->l_md.md_tf;
-	pcb->pcb_context[0] =
-	    (uint64_t)func;			/* s0: pc */
-	pcb->pcb_context[1] =
-	    (uint64_t)exception_return;		/* s1: ra */
-	pcb->pcb_context[2] =
-	    (uint64_t)arg;			/* s2: arg */
-	pcb->pcb_context[7] =
-	    (uint64_t)setfunc_trampoline;	/* ra: assembly magic */
 }
 
 /*

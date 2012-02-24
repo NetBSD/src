@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.88.4.1 2012/02/18 07:33:59 mrg Exp $
+	$NetBSD: syscalls.master,v 1.88.4.2 2012/02/24 09:11:39 mrg Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -676,15 +676,12 @@
 327	UNIMPL
 328	UNIMPL
 329	UNIMPL
-330	STD		{ int|netbsd32||sa_register(netbsd32_sa_upcall_t new, \
-			    netbsd32_sa_upcallp_t old, int flags, \
-			    netbsd32_ssize_t stackinfo_offset); }
-331	STD		{ int|netbsd32||sa_stacks(int num, \
-			    netbsd32_stackp_t stacks); }
-332	NOARGS		{ int|sys||sa_enable(void); }
-333	STD		{ int|netbsd32||sa_setconcurrency(int concurrency); }
-334	NOARGS		{ int|sys||sa_yield(void); }
-335	STD		{ int|netbsd32||sa_preempt(int sa_id); }
+330	OBSOL		netbsd32_sa_register
+331	OBSOL		netbsd32_sa_stacks
+332	OBSOL		sa_enable
+333	OBSOL		netbsd32_sa_setconcurrency
+334	OBSOL		sa_yield
+335	OBSOL		netbsd32_sa_preempt
 336	OBSOL		sys_sa_unblockyield
 337	UNIMPL
 338	UNIMPL

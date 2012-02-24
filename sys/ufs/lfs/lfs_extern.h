@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.96.34.1 2012/02/18 07:35:54 mrg Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.96.34.2 2012/02/24 09:11:51 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -102,6 +102,8 @@ struct lfs;
 struct segment;
 struct block_info;
 
+__BEGIN_DECLS
+
 #if defined(_KERNEL)
 
 extern int lfs_allclean_wakeup;
@@ -119,7 +121,6 @@ extern int lfs_debug_log_subsys[];
 extern kcondvar_t lfs_writing_cv;
 extern kcondvar_t locked_queue_cv;
 
-__BEGIN_DECLS
 /* lfs_alloc.c */
 void lfs_vcreate(struct mount *, ino_t, struct vnode *);
 int lfs_valloc(struct vnode *, int, kauth_cred_t, struct vnode **);

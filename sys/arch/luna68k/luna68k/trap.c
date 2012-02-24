@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.67 2011/02/08 20:20:16 rmind Exp $ */
+/* $NetBSD: trap.c,v 1.67.8.1 2012/02/24 09:11:30 mrg Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.67 2011/02/08 20:20:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.67.8.1 2012/02/24 09:11:30 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -53,8 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.67 2011/02/08 20:20:16 rmind Exp $");
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscall.h>
 #include <sys/syslog.h>
 #include <sys/userret.h>
@@ -499,11 +497,6 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 			map = kernel_map;
 		else {
 			map = vm ? &vm->vm_map : kernel_map;
-			if ((l->l_flag & LW_SA)
-			    && (~l->l_pflag & LP_SA_NOBLOCK)) {
-				l->l_savp->savp_faultaddr = (vaddr_t)v;
-				l->l_pflag |= LP_SA_PAGEFAULT;
-			}
 		}
 
 		if (WRFAULT(code))
@@ -549,7 +542,6 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 #endif
 				return;
 			}
-			l->l_pflag &= ~LP_SA_PAGEFAULT;
 			goto out;
 		}
 		if (rv == EACCES) {
@@ -566,7 +558,6 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 			       type, code);
 			goto dopanic;
 		}
-		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		ksi.ksi_addr = (void *)v;
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.1 2011/04/10 20:36:49 christos Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.1.14.1 2012/02/24 09:11:26 mrg Exp $	*/
 
 /* 
  * Mach Operating System
@@ -26,7 +26,7 @@
  * rights to redistribute these changes.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.1 2011/04/10 20:36:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.1.14.1 2012/02/24 09:11:26 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,7 @@ db_nextframe(long **nextframe, long **retaddr, long **arg0, db_addr_t *ip,
 	    default:
 
 		/* The only argument to trap() or syscall() is the trapframe. */
-		tf = *(struct trapframe **)argp;
+		tf = (struct trapframe *)argp;
 		switch (is_trap) {
 		case TRAP:
 			(*pr)("--- trap (number %d) ---\n", tf->tf_trapno);
@@ -141,7 +141,6 @@ db_nextframe(long **nextframe, long **retaddr, long **arg0, db_addr_t *ip,
 			break;
 		case INTERRUPT:
 			(*pr)("--- interrupt ---\n");
-			tf = (struct trapframe *)argp;
 			break;
 		}
 		*ip = (db_addr_t)tf->tf_rip;
