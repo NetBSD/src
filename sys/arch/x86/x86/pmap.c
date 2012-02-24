@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.74.4.3 2010/04/22 20:02:48 snj Exp $	*/
+/*	$NetBSD: pmap.c,v 1.74.4.4 2012/02/24 17:29:32 sborrill Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74.4.3 2010/04/22 20:02:48 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74.4.4 2012/02/24 17:29:32 sborrill Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -535,7 +535,12 @@ static struct pool_cache pmap_pv_cache;
  * special VAs and the PTEs that map them
  */
 static pt_entry_t *csrc_pte, *cdst_pte, *zero_pte, *ptp_pte, *early_zero_pte;
-static char *csrcp, *cdstp, *zerop, *ptpp, *early_zerop;
+static char *csrcp, *cdstp, *zerop, *ptpp;
+#ifdef XEN
+char *early_zerop; /* also referenced from xen_pmap_bootstrap() */
+#else
+static char *early_zerop;
+#endif
 
 /*
  * pool and cache that PDPs are allocated from
@@ -1340,8 +1345,11 @@ pmap_bootstrap(vaddr_t kva_start)
 		 * when it's called for the first time.
 		 * XXXfvdl fix this for MULTIPROCESSOR later.
 		 */
-
+#ifdef XEN
+		/* early_zerop initialized in xen_pmap_bootstrap() */
+#else
 		early_zerop = (void *)(KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2);
+#endif
 		early_zero_pte = PTE_BASE + pl1_i((unsigned long)early_zerop);
 	}
 
