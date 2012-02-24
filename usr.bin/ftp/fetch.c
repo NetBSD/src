@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.196 2012/02/24 19:40:49 apb Exp $	*/
+/*	$NetBSD: fetch.c,v 1.197 2012/02/24 19:53:31 apb Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.196 2012/02/24 19:40:49 apb Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.197 2012/02/24 19:53:31 apb Exp $");
 #endif /* not lint */
 
 /*
@@ -1741,7 +1741,7 @@ go_fetch(const char *url)
 	 * so we don't try to match that here.
 	 */
 	if ((p = strstr(url, "://")) != NULL && ! STRNEQUAL(url, FTP_URL))
-		errx(1, "Unsupported URL scheme `%.*s'", (p - url), url);
+		errx(1, "Unsupported URL scheme `%.*s'", (int)(p - url), url);
 
 	/*
 	 * Try FTP URL-style and host:file arguments next.
