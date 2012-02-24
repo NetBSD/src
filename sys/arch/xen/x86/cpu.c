@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.87 2012/02/24 11:31:23 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.88 2012/02/24 11:43:06 bouyer Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.87 2012/02/24 11:31:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.88 2012/02/24 11:43:06 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -250,7 +250,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	ci->ci_cpuid = caa->cpu_number;
 	ci->ci_vcpu = NULL;
 	ci->ci_index = nphycpu++;
-	ci->ci_cpumask = (1 << cpu_index(ci));
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
