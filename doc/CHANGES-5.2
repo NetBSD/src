@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.139 2012/02/24 17:30:24 sborrill Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.140 2012/02/24 17:45:53 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -6045,4 +6045,10 @@ sys/arch/xen/x86/x86_xpmap.c			1.40 via patch
 	Fix random kernel panic on domains with large memory.
 	May fix PR port-xen/38699
 	[bouyer, ticket #1729]
+
+sys/arch/xen/xen/if_xennet_xenbus.c		1.59 via patch
+
+	Fix receive stall on the domU side when buffer stays a
+	long time in the network stack or socket buffers.
+	[bouyer, ticket #1730]
 
