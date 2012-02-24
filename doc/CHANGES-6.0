@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.16 2012/02/24 16:30:28 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.17 2012/02/24 16:41:05 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -471,4 +471,19 @@ lib/libterminfo/term.h				1.11
 
 	PR/46075: fix typo set_color_paid -> set_color_pair
 	[asau, ticket #42]
+
+external/gpl3/gcc/lib/libgomp/Makefile		1.7
+
+	Fix build failure on mips64.
+	[nonaka, ticket #43]
+
+sys/arch/xen/x86/cpu.c				1.87-88
+
+	Remove artificial restriction on the number of physical CPUs.
+	[bouyer, ticket #45]
+
+sys/compat/linux/arch/powerpc/linux_exec_powerpc.c 1.24
+
+	Fix builds of Linux emulation on PowerPC platforms.
+	[rjs, ticket #46]
 
