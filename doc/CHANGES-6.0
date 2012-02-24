@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.15 2012/02/23 21:20:39 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.16 2012/02/24 16:30:28 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -456,4 +456,19 @@ sys/arch/xen/xen/xengnt.c			1.23
 
 	Fix locking in xengnt_get_entry() and xengnt_more_entries().
 	[bouyer, ticket #40]
+
+usr.sbin/postinstall/postinstall		1.133
+
+	Fix a call to pwd_mkdb in the case that DEST_DIR is the empty string.
+	[nakayama, ticket #44]
+
+sys/arch/hp700/gsc/harmony.c			1.27
+
+	Fix locking in harmony(4) driver.
+	[skrll, ticket #41]
+
+lib/libterminfo/term.h				1.11
+
+	PR/46075: fix typo set_color_paid -> set_color_pair
+	[asau, ticket #42]
 
