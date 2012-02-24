@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.18 2012/02/24 17:00:02 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.19 2012/02/24 17:19:14 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -494,4 +494,10 @@ sys/arch/hp700/hp700/mainbus.c			1.81
 
 	u_intXX_t -> uintXX_t changes to ease future pullups.
 	[skrll, ticket #47]
+
+external/bsd/acpica/bin/iasl/Makefile		1.5
+sys/external/bsd/acpica/dist/include/acapps.h	1.2-3
+
+	Fixes for MKREPRO=yes builds.
+	[go, ticket #48]
 
