@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.27 2011/12/23 00:51:50 jakllsch Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.28 2012/02/24 06:48:28 mrg Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.27 2011/12/23 00:51:50 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.28 2012/02/24 06:48:28 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,18 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.27 2011/12/23 00:51:50 jakllsch Exp $")
 #include <sys/conf.h>
 #include <sys/tty.h>
 #include <sys/file.h>
-#if defined(__FreeBSD__)
-#include <sys/bus.h>
-#include <sys/ioccom.h>
-#if __FreeBSD_version >= 500014
-#include <sys/selinfo.h>
-#else
-#include <sys/select.h>
-#endif
-#else
 #include <sys/ioctl.h>
 #include <sys/device.h>
-#endif
 #include <sys/proc.h>
 #include <sys/poll.h>
 
@@ -73,15 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.27 2011/12/23 00:51:50 jakllsch Exp $")
 #ifdef UVSCOM_DEBUG
 static int	uvscomdebug = 1;
 
-#if defined(__FreeBSD__)
-#include <sys/sysctl.h>
-
-SYSCTL_DECL(_debug_usb);
-SYSCTL_INT(_debug_usb, OID_AUTO, uvscom, CTLFLAG_RW,
-	   &uvscomdebug, 0, "uvscom debug level");
-
-#endif
-
 #define DPRINTFN(n, x)  do { \
 				if (uvscomdebug > (n)) \
 					printf x; \
@@ -90,10 +71,6 @@ SYSCTL_INT(_debug_usb, OID_AUTO, uvscom, CTLFLAG_RW,
 #define DPRINTFN(n, x)
 #endif
 #define DPRINTF(x) DPRINTFN(0, x)
-
-#if defined(__FreeBSD__)
-#define UVSCOM_MODVER		1	/* module version */
-#endif
 
 #define	UVSCOM_CONFIG_INDEX	0
 #define	UVSCOM_IFACE_INDEX	0

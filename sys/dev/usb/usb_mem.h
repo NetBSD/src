@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.h,v 1.27 2008/06/28 17:42:53 bouyer Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.28 2012/02/24 06:48:28 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.h,v 1.9 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -31,7 +31,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 typedef struct usb_dma_block {
 	bus_dma_tag_t tag;
 	bus_dmamap_t map;
@@ -54,7 +53,6 @@ usbd_status	usb_allocmem(usbd_bus_handle,size_t,size_t, usb_dma_t *);
 void		usb_freemem(usbd_bus_handle, usb_dma_t *);
 void		usb_syncmem(usb_dma_t *, bus_addr_t, bus_size_t, int ops);
 
-#ifdef __NetBSD__
 struct extent;
 
 struct usb_dma_reserve {
@@ -79,37 +77,3 @@ usbd_status usb_reserve_allocm(struct usb_dma_reserve *, usb_dma_t *,
 				u_int32_t);
 int usb_setup_reserve(device_t, struct usb_dma_reserve *, bus_dma_tag_t, size_t);
 void usb_reserve_freem(struct usb_dma_reserve *, usb_dma_t *);
-
-#endif
-
-#elif defined(__FreeBSD__)
-
-/*
- * FreeBSD does not have special functions for DMA memory, so let's keep it
- * simple for now.
- */
-
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/queue.h>
-#include <sys/proc.h>
-#include <sys/bio.h>
-#include <sys/buf.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <vm/vm.h>
-#include <vm/pmap.h>
-
-#include <machine/pmap.h>       /* for vtophys */
-
-#define		usb_allocmem(t,s,a,p)	(*(p) = malloc(s, M_USB, M_NOWAIT), (*(p) == NULL? USBD_NOMEM: USBD_NORMAL_COMPLETION))
-#define		usb_freemem(t,p)	(free(*(p), M_USB))
-
-#ifdef __alpha__
-#define DMAADDR(dma, o)	(alpha_XXX_dmamap((vm_offset_t) *(dma) + (o)))
-#else
-#define DMAADDR(dma, o)	(vtophys(*(dma) + (o)))
-#endif
-#define KERNADDR(dma, o)	((void *) ((char *)*(dma) + (o)))
-#endif /* __FreeBSD__ */
-
