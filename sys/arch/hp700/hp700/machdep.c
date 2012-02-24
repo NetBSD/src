@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.107 2012/02/05 08:24:43 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.107.2.1 2012/02/24 16:57:35 riz Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.107 2012/02/05 08:24:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.107.2.1 2012/02/24 16:57:35 riz Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -152,7 +152,7 @@ int dcache_stride, dcache_line_mask;
 /*
  * things to not kill
  */
-volatile u_int8_t *machine_ledaddr;
+volatile uint8_t *machine_ledaddr;
 int machine_ledword, machine_leds;
 
 /*
@@ -1457,7 +1457,7 @@ cpu_reboot(int howto, char *user_boot_string)
 	/* NOTREACHED */
 }
 
-u_int32_t dumpmag = 0x8fca0101;	/* magic number */
+uint32_t dumpmag = 0x8fca0101;	/* magic number */
 int	dumpsize = 0;		/* pages */
 long	dumplo = 0;		/* blocks */
 
