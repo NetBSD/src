@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.26 2012/02/02 19:42:59 tls Exp $	*/
+/*	$NetBSD: harmony.c,v 1.26.2.1 2012/02/24 16:27:53 riz Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -1259,12 +1259,12 @@ int
 harmony_trigger_input(void *vsc, void *start, void *end, int blksize,
     void (*intr)(void *), void *intrarg, const audio_params_t *param)
 {
-	struct harmony_softc *sc;
-	struct harmony_channel *c;
+	struct harmony_softc *sc = vsc;
+	struct harmony_channel *c = &sc->sc_capture;
 	struct harmony_dma *d;
 
-	sc = vsc;
-	c = &sc->sc_capture;
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
+
 	for (d = sc->sc_dmas; d->d_kva != start; d = d->d_next)
 		continue;
 	if (d == NULL) {
@@ -1272,8 +1272,6 @@ harmony_trigger_input(void *vsc, void *start, void *end, int blksize,
 		    device_xname(sc->sc_dv), start);
 		return EINVAL;
 	}
-
-	mutex_spin_enter(&sc->sc_intr_lock);
 
 	c->c_intr = intr;
 	c->c_intrarg = intrarg;
@@ -1287,8 +1285,6 @@ harmony_trigger_input(void *vsc, void *start, void *end, int blksize,
 
 	harmony_start_cp(sc, 1);
 	harmony_intr_enable(sc);
-
-	mutex_spin_exit(&sc->sc_intr_lock);
 
 	return 0;
 }
