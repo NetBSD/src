@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_log.c,v 1.2 2011/01/18 20:33:46 rmind Exp $	*/
+/*	$NetBSD: npf_log.c,v 1.2.12.1 2012/02/24 09:11:49 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
@@ -34,10 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_log.c,v 1.2 2011/01/18 20:33:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_log.c,v 1.2.12.1 2012/02/24 09:11:49 mrg Exp $");
 
 #include <sys/param.h>
-#include <sys/kernel.h>
+#include <sys/types.h>
 
 #include <sys/conf.h>
 #include <sys/kmem.h>

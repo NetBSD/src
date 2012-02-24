@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.22.12.1 2012/02/18 07:30:44 mrg Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.22.12.2 2012/02/24 09:11:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -29,8 +29,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef	_ARM32_VMPARAM_H_
-#define	_ARM32_VMPARAM_H_
+#ifndef	_ACORN32_VMPARAM_H_
+#define	_ACORN32_VMPARAM_H_
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 
@@ -90,4 +90,4 @@
 
 #endif /* _KERNEL || _KMEMUSER */
 
-#endif	/* _ARM32_VMPARAM_H_ */
+#endif	/* _ACORN32_VMPARAM_H_ */

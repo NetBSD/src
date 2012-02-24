@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.13 2010/12/20 00:25:43 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.13.12.1 2012/02/24 09:11:34 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -78,13 +78,9 @@
  * T.Horiuchi 1998.06.8
  */
 
-#include "opt_sa.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscall.h>
 #include <sys/syscallvar.h>
 
@@ -92,10 +88,8 @@
 
 #include <uvm/uvm_extern.h>
 
-
 static void syscall_plain(struct lwp *, struct trapframe *);
 static void syscall_fancy(struct lwp *, struct trapframe *);
-
 
 void
 syscall_intern(struct proc *p)
@@ -130,13 +124,6 @@ syscall_plain(struct lwp *l, struct trapframe *tf)
 
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
-
-#ifdef KERN_SA
-	if (__predict_false((l->l_savp)
-            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
-		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
-#endif
-
 	params = (void *)tf->tf_r15;
 
 	switch (code) {
@@ -269,13 +256,6 @@ syscall_fancy(struct lwp *l, struct trapframe *tf)
 
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
-
-#ifdef KERN_SA
-	if (__predict_false((l->l_savp)
-            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
-		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
-#endif
-
 	params = (void *)tf->tf_r15;
 
 	switch (code) {

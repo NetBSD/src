@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.88.2.1 2012/02/18 07:35:08 mrg Exp $	*/
+/*	$NetBSD: ucom.c,v 1.88.2.2 2012/02/24 09:11:42 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.88.2.1 2012/02/18 07:35:08 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.88.2.2 2012/02/24 09:11:42 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,9 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.88.2.1 2012/02/18 07:35:08 mrg Exp $");
 #include <sys/poll.h>
 #include <sys/queue.h>
 #include <sys/kauth.h>
-#if defined(__NetBSD__)
 #include <sys/rnd.h>
-#endif
 
 #include <dev/usb/usb.h>
 
@@ -241,10 +239,8 @@ ucom_attach(device_t parent, device_t self, void *aux)
 	DPRINTF(("ucom_attach: tty_attach %p\n", tp));
 	tty_attach(tp);
 
-#if defined(__NetBSD__)
 	rnd_attach_source(&sc->sc_rndsource, device_xname(sc->sc_dev),
 			  RND_TYPE_TTY, 0);
-#endif
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -315,9 +311,7 @@ ucom_detach(device_t self, int flags)
 	}
 
 	/* Detach the random source */
-#if defined(__NetBSD__)
 	rnd_detach_source(&sc->sc_rndsource);
-#endif
 
 	return (0);
 }
@@ -1069,9 +1063,7 @@ ucom_write_status(struct ucom_softc *sc, struct ucom_buffer *ub,
 		break;
 	case USBD_NORMAL_COMPLETION:
 		usbd_get_xfer_status(ub->ub_xfer, NULL, NULL, &cc, NULL);
-#if defined(__NetBSD__)
 		rnd_add_uint32(&sc->sc_rndsource, cc);
-#endif
 		/*FALLTHROUGH*/
 	default:
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_obuff_full, ub_link);
@@ -1254,9 +1246,7 @@ ucomreadcb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 
 	KDASSERT(cp == ub->ub_data);
 
-#if defined(__NetBSD__)
 	rnd_add_uint32(&sc->sc_rndsource, cc);
-#endif
 
 	if (sc->sc_opening) {
 		ucomsubmitread(sc, ub);

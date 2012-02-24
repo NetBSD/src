@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.6.4.1 2012/02/18 07:35:38 mrg Exp $	*/
+/*	$NetBSD: npf.c,v 1.6.4.2 2012/02/24 09:11:49 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.6.4.1 2012/02/18 07:35:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.6.4.2 2012/02/24 09:11:49 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -70,6 +70,7 @@ typedef struct {
 	npf_ruleset_t *		n_rules;
 	npf_tableset_t *	n_tables;
 	npf_ruleset_t *		n_nat_rules;
+	bool			n_default_pass;
 } npf_core_t;
 
 static void	npf_core_destroy(npf_core_t *);
@@ -106,7 +107,7 @@ npf_init(void)
 	rset = npf_ruleset_create();
 	tset = npf_tableset_create();
 	nset = npf_ruleset_create();
-	npf_reload(rset, tset, nset);
+	npf_reload(rset, tset, nset, true);
 	KASSERT(npf_core != NULL);
 
 #ifdef _MODULE
@@ -265,12 +266,14 @@ npf_core_destroy(npf_core_t *nc)
  * Then destroy old (unloaded) structures.
  */
 void
-npf_reload(npf_ruleset_t *rset, npf_tableset_t *tset, npf_ruleset_t *nset)
+npf_reload(npf_ruleset_t *rset, npf_tableset_t *tset, npf_ruleset_t *nset,
+    bool flush)
 {
 	npf_core_t *nc, *onc;
 
 	/* Setup a new core structure. */
-	nc = kmem_alloc(sizeof(npf_core_t), KM_SLEEP);
+	nc = kmem_zalloc(sizeof(npf_core_t), KM_SLEEP);
+	nc->n_default_pass = flush;
 	nc->n_rules = rset;
 	nc->n_tables = tset;
 	nc->n_nat_rules = nset;
@@ -328,6 +331,13 @@ bool
 npf_core_locked(void)
 {
 	return rw_lock_held(&npf_lock);
+}
+
+bool
+npf_default_pass(void)
+{
+	KASSERT(rw_lock_held(&npf_lock));
+	return npf_core->n_default_pass;
 }
 
 /*

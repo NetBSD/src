@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.26 2011/01/22 19:19:19 joerg Exp $	*/
+/*	$NetBSD: boot.c,v 1.26.8.1 2012/02/24 09:11:31 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -96,8 +96,8 @@ char bootdev[MAXBOOTPATHLEN];
 char bootfile[MAXBOOTPATHLEN];
 int boothowto;
 bool floppyboot;
+int ofw_version = 0;
 
-static int ofw_version = 0;
 static const char *kernels[] = { "/netbsd", "/netbsd.gz", "/netbsd.macppc", NULL };
 
 static void

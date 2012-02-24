@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_rproc.c,v 1.1.4.2 2012/02/18 07:35:38 mrg Exp $	*/
+/*	$NetBSD: npf_rproc.c,v 1.1.4.3 2012/02/24 09:11:49 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -37,11 +37,10 @@
 __KERNEL_RCSID(0, "$NetBSD");
 
 #include <sys/param.h>
-#include <sys/kernel.h>
+#include <sys/types.h>
 
 #include <sys/atomic.h>
 #include <sys/kmem.h>
-#include <sys/types.h>
 
 #include "npf_impl.h"
 
@@ -69,7 +68,7 @@ npf_rproc_create(prop_dictionary_t rpdict)
 	npf_rproc_t *rp;
 	const char *rname;
 
-	rp = kmem_zalloc(sizeof(npf_rproc_t), KM_SLEEP);
+	rp = kmem_intr_zalloc(sizeof(npf_rproc_t), KM_SLEEP);
 	rp->rp_refcnt = 1;
 
 	/* Name and flags. */
@@ -107,7 +106,7 @@ npf_rproc_release(npf_rproc_t *rp)
 	if (atomic_dec_uint_nv(&rp->rp_refcnt) != 0) {
 		return;
 	}
-	kmem_free(rp, sizeof(npf_rproc_t));
+	kmem_intr_free(rp, sizeof(npf_rproc_t));
 }
 
 void

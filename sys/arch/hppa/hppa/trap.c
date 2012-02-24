@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.96.8.1 2012/02/18 07:32:14 mrg Exp $	*/
+/*	$NetBSD: trap.c,v 1.96.8.2 2012/02/24 09:11:29 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96.8.1 2012/02/18 07:32:14 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96.8.2 2012/02/24 09:11:29 mrg Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -66,15 +66,12 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96.8.1 2012/02/18 07:32:14 mrg Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ptrace.h"
-#include "opt_sa.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/syscall.h>
 #include <sys/syscallvar.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/mutex.h>
 #include <sys/ktrace.h>
 #include <sys/proc.h>
@@ -853,11 +850,6 @@ do_onfault:
 			map = kernel_map;
 		else {
 			map = &vm->vm_map;
-			if ((l->l_flag & LW_SA)
-			    && (~l->l_pflag & LP_SA_NOBLOCK)) {
-				l->l_savp->savp_faultaddr = va;
-				l->l_pflag |= LP_SA_PAGEFAULT;
-			}
 		}
 
 		va = trunc_page(va);
@@ -883,9 +875,6 @@ do_onfault:
 		printf("uvm_fault(%p, %x, %d)=%d\n",
 		    map, (u_int)va, vftype, ret);
 #endif
-
-		if (map != kernel_map)
-			l->l_pflag &= ~LP_SA_PAGEFAULT;
 
 		/*
 		 * If this was a stack access we keep track of the maximum
@@ -1155,12 +1144,6 @@ syscall(struct trapframe *frame, int *args)
 	code = frame->tf_t1;
 	LWP_CACHE_CREDS(l, p);
 
-#ifdef KERN_SA
-	if (__predict_false((l->l_savp)
-            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
-		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
-#endif
-
 	/*
 	 * Restarting a system call is touchy on the HPPA, because syscall
 	 * arguments are passed in registers and the program counter of the
@@ -1330,14 +1313,5 @@ startlwp(void *arg)
 	KASSERT(error == 0);
 
 	kmem_free(uc, sizeof(ucontext_t));
-	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
-}
-
-/*
- * XXX This is a terrible name.
- */
-void
-upcallret(struct lwp *l)
-{
 	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
 }

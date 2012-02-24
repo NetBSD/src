@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.111.6.1 2012/02/18 07:35:59 mrg Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.111.6.2 2012/02/24 09:11:52 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.111.6.1 2012/02/18 07:35:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.111.6.2 2012/02/24 09:11:52 mrg Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -459,8 +459,12 @@ uvm_km_pgremove(vaddr_t startva, vaddr_t endva)
 void
 uvm_km_pgremove_intrsafe(struct vm_map *map, vaddr_t start, vaddr_t end)
 {
+#define __PGRM_BATCH 16
 	struct vm_page *pg;
-	paddr_t pa;
+	paddr_t pa[__PGRM_BATCH];
+	int npgrm, i;
+	vaddr_t va, batch_vastart;
+
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	KASSERT(VM_MAP_IS_KERNEL(map));
@@ -468,16 +472,30 @@ uvm_km_pgremove_intrsafe(struct vm_map *map, vaddr_t start, vaddr_t end)
 	KASSERT(start < end);
 	KASSERT(end <= vm_map_max(map));
 
-	for (; start < end; start += PAGE_SIZE) {
-		if (!pmap_extract(pmap_kernel(), start, &pa)) {
-			continue;
+	for (va = start; va < end;) {
+		batch_vastart = va;
+		/* create a batch of at most __PGRM_BATCH pages to free */
+		for (i = 0;
+		     i < __PGRM_BATCH && va < end;
+		     va += PAGE_SIZE) {
+			if (!pmap_extract(pmap_kernel(), va, &pa[i])) {
+				continue;
+			}
+			i++;
 		}
-		pg = PHYS_TO_VM_PAGE(pa);
-		KASSERT(pg);
-		KASSERT(pg->uobject == NULL && pg->uanon == NULL);
-		KASSERT((pg->flags & PG_BUSY) == 0);
-		uvm_pagefree(pg);
+		npgrm = i;
+		/* now remove the mappings */
+		pmap_kremove(batch_vastart, PAGE_SIZE * npgrm);
+		/* and free the pages */
+		for (i = 0; i < npgrm; i++) {
+			pg = PHYS_TO_VM_PAGE(pa[i]);
+			KASSERT(pg);
+			KASSERT(pg->uobject == NULL && pg->uanon == NULL);
+			KASSERT((pg->flags & PG_BUSY) == 0);
+			uvm_pagefree(pg);
+		}
 	}
+#undef __PGRM_BATCH
 }
 
 #if defined(DEBUG)
@@ -499,15 +517,13 @@ uvm_km_check_empty(struct vm_map *map, vaddr_t start, vaddr_t end)
 			panic("uvm_km_check_empty: va %p has pa 0x%llx",
 			    (void *)va, (long long)pa);
 		}
-		if ((map->flags & VM_MAP_INTRSAFE) == 0) {
-			mutex_enter(uvm_kernel_object->vmobjlock);
-			pg = uvm_pagelookup(uvm_kernel_object,
-			    va - vm_map_min(kernel_map));
-			mutex_exit(uvm_kernel_object->vmobjlock);
-			if (pg) {
-				panic("uvm_km_check_empty: "
-				    "has page hashed at %p", (const void *)va);
-			}
+		mutex_enter(uvm_kernel_object->vmobjlock);
+		pg = uvm_pagelookup(uvm_kernel_object,
+		    va - vm_map_min(kernel_map));
+		mutex_exit(uvm_kernel_object->vmobjlock);
+		if (pg) {
+			panic("uvm_km_check_empty: "
+			    "has page hashed at %p", (const void *)va);
 		}
 	}
 }
@@ -670,7 +686,6 @@ uvm_km_free(struct vm_map *map, vaddr_t addr, vsize_t size, uvm_flag_t flags)
 		 * remove it after.  See comment below about KVA visibility.
 		 */
 		uvm_km_pgremove_intrsafe(map, addr, addr + size);
-		pmap_kremove(addr, size);
 	}
 
 	/*
@@ -747,7 +762,6 @@ again:
 			} else {
 				uvm_km_pgremove_intrsafe(kernel_map, va,
 				    va + size);
-				pmap_kremove(va, size);
 				vmem_free(kmem_va_arena, va, size);
 				return ENOMEM;
 			}
@@ -783,7 +797,6 @@ uvm_km_kmem_free(vmem_t *vm, vmem_addr_t addr, size_t size)
 	}
 #endif /* PMAP_UNMAP_POOLPAGE */
 	uvm_km_pgremove_intrsafe(kernel_map, addr, addr + size);
-	pmap_kremove(addr, size);
 	pmap_update(pmap_kernel());
 
 	vmem_free(vm, addr, size);

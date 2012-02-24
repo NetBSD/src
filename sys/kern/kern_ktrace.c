@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.159.2.1 2012/02/18 07:35:29 mrg Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.159.2.2 2012/02/24 09:11:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.159.2.1 2012/02/18 07:35:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.159.2.2 2012/02/24 09:11:45 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.159.2.1 2012/02/18 07:35:29 mrg Ex
 #include <sys/kauth.h>
 
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 /*
@@ -980,44 +979,6 @@ ktr_kuser(const char *id, void *addr, size_t len)
 
 	memcpy(ktp + 1, addr, len);
 
-	ktraddentry(l, kte, KTA_WAITOK);
-}
-
-void
-ktr_saupcall(struct lwp *l, int type, int nevent, int nint, void *sas,
-    void *ap, void *ksas)
-{
-	struct ktrace_entry *kte;
-	struct ktr_saupcall *ktp;
-	size_t len, sz;
-	struct sa_t **sapp;
-	int i;
-
-	if (!KTRPOINT(l->l_proc, KTR_SAUPCALL))
-		return;
-
-	len = sizeof(struct ktr_saupcall);
-	sz = len + sizeof(struct sa_t) * (nevent + nint + 1);
-
-	if (ktealloc(&kte, (void *)&ktp, l, KTR_SAUPCALL, sz))
-		return;
-
-	ktp->ktr_type = type;
-	ktp->ktr_nevent = nevent;
-	ktp->ktr_nint = nint;
-	ktp->ktr_sas = sas;
-	ktp->ktr_ap = ap;
-
-	/* Copy the sa_t's */
-	sapp = (struct sa_t **) ksas;
-
-	for (i = nevent + nint; i >= 0; i--) {
-		memcpy((char *)ktp + len, *sapp, sizeof(struct sa_t));
-		len += sizeof(struct sa_t);
-		sapp++;
-	}
-
-	kte->kte_kth.ktr_len = len;
 	ktraddentry(l, kte, KTA_WAITOK);
 }
 

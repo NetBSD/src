@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.30.12.2 2012/02/20 20:35:40 mrg Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.30.12.3 2012/02/24 09:11:44 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,12 +47,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.30.12.2 2012/02/20 20:35:40 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.30.12.3 2012/02/24 09:11:44 mrg Exp $");
 
 #include "scsibus.h"
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/lwp.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/conf.h>

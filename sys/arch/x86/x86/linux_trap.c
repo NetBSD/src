@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_trap.c,v 1.10 2010/07/07 01:30:32 chs Exp $	*/
+/*	$NetBSD: linux_trap.c,v 1.10.12.1 2012/02/24 09:11:36 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,13 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.10 2010/07/07 01:30:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.10.12.1 2012/02/24 09:11:36 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/acct.h>
 #include <sys/kernel.h>
 #include <sys/signal.h>

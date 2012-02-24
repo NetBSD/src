@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_kmguard.c,v 1.5.8.1 2012/02/18 07:35:59 mrg Exp $	*/
+/*	$NetBSD: uvm_kmguard.c,v 1.5.8.2 2012/02/24 09:11:52 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_kmguard.c,v 1.5.8.1 2012/02/18 07:35:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_kmguard.c,v 1.5.8.2 2012/02/24 09:11:52 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,6 @@ uvm_kmguard_free(struct uvm_kmguard *kg, size_t len, void *p)
 	 */
 
 	uvm_km_pgremove_intrsafe(kernel_map, va, va + PAGE_SIZE * 2);
-	pmap_kremove(va, PAGE_SIZE * 2);
 	pmap_update(pmap_kernel());
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.26.2.1 2012/02/18 07:36:01 mrg Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.26.2.2 2012/02/24 09:11:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -68,6 +68,7 @@
 #define	_VM_PARAM_
 
 #ifdef _KERNEL_OPT
+#include "opt_modular.h"
 #include "opt_uvm.h"
 #endif
 #ifdef _KERNEL
@@ -134,10 +135,15 @@
  * If MIN_PAGE_SIZE and MAX_PAGE_SIZE are not equal, then we must use
  * non-constant PAGE_SIZE, et al for LKMs.
  */
-#if (MIN_PAGE_SIZE != MAX_PAGE_SIZE) && (defined(_LKM) || defined(MODULAR))
+#if (MIN_PAGE_SIZE != MAX_PAGE_SIZE)
+#if defined(MODULAR)
+#define	__uvmexp_pagesize
+#endif
+#if defined(_LKM) || defined(_MODULE)
 #undef PAGE_SIZE
 #undef PAGE_MASK
 #undef PAGE_SHIFT
+#endif
 #endif
 
 /*
@@ -151,7 +157,6 @@ extern const int *const uvmexp_pageshift;
 #define	PAGE_SIZE	(*uvmexp_pagesize)	/* size of page */
 #define	PAGE_MASK	(*uvmexp_pagemask)	/* size of page - 1 */
 #define	PAGE_SHIFT	(*uvmexp_pageshift)	/* bits to shift for pages */
-#define	__uvmexp_pagesize
 #endif /* PAGE_SIZE */
 
 #endif /* _KERNEL */

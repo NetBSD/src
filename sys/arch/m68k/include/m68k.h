@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.h,v 1.20.4.1 2012/02/18 07:32:29 mrg Exp $	*/
+/*	$NetBSD: m68k.h,v 1.20.4.2 2012/02/24 09:11:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -112,7 +112,6 @@ void	lwp_trampoline(void);
 void	m68881_save(struct fpframe *);
 void	m68881_restore(struct fpframe *); 
 void	savectx(struct pcb *);
-void	setfunc_trampoline(void);
 
 /* w16copy.s */
 void	w16zero(void *, u_int);

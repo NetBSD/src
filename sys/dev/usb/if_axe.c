@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.50.6.1 2012/02/18 07:35:05 mrg Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.50.6.2 2012/02/24 09:11:42 mrg Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -89,14 +89,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.50.6.1 2012/02/18 07:35:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.50.6.2 2012/02/24 09:11:42 mrg Exp $");
 
-#if defined(__NetBSD__)
-#ifndef _MODULE
+#if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #endif
-#endif
-
 
 #include <sys/param.h>
 #include <sys/bus.h>

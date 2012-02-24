@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.58 2011/06/01 21:25:02 alnsn Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.58.6.1 2012/02/24 09:11:50 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -198,6 +198,8 @@ struct ktr_user {
 
 /*
  * KTR_SAUPCALL - scheduler activated upcall.
+ *
+ * The structure is no longer used, but retained for compatibility.
  */
 #define	KTR_SAUPCALL	13
 struct ktr_saupcall {
@@ -240,7 +242,6 @@ struct ktr_execfd {
 #define	KTRFAC_USER	(1<<KTR_USER)
 #define KTRFAC_EXEC_ARG	(1<<KTR_EXEC_ARG)
 #define KTRFAC_EXEC_ENV	(1<<KTR_EXEC_ENV)
-#define	KTRFAC_SAUPCALL	(1<<KTR_SAUPCALL)
 #define	KTRFAC_MIB	(1<<KTR_MIB)
 #define	KTRFAC_EXEC_FD	(1<<KTR_EXEC_FD)
 /*
@@ -296,7 +297,6 @@ void ktr_mib(const int *a , u_int b);
 void ktr_execarg(const void *, size_t);
 void ktr_execenv(const void *, size_t);
 void ktr_execfd(int, u_int);
-void ktr_saupcall(struct lwp *, int, int, int, void *, void *, void *);
 
 static inline bool
 ktrpoint(int fac)
@@ -407,13 +407,6 @@ ktrexecfd(int fd, u_int dtype)
 {
 	if (__predict_false(ktrace_on))
 		ktr_execfd(fd, dtype);
-}
-
-static inline void
-ktrsaupcall(struct lwp *a, int b, int c, int d, void *e, void *f, void *g)
-{
-	if (__predict_false(ktrace_on))
-		ktr_saupcall(a, b, c, d, e, f, g);
 }
 
 #endif	/* !_KERNEL */

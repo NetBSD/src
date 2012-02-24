@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg.c,v 1.2 2010/11/11 06:30:39 rmind Exp $	*/
+/*	$NetBSD: npf_alg.c,v 1.2.14.1 2012/02/24 09:11:49 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -36,10 +36,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.2 2010/11/11 06:30:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.2.14.1 2012/02/24 09:11:49 mrg Exp $");
 
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/pool.h>
 #include <net/pfil.h>
@@ -83,7 +82,7 @@ npf_alg_register(npf_algfunc_t match, npf_algfunc_t out, npf_algfunc_t in,
 {
 	npf_alg_t *alg;
 
-	alg = kmem_alloc(sizeof(npf_alg_t), KM_SLEEP);
+	alg = kmem_zalloc(sizeof(npf_alg_t), KM_SLEEP);
 	alg->na_bptr = alg;
 	alg->na_match_func = match;
 	alg->na_out_func = out;

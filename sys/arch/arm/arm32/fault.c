@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.78.12.1 2012/02/18 07:31:23 mrg Exp $	*/
+/*	$NetBSD: fault.c,v 1.78.12.2 2012/02/24 09:11:27 mrg Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -79,18 +79,15 @@
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_sa.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.78.12.1 2012/02/18 07:31:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.78.12.2 2012/02/24 09:11:27 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/kauth.h>
-
-#include <sys/savar.h>
 #include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
@@ -387,12 +384,6 @@ data_abort_handler(trapframe_t *tf)
 		}
 	} else {
 		map = &l->l_proc->p_vmspace->vm_map;
-#ifdef KERN_SA
-		if ((l->l_flag & LW_SA) && (~l->l_pflag & LP_SA_NOBLOCK)) {
-			l->l_savp->savp_faultaddr = (vaddr_t)far;
-			l->l_pflag |= LP_SA_PAGEFAULT;
-		}
-#endif
 	}
 
 	/*
@@ -453,10 +444,6 @@ data_abort_handler(trapframe_t *tf)
 	last_fault_code = fsr;
 #endif
 	if (pmap_fault_fixup(map->pmap, va, ftype, user)) {
-#ifdef KERN_SA
-		if (map != kernel_map)
-			l->l_pflag &= ~LP_SA_PAGEFAULT;
-#endif
 		UVMHIST_LOG(maphist, " <- ref/mod emul", 0, 0, 0, 0);
 		goto out;
 	}
@@ -475,11 +462,6 @@ data_abort_handler(trapframe_t *tf)
 	pcb->pcb_onfault = NULL;
 	error = uvm_fault(map, va, ftype);
 	pcb->pcb_onfault = onfault;
-
-#ifdef KERN_SA
-	if (map != kernel_map)
-		l->l_pflag &= ~LP_SA_PAGEFAULT;
-#endif
 
 	if (__predict_true(error == 0)) {
 		if (user)
@@ -866,20 +848,8 @@ prefetch_abort_handler(trapframe_t *tf)
 	}
 #endif
 
-#ifdef KERN_SA
-	if (map != kernel_map && (l->l_flag & LW_SA)) {
-		l->l_savp->savp_faultaddr = fault_pc;
-		l->l_pflag |= LP_SA_PAGEFAULT;
-	}
-#endif
-
 	KASSERT(pcb->pcb_onfault == NULL);
 	error = uvm_fault(map, va, VM_PROT_READ);
-
-#ifdef KERN_SA
-	if (map != kernel_map)
-		l->l_pflag &= ~LP_SA_PAGEFAULT;
-#endif
 
 	if (__predict_true(error == 0)) {
 		UVMHIST_LOG (maphist, " <- uvm", 0, 0, 0, 0);

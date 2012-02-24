@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscallargs.h,v 1.96.4.1 2012/02/18 07:33:58 mrg Exp $ */
+/* $NetBSD: netbsd32_syscallargs.h,v 1.96.4.2 2012/02/24 09:11:39 mrg Exp $ */
 
 /*
  * System call argument lists.
@@ -1637,30 +1637,6 @@ struct netbsd32__lwp_ctl_args {
 };
 check_syscall_args(netbsd32__lwp_ctl)
 
-struct netbsd32_sa_register_args {
-	syscallarg(netbsd32_sa_upcall_t) new;
-	syscallarg(netbsd32_sa_upcallp_t) old;
-	syscallarg(int) flags;
-	syscallarg(netbsd32_ssize_t) stackinfo_offset;
-};
-check_syscall_args(netbsd32_sa_register)
-
-struct netbsd32_sa_stacks_args {
-	syscallarg(int) num;
-	syscallarg(netbsd32_stackp_t) stacks;
-};
-check_syscall_args(netbsd32_sa_stacks)
-
-struct netbsd32_sa_setconcurrency_args {
-	syscallarg(int) concurrency;
-};
-check_syscall_args(netbsd32_sa_setconcurrency)
-
-struct netbsd32_sa_preempt_args {
-	syscallarg(int) sa_id;
-};
-check_syscall_args(netbsd32_sa_preempt)
-
 struct netbsd32___sigaction_sigtramp_args {
 	syscallarg(int) signum;
 	syscallarg(netbsd32_sigactionp_t) nsa;
@@ -3033,18 +3009,6 @@ int	netbsd32__lwp_setname(struct lwp *, const struct netbsd32__lwp_setname_args 
 int	netbsd32__lwp_getname(struct lwp *, const struct netbsd32__lwp_getname_args *, register_t *);
 
 int	netbsd32__lwp_ctl(struct lwp *, const struct netbsd32__lwp_ctl_args *, register_t *);
-
-int	netbsd32_sa_register(struct lwp *, const struct netbsd32_sa_register_args *, register_t *);
-
-int	netbsd32_sa_stacks(struct lwp *, const struct netbsd32_sa_stacks_args *, register_t *);
-
-int	sys_sa_enable(struct lwp *, const void *, register_t *);
-
-int	netbsd32_sa_setconcurrency(struct lwp *, const struct netbsd32_sa_setconcurrency_args *, register_t *);
-
-int	sys_sa_yield(struct lwp *, const void *, register_t *);
-
-int	netbsd32_sa_preempt(struct lwp *, const struct netbsd32_sa_preempt_args *, register_t *);
 
 int	netbsd32___sigaction_sigtramp(struct lwp *, const struct netbsd32___sigaction_sigtramp_args *, register_t *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ral_cardbus.c,v 1.22 2011/08/01 11:20:27 drochner Exp $	*/
+/*	$NetBSD: if_ral_cardbus.c,v 1.22.6.1 2012/02/24 09:11:41 mrg Exp $	*/
 /*	$OpenBSD: if_ral_cardbus.c,v 1.6 2006/01/09 20:03:31 damien Exp $  */
 
 /*-
@@ -22,7 +22,7 @@
  * CardBus front-end for the Ralink RT2560/RT2561/RT2561S/RT2661 driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.22 2011/08/01 11:20:27 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.22.6.1 2012/02/24 09:11:41 mrg Exp $");
 
 
 #include <sys/param.h>
@@ -95,7 +95,7 @@ int	ral_cardbus_match(device_t, cfdata_t, void *);
 void	ral_cardbus_attach(device_t, device_t, void *);
 int	ral_cardbus_detach(device_t, int);
 
-CFATTACH_DECL(ral_cardbus, sizeof (struct ral_cardbus_softc),
+CFATTACH_DECL_NEW(ral_cardbus, sizeof (struct ral_cardbus_softc),
     ral_cardbus_match, ral_cardbus_attach, ral_cardbus_detach, NULL);
 
 int	ral_cardbus_enable(struct rt2560_softc *);
@@ -128,7 +128,7 @@ void
 ral_cardbus_attach(device_t parent, device_t self,
     void *aux)
 {
-	struct ral_cardbus_softc *csc = (struct ral_cardbus_softc *)self;
+	struct ral_cardbus_softc *csc = device_private(self);
 	struct rt2560_softc *sc = &csc->sc_sc;
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
@@ -144,6 +144,7 @@ ral_cardbus_attach(device_t parent, device_t self,
 	    (PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_RALINK_RT2560) ?
 	    &ral_rt2560_opns : &ral_rt2661_opns;
 
+	sc->sc_dev = self;
 	sc->sc_dmat = ca->ca_dmat;
 	csc->sc_ct = ct;
 	csc->sc_tag = ca->ca_tag;
@@ -174,7 +175,7 @@ ral_cardbus_attach(device_t parent, device_t self,
 int
 ral_cardbus_detach(device_t self, int flags)
 {
-	struct ral_cardbus_softc *csc = (struct ral_cardbus_softc *)self;
+	struct ral_cardbus_softc *csc = device_private(self);
 	struct rt2560_softc *sc = &csc->sc_sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
 	int error;
@@ -212,7 +213,7 @@ ral_cardbus_enable(struct rt2560_softc *sc)
 	csc->sc_ih = Cardbus_intr_establish(ct, IPL_NET,
 	    csc->sc_opns->intr, sc);
 	if (csc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 				 "could not establish interrupt\n");
 		Cardbus_function_disable(ct);
 		return 1;

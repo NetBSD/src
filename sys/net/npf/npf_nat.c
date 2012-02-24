@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.8.2.1 2012/02/18 07:35:38 mrg Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.8.2.2 2012/02/24 09:11:49 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
@@ -76,10 +76,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.8.2.1 2012/02/18 07:35:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.8.2.2 2012/02/24 09:11:49 mrg Exp $");
 
 #include <sys/param.h>
-#include <sys/kernel.h>
+#include <sys/types.h>
 
 #include <sys/atomic.h>
 #include <sys/bitops.h>

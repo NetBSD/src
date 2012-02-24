@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.96.2.1 2012/02/18 07:31:35 mrg Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.96.2.2 2012/02/24 09:11:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.96.2.1 2012/02/18 07:31:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.96.2.2 2012/02/24 09:11:27 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -226,6 +226,7 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 	st_pool_phys   = stphysize - st_pool_size;
 	stphysize      = st_pool_phys;
 
+	physmem        = btoc(stphysize) + btoc(ttphysize);
 	machineid      = id;
 	esym           = esym_addr;
 

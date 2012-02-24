@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.27.6.1 2012/02/18 07:35:07 mrg Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.27.6.2 2012/02/24 09:11:42 mrg Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -54,25 +54,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.27.6.1 2012/02/18 07:35:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.27.6.2 2012/02/24 09:11:42 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#ifdef __FreeBSD__
-#include <sys/bus.h>
-#endif
 #include <sys/ioccom.h>
 #include <sys/fcntl.h>
 #include <sys/conf.h>
 #include <sys/tty.h>
 #include <sys/file.h>
-#if __FreeBSD_version >= 500014
-#include <sys/selinfo.h>
-#else
 #include <sys/select.h>
-#endif
 #include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/poll.h>
@@ -91,11 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.27.6.1 2012/02/18 07:35:07 mrg Exp $");
 
 #ifdef UBSA_DEBUG
 int		ubsadebug = 0;
-#ifdef __FreeBSD__
-SYSCTL_NODE(_hw_usb, OID_AUTO, ubsa, CTLFLAG_RW, 0, "USB ubsa");
-SYSCTL_INT(_hw_usb_ubsa, OID_AUTO, debug, CTLFLAG_RW,
-	   &ubsadebug, 0, "ubsa debug level");
-#endif
 
 #define	DPRINTFN(n, x)	do { \
 				if (ubsadebug > (n)) \

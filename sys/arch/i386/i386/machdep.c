@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.714.2.1 2012/02/18 07:32:21 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.714.2.2 2012/02/24 09:11:29 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.714.2.1 2012/02/18 07:32:21 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.714.2.2 2012/02/24 09:11:29 mrg Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -109,8 +109,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.714.2.1 2012/02/18 07:32:21 mrg Exp $"
 #include <sys/kcore.h>
 #include <sys/ucontext.h>
 #include <sys/ras.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/ksyms.h>
 #include <sys/device.h>
 
@@ -544,9 +542,8 @@ i386_switch_context(lwp_t *l)
 
 	pcb = lwp_getpcb(l);
 	ci = curcpu();
-	if (ci->ci_fpused) {
+	if (pcb->pcb_fpcpu != ci) {
 		HYPERVISOR_fpu_taskswitch(1);
-		ci->ci_fpused = 0;
 	}
 
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_esp0);
@@ -808,44 +805,6 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
-}
-
-void
-cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
-	   void *ap, void *sp, sa_upcall_t upcall)
-{
-	struct pmap *pmap = vm_map_pmap(&l->l_proc->p_vmspace->vm_map);
-	struct saframe *sf, frame;
-	struct trapframe *tf;
-
-	tf = l->l_md.md_regs;
-
-	/* Finally, copy out the rest of the frame. */
-	frame.sa_type = type;
-	frame.sa_sas = sas;
-	frame.sa_events = nevents;
-	frame.sa_interrupted = ninterrupted;
-	frame.sa_arg = ap;
-	frame.sa_ra = 0;
-
-	sf = (struct saframe *)sp - 1;
-	if (copyout(&frame, sf, sizeof(frame)) != 0) {
-		/* Copying onto the stack didn't work. Die. */
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
-	}
-
-	tf->tf_eip = (int) upcall;
-	tf->tf_esp = (int) sf;
-	tf->tf_ebp = 0; /* indicate call-frame-top to debuggers */
-	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_cs = pmap->pm_hiexec > I386_MAX_EXE_ADDR ?
-	    GSEL(GUCODEBIG_SEL, SEL_UPL) : GSEL(GUCODE_SEL, SEL_UPL);
-	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 }
 
 static void
@@ -1324,8 +1283,6 @@ init386(paddr_t first_avail)
 
 	uvm_lwp_setuarea(&lwp0, lwp0uarea);
 	pcb = lwp_getpcb(&lwp0);
-
-	cpu_feature[0] &= ~CPUID_FEAT_BLACKLIST;
 
 	cpu_init_msrs(&cpu_info_primary, true);
 

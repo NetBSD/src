@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.7 2011/05/02 00:29:54 rmind Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.7.8.1 2012/02/24 09:11:32 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,10 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.7 2011/05/02 00:29:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.7.8.1 2012/02/24 09:11:32 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
-#include "opt_sa.h"
 #include "opt_coredump.h"
 
 #include <sys/param.h>

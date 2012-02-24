@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.48.8.1 2012/02/18 07:33:00 mrg Exp $	*/
+/*	$NetBSD: syscall.c,v 1.48.8.2 2012/02/24 09:11:33 mrg Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -34,7 +34,6 @@
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
-#include "opt_sa.h"
 /* DO NOT INCLUDE opt_compat_XXX.h */
 /* If needed, they will be included by file that includes this one */
 
@@ -44,8 +43,6 @@
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscallvar.h>
 
 #include <uvm/uvm_extern.h>
@@ -64,7 +61,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.48.8.1 2012/02/18 07:33:00 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.48.8.2 2012/02/24 09:11:33 mrg Exp $");
 
 void
 child_return(void *arg)
@@ -106,12 +103,6 @@ EMULNAME(syscall_plain)(struct trapframe *tf)
 	code = tf->tf_fixreg[0];
 	params = tf->tf_fixreg + FIRSTARG;
 	n = NARGREG;
-
-#ifdef KERN_SA
-	if (__predict_false((l->l_savp)
-            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
-		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
-#endif
 
 	{
 		switch (code) {
@@ -205,12 +196,6 @@ EMULNAME(syscall_fancy)(struct trapframe *tf)
 	code = tf->tf_fixreg[0];
 	params = tf->tf_fixreg + FIRSTARG;
 	n = NARGREG;
-
-#ifdef KERN_SA
-	if (__predict_false((l->l_savp)
-            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
-		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
-#endif
 
 	realcode = code;
 	{

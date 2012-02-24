@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.602.2.1 2012/02/18 07:35:11 mrg Exp $
+$NetBSD: usbdevs,v 1.602.2.2 2012/02/24 09:11:43 mrg Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@ $NetBSD: usbdevs,v 1.602.2.1 2012/02/18 07:35:11 mrg Exp $
  */
 
 vendor EGALAX2		0x0123	eGalax, Inc.
+vendor QUAN		0x01e1	Quan
 vendor CHIPSBANK	0x0204	Chipsbank
 vendor AOX		0x03e8	AOX
 vendor ATMEL		0x03eb	Atmel
@@ -2326,6 +2327,9 @@ product QUALCOMMINC AC8700	0xfffe	CDMA 1xEVDO USB modem
 
 /* Qualcomm Kyocera products */
 product QUALCOMM_K CDMA_MSM_K	0x17da	Qualcomm Kyocera CDMA Technologies MSM
+
+/* Quan products */
+product QUAN DM9601		0x9601	USB ethernet
 
 /* Quanta products */
 product QUANTA RT3070		0x0304	RT3070

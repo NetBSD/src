@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.111 2011/02/08 20:20:09 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.111.8.1 2012/02/24 09:11:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.111 2011/02/08 20:20:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.111.8.1 2012/02/24 09:11:28 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -57,8 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.111 2011/02/08 20:20:09 rmind Exp $");
 #include <sys/resourcevar.h>
 #include <sys/syslog.h>
 #include <sys/syscall.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/userret.h>
 #include <sys/kauth.h>
 
@@ -597,11 +595,6 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 			map = kernel_map;
 		else {
 			map = vm ? &vm->vm_map : kernel_map;
-			if ((l->l_flag & LW_SA)
-			    && (~l->l_pflag & LP_SA_NOBLOCK)) {
-				l->l_savp->savp_faultaddr = (vaddr_t)v;
-				l->l_pflag |= LP_SA_PAGEFAULT;
-			}
 		}
 
 		if (WRFAULT(code))
@@ -644,7 +637,6 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 #endif
 				return;
 			}
-			l->l_pflag &= ~LP_SA_PAGEFAULT;
 			goto out;
 		}
 		if (rv == EACCES) {
@@ -663,7 +655,6 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 			       type, code);
 			panictrap(type, code, v, fp);
 		}
-		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		ksi.ksi_addr = (void *)v;
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
