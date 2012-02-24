@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.128 2011/12/23 00:51:44 jakllsch Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.129 2012/02/24 06:48:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.128 2011/12/23 00:51:44 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.129 2012/02/24 06:48:24 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -497,11 +497,7 @@ uaudio_attach(device_t parent, device_t self, void *aux)
 			   sc->sc_dev);
 
 	DPRINTF("%s", "doing audio_attach_mi\n");
-#if defined(__OpenBSD__)
-	audio_attach_mi(&uaudio_hw_if, sc, &sc->sc_dev);
-#else
 	sc->sc_audiodev = audio_attach_mi(&uaudio_hw_if, sc, sc->sc_dev);
-#endif
 
 	return;
 }

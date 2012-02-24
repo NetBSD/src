@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.62 2011/12/23 00:51:47 jakllsch Exp $	*/
+/*	$NetBSD: umodem.c,v 1.63 2012/02/24 06:48:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.62 2011/12/23 00:51:47 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.63 2012/02/24 06:48:27 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,9 +138,6 @@ int
 umodem_detach(device_t self, int flags)
 {
 	struct umodem_softc *sc = device_private(self);
-#ifdef __FreeBSD__
-	int flags = 0;
-#endif
 
 	return umodem_common_detach(sc, flags);
 }

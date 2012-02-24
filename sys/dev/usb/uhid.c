@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.84 2010/11/03 22:34:24 dyoung Exp $	*/
+/*	$NetBSD: uhid.c,v 1.85 2012/02/24 06:48:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.84 2010/11/03 22:34:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.85 2012/02/24 06:48:25 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -211,13 +211,7 @@ uhid_detach(device_t self, int flags)
 	}
 
 	/* locate the major number */
-#if defined(__NetBSD__)
 	maj = cdevsw_lookup_major(&uhid_cdevsw);
-#elif defined(__OpenBSD__)
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == uhidopen)
-			break;
-#endif
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = device_unit(self);
