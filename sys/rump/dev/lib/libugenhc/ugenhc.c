@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.9 2010/03/22 12:05:45 pooka Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.9.14.1 2012/02/24 07:35:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.9 2010/03/22 12:05:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.9.14.1 2012/02/24 07:35:00 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -312,6 +312,7 @@ rumpusb_root_ctrl_start(usbd_xfer_handle xfer)
 
 ret:
 	xfer->status = err;
+	/* XXX locking */
 	usb_transfer_complete(xfer);
 	return (USBD_IN_PROGRESS);
 }
@@ -842,6 +843,7 @@ rumpusb_device_bulk_transfer(usbd_xfer_handle xfer)
 		    SIMPLEQ_FIRST(&xfer->pipe->queue));
 	} else {
 		/* biglocked */
+		/* XXX locking */
 		err = usb_insert_transfer(xfer);
 		if (err)
 			return err;
