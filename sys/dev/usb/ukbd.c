@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.115 2011/12/23 00:51:47 jakllsch Exp $        */
+/*      $NetBSD: ukbd.c,v 1.116 2012/02/24 06:48:26 mrg Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.115 2011/12/23 00:51:47 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.116 2012/02/24 06:48:26 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ Static const struct ukbd_keycodetrans trtab_gdium_fn[] = {
 };
 #endif
 
-#if defined(__NetBSD__) && defined(WSDISPLAY_COMPAT_RAWKBD)
+#if defined(WSDISPLAY_COMPAT_RAWKBD)
 #define NN 0			/* no translation */
 /*
  * Translate USB keycodes to US keyboard XT scancodes.
@@ -220,7 +220,7 @@ Static const u_int8_t ukbd_trtab[256] = {
       NN,   NN,   NN,   NN,   NN,   NN,   NN,   NN, /* f0 - f7 */
       NN,   NN,   NN,   NN,   NN,   NN,   NN,   NN, /* f8 - ff */
 };
-#endif /* defined(__NetBSD__) && defined(WSDISPLAY_COMPAT_RAWKBD) */
+#endif /* defined(WSDISPLAY_COMPAT_RAWKBD) */
 
 #define KEY_ERROR 0x01
 
@@ -261,7 +261,6 @@ struct ukbd_softc {
 	struct hid_location sc_capsloc;
 	struct hid_location sc_scroloc;
 	int sc_leds;
-#if defined(__NetBSD__)
 	device_t sc_wskbddev;
 
 #if defined(WSDISPLAY_COMPAT_RAWKBD)
@@ -278,7 +277,6 @@ struct ukbd_softc {
 	int sc_spl;
 	int sc_npollchar;
 	u_int16_t sc_pollchars[MAXKEYS];
-#endif /* defined(__NetBSD__) */
 
 	u_char sc_dying;
 };
@@ -319,13 +317,11 @@ Static int	ukbd_is_console;
 Static void	ukbd_cngetc(void *, u_int *, int *);
 Static void	ukbd_cnpollc(void *, int);
 
-#if defined(__NetBSD__)
 const struct wskbd_consops ukbd_consops = {
 	ukbd_cngetc,
 	ukbd_cnpollc,
 	NULL,	/* bell */
 };
-#endif
 
 Static const char *ukbd_parse_desc(struct ukbd_softc *sc);
 
@@ -336,7 +332,6 @@ Static void	ukbd_delayed_decode(void *addr);
 Static int	ukbd_enable(void *, int);
 Static void	ukbd_set_leds(void *, int);
 
-#if defined(__NetBSD__)
 Static int	ukbd_ioctl(void *, u_long, void *, int, struct lwp *);
 #if  defined(WSDISPLAY_COMPAT_RAWKBD) && defined(UKBD_REPEAT)
 Static void	ukbd_rawrepeat(void *v);
@@ -360,7 +355,6 @@ const struct wskbd_mapdata ukbd_keymapdata = {
 	KB_US,
 #endif
 };
-#endif
 
 static int ukbd_match(device_t, cfdata_t, void *);
 static void ukbd_attach(device_t, device_t, void *);
@@ -395,11 +389,7 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 	struct uhidev_attach_arg *uha = aux;
 	u_int32_t qflags;
 	const char *parseerr;
-#if defined(__NetBSD__)
 	struct wskbddev_attach_args a;
-#else
-	int i;
-#endif
 
 	sc->sc_hdev.sc_dev = self;
 	sc->sc_hdev.sc_intr = ukbd_intr;
