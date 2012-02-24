@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2012/01/28 14:24:53 joerg Exp $
+#	$NetBSD: Makefile,v 1.6.2.1 2012/02/24 16:33:10 riz Exp $
 
 # build GCC's libgomp, so that -fopenmp works.
 
@@ -69,6 +69,8 @@ INCS=		omp.h
 INCSDIR=	/usr/include/gcc-4.5
 .endif
 
+.else			# } else {
+libinstall::
 .endif			# }
 
 .include <bsd.lib.mk>
