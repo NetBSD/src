@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.88 2012/02/24 11:43:06 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.89 2012/02/25 18:57:50 bouyer Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.88 2012/02/24 11:43:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.89 2012/02/25 18:57:50 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -409,6 +409,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 	ci->ci_cpuid = cpunum;
 
 	KASSERT(HYPERVISOR_shared_info != NULL);
+	KASSERT(cpunum < XEN_LEGACY_MAX_VCPUS);
 	ci->ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[cpunum];
 
 	KASSERT(ci->ci_func == 0);
@@ -434,6 +435,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		KASSERT(ci->ci_data.cpu_idlelwp != NULL);
 	}
 
+	KASSERT(ci->ci_cpuid == ci->ci_index);
 	ci->ci_cpumask = (1 << cpu_index(ci));
 	pmap_reference(pmap_kernel());
 	ci->ci_pmap = pmap_kernel();
