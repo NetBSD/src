@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.151 2012/02/10 20:54:11 nakayama Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.152 2012/02/25 09:19:30 tron Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -814,7 +814,7 @@ all)
 	makedev tun0 tun1 tun2 tun3
 	makedev ipl pf crypto random
 	makedev lockstat clockctl cpuctl
-	makedev atabus0 atabus1 atabus2 atabus3
+	makedev atabus0 atabus1 atabus2 atabus3 atabus4 atabus5 atabus6 atabus7
 	makedev tap tap0 tap1 tap2 tap3
 	makedev gpio gpio0 gpio1 gpio2 gpio3 gpio4 gpio5 gpio6 gpio7
 	makedev pad pad0 pad1 pad2 pad3
