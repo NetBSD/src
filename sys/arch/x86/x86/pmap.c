@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.173 2012/02/24 08:44:44 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.174 2012/02/25 12:33:53 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.173 2012/02/24 08:44:44 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.174 2012/02/25 12:33:53 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1548,42 +1548,9 @@ pmap_prealloc_lowmem_ptps(void)
 {
 	int level;
 	paddr_t newp;
-#ifdef XEN
-	paddr_t pdes_pa;
-
-	pdes_pa = pmap_pdirpa(pmap_kernel(), 0);
-	level = PTP_LEVELS;
-	for (;;) {
-		newp = avail_start;
-		avail_start += PAGE_SIZE;
-		HYPERVISOR_update_va_mapping ((vaddr_t)early_zerop,
-		    xpmap_ptom_masked(newp) | PG_u | PG_V | PG_RW, UVMF_INVLPG);
-		memset(early_zerop, 0, PAGE_SIZE);
-		/* Mark R/O before installing */
-		HYPERVISOR_update_va_mapping ((vaddr_t)early_zerop,
-		    xpmap_ptom_masked(newp) | PG_u | PG_V, UVMF_INVLPG);
-		if (newp < (NKL2_KIMG_ENTRIES * NBPD_L2))
-			HYPERVISOR_update_va_mapping (newp + KERNBASE,
-			    xpmap_ptom_masked(newp) | PG_u | PG_V, UVMF_INVLPG);
-		/* Update the pmap_kernel() L4 shadow */
-		xpq_queue_pte_update (
-		    xpmap_ptom_masked(pdes_pa)
-		    + (pl_i(0, level) * sizeof (pd_entry_t)),
-		    xpmap_ptom_masked(newp) | PG_RW | PG_u | PG_V);
-		/* sync to per-cpu PD */
-		xpq_queue_pte_update(
-			xpmap_ptom_masked(cpu_info_primary.ci_kpm_pdirpa +
-			    pl_i(0, PTP_LEVELS) *
-			    sizeof(pd_entry_t)),
-			pmap_kernel()->pm_pdir[pl_i(0, PTP_LEVELS)]);
-		pmap_pte_flush();
-		level--;
-		if (level <= 1)
-			break;
-		pdes_pa = newp;
-	}
-#else /* XEN */
 	pd_entry_t *pdes;
+
+	const pd_entry_t pteflags = PG_k | PG_V | PG_RW;
 
 	pdes = pmap_kernel()->pm_pdir;
 	level = PTP_LEVELS;
@@ -1593,18 +1560,47 @@ pmap_prealloc_lowmem_ptps(void)
 #ifdef __HAVE_DIRECT_MAP
 		memset((void *)PMAP_DIRECT_MAP(newp), 0, PAGE_SIZE);
 #else
-		pmap_pte_set(early_zero_pte, (newp & PG_FRAME) | PG_V | PG_RW);
+		pmap_pte_set(early_zero_pte, pmap_pa2pte(newp) | pteflags);
 		pmap_pte_flush();
 		pmap_update_pg((vaddr_t)early_zerop);
 		memset(early_zerop, 0, PAGE_SIZE);
 #endif
-		pdes[pl_i(0, level)] = (newp & PG_FRAME) | PG_V | PG_RW;
+
+#ifdef XEN
+		/* Mark R/O before installing */
+		HYPERVISOR_update_va_mapping ((vaddr_t)early_zerop,
+		    xpmap_ptom_masked(newp) | PG_u | PG_V, UVMF_INVLPG);
+		if (newp < (NKL2_KIMG_ENTRIES * NBPD_L2))
+			HYPERVISOR_update_va_mapping (newp + KERNBASE,
+			    xpmap_ptom_masked(newp) | PG_u | PG_V, UVMF_INVLPG);
+
+
+		if (level == PTP_LEVELS) { /* Top level pde is per-cpu */
+			pd_entry_t *kpm_pdir;
+			/* Reach it via recursive mapping */
+			kpm_pdir = normal_pdes[PTP_LEVELS - 2];
+
+			/* Set it as usual. We can't defer this
+			 * outside the loop since recursive
+			 * pte entries won't be accessible during
+			 * further iterations at lower levels
+			 * otherwise.
+			 */
+			pmap_pte_set(&kpm_pdir[pl_i(0, PTP_LEVELS)],
+			    pmap_pa2pte(newp) | pteflags);
+		}
+
+#endif /* XEN */			
+		pmap_pte_set(&pdes[pl_i(0, level)],
+		    pmap_pa2pte(newp) | pteflags);
+			
+		pmap_pte_flush();
+		
 		level--;
 		if (level <= 1)
 			break;
 		pdes = normal_pdes[level - 2];
 	}
-#endif /* XEN */
 }
 #endif /* defined(__x86_64__) */
 
@@ -2171,7 +2167,7 @@ pmap_pdp_dtor(void *arg, void *v)
 	for (i = 0; i < PDP_SIZE; i++, object += PAGE_SIZE) {
 		/* Set page RW again */
 		pte = kvtopte(object);
-		xpq_queue_pte_update(xpmap_ptetomach(pte), *pte | PG_RW);
+		pmap_pte_set(pte, *pte | PG_RW);
 		xen_bcast_invlpg((vaddr_t)object);
 	}
 	splx(s);
@@ -4191,7 +4187,7 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 			pmap_get_physpage(va, level - 1, &pa);
 			pte = pmap_pa2pte(pa) | PG_k | PG_V | PG_RW;
 #ifdef XEN
-			xpq_queue_pte_update(xpmap_ptetomach(&pdep[i]), pte);
+			pmap_pte_set(&pdep[i], pte);
 #if defined(PAE) || defined(__x86_64__)
 			if (level == PTP_LEVELS && i >= PDIR_SLOT_KERN) {
 				if (__predict_true(
@@ -4211,8 +4207,7 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 					pd_entry_t *cpu_pdep =
 						&cpu_info_primary.ci_kpm_pdir[i];
 #endif
-					xpq_queue_pte_update(
-					    xpmap_ptetomach(cpu_pdep), pte);
+					pmap_pte_set(cpu_pdep, pte);
 				}
 			}
 #endif /* PAE || __x86_64__ */
@@ -4293,11 +4288,10 @@ pmap_growkernel(vaddr_t maxkvaddr)
 			for (pdkidx =  PDIR_SLOT_KERN + old;
 			    pdkidx < PDIR_SLOT_KERN + nkptp[PTP_LEVELS - 1];
 			    pdkidx++) {
-				xpq_queue_pte_update(
-				    xpmap_ptom(pmap_pdirpa(pm, pdkidx)),
+				pmap_pte_set(&pm->pm_pdir[pdkidx],
 				    kpm->pm_pdir[pdkidx]);
 			}
-			xpq_flush_queue();
+			pmap_pte_flush();
 		}
 		mutex_exit(&pmaps_lock);
 #endif /* __x86_64__ */
