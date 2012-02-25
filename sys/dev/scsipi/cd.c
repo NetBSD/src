@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.305 2012/02/02 19:43:06 tls Exp $	*/
+/*	$NetBSD: cd.c,v 1.306 2012/02/25 10:17:14 shattered Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.305 2012/02/02 19:43:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.306 2012/02/25 10:17:14 shattered Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1761,12 +1761,12 @@ cdgetdisklabel(struct cd_softc *cd)
 }
 
 /*
- * Reading a discs total capacity is aparently a very difficult issue for the
+ * Reading a disc's total capacity is apparently a very difficult issue for the
  * SCSI standardisation group. Every disc type seems to have its own
  * (re)invented size request method and modifiers. The failsafe way of
  * determining the total (max) capacity i.e. not the recorded capacity but the
  * total maximum capacity is to request the info on the last track and
- * calucate the total size.
+ * calculate the total size.
  *
  * For ROM drives, we go for the CD recorded capacity. For recordable devices
  * we count.
@@ -1783,7 +1783,7 @@ read_cd_capacity(struct scsipi_periph *periph, u_int *blksize, u_long *size)
 	uint32_t track_start, track_size;
 	int error, flags, msb, lsb, last_track;
 
-	/* if the device doesn't grog capacity, return the dummies */
+	/* if the device doesn't grok capacity, return the dummies */
 	if (periph->periph_quirks & PQUIRK_NOCAPACITY)
 		return 0;
 
