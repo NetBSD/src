@@ -1,0 +1,157 @@
+$NetBSD: TODO.usbmp,v 1.1.2.1 2012/02/25 07:59:03 mrg Exp $
+
+
+the majority of the USB MP device interface is documented in usbdivar.h.
+
+
+host controller porting:
+  - slhci
+  - arch/mips/adm5120/dev/ahci.c
+  - rump/dev/lib/libugenhc/ugenhc.c
+
+
+use /* XXXSMP ok */ markers for non-SMP-safe host controller driver uses.
+eg, "if (lock_ptr) mutex_enter(lock_ptr); else s = splusb();"
+
+
+add lots of asserts
+
+
+wakeup removal core:
+  - usb_detach_wait/wakeup() -> add a usb_detach_cvwait/broadcast() that
+    take a mutex
+
+
+convert uhidev users to MPSAFE:
+  ucycom(4) 
+  - own cdevsw that isn't D_MPSAFE; need to check intr handlers
+
+  uhid(4)
+  - needs some locking here (not completely tested changes)
+
+  ukbd(4)
+  ums(4)
+  uts(4)
+  pbms(4)
+  - depends upon wscons? check intr
+
+  uyurex(4)
+  - sysmon -- hm?
+
+
+wakeup/tsleep drivers:
+  - if_otus.c
+  - if_upgt.c
+  - if_zyd.c
+  - ucom.c
+  - ucycom.c
+  - ugen.c
+  - uirda.c
+  - ulpt.c
+  - umass_isdata.c
+  - usb.c
+  - usb_subr.c
+  - ustir.c
+  - uthum.c
+  - utoppy.c
+  - uvscom.c
+  - uyurex.c
+
+
+missing D_MPSAFE drivers:
+  - ucom
+  - ucycom
+  - ugen
+  - uhso
+  - ulpt
+  - urio
+  - usb
+  - uscanner
+  - utoppy
+
+
+missing CALLOUT_MPSAFE drivers:
+  - if_aue
+  - if_axe
+  - if_cue
+  - if_otus
+  - if_rum
+  - if_udav
+  - if_upgt
+  - if_ural
+  - if_url
+  - if_zyd
+  - ohci
+  - uhci
+  - ukbd
+  - ulpt
+  - usbdi
+  - uyurex
+
+
+driver testing:		STATUS
+  - uhub		working
+  - uhid		working, MPSAFE patches not yet fully tested
+  - uhidev		working
+  - ums			working
+  - uts
+  - ukbd		working
+  - ucycom
+  - uep
+  - udl
+  - ulpt
+  - uhso		? (must take kernel lock for scsipi)
+  - umass		working (must take kernel lock for scsipi)
+  - uaudio		working
+  - umidi		working
+  - uirda
+  - stuirda
+  - ustir
+  - irmce
+  - aue
+  - axe
+  - cdce
+  - cue
+  - kue
+  - udav
+  - url
+  - urndis
+  - atu
+  - otus
+  - ral
+  - rum
+  - upgt
+  - zyd
+  - upl
+  - uberry
+  - uipad
+  - urio
+  - uscanner		? (must take kernel lock for scsipi)
+  - usscanner
+  - utoppy
+  - uyap
+  - udsbr
+  - ugen
+  - pseye
+  - uvideo
+  - auvitek
+  - emdtv
+  - ubt
+  - aubtfwl
+  - u3ginit
+ucom attachments:
+  - umodem
+  - uark
+  - ubsa
+  - uchcom
+  - uftdi
+  - uipaq
+  - umct
+  - uplcom
+  - uslsa
+  - uvscom
+  - moscom
+  - uvisor
+  - ukyopon
+  - u3g
+  - ugensa
