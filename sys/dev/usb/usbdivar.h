@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.93.8.9 2012/02/25 10:26:24 mrg Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.93.8.10 2012/02/25 20:46:34 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -62,7 +62,8 @@
  *	cleartoggle		-
  *	done			x
  *
- * The above semantics are likely to change.
+ * The above semantics are likely to change.  Little performance
+ * evaluation has been done on this code and the locking strategy.
  * 
  * USB functions known to expect the lock taken include (this list is
  * probably not exhaustive):
@@ -152,7 +153,6 @@ struct usbd_bus {
 	char			use_polling;
 	device_t		usbctl;
 	struct usb_device_stats	stats;
-	int 			intr_context;
 	u_int			no_intrs;
 	int			usbrev;	/* USB revision */
 #define USBREV_UNKNOWN	0

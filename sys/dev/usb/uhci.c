@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.240.6.13 2012/02/25 12:53:34 mrg Exp $	*/
+/*	$NetBSD: uhci.c,v 1.240.6.14 2012/02/25 20:46:33 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240.6.13 2012/02/25 12:53:34 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240.6.14 2012/02/25 20:46:33 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240.6.13 2012/02/25 12:53:34 mrg Exp $");
 #include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <machine/endian.h>
 
@@ -1033,9 +1034,7 @@ uhci_poll_hub(void *addr)
 	xfer->actlen = 1;
 	xfer->status = USBD_NORMAL_COMPLETION;
 	mutex_enter(&sc->sc_lock);
-	xfer->device->bus->intr_context++;
 	usb_transfer_complete(xfer);
-	xfer->device->bus->intr_context--;
 	mutex_exit(&sc->sc_lock);
 }
 
@@ -1391,10 +1390,7 @@ uhci_softintr(void *v)
 
 	KASSERT(sc->sc_bus.use_polling || mutex_owned(&sc->sc_lock));
 
-	DPRINTFN(10,("%s: uhci_softintr (%d)\n", device_xname(sc->sc_dev),
-		     sc->sc_bus.intr_context));
-
-	sc->sc_bus.intr_context++;
+	DPRINTFN(10,("%s: uhci_softintr\n", device_xname(sc->sc_dev)));
 
 	/*
 	 * Interrupts on UHCI really suck.  When the host controller
@@ -1416,8 +1412,6 @@ uhci_softintr(void *v)
 		sc->sc_softwake = 0;
 		cv_broadcast(&sc->sc_softwake_cv);
 	}
-
-	sc->sc_bus.intr_context--;
 }
 
 /* Check for an interrupt. */
@@ -2152,7 +2146,7 @@ uhci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 		return;
 	}
 
-	if (xfer->device->bus->intr_context)
+	if (cpu_intr_p() || (curlwp->l_pflag & LP_INTR) != 0)
 		panic("uhci_abort_xfer: not in process context");
 
 	/*
