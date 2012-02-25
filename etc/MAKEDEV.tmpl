@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.152 2012/02/25 09:19:30 tron Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.153 2012/02/25 10:55:27 shattered Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -284,7 +284,6 @@
 #	veriexec Veriexec fingerprint loader
 #	video*	video capture devices
 #	view*	generic interface to graphic displays (Amiga)
-#	vmegen*	generic VME access
 #	wsfont*	console font control
 #	wsmux*	wscons event multiplexor
 #	xenevt	Xen event interface
@@ -1636,15 +1635,6 @@ isdntel[0-9]*)
 isdntrc[0-9]*)
 	unit=${i#isdntrc}
 	mkdev isdntrc$unit c %isdntrc_chr% $unit
-	;;
-
-vmegen)
-	makedev vmegen0 vmegen1 vmegen2 vmegen3
-	;;
-
-vmegen[0-9]*)
-	unit=${i#vmegen}
-	mkdev vmegen$unit c %vmegeneric_chr% $(($unit * 16 + 0))
 	;;
 
 wsfont)
