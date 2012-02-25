@@ -1,12 +1,12 @@
-/*	$NetBSD: uaudio.c,v 1.124.2.2 2012/02/24 09:11:42 mrg Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.124.2.3 2012/02/25 13:17:16 mrg Exp $	*/
 
 /*
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Lennart Augustsson (lennart@augustsson.net) at
- * Carlstedt Research & Technology.
+ * Carlstedt Research & Technology, and Matthew R. Green (mrg@eterna.com.au).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.124.2.2 2012/02/24 09:11:42 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.124.2.3 2012/02/25 13:17:16 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2570,7 +2570,7 @@ uaudio_trigger_input(void *addr, void *start, void *end, int blksize,
 	struct uaudio_softc *sc;
 	struct chan *ch;
 	usbd_status err;
-	int i, s;
+	int i;
 
 	sc = addr;
 	if (sc->sc_dying)
@@ -2602,10 +2602,8 @@ uaudio_trigger_input(void *addr, void *start, void *end, int blksize,
 	ch->arg = arg;
 
 	mutex_spin_exit(&sc->sc_intr_lock);
-	s = splusb();
 	for (i = 0; i < UAUDIO_NCHANBUFS-1; i++) /* XXX -1 shouldn't be needed */
 		uaudio_chan_rtransfer(ch);
-	splx(s);
 	mutex_spin_enter(&sc->sc_intr_lock);
 
 	return 0;
@@ -2619,7 +2617,7 @@ uaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 	struct uaudio_softc *sc;
 	struct chan *ch;
 	usbd_status err;
-	int i, s;
+	int i;
 
 	sc = addr;
 	if (sc->sc_dying)
@@ -2651,10 +2649,8 @@ uaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 	ch->arg = arg;
 
 	mutex_spin_exit(&sc->sc_intr_lock);
-	s = splusb();
 	for (i = 0; i < UAUDIO_NCHANBUFS-1; i++) /* XXX */
 		uaudio_chan_ptransfer(ch);
-	splx(s);
 	mutex_spin_enter(&sc->sc_intr_lock);
 
 	return 0;
@@ -2765,7 +2761,7 @@ uaudio_chan_free_buffers(struct uaudio_softc *sc, struct chan *ch)
 		usbd_free_xfer(ch->chanbufs[i].xfer);
 }
 
-/* Called at splusb() */
+/* Called with USB lock held. */
 Static void
 uaudio_chan_ptransfer(struct chan *ch)
 {
@@ -2868,7 +2864,7 @@ uaudio_chan_pintr(usbd_xfer_handle xfer, usbd_private_handle priv,
 	uaudio_chan_ptransfer(ch);
 }
 
-/* Called at splusb() */
+/* Called with USB lock held. */
 Static void
 uaudio_chan_rtransfer(struct chan *ch)
 {
