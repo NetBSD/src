@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.58 2012/02/10 06:28:39 mhitch Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.59 2012/02/25 02:43:08 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,9 +36,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.58 2012/02/10 06:28:39 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.59 2012/02/25 02:43:08 tsutsui Exp $");
 
 #include "opt_m68k_arch.h"
+#include "opt_extmem.h"
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -124,6 +125,19 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	kptpa = nextpa;
 	nptpages = RELOC(Sysptsize, int) + howmany(RELOC(physmem, int), NPTEPG) +
 		(IIOMAPSIZE + NPTEPG - 1) / NPTEPG;
+#ifdef EXTENDED_MEMORY
+	/*
+	 * Current supported maximum EXTENDED_MEMORY is 128MB on 060turbo.
+	 */
+#define MAX_EXTENDED_MEMORY	(128 * 1024 * 1024)
+	nptpages += howmany(btoc(MAX_EXTENDED_MEMORY), NPTEPG);
+
+	/*
+	 * mem_exist() in machdep.c needs two extra VA pages before pmap_init()
+	 * to probe >16MB memory.
+	 */
+	nptpages += 1;
+#endif
 	nextpa += nptpages * PAGE_SIZE;
 
 	/*
