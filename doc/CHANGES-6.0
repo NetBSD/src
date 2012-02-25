@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.24 2012/02/25 21:19:11 sborrill Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.25 2012/02/25 21:39:44 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -523,14 +523,15 @@ etc/MAKEDEV.tmpl				1.152
 	Create eight device nodes by default.
 	[tron, ticket #50]
 
-sys/arch/amd64/conf/XEN3_DOM0			1.78
+sys/arch/amd64/conf/XEN3_DOM0			1.78-1.80
 sys/arch/amd64/conf/XEN3_DOMU			1.37
-sys/arch/i386/conf/XEN3_DOM0			1.61
+sys/arch/i386/conf/XEN3_DOM0			1.61-1.63
 sys/arch/i386/conf/XEN3_DOMU			1.42
 
 	Xen is stable enough now to remove debug messages in
 	default kernel. Comment out options DEBUG from Xen
 	kernel; also comment out makeoptions DEBUG="-g" where
-	it was still enabled.
+	it was still enabled. Comment out MPDEBUG, ACPIVERBOSE
+	and MPVERBOSE.
 	[bouyer, ticket #52]
 
