@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.78 2012/02/25 17:03:34 bouyer Exp $
+# $NetBSD: XEN3_DOM0,v 1.79 2012/02/25 17:45:53 bouyer Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -217,7 +217,7 @@ options 	ACPI_SCANPCI		# find PCI roots using ACPI
 options 	ACPIVERBOSE		# verbose ACPI configuration messages
 #options 	MIIVERBOSE		# verbose PHY autoconfig messages
 options 	MPBIOS			# configure CPUs and APICs using MPBIOS
-options 	MPDEBUG			# MPBIOS configures PCI roots
+#options 	MPDEBUG			# MPBIOS configures PCI roots
 options 	MPVERBOSE		# verbose MPBIOS autoconfig messages
 options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 #options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
