@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.62 2012/02/25 17:45:53 bouyer Exp $
+#	$NetBSD: XEN3_DOM0,v 1.63 2012/02/25 18:11:05 bouyer Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -837,8 +837,8 @@ pciback* at pci?			#pci backend device
 acpi0		at hypervisor?
 options 	MPBIOS
 #options 	MPDEBUG
-options 	MPVERBOSE
-options 	ACPIVERBOSE
+#options 	MPVERBOSE
+#options 	ACPIVERBOSE
 #options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
 #options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
 #options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing
