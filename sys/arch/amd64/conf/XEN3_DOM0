@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.79 2012/02/25 17:45:53 bouyer Exp $
+# $NetBSD: XEN3_DOM0,v 1.80 2012/02/25 18:11:05 bouyer Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -214,11 +214,11 @@ acpi0		at hypervisor?
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
 options 	ACPI_SCANPCI		# find PCI roots using ACPI
 #options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
-options 	ACPIVERBOSE		# verbose ACPI configuration messages
+#options 	ACPIVERBOSE		# verbose ACPI configuration messages
 #options 	MIIVERBOSE		# verbose PHY autoconfig messages
 options 	MPBIOS			# configure CPUs and APICs using MPBIOS
 #options 	MPDEBUG			# MPBIOS configures PCI roots
-options 	MPVERBOSE		# verbose MPBIOS autoconfig messages
+#options 	MPVERBOSE		# verbose MPBIOS autoconfig messages
 options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 #options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
 #options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
