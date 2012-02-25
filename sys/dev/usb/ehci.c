@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.181.6.12 2012/02/25 10:26:23 mrg Exp $ */
+/*	$NetBSD: ehci.c,v 1.181.6.13 2012/02/25 20:46:33 mrg Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.6.12 2012/02/25 10:26:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.6.13 2012/02/25 20:46:33 mrg Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -69,6 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.6.12 2012/02/25 10:26:23 mrg Exp $");
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <machine/endian.h>
 
@@ -648,7 +649,6 @@ ehci_intr1(ehci_softc_t *sc)
 		return (0);
 
 	EOWRITE4(sc, EHCI_USBSTS, intrs); /* Acknowledge */
-	sc->sc_bus.intr_context++;
 	sc->sc_bus.no_intrs++;
 	if (eintrs & EHCI_STS_IAA) {
 		DPRINTF(("ehci_intr1: door bell\n"));
@@ -675,8 +675,6 @@ ehci_intr1(ehci_softc_t *sc)
 		kpreempt_enable();
 		eintrs &= ~EHCI_STS_PCD;
 	}
-
-	sc->sc_bus.intr_context--;
 
 	if (eintrs != 0) {
 		/* Block unprocessed interrupts. */
@@ -745,10 +743,7 @@ ehci_softintr(void *v)
 
 	KASSERT(sc->sc_bus.use_polling || mutex_owned(&sc->sc_lock));
 
-	DPRINTFN(10,("%s: ehci_softintr (%d)\n", device_xname(sc->sc_dev),
-		     sc->sc_bus.intr_context));
-
-	sc->sc_bus.intr_context++;
+	DPRINTFN(10,("%s: ehci_softintr\n", device_xname(sc->sc_dev)));
 
 	/*
 	 * The only explanation I can think of for why EHCI is as brain dead
@@ -771,8 +766,6 @@ ehci_softintr(void *v)
 		sc->sc_softwake = 0;
 		cv_broadcast(&sc->sc_softwake_cv);
 	}
-
-	sc->sc_bus.intr_context--;
 }
 
 /* Check for an interrupt. */
@@ -3010,7 +3003,7 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 		return;
 	}
 
-	if (xfer->device->bus->intr_context)
+	if (cpu_intr_p() || (curlwp->l_pflag & LP_INTR) != 0)
 		panic("ehci_abort_xfer: not in process context");
 
 	/*
