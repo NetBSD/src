@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.141.6.1 2012/02/24 09:11:43 mrg Exp $	*/
+/*	$NetBSD: umass.c,v 1.141.6.2 2012/02/25 20:49:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.141.6.1 2012/02/24 09:11:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.141.6.2 2012/02/25 20:49:17 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_umass.h"
@@ -308,6 +308,9 @@ umass_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal("\n");
+
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_USB);
+	cv_init(&sc->sc_detach_cv, "umassdet");
 
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	aprint_normal_dev(self, "%s\n", devinfop);
@@ -658,7 +661,7 @@ umass_detach(device_t self, int flags)
 {
 	struct umass_softc *sc = device_private(self);
 	struct umassbus_softc *scbus;
-	int rv = 0, i, s;
+	int rv = 0, i;
 
 	DPRINTF(UDMASS_USB, ("%s: detached\n", device_xname(sc->sc_dev)));
 
@@ -671,15 +674,15 @@ umass_detach(device_t self, int flags)
 	}
 
 	/* Do we really need reference counting?  Perhaps in ioctl() */
-	s = splusb();
+	mutex_enter(&sc->sc_lock);
 	if (--sc->sc_refcnt >= 0) {
 #ifdef DIAGNOSTIC
 		aprint_normal_dev(self, "waiting for refcnt\n");
 #endif
 		/* Wait for processes to go away. */
-		usb_detach_wait(sc->sc_dev);
+		usb_detach_waitcv(sc->sc_dev, &sc->sc_detach_cv, &sc->sc_lock);
 	}
-	splx(s);
+	mutex_exit(&sc->sc_lock);
 
 	scbus = sc->bus;
 	if (scbus != NULL) {
@@ -696,6 +699,9 @@ umass_detach(device_t self, int flags)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   sc->sc_dev);
+
+	mutex_destroy(&sc->sc_lock);
+	cv_destroy(&sc->sc_detach_cv);
 
 	return (rv);
 }
