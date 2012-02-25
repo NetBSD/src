@@ -1,13 +1,13 @@
-/*	$NetBSD: usbdi.c,v 1.134.2.11 2012/02/23 09:25:04 mrg Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.134.2.12 2012/02/25 10:26:24 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Lennart Augustsson (lennart@augustsson.net) at
- * Carlstedt Research & Technology.
+ * Carlstedt Research & Technology and Matthew R. Green (mrg@eterna.com.au).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134.2.11 2012/02/23 09:25:04 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134.2.12 2012/02/25 10:26:24 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"

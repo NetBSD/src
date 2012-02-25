@@ -1,14 +1,14 @@
-/*	$NetBSD: ohci.c,v 1.218.6.12 2012/02/23 09:25:04 mrg Exp $	*/
+/*	$NetBSD: ohci.c,v 1.218.6.13 2012/02/25 10:26:23 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
- * Copyright (c) 1998, 2004, 2005, 2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology, Jared D. McNeill (jmcneill@invisible.ca)
- * and Matthew R. Green.
+ * and Matthew R. Green (mrg@eterna.com.au).
  * This code is derived from software contributed to The NetBSD Foundation
  * by Charles M. Hannum.
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.12 2012/02/23 09:25:04 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.13 2012/02/25 10:26:23 mrg Exp $");
 
 #include "opt_usb.h"
 

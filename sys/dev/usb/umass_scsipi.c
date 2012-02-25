@@ -1,12 +1,12 @@
-/*	$NetBSD: umass_scsipi.c,v 1.38.6.2 2012/02/24 09:11:43 mrg Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.38.6.3 2012/02/25 10:26:24 mrg Exp $	*/
 
 /*
- * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2003, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Lennart Augustsson (lennart@augustsson.net) at
- * Carlstedt Research & Technology and by Charles M. Hamnnum.
+ * Carlstedt Research & Technology, Charles M. Hamnnum and Matthew R. Green.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.38.6.2 2012/02/24 09:11:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.38.6.3 2012/02/25 10:26:24 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_umass.h"

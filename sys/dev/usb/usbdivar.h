@@ -1,13 +1,13 @@
-/*	$NetBSD: usbdivar.h,v 1.93.8.8 2012/02/23 09:25:03 mrg Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.93.8.9 2012/02/25 10:26:24 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Lennart Augustsson (lennart@augustsson.net) at
- * Carlstedt Research & Technology.
+ * Carlstedt Research & Technology and Matthew R. Green (mrg@eterna.com.au).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
