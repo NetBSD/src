@@ -1,12 +1,12 @@
-/*	$NetBSD: uhidev.c,v 1.52.6.2 2012/02/23 09:31:56 mrg Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.52.6.3 2012/02/25 10:26:23 mrg Exp $	*/
 
 /*
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Lennart Augustsson (lennart@augustsson.net) at
- * Carlstedt Research & Technology.
+ * Carlstedt Research & Technology and Matthew R. Green (mrg@eterna.com.au).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.52.6.2 2012/02/23 09:31:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.52.6.3 2012/02/25 10:26:23 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
