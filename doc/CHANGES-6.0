@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.23 2012/02/25 21:18:22 sborrill Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.24 2012/02/25 21:19:11 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -533,3 +533,4 @@ sys/arch/i386/conf/XEN3_DOMU			1.42
 	kernel; also comment out makeoptions DEBUG="-g" where
 	it was still enabled.
 	[bouyer, ticket #52]
+
