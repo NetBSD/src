@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.174 2012/02/25 12:33:53 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.175 2012/02/25 19:32:27 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.174 2012/02/25 12:33:53 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.175 2012/02/25 19:32:27 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2168,6 +2168,7 @@ pmap_pdp_dtor(void *arg, void *v)
 		/* Set page RW again */
 		pte = kvtopte(object);
 		pmap_pte_set(pte, *pte | PG_RW);
+		pmap_pte_flush();
 		xen_bcast_invlpg((vaddr_t)object);
 	}
 	splx(s);
