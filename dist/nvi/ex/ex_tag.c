@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_tag.c,v 1.10 2011/08/17 12:56:55 christos Exp $ */
+/*	$NetBSD: ex_tag.c,v 1.11 2012/02/25 00:13:00 joerg Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -1411,7 +1411,7 @@ ctag_file(SCR *sp, TAGF *tfp, char *name, char **dirp, size_t *dlenp)
 #define	GREATER		1
 #define	LESS		(-1)
 
-#define	SKIP_PAST_NEWLINE(p, back)	while (p < back && *p++ != '\n');
+#define	SKIP_PAST_NEWLINE(p, back)	while (p < back && *p++ != '\n') continue;
 
 static char *
 binary_search(register char *string, register char *front, register char *back)
