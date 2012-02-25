@@ -1,12 +1,12 @@
-/*	$NetBSD: usbdi_util.c,v 1.55.12.2 2012/02/23 09:25:03 mrg Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.55.12.3 2012/02/25 20:47:32 mrg Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Lennart Augustsson (lennart@augustsson.net) at
- * Carlstedt Research & Technology.
+ * Carlstedt Research & Technology and Matthew R. Green (mrg@eterna.com.au).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.55.12.2 2012/02/23 09:25:03 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.55.12.3 2012/02/25 20:47:32 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -511,6 +511,23 @@ usbd_intr_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 		usbd_clear_endpoint_stall(pipe);
 	}
 	return (err);
+}
+
+void
+usb_detach_waitcv(device_t dv, kcondvar_t *cv, kmutex_t *lock)
+{
+	DPRINTF(("usb_detach_waitcv: waiting for %s\n", device_xname(dv)));
+	if (cv_timedwait(cv, lock, hz * 60))	// dv, PZERO, "usbdet", hz * 60
+		printf("usb_detach_waitcv: %s didn't detach\n",
+		        device_xname(dv));
+	DPRINTF(("usb_detach_waitcv: %s done\n", device_xname(dv)));
+}
+
+void
+usb_detach_broadcast(device_t dv, kcondvar_t *cv)
+{
+	DPRINTF(("usb_detach_broadcast: for %s\n", device_xname(dv)));
+	cv_broadcast(cv);
 }
 
 void
