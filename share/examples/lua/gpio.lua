@@ -1,4 +1,4 @@
--- $NetBSD: gpio.lua,v 1.1 2011/10/15 12:58:43 mbalmer Exp $
+-- $NetBSD: gpio.lua,v 1.1.4.1 2012/02/25 09:58:25 sborrill Exp $
 
 require 'gpio'
 
@@ -12,20 +12,17 @@ local npins = g:info()
 
 print('gpio0 has ' .. npins .. ' pins.')
 
-for n = 1, npins do
+for n = 0, npins - 1 do
 	print('pin ' .. n .. ': ' .. g:read(n))
 end
 
-local oldval = g:write(32, gpio.PIN_HIGH)
-print('pin 32: ' .. oldval .. ' -> ' .. g:read(32))
+local oldval = g:write(31, gpio.PIN_HIGH)
+print('pin 31: ' .. oldval .. ' -> ' .. g:read(31))
 
-oldval = g:toggle(32)
-print('pin 32: ' .. oldval .. ' -> ' .. g:read(32))
+oldval = g:toggle(31)
+print('pin 31: ' .. oldval .. ' -> ' .. g:read(31))
 
-g:pulse(32, 1, 50)
-g:write(1, gpio.PIN_LOW)
+g:write(31, gpio.PIN_LOW)
 
-g:write(32, gpio.PIN_LOW)
-
-g:write(32, 5)
+g:write(31, 5)
 
