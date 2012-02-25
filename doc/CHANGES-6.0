@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.21 2012/02/25 09:58:45 sborrill Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.22 2012/02/25 14:48:36 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -515,4 +515,11 @@ share/examples/lua/gpio.lua			1.2
 	like Lua usually is.  The pulse() has been removed, use
 	gpiopwm(4) for that.
 	[mbalmer, ticket #49]
+
+etc/MAKEDEV.tmpl				1.152
+
+	Four instances of atabus(4) are not enough for modern systems
+	as the system will report one instance for each SATA port.
+	Create eight device nodes by default.
+	[tron, ticket #50]
 
