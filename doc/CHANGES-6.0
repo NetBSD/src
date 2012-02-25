@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.20 2012/02/24 17:50:35 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.21 2012/02/25 09:58:45 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -508,4 +508,11 @@ external/bsd/pkg_install/dist/delete/pkg_delete.1.in	delete
 
 	Sync with the most recent version of pkg_install(1).
 	[wiz, ticket #24]
+
+share/examples/lua/gpio.lua			1.2
+
+	GPIO pins are 0-based when accessed from Lua, not 1-based
+	like Lua usually is.  The pulse() has been removed, use
+	gpiopwm(4) for that.
+	[mbalmer, ticket #49]
 
