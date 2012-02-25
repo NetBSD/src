@@ -1,10 +1,11 @@
-/*	$NetBSD: umidivar.h,v 1.17.2.1 2012/02/18 07:35:10 mrg Exp $	*/
+/*	$NetBSD: umidivar.h,v 1.17.2.2 2012/02/25 10:26:24 mrg Exp $	*/
 /*
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Takuya SHIOZAKI (tshiozak@NetBSD.org).
+ * by Takuya SHIOZAKI (tshiozak@NetBSD.org) and Matthew R. Green
+ * (mrg@eterna.com.au).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
