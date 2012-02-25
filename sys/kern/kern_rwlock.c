@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.37 2011/03/20 23:19:16 rmind Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.38 2012/02/25 22:32:44 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.37 2011/03/20 23:19:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.38 2012/02/25 22:32:44 rmind Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -348,9 +348,9 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 			LOCKSTAT_START_TIMER(lsflag, spintime);
 			u_int count = SPINLOCK_BACKOFF_MIN;
 			do {
-				kpreempt_enable();
+				KPREEMPT_ENABLE(curlwp);
 				SPINLOCK_BACKOFF(count);
-				kpreempt_disable();
+				KPREEMPT_DISABLE(curlwp);
 				owner = rw->rw_owner;
 			} while (rw_oncpu(owner));
 			LOCKSTAT_STOP_TIMER(lsflag, spintime);
