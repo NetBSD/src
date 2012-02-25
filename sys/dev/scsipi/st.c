@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.218 2012/02/02 19:43:06 tls Exp $ */
+/*	$NetBSD: st.c,v 1.219 2012/02/25 10:15:50 shattered Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.218 2012/02/02 19:43:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.219 2012/02/25 10:15:50 shattered Exp $");
 
 #include "opt_scsi.h"
 
@@ -1398,7 +1398,7 @@ stioctl(dev_t dev, u_long cmd, void *arg, int flag, struct lwp *l)
 		}
 		SC_DEBUG(st->sc_periph, SCSIPI_DB1, ("[ioctl: get status]\n"));
 		memset(g, 0, sizeof(struct mtget));
-		g->mt_type = 0x7;	/* Ultrix compat *//*? */
+		g->mt_type = MT_ISAR;	/* Ultrix compat *//*? */
 		g->mt_blksiz = st->blksize;
 		g->mt_density = st->density;
 		g->mt_mblksiz[0] = st->modes[0].blksize;
