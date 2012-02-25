@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_amd64.c,v 1.6 2010/11/13 13:52:04 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_amd64.c,v 1.7 2012/02/25 21:21:09 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,13 +224,16 @@ agp_amd64_attach(device_t parent, device_t self, void *aux)
 		tag = pci_make_tag(pa->pa_pc, 0, i, 3);
 		id = pci_conf_read(pa->pa_pc, tag, PCI_ID_REG);
 		if (PCI_VENDOR(id) == PCI_VENDOR_AMD &&
-		    PCI_PRODUCT(id) == PCI_PRODUCT_AMD_AMD64_MISC) {
+		    (PCI_PRODUCT(id) == PCI_PRODUCT_AMD_AMD64_MISC ||
+		     PCI_PRODUCT(id) == PCI_PRODUCT_AMD_AMD64_F10_MISC)) {
 			asc->mctrl_tag[n] = tag;
 			n++;
 		}
 	}
-	if (n == 0)
+	if (n == 0) {
+		aprint_error(": No Miscellaneous Control unit found.\n");
 		return ENXIO;
+	}
 	asc->n_mctrl = n;
 
 	aprint_normal(": %d Miscellaneous Control unit(s) found.\n",
