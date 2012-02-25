@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.122 2012/02/20 19:14:23 bouyer Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.123 2012/02/25 22:28:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.122 2012/02/20 19:14:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.123 2012/02/25 22:28:06 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -729,6 +729,7 @@ again:
 				uvm_wait("plpg");
 				goto again;
 			}
+			return ENOMEM;
 		}
 		va = PMAP_MAP_POOLPAGE(VM_PAGE_TO_PHYS(pg));
 		if (__predict_false(va == 0)) {
@@ -766,7 +767,7 @@ again:
 				return ENOMEM;
 			}
 		}
-	
+
 		pg->flags &= ~PG_BUSY;	/* new page */
 		UVM_PAGE_OWN(pg, NULL);
 		pmap_kenter_pa(loopva, VM_PAGE_TO_PHYS(pg),
@@ -813,4 +814,3 @@ uvm_km_va_starved_p(void)
 
 	return (free < (total / 10));
 }
-
