@@ -1,4 +1,4 @@
-$NetBSD: TODO.usbmp,v 1.1.2.2 2012/02/25 10:26:23 mrg Exp $
+$NetBSD: TODO.usbmp,v 1.1.2.3 2012/02/25 12:57:32 mrg Exp $
 
 
 the majority of the USB MP device interface is documented in usbdivar.h.
@@ -17,9 +17,41 @@ eg, "if (lock_ptr) mutex_enter(lock_ptr); else s = splusb();"
 add lots of asserts
 
 
+bus->intr_context issues:
+  - intr_context is raised when the USB lock is dropped to call the call back
+    for usb_transfer_complete(), then some other cpu can run, take the lock
+    and end up triggering an "intr_context != 0" condition.
+  - usb_transfer_complete() is sometimes called with host intr lock held,
+    sometimes with usb lock
+  - hardware interrupt takes host intr lock to protect intr_context, but
+    software interrupt takes USB lock.
+  - need to re-consider soft_intr() API
+
+
 wakeup removal core:
   - usb_detach_wait/wakeup() -> add a usb_detach_cvwait/broadcast() that
     take a mutex
+  - drivers:
+      if_aue.c
+      if_axe.c
+      if_udav.c
+      if_url.c
+      ubt.c
+      ucom.c
+      ucycom.c
+      ugen.c
+      uhid.c		- done, untested
+      uhso.c
+      uirda.c
+      ulpt.c
+      umass.c		- done, untested
+      urio.c
+      usbdi_util.c
+      usbdi_util.h
+      uscanner.c
+      usscanner.c
+      ustir.c
+      utoppy.c
 
 
 convert uhidev users to MPSAFE:
