@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.3 2012/01/15 00:49:48 rmind Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.4 2012/02/26 21:14:50 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@ yyerror(const char *fmt, ...)
 %type	<num>		ifindex, port, opt_quick, on_iface
 %type	<num>		block_or_pass, rule_dir, block_opts, family, opt_family
 %type	<num>		opt_keep_state, icmp_type, table_type
-%type	<var>		addr_or_iface, port_range, iface, icmp_type_and_code
+%type	<var>		addr_or_iface, port_range, icmp_type_and_code
 %type	<var>		filt_addr, addr_and_mask, tcp_flags, tcp_flags_and_mask
 %type	<var>		modulearg_opts, procs, proc_op, modulearg, moduleargs
 %type	<filtopts>	filt_opts, all_or_filt_opts
@@ -536,10 +536,9 @@ filt_opts
 	;
 
 filt_addr
-	: iface		{ $$ = $1; }
-	| addr_and_mask	{ $$ = $1; }
-	| TABLE_ID 	{ $$ = npfctl_parse_table_id($1); }
-	| ANY		{ $$ = NULL; }
+	: addr_or_iface		{ $$ = $1; }
+	| TABLE_ID		{ $$ = npfctl_parse_table_id($1); }
+	| ANY			{ $$ = NULL; }
 	;
 
 addr_and_mask
@@ -563,7 +562,33 @@ addr_and_mask
 
 addr_or_iface
 	: addr_and_mask	{ assert($1 != NULL); $$ = $1; }
-	| iface		{ assert($1 != NULL); $$ = $1; }
+	| iface_name
+	{
+		$$ = npfctl_parse_iface($1);
+	}
+	| VAR_ID
+	{
+		npfvar_t *vp = npfvar_lookup($1);
+		const int type = npfvar_get_type(vp);
+
+		switch (type) {
+		case NPFVAR_VAR_ID:
+		case NPFVAR_STRING:
+			$$ = npfctl_parse_iface(npfvar_expand_string(vp));
+			break;
+		case NPFVAR_FAM:
+			$$ = vp;
+			break;
+		case -1:
+			yyerror("undefined variable '%s' for interface", $1);
+			break;
+		default:
+			yyerror("wrong variable '%s' type '%s' or interface",
+			    $1, npfvar_type(type));
+			$$ = NULL;
+			break;
+		}
+	}
 	;
 
 addr
@@ -647,36 +672,6 @@ icmp_type
 	{
 		char *s = npfvar_expand_string(npfvar_lookup($1));
 		$$ = npfctl_icmptype(s);
-	}
-	;
-
-iface
-	: iface_name
-	{
-		$$ = npfctl_parse_iface($1);
-	}
-	| VAR_ID
-	{
-		npfvar_t *vp = npfvar_lookup($1);
-		const int type = npfvar_get_type(vp);
-
-		switch (type) {
-		case NPFVAR_VAR_ID:
-		case NPFVAR_STRING:
-			$$ = npfctl_parse_iface(npfvar_expand_string(vp));
-			break;
-		case NPFVAR_FAM:
-			$$ = vp;
-			break;
-		case -1:
-			yyerror("undefined variable '%s' for interface", $1);
-			break;
-		default:
-			yyerror("wrong variable '%s' type '%s' or interface",
-			    $1, npfvar_type(type));
-			$$ = NULL;
-			break;
-		}
 	}
 	;
 
