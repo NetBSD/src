@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_data.c,v 1.10 2012/01/08 21:34:21 rmind Exp $	*/
+/*	$NetBSD: npf_data.c,v 1.11 2012/02/26 21:50:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.10 2012/01/08 21:34:21 rmind Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.11 2012/02/26 21:50:05 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h>
@@ -228,6 +228,45 @@ npfctl_parse_port_range(in_port_t s, in_port_t e)
 	return vp;
 out:
 	npfvar_destroy(vp);
+	return NULL;
+}
+
+npfvar_t *
+npfctl_parse_port_range_variable(const char *v)
+{
+	npfvar_t *vp = npfvar_lookup(v);
+	in_port_t p;
+	port_range_t *pr;
+	size_t count = npfvar_get_count(vp);
+	npfvar_t *pvp = npfvar_create(".port_range");
+
+	for (size_t i = 0; i < count; i++) {
+		int type = npfvar_get_type(vp, i);
+		void *data = npfvar_get_data(vp, type, i);
+		switch (type) {
+		case NPFVAR_IDENTIFIER:
+		case NPFVAR_STRING:
+			p = npfctl_portno(data);
+			npfvar_add_elements(pvp, npfctl_parse_port_range(p, p));
+			break;
+		case NPFVAR_PORT_RANGE:
+			pr = data;
+			npfvar_add_element(pvp, NPFVAR_PORT_RANGE, pr,
+			    sizeof(*pr));
+			break;
+		case NPFVAR_NUM:
+			p = *(unsigned long *)data;
+			npfvar_add_elements(pvp, npfctl_parse_port_range(p, p));
+			break;
+		default:
+			yyerror("wrong variable '%s' type '%s' for port range",
+			    v, npfvar_type(type));
+			goto out;
+		}
+	}
+	return pvp;
+out:
+	npfvar_destroy(pvp);
 	return NULL;
 }
 

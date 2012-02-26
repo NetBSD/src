@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.5 2012/02/20 00:18:19 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.6 2012/02/26 21:50:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.5 2012/02/20 00:18:19 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.6 2012/02/26 21:50:05 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -161,7 +161,7 @@ npfctl_build_fam(nc_ctx_t *nc, sa_family_t family,
 static void
 npfctl_build_vars(nc_ctx_t *nc, sa_family_t family, npfvar_t *vars, int opts)
 {
-	const int type = npfvar_get_type(vars);
+	const int type = npfvar_get_type(vars, 0);
 	size_t i;
 
 	npfctl_ncgen_group(nc);
@@ -335,7 +335,7 @@ npfctl_build_rpcall(nl_rproc_t *rp, const char *name, npfvar_t *args)
 			return;
 		}
 
-		const int type = npfvar_get_type(arg->ma_opts);
+		const int type = npfvar_get_type(arg->ma_opts, 0);
 		if (type != -1 && type != NPFVAR_NUM) {
 			yyerror("option '%s' is not numeric", aval);
 		}
