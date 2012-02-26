@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.86.8.2 2012/02/24 09:11:43 mrg Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.86.8.3 2012/02/26 07:12:50 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.86.8.2 2012/02/24 09:11:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.86.8.3 2012/02/26 07:12:50 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -351,7 +351,7 @@ ulpt_detach(device_t self, int flags)
 	if (--sc->sc_refcnt >= 0) {
 		/* There is noone to wake, aborting the pipe is enough */
 		/* Wait for processes to go away. */
-		usb_detach_wait(sc->sc_dev);
+		usb_detach_waitold(sc->sc_dev);
 	}
 	splx(s);
 
@@ -531,7 +531,7 @@ ulptopen(dev_t dev, int flag, int mode, struct lwp *l)
 
  done:
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 
 	DPRINTFN(2, ("ulptopen: done, error=%d\n", error));
 	return (error);
@@ -647,7 +647,7 @@ ulptwrite(dev_t dev, struct uio *uio, int flags)
 	sc->sc_refcnt++;
 	error = ulpt_do_write(sc, uio, flags);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 	return (error);
 }
 
@@ -830,7 +830,7 @@ ulptread(dev_t dev, struct uio *uio, int flags)
 	sc->sc_refcnt++;
 	error = ulpt_do_read(sc, uio, flags);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 	return (error);
 }
 
