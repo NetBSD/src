@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.3.14.1 2012/02/18 07:35:06 mrg Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.3.14.2 2012/02/26 06:28:58 mrg Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.3.14.1 2012/02/18 07:35:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.3.14.2 2012/02/26 06:28:58 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -31,7 +31,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.3.14.1 2012/02/18 07:35:06 mrg Exp $")
 #include <sys/sockio.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
-
 #include <sys/bus.h>
 #include <sys/endian.h>
 #include <sys/intr.h>
@@ -52,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.3.14.1 2012/02/18 07:35:06 mrg Exp $")
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
+#include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdevs.h>
 
 #include <dev/usb/if_upgtvar.h>
