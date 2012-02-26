@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.253 2012/01/22 03:53:32 tsutsui Exp $
+#	$NetBSD: build.sh,v 1.254 2012/02/26 20:32:40 tsutsui Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -503,6 +503,8 @@ initdefaults()
 	do_syspkgs=false
 	do_iso_image=false
 	do_iso_image_source=false
+	do_live_image=false
+	do_install_image=false
 	do_params=false
 	do_rump=false
 
@@ -1577,6 +1579,16 @@ validatemakeparams()
 		fi
 		;;
 	esac
+
+	# live-image and install-image targets require binary sets
+	# (actually DESTDIR/etc/mtree/set.* files) built with MKUNPRIVED.
+	# If release operation is specified with live-image or install-image,
+	# the release op should be performed with -U for later image ops.
+	#
+	if ${do_release} && ( ${do_live_image} || ${do_install_image} ) && \
+	    [ "${MKUNPRIVED}" = "no" ] ; then
+		bomb "-U must be specified on building release to create images later."
+	fi
 }
 
 
@@ -1644,7 +1656,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.253 2012/01/22 03:53:32 tsutsui Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.254 2012/02/26 20:32:40 tsutsui Exp $
 # with these arguments: ${_args}
 #
 
@@ -1972,13 +1984,13 @@ main()
 			statusmsg "Successful make ${op}"
 			;;
 
-		live-image)
-			${runcmd} "${makewrapper}" ${parallel} ${op} ||
-			    bomb "Failed to make ${op}"
-			statusmsg "Successful make ${op}"
-			;;
-
-		install-image)
+		live-image|install-image)
+			# install-image and live-image require mtree spec files
+			# built with UNPRIVED.  Assume UNPRIVED build has been
+			# performed if METALOG file is created in DESTDIR.
+			if [ ! -e "${DESTDIR}/METALOG" ] ; then
+				bomb "The release binaries must have been built with -U to create images."
+			fi
 			${runcmd} "${makewrapper}" ${parallel} ${op} ||
 			    bomb "Failed to make ${op}"
 			statusmsg "Successful make ${op}"
