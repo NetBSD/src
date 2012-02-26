@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.h,v 1.41.16.1 2012/02/25 20:47:32 mrg Exp $	*/
+/*	$NetBSD: usbdi_util.h,v 1.41.16.2 2012/02/26 07:12:50 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -69,7 +69,6 @@ usbd_status	usbd_get_config(usbd_device_handle dev, u_int8_t *conf);
 usbd_status	usbd_get_string_desc(usbd_device_handle dev, int sindex,
 				     int langid,usb_string_descriptor_t *sdesc,
 				     int *sizep);
-void		usbd_delay_ms(usbd_device_handle, u_int);
 
 
 usbd_status usbd_set_config_no(usbd_device_handle, int, int);
@@ -83,8 +82,8 @@ usbd_status usbd_intr_transfer(usbd_xfer_handle, usbd_pipe_handle,
  			       u_int16_t, u_int32_t, void *,
  			       u_int32_t *, const char *);
 
-void usb_detach_wait(device_t);
-void usb_detach_wakeup(device_t);
+void usb_detach_waitold(device_t);
+void usb_detach_wakeupold(device_t);
 
 /*
  * MPSAFE versions - mutex must be at IPL_USB.

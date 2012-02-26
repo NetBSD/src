@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.38.12.2 2012/02/26 05:05:44 mrg Exp $	*/
+/*	$NetBSD: if_url.c,v 1.38.12.3 2012/02/26 07:12:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.38.12.2 2012/02/26 05:05:44 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.38.12.3 2012/02/26 07:12:49 mrg Exp $");
 
 #include "opt_inet.h"
 
@@ -351,7 +351,7 @@ url_detach(device_t self, int flags)
 
 	if (--sc->sc_refcnt >= 0) {
 		/* Wait for processes to go away */
-		usb_detach_wait(sc->sc_dev);
+		usb_detach_waitold(sc->sc_dev);
 	}
 
 	if (ifp->if_flags & IFF_RUNNING)
@@ -411,7 +411,7 @@ url_mem(struct url_softc *sc, int cmd, int offset, void *buf, int len)
 	sc->sc_refcnt++;
 	err = usbd_do_request(sc->sc_udev, &req, buf);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 	if (err) {
 		DPRINTF(("%s: url_mem(): %s failed. off=%04x, err=%d\n",
 			 device_xname(sc->sc_dev),
@@ -752,7 +752,7 @@ url_openpipes(struct url_softc *sc)
 
  done:
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 
 	return (error);
 }
@@ -919,7 +919,7 @@ url_send(struct url_softc *sc, struct mbuf *m, int idx)
 	sc->sc_refcnt++;
 	err = usbd_transfer(c->url_xfer);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 	if (err != USBD_IN_PROGRESS) {
 		printf("%s: url_send error=%s\n", device_xname(sc->sc_dev),
 		       usbd_errstr(err));
@@ -968,7 +968,7 @@ url_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 			sc->sc_refcnt++;
 			usbd_clear_endpoint_stall_async(sc->sc_pipe_tx);
 			if (--sc->sc_refcnt < 0)
-				usb_detach_wakeup(sc->sc_dev);
+				usb_detach_wakeupold(sc->sc_dev);
 		}
 		splx(s);
 		return;
@@ -1015,7 +1015,7 @@ url_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			sc->sc_refcnt++;
 			usbd_clear_endpoint_stall_async(sc->sc_pipe_rx);
 			if (--sc->sc_refcnt < 0)
-				usb_detach_wakeup(sc->sc_dev);
+				usb_detach_wakeupold(sc->sc_dev);
 		}
 		goto done;
 	}
@@ -1075,7 +1075,7 @@ url_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	sc->sc_refcnt++;
 	usbd_transfer(xfer);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 
 	DPRINTF(("%s: %s: start rx\n", device_xname(sc->sc_dev), __func__));
 }
@@ -1340,7 +1340,7 @@ url_unlock_mii(struct url_softc *sc)
 
 	rw_exit(&sc->sc_mii_rwlock);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 }
 
 Static int

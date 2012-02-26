@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.114.2.2 2012/02/24 09:11:43 mrg Exp $	*/
+/*	$NetBSD: ugen.c,v 1.114.2.3 2012/02/26 07:12:50 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.114.2.2 2012/02/24 09:11:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.114.2.3 2012/02/26 07:12:50 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -756,7 +756,7 @@ ugenread(dev_t dev, struct uio *uio, int flag)
 	sc->sc_refcnt++;
 	error = ugen_do_read(sc, endpt, uio, flag);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 	return (error);
 }
 
@@ -941,7 +941,7 @@ ugenwrite(dev_t dev, struct uio *uio, int flag)
 	sc->sc_refcnt++;
 	error = ugen_do_write(sc, endpt, uio, flag);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 	return (error);
 }
 
@@ -987,7 +987,7 @@ ugen_detach(device_t self, int flags)
 		for (i = 0; i < USB_MAX_ENDPOINTS; i++)
 			wakeup(&sc->sc_endpoints[i][IN]);
 		/* Wait for processes to go away. */
-		usb_detach_wait(sc->sc_dev);
+		usb_detach_waitold(sc->sc_dev);
 	}
 	splx(s);
 
@@ -1782,7 +1782,7 @@ ugenioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	sc->sc_refcnt++;
 	error = ugen_do_ioctl(sc, endpt, cmd, addr, flag, l);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 	return (error);
 }
 

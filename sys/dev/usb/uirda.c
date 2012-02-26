@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.34.12.1 2012/02/18 07:35:10 mrg Exp $	*/
+/*	$NetBSD: uirda.c,v 1.34.12.2 2012/02/26 07:12:50 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.34.12.1 2012/02/18 07:35:10 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.34.12.2 2012/02/26 07:12:50 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,7 +317,7 @@ uirda_detach(device_t self, int flags)
 	s = splusb();
 	if (--sc->sc_refcnt >= 0) {
 		/* Wait for processes to go away. */
-		usb_detach_wait(sc->sc_dev);
+		usb_detach_waitold(sc->sc_dev);
 	}
 	splx(s);
 
@@ -518,7 +518,7 @@ uirda_read(void *h, struct uio *uio, int flag)
 
  ret:
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 	return (error);
 }
 
@@ -570,7 +570,7 @@ uirda_write(void *h, struct uio *uio, int flag)
 
 	mutex_exit(&sc->sc_wr_buf_lk);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 
 	DPRINTFN(1,("%s: sc=%p done\n", __func__, sc));
 	return (error);
