@@ -1,4 +1,4 @@
-/* $NetBSD: t_printf.c,v 1.3 2012/02/17 20:17:38 christos Exp $ */
+/* $NetBSD: t_printf.c,v 1.4 2012/02/26 23:14:26 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -26,11 +26,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/types.h>
+#include <sys/resource.h>
 #include <atf-c.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <time.h>
+#include <stdlib.h>
 
 ATF_TC(snprintf_dotzero);
 ATF_TC_HEAD(snprintf_dotzero, tc)
@@ -96,10 +100,44 @@ ATF_TC_BODY(snprintf_posarg_error, tc)
 	ATF_CHECK(snprintf(s, sizeof(s), fmt, -23) == -1);
 }
 
+ATF_TC(snprintf_float);
+ATF_TC_HEAD(snprintf_float, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "test that floating conversions don't"
+	    " leak memory");
+}
+
+ATF_TC_BODY(snprintf_float, tc)
+{
+	union {
+		double d;
+		uint64_t bits;
+	} u;
+	uint32_t ul, uh;
+	time_t now;
+	char buf[1000];
+	struct rlimit rl;
+
+	rl.rlim_cur = rl.rlim_max = 1 * 1024 * 1024;
+	ATF_CHECK(setrlimit(RLIMIT_AS, &rl) != -1);
+	rl.rlim_cur = rl.rlim_max = 1 * 1024 * 1024;
+	ATF_CHECK(setrlimit(RLIMIT_DATA, &rl) != -1);
+
+	time(&now);
+	srand(now);
+	for (size_t i = 0; i < 1000000; i++) {
+		ul = rand();
+		uh = rand();
+		u.bits = (uint64_t)uh << 32 | ul;
+		ATF_CHECK(snprintf(buf, sizeof buf, " %.2f", u.d) != -1);
+	}
+}
+
 ATF_TC(sprintf_zeropad);
 ATF_TC_HEAD(sprintf_zeropad, tc)
 {
-
+ 
 	atf_tc_set_md_var(tc, "descr", "output format zero padding");
 }
 
@@ -127,6 +165,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, snprintf_posarg);
 	ATF_TP_ADD_TC(tp, snprintf_posarg_width);
 	ATF_TP_ADD_TC(tp, snprintf_posarg_error);
+	ATF_TP_ADD_TC(tp, snprintf_float);
 	ATF_TP_ADD_TC(tp, sprintf_zeropad);
 
 	return atf_no_error();
