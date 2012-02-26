@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.218.6.15 2012/02/25 20:46:34 mrg Exp $	*/
+/*	$NetBSD: ohci.c,v 1.218.6.16 2012/02/26 05:05:44 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.15 2012/02/25 20:46:34 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.16 2012/02/26 05:05:44 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -2317,7 +2317,7 @@ ohci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 		return;
 	}
 
-	if (cpu_intr_p() || (curlwp->l_pflag & LP_INTR) != 0)
+	if (cpu_intr_p() || cpu_softintr_p())
 		panic("ohci_abort_xfer: not in process context");
 
 	/*

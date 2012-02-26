@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.134.2.13 2012/02/25 20:46:34 mrg Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.134.2.14 2012/02/26 05:05:45 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134.2.13 2012/02/25 20:46:34 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134.2.14 2012/02/26 05:05:45 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -968,7 +968,7 @@ usbd_do_request_flags_pipe(usbd_device_handle dev, usbd_pipe_handle pipe,
 	usbd_status err;
 
 #ifdef DIAGNOSTIC
-	if (cpu_intr_p() || (curlwp->l_pflag & LP_INTR) != 0) {
+	if (cpu_intr_p() || cpu_softintr_p()) {
 		printf("usbd_do_request: not in process context\n");
 		return (USBD_INVAL);
 	}

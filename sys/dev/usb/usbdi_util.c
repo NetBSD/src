@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.55.12.3 2012/02/25 20:47:32 mrg Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.55.12.4 2012/02/26 05:05:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.55.12.3 2012/02/25 20:47:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.55.12.4 2012/02/26 05:05:45 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -439,7 +439,7 @@ usbd_bulk_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 	usbd_setup_xfer(xfer, pipe, 0, buf, *size,
 			flags, timeout, usbd_bulk_transfer_cb);
 	DPRINTFN(1, ("usbd_bulk_transfer: start transfer %d bytes\n", *size));
-	usbd_lock_pipe(pipe);	/* don't want callback until tsleep() */
+	usbd_lock_pipe(pipe);	/* don't want callback until block */
 	err = usbd_transfer(xfer);
 	if (err != USBD_IN_PROGRESS) {
 		usbd_unlock_pipe(pipe);
@@ -448,10 +448,10 @@ usbd_bulk_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 	if (pipe->device->bus->lock)
 		error = cv_wait_sig(&xfer->cv, pipe->device->bus->lock);
 	else
-		error = tsleep(xfer, PZERO | PCATCH, lbl, 0);
+		error = tsleep(xfer, PZERO | PCATCH, lbl, 0); /* XXXSMP ok */
 	usbd_unlock_pipe(pipe);
 	if (error) {
-		DPRINTF(("usbd_bulk_transfer: tsleep=%d\n", error));
+		DPRINTF(("usbd_bulk_transfer: wait=%d\n", error));
 		usbd_abort_pipe(pipe);
 		return (USBD_INTERRUPTED);
 	}
@@ -488,7 +488,7 @@ usbd_intr_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 	usbd_setup_xfer(xfer, pipe, 0, buf, *size,
 			flags, timeout, usbd_intr_transfer_cb);
 	DPRINTFN(1, ("usbd_intr_transfer: start transfer %d bytes\n", *size));
-	usbd_lock_pipe(pipe);	/* don't want callback until tsleep() */
+	usbd_lock_pipe(pipe);	/* don't want callback until block */
 	err = usbd_transfer(xfer);
 	if (err != USBD_IN_PROGRESS) {
 		usbd_unlock_pipe(pipe);
@@ -497,10 +497,10 @@ usbd_intr_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 	if (pipe->device->bus->lock)
 		error = cv_wait_sig(&xfer->cv, pipe->device->bus->lock);
 	else
-		error = tsleep(xfer, PZERO | PCATCH, lbl, 0);
+		error = tsleep(xfer, PZERO | PCATCH, lbl, 0); /* XXXSMP ok */
 	usbd_unlock_pipe(pipe);
 	if (error) {
-		DPRINTF(("usbd_intr_transfer: tsleep=%d\n", error));
+		DPRINTF(("usbd_intr_transfer: wait=%d\n", error));
 		usbd_abort_pipe(pipe);
 		return (USBD_INTERRUPTED);
 	}
@@ -534,7 +534,7 @@ void
 usb_detach_wait(device_t dv)
 {
 	DPRINTF(("usb_detach_wait: waiting for %s\n", device_xname(dv)));
-	if (tsleep(dv, PZERO, "usbdet", hz * 60))
+	if (tsleep(dv, PZERO, "usbdet", hz * 60)) /* XXXSMP ok */
 		printf("usb_detach_wait: %s didn't detach\n",
 		        device_xname(dv));
 	DPRINTF(("usb_detach_wait: %s done\n", device_xname(dv)));
@@ -544,7 +544,7 @@ void
 usb_detach_wakeup(device_t dv)
 {
 	DPRINTF(("usb_detach_wakeup: for %s\n", device_xname(dv)));
-	wakeup(dv);
+	wakeup(dv); /* XXXSMP ok */
 }
 
 const usb_cdc_descriptor_t *
