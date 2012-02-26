@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.180.6.3 2011/12/09 01:53:00 mrg Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.180.6.4 2012/02/26 06:59:38 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.180.6.3 2011/12/09 01:53:00 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.180.6.4 2012/02/26 06:59:38 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -296,20 +296,33 @@ usbd_devinfo_free(char *devinfop)
 
 /* Delay for a certain number of ms */
 void
-usb_delay_ms(usbd_bus_handle bus, u_int ms)
+usb_delay_ms_locked(usbd_bus_handle bus, u_int ms, kmutex_t *lock)
 {
 	/* Wait at least two clock ticks so we know the time has passed. */
 	if (bus->use_polling || cold)
 		delay((ms+1) * 1000);
 	else
-		tsleep(&ms, PRIBIO, "usbdly", (ms*hz+999)/1000 + 1);
+		kpause("usbdly", false, (ms*hz+999)/1000 + 1, lock);
+}
+
+void
+usb_delay_ms(usbd_bus_handle bus, u_int ms)
+{
+	usb_delay_ms_locked(bus, ms, NULL);
+}
+
+/* Delay given a device handle. */
+void
+usbd_delay_ms_locked(usbd_device_handle dev, u_int ms, kmutex_t *lock)
+{
+	usb_delay_ms_locked(dev->bus, ms, lock);
 }
 
 /* Delay given a device handle. */
 void
 usbd_delay_ms(usbd_device_handle dev, u_int ms)
 {
-	usb_delay_ms(dev->bus, ms);
+	usb_delay_ms_locked(dev->bus, ms, NULL);
 }
 
 usbd_status

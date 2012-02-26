@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.93.8.10 2012/02/25 20:46:34 mrg Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.93.8.11 2012/02/26 06:59:38 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
 
 #include <sys/callout.h>
 #include <sys/mutex.h>
+#include <sys/bus.h>
 
 /*
  * Discussion about locking in the USB code:
@@ -278,7 +279,10 @@ void usbd_dump_pipe(usbd_pipe_handle pipe);
 
 /* Routines from usb_subr.c */
 int		usbctlprint(void *, const char *);
+void		usb_delay_ms_locked(usbd_bus_handle, u_int, kmutex_t *);
 void		usb_delay_ms(usbd_bus_handle, u_int);
+void		usbd_delay_ms_locked(usbd_device_handle, u_int, kmutex_t *);
+void		usbd_delay_ms(usbd_device_handle, u_int);
 usbd_status	usbd_reset_port(usbd_device_handle, int, usb_port_status_t *);
 usbd_status	usbd_setup_pipe(usbd_device_handle dev,
 				usbd_interface_handle iface,
