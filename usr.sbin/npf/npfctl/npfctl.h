@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.11 2012/02/05 00:37:13 rmind Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.12 2012/02/26 21:50:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -103,6 +103,7 @@ npfvar_t * 	npfctl_parse_icmpcode(const char *);
 npfvar_t * 	npfctl_parse_icmp(uint8_t, uint8_t);
 npfvar_t *	npfctl_parse_iface(const char *);
 npfvar_t *	npfctl_parse_port_range(in_port_t, in_port_t);
+npfvar_t *	npfctl_parse_port_range_variable(const char *);
 npfvar_t *	npfctl_parse_fam_addr_mask(const char *, const char *,
 		    unsigned long *);
 fam_addr_mask_t *npfctl_parse_cidr(char *);
