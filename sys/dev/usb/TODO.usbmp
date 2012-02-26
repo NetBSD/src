@@ -1,4 +1,4 @@
-$NetBSD: TODO.usbmp,v 1.1.2.5 2012/02/26 05:05:44 mrg Exp $
+$NetBSD: TODO.usbmp,v 1.1.2.6 2012/02/26 07:12:49 mrg Exp $
 
 
 the majority of the USB MP device interface is documented in usbdivar.h.
@@ -20,8 +20,9 @@ add lots more asserts
 usb_event_thread() startup should use something to sync companions
 
 
-usb_transfer_complete() is sometimes called with host intr lock held,
-sometimes with usb lock.  may need to re-consider soft_intr() API.
+ehci issues:
+  - ehci_idone() has gone from splhigh() to splusb().  OK?
+  - ehci_suspend() no longer has splhardusb() across the whole function
 
 
 wake/wakeup conversion:
@@ -49,7 +50,10 @@ wake/wakeup conversion:
       ustir.c
       utoppy.c
   - maybe rename usb_detach_wait() to usb_detach_waitold(), so that the
-    new one can be usb_detach_waitcv()
+    new one can be usb_detach_wait()  [old names done]
+
+
+use usb_delay_ms_locked() in places
 
 
 convert uhidev users to MPSAFE:
@@ -79,7 +83,6 @@ wakeup/tsleep drivers:
   - uirda.c
   - ulpt.c
   - umass_isdata.c
-  - usb_subr.c: usb_delay_ms() should use kpause
   - ustir.c
   - uthum.c
   - utoppy.c

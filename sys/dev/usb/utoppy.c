@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.15.12.1 2011/12/08 03:10:09 mrg Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.15.12.2 2012/02/26 07:12:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.15.12.1 2011/12/08 03:10:09 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.15.12.2 2012/02/26 07:12:50 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,7 +345,7 @@ utoppy_detach(device_t self, int flags)
 
 	s = splusb();
 	if (--sc->sc_refcnt >= 0)
-		usb_detach_wait(sc->sc_dev);
+		usb_detach_waitold(sc->sc_dev);
 	splx(s);
 
 	/* locate the major number */
@@ -1424,7 +1424,7 @@ utoppyopen(dev_t dev, int flag, int mode,
 	    utoppy_state_string(sc->sc_state)));
 
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 
 	return (error);
 }
@@ -1562,7 +1562,7 @@ utoppyread(dev_t dev, struct uio *uio, int flags)
 	    device_xname(sc->sc_dev), err, utoppy_state_string(sc->sc_state)));
 
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 
 	return (err);
 }
@@ -1665,7 +1665,7 @@ utoppywrite(dev_t dev, struct uio *uio, int flags)
 	}
 
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 
 	return (err);
 }
@@ -1930,7 +1930,7 @@ utoppyioctl(dev_t dev, u_long cmd, void *data, int flag,
 		utoppy_cancel(sc);
 
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 
 	return (err);
 }

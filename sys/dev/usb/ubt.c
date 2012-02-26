@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.40.8.1 2012/02/18 07:35:07 mrg Exp $	*/
+/*	$NetBSD: ubt.c,v 1.40.8.2 2012/02/26 07:12:49 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.40.8.1 2012/02/18 07:35:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.40.8.2 2012/02/26 07:12:49 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -575,7 +575,7 @@ ubt_detach(device_t self, int flags)
 	/* wait for all processes to finish */
 	s = splusb();
 	if (sc->sc_refcnt-- > 0)
-		usb_detach_wait(sc->sc_dev);
+		usb_detach_waitold(sc->sc_dev);
 
 	splx(s);
 
@@ -1089,7 +1089,7 @@ ubt_xmit_cmd_complete(usbd_xfer_handle xfer,
 
 	if (--sc->sc_refcnt < 0) {
 		DPRINTF("sc_refcnt=%d\n", sc->sc_refcnt);
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 		return;
 	}
 
@@ -1200,7 +1200,7 @@ ubt_xmit_acl_complete(usbd_xfer_handle xfer,
 	sc->sc_aclwr_busy = 0;
 
 	if (--sc->sc_refcnt < 0) {
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 		return;
 	}
 
@@ -1365,7 +1365,7 @@ ubt_xmit_sco_complete(usbd_xfer_handle xfer,
 	}
 
 	if (--sc->sc_refcnt < 0) {
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 		return;
 	}
 
@@ -1500,7 +1500,7 @@ ubt_recv_acl_complete(usbd_xfer_handle xfer,
 
 	if (--sc->sc_refcnt < 0) {
 		DPRINTF("refcnt = %d\n", sc->sc_refcnt);
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 		return;
 	}
 
@@ -1591,7 +1591,7 @@ ubt_recv_sco_complete(usbd_xfer_handle xfer,
 
 	if (--sc->sc_refcnt < 0) {
 		DPRINTF("refcnt=%d\n", sc->sc_refcnt);
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 		return;
 	}
 

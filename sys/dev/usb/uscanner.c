@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.68.12.2 2012/02/24 09:11:44 mrg Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.68.12.3 2012/02/26 07:12:50 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.68.12.2 2012/02/24 09:11:44 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.68.12.3 2012/02/26 07:12:50 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -527,7 +527,7 @@ uscannerread(dev_t dev, struct uio *uio, int flag)
 	sc->sc_refcnt++;
 	error = uscanner_do_read(sc, uio, flag);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 
 	return (error);
 }
@@ -577,7 +577,7 @@ uscannerwrite(dev_t dev, struct uio *uio, int flag)
 	sc->sc_refcnt++;
 	error = uscanner_do_write(sc, uio, flag);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 	return (error);
 }
 
@@ -616,7 +616,7 @@ uscanner_detach(device_t self, int flags)
 	s = splusb();
 	if (--sc->sc_refcnt >= 0) {
 		/* Wait for processes to go away. */
-		usb_detach_wait(sc->sc_dev);
+		usb_detach_waitold(sc->sc_dev);
 	}
 	splx(s);
 
