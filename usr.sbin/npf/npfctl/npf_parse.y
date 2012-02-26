@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.4 2012/02/26 21:14:50 rmind Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.5 2012/02/26 21:50:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -211,6 +211,11 @@ list_elem
 	{
 		npfvar_t *vp = npfvar_create(".string");
 		npfvar_add_element(vp, NPFVAR_STRING, $1, strlen($1) + 1);
+		npfvar_add_elements(cvar, vp);
+	}
+	| NUM MINUS NUM
+	{
+		npfvar_t *vp = npfctl_parse_port_range($1, $3);
 		npfvar_add_elements(cvar, vp);
 	}
 	| NUM
@@ -569,7 +574,7 @@ addr_or_iface
 	| VAR_ID
 	{
 		npfvar_t *vp = npfvar_lookup($1);
-		const int type = npfvar_get_type(vp);
+		const int type = npfvar_get_type(vp, 0);
 
 		switch (type) {
 		case NPFVAR_VAR_ID:
@@ -605,6 +610,9 @@ port_range
 	| PORT port MINUS port	/* port from:to */
 	{
 		$$ = npfctl_parse_port_range($2, $4);
+	}
+	| PORT VAR_ID {
+		$$ = npfctl_parse_port_range_variable($2);
 	}
 	|
 	{
@@ -683,7 +691,7 @@ ifindex
 	| VAR_ID
 	{
 		npfvar_t *vp = npfvar_lookup($1);
-		const int type = npfvar_get_type(vp);
+		const int type = npfvar_get_type(vp, 0);
 
 		switch (type) {
 		case NPFVAR_VAR_ID:
