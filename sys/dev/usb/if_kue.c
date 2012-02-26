@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.74.12.2 2012/02/25 12:53:34 mrg Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.74.12.3 2012/02/26 06:28:58 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.74.12.2 2012/02/25 12:53:34 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.74.12.3 2012/02/26 06:28:58 mrg Exp $");
 
 #include "opt_inet.h"
 
@@ -83,25 +83,23 @@ __KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.74.12.2 2012/02/25 12:53:34 mrg Exp $")
 #include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-
 #include <sys/rnd.h>
 
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <net/if_dl.h>
-
 #include <net/bpf.h>
-
 #include <net/if_ether.h>
+
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #endif
 
-
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
+#include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdevs.h>
 
 #include <dev/usb/if_kuereg.h>

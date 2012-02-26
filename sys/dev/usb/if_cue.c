@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.60.12.2 2012/02/24 09:11:42 mrg Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.60.12.3 2012/02/26 06:28:58 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.60.12.2 2012/02/24 09:11:42 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.60.12.3 2012/02/26 06:28:58 mrg Exp $");
 
 #include "opt_inet.h"
 
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.60.12.2 2012/02/24 09:11:42 mrg Exp $")
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
-
+#include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/rnd.h>
 
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.60.12.2 2012/02/24 09:11:42 mrg Exp $")
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
+#include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdevs.h>
 
 #include <dev/usb/if_cuereg.h>
