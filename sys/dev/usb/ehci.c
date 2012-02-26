@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.181.6.13 2012/02/25 20:46:33 mrg Exp $ */
+/*	$NetBSD: ehci.c,v 1.181.6.14 2012/02/26 05:05:44 mrg Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.6.13 2012/02/25 20:46:33 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.6.14 2012/02/26 05:05:44 mrg Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -548,7 +548,7 @@ ehci_init(ehci_softc_t *sc)
 	sc->sc_async_head = sqh;
 	EOWRITE4(sc, EHCI_ASYNCLISTADDR, sqh->physaddr | EHCI_LINK_QH);
 
-	callout_init(&(sc->sc_tmo_intrlist), CALLOUT_MPSAFE);
+	callout_init(&sc->sc_tmo_intrlist, CALLOUT_MPSAFE);
 
 	/* Turn on controller */
 	EOWRITE4(sc, EHCI_USBCMD,
@@ -3003,7 +3003,7 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 		return;
 	}
 
-	if (cpu_intr_p() || (curlwp->l_pflag & LP_INTR) != 0)
+	if (cpu_intr_p() || cpu_softintr_p())
 		panic("ehci_abort_xfer: not in process context");
 
 	/*

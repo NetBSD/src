@@ -1,4 +1,5 @@
-/*	$NetBSD: if_url.c,v 1.38.12.1 2012/02/18 07:35:06 mrg Exp $	*/
+/*	$NetBSD: if_url.c,v 1.38.12.2 2012/02/26 05:05:44 mrg Exp $	*/
+
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -43,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.38.12.1 2012/02/18 07:35:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.38.12.2 2012/02/26 05:05:44 mrg Exp $");
 
 #include "opt_inet.h"
 

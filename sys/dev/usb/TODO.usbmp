@@ -1,11 +1,11 @@
-$NetBSD: TODO.usbmp,v 1.1.2.4 2012/02/25 20:54:03 mrg Exp $
+$NetBSD: TODO.usbmp,v 1.1.2.5 2012/02/26 05:05:44 mrg Exp $
 
 
 the majority of the USB MP device interface is documented in usbdivar.h.
 
 
-host controller porting:
-  - slhci
+host controllers needing to be ported:
+  - dev/ic/slhci.c
   - arch/mips/adm5120/dev/ahci.c
   - rump/dev/lib/libugenhc/ugenhc.c
 
@@ -14,7 +14,10 @@ use /* XXXSMP ok */ markers for non-SMP-safe host controller driver uses.
 eg, "if (lock_ptr) mutex_enter(lock_ptr); else s = splusb();"
 
 
-add lots of asserts
+add lots more asserts
+
+
+usb_event_thread() startup should use something to sync companions
 
 
 usb_transfer_complete() is sometimes called with host intr lock held,
@@ -22,7 +25,7 @@ sometimes with usb lock.  may need to re-consider soft_intr() API.
 
 
 wake/wakeup conversion:
-  - usb_detach_wait/wakeup() -> add a usb_detach_cvwait/broadcast() that
+  - usb_detach_wait/wakeup() -> add a usb_detach_waitcv/broadcast() that
     take a mutex (done)
   - drivers:
       if_aue.c
@@ -37,7 +40,7 @@ wake/wakeup conversion:
       uhso.c
       uirda.c
       ulpt.c
-      umass.c		- done, untested
+      umass.c		- done
       urio.c
       usbdi_util.c
       usbdi_util.h
@@ -45,6 +48,8 @@ wake/wakeup conversion:
       usscanner.c
       ustir.c
       utoppy.c
+  - maybe rename usb_detach_wait() to usb_detach_waitold(), so that the
+    new one can be usb_detach_waitcv()
 
 
 convert uhidev users to MPSAFE:
@@ -74,8 +79,7 @@ wakeup/tsleep drivers:
   - uirda.c
   - ulpt.c
   - umass_isdata.c
-  - usb.c
-  - usb_subr.c
+  - usb_subr.c: usb_delay_ms() should use kpause
   - ustir.c
   - uthum.c
   - utoppy.c
@@ -109,10 +113,6 @@ missing CALLOUT_MPSAFE drivers:
   - ukbd
   - ulpt
   - uyurex
-
-  - ohci
-  - uhci
-  - usbdi
 
 
 driver testing:		STATUS
