@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.108 2012/02/23 21:38:53 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.109 2012/02/26 07:52:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.108 2012/02/23 21:38:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109 2012/02/26 07:52:52 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -384,7 +384,7 @@ const struct hppa_cpu_info cpu_types[] = {
 #endif
 #ifdef HP8600_CPU
 	{ "PA8600", "Landshark", "PCXW+",
-	  hpcxwp, HPPA_CPU_PCXW2 /*XXX NH */,
+	  hpcxwp, HPPA_CPU_PCXWP,
 	  HPPA_FTRS_W32B, "2.0",
 	  desidhash_u, itlb_u, dtlb_u, itlbna_u, dtlbna_u, tlbd_u,
  	  ibtlb_u, NULL, pbtlb_u, NULL },
