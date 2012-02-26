@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.84.12.2 2012/02/25 20:52:29 mrg Exp $	*/
+/*	$NetBSD: uhid.c,v 1.84.12.3 2012/02/26 08:02:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.84.12.2 2012/02/25 20:52:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.84.12.3 2012/02/26 08:02:36 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -214,7 +214,7 @@ uhid_detach(device_t self, int flags)
 			/* Wake everyone */
 			cv_broadcast(&sc->sc_cv);
 			/* Wait for processes to go away. */
-			usb_detach_waitcv(sc->sc_hdev.sc_dev,
+			usb_detach_wait(sc->sc_hdev.sc_dev,
 			    &sc->sc_detach_cv, &sc->sc_lock);
 		}
 	}

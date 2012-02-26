@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.h,v 1.41.16.2 2012/02/26 07:12:50 mrg Exp $	*/
+/*	$NetBSD: usbdi_util.h,v 1.41.16.3 2012/02/26 08:02:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ void usb_detach_wakeupold(device_t);
 /*
  * MPSAFE versions - mutex must be at IPL_USB.
  */
-void usb_detach_waitcv(device_t dv, kcondvar_t *, kmutex_t *);
+void usb_detach_wait(device_t dv, kcondvar_t *, kmutex_t *);
 void usb_detach_broadcast(device_t, kcondvar_t *);
 
 
