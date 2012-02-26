@@ -1,4 +1,4 @@
-;	$NetBSD: start.S,v 1.2 2005/12/11 12:17:25 christos Exp $
+;	$NetBSD: start.S,v 1.3 2012/02/26 07:23:24 skrll Exp $
 
 ; Copyright (c) 2003 ITOH Yasufumi.
 ; All rights reserved.
@@ -250,7 +250,7 @@ PZ_MEM_KEYBOARD:	.equ	0x400
 
 DEV_PATH:		.equ	0x00
 DEV_LAYERS:		.equ	0x08
-DEV_HPA:		.equ	0x20	; hard physical adderss space
+DEV_HPA:		.equ	0x20	; hard physical address space
 DEV_SPA:		.equ	0x24	; soft physical address space
 DEV_IODC_ENTRY:		.equ	0x28
 DEV_CLASS:		.equ	0x2c
