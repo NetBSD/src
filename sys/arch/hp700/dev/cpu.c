@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.19 2011/02/01 18:33:24 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.20 2012/02/26 08:44:12 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.c,v 1.29 2009/02/08 18:33:28 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.19 2011/02/01 18:33:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.20 2012/02/26 08:44:12 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -133,7 +133,7 @@ cpuattach(device_t parent, device_t self, void *aux)
 	aprint_normal(" MHz clk\n%s: %s", self->dv_xname,
 	    pdc_model.sh? "shadows, ": "");
 
-	if (pdc_cache.dc_conf.cc_sh)
+	if (pdc_cache.dc_conf.cc_fsel)
 		aprint_normal("%uK cache", pdc_cache.dc_size / 1024);
 	else
 		aprint_normal("%uK/%uK D/I caches", pdc_cache.dc_size / 1024,
