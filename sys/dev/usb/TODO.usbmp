@@ -1,4 +1,4 @@
-$NetBSD: TODO.usbmp,v 1.1.2.6 2012/02/26 07:12:49 mrg Exp $
+$NetBSD: TODO.usbmp,v 1.1.2.7 2012/02/26 08:02:36 mrg Exp $
 
 
 the majority of the USB MP device interface is documented in usbdivar.h.
@@ -26,8 +26,7 @@ ehci issues:
 
 
 wake/wakeup conversion:
-  - usb_detach_wait/wakeup() -> add a usb_detach_waitcv/broadcast() that
-    take a mutex (done)
+  - usb_detach_waitold/wakeupold() -> usb_detach_wait/broadcast()
   - drivers:
       if_aue.c
       if_axe.c
@@ -43,14 +42,10 @@ wake/wakeup conversion:
       ulpt.c
       umass.c		- done
       urio.c
-      usbdi_util.c
-      usbdi_util.h
       uscanner.c
       usscanner.c
       ustir.c
       utoppy.c
-  - maybe rename usb_detach_wait() to usb_detach_waitold(), so that the
-    new one can be usb_detach_wait()  [old names done]
 
 
 use usb_delay_ms_locked() in places
