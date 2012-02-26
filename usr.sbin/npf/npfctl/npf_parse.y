@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.5 2012/02/26 21:50:05 christos Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.6 2012/02/26 22:04:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -623,11 +623,6 @@ port_range
 port
 	: NUM		{ $$ = htons($1); }
 	| IDENTIFIER	{ $$ = npfctl_portno($1); }
-	| VAR_ID
-	{
-		char *s = npfvar_expand_string(npfvar_lookup($1));
-		$$ = npfctl_portno(s);
-	}
 	;
 
 icmp_type_and_code
