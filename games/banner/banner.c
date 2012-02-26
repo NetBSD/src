@@ -1,4 +1,4 @@
-/*	$NetBSD: banner.c,v 1.19 2011/08/29 20:30:36 joerg Exp $	*/
+/*	$NetBSD: banner.c,v 1.20 2012/02/26 21:06:59 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993, 1994
@@ -39,13 +39,13 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)banner.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: banner.c,v 1.19 2011/08/29 20:30:36 joerg Exp $");
+__RCSID("$NetBSD: banner.c,v 1.20 2012/02/26 21:06:59 wiz Exp $");
 #endif
 #endif /* not lint */
 
 /*
  * banner - prints large signs
- * banner [-w width] [-d] [-t] message ...
+ * banner [-dt] [-w width] [message]
  */
 
 #include <err.h>
@@ -1051,7 +1051,7 @@ main(int argc, char *argv[])
 			break;
 		case '?':
 		default:
-			(void)fprintf(stderr, "usage: banner [-w width]\n");
+			(void)fprintf(stderr, "usage: banner [-w width] [message]\n");
 			exit(1);
 		}
 	argc -= optind;
