@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.55 2012/02/09 20:01:21 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.56 2012/02/27 17:04:39 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -662,13 +662,10 @@ NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 	.mask	0x80000000, -4
 #ifdef PARANOIA
 	PTR_L	k0, L_PCB(MIPS_CURLWP)
-	slt	k0, k0, sp		# k0 = L_PCB(MIPS_CURLWP) < sp
+	PTR_ADDU k0, 1024		# k0 += 1024
+	PTR_SUBU k0, sp, k0		# k0 = sp - k0
+	sltui	k0, k0, USPACE-1024	# k0 = k0 < USPACE - 1024
 1:	beqz	k0, 1b			# loop forever if false
-	 nop
-	PTR_L	k0, L_PCB(MIPS_CURLWP)
-	PTR_ADDU k0, USPACE
-	slt	k0, sp, k0		# k0 = sp < L_PCB(MIPS_CURLWP) + USPACE
-2:	beqz	k0, 2b			# loop forever if false
 	 nop
 #endif /* PARANOIA
 /*
@@ -676,6 +673,7 @@ NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
  * We don't need to save s0 - s8, sp and gp because
  * the compiler does it for us.
  */
+	move	k0, sp			# save for later
 	PTR_SUBU sp, KERNFRAME_SIZ
 	REG_S	AT, TF_BASE+TF_REG_AST(sp)
 	REG_S	v0, TF_BASE+TF_REG_V0(sp)
@@ -717,8 +715,7 @@ NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 	REG_S	s5, TF_BASE+TF_REG_S5(sp)
 	REG_S	s6, TF_BASE+TF_REG_S6(sp)
 	REG_S	s7, TF_BASE+TF_REG_S7(sp)
-	PTR_ADDU v0, sp, KERNFRAME_SIZ
-	REG_S	v0, TF_BASE+TF_REG_SP(sp)
+	REG_S	k0, TF_BASE+TF_REG_SP(sp)
 	REG_S	s8, TF_BASE+TF_REG_S8(sp)
 	REG_S	gp, TF_BASE+TF_REG_GP(sp)
 #endif
@@ -1668,10 +1665,16 @@ LEAF_NOPROFILE(MIPSX(kern_tlb_miss))
 	nop
 #endif
 #if (MIPS3 + MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
-	lui	k1, %hi(CPUVAR(EV_KERN_TLBMISSES))
-	REG_L	k0, %lo(CPUVAR(EV_KERN_TLBMISSES))(k1)
+	PTR_L	k1, L_CPU(MIPS_CURLWP)
+#ifdef MIPS3
+	nop
+#endif
+	REG_L	k0, CPU_INFO_EV_KERN_TLBMISSES(k1)
+#ifdef MIPS3
+	nop
+#endif
 	REG_ADDU k0, 1
-	REG_S	k0, %lo(CPUVAR(EV_KERN_TLBMISSES))(k1)
+	REG_S	k0, CPU_INFO_EV_KERN_TLBMISSES(k1)
 #endif
 #if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
 	_MFC0	k1, MIPS_COP_0_OSSCRATCH, 2	# get tlbinfo hwlock addr
@@ -1790,15 +1793,32 @@ LEAF_NOPROFILE(MIPSX(kern_tlb_invalid_exception))
 #endif /* (PGSHIFT & 1) == 0 */
 	tlbwi					# write TLB
 	COP0_SYNC
-#ifdef MIPS3
-	nop
-	nop
+#if (MIPS3 + MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
+MIPSX(kern_tlb_invalid_eret):
+	mfc0	k0, MIPS_COP_0_CAUSE
+#if (MIPS3) > 0
+	PTR_L	k1, L_CPU(MIPS_CURLWP)
+	and	k0, (T_TLB_LD_MISS ^ T_TLB_ST_MISS) << MIPS_CR_EXC_CODE_SHIFT
+	beqz	k0, 1f
+	 nop
+	PTR_ADDU k1, EVCNT_SIZE
+1:
+#else
+	li	k1, EVCNT_SIZE
+	and	k0, (T_TLB_LD_MISS ^ T_TLB_ST_MISS) << MIPS_CR_EXC_CODE_SHIFT
+	movn	k0, k1, k0			# if (k0) k0 = k1
+	PTR_L	k1, L_CPU(MIPS_CURLWP)
+	PTR_ADDU k1, k0
+#endif
+	REG_L	k0, CPU_INFO_EV_KERN_TLBINVALID(k1)
+	REG_ADDU k0, 1
+	REG_S	k0, CPU_INFO_EV_KERN_TLBINVALID(k1)
 #endif
 #if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
-	_MFC0	k1, MIPS_COP_0_OSSCRATCH, 2	# get tlblock addr
+	_MFC0	k1, MIPS_COP_0_OSSCRATCH, 2	# get tlbinfo hwlock addr
 	INT_S	zero, 0(k1)			# clear lock
-99:
 #endif
+99:
 	eret
 
 #if (PGSHIFT & 1) == 0
@@ -1833,15 +1853,12 @@ MIPSX(kern_tlbi_odd):
 	COP0_SYNC
 	tlbwi					# update TLB
 	COP0_SYNC
-#ifdef MIPS3
-	nop
-	nop
-#endif
-#if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
-	_MFC0	k1, MIPS_COP_0_OSSCRATCH, 2	# get tlblock addr
-	INT_S	zero, 0(k1)			# clear lock
-#endif
+#if (MIPS32 + MIPS32R2) > 0
 	eret
+#else
+	b	MIPSX(kern_tlb_invalid_eret)
+	 nop
+#endif
 #endif /* (PGSHIFT & 1) == 0 */
 
 #if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0

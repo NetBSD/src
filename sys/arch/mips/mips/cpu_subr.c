@@ -138,18 +138,15 @@ cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_package_id,
 	 * it and its locks.
 	 */
 	if (ti == NULL) {
-		const size_t ti_size = roundup2(sizeof(*ti), COHERENCY_UNIT)
-		    + 2*COHERENCY_UNIT;
+		const size_t ti_size = roundup2(sizeof(*ti), COHERENCY_UNIT);
 		if (cpu_info_offset >= ti_size) {
-			ti = (void *) (va + cpu_info_offset - ti_size);
+			ti = (void *) (va + cpu_info_offset);
 		} else {
 			KASSERT(PAGE_SIZE - cpu_info_offset + sizeof(*ci) >= ti_size);
 			ti = (struct pmap_tlb_info *)(va + PAGE_SIZE - ti_size);
 		}
-		ti->ti_lock = (kmutex_t *)
-		    roundup2((intptr_t)ti + sizeof(*ti), COHERENCY_UNIT);
-		ti->ti_hwlock = (kmutex_t *)
-		    ((intptr_t)ti->ti_lock + COHERENCY_UNIT);
+		ti->ti_lock = (kmutex_t *)((intptr_t)ti - COHERENCY_UNIT);
+		ti->ti_hwlock = (kmutex_t *)((intptr_t)ti - 2*COHERENCY_UNIT);
 		pmap_tlb_info_init(ti);
 	}
 
@@ -225,6 +222,41 @@ cpu_hwrena_setup(void)
 #endif
 }
 
+static const char * const ev_trap_names[32] = {
+	"interrupts",
+	"TLB modifications",
+	"load TLB invalid",
+	"store TLB invalid",
+	"load address errors",
+	"store address errors",
+	"I-fetch bus errors",
+	"load/store bus errors",
+	"system calls",
+	"breakpoints",
+	"reserved instructions",
+	"unusable coprocessors",
+	"arithmetic overflows",
+	"trap exceptions",
+	"VCI exceptions",
+	"FP exceptions",
+	"reserved 16",
+	"reserved 17",
+	"COP2 exceptions",
+	"TLB RI exceptions",
+	"TLB XI exceptions",
+	"reserved 21",
+	"MDMX exceptions",
+	"watch exceptions",
+	"machine checks",
+	"thread activations",
+	"DSP exceptions",
+	"reserved 27",
+	"reserved 28",
+	"reserved 29",
+	"cache errors",
+	"VCD exceptions",
+};
+
 void
 cpu_attach_common(device_t self, struct cpu_info *ci)
 {
@@ -249,12 +281,24 @@ cpu_attach_common(device_t self, struct cpu_info *ci)
 	evcnt_attach_dynamic(&ci->ci_ev_fpu_saves,
 		EVCNT_TYPE_MISC, NULL, xname,
 		"fpu saves");
-	evcnt_attach_dynamic(&ci->ci_ev_user_tlbmisses,
-		EVCNT_TYPE_TRAP, NULL, xname,
-		"user tlb misses");
-	evcnt_attach_dynamic(&ci->ci_ev_kern_tlbmisses,
-		EVCNT_TYPE_TRAP, NULL, xname,
-		"kern tlb misses");
+	snprintf(ci->ci_ev_kern_trap_group, sizeof(ci->ci_ev_kern_trap_group),
+	    "%s kern", xname);
+	snprintf(ci->ci_ev_user_trap_group, sizeof(ci->ci_ev_user_trap_group),
+	    "%s user", xname);
+	evcnt_attach_dynamic(&ci->ci_ev_kern_tlb_misses,
+		EVCNT_TYPE_TRAP, NULL, ci->ci_ev_kern_trap_group,
+		"TLB misses");
+	evcnt_attach_dynamic(&ci->ci_ev_user_tlb_misses,
+		EVCNT_TYPE_TRAP, NULL, ci->ci_ev_user_trap_group,
+		"TLB misses");
+	for (u_int i = 0; i < 32; i++) {
+		evcnt_attach_dynamic(&ci->ci_ev_traps[0][i],
+			EVCNT_TYPE_TRAP, NULL, ci->ci_ev_kern_trap_group,
+			ev_trap_names[i]);
+		evcnt_attach_dynamic(&ci->ci_ev_traps[1][i],
+			EVCNT_TYPE_TRAP, NULL, ci->ci_ev_user_trap_group,
+			ev_trap_names[i]);
+	}
 	evcnt_attach_dynamic(&ci->ci_ev_tlblocked,
 		EVCNT_TYPE_MISC, NULL, xname,
 		"tlb locked");
