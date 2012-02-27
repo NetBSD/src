@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.3 2012/02/27 12:26:21 joerg Exp $	*/
+/*	$NetBSD: cerror.S,v 1.4 2012/02/27 15:47:11 matt Exp $	*/
 
 #include <machine/asm.h>
 #include "SYS.h"
@@ -7,7 +7,7 @@
 	.globl	_C_LABEL(errno)
 #endif
 #ifdef PIC
-	.protected	CERROR
+	.protected _C_LABEL(__cerror)
 #endif
 
 ENTRY(__cerror)
