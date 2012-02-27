@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.17 2012/02/27 12:26:21 joerg Exp $	*/
+/*	$NetBSD: cerror.S,v 1.18 2012/02/27 14:48:34 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,13 +38,13 @@
 #if 0
 	RCSID("from: @(#)cerror.s	8.1 (Berkeley) 6/16/93")
 #else
-	RCSID("$NetBSD: cerror.S,v 1.17 2012/02/27 12:26:21 joerg Exp $")
+	RCSID("$NetBSD: cerror.S,v 1.18 2012/02/27 14:48:34 tsutsui Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef PIC
 	.protected	__cerror
-i#endif
+#endif
 
 #ifdef _REENTRANT
 	.globl	_C_LABEL(__errno)
