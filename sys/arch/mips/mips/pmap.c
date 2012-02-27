@@ -865,7 +865,7 @@ pmap_destroy(pmap_t pmap)
 	PMAP_COUNT(destroy);
 	kpreempt_disable();
 	pmap_tlb_asid_release_all(pmap);
-	pmap_segtab_destroy(pmap);
+	pmap_segtab_destroy(pmap, NULL, 0);
 
 	pool_put(&pmap_pmap_pool, pmap);
 	kpreempt_enable();
@@ -1754,6 +1754,7 @@ pmap_remove_all(struct pmap *pmap)
 		pmap_tlb_asid_deactivate(pmap);
 #endif
 	pmap_tlb_asid_release_all(pmap);
+	pmap_segtab_destroy(pmap, pmap_pte_remove, 0);
 	pmap->pm_flags |= PMAP_DEFERRED_ACTIVATE;
 
 #ifdef PMAP_FAULTINFO
@@ -2503,6 +2504,10 @@ pmap_pv_page_alloc(struct pool *pp, int flags)
 	struct vm_page * const pg = PMAP_ALLOC_POOLPAGE(UVM_PGA_USERESERVE);
 	if (pg == NULL)
 		return NULL;
+#ifdef UVM_PAGE_TRKOWN
+	pg->owner_tag = NULL;
+#endif
+	UVM_PAGE_OWN(pg, pp->pr_wchan, NULL);
 
 	uvm_km_pageclaim(pg);
 	return (void *)mips_pmap_map_poolpage(VM_PAGE_TO_PHYS(pg));
