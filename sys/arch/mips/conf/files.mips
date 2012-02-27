@@ -14,6 +14,7 @@ defflag	opt_cputype.h		NOFPU FPEMUL
 					# ENABLE_MIPS_R4700
 					# ENABLE_MIPS_R3NKK
 defparam opt_cputype.h		MIPS_PAGE_SHIFT
+defflag opt_mips_emul.h		NOMIPSEMUL
 defflag	opt_mips_cache.h	MIPS3_NO_PV_UNCACHED
 				ENABLE_MIPS4_CACHE_R10K
 defflag opt_mips3_wired.h	ENABLE_MIPS3_WIRED_MAP
