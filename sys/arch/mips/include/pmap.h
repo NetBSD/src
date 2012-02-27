@@ -154,7 +154,7 @@ void pmap_pte_process(struct pmap *, vaddr_t, vaddr_t, pte_callback_t,
 	uintptr_t);
 void pmap_segtab_activate(struct pmap *, struct lwp *);
 void pmap_segtab_init(struct pmap *);
-void pmap_segtab_destroy(struct pmap *);
+void pmap_segtab_destroy(struct pmap *, pte_callback_t, uintptr_t);
 #endif /* _KERNEL */
 
 /*
