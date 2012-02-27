@@ -1,17 +1,17 @@
-/*	$NetBSD: cerror.S,v 1.9 2012/02/27 12:26:21 joerg Exp $	*/
+/*	$NetBSD: cerror.S,v 1.10 2012/02/27 15:47:11 matt Exp $	*/
 
 #include "SYS.h"
 #include "assym.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: cerror.S,v 1.9 2012/02/27 12:26:21 joerg Exp $")
+__RCSID("$NetBSD: cerror.S,v 1.10 2012/02/27 15:47:11 matt Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 #ifndef _REENTRANT
 	.globl	_C_LABEL(errno)
 #endif
 #ifdef PIC
-	.protected	CERROR
+	.protected _C_LABEL(__cerror)
 #endif
 
 ENTRY(__cerror)
