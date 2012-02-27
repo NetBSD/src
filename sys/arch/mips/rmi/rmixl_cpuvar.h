@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpuvar.h,v 1.1.2.5 2012/01/19 08:05:24 matt Exp $	*/
+/*	rmixl_cpuvar.h,v 1.1.2.5 2012/01/19 08:05:24 matt Exp	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,6 +49,7 @@ struct cpu_softc {
 	struct evcnt sc_irt_evcnts[160];
 	struct evcnt sc_fmn_stid_evcnts[RMIXL_FMN_NSTID];
 	struct evcnt sc_fmn_cpu_evcnts[8];
+	bool sc_in_ipi;
 };
 
 #endif	/* _ARCH_MIPS_RMI_RMIXL_CPUVAR_H_ */

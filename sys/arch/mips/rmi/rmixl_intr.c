@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.1.2.35 2012/01/19 08:05:24 matt Exp $	*/
+/*	rmixl_intr.c,v 1.1.2.35 2012/01/19 08:05:24 matt Exp	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.35 2012/01/19 08:05:24 matt Exp $");
+__KERNEL_RCSID(0, "rmixl_intr.c,v 1.1.2.35 2012/01/19 08:05:24 matt Exp");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -761,16 +761,6 @@ void rmixl_ipl_eimr_map_print(void);
 #endif
 
 
-static inline u_int
-dclz(uint64_t val)
-{
-	u_int nlz;
-
-	__asm volatile("dclz %0, %1" : "=r"(nlz) : "r"(val));
-	
-	return nlz;
-}
-
 void
 evbmips_intr_init(void)
 {
@@ -1412,7 +1402,7 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t pending)
 		if (eirr == 0)
 			break;
 
-		vec = 63 - dclz(eirr);
+		vec = 63 - __builtin_clzll(eirr);
 		rmixl_intrvec_t * const iv = &rmixl_intrvec[vec];
 		vecbit = 1ULL << vec;
 		KASSERT (iv->iv_ipl == ipl);
@@ -1495,10 +1485,13 @@ rmixl_ipi_intr(void *arg)
 
 	KASSERT(ci->ci_cpl >= IPL_SCHED);
 	KASSERT((uintptr_t)arg < NIPIS);
+	KASSERT(!ci->ci_softc->sc_in_ipi);
 
 	/* if the request is clear, it was previously processed */
 	if ((ci->ci_request_ipis & ipi_mask) == 0)
 		return 0;
+
+	ci->ci_softc->sc_in_ipi = true;
 
 	atomic_or_64(&ci->ci_active_ipis, ipi_mask);
 	atomic_and_64(&ci->ci_request_ipis, ~ipi_mask);
@@ -1507,6 +1500,7 @@ rmixl_ipi_intr(void *arg)
 
 	atomic_and_64(&ci->ci_active_ipis, ~ipi_mask);
 
+	ci->ci_softc->sc_in_ipi = false;
 	return 1;
 }
 #endif	/* MULTIPROCESSOR */
