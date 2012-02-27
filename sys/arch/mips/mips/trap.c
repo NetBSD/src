@@ -99,24 +99,24 @@ const char * const trap_names[] = {
 	"reserved instruction",
 	"coprocessor unusable",
 	"arithmetic overflow",
-	"r4k trap/r3k reserved 13",
+	"trap",
 	"r4k virtual coherency instruction/r3k reserved 14",
-	"r4k floating point/ r3k reserved 15",
+	"floating point",
 	"reserved 16",
 	"reserved 17",
 	"mipsNN cp2 exception",
-	"reserved 19",
-	"reserved 20",
+	"TLB read-inhibit exception",
+	"TLB execute-inhibit exception",
 	"reserved 21",
-	"mips64 MDMX",
-	"r4k watch",
-	"mipsNN machine check",
-	"reserved 25",
-	"reserved 26",
+	"MDMX",
+	"watch",
+	"machine-check",
+	"thread activation",
+	"DSP exception",
 	"reserved 27",
 	"reserved 28",
 	"reserved 29",
-	"mipsNN cache error",
+	"cache error",
 	"r4000 virtual coherency data",
 };
 
@@ -174,9 +174,12 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 	curcpu()->ci_data.cpu_ntrap++;
 	type = TRAPTYPE(cause);
 	if (USERMODE(status)) {
+		curcpu()->ci_ev_traps[1][type].ev_count++;
 		tf = utf;
 		type |= T_USER;
 		LWP_CACHE_CREDS(l, p);
+	} else {
+		curcpu()->ci_ev_traps[0][type].ev_count++;
 	}
 
 	switch (type) {
