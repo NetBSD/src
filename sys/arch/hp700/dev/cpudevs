@@ -1,4 +1,4 @@
-$NetBSD: cpudevs,v 1.5 2009/04/30 07:01:26 skrll Exp $
+$NetBSD: cpudevs,v 1.5.18.1 2012/02/27 20:15:33 riz Exp $
 
 $OpenBSD: cpudevs,v 1.44 2007/05/18 15:57:35 kettenis Exp $
 
@@ -322,7 +322,7 @@ cpu	PCXU	0x0e	PCXU (Onyx)
 cpu	PCXL2	0x0f	PCXL2 (Velociraptor)
 cpu	PCXUP	0x10	PCXU+ (Vulcan)
 cpu	PCXW	0x11	PCXW (Vulcan)
-#cpu	PCXWP	0x??	PCXW+ (Landshark)
+cpu	PCXWP	0x12	PCXW+ (Landshark)
 cpu	PCXW2	0x13	PCXW2 (Piranha)
 #cpu	PCXM	0x??	Mako
 #cpu	PCXM2	0x??	Shortfin
