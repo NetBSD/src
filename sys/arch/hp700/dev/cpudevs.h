@@ -1,9 +1,9 @@
-/*	$NetBSD: cpudevs.h,v 1.6 2012/02/04 17:05:38 skrll Exp $	*/
+/*	$NetBSD: cpudevs.h,v 1.6.2.1 2012/02/27 20:15:33 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.
  * generated from:
- *	NetBSD: cpudevs,v 1.5 2009/04/30 07:01:26 skrll Exp 
+ *	NetBSD: cpudevs,v 1.6 2012/02/26 07:50:37 skrll Exp 
  */
 
 #define	HPPA_TYPE_NPROC	0x00
@@ -230,6 +230,7 @@
 #define	HPPA_CPU_PCXL2	0x0f
 #define	HPPA_CPU_PCXUP	0x10
 #define	HPPA_CPU_PCXW	0x11
+#define	HPPA_CPU_PCXWP	0x12
 #define	HPPA_CPU_PCXW2	0x13
 #define	HPPA_FPU_SOFTEMU	0x01
 #define	HPPA_FPU_INDIGO	0x02
