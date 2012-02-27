@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.25 2012/02/25 21:39:44 sborrill Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.26 2012/02/27 20:37:14 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -534,4 +534,65 @@ sys/arch/i386/conf/XEN3_DOMU			1.42
 	it was still enabled. Comment out MPDEBUG, ACPIVERBOSE
 	and MPVERBOSE.
 	[bouyer, ticket #52]
+
+sys/dev/acpi/acpi_cpu_cstate.c			1.59
+
+	Set the flag for checking for PCI bus master activity only for C3.
+	[jruoho, ticket #51]
+
+sys/arch/hp700/stand/mkboot/mkboot.c		1.8
+sys/arch/hp700/stand/xxboot/iplsum.c		1.6
+sys/arch/hp700/stand/xxboot/main.c		1.10
+sys/arch/hp700/stand/xxboot/readufs.h		1.6
+
+	More u_intXX_t -> uintXX_t to help with later pullups.
+	[skrll, ticket #53]
+
+sys/arch/hp700/dev/cpudevs			1.6
+sys/arch/hp700/dev/cpudevs.h			1.7
+sys/arch/hp700/dev/cpudevs_data.h		1.8
+sys/arch/hp700/hp700/machdep.c			1.109
+
+	Set the CPU id for PCXW+ (Landshark), and use new HPPA_CPU_PCXWP.
+	[skrll, ticket #54]
+
+sys/arch/atari/atari/atari_init.c		1.99
+sys/arch/x68k/x68k/pmap_bootstrap.c		1.59
+
+	Apply proper fixes to atari and x68k for PR/45915.
+	[tsutsui, ticket #55]
+
+doc/3RDPARTY					1.917
+
+	Use new web site and archive location for ATF.
+	[jmmv, ticket #56]
+
+lib/libc/arch/arm/sys/cerror.S			1.8
+lib/libc/arch/i386/sys/cerror.S			1.16
+lib/libc/arch/mips/sys/cerror.S			1.17
+lib/libc/arch/powerpc/sys/cerror.S		1.9-10
+lib/libc/arch/powerpc64/sys/cerror.S		1.3-4
+lib/libc/arch/vax/SYS.h				1.12
+lib/libc/arch/x86_64/sys/cerror.S		1.5
+
+	
+	Make __cerror protected to restore ABI leak in older libc versions,
+	where e.g. librt referenced the copy from libc. Fixes PR#45973.
+	[joerg, ticket #57]
+
+sys/fs/tmpfs/tmpfs_vnops.c			1.95
+
+	In tmpfs_readdir(), skip the . and .. processing on removed
+	directories, to avoid a crash.
+	[chs, ticket #58]
+
+usr.sbin/postinstall/postinstall		1.135 via patch
+
+	Populate /etc/atf with any missing files.  Fixes PR bin/45870.
+	[jmmv, ticket #59]
+
+sys/arch/i386/i386/machdep.c			1.722
+
+	Fix several atf tests running under xen/i386.
+	[bouyer, ticket #60]
 
