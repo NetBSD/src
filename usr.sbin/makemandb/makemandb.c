@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.5 2012/02/16 20:58:55 joerg Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.6 2012/02/27 16:51:06 joerg Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.5 2012/02/16 20:58:55 joerg Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.6 2012/02/27 16:51:06 joerg Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -115,10 +115,11 @@ static void pman_parse_node(const struct man_node *, secbuff *);
 static void pman_parse_name(const struct man_node *, mandb_rec *);
 static void pman_sh(const struct man_node *, mandb_rec *);
 static void pman_block(const struct man_node *, mandb_rec *);
-static void traversedir(const char *, sqlite3 *, struct mparse *);
+static void traversedir(const char *, const char *, sqlite3 *, struct mparse *);
 static void mdoc_parse_section(enum mdoc_sec, const char *, mandb_rec *);
 static void man_parse_section(enum man_sec, const struct man_node *, mandb_rec *);
-static void build_file_cache(sqlite3 *, const char *, struct stat *);
+static void build_file_cache(sqlite3 *, const char *, const char *,
+			     struct stat *);
 static void update_db(sqlite3 *, struct mparse *, mandb_rec *);
 __dead static void usage(void);
 static void optimize(sqlite3 *);
@@ -380,9 +381,9 @@ main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 		
-	sqlstr = "CREATE TABLE IF NOT EXISTS metadb.file_cache(device, inode,"
-		 " mtime, file PRIMARY KEY);"
-		 "CREATE UNIQUE INDEX IF NOT EXISTS metadb.index_file_cache_dev"
+	sqlstr = "CREATE TABLE metadb.file_cache(device, inode, mtime, parent,"
+		 " file PRIMARY KEY);"
+		 "CREATE UNIQUE INDEX metadb.index_file_cache_dev"
 		 " ON file_cache (device, inode)";
 
 	sqlite3_exec(db, sqlstr, NULL, NULL, &errmsg);
@@ -401,10 +402,11 @@ main(int argc, char *argv[])
 		/* Replace the new line character at the end of string with '\0' */
 		line[len - 1] = '\0';
 		parent = estrdup(line);
-		chdir(dirname(parent));
+		char *pdir = estrdup(dirname(parent));
 		free(parent);
 		/* Traverse the man page directories and parse the pages */
-		traversedir(line, db, mp);
+		traversedir(pdir, line, db, mp);
+		free(pdir);
 	}
 	free(line);
 
@@ -440,7 +442,8 @@ main(int argc, char *argv[])
  *  in the way to build_file_cache()
  */
 static void
-traversedir(const char *file, sqlite3 *db, struct mparse *mp)
+traversedir(const char *parent, const char *file, sqlite3 *db,
+            struct mparse *mp)
 {
 	struct stat sb;
 	struct dirent *dirp;
@@ -454,7 +457,7 @@ traversedir(const char *file, sqlite3 *db, struct mparse *mp)
 	
 	/* If it is a regular file or a symlink, pass it to build_cache() */
 	if (S_ISREG(sb.st_mode) || S_ISLNK(sb.st_mode)) {
-		build_file_cache(db, file, &sb);
+		build_file_cache(db, parent, file, &sb);
 		return;
 	}
 	
@@ -469,7 +472,7 @@ traversedir(const char *file, sqlite3 *db, struct mparse *mp)
 			/* Avoid . and .. entries in a directory */
 			if (strncmp(dirp->d_name, ".", 1)) {
 				easprintf(&buf, "%s/%s", file, dirp->d_name);
-				traversedir(buf, db, mp);
+				traversedir(parent, buf, db, mp);
 				free(buf);
 			}
 		}
@@ -485,7 +488,8 @@ traversedir(const char *file, sqlite3 *db, struct mparse *mp)
  *   update_db(), once the database has been updated.
  */
 static void
-build_file_cache(sqlite3 *db, const char *file, struct stat *sb)
+build_file_cache(sqlite3 *db, const char *parent, const char *file,
+		 struct stat *sb)
 {
 	const char *sqlstr;
 	sqlite3_stmt *stmt = NULL;
@@ -496,7 +500,7 @@ build_file_cache(sqlite3 *db, const char *file, struct stat *sb)
 	time_t mtime_cache = sb->st_mtime;
 
 	sqlstr = "INSERT INTO metadb.file_cache VALUES (:device, :inode,"
-		 " :mtime, :file)";
+		 " :mtime, :parent, :file)";
 	rc = sqlite3_prepare_v2(db, sqlstr, -1, &stmt, NULL);
 	if (rc != SQLITE_OK) {
 		warnx("%s", sqlite3_errmsg(db));
@@ -521,6 +525,14 @@ build_file_cache(sqlite3 *db, const char *file, struct stat *sb)
 
 	idx = sqlite3_bind_parameter_index(stmt, ":mtime");
 	rc = sqlite3_bind_int64(stmt, idx, mtime_cache);
+	if (rc != SQLITE_OK) {
+		warnx("%s", sqlite3_errmsg(db));
+		sqlite3_finalize(stmt);
+		return;
+	}
+
+	idx = sqlite3_bind_parameter_index(stmt, ":parent");
+	rc = sqlite3_bind_text(stmt, idx, parent, -1, NULL);
 	if (rc != SQLITE_OK) {
 		warnx("%s", sqlite3_errmsg(db));
 		sqlite3_finalize(stmt);
@@ -659,6 +671,7 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 	const char *sqlstr;
 	sqlite3_stmt *stmt = NULL;
 	const char *file;
+	const char *parent;
 	char *errmsg = NULL;
 	char *md5sum;
 	void *buf;
@@ -670,8 +683,11 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 	int md5_status;
 	int rc;
 
-	sqlstr = "SELECT device, inode, mtime, file FROM metadb.file_cache"
-		 " EXCEPT SELECT device, inode, mtime, file from mandb_meta";
+	sqlstr = "SELECT device, inode, mtime, parent, file"
+	         " FROM metadb.file_cache fc"
+	         " WHERE NOT EXISTS(SELECT 1 FROM mandb_meta WHERE"
+	         "  device = fc.device AND inode = fc.inode AND "
+	         "  mtime = fc.mtime AND file = fc.file)";
 
 	rc = sqlite3_prepare_v2(db, sqlstr, -1, &stmt, NULL);
 	if (rc != SQLITE_OK) {
@@ -687,7 +703,8 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 		rec->device = sqlite3_column_int64(stmt, 0);
 		rec->inode = sqlite3_column_int64(stmt, 1);
 		rec->mtime = sqlite3_column_int64(stmt, 2);
-		file = (const char *) sqlite3_column_text(stmt, 3);
+		parent = (const char *) sqlite3_column_text(stmt, 3);
+		file = (const char *) sqlite3_column_text(stmt, 4);
 		if (read_and_decompress(file, &buf, &buflen)) {
 			err_count++;
 			buf = NULL;
@@ -731,6 +748,7 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 			rec->md5_hash = md5sum;
 			rec->file_path = estrdup(file);
 			// file_path is freed by insert_into_db itself.
+			chdir(parent);
 			begin_parse(file, mp, rec, buf, buflen);
 			if (insert_into_db(db, rec) < 0) {
 				warnx("Error in indexing %s", file);
