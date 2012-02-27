@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.229 2012/02/24 16:06:39 dholland Exp $
+#	$NetBSD: shlib_version,v 1.230 2012/02/27 12:26:21 joerg Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -29,5 +29,6 @@
 #   it's insufficient bitwidth to implement all ctype class.
 #   see isblank's comment in ctype.h.
 # - remove gets(); it is finally dead in c11.
+# - make __cerror (spelled CERROR) hidden again
 major=12
 minor=182
