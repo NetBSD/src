@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.14.78.14 2012/02/13 08:13:42 matt Exp $ */
+/*	mips_emul.c,v 1.14.78.14 2012/02/13 08:13:42 matt Exp */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.14.78.14 2012/02/13 08:13:42 matt Exp $");
+__KERNEL_RCSID(0, "mips_emul.c,v 1.14.78.14 2012/02/13 08:13:42 matt Exp");
+
+#include "opt_mips_emul.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,11 +45,14 @@ __KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.14.78.14 2012/02/13 08:13:42 matt Ex
 #include <mips/vmparam.h>			/* for VM_MAX_ADDRESS */
 #include <mips/trap.h>
 
+#ifndef NOMIPSEMUL
 static void	send_sigsegv(intptr_t, uint32_t, struct trapframe *, uint32_t);
+#endif
 static void	send_sigill(intptr_t, uint32_t, struct trapframe *, uint32_t,
 		    uint32_t);
 static void	update_pc(struct trapframe *, uint32_t);
 
+#if (MIPS1 + MIPS2) > 0
 /*
  * MIPS2 LL instruction emulation state
  */
@@ -56,6 +61,7 @@ struct {
 	vaddr_t addr;
 	uint32_t value;
 } llstate;
+#endif
 
 /*
  * Analyse 'next' PC address taking account of branch/jump instructions
@@ -206,18 +212,24 @@ mips_emul_inst(uint32_t status, uint32_t cause, vaddr_t opc,
 		inst = ufetch_uint32((uint32_t *)opc);
 
 	switch (((InstFmt)inst).FRType.op) {
+#ifndef NOMIPSEMUL
+#if (MIPS1 + MIPS2) > 0
 	case OP_LWC0:
 		mips_emul_lwc0(inst, tf, cause);
 		break;
 	case OP_SWC0:
 		mips_emul_swc0(inst, tf, cause);
 		break;
+#endif
 	case OP_SPECIAL:
 		mips_emul_special(inst, tf, cause);
 		break;
+#endif
+#if (MIPS1 + MIPS2 + MIPS3 + MIPS32 + MIPS64 + MIPS64_RMIXL) > 0
 	case OP_SPECIAL3:
 		mips_emul_special3(inst, tf, cause);
 		break;
+#endif
 	case OP_COP1:
 #if defined(FPEMUL)
 		mips_emul_fp(inst, tf, cause);
@@ -251,6 +263,7 @@ mips_emul_inst(uint32_t status, uint32_t cause, vaddr_t opc,
 	}
 }
 
+#ifndef NOMIPSEMUL
 static void
 send_sigsegv(intptr_t vaddr, uint32_t exccode, struct trapframe *tf,
     uint32_t cause)
@@ -266,6 +279,7 @@ send_sigsegv(intptr_t vaddr, uint32_t exccode, struct trapframe *tf,
 	ksi.ksi_addr = (void *)vaddr;
 	cpu_trapsignal(curlwp, &ksi, tf);
 }
+#endif /* NOMIPSEMUL */
 
 static void
 send_sigill(intptr_t vaddr, uint32_t exccode, struct trapframe *tf,
@@ -295,6 +309,7 @@ update_pc(struct trapframe *tf, uint32_t cause)
 		tf->tf_regs[_R_PC] += 4;
 }
 
+#if !defined(NOMIPSEMUL) && (MIPS1 + MIPS2) > 0
 /*
  * MIPS2 LL instruction
  */
@@ -381,7 +396,9 @@ mips_emul_swc0(uint32_t inst, struct trapframe *tf, uint32_t cause)
 	*t = 0;
 	update_pc(tf, cause);
 }
+#endif /* !defined(NOMIPSEMUL) && (MIPS1 + MIPS2) > 0 */
 
+#ifndef NOMIPSEMUL
 void
 mips_emul_special(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
@@ -399,6 +416,9 @@ mips_emul_special(uint32_t inst, struct trapframe *tf, uint32_t cause)
 	update_pc(tf, cause);
 }
 
+#endif /* NOMIPSEMUL */
+
+#if (MIPS1 + MIPS2 + MIPS3 + MIPS32 + MIPS64 + MIPS64_RMIXL) > 0
 void
 mips_emul_special3(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
@@ -419,6 +439,7 @@ mips_emul_special3(uint32_t inst, struct trapframe *tf, uint32_t cause)
 
 	update_pc(tf, cause);
 }
+#endif
 
 #if defined(FPEMUL)
 
