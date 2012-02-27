@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.129.2.4 2012/02/24 06:12:57 riz Exp $
+# $NetBSD: postinstall,v 1.129.2.5 2012/02/27 20:28:19 riz Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1601,6 +1601,10 @@ do_atf()
 	[ -n "$1" ] || err 3 "USAGE: do_atf  fix|check"
 	op="$1"
 	failed=0
+
+	populate_dir "${op}" true \
+		"${SRC_DIR}/etc/atf" "${DEST_DIR}/etc/atf" 644 \
+		NetBSD.conf atf-run.hooks common.conf
 
 	if grep '[^#]*unprivileged-user[ \t]*=.*_atf' ${DEST_DIR}/etc/atf/common.conf \
 	    >/dev/null
