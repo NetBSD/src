@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.721 2012/02/24 08:06:07 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.722 2012/02/27 19:52:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.721 2012/02/24 08:06:07 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.722 2012/02/27 19:52:59 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -723,13 +723,8 @@ buildcontext(struct lwp *l, int sel, void *catcher, void *fp)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 
-#ifndef XEN
 	tf->tf_gs = GSEL(GUGS_SEL, SEL_UPL);
 	tf->tf_fs = GSEL(GUFS_SEL, SEL_UPL);
-#else
-	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
-#endif
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = (int)catcher;
@@ -970,13 +965,8 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	memcpy(&pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
 
 	tf = l->l_md.md_regs;
-#ifndef XEN
 	tf->tf_gs = GSEL(GUGS_SEL, SEL_UPL);
 	tf->tf_fs = GSEL(GUFS_SEL, SEL_UPL);
-#else
-	tf->tf_gs = LSEL(LUDATA_SEL, SEL_UPL);
-	tf->tf_fs = LSEL(LUDATA_SEL, SEL_UPL);
-#endif
 	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_edi = 0;
