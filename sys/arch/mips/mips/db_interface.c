@@ -202,7 +202,7 @@ db_write_bytes(vaddr_t addr, size_t size, const char *data)
 		*p++ = *data++;
 
 	wbflush();
-	mips_icache_sync_range(addr, size);
+	mips_icache_sync_range((intptr_t)addr, size);
 }
 
 #ifndef KGDB
