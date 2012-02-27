@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.37.12.15 2011/04/29 08:26:30 matt Exp $	*/
+/*	syscall.c,v 1.37.12.15 2011/04/29 08:26:30 matt Exp	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.15 2011/04/29 08:26:30 matt Exp $");
+__KERNEL_RCSID(0, "syscall.c,v 1.37.12.15 2011/04/29 08:26:30 matt Exp");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sa.h"
@@ -149,11 +149,13 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t pc)
 	LWP_CACHE_CREDS(l, p);
 
 	curcpu()->ci_data.cpu_nsyscall++;
+	curcpu()->ci_ev_traps[1][T_SYSCALL].ev_count++;
 
-	if (cause & MIPS_CR_BR_DELAY)
+	if (cause & MIPS_CR_BR_DELAY) {
 		reg->r_regs[_R_PC] = mips_emul_branch(tf, pc, 0, false);
-	else
+	} else {
 		reg->r_regs[_R_PC] = pc + sizeof(uint32_t);
+	}
 
 	callp = p->p_emul->e_sysent;
 	saved_v0 = code = reg->r_regs[_R_V0];

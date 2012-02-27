@@ -89,6 +89,7 @@ include <mips/regnum.h>
 include <mips/vmparam.h>
 include <mips/pte.h>
 include <mips/locore.h>
+include <mips/trap.h>
 
 define	PAGE_SIZE		PAGE_SIZE
 
@@ -289,13 +290,17 @@ ifdef MULTIPROCESSOR
 define	TI_HWLOCK	offsetof(struct pmap_tlb_info, ti_hwlock)
 endif
 
+define	EVCNT_SIZE	sizeof(struct evcnt)
+
 # CPU info
 define	CPU_INFO_CPL		offsetof(struct cpu_info, ci_cpl)
 define	CPU_INFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
 define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CPU_INFO_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
-define	CPU_INFO_EV_USER_TLBMISSES	offsetof(struct cpu_info, ci_ev_user_tlbmisses.ev_count)
-define	CPU_INFO_EV_KERN_TLBMISSES	offsetof(struct cpu_info, ci_ev_kern_tlbmisses.ev_count)
+define	CPU_INFO_EV_USER_TLBMISSES	offsetof(struct cpu_info, ci_ev_user_tlb_misses.ev_count)
+define	CPU_INFO_EV_KERN_TLBMISSES	offsetof(struct cpu_info, ci_ev_kern_tlb_misses.ev_count)
+define	CPU_INFO_EV_USER_TLBINVALID	offsetof(struct cpu_info, ci_ev_traps[1][T_TLB_LD_MISS].ev_count)
+define	CPU_INFO_EV_KERN_TLBINVALID	offsetof(struct cpu_info, ci_ev_traps[0][T_TLB_LD_MISS].ev_count)
 define	CPU_INFO_EV_TLBLOCKED	offsetof(struct cpu_info, ci_ev_tlblocked.ev_count)
 define	CPU_INFO_PMAP_SEG0TAB	offsetof(struct cpu_info, ci_pmap_seg0tab)
 ifdef _LP64
