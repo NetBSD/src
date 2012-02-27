@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.909.2.3 2012/02/23 02:08:59 riz Exp $
+#	$NetBSD: 3RDPARTY,v 1.909.2.4 2012/02/27 20:18:46 riz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -57,8 +57,8 @@ Package:	Automated Testing Framework (ATF)
 Version:	0.15
 Current Vers:	0.15
 Maintainer:	Julio Merino <jmmv@NetBSD.org>
-Archive site:	ftp://ftp.NetBSD.org/pub/NetBSD/misc/jmmv/atf/
-Home page:	http://www.NetBSD.org/~jmmv/atf/
+Archive site:	http://code.google.com/p/kyua/downloads/list?can=1
+Home page:	http://code.google.com/p/kyua/wiki/ATF
 Mailing List:	atf-devel@NetBSD.org
 Responsible:	jmmv
 License:	The NetBSD Foundation's license (BSD 2-clause)
