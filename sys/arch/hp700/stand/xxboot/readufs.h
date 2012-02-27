@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs.h,v 1.5 2011/02/21 02:31:57 itohy Exp $	*/
+/*	$NetBSD: readufs.h,v 1.5.10.1 2012/02/27 20:13:30 riz Exp $	*/
 /*	from Id: readufs.h,v 1.10 2003/12/16 13:54:11 itohy Exp	*/
 
 /*
@@ -76,9 +76,9 @@ struct ufs_info {
 #endif
 
 	/* superblock information */
-	u_int32_t bsize;	/* fs block size */
-	u_int32_t nindir;	/* # indirect per block */
-	u_int32_t fsbtodb;	/* block -> sector shift count */
+	uint32_t bsize;	/* fs block size */
+	uint32_t nindir;	/* # indirect per block */
+	uint32_t fsbtodb;	/* block -> sector shift count */
 	union {
 #ifdef USE_FFS
 		struct {
@@ -94,14 +94,14 @@ struct ufs_info {
 #endif
 #ifdef USE_LFS
 		struct {
-			u_int32_t version;	/* LFS version # */
+			uint32_t version;	/* LFS version # */
 			daddr_t idaddr;		/* ifile inode disk address */
-			u_int32_t inopb;	/* inodes per block (v1) */
+			uint32_t inopb;	/* inodes per block (v1) */
 						/* inodes per frag (v2) */
-			u_int32_t ifpb;		/* inode addrs / ifile block */
-			u_int32_t ioffset;	/* start of inode in ifile */
+			uint32_t ifpb;		/* inode addrs / ifile block */
+			uint32_t ioffset;	/* start of inode in ifile */
 						/* (in sector) */
-			u_int32_t ibsize;	/* size of inode block */
+			uint32_t ibsize;	/* size of inode block */
 		} u_lfs;
 #endif
 	} fs_u;
