@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.26 2012/02/27 20:37:14 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.27 2012/02/27 22:35:01 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -595,4 +595,9 @@ sys/arch/i386/i386/machdep.c			1.722
 
 	Fix several atf tests running under xen/i386.
 	[bouyer, ticket #60]
+
+lib/libc/arch/mips/sys/cerror.S			1.18
+
+	Fix pasto.
+	[oster, ticket #61]
 
