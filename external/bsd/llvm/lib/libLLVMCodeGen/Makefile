@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2012/01/17 15:51:55 joerg Exp $
+#	$NetBSD: Makefile,v 1.15 2012/02/28 17:09:30 joerg Exp $
 
 LIB=	LLVMCodeGen
 
@@ -15,6 +15,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	CodeGen.cpp \
 	CodePlacementOpt.cpp \
 	CriticalAntiDepBreaker.cpp \
+	DFAPacketizer.cpp \
 	DeadMachineInstructionElim.cpp \
 	DwarfEHPrepare.cpp \
 	EdgeBundles.cpp \
