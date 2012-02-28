@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/11/18 15:56:54 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2012/02/28 17:09:30 joerg Exp $
 
 LIB=	LLVMInstrumentation
 
@@ -12,7 +12,8 @@ SRCS+=	AddressSanitizer.cpp \
 	Instrumentation.cpp \
 	OptimalEdgeProfiling.cpp \
 	PathProfiling.cpp \
-	ProfilingUtils.cpp
+	ProfilingUtils.cpp \
+	ThreadSanitizer.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>
