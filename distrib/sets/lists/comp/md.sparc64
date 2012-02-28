@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.139 2012/02/16 23:00:39 joerg Exp $
+# $NetBSD: md.sparc64,v 1.140 2012/02/28 14:22:22 joerg Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
@@ -942,7 +942,7 @@
 ./usr/libdata/debug/usr/lib/sparc/liblua.so.1.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/liblwres.so.5.6.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/liblzf.so.0.0.debug			comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/sparc/liblzma.so.1.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/liblzma.so.1.1.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libm.so.0.10.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libmagic.so.3.1.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libmenu.so.6.0.debug			comp-compat-shlib	compat,pic,debug
