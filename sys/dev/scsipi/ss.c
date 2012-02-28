@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.81 2012/02/28 11:41:00 mbalmer Exp $	*/
+/*	$NetBSD: ss.c,v 1.82 2012/02/28 11:59:37 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.81 2012/02/28 11:41:00 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.82 2012/02/28 11:59:37 mbalmer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,11 +178,10 @@ ssattach(device_t parent, device_t self, void *aux)
 	if (memcmp(sa->sa_inqbuf.vendor, "HP      ", 8) == 0 &&
 	    memcmp(sa->sa_inqbuf.product, "ScanJet 5300C", 13) != 0)
 		scanjet_attach(ss, sa);
-#if 0
+
 	if (ss->special == NULL) {
 		/* XXX add code to restart a SCSI2 scanner, if any */
 	}
-#endif
 	ss->flags &= ~SSF_AUTOCONF;
 }
 
@@ -307,12 +306,9 @@ ssclose(dev_t dev, int flag, int mode, struct lwp *l)
 			error = (ss->special->rewind_scanner)(ss);
 			if (error)
 				return error;
-		}
-#if 0
-		else {
+		} else {
 			/* XXX add code to restart a SCSI2 scanner, if any */
 		}
-#endif
 		ss->sio.scan_window_size = 0;
 		ss->flags &= ~SSF_TRIGGERED;
 	}
@@ -479,12 +475,10 @@ ssstart(struct scsipi_periph *periph)
 
 		if (ss->special && ss->special->read)
 			(ss->special->read)(ss, bp);
-#if 0
 		} else {
 			/* generic scsi2 scanner read */
 			/* XXX add code for SCSI2 scanner read */
 		}
-#endif
 	}
 }
 
