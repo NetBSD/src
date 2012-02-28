@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2011/01/19 10:14:49 plunky Exp $
+# $NetBSD: Makefile,v 1.3 2012/02/28 22:07:16 joerg Exp $
 
 LIB=		lua
 SRCS=		lapi.c lauxlib.c lbaselib.c lcode.c ldblib.c ldebug.c ldo.c \
@@ -13,6 +13,7 @@ INCS=		lauxlib.h lua.h luaconf.h lualib.h
 INCSDIR=	/usr/include
 
 CFLAGS+=	-DLUA_USE_POSIX -DLUA_USE_DLOPEN
+CWARNFLAGS.clang+=	-Wno-empty-body
 
 .PATH:		${NETBSDSRCDIR}/external/mit/lua/dist/src
 
