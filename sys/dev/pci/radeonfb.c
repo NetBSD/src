@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.56 2012/02/28 20:23:51 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.57 2012/02/28 21:22:20 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.56 2012/02/28 20:23:51 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.57 2012/02/28 21:22:20 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2672,7 +2672,7 @@ radeonfb_putchar_aa8(void *cookie, int row, int col, u_int c, long attr)
 	int i, x, y, wi, he, r, g, b, aval;
 	int r1, g1, b1, r0, g0, b0, fgo, bgo;
 	uint8_t *data8;
-	int rv;
+	int rv, cnt;
 
 	if (dp->rd_wsmode != WSDISPLAYIO_MODE_EMUL)
 		return;
@@ -2734,6 +2734,9 @@ radeonfb_putchar_aa8(void *cookie, int row, int col, u_int c, long attr)
 #define R3G3B2(r, g, b) ((r & 0xe0) | ((g >> 3) & 0x1c) | (b >> 6))
 	bg8 = R3G3B2(r0, g0, b0);
 	fg8 = R3G3B2(r1, g1, b1);
+
+	radeonfb_wait_fifo(sc, 20);
+	cnt = 0;
 	for (i = 0; i < ri->ri_fontscale; i++) {
 		aval = *data8;
 		if (aval == 0) {
@@ -2757,6 +2760,11 @@ radeonfb_putchar_aa8(void *cookie, int row, int col, u_int c, long attr)
 			 * out 
 			 */
 			latch = 0;
+			cnt++;
+			if (cnt > 16) {
+				cnt = 0;
+				radeonfb_wait_fifo(sc, 20);
+			}
 		}
 		data8++;
 	}
