@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.31 2009/04/10 13:08:24 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.32 2012/02/28 22:30:44 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95
- *	$NetBSD: extern.h,v 1.31 2009/04/10 13:08:24 christos Exp $
+ *	$NetBSD: extern.h,v 1.32 2012/02/28 22:30:44 joerg Exp $
  */
 
 #ifndef __EXTERN_H__
@@ -294,7 +294,7 @@ int	isign(const char *, struct ignoretab []);
 void	istrcpy(char *, const char *);
 int	member(char *, struct ignoretab *);
 char *	nameof(struct message *, int);
-int	sasprintf(char **ret, const char *format, ...);
+int	sasprintf(char **ret, const char *format, ...) __printflike(2, 3);
 char *	savestr(const char *);
 struct message *set_m_flag(int, int, int);
 char *	skin(char *);
