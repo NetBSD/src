@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.82 2012/02/28 11:59:37 mbalmer Exp $	*/
+/*	$NetBSD: ss.c,v 1.83 2012/02/28 14:01:03 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.82 2012/02/28 11:59:37 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.83 2012/02/28 14:01:03 mbalmer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -475,7 +475,7 @@ ssstart(struct scsipi_periph *periph)
 
 		if (ss->special && ss->special->read)
 			(ss->special->read)(ss, bp);
-		} else {
+		else {
 			/* generic scsi2 scanner read */
 			/* XXX add code for SCSI2 scanner read */
 		}
