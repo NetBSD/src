@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/11/03 17:52:54 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2012/02/28 17:09:30 joerg Exp $
 
 LIB=	LLVMSelectionDAG
 
@@ -17,9 +17,11 @@ SRCS+=	DAGCombiner.cpp \
 	LegalizeTypesGeneric.cpp \
 	LegalizeVectorOps.cpp \
 	LegalizeVectorTypes.cpp \
+	ResourcePriorityQueue.cpp \
 	ScheduleDAGFast.cpp \
 	ScheduleDAGRRList.cpp \
 	ScheduleDAGSDNodes.cpp \
+	ScheduleDAGVLIW.cpp \
 	SelectionDAG.cpp \
 	SelectionDAGBuilder.cpp \
 	SelectionDAGISel.cpp \

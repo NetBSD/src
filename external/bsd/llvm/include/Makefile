@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2012/01/11 23:24:46 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2012/02/28 17:09:30 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -58,6 +58,7 @@ CLANG_TABLEGEN_OUTPUT.Attr.td= \
 	clang/Basic/AttrList.inc|-gen-clang-attr-list \
 	clang/Lex/AttrSpellings.inc|-gen-clang-attr-spelling-list \
 	clang/Parse/AttrLateParsed.inc|-gen-clang-attr-late-parsed-list \
+	clang/Sema/AttrTemplateInstantiate.inc|-gen-clang-attr-template-instantiate \
 	clang/Serialization/AttrPCHRead.inc|-gen-clang-attr-pch-read \
 	clang/Serialization/AttrPCHWrite.inc|-gen-clang-attr-pch-write
 

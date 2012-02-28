@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18 2012/01/17 15:51:55 joerg Exp $
+# $NetBSD: Makefile,v 1.19 2012/02/28 17:09:30 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -26,6 +26,7 @@ SUBDIR=	\
 	libLLVMTableGen \
 	libLLVMTarget \
 	libLLVMTransformsUtils \
+	libLLVMVectorize \
 	libLLVMARMCodeGen \
 	libLLVMMipsCodeGen \
 	libLLVMPowerPCCodeGen \
