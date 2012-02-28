@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2012/01/11 23:24:49 joerg Exp $
+#	$NetBSD: Makefile,v 1.12 2012/02/28 17:09:31 joerg Exp $
 
 LIB=	clangStaticAnalyzerCheckers
 
@@ -12,9 +12,11 @@ SRCS+=	AdjustedReturnValueChecker.cpp \
 	ArrayBoundCheckerV2.cpp \
 	AttrNonNullChecker.cpp \
 	BasicObjCFoundationChecks.cpp \
+	BoolAssignmentChecker.cpp \
 	BuiltinFunctionChecker.cpp \
 	ClangCheckers.cpp \
 	CStringChecker.cpp \
+	CStringSyntaxChecker.cpp \
 	CallAndMessageChecker.cpp \
 	CastSizeChecker.cpp \
 	CastToStructChecker.cpp \
@@ -43,6 +45,8 @@ SRCS+=	AdjustedReturnValueChecker.cpp \
 	NoReturnFunctionChecker.cpp \
 	OSAtomicChecker.cpp \
 	ObjCAtSyncChecker.cpp \
+	ObjCContainersASTChecker.cpp \
+	ObjCContainersChecker.cpp \
 	ObjCSelfInitChecker.cpp \
 	ObjCUnusedIVarsChecker.cpp \
 	PointerArithChecker.cpp \
