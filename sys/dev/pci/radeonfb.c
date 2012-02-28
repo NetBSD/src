@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.55 2012/02/28 20:21:16 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.56 2012/02/28 20:23:51 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.55 2012/02/28 20:21:16 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.56 2012/02/28 20:23:51 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -947,6 +947,29 @@ error:
 		bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_memsz);
 }
 
+static void
+radeonfb_map(struct radeonfb_softc *sc)
+{
+	if (bus_space_map(sc->sc_regt, sc->sc_regaddr, sc->sc_regsz, 0,
+	    &sc->sc_regh) != 0) {
+		aprint_error("%s: unable to map registers!\n", XNAME(sc));
+		return;
+	}
+	if (bus_space_map(sc->sc_memt, sc->sc_memaddr, sc->sc_memsz,
+		BUS_SPACE_MAP_LINEAR, &sc->sc_memh) != 0) {
+		sc->sc_memsz = 0;
+		aprint_error("%s: Unable to map frame buffer\n", XNAME(sc));
+		return;
+	}
+}
+
+static void
+radeonfb_unmap(struct radeonfb_softc *sc)
+{
+	bus_space_unmap(sc->sc_regt, sc->sc_regh, sc->sc_regsz);
+	bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_memsz);
+}
+
 static int
 radeonfb_drm_print(void *aux, const char *pnp)
 {
@@ -1021,11 +1044,14 @@ radeonfb_ioctl(void *v, void *vs,
 			dp->rd_wsmode = *(int *)d;
 			if ((dp->rd_wsmode == WSDISPLAYIO_MODE_EMUL) &&
 			    (dp->rd_vd.active)) {
+			    	radeonfb_map(sc);
 				radeonfb_engine_init(dp);
 				glyphcache_wipe(&dp->rd_gc);
 				radeonfb_init_palette(sc, dp == &sc->sc_displays[0] ? 0 : 1);
 				radeonfb_modeswitch(dp);
 				vcons_redraw_screen(dp->rd_vd.active);
+			} else {
+				radeonfb_unmap(sc);
 			}
 		}
 		return 0;
