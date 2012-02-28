@@ -1,4 +1,4 @@
-B0;259;0c/* $NetBSD: t_atan.c,v 1.2 2012/02/28 06:09:48 jruoho Exp $ */
+/* $NetBSD: t_atan.c,v 1.3 2012/02/28 08:58:39 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
