@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.101.4.2.4.8 2012/02/14 01:12:42 matt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.101.4.2.4.9 2012/02/29 18:03:38 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -128,7 +128,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.101.4.2.4.8 2012/02/14 01:12:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.101.4.2.4.9 2012/02/29 18:03:38 matt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -632,7 +632,7 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 		uvm_km_pageclaim(pg);
 
 		pg->flags &= ~PG_BUSY;	/* new page */
-		UVM_PAGE_OWN(pg, NULL);
+		UVM_PAGE_OWN(pg, NULL, NULL);
 
 		/*
 		 * map it in

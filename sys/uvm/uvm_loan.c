@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.72 2008/06/17 02:29:10 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.72.10.1 2012/02/29 18:03:39 matt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.72 2008/06/17 02:29:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.72.10.1 2012/02/29 18:03:39 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -724,7 +724,7 @@ uvm_loanuobj(struct uvm_faultinfo *ufi, void ***output, int flags, vaddr_t va)
 			uvm_pageactivate(pg);
 			mutex_exit(&uvm_pageqlock);
 			pg->flags &= ~(PG_BUSY|PG_WANTED);
-			UVM_PAGE_OWN(pg, NULL);
+			UVM_PAGE_OWN(pg, NULL, NULL);
 			mutex_exit(&uobj->vmobjlock);
 			return (0);
 		}
@@ -765,7 +765,7 @@ uvm_loanuobj(struct uvm_faultinfo *ufi, void ***output, int flags, vaddr_t va)
 			wakeup(pg);
 		}
 		pg->flags &= ~(PG_WANTED|PG_BUSY);
-		UVM_PAGE_OWN(pg, NULL);
+		UVM_PAGE_OWN(pg, NULL, NULL);
 		mutex_exit(&uobj->vmobjlock);
 		**output = anon;
 		(*output)++;
@@ -803,7 +803,7 @@ uvm_loanuobj(struct uvm_faultinfo *ufi, void ***output, int flags, vaddr_t va)
 		wakeup(pg);
 	}
 	pg->flags &= ~(PG_WANTED|PG_BUSY);
-	UVM_PAGE_OWN(pg, NULL);
+	UVM_PAGE_OWN(pg, NULL, NULL);
 	mutex_exit(&uobj->vmobjlock);
 	mutex_exit(&anon->an_lock);
 	**output = anon;
@@ -819,7 +819,7 @@ fail:
 		wakeup(pg);
 	}
 	pg->flags &= ~(PG_WANTED|PG_BUSY);
-	UVM_PAGE_OWN(pg, NULL);
+	UVM_PAGE_OWN(pg, NULL, NULL);
 	uvmfault_unlockall(ufi, amap, uobj, NULL);
 	return (-1);
 }
@@ -874,7 +874,7 @@ again:
 		mutex_enter(&uvm_pageqlock);
 		uvm_pageactivate(pg);
 		mutex_exit(&uvm_pageqlock);
-		UVM_PAGE_OWN(pg, NULL);
+		UVM_PAGE_OWN(pg, NULL, NULL);
 	}
 
 	if ((flags & UVM_LOAN_TOANON) == 0) {	/* loaning to kernel-page */
@@ -1148,7 +1148,7 @@ uvm_loanbreak(struct vm_page *uobjpage)
 		wakeup(uobjpage);
 	/* uobj still locked */
 	uobjpage->flags &= ~(PG_WANTED|PG_BUSY);
-	UVM_PAGE_OWN(uobjpage, NULL);
+	UVM_PAGE_OWN(uobjpage, NULL, NULL);
 
 	mutex_enter(&uvm_pageqlock);
 
