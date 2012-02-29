@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.218 2008/06/24 10:47:32 gmcgarry Exp $	*/
+/*	lfs_vnops.c,v 1.218 2008/06/24 10:47:32 gmcgarry Exp	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.218 2008/06/24 10:47:32 gmcgarry Exp $");
+__KERNEL_RCSID(0, "lfs_vnops.c,v 1.218 2008/06/24 10:47:32 gmcgarry Exp");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1887,7 +1887,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 				goto top;
 			}
 			pg->flags |= PG_BUSY;
-			UVM_PAGE_OWN(pg, "lfs_putpages");
+			UVM_PAGE_OWN(pg, "lfs_putpages", NULL);
 
 			pmap_page_protect(pg, VM_PROT_NONE);
 			tdirty = (pmap_clear_modify(pg) ||
@@ -1933,7 +1933,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 			if (pg->flags & PG_WANTED)
 				wakeup(pg);
 			pg->flags &= ~(PG_WANTED|PG_BUSY);
-			UVM_PAGE_OWN(pg, NULL);
+			UVM_PAGE_OWN(pg, NULL, NULL);
 		}
 
 		if (checkfirst && any_dirty)
