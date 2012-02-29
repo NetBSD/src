@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2010/10/31 11:29:06 mbalmer Exp $
+#	$NetBSD: Makefile,v 1.2 2012/02/29 20:07:55 tron Exp $
 
-SUBDIR+=	lua
+SUBDIR+=	expat lua
 
 .include <bsd.subdir.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2011/08/11 23:15:38 joerg Exp $
+#	$NetBSD: Makefile,v 1.8 2012/02/29 20:07:57 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -84,7 +84,7 @@ MAN=	FcAtomicCreate.3 FcAtomicDeleteNew.3 FcAtomicDestroy.3 FcAtomicLock.3 \
 MAN+=	fonts-conf.5
 
 LIBDPLIBS=\
-	expat		${.CURDIR}/../../expat \
+	expat		${NETBSDSRCDIR}/external/mit/expat/lib/libexpat \
 	freetype	${.CURDIR}/../../freetype
 
 # XXX FONTCONFIG_PATH was arbitrarily chosen

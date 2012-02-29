@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.986 2012/02/16 12:29:11 wiz Exp $
+# $NetBSD: mi,v 1.987 2012/02/29 20:07:51 tron Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -745,6 +745,7 @@
 ./usr/bin/window				base-obsolete		obsolete
 ./usr/bin/write					base-util-bin
 ./usr/bin/xargs					base-util-bin
+./usr/bin/xmlwf					base-util-bin
 ./usr/bin/xz					base-util-bin
 ./usr/bin/xzcat					base-util-bin
 ./usr/bin/yes					base-util-bin

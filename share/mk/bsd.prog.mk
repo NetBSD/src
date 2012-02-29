@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.273 2012/02/21 01:41:09 matt Exp $
+#	$NetBSD: bsd.prog.mk,v 1.274 2012/02/29 20:07:57 tron Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -107,6 +107,7 @@ LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 	dns \
 	edit \
 	event \
+	expat \
 	fetch \
 	fl \
 	form \
@@ -246,7 +247,6 @@ PAM_STATIC_DPADD=
 	Xxf86misc \
 	Xxf86vm \
 	dps \
-	expat \
 	fntstubs \
 	fontcache \
 	fontconfig \

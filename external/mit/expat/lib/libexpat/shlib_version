@@ -1,0 +1,5 @@
+#	$NetBSD: shlib_version,v 1.1 2012/02/29 20:07:56 tron Exp $
+#
+# XXX netbsd xsrc had major=4
+major=2
+minor=0
