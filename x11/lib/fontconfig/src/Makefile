@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2005/09/22 15:42:57 chs Exp $
+#	$NetBSD: Makefile,v 1.11 2012/02/29 20:07:58 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -10,14 +10,12 @@ SRCS=	fcatomic.c fcblanks.c fccache.c fccfg.c fccharset.c fcdbg.c \
 	fclist.c fcmatch.c fcmatrix.c fcname.c fcpat.c fcstr.c fcxml.c
 
 LIBDPLIBS=\
-	expat		${.CURDIR}/../../expat \
 	freetype	${.CURDIR}/../../freetype2
 
 MAN=	fontconfig.3
 
 CPPFLAGS+=	${X11FLAGS.THREADS}
-CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2 \
-		-I${X11SRCDIR.xc}/extras/expat/lib
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2
 CPPFLAGS+=	-DFC_DEFAULT_FONTS='"${X11FONTDIR}/Type1"' -DHAVE_EXPAT
 CPPFLAGS+=	-DXFREE86_FT2
 

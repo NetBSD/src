@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.157 2012/02/28 14:22:22 joerg Exp $
+# $NetBSD: md.amd64,v 1.158 2012/02/29 20:07:52 tron Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -537,6 +537,11 @@
 ./usr/lib/i386/libevent_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/libevent_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libevent_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libexpat.a			comp-c-lib		compat
+./usr/lib/i386/libexpat.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libexpat_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libexpat_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libexpat_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/libfetch.a			comp-c-lib		compat
 ./usr/lib/i386/libfetch.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libfetch_g.a			comp-c-proflib		compat,debuglib
@@ -1063,6 +1068,7 @@
 ./usr/libdata/debug/usr/lib/i386/libedit.so.3.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libelf.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libevent.so.3.2.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libexpat.so.2.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libfetch.so.3.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libform.so.6.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libgcc_s.so.1.0.debug	comp-compat-shlib	compat,pic,debug
