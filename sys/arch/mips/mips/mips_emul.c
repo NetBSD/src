@@ -1,4 +1,4 @@
-/*	mips_emul.c,v 1.14.78.14 2012/02/13 08:13:42 matt Exp */
+/*	$NetBSD: mips_emul.c,v 1.14.78.17 2012/02/29 02:02:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
