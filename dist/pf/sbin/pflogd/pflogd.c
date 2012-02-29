@@ -1,4 +1,4 @@
-/*	$NetBSD: pflogd.c,v 1.8 2010/12/13 01:45:38 christos Exp $	*/
+/*	$NetBSD: pflogd.c,v 1.9 2012/02/29 23:42:28 joerg Exp $	*/
 /*	$OpenBSD: pflogd.c,v 1.45 2007/06/06 14:11:26 henning Exp $	*/
 
 /*
@@ -559,7 +559,7 @@ dump_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *sp)
 #endif
 
 	if (len < sizeof(*h) || h->caplen > (size_t)cur_snaplen) {
-		logmsg(LOG_NOTICE, "invalid size %u (%u/%u), packet dropped",
+		logmsg(LOG_NOTICE, "invalid size %zu (%u/%u), packet dropped",
 		       len, cur_snaplen, snaplen);
 		packets_dropped++;
 		return;
@@ -770,7 +770,7 @@ main(int argc, char **argv)
 		logmsg(LOG_WARNING, "Reading stats: %s", pcap_geterr(hpcap));
 	else
 		logmsg(LOG_NOTICE,
-		    "%u packets received, %u/%u dropped (kernel/pflogd)",
+		    "%u packets received, %u/%ld dropped (kernel/pflogd)",
 		    pstat.ps_recv, pstat.ps_drop, packets_dropped);
 
 	pcap_close(hpcap);
