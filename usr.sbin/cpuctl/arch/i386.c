@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.27 2012/02/03 05:07:17 yamt Exp $	*/
+/*	$NetBSD: i386.c,v 1.28 2012/02/29 23:34:01 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.27 2012/02/03 05:07:17 yamt Exp $");
+__RCSID("$NetBSD: i386.c,v 1.28 2012/02/29 23:34:01 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1394,9 +1394,9 @@ identifycpu(const char *cpuname)
 	aprint_normal("%s: %s", cpuname, cpu_model);
 
 	if (ci->ci_tsc_freq != 0)
-		aprint_normal(", %qd.%02qd MHz",
-		    (ci->ci_tsc_freq + 4999) / 1000000,
-		    ((ci->ci_tsc_freq + 4999) / 10000) % 100);
+		aprint_normal(", %ju.%02ju MHz",
+		    ((uintmax_t)ci->ci_tsc_freq + 4999) / 1000000,
+		    (((uintmax_t)ci->ci_tsc_freq + 4999) / 10000) % 100);
 	if (ci->ci_signature != 0)
 		aprint_normal(", id 0x%x", ci->ci_signature);
 	aprint_normal("\n");
