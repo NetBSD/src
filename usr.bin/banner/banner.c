@@ -1,4 +1,4 @@
-/*	$NetBSD: banner.c,v 1.14 2012/02/26 21:04:10 wiz Exp $	*/
+/*	$NetBSD: banner.c,v 1.15 2012/02/29 08:55:25 wiz Exp $	*/
 
 /*
  *	Changes for banner(1)
@@ -58,7 +58,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: banner.c,v 1.14 2012/02/26 21:04:10 wiz Exp $");
+__RCSID("$NetBSD: banner.c,v 1.15 2012/02/29 08:55:25 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -205,7 +205,7 @@ main(int argc, char **argv)
 static void
 usage(void)
 {
-    fprintf(stderr, "usage: %s [-l] [b bg] [-f fg] message...\n",
+    fprintf(stderr, "usage: %s [-l] [-b bg] [-f fg] string ...\n",
 	getprogname());
     exit(1);
 }
