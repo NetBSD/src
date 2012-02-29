@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "mips_emul.c,v 1.14.78.14 2012/02/13 08:13:42 matt Exp");
 #include <mips/vmparam.h>			/* for VM_MAX_ADDRESS */
 #include <mips/trap.h>
 
-#ifndef NOMIPSEMUL
+#if (!defined(NOMIPSEMUL) && (MIPS1 + MIPS2) > 0) || defined(FPEMUL) 
 static void	send_sigsegv(intptr_t, uint32_t, struct trapframe *, uint32_t);
 #endif
 static void	send_sigill(intptr_t, uint32_t, struct trapframe *, uint32_t,
@@ -263,7 +263,7 @@ mips_emul_inst(uint32_t status, uint32_t cause, vaddr_t opc,
 	}
 }
 
-#ifndef NOMIPSEMUL
+#if (!defined(NOMIPSEMUL) && (MIPS1 + MIPS2) > 0) || defined(FPEMUL)
 static void
 send_sigsegv(intptr_t vaddr, uint32_t exccode, struct trapframe *tf,
     uint32_t cause)
@@ -821,7 +821,7 @@ mips_emul_lwr(uint32_t inst, struct trapframe *tf, uint32_t cause)
 	update_pc(tf, cause);
 }
 
-#if defined(__mips_n32) || defined(__mips_n64) || defined(__mips_o64)
+#if !defined(__mips_o32)
 void
 mips_emul_lwu(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
@@ -938,7 +938,7 @@ mips_emul_ldr(uint32_t inst, struct trapframe *tf, uint32_t cause)
 
 	update_pc(tf, cause);
 }
-#endif /* defined(__mips_n32) || defined(__mips_n64) || defined(__mips_o64) */
+#endif /* !defined(__mips_o32) */
 
 void
 mips_emul_sb(uint32_t inst, struct trapframe *tf, uint32_t cause)
@@ -1081,7 +1081,7 @@ mips_emul_swr(uint32_t inst, struct trapframe *tf, uint32_t cause)
 	update_pc(tf, cause);
 }
 
-#if defined(__mips_n32) || defined(__mips_n64) || defined(__mips_o64)
+#if !defined(__mips_o32)
 void
 mips_emul_sd(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
@@ -1178,5 +1178,5 @@ mips_emul_sdr(uint32_t inst, struct trapframe *tf, uint32_t cause)
 
 	update_pc(tf, cause);
 }
-#endif /* defined(__mips_n32) || defined(__mips_n64) || defined(__mips_o64) */
+#endif /* !defined(__mips_o32) */
 #endif /* defined(FPEMUL) */
