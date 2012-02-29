@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppoe.4,v 1.34 2009/05/27 19:24:00 snj Exp $
+.\"	$NetBSD: pppoe.4,v 1.35 2012/02/29 22:53:47 rjs Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 4, 2006
+.Dd February 24, 2012
 .Dt PPPOE 4
 .Os
 .Sh NAME
@@ -301,13 +301,19 @@ flag with
 .%T "A Method for Transmitting PPP Over Ethernet (PPPoE)"
 .%D February 1999
 .Re
+.Rs
+.%R RFC
+.%N 4638
+.%T "Accommodating a Maximum Transit Unit/Maximum Recieve Unit (MTU/MRU) Greater Than 1492 in the Point-to-Point Protocol over Ethernet (PPPoE)"
+.%D September 2006
+.Re
 .Sh HISTORY
 The
 .Nm
 device appeared in
 .Nx 1.6 .
 .Sh DEVIATIONS FROM STANDARD
-The PPPoE standard,
+The original PPPoE standard,
 .Li RFC2516 ,
 requires a maximal MTU of 1492 octets.
 This value is the maximum conservative
@@ -319,7 +325,10 @@ many PPPoE services allow the use of (slightly) larger MTUs, to avoid
 the problems described above.
 .Pp
 This implementation allows MTU values as large as possible with the actual
-MTU of the used Ethernet interface.
+MTU of the used Ethernet interface and conforms to the enhancement to the
+PPPoE standard,
+.Li RFC4638 ,
+to request the use of this larger MTU value with the PPPoE server.
 .Sh BUGS
 When using the wildcard address 0.0.0.0 (as described above)
 it is important to specify the proper
