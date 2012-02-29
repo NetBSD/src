@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1742 2012/02/21 10:10:43 wiz Exp $
+#	$NetBSD: mi,v 1.1743 2012/02/29 20:07:52 tron Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -650,6 +650,8 @@
 ./usr/include/evhttp.h				comp-c-include
 ./usr/include/evrpc.h				comp-c-include
 ./usr/include/evutil.h				comp-c-include
+./usr/include/expat.h				comp-c-include
+./usr/include/expat_external.h			comp-c-include
 ./usr/include/fcntl.h				comp-c-include
 ./usr/include/fenv.h				comp-c-include
 ./usr/include/fetch.h				comp-c-include
@@ -2807,6 +2809,9 @@
 ./usr/lib/libevent.a				comp-c-lib
 ./usr/lib/libevent_g.a				-unknown-		debuglib
 ./usr/lib/libevent_p.a				comp-c-proflib		profile
+./usr/lib/libexpat.a				comp-c-lib
+./usr/lib/libexpat_g.a				-unknown-		debuglib
+./usr/lib/libexpat_p.a				comp-c-proflib		profile
 ./usr/lib/libfetch.a				comp-c-lib
 ./usr/lib/libfetch_g.a				-unknown-		debuglib
 ./usr/lib/libfetch_p.a				comp-c-proflib		profile
@@ -3898,6 +3903,7 @@
 ./usr/libdata/debug/usr/bin/xargs.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/xgettext.debug	comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/xstr.debug		comp-c-debug		debug
+./usr/libdata/debug/usr/bin/xmlwf.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/xz.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/yacc.debug		comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/yes.debug		comp-util-debug		debug
@@ -4356,6 +4362,7 @@
 ./usr/libdata/lint/llib-ledit.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lelf.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-levent.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lexpat.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lfetch.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lform.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lgmp.ln			comp-c-lintlib		obsolete

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.66 2011/10/13 22:08:20 joerg Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.67 2012/02/29 20:07:57 tron Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -21,6 +21,7 @@ LIBDBM?=	/usr/lib/libdbm.a
 LIBDES?=	/usr/lib/libdes.a
 LIBEDIT?=	/usr/lib/libedit.a
 LIBEVENT?=	/usr/lib/libevent.a
+LIBEXPAT?=	/usr/lib/libexpat.a
 LIBFETCH?=	/usr/lib/libfetch.a
 LIBFORM?=	/usr/lib/libform.a
 LIBGCC?=	/usr/lib/libgcc.a

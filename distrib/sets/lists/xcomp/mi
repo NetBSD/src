@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.133 2011/10/22 22:23:50 jmcneill Exp $
+#	 $NetBSD: mi,v 1.134 2012/02/29 20:07:55 tron Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -336,7 +336,7 @@
 ./usr/X11R6/include/X11/keysym.h			-unknown-	x11
 ./usr/X11R6/include/X11/keysymdef.h			-unknown-	x11
 ./usr/X11R6/include/X11/xpm.h				-unknown-	x11
-./usr/X11R6/include/expat.h				-unknown-	x11
+./usr/X11R6/include/expat.h				xcomp-obsolete	obsolete
 ./usr/X11R6/include/fontconfig/fcfreetype.h		-unknown-	x11
 ./usr/X11R6/include/fontconfig/fcprivate.h		-unknown-	x11
 ./usr/X11R6/include/fontconfig/fontconfig.h		-unknown-	x11
@@ -650,9 +650,9 @@
 ./usr/X11R6/lib/libdpstk.a				-unknown-	x11
 ./usr/X11R6/lib/libdpstk_g.a				-unknown-	debuglib,x11
 ./usr/X11R6/lib/libdpstk_p.a				-unknown-	profile,x11
-./usr/X11R6/lib/libexpat.a				-unknown-	x11
-./usr/X11R6/lib/libexpat_g.a				-unknown-	debuglib,x11
-./usr/X11R6/lib/libexpat_p.a				-unknown-	profile,x11
+./usr/X11R6/lib/libexpat.a				-obsolete-	obsolete
+./usr/X11R6/lib/libexpat_g.a				-obsolete-	obsolete
+./usr/X11R6/lib/libexpat_p.a				-obsolete-	obsolete
 ./usr/X11R6/lib/libfntstubs.a				-unknown-	x11
 ./usr/X11R6/lib/libfntstubs_g.a				-unknown-	debuglib,x11
 ./usr/X11R6/lib/libfntstubs_p.a				-unknown-	profile,x11
@@ -5696,8 +5696,8 @@
 ./usr/X11R7/include/drm/via_3d_reg.h			-unknown-	obsolete
 ./usr/X11R7/include/drm/via_drm.h			-unknown-	obsolete
 ./usr/X11R7/include/drm/xgi_drm.h			-unknown-	obsolete
-./usr/X11R7/include/expat.h				-unknown-	xorg
-./usr/X11R7/include/expat_external.h			-unknown-	xorg
+./usr/X11R7/include/expat.h				-unknown-	obsolete
+./usr/X11R7/include/expat_external.h			-unknown-	obsolete
 ./usr/X11R7/include/fontconfig/fcfreetype.h		-unknown-	xorg
 ./usr/X11R7/include/fontconfig/fcprivate.h		-unknown-	xorg
 ./usr/X11R7/include/fontconfig/fontconfig.h		-unknown-	xorg
@@ -6275,9 +6275,9 @@
 ./usr/X11R7/lib/libdrm_radeon.a				-unknown-	xorg
 ./usr/X11R7/lib/libdrm_radeon_g.a			-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libdrm_radeon_p.a			-unknown-	profile,xorg
-./usr/X11R7/lib/libexpat.a				-unknown-	xorg
-./usr/X11R7/lib/libexpat_g.a				-unknown-	debuglib,xorg
-./usr/X11R7/lib/libexpat_p.a				-unknown-	profile,xorg
+./usr/X11R7/lib/libexpat.a				-unknown-	obsolete
+./usr/X11R7/lib/libexpat_g.a				-unknown-	obsolete
+./usr/X11R7/lib/libexpat_p.a				-unknown-	obsolete
 ./usr/X11R7/lib/libfontconfig.a				-unknown-	xorg
 ./usr/X11R7/lib/libfontconfig_g.a			-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libfontconfig_p.a			-unknown-	profile,xorg
@@ -9490,7 +9490,7 @@
 ./usr/libdata/debug/usr/X11R7/bin/xman.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/xmessage.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/xmh.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/xmlwf.debug		-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/xmlwf.debug		-obsolete-	obsolete
 ./usr/libdata/debug/usr/X11R7/bin/xmodmap.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/xmore.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/xphelloworld.debug	-obsolete-	obsolete
@@ -9601,8 +9601,6 @@
 ./usr/libdata/lint/llib-ldpstk.ln			-unknown-	lint,x11
 ./usr/libdata/lint/llib-ldrm.ln				-unknown-	lint,xorg
 ./usr/libdata/lint/llib-ldrm_radeon.ln			-unknown-	lint,xorg
-./usr/libdata/lint/llib-lexpat.ln			-unknown-	lint,x11
-./usr/libdata/lint/llib-lexpat.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lfntstubs.ln			-unknown-	lint,x11
 ./usr/libdata/lint/llib-lfontconfig.ln			-unknown-	lint,x11
 ./usr/libdata/lint/llib-lfontconfig.ln			-unknown-	lint,xorg
