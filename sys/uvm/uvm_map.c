@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.263.4.3.4.7 2012/02/09 03:04:59 matt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.263.4.3.4.8 2012/02/29 18:03:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.263.4.3.4.7 2012/02/09 03:04:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.263.4.3.4.8 2012/02/29 18:03:39 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2431,7 +2431,7 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 			for (va = entry->start; va < entry->end;
 			    va += PAGE_SIZE) {
 				if (pmap_extract(vm_map_pmap(map), va, NULL)) {
-					panic("uvm_unmap_remove: has mapping");
+					panic("uvm_unmap_remove: entry %p (%#"PRIxVADDR"...%#"PRIxVADDR") has mapping at %#"PRIxVADDR, entry, entry->start, entry->end, va);
 				}
 			}
 
@@ -5069,10 +5069,10 @@ uvm_page_printit(struct vm_page *pg, bool full,
 	    pg->uobject, pg->uanon, (long long)pg->offset, pg->loan_count);
 #if defined(UVM_PAGE_TRKOWN)
 	if (pg->flags & PG_BUSY)
-		(*pr)("  owning process = %d, tag=%s\n",
-		    pg->owner, pg->owner_tag);
+		(*pr)("  owning process = %d, tag=%s, addr=%p\n",
+		    pg->owner, pg->owner_tag, pg->owner_addr);
 	else
-		(*pr)("  page not busy, no owner\n");
+		(*pr)("  page not busy, no owner (addr=%p)\n", pg->owner_addr);
 #else
 	(*pr)("  [page ownership tracking disabled]\n");
 #endif

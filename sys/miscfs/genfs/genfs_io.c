@@ -693,7 +693,7 @@ out:
 			}
 			uvm_pageenqueue(pg);
 			pg->flags &= ~(PG_WANTED|PG_BUSY|PG_FAKE);
-			UVM_PAGE_OWN(pg, NULL);
+			UVM_PAGE_OWN(pg, NULL, NULL);
 		}
 	}
 	mutex_exit(&uvm_pageqlock);
@@ -1037,7 +1037,7 @@ retry:
 			wasclean = false;
 			memset(pgs, 0, sizeof(pgs));
 			pg->flags |= PG_BUSY;
-			UVM_PAGE_OWN(pg, "genfs_putpages");
+			UVM_PAGE_OWN(pg, "genfs_putpages", NULL);
 
 			/*
 			 * first look backward.
@@ -1115,6 +1115,7 @@ retry:
 					 */
 
 					nextpg = TAILQ_NEXT(tpg, listq.queue);
+					uvm_pagedequeue(tpg);
 					uvm_pagefree(tpg);
 					if (pagedaemon) {
 						uvm_page_to_pggroup(tpg)->pgrp_pdfreed++;

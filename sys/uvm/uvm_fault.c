@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.125.6.1.4.3 2011/06/03 07:59:57 matt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.125.6.1.4.4 2012/02/29 18:03:38 matt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.125.6.1.4.3 2011/06/03 07:59:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.125.6.1.4.4 2012/02/29 18:03:38 matt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -493,7 +493,7 @@ released:
 			uvm_pageactivate(pg);
 			mutex_exit(&uvm_pageqlock);
 			pg->flags &= ~(PG_WANTED|PG_BUSY|PG_FAKE);
-			UVM_PAGE_OWN(pg, NULL);
+			UVM_PAGE_OWN(pg, NULL, NULL);
 			if (!locked)
 				mutex_exit(&anon->an_lock);
 #else /* defined(VMSWAP) */
@@ -1138,7 +1138,7 @@ ReFault:
 				KASSERT((curpg->flags & PG_RELEASED) == 0);
 
 				curpg->flags &= ~(PG_BUSY);
-				UVM_PAGE_OWN(curpg, NULL);
+				UVM_PAGE_OWN(curpg, NULL, NULL);
 			}
 			pmap_update(ufi.orig_map->pmap);
 		}
@@ -1316,7 +1316,7 @@ ReFault:
 				mutex_exit(&uvm_pageqlock);
 
 				pg->flags &= ~(PG_BUSY|PG_FAKE);
-				UVM_PAGE_OWN(pg, NULL);
+				UVM_PAGE_OWN(pg, NULL, NULL);
 
 				/* done! */
 			}     /* ref == 1 */
@@ -1358,7 +1358,7 @@ ReFault:
 		uvm_pageactivate(pg);
 		mutex_exit(&uvm_pageqlock);
 		pg->flags &= ~(PG_BUSY|PG_FAKE);
-		UVM_PAGE_OWN(pg, NULL);
+		UVM_PAGE_OWN(pg, NULL, NULL);
 
 		/* deref: can not drop to zero here by defn! */
 		oanon->an_ref--;
@@ -1577,7 +1577,7 @@ Case2:
 				goto ReFault;
 			}
 			uobjpage->flags &= ~(PG_BUSY|PG_WANTED);
-			UVM_PAGE_OWN(uobjpage, NULL);
+			UVM_PAGE_OWN(uobjpage, NULL, NULL);
 			mutex_exit(&uobj->vmobjlock);
 			goto ReFault;
 		}
@@ -1656,7 +1656,7 @@ Case2:
 					if (uobjpage->flags & PG_WANTED)
 						wakeup(uobjpage);
 					uobjpage->flags &= ~(PG_BUSY|PG_WANTED);
-					UVM_PAGE_OWN(uobjpage, NULL);
+					UVM_PAGE_OWN(uobjpage, NULL, NULL);
 
 					uvmfault_unlockall(&ufi, amap, uobj,
 					  NULL);
@@ -1722,7 +1722,7 @@ Case2:
 				/* still have the obj lock */
 				wakeup(uobjpage);
 			uobjpage->flags &= ~(PG_BUSY|PG_WANTED);
-			UVM_PAGE_OWN(uobjpage, NULL);
+			UVM_PAGE_OWN(uobjpage, NULL, NULL);
 			mutex_exit(&uobj->vmobjlock);
 			uobj = NULL;
 
@@ -1788,7 +1788,7 @@ Case2:
 		KASSERT((pg->flags & PG_RELEASED) == 0);
 
 		pg->flags &= ~(PG_BUSY|PG_FAKE|PG_WANTED);
-		UVM_PAGE_OWN(pg, NULL);
+		UVM_PAGE_OWN(pg, NULL, NULL);
 		uvmfault_unlockall(&ufi, amap, uobj, anon);
 		if (!uvm_reclaimable()) {
 			UVMHIST_LOG(maphist,
@@ -1832,7 +1832,7 @@ Case2:
 	KASSERT((pg->flags & PG_RELEASED) == 0);
 
 	pg->flags &= ~(PG_BUSY|PG_FAKE|PG_WANTED);
-	UVM_PAGE_OWN(pg, NULL);
+	UVM_PAGE_OWN(pg, NULL, NULL);
 	uvmfault_unlockall(&ufi, amap, uobj, anon);
 	pmap_update(ufi.orig_map->pmap);
 	UVMHIST_LOG(maphist, "<- done (SUCCESS!)",0,0,0,0);

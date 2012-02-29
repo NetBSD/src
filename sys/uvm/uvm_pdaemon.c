@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.7 2012/02/17 23:36:04 matt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.8 2012/02/29 18:03:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.7 2012/02/17 23:36:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.8 2012/02/29 18:03:40 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -308,6 +308,10 @@ uvmpd_tune(void)
 		val = (grp->pgrp_freemin * 4) / 3;
 		if (val <= grp->pgrp_freemin)
 			val = grp->pgrp_freemin + 1;
+#ifdef VM_FREELIST_NORMALOK_P
+		if (!VM_FREELIST_NORMALOK_P(grp->pgrp_free_list))
+			val *= 4;
+#endif
 		grp->pgrp_freetarg = val + extrapages / uvmexp.npggroups;
 		if (grp->pgrp_freetarg > grp->pgrp_npages / 2)
 			grp->pgrp_freetarg = grp->pgrp_npages / 2;
@@ -874,7 +878,7 @@ uvmpd_scan_queue(struct uvm_pggroup *grp)
 	uvmpdpol_scaninit(grp);
 
 	UVMHIST_LOG(pdhist,"  [%zd]: want free target (%u)",
-	    grp - uvm.pggrous, grp->pgrp_freetarg << 2, 0, 0);
+	    grp - uvm.pggroups, grp->pgrp_freetarg << 2, 0, 0);
 	while (/* CONSTCOND */ 1) {
 
 		/*
@@ -1074,7 +1078,7 @@ uvmpd_scan_queue(struct uvm_pggroup *grp)
 		 */
 
 		pg->flags |= PG_BUSY;
-		UVM_PAGE_OWN(pg, "scan_queue");
+		UVM_PAGE_OWN(pg, "scan_queue", NULL);
 
 		pg->flags |= PG_PAGEOUT;
 		uvm_pagedequeue(pg);
@@ -1088,7 +1092,7 @@ uvmpd_scan_queue(struct uvm_pggroup *grp)
 
 		if (swapcluster_add(&swc, pg)) {
 			pg->flags &= ~(PG_BUSY|PG_PAGEOUT);
-			UVM_PAGE_OWN(pg, NULL);
+			UVM_PAGE_OWN(pg, NULL, NULL);
 			mutex_enter(&uvm_pageqlock);
 			dirtyreacts++;
 			uvm_pageactivate(pg);

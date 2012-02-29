@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.104.10.2 2011/06/03 07:59:57 matt Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.104.10.3 2012/02/29 18:03:38 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.104.10.2 2011/06/03 07:59:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.104.10.3 2012/02/29 18:03:38 matt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1004,7 +1004,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 
 			/* caller must un-busy this page */
 			ptmp->flags |= PG_BUSY;
-			UVM_PAGE_OWN(ptmp, "uao_get1");
+			UVM_PAGE_OWN(ptmp, "uao_get1", NULL);
 gotpage:
 			pps[lcv] = ptmp;
 			gotpages++;
@@ -1119,7 +1119,7 @@ gotpage:
 
 			/* we own it, caller must un-busy */
 			ptmp->flags |= PG_BUSY;
-			UVM_PAGE_OWN(ptmp, "uao_get2");
+			UVM_PAGE_OWN(ptmp, "uao_get2", NULL);
 			pps[lcv] = ptmp;
 		}
 
@@ -1466,7 +1466,7 @@ uao_pagein_page(struct uvm_aobj *aobj, int pageidx)
 		wakeup(pg);
 	}
 	pg->flags &= ~(PG_WANTED|PG_BUSY|PG_CLEAN|PG_FAKE);
-	UVM_PAGE_OWN(pg, NULL);
+	UVM_PAGE_OWN(pg, NULL, NULL);
 
 	return false;
 }

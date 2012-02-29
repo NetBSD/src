@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.84.20.1.4.1 2012/02/09 03:04:59 matt Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.84.20.1.4.2 2012/02/29 18:03:38 matt Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.84.20.1.4.1 2012/02/09 03:04:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.84.20.1.4.2 2012/02/29 18:03:38 matt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1039,7 +1039,7 @@ ReStart:
 		uvm_pageactivate(npg);
 		mutex_exit(&uvm_pageqlock);
 		npg->flags &= ~(PG_BUSY|PG_FAKE);
-		UVM_PAGE_OWN(npg, NULL);
+		UVM_PAGE_OWN(npg, NULL, NULL);
 		mutex_exit(&nanon->an_lock);
 		mutex_exit(&anon->an_lock);
 	}
