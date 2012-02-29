@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.55.14.8 2012/02/16 04:20:45 matt Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.55.14.9 2012/02/29 18:03:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -153,6 +153,7 @@ struct vm_page {
 	pid_t			owner;		/* proc that set PG_BUSY */
 	lwpid_t			lowner;		/* lwp that set PG_BUSY */
 	const char		*owner_tag;	/* why it was set busy */
+	const void		*owner_addr;	/* who allocated it */
 #endif
 };
 
@@ -328,7 +329,7 @@ extern int vm_nphysseg;
 
 void uvm_page_init(vaddr_t *, vaddr_t *);
 #if defined(UVM_PAGE_TRKOWN)
-void uvm_page_own(struct vm_page *, const char *);
+void uvm_page_own(struct vm_page *, const char *, const void *);
 #endif
 #if !defined(PMAP_STEAL_MEMORY)
 bool uvm_page_physget(paddr_t *);

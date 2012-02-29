@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.42.16.12 2012/02/14 01:12:42 matt Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.42.16.13 2012/02/29 18:03:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.42.16.12 2012/02/14 01:12:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.42.16.13 2012/02/29 18:03:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,12 +109,16 @@ uvm_pglist_add(struct vm_page *pg, struct pglist *rlist)
 	if (tp == NULL)
 		panic("uvm_pglistalloc: page not on freelist");
 #endif
+#ifndef MULTIPROCESSOR
+	KASSERT(LIST_NEXT(pg, pageq.list) == LIST_NEXT(pg, listq.list));
+	KASSERT(LIST_FIRST(&uvm.page_free[color].pgfl_queues[free_list][queue]) == LIST_FIRST(&ucpu->page_free[color].pgfl_queues[free_list][queue]));
+#endif
 	LIST_REMOVE(pg, pageq.list);	/* global */
 	LIST_REMOVE(pg, listq.list);	/* cpu */
 	uvm.page_free[color].pgfl_pages[queue]--;
 	ucpu->page_free[color].pgfl_pages[queue]--;
 	ucpu->pages[queue]--;
-	uvm_page_to_pggroup(pg)->pgrp_free--;
+	uvm.page_free[color].pgfl_pggroups[free_list]->pgrp_free--;
 	uvmexp.free--;
 	if (pg->flags & PG_ZERO)
 		uvmexp.zeropages--;
@@ -624,16 +628,22 @@ uvm_pglistfree(struct pglist *list)
 		const size_t queue = iszero ? PGFL_ZEROS : PGFL_UNKNOWN;
 #ifndef MULTIPROCESSOR
 		KASSERT(ucpu == uvm.cpus);
+		KASSERT(LIST_FIRST(&uvm.page_free[color].pgfl_queues[free_list][queue]) == LIST_FIRST(&ucpu->page_free[color].pgfl_queues[free_list][queue]));
 #endif
 		pg->offset = (uintptr_t)ucpu;
 		LIST_INSERT_HEAD(&uvm.page_free[color].
 		    pgfl_queues[free_list][queue], pg, pageq.list);
 		LIST_INSERT_HEAD(&ucpu->page_free[color].
 		    pgfl_queues[free_list][queue], pg, listq.list);
+#ifndef MULTIPROCESSOR
+		KASSERT(LIST_FIRST(&uvm.page_free[color].pgfl_queues[free_list][queue]) == pg);
+		KASSERT(LIST_FIRST(&ucpu->page_free[color].pgfl_queues[free_list][queue]) == pg);
+		KASSERT(LIST_NEXT(pg, pageq.list) == LIST_NEXT(pg, listq.list));
+#endif
 		uvm.page_free[color].pgfl_pages[queue]++;
 		ucpu->page_free[color].pgfl_pages[queue]++;
 		ucpu->pages[queue]++;
-		uvm_page_to_pggroup(pg)->pgrp_free++;
+		uvm.page_free[color].pgfl_pggroups[free_list]->pgrp_free++;
 		uvmexp.free++;
 		if (iszero)
 			uvmexp.zeropages++;

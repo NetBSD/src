@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.55.16.3 2012/02/09 03:04:59 matt Exp $	*/
+/*	$NetBSD: uvm.h,v 1.55.16.4 2012/02/29 18:03:38 matt Exp $	*/
 
 /*
  *
@@ -204,9 +204,9 @@ void uvm_kick_pdaemon(void);
  */
 
 #if defined(UVM_PAGE_TRKOWN)
-#define UVM_PAGE_OWN(PG, TAG) uvm_page_own(PG, TAG)
+#define UVM_PAGE_OWN(PG, TAG, ADDR) uvm_page_own(PG, TAG, ADDR)
 #else
-#define UVM_PAGE_OWN(PG, TAG) /* nothing */
+#define UVM_PAGE_OWN(PG, TAG, ADDR) /* nothing */
 #endif /* UVM_PAGE_TRKOWN */
 
 #include <uvm/uvm_fault_i.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.65 2008/05/05 17:11:17 ad Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.65.14.1 2012/02/29 18:03:38 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.65 2008/05/05 17:11:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.65.14.1 2012/02/29 18:03:38 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -389,7 +389,7 @@ again:
 		uvm_pageactivate(pg);
 		mutex_exit(&uvm_pageqlock);
 		pg->flags &= ~(PG_BUSY|PG_WANTED);
-		UVM_PAGE_OWN(pg, NULL);
+		UVM_PAGE_OWN(pg, NULL, NULL);
 		mutex_exit(&uobj->vmobjlock);
 		if (error) {
 			UVMHIST_LOG(ubchist, "pmap_enter fail %d",

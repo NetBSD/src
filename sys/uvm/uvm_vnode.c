@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.90.28.3 2011/06/03 07:52:48 matt Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.90.28.4 2012/02/29 18:03:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.90.28.3 2011/06/03 07:52:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.90.28.4 2012/02/29 18:03:40 matt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -311,7 +311,7 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 
 		/* mark the page BUSY and we're done. */
 		pg->flags |= PG_BUSY;
-		UVM_PAGE_OWN(pg, "uvn_findpage");
+		UVM_PAGE_OWN(pg, "uvn_findpage", NULL);
 		UVMHIST_LOG(ubchist, "found %p (color %u)",
 		    pg, VM_PGCOLOR_BUCKET(pg), 0,0);
 		break;
