@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.62 2012/03/01 16:22:13 mbalmer Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.63 2012/03/01 17:27:29 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -239,7 +239,7 @@ Festplatte.
 
 message endoutsidedisk
 {Mit diesem Wert liegt das Ende der Partition jenseits des Endes der
-Festplatte.
+Festplatte. 
 Die Größe Ihrer Partition wurde auf %d %s verringert.
 
 Drücken Sie die Eingabetaste um fortzufahren.

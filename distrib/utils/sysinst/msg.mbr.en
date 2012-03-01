@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.en,v 1.16 2012/03/01 16:22:13 mbalmer Exp $	*/
+/*	$NetBSD: msg.mbr.en,v 1.17 2012/03/01 17:27:29 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -85,7 +85,7 @@ message setbiosgeom
 {
 You will be prompted for the geometry.
 Please enter the number of sectors per track (maximum 63)
-and number of heads (maximum 256) that the BIOS uses to access the disk.
+and number of heads (maximum 256) that the BIOS uses to access the disk. 
 The number of cylinders will be calculated from the disk size.
 
 }
