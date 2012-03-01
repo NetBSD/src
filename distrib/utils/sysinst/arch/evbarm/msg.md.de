@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.9 2012/02/03 00:35:35 nisimura Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.10 2012/03/01 16:22:14 mbalmer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -51,7 +51,7 @@ message badreadbb
 }
 
 message badreadriscix
-{Kann die RISCiX Partitionstabelle nicht lesen
+{Kann die RISCiX Partitionstabelle nicht lesen 
 }
 
 message notnetbsdriscix
@@ -61,7 +61,7 @@ eines Labels nicht möglich.
 
 message notnetbsd
 {Keine NetBSD Partition gefunden (eine Nur-Filecore Platte?) - erstellen eines
-Labels nicht möglich.
+Labels nicht möglich. 
 }
 
 message dobootblks
@@ -76,7 +76,7 @@ message set_kernel_1
 {Kernel (ADI_BRH)}
 message set_kernel_2
 {Kernel (INTERGRATOR)}
-message set_kernel_3
+message set_kernel_3 
 {Kernel (IQ80310)}
 message set_kernel_4
 {Kernel (IQ80321)}
