@@ -71,7 +71,7 @@ message boottoosmall
 however a size of at least 100MB is recommended.}
 
 message nobootpartdisklabel
-{There is no boot partition in the disklabel.  The boot partition should
+{There is no boot partition in the disklabel.  The boot partition should 
 match the boot partition you set up in the MBR partition table.}
 
 message preptoosmall

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.7 2011/04/04 08:30:19 mbalmer Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.8 2012/03/01 16:22:14 mbalmer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -72,7 +72,7 @@ message set_kernel_3
 {Kernel (SMALL030)}
 message set_kernel_4
 {Kernel (HADES)}
-message set_kernel_5
+message set_kernel_5 
 {Kernel (MILAN-ISAIDE)}
 message set_kernel_6
 {Kernel (MILAN-PCIIDE)}

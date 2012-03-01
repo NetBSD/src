@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.13 2011/04/04 08:30:34 mbalmer Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.14 2012/03/01 16:22:15 mbalmer Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.10 2001/07/26 22:47:34 wiz Exp */
 
@@ -45,7 +45,7 @@ message md_may_remove_boot_medium
 }
 
 message fullpart
-{Zainstalujemy teraz NetBSD na dysku %s. Mozesz wybrac, czy chcesz
+{Zainstalujemy teraz NetBSD na dysku %s. Mozesz wybrac, czy chcesz 
 zainstalowac NetBSD na calym dysku, czy tylko na jego czesci.
 
 Ktora instalacje chcesz zrobic?
@@ -141,7 +141,7 @@ Czy chcesz zrezygnowac z podzialu tej partycji?}
 
 message custom_mount_point
 {Podaj Punkt Montazu dla aktualnie wybranej partycji. Powinna byc to
-unikalna nazwa, zaczynajaca sie od "/", ktora nie jest juz uzywana
+unikalna nazwa, zaczynajaca sie od "/", ktora nie jest juz uzywana 
 przez inna partycje.
 
 }

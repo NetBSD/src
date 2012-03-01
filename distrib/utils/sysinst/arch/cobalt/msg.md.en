@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.5 2011/04/04 08:30:21 mbalmer Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.6 2012/03/01 16:22:14 mbalmer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -69,7 +69,7 @@ It needs to be at least 1MB in size, however a size of at least 5MB is
 recommended.}
 
 message nobootpartdisklabel
-{There is no boot partition in the disklabel.  The boot partition should
+{There is no boot partition in the disklabel.  The boot partition should 
 match the boot partition you set up in the MBR partition table.}
 
 message copybootloader

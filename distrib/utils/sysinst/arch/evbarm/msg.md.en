@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.11 2012/02/03 00:35:35 nisimura Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.12 2012/03/01 16:22:14 mbalmer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -72,7 +72,7 @@ message set_kernel_1
 {Kernel (ADI_BRH)}
 message set_kernel_2
 {Kernel (INTERGRATOR)}
-message set_kernel_3
+message set_kernel_3 
 {Kernel (IQ80310)}
 message set_kernel_4
 {Kernel (IQ80321)}

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.119 2012/01/10 21:02:47 gson Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.120 2012/03/01 16:22:13 mbalmer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -172,8 +172,8 @@ ou garder la taille et le contenu des partitions existantes.
 
 Vous aurez ensuite la possibilité d'éditer les champs du disklabel.
 
-La taille allouée pour NetBSD sur votre disque est de %d Mo.
-L'installation standard requiert au moins %d Mo.
+La taille allouée pour NetBSD sur votre disque est de %d Mo. 
+L'installation standard requiert au moins %d Mo. 
 L'installation standard avec X requiert au moins %d Mo.
 }
 
@@ -317,7 +317,7 @@ message mountpt_fmt
 message toggle
 {Basculer}
 
-message restore
+message restore	
 {Revenir aux valeurs initiales}
 
 message Select_the_type
@@ -563,14 +563,14 @@ message net_media
 message netok
 {Vous avez spécifié les valeurs suivantes :
 
-Nom de domaine (DNS) :		 %s
-Nom d'ordinateur :		 %s
+Nom de domaine (DNS) :		 %s 
+Nom d'ordinateur :		 %s 
 Interface réseau :		 %s
 Adresse IPv4 :			 %s
 Masque de sous-réseau :	 %s
 Adresse IPv4 du serveur de noms : %s
 Adresse IPv4 de la passerelle :  %s
-Type de réseau (média)	 %s
+Type de réseau (média)	 %s 
 }
 
 message netok_slip
@@ -588,8 +588,8 @@ Type de réseau (média) :	 %s
 }
 
 message netokv6
-{Auto-configuration IPv6 :	 %s
-Adresse du serveur de noms IPv6 : %s
+{Auto-configuration IPv6 :	 %s 
+Adresse du serveur de noms IPv6 : %s 
 }
 
 message netok_ok
@@ -911,7 +911,7 @@ message config_open_error
 Impossible d'ouvrir le fichier de configuration %s.\n
 }
 
-message choose_timezone
+message choose_timezone	
 {
 Veuillez sélectionner votre zone horaire dans la liste suivante.
 Appuyez sur Entrée pour confirmer votre choix.
@@ -943,7 +943,7 @@ sur le disque cible pour l'installation. Vous devez redémarrer et tenter
 à nouveau.
 }
 
-message rootpw
+message rootpw	
 {
 Aucun mot de passe pour le compte root n'a été défini.
 Nous vous recommandons de spéficier un mot de passe dès à présent.
@@ -951,7 +951,7 @@ Nous vous recommandons de spéficier un mot de passe dès à présent.
 Le souhaitez-vous ?
 }
 
-message rootsh
+message rootsh	
 {
 Vous pouvez à présent déterminer le shell par défaut qui sera
 utilisé par root. Par défaut, il s'agit de /bin/sh
@@ -1068,6 +1068,6 @@ choisissez "Non", vous devez mettre à jour manuellement votre fichier
 }
 
 message license
-{Afin d'utiliser l'interface réseau : %s, vous devez accepter la licence
+{Afin d'utiliser l'interface réseau : %s, vous devez accepter la licence 
 contenue dans le fichier %s.
 Pour afficher ce fichier, tapez ^Z, lisez le puis tapez "fg" pour reprendre.}

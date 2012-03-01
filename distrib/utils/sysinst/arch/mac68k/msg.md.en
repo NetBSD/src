@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.20 2011/04/04 08:30:34 mbalmer Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.21 2012/03/01 16:22:15 mbalmer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -111,7 +111,7 @@ One will be an Apple_Scratch type partition and the other an Apple_Free
 type partition.  You may then change either of the partitions into one of
 another type.  If the Apple_Free part is physically adjacent to another
 partition which is also an Apple_Free type, the two will be automatically
-merged into a single Apple_Free type partition.
+merged into a single Apple_Free type partition. 
 
 There are %d disk blocks in the selected partition. Enter the number
 of disk blocks you would like allocated to the Apple_Scratch partition.
@@ -163,7 +163,7 @@ disk partitions. However your new Disk Partition Map has been written to
 the disk and will be available the next time NetBSD is booted. Please
 reboot immediately and restart the Installation Process.
 }
-
+ 
 .if debug
 message mapdebug
 {Partition Map:
@@ -228,7 +228,7 @@ message parttable_fix_fixing
 
 message parttable_fix_fine
 {Partition %s%c is just fine!\n}
-
+ 
 message dump_line
 {%s\n}
 

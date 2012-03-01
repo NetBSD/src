@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.12 2011/04/04 08:30:41 mbalmer Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.13 2012/03/01 16:22:16 mbalmer Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2001/01/16 16:54:01 nonaka Exp */
 
@@ -73,5 +73,5 @@ message preptoosmall
 however a size of at least 5MB is recommended.}
 
 message prepnobootpart
-{There is no boot partition in the disklabel.  The boot partition should
+{There is no boot partition in the disklabel.  The boot partition should 
 match the PReP boot partition you set up in the MBR partition table.}
