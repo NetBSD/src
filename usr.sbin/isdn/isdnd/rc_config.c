@@ -27,7 +27,7 @@
  *	i4b daemon - config file processing
  *	-----------------------------------
  *
- *	$Id: rc_config.c,v 1.25 2009/04/16 05:56:32 lukem Exp $ 
+ *	$Id: rc_config.c,v 1.26 2012/03/01 22:31:48 joerg Exp $ 
  *
  * $FreeBSD$
  *
@@ -454,13 +454,13 @@ cfg_setval(int keyword)
 			FILE *fp;
 			int s, l;
 			int n;
-			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: budget-callbacksfile = %s", yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: budget-callbacksfile = %s", current_cfe->name, yylval.str)));
 			fp = fopen(yylval.str, "r");
 			if (fp != NULL)
 			{
 				if ((fscanf(fp, "%d %d %d", (int *)&s, (int *)&l, &n)) != 3)
 				{
-					DBGL(DL_RCCF, (logit(LL_DBG, "entry %d: initializing budget-callbacksfile %s", current_cfe->name, yylval.str)));
+					DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: initializing budget-callbacksfile %s", current_cfe->name, yylval.str)));
 					fclose(fp);
 					fp = fopen(yylval.str, "w");
 					if (fp != NULL) {
@@ -1134,7 +1134,7 @@ parse_valid(char *dt)
 			ret = sscanf(dt, "%d:%d-%d:%d", &fromhr, &frommin, &tohr, &tomin);
 			if (ret !=4)
 			{
-				logit(LL_ERR, "ERROR parsing config file: timespec [%s] error at line %d!", *dt, lineno);
+				logit(LL_ERR, "ERROR parsing config file: timespec [%s] error at line %d!", dt, lineno);
 				config_error_flag++;
 				return;
 			}
@@ -1142,7 +1142,7 @@ parse_valid(char *dt)
 			if (fromhr < 0 || fromhr > 24 || tohr < 0 || tohr > 24 ||
 			   frommin < 0 || frommin > 59 || tomin < 0 || tomin > 59)
 			{
-				logit(LL_ERR, "ERROR parsing config file: invalid time [%s] at line %d!", *dt, lineno);
+				logit(LL_ERR, "ERROR parsing config file: invalid time [%s] at line %d!", dt, lineno);
 				config_error_flag++;
 				return;
 			}
