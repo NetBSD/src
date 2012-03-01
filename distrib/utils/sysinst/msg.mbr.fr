@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.fr,v 1.17 2011/04/04 08:30:12 mbalmer Exp $	*/
+/*	$NetBSD: msg.mbr.fr,v 1.18 2012/03/01 16:22:13 mbalmer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -89,7 +89,7 @@ Le nombre de cylindres sera déduit de la taille du disque.
 
 message nobiosgeom
 {Sysinst n'a pas pu déterminer automatiquement la géométrie utilisée par le
-BIOS pour votre disque.
+BIOS pour votre disque. 
 La géométrie physique est %d cylindres %d secteurs %d têtes\n}
 
 message biosguess
@@ -152,7 +152,7 @@ message Delete_partition
 {Supprimer la partition}
 message Dont_change
 {Ne pas modifier}
-message Other_kind
+message Other_kind 
 {Autre, entrer un chiffre}
 
 
