@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.55 2012/02/28 18:14:47 jakllsch Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.56 2012/03/01 20:16:27 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.55 2012/02/28 18:14:47 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.56 2012/03/01 20:16:27 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -174,14 +174,15 @@ struct pci_bridge_hook_arg {
 #define	PCI_MODE2_ENABLE_REG	0x0cf8
 #define	PCI_MODE2_FORWARD_REG	0x0cfa
 
-#define _m1tag(b, d, f) \
-	(PCI_MODE1_ENABLE | ((b) << 16) | ((d) << 11) | ((f) << 8))
+#define _tag(b, d, f) \
+	{.mode1 = PCI_MODE1_ENABLE | ((b) << 16) | ((d) << 11) | ((f) << 8)}
 #define _qe(bus, dev, fcn, vend, prod) \
-	{_m1tag(bus, dev, fcn), PCI_ID_CODE(vend, prod)}
-struct {
-	uint32_t tag;
+	{_tag(bus, dev, fcn), PCI_ID_CODE(vend, prod)}
+const struct {
+	pcitag_t tag;
 	pcireg_t id;
 } pcim1_quirk_tbl[] = {
+	_qe(0, 0, 0, PCI_VENDOR_INVALID, 0x0000), /* patchable */
 	_qe(0, 0, 0, PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_TRIFLEX1),
 	/* XXX Triflex2 not tested */
 	_qe(0, 0, 0, PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_TRIFLEX2),
@@ -198,11 +199,9 @@ struct {
 	/* SIS 741 */
 	_qe(0, 0, 0, PCI_VENDOR_SIS, PCI_PRODUCT_SIS_741),
 	/* VIA Technologies VX900 */
-	_qe(0, 0, 0, PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VX900_HB),
-	{0, 0xffffffff} /* patchable */
+	_qe(0, 0, 0, PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VX900_HB)
 };
-#undef _m1tag
-#undef _id
+#undef _tag
 #undef _qe
 
 /*
@@ -539,10 +538,10 @@ pci_mode_detect(void)
 	for (i = 0; i < __arraycount(pcim1_quirk_tbl); i++) {
 		pcitag_t t;
 
-		if (!pcim1_quirk_tbl[i].tag)
-			break;
-		t.mode1 = pcim1_quirk_tbl[i].tag;
-		idreg = pci_conf_read(0, t, PCI_ID_REG); /* needs "pci_mode" */
+		if (PCI_VENDOR(pcim1_quirk_tbl[i].id) == PCI_VENDOR_INVALID)
+			continue;
+		t.mode1 = pcim1_quirk_tbl[i].tag.mode1;
+		idreg = pci_conf_read(NULL, t, PCI_ID_REG); /* needs "pci_mode" */
 		if (idreg == pcim1_quirk_tbl[i].id) {
 #ifdef DEBUG
 			printf("known mode 1 PCI chipset (%08x)\n",
