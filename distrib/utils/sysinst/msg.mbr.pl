@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.pl,v 1.15 2012/03/01 16:22:13 mbalmer Exp $	*/
+/*	$NetBSD: msg.mbr.pl,v 1.16 2012/03/01 17:40:31 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -149,7 +149,7 @@ message Delete_partition
 {Usun partycje}
 message Dont_change
 {Nie zmieniaj}
-message Other_kind 
+message Other_kind
 {Inny typ, podaj identyfikator liczbowy}
 
 
@@ -162,7 +162,7 @@ Czy chcesz zmienic tablice partycji (MBR)? Brak zgody przerwie instalacje.
 message nobsdpart
 {Nie ma partycji NetBSD w tablicy partycji MBR.}
 
-message multbsdpart 
+message multbsdpart
 {W tablicy partycji MBR znajduje sie kilka partycji NetBSD.
  Powinienies oznaczyc jedna z nich jako przeznaczona do instalacji.
 }
