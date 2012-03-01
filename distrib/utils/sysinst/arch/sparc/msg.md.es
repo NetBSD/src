@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.7 2012/03/01 16:22:16 mbalmer Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.8 2012/03/01 17:40:31 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -52,8 +52,8 @@ message set_kernel_1
 {Núcleo (GENERIC)}
 message set_kernel_2
 {Núcleo (GENERIC_SCSI3)}
-message set_kernel_3 
+message set_kernel_3
 {Núcleo (GENERIC_SUN4U)}
-message set_kernel_4 
+message set_kernel_4
 {Núcleo (GENERIC.MP)}
 
