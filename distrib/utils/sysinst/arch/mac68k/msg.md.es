@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.4 2011/04/04 08:30:34 mbalmer Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.5 2012/03/01 16:22:15 mbalmer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -172,7 +172,7 @@ de Disco ha sido escrita a disco y estara disponible la proxima vez que
 NetBSD sea iniciado.  Por favor reinicie inmediatamente y vuelva a iniciar
 el Proceso de Instalacion.
 }
-
+ 
 .if debug
 message mapdebug
 {Mapa de Particiones:
@@ -237,7 +237,7 @@ message parttable_fix_fixing
 
 message parttable_fix_fine
 {¡La particion %s%c ya es correcta!\n}
-
+ 
 message dump_line
 {%s\n}
 
