@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.7 2012/03/01 16:22:15 mbalmer Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.8 2012/03/01 18:08:56 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -169,7 +169,7 @@ Festplatte geschrieben wurde, wird Sie beim nächsten Start verfügbar sein.
 Bitte starten Sie daher jetzt den Computer neu und führen Sie die Installation
 erneut aus.
 }
- 
+
 .if debug
 message mapdebug
 {Partitions Übersicht:
@@ -234,7 +234,7 @@ message parttable_fix_fixing
 
 message parttable_fix_fine
 {Partition %s%c ist bereits in Ordnung!\n}
- 
+
 message dump_line
 {%s\n}
 
