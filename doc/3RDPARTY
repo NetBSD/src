@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.917 2012/02/26 17:27:46 jmmv Exp $
+#	$NetBSD: 3RDPARTY,v 1.918 2012/03/01 09:50:39 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -302,9 +302,9 @@ Current Vers:	3.2
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/diffutils/
 Home Page:	http://www.gnu.org/software/diffutils/
-Mailing List:	bug-gnu-utils@gnu.org
+Mailing List:	bug-diffutils@gnu.org
 Responsible:	
-License:	GPLv2
+License:	GPLv2+ (2.8.1), GPLv3+ (2.9 and later)
 Location:	gnu/dist/diffutils
 Notes:
 Use src/gnu/dist/diffutils/diffutils2netbsd for preparing the source tree
@@ -432,10 +432,12 @@ Location:	gnu/dist/grep
 Notes:
 Use src/gnu/dist/grep/grep2netbsd for preparing the source tree
 for the import.
-A non-gnu grep was imported into src/usr.bin/grep on 2 Jan 2004. It
-needs some tuning before it can replace gnu grep.
-	(cf.	https://github.com/howardjp/freegrep
-		http://www.monkey.org/openbsd/archive/tech/0306/msg00129.html)
+On 2 Jan 2004, a non-GNU grep (FreeGrep, https://github.com/howardjp/freegrep;
+see also http://www.monkey.org/openbsd/archive/tech/0306/msg00129.html)
+was imported into src/usr.bin/grep;
+on 16 Feb 2011, the BSD grep implementation from FreeBSD was imported
+in src/usr.bin/grep, replacing FreeGrep
+(http://mail-index.NetBSD.org/source-changes/2011/02/16/msg018643.html).
 
 Package:	groff
 Version:	1.19.2
@@ -552,17 +554,17 @@ Location:	external/bsd/less/dist
 Notes:
 Many changes to make less act as more when invoked as more.  Beware.
 Use the "src/external/bsd/less/less2netbsd" script to prepare source tree
-for importation.  Run ./configure before hand to generate "defines.h".
+for importation.  Run ./configure beforehand to generate "defines.h".
 Talk to mrg before importing any new version.
 
 Package:	libarchive
-Version:	2.8.0
-Current Ves.:	2.8.0
+Version:	2.8.4
+Current Vers:	2.8.5 (legacy) / 3.0.3 (stable)
 Maintainer:	kientzle@freebsd.org, joerg@NetBSD.org
-Archive Site:	http://code.google.com/p/libarchive/
-Home Page: 	http://code.google.com/p/libarchive/
+Archive Site:	https://github.com/libarchive/libarchive/downloads
+Home Page: 	http://libarchive.github.com/
 Responsible:	joerg
-License:	BSD
+License:	BSD (2-clause)
 Location:	external/bsd/libarchive/dist
 Notes:
 Distribution is stripped down to the relevant part.
@@ -988,7 +990,7 @@ Archive Site:	ftp://ftp.gnu.org/gnu/rcs/
 Mailing List:	bug-gnu-utils@gnu.org
 Home Page:	http://www.gnu.org/software/rcs/
 Responsible:	agc
-License:	GPLv2 (5.7; 5.8 is GPLv3+)
+License:	GPLv2 (5.7), GPLv3+ (5.8)
 Location:	gnu/usr.bin/rcs
 Notes:
 Old versions are available from Purdue (ftp.cs.purdue.edu:/pub/RCS).
