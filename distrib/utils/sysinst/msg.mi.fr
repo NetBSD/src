@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.120 2012/03/01 16:22:13 mbalmer Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.121 2012/03/01 17:40:31 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -317,7 +317,7 @@ message mountpt_fmt
 message toggle
 {Basculer}
 
-message restore	
+message restore
 {Revenir aux valeurs initiales}
 
 message Select_the_type
@@ -911,7 +911,7 @@ message config_open_error
 Impossible d'ouvrir le fichier de configuration %s.\n
 }
 
-message choose_timezone	
+message choose_timezone
 {
 Veuillez sélectionner votre zone horaire dans la liste suivante.
 Appuyez sur Entrée pour confirmer votre choix.
@@ -951,7 +951,7 @@ Nous vous recommandons de spéficier un mot de passe dès à présent.
 Le souhaitez-vous ?
 }
 
-message rootsh	
+message rootsh
 {
 Vous pouvez à présent déterminer le shell par défaut qui sera
 utilisé par root. Par défaut, il s'agit de /bin/sh

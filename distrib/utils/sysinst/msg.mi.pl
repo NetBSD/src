@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.79 2012/03/01 16:22:14 mbalmer Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.80 2012/03/01 17:40:31 tsutsui Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -700,7 +700,7 @@ message fdremount
 {Dyskietka nie zostala pomyslnie zamountowana.
 }
 
-message fdmount	
+message fdmount
 {Wloz dyskietke zawierajaca plik "%s.%s".
 
 Jezeli nie masz juz wiecej dyskietek, wybierz "Pakiet kompletny"
