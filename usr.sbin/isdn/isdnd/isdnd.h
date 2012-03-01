@@ -27,7 +27,7 @@
  *	i4b daemon - main header file
  *	-----------------------------
  *
- *	$Id: isdnd.h,v 1.17 2011/08/31 13:32:37 joerg Exp $ 
+ *	$Id: isdnd.h,v 1.18 2012/03/01 22:31:48 joerg Exp $ 
  *
  * $FreeBSD$
  *
@@ -791,7 +791,7 @@ void init_controller_protocol ( void );
 void init_single_controller_protocol ( struct isdn_ctrl_state *ctrl );
 void init_log ( void );
 void init_screen ( void );
-void logit ( int what, const char *fmt, ... );
+void logit ( int what, const char *fmt, ... ) __printflike(2, 3);
 int main ( int argc, char **argv );
 void msg_accounting ( msg_accounting_ind_t *mp );
 void msg_alert_ind ( msg_alert_ind_t *mp );
