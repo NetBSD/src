@@ -1,4 +1,4 @@
-/* $NetBSD: ls.c,v 1.3 2011/12/25 06:09:08 tsutsui Exp $ */
+/* $NetBSD: ls.c,v 1.4 2012/03/02 12:08:44 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2011
@@ -108,6 +108,7 @@ ls(const char *path)
 		fname = strrchr(path, '/');
 		if (fname) {
 			size = fname - path;
+			fname++;
 			p = alloc(size + 1);
 			if (!p)
 				goto out;
