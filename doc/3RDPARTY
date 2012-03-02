@@ -1,4 +1,4 @@
-#      $NetBSD: 3RDPARTY,v 1.647.2.16 2012/03/02 06:40:02 riz Exp $
+#      $NetBSD: 3RDPARTY,v 1.647.2.17 2012/03/02 17:42:47 riz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -924,8 +924,8 @@ License:	BSD (4-clause)
 Notes:
 
 Package:	tz
-Version:	tzcode2012a / tzdata2012a
-Current Vers:	tzcode2011i / tzdata2012a
+Version:	tzcode2012b / tzdata2012b
+Current Vers:	tzcode2011i / tzdata2012b
 Maintainer:	Arthur David Olson <ado@elsie.nci.nih.gov>
 Maintainer:	Robert Elz <kre@munnari.oz.au>
 Archive Site:	ftp://elsie.nci.nih.gov/pub/
