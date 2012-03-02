@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.43 2006/11/03 20:18:49 christos Exp $	 */
+/*	$NetBSD: yplib.c,v 1.44 2012/03/02 17:27:49 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yplib.c,v 1.43 2006/11/03 20:18:49 christos Exp $");
+__RCSID("$NetBSD: yplib.c,v 1.44 2012/03/02 17:27:49 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -67,11 +67,13 @@ struct timeval _yplib_timeout = { YPLIB_TIMEOUT, 0 };
 struct timeval _yplib_rpc_timeout = { YPLIB_TIMEOUT / YPLIB_RPC_RETRIES,
 	1000000 * (YPLIB_TIMEOUT % YPLIB_RPC_RETRIES) / YPLIB_RPC_RETRIES };
 int _yplib_nerrs = 5;
+int _yplib_bindtries = 0;
 
 #ifdef __weak_alias
 __weak_alias(yp_bind, _yp_bind)
 __weak_alias(yp_unbind, _yp_unbind)
 __weak_alias(yp_get_default_domain, _yp_get_default_domain)
+__weak_alias(yp_setbindtries, _yp_setbindtries)
 #endif
 
 #ifdef _REENTRANT
@@ -82,6 +84,15 @@ static 	mutex_t			_ypmutex = MUTEX_INITIALIZER;
 #define YPLOCK()
 #define YPUNLOCK()
 #endif
+
+int
+yp_setbindtries(int ntries) {
+	int old_val = _yplib_bindtries;
+
+	if (ntries >= 0)
+		_yplib_bindtries = ntries;
+	return old_val;
+}
 
 int
 _yp_dobind(dom, ypdb)
@@ -214,11 +225,17 @@ trynet:
 		    (xdrproc_t)xdr_ypdomain_wrap_string, &dom,
 		    (xdrproc_t)xdr_ypbind_resp, &ypbr, _yplib_timeout);
 		if (r != RPC_SUCCESS) {
-			if (new == 0 && ++nerrs == _yplib_nerrs) {
+			if (_yplib_bindtries <= 0 && new == 0 &&
+			    ++nerrs == _yplib_nerrs) {
 				nerrs = 0;
 				fprintf(stderr,
 		    "YP server for domain %s not responding, still trying\n",
 				    dom);
+			}
+			else if (_yplib_bindtries > 0 &&
+			         ++nerrs == _yplib_bindtries) {
+				free(ysd);
+				return YPERR_YPBIND;
 			}
 			clnt_destroy(client);
 			ysd->dom_vers = -1;

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1743 2012/02/29 20:07:52 tron Exp $
+#	$NetBSD: mi,v 1.1744 2012/03/02 17:27:48 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9463,6 +9463,7 @@
 ./usr/share/man/cat3/ypclnt.0			comp-c-catman		yp,.cat
 ./usr/share/man/cat3/yperr_string.0		comp-c-catman		yp,.cat
 ./usr/share/man/cat3/ypprot_err.0		comp-c-catman		yp,.cat
+./usr/share/man/cat3/yp_setbindtries.0		comp-c-catman		yp,.cat
 ./usr/share/man/cat3/zlib.0			comp-c-catman		.cat
 ./usr/share/man/cat5/config.0			comp-util-catman	.cat
 ./usr/share/man/cat5/config.samples.0		comp-util-catman	.cat
@@ -15679,6 +15680,7 @@
 ./usr/share/man/html3/ypclnt.html		comp-c-htmlman		yp,html
 ./usr/share/man/html3/yperr_string.html		comp-c-htmlman		yp,html
 ./usr/share/man/html3/ypprot_err.html		comp-c-htmlman		yp,html
+./usr/share/man/html3/yp_setbindtries.html	comp-c-htmlman		yp,html
 ./usr/share/man/html3/zlib.html			comp-c-htmlman		html
 ./usr/share/man/html5/config.html		comp-util-htmlman	html
 ./usr/share/man/html5/config.samples.html	comp-util-htmlman	html
@@ -21971,6 +21973,7 @@
 ./usr/share/man/man3/ypclnt.3			comp-c-man		yp,.man
 ./usr/share/man/man3/yperr_string.3		comp-c-man		yp,.man
 ./usr/share/man/man3/ypprot_err.3		comp-c-man		yp,.man
+./usr/share/man/man3/yp_setbindtries.3		comp-c-man		yp,.man
 ./usr/share/man/man3/zlib.3			comp-c-man		.man
 ./usr/share/man/man5/config.5			comp-util-man		.man
 ./usr/share/man/man5/config.samples.5		comp-util-man		.man
