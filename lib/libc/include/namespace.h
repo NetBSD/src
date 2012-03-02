@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.150 2012/02/15 15:49:46 joerg Exp $	*/
+/*	$NetBSD: namespace.h,v 1.151 2012/03/02 17:27:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -801,6 +801,7 @@
 #define yp_unbind		_yp_unbind
 #define yperr_string		_yperr_string
 #define ypprot_err		_ypprot_err
+#define yp_setbindtries		_yp_setbindtries
 #define dlopen			__dlopen
 #define dlclose			__dlclose
 #define dlsym			__dlsym
