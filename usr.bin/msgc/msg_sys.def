@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.39 2012/03/02 13:11:57 mbalmer Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.40 2012/03/02 14:27:48 mbalmer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -307,6 +307,16 @@ msg_display_add(msg msg_no, ...)
 
 	va_start(ap, msg_no);
 	(void)_msg_vprintf(1, msg_string(msg_no), ap);
+	va_end(ap);
+}
+
+void
+msg_printf(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	(void)_msg_vprintf(1, fmt, ap);
 	va_end(ap);
 }
 
