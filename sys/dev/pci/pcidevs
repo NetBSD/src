@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1102 2012/02/15 16:26:00 tsutsui Exp $
+$NetBSD: pcidevs,v 1.1103 2012/03/02 15:47:51 nonaka Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -4054,6 +4054,8 @@ product RICOH Rx5C847	0x0847 5C847 PCI-CardBus Bridge/SD/MMC/MMC+/MS/xD/Firewire
 product RICOH RxDPCC	0x0852 xD-Picture Card Controller
 product RICOH Rx5C853	0x0853 5C853 PCI-CardBus Bridge/SD/MMC/MMC+/MS/xD/SC/Firewire
 product RICOH Rx5U230	0xe230 5U230 Memory Stick Controller
+product RICOH Rx5U230	0xe230 5U230 Memory Stick Controller
+product RICOH Rx5CE823	0xe823 5CE823 SD/MMC Controller
 product RICOH Rx5U832	0xe832 5U832 Firewire Controller
 product RICOH Rx5C852	0xe852 5C852 xD Controller
 
