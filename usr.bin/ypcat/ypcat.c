@@ -1,4 +1,4 @@
-/* $NetBSD: ypcat.c,v 1.17 2012/03/02 17:27:49 christos Exp $	*/
+/* $NetBSD: ypcat.c,v 1.18 2012/03/02 18:55:16 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypcat.c,v 1.17 2012/03/02 17:27:49 christos Exp $");
+__RCSID("$NetBSD: ypcat.c,v 1.18 2012/03/02 18:55:16 matt Exp $");
 #endif
 
 #include <sys/param.h>
@@ -58,7 +58,7 @@ static int	compressspace;
 int
 main(int argc, char *argv[])
 {
-	char *domainname, b_retry_cnt;
+	char *domainname, *b_retry_cnt;
 	struct ypall_callback ypcb;
 	const char *inmap;
 	int notrans;
@@ -68,7 +68,7 @@ main(int argc, char *argv[])
 	int key;
 
 	setprogname(*argv);
-	domainname = b_retry_cnt NULL;
+	domainname = b_retry_cnt = NULL;
 	notrans = key = 0;
 	ypaliases = ypalias_init();
 	while((c = getopt(argc, argv, "bd:kstx")) != -1) {
