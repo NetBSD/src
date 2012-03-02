@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.48 2012/02/17 18:40:18 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.49 2012/03/02 16:43:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -404,7 +404,6 @@ struct region_descriptor;
 void	lgdt(struct region_descriptor *);
 #ifdef XEN
 void	lgdt_finish(void);
-void	i386_switch_context(lwp_t *);
 #endif
 
 struct pcb;
