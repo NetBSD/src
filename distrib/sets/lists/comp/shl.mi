@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.209 2012/02/12 10:01:58 njoly Exp $
+# $NetBSD: shl.mi,v 1.209.2.1 2012/03/02 18:27:44 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -33,6 +33,7 @@
 ./usr/lib/libedit_pic.a				comp-c-piclib
 ./usr/lib/libelf_pic.a				comp-c-piclib
 ./usr/lib/libevent_pic.a			comp-c-piclib
+./usr/lib/libexpat_pic.a			comp-c-piclib
 ./usr/lib/libfetch_pic.a			comp-c-piclib
 ./usr/lib/libform_pic.a				comp-c-piclib
 ./usr/lib/libg2c_pic.a				comp-fortran-lib	gcc=3
@@ -264,6 +265,7 @@
 ./usr/libdata/debug/usr/lib/libedit.so.3.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libelf.so.0.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libevent.so.3.2.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libexpat.so.2.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libfetch.so.3.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libform.so.6.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libg2c.so.2.0.debug		comp-sys-debug	gcc=3,debug

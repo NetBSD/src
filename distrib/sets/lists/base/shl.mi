@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.616 2012/02/11 23:31:22 martin Exp $
+# $NetBSD: shl.mi,v 1.616.2.1 2012/03/02 18:27:49 riz Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -220,6 +220,9 @@
 ./usr/lib/libevent.so				base-sys-shlib
 ./usr/lib/libevent.so.3				base-sys-shlib
 ./usr/lib/libevent.so.3.2			base-sys-shlib
+./usr/lib/libexpat.so				base-sys-shlib
+./usr/lib/libexpat.so.2				base-sys-shlib
+./usr/lib/libexpat.so.2.0			base-sys-shlib
 ./usr/lib/libfetch.so				base-sys-shlib
 ./usr/lib/libfetch.so.3				base-sys-shlib
 ./usr/lib/libfetch.so.3.0			base-sys-shlib

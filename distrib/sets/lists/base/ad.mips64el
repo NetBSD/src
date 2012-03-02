@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.81 2012/02/11 23:31:22 martin Exp $
+# $NetBSD: ad.mips64el,v 1.81.2.1 2012/03/02 18:27:49 riz Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -93,6 +93,8 @@
 ./usr/lib/64/libelf.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libevent.so.3			base-compat-shlib	compat,pic
 ./usr/lib/64/libevent.so.3.2			base-compat-shlib	compat,pic
+./usr/lib/64/libexpat.so.2			base-compat-shlib	compat,pic
+./usr/lib/64/libexpat.so.2.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libfetch.so.3			base-compat-shlib	compat,pic
 ./usr/lib/64/libfetch.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libform.so.6			base-compat-shlib	compat,pic
@@ -389,6 +391,8 @@
 ./usr/lib/o32/libelf.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libevent.so.3			base-compat-shlib	compat,pic
 ./usr/lib/o32/libevent.so.3.2			base-compat-shlib	compat,pic
+./usr/lib/o32/libexpat.so.2			base-compat-shlib	compat,pic
+./usr/lib/o32/libexpat.so.2.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libfetch.so.3			base-compat-shlib	compat,pic
 ./usr/lib/o32/libfetch.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libform.so.6			base-compat-shlib	compat,pic
