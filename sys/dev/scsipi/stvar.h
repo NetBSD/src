@@ -1,4 +1,4 @@
-/*	$NetBSD: stvar.h,v 1.23 2012/02/02 19:43:06 tls Exp $ */
+/*	$NetBSD: stvar.h,v 1.23.2.1 2012/03/02 16:33:39 riz Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 struct modes {
 	u_int quirks;			/* same definitions as in quirkdata */
 	int blksize;
-	u_int8_t density;
+	uint8_t density;
 };
 
 struct quirkdata {
@@ -87,7 +87,7 @@ struct st_quirk_inquiry_pattern {
 };
 
 struct st_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 /*--------------------callback to bus-specific code--------------------------*/
 	int (*ops)(struct st_softc *, int, int);
 #define ST_OPS_RBL		0x00	/* read block limit */
@@ -99,7 +99,7 @@ struct st_softc {
 	int flags;		/* see below                         */
 	u_int quirks;		/* quirks for the open mode          */
 	int blksize;		/* blksize we are using              */
-	u_int8_t density;	/* present density                   */
+	uint8_t density;	/* present density                   */
 	u_int page_0_size;	/* size of page 0 data		     */
 	u_int last_dsty;	/* last density opened               */
 	short mt_resid;		/* last (short) resid                */
@@ -110,8 +110,8 @@ struct st_softc {
 	int32_t last_io_resid;
 	int32_t last_ctl_resid;
 #define	mt_key	mt_erreg
-	u_int8_t asc;		/* last asc code seen		     */
-	u_int8_t ascq;		/* last asc code seen		     */
+	uint8_t asc;		/* last asc code seen		     */
+	uint8_t ascq;		/* last asc code seen		     */
 /*--------------------device/scsi parameters---------------------------------*/
 	struct scsipi_periph *sc_periph;/* our link to the adpter etc.       */
 /*--------------------parameters reported by the device ---------------------*/
@@ -121,12 +121,12 @@ struct st_softc {
 /*--------------------parameters reported by the device for this media-------*/
 	u_long numblks;		/* nominal blocks capacity            */
 	int media_blksize;	/* 0 if not ST_FIXEDBLOCKS            */
-	u_int8_t media_density;	/* this is what it said when asked    */
+	uint8_t media_density;	/* this is what it said when asked    */
 /*--------------------quirks for the whole drive-----------------------------*/
 	u_int drive_quirks;	/* quirks of this drive               */
 /*--------------------How we should set up when opening each minor device----*/
 	struct modes modes[4];	/* plus more for each mode            */
-	u_int8_t  modeflags[4];	/* flags for the modes                */
+	uint8_t  modeflags[4];	/* flags for the modes                */
 #define DENSITY_SET_BY_USER	0x01
 #define DENSITY_SET_BY_QUIRK	0x02
 #define BLKSIZE_SET_BY_USER	0x04
@@ -173,7 +173,7 @@ struct st_softc {
 			 ST_FIXEDBLOCKS | ST_READONLY | ST_FM_WRITTEN |	\
 			 ST_2FM_AT_EOD | ST_PER_ACTION | ST_POSUPDATED)
 
-void	stattach(device_t, struct st_softc *, void *);
+void	stattach(device_t, device_t, void *);
 int	stdetach(device_t, int);
 int	st_mode_select(struct st_softc *, int);
 
