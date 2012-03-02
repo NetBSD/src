@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_tsd.c,v 1.7 2008/04/28 20:23:01 martin Exp $	*/
+/*	$NetBSD: pthread_tsd.c,v 1.8 2012/03/02 18:11:53 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_tsd.c,v 1.7 2008/04/28 20:23:01 martin Exp $");
+__RCSID("$NetBSD: pthread_tsd.c,v 1.8 2012/03/02 18:11:53 joerg Exp $");
 
 /* Functions and structures dealing with thread-specific data */
 #include <errno.h>
@@ -210,12 +210,13 @@ pthread__destroy_tsd(pthread_t self)
 				pthread_mutex_lock(&tsd_mutex);
 				destructor = pthread__tsd_destructors[i];
 				pthread_mutex_unlock(&tsd_mutex);
-			    if (destructor != NULL) {
-				    done = 0;
-				    val = self->pt_specific[i];
-				    self->pt_specific[i] = NULL; /* see above */
-				    (*destructor)(val);
-			    }
+				if (destructor != NULL) {
+					done = 0;
+					val = self->pt_specific[i];
+					/* See above */
+					self->pt_specific[i] = NULL;
+					(*destructor)(val);
+				}
 			}
 		}
 	} while (!done && iterations--);
