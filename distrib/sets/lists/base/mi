@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.678.2.17 2011/11/02 18:28:45 riz Exp $
+# $NetBSD: mi,v 1.678.2.18 2012/03/02 06:35:44 riz Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -3361,6 +3361,7 @@
 ./usr/share/zoneinfo/America/Costa_Rica		base-sys-share		share
 ./usr/share/zoneinfo/America/Cuiaba		base-sys-share		share
 ./usr/share/zoneinfo/America/Curacao		base-sys-share		share
+./usr/share/zoneinfo/America/Creston		base-sys-share		share
 ./usr/share/zoneinfo/America/Danmarkshavn	base-sys-share		share
 ./usr/share/zoneinfo/America/Dawson		base-sys-share		share
 ./usr/share/zoneinfo/America/Dawson_Creek	base-sys-share		share
