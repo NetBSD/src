@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.29 2012/03/02 06:44:38 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.30 2012/03/02 16:35:50 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -614,4 +614,33 @@ share/zoneinfo/zone.tab				patch
 
 	Update to tzdata2012a.
 	[apb, ticket #73]
+
+sys/arch/hppa/hppa/pmap.c			1.98
+
+	Fix PMAPDEBUG build for hppa.
+	[skrll, ticket #62]
+
+sys/arch/i386/conf/ALL				1.333
+sys/ufs/chfs/chfs_inode.h			1.2
+sys/ufs/chfs/chfs_malloc.c			1.2
+sys/ufs/chfs/chfs_pool.c			1.2
+
+	Make chfs compile again, and add it to i386 ALL kernel.
+	[tron, ticket #63]
+
+sys/dev/scsipi/st.c				1.220
+sys/dev/scsipi/st_atapi.c			1.28
+sys/dev/scsipi/st_scsi.c			1.34
+sys/dev/scsipi/stvar.h				1.24
+
+	Convert st(4) to device_t.
+	[mbalmer, ticket #64]
+
+sys/dev/scsipi/ss.c				1.81
+sys/dev/scsipi/ss_mustek.c			1.41
+sys/dev/scsipi/ss_scanjet.c			1.52
+sys/dev/scsipi/ssvar.h				1.19
+
+	Convert ss(4) to device_t.
+	[mbalmer, ticket #65]
 
