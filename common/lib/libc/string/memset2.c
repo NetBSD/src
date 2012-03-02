@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: memset2.c,v 1.4 2012/03/02 16:19:15 apb Exp $");    
+__RCSID("$NetBSD: memset2.c,v 1.5 2012/03/02 16:22:27 apb Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
