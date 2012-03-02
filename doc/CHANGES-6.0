@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.32 2012/03/02 17:33:42 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.33 2012/03/02 17:40:40 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -671,4 +671,11 @@ usr.sbin/makemandb/makemandb.c			1.6
 
 	Expand workaround for .so usage.
 	[joerg, ticket #70]
+
+doc/3RDPARTY					1.921
+share/zoneinfo/northamerica			patch
+share/zoneinfo/zone.tab				patch
+
+	Update to tzdata2012b.
+	[apb, ticket #76]
 
