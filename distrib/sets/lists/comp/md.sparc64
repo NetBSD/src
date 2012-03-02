@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.138 2012/02/12 10:01:57 njoly Exp $
+# $NetBSD: md.sparc64,v 1.138.2.1 2012/03/02 18:27:46 riz Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
@@ -387,6 +387,11 @@
 ./usr/lib/sparc/libevent_g.a			-unknown-		compat,debuglib
 ./usr/lib/sparc/libevent_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/libevent_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libexpat.a			comp-c-lib		compat
+./usr/lib/sparc/libexpat.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libexpat_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libexpat_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libexpat_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/sparc/libfetch.a			comp-c-lib		compat
 ./usr/lib/sparc/libfetch.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libfetch_g.a			-unknown-		compat,debuglib
@@ -906,6 +911,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libedit.so.3.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libelf.so.0.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libevent.so.3.2.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libexpat.so.2.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libfetch.so.3.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libform.so.6.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libgcc_s.so.1.0.debug			comp-compat-shlib	compat,pic,debug

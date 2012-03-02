@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.292.2.1 2012/02/18 18:05:06 riz Exp $
+#	$NetBSD: bsd.README,v 1.292.2.2 2012/03/02 18:27:55 riz Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1412,6 +1412,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBDNS?=	${DESTDIR}/usr/lib/libdns.a
 		LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
 		LIBEVENT?=	${DESTDIR}/usr/lib/libevent.a
+		LIBEXPAT?=	${DESTDIR}/usr/lib/libexpat.a
 		LIBFETCH?=	${DESTDIR}/usr/lib/libfetch.a
 		LIBFORM?=	${DESTDIR}/usr/lib/libform.a
 		LIBFL?=		${DESTDIR}/usr/lib/libfl.a
@@ -1523,7 +1524,6 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBXXF86MISC?=	${DESTDIR}/usr/X11R7/lib/libXxf86misc.a
 		LIBXXF86VM?=	${DESTDIR}/usr/X11R7/lib/libXxf86vm.a
 		LIBDPS?=	${DESTDIR}/usr/X11R7/lib/libdps.a
-		LIBEXPAT?=	${DESTDIR}/usr/X11R7/lib/libexpat.a
 		LIBFNTSTUBS?=	${DESTDIR}/usr/X11R7/lib/libfntstubs.a
 		LIBFONTCACHE?=	${DESTDIR}/usr/X11R7/lib/libfontcache.a
 		LIBFONTCONFIG?=	${DESTDIR}/usr/X11R7/lib/libfontconfig.a
