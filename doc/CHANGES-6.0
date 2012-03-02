@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.31 2012/03/02 16:49:13 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.32 2012/03/02 17:33:42 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -661,4 +661,14 @@ doc/BUILDING.mdoc				1.88
 	Add sanity checks for live-image and install-image targets
 	to avoid unexpected makefs(8) error during image builds.
 	[tsutsui, ticket #68]
+
+crypto/external/bsd/openssl/dist/crypto/asn1/asn_mime.c 1.2
+
+	Avoid possible NULL dereference (CVE-2006-7248).
+	[tron, ticket #69]
+
+usr.sbin/makemandb/makemandb.c			1.6
+
+	Expand workaround for .so usage.
+	[joerg, ticket #70]
 
