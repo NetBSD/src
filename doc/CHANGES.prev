@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.103 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.104 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -11161,3 +11161,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	postinstall(8): Added pwd_mkdb item, to run "pwd_mkdb -V 1
 		/etc/master.passwd" if necessary.  [apb 20120217]
 	pkg_install(1): Import version 20120128 [tron 20120219]
+	zoneinfo: Import tzdata2012a. [apb 20120301]
+	zoneinfo: Import tzdata2012b. [apb 20120302]
