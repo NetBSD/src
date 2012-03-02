@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1679 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1680 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -29,3 +29,5 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		pkgsrc/misc/window package from now on.  [jmmv 20120215]
 	pkg_add(1): imported 20120221 version from pkgsrc [wiz 20120221]
 	file(1): upgraded to 5.11 [christos 20120222]
+	evbmips: Add support for Lemote Yeeloong Notebook. [nonaka 20120302]
+	re(4): Add support for RTL8168E-VL. [nonaka 20120302]
