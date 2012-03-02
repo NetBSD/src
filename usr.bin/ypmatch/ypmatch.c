@@ -1,4 +1,4 @@
-/*	$NetBSD: ypmatch.c,v 1.20 2012/03/02 17:27:49 christos Exp $	*/
+/*	$NetBSD: ypmatch.c,v 1.21 2012/03/02 18:57:27 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypmatch.c,v 1.20 2012/03/02 17:27:49 christos Exp $");
+__RCSID("$NetBSD: ypmatch.c,v 1.21 2012/03/02 18:57:27 matt Exp $");
 #endif
 
 #include <sys/param.h>
@@ -161,7 +161,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr, "Usage: %s [-ktz] [-b <num-retry>] "
-	    "[-d <domainname>] "<key> ... <mapname>\n", getprogname());
+	    "[-d <domainname>] <key> ... <mapname>\n", getprogname());
 	(void)fprintf(stderr, "       %s -x\n", getprogname());
 	exit(1);
 }
