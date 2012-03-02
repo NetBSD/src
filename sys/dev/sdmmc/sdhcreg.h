@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcreg.h,v 1.5 2012/02/01 22:53:19 matt Exp $	*/
+/*	$NetBSD: sdhcreg.h,v 1.6 2012/03/02 18:20:34 nonaka Exp $	*/
 /*	$OpenBSD: sdhcreg.h,v 1.4 2006/07/30 17:20:40 fgsch Exp $	*/
 
 /*
@@ -73,7 +73,7 @@
 #define  SDHC_CMD_INHIBIT_MASK		0x0003
 #define SDHC_HOST_CTL			0x28
 #define  SDHC_HIGH_SPEED		(1<<2)
-#define  SDHC_8BIT_MODE			(1<<2)	/* ESDHC */
+#define  SDHC_ESDHC_8BIT_MODE		(1<<2)	/* eSDHC */
 #define  SDHC_4BIT_MODE			(1<<1)
 #define  SDHC_LED_ON			(1<<0)
 #define SDHC_POWER_CTL			0x29
@@ -166,6 +166,11 @@
 #define  SDHC_VENDOR_VERS_MASK		0xff
 #define	SDHC_DMA_CTL			0x40c	/* eSDHC */
 #define	 SDHC_DMA_SNOOP			0x40
+
+/* SDHC_SPEC_VERS */
+#define	SDHC_SPEC_VERS_100		0x00
+#define	SDHC_SPEC_VERS_200		0x01
+#define	SDHC_SPEC_VERS_300		0x02
 
 /* SDHC_CAPABILITIES decoding */
 #define SDHC_BASE_FREQ_KHZ(cap)						\
