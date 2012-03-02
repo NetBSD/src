@@ -1,4 +1,4 @@
-/*	$NetBSD: ypmatch.c,v 1.19 2009/06/21 14:59:53 wiz Exp $	*/
+/*	$NetBSD: ypmatch.c,v 1.20 2012/03/02 17:27:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypmatch.c,v 1.19 2009/06/21 14:59:53 wiz Exp $");
+__RCSID("$NetBSD: ypmatch.c,v 1.20 2012/03/02 17:27:49 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -53,7 +53,7 @@ static void	usage(void) __attribute__((__noreturn__));
 int
 main(int argc, char *argv[])
 {
-	char *domainname;
+	char *domainname, *b_retry_cnt;
 	char *inkey, *outbuf;
 	const char *inmap;
 	int outbuflen, key, null, notrans;
@@ -63,10 +63,10 @@ main(int argc, char *argv[])
 	const struct ypalias *ypaliases;
 
 	setprogname(*argv);
-	domainname = NULL;
+	domainname = b_retry_cnt = NULL;
 	notrans = key = null = 0;
 	ypaliases = ypalias_init();
-	while ((c = getopt(argc, argv, "xd:ktz")) != -1) {
+	while ((c = getopt(argc, argv, "bd:ktxz")) != -1) {
 		switch (c) {
 		case 'x':
 			for(i = 0; ypaliases[i].alias; i++)
@@ -74,6 +74,10 @@ main(int argc, char *argv[])
 					ypaliases[i].alias,
 					ypaliases[i].name);
 			return 0;
+
+		case 'b':
+			b_retry_cnt = optarg;
+			break;
 
 		case 'd':
 			domainname = optarg;
@@ -101,6 +105,15 @@ main(int argc, char *argv[])
 
 	if (argc < 2)
 		usage();
+
+	if (b_retry_cnt != NULL) {
+		char *s;
+		unsigned long l;
+
+		l = strtoul(b_retry_cnt, &s, 10);
+		if (*s != '\0' || l > 0xffff) usage();
+		yp_setbindtries((int)l);
+	}
 
 	if (domainname == NULL)
 		yp_get_default_domain(&domainname);
@@ -147,8 +160,8 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "Usage: %s [-ktz] [-d domain] key ... "
-	    "mapname\n", getprogname());
+	(void)fprintf(stderr, "Usage: %s [-ktz] [-b <num-retry>] "
+	    "[-d <domainname>] "<key> ... <mapname>\n", getprogname());
 	(void)fprintf(stderr, "       %s -x\n", getprogname());
 	exit(1);
 }

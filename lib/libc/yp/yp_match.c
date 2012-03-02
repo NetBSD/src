@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_match.c,v 1.17 2005/11/29 03:12:01 christos Exp $	 */
+/*	$NetBSD: yp_match.c,v 1.18 2012/03/02 17:27:49 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_match.c,v 1.17 2005/11/29 03:12:01 christos Exp $");
+__RCSID("$NetBSD: yp_match.c,v 1.18 2012/03/02 17:27:49 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: yp_match.c,v 1.17 2005/11/29 03:12:01 christos Exp $");
 
 extern struct timeval _yplib_timeout;
 extern int _yplib_nerrs;
+extern int _yplib_bindtries;
 extern char _yp_domain[];
 
 #ifdef __weak_alias
@@ -229,9 +230,12 @@ again:
 		      (xdrproc_t)xdr_ypresp_val, &yprv, 
 		      _yplib_timeout);
 	if (r != RPC_SUCCESS) {
-		if (++nerrs == _yplib_nerrs) {
+		if (_yplib_bindtries <= 0 && ++nerrs == _yplib_nerrs) {
 			clnt_perror(ysd->dom_client, "yp_match: clnt_call");
 			nerrs = 0;
+		}
+		else if (_yplib_bindtries > 0 && ++nerrs == _yplib_bindtries) {
+			return YPERR_YPSERV;
 		}
 		ysd->dom_vers = -1;
 		goto again;
