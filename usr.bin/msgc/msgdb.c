@@ -1,4 +1,4 @@
-/*	$NetBSD: msgdb.c,v 1.20 2004/06/20 22:20:16 jmc Exp $	*/
+/*	$NetBSD: msgdb.c,v 1.21 2012/03/02 13:11:57 mbalmer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -25,13 +25,13 @@
  * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE 
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
@@ -45,7 +45,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: msgdb.c,v 1.20 2004/06/20 22:20:16 jmc Exp $");
+__RCSID("$NetBSD: msgdb.c,v 1.21 2012/03/02 13:11:57 mbalmer Exp $");
 #endif
 
 
@@ -203,14 +203,14 @@ write_msg_file ()
 
 	/* msg_list */
 	(void)fprintf (out_file, "const char *msg_list[] = {\nNULL,\n");
-	for (t=head ; t != NULL; t = t->next) 
+	for (t=head ; t != NULL; t = t->next)
 		write_str (out_file, t->msg);
 	(void)fprintf (out_file, "NULL};\n");
 
 	/* sys file out! */
 	while ((ch = fgetc(sys_file)) != EOF)
-		fputc(ch, out_file);     	
-	
+		fputc(ch, out_file);
+
 	fclose (out_file);
 	fclose (sys_file);
 }
