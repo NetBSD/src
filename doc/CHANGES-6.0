@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.30 2012/03/02 16:35:50 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.31 2012/03/02 16:49:13 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -643,4 +643,22 @@ sys/dev/scsipi/ssvar.h				1.19
 
 	Convert ss(4) to device_t.
 	[mbalmer, ticket #65]
+
+sys/arch/mips/mips/mips_fpu.c			1.8
+
+	Remove an incorrect KASSERT. PR#45930.
+	[skrll, ticket #66]
+
+lib/libquota/quota_oldfiles.c			1.9
+
+	Check if fstab file exists before trying to parse it.
+	[njoly, ticket #67]
+
+BUILDING					1.99
+build.sh					1.254
+doc/BUILDING.mdoc				1.88
+
+	Add sanity checks for live-image and install-image targets
+	to avoid unexpected makefs(8) error during image builds.
+	[tsutsui, ticket #68]
 
