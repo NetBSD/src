@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.984 2012/02/14 14:03:34 wiz Exp $
+# $NetBSD: mi,v 1.984.2.1 2012/03/02 06:44:02 riz Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -4352,6 +4352,7 @@
 ./usr/share/zoneinfo/America/Costa_Rica		base-sys-share		share
 ./usr/share/zoneinfo/America/Cuiaba		base-sys-share		share
 ./usr/share/zoneinfo/America/Curacao		base-sys-share		share
+./usr/share/zoneinfo/America/Creston		base-sys-share		share
 ./usr/share/zoneinfo/America/Danmarkshavn	base-sys-share		share
 ./usr/share/zoneinfo/America/Dawson		base-sys-share		share
 ./usr/share/zoneinfo/America/Dawson_Creek	base-sys-share		share
