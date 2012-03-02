@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2011/09/20 05:51:34 macallan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 2012/03/02 13:20:57 nonaka Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2011/09/20 05:51:34 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2012/03/02 13:20:57 nonaka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -133,7 +133,31 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2011/09/20 05:51:34 macallan Exp $")
 #include <mips/bonito/bonitoreg.h>
 #include <mips/bonito/bonitovar.h>
 #include <mips/pmon/pmon.h>
+
+#include "sisfb.h"
+#if NSISFB > 0
 #include <dev/pci/sisfb.h>
+#endif
+
+#include "lynxfb.h"
+#if NLYNXFB > 0
+#include <dev/pci/lynxfbvar.h>
+#endif
+
+#include "pckbc.h"
+#if NPCKBC > 0
+#include <dev/isa/isareg.h>
+#include <dev/ic/i8042reg.h>
+#include <dev/ic/pckbcvar.h>
+#endif
+#include "pckbd.h"
+#include "ukbd.h"
+#if NUKBD > 0
+#include <dev/usb/ukbdvar.h>
+#endif
+#if NPCKBD > 0 || NUKBD > 0
+#include <dev/wscons/wskbdvar.h>
+#endif
 
 #include "com.h"
 #if NCOM > 0
@@ -152,8 +176,6 @@ int comconsrate = 0;
 #define DPRINTF(x)
 #define DPPRINTF(x)
 #endif
-
-#include "sisfb.h"
 
 
 int ex_mallocsafe = 0;
@@ -480,6 +502,8 @@ mach_init(int32_t argc, int32_t argva, int32_t enva, int32_t callvec,
 	    loongson_pciide_compat_intr_establish;
 	DPRINTF(("bonito_bus_io_init "));
 	bonito_bus_io_init(&bonito_iot, NULL);
+	/* override mapping function */
+	bonito_iot.bs_map = bonito_bus_io_legacy_map;
 	DPRINTF(("bonito_bus_mem_init\n"));
 	bonito_bus_mem_init(&bonito_memt, NULL);
 
@@ -510,13 +534,33 @@ mach_init(int32_t argc, int32_t argva, int32_t enva, int32_t callvec,
 		DPRINTF((" id 0x%x; ", reg));
 #if NSISFB > 0
 		if (cn_tab == &pmoncons)
-			sisfb_cnattach(&bonito_memt, &bonito_iot, &bonito_pc, 
+			sisfb_cnattach(&bonito_memt, &bonito_iot, &bonito_pc,
+			    pcitag, reg);
+#endif
+#if NLYNXFB > 0
+		if (cn_tab == &pmoncons)
+			lynxfb_cnattach(&bonito_memt, &bonito_iot, &bonito_pc,
 			    pcitag, reg);
 #endif
 		if (cn_tab == &pmoncons)
-			gdium_cnattach(&bonito_memt, &bonito_iot, &bonito_pc, 
+			gdium_cnattach(&bonito_memt, &bonito_iot, &bonito_pc,
 			    pcitag, reg);
+		if (cn_tab != &pmoncons)
+			break;
 	}
+#if NPCKBC > 0 || NUKBD > 0
+	if (cn_tab != &pmoncons) {
+		int rc = ENXIO;
+#if NPCKBC > 0
+		if (rc != 0)
+			rc = pckbc_cnattach(&bonito_iot, IO_KBD, KBCMDP, 0);
+#endif
+#if NUKBD > 0
+		if (rc != 0)
+			rc = ukbd_cnattach();
+#endif
+	}
+#endif	/* NPCKBC > 0 || NUKBD > 0 */
 	DPRINTF(("\n"));
 
 	/*
@@ -657,7 +701,6 @@ cpu_startup(void)
 	 * that memory allocation is now safe.
 	 */
 	ex_mallocsafe = 1;
-
 }
 
 int	waittime = -1;
