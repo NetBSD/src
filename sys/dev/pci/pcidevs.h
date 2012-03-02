@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1097 2012/02/15 16:27:23 tsutsui Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1098 2012/03/02 15:49:26 nonaka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1102 2012/02/15 16:26:00 tsutsui Exp
+ *	NetBSD: pcidevs,v 1.1103 2012/03/02 15:47:51 nonaka Exp
  */
 
 /*
@@ -4061,6 +4061,8 @@
 #define	PCI_PRODUCT_RICOH_RxDPCC	0x0852		/* xD-Picture Card Controller */
 #define	PCI_PRODUCT_RICOH_Rx5C853	0x0853		/* 5C853 PCI-CardBus Bridge/SD/MMC/MMC+/MS/xD/SC/Firewire */
 #define	PCI_PRODUCT_RICOH_Rx5U230	0xe230		/* 5U230 Memory Stick Controller */
+#define	PCI_PRODUCT_RICOH_Rx5U230	0xe230		/* 5U230 Memory Stick Controller */
+#define	PCI_PRODUCT_RICOH_Rx5CE823	0xe823		/* 5CE823 SD/MMC Controller */
 #define	PCI_PRODUCT_RICOH_Rx5U832	0xe832		/* 5U832 Firewire Controller */
 #define	PCI_PRODUCT_RICOH_Rx5C852	0xe852		/* 5C852 xD Controller */
 
