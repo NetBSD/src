@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.82 2012/01/17 20:34:57 joerg Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.83 2012/03/02 18:06:05 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -175,10 +175,8 @@ struct	__pthread_st {
 #define PT_ATTR_MAGIC	0x22220002
 #define PT_ATTR_DEAD	0xDEAD0002
 
-extern int	pthread__stacksize_lg;
 extern size_t	pthread__stacksize;
-extern vaddr_t	pthread__stackmask;
-extern vaddr_t	pthread__threadmask;
+extern size_t	pthread__pagesize;
 extern int	pthread__nspins;
 extern int	pthread__concurrency;
 extern int 	pthread__osrev;
