@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.179 2012/03/02 16:43:30 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.180 2012/03/03 23:43:17 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.179 2012/03/02 16:43:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.180 2012/03/03 23:43:17 mrg Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -308,6 +308,8 @@ int	cpu_dumpsize(void);
 u_long	cpu_dump_mempagecnt(void);
 void	dodumpsys(void);
 void	dumpsys(void);
+
+extern int time_adjusted;	/* XXX no common header */
 
 void dump_misc_init(void);
 void dump_seg_prep(void);
@@ -711,12 +713,12 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
 }
 
-int	waittime = -1;
 struct pcb dumppcb;
 
 void
 cpu_reboot(int howto, char *bootstr)
 {
+	static bool syncdone = false;
 	int s = IPL_NONE;
 
 	if (cold) {
@@ -725,15 +727,37 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 	boothowto = howto;
-	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
-		waittime = 0;
-		vfs_shutdown();
-		/*
-		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now.
-		 */
-		resettodr();
-	}
+
+	/* i386 maybe_dump() */
+
+	/*
+	 * If we've panic'd, don't make the situation potentially
+	 * worse by syncing or unmounting the file systems.
+	 */
+	if ((howto & RB_NOSYNC) == 0 && panicstr == NULL) {
+		if (!syncdone) {
+			syncdone = true;
+			/* XXX used to force unmount as well, here */
+			vfs_sync_all(curlwp);
+			/*
+			 * If we've been adjusting the clock, the todr
+			 * will be out of synch; adjust it now.
+			 *
+			 * XXX used to do this after unmounting all
+			 * filesystems with vfs_shutdown().
+			 */
+			if (time_adjusted != 0)
+				resettodr();
+		}
+
+		while (vfs_unmountall1(curlwp, false, false) ||
+		       config_detach_all(boothowto) ||
+		       vfs_unmount_forceone(curlwp))
+			;	/* do nothing */
+	} else
+		suspendsched();
+
+	pmf_system_shutdown(boothowto);
 
 	/* Disable interrupts. */
 	s = splhigh();
@@ -744,8 +768,6 @@ cpu_reboot(int howto, char *bootstr)
 
 haltsys:
 	doshutdownhooks();
-
-	pmf_system_shutdown(boothowto);
 
         if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #ifndef XEN
