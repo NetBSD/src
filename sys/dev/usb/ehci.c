@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.181.6.14 2012/02/26 05:05:44 mrg Exp $ */
+/*	$NetBSD: ehci.c,v 1.181.6.15 2012/03/03 02:28:52 mrg Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.6.14 2012/02/26 05:05:44 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.6.15 2012/03/03 02:28:52 mrg Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2879,7 +2879,7 @@ ehci_alloc_itd(ehci_softc_t *sc)
 {
 	struct ehci_soft_itd *itd, *freeitd;
 	usbd_status err;
-	int i, s, offs, frindex, previndex;
+	int i, offs, frindex, previndex;
 	usb_dma_t dma;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
@@ -2933,7 +2933,6 @@ ehci_alloc_itd(ehci_softc_t *sc)
 	itd->u.frame_list.prev = NULL;
 	itd->xfer_next = NULL;
 	itd->slot = 0;
-	splx(s);
 
 	return itd;
 }
