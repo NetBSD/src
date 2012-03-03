@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.240.6.15 2012/02/26 05:05:44 mrg Exp $	*/
+/*	$NetBSD: uhci.c,v 1.240.6.16 2012/03/03 02:29:34 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240.6.15 2012/02/26 05:05:44 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240.6.16 2012/03/03 02:29:34 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -736,13 +736,13 @@ uhci_resume(device_t dv, const pmf_qual_t *qual)
 	UWRITE1(sc, UHCI_SOF, sc->sc_saved_sof);
 
 	UHCICMD(sc, cmd | UHCI_CMD_FGR); /* force resume */
-	usb_delay_ms(&sc->sc_bus, USB_RESUME_DELAY);
+	usb_delay_ms_locked(&sc->sc_bus, USB_RESUME_DELAY, &sc->sc_intr_lock);
 	UHCICMD(sc, cmd & ~UHCI_CMD_EGSM); /* back to normal */
 	UWRITE2(sc, UHCI_INTR, UHCI_INTR_TOCRCIE |
 	    UHCI_INTR_RIE | UHCI_INTR_IOCE | UHCI_INTR_SPIE);
 	UHCICMD(sc, UHCI_CMD_MAXP);
 	uhci_run(sc, 1); /* and start traffic again */
-	usb_delay_ms(&sc->sc_bus, USB_RESUME_RECOVERY);
+	usb_delay_ms_locked(&sc->sc_bus, USB_RESUME_RECOVERY, &sc->sc_intr_lock);
 	sc->sc_bus.use_polling--;
 	if (sc->sc_intr_xfer != NULL)
 		callout_reset(&sc->sc_poll_handle, sc->sc_ival, uhci_poll_hub,
@@ -787,7 +787,7 @@ uhci_suspend(device_t dv, const pmf_qual_t *qual)
 	UWRITE2(sc, UHCI_INTR, 0); /* disable intrs */
 
 	UHCICMD(sc, cmd | UHCI_CMD_EGSM); /* enter suspend */
-	usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
+	usb_delay_ms_locked(&sc->sc_bus, USB_RESUME_WAIT, &sc->sc_intr_lock);
 	sc->sc_bus.use_polling--;
 
 	mutex_spin_exit(&sc->sc_intr_lock);
@@ -1686,7 +1686,7 @@ uhci_waitintr(uhci_softc_t *sc, usbd_xfer_handle xfer)
 
 	xfer->status = USBD_IN_PROGRESS;
 	for (; timo >= 0; timo--) {
-		usb_delay_ms(&sc->sc_bus, 1);
+		usb_delay_ms_locked(&sc->sc_bus, 1, &sc->sc_lock);
 		DPRINTFN(20,("uhci_waitintr: 0x%04x\n", UREAD2(sc, UHCI_STS)));
 		if (UREAD2(sc, UHCI_STS) & UHCI_STS_USBINT) {
 			mutex_spin_enter(&sc->sc_intr_lock);
@@ -1764,7 +1764,7 @@ uhci_run(uhci_softc_t *sc, int run)
 				 UREAD2(sc, UHCI_CMD), UREAD2(sc, UHCI_STS)));
 			return (USBD_NORMAL_COMPLETION);
 		}
-		usb_delay_ms(&sc->sc_bus, 1);
+		usb_delay_ms_locked(&sc->sc_bus, 1, &sc->sc_intr_lock);
 	}
 	mutex_spin_exit(&sc->sc_intr_lock);
 	printf("%s: cannot %s\n", device_xname(sc->sc_dev),
@@ -2192,7 +2192,8 @@ uhci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	 * use of the xfer.  Also make sure the soft interrupt routine
 	 * has run.
 	 */
-	usb_delay_ms(upipe->pipe.device->bus, 2); /* Hardware finishes in 1ms */
+	/* Hardware finishes in 1ms */
+	usb_delay_ms_locked(upipe->pipe.device->bus, 2, &sc->sc_lock);
 	sc->sc_softwake = 1;
 	usb_schedsoftintr(&sc->sc_bus);
 	DPRINTFN(1,("uhci_abort_xfer: cv_wait\n"));
@@ -2437,7 +2438,7 @@ uhci_device_intr_close(usbd_pipe_handle pipe)
 	 * We now have to wait for any activity on the physical
 	 * descriptors to stop.
 	 */
-	usb_delay_ms(&sc->sc_bus, 2);
+	usb_delay_ms_locked(&sc->sc_bus, 2, &sc->sc_lock);
 
 	for(i = 0; i < npoll; i++)
 		uhci_free_sqh(sc, upipe->u.intr.qhs[i]);
@@ -2832,7 +2833,8 @@ uhci_device_isoc_close(usbd_pipe_handle pipe)
 		    sizeof(std->td.td_status),
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	}
-	usb_delay_ms(&sc->sc_bus, 2); /* wait for completion */
+	/* wait for completion */
+	usb_delay_ms_locked(&sc->sc_bus, 2, &sc->sc_lock);
 
 	for (i = 0; i < UHCI_VFRAMELIST_COUNT; i++) {
 		std = iso->stds[i];
