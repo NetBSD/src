@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1099 2012/03/02 18:11:59 nonaka Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1100 2012/03/03 05:40:11 nonaka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1104 2012/03/02 18:10:58 nonaka Exp
+ *	NetBSD: pcidevs,v 1.1105 2012/03/03 05:39:31 nonaka Exp
  */
 
 /*
@@ -938,14 +938,16 @@
 #define	PCI_PRODUCT_AMD_AMD64_F11_MISC	0x1303		/* AMD64 Family11h Miscellaneous Configuration */
 #define	PCI_PRODUCT_AMD_AMD64_F11_LINK	0x1304		/* AMD64 Family11h Link Configuration */
 #define	PCI_PRODUCT_AMD_F14_RC	0x1510		/* Family14h Root Complex */
-#define	PCI_PRODUCT_AMD_F14_HT	0x1700		/* Family14h HyperTransport Configuration */
-#define	PCI_PRODUCT_AMD_F14_ADDR	0x1701		/* Family14h Address Map Configuration */
-#define	PCI_PRODUCT_AMD_F14_DRAM	0x1702		/* Family14h DRAM Configuration */
-#define	PCI_PRODUCT_AMD_F14_NB	0x1703		/* Family14h North Bridge Configuration */
-#define	PCI_PRODUCT_AMD_F14_CSTATE	0x1704		/* Family14h CPU C-state Configuration */
-#define	PCI_PRODUCT_AMD_F14_MISC	0x1716		/* Family14h Misc. Configuration */
-#define	PCI_PRODUCT_AMD_F14_HB18	0x1718		/* Family14h Host Bridge */
-#define	PCI_PRODUCT_AMD_F14_HB19	0x1719		/* Family14h Host Bridge */
+#define	PCI_PRODUCT_AMD_F14_HT	0x1700		/* Family12h/14h HyperTransport Configuration */
+#define	PCI_PRODUCT_AMD_F14_ADDR	0x1701		/* Family12h/14h Address Map Configuration */
+#define	PCI_PRODUCT_AMD_F14_DRAM	0x1702		/* Family12h/14h DRAM Configuration */
+#define	PCI_PRODUCT_AMD_F14_NB	0x1703		/* Family12h/14h North Bridge Configuration */
+#define	PCI_PRODUCT_AMD_F14_CSTATE	0x1704		/* Family12h/14h CPU C-state Configuration */
+#define	PCI_PRODUCT_AMD_F12_RC	0x1705		/* Family12h Root Complex */
+#define	PCI_PRODUCT_AMD_F12_GPP0	0x1709		/* Family12h GPP0 Root Port */
+#define	PCI_PRODUCT_AMD_F14_MISC	0x1716		/* Family12h/14h Misc. Configuration */
+#define	PCI_PRODUCT_AMD_F14_HB18	0x1718		/* Family12h/14h Host Bridge */
+#define	PCI_PRODUCT_AMD_F14_HB19	0x1719		/* Family12h/14h Host Bridge */
 #define	PCI_PRODUCT_AMD_PCNET_PCI	0x2000		/* PCnet-PCI Ethernet */
 #define	PCI_PRODUCT_AMD_PCNET_HOME	0x2001		/* PCnet-Home HomePNA Ethernet */
 #define	PCI_PRODUCT_AMD_AM_1771_MBW	0x2003		/* Alchemy AM 1771 MBW */
@@ -1007,8 +1009,18 @@
 #define	PCI_PRODUCT_AMD_PBC8111_AC	0x746d		/* AMD8111 AC97 Audio */
 #define	PCI_PRODUCT_AMD_PBC8111_MC97	0x746e		/* AMD8111 MC97 Modem */
 #define	PCI_PRODUCT_AMD_PBC8111_AC_756b	0x756b		/* AMD8111 756b ACPI Controller */
-#define	PCI_PRODUCT_AMD_HUDSON2_IDE	0x780c		/* HUDSON-2 IDE Controller */
-#define	PCI_PRODUCT_AMD_HUDSON2_SATA	0x7800		/* HUDSON-2 SATA Controller */
+#define	PCI_PRODUCT_AMD_HUDSON_SATA	0x7800		/* Hudson SATA Controller */
+#define	PCI_PRODUCT_AMD_HUDSON_SATA_AHCI	0x7801		/* Hudson AHCI SATA Controller */
+#define	PCI_PRODUCT_AMD_HUDSON_SDHC	0x7806		/* Hudson SD Flash Controller */
+#define	PCI_PRODUCT_AMD_HUDSON_OHCI	0x7807		/* Hudson USB OHCI Controller */
+#define	PCI_PRODUCT_AMD_HUDSON_EHCI	0x7808		/* Hudson USB EHCI Controller */
+#define	PCI_PRODUCT_AMD_HUDSON_OHCI_2	0x7809		/* Hudson USB OHCI Controller */
+#define	PCI_PRODUCT_AMD_HUDSON_SMB	0x780b		/* Hudson SMBus Controller */
+#define	PCI_PRODUCT_AMD_HUDSON_IDE	0x780c		/* Hudson IDE Controller */
+#define	PCI_PRODUCT_AMD_HUDSON_HDAUDIO	0x780d		/* Hudson HD Audio Controller */
+#define	PCI_PRODUCT_AMD_HUDSON_LPC	0x780e		/* Hudson LPC Bridge */
+#define	PCI_PRODUCT_AMD_HUDSON_PCI	0x780f		/* Hudson PCI Bridge */
+#define	PCI_PRODUCT_AMD_HUDSON_XHCI	0x7812		/* Hudson USB xHCI Controller */
 #define	PCI_PRODUCT_AMD_RS880_HB	0x9601		/* RS880 Host Bridge */
 #define	PCI_PRODUCT_AMD_RS780_PPB_GFX	0x9602		/* RS780 PCI-PCI Bridge (int gfx) */
 #define	PCI_PRODUCT_AMD_RS780_PPB_GFX0	0x9603		/* RS780 PCI-PCI Bridge (ext gfx port 0) */
@@ -1132,6 +1144,8 @@
 
 /* ATI products */
 /* See http://www.x.org/wiki/Radeon%20ASICs */
+#define	PCI_PRODUCT_ATI_RADEON_WRESTLER_HDMI	0x1314		/* Wrestler HDMI Audio */
+#define	PCI_PRODUCT_ATI_RADEON_BEAVERCREEK_HDMI	0x1714		/* BeaverCreek HDMI Audio */
 #define	PCI_PRODUCT_ATI_RADEON_RV380_3150	0x3150		/* Radeon Mobility X600 (M24) 3150 */
 #define	PCI_PRODUCT_ATI_RADEON_RV380_3154	0x3154		/* FireGL M24 GL 3154 */
 #define	PCI_PRODUCT_ATI_RADEON_RV380_3E50	0x3e50		/* Radeon X600 (RV380) 3E50 */
@@ -1192,7 +1206,6 @@
 #define	PCI_PRODUCT_ATI_SB600_PPB_4384	0x4384		/* SB600 PCI to PCI Bridge */
 #define	PCI_PRODUCT_ATI_SB600_SMB	0x4385		/* SB600/SB700/SB800 SMBus Controller */
 #define	PCI_PRODUCT_ATI_SB600_USB_EHCI	0x4386		/* SB600 USB EHCI Controller */
-#define	PCI_PRODUCT_ATI_SB600_USB_OHCI0	0x4387		/* SB600 USB OHCI0 Controller */
 #define	PCI_PRODUCT_ATI_SB600_USB_OHCI1	0x4388		/* SB600 USB OHCI1 Controller */
 #define	PCI_PRODUCT_ATI_SB600_USB_OHCI2	0x4389		/* SB600 USB OHCI2 Controller */
 #define	PCI_PRODUCT_ATI_SB600_USB_OHCI3	0x438a		/* SB600 USB OHCI3 Controller */
@@ -1430,6 +1443,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_HD4650	0x9498		/* Radeon HD4650 */
 #define	PCI_PRODUCT_ATI_RADEON_HD2600_XT	0x9588		/* Radeon HD2600 XT GDDR3 */
 #define	PCI_PRODUCT_ATI_RADEON_HD4250_S	0x95C5		/* Radeon HD4250 GPU (RV610) Secondary */
+#define	PCI_PRODUCT_ATI_RADEON_HD6520G	0x9647		/* Radeon HD6520G */
 #define	PCI_PRODUCT_ATI_RADEON_HD4200	0x9712		/* Radeon HD4200 Mobility */
 #define	PCI_PRODUCT_ATI_RADEON_HD4250	0x9715		/* Radeon HD4250 GPU (RS880) */
 #define	PCI_PRODUCT_ATI_RADEON_HD6310	0x9802		/* Radeon HD6310 Graphics */
