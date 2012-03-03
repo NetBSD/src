@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.7 2011/04/04 08:30:28 mbalmer Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.8 2012/03/03 02:46:13 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -45,13 +45,6 @@ message md_may_remove_boot_medium
 
 message dobootblks
 {Installation des blocs de démarrage sur %s ...
-}
-
-message newdisk
-{Il apparaît que votre disque, %s, n'a pas de marque de disque X68K. sysinst
-écrit une marque de disque.
-Si vous comptez utiliser une partie de %s depuis Human68k, vous devriez annuler
-maintenant et formater le disque avec l'utilitaire format.x de Human68k.
 }
 
 message ordering
