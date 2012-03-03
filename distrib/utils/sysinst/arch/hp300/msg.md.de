@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.6 2012/03/01 16:22:14 mbalmer Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.7 2012/03/03 02:46:13 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -47,14 +47,6 @@ message md_may_remove_boot_medium
 
 message dobootblks
 {Installiere die Bootblöcke auf %s ...
-}
-
-message newdisk
-{Ihre Festplatte, %s, scheint nicht als x68k Festplatte markiert zu sein; 
-sysinst wird dies nun tun.
-Falls Sie planen eine Partition der Festplatte %s mit Human68k zu nutzen,
-sollten Sie hier unbedingt abbrechen und die Festplatte mit dem Human68k
-format.x Werkzeug formatieren. 
 }
 
 message ordering
