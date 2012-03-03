@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.170 2012/03/01 16:22:13 mbalmer Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.171 2012/03/03 03:06:30 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -84,9 +84,9 @@ message thanks
 message installusure
 {You have chosen to install NetBSD on your hard disk.  This will change
 information on your hard disk.  You should have made a full backup
-before this procedure!  This procedure will do the following things: 
-	a) Partition your disk 
-	b) Create new BSD file systems 
+before this procedure!  This procedure will do the following things:
+	a) Partition your disk
+	b) Create new BSD file systems
 	c) Load and install distribution sets
 	d) Some initial system configuration
 
@@ -157,10 +157,10 @@ message megname
 
 message layout
 {NetBSD uses a BSD disklabel to carve up the NetBSD portion of the disk
-into multiple BSD partitions.  You must now set up your BSD disklabel. 
+into multiple BSD partitions.  You must now set up your BSD disklabel.
 
 You can use a simple editor to set the sizes of the NetBSD partitions,
-or keep the existing partition sizes and contents. 
+or keep the existing partition sizes and contents.
 
 You will then be given the opportunity to change any of the disklabel
 fields.
@@ -347,7 +347,7 @@ message packname
 message lastchance
 {Ok, we are now ready to install NetBSD on your hard disk (%s).  Nothing has been
 written yet.  This is your last chance to quit this process before anything
-gets changed.  
+gets changed.
 
 Shall we continue?
 }
