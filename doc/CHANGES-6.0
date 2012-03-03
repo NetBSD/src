@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.34 2012/03/02 18:28:35 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.35 2012/03/03 00:53:11 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -854,4 +854,9 @@ xsrc/external/mit/expat/dist/xmlwf/xmlwin32url.cxx	delete
 
 	Move 'libexpat' from X11 into base which fixes PR lib/40346.
 	[tron, ticket #72]
+
+external/gpl3/binutils/dist/bfd/elfxx-mips.c	1.6
+
+	Fix support for .protected symbols.
+	[matt, ticket #82]
 
