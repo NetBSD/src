@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.608 2012/02/19 14:54:25 mbalmer Exp $
+$NetBSD: usbdevs,v 1.609 2012/03/03 05:38:17 nonaka Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -514,6 +514,7 @@ vendor LINKSYS3		0x1915	Linksys
 vendor MEINBERG		0x1938	Meinberg Funkuhren
 vendor QUALCOMMINC	0x19d2	Qualcomm, Incorporated
 vendor QUANTA		0x1a32	Quanta
+vendor TERMINUS		0x1a40	Terminus Technology
 vendor WINCHIPHEAD2	0x1a86	QinHeng Electronics
 vendor MPMAN		0x1cae	MPMan
 vendor 4GSYSTEMS	0x1c9e	4G Systems
