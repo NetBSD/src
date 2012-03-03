@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.137 2012/02/18 15:56:30 christos Exp $
+#	$NetBSD: files.sparc64,v 1.138 2012/03/03 03:21:16 nakayama Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -294,9 +294,6 @@ file	arch/sparc64/sparc64/sunos32_machdep.c	compat_sunos & compat_netbsd32
 file	dev/md_root.c			memory_disk_hooks
 
 include "arch/sparc64/conf/majors.sparc64"
-
-# special compiler settings (no optimization if 32bit kernel)
-file	uvm/uvm_bio.c compile-with "${CC_NOOPT}"
 
 # OpenFirmware convenience stuff
 file  dev/ofw/ofw_subr.c

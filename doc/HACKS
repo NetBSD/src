@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.122 2011/12/24 05:05:55 tsutsui Exp $
+# $NetBSD: HACKS,v 1.123 2012/03/03 03:21:16 nakayama Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -606,19 +606,6 @@ port	sparc
 		would crash due to NULL IPI.  This was fixed by re-using the
 		right IPL value.  However, GCC 4.5.3 build kernels have the
 		same problems.  For now, the hack is re-instated.
-	kcah
-
-
-port	sparc64
-
-	hack	disable optimzations for uvm_bio.c on 32 bit kernels
-	cdate	Sun Mar 21 14:14:04 MET 2004
-	who	martin
-	file	sys/arch/sparc64/conf/Makefile.sparc64 : 1.53-1.54
-	file	sys/arch/sparc64/conf/files.sparc64 : 1.93
-	descr
-		The sparc compiler miscompiles uvm_bio.c when using
-		any optimization. This results in ubc_release panics.
 	kcah
 
 
