@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.7 2011/04/04 08:30:28 mbalmer Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.8 2012/03/03 02:46:13 tsutsui Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.2 2002/03/15 05:26:37 gmcgarry Exp */
 
@@ -48,13 +48,6 @@ message md_may_remove_boot_medium
 
 message dobootblks
 {Instalowanie bootblokow na %s....
-}
-
-message newdisk
-{Wyglada na to, ze twoj dysk %s, nie ma znaku X68K. sysinst wpisuje taki
-znak.
-Pamietaj, ze jesli chcesz uzywac czesci dysku %s z Human68k, powinienes
-tu przerwac i zformatowac dysk za pomoca format.x z Human68k.
 }
 
 message ordering

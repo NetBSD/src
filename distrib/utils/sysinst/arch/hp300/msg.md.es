@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.4 2011/04/04 08:30:28 mbalmer Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.5 2012/03/03 02:46:13 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,13 +46,6 @@ message md_may_remove_boot_medium
 
 message dobootblks
 {Instalando bloques de arranque en %s....
-}
-
-message newdisk
-{Parece que su disco, %s, no tiene una marca de disco X68K. sysinst
-escribirá una marca de disco.
-Note que si pretende usar una parte de %s desde Human68k, debería abortar
-aqui y formatear el disco con la utilidad format.x de Human68k.
 }
 
 message ordering
