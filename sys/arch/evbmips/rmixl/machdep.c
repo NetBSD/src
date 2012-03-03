@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2012/03/02 16:20:55 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 2012/03/03 00:20:33 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2012/03/02 16:20:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2012/03/03 00:20:33 matt Exp $");
 
 #define __INTR_PRIVATE
 
@@ -196,9 +196,6 @@ static u_long rmixl_physaddr_storage[
 
 /* For sysctl_hw. */
 extern char cpu_model[];
-
-/* Our exported CPU info; we can have only one. */  
-struct cpu_info cpu_info_store;
 
 /* Maps for VM objects. */
 struct vm_map *phys_map = NULL;
