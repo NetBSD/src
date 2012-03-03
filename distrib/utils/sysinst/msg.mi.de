@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.63 2012/03/01 17:27:29 tsutsui Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.64 2012/03/03 02:34:13 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -683,7 +683,7 @@ Bitte korrigieren Sie dies, bevor Sie fortfahren.
 
 Eine Möglichkeit ist es, im Extras-Menü eine Shell zu starten,
 wodurch Sie %s/bin/X.old überprüfen können. Gehört diese Datei zu
-einer früheren Aktualisierung, so können Sie diese mit rm -f 
+einer früheren Aktualisierung, so können Sie diese mit rm -f
 %s/bin/x.old löschen und danach die Aktualisierung neu starten.
 Gehört die Datei %s/bin/X.old aber zu einer aktuellen,
 abgebrochenen Aktualisierung, so können Sie die Datei %s/bin/X mit

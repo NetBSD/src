@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.35 2012/03/01 16:22:15 mbalmer Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.36 2012/03/03 02:41:25 tsutsui Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.24 2001/01/27 07:34:39 jmc Exp 	*/
 
@@ -126,7 +126,7 @@ chcesz to zrobic?
 (Odpowiedz 'nie' zabierze cie spowrotem do menu edycji partycji.)}
 
 message missing_bootmenu_text
-{Masz wiecej niz jeden system operacyjny na tym dysku, ale nie 
+{Masz wiecej niz jeden system operacyjny na tym dysku, ale nie
 zostalo wskazane menu ani dla aktywnej partycji ani dla partycji
 NetBSD, ktora bedzie zainstalowana.
 

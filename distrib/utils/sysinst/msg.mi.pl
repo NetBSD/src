@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.80 2012/03/01 17:40:31 tsutsui Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.81 2012/03/03 02:34:13 tsutsui Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -113,7 +113,7 @@ message reinstallusure
 Ta procedura tylko sciaga i rozpakowuje pakiety na pre-partycjonowany
 bootowalny dysk. Nie nazywa dyskow, aktualizuje bootblokow, lub zapisuje
 istniejacej konfiguracji.   (Wyjdz i wybierz `instaluj' lub
-`aktualizuj' jesli chcesz to zrobic.) Powinienes wykonac `instaluj' lub 
+`aktualizuj' jesli chcesz to zrobic.) Powinienes wykonac `instaluj' lub
 `aktualizuj' przed rozpoczeciem tej procedury!
 
 Czy napewno chcesz przeinstalowac pakiety dystrybucjne NetBSD?
@@ -160,7 +160,7 @@ message megname
 {MB}
 
 message layout
-{NetBSD uzywa BSD disklabel aby pociac czesc dysku NetBSD na kilka  
+{NetBSD uzywa BSD disklabel aby pociac czesc dysku NetBSD na kilka
 partycji BSD.  Musisz teraz skonfigurowac BSD disklabel.
 Masz kilka mozliwosci. Sa one opisane ponizej. 
 -- Standard: partycje BSD disklabel sa ustawiane przez ten program. 
@@ -185,7 +185,7 @@ Wybierz specyfikator rozmiaru}
 message ptnsizes
 {Mozesz teraz zmienic rozmiary partycji systemowych. Domyslne ustawienia
 alokuja cala przestrzen na glowny system plikow, aczkolwiek mozesz zdefiniowac
-osobne partycje /usr (dodatkowe pliki systemowe), /var (dane systemowe i logi) 
+osobne partycje /usr (dodatkowe pliki systemowe), /var (dane systemowe i logi)
 lub /home (katalogi domowe uzytkownikow).
 
 Wolna przestrzen zostanie dodana do partycji oznaczonej '+'.
@@ -345,7 +345,7 @@ message packname
 {Podaj nazwe dla swojego dysku NetBSD}
 
 message lastchance
-{Ok, jestesmy teraz gotowi zainstalowac NetBSD na twoim dysku (%s). Nic 
+{Ok, jestesmy teraz gotowi zainstalowac NetBSD na twoim dysku (%s). Nic
 nie zostalo jeszcze zapisane. Masz teraz ostatnia szanse na przerwanie tego
 procesu poki nic nie zostalo jeszcze zmienione.
 
@@ -389,7 +389,7 @@ potrzebom. Przegladnij /etc/defaults/rc.conf aby poznac domyslne wartosci.
 
 message upgrcomplete
 {Aktualizacja NetBSD-@@VERSION@@ zostala zakonczona. Bedziesz teraz
-musial wykonac polecenia zawarte w pliku INSTALL, aby uzyskac system 
+musial wykonac polecenia zawarte w pliku INSTALL, aby uzyskac system
 odpowiadajacy twoim potrzebom.
 
 Musisz przynajmniej dostosowac rc.conf do swojego lokalnego srodowiska
@@ -845,7 +845,7 @@ message swapactive
 {Dysk, ktory wybrales posiada partycje wymiany, ktora moze byc aktualnie
 w uzyciu jesli twoj system ma malo pamieci. Poniewaz chcesz zmienic uklad
 partycji, partycja wymiany zostanie teraz wylaczona. Moze to spowodowac
-pojawienie sie bledow. Jesli zuwazysz takie bledy zrestartuj komputer, 
+pojawienie sie bledow. Jesli zuwazysz takie bledy zrestartuj komputer,
 a nastepnie sprobuj jeszcze raz.}
 
 message swapdelfailed
