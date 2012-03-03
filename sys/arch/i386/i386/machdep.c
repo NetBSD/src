@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.723 2012/03/02 16:43:31 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.724 2012/03/03 23:43:17 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.723 2012/03/02 16:43:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.724 2012/03/03 23:43:17 mrg Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -835,11 +835,7 @@ void
 cpu_reboot(int howto, char *bootstr)
 {
 	static bool syncdone = false;
-	struct lwp *l;
-	int s;
-
-	s = IPL_NONE;
-	l = (curlwp == NULL) ? &lwp0 : curlwp;
+	int s = IPL_NONE;
 
 	if (cold) {
 		howto |= RB_HALT;
@@ -861,7 +857,7 @@ cpu_reboot(int howto, char *bootstr)
 		if (!syncdone) {
 			syncdone = true;
 			/* XXX used to force unmount as well, here */
-			vfs_sync_all(l);
+			vfs_sync_all(curlwp);
 			/*
 			 * If we've been adjusting the clock, the todr
 			 * will be out of synch; adjust it now.
@@ -873,9 +869,9 @@ cpu_reboot(int howto, char *bootstr)
 				resettodr();
 		}
 
-		while (vfs_unmountall1(l, false, false) ||
+		while (vfs_unmountall1(curlwp, false, false) ||
 		       config_detach_all(boothowto) ||
-		       vfs_unmount_forceone(l))
+		       vfs_unmount_forceone(curlwp))
 			;	/* do nothing */
 	} else
 		suspendsched();
@@ -883,7 +879,11 @@ cpu_reboot(int howto, char *bootstr)
 	pmf_system_shutdown(boothowto);
 
 	s = splhigh();
+
+	/* amd64 maybe_dump() */
+
 haltsys:
+	doshutdownhooks();
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #ifdef XEN
