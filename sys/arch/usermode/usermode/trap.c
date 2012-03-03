@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.64 2012/03/03 21:15:16 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.65 2012/03/03 21:29:02 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.64 2012/03/03 21:15:16 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.65 2012/03/03 21:29:02 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -480,7 +480,7 @@ pagefault(siginfo_t *info, vaddr_t from_userland, vaddr_t pc, vaddr_t va)
 
 	KASSERT(from_userland);
 	KSI_INIT_TRAP(&ksi);
-	ksi.ksi_signo = SIGSEGV;
+	ksi.ksi_signo = info->si_signo;
 	ksi.ksi_trap = 0;	/* XXX */
 	ksi.ksi_code = (error == EPERM) ? SEGV_ACCERR : SEGV_MAPERR;
 	ksi.ksi_addr = (void *) va;
@@ -552,6 +552,11 @@ illegal_instruction(siginfo_t *info, vaddr_t from_userland, vaddr_t pc, vaddr_t 
 }
 
 
+/*
+ * handle pass to userland signals
+ *
+ * arguments other than the origional siginfo_t are not used
+ */
 static void
 pass_on(siginfo_t *info, vaddr_t from_userland, vaddr_t pc, vaddr_t va)
 {
