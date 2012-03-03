@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.218.6.16 2012/02/26 05:05:44 mrg Exp $	*/
+/*	$NetBSD: ohci.c,v 1.218.6.17 2012/03/03 02:29:34 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.16 2012/02/26 05:05:44 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.17 2012/03/03 02:29:34 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -2360,7 +2360,8 @@ ohci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	 * use of the xfer.  Also make sure the soft interrupt routine
 	 * has run.
 	 */
-	usb_delay_ms(opipe->pipe.device->bus, 20); /* Hardware finishes in 1ms */
+	/* Hardware finishes in 1ms */
+	usb_delay_ms_locked(opipe->pipe.device->bus, 20, &sc->sc_lock);
 	sc->sc_softwake = 1;
 	usb_schedsoftintr(&sc->sc_bus);
 	cv_wait(&sc->sc_softwake_cv, &sc->sc_lock);
@@ -3238,7 +3239,7 @@ ohci_device_intr_start(usbd_xfer_handle xfer)
  * TD is gone.
  */
 	if (ohcidebug > 5) {
-		usb_delay_ms(&sc->sc_bus, 5);
+		usb_delay_ms_locked(&sc->sc_bus, 5, &sc->sc_lock);
 		DPRINTF(("ohci_device_intr_transfer: status=%x\n",
 			 OREAD4(sc, OHCI_COMMAND_STATUS)));
 		ohci_dump_ed(sc, sed);
@@ -3290,7 +3291,7 @@ ohci_device_intr_close(usbd_pipe_handle pipe)
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	if ((O32TOH(sed->ed.ed_tailp) & OHCI_HEADMASK) !=
 	    (O32TOH(sed->ed.ed_headp) & OHCI_HEADMASK))
-		usb_delay_ms(&sc->sc_bus, 2);
+		usb_delay_ms_locked(&sc->sc_bus, 2, &sc->sc_lock);
 
 	for (p = sc->sc_eds[pos]; p && p->next != sed; p = p->next)
 		continue;
@@ -3617,12 +3618,7 @@ ohci_device_isoc_abort(usbd_xfer_handle xfer)
 #endif
 	}
 
-	/* XXXMRG is this ok? */
-	mutex_exit(&sc->sc_lock);
-
-	usb_delay_ms(&sc->sc_bus, OHCI_ITD_NOFFSET);
-
-	mutex_enter(&sc->sc_lock);
+	usb_delay_ms_locked(&sc->sc_bus, OHCI_ITD_NOFFSET, &sc->sc_lock);
 
 	/* Run callback. */
 	usb_transfer_complete(xfer);
