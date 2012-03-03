@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.22 2012/03/01 18:08:56 tsutsui Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.23 2012/03/03 03:06:30 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -111,7 +111,7 @@ One will be an Apple_Scratch type partition and the other an Apple_Free
 type partition.  You may then change either of the partitions into one of
 another type.  If the Apple_Free part is physically adjacent to another
 partition which is also an Apple_Free type, the two will be automatically
-merged into a single Apple_Free type partition. 
+merged into a single Apple_Free type partition.
 
 There are %d disk blocks in the selected partition. Enter the number
 of disk blocks you would like allocated to the Apple_Scratch partition.

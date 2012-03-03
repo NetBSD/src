@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.41 2012/03/03 02:34:13 tsutsui Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.42 2012/03/03 03:06:30 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -90,7 +90,7 @@ message installusure
 {Ha escogido instalar NetBSD en su disco duro.  Esto cambiará información
 de su disco duro.  ¡Debería haber hecho una copia de seguridad completa
 antes de este procedimiento!  Este procedimiento realizará las siguientes
-operaciones: 
+operaciones:
 	a) Particionar su disco
 	b) Crear nuevos sistemas de ficheros BSD
 	c) Cargar e instalar los conjuntos de distribución
@@ -164,7 +164,7 @@ message megname
 
 message layout
 {NetBSD usa una etiqueta de BSD para dividir la porción NetBSD del disco
-en varias particiones BSD.  Ahora debería configurar su etiqueta BSD. 
+en varias particiones BSD.  Ahora debería configurar su etiqueta BSD.
 
 Puede usar un simple editor para establecer los tamaños de las particiones
 NetBSD, o mantener los tamaños de partición y contenidos actuales.
@@ -355,7 +355,7 @@ message packname
 message lastchance
 {Bien, todo está preparado para instalar NetBSD en su disco duro (%s).
 Todavía no se ha escrito nada.  Ésta es su última oportunidad para salir
-del proceso antes de que se cambie nada.  
+del proceso antes de que se cambie nada.
 
 ¿Desea continuar?
 }
@@ -710,7 +710,7 @@ message rootmissing
 
 message badroot
 {El nuevo sistema de archivos raíz no ha pasado la comprobación básica.
- ¿Está seguro de que ha instalado todos los conjuntos requeridos? 
+ ¿Está seguro de que ha instalado todos los conjuntos requeridos?
 
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.81 2012/03/03 02:34:13 tsutsui Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.82 2012/03/03 03:06:30 tsutsui Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -89,7 +89,7 @@ message thanks
 message installusure
 {Zdecydowales sie zainstalowac NetBSD na twardym dysku. Spowoduje to zmiane
 informacji na twoim dysku. Powinienes zrobic pelny backup danych przed
-rozpoczeciem tej procedury!  Zostana wykonane nastepujace czynnosci: 
+rozpoczeciem tej procedury!  Zostana wykonane nastepujace czynnosci:
 	a) Podzial dysku twardego
 	b) Stworzenie nowych systemow plikow BSD
 	c) Wgranie i zainstalowanie pakietow dystrybucji
