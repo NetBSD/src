@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_i386.c,v 1.3 2012/01/21 22:05:06 reinoud Exp $ */
+/* $NetBSD: cpu_i386.c,v 1.4 2012/03/03 21:15:16 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_i386.c,v 1.3 2012/01/21 22:05:06 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_i386.c,v 1.4 2012/03/03 21:15:16 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -205,7 +205,8 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	/* use given stack */
 	ucp->uc_stack.ss_sp = (void *) (stack-4);	/* to prevent clearing */
 	ucp->uc_stack.ss_size = 0; //pack->ep_ssize;
-	thunk_makecontext(ucp, (void *) pack->ep_entry, 0, NULL, NULL, NULL);
+	thunk_makecontext(ucp, (void *) pack->ep_entry,
+		0, NULL, NULL, NULL, NULL);
 
 	/* patch up */
 	reg[ 8] = l->l_proc->p_psstrp;	/* _REG_EBX */
