@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.69 2012/01/21 22:09:56 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.70 2012/03/03 21:15:15 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.69 2012/01/21 22:09:56 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.70 2012/03/03 21:15:15 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -242,7 +242,7 @@ cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
 
 	/* create atomic switcher */
 	thunk_makecontext(&sc->sc_ucp, (void (*)(void)) cpu_switchto_atomic,
-			2, oldlwp, newlwp, NULL);
+			2, oldlwp, newlwp, NULL, NULL);
 
 	KASSERT(sc);
 	if (oldpcb) {
@@ -341,7 +341,7 @@ cpu_lwp_trampoline(ucontext_t *ucp, void (*func)(void *), void *arg)
 	lwp_startup(curcpu()->ci_stash, curlwp);
 
 	/* actual jump */
-	thunk_makecontext(ucp, (void (*)(void)) func, 1, arg, NULL, NULL);
+	thunk_makecontext(ucp, (void (*)(void)) func, 1, arg, NULL, NULL, NULL);
 	thunk_setcontext(ucp);
 }
 
@@ -381,7 +381,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb2->pcb_ucp.uc_flags = _UC_STACK | _UC_CPU | _UC_SIGMASK;
 	thunk_makecontext(&pcb2->pcb_ucp,
 	    (void (*)(void)) cpu_lwp_trampoline,
-	    3, &pcb2->pcb_ucp, func, arg);
+	    3, &pcb2->pcb_ucp, func, arg, NULL);
 }
 
 void
