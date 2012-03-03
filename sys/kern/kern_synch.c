@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.298 2012/02/19 21:06:54 rmind Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.299 2012/03/03 00:22:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.298 2012/02/19 21:06:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.299 2012/03/03 00:22:24 matt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -145,7 +145,11 @@ static struct evcnt	kpreempt_ev_immed	__cacheline_aligned;
  * be 0, or the lowest priority that is safe for use on the interrupt stack;
  * it can be made higher to block network software interrupts after panics.
  */
+#ifdef IPL_SAFEPRI
+int	safepri = IPL_SAFEPRI;
+#else
 int	safepri;
+#endif
 
 void
 synch_init(void)
