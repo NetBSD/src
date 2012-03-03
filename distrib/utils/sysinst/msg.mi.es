@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.40 2012/03/01 16:22:13 mbalmer Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.41 2012/03/03 02:34:13 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -869,7 +869,7 @@ message tz_back
 
 message swapactive
 {El disco que ha seleccionado tiene una partición de intercambio (swap) que
-puede que esté en uso actualmente si su sistema tiene poca memoria.  Como 
+puede que esté en uso actualmente si su sistema tiene poca memoria.  Como
 se dispone a reparticionar este disco, esta partición swap será desactivada
 ahora.  Se advierte de que esto puede conducir a problemas de swap.
 Si obtuviera algun error, reinicie el sistema e inténtelo de nuevo.}
