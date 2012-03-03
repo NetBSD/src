@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.cfg.5,v 1.24 2011/11/28 09:38:45 wiz Exp $
+.\"	$NetBSD: boot.cfg.5,v 1.25 2012/03/03 15:14:03 nonaka Exp $
 .\"
 .\" Copyright (c) 2007 Stephen Borrill
 .\" All rights reserved.
@@ -146,7 +146,7 @@ time limit for the user to choose an option.
 .It Sy userconf
 Passes a
 .Xr userconf 4
-command to the kernel at boot time .
+command to the kernel at boot time.
 .It Sy rndseed
 Takes the path to a random-seed file as written by the
 .Fl S
@@ -183,7 +183,7 @@ menu=Go to command line (advanced users only):prompt
 clear=1
 timeout=-1
 default=1
-userconf disable ehci*
+userconf=disable ehci*
 # Always load ramdisk module
 load=/miniroot.kmod
 .Ed
