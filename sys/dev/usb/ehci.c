@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.181.6.15 2012/03/03 02:28:52 mrg Exp $ */
+/*	$NetBSD: ehci.c,v 1.181.6.16 2012/03/04 01:32:47 mrg Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.6.15 2012/03/03 02:28:52 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.6.16 2012/03/04 01:32:47 mrg Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -851,7 +851,8 @@ ehci_check_qh_intr(ehci_softc_t *sc, struct ehci_xfer *ex)
 }
 
 Static void
-ehci_check_itd_intr(ehci_softc_t *sc, struct ehci_xfer *ex) {
+ehci_check_itd_intr(ehci_softc_t *sc, struct ehci_xfer *ex)
+{
 	ehci_soft_itd_t *itd;
 	int i;
 
