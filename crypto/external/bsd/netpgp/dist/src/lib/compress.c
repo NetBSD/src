@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: compress.c,v 1.21 2010/11/15 08:03:39 agc Exp $");
+__RCSID("$NetBSD: compress.c,v 1.22 2012/03/04 19:52:02 agc Exp $");
 #endif
 
 #ifdef HAVE_ZLIB_H
@@ -177,7 +177,8 @@ zlib_compressed_data_reader(pgp_stream_t *stream, void *dest, size_t length,
 			} else if (ret != Z_OK) {
 				(void) fprintf(stderr, "ret=%d\n", ret);
 				PGP_ERROR(cbinfo->errors,
-				PGP_E_P_DECOMPRESSION_ERROR, z->zstream.msg);
+					PGP_E_P_DECOMPRESSION_ERROR, "%s",
+					z->zstream.msg);
 			}
 			z->inflate_ret = ret;
 		}
