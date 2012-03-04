@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.5 2011/05/02 00:17:35 matt Exp $ */
+/* $NetBSD: intr.h,v 1.5.8.1 2012/03/04 00:46:11 mrg Exp $ */
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -48,6 +48,8 @@
 #define	IPL_SCHED	(IPL_VM+1)
 #define	IPL_DDB		(IPL_SCHED+1)
 #define	IPL_HIGH	(IPL_DDB+1)
+
+#define	IPL_SAFEPRI	IPL_SOFTSERIAL
 
 #define	_IPL_N		(IPL_HIGH+1)
 #define	_IPL_NAMES(pfx)	{ pfx"none", pfx"softclock/bio", pfx"softnet/serial", \

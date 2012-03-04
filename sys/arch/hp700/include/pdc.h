@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.h,v 1.19.6.1 2012/02/18 07:32:07 mrg Exp $	*/
+/*	$NetBSD: pdc.h,v 1.19.6.2 2012/03/04 00:46:07 mrg Exp $	*/
 
 /*	$OpenBSD: pdc.h,v 1.35 2007/07/15 20:03:48 kettenis Exp $	*/
 
@@ -384,7 +384,7 @@ struct cache_cf {	/* PDC_CACHE (for "struct pdc_cache") */
 		cc_line	: 3,	/* max data written by store (16-byte mults) */
 		cc_resv1: 2,	/* (reserved) */
 		cc_wt	: 1,	/* D-cache: write-to = 0, write-through = 1 */
-		cc_sh	: 2,	/* separate I and D = 0, shared I and D = 1 */
+		cc_fsel	: 2,	/* Both (00) / only D/I (01/10) / either (11) F[DI]C  */
 		cc_cst  : 3,	/* D-cache: incoherent = 0, coherent = 1 */
 		cc_resv2:11,	/* (reserved) */
 		cc_hvers: 2;	/* H-VERSION dependent */
