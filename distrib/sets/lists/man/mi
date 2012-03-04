@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1382 2012/02/29 20:07:54 tron Exp $
+# $NetBSD: mi,v 1.1383 2012/03/04 16:12:24 tron Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2005,7 +2005,7 @@
 ./usr/share/man/cat5/passwd.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/pcap-savefile.0		man-net-catman		.cat
 ./usr/share/man/cat5/pcfs.0			man-obsolete		obsolete
-./usr/share/man/cat5/pcre_table.0		man-postfix-catman	postfix,.cat
+./usr/share/man/cat5/pcre_table.0		man-obsolete		obsolete
 ./usr/share/man/cat5/pf.boot.conf.0		man-pf-catman		pf,.cat
 ./usr/share/man/cat5/pf.conf.0			man-pf-catman		pf,.cat
 ./usr/share/man/cat5/pf.os.0			man-pf-catman		pf,.cat
@@ -2041,6 +2041,7 @@
 ./usr/share/man/cat5/shells.0			man-sys-catman		.cat
 ./usr/share/man/cat5/siginfo.0			man-obsolete		obsolete
 ./usr/share/man/cat5/spamd.conf.0		man-obsolete		obsolete
+./usr/share/man/cat5/sqlite_table.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/ssh_config.0		man-secsh-catman	crypto,.cat
 ./usr/share/man/cat5/sshd_config.0		man-secsh-catman	crypto,.cat
 ./usr/share/man/cat5/stab.0			man-sys-catman		.cat
@@ -4783,7 +4784,7 @@
 ./usr/share/man/html5/passwd.conf.html		man-sys-htmlman		html
 ./usr/share/man/html5/passwd.html		man-sys-htmlman		html
 ./usr/share/man/html5/pcap-savefile.html	man-sys-htmlman		html
-./usr/share/man/html5/pcre_table.html		man-postfix-htmlman	postfix,html
+./usr/share/man/html5/pcre_table.html		man-obsolete		obsolete
 ./usr/share/man/html5/pf.boot.conf.html		man-pf-htmlman		pf,html
 ./usr/share/man/html5/pf.conf.html		man-pf-htmlman		pf,html
 ./usr/share/man/html5/pf.os.html		man-pf-htmlman		pf,html
@@ -4812,6 +4813,7 @@
 ./usr/share/man/html5/security.conf.html	man-sys-htmlman		html
 ./usr/share/man/html5/services.html		man-net-htmlman		html
 ./usr/share/man/html5/shells.html		man-sys-htmlman		html
+./usr/share/man/html5/sqlite_table.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/ssh_config.html		man-secsh-htmlman	crypto,html
 ./usr/share/man/html5/sshd_config.html		man-secsh-htmlman	crypto,html
 ./usr/share/man/html5/stab.html			man-sys-htmlman		html
@@ -7514,7 +7516,7 @@
 ./usr/share/man/man5/passwd.conf.5		man-sys-man		.man
 ./usr/share/man/man5/pcap-savefile.5		man-netutil-man		.man
 ./usr/share/man/man5/pcfs.5			man-obsolete		obsolete
-./usr/share/man/man5/pcre_table.5		man-postfix-man		postfix,.man
+./usr/share/man/man5/pcre_table.5		man-obsolete		obsolete
 ./usr/share/man/man5/pf.boot.conf.5		man-pf-man		pf,.man
 ./usr/share/man/man5/pf.conf.5			man-pf-man		pf,.man
 ./usr/share/man/man5/pf.os.5			man-pf-man		pf,.man
@@ -7552,6 +7554,7 @@
 ./usr/share/man/man5/spamd.conf.5		man-obsolete		obsolete
 ./usr/share/man/man5/ssh_config.5		man-secsh-man		crypto,.man
 ./usr/share/man/man5/sshd_config.5		man-secsh-man		crypto,.man
+./usr/share/man/man5/sqlite_table.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/stab.5			man-sys-man		.man
 ./usr/share/man/man5/sysctl.conf.5		man-sys-man		.man
 ./usr/share/man/man5/syslog.conf.5		man-sysutil-man		.man
