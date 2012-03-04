@@ -567,10 +567,7 @@ bfd_elf_record_link_assignment (bfd *output_bfd,
       && !h->def_regular)
     h->verinfo.verdef = NULL;
 
-  /* Only set symbols not provided from the linker script as regular so
-     that we can find their version from verdef not vertree */
-  if (!provide)
-    h->def_regular = 1;
+  h->def_regular = 1;
 
   if (provide && hidden)
     {
