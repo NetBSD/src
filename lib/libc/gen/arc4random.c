@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.11 2012/02/27 04:25:12 tls Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.12 2012/03/04 00:36:43 tls Exp $	*/
 /*	$OpenBSD: arc4random.c,v 1.6 2001/06/05 05:05:38 pvalchev Exp $	*/
 
 /*
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: arc4random.c,v 1.11 2012/02/27 04:25:12 tls Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.12 2012/03/04 00:36:43 tls Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -46,12 +46,12 @@ __weak_alias(arc4random,_arc4random)
 
 struct arc4_stream {
 	mutex_t mtx;
+	int initialized;
 	uint8_t i;
 	uint8_t j;
 	uint8_t s[256];
 };
 
-static int rs_initialized;
 /* XXX lint explodes with an internal error if only mtx is initialized! */
 static struct arc4_stream rs = { .i = 0, .mtx = MUTEX_INITIALIZER };
 
@@ -70,6 +70,9 @@ arc4_init(struct arc4_stream *as)
 		as->s[n] = n;
 	as->i = 0;
 	as->j = 0;
+
+	as->initialized = 1;
+	arc4_stir(as);
 }
 
 static inline void
@@ -155,11 +158,11 @@ arc4_getword(struct arc4_stream *as)
 static inline void
 _arc4random_stir_unlocked(void)
 {
-	if (!rs_initialized) {
-		arc4_init(&rs);
-		rs_initialized = 1;
+	if (__predict_false(!rs.initialized)) {
+		arc4_init(&rs);				/* stirs */
+	} else {
+		arc4_stir(&rs);
 	}
-	arc4_stir(&rs);
 }
 
 void
@@ -179,8 +182,9 @@ arc4random_stir(void)
 static inline void
 _arc4random_addrandom_unlocked(u_char *dat, int datlen)
 {
-	if (!rs_initialized)
-		arc4_stir(&rs);
+	if (__predict_false(rs.initialized)) {
+		arc4_init(&rs);
+	}
 	arc4_addrandom(&rs, dat, datlen);
 }
 
@@ -201,8 +205,9 @@ arc4random_addrandom(u_char *dat, int datlen)
 static inline uint32_t
 _arc4random_unlocked(void)
 {
-	if (!rs_initialized)
-		arc4_stir(&rs);
+	if (__predict_false(!rs.initialized)) {
+		arc4_init(&rs);
+	}
 	return arc4_getword(&rs);
 }
 
@@ -227,6 +232,10 @@ _arc4random_buf_unlocked(void *buf, size_t len)
 {
 	uint8_t *bp = buf;
 	uint8_t *ep = bp + len;
+
+	if (__predict_false(!rs.initialized)) {
+		arc4_init(&rs);
+	}
 
 	bp[0] = arc4_getbyte(&rs) % 3;
 	while (bp[0]--)
@@ -292,8 +301,9 @@ _arc4random_uniform_unlocked(uint32_t upper_bound)
 	 * number inside the range we need, so it should rarely need
 	 * to re-roll (at all).
 	 */
-	if (!rs_initialized)
-		arc4_stir(&rs);
+	if (__predict_false(!rs.initialized)) {
+		arc4_init(&rs);
+	}
 	if (arc4_getbyte(&rs) & 1)
 		(void)arc4_getbyte(&rs);
 	do
