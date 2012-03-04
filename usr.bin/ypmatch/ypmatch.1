@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypmatch.1,v 1.17 2012/03/02 17:27:49 christos Exp $
+.\"	$NetBSD: ypmatch.1,v 1.18 2012/03/04 11:54:57 wiz Exp $
 .\"
 .\" Copyright (c) 1993 Winning Strategies, Inc.
 .\" All rights reserved.
@@ -54,9 +54,12 @@ which may be a map name or a map nickname.
 The options are as follows:
 .Bl -tag -width indent
 .It Fl b Ar num_retry
-Do not wait infinite time for ypserver to come up.
-Retry only the specified number times. See
-.Xr yp_setbindtries 3 for explanation. Valid range is limited from 0 to 65535 by this program.
+Do not wait infinite time for the ypserver to come up.
+Retry only the specified number of times.
+See
+.Xr yp_setbindtries 3
+for explanation.
+The valid range is limited from 0 to 65535 by this program.
 .It Fl d Ar domainname
 Specify a domain other than the default domain.
 .It Fl k
