@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_all.h,v 1.24 2005/12/11 12:23:50 christos Exp $	*/
+/*	$NetBSD: scsi_all.h,v 1.24.114.1 2012/03/04 00:46:26 mrg Exp $	*/
 
 /*
  * SCSI-specific interface description.
@@ -25,7 +25,7 @@
 #define _DEV_SCSIPI_SCSI_ALL_H_
 
 /*
- * Define dome bits that are in ALL (or a lot of) scsi commands
+ * Define some bits that are in ALL (or a lot of) scsi commands
  */
 #define	SCSI_CTL_LINK		0x01
 #define	SCSI_CTL_FLAG		0x02

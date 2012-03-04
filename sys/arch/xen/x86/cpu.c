@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.70.4.2 2012/02/24 09:11:37 mrg Exp $	*/
+/*	$NetBSD: cpu.c,v 1.70.4.3 2012/03/04 00:46:17 mrg Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.70.4.2 2012/02/24 09:11:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.70.4.3 2012/03/04 00:46:17 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -184,9 +184,6 @@ struct cpu_info *phycpu_info_list = &phycpu_info_primary;
 uint32_t cpus_attached = 1;
 uint32_t cpus_running = 1;
 
-uint32_t phycpus_attached = 0;
-uint32_t phycpus_running = 0;
-
 uint32_t cpu_feature[5]; /* X86 CPUID feature bits
 			  *	[0] basic features %edx
 			  *	[1] basic features %ecx
@@ -222,11 +219,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	if (phycpus_attached == ~0) {
-		aprint_error(": increase MAXCPUS\n");
-		return;
-	}
-
 	/*
 	 * If we're an Application Processor, allocate a cpu_info
 	 * If we're the first attached CPU use the primary cpu_info,
@@ -258,9 +250,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	ci->ci_cpuid = caa->cpu_number;
 	ci->ci_vcpu = NULL;
 	ci->ci_index = nphycpu++;
-	ci->ci_cpumask = (1 << cpu_index(ci));
-
-	atomic_or_32(&phycpus_attached, ci->ci_cpumask);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -420,6 +409,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 	ci->ci_cpuid = cpunum;
 
 	KASSERT(HYPERVISOR_shared_info != NULL);
+	KASSERT(cpunum < XEN_LEGACY_MAX_VCPUS);
 	ci->ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[cpunum];
 
 	KASSERT(ci->ci_func == 0);
@@ -445,6 +435,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		KASSERT(ci->ci_data.cpu_idlelwp != NULL);
 	}
 
+	KASSERT(ci->ci_cpuid == ci->ci_index);
 	ci->ci_cpumask = (1 << cpu_index(ci));
 	pmap_reference(pmap_kernel());
 	ci->ci_pmap = pmap_kernel();
@@ -1057,14 +1048,6 @@ mp_cpu_start_cleanup(struct cpu_info *ci)
 
 }
 
-/* curcpu() uses %fs - shim for until cpu_init_msrs(), below */
-static struct cpu_info *cpu_primary(void)
-{
-	return &cpu_info_primary;
-}
-/* XXX: rename to something more generic. users other than xpq exist */
-struct cpu_info	* (*xpq_cpu)(void) = cpu_primary;
-
 void
 cpu_init_msrs(struct cpu_info *ci, bool full)
 {
@@ -1073,7 +1056,6 @@ cpu_init_msrs(struct cpu_info *ci, bool full)
 		HYPERVISOR_set_segment_base (SEGBASE_FS, 0);
 		HYPERVISOR_set_segment_base (SEGBASE_GS_KERNEL, (uint64_t) ci);
 		HYPERVISOR_set_segment_base (SEGBASE_GS_USER, 0);
-		xpq_cpu = x86_curcpu;
 	}
 #endif	/* __x86_64__ */
 

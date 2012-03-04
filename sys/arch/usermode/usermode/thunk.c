@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.40.2.1 2012/02/18 07:33:26 mrg Exp $ */
+/* $NetBSD: thunk.c,v 1.40.2.2 2012/03/04 00:46:14 mrg Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.40.2.1 2012/02/18 07:33:26 mrg Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.40.2.2 2012/03/04 00:46:14 mrg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -373,7 +373,7 @@ thunk_setcontext(const ucontext_t *ucp)
 
 void
 thunk_makecontext(ucontext_t *ucp, void (*func)(void), 
-    int nargs, void *arg1, void *arg2, void *arg3)
+    int nargs, void *arg1, void *arg2, void *arg3, void *arg4)
 {
 	switch (nargs) {
 	case 0:
@@ -387,6 +387,9 @@ thunk_makecontext(ucontext_t *ucp, void (*func)(void),
 		break;
 	case 3:
 		makecontext(ucp, func, 3, arg1, arg2, arg3);
+		break;
+	case 4:
+		makecontext(ucp, func, 4, arg1, arg2, arg3, arg4);
 		break;
 	default:
 		warnx("%s: nargs (%d) too big\n", __func__, nargs);

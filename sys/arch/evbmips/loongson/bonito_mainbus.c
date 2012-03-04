@@ -1,4 +1,4 @@
-/*	$NetBSD: bonito_mainbus.c,v 1.1 2011/08/27 13:42:44 bouyer Exp $	*/
+/*	$NetBSD: bonito_mainbus.c,v 1.1.6.1 2012/03/04 00:46:05 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bonito_mainbus.c,v 1.1 2011/08/27 13:42:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bonito_mainbus.c,v 1.1.6.1 2012/03/04 00:46:05 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,18 +70,38 @@ bonito_mainbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct pcibus_attach_args pba;
 	pcireg_t rev;
+	bool compatible;
 
 	self->dv_private = __UNCONST(&sys_platform->bonito_config);
+
+	/*
+	 * Loongson 2F processors do not use a real Bonito64 chip but
+	 * their own derivative, which is no longer 100% compatible.
+	 * We need to make sure we never try to access an unimplemented
+	 * register...
+	 */
+	if (loongson_ver >= 0x2f)
+		compatible = false;
+	else
+		compatible = true;
 
 	/*
 	 * There is only one PCI controller on a Loongson chip.
 	 */
 
 	rev = PCI_REVISION(REGVAL(BONITO_PCICLASS));
+	if (compatible) {
+		aprint_normal(": BONITO Memory and PCI controller,"
+		    " %s rev. %d.%d\n", BONITO_REV_FPGA(rev) ? "FPGA" : "ASIC",
+		    BONITO_REV_MAJOR(rev), BONITO_REV_MINOR(rev));
+	} else {
+		aprint_normal(": Memory and PCI-X controller, rev. %d\n",
+		    PCI_REVISION(rev));
+	}
 
-	aprint_normal(": BONITO Memory and PCI controller, %s rev. %d.%d\n",
-	    BONITO_REV_FPGA(rev) ? "FPGA" : "ASIC",
-	    BONITO_REV_MAJOR(rev), BONITO_REV_MINOR(rev));
+	/*
+	 * Attach PCI bus.
+	 */
 
 	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
 	pba.pba_bus = 0;

@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.57.2.1 2012/02/18 07:32:20 mrg Exp $
+#	$NetBSD: XEN3_DOM0,v 1.57.2.2 2012/03/04 00:46:08 mrg Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -66,7 +66,7 @@ options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# expensive kernel consistency checks
-options 	DEBUG		# expensive debugging checks/support
+#options 	DEBUG		# expensive debugging checks/support
 options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
 options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
@@ -836,9 +836,9 @@ pciback* at pci?			#pci backend device
 
 acpi0		at hypervisor?
 options 	MPBIOS
-options 	MPDEBUG
-options 	MPVERBOSE
-options 	ACPIVERBOSE
+#options 	MPDEBUG
+#options 	MPVERBOSE
+#options 	ACPIVERBOSE
 #options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
 #options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
 #options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing

@@ -1,9 +1,9 @@
-/*	$NetBSD: cpudevs_data.h,v 1.5.16.1 2012/02/18 07:32:05 mrg Exp $	*/
+/*	$NetBSD: cpudevs_data.h,v 1.5.16.2 2012/03/04 00:46:06 mrg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.
  * generated from:
- *	NetBSD: cpudevs,v 1.5 2009/04/30 07:01:26 skrll Exp 
+ *	NetBSD: cpudevs,v 1.6 2012/02/26 07:50:37 skrll Exp 
  */
 
 {HPPA_TYPE_BOARD,	HPPA_BOARD_HP840,	"840/930 (Indigo)" },
@@ -210,6 +210,7 @@
 {HPPA_TYPE_CPU,	HPPA_CPU_PCXL2,	"PCXL2 (Velociraptor)" },
 {HPPA_TYPE_CPU,	HPPA_CPU_PCXUP,	"PCXU+ (Vulcan)" },
 {HPPA_TYPE_CPU,	HPPA_CPU_PCXW,	"PCXW (Vulcan)" },
+{HPPA_TYPE_CPU,	HPPA_CPU_PCXWP,	"PCXW+ (Landshark)" },
 {HPPA_TYPE_CPU,	HPPA_CPU_PCXW2,	"PCXW2 (Piranha)" },
 {HPPA_TYPE_FPU,	HPPA_FPU_SOFTEMU,	"Software Emulation" },
 {HPPA_TYPE_FPU,	HPPA_FPU_INDIGO,	"Indigo" },

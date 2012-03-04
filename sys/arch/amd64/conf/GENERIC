@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.340.2.1 2012/02/18 07:31:10 mrg Exp $
+# $NetBSD: GENERIC,v 1.340.2.2 2012/03/04 00:46:03 mrg Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.340.2.1 $"
+#ident 		"GENERIC-$Revision: 1.340.2.2 $"
 
 maxusers	64		# estimated number of users
 
@@ -98,6 +98,7 @@ options 	DIAGNOSTIC	# expensive kernel consistency checks
 #
 makeoptions	COPTS="-O2 -fno-omit-frame-pointer"
 options 	DDB		# in-kernel debugger
+#options	DDB_COMMANDONENTER="bt"	# execute command when ddb is entered
 #options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
@@ -337,7 +338,7 @@ puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 #amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
 #hpet*	at amdpcib?
 
-#pwdog*	at pci? dev ? function ?	# QUANCOM PWDOG1
+pwdog*	at pci? dev ? function ?	# QUANCOM PWDOG1
 
 ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-LPC w/ timecounter,
 					# watchdog and Speedstep and HPET

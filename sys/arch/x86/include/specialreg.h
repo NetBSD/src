@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.53.6.1 2012/02/18 07:33:34 mrg Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.53.6.2 2012/03/04 00:46:16 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -307,7 +307,7 @@
 /* Blacklists of CPUID flags - used to mask certain features */
 #ifdef XEN
 /* Not on Xen */
-#define CPUID_FEAT_BLACKLIST	 (CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR)
+#define CPUID_FEAT_BLACKLIST	 (CPUID_PGE|CPUID_PSE|CPUID_MTRR)
 #else
 #define CPUID_FEAT_BLACKLIST	 0
 #endif /* XEN */

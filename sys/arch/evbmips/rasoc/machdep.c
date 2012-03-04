@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5.6.1 2012/02/18 07:31:56 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5.6.2 2012/03/04 00:46:05 mrg Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5.6.1 2012/02/18 07:31:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5.6.2 2012/03/04 00:46:05 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/boot_flag.h>
@@ -52,15 +52,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5.6.1 2012/02/18 07:31:56 mrg Exp $");
 #include <mips/ralink/ralink_var.h>
 
 /* structures we define/alloc for other files in the kernel */
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
-struct cpu_info cpu_info_store;
-int physmem;		/* # pages of physical memory */
+
 int mem_cluster_cnt = 0;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
-
-/* structures others define for us */
-extern struct user *proc0paddr;
 
 void mach_init(void);
 

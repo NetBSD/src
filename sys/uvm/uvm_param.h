@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.26.2.2 2012/02/24 09:11:53 mrg Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.26.2.3 2012/03/04 00:46:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -136,9 +136,7 @@
  * non-constant PAGE_SIZE, et al for LKMs.
  */
 #if (MIN_PAGE_SIZE != MAX_PAGE_SIZE)
-#if defined(MODULAR)
 #define	__uvmexp_pagesize
-#endif
 #if defined(_LKM) || defined(_MODULE)
 #undef PAGE_SIZE
 #undef PAGE_MASK

@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.c,v 1.40 2009/11/23 02:13:47 rmind Exp $	*/
+/*	$NetBSD: ss_mustek.c,v 1.40.16.1 2012/03/04 00:46:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.40 2009/11/23 02:13:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.40.16.1 2012/03/04 00:46:26 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -83,9 +83,7 @@ static int	mustek_rewind_scanner(struct ss_softc *);
 static int	mustek_get_status(struct ss_softc *, int, int);
 static void	mustek_compute_sizes(struct ss_softc *);
 
-/*
- * structure for the special handlers
- */
+/* structure for the special handlers */
 static struct ss_special mustek_special = {
 	mustek_set_params,
 	mustek_trigger_scanner,
@@ -97,9 +95,7 @@ static struct ss_special mustek_special = {
 	NULL			/* no adf support right now */
 };
 
-/*
- * mustek_attach: attach special functions to ss
- */
+/* mustek_attach: attach special functions to ss */
 void
 mustek_attach(struct ss_softc *ss, struct scsipibus_attach_args *sa)
 {
@@ -110,16 +106,18 @@ mustek_attach(struct ss_softc *ss, struct scsipibus_attach_args *sa)
 	SC_DEBUG(periph, SCSIPI_DB1, ("mustek_attach: start\n"));
 	ss->sio.scan_scanner_type = 0;
 
-	printf("\n%s: ", device_xname(&ss->sc_dev));
+	printf("\n%s: ", device_xname(ss->sc_dev));
 
 	/* first, check the model which determines resolutions */
 	if (!memcmp(sa->sa_inqbuf.product, "MFS-06000CX", 11)) {
 		ss->sio.scan_scanner_type = MUSTEK_06000CX;
-		printf("Mustek 6000CX Flatbed 3-pass color scanner, 3 - 600 dpi\n");
+		printf("Mustek 6000CX Flatbed 3-pass color scanner, "
+		    "3 - 600 dpi\n");
 	}
 	if (!memcmp(sa->sa_inqbuf.product, "MFS-12000CX", 11)) {
 		ss->sio.scan_scanner_type = MUSTEK_12000CX;
-		printf("Mustek 12000CX Flatbed 3-pass color scanner, 6 - 1200 dpi\n");
+		printf("Mustek 12000CX Flatbed 3-pass color scanner, "
+		    "6 - 1200 dpi\n");
 	}
 
 	SC_DEBUG(periph, SCSIPI_DB1, ("mustek_attach: scanner_type = %d\n",
@@ -149,8 +147,7 @@ mustek_attach(struct ss_softc *ss, struct scsipibus_attach_args *sa)
 static int
 mustek_get_params (struct ss_softc *ss)
 {
-
-	return (0);
+	return 0;
 }
 
 /*
@@ -163,13 +160,11 @@ mustek_set_params(struct ss_softc *ss, struct scan_io *sio)
 {
 	int error;
 
-	/*
-	 * if the scanner is triggered, then rewind it
-	 */
+	/* if the scanner is triggered, then rewind it */
 	if (ss->flags & SSF_TRIGGERED) {
 		error = mustek_rewind_scanner(ss);
 		if (error)
-			return (error);
+			return error;
 	}
 
 	/* size constraints: 8.5" horizontally and 14" vertically */
@@ -184,7 +179,7 @@ mustek_set_params(struct ss_softc *ss, struct scan_io *sio)
 	    sio->scan_x_origin + sio->scan_width > 10200 ||
 	    sio->scan_height == 0 ||
 	    sio->scan_y_origin + sio->scan_height > 16800)
-		return (EINVAL);
+		return EINVAL;
 
 	/*
 	 * for now, only realize the values for the MUSTEK_06000CX
@@ -201,17 +196,17 @@ mustek_set_params(struct ss_softc *ss, struct scan_io *sio)
 	    sio->scan_y_resolution % 3 : sio->scan_y_resolution % 30;
 	if (sio->scan_x_resolution < 3 || sio->scan_x_resolution > 600 ||
 	    sio->scan_x_resolution != sio->scan_y_resolution)
-		return (EINVAL);
+		return EINVAL;
 
 	/* assume brightness values are between 64 and 136 in steps of 3 */
 	sio->scan_brightness -= (sio->scan_brightness - 64) % 3;
 	if (sio->scan_brightness < 64 || sio->scan_brightness > 136)
-		return (EINVAL);
+		return EINVAL;
 
 	/* contrast values must be between 16 and 184 in steps of 7 */
 	sio->scan_contrast -= (sio->scan_contrast - 16) % 7;
 	if (sio->scan_contrast < 16 || sio->scan_contrast > 184)
-		return (EINVAL);
+		return EINVAL;
 
 	/*
 	 * velocity: between 0 (fast) and 4 (slow) which will be mapped
@@ -220,7 +215,7 @@ mustek_set_params(struct ss_softc *ss, struct scan_io *sio)
 	 */
 	sio->scan_quality -= sio->scan_quality % 20;
 	if (sio->scan_quality < 20 || sio->scan_quality > 100)
-		return (EINVAL);
+		return EINVAL;
 
 	switch (sio->scan_image_mode) {
 	case SIM_BINARY_MONOCHROME:
@@ -231,7 +226,7 @@ mustek_set_params(struct ss_softc *ss, struct scan_io *sio)
 	case SIM_BLUE:
 		break;
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	/* change ss_softc to the new values, but save ro-variables */
@@ -240,7 +235,7 @@ mustek_set_params(struct ss_softc *ss, struct scan_io *sio)
 
 	mustek_compute_sizes(ss);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -286,9 +281,7 @@ mustek_trigger_scanner(struct ss_softc *ss)
 
 	SC_DEBUG(periph, SCSIPI_DB1, ("mustek_trigger_scanner\n"));
 
-	/*
-	 * set the window params and send the scsi command
-	 */
+	/* set the window params and send the scsi command */
 	memset(&window_cmd, 0, sizeof(window_cmd));
 	window_cmd.opcode = MUSTEK_SET_WINDOW;
 	window_cmd.length = sizeof(window_data);
@@ -325,7 +318,7 @@ mustek_trigger_scanner(struct ss_softc *ss)
 	    (void *)&window_data, sizeof(window_data),
 	    MUSTEK_RETRIES, 5000, NULL, XS_CTL_DATA_OUT);
 	if (error)
-		return (error);
+		return error;
 
 	/*
 	 * do what it takes to actualize the mode
@@ -337,16 +330,16 @@ mustek_trigger_scanner(struct ss_softc *ss)
 	memset(&mode_data, 0, sizeof(mode_data));
 	mode_data.mode =
 	    MUSTEK_MODE_MASK | MUSTEK_HT_PATTERN_BUILTIN | MUSTEK_UNIT_SPEC;
-	if (ss->sio.scan_x_resolution <= 300) {
+	if (ss->sio.scan_x_resolution <= 300)
 		mode_data.resolution = ss->sio.scan_x_resolution / 3;
-	} else {
+	else
 		/*
 		 * the resolution values is computed by modulo 100, but not
 		 * for 600dpi, where the value is 100 (a bit tricky, but ...)
 		 */
 		mode_data.resolution =
 		    ((ss->sio.scan_x_resolution - 1) % 100) + 1;
-	}
+
 	mode_data.brightness = (ss->sio.scan_brightness - 64) / 3;
 	mode_data.contrast = (ss->sio.scan_contrast - 16) / 7;
 	mode_data.grain = 0;
@@ -364,7 +357,7 @@ mustek_trigger_scanner(struct ss_softc *ss)
 	    (void *)&mode_data, sizeof(mode_data),
 	    MUSTEK_RETRIES, 5000, NULL, XS_CTL_DATA_OUT);
 	if (error)
-		return (error);
+		return error;
 
 	/*
 	 * now construct and send the start command
@@ -398,11 +391,10 @@ mustek_trigger_scanner(struct ss_softc *ss)
 	/* send the command to the scanner */
 	SC_DEBUG(periph, SCSIPI_DB1, ("mustek_trigger_scanner: start_scan\n"));
 	error = scsipi_command(periph,
-	    (void *)&start_scan_cmd, sizeof(start_scan_cmd),
-	    NULL, 0,
+	    (void *)&start_scan_cmd, sizeof(start_scan_cmd), NULL, 0,
 	    MUSTEK_RETRIES, 5000, NULL, 0);
 	if (error)
-		return (error);
+		return error;
 
 	/*
 	 * now check if scanner ready this time with update of size info
@@ -413,14 +405,12 @@ mustek_trigger_scanner(struct ss_softc *ss)
 	SC_DEBUG(periph, SCSIPI_DB1, ("mustek_trigger_scanner: get_status\n"));
 	error = mustek_get_status(ss, 60, 1);
 	if (error)
-		return (error);
+		return error;
 
-	return (0);
+	return 0;
 }
 
-/*
- * stop a scan operation in progress
- */
+/* stop a scan operation in progress */
 static int
 mustek_rewind_scanner(struct ss_softc *ss)
 {
@@ -445,17 +435,15 @@ mustek_rewind_scanner(struct ss_softc *ss)
 		    NULL, 0,
 		    MUSTEK_RETRIES, 5000, NULL, 0);
 		if (error)
-			return (error);
+			return error;
 	}
 
 	SC_DEBUG(periph, SCSIPI_DB1, ("mustek_rewind_scanner: end\n"));
 
-	return (0);
+	return 0;
 }
 
-/*
- * read the requested number of bytes/lines from the scanner
- */
+/* read the requested number of bytes/lines from the scanner */
 static int
 mustek_read(struct ss_softc *ss, struct buf *bp)
 {
@@ -477,9 +465,7 @@ mustek_read(struct ss_softc *ss, struct buf *bp)
 	    lines_to_read));
 	_lto3b(lines_to_read, cmd.length);
 
-	/*
-	 * go ask the adapter to do all this for us
-	 */
+	/* go ask the adapter to do all this for us */
 	xs = scsipi_make_xs(periph,
 	    (struct scsipi_generic *) &cmd, sizeof(cmd),
 	    (u_char *) bp->b_data, bp->b_bcount,
@@ -492,7 +478,7 @@ mustek_read(struct ss_softc *ss, struct buf *bp)
 		 */
 		callout_reset(&ss->sc_callout, hz / 2, ssrestart,
 		    periph);
-		return(0);
+		return 0;
 	}
 #ifdef DIAGNOSTIC
 	if (bufq_get(ss->buf_queue) != bp)
@@ -513,7 +499,7 @@ mustek_read(struct ss_softc *ss, struct buf *bp)
 	if (ss->sio.scan_window_size < 0)
 		ss->sio.scan_window_size = 0;
 #endif
-	return (0);
+	return 0;
 }
 
 /*
@@ -541,7 +527,7 @@ mustek_get_status(struct ss_softc *ss, int timeout, int update)
 		    (void *)&data, sizeof(data),
 		    MUSTEK_RETRIES, 5000, NULL, XS_CTL_DATA_IN);
 		if (error)
-			return (error);
+			return error;
 		if ((data.ready_busy == MUSTEK_READY) ||
 		    (timeout-- <= 0))
 			break;
@@ -555,27 +541,27 @@ mustek_get_status(struct ss_softc *ss, int timeout, int update)
 		if (lines != ss->sio.scan_lines) {
 			printf("mustek: lines actual(%d) != computed(%ld)\n",
 			    lines, ss->sio.scan_lines);
-			return (EIO);
+			return EIO;
 		}
 		if (bytes_per_line * lines != ss->sio.scan_window_size) {
 			printf("mustek: win-size actual(%d) != computed(%ld)\n",
 			    bytes_per_line * lines, ss->sio.scan_window_size);
-		    return (EIO);
+		    return EIO;
 		}
 
 		SC_DEBUG(periph, SCSIPI_DB1,
 		    ("mustek_get_size: bpl=%ld, lines=%ld\n",
-		    (ss->sio.scan_pixels_per_line * ss->sio.scan_bits_per_pixel) / 8,
-		    ss->sio.scan_lines));
+		    (ss->sio.scan_pixels_per_line * ss->sio.scan_bits_per_pixel)
+		    / 8, ss->sio.scan_lines));
 		SC_DEBUG(periph, SCSIPI_DB1, ("window size = %ld\n",
 		    ss->sio.scan_window_size));
 	}
 
 	SC_DEBUG(periph, SCSIPI_DB1, ("mustek_get_status: end\n"));
 	if (data.ready_busy == MUSTEK_READY)
-		return (0);
+		return 0;
 	else
-		return (EBUSY);
+		return EBUSY;
 }
 
 /*
