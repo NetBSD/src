@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.714.2.2 2012/02/24 09:11:29 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.714.2.3 2012/03/04 00:46:09 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.714.2.2 2012/02/24 09:11:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.714.2.3 2012/03/04 00:46:09 mrg Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -525,12 +525,12 @@ i386_proc0_tss_ldt_init(void)
 }
 
 #ifdef XEN
-/* Shim for curcpu() until %fs is ready */
-extern struct cpu_info	* (*xpq_cpu)(void);
+/* used in assembly */
+void i386_switch_context(lwp_t *);
+void i386_tls_switch(lwp_t *);
 
 /*
  * Switch context:
- * - honor CR0_TS in saved CR0 and request DNA exception on FPU use
  * - switch stack pointer for user->kernel transition
  */
 void
@@ -542,11 +542,34 @@ i386_switch_context(lwp_t *l)
 
 	pcb = lwp_getpcb(l);
 	ci = curcpu();
-	if (pcb->pcb_fpcpu != ci) {
-		HYPERVISOR_fpu_taskswitch(1);
-	}
 
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_esp0);
+
+	physop.cmd = PHYSDEVOP_SET_IOPL;
+	physop.u.set_iopl.iopl = pcb->pcb_iopl;
+	HYPERVISOR_physdev_op(&physop);
+}
+
+void
+i386_tls_switch(lwp_t *l)
+{
+	struct cpu_info *ci = curcpu();
+	struct pcb *pcb = lwp_getpcb(l);
+	/*
+         * Raise the IPL to IPL_HIGH.
+	 * FPU IPIs can alter the LWP's saved cr0.  Dropping the priority
+	 * is deferred until mi_switch(), when cpu_switchto() returns.
+	 */
+	(void)splhigh();
+
+        /*
+	 * If our floating point registers are on a different CPU,
+	 * set CR0_TS so we'll trap rather than reuse bogus state.
+	 */
+
+	if (l != ci->ci_fpcurlwp) {
+		HYPERVISOR_fpu_taskswitch(1);
+	}
 
 	/* Update TLS segment pointers */
 	update_descriptor(&ci->ci_gdt[GUFS_SEL],
@@ -554,15 +577,6 @@ i386_switch_context(lwp_t *l)
 	update_descriptor(&ci->ci_gdt[GUGS_SEL], 
 			  (union descriptor *) &pcb->pcb_gsd);
 
-	/* setup curcpu() to use %fs now */
-	/* XXX: find a way to do this, just once */
-	if (__predict_false(xpq_cpu != x86_curcpu)) {
-		xpq_cpu = x86_curcpu;
-	}
-
-	physop.cmd = PHYSDEVOP_SET_IOPL;
-	physop.u.set_iopl.iopl = pcb->pcb_iopl;
-	HYPERVISOR_physdev_op(&physop);
 }
 #endif /* XEN */
 
@@ -732,13 +746,8 @@ buildcontext(struct lwp *l, int sel, void *catcher, void *fp)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 
-#ifndef XEN
 	tf->tf_gs = GSEL(GUGS_SEL, SEL_UPL);
 	tf->tf_fs = GSEL(GUFS_SEL, SEL_UPL);
-#else
-	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
-#endif
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = (int)catcher;
@@ -826,11 +835,7 @@ void
 cpu_reboot(int howto, char *bootstr)
 {
 	static bool syncdone = false;
-	struct lwp *l;
-	int s;
-
-	s = IPL_NONE;
-	l = (curlwp == NULL) ? &lwp0 : curlwp;
+	int s = IPL_NONE;
 
 	if (cold) {
 		howto |= RB_HALT;
@@ -852,7 +857,7 @@ cpu_reboot(int howto, char *bootstr)
 		if (!syncdone) {
 			syncdone = true;
 			/* XXX used to force unmount as well, here */
-			vfs_sync_all(l);
+			vfs_sync_all(curlwp);
 			/*
 			 * If we've been adjusting the clock, the todr
 			 * will be out of synch; adjust it now.
@@ -864,9 +869,9 @@ cpu_reboot(int howto, char *bootstr)
 				resettodr();
 		}
 
-		while (vfs_unmountall1(l, false, false) ||
+		while (vfs_unmountall1(curlwp, false, false) ||
 		       config_detach_all(boothowto) ||
-		       vfs_unmount_forceone(l))
+		       vfs_unmount_forceone(curlwp))
 			;	/* do nothing */
 	} else
 		suspendsched();
@@ -874,7 +879,11 @@ cpu_reboot(int howto, char *bootstr)
 	pmf_system_shutdown(boothowto);
 
 	s = splhigh();
+
+	/* amd64 maybe_dump() */
+
 haltsys:
+	doshutdownhooks();
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #ifdef XEN
@@ -979,13 +988,8 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	memcpy(&pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
 
 	tf = l->l_md.md_regs;
-#ifndef XEN
 	tf->tf_gs = GSEL(GUGS_SEL, SEL_UPL);
 	tf->tf_fs = GSEL(GUFS_SEL, SEL_UPL);
-#else
-	tf->tf_gs = LSEL(LUDATA_SEL, SEL_UPL);
-	tf->tf_fs = LSEL(LUDATA_SEL, SEL_UPL);
-#endif
 	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_edi = 0;
@@ -1077,6 +1081,7 @@ krwlock_t svr4_fasttrap_lock;
 #define MAX_XEN_IDT 128
 trap_info_t xen_idt[MAX_XEN_IDT];
 int xen_idt_idx;
+extern union descriptor tmpgdt[];
 #endif
 
 void cpu_init_idt(void)
@@ -1095,11 +1100,13 @@ void cpu_init_idt(void)
 void
 initgdt(union descriptor *tgdt)
 {
+	KASSERT(tgdt != NULL);
+	
+	gdt = tgdt;
 #ifdef XEN
 	u_long	frames[16];
 #else
 	struct region_descriptor region;
-	gdt = tgdt;
 	memset(gdt, 0, NGDT*sizeof(*gdt));
 #endif /* XEN */
 	/* make gdt gates and memory segments */
@@ -1125,6 +1132,14 @@ initgdt(union descriptor *tgdt)
 	setregion(&region, gdt, NGDT * sizeof(gdt[0]) - 1);
 	lgdt(&region);
 #else /* !XEN */
+	/*
+	 * We jumpstart the bootstrap process a bit so we can update
+	 * page permissions. This is done redundantly later from
+	 * x86_xpmap.c:xen_pmap_bootstrap() - harmless.
+	 */
+	xpmap_phys_to_machine_mapping =
+	    (unsigned long *)xen_start_info.mfn_list;
+
 	frames[0] = xpmap_ptom((uint32_t)gdt - KERNBASE) >> PAGE_SHIFT;
 	{	/*
 		 * Enter the gdt page RO into the kernel map. We can't
@@ -1133,27 +1148,25 @@ initgdt(union descriptor *tgdt)
 		 * the base pointer for curcpu() and curlwp(), both of
 		 * which are in the callpath of pmap_kenter_pa().
 		 * So we mash up our own - this is MD code anyway.
-		 *
-		 * XXX: review this once we have finegrained locking
-		 * for xpq.
 		 */
-		pt_entry_t *pte, npte;
+		pt_entry_t pte;
 		pt_entry_t pg_nx = (cpu_feature[2] & CPUID_NOX ? PG_NX : 0);
 
-		pte = kvtopte((vaddr_t)gdt);
-		npte = pmap_pa2pte((vaddr_t)gdt - KERNBASE);
-		npte |= PG_RO | pg_nx | PG_V;
+		pte = pmap_pa2pte((vaddr_t)gdt - KERNBASE);
+		pte |= PG_k | PG_RO | pg_nx | PG_V;
 
-		xpq_queue_pte_update(xpmap_ptetomach(pte), npte);
-		xpq_flush_queue();
+		if (HYPERVISOR_update_va_mapping((vaddr_t)gdt, pte, UVMF_INVLPG) < 0) {
+			panic("gdt page RO update failed.\n");
+		}
+
 	}
 
 	XENPRINTK(("loading gdt %lx, %d entries\n", frames[0] << PAGE_SHIFT,
 	    NGDT));
 	if (HYPERVISOR_set_gdt(frames, NGDT /* XXX is it right ? */))
 		panic("HYPERVISOR_set_gdt failed!\n");
-	lgdt_finish();
 
+	lgdt_finish();
 #endif /* !XEN */
 }
 
@@ -1364,7 +1377,8 @@ init386(paddr_t first_avail)
 	 * initialised. initgdt() uses pmap_kenter_pa so it can't be called
 	 * before the above variables are set.
 	 */
-	initgdt(NULL);
+
+	initgdt(gdt);
 
 	mutex_init(&pte_lock, MUTEX_DEFAULT, IPL_VM);
 #endif /* XEN */
@@ -1411,6 +1425,24 @@ init386(paddr_t first_avail)
 	uvm_page_physload(atop(avail_start), atop(avail_end),
 	    atop(avail_start), atop(avail_end),
 	    VM_FREELIST_DEFAULT);
+
+	/* Reclaim the boot gdt page - see locore.s */
+	{
+		pt_entry_t pte;
+		pt_entry_t pg_nx = (cpu_feature[2] & CPUID_NOX ? PG_NX : 0);
+
+		pte = pmap_pa2pte((vaddr_t)tmpgdt - KERNBASE);
+		pte |= PG_k | PG_RW | pg_nx | PG_V;
+
+		if (HYPERVISOR_update_va_mapping((vaddr_t)tmpgdt, pte, UVMF_INVLPG) < 0) {
+			panic("tmpgdt page relaim RW update failed.\n");
+		}
+	}
+
+	uvm_page_physload(atop((vaddr_t)tmpgdt), atop((vaddr_t)tmpgdt + PAGE_SIZE),
+	    atop((vaddr_t)tmpgdt), atop((vaddr_t)tmpgdt + PAGE_SIZE),
+	    VM_FREELIST_DEFAULT);
+
 #endif /* !XEN */
 
 	init386_msgbuf();

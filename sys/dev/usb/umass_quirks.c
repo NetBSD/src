@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.90.6.1 2012/02/18 07:35:10 mrg Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.90.6.2 2012/03/04 00:46:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.90.6.1 2012/02/18 07:35:10 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.90.6.2 2012/03/04 00:46:28 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_umass.h"
@@ -312,6 +312,15 @@ Static const struct umass_quirk umass_quirks[] = {
 	},
 
 	{ { USB_VENDOR_KINGSTON, USB_PRODUCT_KINGSTON_DTMINI10 },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
+	  0,
+	  PQUIRK_NODOORLOCK,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+
+	/* Also, some Kingston pendrives have Toshiba vendor ID */
+	{ { USB_VENDOR_TOSHIBA, USB_PRODUCT_KINGSTON_DT100_G2 },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
 	  0,
 	  PQUIRK_NODOORLOCK,

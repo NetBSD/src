@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.95 2011/03/18 15:18:16 joerg Exp $	*/
+/*	$NetBSD: locore.S,v 1.95.8.1 2012/03/04 00:46:09 mrg Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -129,7 +129,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.95 2011/03/18 15:18:16 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.95.8.1 2012/03/04 00:46:09 mrg Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -238,7 +238,12 @@ _C_LABEL(tablesize):	.long	0
 
 	.space 512
 tmpstk:
-
+#ifdef XEN
+	.align 		PAGE_SIZE, 0x0	# Align on page boundary
+_C_LABEL(tmpgdt):
+	.space 		PAGE_SIZE	# Xen expects a page
+#endif /* XEN */
+	.globl tmpgdt
 #ifndef XEN
 #define	_RELOC(x)	((x) - KERNBASE)
 #else
@@ -787,6 +792,15 @@ start:
 	cpuid
 	movl	%eax,RELOC(cpuid_level)
 
+	/*
+	 * Use a temp page. We'll re- add it to uvm(9) once we're
+	 * done using it.
+	 */
+	movl	$RELOC(tmpgdt), %eax
+	pushl	%eax		# start of temporary gdt
+	call	_C_LABEL(initgdt)
+	addl	$4,%esp
+
 	call	xen_pmap_bootstrap
 
 	/*
@@ -999,15 +1013,17 @@ ENTRY(cpu_switchto)
 	pushl	%edi
 	call	_C_LABEL(i386_switch_context)
 	addl	$4,%esp
-#else /* XEN */
+#else /* !XEN */
 	/* Switch ring0 esp */
 	movl	PCB_ESP0(%ebx),%eax
 	movl	%eax,CPUVAR(ESP0)
+#endif /* !XEN */
 
 	/* Don't bother with the rest if switching to a system process. */
 	testl	$LW_SYSTEM,L_FLAG(%edi)
 	jnz	4f
 
+#ifndef XEN
 	/* Restore thread-private %fs/%gs descriptors. */
 	movl	CPUVAR(GDT),%ecx
 	movl	PCB_FSD(%ebx), %eax
@@ -1018,7 +1034,7 @@ ENTRY(cpu_switchto)
 	movl	PCB_GSD+4(%ebx), %edx
 	movl	%eax, (GUGS_SEL*8)(%ecx)
 	movl	%edx, (GUGS_SEL*8+4)(%ecx)
-#endif /* XEN */
+#endif /* !XEN */
 
 	/* Switch I/O bitmap */
 	movl	PCB_IOMAP(%ebx),%eax
@@ -1038,7 +1054,11 @@ ENTRY(cpu_switchto)
 	 * is deferred until mi_switch(), when cpu_switchto() returns.
 	 */
 2:
-#ifndef XEN
+#ifdef XEN
+	pushl	%edi
+	call	_C_LABEL(i386_tls_switch)
+	addl	$4,%esp
+#else /* !XEN */
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)
 	movl	PCB_CR0(%ebx),%ecx		/* has CR0_TS clear */
 	movl	%cr0,%edx
@@ -1055,7 +1075,7 @@ ENTRY(cpu_switchto)
 3:	cmpl	%edx,%ecx
 	je	4f
 	movl	%ecx,%cr0
-#endif /* XEN */
+#endif /* !XEN */
 
 	/* Return to the new LWP, returning 'oldlwp' in %eax. */
 4:	movl	%esi,%eax

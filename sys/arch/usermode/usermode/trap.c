@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.42.2.1 2012/02/18 07:33:26 mrg Exp $ */
+/* $NetBSD: trap.c,v 1.42.2.2 2012/03/04 00:46:14 mrg Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.42.2.1 2012/02/18 07:33:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.42.2.2 2012/03/04 00:46:14 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,6 +59,7 @@ static sigfunc_t pagefault;
 static sigfunc_t illegal_instruction;
 static sigfunc_t alarm;
 static sigfunc_t sigio;
+static sigfunc_t pass_on;
 
 /* raw signal handlers */
 static stack_t sigstk;
@@ -125,7 +126,7 @@ setup_signal_handlers(void)
 	/* TRAP */
 	/* ABRT */
 	/* SIGEMT */
-	/* SIGFPE XXX! */
+	signal_intr_establish(SIGFPE, pass_on);
 	/* KILL */
 	signal_intr_establish(SIGBUS,  pagefault);
 	signal_intr_establish(SIGSEGV, pagefault);
@@ -369,7 +370,7 @@ handle_signal(int sig, siginfo_t *info, void *ctx)
 
 	thunk_makecontext(&jump_ucp,
 			(void (*)(void)) f,
-		3, (void *) from_userland, (void *) pc, (void *) va);
+		4, info, (void *) from_userland, (void *) pc, (void *) va);
 
 	/* switch to the new context on return from signal */
 	thunk_setcontext(&jump_ucp);
@@ -398,7 +399,7 @@ signal_intr_establish(int sig, sigfunc_t f)
  * pmap reference fault or let uvm handle it.
  */
 static void
-pagefault(vaddr_t from_userland, vaddr_t pc, vaddr_t va)
+pagefault(siginfo_t *info, vaddr_t from_userland, vaddr_t pc, vaddr_t va)
 {
 	struct proc *p;
 	struct lwp *l;
@@ -479,7 +480,7 @@ pagefault(vaddr_t from_userland, vaddr_t pc, vaddr_t va)
 
 	KASSERT(from_userland);
 	KSI_INIT_TRAP(&ksi);
-	ksi.ksi_signo = SIGSEGV;
+	ksi.ksi_signo = info->si_signo;
 	ksi.ksi_trap = 0;	/* XXX */
 	ksi.ksi_code = (error == EPERM) ? SEGV_ACCERR : SEGV_MAPERR;
 	ksi.ksi_addr = (void *) va;
@@ -514,7 +515,7 @@ out_quick:
  * arguments 'pc' and 'va' are ignored here
  */
 static void
-illegal_instruction(vaddr_t from_userland, vaddr_t pc, vaddr_t va)
+illegal_instruction(siginfo_t *info, vaddr_t from_userland, vaddr_t pc, vaddr_t va)
 {
 	struct lwp *l = curlwp;
 	struct pcb *pcb = lwp_getpcb(l);
@@ -552,12 +553,38 @@ illegal_instruction(vaddr_t from_userland, vaddr_t pc, vaddr_t va)
 
 
 /*
+ * handle pass to userland signals
+ *
+ * arguments other than the origional siginfo_t are not used
+ */
+static void
+pass_on(siginfo_t *info, vaddr_t from_userland, vaddr_t pc, vaddr_t va)
+{
+	struct lwp *l = curlwp;
+	struct pcb *pcb = lwp_getpcb(l);
+	ucontext_t *ucp = &pcb->pcb_userret_ucp;
+	ksiginfo_t ksi;
+
+	KASSERT(from_userland);
+	KSI_INIT_TRAP(&ksi);
+	ksi.ksi_signo = info->si_signo;
+	ksi.ksi_trap  = 0;	/* XXX ? */
+	ksi.ksi_errno = info->si_errno;
+	ksi.ksi_code  = info->si_code;
+	ksi.ksi_addr  = (void *) md_get_pc(ucp); /* only relyable source */
+
+	trapsignal(l, &ksi);
+	userret(l);
+}
+
+
+/*
  * handle alarm, a clock ticker.
  *
  * arguments 'pc' and 'va' are ignored here
  */
 static void
-alarm(vaddr_t from_userland, vaddr_t pc, vaddr_t va)
+alarm(siginfo_t *info, vaddr_t from_userland, vaddr_t pc, vaddr_t va)
 {
 	struct lwp *l = curlwp;
 	struct pcb *pcb = lwp_getpcb(l); KASSERT(pcb);
@@ -580,7 +607,7 @@ alarm(vaddr_t from_userland, vaddr_t pc, vaddr_t va)
  * arguments 'pc' and 'va' are ignored here
  */
 static void
-sigio(vaddr_t from_userland, vaddr_t pc, vaddr_t va)
+sigio(siginfo_t *info, vaddr_t from_userland, vaddr_t pc, vaddr_t va)
 {
 	struct lwp *l = curlwp;
 	struct pcb *pcb = lwp_getpcb(l); KASSERT(pcb);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_pci.c,v 1.4.8.1 2012/02/18 07:34:52 mrg Exp $	*/
+/*	$NetBSD: sdhc_pci.c,v 1.4.8.2 2012/03/04 00:46:25 mrg Exp $	*/
 /*	$OpenBSD: sdhc_pci.c,v 1.7 2007/10/30 18:13:45 chl Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.4.8.1 2012/02/18 07:34:52 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.4.8.2 2012/03/04 00:46:25 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -79,9 +79,10 @@ static const struct sdhc_pci_quirk {
 	u_int			function;
 
 	uint32_t		flags;
-#define	SDHC_PCI_QUIRK_FORCE_DMA	(1U << 0)
-#define	SDHC_PCI_QUIRK_TI_HACK		(1U << 1)
-#define	SDHC_PCI_QUIRK_NO_PWR0		(1U << 2)
+#define	SDHC_PCI_QUIRK_FORCE_DMA		(1U << 0)
+#define	SDHC_PCI_QUIRK_TI_HACK			(1U << 1)
+#define	SDHC_PCI_QUIRK_NO_PWR0			(1U << 2)
+#define	SDHC_PCI_QUIRK_RICOH_LOWER_FREQ_HACK	(1U << 3)
 } sdhc_pci_quirk_table[] = {
 	{
 		PCI_VENDOR_TI,
@@ -109,9 +110,19 @@ static const struct sdhc_pci_quirk {
 		0,
 		SDHC_PCI_QUIRK_NO_PWR0
 	},
+
+	{
+		PCI_VENDOR_RICOH,
+		PCI_PRODUCT_RICOH_Rx5U823,
+		0xffff,
+		0xffff,
+		0,
+		SDHC_PCI_QUIRK_RICOH_LOWER_FREQ_HACK
+	},
 };
 
 static void sdhc_pci_quirk_ti_hack(struct pci_attach_args *);
+static void sdhc_pci_quirk_ricoh_lower_freq_hack(struct pci_attach_args *);
 
 static uint32_t
 sdhc_pci_lookup_quirk_flags(struct pci_attach_args *pa)
@@ -133,7 +144,7 @@ sdhc_pci_lookup_quirk_flags(struct pci_attach_args *pa)
 
 			if ((q->subvendor == 0xffff)
 			 && (q->subproduct == 0xffff))
-				return q->flags;
+				return (q->flags);
 
 			id = pci_conf_read(pa->pa_pc, pa->pa_tag,
 			    PCI_SUBSYS_ID_REG);
@@ -144,18 +155,17 @@ sdhc_pci_lookup_quirk_flags(struct pci_attach_args *pa)
 			 && (q->subproduct != 0xffff)) {
 				if ((vendor == q->subvendor)
 				 && (product == q->subproduct))
-					return q->flags;
+					return (q->flags);
 			} else if (q->subvendor != 0xffff) {
 				if (product == q->subproduct)
-					return q->flags;
+					return (q->flags);
 			} else {
 				if (vendor == q->subvendor)
-					return q->flags;
+					return (q->flags);
 			}
 		}
 	}
-
-	return 0;
+	return (0);
 }
 
 static int
@@ -165,9 +175,12 @@ sdhc_pci_match(device_t parent, cfdata_t cf, void *aux)
 
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_SYSTEM &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_SYSTEM_SDHC)
-		return 1;
-
-	return 0;
+		return (1);
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_RICOH &&
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_RICOH_Rx5U822 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_RICOH_Rx5U823))
+		return (1);
+	return (0);
 }
 
 static void
@@ -203,6 +216,8 @@ sdhc_pci_attach(device_t parent, device_t self, void *aux)
 		SET(sc->sc.sc_flags, SDHC_FLAG_FORCE_DMA);
 	if (ISSET(flags, SDHC_PCI_QUIRK_NO_PWR0))
 		SET(sc->sc.sc_flags, SDHC_FLAG_NO_PWR0);
+	if (ISSET(flags, SDHC_PCI_QUIRK_RICOH_LOWER_FREQ_HACK))
+		sdhc_pci_quirk_ricoh_lower_freq_hack(pa);
 
 	/*
 	 * Map and attach all hosts supported by the host controller.
@@ -276,6 +291,17 @@ err:
 		free(sc->sc.sc_host, M_DEVBUF);
 }
 
+static void
+sdhc_pci_conf_write(struct pci_attach_args *pa, int reg, uint8_t val)
+{
+	pcireg_t r;
+
+	r = pci_conf_read(pa->pa_pc, pa->pa_tag, reg & ~0x3);
+	r &= ~(0xff << ((reg & 0x3) * 8));
+	r |= (val << ((reg & 0x3) * 8));
+	pci_conf_write(pa->pa_pc, pa->pa_tag, reg & ~0x3, r);
+}
+
 /* TI specific register */
 #define SDHC_PCI_GENERAL_CTL		0x4c
 #define  MMC_SD_DIS			0x02
@@ -308,4 +334,30 @@ sdhc_pci_quirk_ti_hack(struct pci_attach_args *pa)
 	reg = pci_conf_read(pc, tag, SDHC_PCI_GENERAL_CTL);
 	reg |= MMC_SD_DIS;
 	pci_conf_write(pc, tag, SDHC_PCI_GENERAL_CTL, reg);
+}
+
+/* Ricoh specific register */
+#define SDHC_PCI_MODE_KEY		0xf9
+#define SDHC_PCI_MODE			0x150
+#define  SDHC_PCI_MODE_SD20		0x10
+#define SDHC_PCI_BASE_FREQ_KEY		0xfc
+#define SDHC_PCI_BASE_FREQ		0xe1
+
+/* Some RICOH controllers need to be bumped into the right mode. */
+static void
+sdhc_pci_quirk_ricoh_lower_freq_hack(struct pci_attach_args *pa)
+{
+
+	/* Enable SD2.0 mode. */
+	sdhc_pci_conf_write(pa, SDHC_PCI_MODE_KEY, 0xfc);
+	sdhc_pci_conf_write(pa, SDHC_PCI_MODE, SDHC_PCI_MODE_SD20);
+	sdhc_pci_conf_write(pa, SDHC_PCI_MODE_KEY, 0x00);
+
+	/*
+	 * Some SD/MMC cards don't work with the default base
+	 * clock frequency of 200MHz.  Lower it to 50Hz.
+	 */
+	sdhc_pci_conf_write(pa, SDHC_PCI_BASE_FREQ_KEY, 0x01);
+	sdhc_pci_conf_write(pa, SDHC_PCI_BASE_FREQ, 50);
+	sdhc_pci_conf_write(pa, SDHC_PCI_BASE_FREQ_KEY, 0x00);
 }

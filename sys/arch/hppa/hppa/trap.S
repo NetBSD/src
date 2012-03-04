@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.60.8.1 2012/02/18 07:32:14 mrg Exp $	*/
+/*	$NetBSD: trap.S,v 1.60.8.2 2012/03/04 00:46:08 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -244,7 +244,7 @@ syscall_entry:
 
 	GET_CURCPU_SPACE(%sr1, %t1)
 	ldw	CI_PSW(%sr1, %t1), %t1
-	stw	%r1, TF_CR15-TRAPFRAME_SIZEOF(%sr1, %t3)	/* eiem ,bc */
+	stw	%r1, TF_CR15-TRAPFRAME_SIZEOF(%sr1, %t3)	/* eiem ,bc (block copy cache control hint) */
 	stw	%t1, TF_CR22-TRAPFRAME_SIZEOF(%sr1, %t3)	/* ipsw */
  
 	mfsp	%sr3, %t1

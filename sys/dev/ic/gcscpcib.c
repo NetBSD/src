@@ -1,4 +1,4 @@
-/* $NetBSD: gcscpcib.c,v 1.2 2011/08/29 18:34:42 bouyer Exp $ */
+/* $NetBSD: gcscpcib.c,v 1.2.6.1 2012/03/04 00:46:18 mrg Exp $ */
 /* $OpenBSD: gcscpcib.c,v 1.6 2007/11/17 17:02:47 mbalmer Exp $	*/
 
 /*
@@ -24,7 +24,7 @@
  * AMD CS5535/CS5536 series LPC bridge also containing timer, watchdog and GPIO.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscpcib.c,v 1.2 2011/08/29 18:34:42 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscpcib.c,v 1.2.6.1 2012/03/04 00:46:18 mrg Exp $");
 
 #include "gpio.h"
 
@@ -88,11 +88,11 @@ gcscpcib_attach(device_t self, struct gcscpcib_softc *sc,
 {
 	struct timecounter *tc = &sc->sc_timecounter;
 	bus_addr_t wdtbase;
-	int wdt = 0;
+	int wdt = 0, gpio = 0;
 #if NGPIO > 0
 	struct gpiobus_attach_args gba;
 	bus_addr_t gpiobase;
-	int i, gpio;
+	int i;
 #endif
 
 	sc->sc_iot = iot;
@@ -153,7 +153,10 @@ gpio:
 	gpiobase = gcsc_rdmsr(MSR_LBAR_GPIO) & 0xffff;
 	if (!bus_space_map(sc->sc_gpio_iot, gpiobase, 0xff, 0,
 	    &sc->sc_gpio_ioh)) {
-		aprint_normal(", GPIO");
+		if (wdt)
+			aprint_normal(", GPIO");
+		else
+			aprint_normal_dev(self, "GPIO");
 
 		/* initialize pin array */
 		for (i = 0; i < AMD553X_GPIO_NPINS; i++) {
@@ -181,7 +184,8 @@ gpio:
 		gpio = 1;
 	}
 #endif
-	aprint_normal("\n");
+	if (wdt || gpio)
+		aprint_normal("\n");
 
 #if NGPIO > 0
 	/* Attach GPIO framework */
