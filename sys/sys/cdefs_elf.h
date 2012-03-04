@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.39 2012/03/04 16:12:25 tron Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.40 2012/03/04 16:14:48 tron Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -153,8 +153,8 @@
 #define	__link_set_add_bss2(set, sym, n)    __link_set_make_entry2(set, sym, n)
 
 #define	__link_set_decl(set, ptype)					\
-	extern ptype * const __start_link_set_##set[];			\
-	extern ptype * const __stop_link_set_##set[]			\
+	extern ptype * const __start_link_set_##set[] __dso_hidden;	\
+	extern ptype * const __stop_link_set_##set[] __dso_hidden	\
 
 #define	__link_set_start(set)	(__start_link_set_##set)
 #define	__link_set_end(set)	(__stop_link_set_##set)
