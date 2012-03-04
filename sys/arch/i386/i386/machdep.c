@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.725 2012/03/04 15:56:09 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.726 2012/03/04 20:44:17 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.725 2012/03/04 15:56:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.726 2012/03/04 20:44:17 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1439,10 +1439,6 @@ init386(paddr_t first_avail)
 			panic("tmpgdt page relaim RW update failed.\n");
 		}
 	}
-
-	uvm_page_physload(atop((vaddr_t)tmpgdt), atop((vaddr_t)tmpgdt + PAGE_SIZE),
-	    atop((vaddr_t)tmpgdt), atop((vaddr_t)tmpgdt + PAGE_SIZE),
-	    VM_FREELIST_DEFAULT);
 
 #endif /* !XEN */
 
