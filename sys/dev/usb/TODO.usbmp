@@ -1,4 +1,4 @@
-$NetBSD: TODO.usbmp,v 1.1.2.7 2012/02/26 08:02:36 mrg Exp $
+$NetBSD: TODO.usbmp,v 1.1.2.8 2012/03/04 06:55:30 mrg Exp $
 
 
 the majority of the USB MP device interface is documented in usbdivar.h.
@@ -40,7 +40,7 @@ wake/wakeup conversion:
       uhso.c
       uirda.c
       ulpt.c
-      umass.c		- done
+      umass.c		- done, partially done
       urio.c
       uscanner.c
       usscanner.c
