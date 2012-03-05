@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.338 2011/09/04 12:17:13 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.338.8.1 2012/03/05 20:59:25 sborrill Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -5527,6 +5527,9 @@ ENTRY(pmap_copy_page_phys)
  */
 ENTRY(pseg_get_real)
 !	flushw			! Make sure we don't have stack probs & lose hibits of %o
+#ifndef _LP64
+	clruw	%o1					! Zero extend
+#endif
 	ldx	[%o0 + PM_PHYS], %o2			! pmap->pm_segs
 
 	srax	%o1, HOLESHIFT, %o3			! Check for valid address
