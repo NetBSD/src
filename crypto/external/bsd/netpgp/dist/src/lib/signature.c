@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: signature.c,v 1.33 2010/11/07 08:39:59 agc Exp $");
+__RCSID("$NetBSD: signature.c,v 1.34 2012/03/05 02:20:18 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -825,7 +825,8 @@ pgp_write_sig(pgp_output_t *output,
 	pgp_memory_free(sig->mem);
 
 	if (ret == 0) {
-		PGP_ERROR(&output->errors, PGP_E_W, "Cannot write signature");
+		PGP_ERROR_1(&output->errors, PGP_E_W, "%s",
+		    "Cannot write signature");
 	}
 	return ret;
 }
@@ -1020,8 +1021,8 @@ pgp_sign_file(pgp_io_t *io,
 		pgp_teardown_file_write(output, fd_out);
 
 		if (ret == 0) {
-			PGP_ERROR(&output->errors, PGP_E_W,
-					"Cannot sign file as cleartext");
+			PGP_ERROR_1(&output->errors, PGP_E_W, "%s",
+			    "Cannot sign file as cleartext");
 		}
 	} else {
 		/* set armoured/not armoured here */
