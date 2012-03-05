@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.41 2012/03/05 20:32:53 sborrill Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.42 2012/03/05 20:59:45 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -907,4 +907,13 @@ sys/dev/ic/rtl81x9reg.h				1.43
 
 	Add RTL8168E/8111E-VL support.
 	[nonaka, ticket #83]
+
+sys/arch/sparc64/sparc64/locore.s			1.340
+doc/HACKS						1.123
+sys/arch/sparc64/conf/Makefile.sparc64			1.71
+sys/arch/sparc64/conf/files.sparc64			1.138
+
+	Fix the root cause of the hack "disable optimizations for
+	uvm_bio.c on 32 bit kernels".
+	[nakayama, ticket #85]
 
