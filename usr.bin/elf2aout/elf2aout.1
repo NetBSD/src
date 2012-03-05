@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf2aout.1,v 1.9 2003/02/25 10:35:40 wiz Exp $
+.\"	$NetBSD: elf2aout.1,v 1.10 2012/03/05 10:57:18 njoly Exp $
 .\"
 .\" Copyright 1996 The Board of Trustees of The Leland Stanford
 .\" Junior University. All Rights Reserved.
@@ -33,9 +33,7 @@ utility is used to convert native
 ELF binaries
 to a.out format, for compatibility with bootblocks and kernel-reading
 utilities like
-.Xr kvm 3
-and
-.Xr kvm_mkdb 8 ,
+.Xr kvm 3 ,
 which currently expect an a.out format kernel.
 .\" .Sh DIAGNOSTICS
 .Sh SEE ALSO
@@ -43,8 +41,7 @@ which currently expect an a.out format kernel.
 .Xr ld 1 ,
 .Xr kvm 3 ,
 .Xr a.out 5 ,
-.Xr elf 5 ,
-.Xr kvm_mkdb 8
+.Xr elf 5
 .Sh HISTORY
 .Nm
 was originally developed for
