@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.38.2.2 2012/02/23 21:17:25 riz Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.38.2.3 2012/03/05 20:18:03 sborrill Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.38.2.2 2012/02/23 21:17:25 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.38.2.3 2012/03/05 20:18:03 sborrill Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -78,10 +78,11 @@ __KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.38.2.2 2012/02/23 21:17:25 riz Exp $
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mutex.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm.h>
 
-#include <machine/pmap.h>
+#include <x86/pmap.h>
 #include <machine/gdt.h>
 #include <xen/xenfunc.h>
 
@@ -105,13 +106,6 @@ static char XBUF[256];
 #endif
 #define	PRINTF(x) printf x
 #define	PRINTK(x) printk x
-
-/* on x86_64 kernel runs in ring 3 */
-#ifdef __x86_64__
-#define PG_k PG_u
-#else
-#define PG_k 0
-#endif
 
 volatile shared_info_t *HYPERVISOR_shared_info;
 /* Xen requires the start_info struct to be page aligned */
@@ -370,13 +364,14 @@ void
 xen_mcast_invlpg(vaddr_t va, uint32_t cpumask)
 {
 	mmuext_op_t op;
+	u_long xcpumask = cpumask;
 
 	/* Flush pending page updates */
 	xpq_flush_queue();
 
 	op.cmd = MMUEXT_INVLPG_MULTI;
 	op.arg1.linear_addr = va;
-	op.arg2.vcpumask = &cpumask;
+	op.arg2.vcpumask = &xcpumask;
 
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0) {
 		panic("xpq_queue_invlpg_all");
@@ -408,12 +403,13 @@ void
 xen_mcast_tlbflush(uint32_t cpumask)
 {
 	mmuext_op_t op;
+	u_long xcpumask = cpumask;
 
 	/* Flush pending page updates */
 	xpq_flush_queue();
 
 	op.cmd = MMUEXT_TLB_FLUSH_MULTI;
-	op.arg2.vcpumask = &cpumask;
+	op.arg2.vcpumask = &xcpumask;
 
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0) {
 		panic("xpq_queue_invlpg_all");

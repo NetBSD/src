@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.717.2.3 2012/02/27 20:29:36 riz Exp $	*/
+/*	$NetBSD: machdep.c,v 1.717.2.4 2012/03/05 20:18:02 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.717.2.3 2012/02/27 20:29:36 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.717.2.4 2012/03/05 20:18:02 sborrill Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -530,9 +530,12 @@ i386_proc0_tss_ldt_init(void)
 /* Shim for curcpu() until %fs is ready */
 extern struct cpu_info	* (*xpq_cpu)(void);
 
+/* used in assembly */
+void i386_switch_context(lwp_t *);
+void i386_tls_switch(lwp_t *);
+
 /*
  * Switch context:
- * - honor CR0_TS in saved CR0 and request DNA exception on FPU use
  * - switch stack pointer for user->kernel transition
  */
 void
@@ -544,11 +547,34 @@ i386_switch_context(lwp_t *l)
 
 	pcb = lwp_getpcb(l);
 	ci = curcpu();
-	if (pcb->pcb_fpcpu != ci) {
-		HYPERVISOR_fpu_taskswitch(1);
-	}
 
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_esp0);
+
+	physop.cmd = PHYSDEVOP_SET_IOPL;
+	physop.u.set_iopl.iopl = pcb->pcb_iopl;
+	HYPERVISOR_physdev_op(&physop);
+}
+
+void
+i386_tls_switch(lwp_t *l)
+{
+	struct cpu_info *ci = curcpu();
+	struct pcb *pcb = lwp_getpcb(l);
+	/*
+         * Raise the IPL to IPL_HIGH.
+	 * FPU IPIs can alter the LWP's saved cr0.  Dropping the priority
+	 * is deferred until mi_switch(), when cpu_switchto() returns.
+	 */
+	(void)splhigh();
+
+        /*
+	 * If our floating point registers are on a different CPU,
+	 * set CR0_TS so we'll trap rather than reuse bogus state.
+	 */
+
+	if (l != ci->ci_fpcurlwp) {
+		HYPERVISOR_fpu_taskswitch(1);
+	}
 
 	/* Update TLS segment pointers */
 	update_descriptor(&ci->ci_gdt[GUFS_SEL],
@@ -562,9 +588,6 @@ i386_switch_context(lwp_t *l)
 		xpq_cpu = x86_curcpu;
 	}
 
-	physop.cmd = PHYSDEVOP_SET_IOPL;
-	physop.u.set_iopl.iopl = pcb->pcb_iopl;
-	HYPERVISOR_physdev_op(&physop);
 }
 #endif /* XEN */
 
