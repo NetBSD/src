@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.2.2.2 2012/03/02 17:02:00 riz Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.2.2.3 2012/03/05 19:16:27 sborrill Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.2.2.2 2012/03/02 17:02:00 riz Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.2.2.3 2012/03/05 19:16:27 sborrill Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -772,7 +772,7 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 			total_count, new_count, link_count, err_count);
 	}
 
-	if (mflags.recreate == 0)
+	if (mflags.recreate)
 		return;
 
 	if (mflags.verbosity)
