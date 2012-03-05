@@ -1,4 +1,4 @@
-/*      $NetBSD: xpci_xenbus.c,v 1.10 2012/02/02 19:43:01 tls Exp $      */
+/*      $NetBSD: xpci_xenbus.c,v 1.11 2012/03/05 16:53:59 jakllsch Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.10 2012/02/02 19:43:01 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.11 2012/03/05 16:53:59 jakllsch Exp $");
 
 #include "opt_xen.h"
 
@@ -499,7 +499,7 @@ xpci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, int size,
 	op.bus = bus;
 	op.devfn = (dev << 3) | func;
 	op.offset = reg;
-	op.size   = 4;
+	op.size   = size;
 	op.value = data;
 	xpci_do_op(&op);
 	DPRINTF((" err %d\n", op.err));
