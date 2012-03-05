@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.95 2011/03/18 15:18:16 joerg Exp $	*/
+/*	$NetBSD: locore.S,v 1.95.10.1 2012/03/05 20:18:01 sborrill Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -129,7 +129,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.95 2011/03/18 15:18:16 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.95.10.1 2012/03/05 20:18:01 sborrill Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -999,15 +999,17 @@ ENTRY(cpu_switchto)
 	pushl	%edi
 	call	_C_LABEL(i386_switch_context)
 	addl	$4,%esp
-#else /* XEN */
+#else /* !XEN */
 	/* Switch ring0 esp */
 	movl	PCB_ESP0(%ebx),%eax
 	movl	%eax,CPUVAR(ESP0)
+#endif /* !XEN */
 
 	/* Don't bother with the rest if switching to a system process. */
 	testl	$LW_SYSTEM,L_FLAG(%edi)
 	jnz	4f
 
+#ifndef XEN
 	/* Restore thread-private %fs/%gs descriptors. */
 	movl	CPUVAR(GDT),%ecx
 	movl	PCB_FSD(%ebx), %eax
@@ -1018,7 +1020,7 @@ ENTRY(cpu_switchto)
 	movl	PCB_GSD+4(%ebx), %edx
 	movl	%eax, (GUGS_SEL*8)(%ecx)
 	movl	%edx, (GUGS_SEL*8+4)(%ecx)
-#endif /* XEN */
+#endif /* !XEN */
 
 	/* Switch I/O bitmap */
 	movl	PCB_IOMAP(%ebx),%eax
@@ -1038,7 +1040,11 @@ ENTRY(cpu_switchto)
 	 * is deferred until mi_switch(), when cpu_switchto() returns.
 	 */
 2:
-#ifndef XEN
+#ifdef XEN
+	pushl	%edi
+	call	_C_LABEL(i386_tls_switch)
+	addl	$4,%esp
+#else /* !XEN */
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)
 	movl	PCB_CR0(%ebx),%ecx		/* has CR0_TS clear */
 	movl	%cr0,%edx
@@ -1055,7 +1061,7 @@ ENTRY(cpu_switchto)
 3:	cmpl	%edx,%ecx
 	je	4f
 	movl	%ecx,%cr0
-#endif /* XEN */
+#endif /* !XEN */
 
 	/* Return to the new LWP, returning 'oldlwp' in %eax. */
 4:	movl	%esi,%eax
