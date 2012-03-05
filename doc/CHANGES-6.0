@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.40 2012/03/05 20:22:33 sborrill Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.41 2012/03/05 20:32:53 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -901,4 +901,10 @@ distrib/sets/lists/comp/ad.mips64el		1.73
 
 	Fix libexpat.so debug entry
 	[tron, ticket #81]
+
+sys/dev/ic/rtl8169.c				1.135
+sys/dev/ic/rtl81x9reg.h				1.43
+
+	Add RTL8168E/8111E-VL support.
+	[nonaka, ticket #83]
 
