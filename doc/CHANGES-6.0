@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.35 2012/03/03 00:53:11 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.36 2012/03/05 19:02:17 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -859,4 +859,11 @@ external/gpl3/binutils/dist/bfd/elfxx-mips.c	1.6
 
 	Fix support for .protected symbols.
 	[matt, ticket #82]
+
+usr.sbin/sdpd/sdpd.h				1.2
+usr.sbin/sdpd/server.c				1.11
+
+	Fix format string. Make sure problem doesn't reappear by
+	using __printf_like as appropriate.
+	[joerg, ticket #74]
 
