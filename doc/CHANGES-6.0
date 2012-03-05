@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.39 2012/03/05 20:18:42 sborrill Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.40 2012/03/05 20:22:33 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -896,4 +896,9 @@ sys/arch/x86/include/cpu.h			1.49
 	Fix possible FPU registers corruption on context switches.
 	Fix type of pointers passed to some hypercalls.
 	[bouyer, ticket #80]
+
+distrib/sets/lists/comp/ad.mips64el		1.73
+
+	Fix libexpat.so debug entry
+	[tron, ticket #81]
 
