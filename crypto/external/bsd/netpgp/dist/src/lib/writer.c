@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: writer.c,v 1.32 2010/11/15 08:50:32 agc Exp $");
+__RCSID("$NetBSD: writer.c,v 1.33 2012/03/05 02:20:18 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -507,7 +507,7 @@ pgp_writer_push_clearsigned(pgp_output_t *output, pgp_create_sig_t *sig)
 
 	hash = pgp_text_from_hash(pgp_sig_get_hash(sig));
 	if ((dash = calloc(1, sizeof(*dash))) == NULL) {
-		PGP_ERROR(&output->errors, PGP_E_W, "Bad alloc");
+		PGP_ERROR_1(&output->errors, PGP_E_W, "%s", "Bad alloc");
 		return 0;
 	}
 	ret = (pgp_write(output, header, (unsigned)(sizeof(header) - 1)) &&
@@ -515,7 +515,7 @@ pgp_writer_push_clearsigned(pgp_output_t *output, pgp_create_sig_t *sig)
 		pgp_write(output, "\r\n\r\n", 4));
 
 	if (ret == 0) {
-		PGP_ERROR(&output->errors, PGP_E_W,
+		PGP_ERROR_1(&output->errors, PGP_E_W, "%s",
 			"Error pushing clearsigned header");
 		free(dash);
 		return ret;
@@ -689,12 +689,12 @@ pgp_writer_use_armored_sig(pgp_output_t *output)
 
 	pgp_writer_pop(output);
 	if (pgp_write(output, header, (unsigned)(sizeof(header) - 1)) == 0) {
-		PGP_ERROR(&output->errors, PGP_E_W,
+		PGP_ERROR_1(&output->errors, PGP_E_W, "%s",
 			"Error switching to armoured signature");
 		return 0;
 	}
 	if ((linebreak = calloc(1, sizeof(*linebreak))) == NULL) {
-		PGP_ERROR(&output->errors, PGP_E_W,
+		PGP_ERROR_1(&output->errors, PGP_E_W, "%s",
 			"pgp_writer_use_armored_sig: Bad alloc");
 		return 0;
 	}
