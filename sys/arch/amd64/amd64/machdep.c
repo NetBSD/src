@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.175.2.1 2012/02/23 18:37:12 riz Exp $	*/
+/*	$NetBSD: machdep.c,v 1.175.2.2 2012/03/05 20:18:01 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.175.2.1 2012/02/23 18:37:12 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.175.2.2 2012/03/05 20:18:01 sborrill Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -414,23 +414,53 @@ cpu_startup(void)
 void hypervisor_callback(void);
 void failsafe_callback(void);
 void x86_64_switch_context(struct pcb *);
+void x86_64_tls_switch(struct lwp *);
 
 void
 x86_64_switch_context(struct pcb *new)
 {
-	struct cpu_info *ci;
-	ci = curcpu();
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), new->pcb_rsp0);
 	struct physdev_op physop;
 	physop.cmd = PHYSDEVOP_SET_IOPL;
 	physop.u.set_iopl.iopl = new->pcb_iopl;
 	HYPERVISOR_physdev_op(&physop);
-	if (new->pcb_fpcpu != ci) {
-		HYPERVISOR_fpu_taskswitch(1);
-	}
 }
 
-#endif
+void
+x86_64_tls_switch(struct lwp *l)
+{
+	struct cpu_info *ci = curcpu();
+	struct pcb *pcb = lwp_getpcb(l);
+	struct trapframe *tf = l->l_md.md_regs;
+
+	/*
+	 * Raise the IPL to IPL_HIGH.
+	 * FPU IPIs can alter the LWP's saved cr0.  Dropping the priority
+	 * is deferred until mi_switch(), when cpu_switchto() returns.
+	 */
+	(void)splhigh();
+	/*
+	 * If our floating point registers are on a different CPU,
+	 * set CR0_TS so we'll trap rather than reuse bogus state.
+	 */
+	if (l != ci->ci_fpcurlwp) {
+		HYPERVISOR_fpu_taskswitch(1);
+	}
+
+	/* Update TLS segment pointers */
+	if (pcb->pcb_flags & PCB_COMPAT32) {
+		update_descriptor(&curcpu()->ci_gdt[GUFS_SEL], &pcb->pcb_fs);
+		update_descriptor(&curcpu()->ci_gdt[GUGS_SEL], &pcb->pcb_gs);
+		setfs(tf->tf_fs);
+		HYPERVISOR_set_segment_base(SEGBASE_GS_USER_SEL, tf->tf_gs);
+	} else {
+		setfs(0);
+		HYPERVISOR_set_segment_base(SEGBASE_GS_USER_SEL, 0);
+		HYPERVISOR_set_segment_base(SEGBASE_FS, pcb->pcb_fs);
+		HYPERVISOR_set_segment_base(SEGBASE_GS_USER, pcb->pcb_gs);
+	}
+}
+#endif /* XEN */
 
 /*
  * Set up proc0's TSS and LDT.
@@ -2297,28 +2327,6 @@ cpu_fsgs_reload(struct lwp *l, int fssel, int gssel)
 	}
 }
 
-#ifdef XEN
-void x86_64_tls_switch(struct lwp *);
-
-void
-x86_64_tls_switch(struct lwp *l)
-{
-	struct pcb *pcb = lwp_getpcb(l);
-	struct trapframe *tf = l->l_md.md_regs;
-
-	if (pcb->pcb_flags & PCB_COMPAT32) {
-		update_descriptor(&curcpu()->ci_gdt[GUFS_SEL], &pcb->pcb_fs);
-		update_descriptor(&curcpu()->ci_gdt[GUGS_SEL], &pcb->pcb_gs);
-		setfs(tf->tf_fs);
-		HYPERVISOR_set_segment_base(SEGBASE_GS_USER_SEL, tf->tf_gs);
-	} else {
-		setfs(0);
-		HYPERVISOR_set_segment_base(SEGBASE_GS_USER_SEL, 0);
-		HYPERVISOR_set_segment_base(SEGBASE_FS, pcb->pcb_fs);
-		HYPERVISOR_set_segment_base(SEGBASE_GS_USER, pcb->pcb_gs);
-	}
-}
-#endif
 
 #ifdef __HAVE_DIRECT_MAP
 bool
