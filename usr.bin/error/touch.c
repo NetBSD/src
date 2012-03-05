@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.26 2011/05/24 12:24:22 joerg Exp $	*/
+/*	$NetBSD: touch.c,v 1.26.6.1 2012/03/05 19:12:07 sborrill Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.26 2011/05/24 12:24:22 joerg Exp $");
+__RCSID("$NetBSD: touch.c,v 1.26.6.1 2012/03/05 19:12:07 sborrill Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -388,10 +388,13 @@ settotouch(const char *name)
 	int dest = TOSTDOUT;
 
 	if (query) {
-		switch (inquire(terse
-			? "Touch? "
-			: "Do you want to touch file \"%s\"? ",
-			name)) {
+		int reply;
+		if (terse)
+			reply = inquire("Touch? ");
+		else
+			reply = inquire("Do you want to touch file \"%s\"? ",
+			    name);
+		switch (reply) {
 		case Q_NO:
 		case Q_no:
 		case Q_error:

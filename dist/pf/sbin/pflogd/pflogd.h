@@ -1,4 +1,4 @@
-/*	$NetBSD: pflogd.h,v 1.4 2008/06/18 09:06:26 yamt Exp $	*/
+/*	$NetBSD: pflogd.h,v 1.4.20.1 2012/03/05 19:12:08 sborrill Exp $	*/
 /*	$OpenBSD: pflogd.h,v 1.3 2006/01/15 16:38:04 canacar Exp $ */
 
 /*
@@ -36,7 +36,7 @@
 #define PFLOGD_MAXSNAPLEN	INT_MAX
 #define PFLOGD_BUFSIZE		65536	/* buffer size for incoming packets */
 
-void  logmsg(int priority, const char *message, ...);
+void  logmsg(int priority, const char *message, ...) __printflike(2, 3);
 
 /* Privilege separation */
 int	priv_init(void);

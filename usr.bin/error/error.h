@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.18 2011/08/17 13:11:22 christos Exp $	*/
+/*	$NetBSD: error.h,v 1.18.4.1 2012/03/05 19:12:07 sborrill Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -114,7 +114,7 @@ extern const char *suffixlist;
 
 extern boolean query;
 extern boolean terse;
-int inquire(const char *, ...);	/* inquire for yes/no */
+int inquire(const char *, ...) __printflike(1, 2);	/* inquire for yes/no */
 
 /*
  * codes for inquire() to return
