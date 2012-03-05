@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.38 2012/03/05 19:16:57 sborrill Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.39 2012/03/05 20:18:42 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -885,4 +885,15 @@ usr.sbin/makemandb/makemandb.c			1.7
 
 	Fix inverted condition when handling stale entries.
 	[joerg, ticket #77]
+
+sys/arch/xen/x86/x86_xpmap.c			1.42
+sys/arch/x86/include/specialreg.h		1.56
+sys/arch/amd64/amd64/machdep.c			1.179
+sys/arch/i386/i386/locore.S			1.97
+sys/arch/i386/i386/machdep.c			1.723 via patch
+sys/arch/x86/include/cpu.h			1.49
+
+	Fix possible FPU registers corruption on context switches.
+	Fix type of pointers passed to some hypercalls.
+	[bouyer, ticket #80]
 
