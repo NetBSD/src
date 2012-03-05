@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.12 2012/03/04 00:36:43 tls Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.13 2012/03/05 19:40:08 christos Exp $	*/
 /*	$OpenBSD: arc4random.c,v 1.6 2001/06/05 05:05:38 pvalchev Exp $	*/
 
 /*
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: arc4random.c,v 1.12 2012/03/04 00:36:43 tls Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.13 2012/03/05 19:40:08 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -44,12 +44,13 @@ __RCSID("$NetBSD: arc4random.c,v 1.12 2012/03/04 00:36:43 tls Exp $");
 __weak_alias(arc4random,_arc4random)
 #endif
 
+#define RSIZE 256
 struct arc4_stream {
 	mutex_t mtx;
 	int initialized;
 	uint8_t i;
 	uint8_t j;
-	uint8_t s[256];
+	uint8_t s[RSIZE];
 };
 
 /* XXX lint explodes with an internal error if only mtx is initialized! */
@@ -64,9 +65,7 @@ static inline uint32_t arc4_getword(struct arc4_stream *);
 static inline void
 arc4_init(struct arc4_stream *as)
 {
-	int     n;
-
-	for (n = 0; n < 256; n++)
+	for (int n = 0; n < RSIZE; n++)
 		as->s[n] = n;
 	as->i = 0;
 	as->j = 0;
@@ -78,11 +77,10 @@ arc4_init(struct arc4_stream *as)
 static inline void
 arc4_addrandom(struct arc4_stream *as, u_char *dat, int datlen)
 {
-	int     n;
 	uint8_t si;
 
 	as->i--;
-	for (n = 0; n < 256; n++) {
+	for (int n = 0; n < RSIZE; n++) {
 		as->i = (as->i + 1);
 		si = as->s[as->i];
 		as->j = (as->j + si + dat[n % datlen]);
@@ -95,10 +93,8 @@ arc4_addrandom(struct arc4_stream *as, u_char *dat, int datlen)
 static void
 arc4_stir(struct arc4_stream *as)
 {
-	int rdat[128 / sizeof(int)];
-	int	n;
-	int mib[2];
-	unsigned int i;
+	int rdat[32];
+	static const int mib[] = { CTL_KERN, KERN_URND };
 	size_t len;
 
 	/*
@@ -110,23 +106,20 @@ arc4_stir(struct arc4_stream *as)
 	 * for us but much friendlier to other entropy consumers.
 	 */
 
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_URND;
-
-	for (i = 0; i < sizeof(rdat) / sizeof(int); i++) {
+	for (size_t i = 0; i < __arraycount(rdat); i++) {
 		len = sizeof(rdat[i]);
 		if (sysctl(mib, 2, &rdat[i], &len, NULL, 0) == -1)
 			abort();
 	}
 
-	arc4_addrandom(as, (void *) &rdat, sizeof(rdat));
+	arc4_addrandom(as, (void *) &rdat, (int)sizeof(rdat));
 
 	/*
 	 * Throw away the first N words of output, as suggested in the
 	 * paper "Weaknesses in the Key Scheduling Algorithm of RC4"
 	 * by Fluher, Mantin, and Shamir.  (N = 256 in our case.)
 	 */
-	for (n = 0; n < 256 * 4; n++)
+	for (size_t j = 0; j < RSIZE * 4; j++)
 		arc4_getbyte(as);
 }
 
@@ -284,7 +277,7 @@ _arc4random_uniform_unlocked(uint32_t upper_bound)
 		return 0;
 
 #if defined(ULONG_MAX) && (ULONG_MAX > 0xFFFFFFFFUL)
-	min = 0x100000000UL % upper_bound;
+	min = (uint32_t)(0x100000000U % upper_bound);
 #else
 	/* calculate (2^32 % upper_bound) avoiding 64-bit math */
 	if (upper_bound > 0x80000000U)
