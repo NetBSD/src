@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.40 2010/11/29 06:21:40 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.41 2012/03/05 02:20:18 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -132,7 +132,8 @@ accumulate_cb(const pgp_packet_t *pkt, pgp_cbdata_t *cbinfo)
 					keyring->keyc - 1);
 		}
 		if (keyring->keyc == 0) {
-			PGP_ERROR(cbinfo->errors, PGP_E_P_NO_USERID, "No userid found");
+			PGP_ERROR_1(cbinfo->errors, PGP_E_P_NO_USERID, "%s",
+			    "No userid found");
 		} else {
 			pgp_add_userid(&keyring->keys[keyring->keyc - 1], content->userid);
 		}

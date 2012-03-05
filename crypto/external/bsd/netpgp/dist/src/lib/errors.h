@@ -150,9 +150,6 @@ int  pgp_has_error(pgp_error_t *, pgp_errcode_t);
 	fprintf(stderr, "Memory error\n");				\
 }				/* \todo placeholder for better error
 				 * handling */
-#define PGP_ERROR(err,code,fmt)	do {					\
-	pgp_push_error(err,code,0,__FILE__,__LINE__,fmt);		\
-} while(/*CONSTCOND*/0)
 #define PGP_ERROR_1(err,code,fmt,arg)	do {				\
 	pgp_push_error(err,code,0,__FILE__,__LINE__,fmt,arg);		\
 } while(/*CONSTCOND*/0)

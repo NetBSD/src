@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.48 2011/01/01 22:29:00 agc Exp $");
+__RCSID("$NetBSD: reader.c,v 1.49 2012/03/05 02:20:18 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -396,34 +396,34 @@ set_lastseen_headerline(dearmour_t *dearmour, char *hdr, pgp_error_t **errors)
 
 	case END_PGP_MESSAGE:
 		if (prev != BEGIN_PGP_MESSAGE) {
-			PGP_ERROR(errors, PGP_E_R_BAD_FORMAT,
+			PGP_ERROR_1(errors, PGP_E_R_BAD_FORMAT, "%s",
 				"Got END PGP MESSAGE, but not after BEGIN");
 		}
 		break;
 
 	case END_PGP_PUBLIC_KEY_BLOCK:
 		if (prev != BEGIN_PGP_PUBLIC_KEY_BLOCK) {
-			PGP_ERROR(errors, PGP_E_R_BAD_FORMAT,
+			PGP_ERROR_1(errors, PGP_E_R_BAD_FORMAT, "%s",
 			"Got END PGP PUBLIC KEY BLOCK, but not after BEGIN");
 		}
 		break;
 
 	case END_PGP_PRIVATE_KEY_BLOCK:
 		if (prev != BEGIN_PGP_PRIVATE_KEY_BLOCK) {
-			PGP_ERROR(errors, PGP_E_R_BAD_FORMAT,
+			PGP_ERROR_1(errors, PGP_E_R_BAD_FORMAT, "%s",
 			"Got END PGP PRIVATE KEY BLOCK, but not after BEGIN");
 		}
 		break;
 
 	case BEGIN_PGP_MULTI:
 	case END_PGP_MULTI:
-		PGP_ERROR(errors, PGP_E_R_UNSUPPORTED,
+		PGP_ERROR_1(errors, PGP_E_R_UNSUPPORTED, "%s",
 			"Multi-part messages are not yet supported");
 		break;
 
 	case END_PGP_SIGNATURE:
 		if (prev != BEGIN_PGP_SIGNATURE) {
-			PGP_ERROR(errors, PGP_E_R_BAD_FORMAT,
+			PGP_ERROR_1(errors, PGP_E_R_BAD_FORMAT, "%s",
 			"Got END PGP SIGNATURE, but not after BEGIN");
 		}
 		break;
@@ -588,7 +588,7 @@ process_dash_escaped(pgp_stream_t *stream, dearmour_t *dearmour,
 
 	body = &content.u.cleartext_body;
 	if ((hash = calloc(1, sizeof(*hash))) == NULL) {
-		PGP_ERROR(errors, PGP_E_R_BAD_FORMAT,
+		PGP_ERROR_1(errors, PGP_E_R_BAD_FORMAT, "%s",
 			"process_dash_escaped: bad alloc");
 		return -1;
 	}
@@ -615,7 +615,7 @@ process_dash_escaped(pgp_stream_t *stream, dearmour_t *dearmour,
 	}
 
 	if (!hash->init(hash)) {
-		PGP_ERROR(errors, PGP_E_R_BAD_FORMAT,
+		PGP_ERROR_1(errors, PGP_E_R_BAD_FORMAT, "%s",
 			"can't initialise hash");
 		return -1;
 	}
@@ -638,8 +638,8 @@ process_dash_escaped(pgp_stream_t *stream, dearmour_t *dearmour,
 			if (c != ' ') {
 				/* then this had better be a trailer! */
 				if (c != '-') {
-					PGP_ERROR(errors, PGP_E_R_BAD_FORMAT,
-						"Bad dash-escaping");
+					PGP_ERROR_1(errors, PGP_E_R_BAD_FORMAT,
+					    "%s", "Bad dash-escaping");
 				}
 				for (count = 2; count < 5; ++count) {
 					if ((c = read_char(stream, dearmour, errors,
@@ -647,8 +647,8 @@ process_dash_escaped(pgp_stream_t *stream, dearmour_t *dearmour,
 						return -1;
 					}
 					if (c != '-') {
-						PGP_ERROR(errors,
-						PGP_E_R_BAD_FORMAT,
+						PGP_ERROR_1(errors,
+						PGP_E_R_BAD_FORMAT, "%s",
 						"Bad dash-escaping (2)");
 					}
 				}
@@ -756,7 +756,8 @@ parse_headers(pgp_stream_t *stream, dearmour_t *dearmour, pgp_error_t **errors,
 		int             c;
 
 		if ((c = read_char(stream, dearmour, errors, readinfo, cbinfo, 1)) < 0) {
-			PGP_ERROR(errors, PGP_E_R_BAD_FORMAT, "Unexpected EOF");
+			PGP_ERROR_1(errors, PGP_E_R_BAD_FORMAT,
+			    "%s", "Unexpected EOF");
 			ret = -1;
 			break;
 		}
@@ -780,13 +781,17 @@ parse_headers(pgp_stream_t *stream, dearmour_t *dearmour, pgp_error_t **errors,
 					 * then we have seriously malformed
 					 * armour
 					 */
-					PGP_ERROR(errors, PGP_E_R_BAD_FORMAT, "No colon in armour header");
+					PGP_ERROR_1(errors, PGP_E_R_BAD_FORMAT,
+					    "%s", "No colon in armour header");
 					ret = -1;
 					break;
 				} else {
 					if (first &&
 					    !(dearmour->allow_headers_without_gap || dearmour->allow_no_gap)) {
-						PGP_ERROR(errors, PGP_E_R_BAD_FORMAT, "No colon in armour header (2)");
+						PGP_ERROR_1(errors,
+						    PGP_E_R_BAD_FORMAT,
+						    "%s", "No colon in"
+						    " armour header (2)");
 						/*
 						 * then we have a nasty
 						 * armoured block with no
@@ -802,7 +807,8 @@ parse_headers(pgp_stream_t *stream, dearmour_t *dearmour, pgp_error_t **errors,
 			} else {
 				*s = '\0';
 				if (s[1] != ' ') {
-					PGP_ERROR(errors, PGP_E_R_BAD_FORMAT, "No space in armour header");
+					PGP_ERROR_1(errors, PGP_E_R_BAD_FORMAT,
+					    "%s", "No space in armour header");
 					ret = -1;
 					goto end;
 				}
@@ -906,13 +912,14 @@ decode64(pgp_stream_t *stream, dearmour_t *dearmour, pgp_error_t **errors,
 
 	ret = read4(stream, dearmour, errors, readinfo, cbinfo, &c, &n, &l);
 	if (ret < 0) {
-		PGP_ERROR(errors, PGP_E_R_BAD_FORMAT, "Badly formed base64");
+		PGP_ERROR_1(errors, PGP_E_R_BAD_FORMAT, "%s",
+		    "Badly formed base64");
 		return 0;
 	}
 	if (n == 3) {
 		if (c != '=') {
-			PGP_ERROR(errors, PGP_E_R_BAD_FORMAT,
-					"Badly terminated base64 (2)");
+			PGP_ERROR_1(errors, PGP_E_R_BAD_FORMAT,
+			    "%s", "Badly terminated base64 (2)");
 			return 0;
 		}
 		dearmour->buffered = 2;
@@ -920,8 +927,8 @@ decode64(pgp_stream_t *stream, dearmour_t *dearmour, pgp_error_t **errors,
 		l >>= 2;
 	} else if (n == 2) {
 		if (c != '=') {
-			PGP_ERROR(errors, PGP_E_R_BAD_FORMAT,
-					"Badly terminated base64 (3)");
+			PGP_ERROR_1(errors, PGP_E_R_BAD_FORMAT,
+			    "%s", "Badly terminated base64 (3)");
 			return 0;
 		}
 		dearmour->buffered = 1;
@@ -929,14 +936,14 @@ decode64(pgp_stream_t *stream, dearmour_t *dearmour, pgp_error_t **errors,
 		l >>= 4;
 		c = read_char(stream, dearmour, errors, readinfo, cbinfo, 0);
 		if (c != '=') {
-			PGP_ERROR(errors, PGP_E_R_BAD_FORMAT,
-					"Badly terminated base64");
+			PGP_ERROR_1(errors, PGP_E_R_BAD_FORMAT,
+			    "%s", "Badly terminated base64");
 			return 0;
 		}
 	} else if (n == 0) {
 		if (!dearmour->prev_nl || c != '=') {
-			PGP_ERROR(errors, PGP_E_R_BAD_FORMAT,
-					"Badly terminated base64 (4)");
+			PGP_ERROR_1(errors, PGP_E_R_BAD_FORMAT,
+			    "%s", "Badly terminated base64 (4)");
 			return 0;
 		}
 		dearmour->buffered = 0;
@@ -962,14 +969,14 @@ decode64(pgp_stream_t *stream, dearmour_t *dearmour, pgp_error_t **errors,
 		c = read_and_eat_whitespace(stream, dearmour, errors, readinfo, cbinfo,
 				1);
 		if (c != '\n') {
-			PGP_ERROR(errors, PGP_E_R_BAD_FORMAT,
-				"No newline at base64 end");
+			PGP_ERROR_1(errors, PGP_E_R_BAD_FORMAT,
+			    "%s", "No newline at base64 end");
 			return 0;
 		}
 		c = read_char(stream, dearmour, errors, readinfo, cbinfo, 0);
 		if (c != '=') {
-			PGP_ERROR(errors, PGP_E_R_BAD_FORMAT,
-				"No checksum at base64 end");
+			PGP_ERROR_1(errors, PGP_E_R_BAD_FORMAT,
+			    "%s", "No checksum at base64 end");
 			return 0;
 		}
 	}
@@ -978,8 +985,8 @@ decode64(pgp_stream_t *stream, dearmour_t *dearmour, pgp_error_t **errors,
 		ret = read4(stream, dearmour, errors, readinfo, cbinfo, &c, &n,
 				&dearmour->read_checksum);
 		if (ret < 0 || n != 4) {
-			PGP_ERROR(errors, PGP_E_R_BAD_FORMAT,
-					"Error in checksum");
+			PGP_ERROR_1(errors, PGP_E_R_BAD_FORMAT,
+			    "%s", "Error in checksum");
 			return 0;
 		}
 		c = read_char(stream, dearmour, errors, readinfo, cbinfo, 1);
@@ -987,14 +994,14 @@ decode64(pgp_stream_t *stream, dearmour_t *dearmour, pgp_error_t **errors,
 			c = eat_whitespace(stream, c, dearmour, errors, readinfo, cbinfo,
 					1);
 		if (c != '\n') {
-			PGP_ERROR(errors, PGP_E_R_BAD_FORMAT,
-					"Badly terminated checksum");
+			PGP_ERROR_1(errors, PGP_E_R_BAD_FORMAT,
+			    "%s", "Badly terminated checksum");
 			return 0;
 		}
 		c = read_char(stream, dearmour, errors, readinfo, cbinfo, 0);
 		if (c != '-') {
-			PGP_ERROR(errors, PGP_E_R_BAD_FORMAT,
-					"Bad base64 trailer (2)");
+			PGP_ERROR_1(errors, PGP_E_R_BAD_FORMAT,
+			    "%s", "Bad base64 trailer (2)");
 			return 0;
 		}
 	}
@@ -1002,8 +1009,8 @@ decode64(pgp_stream_t *stream, dearmour_t *dearmour, pgp_error_t **errors,
 		for (n = 0; n < 4; ++n)
 			if (read_char(stream, dearmour, errors, readinfo, cbinfo,
 						0) != '-') {
-				PGP_ERROR(errors, PGP_E_R_BAD_FORMAT,
-						"Bad base64 trailer");
+				PGP_ERROR_1(errors, PGP_E_R_BAD_FORMAT, "%s",
+				    "Bad base64 trailer");
 				return 0;
 			}
 		dearmour->eof64 = 1;
@@ -1024,7 +1031,8 @@ decode64(pgp_stream_t *stream, dearmour_t *dearmour, pgp_error_t **errors,
 					dearmour->buffer[n2]);
 
 	if (dearmour->eof64 && dearmour->read_checksum != dearmour->checksum) {
-		PGP_ERROR(errors, PGP_E_R_BAD_FORMAT, "Checksum mismatch");
+		PGP_ERROR_1(errors, PGP_E_R_BAD_FORMAT, "%s",
+		    "Checksum mismatch");
 		return 0;
 	}
 	return 1;
@@ -1243,8 +1251,8 @@ got_minus:
 				buf[n++] = c;
 			}
 			/* then I guess this wasn't a proper trailer */
-			PGP_ERROR(errors, PGP_E_R_BAD_FORMAT,
-					"Bad ASCII armour trailer");
+			PGP_ERROR_1(errors, PGP_E_R_BAD_FORMAT, "%s",
+			    "Bad ASCII armour trailer");
 			break;
 
 got_minus2:
@@ -1262,8 +1270,9 @@ got_minus2:
 				}
 				if (c != '-') {
 					/* wasn't a trailer after all */
-					PGP_ERROR(errors, PGP_E_R_BAD_FORMAT,
-						"Bad ASCII armour trailer (2)");
+					PGP_ERROR_1(errors, PGP_E_R_BAD_FORMAT,
+					    "%s",
+					    "Bad ASCII armour trailer (2)");
 				}
 			}
 
@@ -1280,8 +1289,8 @@ got_minus2:
 			}
 			if (c != '\n') {
 				/* wasn't a trailer line after all */
-				PGP_ERROR(errors, PGP_E_R_BAD_FORMAT,
-					"Bad ASCII armour trailer (3)");
+				PGP_ERROR_1(errors, PGP_E_R_BAD_FORMAT,
+				    "%s", "Bad ASCII armour trailer (3)");
 			}
 
 			if (strncmp(buf, "BEGIN ", 6) == 0) {
@@ -1628,8 +1637,9 @@ se_ip_data_reader(pgp_stream_t *stream, void *dest_,
 			fprintf(stderr,
 			"Bad symmetric decrypt (%02x%02x vs %02x%02x)\n",
 				buf[b - 2], buf[b - 1], buf[b], buf[b + 1]);
-			PGP_ERROR(errors, PGP_E_PROTO_BAD_SYMMETRIC_DECRYPT,
-			"Bad symmetric decrypt when parsing SE IP packet");
+			PGP_ERROR_1(errors, PGP_E_PROTO_BAD_SYMMETRIC_DECRYPT,
+			    "%s", "Bad symmetric decrypt when parsing SE IP"
+			    " packet");
 			free(buf);
 			return -1;
 		}
@@ -1653,8 +1663,8 @@ se_ip_data_reader(pgp_stream_t *stream, void *dest_,
 				(unsigned)sz_plaintext, hashed);
 
 		if (memcmp(mdc_hash, hashed, PGP_SHA1_HASH_SIZE) != 0) {
-			PGP_ERROR(errors, PGP_E_V_BAD_HASH,
-					"Bad hash in MDC packet");
+			PGP_ERROR_1(errors, PGP_E_V_BAD_HASH, "%s",
+			    "Bad hash in MDC packet");
 			free(buf);
 			return 0;
 		}
