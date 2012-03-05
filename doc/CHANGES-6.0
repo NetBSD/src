@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.37 2012/03/05 19:12:28 sborrill Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.38 2012/03/05 19:16:57 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -880,4 +880,9 @@ dist/pf/sbin/pflogd/pflogd.h			1.5
 
 	Fix various format string mismatches
 	[joerg, ticket #75]
+
+usr.sbin/makemandb/makemandb.c			1.7
+
+	Fix inverted condition when handling stale entries.
+	[joerg, ticket #77]
 
