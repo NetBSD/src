@@ -141,7 +141,6 @@ static unsigned char state[STATE_SIZE+MD_DIGEST_LENGTH];
 static unsigned char md[MD_DIGEST_LENGTH];
 static long md_count[2]={0,0};
 static double entropy=0;
-static int initialized=0;
 
 static unsigned int crypto_lock_rand = 0; /* may be set only when a thread
                                            * holds CRYPTO_LOCK_RAND
@@ -187,7 +186,6 @@ static void ssleay_rand_cleanup(void)
 	md_count[0]=0;
 	md_count[1]=0;
 	entropy=0;
-	initialized=0;
 	}
 
 static void ssleay_rand_add(const void *buf, int num, double add)
@@ -389,18 +387,15 @@ static int ssleay_rand_bytes(unsigned char *buf, int num, int pseudo)
 	CRYPTO_w_unlock(CRYPTO_LOCK_RAND2);
 	crypto_lock_rand = 1;
 
-	if (!initialized)
-		{
-		RAND_poll();
-		initialized = 1;
-		}
-	
 	if (!stirred_pool)
 		do_stir_pool = 1;
 	
 	ok = (entropy >= ENTROPY_NEEDED);
 	if (!ok)
 		{
+
+		RAND_poll();
+
 		/* If the PRNG state is not yet unpredictable, then seeing
 		 * the PRNG output may help attackers to determine the new
 		 * state; thus we have to decrease the entropy estimate.
@@ -571,11 +566,10 @@ static int ssleay_rand_status(void)
 		CRYPTO_w_unlock(CRYPTO_LOCK_RAND2);
 		crypto_lock_rand = 1;
 		}
-	
-	if (!initialized)
+
+	if (entropy < ENTROPY_NEEDED)
 		{
 		RAND_poll();
-		initialized = 1;
 		}
 
 	ret = entropy >= ENTROPY_NEEDED;
