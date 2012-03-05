@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.36 2012/03/05 19:02:17 sborrill Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.37 2012/03/05 19:12:28 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -866,4 +866,18 @@ usr.sbin/sdpd/server.c				1.11
 	Fix format string. Make sure problem doesn't reappear by
 	using __printf_like as appropriate.
 	[joerg, ticket #74]
+
+usr.sbin/cpuctl/arch/i386.c			1.28
+usr.bin/unifdef/unifdef.c			1.21
+usr.bin/ktruss/dump.c				1.40
+usr.bin/error/error.h				1.19
+usr.bin/error/touch.c				1.27
+libexec/httpd/dir-index-bozo.c			1.14
+games/dab/algor.cc				1.5
+games/dab/board.h				1.4
+dist/pf/sbin/pflogd/pflogd.c			1.9
+dist/pf/sbin/pflogd/pflogd.h			1.5
+
+	Fix various format string mismatches
+	[joerg, ticket #75]
 
