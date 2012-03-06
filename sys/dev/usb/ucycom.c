@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.33 2011/04/24 16:27:01 rmind Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.34 2012/03/06 03:35:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.33 2011/04/24 16:27:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.34 2012/03/06 03:35:29 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,7 +245,7 @@ ucycom_detach(device_t self, int flags)
 		mutex_spin_exit(&tty_lock);
 	}
 	/* Wait for processes to go away. */
-	usb_detach_wait(sc->sc_hdev.sc_dev);
+	usb_detach_waitold(sc->sc_hdev.sc_dev);
 	splx(s);
 
 	/* locate the major number */

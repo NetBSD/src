@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.38 2012/02/24 06:48:27 mrg Exp $	*/
+/*	$NetBSD: urio.c,v 1.39 2012/03/06 03:35:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.38 2012/02/24 06:48:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.39 2012/03/06 03:35:30 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,7 +226,7 @@ urio_detach(device_t self, int flags)
 	s = splusb();
 	if (--sc->sc_refcnt >= 0) {
 		/* Wait for processes to go away. */
-		usb_detach_wait(sc->sc_dev);
+		usb_detach_waitold(sc->sc_dev);
 	}
 	splx(s);
 
@@ -368,7 +368,7 @@ urioread(dev_t dev, struct uio *uio, int flag)
 	usbd_free_xfer(xfer);
 
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 
 	return (error);
 }
@@ -426,7 +426,7 @@ uriowrite(dev_t dev, struct uio *uio, int flag)
 	usbd_free_xfer(xfer);
 
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 
 	DPRINTFN(5, ("uriowrite: done unit=%d, error=%d\n", URIOUNIT(dev),
 		     error));
@@ -514,7 +514,7 @@ urioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		  &req_actlen, USBD_DEFAULT_TIMEOUT);
 
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 
 	if (err) {
 		error = EIO;

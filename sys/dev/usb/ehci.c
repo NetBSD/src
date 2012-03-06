@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.185 2012/03/06 02:49:02 mrg Exp $ */
+/*	$NetBSD: ehci.c,v 1.186 2012/03/06 03:35:29 mrg Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.185 2012/03/06 02:49:02 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.186 2012/03/06 03:35:29 mrg Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -246,67 +246,67 @@ Static void		ehci_dump_exfer(struct ehci_xfer *);
 #define ehci_active_intr_list(ex) ((ex)->inext.tqe_prev != NULL)
 
 Static const struct usbd_bus_methods ehci_bus_methods = {
-	ehci_open,
-	ehci_softintr,
-	ehci_poll,
-	ehci_allocm,
-	ehci_freem,
-	ehci_allocx,
-	ehci_freex,
+	.open_pipe =	ehci_open,
+	.soft_intr =	ehci_softintr,
+	.do_poll =	ehci_poll,
+	.allocm =	ehci_allocm,
+	.freem =	ehci_freem,
+	.allocx =	ehci_allocx,
+	.freex =	ehci_freex,
 };
 
 Static const struct usbd_pipe_methods ehci_root_ctrl_methods = {
-	ehci_root_ctrl_transfer,
-	ehci_root_ctrl_start,
-	ehci_root_ctrl_abort,
-	ehci_root_ctrl_close,
-	ehci_noop,
-	ehci_root_ctrl_done,
+	.transfer =	ehci_root_ctrl_transfer,
+	.start =	ehci_root_ctrl_start,
+	.abort =	ehci_root_ctrl_abort,
+	.close =	ehci_root_ctrl_close,
+	.cleartoggle =	ehci_noop,
+	.done =		ehci_root_ctrl_done,
 };
 
 Static const struct usbd_pipe_methods ehci_root_intr_methods = {
-	ehci_root_intr_transfer,
-	ehci_root_intr_start,
-	ehci_root_intr_abort,
-	ehci_root_intr_close,
-	ehci_noop,
-	ehci_root_intr_done,
+	.transfer =	ehci_root_intr_transfer,
+	.start =	ehci_root_intr_start,
+	.abort =	ehci_root_intr_abort,
+	.close =	ehci_root_intr_close,
+	.cleartoggle =	ehci_noop,
+	.done =		ehci_root_intr_done,
 };
 
 Static const struct usbd_pipe_methods ehci_device_ctrl_methods = {
-	ehci_device_ctrl_transfer,
-	ehci_device_ctrl_start,
-	ehci_device_ctrl_abort,
-	ehci_device_ctrl_close,
-	ehci_noop,
-	ehci_device_ctrl_done,
+	.transfer =	ehci_device_ctrl_transfer,
+	.start =	ehci_device_ctrl_start,
+	.abort =	ehci_device_ctrl_abort,
+	.close =	ehci_device_ctrl_close,
+	.cleartoggle =	ehci_noop,
+	.done =		ehci_device_ctrl_done,
 };
 
 Static const struct usbd_pipe_methods ehci_device_intr_methods = {
-	ehci_device_intr_transfer,
-	ehci_device_intr_start,
-	ehci_device_intr_abort,
-	ehci_device_intr_close,
-	ehci_device_clear_toggle,
-	ehci_device_intr_done,
+	.transfer =	ehci_device_intr_transfer,
+	.start =	ehci_device_intr_start,
+	.abort =	ehci_device_intr_abort,
+	.close =	ehci_device_intr_close,
+	.cleartoggle =	ehci_device_clear_toggle,
+	.done =		ehci_device_intr_done,
 };
 
 Static const struct usbd_pipe_methods ehci_device_bulk_methods = {
-	ehci_device_bulk_transfer,
-	ehci_device_bulk_start,
-	ehci_device_bulk_abort,
-	ehci_device_bulk_close,
-	ehci_device_clear_toggle,
-	ehci_device_bulk_done,
+	.transfer =	ehci_device_bulk_transfer,
+	.start =	ehci_device_bulk_start,
+	.abort =	ehci_device_bulk_abort,
+	.close =	ehci_device_bulk_close,
+	.cleartoggle =	ehci_device_clear_toggle,
+	.done =		ehci_device_bulk_done,
 };
 
 Static const struct usbd_pipe_methods ehci_device_isoc_methods = {
-	ehci_device_isoc_transfer,
-	ehci_device_isoc_start,
-	ehci_device_isoc_abort,
-	ehci_device_isoc_close,
-	ehci_noop,
-	ehci_device_isoc_done,
+	.transfer =	ehci_device_isoc_transfer,
+	.start =	ehci_device_isoc_start,
+	.abort =	ehci_device_isoc_abort,
+	.close =	ehci_device_isoc_close,
+	.cleartoggle =	ehci_noop,
+	.done =		ehci_device_isoc_done,
 };
 
 static const uint8_t revbits[EHCI_MAX_POLLRATE] = {

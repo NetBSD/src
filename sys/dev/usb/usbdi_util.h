@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.h,v 1.41 2009/11/12 08:32:57 uebayasi Exp $	*/
+/*	$NetBSD: usbdi_util.h,v 1.42 2012/03/06 03:35:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -83,8 +83,8 @@ usbd_status usbd_intr_transfer(usbd_xfer_handle, usbd_pipe_handle,
  			       u_int16_t, u_int32_t, void *,
  			       u_int32_t *, const char *);
 
-void usb_detach_wait(device_t);
-void usb_detach_wakeup(device_t);
+void usb_detach_waitold(device_t);
+void usb_detach_wakeupold(device_t);
 
 
 typedef struct {
