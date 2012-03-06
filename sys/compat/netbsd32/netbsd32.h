@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.88.6.2 2012/02/24 09:11:38 mrg Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.88.6.3 2012/03/06 18:26:40 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -926,6 +926,19 @@ struct netbsd32_nfs_args {
 	int32_t		leaseterm;	/* Ignored; Term (sec) of lease */
 	int32_t		deadthresh;	/* Retrans threshold */
 	netbsd32_charp	hostname;	/* server's name */
+};
+struct netbsd32_msdosfs_args {
+	netbsd32_charp	fspec;		/* blocks special holding the fs to mount */
+	struct	netbsd32_export_args30 _pad1; /* compat with old userland tools */
+	uid_t	uid;		/* uid that owns msdosfs files */
+	gid_t	gid;		/* gid that owns msdosfs files */
+	mode_t  mask;		/* mask to be applied for msdosfs perms */
+	int	flags;		/* see below */
+
+	/* Following items added after versioning support */
+	int	version;	/* version of the struct */
+	mode_t  dirmask;	/* v2: mask to be applied for msdosfs perms */
+	int	gmtoff;		/* v3: offset from UTC in seconds */
 };
 
 #if 0

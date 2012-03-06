@@ -1,5 +1,6 @@
-/*	$NetBSD: if_udav.c,v 1.31.12.3 2012/02/26 07:12:49 mrg Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.31.12.4 2012/03/06 18:26:46 mrg Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
+
 /*
  * Copyright (c) 2003
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -44,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.31.12.3 2012/02/26 07:12:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.31.12.4 2012/03/06 18:26:46 mrg Exp $");
 
 #include "opt_inet.h"
 

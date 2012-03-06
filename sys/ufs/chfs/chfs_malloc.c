@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_malloc.c,v 1.1.2.2 2012/03/06 09:56:29 mrg Exp $	*/
+/*	$NetBSD: chfs_malloc.c,v 1.1.2.3 2012/03/06 18:26:49 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -45,7 +45,7 @@ pool_cache_t chfs_tmp_dnode_cache;
 pool_cache_t chfs_tmp_dnode_info_cache;
 
 int
-chfs_alloc_pool_caches()
+chfs_alloc_pool_caches(void)
 {
 	chfs_vnode_cache = pool_cache_init(
 		sizeof(struct chfs_vnode_cache),
@@ -118,7 +118,7 @@ err_vnode:
 }
 
 void
-chfs_destroy_pool_caches()
+chfs_destroy_pool_caches(void)
 {
 	if (chfs_vnode_cache)
 		pool_cache_destroy(chfs_vnode_cache);
@@ -293,7 +293,7 @@ chfs_free_dirent(struct chfs_dirent *dirent)
 }
 
 struct chfs_full_dnode*
-chfs_alloc_full_dnode()
+chfs_alloc_full_dnode(void)
 {
 	struct chfs_full_dnode *ret;
 	ret = kmem_alloc(sizeof(struct chfs_full_dnode), KM_SLEEP);
@@ -307,7 +307,7 @@ chfs_free_full_dnode(struct chfs_full_dnode *fd)
 }
 
 struct chfs_flash_vnode*
-chfs_alloc_flash_vnode()
+chfs_alloc_flash_vnode(void)
 {
 	struct chfs_flash_vnode *ret;
 	ret = pool_cache_get(chfs_flash_vnode_cache, 0);
@@ -321,7 +321,7 @@ chfs_free_flash_vnode(struct chfs_flash_vnode *fvnode)
 }
 
 struct chfs_flash_dirent_node*
-chfs_alloc_flash_dirent()
+chfs_alloc_flash_dirent(void)
 {
 	struct chfs_flash_dirent_node *ret;
 	ret = pool_cache_get(chfs_flash_dirent_cache, 0);
@@ -335,7 +335,7 @@ chfs_free_flash_dirent(struct chfs_flash_dirent_node *fdnode)
 }
 
 struct chfs_flash_data_node*
-chfs_alloc_flash_dnode()
+chfs_alloc_flash_dnode(void)
 {
 	struct chfs_flash_data_node *ret;
 	ret = pool_cache_get(chfs_flash_dnode_cache, 0);
@@ -350,7 +350,7 @@ chfs_free_flash_dnode(struct chfs_flash_data_node *fdnode)
 
 
 struct chfs_node_frag*
-chfs_alloc_node_frag()
+chfs_alloc_node_frag(void)
 {
 	struct chfs_node_frag *ret;
 	ret = pool_cache_get(chfs_node_frag_cache, 0);
@@ -365,7 +365,7 @@ chfs_free_node_frag(struct chfs_node_frag *frag)
 }
 
 struct chfs_tmp_dnode *
-chfs_alloc_tmp_dnode()
+chfs_alloc_tmp_dnode(void)
 {
 	struct chfs_tmp_dnode *ret;
 	ret = pool_cache_get(chfs_tmp_dnode_cache, 0);
@@ -380,7 +380,7 @@ chfs_free_tmp_dnode(struct chfs_tmp_dnode *td)
 }
 
 struct chfs_tmp_dnode_info *
-chfs_alloc_tmp_dnode_info()
+chfs_alloc_tmp_dnode_info(void)
 {
 	struct chfs_tmp_dnode_info *ret;
 	ret = pool_cache_get(chfs_tmp_dnode_info_cache, 0);
