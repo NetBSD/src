@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.127 2011/12/23 00:51:48 jakllsch Exp $	*/
+/*	$NetBSD: usb.c,v 1.128 2012/03/06 02:49:03 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.127 2011/12/23 00:51:48 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.128 2012/03/06 02:49:03 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -228,7 +228,6 @@ usb_doattach(device_t self)
 	ue->u.ue_ctrlr.ue_bus = device_unit(self);
 	usb_add_event(USB_EVENT_CTRLR_ATTACH, ue);
 
-#ifdef USB_USE_SOFTINTR
 	/* XXX we should have our own level */
 	sc->sc_bus->soft = softint_establish(SOFTINT_NET,
 	    sc->sc_bus->methods->soft_intr, sc->sc_bus);
@@ -238,7 +237,6 @@ usb_doattach(device_t self)
 		sc->sc_dying = 1;
 		return;
 	}
-#endif
 
 	err = usbd_new_device(self, sc->sc_bus, 0, speed, 0,
 		  &sc->sc_port);
@@ -910,15 +908,11 @@ void
 usb_schedsoftintr(usbd_bus_handle bus)
 {
 	DPRINTFN(10,("usb_schedsoftintr: polling=%d\n", bus->use_polling));
-#ifdef USB_USE_SOFTINTR
 	if (bus->use_polling) {
 		bus->methods->soft_intr(bus);
 	} else {
 		softint_schedule(bus->soft);
 	}
-#else
-	bus->methods->soft_intr(bus);
-#endif /* USB_USE_SOFTINTR */
 }
 
 int
@@ -973,12 +967,10 @@ usb_detach(device_t self, int flags)
 	}
 	DPRINTF(("usb_detach: event thread dead\n"));
 
-#ifdef USB_USE_SOFTINTR
 	if (sc->sc_bus->soft != NULL) {
 		softint_disestablish(sc->sc_bus->soft);
 		sc->sc_bus->soft = NULL;
 	}
-#endif
 
 	ue = usb_alloc_event();
 	ue->u.ue_ctrlr.ue_bus = device_unit(self);

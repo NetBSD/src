@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.51 2011/05/28 15:47:17 tsutsui Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.52 2012/03/06 02:49:03 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -109,9 +109,7 @@ typedef struct ohci_softc {
 #define	OHCI_BIG_ENDIAN		1	/* big endian OHCI? never seen it */
 #define	OHCI_HOST_ENDIAN	2	/* if OHCI always matches CPU */
 
-#ifdef USB_USE_SOFTINTR
 	char sc_softwake;
-#endif /* USB_USE_SOFTINTR */
 
 	ohci_soft_ed_t *sc_freeeds;
 	ohci_soft_td_t *sc_freetds;
