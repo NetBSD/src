@@ -1,4 +1,4 @@
-/* $NetBSD: t_mmap.c,v 1.2 2011/07/14 11:08:45 jruoho Exp $ */
+/* $NetBSD: t_mmap.c,v 1.3 2012/03/06 11:02:55 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mmap.c,v 1.2 2011/07/14 11:08:45 jruoho Exp $");
+__RCSID("$NetBSD: t_mmap.c,v 1.3 2012/03/06 11:02:55 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -67,6 +67,7 @@ __RCSID("$NetBSD: t_mmap.c,v 1.2 2011/07/14 11:08:45 jruoho Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -150,6 +151,42 @@ static void
 map_sighandler(int signo)
 {
 	_exit(signo);
+}
+
+ATF_TC(mmap_block);
+ATF_TC_HEAD(mmap_block, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test mmap(2) with a block device");
+}
+
+ATF_TC_BODY(mmap_block, tc)
+{
+	static const char *dev[] = { "/dev/wd0c", "/dev/wd0d", "/dev/wd0g" };
+	char *map;
+	size_t i;
+	int fd;
+
+	atf_tc_skip("The test case causes a panic (PR kern/38889)");
+
+	for (i = 0; i < __arraycount(dev); i++) {
+
+		if ((fd = open(dev[i], O_RDONLY)) >= 0) {
+			(void)fprintf(stderr, "using %s\n", dev[i]);
+			break;
+		}
+	}
+
+	if (i == __arraycount(dev))	/* Skip. */
+		return;
+
+	map = mmap(NULL, 4096, PROT_READ, MAP_FILE, fd, 0);
+	ATF_REQUIRE(map != MAP_FAILED);
+
+	(void)fprintf(stderr, "first byte %x\n", *map);
+	ATF_REQUIRE(close(fd) == 0);
+	(void)fprintf(stderr, "first byte %x\n", *map);
+
+	ATF_REQUIRE(munmap(map, 4096) == 0);
 }
 
 ATF_TC(mmap_err);
@@ -444,6 +481,7 @@ ATF_TP_ADD_TCS(tp)
 	page = sysconf(_SC_PAGESIZE);
 	ATF_REQUIRE(page >= 0);
 
+	ATF_TP_ADD_TC(tp, mmap_block);
 	ATF_TP_ADD_TC(tp, mmap_err);
 	ATF_TP_ADD_TC(tp, mmap_loan);
 	ATF_TP_ADD_TC(tp, mmap_prot_1);
