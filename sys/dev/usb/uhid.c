@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.84.12.3 2012/02/26 08:02:36 mrg Exp $	*/
+/*	$NetBSD: uhid.c,v 1.84.12.4 2012/03/06 18:26:46 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.84.12.3 2012/02/26 08:02:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.84.12.4 2012/03/06 18:26:46 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -426,7 +426,6 @@ uhidread(dev_t dev, struct uio *uio, int flag)
 	if (--sc->sc_refcnt < 0)
 		usb_detach_broadcast(sc->sc_hdev.sc_dev, &sc->sc_detach_cv);
 	mutex_exit(&sc->sc_lock);
-
 	return (error);
 }
 
@@ -664,7 +663,6 @@ uhidioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	if (--sc->sc_refcnt < 0)
 		usb_detach_broadcast(sc->sc_hdev.sc_dev, &sc->sc_detach_cv);
 	mutex_exit(&sc->sc_lock);
-
 	return (error);
 }
 

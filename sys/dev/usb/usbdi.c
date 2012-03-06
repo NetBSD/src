@@ -1,5 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.134.2.14 2012/02/26 05:05:45 mrg Exp $	*/
-/*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.134.2.15 2012/03/06 18:26:48 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -32,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134.2.14 2012/02/26 05:05:45 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134.2.15 2012/03/06 18:26:48 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -910,8 +909,6 @@ usbd_start_next(usbd_pipe_handle pipe)
 	usbd_xfer_handle xfer;
 	usbd_status err;
 
-	KASSERT(pipe->device->bus->lock == NULL || mutex_owned(pipe->device->bus->lock));
-
 #ifdef DIAGNOSTIC
 	if (pipe == NULL) {
 		printf("usbd_start_next: pipe == NULL\n");
@@ -922,6 +919,8 @@ usbd_start_next(usbd_pipe_handle pipe)
 		return;
 	}
 #endif
+
+	KASSERT(pipe->device->bus->lock == NULL || mutex_owned(pipe->device->bus->lock));
 
 	/* Get next request in queue. */
 	xfer = SIMPLEQ_FIRST(&pipe->queue);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.57.2.2 2012/03/06 09:56:09 mrg Exp $	*/
+/*	$NetBSD: ofw.c,v 1.57.2.3 2012/03/06 18:26:38 mrg Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.57.2.2 2012/03/06 09:56:09 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.57.2.3 2012/03/06 18:26:38 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,7 @@ pv_addr_t irqstack;
 #endif
 pv_addr_t undstack;
 pv_addr_t abtstack;
-pv_addr_t kernelstack;
+extern pv_addr_t kernelstack;
 
 paddr_t msgbufphys;
 

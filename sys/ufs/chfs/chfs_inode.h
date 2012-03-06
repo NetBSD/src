@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_inode.h,v 1.1.2.2 2012/03/06 09:56:29 mrg Exp $	*/
+/*	$NetBSD: chfs_inode.h,v 1.1.2.3 2012/03/06 18:26:49 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -42,6 +42,7 @@
 
 struct chfs_inode
 {
+	struct genfs_node	gnode;
 	kmutex_t inode_lock;	/* lock the fields of chfs_inode */
 
 	LIST_ENTRY(chfs_inode) hash_entry;	/* Hash chain. */

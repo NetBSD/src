@@ -1,5 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.86.8.3 2012/02/26 07:12:50 mrg Exp $	*/
-/*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.86.8.4 2012/03/06 18:26:47 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -36,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.86.8.3 2012/02/26 07:12:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.86.8.4 2012/03/06 18:26:47 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

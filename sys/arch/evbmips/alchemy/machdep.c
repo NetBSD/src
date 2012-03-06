@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.51.6.2 2012/03/06 09:56:05 mrg Exp $ */
+/* $NetBSD: machdep.c,v 1.51.6.3 2012/03/06 18:26:35 mrg Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.51.6.2 2012/03/06 09:56:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.51.6.3 2012/03/06 18:26:35 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -130,7 +130,6 @@ int	aucomcnrate = 0;
 /* Maps for VM objects. */
 struct vm_map *phys_map = NULL;
 
-int physmem;			/* # pages of physical memory */
 int maxmem;			/* max memory per process */
 
 int mem_cluster_cnt;

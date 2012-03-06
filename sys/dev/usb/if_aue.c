@@ -1,4 +1,5 @@
-/*	$NetBSD: if_aue.c,v 1.121.12.2 2012/02/26 07:12:49 mrg Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.121.12.3 2012/03/06 18:26:46 mrg Exp $	*/
+
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.121.12.2 2012/02/26 07:12:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.121.12.3 2012/03/06 18:26:46 mrg Exp $");
 
 #include "opt_inet.h"
 

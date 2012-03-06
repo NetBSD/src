@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.120.6.2 2012/02/24 09:11:50 mrg Exp $	*/
+/*	$NetBSD: vm.c,v 1.120.6.3 2012/03/06 18:26:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.120.6.2 2012/02/24 09:11:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.120.6.3 2012/03/06 18:26:49 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -340,7 +340,7 @@ uvm_init(void)
 
 	kmem_va_arena = vmem_create("kva", 0, 0, PAGE_SIZE,
 	    vmem_alloc, vmem_free, kmem_arena,
-	    32 * PAGE_SIZE, VM_NOSLEEP | VM_BOOTSTRAP, IPL_VM);
+	    8 * PAGE_SIZE, VM_NOSLEEP | VM_BOOTSTRAP, IPL_VM);
 
 	pool_cache_bootstrap(&pagecache, sizeof(struct vm_page), 0, 0, 0,
 	    "page$", NULL, IPL_NONE, pgctor, pgdtor, NULL);

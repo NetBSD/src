@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.1.6.3 2012/03/06 09:56:22 mrg Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.1.6.4 2012/03/06 18:26:46 mrg Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.1.6.3 2012/03/06 09:56:22 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.1.6.4 2012/03/06 18:26:46 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,6 @@ CFATTACH_DECL_NEW(urndis, sizeof(struct urndis_softc),
 static const struct usb_devno urndis_devs[] = {
 	{ USB_VENDOR_HTC,	USB_PRODUCT_HTC_ANDROID },
 	{ USB_VENDOR_SAMSUNG,	USB_PRODUCT_SAMSUNG_ANDROID2 },
-	{ 0, 0 }
 };
 
 static usbd_status
