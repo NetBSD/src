@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.714.2.3 2012/03/04 00:46:09 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.714.2.4 2012/03/06 09:56:08 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.714.2.3 2012/03/04 00:46:09 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.714.2.4 2012/03/06 09:56:08 mrg Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -525,12 +525,9 @@ i386_proc0_tss_ldt_init(void)
 }
 
 #ifdef XEN
-/* used in assembly */
-void i386_switch_context(lwp_t *);
-void i386_tls_switch(lwp_t *);
-
 /*
  * Switch context:
+ * - honor CR0_TS in saved CR0 and request DNA exception on FPU use
  * - switch stack pointer for user->kernel transition
  */
 void
@@ -542,34 +539,11 @@ i386_switch_context(lwp_t *l)
 
 	pcb = lwp_getpcb(l);
 	ci = curcpu();
-
-	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_esp0);
-
-	physop.cmd = PHYSDEVOP_SET_IOPL;
-	physop.u.set_iopl.iopl = pcb->pcb_iopl;
-	HYPERVISOR_physdev_op(&physop);
-}
-
-void
-i386_tls_switch(lwp_t *l)
-{
-	struct cpu_info *ci = curcpu();
-	struct pcb *pcb = lwp_getpcb(l);
-	/*
-         * Raise the IPL to IPL_HIGH.
-	 * FPU IPIs can alter the LWP's saved cr0.  Dropping the priority
-	 * is deferred until mi_switch(), when cpu_switchto() returns.
-	 */
-	(void)splhigh();
-
-        /*
-	 * If our floating point registers are on a different CPU,
-	 * set CR0_TS so we'll trap rather than reuse bogus state.
-	 */
-
-	if (l != ci->ci_fpcurlwp) {
+	if (pcb->pcb_fpcpu != ci) {
 		HYPERVISOR_fpu_taskswitch(1);
 	}
+
+	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_esp0);
 
 	/* Update TLS segment pointers */
 	update_descriptor(&ci->ci_gdt[GUFS_SEL],
@@ -577,6 +551,9 @@ i386_tls_switch(lwp_t *l)
 	update_descriptor(&ci->ci_gdt[GUGS_SEL], 
 			  (union descriptor *) &pcb->pcb_gsd);
 
+	physop.cmd = PHYSDEVOP_SET_IOPL;
+	physop.u.set_iopl.iopl = pcb->pcb_iopl;
+	HYPERVISOR_physdev_op(&physop);
 }
 #endif /* XEN */
 
@@ -746,8 +723,13 @@ buildcontext(struct lwp *l, int sel, void *catcher, void *fp)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 
+#ifndef XEN
 	tf->tf_gs = GSEL(GUGS_SEL, SEL_UPL);
 	tf->tf_fs = GSEL(GUFS_SEL, SEL_UPL);
+#else
+	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
+#endif
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = (int)catcher;
@@ -835,7 +817,11 @@ void
 cpu_reboot(int howto, char *bootstr)
 {
 	static bool syncdone = false;
-	int s = IPL_NONE;
+	struct lwp *l;
+	int s;
+
+	s = IPL_NONE;
+	l = (curlwp == NULL) ? &lwp0 : curlwp;
 
 	if (cold) {
 		howto |= RB_HALT;
@@ -857,7 +843,7 @@ cpu_reboot(int howto, char *bootstr)
 		if (!syncdone) {
 			syncdone = true;
 			/* XXX used to force unmount as well, here */
-			vfs_sync_all(curlwp);
+			vfs_sync_all(l);
 			/*
 			 * If we've been adjusting the clock, the todr
 			 * will be out of synch; adjust it now.
@@ -869,9 +855,9 @@ cpu_reboot(int howto, char *bootstr)
 				resettodr();
 		}
 
-		while (vfs_unmountall1(curlwp, false, false) ||
+		while (vfs_unmountall1(l, false, false) ||
 		       config_detach_all(boothowto) ||
-		       vfs_unmount_forceone(curlwp))
+		       vfs_unmount_forceone(l))
 			;	/* do nothing */
 	} else
 		suspendsched();
@@ -879,11 +865,7 @@ cpu_reboot(int howto, char *bootstr)
 	pmf_system_shutdown(boothowto);
 
 	s = splhigh();
-
-	/* amd64 maybe_dump() */
-
 haltsys:
-	doshutdownhooks();
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #ifdef XEN
@@ -988,8 +970,13 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	memcpy(&pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
 
 	tf = l->l_md.md_regs;
+#ifndef XEN
 	tf->tf_gs = GSEL(GUGS_SEL, SEL_UPL);
 	tf->tf_fs = GSEL(GUFS_SEL, SEL_UPL);
+#else
+	tf->tf_gs = LSEL(LUDATA_SEL, SEL_UPL);
+	tf->tf_fs = LSEL(LUDATA_SEL, SEL_UPL);
+#endif
 	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_edi = 0;

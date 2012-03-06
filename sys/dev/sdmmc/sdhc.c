@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.9.6.3 2012/03/04 00:46:27 mrg Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.9.6.4 2012/03/06 09:56:22 mrg Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.9.6.3 2012/03/04 00:46:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.9.6.4 2012/03/06 09:56:22 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -79,8 +79,6 @@ struct sdhc_host {
 	struct kmutex intr_mtx;
 	struct kcondvar intr_cv;
 
-	int specver;			/* spec. version */
-
 	uint32_t flags;			/* flags for this host */
 #define SHF_USE_DMA		0x0001
 #define SHF_USE_4BIT_MODE	0x0002
@@ -92,18 +90,18 @@ struct sdhc_host {
 static uint8_t
 hread1(struct sdhc_host *hp, bus_size_t reg)
 {
-
 	if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_32BIT_ACCESS))
 		return bus_space_read_1(hp->iot, hp->ioh, reg);
+
 	return bus_space_read_4(hp->iot, hp->ioh, reg & -4) >> (8 * (reg & 3));
 }
 
 static uint16_t
 hread2(struct sdhc_host *hp, bus_size_t reg)
 {
-
 	if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_32BIT_ACCESS))
 		return bus_space_read_2(hp->iot, hp->ioh, reg);
+
 	return bus_space_read_4(hp->iot, hp->ioh, reg & -4) >> (8 * (reg & 2));
 }
 
@@ -116,7 +114,6 @@ hread2(struct sdhc_host *hp, bus_size_t reg)
 static void
 hwrite1(struct sdhc_host *hp, bus_size_t o, uint8_t val)
 {
-
 	if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_32BIT_ACCESS)) {
 		bus_space_write_1(hp->iot, hp->ioh, o, val);
 	} else {
@@ -131,7 +128,6 @@ hwrite1(struct sdhc_host *hp, bus_size_t o, uint8_t val)
 static void
 hwrite2(struct sdhc_host *hp, bus_size_t o, uint16_t val)
 {
-
 	if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_32BIT_ACCESS)) {
 		bus_space_write_2(hp->iot, hp->ioh, o, val);
 	} else {
@@ -227,29 +223,25 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	struct sdmmcbus_attach_args saa;
 	struct sdhc_host *hp;
 	uint32_t caps;
+#ifdef SDHC_DEBUG
 	uint16_t sdhcver;
 
 	sdhcver = bus_space_read_2(iot, ioh, SDHC_HOST_CTL_VERSION);
-	aprint_normal_dev(sc->sc_dev, "SD Host Specification ");
+	aprint_normal_dev(sc->sc_dev, "SD Host Specification/Vendor Version ");
 	switch (SDHC_SPEC_VERSION(sdhcver)) {
-	case SDHC_SPEC_VERS_100:
-		aprint_normal("1.0");
+	case 0x00:
+		aprint_normal("1.0/%u\n", SDHC_VENDOR_VERSION(sdhcver));
 		break;
 
-	case SDHC_SPEC_VERS_200:
-		aprint_normal("2.0");
-		break;
-
-	case SDHC_SPEC_VERS_300:
-		aprint_normal("3.0");
+	case 0x01:
+		aprint_normal("2.0/%u\n", SDHC_VENDOR_VERSION(sdhcver));
 		break;
 
 	default:
-		aprint_normal("unknown version(0x%x)",
-		    SDHC_SPEC_VERSION(sdhcver));
+		aprint_normal(">2.0/%u\n", SDHC_VENDOR_VERSION(sdhcver));
 		break;
 	}
-	aprint_normal(", rev.%u\n", SDHC_VENDOR_VERSION(sdhcver));
+#endif
 
 	/* Allocate one more host structure. */
 	hp = malloc(sizeof(struct sdhc_host), M_DEVBUF, M_WAITOK|M_ZERO);
@@ -265,7 +257,6 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	hp->iot = iot;
 	hp->ioh = ioh;
 	hp->dmat = sc->sc_dmat;
-	hp->specver = SDHC_SPEC_VERSION(sdhcver);
 
 	mutex_init(&hp->host_mtx, MUTEX_DEFAULT, IPL_SDMMC);
 	mutex_init(&hp->intr_mtx, MUTEX_DEFAULT, IPL_SDMMC);
@@ -294,12 +285,12 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	/*
 	 * Determine the base clock frequency. (2.2.24)
 	 */
-	hp->clkbase = SDHC_BASE_FREQ_KHZ(caps);
+	if (SDHC_BASE_FREQ_KHZ(caps) != 0)
+		hp->clkbase = SDHC_BASE_FREQ_KHZ(caps);
 	if (hp->clkbase == 0) {
 		if (sc->sc_clkbase == 0) {
 			/* The attachment driver must tell us. */
-			aprint_error_dev(sc->sc_dev,
-			    "unknown base clock frequency\n");
+			aprint_error_dev(sc->sc_dev,"unknown base clock frequency\n");
 			goto err;
 		}
 		hp->clkbase = sc->sc_clkbase;
@@ -428,7 +419,6 @@ sdhc_suspend(device_t dev, const pmf_qual_t *qual)
 {
 	struct sdhc_softc *sc = device_private(dev);
 	struct sdhc_host *hp;
-	size_t i;
 
 	/* XXX poll for command completion or suspend command
 	 * in progress */
@@ -437,15 +427,15 @@ sdhc_suspend(device_t dev, const pmf_qual_t *qual)
 	for (size_t n = 0; n < sc->sc_nhosts; n++) {
 		hp = sc->sc_host[n];
 		if (ISSET(sc->sc_flags, SDHC_FLAG_32BIT_ACCESS)) {
-			for (i = 0; i < sizeof hp->regs; i += 4) {
+			for (size_t i = 0; i < sizeof hp->regs; i += 4) {
 				uint32_t v = HREAD4(hp, i);
-				hp->regs[i + 0] = (v >> 0);
-				hp->regs[i + 1] = (v >> 8);
-				hp->regs[i + 2] = (v >> 16);
-				hp->regs[i + 3] = (v >> 24);
+				hp->regs[i+0] = (v >> 0);
+				hp->regs[i+1] = (v >> 8);
+				hp->regs[i+2] = (v >> 16);
+				hp->regs[i+3] = (v >> 24);
 			}
 		} else {
-			for (i = 0; i < sizeof hp->regs; i++) {
+			for (size_t i = 0; i < sizeof hp->regs; i++) {
 				hp->regs[i] = HREAD1(hp, i);
 			}
 		}
@@ -458,22 +448,21 @@ sdhc_resume(device_t dev, const pmf_qual_t *qual)
 {
 	struct sdhc_softc *sc = device_private(dev);
 	struct sdhc_host *hp;
-	size_t i;
 
 	/* Restore the host controller state. */
 	for (size_t n = 0; n < sc->sc_nhosts; n++) {
 		hp = sc->sc_host[n];
 		(void)sdhc_host_reset(hp);
 		if (ISSET(sc->sc_flags, SDHC_FLAG_32BIT_ACCESS)) {
-			for (i = 0; i < sizeof hp->regs; i += 4) {
+			for (size_t i = 0; i < sizeof hp->regs; i += 4) {
 				HWRITE4(hp, i,
-				    (hp->regs[i + 0] << 0)
-				    | (hp->regs[i + 1] << 8)
-				    | (hp->regs[i + 2] << 16)
-				    | (hp->regs[i + 3] << 24));
+				    (hp->regs[i+0] << 0)
+				    |(hp->regs[i+1] << 8)
+				    |(hp->regs[i+2] << 16)
+				    |(hp->regs[i+3] << 24));
 			}
 		} else {
-			for (i = 0; i < sizeof hp->regs; i++) {
+			for (size_t i = 0; i < sizeof hp->regs; i++) {
 				HWRITE1(hp, i, hp->regs[i]);
 			}
 		}
@@ -612,7 +601,9 @@ sdhc_write_protect(sdmmc_chipset_handle_t sch)
 	r = ISSET(HREAD4(hp, SDHC_PRESENT_STATE), SDHC_WRITE_PROTECT_SWITCH);
 	mutex_exit(&hp->host_mtx);
 
-	return r ? 0 : 1;
+	if (!r)
+		return 1;
+	return 0;
 }
 
 /*
@@ -731,6 +722,7 @@ sdhc_clock_divisor(struct sdhc_host *hp, u_int freq, u_int *divp)
 			}
 		}
 	}
+
 	/* No divisor found. */
 	return false;
 }
@@ -747,17 +739,18 @@ sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 	u_int timo;
 	int error = 0;
 #ifdef DIAGNOSTIC
-	bool present;
+	bool ispresent;
+#endif
 
+#ifdef DIAGNOSTIC
 	mutex_enter(&hp->host_mtx);
-	present = ISSET(HREAD4(hp, SDHC_PRESENT_STATE), SDHC_CMD_INHIBIT_MASK);
+	ispresent = ISSET(HREAD4(hp, SDHC_PRESENT_STATE), SDHC_CMD_INHIBIT_MASK);
 	mutex_exit(&hp->host_mtx);
 
 	/* Must not stop the clock if commands are in progress. */
-	if (present && sdhc_card_detect(hp)) {
+	if (ispresent && sdhc_card_detect(hp))
 		printf("%s: sdhc_sdclk_frequency_select: command in progress\n",
 		    device_xname(hp->sc->sc_dev));
-	}
 #endif
 
 	mutex_enter(&hp->host_mtx);
@@ -797,13 +790,11 @@ sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 	 */
 	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
 		sdmmc_delay(10000);
-		HSET4(hp, SDHC_CLOCK_CTL,
-		    8 | SDHC_INTCLK_ENABLE | SDHC_INTCLK_STABLE);
+		HSET4(hp, SDHC_CLOCK_CTL, 8|SDHC_INTCLK_ENABLE|SDHC_INTCLK_STABLE);
 	} else {
 		HSET2(hp, SDHC_CLOCK_CTL, SDHC_INTCLK_ENABLE);
 		for (timo = 1000; timo > 0; timo--) {
-			if (ISSET(HREAD2(hp, SDHC_CLOCK_CTL),
-			    SDHC_INTCLK_STABLE))
+			if (ISSET(HREAD2(hp, SDHC_CLOCK_CTL), SDHC_INTCLK_STABLE))
 				break;
 			sdmmc_delay(10);
 		}
@@ -828,7 +819,6 @@ sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 			sdmmc_delay(10);
 		}
 		DPRINTF(2,("%s: %u init spins\n", __func__, 10 - timo));
-
 		/*
 		 * Enable SD clock.
 		 */
@@ -875,11 +865,11 @@ sdhc_bus_width(sdmmc_chipset_handle_t sch, int width)
 	mutex_enter(&hp->host_mtx);
 	reg = HREAD1(hp, SDHC_HOST_CTL);
 	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
-		reg &= ~(SDHC_4BIT_MODE|SDHC_ESDHC_8BIT_MODE);
+		reg &= ~(SDHC_4BIT_MODE|SDHC_8BIT_MODE);
 		if (width == 4)
 			reg |= SDHC_4BIT_MODE;
 		else if (width == 8)
-			reg |= SDHC_ESDHC_8BIT_MODE;
+			reg |= SDHC_8BIT_MODE;
 	} else {
 		reg &= ~SDHC_4BIT_MODE;
 		if (width == 4)
@@ -1096,7 +1086,8 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	/*
 	 * Prepare command register value. (2.2.6)
 	 */
-	command = (cmd->c_opcode & SDHC_COMMAND_INDEX_MASK) << SDHC_COMMAND_INDEX_SHIFT;
+	command =
+	 (cmd->c_opcode & SDHC_COMMAND_INDEX_MASK) << SDHC_COMMAND_INDEX_SHIFT;
 
 	if (ISSET(cmd->c_flags, SCF_RSP_CRC))
 		command |= SDHC_CRC_CHECK_ENABLE;
@@ -1233,11 +1224,11 @@ static int
 sdhc_transfer_data_pio(struct sdhc_host *hp, struct sdmmc_command *cmd)
 {
 	uint8_t *data = cmd->c_data;
-	void (*pio_func)(struct sdhc_host *, uint8_t *, u_int);
 	u_int len, datalen;
 	u_int imask;
 	u_int pmask;
 	int error = 0;
+	void (*pio_func)(struct sdhc_host *, uint8_t *, u_int);
 
 	if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
 		imask = SDHC_BUFFER_READ_READY;
@@ -1375,22 +1366,22 @@ sdhc_write_data_pio(struct sdhc_host *hp, uint8_t *data, u_int datalen)
 	}
 }
 
+
 static void
 esdhc_read_data_pio(struct sdhc_host *hp, uint8_t *data, u_int datalen)
 {
 	uint16_t status = HREAD2(hp, SDHC_NINTR_STATUS);
-	uint32_t v;
-
 	while (datalen > 3 && !ISSET(status, SDHC_TRANSFER_COMPLETE)) {
-		v = HREAD4(hp, SDHC_DATA);
+		uint32_t v = HREAD4(hp, SDHC_DATA);
 		v = le32toh(v);
 		*(uint32_t *)data = v;
 		data += 4;
 		datalen -= 4;
 		status = HREAD2(hp, SDHC_NINTR_STATUS);
 	}
+
 	if (datalen > 0 && !ISSET(status, SDHC_TRANSFER_COMPLETE)) {
-		v = HREAD4(hp, SDHC_DATA);
+		uint32_t v = HREAD4(hp, SDHC_DATA);
 		v = le32toh(v);
 		do {
 			*data++ = v;
@@ -1403,10 +1394,8 @@ static void
 esdhc_write_data_pio(struct sdhc_host *hp, uint8_t *data, u_int datalen)
 {
 	uint16_t status = HREAD2(hp, SDHC_NINTR_STATUS);
-	uint32_t v;
-
 	while (datalen > 3 && !ISSET(status, SDHC_TRANSFER_COMPLETE)) {
-		v = *(uint32_t *)data;
+		uint32_t v = *(uint32_t *)data;
 		v = htole32(v);
 		HWRITE4(hp, SDHC_DATA, v);
 		data += 4;
@@ -1414,7 +1403,7 @@ esdhc_write_data_pio(struct sdhc_host *hp, uint8_t *data, u_int datalen)
 		status = HREAD2(hp, SDHC_NINTR_STATUS);
 	}
 	if (datalen > 0 && !ISSET(status, SDHC_TRANSFER_COMPLETE)) {
-		v = *(uint32_t *)data;
+		uint32_t v = *(uint32_t *)data;
 		v = htole32(v);
 		HWRITE4(hp, SDHC_DATA, v);
 	}

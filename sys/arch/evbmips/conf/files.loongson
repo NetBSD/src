@@ -1,4 +1,4 @@
-#	$NetBSD: files.loongson,v 1.2.6.1 2012/03/04 00:46:04 mrg Exp $
+#	$NetBSD: files.loongson,v 1.2.6.2 2012/03/06 09:56:06 mrg Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -13,7 +13,7 @@ file	arch/evbmips/evbmips/interrupt.c
 file	arch/evbmips/loongson/gdium_machdep.c
 file	arch/evbmips/loongson/generic2e_machdep.c
 file	arch/evbmips/loongson/yeeloong_machdep.c
-file	arch/evbmips/loongson/isa_machdep.c	isa
+file	arch/evbmips/loongson/isa_machdep.c		isa
 file	arch/evbmips/loongson/loongson2_machdep.c
 file	arch/evbmips/loongson/machdep.c
 
@@ -26,19 +26,18 @@ file	dev/md_root.c				memory_disk_hooks
 
 include "dev/ata/files.ata"
 include "dev/scsipi/files.scsipi"
-include "dev/i2o/files.i2o"
-include "dev/isa/files.isa"
-include "dev/pci/files.pci"
-include "dev/pci/files.agp"
-include "dev/usb/files.usb"
+include	"dev/i2o/files.i2o"
+include	"dev/isa/files.isa"
+include	"dev/pci/files.pci"
+include	"dev/pci/files.agp"
+include	"dev/usb/files.usb"
 include "dev/bluetooth/files.bluetooth"
-include "dev/pckbport/files.pckbport"
 
 device	mainbus {[addr = -1] }
 attach	mainbus at root
-file	arch/evbmips/loongson/mainbus.c		mainbus
+file	arch/evbmips/loongson/mainbus.c			mainbus
 
-file	arch/evbmips/loongson/bonito_mainbus.c	bonito_mainbus
+file   arch/evbmips/loongson/bonito_mainbus.c		bonito_mainbus
 
 device	cpu
 attach	cpu at mainbus
@@ -53,8 +52,8 @@ include "arch/mips/conf/files.bonito"
 file	arch/evbmips/loongson/dev/glx.c		bonito & pci
 
 # AMD Geode CS5535/CS5536 PCI-ISA bridge
-device	gcscpcib: isabus, sysmon_wdog, gpiobus
-attach	gcscpcib at pci with gcscpcib_pci
+device  gcscpcib: isabus, sysmon_wdog, gpiobus
+attach  gcscpcib at pci with gcscpcib_pci
 file	arch/evbmips/loongson/dev/gcscpcib_pci.c gcscpcib_pci
 file	dev/ic/gcscpcib.c			gcscpcib
 
@@ -72,14 +71,14 @@ file	arch/evbmips/isa/mcclock_isa.c		mcclock_isa
 # Lemote Yeeloong KB3310B Embedded Controller
 device	ykbec
 attach	ykbec at isa
-file	arch/evbmips/loongson/dev/kb3310.c	ykbec needs-flag
+file	arch/evbmips/loongson/dev/kb3310.c		ykbec needs-flag
 
 # Gdium ST7 controller
 device	stvii
 attach	stvii at iic
-file	arch/evbmips/loongson/dev/stvii.c	stvii
+file	arch/evbmips/loongson/dev/stvii.c			stvii
 defflag opt_stvii.h STVII_DEBUG
 
 # SM502 OHCI
 #attach	ohci at voyager with ohci_voyager
-#file	arch/loongson/dev/ohci_voyager.c	ohci_voyager
+#file	arch/loongson/dev/ohci_voyager.c		ohci_voyager
