@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.55 2010/12/14 23:44:49 matt Exp $	 */
+/*	$NetBSD: clock.c,v 1.56 2012/03/06 22:50:24 jklos Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.55 2010/12/14 23:44:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.56 2012/03/06 22:50:24 jklos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -277,7 +277,7 @@ chip_gettime(struct timeval *tvp)
 #endif
 
 	if ((REGPEEK(CSRD_OFF) & CSRD_VRT) == 0) {
-		printf("WARNING: TOY clock not marked valid");
+		printf("WARNING: TOY clock not marked valid\n");
 		return EINVAL;
 	}
 	while (REGPEEK(CSRA_OFF) & CSRA_UIP) {
