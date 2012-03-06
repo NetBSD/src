@@ -1,4 +1,4 @@
-/* $NetBSD: t_stat.c,v 1.2 2011/10/16 08:28:10 jruoho Exp $ */
+/* $NetBSD: t_stat.c,v 1.3 2012/03/06 10:32:15 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,10 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_stat.c,v 1.2 2011/10/16 08:28:10 jruoho Exp $");
+__RCSID("$NetBSD: t_stat.c,v 1.3 2012/03/06 10:32:15 jruoho Exp $");
 
 #include <sys/stat.h>
+#include <sys/socket.h>
 #include <sys/types.h>
+
+#include <arpa/inet.h>
 
 #include <atf-c.h>
 #include <errno.h>
@@ -314,6 +317,51 @@ ATF_TC_CLEANUP(stat_size, tc)
 	(void)unlink(path);
 }
 
+ATF_TC(stat_socket);
+ATF_TC_HEAD(stat_socket, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test fstat(2) with a socket");
+}
+
+ATF_TC_BODY(stat_socket, tc)
+{
+	struct sockaddr_in addr;
+	struct stat st;
+	uint32_t iaddr;
+	int fd, flags;
+
+	atf_tc_expect_fail("PR kern/46077");
+
+	(void)memset(&st, 0, sizeof(struct stat));
+	(void)memset(&addr, 0, sizeof(struct sockaddr_in));
+
+	fd = socket(AF_INET, SOCK_STREAM, 0);
+	ATF_REQUIRE(fd >= 0);
+
+	flags = fcntl(fd, F_GETFL);
+
+	ATF_REQUIRE(flags != -1);
+	ATF_REQUIRE(fcntl(fd, F_SETFL, flags | O_NONBLOCK) != -1);
+	ATF_REQUIRE(inet_pton(AF_INET, "127.0.0.1", &iaddr) == 1);
+
+	addr.sin_port = htons(42);
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = iaddr;
+
+	errno = 0;
+
+	ATF_REQUIRE_ERRNO(EINPROGRESS,
+	    connect(fd, (struct sockaddr *)&addr,
+		sizeof(struct sockaddr_in)) == -1);
+
+	errno = 0;
+
+	if (fstat(fd, &st) != 0 || errno != 0)
+		atf_tc_fail("fstat(2) failed for a EINPROGRESS socket");
+
+	(void)close(fd);
+}
+
 ATF_TC_WITH_CLEANUP(stat_symlink);
 ATF_TC_HEAD(stat_symlink, tc)
 {
@@ -363,6 +411,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, stat_mtime);
 	ATF_TP_ADD_TC(tp, stat_perm);
 	ATF_TP_ADD_TC(tp, stat_size);
+	ATF_TP_ADD_TC(tp, stat_socket);
 	ATF_TP_ADD_TC(tp, stat_symlink);
 
 	return atf_no_error();
