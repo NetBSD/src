@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.4 2004/06/20 22:20:16 jmc Exp $	*/
+/*	$NetBSD: util.c,v 1.5 2012/03/06 16:55:18 mbalmer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -14,11 +14,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software develooped for the NetBSD Project by
- *      Piermont Information Systems Inc.
- * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ * 3. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
  *    written permission.
  *
@@ -45,9 +41,8 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: util.c,v 1.4 2004/06/20 22:20:16 jmc Exp $");
+__RCSID("$NetBSD: util.c,v 1.5 2012/03/06 16:55:18 mbalmer Exp $");
 #endif
-
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -61,21 +56,21 @@ yyerror(const char *fmt, ...)
 {
 	va_list args;
 
-	va_start (args, fmt);
-	printf ("%s:%d: ", src_name, line_no);
-	vfprintf (stdout, fmt, args);
-	printf ("\n");
-	va_end (args);
+	va_start(args, fmt);
+	printf("%s:%d: ", src_name, line_no);
+	vfprintf(stdout, fmt, args);
+	printf("\n");
+	va_end(args);
 	had_errors = TRUE;
 }
-
 
 /* Buffer routines */
 static char *mc_buff = NULL;
 static int mc_size = 0;
 static int mc_loc = 0;
 
-void buff_add_ch (char ch)
+void
+buff_add_ch(char ch)
 {
 	char *t;
 
@@ -84,15 +79,15 @@ void buff_add_ch (char ch)
 			mc_size = 80;
 		else
 			mc_size *= 2;
-		t = (char *) malloc (mc_size);
+		t = (char *)malloc(mc_size);
 		if (t == NULL) {
-			(void) fprintf (stderr, "%s:%d: Malloc error\n",
+			(void)fprintf(stderr, "%s:%d: Malloc error\n",
 					 src_name, line_no);
-			exit (1);
+			exit(1);
 		}
 		if (mc_buff != NULL) {
-			strcpy (t, mc_buff);
-			free (mc_buff);
+			strcpy(t, mc_buff);
+			free(mc_buff);
 		}
 		mc_buff = t;
 	}
@@ -101,12 +96,12 @@ void buff_add_ch (char ch)
 }
 
 /* get a copy of the string ! */
-
 char *
-buff_copy (void)
+buff_copy(void)
 {
-	char *res = strdup (mc_buff);
+	char *res = strdup(mc_buff);
+
 	mc_loc = 0;
 	mc_buff[0] = '\0';
-	return  res;
+	return res;
 }
