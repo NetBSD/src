@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.34 2012/02/23 13:31:13 he Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.35 2012/03/06 03:35:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.34 2012/02/23 13:31:13 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.35 2012/03/06 03:35:30 mrg Exp $");
 
 #include "scsibus.h"
 #include <sys/param.h>
@@ -372,7 +372,7 @@ usscanner_detach(device_t self, int flags)
 	s = splusb();
 	if (--sc->sc_refcnt >= 0) {
 		/* Wait for processes to go away. */
-		usb_detach_wait(sc->sc_dev);
+		usb_detach_waitold(sc->sc_dev);
 	}
 	splx(s);
 

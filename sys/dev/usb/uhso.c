@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.7 2011/12/23 00:51:46 jakllsch Exp $	*/
+/*	$NetBSD: uhso.c,v 1.8 2012/03/06 03:35:29 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.7 2011/12/23 00:51:46 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.8 2012/03/06 03:35:29 mrg Exp $");
 
 #include "opt_inet.h"
 
@@ -549,13 +549,13 @@ uhso_detach(device_t self, int flags)
 	s = splusb();
 	if (sc->sc_refcnt-- > 0) {
 		DPRINTF(1, "waiting for refcnt (%d)..\n", sc->sc_refcnt);
-		usb_detach_wait(sc->sc_dev);
+		usb_detach_waitold(sc->sc_dev);
 	}
 	splx(s);
 
 	/*
 	 * XXX the tty close routine increases/decreases refcnt causing
-	 * XXX another usb_detach_wakeup() does it matter, should these
+	 * XXX another usb_detach_wakeupold() does it matter, should these
 	 * XXX be before the detach_wait? or before the abort?
 	 */
 
@@ -1253,7 +1253,7 @@ uhso_bulk_control(struct uhso_port *hp)
 	status = usbd_do_request(sc->sc_udev, &req, NULL);
 
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		DPRINTF(0, "non-normal status %s\n", usbd_errstr(status));
@@ -1356,7 +1356,7 @@ uhso_tty_write_cb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status stat
 	int s;
 
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		DPRINTF(0, "non-normal status %s\n", usbd_errstr(status));
@@ -1390,7 +1390,7 @@ uhso_tty_read_cb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status statu
 	int s;
 
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		DPRINTF(0, "non-normal status: %s\n", usbd_errstr(status));
@@ -1569,7 +1569,7 @@ uhso_tty_close(dev_t dev, int flag, int mode, struct lwp *l)
 		uhso_tty_clean(hp);
 
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 
 	return 0;
 }
@@ -1617,7 +1617,7 @@ uhso_tty_read(dev_t dev, struct uio *uio, int flag)
 	error = tp->t_linesw->l_read(tp, uio, flag);
 
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 
 	return error;
 }
@@ -1640,7 +1640,7 @@ uhso_tty_write(dev_t dev, struct uio *uio, int flag)
 	error = tp->t_linesw->l_write(tp, uio, flag);
 
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 
 	return error;
 }
@@ -1662,7 +1662,7 @@ uhso_tty_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	error = uhso_tty_do_ioctl(hp, cmd, data, flag, l);
 
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 
 	return error;
 }
@@ -1764,7 +1764,7 @@ uhso_tty_poll(dev_t dev, int events, struct lwp *l)
         revents = tp->t_linesw->l_poll(tp, events, l);
 
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 
         return revents;
 }
@@ -1976,7 +1976,7 @@ uhso_ifnet_write_cb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status st
 	int s;
 
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING))
 		return;
@@ -2017,7 +2017,7 @@ uhso_ifnet_read_cb(usbd_xfer_handle xfer, usbd_private_handle p,
 	uint32_t cc;
 
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING))
 		return;

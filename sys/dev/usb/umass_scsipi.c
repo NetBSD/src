@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.41 2012/03/04 00:21:20 mrg Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.42 2012/03/06 03:35:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.41 2012/03/04 00:21:20 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.42 2012/03/06 03:35:30 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_umass.h"
@@ -139,7 +139,7 @@ umass_scsi_attach(struct umass_softc *sc)
 	    config_found_ia(sc->sc_dev, "scsi", &scbus->sc_channel,
 		scsiprint);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 
 	return (0);
 }
@@ -167,7 +167,7 @@ umass_atapi_attach(struct umass_softc *sc)
 	    config_found_ia(sc->sc_dev, "atapi", &scbus->sc_channel,
 		atapiprint);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 
 	return (0);
 }
