@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.183 2011/12/23 00:51:43 jakllsch Exp $ */
+/*	$NetBSD: ehci.c,v 1.184 2012/03/06 02:36:45 mrg Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.183 2011/12/23 00:51:43 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.184 2012/03/06 02:36:45 mrg Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1730,7 +1730,6 @@ ehci_open(usbd_pipe_handle pipe)
 Static void
 ehci_add_qh(ehci_soft_qh_t *sqh, ehci_soft_qh_t *head)
 {
-	SPLUSBCHECK;
 
 	usb_syncmem(&head->dma, head->offs + offsetof(ehci_qh_t, qh_link),
 	    sizeof(head->qh.qh_link), BUS_DMASYNC_POSTWRITE);
@@ -1759,7 +1758,6 @@ ehci_rem_qh(ehci_softc_t *sc, ehci_soft_qh_t *sqh, ehci_soft_qh_t *head)
 {
 	ehci_soft_qh_t *p;
 
-	SPLUSBCHECK;
 	/* XXX */
 	for (p = head; p != NULL && p->next != sqh; p = p->next)
 		;
