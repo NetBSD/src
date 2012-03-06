@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.218 2011/08/07 13:45:46 jmcneill Exp $	*/
+/*	$NetBSD: ohci.c,v 1.219 2012/03/06 02:36:46 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218 2011/08/07 13:45:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.219 2012/03/06 02:36:46 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -1812,7 +1812,6 @@ ohci_add_ed(ohci_softc_t *sc, ohci_soft_ed_t *sed, ohci_soft_ed_t *head)
 {
 	DPRINTFN(8,("ohci_add_ed: sed=%p head=%p\n", sed, head));
 
-	SPLUSBCHECK;
 	usb_syncmem(&head->dma, head->offs + offsetof(ohci_ed_t, ed_nexted),
 	    sizeof(head->ed.ed_nexted),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
@@ -1835,8 +1834,6 @@ void
 ohci_rem_ed(ohci_soft_ed_t *sed, ohci_soft_ed_t *head)
 {
 	ohci_soft_ed_t *p;
-
-	SPLUSBCHECK;
 
 	/* XXX */
 	for (p = head; p != NULL && p->next != sed; p = p->next)
@@ -1870,8 +1867,6 @@ ohci_hash_add_td(ohci_softc_t *sc, ohci_soft_td_t *std)
 {
 	int h = HASH(std->physaddr);
 
-	SPLUSBCHECK;
-
 	LIST_INSERT_HEAD(&sc->sc_hash_tds[h], std, hnext);
 }
 
@@ -1879,7 +1874,6 @@ ohci_hash_add_td(ohci_softc_t *sc, ohci_soft_td_t *std)
 void
 ohci_hash_rem_td(ohci_softc_t *sc, ohci_soft_td_t *std)
 {
-	SPLUSBCHECK;
 
 	LIST_REMOVE(std, hnext);
 }
@@ -1904,8 +1898,6 @@ ohci_hash_add_itd(ohci_softc_t *sc, ohci_soft_itd_t *sitd)
 {
 	int h = HASH(sitd->physaddr);
 
-	SPLUSBCHECK;
-
 	DPRINTFN(10,("ohci_hash_add_itd: sitd=%p physaddr=0x%08lx\n",
 		    sitd, (u_long)sitd->physaddr));
 
@@ -1916,7 +1908,6 @@ ohci_hash_add_itd(ohci_softc_t *sc, ohci_soft_itd_t *sitd)
 void
 ohci_hash_rem_itd(ohci_softc_t *sc, ohci_soft_itd_t *sitd)
 {
-	SPLUSBCHECK;
 
 	DPRINTFN(10,("ohci_hash_rem_itd: sitd=%p physaddr=0x%08lx\n",
 		    sitd, (u_long)sitd->physaddr));
