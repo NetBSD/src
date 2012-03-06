@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.143 2012/03/04 00:21:20 mrg Exp $	*/
+/*	$NetBSD: umass.c,v 1.144 2012/03/06 03:35:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.143 2012/03/04 00:21:20 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.144 2012/03/06 03:35:30 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_umass.h"
@@ -677,7 +677,7 @@ umass_detach(device_t self, int flags)
 		aprint_normal_dev(self, "waiting for refcnt\n");
 #endif
 		/* Wait for processes to go away. */
-		usb_detach_wait(sc->sc_dev);
+		usb_detach_waitold(sc->sc_dev);
 	}
 	splx(s);
 

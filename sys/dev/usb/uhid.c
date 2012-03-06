@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.85 2012/02/24 06:48:25 mrg Exp $	*/
+/*	$NetBSD: uhid.c,v 1.86 2012/03/06 03:35:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.85 2012/02/24 06:48:25 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.86 2012/03/06 03:35:29 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -205,7 +205,7 @@ uhid_detach(device_t self, int flags)
 			/* Wake everyone */
 			wakeup(&sc->sc_q);
 			/* Wait for processes to go away. */
-			usb_detach_wait(sc->sc_hdev.sc_dev);
+			usb_detach_waitold(sc->sc_hdev.sc_dev);
 		}
 		splx(s);
 	}
@@ -393,7 +393,7 @@ uhidread(dev_t dev, struct uio *uio, int flag)
 	sc->sc_refcnt++;
 	error = uhid_do_read(sc, uio, flag);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_hdev.sc_dev);
+		usb_detach_wakeupold(sc->sc_hdev.sc_dev);
 	return (error);
 }
 
@@ -435,7 +435,7 @@ uhidwrite(dev_t dev, struct uio *uio, int flag)
 	sc->sc_refcnt++;
 	error = uhid_do_write(sc, uio, flag);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_hdev.sc_dev);
+		usb_detach_wakeupold(sc->sc_hdev.sc_dev);
 	return (error);
 }
 
@@ -609,7 +609,7 @@ uhidioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	sc->sc_refcnt++;
 	error = uhid_do_ioctl(sc, cmd, addr, flag, l);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_hdev.sc_dev);
+		usb_detach_wakeupold(sc->sc_hdev.sc_dev);
 	return (error);
 }
 
