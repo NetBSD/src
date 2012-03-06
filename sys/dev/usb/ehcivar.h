@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.38 2011/01/18 08:29:24 matt Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.39 2012/03/06 02:49:02 mrg Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -152,9 +152,7 @@ typedef struct ehci_softc {
 	u_int8_t sc_conf;		/* device configuration */
 	usbd_xfer_handle sc_intrxfer;
 	char sc_isreset[EHCI_MAX_PORTS];
-#ifdef USB_USE_SOFTINTR
 	char sc_softwake;
-#endif /* USB_USE_SOFTINTR */
 
 	u_int32_t sc_eintrs;
 	ehci_soft_qh_t *sc_async_head;
