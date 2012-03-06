@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.81.6.3 2012/03/06 09:56:07 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.81.6.4 2012/03/06 18:26:36 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.81.6.3 2012/03/06 09:56:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.81.6.4 2012/03/06 18:26:36 mrg Exp $");
 
 #include "opt_cputype.h"
 
@@ -1792,7 +1792,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		if (!pve)
 			panic("%s: no pv entries available", __func__);
 		DPRINTF(PDB_FOLLOW|PDB_ENTER, ("%s(%lx, %lx, %x) TLB_KENTER\n",
-		    _func__, va, pa, pte));
+		    __func__, va, pa, pte));
 
 		if (pmap_check_alias(pg, va, pte))
 			pmap_page_remove(pg);

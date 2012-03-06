@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.31.6.2 2012/03/06 09:56:12 mrg Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.31.6.3 2012/03/06 18:26:39 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.31.6.2 2012/03/06 09:56:12 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.31.6.3 2012/03/06 18:26:39 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,12 +145,10 @@ isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq)
 			continue;
 		isp = ci->ci_isources[i];
 		if (isp == NULL) {
-			/*
-			 * if nothing's using the irq, just return it
-			 */
+			/* if nothing's using the irq, just return it */
 			*irq = i;
 			mutex_exit(&cpu_lock);
-			return (0);
+			return 0;
 		}
 
 		switch(isp->is_type) {
@@ -175,7 +173,6 @@ isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq)
 				count = tmp;
 			}
 			break;
-
 		case IST_PULSE:
 			/* this just isn't shareable */
 			continue;
@@ -185,30 +182,23 @@ isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq)
 	mutex_exit(&cpu_lock);
 
 	if (bestirq == -1)
-		return (1);
+		return 1;
 
 	*irq = bestirq;
 
-	return (0);
+	return 0;
 }
 
 const struct evcnt *
 isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
 {
-
 	/* XXX for now, no evcnt parent reported */
 	return NULL;
 }
 
 void *
-isa_intr_establish(
-    isa_chipset_tag_t ic,
-    int irq,
-    int type,
-    int level,
-    int (*ih_fun)(void *),
-    void *ih_arg
-)
+isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
+    int (*ih_fun)(void *), void *ih_arg)
 {
 	struct pic *pic;
 	int pin;
@@ -239,12 +229,11 @@ isa_intr_establish(
 			printf("isa_intr_establish: no MP mapping found\n");
 	}
 #endif
-	return intr_establish(irq, pic, pin, type, level, ih_fun, ih_arg, false);
+	return intr_establish(irq, pic, pin, type, level, ih_fun, ih_arg,
+	    false);
 }
 
-/*
- * Deregister an interrupt handler.
- */
+/* Deregister an interrupt handler. */
 void
 isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 {
@@ -257,8 +246,7 @@ isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 }
 
 void
-isa_attach_hook(device_t parent, device_t self,
-    struct isabus_attach_args *iba)
+isa_attach_hook(device_t parent, device_t self, struct isabus_attach_args *iba)
 {
 	extern struct x86_isa_chipset x86_isa_chipset;
 	extern int isa_has_been_seen;
@@ -289,20 +277,16 @@ isa_detach_hook(isa_chipset_tag_t ic, device_t self)
 
 int
 isa_mem_alloc(bus_space_tag_t t, bus_size_t size, bus_size_t align,
-		bus_addr_t boundary, int flags, bus_addr_t *addrp, bus_space_handle_t *bshp)
+    bus_addr_t boundary, int flags, bus_addr_t *addrp, bus_space_handle_t *bshp)
 {
-
-	/*
-	 * Allocate physical address space in the ISA hole.
-	 */
-	return (bus_space_alloc(t, IOM_BEGIN, IOM_END - 1, size, align,
-	    boundary, flags, addrp, bshp));
+	/* Allocate physical address space in the ISA hole. */
+	return bus_space_alloc(t, IOM_BEGIN, IOM_END - 1, size, align,
+	    boundary, flags, addrp, bshp);
 }
 
 void
 isa_mem_free(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
-
 	bus_space_free(t, bsh, size);
 }
 
@@ -343,7 +327,6 @@ _isa_dma_may_bounce(bus_dma_tag_t t, bus_dmamap_t map, int flags,
 device_t
 device_isa_register(device_t dev, void *aux)
 {
-
 	/*
 	 * Handle network interfaces here, the attachment information is
 	 * not available driver-independently later.
@@ -360,7 +343,7 @@ device_isa_register(device_t dev, void *aux)
 		 * passed by the boot ROM.  The ROM should stay usable if
 		 * the driver becomes obsolete.  The physical attachment
 		 * information (checked below) must be sufficient to
-		 * idenfity the device.
+		 * identify the device.
 		 */
 		if (bin->bus == BI_BUS_ISA &&
 		    device_is_a(device_parent(dev), "isa")) {

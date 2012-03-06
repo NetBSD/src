@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.714.2.4 2012/03/06 09:56:08 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.714.2.5 2012/03/06 18:26:37 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.714.2.4 2012/03/06 09:56:08 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.714.2.5 2012/03/06 18:26:37 mrg Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -525,9 +525,12 @@ i386_proc0_tss_ldt_init(void)
 }
 
 #ifdef XEN
+/* used in assembly */
+void i386_switch_context(lwp_t *);
+void i386_tls_switch(lwp_t *);
+
 /*
  * Switch context:
- * - honor CR0_TS in saved CR0 and request DNA exception on FPU use
  * - switch stack pointer for user->kernel transition
  */
 void
@@ -539,11 +542,34 @@ i386_switch_context(lwp_t *l)
 
 	pcb = lwp_getpcb(l);
 	ci = curcpu();
-	if (pcb->pcb_fpcpu != ci) {
-		HYPERVISOR_fpu_taskswitch(1);
-	}
 
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_esp0);
+
+	physop.cmd = PHYSDEVOP_SET_IOPL;
+	physop.u.set_iopl.iopl = pcb->pcb_iopl;
+	HYPERVISOR_physdev_op(&physop);
+}
+
+void
+i386_tls_switch(lwp_t *l)
+{
+	struct cpu_info *ci = curcpu();
+	struct pcb *pcb = lwp_getpcb(l);
+	/*
+         * Raise the IPL to IPL_HIGH.
+	 * FPU IPIs can alter the LWP's saved cr0.  Dropping the priority
+	 * is deferred until mi_switch(), when cpu_switchto() returns.
+	 */
+	(void)splhigh();
+
+        /*
+	 * If our floating point registers are on a different CPU,
+	 * set CR0_TS so we'll trap rather than reuse bogus state.
+	 */
+
+	if (l != ci->ci_fpcurlwp) {
+		HYPERVISOR_fpu_taskswitch(1);
+	}
 
 	/* Update TLS segment pointers */
 	update_descriptor(&ci->ci_gdt[GUFS_SEL],
@@ -551,9 +577,6 @@ i386_switch_context(lwp_t *l)
 	update_descriptor(&ci->ci_gdt[GUGS_SEL], 
 			  (union descriptor *) &pcb->pcb_gsd);
 
-	physop.cmd = PHYSDEVOP_SET_IOPL;
-	physop.u.set_iopl.iopl = pcb->pcb_iopl;
-	HYPERVISOR_physdev_op(&physop);
 }
 #endif /* XEN */
 
@@ -723,13 +746,8 @@ buildcontext(struct lwp *l, int sel, void *catcher, void *fp)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 
-#ifndef XEN
 	tf->tf_gs = GSEL(GUGS_SEL, SEL_UPL);
 	tf->tf_fs = GSEL(GUFS_SEL, SEL_UPL);
-#else
-	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
-#endif
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = (int)catcher;
@@ -817,11 +835,7 @@ void
 cpu_reboot(int howto, char *bootstr)
 {
 	static bool syncdone = false;
-	struct lwp *l;
-	int s;
-
-	s = IPL_NONE;
-	l = (curlwp == NULL) ? &lwp0 : curlwp;
+	int s = IPL_NONE;
 
 	if (cold) {
 		howto |= RB_HALT;
@@ -843,7 +857,7 @@ cpu_reboot(int howto, char *bootstr)
 		if (!syncdone) {
 			syncdone = true;
 			/* XXX used to force unmount as well, here */
-			vfs_sync_all(l);
+			vfs_sync_all(curlwp);
 			/*
 			 * If we've been adjusting the clock, the todr
 			 * will be out of synch; adjust it now.
@@ -855,9 +869,9 @@ cpu_reboot(int howto, char *bootstr)
 				resettodr();
 		}
 
-		while (vfs_unmountall1(l, false, false) ||
+		while (vfs_unmountall1(curlwp, false, false) ||
 		       config_detach_all(boothowto) ||
-		       vfs_unmount_forceone(l))
+		       vfs_unmount_forceone(curlwp))
 			;	/* do nothing */
 	} else
 		suspendsched();
@@ -865,7 +879,11 @@ cpu_reboot(int howto, char *bootstr)
 	pmf_system_shutdown(boothowto);
 
 	s = splhigh();
+
+	/* amd64 maybe_dump() */
+
 haltsys:
+	doshutdownhooks();
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #ifdef XEN
@@ -970,13 +988,8 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	memcpy(&pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
 
 	tf = l->l_md.md_regs;
-#ifndef XEN
 	tf->tf_gs = GSEL(GUGS_SEL, SEL_UPL);
 	tf->tf_fs = GSEL(GUFS_SEL, SEL_UPL);
-#else
-	tf->tf_gs = LSEL(LUDATA_SEL, SEL_UPL);
-	tf->tf_fs = LSEL(LUDATA_SEL, SEL_UPL);
-#endif
 	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_edi = 0;
@@ -1351,9 +1364,9 @@ init386(paddr_t first_avail)
 	/* Make sure the end of the space used by the kernel is rounded. */
 	first_avail = round_page(first_avail);
 	avail_start = first_avail;
-	avail_end = ctob(xen_start_info.nr_pages) + XPMAP_OFFSET;
+	avail_end = ctob((paddr_t)xen_start_info.nr_pages) + XPMAP_OFFSET;
 	pmap_pa_start = (KERNTEXTOFF - KERNBASE);
-	pmap_pa_end = pmap_pa_start + ctob(xen_start_info.nr_pages);
+	pmap_pa_end = pmap_pa_start + ctob((paddr_t)xen_start_info.nr_pages);
 	mem_clusters[0].start = avail_start;
 	mem_clusters[0].size = avail_end - avail_start;
 	mem_cluster_cnt++;
@@ -1406,9 +1419,10 @@ init386(paddr_t first_avail)
 	initx86_load_memmap(first_avail);
 
 #else /* !XEN */
-	XENPRINTK(("load the memory cluster %p(%d) - %p(%ld)\n",
-	    (void *)(long)avail_start, (int)atop(avail_start),
-	    (void *)(long)avail_end, (int)atop(avail_end)));
+	XENPRINTK(("load the memory cluster 0x%" PRIx64 " (%" PRId64 ") - "
+	    "0x%" PRIx64 " (%" PRId64 ")\n",
+	    (uint64_t)avail_start, (uint64_t)atop(avail_start),
+	    (uint64_t)avail_end, (uint64_t)atop(avail_end)));
 	uvm_page_physload(atop(avail_start), atop(avail_end),
 	    atop(avail_start), atop(avail_end),
 	    VM_FREELIST_DEFAULT);
@@ -1425,10 +1439,6 @@ init386(paddr_t first_avail)
 			panic("tmpgdt page relaim RW update failed.\n");
 		}
 	}
-
-	uvm_page_physload(atop((vaddr_t)tmpgdt), atop((vaddr_t)tmpgdt + PAGE_SIZE),
-	    atop((vaddr_t)tmpgdt), atop((vaddr_t)tmpgdt + PAGE_SIZE),
-	    VM_FREELIST_DEFAULT);
 
 #endif /* !XEN */
 

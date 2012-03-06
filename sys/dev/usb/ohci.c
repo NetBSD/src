@@ -1,5 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.218.6.17 2012/03/03 02:29:34 mrg Exp $	*/
-/*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
+/*	$NetBSD: ohci.c,v 1.218.6.18 2012/03/06 18:26:46 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.17 2012/03/03 02:29:34 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.18 2012/03/06 18:26:46 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -1972,6 +1971,7 @@ ohci_hash_add_itd(ohci_softc_t *sc, ohci_soft_itd_t *sitd)
 void
 ohci_hash_rem_itd(ohci_softc_t *sc, ohci_soft_itd_t *sitd)
 {
+
 	KASSERT(mutex_owned(&sc->sc_lock));
 
 	DPRINTFN(10,("ohci_hash_rem_itd: sitd=%p physaddr=0x%08lx\n",

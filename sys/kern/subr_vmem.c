@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.65.6.1 2012/02/18 07:35:33 mrg Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.65.6.2 2012/03/06 18:26:48 mrg Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.65.6.1 2012/02/18 07:35:33 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.65.6.2 2012/03/06 18:26:48 mrg Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -248,7 +248,8 @@ static LIST_HEAD(, vmem) vmem_list = LIST_HEAD_INITIALIZER(vmem_list);
 #define BT_MAXFREE 64
 #define STATIC_VMEM_COUNT 5
 #define STATIC_BT_COUNT 200
-#define STATIC_QC_POOL_COUNT (VMEM_QCACHE_IDX_MAX + 1)
+/* must be equal or greater then qcache multiplier for kmem_va_arena */
+#define STATIC_QC_POOL_COUNT 8
 
 static struct vmem static_vmems[STATIC_VMEM_COUNT];
 static int static_vmem_count = STATIC_VMEM_COUNT;
@@ -474,6 +475,7 @@ bt_rembusy(vmem_t *vm, bt_t *bt)
 {
 
 	KASSERT(vm->vm_nbusytag > 0);
+	vm->vm_inuse -= bt->bt_size;
 	vm->vm_nbusytag--;
 	LIST_REMOVE(bt, bt_hashlist);
 }
@@ -488,6 +490,7 @@ bt_insbusy(vmem_t *vm, bt_t *bt)
 	list = bt_hashhead(vm, bt->bt_start);
 	LIST_INSERT_HEAD(list, bt, bt_hashlist);
 	vm->vm_nbusytag++;
+	vm->vm_inuse += bt->bt_size;
 }
 
 /* ---- boundary tag list */
@@ -1265,7 +1268,6 @@ gotit:
 	KASSERT(bt->bt_size >= size);
 	bt_remfree(vm, bt);
 	vmem_check(vm);
-	vm->vm_inuse += size;
 	if (bt->bt_start != start) {
 		btnew2->bt_type = BT_TYPE_FREE;
 		btnew2->bt_start = bt->bt_start;
@@ -1356,8 +1358,6 @@ vmem_xfree(vmem_t *vm, vmem_addr_t addr, vmem_size_t size)
 	KASSERT(bt->bt_type == BT_TYPE_BUSY);
 	bt_rembusy(vm, bt);
 	bt->bt_type = BT_TYPE_FREE;
-
-	vm->vm_inuse -= bt->bt_size;
 
 	/* coalesce */
 	t = CIRCLEQ_NEXT(bt, bt_seglist);

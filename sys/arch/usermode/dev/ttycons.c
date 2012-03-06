@@ -1,4 +1,4 @@
-/* $NetBSD: ttycons.c,v 1.5.6.3 2012/03/06 09:56:10 mrg Exp $ */
+/* $NetBSD: ttycons.c,v 1.5.6.4 2012/03/06 18:26:39 mrg Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.5.6.3 2012/03/06 09:56:10 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.5.6.4 2012/03/06 18:26:39 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -389,7 +389,7 @@ ttycons_softintr(void *priv)
  * argument 'pc' and 'va' are not used.
  */
 static void
-ttycons_ctrlc(vaddr_t from_userland, vaddr_t pc, vaddr_t va)
+ttycons_ctrlc(siginfo_t *info, vaddr_t from_userland, vaddr_t pc, vaddr_t va)
 {
 	struct ttycons_softc *sc;
 
@@ -416,7 +416,7 @@ ttycons_softctrlc(void *priv)
  * argument 'pc' and 'va' are not used.
  */
 static void
-ttycons_ctrlz(vaddr_t from_userland, vaddr_t pc, vaddr_t va)
+ttycons_ctrlz(siginfo_t *info, vaddr_t from_userland, vaddr_t pc, vaddr_t va)
 {
 	struct ttycons_softc *sc;
 

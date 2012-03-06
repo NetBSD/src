@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfbvar.h,v 1.11.8.3 2012/03/06 09:56:21 mrg Exp $ */
+/* $NetBSD: radeonfbvar.h,v 1.11.8.4 2012/03/06 18:26:45 mrg Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -317,6 +317,7 @@ struct radeonfb_softc {
 
 #define	GET32(sc, r)	radeonfb_get32(sc, r)
 #define	PUT32(sc, r, v)	radeonfb_put32(sc, r, v)
+#define	PUT32S(sc, r, v)	radeonfb_put32s(sc, r, v)
 #define	SET32(sc, r, v)	PUT32(sc, r, GET32(sc, r) | (v))
 #define	CLR32(sc, r, v)	PUT32(sc, r, GET32(sc, r) & ~(v))
 #define	PATCH32(sc, r, v, m)	PUT32(sc, r, (GET32(sc, r) & (m)) | (v))
@@ -349,6 +350,7 @@ struct radeonfb_softc {
 
 uint32_t radeonfb_get32(struct radeonfb_softc *, uint32_t);
 void radeonfb_put32(struct radeonfb_softc *, uint32_t, uint32_t);
+void radeonfb_put32s(struct radeonfb_softc *, uint32_t, uint32_t);
 void radeonfb_mask32(struct radeonfb_softc *, uint32_t, uint32_t, uint32_t);
 
 uint32_t radeonfb_getindex(struct radeonfb_softc *, uint32_t);

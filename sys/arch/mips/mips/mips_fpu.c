@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fpu.c,v 1.7.6.2 2012/03/06 09:56:08 mrg Exp $	*/
+/*	$NetBSD: mips_fpu.c,v 1.7.6.3 2012/03/06 18:26:38 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.7.6.2 2012/03/06 09:56:08 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.7.6.3 2012/03/06 18:26:38 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -346,6 +346,5 @@ void
 mips_fpu_state_release(lwp_t *l)
 {
 
-	KASSERT(l == curlwp);
 	l->l_md.md_utf->tf_regs[_R_SR] &= ~MIPS_SR_COP_1_BIT;
 }

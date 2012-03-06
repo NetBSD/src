@@ -1,4 +1,4 @@
-/*	$NetBSD: yeeloong_machdep.c,v 1.1.6.3 2012/03/06 09:56:06 mrg Exp $	*/
+/*	$NetBSD: yeeloong_machdep.c,v 1.1.6.4 2012/03/06 18:26:35 mrg Exp $	*/
 /*	$OpenBSD: yeeloong_machdep.c,v 1.16 2011/04/15 20:40:06 deraadt Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yeeloong_machdep.c,v 1.1.6.3 2012/03/06 09:56:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yeeloong_machdep.c,v 1.1.6.4 2012/03/06 18:26:35 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,8 +246,8 @@ lemote_pci_attach_hook(device_t parent, device_t self,
     struct pcibus_attach_args *pba)
 {
 	pci_chipset_tag_t pc = pba->pba_pc;
-	pcireg_t id;
 	pcitag_t tag;
+	pcireg_t id;
 	int dev, i;
 
 	if (pba->pba_bus != 0)
@@ -268,6 +268,7 @@ lemote_pci_attach_hook(device_t parent, device_t self,
 			break;
 		}
 	}
+
 	wrmsr(GCSC_PIC_SHDW, 0);
 	DPRINTF(("PMON setup picregs:"));
 	for (i = 0; i < 12; i++) {
@@ -278,6 +279,7 @@ lemote_pci_attach_hook(device_t parent, device_t self,
 	DPRINTF(("\n"));
 	DPRINTF(("intsel 0x%x 0x%x\n", REGVAL8(BONITO_PCIIO_BASE + 0x4d0),
 	    REGVAL8(BONITO_PCIIO_BASE + 0x4d1)));
+
 	/* setup legacy interrupt controller */
 	REGVAL8(BONITO_PCIIO_BASE + IO_ICU1 + PIC_OCW1) = 0xff;
 	REGVAL8(BONITO_PCIIO_BASE + IO_ICU1 + PIC_ICW1) =
@@ -290,8 +292,7 @@ lemote_pci_attach_hook(device_t parent, device_t self,
 	REGVAL8(BONITO_PCIIO_BASE + IO_ICU1 + PIC_OCW1) = 0xff;
 
 	/* read ISR by default. */
-	REGVAL8(BONITO_PCIIO_BASE + IO_ICU1 + PIC_OCW3) =
-	    OCW3_SELECT | OCW3_RR;
+	REGVAL8(BONITO_PCIIO_BASE + IO_ICU1 + PIC_OCW3) = OCW3_SELECT | OCW3_RR;
 	(void)REGVAL8(BONITO_PCIIO_BASE + IO_ICU1 + PIC_OCW3);
 
 	/* reset; program device, four bytes */
@@ -305,8 +306,7 @@ lemote_pci_attach_hook(device_t parent, device_t self,
 	/* leave interrupts masked */
 	REGVAL8(BONITO_PCIIO_BASE + IO_ICU2 + PIC_OCW1) = 0xff;
 	/* read ISR by default. */
-	REGVAL8(BONITO_PCIIO_BASE + IO_ICU2 + PIC_OCW3) =
-	    OCW3_SELECT | OCW3_RR;
+	REGVAL8(BONITO_PCIIO_BASE + IO_ICU2 + PIC_OCW3) = OCW3_SELECT | OCW3_RR;
 	(void)REGVAL8(BONITO_PCIIO_BASE + IO_ICU2 + PIC_OCW3);
 }
 
@@ -322,34 +322,33 @@ lemote_intr_map(int dev, int fn, int pin, pci_intr_handle_t *ihp)
 		if (pin == PCI_INTERRUPT_PIN_A) {
 			*ihp = BONITO_DIRECT_IRQ(LOONGSON_INTR_PCIA +
 			    (dev - 6));
-			return 0;
+			return (0);
 		}
 		break;
 	/* PCI slot */
 	case 10:
 		*ihp = BONITO_DIRECT_IRQ(LOONGSON_INTR_PCIA +
 		    (pin - PCI_INTERRUPT_PIN_A));
-		return 0;
+		return (0);
 	/* Geode chip */
 	case 14:
 		switch (fn) {
 		case 1:	/* Flash */
 			*ihp = BONITO_ISA_IRQ(6);
-			return 0;
+			return (0);
 		case 3:	/* AC97 */
 			*ihp = BONITO_ISA_IRQ(9);
-			return 0;
+			return (0);
 		case 4:	/* OHCI */
 		case 5:	/* EHCI */
 			*ihp = BONITO_ISA_IRQ(11);
-			return 0;
+			return (0);
 		}
 		break;
 	default:
 		break;
 	}
-
-	return 1;
+	return (1);
 }
 
 /*
@@ -360,6 +359,7 @@ void
 lemote_isa_attach_hook(struct device *parent, struct device *self,
     struct isabus_attach_args *iba)
 {
+
 	loongson_set_isa_imr(loongson_isaimr);
 }
 
@@ -372,19 +372,20 @@ lemote_isa_intr_establish(void *v, int irq, int type, int level,
 
 	ih =  evbmips_intr_establish(BONITO_ISA_IRQ(irq), handler, arg);
 	if (ih == NULL)
-		return NULL;
+		return (NULL);
+
 	/* enable interrupt */
 	imr = lemote_get_isa_imr();
 	imr |= (1 << irq);
-	DPRINTF(("lemote_isa_intr_establish: enable irq %d 0x%x\n",
-	    irq, imr));
+	DPRINTF(("lemote_isa_intr_establish: enable irq %d 0x%x\n", irq, imr));
 	loongson_set_isa_imr(imr);
-	return ih;
+	return (ih);
 }
 
 void
 lemote_isa_intr_disestablish(void *v, void *ih)
 {
+
 	evbmips_intr_disestablish(ih);
 }
 
@@ -422,59 +423,53 @@ void
 lemote_isa_intr(int ipl, vaddr_t pc, uint32_t ipending)
 {
 #if NISA > 0
-	uint32_t isr, imr, mask;
-	int bit;
 	struct evbmips_intrhand *ih;
+	uint32_t isr, imr, mask;
+	int bitno;
 	int rc;
-	//int i;
 
 	imr = lemote_get_isa_imr();
 	isr = lemote_get_isa_isr() & imr;
+	if (isr == 0)
+		return;
 
 	/*
 	 * Now process allowed interrupts.
 	 */
-	if (isr != 0) {
-		int bitno, ret;
+	/* Service higher level interrupts first */
+	for (bitno = BONITO_NISA - 1, mask = 1UL << bitno;
+	     mask != 0;
+	     bitno--, mask >>= 1) {
+		if ((isr & mask) == 0)
+			continue;
 
-		/* Service higher level interrupts first */
-		bit = BONITO_NISA - 1;
-		for (bitno = bit, mask = 1UL << bitno;
-		    mask != 0;
-		    bitno--, mask >>= 1) {
-			if ((isr & mask) == 0)
-				continue;
-			loongson_isa_specific_eoi(bitno);
-			rc = 0;
-			LIST_FOREACH(ih,
-			    &bonito_intrhead[BONITO_ISA_IRQ(bitno)].intrhand_head,
-			    ih_q) {
-				ret = (*ih->ih_func)(ih->ih_arg);
-				if (ret) {
-					rc = 1;
-					bonito_intrhead[BONITO_ISA_IRQ(bitno)].intr_count.ev_count++;
-				}
-			}
-			if (rc == 0) {
-				if (stray_intr[bitno]++ & 0x10000) {
-					printf("spurious isa interrupt %d\n",
-					    bitno);
-					stray_intr[bitno] = 0;
-				}
-			}
+		loongson_isa_specific_eoi(bitno);
 
-			if ((isr ^= mask) == 0)
-				break;
+		rc = 0;
+		LIST_FOREACH(ih,
+		    &bonito_intrhead[BONITO_ISA_IRQ(bitno)].intrhand_head,
+		    ih_q) {
+			if ((*ih->ih_func)(ih->ih_arg) != 0) {
+				rc = 1;
+				bonito_intrhead[BONITO_ISA_IRQ(bitno)].intr_count.ev_count++;
+			}
+		}
+		if (rc == 0) {
+			if (stray_intr[bitno]++ & 0x10000) {
+				printf("spurious isa interrupt %d\n", bitno);
+				stray_intr[bitno] = 0;
+			}
 		}
 
-		/*
-		 * Reenable interrupts which have been serviced.
-		 */
-		loongson_set_isa_imr(imr);
+		if ((isr ^= mask) == 0)
+			break;
 	}
 
+	/*
+	 * Reenable interrupts which have been serviced.
+	 */
+	loongson_set_isa_imr(imr);
 #endif
-	return;
 }
 
 uint
@@ -482,23 +477,23 @@ lemote_get_isa_imr(void)
 {
 	uint imr1, imr2;
 
-	imr1 = 0xff & ~REGVAL8(BONITO_PCIIO_BASE + IO_ICU1 + 1);
+	imr1 = 0xff & ~REGVAL8(BONITO_PCIIO_BASE + IO_ICU1 + PIC_OCW1);
 	imr1 &= ~(1 << 2);	/* hide cascade */
-	imr2 = 0xff & ~REGVAL8(BONITO_PCIIO_BASE + IO_ICU2 + 1);
+	imr2 = 0xff & ~REGVAL8(BONITO_PCIIO_BASE + IO_ICU2 + PIC_OCW1);
 
-	return (imr2 << 8) | imr1;
+	return ((imr2 << 8) | imr1);
 }
 
 uint
 lemote_get_isa_isr(void)
 {
-	uint isr1, isr2 = 0;
+	uint isr1, isr2;
 
 	isr1 = REGVAL8(BONITO_PCIIO_BASE + IO_ICU1);
-	isr1 &= ~(1<<2);
+	isr1 &= ~(1 << 2);
 	isr2 = REGVAL8(BONITO_PCIIO_BASE + IO_ICU2);
 
-	return (isr1 | (isr2 << 8));
+	return ((isr2 << 8) | isr1);
 }
 
 /*
@@ -520,6 +515,7 @@ fuloong_powerdown(void)
 void
 yeeloong_powerdown(void)
 {
+
 	REGVAL(BONITO_GPIODATA) &= ~0x00000001;
 	REGVAL(BONITO_GPIOIE) &= ~0x00000001;
 }
@@ -527,6 +523,7 @@ yeeloong_powerdown(void)
 void
 lemote_reset(void)
 {
+
 	wrmsr(GCSC_GLCP_SYS_RST, rdmsr(GCSC_GLCP_SYS_RST) | 1);
 }
 

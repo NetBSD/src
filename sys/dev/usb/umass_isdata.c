@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.21.6.2 2012/03/06 09:56:23 mrg Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.21.6.3 2012/03/06 18:26:47 mrg Exp $	*/
 
 /*
  * TODO:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.21.6.2 2012/03/06 09:56:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.21.6.3 2012/03/06 18:26:47 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_umass.h"
@@ -361,7 +361,7 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
 		 ata_bio->bcount, drv->drive));
 	sc->sc_methods->wire_xfer(sc, drv->drive, &ata, sizeof ata,
 				  ata_bio->databuf + scbus->sc_skip, nbytes,
-				  dir, ATA_DELAY, uisdata_bio_cb, ata_bio);
+				  dir, ATA_DELAY, 0, uisdata_bio_cb, ata_bio);
 
 	while (ata_bio->flags & ATA_POLL) {
 		DPRINTF(("%s: tsleep %p\n", __func__, ata_bio));
@@ -455,7 +455,7 @@ uisdata_exec_command(struct ata_drive_datas *drv, struct ata_command *cmd)
 		 ata.ac_command, drv->drive));
 	sc->sc_methods->wire_xfer(sc, drv->drive, &ata,
 				  sizeof ata, cmd->data, cmd->bcount, dir,
-				  cmd->timeout, uisdata_exec_cb, cmd);
+				  cmd->timeout, 0, uisdata_exec_cb, cmd);
 	if (cmd->flags & (AT_POLL | AT_WAIT)) {
 #if 0
 		if (cmd->flags & AT_POLL)

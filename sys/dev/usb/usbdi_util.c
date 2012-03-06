@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.55.12.6 2012/02/26 08:02:36 mrg Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.55.12.7 2012/03/06 18:26:48 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.55.12.6 2012/02/26 08:02:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.55.12.7 2012/03/06 18:26:48 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -520,7 +520,7 @@ usb_detach_wait(device_t dv, kcondvar_t *cv, kmutex_t *lock)
 	if (cv_timedwait(cv, lock, hz * 60))	// dv, PZERO, "usbdet", hz * 60
 		printf("usb_detach_wait: %s didn't detach\n",
 		        device_xname(dv));
-	DPRINTF(("usb_detach_wait: %s done\n", device_xname(dv)));
+	DPRINTF(("usb_detach_waitold: %s done\n", device_xname(dv)));
 }
 
 void

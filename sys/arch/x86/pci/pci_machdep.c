@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.53.4.3 2012/03/06 09:56:12 mrg Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.53.4.4 2012/03/06 18:26:40 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -69,11 +69,11 @@
  *
  * The configuration method can be hard-coded in the config file by
  * using `options PCI_CONF_MODE=N', where `N' is the configuration mode
- * as defined section 3.6.4.1, `Generating Configuration Cycles'.
+ * as defined in section 3.6.4.1, `Generating Configuration Cycles'.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.53.4.3 2012/03/06 09:56:12 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.53.4.4 2012/03/06 18:26:40 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -163,9 +163,9 @@ static void pci_conf_select(uint32_t);
 static void pci_conf_lock(struct pci_conf_lock *, uint32_t);
 static void pci_bridge_hook(pci_chipset_tag_t, pcitag_t, void *);
 struct pci_bridge_hook_arg {
-	void (*func)(pci_chipset_tag_t, pcitag_t, void *); 
-	void *arg; 
-}; 
+	void (*func)(pci_chipset_tag_t, pcitag_t, void *);
+	void *arg;
+};
 
 #define	PCI_MODE1_ENABLE	0x80000000UL
 #define	PCI_MODE1_ADDRESS_REG	0x0cf8
@@ -174,14 +174,15 @@ struct pci_bridge_hook_arg {
 #define	PCI_MODE2_ENABLE_REG	0x0cf8
 #define	PCI_MODE2_FORWARD_REG	0x0cfa
 
-#define _m1tag(b, d, f) \
-	(PCI_MODE1_ENABLE | ((b) << 16) | ((d) << 11) | ((f) << 8))
+#define _tag(b, d, f) \
+	{.mode1 = PCI_MODE1_ENABLE | ((b) << 16) | ((d) << 11) | ((f) << 8)}
 #define _qe(bus, dev, fcn, vend, prod) \
-	{_m1tag(bus, dev, fcn), PCI_ID_CODE(vend, prod)}
-struct {
-	uint32_t tag;
+	{_tag(bus, dev, fcn), PCI_ID_CODE(vend, prod)}
+const struct {
+	pcitag_t tag;
 	pcireg_t id;
 } pcim1_quirk_tbl[] = {
+	_qe(0, 0, 0, PCI_VENDOR_INVALID, 0x0000), /* patchable */
 	_qe(0, 0, 0, PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_TRIFLEX1),
 	/* XXX Triflex2 not tested */
 	_qe(0, 0, 0, PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_TRIFLEX2),
@@ -198,11 +199,9 @@ struct {
 	/* SIS 741 */
 	_qe(0, 0, 0, PCI_VENDOR_SIS, PCI_PRODUCT_SIS_741),
 	/* VIA Technologies VX900 */
-	_qe(0, 0, 0, PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VX900_HB),
-	{0, 0xffffffff} /* patchable */
+	_qe(0, 0, 0, PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VX900_HB)
 };
-#undef _m1tag
-#undef _id
+#undef _tag
 #undef _qe
 
 /*
@@ -539,10 +538,10 @@ pci_mode_detect(void)
 	for (i = 0; i < __arraycount(pcim1_quirk_tbl); i++) {
 		pcitag_t t;
 
-		if (!pcim1_quirk_tbl[i].tag)
-			break;
-		t.mode1 = pcim1_quirk_tbl[i].tag;
-		idreg = pci_conf_read(0, t, PCI_ID_REG); /* needs "pci_mode" */
+		if (PCI_VENDOR(pcim1_quirk_tbl[i].id) == PCI_VENDOR_INVALID)
+			continue;
+		t.mode1 = pcim1_quirk_tbl[i].tag.mode1;
+		idreg = pci_conf_read(NULL, t, PCI_ID_REG); /* needs "pci_mode" */
 		if (idreg == pcim1_quirk_tbl[i].id) {
 #ifdef DEBUG
 			printf("known mode 1 PCI chipset (%08x)\n",
@@ -676,7 +675,7 @@ pci_device_foreach_min(pci_chipset_tag_t pc, int minbus, int maxbus,
 			bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
 			if (PCI_HDRTYPE_MULTIFN(bhlcr) ||
 			     (qd != NULL &&
-		  	     (qd->quirks & PCI_QUIRK_MULTIFUNCTION) != 0))
+			     (qd->quirks & PCI_QUIRK_MULTIFUNCTION) != 0))
 				nfuncs = 8;
 			else
 				nfuncs = 1;
@@ -707,10 +706,10 @@ pci_bridge_foreach(pci_chipset_tag_t pc, int minbus, int maxbus,
 	struct pci_bridge_hook_arg bridge_hook;
 
 	bridge_hook.func = func;
-	bridge_hook.arg = ctx;  
+	bridge_hook.arg = ctx;
 
 	pci_device_foreach_min(pc, minbus, maxbus, pci_bridge_hook,
-		&bridge_hook);      
+		&bridge_hook);
 }
 
 static void
@@ -721,7 +720,7 @@ pci_bridge_hook(pci_chipset_tag_t pc, pcitag_t tag, void *ctx)
 
 	reg = pci_conf_read(pc, tag, PCI_CLASS_REG);
 	if (PCI_CLASS(reg) == PCI_CLASS_BRIDGE &&
- 	     (PCI_SUBCLASS(reg) == PCI_SUBCLASS_BRIDGE_PCI ||
+	    (PCI_SUBCLASS(reg) == PCI_SUBCLASS_BRIDGE_PCI ||
 		PCI_SUBCLASS(reg) == PCI_SUBCLASS_BRIDGE_CARDBUS)) {
 		(*bridge_hook->func)(pc, tag, bridge_hook->arg);
 	}
@@ -884,7 +883,7 @@ device_pci_register(device_t dev, void *aux)
 		 * passed by the boot ROM.  The ROM should stay usable if
 		 * the driver becomes obsolete.  The physical attachment
 		 * information (checked below) must be sufficient to
-		 * idenfity the device.
+		 * identify the device.
 		 */
 		if (bin->bus == BI_BUS_PCI &&
 		    device_is_a(device_parent(dev), "pci")) {
@@ -951,7 +950,7 @@ device_pci_register(device_t dev, void *aux)
 #endif
 				if (fbinfo->depth == 8) {
 					gfb_cb.gcc_cookie = NULL;
-					gfb_cb.gcc_set_mapreg = 
+					gfb_cb.gcc_set_mapreg =
 					    x86_genfb_set_mapreg;
 					prop_dictionary_set_uint64(dict,
 					    "cmap_callback",

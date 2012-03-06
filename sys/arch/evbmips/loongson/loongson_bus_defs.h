@@ -1,4 +1,4 @@
-/* $NetBSD: loongson_bus_defs.h,v 1.1.6.2 2012/03/06 09:56:06 mrg Exp $ */
+/* $NetBSD: loongson_bus_defs.h,v 1.1.6.3 2012/03/06 18:26:35 mrg Exp $ */
 
 #ifndef _LOONGSON_BUS_H_
 #define	_LOONGSON_BUS_H_
@@ -15,5 +15,8 @@ extern struct mips_pci_chipset bonito_pc;
 
 void    bonito_bus_io_init(bus_space_tag_t, void *);
 void    bonito_bus_mem_init(bus_space_tag_t, void *);
+
+int	bonito_bus_io_legacy_map(void *, bus_addr_t, bus_size_t, int,
+	    bus_space_handle_t *, int);
 
 #endif /* _LOONGSON_BUS_H_ */

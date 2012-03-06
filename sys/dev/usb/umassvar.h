@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.31.6.3 2012/03/06 09:56:24 mrg Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.31.6.4 2012/03/06 18:26:47 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -134,7 +134,7 @@ typedef void (*umass_callback)(struct umass_softc *, void *, int, int);
 #define STATUS_WIRE_FAILED	3	/* couldn't even get command across */
 
 typedef void (*umass_wire_xfer)(struct umass_softc *, int, void *, int, void *,
-				int, int, u_int, umass_callback, void *);
+				int, int, u_int, int, umass_callback, void *);
 typedef void (*umass_wire_reset)(struct umass_softc *, int);
 typedef void (*umass_wire_state)(usbd_xfer_handle, usbd_private_handle,
 				 usbd_status);
@@ -266,7 +266,6 @@ struct umass_softc {
 	struct timeval tv;
 #endif
 
-	int			sc_xfer_flags;
 	char			sc_dying;
 	int			sc_refcnt;
 	int			sc_sense;

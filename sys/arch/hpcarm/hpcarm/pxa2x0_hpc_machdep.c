@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.13 2011/07/19 15:37:39 dyoung Exp $	*/
+/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.13.6.1 2012/03/06 18:26:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.13 2011/07/19 15:37:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.13.6.1 2012/03/06 18:26:36 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -102,8 +102,15 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.13 2011/07/19 15:37:39 dyou
 
 /* Kernel text starts 2MB in from the bottom of the kernel address space. */
 #define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00200000)
-#define	KERNEL_VM_BASE		(KERNEL_BASE + 0x00C00000)
-#define	KERNEL_VM_SIZE		0x05000000
+#ifndef	KERNEL_VM_BASE
+#define	KERNEL_VM_BASE		(KERNEL_BASE + 0x01000000)
+#endif
+
+/*
+ * The range 0xc1000000 - 0xccffffff is available for kernel VM space
+ * Core-logic registers and I/O mappings occupy 0xfd000000 - 0xffffffff
+ */
+#define	KERNEL_VM_SIZE		0x0c000000
 
 /*
  * Address to call from cpu_reset() to reset the machine.
@@ -148,9 +155,8 @@ extern int end;
 extern int pmap_debug_level;
 #endif /* PMAP_DEBUG */
 
-#define	KERNEL_PT_VMEM		0	/* Page table for mapping video memory */
-#define	KERNEL_PT_SYS		1	/* Page table for mapping proc0 zero page */
-#define	KERNEL_PT_KERNEL	2	/* Page table for mapping kernel */
+#define	KERNEL_PT_SYS		0	/* Page table for mapping proc0 zero page */
+#define	KERNEL_PT_KERNEL	1	/* Page table for mapping kernel */
 #define	KERNEL_PT_KERNEL_NUM	4
 #define	KERNEL_PT_VMDATA	(KERNEL_PT_KERNEL + KERNEL_PT_KERNEL_NUM)
 					/* Page tables for mapping kernel VM */

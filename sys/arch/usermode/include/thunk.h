@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.35.2.3 2012/03/06 09:56:10 mrg Exp $ */
+/* $NetBSD: thunk.h,v 1.35.2.4 2012/03/06 18:26:39 mrg Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -101,7 +101,7 @@ void	thunk_seterrno(int err);
 int	thunk_getcontext(ucontext_t *);
 int	thunk_setcontext(const ucontext_t *);
 void	thunk_makecontext(ucontext_t *ucp, void (*func)(void), 
-		int nargs, void *arg1, void *arg2, void *arg3);
+		int nargs, void *arg1, void *arg2, void *arg3, void *arg4);
 int	thunk_swapcontext(ucontext_t *, ucontext_t *);
 
 int	thunk_tcgetattr(int, struct thunk_termios *);
