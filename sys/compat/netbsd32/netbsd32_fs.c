@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.62 2012/01/25 14:06:07 christos Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.63 2012/03/06 07:37:05 macallan Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.62 2012/01/25 14:06:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.63 2012/03/06 07:37:05 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.62 2012/01/25 14:06:07 christos Ex
 #include <sys/vfs_syscalls.h>
 
 #include <fs/cd9660/cd9660_mount.h>
+#include <fs/msdosfs/bpb.h>
+#include <fs/msdosfs/msdosfsmount.h>
 #include <ufs/ufs/ufsmount.h>
 
 #define NFS_ARGS_ONLY
@@ -774,12 +776,14 @@ netbsd32___mount50(struct lwp *l, const struct netbsd32___mount50_args *uap,
 		struct netbsd32_mfs_args mfs_args;
 		struct netbsd32_iso_args iso_args;
 		struct netbsd32_nfs_args nfs_args;
+		struct netbsd32_msdosfs_args msdosfs_args;
 	} fs_args32;
 	union {
 		struct ufs_args ufs_args;
 		struct mfs_args mfs_args;
 		struct iso_args iso_args;
 		struct nfs_args nfs_args;
+		struct msdosfs_args msdosfs_args;
 	} fs_args;
 	const char *type = SCARG_P32(uap, type);
 	const char *path = SCARG_P32(uap, path);
@@ -812,7 +816,9 @@ netbsd32___mount50(struct lwp *l, const struct netbsd32___mount50_args *uap,
 		data_seg = UIO_SYSSPACE;
 		data = &fs_args.mfs_args;
 		data_len = sizeof(fs_args.mfs_args);
-	} else if (strcmp(mtype, MOUNT_UFS) == 0) {
+	} else if ((strcmp(mtype, MOUNT_UFS) == 0) ||
+		   (strcmp(mtype, MOUNT_EXT2FS) == 0) ||
+		   (strcmp(mtype, MOUNT_LFS) == 0)) {
 		if (data_len > sizeof(fs_args32.ufs_args))
 			return EINVAL;
 		if ((flags & MNT_GETARGS) == 0) {
@@ -843,6 +849,36 @@ netbsd32___mount50(struct lwp *l, const struct netbsd32___mount50_args *uap,
 		data_seg = UIO_SYSSPACE;
 		data = &fs_args.iso_args;
 		data_len = sizeof(fs_args.iso_args);
+	} else if (strcmp(mtype, MOUNT_MSDOS) == 0) {
+		if (data_len != sizeof(fs_args32.msdosfs_args))
+			return EINVAL;
+		if ((flags & MNT_GETARGS) == 0) {
+			error = copyin(data, &fs_args32.msdosfs_args, 
+			    sizeof(fs_args32.msdosfs_args));
+			if (error)
+				return error;
+			fs_args.msdosfs_args.fspec =
+			    NETBSD32PTR64(fs_args32.msdosfs_args.fspec);
+			memset(&fs_args.msdosfs_args._pad1, 0,
+			    sizeof(fs_args.msdosfs_args._pad1));
+			fs_args.msdosfs_args.uid =
+			    fs_args32.msdosfs_args.uid;
+			fs_args.msdosfs_args.gid =
+			    fs_args32.msdosfs_args.gid;
+			fs_args.msdosfs_args.mask =
+			    fs_args32.msdosfs_args.mask;
+			fs_args.msdosfs_args.flags =
+			    fs_args32.msdosfs_args.flags;
+			fs_args.msdosfs_args.version =
+			    fs_args32.msdosfs_args.version;
+			fs_args.msdosfs_args.dirmask =
+			    fs_args32.msdosfs_args.dirmask;
+			fs_args.msdosfs_args.gmtoff =
+			    fs_args32.msdosfs_args.gmtoff;
+		}
+		data_seg = UIO_SYSSPACE;
+		data = &fs_args.msdosfs_args;
+		data_len = sizeof(fs_args.msdosfs_args);
 	} else if (strcmp(mtype, MOUNT_NFS) == 0) {
 		if (data_len != sizeof(fs_args32.nfs_args))
 			return EINVAL;
