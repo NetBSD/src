@@ -1,4 +1,4 @@
-/*	$NetBSD: mke2fs.c,v 1.14 2010/09/10 15:51:20 tsutsui Exp $	*/
+/*	$NetBSD: mke2fs.c,v 1.15 2012/03/06 15:39:41 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2007 Izumi Tsutsui.  All rights reserved.
@@ -100,7 +100,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mke2fs.c,v 1.14 2010/09/10 15:51:20 tsutsui Exp $");
+__RCSID("$NetBSD: mke2fs.c,v 1.15 2012/03/06 15:39:41 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,7 @@ __RCSID("$NetBSD: mke2fs.c,v 1.14 2010/09/10 15:51:20 tsutsui Exp $");
 #include "extern.h"
 
 static void initcg(uint);
-static void zap_old_sblock(daddr_t);
+static void zap_old_sblock(int);
 static uint cgoverhead(uint);
 static int fsinit(const struct timeval *);
 static int makedir(struct ext2fs_direct *, int);
@@ -552,7 +552,7 @@ mke2fs(const char *fsys, int fi, int fo)
 
 	if (!Nflag) {
 		static const uint pbsize[] = { 1024, 2048, 4096, 0 };
-		uint pblock, epblock;
+		uint pblock;
 		/*
 		 * Validate the given file system size.
 		 * Verify that its last block can actually be accessed.
@@ -566,19 +566,23 @@ mke2fs(const char *fsys, int fi, int fo)
 		/*
 		 * Ensure there is nothing that looks like a filesystem
 		 * superblock anywhere other than where ours will be.
-		 * If fsck_ext2fs finds the wrong one all hell breaks loose!
 		 *
-		 * XXX: needs to check how fsck_ext2fs programs even
-		 *      on other OSes determine alternate superblocks
+		 * Ext2fs superblock is always placed at the same SBOFF,
+		 * so we just zap possible first backups.
 		 */
 		for (i = 0; pbsize[i] != 0; i++) {
-			epblock = (uint64_t)bcount * bsize / pbsize[i];
-			for (pblock = ((pbsize[i] == SBSIZE) ? 1 : 0);
-			    pblock < epblock;
-			    pblock += pbsize[i] * NBBY /* bpg */)
-				zap_old_sblock((daddr_t)pblock *
-				    pbsize[i] / sectorsize);
+ 			pblock = (pbsize[i] > BBSIZE) ? 0 : 1;	/* 1st dblk */
+			pblock += pbsize[i] * NBBY;		/* next bg */
+			/* zap first backup */
+			zap_old_sblock(pblock * pbsize[i]);
 		}
+		/*
+		 * Also zap possbile FFS magic leftover to prevent
+		 * kernel vfs_mountroot() and bootloadres from mis-recognizing
+		 * this file system as FFS.
+		 */
+		zap_old_sblock(8192);	/* SBLOCK_UFS1 */
+		zap_old_sblock(65536);	/* SBLOCK_UFS2 */
 	}
 
 	if (verbosity >= 3)
@@ -769,9 +773,9 @@ initcg(uint cylno)
  * Zap possible lingering old superblock data
  */
 static void
-zap_old_sblock(daddr_t sec)
+zap_old_sblock(int sblkoff)
 {
-	static daddr_t cg0_data;
+	static int cg0_data;
 	uint32_t oldfs[SBSIZE / sizeof(uint32_t)];
 	static const struct fsm {
 		uint32_t offset;
@@ -793,24 +797,25 @@ zap_old_sblock(daddr_t sec)
 		return;
 
 	/* don't override data before superblock */
-	if (sec < SBOFF / sectorsize)
+	if (sblkoff < SBOFF)
 		return;
 
 	if (cg0_data == 0) {
 		cg0_data =
 		    ((daddr_t)sblock.e2fs.e2fs_first_dblock + cgoverhead(0)) *
-		    sblock.e2fs_bsize / sectorsize;
+		    sblock.e2fs_bsize;
 	}
 
 	/* Ignore anything that is beyond our filesystem */
-	if (sec >= fssize)
+	if (sblkoff / sectorsize >= fssize)
 		return;
 	/* Zero anything inside our filesystem... */
-	if (sec >= sblock.e2fs.e2fs_first_dblock * bsize / sectorsize) {
+	if (sblkoff >= sblock.e2fs.e2fs_first_dblock * bsize) {
 		/* ...unless we will write that area anyway */
-		if (sec >= cg0_data)
+		if (sblkoff >= cg0_data)
 			/* assume iobuf is zero'ed here */
-			wtfs(sec, roundup(SBSIZE, sectorsize), iobuf);
+			wtfs(sblkoff / sectorsize,
+			    roundup(SBSIZE, sectorsize), iobuf);
 		return;
 	}
 
@@ -820,7 +825,7 @@ zap_old_sblock(daddr_t sec)
 	 * XXX: ext2fs won't preserve data after SBOFF,
 	 *      but first_dblock could have a different value.
 	 */
-	rdfs(sec, sizeof(oldfs), &oldfs);
+	rdfs(sblkoff / sectorsize, sizeof(oldfs), &oldfs);
 	for (fsm = fs_magics;; fsm++) {
 		uint32_t v;
 		if (fsm->mask == 0)
@@ -833,7 +838,7 @@ zap_old_sblock(daddr_t sec)
 
 	/* Just zap the magic number */
 	oldfs[fsm->offset] = 0;
-	wtfs(sec, sizeof(oldfs), &oldfs);
+	wtfs(sblkoff / sectorsize, sizeof(oldfs), &oldfs);
 }
 
 /*
