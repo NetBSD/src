@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.184 2012/03/06 02:36:45 mrg Exp $ */
+/*	$NetBSD: ehci.c,v 1.185 2012/03/06 02:49:02 mrg Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.184 2012/03/06 02:36:45 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.185 2012/03/06 02:49:02 mrg Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -709,12 +709,10 @@ ehci_softintr(void *v)
 		callout_reset(&(sc->sc_tmo_intrlist),
 		    (hz), (ehci_intrlist_timeout), (sc));
 
-#ifdef USB_USE_SOFTINTR
 	if (sc->sc_softwake) {
 		sc->sc_softwake = 0;
 		wakeup(&sc->sc_softwake);
 	}
-#endif /* USB_USE_SOFTINTR */
 
 	sc->sc_bus.intr_context--;
 }
@@ -2980,13 +2978,9 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	 */
 	ehci_sync_hc(sc);
 	s = splusb();
-#ifdef USB_USE_SOFTINTR
 	sc->sc_softwake = 1;
-#endif /* USB_USE_SOFTINTR */
 	usb_schedsoftintr(&sc->sc_bus);
-#ifdef USB_USE_SOFTINTR
 	tsleep(&sc->sc_softwake, PZERO, "ehciab", 0);
-#endif /* USB_USE_SOFTINTR */
 	splx(s);
 
 	/*
@@ -3109,13 +3103,9 @@ ehci_abort_isoc_xfer(usbd_xfer_handle xfer, usbd_status status)
 	splx(s);
 
         s = splusb();
-#ifdef USB_USE_SOFTINTR
         sc->sc_softwake = 1;
-#endif /* USB_USE_SOFTINTR */
         usb_schedsoftintr(&sc->sc_bus);
-#ifdef USB_USE_SOFTINTR
         tsleep(&sc->sc_softwake, PZERO, "ehciab", 0);
-#endif /* USB_USE_SOFTINTR */
         splx(s);
 
 #ifdef DIAGNOSTIC
