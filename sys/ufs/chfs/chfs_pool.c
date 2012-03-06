@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_pool.c,v 1.1.2.1 2012/03/04 00:46:32 mrg Exp $	*/
+/*	$NetBSD: chfs_pool.c,v 1.1.2.2 2012/03/06 09:56:29 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -49,6 +49,9 @@
 
 void *	chfs_pool_page_alloc(struct pool *, int);
 void	chfs_pool_page_free(struct pool *, void *);
+
+extern void*	pool_page_alloc_nointr(struct pool *, int);
+extern void	pool_page_free_nointr(struct pool *, void *);
 
 /* --------------------------------------------------------------------- */
 
@@ -101,7 +104,7 @@ chfs_pool_page_alloc(struct pool *pp, int flags)
 		atomic_dec_uint(&chmp->chm_pages_used);
 		return NULL;
 	}
-	page = pool_get(pp, flags | PR_WAITOK);
+	page = pool_page_alloc_nointr(pp, flags | PR_WAITOK);
 	if (page == NULL) {
 		atomic_dec_uint(&chmp->chm_pages_used);
 	}
@@ -122,7 +125,7 @@ chfs_pool_page_free(struct pool *pp, void *v)
 	chmp = chpp->chp_mount;
 
 	atomic_dec_uint(&chmp->chm_pages_used);
-	pool_put(pp,v);
+	pool_page_free_nointr(pp, v);
 }
 
 /* --------------------------------------------------------------------- */

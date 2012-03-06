@@ -1,4 +1,4 @@
-/*	$NetBSD: st_scsi.c,v 1.32.16.2 2012/03/04 00:46:27 mrg Exp $ */
+/*	$NetBSD: st_scsi.c,v 1.32.16.3 2012/03/06 09:56:22 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,9 +50,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.32.16.2 2012/03/04 00:46:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.32.16.3 2012/03/06 09:56:22 mrg Exp $");
 
 #include "opt_scsi.h"
+
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -73,14 +74,8 @@ static int	st_scsibus_read_block_limits(struct st_softc *, int);
 static int	st_scsibus_mode_sense(struct st_softc *, int);
 static int	st_scsibus_cmprss(struct st_softc *, int, int);
 
-CFATTACH_DECL_NEW(
-	st_scsibus,
-	sizeof(struct st_softc),
-	st_scsibus_match,
-	st_scsibus_attach,
-	stdetach,
-	NULL
-);
+CFATTACH_DECL(st_scsibus, sizeof(struct st_softc),
+    st_scsibus_match, st_scsibus_attach, stdetach, NULL);
 
 static const struct scsipi_inquiry_pattern st_scsibus_patterns[] = {
 	{T_SEQUENTIAL, T_REMOV,
@@ -88,19 +83,20 @@ static const struct scsipi_inquiry_pattern st_scsibus_patterns[] = {
 };
 
 static int
-st_scsibus_match(device_t parent, cfdata_t match, void *aux)
+st_scsibus_match(device_t parent, cfdata_t match,
+    void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
 	int priority;
 
 	if (scsipi_periph_bustype(sa->sa_periph) != SCSIPI_BUSTYPE_SCSI)
-		return 0;
+		return (0);
 
 	(void)scsipi_inqmatch(&sa->sa_inqbuf,
 	    st_scsibus_patterns,
 	    sizeof(st_scsibus_patterns)/sizeof(st_scsibus_patterns[0]),
 	    sizeof(st_scsibus_patterns[0]), &priority);
-	return priority;
+	return (priority);
 }
 
 static void
@@ -109,7 +105,7 @@ st_scsibus_attach(device_t parent, device_t self, void *aux)
 	struct st_softc *st = device_private(self);
 
 	st->ops = st_scsibus_ops;
-	stattach(parent, self, aux);
+	stattach(parent, st, aux);
 }
 
 static int
@@ -144,23 +140,27 @@ st_scsibus_read_block_limits(struct st_softc *st, int flags)
 	struct scsipi_periph *periph = st->sc_periph;
 	int error;
 
-	/* do a 'Read Block Limits' */
+	/*
+	 * do a 'Read Block Limits'
+	 */
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = READ_BLOCK_LIMITS;
 
-	/* do the command, update the global values */
+	/*
+	 * do the command, update the global values
+	 */
 	error = scsipi_command(periph, (void *)&cmd, sizeof(cmd),
 	    (void *)&block_limits, sizeof(block_limits),
 	    ST_RETRIES, ST_CTL_TIME, NULL, flags | XS_CTL_DATA_IN);
 	if (error)
-		return error;
+		return (error);
 
 	st->blkmin = _2btol(block_limits.min_length);
 	st->blkmax = _3btol(block_limits.max_length);
 
 	SC_DEBUG(periph, SCSIPI_DB3,
 	    ("(%d <= blksize <= %d)\n", st->blkmin, st->blkmax));
-	return 0;
+	return (0);
 }
 
 /*
@@ -199,7 +199,7 @@ st_scsibus_mode_sense(struct st_softc *st, int flags)
 	    &scsipi_sense.header, scsipi_sense_len, flags,
 	    ST_RETRIES, ST_CTL_TIME);
 	if (error)
-		return error;
+		return (error);
 
 	st->numblks = _3btol(scsipi_sense.blk_desc.nblocks);
 	st->media_blksize = _3btol(scsipi_sense.blk_desc.blklen);
@@ -219,7 +219,7 @@ st_scsibus_mode_sense(struct st_softc *st, int flags)
 		memcpy(st->sense_data, scsipi_sense.sense_data,
 		    st->page_0_size);
 	periph->periph_flags |= PERIPH_MEDIA_LOADED;
-	return 0;
+	return (0);
 }
 
 static int
@@ -239,11 +239,15 @@ st_scsibus_cmprss(struct st_softc *st, int flags, int onoff)
 	int error, ison;
 
 	scsi_dlen = sizeof(scsi_pdata);
-	/* Do DATA COMPRESSION page first. */
+	/*
+	 * Do DATA COMPRESSION page first.
+	 */
 	page = SMS_PCTRL_CURRENT | 0xf;
 	byte2 = 0;
 
-	/*  Do the MODE SENSE command... */
+	/*
+	 * Do the MODE SENSE command...
+	 */
 again:
 	memset(&scsi_pdata, 0, scsi_dlen);
 	error = scsipi_mode_sense(periph, byte2, page,
@@ -254,13 +258,15 @@ again:
 			byte2 = SMS_DBD;
 			goto again;
 		}
-		/* Try a different page? */
+		/*
+		 * Try a different page?
+		 */
 		if (page == (SMS_PCTRL_CURRENT | 0xf)) {
 			page = SMS_PCTRL_CURRENT | 0x10;
 			byte2 = 0;
 			goto again;
 		}
-		return error;
+		return (error);
 	}
 
 	if (scsi_pdata.header.blk_desc_len)
@@ -300,9 +306,12 @@ again:
 	 * but let's not clog the bus over it.
 	 */
 	if (onoff == ison)
-		return 0;
+		return (0);
 
-	/* Set up for a mode select */
+	/*
+	 * Set up for a mode select
+	 */
+
 	scsi_pdata.header.data_length = 0;
 	scsi_pdata.header.medium_type = 0;
 	if ((st->flags & ST_DONTBUFFER) == 0)
@@ -317,14 +326,18 @@ again:
 		scsi_pdata.blk_desc.nblocks[2] = 0;
 	}
 
-	/* Do the command */
+	/*
+	 * Do the command
+	 */
 	error = scsipi_mode_select(periph, SMS_PF, &scsi_pdata.header,
 	    scsi_dlen, flags, ST_RETRIES, ST_CTL_TIME);
 
 	if (error && (page & SMS_PAGE_MASK) == 0xf) {
-		/* Try DEVICE CONFIGURATION page. */
+		/*
+		 * Try DEVICE CONFIGURATION page.
+		 */
 		page = SMS_PCTRL_CURRENT | 0x10;
 		goto again;
 	}
-	return error;
+	return (error);
 }

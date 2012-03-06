@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.327.2.2 2012/03/04 00:46:08 mrg Exp $
+# $NetBSD: ALL,v 1.327.2.3 2012/03/06 09:56:07 mrg Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.327.2.2 $"
+#ident 		"ALL-$Revision: 1.327.2.3 $"
 
 maxusers	64		# estimated number of users
 
@@ -189,7 +189,6 @@ file-system 	FILECORE	# Acorn filecore file system
 file-system 	ADOSFS		# AmigaDOS file system
 file-system	NILFS		# experimental - NTT's NiLFS(2)
 file-system	V7FS		# 7th Edition(V7) File System
-file-system	CHFS		# Chip File System
 
 # File system options
 options 	QUOTA		# legacy UFS quotas

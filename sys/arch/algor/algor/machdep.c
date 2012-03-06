@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.51.6.1 2012/03/04 00:46:01 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.51.6.2 2012/03/06 09:56:03 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.51.6.1 2012/03/04 00:46:01 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.51.6.2 2012/03/06 09:56:03 mrg Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -149,9 +149,13 @@ struct p5064_config p5064_configuration;
 struct p6032_config p6032_configuration;
 #endif 
 
+/* Our exported CPU info; we can have only one. */
+struct cpu_info cpu_info_store;
+
 /* Maps for VM objects. */
 struct vm_map *phys_map = NULL;
 
+int	physmem;		/* # pages of physical memory */
 int	maxmem;			/* max memory per process */
 
 int	mem_cluster_cnt;

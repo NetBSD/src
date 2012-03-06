@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_ids.c,v 1.5.6.1 2012/03/04 00:46:25 mrg Exp $ */
+/* $NetBSD: hdaudio_ids.c,v 1.5.6.2 2012/03/06 09:56:21 mrg Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_ids.c,v 1.5.6.1 2012/03/04 00:46:25 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_ids.c,v 1.5.6.2 2012/03/06 09:56:21 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -158,7 +158,6 @@ static const struct hdaudio_id {
 	{ HDA_VENDOR_CONEXANT, 0x5066, "CX20582" },
 	{ HDA_VENDOR_CONEXANT, 0x5067, "CX20583" },
 	{ HDA_VENDOR_CONEXANT, 0x5069, "CX20585" },
-	{ HDA_VENDOR_CONEXANT, 0x506e, "CX20671" },
 	{ HDA_VENDOR_CONEXANT, HDA_PRODUCT_ANY, "Conexant" },
 	/* CMedia */
 	{ HDA_VENDOR_CMEDIA, 0x4980, "CMI9880" },
