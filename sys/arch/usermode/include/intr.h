@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.4.6.2 2012/03/04 00:46:14 mrg Exp $ */
+/* $NetBSD: intr.h,v 1.4.6.3 2012/03/06 09:56:10 mrg Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -41,7 +41,7 @@ void	spllower(int);
 #define splx(x)		spllower(x)
 
 /* traps */
-typedef void (sigfunc_t)(siginfo_t *info, vaddr_t from_userland, vaddr_t pc, vaddr_t va);
+typedef void (sigfunc_t)(vaddr_t from_userland, vaddr_t pc, vaddr_t va);
 extern void setup_signal_handlers(void);
 extern void  signal_intr_establish(int sig, sigfunc_t f);
 extern void *sigio_intr_establish(int (*)(void *), void *);

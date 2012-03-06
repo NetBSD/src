@@ -1,4 +1,4 @@
-/*	$NetBSD: ssvar.h,v 1.18.6.1 2012/03/04 00:46:26 mrg Exp $	*/
+/*	$NetBSD: ssvar.h,v 1.18.6.2 2012/03/06 09:56:21 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -59,7 +59,7 @@ struct ss_special {
  * modules include it
  */
 struct ss_softc {
-	device_t sc_dev;
+	struct device sc_dev;
 
 	int flags;
 #define SSF_TRIGGERED	0x01	/* read operation has been primed */
@@ -70,7 +70,7 @@ struct ss_softc {
 	struct bufq_state *buf_queue;	/* the queue of pending IO operations */
 	struct callout sc_callout;	/* to restart the buf queue */
 	u_int quirks;			/* scanner is only mildly twisted */
-#define SS_Q_GET_BUFFER_SIZE	0x0001	/* poll for available data in ssread()*/
+#define SS_Q_GET_BUFFER_SIZE	0x0001	/* poll for available data in ssread() */
 /* truncate to byte boundary is assumed by default unless one of these is set */
 #define SS_Q_PAD_TO_BYTE	0x0002	/* pad monochrome data to byte boundary */
 #define SS_Q_PAD_TO_WORD	0x0004	/* pad monochrome data to word boundary */

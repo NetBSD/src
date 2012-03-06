@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.93.6.1 2012/03/04 00:46:14 mrg Exp $      */
+/*      $NetBSD: cpu.h,v 1.93.6.2 2012/03/06 09:56:11 mrg Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -162,18 +162,7 @@ extern int cpu_printfataltraps;
 		mtpr(AST_OK,PR_ASTLVL);		\
 	} while (/*CONSTCOND*/ 0)
 #define	cpu_proc_fork(x, y)	do { } while (/*CONSCOND*/0)
-
-/*
- * This allows SIMH to recognize the kernel wants to sleep.
- */
-static inline void
-cpu_idle(void)
-{
-	int ipl = mfpr(PR_IPL);
-	mtpr(1, PR_IPL);
-	mtpr(ipl, PR_IPL);
-}
-
+#define	cpu_idle()		do { } while (/*CONSCOND*/0)
 static inline bool
 cpu_intr_p(void)
 {

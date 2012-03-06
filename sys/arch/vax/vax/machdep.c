@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.182.6.3 2012/03/04 00:46:15 mrg Exp $	 */
+/* $NetBSD: machdep.c,v 1.182.6.4 2012/03/06 09:56:11 mrg Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.182.6.3 2012/03/04 00:46:15 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.182.6.4 2012/03/06 09:56:11 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -147,6 +147,7 @@ char		machine[] = MACHINE;		/* from <machine/param.h> */
 char		machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char		cpu_model[100];
 void *		msgbufaddr;
+int		physmem;
 int		*symtab_start;
 int		*symtab_end;
 int		symtab_nsyms;

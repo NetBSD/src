@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.74.2.2 2012/03/04 00:46:14 mrg Exp $ */
+/* $NetBSD: pmap.c,v 1.74.2.3 2012/03/06 09:56:11 mrg Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74.2.2 2012/03/04 00:46:14 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74.2.3 2012/03/06 09:56:11 mrg Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -37,7 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74.2.2 2012/03/04 00:46:14 mrg Exp $");
 #include <sys/param.h>
 #include <sys/mutex.h>
 #include <sys/buf.h>
-#include <sys/kmem.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <machine/thunk.h>
@@ -96,6 +95,7 @@ static uint64_t pm_entries_size = 0;
 
 static struct pool pmap_pool;
 static struct pool pmap_l1_pool;
+static struct pool pmap_l2_pool;
 static struct pool pmap_pventry_pool;
 
 /* forwards */
@@ -451,6 +451,8 @@ pmap_deferred_init(void)
 	/* create pmap pool */
 	pool_init(&pmap_pool, sizeof(struct pmap), 0, 0, 0,
 	    "pmappool", NULL, IPL_NONE);
+	pool_init(&pmap_l2_pool, PMAP_L2_SIZE, 0, 0, 0,
+	    "pmapl2pool", NULL, IPL_HIGH);
 	pool_init(&pmap_l1_pool, pm_l1_size, 0, 0, 0,
 	    "pmapl1pool", NULL, IPL_NONE);
 	pool_init(&pmap_pventry_pool, sizeof(struct pv_entry), 0, 0, 0,
@@ -527,7 +529,7 @@ pmap_destroy(pmap_t pmap)
 		l2tbl = pmap->pm_l1[l1];
 		if (!l2tbl)
 			continue;
-		kmem_free(l2tbl, PMAP_L2_SIZE);
+		pool_put(&pmap_l2_pool, l2tbl);
 	}
 	pool_put(&pmap_l1_pool, pmap->pm_l1);
 	pool_put(&pmap_pool, pmap);
@@ -621,8 +623,8 @@ pmap_set_pv(pmap_t pmap, uintptr_t lpn, struct pv_entry *pv)
 
 	l2tbl = pmap->pm_l1[l1];
 	if (!l2tbl) {
-		l2tbl = pmap->pm_l1[l1] = kmem_zalloc(PMAP_L2_SIZE, KM_SLEEP);
-		/* should be zero filled */
+		l2tbl = pmap->pm_l1[l1] = pool_get(&pmap_l2_pool, PR_WAITOK);
+		memset(l2tbl, 0, PMAP_L2_SIZE);
 	}
 	l2tbl->pm_l2[l2] = pv;
 }

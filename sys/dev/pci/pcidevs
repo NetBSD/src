@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1101.6.2 2012/03/04 00:46:20 mrg Exp $
+$NetBSD: pcidevs,v 1.1101.6.3 2012/03/06 09:56:13 mrg Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -931,16 +931,14 @@ product AMD AMD64_F11_DRAM	0x1302	AMD64 Family11h DRAM Configuration
 product AMD AMD64_F11_MISC	0x1303	AMD64 Family11h Miscellaneous Configuration
 product AMD AMD64_F11_LINK	0x1304	AMD64 Family11h Link Configuration
 product AMD F14_RC	0x1510	Family14h Root Complex
-product AMD F14_HT	0x1700	Family12h/14h HyperTransport Configuration
-product AMD F14_ADDR	0x1701	Family12h/14h Address Map Configuration
-product AMD F14_DRAM	0x1702	Family12h/14h DRAM Configuration
-product AMD F14_NB	0x1703	Family12h/14h North Bridge Configuration
-product AMD F14_CSTATE	0x1704	Family12h/14h CPU C-state Configuration
-product AMD F12_RC	0x1705	Family12h Root Complex
-product AMD F12_GPP0	0x1709	Family12h GPP0 Root Port
-product AMD F14_MISC	0x1716	Family12h/14h Misc. Configuration
-product AMD F14_HB18	0x1718	Family12h/14h Host Bridge
-product AMD F14_HB19	0x1719	Family12h/14h Host Bridge
+product AMD F14_HT	0x1700	Family14h HyperTransport Configuration
+product AMD F14_ADDR	0x1701	Family14h Address Map Configuration
+product AMD F14_DRAM	0x1702	Family14h DRAM Configuration
+product AMD F14_NB	0x1703	Family14h North Bridge Configuration
+product AMD F14_CSTATE	0x1704	Family14h CPU C-state Configuration
+product AMD F14_MISC	0x1716	Family14h Misc. Configuration
+product AMD F14_HB18	0x1718	Family14h Host Bridge
+product AMD F14_HB19	0x1719	Family14h Host Bridge
 product AMD PCNET_PCI	0x2000	PCnet-PCI Ethernet
 product AMD PCNET_HOME	0x2001	PCnet-Home HomePNA Ethernet
 product AMD AM_1771_MBW	0x2003	Alchemy AM 1771 MBW
@@ -1002,18 +1000,8 @@ product AMD PBC8111_ACPI	0x746b	AMD8111 ACPI Controller
 product AMD PBC8111_AC		0x746d	AMD8111 AC97 Audio
 product AMD PBC8111_MC97	0x746e	AMD8111 MC97 Modem
 product AMD PBC8111_AC_756b	0x756b	AMD8111 756b ACPI Controller
-product AMD HUDSON_SATA		0x7800	Hudson SATA Controller
-product AMD HUDSON_SATA_AHCI	0x7801	Hudson AHCI SATA Controller
-product AMD HUDSON_SDHC		0x7806	Hudson SD Flash Controller
-product AMD HUDSON_OHCI		0x7807	Hudson USB OHCI Controller
-product AMD HUDSON_EHCI		0x7808	Hudson USB EHCI Controller
-product AMD HUDSON_OHCI_2	0x7809	Hudson USB OHCI Controller
-product AMD HUDSON_SMB		0x780b	Hudson SMBus Controller
-product AMD HUDSON_IDE		0x780c	Hudson IDE Controller
-product AMD HUDSON_HDAUDIO	0x780d	Hudson HD Audio Controller
-product AMD HUDSON_LPC		0x780e	Hudson LPC Bridge
-product AMD HUDSON_PCI		0x780f	Hudson PCI Bridge
-product AMD HUDSON_XHCI		0x7812	Hudson USB xHCI Controller
+product AMD HUDSON2_IDE		0x780c	HUDSON-2 IDE Controller
+product AMD HUDSON2_SATA	0x7800	HUDSON-2 SATA Controller
 product AMD RS880_HB		0x9601	RS880 Host Bridge
 product AMD RS780_PPB_GFX	0x9602	RS780 PCI-PCI Bridge (int gfx)
 product AMD RS780_PPB_GFX0	0x9603	RS780 PCI-PCI Bridge (ext gfx port 0)
@@ -1137,8 +1125,6 @@ product ATTANSIC AR8152_B2	0x2062	AR8152 v2.0 Fast Ethernet Adapter
 
 /* ATI products */
 /* See http://www.x.org/wiki/Radeon%20ASICs */
-product ATI RADEON_WRESTLER_HDMI	0x1314	Wrestler HDMI Audio
-product ATI RADEON_BEAVERCREEK_HDMI	0x1714	BeaverCreek HDMI Audio
 product ATI RADEON_RV380_3150	0x3150	Radeon Mobility X600 (M24) 3150
 product ATI RADEON_RV380_3154	0x3154	FireGL M24 GL 3154
 product ATI RADEON_RV380_3E50	0x3e50	Radeon X600 (RV380) 3E50
@@ -1199,6 +1185,7 @@ product ATI SB600_AZALIA	0x4383	SB600 Azalia
 product ATI SB600_PPB_4384	0x4384	SB600 PCI to PCI Bridge
 product ATI SB600_SMB		0x4385	SB600/SB700/SB800 SMBus Controller
 product ATI SB600_USB_EHCI	0x4386	SB600 USB EHCI Controller
+product ATI SB600_USB_OHCI0	0x4387	SB600 USB OHCI0 Controller
 product ATI SB600_USB_OHCI1	0x4388	SB600 USB OHCI1 Controller
 product ATI SB600_USB_OHCI2	0x4389	SB600 USB OHCI2 Controller
 product ATI SB600_USB_OHCI3	0x438a	SB600 USB OHCI3 Controller
@@ -1436,7 +1423,6 @@ product ATI RS690_PPB_7917	0x7917	RS690 PCI to PCI-Express Port 3 Bridge
 product ATI RADEON_HD4650	0x9498 	Radeon HD4650
 product ATI RADEON_HD2600_XT	0x9588 	Radeon HD2600 XT GDDR3
 product ATI RADEON_HD4250_S	0x95C5	Radeon HD4250 GPU (RV610) Secondary
-product ATI RADEON_HD6520G	0x9647	Radeon HD6520G
 product ATI RADEON_HD4200	0x9712	Radeon HD4200 Mobility
 product ATI RADEON_HD4250	0x9715	Radeon HD4250 GPU (RS880)
 product ATI RADEON_HD6310	0x9802	Radeon HD6310 Graphics
@@ -4068,9 +4054,6 @@ product RICOH Rx5C847	0x0847 5C847 PCI-CardBus Bridge/SD/MMC/MMC+/MS/xD/Firewire
 product RICOH RxDPCC	0x0852 xD-Picture Card Controller
 product RICOH Rx5C853	0x0853 5C853 PCI-CardBus Bridge/SD/MMC/MMC+/MS/xD/SC/Firewire
 product RICOH Rx5U230	0xe230 5U230 Memory Stick Controller
-product RICOH Rx5U230	0xe230 5U230 Memory Stick Controller
-product RICOH Rx5U822	0xe822 5U822 SD/MMC Controller
-product RICOH Rx5U823	0xe823 5U823 SD/MMC Controller
 product RICOH Rx5U832	0xe832 5U832 Firewire Controller
 product RICOH Rx5C852	0xe852 5C852 xD Controller
 

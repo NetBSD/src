@@ -1,4 +1,4 @@
-/*      $NetBSD: amdtemp.c,v 1.12.6.1 2012/03/04 00:46:16 mrg Exp $ */
+/*      $NetBSD: amdtemp.c,v 1.12.6.2 2012/03/06 09:56:12 mrg Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.12.6.1 2012/03/04 00:46:16 mrg Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.12.6.2 2012/03/06 09:56:12 mrg Exp $ ");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -196,7 +196,7 @@ amdtemp_match(device_t parent, cfdata_t match, void *aux)
 	case PCI_PRODUCT_AMD_AMD64_MISC:
 	case PCI_PRODUCT_AMD_AMD64_F10_MISC:
 	case PCI_PRODUCT_AMD_AMD64_F11_MISC:
-	case PCI_PRODUCT_AMD_F14_NB:	/* Family12h too */
+	case PCI_PRODUCT_AMD_F14_NB:
 		break;
 	default:
 		return 0;
@@ -268,8 +268,7 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 
 	case 0x10: /* AMD Barcelona/Phenom */
 	case 0x11: /* AMD Griffin */
-	case 0x12: /* AMD Lynx/Sabine (Llano) */
-	case 0x14: /* AMD Brazos (Ontario/Zacate/Desna) */
+	case 0x14: /* AMD Fusion */
 		amdtemp_family10_init(sc);
 		break;
 
@@ -297,7 +296,6 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 		break;
 	case 0x10:
 	case 0x11:
-	case 0x12:
 	case 0x14:
 		amdtemp_family10_setup_sensors(sc, device_unit(self));
 		break;
@@ -324,7 +322,6 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 		break;
 	case 0x10:
 	case 0x11:
-	case 0x12:
 	case 0x14:
 		sc->sc_sme->sme_refresh = amdtemp_family10_refresh;
 		break;

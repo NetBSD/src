@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.93.4.2 2012/03/04 00:46:30 mrg Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.93.4.3 2012/03/06 09:56:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.93.4.2 2012/03/04 00:46:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.93.4.3 2012/03/06 09:56:27 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -2206,10 +2206,6 @@ tmpfs_readdir(void *v)
 	node = VP_TO_TMPFS_DIR(vp);
 	startoff = uio->uio_offset;
 	cnt = 0;
-	if (node->tn_links == 0) {
-		error = 0;
-		goto out;
-	}
 
 	if (uio->uio_offset == TMPFS_DIRCOOKIE_DOT) {
 		error = tmpfs_dir_getdotdent(node, uio);

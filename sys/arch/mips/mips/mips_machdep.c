@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.250.6.3 2012/03/04 00:46:11 mrg Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.250.6.4 2012/03/06 09:56:08 mrg Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,8 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.250.6.3 2012/03/04 00:46:11 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.250.6.4 2012/03/06 09:56:08 mrg Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -202,6 +201,13 @@ uint64_t mips3_cp0_tlb_entry_lo_probe(void);
 
 static void mips3_tlb_probe(void);
 #endif
+
+/*
+ * safepri is a safe priority for sleepq to set for a spin-wait during
+ * autoconfiguration or after a panic which will allows interrupts to
+ * be delivered.  Used as an argument to splx().
+ */
+int safepri = IPL_SOFTSERIAL;
 
 #if defined(MIPS1)
 static void	mips1_vector_init(const struct splsw *);

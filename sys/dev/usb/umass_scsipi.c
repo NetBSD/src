@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.38.6.5 2012/03/04 00:46:28 mrg Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.38.6.6 2012/03/06 09:56:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.38.6.5 2012/03/04 00:46:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.38.6.6 2012/03/06 09:56:24 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_umass.h"
@@ -282,12 +282,13 @@ umass_scsipi_request(struct scsipi_channel *chan,
 			/* Use sync transfer. XXX Broken! */
 			DPRINTF(UDMASS_SCSI,
 			    ("umass_scsi_cmd: sync dir=%d\n", dir));
+			sc->sc_xfer_flags = USBD_SYNCHRONOUS;
 			scbus->sc_sync_status = USBD_INVAL;
 			sc->sc_methods->wire_xfer(sc, periph->periph_lun, cmd,
 						  cmdlen, xs->data,
 						  xs->datalen, dir,
-						  xs->timeout, USBD_SYNCHRONOUS,
-						  0, xs);
+						  xs->timeout, 0, xs);
+			sc->sc_xfer_flags = 0;
 			DPRINTF(UDMASS_SCSI, ("umass_scsi_cmd: done err=%d\n",
 					      scbus->sc_sync_status));
 			switch (scbus->sc_sync_status) {
@@ -310,7 +311,7 @@ umass_scsipi_request(struct scsipi_channel *chan,
 			sc->sc_methods->wire_xfer(sc, periph->periph_lun, cmd,
 						  cmdlen, xs->data,
 						  xs->datalen, dir,
-						  xs->timeout, 0,
+						  xs->timeout,
 						  umass_scsipi_cb, xs);
 			return;
 		}
@@ -434,7 +435,7 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 		sc->sc_methods->wire_xfer(sc, periph->periph_lun,
 					  &scbus->sc_sense_cmd, cmdlen,
 					  &xs->sense, sizeof(xs->sense),
-					  DIR_IN, xs->timeout, 0,
+					  DIR_IN, xs->timeout,
 					  umass_scsipi_sense_cb, xs);
 		return;
 
