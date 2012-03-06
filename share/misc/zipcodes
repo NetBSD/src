@@ -1,5 +1,5 @@
 # Zip Code : Location
-#	$NetBSD: zipcodes,v 1.6 2003/05/11 01:55:18 wiz Exp $
+#	$NetBSD: zipcodes,v 1.7 2012/03/06 17:08:10 mbalmer Exp $
 #	@(#)zipcodes	8.1 (Berkeley) 6/8/93
 00401:Pleasantville, NY
 00501:Holtsville, NY
@@ -42157,3 +42157,4 @@
 99645:Palmer, AK
 99647:Pedro Bay, AK
 99648:Perryville, AK
+CH-5073:Gipf-Oberfrick, Switzerland
