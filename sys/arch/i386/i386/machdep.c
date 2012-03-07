@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.717.2.4 2012/03/05 20:18:02 sborrill Exp $	*/
+/*	$NetBSD: machdep.c,v 1.717.2.5 2012/03/07 23:31:41 riz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.717.2.4 2012/03/05 20:18:02 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.717.2.5 2012/03/07 23:31:41 riz Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1404,9 +1404,9 @@ init386(paddr_t first_avail)
 	/* Make sure the end of the space used by the kernel is rounded. */
 	first_avail = round_page(first_avail);
 	avail_start = first_avail;
-	avail_end = ctob(xen_start_info.nr_pages) + XPMAP_OFFSET;
+	avail_end = ctob((paddr_t)xen_start_info.nr_pages) + XPMAP_OFFSET;
 	pmap_pa_start = (KERNTEXTOFF - KERNBASE);
-	pmap_pa_end = pmap_pa_start + ctob(xen_start_info.nr_pages);
+	pmap_pa_end = pmap_pa_start + ctob((paddr_t)xen_start_info.nr_pages);
 	mem_clusters[0].start = avail_start;
 	mem_clusters[0].size = avail_end - avail_start;
 	mem_cluster_cnt++;
@@ -1458,9 +1458,10 @@ init386(paddr_t first_avail)
 	initx86_load_memmap(first_avail);
 
 #else /* !XEN */
-	XENPRINTK(("load the memory cluster %p(%d) - %p(%ld)\n",
-	    (void *)(long)avail_start, (int)atop(avail_start),
-	    (void *)(long)avail_end, (int)atop(avail_end)));
+	XENPRINTK(("load the memory cluster 0x%" PRIx64 " (%" PRId64 ") - "
+	    "0x%" PRIx64 " (%" PRId64 ")\n",
+	    (uint64_t)avail_start, (uint64_t)atop(avail_start),
+	    (uint64_t)avail_end, (uint64_t)atop(avail_end)));
 	uvm_page_physload(atop(avail_start), atop(avail_end),
 	    atop(avail_start), atop(avail_end),
 	    VM_FREELIST_DEFAULT);
