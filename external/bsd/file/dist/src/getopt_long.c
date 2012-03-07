@@ -1,4 +1,6 @@
-/*	$NetBSD: getopt_long.c,v 1.1.1.1 2009/05/08 16:35:05 christos Exp $	*/
+/*	$NetBSD: getopt_long.c,v 1.1.1.1.10.1 2012/03/07 23:18:29 riz Exp $	*/
+
+/*	NetBSD: getopt_long.c,v 1.21.4.1 2008/01/09 01:34:14 matt Exp 	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +37,7 @@
 #if 0
 FILE_RCSID("@(#)$File: getopt_long.c,v 1.6 2009/02/13 18:48:05 christos Exp $")
 #else
-__RCSID("$NetBSD: getopt_long.c,v 1.1.1.1 2009/05/08 16:35:05 christos Exp $");
+__RCSID("$NetBSD: getopt_long.c,v 1.1.1.1.10.1 2012/03/07 23:18:29 riz Exp $");
 #endif
 #endif	/* lint */
 
