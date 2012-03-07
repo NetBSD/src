@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.909.2.6 2012/03/02 17:39:47 riz Exp $
+#	$NetBSD: 3RDPARTY,v 1.909.2.7 2012/03/07 23:18:21 riz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -327,8 +327,8 @@ No hexadecimal floating-point string conversion for VAX FP yet.
 Only double-precision addressed at this time.
 
 Package:	file
-Version:	5.09
-Current Vers:	5.09
+Version:	5.11
+Current Vers:	5.11
 Maintainer:	Christos Zoulas <christos@zoulas.com>
 Archive Site:	ftp://ftp.astron.com/pub/file/
 Home Page:
