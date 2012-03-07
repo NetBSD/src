@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.43 2012/03/07 22:50:40 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.44 2012/03/07 23:19:18 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1047,4 +1047,70 @@ external/public-domain/xz/lib/shlib_version				patch
 
 	Update XZ to version 5.0.3.
 	[joerg, ticket #71]
+
+doc/3RDPARTY						1.916
+external/bsd/file/file2netbsd				patch
+external/bsd/file/dist/ChangeLog			patch
+external/bsd/file/dist/configure			patch
+external/bsd/file/dist/configure.ac			patch
+external/bsd/file/dist/install-sh			patch
+external/bsd/file/dist/doc/file.1			patch
+external/bsd/file/dist/doc/libmagic.3			patch
+external/bsd/file/dist/doc/magic.5			patch
+external/bsd/file/dist/magic/Makefile.am		patch
+external/bsd/file/dist/magic/Makefile.in		patch
+external/bsd/file/dist/magic/magdir/archive		patch
+external/bsd/file/dist/magic/magdir/assembler		new
+external/bsd/file/dist/magic/magdir/audio		patch
+external/bsd/file/dist/magic/magdir/c-lang		patch
+external/bsd/file/dist/magic/magdir/cad			patch
+external/bsd/file/dist/magic/magdir/commands		patch
+external/bsd/file/dist/magic/magdir/compress		patch
+external/bsd/file/dist/magic/magdir/cups		new
+external/bsd/file/dist/magic/magdir/elf			patch
+external/bsd/file/dist/magic/magdir/games		patch
+external/bsd/file/dist/magic/magdir/gnu			patch
+external/bsd/file/dist/magic/magdir/guile		new
+external/bsd/file/dist/magic/magdir/images		patch
+external/bsd/file/dist/magic/magdir/java		patch
+external/bsd/file/dist/magic/magdir/linux		patch
+external/bsd/file/dist/magic/magdir/m4			new
+external/bsd/file/dist/magic/magdir/mail.news		patch
+external/bsd/file/dist/magic/magdir/make		new
+external/bsd/file/dist/magic/magdir/msdos		patch
+external/bsd/file/dist/magic/magdir/music		new
+external/bsd/file/dist/magic/magdir/netbsd		patch
+external/bsd/file/dist/magic/magdir/palm		patch
+external/bsd/file/dist/magic/magdir/pascal		new
+external/bsd/file/dist/magic/magdir/perl		patch
+external/bsd/file/dist/magic/magdir/python		patch
+external/bsd/file/dist/magic/magdir/sgml		patch
+external/bsd/file/dist/magic/magdir/varied.script	patch
+external/bsd/file/dist/magic/magdir/virtual		patch
+external/bsd/file/dist/magic/magdir/zfs			new
+external/bsd/file/dist/python/magic.py			patch
+external/bsd/file/dist/src/Makefile.am			patch
+external/bsd/file/dist/src/Makefile.in			patch
+external/bsd/file/dist/src/apprentice.c			patch
+external/bsd/file/dist/src/ascmagic.c			patch
+external/bsd/file/dist/src/cdf.c			patch
+external/bsd/file/dist/src/cdf.h			patch
+external/bsd/file/dist/src/cdf_time.c			patch
+external/bsd/file/dist/src/compress.c			patch
+external/bsd/file/dist/src/encoding.c			patch
+external/bsd/file/dist/src/file.c			patch
+external/bsd/file/dist/src/file.h			patch
+external/bsd/file/dist/src/funcs.c			patch
+external/bsd/file/dist/src/getline.c			patch
+external/bsd/file/dist/src/getopt_long.c		patch
+external/bsd/file/dist/src/magic.h			patch
+external/bsd/file/dist/src/mygetopt.h			patch
+external/bsd/file/dist/src/names.h			delete
+external/bsd/file/dist/src/print.c			patch
+external/bsd/file/dist/src/readcdf.c			patch
+external/bsd/file/dist/src/softmagic.c			patch
+external/bsd/file/dist/src/vasprintf.c			patch
+
+	Update file to 5.11.
+	[christos, ticket #30]
 
