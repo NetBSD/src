@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.44 2012/03/07 23:19:18 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.45 2012/03/07 23:27:19 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1113,4 +1113,14 @@ external/bsd/file/dist/src/vasprintf.c			patch
 
 	Update file to 5.11.
 	[christos, ticket #30]
+
+sys/arch/usermode/usermode/pmap.c		1.103
+
+	Move from pool(9) to kmem_zalloc(9) for NetBSD/usermode L2 page tables.
+	[reinoud, ticket #78]
+
+usr.sbin/cpuctl/arch/i386.c			1.29
+
+	Print CPU stepping level.
+	[sborrill, ticket #79]
 
