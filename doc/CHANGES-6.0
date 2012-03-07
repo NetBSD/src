@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.42 2012/03/05 20:59:45 sborrill Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.43 2012/03/07 22:50:40 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -916,4 +916,135 @@ sys/arch/sparc64/conf/files.sparc64			1.138
 	Fix the root cause of the hack "disable optimizations for
 	uvm_bio.c on 32 bit kernels".
 	[nakayama, ticket #85]
+
+distrib/sets/lists/base/ad.mips64eb					1.84
+distrib/sets/lists/base/ad.mips64el					1.83
+distrib/sets/lists/base/md.amd64					1.158
+distrib/sets/lists/base/md.sparc64					1.149
+distrib/sets/lists/base/shl.mi						1.618
+distrib/sets/lists/comp/ad.mips64eb					1.71
+distrib/sets/lists/comp/ad.mips64el					1.71
+distrib/sets/lists/comp/md.amd64					1.157
+distrib/sets/lists/comp/md.sparc64					1.140
+distrib/sets/lists/comp/shl.mi						1.211
+external/public-domain/xz/prepare-import.sh				patch
+external/public-domain/xz/dist/ChangeLog				patch
+external/public-domain/xz/dist/INSTALL					patch
+external/public-domain/xz/dist/NEWS					patch
+external/public-domain/xz/dist/THANKS					patch
+external/public-domain/xz/dist/configure.ac				patch
+external/public-domain/xz/dist/doc/lzma-file-format.txt			patch
+external/public-domain/xz/dist/doc/examples/xz_pipe_comp.c		new
+external/public-domain/xz/dist/doc/examples/xz_pipe_decomp.c		new
+external/public-domain/xz/dist/po/cs.gmo				patch
+external/public-domain/xz/dist/po/cs.po					patch
+external/public-domain/xz/dist/po/de.gmo				patch
+external/public-domain/xz/dist/po/de.po					patch
+external/public-domain/xz/dist/po/fr.gmo				new
+external/public-domain/xz/dist/po/fr.po					new
+external/public-domain/xz/dist/po/it.gmo				patch
+external/public-domain/xz/dist/po/it.po					patch
+external/public-domain/xz/dist/po/pl.gmo				new
+external/public-domain/xz/dist/po/pl.po					new
+external/public-domain/xz/dist/src/common/sysdefs.h			patch
+external/public-domain/xz/dist/src/liblzma/api/lzma/block.h		patch
+external/public-domain/xz/dist/src/liblzma/api/lzma/container.h		patch
+external/public-domain/xz/dist/src/liblzma/api/lzma/filter.h		patch
+external/public-domain/xz/dist/src/liblzma/api/lzma/lzma.h		patch
+external/public-domain/xz/dist/src/liblzma/api/lzma/version.h		patch
+external/public-domain/xz/dist/src/liblzma/common/alone_decoder.c	patch
+external/public-domain/xz/dist/src/liblzma/common/alone_encoder.c	patch
+external/public-domain/xz/dist/src/liblzma/common/block_buffer_encoder.c patch
+external/public-domain/xz/dist/src/liblzma/common/block_encoder.c	patch
+external/public-domain/xz/dist/src/liblzma/common/common.c		patch
+external/public-domain/xz/dist/src/liblzma/common/common.h		patch
+external/public-domain/xz/dist/src/liblzma/common/filter_common.c	patch
+external/public-domain/xz/dist/src/liblzma/common/index_decoder.c	patch
+external/public-domain/xz/dist/src/liblzma/common/index_encoder.c	patch
+external/public-domain/xz/dist/src/liblzma/common/stream_buffer_encoder.c patch
+external/public-domain/xz/dist/src/liblzma/common/stream_encoder.c	patch
+external/public-domain/xz/dist/src/liblzma/delta/delta_encoder.c	patch
+external/public-domain/xz/dist/src/liblzma/lz/lz_decoder.c		patch
+external/public-domain/xz/dist/src/liblzma/lz/lz_encoder.c		patch
+external/public-domain/xz/dist/src/liblzma/lzma/lzma2_decoder.c		patch
+external/public-domain/xz/dist/src/liblzma/lzma/lzma2_encoder.c		patch
+external/public-domain/xz/dist/src/liblzma/simple/arm.c			patch
+external/public-domain/xz/dist/src/liblzma/simple/armthumb.c		patch
+external/public-domain/xz/dist/src/liblzma/simple/ia64.c		patch
+external/public-domain/xz/dist/src/liblzma/simple/powerpc.c		patch
+external/public-domain/xz/dist/src/liblzma/simple/simple_coder.c	patch
+external/public-domain/xz/dist/src/liblzma/simple/sparc.c		patch
+external/public-domain/xz/dist/src/lzmainfo/lzmainfo.c			patch
+external/public-domain/xz/dist/src/xz/coder.c				patch
+external/public-domain/xz/dist/src/xz/file_io.c				patch
+external/public-domain/xz/dist/src/xz/hardware.h			patch
+external/public-domain/xz/dist/src/xz/message.c				patch
+external/public-domain/xz/dist/src/xz/message.h				patch
+external/public-domain/xz/dist/src/xz/options.c				patch
+external/public-domain/xz/dist/src/xz/signals.c				patch
+external/public-domain/xz/dist/src/xz/suffix.c				patch
+external/public-domain/xz/dist/src/xz/util.h				patch
+external/public-domain/xz/dist/src/xz/xz.1				patch
+external/public-domain/xz/dist/src/xzdec/xzdec.c			patch
+external/public-domain/xz/dist/tests/compress_prepared_bcj_sparc.base64	patch
+external/public-domain/xz/dist/tests/compress_prepared_bcj_x86.base64	patch
+external/public-domain/xz/dist/tests/files/README			patch
+external/public-domain/xz/dist/tests/files/bad-0cat-alone.xz.base64	patch
+external/public-domain/xz/dist/tests/files/bad-0cat-header_magic.xz.base64 patch
+external/public-domain/xz/dist/tests/files/bad-0catpad-empty.xz.base64	patch
+external/public-domain/xz/dist/tests/files/bad-1-block_header-1.xz.base64 patch
+external/public-domain/xz/dist/tests/files/bad-1-block_header-2.xz.base64 patch
+external/public-domain/xz/dist/tests/files/bad-1-block_header-3.xz.base64 patch
+external/public-domain/xz/dist/tests/files/bad-1-block_header-4.xz.base64 patch
+external/public-domain/xz/dist/tests/files/bad-1-block_header-5.xz.base64 patch
+external/public-domain/xz/dist/tests/files/bad-1-check-crc32.xz.base64	patch
+external/public-domain/xz/dist/tests/files/bad-1-check-crc64.xz.base64	patch
+external/public-domain/xz/dist/tests/files/bad-1-check-sha256.xz.base64	patch
+external/public-domain/xz/dist/tests/files/bad-1-lzma2-1.xz.base64	patch
+external/public-domain/xz/dist/tests/files/bad-1-lzma2-2.xz.base64	patch
+external/public-domain/xz/dist/tests/files/bad-1-lzma2-3.xz.base64	patch
+external/public-domain/xz/dist/tests/files/bad-1-lzma2-4.xz.base64	patch
+external/public-domain/xz/dist/tests/files/bad-1-lzma2-5.xz.base64	patch
+external/public-domain/xz/dist/tests/files/bad-1-lzma2-6.xz.base64	patch
+external/public-domain/xz/dist/tests/files/bad-1-lzma2-7.xz.base64	patch
+external/public-domain/xz/dist/tests/files/bad-1-lzma2-8.xz.base64	patch
+external/public-domain/xz/dist/tests/files/bad-1-stream_flags-1.xz.base64 patch
+external/public-domain/xz/dist/tests/files/bad-1-stream_flags-2.xz.base64 patch
+external/public-domain/xz/dist/tests/files/bad-1-stream_flags-3.xz.base64 patch
+external/public-domain/xz/dist/tests/files/bad-1-vli-1.xz.base64	patch
+external/public-domain/xz/dist/tests/files/bad-1-vli-2.xz.base64	patch
+external/public-domain/xz/dist/tests/files/bad-2-compressed_data_padding.xz.base64 patch
+external/public-domain/xz/dist/tests/files/bad-2-index-1.xz.base64	patch
+external/public-domain/xz/dist/tests/files/bad-2-index-2.xz.base64	patch
+external/public-domain/xz/dist/tests/files/bad-2-index-3.xz.base64	patch
+external/public-domain/xz/dist/tests/files/bad-2-index-4.xz.base64	patch
+external/public-domain/xz/dist/tests/files/bad-2-index-5.xz.base64	patch
+external/public-domain/xz/dist/tests/files/good-0cat-empty.xz.base64	patch
+external/public-domain/xz/dist/tests/files/good-0catpad-empty.xz.base64	patch
+external/public-domain/xz/dist/tests/files/good-1-3delta-lzma2.xz.base64 patch
+external/public-domain/xz/dist/tests/files/good-1-block_header-1.xz.base64 patch
+external/public-domain/xz/dist/tests/files/good-1-block_header-2.xz.base64 patch
+external/public-domain/xz/dist/tests/files/good-1-block_header-3.xz.base64 patch
+external/public-domain/xz/dist/tests/files/good-1-check-crc32.xz.base64	patch
+external/public-domain/xz/dist/tests/files/good-1-check-crc64.xz.base64	patch
+external/public-domain/xz/dist/tests/files/good-1-check-none.xz.base64	patch
+external/public-domain/xz/dist/tests/files/good-1-check-sha256.xz.base64 patch
+external/public-domain/xz/dist/tests/files/good-1-delta-lzma2.tiff.xz.base64 patch
+external/public-domain/xz/dist/tests/files/good-1-lzma2-1.xz.base64	patch
+external/public-domain/xz/dist/tests/files/good-1-lzma2-2.xz.base64	patch
+external/public-domain/xz/dist/tests/files/good-1-lzma2-3.xz.base64	patch
+external/public-domain/xz/dist/tests/files/good-1-lzma2-4.xz.base64	patch
+external/public-domain/xz/dist/tests/files/good-1-lzma2-5.xz.base64	new
+external/public-domain/xz/dist/tests/files/good-1-sparc-lzma2.xz.base64	patch
+external/public-domain/xz/dist/tests/files/good-1-x86-lzma2.xz.base64	patch
+external/public-domain/xz/dist/tests/files/good-2-lzma2.xz.base64	patch
+external/public-domain/xz/dist/tests/files/unsupported-block_header.xz.base64 patch
+external/public-domain/xz/dist/tests/files/unsupported-check.xz.base64	patch
+external/public-domain/xz/dist/tests/files/unsupported-filter_flags-1.xz.base64	patch
+external/public-domain/xz/dist/tests/files/unsupported-filter_flags-2.xz.base64	patch
+external/public-domain/xz/dist/tests/files/unsupported-filter_flags-3.xz.base64	patch
+external/public-domain/xz/lib/shlib_version				patch
+
+	Update XZ to version 5.0.3.
+	[joerg, ticket #71]
 
