@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.209.2.1 2012/03/02 18:27:44 riz Exp $
+# $NetBSD: shl.mi,v 1.209.2.2 2012/03/07 22:33:23 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -297,7 +297,7 @@
 ./usr/libdata/debug/usr/lib/liblua.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/liblwres.so.5.6.debug	comp-bind-debug	debug
 ./usr/libdata/debug/usr/lib/liblzf.so.0.0.debug		comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/liblzma.so.1.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/liblzma.so.1.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libm.so.0.10.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libmagic.so.3.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libmenu.so.6.0.debug	comp-sys-debug	debug
