@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.45 2012/03/07 23:27:19 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.46 2012/03/07 23:37:09 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1123,4 +1123,27 @@ usr.sbin/cpuctl/arch/i386.c			1.29
 
 	Print CPU stepping level.
 	[sborrill, ticket #79]
+
+xsrc/external/mit/xdm/dist/config/Xservers.ws.cpp	1.2
+xsrc/external/mit/xinit/dist/startx.cpp			1.2
+
+	Add -noretro as default server arg in configuration files where we are
+	sure the user will get a visible window "soon".
+	[martin, ticket #86]
+
+sys/arch/i386/i386/machdep.c			1.725
+
+	Fix avail memory when allocating more than 4GB to a XEN3PAE domU.
+	[bouyer, ticket #93]
+
+sys/dev/pci/piixide.c				1.58
+
+	Add support for Intel 6 Series Serial ATA Controller.
+	[sborrill, ticket #98]
+
+sys/dev/pci/if_bnx.c				1.46
+
+	bnx_start() is not MP-safe, so do not create the bnx_alloc_pkts()'s
+	workqueue MPSAFE.
+	[bouyer, ticket #100]
 
