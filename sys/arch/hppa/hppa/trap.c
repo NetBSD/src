@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.98 2012/02/19 21:06:08 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.99 2012/03/07 22:07:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.98 2012/02/19 21:06:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.99 2012/03/07 22:07:13 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -998,7 +998,28 @@ child_return(void *arg)
 void
 cpu_spawn_return(struct lwp *l)
 {
-  	
+	struct proc *p = l->l_proc;
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	pa_space_t space = pmap->pm_space;
+	struct trapframe *tf = l->l_md.md_regs;
+
+	/* Load all of the user's space registers. */
+	tf->tf_sr0 = tf->tf_sr1 = tf->tf_sr3 = tf->tf_sr2 =
+	tf->tf_sr4 = tf->tf_sr5 = tf->tf_sr6 = space;
+	tf->tf_iisq_head = tf->tf_iisq_tail = space;
+
+	/* Load the protection registers */
+	tf->tf_pidr1 = tf->tf_pidr2 = pmap->pm_pid;
+
+	/*
+	 * theoretically these could be inherited from the father,
+	 * but just in case.
+	 */
+	tf->tf_sr7 = HPPA_SID_KERNEL;
+	mfctl(CR_EIEM, tf->tf_eiem);
+	tf->tf_ipsw = PSW_C | PSW_Q | PSW_P | PSW_D | PSW_I /* | PSW_L */ |
+	    (curcpu()->ci_psw & PSW_O);
+
 	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
 #ifdef DEBUG
 	frame_sanity_check(__func__, __LINE__, 0, l->l_md.md_regs, l);
