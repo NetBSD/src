@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.50 2012/02/19 21:06:08 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.51 2012/03/07 22:07:13 skrll Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.64 2008/09/30 18:54:26 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.50 2012/02/19 21:06:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.51 2012/03/07 22:07:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,9 +81,6 @@ void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
-	struct proc *p = l2->l_proc;
-	pmap_t pmap = p->p_vmspace->vm_map.pmap;
-	pa_space_t space = pmap->pm_space;
 	struct pcb *pcb1, *pcb2;
 	struct trapframe *tf;
 	register_t sp, osp;
@@ -128,22 +125,28 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	/* Fill out all the PAs we are going to need in locore. */
 	cpu_activate_pcb(l2);
 
-	/* Load all of the user's space registers. */
-	tf->tf_sr0 = tf->tf_sr1 = tf->tf_sr3 = tf->tf_sr2 = 
-	tf->tf_sr4 = tf->tf_sr5 = tf->tf_sr6 = space;
-	tf->tf_iisq_head = tf->tf_iisq_tail = space;
+	if (__predict_true(l2->l_proc->p_vmspace != NULL)) {
+		struct proc *p = l2->l_proc;
+		pmap_t pmap = p->p_vmspace->vm_map.pmap;
+		pa_space_t space = pmap->pm_space;
 
-	/* Load the protection registers */
-	tf->tf_pidr1 = tf->tf_pidr2 = pmap->pm_pid;
+		/* Load all of the user's space registers. */
+		tf->tf_sr0 = tf->tf_sr1 = tf->tf_sr3 = tf->tf_sr2 = 
+		tf->tf_sr4 = tf->tf_sr5 = tf->tf_sr6 = space;
+		tf->tf_iisq_head = tf->tf_iisq_tail = space;
 
-	/*
-	 * theoretically these could be inherited from the father,
-	 * but just in case.
-	 */
-	tf->tf_sr7 = HPPA_SID_KERNEL;
-	mfctl(CR_EIEM, tf->tf_eiem);
-	tf->tf_ipsw = PSW_C | PSW_Q | PSW_P | PSW_D | PSW_I /* | PSW_L */ |
-	    (curcpu()->ci_psw & PSW_O);
+		/* Load the protection registers */
+		tf->tf_pidr1 = tf->tf_pidr2 = pmap->pm_pid;
+
+		/*
+		 * theoretically these could be inherited from the father,
+		 * but just in case.
+		 */
+		tf->tf_sr7 = HPPA_SID_KERNEL;
+		mfctl(CR_EIEM, tf->tf_eiem);
+		tf->tf_ipsw = PSW_C | PSW_Q | PSW_P | PSW_D | PSW_I /* | PSW_L */ |
+		    (curcpu()->ci_psw & PSW_O);
+	}
 
 	/*
 	 * Set up return value registers as libc:fork() expects
@@ -275,3 +278,130 @@ cpu_lwp_setprivate(lwp_t *l, void *addr)
 		mtctl(addr, CR_TLS);
 	return 0;
 }
+
+
+#ifdef __HAVE_CPU_UAREA_ROUTINES
+void *
+cpu_uarea_alloc(bool system)
+{
+#ifdef PMAP_MAP_POOLPAGE
+	struct pglist pglist;
+	int error;
+
+	/*
+	 * Allocate a new physically contiguous uarea which can be
+	 * direct-mapped.
+	 */
+	error = uvm_pglistalloc(USPACE, 0, ptoa(physmem), 0, 0, &pglist, 1, 1);
+	if (error) {
+		if (!system)
+			return NULL;
+		panic("%s: uvm_pglistalloc failed: %d", __func__, error);
+	}
+
+	/*
+	 * Get the physical address from the first page.
+	 */
+	const struct vm_page * const pg = TAILQ_FIRST(&pglist);
+	KASSERT(pg != NULL);
+	const paddr_t pa = VM_PAGE_TO_PHYS(pg);
+
+	/*
+	 * We need to return a direct-mapped VA for the pa.
+	 */
+
+	return (void *)PMAP_MAP_POOLPAGE(pa);
+#else
+	return NULL;
+#endif
+}
+
+/*
+ * Return true if we freed it, false if we didn't.
+ */
+bool
+cpu_uarea_free(void *vva)
+{
+#ifdef PMAP_UNMAP_POOLPAGE
+	vaddr_t va = (vaddr_t) vva;
+	if (va >= VM_MIN_KERNEL_ADDRESS && va < VM_MAX_KERNEL_ADDRESS)
+		return false;
+
+	/*
+	 * Since the pages are physically contiguous, the vm_page structure
+	 * will be as well.
+	 */
+	struct vm_page *pg = PHYS_TO_VM_PAGE(PMAP_UNMAP_POOLPAGE(va));
+	KASSERT(pg != NULL);
+	for (size_t i = 0; i < UPAGES; i++, pg++) {
+		uvm_pagefree(pg);
+	}
+	return true;
+#else
+	return false;
+#endif
+}
+#endif /* __HAVE_CPU_UAREA_ROUTINES */
+
+#ifdef __HAVE_CPU_UAREA_ROUTINES
+void *
+cpu_uarea_alloc(bool system)
+{
+#ifdef PMAP_MAP_POOLPAGE
+	struct pglist pglist;
+	int error;
+
+	/*
+	 * Allocate a new physically contiguous uarea which can be
+	 * direct-mapped.
+	 */
+	error = uvm_pglistalloc(USPACE, 0, ptoa(physmem), 0, 0, &pglist, 1, 1);
+	if (error) {
+		if (!system)
+			return NULL;
+		panic("%s: uvm_pglistalloc failed: %d", __func__, error);
+	}
+
+	/*
+	 * Get the physical address from the first page.
+	 */
+	const struct vm_page * const pg = TAILQ_FIRST(&pglist);
+	KASSERT(pg != NULL);
+	const paddr_t pa = VM_PAGE_TO_PHYS(pg);
+
+	/*
+	 * We need to return a direct-mapped VA for the pa.
+	 */
+
+	return (void *)PMAP_MAP_POOLPAGE(pa);
+#else
+	return NULL;
+#endif
+}
+
+/*
+ * Return true if we freed it, false if we didn't.
+ */
+bool
+cpu_uarea_free(void *vva)
+{
+#ifdef PMAP_UNMAP_POOLPAGE
+	vaddr_t va = (vaddr_t) vva;
+	if (va >= VM_MIN_KERNEL_ADDRESS && va < VM_MAX_KERNEL_ADDRESS)
+		return false;
+
+	/*
+	 * Since the pages are physically contiguous, the vm_page structure
+	 * will be as well.
+	 */
+	struct vm_page *pg = PHYS_TO_VM_PAGE(PMAP_UNMAP_POOLPAGE(va));
+	KASSERT(pg != NULL);
+	for (size_t i = 0; i < UPAGES; i++, pg++) {
+		uvm_pagefree(pg);
+	}
+	return true;
+#else
+	return false;
+#endif
+}
+#endif /* __HAVE_CPU_UAREA_ROUTINES */
