@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.69.2.1 2012/03/02 18:27:43 riz Exp $
+# $NetBSD: ad.mips64eb,v 1.69.2.2 2012/03/07 22:33:23 riz Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/gcc-4.5/loongson.h		comp-c-include		gcccmds,gcc=45
@@ -1330,7 +1330,7 @@
 ./usr/libdata/debug/usr/lib/64/liblua.so.1.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/liblwres.so.5.6.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/liblzf.so.0.0.debug		comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/64/liblzma.so.1.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/64/liblzma.so.1.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libm.so.0.10.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libmagic.so.3.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libmenu.so.6.0.debug	comp-sys-debug	debug,compat
@@ -1483,7 +1483,7 @@
 ./usr/libdata/debug/usr/lib/o32/liblua.so.1.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/liblwres.so.5.6.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/liblzf.so.0.0.debug		comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/o32/liblzma.so.1.0.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/liblzma.so.1.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libm.so.0.10.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libmagic.so.3.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libmenu.so.6.0.debug	comp-sys-debug	debug,compat
