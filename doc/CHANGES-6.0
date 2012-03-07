@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.46 2012/03/07 23:37:09 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.47 2012/03/07 23:45:14 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1146,4 +1146,20 @@ sys/dev/pci/if_bnx.c				1.46
 	bnx_start() is not MP-safe, so do not create the bnx_alloc_pkts()'s
 	workqueue MPSAFE.
 	[bouyer, ticket #100]
+
+external/bsd/cron/dist/crontab.c		1.4-1.5
+
+	PR/46127: Holger Weiss: "crontab <file>" fails for unprivileged users
+	[dholland, ticket #88]
+
+sys/arch/usermode/dev/cpu.c			1.70
+sys/arch/usermode/dev/ttycons.c			1.19
+sys/arch/usermode/include/intr.h		1.9
+sys/arch/usermode/include/thunk.h		1.61
+sys/arch/usermode/target/i386/cpu_i386.c	1.4
+sys/arch/usermode/usermode/thunk.c		1.81
+sys/arch/usermode/usermode/trap.c		1.64
+
+	Implement signal forwarding to userland for usermode kernels.
+	[reinoud, ticket #89]
 
