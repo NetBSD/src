@@ -138,6 +138,9 @@ static const struct cmd
 } cmds[] =
 
 {
+    /* cvsacl patch */
+    { "acl",      NULL,       NULL,		   cvsacl,    CVS_CMD_MODIFIES_REPOSITORY | CVS_CMD_USES_WORK_DIR },
+    { "racl",     NULL,       NULL,		   cvsacl,    CVS_CMD_MODIFIES_REPOSITORY | CVS_CMD_USES_WORK_DIR },
     { "add",      "ad",       "new",       add,       CVS_CMD_MODIFIES_REPOSITORY | CVS_CMD_USES_WORK_DIR },
     { "admin",    "adm",      "rcs",       admin,     CVS_CMD_MODIFIES_REPOSITORY | CVS_CMD_USES_WORK_DIR },
     { "annotate", "ann",      NULL,        annotate,  CVS_CMD_USES_WORK_DIR },
@@ -231,6 +234,7 @@ static const char *const usg[] =
 static const char *const cmd_usage[] =
 {
     "CVS commands are:\n",
+    "        acl          Add/modify/delete ACLs in files and directories\n",
     "        add          Add a new file/directory to the repository\n",
     "        admin        Administration front end for rcs\n",
     "        annotate     Show last revision where each line was modified\n",
@@ -255,6 +259,7 @@ static const char *const cmd_usage[] =
 #if (defined(AUTH_SERVER_SUPPORT) || defined (HAVE_GSSAPI)) && defined(SERVER_SUPPORT)
     "        pserver      Password server mode\n",
 #endif
+    "        racl         Add/modify/delete ACLs in files and directories\n",
     "        rannotate    Show last revision where each line of module was modified\n",
     "        rdiff        Create 'patch' format diffs between releases\n",
     "        release      Indicate that a Module is no longer in use\n",
@@ -1127,6 +1132,9 @@ cause intermittent sandbox corruption.");
 		 * if it was set in config, we now know it.
 		 */
 		push_env_temp_dir ();
+		
+		/* cvsacl patch */
+		parse_aclconfig (current_parsed_root->directory);
 	    }
 
 #ifdef CLIENT_SUPPORT
@@ -1506,7 +1514,7 @@ usage (register const char *const *cpp)
 {
     (void) fprintf (stderr, *cpp++, program_name, cvs_cmd_name);
     for (; *cpp; cpp++)
-	(void) fprintf (stderr, *cpp);
+	(void) fprintf (stderr, "%s", *cpp);
     exit (EXIT_FAILURE);
 }
 
