@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.49 2012/03/08 17:40:16 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.50 2012/03/08 17:58:08 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1197,4 +1197,29 @@ sys/arch/x86/pci/amdtemp.c			1.13
 
 	amdtemp(4): support family 12h.
 	[nonaka, ticket #97]
+
+usr.bin/ktruss/dump.c				1.41
+
+	Make ktruss compile on mips64.
+	[matt, ticket #99]
+
+share/man/man5/daily.5				1.4
+share/man/man5/weekly.5				1.4-1.5
+
+	Mention run_makemandb and rebuild_mandb in man pages.
+	[plunky, ticket #101]
+
+distrib/sets/lists/man/mi			1.1383
+doc/CHANGES					1.1681 via patch
+external/ibm-public/postfix/Makefile.inc	1.14
+external/ibm-public/postfix/lib/global/Makefile	1.3
+external/ibm-public/postfix/man/man5/Makefile	1.3
+
+	Add support for SQLite look-up tables to postfix(1).
+	[tron, ticket #102]
+
+sys/arch/ofppc/conf/GENERIC			1.140
+
+	Work around ofppc panics when attaching new USB devices.
+	[phx, ticket #103]
 
