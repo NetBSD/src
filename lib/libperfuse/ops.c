@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.50 2012/01/29 06:22:02 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.51 2012/03/08 14:58:57 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -514,6 +514,7 @@ node_lookup_common(pu, opc, path, pcr, pnp)
 	 * Check for cached name
 	 */
 	if ((oldpnd != NULL) && !entry_expired(oldpnd->pnd_pn)) {
+		oldpnd->pnd_puffs_nlookup++;
 		*pnp = oldpnd->pnd_pn;
 		return 0;
 	}
@@ -550,7 +551,8 @@ node_lookup_common(pu, opc, path, pcr, pnp)
 
 	if (oldpnd != NULL) {
 		if (oldpnd->pnd_nodeid == feo->nodeid) {
-			oldpnd->pnd_nlookup++;
+			oldpnd->pnd_fuse_nlookup++;
+			oldpnd->pnd_puffs_nlookup++;
 			*pnp = oldpnd->pnd_pn;
 
 			ps->ps_destroy_msg(pm);
@@ -2702,6 +2704,7 @@ perfuse_node_reclaim(pu, opc)
 		return 0;
 
 	pnd->pnd_flags |= PND_RECLAIMED;
+	pnd->pnd_puffs_nlookup--;
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_RECLAIM)
@@ -2718,11 +2721,11 @@ perfuse_node_reclaim(pu, opc)
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_RECLAIM)
-		DPRINTF("%s (nodeid %"PRId64") is %sreclaimed, "
+		DPRINTF("%s (nodeid %"PRId64") is %sreclaimed, nlookup = %d "
 			"has childcount %d %s%s%s%s, pending ops:%s%s%s\n", 
 		        perfuse_node_path((puffs_cookie_t)pn), pnd->pnd_nodeid,
 		        pnd->pnd_flags & PND_RECLAIMED ? "" : "not ",
-		        pnd->pnd_childcount,
+			pnd->pnd_puffs_nlookup, pnd->pnd_childcount,
 			pnd->pnd_flags & PND_OPEN ? "open " : "not open",
 			pnd->pnd_flags & PND_RFH ? "r" : "",
 			pnd->pnd_flags & PND_WFH ? "w" : "",
@@ -2731,8 +2734,8 @@ perfuse_node_reclaim(pu, opc)
 			pnd->pnd_flags & PND_INWRITE ? " write" : "",
 			pnd->pnd_flags & PND_INOPEN ? " open" : "");
 #endif
-
 		if (!(pnd->pnd_flags & PND_RECLAIMED) ||
+		    (pnd->pnd_puffs_nlookup != 0) ||
 		    (pnd->pnd_childcount != 0))
 			return 0;
 
@@ -2758,7 +2761,7 @@ perfuse_node_reclaim(pu, opc)
 		pm = ps->ps_new_msg(pu, (puffs_cookie_t)pn, FUSE_FORGET, 
 			      sizeof(*ffi), NULL);
 		ffi = GET_INPAYLOAD(ps, pm, fuse_forget_in);
-		ffi->nlookup = pnd->pnd_nlookup;
+		ffi->nlookup = pnd->pnd_fuse_nlookup;
 
 		/*
 		 * No reply is expected, pm is freed in xchg_msg
