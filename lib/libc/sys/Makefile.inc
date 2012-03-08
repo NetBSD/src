@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.213 2012/02/19 19:18:40 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.214 2012/03/08 21:59:28 joerg Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -98,8 +98,8 @@ ASM=	access.S acct.S \
 	ioctl.S \
 	kqueue.S kqueue1.S ktrace.S \
 		_ksem_close.S _ksem_destroy.S _ksem_getvalue.S _ksem_init.S \
-		_ksem_post.S _ksem_trywait.S _ksem_unlink.S _ksem_wait.S \
-		_ksem_open.S \
+		_ksem_post.S _ksem_timedwait.S _ksem_trywait.S _ksem_unlink.S \
+		_ksem_wait.S _ksem_open.S \
 	lchflags.S lchmod.S lchown.S lfs_bmapv.S lfs_markv.S lfs_segclean.S \
 		__lfs_segwait50.S link.S linkat.S listen.S __lstat50.S \
 		__lutimes50.S _lwp_create.S _lwp_exit.S _lwp_kill.S \
