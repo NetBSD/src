@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.257 2012/02/19 17:50:28 matt Exp $
+	$NetBSD: syscalls.master,v 1.258 2012/03/08 21:55:45 joerg Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -494,7 +494,8 @@
 254	STD MODULAR RUMP { int|sys||_ksem_getvalue(intptr_t id, \
 			    unsigned int *value); }
 255	STD MODULAR RUMP { int|sys||_ksem_destroy(intptr_t id); }
-256	UNIMPL		sys__ksem_timedwait
+256	STD MODULAR RUMP { int|sys||_ksem_timedwait(intptr_t id, \
+				const struct timespec *abstime); }
 257	STD MODULAR	{ mqd_t|sys||mq_open(const char * name, int oflag, \
 			    mode_t mode, struct mq_attr *attr); }
 258	STD MODULAR	{ int|sys||mq_close(mqd_t mqdes); }
