@@ -1,4 +1,4 @@
-.\" $NetBSD: sem_open.3,v 1.5 2012/03/08 21:59:29 joerg Exp $
+.\" $NetBSD: sem_open.3,v 1.6 2012/03/08 22:12:52 wiz Exp $
 .\"
 .\" Copyright (C) 2000 Jason Evans <jasone@FreeBSD.org>.
 .\" All rights reserved.
@@ -140,9 +140,8 @@ function will fail if:
 .It Bq Er EACCES
 The semaphore exists and the permissions specified by
 .Fa oflag
-at the time it was created deny access to this process.
-.It Bq Er EACCES
-The semaphore does not exist, but permission to create it is denied.
+at the time it was created deny access to this process;
+or the semaphore does not exist, but permission to create it is denied.
 .It Bq Er EEXIST
 .Dv O_CREAT
 and
@@ -154,9 +153,8 @@ The call was interrupted by a signal.
 The
 .Fn sem_open
 operation is not supported for the given
-.Fa name .
-.It Bq Er EINVAL
-The
+.Fa name ;
+or the
 .Fa value
 argument is greater than
 .Dv SEM_VALUE_MAX .
