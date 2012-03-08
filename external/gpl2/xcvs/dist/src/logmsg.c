@@ -808,7 +808,7 @@ logfile_write (const char *repository, const char *filter, const char *message,
 #endif /* SERVER_SUPPORT */
 	                      "p", "s", srepos,
 	                      "r", "s", current_parsed_root->directory,
-	                      "sVv", ",", changes,
+	                      "sVvTt", ",", changes,
 			      logmsg_list_to_args_proc, (void *) NULL,
 	                      (char *) NULL);
     if (!cmdline || !strlen (cmdline))
@@ -933,7 +933,7 @@ verifymsg_proc (const char *repository, const char *script, void *closure)
                                        "r", "s",
                                        current_parsed_root->directory,
                                        "l", "s", vpd->fname,
-				       "sV", ",", vpd->changes,
+				       "sVTt", ",", vpd->changes,
 				       logmsg_list_to_args_proc, (void *) NULL,
 				       (char *) NULL);
 
