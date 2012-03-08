@@ -1,4 +1,4 @@
-/*	$NetBSD: cyzfirm2h.c,v 1.7 2012/03/08 16:35:53 jakllsch Exp $	*/
+/*	$NetBSD: cyzfirm2h.c,v 1.8 2012/03/08 16:38:04 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cyzfirm2h.c,v 1.7 2012/03/08 16:35:53 jakllsch Exp $");
+__RCSID("$NetBSD: cyzfirm2h.c,v 1.8 2012/03/08 16:38:04 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -83,8 +83,8 @@ main(int argc, char *argv[])
 		err(1, "unable to allocate include name");
 
 	for (cp = include_name; *cp != '\0'; cp++) {
-		if (isalpha(*cp))
-			*cp = toupper(*cp);
+		if (isalpha((unsigned char)*cp))
+			*cp = toupper((unsigned char)*cp);
 		else if (*cp == '.')
 			*cp = '_';
 	}
@@ -99,7 +99,7 @@ main(int argc, char *argv[])
 		err(1, "unable to mmap input file");
 	(void) close(i);
 
-	fprintf(out_file, "/*\t$NetBSD: cyzfirm2h.c,v 1.7 2012/03/08 16:35:53 jakllsch Exp $\t*/\n\n");
+	fprintf(out_file, "/*\t$NetBSD: cyzfirm2h.c,v 1.8 2012/03/08 16:38:04 jakllsch Exp $\t*/\n\n");
 	fprintf(out_file,
 	    "/*\n"
 	    " * Firmware for Cyclades Z series multiport serial boards.\n"
