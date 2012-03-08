@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.126 2012/03/02 18:06:05 joerg Exp $	*/
+/*	$NetBSD: pthread.c,v 1.127 2012/03/08 16:33:45 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.126 2012/03/02 18:06:05 joerg Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.127 2012/03/08 16:33:45 joerg Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -1202,16 +1202,23 @@ pthread__initmainstack(void)
 {
 	struct rlimit slimit;
 	const AuxInfo *aux;
+	size_t size;
 
 	_DIAGASSERT(_dlauxinfo() != NULL);
 
 	if (getrlimit(RLIMIT_STACK, &slimit) == -1)
 		err(1, "Couldn't get stack resource consumption limits");
-	pthread__main.pt_stack.ss_size = slimit.rlim_cur;
+	size = slimit.rlim_cur;
+	pthread__main.pt_stack.ss_size = size;
 
 	for (aux = _dlauxinfo(); aux->a_type != AT_NULL; ++aux) {
 		if (aux->a_type == AT_STACKBASE) {
 			pthread__main.pt_stack.ss_sp = (void *)aux->a_v;
+#ifdef __MACHINE_STACK_GROWS_UP
+			pthread__main.pt_stack.ss_sp = (void *)aux->a_v;
+#else
+			pthread__main.pt_stack.ss_sp = (char *)aux->a_v - size;
+#endif
 			break;
 		}
 	}
