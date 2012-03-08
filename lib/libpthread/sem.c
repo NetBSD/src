@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.22 2012/03/07 23:31:44 joerg Exp $	*/
+/*	$NetBSD: sem.c,v 1.23 2012/03/08 21:59:28 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.22 2012/03/07 23:31:44 joerg Exp $");
+__RCSID("$NetBSD: sem.c,v 1.23 2012/03/08 21:59:28 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/ksem.h>
@@ -258,6 +258,20 @@ sem_wait(sem_t *sem)
 #endif
 
 	return (_ksem_wait((*sem)->ksem_semid));
+}
+
+int
+sem_timedwait(sem_t *sem, const struct timespec * __restrict abstime)
+{
+
+#ifdef ERRORCHECK
+	if (sem == NULL || *sem == NULL || (*sem)->ksem_magic != KSEM_MAGIC) {
+		errno = EINVAL;
+		return (-1);
+	}
+#endif
+
+	return (_ksem_timedwait((*sem)->ksem_semid, abstime));
 }
 
 int

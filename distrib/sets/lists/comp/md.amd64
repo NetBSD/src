@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.158 2012/02/29 20:07:52 tron Exp $
+# $NetBSD: md.amd64,v 1.159 2012/03/08 21:59:25 joerg Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -1053,7 +1053,7 @@
 ./usr/libdata/debug/usr/lib/i386/libbluetooth.so.4.2.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libbsdmalloc.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libbz2.so.1.1.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libc.so.12.182.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libc.so.12.183.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libcom_err.so.6.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/i386/libcom_err.so.7.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/libcrypt.so.1.0.debug	comp-compat-shlib	compat,pic,debug
@@ -1127,7 +1127,7 @@
 ./usr/libdata/debug/usr/lib/i386/libposix.so.0.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libppath.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libprop.so.1.1.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libpthread.so.1.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libpthread.so.1.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libpthread_dbg.so.2.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libpuffs.so.2.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libquota.so.1.0.debug	comp-compat-shlib	compat,pic,debug
@@ -1137,7 +1137,7 @@
 ./usr/libdata/debug/usr/lib/i386/libroken.so.14.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/i386/libroken.so.19.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/librpcsvc.so.1.0.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/librt.so.1.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/librt.so.1.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/librump.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/librumpclient.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/librumpcrypto.so.0.0.debug	comp-obsolete obsolete

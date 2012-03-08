@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.35 2011/04/17 20:37:43 rmind Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.36 2012/03/08 21:59:30 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.35 2011/04/17 20:37:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.36 2012/03/08 21:59:30 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -135,6 +135,7 @@ static const struct syscall_package ksem_syscalls[] = {
 	{ SYS__ksem_trywait, 0, (sy_call_t *)sys__ksem_trywait },
 	{ SYS__ksem_getvalue, 0, (sy_call_t *)sys__ksem_getvalue },
 	{ SYS__ksem_destroy, 0, (sy_call_t *)sys__ksem_destroy },
+	{ SYS__ksem_timedwait, 0, (sy_call_t *)sys__ksem_timedwait },
 	{ 0, 0, NULL },
 };
 
@@ -612,10 +613,10 @@ out:
 	return error;
 }
 
-static int
-ksem_wait(lwp_t *l, intptr_t id, bool try)
+int
+do_ksem_wait(lwp_t *l, intptr_t id, bool try, struct timespec *abstime)
 {
-	int fd = (int)id, error;
+	int fd = (int)id, error, timeo;
 	ksem_t *ks;
 
 	error = ksem_get(fd, &ks);
@@ -625,7 +626,15 @@ ksem_wait(lwp_t *l, intptr_t id, bool try)
 	KASSERT(mutex_owned(&ks->ks_lock));
 	while (ks->ks_value == 0) {
 		ks->ks_waiters++;
-		error = try ? EAGAIN : cv_wait_sig(&ks->ks_cv, &ks->ks_lock);
+		if (!try && abstime != NULL) {
+			error = abstimeout2timo(abstime, &timeo);
+			if (error != 0)
+				goto out;
+		} else {
+			timeo = 0;
+		}
+		error = try ? EAGAIN : cv_timedwait_sig(&ks->ks_cv,
+		    &ks->ks_lock, timeo);
 		ks->ks_waiters--;
 		if (error)
 			goto out;
@@ -645,7 +654,31 @@ sys__ksem_wait(struct lwp *l, const struct sys__ksem_wait_args *uap,
 		intptr_t id;
 	} */
 
-	return ksem_wait(l, SCARG(uap, id), false);
+	return do_ksem_wait(l, SCARG(uap, id), false, NULL);
+}
+
+int
+sys__ksem_timedwait(struct lwp *l, const struct sys__ksem_timedwait_args *uap,
+    register_t *retval)
+{
+	/* {
+		intptr_t id;
+		const struct timespec *abstime;
+	} */
+	struct timespec ts;
+	int error;
+
+	error = copyin(SCARG(uap, abstime), &ts, sizeof(ts));
+	if (error != 0)
+		return error;
+
+	if (ts.tv_sec < 0 || ts.tv_nsec < 0 || ts.tv_nsec >= 1000000000)
+		return EINVAL;
+
+	error = do_ksem_wait(l, SCARG(uap, id), false, &ts);
+	if (error == EWOULDBLOCK)
+		error = ETIMEDOUT;
+	return error;
 }
 
 int
@@ -656,7 +689,7 @@ sys__ksem_trywait(struct lwp *l, const struct sys__ksem_trywait_args *uap,
 		intptr_t id;
 	} */
 
-	return ksem_wait(l, SCARG(uap, id), true);
+	return do_ksem_wait(l, SCARG(uap, id), true, NULL);
 }
 
 int
