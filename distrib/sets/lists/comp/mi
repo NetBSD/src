@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1744 2012/03/02 17:27:48 christos Exp $
+#	$NetBSD: mi,v 1.1745 2012/03/08 21:59:25 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8801,6 +8801,7 @@
 ./usr/share/man/cat3/sem_init.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sem_open.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sem_post.0			comp-c-catman		.cat
+./usr/share/man/cat3/sem_timedwait.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sem_trywait.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sem_unlink.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sem_wait.0			comp-c-catman		.cat
@@ -15054,6 +15055,7 @@
 ./usr/share/man/html3/sem_init.html		comp-c-htmlman		html
 ./usr/share/man/html3/sem_open.html		comp-c-htmlman		html
 ./usr/share/man/html3/sem_post.html		comp-c-htmlman		html
+./usr/share/man/html3/sem_timedwait.html	comp-c-htmlman		html
 ./usr/share/man/html3/sem_trywait.html		comp-c-htmlman		html
 ./usr/share/man/html3/sem_unlink.html		comp-c-htmlman		html
 ./usr/share/man/html3/sem_wait.html		comp-c-htmlman		html
@@ -21315,6 +21317,7 @@
 ./usr/share/man/man3/sem_init.3			comp-c-man		.man
 ./usr/share/man/man3/sem_open.3			comp-c-man		.man
 ./usr/share/man/man3/sem_post.3			comp-c-man		.man
+./usr/share/man/man3/sem_timedwait.3		comp-c-man		.man
 ./usr/share/man/man3/sem_trywait.3		comp-c-man		.man
 ./usr/share/man/man3/sem_unlink.3		comp-c-man		.man
 ./usr/share/man/man3/sem_wait.3			comp-c-man		.man

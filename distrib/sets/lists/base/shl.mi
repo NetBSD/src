@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.619 2012/02/29 20:07:52 tron Exp $
+# $NetBSD: shl.mi,v 1.620 2012/03/08 21:59:24 joerg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -15,7 +15,7 @@
 #
 ./lib/libc.so					base-sys-shlib		dynamicroot
 ./lib/libc.so.12				base-sys-shlib		dynamicroot
-./lib/libc.so.12.182				base-sys-shlib		dynamicroot
+./lib/libc.so.12.183				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so.1				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so.1.0				base-sys-shlib		dynamicroot
@@ -173,7 +173,7 @@
 ./usr/lib/libbz2.so.1.1				base-sys-shlib
 ./usr/lib/libc.so				base-sys-shlib
 ./usr/lib/libc.so.12				base-sys-shlib
-./usr/lib/libc.so.12.182			base-sys-shlib
+./usr/lib/libc.so.12.183			base-sys-shlib
 ./usr/lib/libcdk.so				base-obsolete		obsolete
 ./usr/lib/libcom_err.so				base-krb5-shlib		kerberos
 ./usr/lib/libcom_err.so.7			base-krb5-shlib		kerberos
@@ -378,7 +378,7 @@
 ./usr/lib/libprop.so.1.1			base-sys-shlib
 ./usr/lib/libpthread.so				base-sys-shlib
 ./usr/lib/libpthread.so.1			base-sys-shlib
-./usr/lib/libpthread.so.1.0			base-sys-shlib
+./usr/lib/libpthread.so.1.1			base-sys-shlib
 ./usr/lib/libpthread_dbg.so			base-sys-shlib
 ./usr/lib/libpthread_dbg.so.2			base-sys-shlib
 ./usr/lib/libpthread_dbg.so.2.0			base-sys-shlib
@@ -405,7 +405,7 @@
 ./usr/lib/librpcsvc.so.1.0			base-net-shlib
 ./usr/lib/librt.so				base-sys-shlib
 ./usr/lib/librt.so.1				base-sys-shlib
-./usr/lib/librt.so.1.0				base-sys-shlib
+./usr/lib/librt.so.1.1				base-sys-shlib
 ./usr/lib/librump.so				base-rump-shlib
 ./usr/lib/librump.so.0				base-rump-shlib
 ./usr/lib/librump.so.0.0			base-rump-shlib
