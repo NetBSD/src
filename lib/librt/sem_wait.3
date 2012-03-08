@@ -1,4 +1,4 @@
-.\" $NetBSD: sem_wait.3,v 1.2 2012/03/08 21:59:29 joerg Exp $
+.\" $NetBSD: sem_wait.3,v 1.3 2012/03/08 22:13:32 wiz Exp $
 .\"
 .\" Copyright (C) 2000 Jason Evans <jasone@FreeBSD.org>.
 .\" All rights reserved.
@@ -32,6 +32,7 @@
 .Os
 .Sh NAME
 .Nm sem_wait ,
+.Nm sem_timedwait ,
 .Nm sem_trywait
 .Nd decrement (lock) a semaphore
 .Sh LIBRARY
@@ -41,7 +42,7 @@
 .Ft int
 .Fn sem_wait "sem_t *sem"
 .Ft int
-.Fn sem_wait "sem_t *sem" "const struct timespec * restrict abstime"
+.Fn sem_timedwait "sem_t *sem" "const struct timespec * restrict abstime"
 .Ft int
 .Fn sem_trywait "sem_t *sem"
 .Sh DESCRIPTION
@@ -71,7 +72,7 @@ Otherwise, the semaphore is not decremented and an error is returned.
 .Rv -std sem_wait
 .Sh ERRORS
 .Fn sem_wait ,
-.Fn sem_timedwait
+.Fn sem_timedwait ,
 and
 .Fn sem_trywait
 will fail if:
