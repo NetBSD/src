@@ -26,6 +26,7 @@ bin_SCRIPTS = cvsbug
 
 # The cvs executable
 cvs_SOURCES = \
+	acl.c \
 	add.c \
 	admin.c \
 	annotate.c \
