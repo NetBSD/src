@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.5 2008/11/14 15:49:20 ad Exp $	*/
+/*	$NetBSD: sem.c,v 1.6 2012/03/08 21:59:29 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.5 2008/11/14 15:49:20 ad Exp $");
+__RCSID("$NetBSD: sem.c,v 1.6 2012/03/08 21:59:29 joerg Exp $");
 
 /*
  * If an application is linked against both librt and libpthread, the
@@ -72,6 +72,7 @@ __RCSID("$NetBSD: sem.c,v 1.5 2008/11/14 15:49:20 ad Exp $");
 #define	sem_close	_librt_sem_close
 #define	sem_unlink	_librt_sem_unlink
 #define	sem_wait	_librt_sem_wait
+#define	sem_timedwait	_librt_sem_timedwait
 #define	sem_trywait	_librt_sem_trywait
 #define	sem_post	_librt_sem_post
 #define	sem_getvalue	_librt_sem_getvalue
@@ -108,6 +109,7 @@ __weak_alias(sem_open,_librt_sem_open)
 __weak_alias(sem_close,_librt_sem_close)
 __weak_alias(sem_unlink,_librt_sem_unlink)
 __weak_alias(sem_wait,_librt_sem_wait)
+__weak_alias(sem_timedwait,_librt_sem_timedwait)
 __weak_alias(sem_trywait,_librt_sem_trywait)
 __weak_alias(sem_post,_librt_sem_post)
 __weak_alias(sem_getvalue,_librt_sem_getvalue)
@@ -275,6 +277,20 @@ sem_wait(sem_t *sem)
 #endif
 
 	return (_ksem_wait((*sem)->ksem_semid));
+}
+
+int
+sem_timedwait(sem_t *sem, const struct timespec * __restrict abstime)
+{
+
+#ifdef ERRORCHECK
+	if (sem == NULL || *sem == NULL || (*sem)->ksem_magic != KSEM_MAGIC) {
+		errno = EINVAL;
+		return (-1);
+	}
+#endif
+
+	return (_ksem_timedwait((*sem)->ksem_semid, abstime));
 }
 
 int

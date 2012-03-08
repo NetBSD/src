@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.212 2012/02/29 20:07:53 tron Exp $
+# $NetBSD: shl.mi,v 1.213 2012/03/08 21:59:27 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -249,7 +249,7 @@
 ./usr/libdata/debug/usr/lib/libbluetooth.so.4.2.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libbz2.so.1.1.debug		comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libc.so.12.182.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libc.so.12.183.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libcom_err.so.7.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libcrypt.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libcrypto.so.7.0.debug	comp-crypto-debug	crypto,debug
@@ -320,7 +320,7 @@
 ./usr/libdata/debug/usr/lib/libposix.so.0.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libppath.so.0.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libprop.so.1.1.debug	comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libpthread.so.1.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libpthread.so.1.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libpthread_dbg.so.2.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libpuffs.so.2.0.debug	comp-puffs-debug	debug
 ./usr/libdata/debug/usr/lib/libquota.so.1.0.debug	comp-sys-debug	debug
@@ -329,7 +329,7 @@
 ./usr/libdata/debug/usr/lib/libresolv.so.2.0.debug	comp-net-debug	debug
 ./usr/libdata/debug/usr/lib/libroken.so.19.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/librpcsvc.so.1.0.debug	comp-net-debug	debug
-./usr/libdata/debug/usr/lib/librt.so.1.0.debug		comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/librt.so.1.1.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/librump.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpclient.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpdev.so.0.0.debug	comp-rump-debug	debug
