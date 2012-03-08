@@ -1,4 +1,4 @@
-/*	$NetBSD: cyzfirm2h.c,v 1.10 2012/03/08 16:43:04 jakllsch Exp $	*/
+/*	$NetBSD: cyzfirm2h.c,v 1.11 2012/03/08 16:45:10 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cyzfirm2h.c,v 1.10 2012/03/08 16:43:04 jakllsch Exp $");
+__RCSID("$NetBSD: cyzfirm2h.c,v 1.11 2012/03/08 16:45:10 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: cyzfirm2h.c,v 1.10 2012/03/08 16:43:04 jakllsch Exp $");
 #include <unistd.h>
 
 int	main(int argc, char *argv[]);
-void	usage(void);
+static void	usage(void) __dead;
 
 int
 main(int argc, char *argv[])
@@ -132,7 +132,7 @@ main(int argc, char *argv[])
 	fprintf(out_file, "#endif /* _%s_ */\n", include_name);
 }
 
-void
+__dead static void
 usage(void)
 {
 
