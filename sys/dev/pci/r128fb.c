@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.30 2012/02/16 20:45:21 macallan Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.31 2012/03/08 05:42:44 macallan Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.30 2012/02/16 20:45:21 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.31 2012/03/08 05:42:44 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,9 +325,9 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 		sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
 		sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
 		sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
-		glyphcache_init(&sc->sc_gc, sc->sc_height,
+		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
 				sc->sc_width,
-				(0x800000 / sc->sc_stride) - sc->sc_height,
+				(0x800000 / sc->sc_stride) - sc->sc_height - 5,
 				ri->ri_font->fontwidth,
 				ri->ri_font->fontheight,
 				defattr);
@@ -946,7 +946,7 @@ r128fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	int i, x, y, wi, he, r, g, b, aval;
 	int r1, g1, b1, r0, g0, b0, fgo, bgo;
 	uint8_t *data8;
-	int rv;
+	int rv, cnt = 0;
 
 	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL) 
 		return;
@@ -1007,6 +1007,9 @@ r128fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 #define R3G3B2(r, g, b) ((r & 0xe0) | ((g >> 3) & 0x1c) | (b >> 6))
 	bg8 = R3G3B2(r0, g0, b0);
 	fg8 = R3G3B2(r1, g1, b1);
+
+	r128fb_wait(sc, 16);
+
 	for (i = 0; i < ri->ri_fontscale; i++) {
 		aval = *data8;
 		if (aval == 0) {
@@ -1031,6 +1034,11 @@ r128fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 			 * out 
 			 */
 			latch = 0;
+			cnt++;
+			if (cnt > 15) {
+				r128fb_wait(sc, 16);
+				cnt = 0;
+			}
 		}
 		data8++;
 	}
