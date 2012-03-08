@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.139 2011/12/18 05:49:31 dholland Exp $
+# $NetBSD: GENERIC,v 1.139.2.1 2012/03/08 17:56:46 riz Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.139 $"
+#ident 		"GENERIC-$Revision: 1.139.2.1 $"
 
 maxusers	32
 
@@ -339,6 +339,7 @@ urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 uhci*	at pci? dev ? function ?	# USB Universal Host Controller
 ohci*	at pci? dev ? function ?	# USB Open Host Controller
 ehci*	at pci? dev ? function ?	# USB Enhanced Host Controller
+options USB_FRAG_DMA_WORKAROUND		# Workaround panic in usb_allocmem()
 
 usb*	at uhci?			# USB bus support
 usb*	at ohci?			# USB bus support
