@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.48 2012/03/08 17:27:52 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.49 2012/03/08 17:40:16 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1180,4 +1180,21 @@ sys/arch/hpcarm/hpcarm/pxa2x0_hpc_machdep.c	1.14
 
 	Fix booting on WS011SH and possibly other 128MB models.
 	[nonaka, ticket #94]
+
+sys/dev/pci/agp_amd64.c				1.7
+
+	Fix kernel crash right after starting Xserver with DRM on Socket
+	AM2 + AGP systems.
+	[tsutsui, ticket #95]
+
+sys/lib/libsa/ls.c				1.4
+
+	Make bootloader "ls" work on filenames with directory paths.
+	[tsutsui, ticket #96]
+
+share/man/man4/amdtemp.4			1.6-1.7
+sys/arch/x86/pci/amdtemp.c			1.13
+
+	amdtemp(4): support family 12h.
+	[nonaka, ticket #97]
 
