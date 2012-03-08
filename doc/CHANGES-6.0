@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.47 2012/03/07 23:45:14 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.48 2012/03/08 17:27:52 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1162,4 +1162,22 @@ sys/arch/usermode/usermode/trap.c		1.64
 
 	Implement signal forwarding to userland for usermode kernels.
 	[reinoud, ticket #89]
+
+sys/arch/usermode/usermode/trap.c		1.65
+
+	Fix the type of signal returned to userland from usermode kernel
+	on a segment or access error.
+	[reinoud, ticket #91]
+
+lib/libc/gen/arc4random.c			1.11-1.12
+
+	Make arc4random far less greedy for entropy.  Make arc4random actually
+	implement arc4 when used by threaded programs. Fix a security
+	problem with previous revision.
+	[tls, ticket #92]
+
+sys/arch/hpcarm/hpcarm/pxa2x0_hpc_machdep.c	1.14
+
+	Fix booting on WS011SH and possibly other 128MB models.
+	[nonaka, ticket #94]
 
