@@ -1,4 +1,4 @@
-/*	$NetBSD: rcsbase.h,v 1.12 2012/01/12 14:10:56 joerg Exp $	*/
+/*	$NetBSD: rcsbase.h,v 1.13 2012/03/08 21:32:28 christos Exp $	*/
 
 /* RCS common definitions and data structures */
 
@@ -33,6 +33,10 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsbase.h,v $
+ * Revision 1.13  2012/03/08 21:32:28  christos
+ * Teach rcs about the new cvs "commitid" keyword, so that we don't bitch each
+ * time we play with an RCS file maintained by CVS.
+ *
  * Revision 1.12  2012/01/12 14:10:56  joerg
  * Second try to sort out the dangling elses. Just use {} markers.
  * Produces identical on amd64.
@@ -383,6 +387,7 @@ struct hshentry {
 	char const	  * lockedby; /* who locks the revision		    */
 	char const	  * state;    /* state of revision (Exp by default) */
 	char const	  * name;     /* name (if any) by which retrieved   */
+	char const	  * commitid; /* unique commit identifier           */
 	struct cbuf	    log;      /* log message requested at checkin   */
         struct branchhead * branches; /* list of first revisions on branches*/
 	struct cbuf	    ig;	      /* ignored phrases in admin part	    */
