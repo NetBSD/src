@@ -1,4 +1,4 @@
-.\" $NetBSD: sem_post.3,v 1.2 2012/03/08 21:59:29 joerg Exp $
+.\" $NetBSD: sem_post.3,v 1.3 2012/03/08 22:13:05 wiz Exp $
 .\"
 .\" Copyright (C) 2000 Jason Evans <jasone@FreeBSD.org>.
 .\" All rights reserved.
@@ -48,9 +48,9 @@ If there are threads blocked on the semaphore when
 .Fn sem_post
 is called, then the highest priority thread that has been blocked the longest on
 the semaphore will be allowed to return from
-.Fn sem_wait 
+.Fn sem_wait
 or
-.Fn sem_timedwait.
+.Fn sem_timedwait .
 .Pp
 .Fn sem_post
 is signal-reentrant and may be called within signal handlers.
