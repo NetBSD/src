@@ -241,6 +241,25 @@ cannot remove file `%s' which has a sticky date of `%s'",
     {
 	char *fname;
 
+/* cvsacl patch */
+#ifdef SERVER_SUPPORT
+	if (use_cvs_acl /* && server_active */)
+	{
+	    if (!access_allowed (finfo->file, finfo->repository, vers->tag, 7,
+				 NULL, NULL, 1))
+	    {
+		if (stop_at_first_permission_denied)
+		    error (1, 0, "permission denied for %s",
+			   Short_Repository (finfo->repository));
+		else
+		    error (0, 0, "permission denied for %s/%s",
+			   Short_Repository (finfo->repository), finfo->file);
+			
+		return (0);
+	    }
+	}
+#endif
+
 	/* Re-register it with a negative version number.  */
 	fname = Xasprintf ("-%s", vers->vn_user);
 	Register (finfo->entries, finfo->file, fname, vers->ts_rcs,

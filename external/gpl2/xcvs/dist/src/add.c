@@ -401,6 +401,25 @@ add (int argc, char **argv)
 		    }
 		    else
 		    {
+/* cvsacl patch */
+#ifdef SERVER_SUPPORT
+			if (use_cvs_acl /* && server_active */)
+			{
+			    if (!access_allowed (finfo.file, repository,
+						 vers->tag, 6, NULL, NULL, 1))
+			    {
+				if (stop_at_first_permission_denied)
+				    error (1, 0, "permission denied for %s",
+					   Short_Repository (finfo.repository));
+				else
+				    error (0, 0, "permission denied for %s/%s",
+					   Short_Repository (finfo.repository),
+					   finfo.file);
+			
+				return (0);
+			    }
+			}
+#endif
 			/* There is a user file, so build the entry for it */
 			if (build_entry (repository, finfo.file, vers->options,
 					 message, entries, vers->tag) != 0)
@@ -675,6 +694,25 @@ add (int argc, char **argv)
 	    && isdir (finfo.file)
 	    && !wrap_name_has (finfo.file, WRAP_TOCVS))
 	{
+
+/* cvsacl patch */
+#ifdef SERVER_SUPPORT
+	    if (use_cvs_acl /* && server_active */)
+	    {
+		if (!access_allowed (NULL, repository, NULL, 6, NULL, NULL, 1))
+		{
+		    if (stop_at_first_permission_denied)
+			error (1, 0, "permission denied for %s",
+			       Short_Repository (finfo.repository));
+		    else
+			error (0, 0, "permission denied for %s/%s",
+			       Short_Repository (finfo.repository), finfo.file);
+			
+		    return (0);
+		}
+	    }
+#endif
+
 	    err += add_directory (&finfo);
 	}
 	else
