@@ -2801,7 +2801,7 @@ for what in $tests; do
 	  # so we might as well test it
 	  dotest version-1 "${testcvs} --version" \
 '
-Concurrent Versions System (CVS) [0-9.]*.*
+Concurrent Versions System (CVS) [0-9.]*.*with CVSACL Patch [0-9.]*.*
 
 Copyright (C) [0-9]* Free Software Foundation, Inc.
 
@@ -2823,7 +2823,9 @@ Specify the --help option for further information about CVS'
 	  if $remote; then
 		dotest version-2r "${testcvs} version" \
 'Client: Concurrent Versions System (CVS) [0-9p.]* (client.*)
-Server: Concurrent Versions System (CVS) [0-9p.]* (.*server)'
+with CVSACL Patch [0-9p.]* (.*)
+Server: Concurrent Versions System (CVS) [0-9p.]* (.*server)
+with CVSACL Patch [0-9p.]* (.*)'
 	  else
 		dotest version-2 "${testcvs} version" \
 'Concurrent Versions System (CVS) [0-9.]*.*'
@@ -3328,9 +3330,9 @@ ${SPROG} \[admin aborted\]: attempt to delete all revisions"
 	  # lib/getopt.c will use POSIX when __posixly_correct
 	  # otherwise the other, so accept both of them. -- mdb
 	  dotest_fail basicb-21 "${testcvs} -q admin -H" \
-"admin: invalid option -- H
+"admin: invalid option -- '*H'*
 ${CPROG} \[admin aborted\]: specify ${CPROG} -H admin for usage information" \
-"admin: illegal option -- H
+"admin: illegal option -- '*H'*
 ${CPROG} \[admin aborted\]: specify ${CPROG} -H admin for usage information"
 	  cd ..
 	  rmdir 1
@@ -4637,6 +4639,7 @@ A [0-9-]* [0-9:]* ${PLUS}0000 ${username} 1\.1 file6     first-dir/dir1      == 
 A [0-9-]* [0-9:]* ${PLUS}0000 ${username} 1\.1 file7     first-dir/dir1      == ${TESTDIR}
 A [0-9-]* [0-9:]* ${PLUS}0000 ${username} 1\.1 file6     first-dir/dir1/dir2 == ${TESTDIR}
 A [0-9-]* [0-9:]* ${PLUS}0000 ${username} 1\.1 file7     first-dir/dir1/dir2 == ${TESTDIR}
+T [0-9-]* [0-9:]* ${PLUS}0000 ${username} first-dir \[second-dive:A\]
 A [0-9-]* [0-9:]* ${PLUS}0000 ${username} 1\.1 file14    first-dir           == ${TESTDIR}
 M [0-9-]* [0-9:]* ${PLUS}0000 ${username} 1\.2 file6     first-dir           == ${TESTDIR}
 R [0-9-]* [0-9:]* ${PLUS}0000 ${username} 1\.2 file7     first-dir           == ${TESTDIR}
@@ -4646,6 +4649,7 @@ R [0-9-]* [0-9:]* ${PLUS}0000 ${username} 1\.2 file7     first-dir/dir1      == 
 A [0-9-]* [0-9:]* ${PLUS}0000 ${username} 1\.1 file14    first-dir/dir1/dir2 == ${TESTDIR}
 M [0-9-]* [0-9:]* ${PLUS}0000 ${username} 1\.2 file6     first-dir/dir1/dir2 == ${TESTDIR}
 R [0-9-]* [0-9:]* ${PLUS}0000 ${username} 1\.2 file7     first-dir/dir1/dir2 == ${TESTDIR}
+T [0-9-]* [0-9:]* ${PLUS}0000 ${username} first-dir \[third-dive:A\]
 F [0-9-]* [0-9:]* ${PLUS}0000 ${username}                     =first-dir= ${TESTDIR}/\*
 T [0-9-]* [0-9:]* ${PLUS}0000 ${username} first-dir \[rtagged-by-head:A\]
 T [0-9-]* [0-9:]* ${PLUS}0000 ${username} first-dir \[rtagged-by-tag:rtagged-by-head\]
@@ -4660,6 +4664,7 @@ A [0-9-]* [0-9:]* ${PLUS}0000 ${username} 1\.1 file6     first-dir/dir1      == 
 A [0-9-]* [0-9:]* ${PLUS}0000 ${username} 1\.1 file7     first-dir/dir1      == <remote>
 A [0-9-]* [0-9:]* ${PLUS}0000 ${username} 1\.1 file6     first-dir/dir1/dir2 == <remote>
 A [0-9-]* [0-9:]* ${PLUS}0000 ${username} 1\.1 file7     first-dir/dir1/dir2 == <remote>
+T [0-9-]* [0-9:]* ${PLUS}0000 ${username} first-dir \[second-dive:A\]
 A [0-9-]* [0-9:]* ${PLUS}0000 ${username} 1\.1 file14    first-dir           == <remote>
 M [0-9-]* [0-9:]* ${PLUS}0000 ${username} 1\.2 file6     first-dir           == <remote>
 R [0-9-]* [0-9:]* ${PLUS}0000 ${username} 1\.2 file7     first-dir           == <remote>
@@ -4669,6 +4674,7 @@ R [0-9-]* [0-9:]* ${PLUS}0000 ${username} 1\.2 file7     first-dir/dir1      == 
 A [0-9-]* [0-9:]* ${PLUS}0000 ${username} 1\.1 file14    first-dir/dir1/dir2 == <remote>
 M [0-9-]* [0-9:]* ${PLUS}0000 ${username} 1\.2 file6     first-dir/dir1/dir2 == <remote>
 R [0-9-]* [0-9:]* ${PLUS}0000 ${username} 1\.2 file7     first-dir/dir1/dir2 == <remote>
+T [0-9-]* [0-9:]* ${PLUS}0000 ${username} first-dir \[third-dive:A\]
 F [0-9-]* [0-9:]* ${PLUS}0000 ${username}                     =first-dir= <remote>/\*
 T [0-9-]* [0-9:]* ${PLUS}0000 ${username} first-dir \[rtagged-by-head:A\]
 T [0-9-]* [0-9:]* ${PLUS}0000 ${username} first-dir \[rtagged-by-tag:rtagged-by-head\]
@@ -4692,7 +4698,8 @@ W [0-9-]* [0-9:]* ${PLUS}0000 ${username}     file7     first-dir           == <
 	  dotest ls-init-1 "$testcvs -Q co -dtop ."
 	  cd top
 	  dotest ls-1 "$testcvs ls CVSROOT" \
-"checkoutlist
+"aclconfig
+checkoutlist
 commitinfo
 config
 cvswrappers
@@ -4712,6 +4719,7 @@ verifymsg"
 CVSROOT
 
 CVSROOT:
+aclconfig
 checkoutlist
 commitinfo
 config
@@ -4735,6 +4743,7 @@ CVSROOT
 notcheckedout
 
 CVSROOT:
+aclconfig
 checkoutlist
 commitinfo
 config
@@ -4761,6 +4770,7 @@ CVSROOT
 notcheckedout
 
 CVSROOT:
+aclconfig
 checkoutlist
 commitinfo
 config
@@ -7509,6 +7519,7 @@ CVSROOT
 first-dir
 
 CVSROOT:
+aclconfig
 checkoutlist
 commitinfo
 config
@@ -7540,6 +7551,7 @@ d--- $ISO8601DATE            CVSROOT
 d--- $ISO8601DATE            first-dir
 
 CVSROOT:
+---- $ISO8601DATE 1\.[0-9][0-9]*        aclconfig
 ---- $ISO8601DATE 1\.[0-9][0-9]*        checkoutlist
 ---- $ISO8601DATE 1\.[0-9][0-9]*        commitinfo
 ---- $ISO8601DATE 1\.[0-9][0-9]*        config
@@ -7571,6 +7583,7 @@ D/CVSROOT////
 D/first-dir////
 
 CVSROOT:
+/aclconfig/1\.[0-9][0-9]*/$DATE//
 /checkoutlist/1\.[0-9][0-9]*/$DATE//
 /commitinfo/1\.[0-9][0-9]*/$DATE//
 /config/1\.[0-9][0-9]*/$DATE//
@@ -7601,6 +7614,7 @@ CVSROOT
 first-dir
 
 CVSROOT:
+aclconfig
 checkoutlist
 commitinfo
 config
@@ -12201,7 +12215,8 @@ fish"
 	  mkdir keywordexpand; cd keywordexpand
 
 	  dotest keywordexpand-1 "${testcvs} -q co CVSROOT" \
-'U CVSROOT/checkoutlist
+'U CVSROOT/aclconfig
+U CVSROOT/checkoutlist
 U CVSROOT/commitinfo
 U CVSROOT/config
 U CVSROOT/cvswrappers
@@ -12344,7 +12359,8 @@ $SPROG [a-z]*: $CVSROOT_DIRNAME/CVSROOT/config \[[1-9][0-9]*\]: LocalKeyword ign
 	  ############################################################
 	  # Check out the whole repository
 	  mkdir 1; cd 1
-	  dotest modules-1 "${testcvs} -q co ." 'U CVSROOT/checkoutlist
+	  dotest modules-1 "${testcvs} -q co ." 'U CVSROOT/aclconfig
+U CVSROOT/checkoutlist
 U CVSROOT/commitinfo
 U CVSROOT/config
 U CVSROOT/cvswrappers
@@ -12370,7 +12386,8 @@ $SPROG commit: Rebuilding administrative file database"
 	  ############################################################
 	  # Check out CVSROOT
 	  mkdir 1; cd 1
-	  dotest modules-2 "${testcvs} -q co CVSROOT" 'U CVSROOT/checkoutlist
+	  dotest modules-2 "${testcvs} -q co CVSROOT" 'U CVSROOT/aclconfig
+U CVSROOT/checkoutlist
 U CVSROOT/commitinfo
 U CVSROOT/config
 U CVSROOT/cvswrappers
@@ -12399,7 +12416,8 @@ $SPROG commit: Rebuilding administrative file database"
 	  mkdir 1; cd 1
 	  dotest modules-3 "${testcvs} -q co somedir" ''
 	  cd somedir
-	  dotest modules-3d "${testcvs} -q co CVSROOT" 'U CVSROOT/checkoutlist
+	  dotest modules-3d "${testcvs} -q co CVSROOT" 'U CVSROOT/aclconfig
+U CVSROOT/checkoutlist
 U CVSROOT/commitinfo
 U CVSROOT/config
 U CVSROOT/cvswrappers
@@ -12461,7 +12479,8 @@ initial revision: 1\.1"
 
 	  cd ..
 	  dotest modules-146 "$testcvs -q co CVSROOT" \
-"U CVSROOT/checkoutlist
+"U CVSROOT/aclconfig
+U CVSROOT/checkoutlist
 U CVSROOT/commitinfo
 U CVSROOT/config
 U CVSROOT/cvswrappers
@@ -13269,7 +13288,8 @@ initial revision: 1\.1"
 
 	  cd ..
 	  dotest modules5-6 "${testcvs} -q co CVSROOT" \
-"U CVSROOT/checkoutlist
+"U CVSROOT/aclconfig
+U CVSROOT/checkoutlist
 U CVSROOT/commitinfo
 U CVSROOT/config
 U CVSROOT/cvswrappers
@@ -15573,6 +15593,8 @@ RCS file: $CVSROOT_DIRNAME/CVSROOT$DOTSTAR"
           dotest_fail checkout_repository-2 "${testcvs} co CVSROOT" \
 "${CPROG} \[checkout aborted\]: Cannot check out files into the repository itself" \
 "${SPROG} checkout: Updating CVSROOT
+${CPROG} checkout: move away \`CVSROOT/aclconfig'; it is in the way
+C CVSROOT/aclconfig
 ${CPROG} checkout: move away \`CVSROOT/checkoutlist'; it is in the way
 C CVSROOT/checkoutlist
 ${CPROG} checkout: move away \`CVSROOT/commitinfo'; it is in the way
@@ -15741,6 +15763,7 @@ description:
 revision 1\.1
 date: ${ISO8601DATE};  author: ${username};  state: Exp;  commitid: ${commitid};
 branches:  1\.1\.2;
+x
 xCVS: ----------------------------------------------------------------------
 xCVS: Enter Log.  Lines beginning with .CVS:. are removed automatically
 xCVS:
@@ -15752,6 +15775,7 @@ xCVS: ----------------------------------------------------------------------
 ----------------------------
 revision 1\.1\.2\.1
 date: ${ISO8601DATE};  author: ${username};  state: Exp;  lines: ${PLUS}1 -0;  commitid: ${commitid};
+x
 xCVS: ----------------------------------------------------------------------
 xCVS: Enter Log.  Lines beginning with .CVS:. are removed automatically
 xCVS:
@@ -15779,6 +15803,7 @@ description:
 revision 1\.1
 date: ${ISO8601DATE};  author: ${username};  state: Exp;  commitid: ${commitid};
 branches:  1\.1\.2;
+x
 xCVS: ----------------------------------------------------------------------
 xCVS: Enter Log.  Lines beginning with .CVS:. are removed automatically
 xCVS:
@@ -15790,6 +15815,7 @@ xCVS: ----------------------------------------------------------------------
 ----------------------------
 revision 1\.1\.2\.1
 date: ${ISO8601DATE};  author: ${username};  state: Exp;  lines: ${PLUS}1 -0;  commitid: ${commitid};
+x
 xCVS: ----------------------------------------------------------------------
 xCVS: Enter Log.  Lines beginning with .CVS:. are removed automatically
 xCVS:
@@ -15811,6 +15837,7 @@ description:
 revision 1\.1
 date: ${ISO8601DATE};  author: ${username};  state: Exp;  commitid: ${commitid};
 branches:  1\.1\.2;
+x
 xCVS: ----------------------------------------------------------------------
 xCVS: Enter Log.  Lines beginning with .CVS:. are removed automatically
 xCVS:
@@ -15822,6 +15849,7 @@ xCVS: ----------------------------------------------------------------------
 ----------------------------
 revision 1\.1\.2\.1
 date: ${ISO8601DATE};  author: ${username};  state: Exp;  lines: ${PLUS}1 -0;  commitid: ${commitid};
+x
 xCVS: ----------------------------------------------------------------------
 xCVS: Enter Log.  Lines beginning with .CVS:. are removed automatically
 xCVS:
@@ -31459,7 +31487,7 @@ EOF
 	  # Check that the client detects redirect loops.
 	  cat >$TESTDIR/serveme <<EOF
 #!$TESTSHELL
-echo "Valid-requests Root Valid-responses valid-requests Command-prep Referrer Repository Directory Relative-directory Max-dotdot Static-directory Sticky Entry Kopt Checkin-time Modified Is-modified UseUnchanged Unchanged Notify Hostname LocalDir Questionable Argument Argumentx Global_option Gzip-stream wrapper-sendme-rcsOptions Set Gssapi-authenticate expand-modules ci co update diff log rlog list rlist global-list-quiet ls add remove update-patches gzip-file-contents status rdiff tag rtag import admin export history release watch-on watch-off watch-add watch-remove watchers editors edit init annotate rannotate noop version"
+echo "Valid-requests Root Valid-responses valid-requests Command-prep Referrer Repository Directory Relative-directory Max-dotdot Static-directory Sticky Entry Kopt Checkin-time Modified Is-modified UseUnchanged Unchanged Notify Hostname LocalDir Questionable Argument Argumentx Global_option Gzip-stream wrapper-sendme-rcsOptions Set Gssapi-authenticate expand-modules ci co update diff log rlog acl racl list rlist global-list-quiet ls add remove update-patches gzip-file-contents status rdiff tag rtag import admin export history release watch-on watch-off watch-add watch-remove watchers editors edit init annotate rannotate noop version"
 echo "ok"
 echo "Redirect $CVSROOT"
 
@@ -31868,7 +31896,7 @@ EOF
 	  save_CVS_SERVER=$CVS_SERVER
 	  ln -s $PRIMARY_CVSROOT_DIRNAME $TESTDIR/primary_link
 	  dotest writeproxy-0 "$CVS_SERVER server" \
-"Valid-requests Root Valid-responses valid-requests Command-prep Referrer Repository Directory Relative-directory Max-dotdot Static-directory Sticky Entry Kopt Checkin-time Modified Is-modified UseUnchanged Unchanged Notify Hostname LocalDir Questionable Argument Argumentx Global_option Gzip-stream wrapper-sendme-rcsOptions Set ${DOTSTAR}expand-modules ci co update diff log rlog list rlist global-list-quiet ls add remove update-patches gzip-file-contents status rdiff tag rtag import admin export history release watch-on watch-off watch-add watch-remove watchers editors edit init annotate rannotate noop version
+"Valid-requests Root Valid-responses valid-requests Command-prep Referrer Repository Directory Relative-directory Max-dotdot Static-directory Sticky Entry Kopt Checkin-time Modified Is-modified UseUnchanged Unchanged Notify Hostname LocalDir Questionable Argument Argumentx Global_option Gzip-stream wrapper-sendme-rcsOptions Set ${DOTSTAR}expand-modules ci co update diff log rlog acl racl list rlist global-list-quiet ls add remove update-patches gzip-file-contents status rdiff tag rtag import admin export history release watch-on watch-off watch-add watch-remove watchers editors edit init annotate rannotate noop version
 ok
 ok
 ok" \
@@ -31917,7 +31945,8 @@ EOF
 	  cd ../..
 	  mkdir secondary; cd secondary
 	  dotest writeproxy-1 "$testcvs -qd$SECONDARY_CVSROOT co CVSROOT" \
-"U CVSROOT/checkoutlist
+"U CVSROOT/aclconfig
+U CVSROOT/checkoutlist
 U CVSROOT/commitinfo
 U CVSROOT/config
 U CVSROOT/cvswrappers
@@ -32116,7 +32145,8 @@ EOF
 	  mkdir secondary; cd secondary
 	  dotest writeproxy-noredirect-1 \
 "$testcvs -qd'$PRIMARY_CVSROOT' co CVSROOT" \
-"U CVSROOT/checkoutlist
+"U CVSROOT/aclconfig
+U CVSROOT/checkoutlist
 U CVSROOT/commitinfo
 U CVSROOT/config
 U CVSROOT/cvswrappers
@@ -32152,7 +32182,7 @@ PrimaryServer=$PRIMARY_CVSROOT"
 	  mv $TESTDIR/save-root $PRIMARY_CVSROOT_DIRNAME
 
 	  dotest writeproxy-noredirect-5 "$CVS_SERVER server" \
-"Valid-requests Root Valid-responses valid-requests Command-prep Referrer Repository Directory Relative-directory Max-dotdot Static-directory Sticky Entry Kopt Checkin-time Modified Is-modified UseUnchanged Unchanged Notify Hostname LocalDir Questionable Argument Argumentx Global_option Gzip-stream wrapper-sendme-rcsOptions Set ${DOTSTAR}expand-modules ci co update diff log rlog list rlist global-list-quiet ls add remove update-patches gzip-file-contents status rdiff tag rtag import admin export history release watch-on watch-off watch-add watch-remove watchers editors edit init annotate rannotate noop version
+"Valid-requests Root Valid-responses valid-requests Command-prep Referrer Repository Directory Relative-directory Max-dotdot Static-directory Sticky Entry Kopt Checkin-time Modified Is-modified UseUnchanged Unchanged Notify Hostname LocalDir Questionable Argument Argumentx Global_option Gzip-stream wrapper-sendme-rcsOptions Set ${DOTSTAR}expand-modules ci co update diff log rlog acl racl list rlist global-list-quiet ls add remove update-patches gzip-file-contents status rdiff tag rtag import admin export history release watch-on watch-off watch-add watch-remove watchers editors edit init annotate rannotate noop version
 ok
 ok
 ok
@@ -32184,7 +32214,7 @@ EOF
 	  cd firstdir
 	  echo now you see me >file1
 	  dotest writeproxy-noredirect-6 "$CVS_SERVER server" \
-"Valid-requests Root Valid-responses valid-requests Command-prep Referrer Repository Directory Relative-directory Max-dotdot Static-directory Sticky Entry Kopt Checkin-time Modified Is-modified UseUnchanged Unchanged Notify Hostname LocalDir Questionable Argument Argumentx Global_option Gzip-stream wrapper-sendme-rcsOptions Set ${DOTSTAR}expand-modules ci co update diff log rlog list rlist global-list-quiet ls add remove update-patches gzip-file-contents status rdiff tag rtag import admin export history release watch-on watch-off watch-add watch-remove watchers editors edit init annotate rannotate noop version
+"Valid-requests Root Valid-responses valid-requests Command-prep Referrer Repository Directory Relative-directory Max-dotdot Static-directory Sticky Entry Kopt Checkin-time Modified Is-modified UseUnchanged Unchanged Notify Hostname LocalDir Questionable Argument Argumentx Global_option Gzip-stream wrapper-sendme-rcsOptions Set ${DOTSTAR}expand-modules ci co update diff log rlog acl racl list rlist global-list-quiet ls add remove update-patches gzip-file-contents status rdiff tag rtag import admin export history release watch-on watch-off watch-add watch-remove watchers editors edit init annotate rannotate noop version
 ok
 ok
 ok
@@ -32214,7 +32244,7 @@ EOF
 	  echo /file1/0/dummy+timestamp// >>CVS/Entries
 
 	  dotest writeproxy-noredirect-7 "$CVS_SERVER server" \
-"Valid-requests Root Valid-responses valid-requests Command-prep Referrer Repository Directory Relative-directory Max-dotdot Static-directory Sticky Entry Kopt Checkin-time Modified Is-modified UseUnchanged Unchanged Notify Hostname LocalDir Questionable Argument Argumentx Global_option Gzip-stream wrapper-sendme-rcsOptions Set ${DOTSTAR}expand-modules ci co update diff log rlog list rlist global-list-quiet ls add remove update-patches gzip-file-contents status rdiff tag rtag import admin export history release watch-on watch-off watch-add watch-remove watchers editors edit init annotate rannotate noop version
+"Valid-requests Root Valid-responses valid-requests Command-prep Referrer Repository Directory Relative-directory Max-dotdot Static-directory Sticky Entry Kopt Checkin-time Modified Is-modified UseUnchanged Unchanged Notify Hostname LocalDir Questionable Argument Argumentx Global_option Gzip-stream wrapper-sendme-rcsOptions Set ${DOTSTAR}expand-modules ci co update diff log rlog acl racl list rlist global-list-quiet ls add remove update-patches gzip-file-contents status rdiff tag rtag import admin export history release watch-on watch-off watch-add watch-remove watchers editors edit init annotate rannotate noop version
 ok
 ok
 Mode u=rw,g=rw,o=r
@@ -32541,6 +32571,7 @@ EOF
 
 	  dotest_sort trace-1 "${testcvs} -t -t -t init" \
 "  *-> Lock_Cleanup()
+  *-> RCS_checkout (aclconfig,v, , , , \.#[0-9][0-9]*)
   *-> RCS_checkout (checkoutlist,v, , , , \.#[0-9][0-9]*)
   *-> RCS_checkout (commitinfo,v, , , , \.#[0-9][0-9]*)
   *-> RCS_checkout (config,v, , , , \.#[0-9][0-9]*)
@@ -32573,6 +32604,7 @@ EOF
   *-> unlink_file(\.#[0-9][0-9]*)
   *-> unlink_file(\.#[0-9][0-9]*)
   *-> unlink_file(\.#[0-9][0-9]*)
+  *-> unlink_file(\.#aclconfig)
   *-> unlink_file(\.#checkoutlist)
   *-> unlink_file(\.#commitinfo)
   *-> unlink_file(\.#config)
@@ -32600,6 +32632,7 @@ EOF
 S -> CVS_SERVER_SLEEP not set\.
 S -> Lock_Cleanup()
 S -> Lock_Cleanup()
+S -> RCS_checkout (aclconfig,v, , , , \.#[0-9][0-9]*)
 S -> RCS_checkout (checkoutlist,v, , , , \.#[0-9][0-9]*)
 S -> RCS_checkout (commitinfo,v, , , , \.#[0-9][0-9]*)
 S -> RCS_checkout (config,v, , , , \.#[0-9][0-9]*)
@@ -32636,6 +32669,7 @@ S -> unlink_file(\.#[0-9][0-9]*)
 S -> unlink_file(\.#[0-9][0-9]*)
 S -> unlink_file(\.#[0-9][0-9]*)
 S -> unlink_file(\.#[0-9][0-9]*)
+S -> unlink_file(\.#aclconfig)
 S -> unlink_file(\.#checkoutlist)
 S -> unlink_file(\.#commitinfo)
 S -> unlink_file(\.#config)
