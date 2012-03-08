@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_priv.h,v 1.25 2012/01/29 06:22:02 manu Exp $ */
+/*  $NetBSD: perfuse_priv.h,v 1.26 2012/03/08 14:58:57 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -108,7 +108,8 @@ struct perfuse_node_data {
 	uint64_t pnd_rfh;
 	uint64_t pnd_wfh;
 	uint64_t pnd_nodeid;			/* nodeid, this is not inode */
-	uint64_t pnd_nlookup;			/* vnode refcount */
+	uint64_t pnd_fuse_nlookup;		/* vnode refcount */
+	int pnd_puffs_nlookup;			/* vnode refcount */
 	uint64_t pnd_lock_owner;
 	struct dirent *pnd_dirent;		/* native buffer for readdir */
 	off_t pnd_dirent_len;
