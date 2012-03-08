@@ -32,8 +32,6 @@
 #include "getline.h"
 #include <grp.h>
 
-#define free(x) (void)(x)
-
 static int acl_fileproc (void *callerdat, struct file_info *finfo);
 
 static Dtype acl_dirproc (void *callerdat, const char *dir, const char *repos,
@@ -488,7 +486,7 @@ get_perms (const char *part_perms)
     /* no defined acl, no default acl in access file,
      * or no access file at all */
     if (part_perms == NULL) {
-    if (cvs_acl_default_permissions)
+	if (cvs_acl_default_permissions)
 	{
 	    aclconfig_default_used = 1;
 	    if (debug) fprintf (stderr, "default %s\n",
@@ -515,10 +513,12 @@ check_default:
 	usr = strtok (founduser, "!\t");
 	per = strtok (NULL, ",\t");
 
+	free(xperms);
 	xperms = xstrdup (per);
 	xperms_len = strlen (xperms);
 
 	userfound = 1;
+	free (founduser);
     }
     else
     {
@@ -548,6 +548,7 @@ check_default:
 			xrealloc_and_strcat (&xperms, &xperms_len, gperm);
 
 			groupfound = 1;
+			free (grp);
 		    }
 		}
 	    }
@@ -566,19 +567,23 @@ check_default:
 
 		while ((read = getline (&line, &line_allocated, groupfp)) >= 0)
 		{
+		    char *user;
 		    if (line[0] == '#' || line[0] == '\0' || line[0] == '\n')
 			continue;
 		    
 		    if (line[read - 1] == '\n')
 			line[--read] = '\0';
 
-		    if (grp = findusername (part_perms,
-					    findgroupname (line, username)))
+		    if ((grp = findgroupname (line, username)) &&
+			(user = findusername (part_perms, grp)))
+					    
 		    {
-			gperm = strtok (grp, "!\t");
+			gperm = strtok (user, "!\t");
 			gperm = strtok (NULL, ",\t");
 			xrealloc_and_strcat (&xperms, &xperms_len, gperm);
 			groupfound = 1;
+			free (grp);
+			free (user);
 		    }
 		}
 		
@@ -607,8 +612,6 @@ check_default:
 	    xperms_len = strlen (xperms);
 	}
 	
-	free(foundall);
-
 	/* You don't free pointers from strtok()! */
 	//free(usr);
 	//free(per);
@@ -819,7 +822,7 @@ racl_proc (int argc, char **argv, char *xwhere, char *mwhere,
     char *myargv[2];
     int err = 0;
     int which;
-    char *repository = NULL;
+    char *repository;
     char *where;
     char *obj;
     size_t objlen = 0;
@@ -832,11 +835,10 @@ racl_proc (int argc, char **argv, char *xwhere, char *mwhere,
 
     if (is_racl)
     {
+	char *v;
 	repository = Xasprintf ("%s/%s", current_parsed_root->directory,
 				argv[0]);
-	where = xmalloc (strlen (argv[0]) + (mfile == NULL ? 0 :
-			 strlen (mfile) + 1) + 1);
-	(void) strcpy (where, argv[0]);
+	where = xstrdup (argv[0]);
 
 	/* if mfile isn't null, we need to set up to do only part of the
 	 * module */
@@ -850,10 +852,12 @@ racl_proc (int argc, char **argv, char *xwhere, char *mwhere,
 	    if ((cp = strrchr (mfile, '/')) != NULL)
 	    {
 		*cp = '\0';
-		(void) strcat (repository, "/");
-		(void) strcat (repository, mfile);
-		(void) strcat (where, "/");
-		(void) strcat (where, mfile);
+		v = Xasprintf ("%s/%s", repository, mfile);
+		free (repository);
+		repository = v;
+		v = Xasprintf ("%s/%s", where, mfile);
+		free(where);
+		where = v;
 		mfile = cp + 1;
 	    }
 
@@ -862,18 +866,20 @@ racl_proc (int argc, char **argv, char *xwhere, char *mwhere,
 	    if (isdir (path))
 	    {
 		/* directory means repository gets the dir tacked on */
-		(void) strcpy (repository, path);
-		(void) strcat (where, "/");
-		(void) strcat (where, mfile);
+		free(repository);
+		repository = path;
+		v = Xasprintf ("%s/%s", where, mfile);
+		free(where);
+		where = v;
 	    }
 	    else
 	    {
+		free (path);
 		myargv[0] = argv[0];
 		myargv[1] = mfile;
 		argc = 2;
 		argv = myargv;
 	    }
-	    free (path);
 	}
 
 	/* cd to the starting repository */
@@ -901,6 +907,7 @@ racl_proc (int argc, char **argv, char *xwhere, char *mwhere,
     else
     {
 	where = NULL;
+	repository = NULL;
 	which = W_LOCAL | W_REPOS | W_ATTIC;
 
 	obj = xstrdup (argv[1]);
@@ -918,14 +925,16 @@ racl_proc (int argc, char **argv, char *xwhere, char *mwhere,
     if (listacl)
 	err = start_recursion (acllist_fileproc, NULL, acllist_dirproc, NULL,
 			       NULL, argc - 1, argv + 1, local, which, 0, 0,
-			       (char *) where, 1, repository);
+			       where, 1, repository);
     else
 	err = start_recursion (acl_fileproc, NULL, acl_dirproc, NULL, NULL,
 			       argc - 1, argv + 1, local, which, 0, 0,
-			       (char *) where, 1, repository);
+			       where, 1, repository);
 
     if (repository != NULL)
 	free (repository);
+    if (where != NULL)
+	free (where);
     
     return err;
 }
@@ -1312,7 +1321,7 @@ given_perms_valid (const char *cperms)
 char *
 make_perms (char *perms, char *founduserpart, char **xerrmsg)
 {
-    char *fperms;
+    char *fperms = NULL;
     size_t perms_len;
     size_t fperms_len;
     
@@ -1321,15 +1330,15 @@ make_perms (char *perms, char *founduserpart, char **xerrmsg)
     char *errmsg = NULL;
     
     char *retperms;
-    size_t retperms_len = 1;
-
-    retperms = xmalloc (retperms_len);
-    retperms[0] = '\0';
+    size_t retperms_len;
 
     perms_len = strlen (perms);
-
     if (perms[0] == '+' || perms[0] == '-')
     {
+	retperms = xmalloc (retperms_len);
+	retperms[0] = '\0';
+	retperms_len = 1;
+
 	if (founduserpart)
 	{
 	    char *tempfperms;
@@ -1482,9 +1491,8 @@ make_perms (char *perms, char *founduserpart, char **xerrmsg)
 			    }
 			}
 
-			fperms = xstrdup (tempfperms);
+			fperms = tempfperms;
 			fperms_len = strlen (fperms);
-			free (tempfperms);
 
 			if (!per && !err && (perms[0] == '-')) {
 			    err = 1;
@@ -1544,9 +1552,8 @@ make_perms (char *perms, char *founduserpart, char **xerrmsg)
 			    }
 			}
 
-			fperms = xstrdup (tempfperms);
+			fperms = tempfperms;
 			fperms_len = strlen (fperms);
-			free (tempfperms);
 
 			if (!per && !err && (perms[0] == '-'))
 			{
@@ -1608,9 +1615,8 @@ make_perms (char *perms, char *founduserpart, char **xerrmsg)
 			    }
 			}
 
-			fperms = xstrdup (tempfperms);
+			fperms = tempfperms;
 			fperms_len = strlen (fperms);
-			free (tempfperms);
 
 			if (!per && !err && (perms[0] == '-')) {
 			    err = 1;
@@ -1671,9 +1677,8 @@ make_perms (char *perms, char *founduserpart, char **xerrmsg)
 			    }
 			}
 
-			fperms = xstrdup (tempfperms);
+			fperms = tempfperms;
 			fperms_len = strlen (fperms);
-			free (tempfperms);
 			
 			if (!per && !err && (perms[0] == '-')) {
 				err = 1;
@@ -1709,6 +1714,10 @@ make_perms (char *perms, char *founduserpart, char **xerrmsg)
     {
 	retperms = xstrdup (perms);
     }
+    if (fperms)
+	free (fperms);
+    if (err && retperms)
+	free (retperms);
     
     return (err ? NULL : retperms);
 }
@@ -2116,6 +2125,8 @@ char *findusername (const char *string1, const char *string2)
 	    if (strncmp (tmp2, string2, strlen (string2)) == 0 &&
 				     tmp2[strlen (string2)] == '!')
 	    {
+		tmp2 = xstrdup (tmp2);
+		free (tmp1);
 		return tmp2;
 	    }
 	    tmp2 = strtok (NULL, ",\t");
@@ -2123,7 +2134,6 @@ char *findusername (const char *string1, const char *string2)
 	while (tmp2 != NULL);
 
 	free (tmp1);
-	free (tmp2);
 	
 	return NULL;
     }
@@ -2148,12 +2158,13 @@ char *findgroupname (const char *string1, const char *string2)
 	{
 	    if (strcmp (tmp2, string2) == 0)
 	    {
+		grpname = xstrdup (grpname);
+		free (tmp1);
 		return grpname;
 	    }
 	}
 	
 	free (tmp1);
-	free (tmp2);
 	
 	return NULL;
     }
