@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.36 2012/03/08 21:59:30 joerg Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.37 2012/03/09 21:03:46 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.36 2012/03/08 21:59:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.37 2012/03/09 21:03:46 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -241,12 +241,11 @@ ksem_get(int fd, ksem_t **ksret)
 	file_t *fp;
 
 	fp = fd_getfile(fd);
-	if (__predict_false(fp == NULL)) {
-		return EBADF;
-	}
+	if (__predict_false(fp == NULL))
+		return EINVAL;
 	if (__predict_false(fp->f_type != DTYPE_SEM)) {
 		fd_putfile(fd);
-		return EBADF;
+		return EINVAL;
 	}
 	ks = fp->f_data;
 	mutex_enter(&ks->ks_lock);
