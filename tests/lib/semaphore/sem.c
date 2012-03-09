@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.9 2012/03/08 21:59:32 joerg Exp $	*/
+/*	$NetBSD: sem.c,v 1.10 2012/03/09 14:25:34 joerg Exp $	*/
 
 /*
  * Common code for semaphore tests.  This can be included both into
@@ -309,7 +309,6 @@ ATF_TC_BODY(unlink, tc)
 
 	if (sem_unlink(SEM) == -1)
 		atf_tc_fail_errno("unlink");
-	atf_tc_expect_fail("PR kern/43452");
 	if (sem_close(sem) == -1)
 		atf_tc_fail_errno("close unlinked semaphore");
 }
