@@ -1,4 +1,4 @@
-/*	$NetBSD: quad.h,v 1.4 2011/07/09 02:36:01 matt Exp $	*/
+/*	$NetBSD: quad.h,v 1.5 2012/03/09 15:41:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,8 +94,8 @@ union uu {
  * (sizeof(int)*CHAR_BIT/2).
  */
 #define	HHALF(x)	((u_int)(x) >> HALF_BITS)
-#define	LHALF(x)	((u_int)(x) & (((int)1 << HALF_BITS) - 1))
-#define	LHUP(x)		((u_int)(x) << HALF_BITS)
+#define	LHALF(x)	((u_int)(x) & (((int)1 << (u_int)HALF_BITS) - 1))
+#define	LHUP(x)		((u_int)(x) << (u_int)HALF_BITS)
 
 /*
  * XXX
