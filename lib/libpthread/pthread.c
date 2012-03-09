@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.128 2012/03/08 16:40:45 joerg Exp $	*/
+/*	$NetBSD: pthread.c,v 1.129 2012/03/09 12:06:44 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.128 2012/03/08 16:40:45 joerg Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.129 2012/03/09 12:06:44 drochner Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -340,7 +340,7 @@ pthread__newstack(pthread_t newthread, const pthread_attr_t *attr)
 		mapped_stack = true;
 	}
 	newthread->pt_stack.ss_size = pthread__stacksize - pthread__pagesize;
-		newthread->pt_stack.ss_sp = stackbase;
+	newthread->pt_stack.ss_sp = stackbase;
 #ifdef __MACHINE_STACK_GROWS_UP
 	redzone = (char *)stackbase + newthread->pt_stack.ss_size;
 #else
@@ -1260,7 +1260,7 @@ pthread__initmain(pthread_t *newt)
 	if (pthread__stacksize == 0)
 		pthread__stacksize = pthread__main.pt_stack.ss_size;
 	pthread__stacksize += pthread__pagesize - 1;
-	pthread__stacksize &= ~pthread__pagesize;
+	pthread__stacksize &= ~(pthread__pagesize - 1);
 	if (pthread__stacksize < 4 * pthread__pagesize)
 		errx(1, "Stacksize limit is too low, minimum %zd kbyte.",
 		    4 * pthread__pagesize / 1024);
