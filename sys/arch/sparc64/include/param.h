@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.48 2012/02/04 17:56:16 para Exp $ */
+/*	$NetBSD: param.h,v 1.49 2012/03/09 10:42:12 jdc Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -195,10 +195,12 @@ extern int nbpg, pgofset, pgshift;
 /*
  * Minimum size of the kernel kmem_arena in PAGE_SIZE-sized
  * logical pages.
- * No enforced maximum on sparc64.
+ * Maximum of 2.5GB on sparc64 (it must fit into KERNEND - KERNBASE, and also
+ * leave space in the kernel_map for other allocations).
  */
 #define	NKMEMPAGES_MIN_DEFAULT	((64 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_UNLIMITED 1
+#undef	NKMEMPAGES_MAX_UNLIMITED
+#define	NKMEMPAGES_MAX_DEFAULT	((2048L * 1024 * 1024) >> PAGE_SHIFT)
 
 #ifdef _KERNEL
 #ifndef _LOCORE
