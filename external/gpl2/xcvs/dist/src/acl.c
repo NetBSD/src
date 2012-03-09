@@ -208,7 +208,7 @@ access_allowed (const char *file, const char *repos, const char *tag,
 	dirs[intcount] = xstrdup(filefullname);
     }
 
-    for (accessfilecount; accessfilecount >= 0 && flag; accessfilecount--)
+    for (; accessfilecount >= 0 && flag; accessfilecount--)
     {
 	if (!use_separate_acl_file_for_each_dir) {
 	    flag = 0;
