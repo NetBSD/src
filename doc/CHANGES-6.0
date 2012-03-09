@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.50 2012/03/08 17:58:08 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.51 2012/03/09 16:51:49 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1222,4 +1222,9 @@ sys/arch/ofppc/conf/GENERIC			1.140
 
 	Work around ofppc panics when attaching new USB devices.
 	[phx, ticket #103]
+
+sbin/newfs_ext2fs/mke2fs.c			1.15
+
+	Fix extremely slow newfs_ext2fs(8) operation on large USB stick.
+	[tsutsui, ticket #105]
 
