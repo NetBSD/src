@@ -1,4 +1,4 @@
-/* $NetBSD: t_sem.c,v 1.6 2012/03/07 23:31:44 joerg Exp $ */
+/* $NetBSD: t_sem.c,v 1.7 2012/03/09 19:46:37 joerg Exp $ */
 
 /*
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_sem.c,v 1.6 2012/03/07 23:31:44 joerg Exp $");
+__RCSID("$NetBSD: t_sem.c,v 1.7 2012/03/09 19:46:37 joerg Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -230,14 +230,17 @@ alarm_ms(const int ms)
 static void *
 threadfunc(void *arg)
 {
-	int i;
+	int i, ret;
 
 	printf("Entering loop\n");
 	for (i = 0; i < 500; ) {
 		if ((i & 1) != 0) {
-			ATF_REQUIRE(sem_wait(&sem) != -1);
+			do {
+				ret = sem_wait(&sem);
+			} while (ret == -1 && errno == EINTR);
+			ATF_REQUIRE(ret == 0);
 		} else {
-			const int ret = sem_trywait(&sem);
+			ret = sem_trywait(&sem);
 			if (ret == -1) {
 				ATF_REQUIRE(errno == EAGAIN);
 				continue;
