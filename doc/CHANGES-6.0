@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.51 2012/03/09 16:51:49 sborrill Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.52 2012/03/10 16:50:17 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1227,4 +1227,22 @@ sbin/newfs_ext2fs/mke2fs.c			1.15
 
 	Fix extremely slow newfs_ext2fs(8) operation on large USB stick.
 	[tsutsui, ticket #105]
+
+lib/libperfuse/ops.c				1.51
+lib/libperfuse/perfuse_priv.h			1.26
+lib/libperfuse/subr.c				1.16
+
+	Fix perfuse multiple-reclaim issue.
+	[manu, ticket #104]
+
+doc/CHANGES					patch
+
+	Mention recently pulled-up changes.
+	[nonaka, ticket #106]
+
+sys/kern/kern_exec.c				1.345-1.346
+
+	Make sure the child of a posix_spawn operation is not preempted during
+	the times when it does not have any vm_space. PR#46153.
+	[martin, ticket #107]
 
