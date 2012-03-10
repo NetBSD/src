@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.620 2012/03/08 21:59:24 joerg Exp $
+# $NetBSD: shl.mi,v 1.621 2012/03/10 21:52:00 joerg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -577,9 +577,9 @@
 ./usr/lib/librumpkern_crypto.so			base-rump-shlib
 ./usr/lib/librumpkern_crypto.so.0		base-rump-shlib
 ./usr/lib/librumpkern_crypto.so.0.0		base-rump-shlib
-./usr/lib/librumpkern_ksem.so			base-rump-shlib
-./usr/lib/librumpkern_ksem.so.0			base-rump-shlib
-./usr/lib/librumpkern_ksem.so.0.0		base-rump-shlib
+./usr/lib/librumpkern_ksem.so			base-obsolete		obsolete
+./usr/lib/librumpkern_ksem.so.0			base-obsolete		obsolete
+./usr/lib/librumpkern_ksem.so.0.0		base-obsolete		obsolete
 ./usr/lib/librumpkern_solaris.so		base-rump-shlib		zfs
 ./usr/lib/librumpkern_solaris.so.0		base-rump-shlib		zfs
 ./usr/lib/librumpkern_solaris.so.0.0		base-rump-shlib		zfs

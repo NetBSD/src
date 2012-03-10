@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1745 2012/03/08 21:59:25 joerg Exp $
+#	$NetBSD: mi,v 1.1746 2012/03/10 21:52:00 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3206,9 +3206,9 @@
 ./usr/lib/librumpkern_crypto.a			comp-c-lib
 ./usr/lib/librumpkern_crypto_g.a		-unknown-		debuglib
 ./usr/lib/librumpkern_crypto_p.a		comp-c-proflib		profile
-./usr/lib/librumpkern_ksem.a			comp-c-lib
-./usr/lib/librumpkern_ksem_g.a			-unknown-		debuglib
-./usr/lib/librumpkern_ksem_p.a			comp-c-proflib		profile
+./usr/lib/librumpkern_ksem.a			comp-obsolete		obsolete
+./usr/lib/librumpkern_ksem_g.a			comp-obsolete		obsolete
+./usr/lib/librumpkern_ksem_p.a			comp-obsolete		obsolete
 ./usr/lib/librumpkern_solaris.a			comp-c-lib		zfs
 ./usr/lib/librumpkern_solaris_g.a		-unknown-		debuglib,zfs
 ./usr/lib/librumpkern_solaris_p.a		comp-c-proflib		profile,zfs

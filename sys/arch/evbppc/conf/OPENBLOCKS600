@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS600,v 1.7 2011/12/18 05:49:26 dholland Exp $
+#	$NetBSD: OPENBLOCKS600,v 1.8 2012/03/10 21:51:51 joerg Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.obs600"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"OPENBLOCKS600-$Revision: 1.7 $"
+#ident 		"OPENBLOCKS600-$Revision: 1.8 $"
 
 maxusers	32
 
@@ -23,8 +23,6 @@ maxusers	32
 options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
 options 	SYSVSHM			# System V shared memory
-options		P1003_1B_SEMAPHORE	# p1003.1b semaphore support
-
 
 #options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)

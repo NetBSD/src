@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.171 2011/12/18 05:49:31 dholland Exp $
+# $NetBSD: GENERIC,v 1.172 2012/03/10 21:51:55 joerg Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pmax/conf/std.pmax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.171 $"
+#ident		"GENERIC-$Revision: 1.172 $"
 
 maxusers	64
 
@@ -55,8 +55,6 @@ options 	KTRACE			# system call tracing support
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
-
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
