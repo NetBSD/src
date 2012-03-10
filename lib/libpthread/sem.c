@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.23 2012/03/08 21:59:28 joerg Exp $	*/
+/*	$NetBSD: sem.c,v 1.24 2012/03/10 18:01:10 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.23 2012/03/08 21:59:28 joerg Exp $");
+__RCSID("$NetBSD: sem.c,v 1.24 2012/03/10 18:01:10 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/ksem.h>
@@ -135,6 +135,7 @@ sem_init(sem_t *sem, int pshared, unsigned int value)
 int
 sem_destroy(sem_t *sem)
 {
+	int error, save_errno;
 
 #ifdef ERRORCHECK
 	if (sem == NULL || *sem == NULL || (*sem)->ksem_magic != KSEM_MAGIC) {
@@ -143,12 +144,12 @@ sem_destroy(sem_t *sem)
 	}
 #endif
 
-	if (_ksem_destroy((*sem)->ksem_semid) == -1)
-		return (-1);
-
+	error = _ksem_destroy((*sem)->ksem_semid);
+	save_errno = errno;
 	sem_free(*sem);
+	errno = save_errno;
 
-	return (0);
+	return error;
 }
 
 sem_t *
@@ -218,6 +219,7 @@ sem_open(const char *name, int oflag, ...)
 int
 sem_close(sem_t *sem)
 {
+	int error, save_errno;
 
 #ifdef ERRORCHECK
 	if (sem == NULL || *sem == NULL || (*sem)->ksem_magic != KSEM_MAGIC) {
@@ -227,16 +229,14 @@ sem_close(sem_t *sem)
 #endif
 
 	pthread_mutex_lock(&named_sems_mtx);
-	if (_ksem_close((*sem)->ksem_semid) == -1) {
-		pthread_mutex_unlock(&named_sems_mtx);
-		return (-1);
-	}
-
+	error = _ksem_close((*sem)->ksem_semid);
 	LIST_REMOVE((*sem), ksem_list);
+	save_errno = errno;
 	pthread_mutex_unlock(&named_sems_mtx);
 	sem_free(*sem);
 	free(sem);
-	return (0);
+	errno = save_errno;
+	return error;
 }
 
 int
