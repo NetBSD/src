@@ -1,4 +1,4 @@
-# $NetBSD: dri.mk,v 1.11 2012/02/29 20:07:56 tron Exp $
+# $NetBSD: dri.mk,v 1.12 2012/03/10 20:52:30 tron Exp $
 
 # XXX DRI_LIB_DEPS
 
@@ -43,6 +43,7 @@ LIB=		${MODULE}_dri
 LIBDIR=		${X11USRLIBDIR}/modules/dri
 
 LIBDPLIBS+= 	drm		${.CURDIR}/../../libdrm
+LIBDPLIBS+=	expat		${NETBSDSRCDIR}/external/mit/expat/lib/libexpat
 LIBDPLIBS+=	m		${NETBSDSRCDIR}/lib/libm
 LIBDPLIBS+= 	mesa_dri	${.CURDIR}/../libmesa
 # to find mesa_dri.so
