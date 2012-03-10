@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.18 2011/12/07 22:14:43 he Exp $
+# $NetBSD: md.evbppc,v 1.19 2012/03/10 21:52:02 joerg Exp $
 ./stand/powerpc-4xx							base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@						base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules					base-kernel-modules	kmod,compatmodules
@@ -74,8 +74,8 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/iscsi/iscsi.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/kernfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/kernfs/kernfs.kmod		base-kernel-modules	kmod,compatmodules
-./stand/powerpc-4xx/@OSRELEASE@/modules/ksem				base-kernel-modules	kmod,compatmodules
-./stand/powerpc-4xx/@OSRELEASE@/modules/ksem/ksem.kmod			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/ksem				base-obsolete		obsolete
+./stand/powerpc-4xx/@OSRELEASE@/modules/ksem/ksem.kmod			base-obsolete		obsolete
 ./stand/powerpc-4xx/@OSRELEASE@/modules/layerfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/layerfs/layerfs.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/lfs				base-kernel-modules	kmod,compatmodules
@@ -247,8 +247,8 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/iscsi/iscsi.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/kernfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/kernfs/kernfs.kmod		base-kernel-modules	kmod,compatmodules
-./stand/powerpc-booke/@OSRELEASE@/modules/ksem				base-kernel-modules	kmod,compatmodules
-./stand/powerpc-booke/@OSRELEASE@/modules/ksem/ksem.kmod			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/ksem				base-obsolete		obsolete
+./stand/powerpc-booke/@OSRELEASE@/modules/ksem/ksem.kmod		base-obsolete		obsolete
 ./stand/powerpc-booke/@OSRELEASE@/modules/layerfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/layerfs/layerfs.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/lfs				base-kernel-modules	kmod,compatmodules

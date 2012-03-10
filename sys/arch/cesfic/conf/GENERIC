@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.55 2011/11/22 21:25:03 tls Exp $
+# $NetBSD: GENERIC,v 1.56 2012/03/10 21:51:50 joerg Exp $
 #
 # GENERIC machine description file
 # 
@@ -57,7 +57,6 @@ options 	COMPAT_50	# NetBSD 5.0 compatibility.
 #options 	SYSVSHM		# System V-style shared memory
 #options 	SYSVSEM		# System V-style semaphores
 #options 	SYSVMSG		# System V-style message queues
-#options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 options 	KTRACE		# system call tracing support
 #options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
 options 	COMPAT_SUNOS

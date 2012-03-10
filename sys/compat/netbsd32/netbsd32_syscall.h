@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscall.h,v 1.101 2012/03/08 21:59:29 joerg Exp $ */
+/* $NetBSD: netbsd32_syscall.h,v 1.102 2012/03/10 21:51:58 joerg Exp $ */
 
 /*
  * System call numbers.
@@ -675,7 +675,6 @@
 /* syscall: "compat_50_netbsd32___sigtimedwait" ret: "int" args: "netbsd32_sigsetp_t" "netbsd32_siginfop_t" "netbsd32_timespec50p_t" */
 #define	NETBSD32_SYS_compat_50_netbsd32___sigtimedwait	244
 
-#if defined(P1003_1B_SEMAPHORE) || (!defined(_KERNEL_OPT) && defined(_LIBC))
 /* syscall: "netbsd32__ksem_init" ret: "int" args: "unsigned int" "netbsd32_semidp_t" */
 #define	NETBSD32_SYS_netbsd32__ksem_init	247
 
@@ -706,18 +705,6 @@
 /* syscall: "netbsd32__ksem_timedwait" ret: "int" args: "intptr_t" "const netbsd32_timespecp_t" */
 #define	NETBSD32_SYS_netbsd32__ksem_timedwait	256
 
-#else
-				/* 247 is excluded sys__ksem_init */
-				/* 248 is excluded sys__ksem_open */
-				/* 249 is excluded sys__ksem_unlink */
-				/* 250 is excluded sys__ksem_close */
-				/* 251 is excluded sys__ksem_post */
-				/* 252 is excluded sys__ksem_wait */
-				/* 253 is excluded sys__ksem_trywait */
-				/* 254 is excluded sys__ksem_getvalue */
-				/* 255 is excluded sys__ksem_destroy */
-				/* 256 is excluded sys__ksem_timedwait */
-#endif
 /* syscall: "netbsd32___posix_rename" ret: "int" args: "netbsd32_charp" "netbsd32_charp" */
 #define	NETBSD32_SYS_netbsd32___posix_rename	270
 

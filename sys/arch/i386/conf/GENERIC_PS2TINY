@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_PS2TINY,v 1.64 2011/12/18 05:49:28 dholland Exp $
+#	$NetBSD: GENERIC_PS2TINY,v 1.65 2012/03/10 21:51:53 joerg Exp $
 #
 #	GENERIC-style kernel config for IBM PS/2 with MCA bus. It only contains
 #	IBM PS/2 related stuff and has been generally trimmed down somewhat,
@@ -49,8 +49,6 @@ options 	NTP		# NTP phase/frequency locked loop
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
-
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

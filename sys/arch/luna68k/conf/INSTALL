@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.4 2011/12/18 05:49:29 dholland Exp $
+# $NetBSD: INSTALL,v 1.5 2012/03/10 21:51:53 joerg Exp $
 #
 # config for installation ramdisk kernel
 # 
@@ -24,7 +24,6 @@ options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 #options 	SYSVMSG			# System V message queues
 #options 	SYSVSEM			# System V semaphores
 #options 	SYSVSHM			# System V shared memory
-#options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 #options 	USERCONF		# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
