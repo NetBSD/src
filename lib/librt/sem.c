@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.6 2012/03/08 21:59:29 joerg Exp $	*/
+/*	$NetBSD: sem.c,v 1.7 2012/03/10 19:59:21 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.6 2012/03/08 21:59:29 joerg Exp $");
+__RCSID("$NetBSD: sem.c,v 1.7 2012/03/10 19:59:21 joerg Exp $");
 
 /*
  * If an application is linked against both librt and libpthread, the
@@ -163,6 +163,7 @@ sem_init(sem_t *sem, int pshared, unsigned int value)
 int
 sem_destroy(sem_t *sem)
 {
+	int error, save_errno;
 
 #ifdef ERRORCHECK
 	if (sem == NULL || *sem == NULL || (*sem)->ksem_magic != KSEM_MAGIC) {
@@ -171,12 +172,12 @@ sem_destroy(sem_t *sem)
 	}
 #endif
 
-	if (_ksem_destroy((*sem)->ksem_semid) == -1)
-		return (-1);
-
+	error = _ksem_destroy((*sem)->ksem_semid);
+	save_errno = errno;
 	sem_free(*sem);
+	errno = save_errno;
 
-	return (0);
+	return error;
 }
 
 sem_t *
@@ -241,6 +242,7 @@ sem_open(const char *name, int oflag, ...)
 int
 sem_close(sem_t *sem)
 {
+	int error, save_errno;
 
 #ifdef ERRORCHECK
 	if (sem == NULL || *sem == NULL || (*sem)->ksem_magic != KSEM_MAGIC) {
@@ -249,13 +251,14 @@ sem_close(sem_t *sem)
 	}
 #endif
 
-	if (_ksem_close((*sem)->ksem_semid) == -1)
-		return (-1);
+	error = _ksem_close((*sem)->ksem_semid);
 
 	LIST_REMOVE((*sem), ksem_list);
+	save_errno = errno;
 	sem_free(*sem);
 	free(sem);
-	return (0);
+	errno = save_errno;
+	return error;
 }
 
 int
