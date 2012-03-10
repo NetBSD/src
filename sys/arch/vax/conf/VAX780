@@ -1,4 +1,4 @@
-# $NetBSD: VAX780,v 1.7 2011/12/18 05:49:33 dholland Exp $
+# $NetBSD: VAX780,v 1.8 2012/03/10 21:51:57 joerg Exp $
 #
 # 11/780,750,730 machine description file
 # 
@@ -118,7 +118,6 @@ options 	NFS_BOOT_BOOTPARAM	# Use the Sun way for netbooting.
 options 	SYSVMSG
 options 	SYSVSEM
 options 	SYSVSHM
-options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 # Old compat stuff; needed to run 4.3BSD Reno programs.
 # Note that if COMPAT_ULTRIX is set, you lose compatibility with

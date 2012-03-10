@@ -1,4 +1,4 @@
-# $NetBSD: MMNET_GENERIC,v 1.3 2011/12/18 05:49:26 dholland Exp $
+# $NetBSD: MMNET_GENERIC,v 1.4 2012/03/10 21:51:51 joerg Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mmnet"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.3 $"
+#ident 		"GENERIC-$Revision: 1.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -64,8 +64,6 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
-
 
 #options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

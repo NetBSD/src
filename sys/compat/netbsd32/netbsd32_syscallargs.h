@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscallargs.h,v 1.101 2012/03/08 21:59:29 joerg Exp $ */
+/* $NetBSD: netbsd32_syscallargs.h,v 1.102 2012/03/10 21:51:58 joerg Exp $ */
 
 /*
  * System call argument lists.
@@ -1249,7 +1249,6 @@ struct compat_50_netbsd32___sigtimedwait_args {
 	syscallarg(netbsd32_timespec50p_t) timeout;
 };
 check_syscall_args(compat_50_netbsd32___sigtimedwait)
-#if defined(P1003_1B_SEMAPHORE) || (!defined(_KERNEL_OPT) && defined(_LIBC))
 
 struct netbsd32__ksem_init_args {
 	syscallarg(unsigned int) value;
@@ -1307,8 +1306,6 @@ struct netbsd32__ksem_timedwait_args {
 	syscallarg(const netbsd32_timespecp_t) abstime;
 };
 check_syscall_args(netbsd32__ksem_timedwait)
-#else
-#endif
 
 struct netbsd32___posix_rename_args {
 	syscallarg(netbsd32_charp) from;
@@ -2874,7 +2871,6 @@ int	sys_munlockall(struct lwp *, const void *, register_t *);
 
 int	compat_50_netbsd32___sigtimedwait(struct lwp *, const struct compat_50_netbsd32___sigtimedwait_args *, register_t *);
 
-#if defined(P1003_1B_SEMAPHORE) || (!defined(_KERNEL_OPT) && defined(_LIBC))
 int	netbsd32__ksem_init(struct lwp *, const struct netbsd32__ksem_init_args *, register_t *);
 
 int	netbsd32__ksem_open(struct lwp *, const struct netbsd32__ksem_open_args *, register_t *);
@@ -2895,8 +2891,6 @@ int	netbsd32__ksem_destroy(struct lwp *, const struct netbsd32__ksem_destroy_arg
 
 int	netbsd32__ksem_timedwait(struct lwp *, const struct netbsd32__ksem_timedwait_args *, register_t *);
 
-#else
-#endif
 int	netbsd32___posix_rename(struct lwp *, const struct netbsd32___posix_rename_args *, register_t *);
 
 int	netbsd32_swapctl(struct lwp *, const struct netbsd32_swapctl_args *, register_t *);

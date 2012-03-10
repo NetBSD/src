@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.105 2011/12/30 12:47:37 he Exp $
+# $NetBSD: GENERIC,v 1.106 2012/03/10 21:51:50 joerg Exp $
 #
 # GENERIC machine description file
 # 
@@ -40,7 +40,6 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 #options 	MODULAR		# new style module(7) framework
 

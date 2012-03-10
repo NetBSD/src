@@ -1,4 +1,4 @@
-# $NetBSD: MMEYE_WLF,v 1.5 2011/12/18 05:49:30 dholland Exp $
+# $NetBSD: MMEYE_WLF,v 1.6 2012/03/10 21:51:54 joerg Exp $
 #
 # MMEYE_WLF -- Brains Inc. MMEYE-WLF platforms kernel
 #
@@ -22,7 +22,7 @@ include 	"arch/mmeye/conf/std.mmeye"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.5 $"
+#ident 		"GENERIC-$Revision: 1.6 $"
 
 maxusers	16		# estimated number of users
 
@@ -48,7 +48,6 @@ options 	KTRACE		# system call tracing via ktrace(1)
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 options 	MODULAR		# new style module(7) framework
 

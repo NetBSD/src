@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.42 2012/02/25 17:03:35 bouyer Exp $
+# $NetBSD: XEN3_DOMU,v 1.43 2012/03/10 21:51:53 joerg Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -41,8 +41,6 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=2048	# 2048 pages is the default
-options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
-
 
 options 	USERCONF	# userconf(4) support
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
