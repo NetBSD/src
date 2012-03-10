@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.345 2012/03/10 08:46:45 martin Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.346 2012/03/10 14:35:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.345 2012/03/10 08:46:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.346 2012/03/10 14:35:05 martin Exp $");
 
 #include "opt_exec.h"
 #include "opt_ktrace.h"
@@ -1883,6 +1883,7 @@ spawn_return(void *arg)
 
 	/* we now have our own vmspace */
 	KPREEMPT_ENABLE(l);
+	KASSERT(l->l_nopreempt == 0);
 
 	/* done, signal parent */
 	mutex_enter(&spawn_data->sed_mtx_child);
@@ -1904,7 +1905,7 @@ spawn_return(void *arg)
 		KPREEMPT_DISABLE(l);
 		pmap_deactivate(l);
 		l->l_proc->p_vmspace = NULL;
-		KPREEMPT_ENABLE(l);
+		/* do not enable preemption without vmspace */
 	}
 
  	/*
