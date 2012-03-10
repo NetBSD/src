@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.35 2010/04/30 20:47:18 pooka Exp $	*/
+/*	$NetBSD: defs.h,v 1.36 2012/03/10 21:53:38 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -64,6 +64,9 @@
 /* These are really for MAKE_BOOTSTRAP but harmless. */
 #ifndef __dead
 #define __dead
+#endif
+#ifndef __printflike
+#define __printflike(a, b)
 #endif
 #ifndef _PATH_DEVNULL
 #define _PATH_DEVNULL "/dev/null"
@@ -556,15 +559,15 @@ void	prefix_push(const char *);
 void	prefix_pop(void);
 char	*sourcepath(const char *);
 void	cfgwarn(const char *, ...)			/* immediate warns */
-     __attribute__((__format__(__printf__, 1, 2)));	
+     __printflike(1, 2);
 void	cfgxwarn(const char *, int, const char *, ...)	/* delayed warns */
-     __attribute__((__format__(__printf__, 3, 4)));
+     __printflike(3, 4);
 void	cfgerror(const char *, ...)			/* immediate errs */
-     __attribute__((__format__(__printf__, 1, 2)));
+     __printflike(1, 2);
 void	cfgxerror(const char *, int, const char *, ...)	/* delayed errs */
-     __attribute__((__format__(__printf__, 3, 4)));
+     __printflike(3, 4);
 __dead void panic(const char *, ...)
-     __attribute__((__format__(__printf__, 1, 2)));
+     __printflike(1, 2);
 struct nvlist *newnv(const char *, const char *, void *, long long, struct nvlist *);
 void	nvfree(struct nvlist *);
 void	nvfreel(struct nvlist *);
