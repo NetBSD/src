@@ -1,4 +1,4 @@
-#	$NetBSD: files.netbsd32,v 1.31 2012/02/19 21:06:38 rmind Exp $
+#	$NetBSD: files.netbsd32,v 1.32 2012/03/10 21:51:58 joerg Exp $
 #
 # config file description for machine-independent netbsd32 compat code.
 # included by ports that need it.
@@ -18,7 +18,7 @@ file	compat/netbsd32/netbsd32_ipc.c		compat_netbsd32
 file	compat/netbsd32/netbsd32_lwp.c		compat_netbsd32
 file	compat/netbsd32/netbsd32_mod.c		compat_netbsd32
 file	compat/netbsd32/netbsd32_select.c	compat_netbsd32
-file	compat/netbsd32/netbsd32_sem.c		compat_netbsd32 & p1003_1b_semaphore
+file	compat/netbsd32/netbsd32_sem.c		compat_netbsd32
 file	compat/netbsd32/netbsd32_signal.c	compat_netbsd32
 file	compat/netbsd32/netbsd32_socket.c	compat_netbsd32
 file	compat/netbsd32/netbsd32_sysctl.c	compat_netbsd32

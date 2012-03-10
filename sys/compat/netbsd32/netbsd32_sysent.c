@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_sysent.c,v 1.100 2012/03/08 21:59:29 joerg Exp $ */
+/* $NetBSD: netbsd32_sysent.c,v 1.101 2012/03/10 21:51:58 joerg Exp $ */
 
 /*
  * System call switch table.
@@ -8,14 +8,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysent.c,v 1.100 2012/03/08 21:59:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysent.c,v 1.101 2012/03/10 21:51:58 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
 #include "opt_ntp.h"
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
-#include "opt_posix.h"
 #endif
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -657,7 +656,6 @@ struct sysent netbsd32_sysent[] = {
 	    sys_nosys },			/* 245 = unimplemented */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 246 = unimplemented */
-#if defined(P1003_1B_SEMAPHORE) || (!defined(_KERNEL_OPT) && defined(_LIBC))
 	{ ns(struct netbsd32__ksem_init_args), 0,
 	    (sy_call_t *)netbsd32__ksem_init },	/* 247 = netbsd32__ksem_init */
 	{ ns(struct netbsd32__ksem_open_args), 0,
@@ -678,28 +676,6 @@ struct sysent netbsd32_sysent[] = {
 	    (sy_call_t *)netbsd32__ksem_destroy },/* 255 = netbsd32__ksem_destroy */
 	{ ns(struct netbsd32__ksem_timedwait_args), 0,
 	    (sy_call_t *)netbsd32__ksem_timedwait },/* 256 = netbsd32__ksem_timedwait */
-#else
-	{ 0, 0, 0,
-	    sys_nosys },			/* 247 = excluded sys__ksem_init */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 248 = excluded sys__ksem_open */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 249 = excluded sys__ksem_unlink */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 250 = excluded sys__ksem_close */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 251 = excluded sys__ksem_post */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 252 = excluded sys__ksem_wait */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 253 = excluded sys__ksem_trywait */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 254 = excluded sys__ksem_getvalue */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 255 = excluded sys__ksem_destroy */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 256 = excluded sys__ksem_timedwait */
-#endif
 	{ 0, 0, 0,
 	    sys_nosys },			/* 257 = unimplemented */
 	{ 0, 0, 0,

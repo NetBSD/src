@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.44 2011/11/22 21:25:31 tls Exp $
+# $NetBSD: SLAB,v 1.45 2012/03/10 21:51:55 joerg Exp $
 #
 # deberg's development machine
 #
@@ -16,7 +16,6 @@ options 	KTRACE		# system call tracing
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
-options 	P1003_1B_SEMAPHORE	# POSIX semaphore support
 
 options 	INSECURE	# disable kernel security level
 options 	USERCONF	# userconf(4) support

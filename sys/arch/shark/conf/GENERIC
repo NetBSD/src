@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.98 2012/01/29 00:50:59 christos Exp $
+#	$NetBSD: GENERIC,v 1.99 2012/03/10 21:51:56 joerg Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.98 $"
+#ident		"GENERIC-$Revision: 1.99 $"
 
 # estimated number of users
 maxusers	32
@@ -129,7 +129,6 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 # Device options
 

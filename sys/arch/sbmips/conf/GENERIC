@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.86 2011/12/18 05:49:31 dholland Exp $
+# $NetBSD: GENERIC,v 1.87 2012/03/10 21:51:55 joerg Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.86 $"
+#ident 		"GENERIC-$Revision: 1.87 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 #options 	DEBUG		# extra kernel debugging support
@@ -21,7 +21,6 @@ options 	KTRACE		# system call tracing support
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
-options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 #options 	NTP		# network time protocol
 
 # Debugging options

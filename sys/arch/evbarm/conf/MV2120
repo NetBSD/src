@@ -1,4 +1,4 @@
-#	$NetBSD: MV2120,v 1.6 2012/02/15 01:38:46 jakllsch Exp $
+#	$NetBSD: MV2120,v 1.7 2012/03/10 21:51:51 joerg Exp $
 #
 #  This configuration supports for HP MV2120/MV5140/MV5150.
 
@@ -130,7 +130,6 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 #options 	SEMMNU=30	# number of undo structures in system
 #options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
-options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 # Device options
 

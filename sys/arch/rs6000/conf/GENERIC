@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.19 2011/12/18 05:49:31 dholland Exp $
+# $NetBSD: GENERIC,v 1.20 2012/03/10 21:51:55 joerg Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 #makeoptions	COPTS="-O2 -mno-powerpc -mno-power"	# wheeee
 
-#ident		"GENERIC-$Revision: 1.19 $"
+#ident		"GENERIC-$Revision: 1.20 $"
 
 maxusers	32
 
@@ -46,8 +46,6 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
-
 
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

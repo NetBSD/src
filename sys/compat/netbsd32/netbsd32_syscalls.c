@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscalls.c,v 1.100 2012/03/08 21:59:29 joerg Exp $ */
+/* $NetBSD: netbsd32_syscalls.c,v 1.101 2012/03/10 21:51:58 joerg Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscalls.c,v 1.100 2012/03/08 21:59:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscalls.c,v 1.101 2012/03/10 21:51:58 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -16,7 +16,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_syscalls.c,v 1.100 2012/03/08 21:59:29 joer
 #include "opt_ntp.h"
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
-#include "opt_posix.h"
 #endif
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -313,7 +312,6 @@ const char *const netbsd32_syscallnames[] = {
 	/* 244 */	"compat_50_netbsd32___sigtimedwait",
 	/* 245 */	"#245 (unimplemented)",
 	/* 246 */	"#246 (unimplemented)",
-#if defined(P1003_1B_SEMAPHORE) || (!defined(_KERNEL_OPT) && defined(_LIBC))
 	/* 247 */	"netbsd32__ksem_init",
 	/* 248 */	"netbsd32__ksem_open",
 	/* 249 */	"netbsd32__ksem_unlink",
@@ -324,18 +322,6 @@ const char *const netbsd32_syscallnames[] = {
 	/* 254 */	"netbsd32__ksem_getvalue",
 	/* 255 */	"netbsd32__ksem_destroy",
 	/* 256 */	"netbsd32__ksem_timedwait",
-#else
-	/* 247 */	"#247 (excluded sys__ksem_init)",
-	/* 248 */	"#248 (excluded sys__ksem_open)",
-	/* 249 */	"#249 (excluded sys__ksem_unlink)",
-	/* 250 */	"#250 (excluded sys__ksem_close)",
-	/* 251 */	"#251 (excluded sys__ksem_post)",
-	/* 252 */	"#252 (excluded sys__ksem_wait)",
-	/* 253 */	"#253 (excluded sys__ksem_trywait)",
-	/* 254 */	"#254 (excluded sys__ksem_getvalue)",
-	/* 255 */	"#255 (excluded sys__ksem_destroy)",
-	/* 256 */	"#256 (excluded sys__ksem_timedwait)",
-#endif
 	/* 257 */	"#257 (unimplemented)",
 	/* 258 */	"#258 (unimplemented)",
 	/* 259 */	"#259 (unimplemented)",

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.343 2011/12/18 05:49:23 dholland Exp $
+# $NetBSD: GENERIC,v 1.344 2012/03/10 21:51:48 joerg Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.343 $"
+ident		"GENERIC-$Revision: 1.344 $"
 
 maxusers 32
 
@@ -169,7 +169,6 @@ options 	SYSVSEM
 options 	SYSVSHM
 
 # p1003.1b semaphore support
-options 	P1003_1B_SEMAPHORE
 
 # Loadable Kernel Modules
 

@@ -1,4 +1,4 @@
-#	$NetBSD: EB7500ATX,v 1.46 2011/12/18 05:49:22 dholland Exp $
+#	$NetBSD: EB7500ATX,v 1.47 2012/03/10 21:51:48 joerg Exp $
 #
 #	EB7500ATX --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"EB7500ATX-$Revision: 1.46 $"
+#ident		"EB7500ATX-$Revision: 1.47 $"
 
 # estimated number of users
 maxusers	32
@@ -128,7 +128,6 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 # Device options
 

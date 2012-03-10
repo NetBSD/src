@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.25 2011/12/18 05:49:25 dholland Exp $
+# $NetBSD: HDL_G,v 1.26 2012/03/10 21:51:51 joerg Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -117,7 +117,6 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 # Device options
 

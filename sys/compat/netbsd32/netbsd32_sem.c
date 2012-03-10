@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sem.c,v 1.9 2012/03/08 21:59:29 joerg Exp $	*/
+/*	$NetBSD: netbsd32_sem.c,v 1.10 2012/03/10 21:51:58 joerg Exp $	*/
 
 /*
  *  Copyright (c) 2006 The NetBSD Foundation.
@@ -27,11 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sem.c,v 1.9 2012/03/08 21:59:29 joerg Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_posix.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sem.c,v 1.10 2012/03/10 21:51:58 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
