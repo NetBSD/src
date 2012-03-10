@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_disassemble.c,v 1.1 2012/03/10 22:21:50 christos Exp $	*/
+/*	$NetBSD: npf_disassemble.c,v 1.2 2012/03/10 22:55:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_disassemble.c,v 1.1 2012/03/10 22:21:50 christos Exp $");
+__RCSID("$NetBSD: npf_disassemble.c,v 1.2 2012/03/10 22:55:28 christos Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -86,8 +86,8 @@ npfctl_ncode_add_target(const uint32_t *pc, const uint32_t ***t, size_t *l,
 
 static const char *
 npfctl_ncode_operand(char *buf, size_t bufsiz, uint8_t op, const uint32_t *st,
-    const uint32_t **pcv, size_t *lenv, const uint32_t ***t, size_t *l,
-    size_t *m)
+    const uint32_t *ipc, const uint32_t **pcv, size_t *lenv,
+    const uint32_t ***t, size_t *l, size_t *m)
 {
 	const uint32_t *pc = *pcv;
 	size_t len = *lenv;
@@ -130,7 +130,7 @@ npfctl_ncode_operand(char *buf, size_t bufsiz, uint8_t op, const uint32_t *st,
 
 	case NPF_OPERAND_REL_ADDRESS:
 		snprintf(buf, bufsiz, "+%zu",
-		    npfctl_ncode_add_target(pc + *pc - 1, t, l, m));
+		    npfctl_ncode_add_target(ipc + *pc, t, l, m));
 		ADVANCE(1, NULL);
 		break;
 
@@ -177,12 +177,24 @@ npfctl_ncode_operand(char *buf, size_t bufsiz, uint8_t op, const uint32_t *st,
 		break;
 
 	case NPF_OPERAND_ICMP4_TYPE_CODE:
-		snprintf(buf, bufsiz, "icmp=0x%x", *pc);
+		if (*pc & ~0xffff) {
+			warnx("Bad icmp/type operand 0x%x at offset %td",
+			    *pc, pc - st);
+			return NULL;
+		}
+		snprintf(buf, bufsiz, "type=%d, code=%d", *pc >> 8,
+		    *pc & 0xff);
 		ADVANCE(1, NULL);
 		break;
 
 	case NPF_OPERAND_TCP_FLAGS_MASK:
-		snprintf(buf, bufsiz, "flmask=0x%x", *pc);
+		if (*pc & ~0xffff) {
+			warnx("Bad flags/mask operand 0x%x at offset %td",
+			    *pc, pc - st);
+			return NULL;
+		}
+		snprintf(buf, bufsiz, "type=%d, code=%d", *pc >> 8,
+		    *pc & 0xff);
 		ADVANCE(1, NULL);
 		break;
 
@@ -203,7 +215,7 @@ npfctl_ncode_operand(char *buf, size_t bufsiz, uint8_t op, const uint32_t *st,
 int
 npfctl_ncode_disassemble(FILE *fp, const void *v, size_t len)
 {
-	const uint32_t *pc = v;
+	const uint32_t *ipc, *pc = v;
 	const uint32_t *st = v;
 	const struct npf_instruction *ni;
 	char buf[256];
@@ -225,6 +237,7 @@ npfctl_ncode_disassemble(FILE *fp, const void *v, size_t len)
 			    pc - st);
 			return -1;
 		}
+		ipc = pc;
 		target = npfctl_ncode_get_target(pc, targ, tlen);
 		if (target != (size_t)~0)
 			printf("%zu:", target);
@@ -235,7 +248,7 @@ npfctl_ncode_disassemble(FILE *fp, const void *v, size_t len)
 			if (ni->op[i] == NPF_OPERAND_NONE)
 				break;
 			op = npfctl_ncode_operand(buf, sizeof(buf), ni->op[i],
-			    st, &pc, &len, &targ, &tlen, &mlen);
+			    st, ipc, &pc, &len, &targ, &tlen, &mlen);
 			if (op == NULL)
 				return -1;
 			fprintf(fp, "%s%s", i == 0 ? " " : ", ", op);
