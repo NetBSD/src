@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1044 2012/02/19 21:06:45 rmind Exp $
+#	$NetBSD: files,v 1.1045 2012/03/10 21:51:59 joerg Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -61,7 +61,6 @@ defflag				CPU_IN_CKSUM
 
 defflag opt_dtrace.h		KDTRACE_HOOKS
 
-defflag opt_posix.h		P1003_1B_SEMAPHORE
 defflag	opt_sysv.h		SYSVMSG SYSVSEM	SYSVSHM
 defparam opt_sysvparam.h	SHMMAXPGS SEMMNI SEMMNS SEMUME SEMMNU
 
@@ -1605,7 +1604,7 @@ file	kern/uipc_mbuf.c
 file	kern/uipc_mbuf2.c
 file	net/link_proto.c
 file	kern/uipc_proto.c
-file	kern/uipc_sem.c			p1003_1b_semaphore
+file	kern/uipc_sem.c
 file	kern/uipc_socket.c
 file	kern/uipc_socket2.c
 file	kern/uipc_syscalls.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: ksem.h,v 1.12 2012/03/08 21:59:31 joerg Exp $	*/
+/*	$NetBSD: ksem.h,v 1.13 2012/03/10 21:52:00 joerg Exp $	*/
 
 /*
  * Copyright (c) 2002 Alfred Perlstein <alfred@FreeBSD.org>
@@ -41,7 +41,6 @@ int do_ksem_open(struct lwp *, const char *, int, mode_t, unsigned int,
     intptr_t *, copyout_t);
 int do_ksem_wait(struct lwp *, intptr_t, bool, struct timespec *);
 
-extern int	posix_semaphores;
 extern int	ksem_max;
 #endif
 

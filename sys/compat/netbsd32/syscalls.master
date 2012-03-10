@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.93 2012/03/08 21:55:45 joerg Exp $
+	$NetBSD: syscalls.master,v 1.94 2012/03/10 21:51:59 joerg Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -41,7 +41,6 @@
 #include "opt_ntp.h"
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
-#include "opt_posix.h"
 #endif
 
 #include <sys/param.h>
@@ -517,7 +516,6 @@
 			    netbsd32_timespec50p_t timeout); }
 245	UNIMPL
 246	UNIMPL
-#if defined(P1003_1B_SEMAPHORE) || (!defined(_KERNEL_OPT) && defined(_LIBC))
 247	STD		{ int|netbsd32||_ksem_init(unsigned int value, \
 			    netbsd32_semidp_t idp); }
 248	STD		{ int|netbsd32||_ksem_open(netbsd32_charp name, \
@@ -533,18 +531,6 @@
 255	STD		{ int|netbsd32||_ksem_destroy(netbsd32_intptr_t id); }
 256	STD		{ int|netbsd32||_ksem_timedwait(intptr_t id, \
 				const netbsd32_timespecp_t abstime); }
-#else
-247	EXCL		sys__ksem_init
-248	EXCL		sys__ksem_open
-249	EXCL 		sys__ksem_unlink
-250	EXCL		sys__ksem_close
-251	EXCL		sys__ksem_post
-252	EXCL		sys__ksem_wait
-253	EXCL		sys__ksem_trywait
-254	EXCL		sys__ksem_getvalue
-255	EXCL		sys__ksem_destroy
-256	EXCL		sys__ksem_timedwait
-#endif
 257	UNIMPL
 258	UNIMPL
 259	UNIMPL

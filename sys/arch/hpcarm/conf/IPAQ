@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.67 2011/12/18 05:49:27 dholland Exp $
+#	$NetBSD: IPAQ,v 1.68 2012/03/10 21:51:52 joerg Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -96,7 +96,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 # Device options
 
