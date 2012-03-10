@@ -1,4 +1,4 @@
-/*  $NetBSD: subr.c,v 1.15 2012/01/29 06:22:02 manu Exp $ */
+/*  $NetBSD: subr.c,v 1.15.2.1 2012/03/10 16:42:30 riz Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -67,7 +67,8 @@ perfuse_new_pn(pu, name, parent)
 	pnd->pnd_rfh = FUSE_UNKNOWN_FH;
 	pnd->pnd_wfh = FUSE_UNKNOWN_FH;
 	pnd->pnd_nodeid = PERFUSE_UNKNOWN_NODEID;
-	pnd->pnd_nlookup = 1;
+	pnd->pnd_fuse_nlookup = 1;
+	pnd->pnd_puffs_nlookup = 1;
 	pnd->pnd_parent = parent;
 	pnd->pnd_pn = (puffs_cookie_t)pn;
 	(void)strlcpy(pnd->pnd_name, name, MAXPATHLEN);
