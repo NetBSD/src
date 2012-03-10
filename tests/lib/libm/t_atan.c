@@ -1,4 +1,4 @@
-/* $NetBSD: t_atan.c,v 1.3 2012/02/28 08:58:39 pgoyette Exp $ */
+/* $NetBSD: t_atan.c,v 1.4 2012/03/10 20:11:01 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,9 @@
  */
 
 #include <atf-c.h>
+#include <atf-c/config.h>
 #include <math.h>
+#include <string.h>
 
 /*
  * atan(3)
@@ -63,6 +65,9 @@ ATF_TC_BODY(atan_inf_neg, tc)
 	const double x = -1.0L / 0.0L;
 	const double eps = 1.0e-40;
 
+	if (strcmp(atf_config_get("atf_arch"), "i386") == 0)
+		atf_tc_expect_fail("PR port-i386/46108");
+
 	if (fabs(atan(x) + M_PI_2) > eps)
 		atf_tc_fail_nonfatal("atan(-Inf) != -pi/2");
 #endif
@@ -79,6 +84,9 @@ ATF_TC_BODY(atan_inf_pos, tc)
 #ifndef __vax__
 	const double x = +1.0L / 0.0L;
 	const double eps = 1.0e-40;
+
+	if (strcmp(atf_config_get("atf_arch"), "i386") == 0)
+		atf_tc_expect_fail("PR port-i386/46108");
 
 	if (fabs(atan(x) - M_PI_2) > eps)
 		atf_tc_fail_nonfatal("atan(+Inf) != pi/2");
@@ -98,6 +106,9 @@ ATF_TC_BODY(atan_tan, tc)
 	const double eps = 1.0e-40;
 	double y;
 	size_t i;
+
+	if (strcmp(atf_config_get("atf_arch"), "i386") == 0)
+		atf_tc_expect_fail("PR port-i386/46108");
 
 	for (i = 0; i < __arraycount(x); i++) {
 
