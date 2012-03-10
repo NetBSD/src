@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.52 2012/03/10 16:50:17 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.53 2012/03/10 21:38:30 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1245,4 +1245,9 @@ sys/kern/kern_exec.c				1.345-1.346
 	Make sure the child of a posix_spawn operation is not preempted during
 	the times when it does not have any vm_space. PR#46153.
 	[martin, ticket #107]
+
+external/mit/xorg/lib/dri/dri.mk		1.12
+
+	Fix problems with X11 since moving libexpat from xsrc to src.
+	[tron, ticket #108]
 
