@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.75 2012/02/02 19:43:07 tls Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.76 2012/03/10 23:01:07 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.75 2012/02/02 19:43:07 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.76 2012/03/10 23:01:07 mrg Exp $");
 
 #include "opt_inet.h"
 
@@ -985,13 +985,6 @@ kue_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	if (sc->kue_dying)
 		return (EIO);
-
-#ifdef DIAGNOSTIC
-	if (!curproc) {
-		printf("%s: no proc!!\n", device_xname(sc->kue_dev));
-		return EIO;
-	}
-#endif
 
 	s = splnet();
 
