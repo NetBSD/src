@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.8 2008/12/28 01:23:46 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.9 2012/03/10 21:53:38 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,11 +55,11 @@
 #include "defs.h"
 
 static void cfgvxerror(const char *, int, const char *, va_list)
-	     __attribute__((__format__(__printf__, 3, 0)));
+	     __printflike(3, 0);
 static void cfgvxwarn(const char *, int, const char *, va_list)
-	     __attribute__((__format__(__printf__, 3, 0)));
+	     __printflike(3, 0);
 static void cfgvxmsg(const char *, int, const char *, const char *, va_list)
-     __attribute__((__format__(__printf__, 4, 0)));
+     __printflike(4, 0);
 
 /*
  * Push a prefix onto the prefix stack.
