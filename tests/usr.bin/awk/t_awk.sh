@@ -1,4 +1,4 @@
-# $NetBSD: t_awk.sh,v 1.1 2012/03/10 19:08:56 christos Exp $
+# $NetBSD: t_awk.sh,v 1.2 2012/03/10 19:19:24 christos Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -184,7 +184,7 @@ regex_caret_2_rs_head() {
 
 regex_caret_2_rs_body() {
 	atf_check \
-		-o "inline:\n1a2an\n" \
+		-o "inline:\naa1a2a\n\n" \
 		-x "echo aaa1a2a | $awk 1 RS='^a'"
 
 }
@@ -210,7 +210,7 @@ regex_dollar_2_rs_head() {
 
 regex_dollar_2_rs_body() {
 	atf_check \
-		-o "inline:a1a2aaa\n" \
+		-o "inline:a1a2aaa\n\n" \
 		-x "echo a1a2aaa | $awk 1 RS='a$'"
 
 }
@@ -237,7 +237,7 @@ empty_rs_head() {
 empty_rs_body() {
 	atf_check \
 		-o "inline:foo\n" \
-		-x "echo foo | $awk RS=''"
+		-x "echo foo | $awk 1 RS=''"
 
 }
 
@@ -250,7 +250,7 @@ newline_rs_head() {
 newline_rs_body() {
 	atf_check \
 		-o "inline:r1f1:r1f2\nr2f1:r2f2\n" \
-		-x "printf '\n\n\nr1f1\nr1f2\n\nr2f1\nr2f2\n\n\n' | $awk '{$1=$1}1' RS= OFS=:"
+		-x "printf '\n\n\nr1f1\nr1f2\n\nr2f1\nr2f2\n\n\n' | $awk '{\$1=\$1}1' RS= OFS=:"
 }
 
 atf_init_test_cases() {
