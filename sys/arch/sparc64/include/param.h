@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.49 2012/03/09 10:42:12 jdc Exp $ */
+/*	$NetBSD: param.h,v 1.50 2012/03/10 07:54:17 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -200,7 +200,7 @@ extern int nbpg, pgofset, pgshift;
  */
 #define	NKMEMPAGES_MIN_DEFAULT	((64 * 1024 * 1024) >> PAGE_SHIFT)
 #undef	NKMEMPAGES_MAX_UNLIMITED
-#define	NKMEMPAGES_MAX_DEFAULT	((2048L * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT	((2048UL * 1024 * 1024) >> PAGE_SHIFT)
 
 #ifdef _KERNEL
 #ifndef _LOCORE
