@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.213 2012/03/08 21:59:27 joerg Exp $
+# $NetBSD: shl.mi,v 1.214 2012/03/10 21:52:02 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -175,7 +175,7 @@
 ./usr/lib/librumpfs_zfs_pic.a			comp-c-piclib		zfs
 ./usr/lib/librumphijack_pic.a			comp-c-piclib
 ./usr/lib/librumpkern_crypto_pic.a		comp-c-piclib
-./usr/lib/librumpkern_ksem_pic.a		comp-c-piclib
+./usr/lib/librumpkern_ksem_pic.a		comp-obsolete		obsolete
 ./usr/lib/librumpkern_solaris_pic.a		comp-c-piclib		zfs
 ./usr/lib/librumpkern_tty_pic.a			comp-c-piclib
 ./usr/lib/librumpkern_z_pic.a			comp-c-piclib
@@ -384,7 +384,7 @@
 ./usr/libdata/debug/usr/lib/librumpfs_zfs.so.0.0.debug		comp-rump-debug	debug,zfs
 ./usr/libdata/debug/usr/lib/librumphijack.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpkern_crypto.so.0.0.debug	comp-rump-debug	debug
-./usr/libdata/debug/usr/lib/librumpkern_ksem.so.0.0.debug	comp-rump-debug	debug
+./usr/libdata/debug/usr/lib/librumpkern_ksem.so.0.0.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/lib/librumpkern_solaris.so.0.0.debug	comp-rump-debug	debug,zfs
 ./usr/libdata/debug/usr/lib/librumpkern_tty.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpkern_z.so.0.0.debug	comp-rump-debug	debug
