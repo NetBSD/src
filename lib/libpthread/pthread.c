@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.129 2012/03/09 12:06:44 drochner Exp $	*/
+/*	$NetBSD: pthread.c,v 1.130 2012/03/10 18:01:10 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.129 2012/03/09 12:06:44 drochner Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.130 2012/03/10 18:01:10 joerg Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -339,7 +339,7 @@ pthread__newstack(pthread_t newthread, const pthread_attr_t *attr)
 			return ENOMEM;
 		mapped_stack = true;
 	}
-	newthread->pt_stack.ss_size = pthread__stacksize - pthread__pagesize;
+	newthread->pt_stack.ss_size = stacksize - pthread__pagesize;
 	newthread->pt_stack.ss_sp = stackbase;
 #ifdef __MACHINE_STACK_GROWS_UP
 	redzone = (char *)stackbase + newthread->pt_stack.ss_size;
