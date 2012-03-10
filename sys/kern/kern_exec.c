@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.339.2.2 2012/02/22 18:43:35 riz Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.339.2.3 2012/03/10 16:49:01 riz Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.339.2.2 2012/02/22 18:43:35 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.339.2.3 2012/03/10 16:49:01 riz Exp $");
 
 #include "opt_exec.h"
 #include "opt_ktrace.h"
@@ -1778,11 +1778,13 @@ spawn_return(void *arg)
 	register_t retval;
 	bool have_reflock;
 
+	/* we have been created non-preemptable */
+	KASSERT(l->l_nopreempt == 1);
+
 	/*
 	 * The following actions may block, so we need a temporary
 	 * vmspace - borrow the kernel one
 	 */
-	KPREEMPT_DISABLE(l);
 	l->l_proc->p_vmspace = proc0.p_vmspace;
 	pmap_activate(l);
 	KPREEMPT_ENABLE(l);
@@ -1908,8 +1910,6 @@ spawn_return(void *arg)
 	KPREEMPT_DISABLE(l);
 	pmap_deactivate(l);
 	l->l_proc->p_vmspace = NULL;
-	KPREEMPT_ENABLE(l);
-
 
 	/* now do the real exec */
 	rw_enter(&exec_lock, RW_READER);
@@ -1919,6 +1919,10 @@ spawn_return(void *arg)
 		error = 0;
 	else if (error)
 		goto report_error;
+
+	/* we now have our own vmspace */
+	KPREEMPT_ENABLE(l);
+	KASSERT(l->l_nopreempt == 0);
 
 	/* done, signal parent */
 	mutex_enter(&spawn_data->sed_mtx_child);
@@ -1940,7 +1944,7 @@ spawn_return(void *arg)
 		KPREEMPT_DISABLE(l);
 		pmap_deactivate(l);
 		l->l_proc->p_vmspace = NULL;
-		KPREEMPT_ENABLE(l);
+		/* do not enable preemption without vmspace */
 	}
 
  	/*
@@ -2268,6 +2272,8 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
 		mutex_exit(p2->p_lock);
 		kauth_cred_free(ocred);
 	}
+
+	l2->l_nopreempt = 1; /* start it non-preemptable */
 
 	/*
 	 * It's now safe for the scheduler and other processes to see the
