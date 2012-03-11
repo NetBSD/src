@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1058.2.1 2012/02/18 07:32:19 mrg Exp $
+# $NetBSD: GENERIC,v 1.1058.2.2 2012/03/11 01:52:22 mrg Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1058.2.1 $"
+#ident 		"GENERIC-$Revision: 1.1058.2.2 $"
 
 maxusers	64		# estimated number of users
 
@@ -86,7 +86,6 @@ options 	CPU_UCODE	# cpu ucode loading support
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 options 	MODULAR		# new style module(7) framework
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.65.2.1 2012/02/18 07:30:42 mrg Exp $
+# $NetBSD: GENERIC,v 1.65.2.2 2012/03/11 01:52:18 mrg Exp $
 #
 # GENERIC machine description file
 # 
@@ -121,7 +121,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like shared memory
-options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)

@@ -29,7 +29,6 @@ options 	NTP		# NTP phase/frequency locked loop
 #options 	SYSVSEM		# System V-like semaphores
 #options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=2048	# 2048 pages is the default
-#options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 #options 	NMBCLUSTERS=1024
 #options 	MCLSHIFT=12 # 4k mbuf clusters (increases pool max's to 4k as well)

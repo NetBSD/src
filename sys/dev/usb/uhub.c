@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.114.6.1 2012/03/06 18:26:47 mrg Exp $	*/
+/*	$NetBSD: uhub.c,v 1.114.6.2 2012/03/11 01:52:29 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.114.6.1 2012/03/06 18:26:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.114.6.2 2012/03/11 01:52:29 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -464,8 +464,12 @@ uhub_explore(usbd_device_handle dev)
 
 		/* XXX handle overcurrent and resume events! */
 
-		if (!(change & UPS_C_CONNECT_STATUS))
+		if (!reconnect && !(change & UPS_C_CONNECT_STATUS)) {
+			/* No status change, just do recursive explore. */
+			if (up->device != NULL && up->device->hub != NULL)
+				up->device->hub->explore(up->device);
 			continue;
+		}
 
 		/* We have a connect status change, handle it. */
 

@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.100.2.1 2012/02/18 07:30:43 mrg Exp $
+# 	$NetBSD: GENERIC,v 1.100.2.2 2012/03/11 01:52:18 mrg Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.100.2.1 $"
+#ident		"GENERIC-$Revision: 1.100.2.2 $"
 
 # estimated number of users
 maxusers	32
@@ -133,7 +133,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 # Device options
 

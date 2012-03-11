@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.138.2.1 2012/02/18 07:32:50 mrg Exp $
+# $NetBSD: GENERIC,v 1.138.2.2 2012/03/11 01:52:24 mrg Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.138.2.1 $"
+#ident 		"GENERIC-$Revision: 1.138.2.2 $"
 
 maxusers	32
 
@@ -42,8 +42,6 @@ options 	KTRACE		# system call tracing via ktrace(1)
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
-options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
-
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -339,6 +337,7 @@ urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 uhci*	at pci? dev ? function ?	# USB Universal Host Controller
 ohci*	at pci? dev ? function ?	# USB Open Host Controller
 ehci*	at pci? dev ? function ?	# USB Enhanced Host Controller
+options USB_FRAG_DMA_WORKAROUND		# Workaround panic in usb_allocmem()
 
 usb*	at uhci?			# USB bus support
 usb*	at ohci?			# USB bus support
