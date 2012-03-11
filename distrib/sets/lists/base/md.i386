@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.140 2012/01/27 08:41:35 jnemeth Exp $
+# $NetBSD: md.i386,v 1.141 2012/03/11 06:53:18 riz Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./dev/pms0					base-obsolete		obsolete
@@ -63,6 +63,7 @@
 ./usr/mdec/bootxx_cd9660			base-sysutil-bin
 ./usr/mdec/bootxx_dosfs				base-obsolete		obsolete
 ./usr/mdec/bootxx_ext2fs			base-sysutil-bin
+./usr/mdec/bootxx_fat12				base-sysutil-bin
 ./usr/mdec/bootxx_fat16				base-sysutil-bin
 ./usr/mdec/bootxx_ffsv1				base-sysutil-bin
 ./usr/mdec/bootxx_ffsv2				base-sysutil-bin
