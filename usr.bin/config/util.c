@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.11 2012/03/11 08:21:53 dholland Exp $	*/
+/*	$NetBSD: util.c,v 1.12 2012/03/11 20:02:55 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,6 +61,12 @@ static void cfgvxwarn(const char *, int, const char *, va_list)
 	     __printflike(3, 0);
 static void cfgvxmsg(const char *, int, const char *, const char *, va_list)
      __printflike(4, 0);
+
+/************************************************************/
+
+/*
+ * Prefix stack
+ */
 
 /*
  * Push a prefix onto the prefix stack.
@@ -136,6 +142,16 @@ sourcepath(const char *file)
 	return (cp);
 }
 
+/************************************************************/
+
+/*
+ * Data structures
+ */
+
+/*
+ * nvlist
+ */
+
 struct nvlist *
 newnv(const char *name, const char *str, void *ptr, long long i, struct nvlist *next)
 {
@@ -188,6 +204,10 @@ nvcat(struct nvlist *nv1, struct nvlist *nv2)
 	return nv1;
 }
 
+/*
+ * Attribute lists
+ */
+
 struct attrlist *
 attrlist_create(void)
 {
@@ -232,6 +252,10 @@ attrlist_destroyall(struct attrlist *al)
 		al = next;
 	}
 }
+
+/*
+ * Condition expressions
+ */
 
 /*
  * Create an expression node.
@@ -301,6 +325,12 @@ condexpr_destroy(struct condexpr *expr)
 	}
 	free(expr);
 }
+
+/************************************************************/
+
+/*
+ * Diagnostic messages
+ */
 
 void
 cfgwarn(const char *fmt, ...)
