@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.31.2.2 2012/02/25 21:15:38 mrg Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.31.2.3 2012/03/11 01:52:27 mrg Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.31.2.2 2012/02/25 21:15:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.31.2.3 2012/03/11 01:52:27 mrg Exp $");
 
 #include "opt_slhci.h"
 
@@ -3659,7 +3659,7 @@ slhci_log_sc(void)
 
 	DDOLOG("frame=%d rootintr=%p", t->frame, t->rootintr, 0,0);
 
-	DDOLOG("use_polling=%d", ssc->sc_bus.use_polling, 0,0);
+	DDOLOG("use_polling=%d", ssc->sc_bus.use_polling, 0, 0, 0);
 }
 
 void

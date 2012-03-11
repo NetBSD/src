@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.61.2.1 2012/02/18 07:31:46 mrg Exp $
+#	$NetBSD: GUMSTIX,v 1.61.2.2 2012/03/11 01:52:20 mrg Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -130,7 +130,6 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 #options 	SYSVSHM		# System V-like memory sharing
-options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 # Device options
 

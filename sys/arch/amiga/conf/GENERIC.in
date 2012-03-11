@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.87.2.1 2012/02/18 07:31:14 mrg Exp $
+# $NetBSD: GENERIC.in,v 1.87.2.2 2012/03/11 01:52:18 mrg Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.87.2.1 $"
+#ident 		"GENERIC-$Revision: 1.87.2.2 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -212,7 +212,6 @@ m4_ifdef(`INSTALL_CONFIGURATION', `', `m4_dnl
 options 	SYSVSHM		# System V-like shared memory
 options 	SYSVMSG		# System V-like messages
 options 	SYSVSEM		# System V-like semaphores
-options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 ')m4_dnl
 
 #

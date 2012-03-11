@@ -1,4 +1,4 @@
-#	$NetBSD: SHEEVAPLUG,v 1.11.2.1 2012/02/18 07:31:49 mrg Exp $
+#	$NetBSD: SHEEVAPLUG,v 1.11.2.2 2012/03/11 01:52:20 mrg Exp $
 #
 #  This configuration supports for generically Marvell SheevaPlug
 #
@@ -127,7 +127,6 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
-options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 # Device options
 

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.11.4.1 2012/02/18 07:33:48 mrg Exp $
+# $NetBSD: INSTALL,v 1.11.4.2 2012/03/11 01:52:26 mrg Exp $
 #
 # INSTALL config file (GENERIC with memory disk root)
 #
@@ -47,7 +47,6 @@ no options 		COMPAT_OSSAUDIO
 no options 		SYSVMSG
 no options 		SYSVSEM
 no options 		SYSVSHM
-no options 		P1003_1B_SEMAPHORE
 
 options 		PIPE_SOCKETPAIR
 
