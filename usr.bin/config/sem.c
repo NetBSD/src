@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.39 2012/03/11 07:32:41 dholland Exp $	*/
+/*	$NetBSD: sem.c,v 1.40 2012/03/11 08:21:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1551,26 +1551,26 @@ delpseudo(const char *name)
 
 void
 adddevm(const char *name, devmajor_t cmajor, devmajor_t bmajor,
-	struct nvlist *nv_opts, struct nvlist *nv_nodes)
+	struct condexpr *cond, struct nvlist *nv_nodes)
 {
 	struct devm *dm;
 
 	if (cmajor != NODEVMAJOR && (cmajor < 0 || cmajor >= 4096)) {
 		cfgerror("character major %d is invalid", cmajor);
-		nvfreel(nv_opts);
+		condexpr_destroy(cond);
 		nvfreel(nv_nodes);
 		return;
 	}
 
 	if (bmajor != NODEVMAJOR && (bmajor < 0 || bmajor >= 4096)) {
 		cfgerror("block major %d is invalid", bmajor);
-		nvfreel(nv_opts);
+		condexpr_destroy(cond);
 		nvfreel(nv_nodes);
 		return;
 	}
 	if (cmajor == NODEVMAJOR && bmajor == NODEVMAJOR) {
 		cfgerror("both character/block majors are not specified");
-		nvfreel(nv_opts);
+		condexpr_destroy(cond);
 		nvfreel(nv_nodes);
 		return;
 	}
@@ -1581,7 +1581,7 @@ adddevm(const char *name, devmajor_t cmajor, devmajor_t bmajor,
 	dm->dm_name = name;
 	dm->dm_cmajor = cmajor;
 	dm->dm_bmajor = bmajor;
-	dm->dm_opts = nv_opts;
+	dm->dm_opts = cond;
 	dm->dm_devnodes = nv_nodes;
 
 	TAILQ_INSERT_TAIL(&alldevms, dm, dm_next);

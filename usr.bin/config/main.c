@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.44 2012/03/11 07:32:41 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.45 2012/03/11 08:21:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -951,11 +951,11 @@ appendmkoption(const char *name, const char *value)
  * Add a conditional appending "make" option.
  */
 void
-appendcondmkoption(struct nvlist *cnd, const char *name, const char *value)
+appendcondmkoption(struct condexpr *cond, const char *name, const char *value)
 {
 	struct nvlist *nv;
 
-	nv = newnv(name, value, cnd, 0, NULL);
+	nv = newnv(name, value, cond, 0, NULL);
 	*nextcndmkopt = nv;
 	nextcndmkopt = &nv->nv_next;
 }

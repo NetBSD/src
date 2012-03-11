@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.10 2012/03/11 07:32:41 dholland Exp $	*/
+/*	$NetBSD: util.c,v 1.11 2012/03/11 08:21:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -231,6 +231,75 @@ attrlist_destroyall(struct attrlist *al)
 		attrlist_destroy(al);
 		al = next;
 	}
+}
+
+/*
+ * Create an expression node.
+ */
+struct condexpr *
+condexpr_create(enum condexpr_types type)
+{
+	struct condexpr *cx;
+
+	cx = emalloc(sizeof(*cx));
+	cx->cx_type = type;
+	switch (type) {
+
+	    case CX_ATOM:
+		cx->cx_atom = NULL;
+		break;
+
+	    case CX_NOT:
+		cx->cx_not = NULL;
+		break;
+
+	    case CX_AND:
+		cx->cx_and.left = NULL;
+		cx->cx_and.right = NULL;
+		break;
+
+	    case CX_OR:
+		cx->cx_or.left = NULL;
+		cx->cx_or.right = NULL;
+		break;
+	
+	    default:
+		panic("condexpr_create: invalid expr type %d", (int)type);
+	}
+	return cx;
+}
+
+/*
+ * Free an expression tree.
+ */
+void
+condexpr_destroy(struct condexpr *expr)
+{
+	switch (expr->cx_type) {
+
+	    case CX_ATOM:
+		/* nothing */
+		break;
+
+	    case CX_NOT:
+		condexpr_destroy(expr->cx_not);
+		break;
+
+	    case CX_AND:
+		condexpr_destroy(expr->cx_and.left);
+		condexpr_destroy(expr->cx_and.right);
+		break;
+
+	    case CX_OR:
+		condexpr_destroy(expr->cx_or.left);
+		condexpr_destroy(expr->cx_or.right);
+		break;
+
+	    default:
+		panic("condexpr_destroy: invalid expr type %d",
+		      (int)expr->cx_type);
+	}
+	free(expr);
 }
 
 void
