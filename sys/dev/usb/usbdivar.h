@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.94 2012/03/06 02:36:46 mrg Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.95 2012/03/11 00:34:45 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -110,7 +110,6 @@ struct usbd_bus {
 	char			use_polling;
 	device_t		usbctl;
 	struct usb_device_stats	stats;
-	int 			intr_context;
 	u_int			no_intrs;
 	int			usbrev;	/* USB revision */
 #define USBREV_UNKNOWN	0
