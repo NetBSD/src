@@ -3,7 +3,7 @@
 .\" Skrivet av Jörgen Hägg, Lund, Sverige
 .\"
 .TH GROFF_MMSE @MAN7EXT@ "@MDATE@" "Groff Version @VERSION@"
-.SH NAMN
+.SH NAME
 groff_mmse \- svenska mm makro f\(:or groff
 .SH SYNTAX
 .B groff
