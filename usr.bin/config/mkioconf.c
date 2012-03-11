@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.19 2011/03/03 14:53:01 nakayama Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.20 2012/03/11 07:32:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -200,7 +200,7 @@ static void
 emitcfdrivers(FILE *fp)
 {
 	struct devbase *d;
-	struct nvlist *nv;
+	struct attrlist *al;
 	struct attr *a;
 	int has_iattrs;
 
@@ -212,8 +212,8 @@ emitcfdrivers(FILE *fp)
 		if (!devbase_has_instances(d, WILD))
 			continue;
 		has_iattrs = 0;
-		for (nv = d->d_attrs; nv != NULL; nv = nv->nv_next) {
-			a = nv->nv_ptr;
+		for (al = d->d_attrs; al != NULL; al = al->al_next) {
+			a = al->al_this;
 			if (a->a_iattr == 0)
 				continue;
 			if (has_iattrs == 0)
