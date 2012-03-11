@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.222 2012/03/10 23:01:07 mrg Exp $	*/
+/*	$NetBSD: ohci.c,v 1.223 2012/03/11 00:34:46 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.222 2012/03/10 23:01:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.223 2012/03/11 00:34:46 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -53,8 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.222 2012/03/10 23:01:07 mrg Exp $");
 #include <sys/select.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
-
 #include <sys/bus.h>
+#include <sys/cpu.h>
+
 #include <machine/endian.h>
 
 #include <dev/usb/usb.h>
@@ -1155,7 +1156,6 @@ ohci_intr1(ohci_softc_t *sc)
 		return (0);
 	}
 
-	sc->sc_bus.intr_context++;
 	sc->sc_bus.no_intrs++;
 	if (eintrs & OHCI_SO) {
 		sc->sc_overrun_cnt++;
@@ -1193,8 +1193,6 @@ ohci_intr1(ohci_softc_t *sc)
 		/* Do not allow RHSC interrupts > 1 per second */
 		callout_reset(&sc->sc_tmo_rhsc, hz, ohci_rhsc_enable, sc);
 	}
-
-	sc->sc_bus.intr_context--;
 
 	if (eintrs != 0) {
 		/* Block unprocessed interrupts. */
@@ -1254,8 +1252,6 @@ ohci_softintr(void *v)
 	ohci_physaddr_t done;
 
 	DPRINTFN(10,("ohci_softintr: enter\n"));
-
-	sc->sc_bus.intr_context++;
 
 	s = splhardusb();
 	usb_syncmem(&sc->sc_hccadma, offsetof(struct ohci_hcca, hcca_done_head),
@@ -1462,7 +1458,6 @@ ohci_softintr(void *v)
 		wakeup(&sc->sc_softwake);
 	}
 
-	sc->sc_bus.intr_context--;
 	DPRINTFN(10,("ohci_softintr: done:\n"));
 }
 
@@ -2240,7 +2235,7 @@ ohci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 		return;
 	}
 
-	if (xfer->device->bus->intr_context)
+	if (cpu_intr_p() || cpu_softintr_p())
 		panic("ohci_abort_xfer: not in process context");
 
 	/*
