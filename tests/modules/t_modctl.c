@@ -1,4 +1,4 @@
-/*	$NetBSD: t_modctl.c,v 1.5 2010/11/03 16:10:23 christos Exp $	*/
+/*	$NetBSD: t_modctl.c,v 1.6 2012/03/11 19:33:17 jruoho Exp $	*/
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: t_modctl.c,v 1.5 2010/11/03 16:10:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: t_modctl.c,v 1.6 2012/03/11 19:33:17 jruoho Exp $");
 
 #include <sys/module.h>
 #include <sys/sysctl.h>
@@ -62,7 +62,7 @@ static
 bool
 check_modular(void)
 {
-	bool res;
+	bool res = false;
 	struct iovec iov;
 
 	iov.iov_base = NULL;
@@ -70,8 +70,6 @@ check_modular(void)
 
 	if (modctl(MODCTL_STAT, &iov) == 0)
 		res = true;
-	else
-		res = (errno != ENOSYS);
 
 	return res;
 }
