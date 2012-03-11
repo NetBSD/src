@@ -1,4 +1,4 @@
-/*	$NetBSD: alipm.c,v 1.8 2011/02/10 13:52:36 hannken Exp $ */
+/*	$NetBSD: alipm.c,v 1.9 2012/03/11 22:46:22 pgoyette Exp $ */
 /*	$OpenBSD: alipm.c,v 1.13 2007/05/03 12:19:01 dlg Exp $	*/
 
 /*
@@ -18,12 +18,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alipm.c,v 1.8 2011/02/10 13:52:36 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alipm.c,v 1.9 2012/03/11 22:46:22 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/rwlock.h>
+#include <sys/mutex.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 
@@ -104,7 +104,7 @@ struct alipm_softc {
 	bus_space_handle_t sc_ioh;
 
 	struct i2c_controller sc_smb_tag;
-	krwlock_t sc_smb_lock;
+	kmutex_t sc_smb_mutex;
 };
 
 static int	alipm_match(device_t, cfdata_t, void *);
@@ -203,7 +203,7 @@ alipm_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 
 	/* Attach I2C bus */
-	rw_init(&sc->sc_smb_lock);
+	mutex_init(&sc->sc_smb_mutex, MUTEX_DEFAULT, IPL_NONE);
 	sc->sc_smb_tag.ic_cookie = sc;
 	sc->sc_smb_tag.ic_acquire_bus = alipm_smb_acquire_bus;
 	sc->sc_smb_tag.ic_release_bus = alipm_smb_release_bus;
@@ -224,10 +224,7 @@ alipm_smb_acquire_bus(void *cookie, int flags)
 {
 	struct alipm_softc *sc = cookie;
 
-	if (flags & I2C_F_POLL)
-		return (0);
-
-	rw_enter(&sc->sc_smb_lock, RW_WRITER);
+	mutex_enter(&sc->sc_smb_mutex);
 	return 0;
 }
 
@@ -236,10 +233,7 @@ alipm_smb_release_bus(void *cookie, int flags)
 {
 	struct alipm_softc *sc = cookie;
 
-	if (flags & I2C_F_POLL)
-		return;
-
-	rw_exit(&sc->sc_smb_lock);
+	mutex_exit(&sc->sc_smb_mutex);
 }
 
 int
