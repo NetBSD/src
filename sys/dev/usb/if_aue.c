@@ -1,4 +1,5 @@
-/*	$NetBSD: if_aue.c,v 1.125 2012/03/06 03:35:29 mrg Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.126 2012/03/11 01:06:06 mrg Exp $	*/
+
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.125 2012/03/06 03:35:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.126 2012/03/11 01:06:06 mrg Exp $");
 
 #include "opt_inet.h"
 
@@ -424,7 +425,7 @@ aue_unlock_mii(struct aue_softc *sc)
 {
 	mutex_exit(&sc->aue_mii_lock);
 	if (--sc->aue_refcnt < 0)
-		usb_detach_wakeupold((sc->aue_dev));
+		usb_detach_wakeupold(sc->aue_dev);
 }
 
 Static int
@@ -923,7 +924,7 @@ aue_detach(device_t self, int flags)
 
 	if (--sc->aue_refcnt >= 0) {
 		/* Wait for processes to go away. */
-		usb_detach_waitold((sc->aue_dev));
+		usb_detach_waitold(sc->aue_dev);
 	}
 	splx(s);
 
