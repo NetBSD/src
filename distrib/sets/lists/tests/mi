@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.440 2012/03/10 19:10:06 christos Exp $
+# $NetBSD: mi,v 1.441 2012/03/11 18:45:19 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2724,6 +2724,29 @@
 ./usr/tests/usr.bin/awk				tests-util-tests
 ./usr/tests/usr.bin/awk/Atffile			tests-util-tests	atf
 ./usr/tests/usr.bin/awk/t_awk			tests-util-tests	atf
+./usr/tests/usr.bin/awk/d_assign_NF.awk		tests-util-tests
+./usr/tests/usr.bin/awk/d_assign_NF.in		tests-util-tests
+./usr/tests/usr.bin/awk/d_assign_NF.out		tests-util-tests
+./usr/tests/usr.bin/awk/d_big_regexp.awk	tests-util-tests
+./usr/tests/usr.bin/awk/d_big_regexp.in		tests-util-tests
+./usr/tests/usr.bin/awk/d_big_regexp.out	tests-util-tests
+./usr/tests/usr.bin/awk/d_end1.awk		tests-util-tests
+./usr/tests/usr.bin/awk/d_end1.in		tests-util-tests
+./usr/tests/usr.bin/awk/d_end1.out		tests-util-tests
+./usr/tests/usr.bin/awk/d_end2.awk		tests-util-tests
+./usr/tests/usr.bin/awk/d_end2.in		tests-util-tests
+./usr/tests/usr.bin/awk/d_end2.out		tests-util-tests
+./usr/tests/usr.bin/awk/d_period.awk		tests-util-tests
+./usr/tests/usr.bin/awk/d_period.in		tests-util-tests
+./usr/tests/usr.bin/awk/d_period.out		tests-util-tests
+./usr/tests/usr.bin/awk/d_string1.awk		tests-util-tests
+./usr/tests/usr.bin/awk/d_string1.out		tests-util-tests
+./usr/tests/usr.bin/awk/d_tolower.awk		tests-util-tests
+./usr/tests/usr.bin/awk/d_tolower.in		tests-util-tests
+./usr/tests/urs.bin/awk/d_tolower.out		tests-util-tests
+./usr/tests/usr.bin/awk/d_toupper.awk		tests-util-tests
+./usr/tests/usr.bin/awk/d_toupper.in		tests-util-tests
+./usr/tests/usr.bin/awk/d_toupper.out		tests-util-tests
 ./usr/tests/usr.bin/diff			tests-util-tests
 ./usr/tests/usr.bin/diff/Atffile		tests-util-tests	atf
 ./usr/tests/usr.bin/diff/d_mallocv1.in		tests-util-tests	atf
@@ -2760,32 +2783,32 @@
 ./usr/tests/usr.sbin/traceroute/t_traceroute	tests-util-tests	atf
 ./usr/tests/util				tests-util-tests
 ./usr/tests/util/Atffile			tests-util-tests
-./usr/tests/util/awk				tests-util-tests
-./usr/tests/util/awk/Atffile			tests-util-tests
-./usr/tests/util/awk/d_assign_NF.awk		tests-util-tests
-./usr/tests/util/awk/d_assign_NF.in		tests-util-tests
-./usr/tests/util/awk/d_assign_NF.out		tests-util-tests
-./usr/tests/util/awk/d_big_regexp.awk		tests-util-tests
-./usr/tests/util/awk/d_big_regexp.in		tests-util-tests
-./usr/tests/util/awk/d_big_regexp.out		tests-util-tests
-./usr/tests/util/awk/d_end1.awk			tests-util-tests
-./usr/tests/util/awk/d_end1.in			tests-util-tests
-./usr/tests/util/awk/d_end1.out			tests-util-tests
-./usr/tests/util/awk/d_end2.awk			tests-util-tests
-./usr/tests/util/awk/d_end2.in			tests-util-tests
-./usr/tests/util/awk/d_end2.out			tests-util-tests
-./usr/tests/util/awk/d_period.awk		tests-util-tests
-./usr/tests/util/awk/d_period.in		tests-util-tests
-./usr/tests/util/awk/d_period.out		tests-util-tests
-./usr/tests/util/awk/d_string1.awk		tests-util-tests
-./usr/tests/util/awk/d_string1.out		tests-util-tests
-./usr/tests/util/awk/d_tolower.awk		tests-util-tests
-./usr/tests/util/awk/d_tolower.in		tests-util-tests
-./usr/tests/util/awk/d_tolower.out		tests-util-tests
-./usr/tests/util/awk/d_toupper.awk		tests-util-tests
-./usr/tests/util/awk/d_toupper.in		tests-util-tests
-./usr/tests/util/awk/d_toupper.out		tests-util-tests
-./usr/tests/util/awk/t_awk			tests-util-tests
+./usr/tests/util/awk				tests-obsolete		obsolete
+./usr/tests/util/awk/Atffile			tests-obsolete		obsolete
+./usr/tests/util/awk/d_assign_NF.awk		tests-obsolete		obsolete
+./usr/tests/util/awk/d_assign_NF.in		tests-obsolete		obsolete
+./usr/tests/util/awk/d_assign_NF.out		tests-obsolete		obsolete
+./usr/tests/util/awk/d_big_regexp.awk		tests-obsolete		obsolete
+./usr/tests/util/awk/d_big_regexp.in		tests-obsolete		obsolete
+./usr/tests/util/awk/d_big_regexp.out		tests-obsolete		obsolete
+./usr/tests/util/awk/d_end1.awk			tests-obsolete		obsolete
+./usr/tests/util/awk/d_end1.in			tests-obsolete		obsolete
+./usr/tests/util/awk/d_end1.out			tests-obsolete		obsolete
+./usr/tests/util/awk/d_end2.awk			tests-obsolete		obsolete
+./usr/tests/util/awk/d_end2.in			tests-obsolete		obsolete
+./usr/tests/util/awk/d_end2.out			tests-obsolete		obsolete
+./usr/tests/util/awk/d_period.awk		tests-obsolete		obsolete
+./usr/tests/util/awk/d_period.in		tests-obsolete		obsolete
+./usr/tests/util/awk/d_period.out		tests-obsolete		obsolete
+./usr/tests/util/awk/d_string1.awk		tests-obsolete		obsolete
+./usr/tests/util/awk/d_string1.out		tests-obsolete		obsolete
+./usr/tests/util/awk/d_tolower.awk		tests-obsolete		obsolete
+./usr/tests/util/awk/d_tolower.in		tests-obsolete		obsolete
+./usr/tests/util/awk/d_tolower.out		tests-obsolete		obsolete
+./usr/tests/util/awk/d_toupper.awk		tests-obsolete		obsolete
+./usr/tests/util/awk/d_toupper.in		tests-obsolete		obsolete
+./usr/tests/util/awk/d_toupper.out		tests-obsolete		obsolete
+./usr/tests/util/awk/t_awk			tests-obsolete		obsolete
 ./usr/tests/util/bzip2				tests-util-tests
 ./usr/tests/util/bzip2/Atffile			tests-util-tests
 ./usr/tests/util/bzip2/d_sample1.bz2		tests-util-tests
