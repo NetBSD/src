@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.9 2012/03/10 21:53:38 dholland Exp $	*/
+/*	$NetBSD: util.c,v 1.10 2012/03/11 07:32:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,6 +45,7 @@
 #endif
 
 #include <sys/types.h>
+#include <assert.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -185,6 +186,51 @@ nvcat(struct nvlist *nv1, struct nvlist *nv2)
 
 	nv->nv_next = nv2;
 	return nv1;
+}
+
+struct attrlist *
+attrlist_create(void)
+{
+	struct attrlist *al;
+
+	al = emalloc(sizeof(*al));
+	al->al_next = NULL;
+	al->al_this = NULL;
+	return al;
+}
+
+struct attrlist *
+attrlist_cons(struct attrlist *next, struct attr *a)
+{
+	struct attrlist *al;
+
+	al = attrlist_create();
+	al->al_next = next;
+	al->al_this = a;
+	return al;
+}
+
+void
+attrlist_destroy(struct attrlist *al)
+{
+	assert(al->al_next == NULL);
+	assert(al->al_this == NULL);
+	free(al);
+}
+
+void
+attrlist_destroyall(struct attrlist *al)
+{
+	struct attrlist *next;
+
+	while (al != NULL) {
+		next = al->al_next;
+		al->al_next = NULL;
+		/* XXX should we make the caller guarantee this? */
+		al->al_this = NULL;
+		attrlist_destroy(al);
+		al = next;
+	}
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.37 2012/03/11 05:31:37 dholland Exp $	*/
+/*	$NetBSD: defs.h,v 1.38 2012/03/11 07:32:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -161,8 +161,16 @@ struct attr {
 	int	a_loclen;		/* length of above list */
 	struct	nvlist *a_devs;		/* children */
 	struct	nvlist *a_refs;		/* parents */
-	struct	nvlist *a_deps;		/* we depend on these other attrs */
+	struct	attrlist *a_deps;	/* we depend on these other attrs */
 	int	a_expanding;		/* to detect cycles in attr graph */
+};
+
+/*
+ * List of attributes.
+ */
+struct attrlist {
+	struct attrlist *al_next;
+	struct attr *al_this;
 };
 
 /*
@@ -209,7 +217,7 @@ struct devbase {
 	int	d_isdef;		/* set once properly defined */
 	int	d_ispseudo;		/* is a pseudo-device */
 	devmajor_t d_major;		/* used for "root on sd0", e.g. */
-	struct	nvlist *d_attrs;	/* attributes, if any */
+	struct	attrlist *d_attrs;	/* attributes, if any */
 	int	d_umax;			/* highest unit number + 1 */
 	struct	devi *d_ihead;		/* first instance, if any */
 	struct	devi **d_ipp;		/* used for tacking on more instances */
@@ -225,7 +233,7 @@ struct deva {
 	int	d_isdef;		/* set once properly defined */
 	struct	devbase *d_devbase;	/* the base device */
 	struct	nvlist *d_atlist;	/* e.g., "at tg" (attr list) */
-	struct	nvlist *d_attrs;	/* attributes, if any */
+	struct	attrlist *d_attrs;	/* attributes, if any */
 	struct	devi *d_ihead;		/* first instance, if any */
 	struct	devi **d_ipp;		/* used for tacking on more instances */
 };
@@ -572,6 +580,10 @@ void	nvfree(struct nvlist *);
 void	nvfreel(struct nvlist *);
 struct nvlist *nvcat(struct nvlist *, struct nvlist *);
 void	autogen_comment(FILE *, const char *);
+struct attrlist *attrlist_create(void);
+struct attrlist *attrlist_cons(struct attrlist *, struct attr *);
+void attrlist_destroy(struct attrlist *);
+void attrlist_destroyall(struct attrlist *);
 
 /* liby */
 void	yyerror(const char *);

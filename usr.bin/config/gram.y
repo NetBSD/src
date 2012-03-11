@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.31 2012/03/11 07:27:02 dholland Exp $	*/
+/*	$NetBSD: gram.y,v 1.32 2012/03/11 07:32:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,6 +70,7 @@ static void wrap_cleanup(void);
  * Allocation wrapper type codes
  */
 #define WRAP_CODE_nvlist	1
+#define WRAP_CODE_attrlist	2
 
 /*
  * The allocation wrappers themselves
@@ -77,11 +78,13 @@ static void wrap_cleanup(void);
 #define DECL_ALLOCWRAP(t)	static struct t *wrap_mk_##t(struct t *arg)
 
 DECL_ALLOCWRAP(nvlist);
+DECL_ALLOCWRAP(attrlist);
 
 /*
  * Macros for allocating new objects
  */
 
+/* old-style for struct nvlist */
 #define	new0(n,s,p,i,x)	wrap_mk_nvlist(newnv(n, s, p, i, x))
 #define	new_n(n)	new0(n, NULL, NULL, 0, NULL)
 #define	new_nx(n, x)	new0(n, NULL, NULL, 0, x)
@@ -100,6 +103,17 @@ DECL_ALLOCWRAP(nvlist);
 #define	fx_not(e)	new0(NULL, NULL, NULL, FX_NOT, e)
 #define	fx_and(e1, e2)	new0(NULL, NULL, e1, FX_AND, e2)
 #define	fx_or(e1, e2)	new0(NULL, NULL, e1, FX_OR, e2)
+
+/* new style, type-polymorphic */
+#define MK0(t)		wrap_mk_##t(mk_##t())
+#define MK1(t, a0)	wrap_mk_##t(mk_##t(a0))
+#define MK2(t, a0, a1)	wrap_mk_##t(mk_##t(a0, a1))
+
+/*
+ * Data constructors
+ */
+
+static struct attrlist *mk_attrlist(struct attrlist *, struct attr *);
 
 /*
  * Other private functions
@@ -120,6 +134,7 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 	struct	devbase *devb;
 	struct	deva *deva;
 	struct	nvlist *list;
+	struct attrlist *attrlist;
 	const char *str;
 	struct	numconst num;
 	int64_t	val;
@@ -160,7 +175,7 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %type	<list>	loclist locdef
 %type	<str>	locdefault
 %type	<list>	values locdefaults
-%type	<list>	attrs_opt attrs
+%type	<attrlist>	attrs_opt attrs
 %type	<list>	locators locator
 %type	<list>	dev_spec
 %type	<str>	device_instance
@@ -472,8 +487,8 @@ attrs_opt:
 
 /* one or more attributes */
 attrs:
-	  attr				{ $$ = new_p($1); }
-	| attrs ',' attr		{ $$ = new_px($3, $1); }
+	  attr				{ $$ = MK2(attrlist, NULL, $1); }
+	| attrs ',' attr		{ $$ = MK2(attrlist, $1, $3); }
 ;
 
 /* one attribute */
@@ -935,11 +950,25 @@ wrap_cleanup(void)
 		    case WRAP_CODE_nvlist:
 			nvfree(wrapstack[i].ptr);
 			break;
+		    case WRAP_CODE_attrlist:
+			{
+				struct attrlist *al = wrapstack[i].ptr;
+
+				/*
+				 * Contents got wrapped separately;
+				 * just blank it out to destroy.
+				 */
+				al->al_next = NULL;
+				al->al_this = NULL;
+				attrlist_destroy(al);
+			}
+			break;
 		    default:
 			panic("invalid code %u on allocation wrapper stack",
 			      wrapstack[i].typecode);
 		}
 	}
+
 	wrap_depth = 0;
 }
 
@@ -959,6 +988,19 @@ wrap_cleanup(void)
 	}
 
 DEF_ALLOCWRAP(nvlist);
+DEF_ALLOCWRAP(attrlist);
+
+/************************************************************/
+
+/*
+ * Data constructors
+ */
+
+static struct attrlist *
+mk_attrlist(struct attrlist *next, struct attr *a)
+{
+	return attrlist_cons(next, a);
+}
 
 /************************************************************/
 

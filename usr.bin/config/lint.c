@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.c,v 1.8 2009/08/30 21:07:41 cube Exp $	*/
+/*	$NetBSD: lint.c,v 1.9 2012/03/11 07:32:41 dholland Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -102,6 +102,7 @@ static void
 do_emit_instances(struct devbase *d, struct attr *at)
 {
 	struct nvlist *nv, *nv1;
+	struct attrlist *al;
 	struct attr *a;
 	struct deva *da;
 
@@ -142,8 +143,8 @@ do_emit_instances(struct devbase *d, struct attr *at)
 	 * Children attachments are found the same way as in the orphan
 	 * detection code in main.c.
 	 */
-	for (nv = d->d_attrs; nv != NULL; nv = nv->nv_next) {
-		a = nv->nv_ptr;
+	for (al = d->d_attrs; al != NULL; al = al->al_next) {
+		a = al->al_this;
 		for (nv1 = a->a_devs; nv1 != NULL; nv1 = nv1->nv_next)
 			do_emit_instances(nv1->nv_ptr, a);
 	}
