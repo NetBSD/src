@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.26 2012/03/11 00:57:44 dholland Exp $	*/
+/*	$NetBSD: gram.y,v 1.27 2012/03/11 01:09:42 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -208,9 +208,9 @@ topthings:
 
 /* Directory specification. */
 topthing:
-	  SOURCE filename '\n'		{ if (!srcdir) srcdir = $2; }
+	                  '\n'
+	| SOURCE filename '\n'		{ if (!srcdir) srcdir = $2; }
 	| BUILD  filename '\n'		{ if (!builddir) builddir = $2; }
-	|                 '\n'
 ;
 
 /* "machine foo" from std.whatever */
@@ -229,8 +229,8 @@ subarches_opt:
 
 /* Subarches declaration. */
 subarches:
-	  subarches WORD		{ $$ = new_nx($2, $1); }
-	| WORD				{ $$ = new_n($1); }
+	  WORD				{ $$ = new_n($1); }
+	| subarches WORD		{ $$ = new_nx($2, $1); }
 ;
 
 /************************************************************/
