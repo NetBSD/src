@@ -1,4 +1,4 @@
-/* $NetBSD: t_atan.c,v 1.5 2012/03/11 06:32:53 jruoho Exp $ */
+/* $NetBSD: t_atan.c,v 1.6 2012/03/11 06:36:05 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ ATF_TC_BODY(atan_inf_neg, tc)
 	const double eps = 1.0e-40;
 
 	if (strcmp(atf_config_get("atf_arch"), "i386") == 0 &&
-	    system("cpuctl identify 0 | grep -q QEMU") == 0)
+	    system("cpuctl identify 0 | grep -q QEMU") != 0)
 		atf_tc_expect_fail("PR port-i386/46108");
 
 	if (fabs(atan(x) + M_PI_2) > eps)
@@ -88,7 +88,7 @@ ATF_TC_BODY(atan_inf_pos, tc)
 	const double eps = 1.0e-40;
 
 	if (strcmp(atf_config_get("atf_arch"), "i386") == 0 &&
-	    system("cpuctl identify 0 | grep -q QEMU") == 0)
+	    system("cpuctl identify 0 | grep -q QEMU") != 0)
 		atf_tc_expect_fail("PR port-i386/46108");
 
 	if (fabs(atan(x) - M_PI_2) > eps)
@@ -111,7 +111,7 @@ ATF_TC_BODY(atan_tan, tc)
 	size_t i;
 
 	if (strcmp(atf_config_get("atf_arch"), "i386") == 0 &&
-	    system("cpuctl identify 0 | grep -q QEMU") == 0)
+	    system("cpuctl identify 0 | grep -q QEMU") != 0)
 		atf_tc_expect_fail("PR port-i386/46108");
 
 	for (i = 0; i < __arraycount(x); i++) {
