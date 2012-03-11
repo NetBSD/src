@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.53 2012/03/06 03:35:29 mrg Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.54 2012/03/11 01:06:06 mrg Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.53 2012/03/06 03:35:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.54 2012/03/11 01:06:06 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -778,7 +778,7 @@ axe_detach(device_t self, int flags)
 
 	if (--sc->axe_refcnt >= 0) {
 		/* Wait for processes to go away. */
-		usb_detach_waitold((sc->axe_dev));
+		usb_detach_waitold(sc->axe_dev);
 	}
 	splx(s);
 
