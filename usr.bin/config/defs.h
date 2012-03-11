@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.39 2012/03/11 08:21:53 dholland Exp $	*/
+/*	$NetBSD: defs.h,v 1.40 2012/03/11 21:16:07 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -157,7 +157,7 @@ struct attr {
 	const char *a_name;		/* name of this attribute */
 	int	a_iattr;		/* true => allows children */
 	const char *a_devclass;		/* device class described */
-	struct	nvlist *a_locs;		/* locators required */
+	struct	loclist *a_locs;	/* locators required */
 	int	a_loclen;		/* length of above list */
 	struct	nvlist *a_devs;		/* children */
 	struct	nvlist *a_refs;		/* parents */
@@ -171,6 +171,20 @@ struct attr {
 struct attrlist {
 	struct attrlist *al_next;
 	struct attr *al_this;
+};
+
+/*
+ * List of locators. (Either definitions or uses...)
+ *
+ * XXX it would be nice if someone could clarify wtf ll_string and ll_num
+ * are actually holding. (This stuff was previously stored in a very ad
+ * hoc fashion, and the code is far from clear.)
+ */
+struct loclist {
+	const char *ll_name;
+	const char *ll_string;
+	long long ll_num;
+	struct loclist *ll_next;
 };
 
 /*
@@ -604,6 +618,8 @@ struct attrlist *attrlist_create(void);
 struct attrlist *attrlist_cons(struct attrlist *, struct attr *);
 void attrlist_destroy(struct attrlist *);
 void attrlist_destroyall(struct attrlist *);
+struct loclist *loclist_create(const char *, const char *, long long);
+void loclist_destroy(struct loclist *);
 struct condexpr *condexpr_create(enum condexpr_types);
 void condexpr_destroy(struct condexpr *);
 
