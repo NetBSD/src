@@ -1,4 +1,4 @@
-/*	$NetBSD: lynxfb.c,v 1.1 2012/03/02 13:20:57 nonaka Exp $	*/
+/*	$NetBSD: lynxfb.c,v 1.2 2012/03/11 13:57:30 nonaka Exp $	*/
 /*	$OpenBSD: smfb.c,v 1.13 2011/07/21 20:36:12 miod Exp $	*/
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lynxfb.c,v 1.1 2012/03/02 13:20:57 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lynxfb.c,v 1.2 2012/03/11 13:57:30 nonaka Exp $");
 
 #include "opt_wsemul.h"
 
@@ -402,8 +402,8 @@ lynxfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flags,
 		    cmd, data, flags, l);
 
 	case WSDISPLAYIO_GET_BUSID:
-		return wsdisplayio_busid_pci(device_parent(sc->sc_dev),
-		    sc->sc_pc, sc->sc_pcitag, data);
+		return wsdisplayio_busid_pci(sc->sc_dev, sc->sc_pc,
+		    sc->sc_pcitag, data);
 
 	case WSDISPLAYIO_GINFO:
 		if (ms == NULL)
