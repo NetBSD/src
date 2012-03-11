@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.101 2012/01/17 16:59:38 jakllsch Exp $
+#	$NetBSD: Makefile,v 1.102 2012/03/11 01:30:56 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -32,7 +32,6 @@ SUBDIR+=	gpiosim
 SUBDIR+=	hfs
 SUBDIR+=	iic
 SUBDIR+=	kernfs
-SUBDIR+=	ksem
 SUBDIR+=	layerfs
 SUBDIR+=	lfs
 SUBDIR+=	mfs
