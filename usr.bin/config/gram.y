@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.27 2012/03/11 01:09:42 dholland Exp $	*/
+/*	$NetBSD: gram.y,v 1.28 2012/03/11 02:21:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -135,7 +135,7 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %type	<deva>	devattach_opt
 %type	<list>	atlist interface_opt
 %type	<str>	atname
-%type	<list>	loclist_opt loclist locdef
+%type	<list>	loclist locdef
 %type	<str>	locdefault
 %type	<list>	values locdefaults
 %type	<list>	attrs_opt attrs
@@ -146,7 +146,7 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %type	<str>	value
 %type	<val>	major_minor npseudo
 %type	<num>	signed_number
-%type	<val>	flags_opt
+%type	<val>	device_flags
 %type	<str>	deffs
 %type	<list>	deffses
 %type	<list>	defopt
@@ -155,7 +155,7 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %type	<list>	optdeps
 %type	<list>	defoptdeps
 %type	<str>	optfile_opt
-%type	<list>	subarches_opt subarches
+%type	<list>	subarches
 %type	<str>	filename stringvalue locname mkvarname
 %type	<val>	device_major_block device_major_char
 %type	<list>	devnodes devnodetype devnodeflags devnode_dims
@@ -193,11 +193,8 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
  */
 
 /* Complete configuration. */
-Configuration:
-	topthings
-		machine_spec dev_defs ENDDEFS
-		{ check_maxpart(); check_version(); }
-		specs
+configuration:
+	topthings machine_spec definition_part configuration_part
 ;
 
 /* Sequence of zero or more topthings. */
@@ -216,18 +213,13 @@ topthing:
 /* "machine foo" from std.whatever */
 machine_spec:
 	  XMACHINE WORD '\n'			{ setmachine($2,NULL,NULL,0); }
-	| XMACHINE WORD WORD subarches_opt '\n'	{ setmachine($2,$3,$4,0); }
+	| XMACHINE WORD WORD '\n'		{ setmachine($2,$3,NULL,0); }
+	| XMACHINE WORD WORD subarches '\n'	{ setmachine($2,$3,$4,0); }
 	| IOCONF WORD '\n'			{ setmachine($2,NULL,NULL,1); }
 	| error { stop("cannot proceed without machine or ioconf specifier"); }
 ;
 
-/* Optional subarches. */
-subarches_opt:
-	  /* empty */			{ $$ = NULL; }
-	| subarches
-;
-
-/* Subarches declaration. */
+/* One or more sub-arches. */
 subarches:
 	  WORD				{ $$ = new_n($1); }
 	| subarches WORD		{ $$ = new_nx($2, $1); }
@@ -367,21 +359,21 @@ prefix:
  */
 
 /* Complete definition part: the contents of all files.* files. */
-dev_defs:
-	  /* empty */
-	| dev_defs dev_def
-	| dev_defs ENDFILE		{ enddefs(); checkfiles(); }
+definition_part:
+	definitions ENDDEFS		{ check_maxpart(); check_version(); }
 ;
 
-/* A single definition, or a blank line. Trap errors. */
-dev_def:
-	  '\n'
-	| one_def '\n'			{ adepth = 0; }
-	| error '\n'			{ cleanup(); }
+/* Zero or more definitions. Trap errors. */
+definitions:
+	  /* empty */
+	| definitions '\n'
+	| definitions definition '\n'	{ adepth = 0; }
+	| definitions error '\n'	{ cleanup(); }
+	| definitions ENDFILE		{ enddefs(); checkfiles(); }
 ;
 
 /* A single definition. */
-one_def:
+definition:
 	  file
 	| object
 	| device_major			{ do_devsw = 1; }
@@ -490,16 +482,11 @@ devattach_opt:
 	| WITH WORD			{ $$ = getdevattach($2); }
 ;
 
-/* optional locator specification in braces */
+/* optional locator specification */
 interface_opt:
 	  /* empty */			{ $$ = NULL; }
-	| '{' loclist_opt '}'		{ $$ = new_nx("", $2); }
-;
-
-/* optional locator specification without braces */
-loclist_opt:
-	  /* empty */			{ $$ = NULL; }
-	| loclist			{ $$ = $1; }
+	| '{' '}'			{ $$ = new_nx("", NULL); }
+	| '{' loclist '}'		{ $$ = new_nx("", $2); }
 ;
 
 /*
@@ -625,21 +612,21 @@ majordef:
  */
 
 /* Complete configuration part: all std.* files plus selected config. */
-specs:
-	  /* empty */
-	| specs spec
+configuration_part:
+	config_items
 ;
 
-/* One config item, or a blank line. Trap errors. */
-spec:
-	  '\n'
-	| config_spec '\n'		{ adepth = 0; }
-	| error '\n'			{ cleanup(); }
+/* Zero or more config items. Trap errors. */
+config_items:
+	  /* empty */
+	| config_items '\n'
+	| config_items config_item '\n'	{ adepth = 0; }
+	| config_items error '\n'	{ cleanup(); }
 ;
 
 /* One config item. */
-config_spec:
-	  one_def
+config_item:
+	  definition
 	| NO FILE_SYSTEM no_fs_list
 	| FILE_SYSTEM fs_list
 	| NO MAKEOPTIONS no_mkopt_list
@@ -658,7 +645,7 @@ config_spec:
 					{ deldevi($2, $4); }
 	| NO DEVICE AT attachment	{ deldeva($4); }
 	| NO device_instance		{ deldev($2); }
-	| device_instance AT attachment locators flags_opt
+	| device_instance AT attachment locators device_flags
 					{ adddev($1, $3, $4, $5); }
 ;
 
@@ -761,20 +748,14 @@ conf:
 
 /* root fs specification */
 root_spec:
-	ROOT on_opt dev_spec fs_spec_opt
-					{ setconf(&conf.cf_root, "root", $3); }
+	  ROOT on_opt dev_spec		{ setconf(&conf.cf_root, "root", $3); }
+	| ROOT on_opt dev_spec fs_spec	{ setconf(&conf.cf_root, "root", $3); }
 ;
 
 /* filesystem type for root fs specification */
-fs_spec_opt:
-	  /* empty */
-	| TYPE fs_spec			{ setfstype(&conf.cf_fstype, $2); }
-;
-
-/* filesystem name for root fs specification */
 fs_spec:
-	  '?'				{ $$ = intern("?"); }
-	| WORD				{ $$ = $1; }
+	  TYPE '?'		   { setfstype(&conf.cf_fstype, intern("?")); }
+	| TYPE WORD			{ setfstype(&conf.cf_fstype, $2); }
 ;
 
 /* zero or more additional system parameters */
@@ -838,7 +819,7 @@ locator:
 ;
 
 /* optional device flags */
-flags_opt:
+device_flags:
 	  /* empty */			{ $$ = 0; }
 	| FLAGS NUMBER			{ $$ = $2.val; }
 ;
