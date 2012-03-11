@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.43 2011/07/09 08:01:58 matt Exp $	*/
+/*	$NetBSD: main.c,v 1.44 2012/03/11 07:32:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1589,7 +1589,8 @@ static void
 do_kill_orphans(struct devbase *d, struct attr *at, struct devbase *parent,
     int state)
 {
-	struct nvlist *nv, *nv1;
+	struct nvlist *nv1;
+	struct attrlist *al;
 	struct attr *a;
 	struct devi *i, *j = NULL;
 	struct pspec *p;
@@ -1677,8 +1678,8 @@ do_kill_orphans(struct devbase *d, struct attr *at, struct devbase *parent,
 		}
 	}
 
-	for (nv = d->d_attrs; nv != NULL; nv = nv->nv_next) {
-		a = nv->nv_ptr;
+	for (al = d->d_attrs; al != NULL; al = al->al_next) {
+		a = al->al_this;
 		for (nv1 = a->a_devs; nv1 != NULL; nv1 = nv1->nv_next)
 			do_kill_orphans(nv1->nv_ptr, a, d, active);
 	}

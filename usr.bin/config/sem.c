@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.38 2010/05/02 15:35:00 pooka Exp $	*/
+/*	$NetBSD: sem.c,v 1.39 2012/03/11 07:32:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,7 +70,7 @@ static struct attr errattr;
 static struct devbase errdev;
 static struct deva errdeva;
 
-static int has_errobj(struct nvlist *, void *);
+static int has_errobj(struct attrlist *, struct attr *);
 static struct nvlist *addtoattr(struct nvlist *, struct devbase *);
 static int resolve(struct nvlist **, const char *, const char *,
 		   struct nvlist *, int);
@@ -194,10 +194,11 @@ setident(const char *i)
  * all locator lists include a dummy head node, which we discard here.
  */
 int
-defattr(const char *name, struct nvlist *locs, struct nvlist *deps,
+defattr(const char *name, struct nvlist *locs, struct attrlist *deps,
     int devclass)
 {
 	struct attr *a, *dep;
+	struct attrlist *al;
 	struct nvlist *nv;
 	int len;
 
@@ -211,8 +212,8 @@ defattr(const char *name, struct nvlist *locs, struct nvlist *deps,
 	 * If this attribute depends on any others, make sure none of
 	 * the dependencies are interface attributes.
 	 */
-	for (nv = deps; nv != NULL; nv = nv->nv_next) {
-		dep = nv->nv_ptr;
+	for (al = deps; al != NULL; al = al->al_next) {
+		dep = al->al_this;
 		if (dep->a_iattr) {
 			cfgerror("`%s' dependency `%s' is an interface "
 			    "attribute", name, dep->a_name);
@@ -275,11 +276,11 @@ defattr(const char *name, struct nvlist *locs, struct nvlist *deps,
  * pointer list.
  */
 static int
-has_errobj(struct nvlist *nv, void *obj)
+has_errobj(struct attrlist *al, struct attr *obj)
 {
 
-	for (; nv != NULL; nv = nv->nv_next)
-		if (nv->nv_ptr == obj)
+	for (; al != NULL; al = al->al_next)
+		if (al->al_this == obj)
 			return (1);
 	return (0);
 }
@@ -289,15 +290,15 @@ has_errobj(struct nvlist *nv, void *obj)
  * pointer list.
  */
 int
-has_attr(struct nvlist *nv, const char *attr)
+has_attr(struct attrlist *al, const char *attr)
 {
 	struct attr *a;
 
 	if ((a = getattr(attr)) == NULL)
 		return (0);
 
-	for (; nv != NULL; nv = nv->nv_next)
-		if (nv->nv_ptr == a)
+	for (; al != NULL; al = al->al_next)
+		if (al->al_this == a)
 			return (1);
 	return (0);
 }
@@ -321,10 +322,11 @@ addtoattr(struct nvlist *l, struct devbase *dev)
  * attribute and/or refer to existing attributes.
  */
 void
-defdev(struct devbase *dev, struct nvlist *loclist, struct nvlist *attrs,
+defdev(struct devbase *dev, struct nvlist *loclist, struct attrlist *attrs,
        int ispseudo)
 {
 	struct nvlist *nv;
+	struct attrlist *al;
 	struct attr *a;
 
 	if (dev == &errdev)
@@ -349,9 +351,9 @@ defdev(struct devbase *dev, struct nvlist *loclist, struct nvlist *attrs,
 		loclist = NULL;	/* defattr disposes of them for us */
 		if (defattr(dev->d_name, nv, NULL, 0))
 			goto bad;
-		attrs = newnv(dev->d_name, NULL, getattr(dev->d_name), 0,
-		    attrs);
-
+		attrs = attrlist_cons(attrs, getattr(dev->d_name));
+		/* This used to be stored but was never used */
+		/* attrs->al_name = dev->d_name; */
 	}
 
 	/*
@@ -359,10 +361,10 @@ defdev(struct devbase *dev, struct nvlist *loclist, struct nvlist *attrs,
 	 * attaching at root.
 	 */
 	if (ispseudo) {
-		for (nv = attrs; nv != NULL; nv = nv->nv_next)
-			if (((struct attr *)(nv->nv_ptr))->a_iattr)
+		for (al = attrs; al != NULL; al = al->al_next)
+			if (al->al_this->a_iattr)
 				break;
-		if (nv != NULL) {
+		if (al != NULL) {
 			if (ispseudo < 2) {
 				if (version >= 20080610)
 					cfgerror("interface attribute on "
@@ -389,8 +391,8 @@ defdev(struct devbase *dev, struct nvlist *loclist, struct nvlist *attrs,
 	 * class if any are devclass attributes (and error out if the
 	 * device has two classes).
 	 */
-	for (nv = attrs; nv != NULL; nv = nv->nv_next) {
-		a = nv->nv_ptr;
+	for (al = attrs; al != NULL; al = al->al_next) {
+		a = al->al_this;
 		if (a->a_iattr)
 			a->a_refs = addtoattr(a->a_refs, dev);
 		if (a->a_devclass != NULL) {
@@ -406,7 +408,7 @@ defdev(struct devbase *dev, struct nvlist *loclist, struct nvlist *attrs,
 	return;
  bad:
 	nvfreel(loclist);
-	nvfreel(attrs);
+	attrlist_destroyall(attrs);
 }
 
 /*
@@ -456,9 +458,10 @@ getdevbase(const char *name)
  */
 void
 defdevattach(struct deva *deva, struct devbase *dev, struct nvlist *atlist,
-	     struct nvlist *attrs)
+	     struct attrlist *attrs)
 {
 	struct nvlist *nv;
+	struct attrlist *al;
 	struct attr *a;
 	struct deva *da;
 
@@ -484,8 +487,8 @@ defdevattach(struct deva *deva, struct devbase *dev, struct nvlist *atlist,
 	deva->d_isdef = 1;
 	if (has_errobj(attrs, &errattr))
 		goto bad;
-	for (nv = attrs; nv != NULL; nv = nv->nv_next) {
-		a = nv->nv_ptr;
+	for (al = attrs; al != NULL; al = al->al_next) {
+		a = al->al_this;
 		if (a == &errattr)
 			continue;		/* already complained */
 		if (a->a_iattr || a->a_devclass != NULL)
@@ -538,7 +541,7 @@ defdevattach(struct deva *deva, struct devbase *dev, struct nvlist *atlist,
 	return;
  bad:
 	nvfreel(atlist);
-	nvfreel(attrs);
+	attrlist_destroyall(attrs);
 }
 
 /*
@@ -603,7 +606,7 @@ getattr(const char *name)
 void
 expandattr(struct attr *a, void (*callback)(struct attr *))
 {
-	struct nvlist *nv;
+	struct attrlist *al;
 	struct attr *dep;
 
 	if (a->a_expanding) {
@@ -614,8 +617,8 @@ expandattr(struct attr *a, void (*callback)(struct attr *))
 	a->a_expanding = 1;
 
 	/* First expand all of this attribute's dependencies. */
-	for (nv = a->a_deps; nv != NULL; nv = nv->nv_next) {
-		dep = nv->nv_ptr;
+	for (al = a->a_deps; al != NULL; al = al->al_next) {
+		dep = al->al_this;
 		expandattr(dep, callback);
 	}
 
@@ -940,7 +943,7 @@ adddev(const char *name, const char *at, struct nvlist *loclist, int flags)
 	struct attr *attr;	/* attribute that allows attach */
 	struct devbase *ib;	/* i->i_base */
 	struct devbase *ab;	/* not NULL => at another dev */
-	struct nvlist *nv;
+	struct attrlist *al;
 	struct deva *iba;	/* devbase attachment used */
 	const char *cp;
 	int atunit;
@@ -1032,8 +1035,8 @@ adddev(const char *name, const char *at, struct nvlist *loclist, int flags)
 		 * See if the named parent carries an attribute
 		 * that allows it to supervise device ib.
 		 */
-		for (nv = ab->d_attrs; nv != NULL; nv = nv->nv_next) {
-			attr = nv->nv_ptr;
+		for (al = ab->d_attrs; al != NULL; al = al->al_next) {
+			attr = al->al_this;
 			if (onlist(attr->a_devs, ib))
 				goto findattachment;
 		}
@@ -1461,7 +1464,7 @@ addpseudoroot(const char *name)
 		fakedev = getdevbase(intern(fakename));
 		fakedev->d_isdef = 1;
 		fakedev->d_ispseudo = 0;
-		fakedev->d_attrs = newnv(NULL, NULL, attr, 0, NULL);
+		fakedev->d_attrs = attrlist_cons(NULL, attr);
 		defdevattach(NULL, fakedev, NULL, NULL);
 
 		if (unit == STAR)
@@ -1769,17 +1772,17 @@ static void
 selectbase(struct devbase *d, struct deva *da)
 {
 	struct attr *a;
-	struct nvlist *nv;
+	struct attrlist *al;
 
 	(void)ht_insert(selecttab, d->d_name, __UNCONST(d->d_name));
-	for (nv = d->d_attrs; nv != NULL; nv = nv->nv_next) {
-		a = nv->nv_ptr;
+	for (al = d->d_attrs; al != NULL; al = al->al_next) {
+		a = al->al_this;
 		expandattr(a, selectattr);
 	}
 	if (da != NULL) {
 		(void)ht_insert(selecttab, da->d_name, __UNCONST(da->d_name));
-		for (nv = da->d_attrs; nv != NULL; nv = nv->nv_next) {
-			a = nv->nv_ptr;
+		for (al = da->d_attrs; al != NULL; al = al->al_next) {
+			a = al->al_this;
 			expandattr(a, selectattr);
 		}
 	}
