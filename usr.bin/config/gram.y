@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.34 2012/03/11 08:21:53 dholland Exp $	*/
+/*	$NetBSD: gram.y,v 1.35 2012/03/11 19:27:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -175,7 +175,7 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %type	<condexpr>	cond_or_expr cond_and_expr cond_prefix_expr
 %type	<condexpr>	 cond_base_expr
 %type	<str>	fs_spec
-%type	<val>	fflgs fflag oflgs oflag
+%type	<val>	fflags fflag oflags oflag
 %type	<str>	rule
 %type	<attr>	depend
 %type	<devb>	devbase
@@ -198,9 +198,9 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %type	<list>	deffses
 %type	<list>	defopt
 %type	<list>	defopts
-%type	<str>	optdep
-%type	<list>	optdeps
-%type	<list>	defoptdeps
+%type	<str>	optdepend
+%type	<list>	optdepends
+%type	<list>	optdepend_list
 %type	<str>	optfile_opt
 %type	<list>	subarches
 %type	<str>	filename stringvalue locname mkvarname
@@ -299,16 +299,16 @@ definition:
 	| device_major			{ do_devsw = 1; }
 	| prefix
 	| DEVCLASS WORD			{ (void)defattr($2, NULL, NULL, 1); }
-	| DEFFS deffses defoptdeps	{ deffilesystem($2, $3); }
+	| DEFFS deffses optdepend_list	{ deffilesystem($2, $3); }
 	| DEFINE WORD interface_opt depend_list
 					{ (void)defattr($2, $3, $4, 0); }
-	| DEFOPT optfile_opt defopts defoptdeps
+	| DEFOPT optfile_opt defopts optdepend_list
 					{ defoption($2, $3, $4); }
-	| DEFFLAG optfile_opt defopts defoptdeps
+	| DEFFLAG optfile_opt defopts optdepend_list
 					{ defflag($2, $3, $4, 0); }
 	| OBSOLETE DEFFLAG optfile_opt defopts
 					{ defflag($3, $4, NULL, 1); }
-	| DEFPARAM optfile_opt defopts defoptdeps
+	| DEFPARAM optfile_opt defopts optdepend_list
 					{ defparam($2, $3, $4, 0); }
 	| OBSOLETE DEFPARAM optfile_opt defopts
 					{ defparam($3, $4, NULL, 1); }
@@ -331,7 +331,7 @@ definition:
 
 /* source file: file foo/bar.c bar|baz needs-flag compile-with blah */
 file:
-	XFILE filename fopts fflgs rule	{ addfile($2, $3, $4, $5); }
+	XFILE filename fopts fflags rule	{ addfile($2, $3, $4, $5); }
 ;
 
 /* file options: optional expression of conditions */
@@ -341,9 +341,9 @@ fopts:
 ;
 
 /* zero or more flags for a file */
-fflgs:
+fflags:
 	  /* empty */			{ $$ = 0; }
-	| fflgs fflag			{ $$ = $1 | $2; }
+	| fflags fflag			{ $$ = $1 | $2; }
 ;
 
 /* one flag for a file */
@@ -360,13 +360,13 @@ rule:
 
 /* object file: object zot.o foo|zot needs-flag */
 object:
-	XOBJECT filename fopts oflgs	{ addobject($2, $3, $4); }
+	XOBJECT filename fopts oflags	{ addobject($2, $3, $4); }
 ;
 
 /* zero or more flags for an object file */
-oflgs:
+oflags:
 	  /* empty */			{ $$ = 0; }
-	| oflgs oflag			{ $$ = $1 | $2; }
+	| oflags oflag			{ $$ = $1 | $2; }
 ;
 
 /* a single flag for an object file */
@@ -506,6 +506,24 @@ depend:
 	WORD				{ $$ = getattr($1); }
 ;
 
+/* list of option depends, may be empty */
+optdepend_list:
+	  /* empty */			{ $$ = NULL; }
+	| ':' optdepends		{ $$ = $2; }
+;
+
+/* a list of option dependencies */
+optdepends:
+	  optdepend			{ $$ = new_n($1); }
+	| optdepends ',' optdepend	{ $$ = new_nx($3, $1); }
+;
+
+/* one option depend, which is an option name */
+optdepend:
+	WORD				{ $$ = $1; }
+;
+
+
 /* list of places to attach: attach blah at ... */
 atlist:
 	  atname			{ $$ = new_n($1); }
@@ -538,23 +556,6 @@ defopt:
 
 		$$ = new_nsx("", $5, __nv);
 	  }
-;
-
-/* option dependencies (read as "defopt deps") which are optional */
-defoptdeps:
-	  /* empty */			{ $$ = NULL; }
-	| ':' optdeps			{ $$ = $2; }
-;
-
-/* a list of option dependencies */
-optdeps:
-	  optdep			{ $$ = new_n($1); }
-	| optdeps ',' optdep		{ $$ = new_nx($3, $1); }
-;
-
-/* one option dependence */
-optdep:
-	WORD				{ $$ = $1; }
 ;
 
 /* list of conditional makeoptions */
