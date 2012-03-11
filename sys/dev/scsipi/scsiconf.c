@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.262 2011/04/26 07:41:18 hannken Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.263 2012/03/11 02:16:55 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.262 2011/04/26 07:41:18 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.263 2012/03/11 02:16:55 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -378,11 +378,17 @@ scsidevdetached(device_t self, device_t child)
 	target = device_locator(child, SCSIBUSCF_TARGET);
 	lun = device_locator(child, SCSIBUSCF_LUN);
 
+	/* XXXSMP scsipi */
+	KERNEL_LOCK(1, curlwp);
+
 	periph = scsipi_lookup_periph(chan, target, lun);
 	KASSERT(periph->periph_dev == child);
 
 	scsipi_remove_periph(chan, periph);
 	free(periph, M_DEVBUF);
+
+	/* XXXSMP scsipi */
+	KERNEL_UNLOCK_ONE(curlwp);
 }
 
 /*
