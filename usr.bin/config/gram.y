@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.32 2012/03/11 07:32:41 dholland Exp $	*/
+/*	$NetBSD: gram.y,v 1.33 2012/03/11 07:46:47 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -162,12 +162,12 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %token	<str> PATHNAME QSTRING WORD EMPTYSTRING
 %token	ENDDEFS
 
-%type	<list>	fopts fexpr fatom
-%type	<list>	f_or_expr f_and_expr f_prefix_expr f_base_expr
+%type	<list>	fopts condexpr condatom
+%type	<list>	cond_or_expr cond_and_expr cond_prefix_expr cond_base_expr
 %type	<str>	fs_spec
 %type	<val>	fflgs fflag oflgs oflag
 %type	<str>	rule
-%type	<attr>	attr
+%type	<attr>	depend
 %type	<devb>	devbase
 %type	<deva>	devattach_opt
 %type	<list>	atlist interface_opt
@@ -175,7 +175,7 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %type	<list>	loclist locdef
 %type	<str>	locdefault
 %type	<list>	values locdefaults
-%type	<attrlist>	attrs_opt attrs
+%type	<attrlist>	depend_list depends
 %type	<list>	locators locator
 %type	<list>	dev_spec
 %type	<str>	device_instance
@@ -290,7 +290,7 @@ definition:
 	| prefix
 	| DEVCLASS WORD			{ (void)defattr($2, NULL, NULL, 1); }
 	| DEFFS deffses defoptdeps	{ deffilesystem($2, $3); }
-	| DEFINE WORD interface_opt attrs_opt
+	| DEFINE WORD interface_opt depend_list
 					{ (void)defattr($2, $3, $4, 0); }
 	| DEFOPT optfile_opt defopts defoptdeps
 					{ defoption($2, $3, $4); }
@@ -302,18 +302,18 @@ definition:
 					{ defparam($2, $3, $4, 0); }
 	| OBSOLETE DEFPARAM optfile_opt defopts
 					{ defparam($3, $4, NULL, 1); }
-	| DEVICE devbase interface_opt attrs_opt
+	| DEVICE devbase interface_opt depend_list
 					{ defdev($2, $3, $4, 0); }
-	| ATTACH devbase AT atlist devattach_opt attrs_opt
+	| ATTACH devbase AT atlist devattach_opt depend_list
 					{ defdevattach($5, $2, $4, $6); }
 	| MAXPARTITIONS NUMBER		{ maxpartitions = $2.val; }
 	| MAXUSERS NUMBER NUMBER NUMBER
 				    { setdefmaxusers($2.val, $3.val, $4.val); }
 	| MAKEOPTIONS condmkopt_list
 	/* interface_opt in DEFPSEUDO is for backwards compatibility */
-	| DEFPSEUDO devbase interface_opt attrs_opt
+	| DEFPSEUDO devbase interface_opt depend_list
 					{ defdev($2, $3, $4, 1); }
-	| DEFPSEUDODEV devbase interface_opt attrs_opt
+	| DEFPSEUDODEV devbase interface_opt depend_list
 					{ defdev($2, $3, $4, 2); }
 	| MAJOR '{' majorlist '}'
 	| VERSION NUMBER		{ setversion($2.val); }
@@ -324,10 +324,10 @@ file:
 	XFILE filename fopts fflgs rule	{ addfile($2, $3, $4, $5); }
 ;
 
-/* file options: optional expression of config elements */
+/* file options: optional expression of conditions */
 fopts:
 	  /* empty */			{ $$ = NULL; }
-	| fexpr				{ $$ = $1; }
+	| condexpr			{ $$ = $1; }
 ;
 
 /* zero or more flags for a file */
@@ -479,20 +479,20 @@ locdefaults:
 	'=' '{' values '}'		{ $$ = $3; }
 ;
 
-/* optional attributes */
-attrs_opt:
+/* list of depends, may be empty */
+depend_list:
 	  /* empty */			{ $$ = NULL; }
-	| ':' attrs			{ $$ = $2; }
+	| ':' depends			{ $$ = $2; }
 ;
 
-/* one or more attributes */
-attrs:
-	  attr				{ $$ = MK2(attrlist, NULL, $1); }
-	| attrs ',' attr		{ $$ = MK2(attrlist, $1, $3); }
+/* one or more depend items */
+depends:
+	  depend			{ $$ = MK2(attrlist, NULL, $1); }
+	| depends ',' depend		{ $$ = MK2(attrlist, $1, $3); }
 ;
 
-/* one attribute */
-attr:
+/* one depend item (which is an attribute) */
+depend:
 	WORD				{ $$ = getattr($1); }
 ;
 
@@ -555,7 +555,7 @@ condmkopt_list:
 
 /* one conditional make option */
 condmkoption:
-	fexpr mkvarname PLUSEQ value	{ appendcondmkoption($1, $2, $4); }
+	condexpr mkvarname PLUSEQ value	{ appendcondmkoption($1, $2, $4); }
 ;
 
 /* device name */
@@ -781,7 +781,7 @@ device_flags:
 /************************************************************/
 
 /*
- * dependency logic
+ * conditions
  */
 
 
@@ -791,35 +791,35 @@ device_flags:
  * dholland 20120310: wut?
  */
 
-/* expression of config elements */
-fexpr:
-	f_or_expr
+/* expression of conditions */
+condexpr:
+	cond_or_expr
 ;
 
-f_or_expr:
-	  f_and_expr
-	| f_or_expr '|' f_and_expr	{ $$ = fx_or($1, $3); }
+cond_or_expr:
+	  cond_and_expr
+	| cond_or_expr '|' cond_and_expr	{ $$ = fx_or($1, $3); }
 ;
 
-f_and_expr:
-	  f_prefix_expr
-	| f_and_expr '&' f_prefix_expr	{ $$ = fx_and($1, $3); }
+cond_and_expr:
+	  cond_prefix_expr
+	| cond_and_expr '&' cond_prefix_expr	{ $$ = fx_and($1, $3); }
 ;
 
-f_prefix_expr:
-	  f_base_expr
+cond_prefix_expr:
+	  cond_base_expr
 /* XXX notyet - need to strengthen downstream first */
-/*	| '!' f_prefix_expr		{ $$ = fx_not($2); } */
+/*	| '!' cond_prefix_expr			{ $$ = fx_not($2); } */
 ;
 
-f_base_expr:
-	  fatom				{ $$ = $1; }
-	| '!' fatom			{ $$ = fx_not($2); }
-	| '(' fexpr ')'			{ $$ = $2; }
+cond_base_expr:
+	  condatom			{ $$ = $1; }
+	| '!' condatom			{ $$ = fx_not($2); }
+	| '(' condexpr ')'		{ $$ = $2; }
 ;
 
 /* basic element of config element expression: a config element */
-fatom:
+condatom:
 	WORD				{ $$ = fx_atom($1); }
 ;
 
