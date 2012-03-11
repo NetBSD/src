@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.12 2012/03/11 20:02:55 dholland Exp $	*/
+/*	$NetBSD: util.c,v 1.13 2012/03/11 21:16:08 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -202,6 +202,36 @@ nvcat(struct nvlist *nv1, struct nvlist *nv2)
 
 	nv->nv_next = nv2;
 	return nv1;
+}
+
+/*
+ * Locator lists
+ */
+
+struct loclist *
+loclist_create(const char *name, const char *string, long long num)
+{
+	struct loclist *ll;
+
+	ll = emalloc(sizeof(*ll));
+	ll->ll_name = name;
+	ll->ll_string = string;
+	ll->ll_num = num;
+	ll->ll_next = NULL;
+	return ll;
+}
+
+void
+loclist_destroy(struct loclist *ll)
+{
+	struct loclist *next;
+
+	while (ll != NULL) {
+		next = ll->ll_next;
+		ll->ll_next = NULL;
+		free(ll);
+		ll = next;
+	}
 }
 
 /*

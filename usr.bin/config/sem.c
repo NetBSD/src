@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.40 2012/03/11 08:21:53 dholland Exp $	*/
+/*	$NetBSD: sem.c,v 1.41 2012/03/11 21:16:08 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,7 +82,7 @@ static const char *concat(const char *, int);
 static char *extend(char *, const char *);
 static int split(const char *, size_t, char *, size_t, int *);
 static void selectbase(struct devbase *, struct deva *);
-static const char **fixloc(const char *, struct attr *, struct nvlist *);
+static const char **fixloc(const char *, struct attr *, struct loclist *);
 static const char *makedevstr(devmajor_t, devminor_t);
 static const char *major2name(devmajor_t);
 static devmajor_t dev2major(struct devbase *);
@@ -194,12 +194,12 @@ setident(const char *i)
  * all locator lists include a dummy head node, which we discard here.
  */
 int
-defattr(const char *name, struct nvlist *locs, struct attrlist *deps,
+defattr(const char *name, struct loclist *locs, struct attrlist *deps,
     int devclass)
 {
 	struct attr *a, *dep;
 	struct attrlist *al;
-	struct nvlist *nv;
+	struct loclist *ll;
 	int len;
 
 	if (locs != NULL && devclass)
@@ -225,15 +225,17 @@ defattr(const char *name, struct nvlist *locs, struct attrlist *deps,
 	if (ht_insert(attrtab, name, a)) {
 		free(a);
 		cfgerror("attribute `%s' already defined", name);
-		nvfreel(locs);
+		loclist_destroy(locs);
 		return (1);
 	}
 
 	a->a_name = name;
 	if (locs != NULL) {
 		a->a_iattr = 1;
-		a->a_locs = locs->nv_next;
-		nvfree(locs);
+		/* unwrap */
+		a->a_locs = locs->ll_next;
+		locs->ll_next = NULL;
+		loclist_destroy(locs);
 	} else {
 		a->a_iattr = 0;
 		a->a_locs = NULL;
@@ -257,7 +259,7 @@ defattr(const char *name, struct nvlist *locs, struct attrlist *deps,
 	} else
 		a->a_devclass = NULL;
 	len = 0;
-	for (nv = a->a_locs; nv != NULL; nv = nv->nv_next)
+	for (ll = a->a_locs; ll != NULL; ll = ll->ll_next)
 		len++;
 	a->a_loclen = len;
 	a->a_devs = NULL;
@@ -322,10 +324,10 @@ addtoattr(struct nvlist *l, struct devbase *dev)
  * attribute and/or refer to existing attributes.
  */
 void
-defdev(struct devbase *dev, struct nvlist *loclist, struct attrlist *attrs,
+defdev(struct devbase *dev, struct loclist *loclist, struct attrlist *attrs,
        int ispseudo)
 {
-	struct nvlist *nv;
+	struct loclist *ll;
 	struct attrlist *al;
 	struct attr *a;
 
@@ -347,9 +349,9 @@ defdev(struct devbase *dev, struct nvlist *loclist, struct attrlist *attrs,
 	 * (where you can plug in a foo-bus extender to a foo-bus).
 	 */
 	if (loclist != NULL) {
-		nv = loclist;
+		ll = loclist;
 		loclist = NULL;	/* defattr disposes of them for us */
-		if (defattr(dev->d_name, nv, NULL, 0))
+		if (defattr(dev->d_name, ll, NULL, 0))
 			goto bad;
 		attrs = attrlist_cons(attrs, getattr(dev->d_name));
 		/* This used to be stored but was never used */
@@ -407,7 +409,7 @@ defdev(struct devbase *dev, struct nvlist *loclist, struct attrlist *attrs,
 	}
 	return;
  bad:
-	nvfreel(loclist);
+	loclist_destroy(loclist);
 	attrlist_destroyall(attrs);
 }
 
@@ -936,7 +938,7 @@ newdevi(const char *name, int unit, struct devbase *d)
  * another device instead) plus unit number.
  */
 void
-adddev(const char *name, const char *at, struct nvlist *loclist, int flags)
+adddev(const char *name, const char *at, struct loclist *loclist, int flags)
 {
 	struct devi *i;		/* the new instance */
 	struct pspec *p;	/* and its pspec */
@@ -1076,7 +1078,7 @@ adddev(const char *name, const char *at, struct nvlist *loclist, int flags)
 
 	/* all done, fall into ... */
  bad:
-	nvfreel(loclist);
+	loclist_destroy(loclist);
 	return;
 }
 
@@ -1818,9 +1820,9 @@ extend(char *p, const char *name)
  * given as "?" and have defaults.  Return 0 on success.
  */
 static const char **
-fixloc(const char *name, struct attr *attr, struct nvlist *got)
+fixloc(const char *name, struct attr *attr, struct loclist *got)
 {
-	struct nvlist *m, *n;
+	struct loclist *m, *n;
 	int ord;
 	const char **lp;
 	int nmissing, nextra, nnodefault;
@@ -1837,23 +1839,23 @@ fixloc(const char *name, struct attr *attr, struct nvlist *got)
 		lp = nullvec;
 	else
 		lp = emalloc((attr->a_loclen + 1) * sizeof(const char *));
-	for (n = got; n != NULL; n = n->nv_next)
-		n->nv_num = -1;
+	for (n = got; n != NULL; n = n->ll_next)
+		n->ll_num = -1;
 	nmissing = 0;
 	mp = missing;
 	/* yes, this is O(mn), but m and n should be small */
-	for (ord = 0, m = attr->a_locs; m != NULL; m = m->nv_next, ord++) {
-		for (n = got; n != NULL; n = n->nv_next) {
-			if (n->nv_name == m->nv_name) {
-				n->nv_num = ord;
+	for (ord = 0, m = attr->a_locs; m != NULL; m = m->ll_next, ord++) {
+		for (n = got; n != NULL; n = n->ll_next) {
+			if (n->ll_name == m->ll_name) {
+				n->ll_num = ord;
 				break;
 			}
 		}
-		if (n == NULL && m->nv_num == 0) {
+		if (n == NULL && m->ll_num == 0) {
 			nmissing++;
-			mp = extend(mp, m->nv_name);
+			mp = extend(mp, m->ll_name);
 		}
-		lp[ord] = m->nv_str;
+		lp[ord] = m->ll_string;
 	}
 	if (ord != attr->a_loclen)
 		panic("fixloc");
@@ -1862,17 +1864,17 @@ fixloc(const char *name, struct attr *attr, struct nvlist *got)
 	ep = extra;
 	nnodefault = 0;
 	ndp = nodefault;
-	for (n = got; n != NULL; n = n->nv_next) {
-		if (n->nv_num >= 0) {
-			if (n->nv_str != NULL)
-				lp[n->nv_num] = n->nv_str;
-			else if (lp[n->nv_num] == NULL) {
+	for (n = got; n != NULL; n = n->ll_next) {
+		if (n->ll_num >= 0) {
+			if (n->ll_string != NULL)
+				lp[n->ll_num] = n->ll_string;
+			else if (lp[n->ll_num] == NULL) {
 				nnodefault++;
-				ndp = extend(ndp, n->nv_name);
+				ndp = extend(ndp, n->ll_name);
 			}
 		} else {
 			nextra++;
-			ep = extend(ep, n->nv_name);
+			ep = extend(ep, n->ll_name);
 		}
 	}
 	if (nextra) {

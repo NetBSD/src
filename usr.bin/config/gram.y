@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.35 2012/03/11 19:27:26 dholland Exp $	*/
+/*	$NetBSD: gram.y,v 1.36 2012/03/11 21:16:08 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,8 +70,9 @@ static void wrap_cleanup(void);
  * Allocation wrapper type codes
  */
 #define WRAP_CODE_nvlist	1
-#define WRAP_CODE_attrlist	2
-#define WRAP_CODE_condexpr	3
+#define WRAP_CODE_loclist	2
+#define WRAP_CODE_attrlist	3
+#define WRAP_CODE_condexpr	4
 
 /*
  * The allocation wrappers themselves
@@ -79,10 +80,12 @@ static void wrap_cleanup(void);
 #define DECL_ALLOCWRAP(t)	static struct t *wrap_mk_##t(struct t *arg)
 
 DECL_ALLOCWRAP(nvlist);
+DECL_ALLOCWRAP(loclist);
 DECL_ALLOCWRAP(attrlist);
 DECL_ALLOCWRAP(condexpr);
 
 /* allow shorter names */
+#define wrap_mk_loc(p) wrap_mk_loclist(p)
 #define wrap_mk_cx(p) wrap_mk_condexpr(p)
 
 /*
@@ -108,6 +111,7 @@ DECL_ALLOCWRAP(condexpr);
 #define MK0(t)		wrap_mk_##t(mk_##t())
 #define MK1(t, a0)	wrap_mk_##t(mk_##t(a0))
 #define MK2(t, a0, a1)	wrap_mk_##t(mk_##t(a0, a1))
+#define MK3(t, a0, a1, a2)	wrap_mk_##t(mk_##t(a0, a1, a2))
 
 #define MKF0(t, f)		wrap_mk_##t(mk_##t##_##f())
 #define MKF1(t, f, a0)		wrap_mk_##t(mk_##t##_##f(a0))
@@ -117,6 +121,8 @@ DECL_ALLOCWRAP(condexpr);
  * Data constructors
  */
 
+static struct loclist *mk_loc(const char *, const char *, long long);
+static struct loclist *mk_loc_val(const char *, struct loclist *);
 static struct attrlist *mk_attrlist(struct attrlist *, struct attr *);
 static struct condexpr *mk_cx_atom(const char *);
 static struct condexpr *mk_cx_not(struct condexpr *);
@@ -130,10 +136,10 @@ static struct condexpr *mk_cx_or(struct condexpr *, struct condexpr *);
 static	void	setmachine(const char *, const char *, struct nvlist *, int);
 static	void	check_maxpart(void);
 
-static	void	app(struct nvlist *, struct nvlist *);
-
-static	struct nvlist *mk_nsis(const char *, int, struct nvlist *, int);
-static	struct nvlist *mk_ns(const char *, struct nvlist *);
+static struct loclist *present_loclist(struct loclist *ll);
+static void app(struct loclist *, struct loclist *);
+static struct loclist *locarray(const char *, int, struct loclist *, int);
+static struct loclist *namelocvals(const char *, struct loclist *);
 
 %}
 
@@ -142,6 +148,7 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 	struct	devbase *devb;
 	struct	deva *deva;
 	struct	nvlist *list;
+	struct loclist *loclist;
 	struct attrlist *attrlist;
 	struct condexpr *condexpr;
 	const char *str;
@@ -180,13 +187,14 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %type	<attr>	depend
 %type	<devb>	devbase
 %type	<deva>	devattach_opt
-%type	<list>	atlist interface_opt
+%type	<list>	atlist
+%type	<loclist> interface_opt
 %type	<str>	atname
-%type	<list>	loclist locdef
+%type	<loclist>	loclist locdef
 %type	<str>	locdefault
-%type	<list>	values locdefaults
+%type	<loclist>	values locdefaults
 %type	<attrlist>	depend_list depends
-%type	<list>	locators locator
+%type	<loclist>	locators locator
 %type	<list>	dev_spec
 %type	<str>	device_instance
 %type	<str>	attachment
@@ -442,8 +450,8 @@ deffs:
 /* optional locator specification */
 interface_opt:
 	  /* empty */			{ $$ = NULL; }
-	| '{' '}'			{ $$ = new_nx("", NULL); }
-	| '{' loclist '}'		{ $$ = new_nx("", $2); }
+	| '{' '}'			{ $$ = present_loclist(NULL); }
+	| '{' loclist '}'		{ $$ = present_loclist($2); }
 ;
 
 /*
@@ -463,14 +471,14 @@ loclist:
 
 /* one locator definition */
 locdef:
-	  locname locdefault 		{ $$ = new_nsi($1, $2, 0); }
-	| locname			{ $$ = new_nsi($1, NULL, 0); }
-	| '[' locname locdefault ']'	{ $$ = new_nsi($2, $3, 1); }
-	| locname '[' NUMBER ']'	{ $$ = mk_nsis($1, $3.val, NULL, 0); }
+	  locname locdefault 		{ $$ = MK3(loc, $1, $2, 0); }
+	| locname			{ $$ = MK3(loc, $1, NULL, 0); }
+	| '[' locname locdefault ']'	{ $$ = MK3(loc, $2, $3, 1); }
+	| locname '[' NUMBER ']'	{ $$ = locarray($1, $3.val, NULL, 0); }
 	| locname '[' NUMBER ']' locdefaults
-					{ $$ = mk_nsis($1, $3.val, $5, 0); }
+					{ $$ = locarray($1, $3.val, $5, 0); }
 	| '[' locname '[' NUMBER ']' locdefaults ']'
-					{ $$ = mk_nsis($2, $4.val, $6, 1); }
+					{ $$ = locarray($2, $4.val, $6, 1); }
 ;
 
 /* locator name */
@@ -779,8 +787,8 @@ locators:
 
 /* one locator */
 locator:
-	  WORD '?'			{ $$ = new_ns($1, NULL); }
-	| WORD values			{ $$ = mk_ns($1, $2); }
+	  WORD '?'			{ $$ = MK3(loc, $1, NULL, 0); }
+	| WORD values			{ $$ = namelocvals($1, $2); }
 ;
 
 /* optional device flags */
@@ -880,8 +888,8 @@ stringvalue:
 /* comma-separated list of values */
 /* XXX why right-recursive? */
 values:
-	  value				{ $$ = new_s($1); }
-	| value ',' values		{ $$ = new_sx($1, $3); }
+	  value				{ $$ = MKF2(loc, val, $1, NULL); }
+	| value ',' values		{ $$ = MKF2(loc, val, $1, $3); }
 ;
 
 /* possibly negative number */
@@ -956,22 +964,43 @@ wrap_cleanup(void)
 {
 	unsigned i;
 
+	/*
+	 * Destroy each item. Note that because everything allocated
+	 * is entered on the list separately, lists and trees need to
+	 * have their links blanked before being destroyed. Also note
+	 * that strings are interned elsewhere and not handled by this
+	 * mechanism.
+	 */
+
 	for (i=0; i<wrap_depth; i++) {
 		switch (wrapstack[i].typecode) {
 		    case WRAP_CODE_nvlist:
 			nvfree(wrapstack[i].ptr);
 			break;
+		    case WRAP_CODE_loclist:
+			{
+				struct loclist *ll = wrapstack[i].ptr;
+
+				ll->ll_next = NULL;
+				loclist_destroy(ll);
+			}
+			break;
 		    case WRAP_CODE_attrlist:
 			{
 				struct attrlist *al = wrapstack[i].ptr;
 
-				/*
-				 * Contents got wrapped separately;
-				 * just blank it out to destroy.
-				 */
 				al->al_next = NULL;
 				al->al_this = NULL;
 				attrlist_destroy(al);
+			}
+			break;
+		    case WRAP_CODE_condexpr:
+			{
+				struct condexpr *cx = wrapstack[i].ptr;
+
+				cx->cx_type = CX_ATOM;
+				cx->cx_atom = NULL;
+				condexpr_destroy(cx);
 			}
 			break;
 		    default:
@@ -999,6 +1028,7 @@ wrap_cleanup(void)
 	}
 
 DEF_ALLOCWRAP(nvlist);
+DEF_ALLOCWRAP(loclist);
 DEF_ALLOCWRAP(attrlist);
 DEF_ALLOCWRAP(condexpr);
 
@@ -1006,7 +1036,25 @@ DEF_ALLOCWRAP(condexpr);
 
 /*
  * Data constructors
+ *
+ * (These are *beneath* the allocation wrappers.)
  */
+
+static struct loclist *
+mk_loc(const char *name, const char *str, long long num)
+{
+	return loclist_create(name, str, num);
+}
+
+static struct loclist *
+mk_loc_val(const char *str, struct loclist *next)
+{
+	struct loclist *ll;
+
+	ll = mk_loc(NULL, str, 0);
+	ll->ll_next = next;
+	return ll;
+}
 
 static struct attrlist *
 mk_attrlist(struct attrlist *next, struct attr *a)
@@ -1148,19 +1196,34 @@ check_version(void)
 		stop("your sources are out of date -- please update.");
 }
 
-static void
-app(struct nvlist *p, struct nvlist *q)
+/*
+ * Prepend a blank entry to the locator definitions so the code in
+ * sem.c can distinguish "empty locator list" from "no locator list".
+ * XXX gross.
+ */
+static struct loclist *
+present_loclist(struct loclist *ll)
 {
-	while (p->nv_next)
-		p = p->nv_next;
-	p->nv_next = q;
+	struct loclist *ret;
+
+	ret = MK3(loc, "", NULL, 0);
+	ret->ll_next = ll;
+	return ret;
 }
 
-static struct nvlist *
-mk_nsis(const char *name, int count, struct nvlist *adefs, int opt)
+static void
+app(struct loclist *p, struct loclist *q)
 {
-	struct nvlist *defs = adefs;
-	struct nvlist **p;
+	while (p->ll_next)
+		p = p->ll_next;
+	p->ll_next = q;
+}
+
+static struct loclist *
+locarray(const char *name, int count, struct loclist *adefs, int opt)
+{
+	struct loclist *defs = adefs;
+	struct loclist **p;
 	char buf[200];
 	int i;
 
@@ -1171,27 +1234,27 @@ mk_nsis(const char *name, int count, struct nvlist *adefs, int opt)
 	p = &defs;
 	for(i = 0; i < count; i++) {
 		if (*p == NULL)
-			*p = new_s("0");
+			*p = MK3(loc, NULL, "0", 0);
 		snprintf(buf, sizeof(buf), "%s%c%d", name, ARRCHR, i);
-		(*p)->nv_name = i == 0 ? name : intern(buf);
-		(*p)->nv_num = i > 0 || opt;
-		p = &(*p)->nv_next;
+		(*p)->ll_name = i == 0 ? name : intern(buf);
+		(*p)->ll_num = i > 0 || opt;
+		p = &(*p)->ll_next;
 	}
 	*p = 0;
 	return defs;
 }
 
 
-static struct nvlist *
-mk_ns(const char *name, struct nvlist *vals)
+static struct loclist *
+namelocvals(const char *name, struct loclist *vals)
 {
-	struct nvlist *p;
+	struct loclist *p;
 	char buf[200];
 	int i;
 
-	for(i = 0, p = vals; p; i++, p = p->nv_next) {
+	for (i = 0, p = vals; p; i++, p = p->ll_next) {
 		snprintf(buf, sizeof(buf), "%s%c%d", name, ARRCHR, i);
-		p->nv_name = i == 0 ? name : intern(buf);
+		p->ll_name = i == 0 ? name : intern(buf);
 	}
 	return vals;
 }

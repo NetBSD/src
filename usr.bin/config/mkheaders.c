@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.18 2010/03/22 14:40:54 pooka Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.19 2012/03/11 21:16:08 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -298,7 +298,7 @@ static int
 locators_print(const char *name, void *value, void *arg)
 {
 	struct attr *a;
-	struct nvlist *nv;
+	struct loclist *ll;
 	int i;
 	char *locdup, *namedup;
 	char *cp;
@@ -316,24 +316,24 @@ locators_print(const char *name, void *value, void *arg)
 		for (cp = locdup; *cp; cp++)
 			if (islower((unsigned char)*cp))
 				*cp = toupper((unsigned char)*cp);
-		for (i = 0, nv = a->a_locs; nv; nv = nv->nv_next, i++) {
-			if (strchr(nv->nv_name, ' ') != NULL ||
-			    strchr(nv->nv_name, '\t') != NULL)
+		for (i = 0, ll = a->a_locs; ll; ll = ll->ll_next, i++) {
+			if (strchr(ll->ll_name, ' ') != NULL ||
+			    strchr(ll->ll_name, '\t') != NULL)
 				/*
 				 * name contains a space; we can't generate
 				 * usable defines, so ignore it.
 				 */
 				continue;
-			namedup = estrdup(nv->nv_name);
+			namedup = estrdup(ll->ll_name);
 			for (cp = namedup; *cp; cp++)
 				if (islower((unsigned char)*cp))
 					*cp = toupper((unsigned char)*cp);
 				else if (*cp == ARRCHR)
 					*cp = '_';
 			fprintf(fp, "#define %sCF_%s %d\n", locdup, namedup, i);
-			if (nv->nv_str != NULL)
+			if (ll->ll_string != NULL)
 				fprintf(fp, "#define %sCF_%s_DEFAULT %s\n",
-				    locdup, namedup, nv->nv_str);
+				    locdup, namedup, ll->ll_string);
 			free(namedup);
 		}
 		/* assert(i == a->a_loclen) */

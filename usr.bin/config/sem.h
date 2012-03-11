@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.9 2012/03/11 08:21:53 dholland Exp $	*/
+/*	$NetBSD: sem.h,v 1.10 2012/03/11 21:16:08 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,8 +46,8 @@ void		setversion(int);
 void		setdefmaxusers(int, int, int);
 void		setmaxusers(int);
 void		setident(const char *);
-int		defattr(const char *, struct nvlist *, struct attrlist *, int);
-void		defdev(struct devbase *, struct nvlist *, struct attrlist *, int);
+int		defattr(const char *, struct loclist *, struct attrlist *, int);
+void		defdev(struct devbase *, struct loclist *, struct attrlist *, int);
 void		defdevattach(struct deva *, struct devbase *, struct nvlist *,
 			     struct attrlist *);
 struct devbase *getdevbase(const char *);
@@ -60,7 +60,7 @@ void		addconf(struct config *);
 void		setconf(struct nvlist **, const char *, struct nvlist *);
 void		delconf(const char *);
 void		setfstype(const char **, const char *);
-void		adddev(const char *, const char *, struct nvlist *, int);
+void		adddev(const char *, const char *, struct loclist *, int);
 void		deldevi(const char *, const char *);
 void		deldeva(const char *);
 void		deldev(const char *);
