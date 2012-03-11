@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.20 2012/03/11 07:32:41 dholland Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.21 2012/03/11 21:16:08 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -168,7 +168,7 @@ static int
 cf_locators_print(const char *name, void *value, void *arg)
 {
 	struct attr *a;
-	struct nvlist *nv;
+	struct loclist *ll;
 	FILE *fp = arg;
 
 	a = value;
@@ -180,11 +180,11 @@ cf_locators_print(const char *name, void *value, void *arg)
 		    "static const struct cfiattrdata %scf_iattrdata = {\n",
 			    name);
 		fprintf(fp, "\t\"%s\", %d,\n\t{\n", name, a->a_loclen);
-		for (nv = a->a_locs; nv; nv = nv->nv_next)
+		for (ll = a->a_locs; ll; ll = ll->ll_next)
 			fprintf(fp, "\t\t{ \"%s\", \"%s\", %s },\n",
-				nv->nv_name,
-				(nv->nv_str ? nv->nv_str : "NULL"),
-				(nv->nv_str ? nv->nv_str : "0"));
+				ll->ll_name,
+				(ll->ll_string ? ll->ll_string : "NULL"),
+				(ll->ll_string ? ll->ll_string : "0"));
 		fprintf(fp, "\t}\n};\n");
 	} else {
 		fprintf(fp,
@@ -363,7 +363,7 @@ emitcfdata(FILE *fp)
 	struct pspec *ps;
 	int unit, v;
 	const char *state, *basename, *attachment;
-	struct nvlist *nv;
+	struct loclist *ll;
 	struct attr *a;
 	const char *loc;
 	char locbuf[20];
@@ -394,16 +394,16 @@ emitcfdata(FILE *fp)
 			}
 
 			a = ps->p_iattr;
-			for (nv = a->a_locs, v = 0; nv != NULL;
-			     nv = nv->nv_next, v++) {
-				if (ARRNAME(nv->nv_name, lastname)) {
+			for (ll = a->a_locs, v = 0; ll != NULL;
+			     ll = ll->ll_next, v++) {
+				if (ARRNAME(ll->ll_name, lastname)) {
 					fprintf(fp, " %s %s",
-					    nv->nv_name, i->i_locs[v]);
+					    ll->ll_name, i->i_locs[v]);
 				} else {
 					fprintf(fp, " %s %s",
-						    nv->nv_name,
+						    ll->ll_name,
 						    i->i_locs[v]);
-					lastname = nv->nv_name;
+					lastname = ll->ll_name;
 				}
 			}
 		} else {
