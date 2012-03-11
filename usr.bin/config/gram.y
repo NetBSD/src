@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.30 2012/03/11 02:56:25 dholland Exp $	*/
+/*	$NetBSD: gram.y,v 1.31 2012/03/11 07:27:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,10 +58,31 @@
 
 static	struct	config conf;	/* at most one active at a time */
 
-/* the following is used to recover nvlist space after errors */
-static	struct	nvlist *alloc[1000];
-static	int	adepth;
-#define	new0(n,s,p,i,x)	(alloc[adepth++] = newnv(n, s, p, i, x))
+
+/*
+ * Allocation wrapper functions
+ */
+static void wrap_alloc(void *ptr, unsigned code);
+static void wrap_continue(void);
+static void wrap_cleanup(void);
+
+/*
+ * Allocation wrapper type codes
+ */
+#define WRAP_CODE_nvlist	1
+
+/*
+ * The allocation wrappers themselves
+ */
+#define DECL_ALLOCWRAP(t)	static struct t *wrap_mk_##t(struct t *arg)
+
+DECL_ALLOCWRAP(nvlist);
+
+/*
+ * Macros for allocating new objects
+ */
+
+#define	new0(n,s,p,i,x)	wrap_mk_nvlist(newnv(n, s, p, i, x))
 #define	new_n(n)	new0(n, NULL, NULL, 0, NULL)
 #define	new_nx(n, x)	new0(n, NULL, NULL, 0, x)
 #define	new_ns(n, s)	new0(n, s, NULL, 0, NULL)
@@ -80,7 +101,10 @@ static	int	adepth;
 #define	fx_and(e1, e2)	new0(NULL, NULL, e1, FX_AND, e2)
 #define	fx_or(e1, e2)	new0(NULL, NULL, e1, FX_OR, e2)
 
-static	void	cleanup(void);
+/*
+ * Other private functions
+ */
+
 static	void	setmachine(const char *, const char *, struct nvlist *, int);
 static	void	check_maxpart(void);
 
@@ -238,8 +262,8 @@ definition_part:
 definitions:
 	  /* empty */
 	| definitions '\n'
-	| definitions definition '\n'	{ adepth = 0; }
-	| definitions error '\n'	{ cleanup(); }
+	| definitions definition '\n'	{ wrap_continue(); }
+	| definitions error '\n'	{ wrap_cleanup(); }
 	| definitions ENDFILE		{ enddefs(); checkfiles(); }
 ;
 
@@ -557,8 +581,8 @@ configuration_part:
 config_items:
 	  /* empty */
 	| config_items '\n'
-	| config_items config_item '\n'	{ adepth = 0; }
-	| config_items error '\n'	{ cleanup(); }
+	| config_items config_item '\n'	{ wrap_continue(); }
+	| config_items error '\n'	{ wrap_cleanup(); }
 ;
 
 /* One config item. */
@@ -855,20 +879,88 @@ yyerror(const char *s)
 	cfgerror("%s", s);
 }
 
+/************************************************************/
+
 /*
- * Cleanup procedure after syntax error: release any nvlists
- * allocated during parsing the current line.
+ * Wrap allocations that live on the parser stack so that we can free
+ * them again on error instead of leaking.
+ */
+
+#define MAX_WRAP 1000
+
+struct wrap_entry {
+	void *ptr;
+	unsigned typecode;
+};
+
+static struct wrap_entry wrapstack[MAX_WRAP];
+static unsigned wrap_depth;
+
+/*
+ * Remember pointer PTR with type-code CODE.
  */
 static void
-cleanup(void)
+wrap_alloc(void *ptr, unsigned code)
 {
-	struct nvlist **np;
-	int i;
+	unsigned pos;
 
-	for (np = alloc, i = adepth; --i >= 0; np++)
-		nvfree(*np);
-	adepth = 0;
+	if (wrap_depth >= MAX_WRAP) {
+		panic("allocation wrapper stack overflow");
+	}
+	pos = wrap_depth++;
+	wrapstack[pos].ptr = ptr;
+	wrapstack[pos].typecode = code;
 }
+
+/*
+ * We succeeded; commit to keeping everything that's been allocated so
+ * far and clear the stack.
+ */
+static void
+wrap_continue(void)
+{
+	wrap_depth = 0;
+}
+
+/*
+ * We failed; destroy all the objects allocated.
+ */
+static void
+wrap_cleanup(void)
+{
+	unsigned i;
+
+	for (i=0; i<wrap_depth; i++) {
+		switch (wrapstack[i].typecode) {
+		    case WRAP_CODE_nvlist:
+			nvfree(wrapstack[i].ptr);
+			break;
+		    default:
+			panic("invalid code %u on allocation wrapper stack",
+			      wrapstack[i].typecode);
+		}
+	}
+	wrap_depth = 0;
+}
+
+/*
+ * Instantiate the wrapper functions.
+ *
+ * Each one calls wrap_alloc to save the pointer and then returns the
+ * pointer again; these need to be generated with the preprocessor in
+ * order to be typesafe.
+ */
+#define DEF_ALLOCWRAP(t) \
+	static struct t *				\
+	wrap_mk_##t(struct t *arg)			\
+	{						\
+		wrap_alloc(arg, WRAP_CODE_##t);		\
+		return arg;				\
+	}
+
+DEF_ALLOCWRAP(nvlist);
+
+/************************************************************/
 
 static void
 setmachine(const char *mch, const char *mcharch, struct nvlist *mchsubarches,
