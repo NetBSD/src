@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.47.2.1 2012/02/18 07:33:48 mrg Exp $
+#	$NetBSD: GENERIC,v 1.47.2.2 2012/03/11 01:52:26 mrg Exp $
 #
 # GENERIC machine description file
 #
@@ -115,7 +115,6 @@ options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 # Loadable kernel module support
 #options 	MODULAR		# new style module(7) framework

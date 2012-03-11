@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.95.2.1 2012/02/18 07:31:37 mrg Exp $
+#	$NetBSD: GENERIC.in,v 1.95.2.2 2012/03/11 01:52:19 mrg Exp $
 #
 # Generic atari
 #
@@ -184,7 +184,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 options 	SYSVSHM			# System V shared memory
 options 	SYSVMSG			# System V messages
 options 	SYSVSEM			# System V semaphores
-options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 #endif /* !SMALL030_KERNEL */
 
 #if !defined(SMALL030_KERNEL)

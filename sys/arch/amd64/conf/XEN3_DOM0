@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.75.2.2 2012/03/04 00:46:03 mrg Exp $
+# $NetBSD: XEN3_DOM0,v 1.75.2.3 2012/03/11 01:52:18 mrg Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -40,8 +40,6 @@ options		CPU_UCODE	# cpu ucode loading support
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
-
 
 options 	USERCONF	# userconf(4) support
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel

@@ -1,4 +1,4 @@
-# $NetBSD: MPCSA_GENERIC,v 1.24.2.1 2012/02/18 07:31:48 mrg Exp $
+# $NetBSD: MPCSA_GENERIC,v 1.24.2.2 2012/03/11 01:52:20 mrg Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mpcsa"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.24.2.1 $"
+#ident 		"GENERIC-$Revision: 1.24.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -64,8 +64,6 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
-
 
 #options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

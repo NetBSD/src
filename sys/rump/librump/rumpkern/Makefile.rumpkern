@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.113.2.1 2012/02/18 07:35:46 mrg Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.113.2.2 2012/03/11 01:52:31 mrg Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -106,7 +106,8 @@ SRCS+=	init_sysctl_base.c	\
 	sys_module.c		\
 	sys_pipe.c		\
 	sys_select.c		\
-	syscalls.c
+	syscalls.c		\
+	uipc_sem.c
 
 # sys/uvm
 SRCS+=	uvm_aobj.c uvm_readahead.c uvm_object.c

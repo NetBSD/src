@@ -1,4 +1,4 @@
-#	$NetBSD: NETBOOKPRO,v 1.2.2.1 2012/02/18 07:32:08 mrg Exp $
+#	$NetBSD: NETBOOKPRO,v 1.2.2.2 2012/03/11 01:52:21 mrg Exp $
 #
 #	NETBOOKPRO -- Psion Teklogix NETBOOK PRO
 #
@@ -8,7 +8,7 @@ include	"arch/hpcarm/conf/files.netbookpro"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.2.2.1 $"
+#ident 		"GENERIC-$Revision: 1.2.2.2 $"
 
 # estimated number of users
 maxusers	32
@@ -101,7 +101,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)

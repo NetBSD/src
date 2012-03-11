@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.68.2.1 2012/02/18 07:32:25 mrg Exp $
+#	$NetBSD: GENERIC,v 1.68.2.2 2012/03/11 01:52:22 mrg Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.68.2.1 $"
+#ident 		"GENERIC-$Revision: 1.68.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -49,7 +49,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
 #options 	SYSVSHM		# System V-like memory sharing
-#options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 # Device options
 

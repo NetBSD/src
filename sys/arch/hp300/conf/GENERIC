@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.168.2.1 2012/02/18 07:32:03 mrg Exp $
+# $NetBSD: GENERIC,v 1.168.2.2 2012/03/11 01:52:21 mrg Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.168.2.1 $"
+#ident 		"GENERIC-$Revision: 1.168.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -55,7 +55,6 @@ options 	NTP		# NTP phase/frequency locked loop
 options 	SYSVSHM		# System V-style shared memory
 options 	SYSVMSG		# System V-style message queues
 options 	SYSVSEM		# System V-style semaphores
-options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 #options 	MODULAR		# new style module(7) framework
 

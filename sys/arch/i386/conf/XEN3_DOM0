@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.57.2.2 2012/03/04 00:46:08 mrg Exp $
+#	$NetBSD: XEN3_DOM0,v 1.57.2.3 2012/03/11 01:52:22 mrg Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -55,8 +55,6 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=2048	# 2048 pages is the default
-options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
-
 
 options 	USERCONF	# userconf(4) support
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel

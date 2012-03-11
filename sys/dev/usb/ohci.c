@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.218.6.18 2012/03/06 18:26:46 mrg Exp $	*/
+/*	$NetBSD: ohci.c,v 1.218.6.19 2012/03/11 01:52:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.18 2012/03/06 18:26:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.19 2012/03/11 01:52:28 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.6.18 2012/03/06 18:26:46 mrg Exp $");
 #include <sys/queue.h>
 #include <sys/cpu.h>
 
-#include <sys/bus.h>
 #include <machine/endian.h>
 
 #include <dev/usb/usb.h>

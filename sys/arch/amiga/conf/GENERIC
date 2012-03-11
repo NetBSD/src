@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.275.2.1 2012/02/18 07:31:14 mrg Exp $
+# $NetBSD: GENERIC,v 1.275.2.2 2012/03/11 01:52:18 mrg Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.275.2.1 $"
+#ident 		"GENERIC-$Revision: 1.275.2.2 $"
 
 
 maxusers	8
@@ -169,7 +169,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 options 	SYSVSHM		# System V-like shared memory
 options 	SYSVMSG		# System V-like messages
 options 	SYSVSEM		# System V-like semaphores
-options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 #
 # Support for various kernel options

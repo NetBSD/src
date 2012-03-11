@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.93.8.12 2012/03/06 18:26:48 mrg Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.93.8.13 2012/03/11 01:52:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -29,10 +29,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/callout.h>
-#include <sys/mutex.h>
-#include <sys/bus.h>
 
 /*
  * Discussion about locking in the USB code:
@@ -72,6 +68,10 @@
  *    usb_start_next()
  *
  */
+
+#include <sys/callout.h>
+#include <sys/mutex.h>
+#include <sys/bus.h>
 
 /* From usb_mem.h */
 struct usb_dma_block;
