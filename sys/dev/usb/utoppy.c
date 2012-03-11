@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.18 2012/03/06 03:35:30 mrg Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.19 2012/03/11 01:06:07 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.18 2012/03/06 03:35:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.19 2012/03/11 01:06:07 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,9 +43,11 @@ __KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.18 2012/03/06 03:35:30 mrg Exp $");
 #include <sys/uio.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
+#include <sys/bus.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
+#include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>

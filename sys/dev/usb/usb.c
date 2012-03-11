@@ -1,12 +1,12 @@
-/*	$NetBSD: usb.c,v 1.128 2012/03/06 02:49:03 mrg Exp $	*/
+/*	$NetBSD: usb.c,v 1.129 2012/03/11 01:06:07 mrg Exp $	*/
 
 /*
- * Copyright (c) 1998, 2002, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Lennart Augustsson (lennart@augustsson.net) at
- * Carlstedt Research & Technology.
+ * Carlstedt Research & Technology and Matthew R. Green (mrg@eterna.com.au).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.128 2012/03/06 02:49:03 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.129 2012/03/11 01:06:07 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
