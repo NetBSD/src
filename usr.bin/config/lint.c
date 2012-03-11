@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.c,v 1.9 2012/03/11 07:32:41 dholland Exp $	*/
+/*	$NetBSD: lint.c,v 1.10 2012/03/11 21:16:08 dholland Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -101,7 +101,8 @@ emit_options()
 static void
 do_emit_instances(struct devbase *d, struct attr *at)
 {
-	struct nvlist *nv, *nv1;
+	struct nvlist *nv1;
+	struct loclist *ll;
 	struct attrlist *al;
 	struct attr *a;
 	struct deva *da;
@@ -130,10 +131,10 @@ do_emit_instances(struct devbase *d, struct attr *at)
 	else if (at != NULL && !d->d_ispseudo && da->d_ihead == NULL) {
 		printf("%s0\tat\t%s?", d->d_name, at->a_name);
 
-		for (nv = at->a_locs; nv != NULL; nv = nv->nv_next) {
-			if (nv->nv_num == 0)
-				printf(" %s %c", nv->nv_name,
-				    nv->nv_str ? '?' : '0');
+		for (ll = at->a_locs; ll != NULL; ll = ll->ll_next) {
+			if (ll->ll_num == 0)
+				printf(" %s %c", ll->ll_name,
+				    ll->ll_string ? '?' : '0');
 		}
 
 		printf("\n");
