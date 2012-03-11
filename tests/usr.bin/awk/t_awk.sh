@@ -1,4 +1,4 @@
-# $NetBSD: t_awk.sh,v 1.2 2012/03/10 19:19:24 christos Exp $
+# $NetBSD: t_awk.sh,v 1.3 2012/03/11 18:36:01 jruoho Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -29,6 +29,89 @@
 #
 
 awk=awk
+
+h_check()
+{
+	local fname=d_$1
+	for sfx in in out awk; do
+		cp -r $(atf_get_srcdir)/$fname.$sfx .
+	done
+	shift 1
+	atf_check -o file:$fname.out -x "awk $@ -f $fname.awk < $fname.in"
+}
+
+atf_test_case big_regexp
+
+big_regexp_head() {
+	atf_set "descr" "Checks matching long regular expressions (PR/33392)"
+}
+
+big_regexp_body() {
+	h_check big_regexp
+}
+
+atf_test_case end
+
+end_head() {
+	atf_set "descr" "Checks that the last line of the input" \
+	                "is available under END pattern (PR/29659)"
+}
+
+end_body() {
+	h_check end1
+	h_check end2
+}
+
+atf_test_case string1
+
+string1_head() {
+	atf_set "descr" "Checks escaping newlines in string literals"
+}
+
+string1_body() {
+	for sfx in out awk; do
+		cp -r $(atf_get_srcdir)/d_string1.$sfx .
+	done
+	atf_check -o file:d_string1.out awk -f d_string1.awk
+}
+
+atf_test_case multibyte
+
+multibyte_head() {
+	atf_set "descr" "Checks multibyte charsets support" \
+	                "in tolower and toupper (PR/36394)"
+}
+
+multibyte_body() {
+	export LANG=en_US.UTF-8
+
+	h_check tolower
+	h_check toupper
+}
+
+atf_test_case period
+
+period_head() {
+	atf_set "descr" "Checks that the period character is recognised" \
+	                "in awk program regardless of locale (bin/42320)"
+}
+
+period_body() {
+	export LANG=ru_RU.KOI8-R
+
+	atf_expect_fail "PR bin/42320"
+	h_check period -v x=0.5
+}
+
+atf_test_case assign_NF
+
+assign_NF_head() {
+	atf_set "descr" 'Checks that assign to NF changes $0 and $n (PR/44063)'
+}
+
+assign_NF_body() {
+	h_check assign_NF
+}
 
 atf_test_case single_char_rs
 
@@ -254,6 +337,14 @@ newline_rs_body() {
 }
 
 atf_init_test_cases() {
+
+	atf_add_test_case big_regexp
+	atf_add_test_case end
+	atf_add_test_case string1
+	atf_add_test_case multibyte
+	atf_add_test_case period
+	atf_add_test_case assign_NF
+
 	atf_add_test_case single_char_rs
 	atf_add_test_case two_char_rs
 	atf_add_test_case single_char_regex_group_rs
