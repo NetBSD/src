@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.29 2012/03/11 02:43:33 dholland Exp $	*/
+/*	$NetBSD: gram.y,v 1.30 2012/03/11 02:56:25 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -123,10 +123,8 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %token	<str> PATHNAME QSTRING WORD EMPTYSTRING
 %token	ENDDEFS
 
-%left '|'
-%left '&'
-
 %type	<list>	fopts fexpr fatom
+%type	<list>	f_or_expr f_and_expr f_prefix_expr f_base_expr
 %type	<str>	fs_spec
 %type	<val>	fflgs fflag oflgs oflag
 %type	<str>	rule
@@ -755,12 +753,29 @@ device_flags:
  */
 
 /* expression of config elements */
-/* XXX this should use a real expression grammar */
 fexpr:
+	f_or_expr
+;
+
+f_or_expr:
+	  f_and_expr
+	| f_or_expr '|' f_and_expr	{ $$ = fx_or($1, $3); }
+;
+
+f_and_expr:
+	  f_prefix_expr
+	| f_and_expr '&' f_prefix_expr	{ $$ = fx_and($1, $3); }
+;
+
+f_prefix_expr:
+	  f_base_expr
+/* XXX notyet - need to strengthen downstream first */
+/*	| '!' f_prefix_expr		{ $$ = fx_not($2); } */
+;
+
+f_base_expr:
 	  fatom				{ $$ = $1; }
 	| '!' fatom			{ $$ = fx_not($2); }
-	| fexpr '&' fexpr		{ $$ = fx_and($1, $3); }
-	| fexpr '|' fexpr		{ $$ = fx_or($1, $3); }
 	| '(' fexpr ')'			{ $$ = $2; }
 ;
 
