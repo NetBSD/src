@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.8 2012/03/11 07:32:41 dholland Exp $	*/
+/*	$NetBSD: sem.h,v 1.9 2012/03/11 08:21:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@ void		addpseudo(const char *, int);
 void		delpseudo(const char *);
 void		addpseudoroot(const char *);
 void		adddevm(const char *, int, int,
-			struct nvlist *, struct nvlist *);
+			struct condexpr *, struct nvlist *);
 int		fixdevis(void);
 const char     *ref(const char *);
 const char     *starref(const char *);

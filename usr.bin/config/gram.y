@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.33 2012/03/11 07:46:47 dholland Exp $	*/
+/*	$NetBSD: gram.y,v 1.34 2012/03/11 08:21:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,6 +71,7 @@ static void wrap_cleanup(void);
  */
 #define WRAP_CODE_nvlist	1
 #define WRAP_CODE_attrlist	2
+#define WRAP_CODE_condexpr	3
 
 /*
  * The allocation wrappers themselves
@@ -79,6 +80,10 @@ static void wrap_cleanup(void);
 
 DECL_ALLOCWRAP(nvlist);
 DECL_ALLOCWRAP(attrlist);
+DECL_ALLOCWRAP(condexpr);
+
+/* allow shorter names */
+#define wrap_mk_cx(p) wrap_mk_condexpr(p)
 
 /*
  * Macros for allocating new objects
@@ -99,21 +104,24 @@ DECL_ALLOCWRAP(attrlist);
 #define	new_nsx(n,s,x)	new0(n, s, NULL, 0, x)
 #define	new_i(i)	new0(NULL, NULL, NULL, i, NULL)
 
-#define	fx_atom(s)	new0(s, NULL, NULL, FX_ATOM, NULL)
-#define	fx_not(e)	new0(NULL, NULL, NULL, FX_NOT, e)
-#define	fx_and(e1, e2)	new0(NULL, NULL, e1, FX_AND, e2)
-#define	fx_or(e1, e2)	new0(NULL, NULL, e1, FX_OR, e2)
-
-/* new style, type-polymorphic */
+/* new style, type-polymorphic; ordinary and for types with multiple flavors */
 #define MK0(t)		wrap_mk_##t(mk_##t())
 #define MK1(t, a0)	wrap_mk_##t(mk_##t(a0))
 #define MK2(t, a0, a1)	wrap_mk_##t(mk_##t(a0, a1))
+
+#define MKF0(t, f)		wrap_mk_##t(mk_##t##_##f())
+#define MKF1(t, f, a0)		wrap_mk_##t(mk_##t##_##f(a0))
+#define MKF2(t, f, a0, a1)	wrap_mk_##t(mk_##t##_##f(a0, a1))
 
 /*
  * Data constructors
  */
 
 static struct attrlist *mk_attrlist(struct attrlist *, struct attr *);
+static struct condexpr *mk_cx_atom(const char *);
+static struct condexpr *mk_cx_not(struct condexpr *);
+static struct condexpr *mk_cx_and(struct condexpr *, struct condexpr *);
+static struct condexpr *mk_cx_or(struct condexpr *, struct condexpr *);
 
 /*
  * Other private functions
@@ -135,6 +143,7 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 	struct	deva *deva;
 	struct	nvlist *list;
 	struct attrlist *attrlist;
+	struct condexpr *condexpr;
 	const char *str;
 	struct	numconst num;
 	int64_t	val;
@@ -162,8 +171,9 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %token	<str> PATHNAME QSTRING WORD EMPTYSTRING
 %token	ENDDEFS
 
-%type	<list>	fopts condexpr condatom
-%type	<list>	cond_or_expr cond_and_expr cond_prefix_expr cond_base_expr
+%type	<condexpr>	fopts condexpr condatom
+%type	<condexpr>	cond_or_expr cond_and_expr cond_prefix_expr
+%type	<condexpr>	 cond_base_expr
 %type	<str>	fs_spec
 %type	<val>	fflgs fflag oflgs oflag
 %type	<str>	rule
@@ -798,29 +808,29 @@ condexpr:
 
 cond_or_expr:
 	  cond_and_expr
-	| cond_or_expr '|' cond_and_expr	{ $$ = fx_or($1, $3); }
+	| cond_or_expr '|' cond_and_expr	{ $$ = MKF2(cx, or, $1, $3); }
 ;
 
 cond_and_expr:
 	  cond_prefix_expr
-	| cond_and_expr '&' cond_prefix_expr	{ $$ = fx_and($1, $3); }
+	| cond_and_expr '&' cond_prefix_expr	{ $$ = MKF2(cx, and, $1, $3); }
 ;
 
 cond_prefix_expr:
 	  cond_base_expr
 /* XXX notyet - need to strengthen downstream first */
-/*	| '!' cond_prefix_expr			{ $$ = fx_not($2); } */
+/*	| '!' cond_prefix_expr			{ $$ = MKF1(cx, not, $2); } */
 ;
 
 cond_base_expr:
 	  condatom			{ $$ = $1; }
-	| '!' condatom			{ $$ = fx_not($2); }
+	| '!' condatom			{ $$ = MKF1(cx, not, $2); }
 	| '(' condexpr ')'		{ $$ = $2; }
 ;
 
 /* basic element of config element expression: a config element */
 condatom:
-	WORD				{ $$ = fx_atom($1); }
+	WORD				{ $$ = MKF1(cx, atom, $1); }
 ;
 
 /************************************************************/
@@ -989,6 +999,7 @@ wrap_cleanup(void)
 
 DEF_ALLOCWRAP(nvlist);
 DEF_ALLOCWRAP(attrlist);
+DEF_ALLOCWRAP(condexpr);
 
 /************************************************************/
 
@@ -1000,6 +1011,48 @@ static struct attrlist *
 mk_attrlist(struct attrlist *next, struct attr *a)
 {
 	return attrlist_cons(next, a);
+}
+
+static struct condexpr *
+mk_cx_atom(const char *s)
+{
+	struct condexpr *cx;
+
+	cx = condexpr_create(CX_ATOM);
+	cx->cx_atom = s;
+	return cx;
+}
+
+static struct condexpr *
+mk_cx_not(struct condexpr *sub)
+{
+	struct condexpr *cx;
+
+	cx = condexpr_create(CX_NOT);
+	cx->cx_not = sub;
+	return cx;
+}
+
+static struct condexpr *
+mk_cx_and(struct condexpr *left, struct condexpr *right)
+{
+	struct condexpr *cx;
+
+	cx = condexpr_create(CX_AND);
+	cx->cx_and.left = left;
+	cx->cx_and.right = right;
+	return cx;
+}
+
+static struct condexpr *
+mk_cx_or(struct condexpr *left, struct condexpr *right)
+{
+	struct condexpr *cx;
+
+	cx = condexpr_create(CX_OR);
+	cx->cx_or.left = left;
+	cx->cx_or.right = right;
+	return cx;
 }
 
 /************************************************************/
