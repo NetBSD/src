@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.24 2010/04/30 20:47:18 pooka Exp $	*/
+/*	$NetBSD: gram.y,v 1.25 2012/03/11 00:14:20 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -163,70 +163,113 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %%
 
 /*
- * A configuration consists of a machine type, followed by the machine
- * definition files (via the include() mechanism), followed by the
- * configuration specification(s) proper.  In effect, this is two
- * separate grammars, with some shared terminals and nonterminals.
- * Note that we do not have sufficient keywords to enforce any order
- * between elements of "topthings" without introducing shift/reduce
- * conflicts.  Instead, check order requirements in the C code.
+ * A complete configuration consists of both the configuration part (a
+ * kernel config such as GENERIC or SKYNET, plus also the various
+ * std.* files), which selects the material to be in the kernel, and
+ * also the definition part (files, files.*, etc.) that declares what
+ * material is available to be placed in kernels.
+ *
+ * The two parts have almost entirely separate syntaxes. This grammar
+ * covers both of them. When config is run on a kernel configuration
+ * file, the std.* file for the port is included explicitly. The
+ * files.* files are included implicitly when the std.* file declares
+ * the machine type.
+ *
+ * The machine spec, which brings in the definition part, must appear
+ * before all configuration material except for the "topthings"; these
+ * are the "source" and "build" declarations that tell config where
+ * things are. These are not used by default.
+ *
+ * A previous version of this comment contained the following text:
+ *
+ *       Note that we do not have sufficient keywords to enforce any
+ *       order between elements of "topthings" without introducing
+ *       shift/reduce conflicts.  Instead, check order requirements in
+ *       the C code.
+ *
+ * As of March 2012 this comment makes no sense, as there are only two
+ * topthings and no reason for them to be forcibly ordered.
+ * Furthermore, the statement about conflicts is false.
  */
-Configuration:
-	topthings			/* dirspecs, include "std.arch" */
-	machine_spec			/* "machine foo" from machine descr. */
-	dev_defs ENDDEFS		/* all machine definition files */
-					{ check_maxpart(); check_version(); }
-	specs;				/* rest of machine description */
 
+/* Complete configuration. */
+Configuration:
+	topthings
+	machine_spec
+	dev_defs ENDDEFS
+					{ check_maxpart(); check_version(); }
+	specs;
+
+/* Sequence of zero or more topthings. */
 topthings:
 	topthings topthing |
 	/* empty */;
 
+/* Directory specification. */
 topthing:
 	SOURCE filename '\n'		{ if (!srcdir) srcdir = $2; } |
 	BUILD  filename '\n'		{ if (!builddir) builddir = $2; } |
 	'\n';
 
+/* "machine foo" from std.whatever */
 machine_spec:
 	XMACHINE WORD '\n'		{ setmachine($2,NULL,NULL,0); } |
 	XMACHINE WORD WORD subarches_opt '\n'	{ setmachine($2,$3,$4,0); } |
 	IOCONF WORD '\n'		{ setmachine($2,NULL,NULL,1); } |
 	error { stop("cannot proceed without machine or ioconf specifier"); };
 
+/* Optional subarches. */
 subarches_opt:
 	subarches			|
 	/* empty */			{ $$ = NULL; };
 
+/* Subarches declaration. */
 subarches:
 	subarches WORD			{ $$ = new_nx($2, $1); } |
 	WORD				{ $$ = new_n($1); };
 
+/************************************************************/
+
 /*
  * Various nonterminals shared between the grammars.
+ * (Note: that's a lie, pending some reorg)
  */
+
+/* source file: file foo/bar.c bar|baz needs-flag compile-with blah */
 file:
 	XFILE filename fopts fflgs rule	{ addfile($2, $3, $4, $5); };
 
+/* object file: object zot.o foo|zot needs-flag */
 object:
 	XOBJECT filename fopts oflgs	{ addobject($2, $3, $4); };
 
+/* device major declaration */
 device_major:
 	DEVICE_MAJOR WORD device_major_char device_major_block fopts devnodes
 					{ adddevm($2, $3, $4, $5, $6); };
-
+/* block 33 */
 device_major_block:
 	BLOCK NUMBER			{ $$ = $2.val; } |
 	/* empty */			{ $$ = -1; };
 
+/* char 55 */
 device_major_char:
 	CHAR NUMBER			{ $$ = $2.val; } |
 	/* empty */			{ $$ = -1; };
 
-/* order of options is important, must use right recursion */
+/*
+ * order of options is important, must use right recursion
+ *
+ * dholland 20120310: wut?
+ */
+
+/* file options: optional expression of config elements */
 fopts:
 	fexpr				{ $$ = $1; } |
 	/* empty */			{ $$ = NULL; };
 
+/* expression of config elements */
+/* XXX this should use a real expression grammar */
 fexpr:
 	fatom				{ $$ = $1; } |
 	'!' fatom			{ $$ = fx_not($2); } |
@@ -234,26 +277,32 @@ fexpr:
 	fexpr '|' fexpr			{ $$ = fx_or($1, $3); } |
 	'(' fexpr ')'			{ $$ = $2; };
 
+/* basic element of config element expression: a config element */
 fatom:
 	WORD				{ $$ = fx_atom($1); };
 
+/* zero or more flags for a file */
 fflgs:
 	fflgs fflag			{ $$ = $1 | $2; } |
 	/* empty */			{ $$ = 0; };
 
+/* one flag for a file */
 fflag:
 	NEEDS_COUNT			{ $$ = FI_NEEDSCOUNT; } |
 	NEEDS_FLAG			{ $$ = FI_NEEDSFLAG; };
 
+/* device node specification */
 devnodes:
 	devnodetype ',' devnodeflags	{ $$ = nvcat($1, $3); } |
 	devnodetype			{ $$ = $1; } |
 	/* empty */			{ $$ = new_s("DEVNODE_DONTBOTHER"); };
 
+/* device nodes without flags */
 devnodetype:
 	SINGLE				{ $$ = new_s("DEVNODE_SINGLE"); } |
 	VECTOR '=' devnode_dims		{ $$ = nvcat(new_s("DEVNODE_VECTOR"), $3); };
 
+/* dimensions (?) */
 devnode_dims:
 	NUMBER ':' NUMBER		{ struct nvlist *__nv1, *__nv2;
 					  __nv1 = new_i($1.val);
@@ -261,37 +310,48 @@ devnode_dims:
 					  $$ = nvcat(__nv1, __nv2); } |
 	NUMBER				{ $$ = new_i($1.val); }
 
+/* flags for device nodes */
 devnodeflags:
 	LINKZERO			{ $$ = new_s("DEVNODE_FLAG_LINKZERO");};
-	
+
+/* zero or more flags for an object file */
 oflgs:
 	oflgs oflag			{ $$ = $1 | $2; } |
 	/* empty */			{ $$ = 0; };
 
+/* a single flag for an object file */
 oflag:
 	NEEDS_FLAG			{ $$ = OI_NEEDSFLAG; };
 
+/* extra compile directive for a source file */
 rule:
 	COMPILE_WITH stringvalue	{ $$ = $2; } |
 	/* empty */			{ $$ = NULL; };
 
+/* prefix delimiter */
 prefix:
 	PREFIX filename			{ prefix_push($2); } |
 	PREFIX				{ prefix_pop(); };
 
+/************************************************************/
+
 /*
  * The machine definitions grammar.
  */
+
+/* Complete definition part: the contents of all files.* files. */
 dev_defs:
 	dev_defs dev_def |
 	dev_defs ENDFILE		{ enddefs(); checkfiles(); } |
 	/* empty */;
 
+/* A single definition, or a blank line. Trap errors. */
 dev_def:
 	one_def '\n'			{ adepth = 0; } |
 	'\n' |
 	error '\n'			{ cleanup(); };
 
+/* A single definition. */
 one_def:
 	file |
 	object |
@@ -326,36 +386,45 @@ one_def:
 	MAJOR '{' majorlist '}' |
 	VERSION NUMBER			{ setversion($2.val); };
 
+/* list of places to attach: attach blah at ... */
 atlist:
 	atlist ',' atname		{ $$ = new_nx($3, $1); } |
 	atname				{ $$ = new_n($1); };
 
+/* a place to attach a device */
 atname:
 	WORD				{ $$ = $1; } |
 	ROOT				{ $$ = NULL; };
 
+/* one or more file system names */
 deffses:
 	deffses deffs			{ $$ = new_nx($2, $1); } |
 	deffs				{ $$ = new_n($1); };
 
+/* a single file system name */
 deffs:
 	WORD				{ $$ = $1; };
 
+/* option dependencies (read as "defopt deps") which are optional */
 defoptdeps:
 	':' optdeps			{ $$ = $2; } |
 	/* empty */			{ $$ = NULL; };
 
+/* a list of option dependencies */
 optdeps:
 	optdeps ',' optdep		{ $$ = new_nx($3, $1); } |
 	optdep				{ $$ = new_n($1); };
 
+/* one option dependence */
 optdep:
 	WORD				{ $$ = $1; };
 
+/* one or more defined options */
 defopts:
 	defopts defopt			{ $$ = nvcat($2, $1); } |
 	defopt				{ $$ = $1; };
 
+/* one defined option */
 defopt:
 	WORD				{ $$ = new_n($1); } |
 	WORD '=' value			{ $$ = new_ns($1, $3); } |
@@ -370,27 +439,40 @@ defopt:
 						$$ = new_nsx("", $5, __nv);
 					};
 
+/* device name */
 devbase:
 	WORD				{ $$ = getdevbase($1); };
 
+/* optional attachment: with foo */
 devattach_opt:
 	WITH WORD			{ $$ = getdevattach($2); } |
 	/* empty */			{ $$ = NULL; };
 
+/* optional locator specification in braces */
 interface_opt:
 	'{' loclist_opt '}'		{ $$ = new_nx("", $2); } |
 	/* empty */			{ $$ = NULL; };
 
+/* optional locator specification without braces */
 loclist_opt:
 	loclist				{ $$ = $1; } |
 	/* empty */			{ $$ = NULL; };
 
-/* loclist order matters, must use right recursion */
+/*
+ * loclist order matters, must use right recursion
+ * XXX wot?
+ */
+
+/* list of locator definitions */
 loclist:
 	locdef ',' loclist		{ $$ = $1; app($1, $3); } |
 	locdef				{ $$ = $1; };
 
-/* "[ WORD locdefault ]" syntax may be unnecessary... */
+/*
+ * "[ WORD locdefault ]" syntax may be unnecessary...
+ */
+
+/* one locator definition */
 locdef:
 	locname locdefault 		{ $$ = new_nsi($1, $2, 0); } |
 	locname				{ $$ = new_nsi($1, NULL, 0); } |
@@ -401,24 +483,30 @@ locdef:
 	'[' locname '[' NUMBER ']' locdefaults ']'
 					{ $$ = mk_nsis($2, $4.val, $6, 1); };
 
+/* locator name */
 locname:
 	WORD				{ $$ = $1; } |
 	QSTRING				{ $$ = $1; };
 
+/* locator default value */
 locdefault:
 	'=' value			{ $$ = $2; };
 
+/* multiple locator default values */
 locdefaults:
 	'=' '{' values '}'		{ $$ = $3; };
 
+/* optional file for an option */
 optfile_opt:
 	filename			{ $$ = $1; } |
 	/* empty */			{ $$ = NULL; };
 
+/* filename. */
 filename:
 	QSTRING				{ $$ = $1; } |
 	PATHNAME			{ $$ = $1; };
 
+/* constant value */
 value:
 	QSTRING				{ $$ = $1; } |
 	WORD				{ $$ = $1; } |
@@ -428,49 +516,63 @@ value:
 					      FORMAT($1), (long long)$1.val);
 					  $$ = intern(bf); };
 
+/* constant value that is a string */
 stringvalue:
 	QSTRING				{ $$ = $1; } |
 	WORD				{ $$ = $1; };
 
+/* comma-separated list of values */
 values:
 	value ',' values		{ $$ = new_sx($1, $3); } |
 	value				{ $$ = new_s($1); };
 
+/* possibly negative number */
 signed_number:
 	NUMBER				{ $$ = $1; } |
 	'-' NUMBER			{ $$.fmt = $2.fmt; $$.val = -$2.val; };
 
+/* optional attributes */
 attrs_opt:
 	':' attrs			{ $$ = $2; } |
 	/* empty */			{ $$ = NULL; };
 
+/* one or more attributes */
 attrs:
 	attrs ',' attr			{ $$ = new_px($3, $1); } |
 	attr				{ $$ = new_p($1); };
 
+/* one attribute */
 attr:
 	WORD				{ $$ = getattr($1); };
 
+/* list of major numbers */
+/* XXX why is this right-recursive? */
 majorlist:
 	majorlist ',' majordef |
 	majordef;
 
+/* one major number */
 majordef:
 	devbase '=' NUMBER		{ setmajor($1, $3.val); };
 
+/************************************************************/
 
 /*
  * The configuration grammar.
  */
+
+/* Complete configuration part: all std.* files plus selected config. */
 specs:
 	specs spec |
 	/* empty */;
 
+/* One config item, or a blank line. Trap errors. */
 spec:
 	config_spec '\n'		{ adepth = 0; } |
 	'\n' |
 	error '\n'			{ cleanup(); };
 
+/* One config item. */
 config_spec:
 	one_def |
 	NO FILE_SYSTEM no_fs_list |
@@ -494,61 +596,78 @@ config_spec:
 	device_instance AT attachment locators flags_opt
 					{ adddev($1, $3, $4, $5); };
 
+/* list of filesystems */
 fs_list:
 	fs_list ',' fsoption |
 	fsoption;
 
+/* one filesystem */
 fsoption:
 	WORD				{ addfsoption($1); };
 
+/* list of filesystems that had NO in front */
 no_fs_list:
 	no_fs_list ',' no_fsoption |
 	no_fsoption;
 
+/* one filesystem that had NO in front */
 no_fsoption:
 	WORD				{ delfsoption($1); };
 
+/* list of make options */
+/* XXX why is this right-recursive? */
 mkopt_list:
 	mkopt_list ',' mkoption |
 	mkoption;
 
+/* variable name for make option */
 mkvarname:
 	QSTRING				{ $$ = $1; } |
 	WORD				{ $$ = $1; };
 
+/* one make option */
 mkoption:
 	mkvarname '=' value		{ addmkoption($1, $3); } |
 	mkvarname PLUSEQ value		{ appendmkoption($1, $3); };
 
+/* list of conditional makeoptions */
 condmkopt_list:
 	condmkopt_list ',' condmkoption |
 	condmkoption;
 
+/* one conditional make option */
 condmkoption:
 	fexpr mkvarname PLUSEQ value	{ appendcondmkoption($1, $2, $4); };
 
+/* list of make options that had NO in front */
 no_mkopt_list:
 	no_mkopt_list ',' no_mkoption |
 	no_mkoption;
 
+/* one make option that had NO in front */
 no_mkoption:
 	WORD				{ delmkoption($1); }
 
+/* list of options */
 opt_list:
 	opt_list ',' option |
 	option;
 
+/* one option */
 option:
 	WORD				{ addoption($1, NULL); } |
 	WORD '=' value			{ addoption($1, $3); };
 
+/* list of options that had NO in front */
 no_opt_list:
 	no_opt_list ',' no_option |
 	no_option;
 
+/* one option that had NO in front */
 no_option:
 	WORD				{ deloption($1); };
 
+/* the name in "config name root on ..." */
 conf:
 	WORD				{ conf.cf_name = $1;
 					    conf.cf_lineno = currentline();
@@ -556,57 +675,71 @@ conf:
 					    conf.cf_root = NULL;
 					    conf.cf_dump = NULL; };
 
+/* root fs specification */
 root_spec:
 	ROOT on_opt dev_spec fs_spec_opt
 				{ setconf(&conf.cf_root, "root", $3); };
 
+/* filesystem type for root fs specification */
 fs_spec_opt:
 	TYPE fs_spec		{ setfstype(&conf.cf_fstype, $2); } |
 	/* empty */;
 
+/* filesystem name for root fs specification */
 fs_spec:
 	'?'				{ $$ = intern("?"); } |
 	WORD				{ $$ = $1; };
 
+/* zero or more additional system parameters */
 sysparam_list:
 	sysparam_list sysparam |
 	/* empty */;
 
+/* one additional system parameter (there's only one: dumps) */
 sysparam:
 	DUMPS on_opt dev_spec	 { setconf(&conf.cf_dump, "dumps", $3); };
 
+/* device for root fs or dump */
 dev_spec:
 	'?'				{ $$ = new_si(intern("?"), NODEV); } |
 	WORD				{ $$ = new_si($1, NODEV); } |
 	major_minor			{ $$ = new_si(NULL, $1); };
 
+/* major and minor device number */
 major_minor:
 	MAJOR NUMBER MINOR NUMBER	{ $$ = makedev($2.val, $4.val); };
 
+/* optional ON keyword */
 on_opt:
 	ON | /* empty */;
 
+/* number of pseudo devices to configure (which is optional) */
 npseudo:
 	NUMBER				{ $$ = $1.val; } |
 	/* empty */			{ $$ = 1; };
 
+/* name of a device to configure */
 device_instance:
 	WORD '*'			{ $$ = starref($1); } |
 	WORD				{ $$ = $1; };
 
+/* name of a device to configure an attachment to */
 attachment:
 	ROOT				{ $$ = NULL; } |
 	WORD '?'			{ $$ = wildref($1); } |
 	WORD				{ $$ = $1; };
 
+/* zero or more locators */
 locators:
 	locators locator		{ $$ = $2; app($2, $1); } |
 	/* empty */			{ $$ = NULL; };
 
+/* one locator */
 locator:
 	WORD values			{ $$ = mk_ns($1, $2); } |
 	WORD '?'			{ $$ = new_ns($1, NULL); };
 
+/* optional device flags */
 flags_opt:
 	FLAGS NUMBER			{ $$ = $2.val; } |
 	/* empty */			{ $$ = 0; };
