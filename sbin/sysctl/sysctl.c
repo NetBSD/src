@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.140 2012/02/12 20:54:07 christos Exp $ */
+/*	$NetBSD: sysctl.c,v 1.141 2012/03/11 23:33:00 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.140 2012/02/12 20:54:07 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.141 2012/03/11 23:33:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,8 +122,7 @@ __RCSID("$NetBSD: sysctl.c,v 1.140 2012/02/12 20:54:07 christos Exp $");
 /*
  * generic routines
  */
-static const struct handlespec *findhandler(const char *, int, regex_t *,
-    size_t *);
+static const struct handlespec *findhandler(const char *, regex_t *, size_t *);
 static void canonicalize(const char *, char *);
 static void purge_tree(struct sysctlnode *);
 static void print_tree(int *, u_int, struct sysctlnode *, u_int, int, regex_t *,
@@ -385,7 +384,7 @@ main(int argc, char *argv[])
  * ********************************************************************
  */
 static const struct handlespec *
-findhandler(const char *s, int w, regex_t *re, size_t *lastcompiled)
+findhandler(const char *s, regex_t *re, size_t *lastcompiled)
 {
 	const struct handlespec *p;
 	size_t i, l;
@@ -406,8 +405,7 @@ findhandler(const char *s, int w, regex_t *re, size_t *lastcompiled)
 		}
 		j = regexec(&re[i], s, 1, &match, 0);
 		if (j == 0) {
-			if (match.rm_so == 0 && match.rm_eo == (int)l &&
-			    (w ? p[i].ps_w : p[i].ps_p) != NULL)
+			if (match.rm_so == 0 && match.rm_eo == (int)l)
 				return &p[i];
 		}
 		else if (j != REG_NOMATCH) {
@@ -670,8 +668,13 @@ print_tree(int *name, u_int namelen, struct sysctlnode *pnode, u_int type,
 	}
 
 	canonicalize(gsname, canonname);
-	p = findhandler(canonname, 0, re, lastcompiled);
+	p = findhandler(canonname, re, lastcompiled);
 	if (type != CTLTYPE_NODE && p != NULL) {
+		if (p->ps_p == NULL) {
+			sysctlperror("Cannot print `%s': %s\n", gsname, 
+			    strerror(EOPNOTSUPP));
+			exit(1);
+		}
 		(*p->ps_p)(gsname, gdname, NULL, name, namelen, pnode, type,
 			   __UNCONST(p->ps_d));
 		*sp = *dp = '\0';
@@ -905,8 +908,13 @@ parse(char *l, regex_t *re, size_t *lastcompiled)
 	}
 
 	canonicalize(gsname, canonname);
-	if (type != CTLTYPE_NODE && (w = findhandler(canonname, 1, re,
+	if (type != CTLTYPE_NODE && (w = findhandler(canonname, re,
 	    lastcompiled)) != NULL) {
+		if (w->ps_w == NULL) {
+			sysctlperror("Cannot write `%s': %s\n", gsname, 
+			    strerror(EOPNOTSUPP));
+			exit(1);
+		}
 		(*w->ps_w)(gsname, gdname, value, name, namelen, node, type,
 			   __UNCONST(w->ps_d));
 		gsname[0] = '\0';
