@@ -1,4 +1,5 @@
-/*	$NetBSD: machdep.c,v 1.7 2012/03/02 16:20:55 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 2012/03/11 00:02:04 mrg Exp $	*/
+
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -27,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2012/03/02 16:20:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2012/03/11 00:02:04 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/boot_flag.h>
