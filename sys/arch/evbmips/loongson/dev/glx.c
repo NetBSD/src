@@ -1,3 +1,4 @@
+/*	$NetBSD: glx.c,v 1.4 2012/03/11 00:02:04 mrg Exp $	*/
 /*	$OpenBSD: glx.c,v 1.6 2010/10/14 21:23:04 pirofti Exp $	*/
 
 /*
@@ -21,8 +22,7 @@
  * XXX too many hardcoded numbers... need to expand glxreg.h
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: glx.c,v 1.3 2012/03/02 13:20:57 nonaka Exp $");
-
+__KERNEL_RCSID(0, "$NetBSD: glx.c,v 1.4 2012/03/11 00:02:04 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
