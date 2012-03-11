@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.95 2012/03/11 00:34:45 mrg Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.96 2012/03/11 01:06:07 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -32,6 +32,7 @@
  */
 
 #include <sys/callout.h>
+#include <sys/bus.h>
 
 /* From usb_mem.h */
 struct usb_dma_block;
@@ -234,6 +235,7 @@ void usbd_dump_pipe(usbd_pipe_handle pipe);
 /* Routines from usb_subr.c */
 int		usbctlprint(void *, const char *);
 void		usb_delay_ms(usbd_bus_handle, u_int);
+void		usbd_delay_ms(usbd_device_handle, u_int);
 usbd_status	usbd_reset_port(usbd_device_handle, int, usb_port_status_t *);
 usbd_status	usbd_setup_pipe(usbd_device_handle dev,
 				usbd_interface_handle iface,

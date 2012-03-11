@@ -1,4 +1,4 @@
-/*	$NetBSD: udsbr.c,v 1.20 2011/12/23 00:51:45 jakllsch Exp $	*/
+/*	$NetBSD: udsbr.c,v 1.21 2012/03/11 01:06:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.20 2011/12/23 00:51:45 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.21 2012/03/11 01:06:07 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.20 2011/12/23 00:51:45 jakllsch Exp $");
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
+#include <dev/usb/usbdivar.h>
 
 #include <dev/usb/usbdevs.h>
 

@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv.c,v 1.7 2012/01/09 11:02:18 jmcneill Exp $ */
+/* $NetBSD: emdtv.c,v 1.8 2012/03/11 01:06:06 mrg Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.7 2012/01/09 11:02:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.8 2012/03/11 01:06:06 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.7 2012/01/09 11:02:18 jmcneill Exp $");
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
+#include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdevs.h>
 
 #include <dev/usb/emdtvvar.h>
