@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.28 2012/03/11 02:21:04 dholland Exp $	*/
+/*	$NetBSD: gram.y,v 1.29 2012/03/11 02:43:33 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -228,133 +228,6 @@ subarches:
 /************************************************************/
 
 /*
- * Various nonterminals shared between the grammars.
- * (Note: that's a lie, pending some reorg)
- */
-
-/* source file: file foo/bar.c bar|baz needs-flag compile-with blah */
-file:
-	XFILE filename fopts fflgs rule	{ addfile($2, $3, $4, $5); }
-;
-
-/* object file: object zot.o foo|zot needs-flag */
-object:
-	XOBJECT filename fopts oflgs	{ addobject($2, $3, $4); }
-;
-
-/* device major declaration */
-device_major:
-	DEVICE_MAJOR WORD device_major_char device_major_block fopts devnodes
-					{ adddevm($2, $3, $4, $5, $6); }
-;
-
-/* block 33 */
-device_major_block:
-	  /* empty */			{ $$ = -1; }
-	| BLOCK NUMBER			{ $$ = $2.val; }
-;
-
-/* char 55 */
-device_major_char:
-	  /* empty */			{ $$ = -1; }
-	| CHAR NUMBER			{ $$ = $2.val; }
-;
-
-/*
- * order of options is important, must use right recursion
- *
- * dholland 20120310: wut?
- */
-
-/* file options: optional expression of config elements */
-fopts:
-	  /* empty */			{ $$ = NULL; }
-	| fexpr				{ $$ = $1; }
-;
-
-/* expression of config elements */
-/* XXX this should use a real expression grammar */
-fexpr:
-	  fatom				{ $$ = $1; }
-	| '!' fatom			{ $$ = fx_not($2); }
-	| fexpr '&' fexpr		{ $$ = fx_and($1, $3); }
-	| fexpr '|' fexpr		{ $$ = fx_or($1, $3); }
-	| '(' fexpr ')'			{ $$ = $2; }
-;
-
-/* basic element of config element expression: a config element */
-fatom:
-	WORD				{ $$ = fx_atom($1); }
-;
-
-/* zero or more flags for a file */
-fflgs:
-	  /* empty */			{ $$ = 0; }
-	| fflgs fflag			{ $$ = $1 | $2; }
-;
-
-/* one flag for a file */
-fflag:
-	  NEEDS_COUNT			{ $$ = FI_NEEDSCOUNT; }
-	| NEEDS_FLAG			{ $$ = FI_NEEDSFLAG; }
-;
-
-/* device node specification */
-devnodes:
-	  /* empty */			{ $$ = new_s("DEVNODE_DONTBOTHER"); }
-	| devnodetype ',' devnodeflags	{ $$ = nvcat($1, $3); }
-	| devnodetype			{ $$ = $1; }
-;
-
-/* device nodes without flags */
-devnodetype:
-	  SINGLE			{ $$ = new_s("DEVNODE_SINGLE"); }
-	| VECTOR '=' devnode_dims  { $$ = nvcat(new_s("DEVNODE_VECTOR"), $3); }
-;
-
-/* dimensions (?) */
-devnode_dims:
-	  NUMBER			{ $$ = new_i($1.val); }
-	| NUMBER ':' NUMBER		{
-		struct nvlist *__nv1, *__nv2;
-
-		__nv1 = new_i($1.val);
-		__nv2 = new_i($3.val);
-		$$ = nvcat(__nv1, __nv2);
-	  }
-;
-
-/* flags for device nodes */
-devnodeflags:
-	LINKZERO			{ $$ = new_s("DEVNODE_FLAG_LINKZERO");}
-;
-
-/* zero or more flags for an object file */
-oflgs:
-	  /* empty */			{ $$ = 0; }
-	| oflgs oflag			{ $$ = $1 | $2; }
-;
-
-/* a single flag for an object file */
-oflag:
-	NEEDS_FLAG			{ $$ = OI_NEEDSFLAG; }
-;
-
-/* extra compile directive for a source file */
-rule:
-	  /* empty */			{ $$ = NULL; }
-	| COMPILE_WITH stringvalue	{ $$ = $2; }
-;
-
-/* prefix delimiter */
-prefix:
-	  PREFIX filename		{ prefix_push($2); }
-	| PREFIX			{ prefix_pop(); }
-;
-
-/************************************************************/
-
-/*
  * The machine definitions grammar.
  */
 
@@ -409,16 +282,103 @@ definition:
 	| VERSION NUMBER		{ setversion($2.val); }
 ;
 
-/* list of places to attach: attach blah at ... */
-atlist:
-	  atname			{ $$ = new_n($1); }
-	| atlist ',' atname		{ $$ = new_nx($3, $1); }
+/* source file: file foo/bar.c bar|baz needs-flag compile-with blah */
+file:
+	XFILE filename fopts fflgs rule	{ addfile($2, $3, $4, $5); }
 ;
 
-/* a place to attach a device */
-atname:
-	  WORD				{ $$ = $1; }
-	| ROOT				{ $$ = NULL; }
+/* file options: optional expression of config elements */
+fopts:
+	  /* empty */			{ $$ = NULL; }
+	| fexpr				{ $$ = $1; }
+;
+
+/* zero or more flags for a file */
+fflgs:
+	  /* empty */			{ $$ = 0; }
+	| fflgs fflag			{ $$ = $1 | $2; }
+;
+
+/* one flag for a file */
+fflag:
+	  NEEDS_COUNT			{ $$ = FI_NEEDSCOUNT; }
+	| NEEDS_FLAG			{ $$ = FI_NEEDSFLAG; }
+;
+
+/* extra compile directive for a source file */
+rule:
+	  /* empty */			{ $$ = NULL; }
+	| COMPILE_WITH stringvalue	{ $$ = $2; }
+;
+
+/* object file: object zot.o foo|zot needs-flag */
+object:
+	XOBJECT filename fopts oflgs	{ addobject($2, $3, $4); }
+;
+
+/* zero or more flags for an object file */
+oflgs:
+	  /* empty */			{ $$ = 0; }
+	| oflgs oflag			{ $$ = $1 | $2; }
+;
+
+/* a single flag for an object file */
+oflag:
+	NEEDS_FLAG			{ $$ = OI_NEEDSFLAG; }
+;
+
+/* device major declaration */
+device_major:
+	DEVICE_MAJOR WORD device_major_char device_major_block fopts devnodes
+					{ adddevm($2, $3, $4, $5, $6); }
+;
+
+/* char 55 */
+device_major_char:
+	  /* empty */			{ $$ = -1; }
+	| CHAR NUMBER			{ $$ = $2.val; }
+;
+
+/* block 33 */
+device_major_block:
+	  /* empty */			{ $$ = -1; }
+	| BLOCK NUMBER			{ $$ = $2.val; }
+;
+
+/* device node specification */
+devnodes:
+	  /* empty */			{ $$ = new_s("DEVNODE_DONTBOTHER"); }
+	| devnodetype ',' devnodeflags	{ $$ = nvcat($1, $3); }
+	| devnodetype			{ $$ = $1; }
+;
+
+/* device nodes without flags */
+devnodetype:
+	  SINGLE			{ $$ = new_s("DEVNODE_SINGLE"); }
+	| VECTOR '=' devnode_dims  { $$ = nvcat(new_s("DEVNODE_VECTOR"), $3); }
+;
+
+/* dimensions (?) */
+devnode_dims:
+	  NUMBER			{ $$ = new_i($1.val); }
+	| NUMBER ':' NUMBER		{
+		struct nvlist *__nv1, *__nv2;
+
+		__nv1 = new_i($1.val);
+		__nv2 = new_i($3.val);
+		$$ = nvcat(__nv1, __nv2);
+	  }
+;
+
+/* flags for device nodes */
+devnodeflags:
+	LINKZERO			{ $$ = new_s("DEVNODE_FLAG_LINKZERO");}
+;
+
+/* prefix delimiter */
+prefix:
+	  PREFIX filename		{ prefix_push($2); }
+	| PREFIX			{ prefix_pop(); }
 ;
 
 /* one or more file system names */
@@ -430,56 +390,6 @@ deffses:
 /* a single file system name */
 deffs:
 	WORD				{ $$ = $1; }
-;
-
-/* option dependencies (read as "defopt deps") which are optional */
-defoptdeps:
-	  /* empty */			{ $$ = NULL; }
-	| ':' optdeps			{ $$ = $2; }
-;
-
-/* a list of option dependencies */
-optdeps:
-	  optdep			{ $$ = new_n($1); }
-	| optdeps ',' optdep		{ $$ = new_nx($3, $1); }
-;
-
-/* one option dependence */
-optdep:
-	WORD				{ $$ = $1; }
-;
-
-/* one or more defined options */
-defopts:
-	  defopt			{ $$ = $1; }
-	| defopts defopt		{ $$ = nvcat($2, $1); }
-;
-
-/* one defined option */
-defopt:
-	  WORD				{ $$ = new_n($1); }
-	| WORD '=' value		{ $$ = new_ns($1, $3); }
-	| WORD COLONEQ value		{
-		struct nvlist *__nv = new_n($1);
-
-		$$ = new_nsx("", $3, __nv);
-	  }
-	| WORD '=' value COLONEQ value	{
-		struct nvlist *__nv = new_n($1);
-
-		$$ = new_nsx("", $5, __nv);
-	  }
-;
-
-/* device name */
-devbase:
-	WORD				{ $$ = getdevbase($1); }
-;
-
-/* optional attachment: with foo */
-devattach_opt:
-	  /* empty */			{ $$ = NULL; }
-	| WITH WORD			{ $$ = getdevattach($2); }
 ;
 
 /* optional locator specification */
@@ -532,50 +442,6 @@ locdefaults:
 	'=' '{' values '}'		{ $$ = $3; }
 ;
 
-/* optional file for an option */
-optfile_opt:
-	  /* empty */			{ $$ = NULL; }
-	| filename			{ $$ = $1; }
-;
-
-/* filename. */
-filename:
-	  QSTRING			{ $$ = $1; }
-	| PATHNAME			{ $$ = $1; }
-;
-
-/* constant value */
-value:
-	  QSTRING			{ $$ = $1; }
-	| WORD				{ $$ = $1; }
-	| EMPTYSTRING			{ $$ = $1; }
-	| signed_number			{
-		char bf[40];
-
-		(void)snprintf(bf, sizeof(bf), FORMAT($1), (long long)$1.val);
-		$$ = intern(bf);
-	  }
-;
-
-/* constant value that is a string */
-stringvalue:
-	  QSTRING			{ $$ = $1; }
-	| WORD				{ $$ = $1; }
-;
-
-/* comma-separated list of values */
-/* XXX why right-recursive? */
-values:
-	  value				{ $$ = new_s($1); }
-	| value ',' values		{ $$ = new_sx($1, $3); }
-;
-
-/* possibly negative number */
-signed_number:
-	  NUMBER			{ $$ = $1; }
-	| '-' NUMBER			{ $$.fmt = $2.fmt; $$.val = -$2.val; }
-;
-
 /* optional attributes */
 attrs_opt:
 	  /* empty */			{ $$ = NULL; }
@@ -591,6 +457,79 @@ attrs:
 /* one attribute */
 attr:
 	WORD				{ $$ = getattr($1); }
+;
+
+/* list of places to attach: attach blah at ... */
+atlist:
+	  atname			{ $$ = new_n($1); }
+	| atlist ',' atname		{ $$ = new_nx($3, $1); }
+;
+
+/* a place to attach a device */
+atname:
+	  WORD				{ $$ = $1; }
+	| ROOT				{ $$ = NULL; }
+;
+
+/* one or more defined options */
+defopts:
+	  defopt			{ $$ = $1; }
+	| defopts defopt		{ $$ = nvcat($2, $1); }
+;
+
+/* one defined option */
+defopt:
+	  WORD				{ $$ = new_n($1); }
+	| WORD '=' value		{ $$ = new_ns($1, $3); }
+	| WORD COLONEQ value		{
+		struct nvlist *__nv = new_n($1);
+
+		$$ = new_nsx("", $3, __nv);
+	  }
+	| WORD '=' value COLONEQ value	{
+		struct nvlist *__nv = new_n($1);
+
+		$$ = new_nsx("", $5, __nv);
+	  }
+;
+
+/* option dependencies (read as "defopt deps") which are optional */
+defoptdeps:
+	  /* empty */			{ $$ = NULL; }
+	| ':' optdeps			{ $$ = $2; }
+;
+
+/* a list of option dependencies */
+optdeps:
+	  optdep			{ $$ = new_n($1); }
+	| optdeps ',' optdep		{ $$ = new_nx($3, $1); }
+;
+
+/* one option dependence */
+optdep:
+	WORD				{ $$ = $1; }
+;
+
+/* list of conditional makeoptions */
+condmkopt_list:
+	  condmkoption
+	| condmkopt_list ',' condmkoption
+;
+
+/* one conditional make option */
+condmkoption:
+	fexpr mkvarname PLUSEQ value	{ appendcondmkoption($1, $2, $4); }
+;
+
+/* device name */
+devbase:
+	WORD				{ $$ = getdevbase($1); }
+;
+
+/* optional attachment: with foo */
+devattach_opt:
+	  /* empty */			{ $$ = NULL; }
+	| WITH WORD			{ $$ = getdevattach($2); }
 ;
 
 /* list of major numbers */
@@ -678,27 +617,10 @@ mkopt_list:
 	| mkopt_list ',' mkoption
 ;
 
-/* variable name for make option */
-mkvarname:
-	  QSTRING			{ $$ = $1; }
-	| WORD				{ $$ = $1; }
-;
-
 /* one make option */
 mkoption:
 	  mkvarname '=' value		{ addmkoption($1, $3); }
 	| mkvarname PLUSEQ value	{ appendmkoption($1, $3); }
-;
-
-/* list of conditional makeoptions */
-condmkopt_list:
-	  condmkoption
-	| condmkopt_list ',' condmkoption
-;
-
-/* one conditional make option */
-condmkoption:
-	fexpr mkvarname PLUSEQ value	{ appendcondmkoption($1, $2, $4); }
 ;
 
 /* list of make options that had NO in front */
@@ -708,6 +630,7 @@ no_mkopt_list:
 ;
 
 /* one make option that had NO in front */
+/* XXX shouldn't this be mkvarname rather than WORD? */
 no_mkoption:
 	WORD				{ delmkoption($1); }
 ;
@@ -752,6 +675,18 @@ root_spec:
 	| ROOT on_opt dev_spec fs_spec	{ setconf(&conf.cf_root, "root", $3); }
 ;
 
+/* device for root fs or dump */
+dev_spec:
+	  '?'				{ $$ = new_si(intern("?"), NODEV); }
+	| WORD				{ $$ = new_si($1, NODEV); }
+	| major_minor			{ $$ = new_si(NULL, $1); }
+;
+
+/* major and minor device number */
+major_minor:
+	MAJOR NUMBER MINOR NUMBER	{ $$ = makedev($2.val, $4.val); }
+;
+
 /* filesystem type for root fs specification */
 fs_spec:
 	  TYPE '?'		   { setfstype(&conf.cf_fstype, intern("?")); }
@@ -767,24 +702,6 @@ sysparam_list:
 /* one additional system parameter (there's only one: dumps) */
 sysparam:
 	DUMPS on_opt dev_spec	       { setconf(&conf.cf_dump, "dumps", $3); }
-;
-
-/* device for root fs or dump */
-dev_spec:
-	  '?'				{ $$ = new_si(intern("?"), NODEV); }
-	| WORD				{ $$ = new_si($1, NODEV); }
-	| major_minor			{ $$ = new_si(NULL, $1); }
-;
-
-/* major and minor device number */
-major_minor:
-	MAJOR NUMBER MINOR NUMBER	{ $$ = makedev($2.val, $4.val); }
-;
-
-/* optional ON keyword */
-on_opt:
-	  /* empty */
-	| ON
 ;
 
 /* number of pseudo devices to configure (which is optional) */
@@ -822,6 +739,96 @@ locator:
 device_flags:
 	  /* empty */			{ $$ = 0; }
 	| FLAGS NUMBER			{ $$ = $2.val; }
+;
+
+/************************************************************/
+
+/*
+ * dependency logic
+ */
+
+
+/*
+ * order of options is important, must use right recursion
+ *
+ * dholland 20120310: wut?
+ */
+
+/* expression of config elements */
+/* XXX this should use a real expression grammar */
+fexpr:
+	  fatom				{ $$ = $1; }
+	| '!' fatom			{ $$ = fx_not($2); }
+	| fexpr '&' fexpr		{ $$ = fx_and($1, $3); }
+	| fexpr '|' fexpr		{ $$ = fx_or($1, $3); }
+	| '(' fexpr ')'			{ $$ = $2; }
+;
+
+/* basic element of config element expression: a config element */
+fatom:
+	WORD				{ $$ = fx_atom($1); }
+;
+
+/************************************************************/
+
+/*
+ * Various nonterminals shared between the grammars.
+ */
+
+/* variable name for make option */
+mkvarname:
+	  QSTRING			{ $$ = $1; }
+	| WORD				{ $$ = $1; }
+;
+
+/* optional file for an option */
+optfile_opt:
+	  /* empty */			{ $$ = NULL; }
+	| filename			{ $$ = $1; }
+;
+
+/* filename. */
+filename:
+	  QSTRING			{ $$ = $1; }
+	| PATHNAME			{ $$ = $1; }
+;
+
+/* constant value */
+value:
+	  QSTRING			{ $$ = $1; }
+	| WORD				{ $$ = $1; }
+	| EMPTYSTRING			{ $$ = $1; }
+	| signed_number			{
+		char bf[40];
+
+		(void)snprintf(bf, sizeof(bf), FORMAT($1), (long long)$1.val);
+		$$ = intern(bf);
+	  }
+;
+
+/* constant value that is a string */
+stringvalue:
+	  QSTRING			{ $$ = $1; }
+	| WORD				{ $$ = $1; }
+;
+
+/* comma-separated list of values */
+/* XXX why right-recursive? */
+values:
+	  value				{ $$ = new_s($1); }
+	| value ',' values		{ $$ = new_sx($1, $3); }
+;
+
+/* possibly negative number */
+signed_number:
+	  NUMBER			{ $$ = $1; }
+	| '-' NUMBER			{ $$.fmt = $2.fmt; $$.val = -$2.val; }
+;
+
+/* optional ON keyword */
+on_opt:
+	  /* empty */
+	| ON
 ;
 
 %%
