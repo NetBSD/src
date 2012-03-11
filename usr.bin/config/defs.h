@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.38 2012/03/11 07:32:41 dholland Exp $	*/
+/*	$NetBSD: defs.h,v 1.39 2012/03/11 08:21:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -317,7 +317,7 @@ struct files {
 	TAILQ_ENTRY(files) fi_next;
 	const  char *fi_tail;	/* name, i.e., strrchr(fi_path, '/') + 1 */
 	const  char *fi_base;	/* tail minus ".c" (or whatever) */
-	struct nvlist *fi_optx; /* options expression */
+	struct condexpr *fi_optx; /* options expression */
 	struct nvlist *fi_optf; /* flattened version of above, if needed */
 	const  char *fi_mkrule;	/* special make rule, if any */
 };
@@ -341,7 +341,7 @@ struct files {
 struct objects {
 	struct  filetype oi_fit;
 	TAILQ_ENTRY(objects) oi_next;
-	struct  nvlist *oi_optx;/* options expression */
+	struct condexpr *oi_optx;	/* condition expression */
 	struct  nvlist *oi_optf;/* flattened version of above, if needed */
 };
 
@@ -356,10 +356,31 @@ struct objects {
 #define	OI_SEL		0x01	/* selected */
 #define	OI_NEEDSFLAG	0x02	/* needs-flag */
 
-#define	FX_ATOM		0	/* atom (in nv_name) */
-#define	FX_NOT		1	/* NOT expr (subexpression in nv_next) */
-#define	FX_AND		2	/* AND expr (lhs in nv_ptr, rhs in nv_next) */
-#define	FX_OR		3	/* OR expr (lhs in nv_ptr, rhs in nv_next) */
+/*
+ * Condition expressions.
+ */
+
+enum condexpr_types {
+	CX_ATOM,
+	CX_NOT,
+	CX_AND,
+	CX_OR,
+};
+struct condexpr {
+	enum condexpr_types cx_type;
+	union {
+		const char *atom;
+		struct condexpr *not;
+		struct {
+			struct condexpr *left;
+			struct condexpr *right;
+		} and, or;
+	} cx_u;
+};
+#define cx_atom	cx_u.atom
+#define cx_not	cx_u.not
+#define cx_and	cx_u.and
+#define cx_or	cx_u.or
 
 /*
  * File/object prefixes.  These are arranged in a stack, and affect
@@ -380,7 +401,7 @@ struct devm {
 	const char	*dm_name;	/* [bc]devsw name */
 	devmajor_t	dm_cmajor;	/* character major */
 	devmajor_t	dm_bmajor;	/* block major */
-	struct nvlist	*dm_opts;	/* options */
+	struct condexpr	*dm_opts;	/* options */
 	struct nvlist	*dm_devnodes;	/* information on /dev nodes */
 };
 
@@ -477,10 +498,9 @@ void	checkfiles(void);
 int	fixfiles(void);		/* finalize */
 int	fixobjects(void);
 int	fixdevsw(void);
-void	addfile(const char *, struct nvlist *, int, const char *);
-void	addobject(const char *, struct nvlist *, int);
-int	expr_eval(struct nvlist *, int (*)(const char *, void *), void *);
-void	expr_free(struct nvlist *);
+void	addfile(const char *, struct condexpr *, int, const char *);
+void	addobject(const char *, struct condexpr *, int);
+int	expr_eval(struct condexpr *, int (*)(const char *, void *), void *);
 
 /* hash.c */
 struct	hashtab *ht_new(void);
@@ -505,7 +525,7 @@ void	addoption(const char *, const char *);
 void	addfsoption(const char *);
 void	addmkoption(const char *, const char *);
 void	appendmkoption(const char *, const char *);
-void	appendcondmkoption(struct nvlist *, const char *, const char *);
+void	appendcondmkoption(struct condexpr *, const char *, const char *);
 void	deffilesystem(struct nvlist *, struct nvlist *);
 void	defoption(const char *, struct nvlist *, struct nvlist *);
 void	defflag(const char *, struct nvlist *, struct nvlist *, int);
@@ -584,6 +604,8 @@ struct attrlist *attrlist_create(void);
 struct attrlist *attrlist_cons(struct attrlist *, struct attr *);
 void attrlist_destroy(struct attrlist *);
 void attrlist_destroyall(struct attrlist *);
+struct condexpr *condexpr_create(enum condexpr_types);
+void condexpr_destroy(struct condexpr *);
 
 /* liby */
 void	yyerror(const char *);
