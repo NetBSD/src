@@ -1,4 +1,4 @@
-#	$NetBSD: dot.cshrc,v 1.23 2012/03/11 17:23:55 he Exp $
+#	$NetBSD: dot.cshrc,v 1.24 2012/03/11 17:28:47 he Exp $
 
 alias	h	history
 alias	j	jobs -l
@@ -22,7 +22,8 @@ setenv BLOCKSIZE 1k
 
 # Uncomment the following line(s) to install binary packages
 # from ftp.NetBSD.org via pkg_add.  (See also pkg_install.conf)
-#setenv PKG_PATH "ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/`uname -m`/5.1/All"
+#setenv PKG_PATH "ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/`uname -m`/6.0/All"
+#setenv PKG_PATH "${PKG_PATH};ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/`uname -m`/5.1/All"
 #setenv PKG_PATH "${PKG_PATH};ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/`uname -m`/5.0/All"
 
 set history=1000
