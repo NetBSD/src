@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.36 2012/03/11 21:16:08 dholland Exp $	*/
+/*	$NetBSD: gram.y,v 1.37 2012/03/12 02:58:55 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,9 +70,10 @@ static void wrap_cleanup(void);
  * Allocation wrapper type codes
  */
 #define WRAP_CODE_nvlist	1
-#define WRAP_CODE_loclist	2
-#define WRAP_CODE_attrlist	3
-#define WRAP_CODE_condexpr	4
+#define WRAP_CODE_defoptlist	2
+#define WRAP_CODE_loclist	3
+#define WRAP_CODE_attrlist	4
+#define WRAP_CODE_condexpr	5
 
 /*
  * The allocation wrappers themselves
@@ -80,6 +81,7 @@ static void wrap_cleanup(void);
 #define DECL_ALLOCWRAP(t)	static struct t *wrap_mk_##t(struct t *arg)
 
 DECL_ALLOCWRAP(nvlist);
+DECL_ALLOCWRAP(defoptlist);
 DECL_ALLOCWRAP(loclist);
 DECL_ALLOCWRAP(attrlist);
 DECL_ALLOCWRAP(condexpr);
@@ -121,6 +123,8 @@ DECL_ALLOCWRAP(condexpr);
  * Data constructors
  */
 
+static struct defoptlist *mk_defoptlist(const char *, const char *,
+					const char *);
 static struct loclist *mk_loc(const char *, const char *, long long);
 static struct loclist *mk_loc_val(const char *, struct loclist *);
 static struct attrlist *mk_attrlist(struct attrlist *, struct attr *);
@@ -148,6 +152,7 @@ static struct loclist *namelocvals(const char *, struct loclist *);
 	struct	devbase *devb;
 	struct	deva *deva;
 	struct	nvlist *list;
+	struct defoptlist *defoptlist;
 	struct loclist *loclist;
 	struct attrlist *attrlist;
 	struct condexpr *condexpr;
@@ -204,8 +209,8 @@ static struct loclist *namelocvals(const char *, struct loclist *);
 %type	<val>	device_flags
 %type	<str>	deffs
 %type	<list>	deffses
-%type	<list>	defopt
-%type	<list>	defopts
+%type	<defoptlist>	defopt
+%type	<defoptlist>	defopts
 %type	<str>	optdepend
 %type	<list>	optdepends
 %type	<list>	optdepend_list
@@ -547,23 +552,15 @@ atname:
 /* one or more defined options */
 defopts:
 	  defopt			{ $$ = $1; }
-	| defopts defopt		{ $$ = nvcat($2, $1); }
+	| defopts defopt		{ $$ = defoptlist_append($2, $1); }
 ;
 
 /* one defined option */
 defopt:
-	  WORD				{ $$ = new_n($1); }
-	| WORD '=' value		{ $$ = new_ns($1, $3); }
-	| WORD COLONEQ value		{
-		struct nvlist *__nv = new_n($1);
-
-		$$ = new_nsx("", $3, __nv);
-	  }
-	| WORD '=' value COLONEQ value	{
-		struct nvlist *__nv = new_n($1);
-
-		$$ = new_nsx("", $5, __nv);
-	  }
+	  WORD				{ $$ = MK3(defoptlist, $1, NULL, NULL); }
+	| WORD '=' value		{ $$ = MK3(defoptlist, $1, $3, NULL); }
+	| WORD COLONEQ value		{ $$ = MK3(defoptlist, $1, NULL, $3); }
+	| WORD '=' value COLONEQ value	{ $$ = MK3(defoptlist, $1, $3, $5); }
 ;
 
 /* list of conditional makeoptions */
@@ -977,6 +974,14 @@ wrap_cleanup(void)
 		    case WRAP_CODE_nvlist:
 			nvfree(wrapstack[i].ptr);
 			break;
+		    case WRAP_CODE_defoptlist:
+			{
+				struct defoptlist *dl = wrapstack[i].ptr;
+
+				dl->dl_next = NULL;
+				defoptlist_destroy(dl);
+			}
+			break;
 		    case WRAP_CODE_loclist:
 			{
 				struct loclist *ll = wrapstack[i].ptr;
@@ -1028,6 +1033,7 @@ wrap_cleanup(void)
 	}
 
 DEF_ALLOCWRAP(nvlist);
+DEF_ALLOCWRAP(defoptlist);
 DEF_ALLOCWRAP(loclist);
 DEF_ALLOCWRAP(attrlist);
 DEF_ALLOCWRAP(condexpr);
@@ -1039,6 +1045,12 @@ DEF_ALLOCWRAP(condexpr);
  *
  * (These are *beneath* the allocation wrappers.)
  */
+
+static struct defoptlist *
+mk_defoptlist(const char *name, const char *val, const char *lintval)
+{
+	return defoptlist_create(name, val, lintval);
+}
 
 static struct loclist *
 mk_loc(const char *name, const char *str, long long num)

@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.7 2012/03/12 00:20:30 dholland Exp $	*/
+/*	$NetBSD: hash.c,v 1.8 2012/03/12 02:58:55 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -387,3 +387,4 @@ ht_enumerate(struct hashtab *ht, ht_callback cbfunc, void *arg)
 	}
 
 DEFHASH(nvhash, nvlist);
+DEFHASH(dlhash, defoptlist);
