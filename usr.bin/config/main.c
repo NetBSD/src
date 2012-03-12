@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.45 2012/03/11 08:21:53 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.46 2012/03/12 00:20:30 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,7 +90,7 @@ int	yyparse(void);
 extern int yydebug;
 #endif
 
-static struct hashtab *obsopttab;
+static struct nvhash *obsopttab;
 static struct hashtab *mkopttab;
 static struct nvlist **nextopt;
 static struct nvlist **nextmkopt;
@@ -119,7 +119,7 @@ static	void	do_kill_orphans(struct devbase *, struct attr *,
     struct devbase *, int);
 static	int	kill_orphans_cb(const char *, void *, void *);
 static	int	cfcrosscheck(struct config *, const char *, struct nvlist *);
-void	defopt(struct hashtab *ht, const char *fname,
+void	defopt(struct nvhash *ht, const char *fname,
 	     struct nvlist *opts, struct nvlist *deps, int obs);
 
 #define LOGCONFIG_LARGE "INCLUDE_CONFIG_FILE"
@@ -266,13 +266,13 @@ main(int argc, char **argv)
 	opttab = ht_new();
 	mkopttab = ht_new();
 	fsopttab = ht_new();
-	deffstab = ht_new();
-	defopttab = ht_new();
-	defparamtab = ht_new();
-	defoptlint = ht_new();
-	defflagtab = ht_new();
-	optfiletab = ht_new();
-	obsopttab = ht_new();
+	deffstab = nvhash_create();
+	defopttab = nvhash_create();
+	defparamtab = nvhash_create();
+	defoptlint = nvhash_create();
+	defflagtab = nvhash_create();
+	optfiletab = nvhash_create();
+	obsopttab = nvhash_create();
 	bdevmtab = ht_new();
 	maxbdevm = 0;
 	cdevmtab = ht_new();
@@ -627,7 +627,7 @@ deffilesystem(struct nvlist *fses, struct nvlist *deps)
 		 * used in "file-system" directives in the config
 		 * file.
 		 */
-		if (ht_insert(deffstab, nv->nv_name, nv))
+		if (nvhash_insert(deffstab, nv->nv_name, nv))
 			panic("file system `%s' already in table?!",
 			    nv->nv_name);
 
@@ -668,10 +668,10 @@ find_declared_option(const char *name)
 {
 	struct nvlist *option = NULL;
 
-	if ((option = ht_lookup(defopttab, name)) != NULL ||
-	    (option = ht_lookup(defparamtab, name)) != NULL ||
-	    (option = ht_lookup(defflagtab, name)) != NULL ||
-	    (option = ht_lookup(deffstab, name)) != NULL) {
+	if ((option = nvhash_lookup(defopttab, name)) != NULL ||
+	    (option = nvhash_lookup(defparamtab, name)) != NULL ||
+	    (option = nvhash_lookup(defflagtab, name)) != NULL ||
+	    (option = nvhash_lookup(deffstab, name)) != NULL) {
 		return (option);
 	}
 
@@ -686,7 +686,7 @@ find_declared_option(const char *name)
  * record the option information in the specified table.
  */
 void
-defopt(struct hashtab *ht, const char *fname, struct nvlist *opts,
+defopt(struct nvhash *ht, const char *fname, struct nvlist *opts,
        struct nvlist *deps, int obs)
 {
 	struct nvlist *nv, *nextnv, *oldnv;
@@ -710,7 +710,7 @@ defopt(struct hashtab *ht, const char *fname, struct nvlist *opts,
 			 * If an entry already exists, then we are about to
 			 * complain, so no worry.
 			 */
-			(void) ht_insert(defoptlint, nextnv->nv_name,
+			(void) nvhash_insert(defoptlint, nextnv->nv_name,
 			    nv);
 			nv = nextnv;
 			nextnv = nextnv->nv_next;
@@ -723,7 +723,7 @@ defopt(struct hashtab *ht, const char *fname, struct nvlist *opts,
 			return;
 		}
 
-		if (ht_insert(ht, nv->nv_name, nv)) {
+		if (nvhash_insert(ht, nv->nv_name, nv)) {
 			cfgerror("file system or option `%s' already defined",
 			    nv->nv_name);
 			return;
@@ -756,7 +756,7 @@ defopt(struct hashtab *ht, const char *fname, struct nvlist *opts,
 		 */
 		if (obs) {
 			nv->nv_flags |= NV_OBSOLETE;
-			(void)ht_insert(obsopttab, nv->nv_name, nv);
+			(void)nvhash_insert(obsopttab, nv->nv_name, nv);
 		}
 
 		/*
@@ -764,8 +764,8 @@ defopt(struct hashtab *ht, const char *fname, struct nvlist *opts,
 		 * Otherwise, append to the list of options already
 		 * associated with this file.
 		 */
-		if ((oldnv = ht_lookup(optfiletab, name)) == NULL) {
-			(void)ht_insert(optfiletab, name, nv);
+		if ((oldnv = nvhash_lookup(optfiletab, name)) == NULL) {
+			(void)nvhash_insert(optfiletab, name, nv);
 		} else {
 			while (oldnv->nv_next != NULL)
 				oldnv = oldnv->nv_next;

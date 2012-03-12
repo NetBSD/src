@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.c,v 1.10 2012/03/11 21:16:08 dholland Exp $	*/
+/*	$NetBSD: lint.c,v 1.11 2012/03/12 00:20:30 dholland Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -62,7 +62,7 @@ static struct opt_type {
 };
 
 static int
-do_emit_option(const char *name, void *value, void *v)
+do_emit_option(const char *name, struct nvlist *value, void *v)
 {
 	struct nvlist *nv = value;
 	const struct opt_type *ot = v;
@@ -75,7 +75,7 @@ do_emit_option(const char *name, void *value, void *v)
 
 	printf("%s\t%s", ot->ot_name, nv->nv_name);
 	if (ot->ot_type == OT_PARAM) {
-		struct nvlist *nv2  = ht_lookup(defoptlint, nv->nv_name);
+		struct nvlist *nv2  = nvhash_lookup(defoptlint, nv->nv_name);
 		if (nv2 == NULL)
 			nv2 = nv;
 		printf("=\"%s\"", nv2->nv_str ? nv2->nv_str : "1");
@@ -87,14 +87,14 @@ do_emit_option(const char *name, void *value, void *v)
 	
 
 void
-emit_options()
+emit_options(void)
 {
 
-	(void)ht_enumerate(defflagtab, do_emit_option, &opt_types[0]);
+	(void)nvhash_enumerate(defflagtab, do_emit_option, &opt_types[0]);
 	printf("\n");
-	(void)ht_enumerate(defparamtab, do_emit_option, &opt_types[1]);
+	(void)nvhash_enumerate(defparamtab, do_emit_option, &opt_types[1]);
 	printf("\n");
-	(void)ht_enumerate(deffstab, do_emit_option, &opt_types[2]);
+	(void)nvhash_enumerate(deffstab, do_emit_option, &opt_types[2]);
 	printf("\n");
 }
 

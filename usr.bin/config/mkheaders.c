@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.19 2012/03/11 21:16:08 dholland Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.20 2012/03/12 00:20:30 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,7 +61,7 @@ static int emitcnt(struct nvlist *);
 static int emitopts(void);
 static int emittime(void);
 static int herr(const char *, const char *, FILE *);
-static int defopts_print(const char *, void *, void *);
+static int defopts_print(const char *, struct nvlist *, void *);
 static char *cntname(const char *);
 
 /*
@@ -221,7 +221,7 @@ fprintstr(FILE *fp, const char *str)
  */
 static int
 /*ARGSUSED*/
-defopts_print(const char *name, void *value, void *arg)
+defopts_print(const char *name, struct nvlist *value, void *arg)
 {
 	char tfname[BUFSIZ];
 	struct nvlist *nv, *option;
@@ -286,7 +286,7 @@ static int
 emitopts(void)
 {
 
-	return (ht_enumerate(optfiletab, defopts_print, NULL));
+	return (nvhash_enumerate(optfiletab, defopts_print, NULL));
 }
 
 /*
