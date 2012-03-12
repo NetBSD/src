@@ -1,4 +1,4 @@
-/*	$NetBSD: regress.c,v 1.3 2012/03/11 19:03:33 jruoho Exp $	*/
+/*	$NetBSD: regress.c,v 1.4 2012/03/12 02:18:49 jnemeth Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -514,6 +514,7 @@ test_combined(void)
 	cleanup_test();
 }
 
+#if 0
 static void
 test_simpletimeout(void)
 {
@@ -532,6 +533,7 @@ test_simpletimeout(void)
 
 	cleanup_test();
 }
+#endif
 
 #ifndef WIN32
 extern struct event_base *current_base;
