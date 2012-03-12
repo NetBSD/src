@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.181.6.17 2012/03/11 01:52:28 mrg Exp $ */
+/*	$NetBSD: ehci.c,v 1.181.6.18 2012/03/12 06:42:15 mrg Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.6.17 2012/03/11 01:52:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.6.18 2012/03/12 06:42:15 mrg Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1165,8 +1165,15 @@ ehci_detach(struct ehci_softc *sc, int flags)
 	cv_destroy(&sc->sc_doorbell);
 	cv_destroy(&sc->sc_softwake_cv);
 
+#if 0
+	/* XXX destroyed in ehci_pci.c as it controls ehci_intr access */
+
 	softint_disestablish(sc->sc_doorbell_si);
 	softint_disestablish(sc->sc_pcd_si);
+
+	mutex_destroy(&sc->sc_lock);
+	mutex_destroy(&sc->sc_intr_lock);
+#endif
 
 	while ((xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, next);
