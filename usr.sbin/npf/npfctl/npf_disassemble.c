@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_disassemble.c,v 1.2 2012/03/10 22:55:28 christos Exp $	*/
+/*	$NetBSD: npf_disassemble.c,v 1.3 2012/03/12 15:32:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_disassemble.c,v 1.2 2012/03/10 22:55:28 christos Exp $");
+__RCSID("$NetBSD: npf_disassemble.c,v 1.3 2012/03/12 15:32:02 christos Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -221,6 +221,7 @@ npfctl_ncode_disassemble(FILE *fp, const void *v, size_t len)
 	char buf[256];
 	const uint32_t **targ;
 	size_t tlen, mlen, target;
+	int error = -1;
 
 	targ = NULL;
 	mlen = tlen = 0;
@@ -229,13 +230,13 @@ npfctl_ncode_disassemble(FILE *fp, const void *v, size_t len)
 		if (*pc & ~0xff) {
 			warnx("bad opcode 0x%x at offset (%td)", *pc,
 			    pc - st);
-			return -1;
+			goto out;
 		}
 		ni = &npf_instructions[*pc];
 		if (ni->name == NULL) {
 			warnx("invalid opcode 0x%x at offset (%td)", *pc,
 			    pc - st);
-			return -1;
+			goto out;
 		}
 		ipc = pc;
 		target = npfctl_ncode_get_target(pc, targ, tlen);
@@ -250,10 +251,13 @@ npfctl_ncode_disassemble(FILE *fp, const void *v, size_t len)
 			op = npfctl_ncode_operand(buf, sizeof(buf), ni->op[i],
 			    st, ipc, &pc, &len, &targ, &tlen, &mlen);
 			if (op == NULL)
-				return -1;
+				goto out;
 			fprintf(fp, "%s%s", i == 0 ? " " : ", ", op);
 		}
 		fprintf(fp, "\n");
 	}
-	return 0;
+	error = 0;
+out:
+	free(targ);
+	return error;
 }
