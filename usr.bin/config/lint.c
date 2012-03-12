@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.c,v 1.11 2012/03/12 00:20:30 dholland Exp $	*/
+/*	$NetBSD: lint.c,v 1.12 2012/03/12 02:58:55 dholland Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -30,6 +30,7 @@
 #include "nbtool_config.h"
 #endif
 
+#include <assert.h>
 #include <stdlib.h>
 
 #include "defs.h"
@@ -62,25 +63,49 @@ static struct opt_type {
 };
 
 static int
-do_emit_option(const char *name, struct nvlist *value, void *v)
+do_emit_option(const char *name, struct defoptlist *dl, void *v)
 {
-	struct nvlist *nv = value;
 	const struct opt_type *ot = v;
+	const char *value;
 
-	if (nv->nv_flags & NV_OBSOLETE)
+	if (dl->dl_obsolete)
 		return 0;
 
 	if (ht_lookup(*(ot->ot_ht), name))
 		return 0;
 
-	printf("%s\t%s", ot->ot_name, nv->nv_name);
+	printf("%s\t%s", ot->ot_name, dl->dl_name);
 	if (ot->ot_type == OT_PARAM) {
-		struct nvlist *nv2  = nvhash_lookup(defoptlint, nv->nv_name);
-		if (nv2 == NULL)
-			nv2 = nv;
-		printf("=\"%s\"", nv2->nv_str ? nv2->nv_str : "1");
+		struct defoptlist *dl2 = dlhash_lookup(defoptlint, dl->dl_name);
+		if (dl2 != NULL)
+			value = dl2->dl_lintvalue;
+		else
+			value = dl->dl_value;
+		assert(dl2 == dl);
+		printf("=\"%s\"", value ? value : "1");
 	}
 	printf("\n");
+
+	return 1;
+}
+
+/*
+ * Same as do_emit_option but for filesystem definitions, which now
+ * have a different data type. XXX these should probably be unified
+ * again.
+ */
+static int
+do_emit_fs(const char *name, struct nvlist *nv, void *v)
+{
+	const struct opt_type *ot = v;
+
+	assert((nv->nv_flags & NV_OBSOLETE) == 0);
+
+	if (ht_lookup(*(ot->ot_ht), name))
+		return 0;
+
+	assert(ot->ot_type != OT_PARAM);
+	printf("%s\t%s\n", ot->ot_name, nv->nv_name);
 
 	return 1;
 }
@@ -90,11 +115,11 @@ void
 emit_options(void)
 {
 
-	(void)nvhash_enumerate(defflagtab, do_emit_option, &opt_types[0]);
+	(void)dlhash_enumerate(defflagtab, do_emit_option, &opt_types[0]);
 	printf("\n");
-	(void)nvhash_enumerate(defparamtab, do_emit_option, &opt_types[1]);
+	(void)dlhash_enumerate(defparamtab, do_emit_option, &opt_types[1]);
 	printf("\n");
-	(void)nvhash_enumerate(deffstab, do_emit_option, &opt_types[2]);
+	(void)nvhash_enumerate(deffstab, do_emit_fs, &opt_types[2]);
 	printf("\n");
 }
 
