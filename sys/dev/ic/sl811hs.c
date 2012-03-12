@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.31.2.3 2012/03/11 01:52:27 mrg Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.31.2.4 2012/03/12 04:11:34 mrg Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.31.2.3 2012/03/11 01:52:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.31.2.4 2012/03/12 04:11:34 mrg Exp $");
 
 #include "opt_slhci.h"
 
@@ -694,7 +694,7 @@ const struct usbd_bus_methods slhci_bus_methods = {
 	slhci_freem,
 	slhci_allocx,
 	slhci_freex,
-	NULL, /* slhci_get_locks */
+	NULL, /* slhci_get_lock */
 };
 
 const struct usbd_pipe_methods slhci_pipe_methods = {
