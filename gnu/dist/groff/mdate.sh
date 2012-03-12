@@ -38,5 +38,5 @@ NR == 2 {
 	}
 	else
 		year = $(NF-1);
-	print $(NF-2), full[$(NF-3)], year
+	printf "%s %d, %d", full[$(NF-3)], $(NF-2), year
 }'
