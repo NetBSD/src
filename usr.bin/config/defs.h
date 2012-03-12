@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.41 2012/03/12 00:20:30 dholland Exp $	*/
+/*	$NetBSD: defs.h,v 1.42 2012/03/12 02:58:55 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -136,6 +136,18 @@ struct config {
 	const char *cf_fstype;		/* file system type */
 	struct	nvlist *cf_root;	/* "root on ra0a" */
 	struct	nvlist *cf_dump;	/* "dumps on ra0b" */
+};
+
+/*
+ * Option definition list
+ */
+struct defoptlist {
+	struct defoptlist *dl_next;
+	const char *dl_name;
+	const char *dl_value;
+	const char *dl_lintvalue;
+	int dl_obsolete;
+	struct nvlist *dl_depends;
 };
 
 /*
@@ -460,12 +472,12 @@ struct	hashtab *selecttab;	/* selects things that are "optional foo" */
 struct	hashtab *needcnttab;	/* retains names marked "needs-count" */
 struct	hashtab *opttab;	/* table of configured options */
 struct	hashtab *fsopttab;	/* table of configured file systems */
-struct	nvhash *defopttab;	/* options that have been "defopt"'d */
-struct	nvhash *defflagtab;	/* options that have been "defflag"'d */
-struct	nvhash *defparamtab;	/* options that have been "defparam"'d */
-struct	nvhash *defoptlint;	/* lint values for options */
+struct	dlhash *defopttab;	/* options that have been "defopt"'d */
+struct	dlhash *defflagtab;	/* options that have been "defflag"'d */
+struct	dlhash *defparamtab;	/* options that have been "defparam"'d */
+struct	dlhash *defoptlint;	/* lint values for options */
 struct	nvhash *deffstab;	/* defined file systems */
-struct	nvhash *optfiletab;	/* "defopt"'d option .h files */
+struct	dlhash *optfiletab;	/* "defopt"'d option .h files */
 struct	hashtab *attrtab;	/* attributes (locators, etc.) */
 struct	hashtab *bdevmtab;	/* block devm lookup */
 struct	hashtab *cdevmtab;	/* character devm lookup */
@@ -541,6 +553,7 @@ int	ht_enumerate(struct hashtab *, ht_callback, void *);
 			int (*)(const char *, struct VT *, void *),	\
 			void *)
 DECLHASH(nvhash, nvlist);
+DECLHASH(dlhash, defoptlist);
 
 /* lint.c */
 void	emit_instances(void);
@@ -554,25 +567,25 @@ void	addmkoption(const char *, const char *);
 void	appendmkoption(const char *, const char *);
 void	appendcondmkoption(struct condexpr *, const char *, const char *);
 void	deffilesystem(struct nvlist *, struct nvlist *);
-void	defoption(const char *, struct nvlist *, struct nvlist *);
-void	defflag(const char *, struct nvlist *, struct nvlist *, int);
-void	defparam(const char *, struct nvlist *, struct nvlist *, int);
+void	defoption(const char *, struct defoptlist *, struct nvlist *);
+void	defflag(const char *, struct defoptlist *, struct nvlist *, int);
+void	defparam(const char *, struct defoptlist *, struct nvlist *, int);
 void	deloption(const char *);
 void	delfsoption(const char *);
 void	delmkoption(const char *);
 int	devbase_has_instances(struct devbase *, int);
-struct nvlist * find_declared_option(const char *);
+int	is_declared_option(const char *);
 int	deva_has_instances(struct deva *, int);
 void	setupdirs(void);
 const char *strtolower(const char *);
 
 /* tests on option types */
 #define OPT_FSOPT(n)	(nvhash_lookup(deffstab, (n)) != NULL)
-#define OPT_DEFOPT(n)	(nvhash_lookup(defopttab, (n)) != NULL)
-#define OPT_DEFFLAG(n)	(nvhash_lookup(defflagtab, (n)) != NULL)
-#define OPT_DEFPARAM(n)	(nvhash_lookup(defparamtab, (n)) != NULL)
-#define OPT_OBSOLETE(n)	(nvhash_lookup(obsopttab, (n)) != NULL)
-#define DEFINED_OPTION(n) (find_declared_option((n)) != NULL)
+#define OPT_DEFOPT(n)	(dlhash_lookup(defopttab, (n)) != NULL)
+#define OPT_DEFFLAG(n)	(dlhash_lookup(defflagtab, (n)) != NULL)
+#define OPT_DEFPARAM(n)	(dlhash_lookup(defparamtab, (n)) != NULL)
+#define OPT_OBSOLETE(n)	(dlhash_lookup(obsopttab, (n)) != NULL)
+#define DEFINED_OPTION(n) (is_declared_option((n)))
 
 /* main.c */
 void	logconfig_include(FILE *, const char *);
@@ -627,6 +640,9 @@ void	nvfree(struct nvlist *);
 void	nvfreel(struct nvlist *);
 struct nvlist *nvcat(struct nvlist *, struct nvlist *);
 void	autogen_comment(FILE *, const char *);
+struct defoptlist *defoptlist_create(const char *, const char *, const char *);
+void defoptlist_destroy(struct defoptlist *);
+struct defoptlist *defoptlist_append(struct defoptlist *, struct defoptlist *);
 struct attrlist *attrlist_create(void);
 struct attrlist *attrlist_cons(struct attrlist *, struct attr *);
 void attrlist_destroy(struct attrlist *);
