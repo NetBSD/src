@@ -1,5 +1,5 @@
 /*      Id: gcc_compat.c,v 1.81 2011/07/27 13:41:44 ragge Exp      */	
-/*      $NetBSD: gcc_compat.c,v 1.1.1.4 2011/09/01 12:46:58 plunky Exp $     */
+/*      $NetBSD: gcc_compat.c,v 1.2 2012/03/12 09:09:40 plunky Exp $     */
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -263,6 +263,7 @@ struct atax {
 	CS(GCC_ATYP_ALW_INL)	{ A_0ARG, "always_inline" },
 	CS(GCC_ATYP_TLSMODEL)	{ A_1ARG|A1_STR, "tls_model" },
 	CS(GCC_ATYP_ALIASWEAK)	{ A_1ARG|A1_STR, "aliasweak" },
+	CS(GCC_ATYP_RETURNS_TWICE) { A_0ARG, "returns_twice" },
 
 	CS(GCC_ATYP_BOUNDED)	{ A_3ARG|A_MANY|A1_NAME, "bounded" },
 };
