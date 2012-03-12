@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.40 2012/03/11 21:16:07 dholland Exp $	*/
+/*	$NetBSD: defs.h,v 1.41 2012/03/12 00:20:30 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -460,12 +460,12 @@ struct	hashtab *selecttab;	/* selects things that are "optional foo" */
 struct	hashtab *needcnttab;	/* retains names marked "needs-count" */
 struct	hashtab *opttab;	/* table of configured options */
 struct	hashtab *fsopttab;	/* table of configured file systems */
-struct	hashtab *defopttab;	/* options that have been "defopt"'d */
-struct	hashtab *defflagtab;	/* options that have been "defflag"'d */
-struct	hashtab *defparamtab;	/* options that have been "defparam"'d */
-struct	hashtab *defoptlint;	/* lint values for options */
-struct	hashtab *deffstab;	/* defined file systems */
-struct	hashtab *optfiletab;	/* "defopt"'d option .h files */
+struct	nvhash *defopttab;	/* options that have been "defopt"'d */
+struct	nvhash *defflagtab;	/* options that have been "defflag"'d */
+struct	nvhash *defparamtab;	/* options that have been "defparam"'d */
+struct	nvhash *defoptlint;	/* lint values for options */
+struct	nvhash *deffstab;	/* defined file systems */
+struct	nvhash *optfiletab;	/* "defopt"'d option .h files */
 struct	hashtab *attrtab;	/* attributes (locators, etc.) */
 struct	hashtab *bdevmtab;	/* block devm lookup */
 struct	hashtab *cdevmtab;	/* character devm lookup */
@@ -529,6 +529,19 @@ const char *intern(const char *);
 typedef int (*ht_callback)(const char *, void *, void *);
 int	ht_enumerate(struct hashtab *, ht_callback, void *);
 
+/* typed hash, named struct HT, whose type is string -> struct VT */
+#define DECLHASH(HT, VT) \
+	struct HT;							\
+	struct HT *HT##_create(void);					\
+	int HT##_insert(struct HT *, const char *, struct VT *);	\
+	int HT##_replace(struct HT *, const char *, struct VT *);	\
+	int HT##_remove(struct HT *, const char *);			\
+	struct VT *HT##_lookup(struct HT *, const char *);		\
+	int HT##_enumerate(struct HT *,					\
+			int (*)(const char *, struct VT *, void *),	\
+			void *)
+DECLHASH(nvhash, nvlist);
+
 /* lint.c */
 void	emit_instances(void);
 void	emit_options(void);
@@ -554,11 +567,11 @@ void	setupdirs(void);
 const char *strtolower(const char *);
 
 /* tests on option types */
-#define OPT_FSOPT(n)	(ht_lookup(deffstab, (n)) != NULL)
-#define OPT_DEFOPT(n)	(ht_lookup(defopttab, (n)) != NULL)
-#define OPT_DEFFLAG(n)	(ht_lookup(defflagtab, (n)) != NULL)
-#define OPT_DEFPARAM(n)	(ht_lookup(defparamtab, (n)) != NULL)
-#define OPT_OBSOLETE(n)	(ht_lookup(obsopttab, (n)) != NULL)
+#define OPT_FSOPT(n)	(nvhash_lookup(deffstab, (n)) != NULL)
+#define OPT_DEFOPT(n)	(nvhash_lookup(defopttab, (n)) != NULL)
+#define OPT_DEFFLAG(n)	(nvhash_lookup(defflagtab, (n)) != NULL)
+#define OPT_DEFPARAM(n)	(nvhash_lookup(defparamtab, (n)) != NULL)
+#define OPT_OBSOLETE(n)	(nvhash_lookup(obsopttab, (n)) != NULL)
 #define DEFINED_OPTION(n) (find_declared_option((n)) != NULL)
 
 /* main.c */
