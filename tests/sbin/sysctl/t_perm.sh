@@ -1,4 +1,4 @@
-# $NetBSD: t_perm.sh,v 1.4 2011/05/11 22:08:12 njoly Exp $
+# $NetBSD: t_perm.sh,v 1.5 2012/03/12 08:14:02 jruoho Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -100,7 +100,7 @@ sysctl_hw_cleanup() {
 	clean
 }
 
-# kern.
+# kern (cf. closed PR kern/44946).
 #
 atf_test_case sysctl_kern cleanup
 sysctl_kern_head() {
@@ -109,7 +109,6 @@ sysctl_kern_head() {
 }
 
 sysctl_kern_body() {
-	atf_expect_fail "PR kern/44946"
 	sysctl_write "kern"
 }
 
