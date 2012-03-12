@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.83 2012/03/02 18:06:05 joerg Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.84 2012/03/12 20:16:52 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -52,9 +52,10 @@
 #include <sys/atomic.h>
 #include <sys/tree.h>
 
+#include <limits.h>
 #include <lwp.h>
 #include <signal.h>
-#include <limits.h>
+#include <stdbool.h>
 
 #ifdef __GNUC__
 #define	PTHREAD_HIDE	__attribute__ ((visibility("hidden")))
@@ -104,6 +105,8 @@ struct	__pthread_st {
 	int		pt_cancel;	/* Deferred cancellation */
 	int		pt_errno;	/* Thread-specific errno. */
 	stack_t		pt_stack;	/* Our stack */
+	bool		pt_stack_allocated;
+	size_t		pt_guardsize;
 	void		*pt_exitval;	/* Read by pthread_join() */
 	char		*pt_name;	/* Thread's name, set by the app. */
 	int		pt_willpark;	/* About to park */
