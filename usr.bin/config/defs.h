@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.42 2012/03/12 02:58:55 dholland Exp $	*/
+/*	$NetBSD: defs.h,v 1.43 2012/03/12 03:04:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -123,7 +123,6 @@ struct nvlist {
 	int		nv_ifunit;		/* XXX XXX XXX */
 	int		nv_flags;
 #define	NV_DEPENDED	1
-#define	NV_OBSOLETE	2
 };
 
 /*
@@ -328,11 +327,9 @@ struct filetype
 /*
  * Files.  Each file is either standard (always included) or optional,
  * depending on whether it has names on which to *be* optional.  The
- * options field (fi_optx) is actually an expression tree, with nodes
- * for OR, AND, and NOT, as well as atoms (words) representing some   
- * particular option.  The node type is stored in the nv_num field.
- * Subexpressions appear in the `next' field; for the binary operators
- * AND and OR, the left subexpression is first stored in the nv_ptr field.
+ * options field (fi_optx) is an expression tree of type struct
+ * condexpr, with nodes for OR, AND, and NOT, as well as atoms (words)
+ * representing some particular option.
  * 
  * For any file marked as needs-count or needs-flag, fixfiles() will
  * build fi_optf, a `flat list' of the options with nv_num fields that
