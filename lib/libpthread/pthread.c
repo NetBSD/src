@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.130 2012/03/10 18:01:10 joerg Exp $	*/
+/*	$NetBSD: pthread.c,v 1.131 2012/03/12 16:37:15 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.130 2012/03/10 18:01:10 joerg Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.131 2012/03/12 16:37:15 joerg Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -320,8 +320,7 @@ static int
 pthread__newstack(pthread_t newthread, const pthread_attr_t *attr)
 {
 	void *stackbase, *redzone;
-	size_t stacksize;
-	bool mapped_stack = false;
+	size_t stacksize, guardsize;
 
 	if (attr != NULL) {
 		pthread_attr_getstack(attr, &stackbase, &stacksize);
@@ -333,22 +332,25 @@ pthread__newstack(pthread_t newthread, const pthread_attr_t *attr)
 		stacksize = pthread__stacksize;
 
 	if (stackbase == NULL) {
-		stackbase = mmap(NULL, stacksize,
+		stacksize = (stacksize | (pthread__pagesize - 1)) + 1;
+		guardsize = pthread__pagesize;
+		stackbase = mmap(NULL, stacksize + guardsize,
 		    PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, (off_t)0);
 		if (stackbase == MAP_FAILED)
 			return ENOMEM;
-		mapped_stack = true;
+	} else {
+		guardsize = 0;
 	}
-	newthread->pt_stack.ss_size = stacksize - pthread__pagesize;
-	newthread->pt_stack.ss_sp = stackbase;
+	newthread->pt_stack.ss_size = stacksize;
 #ifdef __MACHINE_STACK_GROWS_UP
 	redzone = (char *)stackbase + newthread->pt_stack.ss_size;
+	newthread->pt_stack.ss_sp = (char *)stackbase + guardsize;
 #else
 	redzone = (char *)stackbase;
+	newthread->pt_stack.ss_sp = (char *)stackbase + guardsize;
 #endif
-	if (mprotect(redzone, pthread__pagesize, PROT_NONE) == -1) {
-		if (mapped_stack)
-			munmap(stackbase, pthread__stacksize);
+	if (guardsize && mprotect(redzone, guardsize, PROT_NONE) == -1) {
+		munmap(stackbase, stacksize + guardsize);
 		return EPERM;
 	}
 	return 0;
