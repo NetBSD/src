@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.c,v 1.12 2012/03/12 02:58:55 dholland Exp $	*/
+/*	$NetBSD: lint.c,v 1.13 2012/03/12 03:04:56 dholland Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -98,8 +98,6 @@ static int
 do_emit_fs(const char *name, struct nvlist *nv, void *v)
 {
 	const struct opt_type *ot = v;
-
-	assert((nv->nv_flags & NV_OBSOLETE) == 0);
 
 	if (ht_lookup(*(ot->ot_ht), name))
 		return 0;
