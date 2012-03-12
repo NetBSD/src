@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.53.6.3 2012/02/18 07:34:36 mrg Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.53.6.4 2012/03/12 06:42:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.53.6.3 2012/02/18 07:34:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.53.6.4 2012/03/12 06:42:15 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -299,8 +299,14 @@ ehci_pci_detach(device_t self, int flags)
 		sc->sc.sc_size = 0;
 	}
 
+#if 1
+	/* XXX created in ehci.c */
 	mutex_destroy(&sc->sc.sc_lock);
 	mutex_destroy(&sc->sc.sc_intr_lock);
+
+	softint_disestablish(sc->sc.sc_doorbell_si);
+	softint_disestablish(sc->sc.sc_pcd_si);
+#endif
 
 	return 0;
 }
