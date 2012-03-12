@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.131 2012/03/12 16:37:15 joerg Exp $	*/
+/*	$NetBSD: pthread.c,v 1.132 2012/03/12 20:16:52 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.131 2012/03/12 16:37:15 joerg Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.132 2012/03/12 20:16:52 joerg Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -317,10 +317,11 @@ pthread__scrubthread(pthread_t t, char *name, int flags)
 }
 
 static int
-pthread__newstack(pthread_t newthread, const pthread_attr_t *attr)
+pthread__getstack(pthread_t newthread, const pthread_attr_t *attr)
 {
-	void *stackbase, *redzone;
+	void *stackbase, *stackbase2, *redzone;
 	size_t stacksize, guardsize;
+	bool allocated;
 
 	if (attr != NULL) {
 		pthread_attr_getstack(attr, &stackbase, &stacksize);
@@ -331,28 +332,51 @@ pthread__newstack(pthread_t newthread, const pthread_attr_t *attr)
 	if (stacksize == 0)
 		stacksize = pthread__stacksize;
 
+	if (newthread->pt_stack_allocated) {
+		if (newthread->pt_stack.ss_size == stacksize)
+			return 0;
+		stackbase2 = newthread->pt_stack.ss_sp;
+#ifndef __MACHINE_STACK_GROWS_UP
+		stackbase2 = (char *)stackbase2 - newthread->pt_guardsize;
+#endif
+		munmap(stackbase2,
+		    newthread->pt_stack.ss_size + newthread->pt_guardsize);
+		newthread->pt_stack.ss_sp = NULL;
+		newthread->pt_stack.ss_size = 0;
+		newthread->pt_guardsize = 0;
+		newthread->pt_stack_allocated = false;
+	}
+
+	newthread->pt_stack_allocated = false;
+
 	if (stackbase == NULL) {
-		stacksize = (stacksize | (pthread__pagesize - 1)) + 1;
+		stacksize = ((stacksize - 1) | (pthread__pagesize - 1)) + 1;
 		guardsize = pthread__pagesize;
 		stackbase = mmap(NULL, stacksize + guardsize,
 		    PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, (off_t)0);
 		if (stackbase == MAP_FAILED)
 			return ENOMEM;
+		allocated = true;
 	} else {
 		guardsize = 0;
+		allocated = false;
 	}
-	newthread->pt_stack.ss_size = stacksize;
 #ifdef __MACHINE_STACK_GROWS_UP
-	redzone = (char *)stackbase + newthread->pt_stack.ss_size;
-	newthread->pt_stack.ss_sp = (char *)stackbase + guardsize;
+	redzone = (char *)stackbase + stacksize;
+	stackbase2 = (char *)stackbase;
 #else
 	redzone = (char *)stackbase;
-	newthread->pt_stack.ss_sp = (char *)stackbase + guardsize;
+	stackbase2 = (char *)stackbase + guardsize;
 #endif
-	if (guardsize && mprotect(redzone, guardsize, PROT_NONE) == -1) {
+	if (allocated && guardsize &&
+	    mprotect(redzone, guardsize, PROT_NONE) == -1) {
 		munmap(stackbase, stacksize + guardsize);
 		return EPERM;
 	}
+	newthread->pt_stack.ss_size = stacksize;
+	newthread->pt_stack.ss_sp = stackbase2;
+	newthread->pt_guardsize = guardsize;
+	newthread->pt_stack_allocated = allocated;
 	return 0;
 }
 
@@ -427,8 +451,9 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 			free(name);
 			return ENOMEM;
 		}
+		newthread->pt_stack_allocated = false;
 
-		if (pthread__newstack(newthread, attr)) {
+		if (pthread__getstack(newthread, attr)) {
 			free(newthread);
 			free(name);
 			return ENOMEM;
@@ -450,6 +475,16 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 
 		/* Will be reset by the thread upon exit. */
 		pthread__initthread(newthread);
+	} else {
+		if (pthread__getstack(newthread, attr)) {
+			pthread_mutex_lock(&pthread__deadqueue_lock);
+			PTQ_INSERT_TAIL(&pthread__deadqueue, newthread, pt_deadq);
+			pthread_mutex_unlock(&pthread__deadqueue_lock);
+			return ENOMEM;
+		}
+		_INITCONTEXT_U(&newthread->pt_uc);
+		newthread->pt_uc.uc_stack = newthread->pt_stack;
+		newthread->pt_uc.uc_link = NULL;
 	}
 
 	/*
