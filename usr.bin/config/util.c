@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.13 2012/03/11 21:16:08 dholland Exp $	*/
+/*	$NetBSD: util.c,v 1.14 2012/03/12 02:58:55 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -202,6 +202,57 @@ nvcat(struct nvlist *nv1, struct nvlist *nv2)
 
 	nv->nv_next = nv2;
 	return nv1;
+}
+
+/*
+ * Option definition lists
+ */
+
+struct defoptlist *
+defoptlist_create(const char *name, const char *val, const char *lintval)
+{
+	struct defoptlist *dl;
+
+	dl = emalloc(sizeof(*dl));
+	dl->dl_next = NULL;
+	dl->dl_name = name;
+	dl->dl_value = val;
+	dl->dl_lintvalue = lintval;
+	dl->dl_obsolete = 0;
+	dl->dl_depends = NULL;
+	return dl;
+}
+
+void
+defoptlist_destroy(struct defoptlist *dl)
+{
+	struct defoptlist *next;
+
+	while (dl != NULL) {
+		next = dl->dl_next;
+		dl->dl_next = NULL;
+
+		// XXX should we assert that dl->dl_deps is null to
+		// be sure the deps have already been destroyed?
+		free(dl);
+
+		dl = next;
+	}
+}
+
+struct defoptlist *
+defoptlist_append(struct defoptlist *dla, struct defoptlist *dlb)
+{
+	struct defoptlist *dl;
+
+	if (dla == NULL)
+		return dlb;
+
+	for (dl = dla; dl->dl_next != NULL; dl = dl->dl_next)
+		;
+
+	dl->dl_next = dlb;
+	return dla;
 }
 
 /*
