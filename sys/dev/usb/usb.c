@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.125.6.12 2012/02/26 05:05:45 mrg Exp $	*/
+/*	$NetBSD: usb.c,v 1.125.6.13 2012/03/12 06:42:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.125.6.12 2012/02/26 05:05:45 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.125.6.13 2012/03/12 06:42:15 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -1052,6 +1052,8 @@ usb_detach(device_t self, int flags)
 	ue = usb_alloc_event();
 	ue->u.ue_ctrlr.ue_bus = device_unit(self);
 	usb_add_event(USB_EVENT_CTRLR_DETACH, ue);
+
+	cv_destroy(&sc->sc_bus->needs_explore_cv);
 
 	return (0);
 }
