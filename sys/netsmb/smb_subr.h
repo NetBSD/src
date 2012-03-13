@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.h,v 1.20 2010/12/17 13:05:29 pooka Exp $	*/
+/*	$NetBSD: smb_subr.h,v 1.21 2012/03/13 18:41:01 elad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -71,6 +71,7 @@ void m_dumpm(struct mbuf *m);
 	 SIGISMEMBER(set, SIGHUP) || SIGISMEMBER(set, SIGKILL) ||	\
 	 SIGISMEMBER(set, SIGQUIT))
 
+/* smb_suser() is not used in NetBSD. */
 #define	smb_suser(cred)	kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL)
 
 /*

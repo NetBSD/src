@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vfsops.c,v 1.5 2011/11/13 23:09:58 christos Exp $	*/
+/*	$NetBSD: v7fs_vfsops.c,v 1.6 2012/03/13 18:40:51 elad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.5 2011/11/13 23:09:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.6 2012/03/13 18:40:51 elad Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -158,7 +158,9 @@ v7fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		    (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
 		    (mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
-		error = genfs_can_mount(devvp, accessmode, l->l_cred);
+		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
+		    KAUTH_REQ_SYSTEM_MOUNT_DEVICE, mp, devvp,
+		    KAUTH_ARG(accessmode));
 	}
 
 	if (error) {

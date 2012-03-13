@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.144 2011/12/19 11:59:58 drochner Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.145 2012/03/13 18:41:00 elad Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.144 2011/12/19 11:59:58 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.145 2012/03/13 18:41:00 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1392,8 +1392,8 @@ ipsec_set_policy(struct secpolicy **spp, int optname, void *request,
 
 	/* check privileged socket */
 	if (xpl->sadb_x_policy_type == IPSEC_POLICY_BYPASS) {
-		error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    NULL);
+		error = kauth_authorize_network(cred, KAUTH_NETWORK_IPSEC,
+		    KAUTH_REQ_NETWORK_IPSEC_BYPASS, NULL, NULL, NULL);
 		if (error)
 			return (error);
 	}

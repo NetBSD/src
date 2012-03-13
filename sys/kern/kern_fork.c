@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.188 2012/03/02 21:23:05 rmind Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.189 2012/03/13 18:40:52 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.188 2012/03/02 21:23:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.189 2012/03/13 18:40:52 elad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -249,13 +249,16 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Enforce limits.
 	 */
 	count = chgproccnt(uid, 1);
-	if (kauth_authorize_generic(l1->l_cred, KAUTH_GENERIC_ISSUSER, NULL) !=
-	    0 && __predict_false(count > p1->p_rlimit[RLIMIT_NPROC].rlim_cur)) {
-		(void)chgproccnt(uid, -1);
-		atomic_dec_uint(&nprocs);
-		if (forkfsleep)
-			kpause("forkulim", false, forkfsleep, NULL);
-		return EAGAIN;
+	if (__predict_false(count > p1->p_rlimit[RLIMIT_NPROC].rlim_cur)) {
+		if (kauth_authorize_process(l1->l_cred, KAUTH_PROCESS_RLIMIT,
+		    p1, KAUTH_ARG(KAUTH_REQ_PROCESS_RLIMIT_BYPASS),
+		    &p1->p_rlimit[RLIMIT_NPROC], KAUTH_ARG(RLIMIT_NPROC)) != 0) {
+			(void)chgproccnt(uid, -1);
+			atomic_dec_uint(&nprocs);
+			if (forkfsleep)
+				kpause("forkulim", false, forkfsleep, NULL);
+			return EAGAIN;
+		}
 	}
 
 	/*

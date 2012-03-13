@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.40 2012/01/27 21:46:42 njoly Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.41 2012/03/13 18:40:50 elad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.40 2012/01/27 21:46:42 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.41 2012/03/13 18:40:50 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -249,8 +249,9 @@ sysvbfs_check_permitted(struct vnode *vp, struct sysvbfs_node *bnode,
 {
 	struct bfs_fileattr *attr = &bnode->inode->attr;
 
-	return genfs_can_access(vp->v_type, attr->mode, attr->uid, attr->gid,
-	    mode, cred);
+	return kauth_authorize_vnode(cred, kauth_access_action(mode,
+	    vp->v_type, attr->mode), vp, NULL, genfs_can_access(vp->v_type,
+	    attr->mode, attr->uid, attr->gid, mode, cred));
 }
 
 int
@@ -351,7 +352,7 @@ sysvbfs_setattr(void *arg)
 		    (vap->va_gid != (gid_t)VNOVAL) ? vap->va_gid : attr->gid;
 		error = kauth_authorize_vnode(cred,
 		    KAUTH_VNODE_CHANGE_OWNERSHIP, vp, NULL,
-		    genfs_can_chown(vp, cred, attr->uid, attr->gid, uid, gid));
+		    genfs_can_chown(cred, attr->uid, attr->gid, uid, gid));
 		if (error)
 			return error;
 		attr->uid = uid;
@@ -361,19 +362,28 @@ sysvbfs_setattr(void *arg)
 	if (vap->va_mode != (mode_t)VNOVAL) {
 		mode_t mode = vap->va_mode;
 		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY,
-		    vp, NULL, genfs_can_chmod(vp, cred, attr->uid, attr->gid,
+		    vp, NULL, genfs_can_chmod(vp->v_type, cred, attr->uid, attr->gid,
 		    mode));
 		if (error)
 			return error;
 		attr->mode = mode;
 	}
 
-	if (vap->va_atime.tv_sec != VNOVAL)
-		attr->atime = vap->va_atime.tv_sec;
-	if (vap->va_mtime.tv_sec != VNOVAL)
-		attr->mtime = vap->va_mtime.tv_sec;
-	if (vap->va_ctime.tv_sec != VNOVAL)
-		attr->ctime = vap->va_ctime.tv_sec;
+	if ((vap->va_atime.tv_sec != VNOVAL) ||
+	    (vap->va_mtime.tv_sec != VNOVAL) ||
+	    (vap->va_ctime.tv_sec != VNOVAL)) {
+		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_TIMES, vp,
+		    NULL, genfs_can_chtimes(vp, vap->va_vaflags, attr->uid, cred));
+		if (error)
+			return error;
+
+		if (vap->va_atime.tv_sec != VNOVAL)
+			attr->atime = vap->va_atime.tv_sec;
+		if (vap->va_mtime.tv_sec != VNOVAL)
+			attr->mtime = vap->va_mtime.tv_sec;
+		if (vap->va_ctime.tv_sec != VNOVAL)
+			attr->ctime = vap->va_ctime.tv_sec;
+	}
 
 	bfs_inode_set_attr(bfs, inode, attr);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.38 2012/01/30 19:41:23 drochner Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.39 2012/03/13 18:40:33 elad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.38 2012/01/30 19:41:23 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.39 2012/03/13 18:40:33 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1195,8 +1195,8 @@ voodoofb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
 	 */
-	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
-	    NULL) != 0) {
+	if (kauth_authorize_machdep(kauth_cred_get(), KAUTH_MACHDEP_UNMANAGEDMEM,
+	    NULL, NULL, NULL, NULL) != 0) {
 		aprint_error_dev(sc->sc_dev, "mmap() rejected.\n");
 		return -1;
 	}
