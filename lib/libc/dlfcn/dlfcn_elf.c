@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn_elf.c,v 1.11 2012/02/16 23:00:39 joerg Exp $	*/
+/*	$NetBSD: dlfcn_elf.c,v 1.12 2012/03/13 21:13:33 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Takuya SHIOZAKI
@@ -27,11 +27,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: dlfcn_elf.c,v 1.11 2012/02/16 23:00:39 joerg Exp $");
+__RCSID("$NetBSD: dlfcn_elf.c,v 1.12 2012/03/13 21:13:33 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/atomic.h>
+#include <assert.h>
 #include <elf.h>
 #include <errno.h>
 #include <string.h>
@@ -165,7 +166,8 @@ dl_iterate_phdr_setup(void)
 			dlpi_phdr = (void *)aux->a_v;
 			break;
 		case AT_PHNUM:
-			dlpi_phnum = aux->a_v;
+			_DIAGASSERT(__type_fit(Elf_Half, aux->a_v));
+			dlpi_phnum = (Elf_Half)aux->a_v;
 			break;
 		case AT_SUN_EXECNAME:
 			dlpi_name = (void *)aux->a_v;

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_bcast.c,v 1.22 2010/03/07 23:49:14 dholland Exp $	*/
+/*	$NetBSD: clnt_bcast.c,v 1.23 2012/03/13 21:13:44 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_bcast.c 1.15 89/04/21 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_bcast.c,v 1.22 2010/03/07 23:49:14 dholland Exp $");
+__RCSID("$NetBSD: clnt_bcast.c,v 1.23 2012/03/13 21:13:44 christos Exp $");
 #endif
 #endif
 
@@ -234,7 +234,8 @@ __rpc_broadenable(int af, int s, struct broadif *bip)
 			return -1;
 	} else
 #endif
-		if (setsockopt(s, SOL_SOCKET, SO_BROADCAST, &o, sizeof o) < 0)
+		if (setsockopt(s, SOL_SOCKET, SO_BROADCAST, &o,
+		    (socklen_t)sizeof(o)) == -1)
 			return -1;
 
 	return 0;
@@ -282,7 +283,7 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 		broadlist_t nal;
 	} fdlist[MAXBCAST];
 	struct pollfd pfd[MAXBCAST];
-	size_t fdlistno = 0;
+	nfds_t fdlistno = 0;
 	struct r_rpcb_rmtcallargs barg;	/* Remote arguments */
 	struct r_rpcb_rmtcallres bres; /* Remote results */
 	size_t outlen;
@@ -469,7 +470,7 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 				if (!__rpc_lowvers)
 					if ((size_t)sendto(fdlist[i].fd, outbuf,
 					    outlen, 0, (struct sockaddr*)addr,
-					    (size_t)fdlist[i].asize) !=
+					    (socklen_t)fdlist[i].asize) !=
 					    outlen) {
 						warn("clnt_bcast: cannot send"
 						      " broadcast packet");
@@ -491,7 +492,7 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 				    fdlist[i].proto == IPPROTO_UDP) {
 					if ((size_t)sendto(fdlist[i].fd,
 					    outbuf_pmap, outlen_pmap, 0, addr,
-					    (size_t)fdlist[i].asize) !=
+					    (socklen_t)fdlist[i].asize) !=
 						outlen_pmap) {
 						warnx("clnt_bcast: "
 						    "Cannot send "

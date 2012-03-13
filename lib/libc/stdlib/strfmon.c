@@ -1,4 +1,4 @@
-/*	$NetBSD: strfmon.c,v 1.8 2011/08/14 09:07:15 christos Exp $	*/
+/*	$NetBSD: strfmon.c,v 1.9 2012/03/13 21:13:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexey Zelkin <phantom@FreeBSD.org>
@@ -32,7 +32,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdlib/strfmon.c,v 1.14 2003/03/20 08:18:55 ache Exp $");
 #else
-__RCSID("$NetBSD: strfmon.c,v 1.8 2011/08/14 09:07:15 christos Exp $");
+__RCSID("$NetBSD: strfmon.c,v 1.9 2012/03/13 21:13:48 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: strfmon.c,v 1.8 2011/08/14 09:07:15 christos Exp $");
 #endif
 
 #include <sys/types.h>
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
@@ -376,7 +377,8 @@ strfmon(char * __restrict s, size_t maxsize, const char * __restrict format,
 				while (dst - tmpptr < width)
 					PRINT(' ');
 			} else {
-				pad_size = dst-tmpptr;
+				_DIAGASSERT(__type_fit(int, dst - tmpptr));
+				pad_size = dst - tmpptr;
 				memmove(tmpptr + width-pad_size, tmpptr,
 				    (size_t) pad_size);
 				memset(tmpptr, ' ', (size_t) width-pad_size);
@@ -452,7 +454,7 @@ __calc_left_pad(int flags, char *cur_symb) {
 
 	char cs_precedes, sep_by_space, sign_posn;
 	const char *signstr;
-	int left_chars = 0;
+	size_t left_chars = 0;
 
 	__setup_vars(flags, &cs_precedes, &sep_by_space, &sign_posn, &signstr);
 
@@ -471,7 +473,8 @@ __calc_left_pad(int flags, char *cur_symb) {
 			if (cs_precedes != 0)
 				left_chars += strlen(signstr);
 	}
-	return (left_chars);
+	_DIAGASSERT(__type_fit(int, left_chars));
+	return (int)left_chars;
 }
 
 static int

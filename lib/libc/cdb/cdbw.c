@@ -1,4 +1,4 @@
-/*	$NetBSD: cdbw.c,v 1.1 2010/04/25 00:54:46 joerg Exp $	*/
+/*	$NetBSD: cdbw.c,v 1.2 2012/03/13 21:13:31 christos Exp $	*/
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,12 +36,13 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cdbw.c,v 1.1 2010/04/25 00:54:46 joerg Exp $");
+__RCSID("$NetBSD: cdbw.c,v 1.2 2012/03/13 21:13:31 christos Exp $");
 
 #include "namespace.h"
 
 #include <sys/endian.h>
 #include <sys/queue.h>
+#include <assert.h>
 #include <cdbw.h>
 #include <stdlib.h>
 #include <string.h>
@@ -167,7 +168,8 @@ cdbw_put_data(struct cdbw *cdbw, const void *data, size_t datalen,
 	memcpy(cdbw->data_ptr[cdbw->data_counter], data, datalen);
 	cdbw->data_len[cdbw->data_counter] = datalen;
 	cdbw->data_size += datalen;
-	*idx = cdbw->data_counter++;
+	_DIAGASSERT(__type_fit(uint32_t, cdbw->data_counter));
+	*idx = (uint32_t)cdbw->data_counter++;
 	return 0;
 }
 
@@ -330,7 +332,9 @@ remove_vertex(struct state *state, struct vertex *v)
 			return;
 	}
 
-	state->output_order[--state->output_index] = e - state->edges;
+	ptrdiff_t td = e - state->edges;
+	_DIAGASSERT(__type_fit(uint32_t, td));
+	state->output_order[--state->output_index] = (uint32_t)td;
 
 	vl = &state->verts[e->left];
 	vm = &state->verts[e->middle];
@@ -365,8 +369,7 @@ build_graph(struct cdbw *cdbw, struct state *state)
 	struct key_hash *key_hash;
 	struct vertex *v;
 	struct edge *e;
-	uint32_t hashes[3];
-	size_t i;
+	uint32_t hashes[3], i;
 
 	e = state->edges;
 	for (i = 0; i < cdbw->hash_size; ++i) {
@@ -492,8 +495,10 @@ print_hash(struct cdbw *cdbw, struct state *state, int fd, const char *descr)
 	memcpy(buf, "NBCDB\n\0", 7);
 	buf[7] = 1;
 	strncpy((char *)buf + 8, descr, 16);
-	le32enc(buf + 24, cdbw->data_size);
-	le32enc(buf + 28, cdbw->data_counter);
+	_DIAGASSERT(__type_fit(uint32_t, cdbw->data_size));
+	le32enc(buf + 24, (uint32_t)cdbw->data_size);
+	_DIAGASSERT(__type_fit(uint32_t, cdbw->data_counter));
+	le32enc(buf + 28, (uint32_t)cdbw->data_counter);
 	le32enc(buf + 32, state->entries);
 	le32enc(buf + 36, state->seed);
 	cur_pos = 40;
@@ -504,7 +509,8 @@ print_hash(struct cdbw *cdbw, struct state *state, int fd, const char *descr)
 		le32enc(buf + cur_pos, state->g[i]);
 		cur_pos += size;
 	}
-	size2 = compute_size(cdbw->data_size);
+	_DIAGASSERT(__type_fit(uint32_t, cdbw->data_counter));
+	size2 = compute_size((uint32_t)cdbw->data_size);
 	size = size * state->entries % size2;
 	if (size != 0) {
 		size = size2 - size;
@@ -516,7 +522,9 @@ print_hash(struct cdbw *cdbw, struct state *state, int fd, const char *descr)
 		COND_FLUSH_BUFFER(4);
 		le32enc(buf + cur_pos, data_size);
 		cur_pos += size2;
-		data_size += cdbw->data_len[i];
+		_DIAGASSERT(__type_fit(uint32_t,
+		    data_size + cdbw->data_len[i]));
+		data_size += (uint32_t)cdbw->data_len[i];
 	}
 	COND_FLUSH_BUFFER(4);
 	le32enc(buf + cur_pos, data_size);
@@ -561,8 +569,10 @@ cdbw_output(struct cdbw *cdbw, int fd, const char descr[16],
 
 	rv = 0;
 
-	state.keys = cdbw->key_counter;
-	state.data_entries = cdbw->data_counter;
+	_DIAGASSERT(__type_fit(uint32_t, cdbw->key_counter));
+	state.keys = (uint32_t)cdbw->key_counter;
+	_DIAGASSERT(__type_fit(uint32_t, cdbw->key_counter));
+	state.data_entries = (uint32_t)cdbw->data_counter;
 	state.entries = state.keys + (state.keys + 3) / 4;
 	if (state.entries < 10)
 		state.entries = 10;

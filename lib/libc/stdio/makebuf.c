@@ -1,4 +1,4 @@
-/*	$NetBSD: makebuf.c,v 1.15 2008/03/13 15:40:00 christos Exp $	*/
+/*	$NetBSD: makebuf.c,v 1.16 2012/03/13 21:13:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)makebuf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: makebuf.c,v 1.15 2008/03/13 15:40:00 christos Exp $");
+__RCSID("$NetBSD: makebuf.c,v 1.16 2012/03/13 21:13:46 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -85,7 +85,8 @@ __smakebuf(fp)
 	__cleanup = _cleanup;
 	flags |= __SMBF;
 	fp->_bf._base = fp->_p = p;
-	fp->_bf._size = size;
+	_DIAGASSERT(__type_fit(int, size));
+	fp->_bf._size = (int)size;
 	if (couldbetty && isatty(__sfileno(fp)))
 		flags |= __SLBF;
 	fp->_flags |= flags;

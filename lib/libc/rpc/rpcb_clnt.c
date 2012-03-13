@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_clnt.c,v 1.25 2010/03/23 20:28:58 drochner Exp $	*/
+/*	$NetBSD: rpcb_clnt.c,v 1.26 2012/03/13 21:13:45 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rpcb_clnt.c 1.30 89/06/21 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: rpcb_clnt.c,v 1.25 2010/03/23 20:28:58 drochner Exp $");
+__RCSID("$NetBSD: rpcb_clnt.c,v 1.26 2012/03/13 21:13:45 christos Exp $");
 #endif
 #endif
 
@@ -466,13 +466,16 @@ local_rpcb()
 		goto try_nconf;
 	sun.sun_family = AF_LOCAL;
 	strcpy(sun.sun_path, _PATH_RPCBINDSOCK);
-	nbuf.len = sun.sun_len = SUN_LEN(&sun);
+	tsize = SUN_LEN(&sun);
+	_DIAGASSERT(__type_fit(uint8_t, tsize));
+	nbuf.len = sun.sun_len = (uint8_t)tsize;
 	nbuf.maxlen = sizeof (struct sockaddr_un);
 	nbuf.buf = &sun;
 
 	tsize = __rpc_get_t_size(AF_LOCAL, 0, 0);
+	_DIAGASSERT(__type_fit(u_int, tsize));
 	client = clnt_vc_create(sock, &nbuf, (rpcprog_t)RPCBPROG,
-	    (rpcvers_t)RPCBVERS, tsize, tsize);
+	    (rpcvers_t)RPCBVERS, (u_int)tsize, (u_int)tsize);
 
 	if (client != NULL) {
 		/* XXX - mark the socket to be closed in destructor */
