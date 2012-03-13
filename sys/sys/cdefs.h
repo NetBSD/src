@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.92 2012/02/22 17:52:58 martin Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.93 2012/03/13 21:07:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -529,5 +529,33 @@
 #else
 #define __CAST(__dt, __st)	((__dt)(__st))
 #endif
+
+#define __type_mask(t) (/*LINTED*/sizeof(t) < sizeof(intmax_t) ? \
+    (~((1ULL << (sizeof(t) * NBBY)) - 1)) : 0ULL)
+
+static inline long long __zero(void) { return 0; }
+static __inline int __negative(double x) { return x < 0; }
+
+#define __type_min_s(t) ((t)((1ULL << (sizeof(t) * NBBY - 1))))
+#define __type_max_s(t) ((t)~((1ULL << (sizeof(t) * NBBY - 1))))
+#define __type_min_u(t) ((t)0ULL)
+#define __type_max_u(t) ((t)~0ULL)
+#define __type_is_signed(t) (/*LINTED*/__type_min_s(t) + (t)1 < (t)1)
+#define __type_min(t) (__type_is_signed(t) ? __type_min_s(t) : __type_min_u(t))
+#define __type_max(t) (__type_is_signed(t) ? __type_max_s(t) : __type_max_u(t))
+
+
+#define __type_fit_u(t, a) (/*LINTED*/sizeof(t) < sizeof(intmax_t) ? \
+    (((a) & __type_mask(t)) == 0) : !__negative(a))
+
+#define __type_fit_s(t, a) (/*LINTED*/__negative(a) ? \
+    ((intmax_t)((a) + __zero()) >= (intmax_t)__type_min_s(t)) : \
+    ((intmax_t)((a) + __zero()) <= (intmax_t)__type_max_s(t)))
+
+/*
+ * return true if value 'a' fits in type 't'
+ */
+#define __type_fit(t, a) (__type_is_signed(t) ? \
+    __type_fit_s(t, a) : __type_fit_u(t, a))
 
 #endif /* !_SYS_CDEFS_H_ */
