@@ -1,4 +1,4 @@
-/*	$NetBSD: vsnprintf_ss.c,v 1.10 2011/07/17 20:54:34 joerg Exp $	*/
+/*	$NetBSD: vsnprintf_ss.c,v 1.11 2012/03/13 21:13:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vsnprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vsnprintf_ss.c,v 1.10 2011/07/17 20:54:34 joerg Exp $");
+__RCSID("$NetBSD: vsnprintf_ss.c,v 1.11 2012/03/13 21:13:47 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -136,6 +136,7 @@ vsnprintf_ss(char *sbuf, size_t slen, const char *fmt0, va_list ap)
 	const char *xdigs;	/* digits for [xX] conversion */
 	char bf[128]; 		/* space for %c, %[diouxX] */
 	char *tailp;		/* tail pointer for snprintf */
+	size_t len;
 
 	static const char xdigs_lower[16] = "0123456789abcdef";
 	static const char xdigs_upper[16] = "0123456789ABCDEF";
@@ -330,13 +331,17 @@ reswitch:	switch (ch) {
 				char *p = memchr(cp, 0, (size_t)prec);
 
 				if (p != NULL) {
-					size = p - cp;
+					_DIAGASSERT(__type_fit(int, p - cp));
+					size = (int)(p - cp);
 					if (size > prec)
 						size = prec;
 				} else
 					size = prec;
-			} else
-				size = strlen(cp);
+			} else {
+				len = strlen(cp);
+				_DIAGASSERT(__type_fit(int, len));
+				size = (int)len;
+			}
 			sign = '\0';
 			break;
 		case 'U':
@@ -409,11 +414,14 @@ number:			if ((dprec = prec) >= 0)
 				default:
 					/*XXXUNCONST*/
 					cp = __UNCONST("bug bad base");
-					size = strlen(cp);
+					len = strlen(cp);
+					_DIAGASSERT(__type_fit(int, len));
+					size = (int)len;
 					goto skipsize;
 				}
 			}
-			size = bf + sizeof(bf) - cp;
+			_DIAGASSERT(__type_fit(int, bf + sizeof(bf) - cp));
+			size = (int)(bf + sizeof(bf) - cp);
 		skipsize:
 			break;
 		default:	/* "%?" prints ?, unless ? is NUL */

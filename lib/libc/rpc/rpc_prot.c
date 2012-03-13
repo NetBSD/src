@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_prot.c,v 1.18 2003/05/29 18:15:25 christos Exp $	*/
+/*	$NetBSD: rpc_prot.c,v 1.19 2012/03/13 21:13:45 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)rpc_prot.c 1.36 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)rpc_prot.c	2.3 88/08/07 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rpc_prot.c,v 1.18 2003/05/29 18:15:25 christos Exp $");
+__RCSID("$NetBSD: rpc_prot.c,v 1.19 2012/03/13 21:13:45 christos Exp $");
 #endif
 #endif
 
@@ -105,7 +105,8 @@ xdr_des_block(xdrs, blkp)
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(blkp != NULL);
 
-	return (xdr_opaque(xdrs, (caddr_t)(void *)blkp, sizeof(des_block)));
+	return (xdr_opaque(xdrs, (caddr_t)(void *)blkp,
+	    (u_int)sizeof(des_block)));
 }
 
 /* * * * * * * * * * * * * * XDR RPC MESSAGE * * * * * * * * * * * * * * * */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6opt.c,v 1.12 2009/01/30 23:43:30 lukem Exp $	*/
+/*	$NetBSD: ip6opt.c,v 1.13 2012/03/13 21:13:41 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ip6opt.c,v 1.12 2009/01/30 23:43:30 lukem Exp $");
+__RCSID("$NetBSD: ip6opt.c,v 1.13 2012/03/13 21:13:41 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: ip6opt.c,v 1.12 2009/01/30 23:43:30 lukem Exp $");
 #include <netinet/ip6.h>
 
 #include <assert.h>
+#include <stddef.h>
 #include <string.h>
 #include <stdio.h>
 
@@ -78,8 +79,11 @@ int
 inet6_option_space(nbytes)
 	int nbytes;
 {
+	size_t sp;
 	nbytes += 2;	/* we need space for nxt-hdr and length fields */
-	return(CMSG_SPACE((nbytes + 7) & ~7));
+	sp = CMSG_SPACE((nbytes + 7) & ~7);
+	_DIAGASSERT(__type_fit(int, sp));
+	return (int)sp;
 }
 
 /*
@@ -163,7 +167,8 @@ inet6_option_append(cmsg, typep, multx, plusy)
 	padlen %= multx;	/* keep the pad as short as possible */
 	/* insert padding */
 	inet6_insert_padopt(bp, padlen);
-	cmsg->cmsg_len += padlen;
+	_DIAGASSERT(__type_fit(socklen_t, padlen + cmsg->cmsg_len));
+	cmsg->cmsg_len += (socklen_t)padlen;
 	bp += padlen;
 
 	/* copy the option */
@@ -173,18 +178,21 @@ inet6_option_append(cmsg, typep, multx, plusy)
 		optlen = typep[1] + 2;
 	memcpy(bp, typep, (size_t)optlen);
 	bp += optlen;
-	cmsg->cmsg_len += optlen;
+	_DIAGASSERT(__type_fit(socklen_t, optlen + cmsg->cmsg_len));
+	cmsg->cmsg_len += (socklen_t)optlen;
 
 	/* calculate pad length after the option and insert the padding */
 	off = bp - (u_char *)(void *)eh;
 	padlen = ((off + 7) & ~7) - off;
 	inet6_insert_padopt(bp, padlen);
 	bp += padlen;
-	cmsg->cmsg_len += padlen;
+	_DIAGASSERT(__type_fit(socklen_t, padlen + cmsg->cmsg_len));
+	cmsg->cmsg_len += (socklen_t)padlen;
 
 	/* update the length field of the ip6 option header */
 	off = bp - (u_char *)(void *)eh;
-	eh->ip6e_len = (off >> 3) - 1;
+	_DIAGASSERT(__type_fit(uint8_t, (off >> 3) - 1));
+	eh->ip6e_len = (uint8_t)((off >> 3) - 1);
 
 	return(0);
 }
@@ -243,7 +251,7 @@ inet6_option_alloc(cmsg, datalen, multx, plusy)
 	padlen %= multx;	/* keep the pad as short as possible */
 	/* insert padding */
 	inet6_insert_padopt(bp, padlen);
-	cmsg->cmsg_len += padlen;
+	cmsg->cmsg_len += (socklen_t)padlen;
 	bp += padlen;
 
 	/* keep space to store specified length of data */
@@ -256,11 +264,13 @@ inet6_option_alloc(cmsg, datalen, multx, plusy)
 	padlen = ((off + 7) & ~7) - off;
 	inet6_insert_padopt(bp, padlen);
 	bp += padlen;
-	cmsg->cmsg_len += padlen;
+	_DIAGASSERT(__type_fit(socklen_t, padlen + cmsg->cmsg_len));
+	cmsg->cmsg_len += (socklen_t)padlen;
 
 	/* update the length field of the ip6 option header */
 	off = bp - (u_char *)(void *)eh;
-	eh->ip6e_len = (off >> 3) - 1;
+	_DIAGASSERT(__type_fit(uint8_t, (off >> 3) - 1));
+	eh->ip6e_len = (uint8_t)((off >> 3) - 1);
 
 	return(retval);
 }
@@ -432,7 +442,8 @@ inet6_insert_padopt(u_char *p, size_t len)
 		 return;
 	 default:
 		 p[0] = IP6OPT_PADN;
-		 p[1] = len - 2; 
+		 _DIAGASSERT(__type_fit(u_char, len - 2));
+		 p[1] = (u_char)(len - 2); 
 		 memset(&p[2], 0, len - 2);
 		 return;
 	}
@@ -496,7 +507,8 @@ inet6_opt_append(void *extbuf, socklen_t extlen, int offset, u_int8_t type,
 		padlen = align - (currentlen % align);
 
 	/* The option must fit in the extension header buffer. */
-	currentlen += padlen;
+	_DIAGASSERT(__type_fit(int, currentlen + padlen));
+	currentlen += (int)padlen;
 	if (extlen &&		/* XXX: right? */
 	    (socklen_t)currentlen > extlen)
 		return (-1);
@@ -511,7 +523,8 @@ inet6_opt_append(void *extbuf, socklen_t extlen, int offset, u_int8_t type,
 		} else if (padlen > 0) {
 			/* insert a PadN option for alignment */
 			*optp++ = IP6OPT_PADN;
-			*optp++ = padlen - 2;
+			_DIAGASSERT(__type_fit(uint8_t, padlen - 2));
+			*optp++ = (uint8_t)(padlen - 2);
 			memset(optp, 0, padlen - 2);
 			optp += (padlen - 2);
 		}
@@ -534,7 +547,7 @@ inet6_opt_finish(void *extbuf, socklen_t extlen, int offset)
 		u_int8_t *padp;
 		size_t padlen = updatelen - offset;
 
-		if ((socklen_t)updatelen > extlen)
+		if ((socklen_t)updatelen > extlen || padlen >= 256 + 2)
 			return (-1);
 
 		padp = (u_int8_t *)extbuf + offset;
@@ -542,7 +555,7 @@ inet6_opt_finish(void *extbuf, socklen_t extlen, int offset)
 			*padp = IP6OPT_PAD1;
 		else if (padlen > 0) {
 			*padp++ = IP6OPT_PADN;
-			*padp++ = (padlen - 2);
+			*padp++ = (uint8_t)(padlen - 2);
 			memset(padp, 0, padlen - 2);
 		}
 	}
@@ -582,6 +595,7 @@ inet6_opt_next(void *extbuf, socklen_t extlen, int offset, u_int8_t *typep,
 
 	/* Find the next option skipping any padding options. */
 	while (optp < lim) {
+		ptrdiff_t rv;
 		switch(*optp) {
 		case IP6OPT_PAD1:
 			optp++;
@@ -597,7 +611,9 @@ inet6_opt_next(void *extbuf, socklen_t extlen, int offset, u_int8_t *typep,
 			*typep = *optp;
 			*lenp = optlen - 2;
 			*databufp = optp + 2;
-			return (optp + optlen - (u_int8_t *)extbuf);
+			rv = optp + optlen - (u_int8_t *)extbuf;
+			_DIAGASSERT(__type_fit(int, rv));
+			return (int)rv;
 		}
 	}
 
@@ -634,9 +650,12 @@ inet6_opt_find(void *extbuf, socklen_t extlen, int offset, u_int8_t type,
 			goto optend;
 
 		if (*optp == type) { /* found */
+			ptrdiff_t td;
 			*lenp = optlen - 2;
 			*databufp = optp + 2;
-			return (optp + optlen - (u_int8_t *)extbuf);
+			td = optp + optlen - (u_int8_t *)extbuf;
+			_DIAGASSERT(__type_fit(int, td));
+			return (int)td;
 		}
 
 		optp += optlen;

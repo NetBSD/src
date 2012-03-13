@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_dg.c,v 1.12 2008/04/25 17:44:44 christos Exp $	*/
+/*	$NetBSD: svc_dg.c,v 1.13 2012/03/13 21:13:45 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: svc_dg.c,v 1.12 2008/04/25 17:44:44 christos Exp $");
+__RCSID("$NetBSD: svc_dg.c,v 1.13 2012/03/13 21:13:45 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -140,7 +140,8 @@ svc_dg_create(fd, sendsize, recvsize)
 	su->su_iosz = ((MAX(sendsize, recvsize) + 3) / 4) * 4;
 	if ((rpc_buffer(xprt) = malloc(su->su_iosz)) == NULL)
 		goto freedata;
-	xdrmem_create(&(su->su_xdrs), rpc_buffer(xprt), su->su_iosz,
+	_DIAGASSERT(__type_fit(u_int, su->su_iosz));
+	xdrmem_create(&(su->su_xdrs), rpc_buffer(xprt), (u_int)su->su_iosz,
 		XDR_DECODE);
 	su->su_cache = NULL;
 	xprt->xp_fd = fd;
@@ -566,8 +567,9 @@ cache_set(xprt, replylen)
 	victim->cache_replylen = replylen;
 	victim->cache_reply = rpc_buffer(xprt);
 	rpc_buffer(xprt) = newbuf;
-	xdrmem_create(&(su->su_xdrs), rpc_buffer(xprt),
-			su->su_iosz, XDR_ENCODE);
+	_DIAGASSERT(__type_fit(u_int, su->su_iosz));
+	xdrmem_create(&(su->su_xdrs), rpc_buffer(xprt), (u_int)su->su_iosz,
+	    XDR_ENCODE);
 	victim->cache_xid = su->su_xid;
 	victim->cache_proc = uc->uc_proc;
 	victim->cache_vers = uc->uc_vers;

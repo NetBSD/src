@@ -1,4 +1,4 @@
-/*	$NetBSD: stack_protector.c,v 1.7 2011/12/08 02:27:14 joerg Exp $	*/
+/*	$NetBSD: stack_protector.c,v 1.8 2012/03/13 21:13:39 christos Exp $	*/
 /*	$OpenBSD: stack_protector.c,v 1.10 2006/03/31 05:34:44 deraadt Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: stack_protector.c,v 1.7 2011/12/08 02:27:14 joerg Exp $");
+__RCSID("$NetBSD: stack_protector.c,v 1.8 2012/03/13 21:13:39 christos Exp $");
 
 #ifdef _LIBC
 #include "namespace.h"
@@ -63,8 +63,8 @@ __guard_setup(void)
 		return;
 
 	len = sizeof(__stack_chk_guard);
-	if (__sysctl(mib, __arraycount(mib), __stack_chk_guard, &len, NULL, 0) == -1 ||
-	    len != sizeof(__stack_chk_guard)) {
+	if (__sysctl(mib, (u_int)__arraycount(mib), __stack_chk_guard, &len,
+	    NULL, 0) == -1 || len != sizeof(__stack_chk_guard)) {
 		/* If sysctl was unsuccessful, use the "terminator canary". */
 		((unsigned char *)(void *)__stack_chk_guard)[0] = 0;
 		((unsigned char *)(void *)__stack_chk_guard)[1] = 0;
