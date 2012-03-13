@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.52 2012/03/12 21:35:10 joerg Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.53 2012/03/13 01:05:55 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.52 2012/03/12 21:35:10 joerg Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.53 2012/03/13 01:05:55 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -97,8 +97,6 @@ __strong_alias(__libc_mutex_destroy,pthread_mutex_destroy)
 __strong_alias(__libc_mutexattr_init,pthread_mutexattr_init)
 __strong_alias(__libc_mutexattr_destroy,pthread_mutexattr_destroy)
 __strong_alias(__libc_mutexattr_settype,pthread_mutexattr_settype)
-
-__strong_alias(__libc_thr_once,pthread_once)
 
 int
 pthread_mutex_init(pthread_mutex_t *ptm, const pthread_mutexattr_t *attr)
