@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1746 2012/03/10 21:52:00 joerg Exp $
+#	$NetBSD: mi,v 1.1747 2012/03/13 18:40:26 elad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -10065,6 +10065,7 @@
 ./usr/share/man/cat9/getnanotime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getnanouptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getnewvnode.0		comp-sys-catman		.cat
+./usr/share/man/cat9/genfs.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/gsignal.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/hardclock.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/hash.0			comp-sys-catman		.cat
@@ -16244,6 +16245,7 @@
 ./usr/share/man/html9/getnanotime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/getnanouptime.html	comp-sys-htmlman	html
 ./usr/share/man/html9/getnewvnode.html		comp-sys-htmlman	html
+./usr/share/man/html9/genfs.html		comp-sys-htmlman	html
 ./usr/share/man/html9/gsignal.html		comp-obsolete		obsolete
 ./usr/share/man/html9/hardclock.html		comp-sys-htmlman	html
 ./usr/share/man/html9/hash.html			comp-sys-htmlman	html
@@ -22576,6 +22578,7 @@
 ./usr/share/man/man9/getnanotime.9		comp-sys-man		.man
 ./usr/share/man/man9/getnanouptime.9		comp-sys-man		.man
 ./usr/share/man/man9/getnewvnode.9		comp-sys-man		.man
+./usr/share/man/man9/genfs.9			comp-sys-man		.man
 ./usr/share/man/man9/gsignal.9			comp-obsolete		obsolete
 ./usr/share/man/man9/hardclock.9		comp-sys-man		.man
 ./usr/share/man/man9/hash.9			comp-sys-man		.man

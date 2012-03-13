@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.111 2011/07/17 22:07:59 dholland Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.112 2012/03/13 18:41:14 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.111 2011/07/17 22:07:59 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.112 2012/03/13 18:41:14 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -67,6 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.111 2011/07/17 22:07:59 dholland Ex
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ufs/ufs_bswap.h>
 #include <ufs/ufs/ufs_wapbl.h>
+
+#include <miscfs/genfs/genfs.h>
 
 #ifdef DIAGNOSTIC
 int	dirchk = 1;
@@ -521,12 +523,6 @@ found:
 	 */
 	if (nameiop == DELETE && (flags & ISLASTCN)) {
 		/*
-		 * Write access to directory required to delete files.
-		 */
-		error = VOP_ACCESS(vdp, VWRITE, cred);
-		if (error)
-			goto out;
-		/*
 		 * Return pointer to current entry in results->ulr_offset,
 		 * and distance past previous entry (if there
 		 * is a previous entry in this block) in results->ulr_count.
@@ -536,12 +532,6 @@ found:
 			results->ulr_count = 0;
 		else
 			results->ulr_count = results->ulr_offset - prevoff;
-		if (dp->i_number == foundino) {
-			vref(vdp);
-			*vpp = vdp;
-			error = 0;
-			goto out;
-		}
 		if (flags & ISDOTDOT)
 			VOP_UNLOCK(vdp); /* race to get the inode */
 		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
@@ -550,18 +540,33 @@ found:
 		if (error)
 			goto out;
 		/*
+		 * Write access to directory required to delete files.
+		 */
+		error = VOP_ACCESS(vdp, VWRITE, cred);
+		if (error) {
+			vput(tdp);
+			goto out;
+		}
+		/*
 		 * If directory is "sticky", then user must own
 		 * the directory, or the file in it, else she
 		 * may not delete it (unless she's root). This
 		 * implements append-only directories.
 		 */
-		if ((dp->i_mode & ISVTX) &&
-		    kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		     NULL) != 0 &&
-		    kauth_cred_geteuid(cred) != dp->i_uid &&
-		    VTOI(tdp)->i_uid != kauth_cred_geteuid(cred)) {
-			vput(tdp);
-			error = EPERM;
+		if (dp->i_mode & ISVTX) {
+			error = kauth_authorize_vnode(cred, KAUTH_VNODE_DELETE,
+			    tdp, vdp, genfs_can_sticky(cred, dp->i_uid,
+			    VTOI(tdp)->i_uid));
+			if (error) {
+				vput(tdp);
+				error = EPERM;
+				goto out;
+			}
+		}
+		if (dp->i_number == foundino) {
+			vref(vdp);
+			*vpp = vdp;
+			error = 0;
 			goto out;
 		}
 		*vpp = tdp;
