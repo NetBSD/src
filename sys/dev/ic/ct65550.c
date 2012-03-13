@@ -1,4 +1,4 @@
-/*	$NetBSD: ct65550.c,v 1.3 2012/01/11 16:12:38 macallan Exp $	*/
+/*	$NetBSD: ct65550.c,v 1.4 2012/03/13 18:40:31 elad Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct65550.c,v 1.3 2012/01/11 16:12:38 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct65550.c,v 1.4 2012/03/13 18:40:31 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -774,8 +774,8 @@ chipsfb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
 	 */
-	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
-	    NULL) != 0) {
+	if (kauth_authorize_machdep(kauth_cred_get(), KAUTH_MACHDEP_UNMANAGEDMEM,
+	    NULL, NULL, NULL, NULL) != 0) {
 		aprint_normal_dev(sc->sc_dev, "mmap() rejected.\n");
 		return -1;
 	}
