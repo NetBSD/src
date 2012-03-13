@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_generic.c,v 1.24 2010/12/08 02:06:38 joerg Exp $	*/
+/*	$NetBSD: rpc_generic.c,v 1.25 2012/03/13 21:13:44 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: rpc_generic.c,v 1.24 2010/12/08 02:06:38 joerg Exp $");
+__RCSID("$NetBSD: rpc_generic.c,v 1.25 2012/03/13 21:13:44 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -649,8 +649,8 @@ __rpc_taddr2uaddr_af(int af, const struct netbuf *nbuf)
 	switch (af) {
 	case AF_INET:
 		sinp = nbuf->buf;
-		if (inet_ntop(af, &sinp->sin_addr, namebuf, sizeof namebuf)
-		    == NULL)
+		if (inet_ntop(af, &sinp->sin_addr, namebuf,
+		    (socklen_t)sizeof namebuf) == NULL)
 			return NULL;
 		port = ntohs(sinp->sin_port);
 		if (asprintf(&ret, "%s.%u.%u", namebuf, ((u_int32_t)port) >> 8,
@@ -660,8 +660,8 @@ __rpc_taddr2uaddr_af(int af, const struct netbuf *nbuf)
 #ifdef INET6
 	case AF_INET6:
 		sin6 = nbuf->buf;
-		if (inet_ntop(af, &sin6->sin6_addr, namebuf6, sizeof namebuf6)
-		    == NULL)
+		if (inet_ntop(af, &sin6->sin6_addr, namebuf6,
+		    (socklen_t)sizeof namebuf6) == NULL)
 			return NULL;
 		port = ntohs(sin6->sin6_port);
 		if (asprintf(&ret, "%s.%u.%u", namebuf6, ((u_int32_t)port) >> 8,
@@ -687,6 +687,7 @@ __rpc_uaddr2taddr_af(int af, const char *uaddr)
 	struct netbuf *ret = NULL;
 	char *addrstr, *p;
 	unsigned port, portlo, porthi;
+	size_t len;
 	struct sockaddr_in *sinp;
 #ifdef INET6
 	struct sockaddr_in6 *sin6;
@@ -765,7 +766,9 @@ __rpc_uaddr2taddr_af(int af, const char *uaddr)
 		memset(sun, 0, sizeof *sun);
 		sun->sun_family = AF_LOCAL;
 		strncpy(sun->sun_path, addrstr, sizeof(sun->sun_path) - 1);
-		ret->len = ret->maxlen = sun->sun_len = SUN_LEN(sun);
+		len = SUN_LEN(sun);
+		_DIAGASSERT(__type_fit(uint8_t, len));
+		ret->len = ret->maxlen = sun->sun_len = (uint8_t)len;
 		ret->buf = sun;
 		break;
 	default:
@@ -893,5 +896,6 @@ __rpc_setnodelay(int fd, const struct __rpc_sockinfo *si)
 	int one = 1;
 	if (si->si_proto != IPPROTO_TCP)
 		return 0;
-	return setsockopt(fd, si->si_proto, TCP_NODELAY, &one, sizeof(one));
+	return setsockopt(fd, si->si_proto, TCP_NODELAY, &one,
+	    (socklen_t)sizeof(one));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fseeko.c,v 1.9 2012/01/22 18:36:17 christos Exp $	*/
+/*	$NetBSD: fseeko.c,v 1.10 2012/03/13 21:13:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fseeko.c,v 1.9 2012/01/22 18:36:17 christos Exp $");
+__RCSID("$NetBSD: fseeko.c,v 1.10 2012/03/13 21:13:46 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -207,7 +207,8 @@ fseeko(FILE *fp, off_t offset, int whence)
 		int o = (int)(target - curoff);
 
 		fp->_p = fp->_bf._base + o;
-		fp->_r = n - o;
+		_DIAGASSERT(__type_fit(int, n - o));
+		fp->_r = (int)(n - o);
 		if (HASUB(fp))
 			FREEUB(fp);
 		fp->_flags &= ~__SEOF;
@@ -236,7 +237,8 @@ fseeko(FILE *fp, off_t offset, int whence)
 		if (__srefill(fp) || (size_t)fp->_r < n)
 			goto dumb;
 		fp->_p += n;
-		fp->_r -= n;
+		_DIAGASSERT(__type_fit(int, fp->_r - n));
+		fp->_r -= (int)n;
 	}
 	FUNLOCKFILE(fp);
 	return (0);

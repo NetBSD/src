@@ -1,4 +1,4 @@
-/*	$NetBSD: ev_timers.c,v 1.8 2009/04/12 17:07:17 christos Exp $	*/
+/*	$NetBSD: ev_timers.c,v 1.9 2012/03/13 21:13:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -26,7 +26,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: ev_timers.c,v 1.6 2005/04/27 04:56:36 sra Exp";
 #else
-__RCSID("$NetBSD: ev_timers.c,v 1.8 2009/04/12 17:07:17 christos Exp $");
+__RCSID("$NetBSD: ev_timers.c,v 1.9 2012/03/13 21:13:38 christos Exp $");
 #endif
 #endif
 
@@ -176,7 +176,7 @@ evTimeVal(struct timespec ts) {
 	struct timeval tv;
 
 	tv.tv_sec = ts.tv_sec;
-	tv.tv_usec = ts.tv_nsec / 1000;
+	tv.tv_usec = (suseconds_t)(ts.tv_nsec / 1000);
 	return (tv);
 }
 

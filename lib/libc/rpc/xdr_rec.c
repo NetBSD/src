@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_rec.c,v 1.31 2010/11/23 14:02:01 christos Exp $	*/
+/*	$NetBSD: xdr_rec.c,v 1.32 2012/03/13 21:13:45 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_rec.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_rec.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_rec.c,v 1.31 2010/11/23 14:02:01 christos Exp $");
+__RCSID("$NetBSD: xdr_rec.c,v 1.32 2012/03/13 21:13:45 christos Exp $");
 #endif
 #endif
 
@@ -62,6 +62,7 @@ __RCSID("$NetBSD: xdr_rec.c,v 1.31 2010/11/23 14:02:01 christos Exp $");
 
 #include <netinet/in.h>
 
+#include <assert.h>
 #include <err.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -259,7 +260,7 @@ xdrrec_getlong(xdrs, lp)
 		rstrm->in_finger += sizeof(int32_t);
 	} else {
 		if (! xdrrec_getbytes(xdrs, (char *)(void *)&mylong,
-		    sizeof(int32_t)))
+		    (u_int)sizeof(int32_t)))
 			return (FALSE);
 		*lp = (long)ntohl((u_int32_t)mylong);
 	}
@@ -334,7 +335,8 @@ xdrrec_putbytes(xdrs, addr, len)
 		memmove(rstrm->out_finger, addr, current);
 		rstrm->out_finger += current;
 		addr += current;
-		len -= current;
+		_DIAGASSERT(__type_fit(u_int, current));
+		len -= (u_int)current;
 		if (rstrm->out_finger == rstrm->out_boundry) {
 			rstrm->frag_sent = TRUE;
 			if (! flush_out(rstrm, FALSE))
@@ -568,7 +570,8 @@ __xdrrec_getrec(xdrs, statp, expectdata)
 			return FALSE;
 		}
 		rstrm->in_hdrp += n;
-		rstrm->in_hdrlen += n;
+		_DIAGASSERT(__type_fit(int, n));
+		rstrm->in_hdrlen += (int)n;
 		if (rstrm->in_hdrlen < (int)sizeof(rstrm->in_header)) {
 			*statp = XPRT_MOREREQS;
 			return FALSE;
@@ -607,7 +610,8 @@ __xdrrec_getrec(xdrs, statp, expectdata)
 		return FALSE;
 	}
 
-	rstrm->in_received += n;
+	_DIAGASSERT(__type_fit(int, n));
+	rstrm->in_received += (int)n;
 
 	if (rstrm->in_received == rstrm->in_reclen) {
 		rstrm->in_haveheader = FALSE;
@@ -704,8 +708,10 @@ get_input_bytes(rstrm, addr, len)
 	}
 
 	while (len > 0) {
-		current = ((uintptr_t)rstrm->in_boundry -
+		uintptr_t d = ((uintptr_t)rstrm->in_boundry -
 		    (uintptr_t)rstrm->in_finger);
+		_DIAGASSERT(__type_fit(u_int, d));
+		current = (u_int)d;
 		if (current == 0) {
 			if (! fill_input_buf(rstrm))
 				return (FALSE);
@@ -728,7 +734,8 @@ set_input_fragment(rstrm)
 
 	if (rstrm->nonblock)
 		return FALSE;
-	if (! get_input_bytes(rstrm, (char *)(void *)&header, sizeof(header)))
+	if (! get_input_bytes(rstrm, (char *)(void *)&header,
+	    (u_int)sizeof(header)))
 		return (FALSE);
 	header = ntohl(header);
 	rstrm->last_frag = ((header & LAST_FRAG) == 0) ? FALSE : TRUE;
@@ -754,7 +761,7 @@ skip_input_bytes(rstrm, cnt)
 	u_int32_t current;
 
 	while (cnt > 0) {
-		current = (size_t)((long)rstrm->in_boundry - 
+		current = (uint32_t)((long)rstrm->in_boundry - 
 		    (long)rstrm->in_finger);
 		if (current == 0) {
 			if (! fill_input_buf(rstrm))

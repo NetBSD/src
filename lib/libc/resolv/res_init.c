@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.23 2011/10/15 23:00:02 christos Exp $	*/
+/*	$NetBSD: res_init.c,v 1.24 2012/03/13 21:13:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -76,7 +76,7 @@
 static const char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static const char rcsid[] = "Id: res_init.c,v 1.26 2008/12/11 09:59:00 marka Exp";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.23 2011/10/15 23:00:02 christos Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.24 2012/03/13 21:13:43 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -351,7 +351,7 @@ __res_vinit(res_state statp, int preinit) {
 	    struct kevent kc;
 
 	    /* read the config file */
-	    while (fgets(buf, sizeof(buf), fp) != NULL) {
+	    while (fgets(buf, (int)sizeof(buf), fp) != NULL) {
 		/* skip comments */
 		if (*buf == ';' || *buf == '#')
 			continue;
@@ -598,6 +598,7 @@ res_setoptions(res_state statp, const char *options, const char *source)
 {
 	const char *cp = options;
 	int i;
+	size_t j;
 	struct __res_state_ext *ext = statp->_u._ext.ext;
 
 #ifdef DEBUG
@@ -690,17 +691,17 @@ res_setoptions(res_state statp, const char *options, const char *source)
 			if (ext == NULL)
 				goto skip;
 			cp += sizeof("nibble:") - 1;
-			i = MIN(strcspn(cp, " \t"), sizeof(ext->nsuffix) - 1);
-			strncpy(ext->nsuffix, cp, (size_t)i);
-			ext->nsuffix[i] = '\0';
+			j = MIN(strcspn(cp, " \t"), sizeof(ext->nsuffix) - 1);
+			strncpy(ext->nsuffix, cp, j);
+			ext->nsuffix[j] = '\0';
 		}
 		else if (!strncmp(cp, "nibble2:", sizeof("nibble2:") - 1)) {
 			if (ext == NULL)
 				goto skip;
 			cp += sizeof("nibble2:") - 1;
-			i = MIN(strcspn(cp, " \t"), sizeof(ext->nsuffix2) - 1);
-			strncpy(ext->nsuffix2, cp, (size_t)i);
-			ext->nsuffix2[i] = '\0';
+			j = MIN(strcspn(cp, " \t"), sizeof(ext->nsuffix2) - 1);
+			strncpy(ext->nsuffix2, cp, j);
+			ext->nsuffix2[j] = '\0';
 		}
 		else if (!strncmp(cp, "v6revmode:", sizeof("v6revmode:") - 1)) {
 			cp += sizeof("v6revmode:") - 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vsnprintf.c,v 1.23 2011/07/17 20:54:34 joerg Exp $	*/
+/*	$NetBSD: vsnprintf.c,v 1.24 2012/03/13 21:13:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vsnprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vsnprintf.c,v 1.23 2011/07/17 20:54:34 joerg Exp $");
+__RCSID("$NetBSD: vsnprintf.c,v 1.24 2012/03/13 21:13:47 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -82,7 +82,8 @@ vsnprintf(char *str, size_t n, const char *fmt, va_list ap)
 		f._bf._size = f._w = 0;
 	} else {
 		f._bf._base = f._p = (unsigned char *)str;
-		f._bf._size = f._w = n - 1;
+		_DIAGASSERT(__type_fit(int, n - 1));
+		f._bf._size = f._w = (int)(n - 1);
 	}
 	ret = __vfprintf_unlocked(&f, fmt, ap);
 	*f._p = 0;

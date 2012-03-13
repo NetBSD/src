@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.64 2011/10/15 23:00:01 christos Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.65 2012/03/13 21:13:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999-2000, 2004-2005 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.64 2011/10/15 23:00:01 christos Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.65 2012/03/13 21:13:35 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -359,7 +359,7 @@ __grscan_files(int *retval, struct group *grp, char *buffer, size_t buflen,
 	rv = NS_NOTFOUND;
 
 							/* scan line by line */
-	while (fgets(filebuf, sizeof(filebuf), state->fp) != NULL) {
+	while (fgets(filebuf, (int)sizeof(filebuf), state->fp) != NULL) {
 		ep = strchr(filebuf, '\n');
 		if (ep == NULL) {	/* skip lines that are too big */
 			int ch;
@@ -1427,7 +1427,7 @@ __grscan_compat(int *retval, struct group *grp, char *buffer, size_t buflen,
 		}
 
 							/* get next file line */
-		if (fgets(filebuf, sizeof(filebuf), state->fp) == NULL)
+		if (fgets(filebuf, (int)sizeof(filebuf), state->fp) == NULL)
 			break;
 
 		ep = strchr(filebuf, '\n');

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_getdents.c,v 1.4 2011/06/20 09:11:17 mrg Exp $	*/
+/*	$NetBSD: compat_getdents.c,v 1.5 2012/03/13 21:13:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_getdents.c,v 1.4 2011/06/20 09:11:17 mrg Exp $");
+__RCSID("$NetBSD: compat_getdents.c,v 1.5 2012/03/13 21:13:32 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -52,6 +52,7 @@ getdents(int fd, char *buf, size_t nbytes)
 	struct dirent12 *odp;
 	ino_t ino;
 	int rv;
+	size_t len;
 
 	if ((rv = __getdents30(fd, buf, nbytes)) == -1)
 		return rv;
@@ -78,8 +79,12 @@ getdents(int fd, char *buf, size_t nbytes)
 		odp->d_type = ndp->d_type;
 		(void)memcpy(odp->d_name, ndp->d_name, (size_t)odp->d_namlen);
 		odp->d_name[odp->d_namlen] = '\0';
-		odp->d_reclen = _DIRENT_SIZE(odp);
+		len = _DIRENT_SIZE(odp);
+		_DIAGASSERT(__type_fit(uint16_t, len));
+		odp->d_reclen = (uint16_t)len;
 		odp = _DIRENT_NEXT(odp);
 	}
-	return ((char *)(void *)odp) - buf;
+	ptrdiff_t td = (((char *)(void *)odp) - buf);
+	_DIAGASSERT(__type_fit(int, td));
+	return (int)td;
 }

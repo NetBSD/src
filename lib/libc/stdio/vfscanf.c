@@ -1,4 +1,4 @@
-/*	$NetBSD: vfscanf.c,v 1.41 2010/12/16 17:42:27 wiz Exp $	*/
+/*	$NetBSD: vfscanf.c,v 1.42 2012/03/13 21:13:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfscanf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfscanf.c,v 1.41 2007/01/09 00:28:07 imp Exp $");
 #else
-__RCSID("$NetBSD: vfscanf.c,v 1.41 2010/12/16 17:42:27 wiz Exp $");
+__RCSID("$NetBSD: vfscanf.c,v 1.42 2012/03/13 21:13:46 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -109,7 +109,7 @@ __weak_alias(vfscanf,__svfscanf)
 
 static const u_char *__sccl(char *, const u_char *);
 #ifndef NO_FLOATING_POINT
-static int parsefloat(FILE *, char *, char *);
+static size_t parsefloat(FILE *, char *, char *);
 #endif
 
 int __scanfdebug = 0;
@@ -161,7 +161,7 @@ __svfscanf_unlocked(FILE *fp, const char *fmt0, va_list ap)
 	char *p0;		/* saves original value of p when necessary */
 	int nassigned;		/* number of fields assigned */
 	int nconversions;	/* number of conversions */
-	int nread;		/* number of characters consumed from fp */
+	size_t nread;		/* number of characters consumed from fp */
 	int base;		/* base argument to conversion function */
 	char ccltab[256];	/* character class table for %[...] */
 	char buf[BUF];		/* buffer for numeric and mb conversions */
@@ -325,9 +325,9 @@ literal:
 			if (flags & SUPPRESS)	/* ??? */
 				continue;
 			if (flags & SHORTSHORT)
-				*va_arg(ap, char *) = nread;
+				*va_arg(ap, char *) = (char)nread;
 			else if (flags & SHORT)
-				*va_arg(ap, short *) = nread;
+				*va_arg(ap, short *) = (short)nread;
 			else if (flags & LONG)
 				*va_arg(ap, long *) = nread;
 			else if (flags & LONGLONG)
@@ -339,7 +339,7 @@ literal:
 			else if (flags & PTRDIFFT)
 				*va_arg(ap, ptrdiff_t *) = nread;
 			else
-				*va_arg(ap, int *) = nread;
+				*va_arg(ap, int *) = (int)nread;
 			continue;
 
 		default:
@@ -439,7 +439,9 @@ literal:
 						}
 					} else {
 						sum += width;
-						fp->_r -= width;
+						_DIAGASSERT(__type_fit(int,
+						    fp->_r - width));
+						fp->_r -= (int)width;
 						fp->_p += width;
 						break;
 					}
@@ -945,7 +947,7 @@ doswitch:
 }
 
 #ifndef NO_FLOATING_POINT
-static int
+static size_t
 parsefloat(FILE *fp, char *buf, char *end)
 {
 	char *commit, *p;

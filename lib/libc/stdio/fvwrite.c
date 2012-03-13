@@ -1,4 +1,4 @@
-/*	$NetBSD: fvwrite.c,v 1.22 2011/03/24 02:29:33 dholland Exp $	*/
+/*	$NetBSD: fvwrite.c,v 1.23 2012/03/13 21:13:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,11 +37,12 @@
 #if 0
 static char sccsid[] = "@(#)fvwrite.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fvwrite.c,v 1.22 2011/03/24 02:29:33 dholland Exp $");
+__RCSID("$NetBSD: fvwrite.c,v 1.23 2012/03/13 21:13:46 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
+#include <stddef.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -61,12 +62,12 @@ __sfvwrite(fp, uio)
 	FILE *fp;
 	struct __suio *uio;
 {
-	int len;
+	size_t len;
 	char *p;
 	struct __siov *iov;
 	int w, s;
 	char *nl;
-	int nlknown, nldist;
+	size_t nlknown, nldist;
 
 	_DIAGASSERT(fp != NULL);
 	_DIAGASSERT(uio != NULL);
@@ -125,8 +126,8 @@ __sfvwrite(fp, uio)
 		do {
 			GETIOV(;);
 			if ((fp->_flags & (__SALC | __SSTR)) ==
-			    (__SALC | __SSTR) && fp->_w < len) {
-				int blen = fp->_p - fp->_bf._base;
+			    (__SALC | __SSTR) && (size_t)fp->_w < len) {
+				ptrdiff_t blen = fp->_p - fp->_bf._base;
 				unsigned char *_base;
 				int _size;
 
@@ -134,7 +135,7 @@ __sfvwrite(fp, uio)
 				_size = fp->_bf._size;
 				do {
 					_size = (_size << 1) + 1;
-				} while (_size < blen + len);
+				} while ((size_t)_size < blen + len);
 				_base = realloc(fp->_bf._base,
 				    (size_t)(_size + 1));
 				if (_base == NULL)
@@ -146,27 +147,27 @@ __sfvwrite(fp, uio)
 			}
 			w = fp->_w;
 			if (fp->_flags & __SSTR) {
-				if (len < w)
-					w = len;
+				if (len < (size_t)w)
+					w = (int)len;
 				COPY(w);	/* copy MIN(fp->_w,len), */
 				fp->_w -= w;
 				fp->_p += w;
-				w = len;	/* but pretend copied all */
-			} else if (fp->_p > fp->_bf._base && len > w) {
+				w = (int)len;	/* but pretend copied all */
+			} else if (fp->_p > fp->_bf._base && len > (size_t)w) {
 				/* fill and flush */
 				COPY(w);
 				/* fp->_w -= w; */ /* unneeded */
 				fp->_p += w;
 				if (fflush(fp))
 					goto err;
-			} else if (len >= (w = fp->_bf._size)) {
+			} else if (len >= (size_t)(w = fp->_bf._size)) {
 				/* write directly */
 				w = (*fp->_write)(fp->_cookie, p, w);
 				if (w <= 0)
 					goto err;
 			} else {
 				/* fill and done */
-				w = len;
+				w = (int)len;
 				COPY(w);
 				fp->_w -= w;
 				fp->_p += w;
@@ -187,11 +188,11 @@ __sfvwrite(fp, uio)
 		do {
 			GETIOV(nlknown = 0);
 			if (!nlknown) {
-				nl = memchr(p, '\n', (size_t)len);
-				nldist = nl ? nl + 1 - p : len + 1;
+				nl = memchr(p, '\n', len);
+				nldist = nl ? (size_t)(nl + 1 - p) : len + 1;
 				nlknown = 1;
 			}
-			s = MIN(len, nldist);
+			s = (int)MIN(len, nldist);
 			w = fp->_w + fp->_bf._size;
 			if (fp->_p > fp->_bf._base && s > w) {
 				COPY(w);

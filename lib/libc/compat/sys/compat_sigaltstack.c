@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigaltstack.c,v 1.3 2009/01/11 02:46:26 christos Exp $	*/
+/*	$NetBSD: compat_sigaltstack.c,v 1.4 2012/03/13 21:13:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_sigaltstack.c,v 1.3 2009/01/11 02:46:26 christos Exp $");
+__RCSID("$NetBSD: compat_sigaltstack.c,v 1.4 2012/03/13 21:13:32 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -62,7 +62,7 @@ sigaltstack(onss, ooss)
 		if (oss.ss_size > INT_MAX)
 			ooss->ss_size = INT_MAX;
 		else
-			ooss->ss_size = oss.ss_size;
+			ooss->ss_size = (int)oss.ss_size;
 		ooss->ss_flags = oss.ss_flags;
 	}
 

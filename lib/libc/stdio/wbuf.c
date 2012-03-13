@@ -1,4 +1,4 @@
-/*	$NetBSD: wbuf.c,v 1.13 2003/08/07 16:43:35 agc Exp $	*/
+/*	$NetBSD: wbuf.c,v 1.14 2012/03/13 21:13:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)wbuf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: wbuf.c,v 1.13 2003/08/07 16:43:35 agc Exp $");
+__RCSID("$NetBSD: wbuf.c,v 1.14 2012/03/13 21:13:47 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -86,7 +86,8 @@ __swbuf(c, fp)
 	 * guarantees that putc() will always call wbuf() by setting _w
 	 * to 0, so we need not do anything else.
 	 */
-	n = fp->_p - fp->_bf._base;
+	_DIAGASSERT(__type_fit(int, fp->_p - fp->_bf._base));
+	n = (int)(fp->_p - fp->_bf._base);
 	if (n >= fp->_bf._size) {
 		if (fflush(fp))
 			return (EOF);

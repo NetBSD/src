@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.c,v 1.2 2008/10/31 00:29:19 rmind Exp $	*/
+/*	$NetBSD: sched.c,v 1.3 2012/03/13 21:13:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sched.c,v 1.2 2008/10/31 00:29:19 rmind Exp $");
+__RCSID("$NetBSD: sched.c,v 1.3 2012/03/13 21:13:48 christos Exp $");
 
 #include <string.h>
 #include <unistd.h>
@@ -104,7 +104,7 @@ sched_get_priority_max(int policy)
 		errno = EINVAL;
 		return -1;
 	}
-	return sysconf(_SC_SCHED_PRI_MAX);
+	return (int)sysconf(_SC_SCHED_PRI_MAX);
 }
 
 int
@@ -115,7 +115,7 @@ sched_get_priority_min(int policy)
 		errno = EINVAL;
 		return -1;
 	}
-	return sysconf(_SC_SCHED_PRI_MIN);
+	return (int)sysconf(_SC_SCHED_PRI_MIN);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.50 2010/06/29 14:44:19 seanb Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.51 2012/03/13 21:13:41 christos Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.50 2010/06/29 14:44:19 seanb Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.51 2012/03/13 21:13:41 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -343,8 +343,8 @@ getnameinfo_inet(sa, salen, host, hostlen, serv, servlen, flags)
 		}
 #endif
 		default:
-			if (inet_ntop(afd->a_af, addr, numaddr, sizeof(numaddr))
-			    == NULL)
+			if (inet_ntop(afd->a_af, addr, numaddr,
+			    (socklen_t)sizeof(numaddr)) == NULL)
 				return EAI_SYSTEM;
 			numaddrlen = strlen(numaddr);
 			if (numaddrlen + 1 > hostlen) /* don't forget terminator */
@@ -415,7 +415,8 @@ ip6_parsenumeric(sa, addr, host, hostlen, flags)
 	_DIAGASSERT(addr != NULL);
 	_DIAGASSERT(host != NULL);
 
-	if (inet_ntop(AF_INET6, addr, numaddr, sizeof(numaddr)) == NULL)
+	if (inet_ntop(AF_INET6, addr, numaddr, (socklen_t)sizeof(numaddr))
+	    == NULL)
 		return EAI_SYSTEM;
 
 	numaddrlen = strlen(numaddr);
@@ -477,7 +478,7 @@ ip6_sa2str(sa6, buf, bufsiz, flags)
 	    bufsiz >= IF_NAMESIZE) {
 		char *p = if_indextoname(ifindex, buf);
 		if (p) {
-			return(strlen(p));
+			return (int)strlen(p);
 		}
 	}
 

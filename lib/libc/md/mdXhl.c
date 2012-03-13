@@ -1,4 +1,4 @@
-/*	$NetBSD: mdXhl.c,v 1.8 2009/03/06 18:15:24 apb Exp $	*/
+/*	$NetBSD: mdXhl.c,v 1.9 2012/03/13 21:13:38 christos Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -78,7 +78,8 @@ MDNAME(File)(filename, buf)
 {
 	unsigned char buffer[BUFSIZ];
 	MDNAME(_CTX) ctx;
-	int f, i, j;
+	int f, j;
+	ssize_t i;
 
 	_DIAGASSERT(filename != 0);
 	/* buf may be NULL */

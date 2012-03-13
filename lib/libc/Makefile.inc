@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2012/01/20 16:31:29 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2012/03/13 21:13:30 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -24,7 +24,7 @@ USE_SHLIBDIR=	yes
 .include <bsd.own.mk>
 
 WARNS=4
-CPPFLAGS+=	-D_LIBC -DLIBC_SCCS -DSYSLIBC_SCCS -D_REENTRANT
+CPPFLAGS+=	-D_LIBC -DLIBC_SCCS -DSYSLIBC_SCCS -D_REENTRANT -D_DIAGNOSTIC
 
 .if (${USE_HESIOD} != "no")
 CPPFLAGS+=	-DHESIOD
@@ -40,10 +40,8 @@ CPPFLAGS+=	-DNLS
 CPPFLAGS+=	-DYP
 .endif
 
-.if ${MACHINE_ARCH} == "i386"
 # Set lint to exit on warnings
 LINTFLAGS+=	-w
-.endif
 # ignore 'empty translation unit' warnings.
 LINTFLAGS+=	-X 272
 

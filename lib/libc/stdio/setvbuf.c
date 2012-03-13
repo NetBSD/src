@@ -1,4 +1,4 @@
-/*	$NetBSD: setvbuf.c,v 1.17 2003/08/07 16:43:31 agc Exp $	*/
+/*	$NetBSD: setvbuf.c,v 1.18 2012/03/13 21:13:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setvbuf.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: setvbuf.c,v 1.17 2003/08/07 16:43:31 agc Exp $");
+__RCSID("$NetBSD: setvbuf.c,v 1.18 2012/03/13 21:13:46 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -152,7 +152,8 @@ nbf:
 		flags |= __SLBF;
 	fp->_flags = flags;
 	fp->_bf._base = fp->_p = (unsigned char *)buf;
-	fp->_bf._size = size;
+	_DIAGASSERT(__type_fit(int, size));
+	fp->_bf._size = (int)size;
 	/* fp->_lbfsize is still 0 */
 	if (flags & __SWR) {
 		/*
@@ -162,8 +163,10 @@ nbf:
 		if (flags & __SLBF) {
 			fp->_w = 0;
 			fp->_lbfsize = -fp->_bf._size;
-		} else
-			fp->_w = size;
+		} else {
+			_DIAGASSERT(__type_fit(int, size));
+			fp->_w = (int)size;
+		}
 	} else {
 		/* begin/continue reading, or stay in intermediate state */
 		fp->_w = 0;

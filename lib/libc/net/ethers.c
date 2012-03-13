@@ -1,4 +1,4 @@
-/*	$NetBSD: ethers.c,v 1.21 2006/10/15 10:55:01 martin Exp $	*/
+/*	$NetBSD: ethers.c,v 1.22 2012/03/13 21:13:40 christos Exp $	*/
 
 /* 
  * ethers(3N) a la Sun.
@@ -9,7 +9,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ethers.c,v 1.21 2006/10/15 10:55:01 martin Exp $");
+__RCSID("$NetBSD: ethers.c,v 1.22 2012/03/13 21:13:40 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -152,7 +152,7 @@ ether_hostton(hostname, e)
 	size_t len;
 	char try[MAXHOSTNAMELEN + 1];
 #ifdef YP
-	int hostlen = strlen(hostname);
+	int hostlen = (int)strlen(hostname);
 #endif
 
 	_DIAGASSERT(hostname != NULL);

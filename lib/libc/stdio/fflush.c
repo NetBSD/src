@@ -1,4 +1,4 @@
-/*	$NetBSD: fflush.c,v 1.15 2003/08/07 16:43:22 agc Exp $	*/
+/*	$NetBSD: fflush.c,v 1.16 2012/03/13 21:13:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,10 +37,11 @@
 #if 0
 static char sccsid[] = "@(#)fflush.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fflush.c,v 1.15 2003/08/07 16:43:22 agc Exp $");
+__RCSID("$NetBSD: fflush.c,v 1.16 2012/03/13 21:13:46 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <stddef.h>
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
@@ -92,7 +93,9 @@ __sflush(fp)
 	if ((p = fp->_bf._base) == NULL)
 		return (0);
 
-	n = fp->_p - p;		/* write this much */
+	ptrdiff_t tp = fp->_p - p;
+	_DIAGASSERT(__type_fit(int, tp));
+	n = (int)tp;		/* write this much */
 
 	/*
 	 * Set these immediately to avoid problems with longjmp and to allow
