@@ -1,4 +1,4 @@
-/* $NetBSD: t_mmap.c,v 1.3 2012/03/06 11:02:55 jruoho Exp $ */
+/* $NetBSD: t_mmap.c,v 1.4 2012/03/13 06:37:03 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mmap.c,v 1.3 2012/03/06 11:02:55 jruoho Exp $");
+__RCSID("$NetBSD: t_mmap.c,v 1.4 2012/03/13 06:37:03 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -176,8 +176,8 @@ ATF_TC_BODY(mmap_block, tc)
 		}
 	}
 
-	if (i == __arraycount(dev))	/* Skip. */
-		return;
+	if (i == __arraycount(dev))
+		atf_tc_skip("failed to find suitable block device");
 
 	map = mmap(NULL, 4096, PROT_READ, MAP_FILE, fd, 0);
 	ATF_REQUIRE(map != MAP_FAILED);
