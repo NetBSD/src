@@ -99,6 +99,7 @@ static const char *const access_contents[] = {
 };
 
 static const char *const group_contents[] = {
+	NULL
 };
 
 /* Structure which describes an administrative file.  */
