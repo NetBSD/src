@@ -251,7 +251,7 @@ FreeBSD 5.2           |      |                 |                       |
  |                   10.7    |                 |                       |
  |                    |      |             OpenBSD 5.0                 |
  +--FreeBSD           |      |                 |                       |
- |    9.0             |      |                 |                       |
+ |    9.0             |      |                 |               DragonFly 3.0.1
  |     v              |      |                 |                       |
  |                    |      |                 |                       |
 FreeBSD 10 -current   |  NetBSD -current  OpenBSD -current             |
@@ -543,6 +543,7 @@ OpenBSD 4.9		2011-05-01 [OBD]
 Mac OS X 10.7		2011-07-20 [APL]
 OpenBSD 5.0		2011-11-01 [OBD]
 FreeBSD 9.0		2012-01-12 [FBD]
+DragonFly 3.0.1		2012-02-21 [DFB]
 
 Bibliography
 ------------------------
@@ -603,4 +604,4 @@ Steven M. Schultz for providing 2.8BSD, 2.10BSD, 2.11BSD manual pages.
 Copyright (c) 1997-2012 Wolfram Schneider <wosch@FreeBSD.ORG>
 URL: http://cvsweb.freebsd.org/src/share/misc/bsd-family-tree
 
-$FreeBSD: src/share/misc/bsd-family-tree,v 1.150 2012/01/13 06:18:23 maxim Exp $
+$FreeBSD: src/share/misc/bsd-family-tree,v 1.151 2012/02/22 17:52:53 maxim Exp $
