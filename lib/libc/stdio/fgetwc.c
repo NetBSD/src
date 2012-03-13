@@ -1,4 +1,4 @@
-/* $NetBSD: fgetwc.c,v 1.11 2009/10/25 20:44:13 christos Exp $ */
+/* $NetBSD: fgetwc.c,v 1.12 2012/03/13 21:13:46 christos Exp $ */
 
 /*-
  * Copyright (c)2001 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fgetwc.c,v 1.11 2009/10/25 20:44:13 christos Exp $");
+__RCSID("$NetBSD: fgetwc.c,v 1.12 2012/03/13 21:13:46 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -80,7 +80,8 @@ restart:
 		nr = 1;
 	}
 	fp->_p += nr;
-	fp->_r -= nr;
+	_DIAGASSERT(__type_fit(int, fp->_r - nr));
+	fp->_r -= (int)nr;
 
 	return wc;
 }

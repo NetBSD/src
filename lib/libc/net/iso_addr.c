@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_addr.c,v 1.12 2005/11/29 03:11:59 christos Exp $	*/
+/*	$NetBSD: iso_addr.c,v 1.13 2012/03/13 21:13:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)iso_addr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: iso_addr.c,v 1.12 2005/11/29 03:11:59 christos Exp $");
+__RCSID("$NetBSD: iso_addr.c,v 1.13 2012/03/13 21:13:41 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -95,7 +95,8 @@ iso_addr(addr)
 		}
 		break;
 	} while (cp < cplim); 
-	out_addr.isoa_len = cp - out_addr.isoa_genaddr;
+	_DIAGASSERT(__type_fit(uint8_t, cp - out_addr.isoa_genaddr));
+	out_addr.isoa_len = (uint8_t)(cp - out_addr.isoa_genaddr);
 	return (&out_addr);
 }
 

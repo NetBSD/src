@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.c,v 1.17 2012/01/22 18:36:17 christos Exp $	*/
+/*	$NetBSD: stdio.c,v 1.18 2012/03/13 21:13:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)stdio.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: stdio.c,v 1.17 2012/01/22 18:36:17 christos Exp $");
+__RCSID("$NetBSD: stdio.c,v 1.18 2012/03/13 21:13:46 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,7 +63,7 @@ __sread(cookie, buf, n)
 	int n;
 {
 	FILE *fp = cookie;
-	int ret;
+	ssize_t ret;
 	
 	_DIAGASSERT(fp != NULL);
 	_DIAGASSERT(buf != NULL);
@@ -74,7 +74,8 @@ __sread(cookie, buf, n)
 		fp->_offset += ret;
 	else
 		fp->_flags &= ~__SOFF;	/* paranoia */
-	return (ret);
+
+	return (int)ret;
 }
 
 int
@@ -91,7 +92,7 @@ __swrite(cookie, buf, n)
 	if (fp->_flags & __SAPP)
 		(void) lseek(__sfileno(fp), (off_t)0, SEEK_END);
 	fp->_flags &= ~__SOFF;	/* in case FAPPEND mode is set */
-	return write(__sfileno(fp), buf, (size_t)n);
+	return (int)write(__sfileno(fp), buf, (size_t)n);
 }
 
 off_t

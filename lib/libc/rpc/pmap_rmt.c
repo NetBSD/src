@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_rmt.c,v 1.30 2010/03/23 20:28:59 drochner Exp $	*/
+/*	$NetBSD: pmap_rmt.c,v 1.31 2012/03/13 21:13:44 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_rmt.c,v 1.30 2010/03/23 20:28:59 drochner Exp $");
+__RCSID("$NetBSD: pmap_rmt.c,v 1.31 2012/03/13 21:13:44 christos Exp $");
 #endif
 #endif
 
@@ -175,7 +175,7 @@ xdr_rmtcallres(xdrs, crp)
 	_DIAGASSERT(crp != NULL);
 
 	port_ptr = (caddr_t)(void *)crp->port_ptr;
-	if (xdr_reference(xdrs, &port_ptr, sizeof (u_long),
+	if (xdr_reference(xdrs, &port_ptr, (u_int)sizeof(u_long),
 	    (xdrproc_t)xdr_u_long) && xdr_u_long(xdrs, &crp->resultslen)) {
 		crp->port_ptr = (u_long *)(void *)port_ptr;
 		return ((*(crp->xdr_results))(xdrs, crp->results_ptr));
