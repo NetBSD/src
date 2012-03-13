@@ -1,4 +1,4 @@
-/*	$NetBSD: bindresvport.c,v 1.21 2003/01/18 11:29:03 thorpej Exp $	*/
+/*	$NetBSD: bindresvport.c,v 1.22 2012/03/13 21:13:44 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)bindresvport.c 1.8 88/02/08 SMI";
 static char *sccsid = "@(#)bindresvport.c	2.2 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: bindresvport.c,v 1.21 2003/01/18 11:29:03 thorpej Exp $");
+__RCSID("$NetBSD: bindresvport.c,v 1.22 2012/03/13 21:13:44 christos Exp $");
 #endif
 #endif
 
@@ -136,7 +136,7 @@ bindresvport_sa(sd, sa)
 		if (error < 0)
 			return (error);
 		error = setsockopt(sd, proto, portrange, &portlow,
-		    sizeof(portlow));
+		    (socklen_t)sizeof(portlow));
 		if (error < 0)
 			return (error);
 	}
@@ -148,7 +148,7 @@ bindresvport_sa(sd, sa)
 
 		if (error < 0) {
 			if (setsockopt(sd, proto, portrange, &old,
-			    sizeof(old)) < 0)
+			    (socklen_t)sizeof(old)) < 0)
 				errno = saved_errno;
 			return (error);
 		}
