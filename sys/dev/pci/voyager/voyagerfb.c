@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.17 2012/02/21 15:26:20 macallan Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.18 2012/03/13 18:40:34 elad Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.17 2012/02/21 15:26:20 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.18 2012/03/13 18:40:34 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -507,8 +507,8 @@ voyagerfb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
 	 */
-	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
-	    NULL) != 0) {
+	if (kauth_authorize_machdep(kauth_cred_get(), KAUTH_MACHDEP_UNMANAGEDMEM,
+	    NULL, NULL, NULL, NULL) != 0) {
 		aprint_normal("%s: mmap() rejected.\n",
 		    device_xname(sc->sc_dev));
 		return -1;

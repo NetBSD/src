@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.67 2012/03/13 18:36:49 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.68 2012/03/13 18:40:52 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.67 2012/03/13 18:36:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.68 2012/03/13 18:40:52 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1068,6 +1068,30 @@ kauth_mode_to_action(mode_t mode)
 		action |= KAUTH_VNODE_WRITE_DATA;
 	if (mode & VEXEC)
 		action |= KAUTH_VNODE_EXECUTE;
+
+	return action;
+}
+
+kauth_action_t
+kauth_access_action(mode_t access_mode, enum vtype vn_type, mode_t file_mode)
+{
+	kauth_action_t action = kauth_mode_to_action(access_mode);
+
+	if (FS_OBJECT_CAN_EXEC(vn_type, file_mode))
+		action |= KAUTH_VNODE_IS_EXEC;
+
+	return action;
+}
+
+kauth_action_t
+kauth_extattr_action(mode_t access_mode)
+{
+	kauth_action_t action = 0;
+
+	if (access_mode & VREAD)
+		action |= KAUTH_VNODE_READ_EXTATTRIBUTES;
+	if (access_mode & VWRITE)
+		action |= KAUTH_VNODE_WRITE_EXTATTRIBUTES;
 
 	return action;
 }
