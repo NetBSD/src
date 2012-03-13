@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_getdents.c,v 1.5 2012/03/13 21:13:32 christos Exp $	*/
+/*	$NetBSD: compat_getdents.c,v 1.6 2012/03/13 22:24:48 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -31,14 +31,16 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_getdents.c,v 1.5 2012/03/13 21:13:32 christos Exp $");
+__RCSID("$NetBSD: compat_getdents.c,v 1.6 2012/03/13 22:24:48 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
 
 #include "namespace.h"
 #include <sys/types.h>
+#include <assert.h>
 #include <dirent.h>
+#include <stddef.h>
 #include <compat/include/dirent.h>
 #include <string.h>
 
