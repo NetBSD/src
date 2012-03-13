@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.144 2011/12/12 19:11:22 njoly Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.145 2012/03/13 18:40:57 elad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.144 2011/12/12 19:11:22 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.145 2012/03/13 18:40:57 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -762,21 +762,6 @@ kernfs_close(void *v)
 	return (0);
 }
 
-static int
-kernfs_check_possible(struct vnode *vp, mode_t mode)
-{
-
-	return 0;
-}
-
-static int
-kernfs_check_permitted(struct vattr *va, mode_t mode, kauth_cred_t cred)
-{
-
-	return genfs_can_access(va->va_type, va->va_mode, va->va_uid, va->va_gid,
-	    mode, cred);
-}
-
 int
 kernfs_access(void *v)
 {
@@ -791,13 +776,10 @@ kernfs_access(void *v)
 	if ((error = VOP_GETATTR(ap->a_vp, &va, ap->a_cred)) != 0)
 		return (error);
 
-	error = kernfs_check_possible(ap->a_vp, ap->a_mode);
-	if (error)
-		return error;
-
-	error = kernfs_check_permitted(&va, ap->a_mode, ap->a_cred);
-
-	return error;
+	return kauth_authorize_vnode(ap->a_cred,
+	    kauth_access_action(ap->a_mode, ap->a_vp->v_type, va.va_mode),
+	    ap->a_vp, NULL, genfs_can_access(va.va_type, va.va_mode,
+	    va.va_uid, va.va_gid, ap->a_mode, ap->a_cred));
 }
 
 static int

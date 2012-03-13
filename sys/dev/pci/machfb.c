@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.73 2012/01/30 19:41:22 drochner Exp $	*/
+/*	$NetBSD: machfb.c,v 1.74 2012/03/13 18:40:32 elad Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.73 2012/01/30 19:41:22 drochner Exp $");
+	"$NetBSD: machfb.c,v 1.74 2012/03/13 18:40:32 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1795,8 +1795,8 @@ mach64_mmap(void *v, void *vs, off_t offset, int prot)
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
 	 */
-	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
-	    NULL) != 0) {
+	if (kauth_authorize_machdep(kauth_cred_get(), KAUTH_MACHDEP_UNMANAGEDMEM,
+	    NULL, NULL, NULL, NULL) != 0) {
 		return -1;
 	}
 
