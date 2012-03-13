@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.26 2012/02/17 23:58:36 christos Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.27 2012/03/13 21:13:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.27 2007/01/09 00:28:08 imp Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.26 2012/02/17 23:58:36 christos Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.27 2012/03/13 21:13:47 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -724,7 +724,9 @@ WDECL(__vf,printf_unlocked)(FILE *fp, const CHAR_T *fmt0, va_list ap)
 	}					\
 } while (/*CONSTCOND*/0)
 #define	PRINTANDPAD(p, ep, len, with) do {	\
-	n2 = (ep) - (p);       			\
+	ptrdiff_t td = (ep) - (p);		\
+	_DIAGASSERT(__type_fit(int, td));	\
+	n2 = (int)td;       			\
 	if (n2 > (len))				\
 		n2 = (len);			\
 	if (n2 > 0)				\
@@ -837,7 +839,8 @@ WDECL(__vf,printf_unlocked)(FILE *fp, const CHAR_T *fmt0, va_list ap)
 
 		for (cp = fmt; (ch = *fmt) != '\0' && ch != '%'; fmt++)
 			continue;
-		if ((n = fmt - cp) != 0) {
+		_DIAGASSERT(__type_fit(int, fmt - cp));
+		if ((n = (int)(fmt - cp)) != 0) {
 			if ((unsigned)ret + n > INT_MAX) {
 				ret = END_OF_FILE;
 				goto error;
@@ -1055,11 +1058,15 @@ reswitch:	switch (ch) {
 			if (dtoaresult == NULL)
 				goto oomem;
 			
-			if (prec < 0)
-				prec = dtoaend - dtoaresult;
+			if (prec < 0) {
+				_DIAGASSERT(__type_fit(int,
+				    dtoaend - dtoaresult));
+				prec = (int)(dtoaend - dtoaresult);
+			}
 			if (expt == INT_MAX)
 				ox[1] = '\0';
-			ndig = dtoaend - dtoaresult;
+			_DIAGASSERT(__type_fit(int, dtoaend - dtoaresult));
+			ndig = (int)(dtoaend - dtoaresult);
 			if (convbuf != NULL)
 				free(convbuf);
 #ifndef NARROW
@@ -1107,7 +1114,8 @@ fp_begin:
 			}
 			if (dtoaresult == NULL)
 				goto oomem;
-			ndig = dtoaend - dtoaresult;
+			_DIAGASSERT(__type_fit(int, dtoaend - dtoaresult));
+			ndig = (int)(dtoaend - dtoaresult);
 			if (convbuf != NULL)
 				free(convbuf);
 #ifndef NARROW
@@ -1328,13 +1336,18 @@ fp_common:
 				CHAR_T *p = MEMCHR(result, 0, (size_t)prec);
 
 				if (p != NULL) {
-					size = p - result;
+					_DIAGASSERT(__type_fit(int,
+					    p - result));
+					size = (int)(p - result);
 					if (size > prec)
 						size = prec;
 				} else
 					size = prec;
-			} else
-				size = STRLEN(result);
+			} else {
+				size_t rlen = STRLEN(result);
+				_DIAGASSERT(__type_fit(int, rlen));
+				size = (int)rlen;
+			}
 			sign = '\0';
 			break;
 		case 'U':
@@ -1399,7 +1412,8 @@ number:			if ((dprec = prec) >= 0)
 					    flags & GROUPING, thousands_sep,
 					    grouping);
 			}
-			size = buf + BUF - result;
+			_DIAGASSERT(__type_fit(int, buf + BUF - result));
+			size = (int)(buf + BUF - result);
 			if (size > BUF)	/* should never happen */
 				abort();
 			break;
@@ -1929,7 +1943,7 @@ static int
 __grow_type_table (size_t nextarg, enum typeid **typetable, size_t *tablesize)
 {
 	enum typeid *const oldtable = *typetable;
-	const int oldsize = *tablesize;
+	const size_t oldsize = *tablesize;
 	enum typeid *newtable;
 	size_t newsize = oldsize * 2;
 
@@ -2038,6 +2052,7 @@ exponent(CHAR_T *p0, int expo, int fmtch)
 			*p++ = '0';
 		*p++ = to_char(expo);
 	}
-	return (p - p0);
+	_DIAGASSERT(__type_fit(int, p - p0));
+	return (int)(p - p0);
 }
 #endif /* !NO_FLOATING_POINT */

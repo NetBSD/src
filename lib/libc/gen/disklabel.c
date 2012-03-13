@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.34 2006/03/19 02:17:16 christos Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.35 2012/03/13 21:13:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.34 2006/03/19 02:17:16 christos Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.35 2012/03/13 21:13:34 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -219,7 +219,7 @@ gettype(t, names)
 
 	for (nm = names; *nm; nm++)
 		if (strcasecmp(t, *nm) == 0)
-			return (nm - names);
+			return (int)(nm - names);
 	if (isdigit((unsigned char) *t))
 		return (atoi(t));
 	return (0);

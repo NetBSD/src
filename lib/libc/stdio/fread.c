@@ -1,4 +1,4 @@
-/*	$NetBSD: fread.c,v 1.20 2009/10/25 20:44:13 christos Exp $	*/
+/*	$NetBSD: fread.c,v 1.21 2012/03/13 21:13:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fread.c	8.2 (Berkeley) 12/11/93";
 #else
-__RCSID("$NetBSD: fread.c,v 1.20 2009/10/25 20:44:13 christos Exp $");
+__RCSID("$NetBSD: fread.c,v 1.21 2012/03/13 21:13:46 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -88,7 +88,9 @@ fread(buf, size, count, fp)
 		}
 	}
 	(void)memcpy(p, fp->_p, resid);
-	fp->_r -= resid;
+
+	_DIAGASSERT(__type_fit(int, fp->_r - resid));
+	fp->_r -= (int)resid;
 	fp->_p += resid;
 	FUNLOCKFILE(fp);
 	return (count);

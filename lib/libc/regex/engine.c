@@ -1,4 +1,4 @@
-/*	$NetBSD: engine.c,v 1.23 2011/10/09 18:23:00 christos Exp $	*/
+/*	$NetBSD: engine.c,v 1.24 2012/03/13 21:13:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -783,7 +783,7 @@ fast(
 	int c = (start == m->beginp) ? OUT : *(start-1);
 	int lastc;	/* previous c */
 	int flagch;
-	int i;
+	size_t i;
 	const char *coldp; /* last p after which no match was underway */
 
 	_DIAGASSERT(m != NULL);
@@ -878,7 +878,7 @@ slow(
 	int c = (start == m->beginp) ? OUT : *(start-1);
 	int lastc;	/* previous c */
 	int flagch;
-	int i;
+	size_t i;
 	const char *matchp;	/* last p at which a match ended */
 
 	_DIAGASSERT(m != NULL);

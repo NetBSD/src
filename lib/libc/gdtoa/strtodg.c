@@ -1,4 +1,4 @@
-/* $NetBSD: strtodg.c,v 1.8 2011/03/21 12:53:50 christos Exp $ */
+/* $NetBSD: strtodg.c,v 1.9 2012/03/13 21:13:34 christos Exp $ */
 
 /****************************************************************
 
@@ -346,7 +346,7 @@ strtodg
 #else
 	char *decimalpoint;
 	static char *decimalpoint_cache;
-	static int dplen;
+	static size_t dplen;
 	if (!(s0 = decimalpoint_cache)) {
 		s0 = localeconv()->decimal_point;
 		if ((decimalpoint_cache = MALLOC(strlen(s0) + 1)) != NULL) {

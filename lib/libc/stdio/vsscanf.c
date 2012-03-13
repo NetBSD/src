@@ -1,4 +1,4 @@
-/*	$NetBSD: vsscanf.c,v 1.16 2011/07/17 20:54:34 joerg Exp $	*/
+/*	$NetBSD: vsscanf.c,v 1.17 2012/03/13 21:13:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vsscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vsscanf.c,v 1.16 2011/07/17 20:54:34 joerg Exp $");
+__RCSID("$NetBSD: vsscanf.c,v 1.17 2012/03/13 21:13:47 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,6 +65,7 @@ vsscanf(const char *str, const char *fmt, va_list ap)
 {
 	FILE f;
 	struct __sfileext fext;
+	size_t len;
 
 	_DIAGASSERT(str != NULL);
 	_DIAGASSERT(fmt != NULL);
@@ -72,7 +73,9 @@ vsscanf(const char *str, const char *fmt, va_list ap)
 	_FILEEXT_SETUP(&f, &fext);
 	f._flags = __SRD;
 	f._bf._base = f._p = __UNCONST(str);
-	f._bf._size = f._r = strlen(str);
+	len = strlen(str);
+	_DIAGASSERT(__type_fit(int, len));
+	f._bf._size = f._r = (int)len;
 	f._read = eofread;
 	_UB(&f)._base = NULL;
 	return (__svfscanf_unlocked(&f, fmt, ap));
