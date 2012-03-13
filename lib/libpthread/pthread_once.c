@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_once.c,v 1.1 2012/03/12 21:35:10 joerg Exp $	*/
+/*	$NetBSD: pthread_once.c,v 1.2 2012/03/13 01:05:55 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_once.c,v 1.1 2012/03/12 21:35:10 joerg Exp $");
+__RCSID("$NetBSD: pthread_once.c,v 1.2 2012/03/13 01:05:55 joerg Exp $");
 
 #include "pthread.h"
 
@@ -64,3 +64,5 @@ pthread_once(pthread_once_t *once_control, void (*routine)(void))
 
 	return 0;
 }
+
+__strong_alias(__libc_thr_once,pthread_once)
