@@ -1,4 +1,4 @@
-.\" $NetBSD: genfs.9,v 1.1 2012/03/13 18:40:27 elad Exp $
+.\" $NetBSD: genfs.9,v 1.2 2012/03/14 11:44:42 wiz Exp $
 .\"
 .\" Copyright 2012 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -31,12 +31,15 @@
 .Os
 .Sh NAME
 .Nm genfs
-.Nd genfs routines 
+.Nd genfs routines
 .Sh SYNOPSIS
 .In miscfs/genfs/genfs.h
 .Ft int
 .Fn genfs_can_access "enum vtype type" "mode_t file_mode" "uid_t uid" \
 "gid_t gid" "mode_t acc_mode" "kauth_cred_t cred"
+.Ft int
+.Fn genfs_can_chflags "kauth_cred_t cred" "enum vtype type" "uid_t owner_uid" \
+"bool changing_sysflags"
 .Ft int
 .Fn genfs_can_chmod "enum vtype type" "kauth_cred_t cred" "uid_t cur_uid" \
 "gid_t cur_gid" "mode_t new_mode"
@@ -47,24 +50,21 @@
 .Fn genfs_can_chtimes "vnode_t *vp" "u_int vaflags" "uid_t owner_uid" \
 "kauth_cred_t cred"
 .Ft int
-.Fn genfs_can_chflags "kauth_cred_t cred" "enum vtype type" "uid_t owner_uid" \
-"bool changing_sysflags"
-.Ft int
-.Fn genfs_can_sticky "kauth_cred_t cred" "uid_t dir_uid" "uid_t file_uid"
-.Ft int
 .Fn genfs_can_extattr "kauth_cred_t cred" "int access_mode" "vnode_t *vp" \
 "const char *attr"
+.Ft int
+.Fn genfs_can_sticky "kauth_cred_t cred" "uid_t dir_uid" "uid_t file_uid"
 .Sh DESCRIPTION
 The functions documented here are general routines for internal use in
-file-systems to implement common policies for performing various operations.
+file systems to implement common policies for performing various operations.
 The developer must understand that these routines implement no system-wide
 policies and only take into account the object being accessed and the
 nominal values of the credentials accessing it.
 .Pp
-In other words, these functions are not meant to be called direcly.
+In other words, these functions are not meant to be called directly.
 They are intended to be used in
 .Xr kauth 9
-vnode scope authorization calls, for providing the fall-back file-system
+vnode scope authorization calls, for providing the fall-back file system
 decision.
 .Pp
 As a rule of thumb, code that looks like this is wrong:
@@ -81,6 +81,11 @@ error = kauth_authorize_vnode(..., genfs_can_foo(...));
 .It Fn genfs_can_access "enum vtype type" "mode_t file_mode" "uid_t uid" \
 "gid_t gid" "mode_t acc_mode" "kauth_cred_t cred"
 Implements file access checking based on traditional Unix permissions.
+.It Fn genfs_can_chflags "kauth_cred_t cred" "enum vtype type" \
+"uid_t owner_uid" "bool changing_sysflags"
+Implements
+.Xr chflags 2
+policy.
 .It Fn genfs_can_chmod "enum vtype type" "kauth_cred_t cred" "uid_t cur_uid" \
 "gid_t cur_gid" "mode_t new_mode"
 Implements
@@ -96,16 +101,11 @@ policy.
 Implements
 .Xr utimes 2
 policy.
-.It Fn genfs_can_chflags "kauth_cred_t cred" "enum vtype type" \
-"uid_t owner_uid" "bool changing_sysflags"
-Implements
-.Xr chflags 2
-policy.
-.It Fn genfs_can_sticky "kauth_cred_t cred" "uid_t dir_uid" "uid_t file_uid"
-Implements rename and delete policy from sticky directories.
 .It Fn genfs_can_extattr "kauth_cred_t cred" "int access_mode" "vnode_t *vp" \
 "const char *attr"
 Implements extended attributes access policy.
+.It Fn genfs_can_sticky "kauth_cred_t cred" "uid_t dir_uid" "uid_t file_uid"
+Implements rename and delete policy from sticky directories.
 .El
 .Sh SEE ALSO
 .Xr kauth 9
