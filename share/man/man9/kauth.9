@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.98 2012/03/13 18:40:27 elad Exp $
+.\" $NetBSD: kauth.9,v 1.99 2012/03/14 11:51:54 wiz Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 16, 2012
+.Dd March 13, 2012
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -208,7 +208,7 @@ Check if operations on the device mapper
 .Xr dm 4
 device are allowed.
 .It Dv KAUTH_SYSTEM_FILEHANDLE
-Check if filehandle operations allowed.
+Check if file handle operations allowed.
 .It Dv KAUTH_SYSTEM_FS_EXTATTR
 Check if starting, stopping, enabling, or disabling extended attributes
 is allowed.
@@ -217,7 +217,7 @@ is a
 .Ft struct mount *
 of the mount-point on which the operation is performed.
 .It Dv KAUTH_SYSTEM_FS_SNAPSHOT
-Check if setting up a file-system snapshot is allowed.
+Check if setting up a file system snapshot is allowed.
 .Ar arg1
 is a
 .Ft struct mount *
@@ -227,12 +227,12 @@ is a
 .Ft struct vnode *
 of the vnode where the snapshot is expected to be.
 .It Dv KAUTH_SYSTEM_FS_QUOTA
-Check if file-system quota operations are allowed.
+Check if file system quota operations are allowed.
 .Pp
 .Ar arg1
 is a
 .Ft struct mount *
-describing the file-system mount in question.
+describing the file system mount in question.
 .Ar req
 can be one of the following:
 .Bl -tag -width compact
@@ -256,7 +256,7 @@ with the user-id of the user whose quota/quota use is to be set.
 Check if bypassing the quota (not enforcing it) is allowed.
 .El
 .It Dv KAUTH_SYSTEM_FS_RESERVEDSPACE
-Check if using the file-system reserved space is allowed.
+Check if using the file system reserved space is allowed.
 .It Dv KAUTH_SYSTEM_LFS
 Check if LFS-related operations are allowed.
 .Ar req
@@ -322,14 +322,14 @@ with the mount structure in question,
 .Ar arg2
 is a
 .Ft void *
-with file-system specific data, if any.
+with file system specific data, if any.
 .It Dv KAUTH_REQ_SYSTEM_MOUNT_NEW
-Check if mounting a new file-system is allowed.
+Check if mounting a new file system is allowed.
 .Pp
 .Ar arg1
 is the
 .Ft struct vnode *
-on which the file-system is to be mounted,
+on which the file system is to be mounted,
 .Ar arg2
 is an
 .Ft int
@@ -337,9 +337,9 @@ with the mount flags, and
 .Ar arg3
 is a
 .Ft void *
-with file-system specific data, if any.
+with file system specific data, if any.
 .It Dv KAUTH_REQ_SYSTEM_MOUNT_UNMOUNT
-Checks if unmounting a file-system is allowed.
+Checks if unmounting a file system is allowed.
 .Pp
 .Ar arg1
 is a
@@ -359,9 +359,9 @@ with the new mount flags, and
 .Ar arg3
 is a
 .Ft void *
-with file-system specific data, if any.
+with file system specific data, if any.
 .It Dv KAUTH_REQ_SYSTEM_MOUNT_UMAP
-Check if mounting the user and group id remapping file-system.
+Check if mounting the user and group id remapping file system.
 See
 .Xr mount_umap 8 .
 .El
@@ -775,7 +775,7 @@ can be one of the following:
 .It Dv KAUTH_REQ_NETWORK_INTERFACE_BRIDGE_GETPRIV
 Check if getting privileges parameters is allowed.
 .It Dv KAUTH_REQ_NETWORK_INTERFACE_BRIDGE_SETPRIV
-Check if setting privileges paramteres is allowed.
+Check if setting privileges parameters is allowed.
 .El
 .It Dv KAUTH_NETWORK_INTERFACE_PPP
 Checks if operations performed on the
@@ -1299,14 +1299,14 @@ Check if setting the default key-repeat is allowed.
 .Ss Vnode Scope
 The vnode scope,
 .Dq org.netbsd.kauth.vnode ,
-authorizes operations made on vnodes representing files-system objects.
+authorizes operations made on vnodes representing file system objects.
 .Pp
 The authorization wrapper for this scope is declared as
 .Pp
 .Ft int Fn kauth_authorize_vnode "kauth_cred_t cred" "kauth_action_t action" \
 "vnode_t *vp" "vnode_t *dvp" "int fs_decision"
 .Pp
-This scope is heavily used in file-system code and can potentially affect
+This scope is heavily used in file system code and can potentially affect
 system-wide performance.
 Therefore, there are several things developers should know when using it.
 .Pp
@@ -1316,7 +1316,7 @@ parameter is a bit-mask and multiple actions can be binary-OR'd and authorized
 in a single call.
 Two helper functions help generate the
 .Ar action
-value for a couple of common cases: translating file-system access to a
+value for a couple of common cases: translating file system access to a
 .Xr kauth 9
 action and checking access to a vnode.
 .Pp
@@ -1330,7 +1330,7 @@ Another function,
 "mode_t file_mode" ,
 returns a
 .Ft kauth_action_t
-suitable for use in many file-system
+suitable for use in many file system
 .Xr access 2
 implementations.
 It calls the aforementioned
@@ -1345,7 +1345,7 @@ Second, it is recommended to be very careful with adding listeners on this
 scope.
 A special parameter,
 .Ar fs_decision ,
-allows different file-systems to instrument different policies without adding
+allows different file systems to instrument different policies without adding
 their own listener.
 This parameter is special because it also serves as a fall-back decision when
 no
@@ -1355,11 +1355,11 @@ It can take either an
 .Xr errno 2
 value or
 .Dq KAUTH_VNODE_REMOTEFS ,
-indicating that the file-system on which the authorization is made is remote
+indicating that the file system on which the authorization is made is remote
 and cannot provide us with a fall-back decision.
 In this case,
 .Xr kauth 9
-can only short-circuit the request but the file-system will have the last
+can only short-circuit the request but the file system will have the last
 word if there is no definitive allow or deny decision.
 .Pp
 The value of
@@ -1369,7 +1369,7 @@ policy.
 For the latter case,
 .Xr genfs 9
 provides a set of helper functions that implement common policies that
-file-systems can use.
+file systems can use.
 The calling convention is as follows:
 .Bd -literal -offset indent
 int error;
@@ -1381,7 +1381,7 @@ Actions on the vnode scope are of two types: operations and flags.
 An operation is similar in concept to actions on other scopes in the sense
 that it represents an operation desired by the caller.
 A flag is an indicator of additional information about the vnode that
-a file-system can set in order to allow the listener to make a more
+a file system can set in order to allow the listener to make a more
 informed decision.
 .Pp
 Actions include the following:
@@ -1457,7 +1457,7 @@ The vnode is executable.
 The macro
 .Fn FS_OBJECT_CAN_EXEC
 can be used to help determine if this flag should be set.
-This macro determines a file-system object to be executable if it is a
+This macro determines a file system object to be executable if it is a
 directory (in which case we say it is searchable) or if it has at least one
 executable bit set in its mode.
 .Pp
@@ -1476,16 +1476,15 @@ if (privileged) {
 .Pp
 Finally, the vnode scope authorization wrapper returns
 .Er EACCES
-in case of an error, to maintain file-system semantics.
-File-systems can override this value if needed.
+in case of an error, to maintain file system semantics.
+File systems can override this value if needed.
 .It KAUTH_VNODE_HAS_SYSFLAGS
-The file-system object represented by the vnode has system flags set.
+The file system object represented by the vnode has system flags set.
 .It KAUTH_VNODE_ACCESS
 The authorization is advisory only and no actual operation is to be
 performed.
 This is not implemented.
 .El
-.Pp
 .Ss Credentials Scope
 The credentials scope,
 .Dq org.netbsd.kauth.cred ,
