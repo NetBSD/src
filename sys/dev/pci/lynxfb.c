@@ -1,4 +1,4 @@
-/*	$NetBSD: lynxfb.c,v 1.3 2012/03/11 15:58:56 nonaka Exp $	*/
+/*	$NetBSD: lynxfb.c,v 1.4 2012/03/14 13:41:07 nonaka Exp $	*/
 /*	$OpenBSD: smfb.c,v 1.13 2011/07/21 20:36:12 miod Exp $	*/
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lynxfb.c,v 1.3 2012/03/11 15:58:56 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lynxfb.c,v 1.4 2012/03/14 13:41:07 nonaka Exp $");
 
 #include "opt_wsemul.h"
 
@@ -478,8 +478,8 @@ lynxfb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
 	 */
-	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
-	    NULL) != 0) {
+	if (kauth_authorize_machdep(kauth_cred_get(),
+	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL) != 0) {
 		aprint_normal_dev(sc->sc_dev, "mmap() rejected.\n");
 		return (-1);
 	}
