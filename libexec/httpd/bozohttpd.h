@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.21 2012/02/20 09:26:56 elric Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.22 2012/03/14 23:47:19 joerg Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -164,18 +164,17 @@ typedef struct bozoprefs_t {
 
 #define	strornull(x)	((x) ? (x) : "<null>")
 
-#ifndef NO_DEBUG
-void	debug__(bozohttpd_t *, int, const char *, ...)
-			__attribute__((__format__(__printf__, 3, 4)));
-#define debug(x)	debug__ x
-#else
-#define	debug(x)	
-#endif /* NO_DEBUG */
-
 #if defined(__GNUC__) && __GNUC__ >= 3
 #define BOZO_PRINTFLIKE(x,y) __attribute__((__format__(__printf__, x,y)))
 #define BOZO_DEAD __attribute__((__noreturn__))
 #endif
+
+#ifndef NO_DEBUG
+void	debug__(bozohttpd_t *, int, const char *, ...) BOZO_PRINTFLIKE(3, 4);
+#define debug(x)	debug__ x
+#else
+#define	debug(x)	
+#endif /* NO_DEBUG */
 
 void	bozo_warn(bozohttpd_t *, const char *, ...)
 		BOZO_PRINTFLIKE(2, 3);
@@ -278,7 +277,7 @@ void	bozo_add_content_map_mime(bozohttpd_t *, const char *, const char *, const 
 #endif
 
 /* I/O */
-int bozo_printf(bozohttpd_t *, const char *, ...);
+int bozo_printf(bozohttpd_t *, const char *, ...) BOZO_PRINTFLIKE(2, 3);;
 ssize_t bozo_read(bozohttpd_t *, int, void *, size_t);
 ssize_t bozo_write(bozohttpd_t *, int, const void *, size_t);
 int bozo_flush(bozohttpd_t *, FILE *);
