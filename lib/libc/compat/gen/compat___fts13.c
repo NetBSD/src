@@ -1,4 +1,4 @@
-/*	$NetBSD: compat___fts13.c,v 1.8 2012/03/13 22:37:51 joerg Exp $	*/
+/*	$NetBSD: compat___fts13.c,v 1.9 2012/03/14 00:25:19 christos Exp $	*/
 
 #include "namespace.h"
 #include <sys/cdefs.h>
@@ -33,12 +33,14 @@ __warn_references(__fts_set13,
 #define	__fts_dev_t	uint32_t
 #define	__fts_level_t	short
 
-#undef fts_namelen_truncate
-#define fts_namelen_truncate(a)	\
+#ifndef ftsent_namelen_truncate
+#define ftsent_namelen_truncate(a)	\
     ((a) > USHRT_MAX ? USHRT_MAX : (unsigned short)(a))
-#undef fts_pathlen_truncate
+#endif
+#ifndef ftsent_pathlen_truncate
 #define ftsent_pathlen_truncate(a)	\
     ((a) > USHRT_MAX ? USHRT_MAX : (unsigned short)(a))
+#endif
 
 #define	stat		__stat13
 #define	lstat		__lstat13
