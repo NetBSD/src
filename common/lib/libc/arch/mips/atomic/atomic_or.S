@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or.S,v 1.3 2011/08/27 13:23:52 bouyer Exp $	*/
+/*	$NetBSD: atomic_or.S,v 1.4 2012/03/14 16:50:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -26,7 +26,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #include <machine/asm.h>
 #include "atomic_op_asm.h"
 
