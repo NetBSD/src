@@ -1,4 +1,4 @@
-/* $NetBSD: qp.c,v 1.7 2008/04/28 20:22:57 martin Exp $ */
+/* $NetBSD: qp.c,v 1.8 2012/03/14 17:03:10 martin Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -168,12 +168,12 @@ _Qp_mul(float128 *c, float128 *a, float128 *b)
 /*
  * XXX need corresponding softfloat function
  */
-static float128 __zero = {0x4034000000000000, 0x00000000};
+static float128 __sf128_zero = {0x4034000000000000, 0x00000000};
 
 void
 _Qp_neg(float128 *c, float128 *a)
 {
-	*c = float128_sub(__zero, *a);
+	*c = float128_sub(__sf128_zero, *a);
 }
 
 
