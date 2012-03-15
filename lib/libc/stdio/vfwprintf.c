@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.27 2012/03/13 21:13:47 christos Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.28 2012/03/15 18:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.27 2007/01/09 00:28:08 imp Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.27 2012/03/13 21:13:47 christos Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.28 2012/03/15 18:22:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -182,7 +182,7 @@ __sbprintf(FILE *fp, const CHAR_T *fmt, va_list ap)
 		ret = END_OF_FILE;
 	if (fake._flags & __SERR)
 		fp->_flags |= __SERR;
-	return (ret);
+	return ret;
 }
 
 #ifndef NARROW
@@ -201,19 +201,19 @@ __xfputwc(wchar_t wc, FILE *fp)
 	size_t len;
 
 	if ((fp->_flags & __SSTR) == 0)
-		return (__fputwc_unlock(wc, fp));
+		return __fputwc_unlock(wc, fp);
 
 	mbs = initial;
 	if ((len = wcrtomb(buf, wc, &mbs)) == (size_t)-1) {
 		fp->_flags |= __SERR;
-		return (END_OF_FILE);
+		return END_OF_FILE;
 	}
 	uio.uio_iov = &iov;
 	uio.uio_resid = len;
 	uio.uio_iovcnt = 1;
 	iov.iov_base = buf;
 	iov.iov_len = len;
-	return (__sfvwrite(fp, &uio) != EOF ? (wint_t)wc : END_OF_FILE);
+	return __sfvwrite(fp, &uio) != EOF ? (wint_t)wc : END_OF_FILE;
 }
 #else
 /*
@@ -230,12 +230,12 @@ __sprint(FILE *fp, struct __suio *uio)
 
 	if (uio->uio_resid == 0) {
 		uio->uio_iovcnt = 0;
-		return (0);
+		return 0;
 	}
 	err = __sfvwrite(fp, uio);
 	uio->uio_resid = 0;
 	uio->uio_iovcnt = 0;
-	return (err);
+	return err;
 }
 #endif
 
@@ -254,7 +254,7 @@ __sprint(FILE *fp, struct __suio *uio)
  */
 static CHAR_T *
 __ultoa(u_long val, CHAR_T *endp, int base, int octzero, const char *xdigs,
-	int needgrp, char thousep, const char *grp)
+    int needgrp, char thousep, const char *grp)
 {
 	CHAR_T *cp = endp;
 	long sval;
@@ -268,7 +268,7 @@ __ultoa(u_long val, CHAR_T *endp, int base, int octzero, const char *xdigs,
 	case 10:
 		if (val < 10) {	/* many numbers are 1 digit */
 			*--cp = to_char(val);
-			return (cp);
+			return cp;
 		}
 		ndig = 0;
 		/*
@@ -325,13 +325,13 @@ __ultoa(u_long val, CHAR_T *endp, int base, int octzero, const char *xdigs,
 	default:			/* oops */
 		abort();
 	}
-	return (cp);
+	return cp;
 }
 
 /* Identical to __ultoa, but for intmax_t. */
 static CHAR_T *
 __ujtoa(uintmax_t val, CHAR_T *endp, int base, int octzero,
-	const char *xdigs, int needgrp, char thousep, const char *grp)
+    const char *xdigs, int needgrp, char thousep, const char *grp)
 {
 	CHAR_T *cp = endp;
 	intmax_t sval;
@@ -340,13 +340,13 @@ __ujtoa(uintmax_t val, CHAR_T *endp, int base, int octzero,
 	/* quick test for small values; __ultoa is typically much faster */
 	/* (perhaps instead we should run until small, then call __ultoa?) */
 	if (val <= ULONG_MAX)
-		return (__ultoa((u_long)val, endp, base, octzero, xdigs,
-		    needgrp, thousep, grp));
+		return __ultoa((u_long)val, endp, base, octzero, xdigs,
+		    needgrp, thousep, grp);
 	switch (base) {
 	case 10:
 		if (val < 10) {
 			*--cp = to_char(val % 10);
-			return (cp);
+			return cp;
 		}
 		ndig = 0;
 		if (val > INTMAX_MAX) {
@@ -397,7 +397,7 @@ __ujtoa(uintmax_t val, CHAR_T *endp, int base, int octzero,
 	default:
 		abort();
 	}
-	return (cp);
+	return cp;
 }
 
 #ifndef NARROW
@@ -417,7 +417,7 @@ __mbsconv(char *mbsarg, int prec)
 	size_t insize, nchars, nconv;
 
 	if (mbsarg == NULL)
-		return (NULL);
+		return NULL;
 
 	/*
 	 * Supplied argument is a multibyte string; convert it to wide
@@ -441,7 +441,7 @@ __mbsconv(char *mbsarg, int prec)
 			insize += nconv;
 		}
 		if (nconv == (size_t)-1 || nconv == (size_t)-2)
-			return (NULL);
+			return NULL;
 	} else
 		insize = strlen(mbsarg);
 
@@ -452,7 +452,7 @@ __mbsconv(char *mbsarg, int prec)
 	 */
 	convbuf = malloc((insize + 1) * sizeof(*convbuf));
 	if (convbuf == NULL)
-		return (NULL);
+		return NULL;
 	wcp = convbuf;
 	p = mbsarg;
 	mbs = initial;
@@ -467,11 +467,11 @@ __mbsconv(char *mbsarg, int prec)
 	}
 	if (nconv == (size_t)-1 || nconv == (size_t)-2) {
 		free(convbuf);
-		return (NULL);
+		return NULL;
 	}
 	*wcp = L'\0';
 
-	return (convbuf);
+	return convbuf;
 }
 #else
 /*
@@ -496,7 +496,7 @@ __wcsconv(wchar_t *wcsarg, int prec)
 		mbs = initial;
 		nbytes = wcsrtombs(NULL, (void *)&p, 0, &mbs);
 		if (nbytes == (size_t)-1)
-			return (NULL);
+			return NULL;
 	} else {
 		/*
 		 * Optimisation: if the output precision is small enough,
@@ -519,7 +519,7 @@ __wcsconv(wchar_t *wcsarg, int prec)
 		}
 	}
 	if ((convbuf = malloc(nbytes + 1)) == NULL)
-		return (NULL);
+		return NULL;
 
 	/* Fill the output buffer. */
 	p = wcsarg;
@@ -527,10 +527,10 @@ __wcsconv(wchar_t *wcsarg, int prec)
 	if ((nbytes = wcsrtombs(convbuf, (void *)&p,
 	    nbytes, &mbs)) == (size_t)-1) {
 		free(convbuf);
-		return (NULL);
+		return NULL;
 	}
 	convbuf[nbytes] = '\0';
-	return (convbuf);
+	return convbuf;
 }
 #endif
 
@@ -545,7 +545,7 @@ WDECL(vf,printf)(FILE * __restrict fp, const CHAR_T * __restrict fmt0, va_list a
 	FLOCKFILE(fp);
 	ret = WDECL(__vf,printf_unlocked)(fp, fmt0, ap);
 	FUNLOCKFILE(fp);
-	return (ret);
+	return ret;
 }
 
 #ifndef NO_FLOATING_POINT
@@ -812,13 +812,13 @@ WDECL(__vf,printf_unlocked)(FILE *fp, const CHAR_T *fmt0, va_list ap)
 	/* sorry, f{w,}printf(read_only_file, L"") returns {W,}EOF, not 0 */
 	if (cantwrite(fp)) {
 		errno = EBADF;
-		return (END_OF_FILE);
+		return END_OF_FILE;
 	}
 
 	/* optimise fprintf(stderr) (and other unbuffered Unix files) */
 	if ((fp->_flags & (__SNBF|__SWR|__SRW)) == (__SNBF|__SWR) &&
 	    __sfileno(fp) != -1)
-		return (__sbprintf(fp, fmt0, ap));
+		return __sbprintf(fp, fmt0, ap);
 
 	fmt = (CHAR_T *)__UNCONST(fmt0);
 	argtable = NULL;
@@ -1549,7 +1549,7 @@ error:
 		ret = END_OF_FILE;
 	if ((argtable != NULL) && (argtable != statargtable))
 		free (argtable);
-	return (ret);
+	return ret;
 	/* NOTREACHED */
 oomem:
 	errno = ENOMEM;

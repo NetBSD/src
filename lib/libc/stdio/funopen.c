@@ -1,4 +1,4 @@
-/*	$NetBSD: funopen.c,v 1.11 2012/01/22 18:36:17 christos Exp $	*/
+/*	$NetBSD: funopen.c,v 1.12 2012/03/15 18:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)funopen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: funopen.c,v 1.11 2012/01/22 18:36:17 christos Exp $");
+__RCSID("$NetBSD: funopen.c,v 1.12 2012/03/15 18:22:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,12 +47,11 @@ __RCSID("$NetBSD: funopen.c,v 1.11 2012/01/22 18:36:17 christos Exp $");
 #include "local.h"
 
 FILE *
-funopen(cookie, readfn, writefn, seekfn, closefn)
-	const void *cookie;
-	int (*readfn) __P((void *, char *, int));
-	int (*writefn) __P((void *, const char *, int));
-	off_t (*seekfn) __P((void *, off_t, int));
-	int (*closefn) __P((void *));
+funopen(const void *cookie,
+    int (*readfn)(void *, char *, int),
+    int (*writefn)(void *, const char *, int),
+    off_t (*seekfn)(void *, off_t, int),
+    int (*closefn)(void *))
 {
 	FILE *fp;
 	int flags;
@@ -60,7 +59,7 @@ funopen(cookie, readfn, writefn, seekfn, closefn)
 	if (readfn == NULL) {
 		if (writefn == NULL) {		/* illegal */
 			errno = EINVAL;
-			return (NULL);
+			return NULL;
 		} else
 			flags = __SWR;		/* write only */
 	} else {
@@ -70,7 +69,7 @@ funopen(cookie, readfn, writefn, seekfn, closefn)
 			flags = __SRW;		/* read-write */
 	}
 	if ((fp = __sfp()) == NULL)
-		return (NULL);
+		return NULL;
 	fp->_flags = flags;
 	fp->_file = -1;
 	fp->_cookie = __UNCONST(cookie);
@@ -78,5 +77,5 @@ funopen(cookie, readfn, writefn, seekfn, closefn)
 	fp->_write = writefn;
 	fp->_seek = seekfn;
 	fp->_close = closefn;
-	return (fp);
+	return fp;
 }
