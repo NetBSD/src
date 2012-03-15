@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio.c,v 1.6 2011/11/13 16:56:15 mbalmer Exp $ */
+/*	$NetBSD: gpio.c,v 1.7 2012/03/15 02:02:21 joerg Exp $ */
 
 /*
  * Copyright (c) 2011 Marc Balmer <marc@msys.ch>
@@ -45,7 +45,7 @@
 
 #define GPIO_METATABLE "GPIO object methods"
 
-static void
+static __printflike(2, 3) void
 gpio_error(lua_State *L, const char *fmt, ...)
 {
 	va_list ap;

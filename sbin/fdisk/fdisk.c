@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.138 2011/12/02 15:21:15 christos Exp $ */
+/*	$NetBSD: fdisk.c,v 1.139 2012/03/15 02:02:21 joerg Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.138 2011/12/02 15:21:15 christos Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.139 2012/03/15 02:02:21 joerg Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -286,7 +286,7 @@ static int	read_s0(daddr_t, struct mbr_sector *);
 static int	write_mbr(void);
 static int	read_gpt(daddr_t, struct gpt_hdr *);
 static int	delete_gpt(struct gpt_hdr *);
-static int	yesno(const char *, ...);
+static int	yesno(const char *, ...) __printflike(1, 2);
 static int64_t	decimal(const char *, int64_t, int, int64_t, int64_t);
 #define DEC_SEC		1		/* asking for a sector number */
 #define	DEC_RND		2		/* round to end of first track */
