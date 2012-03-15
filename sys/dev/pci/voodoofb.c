@@ -1,7 +1,7 @@
-/*	$NetBSD: voodoofb.c,v 1.39 2012/03/13 18:40:33 elad Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.40 2012/03/15 03:12:51 macallan Exp $	*/
 
 /*
- * Copyright (c) 2005, 2006 Michael Lorenz
+ * Copyright (c) 2005, 2006, 2012 Michael Lorenz
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.39 2012/03/13 18:40:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.40 2012/03/15 03:12:51 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1165,6 +1165,14 @@ voodoofb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 					   sc->sc_cmap_green[i],
 					   sc->sc_cmap_blue[i]);
 				}
+
+				/* zap the glyph cache */
+				for (i = 0; i < 256; i++) {
+					sc->sc_glyphs_defattr[i] = 0;
+					sc->sc_glyphs_kernattr[i] = 0;
+				}
+				sc->sc_usedglyphs = 0;
+
 				voodoofb_clearscreen(sc);
 				vcons_redraw_screen(ms);
 			} else {
