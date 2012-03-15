@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.32 2012/03/15 11:46:08 christos Exp $	*/
+/*	$NetBSD: local.h,v 1.33 2012/03/15 13:23:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -51,7 +51,7 @@ extern FILE	*__sfp(void);
 extern void	__sfpinit(FILE *);
 extern int	__srefill(FILE *);
 extern int	__sread(void *, char *, int);
-extern int	__swrite(void *, char * const, int);
+extern int	__swrite(void *, char const *, int);
 extern off_t	__sseek(void *, off_t, int);
 extern int	__sclose(void *);
 extern void	__sinit(void);
