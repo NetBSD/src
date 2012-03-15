@@ -467,7 +467,7 @@ modify_iov(struct iovec ** iov_ptr, int *iovc, uint32_t offset, uint32_t length)
 	}
 	if (i == *iovc) {
 		iscsi_err(__FILE__, __LINE__,
-			"sum of iov lens (%u) < offset (%u)\n", len, offset);
+			"sum of iov lens (%zu) < offset (%u)\n", len, offset);
 		return -1;
 	}
 	iov[i].iov_len -= disp;
@@ -493,7 +493,7 @@ modify_iov(struct iovec ** iov_ptr, int *iovc, uint32_t offset, uint32_t length)
 	}
 	if (i == *iovc) {
 		iscsi_err(__FILE__, __LINE__,
-			"sum of iovec lens (%u) < length (%u)\n", len, length);
+			"sum of iovec lens (%zu) < length (%u)\n", len, length);
 		for (i = 0; i < *iovc; i++) {
 			iscsi_err(__FILE__, __LINE__,
 				"iov[%d].iov_base = %p (len %u)\n",
@@ -512,7 +512,7 @@ modify_iov(struct iovec ** iov_ptr, int *iovc, uint32_t offset, uint32_t length)
 			i, iov[i].iov_base, (unsigned)iov[i].iov_len);
 		len += iov[i].iov_len;
 	}
-	iscsi_trace(TRACE_NET_IOV, "new iov length: %u bytes\n", len);
+	iscsi_trace(TRACE_NET_IOV, "new iov length: %zu bytes\n", len);
 #endif
 
 	return 0;
@@ -960,7 +960,7 @@ iscsi_sock_msg(int sock, int xmit, unsigned len, void *data, int iovc)
 		}
 		if (total_len != len - n) {
 			iscsi_err(__FILE__, __LINE__,
-				"iovcs sum to %u != total len of %u\n",
+				"iovcs sum to %zu != total len of %u\n",
 				total_len, len - n);
 			iscsi_err(__FILE__, __LINE__, "iov = %p\n", iov);
 			for (i = 0; i < iovc; i++) {
@@ -995,7 +995,7 @@ iscsi_sock_msg(int sock, int xmit, unsigned len, void *data, int iovc)
 			}
 			iscsi_trace(TRACE_NET_IOV,
 				"before modify_iov: %s %d buffers, "
-				"total_len = %u, n = %u, rc = %u\n",
+				"total_len = %zu, n = %u, rc = %u\n",
 				xmit ? "gathering from" : "scattering into",
 				iovc, total_len, n, rc);
 			if (modify_iov(&iov, &iovc, (unsigned) rc, len - n)
@@ -1010,7 +1010,7 @@ iscsi_sock_msg(int sock, int xmit, unsigned len, void *data, int iovc)
 			}
 			iscsi_trace(TRACE_NET_IOV,
 				"after modify_iov: %s %d buffers, "
-				"total_len = %u, n = %u, rc = %u\n\n",
+				"total_len = %zu, n = %u, rc = %u\n\n",
 				xmit ? "gathering from" : "scattering into",
 				iovc, total_len, n, rc);
 		}

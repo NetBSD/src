@@ -821,7 +821,7 @@ param_text_parse(iscsi_parameter_t * head,
 		}
 		if (strlen(value) > ISCSI_PARAM_MAX_LEN) {
 			iscsi_err(__FILE__, __LINE__,
-				"strlen(value) %u\n", strlen(value));
+				"strlen(value) %zu\n", strlen(value));
 			PTP_CLEANUP;
 			return -1;
 		}
