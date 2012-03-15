@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.211 2012/01/28 21:32:14 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.212 2012/03/15 02:00:52 joerg Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -13,7 +13,7 @@ CPPFLAGS+=	-Wp,-iremap,${DESTDIR}/:/
 # Enable c99 mode by default.
 # This has the side effect of complaining for missing prototypes
 # implicit type declarations and missing return statements.
-.if defined(HAVE_GCC)
+.if defined(HAVE_GCC) || defined(HAVE_LLVM)
 CFLAGS+=	-std=gnu99
 .endif
 
@@ -59,8 +59,9 @@ CXXFLAGS+=	-Wctor-dtor-privacy -Wnon-virtual-dtor -Wreorder \
 		-Wno-deprecated -Woverloaded-virtual -Wsign-promo -Wsynth
 CXXFLAGS+=	${${ACTIVE_CXX} == "gcc":? -Wno-non-template-friend -Wno-pmf-conversions :}
 .endif
-.if ${WARNS} > 3 && defined(HAVE_GCC)
+.if ${WARNS} > 3 && (defined(HAVE_GCC) || defined(HAVE_LLVM))
 CFLAGS+=	-Wsign-compare -Wformat=2
+CFLAGS+=	${${ACTIVE_CC} == "gcc":? -Wno-format-zero-length :}
 .endif
 .if ${WARNS} > 3 && defined(HAVE_LLVM)
 CFLAGS+=	${${ACTIVE_CC} == "clang":? -Wpointer-sign -Wmissing-noreturn :}
