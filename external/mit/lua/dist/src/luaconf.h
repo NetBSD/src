@@ -1,7 +1,7 @@
-/*	$NetBSD: luaconf.h,v 1.3 2012/03/15 00:17:22 alnsn Exp $	*/
+/*	$NetBSD: luaconf.h,v 1.4 2012/03/15 01:02:19 alnsn Exp $	*/
 
 /*
-** $Id: luaconf.h,v 1.3 2012/03/15 00:17:22 alnsn Exp $
+** Id: luaconf.h,v 1.82.1.7 2008/02/11 16:25:08 roberto Exp $
 ** Configuration file for Lua
 ** See Copyright Notice in lua.h
 */
