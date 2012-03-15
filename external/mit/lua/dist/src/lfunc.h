@@ -1,7 +1,7 @@
-/*	$NetBSD: lfunc.h,v 1.1.1.1 2010/10/31 11:16:56 mbalmer Exp $	*/
+/*	$NetBSD: lfunc.h,v 1.1.1.2 2012/03/15 00:08:04 alnsn Exp $	*/
 
 /*
-** Id: lfunc.h,v 2.4.1.1 2007/12/27 13:02:25 roberto Exp
+** $Id: lfunc.h,v 1.1.1.2 2012/03/15 00:08:04 alnsn Exp $
 ** Auxiliary functions to manipulate prototypes and closures
 ** See Copyright Notice in lua.h
 */

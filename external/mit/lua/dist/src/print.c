@@ -1,7 +1,7 @@
-/*	$NetBSD: print.c,v 1.1.1.1 2010/10/31 11:17:01 mbalmer Exp $	*/
+/*	$NetBSD: print.c,v 1.1.1.2 2012/03/15 00:08:12 alnsn Exp $	*/
 
 /*
-** Id: print.c,v 1.55a 2006/05/31 13:30:05 lhf Exp
+** $Id: print.c,v 1.1.1.2 2012/03/15 00:08:12 alnsn Exp $
 ** print bytecodes
 ** See Copyright Notice in lua.h
 */

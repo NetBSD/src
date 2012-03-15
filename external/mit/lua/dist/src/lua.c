@@ -1,7 +1,7 @@
-/*	$NetBSD: lua.c,v 1.1.1.1 2010/10/31 11:17:00 mbalmer Exp $	*/
+/*	$NetBSD: lua.c,v 1.1.1.2 2012/03/15 00:08:11 alnsn Exp $	*/
 
 /*
-** Id: lua.c,v 1.160.1.2 2007/12/28 15:32:23 roberto Exp
+** $Id: lua.c,v 1.1.1.2 2012/03/15 00:08:11 alnsn Exp $
 ** Lua stand-alone interpreter
 ** See Copyright Notice in lua.h
 */

@@ -1,7 +1,7 @@
-/*	$NetBSD: lmathlib.c,v 1.1.1.1 2010/10/31 11:16:57 mbalmer Exp $	*/
+/*	$NetBSD: lmathlib.c,v 1.1.1.2 2012/03/15 00:08:05 alnsn Exp $	*/
 
 /*
-** Id: lmathlib.c,v 1.67.1.1 2007/12/27 13:02:25 roberto Exp
+** $Id: lmathlib.c,v 1.1.1.2 2012/03/15 00:08:05 alnsn Exp $
 ** Standard mathematical library
 ** See Copyright Notice in lua.h
 */

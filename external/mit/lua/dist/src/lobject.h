@@ -1,7 +1,7 @@
-/*	$NetBSD: lobject.h,v 1.1.1.1 2010/10/31 11:16:57 mbalmer Exp $	*/
+/*	$NetBSD: lobject.h,v 1.1.1.2 2012/03/15 00:08:07 alnsn Exp $	*/
 
 /*
-** Id: lobject.h,v 2.20.1.2 2008/08/06 13:29:48 roberto Exp
+** $Id: lobject.h,v 1.1.1.2 2012/03/15 00:08:07 alnsn Exp $
 ** Type definitions for Lua objects
 ** See Copyright Notice in lua.h
 */
