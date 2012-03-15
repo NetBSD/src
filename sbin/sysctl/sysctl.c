@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.141 2012/03/11 23:33:00 christos Exp $ */
+/*	$NetBSD: sysctl.c,v 1.142 2012/03/15 02:02:22 joerg Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.141 2012/03/11 23:33:00 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.142 2012/03/15 02:02:22 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,7 +146,7 @@ static void getdesc(int *, u_int, struct sysctlnode *);
 static void trim_whitespace(char *, int);
 static void sysctlerror(int);
 static void sysctlparseerror(u_int, const char *);
-static void sysctlperror(const char *, ...);
+static void sysctlperror(const char *, ...) __printflike(1, 2);
 #define EXIT(n) do { \
 	if (fn == NULL) exit(n); else return; } while (/*CONSTCOND*/0)
 

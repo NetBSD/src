@@ -1,4 +1,4 @@
-/*	$NetBSD: t_modctl.c,v 1.7 2012/03/13 05:56:46 jruoho Exp $	*/
+/*	$NetBSD: t_modctl.c,v 1.8 2012/03/15 02:02:23 joerg Exp $	*/
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: t_modctl.c,v 1.7 2012/03/13 05:56:46 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: t_modctl.c,v 1.8 2012/03/15 02:02:23 joerg Exp $");
 
 #include <sys/module.h>
 #include <sys/sysctl.h>
@@ -195,7 +195,7 @@ k_helper_is_present(enum presence_check how)
  * occurs when loading the module, an error message is printed and the
  * test case is aborted.
  */
-static int
+static __printflike(3, 4) int
 load(prop_dictionary_t props, bool fatal, const char *fmt, ...)
 {
 	int err;
@@ -300,7 +300,7 @@ ATF_TC_BODY(cmd_load, tc)
 	for (i = 0; i < MAXPATHLEN - 1; i++)
 		longname[i] = 'a';
 	longname[MAXPATHLEN - 1] = '\0';
-	ATF_CHECK(load(NULL, false, longname) == ENAMETOOLONG);
+	ATF_CHECK(load(NULL, false, "%s", longname) == ENAMETOOLONG);
 
 	ATF_CHECK(!k_helper_is_present(stat_check));
 	load(NULL, true, "%s/k_helper/k_helper.kmod",
