@@ -1,4 +1,4 @@
-/*	$NetBSD: vsnprintf.c,v 1.24 2012/03/13 21:13:47 christos Exp $	*/
+/*	$NetBSD: vsnprintf.c,v 1.25 2012/03/15 18:22:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vsnprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vsnprintf.c,v 1.24 2012/03/13 21:13:47 christos Exp $");
+__RCSID("$NetBSD: vsnprintf.c,v 1.25 2012/03/15 18:22:31 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,7 +71,7 @@ vsnprintf(char *str, size_t n, const char *fmt, va_list ap)
 
 	if ((int)n < 0) {
 		errno = EINVAL;
-		return (-1);
+		return -1;
 	}
 
 	_FILEEXT_SETUP(&f, &fext);
@@ -87,5 +87,5 @@ vsnprintf(char *str, size_t n, const char *fmt, va_list ap)
 	}
 	ret = __vfprintf_unlocked(&f, fmt, ap);
 	*f._p = 0;
-	return (ret);
+	return ret;
 }
