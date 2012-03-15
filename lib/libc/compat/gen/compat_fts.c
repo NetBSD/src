@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_fts.c,v 1.5 2012/03/13 22:37:51 joerg Exp $	*/
+/*	$NetBSD: compat_fts.c,v 1.6 2012/03/15 16:47:38 christos Exp $	*/
 
 /*
  * Written by Jason R. Thorpe <thorpej@NetBSD.org>, October 21, 1997.
@@ -22,12 +22,14 @@
 #define	__fts_dev_t	uint32_t
 #define	__fts_level_t	short
 
-#undef fts_namelen_truncate
-#define fts_namelen_truncate(a)	\
+#ifndef ftsent_namelen
+#define ftsent_namelen_truncate(a)	\
     ((a) > USHRT_MAX ? USHRT_MAX : (unsigned short)(a))
-#undef fts_pathlen_truncate
+#endif
+#ifndef fts_pathlen_truncate
 #define ftsent_pathlen_truncate(a)	\
     ((a) > USHRT_MAX ? USHRT_MAX : (unsigned short)(a))
+#endif
 
 #include <fts.h>
 #include <compat/include/fts.h>
