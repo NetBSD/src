@@ -1,4 +1,4 @@
-/*	$NetBSD: want.c,v 1.15 2012/03/15 02:55:02 dholland Exp $	*/
+/*	$NetBSD: want.c,v 1.16 2012/03/15 03:01:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -131,7 +131,7 @@ wtmp(const char *file, int namesz, int linesz, int hostsz, int numeric)
 	if (!S_ISREG(stb.st_mode))
 		errx(EXIT_FAILURE, "%s: Not a regular file", file);
 
-	seentime = time(NULL);
+	seentime = stb.st_mtime;
 	(void)signal(SIGINT, onintr);
 	(void)signal(SIGQUIT, onintr);
 
