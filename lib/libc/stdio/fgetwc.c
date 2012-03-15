@@ -1,4 +1,4 @@
-/* $NetBSD: fgetwc.c,v 1.12 2012/03/13 21:13:46 christos Exp $ */
+/* $NetBSD: fgetwc.c,v 1.13 2012/03/15 18:22:30 christos Exp $ */
 
 /*-
  * Copyright (c)2001 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fgetwc.c,v 1.12 2012/03/13 21:13:46 christos Exp $");
+__RCSID("$NetBSD: fgetwc.c,v 1.13 2012/03/15 18:22:30 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -97,6 +97,6 @@ fgetwc(FILE *fp)
 	r = __fgetwc_unlock(fp);
 	FUNLOCKFILE(fp);
 
-	return (r);
+	return r;
 }
 

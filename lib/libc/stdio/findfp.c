@@ -1,4 +1,4 @@
-/*	$NetBSD: findfp.c,v 1.26 2012/01/22 18:36:17 christos Exp $	*/
+/*	$NetBSD: findfp.c,v 1.27 2012/03/15 18:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)findfp.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: findfp.c,v 1.26 2012/01/22 18:36:17 christos Exp $");
+__RCSID("$NetBSD: findfp.c,v 1.27 2012/03/15 18:22:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -85,16 +85,14 @@ FILE __sF[3] = {
 };
 struct glue __sglue = { &uglue, 3, __sF };
 
-static struct glue *moreglue __P((int));
-void f_prealloc __P((void));
+void f_prealloc(void);
 
 #ifdef _REENTRANT
 rwlock_t __sfp_lock = RWLOCK_INITIALIZER;
 #endif
 
 static struct glue *
-moreglue(n)
-	int n;
+moreglue(int n)
 {
 	struct glue *g;
 	FILE *p;
@@ -104,7 +102,7 @@ moreglue(n)
 	g = (struct glue *)malloc(sizeof(*g) + ALIGNBYTES + n * sizeof(FILE)
 		+ n * sizeof(struct __sfileext));
 	if (g == NULL)
-		return (NULL);
+		return NULL;
 	p = (FILE *)ALIGN((u_long)(g + 1));
 	g->next = NULL;
 	g->niobs = n;
@@ -116,7 +114,7 @@ moreglue(n)
 		p++;
 		pext++;
 	}
-	return (g);
+	return g;
 }
 
 void
@@ -140,7 +138,7 @@ __sfpinit(FILE *fp)
  * Find a free FILE for fopen et al.
  */
 FILE *
-__sfp()
+__sfp(void)
 {
 	FILE *fp;
 	int n;
@@ -158,11 +156,11 @@ __sfp()
 			break;
 	}
 	rwlock_unlock(&__sfp_lock);
-	return (NULL);
+	return NULL;
 found:
 	__sfpinit(fp);
 	rwlock_unlock(&__sfp_lock);
-	return (fp);
+	return fp;
 }
 
 /*
@@ -170,14 +168,14 @@ found:
  * but documented historically for certain applications.  Bad applications.
  */
 void
-f_prealloc()
+f_prealloc(void)
 {
 	struct glue *g;
 	int n;
 
 	n = (int)sysconf(_SC_OPEN_MAX) - FOPEN_MAX + 20; /* 20 for slop. */
 	for (g = &__sglue; (n -= g->niobs) > 0 && g->next; g = g->next)
-		/* void */;
+		continue;
 	if (n > 0)
 		g->next = moreglue(n);
 }
@@ -190,7 +188,7 @@ f_prealloc()
  * The name `_cleanup' is, alas, fairly well known outside stdio.
  */
 void
-_cleanup()
+_cleanup(void)
 {
 	/* (void) _fwalk(fclose); */
 	(void) fflush(NULL);			/* `cheating' */
@@ -200,7 +198,7 @@ _cleanup()
  * __sinit() is called whenever stdio's internal variables must be set up.
  */
 void
-__sinit()
+__sinit(void)
 {
 	int i;
 

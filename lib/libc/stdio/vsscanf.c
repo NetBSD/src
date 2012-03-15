@@ -1,4 +1,4 @@
-/*	$NetBSD: vsscanf.c,v 1.17 2012/03/13 21:13:47 christos Exp $	*/
+/*	$NetBSD: vsscanf.c,v 1.18 2012/03/15 18:22:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vsscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vsscanf.c,v 1.17 2012/03/13 21:13:47 christos Exp $");
+__RCSID("$NetBSD: vsscanf.c,v 1.18 2012/03/15 18:22:31 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,16 +48,11 @@ __RCSID("$NetBSD: vsscanf.c,v 1.17 2012/03/13 21:13:47 christos Exp $");
 #include "reentrant.h"
 #include "local.h"
 
-static int eofread __P((void *, char *, int));
-
 /* ARGSUSED */
 static int
-eofread(cookie, buf, len)
-	void *cookie;
-	char *buf;
-	int len;
+eofread(void *cookie, char *buf, int len)
 {
-	return (0);
+	return 0;
 }
 
 int
@@ -78,5 +73,5 @@ vsscanf(const char *str, const char *fmt, va_list ap)
 	f._bf._size = f._r = (int)len;
 	f._read = eofread;
 	_UB(&f)._base = NULL;
-	return (__svfscanf_unlocked(&f, fmt, ap));
+	return __svfscanf_unlocked(&f, fmt, ap);
 }

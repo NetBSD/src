@@ -1,4 +1,4 @@
-/*	$NetBSD: fvwrite.c,v 1.23 2012/03/13 21:13:46 christos Exp $	*/
+/*	$NetBSD: fvwrite.c,v 1.24 2012/03/15 18:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fvwrite.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fvwrite.c,v 1.23 2012/03/13 21:13:46 christos Exp $");
+__RCSID("$NetBSD: fvwrite.c,v 1.24 2012/03/15 18:22:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,9 +58,7 @@ __RCSID("$NetBSD: fvwrite.c,v 1.23 2012/03/13 21:13:46 christos Exp $");
  * to the three different kinds of output buffering is handled here.
  */
 int
-__sfvwrite(fp, uio)
-	FILE *fp;
-	struct __suio *uio;
+__sfvwrite(FILE *fp, struct __suio *uio)
 {
 	size_t len;
 	char *p;
@@ -74,14 +72,14 @@ __sfvwrite(fp, uio)
 
 	if ((int)uio->uio_resid < 0) {
 		errno = EINVAL;
-		return (EOF);
+		return EOF;
 	}
 	if (uio->uio_resid == 0)
-		return (0);
+		return 0;
 	/* make sure we can write */
 	if (cantwrite(fp)) {
 		errno = EBADF;
-		return (EOF);
+		return EOF;
 	}
 
 #define	MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -220,9 +218,9 @@ __sfvwrite(fp, uio)
 			len -= w;
 		} while ((uio->uio_resid -= w) != 0);
 	}
-	return (0);
+	return 0;
 
 err:
 	fp->_flags |= __SERR;
-	return (EOF);
+	return EOF;
 }

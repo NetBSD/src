@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwscanf.c,v 1.7 2012/03/13 21:13:47 christos Exp $	*/
+/*	$NetBSD: vfwscanf.c,v 1.8 2012/03/15 18:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@
 static char sccsid[] = "@(#)ftell.c	8.2 (Berkeley) 5/4/95";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwscanf.c,v 1.12 2004/05/02 20:13:29 obrien Exp $");
 #else
-__RCSID("$NetBSD: vfwscanf.c,v 1.7 2012/03/13 21:13:47 christos Exp $");
+__RCSID("$NetBSD: vfwscanf.c,v 1.8 2012/03/15 18:22:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -121,7 +121,7 @@ vfwscanf(FILE * __restrict fp, const wchar_t * __restrict fmt, va_list ap)
 	_SET_ORIENTATION(fp, 1);
 	ret = __vfwscanf_unlocked(fp, fmt, ap);
 	FUNLOCKFILE(fp);
-	return (ret);
+	return ret;
 }
 
 #define SCANF_SKIP_SPACE() \
@@ -175,7 +175,7 @@ __vfwscanf_unlocked(FILE * __restrict fp, const wchar_t * __restrict fmt, va_lis
 	for (;;) {
 		c = *fmt++;
 		if (c == 0)
-			return (nassigned);
+			return nassigned;
 		if (iswspace(c)) {
 			while ((c = __fgetwc_unlock(fp)) != WEOF &&
 			    iswspace(c))
@@ -352,7 +352,7 @@ literal:
 		 * Disgusting backwards compatibility hack.	XXX
 		 */
 		case '\0':	/* compat */
-			return (EOF);
+			return EOF;
 		}
 
 		/*
@@ -739,9 +739,9 @@ literal:
 		}
 	}
 input_failure:
-	return (nconversions != 0 ? nassigned : EOF);
+	return nconversions != 0 ? nassigned : EOF;
 match_failure:
-	return (nassigned);
+	return nassigned;
 }
 
 #ifndef NO_FLOATING_POINT

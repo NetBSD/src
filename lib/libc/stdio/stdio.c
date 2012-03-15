@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.c,v 1.18 2012/03/13 21:13:46 christos Exp $	*/
+/*	$NetBSD: stdio.c,v 1.19 2012/03/15 18:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)stdio.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: stdio.c,v 1.18 2012/03/13 21:13:46 christos Exp $");
+__RCSID("$NetBSD: stdio.c,v 1.19 2012/03/15 18:22:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,10 +57,7 @@ __RCSID("$NetBSD: stdio.c,v 1.18 2012/03/13 21:13:46 christos Exp $");
  * These maintain the `known seek offset' for seek optimisation.
  */
 int
-__sread(cookie, buf, n)
-	void *cookie;
-	char *buf;
-	int n;
+__sread(void *cookie, char *buf, int n)
 {
 	FILE *fp = cookie;
 	ssize_t ret;
@@ -79,10 +76,7 @@ __sread(cookie, buf, n)
 }
 
 int
-__swrite(cookie, buf, n)
-	void *cookie;
-	char const *buf;
-	int n;
+__swrite(void *cookie, char const *buf, int n)
 {
 	FILE *fp = cookie;
 
@@ -96,10 +90,7 @@ __swrite(cookie, buf, n)
 }
 
 off_t
-__sseek(cookie, offset, whence)
-	void *cookie;
-	off_t offset;
-	int whence;
+__sseek(void *cookie, off_t offset, int whence)
 {
 	FILE *fp = cookie;
 	off_t ret;
@@ -113,7 +104,7 @@ __sseek(cookie, offset, whence)
 		fp->_flags |= __SOFF;
 		fp->_offset = ret;
 	}
-	return (ret);
+	return ret;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: fflush.c,v 1.16 2012/03/13 21:13:46 christos Exp $	*/
+/*	$NetBSD: fflush.c,v 1.17 2012/03/15 18:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fflush.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fflush.c,v 1.16 2012/03/13 21:13:46 christos Exp $");
+__RCSID("$NetBSD: fflush.c,v 1.17 2012/03/15 18:22:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,8 +54,7 @@ extern rwlock_t __sfp_lock;
 
 /* Flush a single file, or (if fp is NULL) all files.  */
 int
-fflush(fp)
-	FILE *fp;
+fflush(FILE *fp)
 {
 	int r;
 
@@ -78,8 +77,7 @@ fflush(fp)
 }
 
 int
-__sflush(fp)
-	FILE *fp;
+__sflush(FILE *fp)
 {
 	unsigned char *p;
 	int n, t;
@@ -88,10 +86,10 @@ __sflush(fp)
 
 	t = fp->_flags;
 	if ((t & __SWR) == 0)
-		return (0);
+		return 0;
 
 	if ((p = fp->_bf._base) == NULL)
-		return (0);
+		return 0;
 
 	ptrdiff_t tp = fp->_p - p;
 	_DIAGASSERT(__type_fit(int, tp));
@@ -108,8 +106,8 @@ __sflush(fp)
 		t = (*fp->_write)(fp->_cookie, (char *)p, n);
 		if (t <= 0) {
 			fp->_flags |= __SERR;
-			return (EOF);
+			return EOF;
 		}
 	}
-	return (0);
+	return 0;
 }
