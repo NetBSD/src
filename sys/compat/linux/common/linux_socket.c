@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.112 2012/01/20 14:08:07 joerg Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.113 2012/03/15 16:17:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.112 2012/01/20 14:08:07 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.113 2012/03/15 16:17:48 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1203,7 +1203,7 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 
 	if (strncmp(lreq.ifr_name, "eth", 3) == 0) {
 		for (ifnum = 0, index = 3;
-		     lreq.ifr_name[index] != '\0' && index < LINUX_IFNAMSIZ;
+		     index < LINUX_IFNAMSIZ && lreq.ifr_name[index] != '\0';
 		     index++) {
 			ifnum *= 10;
 			ifnum += lreq.ifr_name[index] - '0';
