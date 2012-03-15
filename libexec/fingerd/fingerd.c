@@ -1,4 +1,4 @@
-/*	$NetBSD: fingerd.c,v 1.26 2011/08/27 15:08:58 joerg Exp $	*/
+/*	$NetBSD: fingerd.c,v 1.27 2012/03/15 02:02:21 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fingerd.c,v 1.26 2011/08/27 15:08:58 joerg Exp $");
+__RCSID("$NetBSD: fingerd.c,v 1.27 2012/03/15 02:02:21 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ __RCSID("$NetBSD: fingerd.c,v 1.26 2011/08/27 15:08:58 joerg Exp $");
 #include <string.h>
 #include "pathnames.h"
 
-__dead static void my_err(const char *, ...);
+__dead static void my_err(const char *, ...) __printflike(1, 2);
 
 int
 main(int argc, char *argv[])

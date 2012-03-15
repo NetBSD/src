@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.35 2010/08/20 16:35:05 pooka Exp $	*/
+/*	$NetBSD: opdump.c,v 1.36 2012/03/15 02:02:21 joerg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.35 2010/08/20 16:35:05 pooka Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.36 2012/03/15 02:02:21 joerg Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -148,7 +148,7 @@ const char *puffsdump_flush_revmap[] = {
 };
 size_t puffsdump_flush_count = __arraycount(puffsdump_flush_revmap);
 
-static void
+static __printflike(1, 2) void
 mydprintf(const char *fmt, ...)
 {
 	va_list ap;
