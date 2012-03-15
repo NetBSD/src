@@ -1,7 +1,7 @@
-/*	$NetBSD: lopcodes.h,v 1.1.1.1 2010/10/31 11:16:58 mbalmer Exp $	*/
+/*	$NetBSD: lopcodes.h,v 1.1.1.2 2012/03/15 00:08:14 alnsn Exp $	*/
 
 /*
-** Id: lopcodes.h,v 1.125.1.1 2007/12/27 13:02:25 roberto Exp
+** $Id: lopcodes.h,v 1.1.1.2 2012/03/15 00:08:14 alnsn Exp $
 ** Opcodes for Lua virtual machine
 ** See Copyright Notice in lua.h
 */

@@ -1,7 +1,7 @@
-/*	$NetBSD: ltm.h,v 1.1.1.1 2010/10/31 11:17:00 mbalmer Exp $	*/
+/*	$NetBSD: ltm.h,v 1.1.1.2 2012/03/15 00:08:07 alnsn Exp $	*/
 
 /*
-** Id: ltm.h,v 2.6.1.1 2007/12/27 13:02:25 roberto Exp
+** $Id: ltm.h,v 1.1.1.2 2012/03/15 00:08:07 alnsn Exp $
 ** Tag methods
 ** See Copyright Notice in lua.h
 */
