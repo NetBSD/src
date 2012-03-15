@@ -133,7 +133,7 @@ iscsi_task_cmd_decap(uint8_t *header, iscsi_task_cmd_t * cmd)
 		errmsg = "Bytes 40-47";
 	}
 	if (errmsg) {
-		iscsi_err(__FILE__, __LINE__, errmsg);
+		iscsi_err(__FILE__, __LINE__, "%s", errmsg);
 		NO_CLEANUP;
 		return 1;
 	}
@@ -211,7 +211,7 @@ iscsi_task_rsp_decap(uint8_t *header, iscsi_task_rsp_t * rsp)
 		errmsg = "Bytes 36-47";
 	}
 	if (errmsg) {
-		iscsi_err(__FILE__, __LINE__, errmsg);
+		iscsi_err(__FILE__, __LINE__, "%s", errmsg);
 		NO_CLEANUP;
 		return 1;
 	}
@@ -287,7 +287,7 @@ iscsi_nop_out_decap(uint8_t *header, iscsi_nop_out_args_t * cmd)
 		errmsg = "Bytes 32-47";
 	}
 	if (errmsg) {
-		iscsi_err(__FILE__, __LINE__, errmsg);
+		iscsi_err(__FILE__, __LINE__, "%s", errmsg);
 		NO_CLEANUP;
 		return 1;
 	}
@@ -364,7 +364,7 @@ iscsi_nop_in_decap(uint8_t *header, iscsi_nop_in_args_t * cmd)
 		errmsg = "Bytes 36-47";
 	}
 	if (errmsg) {
-		iscsi_err(__FILE__, __LINE__, errmsg);
+		iscsi_err(__FILE__, __LINE__, "%s", errmsg);
 		NO_CLEANUP;
 		return 1;
 	}
@@ -452,7 +452,7 @@ iscsi_text_cmd_decap(uint8_t *header, iscsi_text_cmd_args_t * cmd)
 		errmsg = "Bytes 32-47";
 	}
 	if (errmsg) {
-		iscsi_err(__FILE__, __LINE__, errmsg);
+		iscsi_err(__FILE__, __LINE__, "%s", errmsg);
 		NO_CLEANUP;
 		return 1;
 	}
@@ -540,7 +540,7 @@ iscsi_text_rsp_decap(uint8_t *header, iscsi_text_rsp_args_t * rsp)
 		errmsg = "Bytes 36-47";
 	}
 	if (errmsg) {
-		iscsi_err(__FILE__, __LINE__, errmsg);
+		iscsi_err(__FILE__, __LINE__, "%s", errmsg);
 		NO_CLEANUP;
 		return 1;
 	}
@@ -657,7 +657,7 @@ iscsi_login_cmd_decap(uint8_t *header, iscsi_login_cmd_args_t * cmd)
 		errmsg = "Bytes 32-47";
 	}
 	if (errmsg) {
-		iscsi_err(__FILE__, __LINE__, errmsg);
+		iscsi_err(__FILE__, __LINE__, "%s", errmsg);
 		NO_CLEANUP;
 		return 1;
 	}
@@ -783,7 +783,7 @@ iscsi_login_rsp_decap(uint8_t *header, iscsi_login_rsp_args_t * rsp)
 		errmsg = "Bytes 40-47";
 	}
 	if (errmsg) {
-		iscsi_err(__FILE__, __LINE__, errmsg);
+		iscsi_err(__FILE__, __LINE__, "%s", errmsg);
 		NO_CLEANUP;
 		return 1;
 	}
@@ -862,7 +862,7 @@ iscsi_logout_cmd_decap(uint8_t *header, iscsi_logout_cmd_args_t * cmd)
 		errmsg = "Bytes 32-47";
 	}
 	if (errmsg) {
-		iscsi_err(__FILE__, __LINE__, errmsg);
+		iscsi_err(__FILE__, __LINE__, "%s", errmsg);
 		NO_CLEANUP;
 		return 1;
 	}
@@ -940,7 +940,7 @@ iscsi_logout_rsp_decap(uint8_t *header, iscsi_logout_rsp_args_t * rsp)
 		errmsg = "Bytes 44-47";
 	}
 	if (errmsg) {
-		iscsi_err(__FILE__, __LINE__, errmsg);
+		iscsi_err(__FILE__, __LINE__, "%s", errmsg);
 		NO_CLEANUP;
 		return 1;
 	}
@@ -1041,7 +1041,7 @@ iscsi_scsi_cmd_decap(uint8_t *header, iscsi_scsi_cmd_args_t * cmd)
 		errmsg = "Byte 3";
 	}
 	if (errmsg) {
-		iscsi_err(__FILE__, __LINE__, errmsg);
+		iscsi_err(__FILE__, __LINE__, "%s", errmsg);
 		NO_CLEANUP;
 		return 1;
 	}
@@ -1157,7 +1157,7 @@ iscsi_scsi_rsp_decap(uint8_t *header, iscsi_scsi_rsp_t * rsp)
 		errmsg = "overflow";
 	}
 	if (errmsg) {
-		iscsi_err(__FILE__, __LINE__, errmsg);
+		iscsi_err(__FILE__, __LINE__, "%s", errmsg);
 		NO_CLEANUP;
 		return 1;
 	}
@@ -1252,7 +1252,7 @@ iscsi_r2t_decap(uint8_t *header, iscsi_r2t_t * cmd)
 		errmsg = "Bytes 4-15";
 	}
 	if (errmsg) {
-		iscsi_err(__FILE__, __LINE__, errmsg);
+		iscsi_err(__FILE__, __LINE__, "%s", errmsg);
 		NO_CLEANUP;
 		return 1;
 	}
@@ -1339,7 +1339,7 @@ iscsi_write_data_decap(uint8_t *header, iscsi_write_data_t * cmd)
 		errmsg = "Bytes 44-47";
 	}
 	if (errmsg) {
-		iscsi_err(__FILE__, __LINE__, errmsg);
+		iscsi_err(__FILE__, __LINE__, "%s", errmsg);
 		NO_CLEANUP;
 		return 1;
 	}
@@ -1461,7 +1461,7 @@ iscsi_read_data_decap(uint8_t *header, iscsi_read_data_t * cmd)
 		errmsg = "Bytes 44-47";
 	}
 	if (errmsg) {
-		iscsi_err(__FILE__, __LINE__, errmsg);
+		iscsi_err(__FILE__, __LINE__, "%s", errmsg);
 		NO_CLEANUP;
 		return 1;
 	}
@@ -1546,7 +1546,7 @@ iscsi_reject_decap(uint8_t *header, iscsi_reject_t * cmd)
 		errmsg = "Bytes 40-47";
 	}
 	if (errmsg) {
-		iscsi_err(__FILE__, __LINE__, errmsg);
+		iscsi_err(__FILE__, __LINE__, "%s", errmsg);
 		NO_CLEANUP;
 		return 1;
 	}
