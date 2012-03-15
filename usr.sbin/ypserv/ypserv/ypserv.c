@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv.c,v 1.25 2011/08/30 17:06:22 plunky Exp $	*/
+/*	$NetBSD: ypserv.c,v 1.26 2012/03/15 02:02:24 joerg Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv.c,v 1.25 2011/08/30 17:06:22 plunky Exp $");
+__RCSID("$NetBSD: ypserv.c,v 1.26 2012/03/15 02:02:24 joerg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -94,7 +94,7 @@ static void	usage(void) __dead;
 static int	bind_resv_port(int, sa_family_t, in_port_t);
 void		ypserv_sock_hostname(struct host_info *host);
 
-static void
+static __printflike(2, 3) void
 _msgout(int level, const char *msg, ...)
 {
 	va_list ap;
