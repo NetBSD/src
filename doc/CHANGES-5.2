@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.144 2012/03/02 17:43:03 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.145 2012/03/15 08:50:59 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -6081,4 +6081,12 @@ share/zoneinfo/zone.tab				patch
 
 	Update to tzdata2012b.
 	[apb, ticket #1734]
+
+usr.bin/last/want.c				1.15-1.16
+
+	Keep track of the timestamp of the last (thus oldest) record
+	seen and use it to print "wtmp[x] begins" at the end. When the
+	wtmp file is empty, use the last mod time of the wtmp file.
+	Fixes PR/39444.
+	[dholland, ticket #1744]
 
