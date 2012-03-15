@@ -1,4 +1,4 @@
-/*	$NetBSD: wbuf.c,v 1.14 2012/03/13 21:13:47 christos Exp $	*/
+/*	$NetBSD: wbuf.c,v 1.15 2012/03/15 18:22:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)wbuf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: wbuf.c,v 1.14 2012/03/13 21:13:47 christos Exp $");
+__RCSID("$NetBSD: wbuf.c,v 1.15 2012/03/15 18:22:31 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,9 +53,7 @@ __RCSID("$NetBSD: wbuf.c,v 1.14 2012/03/13 21:13:47 christos Exp $");
  * or if c=='\n' and the file is line buffered.
  */
 int
-__swbuf(c, fp)
-	int c;
-	FILE *fp;
+__swbuf(int c, FILE *fp)
 {
 	int n;
 
@@ -73,7 +71,7 @@ __swbuf(c, fp)
 	fp->_w = fp->_lbfsize;
 	if (cantwrite(fp)) {
 		errno = EBADF;
-		return (EOF);
+		return EOF;
 	}
 	c = (unsigned char)c;
 
@@ -90,13 +88,13 @@ __swbuf(c, fp)
 	n = (int)(fp->_p - fp->_bf._base);
 	if (n >= fp->_bf._size) {
 		if (fflush(fp))
-			return (EOF);
+			return EOF;
 		n = 0;
 	}
 	fp->_w--;
 	*fp->_p++ = c;
 	if (++n == fp->_bf._size || (fp->_flags & __SLBF && c == '\n'))
 		if (fflush(fp))
-			return (EOF);
-	return (c);
+			return EOF;
+	return c;
 }
