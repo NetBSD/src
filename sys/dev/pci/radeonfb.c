@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.58 2012/03/13 18:40:33 elad Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.59 2012/03/15 05:47:19 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.58 2012/03/13 18:40:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.59 2012/03/15 05:47:19 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,8 +171,9 @@ static void radeonfb_putchar_aa32(void *, int, int, unsigned, long);
 static void radeonfb_putchar_aa8(void *, int, int, unsigned, long);
 static void radeonfb_putchar_wrapper(void *, int, int, unsigned, long);
 
-static int radeonfb_get_backlight(struct radeonfb_display *);
 static int radeonfb_set_backlight(struct radeonfb_display *, int);
+static int radeonfb_get_backlight(struct radeonfb_display *);
+static void radeonfb_switch_backlight(struct radeonfb_display *, int);
 static void radeonfb_lvds_callout(void *);
 
 static void radeonfb_brightness_up(device_t);
@@ -911,11 +912,14 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 		config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
 		
 		radeonfb_blank(dp, 0);
-		
+
 		/* Initialise delayed lvds operations for backlight. */
 		callout_init(&dp->rd_bl_lvds_co, 0);
 		callout_setfunc(&dp->rd_bl_lvds_co,
 				radeonfb_lvds_callout, dp);
+		dp->rd_bl_on = 1;
+		dp->rd_bl_level = radeonfb_get_backlight(dp);
+		radeonfb_set_backlight(dp, dp->rd_bl_level);
 	}
 
 	/*
@@ -1089,18 +1093,29 @@ radeonfb_ioctl(void *v, void *vs,
 #endif
 	case WSDISPLAYIO_GETPARAM:
 		param = (struct wsdisplay_param *)d;
-		if (param->param == WSDISPLAYIO_PARAM_BACKLIGHT) {
+		switch (param->param) {
+		case WSDISPLAYIO_PARAM_BRIGHTNESS:
+			param->min = 0;
+			param->max = 255;
+			param->curval = dp->rd_bl_level;
+			return 0;
+		case WSDISPLAYIO_PARAM_BACKLIGHT:
 			param->min = 0;
 			param->max = RADEONFB_BACKLIGHT_MAX;
-			param->curval = radeonfb_get_backlight(dp);
+			param->curval = dp->rd_bl_on;
 			return 0;
 		}
 		return EPASSTHROUGH;
 
 	case WSDISPLAYIO_SETPARAM:
 		param = (struct wsdisplay_param *)d;
-		if (param->param == WSDISPLAYIO_PARAM_BACKLIGHT) {
-			return radeonfb_set_backlight(dp, param->curval);
+		switch (param->param) {
+		case WSDISPLAYIO_PARAM_BRIGHTNESS:
+			radeonfb_set_backlight(dp, param->curval);
+			return 0;
+		case WSDISPLAYIO_PARAM_BACKLIGHT:
+			radeonfb_switch_backlight(dp,  param->curval);
+			return 0;
 		}
 		return EPASSTHROUGH;
 
@@ -3780,6 +3795,14 @@ radeonfb_get_backlight(struct radeonfb_display *dp)
 }	
 
 /* Set the backlight to the given level for the display.  */
+static void 
+radeonfb_switch_backlight(struct radeonfb_display *dp, int on)
+{
+	if (dp->rd_bl_on == on)
+		return;
+	dp->rd_bl_on = on;
+	radeonfb_set_backlight(dp, dp->rd_bl_level);
+}
 
 static int 
 radeonfb_set_backlight(struct radeonfb_display *dp, int level)
@@ -3789,7 +3812,11 @@ radeonfb_set_backlight(struct radeonfb_display *dp, int level)
 	uint32_t lvds;
 
 	s = spltty();
-	
+
+	dp->rd_bl_level = level;
+	if (dp->rd_bl_on == 0)
+		level = 0;
+
 	if (level < 0)
 		level = 0;
 	else if (level >= RADEONFB_BACKLIGHT_MAX)
@@ -3865,24 +3892,30 @@ static void
 radeonfb_brightness_up(device_t dev)
 {
 	struct radeonfb_softc *sc = device_private(dev);
+	struct radeonfb_display *dp = &sc->sc_displays[0];
 	int level;
 
 	/* we assume the main display is the first one - need a better way */
 	if (sc->sc_ndisplays < 1) return;
-	level = radeonfb_get_backlight(&sc->sc_displays[0]);
+	/* make sure pushing the hotkeys always has an effect */
+	dp->rd_bl_on = 1;
+	level = dp->rd_bl_level;
 	level = min(RADEONFB_BACKLIGHT_MAX, level + 5);
-	radeonfb_set_backlight(&sc->sc_displays[0], level);
+	radeonfb_set_backlight(dp, level);
 }
 
 static void
 radeonfb_brightness_down(device_t dev)
 {
 	struct radeonfb_softc *sc = device_private(dev);
+	struct radeonfb_display *dp = &sc->sc_displays[0];
 	int level;
 
 	/* we assume the main display is the first one - need a better way */
 	if (sc->sc_ndisplays < 1) return;
-	level = radeonfb_get_backlight(&sc->sc_displays[0]);
+	/* make sure pushing the hotkeys always has an effect */
+	dp->rd_bl_on = 1;
+	level = dp->rd_bl_level;
 	level = max(0, level - 5);
-	radeonfb_set_backlight(&sc->sc_displays[0], level);
+	radeonfb_set_backlight(dp, level);
 }
