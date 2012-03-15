@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unpriv.c,v 1.5 2012/02/09 18:31:03 njoly Exp $	*/
+/*	$NetBSD: t_unpriv.c,v 1.6 2012/03/15 12:57:27 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -25,6 +25,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/time.h>
 
 #include <atf-c.h>
 #include <libgen.h>
@@ -115,14 +117,45 @@ dirperms(const atf_tc_t *tc, const char *mp)
 	FSTEST_EXIT();
 }
 
+static void
+times(const atf_tc_t *tc, const char *mp)
+{
+	const char *name = "file.test";
+	int fd;
+
+	FSTEST_ENTER();
+
+	if ((fd = rump_sys_open(name, O_RDWR|O_CREAT, 0666)) == -1)
+		atf_tc_fail_errno("open");
+	if (rump_sys_close(fd) == -1)
+		atf_tc_fail_errno("close");
+
+	rump_pub_lwproc_rfork(RUMP_RFCFDG);
+	if (rump_sys_setuid(1) == -1)
+		atf_tc_fail_errno("setuid");
+	if (rump_sys_utimes(name, NULL) != -1 || errno != EACCES)
+		atf_tc_fail_errno("utimes");
+	rump_pub_lwproc_releaselwp();
+
+	if (rump_sys_utimes(name, NULL) == -1)
+		atf_tc_fail_errno("utimes");
+
+	if (rump_sys_unlink(name) == -1)
+		atf_tc_fail_errno("unlink");
+
+	FSTEST_EXIT();
+}
+
 ATF_TC_FSAPPLY(owner, "owner unprivileged checks");
 ATF_TC_FSAPPLY(dirperms, "directory permission checks");
+ATF_TC_FSAPPLY(times, "time set checks");
 
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_FSAPPLY(owner);
 	ATF_TP_FSAPPLY(dirperms);
+	ATF_TP_FSAPPLY(times);
 
 	return atf_no_error();
 }
