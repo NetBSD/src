@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.212 2012/03/15 02:00:52 joerg Exp $
+#	$NetBSD: bsd.sys.mk,v 1.213 2012/03/15 15:04:23 joerg Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -61,6 +61,7 @@ CXXFLAGS+=	${${ACTIVE_CXX} == "gcc":? -Wno-non-template-friend -Wno-pmf-conversi
 .endif
 .if ${WARNS} > 3 && (defined(HAVE_GCC) || defined(HAVE_LLVM))
 CFLAGS+=	-Wsign-compare -Wformat=2
+CFLAGS+=	${${ACTIVE_CC} == "clang":? -Wno-error=format-nonliteral :}
 CFLAGS+=	${${ACTIVE_CC} == "gcc":? -Wno-format-zero-length :}
 .endif
 .if ${WARNS} > 3 && defined(HAVE_LLVM)
