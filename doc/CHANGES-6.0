@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.53 2012/03/10 21:38:30 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.54 2012/03/15 08:53:56 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1250,4 +1250,12 @@ external/mit/xorg/lib/dri/dri.mk		1.12
 
 	Fix problems with X11 since moving libexpat from xsrc to src.
 	[tron, ticket #108]
+
+usr.bin/last/want.c				1.15-1.16
+
+	Keep track of the timestamp of the last (thus oldest) record
+	seen and use it to print "wtmp[x] begins" at the end. When the
+	wtmp file is empty, use the last mod time of the wtmp file.
+	Fixes PR/39444.
+	[dholland, ticket #117]
 
