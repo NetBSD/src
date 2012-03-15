@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.35 2012/02/19 23:19:37 matt Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.36 2012/03/15 02:00:52 joerg Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -18,7 +18,7 @@ CPPFLAGS+=	-isystem ${S}/../common/include
 CPPFLAGS+=	-D_KERNEL -D_LKM -D_MODULE -DSYSCTL_INCLUDE_DESCR
 
 # XXX until the kernel is fixed again...
-.if defined(HAVE_GCC) || defined(HAVE_PCC)
+.if defined(HAVE_GCC) || defined(HAVE_PCC) || defined(HAVE_LLVM)
 CFLAGS+=	-fno-strict-aliasing -Wno-pointer-sign
 .endif
 
