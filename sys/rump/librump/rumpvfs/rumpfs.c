@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.107 2012/03/13 18:41:01 elad Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.108 2012/03/15 12:42:28 njoly Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.107 2012/03/13 18:41:01 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.108 2012/03/15 12:42:28 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -910,7 +910,7 @@ rump_vop_setattr(void *v)
 	    CHANGED(va_mtime.tv_nsec, long) ||
 	    CHANGED(va_birthtime.tv_nsec, long)) {
 		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_TIMES, vp,
-		    NULL, genfs_can_chtimes(vp, attr->va_vaflags, attr->va_uid,
+		    NULL, genfs_can_chtimes(vp, vap->va_vaflags, attr->va_uid,
 		    cred));
 		if (error)
 			return error;
