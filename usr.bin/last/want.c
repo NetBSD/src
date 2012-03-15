@@ -1,4 +1,4 @@
-/*	$NetBSD: want.c,v 1.16 2012/03/15 03:01:03 dholland Exp $	*/
+/*	$NetBSD: want.c,v 1.17 2012/03/15 03:04:05 dholland Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -39,7 +39,7 @@ static const char *
 /*ARGSUSED*/
 gethost(struct utmp *ut, const char *host, int numeric)
 {
-#if FIRSTVALID == 0
+#if HAS_UT_SS == 0
 	return numeric ? "" : host;
 #else
 	if (numeric) {
