@@ -1,4 +1,4 @@
-/*	$NetBSD: fseeko.c,v 1.10 2012/03/13 21:13:46 christos Exp $	*/
+/*	$NetBSD: fseeko.c,v 1.11 2012/03/15 18:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fseeko.c,v 1.10 2012/03/13 21:13:46 christos Exp $");
+__RCSID("$NetBSD: fseeko.c,v 1.11 2012/03/15 18:22:30 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -82,7 +82,7 @@ fseeko(FILE *fp, off_t offset, int whence)
 	if ((seekfn = fp->_seek) == NULL) {
 		errno = ESPIPE;			/* historic practice */
 		FUNLOCKFILE(fp);
-		return (-1);
+		return -1;
 	}
 
 	/*
@@ -104,7 +104,7 @@ fseeko(FILE *fp, off_t offset, int whence)
 			curoff = (*seekfn)(fp->_cookie, (off_t)0, SEEK_CUR);
 			if (curoff == POS_ERR) {
 				FUNLOCKFILE(fp);
-				return (-1);
+				return -1;
 			}
 		}
 		if (fp->_flags & __SRD) {
@@ -128,7 +128,7 @@ fseeko(FILE *fp, off_t offset, int whence)
 	default:
 		errno = EINVAL;
 		FUNLOCKFILE(fp);
-		return (-1);
+		return -1;
 	}
 
 	/*
@@ -213,7 +213,7 @@ fseeko(FILE *fp, off_t offset, int whence)
 			FREEUB(fp);
 		fp->_flags &= ~__SEOF;
 		FUNLOCKFILE(fp);
-		return (0);
+		return 0;
 	}
 
 	/*
@@ -241,7 +241,7 @@ fseeko(FILE *fp, off_t offset, int whence)
 		fp->_r -= (int)n;
 	}
 	FUNLOCKFILE(fp);
-	return (0);
+	return 0;
 
 	/*
 	 * We get here if we cannot optimise the seek ... just
@@ -251,7 +251,7 @@ dumb:
 	if (__sflush(fp) ||
 	    (*seekfn)(fp->_cookie, offset, whence) == POS_ERR) {
 		FUNLOCKFILE(fp);
-		return (-1);
+		return -1;
 	}
 	/* success: clear EOF indicator and discard ungetc() data */
 	if (HASUB(fp))
@@ -261,5 +261,5 @@ dumb:
 	/* fp->_w = 0; */	/* unnecessary (I think...) */
 	fp->_flags &= ~__SEOF;
 	FUNLOCKFILE(fp);
-	return (0);
+	return 0;
 }

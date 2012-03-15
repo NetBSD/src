@@ -1,4 +1,4 @@
-/*	$NetBSD: vswscanf.c,v 1.7 2012/03/13 21:13:47 christos Exp $	*/
+/*	$NetBSD: vswscanf.c,v 1.8 2012/03/15 18:22:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@
 static char sccsid[] = "@(#)vsscanf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vswscanf.c,v 1.3 2004/04/07 09:55:05 tjr Exp $");
 #else
-__RCSID("$NetBSD: vswscanf.c,v 1.7 2012/03/13 21:13:47 christos Exp $");
+__RCSID("$NetBSD: vswscanf.c,v 1.8 2012/03/15 18:22:31 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,14 +56,12 @@ __RCSID("$NetBSD: vswscanf.c,v 1.7 2012/03/13 21:13:47 christos Exp $");
 #include "reentrant.h"
 #include "local.h"
 
-static int	eofread(void *, char *, int);
-
 static int
 /*ARGSUSED*/
 eofread(void *cookie, char *buf, int len)
 {
 
-	return (0);
+	return 0;
 }
 
 int
@@ -84,11 +82,11 @@ vswscanf(const wchar_t * __restrict str, const wchar_t * __restrict fmt,
 	 * __vfwscanf() will convert back to wide characters.
 	 */
 	if ((mbstr = malloc(wcslen(str) * MB_CUR_MAX + 1)) == NULL)
-		return (EOF);
+		return EOF;
 	mbs = initial;
 	if ((mlen = wcsrtombs(mbstr, &rstr, SIZE_T_MAX, &mbs)) == (size_t)-1) {
 		free(mbstr);
-		return (EOF);
+		return EOF;
 	}
 	_FILEEXT_SETUP(&f, &fext);
 	(void)memset(WCIO_GET(&f), 0, sizeof(struct wchar_io_data));
@@ -102,5 +100,5 @@ vswscanf(const wchar_t * __restrict str, const wchar_t * __restrict fmt,
 	r = __vfwscanf_unlocked(&f, fmt, ap);
 	free(mbstr);
 
-	return (r);
+	return r;
 }
