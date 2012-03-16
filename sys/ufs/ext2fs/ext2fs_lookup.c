@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.68 2012/03/13 18:41:03 elad Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.69 2012/03/16 08:39:54 hannken Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.68 2012/03/13 18:41:03 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.69 2012/03/16 08:39:54 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -586,18 +586,26 @@ found:
 			results->ulr_count = 0;
 		else
 			results->ulr_count = results->ulr_offset - prevoff;
-		if (flags & ISDOTDOT)
-			VOP_UNLOCK(vdp); /* race to get the inode */
-		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
-		if (flags & ISDOTDOT)
-			vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
-		if (error)
-			return (error);
+		if (dp->i_number == foundino) {
+			vref(vdp);
+			tdp = vdp;
+		} else {
+			if (flags & ISDOTDOT)
+				VOP_UNLOCK(vdp); /* race to get the inode */
+			error = VFS_VGET(vdp->v_mount, foundino, &tdp);
+			if (flags & ISDOTDOT)
+				vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
+			if (error)
+				return (error);
+		}
 		/*
 		 * Write access to directory required to delete files.
 		 */
 		if ((error = VOP_ACCESS(vdp, VWRITE, cred)) != 0) {
-			vput(tdp);
+			if (dp->i_number == foundino)
+				vrele(tdp);
+			else
+				vput(tdp);
 			return (error);
 		}
 		/*
@@ -611,14 +619,12 @@ found:
 			    tdp, vdp, genfs_can_sticky(cred, dp->i_uid,
 			    VTOI(tdp)->i_uid));
 			if (error) {
-				vput(tdp);
+				if (dp->i_number == foundino)
+					vrele(tdp);
+				else
+					vput(tdp);
 				return (EPERM);
 			}
-		}
-		if (dp->i_number == foundino) {
-			vref(vdp);
-			*vpp = vdp;
-			return (0);
 		}
 		*vpp = tdp;
 		return (0);
