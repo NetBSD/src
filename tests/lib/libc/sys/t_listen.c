@@ -1,4 +1,4 @@
-/*	$NetBSD: t_listen.c,v 1.2 2012/03/07 07:24:05 jruoho Exp $	*/
+/*	$NetBSD: t_listen.c,v 1.3 2012/03/16 08:14:11 matt Exp $	*/
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -78,8 +78,6 @@ ATF_TC_BODY(listen_err, tc)
 	 * According to IEEE Std 1003.1-2008: if the socket is
 	 * already connected, the call should fail with EINVAL.
 	 */
-	atf_tc_expect_fail("PR standards/46150");
-
 	ATF_REQUIRE(connect(fdb, (struct sockaddr *)&sinb, siz) == 0);
 	ATF_REQUIRE_ERRNO(EINVAL, listen(fdb, 1) == -1);
 
