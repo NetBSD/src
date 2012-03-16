@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.63 2012/02/19 21:06:24 rmind Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.64 2012/03/16 07:41:55 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.63 2012/02/19 21:06:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.64 2012/03/16 07:41:55 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_modular.h"
@@ -247,6 +247,13 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_INT, "altivec", NULL,
 		       NULL, cpu_altivec, NULL, 0,
 		       CTL_MACHDEP, CPU_ALTIVEC, CTL_EOL);
+#endif
+#ifdef PPC_BOOKE
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "execprot", NULL,
+		       NULL, 1, NULL, 0,
+		       CTL_MACHDEP, CPU_EXECPROT, CTL_EOL);
 #endif
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
