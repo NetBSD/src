@@ -1,4 +1,4 @@
-/* $NetBSD: t_msync.c,v 1.1 2011/07/07 06:57:54 jruoho Exp $ */
+/* $NetBSD: t_msync.c,v 1.2 2012/03/16 06:15:17 matt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_msync.c,v 1.1 2011/07/07 06:57:54 jruoho Exp $");
+__RCSID("$NetBSD: t_msync.c,v 1.2 2012/03/16 06:15:17 matt Exp $");
 
 #include <sys/mman.h>
 
@@ -165,6 +165,8 @@ ATF_TC_HEAD(msync_err, tc)
 ATF_TC_BODY(msync_err, tc)
 {
 
+	char *map = MAP_FAILED;
+
 	/*
 	 * Test that invalid flags error out.
 	 */
@@ -173,7 +175,16 @@ ATF_TC_BODY(msync_err, tc)
 
 	errno = 0;
 
-	ATF_REQUIRE(msync((void *)INT_MAX, page, MS_SYNC) != 0);
+	/*
+	 * Map a page and then unmap to get an unmapped address.
+	 */
+	map = mmap(NULL, page, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE,
+	    -1, 0);
+	ATF_REQUIRE(map != MAP_FAILED);
+
+	(void)munmap(map, page);
+
+	ATF_REQUIRE(msync(map, page, MS_SYNC) != 0);
 	ATF_REQUIRE(errno == EFAULT);
 }
 
