@@ -1,4 +1,4 @@
-# $NetBSD: t_nonexistent.sh,v 1.2 2011/05/11 22:08:12 njoly Exp $
+# $NetBSD: t_nonexistent.sh,v 1.3 2012/03/17 17:39:44 jruoho Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,9 +35,10 @@ nonexistent_head() {
 
 nonexistent_body() {
 
-	atf_expect_fail "PR bin/43141"
-
-	atf_check -s not-exit:0 ifconfig nonexistent0 1.2.3.4/24
+	# Cf. PR bin/43141.
+	#
+	atf_check -s not-exit:0 -e ignore \
+		ifconfig nonexistent0 1.2.3.4/24
 }
 
 atf_init_test_cases() {
