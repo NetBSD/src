@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.162 2012/02/02 19:43:07 tls Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.163 2012/03/17 02:48:51 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.162 2012/02/02 19:43:07 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.163 2012/03/17 02:48:51 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -267,11 +267,11 @@ tcp_usrreq(struct socket *so, int req,
 	 * a (struct inpcb) pointed at by the socket, and this
 	 * structure will point at a subsidary (struct tcpcb).
 	 */
-#ifndef INET6
-	if (inp == 0 && req != PRU_ATTACH)
-#else
-	if ((inp == 0 && in6p == 0) && req != PRU_ATTACH)
+	if ((inp == 0
+#ifdef INET6
+	    && in6p == 0
 #endif
+	    ) && (req != PRU_ATTACH && req != PRU_SENSE))
 	{
 		error = EINVAL;
 		goto release;
