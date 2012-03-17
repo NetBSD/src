@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.444 2012/03/17 16:40:14 jruoho Exp $
+# $NetBSD: mi,v 1.445 2012/03/17 17:16:41 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2752,11 +2752,11 @@
 ./usr/tests/syscall/t_truncate			tests-obsolete		obsolete
 ./usr/tests/syscall/t_umask			tests-obsolete		obsolete
 ./usr/tests/syscall/t_unlink			tests-obsolete		obsolete
-./usr/tests/toolchain				tests-syscall-tests	atf
-./usr/tests/toolchain/Atffile			tests-syscall-tests	atf
-./usr/tests/toolchain/cc			tests-syscall-tests	atf
-./usr/tests/toolchain/cc/Atffile		tests-syscall-tests	atf
-./usr/tests/toolchain/cc/t_hello		tests-syscall-tests	atf
+./usr/tests/toolchain				tests-obsolete		obsolete
+./usr/tests/toolchain/Atffile			tests-obsolete		obsolete
+./usr/tests/toolchain/cc			tests-obsolete		obsolete
+./usr/tests/toolchain/cc/Atffile		tests-obsolete		obsolete
+./usr/tests/toolchain/cc/t_hello		tests-obsolete		obsolete
 ./usr/tests/usr.bin				tests-usr.bin-tests
 ./usr/tests/usr.bin/Atffile			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/awk				tests-usr.bin-tests
@@ -2797,6 +2797,9 @@
 ./usr/tests/usr.bin/bzip2/d_sample2.ref		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/bzip2/d_sample3.bz2		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/bzip2/d_sample3.ref		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/cc				tests-usr.bin-tests
+./usr/tests/usr.bin/cc/Atffile			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/cc/t_hello			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/config			tests-usr.bin-tests
 ./usr/tests/usr.bin/config/Atffile		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/config/Makefile.regress	tests-usr.bin-tests	atf
