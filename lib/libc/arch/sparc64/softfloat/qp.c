@@ -1,4 +1,4 @@
-/* $NetBSD: qp.c,v 1.8 2012/03/14 17:03:10 martin Exp $ */
+/* $NetBSD: qp.c,v 1.9 2012/03/17 20:48:59 martin Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -271,15 +271,15 @@ _Qp_uxtoq(float128 *c, unsigned long a)
 
 	if (a & 0x8000000000000000ULL) {
 		a = (a >> 1) | (a & 1);
-		*c = int64_to_float128(a);
+		*c = int64_to_float128((long long)a);
 		*c = float128_add(*c, *c);
 	} else
-		*c = int64_to_float128(a);
+		*c = int64_to_float128((long long)a);
 }
 
 
 void
 _Qp_xtoq(float128 *c, long a)
 {
-	*c = int64_to_float128(a);
+	*c = int64_to_float128((long long)a);
 }
