@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.110.2.2 2008/12/06 21:27:36 snj Exp $
+# $NetBSD: HACKS,v 1.110.2.2.2.1 2012/03/17 18:45:09 bouyer Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -541,18 +541,6 @@ port	m68000
 		This might be related with GCC Bugzilla Bug 32424.
 	kcah
 
-
-port	sparc64
-
-	hack	disable optimzations for uvm_bio.c on 32 bit kernels
-	cdate	Sun Mar 21 14:14:04 MET 2004
-	who	martin
-	file	sys/arch/sparc64/conf/Makefile.sparc64 : 1.53-1.54
-	file	sys/arch/sparc64/conf/files.sparc64 : 1.93
-	descr
-		The sparc compiler miscompiles uvm_bio.c when using
-		any optimization. This results in ubc_release panics.
-	kcah
 
 port	mips
 
