@@ -1,5 +1,5 @@
 /*	Id: pass1.h,v 1.235 2011/08/14 14:52:29 ragge Exp 	*/	
-/*	$NetBSD: pass1.h,v 1.1.1.4 2011/09/01 12:47:00 plunky Exp $	*/
+/*	$NetBSD: pass1.h,v 1.1.1.4.4.1 2012/03/17 17:24:22 bouyer Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -491,6 +491,7 @@ enum {	ATTR_NONE,
 	GCC_ATYP_ALW_INL,
 	GCC_ATYP_TLSMODEL,
 	GCC_ATYP_ALIASWEAK,
+	GCC_ATYP_RETURNS_TWICE,
 
 	/* other stuff */
 	GCC_ATYP_BOUNDED,	/* OpenBSD extra boundary checks */
