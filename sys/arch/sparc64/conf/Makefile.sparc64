@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.62.12.1 2007/06/05 20:22:33 bouyer Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.62.12.2 2012/03/17 19:40:40 bouyer Exp $
 
 #=========================================================================
 #
@@ -57,7 +57,6 @@ CPPFLAGS+=	-Dsparc64 -D__sparc64__
 # 64-bit kernels
 CPPFLAGS+=	-D_LP64 -Wa,-Av9a
 AFLAGS+=	-Wa,-Av9a
-CC_NOOPT=	${NORMAL_C}
 .if defined(PROF)
 # Profiling is only supported in the medium low memory model.
 CFLAGS+=	-mcmodel=medlow
@@ -69,10 +68,6 @@ CFLAGS+=	-mcmodel=medlow
 # 32-bit kernels
 CPPFLAGS+=	-m32 -Wa,-Av8plusa -mcpu=ultrasparc
 AFLAGS+=	-Wa,-Av8plusa
-# XXX
-# The sparc gcc version 3.3.3 (NetBSD nb1 20040301) does not compile this
-# file properly with higher optimizations
-CC_NOOPT=	${NORMAL_C:C/-O./-O0/}
 .endif
 CFLAGS+=	-mno-fpu
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
