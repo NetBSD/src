@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.962.4.15 2010/11/22 03:40:00 riz Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.962.4.16 2012/03/17 19:06:21 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD
+ *	NetBSD: pcidevs,v 1.962.4.16 2012/03/17 19:05:38 bouyer Exp
  */
 
 /*
@@ -8104,6 +8104,106 @@ static const struct pci_product pci_products[] = {
 	    "82845 AGP",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_SATA_1,
+	    "6 Series SATA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_SATA_2,
+	    "6 Series SATA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_AHCI_1,
+	    "6 Series AHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_AHCI_2,
+	    "6 Series AHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_RAID_1,
+	    "6 Series RAID",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_RAID_2,
+	    "6 Series RAID",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_RAID_3,
+	    "6 Series RAID",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_SATA_3,
+	    "6 Series SATA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_SATA_4,
+	    "6 Series SATA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_PCIE_1,
+	    "6 Series PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_PCIE_2,
+	    "6 Series PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_PCIE_3,
+	    "6 Series PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_PCIE_4,
+	    "6 Series PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_PCIE_5,
+	    "6 Series PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_PCIE_6,
+	    "6 Series PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_PCIE_7,
+	    "6 Series PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_PCIE_8,
+	    "6 Series PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_HDA,
+	    "6 Series HD Audio",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_SMB,
+	    "6 Series SMBus",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_THERM,
+	    "6 Series Thermal",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_DMI,
+	    "6 Series DMI-PCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_EHCI_1,
+	    "6 Series USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_EHCI_2,
+	    "6 Series USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_MEI,
+	    "6 Series MEI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_KT,
+	    "6 Series KT",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_LPC,
 	    "82801AA LPC Interface Bridge",
 	},
@@ -14980,4 +15080,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3144;
+const int pci_nproducts = 3169;
