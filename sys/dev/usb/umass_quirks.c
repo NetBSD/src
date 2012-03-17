@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.76.2.1 2010/11/26 17:29:13 riz Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.76.2.2 2012/03/17 18:51:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.76.2.1 2010/11/26 17:29:13 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.76.2.2 2012/03/17 18:51:18 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,7 +199,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
 	  NULL, NULL
 	},
-	/* IBEAD devices don't like all SCSI commands */
+	/* Some Sigmatel-based devices don't like all SCSI commands */
 	{ { USB_VENDOR_SIGMATEL, USB_PRODUCT_SIGMATEL_MUSICSTICK },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
@@ -221,9 +221,103 @@ Static const struct umass_quirk umass_quirks[] = {
 	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
 	},
-	/* Kingston generic HBA errors */
-	{ { USB_VENDOR_KINGSTON, USB_PRODUCT_KINGSTON_DTMINI10 },
+	{ { USB_VENDOR_PHILIPS, USB_PRODUCT_PHILIPS_SA235 },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0,
+	  PQUIRK_NODOORLOCK | PQUIRK_NOSYNCCACHE,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+	/* Creative Nomad MuVo, NetBSD PR 30389, FreeBSD PR 53094 */
+	{ { USB_VENDOR_CREATIVE, USB_PRODUCT_CREATIVE_NOMAD },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0,
+	  PQUIRK_NODOORLOCK | PQUIRK_NOSYNCCACHE,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+
+	/* iRiver iFP-[135]xx players fail on PREVENT/ALLOW, see PR 25440 */
+	{ { USB_VENDOR_IRIVER, USB_PRODUCT_IRIVER_IFP_1XX },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0,
+	  PQUIRK_NODOORLOCK,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+	{ { USB_VENDOR_IRIVER, USB_PRODUCT_IRIVER_IFP_3XX },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0,
+	  PQUIRK_NODOORLOCK,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+	{ { USB_VENDOR_IRIVER, USB_PRODUCT_IRIVER_IFP_5XX },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0,
+	  PQUIRK_NODOORLOCK,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+
+	/* Meizu M6 doesn't like synchronize-cache, see PR 40442 */
+	{ { USB_VENDOR_MEIZU, USB_PRODUCT_MEIZU_M6_SL },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
+	  0,
+	  PQUIRK_NOSYNCCACHE,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+
+	/*
+	 * SanDisk Sansa Clip rejects cache sync in unconventional way.
+	 * However, unlike some other devices listed in this table,
+	 * this is does not cause the device firmware to stop responding.
+	 */
+	{ { USB_VENDOR_SANDISK, USB_PRODUCT_SANDISK_SANSA_CLIP },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
+	  0,
+	  PQUIRK_NOSYNCCACHE,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+
+	/* Kingston USB pendrives don't like being told to lock the door */
+	{ { USB_VENDOR_KINGSTON, USB_PRODUCT_KINGSTON_DT101_II },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
+	  0,
+	  PQUIRK_NODOORLOCK,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+
+	{ { USB_VENDOR_KINGSTON, USB_PRODUCT_KINGSTON_DT101_G2 },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
+	  0,
+	  PQUIRK_NODOORLOCK,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+
+	{ { USB_VENDOR_KINGSTON, USB_PRODUCT_KINGSTON_DT102_G2 },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
+	  0,
+	  PQUIRK_NODOORLOCK,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+
+	{ { USB_VENDOR_KINGSTON, USB_PRODUCT_KINGSTON_DTMINI10 },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
+	  0,
+	  PQUIRK_NODOORLOCK,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+
+	/* Also, some Kingston pendrives have Toshiba vendor ID */
+	{ { USB_VENDOR_TOSHIBA, USB_PRODUCT_KINGSTON_DT100_G2 },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
 	  0,
 	  PQUIRK_NODOORLOCK,
 	  UMATCH_VENDOR_PRODUCT,

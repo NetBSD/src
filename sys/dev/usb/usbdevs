@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.519.4.8 2010/11/26 17:29:13 riz Exp $
+$NetBSD: usbdevs,v 1.519.4.9 2012/03/17 18:51:18 bouyer Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -100,6 +100,7 @@ vendor LUCENT		0x047e	Lucent
 vendor PLANTRONICS	0x047f	Plantronics
 vendor KYOCERA		0x0482	Kyocera
 vendor STMICRO		0x0483	STMicroelectronics
+vendor MEIZU		0x0492	Meizu Electronics
 vendor YAMAHA		0x0499	YAMAHA
 vendor COMPAQ		0x049f	Compaq
 vendor HITACHI		0x04a4	Hitachi
@@ -1372,7 +1373,11 @@ product KEYSPAN UIA11		0x0202	UIA-11 remote control
 /* Kingston products */
 product KINGSTON XX1		0x0008	Ethernet Adapter
 product KINGSTON KNU101TX	0x000a	KNU101TX USB Ethernet
-product KINGSTON DTMINI10	0x162c	DT Mini 10 
+product KINGSTON DT102_G2	0x1624	DT 102 G2
+product KINGSTON DT101_II	0x1625	DT 101 II
+product KINGSTON DTMINI10	0x162c	DT Mini 10
+product KINGSTON DT101_G2	0x1642	DT 101 G2
+product KINGSTON DT100_G2	0x6544	DT 100 G2
 
 /* Kodak products */
 product KODAK DC220		0x0100	Digital Science DC220
@@ -1483,6 +1488,9 @@ product MCT ML_4500		0x0302	ML-4500
 
 /* MediaGear products */
 product MEDIAGEAR READER9IN1	0x5003	USB2.0 9 in 1 Reader
+
+/* Meizo Electronics */
+product MEIZU M6_SL		0x0140	MiniPlayer M6 (SL)
 
 /* Melco, Inc products */
 product MELCO LUATX1		0x0001	LUA-TX Ethernet
@@ -1779,6 +1787,7 @@ product PERACOM ENET2		0x0005	Ethernet adapter
 /* Philips products */
 product PHILIPS DSS350		0x0101	DSS 350 Digital Speaker System
 product PHILIPS DSS		0x0104	DSS XXX Digital Speaker System
+product PHILIPS SA235		0x016a	SA235
 product PHILIPS HUB		0x0201	hub
 product PHILIPS PCA645VC	0x0302	PCA645VC PC Camera
 product PHILIPS PCA646VC	0x0303	PCA646VC PC Camera
@@ -1976,6 +1985,7 @@ product SANDISK SDDR12		0x0100	ImageMate SDDR-12
 product SANDISK SDDR09		0x0200	ImageMate SDDR-09
 product SANDISK SDDR86		0x0621	ImageMate SDDR-86
 product SANDISK SDDR75		0x0810	ImageMate SDDR-75
+product SANDISK SANSA_CLIP	0x7433	Sansa Clip
 
 /* Sanwa Supply products */
 product SANWASUPPLY JYDV9USB	0x9806	JY-DV9USB gamepad
