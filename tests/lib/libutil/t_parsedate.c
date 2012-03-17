@@ -1,4 +1,4 @@
-/* $NetBSD: t_parsedate.c,v 1.3 2011/12/17 19:07:34 apb Exp $ */
+/* $NetBSD: t_parsedate.c,v 1.4 2012/03/17 21:33:13 christos Exp $ */
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_parsedate.c,v 1.3 2011/12/17 19:07:34 apb Exp $");
+__RCSID("$NetBSD: t_parsedate.c,v 1.4 2012/03/17 21:33:13 christos Exp $");
 
 #include <atf-c.h>
 #include <util.h>
@@ -38,13 +38,13 @@ ATF_TC(dates);
 
 ATF_TC_HEAD(dates, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test unambiguous dates");
+	atf_tc_set_md_var(tc, "descr", "Test unambiguous dates"
+	    " PR/44255");
 }
 
 ATF_TC_BODY(dates, tc)
 {
 
-//	atf_tc_expect_fail("PR lib/44255");
 	ATF_CHECK(parsedate("69-09-10", NULL, NULL) != -1);
 	ATF_CHECK(parsedate("2006-11-17", NULL, NULL) != -1);
 	ATF_CHECK(parsedate("10/1/2000", NULL, NULL) != -1);
@@ -60,13 +60,13 @@ ATF_TC(times);
 
 ATF_TC_HEAD(times, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test times");
+	atf_tc_set_md_var(tc, "descr", "Test times"
+	    " PR/44255");
 }
 
 ATF_TC_BODY(times, tc)
 {
 
-//	atf_tc_expect_fail("PR lib/44255");
 	ATF_CHECK(parsedate("10:01", NULL, NULL) != -1);
 	ATF_CHECK(parsedate("10:12pm", NULL, NULL) != -1);
 	ATF_CHECK(parsedate("12:11:01.000012", NULL, NULL) != -1);
@@ -77,13 +77,13 @@ ATF_TC(relative);
 
 ATF_TC_HEAD(relative, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test relative items");            
+	atf_tc_set_md_var(tc, "descr", "Test relative items"
+	    " PR/44255");
 }
 
 ATF_TC_BODY(relative, tc)
 {
 
-//	atf_tc_expect_fail("PR lib/44255");
 	ATF_CHECK(parsedate("-1 month", NULL, NULL) != -1);
 	ATF_CHECK(parsedate("last friday", NULL, NULL) != -1);
 	ATF_CHECK(parsedate("one week ago", NULL, NULL) != -1);
