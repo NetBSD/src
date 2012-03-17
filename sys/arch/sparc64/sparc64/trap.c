@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.169 2012/02/19 21:06:31 rmind Exp $ */
+/*	$NetBSD: trap.c,v 1.170 2012/03/17 22:19:53 mrg Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.169 2012/02/19 21:06:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.170 2012/03/17 22:19:53 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -91,6 +91,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.169 2012/02/19 21:06:31 rmind Exp $");
 #ifdef COMPAT_SVR4_32
 #include <machine/svr4_32_machdep.h>
 #endif
+
+#include <sparc64/sparc64/cache.h>
 
 #include <sparc/fpu/fpu_extern.h>
 
@@ -369,6 +371,7 @@ void text_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	u_long sfsr);
 void text_access_error(struct trapframe64 *, unsigned int, vaddr_t, u_long,
 	vaddr_t, u_long);
+void ecc_corrected_error(unsigned int type, vaddr_t pc);
 
 #ifdef DEBUG
 void print_trapframe(struct trapframe64 *);
@@ -537,6 +540,9 @@ trap(struct trapframe64 *tf, unsigned int type, vaddr_t pc, long tstate)
 			}
 			/* Enable the FPU */
 			tf->tf_tstate |= TSTATE_PEF;
+			return;
+		} else if (type == T_ECCERR) {
+			ecc_corrected_error(type, pc);
 			return;
 		}
 		goto dopanic;
@@ -852,6 +858,9 @@ badtrap:
 		ksi.ksi_trap = type;
 		ksi.ksi_code = FPE_INTOVF;
 		ksi.ksi_addr = (void *)pc;
+		break;
+	case T_ECCERR:
+		ecc_corrected_error(type, pc);
 		break;
 	}
 	if (sig != 0) {
@@ -1608,4 +1617,49 @@ out:
 		print_trapframe(tf);
 	}
 #endif
+}
+
+/*
+ * Handle an ECC corrected event.
+ */
+void
+ecc_corrected_error(unsigned int type, vaddr_t pc)
+{
+	uint64_t eeer, afar, afsr;
+	char buf[128];
+	int s;
+
+	/* Clear the error */
+	eeer = ldxa(0, ASI_ERROR_EN_REG);
+	s = intr_disable();
+	stxa(0, ASI_ERROR_EN_REG,
+	    eeer & ~(P_EER_NCEEN | P_EER_CEEN));
+	membar_Sync();
+	intr_restore(s);
+
+	/* Flush the caches in order ensure no corrupt data got installed. */
+	blast_dcache();
+	blast_icache();
+
+#if 0
+	/* Ensure the caches are still turned on (should be). */
+	cache_enable(PCPU_GET(impl));
+#endif
+
+	/* Grab the current AFSR/AFAR, and clear the error from the AFSR. */
+	afar = ldxa(0, ASI_AFAR);
+	afsr = ldxa(0, ASI_AFSR);
+	s = intr_disable();
+	stxa(0, ASI_AFSR, ldxa(0, ASI_AFSR));
+	membar_Sync();
+	intr_restore(s);
+	/* XXX: count the error */
+	snprintb(buf, sizeof(buf), AFSR_BITS, afsr);
+	printf("corrected ECC error: pc %p afsr %"PRIx64" (%s) addr %"PRIx64"\n", (void *)pc, afsr, buf, afar);
+
+	/* Turn (non-)correctable error reporting back on. */
+	s = intr_disable();
+	stxa(0, ASI_ERROR_EN_REG, eeer);
+	membar_Sync();
+	intr_restore(s);
 }
