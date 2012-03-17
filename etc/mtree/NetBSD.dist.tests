@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.63 2012/03/17 16:35:02 jruoho Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.64 2012/03/17 17:16:41 jruoho Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -259,12 +259,11 @@
 ./usr/tests/sbin/sysctl
 ./usr/tests/sys
 ./usr/tests/sys/rc
-./usr/tests/toolchain
-./usr/tests/toolchain/cc
 ./usr/tests/usr.bin
 ./usr/tests/usr.bin/awk
 ./usr/tests/usr.bin/basename
 ./usr/tests/usr.bin/bzip2
+./usr/tests/usr.bin/cc
 ./usr/tests/usr.bin/config
 ./usr/tests/usr.bin/config/support
 ./usr/tests/usr.bin/config/support/arch
