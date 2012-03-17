@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.1 2010/12/15 10:36:49 haad Exp $
+# $NetBSD: Makefile,v 1.2 2012/03/17 16:33:16 jruoho Exp $
 .include <bsd.own.mk>
 
 TESTSDIR=       ${TESTSBASE}/usr.sbin
 
-TESTS_SUBDIRS+= traceroute
+TESTS_SUBDIRS+= mtree traceroute
 
 .include <bsd.test.mk>

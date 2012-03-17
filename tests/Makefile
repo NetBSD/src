@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.34 2011/11/12 01:19:25 jmmv Exp $
+# $NetBSD: Makefile,v 1.35 2012/03/17 16:33:10 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -7,8 +7,8 @@
 TESTSDIR=	${TESTSBASE}
 ATFFILE=	yes
 
-SUBDIR=		dev examples fs games include ipf kernel lib libexec net
-SUBDIR+=	rump sbin sys toolchain usr.bin usr.sbin util
+SUBDIR=		bin dev examples fs games include ipf kernel lib libexec net
+SUBDIR+=	rump sbin sys toolchain usr.bin usr.sbin
 
 . if ${MKKMOD} != "no"
 SUBDIR+= modules
