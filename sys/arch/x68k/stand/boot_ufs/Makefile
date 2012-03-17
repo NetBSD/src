@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2008/10/25 22:27:38 apb Exp $
+#	$NetBSD: Makefile,v 1.23.4.1 2012/03/17 18:38:56 bouyer Exp $
 
 NOMAN=		# defined
 
@@ -37,12 +37,13 @@ vers.c:	${VERSIONFILE}
 	${HOST_SH} ${S}/conf/newvers_stand.sh -DM ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
 
 CFLAGS=	-Os -fomit-frame-pointer
+CFLAGS+= -m68020-60
 CFLAGS+= -W -Wall -Wstrict-prototypes -Wmissing-prototypes
 CPPFLAGS+= -DTEXTADDR="0x$(TEXT)" -DBOOT_TEXTADDR="0x$(BOOT_TEXT)"
 CPPFLAGS+= -DBOOT=\"$(BOOT)\" -DBOOT_VERS=\"$(VERSION)\"
 CPPFLAGS+= -DSCSI_ADHOC_BOOTPART
 #CPPFLAGS+= -DBOOT_DEBUG
-CPPFLAGS+= -DUSE_FFS -DUSE_LFS -DUSE_UFS1 -DUSE_UFS2 -D__daddr_t=int32_t
+CPPFLAGS+= -DUSE_FFS -DUSE_LFS -DUSE_UFS1 -DUSE_UFS2
 CPPFLAGS+= -I${COMMONDIR} -I${LIBIOCS} -I${S} -I. -D_STANDALONE
 AFLAGS=	   ${CFLAGS:M-[ID]*}
 .if ${OBJECT_FMT} == "ELF"
