@@ -1,4 +1,4 @@
-/*	$NetBSD: t_types.c,v 1.2 2011/07/11 16:12:56 njoly Exp $ */
+/*	$NetBSD: t_types.c,v 1.3 2012/03/17 21:31:29 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_types.c,v 1.2 2011/07/11 16:12:56 njoly Exp $");
+__RCSID("$NetBSD: t_types.c,v 1.3 2012/03/17 21:31:29 christos Exp $");
 
 #include <sys/types.h>
 
@@ -76,7 +76,8 @@ ATF_TC_BODY(types_limits, tc)
 ATF_TC(types_signed);
 ATF_TC_HEAD(types_signed, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Signed types(3)");
+	atf_tc_set_md_var(tc, "descr", "Signed types(3)"
+	    " PR/44847");
 }
 
 ATF_TC_BODY(types_signed, tc)
@@ -91,8 +92,6 @@ ATF_TC_BODY(types_signed, tc)
 	 * As noted in types(3), the following
 	 * types should be signed integers.
 	 */
-	atf_tc_expect_fail("PR standards/44847");
-
 	bc = 0;
 	bs = 0;
 	off = 0;
