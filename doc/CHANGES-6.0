@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.55 2012/03/17 17:55:47 bouyer Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.56 2012/03/17 19:52:08 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1385,4 +1385,9 @@ sys/arch/sparc64/include/param.h		1.49, 1.50
 	Restrict NKMEMPAGES to 2.5GB, otherwise we will run out of space in the
 	kernel_map on machines with 8GB (or more) main memory.
 	[martin, ticket #123]
+
+sys/netinet/tcp_usrreq.c			1.163
+
+	PR/46077: M. Nunberg: Stat should not fial on connecting socket.
+	[jruoho, ticket #124]
 
