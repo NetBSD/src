@@ -1,4 +1,4 @@
-/* $NetBSD: t_printf.c,v 1.2 2011/07/13 11:17:03 jruoho Exp $ */
+/* $NetBSD: t_printf.c,v 1.2.4.1 2012/03/17 17:49:55 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@ ATF_TC_HEAD(snprintf_dotzero, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", \
-	    "PR lib/32951: %.0f formats (0.0,0.5] to \"0.\"");
+	    "PR lib/32951: %%.0f formats (0.0,0.5] to \"0.\"");
 }
 
 ATF_TC_BODY(snprintf_dotzero, tc)
