@@ -1,4 +1,4 @@
-/* $NetBSD: t_stat.c,v 1.3 2012/03/06 10:32:15 jruoho Exp $ */
+/* $NetBSD: t_stat.c,v 1.4 2012/03/17 08:37:08 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_stat.c,v 1.3 2012/03/06 10:32:15 jruoho Exp $");
+__RCSID("$NetBSD: t_stat.c,v 1.4 2012/03/17 08:37:08 jruoho Exp $");
 
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -320,7 +320,8 @@ ATF_TC_CLEANUP(stat_size, tc)
 ATF_TC(stat_socket);
 ATF_TC_HEAD(stat_socket, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test fstat(2) with a socket");
+	atf_tc_set_md_var(tc, "descr", "Test fstat(2) with "
+	    "a socket (PR kern/46077)");
 }
 
 ATF_TC_BODY(stat_socket, tc)
@@ -329,8 +330,6 @@ ATF_TC_BODY(stat_socket, tc)
 	struct stat st;
 	uint32_t iaddr;
 	int fd, flags;
-
-	atf_tc_expect_fail("PR kern/46077");
 
 	(void)memset(&st, 0, sizeof(struct stat));
 	(void)memset(&addr, 0, sizeof(struct sockaddr_in));
