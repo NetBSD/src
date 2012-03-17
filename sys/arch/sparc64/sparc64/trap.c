@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.170 2012/03/17 22:19:53 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.171 2012/03/17 23:47:13 mrg Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.170 2012/03/17 22:19:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.171 2012/03/17 23:47:13 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -158,6 +158,10 @@ int	trapdebug = 0/*|TDB_SYSCALL|TDB_STOPSIG|TDB_STOPCPIO|TDB_ADDFLT|TDB_FOLLOW*/
 #define DEBUGGER(t,f)
 #define Debugger()
 #endif
+
+struct evcnt ecc_corrected =
+        EVCNT_INITIALIZER(EVCNT_TYPE_MISC,0,"ECC","corrected");
+EVCNT_ATTACH_STATIC(ecc_corrected);
 
 /*
  * Initial FPU state is all registers == all 1s, everything else == all 0s.
@@ -1653,7 +1657,7 @@ ecc_corrected_error(unsigned int type, vaddr_t pc)
 	stxa(0, ASI_AFSR, ldxa(0, ASI_AFSR));
 	membar_Sync();
 	intr_restore(s);
-	/* XXX: count the error */
+	ecc_corrected.ev_count++;
 	snprintb(buf, sizeof(buf), AFSR_BITS, afsr);
 	printf("corrected ECC error: pc %p afsr %"PRIx64" (%s) addr %"PRIx64"\n", (void *)pc, afsr, buf, afar);
 
