@@ -1,4 +1,4 @@
-/* $NetBSD: t_lwpctl.c,v 1.1 2009/02/20 21:39:57 jmmv Exp $ */
+/* $NetBSD: t_lwp_ctl.c,v 1.1 2012/03/17 17:23:34 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_lwpctl.c,v 1.1 2009/02/20 21:39:57 jmmv Exp $");
+__RCSID("$NetBSD: t_lwp_ctl.c,v 1.1 2012/03/17 17:23:34 jruoho Exp $");
 
 #include <sys/lwpctl.h>
 
@@ -39,14 +39,15 @@ __RCSID("$NetBSD: t_lwpctl.c,v 1.1 2009/02/20 21:39:57 jmmv Exp $");
 
 #include <atf-c.h>
 
-#include "../h_macros.h"
+#include "../../../h_macros.h"
 
-ATF_TC(lwpctl);
-ATF_TC_HEAD(lwpctl, tc)
+ATF_TC(lwpctl_counter);
+ATF_TC_HEAD(lwpctl_counter, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks lwpctl preemption counter");
 }
-ATF_TC_BODY(lwpctl, tc)
+
+ATF_TC_BODY(lwpctl_counter, tc)
 {
 	lwpctl_t *lc;
 	struct timespec ts;
@@ -68,7 +69,7 @@ ATF_TC_BODY(lwpctl, tc)
 
 ATF_TP_ADD_TCS(tp)
 {
-	ATF_TP_ADD_TC(tp, lwpctl);
+	ATF_TP_ADD_TC(tp, lwpctl_counter);
 
 	return atf_no_error();
 }
