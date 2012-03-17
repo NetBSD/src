@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.99 2012/03/14 11:51:54 wiz Exp $
+.\" $NetBSD: kauth.9,v 1.100 2012/03/17 14:42:13 njoly Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -753,7 +753,7 @@ Check if retrieving privileged information from the device is allowed.
 Check if setting parameters on the device is allowed.
 .It Dv KAUTH_REQ_NETWORK_INTERFACE_SETPRIV
 Check if setting privileged parameters on the device is allowed.
-.it Dv KAUTH_REQ_NETWORK_INTERFACE_FIRMWARE
+.It Dv KAUTH_REQ_NETWORK_INTERFACE_FIRMWARE
 Check if manipulating the firmware on a network interface device is allowed.
 .El
 .Pp
