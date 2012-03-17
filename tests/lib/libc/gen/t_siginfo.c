@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.12 2011/10/01 17:46:10 christos Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.13 2012/03/17 20:10:08 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -332,9 +332,6 @@ sigfpe_int_action(int signo, siginfo_t *info, void *ptr)
 		atf_tc_fail("INTDIV handler called more than once");
 
 	ATF_REQUIRE_EQ(info->si_signo, SIGFPE);
-	if (info->si_code == FPE_FLTDIV)
-		atf_tc_expect_fail("PR port-i386/43655 : integer div-by-zero "
-		    "reports FPE_FLTDIV instead of FPE_INTDIV");
 	ATF_REQUIRE_EQ(info->si_code, FPE_INTDIV);
 	atf_tc_expect_pass();
 	ATF_REQUIRE_EQ(info->si_errno, 0);
@@ -348,7 +345,7 @@ ATF_TC_HEAD(sigfpe_int, tc)
 
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks that signal trampoline correctly calls SIGFPE handler "
-	    "for integer div-by-zero");
+	    "for integer div-by-zero PR/43655");
 }
 
 ATF_TC_BODY(sigfpe_int, tc)
