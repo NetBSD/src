@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2007/11/11 13:23:07 isaki Exp $
+#	$NetBSD: Makefile,v 1.22.28.1 2012/03/17 18:38:56 bouyer Exp $
 
 S=		${.CURDIR}/../../../..
 LIBSADIR=	$S/lib/libsa
@@ -19,7 +19,7 @@ SRCS+=		cd9660.c lfsv1.c lfsv2.c nfs.c ufs.c ufs_ls.c ustarfs.c
 #SRCS+=		arp.c ether.c in_cksum.c net.c netif.c rpc.c udp.c
 #SRCS+=		bootp.c
 
-SRCS+=		ashldi3.c ashrdi3.c divdi3.c moddi3.c qdivrem.c
+SRCS+=		ashldi3.c ashrdi3.c divdi3.c moddi3.c muldi3.c qdivrem.c
 SRCS+=		strcat.c strchr.c strcmp.c strcpy.c strerror.c strlen.c
 SRCS+=		strncmp.c strrchr.c
 
@@ -32,6 +32,8 @@ SRCS+=		putimage.S
 NOPROFILE=	# defined
 NOPIC=		# defined
 NOLINT=		# defined
+
+CFLAGS+=	-m68020-60
 
 CPPFLAGS+=	-I${.OBJDIR} -I${LIBSADIR} -I$S -I${LIBZDIR} -D_STANDALONE
 CPPFLAGS+=	-I${.CURDIR}/../libiocs -I${.CURDIR}/../common
