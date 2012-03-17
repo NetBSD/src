@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2012/03/13 22:37:51 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2012/03/17 18:00:50 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -41,7 +41,7 @@ CPPFLAGS+=	-DYP
 .endif
 
 # Set lint to exit on warnings
-#LINTFLAGS+=	-w
+LINTFLAGS+=	-w
 # ignore 'empty translation unit' warnings.
 LINTFLAGS+=	-X 272
 
