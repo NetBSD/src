@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.146 2012/03/17 18:29:40 bouyer Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.147 2012/03/17 18:52:59 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -6134,3 +6134,66 @@ usr.bin/ldd/ldd.c				1.15 via patch
 	Somewhat taken from FreeBSD. Manual page from OpenBSD.
 	[skrll, ticket #1724]
 
+sys/arch/x68k/stand/Makefile.booters		1.7 via patch
+sys/arch/x68k/stand/boot/version		1.4 via patch
+sys/arch/x68k/stand/boot_ufs/Makefile		1.26 via patch
+sys/arch/x68k/stand/boot_ustar/Makefile		1.19 via patch
+sys/arch/x68k/stand/libsa/Makefile		1.27 via patch
+
+	Fix "Error occurs, please reset" boot problem on
+	X68030 + 060turbo in 060 mode, found on NetBSD booth
+	at OSC 2011 Hiroshima:
+
+	- use -D__daddr_t=int32_t for all bootloader files
+	  to avoid 64 bit ops in FFS
+	- explicitly specify -m68020-60 to avoid 64 bit mulsl/mulul
+	  instructions which need to be handled by 060SP emulation
+	  but not available in 060turbo IPL ROM
+	  (LFS still has uint64_t members even with 32bit daddr_t)
+
+	Bump version to denote 060turbo boot fix.
+	[tsutsui, ticket #1731]
+
+sys/arch/x68k/dev/kbd.c				1.37
+
+	Calling psignal(9) (via EV_WAKEUP()) in interrupt handlers
+	could cause mutex error panic, so defer it via softint(9).
+	This should fix panic on heavy key strokes during running Xserver.
+	[tsutsui, ticket #1732]
+
+usr.sbin/cpuctl/arch/i386.c			1.29
+
+	Print CPU stepping level
+	[sborrill, ticket #1735]
+
+doc/HACKS					1.123 via patch
+sys/arch/sparc64/conf/Makefile.sparc64		1.71 via patch
+sys/arch/sparc64/conf/files.sparc64		1.138 via patch
+sys/arch/sparc64/sparc64/locore.s		1.340 via patch
+
+	Fix the root cause of the hack "disable optimizations for uvm_bio.c
+	on 32 bit kernels".
+
+	gcc converts a division in the calculation of UBC_UMAP_ADDR macro
+	to multiplication (smul or combination of add/sll), and the
+	register of its result contains a garbage in upper 32 bits (the
+	upper 32 bits of smul/add/sll's result isn't zero cleared).
+
+	Then it passes to pseg_get{,_real} through pmap_extract without the
+	zero clear of upper 32 bits in the optimization case.  So the
+	result of pseg_get and pmap_extact sometimes gets screwed up.
+	[nakayama, ticket #1736]
+
+sys/dev/usb/usbdevs				patch
+sys/dev/usb/umass_quirks.c			patch
+
+	Add umass quirks for the following devices:
+	Kingston DT 102 G2
+	Kingston DT 101 II
+	Kingston DT Mini 10
+	Kingston DT 101 G2
+	Kingston DT 100 G2
+	Meizo Electronics MiniPlayer M6 (SL)
+	Philips SA235
+	Sandisk Sansa Clip
+	[riz, ticket #1737]
