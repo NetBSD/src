@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.2.12.3 2010/03/06 22:48:22 sborrill Exp $	*/
+/*	$NetBSD: ldd.c,v 1.2.12.4 2012/03/17 18:28:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd.c,v 1.2.12.3 2010/03/06 22:48:22 sborrill Exp $");
+__RCSID("$NetBSD: ldd.c,v 1.2.12.4 2012/03/17 18:28:31 bouyer Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -93,6 +93,9 @@ bool _rtld_trust;		/* False for setuid and setgid programs */
 Obj_Entry *_rtld_objlist;	/* Head of linked list of shared objects */
 Obj_Entry **_rtld_objtail = &_rtld_objlist;
 				/* Link field of last object in list */
+u_int _rtld_objcount;		/* Number of shared objects */
+u_int _rtld_objloads;		/* Number of objects loaded */
+
 Obj_Entry *_rtld_objmain;	/* The main program shared object */
 int _rtld_pagesz;
 

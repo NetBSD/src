@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.32 2008/07/24 04:39:26 matt Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.32.4.1 2012/03/17 18:28:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.32 2008/07/24 04:39:26 matt Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.32.4.1 2012/03/17 18:28:35 bouyer Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -260,12 +260,16 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 	Elf_Addr new_value;
 	const Elf_Sym  *def;
 	const Obj_Entry *defobj;
+	unsigned long info = rela->r_info;
 
-	assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JUMP_SLOT));
+	assert(ELF_R_TYPE(info) == R_TYPE(JMP_SLOT));
 
-	def = _rtld_find_symdef(ELF_R_SYM(rela->r_info), obj, &defobj, true);
-	if (def == NULL)
+	def = _rtld_find_plt_symdef(ELF_R_SYM(info), obj, &defobj, tp != NULL);
+	if (__predict_false(def == NULL))
 		return -1;
+	if (__predict_false(def == &_rtld_sym_zero))
+		return 0;
+
 	new_value = (Elf_Addr)(defobj->relocbase + def->st_value +
 	    rela->r_addend);
 	rdbg(("bind now/fixup in %s --> old=%p new=%p", 
@@ -289,7 +293,7 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 	new_value = 0; /* XXX GCC4 */
 
 	err = _rtld_relocate_plt_object(obj, rela, &new_value);
-	if (err || new_value == 0)
+	if (err)
 		_rtld_die();
 
 	return (caddr_t)new_value;

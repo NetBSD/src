@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.79.4.3 2010/01/30 18:53:47 snj Exp $	 */
+/*	$NetBSD: rtld.h,v 1.79.4.4 2012/03/17 18:28:31 bouyer Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -59,6 +59,17 @@ extern int _rtld_pagesz;
 #define NEW(type)	((type *) xmalloc(sizeof(type)))
 #define CNEW(type)	((type *) xcalloc(sizeof(type)))
 
+/*
+ * Fill in a DoneList with an allocation large enough to hold all of
+ * the currently-loaded objects. Keep this in a macro since it calls
+ * alloca and we want that to occur within the scope of the caller.
+ */
+#define _rtld_donelist_init(dlp)					\
+    ((dlp)->num_alloc = _rtld_objcount,					\
+    (dlp)->objs = alloca((dlp)->num_alloc * sizeof((dlp)->objs[0])),	\
+    assert((dlp)->objs != NULL),					\
+    (dlp)->num_used = 0)
+
 #endif /* _RTLD_SOURCE */
 
 /*
@@ -73,6 +84,11 @@ typedef struct Struct_Objlist_Entry {
 } Objlist_Entry;
 
 typedef SIMPLEQ_HEAD(Struct_Objlist, Struct_Objlist_Entry) Objlist;
+
+typedef struct Struct_Name_Entry {
+	STAILQ_ENTRY(Struct_Name_Entry)	link;
+	char	name[1];
+} Name_Entry;
 
 typedef struct Struct_Needed_Entry {
 	struct Struct_Needed_Entry *next;
@@ -128,8 +144,8 @@ typedef struct Struct_Obj_Entry {
 	caddr_t         relocbase;	/* Reloc const = mapbase - *vaddrbase */
 	Elf_Dyn        *dynamic;	/* Dynamic section */
 	caddr_t         entry;		/* Entry point */
-	const Elf_Phdr *__junk001;
-	size_t		pathlen;	/* Pathname length */
+	const Elf_Phdr *phdr;		/* Program header (may be xmalloc'ed) */
+	size_t		phsize;		/* Size of program header in bytes */
 
 	/* Items from the dynamic section. */
 	Elf_Addr       *pltgot;		/* PLTGOT table */
@@ -183,8 +199,10 @@ typedef struct Struct_Obj_Entry {
 					 * called */
 			fini_called:1,	/* True if .fini function has been 
 					 * called */
-			initfirst:1;	/* True if object's .init/.fini take
-					* priority over others */
+			initfirst:1,	/* True if object's .init/.fini take
+					 * priority over others */
+			phdr_loaded:1;	/* Phdr is loaded and doesn't need to
+					 * be freed. */
 
 	struct link_map linkmap;	/* for GDB */
 
@@ -196,7 +214,17 @@ typedef struct Struct_Obj_Entry {
 	ino_t           ino;		/* Object's inode number */
 
 	void		*ehdr;
+	size_t		pathlen;	/* Pathname length */
+	STAILQ_HEAD(, Struct_Name_Entry) names;	/* List of names for this object we
+						   know about. */
 } Obj_Entry;
+
+typedef struct Struct_DoneList {
+	const Obj_Entry **objs;		/* Array of object pointers */
+	unsigned int num_alloc;		/* Allocated size of the array */
+	unsigned int num_used;		/* Number of array slots used */
+} DoneList;
+
 
 #if defined(_RTLD_SOURCE)
 
@@ -204,6 +232,8 @@ extern struct r_debug _rtld_debug;
 extern Search_Path *_rtld_default_paths;
 extern Obj_Entry *_rtld_objlist;
 extern Obj_Entry **_rtld_objtail;
+extern u_int _rtld_objcount;
+extern u_int _rtld_objloads;
 extern Obj_Entry *_rtld_objmain;
 extern Obj_Entry _rtld_objself;
 extern Search_Path *_rtld_paths;
@@ -215,16 +245,17 @@ extern Elf_Sym _rtld_sym_zero;
 
 /* rtld.c */
 
-/*
- * We export these symbols using _rtld_symbol_lookup and is_exported.
- */
+/* We export these symbols using _rtld_symbol_lookup and is_exported. */
 char *dlerror(void);
 void *dlopen(const char *, int);
 void *dlsym(void *, const char *);
 int dlclose(void *);
 int dladdr(const void *, Dl_info *);
 int dlinfo(void *, int, void *);
+int dl_iterate_phdr(int (*)(struct dl_phdr_info *, size_t, void *),
+    void *);
 
+/* These aren't exported */
 void _rtld_error(const char *, ...)
      __attribute__((__format__(__printf__,1,2)));
 void _rtld_die(void) __attribute__((__noreturn__));
@@ -272,12 +303,16 @@ const Elf_Sym *_rtld_symlook_obj(const char *, unsigned long,
     const Obj_Entry *, bool);
 const Elf_Sym *_rtld_find_symdef(unsigned long, const Obj_Entry *,
     const Obj_Entry **, bool);
+const Elf_Sym *_rtld_find_plt_symdef(unsigned long, const Obj_Entry *, 
+    const Obj_Entry **, bool);
+
 const Elf_Sym *_rtld_symlook_list(const char *, unsigned long,
-    const Objlist *, const Obj_Entry **, bool);
+    const Objlist *, const Obj_Entry **, bool, DoneList *);
 const Elf_Sym *_rtld_symlook_default(const char *, unsigned long,
     const Obj_Entry *, const Obj_Entry **, bool);
 const Elf_Sym *_rtld_symlook_needed(const char *, unsigned long,
-    const Needed_Entry *, const Obj_Entry **, bool);
+    const Needed_Entry *, const Obj_Entry **, bool,
+    DoneList *, DoneList *);
 #ifdef COMBRELOC
 void _rtld_combreloc_reset(const Obj_Entry *);
 #endif

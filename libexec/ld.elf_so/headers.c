@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.26.10.1 2009/01/16 22:21:30 bouyer Exp $	 */
+/*	$NetBSD: headers.c,v 1.26.10.2 2012/03/17 18:28:33 bouyer Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.26.10.1 2009/01/16 22:21:30 bouyer Exp $");
+__RCSID("$NetBSD: headers.c,v 1.26.10.2 2012/03/17 18:28:33 bouyer Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -291,18 +291,26 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 	const Elf_Phdr *phlimit = phdr + phnum;
 	const Elf_Phdr *ph;
 	int             nsegs = 0;
-	ptrdiff_t	relocoffs = 0;
 	Elf_Addr	vaddr;
 
 	obj = _rtld_obj_new();
-	for (ph = phdr; ph < phlimit; ++ph) {
-		vaddr = ph->p_vaddr + relocoffs;
-		dbg(("headers: relocoffs = %lx\n", (long)relocoffs));
-		switch (ph->p_type) {
 
-		case PT_PHDR:
-			relocoffs = (uintptr_t)phdr - (uintptr_t)ph->p_vaddr;
-			break;
+	for (ph = phdr; ph < phlimit; ++ph) {
+		if (ph->p_type != PT_PHDR)
+			continue;
+		
+		obj->phdr = (void *)(uintptr_t)phdr->p_vaddr;
+		obj->phsize = phdr->p_memsz;
+		obj->relocbase = (caddr_t)((uintptr_t)phdr - (uintptr_t)ph->p_vaddr);
+		dbg(("headers: phdr %p phsize %zu relocbase %lx", obj->phdr,
+		    obj->phsize, (long)obj->relocbase));
+		break;
+	}
+	assert(obj->phdr == phdr);
+	
+	for (ph = phdr; ph < phlimit; ++ph) {
+		vaddr = (Elf_Addr)obj->relocbase + ph->p_vaddr;
+		switch (ph->p_type) {
 
 		case PT_INTERP:
 			obj->interp = (const char *)(uintptr_t)vaddr;
@@ -313,7 +321,6 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 			if (nsegs == 0) {	/* First load segment */
 				obj->vaddrbase = round_down(vaddr);
 				obj->mapbase = (caddr_t)(uintptr_t)obj->vaddrbase;
-				obj->relocbase = (void *)relocoffs;
 				obj->textsize = round_up(vaddr + ph->p_memsz) -
 				    obj->vaddrbase;
 			} else {		/* Last load segment */
