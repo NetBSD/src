@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.13.2.4 2009/10/04 00:16:53 snj Exp $	*/
+/*	$NetBSD: i386.c,v 1.13.2.5 2012/03/17 18:41:15 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.13.2.4 2009/10/04 00:16:53 snj Exp $");
+__RCSID("$NetBSD: i386.c,v 1.13.2.5 2012/03/17 18:41:15 bouyer Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1498,9 +1498,10 @@ identifycpu(const char *cpuname)
 #endif
 
 	aprint_normal_dev(ci->ci_dev, "family %02x model %02x "
-	    "extfamily %02x extmodel %02x\n", CPUID2FAMILY(ci->ci_signature),
-	    CPUID2MODEL(ci->ci_signature), CPUID2EXTFAMILY(ci->ci_signature),
-	    CPUID2EXTMODEL(ci->ci_signature));
+	    "extfamily %02x extmodel %02x stepping %02x\n",
+	    CPUID2FAMILY(ci->ci_signature), CPUID2MODEL(ci->ci_signature),
+	    CPUID2EXTFAMILY(ci->ci_signature), CPUID2EXTMODEL(ci->ci_signature),
+	    CPUID2STEPPING(ci->ci_signature));
 }
 
 static const char *
