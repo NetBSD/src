@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.67 2012/03/17 19:23:46 bouyer Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.68 2012/03/17 19:32:13 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -2992,4 +2992,9 @@ usr.bin/ktruss/makeerrnos.sh			1.6
 	Use 'sort -n -k 3' instead of 'sort -n +2' since the former is more
 	portable.  The latter is not supported by Mac OS X Lion.
 	[dyoung, ticket #1742]
+
+sbin/mount/mount.8				1.73, 1.74
+
+	Clarify UFS2 superblock format stuff. Bump date.  Fix PR 45166.
+	[dholland, ticket #1743]
 
