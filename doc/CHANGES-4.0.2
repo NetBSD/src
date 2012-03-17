@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.96 2012/03/02 17:49:02 riz Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.97 2012/03/17 19:40:06 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -1338,4 +1338,22 @@ share/zoneinfo/zone.tab				patch
 
 	Update to tzdata2012b.
 	[apb, ticket #1442]
+
+doc/HACKS					1.123 via patch
+sys/arch/sparc64/conf/Makefile.sparc64		1.71 via patch
+sys/arch/sparc64/conf/files.sparc64		1.138 via patch
+sys/arch/sparc64/sparc64/locore.s		1.340 via patch
+
+	Fix the root cause of the hack "disable optimizations for uvm_bio.c
+	on 32 bit kernels".
+
+	gcc converts a division in the calculation of UBC_UMAP_ADDR macro
+	to multiplication (smul or combination of add/sll), and the
+	register of its result contains a garbage in upper 32 bits (the
+	upper 32 bits of smul/add/sll's result isn't zero cleared).
+
+	Then it passes to pseg_get{,_real} through pmap_extract without the
+	zero clear of upper 32 bits in the optimization case.  So the
+	result of pseg_get and pmap_extact sometimes gets screwed up.
+	[nakayama, ticket #1443]
 
