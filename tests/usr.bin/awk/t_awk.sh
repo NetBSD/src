@@ -1,4 +1,4 @@
-# $NetBSD: t_awk.sh,v 1.3 2012/03/11 18:36:01 jruoho Exp $
+# $NetBSD: t_awk.sh,v 1.4 2012/03/17 23:22:59 christos Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -99,7 +99,6 @@ period_head() {
 period_body() {
 	export LANG=ru_RU.KOI8-R
 
-	atf_expect_fail "PR bin/42320"
 	h_check period -v x=0.5
 }
 
