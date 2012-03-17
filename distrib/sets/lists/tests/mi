@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.443 2012/03/17 16:35:02 jruoho Exp $
+# $NetBSD: mi,v 1.444 2012/03/17 16:40:14 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -394,6 +394,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_pause.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_raise.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_randomid.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/t_realpath.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_rbstress.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_setdomainname.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_sethostname.debug		tests-lib-debug		debug,atf
@@ -2029,6 +2030,7 @@
 ./usr/tests/lib/libc/gen/t_pause		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_raise		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_randomid		tests-lib-tests		atf
+./usr/tests/lib/libc/gen/t_realpath		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_rbstress		tests-obsolete		obsolete
 ./usr/tests/lib/libc/gen/t_setdomainname	tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_sethostname		tests-lib-tests		atf
