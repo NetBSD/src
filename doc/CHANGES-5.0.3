@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.66 2012/03/17 19:14:44 bouyer Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.67 2012/03/17 19:23:46 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -2986,4 +2986,10 @@ sys/kern/kern_sig.c				1.300
 	process, also update a comment and add an assert.
 	Fixes PR/42309 by Nicolas Joly.
 	[christos, ticket #1741]
+
+usr.bin/ktruss/makeerrnos.sh			1.6
+
+	Use 'sort -n -k 3' instead of 'sort -n +2' since the former is more
+	portable.  The latter is not supported by Mac OS X Lion.
+	[dyoung, ticket #1742]
 
