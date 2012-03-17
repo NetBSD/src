@@ -1,4 +1,4 @@
-/*	$NetBSD: humanize_number.c,v 1.15 2012/03/13 21:13:36 christos Exp $	*/
+/*	$NetBSD: humanize_number.c,v 1.16 2012/03/17 20:01:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: humanize_number.c,v 1.15 2012/03/13 21:13:36 christos Exp $");
+__RCSID("$NetBSD: humanize_number.c,v 1.16 2012/03/17 20:01:14 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -49,7 +49,7 @@ humanize_number(char *buf, size_t len, int64_t bytes,
 {
 	const char *prefixes, *sep;
 	int	b, r, s1, s2, sign;
-	int64_t	divisor, max;
+	int64_t	divisor, max, post = 1;
 	size_t	i, baselen, maxscale;
 
 	_DIAGASSERT(buf != NULL);
@@ -89,12 +89,23 @@ humanize_number(char *buf, size_t len, int64_t bytes,
 		buf[0] = '\0';
 	if (bytes < 0) {
 		sign = -1;
-		bytes *= -100;
 		baselen = 3;		/* sign, digit, prefix */
+		if (-bytes < INT64_MAX / 100)
+			bytes *= -100;
+		else {
+			bytes = -bytes;
+			post = 100;
+			baselen += 2;
+		}
 	} else {
 		sign = 1;
-		bytes *= 100;
 		baselen = 2;		/* digit, prefix */
+		if (bytes < INT64_MAX / 100)
+			bytes *= 100;
+		else {
+			post = 100;
+			baselen += 2;
+		}
 	}
 	if (flags & HN_NOSPACE)
 		sep = "";
@@ -128,6 +139,7 @@ humanize_number(char *buf, size_t len, int64_t bytes,
 	} else
 		for (i = 0; i < (size_t)scale && i < maxscale; i++)
 			bytes /= divisor;
+	bytes *= post;
 
 	/* If a value <= 9.9 after rounding and ... */
 	if (bytes < 995 && i > 0 && flags & HN_DECIMAL) {
