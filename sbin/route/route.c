@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.136 2011/12/26 00:20:43 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.137 2012/03/17 02:13:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.136 2011/12/26 00:20:43 christos Exp $");
+__RCSID("$NetBSD: route.c,v 1.137 2012/03/17 02:13:44 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1031,6 +1031,10 @@ newroute(int argc, char *const *argv)
 			}
 		}
 	}
+	if ((rtm_addrs & RTA_DST) == 0)
+		errx(EXIT_FAILURE, "missing destination specification");
+	if (*cmd == 'a' && (rtm_addrs & RTA_GATEWAY) == 0)
+		errx(EXIT_FAILURE, "missing gateway specification");
 	if (forcehost && forcenet)
 		errx(EXIT_FAILURE, "-host and -net conflict");
 	else if (forcehost)
