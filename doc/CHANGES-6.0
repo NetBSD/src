@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.54 2012/03/15 08:53:56 sborrill Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.55 2012/03/17 17:55:47 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1258,4 +1258,131 @@ usr.bin/last/want.c				1.15-1.16
 	wtmp file is empty, use the last mod time of the wtmp file.
 	Fixes PR/39444.
 	[dholland, ticket #117]
+
+sys/dev/usb/umass_quirks.c			1.93
+sys/dev/usb/usbdevs				1.610
+sys/dev/usb/usbdevs.h				regen
+sys/dev/usb/usbdevs_data.h			regen
+
+	Add quirk for Kingston DataTraveler 100 G2 (which apparently has
+	a Toshiba vendor ID)
+	[riz, ticket #90]
+
+etc/root/dot.cshrc				1.23, 1.24
+etc/root/dot.profile				1.26
+
+	Can't use Bourne shell syntax here... (Even in comments, for PKG_PATH.)
+
+	Point first to 6.0 packages, then to packages for 5.1 or 5.0.
+	The latter have reduced usefullness in -current or netbsd-6 until
+	we have a compat50 package.
+	[he, ticket #109]
+
+external/bsd/pcc/dist/pcc/cc/ccom/gcc_compat.c	1.2
+external/bsd/pcc/dist/pcc/cc/ccom/pass1.h	1.2
+
+	recognise (but ignore) the __returns_twice__ GCC attribute
+	[plunky, ticket #110]
+
+sys/dev/pci/hdaudio/hdafg.c			1.16
+
+	call kmem_free with the right address in hdafg_detach for sc_widgets
+	the former code let to memory corruption
+	[lars, ticket #111]
+
+gnu/dist/groff/contrib/mm/groff_mmse.man	1.2, 1.3
+gnu/dist/groff/mdate.sh				1.2
+
+	use character escapes for non-ASCII chars, according to mandoc_char(7)
+	format the generated manpage date as per Dd macro, for consistency
+	[plunky, ticket #112]
+
+sys/uvm/uvm_km.c				1.123
+
+	uvm_km_kmem_alloc: return ENOMEM on failure in PMAP_MAP_POOLPAGE case.
+	[chs, ticket #113]
+
+sys/arch/hppa/hppa/trap.c			1.99
+sys/arch/hppa/hppa/vm_machdep.c			1.51, 1.52
+
+	Deal with setting of space registers and protection ids for posix_spawn.
+	Thanks to martin for the help.
+	[skrll, ticket #114]
+
+usr.bin/ktruss/makeerrnos.sh			1.6
+
+	Use 'sort -n -k 3' instead of 'sort -n +2' since the former is more
+	portable.  The latter is not supported by Mac OS X Lion.
+	[dyoung, ticket #115]
+
+sbin/newfs_lfs/make_lfs.c			1.19
+sys/ufs/lfs/lfs.h				1.136
+sys/ufs/lfs/lfs_alloc.c				1.112
+sys/ufs/lfs/lfs_bio.c				1.122
+sys/ufs/lfs/lfs_segment.c			1.224
+sys/ufs/lfs/lfs_vfsops.c			1.294
+sys/ufs/lfs/lfs_vnops.c				1.240
+tests/fs/vfs/t_renamerace.c			1.25
+tests/fs/vfs/t_rmdirrace.c			1.9
+
+	Pass t_renamerace and t_rmdirrace tests.
+
+	Adapt dholland@'s fix to ufs_rename to fix PR kern/43582.
+	Address several other MP locking issues discovered during the
+	course of investigating the same problem.
+
+	Fix PR kern/45982 by deemphasizing the estimate of how much metadata
+	will fill the empty space on disk when the disk is nearly empty
+	(t_renamerace crates a lot of inode blocks on a tiny empty disk).
+	[perseant, ticket #116]
+
+external/bsd/iscsi/dist/include/iscsiutil.h	1.4
+external/bsd/iscsi/dist/src/lib/conffile.c	1.3
+external/bsd/iscsi/dist/src/lib/disk.c		1.7
+external/bsd/iscsi/dist/src/lib/initiator.c	1.8
+external/bsd/iscsi/dist/src/lib/parameters.c	1.3
+external/bsd/iscsi/dist/src/lib/protocol.c	1.3
+external/bsd/iscsi/dist/src/lib/util.c		1.3
+
+	Add __printflike where needed. Fix various format string issues.
+	[joerg, ticket #118]
+
+tests/lib/libc/gen/t_humanize_number.c		1.6
+tests/lib/libc/stdio/t_printf.c			1.5
+tests/lib/libc/stdio/t_scanf.c			1.2
+
+	Mark w_printf as __printflike and fix a format string error.
+	Fix format strings to properly quote %.
+	[joerg, ticket #119]
+
+lib/libc/arch/hppa/sys/brk.S			1.5
+lib/libc/arch/hppa/sys/sbrk.S			1.5
+
+	Use the _end symbol rather than the end symbol.  Prevents version info
+	problems in elflink.c for the heimdal libraries.
+	[skrll, ticket #120]
+
+lib/libcurses/clrtobot.c			1.22
+lib/libcurses/clrtoeol.c			1.26
+
+	PR/46049: Tim van der Molen:
+	clrtobot() and clrtoeol() do not set background attributes
+	[blymn, ticket #121]
+
+sys/netinet/rfc6056.c				1.5
+
+	Fix random kernel memory corruption by algo_doublehash().  And by
+	"random" I don't mean just "arbitary" as in using an uninitialized
+	pointer, but random as in corrupting the contents of memory addresses
+	chosen using a crypto-strength random number generator.
+
+	I believe this is the likely cause of multiple reports of random
+	crashes over the last six months, including kern/45677 and kern/46096.
+	[gson, ticket #122]
+
+sys/arch/sparc64/include/param.h		1.49, 1.50
+
+	Restrict NKMEMPAGES to 2.5GB, otherwise we will run out of space in the
+	kernel_map on machines with 8GB (or more) main memory.
+	[martin, ticket #123]
 
