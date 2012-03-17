@@ -1,4 +1,4 @@
-/*	$NetBSD: t_humanize_number.c,v 1.5 2011/07/07 09:49:59 jruoho Exp $	*/
+/*	$NetBSD: t_humanize_number.c,v 1.5.4.1 2012/03/17 17:49:55 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@ const struct hnflags normal_flags[] = {
 
 const char *formatflags(char *, size_t, const struct hnflags *, size_t, int);
 void	    newline(void);
-void	    w_printf(const char *, ...);
+void	    w_printf(const char *, ...) __printflike(1, 2);
 int	    main(int, char *[]);
 
 const char *
@@ -226,7 +226,7 @@ ATF_TC_BODY(humanize_number_basic, tc)
 		    (rv == -1 || strcmp(buf, ho->ho_retstr) == 0))
 			continue;
 
-		w_printf("humanize_number(\"%s\", %d, %" PRId64 ",",
+		w_printf("humanize_number(\"%s\", %zu, %" PRId64 ",",
 		    ho->ho_retstr, ho->ho_len, ho->ho_num);
 		w_printf("\"%s\",", ho->ho_suffix);
 		w_printf("%s,", formatflags(fbuf, sizeof(fbuf), scale_flags,
