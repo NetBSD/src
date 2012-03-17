@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.47.4.1 2009/12/18 05:48:07 snj Exp $	*/
+/*	$NetBSD: piixide.c,v 1.47.4.2 2012/03/17 19:05:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.47.4.1 2009/12/18 05:48:07 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.47.4.2 2012/03/17 19:05:39 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,6 +306,30 @@ static const struct pciide_product_desc pciide_intel_products[] =  {
 	  PCI_PRODUCT_INTEL_3400_SATA_6,
 	  0,
 	  "Intel 3400 Serial ATA Controller",
+	  piixsata_chip_map,
+	},
+	{
+	  PCI_PRODUCT_INTEL_6SERIES_SATA_1,
+	  0,
+	  "Intel 6 Series Serial ATA Controller",
+	  piixsata_chip_map,
+	},
+	{
+	  PCI_PRODUCT_INTEL_6SERIES_SATA_2,
+	  0,
+	  "Intel 6 Series Serial ATA Controller",
+	  piixsata_chip_map,
+	},
+	{
+	  PCI_PRODUCT_INTEL_6SERIES_SATA_3,
+	  0,
+	  "Intel 6 Series Serial ATA Controller",
+	  piixsata_chip_map,
+	},
+	{
+	  PCI_PRODUCT_INTEL_6SERIES_SATA_4,
+	  0,
+	  "Intel 6 Series Serial ATA Controller",
 	  piixsata_chip_map,
 	},
 	{ 0,
