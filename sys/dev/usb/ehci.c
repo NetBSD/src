@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.188 2012/03/15 18:38:37 bouyer Exp $ */
+/*	$NetBSD: ehci.c,v 1.189 2012/03/17 11:45:00 bouyer Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.188 2012/03/15 18:38:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.189 2012/03/17 11:45:00 bouyer Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2712,12 +2712,12 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 			ehci_physaddr_t a = dataphys + i * EHCI_PAGE_SIZE;
 			if (i != 0) /* use offset only in first buffer */
 				a = EHCI_PAGE(a);
-#ifdef DIAGNOSTIC
 			if (i >= EHCI_QTD_NBUFFERS) {
+#ifdef DIAGNOSTIC
 				printf("ehci_alloc_sqtd_chain: i=%d\n", i);
+#endif
 				goto nomem;
 			}
-#endif
 			cur->qtd.qtd_buffer[i] = htole32(a);
 			cur->qtd.qtd_buffer_hi[i] = 0;
 		}
