@@ -12,7 +12,7 @@ if [ $# -ne 1 ]; then
 fi
 
 sed 's/\(["\]\)/\\\1/g' | \
-awk -v sym=$1 '
+${AWK:-awk} -v sym=$1 '
 BEGIN	{ printf "const char " sym "[] = \""; }
 	{ printf $0 "\\n"; }
 END	{ print "\";"; }'

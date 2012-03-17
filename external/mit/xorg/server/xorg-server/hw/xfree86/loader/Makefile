@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2011/08/02 09:11:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2012/03/17 12:42:31 nakayama Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -52,6 +52,6 @@ COPTS.loadmod.c=		-Wno-error
 .include <bsd.lib.mk>
 
 sdksyms.c: sdksyms.sh
-	CPP='$(CPP)' AWK='$(AWK)' $(LOADERDIR)/sdksyms.sh $(X11SRCDIR.xorg-server) ${CFLAGS} ${CPPFLAGS}
+	CPP='$(CPP)' AWK='$(TOOL_AWK)' $(LOADERDIR)/sdksyms.sh $(X11SRCDIR.xorg-server) ${CFLAGS} ${CPPFLAGS}
 sdksyms.d: sdksyms.c
 CLEANFILES+=	sdksyms.c
