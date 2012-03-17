@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.96.4.2 2010/01/23 17:34:16 bouyer Exp $	 */
+/*	$NetBSD: reloc.c,v 1.96.4.3 2012/03/17 18:28:33 bouyer Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: reloc.c,v 1.96.4.2 2010/01/23 17:34:16 bouyer Exp $");
+__RCSID("$NetBSD: reloc.c,v 1.96.4.3 2012/03/17 18:28:33 bouyer Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -84,7 +84,7 @@ _rtld_do_copy_relocation(const Obj_Entry *dstobj, const Elf_Rela *rela)
 	srcaddr = (const void *)(srcobj->relocbase + srcsym->st_value);
 	(void)memcpy(dstaddr, srcaddr, size);
 	rdbg(("COPY %s %s %s --> src=%p dst=%p size %ld",
-	    dstobj->path, srcobj->path, name, (void *)srcaddr,
+	    dstobj->path, srcobj->path, name, srcaddr,
 	    (void *)dstaddr, (long)size));
 	return (0);
 }
@@ -187,9 +187,6 @@ _rtld_relocate_objects(Obj_Entry *first, bool bind_now)
 		dbg(("doing lazy PLT binding"));
 		if (_rtld_relocate_plt_lazy(obj) < 0)
 			ok = 0;
-#if defined(__hppa__)
-		bind_now = 1;
-#endif
 		if (bind_now) {
 			dbg(("doing immediate PLT binding"));
 			if (_rtld_relocate_plt_objects(obj) < 0)
@@ -197,8 +194,6 @@ _rtld_relocate_objects(Obj_Entry *first, bool bind_now)
 		}
 		if (!ok)
 			return -1;
-
-		(void)dlerror(); /* clear any errors since all is good */
 
 		/* Set some sanity-checking numbers in the Obj_Entry. */
 		obj->magic = RTLD_MAGIC;

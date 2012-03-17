@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.27 2008/07/24 04:39:25 matt Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.27.4.1 2012/03/17 18:28:37 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hppa_reloc.c,v 1.27 2008/07/24 04:39:25 matt Exp $");
+__RCSID("$NetBSD: hppa_reloc.c,v 1.27.4.1 2012/03/17 18:28:37 bouyer Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -549,16 +549,20 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
 	Elf_Addr	func_pc, func_sl;
+	unsigned long info = rela->r_info;
 
-	assert(ELF_R_TYPE(rela->r_info) == R_TYPE(IPLT));
+	assert(ELF_R_TYPE(info) == R_TYPE(IPLT));
 
-	if (ELF_R_SYM(rela->r_info) == 0) {
+	if (ELF_R_SYM(info) == 0) {
 		func_pc = (Elf_Addr)(obj->relocbase + rela->r_addend);
 		func_sl = (Elf_Addr)(obj->pltgot);
 	} else {
-		def = _rtld_find_symdef(ELF_R_SYM(rela->r_info), obj, &defobj, true);
-		if (def == NULL)
+		def = _rtld_find_plt_symdef(ELF_R_SYM(info), obj, &defobj,
+		    tp != NULL);
+		if (__predict_false(def == NULL))
 			return -1;
+		if (__predict_false(def == &_rtld_sym_zero))
+			return 0;
 
 		func_pc = (Elf_Addr)(defobj->relocbase + def->st_value + rela->r_addend);
 		func_sl = (Elf_Addr)(defobj->pltgot);
@@ -592,7 +596,7 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 	assert(ELF_R_SYM(rela->r_info) != 0);
 
 	err = _rtld_relocate_plt_object(obj, rela, &new_value); 
-	if (err || new_value == 0)
+	if (err)
 		_rtld_die();
 
 	return (caddr_t)new_value;
