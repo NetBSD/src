@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.95 2008/04/28 20:24:10 martin Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.95.10.1 2012/03/17 18:28:37 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -45,14 +45,6 @@
 #else
 #include <inttypes.h>
 #endif /* _KERNEL || _STANDALONE */
-
-#if defined(ELFSIZE)
-#define	CONCAT(x,y)	__CONCAT(x,y)
-#define	ELFNAME(x)	CONCAT(elf,CONCAT(ELFSIZE,CONCAT(_,x)))
-#define	ELFNAME2(x,y)	CONCAT(x,CONCAT(_elf,CONCAT(ELFSIZE,CONCAT(_,y))))
-#define	ELFNAMEEND(x)	CONCAT(x,CONCAT(_elf,ELFSIZE))
-#define	ELFDEFNNAME(x)	CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
-#endif
 
 #if HAVE_NBTOOL_CONFIG_H
 #include <nbinclude/machine/elf_machdep.h>
@@ -753,6 +745,18 @@ struct netbsd_elfcore_procinfo {
 	int32_t		cpi_siglwp;	/* LWP target of killing signal */
 };
 
+#if !defined(ELFSIZE) && defined(ARCH_ELFSIZE)
+#define	ELFSIZE	ARCH_ELFSIZE
+#endif
+
+#if defined(ELFSIZE)
+#define	CONCAT(x,y)	__CONCAT(x,y)
+#define	ELFNAME(x)	CONCAT(elf,CONCAT(ELFSIZE,CONCAT(_,x)))
+#define	ELFNAME2(x,y)	CONCAT(x,CONCAT(_elf,CONCAT(ELFSIZE,CONCAT(_,y))))
+#define	ELFNAMEEND(x)	CONCAT(x,CONCAT(_elf,ELFSIZE))
+#define	ELFDEFNNAME(x)	CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
+#endif
+
 #if defined(ELFSIZE) && (ELFSIZE == 32)
 #define	Elf_Ehdr	Elf32_Ehdr
 #define	Elf_Phdr	Elf32_Phdr
@@ -763,6 +767,7 @@ struct netbsd_elfcore_procinfo {
 #define	Elf_Dyn		Elf32_Dyn
 #define	Elf_Word	Elf32_Word
 #define	Elf_Sword	Elf32_Sword
+#define	Elf_Half	Elf32_Half
 #define	Elf_Addr	Elf32_Addr
 #define	Elf_Off		Elf32_Off
 #define	Elf_Nhdr	Elf32_Nhdr
@@ -782,6 +787,7 @@ struct netbsd_elfcore_procinfo {
 #define	Elf_Dyn		Elf64_Dyn
 #define	Elf_Word	Elf64_Word
 #define	Elf_Sword	Elf64_Sword
+#define	Elf_Half	Elf64_Half
 #define	Elf_Addr	Elf64_Addr
 #define	Elf_Off		Elf64_Off
 #define	Elf_Nhdr	Elf64_Nhdr
