@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.94 2012/03/15 00:09:08 christos Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.95 2012/03/17 16:48:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -534,8 +534,8 @@
     (~((1ULL << (sizeof(t) * NBBY)) - 1)) : 0ULL)
 
 #ifndef __ASSEMBLER__
-static inline long long __zeroll(void) { return 0; }
-static inline int __negative_p(double x) { return x < 0; }
+static __inline long long __zeroll(void) { return 0; }
+static __inline int __negative_p(double x) { return x < 0; }
 #else
 #define __zeroll() (0LL)
 #define __negative_p(x) ((x) < 0)
