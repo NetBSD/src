@@ -1,4 +1,4 @@
-/* $NetBSD: t_printf.c,v 1.6 2012/03/18 07:00:51 jruoho Exp $ */
+/* $NetBSD: t_printf.c,v 1.7 2012/03/18 08:13:57 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -36,11 +36,32 @@
 #include <time.h>
 #include <stdlib.h>
 
+ATF_TC(snprintf_c99);
+ATF_TC_HEAD(snprintf_c99, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr",
+	    "Test printf(3) C99 conformance (PR lib/22019)");
+}
+
+ATF_TC_BODY(snprintf_c99, tc)
+{
+	char s[4];
+
+	(void)memset(s, '\0', sizeof(s));
+	(void)snprintf(s, sizeof(s), "%#.o", 0);
+	(void)printf("printf = %#.o\n", 0);
+	(void)fprintf(stderr, "snprintf = %s", s);
+
+	ATF_REQUIRE(strlen(s) == 1);
+	ATF_REQUIRE(s[0] == '0');
+}
+
 ATF_TC(snprintf_dotzero);
 ATF_TC_HEAD(snprintf_dotzero, tc)
 {
 
-	atf_tc_set_md_var(tc, "descr", \
+	atf_tc_set_md_var(tc, "descr",
 	    "PR lib/32951: %%.0f formats (0.0,0.5] to \"0.\"");
 }
 
@@ -161,6 +182,7 @@ ATF_TC_BODY(sprintf_zeropad, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
+	ATF_TP_ADD_TC(tp, snprintf_c99);
 	ATF_TP_ADD_TC(tp, snprintf_dotzero);
 	ATF_TP_ADD_TC(tp, snprintf_posarg);
 	ATF_TP_ADD_TC(tp, snprintf_posarg_width);
