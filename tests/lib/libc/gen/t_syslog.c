@@ -1,4 +1,4 @@
-/*	$NetBSD: t_syslog.c,v 1.1 2011/07/07 10:02:53 jruoho Exp $ */
+/*	$NetBSD: t_syslog.c,v 1.2 2012/03/18 07:00:51 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -37,16 +37,13 @@ ATF_TC(syslog_pthread);
 ATF_TC_HEAD(syslog_pthread, tc)
 {
 
-	atf_tc_set_md_var(tc, "descr", "Test that syslog works at all");
+	atf_tc_set_md_var(tc, "descr", "Test that syslog(3) "
+	    "works when linked to pthread(3) (PR lib/44248)");
 	atf_tc_set_md_var(tc, "timeout", "2");
 }
 
 ATF_TC_BODY(syslog_pthread, tc)
 {
-
-	/*
-	 * See the old PR lib/44248; syslog(3) fails with pthread(3).
-	 */
 	syslog(LOG_DEBUG, "from tests/lib/libc/gen/t_syslog");
 }
 

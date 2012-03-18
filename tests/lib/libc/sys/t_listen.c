@@ -1,4 +1,4 @@
-/*	$NetBSD: t_listen.c,v 1.3 2012/03/16 08:14:11 matt Exp $	*/
+/*	$NetBSD: t_listen.c,v 1.4 2012/03/18 07:00:52 jruoho Exp $	*/
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,8 @@ static const char *path = "listen";
 ATF_TC_WITH_CLEANUP(listen_err);
 ATF_TC_HEAD(listen_err, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Checks errors from listen(2)");
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks errors from listen(2) (PR standards/46150)");
 }
 
 ATF_TC_BODY(listen_err, tc)
