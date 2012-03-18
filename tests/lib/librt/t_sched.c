@@ -1,4 +1,4 @@
-/* $NetBSD: t_sched.c,v 1.2 2011/03/25 09:39:19 jruoho Exp $ */
+/* $NetBSD: t_sched.c,v 1.3 2012/03/18 02:14:16 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sched.c,v 1.2 2011/03/25 09:39:19 jruoho Exp $");
+__RCSID("$NetBSD: t_sched.c,v 1.3 2012/03/18 02:14:16 christos Exp $");
 
 #include <sched.h>
 #include <limits.h>
@@ -188,7 +188,8 @@ ATF_TC_BODY(sched_setscheduler_4, tc)
 ATF_TC(sched_rr_get_interval_1);
 ATF_TC_HEAD(sched_rr_get_interval_1, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test sched_rr_get_interval(3), #1");
+	atf_tc_set_md_var(tc, "descr", "Test sched_rr_get_interval(3), #1"
+	    " PR/44768");
 	atf_tc_set_md_var(tc, "require.user", "root");
 }
 
@@ -203,7 +204,6 @@ ATF_TC_BODY(sched_rr_get_interval_1, tc)
 	/*
 	 * This should fail with ESRCH for invalid PID.
 	 */
-	atf_tc_expect_fail("PR lib/44768");
 	ATF_REQUIRE(sched_rr_get_interval(-INT_MAX, &tv) != 0);
 }
 
