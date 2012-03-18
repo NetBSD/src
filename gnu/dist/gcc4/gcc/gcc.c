@@ -1620,14 +1620,15 @@ init_gcc_specs (struct obstack *obstack, const char *shared_name,
 		"%{!shared:%{!shared-libgcc:", static_name, " ",
 		eh_name, "}%{shared-libgcc:", shared_name, " ",
 		static_name, "}}%{shared:",
-/* XXX NH XXX */
-#if defined(LINK_EH_SPEC) || 1
-		"%{shared-libgcc:", shared_name, "} ",
-		static_name, 
+#ifdef LINK_EH_SPEC
+		"%{shared-libgcc:", shared_name,
+		"}%{!shared-libgcc:", static_name,
 #ifdef LIBGCC_PICSUFFIX
 		LIBGCC_PICSUFFIX ,
 #endif
+		"}"
 #else
+NO NO NO!!!!
 		shared_name,
 #endif
 #endif

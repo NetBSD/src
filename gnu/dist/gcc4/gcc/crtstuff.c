@@ -88,10 +88,12 @@ call_ ## FUNC (void)					\
 
 #if defined(OBJECT_FORMAT_ELF) && defined(HAVE_LD_EH_FRAME_HDR) \
     && !defined(inhibit_libc) && !defined(CRTSTUFFT_O) \
-    && defined(__GLIBC__) && __GLIBC__ >= 2
+    && ((defined(__GLIBC__) && __GLIBC__ >= 2) \
+       || defined(__NetBSD__))
 #include <link.h>
 # if (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ > 2) \
-     || (__GLIBC__ == 2 && __GLIBC_MINOR__ == 2 && defined(DT_CONFIG)))
+     || (__GLIBC__ == 2 && __GLIBC_MINOR__ == 2 && defined(DT_CONFIG)) \
+     || defined(__NetBSD__))
 #  define USE_PT_GNU_EH_FRAME
 # endif
 #endif

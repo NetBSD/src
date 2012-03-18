@@ -93,3 +93,7 @@ Boston, MA 02110-1301, USA.  */
        %{rdynamic:-export-dynamic} \
        %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.elf_so}} \
      %{static:-static}}"
+
+#if defined(HAVE_LD_EH_FRAME_HDR)
+#define LINK_EH_SPEC "%{!static:--eh-frame-hdr} "
+#endif
