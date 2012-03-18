@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.448 2012/03/18 10:12:30 jruoho Exp $
+# $NetBSD: mi,v 1.449 2012/03/18 12:40:42 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2845,6 +2845,9 @@
 ./usr/tests/usr.bin/dirname			tests-usr.bin-tests
 ./usr/tests/usr.bin/dirname/Atffile		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/dirname/t_dirname		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/find			tests-usr.bin-tests
+./usr/tests/usr.bin/find/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/find/t_find			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/grep			tests-usr.bin-tests
 ./usr/tests/usr.bin/grep/Atffile		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/grep/d_basic.out		tests-usr.bin-tests	atf
