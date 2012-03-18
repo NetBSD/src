@@ -1,4 +1,4 @@
-#	$NetBSD: t_basic.sh,v 1.6 2011/04/11 20:08:10 martin Exp $
+#	$NetBSD: t_basic.sh,v 1.7 2012/03/18 21:23:57 christos Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -72,7 +72,7 @@ pcap()
 #
 #	should not fail anymore...
 #
-#	atf_expect_fail "PR bin/44721"
+#	Used to fail for "PR bin/44721"
 	atf_check -s exit:0 -o file:d_pcap.out -e ignore \
 	    tcpdump -tt -n -r pcap
 }
