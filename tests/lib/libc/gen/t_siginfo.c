@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.13 2012/03/17 20:10:08 christos Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.14 2012/03/18 07:14:08 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ sig_debug(int signo, siginfo_t *info, ucontext_t *ctx)
 		for (i = 0; i < __arraycount(ctx->uc_sigmask.__bits); i++)
 			printf("uc_sigmask[%d] 0x%x\n", i,
 			    ctx->uc_sigmask.__bits[i]);
-		printf("uc_stack %p %lu 0x%x\n", ctx->uc_stack.ss_sp, 
+		printf("uc_stack %p %lu 0x%x\n", ctx->uc_stack.ss_sp,
 		    (unsigned long)ctx->uc_stack.ss_size,
 		    ctx->uc_stack.ss_flags);
 		for (i = 0; i < __arraycount(ctx->uc_mcontext.__gregs); i++)
@@ -101,10 +101,10 @@ sigalrm_action(int signo, siginfo_t *info, void *ptr)
 ATF_TC(sigalarm);
 
 ATF_TC_HEAD(sigalarm, tc)
-{ 
+{
 
 	atf_tc_set_md_var(tc, "descr",
-	    "Checks that signal trampoline correctly calls SIGALRM handler"); 
+	    "Checks that signal trampoline correctly calls SIGALRM handler");
 }
 
 ATF_TC_BODY(sigalarm, tc)
@@ -118,7 +118,7 @@ ATF_TC_BODY(sigalarm, tc)
 		alarm(1);
 		sleep(1);
 	}
-	atf_tc_fail("SIGALRM handler wasn't called"); 
+	atf_tc_fail("SIGALRM handler wasn't called");
 }
 
 static void
@@ -187,7 +187,7 @@ ATF_TC_BODY(sigchild_normal, tc)
 {
 	sigset_t set;
 
-	sigchild_setup(); 
+	sigchild_setup();
 
 	status = 25;
 	code = CLD_EXITED;
@@ -214,10 +214,10 @@ ATF_TC_HEAD(sigchild_dump, tc)
 }
 
 ATF_TC_BODY(sigchild_dump, tc)
-{ 
+{
 	sigset_t set;
 
-	sigchild_setup(); 
+	sigchild_setup();
 
 	status = SIGSEGV;
 	code = CLD_DUMPED;
@@ -246,10 +246,10 @@ ATF_TC_HEAD(sigchild_kill, tc)
 }
 
 ATF_TC_BODY(sigchild_kill, tc)
-{ 
+{
 	sigset_t set;
 
-	sigchild_setup(); 
+	sigchild_setup();
 
 	status = SIGPIPE;
 	code = CLD_KILLED;
@@ -295,7 +295,7 @@ ATF_TC_HEAD(sigfpe_flt, tc)
 }
 
 ATF_TC_BODY(sigfpe_flt, tc)
-{ 
+{
 	struct sigaction sa;
 	double d = strtod("0", NULL);
 
@@ -345,11 +345,11 @@ ATF_TC_HEAD(sigfpe_int, tc)
 
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks that signal trampoline correctly calls SIGFPE handler "
-	    "for integer div-by-zero PR/43655");
+	    "for integer div-by-zero (PR port-i386/43655)");
 }
 
 ATF_TC_BODY(sigfpe_int, tc)
-{ 
+{
 	struct sigaction sa;
 	long l = strtol("0", NULL, 10);
 
