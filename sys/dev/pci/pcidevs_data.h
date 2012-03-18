@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1099 2012/03/03 05:40:11 nonaka Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1100 2012/03/18 17:30:19 tsutsui Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1105 2012/03/03 05:39:31 nonaka Exp
+ *	NetBSD: pcidevs,v 1.1106 2012/03/18 17:29:06 tsutsui Exp
  */
 
 /*
@@ -7660,6 +7660,8 @@ static const uint16_t pci_products[] = {
 	    26224, 26047, 26233, 26734, 6259, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8605AGP, 
 	    26239, 26047, 26246, 26255, 17666, 6259, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VX900_IDE, 
+	    26083, 6322, 6151, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_A238, 
 	    26021, 7890, 6259, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8633AGP, 
@@ -8756,7 +8758,7 @@ static const char pci_words[] = { "."
 	    "Escalade\0" /* 2 refs @ 6133 */
 	    "ATA\0" /* 51 refs @ 6142 */
 	    "RAID\0" /* 37 refs @ 6146 */
-	    "Controller\0" /* 760 refs @ 6151 */
+	    "Controller\0" /* 761 refs @ 6151 */
 	    "7000/8000\0" /* 1 refs @ 6162 */
 	    "Series\0" /* 53 refs @ 6172 */
 	    "9000\0" /* 5 refs @ 6179 */
@@ -8781,7 +8783,7 @@ static const char pci_words[] = { "."
 	    "(ISA\0" /* 1 refs @ 6301 */
 	    "ATP850U/UF\0" /* 1 refs @ 6306 */
 	    "UDMA\0" /* 6 refs @ 6317 */
-	    "IDE\0" /* 101 refs @ 6322 */
+	    "IDE\0" /* 102 refs @ 6322 */
 	    "ATP860\0" /* 1 refs @ 6326 */
 	    "ATP860-A\0" /* 1 refs @ 6333 */
 	    "ATP865\0" /* 1 refs @ 6342 */
@@ -11485,7 +11487,7 @@ static const char pci_words[] = { "."
 	    "VT3351\0" /* 7 refs @ 26062 */
 	    "VT8371\0" /* 2 refs @ 26069 */
 	    "KX133)\0" /* 2 refs @ 26076 */
-	    "VX900\0" /* 1 refs @ 26083 */
+	    "VX900\0" /* 2 refs @ 26083 */
 	    "VT8501\0" /* 2 refs @ 26089 */
 	    "MVP4)\0" /* 2 refs @ 26096 */
 	    "VT82C505\0" /* 1 refs @ 26102 */
