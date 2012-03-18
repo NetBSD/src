@@ -1,4 +1,4 @@
-/* $NetBSD: t_dup.c,v 1.7 2011/10/17 17:58:43 njoly Exp $ */
+/* $NetBSD: t_dup.c,v 1.8 2012/03/18 07:00:51 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_dup.c,v 1.7 2011/10/17 17:58:43 njoly Exp $");
+__RCSID("$NetBSD: t_dup.c,v 1.8 2012/03/18 07:00:51 jruoho Exp $");
 
 #include <sys/resource.h>
 #include <sys/stat.h>
@@ -195,7 +195,8 @@ ATF_TC_CLEANUP(dup2_mode, tc)
 ATF_TC(dup3_err);
 ATF_TC_HEAD(dup3_err, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test error conditions of dup3(2)");
+	atf_tc_set_md_var(tc, "descr",
+	    "Test error conditions of dup3(2) (PR lib/45148)");
 }
 
 ATF_TC_BODY(dup3_err, tc)
@@ -217,9 +218,6 @@ ATF_TC_BODY(dup3_err, tc)
 	errno = 0;
 	ATF_REQUIRE_ERRNO(EBADF, dup3(-1, fd, O_CLOEXEC) == -1);
 
-	/*
-	 * See the closed PR lib/45148.
-	 */
 	errno = 0;
 	ATF_REQUIRE_ERRNO(EINVAL, dup3(fd, 1, O_NOFOLLOW) == -1);
 
