@@ -4,7 +4,7 @@
 #
 G_INCLUDES=-I. -I. -I${GNUHOSTDIST}/gcc -I${GNUHOSTDIST}/gcc/. -I${GNUHOSTDIST}/gcc/../include -I${GNUHOSTDIST}/gcc/../libcpp/include 
 G_LIB2ADD=fpgnulib.c xfgnulib.c
-G_LIB2ADDEH=${GNUHOSTDIST}/gcc/unwind-dw2.c ${GNUHOSTDIST}/gcc/unwind-dw2-fde.c ${GNUHOSTDIST}/gcc/unwind-sjlj.c ${GNUHOSTDIST}/gcc/gthr-gnat.c ${GNUHOSTDIST}/gcc/unwind-c.c
+G_LIB2ADDEH=${GNUHOSTDIST}/gcc/unwind-dw2.c ${GNUHOSTDIST}/gcc/unwind-dw2-fde-phdr.c ${GNUHOSTDIST}/gcc/unwind-sjlj.c ${GNUHOSTDIST}/gcc/gthr-gnat.c ${GNUHOSTDIST}/gcc/unwind-c.c
 G_LIB1ASMFUNCS=_mulsi3 _udivsi3 _divsi3 _umodsi3 _modsi3 _double _float _floatex _eqdf2 _nedf2 _gtdf2 _gedf2 _ltdf2 _ledf2 _eqsf2 _nesf2 _gtsf2 _gesf2 _ltsf2 _lesf2
 G_LIB1ASMSRC=m68k/lb1sf68.asm
 G_LIB2_DIVMOD_FUNCS=_divdi3 _moddi3 _udivdi3 _umoddi3 _udiv_w_sdiv _udivmoddi4
