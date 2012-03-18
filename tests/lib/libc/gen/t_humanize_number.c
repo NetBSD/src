@@ -1,4 +1,4 @@
-/*	$NetBSD: t_humanize_number.c,v 1.7 2012/03/17 20:06:46 christos Exp $	*/
+/*	$NetBSD: t_humanize_number.c,v 1.8 2012/03/18 07:14:08 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -247,7 +247,8 @@ ATF_TC(humanize_number_big);
 ATF_TC_HEAD(humanize_number_big, tc)
 {
 
-	atf_tc_set_md_var(tc, "descr", "Test humanize big numbers (PR/44097)");
+	atf_tc_set_md_var(tc, "descr", "Test humanize "
+	    "big numbers (PR lib/44097)");
 }
 
 ATF_TC_BODY(humanize_number_big, tc)

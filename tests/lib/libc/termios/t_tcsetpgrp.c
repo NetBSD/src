@@ -1,4 +1,4 @@
-/*	$NetBSD: t_tcsetpgrp.c,v 1.2 2012/03/17 20:12:09 christos Exp $ */
+/*	$NetBSD: t_tcsetpgrp.c,v 1.3 2012/03/18 07:14:08 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_tcsetpgrp.c,v 1.2 2012/03/17 20:12:09 christos Exp $");
+__RCSID("$NetBSD: t_tcsetpgrp.c,v 1.3 2012/03/18 07:14:08 jruoho Exp $");
 
 #include <sys/wait.h>
 
@@ -42,7 +42,7 @@ ATF_TC(tcsetpgrp_err);
 ATF_TC_HEAD(tcsetpgrp_err, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test errors from tcsetpgrp(3)"
-	    " PR/41673");
+	    " (PR lib/41673)");
 }
 
 ATF_TC_BODY(tcsetpgrp_err, tc)
