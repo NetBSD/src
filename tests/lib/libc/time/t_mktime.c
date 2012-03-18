@@ -1,4 +1,4 @@
-/* $NetBSD: t_mktime.c,v 1.4 2012/01/07 15:05:22 martin Exp $ */
+/* $NetBSD: t_mktime.c,v 1.5 2012/03/18 07:33:58 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,11 +33,32 @@
 #include <string.h>
 #include <time.h>
 
-ATF_TC(mktime_negyear);
+ATF_TC(localtime_r_gmt);
+ATF_TC_HEAD(localtime_r_gmt, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test that localtime_r(3) "
+	    "returns localtime, not GMT (PR lib/28324)");
+}
 
+ATF_TC_BODY(localtime_r_gmt, tc)
+{
+	struct tm *t;
+	struct tm tt;
+	time_t x;
+
+	x = time(NULL);
+	localtime_r(&x, &tt);
+	t = localtime(&x);
+
+	if (t->tm_sec != tt.tm_sec || t->tm_min != tt.tm_min ||
+	    t->tm_hour != tt.tm_hour || t->tm_mday != tt.tm_mday)
+		atf_tc_fail("inconsistencies between "
+		    "localtime(3) and localtime_r(3)");
+}
+
+ATF_TC(mktime_negyear);
 ATF_TC_HEAD(mktime_negyear, tc)
 {
-
 	atf_tc_set_md_var(tc, "descr", "Test mktime(3) with negative year");
 }
 
@@ -55,10 +76,8 @@ ATF_TC_BODY(mktime_negyear, tc)
 }
 
 ATF_TC(timegm_epoch);
-
 ATF_TC_HEAD(timegm_epoch, tc)
 {
-
 	atf_tc_set_md_var(tc, "descr", "Test timegm(3) close to the epoch");
 }
 
@@ -128,6 +147,7 @@ ATF_TC_BODY(timegm_epoch, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
+	ATF_TP_ADD_TC(tp, localtime_r_gmt);
 	ATF_TP_ADD_TC(tp, mktime_negyear);
 	ATF_TP_ADD_TC(tp, timegm_epoch);
 
