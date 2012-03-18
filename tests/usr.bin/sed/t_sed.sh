@@ -1,10 +1,10 @@
-# $NetBSD: t_sed.sh,v 1.1 2012/03/18 10:12:30 jruoho Exp $
+# $NetBSD: t_sed.sh,v 1.2 2012/03/18 15:35:27 dholland Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
-# by Jukka Ruohonen.
+# by Jukka Ruohonen and David A. Holland.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -47,6 +47,54 @@ emptybackref_body() {
 		-x "echo foobar | sed -ne '/foo\(.*\)bar\1/p'"
 }
 
+atf_test_case rangeselection
+rangeselection_head() {
+	atf_set "descr" "Test that sed(1) handles " \
+			"range selection correctly"
+}
+
+rangeselection_body() {
+	# basic cases
+	atf_check -o inline:"D\n" \
+		-x "printf 'A\nB\nC\nD\n' | sed '1,3d'"
+	atf_check -o inline:"A\n" \
+		-x "printf 'A\nB\nC\nD\n' | sed '2,4d'"
+	# two nonoverlapping ranges
+	atf_check -o inline:"C\n" \
+		-x "printf 'A\nB\nC\nD\nE\n' | sed '1,2d;4,5d'"
+	# overlapping ranges; the first prevents the second from being entered
+	atf_check -o inline:"D\nE\n" \
+		-x "printf 'A\nB\nC\nD\nE\n' | sed '1,3d;3,5d'"
+	# the 'n' command can also prevent ranges from being entered
+	atf_check -o inline:"B\nB\nC\nD\n" \
+		-x "printf 'A\nB\nC\nD\n' | sed '1,3s/A/B/;1,3n;1,3s/B/C/'"
+	atf_check -o inline:"B\nC\nC\nD\n" \
+		-x "printf 'A\nB\nC\nD\n' | sed '1,3s/A/B/;1,3n;2,3s/B/C/'"
+
+	# basic cases using regexps
+	atf_check -o inline:"D\n" \
+		-x "printf 'A\nB\nC\nD\n' | sed '/A/,/C/d'"
+	atf_check -o inline:"A\n" \
+		-x "printf 'A\nB\nC\nD\n' | sed '/B/,/D/d'"
+	# two nonoverlapping ranges
+	atf_check -o inline:"C\n" \
+		-x "printf 'A\nB\nC\nD\nE\n' | sed '/A/,/B/d;/D/,/E/d'"
+	# two overlapping ranges; the first blocks the second as above
+	atf_check -o inline:"D\nE\n" \
+		-x "printf 'A\nB\nC\nD\nE\n' | sed '/A/,/C/d;/C/,/E/d'"
+	# the 'n' command makes some lines invisible to downstreap regexps
+	atf_check -o inline:"B\nC\nC\nD\n" \
+		-x "printf 'A\nB\nC\nD\n' | sed '/A/,/C/s/A/B/;1,3n;/B/,/C/s/B/C/'"
+
+	# a range ends at the *first* matching end line
+	atf_check -o inline:"D\nC\n" \
+		-x "printf 'A\nB\nC\nD\nC\n' | sed '/A/,/C/d'"
+	# another matching start line within the range has no effect
+	atf_check -o inline:"D\nC\n" \
+		-x "printf 'A\nB\nA\nC\nD\nC\n' | sed '/A/,/C/d'"
+}
+
 atf_init_test_cases() {
 	atf_add_test_case emptybackref
+	atf_add_test_case rangeselection
 }
