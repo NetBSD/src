@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1100 2012/03/03 05:40:11 nonaka Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1101 2012/03/18 17:30:19 tsutsui Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1105 2012/03/03 05:39:31 nonaka Exp
+ *	NetBSD: pcidevs,v 1.1106 2012/03/18 17:29:06 tsutsui Exp
  */
 
 /*
@@ -4701,6 +4701,7 @@
 #define	PCI_PRODUCT_VIATECH_VT82C597AGP	0x8597		/* VT82C597 (Apollo VP3) CPU-AGP Bridge */
 #define	PCI_PRODUCT_VIATECH_VT82C598AGP	0x8598		/* VT82C598 (Apollo MVP3) CPU-AGP Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8605AGP	0x8605		/* VT8605 (Apollo ProMedia 133) Host-AGP Bridge */
+#define	PCI_PRODUCT_VIATECH_VX900_IDE	0x9001		/* VX900 IDE Controller */
 #define	PCI_PRODUCT_VIATECH_K8T890_PPB_A238	0xa238		/* K8T890 PCI-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8633AGP	0xb091		/* VT8633 (Apollo Pro 266) CPU-AGP Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8366AGP	0xb099		/* VT8366 (Apollo KT266) CPU-AGP Bridge */
