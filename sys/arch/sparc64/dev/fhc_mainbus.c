@@ -1,4 +1,4 @@
-/*	$NetBSD: fhc_mainbus.c,v 1.2 2011/08/01 08:36:39 mrg Exp $	*/
+/*	$NetBSD: fhc_mainbus.c,v 1.3 2012/03/18 05:26:58 mrg Exp $	*/
 /*	$OpenBSD: fhc_mainbus.c,v 1.4 2004/09/27 18:32:35 jason Exp $	*/
 
 /*
@@ -26,6 +26,9 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fhc_mainbus.c,v 1.3 2012/03/18 05:26:58 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

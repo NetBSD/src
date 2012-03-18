@@ -1,4 +1,4 @@
-/*	$NetBSD: pld_wdog.c,v 1.9 2011/06/03 03:21:12 christos Exp $	*/
+/*	$NetBSD: pld_wdog.c,v 1.10 2012/03/18 05:26:58 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -25,6 +25,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pld_wdog.c,v 1.10 2012/03/18 05:26:58 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
