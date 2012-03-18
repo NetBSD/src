@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.35 2012/03/17 16:40:14 jruoho Exp $
+# $NetBSD: Makefile,v 1.36 2012/03/18 08:52:07 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,7 @@ TESTS_C+=	t_closefrom
 TESTS_C+=	t_cpuset
 TESTS_C+=	t_dir
 TESTS_C+=	t_fmtcheck
+TESTS_C+=	t_fnmatch
 TESTS_C+=	t_fpclassify
 TESTS_C+=	t_fpsetmask
 TESTS_C+=	t_fpsetround
