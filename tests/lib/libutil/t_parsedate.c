@@ -1,4 +1,4 @@
-/* $NetBSD: t_parsedate.c,v 1.4 2012/03/17 21:33:13 christos Exp $ */
+/* $NetBSD: t_parsedate.c,v 1.5 2012/03/18 07:14:08 jruoho Exp $ */
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_parsedate.c,v 1.4 2012/03/17 21:33:13 christos Exp $");
+__RCSID("$NetBSD: t_parsedate.c,v 1.5 2012/03/18 07:14:08 jruoho Exp $");
 
 #include <atf-c.h>
 #include <util.h>
@@ -39,7 +39,7 @@ ATF_TC(dates);
 ATF_TC_HEAD(dates, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test unambiguous dates"
-	    " PR/44255");
+	    " (PR lib/44255)");
 }
 
 ATF_TC_BODY(dates, tc)
@@ -61,7 +61,7 @@ ATF_TC(times);
 ATF_TC_HEAD(times, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test times"
-	    " PR/44255");
+	    " (PR lib/44255)");
 }
 
 ATF_TC_BODY(times, tc)
@@ -78,7 +78,7 @@ ATF_TC(relative);
 ATF_TC_HEAD(relative, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test relative items"
-	    " PR/44255");
+	    " (PR lib/44255)");
 }
 
 ATF_TC_BODY(relative, tc)

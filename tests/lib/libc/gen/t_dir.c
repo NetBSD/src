@@ -1,4 +1,4 @@
-/* $NetBSD: t_dir.c,v 1.4 2011/07/07 09:49:59 jruoho Exp $ */
+/* $NetBSD: t_dir.c,v 1.5 2012/03/18 07:14:08 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -43,8 +43,8 @@ ATF_TC(seekdir_basic);
 ATF_TC_HEAD(seekdir_basic, tc)
 {
 
-	atf_tc_set_md_var(tc, "descr",
-	    "Check telldir(3) and seekdir(3) for correct behavior (PR/24324)");
+	atf_tc_set_md_var(tc, "descr", "Check telldir(3) and seekdir(3) "
+	    "for correct behavior (PR lib/24324)");
 }
 
 ATF_TC_BODY(seekdir_basic, tc)
@@ -116,7 +116,7 @@ ATF_TC_HEAD(telldir_leak, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr",
-	    "Check telldir(3) for memory leakage (PR/24324)");
+	    "Check telldir(3) for memory leakage (PR lib/24324)");
 }
 
 ATF_TC_BODY(telldir_leak, tc)
