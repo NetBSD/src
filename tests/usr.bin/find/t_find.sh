@@ -1,4 +1,4 @@
-# $NetBSD: t_find.sh,v 1.4 2012/03/18 19:11:30 jruoho Exp $
+# $NetBSD: t_find.sh,v 1.5 2012/03/18 19:21:53 jruoho Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,13 +30,20 @@
 
 atf_test_case emptyperm
 emptyperm_head() {
-	atf_set "descr" "Test that 'find -empty' returns true (PR bin/44179)"
+	atf_set "descr" "Test that 'find -empty' does not error out " \
+			"when directory access is denied (PR bin/44179)"
 	atf_set "require.user" "unprivileged"
 }
 
 emptyperm_body() {
 
-	# The test assumes that $dir is drwxrwx---.
+	# The case assumes that at least some directories
+	# in /var are unavailable for the user '_tests'.
+	#
+	atf_check -s exit:1 -o save:output.file \
+		-e not-empty -x "find /var -empty -type d"
+
+	# The case assumes that $dir is drwxrwx---.
 	#
 	dir="/var/quotas"
 
