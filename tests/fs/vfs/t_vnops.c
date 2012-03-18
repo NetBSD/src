@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.30 2011/12/12 19:11:22 njoly Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.31 2012/03/18 21:49:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -176,10 +176,6 @@ dir_rmdirdotdot(const atf_tc_t *tc, const char *mp)
 		xerrno = ESTALE;
 	else
 		xerrno = ENOENT;
-	/*
-	if (FSTYPE_TMPFS(tc))
-		atf_tc_expect_signal(-1, "PR kern/44657");
-	*/
 	ATF_REQUIRE_ERRNO(xerrno, rump_sys_chdir("..") == -1);
 	FSTEST_EXIT();
 }
@@ -296,10 +292,6 @@ rename_dir(const atf_tc_t *tc, const char *mp)
 	if (! FSTYPE_MSDOS(tc))
 		ATF_CHECK_EQ(sb.st_nlink, 3);
 	RL(rump_sys_rmdir(pb3));
-	/*
-	if (FSTYPE_TMPFS(tc))
-		atf_tc_expect_signal(-1, "PR kern/44288");
-	*/
 	RL(rump_sys_rmdir(pb1));
 }
 
@@ -327,9 +319,6 @@ rename_dotdot(const atf_tc_t *tc, const char *mp)
 		atf_tc_fail_errno("self-dotdot from");
 	atf_tc_expect_pass();
 
-	/*
-	if (FSTYPE_TMPFS(tc)) {
-		atf_tc_expect_fail("PR kern/43617");
 	}
 	*/
 	if (rump_sys_rename("dir1", "dir2/..") != -1 || errno != EINVAL)
@@ -852,9 +841,10 @@ ATF_TC_FSAPPLY(lookup_simple, "simple lookup (./.. on root)");
 ATF_TC_FSAPPLY(lookup_complex, "lookup of non-dot entries");
 ATF_TC_FSAPPLY(dir_simple, "mkdir/rmdir");
 ATF_TC_FSAPPLY(dir_notempty, "non-empty directories cannot be removed");
-ATF_TC_FSAPPLY(dir_rmdirdotdot, "remove .. and try to cd out");
-ATF_TC_FSAPPLY(rename_dir, "exercise various directory renaming ops");
-ATF_TC_FSAPPLY(rename_dotdot, "rename dir ..");
+ATF_TC_FSAPPLY(dir_rmdirdotdot, "remove .. and try to cd out (PR kern/44657)");
+ATF_TC_FSAPPLY(rename_dir, "exercise various directory renaming ops "
+"(PR kern/44288)");
+ATF_TC_FSAPPLY(rename_dotdot, "rename dir .. (PR kern/43617)");
 ATF_TC_FSAPPLY(rename_reg_nodir, "rename regular files, no subdirectories");
 ATF_TC_FSAPPLY(create_nametoolong, "create file with name too long");
 ATF_TC_FSAPPLY(create_exist, "create with O_EXCL");
