@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_ecoff.c,v 1.18 2009/08/21 08:42:02 he Exp $ */
+/* $NetBSD: nlist_ecoff.c,v 1.19 2012/03/18 14:34:28 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nlist_ecoff.c,v 1.18 2009/08/21 08:42:02 he Exp $");
+__RCSID("$NetBSD: nlist_ecoff.c,v 1.19 2012/03/18 14:34:28 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -59,8 +59,6 @@ __RCSID("$NetBSD: nlist_ecoff.c,v 1.18 2009/08/21 08:42:02 he Exp $");
 
 #ifdef NLIST_ECOFF
 #define	check(off, size)	((off < 0) || (off + size > mappedsize))
-#define	BAD			do { rv = -1; goto out; } while (/*CONSTCOND*/0)
-#define	BADUNMAP		do { rv = -1; goto unmap; } while (/*CONSTCOND*/0)
 
 int
 __fdnlist_ecoff(fd, list)
@@ -72,7 +70,7 @@ __fdnlist_ecoff(fd, list)
 	struct ecoff_symhdr *symhdrp;
 	struct ecoff_extsym *esyms;
 	struct stat st;
-	char *mappedfile;
+	void *mappedfile;
 	size_t mappedsize;
 	u_long symhdroff, extstroff;
 	u_int symhdrsize;
@@ -88,20 +86,20 @@ __fdnlist_ecoff(fd, list)
 	 * If we can't fstat() the file, something bad is going on.
 	 */
 	if (fstat(fd, &st) < 0)
-		BAD;
+		goto out;
 
 	/*
 	 * Map the file in its entirety.
 	 */
 	if ((uintmax_t)st.st_size > (uintmax_t)SIZE_T_MAX) {
 		errno = EFBIG;
-		BAD;
+		goto out;
 	}
-	mappedsize = st.st_size;
+	mappedsize = (size_t)st.st_size;
 	mappedfile = mmap(NULL, mappedsize, PROT_READ, MAP_PRIVATE|MAP_FILE,
 	    fd, 0);
-	if (mappedfile == (char *)-1)
-		BAD;
+	if (mappedfile == MAP_FAILED)
+		goto out;
 
 	/*
 	 * Make sure we can access the executable's header
@@ -109,11 +107,11 @@ __fdnlist_ecoff(fd, list)
 	 * as an ECOFF binary.
 	 */
 	if (check(0, sizeof *exechdrp))
-		BADUNMAP;
-	exechdrp = (struct ecoff_exechdr *)&mappedfile[0];
+		goto unmap;
+	exechdrp = mappedfile;
 
 	if (ECOFF_BADMAG(exechdrp))
-		BADUNMAP;
+		goto unmap;
 
 	/*
 	 * Find the symbol list.
@@ -123,13 +121,13 @@ __fdnlist_ecoff(fd, list)
 
 	if ((symhdroff + sizeof *symhdrp) > mappedsize ||
 	    sizeof *symhdrp != symhdrsize)
-		BADUNMAP;
-	symhdrp = (struct ecoff_symhdr *)&mappedfile[symhdroff];
+		goto unmap;
+	symhdrp = (void *)((char *)mappedfile + symhdroff);
 
 	nesyms = symhdrp->esymMax;
 	if (check(symhdrp->cbExtOffset, nesyms * sizeof *esyms))
-		BADUNMAP;
-	esyms = (struct ecoff_extsym *)&mappedfile[symhdrp->cbExtOffset];
+		goto unmap;
+	esyms = (void *)((char *)mappedfile + symhdrp->cbExtOffset);
 	extstroff = symhdrp->cbSsExtOffset;
 
 	/*
@@ -183,7 +181,7 @@ done:
 unmap:
 	munmap(mappedfile, mappedsize);
 out:
-	return (rv);
+	return rv;
 }
 
 #endif /* NLIST_ECOFF */
