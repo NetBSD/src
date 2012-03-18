@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.77 2011/12/28 20:28:04 phx Exp $	*/
+/*	$NetBSD: viaide.c,v 1.78 2012/03/18 17:50:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.77 2011/12/28 20:28:04 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.78 2012/03/18 17:50:43 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,6 +310,11 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	  NULL,
 	  via_chip_map,
 	},
+	{ PCI_PRODUCT_VIATECH_VX900_IDE,
+	  0,
+	  NULL,
+	  via_chip_map,
+	},
 	{ PCI_PRODUCT_VIATECH_VT6410_RAID,
 	  0,
 	  NULL,
@@ -463,6 +468,11 @@ via_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
 			    PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
+			break;
+		case PCI_PRODUCT_VIATECH_VX900_IDE:
+			aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+			    "VIA Technologies VX900 ATA133 controller\n");
+			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
 		default:
 			/*
