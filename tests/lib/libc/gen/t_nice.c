@@ -1,4 +1,4 @@
-/*	$NetBSD: t_nice.c,v 1.7 2011/05/01 06:42:29 jruoho Exp $ */
+/*	$NetBSD: t_nice.c,v 1.8 2012/03/18 07:00:51 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_nice.c,v 1.7 2011/05/01 06:42:29 jruoho Exp $");
+__RCSID("$NetBSD: t_nice.c,v 1.8 2012/03/18 07:00:51 jruoho Exp $");
 
 #include <sys/resource.h>
 #include <sys/wait.h>
@@ -63,7 +63,8 @@ threadfunc(void *arg)
 ATF_TC(nice_err);
 ATF_TC_HEAD(nice_err, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test nice(3) for invalid parameters");
+	atf_tc_set_md_var(tc, "descr",
+	    "Test nice(3) for invalid parameters (PR lib/42587)");
 	atf_tc_set_md_var(tc, "require.user", "unprivileged");
 }
 
@@ -74,8 +75,7 @@ ATF_TC_BODY(nice_err, tc)
 	/*
 	 * The call should fail with EPERM if the
 	 * supplied parameter is negative and the
-	 * caller does not have privileges; see
-	 * the closed PR lib/42587.
+	 * caller does not have privileges.
 	 */
 	for (i = -20; i < 0; i++) {
 

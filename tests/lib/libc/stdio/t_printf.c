@@ -1,4 +1,4 @@
-/* $NetBSD: t_printf.c,v 1.5 2012/03/15 01:44:44 joerg Exp $ */
+/* $NetBSD: t_printf.c,v 1.6 2012/03/18 07:00:51 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -137,8 +137,8 @@ ATF_TC_BODY(snprintf_float, tc)
 ATF_TC(sprintf_zeropad);
 ATF_TC_HEAD(sprintf_zeropad, tc)
 {
- 
-	atf_tc_set_md_var(tc, "descr", "output format zero padding");
+	atf_tc_set_md_var(tc, "descr",
+	    "Test output format zero padding (PR lib/44113)");
 }
 
 ATF_TC_BODY(sprintf_zeropad, tc)
@@ -150,7 +150,7 @@ ATF_TC_BODY(sprintf_zeropad, tc)
 
 	/* ieeefp */
 #ifndef __vax__
-	/* PR/44113: printf(3) should ignore zero padding for nan/inf */
+	/* printf(3) should ignore zero padding for nan/inf */
 	ATF_CHECK(sprintf(str, "%010f", NAN) == 10);
 	ATF_REQUIRE_STREQ(str, "       nan");
 	ATF_CHECK(sprintf(str, "%010f", INFINITY) == 10);

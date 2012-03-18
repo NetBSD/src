@@ -1,4 +1,4 @@
-/*	$NetBSD: t_kevent.c,v 1.1 2011/11/17 01:14:12 christos Exp $ */
+/*	$NetBSD: t_kevent.c,v 1.2 2012/03/18 07:00:52 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,30 +29,27 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_kevent.c,v 1.1 2011/11/17 01:14:12 christos Exp $");
-
-#include <time.h>
-#include <stdio.h>
+__RCSID("$NetBSD: t_kevent.c,v 1.2 2012/03/18 07:00:52 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/event.h>
 
 #include <atf-c.h>
+#include <time.h>
+#include <stdio.h>
 
 ATF_TC(kevent_zerotimer);
 ATF_TC_HEAD(kevent_zerotimer, tc)
 {
-
-	/* Cf. PR lib/45618. */
 	atf_tc_set_md_var(tc, "descr", "Checks that kevent with a 0 timer "
-	    "does not crash the system");
+	    "does not crash the system (PR lib/45618)");
 }
 
 ATF_TC_BODY(kevent_zerotimer, tc)
 {
 	struct kevent ev;
 	int kq;
-	
+
 	ATF_REQUIRE((kq = kqueue()) != -1);
 	EV_SET(&ev, 1, EVFILT_TIMER, EV_ADD|EV_ENABLE, 0, 1, 0);
 	ATF_REQUIRE(kevent(kq, &ev, 1, NULL, 0, NULL) != -1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_timer_create.c,v 1.3 2011/12/18 22:25:20 christos Exp $ */
+/*	$NetBSD: t_timer_create.c,v 1.4 2012/03/18 07:00:52 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -115,8 +115,8 @@ timer_signal_create(clockid_t cid, bool expire)
 ATF_TC(timer_create_err);
 ATF_TC_HEAD(timer_create_err, tc)
 {
-	/* Cf. PR lib/42434. */
-	atf_tc_set_md_var(tc, "descr", "Check errors from timer_create(2)");
+	atf_tc_set_md_var(tc, "descr",
+	    "Check errors from timer_create(2) (PR lib/42434");
 }
 
 ATF_TC_BODY(timer_create_err, tc)
