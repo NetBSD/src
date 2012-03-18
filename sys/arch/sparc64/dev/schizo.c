@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.27 2011/09/04 12:17:14 nakayama Exp $	*/
+/*	$NetBSD: schizo.c,v 1.28 2012/03/18 05:26:58 mrg Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -28,6 +28,9 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: schizo.c,v 1.28 2012/03/18 05:26:58 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
