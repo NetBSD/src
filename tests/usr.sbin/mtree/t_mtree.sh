@@ -1,4 +1,4 @@
-# $NetBSD: t_mtree.sh,v 1.1 2012/03/17 16:33:16 jruoho Exp $
+# $NetBSD: t_mtree.sh,v 1.2 2012/03/18 11:50:55 jruoho Exp $
 #
 # Copyright (c) 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,6 +27,7 @@
 
 # Postprocess mtree output, canonicalising portions that
 # are expected to differ from one run to another.
+#
 h_postprocess()
 {
 	sed -e '
@@ -157,6 +158,31 @@ merge_body()
 	h_check "$(atf_get_srcdir)/d_merge_C_M_S.out" output
 }
 
+atf_test_case nonemptydir
+nonemptydir_head() {
+	atf_set "descr" "Test that new non-empty " \
+			"directories are recorded (PR bin/25693)"
+}
+
+nonemptydir_body() {
+
+	mkdir testdir
+	cd testdir
+
+	mtree -c > mtree.spec
+
+	if [ ! -f mtree.spec ]; then
+		atf_fail "mtree failed"
+	fi
+
+	touch bar
+	atf_check -s ignore -o save:output -x "mtree -f mtree.spec"
+
+	if [ ! -n "$(egrep "extra: bar" output)" ]; then
+		atf_fail "mtree did not record changes (PR bin/25693)"
+	fi
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case create
@@ -166,4 +192,5 @@ atf_init_test_cases()
 	atf_add_test_case convert_D
 	atf_add_test_case convert_D_S
 	atf_add_test_case merge
+	atf_add_test_case nonemptydir
 }
