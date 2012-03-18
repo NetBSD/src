@@ -1,4 +1,4 @@
-/* $NetBSD: t_sched.c,v 1.3 2012/03/18 02:14:16 christos Exp $ */
+/* $NetBSD: t_sched.c,v 1.4 2012/03/18 07:14:08 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sched.c,v 1.3 2012/03/18 02:14:16 christos Exp $");
+__RCSID("$NetBSD: t_sched.c,v 1.4 2012/03/18 07:14:08 jruoho Exp $");
 
 #include <sched.h>
 #include <limits.h>
@@ -189,7 +189,7 @@ ATF_TC(sched_rr_get_interval_1);
 ATF_TC_HEAD(sched_rr_get_interval_1, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test sched_rr_get_interval(3), #1"
-	    " PR/44768");
+	    " (PR lib/44768)");
 	atf_tc_set_md_var(tc, "require.user", "root");
 }
 
