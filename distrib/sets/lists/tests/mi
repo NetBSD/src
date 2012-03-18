@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.449 2012/03/18 12:40:42 jruoho Exp $
+# $NetBSD: mi,v 1.450 2012/03/18 15:32:23 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -290,6 +290,7 @@
 ./usr/libdata/debug/usr/tests/include/sys				tests-include-tests
 ./usr/libdata/debug/usr/tests/include/sys/t_bitops.debug		tests-include-tests	debug,atf
 ./usr/libdata/debug/usr/tests/include/sys/t_bootblock.debug		tests-include-tests	debug,atf
+./usr/libdata/debug/usr/tests/include/sys/t_cdefs.debug			tests-include-tests	debug,atf
 ./usr/libdata/debug/usr/tests/include/sys/t_socket.debug		tests-include-tests	debug,atf
 ./usr/libdata/debug/usr/tests/include/sys/t_tree.debug			tests-include-tests	debug,atf
 ./usr/libdata/debug/usr/tests/include/sys/t_types.debug			tests-include-tests	debug,atf
@@ -1603,6 +1604,7 @@
 ./usr/tests/include/sys/Atffile			tests-include-tests	atf
 ./usr/tests/include/sys/t_bitops		tests-include-tests	atf
 ./usr/tests/include/sys/t_bootblock		tests-include-tests	atf
+./usr/tests/include/sys/t_cdefs			tests-include-tests	atf
 ./usr/tests/include/sys/t_socket		tests-include-tests	atf
 ./usr/tests/include/sys/t_tree			tests-include-tests	atf
 ./usr/tests/include/sys/t_types			tests-include-tests	atf
