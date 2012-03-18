@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt.c,v 1.15 2011/05/24 10:08:03 mrg Exp $	*/
+/*	$NetBSD: mpt.c,v 1.16 2012/03/18 21:05:21 martin Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.15 2011/05/24 10:08:03 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.16 2012/03/18 21:05:21 martin Exp $");
 
 #include <dev/ic/mpt.h>
 
@@ -1153,7 +1153,7 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
 	if (mpt_hw_init(mpt) != 0)
 		return (EIO);
 
-	dict = device_properties(&mpt->sc_dev);
+	dict = device_properties(mpt->sc_dev);
 
 	for (try = 0; try < MPT_MAX_TRYS; try++) {
 		/*
