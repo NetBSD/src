@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.446 2012/03/17 17:23:34 jruoho Exp $
+# $NetBSD: mi,v 1.447 2012/03/18 08:52:07 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -379,6 +379,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_cpuset.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_dir.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_fmtcheck.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/t_fnmatch.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpclassify.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpsetmask.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpsetround.debug		tests-lib-debug		debug,atf
@@ -2016,6 +2017,7 @@
 ./usr/tests/lib/libc/gen/t_cpuset		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_dir			tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_fmtcheck		tests-lib-tests		atf
+./usr/tests/lib/libc/gen/t_fnmatch		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_fpclassify		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_fpsetmask		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_fpsetround		tests-lib-tests		atf
