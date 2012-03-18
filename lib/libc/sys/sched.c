@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.c,v 1.3 2012/03/13 21:13:48 christos Exp $	*/
+/*	$NetBSD: sched.c,v 1.4 2012/03/18 02:04:39 christos Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,12 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sched.c,v 1.3 2012/03/13 21:13:48 christos Exp $");
+__RCSID("$NetBSD: sched.c,v 1.4 2012/03/18 02:04:39 christos Exp $");
 
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
 #include <sched.h>
+#include <signal.h>
 #include <sys/param.h>
 #include <sys/types.h>
 
@@ -123,6 +124,8 @@ int
 sched_rr_get_interval(pid_t pid, struct timespec *interval)
 {
 
+	if (pid && kill(pid, 0) == -1)
+		return -1;
 	interval->tv_sec = 0;
 	interval->tv_nsec = sysconf(_SC_SCHED_RT_TS) * 1000;
 	return 0;
