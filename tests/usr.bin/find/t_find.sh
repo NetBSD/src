@@ -1,4 +1,4 @@
-# $NetBSD: t_find.sh,v 1.3 2012/03/18 18:32:16 jruoho Exp $
+# $NetBSD: t_find.sh,v 1.4 2012/03/18 19:11:30 jruoho Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -28,6 +28,22 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+atf_test_case emptyperm
+emptyperm_head() {
+	atf_set "descr" "Test that 'find -empty' returns true (PR bin/44179)"
+	atf_set "require.user" "unprivileged"
+}
+
+emptyperm_body() {
+
+	# The test assumes that $dir is drwxrwx---.
+	#
+	dir="/var/quotas"
+
+	atf_check -s exit:1 -e inline:"find: $dir: Permission denied\n" \
+		-x "find $dir -empty -type d"
+}
+
 atf_test_case exit
 exit_head() {
 	atf_set "descr" "Test that find(1) with -exit works (PR bin/44973)"
@@ -49,6 +65,7 @@ exit_status_body() {
 }
 
 atf_init_test_cases() {
+	atf_add_test_case emptyperm
 	atf_add_test_case exit
 	atf_add_test_case exit_status
 }
