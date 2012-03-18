@@ -1,4 +1,4 @@
-/* $NetBSD: t_lwp_ctl.c,v 1.1 2012/03/17 17:23:34 jruoho Exp $ */
+/* $NetBSD: t_lwp_ctl.c,v 1.2 2012/03/18 06:20:51 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,17 +29,14 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_lwp_ctl.c,v 1.1 2012/03/17 17:23:34 jruoho Exp $");
+__RCSID("$NetBSD: t_lwp_ctl.c,v 1.2 2012/03/18 06:20:51 jruoho Exp $");
 
 #include <sys/lwpctl.h>
 
+#include <atf-c.h>
 #include <lwp.h>
 #include <stdio.h>
 #include <time.h>
-
-#include <atf-c.h>
-
-#include "../../../h_macros.h"
 
 ATF_TC(lwpctl_counter);
 ATF_TC_HEAD(lwpctl_counter, tc)
@@ -53,14 +50,16 @@ ATF_TC_BODY(lwpctl_counter, tc)
 	struct timespec ts;
 	int ctr1, ctr2;
 
-	RL(_lwp_ctl(LWPCTL_FEATURE_PCTR, &lc));
+	ATF_REQUIRE(_lwp_ctl(LWPCTL_FEATURE_PCTR, &lc) == 0);
 
 	/* Ensure that preemption is reported. */
 	ctr1 = lc->lc_pctr;
 	(void)printf("pctr = %d\n", ctr1);
 	ts.tv_nsec = 10*1000000;
 	ts.tv_sec = 0;
-	RL(nanosleep(&ts, 0));
+
+	ATF_REQUIRE(nanosleep(&ts, 0) != -1);
+
 	ctr2 = lc->lc_pctr;
 	(void)printf("pctr = %d\n", ctr2);
 
