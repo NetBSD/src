@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.c,v 1.29 2012/03/13 21:13:45 christos Exp $	*/
+/*	$NetBSD: xdr.c,v 1.30 2012/03/18 16:43:34 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr.c 1.35 87/08/12";
 static char *sccsid = "@(#)xdr.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr.c,v 1.29 2012/03/13 21:13:45 christos Exp $");
+__RCSID("$NetBSD: xdr.c,v 1.30 2012/03/18 16:43:34 christos Exp $");
 #endif
 #endif
 
@@ -821,10 +821,10 @@ xdr_int64_t(XDR *xdrs, int64_t *llp)
 
 	switch (xdrs->x_op) {
 	case XDR_ENCODE:
-		ul[0] = (u_long)((uint64_t)*llp >> 32) &
-		    (uint64_t)0xffffffffULL;
-		ul[1] = (u_long)((uint64_t)*llp) &
-		    (uint64_t)0xffffffffULL;
+		ul[0] = (u_long)(((uint64_t)*llp >> 32) &
+		    (uint64_t)0xffffffffULL);
+		ul[1] = (u_long)(((uint64_t)*llp) &
+		    (uint64_t)0xffffffffULL);
 		if (XDR_PUTLONG(xdrs, (long *)&ul[0]) == FALSE)
 			return (FALSE);
 		return (XDR_PUTLONG(xdrs, (long *)&ul[1]));
