@@ -1,4 +1,4 @@
-# $NetBSD: t_find.sh,v 1.2 2012/03/18 18:09:45 dholland Exp $
+# $NetBSD: t_find.sh,v 1.3 2012/03/18 18:32:16 jruoho Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,6 +38,17 @@ exit_body() {
 		-s exit:0 -x "find /etc -type f -exit"
 }
 
+atf_test_case exit_status
+exit_status_head() {
+	atf_set "descr" "Test exit status from 'find -exit'"
+}
+
+exit_status_body() {
+	num=$(jot -r 1 0 99)
+	atf_check -o ignore -e ignore -s exit:$num -x "find / -exit $num"
+}
+
 atf_init_test_cases() {
 	atf_add_test_case exit
+	atf_add_test_case exit_status
 }
