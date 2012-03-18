@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.149 2012/03/17 19:33:21 bouyer Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.150 2012/03/18 13:28:08 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -6233,4 +6233,49 @@ sbin/mount/mount.8				1.73, 1.74
 
 	Clarify UFS2 superblock format stuff. Bump date.  Fix PR 45166.
 	[dholland, ticket #1743]
+
+gnu/dist/gcc4/gcc/crtstuff.c			patch
+gnu/dist/gcc4/gcc/gcc.c				patch
+gnu/dist/gcc4/gcc/config/netbsd-elf.h		patch
+gnu/dist/gcc4/gcc/config/t-netbsd		patch
+gnu/lib/libgcc4/arch/alpha.mk			patch
+gnu/lib/libgcc4/arch/arm.mk			patch
+gnu/lib/libgcc4/arch/armeb.mk			patch
+gnu/lib/libgcc4/arch/hppa.mk			patch
+gnu/lib/libgcc4/arch/i386.mk			patch
+gnu/lib/libgcc4/arch/m68000.mk			patch
+gnu/lib/libgcc4/arch/m68k.mk			patch
+gnu/lib/libgcc4/arch/mipseb.mk			patch
+gnu/lib/libgcc4/arch/mipsel.mk			patch
+gnu/lib/libgcc4/arch/powerpc.mk			patch
+gnu/lib/libgcc4/arch/powerpc64.mk		patch
+gnu/lib/libgcc4/arch/sh3eb.mk			patch
+gnu/lib/libgcc4/arch/sh3el.mk			patch
+gnu/lib/libgcc4/arch/sparc.mk			patch
+gnu/lib/libgcc4/arch/sparc64.mk			patch
+gnu/lib/libgcc4/arch/vax.mk			patch
+gnu/lib/libgcc4/arch/x86_64.mk			patch
+gnu/usr.bin/gcc4/arch/alpha/defs.mk		patch
+gnu/usr.bin/gcc4/arch/arm/defs.mk		patch
+gnu/usr.bin/gcc4/arch/armeb/defs.mk		patch
+gnu/usr.bin/gcc4/arch/hppa/defs.mk		patch
+gnu/usr.bin/gcc4/arch/i386/defs.mk		patch
+gnu/usr.bin/gcc4/arch/m68000/defs.mk		patch
+gnu/usr.bin/gcc4/arch/m68k/defs.mk		patch
+gnu/usr.bin/gcc4/arch/mipseb/defs.mk		patch
+gnu/usr.bin/gcc4/arch/mipsel/defs.mk		patch
+gnu/usr.bin/gcc4/arch/powerpc/defs.mk		patch
+gnu/usr.bin/gcc4/arch/powerpc64/defs.mk		patch
+gnu/usr.bin/gcc4/arch/sh3eb/defs.mk		patch
+gnu/usr.bin/gcc4/arch/sh3el/defs.mk		patch
+gnu/usr.bin/gcc4/arch/sparc/defs.mk		patch
+gnu/usr.bin/gcc4/arch/sparc64/defs.mk		patch
+gnu/usr.bin/gcc4/arch/vax/defs.mk		patch
+gnu/usr.bin/gcc4/arch/x86_64/defs.mk		patch
+gnu/dist/gcc4/gcc/unwind-dw2-fde-phdr.c		patch
+
+	Instruct gcc to use dl_iterate_phdr to find exception unwind frames.
+	This avoids the registration/deregistration of frames that can
+	screwed up if the right set of libraries isn't linked together.
+	[skrll, ticket #1725]
 
