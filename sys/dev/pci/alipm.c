@@ -1,4 +1,4 @@
-/*	$NetBSD: alipm.c,v 1.9 2012/03/11 22:46:22 pgoyette Exp $ */
+/*	$NetBSD: alipm.c,v 1.10 2012/03/18 12:47:01 martin Exp $ */
 /*	$OpenBSD: alipm.c,v 1.13 2007/05/03 12:19:01 dlg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alipm.c,v 1.9 2012/03/11 22:46:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alipm.c,v 1.10 2012/03/18 12:47:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -98,7 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: alipm.c,v 1.9 2012/03/11 22:46:22 pgoyette Exp $");
 #define ALIPM_TIMEOUT	1
 
 struct alipm_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
@@ -115,7 +115,7 @@ void	alipm_smb_release_bus(void *, int);
 int	alipm_smb_exec(void *, i2c_op_t, i2c_addr_t, const void *,
 	    size_t, void *, size_t, int);
 
-CFATTACH_DECL(alipm, sizeof(struct alipm_softc),
+CFATTACH_DECL_NEW(alipm, sizeof(struct alipm_softc),
 	alipm_match, alipm_attach, NULL, NULL);
 
 static int
@@ -138,6 +138,8 @@ alipm_attach(device_t parent, device_t self, void *aux)
 	pcireg_t iobase, reg;
 	bus_size_t iosize = ALIPM_SMB_SIZE;
 
+	sc->sc_dev = self;
+
 	/* Old chips don't have the PCI 2.2 Capabilities List. */
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	if ((reg & PCI_STATUS_CAPLIST_SUPPORT) == 0) {
@@ -147,32 +149,32 @@ alipm_attach(device_t parent, device_t self, void *aux)
 		if (iobase == 0 ||
 		    bus_space_map(sc->sc_iot, iobase >> 16,
 		    iosize, 0, &sc->sc_ioh)) {
-			aprint_error_dev(&sc->sc_dev, "can't map I/O space\n");
+			aprint_error_dev(sc->sc_dev, "can't map I/O space\n");
 			return;
 		}
 
 		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, ALIPM_CONF);
 		if ((reg & ALIPM_CONF_SMBEN) == 0) {
-			aprint_error_dev(&sc->sc_dev, "SMBus disabled\n");
+			aprint_error_dev(sc->sc_dev, "SMBus disabled\n");
 			goto fail;
 		}
 
 		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, ALIPM_SMB_HOSTC);
 		if ((reg & ALIPM_SMB_HOSTC_HSTEN) == 0) {
-			aprint_error_dev(&sc->sc_dev, "SMBus host disabled\n");
+			aprint_error_dev(sc->sc_dev, "SMBus host disabled\n");
 			goto fail;
 		}
 	} else {
 		/* Map I/O space */
 		if (pci_mapreg_map(pa, ALIPM_SMB_BASE, PCI_MAPREG_TYPE_IO, 0,
 		    &sc->sc_iot, &sc->sc_ioh, NULL, &iosize)) {
-			aprint_error_dev(&sc->sc_dev, "can't map I/O space\n");
+			aprint_error_dev(sc->sc_dev, "can't map I/O space\n");
 			return;
 		}
 
 		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, ALIPM_SMB_HOSTX);
 		if ((reg & ALIPM_SMB_HOSTC_HSTEN) == 0) {
-			aprint_error_dev(&sc->sc_dev, "SMBus host disabled\n");
+			aprint_error_dev(sc->sc_dev, "SMBus host disabled\n");
 			goto fail;
 		}
 	}
@@ -211,7 +213,7 @@ alipm_attach(device_t parent, device_t self, void *aux)
 
 	memset(&iba, 0, sizeof iba);
 	iba.iba_tag = &sc->sc_smb_tag;
-	(void)config_found_ia(&sc->sc_dev, "i2cbus", &iba, iicbus_print);
+	(void)config_found_ia(sc->sc_dev, "i2cbus", &iba, iicbus_print);
 
 	return;
 
@@ -246,7 +248,7 @@ alipm_smb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	int retries, error = 0;
 
 	DPRINTF(("%s: exec op %d, addr 0x%x, cmdlen %d, len %d, "
-	    "flags 0x%x\n", device_xname(&sc->sc_dev), op, addr, cmdlen,
+	    "flags 0x%x\n", device_xname(sc->sc_dev), op, addr, cmdlen,
 	    len, flags));
 
 	if (!I2C_OP_STOP_P(op) || cmdlen > 1 || len > 2 ||
@@ -271,12 +273,12 @@ alipm_smb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		DELAY(ALIPM_DELAY);
 	}
 	if (retries == 0) {
-		aprint_error_dev(&sc->sc_dev, "timeout st 0x%x\n", st);
+		aprint_error_dev(sc->sc_dev, "timeout st 0x%x\n", st);
 		return (ETIMEDOUT);
 	}
 	if (st & (ALIPM_SMB_HS_FAILED |
 	    ALIPM_SMB_HS_BUSERR | ALIPM_SMB_HS_DEVERR)) {
-		aprint_error_dev(&sc->sc_dev, "error st 0x%x\n", st);
+		aprint_error_dev(sc->sc_dev, "error st 0x%x\n", st);
 		return (EIO);
 	}
 
@@ -335,7 +337,7 @@ alipm_smb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		DELAY(ALIPM_DELAY);
 	}
 	if (retries == 0) {
-		aprint_error_dev(&sc->sc_dev, "timeout st 0x%x, resetting\n",st);
+		aprint_error_dev(sc->sc_dev, "timeout st 0x%x, resetting\n",st);
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, ALIPM_SMB_HC,
 		    ALIPM_SMB_HC_RESET);
 		bus_space_barrier(sc->sc_iot, sc->sc_ioh, 0, ALIPM_SMB_SIZE,
@@ -356,7 +358,7 @@ alipm_smb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		bus_space_barrier(sc->sc_iot, sc->sc_ioh, ALIPM_SMB_HS, 1,
 		    BUS_SPACE_BARRIER_READ);
 		if ((st & ALIPM_SMB_HS_FAILED) == 0)
-			aprint_error_dev(&sc->sc_dev, "error st 0x%x\n", st);
+			aprint_error_dev(sc->sc_dev, "error st 0x%x\n", st);
 	}
 
 	/* Check for errors */
