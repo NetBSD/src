@@ -1,4 +1,4 @@
-# $NetBSD: t_find.sh,v 1.1 2012/03/18 12:40:42 jruoho Exp $
+# $NetBSD: t_find.sh,v 1.2 2012/03/18 18:09:45 dholland Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,9 +34,6 @@ exit_head() {
 }
 
 exit_body() {
-
-	atf_expect_fail "PR bin/44973"
-
 	atf_check -o ignore \
 		-s exit:0 -x "find /etc -type f -exit"
 }
