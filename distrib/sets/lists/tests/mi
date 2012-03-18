@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.447 2012/03/18 08:52:07 jruoho Exp $
+# $NetBSD: mi,v 1.448 2012/03/18 10:12:30 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2967,6 +2967,9 @@
 ./usr/tests/usr.bin/sdiff/d_tabs1.in		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/sdiff/d_tabs2.in		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/sdiff/t_sdiff		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sed				tests-usr.bin-tests
+./usr/tests/usr.bin/sed/Atffile			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sed/t_sed			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/shmif_dumpbus				tests-usr.bin-tests
 ./usr/tests/usr.bin/shmif_dumpbus/Atffile			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/shmif_dumpbus/d_pcap.out.bz2.uue		tests-usr.bin-tests	atf
