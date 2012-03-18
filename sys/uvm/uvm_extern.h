@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.181 2012/02/02 18:59:45 para Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.182 2012/03/18 13:31:14 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,16 +71,6 @@
  *
  * NOTE: vm system calls are prototyped in syscallargs.h
  */
-
-/*
- * typedefs, necessary for standard UVM headers.
- */
-
-typedef unsigned int uvm_flag_t;
-
-typedef int vm_inherit_t;	/* XXX: inheritance codes */
-typedef off_t voff_t;		/* XXX: offset within a uvm_object */
-typedef voff_t pgoff_t;		/* XXX: number of pages within a uvm object */
 
 /*
  * defines

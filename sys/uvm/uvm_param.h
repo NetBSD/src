@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.29 2012/02/27 01:39:58 he Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.30 2012/03/18 13:31:15 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -248,6 +248,16 @@ extern const int *const uvmexp_pageshift;
 #  define VM_DEFAULT_ADDRESS(da, sz) round_page((vaddr_t)(da) + (vsize_t)maxdmap)
 # endif /* VM_DEFAULT_ADDRESS */
 #endif /* !__USING_TOPDOWN_VM */
+
+/*
+ * typedefs, necessary for standard UVM headers.
+ */
+
+typedef unsigned int uvm_flag_t;
+
+typedef int vm_inherit_t;	/* XXX: inheritance codes */
+typedef off_t voff_t;		/* XXX: offset within a uvm_object */
+typedef voff_t pgoff_t;		/* XXX: number of pages within a uvm object */
 
 extern int		ubc_nwins;	/* number of UBC mapping windows */
 extern int		ubc_winshift;	/* shift for a UBC mapping window */
