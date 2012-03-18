@@ -1,4 +1,4 @@
-/*	$NetBSD: pyro.c,v 1.10 2011/08/12 06:41:50 mrg Exp $	*/
+/*	$NetBSD: pyro.c,v 1.11 2012/03/18 05:26:58 mrg Exp $	*/
 /*	from: $OpenBSD: pyro.c,v 1.20 2010/12/05 15:15:14 kettenis Exp $	*/
 
 /*
@@ -29,6 +29,9 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pyro.c,v 1.11 2012/03/18 05:26:58 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
