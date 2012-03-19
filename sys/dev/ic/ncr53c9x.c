@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.143 2011/07/31 18:39:00 jakllsch Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.143.8.1 2012/03/19 23:13:59 riz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.143 2011/07/31 18:39:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.143.8.1 2012/03/19 23:13:59 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -530,6 +530,9 @@ ncr53c9x_init(struct ncr53c9x_softc *sc, int doreset)
 	sc->sc_msgpriq = sc->sc_msgout = sc->sc_msgoutq = 0;
 	sc->sc_phase = sc->sc_prevphase = INVALID_PHASE;
 
+	/* XXXSMP scsipi */
+	KERNEL_LOCK(1, curlwp);
+
 	for (r = 0; r < sc->sc_ntarg; r++) {
 		struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[r];
 /* XXX - config flags per target: low bits: no reselect; high bits: no synch */
@@ -559,6 +562,9 @@ ncr53c9x_init(struct ncr53c9x_softc *sc, int doreset)
 
 	/* Notify upper layer */
 	scsipi_async_event(&sc->sc_channel, ASYNC_EVENT_RESET, NULL);
+
+	/* XXXSMP scsipi */
+	KERNEL_UNLOCK_ONE(curlwp);
 }
 
 /*
