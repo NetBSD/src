@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.151 2012/03/18 14:14:24 bouyer Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.152 2012/03/19 18:46:36 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -6119,6 +6119,7 @@ share/man/man3/dl_iterate_phdr.3		1.1 via patch
 sys/sys/exec_elf.h				1.106 via patch
 usr.bin/ldd/ldd.c				1.15 via patch
 libexec/ld.elf_so/headers.c			1.37 via patch
+libexec/ld.elf_so/arch/mips/mips_reloc.c	patch
 
 	PR/39240: Satoshi Suetake: Don't fail when attempting to resolve
 	weak symbols when we are doing immediate binding, leave them alone
