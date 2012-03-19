@@ -1,4 +1,4 @@
-# $NetBSD: t_find.sh,v 1.5 2012/03/18 19:21:53 jruoho Exp $
+# $NetBSD: t_find.sh,v 1.6 2012/03/19 12:58:41 jruoho Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -40,15 +40,10 @@ emptyperm_body() {
 	# The case assumes that at least some directories
 	# in /var are unavailable for the user '_tests'.
 	#
+	# TODO: Parse the output.file for actual verification.
+	#
 	atf_check -s exit:1 -o save:output.file \
 		-e not-empty -x "find /var -empty -type d"
-
-	# The case assumes that $dir is drwxrwx---.
-	#
-	dir="/var/quotas"
-
-	atf_check -s exit:1 -e inline:"find: $dir: Permission denied\n" \
-		-x "find $dir -empty -type d"
 }
 
 atf_test_case exit
