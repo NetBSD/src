@@ -1,4 +1,4 @@
-/* $NetBSD: dbsym.c,v 1.2 2012/03/19 05:38:26 bsh Exp $ */
+/* $NetBSD: dbsym.c,v 1.3 2012/03/19 09:14:15 wiz Exp $ */
 
 /*
  * Copyright (c) 2001 Simon Burge (for Wasabi Systems)
@@ -39,7 +39,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1996 Christopher G. Demetriou.\
   Copyright 2001 Simon Burge.\
   All rights reserved.");
-__RCSID("$NetBSD: dbsym.c,v 1.2 2012/03/19 05:38:26 bsh Exp $");
+__RCSID("$NetBSD: dbsym.c,v 1.3 2012/03/19 09:14:15 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -194,7 +194,7 @@ usage(void)
 	const char **list;
 
 	fprintf(stderr,
-	    "usage: %s [-b bfdname] [-v] kernel_file\n",
+	    "usage: %s [-pv] [-b bfdname] kernel\n",
 	    getprogname());
 	fprintf(stderr, "supported targets:");
 	for (list = bfd_target_list(); *list != NULL; list++)
