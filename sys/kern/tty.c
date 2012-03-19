@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.249 2011/10/21 02:08:09 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.249.8.1 2012/03/19 23:23:10 riz Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.249 2011/10/21 02:08:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.249.8.1 2012/03/19 23:23:10 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1271,7 +1271,7 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		mutex_exit(proc_lock);
 		break;
 	case FIOSETOWN: {		/* set pgrp of tty */
-		pid_t pgid = *(int *)data;
+		pid_t pgid = *(pid_t *)data;
 		struct pgrp *pgrp;
 
 		mutex_enter(proc_lock); 
@@ -1308,18 +1308,18 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 	}
 	case TIOCSPGRP: {		/* set pgrp of tty */
 		struct pgrp *pgrp;
+		pid_t pgid = *(pid_t *)data;
+
+		if (pgid == NO_PGID)
+			return EINVAL;
 
 		mutex_enter(proc_lock); 
 		if (!isctty(p, tp)) {
 			mutex_exit(proc_lock);
 			return (ENOTTY);
 		}
-		pgrp = pgrp_find(*(pid_t *)data);
-		if (pgrp == NULL) {
-			mutex_exit(proc_lock);
-			return (EINVAL);
-		}
-		if (pgrp->pg_session != p->p_session) {
+		pgrp = pgrp_find(pgid);
+		if (pgrp == NULL || pgrp->pg_session != p->p_session) {
 			mutex_exit(proc_lock);
 			return (EPERM);
 		}
