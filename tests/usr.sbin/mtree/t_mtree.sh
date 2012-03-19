@@ -1,6 +1,6 @@
-# $NetBSD: t_mtree.sh,v 1.2 2012/03/18 11:50:55 jruoho Exp $
+# $NetBSD: t_mtree.sh,v 1.3 2012/03/19 06:39:22 jruoho Exp $
 #
-# Copyright (c) 2009 The NetBSD Foundation, Inc.
+# Copyright (c) 2009, 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -48,6 +48,7 @@ create_head()
 {
 	atf_set "descr" "Create a specfile describing a directory tree"
 }
+
 create_setup()
 {
 	# create some directories
@@ -73,6 +74,7 @@ create_setup()
 	# dangling symlink
 	ln -s nonexistent create/top.dangling
 }
+
 create_body()
 {
 	create_setup
@@ -89,6 +91,7 @@ check_head()
 {
 	atf_set "descr" "Check a directory tree against a specfile"
 }
+
 check_body()
 {
 	# we use the same directory tree and specfile as in the "create" test
@@ -105,6 +108,7 @@ convert_C_head()
 {
 	atf_set "descr" "Convert a specfile to mtree -C format, unsorted"
 }
+
 convert_C_body()
 {
 	mtree -C -K all <"$(atf_get_srcdir)/d_convert.in" >output
@@ -116,6 +120,7 @@ convert_C_S_head()
 {
 	atf_set "descr" "Convert a specfile to mtree -C format, sorted"
 }
+
 convert_C_S_body()
 {
 	mtree -C -S -K all <"$(atf_get_srcdir)/d_convert.in" >output
@@ -127,6 +132,7 @@ convert_D_head()
 {
 	atf_set "descr" "Convert a specfile to mtree -D format, unsorted"
 }
+
 convert_D_body()
 {
 	mtree -D -K all <"$(atf_get_srcdir)/d_convert.in" >output
@@ -138,10 +144,34 @@ convert_D_S_head()
 {
 	atf_set "descr" "Convert a specfile to mtree -D format, sorted"
 }
+
 convert_D_S_body()
 {
 	mtree -D -S -K all <"$(atf_get_srcdir)/d_convert.in" >output
 	h_check "$(atf_get_srcdir)/d_convert_D_S.out" output
+}
+
+atf_test_case ignore
+ignore_head()
+{
+	atf_set "descr" "Test that -d ignores symlinks (PR bin/41061)"
+}
+
+ignore_body()
+{
+	mkdir newdir
+	mtree -c | mtree -Ck uid,gid,mode > mtree.spec
+	ln -s newdir otherdir
+
+	# This yields "extra: otherdir" even with -d.
+	#
+	atf_expect_fail "PR bin/41061"
+	atf_check -s ignore -o empty -e empty -x "mtree -d < mtree.spec"
+
+	# Delete the symlink and re-verify.
+	#
+	rm otherdir
+	atf_check -s ignore -o empty -e empty -x "mtree -d < mtree.spec"
 }
 
 atf_test_case merge
@@ -149,6 +179,7 @@ merge_head()
 {
 	atf_set "descr" "Merge records of different type"
 }
+
 merge_body()
 {
 	mtree -C -M -K all <"$(atf_get_srcdir)/d_merge.in" >output
@@ -159,13 +190,14 @@ merge_body()
 }
 
 atf_test_case nonemptydir
-nonemptydir_head() {
+nonemptydir_head()
+{
 	atf_set "descr" "Test that new non-empty " \
 			"directories are recorded (PR bin/25693)"
 }
 
-nonemptydir_body() {
-
+nonemptydir_body()
+{
 	mkdir testdir
 	cd testdir
 
@@ -191,6 +223,7 @@ atf_init_test_cases()
 	atf_add_test_case convert_C_S
 	atf_add_test_case convert_D
 	atf_add_test_case convert_D_S
+	atf_add_test_case ignore
 	atf_add_test_case merge
 	atf_add_test_case nonemptydir
 }
