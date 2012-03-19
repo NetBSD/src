@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.30 2012/03/18 13:31:15 uebayasi Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.31 2012/03/19 00:17:08 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -249,16 +249,6 @@ extern const int *const uvmexp_pageshift;
 # endif /* VM_DEFAULT_ADDRESS */
 #endif /* !__USING_TOPDOWN_VM */
 
-/*
- * typedefs, necessary for standard UVM headers.
- */
-
-typedef unsigned int uvm_flag_t;
-
-typedef int vm_inherit_t;	/* XXX: inheritance codes */
-typedef off_t voff_t;		/* XXX: offset within a uvm_object */
-typedef voff_t pgoff_t;		/* XXX: number of pages within a uvm object */
-
 extern int		ubc_nwins;	/* number of UBC mapping windows */
 extern int		ubc_winshift;	/* shift for a UBC mapping window */
 extern u_int		uvm_emap_size;	/* size of emap */
@@ -272,5 +262,16 @@ extern u_int		uvm_emap_size;	/* size of emap */
 	((((vaddr_t)(x)) / vm_page_size) * vm_page_size)
 
 #endif /* _KERNEL */
+
+/*
+ * typedefs, necessary for standard UVM headers.
+ */
+
+typedef unsigned int uvm_flag_t;
+
+typedef int vm_inherit_t;	/* XXX: inheritance codes */
+typedef off_t voff_t;		/* XXX: offset within a uvm_object */
+typedef voff_t pgoff_t;		/* XXX: number of pages within a uvm object */
+
 #endif /* ASSEMBLER */
 #endif /* _VM_PARAM_ */
