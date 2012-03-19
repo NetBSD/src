@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_ecoff.c,v 1.19 2012/03/18 14:34:28 christos Exp $ */
+/* $NetBSD: nlist_ecoff.c,v 1.20 2012/03/19 16:20:58 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nlist_ecoff.c,v 1.19 2012/03/18 14:34:28 christos Exp $");
+__RCSID("$NetBSD: nlist_ecoff.c,v 1.20 2012/03/19 16:20:58 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -157,8 +157,8 @@ __fdnlist_ecoff(fd, list)
 			if (*nlistname == '_')
 				nlistname++;
 
-			symtabname =
-			    &mappedfile[extstroff + esyms[i].es_strindex];
+			symtabname = (void *)((char *)
+			    mappedfile + (extstroff + esyms[i].es_strindex));
 
 			if (!strcmp(symtabname, nlistname)) {
 				/*
