@@ -1,4 +1,4 @@
-# $NetBSD: t_sed.sh,v 1.2 2012/03/18 15:35:27 dholland Exp $
+# $NetBSD: t_sed.sh,v 1.3 2012/03/19 06:21:53 jruoho Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,8 +36,6 @@ emptybackref_head() {
 
 emptybackref_body() {
 
-	atf_check -o inline:"foobar\n" -x "echo foobar"
-
 	atf_check -o inline:"foo1bar1\n" \
 		-x "echo foo1bar1 | sed -ne '/foo\(.*\)bar\1/p'"
 
@@ -45,6 +43,21 @@ emptybackref_body() {
 
 	atf_check -o inline:"foobar\n" \
 		-x "echo foobar | sed -ne '/foo\(.*\)bar\1/p'"
+}
+
+atf_test_case longlines
+longlines_head() {
+	atf_set "descr" "Test that sed(1) handles " \
+			"long lines correctly (PR bin/42261)"
+}
+
+longlines_body() {
+
+	str=$(awk 'BEGIN {while(x<2043){printf "x";x++}}')
+	echo $str > input
+
+	atf_check -o save:output -x "echo x | sed s,x,${str},g"
+	atf_check -s exit:0 -o empty -e empty -x "diff input output"
 }
 
 atf_test_case rangeselection
@@ -96,5 +109,6 @@ rangeselection_body() {
 
 atf_init_test_cases() {
 	atf_add_test_case emptybackref
+	atf_add_test_case longlines
 	atf_add_test_case rangeselection
 }
