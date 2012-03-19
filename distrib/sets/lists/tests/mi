@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.451 2012/03/19 07:05:18 jruoho Exp $
+# $NetBSD: mi,v 1.452 2012/03/19 11:16:36 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -179,6 +179,9 @@
 ./usr/libdata/debug/usr/tests/atf/units/t_text.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/atf/units/t_user.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/atf/units/t_utils.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/bin					tests-bin-debug
+./usr/libdata/debug/usr/tests/bin/df					tests-bin-debug
+./usr/libdata/debug/usr/tests/bin/df/h_df.debug				tests-bin-debug		debug
 ./usr/libdata/debug/usr/tests/crypto					tests-crypto-debug
 ./usr/libdata/debug/usr/tests/crypto/libcrypto				tests-crypto-debug
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_bftest.debug		tests-crypto-debug	debug,crypto
@@ -786,8 +789,10 @@
 ./usr/libdata/debug/usr/tests/syscall/t_truncate.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/syscall/t_umask.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/syscall/t_unlink.debug			tests-obsolete		obsolete
-./usr/libdata/debug/usr/tests/usr.bin					tests-sbin-tests
-./usr/libdata/debug/usr/tests/usr.sbin					tests-sbin-tests
+./usr/libdata/debug/usr/tests/usr.bin					tests-usr.bin-debug
+./usr/libdata/debug/usr/tests/usr.bin/id				tests-usr.bin-debug
+./usr/libdata/debug/usr/tests/usr.bin/id/h_id.debug			tests-usr.bin-debug	debug
+./usr/libdata/debug/usr/tests/usr.sbin					tests-usr.sbin-debug
 ./usr/libdata/debug/usr/tests/util					tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/util/df					tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/util/df/h_df.debug			tests-obsolete		obsolete

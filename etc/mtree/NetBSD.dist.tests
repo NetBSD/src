@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.67 2012/03/19 07:05:18 jruoho Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.68 2012/03/19 11:16:37 njoly Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -10,6 +10,8 @@
 ./usr/libdata/debug/usr/tests/atf/atf-run
 ./usr/libdata/debug/usr/tests/atf/formats
 ./usr/libdata/debug/usr/tests/atf/test-programs
+./usr/libdata/debug/usr/tests/bin
+./usr/libdata/debug/usr/tests/bin/df
 ./usr/libdata/debug/usr/tests/crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto
 ./usr/libdata/debug/usr/tests/dev
@@ -113,6 +115,7 @@
 ./usr/libdata/debug/usr/tests/sbin
 ./usr/libdata/debug/usr/tests/sbin/resize_ffs
 ./usr/libdata/debug/usr/tests/usr.bin
+./usr/libdata/debug/usr/tests/usr.bin/id
 ./usr/libdata/debug/usr/tests/usr.sbin
 ./usr/tests
 ./usr/tests/atf
