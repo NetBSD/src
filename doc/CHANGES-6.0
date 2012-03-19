@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.56 2012/03/17 19:52:08 bouyer Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.57 2012/03/19 23:25:45 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1390,4 +1390,29 @@ sys/netinet/tcp_usrreq.c			1.163
 
 	PR/46077: M. Nunberg: Stat should not fial on connecting socket.
 	[jruoho, ticket #124]
+
+sys/dev/ic/ncr53c9x.c				1.144
+sys/dev/ic/ninjascsi32.c			1.22
+sys/dev/scsipi/scsiconf.c			1.263-1.264
+sys/dev/usb/uhub.c				1.117
+
+	Fix detaching ehci(4) with drvctl -d and some reboot issues.
+	[mrg, ticket #125]
+
+sys/arch/sparc/sparc/cpu.c			1.235
+
+	Avoid some spurious console messages, which can lead to weird
+	failures.
+	[mrg, ticket #127]
+
+sys/kern/tty.c					1.250
+
+	PR/41673: Stathis Kamperis: tcsetpgrp returns EINVAL,
+	but should return EPERM.
+	[dholland, ticket #128]
+
+lib/libc/gen/humanize_number.c			1.16 via patch
+
+	PR/44097: Yamamoto Takashi: Prevent overflow.
+	[dholland, ticket #129]
 
