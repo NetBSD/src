@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.262 2011/04/26 07:41:18 hannken Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.262.10.1 2012/03/19 23:13:59 riz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.262 2011/04/26 07:41:18 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.262.10.1 2012/03/19 23:13:59 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,11 +256,18 @@ scsibusdetach(device_t self, int flags)
 	struct scsipi_xfer *xs;
 	int error;
 
+	/* XXXSMP scsipi */
+	KERNEL_LOCK(1, curlwp);
+
 	/*
 	 * Detach all of the periphs.
 	 */
-	if ((error = scsipi_target_detach(chan, -1, -1, flags)) != 0)
+	if ((error = scsipi_target_detach(chan, -1, -1, flags)) != 0) {
+		/* XXXSMP scsipi */
+		KERNEL_UNLOCK_ONE(curlwp);
+
 		return error;
+	}
 
 	pmf_device_deregister(self);
 
@@ -290,6 +297,10 @@ scsibusdetach(device_t self, int flags)
 	 * Now shut down the channel.
 	 */
 	scsipi_channel_shutdown(chan);
+
+	/* XXXSMP scsipi */
+	KERNEL_UNLOCK_ONE(curlwp);
+
 	return 0;
 }
 
@@ -378,11 +389,17 @@ scsidevdetached(device_t self, device_t child)
 	target = device_locator(child, SCSIBUSCF_TARGET);
 	lun = device_locator(child, SCSIBUSCF_LUN);
 
+	/* XXXSMP scsipi */
+	KERNEL_LOCK(1, curlwp);
+
 	periph = scsipi_lookup_periph(chan, target, lun);
 	KASSERT(periph->periph_dev == child);
 
 	scsipi_remove_periph(chan, periph);
 	free(periph, M_DEVBUF);
+
+	/* XXXSMP scsipi */
+	KERNEL_UNLOCK_ONE(curlwp);
 }
 
 /*
