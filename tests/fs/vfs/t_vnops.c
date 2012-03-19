@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.31 2012/03/18 21:49:08 christos Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.32 2012/03/19 03:33:54 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -319,8 +319,6 @@ rename_dotdot(const atf_tc_t *tc, const char *mp)
 		atf_tc_fail_errno("self-dotdot from");
 	atf_tc_expect_pass();
 
-	}
-	*/
 	if (rump_sys_rename("dir1", "dir2/..") != -1 || errno != EINVAL)
 		atf_tc_fail("other-dotdot");
 
