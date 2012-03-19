@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.450 2012/03/18 15:32:23 christos Exp $
+# $NetBSD: mi,v 1.451 2012/03/19 07:05:18 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2806,6 +2806,9 @@
 ./usr/tests/usr.bin/cc				tests-usr.bin-tests
 ./usr/tests/usr.bin/cc/Atffile			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/cc/t_hello			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/cmp				tests-usr.bin-tests
+./usr/tests/usr.bin/cmp/Atffile			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/cmp/t_cmp			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/config			tests-usr.bin-tests
 ./usr/tests/usr.bin/config/Atffile		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/config/Makefile.regress	tests-usr.bin-tests	atf
