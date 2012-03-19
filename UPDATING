@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.235 2012/02/15 23:32:27 joerg Exp $
+$NetBSD: UPDATING,v 1.236 2012/03/19 06:08:51 bsh Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,13 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20120319:
+	sys/conf/Makefile.kern.inc has been modified to adjust the
+	size of db_symtab automatically.  You need to update dbsym in
+	your $TOOLDIR to build kernels with options SYMTAB_SPACE.  If
+	you don't want this behavior, add AUTO_SYMTAB_SPACE=no to your
+	mk.conf.
 
 20120216:
 	Default for MKCATPAGES changed to NO. Update builds will fail
