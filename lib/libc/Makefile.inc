@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 2012/03/17 18:00:50 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2012/03/19 22:32:16 matt Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -24,7 +24,8 @@ USE_SHLIBDIR=	yes
 .include <bsd.own.mk>
 
 WARNS=4
-CPPFLAGS+=	-D_LIBC -DLIBC_SCCS -DSYSLIBC_SCCS -D_REENTRANT -D_DIAGNOSTIC
+CPPFLAGS+=	-D_LIBC -DLIBC_SCCS -DSYSLIBC_SCCS -D_REENTRANT
+CPPFLAGS+=	-D_DIAGNOSTIC
 
 .if (${USE_HESIOD} != "no")
 CPPFLAGS+=	-DHESIOD
