@@ -1,4 +1,4 @@
-/* $NetBSD: dbsym.c,v 1.1 2009/08/18 20:22:20 skrll Exp $ */
+/* $NetBSD: dbsym.c,v 1.2 2012/03/19 05:38:26 bsh Exp $ */
 
 /*
  * Copyright (c) 2001 Simon Burge (for Wasabi Systems)
@@ -39,7 +39,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1996 Christopher G. Demetriou.\
   Copyright 2001 Simon Burge.\
   All rights reserved.");
-__RCSID("$NetBSD: dbsym.c,v 1.1 2009/08/18 20:22:20 skrll Exp $");
+__RCSID("$NetBSD: dbsym.c,v 1.2 2012/03/19 05:38:26 bsh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -75,6 +75,7 @@ int	find_symtab(bfd *, struct symbols *);
 int	load_symtab(bfd *, int fd, char **, u_int32_t *);
 
 int	verbose;
+int	printsize;
 
 int
 main(int argc, char **argv)
@@ -90,13 +91,16 @@ main(int argc, char **argv)
 	setprogname(argv[0]);
 
 	bfdname = NULL;
-	while ((ch = getopt(argc, argv, "b:v")) != -1)
+	while ((ch = getopt(argc, argv, "b:pv")) != -1)
 		switch (ch) {
 		case 'b':
 			bfdname = optarg;
 			break;
 		case 'v':
 			verbose = 1;
+			break;
+		case 'p':
+			printsize = 1;
 			break;
 		case '?':
 		default:
@@ -150,6 +154,11 @@ main(int argc, char **argv)
 	symtab_space = bfd_get_32(abfd,
 	    &mappedkfile[db_symtab_symbols[X_DB_SYMTABSIZE].offset]);
 
+	if (printsize) {
+		printf("%d %d\n", symtabsize, symtab_space);
+		goto done;
+	}
+
 	if (symtabsize > symtab_space)
 		errx(1, "symbol table (%u bytes) too big for buffer (%u bytes)\n"
 		    "Increase options SYMTAB_SPACE in your kernel config",
@@ -168,6 +177,7 @@ main(int argc, char **argv)
 	bfd_put_32(abfd, symtabsize,
 	    &mappedkfile[db_symtab_symbols[X_DB_SYMTABSIZE].offset]);
 
+done:
 	munmap(mappedkfile, ksb.st_size);
 	close(kfd);
 
