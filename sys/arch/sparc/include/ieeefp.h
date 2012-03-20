@@ -1,4 +1,4 @@
-/*	$NetBSD: ieeefp.h,v 1.7 2011/05/20 21:42:49 nakayama Exp $	*/
+/*	$NetBSD: ieeefp.h,v 1.8 2012/03/20 23:57:57 christos Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 6, 1995
@@ -27,7 +27,7 @@
 
 #if !defined(_ISOC99_SOURCE)
 
-typedef int fp_except;
+typedef unsigned int fp_except;
 #define FP_X_IMP	FE_INEXACT	/* imprecise (loss of precision) */
 #define FP_X_DZ		FE_DIVBYZERO	/* divide-by-zero exception */
 #define FP_X_UFL	FE_UNDERFLOW	/* underflow exception */
