@@ -20,7 +20,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_net_pton.c,v 1.4.2.1 2002/08/02 02:17:21 marka Exp ";
 #else
-__RCSID("$NetBSD: inet_net_pton.c,v 1.3 2012/03/13 21:13:38 christos Exp $");
+__RCSID("$NetBSD: inet_net_pton.c,v 1.4 2012/03/20 17:08:13 matt Exp $");
 #endif
 #endif
 
@@ -71,7 +71,8 @@ __weak_alias(inet_net_pton,_inet_net_pton)
  *	Paul Vixie (ISC), June 1996
  */
 static int
-inet_net_pton_ipv4( const char *src, u_char *dst, size_t size) {
+inet_net_pton_ipv4(const char *src, u_char *dst, size_t size)
+{
 	static const char xdigits[] = "0123456789abcdef";
 	static const char digits[] = "0123456789";
 	int ch, dirty, bits;
@@ -197,7 +198,8 @@ inet_net_pton_ipv4( const char *src, u_char *dst, size_t size) {
 }
 
 static int
-getbits(const char *src, int *bitsp) {
+getbits(const char *src, int *bitsp)
+{
 	static const char digits[] = "0123456789";
 	int n;
 	int val;
@@ -227,7 +229,8 @@ getbits(const char *src, int *bitsp) {
 }
 
 static int
-getv4(const char *src, u_char *dst, int *bitsp) {
+getv4(const char *src, u_char *dst, int *bitsp)
+{
 	static const char digits[] = "0123456789";
 	u_char *odst = dst;
 	int n;
@@ -270,7 +273,8 @@ getv4(const char *src, u_char *dst, int *bitsp) {
 }
 
 static int
-inet_net_pton_ipv6(const char *src, u_char *dst, size_t size) {
+inet_net_pton_ipv6(const char *src, u_char *dst, size_t size)
+{
 	static const char xdigits_l[] = "0123456789abcdef",
 			  xdigits_u[] = "0123456789ABCDEF";
 	u_char tmp[NS_IN6ADDRSZ], *tp, *endp, *colonp;
@@ -402,7 +406,8 @@ inet_net_pton_ipv6(const char *src, u_char *dst, size_t size) {
  *	Paul Vixie (ISC), June 1996
  */
 int
-inet_net_pton(int af, const char *src, void *dst, size_t size) {
+inet_net_pton(int af, const char *src, void *dst, size_t size)
+{
 	switch (af) {
 	case AF_INET:
 		return (inet_net_pton_ipv4(src, dst, size));
