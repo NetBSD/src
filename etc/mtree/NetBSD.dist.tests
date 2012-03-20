@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.68 2012/03/19 11:16:37 njoly Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.69 2012/03/20 06:18:34 jruoho Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -281,6 +281,7 @@
 ./usr/tests/usr.bin/grep
 ./usr/tests/usr.bin/gzip
 ./usr/tests/usr.bin/id
+./usr/tests/usr.bin/jot
 ./usr/tests/usr.bin/m4
 ./usr/tests/usr.bin/make
 ./usr/tests/usr.bin/mkdep
