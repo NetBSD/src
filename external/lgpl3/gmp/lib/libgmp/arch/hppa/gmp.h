@@ -2271,7 +2271,7 @@ enum
 };
 
 /* Define CC and CFLAGS which were used to build this version of GMP */
-#define __GMP_CC "/var/obj/hp700/usr/src3/tooldir.NetBSD-5.99.54-amd64/bin/hppa--netbsd-gcc --sysroot=/var/obj/hp700/usr/src3/destdir.hp700 -L/var/obj/hp700/usr/src3/destdir.hp700/lib -L/var/obj/hp700/usr/src3/destdir.hp700/usr/lib -B/var/obj/hp700/usr/src3/destdir.hp700/usr/lib/ -I/var/tmp/gmp/hppa/.native/gcc/include -std=gnu99"
+#define __GMP_CC "gcc -std=gnu99"
 #define __GMP_CFLAGS "-O2 -pedantic -mpa-risc-1-1"
 
 /* Major version number is the value of __GNU_MP__ too, above and in mp.h. */
