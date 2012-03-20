@@ -1,4 +1,4 @@
-# $NetBSD: t_expr.sh,v 1.1 2012/03/17 16:33:11 jruoho Exp $
+# $NetBSD: t_expr.sh,v 1.2 2012/03/20 06:30:02 jruoho Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -149,10 +149,11 @@ compare_ops_body() {
 
 atf_test_case multiply
 multiply_head() {
-	atf_set "descr" "Test the multiply operator"
+	atf_set "descr" "Test the multiply operator (PR bin/12838)"
 }
 multiply_body() {
 	test_expr '1 \* -1' '-1'
+	test_expr '2 \> 1 \* 17' '0'
 }
 
 atf_test_case negative
