@@ -1,4 +1,4 @@
-/*	$NetBSD: catopen.c,v 1.29 2012/01/20 16:31:30 joerg Exp $	*/
+/*	$NetBSD: catopen.c,v 1.30 2012/03/20 17:44:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: catopen.c,v 1.29 2012/01/20 16:31:30 joerg Exp $");
+__RCSID("$NetBSD: catopen.c,v 1.30 2012/03/20 17:44:18 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define _NLS_PRIVATE
@@ -65,12 +65,10 @@ __RCSID("$NetBSD: catopen.c,v 1.29 2012/01/20 16:31:30 joerg Exp $");
 __weak_alias(catopen, _catopen)
 #endif
 
-static nl_catd load_msgcat __P((const char *));
+static nl_catd load_msgcat(const char *);
 
 nl_catd
-_catopen(name, oflag)
-	const char *name;
-	int oflag;
+_catopen(const char *name, int oflag)
 {
 	char tmppath[PATH_MAX+1];
 	const char *nlspath;
@@ -147,8 +145,7 @@ _catopen(name, oflag)
 }
 
 static nl_catd
-load_msgcat(path)
-	const char *path;
+load_msgcat(const char *path)
 {
 	struct stat st;
 	nl_catd catd;
