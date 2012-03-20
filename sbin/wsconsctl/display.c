@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.15 2008/04/28 20:23:09 martin Exp $ */
+/*	$NetBSD: display.c,v 1.16 2012/03/20 18:50:31 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -147,8 +147,7 @@ display_get_values(int fd)
 }
 
 void
-display_put_values(fd)
-	int fd;
+display_put_values(int fd)
 {
 
 	if (field_by_value(&font.name)->flags & FLG_SET) {

@@ -1,4 +1,4 @@
-/* $NetBSD: quota2.c,v 1.4 2011/08/14 12:32:01 christos Exp $ */
+/* $NetBSD: quota2.c,v 1.5 2012/03/20 18:50:31 matt Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -514,7 +514,7 @@ quota2_check_usage(int type)
  * check if a quota check needs to be run, regardless of the clean flag
  */
 int
-quota2_check_doquota()
+quota2_check_doquota(void)
 {
 	int retval = 1;
 

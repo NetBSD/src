@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.43 2011/08/29 14:34:59 joerg Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.44 2012/03/20 18:50:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.43 2011/08/29 14:34:59 joerg Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.44 2012/03/20 18:50:31 matt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -147,9 +147,6 @@ main(int argc, char *argv[])
 }
 
 #define CMDFUNC(func) static int func (int argc, char *argv[])
-#define CMDFUNCSTART(func) static int func(argc, argv)		\
-				int argc;			\
-				char *argv[];
 
 CMDFUNC(helpfn);
 CMDFUNC(focus);			/* focus on inode */
@@ -326,7 +323,7 @@ static ino_t ocurrent;
 /*
  * Focus on given inode number
  */
-CMDFUNCSTART(focus)
+CMDFUNC(focus)
 {
 	ino_t   inum;
 	char   *cp;
@@ -339,7 +336,7 @@ CMDFUNCSTART(focus)
 	return 0;
 }
 
-CMDFUNCSTART(back)
+CMDFUNC(back)
 {
 	curinum = ocurrent;
 	curinode = ginode(curinum);
@@ -347,7 +344,7 @@ CMDFUNCSTART(back)
 	return 0;
 }
 
-CMDFUNCSTART(zapi)
+CMDFUNC(zapi)
 {
 	ino_t   inum;
 	union dinode *dp;
@@ -362,18 +359,18 @@ CMDFUNCSTART(zapi)
 	return 0;
 }
 
-CMDFUNCSTART(active)
+CMDFUNC(active)
 {
 	printactive();
 	return 0;
 }
 
-CMDFUNCSTART(quit)
+CMDFUNC(quit)
 {
 	return -1;
 }
 
-CMDFUNCSTART(uplink)
+CMDFUNC(uplink)
 {
 	int16_t nlink;
 
@@ -388,7 +385,7 @@ CMDFUNCSTART(uplink)
 	return 0;
 }
 
-CMDFUNCSTART(downlink)
+CMDFUNC(downlink)
 {
 	int16_t nlink;
 
@@ -435,7 +432,7 @@ scannames(struct inodesc *idesc)
 	return (KEEPON);
 }
 
-CMDFUNCSTART(ls)
+CMDFUNC(ls)
 {
 	struct inodesc idesc;
 	checkactivedir();	/* let it go on anyway */
@@ -451,7 +448,7 @@ CMDFUNCSTART(ls)
 	return 0;
 }
 
-CMDFUNCSTART(blks)
+CMDFUNC(blks)
 {
 	uint64_t blkno = 0;
 	int i, type;
@@ -492,7 +489,7 @@ CMDFUNCSTART(blks)
 
 static int findblk_numtofind;
 static int wantedblksize;
-CMDFUNCSTART(findblk)
+CMDFUNC(findblk)
 {
 	ino_t   inum, inosused;
 	uint32_t *wantedblk32 = NULL;
@@ -874,7 +871,7 @@ dolookup(char *name)
 	}
 }
 
-CMDFUNCSTART(focusname)
+CMDFUNC(focusname)
 {
 	char   *p, *val;
 
@@ -904,7 +901,7 @@ CMDFUNCSTART(focusname)
 	return 0;
 }
 
-CMDFUNCSTART(ln)
+CMDFUNC(ln)
 {
 	ino_t   inum;
 	int     rval;
@@ -924,7 +921,7 @@ CMDFUNCSTART(ln)
 	return rval;
 }
 
-CMDFUNCSTART(rm)
+CMDFUNC(rm)
 {
 	int     rval;
 
@@ -954,7 +951,7 @@ chinumfunc(struct inodesc *idesc)
 	return KEEPON;
 }
 
-CMDFUNCSTART(chinum)
+CMDFUNC(chinum)
 {
 	char   *cp;
 	ino_t   inum;
@@ -1004,7 +1001,7 @@ chnamefunc(struct inodesc *idesc)
 	return KEEPON;
 }
 
-CMDFUNCSTART(chname)
+CMDFUNC(chname)
 {
 	int     rval;
 	char   *cp;
@@ -1049,7 +1046,7 @@ static struct typemap {
 	{ "fifo", IFIFO },
 };
 
-CMDFUNCSTART(newtype)
+CMDFUNC(newtype)
 {
 	int     type;
 	uint16_t mode;
@@ -1079,7 +1076,7 @@ CMDFUNCSTART(newtype)
 	return 0;
 }
 
-CMDFUNCSTART(chmode)
+CMDFUNC(chmode)
 {
 	long    modebits;
 	char   *cp;
@@ -1100,7 +1097,7 @@ CMDFUNCSTART(chmode)
 	return 0;
 }
 
-CMDFUNCSTART(chlen)
+CMDFUNC(chlen)
 {
 	long    len;
 	char   *cp;
@@ -1119,7 +1116,7 @@ CMDFUNCSTART(chlen)
 	return 0;
 }
 
-CMDFUNCSTART(chaflags)
+CMDFUNC(chaflags)
 {
 	u_long  flags;
 	char   *cp;
@@ -1143,7 +1140,7 @@ CMDFUNCSTART(chaflags)
 	return 0;
 }
 
-CMDFUNCSTART(chgen)
+CMDFUNC(chgen)
 {
 	long    gen;
 	char   *cp;
@@ -1166,7 +1163,7 @@ CMDFUNCSTART(chgen)
 	return 0;
 }
 
-CMDFUNCSTART(linkcount)
+CMDFUNC(linkcount)
 {
 	int     lcnt;
 	char   *cp;
@@ -1189,7 +1186,7 @@ CMDFUNCSTART(linkcount)
 	return 0;
 }
 
-CMDFUNCSTART(chowner)
+CMDFUNC(chowner)
 {
 	unsigned long uid;
 	char   *cp;
@@ -1217,7 +1214,7 @@ CMDFUNCSTART(chowner)
 	return 0;
 }
 
-CMDFUNCSTART(chgroup)
+CMDFUNC(chgroup)
 {
 	unsigned long gid;
 	char   *cp;
@@ -1298,7 +1295,7 @@ badformat:
 	return 0;
 }
 
-CMDFUNCSTART(chmtime)
+CMDFUNC(chmtime)
 {
 	int32_t rsec, nsec;
 
@@ -1311,7 +1308,7 @@ CMDFUNCSTART(chmtime)
 	return 0;
 }
 
-CMDFUNCSTART(chatime)
+CMDFUNC(chatime)
 {
 	int32_t rsec, nsec;
 
@@ -1324,7 +1321,7 @@ CMDFUNCSTART(chatime)
 	return 0;
 }
 
-CMDFUNCSTART(chctime)
+CMDFUNC(chctime)
 {
 	int32_t rsec, nsec;
 
