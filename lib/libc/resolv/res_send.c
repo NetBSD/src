@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.23 2012/03/13 21:13:44 christos Exp $	*/
+/*	$NetBSD: res_send.c,v 1.24 2012/03/20 17:44:18 matt Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -93,7 +93,7 @@
 static const char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_send.c,v 1.22 2009/01/22 23:49:23 tbox Exp";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.23 2012/03/13 21:13:44 christos Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.24 2012/03/20 17:44:18 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -162,8 +162,8 @@ static const int highestFD = FD_SETSIZE - 1;
 
 /* Forward. */
 
-static int		get_salen __P((const struct sockaddr *));
-static struct sockaddr * get_nsaddr __P((res_state, size_t));
+static int		get_salen(const struct sockaddr *);
+static struct sockaddr * get_nsaddr(res_state, size_t);
 static int		send_vc(res_state, const u_char *, int,
 				u_char *, int, int *, int);
 static int		send_dg(res_state, const u_char *, int,
@@ -577,8 +577,7 @@ res_nsend(res_state statp,
 /* Private */
 
 static int
-get_salen(sa)
-	const struct sockaddr *sa;
+get_salen(const struct sockaddr *sa)
 {
 
 #ifdef HAVE_SA_LEN
@@ -599,9 +598,7 @@ get_salen(sa)
  * pick appropriate nsaddr_list for use.  see res_init() for initialization.
  */
 static struct sockaddr *
-get_nsaddr(statp, n)
-	res_state statp;
-	size_t n;
+get_nsaddr(res_state statp, size_t n)
 {
 
 	if (!statp->nsaddr_list[n].sin_family && EXT(statp).ext) {
