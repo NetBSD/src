@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_cidr_pton.c,v 1.7 2012/03/13 21:13:38 christos Exp $	*/
+/*	$NetBSD: inet_cidr_pton.c,v 1.8 2012/03/20 17:08:13 matt Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_cidr_pton.c,v 1.6 2005/04/27 04:56:19 sra Exp";
 #else
-__RCSID("$NetBSD: inet_cidr_pton.c,v 1.7 2012/03/13 21:13:38 christos Exp $");
+__RCSID("$NetBSD: inet_cidr_pton.c,v 1.8 2012/03/20 17:08:13 matt Exp $");
 #endif
 #endif
 
@@ -55,10 +55,9 @@ __RCSID("$NetBSD: inet_cidr_pton.c,v 1.7 2012/03/13 21:13:38 christos Exp $");
 __weak_alias(inet_cidr_pton,_inet_cidr_pton)
 #endif
 
-static int	inet_cidr_pton_ipv4 __P((const char *src, u_char *dst,
-					 int *bits, int ipv6));
-static int	inet_cidr_pton_ipv6 __P((const char *src, u_char *dst,
-					 int *bits));
+static int	inet_cidr_pton_ipv4(const char *src, u_char *dst,
+					 int *bits, int ipv6);
+static int	inet_cidr_pton_ipv6(const char *src, u_char *dst, int *bits);
 
 static int	getbits(const char *, int ipv6);
 
