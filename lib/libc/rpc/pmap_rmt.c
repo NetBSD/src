@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_rmt.c,v 1.31 2012/03/13 21:13:44 christos Exp $	*/
+/*	$NetBSD: pmap_rmt.c,v 1.32 2012/03/20 17:14:50 matt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_rmt.c,v 1.31 2012/03/13 21:13:44 christos Exp $");
+__RCSID("$NetBSD: pmap_rmt.c,v 1.32 2012/03/20 17:14:50 matt Exp $");
 #endif
 #endif
 
@@ -131,9 +131,7 @@ pmap_rmtcall(addr, prog, vers, proc, xdrargs, argsp, xdrres, resp, tout,
  * written for XDR_ENCODE direction only
  */
 bool_t
-xdr_rmtcall_args(xdrs, cap)
-	XDR *xdrs;
-	struct rmtcallargs *cap;
+xdr_rmtcall_args(XDR *xdrs, struct rmtcallargs *cap)
 {
 	u_int lenposition, argposition, position;
 
@@ -165,9 +163,7 @@ xdr_rmtcall_args(xdrs, cap)
  * written for XDR_DECODE direction only
  */
 bool_t
-xdr_rmtcallres(xdrs, crp)
-	XDR *xdrs;
-	struct rmtcallres *crp;
+xdr_rmtcallres(XDR *xdrs, struct rmtcallres *crp)
 {
 	caddr_t port_ptr;
 

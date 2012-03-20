@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_bcast.c,v 1.23 2012/03/13 21:13:44 christos Exp $	*/
+/*	$NetBSD: clnt_bcast.c,v 1.24 2012/03/20 17:14:50 matt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_bcast.c 1.15 89/04/21 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_bcast.c,v 1.23 2012/03/13 21:13:44 christos Exp $");
+__RCSID("$NetBSD: clnt_bcast.c,v 1.24 2012/03/20 17:14:50 matt Exp $");
 #endif
 #endif
 
@@ -122,9 +122,9 @@ struct broadif {
 
 typedef TAILQ_HEAD(, broadif) broadlist_t;
 
-int __rpc_getbroadifs __P((int, int, int, broadlist_t *));
-void __rpc_freebroadifs __P((broadlist_t *));
-int __rpc_broadenable __P((int, int, struct broadif *));
+int __rpc_getbroadifs(int, int, int, broadlist_t *);
+void __rpc_freebroadifs(broadlist_t *);
+int __rpc_broadenable(int, int, struct broadif *);
 
 int __rpc_lowvers = 0;
 
@@ -243,19 +243,18 @@ __rpc_broadenable(int af, int s, struct broadif *bip)
 
 
 enum clnt_stat
-rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
-	eachresult, inittime, waittime, nettype)
-	rpcprog_t	prog;		/* program number */
-	rpcvers_t	vers;		/* version number */
-	rpcproc_t	proc;		/* procedure number */
-	xdrproc_t	xargs;		/* xdr routine for args */
-	const char *	argsp;		/* pointer to args */
-	xdrproc_t	xresults;	/* xdr routine for results */
-	caddr_t		resultsp;	/* pointer to results */
-	resultproc_t	eachresult;	/* call with each result obtained */
-	int 		inittime;	/* how long to wait initially */
-	int 		waittime;	/* maximum time to wait */
-	const char		*nettype;	/* transport type */
+rpc_broadcast_exp(
+	rpcprog_t	prog,		/* program number */
+	rpcvers_t	vers,		/* version number */
+	rpcproc_t	proc,		/* procedure number */
+	xdrproc_t	xargs,		/* xdr routine for args */
+	const char *	argsp,		/* pointer to args */
+	xdrproc_t	xresults,	/* xdr routine for results */
+	caddr_t		resultsp,	/* pointer to results */
+	resultproc_t	eachresult,	/* call with each result obtained */
+	int 		inittime,	/* how long to wait initially */
+	int 		waittime,	/* maximum time to wait */
+	const char *	nettype)	/* transport type */
 {
 	enum clnt_stat	stat = RPC_SUCCESS; /* Return status */
 	XDR 		xdr_stream; /* XDR stream */
@@ -666,17 +665,16 @@ done_broad:
 
 
 enum clnt_stat
-rpc_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp,
-			eachresult, nettype)
-	rpcprog_t	prog;		/* program number */
-	rpcvers_t	vers;		/* version number */
-	rpcproc_t	proc;		/* procedure number */
-	xdrproc_t	xargs;		/* xdr routine for args */
-	const char *	argsp;		/* pointer to args */
-	xdrproc_t	xresults;	/* xdr routine for results */
-	caddr_t		resultsp;	/* pointer to results */
-	resultproc_t	eachresult;	/* call with each result obtained */
-	const char		*nettype;	/* transport type */
+rpc_broadcast(
+	rpcprog_t	prog,		/* program number */
+	rpcvers_t	vers,		/* version number */
+	rpcproc_t	proc,		/* procedure number */
+	xdrproc_t	xargs,		/* xdr routine for args */
+	const char *	argsp,		/* pointer to args */
+	xdrproc_t	xresults,	/* xdr routine for results */
+	caddr_t		resultsp,	/* pointer to results */
+	resultproc_t	eachresult,	/* call with each result obtained */
+	const char *	nettype)	/* transport type */
 {
 	enum clnt_stat	dummy;
 
