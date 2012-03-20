@@ -2271,7 +2271,7 @@ enum
 };
 
 /* Define CC and CFLAGS which were used to build this version of GMP */
-#define __GMP_CC "/var/obj/evbppc/usr/src3/tooldir.NetBSD-5.99.54-amd64/bin/powerpc--netbsd-gcc --sysroot=/var/obj/evbppc/usr/src3/destdir.evbppc -L/var/obj/evbppc/usr/src3/destdir.evbppc/lib -L/var/obj/evbppc/usr/src3/destdir.evbppc/usr/lib -B/var/obj/evbppc/usr/src3/destdir.evbppc/usr/lib/ -I/var/tmp/gmp/powerpc64/.native/gcc/include -std=gnu99"
+#define __GMP_CC "gcc -std=gnu99"
 #define __GMP_CFLAGS "-mpowerpc64 -O3"
 
 /* Major version number is the value of __GNU_MP__ too, above and in mp.h. */
