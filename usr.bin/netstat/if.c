@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.73 2012/02/12 19:11:33 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.74 2012/03/20 20:34:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.73 2012/02/12 19:11:33 christos Exp $");
+__RCSID("$NetBSD: if.c,v 1.74 2012/03/20 20:34:58 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,10 +107,7 @@ bool	signalled;			/* set if alarm goes off "early" */
  * which is a TAILQ_HEAD.
  */
 void
-intpr(interval, ifnetaddr, pfunc)
-	int interval;
-	u_long ifnetaddr;
-	void (*pfunc)(const char *);
+intpr(int interval, u_long ifnetaddr, void (*pfunc)(const char *))
 {
 
 	if (interval) {
@@ -926,9 +923,7 @@ loop:
  * First line printed at top of screen is always cumulative.
  */
 static void
-sidewaysintpr(interval, off)
-	unsigned interval;
-	u_long off;
+sidewaysintpr(unsigned int interval, u_long off)
 {
 
 	if (use_sysctl) {
@@ -943,8 +938,7 @@ sidewaysintpr(interval, off)
  * Sets a flag to not wait for the alarm.
  */
 static void
-catchalarm(signo)
-	int signo;
+catchalarm(int signo)
 {
 
 	signalled = true;

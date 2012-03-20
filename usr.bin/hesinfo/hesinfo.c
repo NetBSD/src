@@ -1,4 +1,4 @@
-/*	$NetBSD: hesinfo.c,v 1.3 2004/01/05 23:23:34 jmmv Exp $	*/
+/*	$NetBSD: hesinfo.c,v 1.4 2012/03/20 20:34:57 matt Exp $	*/
 
 /* Copyright 1988, 1996 by the Massachusetts Institute of Technology.
  *
@@ -23,7 +23,7 @@
 #if 0
 static char rcsid[] = "#Id: hesinfo.c,v 1.8 1996/12/08 21:29:54 ghudson Exp #";
 #else
-__RCSID("$NetBSD: hesinfo.c,v 1.3 2004/01/05 23:23:34 jmmv Exp $");
+__RCSID("$NetBSD: hesinfo.c,v 1.4 2012/03/20 20:34:57 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -35,12 +35,10 @@ __RCSID("$NetBSD: hesinfo.c,v 1.3 2004/01/05 23:23:34 jmmv Exp $");
 #include <string.h>
 #include <unistd.h>
 
-int	main __P((int, char **));
+int	main(int, char **);
 
 int 
-main(argc, argv)
-	int	argc;
-	char  **argv;
+main(int argc, char **argv)
 {
 	char  **list, **p, *bindname, *name, *type;
 	int     lflag = 0, errflg = 0, bflag = 0, c;

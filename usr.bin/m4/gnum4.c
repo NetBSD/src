@@ -1,4 +1,4 @@
-/* $NetBSD: gnum4.c,v 1.8 2011/09/06 18:16:01 joerg Exp $ */
+/* $NetBSD: gnum4.c,v 1.9 2012/03/20 20:34:58 matt Exp $ */
 /* $OpenBSD: gnum4.c,v 1.39 2008/08/21 21:01:04 espie Exp $ */
 
 /*
@@ -33,7 +33,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gnum4.c,v 1.8 2011/09/06 18:16:01 joerg Exp $");
+__RCSID("$NetBSD: gnum4.c,v 1.9 2012/03/20 20:34:58 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -106,7 +106,7 @@ addtoincludepath(const char *dirname)
 }
 
 static void
-ensure_m4path()
+ensure_m4path(void)
 {
 	static int envpathdone = 0;
 	char *envpath;
@@ -241,7 +241,7 @@ addchar(int c)
 }
 
 static char *
-getstring()
+getstring(void)
 {
 	addchar('\0');
 	current = 0;

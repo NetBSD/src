@@ -1,4 +1,4 @@
-/*	$NetBSD: mroute.c,v 1.23 2009/04/12 16:08:37 lukem Exp $	*/
+/*	$NetBSD: mroute.c,v 1.24 2012/03/20 20:34:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mroute.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mroute.c,v 1.23 2009/04/12 16:08:37 lukem Exp $");
+__RCSID("$NetBSD: mroute.c,v 1.24 2012/03/20 20:34:58 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,12 +104,11 @@ __RCSID("$NetBSD: mroute.c,v 1.23 2009/04/12 16:08:37 lukem Exp $");
 #include <kvm.h>
 #include "netstat.h"
 
-static char *pktscale __P((u_long));
-static void print_bw_meter __P((struct bw_meter *, int *));
+static char *pktscale(u_long);
+static void print_bw_meter(struct bw_meter *, int *);
 
 static char *
-pktscale(n)
-	u_long n;
+pktscale(u_long n)
 {
 	static char buf[20];
 	char t;
@@ -129,8 +128,8 @@ pktscale(n)
 }
 
 void
-mroutepr(mrpaddr, mfchashtbladdr, mfchashaddr, vifaddr)
-	u_long mrpaddr, mfchashtbladdr, mfchashaddr, vifaddr;
+mroutepr(u_long mrpaddr, u_long mfchashtbladdr, u_long mfchashaddr,
+	u_long vifaddr)
 {
 	u_int mrtproto;
 	LIST_HEAD(, mfc) *mfchashtbl;
@@ -267,9 +266,7 @@ mroutepr(mrpaddr, mfchashtbladdr, mfchashaddr, vifaddr)
 }
 
 static void
-print_bw_meter(bw_meter, banner_printed)
-	struct bw_meter *bw_meter;
-	int *banner_printed;
+print_bw_meter(struct bw_meter *bw_meter, int *banner_printed)
 {
 	char s0[256], s1[256], s2[256], s3[256];
 	struct timeval now, end, delta;
@@ -343,8 +340,7 @@ print_bw_meter(bw_meter, banner_printed)
 }
 
 void
-mrt_stats(mrpaddr, mstaddr)
-	u_long mrpaddr, mstaddr;
+mrt_stats(u_long mrpaddr, u_long mstaddr)
 {
 	u_int mrtproto;
 	struct mrtstat mrtstat;

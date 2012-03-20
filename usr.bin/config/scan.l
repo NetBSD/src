@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.16 2010/04/30 20:47:18 pooka Exp $	*/
+/*	$NetBSD: scan.l,v 1.17 2012/03/20 20:34:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -541,7 +541,7 @@ include(const char *fname, int ateof, int conditional, int direct)
  * Extract the pathname from a include/cinclude/package into curinclpath
  */
 static int
-getincludepath()
+getincludepath(void)
 {
 	const char *p = yytext;
 	ptrdiff_t len;

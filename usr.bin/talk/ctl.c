@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.9 2011/09/06 18:32:03 joerg Exp $	*/
+/*	$NetBSD: ctl.c,v 1.10 2012/03/20 20:34:59 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ctl.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: ctl.c,v 1.9 2011/09/06 18:32:03 joerg Exp $");
+__RCSID("$NetBSD: ctl.c,v 1.10 2012/03/20 20:34:59 matt Exp $");
 #endif /* not lint */
 
 /*
@@ -88,7 +88,7 @@ open_sockt(void)
 
 /* open the ctl socket */
 void
-open_ctl() 
+open_ctl(void) 
 {
 	socklen_t length;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.7 2011/03/05 16:37:50 christos Exp $	*/
+/*	$NetBSD: trace.c,v 1.8 2012/03/20 20:34:58 matt Exp $	*/
 /* $OpenBSD: trace.c,v 1.15 2006/03/24 08:03:44 espie Exp $ */
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -28,7 +28,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: trace.c,v 1.7 2011/03/05 16:37:50 christos Exp $");
+__RCSID("$NetBSD: trace.c,v 1.8 2012/03/20 20:34:58 matt Exp $");
 
 #include <sys/types.h>
 #include <err.h>
@@ -125,7 +125,7 @@ set_trace_flags(const char *s)
 }
 
 static int
-frame_level()
+frame_level(void)
 {
 	int level;
 	int framep;
