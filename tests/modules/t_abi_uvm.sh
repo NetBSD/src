@@ -1,4 +1,4 @@
-# $NetBSD: t_abi_uvm.sh,v 1.1 2012/02/17 22:36:50 jmmv Exp $
+# $NetBSD: t_abi_uvm.sh,v 1.2 2012/03/20 05:50:11 jruoho Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -31,6 +31,15 @@ PAGE_SIZE_head() {
 	atf_set "require.user" "root"
 }
 PAGE_SIZE_body() {
+
+	# XXX: There should be a reliable way to detect MODULAR.
+	#
+	sysctl machdep.xen > /dev/null 2>&1
+
+	if [ $? -eq 0 ]; then
+		atf_skip "host does not support modules"
+	fi
+
 	if modload $(atf_get_srcdir)/k_uvm/k_uvm.kmod; then
 		:
 	else
