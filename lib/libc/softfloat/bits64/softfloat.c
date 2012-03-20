@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.c,v 1.8 2011/07/10 04:52:23 matt Exp $ */
+/* $NetBSD: softfloat.c,v 1.9 2012/03/20 21:34:51 martin Exp $ */
 
 /*
  * This version hacked for use with gcc -msoft-float by bjh21.
@@ -46,7 +46,7 @@ this code that are retained.
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: softfloat.c,v 1.8 2011/07/10 04:52:23 matt Exp $");
+__RCSID("$NetBSD: softfloat.c,v 1.9 2012/03/20 21:34:51 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef SOFTFLOAT_FOR_GCC
@@ -5118,7 +5118,7 @@ according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 */
 float128 float128_rem( float128 a, float128 b )
 {
-    flag aSign, bSign, zSign;
+    flag aSign, zSign;
     int32 aExp, bExp, expDiff;
     bits64 aSig0, aSig1, bSig0, bSig1, q, term0, term1, term2;
     bits64 allZero, alternateASig0, alternateASig1, sigMean1;
@@ -5132,7 +5132,6 @@ float128 float128_rem( float128 a, float128 b )
     bSig1 = extractFloat128Frac1( b );
     bSig0 = extractFloat128Frac0( b );
     bExp = extractFloat128Exp( b );
-    bSign = extractFloat128Sign( b );
     if ( aExp == 0x7FFF ) {
         if (    ( aSig0 | aSig1 )
              || ( ( bExp == 0x7FFF ) && ( bSig0 | bSig1 ) ) ) {
