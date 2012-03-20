@@ -1,4 +1,4 @@
-/*	$NetBSD: mcount.c,v 1.9 2012/03/17 21:40:21 martin Exp $	*/
+/*	$NetBSD: mcount.c,v 1.10 2012/03/20 16:21:41 matt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mcount.c,v 1.9 2012/03/17 21:40:21 martin Exp $");
+__RCSID("$NetBSD: mcount.c,v 1.10 2012/03/20 16:21:41 matt Exp $");
 #endif
 #endif
 
@@ -94,7 +94,7 @@ struct gmonparam *_m_gmon_alloc(void);
 #endif
 
 #ifndef __LINT__
-_MCOUNT_DECL __P((u_long, u_long))
+_MCOUNT_DECL(u_long, u_long)
 #ifdef _KERNEL
     __attribute__((__no_instrument_function__))
 #endif
@@ -127,8 +127,8 @@ _MCOUNT_DECL __P((u_long, u_long))
  * perform this optimization.
  */
 #ifndef __LINT__
-_MCOUNT_DECL(frompc, selfpc)	/* _mcount; may be static, inline, etc */
-	u_long frompc, selfpc;
+/* _mcount; may be static, inline, etc */
+_MCOUNT_DECL(u_long frompc, u_long selfpc)
 {
 	u_short *frompcindex;
 	struct tostruct *top, *prevtop;
