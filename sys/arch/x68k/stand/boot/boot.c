@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.17 2011/12/25 06:09:09 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.18 2012/03/20 12:37:01 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -124,8 +124,10 @@ doboot(const char *file, int flags)
 		printf("XXX: unknown corruption in /boot.\n");
 	}
 
+#ifdef DEBUG
 	printf("dev = %x, unit = %d, part = %c, name = %s\n",
 	       dev, unit, part + 'a', name);
+#endif
 
 	if (dev == 0) {		/* SCSI */
 		dev = X68K_MAKESCSIBOOTDEV(X68K_MAJOR_SD,
@@ -135,6 +137,7 @@ doboot(const char *file, int flags)
 	} else {
 		dev = X68K_MAKEBOOTDEV(X68K_MAJOR_FD, unit & 3, 0);
 	}
+#ifdef DEBUG
 	printf("boot device = %x\n", dev);
 	printf("if = %d, unit = %d, id = %d, lun = %d, part = %c\n",
 	       B_X68K_SCSI_IF(dev),
@@ -142,9 +145,12 @@ doboot(const char *file, int flags)
 	       B_X68K_SCSI_ID(dev),
 	       B_X68K_SCSI_LUN(dev),
 	       B_X68K_SCSI_PART(dev) + 'a');
+#endif
 
 	p = ((short*) marks[MARK_ENTRY]) - 1;
+#ifdef DEBUG
 	printf("Kernel Version: 0x%x\n", *p);
+#endif
 	if (*p != 0x4e73 && *p != 0) {
 		/*
 		 * XXX temporary solution; compatibility loader
