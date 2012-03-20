@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.452 2012/03/19 11:16:36 njoly Exp $
+# $NetBSD: mi,v 1.453 2012/03/20 06:18:34 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2896,6 +2896,10 @@
 ./usr/tests/usr.bin/id/t_groups			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/id/t_id			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/id/t_whoami			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/jot				tests-usr.bin-tests
+./usr/tests/usr.bin/jot/Atffile			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/jot/d_basic.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/jot/t_jot			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/m4				tests-usr.bin-tests
 ./usr/tests/usr.bin/m4/Atffile			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/m4/d_ff_after_dnl.m4.uue	tests-usr.bin-tests	atf
