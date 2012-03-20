@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)lsearch.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: lsearch.c,v 1.5 2011/05/18 19:36:36 dsl Exp $");
+__RCSID("$NetBSD: lsearch.c,v 1.6 2012/03/20 16:38:44 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -80,12 +80,8 @@ lfind(key, base, nelp, width, compar)
 }
 
 static void *
-linear_base(key, base, nelp, width, compar, add_flag)
-	const void *key;
-	void *base;
-	size_t *nelp, width;
-	cmp_fn_t compar;
-	int add_flag;
+linear_base(const void *key, void *base, size_t *nelp, size_t width,
+	cmp_fn_t compar, int add_flag)
 {
 	char *element, *end;
 
