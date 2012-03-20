@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.68 2011/11/03 21:59:45 christos Exp $	*/
+/*	$NetBSD: tar.c,v 1.69 2012/03/20 18:42:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.68 2011/11/03 21:59:45 christos Exp $");
+__RCSID("$NetBSD: tar.c,v 1.69 2012/03/20 18:42:28 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -1366,8 +1366,7 @@ tar_gnutar_exclude_one(const char *line, size_t len)
  * named files.
  */
 int
-tar_gnutar_minus_minus_exclude(path)
-	const char *path;
+tar_gnutar_minus_minus_exclude(const char *path)
 {
 	size_t	len = strlen(path);
 
@@ -1378,8 +1377,7 @@ tar_gnutar_minus_minus_exclude(path)
 }
 
 int
-tar_gnutar_X_compat(path)
-	const char *path;
+tar_gnutar_X_compat(const char *path)
 {
 	char *line;
 	FILE *fp;

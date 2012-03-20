@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.53 2011/08/31 16:24:54 plunky Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.54 2012/03/20 18:42:28 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -1613,12 +1613,7 @@ ar_start_gzip(int fd, const char *gzp, int wr)
 }
 
 static const char *
-timefmt(buf, size, sz, tm, unitstr)
-	char *buf;
-	size_t size;
-	off_t sz;
-	time_t tm;
-	const char *unitstr;
+timefmt(char *buf, size_t size, off_t sz, time_t tm, const char *unitstr)
 {
 	(void)snprintf(buf, size, "%lu secs (" OFFT_F " %s/sec)",
 	    (unsigned long)tm, (OFFT_T)(sz / tm), unitstr);
@@ -1626,10 +1621,7 @@ timefmt(buf, size, sz, tm, unitstr)
 }
 
 static const char *
-sizefmt(buf, size, sz)
-	char *buf;
-	size_t size;
-	off_t sz;
+sizefmt(char *buf, size_t size, off_t sz)
 {
 	(void)snprintf(buf, size, OFFT_F " bytes", (OFFT_T)sz);
 	return buf;

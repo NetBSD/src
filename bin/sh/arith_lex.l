@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: arith_lex.l,v 1.15 2009/10/29 14:21:40 christos Exp $	*/
+/*	$NetBSD: arith_lex.l,v 1.16 2012/03/20 18:42:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)arith_lex.l	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: arith_lex.l,v 1.15 2009/10/29 14:21:40 christos Exp $");
+__RCSID("$NetBSD: arith_lex.l,v 1.16 2012/03/20 18:42:29 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,7 @@ extern const char *arith_buf, *arith_startbuf;
 %%
 
 void
-arith_lex_reset() {
+arith_lex_reset(void) {
 #ifdef YY_NEW_FILE
 	YY_NEW_FILE;
 #endif
