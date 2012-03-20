@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_ecoff.c,v 1.21 2012/03/20 00:03:12 christos Exp $ */
+/* $NetBSD: nlist_ecoff.c,v 1.22 2012/03/20 00:16:35 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nlist_ecoff.c,v 1.21 2012/03/20 00:03:12 christos Exp $");
+__RCSID("$NetBSD: nlist_ecoff.c,v 1.22 2012/03/20 00:16:35 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: nlist_ecoff.c,v 1.21 2012/03/20 00:03:12 christos Exp $");
 
 #ifdef NLIST_ECOFF
 #define	check(off, size) \
-	(/*CONSTCOND*/(off < 0) || (off + size > mappedsize))
+	(/*CONSTCOND*/(off < 0) || ((size_t)(off + size) > mappedsize))
 
 int
 __fdnlist_ecoff(int fd, struct nlist *list)
