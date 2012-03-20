@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.6 2008/04/28 20:23:40 martin Exp $	 */
+/*	$NetBSD: loadfile_machdep.h,v 1.7 2012/03/20 13:03:33 minoura Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -33,13 +33,16 @@
 #define	_X68K_LOADFILE_MACHDEP_H_
 
 #define BOOT_AOUT
+#ifndef BOOT_STAGE1
 #define BOOT_ELF32
+#endif
 
 #define LOAD_KERNEL	LOAD_ALL
 #define COUNT_KERNEL	COUNT_ALL
 
 #ifdef _STANDALONE
 
+#ifndef BOOT_STAGE1
 #define LOADADDR(a)		((a) + offset)
 #define ALIGNENTRY(a)		0
 #define READ(f, b, c)		pread((f), (void *)LOADADDR(b), (c))
@@ -51,7 +54,19 @@
 #define PROGRESS(a)		(void) printf a
 #define ALLOC(a)		alloc(a)
 #define DEALLOC(a, b)		dealloc(a, b)
-#define OKMAGIC(a)		((a) == NMAGIC)
+#define OKMAGIC(a)		(((a) == NMAGIC) || ((a) == OMAGIC))
+#else
+#define LOADADDR(a)		((a) + offset)
+#define ALIGNENTRY(a)		0
+#define READ(f, b, c)		pread((f), (void *)LOADADDR(b), (c))
+#define BCOPY(s, d, c)		vpbcopy((s), (void *)LOADADDR(d), (c))
+#define BZERO(d, c)		pbzero((void *)LOADADDR(d), (c))
+#define WARN(a)			/* nothing */
+#define PROGRESS(a)		/* nothing */
+#define ALLOC(a)		alloc(a)
+#define DEALLOC(a, b)		dealloc(a, b)
+#define OKMAGIC(a)		(((a) == NMAGIC) || ((a) == OMAGIC))
+#endif
 
 #define	vpbcopy bcopy
 #define	pbzero  bzero
