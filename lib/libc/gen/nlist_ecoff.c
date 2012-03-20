@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_ecoff.c,v 1.22 2012/03/20 00:16:35 christos Exp $ */
+/* $NetBSD: nlist_ecoff.c,v 1.23 2012/03/20 00:31:24 matt Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nlist_ecoff.c,v 1.22 2012/03/20 00:16:35 christos Exp $");
+__RCSID("$NetBSD: nlist_ecoff.c,v 1.23 2012/03/20 00:31:24 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -59,17 +59,17 @@ __RCSID("$NetBSD: nlist_ecoff.c,v 1.22 2012/03/20 00:16:35 christos Exp $");
 
 #ifdef NLIST_ECOFF
 #define	check(off, size) \
-	(/*CONSTCOND*/(off < 0) || ((size_t)(off + size) > mappedsize))
+	((size_t)off >= mappedsize || (size_t)(off + size) > mappedsize)
 
 int
 __fdnlist_ecoff(int fd, struct nlist *list)
 {
 	struct nlist *p;
-	struct ecoff_exechdr *exechdrp;
-	struct ecoff_symhdr *symhdrp;
-	struct ecoff_extsym *esyms;
+	const struct ecoff_exechdr *exechdrp;
+	const struct ecoff_symhdr *symhdrp;
+	const struct ecoff_extsym *esyms;
 	struct stat st;
-	char *mappedfile;
+	const char *mappedfile;
 	size_t mappedsize;
 	u_long symhdroff, extstroff;
 	u_int symhdrsize;
@@ -107,7 +107,7 @@ __fdnlist_ecoff(int fd, struct nlist *list)
 	 */
 	if (check(0, sizeof *exechdrp))
 		goto unmap;
-	exechdrp = mappedfile;
+	exechdrp = (const void *)mappedfile;
 
 	if (ECOFF_BADMAG(exechdrp))
 		goto unmap;
@@ -121,12 +121,12 @@ __fdnlist_ecoff(int fd, struct nlist *list)
 	if ((symhdroff + sizeof *symhdrp) > mappedsize ||
 	    sizeof *symhdrp != symhdrsize)
 		goto unmap;
-	symhdrp = (void *)&mappedfile[symhdroff];
+	symhdrp = (const void *)&mappedfile[symhdroff];
 
 	nesyms = symhdrp->esymMax;
 	if (check(symhdrp->cbExtOffset, nesyms * sizeof *esyms))
 		goto unmap;
-	esyms = (void *)&mappedfile[symhdrp->cbExtOffset];
+	esyms = (const void *)&mappedfile[symhdrp->cbExtOffset];
 	extstroff = symhdrp->cbSsExtOffset;
 
 	/*
@@ -149,15 +149,15 @@ __fdnlist_ecoff(int fd, struct nlist *list)
 	for (i = 0; i < nesyms; i++) {
 		for (p = list; !ISLAST(p); p++) {
 			const char *nlistname;
-			char *symtabname;
+			const char *symtabname;
 
 			/* This may be incorrect */
 			nlistname = N_NAME(p);
 			if (*nlistname == '_')
 				nlistname++;
 
-			symtabname = (void *)&mappedfile[extstroff
-			    + esyms[i].es_strindex];
+			symtabname =
+			    &mappedfile[extstroff + esyms[i].es_strindex];
 
 			if (!strcmp(symtabname, nlistname)) {
 				/*
@@ -178,7 +178,7 @@ __fdnlist_ecoff(int fd, struct nlist *list)
 done:
 	rv = nent;
 unmap:
-	munmap(mappedfile, mappedsize);
+	munmap(__UNCONST(mappedfile), mappedsize);
 out:
 	return rv;
 }
