@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.c,v 1.19 2012/03/15 18:22:30 christos Exp $	*/
+/*	$NetBSD: stdio.c,v 1.20 2012/03/20 01:42:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)stdio.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: stdio.c,v 1.19 2012/03/15 18:22:30 christos Exp $");
+__RCSID("$NetBSD: stdio.c,v 1.20 2012/03/20 01:42:59 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -108,8 +108,7 @@ __sseek(void *cookie, off_t offset, int whence)
 }
 
 int
-__sclose(cookie)
-	void *cookie;
+__sclose(void *cookie)
 {
 
 	_DIAGASSERT(cookie != NULL);
