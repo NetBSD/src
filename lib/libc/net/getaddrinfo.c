@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.98 2012/03/17 21:56:40 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.99 2012/03/20 10:34:33 kardel Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.98 2012/03/17 21:56:40 christos Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.99 2012/03/20 10:34:33 kardel Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -1032,7 +1032,7 @@ addrconfig(uint64_t *mask)
 	if (getifaddrs(&ifaddrs) == -1)
 		return -1;
 
-	mask = 0;
+	*mask = 0;
 	for (ifa = ifaddrs; ifa != NULL; ifa = ifa->ifa_next)
 		if (ifa->ifa_addr && (ifa->ifa_flags & IFF_UP)) {
 			_DIAGASSERT(ifa->ifa_addr->sa_family < 64);
