@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.66 2012/03/13 21:13:48 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.67 2012/03/20 16:39:08 matt Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.66 2012/03/13 21:13:48 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.67 2012/03/20 16:39:08 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -659,8 +659,7 @@ static const int	year_lengths[2] = {
 */
 
 static const char *
-getzname(strp)
-const char *	strp;
+getzname(const char *strp)
 {
 	char	c;
 
@@ -697,11 +696,7 @@ getqzname(const char *strp, const int delim)
 */
 
 static const char *
-getnum(strp, nump, min, max)
-const char *	strp;
-int * const		nump;
-const int		min;
-const int		max;
+getnum(const char *strp, int * const nump, const int min, const int max)
 {
 	char	c;
 	int	num;
