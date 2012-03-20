@@ -1,4 +1,4 @@
-/*	$NetBSD: xdryp.c,v 1.31 2012/03/13 21:13:49 christos Exp $	*/
+/*	$NetBSD: xdryp.c,v 1.32 2012/03/20 16:30:26 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@NetBSD.org>.
@@ -61,7 +61,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: xdryp.c,v 1.31 2012/03/13 21:13:49 christos Exp $");
+__RCSID("$NetBSD: xdryp.c,v 1.32 2012/03/20 16:30:26 matt Exp $");
 #endif
 
 /*
@@ -115,10 +115,10 @@ __weak_alias(xdr_ypresp_val,_xdr_ypresp_val)
 /*
  * Functions used only within this file.
  */
-static	bool_t xdr_ypbind_binding __P((XDR *, struct ypbind_binding *));
-static	bool_t xdr_ypbind_resptype __P((XDR *, enum ypbind_resptype *));
-static	bool_t xdr_ypstat __P((XDR *, enum ypbind_resptype *));
-static	bool_t xdr_ypmaplist_str __P((XDR *, char *));
+static	bool_t xdr_ypbind_binding(XDR *, struct ypbind_binding *);
+static	bool_t xdr_ypbind_resptype(XDR *, enum ypbind_resptype *);
+static	bool_t xdr_ypstat(XDR *, enum ypbind_resptype *);
+static	bool_t xdr_ypmaplist_str(XDR *, char *);
 
 __warn_references(xdr_domainname,
     "warning: this program uses xdr_domainname(), which is deprecated and buggy.")
