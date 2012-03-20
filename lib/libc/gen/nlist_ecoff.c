@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_ecoff.c,v 1.20 2012/03/19 16:20:58 christos Exp $ */
+/* $NetBSD: nlist_ecoff.c,v 1.21 2012/03/20 00:03:12 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nlist_ecoff.c,v 1.20 2012/03/19 16:20:58 christos Exp $");
+__RCSID("$NetBSD: nlist_ecoff.c,v 1.21 2012/03/20 00:03:12 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -58,19 +58,18 @@ __RCSID("$NetBSD: nlist_ecoff.c,v 1.20 2012/03/19 16:20:58 christos Exp $");
 #endif
 
 #ifdef NLIST_ECOFF
-#define	check(off, size)	((off < 0) || (off + size > mappedsize))
+#define	check(off, size) \
+	(/*CONSTCOND*/(off < 0) || (off + size > mappedsize))
 
 int
-__fdnlist_ecoff(fd, list)
-	int fd;
-	struct nlist *list;
+__fdnlist_ecoff(int fd, struct nlist *list)
 {
 	struct nlist *p;
 	struct ecoff_exechdr *exechdrp;
 	struct ecoff_symhdr *symhdrp;
 	struct ecoff_extsym *esyms;
 	struct stat st;
-	void *mappedfile;
+	char *mappedfile;
 	size_t mappedsize;
 	u_long symhdroff, extstroff;
 	u_int symhdrsize;
@@ -122,12 +121,12 @@ __fdnlist_ecoff(fd, list)
 	if ((symhdroff + sizeof *symhdrp) > mappedsize ||
 	    sizeof *symhdrp != symhdrsize)
 		goto unmap;
-	symhdrp = (void *)((char *)mappedfile + symhdroff);
+	symhdrp = (void *)&mappedfile[symhdroff];
 
 	nesyms = symhdrp->esymMax;
 	if (check(symhdrp->cbExtOffset, nesyms * sizeof *esyms))
 		goto unmap;
-	esyms = (void *)((char *)mappedfile + symhdrp->cbExtOffset);
+	esyms = (void *)&mappedfile[symhdrp->cbExtOffset];
 	extstroff = symhdrp->cbSsExtOffset;
 
 	/*
@@ -157,8 +156,8 @@ __fdnlist_ecoff(fd, list)
 			if (*nlistname == '_')
 				nlistname++;
 
-			symtabname = (void *)((char *)
-			    mappedfile + (extstroff + esyms[i].es_strindex));
+			symtabname = (void *)&mappedfile[extstroff
+			    + esyms[i].es_strindex];
 
 			if (!strcmp(symtabname, nlistname)) {
 				/*
