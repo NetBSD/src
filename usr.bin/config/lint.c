@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.c,v 1.13 2012/03/12 03:04:56 dholland Exp $	*/
+/*	$NetBSD: lint.c,v 1.14 2012/03/20 20:34:57 matt Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -36,7 +36,7 @@
 #include "defs.h"
 
 void
-emit_params()
+emit_params(void)
 {
 
 	printf("version\t%d\n", CONFIG_VERSION);
@@ -196,7 +196,7 @@ emit_pseudo_instance(const char *name, void *value, void *v)
 }
 
 void
-emit_instances()
+emit_instances(void)
 {
 
 	(void)ht_enumerate(devroottab, emit_root_instance, NULL);

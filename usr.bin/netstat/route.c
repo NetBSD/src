@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.78 2011/06/21 19:42:45 kefren Exp $	*/
+/*	$NetBSD: route.c,v 1.79 2012/03/20 20:34:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.78 2011/06/21 19:42:45 kefren Exp $");
+__RCSID("$NetBSD: route.c,v 1.79 2012/03/20 20:34:58 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,8 +99,7 @@ static void p_krtentry(struct rtentry *);
  * Print routing tables.
  */
 void
-routepr(rtree)
-	u_long rtree;
+routepr(u_long rtree)
 {
 	struct radix_node_head *rnh, head;
 	struct radix_node_head *rt_nodes[AF_MAX+1];
@@ -143,8 +142,7 @@ kgetsa(const struct sockaddr *dst)
 }
 
 static void
-p_tree(rn)
-	struct radix_node *rn;
+p_tree(struct radix_node *rn)
 {
 
 again:
@@ -180,7 +178,7 @@ again:
 }
 
 static void
-p_rtnode()
+p_rtnode(void)
 {
 	struct radix_mask *rm = rnode.rn_mklist;
 	char	nbuf[20];
@@ -218,17 +216,14 @@ p_rtnode()
 	putchar('\n');
 }
 
-static struct sockaddr *sockcopy __P((struct sockaddr *,
-    union sockaddr_union *));
+static struct sockaddr *sockcopy(struct sockaddr *, union sockaddr_union *);
 
 /*
  * copy a sockaddr into an allocated region, allocate at least sockaddr
  * bytes and zero unused
  */
 static struct sockaddr *
-sockcopy(sp, dp)
-	struct sockaddr *sp;
-	union sockaddr_union *dp;
+sockcopy(struct sockaddr *sp, union sockaddr_union *dp)
 {
 	int len;
 
@@ -242,8 +237,7 @@ sockcopy(sp, dp)
 }
 
 static void
-p_krtentry(rt)
-	struct rtentry *rt;
+p_krtentry(struct rtentry *rt)
 {
 	static struct ifnet ifnet, *lastif;
 	union sockaddr_union addr_un, mask_un;
@@ -321,8 +315,7 @@ p_krtentry(rt)
  * Print routing statistics
  */
 void
-rt_stats(off)
-	u_long off;
+rt_stats(u_long off)
 {
 	struct rtstat rtstats;
 
@@ -357,8 +350,7 @@ rt_stats(off)
 }
 
 void
-upHex(p0)
-	char *p0;
+upHex(char *p0)
 {
 	char *p = p0;
 
@@ -373,5 +365,3 @@ upHex(p0)
 			*p += ('A' - 'a');
 		}
 }
-
-
