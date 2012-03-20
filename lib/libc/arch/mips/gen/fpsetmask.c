@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetmask.c,v 1.6 2012/03/19 22:23:10 matt Exp $	*/
+/*	$NetBSD: fpsetmask.c,v 1.7 2012/03/20 10:51:24 he Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 11, 1995
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpsetmask.c,v 1.6 2012/03/19 22:23:10 matt Exp $");
+__RCSID("$NetBSD: fpsetmask.c,v 1.7 2012/03/20 10:51:24 he Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -31,5 +31,5 @@ fpsetmask(fp_except mask)
 
 	__asm("ctc1 %0,$31" : : "r" (new));
 
-	return (old >> 7) & 0x1f;
+	return ((unsigned int)old >> 7) & 0x1f;
 }
