@@ -1,4 +1,4 @@
-# $NetBSD: t_modload.sh,v 1.9 2011/03/24 21:52:51 jmmv Exp $
+# $NetBSD: t_modload.sh,v 1.10 2012/03/20 05:50:11 jruoho Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,6 +36,15 @@ plain_head() {
 	atf_set "require.user" "root"
 }
 plain_body() {
+
+	# XXX: There should be a reliable way to detect MODULAR.
+	#
+	sysctl machdep.xen > /dev/null 2>&1
+
+	if [ $? -eq 0 ]; then
+		atf_skip "host does not support modules"
+	fi
+
 	cat >experr <<EOF
 modload: No such file or directory
 EOF
@@ -99,6 +108,15 @@ iflag_head() {
 	atf_set "require.user" "root"
 }
 iflag_body() {
+
+	# XXX: There should be a reliable way to detect MODULAR.
+	#
+	sysctl machdep.xen > /dev/null 2>&1
+
+	if [ $? -eq 0 ]; then
+		atf_skip "host does not support modules"
+	fi
+
 	echo "Checking error conditions"
 
 	atf_check -s eq:1 -o empty -e save:stderr modload -i foo \
@@ -143,6 +161,15 @@ sflag_head() {
 	atf_set "require.user" "root"
 }
 sflag_body() {
+
+	# XXX: There should be a reliable way to detect MODULAR.
+	#
+	sysctl machdep.xen > /dev/null 2>&1
+
+	if [ $? -eq 0 ]; then
+		atf_skip "host does not support modules"
+	fi
+
 	echo "Checking error conditions"
 
 	atf_check -s eq:1 -o empty -e save:stderr modload -s foo \
