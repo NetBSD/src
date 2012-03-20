@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigaltstack.c,v 1.4 2012/03/13 21:13:32 christos Exp $	*/
+/*	$NetBSD: compat_sigaltstack.c,v 1.5 2012/03/20 17:06:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_sigaltstack.c,v 1.4 2012/03/13 21:13:32 christos Exp $");
+__RCSID("$NetBSD: compat_sigaltstack.c,v 1.5 2012/03/20 17:06:00 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -44,9 +44,7 @@ __RCSID("$NetBSD: compat_sigaltstack.c,v 1.4 2012/03/13 21:13:32 christos Exp $"
 #include <stddef.h>
 
 int
-sigaltstack(onss, ooss)
-	const struct sigaltstack13 *onss;
-	struct sigaltstack13 *ooss;
+sigaltstack(const struct sigaltstack13 *onss, struct sigaltstack13 *ooss)
 {
 	stack_t nss, oss;
 	int error;
