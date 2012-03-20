@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_generic.c,v 1.25 2012/03/13 21:13:44 christos Exp $	*/
+/*	$NetBSD: rpc_generic.c,v 1.26 2012/03/20 17:14:50 matt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: rpc_generic.c,v 1.25 2012/03/13 21:13:44 christos Exp $");
+__RCSID("$NetBSD: rpc_generic.c,v 1.26 2012/03/20 17:14:50 matt Exp $");
 #endif
 
 #include "namespace.h"
@@ -109,16 +109,16 @@ static const struct netid_af na_cvt[] = {
 };
 
 #if 0
-static char *strlocase __P((char *));
+static char *strlocase(char *);
 #endif
-static int getnettype __P((const char *));
+static int getnettype(const char *);
 
 /*
  * Cache the result of getrlimit(), so we don't have to do an
  * expensive call every time.
  */
 int
-__rpc_dtbsize()
+__rpc_dtbsize(void)
 {
 	static int tbsize;
 	struct rlimit rl;
@@ -142,9 +142,10 @@ __rpc_dtbsize()
  */
 u_int
 /*ARGSUSED*/
-__rpc_get_t_size(af, proto, size)
-	int af, proto;
-	int size;	/* Size requested */
+__rpc_get_t_size(
+	int af,
+	int proto,
+	int size)	/* Size requested */
 {
 	int maxsize, defsize;
 
@@ -171,8 +172,7 @@ __rpc_get_t_size(af, proto, size)
  * Find the appropriate address buffer size
  */
 u_int
-__rpc_get_a_size(af)
-	int af;
+__rpc_get_a_size(int af)
 {
 	switch (af) {
 	case AF_INET:
@@ -191,8 +191,7 @@ __rpc_get_a_size(af)
 
 #if 0
 static char *
-strlocase(p)
-	char *p;
+strlocase(char *p)
 {
 	char *t = p;
 
@@ -210,8 +209,7 @@ strlocase(p)
  * If nettype is NULL, it defaults to NETPATH.
  */
 static int
-getnettype(nettype)
-	const char *nettype;
+getnettype(const char *nettype)
 {
 	int i;
 
@@ -248,8 +246,7 @@ __rpc_getconfigp_setup(void)
 #endif
 
 struct netconfig *
-__rpc_getconfip(nettype)
-	const char *nettype;
+__rpc_getconfip(const char *nettype)
 {
 	char *netid;
 	char *netid_tcp = NULL;
@@ -334,8 +331,7 @@ __rpc_getconfip(nettype)
  * __rpc_getconf().
  */
 void *
-__rpc_setconf(nettype)
-	const char *nettype;
+__rpc_setconf(const char *nettype)
 {
 	struct handle *handle;
 
@@ -380,8 +376,7 @@ __rpc_setconf(nettype)
  * __rpc_setconf() should have been called previously.
  */
 struct netconfig *
-__rpc_getconf(vhandle)
-	void *vhandle;
+__rpc_getconf(void *vhandle)
 {
 	struct handle *handle;
 	struct netconfig *nconf;
@@ -457,8 +452,7 @@ __rpc_getconf(vhandle)
 }
 
 void
-__rpc_endconf(vhandle)
-	void * vhandle;
+__rpc_endconf(void *vhandle)
 {
 	struct handle *handle;
 
@@ -479,8 +473,7 @@ __rpc_endconf(vhandle)
  * Returns NULL if fails, else a non-NULL pointer.
  */
 void *
-rpc_nullproc(clnt)
-	CLIENT *clnt;
+rpc_nullproc(CLIENT *clnt)
 {
 	struct timeval TIMEOUT = {25, 0};
 
@@ -496,8 +489,7 @@ rpc_nullproc(clnt)
  * one succeeds in finding the netconf for the given fd.
  */
 struct netconfig *
-__rpcgettp(fd)
-	int fd;
+__rpcgettp(int fd)
 {
 	const char *netid;
 	struct __rpc_sockinfo si;
