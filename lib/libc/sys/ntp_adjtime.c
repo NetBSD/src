@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_adjtime.c,v 1.12 2011/10/15 23:00:02 christos Exp $ */
+/*	$NetBSD: ntp_adjtime.c,v 1.13 2012/03/20 16:26:12 matt Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.      
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ntp_adjtime.c,v 1.12 2011/10/15 23:00:02 christos Exp $");
+__RCSID("$NetBSD: ntp_adjtime.c,v 1.13 2012/03/20 16:26:12 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -60,8 +60,7 @@ extern int __clockctl_fd;
 int __ntp_adjtime(struct timex *);
 
 int
-ntp_adjtime(tp)
-	struct timex *tp;
+ntp_adjtime(struct timex *tp)
 {
 	struct clockctl_ntp_adjtime args;
 	int error;
