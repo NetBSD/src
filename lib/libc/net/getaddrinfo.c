@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.99 2012/03/20 10:34:33 kardel Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.100 2012/03/20 12:04:01 kardel Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.99 2012/03/20 10:34:33 kardel Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.100 2012/03/20 12:04:01 kardel Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -503,8 +503,11 @@ getaddrinfo(const char *hostname, const char *servname,
 	for (ex = explore; ex->e_af >= 0; ex++) {
 		*pai = ai0;
 
+
 		/* ADDRCONFIG check */
-		if ((((uint64_t)1 << ex->e_af) & mask) == 0)
+		/* PF_UNSPEC entries are prepared for DNS queries only */
+		if (ex->e_af != PF_UNSPEC &&
+		    (((uint64_t)1 << ex->e_af) & mask) == 0)
 			continue;
 
 		/* require exact match for family field */
