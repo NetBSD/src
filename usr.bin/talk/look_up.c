@@ -1,4 +1,4 @@
-/*	$NetBSD: look_up.c,v 1.7 2005/09/24 16:40:01 christos Exp $	*/
+/*	$NetBSD: look_up.c,v 1.8 2012/03/20 20:34:59 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)look_up.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: look_up.c,v 1.7 2005/09/24 16:40:01 christos Exp $");
+__RCSID("$NetBSD: look_up.c,v 1.8 2012/03/20 20:34:59 matt Exp $");
 #endif /* not lint */
 
 #include "talk.h"
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: look_up.c,v 1.7 2005/09/24 16:40:01 christos Exp $");
  * See if the local daemon has an invitation for us.
  */
 int
-check_local()
+check_local(void)
 {
 	CTL_RESPONSE response;
 	CTL_RESPONSE *rp = &response;
@@ -101,8 +101,7 @@ check_local()
  * Look for an invitation on 'machine'
  */
 int
-look_for_invite(rp)
-	CTL_RESPONSE *rp;
+look_for_invite(CTL_RESPONSE *rp)
 {
 	current_state = "Checking for invitation on caller's machine";
 	ctl_transact(his_machine_addr, msg, LOOK_UP, rp);

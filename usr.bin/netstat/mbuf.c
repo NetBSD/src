@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.c,v 1.30 2010/12/13 21:15:30 pooka Exp $	*/
+/*	$NetBSD: mbuf.c,v 1.31 2012/03/20 20:34:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mbuf.c,v 1.30 2010/12/13 21:15:30 pooka Exp $");
+__RCSID("$NetBSD: mbuf.c,v 1.31 2012/03/20 20:34:58 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,10 +87,8 @@ int mowners_ctl[] = { CTL_KERN, KERN_MBUF, MBUF_MOWNERS };
  * Print mbuf statistics.
  */
 void
-mbpr(mbaddr, msizeaddr, mclbaddr, mbpooladdr, mclpooladdr)
-	u_long mbaddr;
-	u_long msizeaddr, mclbaddr;
-	u_long mbpooladdr, mclpooladdr;
+mbpr(u_long mbaddr, u_long msizeaddr, u_long mclbaddr, u_long mbpooladdr,
+	u_long mclpooladdr)
 {
 	u_long totmem, totused, totpct;
 	u_int totmbufs;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mroute6.c,v 1.12 2005/08/04 19:41:28 rpaulo Exp $	*/
+/*	$NetBSD: mroute6.c,v 1.13 2012/03/20 20:34:58 matt Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -124,8 +124,7 @@
 #define	WID_GRP	(lflag ? 18 : (numeric_addr ? 16 : 18)) /* width of group column */
 
 void
-mroute6pr(mrpaddr, mfcaddr, mifaddr)
-	u_long mrpaddr, mfcaddr, mifaddr;
+mroute6pr(u_long mrpaddr, u_long mfcaddr, u_long mifaddr)
 {
 	u_int mrtproto;
 	struct mf6c *mf6ctable[MF6CTBLSIZ], *mfcp;
@@ -248,8 +247,7 @@ mroute6pr(mrpaddr, mfcaddr, mifaddr)
 }
 
 void
-mrt6_stats(mrpaddr, mstaddr)
-	u_long mrpaddr, mstaddr;
+mrt6_stats(u_long mrpaddr, u_long mstaddr)
 {
 #define	p(f, m) printf(m, (unsigned long long)mrtstat.f, plural(mrtstat.f))
 #define	pes(f, m) printf(m, (unsigned long long)mrtstat.f, plurales(mrtstat.f))
