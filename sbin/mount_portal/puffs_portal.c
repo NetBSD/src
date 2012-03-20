@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_portal.c,v 1.5 2011/12/19 15:36:27 riastradh Exp $	*/
+/*	$NetBSD: puffs_portal.c,v 1.6 2012/03/20 18:50:31 matt Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: puffs_portal.c,v 1.5 2011/12/19 15:36:27 riastradh Exp $");
+__RCSID("$NetBSD: puffs_portal.c,v 1.6 2012/03/20 18:50:31 matt Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -66,7 +66,7 @@ int readcfg, sigchild;
 const char *cfg;
 
 static void
-usage()
+usage(void)
 {
 
 	errx(1, "usage: %s [-o options] /path/portal.conf mount_point",
