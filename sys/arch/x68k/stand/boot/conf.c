@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.8 2005/12/11 12:19:44 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.9 2012/03/20 12:38:33 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -52,7 +52,8 @@ const struct devspec devspec[] = {
 };
 
 struct fs_ops file_system[] = {
-	FS_OPS(ufs),
+	FS_OPS(ffsv1),
+	FS_OPS(ffsv2),
 	FS_OPS(lfsv1),
 	FS_OPS(lfsv2),
 	FS_OPS(cd9660),
