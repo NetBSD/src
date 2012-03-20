@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.67 2011/09/22 12:49:57 christos Exp $	*/
+/*	$NetBSD: function.c,v 1.68 2012/03/20 20:34:57 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.67 2011/09/22 12:49:57 christos Exp $");
+__RCSID("$NetBSD: function.c,v 1.68 2012/03/20 20:34:57 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -215,9 +215,7 @@ c_amin(char ***argvp, int isok)
  *	file.
  */
 int
-f_anewer(plan, entry)
-	PLAN *plan;
-	FTSENT *entry;
+f_anewer(PLAN *plan, FTSENT *entry)
 {
 
 	return (entry->fts_statp->st_atime > plan->t_data);
