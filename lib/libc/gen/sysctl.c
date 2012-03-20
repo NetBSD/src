@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.31 2012/03/13 21:13:36 christos Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.32 2012/03/20 16:36:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.31 2012/03/13 21:13:36 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.32 2012/03/20 16:36:05 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -70,12 +70,9 @@ static size_t __cvt_node_out(uint, const struct sysctlnode *, void **,
 #include <stdlib.h>
 
 int
-sysctl(name, namelen, oldp, oldlenp, newp, newlen)
-	const int *name;
-	unsigned int namelen;
-	void *oldp;
-	const void *newp;
-	size_t *oldlenp, newlen;
+sysctl(const int *name, unsigned int namelen,
+	void *oldp, size_t *oldlenp,
+	const void *newp, size_t newlen)
 {
 	size_t oldlen, savelen;
 	int error;
@@ -105,12 +102,9 @@ sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 }
 
 static int
-user_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
-	const int *name;
-	unsigned int namelen;
-	void *oldp;
-	const void *newp;
-	size_t *oldlenp, newlen;
+user_sysctl(const int *name, unsigned int namelen,
+	void *oldp, size_t *oldlenp,
+	const void *newp, size_t newlen)
 {
 #define _INT(s, n, v, d) {					\
 	.sysctl_flags = CTLFLAG_IMMEDIATE|CTLFLAG_PERMANENT|	\

@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_elf32.c,v 1.33 2011/10/15 21:06:58 christos Exp $ */
+/* $NetBSD: nlist_elf32.c,v 1.34 2012/03/20 16:36:05 matt Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nlist_elf32.c,v 1.33 2011/10/15 21:06:58 christos Exp $");
+__RCSID("$NetBSD: nlist_elf32.c,v 1.34 2012/03/20 16:36:05 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /* If not included by nlist_elf64.c, ELFSIZE won't be defined. */
@@ -73,9 +73,7 @@ __RCSID("$NetBSD: nlist_elf32.c,v 1.33 2011/10/15 21:06:58 christos Exp $");
 #define	BADUNMAP		goto unmap
 
 int
-ELFNAMEEND(__fdnlist)(fd, list)
-	int fd;
-	struct nlist *list;
+ELFNAMEEND(__fdnlist)(int fd, struct nlist *list)
 {
 	struct stat st;
 	struct nlist *p;
