@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_addr.c,v 1.13 2012/03/13 21:13:41 christos Exp $	*/
+/*	$NetBSD: iso_addr.c,v 1.14 2012/03/20 17:44:18 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)iso_addr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: iso_addr.c,v 1.13 2012/03/13 21:13:41 christos Exp $");
+__RCSID("$NetBSD: iso_addr.c,v 1.14 2012/03/20 17:44:18 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,8 +54,7 @@ __RCSID("$NetBSD: iso_addr.c,v 1.13 2012/03/13 21:13:41 christos Exp $");
 #define DELIM	(4*2)
 
 struct iso_addr *
-iso_addr(addr)
-	register const char *addr;
+iso_addr(const char *addr)
 {
 	static struct iso_addr out_addr;
 	register char *cp = out_addr.isoa_genaddr;
@@ -103,8 +102,7 @@ iso_addr(addr)
 static const char hexlist[16] = "0123456789abcdef";
 
 char *
-iso_ntoa(isoa)
-	const struct iso_addr *isoa;
+iso_ntoa(const struct iso_addr *isoa)
 {
 	static char obuf[64];
 	char *out = obuf; 
