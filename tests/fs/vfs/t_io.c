@@ -1,4 +1,4 @@
-/*	$NetBSD: t_io.c,v 1.9 2012/03/20 05:21:45 jruoho Exp $	*/
+/*	$NetBSD: t_io.c,v 1.10 2012/03/20 18:20:49 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -89,7 +89,6 @@ extendbody(const atf_tc_t *tc, off_t seekcnt)
 	RL(rump_sys_ftruncate(fd, seekcnt));
 	RL(rump_sys_fstat(fd, &sb));
 	ATF_REQUIRE_EQ(sb.st_size, seekcnt);
-	atf_tc_expect_pass();
 
 	ATF_REQUIRE_EQ(rump_sys_write(fd, TESTSTR, TESTSZ), TESTSZ);
 	ATF_REQUIRE_EQ(rump_sys_pread(fd, buf, TESTSZ, seekcnt), TESTSZ);
