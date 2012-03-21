@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2011/08/14 08:19:04 christos Exp $
+# $NetBSD: Makefile,v 1.9 2012/03/21 05:37:42 matt Exp $
 
 LIB=            perfuse
 LIBDPLIBS+=     puffs	${.CURDIR}/../libpuffs
@@ -12,7 +12,7 @@ CPPFLAGS+=	-I${.CURDIR}
 CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libpuffs 
 SRCS=           perfuse.c ops.c subr.c debug.c
 MAN=		libperfuse.3
-WARNS=          4
+WARNS?=		5
 INCS=           perfuse.h
 INCSDIR=	/usr/include
 

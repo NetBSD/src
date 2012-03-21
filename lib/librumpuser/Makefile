@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.5 2010/11/30 14:23:24 pooka Exp $
+#	$NetBSD: Makefile,v 1.6 2012/03/21 05:37:44 matt Exp $
 #
 
-WARNS=		4
+WARNS?=		5
 
 # rumpuser.h is in sys/rump for inclusion by kernel components
 .PATH:		${.CURDIR}/../../sys/rump/include/rump

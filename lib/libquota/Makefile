@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.9 2012/02/13 01:24:03 dholland Exp $
+#	$NetBSD: Makefile,v 1.10 2012/03/21 05:37:43 matt Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 .include <bsd.own.mk>
 
-WARNS=	4
+WARNS?=	5
 LIB=	quota
 
 LIBDPLIBS+=     rpcsvc  ${.CURDIR}/../librpcsvc
