@@ -1,4 +1,4 @@
-/*	$NetBSD: setmode.c,v 1.32 2012/03/20 16:36:05 matt Exp $	*/
+/*	$NetBSD: setmode.c,v 1.33 2012/03/21 14:28:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: setmode.c,v 1.32 2012/03/20 16:36:05 matt Exp $");
+__RCSID("$NetBSD: setmode.c,v 1.33 2012/03/21 14:28:32 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -367,7 +367,7 @@ out:
 }
 
 static BITCMD *
-addcmd(BITCMD *set, mode_t oparg, mode_t who, mode_t op, mode_t mask)
+addcmd(BITCMD *set, mode_t op, mode_t who, mode_t oparg, mode_t mask)
 {
 
 	_DIAGASSERT(set != NULL);
