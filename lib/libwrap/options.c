@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.14 2005/09/24 14:26:12 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.15 2012/03/21 10:10:37 matt Exp $	*/
 
  /*
   * General skeleton for adding options to the access control language. The
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#) options.c 1.17 96/02/11 17:01:31";
 #else
-__RCSID("$NetBSD: options.c,v 1.14 2005/09/24 14:26:12 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.15 2012/03/21 10:10:37 matt Exp $");
 #endif
 #endif
 
@@ -72,50 +72,50 @@ static char whitespace_eq[] = "= \t\r\n";
 #define whitespace (whitespace_eq + 1)
 
 static char *get_field			/* chew :-delimited field off string */
-		__P((char *));
+		(char *);
 static char *chop_string		/* strip leading and trailing blanks */
-		__P((char *));
+		(char *);
 struct syslog_names;
 static int severity_map 
-		__P((struct syslog_names *, char *));
+		(const struct syslog_names *, char *);
 
 /* List of functions that implement the options. Add yours here. */
 
 static void user_option			/* execute "user name.group" option */
-		__P((char *, struct request_info *));
+		(char *, struct request_info *);
 static void group_option		/* execute "group name" option */
-		__P((char *, struct request_info *));
+		(char *, struct request_info *);
 static void umask_option		/* execute "umask mask" option */
-		__P((char *, struct request_info *));
+		(char *, struct request_info *);
 static void linger_option		/* execute "linger time" option */
-		__P((char *, struct request_info *));
+		(char *, struct request_info *);
 static void keepalive_option		/* execute "keepalive" option */
-		__P((char *, struct request_info *));
+		(char *, struct request_info *);
 static void spawn_option		/* execute "spawn command" option */
-		__P((char *, struct request_info *));
+		(char *, struct request_info *);
 static void twist_option		/* execute "twist command" option */
-		__P((char *, struct request_info *));
+		(char *, struct request_info *);
 static void rfc931_option		/* execute "rfc931" option */
-		__P((char *, struct request_info *));
+		(char *, struct request_info *);
 static void setenv_option		/* execute "setenv name value" */
-		__P((char *, struct request_info *));
+		(char *, struct request_info *);
 static void nice_option			/* execute "nice" option */
-		__P((char *, struct request_info *));
+		(char *, struct request_info *);
 static void severity_option		/* execute "severity value" */
-		__P((char *, struct request_info *));
+		(char *, struct request_info *);
 static void allow_option		/* execute "allow" option */
-		__P((char *, struct request_info *));
+		(char *, struct request_info *);
 static void deny_option			/* execute "deny" option */
-		__P((char *, struct request_info *));
+		(char *, struct request_info *);
 static void banners_option		/* execute "banners path" option */
-		__P((char *, struct request_info *));
+		(char *, struct request_info *);
 
 /* Structure of the options table. */
 
 struct option {
-    char   *name;			/* keyword name, case is ignored */
+    const char *name;			/* keyword name, case is ignored */
     void  (*func)			/* function that does the real work */
-		__P((char *, struct request_info *));
+		(char *, struct request_info *);
     int     flags;			/* see below... */
 };
 
@@ -152,9 +152,8 @@ static struct option option_table[] = {
 
 /* process_options - process access control options */
 
-void    process_options(options, request)
-char   *options;
-struct request_info *request;
+void
+process_options(char *options, struct request_info *request)
 {
     char   *key;
     char   *value;
@@ -218,9 +217,8 @@ struct request_info *request;
 
 /* ARGSUSED */
 
-static void allow_option(value, request)
-char   *value;
-struct request_info *request;
+static void
+allow_option(char *value, struct request_info *request)
 {
     longjmp(tcpd_buf, AC_PERMIT);
 }
@@ -229,18 +227,16 @@ struct request_info *request;
 
 /* ARGSUSED */
 
-static void deny_option(value, request)
-char   *value;
-struct request_info *request;
+static void
+deny_option(char *value, struct request_info *request)
 {
     longjmp(tcpd_buf, AC_DENY);
 }
 
 /* banners_option - expand %<char>, terminate each line with CRLF */
 
-static void banners_option(value, request)
-char   *value;
-struct request_info *request;
+static void
+banners_option(char *value, struct request_info *request)
 {
     char    path[MAXPATHLEN];
     char    ibuf[BUFSIZ];
@@ -270,9 +266,8 @@ struct request_info *request;
 
 /* ARGSUSED */
 
-static void group_option(value, request)
-char   *value;
-struct request_info *request;
+static void
+group_option(char *value, struct request_info *request)
 {
     struct group grs, *grp;
     char grbuf[1024];
@@ -289,9 +284,8 @@ struct request_info *request;
 
 /* ARGSUSED */
 
-static void user_option(value, request)
-char   *value;
-struct request_info *request;
+static void
+user_option(char *value, struct request_info *request)
 {
     struct passwd *pwd, pws;
     char   *group;
@@ -311,9 +305,8 @@ struct request_info *request;
 
 /* ARGSUSED */
 
-static void umask_option(value, request)
-char   *value;
-struct request_info *request;
+static void
+umask_option(char *value, struct request_info *request)
 {
     unsigned mask;
     char    junk;
@@ -327,9 +320,8 @@ struct request_info *request;
 
 /* ARGSUSED */
 
-static void spawn_option(value, request)
-char   *value;
-struct request_info *request;
+static void
+spawn_option(char *value, struct request_info *request)
 {
     if (dry_run == 0)
 	shell_cmd(value);
@@ -339,9 +331,8 @@ struct request_info *request;
 
 /* ARGSUSED */
 
-static void linger_option(value, request)
-char   *value;
-struct request_info *request;
+static void
+linger_option(char *value, struct request_info *request)
 {
     struct linger linger;
     char    junk;
@@ -361,9 +352,8 @@ struct request_info *request;
 
 /* ARGSUSED */
 
-static void keepalive_option(value, request)
-char   *value;
-struct request_info *request;
+static void
+keepalive_option(char *value, struct request_info *request)
 {
     static int on = 1;
 
@@ -376,9 +366,8 @@ struct request_info *request;
 
 /* ARGSUSED */
 
-static void nice_option(value, request)
-char   *value;
-struct request_info *request;
+static void
+nice_option(char *value, struct request_info *request)
 {
     int     niceval = 10;
     char    junk;
@@ -391,9 +380,8 @@ struct request_info *request;
 
 /* twist_option - replace process by shell command */
 
-static void twist_option(value, request)
-char   *value;
-struct request_info *request;
+static void
+twist_option(char *value, struct request_info *request)
 {
     if (dry_run != 0) {
 	dry_run = 0;
@@ -425,9 +413,8 @@ struct request_info *request;
 
 /* rfc931_option - look up remote user name */
 
-static void rfc931_option(value, request)
-char   *value;
-struct request_info *request;
+static void
+rfc931_option(char *value, struct request_info *request)
 {
     int     timeout;
     char    junk;
@@ -444,9 +431,8 @@ struct request_info *request;
 
 /* ARGSUSED */
 
-static void setenv_option(value, request)
-char   *value;
-struct request_info *request;
+static void
+setenv_option(char *value, struct request_info *request)
 {
     char   *var_value;
 
@@ -462,11 +448,11 @@ struct request_info *request;
   */
 
 struct syslog_names {
-    char   *name;
-    int     value;
+    const char *name;
+    int value;
 };
 
-static struct syslog_names log_fac[] = {
+static const struct syslog_names log_fac[] = {
 #ifdef LOG_KERN
     { "kern", LOG_KERN },
 #endif
@@ -527,7 +513,7 @@ static struct syslog_names log_fac[] = {
     { NULL, 0 }
 };
 
-static struct syslog_names log_sev[] = {
+static const struct syslog_names log_sev[] = {
 #ifdef LOG_EMERG
     { "emerg", LOG_EMERG },
 #endif
@@ -557,11 +543,10 @@ static struct syslog_names log_sev[] = {
 
 /* severity_map - lookup facility or severity value */
 
-static int severity_map(table, name)
-struct syslog_names *table;
-char   *name;
+static int
+severity_map(const struct syslog_names *table, char *name)
 {
-    struct syslog_names *t;
+    const struct syslog_names *t;
 
     for (t = table; t->name; t++)
 	if (STR_EQ(t->name, name))
@@ -575,9 +560,8 @@ char   *name;
 
 /* ARGSUSED */
 
-static void severity_option(value, request)
-char   *value;
-struct request_info *request;
+static void
+severity_option(char *value, struct request_info *request)
 {
     char   *level = split_at(value, '.');
 
@@ -588,10 +572,11 @@ struct request_info *request;
 
 /* get_field - return pointer to next field in string */
 
-static char *get_field(string)
-char   *string;
+static char *
+get_field(char *string)
 {
-    static char *last = "";
+    static char nul = '\0';
+    static char *last = &nul;
     char   *src;
     char   *dst;
     char   *ret;
@@ -631,8 +616,8 @@ char   *string;
 
 /* chop_string - strip leading and trailing blanks from string */
 
-static char *chop_string(string)
-register char *string;
+static char *
+chop_string(register char *string)
 {
     char   *start = NULL;
     char   *end = NULL;

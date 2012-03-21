@@ -1,4 +1,4 @@
-/*  $NetBSD: debug.c,v 1.10 2012/01/29 09:01:31 dholland Exp $ */
+/*  $NetBSD: debug.c,v 1.11 2012/03/21 10:10:36 matt Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -84,7 +84,7 @@ const struct perfuse_opcode perfuse_opcode[] = {
 	{ 0, "UNKNOWN" },
 };
 
-const char *perfuse_qtypestr[] = { 
+const char * const perfuse_qtypestr[] = { 
 	"READDIR",
 	"READ",
 	"WRITE",
@@ -94,8 +94,7 @@ const char *perfuse_qtypestr[] = {
 };
 
 const char *
-perfuse_opname(opcode)
-	int opcode;
+perfuse_opname(int opcode)
 {
 	const struct perfuse_opcode *po;
 
@@ -108,9 +107,7 @@ perfuse_opname(opcode)
 }
 
 char *
-perfuse_opdump_in(ps, pm)
-	struct perfuse_state *ps;
-	perfuse_msg_t *pm;
+perfuse_opdump_in(struct perfuse_state *ps, perfuse_msg_t *pm)
 {
 	struct fuse_in_header *fih;
 	static char buf[BUFSIZ] = "";
@@ -131,10 +128,8 @@ perfuse_opdump_in(ps, pm)
 }
 
 struct perfuse_trace *
-perfuse_trace_begin(ps, opc, pm)
-	struct perfuse_state *ps;
-	puffs_cookie_t opc;
-	perfuse_msg_t *pm;
+perfuse_trace_begin(struct perfuse_state *ps, puffs_cookie_t opc,
+	perfuse_msg_t *pm)
 {
 	struct perfuse_trace *pt;
 
@@ -165,10 +160,7 @@ perfuse_trace_begin(ps, opc, pm)
 }
 
 void
-perfuse_trace_end(ps, pt, error)
-	struct perfuse_state *ps;
-	struct perfuse_trace *pt;
-	int error;
+perfuse_trace_end(struct perfuse_state *ps, struct perfuse_trace *pt, int error)
 {
 	if (clock_gettime(CLOCK_REALTIME, &pt->pt_end) != 0)
 		DERR(EX_OSERR, "clock_gettime failed");
@@ -189,9 +181,7 @@ perfuse_trace_end(ps, pt, error)
 }
 
 void
-perfuse_trace_dump(pu, fp)
-	struct puffs_usermount *pu;
-	FILE *fp;
+perfuse_trace_dump(struct puffs_usermount *pu, FILE *fp)
 {
 	struct perfuse_state *ps;
 	struct perfuse_trace *pt;
