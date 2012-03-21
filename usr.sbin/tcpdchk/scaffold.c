@@ -1,4 +1,4 @@
-/*	$NetBSD: scaffold.c,v 1.10 2003/07/14 09:07:22 itojun Exp $	*/
+/*	$NetBSD: scaffold.c,v 1.11 2012/03/21 10:11:34 matt Exp $	*/
 
  /*
   * Routines for testing only. Not really industrial strength.
@@ -11,7 +11,7 @@
 #if 0
 static char sccs_id[] = "@(#) scaffold.c 1.6 97/03/21 19:27:24";
 #else
-__RCSID("$NetBSD: scaffold.c,v 1.10 2003/07/14 09:07:22 itojun Exp $");
+__RCSID("$NetBSD: scaffold.c,v 1.11 2012/03/21 10:11:34 matt Exp $");
 #endif
 #endif
 
@@ -134,8 +134,8 @@ struct request_info *request;
 
 /* ARGSUSED */
 
-void    rfc931(request)
-struct request_info *request;
+void
+rfc931(struct request_info *request)
 {
     strlcpy(request->user, unknown, sizeof(request->user));
 }
@@ -143,9 +143,8 @@ struct request_info *request;
 
 /* check_path - examine accessibility */
 
-int     check_path(path, st)
-char   *path;
-struct stat *st;
+int
+check_path(const char *path, struct stat *st)
 {
     struct stat stbuf;
     char    buf[BUFSIZ];

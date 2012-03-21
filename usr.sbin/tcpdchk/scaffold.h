@@ -1,4 +1,4 @@
-/*	$NetBSD: scaffold.h,v 1.4 2002/06/06 21:28:50 itojun Exp $	*/
+/*	$NetBSD: scaffold.h,v 1.5 2012/03/21 10:11:34 matt Exp $	*/
 
  /*
   * @(#) scaffold.h 1.3 94/12/31 18:19:19
@@ -6,11 +6,11 @@
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
 
-struct addrinfo *find_inet_addr __P((char *, int));
-int check_dns __P((char *));
-void shell_cmd __P((char *));
-void clean_exit __P((struct request_info *));
+struct addrinfo *find_inet_addr(char *, int);
+int check_dns(char *);
+void shell_cmd(char *);
+void clean_exit(struct request_info *);
 #if 0
-void rfc931 __P((struct request_info *));
+void rfc931(struct request_info *);
 #endif
-int check_path __P((char *, struct stat *));
+int check_path(const char *, struct stat *);
