@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.26 2012/03/21 09:49:02 he Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.27 2012/03/21 10:10:36 matt Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.26 2012/03/21 09:49:02 he Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.27 2012/03/21 10:10:36 matt Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -3227,7 +3227,8 @@ malloc_print_stats(void)
 		    "");
 
 		_malloc_message("Chunk size: ", umax2s(chunksize, s), "", "");
-		_malloc_message(" (2^", umax2s((size_t) opt_chunk_2pow, s), ")\n", "");
+		_malloc_message(" (2^", umax2s((size_t)opt_chunk_2pow, s),
+		    ")\n", "");
 
 #ifdef MALLOC_STATS
 		{

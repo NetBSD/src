@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.4 1999/07/03 12:30:41 simonb Exp $	*/
+/*	$NetBSD: refuse.c,v 1.5 2012/03/21 10:10:37 matt Exp $	*/
 
  /*
   * refuse() reports a refused connection, and takes the consequences: in
@@ -14,7 +14,7 @@
 #if 0
 static char sccsid[] = "@(#) refuse.c 1.5 94/12/28 17:42:39";
 #else
-__RCSID("$NetBSD: refuse.c,v 1.4 1999/07/03 12:30:41 simonb Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.5 2012/03/21 10:10:37 matt Exp $");
 #endif
 #endif
 
@@ -29,8 +29,8 @@ __RCSID("$NetBSD: refuse.c,v 1.4 1999/07/03 12:30:41 simonb Exp $");
 
 /* refuse - refuse request */
 
-void    refuse(request)
-struct request_info *request;
+void
+refuse(struct request_info *request)
 {
     syslog(deny_severity, "refused connect from %s", eval_client(request));
     clean_exit(request);
