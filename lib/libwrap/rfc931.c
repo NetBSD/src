@@ -1,4 +1,4 @@
-/*	$NetBSD: rfc931.c,v 1.8 2002/06/06 21:45:19 itojun Exp $	*/
+/*	$NetBSD: rfc931.c,v 1.9 2012/03/21 10:10:37 matt Exp $	*/
 
  /*
   * rfc931() speaks a common subset of the RFC 931, AUTH, TAP, IDENT and RFC
@@ -16,7 +16,7 @@
 #if 0
 static char sccsid[] = "@(#) rfc931.c 1.10 95/01/02 16:11:34";
 #else
-__RCSID("$NetBSD: rfc931.c,v 1.8 2002/06/06 21:45:19 itojun Exp $");
+__RCSID("$NetBSD: rfc931.c,v 1.9 2012/03/21 10:10:37 matt Exp $");
 #endif
 #endif
 
@@ -44,15 +44,13 @@ int     rfc931_timeout = RFC931_TIMEOUT;/* Global so it can be changed */
 
 static jmp_buf timebuf;
 
-static FILE *fsocket __P((int, int, int));
-static void timeout __P((int));
+static FILE *fsocket(int, int, int);
+static void timeout(int);
 
 /* fsocket - open stdio stream on top of socket */
 
-static FILE *fsocket(domain, type, protocol)
-int     domain;
-int     type;
-int     protocol;
+static FILE *
+fsocket(int domain, int type, int protocol)
 {
     int     s;
     FILE   *fp;
@@ -71,18 +69,16 @@ int     protocol;
 
 /* timeout - handle timeouts */
 
-static void timeout(sig)
-int     sig;
+static void
+timeout(int sig)
 {
     longjmp(timebuf, sig);
 }
 
 /* rfc931 - return remote user name, given socket structures */
 
-void    rfc931(rmt_sin, our_sin, dest)
-struct sockaddr *rmt_sin;
-struct sockaddr *our_sin;
-char   *dest;
+void
+rfc931(struct sockaddr *rmt_sin, struct sockaddr *our_sin, char *dest)
 {
     unsigned rmt_port;
     unsigned our_port;
@@ -93,9 +89,9 @@ char   *dest;
     char   *cp;
     char   *result = unknown;
     FILE   *fp;
-    int salen;
-    u_short *rmt_portp;
-    u_short *our_portp;
+    volatile int salen;
+    u_short * volatile rmt_portp;
+    u_short * volatile our_portp;
 
     /* address family must be the same */
     if (rmt_sin->sa_family != our_sin->sa_family) {
