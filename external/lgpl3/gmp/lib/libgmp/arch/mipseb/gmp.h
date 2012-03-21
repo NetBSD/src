@@ -2271,7 +2271,7 @@ enum
 };
 
 /* Define CC and CFLAGS which were used to build this version of GMP */
-#define __GMP_CC "/var/obj/newsmips/usr/src3/tooldir.NetBSD-5.99.48-amd64/bin/mipseb--netbsd-gcc --sysroot=/var/obj/newsmips/usr/src3/destdir.newsmips -L/var/obj/newsmips/usr/src3/destdir.newsmips/lib -L/var/obj/newsmips/usr/src3/destdir.newsmips/usr/lib -B/var/obj/newsmips/usr/src3/destdir.newsmips/usr/lib/ -I/var/tmp/gmp/mipseb/.native/gcc/include -std=gnu99"
+#define __GMP_CC "gcc -std=gnu99"
 #define __GMP_CFLAGS "-O2 -pedantic -mabi=32"
 
 /* Major version number is the value of __GNU_MP__ too, above and in mp.h. */
