@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.68 2012/03/17 19:32:13 bouyer Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.69 2012/03/21 21:31:03 jdc Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -2998,3 +2998,9 @@ sbin/mount/mount.8				1.73, 1.74
 	Clarify UFS2 superblock format stuff. Bump date.  Fix PR 45166.
 	[dholland, ticket #1743]
 
+sys/dev/wscons/wsemul_vt100.c			1.31
+sys/dev/wscons/wsemul_vt100_chars.c		1.12
+sys/dev/wscons/wsksymdef.h			1.62
+
+	s/portugese/portuguese/, spotted by Ari Constancio in PR misc/40202.
+	[bouyer, ticket #1727]
