@@ -1,4 +1,4 @@
-/* $NetBSD: nlist.c,v 1.23 2012/03/20 16:36:05 matt Exp $ */
+/* $NetBSD: nlist.c,v 1.24 2012/03/21 15:32:26 christos Exp $ */
 
 /*
  * Copyright (c) 1989, 1993
@@ -66,7 +66,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: nlist.c,v 1.23 2012/03/20 16:36:05 matt Exp $");
+__RCSID("$NetBSD: nlist.c,v 1.24 2012/03/21 15:32:26 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -112,9 +112,7 @@ static const struct {
 };
 	
 int
-nlist(name, list)
-	const char *name;
-	struct nlist *list;
+nlist(const char *name, struct nlist *list)
 {
 	int fd, n;
 
@@ -130,9 +128,7 @@ nlist(name, list)
 }
 
 int
-__fdnlist(fd, list)
-	int fd;
-	struct nlist *list;
+__fdnlist(int fd, struct nlist *list)
 {
 	size_t i;
 	int rv;
