@@ -1,4 +1,4 @@
-/*	$NetBSD: ev_timers.c,v 1.10 2012/03/20 17:44:17 matt Exp $	*/
+/*	$NetBSD: ev_timers.c,v 1.11 2012/03/21 00:34:54 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -26,7 +26,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: ev_timers.c,v 1.6 2005/04/27 04:56:36 sra Exp";
 #else
-__RCSID("$NetBSD: ev_timers.c,v 1.10 2012/03/20 17:44:17 matt Exp $");
+__RCSID("$NetBSD: ev_timers.c,v 1.11 2012/03/21 00:34:54 christos Exp $");
 #endif
 #endif
 
@@ -137,7 +137,7 @@ evNowTime(void)
 		return (tsnow);
 #endif
 	if (gettimeofday(&now, NULL) < 0)
-		return (evConsTime(0L, 0L));
+		return (evConsTime((time_t)0, 0L));
 	return (evTimeSpec(now));
 }
 
@@ -150,7 +150,7 @@ evUTCTime(void) {
 		return (tsnow);
 #endif
 	if (gettimeofday(&now, NULL) < 0)
-		return (evConsTime(0L, 0L));
+		return (evConsTime((time_t)0, 0L));
 	return (evTimeSpec(now));
 }
 
