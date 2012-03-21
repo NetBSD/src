@@ -1,4 +1,4 @@
-/*	$NetBSD: strfmon.c,v 1.9 2012/03/13 21:13:48 christos Exp $	*/
+/*	$NetBSD: strfmon.c,v 1.10 2012/03/21 14:19:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexey Zelkin <phantom@FreeBSD.org>
@@ -32,7 +32,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdlib/strfmon.c,v 1.14 2003/03/20 08:18:55 ache Exp $");
 #else
-__RCSID("$NetBSD: strfmon.c,v 1.9 2012/03/13 21:13:48 christos Exp $");
+__RCSID("$NetBSD: strfmon.c,v 1.10 2012/03/21 14:19:15 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,6 +62,10 @@ __RCSID("$NetBSD: strfmon.c,v 1.9 2012/03/13 21:13:48 christos Exp $");
 #define	LEFT_JUSTIFY		0x20	/* left justify */
 #define	USE_INTL_CURRENCY	0x40	/* use international currency symbol */
 #define IS_NEGATIVE		0x80	/* is argument value negative ? */
+
+#ifndef NBCHAR_MAX
+#define NBCHAR_MAX ((unsigned char)CHAR_MAX)
+#endif
 
 /* internal macros */
 #define PRINT(CH) do {						\
@@ -443,9 +447,9 @@ __setup_vars(int flags, char *cs_precedes, char *sep_by_space,
 	/* Set defult values for unspecified information. */
 	if (*cs_precedes != 0)
 		*cs_precedes = 1;
-	if (*sep_by_space == CHAR_MAX)
+	if ((unsigned char)*sep_by_space == NBCHAR_MAX)
 		*sep_by_space = 0;
-	if (*sign_posn == CHAR_MAX)
+	if ((unsigned char)*sign_posn == NBCHAR_MAX)
 		*sign_posn = 0;
 }
 
@@ -482,14 +486,14 @@ get_groups(int size, char *grouping) {
 
 	int	chars = 0;
 
-	if (*grouping == CHAR_MAX || *grouping <= 0)	/* no grouping ? */
+	if ((unsigned char)*grouping == NBCHAR_MAX || *grouping <= 0)	/* no grouping ? */
 		return (0);
 
 	while (size > (int)*grouping) {
 		chars++;
 		size -= (int)*grouping++;
 		/* no more grouping ? */
-		if (*grouping == CHAR_MAX)
+		if ((unsigned char)*grouping == NBCHAR_MAX)
 			break;
 		/* rest grouping with same value ? */
 		if (*grouping == 0) {
@@ -581,7 +585,7 @@ __format_grouped_double(double value, int *flags,
         /* XXX: Why not use %' instead? */
 	if ((*flags & NEED_GROUPING) &&
 	    thousands_sep != '\0' &&	/* XXX: need investigation */
-	    *grouping != CHAR_MAX &&
+	    (unsigned char)*grouping != NBCHAR_MAX &&
 	    *grouping > 0) {
 		while (avalue_size > (int)*grouping) {
 			GRPCPY(*grouping);
@@ -589,7 +593,7 @@ __format_grouped_double(double value, int *flags,
 			grouping++;
 
 			/* no more grouping ? */
-			if (*grouping == CHAR_MAX)
+			if ((unsigned char)*grouping == NBCHAR_MAX)
 				break;
 
 			/* rest grouping with same value ? */
