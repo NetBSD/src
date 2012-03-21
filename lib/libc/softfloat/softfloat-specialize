@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat-specialize,v 1.6 2011/03/06 10:27:37 martin Exp $	*/
+/*	$NetBSD: softfloat-specialize,v 1.7 2012/03/21 02:32:26 christos Exp $	*/
 
 /* This is a derivative work. */
 
@@ -114,7 +114,7 @@ static
 flag float32_is_nan( float32 a )
 {
 
-    return ( 0xFF000000 < (bits32) ( a<<1 ) );
+    return ( (bits32)0xFF000000 < (bits32) ( a<<1 ) );
 
 }
 
@@ -163,7 +163,7 @@ precision floating-point format.
 static float32 commonNaNToFloat32( commonNaNT a )
 {
 
-    return ( ( (bits32) a.sign )<<31 ) | 0x7FC00000 | ( a.high>>41 );
+    return ( ( (bits32) a.sign )<<31 ) | 0x7FC00000 | (bits32)( a.high>>41 );
 
 }
 
@@ -213,7 +213,7 @@ static
 flag float64_is_nan( float64 a )
 {
 
-    return ( LIT64( 0xFFE0000000000000 ) <
+    return ( (bits64)LIT64( 0xFFE0000000000000 ) <
 	     (bits64) ( FLOAT64_DEMANGLE(a)<<1 ) );
 
 }
@@ -249,7 +249,7 @@ static commonNaNT float64ToCommonNaN( float64 a )
     commonNaNT z;
 
     if ( float64_is_signaling_nan( a ) ) float_raise( float_flag_invalid );
-    z.sign = FLOAT64_DEMANGLE(a)>>63;
+    z.sign = (flag)(FLOAT64_DEMANGLE(a)>>63);
     z.low = 0;
     z.high = FLOAT64_DEMANGLE(a)<<12;
     return z;
@@ -427,7 +427,7 @@ flag float128_is_nan( float128 a )
 {
 
     return
-           ( LIT64( 0xFFFE000000000000 ) <= (bits64) ( a.high<<1 ) )
+           ( (bits64)LIT64( 0xFFFE000000000000 ) <= (bits64) ( a.high<<1 ) )
         && ( a.low || ( a.high & LIT64( 0x0000FFFFFFFFFFFF ) ) );
 
 }
@@ -459,7 +459,7 @@ static commonNaNT float128ToCommonNaN( float128 a )
     commonNaNT z;
 
     if ( float128_is_signaling_nan( a ) ) float_raise( float_flag_invalid );
-    z.sign = a.high>>63;
+    z.sign = (flag)(a.high>>63);
     shortShift128Left( a.high, a.low, 16, &z.high, &z.low );
     return z;
 
