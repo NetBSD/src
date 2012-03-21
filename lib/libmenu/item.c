@@ -1,4 +1,4 @@
-/*	$NetBSD: item.c,v 1.11 2007/07/23 12:12:19 blymn Exp $	*/
+/*	$NetBSD: item.c,v 1.12 2012/03/21 05:33:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: item.c,v 1.11 2007/07/23 12:12:19 blymn Exp $");
+__RCSID("$NetBSD: item.c,v 1.12 2012/03/21 05:33:27 matt Exp $");
 
 #include <menu.h>
 #include <stdlib.h>
@@ -185,9 +185,7 @@ item_selected(MENU *menu, int **sel)
  * defaults.
  */
 int
-set_item_opts(item, opts)
-        ITEM *item;
-        OPTIONS opts;
+set_item_opts(ITEM *item, OPTIONS opts)
 {
           /* selectable seems to be the only allowable item opt! */
         if (opts != O_SELECTABLE)
