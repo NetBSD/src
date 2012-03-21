@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.338.8.1 2012/03/05 20:59:25 sborrill Exp $	*/
+/*	$NetBSD: locore.s,v 1.338.8.2 2012/03/21 16:10:21 riz Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -491,7 +491,7 @@ _C_LABEL(trapbase):
 	VTRAP(0x060, interrupt_vector); ! 060 = interrupt vector
 	TRAP(T_PA_WATCHPT)		! 061 = physical address data watchpoint
 	TRAP(T_VA_WATCHPT)		! 062 = virtual address data watchpoint
-	UTRAP(T_ECCERR)			! We'll implement this one later
+	TRAP(T_ECCERR)			! 063 = corrected ECC error
 ufast_IMMU_miss:			! 064 = fast instr access MMU miss
 	ldxa	[%g0] ASI_IMMU_8KPTR, %g2 ! Load IMMU 8K TSB pointer
 #ifdef NO_TSB
@@ -727,7 +727,7 @@ kdatafault:
 	VTRAP(0x060, interrupt_vector); ! 060 = interrupt vector
 	TRAP(T_PA_WATCHPT)		! 061 = physical address data watchpoint
 	TRAP(T_VA_WATCHPT)		! 062 = virtual address data watchpoint
-	UTRAP(T_ECCERR)			! We'll implement this one later
+	TRAP(T_ECCERR)			! 063 = corrected ECC error
 kfast_IMMU_miss:			! 064 = fast instr access MMU miss
 	ldxa	[%g0] ASI_IMMU_8KPTR, %g2 ! Load IMMU 8K TSB pointer
 #ifdef NO_TSB
