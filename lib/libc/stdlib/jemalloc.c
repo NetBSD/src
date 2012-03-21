@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.24 2011/05/18 01:59:39 christos Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.25 2012/03/21 00:38:06 christos Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.24 2011/05/18 01:59:39 christos Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.25 2012/03/21 00:38:06 christos Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -816,7 +816,7 @@ static void	wrtmessage(const char *p1, const char *p2, const char *p3,
 #ifdef MALLOC_STATS
 static void	malloc_printf(const char *format, ...);
 #endif
-static char	*umax2s(uintmax_t x, char *s);
+static char	*umax2s(size_t x, char *s);
 static bool	base_pages_alloc(size_t minsize);
 static void	*base_alloc(size_t size);
 static chunk_node_t *base_chunk_node_alloc(void);
@@ -984,13 +984,13 @@ malloc_printf(const char *format, ...)
  */
 #define UMAX2S_BUFSIZE	21
 static char *
-umax2s(uintmax_t x, char *s)
+umax2s(size_t x, char *s)
 {
 	unsigned i;
 
 	/* Make sure UMAX2S_BUFSIZE is large enough. */
 	/* LINTED */
-	assert(sizeof(uintmax_t) <= 8);
+	assert(sizeof(size_t) <= 8);
 
 	i = UMAX2S_BUFSIZE - 1;
 	s[i] = '\0';
