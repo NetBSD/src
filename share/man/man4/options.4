@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.413 2012/03/13 19:25:41 njoly Exp $
+.\"	$NetBSD: options.4,v 1.414 2012/03/21 15:38:32 jakllsch Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd January 13, 2012
+.Dd March 21, 2012
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -2395,25 +2395,6 @@ and is only needed on 68040+PPC, not on
 has shut
 down and will only restart after a keyboard reset or a power cycle.
 .El
-.Ss arm32-specific Options
-.Bl -ohang
-.It Cd options FRENCH_KBD
-Include translation for French keyboards when using
-.Em pccons
-on a Shark.
-.It Cd options FINNISH_KBD
-Include translation for Finnish keyboards when using
-.Em pccons
-on a Shark.
-.It Cd options GERMAN_KBD
-Include translation for German keyboards when using
-.Em pccons
-on a Shark.
-.It Cd options NORWEGIAN_KBD
-Include translation for French keyboards when using
-.Em pccons
-on a Shark.
-.El
 .Ss atari-specific Options
 .Bl -ohang
 .It Cd options DISKLABEL_AHDI
@@ -2489,10 +2470,6 @@ Overrides the extended memory size passed in from the boot block.
 (Value given in kilobytes.
 Extended memory does not include the first megabyte.)
 Use this option only if the boot block reports the size incorrectly.
-.It Cd options FRENCH_KBD,FINNISH_KBD,GERMAN_KBD,NORWEGIAN_KBD
-Select a non-US keyboard layout for the
-.Em pccons
-console driver.
 .It Cd options CYRIX_CACHE_WORKS
 Relevant only to the Cyrix 486DLC CPU.
 This option is used to turn on the cache in hold-flush mode.
