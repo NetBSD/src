@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.28 2012/03/15 18:22:30 christos Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.29 2012/03/21 14:20:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.27 2007/01/09 00:28:08 imp Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.28 2012/03/15 18:22:30 christos Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.29 2012/03/21 14:20:47 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -290,8 +290,9 @@ __ultoa(u_long val, CHAR_T *endp, int base, int octzero, const char *xdigs,
 			 * If (*grp == CHAR_MAX) then no more grouping
 			 * should be performed.
 			 */
-			if (needgrp && ndig == *grp && *grp != CHAR_MAX
-					&& sval > 9) {
+			if (needgrp && ndig == *grp
+			    && (unsigned char)*grp != (unsigned char)CHAR_MAX
+			    && sval > 9) {
 				*--cp = thousep;
 				ndig = 0;
 				/*
@@ -362,8 +363,10 @@ __ujtoa(uintmax_t val, CHAR_T *endp, int base, int octzero,
 			 * If (*grp == CHAR_MAX) then no more grouping
 			 * should be performed.
 			 */
-			if (needgrp && *grp != CHAR_MAX && ndig == *grp
-					&& sval > 9) {
+			if (needgrp
+			    && (unsigned char)*grp != (unsigned char)CHAR_MAX
+			    && ndig == *grp
+			    && sval > 9) {
 				*--cp = thousep;
 				ndig = 0;
 				/*
@@ -1240,7 +1243,8 @@ fp_common:
 					/* space for thousands' grouping */
 					nseps = nrepeats = 0;
 					lead = expt;
-					while (*grouping != CHAR_MAX) {
+					while ((unsigned char)*grouping
+					    != (unsigned char)CHAR_MAX) {
 						if (lead <= *grouping)
 							break;
 						lead -= *grouping;
