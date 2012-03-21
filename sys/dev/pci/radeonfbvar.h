@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfbvar.h,v 1.13 2012/01/30 19:41:23 drochner Exp $ */
+/* $NetBSD: radeonfbvar.h,v 1.13.2.1 2012/03/21 16:12:19 riz Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -175,6 +175,8 @@ struct radeonfb_display {
 
 	struct callout          rd_bl_lvds_co;  /* delayed lvds operation */
 	uint32_t                rd_bl_lvds_val; /* value of delayed lvds */
+	int			rd_bl_on;
+	int			rd_bl_level;
 
 	int			rd_wsmode;
 
