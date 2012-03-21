@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.152 2012/03/19 18:46:36 bouyer Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.153 2012/03/21 21:30:57 jdc Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -6281,3 +6281,19 @@ gnu/dist/gcc4/gcc/unwind-dw2-fde-phdr.c		patch
 	screwed up if the right set of libraries isn't linked together.
 	[skrll, ticket #1725]
 
+sys/dev/wscons/wsemul_vt100.c			1.31
+sys/dev/wscons/wsemul_vt100_chars.c		1.12
+sys/dev/wscons/wsksymdef.h			1.62
+
+	s/portugese/portuguese/, spotted by Ari Constancio in PR misc/40202.
+	[bouyer, ticket #1727]
+
+src/sys/arch/i386/i386/gdt.c			patch
+src/sys/arch/i386/i386/machdep.c		patch
+src/sys/arch/i386/include/segments.h		patch
+
+	Do not special-case XEN and always use the proper selectors for %fs
+	and %gs in buildcontext() and setregs(). The consequence was that
+	signal handlers would have the wrong %fs/%gs. Found by running atf
+	tests under Xen/i386.
+	[bouyer, ticket #1738]
