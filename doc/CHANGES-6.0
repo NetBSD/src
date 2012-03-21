@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.57 2012/03/19 23:25:45 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.58 2012/03/21 16:16:00 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1415,4 +1415,54 @@ lib/libc/gen/humanize_number.c			1.16 via patch
 
 	PR/44097: Yamamoto Takashi: Prevent overflow.
 	[dholland, ticket #129]
+
+external/lgpl3/gmp/README			1.3
+external/lgpl3/gmp/lib/libgmp/arch/alpha/config.h 1.2
+external/lgpl3/gmp/lib/libgmp/arch/alpha/gmp.h	1.2
+external/lgpl3/gmp/lib/libgmp/arch/arm/config.h	1.2
+external/lgpl3/gmp/lib/libgmp/arch/armeb/config.h 1.2
+external/lgpl3/gmp/lib/libgmp/arch/hppa/config.h 1.2
+external/lgpl3/gmp/lib/libgmp/arch/hppa/gmp.h	1.2
+external/lgpl3/gmp/lib/libgmp/arch/m68000/config.h 1.2
+external/lgpl3/gmp/lib/libgmp/arch/m68000/gmp.h	1.2
+external/lgpl3/gmp/lib/libgmp/arch/m68k/config.h 1.2
+external/lgpl3/gmp/lib/libgmp/arch/m68k/gmp.h	1.2
+external/lgpl3/gmp/lib/libgmp/arch/mips64eb/config.h 1.2
+external/lgpl3/gmp/lib/libgmp/arch/mips64eb/gmp.h 1.3
+external/lgpl3/gmp/lib/libgmp/arch/mips64el/config.h 1.2
+external/lgpl3/gmp/lib/libgmp/arch/mips64el/gmp.h 1.3
+external/lgpl3/gmp/lib/libgmp/arch/mipseb/config.h 1.2
+external/lgpl3/gmp/lib/libgmp/arch/mipseb/gmp.h	1.2
+external/lgpl3/gmp/lib/libgmp/arch/mipsel/config.h 1.2
+external/lgpl3/gmp/lib/libgmp/arch/mipsel/gmp.h	1.2
+external/lgpl3/gmp/lib/libgmp/arch/powerpc64/config.h 1.2
+external/lgpl3/gmp/lib/libgmp/arch/powerpc64/config.m4 1.3
+external/lgpl3/gmp/lib/libgmp/arch/powerpc64/gmp.h 1.2
+external/lgpl3/gmp/lib/libgmp/arch/sh3eb/config.h 1.2
+external/lgpl3/gmp/lib/libgmp/arch/sh3eb/gmp.h	1.2
+external/lgpl3/gmp/lib/libgmp/arch/sh3el/config.h 1.2
+external/lgpl3/gmp/lib/libgmp/arch/sh3el/gmp.h	1.2
+external/lgpl3/gmp/lib/libgmp/arch/sparc/config.h 1.2
+
+	Clean up references to a specific user's trees, and make a note
+	about avoiding such in the future.
+	[mrg, ticket #130]
+
+sys/arch/sparc64/sparc64/locore.s		1.341
+sys/arch/sparc64/sparc64/trap.c			1.170-1.171
+
+	Fix sparc64 ECC error handling.
+	[mrg, ticket #131]
+
+sys/dev/pci/radeonfb.c				1.59
+sys/dev/pci/radeonfbvar.h			1.16
+
+	Adjust the backlight control interface for radeonfb(4) to match
+	the other drivers.
+	[macallan, ticket #132]
+
+sys/dev/raidframe/rf_netbsdkintf.c		1.296
+
+	Add the ability to autoconfigure raid components on raw disks.
+	[buhrow, ticket #133]
 
