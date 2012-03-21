@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.39 2007/05/28 12:06:21 tls Exp $
+#	$NetBSD: Makefile,v 1.40 2012/03/21 10:08:30 matt Exp $
+
+WARNS=	4
 
 USE_FORT?= yes	# network protocol library
 
