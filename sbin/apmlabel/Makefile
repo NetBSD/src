@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2007/03/05 23:06:53 dillo Exp $
+#	$NetBSD: Makefile,v 1.2 2012/03/21 00:35:33 riz Exp $
 
 .include <bsd.own.mk>
 
@@ -9,5 +9,5 @@ CPPFLAGS+= -I${DISKLABELPATH}
 MAN=	apmlabel.8
 LDADD+=	-lutil
 
-.PATH:	${DISKLABELPATH} ${NETBSDSRCDIR}/sys/lib/libkern
+.PATH:	${DISKLABELPATH}
 .include <bsd.prog.mk>
