@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_get_ioperm.c,v 1.6 2008/04/28 20:22:55 martin Exp $	*/
+/*	$NetBSD: i386_get_ioperm.c,v 1.7 2012/03/21 21:37:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,8 +37,7 @@
 int i386_get_ioperm(u_long *);
 
 int
-i386_get_ioperm(iomap)
-	u_long *iomap;
+i386_get_ioperm(u_long *iomap)
 {
 	struct i386_get_ioperm_args p;
 
