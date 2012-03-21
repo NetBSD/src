@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2011/06/20 07:43:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.23 2012/03/21 05:37:42 matt Exp $
 
 USE_SHLIBDIR=	yes
 
@@ -7,7 +7,7 @@ LIB=	crypt
 SRCS=	crypt.c md5crypt.c bcrypt.c crypt-sha1.c util.c pw_gensalt.c
 SRCS+=	hmac_sha1.c
 
-WARNS=	4
+WARNS?=	5
 
 MAN=	crypt.3
 MLINKS= crypt.3 encrypt.3 crypt.3 setkey.3

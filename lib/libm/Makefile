@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.121 2012/03/09 08:03:53 njoly Exp $
+#  $NetBSD: Makefile,v 1.122 2012/03/21 05:37:42 matt Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -108,10 +108,10 @@ ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_fmod.S e_log.S \
 # XXX - ripped out due to lack of the insn polyd in the Mariah chip,
 # and emulation code isn't written yet.
 ARCHS_SRCS = n_scalbn.S
-WARNS?=4
+WARNS?=5
 .endif
 
-WARNS?=4
+WARNS?=5
 
 .PATH:	${.CURDIR}/man
 .PATH:	${.CURDIR}/src
