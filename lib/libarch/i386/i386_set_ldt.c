@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_set_ldt.c,v 1.6 1999/07/02 15:14:07 simonb Exp $	*/
+/*	$NetBSD: i386_set_ldt.c,v 1.7 2012/03/21 21:37:29 christos Exp $	*/
 
 /*
  *  Copyright (c) 1993 John Brezak
@@ -36,10 +36,7 @@
 #include <machine/sysarch.h>
 
 int
-i386_set_ldt(start, desc, num)
-	int start;
-	union descriptor *desc;
-	int num;
+i386_set_ldt(int start, union descriptor *desc, int num)
 {
 	struct i386_set_ldt_args p;
 
