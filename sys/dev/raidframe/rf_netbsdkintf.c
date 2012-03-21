@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.295 2011/11/05 16:40:35 erh Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.295.6.1 2012/03/21 16:14:57 riz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.295 2011/11/05 16:40:35 erh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.295.6.1 2012/03/21 16:14:57 riz Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2992,7 +2992,7 @@ rf_find_raid_components(void)
 	device_t dv;
 	deviter_t di;
 	dev_t dev;
-	int bmajor, bminor, wedge;
+	int bmajor, bminor, wedge, rf_part_found;
 	int error;
 	int i;
 	RF_AutoConfig_t *ac_list;
@@ -3039,6 +3039,8 @@ rf_find_raid_components(void)
 		/* need to find the device_name_to_block_device_major stuff */
 		bmajor = devsw_name2blk(device_xname(dv), NULL, 0);
 
+		rf_part_found = 0; /*No raid partition as yet*/
+
 		/* get a vnode for the raw partition of this disk */
 
 		wedge = device_is_a(dv, "dk");
@@ -3084,6 +3086,7 @@ rf_find_raid_components(void)
 				
 			ac_list = rf_get_component(ac_list, dev, vp,
 			    device_xname(dv), dkw.dkw_size, numsecs, secsize);
+			rf_part_found = 1; /*There is a raid component on this disk*/
 			continue;
 		}
 
@@ -3108,6 +3111,7 @@ rf_find_raid_components(void)
 		if (error)
 			continue;
 
+		rf_part_found = 0; /*No raid partitions yet*/
 		for (i = 0; i < label.d_npartitions; i++) {
 			char cname[sizeof(ac_list->devname)];
 
@@ -3129,6 +3133,33 @@ rf_find_raid_components(void)
 			    device_xname(dv), 'a' + i);
 			ac_list = rf_get_component(ac_list, dev, vp, cname,
 				label.d_partitions[i].p_size, numsecs, secsize);
+				rf_part_found = 1; /*There is at least one raid partition on this disk*/
+		}
+
+		/*
+		 *If there is no raid component on this disk, either in a
+		 *disklabel or inside a wedge, check the raw partition as well,
+		 *as it is possible to configure raid components on raw disk
+		 *devices.
+		 */
+
+		if (!rf_part_found) {
+			char cname[sizeof(ac_list->devname)];
+
+			dev = MAKEDISKDEV(bmajor, device_unit(dv), RAW_PART);
+			if (bdevvp(dev, &vp))
+				panic("RAID can't alloc vnode");
+
+			error = VOP_OPEN(vp, FREAD, NOCRED);
+			if (error) {
+				/* Whatever... */
+				vput(vp);
+				continue;
+			}
+			snprintf(cname, sizeof(cname), "%s%c",
+			    device_xname(dv), 'a' + RAW_PART);
+			ac_list = rf_get_component(ac_list, dev, vp, cname,
+				label.d_partitions[RAW_PART].p_size, numsecs, secsize);
 		}
 	}
 	deviter_release(&di);
