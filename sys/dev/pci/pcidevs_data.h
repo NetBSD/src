@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1100 2012/03/18 17:30:19 tsutsui Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1101 2012/03/21 13:31:40 sborrill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1106 2012/03/18 17:29:06 tsutsui Exp
+ *	NetBSD: pcidevs,v 1.1107 2012/03/21 13:30:12 sborrill Exp
  */
 
 /*
@@ -5452,6 +5452,14 @@ static const uint16_t pci_products[] = {
 	    20619, 615, 4329, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS2008, 
 	    20627, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS2008_1, 
+	    8160, 20627, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS2108_3, 
+	    20635, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS2108_4, 
+	    20635, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS2108_5, 
+	    20635, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS2108_1, 
 	    8160, 20635, 20643, 20650, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS2108_2, 
@@ -9038,7 +9046,7 @@ static const char pci_words[] = { "."
 	    "(port\0" /* 3 refs @ 8148 */
 	    "1)\0" /* 1 refs @ 8154 */
 	    "2)\0" /* 1 refs @ 8157 */
-	    "MegaRAID\0" /* 7 refs @ 8160 */
+	    "MegaRAID\0" /* 8 refs @ 8160 */
 	    "Crypto\0" /* 2 refs @ 8169 */
 	    "Accelerator\0" /* 17 refs @ 8176 */
 	    "ADSP-2141\0" /* 1 refs @ 8188 */
@@ -10759,8 +10767,8 @@ static const char pci_words[] = { "."
 	    "SAS1064A\0" /* 1 refs @ 20602 */
 	    "SAS1066\0" /* 1 refs @ 20611 */
 	    "SAS1078\0" /* 2 refs @ 20619 */
-	    "SAS2008\0" /* 1 refs @ 20627 */
-	    "SAS2108\0" /* 2 refs @ 20635 */
+	    "SAS2008\0" /* 2 refs @ 20627 */
+	    "SAS2108\0" /* 5 refs @ 20635 */
 	    "CRYPTO\0" /* 1 refs @ 20643 */
 	    "GEN2\0" /* 2 refs @ 20650 */
 	    "SAS1078DE\0" /* 1 refs @ 20655 */
