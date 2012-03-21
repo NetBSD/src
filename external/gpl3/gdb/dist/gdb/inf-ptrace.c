@@ -358,12 +358,6 @@ inf_ptrace_resume (struct target_ops *ops,
   else
     request = PT_CONTINUE;
 
-#ifdef notyet
-  /*
-   * Disable support for kernel PT_STEP. This code has no hope of working
-   * since this is the only place where PT_STEP is set, and it is only turned
-   * on!
-   */
   if (step)
     {
       /* If this system does not support PT_STEP, a higher level
@@ -374,7 +368,6 @@ inf_ptrace_resume (struct target_ops *ops,
       request = PT_STEP;
       sig = 0;
     } else
-#endif
       sig = target_signal_to_host (signal);
 
   /* An address of (PTRACE_TYPE_ARG3)1 tells ptrace to continue from
