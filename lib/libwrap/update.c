@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.8 2002/06/06 21:45:20 itojun Exp $	*/
+/*	$NetBSD: update.c,v 1.9 2012/03/21 10:10:37 matt Exp $	*/
 
  /*
   * Routines for controlled update/initialization of request structures.
@@ -20,7 +20,7 @@
 #if 0
 static char sccsid[] = "@(#) update.c 1.1 94/12/28 17:42:56";
 #else
-__RCSID("$NetBSD: update.c,v 1.8 2002/06/06 21:45:20 itojun Exp $");
+__RCSID("$NetBSD: update.c,v 1.9 2012/03/21 10:10:37 matt Exp $");
 #endif
 #endif
 
@@ -36,13 +36,12 @@ __RCSID("$NetBSD: update.c,v 1.8 2002/06/06 21:45:20 itojun Exp $");
 #include "mystdarg.h"
 #include "tcpd.h"
 
-static struct request_info *request_fill __P((struct request_info *, va_list));
+static struct request_info *request_fill(struct request_info *, va_list);
 
 /* request_fill - request update engine */
 
-static struct request_info *request_fill(request, ap)
-struct request_info *request;
-va_list ap;
+static struct request_info *
+request_fill(struct request_info *request, va_list ap)
 {
     int     key;
     char   *ptr;

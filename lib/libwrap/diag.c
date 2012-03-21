@@ -1,4 +1,4 @@
-/*	$NetBSD: diag.c,v 1.8 2004/09/07 13:20:40 jrf Exp $	*/
+/*	$NetBSD: diag.c,v 1.9 2012/03/21 10:10:37 matt Exp $	*/
 
  /*
   * Routines to report various classes of problems. Each report is decorated
@@ -16,13 +16,14 @@
 #if 0
 static char sccsid[] = "@(#) diag.c 1.1 94/12/28 17:42:20";
 #else
-__RCSID("$NetBSD: diag.c,v 1.8 2004/09/07 13:20:40 jrf Exp $");
+__RCSID("$NetBSD: diag.c,v 1.9 2012/03/21 10:10:37 matt Exp $");
 #endif
 #endif
 
 /* System libraries */
 
 #include <syslog.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <setjmp.h>
 #include <string.h>
@@ -31,25 +32,22 @@ __RCSID("$NetBSD: diag.c,v 1.8 2004/09/07 13:20:40 jrf Exp $");
 /* Local stuff */
 
 #include "tcpd.h"
-#include "mystdarg.h"
 
 struct tcpd_context tcpd_context;
 jmp_buf tcpd_buf;
 
-static void tcpd_diag __P((int, char *, char *, va_list))
+static void tcpd_diag(int, const char *, const char *, va_list)
 	__attribute__((__format__(__printf__, 3, 0)));
 
 /* tcpd_diag - centralize error reporter */
 
-static void tcpd_diag(severity, tag, format, ap)
-int     severity;
-char   *tag;
-char   *format;
-va_list ap;
+static void
+tcpd_diag(int severity, const char *tag, const char *format, va_list ap)
 {
     char    fmt[BUFSIZ];
     char    buf[BUFSIZ];
-    int     i, o, oerrno;
+    size_t  i, o;
+    int     oerrno;
 
     /* save errno in case we need it */
     oerrno = errno;
@@ -83,23 +81,25 @@ va_list ap;
 
 /* tcpd_warn - report problem of some sort and proceed */
 
-void    VARARGS(tcpd_warn, char *, format)
+void
+tcpd_warn(const char *format, ...)
 {
     va_list ap;
 
-    VASTART(ap, char *, format);
+    va_start(ap, format);
     tcpd_diag(LOG_ERR, "warning", format, ap);
-    VAEND(ap);
+    va_end(ap);
 }
 
 /* tcpd_jump - report serious problem and jump */
 
-void    VARARGS(tcpd_jump, char *, format)
+void
+tcpd_jump(const char *format, ...)
 {
     va_list ap;
 
-    VASTART(ap, char *, format);
+    va_start(ap, format);
     tcpd_diag(LOG_ERR, "error", format, ap);
-    VAEND(ap);
+    va_end(ap);
     longjmp(tcpd_buf, AC_ERROR);
 }

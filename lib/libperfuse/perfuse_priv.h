@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_priv.h,v 1.26 2012/03/08 14:58:57 manu Exp $ */
+/*  $NetBSD: perfuse_priv.h,v 1.27 2012/03/21 10:10:36 matt Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -95,7 +95,7 @@ enum perfuse_qtype {
 };
 
 #ifdef PERFUSE_DEBUG
-extern const char *perfuse_qtypestr[];
+extern const char * const perfuse_qtypestr[];
 #endif
 
 struct perfuse_cc_queue {

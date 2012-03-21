@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.25 2012/02/03 15:54:15 manu Exp $ */
+/*  $NetBSD: perfuse.c,v 1.26 2012/03/21 10:10:36 matt Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -105,8 +105,7 @@ init_state(void)
 
 
 static int
-get_fd(data)
-	const char *data;
+get_fd(const char *data)
 {
 	char *string;
 	const char fdopt[] = "fd=";
@@ -138,10 +137,7 @@ get_fd(data)
 }
 
 int
-perfuse_open(path, flags, mode)
-	const char *path;
-	int flags;
-	mode_t mode;
+perfuse_open(const char *path, int flags, mode_t mode)
 {
 	int sv[2];
 	struct sockaddr_un sun;
@@ -259,12 +255,8 @@ perfuse_open(path, flags, mode)
 }
 
 int
-perfuse_mount(source, target, filesystemtype, mountflags, data)
-	const char *source;
-	const char *target;
-	const char *filesystemtype;
-	long mountflags;
-	const void *data;
+perfuse_mount(const char *source, const char *target,
+	const char *filesystemtype, long mountflags, const void *data)
 {
 	int s;
 	size_t len;
@@ -380,8 +372,7 @@ perfuse_mount(source, target, filesystemtype, mountflags, data)
 
 
 uint64_t
-perfuse_next_unique(pu)
-	struct puffs_usermount *pu;
+perfuse_next_unique(struct puffs_usermount *pu)
 {
 	struct perfuse_state *ps;
 
@@ -391,9 +382,7 @@ perfuse_next_unique(pu)
 } 
 
 struct puffs_usermount *
-perfuse_init(pc, pmi)
-	struct perfuse_callbacks *pc;
-	struct perfuse_mount_info *pmi;
+perfuse_init(struct perfuse_callbacks *pc, struct perfuse_mount_info *pmi)
 {
 	struct perfuse_state *ps;
 	struct puffs_usermount *pu;
@@ -567,9 +556,7 @@ perfuse_init(pc, pmi)
 } 
 
 void
-perfuse_setspecific(pu, priv)
-	struct puffs_usermount *pu;
-	void *priv;
+perfuse_setspecific(struct puffs_usermount *pu, void *priv)
 {
 	struct perfuse_state *ps;
 
@@ -580,8 +567,7 @@ perfuse_setspecific(pu, priv)
 }
 
 void *
-perfuse_getspecific(pu)
-	struct puffs_usermount *pu;
+perfuse_getspecific(struct puffs_usermount *pu)
 {
 	struct perfuse_state *ps;
 
@@ -591,8 +577,7 @@ perfuse_getspecific(pu)
 }
 
 int
-perfuse_inloop(pu)
-	struct puffs_usermount *pu;
+perfuse_inloop(struct puffs_usermount *pu)
 {
 	struct perfuse_state *ps;
 
@@ -602,8 +587,7 @@ perfuse_inloop(pu)
 }
 
 int
-perfuse_mainloop(pu)
-	struct puffs_usermount *pu;
+perfuse_mainloop(struct puffs_usermount *pu)
 {
 	struct perfuse_state *ps;
 
@@ -623,16 +607,13 @@ perfuse_mainloop(pu)
 
 /* ARGSUSED0 */
 uint64_t
-perfuse_get_nodeid(pu, opc)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
+perfuse_get_nodeid(struct puffs_usermount *pu, puffs_cookie_t opc)
 {
 	return PERFUSE_NODE_DATA(opc)->pnd_nodeid;
 }
 
 int
-perfuse_unmount(pu)
-	struct puffs_usermount *pu;
+perfuse_unmount(struct puffs_usermount *pu)
 {
 	struct perfuse_state *ps;
 

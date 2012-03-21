@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext.c,v 1.26 2012/01/21 13:35:49 tnozaki Exp $	*/
+/*	$NetBSD: gettext.c,v 1.27 2012/03/21 10:10:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gettext.c,v 1.26 2012/01/21 13:35:49 tnozaki Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.27 2012/03/21 10:10:36 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -303,8 +303,8 @@ static int
 get_sysdep_string_table(struct mosysdepstr_h **table_h, uint32_t *ofstable,
 			uint32_t nstrings, uint32_t magic, char *base)
 {
-	int i, j;
-	int count;
+	unsigned int i;
+	int j, count;
 	size_t l;
 	struct mosysdepstr *table;
 
@@ -398,7 +398,7 @@ setup_sysdep_stuffs(struct mo *mo, struct mohandle *mohandle, char *base)
 	uint32_t magic;
 	struct moentry *stable;
 	size_t l;
-	int i;
+	unsigned int i;
 	char *v;
 	uint32_t *ofstable;
 
@@ -480,7 +480,7 @@ mapit(const char *path, struct domainbinding *db)
 	struct moentry_h *p;
 	struct mo *mo;
 	size_t l, headerlen;
-	int i;
+	unsigned int i;
 	char *v;
 	struct mohandle *mohandle = &db->mohandle;
 
@@ -772,7 +772,7 @@ lookup_bsearch(const char *msgid, struct domainbinding *db, size_t *rlen)
 		/* avoid possible infinite loop, when the data is not sorted */
 		if (omiddle == middle)
 			break;
-		if (middle < 0 || middle >= mohandle->mo.mo_nstring)
+		if ((size_t)middle >= mohandle->mo.mo_nstring)
 			break;
 
 		n = strcmp(msgid, mohandle->mo.mo_otable[middle].off);

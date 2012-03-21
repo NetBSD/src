@@ -1,4 +1,4 @@
-/*	$NetBSD: rmtlib.c,v 1.25 2011/06/21 09:35:23 mrg Exp $	*/
+/*	$NetBSD: rmtlib.c,v 1.26 2012/03/21 10:10:37 matt Exp $	*/
 
 /*
  *	rmt --- remote tape emulator subroutines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rmtlib.c,v 1.25 2011/06/21 09:35:23 mrg Exp $");
+__RCSID("$NetBSD: rmtlib.c,v 1.26 2012/03/21 10:10:37 matt Exp $");
 
 #define RMTIOCTL	1
 /* #define USE_REXEC	1 */	/* rexec code courtesy of Dan Kegel, srs!dan */
@@ -114,7 +114,7 @@ command(int fildes, const char *buf)
 
 	blen = strlen(buf);
 	pstat = signal(SIGPIPE, SIG_IGN);
-	if (write(WRITE(fildes), buf, blen) == blen) {
+	if ((size_t)write(WRITE(fildes), buf, blen) == blen) {
 		signal(SIGPIPE, pstat);
 		return 0;
 	}
@@ -254,7 +254,7 @@ _rmt_open(const char *path, int oflag, int mode)
 	char device[BUFMAGIC];
 	char login[BUFMAGIC];
 	char *sys, *dev, *user;
-	char *rshpath, *rsh;
+	const char *rshpath, *rsh;
 
 	_DIAGASSERT(path != NULL);
 
@@ -422,7 +422,7 @@ _rmt_read(int fildes, void *buf, size_t nbyte)
 	if (command(fildes, buffer) == -1 || (rv = status(fildes)) == -1)
 		return -1;
 
-	if (rv > nbyte)
+	if (rv > (int)nbyte)
 		rv = (int)nbyte;
 
 	for (rc = rv, p = buf; rc > 0; rc -= nread, p += nread) {
@@ -453,7 +453,7 @@ _rmt_write(int fildes, const void *buf, size_t nbyte)
 		return -1;
 
 	pstat = signal(SIGPIPE, SIG_IGN);
-	if (write(WRITE(fildes), buf, nbyte) == nbyte) {
+	if ((size_t)write(WRITE(fildes), buf, nbyte) == nbyte) {
 		signal(SIGPIPE, pstat);
 		return status(fildes);
 	}
