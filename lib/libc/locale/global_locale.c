@@ -1,4 +1,4 @@
-/* $NetBSD: global_locale.c,v 1.12 2012/01/20 16:31:29 joerg Exp $ */
+/* $NetBSD: global_locale.c,v 1.13 2012/03/21 14:11:24 christos Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: global_locale.c,v 1.12 2012/01/20 16:31:29 joerg Exp $");
+__RCSID("$NetBSD: global_locale.c,v 1.13 2012/03/21 14:11:24 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -43,6 +43,10 @@ __RCSID("$NetBSD: global_locale.c,v 1.12 2012/01/20 16:31:29 joerg Exp $");
 #include "runetype_local.h"
 #include "setlocale_local.h"
 
+#ifndef NBCHAR_MAX
+#define NBCHAR_MAX (char)CHAR_MAX
+#endif
+
 static struct lconv _global_ldata = {
 	.decimal_point		= __UNCONST("."),
 	.thousands_sep		= __UNCONST(""),
@@ -54,20 +58,20 @@ static struct lconv _global_ldata = {
 	.mon_grouping		= __UNCONST(""),
 	.positive_sign		= __UNCONST(""),
 	.negative_sign		= __UNCONST(""),
-	.int_frac_digits	= CHAR_MAX,
-	.frac_digits		= CHAR_MAX,
-	.p_cs_precedes		= CHAR_MAX,
-	.p_sep_by_space		= CHAR_MAX,
-	.n_cs_precedes		= CHAR_MAX,
-	.n_sep_by_space		= CHAR_MAX,
-	.p_sign_posn		= CHAR_MAX,
-	.n_sign_posn		= CHAR_MAX,
-	.int_p_cs_precedes	= CHAR_MAX,
-	.int_n_cs_precedes	= CHAR_MAX,
-	.int_p_sep_by_space	= CHAR_MAX,
-	.int_n_sep_by_space	= CHAR_MAX,
-	.int_p_sign_posn	= CHAR_MAX,
-	.int_n_sign_posn	= CHAR_MAX,
+	.int_frac_digits	= NBCHAR_MAX,
+	.frac_digits		= NBCHAR_MAX,
+	.p_cs_precedes		= NBCHAR_MAX,
+	.p_sep_by_space		= NBCHAR_MAX,
+	.n_cs_precedes		= NBCHAR_MAX,
+	.n_sep_by_space		= NBCHAR_MAX,
+	.p_sign_posn		= NBCHAR_MAX,
+	.n_sign_posn		= NBCHAR_MAX,
+	.int_p_cs_precedes	= NBCHAR_MAX,
+	.int_n_cs_precedes	= NBCHAR_MAX,
+	.int_p_sep_by_space	= NBCHAR_MAX,
+	.int_n_sep_by_space	= NBCHAR_MAX,
+	.int_p_sign_posn	= NBCHAR_MAX,
+	.int_n_sign_posn	= NBCHAR_MAX,
 };
 
 static const char *_global_items[(size_t)ALT_DIGITS + 1] = {
