@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_coff.c,v 1.8 2009/08/21 08:42:02 he Exp $ */
+/* $NetBSD: nlist_coff.c,v 1.9 2012/03/21 15:32:26 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nlist_coff.c,v 1.8 2009/08/21 08:42:02 he Exp $");
+__RCSID("$NetBSD: nlist_coff.c,v 1.9 2012/03/21 15:32:26 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -81,9 +81,7 @@ struct coff_extsym {
 #define es_offset u.s.u_offset
 
 int
-__fdnlist_coff(fd, list)
-	int fd;
-	struct nlist *list;
+__fdnlist_coff(int fd, struct nlist *list)
 {
 	struct nlist *p;
 	struct coff_filehdr *filehdrp;
