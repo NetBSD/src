@@ -1,4 +1,4 @@
-/* $NetBSD: mfivar.h,v 1.14 2010/02/09 00:05:18 msaitoh Exp $ */
+/* $NetBSD: mfivar.h,v 1.15 2012/03/21 14:22:36 sborrill Exp $ */
 /* $OpenBSD: mfivar.h,v 1.28 2006/08/31 18:18:46 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -99,7 +99,8 @@ TAILQ_HEAD(mfi_ccb_list, mfi_ccb);
 enum mfi_iop {
 	MFI_IOP_XSCALE,
 	MFI_IOP_PPC,
-	MFI_IOP_GEN2
+	MFI_IOP_GEN2,
+	MFI_IOP_SKINNY
 };
 
 struct mfi_iop_ops {
