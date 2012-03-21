@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_iopl.c,v 1.5 2008/04/28 20:22:55 martin Exp $	*/
+/*	$NetBSD: i386_iopl.c,v 1.6 2012/03/21 21:37:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,8 +35,7 @@
 #include <machine/sysarch.h>
 
 int
-i386_iopl(iopl)
-	int iopl;
+i386_iopl(int iopl)
 {
 	struct i386_iopl_args p;
 
