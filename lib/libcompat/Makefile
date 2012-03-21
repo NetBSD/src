@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.30 2010/03/22 01:29:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.31 2012/03/21 10:08:30 matt Exp $
 
 .include <bsd.own.mk>
+
+WARNS=	2
 
 LIB=	compat
 CPPFLAGS+=-DLIBC_SCCS -DSYSLIBC_SCCS -D__LIBCOMPAT_SOURCE__

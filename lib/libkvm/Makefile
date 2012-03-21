@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.48 2011/09/12 21:11:31 christos Exp $
+#	$NetBSD: Makefile,v 1.49 2012/03/21 10:08:30 matt Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
+
+WARNS=	3
 
 USE_FORT?= yes	# used primarily by setgid programs
 

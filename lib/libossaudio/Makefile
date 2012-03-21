@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.8 2009/03/12 13:52:47 wiz Exp $
+#	$NetBSD: Makefile,v 1.9 2012/03/21 10:08:30 matt Exp $
+
+WARNS=	2
 
 LIB=	ossaudio
 MAN=	ossaudio.3
