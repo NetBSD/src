@@ -90,7 +90,7 @@ static void nbsd_find_new_threads (struct target_ops *);
 #define IS_LWP(ptid)		(GET_LWP (ptid) != 0)
 #define IS_THREAD(ptid)		(GET_THREAD (ptid) != 0)
 
-#define BUILD_LWP(lwp, ptid)	ptid_build (GET_PID(ptid), lwp, 0)
+#define BUILD_LWP(lwp, ptid)	ptid_build (GET_PID(ptid), (lwp) - 1, 0)
 #define BUILD_THREAD(tid, ptid)	ptid_build (GET_PID(ptid), 0, tid)
 
 static td_proc_t *main_ta;
