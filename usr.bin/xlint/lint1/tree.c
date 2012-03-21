@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.68 2011/02/05 17:14:14 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.69 2012/03/21 14:17:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.68 2011/02/05 17:14:14 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.69 2012/03/21 14:17:22 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -2676,7 +2676,7 @@ fold(tnode_t *tn)
 		break;
 	case UMINUS:
 		q = -sl;
-		if (msb(q, t, -1) == msb(sl, t, -1))
+		if (sl != 0 && msb(q, t, -1) == msb(sl, t, -1))
 			ovfl = 1;
 		break;
 	case COMPL:
