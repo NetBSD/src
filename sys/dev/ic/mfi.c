@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.36 2011/06/20 22:02:55 pgoyette Exp $ */
+/* $NetBSD: mfi.c,v 1.37 2012/03/21 13:19:11 sborrill Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.36 2011/06/20 22:02:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.37 2012/03/21 13:19:11 sborrill Exp $");
 
 #include "bio.h"
 
@@ -180,11 +180,13 @@ static void
 mfi_put_ccb(struct mfi_ccb *ccb)
 {
 	struct mfi_softc	*sc = ccb->ccb_sc;
+	struct mfi_frame_header	*hdr = &ccb->ccb_frame->mfr_header;
 	int			s;
 
 	DNPRINTF(MFI_D_CCB, "%s: mfi_put_ccb: %p\n", DEVNAME(sc), ccb);
 
-	s = splbio();
+	hdr->mfh_cmd_status = 0x0;
+	hdr->mfh_flags = 0x0;
 	ccb->ccb_state = MFI_CCB_FREE;
 	ccb->ccb_xs = NULL;
 	ccb->ccb_flags = 0;
@@ -195,6 +197,8 @@ mfi_put_ccb(struct mfi_ccb *ccb)
 	ccb->ccb_sgl = NULL;
 	ccb->ccb_data = NULL;
 	ccb->ccb_len = 0;
+
+	s = splbio();
 	TAILQ_INSERT_TAIL(&sc->sc_ccb_freeq, ccb, ccb_link);
 	splx(s);
 }
