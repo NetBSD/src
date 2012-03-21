@@ -1,4 +1,4 @@
-/*	$NetBSD: genget.c,v 1.12 2012/01/09 15:25:33 christos Exp $	*/
+/*	$NetBSD: genget.c,v 1.13 2012/03/21 05:33:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)genget.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: genget.c,v 1.12 2012/01/09 15:25:33 christos Exp $");
+__RCSID("$NetBSD: genget.c,v 1.13 2012/03/21 05:33:27 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: genget.c,v 1.12 2012/01/09 15:25:33 christos Exp $");
  * the length is returned.  If *s1 is a prefix of *s2,
  * the length of *s1 is returned.
  */
-	int
+int
 isprefix(char *s1, const char *s2)
 {
 	char *os1;
@@ -71,11 +71,10 @@ isprefix(char *s1, const char *s2)
 
 static char *ambiguous;		/* special return value for command routines */
 
-	char **
-genget(name, table, stlen)
-	char	*name;		/* name to match */
-	char	**table;	/* name entry in table */
-	int	stlen;
+char **
+genget( char	*name,		/* name to match */
+	char	**table,	/* name entry in table */
+	int	stlen)
 {
 	register char **c, **found;
 	register int n;
@@ -99,9 +98,8 @@ genget(name, table, stlen)
 /*
  * Function call version of Ambiguous()
  */
-	int
-Ambiguous(s)
-	void *s;
+int
+Ambiguous(void *s)
 {
 	return(s == &ambiguous);
 }
