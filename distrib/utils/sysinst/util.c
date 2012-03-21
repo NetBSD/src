@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.173 2012/01/10 21:02:47 gson Exp $	*/
+/*	$NetBSD: util.c,v 1.174 2012/03/21 05:43:55 matt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -409,7 +409,7 @@ get_iso9660_volname(int dev, int sess, char *volname)
  * the number of entries collected.
  */
 static int
-get_available_cds()
+get_available_cds(void)
 {
 	char dname[16], volname[80];
 	struct cd_info *info = cds;
