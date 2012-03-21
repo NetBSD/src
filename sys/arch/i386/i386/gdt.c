@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.45.10.1 2009/04/04 17:39:09 snj Exp $	*/
+/*	$NetBSD: gdt.c,v 1.45.10.2 2012/03/21 21:29:31 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.45.10.1 2009/04/04 17:39:09 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.45.10.2 2012/03/21 21:29:31 jdc Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -66,7 +66,7 @@ void gdt_grow(int);
 int gdt_get_slot1(int);
 void gdt_put_slot1(int, int);
 
-static void
+void
 update_descriptor(union descriptor *table, union descriptor *entry)
 {
 #ifndef XEN
