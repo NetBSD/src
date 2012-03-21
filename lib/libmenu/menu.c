@@ -1,4 +1,4 @@
-/*	$NetBSD: menu.c,v 1.16 2003/03/09 01:08:48 lukem Exp $	*/
+/*	$NetBSD: menu.c,v 1.17 2012/03/21 05:33:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: menu.c,v 1.16 2003/03/09 01:08:48 lukem Exp $");
+__RCSID("$NetBSD: menu.c,v 1.17 2012/03/21 05:33:27 matt Exp $");
 
 #include <ctype.h>
 #include <menu.h>
@@ -135,8 +135,7 @@ set_menu_unmark(MENU *m, char *mark)
  * Return the menu unmark string for the menu.
  */
 char *
-menu_unmark(menu)
-        MENU *menu;
+menu_unmark(MENU *menu)
 {
 	if (menu == NULL)
 		return _menui_default_menu.unmark.string;
@@ -181,9 +180,7 @@ menu_win(MENU *menu)
  * Set the menu subwindow for the menu.
  */
 int
-set_menu_sub(menu, sub)
-        MENU *menu;
-        WINDOW *sub;
+set_menu_sub(MENU *menu, WINDOW *sub)
 {
 	if (menu == NULL) {
 		_menui_default_menu.menu_subwin = sub;
