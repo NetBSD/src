@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.12 2003/08/07 16:44:56 agc Exp $	*/
+/*	$NetBSD: misc.c,v 1.13 2012/03/21 05:33:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.12 2003/08/07 16:44:56 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.13 2012/03/21 05:33:27 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,12 +50,9 @@ const char *LocalHostName;
 char *UserNameRequested = 0;
 int ConnectedCount = 0;
 
-	void
-auth_encrypt_init(local, remote, name, server)
-	const char *local;
-	const char *remote;
-	const char *name;
-	int server;
+void
+auth_encrypt_init(const char *local, const char *remote, const char *name,
+	int server)
 {
 	RemoteHostName = remote;
 	LocalHostName = local;
@@ -71,25 +68,21 @@ auth_encrypt_init(local, remote, name, server)
 	}
 }
 
-	void
-auth_encrypt_user(name)
-	const char *name;
+void
+auth_encrypt_user(const char *name)
 {
 	if (UserNameRequested)
 		free(UserNameRequested);
 	UserNameRequested = name ? strdup(name) : 0;
 }
 
-	void
-auth_encrypt_connect(cnt)
-	int cnt;
+void
+auth_encrypt_connect(int cnt)
 {
 }
 
-	void
-printd(data, cnt)
-	const unsigned char *data;
-	int cnt;
+void
+printd(const unsigned char *data, int cnt)
 {
 	if (cnt > 16)
 		cnt = 16;

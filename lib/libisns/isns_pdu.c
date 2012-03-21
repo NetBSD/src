@@ -1,4 +1,4 @@
-/*	$NetBSD: isns_pdu.c,v 1.2 2011/10/25 00:02:30 christos Exp $	*/
+/*	$NetBSD: isns_pdu.c,v 1.3 2012/03/21 05:33:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004,2009 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: isns_pdu.c,v 1.2 2011/10/25 00:02:30 christos Exp $");
+__RCSID("$NetBSD: isns_pdu.c,v 1.3 2012/03/21 05:33:27 matt Exp $");
 
 
 #include <sys/types.h>
@@ -93,7 +93,7 @@ static struct isns_buffer_pool_s G_buffer_pool;
  * isns_init_buffer_pool - initialize buffer pool for use
  */
 void
-isns_init_buffer_pool()
+isns_init_buffer_pool(void)
 {
 	pthread_mutexattr_t mutexattr;
 
