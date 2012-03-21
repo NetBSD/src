@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.100 2011/11/18 20:38:42 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.101 2012/03/21 05:33:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.100 2011/11/18 20:38:42 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.101 2012/03/21 05:33:26 matt Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1922,7 +1922,7 @@ rl_add_defun(const char *name, Function *fun, int c)
 }
 
 void
-rl_callback_read_char()
+rl_callback_read_char(void)
 {
 	int count = 0, done = 0;
 	const char *buf = el_gets(e, &count);
