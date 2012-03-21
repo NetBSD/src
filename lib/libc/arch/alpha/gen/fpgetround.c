@@ -1,4 +1,4 @@
-/* $NetBSD: fpgetround.c,v 1.10 2011/06/12 05:44:36 matt Exp $ */
+/* $NetBSD: fpgetround.c,v 1.11 2012/03/21 20:07:52 he Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpgetround.c,v 1.10 2011/06/12 05:44:36 matt Exp $");
+__RCSID("$NetBSD: fpgetround.c,v 1.11 2012/03/21 20:07:52 he Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -58,5 +58,5 @@ fpgetround(void)
 
 	__asm("excb; mf_fpcr %0; excb" : "=f" (fpcrval.d));
 
-	return ((fpcrval.u64 >> 58) & 0x3);
+	return ((fp_rnd)(fpcrval.u64 >> 58) & 0x3);
 }
