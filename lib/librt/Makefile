@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.15 2012/03/08 21:59:28 joerg Exp $
+#	$NetBSD: Makefile,v 1.16 2012/03/21 05:37:43 matt Exp $
 #
 
 .include <bsd.own.mk>
 
-WARNS=	4
+WARNS?=	5
 
 LIB=	rt
 SRCS=	sem.c

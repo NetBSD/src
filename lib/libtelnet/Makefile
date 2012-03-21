@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
-#	$NetBSD: Makefile,v 1.34 2012/01/09 15:25:33 christos Exp $
+#	$NetBSD: Makefile,v 1.35 2012/03/21 05:37:44 matt Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -7,7 +7,7 @@ LIBISPRIVATE=	yes
 
 .include <bsd.own.mk>
 
-WARNS?=	4
+WARNS?=	5
 
 LIB=	telnet
 SRCS=	auth.c encrypt.c genget.c getent.c misc.c

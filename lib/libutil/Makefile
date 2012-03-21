@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.70 2012/01/07 18:40:55 christos Exp $
+#	$NetBSD: Makefile,v 1.71 2012/03/21 05:37:44 matt Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -7,7 +7,7 @@ USE_SHLIBDIR=	yes
 
 .include "${NETBSDSRCDIR}/common/lib/libutil/Makefile.inc"
 
-WARNS=	4
+WARNS?=	5
 LIB=	util
 CPPFLAGS+=-DLIBC_SCCS -I${.CURDIR}
 SRCS+=	efun.c getbootfile.c getlabelsector.c getmaxpartitions.c \
