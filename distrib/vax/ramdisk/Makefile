@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2012/03/18 14:12:55 he Exp $
+#	$NetBSD: Makefile,v 1.28 2012/03/21 05:49:39 matt Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -17,7 +17,7 @@ IMAGEENDIAN=	le
 MAKEDEVTARGETS=	std mt0 st0 rd0 rd1 dz0 dl0 dhu0 rx0 ra0 ra1 ra2 ra3 hp0 hp1 \
 		sd0 sd1 sd2 md0 pty0 cd0 cd1
 IMAGEDEPENDS=	${CRUNCHBIN} \
-		dot.profile \
+		Makefile dot.profile \
 		${DESTDIR}/boot ${DESTDIR}/usr/mdec/xxboot \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
 		${NETBSDSRCDIR}/etc/netconfig ${DISTRIBDIR}/common/protocols \
