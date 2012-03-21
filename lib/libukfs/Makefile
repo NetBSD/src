@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.5 2009/12/11 21:21:52 pooka Exp $
+#	$NetBSD: Makefile,v 1.6 2012/03/21 05:38:49 matt Exp $
 #
+
+WARNS=		2
 
 LIB=		ukfs
 LIBDPLIBS+=	rump	${.CURDIR}/../librump		\
