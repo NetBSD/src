@@ -1,4 +1,4 @@
-/* $NetBSD: strtod.c,v 1.9 2012/03/13 21:13:34 christos Exp $ */
+/* $NetBSD: strtod.c,v 1.10 2012/03/22 13:15:48 he Exp $ */
 
 /****************************************************************
 
@@ -97,7 +97,10 @@ strtod
 #ifdef Avoid_Underflow
 	int scale;
 #endif
-	int bb2, bb5, bbe, bd2, bd5, bbbits, bs2, c, decpt, dsign,
+#ifdef INFNAN_CHECK
+	int decpt;
+#endif
+	int bb2, bb5, bbe, bd2, bd5, bbbits, bs2, c, dsign,
 		 e, e1, esign, i, j, k, nd, nd0, nf, nz, nz0, sign;
 	CONST char *s, *s0, *s1;
 	double aadj;
@@ -148,7 +151,10 @@ strtod
 #endif /*}}*/
 #endif /*}*/
 
-	sign = nz0 = nz = decpt = 0;
+#ifdef INFNAN_CHECK
+	decpt = 0;
+#endif
+	sign = nz0 = nz = 0;
 	dval(&rv) = 0.;
 	for(s = s00;;s++) switch(*s) {
 		case '-':
@@ -229,7 +235,9 @@ strtod
 	if (c == '.') {
 		c = *++s;
 #endif
+#ifdef INFNAN_CHECK
 		decpt = 1;
+#endif
 		if (!nd) {
 			for(; c == '0'; c = *++s)
 				nz++;
@@ -552,7 +560,7 @@ strtod
 					word1(&rv) &= 0xffffffff << j;
 				}
 #else
-			for(j = 0; e1 > 1; j++, e1 >>= 1)
+			for(j = 0; e1 > 1; j++, e1 = (unsigned int)e1 >> 1)
 				if (e1 & 1)
 					dval(&rv) *= tinytens[j];
 			/* The last multiplication could underflow. */
@@ -957,6 +965,7 @@ strtod
 					dval(&aadj1) += 0.5;
 				}
 #else
+			/* CONSTCOND */
 			if (Flt_Rounds == 0)
 				dval(&aadj1) += 0.5;
 #endif /*Check_FLT_ROUNDS*/
