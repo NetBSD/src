@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2011/08/11 23:15:38 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2012/03/22 23:46:27 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,7 @@ CPPFLAGS+=	${X11FLAGS.THREADLIB} \
 		-D_NETBSD_SOURCE -DUSE_EXTERNAL_DXTN_LIB=1 -DHAVE_ALIAS
 CFLAGS+=	-pthread
 
-CWARNFLAGS.clang+=	-Wno-format
+CWARNFLAGS.clang+=	-Wno-format -Wno-constant-conversion
 
 .include "libmesa.mk"
 
