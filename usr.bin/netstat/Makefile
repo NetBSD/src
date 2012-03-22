@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2012/01/06 14:21:16 drochner Exp $
+#	$NetBSD: Makefile,v 1.38 2012/03/22 20:34:43 drochner Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -6,7 +6,7 @@
 USE_FORT?= yes	# setgid
 
 RUMPPRG=netstat
-SRCS=	atalk.c bpf.c fast_ipsec.c if.c inet.c inet6.c ipsec.c iso.c \
+SRCS=	atalk.c bpf.c fast_ipsec.c if.c inet.c inet6.c iso.c \
 	main.c mbuf.c mroute.c mroute6.c pfkey.c pfsync.c show.c route.c \
 	tp_astring.c unix.c vtw.c
 .PATH:	${NETBSDSRCDIR}/sys/netiso 
