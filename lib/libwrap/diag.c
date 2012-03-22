@@ -1,4 +1,4 @@
-/*	$NetBSD: diag.c,v 1.9 2012/03/21 10:10:37 matt Exp $	*/
+/*	$NetBSD: diag.c,v 1.10 2012/03/22 22:58:15 joerg Exp $	*/
 
  /*
   * Routines to report various classes of problems. Each report is decorated
@@ -16,7 +16,7 @@
 #if 0
 static char sccsid[] = "@(#) diag.c 1.1 94/12/28 17:42:20";
 #else
-__RCSID("$NetBSD: diag.c,v 1.9 2012/03/21 10:10:37 matt Exp $");
+__RCSID("$NetBSD: diag.c,v 1.10 2012/03/22 22:58:15 joerg Exp $");
 #endif
 #endif
 
@@ -25,6 +25,7 @@ __RCSID("$NetBSD: diag.c,v 1.9 2012/03/21 10:10:37 matt Exp $");
 #include <syslog.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <setjmp.h>
 #include <string.h>
 #include <errno.h>
@@ -37,46 +38,33 @@ struct tcpd_context tcpd_context;
 jmp_buf tcpd_buf;
 
 static void tcpd_diag(int, const char *, const char *, va_list)
-	__attribute__((__format__(__printf__, 3, 0)));
+    __printflike(3,0);
 
 /* tcpd_diag - centralize error reporter */
 
 static void
-tcpd_diag(int severity, const char *tag, const char *format, va_list ap)
+tcpd_diag(int severity, const char *tag, const char *fmt, va_list ap)
 {
-    char    fmt[BUFSIZ];
-    char    buf[BUFSIZ];
-    size_t  i, o;
+    char *buf;
     int     oerrno;
 
     /* save errno in case we need it */
     oerrno = errno;
 
-    /* contruct the tag for the log entry */
-    if (tcpd_context.file)
-	(void)snprintf(buf, sizeof buf, "%s: %s, line %d: ",
-		tag, tcpd_context.file, tcpd_context.line);
-    else
-	(void)snprintf(buf, sizeof buf, "%s: ", tag);
-
-    /* change % to %% in tag before appending the format */
-    for (i = 0, o = 0; buf[i] != '\0'; ) {
-	if (buf[i] == '%') {
-	    fmt[o] = '%';
-	    if (o < sizeof(fmt) - 1)
-		o++;
-	}
-	fmt[o] = buf[i++];
-	if (o < sizeof(fmt) - 1)
-	    o++;
-    }
-
-    /* append format and force null termination */
-    fmt[o] = '\0';
-    (void)strlcat(fmt, format, sizeof(fmt) - o);
+    if (vasprintf(&buf, fmt, ap) == -1)
+	buf = __UNCONST(fmt);
 
     errno = oerrno;
-    vsyslog(severity, fmt, ap);
+
+    /* contruct the tag for the log entry */
+    if (tcpd_context.file)
+	syslog(severity, "%s: %s, line %d: %s",
+	    tag, tcpd_context.file, tcpd_context.line, buf);
+    else
+	syslog(severity, "%s: %s", tag, buf);
+
+    if (buf != fmt)
+        free(buf);
 }
 
 /* tcpd_warn - report problem of some sort and proceed */
