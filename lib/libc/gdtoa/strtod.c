@@ -1,4 +1,4 @@
-/* $NetBSD: strtod.c,v 1.10 2012/03/22 13:15:48 he Exp $ */
+/* $NetBSD: strtod.c,v 1.11 2012/03/22 15:34:14 christos Exp $ */
 
 /****************************************************************
 
@@ -554,10 +554,10 @@ strtod
 					if (j >= 53)
 					 word0(&rv) = (P+2)*Exp_msk1;
 					else
-					 word0(&rv) &= 0xffffffff << (j-32);
+					 word0(&rv) &= 0xffffffffU << (j-32);
 					}
 				else
-					word1(&rv) &= 0xffffffff << j;
+					word1(&rv) &= 0xffffffffU << j;
 				}
 #else
 			for(j = 0; e1 > 1; j++, e1 = (unsigned int)e1 >> 1)
@@ -956,6 +956,7 @@ strtod
 			aadj *= 0.5;
 			dval(&aadj1) = dsign ? aadj : -aadj;
 #ifdef Check_FLT_ROUNDS
+			/* CONSTCOND */
 			switch(Rounding) {
 				case 2: /* towards +infinity */
 					dval(&aadj1) -= 0.5;
