@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_pci_io.c,v 1.5 2008/04/28 20:22:55 martin Exp $	*/
+/*	$NetBSD: alpha_pci_io.c,v 1.6 2012/03/22 08:54:48 he Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -195,7 +195,7 @@ alpha_pci_io_swiz_outb(bus_addr_t ioaddr, uint8_t val)
 {
 	uint32_t *port = alpha_pci_io_swiz(ioaddr, 0);
 	bus_addr_t offset = ioaddr & 3;
-	uint32_t nval = ((uint32_t)val) << (8 * offset);
+	uint32_t nval = ((uint32_t)val) << (uint32_t)(8 * offset);
 
 	*port = nval;
 	alpha_mb();
@@ -206,7 +206,7 @@ alpha_pci_io_swiz_outw(bus_addr_t ioaddr, uint16_t val)
 {
 	uint32_t *port = alpha_pci_io_swiz(ioaddr, 1);
 	bus_addr_t offset = ioaddr & 3;
-	uint32_t nval = ((uint32_t)val) << (8 * offset);
+	uint32_t nval = ((uint32_t)val) << (uint32_t)(8 * offset);
 
 	*port = nval;
 	alpha_mb();
