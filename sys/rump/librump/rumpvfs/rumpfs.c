@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.108 2012/03/15 12:42:28 njoly Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.109 2012/03/22 22:48:56 njoly Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.108 2012/03/15 12:42:28 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.109 2012/03/22 22:48:56 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -887,7 +887,7 @@ rump_vop_getattr(void *v)
 static int
 rump_vop_setattr(void *v)
 {
-	struct vop_getattr_args /* {
+	struct vop_setattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		kauth_cred_t a_cred;
@@ -1055,7 +1055,7 @@ out:
 static int
 rump_vop_remove(void *v)
 {
-        struct vop_rmdir_args /* {
+        struct vop_remove_args /* {
                 struct vnode *a_dvp;
                 struct vnode *a_vp;
                 struct componentname *a_cnp;
@@ -1424,7 +1424,7 @@ etwrite(struct rumpfs_node *rn, struct uio *uio)
 static int
 rump_vop_write(void *v)
 {
-	struct vop_read_args /* {
+	struct vop_write_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int ioflags a_ioflag;
