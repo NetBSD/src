@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.58 2012/03/21 16:16:00 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.59 2012/03/22 23:05:17 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1465,4 +1465,41 @@ sys/dev/raidframe/rf_netbsdkintf.c		1.296
 
 	Add the ability to autoconfigure raid components on raw disks.
 	[buhrow, ticket #133]
+
+sys/arch/amd64/amd64/machdep.c			1.180 via patch
+sys/arch/i386/i386/machdep.c			1.724
+
+	Make i386 and amd64 cpu_reboot() more similar, and avoid
+	triggering an assert in the umass code.
+	[mrg, ticket #126]
+
+sys/dev/pci/if_iwi.c				1.90
+
+	Fix iwi(4) firmware decoding on bigendian machines.
+	[nisimura, ticket #134]
+
+sys/kern/kern_sysctl.c				1.234
+
+	Fix query of sysctl IMMEDIATE bool values.
+	[martin, ticket #135]
+
+sys/dev/ic/mfi.c				1.37
+
+	Fix potential deadlock during autoconf with mfi(4).
+	[sborrill, ticket #136]
+
+sys/dev/pci/pcidevs				1.1107
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add some Symbios SAS devices.
+	[sborrill, ticket #137]
+
+sys/dev/ic/mfi.c				1.38
+sys/dev/ic/mfireg.h				1.5
+sys/dev/ic/mfivar.h				1.15
+sys/dev/pci/mfi_pci.c				1.13
+
+	Add support to mfi(4) for skinny variants (e.g. IBM ServeRAID M1015).
+	[sborrill, ticket #138]
 
