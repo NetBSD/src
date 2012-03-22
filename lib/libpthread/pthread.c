@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.132 2012/03/12 20:16:52 joerg Exp $	*/
+/*	$NetBSD: pthread.c,v 1.133 2012/03/22 20:01:18 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.132 2012/03/12 20:16:52 joerg Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.133 2012/03/22 20:01:18 drochner Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -333,7 +333,8 @@ pthread__getstack(pthread_t newthread, const pthread_attr_t *attr)
 		stacksize = pthread__stacksize;
 
 	if (newthread->pt_stack_allocated) {
-		if (newthread->pt_stack.ss_size == stacksize)
+		if (stackbase == NULL &&
+		    newthread->pt_stack.ss_size == stacksize)
 			return 0;
 		stackbase2 = newthread->pt_stack.ss_sp;
 #ifndef __MACHINE_STACK_GROWS_UP
