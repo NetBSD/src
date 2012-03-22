@@ -84,7 +84,7 @@ static ptid_t find_active_thread (void);
 static void nbsd_find_new_threads (struct target_ops *);
 
 #define GET_PID(ptid)		ptid_get_pid (ptid)
-#define GET_LWP(ptid)		ptid_get_lwp (ptid)
+#define GET_LWP(ptid)		(ptid_get_lwp (ptid) + 1)
 #define GET_THREAD(ptid)	ptid_get_tid (ptid)
 
 #define IS_LWP(ptid)		(GET_LWP (ptid) != 0)
@@ -334,7 +334,7 @@ find_active_thread (void)
       return inferior_ptid;
     }
 
-  cached_thread = BUILD_LWP (pl.pl_lwpid, main_ptid);
+  cached_thread = BUILD_LWP (pl.pl_lwpid + 1, main_ptid);
   return cached_thread;
 }
 
