@@ -1,4 +1,4 @@
-/*	$NetBSD: shell_cmd.c,v 1.6 2012/03/21 10:10:37 matt Exp $	*/
+/*	$NetBSD: shell_cmd.c,v 1.7 2012/03/22 22:59:43 joerg Exp $	*/
 
  /*
   * shell_cmd() takes a shell command after %<character> substitutions. The
@@ -15,7 +15,7 @@
 #if 0
 static char sccsid[] = "@(#) shell_cmd.c 1.5 94/12/28 17:42:44";
 #else
-__RCSID("$NetBSD: shell_cmd.c,v 1.6 2012/03/21 10:10:37 matt Exp $");
+__RCSID("$NetBSD: shell_cmd.c,v 1.7 2012/03/22 22:59:43 joerg Exp $");
 #endif
 #endif
 
@@ -38,7 +38,7 @@ __RCSID("$NetBSD: shell_cmd.c,v 1.6 2012/03/21 10:10:37 matt Exp $");
 
 /* Forward declarations. */
 
-static void do_child __P((char *));
+static void do_child(char *) __dead;
 
 /* shell_cmd - execute shell command */
 
