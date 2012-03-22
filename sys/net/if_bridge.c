@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.75 2012/03/13 18:40:58 elad Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.76 2012/03/22 12:59:33 wiz Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.75 2012/03/13 18:40:58 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.76 2012/03/22 12:59:33 wiz Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -467,7 +467,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		    KAUTH_NETWORK_INTERFACE_BRIDGE,
 		    cmd == SIOCGDRVSPEC ?
 		     KAUTH_REQ_NETWORK_INTERFACE_BRIDGE_GETPRIV :
-		     KAUTH_REQ_NETWORK_INTERFACE_SETPRIV,
+		     KAUTH_REQ_NETWORK_INTERFACE_BRIDGE_SETPRIV,
 		     ifd, NULL, NULL);
 		if (error)
 			return (error);
