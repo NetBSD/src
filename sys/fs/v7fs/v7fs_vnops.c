@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.8 2012/03/13 18:40:51 elad Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.9 2012/03/22 22:16:21 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.8 2012/03/13 18:40:51 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.9 2012/03/22 22:16:21 njoly Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -536,7 +536,7 @@ v7fs_setattr(void *v)
 	    (vap->va_mtime.tv_sec != VNOVAL) ||
 	    (vap->va_ctime.tv_sec != VNOVAL)) {
 		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_TIMES, vp,
-		    NULL, genfs_can_chtimes(vp, vap->va_flags, inode->uid,
+		    NULL, genfs_can_chtimes(vp, vap->va_vaflags, inode->uid,
 		    cred));
 		if (error)
 			return error;
