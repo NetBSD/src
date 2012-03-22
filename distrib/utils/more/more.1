@@ -1,4 +1,4 @@
-.\"	$NetBSD: more.1,v 1.8 2003/08/07 09:28:00 agc Exp $
+.\"	$NetBSD: more.1,v 1.9 2012/03/22 07:58:17 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,7 +49,7 @@ The
 .Nm
 command is a filter for paging through text one screenful at a time.
 It uses
-.Xr termcap  3
+.Xr termcap 3
 so it can run on a variety of terminals.
 There is even limited support for hardcopy terminals.
 (On a hardcopy terminal, lines which should be printed at the top
@@ -112,7 +112,7 @@ The
 .Fl t
 option, followed immediately by a tag, will edit the file
 containing that tag.  For more information, see the
-.Xr ctags  1
+.Xr ctags 1
 command.
 .It Fl u
 By default,
@@ -149,7 +149,7 @@ each file is displayed.
 Interactive commands for
 .Nm
 are based on
-.Xr vi  1  .
+.Xr vi 1 .
 Some commands may be preceded by a decimal number, called N in the
 descriptions below.
 In the following descriptions, ^X means control-X.
@@ -251,7 +251,7 @@ Invokes an editor to edit the current file being viewed.
 The editor is taken from the environment variable
 .Ev EDITOR ,
 or defaults to
-.Xr vi  1  .
+.Xr vi 1 .
 .It Ic \&= No or Ic \&^G
 These options print out the number of the file currently being displayed
 relative to the total number of files there are to display, the current
