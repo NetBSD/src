@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2012/02/29 20:07:57 tron Exp $
+#	$NetBSD: Makefile,v 1.9 2012/03/22 23:46:27 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -119,7 +119,7 @@ PKGCONFIG_VERSION.fontconfig=	2.6.0
 # XXX
 CPPFLAGS.fcxml.c=	-Wno-error
 
-CWARNFLAGS.clang+=	-Wno-pointer-sign
+CWARNFLAGS.clang+=	-Wno-pointer-sign -Wno-switch
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

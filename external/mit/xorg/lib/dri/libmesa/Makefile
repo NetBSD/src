@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2011/08/11 23:15:36 joerg Exp $
+#	$NetBSD: Makefile,v 1.10 2012/03/22 23:46:27 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -35,6 +35,6 @@ LIBDIR=		${X11USRLIBDIR}/modules/dri
 
 #LIBDPLIBS+=	GL	${.CURDIR}/../../libGL
 
-CWARNFLAGS.clang+=	-Wno-format
+CWARNFLAGS.clang+=	-Wno-format -Wno-constant-conversion
 
 .include <bsd.lib.mk>
