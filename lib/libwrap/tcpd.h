@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpd.h,v 1.13 2012/03/21 10:10:37 matt Exp $	*/
+/*	$NetBSD: tcpd.h,v 1.14 2012/03/22 22:59:43 joerg Exp $	*/
  /*
   * @(#) tcpd.h 1.5 96/03/19 16:22:24
   * 
@@ -79,9 +79,9 @@ extern char *percent_x			/* do %<char> expansion */
 		(char *, int, char *, struct request_info *);
 extern void rfc931			/* client name from RFC 931 daemon */
 		(struct sockaddr *, struct sockaddr *, char *);
-extern void clean_exit			/* clean up and exit */
+__dead extern void clean_exit		/* clean up and exit */
 		(struct request_info *);
-extern void refuse			/* clean up and exit */
+__dead extern void refuse		/* clean up and exit */
 		(struct request_info *);
 extern char *xgets			/* fgets() on steroids */
 		(char *, int, FILE *);
@@ -167,12 +167,11 @@ extern void tli_host			/* look up endpoint addresses etc. */
   * everyone would have to include <setjmp.h>.
   */
 
-extern void tcpd_warn			/* report problem and proceed */
-		(const char *, ...)
-	__attribute__((__format__(__printf__, 1, 2)));
-extern void tcpd_jump			/* report problem and jump */
-		(const char *, ...)
-	__attribute__((__format__(__printf__, 1, 2)));
+/* Report problem and proceed */
+void tcpd_warn(const char *, ...) __printflike(1, 2);
+
+/* Report problem and jump */
+void tcpd_jump(const char *, ...) __dead __printflike(1, 2);
 __END_DECLS
 
 struct tcpd_context {
