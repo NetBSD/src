@@ -328,13 +328,15 @@ find_active_thread (void)
       while ((val != -1) && (pl.pl_lwpid != 0) &&
 	     (pl.pl_event != PL_EVENT_SIGNAL))
 	val = ptrace (PT_LWPINFO, GET_PID(inferior_ptid), (void *)&pl, sizeof(pl));
+      if (pl.pl_lwpid == 0)
+	 pl.pl_lwpid = 1;
     }
   else
     {
       return inferior_ptid;
     }
 
-  cached_thread = BUILD_LWP (pl.pl_lwpid + 1, main_ptid);
+  cached_thread = BUILD_LWP (pl.pl_lwpid, main_ptid);
   return cached_thread;
 }
 
