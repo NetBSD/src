@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_coff.c,v 1.9 2012/03/21 15:32:26 christos Exp $ */
+/* $NetBSD: nlist_coff.c,v 1.10 2012/03/22 13:42:36 he Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nlist_coff.c,v 1.9 2012/03/21 15:32:26 christos Exp $");
+__RCSID("$NetBSD: nlist_coff.c,v 1.10 2012/03/22 13:42:36 he Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -58,8 +58,10 @@ __RCSID("$NetBSD: nlist_coff.c,v 1.9 2012/03/21 15:32:26 christos Exp $");
 #endif
 
 #ifdef NLIST_COFF
-#define	BAD		do { rv = -1; goto out; } while (/*CONSTCOND*/0)
-#define	BADUNMAP	do { rv = -1; goto unmap; } while (/*CONSTCOND*/0)
+#define	BAD		do { rv = -1; goto out; } \
+			/* NOTREACHED */ while (/*CONSTCOND*/0)
+#define	BADUNMAP	do { rv = -1; goto unmap; } \
+			/* NOTREACHED */ while (/*CONSTCOND*/0)
 
 #define ES_LEN 18
 struct coff_extsym {
@@ -110,7 +112,7 @@ __fdnlist_coff(int fd, struct nlist *list)
 		errno = EFBIG;
 		BAD;
 	}
-	mappedsize = st.st_size;
+	mappedsize = (size_t)st.st_size;
 	mappedfile = mmap(NULL, mappedsize, PROT_READ, MAP_PRIVATE|MAP_FILE,
 	    fd, 0);
 	if (mappedfile == (char *)-1)
@@ -123,7 +125,7 @@ __fdnlist_coff(int fd, struct nlist *list)
 	 */
 	if (mappedsize < sizeof (struct coff_filehdr))
 		BADUNMAP;
-	filehdrp = (struct coff_filehdr *)&mappedfile[0];
+	filehdrp = (void *)&mappedfile[0];
 
 	if (COFF_BADMAG(filehdrp))
 		BADUNMAP;
