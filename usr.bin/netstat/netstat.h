@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.43 2011/06/21 19:42:45 kefren Exp $	*/
+/*	$NetBSD: netstat.h,v 1.44 2012/03/22 20:34:43 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,11 +84,6 @@ void	arp_stats __P((u_long, const char *));
 void	carp_stats __P((u_long, const char *));
 void	pfsync_stats __P((u_long, const char*));
 #ifdef IPSEC
-/* run-time selector for which  implementation (KAME, FAST_IPSEC) to show */
-void	ipsec_switch __P((u_long, const char *));
-/* KAME ipsec version */
-void	ipsec_stats __P((u_long, const char *));
-/* FAST_IPSEC version */
 void	fast_ipsec_stats __P((u_long, const char *));
 #endif
 

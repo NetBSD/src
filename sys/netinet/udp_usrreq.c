@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.185 2012/01/09 22:26:44 liamjfoy Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.186 2012/03/22 20:34:39 drochner Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.185 2012/01/09 22:26:44 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.186 2012/03/22 20:34:39 drochner Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -128,13 +128,6 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.185 2012/01/09 22:26:44 liamjfoy Ex
 #include <netipsec/ipsec6.h>
 #endif
 #endif	/* FAST_IPSEC */
-
-#ifdef KAME_IPSEC
-#include <netinet6/ipsec.h>
-#include <netinet6/ipsec_private.h>
-#include <netinet6/esp.h>
-#include <netkey/key.h>
-#endif /* KAME_IPSEC */
 
 #ifdef COMPAT_50
 #include <compat/sys/socket.h>
@@ -634,7 +627,7 @@ udp4_sendup(struct mbuf *m, int off /* offset of data portion */,
 		return;
 	}
 
-#if defined(KAME_IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 	/* check AH/ESP integrity. */
 	if (so != NULL && ipsec4_in_reject_so(m, so)) {
 		IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
@@ -684,7 +677,7 @@ udp6_sendup(struct mbuf *m, int off /* offset of data portion */,
 		return;
 	in6p = sotoin6pcb(so);
 
-#if defined(KAME_IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 	/* check AH/ESP integrity. */
 	if (so != NULL && ipsec6_in_reject_so(m, so)) {
 		IPSEC6_STATINC(IPSEC_STAT_IN_POLVIO);

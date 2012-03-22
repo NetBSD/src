@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.163 2012/03/17 02:48:51 christos Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.164 2012/03/22 20:34:39 drochner Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.163 2012/03/17 02:48:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.164 2012/03/22 20:34:39 drochner Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -152,10 +152,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.163 2012/03/17 02:48:51 christos Ex
 #include <netinet/tcp_vtw.h>
 
 #include "opt_tcp_space.h"
-
-#ifdef KAME_IPSEC
-#include <netinet6/ipsec.h>
-#endif /*KAME_IPSEC*/
 
 /*
  * TCP protocol interface to socket abstraction.

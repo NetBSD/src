@@ -1,8 +1,9 @@
-#	$Id: files.netipsec,v 1.9 2012/01/09 15:16:31 drochner Exp $
+#	$Id: files.netipsec,v 1.10 2012/03/22 20:34:42 drochner Exp $
 #
 #
 defflag opt_ipsec.h	FAST_IPSEC:	opencrypto
 defflag opt_ipsec.h	IPSEC: FAST_IPSEC
+defflag opt_ipsec.h	IPSEC_NAT_T
 defflag opt_ipsec.h	IPSEC_DEBUG
 
 file	netipsec/ipsec.c		fast_ipsec	needs-flag
