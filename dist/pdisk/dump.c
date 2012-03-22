@@ -390,7 +390,7 @@ dump_partition_entry(partition_map *entry, int type_length, int name_length, int
 
 
 void
-list_all_disks()
+list_all_disks(void)
 {
     MEDIA_ITERATOR iter;
     MEDIA m;
