@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/10/22 22:06:17 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.2 2012/03/22 23:46:26 joerg Exp $
 
 NOMAN=		# defined
 
@@ -24,6 +24,8 @@ CPPFLAGS.stb_image.c+=	-Wno-shadow
 CPPFLAGS.stb_image.c+=	-Wno-sign-compare
 CPPFLAGS.stb_image.c+=	-Wno-missing-prototypes
 CPPFLAGS.stb_image.c+=	-Wno-missing-field-initializers
+
+CWARNFLAGS.clang+=	-Wno-missing-noreturn -Wno-self-assign
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>

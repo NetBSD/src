@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2011/08/11 23:15:38 joerg Exp $
+#	$NetBSD: Makefile,v 1.18 2012/03/22 23:46:27 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -109,7 +109,7 @@ PKGDIST.gl=	${X11SRCDIR.MesaLib}/src/mesa
 .include "${.CURDIR}/../libGL/mesa-ver.mk"
 PKGCONFIG_VERSION.gl=	${MESA_VER}
 
-CWARNFLAGS.clang+=	-Wno-tautological-compare -Wno-format
+CWARNFLAGS.clang+=	-Wno-tautological-compare -Wno-format -Wno-constant-conversion
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
