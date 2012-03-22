@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1045 2012/03/10 21:51:59 joerg Exp $
+#	$NetBSD: files,v 1.1046 2012/03/22 20:34:38 drochner Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -194,7 +194,6 @@ include "netatalk/files.netatalk"
 include "netbt/files.netbt"
 include "netinet/files.netinet"
 include "netinet6/files.netinet6"
-include "netinet6/files.ipsec"
 include "netipsec/files.netipsec"
 include "netiso/files.netiso"
 include "netmpls/files.netmpls"

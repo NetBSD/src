@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.82 2012/03/20 20:34:58 matt Exp $	*/
+/*	$NetBSD: main.c,v 1.83 2012/03/22 20:34:43 drochner Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.82 2012/03/20 20:34:58 matt Exp $");
+__RCSID("$NetBSD: main.c,v 1.83 2012/03/22 20:34:43 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -232,7 +232,7 @@ struct protox {
 	  carp_stats,	NULL,		0,	"carp" },
 #ifdef IPSEC
 	{ -1,		N_IPSECSTAT,	1,	0,
-	  ipsec_switch,	NULL,		0,	"ipsec" },
+	  fast_ipsec_stats, NULL,	0,	"ipsec" },
 #endif
 	{ -1,		N_PIMSTAT,	1,	0,
 	  pim_stats,	NULL,		0,	"pim" },
@@ -259,7 +259,7 @@ struct protox ip6protox[] = {
 	  udp6_stats,	NULL,		0,	"udp6" },
 #ifdef IPSEC
 	{ -1,		N_IPSEC6STAT,	1,	0,
-	  ipsec_switch,	NULL,		0,	"ipsec6" },
+	  fast_ipsec_stats, NULL,	0,	"ipsec6" },
 #endif
 	{ -1,		N_PIM6STAT,	1,	0,
 	  pim6_stats,	NULL,		0,	"pim6" },
