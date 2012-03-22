@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1383 2012/03/04 16:12:24 tron Exp $
+# $NetBSD: mi,v 1.1384 2012/03/22 20:52:47 drochner Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1240,7 +1240,7 @@
 ./usr/share/man/cat4/jme.0			man-sys-catman		.cat
 ./usr/share/man/cat4/jmide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/joy.0			man-sys-catman		.cat
-./usr/share/man/cat4/kame_ipsec.0		man-sys-catman		.cat
+./usr/share/man/cat4/kame_ipsec.0		man-obsolete		obsolete
 ./usr/share/man/cat4/kloader.0			man-sys-catman		.cat
 ./usr/share/man/cat4/kse.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ksyms.0			man-sys-catman		.cat
@@ -4074,7 +4074,7 @@
 ./usr/share/man/html4/jme.html			man-sys-htmlman		html
 ./usr/share/man/html4/jmide.html		man-sys-htmlman		html
 ./usr/share/man/html4/joy.html			man-sys-htmlman		html
-./usr/share/man/html4/kame_ipsec.html		man-sys-htmlman		html
+./usr/share/man/html4/kame_ipsec.html		man-obsolete		obsolete
 ./usr/share/man/html4/kloader.html		man-sys-htmlman		html
 ./usr/share/man/html4/kse.html			man-sys-htmlman		html
 ./usr/share/man/html4/ksyms.html		man-sys-htmlman		html
@@ -6751,7 +6751,7 @@
 ./usr/share/man/man4/jme.4			man-sys-man		.man
 ./usr/share/man/man4/jmide.4			man-sys-man		.man
 ./usr/share/man/man4/joy.4			man-sys-man		.man
-./usr/share/man/man4/kame_ipsec.4		man-sys-man		.man
+./usr/share/man/man4/kame_ipsec.4		man-obsolete		obsolete
 ./usr/share/man/man4/kloader.4			man-sys-man		.man
 ./usr/share/man/man4/kse.4			man-sys-man		.man
 ./usr/share/man/man4/ksyms.4			man-sys-man		.man
