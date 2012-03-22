@@ -1,4 +1,4 @@
-/* $NetBSD: crt0-common.c,v 1.7 2011/06/30 20:07:35 matt Exp $ */
+/* $NetBSD: crt0-common.c,v 1.8 2012/03/22 22:59:43 joerg Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crt0-common.c,v 1.7 2011/06/30 20:07:35 matt Exp $");
+__RCSID("$NetBSD: crt0-common.c,v 1.8 2012/03/22 22:59:43 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/exec.h>
@@ -74,7 +74,7 @@ struct ps_strings *__ps_strings = 0;
 static char	 empty_string[] = "";
 char		*__progname = empty_string;
 
-__dso_hidden void ___start(void (*)(void), const Obj_Entry *,
+__dead __dso_hidden void ___start(void (*)(void), const Obj_Entry *,
 			 struct ps_strings *);
 
 #define	write(fd, s, n)	__syscall(SYS_write, (fd), (s), (n))

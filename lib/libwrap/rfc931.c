@@ -1,4 +1,4 @@
-/*	$NetBSD: rfc931.c,v 1.9 2012/03/21 10:10:37 matt Exp $	*/
+/*	$NetBSD: rfc931.c,v 1.10 2012/03/22 22:59:43 joerg Exp $	*/
 
  /*
   * rfc931() speaks a common subset of the RFC 931, AUTH, TAP, IDENT and RFC
@@ -16,7 +16,7 @@
 #if 0
 static char sccsid[] = "@(#) rfc931.c 1.10 95/01/02 16:11:34";
 #else
-__RCSID("$NetBSD: rfc931.c,v 1.9 2012/03/21 10:10:37 matt Exp $");
+__RCSID("$NetBSD: rfc931.c,v 1.10 2012/03/22 22:59:43 joerg Exp $");
 #endif
 #endif
 
@@ -45,7 +45,7 @@ int     rfc931_timeout = RFC931_TIMEOUT;/* Global so it can be changed */
 static jmp_buf timebuf;
 
 static FILE *fsocket(int, int, int);
-static void timeout(int);
+static void timeout(int) __dead;
 
 /* fsocket - open stdio stream on top of socket */
 
