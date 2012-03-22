@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.15 2012/03/21 10:10:37 matt Exp $	*/
+/*	$NetBSD: options.c,v 1.16 2012/03/22 22:59:43 joerg Exp $	*/
 
  /*
   * General skeleton for adding options to the access control language. The
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#) options.c 1.17 96/02/11 17:01:31";
 #else
-__RCSID("$NetBSD: options.c,v 1.15 2012/03/21 10:10:37 matt Exp $");
+__RCSID("$NetBSD: options.c,v 1.16 2012/03/22 22:59:43 joerg Exp $");
 #endif
 #endif
 
@@ -103,9 +103,9 @@ static void nice_option			/* execute "nice" option */
 		(char *, struct request_info *);
 static void severity_option		/* execute "severity value" */
 		(char *, struct request_info *);
-static void allow_option		/* execute "allow" option */
+__dead static void allow_option		/* execute "allow" option */
 		(char *, struct request_info *);
-static void deny_option			/* execute "deny" option */
+__dead static void deny_option			/* execute "deny" option */
 		(char *, struct request_info *);
 static void banners_option		/* execute "banners path" option */
 		(char *, struct request_info *);

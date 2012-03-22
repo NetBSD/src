@@ -1,4 +1,4 @@
-/*	$NetBSD: skeysubr.c,v 1.27 2012/03/21 10:10:37 matt Exp $	*/
+/*	$NetBSD: skeysubr.c,v 1.28 2012/03/22 22:59:43 joerg Exp $	*/
 
 /* S/KEY v1.1b (skeysubr.c)
  *
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: skeysubr.c,v 1.27 2012/03/21 10:10:37 matt Exp $");
+__RCSID("$NetBSD: skeysubr.c,v 1.28 2012/03/22 22:59:43 joerg Exp $");
 
 #include <ctype.h>
 #include <stdio.h>
@@ -46,7 +46,7 @@ static int keycrunch_sha1(char *, const char *, const char *);
 /* static int keycrunch_rmd160(char *, const char *, const char *); */
 static void lowcase(char *);
 static void skey_echo(int);
-static void trapped(int);
+static void trapped(int) __dead;
 static char *mkSeedPassword(const char *, const char *, size_t *);
 
 /* Current hash type (index into skey_hash_types array) */
