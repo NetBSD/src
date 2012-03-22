@@ -1,4 +1,4 @@
-/* $NetBSD: t_getitimer.c,v 1.1 2011/07/07 06:57:53 jruoho Exp $ */
+/* $NetBSD: t_getitimer.c,v 1.2 2012/03/22 18:20:46 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_getitimer.c,v 1.1 2011/07/07 06:57:53 jruoho Exp $");
+__RCSID("$NetBSD: t_getitimer.c,v 1.2 2012/03/22 18:20:46 christos Exp $");
 
 #include <sys/time.h>
 
@@ -146,7 +146,8 @@ ATF_TC_BODY(setitimer_basic, tc)
 ATF_TC(setitimer_err);
 ATF_TC_HEAD(setitimer_err, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test errors from setitimer(2)");
+	atf_tc_set_md_var(tc, "descr", "Test errors from setitimer(2)"
+	    " (PR standards/44927)");
 }
 
 ATF_TC_BODY(setitimer_err, tc)
@@ -158,11 +159,6 @@ ATF_TC_BODY(setitimer_err, tc)
 
 	errno = 0;
 	ATF_REQUIRE_ERRNO(EINVAL, setitimer(INT_MAX, &it, &ot) == -1);
-
-	/*
-	 * This fails incorrectly with EPERM.
-	 */
-	atf_tc_expect_fail("PR standards/44927");
 
 	errno = 0;
 	ATF_REQUIRE_ERRNO(EFAULT, setitimer(ITIMER_REAL,(void*)-1, &ot) == -1);
