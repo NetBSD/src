@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.6 2011/05/20 21:42:48 nakayama Exp $	*/
+/*	$NetBSD: fenv.h,v 1.7 2012/03/22 03:06:06 dholland Exp $	*/
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -55,7 +55,7 @@ int	feenableexcept(int mask);
 int	fedisableexcept(int mask);
 int	fegetexcept(void);
 
-#endif /* _NETBDS_SOURCE || _GNU_SOURCE */
+#endif /* _NETBSD_SOURCE || _GNU_SOURCE */
 
 __END_DECLS
 
