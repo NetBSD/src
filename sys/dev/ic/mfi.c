@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.36.8.1 2012/03/22 22:58:23 riz Exp $ */
+/* $NetBSD: mfi.c,v 1.36.8.2 2012/03/22 23:04:27 riz Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.36.8.1 2012/03/22 22:58:23 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.36.8.2 2012/03/22 23:04:27 riz Exp $");
 
 #include "bio.h"
 
@@ -149,6 +149,20 @@ static const struct mfi_iop_ops mfi_iop_gen2 = {
 	mfi_gen2_intr_ena,
 	mfi_gen2_intr,
 	mfi_gen2_post
+};
+
+u_int32_t	mfi_skinny_fw_state(struct mfi_softc *);
+void		mfi_skinny_intr_dis(struct mfi_softc *);
+void		mfi_skinny_intr_ena(struct mfi_softc *);
+int		mfi_skinny_intr(struct mfi_softc *);
+void		mfi_skinny_post(struct mfi_softc *, struct mfi_ccb *);
+
+static const struct mfi_iop_ops mfi_iop_skinny = {
+	mfi_skinny_fw_state,
+	mfi_skinny_intr_dis,
+	mfi_skinny_intr_ena,
+	mfi_skinny_intr,
+	mfi_skinny_post
 };
 
 #define mfi_fw_state(_s) 	((_s)->sc_iop->mio_fw_state(_s))
@@ -402,11 +416,17 @@ mfi_transition_firmware(struct mfi_softc *sc)
 			printf("%s: firmware fault\n", DEVNAME(sc));
 			return 1;
 		case MFI_STATE_WAIT_HANDSHAKE:
-			mfi_write(sc, MFI_IDB, MFI_INIT_CLEAR_HANDSHAKE);
+			if (sc->sc_flags & MFI_IOP_SKINNY)
+				mfi_write(sc, MFI_SKINNY_IDB, MFI_INIT_CLEAR_HANDSHAKE);
+			else
+				mfi_write(sc, MFI_IDB, MFI_INIT_CLEAR_HANDSHAKE);
 			max_wait = 2;
 			break;
 		case MFI_STATE_OPERATIONAL:
-			mfi_write(sc, MFI_IDB, MFI_INIT_READY);
+			if (sc->sc_flags & MFI_IOP_SKINNY)
+				mfi_write(sc, MFI_SKINNY_IDB, MFI_INIT_READY);
+			else
+				mfi_write(sc, MFI_IDB, MFI_INIT_READY);
 			max_wait = 10;
 			break;
 		case MFI_STATE_UNDEFINED:
@@ -729,6 +749,9 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 		break;
 	case MFI_IOP_GEN2:
 		sc->sc_iop = &mfi_iop_gen2;
+		break;
+	case MFI_IOP_SKINNY:
+		sc->sc_iop = &mfi_iop_skinny;
 		break;
 	default:
 		 panic("%s: unknown iop %d", DEVNAME(sc), iop);
@@ -2232,4 +2255,45 @@ mfi_gen2_post(struct mfi_softc *sc, struct mfi_ccb *ccb)
 {
 	mfi_write(sc, MFI_IQP, 0x1 | ccb->ccb_pframe |
 	    (ccb->ccb_extra_frames << 1));
+}
+
+u_int32_t
+mfi_skinny_fw_state(struct mfi_softc *sc)
+{
+	return (mfi_read(sc, MFI_OSP));
+}
+
+void
+mfi_skinny_intr_dis(struct mfi_softc *sc)
+{
+	mfi_write(sc, MFI_OMSK, 0);
+}
+
+void
+mfi_skinny_intr_ena(struct mfi_softc *sc)
+{
+	mfi_write(sc, MFI_OMSK, ~0x00000001);
+}
+
+int
+mfi_skinny_intr(struct mfi_softc *sc)
+{
+	u_int32_t status;
+
+	status = mfi_read(sc, MFI_OSTS);
+	if (!ISSET(status, MFI_OSTS_SKINNY_INTR_VALID))
+		return (0);
+
+	/* write status back to acknowledge interrupt */
+	mfi_write(sc, MFI_OSTS, status);
+
+	return (1);
+}
+
+void
+mfi_skinny_post(struct mfi_softc *sc, struct mfi_ccb *ccb)
+{
+	mfi_write(sc, MFI_IQPL, 0x1 | ccb->ccb_pframe |
+	    (ccb->ccb_extra_frames << 1));
+	mfi_write(sc, MFI_IQPH, 0x00000000);
 }
