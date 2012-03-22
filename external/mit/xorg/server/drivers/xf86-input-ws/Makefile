@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/09/26 18:08:09 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.3 2012/03/22 23:46:27 joerg Exp $
 
 WARNS?=		2
 
@@ -11,5 +11,7 @@ MAN=		ws.4
 CPPFLAGS+=	-DHAVE_CONFIG_H \
 		-I${X11SRCDIR.${DRIVER}}/../include \
 		-I${X11SRCDIR.${DRIVER}}/include
+
+CWARNFLAGS.clang+=	-Wno-parentheses-equality
 
 .include "../Makefile.xf86-driver"
