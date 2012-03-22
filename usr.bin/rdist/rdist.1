@@ -1,4 +1,4 @@
-.\"	$NetBSD: rdist.1,v 1.19 2009/08/19 14:54:35 joerg Exp $
+.\"	$NetBSD: rdist.1,v 1.20 2012/03/22 07:58:19 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -188,7 +188,7 @@ Files are normally updated if their
 and
 .Ar size
 (see
-.Xr stat  2  )
+.Xr stat 2 )
 disagree.
 The
 .Fl y
@@ -250,7 +250,7 @@ or
 .Pp
 The shell meta-characters `[', `]', `{', `}', `*', and `?'
 are recognized and expanded (on the local host only) in the same way as
-.Xr csh  1  .
+.Xr csh 1 .
 They can be escaped with a backslash.
 The `~' character is also expanded in the same way as
 .Xr csh 1
@@ -325,7 +325,7 @@ command except that
 .Ar pattern list
 is a list of regular expressions
 (see
-.Xr ed  1
+.Xr ed 1
 for details).
 If one of the patterns matches some string within a file name, that file will
 be ignored.
@@ -340,7 +340,7 @@ must be escaped with `\e'.
 The
 .Ic special
 command is used to specify
-.Xr sh  1
+.Xr sh 1
 commands that are to be executed on the
 remote host after the file in
 .Ar name list
