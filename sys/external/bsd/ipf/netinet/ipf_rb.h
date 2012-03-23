@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf_rb.h,v 1.1.1.1 2012/03/23 20:37:04 christos Exp $	*/
+/*	$NetBSD: ipf_rb.h,v 1.2 2012/03/23 20:39:50 christos Exp $	*/
 
 /*
  * Copyright (C) 2011 by Darren Reed.
@@ -339,7 +339,7 @@ _n##_rb_walktree(struct _n##_rb_head *head, _n##_rb_walker_t func, void *arg)\
 _t *									\
 _n##_rb_search(struct _n##_rb_head *head, void *key)			\
 {									\
-	int	match;							\
+	int	match = 0;						\
 	_t	*node;							\
 	node = head->top._f.right;					\
 	while (node != &_n##_rb_zero) {					\
