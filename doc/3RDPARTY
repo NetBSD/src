@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.922 2012/03/23 09:42:47 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.923 2012/03/23 21:34:17 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -477,18 +477,17 @@ Location:	games/hunt
 Notes:
 
 Package:	ipf
-Version:	4.1.34
-Current Vers:	5.1.0
+Version:	5.1.1
+Current Vers:	5.1.1
 Maintainer:	Darren Reed
 Archive Site:	http://coombs.anu.edu.au/~avalon/
 Home Page:	http://coombs.anu.edu.au/~avalon/
 Mailing List:	ipfilter@postbox.anu.edu.au
-Responsible:	darrenr, mike
-License:	BSD-based; see src/dist/ipf/IPFILTER.LICENCE
-Location:	dist/ipf,sys/dist/ipf
+Responsible:	darrenr, christos
+License:	BSD-based; see src/external/ipf/dist/IPFILTER.LICENCE
+Location:	external/bsd/ipf,sys/external/bsd/ipf
 Notes:
 ipf2netbsd should be used on a virgin ipfilter source tree.
-See also dist/ipf/README.NetBSD
 
 Package:	ipsec-tools
 Version:	(ipsec-tools head is NetBSD-current head)
