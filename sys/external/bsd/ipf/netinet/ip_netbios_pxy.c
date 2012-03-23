@@ -1,9 +1,9 @@
-/*	$NetBSD: ip_netbios_pxy.c,v 1.1.1.1 2012/03/23 20:37:01 christos Exp $	*/
+/*	$NetBSD: ip_netbios_pxy.c,v 1.2 2012/03/23 20:39:50 christos Exp $	*/
 
 /*
  * Simple netbios-dgm transparent proxy for in-kernel use.
  * For use with the NAT code.
- * Id
+ * Id: ip_netbios_pxy.c,v 2.11 2008/08/10 05:51:12 darrenr Exp
  */
 
 /*-
@@ -31,14 +31,17 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id
+ * Id: ip_netbios_pxy.c,v 2.11 2008/08/10 05:51:12 darrenr Exp
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(1, "$NetBSD: ip_netbios_pxy.c,v 1.2 2012/03/23 20:39:50 christos Exp $");
 
 #define	IPF_NETBIOS_PROXY
 
-void ipf_p_netbios_main_load __P((void));
-void ipf_p_netbios_main_unload __P((void));
-int ipf_p_netbios_out __P((void *, fr_info_t *, ap_session_t *, nat_t *));
+void ipf_p_netbios_main_load(void);
+void ipf_p_netbios_main_unload(void);
+int ipf_p_netbios_out(void *, fr_info_t *, ap_session_t *, nat_t *);
 
 static	frentry_t	netbiosfr;
 
@@ -48,7 +51,7 @@ int	netbios_proxy_init = 0;
  * Initialize local structures.
  */
 void
-ipf_p_netbios_main_load()
+ipf_p_netbios_main_load(void)
 {
 	bzero((char *)&netbiosfr, sizeof(netbiosfr));
 	netbiosfr.fr_ref = 1;
@@ -59,7 +62,7 @@ ipf_p_netbios_main_load()
 
 
 void
-ipf_p_netbios_main_unload()
+ipf_p_netbios_main_unload(void)
 {
 	if (netbios_proxy_init == 1) {
 		MUTEX_DESTROY(&netbiosfr.fr_lock);
@@ -69,11 +72,7 @@ ipf_p_netbios_main_unload()
 
 
 int
-ipf_p_netbios_out(arg, fin, aps, nat)
-	void *arg;
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_netbios_out(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	char dgmbuf[6];
 	int off, dlen;

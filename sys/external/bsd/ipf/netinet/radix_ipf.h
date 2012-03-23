@@ -1,4 +1,4 @@
-/*	$NetBSD: radix_ipf.h,v 1.1.1.1 2012/03/23 20:37:04 christos Exp $	*/
+/*	$NetBSD: radix_ipf.h,v 1.2 2012/03/23 20:39:50 christos Exp $	*/
 
 /*
  * Copyright (C) 2011 by Darren Reed.
@@ -82,17 +82,17 @@ typedef struct radix_softc {
 # define	RADIX_NODE_HEAD_UNLOCK(x)
 #endif
 
-extern	void	*ipf_rx_create __P((void));
-extern	int	ipf_rx_init __P((void *));
-extern	void	ipf_rx_destroy __P((void *));   
-extern	int	ipf_rx_inithead __P((radix_softc_t *, ipf_rdx_head_t **));
-extern	void	ipf_rx_freehead __P((ipf_rdx_head_t *));
-extern	ipf_rdx_node_t *ipf_rx_addroute __P((ipf_rdx_head_t *,
+extern	void	*ipf_rx_create(void);
+extern	int	ipf_rx_init(void *);
+extern	void	ipf_rx_destroy(void *);   
+extern	int	ipf_rx_inithead(radix_softc_t *, ipf_rdx_head_t **);
+extern	void	ipf_rx_freehead(ipf_rdx_head_t *);
+extern	ipf_rdx_node_t *ipf_rx_addroute(ipf_rdx_head_t *,
 					     addrfamily_t *, addrfamily_t *,
-					     ipf_rdx_node_t *));
-extern	ipf_rdx_node_t *ipf_rx_delete __P((ipf_rdx_head_t *, addrfamily_t *,
-					   addrfamily_t *));
-extern	void	ipf_rx_walktree __P((ipf_rdx_head_t *, radix_walk_func_t,
-				     void *));
+					     ipf_rdx_node_t *);
+extern	ipf_rdx_node_t *ipf_rx_delete(ipf_rdx_head_t *, addrfamily_t *,
+					   addrfamily_t *);
+extern	void	ipf_rx_walktree(ipf_rdx_head_t *, radix_walk_func_t,
+				     void *);
 
 #endif /* __RADIX_IPF_H__ */

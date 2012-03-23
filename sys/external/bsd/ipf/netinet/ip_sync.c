@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_sync.c,v 1.1.1.1 2012/03/23 20:37:04 christos Exp $	*/
+/*	$NetBSD: ip_sync.c,v 1.2 2012/03/23 20:39:50 christos Exp $	*/
 
 /*
  * Copyright (C) 2011 by Darren Reed.
@@ -98,7 +98,12 @@ struct file;
 /* END OF INCLUDES */
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id";
+#if defined(__NetBSD__)
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_sync.c,v 1.2 2012/03/23 20:39:50 christos Exp $");
+#else
+static const char rcsid[] = "@(#)Id: ip_sync.c,v 2.68.2.4 2012/01/29 05:30:36 darrenr Exp";
+#endif
 #endif
 
 #define	SYNC_STATETABSZ	256
@@ -137,23 +142,22 @@ typedef struct ipf_sync_softc_s {
 	int		ipf_sync_inited;
 } ipf_sync_softc_t;
 
-static int ipf_sync_flush_table __P((ipf_sync_softc_t *, int, synclist_t **));
-static void ipf_sync_wakeup __P((ipf_main_softc_t *));
-static void ipf_sync_del __P((ipf_sync_softc_t *, synclist_t *));
-static void ipf_sync_poll_wakeup __P((ipf_main_softc_t *));
-static int ipf_sync_nat __P((ipf_main_softc_t *, synchdr_t *, void *));
-static int ipf_sync_state __P((ipf_main_softc_t *, synchdr_t *, void *));
+static int ipf_sync_flush_table(ipf_sync_softc_t *, int, synclist_t **);
+static void ipf_sync_wakeup(ipf_main_softc_t *);
+static void ipf_sync_del(ipf_sync_softc_t *, synclist_t *);
+static void ipf_sync_poll_wakeup(ipf_main_softc_t *);
+static int ipf_sync_nat(ipf_main_softc_t *, synchdr_t *, void *);
+static int ipf_sync_state(ipf_main_softc_t *, synchdr_t *, void *);
 
 # if !defined(sparc) && !defined(__hppa)
-void ipf_sync_tcporder __P((int, struct tcpdata *));
-void ipf_sync_natorder __P((int, struct nat *));
-void ipf_sync_storder __P((int, struct ipstate *));
+void ipf_sync_tcporder(int, struct tcpdata *);
+void ipf_sync_natorder(int, struct nat *);
+void ipf_sync_storder(int, struct ipstate *);
 # endif
 
 
 void *
-ipf_sync_soft_create(softc)
-	ipf_main_softc_t *softc;
+ipf_sync_soft_create(ipf_main_softc_t *softc)
 {
 	ipf_sync_softc_t *softs;
 
@@ -182,9 +186,7 @@ ipf_sync_soft_create(softc)
 /* any data structures, as required.                                        */
 /* ------------------------------------------------------------------------ */
 int
-ipf_sync_soft_init(softc, arg)
-	ipf_main_softc_t *softc;
-	void *arg;
+ipf_sync_soft_init(ipf_main_softc_t *softc, void *arg)
 {
 	ipf_sync_softc_t *softs = arg;
 
@@ -249,9 +251,7 @@ ipf_sync_soft_init(softc, arg)
 /* with the synchronisation tables.                                         */
 /* ------------------------------------------------------------------------ */
 int
-ipf_sync_soft_fini(softc, arg)
-	ipf_main_softc_t *softc;
-	void *arg;
+ipf_sync_soft_fini(ipf_main_softc_t *softc, void *arg)
 {
 	ipf_sync_softc_t *softs = arg;
 
@@ -296,9 +296,7 @@ ipf_sync_soft_fini(softc, arg)
 }
 
 void
-ipf_sync_soft_destroy(softc, arg)
-	ipf_main_softc_t *softc;
-	void *arg;
+ipf_sync_soft_destroy(ipf_main_softc_t *softc, void *arg)
 {
 	ipf_sync_softc_t *softs = arg;
 
@@ -317,9 +315,7 @@ ipf_sync_soft_destroy(softc, arg)
 /* need to be used at both ends by the host in their native byte order.     */
 /* ------------------------------------------------------------------------ */
 void
-ipf_sync_tcporder(way, td)
-	int way;
-	tcpdata_t *td;
+ipf_sync_tcporder(int way, tcpdata_t *td)
 {
 	if (way) {
 		td->td_maxwin = htons(td->td_maxwin);
@@ -343,9 +339,7 @@ ipf_sync_tcporder(way, td)
 /* used at both ends by the host in their native byte order.                */
 /* ------------------------------------------------------------------------ */
 void
-ipf_sync_natorder(way, n)
-	int way;
-	nat_t *n;
+ipf_sync_natorder(int way, nat_t *n)
 {
 	if (way) {
 		n->nat_age = htonl(n->nat_age);
@@ -373,9 +367,7 @@ ipf_sync_natorder(way, n)
 /* be used at both ends by the host in their native byte order.             */
 /* ------------------------------------------------------------------------ */
 void
-ipf_sync_storder(way, ips)
-	int way;
-	ipstate_t *ips;
+ipf_sync_storder(int way, ipstate_t *ips)
 {
 	ipf_sync_tcporder(way, &ips->is_tcp.ts_data[0]);
 	ipf_sync_tcporder(way, &ips->is_tcp.ts_data[1]);
@@ -432,9 +424,7 @@ ipf_sync_storder(way, ips)
 /* structures in the state/NAT tables.                                      */
 /* ------------------------------------------------------------------------ */
 int
-ipf_sync_write(softc, uio)
-	ipf_main_softc_t *softc;
-	struct uio *uio;
+ipf_sync_write(ipf_main_softc_t *softc, struct uio *uio)
 {
 	ipf_sync_softc_t *softs = softc->ipf_sync_soft;
 	synchdr_t sh;
@@ -456,7 +446,7 @@ ipf_sync_write(softc, uio)
 
 		if (uio->uio_resid >= sizeof(sh)) {
 
-			err = UIOMOVE(&sh, sizeof(sh), UIO_WRITE, uio);
+			err = UIOMOVE((void *)&sh, sizeof(sh), UIO_WRITE, uio);
 
 			if (err) {
 				if (softs->ipf_sync_debug > 2)
@@ -534,7 +524,7 @@ ipf_sync_write(softc, uio)
 
 		if (uio->uio_resid >= sh.sm_len) {
 
-			err = UIOMOVE(data, sh.sm_len, UIO_WRITE, uio);
+			err = UIOMOVE((void *)data, sh.sm_len, UIO_WRITE, uio);
 
 			if (err) {
 				if (softs->ipf_sync_debug > 2)
@@ -558,7 +548,7 @@ ipf_sync_write(softc, uio)
 		} else {
 			/* insufficient data, wait until next call */
 			if (softs->ipf_sync_debug > 2)
-				printf("uiomove(data) %s %d bytes, got %d\n",
+				printf("uiomove(data) %s %d bytes, got %zu\n",
 					"insufficient data, need",
 					sh.sm_len, uio->uio_resid);
 			IPFERROR(110007);
@@ -581,9 +571,7 @@ ipf_sync_write(softc, uio)
 /* put to sleep, pending a wakeup from the "lower half" of this code.       */
 /* ------------------------------------------------------------------------ */
 int
-ipf_sync_read(softc, uio)
-	ipf_main_softc_t *softc;
-	struct uio *uio;
+ipf_sync_read(ipf_main_softc_t *softc, struct uio *uio)
 {
 	ipf_sync_softc_t *softs = softc->ipf_sync_soft;
 	syncupdent_t *su;
@@ -690,10 +678,7 @@ goterror:
 /* structures being timed out correctly.                                    */
 /* ------------------------------------------------------------------------ */
 static int
-ipf_sync_state(softc, sp, data)
-	ipf_main_softc_t *softc;
-	synchdr_t *sp;
-	void *data;
+ipf_sync_state(ipf_main_softc_t *softc, synchdr_t *sp, void *data)
 {
 	ipf_sync_softc_t *softs = softc->ipf_sync_soft;
 	synctcp_update_t su;
@@ -860,9 +845,7 @@ ipf_sync_state(softc, sp, data)
 /* Deletes an object from the synclist.                                     */
 /* ------------------------------------------------------------------------ */
 static void
-ipf_sync_del(softs, sl)
-	ipf_sync_softc_t *softs;
-	synclist_t *sl;
+ipf_sync_del(ipf_sync_softc_t *softs, synclist_t *sl)
 {
 	*sl->sl_pnext = sl->sl_next;
 	if (sl->sl_next != NULL)
@@ -880,9 +863,7 @@ ipf_sync_del(softs, sl)
 /* Deletes an object from the synclist state table and free's its memory.   */
 /* ------------------------------------------------------------------------ */
 void
-ipf_sync_del_state(arg, sl)
-	void *arg;
-	synclist_t *sl;
+ipf_sync_del_state(void *arg, synclist_t *sl)
 {
 	ipf_sync_softc_t *softs = arg;
 
@@ -901,9 +882,7 @@ ipf_sync_del_state(arg, sl)
 /* Deletes an object from the synclist nat table and free's its memory.     */
 /* ------------------------------------------------------------------------ */
 void
-ipf_sync_del_nat(arg, sl)
-	void *arg;
-	synclist_t *sl;
+ipf_sync_del_nat(void *arg, synclist_t *sl)
 {
 	ipf_sync_softc_t *softs = arg;
 
@@ -927,10 +906,7 @@ ipf_sync_del_nat(arg, sl)
 /* structures being timed out correctly.                                    */
 /* ------------------------------------------------------------------------ */
 static int
-ipf_sync_nat(softc, sp, data)
-	ipf_main_softc_t *softc;
-	synchdr_t *sp;
-	void *data;
+ipf_sync_nat(ipf_main_softc_t *softc, synchdr_t *sp, void *data)
 {
 	ipf_sync_softc_t *softs = softc->ipf_sync_soft;
 	syncupdent_t su;
@@ -1030,11 +1006,7 @@ ipf_sync_nat(softc, sp, data)
 /* waiting to be processed.                                                 */
 /* ------------------------------------------------------------------------ */
 synclist_t *
-ipf_sync_new(softc, tab, fin, ptr)
-	ipf_main_softc_t *softc;
-	int tab;
-	fr_info_t *fin;
-	void *ptr;
+ipf_sync_new(ipf_main_softc_t *softc, int tab, fr_info_t *fin, void *ptr)
 {
 	ipf_sync_softc_t *softs = softc->ipf_sync_soft;
 	synclist_t *sl, *ss;
@@ -1165,11 +1137,8 @@ ipf_sync_new(softc, tab, fin, ptr)
 /* process to read.                                                         */
 /* ------------------------------------------------------------------------ */
 void
-ipf_sync_update(softc, tab, fin, sl)
-	ipf_main_softc_t *softc;
-	int tab;
-	fr_info_t *fin;
-	synclist_t *sl;
+ipf_sync_update(ipf_main_softc_t *softc, int tab, fr_info_t *fin,
+    synclist_t *sl)
 {
 	ipf_sync_softc_t *softs = softc->ipf_sync_soft;
 	synctcp_update_t *st;
@@ -1251,10 +1220,7 @@ ipf_sync_update(softc, tab, fin, sl)
 /* during this cleanup.                                                     */
 /* ------------------------------------------------------------------------ */
 static int
-ipf_sync_flush_table(softs, tabsize, table)
-	ipf_sync_softc_t *softs;
-	int tabsize;
-	synclist_t **table;
+ipf_sync_flush_table(ipf_sync_softc_t *softs, int tabsize, synclist_t **table)
 {
 	synclist_t *sl;
 	int i, items;
@@ -1298,12 +1264,8 @@ ipf_sync_flush_table(softs, tabsize, table)
 /* EINVAL on all occasions.                                                 */
 /* ------------------------------------------------------------------------ */
 int
-ipf_sync_ioctl(softc, data, cmd, mode, uid, ctx)
-	ipf_main_softc_t *softc;
-	caddr_t data;
-	ioctlcmd_t cmd;
-	int mode, uid;
-	void *ctx;
+ipf_sync_ioctl(ipf_main_softc_t *softc, void *data, ioctlcmd_t cmd, int mode,
+    int uid, void *ctx)
 {
 	ipf_sync_softc_t *softs = softc->ipf_sync_soft;
 	int error, i;
@@ -1379,8 +1341,7 @@ ipf_sync_ioctl(softc, data, cmd, mode, uid, ctx)
 /* there is data waiting to be read from the /dev/ipsync device.            */
 /* ------------------------------------------------------------------------ */
 int
-ipf_sync_canread(arg)
-	void *arg;
+ipf_sync_canread(void *arg)
 {
 	ipf_sync_softc_t *softs = arg;
 	return !((softs->sl_tail == softs->sl_idx) &&
@@ -1398,8 +1359,7 @@ ipf_sync_canread(arg)
 /* XXX Maybe this should return false if the sync table is full?            */
 /* ------------------------------------------------------------------------ */
 int
-ipf_sync_canwrite(arg)
-	void *arg;
+ipf_sync_canwrite(void *arg)
 {
 	return 1;
 }
@@ -1424,8 +1384,7 @@ ipf_sync_canwrite(arg)
 /*   mark for this counter.)                                                */
 /* ------------------------------------------------------------------------ */
 static void
-ipf_sync_wakeup(softc)
-	ipf_main_softc_t *softc;
+ipf_sync_wakeup(ipf_main_softc_t *softc)
 {
 	ipf_sync_softc_t *softs = softc->ipf_sync_soft;
 
@@ -1451,8 +1410,7 @@ ipf_sync_wakeup(softc)
 /* Deliver a poll wakeup and reset counters for two of the three heuristics */
 /* ------------------------------------------------------------------------ */
 static void
-ipf_sync_poll_wakeup(softc)
-	ipf_main_softc_t *softc;
+ipf_sync_poll_wakeup(ipf_main_softc_t *softc)
 {
 	ipf_sync_softc_t *softs = softc->ipf_sync_soft;
 
@@ -1482,8 +1440,7 @@ ipf_sync_poll_wakeup(softc)
 /* three heuristics above *IF* there are events waiting.                    */
 /* ------------------------------------------------------------------------ */
 void
-ipf_sync_expire(softc)
-	ipf_main_softc_t *softc;
+ipf_sync_expire(ipf_main_softc_t *softc)
 {
 	ipf_sync_softc_t *softs = softc->ipf_sync_soft;
 
