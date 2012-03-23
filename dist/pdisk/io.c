@@ -96,7 +96,7 @@ void my_ungetch(int c);
 // Routines
 //
 int
-my_getch()
+my_getch(void)
 {
     if (unget_count > 0) {
 	return (unget_buf[--unget_count]);

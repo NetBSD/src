@@ -92,7 +92,7 @@ init_program_name(char **argv)
 
 
 void
-do_help()
+do_help(void)
 {
     printf("\t%s [-h|--help]\n", program_name);
     printf("\t%s [-v|--version]\n", program_name);

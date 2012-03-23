@@ -226,7 +226,7 @@ main(int argc, char **argv)
 
 
 void
-print_top_notes()
+print_top_notes(void)
 {
     printf("Notes:\n");
     printf("  Disks have fake names of the form /dev/scsi<bus>.<id>\n");
@@ -239,7 +239,7 @@ print_top_notes()
 
 
 void
-interact()
+interact(void)
 {
     char *name;
     int command;
@@ -504,7 +504,7 @@ get_options(int argc, char **argv)
 
 
 void
-print_edit_notes()
+print_edit_notes(void)
 {
     printf("Notes:\n");
     printf("  Base and length fields are blocks, which vary in size between media.\n");
@@ -958,7 +958,7 @@ do_write_partition_map(partition_map_header *map)
 
 
 void
-print_expert_notes()
+print_expert_notes(void)
 {
     printf("Notes:\n");
     printf("  The expert commands are for low level and experimental features.\n");
