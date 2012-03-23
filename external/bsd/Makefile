@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2011/11/05 22:40:26 christos Exp $
+#	$NetBSD: Makefile,v 1.32 2012/03/23 21:31:27 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -23,6 +23,10 @@ SUBDIR+= pkg_install ../../crypto/external/bsd
 .endif
 .if (${MKPCC} != "no")
 SUBDIR+= pcc
+.endif
+# IP Filter
+.if (${MKIPFILTER} != "no")
+SUBDIR+=ipf
 .endif
 
 .include <bsd.subdir.mk>
