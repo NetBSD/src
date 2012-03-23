@@ -1,23 +1,23 @@
-/*	$NetBSD: ip_tftp_pxy.c,v 1.1.1.1 2012/03/23 20:37:04 christos Exp $	*/
+/*	$NetBSD: ip_tftp_pxy.c,v 1.2 2012/03/23 20:39:50 christos Exp $	*/
 
 /*
  * Copyright (C) 2010 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_tftp_pxy.c,v 1.1.2.4 2012/01/26 05:44:25 darren_r Exp 
+ * Id: ip_tftp_pxy.c,v 2.1.2.2 2012/01/26 05:29:13 darrenr Exp
  */
 
 #define IPF_TFTP_PROXY
 
-void ipf_p_tftp_main_load __P((void));
-void ipf_p_tftp_main_unload __P((void));
-int ipf_p_tftp_new __P((void *, fr_info_t *, ap_session_t *, nat_t *));
-int ipf_p_tftp_out __P((void *, fr_info_t *, ap_session_t *, nat_t *));
-int ipf_p_tftp_in __P((void *, fr_info_t *, ap_session_t *, nat_t *));
-int ipf_p_tftp_client __P((fr_info_t *, ap_session_t *, nat_t *));
-int ipf_p_tftp_server __P((fr_info_t *, ap_session_t *, nat_t *));
-int ipf_p_tftp_backchannel __P((fr_info_t *, ap_session_t *, nat_t *));
+void ipf_p_tftp_main_load(void);
+void ipf_p_tftp_main_unload(void);
+int ipf_p_tftp_new(void *, fr_info_t *, ap_session_t *, nat_t *);
+int ipf_p_tftp_out(void *, fr_info_t *, ap_session_t *, nat_t *);
+int ipf_p_tftp_in(void *, fr_info_t *, ap_session_t *, nat_t *);
+int ipf_p_tftp_client(fr_info_t *, ap_session_t *, nat_t *);
+int ipf_p_tftp_server(fr_info_t *, ap_session_t *, nat_t *);
+int ipf_p_tftp_backchannel(fr_info_t *, ap_session_t *, nat_t *);
 
 static	frentry_t	tftpfr;
 
@@ -44,7 +44,7 @@ typedef struct tftpinfo {
  * TFTP application proxy initialization.
  */
 void
-ipf_p_tftp_main_load()
+ipf_p_tftp_main_load(void)
 {
 
 	bzero((char *)&tftpfr, sizeof(tftpfr));
@@ -56,7 +56,7 @@ ipf_p_tftp_main_load()
 
 
 void
-ipf_p_tftp_main_unload()
+ipf_p_tftp_main_unload(void)
 {
 
 	if (tftp_proxy_init == 1) {
@@ -67,11 +67,7 @@ ipf_p_tftp_main_unload()
 
 
 int
-ipf_p_tftp_out(arg, fin, aps, nat)
-	void *arg;
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_tftp_out(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 
 	if (nat->nat_dir == NAT_OUTBOUND)
@@ -81,11 +77,7 @@ ipf_p_tftp_out(arg, fin, aps, nat)
 
 
 int
-ipf_p_tftp_in(arg, fin, aps, nat)
-	void *arg;
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_tftp_in(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 
 	if (nat->nat_dir == NAT_INBOUND)
@@ -95,11 +87,7 @@ ipf_p_tftp_in(arg, fin, aps, nat)
 
 
 int
-ipf_p_tftp_new(arg, fin, aps, nat)
-	void *arg;
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_tftp_new(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	udphdr_t *udp;
 	tftpinfo_t *ti;
@@ -126,10 +114,7 @@ ipf_p_tftp_new(arg, fin, aps, nat)
  * Setup for a new TFTP proxy.
  */
 int
-ipf_p_tftp_backchannel(fin, aps, nat)
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_tftp_backchannel(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	ipf_main_softc_t *softc = fin->fin_main_soft;
 #ifdef USE_MUTEXES
@@ -211,10 +196,7 @@ ipf_p_tftp_backchannel(fin, aps, nat)
 
 
 int
-ipf_p_tftp_client(fin, aps, nat)
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_tftp_client(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	u_char *msg, *s, *t;
 	tftpinfo_t *ti;
@@ -257,10 +239,7 @@ ipf_p_tftp_client(fin, aps, nat)
 
 
 int
-ipf_p_tftp_server(fin, aps, nat)
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_tftp_server(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	tftpinfo_t *ti;
 	u_short opcode;

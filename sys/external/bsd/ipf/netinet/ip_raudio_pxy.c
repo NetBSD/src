@@ -1,21 +1,24 @@
-/*	$NetBSD: ip_raudio_pxy.c,v 1.1.1.1 2012/03/23 20:37:02 christos Exp $	*/
+/*	$NetBSD: ip_raudio_pxy.c,v 1.2 2012/03/23 20:39:50 christos Exp $	*/
 
 /*
  * Copyright (C) 2008 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id
+ * Id: ip_raudio_pxy.c,v 1.53.2.1 2012/01/26 05:29:12 darrenr Exp
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(1, "$NetBSD: ip_raudio_pxy.c,v 1.2 2012/03/23 20:39:50 christos Exp $");
 
 #define	IPF_RAUDIO_PROXY
 
 
-void ipf_p_raudio_main_load __P((void));
-void ipf_p_raudio_main_unload __P((void));
-int ipf_p_raudio_new __P((void *, fr_info_t *, ap_session_t *, nat_t *));
-int ipf_p_raudio_in __P((void *, fr_info_t *, ap_session_t *, nat_t *));
-int ipf_p_raudio_out __P((void *, fr_info_t *, ap_session_t *, nat_t *));
+void ipf_p_raudio_main_load(void);
+void ipf_p_raudio_main_unload(void);
+int ipf_p_raudio_new(void *, fr_info_t *, ap_session_t *, nat_t *);
+int ipf_p_raudio_in(void *, fr_info_t *, ap_session_t *, nat_t *);
+int ipf_p_raudio_out(void *, fr_info_t *, ap_session_t *, nat_t *);
 
 static	frentry_t	raudiofr;
 
@@ -26,7 +29,7 @@ int	raudio_proxy_init = 0;
  * Real Audio application proxy initialization.
  */
 void
-ipf_p_raudio_main_load()
+ipf_p_raudio_main_load(void)
 {
 	bzero((char *)&raudiofr, sizeof(raudiofr));
 	raudiofr.fr_ref = 1;
@@ -37,7 +40,7 @@ ipf_p_raudio_main_load()
 
 
 void
-ipf_p_raudio_main_unload()
+ipf_p_raudio_main_unload(void)
 {
 	if (raudio_proxy_init == 1) {
 		MUTEX_DESTROY(&raudiofr.fr_lock);
@@ -50,11 +53,7 @@ ipf_p_raudio_main_unload()
  * Setup for a new proxy to handle Real Audio.
  */
 int
-ipf_p_raudio_new(arg, fin, aps, nat)
-	void *arg;
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_raudio_new(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	raudio_t *rap;
 
@@ -75,11 +74,7 @@ ipf_p_raudio_new(arg, fin, aps, nat)
 
 
 int
-ipf_p_raudio_out(arg, fin, aps, nat)
-	void *arg;
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_raudio_out(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	raudio_t *rap = aps->aps_data;
 	unsigned char membuf[512 + 1], *s;
@@ -183,11 +178,7 @@ ipf_p_raudio_out(arg, fin, aps, nat)
 
 
 int
-ipf_p_raudio_in(arg, fin, aps, nat)
-	void *arg;
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_raudio_in(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	unsigned char membuf[IPF_MAXPORTLEN + 1], *s;
 	tcphdr_t *tcp, tcph, *tcp2 = &tcph;

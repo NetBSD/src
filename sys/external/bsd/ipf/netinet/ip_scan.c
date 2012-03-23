@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_scan.c,v 1.1.1.1 2012/03/23 20:37:02 christos Exp $	*/
+/*	$NetBSD: ip_scan.c,v 1.2 2012/03/23 20:39:50 christos Exp $	*/
 
 /*
  * Copyright (C) 2009 by Darren Reed.
@@ -59,8 +59,13 @@ struct file;
 /* END OF INCLUDES */
 
 #if !defined(lint)
+#if defined(__NetBSD__)
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_scan.c,v 1.2 2012/03/23 20:39:50 christos Exp $");
+#else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id";
+static const char rcsid[] = "@(#)Id: ip_scan.c,v 2.53.2.2 2012/01/29 03:08:31 darrenr Exp";
+#endif
 #endif
 
 #ifdef	IPFILTER_SCAN	/* endif at bottom of file */
@@ -79,12 +84,12 @@ ipfrwlock_t	ipf_scan_rwlock;
 # endif
 
 
-int ipf_scan_add __P((caddr_t));
-int ipf_scan_remove __P((caddr_t));
-struct ipscan *ipf_scan_lookup __P((char *));
-int ipf_scan_matchstr __P((sinfo_t *, char *, int));
-int ipf_scan_matchisc __P((ipscan_t *, ipstate_t *, int, int, int *));
-int ipf_scan_match __P((ipstate_t *));
+int ipf_scan_add(void *);
+int ipf_scan_remove(void *);
+struct ipscan *ipf_scan_lookup(char *);
+int ipf_scan_matchstr(sinfo_t *, char *, int);
+int ipf_scan_matchisc(ipscan_t *, ipstate_t *, int, int, int *);
+int ipf_scan_match(ipstate_t *);
 
 static int	ipf_scan_inited = 0;
 
@@ -110,7 +115,7 @@ ipf_scan_unload(void *arg)
 
 int
 ipf_scan_add(data)
-	caddr_t data;
+	void *data;
 {
 	ipscan_t *i, *isc;
 	int err;
@@ -161,7 +166,7 @@ ipf_scan_add(data)
 
 int
 ipf_scan_remove(data)
-	caddr_t data;
+	void *data;
 {
 	ipscan_t isc, *i;
 	int err;
@@ -567,7 +572,7 @@ ipf_scan_packet(fin, is)
 	i = (0xffff & j) << off;
 #ifdef _KERNEL
 	COPYDATA(*(mb_t **)fin->fin_mp, fin->fin_plen - fin->fin_dlen + thoff,
-		 dlen, (caddr_t)is->is_sbuf[rv] + off);
+		 dlen, (void *)is->is_sbuf[rv] + off);
 #endif
 	is->is_smsk[rv] |= i;
 	for (j = 0, i = is->is_smsk[rv]; i & 1; i >>= 1)
@@ -592,7 +597,7 @@ ipf_scan_packet(fin, is)
 
 int
 ipf_scan_ioctl(data, cmd, mode, uid, ctx)
-	caddr_t data;
+	void *data;
 	ioctlcmd_t cmd;
 	int mode, uid;
 	void *ctx;

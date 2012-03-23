@@ -1,4 +1,4 @@
-/*	$NetBSD: ipl.h,v 1.1.1.1 2012/03/23 20:37:04 christos Exp $	*/
+/*	$NetBSD: ipl.h,v 1.2 2012/03/23 20:39:50 christos Exp $	*/
 
 /*
  * Copyright (C) 2010 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ipl.h	1.21 6/5/96
- * Id
+ * Id: ipl.h,v 2.60.2.4 2012/01/30 15:08:00 darrenr Exp
  */
 
 #ifndef	__IPL_H__
