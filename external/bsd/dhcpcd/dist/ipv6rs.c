@@ -92,6 +92,16 @@ static unsigned char *rcvbuf;
 static unsigned char ansbuf[1500];
 static char ntopbuf[INET6_ADDRSTRLEN];
 
+#if DEBUG_MEMORY
+static void
+ipv6rs_cleanup(void)
+{
+
+	free(sndbuf);
+	free(rcvbuf);
+}
+#endif
+
 int
 ipv6rs_open(void)
 {
@@ -125,6 +135,10 @@ ipv6rs_open(void)
 		&filt, sizeof(filt)) == -1)
 		return -1;
 
+#if DEBUG_MEMORY
+	atexit(ipv6rs_cleanup);
+#endif
+
 	len = CMSG_SPACE(sizeof(struct in6_pktinfo)) + CMSG_SPACE(sizeof(int));
 	sndbuf = xzalloc(len);
 	if (sndbuf == NULL)
@@ -154,6 +168,7 @@ ipv6rs_makeprobe(struct interface *ifp)
 	struct nd_router_solicit *rs;
 	struct nd_opt_hdr *nd;
 
+	free(ifp->rs);
 	ifp->rslen = sizeof(*rs) + ROUNDUP8(ifp->hwlen + 2);
 	ifp->rs = xzalloc(ifp->rslen);
 	if (ifp->rs == NULL)
@@ -274,6 +289,7 @@ ipv6rs_handledata(_unused void *arg)
 	struct ra_opt *rao, *raol;
 	char *opt;
 	struct timeval expire;
+	int has_dns;
 
 	len = recvmsg(sock, &rcvhdr, 0);
 	if (len == -1) {
@@ -335,15 +351,26 @@ ipv6rs_handledata(_unused void *arg)
 		    sfrom);
 		return;
 	}
-
-	syslog(LOG_INFO, "%s: Router Advertisement from %s", ifp->name, sfrom);
-	delete_timeouts(ifp, NULL);
-
 	for (rap = ifp->ras; rap; rap = rap->next) {
 		if (memcmp(rap->from.s6_addr, from.sin6_addr.s6_addr,
 		    sizeof(rap->from.s6_addr)) == 0)
 			break;
 	}
+
+	/* We don't want to spam the log with the fact we got an RA every
+	 * 30 seconds or so, so only spam the log if it's different. */
+	if (options & DHCPCD_DEBUG || rap == NULL ||
+	    (rap->expired || rap->data_len != len ||
+	     memcmp(rap->data, (unsigned char *)icp, rap->data_len) != 0))
+	{
+		if (rap) {
+			free(rap->data);
+			rap->data_len = 0;
+		}
+		syslog(LOG_INFO, "%s: Router Advertisement from %s",
+		    ifp->name, sfrom);
+	}
+
 	if (rap == NULL) {
 		rap = xmalloc(sizeof(*rap));
 		rap->next = ifp->ras;
@@ -352,16 +379,24 @@ ipv6rs_handledata(_unused void *arg)
 		memcpy(rap->from.s6_addr, from.sin6_addr.s6_addr,
 		    sizeof(rap->from.s6_addr));
 		strlcpy(rap->sfrom, sfrom, sizeof(rap->sfrom));
+		rap->data_len = 0;
+	}
+	if (rap->data_len == 0) {
+		rap->data = xmalloc(len);
+		memcpy(rap->data, icp, len);
+		rap->data_len = len;
 	}
 
 	get_monotonic(&rap->received);
 	nd_ra = (struct nd_router_advert *)icp;
 	rap->lifetime = ntohs(nd_ra->nd_ra_router_lifetime);
+	rap->expired = 0;
 
 	len -= sizeof(struct nd_router_advert);
 	p = ((uint8_t *)icp) + sizeof(struct nd_router_advert);
 	olen = 0;
 	lifetime = ~0U;
+	has_dns = 0;
 	for (olen = 0; len > 0; p += olen, len -= olen) {
 		if ((size_t)len < sizeof(struct nd_opt_hdr)) {
 			syslog(LOG_ERR, "%s: Short option", ifp->name);
@@ -443,10 +478,10 @@ ipv6rs_handledata(_unused void *arg)
 							l + strlen(cbp) + 2);
 						opt[l] = ' ';
 						strcpy(opt + l + 1, cbp);
-						opt[l + strlen(cbp) + l + 1] =
-						    '\0';
 					} else
 						opt = xstrdup(cbp);
+					if (lifetime > 0)
+						has_dns = 1;
 				}
 		        	op += sizeof(addr.s6_addr);
 			}
@@ -513,10 +548,20 @@ ipv6rs_handledata(_unused void *arg)
 	if (options & DHCPCD_TEST)
 		exit(EXIT_SUCCESS);
 
-	delete_q_timeout(0, handle_exit_timeout, NULL);
-	delete_timeouts(ifp, NULL);
+	/* If we don't require RDNSS then set has_dns = 1 so we fork */
+	if (!(ifp->state->options->options & DHCPCD_IPV6RA_REQRDNSS))
+		has_dns = 1;
+
+	if (has_dns)
+		delete_q_timeout(0, handle_exit_timeout, NULL);
+	delete_timeout(NULL, ifp);
 	ipv6rs_expire(ifp);
-	daemonise();
+	if (has_dns)
+		daemonise();
+	else if (options & DHCPCD_DAEMONISE && !(options & DHCPCD_DAEMONISED))
+		syslog(LOG_WARNING,
+		    "%s: did not fork due to an absent RDNSS option in the RA",
+		    ifp->name);
 }
 
 ssize_t
@@ -620,10 +665,14 @@ ipv6rs_free(struct interface *ifp)
 {
 	struct ra *rap, *ran;
 
+	free(ifp->rs);
+	ifp->rs = NULL;
 	for (rap = ifp->ras; rap && (ran = rap->next, 1); rap = ran) {
 		ipv6rs_free_opts(rap);
+		free(rap->data);
 		free(rap);
 	}
+	ifp->ras = NULL;
 }
 
 void
@@ -652,7 +701,7 @@ ipv6rs_expire(void *arg)
 		if (timercmp(&now, &expire, >)) {
 			syslog(LOG_INFO, "%s: %s: expired Router Advertisement",
 			    ifp->name, rap->sfrom);
-			expired = 1;
+			rap->expired = expired = 1;
 			if (ral)
 				ral->next = ran;
 			else
@@ -675,6 +724,7 @@ ipv6rs_expire(void *arg)
 				syslog(LOG_INFO,
 				    "%s: %s: expired option %d",
 				    ifp->name, rap->sfrom, rao->type);
+				rap->expired = expired = 1;
 				if (raol)
 					raol = raon;
 				else
@@ -697,7 +747,7 @@ int
 ipv6rs_start(struct interface *ifp)
 {
 
-	delete_timeouts(ifp, NULL);
+	delete_timeout(NULL, ifp);
 
 	/* Always make a new probe as the underlying hardware
 	 * address could have changed. */

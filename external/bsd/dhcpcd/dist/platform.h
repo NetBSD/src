@@ -28,7 +28,7 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
-char * hardware_platform(void);
-int check_ipv6(void);
+char *hardware_platform(void);
+int check_ipv6(const char *);
 
 #endif
