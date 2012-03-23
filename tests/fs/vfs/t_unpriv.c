@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unpriv.c,v 1.6 2012/03/15 12:57:27 njoly Exp $	*/
+/*	$NetBSD: t_unpriv.c,v 1.7 2012/03/23 09:58:23 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -121,7 +121,8 @@ static void
 times(const atf_tc_t *tc, const char *mp)
 {
 	const char *name = "file.test";
-	int fd;
+	int fd, expect;
+	struct timeval tmv[2];
 
 	FSTEST_ENTER();
 
@@ -138,6 +139,17 @@ times(const atf_tc_t *tc, const char *mp)
 	rump_pub_lwproc_releaselwp();
 
 	if (rump_sys_utimes(name, NULL) == -1)
+		atf_tc_fail_errno("utimes");
+
+	rump_pub_lwproc_rfork(RUMP_RFCFDG);
+	if (rump_sys_setuid(1) == -1)
+		atf_tc_fail_errno("setuid");
+	expect = FSTYPE_MSDOS(tc) ? EACCES : EPERM;
+	if (rump_sys_utimes(name, tmv) != -1 || errno != expect)
+		atf_tc_fail_errno("utimes");
+	rump_pub_lwproc_releaselwp();
+
+	if (rump_sys_utimes(name, tmv) == -1)
 		atf_tc_fail_errno("utimes");
 
 	if (rump_sys_unlink(name) == -1)
