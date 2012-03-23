@@ -63,8 +63,8 @@
 .Nm
 .Fl U, Fl Fl dumplease
 .Ar interface
-.\".Nm
-.\".Fl v , Fl Fl version
+.Nm
+.Fl Fl version
 .Nm
 .Fl x , Fl Fl exit
 .Op interface
@@ -378,10 +378,10 @@ Set the vendor option 03 with an IP address as a string.
 .D1 dhcpcd \-v 03,\e"192.168.0.2\e" eth0
 Set un-encapsulated vendor option to hello world.
 .D1 dhcpcd \-v ,"hello world" eth0
-.\".It Fl v , Fl Fl version
-.\"Display both program version and copyright information.
-.\".Nm
-.\"then exits before doing any configuration.
+.It Fl Fl version
+Display both program version and copyright information.
+.Nm
+then exits before doing any configuration.
 .It Fl w , Fl Fl waitip
 Wait for an address to be assigned before forking to the background.
 .It Fl x , Fl Fl exit
