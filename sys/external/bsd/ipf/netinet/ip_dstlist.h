@@ -1,11 +1,11 @@
-/*	$NetBSD: ip_dstlist.h,v 1.1.1.1 2012/03/23 20:36:53 christos Exp $	*/
+/*	$NetBSD: ip_dstlist.h,v 1.2 2012/03/23 20:39:49 christos Exp $	*/
 
 /*
  * Copyright (C) 2010 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_dstlist.h,v 1.5.2.4 2012/01/26 05:44:25 darren_r Exp 
+ * Id: ip_dstlist.h,v 2.5.2.2 2012/01/26 05:29:10 darrenr Exp
  */
 
 #ifndef	__IP_DSTLIST_H__
@@ -65,7 +65,6 @@ typedef	struct dstlist_stat_s {
 
 extern ipf_lookup_t ipf_dstlist_backend;
 
-extern int ipf_dstlist_select_node __P((fr_info_t *, void *, u_32_t *,
-					frdest_t *));
+extern int ipf_dstlist_select_node(fr_info_t *, void *, u_32_t *, frdest_t *);
 
 #endif /* __IP_DSTLIST_H__ */

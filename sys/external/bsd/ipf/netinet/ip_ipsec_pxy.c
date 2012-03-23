@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ipsec_pxy.c,v 1.1.1.1 2012/03/23 20:36:57 christos Exp $	*/
+/*	$NetBSD: ip_ipsec_pxy.c,v 1.2 2012/03/23 20:39:50 christos Exp $	*/
 
 /*
  * Copyright (C) 2011 by Darren Reed.
@@ -8,22 +8,26 @@
  * Simple ISAKMP transparent proxy for in-kernel use.  For use with the NAT
  * code.
  *
- * Id
+ * Id: ip_ipsec_pxy.c,v 2.43.2.2 2012/01/26 05:29:11 darrenr Exp
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(1, "$NetBSD: ip_ipsec_pxy.c,v 1.2 2012/03/23 20:39:50 christos Exp $");
+
 #define	IPF_IPSEC_PROXY
 
 
-void *ipf_p_ipsec_soft_create __P((ipf_main_softc_t *));
-void ipf_p_ipsec_soft_destroy __P((ipf_main_softc_t *, void *));
-int ipf_p_ipsec_soft_init __P((ipf_main_softc_t *, void *));
-void ipf_p_ipsec_soft_fini __P((ipf_main_softc_t *, void *));
-int ipf_p_ipsec_init __P((void));
-void ipf_p_ipsec_fini __P((void));
-int ipf_p_ipsec_new __P((void *, fr_info_t *, ap_session_t *, nat_t *));
-void ipf_p_ipsec_del __P((ipf_main_softc_t *, ap_session_t *));
-int ipf_p_ipsec_inout __P((void *, fr_info_t *, ap_session_t *, nat_t *));
-int ipf_p_ipsec_match __P((fr_info_t *, ap_session_t *, nat_t *));
+void *ipf_p_ipsec_soft_create(ipf_main_softc_t *);
+void ipf_p_ipsec_soft_destroy(ipf_main_softc_t *, void *);
+int ipf_p_ipsec_soft_init(ipf_main_softc_t *, void *);
+void ipf_p_ipsec_soft_fini(ipf_main_softc_t *, void *);
+int ipf_p_ipsec_init(void);
+void ipf_p_ipsec_fini(void);
+int ipf_p_ipsec_new(void *, fr_info_t *, ap_session_t *, nat_t *);
+void ipf_p_ipsec_del(ipf_main_softc_t *, ap_session_t *);
+int ipf_p_ipsec_inout(void *, fr_info_t *, ap_session_t *, nat_t *);
+int ipf_p_ipsec_match(fr_info_t *, ap_session_t *, nat_t *);
 
 typedef struct ipf_ipsec_softc_s {
 	frentry_t	ipsec_fr;
@@ -39,8 +43,7 @@ typedef struct ipf_ipsec_softc_s {
  * IPSec application proxy initialization.
  */
 void *
-ipf_p_ipsec_soft_create(softc)
-	ipf_main_softc_t *softc;
+ipf_p_ipsec_soft_create(ipf_main_softc_t *softc)
 {
 	ipf_ipsec_softc_t *softi;
 
@@ -60,9 +63,7 @@ ipf_p_ipsec_soft_create(softc)
 
 
 int
-ipf_p_ipsec_soft_init(softc, arg)
-	ipf_main_softc_t *softc;
-	void *arg;
+ipf_p_ipsec_soft_init(ipf_main_softc_t *softc, void *arg)
 {
 	ipf_ipsec_softc_t *softi = arg;
 
@@ -86,9 +87,7 @@ ipf_p_ipsec_soft_init(softc, arg)
 
 
 void
-ipf_p_ipsec_soft_fini(softc, arg)
-	ipf_main_softc_t *softc;
-	void *arg;
+ipf_p_ipsec_soft_fini(ipf_main_softc_t *softc, void *arg)
 {
 	ipf_ipsec_softc_t *softi = arg;
 
@@ -109,9 +108,7 @@ ipf_p_ipsec_soft_fini(softc, arg)
 
 
 void
-ipf_p_ipsec_soft_destroy(softc, arg)
-	ipf_main_softc_t *softc;
-	void *arg;
+ipf_p_ipsec_soft_destroy(ipf_main_softc_t *softc, void *arg)
 {
 	ipf_ipsec_softc_t *softi = arg;
 
@@ -128,11 +125,7 @@ ipf_p_ipsec_soft_destroy(softc, arg)
  * Setup for a new IPSEC proxy.
  */
 int
-ipf_p_ipsec_new(arg, fin, aps, nat)
-	void *arg;
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_ipsec_new(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	ipf_ipsec_softc_t *softi = arg;
 	ipf_main_softc_t *softc = fin->fin_main_soft;
@@ -250,11 +243,7 @@ ipf_p_ipsec_new(arg, fin, aps, nat)
  * we can.  If they have disappeared, recreate them.
  */
 int
-ipf_p_ipsec_inout(arg, fin, aps, nat)
-	void *arg;
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_ipsec_inout(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	ipf_ipsec_softc_t *softi = arg;
 	ipf_main_softc_t *softc = fin->fin_main_soft;
@@ -340,10 +329,7 @@ ipf_p_ipsec_inout(arg, fin, aps, nat)
  * UDP/TCP port numbers).
  */
 int
-ipf_p_ipsec_match(fin, aps, nat)
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_ipsec_match(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	ipsec_pxy_t *ipsec;
 	u_32_t cookies[4];
@@ -385,9 +371,7 @@ ipf_p_ipsec_match(fin, aps, nat)
  * clean up after ourselves.
  */
 void
-ipf_p_ipsec_del(softc, aps)
-	ipf_main_softc_t *softc;
-	ap_session_t *aps;
+ipf_p_ipsec_del(ipf_main_softc_t *softc, ap_session_t *aps)
 {
 	ipsec_pxy_t *ipsec;
 
