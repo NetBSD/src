@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: ipf2netbsd,v 1.1 2012/03/23 21:29:34 christos Exp $
+#	$NetBSD: ipf2netbsd,v 1.2 2012/03/23 23:14:34 christos Exp $
 #
 # Copyright (c) 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -45,8 +45,8 @@ esac
 
 dbase=$dest/src/external/bsd/ipf/dist
 dsys=$dest/src/sys/external/bsd/ipf/netinet
-#dlkm=$dest/src/sys/lkm/netinet/if_ipl
-#dregress=$dest/src/regress/sys/kern/ipf
+#dlkm=$dest/src/sys/modules/ipf
+dtests=$dest/src/tests/ipf
 
 case "$r" in
 	/*)
@@ -108,9 +108,8 @@ pax -rvw \
 	radix_ipf.c \
 	radix_ipf.h \
 	$dsys
-#pax -rvw mln_ipl.c $dlkm
-#cd $r/test
-#pax -rvw * $dregress
+cd $r/test
+pax -rvw * $dtest
 list="
 4bsd
 AIX
@@ -211,8 +210,7 @@ mls_rule.c
 mlso_rule.c
 samples/Makefile
 solaris.c
-test/Makefile
-test/expected/Makefile
+test
 tools/Makefile
 tru64.c
 "
@@ -222,8 +220,14 @@ echo "removing extraneous files and directiones."
 (
 	cd ${dbase}
 	find . -name .cvsignore | xargs /bin/rm -f
-	for i in $list;
-do
+	for i in $list; do
+		echo "removing $i";
+		/bin/rm -rf "$i"
+	done
+)
+(
+	cd ${dtest}
+	for i in Makefile expected/Makefile; do
 		echo "removing $i";
 		/bin/rm -rf "$i"
 	done
