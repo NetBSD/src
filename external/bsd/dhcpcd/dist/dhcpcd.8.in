@@ -63,8 +63,8 @@
 .Nm
 .Fl U, Fl Fl dumplease
 .Ar interface
-.Nm
-.Fl v , Fl Fl version
+.\".Nm
+.\".Fl v , Fl Fl version
 .Nm
 .Fl x , Fl Fl exit
 .Op interface
