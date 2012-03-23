@@ -1,25 +1,28 @@
-/*	$NetBSD: ip_irc_pxy.c,v 1.1.1.1 2012/03/23 20:36:57 christos Exp $	*/
+/*	$NetBSD: ip_irc_pxy.c,v 1.2 2012/03/23 20:39:50 christos Exp $	*/
 
 /*
  * Copyright (C) 2008 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id
+ * Id: ip_irc_pxy.c,v 2.56.2.1 2012/01/26 05:29:11 darrenr Exp
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(1, "$NetBSD: ip_irc_pxy.c,v 1.2 2012/03/23 20:39:50 christos Exp $");
 
 #define	IPF_IRC_PROXY
 
 #define	IPF_IRCBUFSZ	96	/* This *MUST* be >= 64! */
 
 
-void ipf_p_irc_main_load __P((void));
-void ipf_p_irc_main_unload __P((void));
-int ipf_p_irc_new __P((void *, fr_info_t *, ap_session_t *, nat_t *));
-int ipf_p_irc_out __P((void *, fr_info_t *, ap_session_t *, nat_t *));
-int ipf_p_irc_send __P((fr_info_t *, nat_t *));
-int ipf_p_irc_complete __P((ircinfo_t *, char *, size_t));
-u_short ipf_irc_atoi __P((char **));
+void ipf_p_irc_main_load(void);
+void ipf_p_irc_main_unload(void);
+int ipf_p_irc_new(void *, fr_info_t *, ap_session_t *, nat_t *);
+int ipf_p_irc_out(void *, fr_info_t *, ap_session_t *, nat_t *);
+int ipf_p_irc_send(fr_info_t *, nat_t *);
+int ipf_p_irc_complete(ircinfo_t *, char *, size_t);
+u_short ipf_irc_atoi(char **);
 
 static	frentry_t	ircnatfr;
 
@@ -30,7 +33,7 @@ int	irc_proxy_init = 0;
  * Initialize local structures.
  */
 void
-ipf_p_irc_main_load()
+ipf_p_irc_main_load(void)
 {
 	bzero((char *)&ircnatfr, sizeof(ircnatfr));
 	ircnatfr.fr_ref = 1;
@@ -41,7 +44,7 @@ ipf_p_irc_main_load()
 
 
 void
-ipf_p_irc_main_unload()
+ipf_p_irc_main_unload(void)
 {
 	if (irc_proxy_init == 1) {
 		MUTEX_DESTROY(&ircnatfr.fr_lock);
@@ -67,10 +70,7 @@ const char *ipf_p_irc_dcctypes[] = {
 
 
 int
-ipf_p_irc_complete(ircp, buf, len)
-	ircinfo_t *ircp;
-	char *buf;
-	size_t len;
+ipf_p_irc_complete(ircinfo_t *ircp, char *buf, size_t len)
 {
 	register char *s, c;
 	register size_t i;
@@ -226,11 +226,7 @@ ipf_p_irc_complete(ircp, buf, len)
 
 
 int
-ipf_p_irc_new(arg, fin, aps, nat)
-	void *arg;
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_irc_new(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	ircinfo_t *irc;
 
@@ -250,9 +246,7 @@ ipf_p_irc_new(arg, fin, aps, nat)
 
 
 int
-ipf_p_irc_send(fin, nat)
-	fr_info_t *fin;
-	nat_t *nat;
+ipf_p_irc_send(fr_info_t *fin, nat_t *nat)
 {
 	char ctcpbuf[IPF_IRCBUFSZ], newbuf[IPF_IRCBUFSZ];
 	tcphdr_t *tcp, tcph, *tcp2 = &tcph;
@@ -396,7 +390,7 @@ ipf_p_irc_send(fin, nat)
 	 * it is the most likely so use it here to check for a conflicting
 	 * mapping.
 	 */
-	bcopy((caddr_t)fin, (caddr_t)&fi, sizeof(fi));
+	bcopy((void *)fin, (void *)&fi, sizeof(fi));
 	fi.fin_data[0] = sp;
 	fi.fin_data[1] = fin->fin_data[1];
 	nat2 = ipf_nat_outlookup(fin, IPN_TCP, nat->nat_pr[1], nat->nat_nsrcip,
@@ -406,7 +400,7 @@ ipf_p_irc_send(fin, nat)
 		ipf_nat_softc_t *softn = softc->ipf_nat_soft;
 #endif
 
-		bcopy((caddr_t)fin, (caddr_t)&fi, sizeof(fi));
+		bcopy((void *)fin, (void *)&fi, sizeof(fi));
 		bzero((char *)tcp2, sizeof(*tcp2));
 		tcp2->th_win = htons(8192);
 		tcp2->th_sport = sp;
@@ -438,11 +432,7 @@ ipf_p_irc_send(fin, nat)
 
 
 int
-ipf_p_irc_out(arg, fin, aps, nat)
-	void *arg;
-	fr_info_t *fin;
-	ap_session_t *aps;
-	nat_t *nat;
+ipf_p_irc_out(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	aps = aps;	/* LINT */
 	return ipf_p_irc_send(fin, nat);

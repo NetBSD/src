@@ -1,11 +1,11 @@
-/*	$NetBSD: ip_pool.h,v 1.1.1.1 2012/03/23 20:37:01 christos Exp $	*/
+/*	$NetBSD: ip_pool.h,v 1.2 2012/03/23 20:39:50 christos Exp $	*/
 
 /*
  * Copyright (C) 2011 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id
+ * Id: ip_pool.h,v 2.40.2.3 2012/01/26 05:29:12 darrenr Exp
  */
 
 #ifndef	__IP_POOL_H__
@@ -62,7 +62,7 @@ typedef	struct	ipf_pool_stat	{
 extern	ipf_lookup_t	ipf_pool_backend;
 
 #ifndef _KERNEL
-extern	void	ipf_pool_dump __P((ipf_main_softc_t *, void *));
+extern	void	ipf_pool_dump(ipf_main_softc_t *, void *);
 #endif
 
 #endif /* __IP_POOL_H__ */
