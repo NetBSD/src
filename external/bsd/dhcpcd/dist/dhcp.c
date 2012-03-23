@@ -772,7 +772,7 @@ route_netmask(uint32_t ip_in)
  * Otherwise we add static routes and then routers. */
 struct rt *
 get_option_routes(const struct dhcp_message *dhcp,
-    const char *ifname, int *opts)
+    const char *ifname, unsigned long long *opts)
 {
 	const uint8_t *p;
 	const uint8_t *e;
@@ -787,11 +787,13 @@ get_option_routes(const struct dhcp_message *dhcp,
 		p = get_option(dhcp, DHO_MSCSR, &len, NULL);
 	if (p) {
 		routes = decode_rfc3442_rt(len, p);
-		if (routes && !(*opts & DHCPCD_CSR_WARNED)) {
-			syslog(LOG_DEBUG,
-			    "%s: using Classless Static Routes (RFC3442)",
-			    ifname);
-			*opts |= DHCPCD_CSR_WARNED;
+		if (routes) {
+			if (!(*opts & DHCPCD_CSR_WARNED)) {
+				syslog(LOG_DEBUG,
+				    "%s: using Classless Static Routes",
+				    ifname);
+				*opts |= DHCPCD_CSR_WARNED;
+			}
 			return routes;
 		}
 	}
