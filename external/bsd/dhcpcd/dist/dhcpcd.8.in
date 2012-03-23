@@ -30,7 +30,7 @@
 .Nd an RFC 2131 compliant DHCP client
 .Sh SYNOPSIS
 .Nm
-.Op Fl bdgknpqwABDEGHJKLTV
+.Op Fl ABbDdEGgHJKkLnpqTVw
 .Op Fl C , Fl Fl nohook Ar hook
 .Op Fl c , Fl Fl script Ar script
 .Op Fl e , Fl Fl env Ar value
