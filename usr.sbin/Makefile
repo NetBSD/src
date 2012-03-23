@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.263 2012/02/13 01:43:22 dholland Exp $
+#	$NetBSD: Makefile,v 1.264 2012/03/23 21:30:57 christos Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -61,11 +61,6 @@ SUBDIR+= racoon racoonctl
 # NPF
 .if (${MKNPF} != "no")
 SUBDIR+=npf
-.endif
-
-# IP Filter
-.if (${MKIPFILTER} != "no")
-SUBDIR+=ipf
 .endif
 
 # PF
