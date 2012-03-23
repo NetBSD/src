@@ -80,7 +80,7 @@ const char copyright[] = "Copyright (c) 2006-2012 Roy Marples";
 #define RELEASE_DELAY_S		0
 #define RELEASE_DELAY_NS	10000000
 
-int options = 0;
+unsigned long long options = 0;
 int pidfd = -1;
 struct interface *ifaces = NULL;
 int ifac = 0;
@@ -828,7 +828,7 @@ configure_interface1(struct interface *iface)
 	if (ifo->options & DHCPCD_CLIENTID)
 		syslog(LOG_DEBUG, "%s: using ClientID %s", iface->name,
 		    hwaddr_ntoa(iface->clientid + 1, *iface->clientid));
-	else
+	else if (iface->hwlen)
 		syslog(LOG_DEBUG, "%s: using hwaddr %s", iface->name,
 		    hwaddr_ntoa(iface->hwaddr, iface->hwlen));
 }
@@ -1162,8 +1162,12 @@ start_interface(void *arg)
 	free(iface->state->offer);
 	iface->state->offer = NULL;
 
-	if (options & DHCPCD_IPV6RS && ifo->options & DHCPCD_IPV6RS)
-		ipv6rs_start(iface);
+	if (options & DHCPCD_IPV6RS && ifo->options & DHCPCD_IPV6RS) {
+		if (check_ipv6(iface->name) == 1)
+			ipv6rs_start(iface);
+		else
+			ifo->options &= ~DHCPCD_IPV6RS;
+	}
 
 	if (iface->state->arping_index < ifo->arping_len) {
 		start_arping(iface);
@@ -1993,7 +1997,7 @@ main(int argc, char **argv)
 	}
 #endif
 
-	if (options & DHCPCD_IPV6RS && !check_ipv6())
+	if (options & DHCPCD_IPV6RS && !check_ipv6(NULL))
 		options &= ~DHCPCD_IPV6RS;
 	if (options & DHCPCD_IPV6RS) {
 		ipv6rsfd = ipv6rs_open();

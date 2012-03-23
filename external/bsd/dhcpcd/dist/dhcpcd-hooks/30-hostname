@@ -1,12 +1,33 @@
 # Set the hostname from DHCP data if required
 
+# Some systems don't have hostname(1)
+_hostname()
+{
+	local name=
+
+	if [ -z "$1" ]; then
+		if [ -r /proc/sys/kernel/hostname ]; then
+			read name </proc/sys/kernel/hostname && echo "$name"
+		else
+			hostname
+		fi
+		return $?
+	fi
+
+	if [ -w /proc/sys/kernel/hostname ]; then
+		echo "$1" >/proc/sys/kernel/hostname
+	else
+		hostname "$1"
+	fi
+}
+
 need_hostname()
 {
 	local hostname=""
 
 	case "$force_hostname" in
 	[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|1) ;;
-	*) hostname="$(hostname)";;
+	*) hostname="$(_hostname)";;
 	esac
 	case "$hostname" in
 	""|"(none)"|localhost|localhost.localdomain)
@@ -21,7 +42,7 @@ need_hostname()
 try_hostname()
 {
 	if valid_domainname "$1"; then
-		hostname "$1"
+		_hostname "$1"
 	else
 		syslog err "Invalid hostname: $1"
 	fi

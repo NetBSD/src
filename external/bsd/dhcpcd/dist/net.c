@@ -66,6 +66,7 @@
 #include "common.h"
 #include "dhcp.h"
 #include "if-options.h"
+#include "ipv6rs.h"
 #include "net.h"
 #include "signals.h"
 
@@ -233,6 +234,7 @@ free_interface(struct interface *iface)
 {
 	if (!iface)
 		return;
+	ipv6rs_free(iface);
 	if (iface->state) {
 		free_options(iface->state->options);
 		free(iface->state->old);
@@ -315,7 +317,7 @@ discover_interfaces(int argc, char * const *argv)
 {
 	struct ifaddrs *ifaddrs, *ifa;
 	char *p;
-	int i;
+	int i, sdl_type;
 	struct interface *ifp, *ifs, *ifl;
 #ifdef __linux__
 	char ifn[IF_NAMESIZE];
@@ -409,6 +411,7 @@ discover_interfaces(int argc, char * const *argv)
 				syslog(LOG_ERR, "%s: up_interface: %m", ifp->name);
 		}
 
+		sdl_type = 0;
 		/* Don't allow loopback unless explicit */
 		if (ifp->flags & IFF_LOOPBACK) {
 			if (argc == 0 && ifac == 0) {
@@ -435,13 +438,22 @@ discover_interfaces(int argc, char * const *argv)
 			}
 #endif
 
+			sdl_type = sdl->sdl_type;
 			switch(sdl->sdl_type) {
+			case IFT_BRIDGE: /* FALLTHROUGH */
+			case IFT_L2VLAN: /* FALLTHOUGH */
+			case IFT_L3IPVLAN: /* FALLTHROUGH */
 			case IFT_ETHER:
 				ifp->family = ARPHRD_ETHER;
 				break;
 			case IFT_IEEE1394:
 				ifp->family = ARPHRD_IEEE1394;
 				break;
+#ifdef IFT_INFINIBAND
+			case IFT_INFINIBAND:
+				ifp->family = ARPHRD_INFINIBAND;
+				break;
+#endif
 			}
 			ifp->hwlen = sdl->sdl_alen;
 #ifndef CLLADDR
@@ -450,7 +462,7 @@ discover_interfaces(int argc, char * const *argv)
 			memcpy(ifp->hwaddr, CLLADDR(sdl), ifp->hwlen);
 #elif AF_PACKET
 			sll = (const struct sockaddr_ll *)(void *)ifa->ifa_addr;
-			ifp->family = sll->sll_hatype;
+			ifp->family = sdl_type = sll->sll_hatype;
 			ifp->hwlen = sll->sll_halen;
 			if (ifp->hwlen != 0)
 				memcpy(ifp->hwaddr, sll->sll_addr, ifp->hwlen);
@@ -472,7 +484,11 @@ discover_interfaces(int argc, char * const *argv)
 				break;
 			default:
 				syslog(LOG_WARNING,
-				    "%s: unknown hardware family", p);
+				    "%s: unsupported interface type %.2x"
+				    ", falling back to ethernet",
+				    ifp->name, sdl_type);
+				ifp->family = ARPHRD_ETHER;
+				break;
 			}
 		}
 

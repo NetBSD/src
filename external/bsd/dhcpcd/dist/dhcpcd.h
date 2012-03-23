@@ -92,6 +92,8 @@ struct ra_opt {
 struct ra {
 	struct in6_addr from;
 	char sfrom[INET6_ADDRSTRLEN];
+	unsigned char *data;
+	ssize_t data_len;
 	struct timeval received;
 	uint32_t lifetime;
 	struct in6_addr prefix;
@@ -100,6 +102,7 @@ struct ra {
 	uint32_t prefix_pltime;
 	char sprefix[INET6_ADDRSTRLEN];
 	struct ra_opt *options;
+	int expired;
 	struct ra *next;
 };
 
@@ -140,7 +143,7 @@ struct interface {
 };
 
 extern int pidfd;
-extern int options;
+extern unsigned long long options;
 extern int ifac;
 extern char **ifav;
 extern int ifdc;
