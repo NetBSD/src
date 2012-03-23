@@ -1,4 +1,4 @@
-/* $NetBSD: t_cdefs.c,v 1.1 2012/03/18 15:31:00 christos Exp $ */
+/* $NetBSD: t_cdefs.c,v 1.2 2012/03/23 23:12:28 matt Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_cdefs.c,v 1.1 2012/03/18 15:31:00 christos Exp $");
+__RCSID("$NetBSD: t_cdefs.c,v 1.2 2012/03/23 23:12:28 matt Exp $");
 
 #include <atf-c.h>
 #include <sys/types.h>
@@ -44,7 +44,7 @@ static const struct {
 	intmax_t min;
 	intmax_t max;
 } s[] = {
-	{ "signed char", CHAR_MIN, CHAR_MAX },
+	{ "signed char", SCHAR_MIN, SCHAR_MAX },
 	{ "signed short", SHRT_MIN, SHRT_MAX },
 	{ "signed int", INT_MIN, INT_MAX },
 	{ "signed long", LONG_MIN, LONG_MAX },
