@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.1.1.1 2012/03/23 21:19:54 christos Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.2 2012/03/23 21:28:57 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -69,7 +69,7 @@ ipfioctl(softc, dev, cmd, data, mode)
 	ipf_main_softc_t *softc;
 	int dev;
 	ioctlcmd_t cmd;
-	caddr_t data;
+	void *data;
 	int mode;
 {
 	int error = 0, unit = 0, uid;
@@ -514,7 +514,7 @@ void
 m_copydata(m, off, len, cp)
 	mb_t *m;
 	int off, len;
-	caddr_t cp;
+	void *cp;
 {
 	bcopy((char *)m + off, cp, len);
 }
@@ -522,7 +522,7 @@ m_copydata(m, off, len, cp)
 
 int
 ipfuiomove(buf, len, rwflag, uio)
-	caddr_t buf;
+	void *buf;
 	int len, rwflag;
 	struct uio *uio;
 {
