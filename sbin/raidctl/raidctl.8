@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.63 2011/08/02 10:28:00 wiz Exp $
+.\"     $NetBSD: raidctl.8,v 1.64 2012/03/23 18:28:13 njoly Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1603,8 +1603,7 @@ idea to zero out the first 64 blocks of the new component to insure the
 RAIDframe driver doesn't erroneously detect a component label in the
 new component.
 This is particularly true on
-.Em
-RAID 1
+.Em RAID 1
 sets because there is at most one correct component label in a failed RAID
 1 installation, and the RAIDframe driver picks the component label with the
 highest serial number and modification value as the authoritative source
