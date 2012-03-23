@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2011 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2012 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -54,6 +54,7 @@
 #define O_FALLBACK	O_BASE + 2
 #define O_DESTINATION	O_BASE + 3
 #define O_NOIPV6RS	O_BASE + 4
+#define O_IPV6_RA_FORK	O_BASE + 5
 
 const struct option cf_options[] = {
 	{"background",      no_argument,       NULL, 'b'},
@@ -105,6 +106,7 @@ const struct option cf_options[] = {
 	{"destination",     required_argument, NULL, O_DESTINATION},
 	{"fallback",        required_argument, NULL, O_FALLBACK},
 	{"noipv6rs",        no_argument,       NULL, O_NOIPV6RS},
+	{"ipv6ra_fork",     no_argument,       NULL, O_IPV6_RA_FORK},
 	{NULL,              0,                 NULL, '\0'}
 };
 
@@ -743,7 +745,10 @@ parse_option(struct if_options *ifo, int opt, const char *arg)
 		ifo->fallback = xstrdup(arg);
 		break;
 	case O_NOIPV6RS:
-		ifo->options &=~ DHCPCD_IPV6RS;
+		ifo->options &= ~DHCPCD_IPV6RS;
+		break;
+	case O_IPV6_RA_FORK:
+		ifo->options &= ~DHCPCD_IPV6RA_REQRDNSS;
 		break;
 	default:
 		return 0;
@@ -789,7 +794,8 @@ read_config(const char *file,
 	/* Seed our default options */
 	ifo = xzalloc(sizeof(*ifo));
 	ifo->options |= DHCPCD_GATEWAY | DHCPCD_DAEMONISE | DHCPCD_LINK;
-	ifo->options |= DHCPCD_ARP | DHCPCD_IPV4LL | DHCPCD_IPV6RS;
+	ifo->options |= DHCPCD_ARP | DHCPCD_IPV4LL;
+	ifo->options |= DHCPCD_IPV6RS | DHCPCD_IPV6RA_REQRDNSS;
 	ifo->timeout = DEFAULT_TIMEOUT;
 	ifo->reboot = DEFAULT_REBOOT;
 	ifo->metric = -1;
