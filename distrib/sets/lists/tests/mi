@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.455 2012/03/24 07:03:12 matt Exp $
+# $NetBSD: mi,v 1.456 2012/03/24 18:27:53 tron Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1672,6 +1672,7 @@
 ./usr/tests/ipf/expected/i20			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/expected/i21			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/expected/i22			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/i23			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/expected/i3			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/expected/i4			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/expected/i5			tests-ipf-tests		ipfilter
@@ -1688,6 +1689,7 @@
 ./usr/tests/ipf/expected/in4			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/expected/in5			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/expected/in6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/in7			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/expected/ip1			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/expected/ip2			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/expected/ip3			tests-ipf-tests		ipfilter
@@ -2026,7 +2028,9 @@
 ./usr/tests/ipf/regress/ni15.nat		tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/ni16.ipf		tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/ni16.nat		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni17.ipf		tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/ni17.nat		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni18.ipf		tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/ni18.nat		tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/ni19.ipf		tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/ni19.nat		tests-ipf-tests		ipfilter
