@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipf.4,v 1.1.1.1 2012/03/23 21:20:10 christos Exp $
+.\"	$NetBSD: ipf.4,v 1.2 2012/03/24 02:19:00 christos Exp $
 .\"
 .TH IPF 4
 .SH NAME
@@ -255,3 +255,14 @@ value returned is that of the list which is now inactive.
 /dev/ipstate
 .SH SEE ALSO
 ipl(4), ipnat(4), ipf(5), ipf(8), ipfstat(8)
+.SH BUGS
+When a packet encapsulated by ipsec(4) tunnel comes in, ipf(4) looks at
+wire-format packet on inbound and outbound.
+ipf(4) will not look at decapsulated packets on inbound,
+nor packets prior to encapsulation on outbound.
+.PP
+When tunneled packets arrive at the node and are handled by a
+tunneling pseudo interface like gif(4),
+the packets may go through ipf(4) twice, before and after decapsulation.
+In some cases it may be necessary to check, in the ipf(4) rules,
+if the inbound interface is a tunneling pseudo interface or not.

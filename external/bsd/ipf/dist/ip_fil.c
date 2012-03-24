@@ -1,15 +1,15 @@
-/*	$NetBSD: ip_fil.c,v 1.2 2012/03/23 21:28:57 christos Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.3 2012/03/24 02:19:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id
+ * Id: ip_fil.c,v 2.168.2.8 2012/01/26 05:29:10 darrenr Exp
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id";
+static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.168.2.8 2012/01/26 05:29:10 darrenr Exp";
 #endif
 
 #include "ipf.h"
@@ -37,10 +37,17 @@ static int 	no_output __P((struct ifnet *, struct mbuf *,
 static int	write_output __P((struct ifnet *, struct mbuf *,
 				  struct sockaddr *, struct rtentry *, char *));
 # else
+#if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 499001100)
+static int 	no_output(struct ifnet *, struct mbuf *,
+	    const struct sockaddr *, struct rtentry *);
+static int	write_output(struct ifnet *, struct mbuf *,
+	    const struct sockaddr *, struct rtentry *);
+#else
 static int 	no_output __P((struct ifnet *, struct mbuf *,
 			       struct sockaddr *, struct rtentry *));
 static int	write_output __P((struct ifnet *, struct mbuf *,
 				  struct sockaddr *, struct rtentry *));
+#endif
 # endif
 #endif
 
@@ -133,7 +140,7 @@ no_output(ifp, m, s, rt)
 #endif
 	struct ifnet *ifp;
 	struct mbuf *m;
-	struct sockaddr *s;
+	const struct sockaddr *s;
 {
 	return 0;
 }
@@ -153,7 +160,7 @@ write_output(ifp, m, s, rt)
 #endif
 	struct ifnet *ifp;
 	struct mbuf *m;
-	struct sockaddr *s;
+	const struct sockaddr *s;
 {
 	char fname[32];
 	mb_t *mb;
@@ -203,7 +210,7 @@ ipf_setifpaddr(ifp, addr)
 #endif
 		return;
 
-	ifa = (struct ifaddr *)malloc(sizeof(*ifa));
+	ifa = (struct ifaddr *)calloc(1, sizeof(*ifa));
 #if defined(__NetBSD__) || defined(__OpenBSD__) || defined(__FreeBSD__)
 	ifp->if_addrlist.tqh_first = ifa;
 #else
@@ -289,7 +296,7 @@ get_unit(name, family)
 #endif
 
 	if (!ifneta) {
-		ifneta = (struct ifnet **)malloc(sizeof(ifp) * 2);
+		ifneta = (struct ifnet **)calloc(1, sizeof(ifp) * 2);
 		if (!ifneta)
 			return NULL;
 		ifneta[1] = NULL;
@@ -310,7 +317,7 @@ get_unit(name, family)
 			return NULL;
 		}
 		ifneta[nifs] = NULL;
-		ifneta[nifs - 1] = (struct ifnet *)malloc(sizeof(*ifp));
+		ifneta[nifs - 1] = (struct ifnet *)calloc(1, sizeof(*ifp));
 		if (!ifneta[nifs - 1]) {
 			nifs--;
 			return NULL;
@@ -514,7 +521,7 @@ void
 m_copydata(m, off, len, cp)
 	mb_t *m;
 	int off, len;
-	void *cp;
+	void * cp;
 {
 	bcopy((char *)m + off, cp, len);
 }
@@ -608,7 +615,7 @@ ipf_newisn(fin)
 /*                                                                          */
 /* Returns the next IPv4 ID to use for this packet.                         */
 /* ------------------------------------------------------------------------ */
-INLINE u_short
+EXTERN_INLINE u_short
 ipf_nextipid(fin)
 	fr_info_t *fin;
 {
@@ -631,7 +638,7 @@ ipf_nextipid(fin)
 }
 
 
-INLINE int
+EXTERN_INLINE int
 ipf_checkv4sum(fin)
 	fr_info_t *fin;
 {
@@ -648,7 +655,7 @@ ipf_checkv4sum(fin)
 
 
 #ifdef	USE_INET6
-INLINE int
+EXTERN_INLINE int
 ipf_checkv6sum(fin)
 	fr_info_t *fin;
 {

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ippool.5,v 1.1.1.1 2012/03/23 21:20:12 christos Exp $
+.\"	$NetBSD: ippool.5,v 1.2 2012/03/24 02:19:00 christos Exp $
 .\"
 .TH IPPOOL 5
 .SH NAME
@@ -50,10 +50,60 @@ table role = ipf type = tree number = 100
         { 1.1.1.1/32; !2.2.0.0/16; 2.2.2.0/24; ef00::5/128; };
 .fi
 .PP
-This is rather long winded. The evolution of the configuration syntax
-has also replaced the use of numbers with names, although numbers can
-still be used as can be seen here:
+The IP pool configuration file is used for defining a single object that
+contains a reference to multiple IP address/netmask pairs.  A pool may consist
+of a mixture of netmask sizes, from 0 to 32.
 .PP
+At this point in time, only IPv4 addressing is supported.
+.SH OVERVIEW
+.PP
+The IP pool configuration file provides for defining two different mechanisms
+for improving speed in matching IP addresses with rules.
+The first,
+.B table
+, defines a lookup
+.I table
+to provide a single reference in a
+filter rule to multiple targets and the second,
+.B group-map
+, provides a mechanism to target multiple groups from a single filter line.
+.PP
+The
+.B group-map
+command can only be used with filter rules that use the
+.B call
+command to invoke either
+.B fr_srcgrpmap
+or
+.B fr_dstgrpmap
+, to use the source or destination address,
+respectively, for determining which filter group to jump to next for
+continuation of filter packet processing.
+.SH POOL TYPES
+.PP
+Two storage formats are provided: hash tables and tree structure.  The hash
+table is intended for use with objects all containing the same netmask or a
+few different sized netmasks of non-overlapping address space and the tree
+is designed for being able to support exceptions to a covering mask, in
+addition to normal searching as you would do with a table.  It is not possible
+to use the tree data storage type with
+.B group-map
+configuration entries.
+.SH POOL ROLES
+.PP
+When a pool is defined in the configuration file, it must have an associated
+role.  At present the only supported role is
+.B ipf.
+Future development will see futher expansion of their use by other sections
+of IPFilter code.
+.SH EXAMPLES
+The following examples show how the pool configuration file is used with
+the ipf configuration file to enhance the ability for the ipf configuration
+file to be succinct in meaning.
+.TP
+1
+The first example shows how a filter rule makes reference to a specific
+pool for matching of the source address.
 .nf
 pool ipf/tree (name "100";)
 	{ 1.1.1.1/32; !2.2.0.0/16; 2.2.2.0/24; ef00::5/128; };
@@ -84,7 +134,7 @@ found in ipnat.conf(5).
 auth
 .IP
 pools defined for role "auth" are available only for use with "auth" rules
-that are found in ipf.conf(5)
+that are found in ipf.conf(5) 
 .HP
 all
 .IP
@@ -117,8 +167,28 @@ the pool contains "2.2.0.0/16" and "!2.2.2.0/24", meaning that all packets
 that match 2.2.0.0/16, except those that match 2.2.2.0/24, will be considered
 as a match for this pool.
 .PP
+.nf
 table role = ipf type = tree number = 100
         { 1.1.1.1/32; 2.2.0.0/16; !2.2.2.0/24; ef00::5/128; };
+.fi
+.PP
+The prior example is the older file format. The declaration that
+defines the pool itself has been updated and can now be expressed
+as below:
+.PP
+.nf
+pool ipf/tree (name "100";)
+	{ 1.1.1.1/32; !2.2.0.0/16; 2.2.2.0/24; ef00::5/128; };
+.fi
+.PP
+If the role and table type are left out, such as in the exmaple below,
+the default is to make the table available to all aspects of IPFilter
+and for the storage type to be "tree".
+.PP
+.nf
+pool (name "100";)
+	{ 1.1.1.1/32; !2.2.0.0/16; 2.2.2.0/24; ef00::5/128; };
+.fi
 .PP
 For the sake of clarity and to aid in managing large numbers of addresses
 inside address pools, it is possible to specify a location to load the
@@ -227,7 +297,7 @@ the last one used will be the next address selected.
 .RE
 .PP
 The first example here shows 4 destinations that are used with a
-round-robin selection policy.
+round-robin selection policy. 
 .PP
 .nf
 pool nat/dstlist (name servers; policy round-robin;)

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipf.5,v 1.1.1.1 2012/03/23 21:20:11 christos Exp $
+.\"	$NetBSD: ipf.5,v 1.2 2012/03/24 02:19:00 christos Exp $
 .\"
 .TH IPF 5
 .SH NAME
@@ -245,7 +245,7 @@ in the same way as it does the TCP RST packet. To return an ICMP error
 it is necessary to place return-icmp after the block keyword like this:
 .PP
 .nf
-block return-icmp in proto udp from any to 192.168.0.1/24
+block return-icmp in proto udp from any to 192.168.0.1/24 
 .fi
 .PP
 When electing to return an ICMP error packet, it is also possible to
@@ -303,7 +303,7 @@ An example that shows how to send back a port unreachable packet for
 UDP packets to 192.168.1.0/24 is as follows:
 .PP
 .nf
-block return-icmp(port-unr) in proto udp from any to 192.168.1.0/24
+block return-icmp(port-unr) in proto udp from any to 192.168.1.0/24 
 .fi
 .PP
 In the above examples, when sending the ICMP packet, IPFilter will construct
@@ -316,7 +316,7 @@ this:
 .PP
 .nf
 block return-icmp-as-dest(port-unr) in proto udp \\
-    from any to 192.168.1.0/24
+    from any to 192.168.1.0/24 
 .fi
 .SS TCP/UDP Port Matching
 .PP
@@ -328,9 +328,9 @@ the following logical operations:
 .IP "< x"
 is true if the port number is greater than or equal to x and less than or
 equal to y
-is true if the port number in the packet is less than x
+is true if the port number in the packet is less than x 
 .IP "<= x"
-is true if the port number in the packet is less than or equal to x
+is true if the port number in the packet is less than or equal to x 
 .IP "> x"
 is true if the port number in the packet is greater than x
 .IP ">= x"
@@ -705,7 +705,7 @@ limit the number of state table entries that this rule can create to
 the number given after limit. A rule that has a limit specified is
 always permitted that many state table entries, even if creating an
 additional entry would cause the table to have more entries than the
-otherwise global limit.
+otherwise global limit. 
 .IP
 .nf
 pass ... keep state(limit 100)
@@ -852,7 +852,7 @@ connection might look something like this:
 pass in on bge0,bge1 out-via bge1,bge0 proto tcp \\
     from any to any port = 22 flags S keep state
 .fi
-.SS Working with packet fragments
+.SS Working with packet fragments 
 .PP
 Fragmented packets result in 1 packet containing all of the layer 3 and 4
 header information whilst the data is split across a number of other packets.
@@ -1632,7 +1632,7 @@ from ipf.conf
 block in all
 call now srcgrpmap/1010 in all
 pass in proto tcp from any to any port = 80 group 1020
-pass in proto icmp all icmp-type echo group 1030
+pass in proto icmp all icmp-type echo group 1030 
 
 from ippool.conf
 ----------------

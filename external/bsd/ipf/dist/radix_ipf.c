@@ -1,4 +1,4 @@
-/*	$NetBSD: radix_ipf.c,v 1.1.1.1 2012/03/23 21:20:01 christos Exp $	*/
+/*	$NetBSD: radix_ipf.c,v 1.2 2012/03/24 02:19:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -27,7 +27,7 @@
 #include "netinet/radix_ipf.h"
 
 #define	ADF_OFF	offsetof(addrfamily_t, adf_addr)
-#define	ADF_OFF_BITS	(ADF_OFF << 3)
+#define	ADF_OFF_BITS	((ADF_OFF << 3) & 0xffff)
 
 static ipf_rdx_node_t *ipf_rx_insert __P((ipf_rdx_head_t *,
 					  ipf_rdx_node_t nodes[2], int *));

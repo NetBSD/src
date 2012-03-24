@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfcomp.c,v 1.1.1.1 2012/03/23 21:20:22 christos Exp $	*/
+/*	$NetBSD: ipfcomp.c,v 1.2 2012/03/24 02:19:01 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id";
+static const char rcsid[] = "@(#)Id: ipfcomp.c,v 1.38.2.3 2012/01/26 06:06:07 darrenr Exp";
 #endif
 
 #include "ipf.h"
@@ -389,7 +389,7 @@ extern frentry_t *ipfrule_match_out_%s __P((fr_info_t *, u_32_t *));\n\
 extern frentry_t *ipf_rules_out_%s[%d];\n",
 			grp->fg_name, grp->fg_name, outcount);
 
-		for (g = groups; g != g; g = g->fg_next)
+		for (g = groups; g != grp; g = g->fg_next)
 			if ((strncmp(g->fg_name, grp->fg_name,
 				     FR_GROUPLEN) == 0) &&
 			    g->fg_flags == grp->fg_flags)

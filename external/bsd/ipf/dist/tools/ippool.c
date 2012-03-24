@@ -1,4 +1,4 @@
-/*	$NetBSD: ippool.c,v 1.1.1.1 2012/03/23 21:20:25 christos Exp $	*/
+/*	$NetBSD: ippool.c,v 1.2 2012/03/24 02:19:01 christos Exp $	*/
 
 /*
  * Copyright (C) 2010 by Darren Reed.
@@ -806,6 +806,7 @@ poollist_live(role, poolname, type, fd)
 {
 	ipf_pool_stat_t plstat;
 	iplookupop_t op;
+	int unit;
 	int c;
 
 	if (type == IPLT_ALL || type == IPLT_POOL) {
@@ -826,8 +827,8 @@ poollist_live(role, poolname, type, fd)
 
 			showpools_live(fd, role, &plstat, poolname);
 		} else {
-			for (role = -1; role <= IPL_LOGMAX; role++) {
-				op.iplo_unit = role;
+			for (unit = -1; unit <= IPL_LOGMAX; unit++) {
+				op.iplo_unit = unit;
 
 				c = ioctl(fd, SIOCLOOKUPSTAT, &op);
 				if (c == -1) {
@@ -835,10 +836,8 @@ poollist_live(role, poolname, type, fd)
 					return;
 				}
 
-				showpools_live(fd, role, &plstat, poolname);
+				showpools_live(fd, unit, &plstat, poolname);
 			}
-
-			role = IPL_LOGALL;
 		}
 	}
 
@@ -861,18 +860,17 @@ poollist_live(role, poolname, type, fd)
 			}
 			showhashs_live(fd, role, &htstat, poolname);
 		} else {
-			for (role = 0; role <= IPL_LOGMAX; role++) {
+			for (unit = 0; unit <= IPL_LOGMAX; unit++) {
 
-				op.iplo_unit = role;
+				op.iplo_unit = unit;
 				c = ioctl(fd, SIOCLOOKUPSTAT, &op);
 				if (c == -1) {
 					ipferror(fd, "ioctl(SIOCLOOKUPSTAT)");
 					return;
 				}
 
-				showhashs_live(fd, role, &htstat, poolname);
+				showhashs_live(fd, unit, &htstat, poolname);
 			}
-			role = IPL_LOGALL;
 		}
 	}
 
@@ -895,18 +893,17 @@ poollist_live(role, poolname, type, fd)
 			}
 			showdstls_live(fd, role, &dlstat, poolname);
 		} else {
-			for (role = 0; role <= IPL_LOGMAX; role++) {
+			for (unit = 0; unit <= IPL_LOGMAX; unit++) {
 
-				op.iplo_unit = role;
+				op.iplo_unit = unit;
 				c = ioctl(fd, SIOCLOOKUPSTAT, &op);
 				if (c == -1) {
 					ipferror(fd, "ioctl(SIOCLOOKUPSTAT)");
 					return;
 				}
 
-				showdstls_live(fd, role, &dlstat, poolname);
+				showdstls_live(fd, unit, &dlstat, poolname);
 			}
-			role = IPL_LOGALL;
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipftest.c,v 1.1.1.1 2012/03/23 21:20:24 christos Exp $	*/
+/*	$NetBSD: ipftest.c,v 1.2 2012/03/24 02:19:01 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -12,7 +12,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipt.c	1.19 6/3/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id";
+static const char rcsid[] = "@(#)Id: ipftest.c,v 1.78.2.6 2012/01/26 05:29:18 darrenr Exp";
 #endif
 
 extern	char	*optarg;
@@ -736,7 +736,7 @@ void dumprules(rulehead)
 
 	for (fr = rulehead; fr != NULL; fr = fr->fr_next) {
 #ifdef	USE_QUAD_T
-		printf("%"PRIu64" ",(unsigned long long)fr->fr_hits);
+		printf("%llu ",(unsigned long long)fr->fr_hits);
 #else
 		printf("%ld ", fr->fr_hits);
 #endif

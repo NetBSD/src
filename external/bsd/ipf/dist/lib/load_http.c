@@ -1,11 +1,11 @@
-/*	$NetBSD: load_http.c,v 1.1.1.1 2012/03/23 21:20:09 christos Exp $	*/
+/*	$NetBSD: load_http.c,v 1.2 2012/03/24 02:19:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2010 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: load_http.c,v 1.5.2.3 2012/01/26 05:44:26 darren_r Exp 
+ * Id: load_http.c,v 1.5.2.3 2012/01/26 05:29:16 darrenr Exp
  */
 
 #include "ipf.h"
@@ -33,6 +33,7 @@ load_http(char *url)
 	int fd, len, left, port, endhdr, removed, linenum = 0;
 	char *s, *t, *u, buffer[LOAD_BUFSIZE], *myurl;
 	alist_t *a, *rtop, *rbot;
+	int rem;
 
 	/*
 	 * More than this would just be absurd.
@@ -47,18 +48,21 @@ load_http(char *url)
 	rtop = NULL;
 	rbot = NULL;
 
-	sprintf(buffer, "GET %s HTTP/1.0\r\n", url);
-
 	myurl = strdup(url);
 	if (myurl == NULL)
 		goto done;
+
+	rem = sizeof(buffer);
+	left = snprintf(buffer, rem, "GET %s HTTP/1.0\r\n", url);
+	if (left < 0 || left > rem)
+		goto done;
+	rem -= left;
 
 	s = myurl + 7;			/* http:// */
 	t = strchr(s, '/');
 	if (t == NULL) {
 		fprintf(stderr, "load_http has a malformed URL '%s'\n", url);
-		free(myurl);
-		return NULL;
+		goto done;
 	}
 	*t++ = '\0';
 
@@ -75,7 +79,10 @@ load_http(char *url)
 	if (u != NULL)
 		s = u + 1;		/* AUTH */
 
-	sprintf(buffer + strlen(buffer), "Host: %s\r\n\r\n", s);
+	left = snprintf(buffer + left, rem, "Host: %s\r\n\r\n", s);
+	if (left < 0 || left > rem)
+		goto done;
+	rem -= left;
 
 	u = strchr(s, ':');
 	if (u != NULL) {
@@ -92,12 +99,9 @@ load_http(char *url)
 	if (fd == -1)
 		goto done;
 
-
 	len = strlen(buffer);
-	if (write(fd, buffer, len) != len) {
-		close(fd);
+	if (write(fd, buffer, len) != len)
 		goto done;
-	}
 
 	s = buffer;
 	endhdr = 0;
@@ -149,6 +153,20 @@ load_http(char *url)
 			linenum++;
 			*t = '\0';
 
+			for (u = buffer; isdigit((unsigned char)*u) ||
+			    (*u == '.'); u++)
+				continue;
+			if (*u == '/') {
+				char *slash;
+
+				slash = u;
+				u++;
+				while (isdigit((unsigned char)*u))
+					u++;
+				if (!isspace((unsigned char)*u) && *u)
+					u = slash;
+			}
+
 			/*
 			 * Remove comment and continue to the next line if
 			 * the comment is at the start of the line.
@@ -156,7 +174,7 @@ load_http(char *url)
 			u = strchr(buffer, '#');
 			if (u != NULL) {
 				*u = '\0';
-				if (u == buffer);
+				if (u == buffer)
 					continue;
 			}
 
