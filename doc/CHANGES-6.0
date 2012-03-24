@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.59 2012/03/22 23:05:17 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.60 2012/03/24 16:55:54 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1502,4 +1502,11 @@ sys/dev/pci/mfi_pci.c				1.13
 
 	Add support to mfi(4) for skinny variants (e.g. IBM ServeRAID M1015).
 	[sborrill, ticket #138]
+
+distrib/sparc/bootfs/Makefile			1.40
+etc/etc.sparc/Makefile.inc			1.43
+
+	Disable generation of boot floppy images for sparc, which do not fit on
+	floppy disks anymore, to unbreak the build.
+	[martin, ticket #139]
 
