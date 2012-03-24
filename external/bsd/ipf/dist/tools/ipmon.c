@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.1.1.1 2012/03/23 21:20:24 christos Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.2 2012/03/24 02:19:01 christos Exp $	*/
 
 /*
  * Copyright (C) 2010 by Darren Reed.
@@ -16,7 +16,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipmon.c	1.21 6/5/96 (C)1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id";
+static const char rcsid[] = "@(#)Id: ipmon.c,v 1.72.2.2 2012/01/26 05:29:18 darrenr Exp";
 #endif
 
 
@@ -699,7 +699,8 @@ static void print_natlog(conf, buf, blen)
 	}
 	(void) strftime(t, len, "%T", tm);
 	t += strlen(t);
-	sprintf(t, ".%-.6ld @%hd ", (long)ipl->ipl_usec, nl->nl_rule + 1);
+	(void) sprintf(t, ".%-.6ld @%hd ", (long)ipl->ipl_usec,
+	    nl->nl_rule + 1);
 	t += strlen(t);
 
 	switch (nl->nl_action)
@@ -879,7 +880,7 @@ static void print_statelog(conf, buf, blen)
 	}
 	(void) strftime(t, len, "%T", tm);
 	t += strlen(t);
-	sprintf(t, ".%-.6ld ", (long)ipl->ipl_usec);
+	(void) sprintf(t, ".%-.6ld ", (long)ipl->ipl_usec);
 	t += strlen(t);
 
 	family = vtof(sl->isl_v);
@@ -963,19 +964,20 @@ static void print_statelog(conf, buf, blen)
 		t += strlen(t);
 	}
 	if (sl->isl_type != ISL_NEW) {
-		sprintf(t,
+		static const char fmt[] =
 #ifdef	USE_QUAD_T
 #ifdef	PRId64
 			" Forward: Pkts in %" PRId64 " Bytes in %" PRId64
 			" Pkts out %" PRId64 " Bytes out %" PRId64
 			" Backward: Pkts in %" PRId64 " Bytes in %" PRId64
-			" Pkts out %" PRId64 " Bytes out %" PRId64,
+			" Pkts out %" PRId64 " Bytes out %" PRId64;
 #else
-			" Forward: Pkts in %qd Bytes in %qd Pkts out %qd Bytes out %qd Backward: Pkts in %qd Bytes in %qd Pkts out %qd Bytes out %qd",
+			" Forward: Pkts in %qd Bytes in %qd Pkts out %qd Bytes out %qd Backward: Pkts in %qd Bytes in %qd Pkts out %qd Bytes out %qd";
 #endif /* PRId64 */
 #else
-			" Forward: Pkts in %ld Bytes in %ld Pkts out %ld Bytes out %ld Backward: Pkts in %ld Bytes in %ld Pkts out %ld Bytes out %ld",
+			" Forward: Pkts in %ld Bytes in %ld Pkts out %ld Bytes out %ld Backward: Pkts in %ld Bytes in %ld Pkts out %ld Bytes out %ld";
 #endif
+		sprintf(t, fmt,
 			sl->isl_pkts[0], sl->isl_bytes[0],
 			sl->isl_pkts[1], sl->isl_bytes[1],
 			sl->isl_pkts[2], sl->isl_bytes[2],
@@ -1109,7 +1111,7 @@ static void print_ipflog(conf, buf, blen)
 	}
 	(void) strftime(t, len, "%T", tm);
 	t += strlen(t);
-	sprintf(t, ".%-.6ld ", (long)ipl->ipl_usec);
+	(void) sprintf(t, ".%-.6ld ", (long)ipl->ipl_usec);
 	t += strlen(t);
 	if (ipl->ipl_count > 1) {
 		sprintf(t, "%dx ", ipl->ipl_count);

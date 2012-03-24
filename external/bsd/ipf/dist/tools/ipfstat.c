@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfstat.c,v 1.1.1.1 2012/03/23 21:20:23 christos Exp $	*/
+/*	$NetBSD: ipfstat.c,v 1.2 2012/03/24 02:19:01 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -71,7 +71,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id";
+static const char rcsid[] = "@(#)Id: ipfstat.c,v 1.94.2.5 2012/01/26 05:29:18 darrenr Exp";
 #endif
 
 #ifdef __hpux
@@ -775,6 +775,8 @@ static void printlivelist(fiop, out, set, fp, group, comment)
 	frgroup_t *g;
 	ipfobj_t obj;
 	int n;
+	void *buf;
+	size_t bufsiz;
 
 	n = 0;
 
@@ -795,11 +797,17 @@ static void printlivelist(fiop, out, set, fp, group, comment)
 	obj.ipfo_size = sizeof(rule);
 	obj.ipfo_ptr = &rule;
 
-	do {
-		u_long array[1000];
+	/*
+	 * The API does not know how much we need for filter data. Assume
+	 * 10K is large enough. XXX: The code silently fails elsewhere on
+	 * allocation, we do the same here.
+	 */
+	if ((buf = malloc(bufsiz = sizeof(*fp) + 10240)) == NULL)
+		return;
 
-		memset(array, 0xff, sizeof(array));
-		fp = (frentry_t *)array;
+	do {
+		memset(buf, 0xff, bufsiz);
+		fp = buf;
 		rule.iri_rule = fp;
 		if (ioctl(ipf_fd, SIOCIPFITER, &obj) == -1) {
 			ipferror(ipf_fd, "ioctl(SIOCIPFITER)");
@@ -826,13 +834,13 @@ static void printlivelist(fiop, out, set, fp, group, comment)
 
 		if (opts & (OPT_HITS|OPT_VERBOSE))
 #ifdef	USE_QUAD_T
-			PRINTF("%"PRIu64" ", (unsigned long long) fp->fr_hits);
+			PRINTF("%llu ", (unsigned long long) fp->fr_hits);
 #else
 			PRINTF("%lu ", fp->fr_hits);
 #endif
 		if (opts & (OPT_ACCNT|OPT_VERBOSE))
 #ifdef	USE_QUAD_T
-			PRINTF("%"PRIu64" ", (unsigned long long) fp->fr_bytes);
+			PRINTF("%llu ", (unsigned long long) fp->fr_bytes);
 #else
 			PRINTF("%lu ", fp->fr_bytes);
 #endif
@@ -890,6 +898,7 @@ static void printlivelist(fiop, out, set, fp, group, comment)
 			free(g);
 		}
 	}
+	free(buf);
 }
 
 
@@ -942,13 +951,13 @@ static void printdeadlist(fiop, out, set, fp, group, comment)
 
 		if (opts & (OPT_HITS|OPT_VERBOSE))
 #ifdef	USE_QUAD_T
-			PRINTF("%"PRIu64" ", (unsigned long long) fb.fr_hits);
+			PRINTF("%llu ", (unsigned long long) fb.fr_hits);
 #else
 			PRINTF("%lu ", fb.fr_hits);
 #endif
 		if (opts & (OPT_ACCNT|OPT_VERBOSE))
 #ifdef	USE_QUAD_T
-			PRINTF("%"PRIu64" ", (unsigned long long) fb.fr_bytes);
+			PRINTF("%llu ", (unsigned long long) fb.fr_bytes);
 #else
 			PRINTF("%lu ", fb.fr_bytes);
 #endif
@@ -1763,7 +1772,7 @@ static void showauthstates(asp)
 	auth.igi_data = &fra;
 
 #ifdef	USE_QUAD_T
-	printf("Authorisation hits: %"PRIu64"\tmisses %"PRIu64"\n",
+	printf("Authorisation hits: %llu\tmisses %llu\n",
 		(unsigned long long) asp->fas_hits,
 		(unsigned long long) asp->fas_miss);
 #else
