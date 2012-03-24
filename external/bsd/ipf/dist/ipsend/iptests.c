@@ -1,4 +1,4 @@
-/*	$NetBSD: iptests.c,v 1.1.1.1 2012/03/23 21:20:07 christos Exp $	*/
+/*	$NetBSD: iptests.c,v 1.2 2012/03/24 02:08:34 christos Exp $	*/
 
 /*
  * Copyright (C) 2009 by Darren Reed.
@@ -8,10 +8,11 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id";
+static const char rcsid[] = "@(#)Id: iptests.c,v 2.21.2.1 2012/01/26 05:29:15 darrenr Exp";
 #endif
 #include <sys/param.h>
 #include <sys/types.h>
+#include <stdbool.h>
 #if defined(__NetBSD__) && defined(__vax__)
 /*
  * XXX need to declare boolean_t for _KERNEL <sys/files.h>
@@ -24,6 +25,7 @@ typedef	int	boolean_t;
 #if !defined(__osf__)
 # ifdef __NetBSD__
 #  include <machine/lock.h>
+#  include <sys/mutex.h>
 # endif
 # define _KERNEL
 # define KERNEL
