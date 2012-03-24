@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.c,v 1.1.1.1 2012/03/23 21:20:06 christos Exp $	*/
+/*	$NetBSD: ip.c,v 1.2 2012/03/24 02:19:00 christos Exp $	*/
 
 /*
  * ip.c (C) 1995-1998 Darren Reed
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C)1995";
-static const char rcsid[] = "@(#)Id";
+static const char rcsid[] = "@(#)Id: ip.c,v 2.12 2008/08/10 05:51:14 darrenr Exp";
 #endif
 #include <sys/param.h>
 #include <sys/types.h>
@@ -262,7 +262,7 @@ int	send_tcp(nfd, mtu, ip, gwip)
 	hlen = IP_HL(ip) << 2;
 	t = (tcphdr_t *)((char *)ip + hlen);
 	ip2 = (struct ip *)lbuf;
-	t2 = (tcphdr_t *)((char *)ip2 + hlen);
+	t2 = (tcphdr_t *)((char *)ip2 + sizeof(ip_t));
 	thlen = TCP_OFF(t) << 2;
 	if (!thlen)
 		thlen = sizeof(tcphdr_t);
