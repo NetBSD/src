@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.42 2012/01/15 17:36:55 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.42.2.1 2012/03/24 16:55:31 bouyer Exp $
 #
 #	etc.sparc/Makefile.inc -- sparc-specific etc Makefile targets
 #
@@ -14,17 +14,23 @@ BUILD_KERNELS=		INSTALL
 MD_INSTALLATION_DIRS=	installation/miniroot	\
 			installation/netboot	\
 			installation/bootfs	\
-			installation/tape	\
-			installation/floppy
+			installation/tape
+
+# XXX floppy overflows, see below (add to above list to re-enable)
+#			installation/floppy
+
 INSTALLATION_DIRS+=	${MD_INSTALLATION_DIRS}
 
 
 INSTALLATION_SYMLINKS=	\
 		tape/tapefile1.gz	../bootfs/netbsd.ram.aout.gz	\
 		tape/tapefile2		../bootfs/instfs.tgz		\
-		floppy/disk1.gz		../bootfs/boot.fs.gz		\
-		floppy/disk2		../bootfs/instfs.tgz		\
 		netboot/rootfs.tgz	../bootfs/instfs.tgz
+
+# XXX - floppy overflows on boot.fs.gz - so disabled for now,
+# add the following to above list to re-enable
+#		floppy/disk1.gz		../bootfs/boot.fs.gz
+#		floppy/disk2		../bootfs/instfs.tgz
 
 #
 # Install miniroot images and auxiliary scripts to the release tree
