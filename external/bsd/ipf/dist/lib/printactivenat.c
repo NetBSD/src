@@ -1,4 +1,4 @@
-/*	$NetBSD: printactivenat.c,v 1.1.1.1 2012/03/23 21:20:09 christos Exp $	*/
+/*	$NetBSD: printactivenat.c,v 1.2 2012/03/24 02:19:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -12,7 +12,7 @@
 
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id";
+static const char rcsid[] = "@(#)Id: printactivenat.c,v 1.20.2.4 2012/01/26 05:29:16 darrenr Exp";
 #endif
 
 
@@ -113,7 +113,7 @@ printactivenat(nat, opts, ticks)
 		PRINTF("\tifp %s", getifname(nat->nat_ifps[0]));
 		PRINTF(",%s ", getifname(nat->nat_ifps[1]));
 #ifdef	USE_QUAD_T
-		PRINTF("bytes %"PRIu64"/%"PRIu64" pkts %"PRIu64"/%"PRIu64"",
+		PRINTF("bytes %llu/%llu pkts %llu/%llu",
 			(unsigned long long)nat->nat_bytes[0],
 			(unsigned long long)nat->nat_bytes[1],
 			(unsigned long long)nat->nat_pkts[0],
