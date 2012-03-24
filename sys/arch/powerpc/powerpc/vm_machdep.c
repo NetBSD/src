@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.95 2012/02/19 21:06:25 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.96 2012/03/24 17:52:35 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.95 2012/02/19 21:06:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.96 2012/03/24 17:52:35 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -108,10 +108,13 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	*l2->l_md.md_utf = *l1->l_md.md_utf;
 
 	/*
-	 * If specified, give the child a different stack.
+	 * If specified, give the child a different stack.  Make sure to
+	 * reserve enough at the top to store the previous LR.
 	 */
 	if (stack != NULL) {
-		l2->l_md.md_utf->tf_fixreg[1] = (register_t)stack + stacksize;
+		l2->l_md.md_utf->tf_fixreg[1] =	
+		    ((register_t)stack + stacksize - STACK_ALIGNBYTES)
+			& ~STACK_ALIGNBYTES;
 	}
 
 	/*
