@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.180 2011/11/06 19:46:56 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.181 2012/03/24 20:28:41 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.180 2011/11/06 19:46:56 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.181 2012/03/24 20:28:41 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.180 2011/11/06 19:46:56 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.181 2012/03/24 20:28:41 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2524,7 +2524,9 @@ ParseGetLine(int flags, int *length)
 	    }
 	    if (ch == '#' && comment == NULL) {
 		/* Remember first '#' for comment stripping */
-		comment = line_end;
+		/* Unless previous char was '[', as in modifier :[#] */
+		if (!(ptr > line && ptr[-1] == '['))
+		    comment = line_end;
 	    }
 	    ptr++;
 	    if (ch == '\n')
