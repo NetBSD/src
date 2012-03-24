@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2012/03/23 21:29:45 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2012/03/24 00:32:50 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -17,7 +17,7 @@ CPPFLAGS+=	-DIPFILTER_LOG -DIPFILTER_LOOKUP \
 COPTS.radix.c=	-Wno-error
 COPTS+=		-fno-strict-aliasing
 
-.PATH:		${NETBSDSRCDIR}/sys/dist/ipf/netinet
+.PATH:		${NETBSDSRCDIR}/sys/external/bsd/ipf/netinet
 
 DPSRCS+=	ipnat_l.h ipnat_y.h ippool_l.h ippool_y.h ipf_l.h ipf_y.h
 
