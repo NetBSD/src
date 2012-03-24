@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.c,v 1.10 2012/03/21 02:32:26 christos Exp $ */
+/* $NetBSD: softfloat.c,v 1.11 2012/03/24 00:06:20 matt Exp $ */
 
 /*
  * This version hacked for use with gcc -msoft-float by bjh21.
@@ -46,7 +46,7 @@ this code that are retained.
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: softfloat.c,v 1.10 2012/03/21 02:32:26 christos Exp $");
+__RCSID("$NetBSD: softfloat.c,v 1.11 2012/03/24 00:06:20 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef SOFTFLOAT_FOR_GCC
@@ -2000,7 +2000,7 @@ float32 float32_div( float32 a, float32 b )
         aSig >>= 1;
         ++zExp;
     }
-    zSig = (bits32)(((bits64) aSig) << 32) / bSig;
+    zSig = (bits32)((((bits64) aSig) << 32) / bSig);
     if ( ( zSig & 0x3F ) == 0 ) {
         zSig |= ( (bits64) bSig * zSig != ( (bits64) aSig )<<32 );
     }
