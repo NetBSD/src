@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2012/03/23 21:29:45 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2012/03/24 02:08:34 christos Exp $
 
 .include <bsd.own.mk>
+.include "../Makefile.inc"
 
 PROG=		ipsend
 SRCS=		ipsend.c ip.c ipsopt.c iplang_y.c iplang_l.l sbpf.c \
@@ -9,16 +10,16 @@ MAN=		ipsend.1 ipsend.5
 DPADD+=		${LIBL}
 LDADD+=		-ll
 
-CPPFLAGS+=	-I${NETBSDSRCDIR}/dist/ipf/ipsend
-CPPFLAGS+=	-I${NETBSDSRCDIR}/dist/ipf/iplang
-CPPFLAGS+=	-I.
+CPPFLAGS+=	-I${UDIST}/ipsend
+CPPFLAGS+=	-I${UDIST}/iplang
+CPPFLAGS+=	-I${.CURDIR} -I.
 
 CLEANFILES+=	iplang_y.c iplang_y.h
 
 DPSRCS+=	iplang_y.h
 
-.PATH:		${NETBSDSRCDIR}/dist/ipf/ipsend \
-		${NETBSDSRCDIR}/dist/ipf/iplang
+.PATH:		${UDIST}/ipsend \
+		${UDIST}/iplang
 
 iplang_y.c: iplang_y.y
 	${_MKTARGET_CREATE}
