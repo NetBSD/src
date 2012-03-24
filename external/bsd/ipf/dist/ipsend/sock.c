@@ -1,4 +1,4 @@
-/*	$NetBSD: sock.c,v 1.1.1.1 2012/03/23 21:20:07 christos Exp $	*/
+/*	$NetBSD: sock.c,v 1.2 2012/03/24 02:08:34 christos Exp $	*/
 
 /*
  * sock.c (C) 1995-1998 Darren Reed
@@ -8,12 +8,13 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)sock.c	1.2 1/11/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id";
+static const char rcsid[] = "@(#)Id: sock.c,v 2.18 2008/08/10 05:51:14 darrenr Exp";
 #endif
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+#include <stdbool.h>
 #if defined(__NetBSD__) && defined(__vax__)
 /*
  * XXX need to declare boolean_t for _KERNEL <sys/files.h>
@@ -33,6 +34,7 @@ typedef int     boolean_t;
 #if !defined(__osf__)
 # ifdef __NetBSD__
 #  include <machine/lock.h>
+#  include <sys/mutex.h>
 # endif
 # define _KERNEL
 # define	KERNEL
@@ -324,12 +326,21 @@ struct	tcpcb	*find_tcp(tfd, ti)
 	t = NULL;
 
 	o = (struct file **)calloc(1, sizeof(*o) * (fd->fd_lastfile + 1));
+#if defined(__NetBSD_Version__)  && __NetBSD_Version__ < 599001200
 	if (KMCPY(o, fd->fd_ofiles, (fd->fd_lastfile + 1) * sizeof(*o)) == -1)
 	    {
 		fprintf(stderr, "read(%#lx,%#lx,%lu) - u_ofile - failed\n",
 			(u_long)fd->fd_ofiles, (u_long)o, (u_long)sizeof(*o));
 		goto finderror;
 	    }
+#else
+	if (KMCPY(o, &fd->fd_dt->dt_ff, (fd->fd_lastfile + 1) * sizeof(*o)) == -1)
+	    {
+		fprintf(stderr, "read(%#lx,%#lx,%lu) - u_ofile - failed\n",
+			(u_long)fd->fd_dt->dt_ff, (u_long)o, (u_long)sizeof(*o));
+		goto finderror;
+	    }
+#endif
 	f = (struct file *)calloc(1, sizeof(*f));
 	if (KMCPY(f, o[tfd], sizeof(*f)) == -1)
 	    {
