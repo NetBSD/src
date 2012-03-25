@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.988 2012/03/02 06:07:24 apb Exp $
+# $NetBSD: mi,v 1.989 2012/03/25 00:11:18 nonaka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -182,6 +182,7 @@
 ./libdata/firmware/rum/rum-license		base-firmware-root
 ./libdata/firmware/rum/rum-rt2573		base-firmware-root
 ./libdata/firmware/upgt				base-firmware-root
+./libdata/firmware/urtwn			base-firmware-root
 ./libdata/firmware/zyd				base-firmware-root
 ./libdata/firmware/zyd/zd1211-licence		base-obsolete			obsolete
 ./libdata/firmware/zyd/zd1211-license		base-firmware-root
