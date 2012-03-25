@@ -1,4 +1,4 @@
-/* $NetBSD: t_sched.c,v 1.4 2012/03/18 07:14:08 jruoho Exp $ */
+/* $NetBSD: t_sched.c,v 1.5 2012/03/25 04:11:42 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sched.c,v 1.4 2012/03/18 07:14:08 jruoho Exp $");
+__RCSID("$NetBSD: t_sched.c,v 1.5 2012/03/25 04:11:42 christos Exp $");
 
 #include <sched.h>
 #include <limits.h>
@@ -57,7 +57,7 @@ ATF_TC_BODY(sched_getparam, tc)
 	ATF_REQUIRE(sched_getparam(0, &s1) == 0);
 	ATF_REQUIRE(sched_getparam(p, &s2) == 0);
 
-	ATF_REQUIRE(s1.sched_priority == s2.sched_priority);
+	ATF_CHECK_EQ(s1.sched_priority, s2.sched_priority);
 
 	/*
 	 * The behavior is undefined but should error
@@ -114,7 +114,7 @@ sched_priority_set(int pri, int pol)
 	/*
 	 * Test that the policy was changed.
 	 */
-	ATF_REQUIRE(sched_getscheduler(0) == pol);
+	ATF_CHECK_EQ(sched_getscheduler(0), pol);
 
 	/*
 	 * And that sched_getparam(3) returns the new priority.
@@ -122,7 +122,7 @@ sched_priority_set(int pri, int pol)
 	sched.sched_priority = -1;
 
 	ATF_REQUIRE(sched_getparam(0, &sched) == 0);
-	ATF_REQUIRE(sched.sched_priority == pri);
+	ATF_CHECK_EQ(sched.sched_priority, pri);
 }
 
 ATF_TC(sched_setscheduler_1);
