@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vm.c,v 1.2 2010/06/14 21:06:09 pooka Exp $	*/
+/*	$NetBSD: t_vm.c,v 1.2.8.1 2012/03/25 11:29:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@ ATF_TC_HEAD(uvmwait, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "Tests that uvm_wait works");
-	atf_tc_set_md_var(tc, "timeout", "10");
+	atf_tc_set_md_var(tc, "timeout", "30");
 }
 
 #define UVMWAIT_LIMIT 1024*1024
