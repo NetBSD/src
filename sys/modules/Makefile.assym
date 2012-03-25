@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.assym,v 1.1 2008/01/16 12:34:56 ad Exp $
+#	$NetBSD: Makefile.assym,v 1.2 2012/03/25 06:55:20 joerg Exp $
 
 DPSRCS+=	assym.h
 CLEANFILES+=	assym.h
@@ -22,6 +22,6 @@ GENASSYM_DIR?=
 assym.h:
 #	 ${GENASSYM_DIR}/genassym.cf
 	@echo ${S}
-	${TOOL_GENASSYM} -- ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	${TOOL_GENASSYM} -- ${CC} ${CFLAGS:N-Wa,*} ${CPPFLAGS} ${PROF} \
 		< ${GENASSYM_DIR}/genassym.cf > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h

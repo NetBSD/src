@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2012/01/31 20:08:28 uwe Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2012/03/25 06:55:19 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -68,7 +68,7 @@ gcrt0.o: crt0.S crt0-common.c
 sysident_assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS}
 	${_MKTARGET_CREATE}
 	cat ${COMMON_DIR}/sysident_assym.cf | \
-	    ${TOOL_GENASSYM} -- ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	    ${TOOL_GENASSYM} -- ${CC} ${CFLAGS:N-Wa,*} ${CPPFLAGS} ${PROF} \
 	    > sysident_assym.h.tmp && \
 	mv -f sysident_assym.h.tmp sysident_assym.h
 
