@@ -1,4 +1,4 @@
-/*	$NetBSD: iommuvar.h,v 1.20 2011/03/20 20:47:10 mrg Exp $	*/
+/*	$NetBSD: iommuvar.h,v 1.21 2012/03/25 03:51:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -55,6 +55,7 @@ struct iommu_state {
 	u_int			is_dvmaend;
 	int64_t			is_cr;		/* IOMMU control regiter value */
 	struct extent		*is_dvmamap;	/* DVMA map for this instance */
+	kmutex_t		is_lock;	/* lock for DVMA map */
 	int			is_flags;
 #define IOMMU_FLUSH_CACHE	0x00000001
 #define IOMMU_TSBSIZE_IN_PTSB	0x00000002	/* PCIe */
