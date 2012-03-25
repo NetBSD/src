@@ -1,4 +1,4 @@
-# $NetBSD: t_mtree.sh,v 1.3 2012/03/19 06:39:22 jruoho Exp $
+# $NetBSD: t_mtree.sh,v 1.4 2012/03/25 16:10:13 christos Exp $
 #
 # Copyright (c) 2009, 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -164,8 +164,7 @@ ignore_body()
 	ln -s newdir otherdir
 
 	# This yields "extra: otherdir" even with -d.
-	#
-	atf_expect_fail "PR bin/41061"
+	# (PR bin/41061)
 	atf_check -s ignore -o empty -e empty -x "mtree -d < mtree.spec"
 
 	# Delete the symlink and re-verify.
