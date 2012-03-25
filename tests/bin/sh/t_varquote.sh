@@ -1,4 +1,4 @@
-# $NetBSD: t_varquote.sh,v 1.1 2012/03/17 16:33:11 jruoho Exp $
+# $NetBSD: t_varquote.sh,v 1.2 2012/03/25 18:50:19 christos Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -68,10 +68,9 @@ all_body() {
 atf_test_case nested_quotes_multiword
 nested_quotes_multiword_head() {
 	atf_set "descr" "Tests that having nested quoting in a multi-word" \
-	    "string works"
+	    "string works (PR bin/43597)"
 }
 nested_quotes_multiword_body() {
-	atf_expect_fail "PR bin/43597"
 	atf_check -s eq:0 -o match:"first-word second-word" -e empty \
 	    /bin/sh -c 'echo "${foo:="first-word"} second-word"'
 }
