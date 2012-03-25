@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.60 2012/03/24 16:55:54 bouyer Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.61 2012/03/25 11:30:36 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1509,4 +1509,17 @@ etc/etc.sparc/Makefile.inc			1.43
 	Disable generation of boot floppy images for sparc, which do not fit on
 	floppy disks anymore, to unbreak the build.
 	[martin, ticket #139]
+
+sys/compat/linux/arch/i386/linux_exec.h		1.11
+
+	define LINUX_DEBUGLINK_SIGNATURE for i386 too.
+	this allows linux ldd to work.
+	[chs, ticket #140]
+
+sys/rump/librump/rumpkern/vm.c			1.125
+tests/rump/rumpkern/t_vm.c			1.3
+
+	Fix a locking bug in rumpkern.
+	Increase uvmwait test timeout so it has a chance to succeed.
+	[hannken, ticket #141]
 
