@@ -1,4 +1,4 @@
-/* $NetBSD: t_fnmatch.c,v 1.1 2012/03/18 08:52:07 jruoho Exp $ */
+/* $NetBSD: t_fnmatch.c,v 1.2 2012/03/25 16:31:51 christos Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fnmatch.c,v 1.1 2012/03/18 08:52:07 jruoho Exp $");
+__RCSID("$NetBSD: t_fnmatch.c,v 1.2 2012/03/25 16:31:51 christos Exp $");
 
 #include <atf-c.h>
 #include <fnmatch.h>
@@ -49,8 +49,6 @@ ATF_TC_HEAD(fnmatch_backslashes, tc)
 ATF_TC_BODY(fnmatch_backslashes, tc)
 {
 	const int rv = fnmatch(/* pattern */ "\\", "\\", 0);
-
-	atf_tc_expect_fail("PR lib/41558");
 
 	if (rv != FNM_NOMATCH)
 		atf_tc_fail("fnmatch(3) did not translate '\\'");
