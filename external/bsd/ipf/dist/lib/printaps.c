@@ -1,4 +1,4 @@
-/*	$NetBSD: printaps.c,v 1.1.1.1 2012/03/23 21:20:09 christos Exp $	*/
+/*	$NetBSD: printaps.c,v 1.2 2012/03/25 09:50:45 martin Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -35,7 +35,7 @@ printaps(aps, opts, proto)
 	PRINTF("\tproxy %s/%d use %d flags %x\n", apr.apr_label,
 		apr.apr_p, apr.apr_ref, apr.apr_flags);
 #ifdef	USE_QUAD_T
-	PRINTF("%"PRIu64" pkts %"PRIu64"", (unsigned long long)ap.aps_bytes,
+	PRINTF("%llu pkts %llu", (unsigned long long)ap.aps_bytes,
 		(unsigned long long)ap.aps_pkts);
 #else
 	PRINTF("%lu pkts %lu", ap.aps_bytes, ap.aps_pkts);
