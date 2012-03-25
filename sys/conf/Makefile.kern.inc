@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.154 2012/03/25 01:56:02 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.155 2012/03/25 06:55:20 joerg Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -322,7 +322,7 @@ SYSTEM_LD_TAIL+=${SYSTEM_LD_TAIL_EXTRA}
 assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS}
 	${_MKTARGET_CREATE}
 	cat ${GENASSYM_CONF} ${GENASSYM_EXTRAS} | \
-	    ${GENASSYM} -- ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	    ${GENASSYM} -- ${CC} ${CFLAGS:N-Wa,*} ${CPPFLAGS} ${PROF} \
 	    > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 ${MD_SFILES:C/\.[Ss]/.o/} ${SFILES:C/\.[Ss]/.o/}: assym.h
@@ -428,7 +428,7 @@ assym.d: assym.h
 	${_MKTARGET_CREATE}
 	cat ${GENASSYM_CONF} ${GENASSYM_EXTRAS} | \
 	    ${GENASSYM} -- ${MKDEP} -f assym.dep -- \
-	    ${CFLAGS} ${CPPFLAGS}
+	    ${CFLAGS:N-Wa,*} ${CPPFLAGS}
 	${TOOL_SED} -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >${.TARGET}
 	rm -f assym.dep
 
