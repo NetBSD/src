@@ -1,4 +1,4 @@
-# $NetBSD: t_exit.sh,v 1.1 2012/03/17 16:33:11 jruoho Exp $
+# $NetBSD: t_exit.sh,v 1.2 2012/03/25 17:30:59 christos Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -64,9 +64,9 @@ trap_subshell_body() {
 
 atf_test_case trap_zero__implicit_exit
 trap_zero__implicit_exit_body() {
+	# PR bin/6764: sh works but ksh does not"
 	echo '( trap "echo exiting" 0 )' >helper.sh
 	atf_check -s eq:0 -o match:exiting -e empty /bin/sh helper.sh
-	atf_expect_fail "PR bin/6764: sh works but ksh does not"
 	atf_check -s eq:0 -o match:exiting -e empty /bin/ksh helper.sh
 }
 
