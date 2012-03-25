@@ -1,4 +1,4 @@
-/* $NetBSD: t_bitstring.c,v 1.3 2010/11/07 17:51:19 jmmv Exp $ */
+/* $NetBSD: t_bitstring.c,v 1.4 2012/03/25 06:54:04 joerg Exp $ */
 
 /*-
  * Copyright (c) 1993, 2008, 2010 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ calculate_data(FILE *file, const int test_length)
 		bit_set(bs, i);
 	(void) fprintf(file, "be:   1   0 ");
 	for (i=0; i < test_length; i++)
-		(void) fprintf(file, "%c", *("100" + (i % 3)));
+		(void) fprintf(file, "%c", "100"[i % 3]);
 	(void) fprintf(file, "\nis: ");
 	printbits(file, bs, test_length);
 
@@ -101,7 +101,7 @@ calculate_data(FILE *file, const int test_length)
 		bit_clear(bs, i);
 	(void) fprintf(file, "be:   0   3 ");
 	for (i=0; i < test_length; i++)
-		(void) fprintf(file, "%c", *("000100" + (i % 6)));
+		(void) fprintf(file, "%c", "000100"[i % 6]);
 	(void) fprintf(file, "\nis: ");
 	printbits(file, bs, test_length);
 
