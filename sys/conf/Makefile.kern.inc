@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.153 2012/03/19 05:38:26 bsh Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.154 2012/03/25 01:56:02 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -136,7 +136,7 @@ COMPILE_CTFCONVERT=	${_MKSHECHO}\
 			${CTFCONVERT} ${CTFFLAGS} ${.TARGET} && \
 			${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
 .else
-COMPILE_CTFCONVERT=	${_MKSHECHO}
+COMPILE_CTFCONVERT=
 .endif
 
 # compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
