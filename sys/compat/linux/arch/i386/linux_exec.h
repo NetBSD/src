@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.10 2008/11/17 13:03:42 ad Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.10.22.1 2012/03/25 11:25:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,6 +38,8 @@
 
 #define LINUX_ELF_AUX_ARGSIZ 	\
 	(howmany(LINUX_ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof(Elf32_Addr)))
+
+#define LINUX_DEBUGLINK_SIGNATURE
 
 #ifdef _KERNEL
 int linux_exec_setup_stack(struct lwp *, struct exec_package *);
