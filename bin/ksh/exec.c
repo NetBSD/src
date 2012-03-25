@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.14 2011/10/16 17:12:11 joerg Exp $	*/
+/*	$NetBSD: exec.c,v 1.15 2012/03/25 17:23:48 christos Exp $	*/
 
 /*
  * execute command tree
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: exec.c,v 1.14 2011/10/16 17:12:11 joerg Exp $");
+__RCSID("$NetBSD: exec.c,v 1.15 2012/03/25 17:23:48 christos Exp $");
 #endif
 
 
@@ -457,6 +457,7 @@ comexec(t, tp, ap, flags)
 	int volatile flags;
 {
 	int i;
+	int leave = LLEAVE;
 	volatile int rv = 0;
 	register char *cp;
 	register char **lastp;
@@ -745,10 +746,11 @@ comexec(t, tp, ap, flags)
 		rv = exchild(&texec, flags, -1);
 		break;
 	}
+	leave = LEXIT;
   Leave:
 	if (flags & XEXEC) {
 		exstat = rv;
-		unwind(LLEAVE);
+		unwind(leave);
 	}
 	return rv;
 }
