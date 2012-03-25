@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.155 2012/03/25 06:55:20 joerg Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.156 2012/03/25 09:15:20 martin Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -37,6 +37,7 @@ GENASSYM?=	${TOOL_GENASSYM:Ugenassym}
 _MKMSG?=		@\#
 _MKSHMSG?=		echo
 _MKSHECHO?=		echo
+_MKSHNOECHO=		:
 _MKMSG_CREATE?=		:
 _MKTARGET_COMPILE?=	:
 _MKTARGET_CREATE?=	:
@@ -136,7 +137,7 @@ COMPILE_CTFCONVERT=	${_MKSHECHO}\
 			${CTFCONVERT} ${CTFFLAGS} ${.TARGET} && \
 			${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
 .else
-COMPILE_CTFCONVERT=
+COMPILE_CTFCONVERT=	${_MKSHNOECHO}
 .endif
 
 # compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
