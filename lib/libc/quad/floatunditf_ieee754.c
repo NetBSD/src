@@ -1,4 +1,4 @@
-/*	$NetBSD: floatunditf_ieee754.c,v 1.2 2011/07/09 03:16:40 matt Exp $	*/
+/*	$NetBSD: floatunditf_ieee754.c,v 1.3 2012/03/25 19:53:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)floatunsdidf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: floatunditf_ieee754.c,v 1.2 2011/07/09 03:16:40 matt Exp $");
+__RCSID("$NetBSD: floatunditf_ieee754.c,v 1.3 2012/03/25 19:53:18 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,8 +66,8 @@ __floatunditf(u_quad_t x)
 #else
 	union ieee_ext_u extu;
 	quad_t tmp = x;		/* must be signed */
-	size_t width = 64;
-	size_t bit = 0;
+	unsigned int width = 64;
+	unsigned int bit = 0;
 	quad_t mask = ~(quad_t)0;
 
 	if (x == 0)
@@ -87,17 +87,17 @@ __floatunditf(u_quad_t x)
 	x <<= (bit + 1);
 	extu.extu_sign = 0;
 	extu.extu_exp = EXT_EXP_BIAS + (64 - (bit + 1));
-	extu.extu_frach = x >> (64 - EXT_FRACHBITS);
+	extu.extu_frach = (unsigned int)(x >> (64 - EXT_FRACHBITS));
 	x <<= EXT_FRACHBITS;
 #ifdef EXT_FRACHMBITS
-	extu.extu_frachm = x >> (64 - EXT_FRACHMBITS);
+	extu.extu_frachm =(unsigned int)(x >> (64 - EXT_FRACHMBITS));
 	x <<= EXT_FRACHMBITS;
 #endif
 #ifdef EXT_FRACLMBITS
-	extu.extu_fraclm = x >> (64 - EXT_FRACLMBITS);
+	extu.extu_fraclm =(unsigned int)(x >> (64 - EXT_FRACLMBITS));
 	x <<= EXT_FRACLMBITS;
 #endif
-	extu.extu_fracl = x >> (64 - EXT_FRACLBITS);
+	extu.extu_fracl =(unsigned int)(x >> (64 - EXT_FRACLBITS));
 
 	return extu.extu_ld;
 #endif
