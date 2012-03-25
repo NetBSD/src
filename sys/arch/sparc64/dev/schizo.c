@@ -1,10 +1,10 @@
-/*	$NetBSD: schizo.c,v 1.28 2012/03/18 05:26:58 mrg Exp $	*/
+/*	$NetBSD: schizo.c,v 1.29 2012/03/25 03:13:08 mrg Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
  * Copyright (c) 2003 Henric Jungheim
- * Copyright (c) 2008, 2009, 2010 Matthew R. Green
+ * Copyright (c) 2008, 2009, 2010, 2012 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: schizo.c,v 1.28 2012/03/18 05:26:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: schizo.c,v 1.29 2012/03/25 03:13:08 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -152,6 +152,9 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 	str = prom_getpropstring(ma->ma_node, "compatible");
 	if (strcmp(str, "pci108e,a801") == 0)
 		sc->sc_tomatillo = 1;
+
+	sc->sc_ver = prom_getpropint(sc->sc_node, "version#", 0);
+
 	sc->sc_dev = self;
 	sc->sc_node = ma->ma_node;
 	sc->sc_dmat = ma->ma_dmatag;
@@ -204,9 +207,8 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 		panic("schizo: can't get bus-range");
 
 	aprint_normal(": \"%s\", version %d, ign %x, bus %c %d to %d\n",
-	    sc->sc_tomatillo ? "Tomatillo" : "Schizo",
-	    prom_getpropint(sc->sc_node, "version#", 0), sc->sc_ign,
-	    pbm->sp_bus_a ? 'A' : 'B', busranges[0], busranges[1]);
+	    sc->sc_tomatillo ? "Tomatillo" : "Schizo", sc->sc_ver,
+	    sc->sc_ign, pbm->sp_bus_a ? 'A' : 'B', busranges[0], busranges[1]);
 	aprint_naive("\n");
 
 	if (bus_space_subregion(pbm->sp_regt, sc->sc_ctrlh,
@@ -280,8 +282,20 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 
 	reg = schizo_pbm_read(pbm, SCZ_PCI_CTRL);
 	/* enable/disable error interrupts and arbiter */
-	reg |= SCZ_PCICTRL_EEN | SCZ_PCICTRL_MMU_INT | SCZ_PCICTRL_ARB;
-	reg &= ~SCZ_PCICTRL_SBH_INT;
+	reg |= SCZ_PCICTRL_EEN | SCZ_PCICTRL_MMU_INT;
+	if (sc->sc_tomatillo) {
+		reg &= ~SCZ_PCICTRL_SBH_INT;
+		reg |= TOM_PCICTRL_ARB;
+		reg |= TOM_PCICTRL_PRM | TOM_PCICTRL_PRO |
+		       TOM_PCICTRL_PRL;
+		if (sc->sc_ver <= 1)	/* 2.0 */
+			reg |= TOM_PCICTRL_DTO_INT;
+		else
+			reg |= SCZ_PCICTRL_PTO;
+	} else
+		reg |= SCZ_PCICTRL_SBH_INT | SCZ_PCICTRL_ARB;
+	if (OF_getproplen(sc->sc_node, "no-bus-parking") < 0)
+		reg |= SCZ_PCICTRL_PARK;
 	schizo_pbm_write(pbm, SCZ_PCI_CTRL, reg);
 
 	reg = schizo_pbm_read(pbm, SCZ_PCI_DIAG);
@@ -315,7 +329,6 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 			      TOM_IOCACHE_CSR_PEN_RDM |
 			      TOM_IOCACHE_CSR_PEN_ONE |
 			      TOM_IOCACHE_CSR_PEN_LINE;
-
 		schizo_pbm_write(pbm, SCZ_PCI_IOCACHE_CSR, iocache_csr);
 	}
 
@@ -547,22 +560,19 @@ schizo_set_intr(struct schizo_softc *sc, struct schizo_pbm *pbm, int ipl,
 bus_space_tag_t
 schizo_alloc_mem_tag(struct schizo_pbm *sp)
 {
-	return (schizo_alloc_bus_tag(sp, "mem",
-	    PCI_MEMORY_BUS_SPACE));
+	return (schizo_alloc_bus_tag(sp, "mem", PCI_MEMORY_BUS_SPACE));
 }
 
 bus_space_tag_t
 schizo_alloc_io_tag(struct schizo_pbm *sp)
 {
-	return (schizo_alloc_bus_tag(sp, "io",
-	    PCI_IO_BUS_SPACE));
+	return (schizo_alloc_bus_tag(sp, "io", PCI_IO_BUS_SPACE));
 }
 
 bus_space_tag_t
 schizo_alloc_config_tag(struct schizo_pbm *sp)
 {
-	return (schizo_alloc_bus_tag(sp, "cfg",
-	    PCI_CONFIG_BUS_SPACE));
+	return (schizo_alloc_bus_tag(sp, "cfg", PCI_CONFIG_BUS_SPACE));
 }
 
 bus_space_tag_t
