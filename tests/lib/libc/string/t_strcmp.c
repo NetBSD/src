@@ -1,4 +1,4 @@
-/* $NetBSD: t_strcmp.c,v 1.3 2011/07/14 07:33:20 jruoho Exp $ */
+/* $NetBSD: t_strcmp.c,v 1.4 2012/03/25 08:17:54 joerg Exp $ */
 
 /*
  * Written by J.T. Conklin <jtc@acorntoolworks.com>
@@ -111,7 +111,7 @@ ATF_TC_BODY(strcmp_simple, tc)
 	ATF_CHECK(strcmp(buf1, buf1) == 0);
 	ATF_CHECK(strcmp(buf2, buf2) == 0);
 
-	ATF_CHECK(strcmp("xöx", "xox") > 0);
+	ATF_CHECK(strcmp("x\xf6x", "xox") > 0);
 	ATF_CHECK(strcmp("xxx", "xxxyyy") < 0);
 	ATF_CHECK(strcmp("xxxyyy", "xxx") > 0);
 
