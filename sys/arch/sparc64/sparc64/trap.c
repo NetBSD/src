@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.173 2012/03/25 13:44:04 martin Exp $ */
+/*	$NetBSD: trap.c,v 1.174 2012/03/25 15:40:32 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.173 2012/03/25 13:44:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.174 2012/03/25 15:40:32 nakayama Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1158,7 +1158,7 @@ kfault:
 				/* Disable traptrace for printf */
 				trap_trace_dis = 1;
 				(void) splhigh();
-				printf("cpu%d: data fault: pc=%lx rpc=%"PRIu64" addr=%lx\n",
+				printf("cpu%d: data fault: pc=%lx rpc=%"PRIx64" addr=%lx\n",
 				    cpu_number(), pc, tf->tf_in[7], addr);
 				DEBUGGER(type, tf);
 				panic("kernel fault");
