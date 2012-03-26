@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.219 2011/10/14 09:23:30 hannken Exp $	*/
+/*	$NetBSD: vnd.c,v 1.220 2012/03/26 16:28:08 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.219 2011/10/14 09:23:30 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.220 2012/03/26 16:28:08 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -155,6 +155,8 @@ struct vndxfer {
 
 #define VNDLABELDEV(dev) \
     (MAKEDISKDEV(major((dev)), vndunit((dev)), RAW_PART))
+
+#define	VND_MAXPENDING(vnd)	((vnd)->sc_maxactive * 4)
 
 /* called by main() at boot time */
 void	vndattach(int);
@@ -496,6 +498,13 @@ vndstrategy(struct buf *bp)
 	if (vnddebug & VDB_FOLLOW)
 		printf("vndstrategy(%p): unit %d\n", bp, unit);
 #endif
+	if ((vnd->sc_flags & VNF_USE_VN_RDWR)) {
+		KASSERT(vnd->sc_pending >= 0 &&
+		    vnd->sc_pending <= VND_MAXPENDING(vnd));
+		while (vnd->sc_pending == VND_MAXPENDING(vnd))
+			tsleep(&vnd->sc_pending, PRIBIO, "vndpc", 0);
+		vnd->sc_pending++;
+	}
 	bufq_put(vnd->sc_tab, bp);
 	wakeup(&vnd->sc_tab);
 	splx(s);
@@ -587,6 +596,12 @@ vndthread(void *arg)
 			tsleep(&vnd->sc_tab, PRIBIO, "vndbp", 0);
 			continue;
 		};
+		if ((vnd->sc_flags & VNF_USE_VN_RDWR)) {
+			KASSERT(vnd->sc_pending > 0 &&
+			    vnd->sc_pending <= VND_MAXPENDING(vnd));
+			if (vnd->sc_pending-- == VND_MAXPENDING(vnd))
+				wakeup(&vnd->sc_pending);
+		}
 		splx(s);
 		flags = obp->b_flags;
 #ifdef DEBUG
@@ -722,13 +737,9 @@ handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
 	    IO_ADV_ENCODE(POSIX_FADV_NOREUSE), vnd->sc_cred, &resid, NULL);
 	bp->b_resid = resid;
 
-	/* Keep mapped pages below threshold. */
 	mutex_enter(vp->v_interlock);
-	if (vp->v_uobj.uo_npages > 1024*1024 / PAGE_SIZE)
-		(void) VOP_PUTPAGES(vp, 0, 0,
-		    PGO_ALLPAGES | PGO_CLEANIT | PGO_FREE | PGO_SYNCIO);
-	else
-		mutex_exit(vp->v_interlock);
+	(void) VOP_PUTPAGES(vp, 0, 0,
+	    PGO_ALLPAGES | PGO_CLEANIT | PGO_FREE | PGO_SYNCIO);
 
 	/* We need to increase the number of outputs on the vnode if
 	 * there was any write to it. */
