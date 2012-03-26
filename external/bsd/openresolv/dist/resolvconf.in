@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2007-2011 Roy Marples
+# Copyright (c) 2007-2012 Roy Marples
 # All rights reserved
 
 # Redistribution and use in source and binary forms, with or without
@@ -45,6 +45,7 @@ PRIVATEDIR="$VARDIR/private"
 
 : ${dynamic_order:=tap[0-9]* tun[0-9]* vpn vpn[0-9]* ppp[0-9]* ippp[0-9]*}
 : ${interface_order:=lo lo[0-9]*}
+: ${name_server_blacklist:=0.0.0.0}
 
 error_exit()
 {
@@ -289,18 +290,45 @@ list_resolv()
 	return $retval
 }
 
+list_remove() {
+	local list= e= l= result= found= retval=0
+
+	[ -z "$2" ] && return 0
+	eval list=\"\$$1\"
+	shift
+
+	set -f
+	for e; do
+		found=false
+		for l in $list; do
+			case "$e" in
+			$l) found=true;;
+			esac
+			$found && break
+		done
+		if $found; then
+			retval=$(($retval + 1))
+		else
+			result="$result $e"
+		fi
+	done
+	set +f
+	echo "${result# *}"
+	return $retval
+}
+
 make_vars()
 {
+	local newdomains= d= dn= newns= ns=
 	eval "$(list_resolv -l "$@" | parse_resolv)"
 
 	# Ensure that we only list each domain once
-	newdomains=
 	for d in $DOMAINS; do
 		dn="${d%%:*}"
+		list_remove domain_blacklist "$dn" >/dev/null || continue
 		case " $newdomains" in
 		*" ${dn}:"*) continue;;
 		esac
-		newdomains="$newdomains${newdomains:+ }$dn:"
 		newns=
 		for nd in $DOMAINS; do
 			if [ "$dn" = "${nd%%:*}" ]; then
@@ -308,19 +336,30 @@ make_vars()
 				while [ -n "$ns" ]; do
 					case ",$newns," in
 					*,${ns%%,*},*) ;;
-					*) newns="$newns${newns:+,}${ns%%,*}";;
+					*) list_remove name_server_blacklist \
+						"$ns" >/dev/null \
+					&& newns="$newns${newns:+,}${ns%%,*}";;
 					esac
 					[ "$ns" = "${ns#*,}" ] && break
 					ns="${ns#*,}"
 				done
 			fi
 		done
-		newdomains="$newdomains$newns"
+		if [ -n "$newns" ]; then
+			newdomains="$newdomains${newdomains:+ }$dn:$newns"
+		fi
 	done
+	DOMAIN="$(list_remove domain_blacklist $DOMAIN)"
+	SEARCH="$(uniqify $SEARCH)"
+	SEARCH="$(list_remove domain_blacklist $SEARCH)"
+	NAMESERVERS="$(uniqify $NAMESERVERS)"
+	NAMESERVERS="$(list_remove name_server_blacklist $NAMESERVERS)"
+	LOCALNAMESERVERS="$(uniqify $LOCALNAMESERVERS)"
+	LOCALNAMESERVERS="$(list_remove name_server_blacklist $LOCALNAMESERVERS)"
 	echo "DOMAIN='$DOMAIN'"
-	echo "SEARCH='$(uniqify $SEARCH)'"
-	echo "NAMESERVERS='$(uniqify $NAMESERVERS)'"
-	echo "LOCALNAMESERVERS='$(uniqify $LOCALNAMESERVERS)'"
+	echo "SEARCH='$SEARCH'"
+	echo "NAMESERVERS='$NAMESERVERS'"
+	echo "LOCALNAMESERVERS='$LOCALNAMESERVERS'"
 	echo "DOMAINS='$newdomains'"
 }
 

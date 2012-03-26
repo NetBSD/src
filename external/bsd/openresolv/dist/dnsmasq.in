@@ -71,12 +71,13 @@ conf=
 for d in $DOMAINS; do
 	dn="${d%%:*}"
 	ns="${d#*:}"
+	n="${ns%%,*}"
 	while [ -n "$ns" ]; do
-		case "$ns" in
+		case "$n" in
 		*.*.*.*)
 			SIFS=${IFS-y} OIFS=$IFS
 			IFS=.
-			set -- ${ns%%,*}
+			set -- $n
 			num="0x$(printf %02x $1 $2 $3 $4)"
 			if [ "$SIFS" = y ]; then
 				unset IFS
@@ -89,7 +90,7 @@ for d in $DOMAINS; do
 		*:*:*:*:*:*:*:*)
 			SIFS=${IFS-y} OIFS=$IFS bytes=
 			IFS=:
-			set -- ${ns%%,*}
+			set -- $n
 			while [ -n "$1" ]; do
 				addr="$1"
 				shift
@@ -111,11 +112,12 @@ for d in $DOMAINS; do
 			dbus=false
 			;;
 		esac
-		conf="${conf}server=/$dn/${ns%%,*}$NL"
+		conf="${conf}server=/$dn/$n$NL"
 		[ "$ns" = "${ns#*,}" ] && break
 		ns="${ns#*,}"
 	done
 done
+
 if $dbus; then
 	newconf="$newconf$NL# Domain specific servers will"
 	newconf="$newconf be sent over dbus${NL}enable-dbus$NL"
