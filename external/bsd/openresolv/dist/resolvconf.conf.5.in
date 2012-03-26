@@ -1,4 +1,4 @@
-.\" Copyright (c) 2009-2011 Roy Marples
+.\" Copyright (c) 2009-2012 Roy Marples
 .\" All rights reserved
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 11, 2011
+.Dd March 19, 2012
 .Dt RESOLVCONF.CONF 5 SMM
 .Os
 .Sh NAME
@@ -60,12 +60,20 @@ If unset, defaults to the following:-
 Prepend search domains to the dynamically generated list.
 .It Sy search_domains_append
 Append search domains to the dynamically generated list.
+.It Sy domain_blacklist
+A list of domains to be removed from consideration.
+To remove a domain, you can use foo.*
+To remove a sub domain, you can use *.bar
 .It Sy name_servers
 Prepend name servers to the dynamically generated list.
 You should set this to 127.0.0.1 if you use a local name server other than
 libc.
 .It Sy name_servers_append
 Append name servers to the dynamically generated list.
+.It Sy name_server_blacklist
+A list of name servers to be removed from consideration.
+The default is 0.0.0.0 as some faulty routers send it via DHCP.
+To remove a block, you can use 192.168.*
 .It Sy private_interfaces
 These interfaces name servers will only be queried for the domains listed
 in their resolv.conf.
@@ -99,6 +107,12 @@ without any alteration.
 .It Sy resolv_conf_sortlist
 A libc resolver sortlist, as specified in
 .Xr resolv.conf 5 .
+.It Sy resolv_conf_local_only
+If a local nameserver is configured then the default is just to specify that
+and ignore all other entries as they will be configured for the local
+nameserver.
+Set this to YES to list them instead, if you need working DNS and the local
+nameserver stops functioning at the expense of duplicated server queries.
 .El
 .Sh SUBSCRIBER OPTIONS
 openresolv ships with subscribers for the name servers
@@ -187,4 +201,5 @@ and
 .Sh AUTHORS
 .An Roy Marples Aq roy@marples.name
 .Sh BUGS
-Please report them to http://roy.marples.name/projects/openresolv
+Please report them to
+.Lk http://roy.marples.name/projects/openresolv
