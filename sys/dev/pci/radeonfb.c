@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.59 2012/03/15 05:47:19 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.60 2012/03/26 21:59:01 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.59 2012/03/15 05:47:19 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.60 2012/03/26 21:59:01 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2785,7 +2785,10 @@ radeonfb_putchar_aa8(void *cookie, int row, int col, u_int c, long attr)
 	}
 	/* if we have pixels left in latch write them out */
 	if ((i & 3) != 0) {
-		latch = latch << ((4 - (i & 3)) << 3);	
+		/*
+		 * radeon is weird - apparently leftover pixels are written
+		 * from the middle, not from the left as everything else
+		 */
 		PUT32(sc, RADEON_HOST_DATA0, latch);
 	}
 
