@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.26 2011/12/10 16:16:11 jmcneill Exp $	*/
+/*	$NetBSD: btsco.c,v 1.27 2012/03/26 06:49:15 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.26 2011/12/10 16:16:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.27 2012/03/26 06:49:15 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -458,7 +458,7 @@ btsco_sco_disconnected(void *arg, int err)
 		 * has completed so that when it tries to send more, we
 		 * can indicate an error.
 		 */
-		mutex_spin_enter(&sc->sc_intr_lock);
+		mutex_enter(&sc->sc_intr_lock);
 		if (sc->sc_tx_pending > 0) {
 			sc->sc_tx_pending = 0;
 			(*sc->sc_tx_intr)(sc->sc_tx_intrarg);
@@ -467,7 +467,7 @@ btsco_sco_disconnected(void *arg, int err)
 			sc->sc_rx_want = 0;
 			(*sc->sc_rx_intr)(sc->sc_rx_intrarg);
 		}
-		mutex_spin_exit(&sc->sc_intr_lock);
+		mutex_exit(&sc->sc_intr_lock);
 		break;
 
 	default:
@@ -501,13 +501,13 @@ btsco_sco_complete(void *arg, int count)
 
 	DPRINTFN(10, "%s count %d\n", sc->sc_name, count);
 
-	mutex_spin_enter(&sc->sc_intr_lock);
+	mutex_enter(&sc->sc_intr_lock);
 	if (sc->sc_tx_pending > 0) {
 		sc->sc_tx_pending -= count;
 		if (sc->sc_tx_pending == 0)
 			(*sc->sc_tx_intr)(sc->sc_tx_intrarg);
 	}
-	mutex_spin_exit(&sc->sc_intr_lock);
+	mutex_exit(&sc->sc_intr_lock);
 }
 
 static void
@@ -526,7 +526,7 @@ btsco_sco_input(void *arg, struct mbuf *m)
 
 	DPRINTFN(10, "%s len=%d\n", sc->sc_name, m->m_pkthdr.len);
 
-	mutex_spin_enter(&sc->sc_intr_lock);
+	mutex_enter(&sc->sc_intr_lock);
 	if (sc->sc_rx_want == 0) {
 		m_freem(m);
 	} else {
@@ -552,7 +552,7 @@ btsco_sco_input(void *arg, struct mbuf *m)
 		if (sc->sc_rx_want == 0)
 			(*sc->sc_rx_intr)(sc->sc_rx_intrarg);
 	}
-	mutex_spin_exit(&sc->sc_intr_lock);
+	mutex_exit(&sc->sc_intr_lock);
 }
 
 
