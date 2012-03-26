@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.37 2012/03/13 18:41:14 elad Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.38 2012/03/26 11:03:43 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.37 2012/03/13 18:41:14 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.38 2012/03/26 11:03:43 wiz Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -133,7 +133,7 @@ from_freebsd_extattr(int attrnamespace, const char *attrname)
 
 	attr = kmem_alloc(len, KM_SLEEP);
 
-	snprintf(attr, len, "%s.%s", namespace, attr);
+	snprintf(attr, len, "%s.%s", namespace, attrname);
 
 	return attr;
 }
