@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_msdosfs.c,v 1.2 2010/07/30 16:15:05 pooka Exp $	*/
+/*	$NetBSD: fstest_msdosfs.c,v 1.3 2012/03/26 15:10:26 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -75,9 +75,10 @@ msdosfs_fstest_newfs(const atf_tc_t *tc, void **buf, const char *image,
 	if (args == NULL)
 		return -1;
 
-        snprintf(args->ta_devpath, MAXPATHLEN, "/dev/device%d.msdosfs", num);
-        snprintf(args->ta_imgpath, MAXPATHLEN, "%s", image);
-        args->ta_uargs.fspec = args->ta_devpath;
+	snprintf(args->ta_devpath, MAXPATHLEN, "/dev/device%d.msdosfs", num);
+	snprintf(args->ta_imgpath, MAXPATHLEN, "%s", image);
+	args->ta_uargs.fspec = args->ta_devpath;
+	args->ta_uargs.mask = 0755;
 
 	res = rump_pub_etfs_register(args->ta_devpath, image, RUMP_ETFS_BLK);
 	if (res != 0) {
