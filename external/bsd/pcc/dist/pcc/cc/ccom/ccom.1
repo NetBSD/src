@@ -1,5 +1,5 @@
-.\"	Id: ccom.1,v 1.24 2011/11/14 16:46:17 plunky Exp 	
-.\"	$NetBSD: ccom.1,v 1.5 2012/01/11 20:46:48 plunky Exp $
+.\"	Id: ccom.1,v 1.27 2012/03/22 21:09:41 plunky Exp 	
+.\"	$NetBSD: ccom.1,v 1.6 2012/03/26 14:30:46 plunky Exp $
 .\"
 .\" Copyright (c) 2007 Jeremy C. Reed <reed@reedmedia.net>
 .\"
@@ -16,7 +16,7 @@
 .\" ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd November 14, 2011
+.Dd March 22, 2012
 .Dt CCOM 1
 .Os
 .Sh NAME
@@ -222,7 +222,7 @@ Do dead code elimination.
 Delete redundant jumps and dead code.
 .It Sy gnu89
 .It Sy gnu99
-Use gcc semantics rather than C99 for some things.
+Use GNU C semantics rather than C99 for some things.
 Currently only inline.
 .It Sy inline
 Replace calls to functions marked with an inline specifier with a copy
@@ -254,6 +254,8 @@ Code printout
 Trees when entering pass2
 .It Sy f
 Instruction matcher, may provide much output
+.It Sy g
+Print flow graphs
 .It Sy n
 Memory allocation
 .It Sy o
@@ -270,6 +272,167 @@ Sethi-Ullman computations
 Target-specific flag, used in machine-dependent code
 .El
 .El
+.Sh PRAGMAS
+Input lines starting with a
+.Dq #pragma
+directive can be used to modify behaviour of
+.Nm
+during compilation.
+All tokens up to the first unescaped newline are considered part
+of the pragma command, with the following operations being recognized:
+.Bl -tag
+.It Sy STDC
+Standard C99 operator follows.
+Currently no C99 operations are implemented, and any directives starting
+with this token will be silently ignored.
+.It Sy GCC diagnostic Ar effect Qq Ar option
+GNU C compatibility.
+Alter the effects of compiler diagnostics.
+The required
+.Ar effect
+should be stated as
+.Sy warning ,
+.Sy error
+or
+.Sy ignored ,
+followed by the compiler diagnostic
+.Ar option
+in double quotes.
+For example, to force unknown pragmas to always generate an error,
+a standard header might include
+.Bd -literal -offset 2n
+#pragma GCC diagnostic error "-Wunknown-pragmas"
+.Ed
+.It Sy GCC poison Ar identifier ...
+GNU C compatibility.
+Cause an error if any of the following
+.Ar identifier Ns s
+subsequently appear in the code
+.Pq but not in any macro expansions .
+Currently not implemented.
+.It Sy GCC visibility
+GNU C compatibility.
+Currently not implemented.
+.It Sy pack Ns Pq Op Ar n
+Set the default maximum alignment for structures and unions, such that
+members will have their natural alignment requirements clamped at this
+value and may be stored misaligned.
+If
+.Ar n
+is not given, the alignment is reset to the target default.
+.It Sy pack Ns Pq Sy push Ns Op , Ar n
+Push the current pack setting onto an internal stack then, if
+.Ar n
+is given, change the default alignment for structures and unions.
+Currently not implemented.
+.It Sy pack Ns Pq Sy pop
+Change the pack setting to the most recently pushed value, and remove
+that setting from the stack.
+Currently not implemented.
+.It Sy packed Op Ar n
+Set the maximum alignment for the structure or union defined
+in the current statement.
+If
+.Ar n
+is not given, the default value of 1 is used.
+.Pq Currently this works except Ar n is not used
+.It Sy aligned Op Ar n
+Set the minimum alignment for the structure or union defined
+in the current statement.
+.It Sy rename Ar name
+Provide an alternative
+.Ar name
+which will be used to reference the object declared in the current statement.
+.It Sy weak Ar name Ns Op = Ns Ar alias
+Mark
+.Ar name
+as a weak rather than a global symbol, to allow its definition to be
+overridden at link time.
+If an
+.Ar alias
+is given, this will be used as the default value of
+.Ar name.
+.It Sy ident
+Currently not implemented.
+.El
+.Lp
+and the following target-specific operations are handled by
+machine-dependent code:
+.Bl -tag
+.It Sy tls
+For AMD64 and i386 targets, the variable declared in the current statement
+will be referenced via the
+.Dq thread-local storage
+mechanism.
+.It Sy init
+For AMD64, ARM, HPPA, i386, MIPS and PowerPC targets, when the current statement is a
+function declaration, generate a reference in the
+.Sy .ctors
+section, enabling library code to call the function prior to entering
+.Fn main .
+.It Sy fini
+For AMD64, ARM, HPPA, i386, MIPS and PowerPC targets, when the current statement is a
+function declaration, generate a reference in the
+.Sy .dtors
+section, enabling library code to call the function when
+.Fn main
+returns or the
+.Fn exit
+function is called.
+.It Sy section Ar name
+For AMD64, ARM, HPPA and i386 targets, place the subsequent code in the named
+section.
+.Pq This is currently broken .
+.It Sy alias Ar name
+For AMD64, HPPA and i386 targets, emit assembler instructions providing an
+alias for the symbol defined by the current statement.
+.It Sy stdcall
+For i386 targets, enable
+.Dq stdcall
+semantics during code generation, where function arguments are passed on
+the stack in right-to-left order, and the callee is responsible for adjusting
+the stack pointer before returning.
+Any function result is passed in the EAX register.
+On win32, the function name is postfixed with an
+.Dq @
+and the size of the stack adjustment.
+.It Sy cdecl
+For i386 targets, enable
+.Dq cdecl
+semantics during code generation, where function arguments are passed on
+the stack in right-to-left order, and the caller is responsible for cleaning
+up the stack after the function returns.
+Any function result is passed in the EAX register.
+This is the default.
+.It Sy fastcall
+For i386-win32 targets, enable
+.Dq fastcall
+semantics during code generation.
+.Po
+Currently this is equivalent to
+.Sy stdcall ,
+which is likely wrong
+.Pc .
+.It Sy dllimport
+For i386-win32 targets, references to the external symbol defined by
+the current statement will be made via indirect access through a
+location identified by the symbol name prefixed with
+.Dq __imp_ .
+.It Sy dllexport
+For i386-win32 targets, the external symbol declared by the current
+statement will be exported as an indirect reference to be
+accessed with
+.Sy dllimport .
+The global locator will be the symbol name prefixed with
+.Dq __imp_ .
+Currently this is not completely implemented.
+.El
+.Pp
+Any unknown
+.Dq #pragma
+directives will be ignored unless the
+.Fl Wunknown-pragmas
+diagnostic is in effect.
 .Sh SEE ALSO
 .Xr as 1 ,
 .Xr cpp 1 ,
