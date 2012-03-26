@@ -1,5 +1,5 @@
-/*	Id: pftn.c,v 1.339 2011/08/31 18:02:24 plunky Exp 	*/	
-/*	$NetBSD: pftn.c,v 1.7 2011/09/01 12:55:29 plunky Exp $	*/
+/*	Id: pftn.c,v 1.342 2012/03/22 18:51:40 plunky Exp 	*/	
+/*	$NetBSD: pftn.c,v 1.8 2012/03/26 14:30:46 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -130,8 +130,6 @@ static void alprint(union arglist *al, int in);
 static void lcommadd(struct symtab *sp);
 static NODE *mkcmplx(NODE *p, TWORD dt);
 extern int fun_inline;
-
-int ddebug = 0;
 
 /*
  * Declaration of an identifier.  Handles redeclarations, hiding,
@@ -1992,6 +1990,10 @@ arglist(NODE *n)
 		if (w->n_right->n_op == ELLIPSIS)
 			continue;
 		ty = w->n_right->n_type;
+		if (ty == ENUMTY) {
+			uerror("arg %d enum undeclared", cnt);
+			ty = w->n_right->n_type = INT;
+		}
 		if (BTYPE(ty) == STRTY || BTYPE(ty) == UNIONTY)
 			num++;
 		while (ISFTN(ty) == 0 && ISARY(ty) == 0 && ty > BTMASK)
@@ -2001,6 +2003,10 @@ arglist(NODE *n)
 	}
 	cnt++;
 	ty = w->n_type;
+	if (ty == ENUMTY) {
+		uerror("arg %d enum undeclared", cnt);
+		ty = w->n_type = INT;
+	}
 	if (BTYPE(ty) == STRTY || BTYPE(ty) == UNIONTY)
 		num++;
 	while (ISFTN(ty) == 0 && ISARY(ty) == 0 && ty > BTMASK)
@@ -2168,7 +2174,10 @@ alprint(union arglist *al, int in)
 				printf(" dim %d ", al->df->ddim);
 			} else if (ISFTN(t)) {
 				al++;
-				alprint(al->df->dfun, in+1);
+				if (al->df->dfun) {
+					printf("\n");
+					alprint(al->df->dfun, in+1);
+				}
 			}
 			t = DECREF(t);
 		}
@@ -2183,6 +2192,7 @@ alprint(union arglist *al, int in)
 		printf("end arglist\n");
 }
 #endif
+
 int
 suemeq(struct attr *s1, struct attr *s2)
 {
@@ -2976,9 +2986,9 @@ complinit()
 	struct rstack *rp;
 	NODE *p, *q;
 	char *n[] = { "0f", "0d", "0l" };
-	int i, odebug;
+	int i, d_debug;
 
-	odebug = ddebug;
+	d_debug = ddebug;
 	ddebug = 0;
 	real = addname("__real");
 	imag = addname("__imag");
@@ -2996,7 +3006,7 @@ complinit()
 		nfree(q);
 	}
 	nfree(p);
-	ddebug = odebug;
+	ddebug = d_debug;
 }
 
 /*
