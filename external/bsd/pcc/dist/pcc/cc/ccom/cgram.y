@@ -1,5 +1,5 @@
-/*	Id: cgram.y,v 1.341 2011/09/03 07:43:43 ragge Exp 	*/	
-/*	$NetBSD: cgram.y,v 1.1.1.5 2012/01/11 20:33:09 plunky Exp $	*/
+/*	Id: cgram.y,v 1.342 2012/03/24 16:53:12 ragge Exp 	*/	
+/*	$NetBSD: cgram.y,v 1.1.1.6 2012/03/26 14:26:48 plunky Exp $	*/
 
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -417,6 +417,7 @@ parameter_declaration:
 			$$ = block(TYMERGE, $1, $2, INT, 0, gcc_attr_parse($3));
 		}
 		|  declaration_specifiers abstract_declarator { 
+			$1->n_ap = attr_add($1->n_ap, $2->n_ap);
 			$$ = block(TYMERGE, $1, $2, INT, 0, 0);
 		}
 		|  declaration_specifiers {
@@ -451,15 +452,19 @@ abstract_declarator:
 		|  abstract_declarator '[' e ']' attr_var {
 			$$ = block(LB, $1, $3, INT, 0, gcc_attr_parse($5));
 		}
-		|  '(' ')' { $$ = bdty(UCALL, bdty(NAME, NULL)); }
-		|  '(' ib2 parameter_type_list ')' {
-			$$ = bdty(CALL, bdty(NAME, NULL), $3);
+		|  '(' ')' attr_var {
+			$$ = bdty(UCALL, bdty(NAME, NULL));
+			$$->n_ap = gcc_attr_parse($3);
 		}
-		|  abstract_declarator '(' ')' {
-			$$ = bdty(UCALL, $1);
+		|  '(' ib2 parameter_type_list ')' attr_var {
+			$$ = block(CALL, bdty(NAME, NULL), $3, INT, 0,
+			    gcc_attr_parse($5));
 		}
-		|  abstract_declarator '(' ib2 parameter_type_list ')' {
-			$$ = bdty(CALL, $1, $4);
+		|  abstract_declarator '(' ')' attr_var {
+			$$ = block(UCALL, $1, NIL, INT, 0, gcc_attr_parse($4));
+		}
+		|  abstract_declarator '(' ib2 parameter_type_list ')' attr_var {
+			$$ = block(CALL, $1, $4, INT, 0, gcc_attr_parse($6));
 		}
 		;
 
