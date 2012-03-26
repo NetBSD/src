@@ -1,5 +1,5 @@
-/*	Id: stabs.c,v 1.32 2011/04/07 18:50:16 ragge Exp 	*/	
-/*	$NetBSD: stabs.c,v 1.1.1.4 2011/09/01 12:47:02 plunky Exp $	*/
+/*	Id: stabs.c,v 1.33 2012/03/22 18:04:41 plunky Exp 	*/	
+/*	$NetBSD: stabs.c,v 1.1.1.5 2012/03/26 14:26:52 plunky Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -330,7 +330,7 @@ stabs_newsym(struct symtab *s)
 	extern int fun_inline;
 	char *sname;
 	char ostr[MAXPSTR];
-	int suesize, sz;
+	OFFSZ suesize, sz;
 
 	if (ISFTN(s->stype))
 		return; /* functions are handled separate */
@@ -352,34 +352,35 @@ stabs_newsym(struct symtab *s)
 	printtype(s, ostr, sizeof(ostr));
 	switch (s->sclass) {
 	case PARAM:
-		cprint(0, "\t.stabs \"%s:p%s\",%d,0,%d,%d\n", sname, ostr,
-		    N_PSYM, suesize, BIT2BYTE(s->soffset));
+		cprint(0, "\t.stabs \"%s:p%s\",%d,0," CONFMT ",%d\n",
+		    sname, ostr, N_PSYM, (CONSZ)suesize, BIT2BYTE(s->soffset));
 		break;
 
 	case AUTO:
-		cprint(0, "\t.stabs \"%s:%s\",%d,0,%d,%d\n", sname, ostr,
-		    N_LSYM, suesize, BIT2BYTE(s->soffset));
+		cprint(0, "\t.stabs \"%s:%s\",%d,0," CONFMT ",%d\n",
+		    sname, ostr, N_LSYM, (CONSZ)suesize, BIT2BYTE(s->soffset));
 		break;
 
 	case STATIC:
 		if (blevel)
-			cprint(0, "\t.stabs \"%s:V%s\",%d,0,%d," LABFMT "\n", sname, ostr,
-			    N_LCSYM, suesize, s->soffset);
+			cprint(0, "\t.stabs \"%s:V%s\",%d,0," CONFMT "," LABFMT "\n",
+			    sname, ostr, N_LCSYM, (CONSZ)suesize, s->soffset);
 		else
-			cprint(0, "\t.stabs \"%s:S%s\",%d,0,%d,%s\n", sname, ostr,
-			    N_LCSYM, suesize, sname);
+			cprint(0, "\t.stabs \"%s:S%s\",%d,0," CONFMT ",%s\n",
+			    sname, ostr, N_LCSYM, (CONSZ)suesize, sname);
 		break;
 
 	case EXTERN:
 	case EXTDEF:
-		cprint(0, "\t.stabs \"%s:G%s\",%d,0,%d,0\n", sname, ostr,
-		    N_GSYM, suesize);
+		cprint(0, "\t.stabs \"%s:G%s\",%d,0," CONFMT ",0\n",
+		    sname, ostr, N_GSYM, (CONSZ)suesize);
 		break;
 
 	case REGISTER:
-		cprint(0, "\t.stabs \"%s:r%s\",%d,0,%d,%d\n", sname, ostr,
-		    N_RSYM, 1, s->soffset);
+		cprint(0, "\t.stabs \"%s:r%s\",%d,0,%d,%d\n",
+		    sname, ostr, N_RSYM, 1, s->soffset);
 		break;
+
 	case SNULL:
 		if (fun_inline)
 			break;

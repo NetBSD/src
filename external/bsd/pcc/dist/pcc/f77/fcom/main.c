@@ -1,5 +1,5 @@
-/*	Id: main.c,v 1.16 2011/08/12 19:20:24 plunky Exp 	*/	
-/*	$NetBSD: main.c,v 1.1.1.4 2011/09/01 12:47:09 plunky Exp $	*/
+/*	Id: main.c,v 1.17 2012/03/22 18:51:40 plunky Exp 	*/	
+/*	$NetBSD: main.c,v 1.1.1.5 2012/03/26 14:27:08 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -42,8 +42,10 @@ char xxxvers[] = "\nFORTRAN 77 PASS 1, VERSION 1.16,  3 NOVEMBER 1978\n";
 
 void mkdope(void);
 
-int f2debug, e2debug, odebug, rdebug, b2debug, c2debug, t2debug;
-int s2debug, udebug, x2debug, nflag, kflag, g2debug;
+int ndebug;
+int b2debug, c2debug, e2debug, f2debug, g2debug, o2debug;
+int r2debug, s2debug, t2debug, u2debug, x2debug;
+int kflag;
 int xdeljumps, xtemps, xssa, xdce;
 
 int mflag, tflag;
@@ -140,35 +142,45 @@ main(int argc, char **argv)
 			tylogical = tyint;
 			break;
 
-		case 'Z':
+		case 'Z':	/* pass2 debugging */
 			while (*optarg)
 				switch (*optarg++) {
-				case 'f': /* instruction matching */
-					++f2debug;
-					break;
-				case 'e': /* print tree upon pass2 enter */
-					++e2debug;
-					break;
-				case 'o': ++odebug; break;
-				case 'r': /* register alloc/graph coloring */
-					++rdebug;
-					break;
 				case 'b': /* basic block and SSA building */
 					++b2debug;
 					break;
 				case 'c': /* code printout */
 					++c2debug;
 					break;
-				case 't': ++t2debug; break;
+				case 'e': /* print tree upon pass2 enter */
+					++e2debug;
+					break;
+				case 'f': /* instruction matching */
+					++f2debug;
+					break;
+				case 'g':
+					++g2debug;
+					break;
+				case 'n':
+					++ndebug;
+					break;
+				case 'o':
+					++o2debug;
+					break;
+				case 'r': /* register alloc/graph coloring */
+					++r2debug;
+					break;
 				case 's': /* shape matching */
 					++s2debug;
 					break;
-				case 'u': /* Sethi-Ullman debugging */
-					++udebug;
+				case 't':
+					++t2debug;
 					break;
-				case 'x': ++x2debug; break;
-				case 'g': ++g2debug; break;
-				case 'n': ++nflag; break;
+				case 'u': /* Sethi-Ullman debugging */
+					++u2debug;
+					break;
+				case 'x':
+					++x2debug;
+					break;
 				default:
 					fprintf(stderr, "unknown Z flag '%c'\n",
 					    optarg[-1]);
@@ -176,14 +188,14 @@ main(int argc, char **argv)
 				}
 			break;
 
-		case 'X':
+		case 'X':	/* pass1 debugging */
 			while (*optarg)
 				switch (*optarg++) {
-				case 't': /* tree debugging */
-					tflag++;
-					break;
 				case 'm': /* memory allocation */
 					++mflag;
+					break;
+				case 't': /* tree debugging */
+					tflag++;
 					break;
 				default:
 					usage();

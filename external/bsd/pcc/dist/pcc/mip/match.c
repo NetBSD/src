@@ -1,5 +1,5 @@
-/*      Id: match.c,v 1.97 2011/08/12 19:20:24 plunky Exp    */	
-/*      $NetBSD: match.c,v 1.1.1.4 2011/09/01 12:47:13 plunky Exp $   */
+/*      Id: match.c,v 1.98 2012/03/22 18:51:41 plunky Exp    */	
+/*      $NetBSD: match.c,v 1.1.1.5 2012/03/26 14:27:12 plunky Exp $   */
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -69,8 +69,6 @@
 
 void setclass(int tmp, int class);
 int getclass(int tmp);
-
-int s2debug;
 
 extern char *ltyp[], *rtyp[];
 
