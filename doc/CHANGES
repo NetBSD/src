@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1689 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1690 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -37,3 +37,4 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	urtwn(4): Add a driver for Realtek RTL8188CU/RTL8192CU USB IEEE
 		802.11b/g/n wireless network device, ported from OpenBSD.
 		[nonaka 20120325]
+	openresolv(8): Import openresolv-3.5.0 [roy 20120326]
