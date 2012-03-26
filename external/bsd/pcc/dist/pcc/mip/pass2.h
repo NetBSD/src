@@ -1,5 +1,5 @@
-/*	Id: pass2.h,v 1.130 2011/08/12 19:24:40 plunky Exp 	*/	
-/*	$NetBSD: pass2.h,v 1.1.1.4 2011/09/01 12:47:14 plunky Exp $	*/
+/*	Id: pass2.h,v 1.131 2012/03/22 18:51:41 plunky Exp 	*/	
+/*	$NetBSD: pass2.h,v 1.1.1.5 2012/03/26 14:27:14 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -348,10 +348,10 @@ int offset(NODE *p, int);
 
 extern	int lineno;
 extern	int fldshf, fldsz;
-extern	int x2debug, udebug, e2debug, odebug;
-extern	int rdebug, t2debug, s2debug, b2debug, c2debug;
-extern	int g2debug;
-extern	int kflag;
+extern	int ndebug;
+extern	int b2debug, c2debug, e2debug, f2debug, g2debug, o2debug;
+extern	int r2debug, s2debug, t2debug, u2debug, x2debug;
+
 #ifdef FORT
 extern	int Oflag;
 #endif
