@@ -1,5 +1,5 @@
-/*	Id: init.c,v 1.77 2011/09/02 15:35:34 ragge Exp 	*/	
-/*	$NetBSD: init.c,v 1.1.1.5 2012/01/11 20:33:10 plunky Exp $	*/
+/*	Id: init.c,v 1.78 2012/03/22 18:51:40 plunky Exp 	*/	
+/*	$NetBSD: init.c,v 1.1.1.6 2012/03/26 14:26:48 plunky Exp $	*/
 
 /*
  * Copyright (c) 2004, 2007 Anders Magnusson (ragge@ludd.ltu.se).
@@ -111,8 +111,6 @@
  * TO FIX:
  * - Alignment of structs on like i386 char members.
  */
-
-int idebug;
 
 /*
  * Struct used in array initialisation.

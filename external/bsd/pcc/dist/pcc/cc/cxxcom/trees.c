@@ -1,5 +1,5 @@
-/*	Id: trees.c,v 1.1 2012/01/01 16:20:55 ragge Exp 	*/	
-/*	$NetBSD: trees.c,v 1.1.1.1 2012/01/11 20:33:23 plunky Exp $	*/
+/*	Id: trees.c,v 1.2 2012/03/22 18:51:40 plunky Exp 	*/	
+/*	$NetBSD: trees.c,v 1.1.1.2 2012/03/26 14:27:03 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -144,7 +144,6 @@ static char *tnames[] = {
 
 	*/
 
-int bdebug = 0;
 extern int negrel[];
 
 /* Have some defaults for most common targets */
@@ -1464,8 +1463,6 @@ ptmatch(NODE *p)
 	return(clocal(p));
 	}
 
-int tdebug = 0;
-
 /*
  * Satisfy the types of various arithmetic binary ops.
  *
@@ -2634,7 +2631,6 @@ rmfldops(NODE *p)
 }
 #endif
 
-int edebug = 0;
 void
 ecomp(NODE *p)
 {
