@@ -1,5 +1,5 @@
-/*	Id: reader.c,v 1.277 2011/12/24 10:59:04 ragge Exp 	*/	
-/*	$NetBSD: reader.c,v 1.1.1.5 2012/01/11 20:33:35 plunky Exp $	*/
+/*	Id: reader.c,v 1.278 2012/03/22 18:51:41 plunky Exp 	*/	
+/*	$NetBSD: reader.c,v 1.1.1.6 2012/03/26 14:27:14 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -72,7 +72,6 @@
 
 /*	some storage declarations */
 int nrecur;
-int x2debug, udebug, odebug;
 int thisline;
 int fregs;
 int p2autooff, p2maxautooff;
@@ -549,7 +548,7 @@ geninsn(NODE *p, int cookie)
 	int q, o, rv = 0;
 
 #ifdef PCC_DEBUG
-	if (odebug) {
+	if (o2debug) {
 		printf("geninsn(%p, %s)\n", p, prcook(cookie));
 		fwalk(p, e2print, 0);
 	}
@@ -676,7 +675,7 @@ again:	switch (o = p->n_op) {
 	if (rv == FRETRY)
 		goto again;
 #ifdef PCC_DEBUG
-	if (odebug) {
+	if (o2debug) {
 		printf("geninsn(%p, %s) rv %d\n", p, prcook(cookie), rv);
 		fwalk(p, e2print, 0);
 	}
