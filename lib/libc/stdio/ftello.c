@@ -1,4 +1,4 @@
-/*	$NetBSD: ftello.c,v 1.6 2012/03/15 18:22:30 christos Exp $	*/
+/*	$NetBSD: ftello.c,v 1.7 2012/03/27 15:05:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ftello.c,v 1.6 2012/03/15 18:22:30 christos Exp $");
+__RCSID("$NetBSD: ftello.c,v 1.7 2012/03/27 15:05:42 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -69,7 +69,7 @@ ftello(FILE *fp)
 	 * Find offset of underlying I/O object, then
 	 * adjust for buffered bytes.
 	 */
-	__sflush(fp);		/* may adjust seek offset on append stream */
+	(void)__sflush(fp); /* may adjust seek offset on append stream */
 	if (fp->_flags & __SOFF)
 		pos = fp->_offset;
 	else {

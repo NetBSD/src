@@ -1,4 +1,4 @@
-/*	$NetBSD: freopen.c,v 1.18 2012/03/15 18:22:30 christos Exp $	*/
+/*	$NetBSD: freopen.c,v 1.19 2012/03/27 15:05:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)freopen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: freopen.c,v 1.18 2012/03/15 18:22:30 christos Exp $");
+__RCSID("$NetBSD: freopen.c,v 1.19 2012/03/27 15:05:42 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -93,7 +93,7 @@ freopen(const char *file, const char *mode, FILE *fp)
 	} else {
 		/* flush the stream; ANSI doesn't require this. */
 		if (fp->_flags & __SWR)
-			(void) __sflush(fp);
+			(void)__sflush(fp);
 		/* if close is NULL, closing is a no-op, hence pointless */
 		isopen = fp->_close != NULL;
 		if ((wantfd = __sfileno(fp)) == -1 && isopen) {

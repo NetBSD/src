@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.29 2012/03/21 14:20:47 christos Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.30 2012/03/27 15:05:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.27 2007/01/09 00:28:08 imp Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.29 2012/03/21 14:20:47 christos Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.30 2012/03/27 15:05:42 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -170,6 +170,7 @@ __sbprintf(FILE *fp, const CHAR_T *fmt, va_list ap)
 	fake._file = fp->_file;
 	fake._cookie = fp->_cookie;
 	fake._write = fp->_write;
+	fake._flush = fp->_flush;
 
 	/* set up the buffer */
 	fake._bf._base = fake._p = buf;

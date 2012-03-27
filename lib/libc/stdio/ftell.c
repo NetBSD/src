@@ -1,4 +1,4 @@
-/*	$NetBSD: ftell.c,v 1.19 2012/03/15 18:22:30 christos Exp $	*/
+/*	$NetBSD: ftell.c,v 1.20 2012/03/27 15:05:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ftell.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: ftell.c,v 1.19 2012/03/15 18:22:30 christos Exp $");
+__RCSID("$NetBSD: ftell.c,v 1.20 2012/03/27 15:05:42 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,7 +68,7 @@ ftell(FILE *fp)
 	 * Find offset of underlying I/O object, then
 	 * adjust for buffered bytes.
 	 */
-	__sflush(fp);		/* may adjust seek offset on append stream */
+	(void)__sflush(fp); /* may adjust seek offset on append stream */
 	if (fp->_flags & __SOFF)
 		pos = fp->_offset;
 	else {

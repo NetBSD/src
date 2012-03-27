@@ -1,4 +1,4 @@
-/*	$NetBSD: sscanf.c,v 1.19 2012/03/15 18:22:30 christos Exp $	*/
+/*	$NetBSD: sscanf.c,v 1.20 2012/03/27 15:05:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: sscanf.c,v 1.19 2012/03/15 18:22:30 christos Exp $");
+__RCSID("$NetBSD: sscanf.c,v 1.20 2012/03/27 15:05:42 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,8 +51,8 @@ __RCSID("$NetBSD: sscanf.c,v 1.19 2012/03/15 18:22:30 christos Exp $");
 #include "local.h"
 
 /* ARGSUSED */
-static int
-eofread(void *cookie, char *buf, int len)
+static ssize_t
+eofread(void *cookie, void *buf, size_t len)
 {
 
 	return 0;

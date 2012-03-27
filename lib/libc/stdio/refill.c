@@ -1,4 +1,4 @@
-/*	$NetBSD: refill.c,v 1.15 2012/03/15 18:22:30 christos Exp $	*/
+/*	$NetBSD: refill.c,v 1.16 2012/03/27 15:05:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)refill.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refill.c,v 1.15 2012/03/15 18:22:30 christos Exp $");
+__RCSID("$NetBSD: refill.c,v 1.16 2012/03/27 15:05:42 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -129,7 +129,8 @@ __srefill(FILE *fp)
 		rwlock_unlock(&__sfp_lock);
 	}
 	fp->_p = fp->_bf._base;
-	fp->_r = (*fp->_read)(fp->_cookie, (char *)fp->_p, fp->_bf._size);
+	fp->_r = (int)(*fp->_read)(fp->_cookie, (char *)fp->_p,
+	    (size_t)fp->_bf._size);
 	fp->_flags &= ~__SMOD;	/* buffer contents are again pristine */
 	if (fp->_r <= 0) {
 		if (fp->_r == 0)

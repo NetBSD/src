@@ -1,4 +1,4 @@
-/*	$NetBSD: fflush.c,v 1.17 2012/03/15 18:22:30 christos Exp $	*/
+/*	$NetBSD: fflush.c,v 1.18 2012/03/27 15:05:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fflush.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fflush.c,v 1.17 2012/03/15 18:22:30 christos Exp $");
+__RCSID("$NetBSD: fflush.c,v 1.18 2012/03/27 15:05:42 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -80,7 +80,8 @@ int
 __sflush(FILE *fp)
 {
 	unsigned char *p;
-	int n, t;
+	size_t n;
+	ssize_t t;
 
 	_DIAGASSERT(fp != NULL);
 
@@ -92,8 +93,8 @@ __sflush(FILE *fp)
 		return 0;
 
 	ptrdiff_t tp = fp->_p - p;
-	_DIAGASSERT(__type_fit(int, tp));
-	n = (int)tp;		/* write this much */
+	_DIAGASSERT(__type_fit(ssize_t, tp));
+	n = (ssize_t)tp;	/* write this much */
 
 	/*
 	 * Set these immediately to avoid problems with longjmp and to allow
@@ -109,5 +110,7 @@ __sflush(FILE *fp)
 			return EOF;
 		}
 	}
+	if (fp->_flush)
+		return (*fp->_flush)(fp->_cookie);
 	return 0;
 }

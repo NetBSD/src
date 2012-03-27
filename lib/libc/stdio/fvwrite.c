@@ -1,4 +1,4 @@
-/*	$NetBSD: fvwrite.c,v 1.24 2012/03/15 18:22:30 christos Exp $	*/
+/*	$NetBSD: fvwrite.c,v 1.25 2012/03/27 15:05:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fvwrite.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fvwrite.c,v 1.24 2012/03/15 18:22:30 christos Exp $");
+__RCSID("$NetBSD: fvwrite.c,v 1.25 2012/03/27 15:05:42 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,14 +63,15 @@ __sfvwrite(FILE *fp, struct __suio *uio)
 	size_t len;
 	char *p;
 	struct __siov *iov;
-	int w, s;
+	int s;
+	ssize_t w;
 	char *nl;
 	size_t nlknown, nldist;
 
 	_DIAGASSERT(fp != NULL);
 	_DIAGASSERT(uio != NULL);
 
-	if ((int)uio->uio_resid < 0) {
+	if ((ssize_t)uio->uio_resid < 0) {
 		errno = EINVAL;
 		return EOF;
 	}
@@ -102,8 +103,7 @@ __sfvwrite(FILE *fp, struct __suio *uio)
 		 */
 		do {
 			GETIOV(;);
-			w = (*fp->_write)(fp->_cookie, p,
-			    (int)MIN(len, BUFSIZ));
+			w = (*fp->_write)(fp->_cookie, p, MIN(len, BUFSIZ));
 			if (w <= 0)
 				goto err;
 			p += w;
@@ -146,11 +146,11 @@ __sfvwrite(FILE *fp, struct __suio *uio)
 			w = fp->_w;
 			if (fp->_flags & __SSTR) {
 				if (len < (size_t)w)
-					w = (int)len;
+					w = len;
 				COPY(w);	/* copy MIN(fp->_w,len), */
-				fp->_w -= w;
+				fp->_w -= (int)w;
 				fp->_p += w;
-				w = (int)len;	/* but pretend copied all */
+				w = len;	/* but pretend copied all */
 			} else if (fp->_p > fp->_bf._base && len > (size_t)w) {
 				/* fill and flush */
 				COPY(w);
@@ -160,14 +160,14 @@ __sfvwrite(FILE *fp, struct __suio *uio)
 					goto err;
 			} else if (len >= (size_t)(w = fp->_bf._size)) {
 				/* write directly */
-				w = (*fp->_write)(fp->_cookie, p, w);
+				w = (*fp->_write)(fp->_cookie, p, (size_t)w);
 				if (w <= 0)
 					goto err;
 			} else {
 				/* fill and done */
-				w = (int)len;
+				w = len;
 				COPY(w);
-				fp->_w -= w;
+				fp->_w -= (int)w;
 				fp->_p += w;
 			}
 			p += w;
@@ -199,13 +199,13 @@ __sfvwrite(FILE *fp, struct __suio *uio)
 				if (fflush(fp))
 					goto err;
 			} else if (s >= (w = fp->_bf._size)) {
-				w = (*fp->_write)(fp->_cookie, p, w);
+				w = (*fp->_write)(fp->_cookie, p, (size_t)w);
 				if (w <= 0)
 				 	goto err;
 			} else {
 				w = s;
 				COPY(w);
-				fp->_w -= w;
+				fp->_w -= (int)w;
 				fp->_p += w;
 			}
 			if ((nldist -= w) == 0) {
