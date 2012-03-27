@@ -1,4 +1,4 @@
-/*	$NetBSD: fseeko.c,v 1.11 2012/03/15 18:22:30 christos Exp $	*/
+/*	$NetBSD: fseeko.c,v 1.12 2012/03/27 15:05:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fseeko.c,v 1.11 2012/03/15 18:22:30 christos Exp $");
+__RCSID("$NetBSD: fseeko.c,v 1.12 2012/03/27 15:05:42 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -97,7 +97,7 @@ fseeko(FILE *fp, off_t offset, int whence)
 		 * we have to first find the current stream offset a la
 		 * ftell (see ftell for details).
 		 */
-		__sflush(fp);	/* may adjust seek offset on append stream */
+		(void)__sflush(fp); /* may adjust seek offset on append stream */
 		if (fp->_flags & __SOFF)
 			curoff = fp->_offset;
 		else {
