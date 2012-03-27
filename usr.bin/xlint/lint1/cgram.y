@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.53 2011/12/25 20:11:22 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.54 2012/03/27 19:24:03 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.53 2011/12/25 20:11:22 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.54 2012/03/27 19:24:03 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1873,13 +1873,13 @@ toicon(tnode_t *tn, int required)
 		i = (int)v->v_quad;
 		if (isutyp(t)) {
 			if (uq_gt((uint64_t)v->v_quad,
-				  (uint64_t)INT_MAX)) {
+				  (uint64_t)TARG_INT_MAX)) {
 				/* integral constant too large */
 				warning(56);
 			}
 		} else {
-			if (q_gt(v->v_quad, (int64_t)INT_MAX) ||
-			    q_lt(v->v_quad, (int64_t)INT_MIN)) {
+			if (q_gt(v->v_quad, (int64_t)TARG_INT_MAX) ||
+			    q_lt(v->v_quad, (int64_t)TARG_INT_MIN)) {
 				/* integral constant too large */
 				warning(56);
 			}

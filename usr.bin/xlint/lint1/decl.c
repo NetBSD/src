@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.53 2011/06/24 01:10:31 christos Exp $ */
+/* $NetBSD: decl.c,v 1.54 2012/03/27 19:24:03 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.53 2011/06/24 01:10:31 christos Exp $");
+__RCSID("$NetBSD: decl.c,v 1.54 2012/03/27 19:24:03 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1831,7 +1831,7 @@ ename(sym_t *sym, int val, int impl)
 	sym->s_type = dcs->d_tagtyp;
 	sym->s_value.v_tspec = INT;
 	sym->s_value.v_quad = val;
-	if (impl && val - 1 == INT_MAX) {
+	if (impl && val - 1 == TARG_INT_MAX) {
 		/* overflow in enumeration values: %s */
 		warning(48, sym->s_name);
 	}
@@ -2099,7 +2099,7 @@ eqtype(type_t *tp1, type_t *tp2, int ignqual, int promot, int *dowarn)
 				t = INT;
 			} else if (t == USHORT) {
 				/* CONSTCOND */
-				t = INT_MAX < USHRT_MAX || tflag ? UINT : INT;
+				t = TARG_INT_MAX < TARG_USHRT_MAX || tflag ? UINT : INT;
 			}
 		}
 

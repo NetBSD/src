@@ -1,4 +1,4 @@
-/*	$NetBSD: ilp32.h,v 1.2 2002/02/20 16:10:34 thorpej Exp $	*/
+/*	$NetBSD: ilp32.h,v 1.3 2012/03/27 19:24:03 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -45,6 +45,14 @@
 #define	LONG_SIZE	(4 * CHAR_BIT)
 #define	QUAD_SIZE	(8 * CHAR_BIT)
 #define	PTR_SIZE	(4 * CHAR_BIT)
+
+#define	TARG_SCHAR_MAX	((signed char) (((unsigned char) -1) >> 1))
+#define	TARG_SCHAR_MIN	((-TARG_CHAR_MAX) - 1)
+#define	TARG_UCHAR_MAX	((unsigned char) -1)
+
+#define	TARG_SHRT_MAX	((int16_t) (((uint16_t) -1) >> 1))
+#define	TARG_SHRT_MIN	((-TARG_SHRT_MAX) - 1)
+#define	TARG_USHRT_MAX	((uint16_t) -1)
 
 #define	TARG_INT_MAX	((int32_t) (((uint32_t) -1) >> 1))
 #define	TARG_INT_MIN	((-TARG_INT_MAX) - 1)
