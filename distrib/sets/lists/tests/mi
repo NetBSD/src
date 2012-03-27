@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.457 2012/03/27 07:39:00 jruoho Exp $
+# $NetBSD: mi,v 1.458 2012/03/27 08:16:33 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1353,6 +1353,11 @@
 ./usr/tests/atf/units/t_utils			tests-obsolete		obsolete
 ./usr/tests/bin					tests-bin-tests
 ./usr/tests/bin/Atffile				tests-bin-tests		atf
+./usr/tests/bin/cat				tests-bin-tests
+./usr/tests/bin/cat/Atffile			tests-bin-tests		atf
+./usr/tests/bin/cat/d_align.in			tests-bin-tests		atf
+./usr/tests/bin/cat/d_align.out			tests-bin-tests		atf
+./usr/tests/bin/cat/t_cat			tests-bin-tests		atf
 ./usr/tests/bin/cp				tests-bin-tests
 ./usr/tests/bin/cp/Atffile			tests-bin-tests		atf
 ./usr/tests/bin/cp/t_cp				tests-bin-tests		atf
