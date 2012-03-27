@@ -1,4 +1,4 @@
-# $NetBSD: t_cat.sh,v 1.1 2012/03/27 08:16:33 jruoho Exp $
+# $NetBSD: t_cat.sh,v 1.2 2012/03/27 17:57:02 jruoho Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,7 +42,7 @@ align_body() {
 
 atf_test_case nonexistent
 nonexistent_head() {
-	atf_set "descr" "Test that cat(1) doest return zero exit " \
+	atf_set "descr" "Test that cat(1) doesn't return zero exit " \
 			"status for a nonexistent file (PR bin/3538)"
 }
 
