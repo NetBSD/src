@@ -1,4 +1,4 @@
-# $NetBSD: t_filter_exec.sh,v 1.5 2012/02/15 17:55:24 riz Exp $
+# $NetBSD: t_filter_exec.sh,v 1.6 2012/03/27 09:27:33 jruoho Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -87,7 +87,7 @@ test_case f14 dotest text text
 test_case f15 mtest text text
 test_case f16 mtest text text
 test_case f17 mtest hex hex
-test_case f18 mtest text text
+broken_test_case f18 mtest text text
 #broken_test_case f19 dotest text text -T fr_statemax=3
 test_case f20 mtest text text
 test_case f24 mtest hex text
