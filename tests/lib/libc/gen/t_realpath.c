@@ -1,4 +1,4 @@
-/* $NetBSD: t_realpath.c,v 1.1 2012/03/17 16:40:14 jruoho Exp $ */
+/* $NetBSD: t_realpath.c,v 1.2 2012/03/27 07:54:58 njoly Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_realpath.c,v 1.1 2012/03/17 16:40:14 jruoho Exp $");
+__RCSID("$NetBSD: t_realpath.c,v 1.2 2012/03/27 07:54:58 njoly Exp $");
 
 #include <sys/param.h>
 
@@ -102,7 +102,7 @@ ATF_TC_BODY(realpath_huge, tc)
 	char result[MAXPATHLEN] = { 0 };
 	char buffer[MAXPATHLEN] = { 0 };
 
-	(void)memset(buffer, '/', sizeof(buffer));
+	(void)memset(buffer, '/', sizeof(buffer) - 1);
 
 	ATF_CHECK(realpath(buffer, result) != NULL);
 	ATF_CHECK(strlen(result) == 1);
