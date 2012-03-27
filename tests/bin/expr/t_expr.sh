@@ -1,4 +1,4 @@
-# $NetBSD: t_expr.sh,v 1.2 2012/03/20 06:30:02 jruoho Exp $
+# $NetBSD: t_expr.sh,v 1.3 2012/03/27 07:23:06 jruoho Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,6 +34,19 @@ test_expr() {
 		atf_fail "Expected $2, got $res from expression: " \
 		         "`eval echo $1`"
 	fi
+}
+
+atf_test_case lang
+lang_ops_head() {
+	atf_set "descr" "Test that expr(1) works with non-C LANG (PR bin/2486)"
+}
+lang_body() {
+
+	export LANG=nonexistent
+	atf_check -s exit:0 -o inline:"21\n" -e empty -x "expr 10 + 11"
+
+	export LANG=ru_RU.KOI8-R
+	atf_check -s exit:0 -o inline:"21\n" -e empty -x "expr 10 + 11"
 }
 
 atf_test_case overflow
@@ -198,6 +211,7 @@ regex_body() {
 
 atf_init_test_cases()
 {
+	atf_add_test_case lang
 	atf_add_test_case overflow
 	atf_add_test_case gtkmm
 	atf_add_test_case colon_vs_math
