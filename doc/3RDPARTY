@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.925 2012/03/26 14:50:12 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.926 2012/03/27 07:09:03 plunky Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -872,6 +872,21 @@ Notes:
 - Run openssl2netbsd to get rid of the RCSID identifiers
 - run make in /usr/src/crypto/external/bsd/openssl/lib/libcrypto/man
   to regen man pages.
+
+Package:	pcc
+Version:	1.1.0.DEVEL 20120325
+Current Vers:	1.1.0.DEVEL 20120325
+Maintainer:	Anders Magnusson <ragge@netbsd.org>
+Archive Site:	ftp://pcc.ludd.ltu.se/pub/pcc/
+Home Page:	http://pcc.ludd.ltu.se/
+Mailing List:	pcc-list@ludd.ltu.se
+Responsible:	plunky
+License:	BSD
+Location:	external/bsd/pcc/dist
+Notes:
+This is a development snapshot. See the src/external/bsd/pcc/prepare-import.sh
+file for details about how to get the latest version from the upstream server
+and import it.
 
 Package:	pdisk
 Version:	0.8a2
