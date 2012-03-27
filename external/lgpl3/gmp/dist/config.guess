@@ -833,8 +833,8 @@ esac
 
 # -------------------------------------------------------------------------
 # Use an exact cpu, if possible
-
-if test -n "$exact_cpu"; then
+# Disabled for NetBSD cross builds
+if false && test -n "$exact_cpu"; then
   echo "$exact_cpu$guess_rest"
 else
   echo "$guess_full"
