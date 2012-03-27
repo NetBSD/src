@@ -1,4 +1,4 @@
-# $NetBSD: t_sed.sh,v 1.3 2012/03/19 06:21:53 jruoho Exp $
+# $NetBSD: t_sed.sh,v 1.4 2012/03/27 07:39:00 jruoho Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,6 +27,18 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
+
+atf_test_case c2048
+c2048_head() {
+	atf_set "descr" "Test that sed(1) does not fail when the " \
+			"2048'th character is a backslash (PR bin/25899)"
+}
+
+c2048_body() {
+
+	atf_check -s exit:0 -o empty -e empty \
+		-x "sed -f $(atf_get_srcdir)/d_c2048.in"
+}
 
 atf_test_case emptybackref
 emptybackref_head() {
@@ -108,6 +120,7 @@ rangeselection_body() {
 }
 
 atf_init_test_cases() {
+	atf_add_test_case c2048
 	atf_add_test_case emptybackref
 	atf_add_test_case longlines
 	atf_add_test_case rangeselection
