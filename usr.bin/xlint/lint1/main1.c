@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.19 2008/07/31 15:21:34 christos Exp $	*/
+/*	$NetBSD: main1.c,v 1.20 2012/03/27 19:24:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main1.c,v 1.19 2008/07/31 15:21:34 christos Exp $");
+__RCSID("$NetBSD: main1.c,v 1.20 2012/03/27 19:24:03 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -180,7 +180,7 @@ main(int argc, char *argv[])
 
 				errno = 0;
 				msg = strtol(ptr, &eptr, 0);
-				if ((msg == LONG_MIN || msg == LONG_MAX) &&
+				if ((msg == TARG_LONG_MIN || msg == TARG_LONG_MAX) &&
 				    errno == ERANGE)
 				    err(1, "invalid error message id '%s'",
 					ptr);
