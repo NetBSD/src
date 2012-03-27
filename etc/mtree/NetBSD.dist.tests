@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.69 2012/03/20 06:18:34 jruoho Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.70 2012/03/27 08:16:33 jruoho Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -129,6 +129,7 @@
 ./usr/tests/atf/atf-sh
 ./usr/tests/atf/test-programs
 ./usr/tests/bin
+./usr/tests/bin/cat
 ./usr/tests/bin/cp
 ./usr/tests/bin/dd
 ./usr/tests/bin/df
