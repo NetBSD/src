@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1691 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1692 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -38,4 +38,4 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		802.11b/g/n wireless network device, ported from OpenBSD.
 		[nonaka 20120325]
 	pcc: upgrade to 1.1.0.DEVEL 20120325 [plunky 20120325]
-	openresolv(8): Import openresolv-3.5.0 [roy 20120326]
+	openresolv(8): Import openresolv-3.5.1 [roy 20120327]
