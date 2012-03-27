@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1747 2012/03/13 18:40:26 elad Exp $
+#	$NetBSD: mi,v 1.1748 2012/03/27 15:07:01 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6574,6 +6574,7 @@
 ./usr/share/man/cat3/freopen.0			comp-c-catman		.cat
 ./usr/share/man/cat3/frexp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fropen.0			comp-c-catman		.cat
+./usr/share/man/cat3/fropen2.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fscanf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fseek.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fseeko.0			comp-c-catman		.cat
@@ -6593,8 +6594,10 @@
 ./usr/share/man/cat3/fullname.0			comp-c-catman		.cat
 ./usr/share/man/cat3/funlockfile.0		comp-c-catman		.cat
 ./usr/share/man/cat3/funopen.0			comp-c-catman		.cat
+./usr/share/man/cat3/funopen2.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fwide.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fwopen.0			comp-c-catman		.cat
+./usr/share/man/cat3/fwopen2.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fwprintf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fwrite.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fwscanf.0			comp-c-catman		.cat
@@ -12876,6 +12879,7 @@
 ./usr/share/man/html3/freopen.html		comp-c-htmlman		html
 ./usr/share/man/html3/frexp.html		comp-c-htmlman		html
 ./usr/share/man/html3/fropen.html		comp-c-htmlman		html
+./usr/share/man/html3/fropen2.html		comp-c-htmlman		html
 ./usr/share/man/html3/fscanf.html		comp-c-htmlman		html
 ./usr/share/man/html3/fseek.html		comp-c-htmlman		html
 ./usr/share/man/html3/fseeko.html		comp-c-htmlman		html
@@ -12895,8 +12899,10 @@
 ./usr/share/man/html3/fullname.html		comp-c-htmlman		html
 ./usr/share/man/html3/funlockfile.html		comp-c-htmlman		html
 ./usr/share/man/html3/funopen.html		comp-c-htmlman		html
+./usr/share/man/html3/funopen2.html		comp-c-htmlman		html
 ./usr/share/man/html3/fwide.html		comp-c-htmlman		html
 ./usr/share/man/html3/fwopen.html		comp-c-htmlman		html
+./usr/share/man/html3/fwopen2.html		comp-c-htmlman		html
 ./usr/share/man/html3/fwprintf.html		comp-c-htmlman		html
 ./usr/share/man/html3/fwrite.html		comp-c-htmlman		html
 ./usr/share/man/html3/fwscanf.html		comp-c-htmlman		html
@@ -19092,6 +19098,7 @@
 ./usr/share/man/man3/freopen.3			comp-c-man		.man
 ./usr/share/man/man3/frexp.3			comp-c-man		.man
 ./usr/share/man/man3/fropen.3			comp-c-man		.man
+./usr/share/man/man3/fropen2.3			comp-c-man		.man
 ./usr/share/man/man3/fscanf.3			comp-c-man		.man
 ./usr/share/man/man3/fseek.3			comp-c-man		.man
 ./usr/share/man/man3/fseeko.3			comp-c-man		.man
@@ -19111,8 +19118,10 @@
 ./usr/share/man/man3/fullname.3			comp-c-man		.man
 ./usr/share/man/man3/funlockfile.3		comp-c-man		.man
 ./usr/share/man/man3/funopen.3			comp-c-man		.man
+./usr/share/man/man3/funopen2.3			comp-c-man		.man
 ./usr/share/man/man3/fwide.3			comp-c-man		.man
 ./usr/share/man/man3/fwopen.3			comp-c-man		.man
+./usr/share/man/man3/fwopen2.3			comp-c-man		.man
 ./usr/share/man/man3/fwprintf.3			comp-c-man		.man
 ./usr/share/man/man3/fwrite.3			comp-c-man		.man
 ./usr/share/man/man3/fwscanf.3			comp-c-man		.man
