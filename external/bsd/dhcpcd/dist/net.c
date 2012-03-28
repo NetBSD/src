@@ -74,6 +74,21 @@ static char hwaddr_buffer[(HWADDR_LEN * 3) + 1];
 
 int socket_afnet = -1;
 
+#if defined(__FreeBSD__) && defined(DEBUG_MEMORY)
+/* FreeBSD does not zero the struct, causing valgrind errors */
+unsigned int
+if_nametoindex(const char *ifname)
+{
+	struct ifreq ifr;
+
+	memset(&ifr, 0, sizeof(ifr));
+	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+	if (ioctl(socket_afnet, SIOCGIFINDEX, &ifr) != -1)
+		return ifr.ifr_index;
+	return 0;
+}
+#endif
+
 int
 inet_ntocidr(struct in_addr address)
 {
@@ -242,6 +257,7 @@ free_interface(struct interface *iface)
 		free(iface->state->offer);
 		free(iface->state);
 	}
+	free(iface->buffer);
 	free(iface->clientid);
 	free(iface);
 }
