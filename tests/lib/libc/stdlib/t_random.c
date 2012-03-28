@@ -1,4 +1,4 @@
-/* $NetBSD: t_random.c,v 1.1 2012/03/28 10:33:57 jruoho Exp $ */
+/* $NetBSD: t_random.c,v 1.2 2012/03/28 10:38:00 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_random.c,v 1.1 2012/03/28 10:33:57 jruoho Exp $");
+__RCSID("$NetBSD: t_random.c,v 1.2 2012/03/28 10:38:00 jruoho Exp $");
 
 #include <atf-c.h>
 #include <stdlib.h>
@@ -52,6 +52,9 @@ ATF_TC_BODY(random_zero, tc)
 	size_t i, j;
 	long x;
 
+	/*
+	 * See CVE-2012-1577.
+	 */
 	srandom(0);
 
 	for (i = j = 0; i < n; i++) {
