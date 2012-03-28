@@ -146,15 +146,24 @@ read_pid(void)
 static void
 usage(void)
 {
-	printf("usage: "PACKAGE" [-dgknpqwxyADEGHJKLOTV] [-c script] [-f file]"
-	    " [-e var=val]\n"
-	    "              [-h hostname] [-i classID ] [-l leasetime]"
-	    " [-m metric] [-o option]\n"
-	    "              [-r ipaddr] [-s ipaddr] [-t timeout]"
-	    " [-u userclass]\n"
-	    "              [-F none|ptr|both] [-I clientID] [-C hookscript]"
-	    " [-Q option]\n"
-	    "              [-X ipaddr] <interface>\n");
+
+printf("usage: "PACKAGE"\t[-ABbDdEGgHJKkLnpqTVw]\n"
+	"\t\t[-C, --nohook hook] [-c, --script script]\n"
+	"\t\t[-e, --env value] [-F, --fqdn FQDN] [-f, --config file]\n"
+	"\t\t[-h, --hostname hostname] [-I, --clientid clientid]\n"
+	"\t\t[-i, --vendorclassid vendorclassid] [-l, --leasetime seconds]\n"
+	"\t\t[-m, --metric metric] [-O, --nooption option]\n"
+	"\t\t[-o, --option option] [-Q, --require option]\n"
+	"\t\t[-r, --request address] [-S, --static value]\n"
+	"\t\t[-s, --inform address[/cidr]] [-t, --timeout seconds]\n"
+	"\t\t[-u, --userclass class] [-v, --vendor code, value]\n"
+	"\t\t[-W, --whitelist address[/cidr]] [-y, --reboot seconds]\n"
+	"\t\t[-X, --blacklist address[/cidr]] [-Z, --denyinterfaces pattern]\n"
+	"\t\t[-z, --allowinterfaces pattern] [interface] [...]\n"
+	"       "PACKAGE"\t-k, --release [interface]\n"
+	"       "PACKAGE"\t-U, --dumplease interface\n"
+	"       "PACKAGE"\t-v, --version\n"
+	"       "PACKAGE"\t-x, --exit [interface]\n");
 }
 
 static void
@@ -1524,7 +1533,7 @@ handle_signal(_unused void *arg)
 			ifo->options |= DHCPCD_DAEMONISED;
 		options = ifo->options;
 		free_options(ifo);
-		reconf_reboot(1, 0, NULL, 0);
+		reconf_reboot(1, ifc, ifv, 0);
 		return;
 	case SIGHUP:
 		syslog(LOG_INFO, "received SIGHUP, releasing");

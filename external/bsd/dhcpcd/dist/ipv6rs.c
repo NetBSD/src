@@ -533,7 +533,8 @@ ipv6rs_handledata(_unused void *arg)
 			rap->options = rao;
 			rao->type = ndo->nd_opt_type;
 			rao->option = opt;
-		}
+		} else
+			free(opt);
 		if (lifetime == ~0U)
 			timerclear(&rao->expire);
 		else {
@@ -751,7 +752,6 @@ ipv6rs_start(struct interface *ifp)
 
 	/* Always make a new probe as the underlying hardware
 	 * address could have changed. */
-	free(ifp->rs);
 	ipv6rs_makeprobe(ifp);
 	if (ifp->rs == NULL)
 		return -1;
