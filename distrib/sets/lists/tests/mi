@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.458 2012/03/27 08:16:33 jruoho Exp $
+# $NetBSD: mi,v 1.459 2012/03/28 10:33:57 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -495,6 +495,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_hsearch.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_mi_vector_hash.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_posix_memalign.debug	tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_random.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_strtod.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_strtol.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_strtox.debug		tests-obsolete		obsolete
@@ -2387,6 +2388,7 @@
 ./usr/tests/lib/libc/stdlib/t_hsearch		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_mi_vector_hash	tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_posix_memalign	tests-lib-tests		atf
+./usr/tests/lib/libc/stdlib/t_random		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_strtod		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_strtol		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_strtox		tests-obsolete		obsolete
