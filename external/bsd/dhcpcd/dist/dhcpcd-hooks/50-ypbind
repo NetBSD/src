@@ -20,12 +20,12 @@ best_domain()
 make_yp_binding()
 {
 	[ -d "$ypbind_dir" ] || mkdir -p "$ypbind_dir"
-	echo "$new_nis_domain" >"$ypbind_dir/$interface"
+	echo "$new_nis_domain" >"$ypbind_dir/$ifname"
 	local nd="$(best_domain)"
 
 	local cf=/var/yp/binding/"$new_nis_domain".ypservers
 	if [ -n "$new_nis_servers" ]; then
-		local ncf="$cf.$interface" x=
+		local ncf="$cf.$ifname" x=
 		rm -f "$ncf"
 		for x in $new_nis_servers; do
 			echo "$x" >>"$ncf"
@@ -46,7 +46,7 @@ make_yp_binding()
 
 restore_yp_binding()
 {
-	rm -f "$ypbind_dir/$interface"
+	rm -f "$ypbind_dir/$ifname"
 	local nd="$(best_domain)"
 	# We need to stop ypbind if there is no best domain
 	# otherwise it will just stall as we cannot set domainname
@@ -64,7 +64,7 @@ restore_yp_binding()
 }
 
 if [ "$reason" = PREINIT ]; then
-	rm -f "$ypbind_dir/$interface"
+	rm -f "$ypbind_dir/$ifname"
 elif $if_up || $if_down; then
 	if [ -n "$new_nis_domain" ]; then
 		if valid_domainname "$new_nis_domain"; then
