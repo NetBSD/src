@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.40 2011/06/18 21:18:46 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.41 2012/03/28 20:11:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.40 2011/06/18 21:18:46 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.41 2012/03/28 20:11:25 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: var.c,v 1.40 2011/06/18 21:18:46 christos Exp $");
 #include <stdlib.h>
 #include <strings.h>
 #include <paths.h>
+#include <limits.h>
 
 /*
  * Shell variables.

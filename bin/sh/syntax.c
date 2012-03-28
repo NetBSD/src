@@ -1,8 +1,9 @@
-/*	$NetBSD: syntax.c,v 1.2 2007/12/12 22:55:43 lukem Exp $	*/
+/*	$NetBSD: syntax.c,v 1.3 2012/03/28 20:11:25 christos Exp $	*/
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: syntax.c,v 1.2 2007/12/12 22:55:43 lukem Exp $");
+__RCSID("$NetBSD: syntax.c,v 1.3 2012/03/28 20:11:25 christos Exp $");
 
+#include <limits.h>
 #include "shell.h"
 #include "syntax.h"
 #include "parser.h"

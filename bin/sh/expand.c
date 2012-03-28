@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.86 2011/08/31 16:24:54 plunky Exp $	*/
+/*	$NetBSD: expand.c,v 1.87 2012/03/28 20:11:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.86 2011/08/31 16:24:54 plunky Exp $");
+__RCSID("$NetBSD: expand.c,v 1.87 2012/03/28 20:11:25 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: expand.c,v 1.86 2011/08/31 16:24:54 plunky Exp $");
 #include <dirent.h>
 #include <unistd.h>
 #include <pwd.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 
