@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.31 2011/10/06 16:02:52 christos Exp $	*/
+/*	$NetBSD: limits.h,v 1.32 2012/03/28 17:04:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -162,6 +162,15 @@
 #endif
 
 #include <machine/limits.h>
+
+#ifdef __CHAR_UNSIGNED__
+# define CHAR_MIN     0
+# define CHAR_MAX     UCHAR_MAX
+#else
+# define CHAR_MIN     SCHAR_MIN
+# define CHAR_MAX     SCHAR_MAX
+#endif
+
 #include <sys/syslimits.h>
 
 #endif /* !_LIMITS_H_ */
