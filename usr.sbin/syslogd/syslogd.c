@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.105 2011/08/31 16:25:00 plunky Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.106 2012/03/28 17:39:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.105 2011/08/31 16:25:00 plunky Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.106 2012/03/28 17:39:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -334,9 +334,10 @@ main(int argc, char *argv[])
 			UseNameService = 0;
 			break;
 		case 'o':		/* message format */
-			if (!strncmp(optarg, "rfc3164", sizeof("rfc3164")-1))
+#define EQ(a)		(strncmp(optarg, # a, sizeof(# a) - 1) == 0)
+			if (EQ(bsd) || EQ(rfc3264))
 				BSDOutputFormat = true;
-			else if (!strncmp(optarg, "syslog", sizeof("syslog")-1))
+			else if (EQ(syslog) || EQ(rfc5424))
 				BSDOutputFormat = false;
 			else
 				usage();
