@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslogd.8,v 1.49 2009/10/15 20:35:07 plunky Exp $
+.\"	$NetBSD: syslogd.8,v 1.50 2012/03/28 17:39:33 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)syslogd.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd October 15, 2009
+.Dd March 28, 2012
 .Dt SYSLOGD 8
 .Os
 .Sh NAME
@@ -97,9 +97,9 @@ Do not perform hostname lookups; report only numeric addresses.
 .It Fl o Ar output_format
 Select output message format.
 .Bl -hang
-.It Em rfc3164
+.It Em bsd , rfc3164
 traditional BSD Syslog format (default)
-.It Em syslog
+.It Em syslog , rfc5424
 new syslog-protocol format
 .El
 .It Fl P
