@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1102 2012/03/21 13:31:40 sborrill Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1103 2012/03/28 14:55:22 pgoyette Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1107 2012/03/21 13:30:12 sborrill Exp
+ *	NetBSD: pcidevs,v 1.1108 2012/03/28 14:54:15 pgoyette Exp
  */
 
 /*
@@ -3137,6 +3137,7 @@
 /* JMicron products */
 #define	PCI_PRODUCT_JMICRON_JMB360	0x2360		/* JMB360 SATA Controller */
 #define	PCI_PRODUCT_JMICRON_JMB361	0x2361		/* JMB361 SATA/PATA Controller */
+#define	PCI_PRODUCT_JMICRON_JMB362	0x2362		/* JMB362 SATA Controller */
 #define	PCI_PRODUCT_JMICRON_JMB363	0x2363		/* JMB363 SATA/PATA Controller */
 #define	PCI_PRODUCT_JMICRON_JMB365	0x2365		/* JMB365 SATA/PATA Controller */
 #define	PCI_PRODUCT_JMICRON_JMB366	0x2366		/* JMB366 SATA/PATA Controller */
