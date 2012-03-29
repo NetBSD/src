@@ -1,4 +1,4 @@
-/* $NetBSD: cacheflush.c,v 1.5 2012/03/29 19:26:21 christos Exp $ */
+/* $NetBSD: cacheflush.c,v 1.6 2012/03/29 21:21:04 christos Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include <mips/sysarch.h>
 
 int
-_cacheflush(void *addr, int nbytes, int whichcache)
+_cacheflush(void *addr, size_t nbytes, int whichcache)
 {
 	struct mips_cacheflush_args cfa;
 
