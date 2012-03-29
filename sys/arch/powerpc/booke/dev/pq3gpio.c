@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3gpio.c,v 1.4 2011/06/30 04:43:47 matt Exp $	*/
+/*	$NetBSD: pq3gpio.c,v 1.5 2012/03/29 14:47:09 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,12 +35,13 @@
  */
 
 #define	GLOBAL_PRIVATE
+#define	GPIO_PRIVATE
 
 #include "opt_mpc85xx.h"
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3gpio.c,v 1.4 2011/06/30 04:43:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3gpio.c,v 1.5 2012/03/29 14:47:09 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -108,6 +109,19 @@ pq3gpio_pin_write(void *v, int num, int val)
 static void
 pq3gpio_pin_ctl(void *v, int num, int ctl)
 {
+	struct pq3gpio_group * const gc = v;
+	const u_int mask = 1 << (gc->gc_pins[num].pin_num ^ 31);
+        uint32_t old, new; 
+  
+        old = bus_space_read_4(gc->gc_bst, gc->gc_bsh, GPDIR);
+        new = old;
+        switch (ctl & (GPIO_PIN_INPUT|GPIO_PIN_OUTPUT)) {
+        case GPIO_PIN_OUTPUT:    new |= mask; break;
+        case GPIO_PIN_INPUT:   new &= ~mask; break;
+        default:                return;
+        }
+        if (old != new)
+		bus_space_write_4(gc->gc_bst, gc->gc_bsh, GPDIR, new);
 }
 
 static void
@@ -291,19 +305,21 @@ pq3gpio_p20x0_attach(device_t self, bus_space_tag_t bst,
 	bus_space_handle_t bsh, u_int svr)
 {
 	static const uint32_t gpio2pmuxcr_map[][2] = {
-		{ __BIT(10), PMUXCR_TSEC3_TS|PMUXCR_USB },
-		{ __BIT(11), PMUXCR_TSEC3_TS|PMUXCR_USB },
-		{ __BIT(12), PMUXCR_TSEC1_TS },
-		{ __BIT(13), PMUXCR_TSEC1_TS },
-		{ __BIT(14), PMUXCR_TSEC2_TS },
-		{ __BIT(15), PMUXCR_TSEC2_TS },
+		{ __BIT(8), PMUXCR_SDHC_CD },
+		{ __BIT(9), PMUXCR_SDHC_WP },
+		/*
+		 * These are really two bits but the low bit MBZ so we ignore
+		 * it.
+		 */
+		{ __BIT(10), PMUXCR_TSEC3_TS },
+		{ __BIT(11), PMUXCR_TSEC3_TS },
 	};
 	
-	uint32_t pinmask = ~0;	/* assume all bits are valid */
-	size_t pincnt = 32;
+	uint32_t pinmask = 0xffff0000;	/* assume all bits are valid */
+	size_t pincnt = 16;
 	const uint32_t pmuxcr = bus_space_read_4(bst, bsh, PMUXCR);
 	for (size_t i = 0; i < __arraycount(gpio2pmuxcr_map); i++) {
-		if (pmuxcr & gpio2pmuxcr_map[i][1]) {
+		if ((pmuxcr & gpio2pmuxcr_map[i][1]) == 0) {
 			pinmask &= ~gpio2pmuxcr_map[i][0];
 			pincnt--;
 		}
@@ -312,10 +328,10 @@ pq3gpio_p20x0_attach(device_t self, bus_space_tag_t bst,
 	/*
 	 * Create GPIO pin groups
 	 */
-	aprint_normal_dev(self, "%zu input pins, %zu output pins\n",
-	    pincnt, pincnt);
-	pq3gpio_group_create(self, bst, bsh, GPINDR, pinmask, GPIO_PIN_INPUT);
-	pq3gpio_group_create(self, bst, bsh, GPOUTDR, pinmask, GPIO_PIN_OUTPUT);
+	aprint_normal_dev(self, "%zu input/output pins\n",
+	    pincnt);
+	pq3gpio_group_create(self, bst, bsh, GPDAT, pinmask,
+	    GPIO_PIN_INPUT|GPIO_PIN_OUTPUT);
 }
 #endif /* P2020 */
 
