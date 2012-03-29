@@ -1,7 +1,7 @@
-$NetBSD: README,v 1.7 2011/04/17 01:29:06 mrg Exp $
+$NetBSD: README,v 1.8 2012/03/29 18:35:11 wiz Exp $
 
 
-Building multi- ABI libraries for NetBSD platforms.
+Building multi-ABI libraries for NetBSD platforms.
 
 
 src/compat has a framework to (re)build the libraries shipped with
@@ -15,11 +15,11 @@ The basic premise is to re-set $MAKEOBJDIR to fresh subdirectory
 underneath src/compat and rebuild the libraries with a different set
 of options.  Each platform wanting support should create their port
 subdirectory directly in src/compat, and then one subdirectory in here
-for each ABI required.  e.g., src/compat/amd64/i386 is where we build
+for each ABI required, e.g., src/compat/amd64/i386 is where we build
 the 32-bit compat libraries for the amd64 port.  In each of these
-subdirs, a small Makefile and makefile fragment should exist.  The
+subdirectories, a small Makefile and makefile fragment should exist.  The
 Makefile should set BSD_MK_COMPAT_FILE to equal the fragment, and then
-include "../../compatsubdir.mk"  Eg, amd64/i386/Makefile has:
+include "../../compatsubdir.mk".  E.g., amd64/i386/Makefile has:
 
 	BSD_MK_COMPAT_FILE=${.CURDIR}/bsd.i386.mk
 
@@ -60,7 +60,7 @@ ld.elf_so) to build with this ABI.
 archdirs.mk holds the list of subdirectories for each port.
 
 Makefile.compat has the basic framework to force the right paths for
-library and ld.elf_so linkage.  It contains a hack to create subdirs
+library and ld.elf_so linkage.  It contains a hack to create subdirectories
 in the build that should be fixed.
 
 dirshack/Makefile is a hack to get objdirs created timely, and should
