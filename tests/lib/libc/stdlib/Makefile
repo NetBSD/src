@@ -1,9 +1,10 @@
-# $NetBSD: Makefile,v 1.20 2012/03/28 10:33:57 jruoho Exp $
+# $NetBSD: Makefile,v 1.21 2012/03/29 05:42:31 jruoho Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/lib/libc/stdlib
 
+TESTS_C+=	t_atoi
 TESTS_C+=	t_div
 TESTS_C+=	t_getenv
 TESTS_C+=	t_getenv_thread

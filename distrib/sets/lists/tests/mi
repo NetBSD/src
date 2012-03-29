@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.459 2012/03/28 10:33:57 jruoho Exp $
+# $NetBSD: mi,v 1.460 2012/03/29 05:42:31 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -486,6 +486,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/h_atexit.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/h_getopt.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/h_getopt_long.debug	tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_atoi.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_div.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_environment.debug	tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_environment_pth.debug	tests-obsolete		obsolete
@@ -2378,6 +2379,7 @@
 ./usr/tests/lib/libc/stdlib/h_getopt		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/h_getopt_long	tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_atexit		tests-lib-tests		atf
+./usr/tests/lib/libc/stdlib/t_atoi		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_div		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_environment	tests-obsolete		obsolete
 ./usr/tests/lib/libc/stdlib/t_environment_pth	tests-obsolete		obsolete
