@@ -1,4 +1,4 @@
-.\" $NetBSD: hostname.7,v 1.12 2012/03/22 07:58:18 wiz Exp $
+.\" $NetBSD: hostname.7,v 1.13 2012/03/29 18:37:21 wiz Exp $
 .\"
 .\" Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
 .\"
@@ -156,7 +156,7 @@ and
 options are present in the resolver configuration file, then only the
 .Em last
 one listed is used (see
-.Xr resolver 5 ) .
+.Xr resolv.conf 5 ) .
 .Pp
 If the name was not previously tried
 .Dq as-is
@@ -177,9 +177,9 @@ pairs.
 .Bl -tag -width "/etc/resolv.conf  " -compact
 .It Pa /etc/resolv.conf
 See
-.Xr resolver 5 .
+.Xr resolv.conf 5 .
 .El
 .Sh SEE ALSO
 .Xr gethostbyname 3 ,
-.Xr resolver 5 ,
+.Xr resolv.conf 5 ,
 .Xr mailaddr 7
