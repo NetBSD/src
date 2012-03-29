@@ -1,4 +1,4 @@
-/*	$NetBSD: jmide.c,v 1.12 2012/01/30 19:41:22 drochner Exp $	*/
+/*	$NetBSD: jmide.c,v 1.13 2012/03/29 00:02:41 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.12 2012/01/30 19:41:22 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.13 2012/03/29 00:02:41 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,10 @@ static const struct jmide_product jm_products[] =  {
 	{ PCI_PRODUCT_JMICRON_JMB361,
 	  1,
 	  1
+	},
+	{ PCI_PRODUCT_JMICRON_JMB362,
+	  0,
+	  2
 	},
 	{ PCI_PRODUCT_JMICRON_JMB363,
 	  1,
