@@ -1,4 +1,4 @@
-/*	$NetBSD: cachectl.h,v 1.9 2009/03/14 14:46:02 dsl Exp $	*/
+/*	$NetBSD: cachectl.h,v 1.10 2012/03/29 21:20:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,11 +34,12 @@
 
 #include <sys/cdefs.h>
 
+__BEGIN_DECLS
 /*
  * invalidate a range of addresses from the cache.
  */
-int  _cacheflush(void *addr, int nbytes, int cacheflags);
-int  cacheflush(void *addr, int nbytes, int cacheflags);
+int  _cacheflush(void *, size_t, int);
+int  cacheflush(void *, size_t, int);
 
 					/* cacheflush() flags: */
 #define ICACHE	0x01			/* invalidate I-cache */
@@ -46,11 +47,13 @@ int  cacheflush(void *addr, int nbytes, int cacheflags);
 #define BCACHE	(ICACHE|DCACHE)		/* invalidate both caches, as above */
 
 
-int  cachectl(void *addr, int nbytes, int cacheop);
+int  cachectl(void *, size_t, int);
 
 					/* cachectl() cache operations: */
 #define CACHEABLE       0x00		/* make page(s) cacheable */
 #define UNCACHEABLE     0x01		/* make page(s) uncacheable */
+
+__END_DECLS
 
 #ifdef _KERNEL
 int mips_user_cachectl(struct proc *, vaddr_t, size_t, int);
