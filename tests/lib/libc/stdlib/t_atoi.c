@@ -1,4 +1,4 @@
-/* $NetBSD: t_atoi.c,v 1.1 2012/03/29 05:42:31 jruoho Exp $ */
+/* $NetBSD: t_atoi.c,v 1.2 2012/03/29 05:56:36 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_atoi.c,v 1.1 2012/03/29 05:42:31 jruoho Exp $");
+__RCSID("$NetBSD: t_atoi.c,v 1.2 2012/03/29 05:56:36 jruoho Exp $");
 
 #include <atf-c.h>
 #include <float.h>
@@ -46,7 +46,7 @@ ATF_TC_HEAD(atof_strtod, tc)
 
 ATF_TC_BODY(atof_strtod, tc)
 {
-	char buf[64];
+	char buf[128];
 
 	(void)snprintf(buf, sizeof(buf), "%f\n", DBL_MAX);
 
@@ -91,12 +91,31 @@ ATF_TC_BODY(atol_strtol, tc)
 	ATF_REQUIRE(atol(buf)  == strtol(buf, NULL, 10));
 }
 
+ATF_TC(atoll_strtoll);
+ATF_TC_HEAD(atoll_strtoll, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test that atoll(3) matches the corresponding strtoll(3) call");
+}
+
+ATF_TC_BODY(atoll_strtoll, tc)
+{
+	char buf[128];
+
+	(void)snprintf(buf, sizeof(buf), "%lld\n", LLONG_MAX);
+
+	ATF_REQUIRE(atoll("0")  == strtoll("0", NULL, 10));
+	ATF_REQUIRE(atoll("-1") == strtoll("-1", NULL, 10));
+	ATF_REQUIRE(atoll(buf)  == strtoll(buf, NULL, 10));
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, atof_strtod);
 	ATF_TP_ADD_TC(tp, atoi_strtol);
 	ATF_TP_ADD_TC(tp, atol_strtol);
+	ATF_TP_ADD_TC(tp, atoll_strtoll);
 
 	return atf_no_error();
 }
