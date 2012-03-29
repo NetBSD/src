@@ -1,4 +1,4 @@
-/* $NetBSD: fmemopen.c,v 1.7 2012/03/27 15:05:42 christos Exp $ */
+/* $NetBSD: fmemopen.c,v 1.8 2012/03/29 14:27:33 christos Exp $ */
 
 /*-
  * Copyright (c)2007, 2010 Takehiko NOZAKI,
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fmemopen.c,v 1.7 2012/03/27 15:05:42 christos Exp $");
+__RCSID("$NetBSD: fmemopen.c,v 1.8 2012/03/29 14:27:33 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -98,6 +98,7 @@ ok:
 	return (ssize_t)(p->cur - s);
 }
 
+#ifdef notyet
 static int
 fmemopen_flush(void *cookie)
 {
@@ -111,6 +112,7 @@ fmemopen_flush(void *cookie)
 	*p->cur = '\0';
 	return 0;
 }
+#endif
 
 static off_t
 fmemopen_seek(void *cookie, off_t offset, int whence)
@@ -221,7 +223,9 @@ fmemopen(void * __restrict buf, size_t size, const char * __restrict mode)
 	fp->_write  = (flags & __SRD) ? NULL : fmemopen_write;
 	fp->_read   = (flags & __SWR) ? NULL : fmemopen_read;
 	fp->_seek   = fmemopen_seek;
+#ifdef notyet
 	fp->_flush  = fmemopen_flush;
+#endif
 	fp->_cookie = (void *)cookie;
 
 	return fp;
