@@ -1,4 +1,4 @@
-/* $NetBSD: t_random.c,v 1.2 2012/03/28 10:38:00 jruoho Exp $ */
+/* $NetBSD: t_random.c,v 1.3 2012/03/29 08:56:06 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,47 +29,54 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_random.c,v 1.2 2012/03/28 10:38:00 jruoho Exp $");
+__RCSID("$NetBSD: t_random.c,v 1.3 2012/03/29 08:56:06 jruoho Exp $");
 
 #include <atf-c.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 /*
  * TODO: Add some general RNG tests (cf. the famous "diehard" tests?).
  */
 
-ATF_TC(random_zero);
-ATF_TC_HEAD(random_zero, tc)
+ATF_TC(random_same);
+ATF_TC_HEAD(random_same, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Test that random(3) does not always return "
-	    "zero when the seed is initialized to zero");
+	    "Test that random(3) does not always return the same "
+	    "value when the seed is initialized to zero");
 }
 
-ATF_TC_BODY(random_zero, tc)
+#define MAX_ITER 10
+
+ATF_TC_BODY(random_same, tc)
 {
-	const size_t n = 1000000;
+	long buf[MAX_ITER];
 	size_t i, j;
-	long x;
 
 	/*
 	 * See CVE-2012-1577.
 	 */
 	srandom(0);
 
-	for (i = j = 0; i < n; i++) {
+	for (i = 0; i < __arraycount(buf); i++) {
 
-		if ((x = random()) == 0)
-			j++;
+		buf[i] = random();
+
+		for (j = 0; j < i; j++) {
+
+			(void)fprintf(stderr, "i = %zu, j = %zu: "
+			    "%ld vs. %ld\n", i, j, buf[i], buf[j]);
+
+			ATF_CHECK(buf[i] != buf[j]);
+		}
 	}
-
-	ATF_REQUIRE(j != n);
 }
 
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, random_zero);
+	ATF_TP_ADD_TC(tp, random_same);
 
 	return atf_no_error();
 }
