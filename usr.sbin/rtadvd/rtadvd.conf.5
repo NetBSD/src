@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtadvd.conf.5,v 1.15 2011/12/10 19:14:29 roy Exp $
+.\"	$NetBSD: rtadvd.conf.5,v 1.16 2012/03/29 18:37:45 wiz Exp $
 .\"	$KAME: rtadvd.conf.5,v 1.50 2005/01/14 05:30:59 jinmei Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -356,10 +356,9 @@ options with corresponding
 .Cm rdnssltime2 ...
 entries.
 Note that the maximum number of servers depends on the receiver side.
-See also
-.Xr resolver 5
-manual page for resolver implementation in
-.Fx .
+See also the
+.Xr resolv.conf 5
+manual page for the resolver implementation.
 .It Cm \&rdnssltime
 The lifetime of the
 .Cm rdnss
@@ -382,10 +381,9 @@ options with corresponding
 .Cm dnsslltime2 ...
 entries.
 Note that the maximum number of names depends on the receiver side.
-See also
-.Xr resolver 5
-manual page for resolver implementation in
-.Fx .
+See also the
+.Xr resolv.conf 5
+manual page for the resolver implementation.
 .It Cm \&dnsslltime
 The lifetime of the
 .Cm dnssl
