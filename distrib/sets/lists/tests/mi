@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.461 2012/03/29 06:16:57 jruoho Exp $
+# $NetBSD: mi,v 1.462 2012/03/30 09:27:10 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1381,6 +1381,9 @@
 ./usr/tests/bin/ps/Atffile			tests-bin-tests		atf
 ./usr/tests/bin/ps/keywords			tests-bin-tests		atf
 ./usr/tests/bin/ps/t_ps				tests-bin-tests		atf
+./usr/tests/bin/sleep				tests-bin-tests
+./usr/tests/bin/sleep/Atffile			tests-bin-tests		atf
+./usr/tests/bin/sleep/t_sleep			tests-bin-tests		atf
 ./usr/tests/bin/sh				tests-bin-tests
 ./usr/tests/bin/sh/Atffile			tests-bin-tests		atf
 ./usr/tests/bin/sh/t_compexit			tests-bin-tests		atf
