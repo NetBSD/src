@@ -790,8 +790,10 @@ rmixl_fmn_cpu_attach(struct cpu_info *ci)
 	KASSERT(xname != NULL);
 
 	for (size_t i = 1; i < fmn_info.fmn_nstid; i++) {
-		evcnt_attach_dynamic(&sc->sc_fmn_stid_evcnts[i],
-		    EVCNT_TYPE_MISC, NULL, xname, fmn_stid_ev_names[i]);
+		if (fmn_stid_ev_names[i][0] != '\0') {
+			evcnt_attach_dynamic(&sc->sc_fmn_stid_evcnts[i],
+			    EVCNT_TYPE_MISC, NULL, xname, fmn_stid_ev_names[i]);
+		}
 	}
 
 	for (size_t i = 0; i < fmn_info.fmn_nbucket; i++) {
@@ -811,9 +813,11 @@ rmixl_fmn_init_thread(void)
 
 	KASSERT(fmn->fmn_stinfo[0].si_name == NULL);
 	for (size_t i = 1; i < fmn_info.fmn_nstid; i++) {
-		KASSERT(fmn->fmn_stinfo[i].si_name != NULL);
-		snprintf(fmn_stid_ev_names[i], sizeof(fmn_stid_ev_names[i]),
-		    "fmn %s rx msgs", fmn->fmn_stinfo[i].si_name);
+		if (fmn->fmn_stinfo[i].si_name != NULL) {
+			snprintf(fmn_stid_ev_names[i],
+			    sizeof(fmn_stid_ev_names[i]),
+			    "fmn %s rx msgs", fmn->fmn_stinfo[i].si_name);
+		}
 	}
 
 	if (CPU_IS_PRIMARY(ci)) {
