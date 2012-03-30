@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.6 2011/12/20 13:42:19 apb Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.7 2012/03/30 20:15:18 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.6 2011/12/20 13:42:19 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.7 2012/03/30 20:15:18 drochner Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -213,15 +213,14 @@ rndopen(dev_t dev, int flag, int ifmt,
 	    default:
 		return ENXIO;
 	}
-	ctx = pool_cache_get(rp_cpc, PR_WAITOK);
-	ctx->cprng = NULL;
-	ctx->hard = hard;
-	mutex_init(&ctx->interlock, MUTEX_DEFAULT, IPL_NONE);
-	
+	ctx = pool_cache_get(rp_cpc, PR_WAITOK);	
 	if ((error = fd_allocfile(&fp, &fd)) != 0) {
 	    pool_cache_put(rp_cpc, ctx);
 	    return error;
 	}
+	ctx->cprng = NULL;
+	ctx->hard = hard;
+	mutex_init(&ctx->interlock, MUTEX_DEFAULT, IPL_NONE);
 
 	return fd_clone(fp, fd, flag, &rnd_fileops, ctx);
 }
