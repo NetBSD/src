@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.42 2012/03/18 02:40:55 christos Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.43 2012/03/30 18:27:55 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.42 2012/03/18 02:40:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.43 2012/03/30 18:27:55 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -344,6 +344,9 @@ sysvbfs_setattr(void *arg)
 	    (vap->va_blocksize != VNOVAL) || (vap->va_rdev != VNOVAL) ||
 	    ((int)vap->va_bytes != VNOVAL) || (vap->va_gen != VNOVAL))
 		return EINVAL;
+
+	if (vap->va_flags != VNOVAL)
+		return EOPNOTSUPP;
 
 	if (vap->va_uid != (uid_t)VNOVAL || vap->va_gid != (uid_t)VNOVAL) {
 		uid_t uid =
