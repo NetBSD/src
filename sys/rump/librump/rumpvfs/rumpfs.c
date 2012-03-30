@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.109 2012/03/22 22:48:56 njoly Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.110 2012/03/30 18:09:12 njoly Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.109 2012/03/22 22:48:56 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.110 2012/03/30 18:09:12 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -930,6 +930,8 @@ rump_vop_setattr(void *v)
 		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_FLAGS, vp,
 		    NULL, genfs_can_chflags(cred, vp->v_type, attr->va_uid,
 		    false));
+		if (error)
+			return error;
 	}
 
 	SETIFVAL(va_flags, u_long);
