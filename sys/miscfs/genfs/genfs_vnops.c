@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.188 2012/03/13 18:40:57 elad Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.189 2012/03/30 18:24:08 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.188 2012/03/13 18:40:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.189 2012/03/30 18:24:08 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -762,7 +762,7 @@ genfs_can_chflags(kauth_cred_t cred, enum vtype type, uid_t owner_uid,
 
 	/* The user must own the file. */
 	if (kauth_cred_geteuid(cred) != owner_uid) {
-		return EACCES;
+		return EPERM;
 	}
 
 	if (changing_sysflags) {
