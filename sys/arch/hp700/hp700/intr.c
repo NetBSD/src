@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.15 2008/04/28 20:23:19 martin Exp $	*/
+/*	$NetBSD: intr.c,v 1.15.10.1 2012/03/30 19:29:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.15 2008/04/28 20:23:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.15.10.1 2012/03/30 19:29:24 bouyer Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -399,7 +399,8 @@ hppa_intr(struct trapframe *frame)
 	 * handlers need to aquire the mutex, they could
 	 * deadlock if the owner value is left unset.
 	 */
-	if (frame->tf_iioq_head >= (u_int)mutex_enter_crit_start &&
+	if (frame->tf_iisq_head == HPPA_SID_KERNEL &&
+	    frame->tf_iioq_head >= (u_int)mutex_enter_crit_start &&
 	    frame->tf_iioq_head <= (u_int)mutex_enter_crit_end &&
 	    frame->tf_ret0 != 0)
 		((kmutex_t *)frame->tf_arg0)->mtx_owner = (uintptr_t)curlwp;
