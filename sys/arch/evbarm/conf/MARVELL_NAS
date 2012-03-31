@@ -1,4 +1,4 @@
-#	$NetBSD: MARVELL_NAS,v 1.6 2012/03/10 21:51:51 joerg Exp $
+#	$NetBSD: MARVELL_NAS,v 1.7 2012/03/31 02:45:37 tsutsui Exp $
 #
 #  This configuration supports for generically Marvell NAS.
 
@@ -115,12 +115,7 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
 #options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 # Device options
 
