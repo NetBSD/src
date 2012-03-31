@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.65 2010/04/17 13:36:21 nonaka Exp $
+#	$NetBSD: files.hpcarm,v 1.66 2012/03/31 14:02:54 nonaka Exp $
 #
 # hpcarm specific configuration info
 #
@@ -26,6 +26,13 @@ file	arch/hpcarm/hpcarm/autoconf.c
 
 # HPCARM specific files
 file	arch/hpcarm/hpcarm/hpc_machdep.c
+
+# kloader
+defflag opt_kloader.h				KLOADER
+defparam opt_kloader.h				KLOADER_KERNEL_PATH
+defflag debug_kloader.h				KLOADER_DEBUG
+file	dev/kloader.c				kloader
+file	arch/hpcarm/hpcarm/kloader_machdep.c	kloader
 
 #
 # H/PC Platform common files.

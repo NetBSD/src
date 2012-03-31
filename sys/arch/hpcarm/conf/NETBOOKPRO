@@ -1,4 +1,4 @@
-#	$NetBSD: NETBOOKPRO,v 1.4 2012/03/10 21:51:52 joerg Exp $
+#	$NetBSD: NETBOOKPRO,v 1.5 2012/03/31 14:02:54 nonaka Exp $
 #
 #	NETBOOKPRO -- Psion Teklogix NETBOOK PRO
 #
@@ -8,10 +8,15 @@ include	"arch/hpcarm/conf/files.netbookpro"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.4 $"
+#ident 		"GENERIC-$Revision: 1.5 $"
 
 # estimated number of users
 maxusers	32
+
+# in-kernel bootloader, see kloader(4)
+options 	KLOADER
+#options 	KLOADER_KERNEL_PATH="\"/netbsd\""
+#options 	KLOADER_DEBUG
 
 # Standard system options
 
