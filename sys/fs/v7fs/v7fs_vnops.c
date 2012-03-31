@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.9 2012/03/22 22:16:21 njoly Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.10 2012/03/31 21:44:28 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.9 2012/03/22 22:16:21 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.10 2012/03/31 21:44:28 njoly Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -428,7 +428,7 @@ v7fs_getattr(void *v)
 	vap->va_ctime.tv_sec = inode->ctime;
 	vap->va_birthtime.tv_sec = 0;
 	vap->va_gen = 1;
-	vap->va_flags = 0;
+	vap->va_flags = inode->append_mode ? SF_APPEND : 0;
 	vap->va_rdev = inode->device;
 	vap->va_bytes = vap->va_size; /* No sparse support. */
 	vap->va_filerev = 0;
@@ -482,15 +482,13 @@ v7fs_setattr(void *v)
 		return EINVAL;
 	}
 	/* File pointer mode. */
-	if ((vap->va_flags != VNOVAL) && (vap->va_flags & SF_APPEND)) {
+	if (vap->va_flags != VNOVAL) {
 		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_FLAGS,
 		    vp, NULL, genfs_can_chflags(cred, vp->v_type, inode->uid,
 		    false));
 		if (error)
 			return error;
-
-		DPRINTF("Set append-mode.\n");
-		inode->append_mode = true;
+		inode->append_mode = vap->va_flags & SF_APPEND;
 	}
 
 	/* File size change. */
