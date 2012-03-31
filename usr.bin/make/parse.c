@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.181 2012/03/24 20:28:41 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.182 2012/03/31 00:12:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.181 2012/03/24 20:28:41 sjg Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.182 2012/03/31 00:12:24 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.181 2012/03/24 20:28:41 sjg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.182 2012/03/31 00:12:24 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -361,6 +361,9 @@ static void ParseDoInclude(char *);
 static void ParseSetParseFile(const char *);
 #ifdef SYSVINCLUDE
 static void ParseTraditionalInclude(char *);
+#endif
+#ifdef GMAKEEXPORT
+static void ParseGmakeExport(char *);
 #endif
 static int ParseEOF(void);
 static char *ParseReadLine(void);
@@ -2402,6 +2405,55 @@ ParseTraditionalInclude(char *line)
 }
 #endif
 
+#ifdef SYSVINCLUDE
+/*-
+ *---------------------------------------------------------------------
+ * ParseGmakeExport  --
+ *	Parse export <variable>=<value>
+ *
+ *	And set the environment with it.
+ *
+ * Results:
+ *	None
+ *
+ * Side Effects:
+ *	None
+ *---------------------------------------------------------------------
+ */
+static void
+ParseGmakeExport(char *line)
+{
+    char	  *variable = &line[6];
+    char	  *value;
+
+    if (DEBUG(PARSE)) {
+	    fprintf(debug_file, "ParseTraditionalInclude: %s\n", variable);
+    }
+
+    /*
+     * Skip over whitespace
+     */
+    while (isspace((unsigned char)*variable))
+	variable++;
+
+    for (value = variable; *value && *value != '='; value++)
+	continue;
+
+    if (*value != '=') {
+	Parse_Error(PARSE_FATAL,
+		     "Variable/Value missing from \"include\"");
+	return;
+    }
+
+    /*
+     * Substitute for any variables in the file name before trying to
+     * find the thing.
+     */
+    value = Var_Subst(NULL, value, VAR_CMD, FALSE);
+    setenv(variable, value, 1);
+}
+#endif
+
 /*-
  *---------------------------------------------------------------------
  * ParseEOF  --
@@ -2848,6 +2900,17 @@ Parse_File(const char *name, int fd)
 		 * It's an S3/S5-style "include".
 		 */
 		ParseTraditionalInclude(line);
+		continue;
+	    }
+#endif
+#ifdef GMAKEEXPORT
+	    if (strncmp(line, "export", 6) == 0 &&
+		isspace((unsigned char) line[6]) &&
+		strchr(line, ':') == NULL) {
+		/*
+		 * It's an Gmake"export".
+		 */
+		ParseGmakeExport(line);
 		continue;
 	    }
 #endif
