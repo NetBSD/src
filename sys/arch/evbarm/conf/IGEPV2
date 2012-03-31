@@ -1,5 +1,5 @@
 #
-#	$NetBSD: IGEPV2,v 1.8 2011/12/18 05:49:25 dholland Exp $
+#	$NetBSD: IGEPV2,v 1.9 2012/03/31 02:45:37 tsutsui Exp $
 #
 #	IGEPv2 -- TI OMAP 3530 Eval Board Kernel
 #
@@ -107,12 +107,7 @@ options 	COMPAT_30	# NetBSD 3.0 compatibility.
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 # Device options
 
