@@ -1,4 +1,4 @@
-/* $NetBSD: t_nanosleep.c,v 1.1 2011/07/07 06:57:54 jruoho Exp $ */
+/* $NetBSD: t_nanosleep.c,v 1.2 2012/03/31 11:41:33 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_nanosleep.c,v 1.1 2011/07/07 06:57:54 jruoho Exp $");
+__RCSID("$NetBSD: t_nanosleep.c,v 1.2 2012/03/31 11:41:33 jruoho Exp $");
 
 #include <sys/time.h>
 #include <sys/wait.h>
@@ -96,7 +96,8 @@ ATF_TC_BODY(nanosleep_basic, tc)
 ATF_TC(nanosleep_err);
 ATF_TC_HEAD(nanosleep_err, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test errors from nanosleep(2)");
+	atf_tc_set_md_var(tc, "descr",
+	    "Test errors from nanosleep(2) (PR bin/14558)");
 }
 
 ATF_TC_BODY(nanosleep_err, tc)
