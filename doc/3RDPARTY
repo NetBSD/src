@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.929 2012/04/01 14:01:12 tron Exp $
+#	$NetBSD: 3RDPARTY,v 1.930 2012/04/01 14:06:04 tron Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -309,6 +309,19 @@ Location:	gnu/dist/diffutils
 Notes:
 Use src/gnu/dist/diffutils/diffutils2netbsd for preparing the source tree
 for the import.
+
+Package:	expat
+Version:	2.0.1
+Current Vers:	2.1.0
+Maintainer:	wiz
+Archive Site:	http://sourceforge.net/projects/expat/files/expat/
+Home Page:	http://expat.sourceforge.net/
+Mailing List:	expat-discuss@libexpat.org
+Responsible:
+License:	MIT
+Location:	src/external/mit/expat/dist
+Notes:
+Please use "expat" as the vendor tag for CVS imports.
 
 Package:	file
 Version:	5.11
