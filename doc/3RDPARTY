@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.928 2012/03/28 10:22:46 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.929 2012/04/01 14:01:12 tron Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -310,21 +310,6 @@ Notes:
 Use src/gnu/dist/diffutils/diffutils2netbsd for preparing the source tree
 for the import.
 
-Package:	gdtoa
-Version:	2011-03-19
-Current Vers:	$(date)
-Maintainer:	David M. Gay <dmg@acm.org>
-Archive Site:	http://www.netlib.org/fp/
-Home Page:	http://www.netlib.org/fp/
-Mailing List:	none
-Responsible:	kleink
-License:	BSD-like
-Location:	lib/libc/gdtoa
-Notes:
-Test suite integrated at this time, but not built (and fails to run).
-No hexadecimal floating-point string conversion for VAX FP yet.
-Only double-precision addressed at this time.
-
 Package:	file
 Version:	5.11
 Current Vers:	5.11
@@ -391,6 +376,21 @@ When updating GDB, it is imperative to test that:
 	- Debugging of kernel cores ("target kvm") works correctly
 	- Support for our kernel's remote serial debugging protocol
 	  ("options KGDB") works correctly.
+
+Package:	gdtoa
+Version:	2011-03-19
+Current Vers:	$(date)
+Maintainer:	David M. Gay <dmg@acm.org>
+Archive Site:	http://www.netlib.org/fp/
+Home Page:	http://www.netlib.org/fp/
+Mailing List:	none
+Responsible:	kleink
+License:	BSD-like
+Location:	lib/libc/gdtoa
+Notes:
+Test suite integrated at this time, but not built (and fails to run).
+No hexadecimal floating-point string conversion for VAX FP yet.
+Only double-precision addressed at this time.
 
 Package:	gettext
 Version:	0.14.4
