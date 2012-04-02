@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.61 2012/03/25 11:30:36 bouyer Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.62 2012/04/02 18:31:13 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1522,4 +1522,23 @@ tests/rump/rumpkern/t_vm.c			1.3
 	Fix a locking bug in rumpkern.
 	Increase uvmwait test timeout so it has a chance to succeed.
 	[hannken, ticket #141]
+
+usr.bin/fstat/fstat.c				1.96
+
+	Byte swap the inet6 ports.
+	[christos, ticket #143]
+
+sys/netinet/ip_carp.c				1.48
+
+	Fix system hang when configuring carp(4). PR#46217.
+	[bouyer, ticket #145]
+
+crypto/external/bsd/openssh/dist/random.c	delete
+crypto/external/bsd/openssh/dist/sshd.c		1.9
+crypto/external/bsd/openssl/dist/crypto/rand/md_rand.c 1.2-1.3
+crypto/external/bsd/openssl/dist/crypto/rand/rand_unix.c 1.3
+
+	Prevent sshd from consuming all available entropy in the
+	system.
+	[tls, ticket #146]
 
