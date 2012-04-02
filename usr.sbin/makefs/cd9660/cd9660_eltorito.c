@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_eltorito.c,v 1.17 2011/06/23 02:35:56 enami Exp $	*/
+/*	$NetBSD: cd9660_eltorito.c,v 1.18 2012/04/02 19:01:21 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -35,10 +35,11 @@
 
 #include "cd9660.h"
 #include "cd9660_eltorito.h"
+#include <sys/bootblock.h>
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_eltorito.c,v 1.17 2011/06/23 02:35:56 enami Exp $");
+__RCSID("$NetBSD: cd9660_eltorito.c,v 1.18 2012/04/02 19:01:21 christos Exp $");
 #endif  /* !__lint */
 
 #ifdef DEBUG
@@ -541,8 +542,19 @@ cd9660_write_apm_partition_entry(FILE *fd, int idx, int total_partitions,
     off_t sector_start, off_t nsectors, off_t sector_size,
     const char *part_name, const char *part_type)
 {
-	uint32_t apm32;
+	uint32_t apm32, part_status;
 	uint16_t apm16;
+
+	/* See Apple Tech Note 1189 for the details about the pmPartStatus
+	 * flags.
+	 * Below the flags which are default:
+	 * - IsValid     0x01
+	 * - IsAllocated 0x02
+	 * - IsReadable  0x10
+	 * - IsWritable  0x20
+	 */
+	part_status = APPLE_PS_VALID | APPLE_PS_ALLOCATED | APPLE_PS_READABLE |
+	    APPLE_PS_WRITABLE;
 
 	if (fseeko(fd, (off_t)(idx + 1) * sector_size, SEEK_SET) == -1)
 		err(1, "fseeko");
@@ -565,6 +577,17 @@ cd9660_write_apm_partition_entry(FILE *fd, int idx, int total_partitions,
 	fwrite(part_name, strlen(part_name) + 1, 1, fd);
 	fseek(fd, 32 - strlen(part_name) - 1, SEEK_CUR);
 	fwrite(part_type, strlen(part_type) + 1, 1, fd);
+	fseek(fd, 32 - strlen(part_type) - 1, SEEK_CUR);
+
+	apm32 = 0;
+	/* pmLgDataStart */
+	fwrite(&apm32, sizeof(apm32), 1, fd);
+	/* pmDataCnt */ 
+	apm32 = htobe32(nsectors);
+	fwrite(&apm32, sizeof(apm32), 1, fd);
+	/* pmPartStatus */
+	apm32 = htobe32(part_status);
+	fwrite(&apm32, sizeof(apm32), 1, fd);
 
 	return 0;
 }
@@ -669,12 +692,6 @@ cd9660_write_boot(FILE *fd)
 		cd9660_write_apm_partition_entry(fd, 0, total_parts, 1,
 		    total_parts, 512, "Apple", "Apple_partition_map");
 
-		/* Write ISO9660 descriptor, enclosing the whole disk */
-		cd9660_write_apm_partition_entry(fd, 1, total_parts, 0,
-		    diskStructure.totalSectors *
-		    (diskStructure.sectorSize / 512), 512, "ISO9660",
-		    "CD_ROM_Mode_1");
-
 		/* Write all partition entries */
 		apm_partitions = 0;
 		TAILQ_FOREACH(t, &diskStructure.boot_images, image_list) {
@@ -682,11 +699,17 @@ cd9660_write_boot(FILE *fd)
 				continue;
 
 			cd9660_write_apm_partition_entry(fd,
-			    2 + apm_partitions++, total_parts,
+			    1 + apm_partitions++, total_parts,
 			    t->sector * (diskStructure.sectorSize / 512),
 			    t->num_sectors * (diskStructure.sectorSize / 512),
 			    512, "CD Boot", "Apple_Bootstrap");
 		}
+
+		/* Write ISO9660 descriptor, enclosing the whole disk */
+		cd9660_write_apm_partition_entry(fd, 2 + apm_partitions,
+		    total_parts, 0, diskStructure.totalSectors *
+		    (diskStructure.sectorSize / 512), 512, "ISO9660",
+		    "CD_ROM_Mode_1");
 	}
 
 	return 0;
