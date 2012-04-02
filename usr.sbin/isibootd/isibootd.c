@@ -1,4 +1,4 @@
-/*	$NetBSD: isibootd.c,v 1.2 2011/12/18 14:45:23 tsutsui Exp $	*/
+/*	$NetBSD: isibootd.c,v 1.3 2012/04/02 09:01:30 nisimura Exp $	*/
 /*	Id: isiboot.c,v 1.2 1999/12/26 14:33:33 nisimura Exp 	*/
 
 /*-
@@ -57,13 +57,13 @@
 #define	TRACE(l, x) if ((l) <= dbg) printf x
 
 /*
- * TRFS (Integrated Solutions Inc. Transparent Remote File System) frame
+ * Integrated Solutions Inc. "ISIBOOT" boot enet protocol.
  *
  * Following data format depends on m68k order, and aligned harmful
  * to RISC processors.
  */
-#define	TRFS_FRAMETYPE	0x80df
-#define	TRFS_FRAMELEN	1468
+#define	ISIBOOT_FRAMETYPE	0x80df
+#define	ISIBOOT_FRAMELEN	1468
 struct frame {
 	uint8_t dst[ETHER_ADDR_LEN];
 	uint8_t src[ETHER_ADDR_LEN];
@@ -74,7 +74,7 @@ struct frame {
 	uint8_t pad_1;
 	uint8_t pos[4];
 	uint8_t siz[4];
-	uint8_t data[TRFS_FRAMELEN - 28];
+	uint8_t data[ISIBOOT_FRAMELEN - 28];
 } __packed;
 
 struct station {
@@ -112,7 +112,7 @@ static char *etheraddr(uint8_t *);
 static int pickif(char *, uint8_t *);
 static __dead void usage(void);
 
-#define	TRFS_FRAME(buf)	((buf) + ((struct bpf_hdr *)(buf))->bh_hdrlen)
+#define	ISIBOOT_FRAME(buf)	((buf) + ((struct bpf_hdr *)(buf))->bh_hdrlen)
 
 #define	PATH_DEFBOOTDIR	"/tftpboot"
 
@@ -185,7 +185,7 @@ main(int argc, char *argv[])
 	for (;;) {
 		poll(&pollfd, 1, INFTIM);
 		read(pollfd.fd, iobuf, iolen);	/* returns 1468 */
-		fp = (struct frame *)TRFS_FRAME(iobuf);
+		fp = (struct frame *)ISIBOOT_FRAME(iobuf);
 
 		/* ignore own TX packets */
 		if (memcmp(fp->src, station.addr, ETHER_ADDR_LEN) == 0)
@@ -269,7 +269,7 @@ main(int argc, char *argv[])
 		}
 		memcpy(fp->dst, fp->src, ETHER_ADDR_LEN);
 		memcpy(fp->src, station.addr, ETHER_ADDR_LEN);
-		write(pollfd.fd, fp, TRFS_FRAMELEN);
+		write(pollfd.fd, fp, ISIBOOT_FRAMELEN);
 	}
 	/* NOTREACHED */
 }
@@ -348,8 +348,8 @@ etheraddr(uint8_t *e)
 
 static struct bpf_insn bpf_insn[] = {
 	{ BPF_LD|BPF_H|BPF_ABS,  0, 0, offsetof(struct frame, type) },
-	{ BPF_JMP|BPF_JEQ|BPF_K, 0, 1, TRFS_FRAMETYPE },
-	{ BPF_RET|BPF_K,         0, 0, TRFS_FRAMELEN },
+	{ BPF_JMP|BPF_JEQ|BPF_K, 0, 1, ISIBOOT_FRAMETYPE },
+	{ BPF_RET|BPF_K,         0, 0, ISIBOOT_FRAMELEN },
 	{ BPF_RET|BPF_K,         0, 0, 0x0 }
 };
 static struct bpf_program bpf_pgm = {
