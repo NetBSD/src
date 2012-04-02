@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.6 2012/03/29 20:31:49 skrll Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.7 2012/04/02 13:18:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,17 +30,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.6 2012/03/29 20:31:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.7 2012/04/02 13:18:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
 
 #include <machine/db_machdep.h>
+#include <machine/psl.h>
 
 #include <ddb/db_command.h>
 #include <ddb/db_output.h>
 #include <ddb/db_variables.h>
 #include <ddb/db_access.h>
+
+#ifndef _KERNEL
+#include <util.h>
+#endif
 
 db_regs_t	ddb_regs;
 const struct db_variable db_regs[] = {
