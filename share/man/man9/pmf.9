@@ -1,4 +1,4 @@
-.\" $NetBSD: pmf.9,v 1.19 2010/12/02 12:54:13 wiz Exp $
+.\" $NetBSD: pmf.9,v 1.20 2012/04/02 09:56:58 plunky Exp $
 .\"
 .\" Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 25, 2010
+.Dd April 2, 2012
 .Dt PMF 9
 .Os
 .Sh NAME
@@ -138,14 +138,16 @@ The following message types are defined:
 .Bl -tag -width compact
 .It Fn pmf_device_register "dev" "suspend" "resume"
 Register a device with the power management framework.
+The
 .Fa suspend
 and
 .Fa resume
-are passed
+functions are passed
 .Fa dev
 and a
-.Fa pmf_qual_t ;
-they return
+.Fa pmf_qual_t ,
+and will be called when the system state changes;
+they should return
 .Dv true
 on success and
 .Dv false
