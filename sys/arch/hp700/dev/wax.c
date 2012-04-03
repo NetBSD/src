@@ -1,4 +1,4 @@
-/*	$NetBSD: wax.c,v 1.17 2011/02/01 18:33:24 skrll Exp $	*/
+/*	$NetBSD: wax.c,v 1.18 2012/04/03 12:07:26 skrll Exp $	*/
 
 /*	$OpenBSD: wax.c,v 1.1 1998/11/23 03:04:10 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.17 2011/02/01 18:33:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.18 2012/04/03 12:07:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +115,7 @@ waxattach(device_t parent, device_t self, void *aux)
 	struct confargs *ca = aux;
 	struct wax_softc *sc = device_private(self);
 	struct gsc_attach_args ga;
+	struct cpu_info *ci = &cpus[0];
 	bus_space_handle_t ioh;
 	int s, in;
 
@@ -140,7 +141,7 @@ waxattach(device_t parent, device_t self, void *aux)
 
 	/* interrupts guts */
 	s = splhigh();
-	sc->sc_regs->wax_iar = cpu_gethpa(0) | (31 - ca->ca_irq);
+	sc->sc_regs->wax_iar = ci->ci_hpa | (31 - ca->ca_irq);
 	sc->sc_regs->wax_icr = 0;
 	sc->sc_regs->wax_imr = ~0U;
 	in = sc->sc_regs->wax_irr;

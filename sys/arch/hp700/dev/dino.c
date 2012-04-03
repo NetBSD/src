@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.33 2012/01/27 18:52:55 para Exp $ */
+/*	$NetBSD: dino.c,v 1.34 2012/04/03 12:07:26 skrll Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.33 2012/01/27 18:52:55 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.34 2012/04/03 12:07:26 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -1608,6 +1608,7 @@ dinoattach(device_t parent, device_t self, void *aux)
 	struct confargs *ca = (struct confargs *)aux, nca;
 	struct pcibus_attach_args pba;
 	volatile struct dino_regs *r;
+	struct cpu_info *ci = &cpus[0];
 	const char *p = NULL;
 	u_int data;
 	int s, ver;
@@ -1655,7 +1656,7 @@ dinoattach(device_t parent, device_t self, void *aux)
 	r->imr = ~0;
 	data = r->irr0;
 	r->imr = 0;
-	r->iar0 = cpu_gethpa(0) | (31 - ca->ca_irq);
+	r->iar0 = ci->ci_hpa | (31 - ca->ca_irq);
 	splx(s);
 	/* Establish the interrupt register. */
 	hp700_interrupt_register_establish(&sc->sc_ir);
