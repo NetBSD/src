@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.20 2012/02/26 08:44:12 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.21 2012/04/03 11:44:32 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.c,v 1.29 2009/02/08 18:33:28 miod Exp $	*/
 
@@ -29,13 +29,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.20 2012/02/26 08:44:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.21 2012/04/03 11:44:32 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/atomic.h>
 #include <sys/reboot.h>
 
 #include <uvm/uvm.h>
