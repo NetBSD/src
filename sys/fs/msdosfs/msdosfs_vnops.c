@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.81 2012/04/02 07:30:22 njoly Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.82 2012/04/03 14:58:55 njoly Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.81 2012/04/02 07:30:22 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.82 2012/04/03 14:58:55 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,9 +306,10 @@ msdosfs_getattr(void *v)
 		vap->va_ctime = vap->va_mtime;
 	}
 	vap->va_flags = 0;
-	if ((dep->de_Attributes & ATTR_ARCHIVE) == 0)
+	if ((dep->de_Attributes & ATTR_ARCHIVE) == 0) {
 		vap->va_flags |= SF_ARCHIVED;
 		vap->va_mode  |= S_ARCH1;
+	}
 	vap->va_gen = 0;
 	vap->va_blocksize = pmp->pm_bpcluster;
 	vap->va_bytes =
