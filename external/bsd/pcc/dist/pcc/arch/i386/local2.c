@@ -1,5 +1,5 @@
-/*	Id: local2.c,v 1.165 2011/12/06 05:58:54 gmcgarry Exp 	*/	
-/*	$NetBSD: local2.c,v 1.1.1.5 2012/01/11 20:32:48 plunky Exp $	*/
+/*	Id: local2.c,v 1.166 2012/03/22 18:04:41 plunky Exp 	*/	
+/*	$NetBSD: local2.c,v 1.1.1.5.2.1 2012/04/03 16:36:21 riz Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -1270,7 +1270,8 @@ myxasm(struct interpass *ip, NODE *p)
 	TWORD t;
 	char *w;
 	int reg;
-	int c, cw, v;
+	int c, cw;
+	CONSZ v;
 
 	cw = xasmcode(p->n_name);
 	if (cw & (XASMASG|XASMINOUT))

@@ -1,5 +1,5 @@
-/*	Id: optim.c,v 1.47 2011/08/14 14:52:29 ragge Exp 	*/	
-/*	$NetBSD: optim.c,v 1.1.1.4 2011/09/01 12:46:59 plunky Exp $	*/
+/*	Id: optim.c,v 1.49 2012/03/22 18:51:40 plunky Exp 	*/	
+/*	$NetBSD: optim.c,v 1.1.1.4.4.1 2012/04/03 16:36:21 riz Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -86,10 +86,10 @@ optim(NODE *p)
 {
 	int o, ty;
 	NODE *sp, *q;
-	int i, sz;
+	OFFSZ sz;
+	int i;
 
-	if( oflag ) return(p);
-
+	if (odebug) return(p);
 
 	ty = coptype(p->n_op);
 	if( ty == LTYPE ) return(p);
