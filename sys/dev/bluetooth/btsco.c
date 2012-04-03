@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.27 2012/03/26 06:49:15 mrg Exp $	*/
+/*	$NetBSD: btsco.c,v 1.28 2012/04/03 09:32:53 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.27 2012/03/26 06:49:15 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.28 2012/04/03 09:32:53 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -343,6 +343,8 @@ btsco_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "audio_attach_mi failed\n");
 		return;
 	}
+
+	pmf_device_register(self, NULL, NULL);
 }
 
 static int
@@ -351,6 +353,8 @@ btsco_detach(device_t self, int flags)
 	struct btsco_softc *sc = device_private(self);
 
 	DPRINTF("sc=%p\n", sc);
+
+	pmf_device_deregister(self);
 
 	mutex_enter(bt_lock);
 	if (sc->sc_sco != NULL) {
