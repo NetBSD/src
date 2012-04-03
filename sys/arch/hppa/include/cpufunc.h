@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.15 2012/02/04 16:33:27 skrll Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.16 2012/04/03 12:07:26 skrll Exp $	*/
 
 /*	$OpenBSD: cpufunc.h,v 1.17 2000/05/15 17:22:40 mickey Exp $	*/
 
@@ -180,7 +180,6 @@ void fdcache(pa_space_t, vaddr_t, vsize_t);
 void pdcache(pa_space_t, vaddr_t, vsize_t);
 void fcacheall(void);
 void ptlball(void);
-hppa_hpa_t cpu_gethpa(int);
 
 #define PCXL2_ACCEL_IO_START		0xf4000000
 #define PCXL2_ACCEL_IO_END		(0xfc000000 - 1)
