@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.931 2012/04/01 14:09:47 tron Exp $
+#	$NetBSD: 3RDPARTY,v 1.932 2012/04/03 22:21:13 riz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -889,7 +889,7 @@ Notes:
 Package:	pcc
 Version:	1.1.0.DEVEL 20120325
 Current Vers:	1.1.0.DEVEL 20120325
-Maintainer:	Anders Magnusson <ragge@netbsd.org>
+Maintainer:	Anders Magnusson <ragge@NetBSD.org>
 Archive Site:	ftp://pcc.ludd.ltu.se/pub/pcc/
 Home Page:	http://pcc.ludd.ltu.se/
 Mailing List:	pcc-list@ludd.ltu.se
