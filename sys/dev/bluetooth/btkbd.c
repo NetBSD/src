@@ -1,4 +1,4 @@
-/*	$NetBSD: btkbd.c,v 1.13 2012/01/11 17:27:45 plunky Exp $	*/
+/*	$NetBSD: btkbd.c,v 1.14 2012/04/03 09:32:53 plunky Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.13 2012/01/11 17:27:45 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.14 2012/04/03 09:32:53 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -237,6 +237,8 @@ btkbd_attach(device_t parent, device_t self, void *aux)
 	wska.accesscookie = sc;
 
 	sc->sc_wskbd = config_found(self, &wska, wskbddevprint);
+
+	pmf_device_register(self, NULL, NULL);
 }
 
 static int
@@ -244,6 +246,8 @@ btkbd_detach(device_t self, int flags)
 {
 	struct btkbd_softc *sc = device_private(self);
 	int err = 0;
+
+	pmf_device_deregister(self);
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 #ifdef BTKBD_REPEAT
