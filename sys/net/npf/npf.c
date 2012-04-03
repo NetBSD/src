@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.7 2012/01/15 00:49:48 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.7.2.1 2012/04/03 17:22:53 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.7 2012/01/15 00:49:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.7.2.1 2012/04/03 17:22:53 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -70,6 +70,8 @@ typedef struct {
 	npf_ruleset_t *		n_rules;
 	npf_tableset_t *	n_tables;
 	npf_ruleset_t *		n_nat_rules;
+	prop_dictionary_t	n_dict;
+	bool			n_default_pass;
 } npf_core_t;
 
 static void	npf_core_destroy(npf_core_t *);
@@ -92,6 +94,7 @@ npf_init(void)
 #endif
 	npf_ruleset_t *rset, *nset;
 	npf_tableset_t *tset;
+	prop_dictionary_t dict;
 	int error = 0;
 
 	rw_init(&npf_lock);
@@ -103,10 +106,11 @@ npf_init(void)
 	npflogattach(1);
 
 	/* Load empty configuration. */
+	dict = prop_dictionary_create();
 	rset = npf_ruleset_create();
 	tset = npf_tableset_create();
 	nset = npf_ruleset_create();
-	npf_reload(rset, tset, nset);
+	npf_reload(dict, rset, tset, nset, true);
 	KASSERT(npf_core != NULL);
 
 #ifdef _MODULE
@@ -124,20 +128,20 @@ static int
 npf_fini(void)
 {
 
-	/*
-	 * At first, detach device, remove pfil hooks and unload existing
-	 * configuration, destroy structures.
-	 */
+	/* At first, detach device and remove pfil hooks. */
 #ifdef _MODULE
 	devsw_detach(NULL, &npf_cdevsw);
 #endif
-	npf_unregister_pfil();
-	npf_core_destroy(npf_core);
 	npflogdetach();
+	npf_pfil_unregister();
 
-	/* Note: order is particular. */
-	npf_nat_sysfini();
+	/* Flush all sessions, destroy configuration (ruleset, etc). */
+	npf_session_tracking(false);
+	npf_core_destroy(npf_core);
+
+	/* Finally, safe to destroy the subsystems. */
 	npf_alg_sysfini();
+	npf_nat_sysfini();
 	npf_session_sysfini();
 	npf_tableset_sysfini();
 	percpu_free(npf_stats_percpu, NPF_STATS_SIZE);
@@ -210,6 +214,9 @@ npf_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 	case IOC_NPF_RELOAD:
 		error = npfctl_reload(cmd, data);
 		break;
+	case IOC_NPF_GETCONF:
+		error = npfctl_getconf(cmd, data);
+		break;
 	case IOC_NPF_TABLE:
 		error = npfctl_table(data);
 		break;
@@ -254,6 +261,7 @@ static void
 npf_core_destroy(npf_core_t *nc)
 {
 
+	prop_object_release(nc->n_dict);
 	npf_ruleset_destroy(nc->n_rules);
 	npf_ruleset_destroy(nc->n_nat_rules);
 	npf_tableset_destroy(nc->n_tables);
@@ -265,15 +273,18 @@ npf_core_destroy(npf_core_t *nc)
  * Then destroy old (unloaded) structures.
  */
 void
-npf_reload(npf_ruleset_t *rset, npf_tableset_t *tset, npf_ruleset_t *nset)
+npf_reload(prop_dictionary_t dict, npf_ruleset_t *rset,
+    npf_tableset_t *tset, npf_ruleset_t *nset, bool flush)
 {
 	npf_core_t *nc, *onc;
 
 	/* Setup a new core structure. */
-	nc = kmem_alloc(sizeof(npf_core_t), KM_SLEEP);
+	nc = kmem_zalloc(sizeof(npf_core_t), KM_SLEEP);
 	nc->n_rules = rset;
 	nc->n_tables = tset;
 	nc->n_nat_rules = nset;
+	nc->n_dict = dict;
+	nc->n_default_pass = flush;
 
 	/* Lock and load the core structure. */
 	rw_enter(&npf_lock, RW_WRITER);
@@ -328,6 +339,20 @@ bool
 npf_core_locked(void)
 {
 	return rw_lock_held(&npf_lock);
+}
+
+prop_dictionary_t
+npf_core_dict(void)
+{
+	KASSERT(rw_lock_held(&npf_lock));
+	return npf_core->n_dict;
+}
+
+bool
+npf_default_pass(void)
+{
+	KASSERT(rw_lock_held(&npf_lock));
+	return npf_core->n_default_pass;
 }
 
 /*

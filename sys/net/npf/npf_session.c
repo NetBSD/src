@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_session.c,v 1.10 2011/11/29 20:05:30 rmind Exp $	*/
+/*	$NetBSD: npf_session.c,v 1.10.4.1 2012/04/03 17:22:52 riz Exp $	*/
 
 /*-
- * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -49,7 +49,7 @@
  *	indicate that the packet of the backwards stream should be passed
  *	without inspection of the ruleset.  Another purpose is to associate
  *	NAT with a connection (which implies connection tracking).  Such
- *	sessions are created according to the NAT policies and they have a 1:1
+ *	sessions are created according to the NAT policies and they have a
  *	relationship with NAT translation structure via npf_session_t::s_nat.
  *	A single session can serve both purposes, which is a common case.
  *
@@ -61,9 +61,9 @@
  *	depending on session properties (e.g. last activity time, protocol)
  *	removes session entries and expires the actual sessions.
  *
- *	Each session has a reference count, which is taken on lookup and
- *	needs to be released by the caller.  Reference guarantees that
- *	session will not be destroyed, although it might be expired.
+ *	Each session has a reference count.  Reference is acquired on lookup
+ *	and should be released by the caller.  Reference guarantees that the
+ *	session will not be destroyed, although it may be expired.
  *
  * External session identifiers
  *
@@ -74,10 +74,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.10 2011/11/29 20:05:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.10.4.1 2012/04/03 17:22:52 riz Exp $");
 
 #include <sys/param.h>
-#include <sys/kernel.h>
+#include <sys/types.h>
 
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -93,7 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.10 2011/11/29 20:05:30 rmind Exp $
 #include <sys/rwlock.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
-#include <sys/types.h>
 
 #include "npf_impl.h"
 
@@ -197,7 +196,7 @@ npf_session_sysfini(void)
 {
 
 	/* Disable tracking, flush all sessions. */
-	sess_tracking_stop();
+	npf_session_tracking(false);
 	KASSERT(sess_tracking == 0);
 	KASSERT(sess_gc_lwp == NULL);
 
@@ -277,7 +276,7 @@ sess_htable_create(void)
 	npf_sehash_t *stbl, *sh;
 	u_int i;
 
-	stbl = kmem_alloc(SESS_HASH_BUCKETS * sizeof(*sh), KM_SLEEP);
+	stbl = kmem_zalloc(SESS_HASH_BUCKETS * sizeof(*sh), KM_SLEEP);
 	if (stbl == NULL) {
 		return NULL;
 	}
@@ -406,7 +405,10 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
 	npf_sentry_t *sen;
 	npf_session_t *se;
 
-	/* Layer 3 and 4 should be already cached for session tracking. */
+	/*
+	 * If layer 3 and 4 are not cached - protocol is not supported
+	 * or packet is invalid.
+	 */
 	if (!sess_tracking || !npf_iscached(npc, NPC_IP46) ||
 	    !npf_iscached(npc, NPC_LAYER4)) {
 		return NULL;
@@ -491,7 +493,7 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
 /*
  * npf_establish_session: create a new session, insert into the global list.
  *
- * => Sessions is created with the held reference (for caller).
+ * => Session is created with the reference held for the caller.
  */
 npf_session_t *
 npf_session_establish(const npf_cache_t *npc, nbuf_t *nbuf, const int di)
@@ -504,11 +506,14 @@ npf_session_establish(const npf_cache_t *npc, nbuf_t *nbuf, const int di)
 	int proto, sz;
 	bool ok;
 
-	if (!sess_tracking) {
+	/*
+	 * If layer 3 and 4 are not cached - protocol is not supported
+	 * or packet is invalid.
+	 */
+	if (!sess_tracking || !npf_iscached(npc, NPC_IP46) ||
+	    !npf_iscached(npc, NPC_LAYER4)) {
 		return NULL;
 	}
-	KASSERT(npf_iscached(npc, NPC_IP46));
-	KASSERT(npf_iscached(npc, NPC_LAYER4));
 
 	/* Allocate and initialise new state. */
 	se = pool_cache_get(sess_cache, PR_NOWAIT);

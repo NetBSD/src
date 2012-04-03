@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ncgen.c,v 1.7 2012/01/09 01:47:09 rmind Exp $	*/
+/*	$NetBSD: npf_ncgen.c,v 1.7.2.1 2012/04/03 17:22:54 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_ncgen.c,v 1.7 2012/01/09 01:47:09 rmind Exp $");
+__RCSID("$NetBSD: npf_ncgen.c,v 1.7.2.1 2012/04/03 17:22:54 riz Exp $");
 
 #include <stdlib.h>
 #include <stddef.h>
@@ -388,10 +388,14 @@ npfctl_gennc_tcpfl(nc_ctx_t *ctx, uint8_t tf, uint8_t tf_mask)
 void
 npfctl_ncgen_print(const void *code, size_t len)
 {
+#if 0
 	const uint32_t *op = code;
 
 	while (len) {
 		printf("\t> |0x%02x|\n", (u_int)*op++);
 		len -= sizeof(*op);
 	}
+#else
+	npfctl_ncode_disassemble(stdout, code, len);
+#endif
 }

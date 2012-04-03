@@ -1,16 +1,18 @@
-# $NetBSD: Makefile,v 1.5 2012/01/08 21:34:21 rmind Exp $
+# $NetBSD: Makefile,v 1.5.2.1 2012/04/03 17:22:54 riz Exp $
 
 PROG=		npfctl
 MAN=		npfctl.8 npf.conf.5
 
-SRCS=		npfctl.c npf_var.c npf_data.c npf_ncgen.c npf_build.c
+SRCS=		npfctl.c npf_var.c npf_data.c npf_ncgen.c npf_build.c \
+		npf_disassemble.c
 
 CPPFLAGS+=	-I${.CURDIR}
 SRCS+=		npf_scan.l npf_parse.y
 YHEADER=	1
+YFLAGS+=	-v
 
-LDADD+=		-lnpf -lprop -ly
-DPADD+=		${LIBNPF} ${LIBPROP}
+LDADD+=		-lnpf -lprop -lutil -ly
+DPADD+=		${LIBNPF} ${LIBPROP} ${LIBUTIL}
 
 WARNS?=		4
 NOLINT=		# disabled (note: deliberately)

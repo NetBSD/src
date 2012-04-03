@@ -1,7 +1,7 @@
-/*	$NetBSD: npf.h,v 1.6 2012/02/05 00:37:13 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.6.2.1 2012/04/03 17:22:54 riz Exp $	*/
 
 /*-
- * Copyright (c) 2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -63,6 +63,8 @@ typedef struct {
 	int		ne_ncode_errat;
 } nl_error_t;
 
+typedef void (*nl_rule_callback_t)(nl_rule_t *, unsigned);
+
 #endif
 
 #define	NPF_CODE_NCODE		1
@@ -75,6 +77,7 @@ typedef struct {
 nl_config_t *	npf_config_create(void);
 int		npf_config_submit(nl_config_t *, int);
 void		npf_config_destroy(nl_config_t *);
+nl_config_t *	npf_config_retrieve(int, bool *, bool *);
 int		npf_config_flush(int);
 #ifdef _NPF_PRIVATE
 void		_npf_config_error(nl_config_t *, nl_error_t *);
@@ -86,6 +89,12 @@ int		npf_rule_setcode(nl_rule_t *, int, const void *, size_t);
 int		npf_rule_setproc(nl_config_t *, nl_rule_t *, const char *);
 bool		npf_rule_exists_p(nl_config_t *, const char *);
 int		npf_rule_insert(nl_config_t *, nl_rule_t *, nl_rule_t *, pri_t);
+#ifdef _NPF_PRIVATE
+int		_npf_rule_foreach(nl_config_t *, nl_rule_callback_t);
+pri_t		_npf_rule_getinfo(nl_rule_t *, const char **, uint32_t *, u_int *);
+const void *	_npf_rule_ncode(nl_rule_t *, size_t *);
+const char *	_npf_rule_rproc(nl_rule_t *);
+#endif
 void		npf_rule_destroy(nl_rule_t *);
 
 nl_rproc_t *	npf_rproc_create(const char *);

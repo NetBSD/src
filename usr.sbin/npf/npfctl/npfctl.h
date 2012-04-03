@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.11 2012/02/05 00:37:13 rmind Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.11.2.1 2012/04/03 17:22:54 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -153,5 +153,6 @@ void		npfctl_build_rule(int, u_int, sa_family_t,
 void		npfctl_build_nat(int, u_int, const filt_opts_t *,
 		    npfvar_t *, npfvar_t *);
 void		npfctl_build_table(const char *, u_int, const char *);
+int		npfctl_ncode_disassemble(FILE *, const void *, size_t);
 
 #endif
