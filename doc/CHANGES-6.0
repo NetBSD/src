@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.62 2012/04/02 18:31:13 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.63 2012/04/03 15:58:45 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1541,4 +1541,41 @@ crypto/external/bsd/openssl/dist/crypto/rand/rand_unix.c 1.3
 	Prevent sshd from consuming all available entropy in the
 	system.
 	[tls, ticket #146]
+
+sys/arch/hp700/hp700/intr.c			1.38
+
+	Check for HPPA_SID_KERNEL when checking for interrupt in the
+	mutex_enter critical section.
+	[skrll, ticket #148]
+
+sys/dev/pci/jmide.c				1.13
+sys/dev/pci/pcidevs				1.1108
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add support for JMB 362 (as found on ASUS M5A99X motherboard).
+	[pgoyette, ticket #149]
+
+sys/uvm/uvm_amap.c				1.106
+
+	Adjust amap_cow_now() to make UVM_PAGE_TRKOWN happy.
+	[chs, ticket #150]
+
+sys/dev/pci/pcidevs				1.1106
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/pci/viaide.c				1.78
+
+	Add UDMA support for VIA VX900 media system processor IDE controller.
+	[tsutsui, ticket #151]
+
+external/gpl3/binutils/dist/bfd/elflink.c	1.6
+
+	Fix merge botch dealing with linker assignments.
+	[martin, ticket #152]
+
+sys/fs/puffs/puffs_vnops.c			1.164
+
+	Prevent access beyond end of PUFFS file on read.
+	[jakllsch, ticket #154]
 
