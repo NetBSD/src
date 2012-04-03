@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.24 2012/04/03 14:13:26 skrll Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.25 2012/04/03 14:15:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ LEAF_ENTRY(mutex_exit)
 
 	ldi	__SIMPLELOCK_RAW_UNLOCKED, %t2	/* unlocked = 1 */
 	ldo	(MTX_LOCK + HPPA_LDCW_ALIGN - 1)(%arg0), %t3
-	depi	0, 31, 4, %t3
+	depi	0, 31, 4, %t3			/* bits[28-31] = 0 */
 	stw	%t1, MTX_OWNER(%arg0)
 	stw	%t2, 0(%t3)			/* %t3 is properly aligned */
 	sync
@@ -265,7 +265,7 @@ _lock_cas_mp_spin:
 
 _lock_cas_mp_interlocked:
 	ldw	0(%arg0), %ret0
-	comclr,<>	%arg1, %ret0, %r0	/* If *ptr != old, then nullify */
+	comclr,<> %arg1, %ret0, %r0	/* If *ptr != old, then nullify */
 	stw	%arg2, 0(%arg0)
 
 	sync
