@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.81 2012/02/23 21:38:53 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.82 2012/04/03 12:07:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.81 2012/02/23 21:38:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.82 2012/04/03 12:07:26 skrll Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -101,8 +101,6 @@ int mbusdebug = 1;
 
 struct mainbus_softc {
 	device_t sc_dv;
-
-	hppa_hpa_t sc_hpa;
 };
 
 int	mbmatch(device_t, cfdata_t, void *);
@@ -1387,8 +1385,6 @@ mbattach(device_t parent, device_t self, void *aux)
 	((struct iomod *)(hppa_mcpuhpa & HPPA_FLEX_MASK))[FPA_IOMOD].io_flex =
 		(void *)((hppa_mcpuhpa & HPPA_FLEX_MASK) | DMA_ENABLE);
 
-	sc->sc_hpa = hppa_mcpuhpa;
-
 	aprint_normal(" [flex %lx]\n", hppa_mcpuhpa & HPPA_FLEX_MASK);
 
 	/* PDC first */
@@ -1455,19 +1451,6 @@ mbattach(device_t parent, device_t self, void *aux)
 	pdc_scanbus(self, &nca, mb_module_callback);
 
 	hppa_modules_done();
-}
-
-/*
- * retrive CPU #N HPA value
- */
-hppa_hpa_t
-cpu_gethpa(int n)
-{
-	struct mainbus_softc *sc;
-
-	sc = device_lookup_private(&mainbus_cd, 0);
-
-	return sc->sc_hpa;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_sgc.c,v 1.8 2011/07/01 18:33:09 dyoung Exp $	*/
+/*	$NetBSD: siop_sgc.c,v 1.9 2012/04/03 12:07:26 skrll Exp $	*/
 
 /*	$OpenBSD: siop_sgc.c,v 1.1 2007/08/05 19:09:52 kettenis Exp $	*/
 
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_sgc.c,v 1.8 2011/07/01 18:33:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_sgc.c,v 1.9 2012/04/03 12:07:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -88,6 +88,7 @@ siop_sgc_attach(device_t parent, device_t self, void *aux)
 	struct siop_sgc_softc *sgc = device_private(self);
 	struct siop_softc *sc = &sgc->sc_siop;
 	struct confargs *ca = aux;
+	struct cpu_info *ci = &cpus[0];
 	volatile struct iomod *regs;
 
 	sc->sc_c.sc_dev = self;
@@ -126,7 +127,7 @@ siop_sgc_attach(device_t parent, device_t self, void *aux)
 
 	siop_sgc_reset(&sc->sc_c);
 
-	regs->io_eim = cpu_gethpa(0) | (31 - ca->ca_irq);
+	regs->io_eim = ci->ci_hpa | (31 - ca->ca_irq);
 	regs->io_ii_rw |= IO_II_INTEN;
 
 	aprint_normal(": NCR53C720 rev %d\n", bus_space_read_1(sc->sc_c.sc_rt,
