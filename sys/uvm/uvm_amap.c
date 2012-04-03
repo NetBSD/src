@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.105 2012/01/27 19:48:41 para Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.105.2.1 2012/04/03 15:40:36 riz Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.105 2012/01/27 19:48:41 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.105.2.1 2012/04/03 15:40:36 riz Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1035,6 +1035,7 @@ ReStart:
 
 		nanon = uvm_analloc();
 		if (nanon) {
+			nanon->an_lock = amap->am_lock;
 			npg = uvm_pagealloc(NULL, 0, nanon, 0);
 		} else {
 			npg = NULL;
@@ -1042,6 +1043,7 @@ ReStart:
 		if (nanon == NULL || npg == NULL) {
 			amap_unlock(amap);
 			if (nanon) {
+				nanon->an_lock = NULL;
 				nanon->an_ref--;
 				KASSERT(nanon->an_ref == 0);
 				uvm_anon_free(nanon);
@@ -1055,7 +1057,6 @@ ReStart:
 		 * Also, setup its lock (share the with amap's lock).
 		 */
 
-		nanon->an_lock = amap->am_lock;
 		uvm_pagecopy(pg, npg);
 		anon->an_ref--;
 		KASSERT(anon->an_ref > 0);
