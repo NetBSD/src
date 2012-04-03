@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.22 2011/01/30 22:36:37 skrll Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.23 2012/04/03 11:43:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -31,8 +31,6 @@
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
-#include "opt_cputype.h"
-#include "opt_ddb.h"
 
 #define __MUTEX_PRIVATE
 
