@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_ctl.c,v 1.12 2012/02/05 00:37:13 rmind Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.12.2.1 2012/04/03 17:22:53 riz Exp $	*/
 
 /*-
- * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -37,11 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.12 2012/02/05 00:37:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.12.2.1 2012/04/03 17:22:53 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
-#include <sys/kernel.h>
 
 #include <prop/proplib.h>
 
@@ -67,10 +66,10 @@ npfctl_switch(void *data)
 
 	if (onoff) {
 		/* Enable: add pfil hooks. */
-		error = npf_register_pfil();
+		error = npf_pfil_register();
 	} else {
 		/* Disable: remove pfil hooks. */
-		npf_unregister_pfil();
+		npf_pfil_unregister();
 		error = 0;
 	}
 	return error;
@@ -426,7 +425,7 @@ int
 npfctl_reload(u_long cmd, void *data)
 {
 	struct plistref *pref = data;
-	prop_dictionary_t dict, errdict;
+	prop_dictionary_t npf_dict, errdict;
 	prop_array_t natlist, tables, rprocs, rules;
 	npf_tableset_t *tblset = NULL;
 	npf_ruleset_t *rlset = NULL;
@@ -436,12 +435,12 @@ npfctl_reload(u_long cmd, void *data)
 
 	/* Retrieve the dictionary. */
 #ifdef _KERNEL
-	error = prop_dictionary_copyin_ioctl(pref, cmd, &dict);
+	error = prop_dictionary_copyin_ioctl(pref, cmd, &npf_dict);
 	if (error)
 		return error;
 #else
-	dict = prop_dictionary_internalize_from_file(data);
-	if (dict == NULL)
+	npf_dict = prop_dictionary_internalize_from_file(data);
+	if (npf_dict == NULL)
 		return EINVAL;
 #endif
 	/* Dictionary for error reporting. */
@@ -449,7 +448,7 @@ npfctl_reload(u_long cmd, void *data)
 
 	/* NAT policies. */
 	nset = npf_ruleset_create();
-	natlist = prop_dictionary_get(dict, "translation");
+	natlist = prop_dictionary_get(npf_dict, "translation");
 	error = npf_mk_natlist(nset, natlist, errdict);
 	if (error) {
 		goto fail;
@@ -457,7 +456,7 @@ npfctl_reload(u_long cmd, void *data)
 
 	/* Tables. */
 	tblset = npf_tableset_create();
-	tables = prop_dictionary_get(dict, "tables");
+	tables = prop_dictionary_get(npf_dict, "tables");
 	error = npf_mk_tables(tblset, tables, errdict);
 	if (error) {
 		goto fail;
@@ -465,21 +464,21 @@ npfctl_reload(u_long cmd, void *data)
 
 	/* Rules and rule procedures. */
 	rlset = npf_ruleset_create();
-	rprocs = prop_dictionary_get(dict, "rprocs");
-	rules = prop_dictionary_get(dict, "rules");
+	rprocs = prop_dictionary_get(npf_dict, "rprocs");
+	rules = prop_dictionary_get(npf_dict, "rules");
 	error = npf_mk_rules(rlset, rules, rprocs, errdict);
 	if (error) {
 		goto fail;
 	}
 
 	flush = false;
-	prop_dictionary_get_bool(dict, "flush", &flush);
+	prop_dictionary_get_bool(npf_dict, "flush", &flush);
 
 	/*
 	 * Finally - reload ruleset, tableset and NAT policies.
 	 * Operation will be performed as a single transaction.
 	 */
-	npf_reload(rlset, tblset, nset);
+	npf_reload(npf_dict, rlset, tblset, nset, flush);
 
 	/* Turn on/off session tracking accordingly. */
 	npf_session_tracking(!flush);
@@ -502,13 +501,33 @@ fail:
 	if (tblset) {
 		npf_tableset_destroy(tblset);
 	}
-	prop_object_release(dict);
+	if (error) {
+		prop_object_release(npf_dict);
+	}
 
 	/* Error report. */
 	prop_dictionary_set_int32(errdict, "errno", error);
+#ifdef _KERNEL
 	prop_dictionary_copyout_ioctl(pref, cmd, errdict);
+#endif
 	prop_object_release(errdict);
 	return 0;
+}
+
+int
+npfctl_getconf(u_long cmd, void *data)
+{
+	struct plistref *pref = data;
+	prop_dictionary_t npf_dict;
+	int error;
+
+	npf_core_enter();
+	npf_dict = npf_core_dict();
+	prop_dictionary_set_bool(npf_dict, "active", npf_pfil_registered_p());
+	error = prop_dictionary_copyout_ioctl(pref, cmd, npf_dict);
+	npf_core_exit();
+
+	return error;
 }
 
 /*
@@ -561,7 +580,9 @@ out:		/* Error path. */
 
 	/* Error report. */
 	prop_dictionary_set_int32(errdict, "errno", error);
+#ifdef _KERNEL
 	prop_dictionary_copyout_ioctl(pref, cmd, errdict);
+#endif
 	prop_object_release(errdict);
 	return error;
 }

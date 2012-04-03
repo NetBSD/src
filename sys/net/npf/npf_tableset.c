@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_tableset.c,v 1.9 2012/01/15 00:49:49 rmind Exp $	*/
+/*	$NetBSD: npf_tableset.c,v 1.9.2.1 2012/04/03 17:22:52 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -39,10 +39,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.9 2012/01/15 00:49:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.9.2.1 2012/04/03 17:22:52 riz Exp $");
 
 #include <sys/param.h>
-#include <sys/kernel.h>
+#include <sys/types.h>
 
 #include <sys/atomic.h>
 #include <sys/hash.h>

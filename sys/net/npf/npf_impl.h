@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_impl.h,v 1.10 2012/02/06 23:30:14 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.10.2.1 2012/04/03 17:22:53 riz Exp $	*/
 
 /*-
- * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -91,6 +91,9 @@ typedef npf_table_t *		npf_tableset_t;
  * DEFINITIONS.
  */
 
+#define	NPF_DECISION_BLOCK	0
+#define	NPF_DECISION_PASS	1
+
 typedef bool (*npf_algfunc_t)(npf_cache_t *, nbuf_t *, void *);
 
 #define	NPF_NCODE_LIMIT		1024
@@ -127,12 +130,17 @@ npf_ruleset_t *	npf_core_natset(void);
 npf_tableset_t *npf_core_tableset(void);
 void		npf_core_exit(void);
 bool		npf_core_locked(void);
-void		npf_reload(npf_ruleset_t *, npf_tableset_t *, npf_ruleset_t *);
+bool		npf_default_pass(void);
+prop_dictionary_t npf_core_dict(void);
+
+void		npf_reload(prop_dictionary_t, npf_ruleset_t *,
+		    npf_tableset_t *, npf_ruleset_t *, bool);
 
 void		npflogattach(int);
 void		npflogdetach(void);
 int		npfctl_switch(void *);
 int		npfctl_reload(u_long, void *);
+int		npfctl_getconf(u_long, void *);
 int		npfctl_sessions_save(u_long, void *);
 int		npfctl_sessions_load(u_long, void *);
 int		npfctl_update_rule(u_long, void *);
@@ -142,8 +150,9 @@ void		npf_stats_inc(npf_stats_t);
 void		npf_stats_dec(npf_stats_t);
 
 /* Packet filter hooks. */
-int		npf_register_pfil(void);
-void		npf_unregister_pfil(void);
+int		npf_pfil_register(void);
+void		npf_pfil_unregister(void);
+bool		npf_pfil_registered_p(void);
 void		npf_log_packet(npf_cache_t *, nbuf_t *, int);
 
 /* Protocol helpers. */

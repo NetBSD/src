@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg_icmp.c,v 1.8 2011/11/29 20:05:30 rmind Exp $	*/
+/*	$NetBSD: npf_alg_icmp.c,v 1.8.4.1 2012/04/03 17:22:53 riz Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,10 +34,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.8 2011/11/29 20:05:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.8.4.1 2012/04/03 17:22:53 riz Exp $");
 
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/module.h>
 #include <sys/pool.h>
 

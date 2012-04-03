@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.7 2012/02/05 00:37:13 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.7.2.1 2012/04/03 17:22:54 riz Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.7 2012/02/05 00:37:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.7.2.1 2012/04/03 17:22:54 riz Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.7 2012/02/05 00:37:13 rmind Exp $");
 
 struct nl_config {
 	/* Rules, translations, tables, procedures. */
+	prop_dictionary_t	ncf_dict;
 	prop_array_t		ncf_rules_list;
 	prop_array_t		ncf_rproc_list;
 	prop_array_t		ncf_table_list;
@@ -139,6 +140,33 @@ npf_config_submit(nl_config_t *ncf, int fd)
 	return error;
 }
 
+nl_config_t *
+npf_config_retrieve(int fd, bool *active, bool *loaded)
+{
+	prop_dictionary_t npf_dict;
+	nl_config_t *ncf;
+	int error;
+
+	error = prop_dictionary_recv_ioctl(fd, IOC_NPF_GETCONF, &npf_dict);
+	if (error) {
+		return NULL;
+	}
+	ncf = calloc(1, sizeof(*ncf));
+	if (ncf == NULL) {
+		prop_object_release(npf_dict);
+		return NULL;
+	}
+	ncf->ncf_dict = npf_dict;
+	ncf->ncf_rules_list = prop_dictionary_get(npf_dict, "rules");
+	ncf->ncf_rproc_list = prop_dictionary_get(npf_dict, "rprocs");
+	ncf->ncf_table_list = prop_dictionary_get(npf_dict, "tables");
+	ncf->ncf_nat_list = prop_dictionary_get(npf_dict, "translation");
+
+	prop_dictionary_get_bool(npf_dict, "active", active);
+	*loaded = (ncf->ncf_rules_list != NULL);
+	return ncf;
+}
+
 int
 npf_config_flush(int fd)
 {
@@ -174,10 +202,14 @@ void
 npf_config_destroy(nl_config_t *ncf)
 {
 
-	prop_object_release(ncf->ncf_rules_list);
-	prop_object_release(ncf->ncf_rproc_list);
-	prop_object_release(ncf->ncf_table_list);
-	prop_object_release(ncf->ncf_nat_list);
+	if (ncf->ncf_dict == NULL) {
+		prop_object_release(ncf->ncf_rules_list);
+		prop_object_release(ncf->ncf_rproc_list);
+		prop_object_release(ncf->ncf_table_list);
+		prop_object_release(ncf->ncf_nat_list);
+	} else {
+		prop_object_release(ncf->ncf_dict);
+	}
 	if (ncf->ncf_err) {
 		prop_object_release(ncf->ncf_err);
 	}
@@ -302,6 +334,73 @@ npf_rule_insert(nl_config_t *ncf, nl_rule_t *parent, nl_rule_t *rl, pri_t pri)
 	}
 	prop_array_add(rlset, rldict);
 	return 0;
+}
+
+static int
+_npf_rule_foreach1(prop_array_t rules, unsigned nlevel, nl_rule_callback_t func)
+{
+	prop_dictionary_t rldict;
+	prop_object_iterator_t it;
+
+	if (!rules || prop_object_type(rules) != PROP_TYPE_ARRAY) {
+		return ENOENT;
+	}
+	it = prop_array_iterator(rules);
+	if (it == NULL) {
+		return ENOMEM;
+	}
+	while ((rldict = prop_object_iterator_next(it)) != NULL) {
+		prop_array_t subrules;
+		nl_rule_t nrl;
+
+		nrl.nrl_dict = rldict;
+		(*func)(&nrl, nlevel);
+
+		subrules = prop_dictionary_get(rldict, "subrules");
+		(void)_npf_rule_foreach1(subrules, nlevel + 1, func);
+	}
+	prop_object_iterator_release(it);
+	return 0;
+}
+
+int
+_npf_rule_foreach(nl_config_t *ncf, nl_rule_callback_t func)
+{
+
+	return _npf_rule_foreach1(ncf->ncf_rules_list, 0, func);
+}
+
+pri_t
+_npf_rule_getinfo(nl_rule_t *nrl, const char **rname, uint32_t *attr,
+    u_int *if_idx)
+{
+	prop_dictionary_t rldict = nrl->nrl_dict;
+	pri_t prio;
+
+	prop_dictionary_get_cstring_nocopy(rldict, "name", rname);
+	prop_dictionary_get_uint32(rldict, "attributes", attr);
+	prop_dictionary_get_int32(rldict, "priority", &prio);
+	prop_dictionary_get_uint32(rldict, "interface", if_idx);
+	return prio;
+}
+
+const void *
+_npf_rule_ncode(nl_rule_t *nrl, size_t *size)
+{
+	prop_dictionary_t rldict = nrl->nrl_dict;
+	prop_object_t obj = prop_dictionary_get(rldict, "ncode");
+	*size = prop_data_size(obj);
+	return prop_data_data_nocopy(obj);
+}
+
+const char *
+_npf_rule_rproc(nl_rule_t *nrl)
+{
+	prop_dictionary_t rldict = nrl->nrl_dict;
+	const char *rpname = NULL;
+
+	prop_dictionary_get_cstring_nocopy(rldict, "rproc", &rpname);
+	return rpname;
 }
 
 void

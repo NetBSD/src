@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_processor.c,v 1.9 2012/02/05 00:37:13 rmind Exp $	*/
+/*	$NetBSD: npf_processor.c,v 1.9.2.1 2012/04/03 17:22:53 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -47,17 +47,12 @@
  * N-code memory address and thus instructions should be word aligned.
  * All processing is done in 32 bit words, since both instructions (their
  * codes) and arguments use 32 bits words.
- *
- * TODO:
- * - There is some space for better a abstraction.  Duplicated opcode
- *   maintenance in npf_ncode_process() and nc_insn_check() might be avoided.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_processor.c,v 1.9 2012/02/05 00:37:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_processor.c,v 1.9.2.1 2012/04/03 17:22:53 riz Exp $");
 
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/types.h>
 #include <sys/kmem.h>
 
