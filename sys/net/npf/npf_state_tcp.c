@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state_tcp.c,v 1.3 2011/12/08 23:36:57 rmind Exp $	*/
+/*	$NetBSD: npf_state_tcp.c,v 1.4 2012/04/03 22:14:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.3 2011/12/08 23:36:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.4 2012/04/03 22:14:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -59,7 +59,7 @@ void	npf_state_sample(npf_state_t *);
 
 /*
  * NPF TCP states.  Note: these states are different from the TCP FSM
- * states of RFC 793.  Mind that packet filter is a man-in-the-middle.
+ * states of RFC 793.  The packet filter is a man-in-the-middle.
  */
 #define NPF_TCPS_OK		(-1)
 #define	NPF_TCPS_CLOSED		0
@@ -430,7 +430,7 @@ npf_tcp_inwindow(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst,
 	 * total length of the packet is unknown - bump the boundary.
 	 */
 	if (ackskew < 0) {
-		tstate->nst_end = end;
+		tstate->nst_end = ack;
 	}
 	/* Keep track of the maximum window seen. */
 	if (fstate->nst_maxwin < win) {
