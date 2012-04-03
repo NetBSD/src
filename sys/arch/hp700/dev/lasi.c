@@ -1,4 +1,4 @@
-/*	$NetBSD: lasi.c,v 1.21 2011/07/01 18:33:09 dyoung Exp $	*/
+/*	$NetBSD: lasi.c,v 1.22 2012/04/03 12:07:26 skrll Exp $	*/
 
 /*	$OpenBSD: lasi.c,v 1.4 2001/06/09 03:57:19 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.21 2011/07/01 18:33:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.22 2012/04/03 12:07:26 skrll Exp $");
 
 #undef LASIDEBUG
 
@@ -151,6 +151,7 @@ lasiattach(device_t parent, device_t self, void *aux)
 	struct confargs *ca = aux;
 	struct lasi_softc *sc = device_private(self);
 	struct gsc_attach_args ga;
+	struct cpu_info *ci = &cpus[0];
 	bus_space_handle_t ioh;
 	int s, in;
 
@@ -182,7 +183,7 @@ lasiattach(device_t parent, device_t self, void *aux)
 
 	/* interrupts guts */
 	s = splhigh();
-	sc->sc_trs->lasi_iar = cpu_gethpa(0) | (31 - ca->ca_irq);
+	sc->sc_trs->lasi_iar = ci->ci_hpa | (31 - ca->ca_irq);
 	sc->sc_trs->lasi_icr = 0;
 	sc->sc_trs->lasi_imr = ~0U;
 	in = sc->sc_trs->lasi_irr;
