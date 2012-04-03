@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1102.2.1 2012/03/22 23:00:28 riz Exp $
+$NetBSD: pcidevs,v 1.1102.2.2 2012/04/03 15:38:30 riz Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3116,6 +3116,7 @@ product ITT ITT3204	0x0002	ITT3204 MPEG Decoder
 /* JMicron products */
 product JMICRON	JMB360		0x2360 JMB360 SATA Controller
 product JMICRON	JMB361		0x2361 JMB361 SATA/PATA Controller
+product JMICRON	JMB362		0x2362 JMB362 SATA Controller
 product JMICRON	JMB363		0x2363 JMB363 SATA/PATA Controller
 product JMICRON	JMB365		0x2365 JMB365 SATA/PATA Controller
 product JMICRON	JMB366		0x2366 JMB366 SATA/PATA Controller
