@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.23 2012/04/03 11:43:36 skrll Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.24 2012/04/03 14:13:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,10 +49,8 @@
  * we don't need the overhead of interlocking.
  */
 
-#ifndef MULTIPROCESSOR
 
-	.global _lock_cas_ras_start
-	.global _lock_cas_ras_end
+#ifndef LOCKDEBUG
 
 	.global mutex_enter_crit_start
 	.global mutex_enter_crit_end
@@ -61,40 +59,9 @@
 	.import mutex_vector_exit, code
 	.import mutex_wakeup, code
 
-LEAF_ENTRY(_lock_cas)
-_lock_cas_ras_start:
-	ldw	0(%arg0),%t1
-	comb,<>	%arg1, %t1, 1f
-	 copy	%t1,%ret0
-_lock_cas_ras_end:
-	stw	%arg2, 0(%arg0)
-	copy	%arg1,%ret0
-1:
-	bv,n	%r0(%rp)
-
-EXIT(_lock_cas)
-
-STRONG_ALIAS(_atomic_cas_ulong,_lock_cas)
-STRONG_ALIAS(atomic_cas_ulong,_lock_cas)
-STRONG_ALIAS(_atomic_cas_32,_lock_cas)
-STRONG_ALIAS(atomic_cas_32,_lock_cas)
-STRONG_ALIAS(_atomic_cas_uint,_lock_cas)
-STRONG_ALIAS(atomic_cas_uint,_lock_cas)
-STRONG_ALIAS(_atomic_cas_ptr,_lock_cas)
-STRONG_ALIAS(atomic_cas_ptr,_lock_cas)
-
-STRONG_ALIAS(_atomic_cas_ulong_ni,_lock_cas)
-STRONG_ALIAS(atomic_cas_ulong_ni,_lock_cas)
-STRONG_ALIAS(_atomic_cas_32_ni,_lock_cas)
-STRONG_ALIAS(atomic_cas_32_ni,_lock_cas)
-STRONG_ALIAS(_atomic_cas_uint_ni,_lock_cas)
-STRONG_ALIAS(atomic_cas_uint_ni,_lock_cas)
-STRONG_ALIAS(_atomic_cas_ptr_ni,_lock_cas)
-STRONG_ALIAS(atomic_cas_ptr_ni,_lock_cas)
-
-#ifndef LOCKDEBUG
 /*
  * void mutex_exit(kmutex_t *mtx);
+ *
  */
 
 LEAF_ENTRY(mutex_exit)
@@ -192,6 +159,42 @@ mutex_enter_crit_end:
 EXIT(mutex_enter)
 
 #endif	/* !LOCKDEBUG */
+
+#ifndef MULTIPROCESSOR
+
+	.global _lock_cas_ras_start
+	.global _lock_cas_ras_end
+
+LEAF_ENTRY(_lock_cas)
+_lock_cas_ras_start:
+	ldw	0(%arg0),%t1
+	comb,<>	%arg1, %t1, 1f
+	 copy	%t1,%ret0
+_lock_cas_ras_end:
+	stw	%arg2,0(%arg0)
+	copy	%arg1,%ret0
+1:
+	bv,n	%r0(%rp)
+
+EXIT(_lock_cas)
+
+STRONG_ALIAS(_atomic_cas_ulong,_lock_cas)
+STRONG_ALIAS(atomic_cas_ulong,_lock_cas)
+STRONG_ALIAS(_atomic_cas_32,_lock_cas)
+STRONG_ALIAS(atomic_cas_32,_lock_cas)
+STRONG_ALIAS(_atomic_cas_uint,_lock_cas)
+STRONG_ALIAS(atomic_cas_uint,_lock_cas)
+STRONG_ALIAS(_atomic_cas_ptr,_lock_cas)
+STRONG_ALIAS(atomic_cas_ptr,_lock_cas)
+
+STRONG_ALIAS(_atomic_cas_ulong_ni,_lock_cas)
+STRONG_ALIAS(atomic_cas_ulong_ni,_lock_cas)
+STRONG_ALIAS(_atomic_cas_32_ni,_lock_cas)
+STRONG_ALIAS(atomic_cas_32_ni,_lock_cas)
+STRONG_ALIAS(_atomic_cas_uint_ni,_lock_cas)
+STRONG_ALIAS(atomic_cas_uint_ni,_lock_cas)
+STRONG_ALIAS(_atomic_cas_ptr_ni,_lock_cas)
+STRONG_ALIAS(atomic_cas_ptr_ni,_lock_cas)
 
 #else  /* !MULTIPROCESSOR */
 
@@ -291,6 +294,5 @@ STRONG_ALIAS(_atomic_cas_uint_ni,_lock_cas_mp)
 STRONG_ALIAS(atomic_cas_uint_ni,_lock_cas_mp)
 STRONG_ALIAS(_atomic_cas_ptr_ni,_lock_cas_mp)
 STRONG_ALIAS(atomic_cas_ptr_ni,_lock_cas_mp)
-
 
 #endif /* MULTIPROCESSOR */
