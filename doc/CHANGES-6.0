@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.64 2012/04/03 17:25:03 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.65 2012/04/03 17:32:12 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1661,4 +1661,14 @@ usr.sbin/npf/npfctl/npfctl.h			1.13
 
 	Various improvements to NPF, the NetBSD Packet Filter.
 	[rmind, ticket #158]
+
+sys/dev/bluetooth/bthidev.c			1.22
+sys/dev/bluetooth/bthub.c			1.18
+sys/dev/bluetooth/btkbd.c			1.14
+sys/dev/bluetooth/btmagic.c			1.2
+sys/dev/bluetooth/btms.c			1.10
+sys/dev/bluetooth/btsco.c			1.28
+
+	Power management for bthub(4).  PR#39006.
+	[plunky, ticket #159]
 
