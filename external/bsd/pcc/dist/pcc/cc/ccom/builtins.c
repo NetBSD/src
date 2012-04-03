@@ -1,5 +1,5 @@
-/*	Id: builtins.c,v 1.34 2011/10/24 08:53:18 plunky Exp 	*/	
-/*	$NetBSD: builtins.c,v 1.1.1.3 2012/01/11 20:33:08 plunky Exp $	*/
+/*	Id: builtins.c,v 1.35 2012/03/22 18:04:41 plunky Exp 	*/	
+/*	$NetBSD: builtins.c,v 1.1.1.3.2.1 2012/04/03 16:36:21 riz Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -306,7 +306,7 @@ builtin_ffsll(NODE *f, NODE *a, TWORD rt)
 static NODE *
 builtin_object_size(NODE *f, NODE *a, TWORD rt)
 {
-	int v = icons(a->n_right);
+	CONSZ v = icons(a->n_right);
 	if (v < 0 || v > 3)
 		uerror("arg2 must be between 0 and 3");
 

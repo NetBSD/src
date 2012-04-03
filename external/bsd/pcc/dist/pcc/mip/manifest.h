@@ -1,5 +1,5 @@
-/*	Id: manifest.h,v 1.97 2011/08/31 18:02:24 plunky Exp 	*/	
-/*	$NetBSD: manifest.h,v 1.1.1.4 2011/09/01 12:47:12 plunky Exp $	*/
+/*	Id: manifest.h,v 1.99 2012/03/22 18:51:41 plunky Exp 	*/	
+/*	$NetBSD: manifest.h,v 1.1.1.4.4.1 2012/04/03 16:36:23 riz Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -173,10 +173,7 @@
 /*
  * 
  */
-extern int bdebug, tdebug, edebug;
-extern int ddebug, xdebug, f2debug;
-extern int iTflag, oTflag, kflag;
-extern int sflag, nflag, gflag, pflag;
+extern int gflag, kflag, pflag;
 extern int sspflag;
 extern int xssa, xtailcall, xtemps, xdeljumps, xdce;
 extern int xuchar;

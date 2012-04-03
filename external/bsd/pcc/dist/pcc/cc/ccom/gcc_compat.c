@@ -1,5 +1,5 @@
-/*      Id: gcc_compat.c,v 1.81 2011/07/27 13:41:44 ragge Exp      */	
-/*      $NetBSD: gcc_compat.c,v 1.1.1.4.4.1 2012/03/17 17:24:22 bouyer Exp $     */
+/*      Id: gcc_compat.c,v 1.83 2012/03/22 18:04:41 plunky Exp      */	
+/*      $NetBSD: gcc_compat.c,v 1.1.1.4.4.2 2012/04/03 16:36:21 riz Exp $     */
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -514,7 +514,8 @@ gcc_tcattrfix(NODE *p)
 int
 pragmas_gcc(char *t)
 {
-	int ign, warn, err, i, u;
+	char u;
+	int ign, warn, err, i;
 	extern bittype warnary[], werrary[];
 	extern char *flagstr[], *pragstore;
 

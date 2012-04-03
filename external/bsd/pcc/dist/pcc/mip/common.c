@@ -1,5 +1,5 @@
-/*	Id: common.c,v 1.99 2011/11/14 11:52:13 plunky Exp 	*/	
-/*	$NetBSD: common.c,v 1.4 2012/01/11 20:46:48 plunky Exp $	*/
+/*	Id: common.c,v 1.100 2012/03/22 18:51:40 plunky Exp 	*/	
+/*	$NetBSD: common.c,v 1.4.2.1 2012/04/03 16:36:23 riz Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -263,14 +263,14 @@ talloc()
 		freelink = p->next;
 		if (p->n_op != FREE)
 			cerror("node not FREE: %p", p);
-		if (nflag)
+		if (ndebug)
 			printf("alloc node %p from freelist\n", p);
 		return p;
 	}
 
 	p = permalloc(sizeof(NODE));
 	p->n_op = FREE;
-	if (nflag)
+	if (ndebug)
 		printf("alloc node %p from memory\n", p);
 	return p;
 }
@@ -351,7 +351,7 @@ nfree(NODE *p)
 	}
 #endif
 
-	if (nflag)
+	if (ndebug)
 		printf("freeing node %p\n", p);
 	p->n_op = FREE;
 	p->next = freelink;

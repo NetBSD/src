@@ -1,5 +1,5 @@
-/*	Id: inline.c,v 1.1 2012/01/01 16:20:54 ragge Exp 	*/	
-/*	$NetBSD: inline.c,v 1.1.1.1 2012/01/11 20:33:19 plunky Exp $	*/
+/*	Id: inline.c,v 1.2 2012/03/22 18:51:40 plunky Exp 	*/	
+/*	$NetBSD: inline.c,v 1.1.1.1.2.1 2012/04/03 16:36:22 riz Exp $	*/
 /*
  * Copyright (c) 2003, 2008 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -88,7 +88,7 @@ tcnt(NODE *p, void *arg)
 		SLIST_FIRST(&ipole)->flags &= ~CANINL; /* no stack refs */
 	if (p->n_op == NAME || p->n_op == ICON)
 		p->n_sp = NULL; /* let symtabs be freed for inline funcs */
-	if (nflag)
+	if (ndebug)
 		printf("locking node %p\n", p);
 }
 
