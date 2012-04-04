@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.4 2012/02/05 17:47:30 matt Exp $
+# $NetBSD: Makefile.inc,v 1.5 2012/04/04 10:59:45 joerg Exp $
 
 USE_LIBEDIT=no
 USE_TUI=yes
@@ -8,7 +8,8 @@ WARNS?=		0
 CWARNFLAGS.clang+=	-Wno-unused-value -Wno-conversion \
 			-Wno-switch-enum -Wno-parentheses -Wno-comment \
 			-Wno-format-security \
-			-Wno-tautological-compare -Wno-format-extra-args
+			-Wno-tautological-compare -Wno-format-extra-args \
+			-Wno-string-plus-int
 
 .if ${MACHINE} == "vax"
 CWARNFLAGS.gcc+=	-Wno-overflow
