@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.35 2011/04/22 14:18:34 joerg Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.36 2012/04/04 06:29:16 agc Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #undef _FORTIFY_SOURCE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.35 2011/04/22 14:18:34 joerg Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.36 2012/04/04 06:29:16 agc Exp $");
 
 #ifndef lint
 
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: pthread_cancelstub.c,v 1.35 2011/04/22 14:18:34 joerg Exp $");
 #include <sys/uio.h>
 #include <sys/wait.h>
 #include <aio.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <mqueue.h>
 #include <poll.h>
@@ -577,6 +578,7 @@ __sigtimedwait50(const sigset_t * __restrict set, siginfo_t * __restrict info,
 	pthread_t self;
 	int retval;
 	struct timespec tout, *tp;
+
 	if (timeout) {
 		tout = *timeout;
 		tp = &tout;
@@ -589,6 +591,28 @@ __sigtimedwait50(const sigset_t * __restrict set, siginfo_t * __restrict info,
 	TESTCANCEL(self);
 
 	return retval;
+}
+
+int                                                                                                                  
+sigwait(const sigset_t * __restrict set, int * __restrict sig)
+{
+	pthread_t	self;
+	int		saved_errno;
+	int		new_errno;
+	int		retval;
+
+	self = pthread__self();
+	saved_errno = errno;
+	TESTCANCEL(self);
+	retval = ____sigtimedwait50(set, NULL, NULL);
+	TESTCANCEL(self);
+	new_errno = errno;
+	errno = saved_errno;
+	if (retval < 0) {
+		return new_errno;
+	}
+	*sig = retval;
+	return 0;
 }
 
 __strong_alias(_close, close)
@@ -608,6 +632,7 @@ __strong_alias(_pread, pread)
 __strong_alias(_pwrite, pwrite)
 __strong_alias(_read, read)
 __strong_alias(_readv, readv)
+__strong_alias(_sigwait, sigwait)
 __strong_alias(_write, write)
 __strong_alias(_writev, writev)
 
