@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2012/02/28 17:09:31 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2012/04/04 10:42:04 joerg Exp $
 
 LIB=	clangAST
 
@@ -35,6 +35,7 @@ SRCS+=	APValue.cpp \
 	Mangle.cpp \
 	MicrosoftCXXABI.cpp \
 	MicrosoftMangle.cpp \
+	NSAPI.cpp \
 	NestedNameSpecifier.cpp \
 	ParentMap.cpp \
 	RecordLayout.cpp \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2011/12/19 14:07:40 joerg Exp $
+#	$NetBSD: Makefile,v 1.8 2012/04/04 10:42:03 joerg Exp $
 
 LIB=	LLVMTransformsUtils
 
@@ -8,7 +8,6 @@ LIB=	LLVMTransformsUtils
 
 SRCS+=	AddrModeMatcher.cpp \
 	BasicBlockUtils.cpp \
-	BasicInliner.cpp \
 	BreakCriticalEdges.cpp \
 	BuildLibCalls.cpp \
 	CloneFunction.cpp \

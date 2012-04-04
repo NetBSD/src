@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2012/02/28 17:09:30 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2012/04/04 10:42:02 joerg Exp $
 
 LIB=	LLVMInstrumentation
 
@@ -8,6 +8,7 @@ LIB=	LLVMInstrumentation
 
 SRCS+=	AddressSanitizer.cpp \
 	EdgeProfiling.cpp \
+	FunctionBlackList.cpp \
 	GCOVProfiling.cpp \
 	Instrumentation.cpp \
 	OptimalEdgeProfiling.cpp \

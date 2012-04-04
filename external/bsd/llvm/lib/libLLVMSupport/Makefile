@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2012/02/28 17:09:31 joerg Exp $
+#	$NetBSD: Makefile,v 1.10 2012/04/04 10:42:03 joerg Exp $
 
 LIB=	LLVMSupport
 
@@ -29,6 +29,7 @@ SRCS+=	APFloat.cpp \
 	FoldingSet.cpp \
 	FormattedStream.cpp \
 	GraphWriter.cpp \
+	Hashing.cpp \
 	IntEqClasses.cpp \
 	IntervalMap.cpp \
 	IntrusiveRefCntPtr.cpp \
