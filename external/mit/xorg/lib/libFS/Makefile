@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/09/13 04:32:29 cube Exp $
+#	$NetBSD: Makefile,v 1.3 2012/04/04 10:59:45 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,8 @@ SRCS=	FSCloseFt.c FSClServ.c FSConnServ.c FSErrDis.c FSErrHndlr.c FSFlush.c \
 	FSListExt.c FSMisc.c FSNextEv.c FSOpenFont.c FSOpenServ.c FSQGlyphs.c \
 	FSQuExt.c FSQXExt.c FSQXInfo.c FSServName.c FSSetCats.c FSSync.c \
 	FSSynchro.c fs_transport.c
+
+CWARNFLAGS.clang+=	-Wno-string-plus-int
 
 INCS=	FSlib.h
 INCSDIR=${X11INCDIR}/X11/fonts
