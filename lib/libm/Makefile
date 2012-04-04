@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.122 2012/03/21 05:37:42 matt Exp $
+#  $NetBSD: Makefile,v 1.123 2012/04/04 10:59:46 joerg Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -165,10 +165,8 @@ COMMON_SRCS+= e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \
 .PATH:	${.CURDIR}/compat
 COMMON_SRCS+= compat_cabs.c compat_cabsf.c
 # XXX our compatibility cabs() is different!
-.if defined(HAVE_GCC)
-COPTS.compat_cabs.c=	-fno-builtin-cabs
-COPTS.compat_cabsf.c=	-fno-builtin-cabsf
-.endif
+COPTS.compat_cabs.c=	${${ACTIVE_CC} == "gcc":? -fno-builtin-cabs :}
+COPTS.compat_cabsf.c=	${${ACTIVE_CC} == "gcc":? -fno-builtin-cabsf :}
 
 # math routines for non-IEEE architectures.
 NOIEEE_SRCS = n_asincos.c n_acosh.c n_asinh.c n_atan.c n_atanh.c n_cosh.c \

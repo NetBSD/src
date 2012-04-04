@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/06/20 07:43:59 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2012/04/04 10:59:47 joerg Exp $
 
 NOMAN=	#defined
 PROG=	ras3
@@ -11,8 +11,6 @@ regress:
 		echo "FAILED";		\
 	fi
 
-.include <bsd.prog.mk>
+CFLAGS+=	${${ACTIVE_CC} == "gcc":? -fno-reorder-blocks :}
 
-.if defined(HAVE_GCC)
-CFLAGS+=	-fno-reorder-blocks
-.endif
+.include <bsd.prog.mk>

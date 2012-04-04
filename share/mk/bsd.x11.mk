@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.105 2012/01/17 19:40:08 njoly Exp $
+#	$NetBSD: bsd.x11.mk,v 1.106 2012/04/04 10:59:47 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -123,7 +123,7 @@ X11FLAGS.EXTENSION+=	-D__GLX_ALIGN64
     ${MACHINE} == "zaurus"
 #	LOADABLE
 X11FLAGS.LOADABLE=	-DXFree86LOADER -DIN_MODULE -DXFree86Module \
-			-fno-merge-constants
+			${${ACTIVE_CXX} == "gcc":? -fno-merge-constants :}
 .endif
   
 # XXX FIX ME
