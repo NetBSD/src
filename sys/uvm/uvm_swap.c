@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.140.4.1 2008/12/27 18:22:49 snj Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.140.4.1.4.1 2012/04/04 00:26:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.140.4.1 2008/12/27 18:22:49 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.140.4.1.4.1 2012/04/04 00:26:25 matt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -249,11 +249,7 @@ uvm_swap_init(void)
 	LIST_INIT(&swap_priority);
 	uvmexp.nswapdev = 0;
 	rw_init(&swap_syscall_lock);
-	cv_init(&uvm.scheduler_cv, "schedule");
 	mutex_init(&uvm_swap_data_lock, MUTEX_DEFAULT, IPL_NONE);
-
-	/* XXXSMP should be at IPL_VM, but for audio interrupt handlers. */
-	mutex_init(&uvm_scheduler_mutex, MUTEX_SPIN, IPL_SCHED);
 
 	if (bdevvp(swapdev, &swapdev_vp))
 		panic("uvm_swap_init: can't get vnode for swap device");
