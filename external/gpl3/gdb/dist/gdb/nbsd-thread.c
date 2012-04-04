@@ -84,14 +84,11 @@ static ptid_t find_active_thread (void);
 static void nbsd_find_new_threads (struct target_ops *);
 
 #define GET_PID(ptid)		ptid_get_pid (ptid)
-#define GET_LWP(ptid)		(ptid_get_lwp (ptid) + 1)
-#define GET_THREAD(ptid)	ptid_get_tid (ptid)
+#define GET_LWP(ptid)		ptid_get_lwp (ptid)
 
 #define IS_LWP(ptid)		(GET_LWP (ptid) != 0)
-#define IS_THREAD(ptid)		(GET_THREAD (ptid) != 0)
 
 #define BUILD_LWP(lwp, ptid)	ptid_build (GET_PID(ptid), (lwp) - 1, 0)
-#define BUILD_THREAD(tid, ptid)	ptid_build (GET_PID(ptid), 0, tid)
 
 static td_proc_t *main_ta;
 
@@ -227,39 +224,6 @@ thread_resume_suspend_cb (td_thread_t *th, void *arg)
   if (td_thr_info (th, &ti) != 0)
       return -1;
 
-  if ((ti.thread_id != GET_THREAD (*pt)) &&
-      (ti.thread_type == TD_TYPE_USER) &&
-      (ti.thread_state != TD_STATE_SUSPENDED) &&
-      (ti.thread_state != TD_STATE_ZOMBIE))
-    {
-      val = td_thr_suspend(th);
-      if (val != 0)
-	error ("thread_resume_suspend_cb: td_thr_suspend(%p): %s", th,
-	       td_err_string (val));
-	
-      if (nsusp == nsuspalloc)
-	{
-	  if (nsuspalloc == 0)
-	    {
-	      nsuspalloc = 32;
-	      susp = malloc (nsuspalloc * sizeof(td_thread_t *));
-	      if (susp == NULL)
-		error ("thread_resume_suspend_cb: out of memory\n");
-	    }
-	  else
-	    {
-	      static td_thread_t **newsusp;
-	      nsuspalloc *= 2;
-	      newsusp = realloc (susp, nsuspalloc * sizeof(td_thread_t *));
-	      if (newsusp == NULL)
-		error ("thread_resume_suspend_cb: out of memory\n");
-	      susp = newsusp;
-	    }
-	}
-      susp[nsusp] = th;
-      nsusp++;
-    }
-  
   return 0;
 }
 
@@ -276,20 +240,7 @@ nbsd_thread_resume (struct target_ops *ops, ptid_t ptid, int step,
      isn't anything we can do but pass it down to the ptrace call;
      given the flexibility of the LWP-to-thread mapping, this might or
      might not accomplish what the user wanted. */
-  if (GET_PID (ptid) != -1 && IS_THREAD (ptid))
-    {
-      int val;
-
-      val = td_thr_iter (main_ta, thread_resume_suspend_cb, &ptid);
-      if (val != 0)
-	error ("nbsd_thread_resume td_thr_iter: %s", td_err_string (val));
-
-	beneath->to_resume (beneath, ptid, step, signo);
-
-      /* can't un-suspend just yet, child may not be stopped */
-    }
-  else
-    beneath->to_resume (beneath, ptid, step, signo);
+  beneath->to_resume (beneath, ptid, step, signo);
 
   cached_thread = minus_one_ptid;
 }
@@ -382,29 +333,12 @@ nbsd_thread_fetch_registers (struct target_ops *ops, struct regcache *cache,
 
   old_chain = save_inferior_ptid ();
 
-  if (nbsd_thread_active && IS_THREAD (inferior_ptid))
+  if (!target_has_execution)
     {
-      if ((val = td_map_id2thr (main_ta, GET_THREAD (inferior_ptid), &thread)) != 0)
-	error ("nbsd_thread_fetch_registers: td_map_id2thr: %s\n",
-	       td_err_string (val));
-      if ((val = td_thr_getregs (thread, 0, &gregs)) != 0)
-	error ("nbsd_thread_fetch_registers: td_thr_getregs: %s\n",
-	       td_err_string (val));
-      supply_gregset (cache, &gregs);
-#ifdef HAVE_FPREGS
-      if ((val = td_thr_getregs (thread, 1, &fpregs)) == 0)
-	      supply_fpregset (cache, &fpregs);
-#endif
+      inferior_ptid = pid_to_ptid ((GET_LWP (inferior_ptid) << 16) | 
+				    GET_PID (inferior_ptid));
     }
-  else
-    {
-      if (!target_has_execution)
-	{
-	  inferior_ptid = pid_to_ptid ((GET_LWP (inferior_ptid) << 16) | 
-				        GET_PID (inferior_ptid));
-	}
-	beneath->to_fetch_registers (beneath, cache, regno);
-    }
+    beneath->to_fetch_registers (beneath, cache, regno);
   
   do_cleanups (old_chain);
 }
@@ -421,34 +355,7 @@ nbsd_thread_store_registers (struct target_ops *ops, struct regcache *cache,
 #endif
   int val;
 
-  if (nbsd_thread_active && IS_THREAD (inferior_ptid))
-    {
-      val = td_map_id2thr (main_ta, GET_THREAD (inferior_ptid), &thread);
-      if (val != 0)
-	error ("nbsd_thread_store_registers: td_map_id2thr: %s\n",
-	      td_err_string (val));
-
-      fill_gregset (cache, &gregs, -1);
-#ifdef HAVE_FPREGS
-      fill_fpregset (cache, &fpregs, -1);
-#endif
-
-      val = td_thr_setregs (thread, 0, &gregs);
-      if (val != 0)
-	error ("nbsd_thread_store_registers: td_thr_setregs: %s\n",
-	      td_err_string (val));
-#ifdef HAVE_FPREGS
-      val = td_thr_setregs (thread, 1, &fpregs);
-      if (val != 0)
-	error ("nbsd_thread_store_registers: td_thr_setregs: %s\n",
-	      td_err_string (val));
-#endif
-    }
-  else
-    {
-	beneath->to_store_registers (beneath, cache, regno);
-    }
-
+  beneath->to_store_registers (beneath, cache, regno);
 }
 
 
@@ -505,18 +412,9 @@ nbsd_pid_to_str (struct target_ops *ops, ptid_t ptid)
   td_thread_t *th;
   char name[32];
 
-  if ((GET_THREAD(ptid) == 0) &&
-      (GET_LWP(ptid) == 0) && 
+  if ((GET_LWP(ptid) == 0) && 
       (nbsd_thread_active == 0))
     sprintf (buf, "process %d", GET_PID (ptid));
-  else if (IS_THREAD (ptid))
-    {
-      if ((td_map_id2thr (main_ta, GET_THREAD (ptid), &th) == 0) &&
-	  (td_thr_getname (th, name, 32) == 0))
-	sprintf (buf, "Thread %ld (%s)", GET_THREAD (ptid), name);
-      else
-	sprintf (buf, "Thread %ld", GET_THREAD (ptid));
-    }
   else
     sprintf (buf, "LWP %ld", GET_LWP (ptid));
 
@@ -599,19 +497,7 @@ nbsd_thread_alive (struct target_ops *ops, ptid_t ptid)
 
   if (nbsd_thread_active)
     {
-      if (IS_THREAD (ptid))
-	{
-	  val = 0;
-	  if (td_map_id2thr (main_ta, GET_THREAD (ptid), &th) == 0)
-	    {
-	      /* Thread found */
-	      if ((td_thr_info (th, &ti) == 0) &&
-		  (ti.thread_state != TD_STATE_ZOMBIE) &&
-		  (ti.thread_type != TD_TYPE_SYSTEM))
-		val = 1;
-	    }
-	}
-      else if (IS_LWP (ptid))
+      if (IS_LWP (ptid))
 	{
 	  struct ptrace_lwpinfo pl;
 	  pl.pl_lwpid = GET_LWP (ptid);
@@ -637,29 +523,6 @@ nbsd_core_thread_alive (struct target_ops *ops, ptid_t ptid)
   return beneath->to_thread_alive (beneath, ptid);
 }
 
-
-/* Worker bee for find_new_threads
-   Callback function that gets called once per USER thread (i.e., not
-   kernel) thread. */
-
-static int
-nbsd_find_new_threads_callback (td_thread_t *th, void *ignored)
-{
-  td_thread_info_t ti;
-  ptid_t ptid;
-
-  if (td_thr_info (th, &ti) != 0)
-      return -1;
-
-  ptid = BUILD_THREAD (ti.thread_id, main_ptid);
-  if (ti.thread_type == TD_TYPE_USER &&
-      ti.thread_state != TD_STATE_BLOCKED &&
-      ti.thread_state != TD_STATE_ZOMBIE &&
-      !in_thread_list (ptid))
-    add_thread (ptid);
-
-  return 0;
-}
 
 static void
 nbsd_find_new_threads (struct target_ops *ops)
@@ -695,11 +558,6 @@ nbsd_find_new_threads (struct target_ops *ops)
 	  retval = ptrace (PT_LWPINFO, GET_PID(inferior_ptid), (void *)&pl, sizeof(pl));
 	}
     }
-
-  retval = td_thr_iter (main_ta, nbsd_find_new_threads_callback, (void *) 0);
-  if (retval != 0)
-    error ("nbsd_find_new_threads: td_thr_iter: %s",
-	   td_err_string (retval));
 }
 
 
@@ -1137,13 +995,6 @@ nbsd_thread_proc_setregs (void *arg, int regset, int lwp, void *buf)
   return ret;
 }
 
-
-static int
-ignore (CORE_ADDR addr, char *contents)
-{
-  return 0;
-}
-
 static void
 init_nbsd_proc_callbacks (void)
 {
@@ -1153,18 +1004,6 @@ init_nbsd_proc_callbacks (void)
   nbsd_thread_callbacks.proc_regsize = nbsd_thread_proc_regsize;
   nbsd_thread_callbacks.proc_getregs = nbsd_thread_proc_getregs;
   nbsd_thread_callbacks.proc_setregs = nbsd_thread_proc_setregs;
-}
-
-static int
-one(struct target_ops *ops)
-{
-  return 1;
-}
-
-static int
-oneptid(struct target_ops *ops, ptid_t id)
-{
-  return 1;
 }
 
 static void
