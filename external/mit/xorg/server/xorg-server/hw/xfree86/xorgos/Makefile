@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2011/08/30 04:22:56 macallan Exp $
+#	$NetBSD: Makefile,v 1.32 2012/04/04 01:23:27 bsh Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -69,6 +69,7 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endif
 
 .if ${MACHINE} == "cats" || \
+    ${MACHINE} == "evbarm" || \
     ${MACHINE} == "hpcarm" || \
     ${MACHINE} == "shark" || \
     ${MACHINE} == "netwinder" || \
