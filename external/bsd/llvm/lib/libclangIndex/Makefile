@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/06 01:14:08 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2012/04/04 10:42:04 joerg Exp $
 
 LIB=	clangIndex
 
@@ -8,9 +8,9 @@ LIB=	clangIndex
 
 SRCS+=	ASTLocation.cpp \
 	Analyzer.cpp \
-	CallGraph.cpp \
 	DeclReferenceMap.cpp \
 	Entity.cpp \
+	GlobalCallGraph.cpp \
 	GlobalSelector.cpp \
 	Handlers.cpp \
 	IndexProvider.cpp \
