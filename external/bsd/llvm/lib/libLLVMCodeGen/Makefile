@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2012/02/28 17:09:30 joerg Exp $
+#	$NetBSD: Makefile,v 1.16 2012/04/04 10:42:02 joerg Exp $
 
 LIB=	LLVMCodeGen
 
@@ -88,7 +88,6 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	RegisterScavenging.cpp \
 	RenderMachineFunction.cpp \
 	ScheduleDAG.cpp \
-	ScheduleDAGEmit.cpp \
 	ScheduleDAGInstrs.cpp \
 	ScheduleDAGPrinter.cpp \
 	ShadowStackGC.cpp \
