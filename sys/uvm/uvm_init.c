@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.34.12.1 2012/02/09 03:04:59 matt Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.34.12.2 2012/04/04 00:26:25 matt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.34.12.1 2012/02/09 03:04:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.34.12.2 2012/04/04 00:26:25 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,4 +190,12 @@ uvm_init(void)
 	 */
 
 	uvm_ra_init();
+
+	/*
+	 * Init scheduler mutex/cv.
+	 */
+	cv_init(&uvm.scheduler_cv, "schedule");
+	/* XXXSMP should be at IPL_VM, but for audio interrupt handlers. */
+	mutex_init(&uvm_scheduler_mutex, MUTEX_SPIN, IPL_SCHED);
+
 }
