@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1103 2012/03/28 14:55:22 pgoyette Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1104 2012/04/04 23:00:35 uwe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1108 2012/03/28 14:54:15 pgoyette Exp
+ *	NetBSD: pcidevs,v 1.1109 2012/04/04 22:58:56 uwe Exp
  */
 
 /*
@@ -2123,6 +2123,7 @@
 #define	PCI_PRODUCT_MARVELL_YUKON_8036	0x4351		/* Yukon 88E8036 */
 #define	PCI_PRODUCT_MARVELL_YUKON_8038	0x4352		/* Yukon 88E8038 */
 #define	PCI_PRODUCT_MARVELL_YUKON_8039	0x4353		/* Yukon 88E8039 */
+#define	PCI_PRODUCT_MARVELL_YUKON_8040	0x4354		/* Yukon 88E8040 */
 #define	PCI_PRODUCT_MARVELL_YUKON_C033	0x4356		/* Yukon 88EC033 */
 #define	PCI_PRODUCT_MARVELL_YUKON_8052	0x4360		/* Yukon 88E8052 */
 #define	PCI_PRODUCT_MARVELL_YUKON_8050	0x4361		/* Yukon 88E8050 */
