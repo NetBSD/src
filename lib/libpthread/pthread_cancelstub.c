@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.36 2012/04/04 06:29:16 agc Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.37 2012/04/04 17:47:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #undef _FORTIFY_SOURCE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.36 2012/04/04 06:29:16 agc Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.37 2012/04/04 17:47:03 christos Exp $");
 
 #ifndef lint
 
@@ -593,7 +593,7 @@ __sigtimedwait50(const sigset_t * __restrict set, siginfo_t * __restrict info,
 	return retval;
 }
 
-int                                                                                                                  
+int
 sigwait(const sigset_t * __restrict set, int * __restrict sig)
 {
 	pthread_t	self;
