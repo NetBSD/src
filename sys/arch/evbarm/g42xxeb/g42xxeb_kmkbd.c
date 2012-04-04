@@ -1,4 +1,4 @@
-/* $NetBSD: g42xxeb_kmkbd.c,v 1.12 2011/07/01 20:38:17 dyoung Exp $ */
+/* $NetBSD: g42xxeb_kmkbd.c,v 1.13 2012/04/04 01:40:57 bsh Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003, 2005 Genetec corp.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: g42xxeb_kmkbd.c,v 1.12 2011/07/01 20:38:17 dyoung Exp $" );
+__KERNEL_RCSID(0, "$NetBSD: g42xxeb_kmkbd.c,v 1.13 2012/04/04 01:40:57 bsh Exp $" );
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,12 +57,12 @@ __KERNEL_RCSID(0, "$NetBSD: g42xxeb_kmkbd.c,v 1.12 2011/07/01 20:38:17 dyoung Ex
 #include <arch/evbarm/g42xxeb/g42xxeb_var.h>
 
 #include "locators.h"
-
-/*#include "opt_pckbd_layout.h"*/
-/*#include "opt_wsdisplay_compat.h"*/
+#include "opt_wsdisplay_compat.h"
 
 #define DEBOUNCE_TICKS	((hz<=50)?1:hz/50)	/* 20ms */
 #define RELEASE_WATCH_TICKS  (hz/10)	/* 100ms */
+
+#define	NUMKEYS	(4*5)	/* the number of keys */
 
 struct kmkbd_softc {
 	device_t dev;
@@ -76,6 +76,7 @@ struct kmkbd_softc {
 	u_char  debounce_counter;
 #define DEBOUNCE_COUNT  3
 	u_char  polling;
+	u_char	rawkbd;
 	enum kmkbd_state {
 		ST_INIT,
 		ST_DISABLED,
@@ -211,6 +212,9 @@ kmkbd_attach(device_t parent, device_t self, void *aux)
 		state0 = ST_DISABLED;
 	}
 
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	sc->rawkbd = 0;
+#endif
 	callout_init(&sc->callout, 0);
 
 	s = spltty();
@@ -266,7 +270,9 @@ kmkbd_set_leds(void *v, int leds)
 static int
 kmkbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	/*struct kmkbd_softc *sc = v;*/
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	struct kmkbd_softc *sc = v;
+#endif
 
 	switch (cmd) {
 	    case WSKBDIO_GTYPE:
@@ -435,6 +441,39 @@ kmkbd_report(struct kmkbd_softc *sc, u_int bitset)
 	sc->notified_bits = bitset;
 }
 
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+static void
+kmkbd_report_raw(struct kmkbd_softc *sc, u_int bitset)
+{
+	int i, nc;
+	char cbuf[NUMKEYS];
+	u_int changed;
+	
+	if (bitset == sc->notified_bits)
+		return;
+
+	nc = 0;
+	changed = bitset ^ sc->notified_bits;
+
+	while (changed) {
+		i = ffs(changed) - 1;
+		if (nc < NUMKEYS) {
+			cbuf[nc] = i + 1;
+			if (0 == (bitset & (1<<i))) {
+				/* the key is released */
+				cbuf[nc] |= 0x80;
+			}
+			++nc;
+		}
+
+		changed &= ~(1<<i);
+	}
+
+	wskbd_rawinput(sc->wskbddev, cbuf, nc);
+	sc->notified_bits = bitset;
+}
+#endif
+
 static int
 kmkbd_intr(void *arg)
 {
@@ -468,7 +507,12 @@ kmkbd_debounce(void *arg)
 	}
 	else if( ++(sc->debounce_counter) >= DEBOUNCE_COUNT ){
 		new_state = newbits == 0 ? ST_ALL_UP : ST_KEY_PRESSED;
-		kmkbd_report(sc, newbits);
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+		if (sc->rawkbd)
+			kmkbd_report_raw(sc, newbits);
+		else
+#endif
+			kmkbd_report(sc, newbits);
 	}
 
 	kmkbd_new_state(sc, new_state);
