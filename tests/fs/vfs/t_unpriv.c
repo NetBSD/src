@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unpriv.c,v 1.8 2012/03/26 15:13:20 njoly Exp $	*/
+/*	$NetBSD: t_unpriv.c,v 1.9 2012/04/04 18:53:34 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -26,6 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/stat.h>
 #include <sys/time.h>
 
 #include <atf-c.h>
@@ -157,9 +158,55 @@ times(const atf_tc_t *tc, const char *mp)
 	FSTEST_EXIT();
 }
 
+static void
+flags(const atf_tc_t *tc, const char *mp)
+{
+	const char *name = "file.test";
+	int fd, fflags;
+	struct stat st;
+
+	FSTEST_ENTER();
+
+	if ((fd = rump_sys_open(name, O_RDWR|O_CREAT, 0666)) == -1)
+		atf_tc_fail_errno("open");
+	if (rump_sys_close(fd) == -1)
+		atf_tc_fail_errno("close");
+
+	if (rump_sys_stat(name, &st) == -1)
+		atf_tc_fail_errno("stat");
+	if (rump_sys_chflags(name, st.st_flags) == -1) {
+		if (errno == EOPNOTSUPP)
+			atf_tc_skip("file flags not supported by file system");
+		atf_tc_fail_errno("chflags");
+	}
+
+	fflags = st.st_flags | UF_IMMUTABLE;
+
+	rump_pub_lwproc_rfork(RUMP_RFCFDG);
+	if (rump_sys_setuid(1) == -1)
+		atf_tc_fail_errno("setuid");
+	fflags |= UF_IMMUTABLE;
+	if (rump_sys_chflags(name, fflags) != -1 || errno != EPERM)
+		atf_tc_fail_errno("chflags");
+	rump_pub_lwproc_releaselwp();
+
+	if (rump_sys_chflags(name, fflags) == -1)
+		atf_tc_fail_errno("chflags");
+
+	fflags &= ~UF_IMMUTABLE;
+	if (rump_sys_chflags(name, fflags) == -1)
+		atf_tc_fail_errno("chflags");
+
+	if (rump_sys_unlink(name) == -1)
+		atf_tc_fail_errno("unlink");
+
+	FSTEST_EXIT();
+}
+
 ATF_TC_FSAPPLY(owner, "owner unprivileged checks");
 ATF_TC_FSAPPLY(dirperms, "directory permission checks");
 ATF_TC_FSAPPLY(times, "time set checks");
+ATF_TC_FSAPPLY(flags, "file flags checks");
 
 ATF_TP_ADD_TCS(tp)
 {
@@ -167,6 +214,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_FSAPPLY(owner);
 	ATF_TP_FSAPPLY(dirperms);
 	ATF_TP_FSAPPLY(times);
+	ATF_TP_FSAPPLY(flags);
 
 	return atf_no_error();
 }
