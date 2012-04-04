@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.60 2011/08/30 04:22:56 macallan Exp $
+#	$NetBSD: Makefile,v 1.61 2012/04/04 01:23:27 bsh Exp $
 
 # xf86-input drivers
 
@@ -146,6 +146,11 @@ SUBDIR+= \
 SUBDIR+= \
 	xf86-video-wsfb
 .endif	# ${MACHINE} == "dreamcast"
+
+.if ${MACHINE} == "evbarm"
+SUBDIR+= \
+	xf86-video-wsfb
+.endif # ${MACHINE} == "evbarm"
 
 .if ${MACHINE} == "evbmips"
 SUBDIR+= \
