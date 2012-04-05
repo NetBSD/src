@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.76 2012/04/05 20:13:34 plunky Exp $	*/
+/*	$NetBSD: midi.c,v 1.77 2012/04/05 20:25:53 plunky Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.76 2012/04/05 20:13:34 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.77 2012/04/05 20:25:53 plunky Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -261,7 +261,6 @@ midi_attach(struct midi_softc *sc, device_t parent)
 
 	sc->dying = 0;
 	sc->isopen = 0;
-	sc->sc_dev = parent;
 
 	mutex_enter(&hwif_softc_lock);
 	mutex_enter(sc->lock);
