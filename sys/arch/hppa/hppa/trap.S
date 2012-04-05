@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.64 2012/04/05 19:42:14 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.65 2012/04/05 19:44:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -1058,7 +1058,7 @@ ALTENTRY(hppa_fpu_swap)
 	mfctl	CR_CCR, %r1
 	depi	3, 25, 2, %r1
 	comb,=	%r0, %arg0, L$fpu_swap_in
-	mtctl	%r1,CR_CCR 
+	mtctl	%r1, CR_CCR
 
 	/*
 	 * Swap out the current FPU state.
@@ -1189,7 +1189,7 @@ L$fpu_no_swap_in:
 	mfctl	CR_CCR, %r1
 	depi	0, 25, 2, %r1
 	b	L$fpu_swap_done
-	mtctl	%r1, CR_CCR 
+	mtctl	%r1, CR_CCR
 EXIT(hppa_fpu_swapout)
 
 	/* Construct the virtual address tag. */
