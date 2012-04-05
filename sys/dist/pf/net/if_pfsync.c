@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pfsync.c,v 1.7.12.1 2012/02/18 07:35:22 mrg Exp $	*/
+/*	$NetBSD: if_pfsync.c,v 1.7.12.2 2012/04/05 21:33:35 mrg Exp $	*/
 /*	$OpenBSD: if_pfsync.c,v 1.83 2007/06/26 14:44:12 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.7.12.1 2012/02/18 07:35:22 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.7.12.2 2012/04/05 21:33:35 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -361,9 +361,6 @@ pfsync_input(struct mbuf *m, ...)
 	struct pfsync_state_clr *cp;
 	struct pfsync_state_upd_req *rup;
 	struct pfsync_state_bus *bus;
-#ifdef KAME_IPSEC
-	struct pfsync_tdb *pt;
-#endif
 	struct in_addr src;
 	struct mbuf *mp;
 	int iplen, action, error, i, s, count, offp, sfail, stale = 0;
@@ -849,20 +846,6 @@ pfsync_input(struct mbuf *m, ...)
 			break;
 		}
 		break;
-#ifdef KAME_IPSEC
-	case PFSYNC_ACT_TDB_UPD:
-		if ((mp = m_pulldown(m, iplen + sizeof(*ph),
-		    count * sizeof(*pt), &offp)) == NULL) {
-			PFSYNC_STATINC(PFSYNC_STAT_BADLEN);
-			return;
-		}
-		s = splsoftnet();
-		for (i = 0, pt = (struct pfsync_tdb *)(mp->m_data + offp);
-		    i < count; i++, pt++)
-			pfsync_update_net_tdb(pt);
-		splx(s);
-		break;
-#endif
 	}
 
 done:
@@ -1623,159 +1606,6 @@ pfsync_sendout_mbuf(struct pfsync_softc *sc, struct mbuf *m)
 
 	return (0);
 }
-
-#ifdef KAME_IPSEC
-/* Update an in-kernel tdb. Silently fail if no tdb is found. */
-void
-pfsync_update_net_tdb(struct pfsync_tdb *pt)
-{
-	struct tdb		*tdb;
-	int			 s;
-
-	/* check for invalid values */
-	if (ntohl(pt->spi) <= SPI_RESERVED_MAX ||
-	    (pt->dst.sa.sa_family != AF_INET &&
-	     pt->dst.sa.sa_family != AF_INET6))
-		goto bad;
-
-	s = spltdb();
-	tdb = gettdb(pt->spi, &pt->dst, pt->sproto);
-	if (tdb) {
-		pt->rpl = ntohl(pt->rpl);
-		pt->cur_bytes = betoh64(pt->cur_bytes);
-
-		/* Neither replay nor byte counter should ever decrease. */
-		if (pt->rpl < tdb->tdb_rpl ||
-		    pt->cur_bytes < tdb->tdb_cur_bytes) {
-			splx(s);
-			goto bad;
-		}
-
-		tdb->tdb_rpl = pt->rpl;
-		tdb->tdb_cur_bytes = pt->cur_bytes;
-	}
-	splx(s);
-	return;
-
- bad:
-	if (pf_status.debug >= PF_DEBUG_MISC)
-		printf("pfsync_insert: PFSYNC_ACT_TDB_UPD: "
-		    "invalid value\n");
-	PFSYNC_STATINC(PFSYNC_STAT_BADSTATE);
-	return;
-}
-
-/* One of our local tdbs have been updated, need to sync rpl with others */
-int
-pfsync_update_tdb(struct tdb *tdb, int output)
-{
-	struct ifnet *ifp = NULL;
-	struct pfsync_softc *sc = pfsyncif;
-	struct pfsync_header *h;
-	struct pfsync_tdb *pt = NULL;
-	int s, i, ret;
-
-	if (sc == NULL)
-		return (0);
-
-	ifp = &sc->sc_if;
-	if (ifp->if_bpf == NULL && sc->sc_sync_ifp == NULL &&
-	    sc->sc_sync_peer.s_addr == INADDR_PFSYNC_GROUP) {
-		/* Don't leave any stale pfsync packets hanging around. */
-		if (sc->sc_mbuf_tdb != NULL) {
-			m_freem(sc->sc_mbuf_tdb);
-			sc->sc_mbuf_tdb = NULL;
-			sc->sc_statep_tdb.t = NULL;
-		}
-		return (0);
-	}
-
-	s = splnet();
-	if (sc->sc_mbuf_tdb == NULL) {
-		if ((sc->sc_mbuf_tdb = pfsync_get_mbuf(sc, PFSYNC_ACT_TDB_UPD,
-		    (void *)&sc->sc_statep_tdb.t)) == NULL) {
-			splx(s);
-			return (ENOMEM);
-		}
-		h = mtod(sc->sc_mbuf_tdb, struct pfsync_header *);
-	} else {
-		h = mtod(sc->sc_mbuf_tdb, struct pfsync_header *);
-		if (h->action != PFSYNC_ACT_TDB_UPD) {
-			/*
-			 * XXX will never happen as long as there's
-			 * only one "TDB action".
-			 */
-			pfsync_tdb_sendout(sc);
-			sc->sc_mbuf_tdb = pfsync_get_mbuf(sc,
-			    PFSYNC_ACT_TDB_UPD, (void *)&sc->sc_statep_tdb.t);
-			if (sc->sc_mbuf_tdb == NULL) {
-				splx(s);
-				return (ENOMEM);
-			}
-			h = mtod(sc->sc_mbuf_tdb, struct pfsync_header *);
-		} else if (sc->sc_maxupdates) {
-			/*
-			 * If it's an update, look in the packet to see if
-			 * we already have an update for the state.
-			 */
-			struct pfsync_tdb *u =
-			    (void *)((char *)h + PFSYNC_HDRLEN);
-
-			for (i = 0; !pt && i < h->count; i++) {
-				if (tdb->tdb_spi == u->spi &&
-				    tdb->tdb_sproto == u->sproto &&
-			            !bcmp(&tdb->tdb_dst, &u->dst,
-				    SA_LEN(&u->dst.sa))) {
-					pt = u;
-					pt->updates++;
-				}
-				u++;
-			}
-		}
-	}
-
-	if (pt == NULL) {
-		/* not a "duplicate" update */
-		pt = sc->sc_statep_tdb.t++;
-		sc->sc_mbuf_tdb->m_pkthdr.len =
-		    sc->sc_mbuf_tdb->m_len += sizeof(struct pfsync_tdb);
-		h->count++;
-		memset(pt, 0, sizeof(*pt));
-
-		pt->spi = tdb->tdb_spi;
-		memcpy(&pt->dst, &tdb->tdb_dst, sizeof pt->dst);
-		pt->sproto = tdb->tdb_sproto;
-	}
-
-	/*
-	 * When a failover happens, the master's rpl is probably above
-	 * what we see here (we may be up to a second late), so
-	 * increase it a bit for outbound tdbs to manage most such
-	 * situations.
-	 *
-	 * For now, just add an offset that is likely to be larger
-	 * than the number of packets we can see in one second. The RFC
-	 * just says the next packet must have a higher seq value.
-	 *
-	 * XXX What is a good algorithm for this? We could use
-	 * a rate-determined increase, but to know it, we would have
-	 * to extend struct tdb.
-	 * XXX pt->rpl can wrap over MAXINT, but if so the real tdb
-	 * will soon be replaced anyway. For now, just don't handle
-	 * this edge case.
-	 */
-#define RPL_INCR 16384
-	pt->rpl = htonl(tdb->tdb_rpl + (output ? RPL_INCR : 0));
-	pt->cur_bytes = htobe64(tdb->tdb_cur_bytes);
-
-	if (h->count == sc->sc_maxcount ||
-	    (sc->sc_maxupdates && (pt->updates >= sc->sc_maxupdates)))
-		ret = pfsync_tdb_sendout(sc);
-
-	splx(s);
-	return (ret);
-}
-#endif
 
 static int
 sysctl_net_inet_pfsync_stats(SYSCTLFN_ARGS)

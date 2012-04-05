@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.255.2.2 2012/02/24 09:11:40 mrg Exp $	*/
+/*	$NetBSD: audio.c,v 1.255.2.3 2012/04/05 21:33:23 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.255.2.2 2012/02/24 09:11:40 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.255.2.3 2012/04/05 21:33:23 mrg Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -241,6 +241,7 @@ int	audio_initbufs(struct audio_softc *);
 void	audio_calcwater(struct audio_softc *);
 int	audio_drain(struct audio_softc *);
 void	audio_clear(struct audio_softc *);
+void	audio_clear_intr_unlocked(struct audio_softc *sc);
 static inline void audio_pint_silence
 	(struct audio_softc *, struct audio_ringbuffer *, uint8_t *, int);
 
@@ -1992,7 +1993,6 @@ audio_clear(struct audio_softc *sc)
 
 	KASSERT(mutex_owned(sc->sc_lock));
 
-	mutex_enter(sc->sc_intr_lock);
 	if (sc->sc_rbus) {
 		cv_broadcast(&sc->sc_rchan);
 		sc->hw_if->halt_input(sc->hw_hdl);
@@ -2005,6 +2005,14 @@ audio_clear(struct audio_softc *sc)
 		sc->sc_pbus = false;
 		sc->sc_pr.pause = false;
 	}
+}
+
+void
+audio_clear_intr_unlocked(struct audio_softc *sc)
+{
+
+	mutex_enter(sc->sc_intr_lock);
+	audio_clear(sc);
 	mutex_exit(sc->sc_intr_lock);
 }
 
@@ -3643,7 +3651,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 	setmode = 0;
 	if (nr > 0) {
 		if (!cleared) {
-			audio_clear(sc);
+			audio_clear_intr_unlocked(sc);
 			cleared = true;
 		}
 		modechange = true;
@@ -3651,7 +3659,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 	}
 	if (np > 0) {
 		if (!cleared) {
-			audio_clear(sc);
+			audio_clear_intr_unlocked(sc);
 			cleared = true;
 		}
 		modechange = true;
@@ -3660,7 +3668,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 
 	if (SPECIFIED(ai->mode)) {
 		if (!cleared) {
-			audio_clear(sc);
+			audio_clear_intr_unlocked(sc);
 			cleared = true;
 		}
 		modechange = true;
@@ -3754,7 +3762,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 
 	if (SPECIFIED(p->port)) {
 		if (!cleared) {
-			audio_clear(sc);
+			audio_clear_intr_unlocked(sc);
 			cleared = true;
 		}
 		error = au_set_port(sc, &sc->sc_outports, p->port);
@@ -3763,7 +3771,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 	}
 	if (SPECIFIED(r->port)) {
 		if (!cleared) {
-			audio_clear(sc);
+			audio_clear_intr_unlocked(sc);
 			cleared = true;
 		}
 		error = au_set_port(sc, &sc->sc_inports, r->port);
@@ -3825,7 +3833,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		/* Block size specified explicitly. */
 		if (ai->blocksize == 0) {
 			if (!cleared) {
-				audio_clear(sc);
+				audio_clear_intr_unlocked(sc);
 				cleared = true;
 			}
 			sc->sc_blkset = false;
@@ -3836,7 +3844,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 			/* check whether new blocksize changes actually */
 			if (hw->round_blocksize == NULL) {
 				if (!cleared) {
-					audio_clear(sc);
+					audio_clear_intr_unlocked(sc);
 					cleared = true;
 				}
 				sc->sc_pr.blksize = ai->blocksize;
@@ -3849,7 +3857,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 				if (pblksize != sc->sc_pr.blksize ||
 				    rblksize != sc->sc_rr.blksize) {
 					if (!cleared) {
-						audio_clear(sc);
+						audio_clear_intr_unlocked(sc);
 						cleared = true;
 					}
 					sc->sc_pr.blksize = ai->blocksize;

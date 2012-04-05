@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.228.2.2 2012/03/11 01:52:25 mrg Exp $
+# $NetBSD: GENERIC,v 1.228.2.3 2012/04/05 21:33:19 mrg Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.228.2.2 $"
+#ident 		"GENERIC-$Revision: 1.228.2.3 $"
 
 maxusers	32
 
@@ -229,7 +229,7 @@ options 	INET6		# IPV6
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
-options 	PFIL_HOOKS	# Add pfil(9) hooks, intended for custom LKMs.
+options 	PFIL_HOOKS	# Add pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter

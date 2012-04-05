@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20.8.1 2012/02/18 07:33:32 mrg Exp $
+#	$NetBSD: Makefile,v 1.20.8.2 2012/04/05 21:33:21 mrg Exp $
 
 NOMAN=		# defined
 
@@ -32,7 +32,7 @@ SRCS+=		vers.c
 CLEANFILES+=	vers.c
 vers.c:	${VERSIONFILE}
 	${_MKTARGET_CREATE}
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	${HOST_SH} ${S}/conf/newvers_stand.sh \
 	    ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
 
 CPPFLAGS+=	-nostdinc -I$S -I${.OBJDIR} -I$M/stand/libsa

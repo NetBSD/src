@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.36 2011/09/27 01:23:05 christos Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.36.6.1 2012/04/05 21:33:42 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,10 +54,6 @@ typedef enum {
 	KFSavenrun,		/* loadavg */
 	KFSdevice,		/* device file (rootdev/rrootdev) */
 	KFSmsgbuf,		/* msgbuf */
-	KFSipsecsadir,	/* ipsec security association (top dir) */
-	KFSipsecspdir,	/* ipsec security policy (top dir) */
-	KFSipsecsa,		/* ipsec security association entry */
-	KFSipsecsp,		/* ipsec security policy entry */
 	KFSsubdir,		/* directory */
 	KFSlasttype,		/* last used type */
 	KFSmaxtype = (1<<6) - 1	/* last possible type */

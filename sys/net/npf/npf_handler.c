@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.11.2.2 2012/02/24 09:11:49 mrg Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.11.2.3 2012/04/05 21:33:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.11.2.2 2012/02/24 09:11:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.11.2.3 2012/04/05 21:33:43 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -251,10 +251,10 @@ out:
 }
 
 /*
- * npf_register_pfil: register pfil(9) hooks.
+ * npf_pfil_register: register pfil(9) hooks.
  */
 int
-npf_register_pfil(void)
+npf_pfil_register(void)
 {
 	int error;
 
@@ -298,10 +298,10 @@ fail:
 }
 
 /*
- * npf_unregister: unregister pfil(9) hooks.
+ * npf_pfil_unregister: unregister pfil(9) hooks.
  */
 void
-npf_unregister_pfil(void)
+npf_pfil_unregister(void)
 {
 
 	mutex_enter(softnet_lock);
@@ -320,4 +320,10 @@ npf_unregister_pfil(void)
 
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
+}
+
+bool
+npf_pfil_registered_p(void)
+{
+	return npf_ph_if != NULL;
 }

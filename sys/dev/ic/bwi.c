@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.18 2011/10/10 11:15:24 njoly Exp $	*/
+/*	$NetBSD: bwi.c,v 1.18.6.1 2012/04/05 21:33:25 mrg Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.18 2011/10/10 11:15:24 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.18.6.1 2012/04/05 21:33:25 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -3595,7 +3595,7 @@ bwi_phy_config_11g(struct bwi_mac *mac)
 			bwi_tbl_write_2(mac, BWI_PHYTBL_RSSI + i, i);
 
 		/* Fill noise table */
-		for (i = 0; i < sizeof(bwi_phy_noise_11g); ++i) {
+		for (i = 0; i < __arraycount(bwi_phy_noise_11g); ++i) {
 			bwi_tbl_write_2(mac, BWI_PHYTBL_NOISE + i,
 			    bwi_phy_noise_11g[i]);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.442.2.1 2012/02/18 07:35:34 mrg Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.442.2.2 2012/04/05 21:33:41 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.442.2.1 2012/02/18 07:35:34 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.442.2.2 2012/04/05 21:33:41 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -3054,22 +3054,11 @@ change_flags(struct vnode *vp, u_long flags, struct lwp *l)
 	int error;
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	/*
-	 * Non-superusers cannot change the flags on devices, even if they
-	 * own them.
-	 */
-	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
-		if ((error = VOP_GETATTR(vp, &vattr, l->l_cred)) != 0)
-			goto out;
-		if (vattr.va_type == VCHR || vattr.va_type == VBLK) {
-			error = EINVAL;
-			goto out;
-		}
-	}
+
 	vattr_null(&vattr);
 	vattr.va_flags = flags;
 	error = VOP_SETATTR(vp, &vattr, l->l_cred);
-out:
+
 	return (error);
 }
 
@@ -3370,9 +3359,18 @@ change_owner(struct vnode *vp, uid_t uid, gid_t gid, struct lwp *l,
 		 * implementation-defined; we leave the set-user-id and set-
 		 * group-id settings intact in that case.
 		 */
-		if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-				      NULL) != 0)
-			newmode &= ~(S_ISUID | S_ISGID);
+		if (vattr.va_mode & S_ISUID) {
+			error = kauth_authorize_vnode(l->l_cred,
+			    KAUTH_VNODE_RETAIN_SUID, vp, NULL, EPERM);
+			if (error)
+				newmode &= ~S_ISUID;
+		}
+		if (vattr.va_mode & S_ISGID) {
+			error = kauth_authorize_vnode(l->l_cred,
+			    KAUTH_VNODE_RETAIN_SGID, vp, NULL, EPERM);
+			if (error)
+				newmode &= ~S_ISGID;
+		}
 	} else {
 		/*
 		 * NetBSD semantics: when changing owner and/or group,
@@ -4235,16 +4233,17 @@ int
 dorevoke(struct vnode *vp, kauth_cred_t cred)
 {
 	struct vattr vattr;
-	int error;
+	int error, fs_decision;
 
 	vn_lock(vp, LK_SHARED | LK_RETRY);
 	error = VOP_GETATTR(vp, &vattr, cred);
 	VOP_UNLOCK(vp);
 	if (error != 0)
 		return error;
-	if (kauth_cred_geteuid(cred) == vattr.va_uid ||
-	    (error = kauth_authorize_generic(cred,
-	    KAUTH_GENERIC_ISSUSER, NULL)) == 0)
+	fs_decision = (kauth_cred_geteuid(cred) == vattr.va_uid) ? 0 : EPERM;
+	error = kauth_authorize_vnode(cred, KAUTH_VNODE_REVOKE, vp, NULL,
+	    fs_decision);
+	if (!error)
 		VOP_REVOKE(vp, REVOKEALL);
 	return (error);
 }

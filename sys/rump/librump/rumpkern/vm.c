@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.120.6.3 2012/03/06 18:26:49 mrg Exp $	*/
+/*	$NetBSD: vm.c,v 1.120.6.4 2012/04/05 21:33:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.120.6.3 2012/03/06 18:26:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.120.6.4 2012/04/05 21:33:49 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1110,7 +1110,6 @@ uvm_pageout(void *arg)
 			rumpuser_dprintf("pagedaemoness: failed to reclaim "
 			    "memory ... sleeping (deadlock?)\n");
 			cv_timedwait(&pdaemoncv, &pdaemonmtx, hz);
-			mutex_enter(&pdaemonmtx);
 		}
 	}
 

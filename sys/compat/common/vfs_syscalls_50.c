@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_50.c,v 1.10.2.1 2012/02/18 07:33:54 mrg Exp $	*/
+/*	$NetBSD: vfs_syscalls_50.c,v 1.10.2.2 2012/04/05 21:33:22 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.10.2.1 2012/02/18 07:33:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.10.2.2 2012/04/05 21:33:22 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,8 +282,9 @@ compat_50_sys_lfs_segwait(struct lwp *l,
 	int error;
 
 	/* XXX need we be su to segwait? */
-	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    NULL)) != 0)
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_LFS,
+	    KAUTH_REQ_SYSTEM_LFS_SEGWAIT, NULL, NULL, NULL);
+	if (error)
 		return (error);
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
 		return (error);

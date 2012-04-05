@@ -1,4 +1,4 @@
-/*	$NetBSD: apic.c,v 1.12 2011/04/04 20:37:50 dyoung Exp $	*/
+/*	$NetBSD: apic.c,v 1.12.8.1 2012/04/05 21:33:14 mrg Exp $	*/
 
 /*	$OpenBSD: apic.c,v 1.7 2007/10/06 23:50:54 krw Exp $	*/
 
@@ -161,7 +161,8 @@ apic_intr_establish(void *v, pci_intr_handle_t ih,
 {
 	struct elroy_softc *sc = v;
 	volatile struct elroy_regs *r = sc->sc_regs;
-	hppa_hpa_t hpa = cpu_gethpa(0);
+	struct cpu_info *ci = &cpus[0];
+	hppa_hpa_t hpa = ci->ci_hpa;
 	struct evcnt *cnt;
 	struct apic_iv *aiv, *biv;
 	void *iv;

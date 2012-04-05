@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.238.6.1 2012/02/18 07:35:55 mrg Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.238.6.2 2012/04/05 21:33:51 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.238.6.1 2012/02/18 07:35:55 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.238.6.2 2012/04/05 21:33:51 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1396,13 +1396,13 @@ lfs_rename(void *v)
 		 * otherwise the destination may not be changed (except by
 		 * root). This implements append-only directories.
 		 */
-		if ((tdp->i_mode & S_ISTXT) &&
-		    kauth_authorize_generic(tcnp->cn_cred,
-		     KAUTH_GENERIC_ISSUSER, NULL) != 0 &&
-		    kauth_cred_geteuid(tcnp->cn_cred) != tdp->i_uid &&
-		    txp->i_uid != kauth_cred_geteuid(tcnp->cn_cred)) {
-			error = EPERM;
-			goto bad;
+		if (tdp->i_mode & S_ISTXT) {
+			error = kauth_authorize_vnode(tcnp->cn_cred,
+			    KAUTH_VNODE_DELETE, tvp, tdvp,
+			    genfs_can_sticky(tcnp->cn_cred, tdp->i_uid,
+			    txp->i_uid));
+			if (error)
+				goto bad;
 		}
 		/*
 		 * Target must be empty if a directory and have no links
@@ -2294,8 +2294,8 @@ lfs_fcntl(void *v)
 	/* LFS control and monitoring fcntls are available only to root */
 	l = curlwp;
 	if (((ap->a_command & 0xff00) >> 8) == 'L' &&
-	    (error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-					     NULL)) != 0)
+	    (error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_LFS,
+	     KAUTH_REQ_SYSTEM_LFS_FCNTL, NULL, NULL, NULL)) != 0)
 		return (error);
 
 	fs = VTOI(ap->a_vp)->i_lfs;

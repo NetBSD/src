@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.50.12.1 2012/02/18 07:35:17 mrg Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.50.12.2 2012/04/05 21:33:34 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.50.12.1 2012/02/18 07:35:17 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.50.12.2 2012/04/05 21:33:34 mrg Exp $");
 
 #include "opt_wsfont.h"
 
@@ -127,10 +127,6 @@ __KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.50.12.1 2012/02/18 07:35:17 mrg Exp $")
 #include <dev/wsfont/Droid_Sans_Mono_9x18.h>
 #endif
 
-#ifdef FONT_FREEMONO12x22
-#include <dev/wsfont/FreeMono_12x22.h>
-#endif
-
 /* Make sure we always have at least one bitmap font. */
 #ifndef HAVE_FONT
 #define HAVE_FONT 1
@@ -219,9 +215,6 @@ static struct font builtin_fonts[] = {
 #endif
 #ifdef FONT_DROID_SANS_MONO9x18
 	{ { NULL, NULL }, &Droid_Sans_Mono_9x18, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
-#endif
-#ifdef FONT_FREEMONO12x22
-	{ { NULL, NULL }, &FreeMono_12x22, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 	{ { NULL, NULL }, NULL, 0, 0, 0 },
 };

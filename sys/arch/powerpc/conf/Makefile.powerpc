@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.48.6.1 2012/02/18 07:32:52 mrg Exp $
+#	$NetBSD: Makefile.powerpc,v 1.48.6.2 2012/04/05 21:33:18 mrg Exp $
 #
 # Makefile for NetBSD
 #
@@ -42,6 +42,11 @@ CWARNFLAGS+=	-Wreturn-type
 .if ${PPCDIR} == "oea"
 CFLAGS+=	-mno-strict-align
 CFLAGS+=	-Wa,-maltivec
+.endif
+.if ${PPCDIR} == "booke"
+DEFCOPTS=	-O2
+CFLAGS+=	-fstack-protector
+CFLAGS+=	-mmultiple -misel
 .endif
 CFLAGS+=	-msdata=none
 CFLAGS+=	-msoft-float ${CCPUOPTS}

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_subr.c,v 1.24 2011/06/12 03:35:58 rmind Exp $	*/
+/*	$NetBSD: kernfs_subr.c,v 1.24.6.1 2012/04/05 21:33:42 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,11 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.24 2011/06/12 03:35:58 rmind Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_ipsec.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.24.6.1 2012/04/05 21:33:42 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,15 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.24 2011/06/12 03:35:58 rmind Exp $
 #include <sys/mount.h>
 
 #include <miscfs/kernfs/kernfs.h>
-
-#ifdef IPSEC
-#include <sys/mbuf.h>
-#include <net/route.h>
-#include <netinet/in.h>
-#include <netinet6/ipsec.h>
-#include <netkey/keydb.h>
-#include <netkey/key.h>
-#endif
 
 void kernfs_hashins(struct kernfs_node *);
 void kernfs_hashrem(struct kernfs_node *);
@@ -355,49 +342,3 @@ kernfs_hashrem(struct kernfs_node *pp)
 	LIST_REMOVE(pp, kfs_hash);
 	mutex_exit(&kfs_ihash_lock);
 }
-
-#ifdef IPSEC
-void
-kernfs_revoke_sa(struct secasvar *sav)
-{
-	struct kernfs_node *kfs, *pnext;
-	struct vnode *vp;
-	struct kfs_hashhead *ppp;
-	struct mbuf *m;
-
-	if (key_setdumpsa_spi == NULL)
-		return;
-
-	ppp = &kfs_hashtbl[KFSVALUEHASH(ntohl(sav->spi))];
-	for (kfs = LIST_FIRST(ppp); kfs; kfs = pnext) {
-		vp = KERNFSTOV(kfs);
-		pnext = LIST_NEXT(kfs, kfs_hash);
-		if (vp->v_usecount > 0 && kfs->kfs_type == KFSipsecsa &&
-		    kfs->kfs_value == ntohl(sav->spi)) {
-			m = key_setdumpsa_spi(sav->spi);
-			if (!m)
-				VOP_REVOKE(vp, REVOKEALL);
-			else
-				m_freem(m);
-			break;
-		}
-	}
-}
-
-void
-kernfs_revoke_sp(struct secpolicy *sp)
-{
-	struct kernfs_node *kfs, *pnext;
-	struct vnode *vp;
-	struct kfs_hashhead *ppp;
-
-	ppp = &kfs_hashtbl[KFSVALUEHASH(sp->id)];
-	for (kfs = LIST_FIRST(ppp); kfs; kfs = pnext) {
-		vp = KERNFSTOV(kfs);
-		pnext = LIST_NEXT(kfs, kfs_hash);
-		if (vp->v_usecount > 0 && kfs->kfs_type == KFSipsecsa &&
-		    kfs->kfs_value == sp->id)
-			VOP_REVOKE(vp, REVOKEALL);
-	}
-}
-#endif

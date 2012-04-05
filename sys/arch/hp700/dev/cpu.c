@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.19.8.1 2012/03/04 00:46:06 mrg Exp $	*/
+/*	$NetBSD: cpu.c,v 1.19.8.2 2012/04/05 21:33:14 mrg Exp $	*/
 
 /*	$OpenBSD: cpu.c,v 1.29 2009/02/08 18:33:28 miod Exp $	*/
 
@@ -29,13 +29,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.19.8.1 2012/03/04 00:46:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.19.8.2 2012/04/05 21:33:14 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/atomic.h>
 #include <sys/reboot.h>
 
 #include <uvm/uvm.h>
@@ -45,15 +46,10 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.19.8.1 2012/03/04 00:46:06 mrg Exp $");
 #include <machine/iomod.h>
 #include <machine/autoconf.h>
 
+#include <hppa/hppa/cpuvar.h>
 #include <hp700/hp700/intr.h>
 #include <hp700/hp700/machdep.h>
 #include <hp700/dev/cpudevs.h>
-
-struct cpu_softc {
-	device_t sc_dev;
-	hppa_hpa_t sc_hpa;
-	void *sc_ih;
-};
 
 #ifdef MULTIPROCESSOR
 
@@ -174,7 +170,7 @@ cpuattach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	
-	sc->sc_ih = hp700_intr_establish(IPL_CLOCK, clock_intr,
+	sc->sc_ihclk = hp700_intr_establish(IPL_CLOCK, clock_intr,
 	    NULL /*clockframe*/, &ir_cpu, 31);
 
 #ifdef MULTIPROCESSOR

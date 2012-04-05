@@ -1,4 +1,3 @@
-/*	$NetBSD: limits.h,v 1.2 2005/12/06 16:51:17 tsutsui Exp $	*/
+/*	$NetBSD: limits.h,v 1.2.116.1 2012/04/05 21:33:17 mrg Exp $	*/
 
-/* Just use the common m68k definition */
 #include <m68k/limits.h>

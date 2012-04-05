@@ -1,30 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.65.16.1 2012/02/18 07:35:27 mrg Exp $ */
-
-/*-
- * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
+/* $NetBSD: kern_auth.c,v 1.65.16.2 2012/04/05 21:33:38 mrg Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -54,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.65.16.1 2012/02/18 07:35:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.65.16.2 2012/04/05 21:33:38 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1094,6 +1068,30 @@ kauth_mode_to_action(mode_t mode)
 		action |= KAUTH_VNODE_WRITE_DATA;
 	if (mode & VEXEC)
 		action |= KAUTH_VNODE_EXECUTE;
+
+	return action;
+}
+
+kauth_action_t
+kauth_access_action(mode_t access_mode, enum vtype vn_type, mode_t file_mode)
+{
+	kauth_action_t action = kauth_mode_to_action(access_mode);
+
+	if (FS_OBJECT_CAN_EXEC(vn_type, file_mode))
+		action |= KAUTH_VNODE_IS_EXEC;
+
+	return action;
+}
+
+kauth_action_t
+kauth_extattr_action(mode_t access_mode)
+{
+	kauth_action_t action = 0;
+
+	if (access_mode & VREAD)
+		action |= KAUTH_VNODE_READ_EXTATTRIBUTES;
+	if (access_mode & VWRITE)
+		action |= KAUTH_VNODE_WRITE_EXTATTRIBUTES;
 
 	return action;
 }

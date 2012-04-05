@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.62 2011/07/30 06:19:02 uebayasi Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.62.6.1 2012/04/05 21:33:40 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.62 2011/07/30 06:19:02 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.62.6.1 2012/04/05 21:33:40 mrg Exp $");
 
 #define SYSVMSG
 
@@ -154,6 +154,8 @@ msginit(void)
 	mutex_init(&msgmutex, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&msg_realloc_cv, "msgrealc");
 	msg_realloc_state = false;
+
+	sysvipcinit();
 }
 
 static int
@@ -487,8 +489,10 @@ msgctl1(struct lwp *l, int msqid, int cmd, struct msqid_ds *msqbuf)
 		if ((error = ipcperm(cred, &msqptr->msg_perm, IPC_M)))
 			break;
 		if (msqbuf->msg_qbytes > msqptr->msg_qbytes &&
-		    kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    NULL) != 0) {
+		    kauth_authorize_system(cred, KAUTH_SYSTEM_SYSVIPC,
+		    KAUTH_REQ_SYSTEM_SYSVIPC_MSGQ_OVERSIZE,
+		    KAUTH_ARG(msqbuf->msg_qbytes),
+		    KAUTH_ARG(msqptr->msg_qbytes), NULL) != 0) {
 			error = EPERM;
 			break;
 		}

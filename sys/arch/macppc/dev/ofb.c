@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.67 2011/07/01 18:41:52 dyoung Exp $	*/
+/*	$NetBSD: ofb.c,v 1.67.6.1 2012/04/05 21:33:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.67 2011/07/01 18:41:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.67.6.1 2012/04/05 21:33:17 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -335,8 +335,8 @@ ofb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
 	 */
-	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
-	    NULL) != 0) {
+	if (kauth_authorize_machdep(kauth_cred_get(), KAUTH_MACHDEP_UNMANAGEDMEM,
+	    NULL, NULL, NULL, NULL) != 0) {
 		printf("%s: mmap() rejected.\n", sc->sc_dev.dv_xname);
 		return -1;
 	}

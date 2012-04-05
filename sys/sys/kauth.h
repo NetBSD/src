@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.65.2.1 2012/02/18 07:35:49 mrg Exp $ */
+/* $NetBSD: kauth.h,v 1.65.2.2 2012/04/05 21:33:50 mrg Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -36,6 +36,7 @@
 #define	_SYS_KAUTH_H_
 
 #include <secmodel/secmodel.h> /* for secmodel_t type */
+#include <sys/stat.h> /* for modes */
 
 struct uucred;
 struct ki_ucred;
@@ -43,6 +44,7 @@ struct ki_pcred;
 struct proc;
 struct tty;
 struct vnode;
+enum vtype;
 
 /* Types. */
 typedef struct kauth_scope     *kauth_scope_t;
@@ -100,6 +102,15 @@ enum {
 	KAUTH_SYSTEM_MODULE,
 	KAUTH_SYSTEM_FS_RESERVEDSPACE,
 	KAUTH_SYSTEM_FS_QUOTA,
+	KAUTH_SYSTEM_SEMAPHORE,
+	KAUTH_SYSTEM_SYSVIPC,
+	KAUTH_SYSTEM_MQUEUE,
+	KAUTH_SYSTEM_VERIEXEC,
+	KAUTH_SYSTEM_DEVMAPPER,
+	KAUTH_SYSTEM_MAP_VA_ZERO,
+	KAUTH_SYSTEM_LFS,
+	KAUTH_SYSTEM_FS_EXTATTR,
+	KAUTH_SYSTEM_FS_SNAPSHOT,
 };
 
 /*
@@ -132,7 +143,20 @@ enum kauth_system_req {
 	KAUTH_REQ_SYSTEM_FS_QUOTA_MANAGE,
 	KAUTH_REQ_SYSTEM_FS_QUOTA_NOLIMIT,
 	KAUTH_REQ_SYSTEM_FS_QUOTA_ONOFF,
-};	
+	KAUTH_REQ_SYSTEM_SYSVIPC_BYPASS,
+	KAUTH_REQ_SYSTEM_SYSVIPC_SHM_LOCK,
+	KAUTH_REQ_SYSTEM_SYSVIPC_SHM_UNLOCK,
+	KAUTH_REQ_SYSTEM_SYSVIPC_MSGQ_OVERSIZE,
+	KAUTH_REQ_SYSTEM_VERIEXEC_ACCESS,
+	KAUTH_REQ_SYSTEM_VERIEXEC_MODIFY,
+	KAUTH_REQ_SYSTEM_LFS_MARKV,
+	KAUTH_REQ_SYSTEM_LFS_BMAPV,
+	KAUTH_REQ_SYSTEM_LFS_SEGCLEAN,
+	KAUTH_REQ_SYSTEM_LFS_SEGWAIT,
+	KAUTH_REQ_SYSTEM_LFS_FCNTL,
+	KAUTH_REQ_SYSTEM_MOUNT_UMAP,
+	KAUTH_REQ_SYSTEM_MOUNT_DEVICE,
+};
 
 /*
  * Process scope - actions.
@@ -172,7 +196,8 @@ enum kauth_process_req {
 	KAUTH_REQ_PROCESS_PROCFS_RW,
 	KAUTH_REQ_PROCESS_PROCFS_WRITE,
 	KAUTH_REQ_PROCESS_RLIMIT_GET,
-	KAUTH_REQ_PROCESS_RLIMIT_SET
+	KAUTH_REQ_PROCESS_RLIMIT_SET,
+	KAUTH_REQ_PROCESS_RLIMIT_BYPASS,
 };
 
 /*
@@ -191,6 +216,11 @@ enum {
 	KAUTH_NETWORK_INTERFACE_SLIP,
 	KAUTH_NETWORK_INTERFACE_STRIP,
 	KAUTH_NETWORK_INTERFACE_TUN,
+	KAUTH_NETWORK_INTERFACE_BRIDGE,
+	KAUTH_NETWORK_IPSEC,
+	KAUTH_NETWORK_INTERFACE_PVC,
+	KAUTH_NETWORK_IPV6,
+	KAUTH_NETWORK_SMB,
 };
 
 /*
@@ -228,6 +258,17 @@ enum kauth_network_req {
 	KAUTH_REQ_NETWORK_INTERFACE_SLIP_ADD,
 	KAUTH_REQ_NETWORK_INTERFACE_STRIP_ADD,
 	KAUTH_REQ_NETWORK_INTERFACE_TUN_ADD,
+	KAUTH_REQ_NETWORK_IPV6_HOPBYHOP,
+	KAUTH_REQ_NETWORK_INTERFACE_BRIDGE_GETPRIV,
+	KAUTH_REQ_NETWORK_INTERFACE_BRIDGE_SETPRIV,
+	KAUTH_REQ_NETWORK_IPSEC_BYPASS,
+	KAUTH_REQ_NETWORK_IPV6_JOIN_MULTICAST,
+	KAUTH_REQ_NETWORK_INTERFACE_PVC_ADD,
+	KAUTH_REQ_NETWORK_SMB_SHARE_ACCESS,
+	KAUTH_REQ_NETWORK_SMB_SHARE_CREATE,
+	KAUTH_REQ_NETWORK_SMB_VC_ACCESS,
+	KAUTH_REQ_NETWORK_SMB_VC_CREATE,
+	KAUTH_REQ_NETWORK_INTERFACE_FIRMWARE,
 };
 
 /*
@@ -244,7 +285,8 @@ enum {
 	KAUTH_MACHDEP_MTRR_GET,
 	KAUTH_MACHDEP_MTRR_SET,
 	KAUTH_MACHDEP_NVRAM,
-	KAUTH_MACHDEP_UNMANAGEDMEM
+	KAUTH_MACHDEP_UNMANAGEDMEM,
+	KAUTH_MACHDEP_PXG,
 };
 
 /*
@@ -265,7 +307,10 @@ enum {
 	KAUTH_DEVICE_BLUETOOTH_BTUART,
 	KAUTH_DEVICE_GPIO_PINSET,
 	KAUTH_DEVICE_BLUETOOTH_SEND,
-	KAUTH_DEVICE_BLUETOOTH_RECV
+	KAUTH_DEVICE_BLUETOOTH_RECV,
+	KAUTH_DEVICE_TTY_VIRTUAL,
+	KAUTH_DEVICE_WSCONS_KEYBOARD_BELL,
+	KAUTH_DEVICE_WSCONS_KEYBOARD_KEYREPEAT,
 };
 
 /*
@@ -315,7 +360,11 @@ enum {
 #define	KAUTH_VNODE_WRITE_ATTRIBUTES	(1U << 16)
 #define	KAUTH_VNODE_READ_EXTATTRIBUTES	(1U << 17)
 #define	KAUTH_VNODE_WRITE_EXTATTRIBUTES	(1U << 18)
+#define	KAUTH_VNODE_RETAIN_SUID		(1U << 19)
+#define	KAUTH_VNODE_RETAIN_SGID		(1U << 20)
+#define	KAUTH_VNODE_REVOKE		(1U << 21)
 
+#define	KAUTH_VNODE_IS_EXEC		(1U << 29)
 #define	KAUTH_VNODE_HAS_SYSFLAGS	(1U << 30)
 #define	KAUTH_VNODE_ACCESS		(1U << 31)
 
@@ -340,6 +389,20 @@ enum {
 
 /* Macro to help passing arguments to authorization wrappers. */
 #define	KAUTH_ARG(arg)	((void *)(unsigned long)(arg))
+
+/*
+ * A file-system object is determined to be able to execute if it's a
+ * directory or if the execute bit is present in any of the
+ * owner/group/other modes.
+ *
+ * This helper macro is intended to be used in order to implement a
+ * policy that maintains the semantics of "a privileged user can enter
+ * directory, and can execute any file, but only if the file is actually
+ * executable."
+ */
+#define	FS_OBJECT_CAN_EXEC(vtype, mode)	(((vtype) == VDIR) ||		\
+					 ((mode) &			\
+					  (S_IXUSR|S_IXGRP|S_IXOTH)))
 
 /*
  * Prototypes.
@@ -417,7 +480,9 @@ int kauth_cred_uucmp(kauth_cred_t, const struct uucred *);
 void kauth_cred_toucred(kauth_cred_t, struct ki_ucred *);
 void kauth_cred_topcred(kauth_cred_t, struct ki_pcred *);
 
-kauth_action_t kauth_mode_to_action(mode_t mode);
+kauth_action_t kauth_mode_to_action(mode_t);
+kauth_action_t kauth_access_action(mode_t, enum vtype, mode_t);
+kauth_action_t kauth_extattr_action(mode_t);
 
 kauth_cred_t kauth_cred_get(void);
 

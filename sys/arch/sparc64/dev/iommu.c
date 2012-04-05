@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.105.6.1 2012/02/18 07:33:16 mrg Exp $	*/
+/*	$NetBSD: iommu.c,v 1.105.6.2 2012/04/05 21:33:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.105.6.1 2012/02/18 07:33:16 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.105.6.2 2012/04/05 21:33:19 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -202,6 +202,8 @@ iommu_init(char *name, struct iommu_state *is, int tsbsize, uint32_t iovabase)
 	    is->is_dvmabase, is->is_dvmaend,
 	    0, 0, EX_NOWAIT);
 	/* XXXMRG Check is_dvmamap is valid. */
+
+	mutex_init(&is->is_lock, MUTEX_DEFAULT, IPL_HIGH);
 
 	/*
 	 * Set the TSB size.  The relevant bits were moved to the TSB
@@ -456,7 +458,6 @@ iommu_dvmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 {
 	struct strbuf_ctl *sb = (struct strbuf_ctl *)map->_dm_cookie;
 	struct iommu_state *is = sb->sb_is;
-	int s;
 	int err, needsflush;
 	bus_size_t sgsize;
 	paddr_t curaddr;
@@ -503,11 +504,11 @@ iommu_dvmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	 * split the transfer up int little pieces ourselves.
 	 */
 	KASSERT(is->is_dvmamap);
-	s = splhigh();
+	mutex_enter(&is->is_lock);
 	err = extent_alloc(is->is_dvmamap, sgsize, align,
 	    (sgsize > boundary) ? 0 : boundary,
 	    EX_NOWAIT|EX_BOUNDZERO, &dvmaddr);
-	splx(s);
+	mutex_exit(&is->is_lock);
 
 #ifdef DEBUG
 	if (err || (dvmaddr == (u_long)-1)) {
@@ -555,12 +556,12 @@ iommu_dvmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 			/* Too many segments.  Fail the operation. */
 			DPRINTF(IDB_INFO, ("iommu_dvmamap_load: "
 			    "too many segments %d\n", seg));
-			s = splhigh();
+			mutex_enter(&is->is_lock);
 			err = extent_free(is->is_dvmamap,
 			    dvmaddr, sgsize, EX_NOWAIT);
 			map->_dm_dvmastart = 0;
 			map->_dm_dvmasize = 0;
-			splx(s);
+			mutex_exit(&is->is_lock);
 			if (err != 0)
 				printf("warning: %s: %" PRId64
 				    " of DVMA space lost\n", __func__, sgsize);
@@ -647,7 +648,7 @@ iommu_dvmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	struct strbuf_ctl *sb = (struct strbuf_ctl *)map->_dm_cookie;
 	struct iommu_state *is = sb->sb_is;
-	int error, s;
+	int error;
 	bus_size_t sgsize = map->_dm_dvmasize;
 
 	/* Flush the iommu */
@@ -664,12 +665,12 @@ iommu_dvmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	/* Flush the caches */
 	bus_dmamap_unload(t->_parent, map);
 
-	s = splhigh();
+	mutex_enter(&is->is_lock);
 	error = extent_free(is->is_dvmamap, map->_dm_dvmastart,
 		map->_dm_dvmasize, EX_NOWAIT);
 	map->_dm_dvmastart = 0;
 	map->_dm_dvmasize = 0;
-	splx(s);
+	mutex_exit(&is->is_lock);
 	if (error != 0)
 		printf("warning: %s: %" PRId64 " of DVMA space lost\n",
 		    __func__, sgsize);
@@ -685,7 +686,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	struct strbuf_ctl *sb = (struct strbuf_ctl *)map->_dm_cookie;
 	struct iommu_state *is = sb->sb_is;
 	struct vm_page *pg;
-	int i, j, s;
+	int i, j;
 	int left;
 	int err, needsflush;
 	bus_size_t sgsize;
@@ -734,7 +735,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	}
 	sgsize = round_page(sgsize);
 
-	s = splhigh();
+	mutex_enter(&is->is_lock);
 	/*
 	 * If our segment size is larger than the boundary we need to
 	 * split the transfer up into little pieces ourselves.
@@ -743,7 +744,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 		(sgsize > boundary) ? 0 : boundary,
 		((flags & BUS_DMA_NOWAIT) == 0 ? EX_WAITOK : EX_NOWAIT) |
 		EX_BOUNDZERO, &dvmaddr);
-	splx(s);
+	mutex_exit(&is->is_lock);
 
 	if (err != 0)
 		return (err);
@@ -976,12 +977,12 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	return (0);
 
 fail:
-	s = splhigh();
+	mutex_enter(&is->is_lock);
 	err = extent_free(is->is_dvmamap, map->_dm_dvmastart, sgsize,
 	    EX_NOWAIT);
 	map->_dm_dvmastart = 0;
 	map->_dm_dvmasize = 0;
-	splx(s);
+	mutex_exit(&is->is_lock);
 	if (err != 0)
 		printf("warning: %s: %" PRId64 " of DVMA space lost\n",
 		    __func__, sgsize);

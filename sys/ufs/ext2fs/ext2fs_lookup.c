@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.66.6.1 2012/02/18 07:35:53 mrg Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.66.6.2 2012/04/05 21:33:51 mrg Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.66.6.1 2012/02/18 07:35:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.66.6.2 2012/04/05 21:33:51 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.66.6.1 2012/02/18 07:35:53 mrg E
 #include <ufs/ext2fs/ext2fs_extern.h>
 #include <ufs/ext2fs/ext2fs_dir.h>
 #include <ufs/ext2fs/ext2fs.h>
+
+#include <miscfs/genfs/genfs.h>
 
 extern	int dirchk;
 
@@ -575,11 +577,6 @@ found:
 	 */
 	if (nameiop == DELETE && (flags & ISLASTCN)) {
 		/*
-		 * Write access to directory required to delete files.
-		 */
-		if ((error = VOP_ACCESS(vdp, VWRITE, cred)) != 0)
-			return (error);
-		/*
 		 * Return pointer to current entry in results->ulr_offset,
 		 * and distance past previous entry (if there
 		 * is a previous entry in this block) in results->ulr_count.
@@ -591,28 +588,43 @@ found:
 			results->ulr_count = results->ulr_offset - prevoff;
 		if (dp->i_number == foundino) {
 			vref(vdp);
-			*vpp = vdp;
-			return (0);
+			tdp = vdp;
+		} else {
+			if (flags & ISDOTDOT)
+				VOP_UNLOCK(vdp); /* race to get the inode */
+			error = VFS_VGET(vdp->v_mount, foundino, &tdp);
+			if (flags & ISDOTDOT)
+				vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
+			if (error)
+				return (error);
 		}
-		if (flags & ISDOTDOT)
-			VOP_UNLOCK(vdp); /* race to get the inode */
-		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
-		if (flags & ISDOTDOT)
-			vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
-		if (error)
+		/*
+		 * Write access to directory required to delete files.
+		 */
+		if ((error = VOP_ACCESS(vdp, VWRITE, cred)) != 0) {
+			if (dp->i_number == foundino)
+				vrele(tdp);
+			else
+				vput(tdp);
 			return (error);
+		}
 		/*
 		 * If directory is "sticky", then user must own
 		 * the directory, or the file in it, else she
 		 * may not delete it (unless she's root). This
 		 * implements append-only directories.
 		 */
-		if ((dp->i_e2fs_mode & ISVTX) &&
-		    kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) &&
-		    kauth_cred_geteuid(cred) != dp->i_uid &&
-		    VTOI(tdp)->i_uid != kauth_cred_geteuid(cred)) {
-			vput(tdp);
-			return (EPERM);
+		if (dp->i_e2fs_mode & ISVTX) {
+			error = kauth_authorize_vnode(cred, KAUTH_VNODE_DELETE,
+			    tdp, vdp, genfs_can_sticky(cred, dp->i_uid,
+			    VTOI(tdp)->i_uid));
+			if (error) {
+				if (dp->i_number == foundino)
+					vrele(tdp);
+				else
+					vput(tdp);
+				return (EPERM);
+			}
 		}
 		*vpp = tdp;
 		return (0);

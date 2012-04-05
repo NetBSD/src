@@ -1,4 +1,4 @@
-/*	$NetBSD: bthidev.c,v 1.19.12.1 2012/02/18 07:34:09 mrg Exp $	*/
+/*	$NetBSD: bthidev.c,v 1.19.12.2 2012/04/05 21:33:25 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.19.12.1 2012/02/18 07:34:09 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.19.12.2 2012/04/05 21:33:25 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -330,6 +330,8 @@ bthidev_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
+	pmf_device_register(self, NULL, NULL);
+
 	/*
 	 * start bluetooth connections
 	 */
@@ -381,6 +383,8 @@ bthidev_detach(device_t self, int flags)
 	callout_destroy(&sc->sc_reconnect);
 
 	mutex_exit(bt_lock);
+
+	pmf_device_deregister(self);
 
 	/* kill off the input processor */
 	if (sc->sc_lwp != NULL) {

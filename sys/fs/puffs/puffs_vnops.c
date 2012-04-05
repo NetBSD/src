@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.162.4.1 2012/02/18 07:35:24 mrg Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.162.4.2 2012/04/05 21:33:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.162.4.1 2012/02/18 07:35:24 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.162.4.2 2012/04/05 21:33:37 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1862,6 +1862,9 @@ puffs_vnop_read(void *v)
 		const int advice = IO_ADV_DECODE(ap->a_ioflag);
 
 		while (uio->uio_resid > 0) {
+			if (vp->v_size <= uio->uio_offset) {
+				break;
+			}
 			bytelen = MIN(uio->uio_resid,
 			    vp->v_size - uio->uio_offset);
 			if (bytelen == 0)

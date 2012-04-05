@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.28 2010/12/23 20:07:13 christos Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.28.12.1 2012/04/05 21:33:25 mrg Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -397,8 +397,8 @@ dm_cmd_to_fun(prop_dictionary_t dm_dict) {
 			break;
 
 	if (!cmd_fn[i].allowed && 
-	    (r = kauth_authorize_generic(kauth_cred_get(),
-	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
+	    (r = kauth_authorize_system(kauth_cred_get(),
+	    KAUTH_SYSTEM_DEVMAPPER, 0, NULL, NULL, NULL)) != 0)
 		return r;
 
 	if (cmd_fn[i].cmd == NULL)

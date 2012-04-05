@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.291.4.1 2012/02/18 07:35:55 mrg Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.291.4.2 2012/04/05 21:33:51 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.291.4.1 2012/02/18 07:35:55 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.291.4.2 2012/04/05 21:33:51 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -722,7 +722,9 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		    (mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = genfs_can_mount(devvp, accessmode, l->l_cred);
+		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
+		    KAUTH_REQ_SYSTEM_MOUNT_DEVICE, mp, devvp,
+		    KAUTH_ARG(accessmode));
 		VOP_UNLOCK(devvp);
 	}
 

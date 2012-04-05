@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.47.8.2 2012/02/18 07:34:45 mrg Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.47.8.3 2012/04/05 21:33:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.47.8.2 2012/02/18 07:34:45 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.47.8.3 2012/04/05 21:33:27 mrg Exp $");
 
 #include "ehci.h"
 
@@ -96,6 +96,16 @@ ohci_pci_attach(device_t parent, device_t self, void *aux)
 
 	pci_aprint_devinfo(pa, "USB Controller");
 
+	/* check if memory space access is enabled */
+	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+#ifdef DEBUG
+	printf("csr: %08x\n", csr);
+#endif
+	if ((csr & PCI_COMMAND_MEM_ENABLE) == 0) {
+		aprint_error_dev(self, "memory access is disabled\n");
+		return;
+	}
+
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBMEM, PCI_MAPREG_TYPE_MEM, 0,
 			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size)) {
@@ -113,7 +123,6 @@ ohci_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_bus.dmatag = pa->pa_dmat;
 
 	/* Enable the device. */
-	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
 		       csr | PCI_COMMAND_MASTER_ENABLE);
 

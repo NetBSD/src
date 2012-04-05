@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_pmap.c,v 1.10.6.1 2012/02/18 07:32:52 mrg Exp $	*/
+/*	$NetBSD: booke_pmap.c,v 1.10.6.2 2012/04/05 21:33:17 mrg Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.10.6.1 2012/02/18 07:32:52 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.10.6.2 2012/04/05 21:33:17 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -58,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.10.6.1 2012/02/18 07:32:52 mrg Exp 
 #endif
 
 CTASSERT(sizeof(struct pmap_segtab) == NBPG);
+
+struct pmap_segtab pmap_kernel_segtab;
 
 void
 pmap_procwr(struct proc *p, vaddr_t va, size_t len)
@@ -120,30 +122,46 @@ pmap_md_direct_mapped_vaddr_to_paddr(vaddr_t va)
 	return (paddr_t) va;
 }
 
+#ifdef PMAP_MINIMALTLB
+static pt_entry_t *
+kvtopte(const struct pmap_segtab *stp, vaddr_t va)
+{
+	pt_entry_t * const ptep = stp->seg_tab[va >> SEGSHIFT];
+	if (ptep == NULL)
+		return NULL;
+	return &ptep[(va & SEGOFSET) >> PAGE_SHIFT];
+}
+
+vaddr_t
+pmap_kvptefill(vaddr_t sva, vaddr_t eva, pt_entry_t pt_entry)
+{
+	const struct pmap_segtab * const stp = pmap_kernel()->pm_segtab;
+	KASSERT(sva == trunc_page(sva));
+	pt_entry_t *ptep = kvtopte(stp, sva);
+	for (; sva < eva; sva += NBPG) {
+		*ptep++ = pt_entry ? (sva | pt_entry) : 0;
+	}
+	return sva;
+}
+#endif
+
 /*
  *	Bootstrap the system enough to run with virtual memory.
  *	firstaddr is the first unused kseg0 address (not page aligned).
  */
-void
+vaddr_t
 pmap_bootstrap(vaddr_t startkernel, vaddr_t endkernel,
-	const phys_ram_seg_t *avail, size_t cnt)
+	phys_ram_seg_t *avail, size_t cnt)
 {
-	for (size_t i = 0; i < cnt; i++) {
-		printf(" uvm_page_physload(%#lx,%#lx,%#lx,%#lx,%d)",
-		    atop(avail[i].start),
-		    atop(avail[i].start + avail[i].size) - 1,
-		    atop(avail[i].start),
-		    atop(avail[i].start + avail[i].size) - 1,
-		    VM_FREELIST_DEFAULT);
-		uvm_page_physload(
-		    atop(avail[i].start),
-		    atop(avail[i].start + avail[i].size) - 1,
-		    atop(avail[i].start),
-		    atop(avail[i].start + avail[i].size) - 1,
-		    VM_FREELIST_DEFAULT);
-	}
+	struct pmap_segtab * const stp = &pmap_kernel_segtab;
 
-	pmap_tlb_info_init(&pmap_tlb0_info);		/* init the lock */
+	/*
+	 * Initialize the kernel segment table.
+	 */
+	pmap_kernel()->pm_segtab = stp;
+	curcpu()->ci_pmap_kern_segtab = stp;
+
+	KASSERT(endkernel == trunc_page(endkernel));
 
 	/*
 	 * Compute the number of pages kmem_arena will have.
@@ -160,7 +178,7 @@ pmap_bootstrap(vaddr_t startkernel, vaddr_t endkernel,
 	vsize_t bufsz = buf_memcalc();
 	buf_setvalimit(bufsz);
 
-	vsize_t nsegtabs = pmap_round_seg(VM_PHYS_SIZE
+	vsize_t kv_nsegtabs = pmap_round_seg(VM_PHYS_SIZE
 	    + (ubc_nwins << ubc_winshift)
 	    + bufsz
 	    + 16 * NCARGS
@@ -169,7 +187,7 @@ pmap_bootstrap(vaddr_t startkernel, vaddr_t endkernel,
 #ifdef SYSVSHM
 	    + NBPG * shminfo.shmall
 #endif
-	    + NBPG * nkmempages);
+	    + NBPG * nkmempages) >> SEGSHIFT;
 
 	/*
 	 * Initialize `FYI' variables.	Note we're relying on
@@ -179,67 +197,99 @@ pmap_bootstrap(vaddr_t startkernel, vaddr_t endkernel,
 	 */
 	pmap_limits.avail_start = vm_physmem[0].start << PGSHIFT;
 	pmap_limits.avail_end = vm_physmem[vm_nphysseg - 1].end << PGSHIFT;
-	const vsize_t max_nsegtabs =
+	const size_t max_nsegtabs =
 	    (pmap_round_seg(VM_MAX_KERNEL_ADDRESS)
 		- pmap_trunc_seg(VM_MIN_KERNEL_ADDRESS)) / NBSEG;
-	if (nsegtabs >= max_nsegtabs) {
+	if (kv_nsegtabs >= max_nsegtabs) {
 		pmap_limits.virtual_end = VM_MAX_KERNEL_ADDRESS;
-		nsegtabs = max_nsegtabs;
+		kv_nsegtabs = max_nsegtabs;
 	} else {
 		pmap_limits.virtual_end = VM_MIN_KERNEL_ADDRESS
-		    + nsegtabs * NBSEG;
+		    + kv_nsegtabs * NBSEG;
 	}
-
-	pmap_pvlist_lock_init(curcpu()->ci_ci.dcache_line_size);
 
 	/*
 	 * Now actually allocate the kernel PTE array (must be done
 	 * after virtual_end is initialized).
 	 */
-	vaddr_t segtabs =
-	    uvm_pageboot_alloc(NBPG * nsegtabs + sizeof(struct pmap_segtab));
+	const vaddr_t kv_segtabs = avail[0].start;
+	KASSERT(kv_segtabs == endkernel);
+	KASSERT(avail[0].size >= NBPG * kv_nsegtabs);
+	printf(" kv_nsegtabs=%#"PRIxVSIZE, kv_nsegtabs);
+	printf(" kv_segtabs=%#"PRIxVADDR, kv_segtabs);
+	avail[0].start += NBPG * kv_nsegtabs;
+	avail[0].size -= NBPG * kv_nsegtabs;
+	endkernel += NBPG * kv_nsegtabs;
 
 	/*
 	 * Initialize the kernel's two-level page level.  This only wastes
 	 * an extra page for the segment table and allows the user/kernel
 	 * access to be common.
 	 */
-	struct pmap_segtab * const stp = (void *)segtabs;
-	segtabs += round_page(sizeof(struct pmap_segtab));
 	pt_entry_t **ptp = &stp->seg_tab[VM_MIN_KERNEL_ADDRESS >> SEGSHIFT];
-	for (u_int i = 0; i < nsegtabs; i++, segtabs += NBPG) {
-		*ptp++ = (void *)segtabs;
+	pt_entry_t *ptep = (void *)kv_segtabs;
+	memset(ptep, 0, NBPG * kv_nsegtabs);
+	for (size_t i = 0; i < kv_nsegtabs; i++, ptep += NPTEPG) {
+		*ptp++ = ptep;
 	}
-	pmap_kernel()->pm_segtab = stp;
-	curcpu()->ci_pmap_kern_segtab = stp;
-	printf(" kern_segtab=%p", stp);
 
-#if 0
-	nsegtabs = (physmem + NPTEPG - 1) / NPTEPG;
-	segtabs = uvm_pageboot_alloc(NBPG * nsegtabs);
+#if PMAP_MINIMALTLB
+	const vsize_t dm_nsegtabs = (physmem + NPTEPG - 1) / NPTEPG;
+	const vaddr_t dm_segtabs = avail[0].start;
+	printf(" dm_nsegtabs=%#"PRIxVSIZE, dm_nsegtabs);
+	printf(" dm_segtabs=%#"PRIxVADDR, dm_segtabs);
+	KASSERT(dm_segtabs == endkernel);
+	KASSERT(avail[0].size >= NBPG * dm_nsegtabs);
+	avail[0].start += NBPG * dm_nsegtabs;
+	avail[0].size -= NBPG * dm_nsegtabs;
+	endkernel += NBPG * dm_nsegtabs;
+
 	ptp = stp->seg_tab;
-	pt_entry_t pt_entry = PTE_M|PTE_xX|PTE_xR;
-	pt_entry_t *ptep = (void *)segtabs;
-	printf("%s: allocated %lu page table pages for mapping %u pages\n",
-	    __func__, nsegtabs, physmem);
-	for (u_int i = 0; i < nsegtabs; i++, segtabs += NBPG, ptp++) {
+	ptep = (void *)dm_segtabs;
+	memset(ptep, 0, NBPG * dm_nsegtabs);
+	for (size_t i = 0; i < dm_nsegtabs; i++, ptp++, ptep += NPTEPG) {
 		*ptp = ptep;
-		for (u_int j = 0; j < NPTEPG; j++, ptep++) {
-			*ptep = pt_entry;
-			pt_entry += NBPG;
-		}
-		printf(" [%u]=%p (%#x)", i, *ptp, **ptp);
-		pt_entry |= PTE_xW;
-		pt_entry &= ~PTE_xX;
 	}
 
 	/*
-	 * Now make everything before the kernel inaccessible.
 	 */
-	for (u_int i = 0; i < startkernel / NBPG; i += NBPG) {
-		stp->seg_tab[i >> SEGSHIFT][(i & SEGOFSET) >> PAGE_SHIFT] = 0;
-	}
+	extern uint32_t _fdata[], _etext[];
+	vaddr_t va;
+
+	/* Now make everything before the kernel inaccessible. */
+	va = pmap_kvptefill(NBPG, startkernel, 0);
+
+	/* Kernel text is readonly & executable */
+	va = pmap_kvptefill(va, round_page((vaddr_t)_etext),
+	    PTE_M | PTE_xR | PTE_xX);
+
+	/* Kernel .rdata is readonly */
+	va = pmap_kvptefill(va, trunc_page((vaddr_t)_fdata), PTE_M | PTE_xR);
+
+	/* Kernel .data/.bss + page tables are read-write */
+	va = pmap_kvptefill(va, round_page(endkernel), PTE_M | PTE_xR | PTE_xW);
+
+	/* message buffer page table pages are read-write */
+	(void) pmap_kvptefill(msgbuf_paddr, msgbuf_paddr+round_page(MSGBUFSIZE),
+	    PTE_M | PTE_xR | PTE_xW);
 #endif
+
+	for (size_t i = 0; i < cnt; i++) {
+		printf(" uvm_page_physload(%#lx,%#lx,%#lx,%#lx,%d)",
+		    atop(avail[i].start),
+		    atop(avail[i].start + avail[i].size) - 1,
+		    atop(avail[i].start),
+		    atop(avail[i].start + avail[i].size) - 1,
+		    VM_FREELIST_DEFAULT);
+		uvm_page_physload(
+		    atop(avail[i].start),
+		    atop(avail[i].start + avail[i].size) - 1,
+		    atop(avail[i].start),
+		    atop(avail[i].start + avail[i].size) - 1,
+		    VM_FREELIST_DEFAULT);
+	}
+
+	pmap_pvlist_lock_init(curcpu()->ci_ci.dcache_line_size);
 
 	/*
 	 * Initialize the pools.
@@ -250,6 +300,8 @@ pmap_bootstrap(vaddr_t startkernel, vaddr_t endkernel,
 	    &pmap_pv_page_allocator, IPL_NONE);
 
 	tlb_set_asid(0);
+
+	return endkernel;
 }
 
 struct vm_page *
@@ -261,38 +313,69 @@ pmap_md_alloc_poolpage(int flags)
 	return uvm_pagealloc(NULL, 0, NULL, flags);
 }
 
+vaddr_t
+pmap_md_map_poolpage(paddr_t pa, vsize_t size)
+{
+	const vaddr_t sva = (vaddr_t) pa;
+#ifdef PMAP_MINIMALTLB
+	const vaddr_t eva = sva + size;
+	pmap_kvptefill(sva, eva, PTE_M | PTE_xR | PTE_xW);
+#endif
+	return sva;
+}
+
+void
+pmap_md_unmap_poolpage(vaddr_t va, vsize_t size)
+{
+#ifdef PMAP_MINIMALTLB
+	struct pmap * const pm = pmap_kernel();
+	const vaddr_t eva = va + size;
+	pmap_kvptefill(va, eva, 0);
+	for (;va < eva; va += NBPG) {
+		pmap_tlb_invalidate_addr(pm, va);
+	}
+	pmap_update(pm);
+#endif
+}
+
 void
 pmap_zero_page(paddr_t pa)
 {
-	dcache_zero_page(pa);
+	vaddr_t va = pmap_md_map_poolpage(pa, NBPG);
+	dcache_zero_page(va);
 
-	KASSERT(!VM_PAGEMD_EXECPAGE_P(VM_PAGE_TO_MD(PHYS_TO_VM_PAGE(pa))));
+	KASSERT(!VM_PAGEMD_EXECPAGE_P(VM_PAGE_TO_MD(PHYS_TO_VM_PAGE(va))));
+	pmap_md_unmap_poolpage(va, NBPG);
 }
 
 void
 pmap_copy_page(paddr_t src, paddr_t dst)
 {
 	const size_t line_size = curcpu()->ci_ci.dcache_line_size;
-	const paddr_t end = src + PAGE_SIZE;
+	vaddr_t src_va = pmap_md_map_poolpage(src, NBPG);
+	vaddr_t dst_va = pmap_md_map_poolpage(dst, NBPG);
+	const vaddr_t end = src_va + PAGE_SIZE;
 
-	while (src < end) {
+	while (src_va < end) {
 		__asm(
 			"dcbt	%2,%1"	"\n\t"	/* touch next src cachline */
 			"dcba	0,%1"	"\n\t" 	/* don't fetch dst cacheline */
-		    :: "b"(src), "b"(dst), "b"(line_size));
+		    :: "b"(src_va), "b"(dst_va), "b"(line_size));
 		for (u_int i = 0;
 		     i < line_size;
-		     src += 32, dst += 32, i += 32) {
+		     src_va += 32, dst_va += 32, i += 32) {
 			__asm(
 				"lmw	24,0(%0)" "\n\t"
 				"stmw	24,0(%1)"
-			    :: "b"(src), "b"(dst)
+			    :: "b"(src_va), "b"(dst_va)
 			    : "r24", "r25", "r26", "r27",
 			      "r28", "r29", "r30", "r31");
 		}
 	}
+	pmap_md_unmap_poolpage(src_va, NBPG);
+	pmap_md_unmap_poolpage(dst_va, NBPG);
 
-	KASSERT(!VM_PAGEMD_EXECPAGE_P(VM_PAGE_TO_MD(PHYS_TO_VM_PAGE(dst - PAGE_SIZE))));
+	KASSERT(!VM_PAGEMD_EXECPAGE_P(VM_PAGE_TO_MD(PHYS_TO_VM_PAGE(dst))));
 }
 
 void

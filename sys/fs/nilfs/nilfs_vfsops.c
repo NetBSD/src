@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vfsops.c,v 1.8 2011/11/14 18:35:13 hannken Exp $ */
+/* $NetBSD: nilfs_vfsops.c,v 1.8.4.1 2012/04/05 21:33:36 mrg Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.8 2011/11/14 18:35:13 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.8.4.1 2012/04/05 21:33:36 mrg Exp $");
 #endif /* not lint */
 
 
@@ -607,7 +607,8 @@ nilfs_mount_device(struct vnode *devvp, struct mount *mp, struct nilfs_args *arg
 	if ((mp->mnt_flag & MNT_RDONLY) == 0)
 		accessmode |= VWRITE;
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = genfs_can_mount(devvp, accessmode, l->l_cred);
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
+	    KAUTH_REQ_SYSTEM_MOUNT_DEVICE, mp, devvp, KAUTH_ARG(accessmode));
 	VOP_UNLOCK(devvp);
 	if (error) {
 		vrele(devvp);

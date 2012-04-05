@@ -1,4 +1,4 @@
-/*	$NetBSD: rfc6056.c,v 1.4 2011/11/19 22:51:25 tls Exp $	*/
+/*	$NetBSD: rfc6056.c,v 1.4.2.1 2012/04/05 21:33:44 mrg Exp $	*/
 
 /*
  * Copyright 2011 Vlad Balan
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfc6056.c,v 1.4 2011/11/19 22:51:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfc6056.c,v 1.4.2.1 2012/04/05 21:33:44 mrg Exp $");
 
 #include "opt_inet.h"
 
@@ -665,8 +665,9 @@ algo_doublehash(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
 	uint16_t count, num_ephemeral;
 	uint16_t mymin, mymax, lastport;
 	uint16_t *next_ephemeral;
-	uint16_t offset, idx, myport;
+	uint16_t offset, myport;
 	static uint16_t dhtable[8];
+	size_t idx;
 	int error;
 
 	DPRINTF("%s called\n", __func__);
@@ -688,7 +689,7 @@ algo_doublehash(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
 	/* Ephemeral port selection function */
 	num_ephemeral = mymax - mymin + 1;
 	offset = Fhash(inp_hdr);
-	idx = Fhash(inp_hdr);	/* G */
+	idx = Fhash(inp_hdr) % __arraycount(dhtable);	/* G */
 	count = num_ephemeral;
 
 	do {

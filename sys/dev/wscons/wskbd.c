@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.130 2010/10/26 05:12:34 jruoho Exp $ */
+/* $NetBSD: wskbd.c,v 1.130.12.1 2012/04/05 21:33:34 mrg Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.130 2010/10/26 05:12:34 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.130.12.1 2012/04/05 21:33:34 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1042,7 +1042,6 @@ wskbd_displayioctl(device_t dev, u_long cmd, void *data, int flag,
 	struct wskbd_keyrepeat_data *ukdp, *kkdp;
 	struct wskbd_map_data *umdp;
 	struct wskbd_mapdata md;
-	struct proc *p = l ? l->l_proc : NULL;
 	kbd_t enc;
 	void *tbuf;
 	int len, error;
@@ -1090,8 +1089,9 @@ getbell:
 		return (0);
 
 	case WSKBDIO_SETDEFAULTBELL:
-		if (p && (error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
+		if ((error = kauth_authorize_device(l->l_cred,
+		    KAUTH_DEVICE_WSCONS_KEYBOARD_BELL, NULL, NULL,
+		    NULL, NULL)) != 0)
 			return (error);
 		kbdp = &wskbd_default_bell_data;
 		goto setbell;
@@ -1129,8 +1129,9 @@ getkeyrepeat:
 		return (0);
 
 	case WSKBDIO_SETDEFAULTKEYREPEAT:
-		if ((error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
+		if ((error = kauth_authorize_device(l->l_cred,
+		    KAUTH_DEVICE_WSCONS_KEYBOARD_KEYREPEAT, NULL, NULL,
+		    NULL, NULL)) != 0)
 			return (error);
 		kkdp = &wskbd_default_keyrepeat_data;
 		goto setkeyrepeat;

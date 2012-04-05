@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnode.c,v 1.2 2011/11/24 21:09:37 agc Exp $	*/
+/*	$NetBSD: chfs_vnode.c,v 1.2.2.1 2012/04/05 21:33:51 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -39,6 +39,8 @@
 #include <sys/namei.h>
 #include <sys/uio.h>
 #include <sys/buf.h>
+
+#include <miscfs/genfs/genfs.h>
 
 struct vnode *
 chfs_vnode_lookup(struct chfs_mount *chmp, ino_t vno)
@@ -191,7 +193,7 @@ chfs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	struct ufsmount* ump = VFSTOUFS(dvp->v_mount);
 	struct chfs_mount* chmp = ump->um_chfs;
 	struct chfs_vnode_cache* chvc;
-	int error, ismember = 0;
+	int error;
 	ino_t vno;
 	struct chfs_dirent *nfd;//, *fd;
 
@@ -239,10 +241,15 @@ chfs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 
 	ip->mode = mode;
 	vp->v_type = type;	/* Rest init'd in getnewvnode(). */
-	if ((ip->mode & ISGID) && (kauth_cred_ismember_gid(cnp->cn_cred,
-		ip->gid, &ismember) != 0 || !ismember) &&
-	    kauth_authorize_generic(cnp->cn_cred, KAUTH_GENERIC_ISSUSER, NULL))
-		ip->mode &= ~ISGID;
+
+	/* Authorize setting SGID if needed. */
+	if (ip->mode & ISGID) {
+		error = kauth_authorize_vnode(cnp->cn_cred, KAUTH_VNODE_WRITE_SECURITY,
+		    vp, NULL, genfs_can_chmod(vp->v_type, cnp->cn_cred, ip->uid,
+		    ip->gid, mode));
+		if (error)
+			ip->mode &= ~ISGID;
+	}
 
 	chfs_update(vp, NULL, NULL, UPDATE_WAIT);
 

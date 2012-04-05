@@ -1,4 +1,4 @@
-/* $NetBSD: mfi_pci.c,v 1.12 2010/02/09 00:05:18 msaitoh Exp $ */
+/* $NetBSD: mfi_pci.c,v 1.12.14.1 2012/04/05 21:33:27 mrg Exp $ */
 /* $OpenBSD: mfi_pci.c,v 1.11 2006/08/06 04:40:08 brad Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.12 2010/02/09 00:05:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.12.14.1 2012/04/05 21:33:27 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,12 @@ static const struct mfi_pci_subtype mfi_perc5_subtypes[] = {
 
 static const struct mfi_pci_subtype mfi_gen2_subtypes[] = {
 	{ PCI_VENDOR_SYMBIOS,	0x9261,		"SAS 9260-8i" },
+	{ PCI_VENDOR_IBM,	0x03c7,		"IBM ServeRAID M5014 SAS/SATA" },
+	{ 0x0,			0,		"" }
+};
+
+static const struct mfi_pci_subtype mfi_skinny_subtypes[] = {
+	{ PCI_VENDOR_IBM,	0x03b1,		"IBM ServeRAID M1015 SAS/SATA" },
 	{ 0x0,			0,		"" }
 };
 
@@ -111,6 +117,8 @@ struct mfi_pci_device {
 	  MFI_IOP_GEN2,		mfi_gen2_subtypes },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS2108_2,
 	  MFI_IOP_GEN2,		mfi_gen2_subtypes },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS2008_1,
+	  MFI_IOP_SKINNY,	mfi_skinny_subtypes },
 };
 
 const struct mfi_pci_device *
@@ -176,7 +184,9 @@ mfi_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (mpd->mpd_iop == MFI_IOP_GEN2)
+	sc->sc_flags = mpd->mpd_iop;
+
+	if (mpd->mpd_iop == MFI_IOP_GEN2 || mpd->mpd_iop == MFI_IOP_SKINNY)
 		regbar = MFI_BAR_GEN2;
 	else
 		regbar = MFI_BAR;

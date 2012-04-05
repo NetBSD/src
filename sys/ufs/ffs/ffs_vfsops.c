@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.271.4.1 2012/02/18 07:35:53 mrg Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.271.4.2 2012/04/05 21:33:51 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.271.4.1 2012/02/18 07:35:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.271.4.2 2012/04/05 21:33:51 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -114,6 +114,8 @@ MODULE(MODULE_CLASS_VFS, ffs, NULL);
 static int	ffs_vfs_fsync(vnode_t *, int);
 
 static struct sysctllog *ffs_sysctl_log;
+
+static kauth_listener_t ffs_snapshot_listener;
 
 /* how many times ffs_init() was called */
 int ffs_initcount = 0;
@@ -173,6 +175,22 @@ static const struct ufs_ops ffs_ufsops = {
 	.uo_balloc = ffs_balloc,
 	.uo_unmark_vnode = (void (*)(vnode_t *))nullop,
 };
+
+static int
+ffs_snapshot_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	vnode_t *vp = arg2;
+	int result = KAUTH_RESULT_DEFER;;
+
+	if (action != KAUTH_SYSTEM_FS_SNAPSHOT)
+		return result;
+
+	if (VTOI(vp)->i_uid == kauth_cred_geteuid(cred))
+		result = KAUTH_RESULT_ALLOW;
+
+	return result;
+}
 
 static int
 ffs_modcmd(modcmd_t cmd, void *arg)
@@ -247,12 +265,19 @@ ffs_modcmd(modcmd_t cmd, void *arg)
 		
 #endif /* UFS_EXTATTR */
 
+		ffs_snapshot_listener = kauth_listen_scope(KAUTH_SCOPE_SYSTEM,
+		    ffs_snapshot_cb, NULL);
+		if (ffs_snapshot_listener == NULL)
+			printf("ffs_modcmd: can't listen on system scope.\n");
+
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&ffs_vfsops);
 		if (error != 0)
 			break;
 		sysctl_teardown(&ffs_sysctl_log);
+		if (ffs_snapshot_listener != NULL)
+			kauth_unlisten_scope(ffs_snapshot_listener);
 		break;
 	default:
 		error = ENOTTY;
@@ -404,7 +429,9 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		    (mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = genfs_can_mount(devvp, accessmode, l->l_cred);
+		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
+		    KAUTH_REQ_SYSTEM_MOUNT_DEVICE, mp, devvp,
+		    KAUTH_ARG(accessmode));
 		VOP_UNLOCK(devvp);
 	}
 

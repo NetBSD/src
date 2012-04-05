@@ -1,4 +1,4 @@
-/*	$NetBSD: lynxfb.c,v 1.1.2.4 2012/03/06 18:26:41 mrg Exp $	*/
+/*	$NetBSD: lynxfb.c,v 1.1.2.5 2012/04/05 21:33:27 mrg Exp $	*/
 /*	$OpenBSD: smfb.c,v 1.13 2011/07/21 20:36:12 miod Exp $	*/
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lynxfb.c,v 1.1.2.4 2012/03/06 18:26:41 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lynxfb.c,v 1.1.2.5 2012/04/05 21:33:27 mrg Exp $");
 
 #include "opt_wsemul.h"
 
@@ -34,6 +34,7 @@ __KERNEL_RCSID(0, "$NetBSD: lynxfb.c,v 1.1.2.4 2012/03/06 18:26:41 mrg Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/endian.h>
+#include <sys/kauth.h>
 
 #include <sys/bus.h>
 
@@ -117,6 +118,8 @@ struct lynxfb_softc {
 
 	struct lynxfb		*sc_fb;
 	struct lynxfb		sc_fb_store;
+	bus_addr_t		sc_fbaddr;
+	bus_size_t		sc_fbsize;
 
 	struct vcons_data	sc_vd;
 	struct wsscreen_list	sc_screenlist;
@@ -168,6 +171,8 @@ static struct {
 	bus_space_tag_t memt;
 	bus_space_handle_t memh;
 	struct lynxfb fb;
+	bus_addr_t fbaddr;
+	bus_size_t fbsize;
 } lynxfb_console;
 
 int lynxfb_default_width = LYNXFB_DEFAULT_WIDTH;
@@ -229,6 +234,8 @@ lynxfb_cnattach(bus_space_tag_t memt, bus_space_tag_t iot, pci_chipset_tag_t pc,
 
 	lynxfb_console.is_console = true;
 	lynxfb_console.tag = tag;
+	lynxfb_console.fbaddr = base;
+	lynxfb_console.fbsize = size;
 	(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 	wsdisplay_preattach(&fb->wsd, ri, 0, 0, defattr);
 
@@ -264,7 +271,6 @@ lynxfb_attach(device_t parent, device_t self, void *aux)
 	struct lynxfb *fb;
 	struct rasops_info *ri;
 	prop_dictionary_t dict;
-	bus_size_t size;
 	long defattr;
 	bool is_console;
 
@@ -280,9 +286,13 @@ lynxfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_fb = fb;
 	fb->sc = sc;
 
-	if (!is_console) {
+	if (is_console) {
+		sc->sc_fbaddr = lynxfb_console.fbaddr;
+		sc->sc_fbsize = lynxfb_console.fbsize;
+	} else {
 		if (pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_MEM,
-		    BUS_SPACE_MAP_LINEAR, &fb->memt, &fb->memh, NULL, &size)) {
+		    BUS_SPACE_MAP_LINEAR, &fb->memt, &fb->memh, &sc->sc_fbaddr,
+		    &sc->sc_fbsize)) {
 			aprint_error_dev(self, "can't map frame buffer\n");
 			return;
 		}
@@ -305,7 +315,7 @@ lynxfb_attach(device_t parent, device_t self, void *aux)
 
 		if (lynxfb_setup(fb)) {
 			aprint_error_dev(self, "can't setup frame buffer\n");
-			bus_space_unmap(fb->memt, fb->memh, size);
+			bus_space_unmap(fb->memt, fb->memh, sc->sc_fbsize);
 			return;
 		}
 	}
@@ -402,8 +412,8 @@ lynxfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flags,
 		    cmd, data, flags, l);
 
 	case WSDISPLAYIO_GET_BUSID:
-		return wsdisplayio_busid_pci(device_parent(sc->sc_dev),
-		    sc->sc_pc, sc->sc_pcitag, data);
+		return wsdisplayio_busid_pci(sc->sc_dev, sc->sc_pc,
+		    sc->sc_pcitag, data);
 
 	case WSDISPLAYIO_GINFO:
 		if (ms == NULL)
@@ -458,14 +468,36 @@ lynxfb_mmap(void *v, void *vs, off_t offset, int prot)
 	struct lynxfb_softc *sc = vd->cookie;
 	struct rasops_info *ri = &sc->sc_fb->vcs.scr_ri;
 
-	if ((offset & PAGE_MASK) != 0)
-		return (-1);
+	/* 'regular' framebuffer mmap()ing */
+	if (offset < ri->ri_stride * ri->ri_height) {
+		return bus_space_mmap(sc->sc_memt, sc->sc_fbaddr + offset, 0,
+		    prot, BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);
+	}
 
-	if (offset < 0 || offset >= ri->ri_stride * ri->ri_height)
+	/*
+	 * restrict all other mappings to processes with superuser privileges
+	 * or the kernel itself
+	 */
+	if (kauth_authorize_machdep(kauth_cred_get(),
+	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL) != 0) {
+		aprint_normal_dev(sc->sc_dev, "mmap() rejected.\n");
 		return (-1);
+	}
 
-	return bus_space_mmap(sc->sc_memt, offset, 0, prot,
-	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);
+	/* framebuffer mmap()ing */
+	if (offset >= sc->sc_fbaddr &&
+	    offset < sc->sc_fbaddr + ri->ri_stride * ri->ri_height) {
+		return bus_space_mmap(sc->sc_memt, offset, 0, prot,
+		    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);
+	}
+
+	/* register mmap()ing */
+	if (offset >= sc->sc_fbaddr + SM7XX_REG_BASE &&
+	    offset < sc->sc_fbaddr + SM7XX_REG_BASE + SM7XX_REG_SIZE) {
+		return bus_space_mmap(sc->sc_memt, offset, 0, prot, 0);
+	}
+
+	return (-1);
 }
 
 static void

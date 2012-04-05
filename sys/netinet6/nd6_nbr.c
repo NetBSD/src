@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.94.16.1 2012/02/18 07:35:44 mrg Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.94.16.2 2012/04/05 21:33:48 mrg Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.94.16.1 2012/02/18 07:35:44 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.94.16.2 2012/04/05 21:33:48 mrg Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -66,10 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.94.16.1 2012/02/18 07:35:44 mrg Exp $"
 #include <netinet6/nd6.h>
 #include <netinet/icmp6.h>
 #include <netinet6/icmp6_private.h>
-
-#ifdef KAME_IPSEC
-#include <netinet6/ipsec.h>
-#endif
 
 #include "carp.h"
 #if NCARP > 0

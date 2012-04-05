@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.234 2011/08/15 02:19:44 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.234.6.1 2012/04/05 21:33:19 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.234 2011/08/15 02:19:44 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.234.6.1 2012/04/05 21:33:19 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -90,6 +90,15 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.234 2011/08/15 02:19:44 mrg Exp $");
 #include <sparc/sparc/memreg.h>
 #if defined(SUN4D)
 #include <sparc/sparc/cpuunitvar.h>
+#endif
+
+#ifdef DEBUG
+#ifndef DEBUG_XCALL
+#define DEBUG_XCALL 0
+#endif
+int	debug_xcall = DEBUG_XCALL;
+#else
+#define debug_xcall 0
 #endif
 
 struct cpu_softc {
@@ -671,14 +680,20 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 	if (cold || pil <= IPL_SCHED)
 		mutex_spin_enter(&xpmsg_mutex);
 	else {
-#ifdef DEBUG
-		u_int pc;
+		/*
+		 * Warn about xcall at high IPL.
+		 *
+		 * XXX This is probably bogus (logging at high IPL),
+		 * XXX so we don't do it by default.
+		 */
+		if (debug_xcall && (void *)func != sparc_noop) {
+			u_int pc;
 
-		/* warn about xcall at high IPL */
-		__asm("mov %%i7, %0" : "=r" (pc) : );
-		printf_nolog("%d: xcall at lvl %u from 0x%x\n",
-		    cpu_number(), pil, pc);
-#endif
+			__asm("mov %%i7, %0" : "=r" (pc) : );
+			printf_nolog("%d: xcall %p at lvl %u from 0x%x\n",
+			    cpu_number(), func, pil, pc);
+		}
+
 		while (mutex_tryenter(&xpmsg_mutex) == 0) {
 			cpuinfo.ci_xpmsg_mutex_fail.ev_count++;
 			if (cpuinfo.msg.tag) {
@@ -724,12 +739,13 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 	 * this in the process).
 	 */
 	done = is_noop;
-	i = 100000;	/* time-out, not too long, but still an _AGE_ */
+	i = 1000000;	/* time-out, not too long, but still an _AGE_ */
 	while (!done) {
 		if (--i < 0) {
 			wrsz = snprintf(bufp, bufsz,
-			    "xcall(cpu%d,%p): couldn't ping cpus:",
-			    cpu_number(), func);
+			    "xcall(cpu%d,%p) from %p: couldn't ping cpus:",
+			    cpu_number(), fasttrap ? trap : func,
+			    __builtin_return_address(0));
 			bufsz -= wrsz;
 			bufp += wrsz;
 		}
@@ -755,33 +771,30 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 			}
 		}
 	}
-	if (i < 0)
-		printf_nolog("%s\n", errbuf);
-	mutex_spin_exit(&xpmsg_mutex);
 
-#if 0
-	if (!timeout)
+	if (i >= 0 || debug_xcall == 0) {
+		if (i < 0)
+			printf_nolog("%s\n", errbuf);
+		mutex_spin_exit(&xpmsg_mutex);
 		return;
+	}
 
 	/*
-	 * Let's make this a hard panic for now, and figure out why it happens.
+	 * Let's make this a hard panic for now, and figure out why it
+	 * happens.
 	 *
-	 * We call mp_pause_cpus() so we can capture their state *now* as opposed
-	 * to after we've written all the below to the console.
+	 * We call mp_pause_cpus() so we can capture their state *now*
+	 * as opposed to after we've written all the below to the console.
 	 */
 #ifdef DDB
 	mp_pause_cpus_ddb();
 #else
 	mp_pause_cpus();
 #endif
-	printf_nolog("xcall(cpu%d,%p) from %p: couldn't ping cpus:",
-	    cpu_number(), fasttrap ? trap : func, __builtin_return_address(0));
-	for (CPU_INFO_FOREACH(n, cpi))
-		if ((failed_cpuset & (1 << n)) == 0)
-			printf_nolog(" cpu%d", cpi->ci_cpuid);
-	printf_nolog("%s\n", i == 10000000 ? " [hard 10M timeout]" : "");
+	printf_nolog("%s\n", errbuf);
+	mutex_spin_exit(&xpmsg_mutex);
+
 	panic("failed to ping cpus");
-#endif
 }
 
 /*

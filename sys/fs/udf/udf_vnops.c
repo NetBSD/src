@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.69 2011/11/18 21:18:51 christos Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.69.4.1 2012/04/05 21:33:38 mrg Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.69 2011/11/18 21:18:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.69.4.1 2012/04/05 21:33:38 mrg Exp $");
 #endif /* not lint */
 
 
@@ -970,7 +970,8 @@ udf_chown(struct vnode *vp, uid_t new_uid, gid_t new_gid,
 		return EINVAL;
 
 	/* check permissions */
-	error = genfs_can_chown(vp, cred, uid, gid, new_uid, new_gid);
+	error = kauth_authorize_vnode(cred, KAUTH_VNODE_CHANGE_OWNERSHIP,
+	    vp, NULL, genfs_can_chown(cred, uid, gid, new_uid, new_gid));
 	if (error)
 		return (error);
 
@@ -1008,7 +1009,8 @@ udf_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred)
 	udf_getownership(udf_node, &uid, &gid);
 
 	/* check permissions */
-	error = genfs_can_chmod(vp, cred, uid, gid, mode);
+	error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY, vp,
+	    NULL, genfs_can_chmod(vp->v_type, cred, uid, gid, mode));
 	if (error)
 		return (error);
 
@@ -1116,7 +1118,8 @@ udf_chtimes(struct vnode *vp,
 	udf_getownership(udf_node, &uid, &gid);
 
 	/* check permissions */
-	error = genfs_can_chtimes(vp, setattrflags, uid, cred);
+	error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_TIMES, vp,
+	    NULL, genfs_can_chtimes(vp, setattrflags, uid, cred));
 	if (error)
 		return (error);
 
@@ -1371,9 +1374,9 @@ udf_check_permitted(struct vnode *vp, struct vattr *vap, mode_t mode,
 {
 
 	/* ask the generic genfs_can_access to advice on security */
-	return genfs_can_access(vp->v_type,
-			vap->va_mode, vap->va_uid, vap->va_gid,
-			mode, cred);
+	return kauth_authorize_vnode(cred, kauth_access_action(mode,
+	    vp->v_type, vap->va_mode), vp, NULL, genfs_can_access(vp->v_type,
+	    vap->va_mode, vap->va_uid, vap->va_gid, mode, cred));
 }
 
 int

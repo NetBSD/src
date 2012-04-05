@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.88.2.1 2012/02/18 07:34:39 mrg Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.88.2.2 2012/04/05 21:33:26 mrg Exp $  */
 /*	$OpenBSD: if_iwi.c,v 1.111 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.88.2.1 2012/02/18 07:34:39 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.88.2.2 2012/04/05 21:33:26 mrg Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -2154,7 +2154,7 @@ iwi_cache_firmware(struct iwi_softc *sc)
 {
 	struct iwi_firmware *kfw = &sc->fw;
 	firmware_handle_t fwh;
-	const struct iwi_firmware_hdr *hdr;
+	struct iwi_firmware_hdr *hdr;
 	off_t size;	
 	char *fw;
 	int error;
@@ -2192,8 +2192,12 @@ iwi_cache_firmware(struct iwi_softc *sc)
 	if (error != 0)
 		goto fail2;
 
+	hdr = (struct iwi_firmware_hdr *)sc->sc_blob;
+	hdr->version = le32toh(hdr->version);
+	hdr->bsize = le32toh(hdr->bsize);
+	hdr->usize = le32toh(hdr->usize);
+	hdr->fsize = le32toh(hdr->fsize);
 
-	hdr = (const struct iwi_firmware_hdr *)sc->sc_blob;
 	if (size < sizeof(struct iwi_firmware_hdr) + hdr->bsize + hdr->usize + hdr->fsize) {
 		aprint_error_dev(sc->sc_dev, "image '%s' too small\n",
 		    sc->sc_fwname);
@@ -2201,14 +2205,13 @@ iwi_cache_firmware(struct iwi_softc *sc)
 		goto fail2;
 	}
 
-	hdr = (const struct iwi_firmware_hdr *)sc->sc_blob;
-	DPRINTF(("firmware version = %d\n", le32toh(hdr->version)));
-	if ((IWI_FW_GET_MAJOR(le32toh(hdr->version)) != IWI_FW_REQ_MAJOR) ||
-	    (IWI_FW_GET_MINOR(le32toh(hdr->version)) != IWI_FW_REQ_MINOR)) {
+	DPRINTF(("firmware version = %d\n", hdr->version));
+	if ((IWI_FW_GET_MAJOR(hdr->version) != IWI_FW_REQ_MAJOR) ||
+	    (IWI_FW_GET_MINOR(hdr->version) != IWI_FW_REQ_MINOR)) {
 		aprint_error_dev(sc->sc_dev,
 		    "version for '%s' %d.%d != %d.%d\n", sc->sc_fwname,
-		    IWI_FW_GET_MAJOR(le32toh(hdr->version)),
-		    IWI_FW_GET_MINOR(le32toh(hdr->version)),
+		    IWI_FW_GET_MAJOR(hdr->version),
+		    IWI_FW_GET_MINOR(hdr->version),
 		    IWI_FW_REQ_MAJOR, IWI_FW_REQ_MINOR);
 		error = EIO;
 		goto fail2;

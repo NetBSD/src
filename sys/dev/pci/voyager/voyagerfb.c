@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.9.4.2 2012/02/24 09:11:42 mrg Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.9.4.3 2012/04/05 21:33:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.9.4.2 2012/02/24 09:11:42 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.9.4.3 2012/04/05 21:33:33 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,8 @@ static void	voyagerfb_bitblt(void *, int, int, int, int,
 			    int, int, int);
 
 static void	voyagerfb_cursor(void *, int, int, int);
-static void	voyagerfb_putchar(void *, int, int, u_int, long);
+static void	voyagerfb_putchar_mono(void *, int, int, u_int, long);
+static void	voyagerfb_putchar_aa32(void *, int, int, u_int, long);
 static void	voyagerfb_copycols(void *, int, int, int, int);
 static void	voyagerfb_erasecols(void *, int, int, int, long);
 static void	voyagerfb_copyrows(void *, int, int, int);
@@ -507,8 +508,8 @@ voyagerfb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
 	 */
-	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
-	    NULL) != 0) {
+	if (kauth_authorize_machdep(kauth_cred_get(), KAUTH_MACHDEP_UNMANAGEDMEM,
+	    NULL, NULL, NULL, NULL) != 0) {
 		aprint_normal("%s: mmap() rejected.\n",
 		    device_xname(sc->sc_dev));
 		return -1;
@@ -548,7 +549,8 @@ voyagerfb_init_screen(void *cookie, struct vcons_screen *scr,
 		ri->ri_flg |= RI_CLEAR;
 	}
 #ifdef VOYAGERFB_ANTIALIAS
-	ri->ri_flg |= RI_ENABLE_ALPHA;
+	if (sc->sc_depth == 32)
+		ri->ri_flg |= RI_ENABLE_ALPHA;
 #endif
 
 	rasops_init(ri, 0, 0);
@@ -563,7 +565,10 @@ voyagerfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_ops.eraserows = voyagerfb_eraserows;
 	ri->ri_ops.erasecols = voyagerfb_erasecols;
 	ri->ri_ops.cursor = voyagerfb_cursor;
-	ri->ri_ops.putchar = voyagerfb_putchar;
+	if (FONT_IS_ALPHA(ri->ri_font)) {
+		ri->ri_ops.putchar = voyagerfb_putchar_aa32;
+	} else
+		ri->ri_ops.putchar = voyagerfb_putchar_mono;
 }
 
 static int
@@ -844,9 +849,8 @@ voyagerfb_feed16(struct voyagerfb_softc *sc, uint16_t *data, int len)
 	}
 }
 
-
 static void
-voyagerfb_putchar(void *cookie, int row, int col, u_int c, long attr)
+voyagerfb_putchar_mono(void *cookie, int row, int col, u_int c, long attr)
 {
 	struct rasops_info *ri = cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, c);
@@ -856,6 +860,67 @@ voyagerfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	int fg, bg;
 	uint8_t *data;
 	int x, y, wi, he;
+
+	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
+		return;
+		
+	if (!CHAR_IN_FONT(c, font))
+		return;
+
+	wi = font->fontwidth;
+	he = font->fontheight;
+
+	bg = ri->ri_devcmap[(attr >> 16) & 0x0f];
+	fg = ri->ri_devcmap[(attr >> 24) & 0x0f];
+	x = ri->ri_xorigin + col * wi;
+	y = ri->ri_yorigin + row * he;
+	if (c == 0x20) {
+		voyagerfb_rectfill(sc, x, y, wi, he, bg);
+		return;
+	}
+
+	data = WSFONT_GLYPH(c, font);
+
+	cmd = ROP_COPY |
+	      SM502_CTRL_USE_ROP2 |
+	      SM502_CTRL_CMD_HOSTWRT |
+	      SM502_CTRL_HOSTBLT_MONO |
+	      SM502_CTRL_QUICKSTART_E | 
+	      SM502_CTRL_MONO_PACK_32BIT;
+	voyagerfb_ready(sc);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_CONTROL, cmd);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_FOREGROUND, fg);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_BACKGROUND, bg);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_SRC, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_DST, (x << 16) | y);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh,
+	    SM502_DIMENSION, (wi << 16) | he);
+	/* now feed the data, padded to 32bit */
+	switch (ri->ri_font->stride) {
+		case 1:
+			voyagerfb_feed8(sc, data, ri->ri_fontscale);
+			break;
+		case 2:
+			voyagerfb_feed16(sc, (uint16_t *)data,
+			    ri->ri_fontscale);
+			break;		
+	}	
+}
+
+static void
+voyagerfb_putchar_aa32(void *cookie, int row, int col, u_int c, long attr)
+{
+	struct rasops_info *ri = cookie;
+	struct wsdisplay_font *font = PICK_FONT(ri, c);
+	struct vcons_screen *scr = ri->ri_hw;
+	struct voyagerfb_softc *sc = scr->scr_cookie;
+	uint32_t cmd;
+	int fg, bg;
+	uint8_t *data;
+	int x, y, wi, he;
+	int i, j, r, g, b, aval, pad;
+	int rf, gf, bf, rb, gb, bb;
+	uint32_t pixel;
 	int rv;
 
 	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
@@ -877,98 +942,57 @@ voyagerfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	}
 
 	data = WSFONT_GLYPH(c, font);
-	if (!FONT_IS_ALPHA(font)) {
-		/* this is a mono font */
-		cmd = ROP_COPY |
-		      SM502_CTRL_USE_ROP2 |
-		      SM502_CTRL_CMD_HOSTWRT |
-		      SM502_CTRL_HOSTBLT_MONO |
-		      SM502_CTRL_QUICKSTART_E | 
-		      SM502_CTRL_MONO_PACK_32BIT;
-		voyagerfb_ready(sc);
-		bus_space_write_4(sc->sc_memt, sc->sc_regh,
-		    SM502_CONTROL, cmd);
-		bus_space_write_4(sc->sc_memt, sc->sc_regh, 
-		    SM502_FOREGROUND, fg);
-		bus_space_write_4(sc->sc_memt, sc->sc_regh, 
-		    SM502_BACKGROUND, bg);
-		bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_SRC, 0);
-		bus_space_write_4(sc->sc_memt, sc->sc_regh,
-		    SM502_DST, (x << 16) | y);
-		bus_space_write_4(sc->sc_memt, sc->sc_regh,
-		    SM502_DIMENSION, (wi << 16) | he);
-		/* now feed the data, padded to 32bit */
-		switch (ri->ri_font->stride) {
-			case 1:
-				voyagerfb_feed8(sc, data, ri->ri_fontscale);
-				break;
-			case 2:
-				voyagerfb_feed16(sc, (uint16_t *)data, 
-				    ri->ri_fontscale);
-				break;
-			
-		}	
-	} else {
-		/*
-		 * alpha font
-		 * we can't accelerate the actual alpha blending but
-		 * we can at least use a host blit to go through the
-		 * pipeline instead of having to sync the engine
-		 */
-		int i, j, r, g, b, aval, pad;
-		int rf, gf, bf, rb, gb, bb;
-		uint32_t pixel;
+	/*
+	 * we can't accelerate the actual alpha blending but
+	 * we can at least use a host blit to go through the
+	 * pipeline instead of having to sync the engine
+	 */
 
-		rv = glyphcache_try(&sc->sc_gc, c, x, y, attr);
-		if (rv == GC_OK)
-			return;
+	rv = glyphcache_try(&sc->sc_gc, c, x, y, attr);
+	if (rv == GC_OK)
+		return;
 
-		cmd = ROP_COPY |
-		      SM502_CTRL_USE_ROP2 |
-		      SM502_CTRL_CMD_HOSTWRT |
-		      SM502_CTRL_QUICKSTART_E;
-		voyagerfb_ready(sc);
-		bus_space_write_4(sc->sc_memt, sc->sc_regh,
-		    SM502_CONTROL, cmd);
-		bus_space_write_4(sc->sc_memt, sc->sc_regh,
-		    SM502_SRC, 0);
-		bus_space_write_4(sc->sc_memt, sc->sc_regh,
-		    SM502_DST, (x << 16) | y);
-		bus_space_write_4(sc->sc_memt, sc->sc_regh,
-		    SM502_DIMENSION, (wi << 16) | he);
-		rf = (fg >> 16) & 0xff;
-		rb = (bg >> 16) & 0xff;
-		gf = (fg >> 8) & 0xff;
-		gb = (bg >> 8) & 0xff;
-		bf =  fg & 0xff;
-		bb =  bg & 0xff;
-		pad = wi & 1;
-		for (i = 0; i < he; i++) {
-			for (j = 0; j < wi; j++) {
-				aval = *data;
-				data++;
-				if (aval == 0) {
-					pixel = bg;
-				} else if (aval == 255) {
-					pixel = fg;
-				} else {
-					r = aval * rf + (255 - aval) * rb;
-					g = aval * gf + (255 - aval) * gb;
-					b = aval * bf + (255 - aval) * bb;
-					pixel = (r & 0xff00) << 8 |
-					        (g & 0xff00) |
-					        (b & 0xff00) >> 8;
-				}
-				bus_space_write_4(sc->sc_memt, sc->sc_regh,
-				    SM502_DATAPORT, pixel);
+	cmd = ROP_COPY |
+	      SM502_CTRL_USE_ROP2 |
+	      SM502_CTRL_CMD_HOSTWRT |
+	      SM502_CTRL_QUICKSTART_E;
+	voyagerfb_ready(sc);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_CONTROL, cmd);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_SRC, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_DST, (x << 16) | y);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_DIMENSION, (wi << 16) | he);
+	rf = (fg >> 16) & 0xff;
+	rb = (bg >> 16) & 0xff;
+	gf = (fg >> 8) & 0xff;
+	gb = (bg >> 8) & 0xff;
+	bf =  fg & 0xff;
+	bb =  bg & 0xff;
+	pad = wi & 1;
+	for (i = 0; i < he; i++) {
+		for (j = 0; j < wi; j++) {
+			aval = *data;
+			data++;
+			if (aval == 0) {
+				pixel = bg;
+			} else if (aval == 255) {
+				pixel = fg;
+			} else {
+				r = aval * rf + (255 - aval) * rb;
+				g = aval * gf + (255 - aval) * gb;
+				b = aval * bf + (255 - aval) * bb;
+				pixel = (r & 0xff00) << 8 |
+				        (g & 0xff00) |
+				        (b & 0xff00) >> 8;
 			}
-			if (pad)
-				bus_space_write_4(sc->sc_memt, sc->sc_regh,
-				    SM502_DATAPORT, 0);
+			bus_space_write_4(sc->sc_memt, sc->sc_regh,
+			    SM502_DATAPORT, pixel);
 		}
-		if (rv == GC_ADD) {
-			glyphcache_add(&sc->sc_gc, c, x, y);
-		}
+		if (pad)
+			bus_space_write_4(sc->sc_memt, sc->sc_regh,
+			    SM502_DATAPORT, 0);
+	}
+	if (rv == GC_ADD) {
+		glyphcache_add(&sc->sc_gc, c, x, y);
 	}
 }
 

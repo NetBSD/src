@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_file.c,v 1.3 2011/07/30 03:51:53 uch Exp $	*/
+/*	$NetBSD: v7fs_file.c,v 1.3.6.1 2012/04/05 21:33:38 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -34,19 +34,18 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_file.c,v 1.3 2011/07/30 03:51:53 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_file.c,v 1.3.6.1 2012/04/05 21:33:38 mrg Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
 
+#include <sys/param.h>
 #ifdef _KERNEL
 #include <sys/systm.h>
-#include <sys/param.h>
 #else
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#define	MIN(a,b)	((/*CONSTCOND*/(a)<(b))?(a):(b))
 #endif
 
 #include "v7fs.h"

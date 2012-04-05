@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.139.6.1 2012/02/18 07:35:54 mrg Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.139.6.2 2012/04/05 21:33:51 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.139.6.1 2012/02/18 07:35:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.139.6.2 2012/04/05 21:33:51 mrg Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -117,8 +117,9 @@ sys_lfs_markv(struct lwp *l, const struct sys_lfs_markv_args *uap, register_t *r
 	struct lfs *fs;
 	struct mount *mntp;
 
-	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    NULL)) != 0)
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_LFS,
+	    KAUTH_REQ_SYSTEM_LFS_MARKV, NULL, NULL, NULL);
+	if (error)
 		return (error);
 
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
@@ -162,8 +163,9 @@ sys_lfs_markv(struct lwp *l, const struct sys_lfs_markv_args *uap, register_t *r
 	struct lfs *fs;
 	struct mount *mntp;
 
-	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    NULL)) != 0)
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_LFS,
+	    KAUTH_REQ_SYSTEM_LFS_MARKV, NULL, NULL, NULL);
+	if (error)
 		return (error);
 
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
@@ -564,8 +566,9 @@ sys_lfs_bmapv(struct lwp *l, const struct sys_lfs_bmapv_args *uap, register_t *r
 	struct lfs *fs;
 	struct mount *mntp;
 
-	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    NULL)) != 0)
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_LFS,
+	    KAUTH_REQ_SYSTEM_LFS_BMAPV, NULL, NULL, NULL);
+	if (error)
 		return (error);
 
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
@@ -608,8 +611,9 @@ sys_lfs_bmapv(struct lwp *l, const struct sys_lfs_bmapv_args *uap, register_t *r
 	struct lfs *fs;
 	struct mount *mntp;
 
-	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    NULL)) != 0)
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_LFS,
+	    KAUTH_REQ_SYSTEM_LFS_BMAPV, NULL, NULL, NULL);
+	if (error)
 		return (error);
 
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
@@ -854,8 +858,9 @@ sys_lfs_segclean(struct lwp *l, const struct sys_lfs_segclean_args *uap, registe
 	int error;
 	unsigned long segnum;
 
-	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    NULL)) != 0)
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_LFS,
+	    KAUTH_REQ_SYSTEM_LFS_SEGCLEAN, NULL, NULL, NULL);
+	if (error)
 		return (error);
 
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
@@ -998,8 +1003,9 @@ sys___lfs_segwait50(struct lwp *l, const struct sys___lfs_segwait50_args *uap,
 	int error;
 
 	/* XXX need we be su to segwait? */
-	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    NULL)) != 0)
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_LFS,
+	    KAUTH_REQ_SYSTEM_LFS_SEGWAIT, NULL, NULL, NULL);
+	if (error)
 		return (error);
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
 		return (error);

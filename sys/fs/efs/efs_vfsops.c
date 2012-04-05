@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vfsops.c,v 1.22 2011/06/12 03:35:52 rmind Exp $	*/
+/*	$NetBSD: efs_vfsops.c,v 1.22.6.1 2012/04/05 21:33:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.22 2011/06/12 03:35:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.22.6.1 2012/04/05 21:33:36 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,7 +223,8 @@ efs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	err = genfs_can_mount(devvp, VREAD, l->l_cred);
+	err = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
+	    KAUTH_REQ_SYSTEM_MOUNT_DEVICE, mp, devvp, KAUTH_ARG(VREAD));
 	if (err) {
 		vput(devvp);
 		return (err);

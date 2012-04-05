@@ -1,4 +1,4 @@
-/* $NetBSD: vga_ofbus.c,v 1.15 2008/10/11 20:36:40 tsutsui Exp $ */
+/* $NetBSD: vga_ofbus.c,v 1.15.32.1 2012/04/05 21:33:18 mrg Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_ofbus.c,v 1.15 2008/10/11 20:36:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_ofbus.c,v 1.15.32.1 2012/04/05 21:33:18 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,8 +181,8 @@ vga_ofbus_mmap(void *cookie, off_t offset, int prot)
 
 	/* only the superuser may mmap IO and aperture */
 	if (curlwp != NULL) {
-		if (kauth_authorize_generic(kauth_cred_get(),
-		    KAUTH_GENERIC_ISSUSER, NULL) != 0) {
+		if (kauth_authorize_machdep(kauth_cred_get(),
+		    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL) != 0) {
 			return -1;
 		}
 	}

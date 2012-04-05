@@ -1,4 +1,4 @@
-/*	$NetBSD: central.c,v 1.2 2011/08/01 08:36:39 mrg Exp $	*/
+/*	$NetBSD: central.c,v 1.2.6.1 2012/04/05 21:33:19 mrg Exp $	*/
 /*	$OpenBSD: central.c,v 1.7 2010/11/11 17:58:23 miod Exp $	*/
 
 /*
@@ -26,6 +26,9 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: central.c,v 1.2.6.1 2012/04/05 21:33:19 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

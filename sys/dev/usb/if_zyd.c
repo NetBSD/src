@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.29 2011/07/18 05:57:40 jruoho Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.29.6.1 2012/04/05 21:33:33 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -22,7 +22,7 @@
  * ZyDAS ZD1211/ZD1211B USB WLAN driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.29 2011/07/18 05:57:40 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.29.6.1 2012/04/05 21:33:33 mrg Exp $");
 
 
 #include <sys/param.h>
@@ -852,6 +852,8 @@ zyd_read16(struct zyd_softc *sc, uint16_t reg, uint16_t *val)
 	    ZYD_CMD_FLAG_READ);
 	if (error == 0)
 		*val = le16toh(tmp.val);
+	else
+		*val = 0;
 	return error;
 }
 
@@ -868,6 +870,8 @@ zyd_read32(struct zyd_softc *sc, uint16_t reg, uint32_t *val)
 	    ZYD_CMD_FLAG_READ);
 	if (error == 0)
 		*val = le16toh(tmp[0].val) << 16 | le16toh(tmp[1].val);
+	else
+		*val = 0;
 	return error;
 }
 

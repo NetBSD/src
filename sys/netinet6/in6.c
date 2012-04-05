@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.159 2011/11/19 22:51:26 tls Exp $	*/
+/*	$NetBSD: in6.c,v 1.159.2.1 2012/04/05 21:33:45 mrg Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.159 2011/11/19 22:51:26 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.159.2.1 2012/04/05 21:33:45 mrg Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -800,8 +800,10 @@ in6_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	case OSIOCAIFADDR_IN6:
 #endif
 	case SIOCAIFADDR_IN6:
-		if (l == NULL || kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL))
+		if (kauth_authorize_network(l->l_cred,
+		    KAUTH_NETWORK_SOCKET,
+		    KAUTH_REQ_NETWORK_SOCKET_SETPRIV,
+		    so, NULL, NULL))
 			return EPERM;
 		break;
 	}

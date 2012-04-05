@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_pmap.c,v 1.10.2.4 2012/03/06 18:26:40 mrg Exp $	*/
+/*	$NetBSD: xen_pmap.c,v 1.10.2.5 2012/04/05 21:33:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.10.2.4 2012/03/06 18:26:40 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.10.2.5 2012/04/05 21:33:22 mrg Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -236,22 +236,16 @@ pmap_extract_ma(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 }
 
 /*
- * Flush all APDP entries found in pmaps
- * Required during Xen save/restore operations, as Xen does not
- * handle alternative recursive mappings properly
+ * Xen pmap's handlers for save/restore
  */
 void
 pmap_xen_suspend(void)
 {
-	int s;
-
-	s = splvm();
-	xpq_flush_queue();
-	splx(s);
-
 #ifdef PAE
 	pmap_unmap_recursive_entries();
 #endif
+
+	xpq_flush_queue();
 }
 
 void
@@ -260,6 +254,8 @@ pmap_xen_resume(void)
 #ifdef PAE
 	pmap_map_recursive_entries();
 #endif
+
+	xpq_flush_queue();
 }
 
 #ifdef PAE
@@ -294,10 +290,13 @@ pmap_map_recursive_entries(void)
 		    xpmap_ptom(pmap_pdirpa(pmap_kernel(), PDIR_SLOT_PTE + i)),
 		    xpmap_ptom(pmap_kernel()->pm_pdirpa[i]) | PG_V);
 	}
-
-	xpq_flush_queue();
 }
 
+/*
+ * Unmap recursive entries found in pmaps. Required during Xen
+ * save/restore operations, as Xen does not handle recursive mappings
+ * properly.
+ */
 void
 pmap_unmap_recursive_entries(void)
 {
@@ -322,13 +321,11 @@ pmap_unmap_recursive_entries(void)
 	mutex_exit(&pmaps_lock);
 
 	/* do it for pmap_kernel() too! */
-	for (i = 0; i < PDP_SIZE; i++)
+	for (i = 0; i < PDP_SIZE; i++) {
 		xpq_queue_pte_update(
 		    xpmap_ptom(pmap_pdirpa(pmap_kernel(), PDIR_SLOT_PTE + i)),
 		    0);
-
-	xpq_flush_queue();
-
+	}
 }
 #endif /* PAE */
 

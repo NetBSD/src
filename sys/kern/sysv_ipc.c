@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc.c,v 1.23 2009/04/16 14:55:44 rmind Exp $	*/
+/*	$NetBSD: sysv_ipc.c,v 1.23.16.1 2012/04/05 21:33:40 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.23 2009/04/16 14:55:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.23.16.1 2012/04/05 21:33:40 mrg Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -59,24 +59,32 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.23 2009/04/16 14:55:44 rmind Exp $");
 #include <compat/sys/ipc.h>
 #endif
 
-/*
- * Check for ipc permission
- */
+static kauth_listener_t sysvipc_listener = NULL;
 
-int
-ipcperm(kauth_cred_t cred, struct ipc_perm *perm, int mode)
+static int
+sysvipc_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
 {
 	mode_t mask;
 	int ismember = 0;
+	struct ipc_perm *perm;
+	int mode;
+	enum kauth_system_req req;
 
-	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) == 0)
-		return (0);
+	req = (enum kauth_system_req)arg0;
+
+	if (!(action == KAUTH_SYSTEM_SYSVIPC &&
+	      req == KAUTH_REQ_SYSTEM_SYSVIPC_BYPASS))
+		return KAUTH_RESULT_DEFER;
+
+	perm = arg1;
+	mode = (int)(uintptr_t)arg2;
 
 	if (mode == IPC_M) {
 		if (kauth_cred_geteuid(cred) == perm->uid ||
 		    kauth_cred_geteuid(cred) == perm->cuid)
-			return (0);
-		return (EPERM);
+			return (KAUTH_RESULT_ALLOW);
+		return (KAUTH_RESULT_DEFER); /* EPERM */
 	}
 
 	mask = 0;
@@ -87,7 +95,7 @@ ipcperm(kauth_cred_t cred, struct ipc_perm *perm, int mode)
 			mask |= S_IRUSR;
 		if (mode & IPC_W)
 			mask |= S_IWUSR;
-		return ((perm->mode & mask) == mask ? 0 : EACCES);
+		return ((perm->mode & mask) == mask ? KAUTH_RESULT_ALLOW : KAUTH_RESULT_DEFER /* EACCES */);
 	}
 
 	if (kauth_cred_getegid(cred) == perm->gid ||
@@ -98,14 +106,46 @@ ipcperm(kauth_cred_t cred, struct ipc_perm *perm, int mode)
 			mask |= S_IRGRP;
 		if (mode & IPC_W)
 			mask |= S_IWGRP;
-		return ((perm->mode & mask) == mask ? 0 : EACCES);
+		return ((perm->mode & mask) == mask ? KAUTH_RESULT_ALLOW : KAUTH_RESULT_DEFER /* EACCES */);
 	}
 
 	if (mode & IPC_R)
 		mask |= S_IROTH;
 	if (mode & IPC_W)
 		mask |= S_IWOTH;
-	return ((perm->mode & mask) == mask ? 0 : EACCES);
+	return ((perm->mode & mask) == mask ? KAUTH_RESULT_ALLOW : KAUTH_RESULT_DEFER /* EACCES */);
+}
+
+/*
+ * Check for ipc permission
+ */
+
+int
+ipcperm(kauth_cred_t cred, struct ipc_perm *perm, int mode)
+{
+	int error;
+
+	error = kauth_authorize_system(cred, KAUTH_SYSTEM_SYSVIPC,
+	    KAUTH_REQ_SYSTEM_SYSVIPC_BYPASS, perm, KAUTH_ARG(mode), NULL);
+	if (error == 0)
+		return (0);
+
+	/* Adjust EPERM and EACCES errors until there's a better way to do this. */
+	if (mode != IPC_M)
+		error = EACCES;
+
+	return error;
+}
+
+void
+sysvipcinit(void)
+{
+
+	if (sysvipc_listener != NULL)
+		return;
+
+	sysvipc_listener = kauth_listen_scope(KAUTH_SCOPE_SYSTEM,
+	    sysvipc_listener_cb, NULL);
 }
 
 static int

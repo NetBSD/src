@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.5.6.1 2012/02/18 07:31:52 mrg Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.5.6.2 2012/04/05 21:33:13 mrg Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.5.6.1 2012/02/18 07:31:52 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.5.6.2 2012/04/05 21:33:13 mrg Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -913,10 +913,14 @@ marvell_device_register(device_t dev, void *aux)
 		extern struct bus_space
 		    kirkwood_pex_io_bs_tag, kirkwood_pex_mem_bs_tag;
 #endif
-		extern struct arm32_pci_chipset
-		    arm32_mvpex0_chipset, arm32_mvpex1_chipset;
+		extern struct arm32_pci_chipset arm32_mvpex0_chipset;
+#ifdef ORION
+		extern struct arm32_pci_chipset arm32_mvpex1_chipset;
+#endif
 
+#ifdef ORION
 		struct marvell_attach_args *mva = aux;
+#endif
 		struct bus_space *mvpex_io_bs_tag, *mvpex_mem_bs_tag;
 		struct arm32_pci_chipset *arm32_mvpex_chipset;
 		prop_data_t io_bs_tag, mem_bs_tag, pc;

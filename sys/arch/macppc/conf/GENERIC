@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.294.2.2 2012/03/11 01:52:23 mrg Exp $
+# $NetBSD: GENERIC,v 1.294.2.3 2012/04/05 21:33:17 mrg Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.294.2.2 $"
+#ident 		"GENERIC-$Revision: 1.294.2.3 $"
 
 maxusers	32
 
@@ -80,6 +80,13 @@ options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_LINUX	# Linux binary compatibility
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+
+# Wedge support
+options         DKWEDGE_AUTODISCOVER    # Automatically add dk(4) instances
+options         DKWEDGE_METHOD_GPT      # Supports GPT partitions as wedges
+# The following two options can break /etc/fstab, so handle with care
+#options        DKWEDGE_METHOD_BSDLABEL # Support disklabel entries as wedges
+#options        DKWEDGE_METHOD_MBR      # Support MBR partitions as wedges
 
 # File systems
 file-system 	FFS		# UFS
@@ -612,6 +619,9 @@ pseudo-device	nsmb			# SMB requester
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 pseudo-device	putter			# for puffs and pud
+
+# userland interface to drivers, including autoconf and properties retrieval
+pseudo-device   drvctl
 
 # Veriexec
 #
