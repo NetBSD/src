@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.4 2011/10/13 11:35:37 tsutsui Exp $
+$NetBSD: version,v 1.4.6.1 2012/04/05 21:33:21 mrg Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -9,3 +9,4 @@ is taken as the current.
 1.1:	loadfile() update to avoid backwards seeks for ELF Program Headers.
 1.2:	Fix serial console output.
 1.3:	Avoid exception on 68060 in UFS ops.
+1.4:	ffsv2 support.

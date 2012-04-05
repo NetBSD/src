@@ -1,8 +1,3 @@
-/*	$NetBSD: limits.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
-
-#ifndef _LANDISK_LIMITS_H_
-#define _LANDISK_LIMITS_H_
+/*	$NetBSD: limits.h,v 1.1.104.1 2012/04/05 21:33:16 mrg Exp $	*/
 
 #include <sh3/limits.h>
-
-#endif /* _LANDISK_LIMITS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_session.c,v 1.10.2.1 2012/02/24 09:11:49 mrg Exp $	*/
+/*	$NetBSD: npf_session.c,v 1.10.2.2 2012/04/05 21:33:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  *	indicate that the packet of the backwards stream should be passed
  *	without inspection of the ruleset.  Another purpose is to associate
  *	NAT with a connection (which implies connection tracking).  Such
- *	sessions are created according to the NAT policies and they have a 1:1
+ *	sessions are created according to the NAT policies and they have a
  *	relationship with NAT translation structure via npf_session_t::s_nat.
  *	A single session can serve both purposes, which is a common case.
  *
@@ -61,9 +61,9 @@
  *	depending on session properties (e.g. last activity time, protocol)
  *	removes session entries and expires the actual sessions.
  *
- *	Each session has a reference count, which is taken on lookup and
- *	needs to be released by the caller.  Reference guarantees that
- *	session will not be destroyed, although it might be expired.
+ *	Each session has a reference count.  Reference is acquired on lookup
+ *	and should be released by the caller.  Reference guarantees that the
+ *	session will not be destroyed, although it may be expired.
  *
  * External session identifiers
  *
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.10.2.1 2012/02/24 09:11:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.10.2.2 2012/04/05 21:33:43 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -196,7 +196,7 @@ npf_session_sysfini(void)
 {
 
 	/* Disable tracking, flush all sessions. */
-	sess_tracking_stop();
+	npf_session_tracking(false);
 	KASSERT(sess_tracking == 0);
 	KASSERT(sess_gc_lwp == NULL);
 

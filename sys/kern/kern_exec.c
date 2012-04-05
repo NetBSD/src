@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.332.2.3 2012/03/11 01:52:29 mrg Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.332.2.4 2012/04/05 21:33:38 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.332.2.3 2012/03/11 01:52:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.332.2.4 2012/04/05 21:33:38 mrg Exp $");
 
 #include "opt_exec.h"
 #include "opt_ktrace.h"
@@ -599,10 +599,15 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	 * to call exec in order to do something useful.
 	 */
  retry:
-	if ((p->p_flag & PK_SUGID) && kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, NULL) != 0 && chgproccnt(kauth_cred_getuid(
-	    l->l_cred), 0) > p->p_rlimit[RLIMIT_NPROC].rlim_cur)
+	if (p->p_flag & PK_SUGID) {
+		if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_RLIMIT,
+		     p, KAUTH_ARG(KAUTH_REQ_PROCESS_RLIMIT_BYPASS),
+		     &p->p_rlimit[RLIMIT_NPROC],
+		     KAUTH_ARG(RLIMIT_NPROC)) != 0 &&
+		    chgproccnt(kauth_cred_getuid(l->l_cred), 0) >
+		     p->p_rlimit[RLIMIT_NPROC].rlim_cur)
 		return EAGAIN;
+	}
 
 	/*
 	 * Drain existing references and forbid new ones.  The process
@@ -2033,8 +2038,10 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
 	 * Enforce limits.
 	 */
 	count = chgproccnt(uid, 1);
-	if (kauth_authorize_generic(l1->l_cred, KAUTH_GENERIC_ISSUSER, NULL) !=
-	    0 && __predict_false(count > p1->p_rlimit[RLIMIT_NPROC].rlim_cur)) {
+	if (kauth_authorize_process(l1->l_cred, KAUTH_PROCESS_RLIMIT,
+	     p1, KAUTH_ARG(KAUTH_REQ_PROCESS_RLIMIT_BYPASS),
+	     &p1->p_rlimit[RLIMIT_NPROC], KAUTH_ARG(RLIMIT_NPROC)) != 0 &&
+	    __predict_false(count > p1->p_rlimit[RLIMIT_NPROC].rlim_cur)) {
 		error = EAGAIN;
 		goto error_exit;
 	}

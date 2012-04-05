@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.170.6.2 2012/02/24 09:11:47 mrg Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.170.6.3 2012/04/05 21:33:39 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.170.6.2 2012/02/24 09:11:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.170.6.3 2012/04/05 21:33:39 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -1063,7 +1063,7 @@ sys___setitimer50(struct lwp *l, const struct sys___setitimer50_args *uap,
 		return (EINVAL);
 	itvp = SCARG(uap, itv);
 	if (itvp &&
-	    (error = copyin(itvp, &aitv, sizeof(struct itimerval)) != 0))
+	    (error = copyin(itvp, &aitv, sizeof(struct itimerval))) != 0)
 		return (error);
 	if (SCARG(uap, oitv) != NULL) {
 		SCARG(&getargs, which) = which;

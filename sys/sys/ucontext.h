@@ -1,4 +1,4 @@
-/*	$NetBSD: ucontext.h,v 1.13.8.1 2012/02/24 09:11:51 mrg Exp $	*/
+/*	$NetBSD: ucontext.h,v 1.13.8.2 2012/04/05 21:33:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2003 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ struct __ucontext {
 struct lwp;
 
 #ifdef __UCONTEXT_SIZE
-__CTASSERT(sizeof(ucontext_t) == __UCONTEXT_SIZE)
+__CTASSERT(sizeof(ucontext_t) == __UCONTEXT_SIZE);
 #endif
 
 void	getucontext(struct lwp *, ucontext_t *);

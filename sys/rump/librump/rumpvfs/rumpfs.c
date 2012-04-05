@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.103.6.1 2012/02/18 07:35:46 mrg Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.103.6.2 2012/04/05 21:33:50 mrg Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.103.6.1 2012/02/18 07:35:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.103.6.2 2012/04/05 21:33:50 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -887,7 +887,7 @@ rump_vop_getattr(void *v)
 static int
 rump_vop_setattr(void *v)
 {
-	struct vop_getattr_args /* {
+	struct vop_setattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		kauth_cred_t a_cred;
@@ -899,7 +899,23 @@ rump_vop_setattr(void *v)
 	kauth_cred_t cred = ap->a_cred;
 	int error;
 
-#define SETIFVAL(a,t) if (vap->a != (t)VNOVAL) rn->rn_va.a = vap->a
+#define	CHANGED(a, t)	(vap->a != (t)VNOVAL)
+#define SETIFVAL(a,t) if (CHANGED(a, t)) rn->rn_va.a = vap->a
+	if (CHANGED(va_atime.tv_sec, time_t) ||
+	    CHANGED(va_ctime.tv_sec, time_t) ||
+	    CHANGED(va_mtime.tv_sec, time_t) ||
+	    CHANGED(va_birthtime.tv_sec, time_t) ||
+	    CHANGED(va_atime.tv_nsec, long) ||
+	    CHANGED(va_ctime.tv_nsec, long) ||
+	    CHANGED(va_mtime.tv_nsec, long) ||
+	    CHANGED(va_birthtime.tv_nsec, long)) {
+		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_TIMES, vp,
+		    NULL, genfs_can_chtimes(vp, vap->va_vaflags, attr->va_uid,
+		    cred));
+		if (error)
+			return error;
+	}
+
 	SETIFVAL(va_atime.tv_sec, time_t);
 	SETIFVAL(va_ctime.tv_sec, time_t);
 	SETIFVAL(va_mtime.tv_sec, time_t);
@@ -908,8 +924,19 @@ rump_vop_setattr(void *v)
 	SETIFVAL(va_ctime.tv_nsec, long);
 	SETIFVAL(va_mtime.tv_nsec, long);
 	SETIFVAL(va_birthtime.tv_nsec, long);
+
+	if (CHANGED(va_flags, u_long)) {
+		/* XXX Can we handle system flags here...? */
+		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_FLAGS, vp,
+		    NULL, genfs_can_chflags(cred, vp->v_type, attr->va_uid,
+		    false));
+		if (error)
+			return error;
+	}
+
 	SETIFVAL(va_flags, u_long);
 #undef  SETIFVAL
+#undef	CHANGED
 
 	if (vap->va_uid != (uid_t)VNOVAL || vap->va_gid != (uid_t)VNOVAL) {
 		uid_t uid =
@@ -918,7 +945,7 @@ rump_vop_setattr(void *v)
 		    (vap->va_gid != (gid_t)VNOVAL) ? vap->va_gid : attr->va_gid;
 		error = kauth_authorize_vnode(cred,
 		    KAUTH_VNODE_CHANGE_OWNERSHIP, vp, NULL,
-		    genfs_can_chown(vp, cred, attr->va_uid, attr->va_gid, uid,
+		    genfs_can_chown(cred, attr->va_uid, attr->va_gid, uid,
 		    gid));
 		if (error)
 			return error;
@@ -929,7 +956,7 @@ rump_vop_setattr(void *v)
 	if (vap->va_mode != (mode_t)VNOVAL) {
 		mode_t mode = vap->va_mode;
 		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY,
-		    vp, NULL, genfs_can_chmod(vp, cred, attr->va_uid,
+		    vp, NULL, genfs_can_chmod(vp->v_type, cred, attr->va_uid,
 		    attr->va_gid, mode));
 		if (error)
 			return error;
@@ -1030,7 +1057,7 @@ out:
 static int
 rump_vop_remove(void *v)
 {
-        struct vop_rmdir_args /* {
+        struct vop_remove_args /* {
                 struct vnode *a_dvp;
                 struct vnode *a_vp;
                 struct componentname *a_cnp;
@@ -1399,7 +1426,7 @@ etwrite(struct rumpfs_node *rn, struct uio *uio)
 static int
 rump_vop_write(void *v)
 {
-	struct vop_read_args /* {
+	struct vop_write_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int ioflags a_ioflag;

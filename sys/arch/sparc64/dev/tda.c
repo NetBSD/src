@@ -1,4 +1,4 @@
-/*	$NetBSD: tda.c,v 1.4 2011/04/03 06:25:11 jdc Exp $	*/
+/*	$NetBSD: tda.c,v 1.4.8.1 2012/04/05 21:33:20 mrg Exp $	*/
 /*	$OpenBSD: tda.c,v 1.4 2008/02/27 17:25:00 robert Exp $ */
 
 /*
@@ -17,6 +17,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tda.c,v 1.4.8.1 2012/04/05 21:33:20 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

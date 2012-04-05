@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.206.4.1 2012/02/18 07:35:57 mrg Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.206.4.2 2012/04/05 21:33:52 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.206.4.1 2012/02/18 07:35:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.206.4.2 2012/04/05 21:33:52 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -345,8 +345,9 @@ ufs_check_permitted(struct vnode *vp, struct inode *ip, mode_t mode,
     kauth_cred_t cred)
 {
 
-	return genfs_can_access(vp->v_type, ip->i_mode & ALLPERMS, ip->i_uid,
-	    ip->i_gid, mode, cred);
+	return kauth_authorize_vnode(cred, kauth_access_action(mode, vp->v_type,
+	    ip->i_mode & ALLPERMS), vp, NULL, genfs_can_access(vp->v_type,
+	    ip->i_mode & ALLPERMS, ip->i_uid, ip->i_gid, mode, cred));
 }
 
 int
@@ -462,12 +463,16 @@ ufs_setattr(void *v)
 	kauth_cred_t	cred;
 	struct lwp	*l;
 	int		error;
+	kauth_action_t	action;
+	bool		changing_sysflags;
 
 	vap = ap->a_vap;
 	vp = ap->a_vp;
 	ip = VTOI(vp);
 	cred = ap->a_cred;
 	l = curlwp;
+	action = KAUTH_VNODE_WRITE_FLAGS;
+	changing_sysflags = false;
 
 	/*
 	 * Check for unsettable attributes.
@@ -486,40 +491,36 @@ ufs_setattr(void *v)
 			error = EROFS;
 			goto out;
 		}
-		if (kauth_cred_geteuid(cred) != ip->i_uid &&
-		    (error = kauth_authorize_generic(cred,
-		    KAUTH_GENERIC_ISSUSER, NULL)))
+
+		/* Snapshot flag cannot be set or cleared */
+		if ((vap->va_flags & (SF_SNAPSHOT | SF_SNAPINVAL)) !=
+		    (ip->i_flags & (SF_SNAPSHOT | SF_SNAPINVAL))) {
+			error = EPERM;
 			goto out;
-		if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    NULL) == 0) {
-			if ((ip->i_flags & (SF_IMMUTABLE | SF_APPEND)) &&
-			    kauth_authorize_system(l->l_cred,
-			     KAUTH_SYSTEM_CHSYSFLAGS, 0, NULL, NULL, NULL)) {
-				error = EPERM;
-				goto out;
-			}
-			/* Snapshot flag cannot be set or cleared */
-			if ((vap->va_flags & (SF_SNAPSHOT | SF_SNAPINVAL)) !=
-			    (ip->i_flags & (SF_SNAPSHOT | SF_SNAPINVAL))) {
-				error = EPERM;
-				goto out;
-			}
+		}
+
+		if (ip->i_flags & (SF_IMMUTABLE | SF_APPEND)) {
+			action |= KAUTH_VNODE_HAS_SYSFLAGS;
+		}
+
+		if ((vap->va_flags & UF_SETTABLE) != vap->va_flags) {
+			action |= KAUTH_VNODE_WRITE_SYSFLAGS;
+			changing_sysflags = true;
+		}
+
+		error = kauth_authorize_vnode(cred, action, vp, NULL,
+		    genfs_can_chflags(cred, vp->v_type, ip->i_uid,
+		    changing_sysflags));
+		if (error)
+			goto out;
+
+		if (changing_sysflags) {
 			error = UFS_WAPBL_BEGIN(vp->v_mount);
 			if (error)
 				goto out;
 			ip->i_flags = vap->va_flags;
 			DIP_ASSIGN(ip, flags, ip->i_flags);
 		} else {
-			if ((ip->i_flags & (SF_IMMUTABLE | SF_APPEND)) ||
-			    (vap->va_flags & UF_SETTABLE) != vap->va_flags) {
-				error = EPERM;
-				goto out;
-			}
-			if ((ip->i_flags & SF_SETTABLE) !=
-			    (vap->va_flags & SF_SETTABLE)) {
-				error = EPERM;
-				goto out;
-			}
 			error = UFS_WAPBL_BEGIN(vp->v_mount);
 			if (error)
 				goto out;
@@ -630,7 +631,8 @@ ufs_setattr(void *v)
 			error = EPERM;
 			goto out;
 		}
-		error = genfs_can_chtimes(vp, vap->va_vaflags, ip->i_uid, cred);
+		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_TIMES, vp,
+		    NULL, genfs_can_chtimes(vp, vap->va_vaflags, ip->i_uid, cred));
 		if (error)
 			goto out;
 		error = UFS_WAPBL_BEGIN(vp->v_mount);
@@ -692,7 +694,8 @@ ufs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 
 	ip = VTOI(vp);
 
-	error = genfs_can_chmod(vp, cred, ip->i_uid, ip->i_gid, mode);
+	error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY, vp,
+	    NULL, genfs_can_chmod(vp->v_type, cred, ip->i_uid, ip->i_gid, mode));
 	if (error)
 		return (error);
 
@@ -729,7 +732,8 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	if (gid == (gid_t)VNOVAL)
 		gid = ip->i_gid;
 
-	error = genfs_can_chown(vp, cred, ip->i_uid, ip->i_gid, uid, gid);
+	error = kauth_authorize_vnode(cred, KAUTH_VNODE_CHANGE_OWNERSHIP, vp,
+	    NULL, genfs_can_chown(cred, ip->i_uid, ip->i_gid, uid, gid));
 	if (error)
 		return (error);
 
@@ -1711,13 +1715,13 @@ ufs_rename(void *v)
 		 * otherwise the destination may not be changed (except by
 		 * root). This implements append-only directories.
 		 */
-		if ((tdp->i_mode & S_ISTXT) &&
-		    kauth_authorize_generic(tcnp->cn_cred,
-		     KAUTH_GENERIC_ISSUSER, NULL) != 0 &&
-		    kauth_cred_geteuid(tcnp->cn_cred) != tdp->i_uid &&
-		    txp->i_uid != kauth_cred_geteuid(tcnp->cn_cred)) {
-			error = EPERM;
-			goto bad;
+		if (tdp->i_mode & S_ISTXT) {
+			/* XXX: figure out a way to combine it all into one... */
+			error = kauth_authorize_vnode(tcnp->cn_cred,
+			    KAUTH_VNODE_DELETE, tvp, tdvp,
+			    genfs_can_sticky(tcnp->cn_cred, tdp->i_uid, txp->i_uid));
+			if (error)
+				goto bad;
 		}
 		/*
 		 * Target must be empty if a directory and have no links
@@ -2831,7 +2835,7 @@ ufs_makeinode(int mode, struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	struct inode	*ip, *pdir;
 	struct direct	*newdir;
 	struct vnode	*tvp;
-	int		error, ismember = 0;
+	int		error;
 
 	UFS_WAPBL_JUNLOCK_ASSERT(dvp->v_mount);
 
@@ -2876,11 +2880,16 @@ ufs_makeinode(int mode, struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	tvp->v_type = IFTOVT(mode);	/* Rest init'd in getnewvnode(). */
 	ip->i_nlink = 1;
 	DIP_ASSIGN(ip, nlink, 1);
-	if ((ip->i_mode & ISGID) && (kauth_cred_ismember_gid(cnp->cn_cred,
-	    ip->i_gid, &ismember) != 0 || !ismember) &&
-	    kauth_authorize_generic(cnp->cn_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
-		ip->i_mode &= ~ISGID;
-		DIP_ASSIGN(ip, mode, ip->i_mode);
+
+	/* Authorize setting SGID if needed. */
+	if (ip->i_mode & ISGID) {
+		error = kauth_authorize_vnode(cnp->cn_cred, KAUTH_VNODE_WRITE_SECURITY,
+		    tvp, NULL, genfs_can_chmod(tvp->v_type, cnp->cn_cred, ip->i_uid,
+		    ip->i_gid, mode));
+		if (error) {
+			ip->i_mode &= ~ISGID;
+			DIP_ASSIGN(ip, mode, ip->i_mode);
+		}
 	}
 
 	if (cnp->cn_flags & ISWHITEOUT) {

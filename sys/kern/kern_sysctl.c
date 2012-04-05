@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.233 2011/11/19 22:51:25 tls Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.233.2.1 2012/04/05 21:33:39 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.233 2011/11/19 22:51:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.233.2.1 2012/04/05 21:33:39 mrg Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -1182,7 +1182,7 @@ sysctl_create(SYSCTLFN_ARGS)
 	} else if (flags & CTLFLAG_IMMEDIATE) {
 		switch (type) {
 		case CTLTYPE_BOOL:
-			node->sysctl_idata = nnode.sysctl_bdata;
+			node->sysctl_bdata = nnode.sysctl_bdata;
 			break;
 		case CTLTYPE_INT:
 			node->sysctl_idata = nnode.sysctl_idata;

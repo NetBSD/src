@@ -1,4 +1,4 @@
-/*	$NetBSD: mboot.c,v 1.9 2011/10/01 15:59:01 chs Exp $	*/
+/*	$NetBSD: mboot.c,v 1.9.6.1 2012/04/05 21:33:21 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -32,104 +32,13 @@
 #include <sys/types.h>
 #include <machine/disklabel.h>
 
+#include "iocs.h"
+
 int bootmain(int);
-
-struct iocs_readcap {
-	unsigned long	block;
-	unsigned long	size;
-};
-static inline int
-IOCS_BITSNS (int row)
-{
-	register unsigned int reg_d0 __asm ("%d0");
-
-	__asm volatile ("movel %1,%%d1\n\t"
-			  "movel #0x04,%0\n\t"
-			  "trap #15"
-			  : "=d" (reg_d0)
-			  : "ri" ((int) row)
-			  : "%d1");
-
-	return reg_d0;
-}
-static inline void
-IOCS_B_PRINT (const char *str)
-{
-	__asm volatile ("moval %0,%%a1\n\t"
-			  "movel #0x21,%%d0\n\t"
-			  "trap #15\n\t"
-			  :
-			  : "a" ((int) str)
-			  : "%a1", "%d0");
-	return;
-}
-static inline int
-IOCS_S_READCAP (int id, struct iocs_readcap *cap)
-{
-	register int reg_d0 __asm ("%d0");
-
-	__asm volatile ("moveml %%d4,%%sp@-\n\t"
-			  "movel %2,%%d4\n\t"
-			  "moval %3,%%a1\n\t"
-			  "movel #0x25,%%d1\n\t"
-			  "movel #0xf5,%%d0\n\t"
-			  "trap #15\n\t"
-			  "moveml %%sp@+,%%d4"
-			  : "=d" (reg_d0), "=m" (*cap)
-			  : "ri" (id), "g" ((int) cap)
-			  : "%d1", "%a1");
-
-	return reg_d0;
-}
-static inline int
-IOCS_S_READ (int pos, int blk, int id, int size, void *buf)
-{
-	register int reg_d0 __asm ("%d0");
-
-	__asm volatile ("moveml %%d3-%%d5,%%sp@-\n\t"
-			  "movel %2,%%d2\n\t"
-			  "movel %3,%%d3\n\t"
-			  "movel %4,%%d4\n\t"
-			  "movel %5,%%d5\n\t"
-			  "moval %6,%%a1\n\t"
-			  "movel #0x26,%%d1\n\t"
-			  "movel #0xf5,%%d0\n\t"
-			  "trap #15\n\t"
-			  "moveml %%sp@+,%%d3-%%d5"
-			  : "=d" (reg_d0), "=m" (*(char*) buf)
-			  : "ri" (pos), "ri" (blk), "ri" (id), "ri" (size), "g" ((int) buf)
-			  : "%d1", "%d2", "%a1");
-
-	return reg_d0;
-}
-
-static inline int
-IOCS_S_READEXT (int pos, int blk, int id, int size, void *buf)
-{
-	register int reg_d0 __asm ("%d0");
-
-	__asm volatile ("moveml %%d3-%%d5,%%sp@-\n\t"
-			  "movel %2,%%d2\n\t"
-			  "movel %3,%%d3\n\t"
-			  "movel %4,%%d4\n\t"
-			  "movel %5,%%d5\n\t"
-			  "moval %6,%%a1\n\t"
-			  "movel #0x26,%%d1\n\t"
-			  "movel #0xf5,%%d0\n\t"
-			  "trap #15\n\t"
-			  "moveml %%sp@+,%%d3-%%d5"
-			  : "=d" (reg_d0), "=m" (*(char*) buf)
-			  : "ri" (pos), "ri" (blk), "ri" (id), "ri" (size), "g" ((int) buf)
-			  : "%d1", "%d2", "%a1");
-
-	return reg_d0;
-}
 
 #define PART_BOOTABLE	0
 #define PART_UNUSED	1
 #define PART_INUSE	2
-
-
 
 int
 bootmain(int scsiid)

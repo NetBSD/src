@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.93 2011/11/14 18:35:13 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.93.4.1 2012/04/05 21:33:36 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.93 2011/11/14 18:35:13 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.93.4.1 2012/04/05 21:33:36 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -361,10 +361,11 @@ msdosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			 */
 			devvp = pmp->pm_devvp;
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-			error = genfs_can_mount(devvp, VREAD | VWRITE,
-			    l->l_cred);
+			error = kauth_authorize_system(l->l_cred,
+			    KAUTH_SYSTEM_MOUNT, KAUTH_REQ_SYSTEM_MOUNT_DEVICE,
+			    mp, devvp, KAUTH_ARG(VREAD | VWRITE));
 			VOP_UNLOCK(devvp);
-			DPRINTF(("genfs_can_mount %d\n", error));
+			DPRINTF(("KAUTH_REQ_SYSTEM_MOUNT_DEVICE %d\n", error));
 			if (error)
 				return (error);
 
@@ -404,10 +405,11 @@ msdosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	if ((mp->mnt_flag & MNT_RDONLY) == 0)
 		accessmode |= VWRITE;
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = genfs_can_mount(devvp, accessmode, l->l_cred);
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
+	    KAUTH_REQ_SYSTEM_MOUNT_DEVICE, mp, devvp, KAUTH_ARG(accessmode));
 	VOP_UNLOCK(devvp);
 	if (error) {
-		DPRINTF(("genfs_can_mount %d\n", error));
+		DPRINTF(("KAUTH_REQ_SYSTEM_MOUNT_DEVICE %d\n", error));
 		vrele(devvp);
 		return (error);
 	}

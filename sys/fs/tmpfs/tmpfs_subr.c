@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.78 2011/11/19 22:51:24 tls Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.78.2.1 2012/04/05 21:33:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 2005-2011 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.78 2011/11/19 22:51:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.78.2.1 2012/04/05 21:33:37 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -871,7 +871,8 @@ tmpfs_chflags(vnode_t *vp, int flags, kauth_cred_t cred, lwp_t *l)
 {
 	tmpfs_node_t *node = VP_TO_TMPFS_NODE(vp);
 	kauth_action_t action = KAUTH_VNODE_WRITE_FLAGS;
-	int error, fs_decision = 0;
+	int error;
+	bool changing_sysflags = false;
 
 	KASSERT(VOP_ISLOCKED(vp));
 
@@ -879,19 +880,13 @@ tmpfs_chflags(vnode_t *vp, int flags, kauth_cred_t cred, lwp_t *l)
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		return EROFS;
 
-	if (kauth_cred_geteuid(cred) != node->tn_uid) {
-		fs_decision = EACCES;
-	}
-
 	/*
 	 * If the new flags have non-user flags that are different than
 	 * those on the node, we need special permission to change them.
 	 */
 	if ((flags & SF_SETTABLE) != (node->tn_flags & SF_SETTABLE)) {
 		action |= KAUTH_VNODE_WRITE_SYSFLAGS;
-		if (!fs_decision) {
-			fs_decision = EPERM;
-		}
+		changing_sysflags = true;
 	}
 
 	/*
@@ -902,7 +897,9 @@ tmpfs_chflags(vnode_t *vp, int flags, kauth_cred_t cred, lwp_t *l)
 		action |= KAUTH_VNODE_HAS_SYSFLAGS;
 	}
 
-	error = kauth_authorize_vnode(cred, action, vp, NULL, fs_decision);
+	error = kauth_authorize_vnode(cred, action, vp, NULL,
+	    genfs_can_chflags(cred, vp->v_type, node->tn_uid,
+	    changing_sysflags));
 	if (error)
 		return error;
 
@@ -915,7 +912,7 @@ tmpfs_chflags(vnode_t *vp, int flags, kauth_cred_t cred, lwp_t *l)
 	 *      proper permissions, and if we're here it means it's okay to
 	 *      change them...
 	 */
-	if ((action & KAUTH_VNODE_WRITE_SYSFLAGS) == 0) {
+	if (!changing_sysflags) {
 		/* Clear all user-settable flags and re-set them. */
 		node->tn_flags &= SF_SETTABLE;
 		node->tn_flags |= (flags & UF_SETTABLE);
@@ -949,7 +946,7 @@ tmpfs_chmod(vnode_t *vp, mode_t mode, kauth_cred_t cred, lwp_t *l)
 		return EPERM;
 
 	error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY, vp,
-	    NULL, genfs_can_chmod(vp, cred, node->tn_uid, node->tn_gid, mode));
+	    NULL, genfs_can_chmod(vp->v_type, cred, node->tn_uid, node->tn_gid, mode));
 	if (error) {
 		return error;
 	}
@@ -992,7 +989,7 @@ tmpfs_chown(vnode_t *vp, uid_t uid, gid_t gid, kauth_cred_t cred, lwp_t *l)
 		return EPERM;
 
 	error = kauth_authorize_vnode(cred, KAUTH_VNODE_CHANGE_OWNERSHIP, vp,
-	    NULL, genfs_can_chown(vp, cred, node->tn_uid, node->tn_gid, uid,
+	    NULL, genfs_can_chown(cred, node->tn_uid, node->tn_gid, uid,
 	    gid));
 	if (error) {
 		return error;

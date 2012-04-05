@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.67.2.1 2012/02/18 07:35:22 mrg Exp $	*/
+/*	$NetBSD: pf.c,v 1.67.2.2 2012/04/05 21:33:35 mrg Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.67.2.1 2012/02/18 07:35:22 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.67.2.2 2012/04/05 21:33:35 mrg Exp $");
 
 #include "pflog.h"
 
@@ -5237,9 +5237,6 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	struct pf_addr		 naddr;
 	struct pf_src_node	*sn = NULL;
 	int			 error = 0;
-#ifdef KAME_IPSEC
-	struct m_tag		*mtag;
-#endif /* KAME_IPSEC */
 #ifdef __NetBSD__
 	struct pf_mtag		*pf_mtag;
 #endif /* __NetBSD__ */
@@ -5342,18 +5339,6 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	}
 
 	/* Copied from ip_output. */
-#ifdef KAME_IPSEC
-	/*
-	 * If deferred crypto processing is needed, check that the
-	 * interface supports it.
-	 */
-	if ((mtag = m_tag_find(m0, PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED, NULL))
-	    != NULL && (ifp->if_capabilities & IFCAP_IPSEC) == 0) {
-		/* Notify IPsec to do its own crypto. */
-		ipsp_skipcrypto_unmark((struct tdb_ident *)(mtag + 1));
-		goto bad;
-	}
-#endif /* KAME_IPSEC */
 
 	/* Catch routing changes wrt. hardware checksumming for TCP or UDP. */
 #ifdef __NetBSD__

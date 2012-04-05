@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.88.6.1 2012/02/18 07:34:46 mrg Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.88.6.2 2012/04/05 21:33:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.88.6.1 2012/02/18 07:34:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.88.6.2 2012/04/05 21:33:27 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.88.6.1 2012/02/18 07:34:46 mrg Exp $"
  */
 struct pci_class {
 	const char	*name;
-	int		val;		/* as wide as pci_{,sub}class_t */
+	u_int		val;		/* as wide as pci_{,sub}class_t */
 	const struct pci_class *subclasses;
 };
 

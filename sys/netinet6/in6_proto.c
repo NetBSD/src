@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.93.6.1 2012/02/18 07:35:42 mrg Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.93.6.2 2012/04/05 21:33:46 mrg Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.93.6.1 2012/02/18 07:35:42 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.93.6.2 2012/04/05 21:33:46 mrg Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -106,15 +106,6 @@ __KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.93.6.1 2012/02/18 07:35:42 mrg Exp $
 #include <netinet6/pim6_var.h>
 
 #include <netinet6/nd6.h>
-
-#ifdef KAME_IPSEC
-#include <netinet6/ipsec.h>
-#include <netinet6/ah.h>
-#ifdef IPSEC_ESP
-#include <netinet6/esp.h>
-#endif
-#include <netinet6/ipcomp.h>
-#endif /* KAME_IPSEC */
 
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
@@ -173,13 +164,13 @@ PR_WRAP_CTLOUTPUT(icmp6_ctloutput)
 #define	udp6_ctloutput	udp6_ctloutput_wrapper
 #define	icmp6_ctloutput	icmp6_ctloutput_wrapper
 
-#if defined(KAME_IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 PR_WRAP_CTLINPUT(ah6_ctlinput)
 
 #define	ah6_ctlinput	ah6_ctlinput_wrapper
 #endif
 
-#if (defined(KAME_IPSEC) && defined(IPSEC_ESP)) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 PR_WRAP_CTLINPUT(esp6_ctlinput)
 
 #define	esp6_ctlinput	esp6_ctlinput_wrapper
@@ -264,33 +255,6 @@ const struct ip6protosw inet6sw[] = {
 	.pr_flags = PR_ATOMIC|PR_ADDR,
 	.pr_input = frag6_input,
 },
-#ifdef KAME_IPSEC
-{	.pr_type = SOCK_RAW,
-	.pr_domain = &inet6domain,
-	.pr_protocol = IPPROTO_AH,
-	.pr_flags = PR_ATOMIC|PR_ADDR,
-	.pr_input = ah6_input,
-	.pr_ctlinput = ah6_ctlinput,
-	.pr_init = ah6_init,
-},
-#ifdef IPSEC_ESP
-{	.pr_type = SOCK_RAW,
-	.pr_domain = &inet6domain,
-	.pr_protocol = IPPROTO_ESP,
-	.pr_flags = PR_ATOMIC|PR_ADDR,
-	.pr_input = esp6_input,
-	.pr_ctlinput = esp6_ctlinput,
-	.pr_init = esp6_init,
-},
-#endif
-{	.pr_type = SOCK_RAW,
-	.pr_domain = &inet6domain,
-	.pr_protocol = IPPROTO_IPCOMP,
-	.pr_flags = PR_ATOMIC|PR_ADDR,
-	.pr_input = ipcomp6_input,
-	.pr_init = ipcomp6_init,
-},
-#endif /* KAME_IPSEC */
 #ifdef FAST_IPSEC
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inet6domain,

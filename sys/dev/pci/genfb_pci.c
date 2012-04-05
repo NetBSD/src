@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.32.8.1 2012/02/18 07:34:37 mrg Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.32.8.2 2012/04/05 21:33:26 mrg Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.32.8.1 2012/02/18 07:34:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.32.8.2 2012/04/05 21:33:26 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,8 +268,8 @@ pci_genfb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
 	 */
-	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
-	    NULL) != 0) {
+	if (kauth_authorize_machdep(kauth_cred_get(), KAUTH_MACHDEP_UNMANAGEDMEM,
+	    NULL, NULL, NULL, NULL) != 0) {
 		aprint_normal_dev(sc->sc_gen.sc_dev, "mmap() rejected.\n");
 		return -1;
 	}

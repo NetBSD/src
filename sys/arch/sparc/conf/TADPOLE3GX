@@ -1,4 +1,4 @@
-# 	$NetBSD: TADPOLE3GX,v 1.54 2011/11/22 21:25:37 tls Exp $
+# 	$NetBSD: TADPOLE3GX,v 1.54.2.1 2012/04/05 21:33:19 mrg Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -64,8 +64,6 @@ options 	KTRACE
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
-
-## Loadable kernel module support; still under development.
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -183,7 +181,7 @@ options 	INET		# IP (Internet Protocol) v4
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
-options 	PFIL_HOOKS	# Add pfil(9) hooks, intended for custom LKMs.
+options 	PFIL_HOOKS	# Add pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter

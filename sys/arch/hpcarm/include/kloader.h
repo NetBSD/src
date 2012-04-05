@@ -1,11 +1,8 @@
-/*	$NetBSD: key_private.h,v 1.2 2008/04/28 20:24:10 martin Exp $	*/
+/*	$NetBSD: kloader.h,v 1.1.2.2 2012/04/05 21:33:15 mrg Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,6 +12,13 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -29,18 +33,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _NETKEY_KEY_PRIVATE_H_
-#define _NETKEY_KEY_PRIVATE_H_
+#ifndef	_HPCARM_KLOADER_H_
+#define	_HPCARM_KLOADER_H_
 
-#ifdef _KERNEL
-#include <net/net_stats.h>
+#include <sys/lock.h>
 
-extern	percpu_t *pfkeystat_percpu;
+#include <uvm/uvm.h>
 
-#define	PFKEY_STAT_GETREF()	_NET_STAT_GETREF(pfkeystat_percpu)
-#define	PFKEY_STAT_PUTREF()	_NET_STAT_PUTREF(pfkeystat_percpu)
-#define	PFKEY_STATINC(x)	_NET_STATINC(pfkeystat_percpu, x)
-#define	PFKEY_STATADD(x, v)	_NET_STATADD(pfkeystat_percpu, x, v)
-#endif /* _KERNEL */
+#include <machine/pmap.h>
 
-#endif /* !_NETKEY_KEY_PRIVATE_H_ */
+#define PG_VADDR(pg)	kloader_phystov(VM_PAGE_TO_PHYS(pg))
+vaddr_t kloader_phystov(paddr_t pa);
+
+#include <dev/kloader.h>
+
+#endif	/* _HPCARM_KLOADER_H_ */

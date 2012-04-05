@@ -1,4 +1,4 @@
-/*	$NetBSD: schizoreg.h,v 1.8 2011/03/20 20:43:34 mrg Exp $	*/
+/*	$NetBSD: schizoreg.h,v 1.8.8.1 2012/04/05 21:33:20 mrg Exp $	*/
 /*	$OpenBSD: schizoreg.h,v 1.20 2008/07/12 13:08:04 kettenis Exp $	*/
 
 /*
@@ -203,12 +203,16 @@ struct schizo_regs {
 #define	SCZ_PCICTRL_SBH_ERR		(1ULL << 35UL)		/* pci strm hole */
 #define	SCZ_PCICTRL_SERR		(1ULL << 34UL)		/* pci serr# sampled */
 #define	SCZ_PCICTRL_PCISPD		(1ULL << 33UL)		/* speed (0=clk/2,1=clk) */
+#define	TOM_PCICTRL_PRM			(1ULL << 30UL)		/* prefetch read multiple */
+#define	TOM_PCICTRL_PRO			(1ULL << 29UL)		/* prefetch read one */
+#define	TOM_PCICTRL_PRL			(1ULL << 28UL)		/* prefetch read line */
 #define	SCZ_PCICTRL_PTO			(3UL << 24UL)		/* pci timeout interval */
 #define	SCZ_PCICTRL_MMU_INT		(1UL << 19UL)		/* mmu intr en */
 #define	SCZ_PCICTRL_SBH_INT		(1UL << 18UL)		/* strm byte hole intr en */
 #define	SCZ_PCICTRL_EEN			(1UL << 17UL)		/* error intr en */
 #define	SCZ_PCICTRL_PARK		(1UL << 16UL)		/* bus parked */
 #define	SCZ_PCICTRL_PCIRST		(1UL <<  8UL)		/* pci reset */
+#define	TOM_PCICTRL_ARB			(0xffUL << 0UL)		/* dma arb enables, tomatillo */
 #define	SCZ_PCICTRL_ARB			(0x3fUL << 0UL)		/* dma arb enables */
 #define SCZ_PCICTRL_BITS "\20\277UNUS\276DTO\275DTO_INT\263ESLCK\246TTO\245RTRY\244MMU\243SBH\242SERR\241SPD\223MMU_INT\222SBH_INT\221EEN\220PARK\210PCIRST"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.86 2010/11/19 06:44:46 dholland Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.86.12.1 2012/04/05 21:33:42 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.86 2010/11/19 06:44:46 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.86.12.1 2012/04/05 21:33:42 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,8 +96,9 @@ umapfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	}
 
 	/* only for root */
-	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    NULL)) != 0)
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
+	    KAUTH_REQ_SYSTEM_MOUNT_UMAP, NULL, NULL, NULL);
+	if (error)
 		return error;
 
 #ifdef UMAPFS_DIAGNOSTIC

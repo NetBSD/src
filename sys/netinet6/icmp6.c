@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.157.6.1 2012/02/18 07:35:41 mrg Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.157.6.2 2012/04/05 21:33:45 mrg Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.157.6.1 2012/02/18 07:35:41 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.157.6.2 2012/04/05 21:33:45 mrg Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -98,11 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.157.6.1 2012/02/18 07:35:41 mrg Exp $");
 #include <netinet6/in6_ifattach.h>
 #include <netinet6/ip6protosw.h>
 #include <netinet6/scope6_var.h>
-
-#ifdef KAME_IPSEC
-#include <netinet6/ipsec.h>
-#include <netkey/key.h>
-#endif
 
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
@@ -2319,7 +2314,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 
 		sockaddr_in6_init(&sdst, &reddst6, 0, 0, 0);
 		pfctlinput(PRC_REDIRECT_HOST, (struct sockaddr *)&sdst);
-#if defined(KAME_IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 		key_sa_routechange((struct sockaddr *)&sdst);
 #endif
 	}

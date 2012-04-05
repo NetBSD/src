@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.12 2010/04/17 13:36:21 nonaka Exp $	*/
+/*	$NetBSD: locore.S,v 1.12.12.1 2012/04/05 21:33:15 mrg Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -122,13 +122,11 @@ ASENTRY_NP(start)
 	CPWAIT(r9)
 
 	/* Jump to kernel code in TRUE VA */
-	adr	r9, .Lstart
-	ldmia	r9, {r9, sp}		/* and set stack pointer */
+	ldr	r9, .Lhpc_start
 	mov	pc, r9
 
-.Lstart:
+.Lhpc_start:
 	.word	hpc_start
-	.word	svcstk + INIT_ARM_STACK_SIZE
 
 #define MMU_INIT(va,pa,n_sec,attr)					\
 	.word	(n_sec);						\
@@ -145,17 +143,22 @@ ASENTRY_NP(start)
 	MMU_INIT(0xa0000000, 0xa0000000, 256, L1_TYPE_S|L1_S_C|L1_S_AP(AP_KRW))
 	/* map VA 0xc0000000..0xcfffffff to PA 0xa0000000..0xafffffff */
 	MMU_INIT(0xc0000000, 0xa0000000, 256, L1_TYPE_S|L1_S_C|L1_S_AP(AP_KRW))
-
 	.word	0,0,0	/* end of table */
-
-	.bss
-svcstk:
-	.space	INIT_ARM_STACK_SIZE
 
 	.text
 	.align	0
 ASENTRY_NP(hpc_start)
-#endif
+#endif	/* CPU_XSCALE_PXA250 | CPU_XSCALE_PXA270 */
+
+	adr	r5, .Lstart
+	ldmia	r5, {r3, r4, sp}	/* Set initial stack and */
+	sub	r4, r4, r3		/* get zero init data */
+
+	mov	r5, #0
+.L1:
+	str	r5, [r3], #4		/* Zero the bss */
+	subs	r4, r4, #4
+	bgt	.L1
 
 	mov	fp, #0x00000000		/* trace back starts here */
 	bl	_C_LABEL(initarm)	/* Off we go */
@@ -176,6 +179,15 @@ ASENTRY_NP(hpc_start)
 	movs	pc, lr			/* Exit to user process */
 	/* Never gets here */
 	b	.
+
+.Lstart:
+	.word	_edata
+	.word	_end
+	.word	svcstk + INIT_ARM_STACK_SIZE
+
+	.bss
+svcstk:
+	.space	INIT_ARM_STACK_SIZE
 
 	.text
 	.align	0

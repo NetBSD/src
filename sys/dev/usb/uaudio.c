@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.124.2.3 2012/02/25 13:17:16 mrg Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.124.2.4 2012/04/05 21:33:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.124.2.3 2012/02/25 13:17:16 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.124.2.4 2012/04/05 21:33:34 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1846,6 +1846,12 @@ uaudio_identify_as(struct uaudio_softc *sc,
 				if (j >= AUFMT_MAX_FREQUENCIES) {
 					aprint_error("%s: please increase "
 					       "AUFMT_MAX_FREQUENCIES to %d\n",
+					       __func__, t1desc->bSamFreqType);
+					break;
+				}
+				if (j >= 2) {
+					aprint_error("%s: too much tSamFreq: "
+					       "%d\n",
 					       __func__, t1desc->bSamFreqType);
 					break;
 				}

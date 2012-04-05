@@ -1,4 +1,4 @@
-/*	$NetBSD: wcfb.c,v 1.8.8.1 2012/02/18 07:34:54 mrg Exp $ */
+/*	$NetBSD: wcfb.c,v 1.8.8.2 2012/04/05 21:33:32 mrg Exp $ */
 
 /*-
  * Copyright (c) 2010 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.8.8.1 2012/02/18 07:34:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.8.8.2 2012/04/05 21:33:32 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -340,8 +340,8 @@ wcfb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
 	 */
-	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
-	    NULL) != 0) {
+	if (kauth_authorize_machdep(kauth_cred_get(), KAUTH_MACHDEP_UNMANAGEDMEM,
+	    NULL, NULL, NULL, NULL) != 0) {
 		aprint_normal_dev(sc->sc_dev, "mmap() rejected.\n");
 		return -1;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.h,v 1.39 2009/08/20 22:07:49 he Exp $	*/
+/*	$NetBSD: exec_aout.h,v 1.39.16.1 2012/04/05 21:33:50 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -88,16 +88,16 @@ struct exec {
  * The macros below will set/get the needed fields.
  */
 #define	N_GETMAGIC(ex) \
-    ((((ex).a_midmag)&0xffff0000) ? \
+    ((((uint32_t)(ex).a_midmag)&0xffff0000) ? \
     (be32toh((uint32_t)((ex).a_midmag))&0xffff) : ((ex).a_midmag))
 #define	N_GETMAGIC2(ex) \
-    ((((ex).a_midmag)&0xffff0000) ? \
+    ((((uint32_t)(ex).a_midmag)&0xffff0000) ? \
     (be32toh((uint32_t)((ex).a_midmag))&0xffff) : (((ex).a_midmag) | 0x10000))
 #define	N_GETMID(ex) \
-    ((((ex).a_midmag)&0xffff0000) ? \
+    ((((uint32_t)(ex).a_midmag)&0xffff0000) ? \
     ((be32toh((uint32_t)((ex).a_midmag))>>16)&0x03ff) : MID_ZERO)
 #define	N_GETFLAG(ex) \
-    ((((ex).a_midmag)&0xffff0000) ? \
+    ((((uint32_t)(ex).a_midmag)&0xffff0000) ? \
     ((be32toh((uint32_t)((ex).a_midmag))>>26)&0x3f) : 0)
 #define	N_SETMAGIC(ex,mag,mid,flag) \
     ((ex).a_midmag = htobe32((uint32_t) \

@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_securelevel.c,v 1.22.2.1 2012/02/18 07:35:47 mrg Exp $ */
+/* $NetBSD: secmodel_securelevel.c,v 1.22.2.2 2012/04/05 21:33:50 mrg Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.22.2.1 2012/02/18 07:35:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.22.2.2 2012/04/05 21:33:50 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -259,6 +259,7 @@ secmodel_securelevel_system_cb(kauth_cred_t cred, kauth_action_t action,
 
 	switch (action) {
 	case KAUTH_SYSTEM_CHSYSFLAGS:
+		/* Deprecated. */
 		if (securelevel > 0)
 			result = KAUTH_RESULT_DENY;
 		break;
@@ -283,6 +284,11 @@ secmodel_securelevel_system_cb(kauth_cred_t cred, kauth_action_t action,
 		default:
 			break;
 		}
+		break;
+
+	case KAUTH_SYSTEM_MAP_VA_ZERO:
+		if (securelevel > 0)
+			result = KAUTH_RESULT_DENY;
 		break;
 
 	case KAUTH_SYSTEM_MODULE:

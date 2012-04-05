@@ -1,11 +1,9 @@
-/*	$NetBSD: ipsec_private.h,v 1.2 2008/04/28 20:24:10 martin Exp $	*/
-
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Nick Hudson
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,22 +27,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _NETINET6_IPSEC_PRIVATE_H_
-#define _NETINET6_IPSEC_PRIVATE_H_
+#include "opt_multiprocessor.h"
 
-#ifdef _KERNEL
-#include <net/net_stats.h>
-
-extern	percpu_t *ipsecstat_percpu;
-extern	percpu_t *ipsec6stat_percpu;
-
-#define	IPSEC_STAT_GETREF()	_NET_STAT_GETREF(ipsecstat_percpu)
-#define	IPSEC_STAT_PUTREF()	_NET_STAT_PUTREF(ipsecstat_percpu)
-#define	IPSEC_STATINC(x)	_NET_STATINC(ipsecstat_percpu, x)
-
-#define	IPSEC6_STAT_GETREF()	_NET_STAT_GETREF(ipsec6stat_percpu)
-#define	IPSEC6_STAT_PUTREF()	_NET_STAT_PUTREF(ipsec6stat_percpu)
-#define	IPSEC6_STATINC(x)	_NET_STATINC(ipsec6stat_percpu, x)
-#endif /* _KERNEL */
-
-#endif /* !_NETINET6_IPSEC_PRIVATE_H_ */
+struct cpu_softc {
+	device_t sc_dev;
+	void *sc_ihclk;
+	void *sc_ihipi;
+#if defined(MULTIPROCESSOR)
+	struct evcnt sc_evcnt_ipi;      /* interprocessor interrupts */
+	struct evcnt sc_evcnt_which_ipi[HPPA_NIPI];
+#endif
+};

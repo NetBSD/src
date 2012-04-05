@@ -1,4 +1,4 @@
-#	$NetBSD: files.hppa,v 1.16 2010/03/02 20:40:15 skrll Exp $
+#	$NetBSD: files.hppa,v 1.16.14.1 2012/04/05 21:33:15 mrg Exp $
 #
 #	$OpenBSD: files.hppa,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -16,6 +16,7 @@ file	arch/hppa/hppa/db_memrw.c		ddb | kgdb
 file	arch/hppa/hppa/db_trace.c		ddb
 file	arch/hppa/hppa/db_machdep.c		ddb
 file	arch/hppa/hppa/fpu.c
+file	arch/hppa/hppa/ipifuncs.c		multiprocessor
 file	arch/hppa/hppa/kgdb_hppa.c		kgdb
 file	arch/hppa/hppa/kobj_machdep.c		modular
 file	arch/hppa/hppa/hppa_machdep.c

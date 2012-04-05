@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.306.2.2 2012/02/24 09:11:52 mrg Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.306.2.3 2012/04/05 21:33:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.306.2.2 2012/02/24 09:11:52 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.306.2.3 2012/04/05 21:33:53 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -4716,11 +4716,9 @@ sysctl_user_va0_disable(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return (error);
 
-	/* lower only at securelevel < 1 */
 	if (!t && user_va0_disable &&
-	    kauth_authorize_system(l->l_cred,
-				   KAUTH_SYSTEM_CHSYSFLAGS /* XXX */, 0,
-				   NULL, NULL, NULL))
+	    kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MAP_VA_ZERO, 0,
+	    NULL, NULL, NULL))
 		return EPERM;
 
 	user_va0_disable = !!t;

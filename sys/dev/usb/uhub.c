@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.114.6.2 2012/03/11 01:52:29 mrg Exp $	*/
+/*	$NetBSD: uhub.c,v 1.114.6.3 2012/04/05 21:33:34 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.114.6.2 2012/03/11 01:52:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.114.6.3 2012/04/05 21:33:34 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -597,13 +597,20 @@ uhub_detach(device_t self, int flags)
 	if (hub == NULL)		/* Must be partially working */
 		return (0);
 
+	/* XXXSMP usb */
+	KERNEL_LOCK(1, curlwp);
+
 	nports = hub->hubdesc.bNbrPorts;
 	for(port = 0; port < nports; port++) {
 		rup = &hub->ports[port];
 		if (rup->device == NULL)
 			continue;
-		if ((rc = usb_disconnect_port(rup, self, flags)) != 0)
+		if ((rc = usb_disconnect_port(rup, self, flags)) != 0) {
+			/* XXXSMP usb */
+			KERNEL_UNLOCK_ONE(curlwp);
+
 			return rc;
+		}
 	}
 
 	pmf_device_deregister(self);
@@ -622,6 +629,9 @@ uhub_detach(device_t self, int flags)
 		free(sc->sc_status, M_USBDEV);
 	if (sc->sc_statusbuf)
 		free(sc->sc_statusbuf, M_USBDEV);
+
+	/* XXXSMP usb */
+	KERNEL_UNLOCK_ONE(curlwp);
 
 	return (0);
 }

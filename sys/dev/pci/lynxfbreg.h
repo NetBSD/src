@@ -1,4 +1,4 @@
-/*	$NetBSD: lynxfbreg.h,v 1.1.2.4 2012/03/06 18:26:41 mrg Exp $	*/
+/*	$NetBSD: lynxfbreg.h,v 1.1.2.5 2012/04/05 21:33:27 mrg Exp $	*/
 /*	$OpenBSD: smfbreg.h,v 1.5 2010/08/27 12:48:54 miod Exp $	*/
 
 /*
@@ -59,6 +59,10 @@
 #define	DE_CTRL_ROP_MASK		0x000000ff
 #define	DE_CTRL_ROP_SHIFT			0
 #define	DE_CTRL_ROP_SRC				0x0c
+
+
+#define	SM7XX_REG_BASE			0x00400000
+#define	SM7XX_REG_SIZE			0x00400000
 
 /*
  * VPR (Video Parameter Registers)

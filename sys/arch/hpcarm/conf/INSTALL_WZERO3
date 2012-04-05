@@ -1,7 +1,7 @@
 #
 # kernel config file for system install
 #
-# 	$NetBSD: INSTALL_WZERO3,v 1.1 2010/04/17 13:36:21 nonaka Exp $
+# 	$NetBSD: INSTALL_WZERO3,v 1.1.18.1 2012/04/05 21:33:14 mrg Exp $
 #
 
 include		"arch/hpcarm/conf/WZERO3"
@@ -11,3 +11,5 @@ options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=8704	# size of memory disk, in blocks
+
+no options	KLOADER
