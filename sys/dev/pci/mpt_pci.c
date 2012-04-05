@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_pci.c,v 1.20.16.1 2012/02/18 07:34:45 mrg Exp $	*/
+/*	$NetBSD: mpt_pci.c,v 1.20.16.2 2012/04/05 21:33:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_pci.c,v 1.20.16.1 2012/02/18 07:34:45 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_pci.c,v 1.20.16.2 2012/04/05 21:33:27 mrg Exp $");
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 
@@ -140,6 +140,7 @@ mpt_pci_attach(device_t parent, device_t self, void *aux)
 	psc->sc_pc = pa->pa_pc;
 	psc->sc_tag = pa->pa_tag;
 
+	mpt->sc_dev = self;
 	mpt->sc_dmat = pa->pa_dmat;
 
 	/*
@@ -161,7 +162,7 @@ mpt_pci_attach(device_t parent, device_t self, void *aux)
 		mpt->sc_st = memt;
 		mpt->sc_sh = memh;
 	} else {
-		aprint_error_dev(&mpt->sc_dev, "unable to map device registers\n");
+		aprint_error_dev(mpt->sc_dev, "unable to map device registers\n");
 		return;
 	}
 
@@ -181,7 +182,7 @@ mpt_pci_attach(device_t parent, device_t self, void *aux)
 	 */
 	if ((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SYMBIOS_1030) &&
 	    (PCI_REVISION(pa->pa_class) < 0x08)) {
-		aprint_normal_dev(&mpt->sc_dev, "applying 1030 quirk\n");
+		aprint_normal_dev(mpt->sc_dev, "applying 1030 quirk\n");
 		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x68);
 		reg &= 0x8fffff;
 		pci_conf_write(pa->pa_pc, pa->pa_tag, 0x68, reg);
@@ -198,19 +199,19 @@ mpt_pci_attach(device_t parent, device_t self, void *aux)
 	 * Map and establish our interrupt.
 	 */
 	if (pci_intr_map(pa, &ih) != 0) {
-		aprint_error_dev(&mpt->sc_dev, "unable to map interrupt\n");
+		aprint_error_dev(mpt->sc_dev, "unable to map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	psc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, mpt_intr, mpt);
 	if (psc->sc_ih == NULL) {
-		aprint_error_dev(&mpt->sc_dev, "unable to establish interrupt");
+		aprint_error_dev(mpt->sc_dev, "unable to establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
 		return;
 	}
-	aprint_normal_dev(&mpt->sc_dev, "interrupting at %s\n",
+	aprint_normal_dev(mpt->sc_dev, "interrupting at %s\n",
 	    intrstr);
 
 	/* Disable interrupts on the part. */
@@ -218,7 +219,7 @@ mpt_pci_attach(device_t parent, device_t self, void *aux)
 
 	/* Allocate DMA memory. */
 	if (mpt_dma_mem_alloc(mpt) != 0) {
-		aprint_error_dev(&mpt->sc_dev, "unable to allocate DMA memory\n");
+		aprint_error_dev(mpt->sc_dev, "unable to allocate DMA memory\n");
 		return;
 	}
 
@@ -232,6 +233,6 @@ mpt_pci_attach(device_t parent, device_t self, void *aux)
 	mpt_scsipi_attach(mpt);
 }
 
-CFATTACH_DECL(mpt_pci, sizeof(struct mpt_pci_softc),
+CFATTACH_DECL_NEW(mpt_pci, sizeof(struct mpt_pci_softc),
     mpt_pci_match, mpt_pci_attach, NULL, NULL);
 

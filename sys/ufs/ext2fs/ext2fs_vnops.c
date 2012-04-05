@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.101 2011/11/18 21:18:51 christos Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.101.4.1 2012/04/05 21:33:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.101 2011/11/18 21:18:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.101.4.1 2012/04/05 21:33:51 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,8 +253,9 @@ ext2fs_check_permitted(struct vnode *vp, struct inode *ip, mode_t mode,
     kauth_cred_t cred)
 {
 
-	return genfs_can_access(vp->v_type, ip->i_e2fs_mode & ALLPERMS,
-	    ip->i_uid, ip->i_gid, mode, cred);
+	return kauth_authorize_vnode(cred, kauth_access_action(mode, vp->v_type,
+	    ip->i_e2fs_mode & ALLPERMS), vp, NULL, genfs_can_access(vp->v_type,
+	    ip->i_e2fs_mode & ALLPERMS, ip->i_uid, ip->i_gid, mode, cred));
 }
 
 int
@@ -348,6 +349,8 @@ ext2fs_setattr(void *v)
 	kauth_cred_t cred = ap->a_cred;
 	struct lwp *l = curlwp;
 	int error;
+	kauth_action_t action = KAUTH_VNODE_WRITE_FLAGS;
+	bool changing_sysflags = false;
 
 	/*
 	 * Check for unsettable attributes.
@@ -361,24 +364,38 @@ ext2fs_setattr(void *v)
 	if (vap->va_flags != VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
-		if (kauth_cred_geteuid(cred) != ip->i_uid &&
-		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    NULL)))
-			return (error);
+
+		/*
+		 * Check if we're allowed to change the flags.
+		 * If EXT2FS_SYSTEM_FLAGS is set, then the flags are treated
+		 * as system flags, otherwise they're considered to be user
+		 * flags.
+		 */
 #ifdef EXT2FS_SYSTEM_FLAGS
-		if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    NULL) == 0) {
-			if ((ip->i_e2fs_flags &
-			    (EXT2_APPEND | EXT2_IMMUTABLE)) &&
-			    kauth_authorize_system(l->l_cred,
-			     KAUTH_SYSTEM_CHSYSFLAGS, 0, NULL, NULL, NULL))
-				return (EPERM);
-			ip->i_e2fs_flags &= ~(EXT2_APPEND | EXT2_IMMUTABLE);
-			ip->i_e2fs_flags |=
-			    (vap->va_flags & SF_APPEND) ?  EXT2_APPEND : 0 |
-			    (vap->va_flags & SF_IMMUTABLE) ? EXT2_IMMUTABLE : 0;
-		} else
-			return (EPERM);
+		/* Indicate we're changing system flags if we are. */
+		if ((vap->va_flags & SF_APPEND) ||
+		     (vap->va_flags & SF_IMMUTABLE)) {
+			action |= KAUTH_VNODE_WRITE_SYSFLAGS;
+			changing_sysflags = true;
+		}
+
+		/* Indicate the node has system flags if it does. */
+		if (ip->i_e2fs_flags & (EXT2_APPEND | EXT2_IMMUTABLE)) {
+			action |= KAUTH_VNODE_HAS_SYSFLAGS;
+		}
+#endif /* EXT2FS_SYSTEM_FLAGS */
+
+		error = kauth_authorize_vnode(cred, action, vp, NULL,
+		    genfs_can_chflags(cred, vp->v_type, ip->i_uid,
+		    changing_sysflags));
+		if (error)
+			return (error);
+
+#ifdef EXT2FS_SYSTEM_FLAGS
+		ip->i_e2fs_flags &= ~(EXT2_APPEND | EXT2_IMMUTABLE);
+		ip->i_e2fs_flags |=
+		    (vap->va_flags & SF_APPEND) ?  EXT2_APPEND : 0 |
+		    (vap->va_flags & SF_IMMUTABLE) ? EXT2_IMMUTABLE : 0;
 #else
 		ip->i_e2fs_flags &= ~(EXT2_APPEND | EXT2_IMMUTABLE);
 		ip->i_e2fs_flags |=
@@ -425,7 +442,9 @@ ext2fs_setattr(void *v)
 	if (vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
-		error = genfs_can_chtimes(vp, vap->va_vaflags, ip->i_uid, cred);
+		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_TIMES, vp,
+		    NULL, genfs_can_chtimes(vp, vap->va_vaflags, ip->i_uid,
+		    cred));
 		if (error)
 			return (error);
 		if (vap->va_atime.tv_sec != VNOVAL)
@@ -461,7 +480,9 @@ ext2fs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 	struct inode *ip = VTOI(vp);
 	int error;
 
-	error = genfs_can_chmod(vp, cred, ip->i_uid, ip->i_gid, mode);
+	error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY, vp,
+	    NULL, genfs_can_chmod(vp->v_type, cred, ip->i_uid, ip->i_gid,
+	    mode));
 	if (error)
 		return (error);
 
@@ -489,7 +510,8 @@ ext2fs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	if (gid == (gid_t)VNOVAL)
 		gid = ip->i_gid;
 
-	error = genfs_can_chown(vp, cred, ip->i_uid, ip->i_gid, uid, gid);
+	error = kauth_authorize_vnode(cred, KAUTH_VNODE_CHANGE_OWNERSHIP, vp,
+	    NULL, genfs_can_chown(cred, ip->i_uid, ip->i_gid, uid, gid));
 	if (error)
 		return (error);
 
@@ -509,11 +531,13 @@ ext2fs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 		ext2fs_set_inode_guid(ip);
 		ip->i_flag |= IN_CHANGE;
 	}
-	if (ouid != uid && kauth_authorize_generic(cred,
-	    KAUTH_GENERIC_ISSUSER, NULL) != 0)
+	if (ouid != uid && (ip->i_e2fs_mode & ISUID) &&
+	    kauth_authorize_vnode(cred, KAUTH_VNODE_RETAIN_SUID,
+	    vp, NULL, EPERM) != 0)
 		ip->i_e2fs_mode &= ~ISUID;
-	if (ogid != gid && kauth_authorize_generic(cred,
-	    KAUTH_GENERIC_ISSUSER, NULL) != 0)
+	if (ogid != gid && (ip->i_e2fs_mode & ISGID) &&
+	    kauth_authorize_vnode(cred, KAUTH_VNODE_RETAIN_SGID,
+	    vp, NULL, EPERM) != 0)
 		ip->i_e2fs_mode &= ~ISGID;
 	return (0);
 }
@@ -868,13 +892,15 @@ abortit:
 		 * otherwise the destination may not be changed (except by
 		 * root). This implements append-only directories.
 		 */
-		if ((dp->i_e2fs_mode & S_ISTXT) &&
-		    kauth_authorize_generic(tcnp->cn_cred,
-		     KAUTH_GENERIC_ISSUSER, NULL) != 0 &&
-		    kauth_cred_geteuid(tcnp->cn_cred) != dp->i_uid &&
-		    xp->i_uid != kauth_cred_geteuid(tcnp->cn_cred)) {
-			error = EPERM;
-			goto bad;
+		if (dp->i_e2fs_mode & S_ISTXT) {
+			error = kauth_authorize_vnode(tcnp->cn_cred,
+			    KAUTH_VNODE_DELETE, tvp, tdvp,
+			    genfs_can_sticky(tcnp->cn_cred, dp->i_uid,
+			    xp->i_uid));
+			if (error) {
+				error = EPERM;
+				goto bad;
+			}
 		}
 		/*
 		 * Target must be empty if a directory and have no links
@@ -1426,7 +1452,7 @@ ext2fs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 {
 	struct inode *ip, *pdir;
 	struct vnode *tvp;
-	int error, ismember = 0;
+	int error;
 	struct ufs_lookup_results *ulr;
 
 	pdir = VTOI(dvp);
@@ -1459,10 +1485,15 @@ ext2fs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	ip->i_e2fs_mode = mode;
 	tvp->v_type = IFTOVT(mode);	/* Rest init'd in getnewvnode(). */
 	ip->i_e2fs_nlink = 1;
-	if ((ip->i_e2fs_mode & ISGID) && (kauth_cred_ismember_gid(cnp->cn_cred,
-	    ip->i_gid, &ismember) != 0 || !ismember) &&
-	    kauth_authorize_generic(cnp->cn_cred, KAUTH_GENERIC_ISSUSER, NULL))
-		ip->i_e2fs_mode &= ~ISGID;
+
+	/* Authorize setting SGID if needed. */
+	if (ip->i_e2fs_mode & ISGID) {
+		error = kauth_authorize_vnode(cnp->cn_cred, KAUTH_VNODE_WRITE_SECURITY,
+		    tvp, NULL, genfs_can_chmod(tvp->v_type, cnp->cn_cred, ip->i_uid,
+		    ip->i_gid, mode));
+		if (error)
+			ip->i_e2fs_mode &= ~ISGID;
+	}
 
 	/*
 	 * Make sure inode goes to disk before directory entry.

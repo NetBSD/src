@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.22.6.2 2012/03/11 01:52:28 mrg Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.22.6.3 2012/04/05 21:33:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.22.6.2 2012/03/11 01:52:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.22.6.3 2012/04/05 21:33:32 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -495,8 +495,8 @@ r128fb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
 	 */
-	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
-	    NULL) != 0) {
+	if (kauth_authorize_machdep(kauth_cred_get(), KAUTH_MACHDEP_UNMANAGEDMEM,
+	    NULL, NULL, NULL, NULL) != 0) {
 		aprint_normal("%s: mmap() rejected.\n",
 		    device_xname(sc->sc_dev));
 		return -1;

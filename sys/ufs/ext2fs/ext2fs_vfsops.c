@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.162 2011/11/14 18:35:14 hannken Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.162.4.1 2012/04/05 21:33:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.162 2011/11/14 18:35:14 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.162.4.1 2012/04/05 21:33:51 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -390,7 +390,9 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		    (mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = genfs_can_mount(devvp, accessmode, l->l_cred);
+		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
+		    KAUTH_REQ_SYSTEM_MOUNT_DEVICE, mp, devvp,
+		    KAUTH_ARG(accessmode));
 		VOP_UNLOCK(devvp);
 	}
 

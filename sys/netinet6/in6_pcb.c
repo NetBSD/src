@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.116.6.1 2012/02/18 07:35:42 mrg Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.116.6.2 2012/04/05 21:33:46 mrg Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.116.6.1 2012/02/18 07:35:42 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.116.6.2 2012/04/05 21:33:46 mrg Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -98,11 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.116.6.1 2012/02/18 07:35:42 mrg Exp $"
 #include <netinet6/nd6.h>
 
 #include "faith.h"
-
-#ifdef KAME_IPSEC
-#include <netinet6/ipsec.h>
-#include <netkey/key.h>
-#endif /* KAME_IPSEC */
 
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
@@ -162,7 +157,7 @@ in6_pcballoc(struct socket *so, void *v)
 	struct inpcbtable *table = v;
 	struct in6pcb *in6p;
 	int s;
-#if defined(KAME_IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 	int error;
 #endif
 
@@ -179,7 +174,7 @@ in6_pcballoc(struct socket *so, void *v)
 	in6p->in6p_icmp6filt = NULL;
 	in6p->in6p_rfc6056algo = RFC6056_ALGO_DEFAULT;
 	in6p->in6p_bindportonsend = false;
-#if defined(KAME_IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 	error = ipsec_init_pcbpolicy(so, &in6p->in6p_sp);
 	if (error != 0) {
 		s = splnet();
@@ -567,7 +562,7 @@ in6_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 	if (ip6_auto_flowlabel)
 		in6p->in6p_flowinfo |=
 		    (htonl(ip6_randomflowlabel()) & IPV6_FLOWLABEL_MASK);
-#if defined(KAME_IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 	if (in6p->in6p_socket->so_type == SOCK_STREAM)
 		ipsec_pcbconn(in6p->in6p_sp);
 #endif
@@ -581,7 +576,7 @@ in6_pcbdisconnect(struct in6pcb *in6p)
 	in6p->in6p_fport = 0;
 	in6_pcbstate(in6p, IN6P_BOUND);
 	in6p->in6p_flowinfo &= ~IPV6_FLOWLABEL_MASK;
-#if defined(KAME_IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 	ipsec_pcbdisconn(in6p->in6p_sp);
 #endif
 	if (in6p->in6p_socket->so_state & SS_NOFDREF)
@@ -597,7 +592,7 @@ in6_pcbdetach(struct in6pcb *in6p)
 	if (in6p->in6p_af != AF_INET6)
 		return;
 
-#if defined(KAME_IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 	ipsec6_delete_pcbpolicy(in6p);
 #endif /* IPSEC */
 	so->so_pcb = 0;

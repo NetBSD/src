@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.93.4.4 2012/03/06 18:26:48 mrg Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.93.4.5 2012/04/05 21:33:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.93.4.4 2012/03/06 18:26:48 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.93.4.5 2012/04/05 21:33:38 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -253,27 +253,19 @@ tmpfs_lookup(void *v)
 
 	/* Check the permissions. */
 	if (lastcn && (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)) {
-		kauth_action_t action = 0;
-
-		/* This is the file-system's decision. */
-		if ((dnode->tn_mode & S_ISTXT) != 0 &&
-		    kauth_cred_geteuid(cnp->cn_cred) != dnode->tn_uid &&
-		    kauth_cred_geteuid(cnp->cn_cred) != tnode->tn_uid) {
-			error = EPERM;
-		} else {
-			error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
-		}
-
-		if (cnp->cn_nameiop == DELETE) {
-			action |= KAUTH_VNODE_DELETE;
-		} else {
-			KASSERT(cnp->cn_nameiop == RENAME);
-			action |= KAUTH_VNODE_RENAME;
-		}
-		error = kauth_authorize_vnode(cnp->cn_cred,
-		    action, *vpp, dvp, error);
-		if (error) {
+		error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
+		if (error)
 			goto out;
+
+		if ((dnode->tn_mode & S_ISTXT) != 0) {
+			error = kauth_authorize_vnode(cnp->cn_cred,
+			    KAUTH_VNODE_DELETE, tnode->tn_vnode,
+			    dnode->tn_vnode, genfs_can_sticky(cnp->cn_cred,
+			    dnode->tn_uid, tnode->tn_uid));
+			if (error) {
+				error = EPERM;
+				goto out;
+			}
 		}
 	}
 
@@ -395,7 +387,6 @@ tmpfs_access(void *v)
 	kauth_cred_t cred = ap->a_cred;
 	tmpfs_node_t *node = VP_TO_TMPFS_NODE(vp);
 	const bool writing = (mode & VWRITE) != 0;
-	int error;
 
 	KASSERT(VOP_ISLOCKED(vp));
 
@@ -420,12 +411,9 @@ tmpfs_access(void *v)
 		return EPERM;
 	}
 
-	/* Permitted? */
-	error = genfs_can_access(vp->v_type, node->tn_mode, node->tn_uid,
-	    node->tn_gid, mode, cred);
-
-	return kauth_authorize_vnode(cred, kauth_mode_to_action(mode), vp,
-	    NULL, error);
+	return kauth_authorize_vnode(cred, kauth_access_action(mode,
+	    vp->v_type, node->tn_mode), vp, NULL, genfs_can_access(vp->v_type,
+	    node->tn_mode, node->tn_uid, node->tn_gid, mode, cred));
 }
 
 int
@@ -2042,13 +2030,14 @@ tmpfs_check_sticky(kauth_cred_t cred,
 	KASSERT((node == NULL) ||
 	    (VOP_ISLOCKED(dnode->tn_vnode) == LK_EXCLUSIVE));
 
+	if (node == NULL)
+		return 0;
+
 	if (dnode->tn_mode & S_ISTXT) {
-		uid_t euid = kauth_cred_geteuid(cred);
-		if (euid == dnode->tn_uid)
-			return 0;
-		if ((node == NULL) || (euid == node->tn_uid))
-			return 0;
-		return EPERM;
+		if (kauth_authorize_vnode(cred, KAUTH_VNODE_DELETE,
+		    node->tn_vnode, dnode->tn_vnode, genfs_can_sticky(cred,
+		    dnode->tn_uid, node->tn_uid)) != 0)
+			return EPERM;
 	}
 
 	return 0;

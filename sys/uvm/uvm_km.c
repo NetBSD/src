@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.111.6.3 2012/03/04 00:46:32 mrg Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.111.6.4 2012/04/05 21:33:52 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.111.6.3 2012/03/04 00:46:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.111.6.4 2012/04/05 21:33:52 mrg Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -485,7 +485,7 @@ uvm_km_pgremove_intrsafe(struct vm_map *map, vaddr_t start, vaddr_t end)
 		}
 		npgrm = i;
 		/* now remove the mappings */
-		pmap_kremove(batch_vastart, PAGE_SIZE * npgrm);
+		pmap_kremove(batch_vastart, va - batch_vastart);
 		/* and free the pages */
 		for (i = 0; i < npgrm; i++) {
 			pg = PHYS_TO_VM_PAGE(pa[i]);

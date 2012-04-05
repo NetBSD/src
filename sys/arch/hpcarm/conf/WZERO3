@@ -1,4 +1,4 @@
-#	$NetBSD: WZERO3,v 1.22.2.2 2012/03/11 01:52:21 mrg Exp $
+#	$NetBSD: WZERO3,v 1.22.2.3 2012/04/05 21:33:14 mrg Exp $
 #
 #	WZERO3 -- Sharp Windows Mobile 5 based PDA
 #
@@ -8,10 +8,15 @@ include	"arch/hpcarm/conf/files.wzero3"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.22.2.2 $"
+#ident 		"GENERIC-$Revision: 1.22.2.3 $"
 
 # estimated number of users
 maxusers	32
+
+# in-kernel bootloader, see kloader(4)
+options 	KLOADER
+#options 	KLOADER_KERNEL_PATH="\"/netbsd\""
+#options 	KLOADER_DEBUG
 
 # Standard system options
 

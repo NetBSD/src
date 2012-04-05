@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.70.4.3 2012/03/04 00:46:17 mrg Exp $	*/
+/*	$NetBSD: cpu.c,v 1.70.4.4 2012/04/05 21:33:22 mrg Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.70.4.3 2012/03/04 00:46:17 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.70.4.4 2012/04/05 21:33:22 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1196,7 +1196,7 @@ cpu_load_pmap(struct pmap *pmap, struct pmap *oldpmap)
   * considered to be a canonical "SHADOW" PDIR with the following
   * properties: 
   * - Its recursive mapping points to itself
-  * - per-cpu recurseive mappings point to themselves on __x86_64__
+  * - per-cpu recursive mappings point to themselves on __x86_64__
   * - per-cpu L4 pages' kernel entries are expected to be in sync with
   *   the shadow
   */

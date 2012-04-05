@@ -1,8 +1,8 @@
-# 	$NetBSD: NONPLUS64,v 1.34 2011/11/22 21:25:38 tls Exp $
+# 	$NetBSD: NONPLUS64,v 1.34.2.1 2012/04/05 21:33:19 mrg Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident		"NONPLUS64-$Revision: 1.34 $"
+#ident		"NONPLUS64-$Revision: 1.34.2.1 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -44,8 +44,6 @@ options 	KTRACE
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
-
-## Loadable kernel module support; still under development.
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -172,7 +170,7 @@ options 	ISO,TPIP	# OSI networking
 options 	NETATALK	# AppleTalk (over Ethernet) protocol
 options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
-options 	PFIL_HOOKS	# Add pfil(9) hooks, intended for custom LKMs.
+options 	PFIL_HOOKS	# Add pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
 #options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	PPP_BSDCOMP	# Add BSD compression to ppp device

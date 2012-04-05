@@ -1,7 +1,7 @@
-/*	$NetBSD: voodoofb.c,v 1.28.6.1 2012/02/18 07:34:54 mrg Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.28.6.2 2012/04/05 21:33:32 mrg Exp $	*/
 
 /*
- * Copyright (c) 2005, 2006 Michael Lorenz
+ * Copyright (c) 2005, 2006, 2012 Michael Lorenz
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.28.6.1 2012/02/18 07:34:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.28.6.2 2012/04/05 21:33:32 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1165,6 +1165,14 @@ voodoofb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 					   sc->sc_cmap_green[i],
 					   sc->sc_cmap_blue[i]);
 				}
+
+				/* zap the glyph cache */
+				for (i = 0; i < 256; i++) {
+					sc->sc_glyphs_defattr[i] = 0;
+					sc->sc_glyphs_kernattr[i] = 0;
+				}
+				sc->sc_usedglyphs = 0;
+
 				voodoofb_clearscreen(sc);
 				vcons_redraw_screen(ms);
 			} else {
@@ -1195,8 +1203,8 @@ voodoofb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
 	 */
-	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
-	    NULL) != 0) {
+	if (kauth_authorize_machdep(kauth_cred_get(), KAUTH_MACHDEP_UNMANAGEDMEM,
+	    NULL, NULL, NULL, NULL) != 0) {
 		aprint_error_dev(sc->sc_dev, "mmap() rejected.\n");
 		return -1;
 	}

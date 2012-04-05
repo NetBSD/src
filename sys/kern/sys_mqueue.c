@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.33 2011/04/25 11:39:42 martin Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.33.8.1 2012/04/05 21:33:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.33 2011/04/25 11:39:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.33.8.1 2012/04/05 21:33:39 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -81,6 +81,8 @@ static kmutex_t			mqlist_lock	__cacheline_aligned;
 static LIST_HEAD(, mqueue)	mqueue_head	__cacheline_aligned;
 static struct sysctllog *	mqsysctl_log;
 
+static kauth_listener_t		mq_listener;
+
 static int	mqueue_sysinit(void);
 static int	mqueue_sysfini(bool);
 static int	mqueue_sysctl_init(void);
@@ -114,6 +116,26 @@ static const struct syscall_package mqueue_syscalls[] = {
 	{ 0, 0, NULL }
 };
 
+static int
+mq_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	mqueue_t *mq;
+	int result;
+
+	if (action != KAUTH_SYSTEM_MQUEUE)
+		return KAUTH_RESULT_DEFER;
+
+	result = KAUTH_RESULT_DEFER;
+
+	mq = arg1;
+
+	if (kauth_cred_geteuid(cred) == mq->mq_euid)
+		result = KAUTH_RESULT_ALLOW;
+
+	return result;
+}
+
 /*
  * Initialisation and unloading of POSIX message queue subsystem.
  */
@@ -137,6 +159,8 @@ mqueue_sysinit(void)
 	if (error) {
 		(void)mqueue_sysfini(false);
 	}
+	mq_listener = kauth_listen_scope(KAUTH_SCOPE_SYSTEM,
+	    mq_listener_cb, NULL);
 	return error;
 }
 
@@ -165,6 +189,8 @@ mqueue_sysfini(bool interface)
 
 	if (mqsysctl_log != NULL)
 		sysctl_teardown(&mqsysctl_log);
+
+	kauth_unlisten_scope(mq_listener);
 
 	mutex_destroy(&mqlist_lock);
 	pool_cache_destroy(mqmsg_cache);
@@ -1062,8 +1088,8 @@ sys_mq_unlink(struct lwp *l, const struct sys_mq_unlink_args *uap,
 	KASSERT(mutex_owned(&mq->mq_mtx));
 
 	/* Verify permissions. */
-	if (kauth_cred_geteuid(l->l_cred) != mq->mq_euid &&
-	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
+	if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MQUEUE, 0, mq,
+	    NULL, NULL)) {
 		mutex_exit(&mq->mq_mtx);
 		error = EACCES;
 		goto err;

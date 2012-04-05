@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.26.2.3 2012/03/04 00:46:32 mrg Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.26.2.4 2012/04/05 21:33:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -262,5 +262,16 @@ extern u_int		uvm_emap_size;	/* size of emap */
 	((((vaddr_t)(x)) / vm_page_size) * vm_page_size)
 
 #endif /* _KERNEL */
+
+/*
+ * typedefs, necessary for standard UVM headers.
+ */
+
+typedef unsigned int uvm_flag_t;
+
+typedef int vm_inherit_t;	/* XXX: inheritance codes */
+typedef off_t voff_t;		/* XXX: offset within a uvm_object */
+typedef voff_t pgoff_t;		/* XXX: number of pages within a uvm object */
+
 #endif /* ASSEMBLER */
 #endif /* _VM_PARAM_ */

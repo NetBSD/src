@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.9.6.5 2012/03/06 18:26:46 mrg Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.9.6.6 2012/04/05 21:33:33 mrg Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.9.6.5 2012/03/06 18:26:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.9.6.6 2012/04/05 21:33:33 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -441,8 +441,10 @@ sdhc_suspend(device_t dev, const pmf_qual_t *qual)
 				uint32_t v = HREAD4(hp, i);
 				hp->regs[i + 0] = (v >> 0);
 				hp->regs[i + 1] = (v >> 8);
-				hp->regs[i + 2] = (v >> 16);
-				hp->regs[i + 3] = (v >> 24);
+				if (i + 3 < sizeof hp->regs) {
+					hp->regs[i + 2] = (v >> 16);
+					hp->regs[i + 3] = (v >> 24);
+				}
 			}
 		} else {
 			for (i = 0; i < sizeof hp->regs; i++) {
@@ -466,11 +468,17 @@ sdhc_resume(device_t dev, const pmf_qual_t *qual)
 		(void)sdhc_host_reset(hp);
 		if (ISSET(sc->sc_flags, SDHC_FLAG_32BIT_ACCESS)) {
 			for (i = 0; i < sizeof hp->regs; i += 4) {
-				HWRITE4(hp, i,
-				    (hp->regs[i + 0] << 0)
-				    | (hp->regs[i + 1] << 8)
-				    | (hp->regs[i + 2] << 16)
-				    | (hp->regs[i + 3] << 24));
+				if (i + 3 < sizeof hp->regs) {
+					HWRITE4(hp, i,
+					    (hp->regs[i + 0] << 0)
+					    | (hp->regs[i + 1] << 8)
+					    | (hp->regs[i + 2] << 16)
+					    | (hp->regs[i + 3] << 24));
+				} else {
+					HWRITE4(hp, i,
+					    (hp->regs[i + 0] << 0)
+					    | (hp->regs[i + 1] << 8));
+				}
 			}
 		} else {
 			for (i = 0; i < sizeof hp->regs; i++) {

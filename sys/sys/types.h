@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.88 2011/01/14 02:06:34 rmind Exp $	*/
+/*	$NetBSD: types.h,v 1.88.12.1 2012/04/05 21:33:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -127,7 +127,7 @@ typedef	int64_t		longlong_t;	/* for XDR */
 typedef	uint64_t	u_longlong_t;	/* for XDR */
 
 typedef	int64_t		blkcnt_t;	/* fs block count */
-typedef	uint32_t	blksize_t;	/* fs optimal block size */
+typedef	int32_t		blksize_t;	/* fs optimal block size */
 
 #ifndef	fsblkcnt_t
 typedef	__fsblkcnt_t	fsblkcnt_t;	/* fs block count (statvfs) */

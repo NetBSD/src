@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.2 2011/11/24 21:09:37 agc Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.2.2.1 2012/04/05 21:33:51 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -390,8 +390,9 @@ chfs_access(void *v)
 	if (mode & VWRITE && ip->flags & IMMUTABLE)
 		return (EPERM);
 
-	return genfs_can_access(vp->v_type, ip->mode & ALLPERMS,
-	    ip->uid, ip->gid, mode, cred);
+	return kauth_authorize_vnode(cred, kauth_access_action(mode, vp->v_type,
+	    ip->mode & ALLPERMS), vp, NULL, genfs_can_access(vp->v_type,
+	    ip->mode & ALLPERMS, ip->uid, ip->gid, mode, cred));
 }
 
 /* --------------------------------------------------------------------- */
@@ -485,7 +486,8 @@ chfs_setattr(void *v)
 #endif
 
 	if (vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL) {
-		error = genfs_can_chtimes(vp, vap->va_vaflags, ip->uid, cred);
+		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_TIMES, vp,
+		    NULL, genfs_can_chtimes(vp, vap->va_vaflags, ip->uid, cred));
 		if (error)
 			return error;
 		if (vap->va_atime.tv_sec != VNOVAL)
@@ -512,7 +514,8 @@ chfs_chmod(struct vnode *vp, int mode, kauth_cred_t cred)
 	int error;
 	dbg("chmod\n");
 
-	error = genfs_can_chmod(vp, cred, ip->uid, ip->gid, mode);
+	error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY, vp,
+	    NULL, genfs_can_chmod(vp->v_type, cred, ip->uid, ip->gid, mode));
 	if (error)
 		return error;
 	ip->mode &= ~ALLPERMS;
@@ -538,7 +541,8 @@ chfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred)
 	if (gid == (gid_t)VNOVAL)
 		gid = ip->gid;
 
-	error = genfs_can_chown(vp, cred, ip->uid, ip->gid, uid, gid);
+	error = kauth_authorize_vnode(cred, KAUTH_VNODE_CHANGE_OWNERSHIP, vp,
+	    NULL, genfs_can_chown(cred, ip->uid, ip->gid, uid, gid));
 	if (error)
 		return error;
 
@@ -963,9 +967,20 @@ out:
 		    PGO_CLEANIT | PGO_SYNCIO | PGO_JOURNALLOCKED);
 	}
 	ip->iflag |= IN_CHANGE | IN_UPDATE;
-	if (resid > uio->uio_resid && ap->a_cred &&
-	    kauth_authorize_generic(ap->a_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
-		ip->mode &= ~(ISUID | ISGID);
+	if (resid > uio->uio_resid && ap->a_cred) {
+		if (ip->mode & ISUID) {
+			error = kauth_authorize_vnode(ap->a_cred, KAUTH_VNODE_RETAIN_SUID, vp,
+			    NULL, EPERM);
+			if (error)
+				ip->mode &= ~ISUID;
+		}
+
+		if (ip->mode & ISGID) {
+			error = kauth_authorize_vnode(ap->a_cred, KAUTH_VNODE_RETAIN_SGID, vp,
+			    NULL, EPERM);
+			if (error)
+				ip->mode &= ~ISGID;
+		}
 	}
 	if (resid > uio->uio_resid)
 		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));

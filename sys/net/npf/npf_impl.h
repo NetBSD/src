@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.9.2.2 2012/02/24 09:11:49 mrg Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.9.2.3 2012/04/05 21:33:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -131,13 +131,16 @@ npf_tableset_t *npf_core_tableset(void);
 void		npf_core_exit(void);
 bool		npf_core_locked(void);
 bool		npf_default_pass(void);
-void		npf_reload(npf_ruleset_t *, npf_tableset_t *,
-		    npf_ruleset_t *, bool);
+prop_dictionary_t npf_core_dict(void);
+
+void		npf_reload(prop_dictionary_t, npf_ruleset_t *,
+		    npf_tableset_t *, npf_ruleset_t *, bool);
 
 void		npflogattach(int);
 void		npflogdetach(void);
 int		npfctl_switch(void *);
 int		npfctl_reload(u_long, void *);
+int		npfctl_getconf(u_long, void *);
 int		npfctl_sessions_save(u_long, void *);
 int		npfctl_sessions_load(u_long, void *);
 int		npfctl_update_rule(u_long, void *);
@@ -147,8 +150,9 @@ void		npf_stats_inc(npf_stats_t);
 void		npf_stats_dec(npf_stats_t);
 
 /* Packet filter hooks. */
-int		npf_register_pfil(void);
-void		npf_unregister_pfil(void);
+int		npf_pfil_register(void);
+void		npf_pfil_unregister(void);
+bool		npf_pfil_registered_p(void);
 void		npf_log_packet(npf_cache_t *, nbuf_t *, int);
 
 /* Protocol helpers. */

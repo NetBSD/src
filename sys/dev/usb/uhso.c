@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.5.8.2 2012/02/26 07:12:50 mrg Exp $	*/
+/*	$NetBSD: uhso.c,v 1.5.8.3 2012/04/05 21:33:34 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.5.8.2 2012/02/26 07:12:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.5.8.3 2012/04/05 21:33:34 mrg Exp $");
 
 #include "opt_inet.h"
 
@@ -537,8 +537,7 @@ uhso_detach(device_t self, int flags)
 	unsigned int i;
 	int s;
 
-	if (device_pmf_is_registered(self))
-		pmf_device_deregister(self);
+	pmf_device_deregister(self);
 
 	for (i = 0; i < UHSO_PORT_MAX; i++) {
 		hp = sc->sc_port[i];

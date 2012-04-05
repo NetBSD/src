@@ -1,9 +1,10 @@
-#	$NetBSD: files.pxa2x0,v 1.4 2011/06/21 15:23:57 kiyohara Exp $
+#	$NetBSD: files.pxa2x0,v 1.4.6.1 2012/04/05 21:33:14 mrg Exp $
 #
 # PXA2x0 specific configuration info
 #
 
 file	arch/hpcarm/hpcarm/pxa2x0_hpc_machdep.c
+file	arch/hpcarm/hpcarm/kloader_pxa2x0.S	kloader
 
 # Include hpcarm/XScale config definitions.
 include "arch/arm/xscale/files.pxa2x0"

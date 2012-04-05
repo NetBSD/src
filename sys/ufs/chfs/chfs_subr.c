@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_subr.c,v 1.2 2011/11/24 21:09:37 agc Exp $	*/
+/*	$NetBSD: chfs_subr.c,v 1.2.2.1 2012/04/05 21:33:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -56,6 +56,7 @@
 #include <uvm/uvm.h>
 
 #include <miscfs/specfs/specdev.h>
+#include <miscfs/genfs/genfs.h>
 #include "chfs.h"
 //#include <fs/chfs/chfs_vnops.h>
 //#include </root/xipffs/netbsd.chfs/chfs.h>
@@ -396,6 +397,8 @@ chfs_chflags(struct vnode *vp, int flags, kauth_cred_t cred)
 	struct chfs_mount *chmp;
 	struct chfs_inode *ip;
 	int error = 0;
+	kauth_action_t action = KAUTH_VNODE_WRITE_FLAGS;
+	bool changing_sysflags = false;
 
 	ip = VTOI(vp);
 	chmp = ip->chmp;
@@ -403,32 +406,29 @@ chfs_chflags(struct vnode *vp, int flags, kauth_cred_t cred)
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		return EROFS;
 
-	if (kauth_cred_geteuid(cred) != ip->uid &&
-	    (error = kauth_authorize_generic(cred,
-		KAUTH_GENERIC_ISSUSER, NULL)))
+	if ((flags & SF_SNAPSHOT) != (ip->flags & SF_SNAPSHOT))
+		return EPERM;
+
+	/* Indicate we're changing system flags if we are. */
+	if ((ip->flags & SF_SETTABLE) != (flags & SF_SETTABLE) ||
+	    (flags & UF_SETTABLE) != flags) {
+		action |= KAUTH_VNODE_WRITE_SYSFLAGS;
+		changing_sysflags = true;
+	}
+
+	/* Indicate the node has system flags if it does. */
+	if (ip->flags & (SF_IMMUTABLE | SF_APPEND)) {
+		action |= KAUTH_VNODE_HAS_SYSFLAGS;
+	}
+
+	error = kauth_authorize_vnode(cred, action, vp, NULL,
+	    genfs_can_chflags(cred, vp->v_type, ip->uid, changing_sysflags));
+	if (error)
 		return error;
 
-	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		NULL) == 0) {
-		if ((ip->flags & (SF_IMMUTABLE | SF_APPEND)) &&
-		    kauth_authorize_system(curlwp->l_cred,
-			KAUTH_SYSTEM_CHSYSFLAGS, 0, NULL, NULL, NULL))
-			return EPERM;
-
-		if ((flags & SF_SNAPSHOT) !=
-		    (ip->flags & SF_SNAPSHOT))
-			return EPERM;
-
+	if (changing_sysflags) {
 		ip->flags = flags;
 	} else {
-		if ((ip->flags & (SF_IMMUTABLE | SF_APPEND)) ||
-		    (flags & UF_SETTABLE) != flags)
-			return EPERM;
-
-		if ((ip->flags & SF_SETTABLE) !=
-		    (flags & SF_SETTABLE))
-			return EPERM;
-
 		ip->flags &= SF_SETTABLE;
 		ip->flags |= (flags & UF_SETTABLE);
 	}

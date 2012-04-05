@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.56.6.1 2012/02/18 07:31:15 mrg Exp $ */
+/*	$NetBSD: grf.c,v 1.56.6.2 2012/04/05 21:33:11 mrg Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.56.6.1 2012/02/18 07:31:15 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.56.6.2 2012/04/05 21:33:11 mrg Exp $");
 
 /*
  * Graphics display driver for the Amiga
@@ -540,8 +540,8 @@ grf_wsmmap(void *v, void *vs, off_t off, int prot)
 	if (off < gi->gd_fbsize)
 		return grf_wsmmap_md(((bus_addr_t)gp->g_fbkva) + off);
 
-	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
-	    NULL) != 0) {
+	if (kauth_authorize_machdep(kauth_cred_get(), KAUTH_MACHDEP_UNMANAGEDMEM,
+	    NULL, NULL, NULL, NULL) != 0) {
 		aprint_normal("%s: permission to mmap denied.\n",
 		    device_xname(&gp->g_device));
 		return -1;

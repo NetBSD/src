@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.50.12.1 2012/02/18 07:33:36 mrg Exp $ */
+/*	$NetBSD: ipmi.c,v 1.50.12.2 2012/04/05 21:33:21 mrg Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.50.12.1 2012/02/18 07:33:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.50.12.2 2012/04/05 21:33:21 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1439,7 +1439,12 @@ ipmi_convert(uint8_t v, struct sdrtype1 *s1, long adj)
 {
 	int64_t	M, B;
 	char	K1, K2;
-	int64_t	val, v1, v2;
+	int64_t	val, v1, v2, vs;
+	int sign = (s1->units1 >> 6) & 0x3;
+
+	vs = (sign == 0x1 || sign == 0x2) ? (int8_t)v : v;
+	if ((vs < 0) && (sign == 0x1))
+		vs++;
 
 	/* Calculate linear reading variables */
 	M  = signextend((((short)(s1->m_tolerance & 0xC0)) << 2) + s1->m, 10);
@@ -1454,7 +1459,7 @@ ipmi_convert(uint8_t v, struct sdrtype1 *s1, long adj)
 	 *  y = L(M*v * 10^(K2+adj) + B * 10^(K1+K2+adj)); */
 	v1 = powx(FIX10, INT2FIX(K2 + adj));
 	v2 = powx(FIX10, INT2FIX(K1 + K2 + adj));
-	val = M * v * v1 + B * v2;
+	val = M * vs * v1 + B * v2;
 
 	/* Linearization function: y = f(x) 0 : y = x 1 : y = ln(x) 2 : y =
 	 * log10(x) 3 : y = log2(x) 4 : y = e^x 5 : y = 10^x 6 : y = 2^x 7 : y

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.11.2.1 2012/02/18 07:35:38 mrg Exp $	*/
+/*	$NetBSD: npf.h,v 1.11.2.2 2012/04/05 21:33:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -306,5 +306,6 @@ typedef enum {
 #define	IOC_NPF_SESSIONS_SAVE	_IOR('N', 105, struct plistref)
 #define	IOC_NPF_SESSIONS_LOAD	_IOW('N', 106, struct plistref)
 #define	IOC_NPF_UPDATE_RULE	_IOWR('N', 107, struct plistref)
+#define	IOC_NPF_GETCONF		_IOR('N', 108, struct plistref)
 
 #endif	/* _NPF_NET_H_ */

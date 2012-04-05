@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.10 2010/06/07 13:52:30 tnozaki Exp $	*/
+/*	$NetBSD: limits.h,v 1.10.12.1 2012/04/05 21:33:12 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,12 +38,9 @@
 
 #define	CHAR_BIT	8		/* number of bits in a char */
 
-#define SCHAR_MIN	(-0x7f-1)	/* max value for a signed char */
-#define	SCHAR_MAX	0x7f		/* min value for a signed char */
-
 #define	UCHAR_MAX	0xff		/* max value for an unsigned char */
-#define	CHAR_MAX	0xff		/* max value for a char */
-#define	CHAR_MIN	0		/* min value for a char */
+#define	SCHAR_MAX	0x7f		/* max value for a signed char */
+#define SCHAR_MIN	(-0x7f-1)	/* min value for a signed char */
 
 #define	USHRT_MAX	0xffff		/* max value for an unsigned short */
 #define	SHRT_MAX	0x7fff		/* max value for a short */
@@ -71,7 +68,7 @@
 #if defined(_NETBSD_SOURCE)
 #define	SIZE_T_MAX	LONG_MAX	/* max value for a size_t */
 
-#define	UQUAD_MAX	0xffffffffffffffffLL		/* max unsigned quad */
+#define	UQUAD_MAX	0xffffffffffffffffULL		/* max unsigned quad */
 #define	QUAD_MAX	0x7fffffffffffffffLL		/* max signed quad */
 #define	QUAD_MIN	(-0x7fffffffffffffffLL-1)	/* min signed quad */
 

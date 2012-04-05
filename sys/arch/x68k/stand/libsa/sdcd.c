@@ -1,4 +1,4 @@
-/*	$NetBSD: sdcd.c,v 1.11 2011/07/17 20:54:49 joerg Exp $	*/
+/*	$NetBSD: sdcd.c,v 1.11.6.1 2012/04/05 21:33:21 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -67,7 +67,7 @@ check_unit(int id)
 	}
 
 	{
-		struct iocs_inquiry *inqdata = buffer;
+		struct iocs_inquiry *inqdata= buffer;
 
 		error = IOCS_S_INQUIRY(100, id, inqdata);
 		if (error < 0) {		/* WHY??? */
@@ -75,6 +75,7 @@ check_unit(int id)
 			goto out;
 		}
 		if ((inqdata->unit != 0) &&	/* direct */
+		    (inqdata->unit != 5) &&	/* cdrom */
 		    (inqdata->unit != 7)) {	/* optical */
 			error = EUNIT;
 			goto out;
@@ -327,7 +328,7 @@ cdopen(struct open_file *f, ...)
 
 	if (id < 0 || id > 7)
 		return ENXIO;
-	if (part == 0 || part == 2)
+	if (part != 0 && part != 2)
 		return ENXIO;
 	if (current_id != id) {
 		error = check_unit(id);
@@ -341,6 +342,8 @@ cdopen(struct open_file *f, ...)
 	sc->sc_partinfo.size = current_devsize;
 	sc->sc_blocksize = current_blklen << 9;
 	f->f_devdata = sc;
+	current_id = id;
+
 	return 0;
 }
 
@@ -358,6 +361,7 @@ cdstrategy(void *arg, int rw, daddr_t dblk, size_t size,
 {
 	struct sdcd_softc *sc = arg;
 
-	return sdstrategy(arg, rw, dblk * DEV_BSIZE / sc->sc_blocksize,
+	/* cast dblk to avoid divdi3; 32bit is enough even for BD-ROMs.  */
+	return sdstrategy(arg, rw, (unsigned int) dblk / sc->sc_blocksize,
 	                  size, buf, rsize);
 }

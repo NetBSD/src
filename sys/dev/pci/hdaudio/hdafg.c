@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.11.2.1 2012/02/18 07:34:54 mrg Exp $ */
+/* $NetBSD: hdafg.c,v 1.11.2.2 2012/04/05 21:33:33 mrg Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.11.2.1 2012/02/18 07:34:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.11.2.2 2012/04/05 21:33:33 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -3733,7 +3733,7 @@ static int
 hdafg_detach(device_t self, int flags)
 {
 	struct hdafg_softc *sc = device_private(self);
-	struct hdaudio_widget *w = sc->sc_widgets;
+	struct hdaudio_widget *wl, *w = sc->sc_widgets;
 	struct hdaudio_assoc *as = sc->sc_assocs;
 	struct hdaudio_control *ctl = sc->sc_ctls;
 	struct hdaudio_mixer *mx = sc->sc_mixers;
@@ -3755,10 +3755,10 @@ hdafg_detach(device_t self, int flags)
 
 	/* restore bios pin widget configuration */
 	for (nid = sc->sc_startnode; nid < sc->sc_endnode; nid++) {
-		w = hdafg_widget_lookup(sc, nid);		
-		if (w == NULL || w->w_type != COP_AWCAP_TYPE_PIN_COMPLEX)
+		wl = hdafg_widget_lookup(sc, nid);		
+		if (wl == NULL || wl->w_type != COP_AWCAP_TYPE_PIN_COMPLEX)
 			continue;
-		hdafg_widget_setconfig(w, w->w_pin.biosconfig);
+		hdafg_widget_setconfig(wl, wl->w_pin.biosconfig);
 	}
 
 	if (w)

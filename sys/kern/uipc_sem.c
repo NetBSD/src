@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.35.8.1 2012/03/11 01:52:30 mrg Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.35.8.2 2012/04/05 21:33:40 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.35.8.1 2012/03/11 01:52:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.35.8.2 2012/04/05 21:33:40 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -108,6 +108,8 @@ static LIST_HEAD(,ksem)	ksem_head	__cacheline_aligned;
 static u_int		nsems_total	__cacheline_aligned;
 static u_int		nsems		__cacheline_aligned;
 
+static kauth_listener_t	ksem_listener;
+
 static int		ksem_sysinit(void);
 static int		ksem_sysfini(bool);
 static int		ksem_modcmd(modcmd_t, void *);
@@ -140,6 +142,27 @@ static const struct syscall_package ksem_syscalls[] = {
 };
 
 static int
+ksem_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	ksem_t *ks;
+	mode_t mode;
+
+	if (action != KAUTH_SYSTEM_SEMAPHORE)
+		return KAUTH_RESULT_DEFER;
+
+	ks = arg1;
+	mode = ks->ks_mode;
+
+	if ((kauth_cred_geteuid(cred) == ks->ks_uid && (mode & S_IWUSR) != 0) ||
+	    (kauth_cred_getegid(cred) == ks->ks_gid && (mode & S_IWGRP) != 0) ||
+	    (mode & S_IWOTH) != 0)
+		return KAUTH_RESULT_ALLOW;
+
+	return KAUTH_RESULT_DEFER;
+}
+
+static int
 ksem_sysinit(void)
 {
 	int error;
@@ -153,6 +176,10 @@ ksem_sysinit(void)
 	if (error) {
 		(void)ksem_sysfini(false);
 	}
+
+	ksem_listener = kauth_listen_scope(KAUTH_SCOPE_SYSTEM,
+	    ksem_listener_cb, NULL);
+
 	return error;
 }
 
@@ -176,6 +203,7 @@ ksem_sysfini(bool interface)
 			return EBUSY;
 		}
 	}
+	kauth_unlisten_scope(ksem_listener);
 	mutex_destroy(&ksem_lock);
 	return 0;
 }
@@ -216,16 +244,13 @@ static int
 ksem_perm(lwp_t *l, ksem_t *ks)
 {
 	kauth_cred_t uc = l->l_cred;
-	mode_t mode = ks->ks_mode;
 
 	KASSERT(mutex_owned(&ks->ks_lock));
-	if ((kauth_cred_geteuid(uc) == ks->ks_uid && (mode & S_IWUSR) != 0) ||
-	    (kauth_cred_getegid(uc) == ks->ks_gid && (mode & S_IWGRP) != 0) ||
-	    (mode & S_IWOTH) != 0 ||
-	    kauth_authorize_generic(uc, KAUTH_GENERIC_ISSUSER, NULL) == 0)
-		return 0;
 
-	return EACCES;
+	if (kauth_authorize_system(uc, KAUTH_SYSTEM_SEMAPHORE, 0, ks, NULL, NULL) != 0)
+		return EACCES;
+
+	return 0;
 }
 
 /*
