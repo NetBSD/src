@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.36 2012/02/24 06:48:24 mrg Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.37 2012/04/05 16:31:53 plunky Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.36 2012/02/24 06:48:24 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.37 2012/04/05 16:31:53 plunky Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -309,8 +309,7 @@ cdce_detach(device_t self, int flags)
 	struct ifnet	*ifp = GET_IFP(sc);
 	int		 s;
 
-	if (device_pmf_is_registered(self))
-		pmf_device_deregister(self);
+	pmf_device_deregister(self);
 
 	s = splusb();
 

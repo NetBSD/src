@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.45 2012/03/06 03:35:29 mrg Exp $	*/
+/*	$NetBSD: ubt.c,v 1.46 2012/04/05 16:31:53 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.45 2012/03/06 03:35:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.46 2012/04/05 16:31:53 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -533,8 +533,10 @@ ubt_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_ok = 1;
+
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	return;
 }
 
@@ -546,8 +548,7 @@ ubt_detach(device_t self, int flags)
 
 	DPRINTF("sc=%p flags=%d\n", sc, flags);
 
-	if (device_pmf_is_registered(self))
-		pmf_device_deregister(self);
+	pmf_device_deregister(self);
 
 	sc->sc_dying = 1;
 
