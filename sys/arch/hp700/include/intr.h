@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.19 2010/11/16 08:59:30 uebayasi Exp $	*/
+/*	$NetBSD: intr.h,v 1.20 2012/04/05 20:17:24 skrll Exp $	*/
 /*	$OpenBSD: intr.h,v 1.26 2009/12/29 13:11:40 jsing Exp $	*/
 
 /*-
@@ -92,6 +92,13 @@ splraiseipl(ipl_cookie_t icookie)
 #endif
 
 #define	setsoftast(l)	((l)->l_md.md_astpending = 1)
+
+#ifdef MULTIPROCESSOR
+void	 hppa_ipi_init(struct cpu_info *);
+int	 hppa_ipi_intr(void *arg);
+int	 hppa_ipi_send(struct cpu_info *, u_long);
+int	 hppa_ipi_broadcast(u_long);
+#endif
 
 #endif /* !_LOCORE */
 
