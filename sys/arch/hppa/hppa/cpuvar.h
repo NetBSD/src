@@ -1,12 +1,9 @@
-/*	$NetBSD: intr.h,v 1.21 2012/04/05 21:00:29 skrll Exp $	*/
-/*	$OpenBSD: intr.h,v 1.26 2009/12/29 13:11:40 jsing Exp $	*/
-
 /*-
- * Copyright (c) 1998, 2001, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum, and by Jason R. Thorpe, and by Matthew Fredette.
+ * by Nick Hudson
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,63 +27,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _HP700_INTR_H_
-#define _HP700_INTR_H_
+#include "opt_multiprocessor.h"
 
-#include <machine/psl.h>
-#include <machine/intrdefs.h>
-
-#ifndef _LOCORE
-
-#ifdef _KERNEL
-
-/* The priority level masks. */
-extern int imask[NIPL];
-
-/* splraise()/spllower() are in locore.S */
-int splraise(int);
-void spllower(int);
-
-/*
- * Miscellaneous
- */
-#define	spl0()		spllower(0)
-#define	splx(x)		spllower(x)
-
-typedef int ipl_t;
-typedef struct {
-	ipl_t _ipl;
-} ipl_cookie_t;
-
-static inline ipl_cookie_t
-makeiplcookie(ipl_t ipl)
-{
-
-	return (ipl_cookie_t){._ipl = ipl};
-}
-
-static inline int
-splraiseipl(ipl_cookie_t icookie)
-{
-
-	return splraise(imask[icookie._ipl]);
-}
-
-#include <sys/spl.h>
+struct cpu_softc {
+	device_t sc_dev;
+	void *sc_ihclk;
+	void *sc_ihipi;
+#if defined(MULTIPROCESSOR)
+	struct evcnt sc_evcnt_ipi;      /* interprocessor interrupts */
+	struct evcnt sc_evcnt_which_ipi[HPPA_NIPI];
 #endif
-
-#define	setsoftast(l)	((l)->l_md.md_astpending = 1)
-
-#ifdef MULTIPROCESSOR
-
-struct cpu_info;
-
-void	 hppa_ipi_init(struct cpu_info *);
-int	 hppa_ipi_intr(void *arg);
-int	 hppa_ipi_send(struct cpu_info *, u_long);
-int	 hppa_ipi_broadcast(u_long);
-#endif
-
-#endif /* !_LOCORE */
-
-#endif /* !_HP700_INTR_H_ */
+};
