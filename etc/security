@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.110 2011/03/02 17:00:28 christos Exp $
+#	$NetBSD: security,v 1.111 2012/04/05 09:09:27 spz Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -287,14 +287,18 @@ if checkyesno check_passwd; then
 		column $OUTPUT
 	fi
 
-# To not exclude 'toor', a standard duplicate root account, from the duplicate
-# account test, uncomment the line below (without egrep in it)and comment
-# out the line (with egrep in it) below it.
-#
-#	< $MPBYUID uniq -d -f 1 | awk '{ print $2 }' > $TMP2
-	< $MPBYUID egrep -v '^toor ' | uniq -d -f 1 | awk '{ print $2 }' > $TMP2
+	awk -v "permit_dups_list=$check_passwd_permit_dups" \
+	'
+	BEGIN {
+		split(permit_dups_list, a);
+		for (i in a) permit_dups[a[i]]++;
+	}
+	{
+		if (!permit_dups[$1])
+			print $2;
+	}' < $MPBYUID | uniq -d > $TMP2
 	if [ -s $TMP2 ] ; then
-		printf "\n$MP has duplicate user id's.\n"
+		printf "\n$MP has duplicate user ids.\n"
 		while read uid; do
 			grep -w $uid $MPBYUID
 		done < $TMP2 | column
