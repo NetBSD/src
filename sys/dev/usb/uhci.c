@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.240.6.18 2012/03/11 01:52:28 mrg Exp $	*/
+/*	$NetBSD: uhci.c,v 1.240.6.19 2012/04/05 22:32:09 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240.6.18 2012/03/11 01:52:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240.6.19 2012/04/05 22:32:09 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -1498,7 +1498,9 @@ uhci_idone(uhci_intr_info_t *ii)
 {
 	usbd_xfer_handle xfer = ii->xfer;
 	struct uhci_pipe *upipe = (struct uhci_pipe *)xfer->pipe;
+#ifdef DIAGNOSTIC
 	uhci_softc_t *sc = upipe->pipe.device->bus->hci_private;
+#endif
 	uhci_soft_td_t *std;
 	u_int32_t status = 0, nstatus;
 	int actlen;
@@ -2745,7 +2747,9 @@ uhci_device_isoc_start(usbd_xfer_handle xfer)
 void
 uhci_device_isoc_abort(usbd_xfer_handle xfer)
 {
+#ifdef DIAGNOSTIC
 	uhci_softc_t *sc = xfer->pipe->device->bus->hci_private;
+#endif
 	struct uhci_pipe *upipe = (struct uhci_pipe *)xfer->pipe;
 	uhci_soft_td_t **stds = upipe->u.iso.stds;
 	uhci_soft_td_t *std;
