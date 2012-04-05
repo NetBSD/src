@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.68 2012/01/20 06:51:19 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.69 2012/04/05 21:00:29 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -280,6 +280,9 @@ struct cpu_info {
 #define	CPUF_PRIMARY	0x0001		/* ... is monarch/primary */
 #define	CPUF_RUNNING	0x0002 		/* ... is running. */
 
+	volatile u_long	ci_ipi;		/* IPIs pending */
+
+	struct cpu_softc *ci_softc;
 #endif
 
 #endif /* !_KMEMUSER */
