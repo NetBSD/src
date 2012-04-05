@@ -1,4 +1,4 @@
-/*	$NetBSD: midivar.h,v 1.18 2011/11/23 23:07:31 jmcneill Exp $	*/
+/*	$NetBSD: midivar.h,v 1.19 2012/04/05 20:25:53 plunky Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -179,11 +179,10 @@ struct midi_state {
 };
 
 struct midi_softc {
-	device_t dev;
+	device_t dev;		/* Hardware device struct */
 	void	*hw_hdl;	/* Hardware driver handle */
 	const struct	midi_hw_if *hw_if; /* Hardware interface */
 	const struct	midi_hw_if_ext *hw_if_ext; /* see midi_if.h */
-	device_t sc_dev;	/* Hardware device struct */
 	int	isopen;		/* Open indicator */
 	int	flags;		/* Open flags */
 	int	dying;
