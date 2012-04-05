@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.1 2012/04/05 16:13:46 skrll Exp $	*/
+/*	$NetBSD: ipifuncs.c,v 1.2 2012/04/05 16:16:01 skrll Exp $	*/
 /*	$OpenBSD: ipi.c,v 1.4 2011/01/14 13:20:06 jsing Exp $	*/
 
 /*
@@ -79,8 +79,6 @@ hppa_ipi_intr(void *arg)
 	u_long ipi_pending;
 	int bit = 0;
 
-printf_nolog("%s: ci %p\n",__func__, curcpu());
-
 	/* Handle an IPI. */
 	ipi_pending = atomic_swap_ulong(&ci->ci_ipi, 0);
 
@@ -104,17 +102,14 @@ int
 hppa_ipi_send(struct cpu_info *ci, u_long ipi)
 {
 	struct iomod *cpu;
-printf_nolog("%s: made it\n", __func__);
 	KASSERT(ci->ci_flags & CPUF_RUNNING);
 
 	atomic_or_ulong(&ci->ci_ipi, (1L << ipi));
-printf_nolog("%s: after atomic\n",__func__);
 
 	/* Send an IPI to the specified CPU by triggering EIR{1} (irq 30). */
 	cpu = (struct iomod *)(ci->ci_hpa);
 	cpu->io_eir = 1;
 	membar_sync();
-printf_nolog("%s: after io_eir ci %p\n",__func__, curcpu());
 
 	return 0;
 }
@@ -153,21 +148,6 @@ hppa_ipi_halt(void)
 		;
 }
 
-#if 0
-void
-hppa_ipi_fpu_save(void)
-{
-	fpu_cpu_save(1);
-}
-
-void
-hppa_ipi_fpu_flush(void)
-{
-	fpu_cpu_save(0);
-}
-
-#endif
-
 void
 hppa_ipi_xcall(void)
 {
@@ -181,31 +161,12 @@ xc_send_ipi(struct cpu_info *ci)
 	
 	KASSERT(kpreempt_disabled());
 	KASSERT(curcpu() != ci);
-Debugger();
+
 	if (ci) {
 		/* Unicast: remote CPU. */
 		hppa_ipi_send(ci, HPPA_IPI_XCALL);
 	} else {
 		/* Broadcast: all, but local CPU (caller will handle it). */
 		hppa_ipi_broadcast(HPPA_IPI_XCALL);
-	}
-}
-	
-void hppa_ipi_counts(void);
-void
-hppa_ipi_counts(void)
-{
-	CPU_INFO_ITERATOR cii;
-	struct cpu_info *ci;
-	struct cpu_softc *sc;
-
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		if ((ci->ci_flags & CPUF_RUNNING)) {
-			sc = ci->ci_softc;
-			printf("%s: ci %p cpuid %d total ipis %" PRIu64 "\n", __func__, ci, ci->ci_cpuid, sc->sc_evcnt_ipi.ev_count);
-			printf("%s: ci %p cpuid %d ipis bit 0 %" PRIu64 "\n", __func__, ci, ci->ci_cpuid, sc->sc_evcnt_which_ipi[0].ev_count);
-			printf("%s: ci %p cpuid %d ipis bit 1 %" PRIu64 "\n", __func__, ci, ci->ci_cpuid, sc->sc_evcnt_which_ipi[1].ev_count);
-			printf("%s: ci %p cpuid %d ipis bit 2 %" PRIu64 "\n", __func__, ci, ci->ci_cpuid, sc->sc_evcnt_which_ipi[2].ev_count);
-		}
 	}
 }
