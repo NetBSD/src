@@ -1,4 +1,4 @@
-.\"	$NetBSD: security.conf.5,v 1.37 2010/02/05 17:23:47 wiz Exp $
+.\"	$NetBSD: security.conf.5,v 1.38 2012/04/05 09:10:21 spz Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -221,6 +221,10 @@ This is of particular value when those shells are not in
 If
 .Sy check_passwd
 is enabled, suppress warnings for these users.
+.It Sy check_passwd_permit_dups
+If
+.Sy check_passwd
+is enabled, do not warn about duplicate uids for the listed login names.
 .It Sy check_passwd_permit_nonalpha
 If
 .Sy check_passwd
