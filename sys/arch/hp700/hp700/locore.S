@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.58 2012/01/03 06:11:21 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.59 2012/04/05 19:42:13 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -78,9 +78,6 @@
 
 /* Some aliases for the macros in assym.h. */
 #define	TRAPFRAME_SIZEOF	trapframe_SIZEOF
-
-#define	ccr	cr10
-#define	rctr	cr0
 
 /*
  * Very crude debugging macros that write to com1.
@@ -244,7 +241,7 @@ L$start_zero_tf:
 	/*
 	 * disable all coprocessors
 	 */
-	mtctl	%r0, %ccr
+	mtctl	%r0, CR_CCR
 
 #ifdef MULTIPROCESSOR
 
@@ -446,7 +443,7 @@ LEAF_ENTRY_NOPROFILE(hw_cpu_spinup_trampoline)
 	/*
 	 * disable all coprocessors
 	 */
-	mtctl   %r0, %ccr
+	mtctl   %r0, CR_CCR
 
 	/*
 	 * to keep the spl() routines consistent we need to put the correct
@@ -1054,13 +1051,13 @@ ALTENTRY(hppa_fpu_nop1)
 	 * states.
 	 */
 	GET_CURCPU(%t1)
-	mfctl	%ccr, %r1
+	mfctl	CR_CCR, %r1
 	mfctl	CR_FPPADDR, %t2
 	ldw	CI_FPU_STATE(%t1), %t1
 	depi	0, 25, 2, %r1		; disables the FPU
 	comb,<>,n %t1, %t2, 0		; nullify if LWPs different
 	depi	3, 25, 2, %r1		; enables the FPU
-	mtctl	%r1, %ccr
+	mtctl	%r1, CR_CCR
 
 switch_return:
 	copy	%arg0, %ret0

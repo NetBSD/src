@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.63 2012/02/26 08:28:57 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.64 2012/04/05 19:42:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -513,7 +513,7 @@ syscall_return:
 	mtctl	%t2, CR_FPPADDR
 
 	ldw	TF_CR0(%sr3, %t3), %t1
-	mtctl	%t1, %rctr
+	mtctl	%t1, CR_RCTR
 
 	GET_CURCPU_SPACE(%sr3, %t3)
 
@@ -939,7 +939,7 @@ ALTENTRY(hppa_fpu_nop0)
 	 * We have a hardware FPU.  If it is enabled,  branch to emulate the
 	 * instruction.
 	 */
-	mfctl	%ccr, %arg0
+	mfctl	CR_CCR, %arg0
 	extru,= %arg0, 25, 2, %r1
 	b,n	L$emulate_fpu
 
@@ -1055,10 +1055,10 @@ ALTENTRY(hppa_fpu_swap)
 	 * 
 	 * Also, branch if there's no FPU state to swap out.
 	 */
-	mfctl	%ccr, %r1
+	mfctl	CR_CCR, %r1
 	depi	3, 25, 2, %r1
 	comb,=	%r0, %arg0, L$fpu_swap_in
-	mtctl	%r1, %ccr
+	mtctl	%r1,CR_CCR 
 
 	/*
 	 * Swap out the current FPU state.
@@ -1186,10 +1186,10 @@ L$fpu_swap_done:
 L$fpu_no_swap_in:
 
 	/* We didn't swap any FPU state in, so disable the FPU. */
-	mfctl	%ccr, %r1
+	mfctl	CR_CCR, %r1
 	depi	0, 25, 2, %r1
 	b	L$fpu_swap_done
-	mtctl	%r1, %ccr
+	mtctl	%r1, CR_CCR 
 EXIT(hppa_fpu_swapout)
 
 	/* Construct the virtual address tag. */
@@ -2053,7 +2053,7 @@ L$trap_have_stack:
 	stw	%r1, CI_TRAPSAVE + TF_FLAGS(%t3)
 
 	/* gotta get it before R is up */
-	mfctl	%rctr, %t1
+	mfctl	CR_RCTR, %t1
 
 	copy	%sp, %t3
 	ldo	HPPA_FRAME_SIZE+TRAPFRAME_SIZEOF(%sp), %sp
@@ -2073,7 +2073,7 @@ trapnowvirt:
 	 * %sp is loaded w/ the right VA (we did not need it being physical)
 	 */
 
-	mfctl	%ccr, %t2
+	mfctl	CR_CCR, %t2
 	stw	%t1, TF_CR0(%sr3, %t3)
 	stw	%t2, TF_CR10(%sr3, %t3)
 
