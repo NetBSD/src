@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.38 2012/03/10 18:42:18 dsl Exp $ */
+/* $NetBSD: i386.c,v 1.39 2012/04/06 10:10:11 gson Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.38 2012/03/10 18:42:18 dsl Exp $");
+__RCSID("$NetBSD: i386.c,v 1.39 2012/04/06 10:10:11 gson Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -251,7 +251,7 @@ update_i386_boot_params(ib_params *params, struct x86_boot_params  *bpp)
 		if (i == __arraycount(consoles)) {
 			warnx("invalid console name, valid names are:");
 			(void)fprintf(stderr, "\t%s", consoles[0].name);
-			for (i = 1; consoles[i].name != NULL; i++)
+			for (i = 1; i < __arraycount(consoles); i++)
 				(void)fprintf(stderr, ", %s", consoles[i].name);
 			(void)fprintf(stderr, "\n");
 			return 1;
