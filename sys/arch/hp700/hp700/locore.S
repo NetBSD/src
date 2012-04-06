@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.59 2012/04/05 19:42:13 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.60 2012/04/06 12:21:59 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -1034,13 +1034,6 @@ switch_exited:
 	ldw	HPPA_FRAME_ARG(0)(%r3), %arg0
 
 noras:
-	/*
-	 * As an optimization, hppa_fpu_bootstrap
-	 * replaces this branch instruction with a
-	 * nop if there is a hardware FPU.
-	 */
-ALTENTRY(hppa_fpu_nop1)
-	b,n	switch_return
 
 	/*
 	 * We do have a hardware FPU.  If the LWP

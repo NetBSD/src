@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.65 2012/04/05 19:44:29 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.66 2012/04/06 12:21:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -267,7 +267,6 @@ syscall_entry:
 	/* We can now set the frame pointer */
 	copy	%t3, %r3
 
-#if defined(DDB) || defined(KGDB) || defined(FPEMUL)
 	stw	%r4 , TF_R4 -TRAPFRAME_SIZEOF(%sr1, %t3)
 	stw	%r5 , TF_R5 -TRAPFRAME_SIZEOF(%sr1, %t3)
 	stw	%r6 , TF_R6 -TRAPFRAME_SIZEOF(%sr1, %t3)
@@ -283,7 +282,7 @@ syscall_entry:
 	stw	%r16, TF_R16-TRAPFRAME_SIZEOF(%sr1, %t3)
 	stw	%r17, TF_R17-TRAPFRAME_SIZEOF(%sr1, %t3)
 	stw	%r18, TF_R18-TRAPFRAME_SIZEOF(%sr1, %t3)
-#endif /* DDB || KGDB || FPEMUL */
+
 	stw	%r0, 0(%sr1, %t3)	/* terminate frame */
 	copy	%r0 , %r3
 	stw	%r0, HPPA_FRAME_PSP(%sr1, %sp)
@@ -445,11 +444,11 @@ syscall_return:
 	ldw	TF_R1(%t3), %r1
 	ldw	TF_R2(%t3), %r2
 	ldw	TF_R3(%t3), %r3
+
 	/*
 	 * See the comment in the trap handling code below about why we need to
 	 * save and restore all general registers under these cases.
 	 */
-#if defined(DDB) || defined(KGDB) || defined(FPEMUL)
 	ldw	TF_R4(%t3), %r4
 	ldw	TF_R5(%t3), %r5
 	ldw	TF_R6(%t3), %r6
@@ -465,7 +464,7 @@ syscall_return:
 	ldw	TF_R16(%t3), %r16
 	ldw	TF_R17(%t3), %r17
 	ldw	TF_R18(%t3), %r18
-#endif /* DDB || KGDB || FPEMUL */
+
 	ldw	TF_R19(%t3), %t4
 	/*	%r20(%t3) is used as a temporary and will be restored later */
 	/*	%r21(%t2) is used as a temporary and will be restored later */
@@ -900,7 +899,7 @@ LEAF_ENTRY_NOPROFILE(TLABEL(emu))
 	 */
 	extru	%arg0, 5, 6, %r1
 	comib,=,n 4, %r1, L$emulate_sfu
-	comib,=,n 0xe, %r1, hppa_fpu_nop0
+	comib,=,n 0xe, %r1, hppa_fpu_emulate
 
 	/*
 	 * If the uid field in the instruction is not zero or one, indicating a
@@ -932,8 +931,7 @@ LEAF_ENTRY_NOPROFILE(TLABEL(emu))
 	 *
 	 * Otherwise, this is the branch to emulate an FPU coprocessor.
 	 */
-ALTENTRY(hppa_fpu_nop0)
-	b,n	L$emulate_fpu
+hppa_fpu_emulate:
 
 	/*
 	 * We have a hardware FPU.  If it is enabled,  branch to emulate the
@@ -2160,7 +2158,6 @@ trapnowvirt:
 	 *
 	 * See similar #ifdefs in the syscall entry and exit code.
 	 */
-#if defined(DDB) || defined(KGDB) || defined(FPEMUL)
 	stw	%r4, TF_R4(%t3)
 	stw	%r5, TF_R5(%t3)
 	stw	%r6, TF_R6(%t3)
@@ -2176,7 +2173,7 @@ trapnowvirt:
 	stw	%r16, TF_R16(%t3)
 	stw	%r17, TF_R17(%t3)
 	stw	%r18, TF_R18(%t3)
-#endif /* DDB || KGDB || FPEMUL */
+
 	stw	%t4, TF_R19(%t3)
 	stw	%r23,TF_R23(%t3)
 	stw	%r24,TF_R24(%t3)

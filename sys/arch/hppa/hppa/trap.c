@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.99 2012/03/07 22:07:13 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.100 2012/04/06 12:21:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.99 2012/03/07 22:07:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.100 2012/04/06 12:21:59 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -631,21 +631,7 @@ trap(int type, struct trapframe *frame)
 #endif
 
 	case T_EMULATION | T_USER:
-#ifdef FPEMUL
 		hppa_fpu_emulate(frame, l, opcode);
-#else  /* !FPEMUL */
-		/*
-		 * We don't have FPU emulation, so signal the
-		 * process with a SIGFPE.
-		 */
-		
-		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGFPE;
-		ksi.ksi_code = SI_NOINFO;
-		ksi.ksi_trap = type;
-		ksi.ksi_addr = (void *)frame->tf_iioq_head;
-		trapsignal(l, &ksi);
-#endif /* !FPEMUL */
 		break;
 
 	case T_DATALIGN:
