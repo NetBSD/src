@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.27.2.2 2012/03/07 23:26:01 riz Exp $	*/
+/*	$NetBSD: i386.c,v 1.27.2.3 2012/04/06 17:46:41 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.27.2.2 2012/03/07 23:26:01 riz Exp $");
+__RCSID("$NetBSD: i386.c,v 1.27.2.3 2012/04/06 17:46:41 riz Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1769,9 +1769,9 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
 
 	/*
-	 * Determine L3 cache info on AMD Family 10h processors
+	 * Determine L3 cache info on AMD Family 10h and newer processors
 	 */
-	if (family == 0x10) {
+	if (family >= 0x10) {
 		cai = &ci->ci_cinfo[CAI_L3CACHE];
 		cai->cai_totalsize = AMD_L3_EDX_C_SIZE(descs[3]);
 		cai->cai_associativity = AMD_L3_EDX_C_ASSOC(descs[3]);
