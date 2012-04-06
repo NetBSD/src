@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.42 2012/03/03 03:06:30 tsutsui Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.43 2012/04/06 23:48:53 riz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1012,3 +1012,59 @@ message license
 file %s.
 To view this file now, you can type ^Z, look at the contents of
 the file and then type "fg" to resume.}
+
+message binpkg
+{To configure the binary package system, please choose the network location
+to fetch packages from.  Once your system comes up, you can use 'pkgin'
+to install additional packages, or remove packages.}
+
+message pkgpath
+{The following are the protocol, host, directory, user, and password that
+will be used.  If "user" is "ftp", then the password is not needed.
+
+}
+message rcconf_backup_failed {Making backup of rc.conf failed. Continue?}
+message rcconf_backup_succeeded {rc.conf backup saved to %s.}
+message rcconf_restore_failed {Restoring backup rc.conf failed.}
+message rcconf_delete_failed {Deleting old %s entry failed.}
+message Pkg_dir {Package directory}
+message configure_prior {configure a prior installation of}
+message configure {configure}
+message change {change}
+message password_set {password set}
+message YES {YES}
+message NO {NO}
+message DONE {DONE}
+message abandoned {Abandoned}
+message empty {***EMPTY***}
+message timezone {Timezone}
+message change_rootpw {Change root password}
+message enable_binpkg {Enable installation of binary packages}
+message enable_sshd {Enable sshd}
+message enable_ntpd {Enable ntpd}
+message run_ntpdate {Run ntpdate at boot}
+message enable_mdnsd {Enable mdnsd}
+message configmenu {Configure the additional items as needed.}
+message doneconfig {Finished configuring}
+message Install_pkgin {Install pkgin and update package summary}
+message binpkg_installed 
+{You are now configured to use pkgin to install binary packages.  To
+install a package, run:
+
+pkgin install <packagename>
+
+from a root shell.  Read the pkgin(1) manual page for further information.}
+message Install_pkgsrc {Fetch and unpack pkgsrc}
+message pkgsrc
+{Installing pkgsrc requires unpacking an archive retrieved over the network.
+The following are the host, directory, user, and password that
+will be used.  If "user" is "ftp", then the password is not needed.
+
+}
+message Pkgsrc_dir {pkgsrc directory}
+message get_pkgsrc {Fetch and unpack pkgsrc for building from source}
+message retry_pkgsrc_network {Network configuration failed.  Retry?}
+message quit_pkgsrc {Quit without installing pkgsrc}
+message pkgin_failed 
+{Installation of pkgin failed, possibly because no binary packages  exist.  Please check the package path and try again.}
+message failed {Failed}

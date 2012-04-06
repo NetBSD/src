@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.63 2012/01/10 21:02:47 gson Exp $	*/
+/*	$NetBSD: main.c,v 1.64 2012/04/06 23:48:53 riz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -99,6 +99,18 @@ static const struct f_arg fflagopts[] = {
 	{"targetroot mount", "/targetroot", targetroot_mnt, sizeof targetroot_mnt},
 	{"dist postfix", ".tgz", dist_postfix, sizeof dist_postfix},
 	{"diskname", "mydisk", bsddiskname, sizeof bsddiskname},
+	{"pkg host", SYSINST_PKG_HOST, pkg.host, sizeof pkg.host},
+	{"pkg dir", SYSINST_PKG_DIR, pkg.dir, sizeof pkg.dir},
+	{"pkg prefix", "/" MACH "/" REL "/All", pkg_dir, sizeof pkg_dir},
+	{"pkg user", "ftp", pkg.user, sizeof pkg.user},
+	{"pkg pass", "", pkg.pass, sizeof pkg.pass},
+	{"pkg proxy", "", pkg.proxy, sizeof pkg.proxy},
+	{"pkgsrc host", SYSINST_PKGSRC_HOST, pkgsrc.host, sizeof pkgsrc.host},
+	{"pkgsrc dir", "", pkgsrc.dir, sizeof pkgsrc.dir},
+	{"pkgsrc prefix", "pub/pkgsrc/stable", pkgsrc_dir, sizeof pkgsrc_dir},
+	{"pkgsrc user", "ftp", pkgsrc.user, sizeof pkgsrc.user},
+	{"pkgsrc pass", "", pkgsrc.pass, sizeof pkgsrc.pass},
+	{"pkgsrc proxy", "", pkgsrc.proxy, sizeof pkgsrc.proxy},
 
 	{NULL, NULL, NULL, 0}
 };
@@ -118,6 +130,7 @@ init(void)
 
 	for (arg = fflagopts; arg->name != NULL; arg++)
 		strlcpy(arg->var, arg->dflt, arg->size);
+	pkg.xfer_type = pkgsrc.xfer_type = "http";
 }
 
 int

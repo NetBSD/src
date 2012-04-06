@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.54 2012/01/05 21:29:25 christos Exp $	*/
+/*	$NetBSD: target.c,v 1.55 2012/04/06 23:48:54 riz Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.54 2012/01/05 21:29:25 christos Exp $");
+__RCSID("$NetBSD: target.c,v 1.55 2012/04/06 23:48:54 riz Exp $");
 #endif
 
 /*
@@ -537,4 +537,10 @@ target_symlink_exists_p(const char *path)
 {
 
 	return (target_test_symlink(path) == 0);
+}
+
+int
+target_mounted(void)
+{
+	return (unwind_mountlist != NULL);
 }
