@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.109 2012/04/06 09:16:34 isaki Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.110 2012/04/06 18:49:44 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.106 2012/04/06 09:15:37 isaki Exp
+ *	NetBSD: miidevs,v 1.107 2012/04/06 18:49:17 matt Exp
  */
 
 /*-
@@ -252,6 +252,8 @@
 #define	MII_STR_CICADA_CS8201A	"Cicada CS8201 10/100/1000TX PHY"
 #define	MII_MODEL_CICADA_CS8201B	0x0021
 #define	MII_STR_CICADA_CS8201B	"Cicada CS8201 10/100/1000TX PHY"
+#define	MII_MODEL_xxCICADA_VSC8221	0x0015
+#define	MII_STR_xxCICADA_VSC8221	"Vitesse VSC8221 10/100/1000BASE-T PHY"
 #define	MII_MODEL_xxCICADA_VSC8244	0x002c
 #define	MII_STR_xxCICADA_VSC8244	"Vitesse VSC8244 Quad 10/100/1000BASE-T PHY"
 #define	MII_MODEL_xxCICADA_CS8201B	0x0021
