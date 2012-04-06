@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.174 2012/03/21 05:43:55 matt Exp $	*/
+/*	$NetBSD: util.c,v 1.175 2012/04/06 23:48:54 riz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -287,7 +287,6 @@ run_makedev(void)
  *
  * replace("/etc/some-file.conf", "s/prop1=NO/prop1=YES/;s/foo/bar/");
  */
-static
 void
 replace(const char *path, const char *patterns, ...)
 {
@@ -858,7 +857,7 @@ customise_sets(void)
  * full path name to the directory.
  */
 
-static int
+int
 extract_file(distinfo *dist, int update)
 {
 	char path[STRSIZE];
@@ -909,7 +908,9 @@ extract_file(distinfo *dist, int update)
 	if (update && (dist->set == SET_ETC || dist->set == SET_X11_ETC)) {
 		make_target_dir("/.sysinst");
 		target_chdir_or_die("/.sysinst");
-	} else
+	} else if (dist->set == SET_PKGSRC)
+		target_chdir_or_die("/usr");
+	else
 		target_chdir_or_die("/");
 
 	/*
@@ -1181,7 +1182,7 @@ sanity_check(void)
 static char zoneinfo_dir[STRSIZE];
 static int zonerootlen;
 static char *tz_selected;	/* timezonename (relative to share/zoneinfo */
-static const char *tz_default;	/* UTC, or whatever /etc/localtime points to */
+const char *tz_default;		/* UTC, or whatever /etc/localtime points to */
 static char tz_env[STRSIZE];
 static int save_cursel, save_topline;
 
@@ -1332,21 +1333,13 @@ tzm_set_names(menudesc *m, void *arg)
 	qsort(tz_menu, nfiles, sizeof *tz_menu, tz_sort);
 }
 
-/*
- * Choose from the files in usr/share/zoneinfo and set etc/localtime
- */
-int
-set_timezone(void)
+void
+get_tz_default(void)
 {
 	char localtime_link[STRSIZE];
-	char localtime_target[STRSIZE];
+	static char localtime_target[STRSIZE];
 	int rc;
-	time_t t;
-	int menu_no;
 
-	strlcpy(zoneinfo_dir, target_expand("/usr/share/zoneinfo/"),
-	    sizeof zoneinfo_dir - 1);
-	zonerootlen = strlen(zoneinfo_dir);
 	strlcpy(localtime_link, target_expand("/etc/localtime"),
 	    sizeof localtime_link);
 
@@ -1363,6 +1356,24 @@ set_timezone(void)
 		localtime_target[rc] = '\0';
 		tz_default = strchr(strstr(localtime_target, "zoneinfo"), '/') + 1;
 	}
+}
+
+/*
+ * Choose from the files in usr/share/zoneinfo and set etc/localtime
+ */
+int
+set_timezone(void)
+{
+	char localtime_link[STRSIZE];
+	char localtime_target[STRSIZE];
+	time_t t;
+	int menu_no;
+
+	strlcpy(zoneinfo_dir, target_expand("/usr/share/zoneinfo/"),
+	    sizeof zoneinfo_dir - 1);
+	zonerootlen = strlen(zoneinfo_dir);
+
+	get_tz_default();
 
 	tz_selected = strdup(tz_default);
 	snprintf(tz_env, sizeof(tz_env), "%s%s", zoneinfo_dir, tz_selected);
@@ -1389,34 +1400,13 @@ set_timezone(void)
 
 	snprintf(localtime_target, sizeof(localtime_target),
 		 "/usr/share/zoneinfo/%s", tz_selected);
+	strlcpy(localtime_link, target_expand("/etc/localtime"),
+	    sizeof localtime_link);
 	unlink(localtime_link);
 	symlink(localtime_target, localtime_link);
 
 done:
 	return 1;
-}
-
-int
-set_root_password(void)
-{
-
-	msg_display(MSG_rootpw);
-	process_menu(MENU_yesno, NULL);
-	if (yesno)
-		run_program(RUN_DISPLAY | RUN_PROGRESS | RUN_CHROOT,
-			    "passwd -l root");
-	return 0;
-}
-
-int
-set_root_shell(void)
-{
-	const char *shellpath;
-
-	msg_display(MSG_rootsh);
-	process_menu(MENU_rootsh, &shellpath);
-	run_program(RUN_DISPLAY | RUN_CHROOT, "chpass -s %s root", shellpath);
-	return 0;
 }
 
 void
@@ -1455,6 +1445,102 @@ add_rc_conf(const char *fmt, ...)
 		scripting_fprintf(NULL, "EOF\n");
 	}
 	va_end(ap);
+}
+
+int
+del_rc_conf(const char *value)
+{
+	FILE *fp, *nfp;
+	char buf[4096]; /* Ridiculously high, but should be enough in any way */
+	char *rcconf, *tempname, *bakname;
+	char *cp;
+	int done = 0;
+	int fd;
+	int retval = 0;
+
+	/* The paths might seem strange, but using /tmp would require copy instead 
+	 * of rename operations. */
+	if (asprintf(&rcconf, "%s", target_expand("/etc/rc.conf")) < 0
+			|| asprintf(&tempname, "%s", target_expand("/etc/rc.conf.tmp.XXXXXX")) < 0
+			|| asprintf(&bakname, "%s", target_expand("/etc/rc.conf.bak.XXXXXX")) < 0) {
+		if (rcconf)
+			free(rcconf);
+		if (tempname)
+			free(tempname);
+		msg_display(MSG_rcconf_delete_failed, value);
+		process_menu(MENU_ok, NULL);
+		return -1;
+	}
+
+	if ((fd = mkstemp(bakname)) < 0) {
+		msg_display(MSG_rcconf_delete_failed, value);
+		process_menu(MENU_ok, NULL);
+		return -1;
+	}
+	close(fd);
+
+	if (!(fp = fopen(rcconf, "r+")) || (fd = mkstemp(tempname)) < 0) {
+		if (fp)
+			fclose(fp);
+		msg_display(MSG_rcconf_delete_failed, value);
+		process_menu(MENU_ok, NULL);
+		return -1;
+	}
+
+	nfp = fdopen(fd, "w");
+	if (!nfp) {
+		fclose(fp);
+		close(fd);
+		msg_display(MSG_rcconf_delete_failed, value);
+		process_menu(MENU_ok, NULL);
+		return -1;
+	}
+
+	while (fgets(buf, sizeof buf, fp) != NULL) {
+
+		cp = buf + strspn(buf, " \t"); /* Skip initial spaces */
+		if (strncmp(cp, value, strlen(value)) == 0) {
+			cp += strlen(value);
+			if (*cp != '=')
+				scripting_fprintf(nfp, "%s", buf);
+			else
+				done = 1;
+		} else {
+			scripting_fprintf(nfp, "%s", buf);
+		}
+	}
+	fclose(fp);
+	fclose(nfp);
+	
+	if (done) {
+		if (rename(rcconf, bakname)) {
+			msg_display(MSG_rcconf_backup_failed);
+			process_menu(MENU_noyes, NULL);
+			if (!yesno) {
+				retval = -1;
+				goto done;
+			}
+		}
+
+		if (rename(tempname, rcconf)) {
+			if (rename(bakname, rcconf)) {
+				msg_display(MSG_rcconf_restore_failed);
+				process_menu(MENU_ok, NULL);
+			} else {
+				msg_display(MSG_rcconf_delete_failed, value);
+				process_menu(MENU_ok, NULL);
+			}
+		} else {
+			(void)unlink(bakname);
+		}
+	}
+
+done:
+	(void)unlink(tempname);
+	free(rcconf);
+	free(tempname);
+	free(bakname);
+	return retval;
 }
 
 void
@@ -1503,11 +1589,15 @@ set_is_source(const char *set_name) {
 
 const char *
 set_dir_for_set(const char *set_name) {
+	if (strcmp(set_name, "pkgsrc") == 0)
+		return pkgsrc_dir;
 	return set_is_source(set_name) ? set_dir_src : set_dir_bin;
 }
 
 const char *
 ext_dir_for_set(const char *set_name) {
+	if (strcmp(set_name, "pkgsrc") == 0)
+		return ext_dir_pkgsrc;
 	return set_is_source(set_name) ? ext_dir_src : ext_dir_bin;
 }
 
