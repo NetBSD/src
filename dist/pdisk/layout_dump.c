@@ -29,6 +29,7 @@
 #include <stdio.h>
 // for strlen()
 #include <string.h>
+#include <inttypes.h>
 #include "layout_dump.h"
 
 
@@ -45,7 +46,7 @@
 /*
  * Global Constants
  */
-unsigned char bitmasks[] = {
+uint8_t bitmasks[] = {
     0x01, 0x03, 0x07, 0x0F,
     0x1F, 0x3F, 0x7F, 0xFF
 };
@@ -97,7 +98,7 @@ dump_using_layout(void *buffer, layout *desc)
 	    value = 0;
 	    for (i = entry->byte_offset; byte_length > 0;i++) {
 		value = value << 8;
-		value |= ((unsigned char *)buffer)[i];
+		value |= ((uint8_t *)buffer)[i];
 		byte_length--;
 	    }
 	} else {
@@ -110,29 +111,29 @@ dump_using_layout(void *buffer, layout *desc)
 			entry->bit_offset, entry->bit_length);
 		continue;
 	    }
-	    value = (((unsigned char *)buffer)[entry->byte_offset]
+	    value = (((uint8_t *)buffer)[entry->byte_offset]
 		    & bitmasks[entry->bit_offset])
 		    >> ((entry->bit_offset + 1) - entry->bit_length);
 	}
 	
 	switch (entry->format) {
 	case kHex:
-	    printf("0x%x\n", (unsigned int) value);
+	    printf("0x%x\n", (uint32_t) value);
 	    break;
 	case kDec:
 	    byte_length = entry->bit_length / 8;
 	    switch (byte_length) {
-	    case 4: printf("%ld\n", (signed long)value); break;
-	    case 2: printf("%d\n", (signed short)value); break;
-	    case 1: printf("%d\n", (signed char)value); break;
+	    case 4: printf("%"PRId32"\n", (int32_t)value); break;
+	    case 2: printf("%"PRId16"\n", (int16_t)value); break;
+	    case 1: printf("%"PRId8"\n", (int8_t)value); break;
 	    }
 	    break;
 	case kUns:
 	    byte_length = entry->bit_length / 8;
 	    switch (byte_length) {
-	    case 4: printf("%lu\n", (unsigned long)value); break;
-	    case 2: printf("%u\n", (unsigned short)value); break;
-	    case 1: printf("%u\n", (unsigned char)value); break;
+	    case 4: printf("%"PRIu32"\n", (uint32_t)value); break;
+	    case 2: printf("%"PRIu16"\n", (uint16_t)value); break;
+	    case 1: printf("%"PRIu8"\n", (uint8_t)value); break;
 	    }
 	    break;
 	case kBit:
@@ -149,7 +150,7 @@ dump_using_layout(void *buffer, layout *desc)
 
 
 void
-DumpRawBuffer(unsigned char *bufferPtr, int length )
+DumpRawBuffer(uint8_t *bufferPtr, int length )
 {
 	register int            i;
 	int                     lineStart;
