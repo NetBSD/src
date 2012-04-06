@@ -4,7 +4,7 @@
 # Created: 1993-05-16
 # Public domain
 
-# $Id: mkinstalldirs,v 1.2 2012/02/11 18:22:58 tron Exp $
+# Id: mkinstalldirs,v 1.1 2000/09/18 16:26:21 coopercc Exp 
 
 errstatus=0
 
