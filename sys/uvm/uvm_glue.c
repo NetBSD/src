@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.157 2012/02/20 12:21:23 martin Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.158 2012/04/06 17:16:30 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.157 2012/02/20 12:21:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.158 2012/04/06 17:16:30 chs Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -315,8 +315,11 @@ uarea_system_poolpage_alloc(struct pool *pp, int flags)
 static void
 uarea_system_poolpage_free(struct pool *pp, void *addr)
 {
-	if (!cpu_uarea_free(addr))
-		panic("%s: failed to free uarea %p", __func__, addr);
+	if (cpu_uarea_free(addr))
+		return;
+
+	uvm_km_free(kernel_map, (vaddr_t)addr, pp->pr_alloc->pa_pagesz,
+	    UVM_KMF_WIRED);
 }
 
 static struct pool_allocator uvm_uarea_system_allocator = {
