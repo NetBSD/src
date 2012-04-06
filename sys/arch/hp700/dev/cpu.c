@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.22 2012/04/05 21:00:29 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.23 2012/04/06 12:21:58 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.c,v 1.29 2009/02/08 18:33:28 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.22 2012/04/05 21:00:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.23 2012/04/06 12:21:58 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -146,23 +146,14 @@ cpuattach(device_t parent, device_t self, void *aux)
 		aprint_normal(", %u/%u D/I BTLBs", pdc_btlb.finfo.num_i,
 		    pdc_btlb.finfo.num_d);
 	}
+	aprint_normal("\n");
 
 	/*
 	 * Describe the floating-point support.
 	 */
-#ifndef	FPEMUL
-	if (!fpu_present)
-		aprint_normal("\n%s: no floating point support",
-		    self->dv_xname);
-	else
-#endif /* !FPEMUL */
-	{
-		aprint_normal("\n%s: %s floating point, rev %d", self->dv_xname,
-		    hppa_mod_info(HPPA_TYPE_FPU, (fpu_version >> 16) & 0x1f),
-		    (fpu_version >> 11) & 0x1f);
-	}
-
-	aprint_normal("\n");
+	aprint_normal("%s: %s floating point, rev %d\n", self->dv_xname,
+	    hppa_mod_info(HPPA_TYPE_FPU, (fpu_version >> 16) & 0x1f),
+	    (fpu_version >> 11) & 0x1f);
 
 	/* sanity against luser amongst config editors */
 	if (ca->ca_irq != 31) {
