@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1748 2012/03/27 15:07:01 christos Exp $
+#	$NetBSD: mi,v 1.1749 2012/04/06 22:46:16 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3467,6 +3467,7 @@
 ./usr/libdata/debug/sbin/newfs_sysvbfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/newfs_udf.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/newfs_v7fs.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/pdisk.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/pfctl.debug		comp-pf-debug		pf,debug
 ./usr/libdata/debug/sbin/pflogd.debug		comp-pf-debug		pf,debug
 ./usr/libdata/debug/sbin/pfs.debug		comp-pf-debug		pf,debug

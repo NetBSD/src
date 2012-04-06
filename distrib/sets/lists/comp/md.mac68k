@@ -1,4 +1,4 @@
-# $NetBSD: md.mac68k,v 1.58 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.mac68k,v 1.59 2012/04/06 22:46:16 christos Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mac68k				comp-c-include
 ./usr/include/mac68k/_G_config.h		comp-obsolete		obsolete
@@ -60,4 +60,3 @@
 ./usr/include/mac68k/vmparam.h			comp-c-include
 ./usr/include/mac68k/wchar_limits.h		comp-c-include
 ./usr/include/mac68k/z8530var.h			comp-c-include
-./usr/libdata/debug/sbin/pdisk.debug		comp-sysutil-debug	debug
