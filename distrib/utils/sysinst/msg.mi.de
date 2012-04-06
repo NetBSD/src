@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.64 2012/03/03 02:34:13 tsutsui Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.65 2012/04/06 23:48:53 riz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1039,3 +1039,64 @@ der Datei %s zustimmen.
 Um den Lizenztext zu lesen, geben Sie ^Z ein, schauen den Inhalt
 der Datei an und kehren mit dem Befehl "fg" zu sysinst zurück.}
 
+message binpkg
+{Um Binärpakete zu installieren, muss erst eine Netzwerkverbindung konfiguriert 
+werden, über die die Pakete heruntergeladen werden. Nach einem ersten Start in
+das installierte System können mit dem Kommando 'pkgin' zusätzliche Pakete 
+installiert oder entfernt werden.}
+
+message pkgpath
+{Zur Konfiguration von pkgin muss zuerst das Repository konfiguriert werden. 
+Welches Protokoll, welcher Host, welches Verzeichnis und welcher User/Passwort 
+sollen zum Herunterladen verwendet werden? Wenn der User auf "ftp" gesetzt wird, 
+dann wird kein Passwort benötigt. 
+
+}
+message rcconf_backup_failed {rc.conf-Backup fehlgeschlagen. Trotzdem fortfahren?}
+message rcconf_backup_succeeded {rc.conf-Backup nach %s gespeichert.}
+message rcconf_restore_failed {rc.conf-Restore ist fehlgeschlagen.}
+message rcconf_delete_failed {Löschen des alten %s-Eintrages ist fehlgeschlagen.}
+message Pkg_dir {Paketverzeichnis}
+message configure_prior {Existierende Installation konfigurieren}
+message configure {Konfigurieren}
+message change {Ändern}
+message password_set {Passwort gesetzt}
+message YES {JA}
+message NO {NEIN}
+message DONE {ERLEDIGT}
+message abandoned {Abgebrochen}
+message empty {***LEER***}
+message timezone {Zeitzone}
+message change_rootpw {root-Passwort setzen}
+message enable_binpkg {Enable installation of binary packages}
+message enable_sshd {sshd aktivieren}
+message enable_ntpd {ntpd aktivieren}
+message run_ntpdate {ntpdate beim Starten ausführen}
+message enable_mdnsd {mdnsd aktivieren}
+message configmenu {Zusätzliche Einstellungen konfigurieren.}
+message doneconfig {Konfiguration abgeschlossen.}
+message Install_pkgin {pkgin installieren und Datenbank initialisieren}
+message binpkg_installed 
+{Das System kann nun Binärpakete mittels pkgin installieren. Um ein Paket zu 
+installieren, muss man folenden Befehl von einer root-Shell ausführen:
+
+pkgin install <packagename>
+
+Weitere Informationen finden sich in der pkgin(1)-Manpage.}
+message Install_pkgsrc {pkgsrc herunterladen und entpacken}
+message pkgsrc
+{Welches Protokoll, welcher Host, welches Verzeichnis und welcher User/Passwort 
+sollen zum Herunterladen von pkgsrc verwendet werden? Wenn der User auf "ftp" 
+gesetzt wird, dann wird kein Passwort benötigt. 
+
+}
+message Pkgsrc_dir {pkgsrc-Verzeichnis}
+message get_pkgsrc {pkgsrc zur Installation von Quellpaketen herunterladen und 
+installieren}
+message retry_pkgsrc_network {Netzwerkkonfiguration fehlgeschlagen. Noch einmal 
+versuchen?}
+message quit_pkgsrc {Ohne Installation von pkgsrc beenden.}
+message pkgin_failed 
+{Die Installation von pkgin ist fehlgeschlagen, evtl. weil keine Binärpakete 
+vorhanden sind. Bitte den Pfad der Pakete überprüfen und noch einmal versuchen.}
+message failed {Fehlgeschlagen}
