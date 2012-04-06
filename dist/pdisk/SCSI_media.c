@@ -38,7 +38,7 @@
 /*
  * Defines
  */
-#define DriverRefNumToSCSI(x)  ((signed short) (~(x) - 32))
+#define DriverRefNumToSCSI(x)  ((int16_t) (~(x) - 32))
 
 
 /*
@@ -119,8 +119,8 @@ static struct linux_order_cache linux_order;
 int AsyncSCSIPresent(void);
 void scsi_init(void);
 SCSI_MEDIA new_scsi_media(void);
-long read_scsi_media(MEDIA m, long long offset, unsigned long count, void *address);
-long write_scsi_media(MEDIA m, long long offset, unsigned long count, void *address);
+long read_scsi_media(MEDIA m, long long offset, uint32_t count, void *address);
+long write_scsi_media(MEDIA m, long long offset, uint32_t count, void *address);
 long close_scsi_media(MEDIA m);
 long os_reload_scsi_media(MEDIA m);
 long compute_id(long bus, long device);
@@ -320,14 +320,14 @@ open_scsi_as_media(long bus, long device)
 
 
 long
-read_scsi_media(MEDIA m, long long offset, unsigned long count, void *address)
+read_scsi_media(MEDIA m, long long offset, uint32_t count, void *address)
 {
     SCSI_MEDIA a;
     long rtn_value;
     long block;
     long block_count;
     long block_size;
-    unsigned char *buffer;
+    uint8_t *buffer;
     int i;
     
     block = (long) offset;
@@ -365,14 +365,14 @@ read_scsi_media(MEDIA m, long long offset, unsigned long count, void *address)
 
 
 long
-write_scsi_media(MEDIA m, long long offset, unsigned long count, void *address)
+write_scsi_media(MEDIA m, long long offset, uint32_t count, void *address)
 {
     SCSI_MEDIA a;
     long rtn_value;
     long block;
     long block_count;
     long block_size;
-    unsigned char *buffer;
+    uint8_t *buffer;
     int i;
     
     a = (SCSI_MEDIA) m;

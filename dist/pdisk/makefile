@@ -129,7 +129,7 @@ MAC_68KBINARY= \
 	pdisk_68k.hqx
 
 
-CFLAGS = -Wall -D__unix__
+CFLAGS = -Wall -D__unix__ -g
 DIST_TAR_FLAGS = cvf
 
 

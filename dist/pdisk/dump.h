@@ -62,7 +62,7 @@ extern int fflag;
 //
 void display_patches(partition_map *entry);
 int dump(char *name);
-void dump_block(unsigned char *addr, int len);
+void dump_block(uint8_t *addr, int len);
 void dump_partition_map(partition_map_header *map, int disk_order);
 void full_dump_partition_entry(partition_map_header *, int);
 void full_dump_block_zero(partition_map_header *map);

@@ -100,7 +100,7 @@ struct file_media_iterator {
  * Global Constants
  */
 int potential_block_sizes[] = {
-    1, 512, 1024, 2048,
+    1, 512, 1024, 2048, 4096, 8192, 16834,
     0
 };
 
@@ -124,8 +124,8 @@ static struct file_media_globals file_info;
 int compute_block_size(int fd);
 void file_init(void);
 FILE_MEDIA new_file_media(void);
-long read_file_media(MEDIA m, long long offset, unsigned long count, void *address);
-long write_file_media(MEDIA m, long long offset, unsigned long count, void *address);
+long read_file_media(MEDIA m, long long offset, uint32_t count, void *address);
+long write_file_media(MEDIA m, long long offset, uint32_t count, void *address);
 long close_file_media(MEDIA m);
 long os_reload_file_media(MEDIA m);
 FILE_MEDIA_ITERATOR new_file_iterator(void);
@@ -249,7 +249,7 @@ open_file_as_media(char *file, int oflag)
 
 
 long
-read_file_media(MEDIA m, long long offset, unsigned long count, void *address)
+read_file_media(MEDIA m, long long offset, uint32_t count, void *address)
 {
     FILE_MEDIA a;
     long rtn_value;
@@ -294,7 +294,7 @@ read_file_media(MEDIA m, long long offset, unsigned long count, void *address)
 
 
 long
-write_file_media(MEDIA m, long long offset, unsigned long count, void *address)
+write_file_media(MEDIA m, long long offset, uint32_t count, void *address)
 {
     FILE_MEDIA a;
     long rtn_value;

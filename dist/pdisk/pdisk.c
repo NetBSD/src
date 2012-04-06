@@ -61,6 +61,8 @@
 #include <linux/hdreg.h>
 #endif
 
+#include <stdint.h>
+
 #include "pdisk.h"
 #include "io.h"
 #include "partition_map.h"
@@ -761,7 +763,7 @@ get_size_argument(long *number, partition_map_header *map)
 {
     partition_map * entry;
     int result = 0;
-    unsigned long multiple;
+    uint32_t multiple;
 
     if (get_number_argument("Length in blocks: ", number, kDefault) == 0) {
 	bad_input("Bad length");
@@ -1068,7 +1070,7 @@ do_display_block(partition_map_header *map, char *alt_name)
     MEDIA m;
     long number;
     char *name;
-    static unsigned char *display_block;
+    static uint8_t *display_block;
     static int display_g;
     int g;
     static long next_number = -1;
@@ -1106,7 +1108,7 @@ do_display_block(partition_map_header *map, char *alt_name)
     	    free(display_block);
     	    display_g = 0;
 	}
-	display_block = (unsigned char *) malloc(g);
+	display_block = (uint8_t *) malloc(g);
 	if (display_block == NULL) {
 	    error(errno, "can't allocate memory for display block buffer");
 	    goto xit;
@@ -1115,7 +1117,7 @@ do_display_block(partition_map_header *map, char *alt_name)
     }
     if (read_media(m, ((long long)number) * g, g, (char *)display_block) != 0) {
 	printf("block %ld -", number);
-	dump_block((unsigned char*) display_block, g);
+	dump_block((uint8_t*) display_block, g);
 	next_number = number + 1;
     }
 

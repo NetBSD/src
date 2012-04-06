@@ -1,7 +1,7 @@
 /*
  * cvt_pt.c
  *
- *	Covert partition type.	$Revision: 1.5 $
+ *	Covert partition type.	$Revision: 1.6 $
  *
  *	Copyright (c)  1999, Eryk Vershen
  * 
@@ -135,7 +135,7 @@ trim_num(char *s)
     }
 
     for (t--; t >= s; t--) {
-        if (!isdigit((unsigned char)*t)) {
+        if (!isdigit((uint8_t)*t)) {
             t++;
             if (*t) {
                 n = atoi(t);
