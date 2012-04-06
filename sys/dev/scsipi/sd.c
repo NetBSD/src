@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.296 2012/02/02 19:43:06 tls Exp $	*/
+/*	$NetBSD: sd.c,v 1.297 2012/04/06 22:50:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.296 2012/02/02 19:43:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.297 2012/04/06 22:50:39 christos Exp $");
 
 #include "opt_scsi.h"
 
@@ -263,6 +263,9 @@ sdattach(device_t parent, device_t self, void *aux)
 	 */
 	aprint_naive("\n");
 	aprint_normal("\n");
+
+	if (periph->periph_quirks & PQUIRK_START)
+		(void)scsipi_start(periph, SSS_START, XS_CTL_SILENT);
 
 	error = scsipi_test_unit_ready(periph,
 	    XS_CTL_DISCOVERY | XS_CTL_IGNORE_ILLEGAL_REQUEST |
