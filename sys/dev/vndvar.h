@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.31 2011/06/29 09:12:42 hannken Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.31.8.1 2012/04/06 17:44:21 riz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -113,6 +113,7 @@ struct vnd_softc {
 	kauth_cred_t	 sc_cred;	/* credentials */
 	int		 sc_maxactive;	/* max # of active requests */
 	struct bufq_state *sc_tab;	/* transfer queue */
+	int		 sc_pending;	/* number of pending transfers */
 	int		 sc_active;	/* number of active transfers */
 	struct disk	 sc_dkdev;	/* generic disk device info */
 	struct vndgeom	 sc_geom;	/* virtual geometry */
