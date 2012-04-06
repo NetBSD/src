@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs_data.h,v 1.96 2011/11/25 23:29:28 jakllsch Exp $	*/
+/*	$NetBSD: miidevs_data.h,v 1.97 2012/04/06 09:16:34 isaki Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.105 2011/11/25 23:28:14 jakllsch Exp
+ *	NetBSD: miidevs,v 1.106 2012/04/06 09:15:37 isaki Exp
  */
 
 /*-
