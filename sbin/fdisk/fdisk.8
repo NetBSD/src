@@ -1,6 +1,6 @@
-.\"	$NetBSD: fdisk.8,v 1.75 2012/01/04 10:57:40 wiz Exp $
+.\"	$NetBSD: fdisk.8,v 1.76 2012/04/06 20:09:26 christos Exp $
 .\"
-.Dd December 1, 2011
+.Dd April 6, 2012
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -32,6 +32,9 @@
 .Ek
 .Bk -words
 .Op Fl t Ar disktab
+.Ek
+.Bk -words
+.Op Fl z Ar sectorsize
 .Ek
 .Bk -words
 .Op Ar device
@@ -397,6 +400,10 @@ allows the user to change more parameters than normally permitted.
 Write the modified partition table to file
 .Ar file
 instead of the disk.
+.It Fl z Ar sectorsize
+Specify a sector size other than 512, for devices that only
+support larger sector sizes.
+The sector size needs to be a power of two greater than 512.
 .El
 .Pp
 When called with no arguments, it prints the partition table.
