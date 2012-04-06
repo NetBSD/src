@@ -369,12 +369,12 @@ get_string(int eos)
 }
 
 
-unsigned long
+uint32_t
 get_multiplier(long divisor)
 {
     int c;
-    unsigned long result;
-    unsigned long extra;
+    uint32_t result;
+    uint32_t extra;
 
     c = my_getch();
 
@@ -433,7 +433,7 @@ get_partition_modifier(void)
 
 
 int
-number_of_digits(unsigned long value)
+number_of_digits(uint32_t value)
 {
     int j;
 

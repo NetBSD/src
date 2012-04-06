@@ -73,6 +73,6 @@ typedef struct {
  * Routines
  */
 void dump_using_layout(void *buffer, layout *desc);
-void DumpRawBuffer(unsigned char *bufferPtr, int length);
+void DumpRawBuffer(uint8_t *bufferPtr, int length);
 
 #endif /* __layout_dump__ */
