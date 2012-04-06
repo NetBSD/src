@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.108 2011/11/25 23:29:28 jakllsch Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.109 2012/04/06 09:16:34 isaki Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.105 2011/11/25 23:28:14 jakllsch Exp
+ *	NetBSD: miidevs,v 1.106 2012/04/06 09:15:37 isaki Exp
  */
 
 /*-
@@ -47,7 +47,7 @@
  * mapping; the bit positions are defined in IEEE 802-1990, figure 5.2.
  * (There is a formal 802.3 interpretation, number 1-07/98 of July 09 1998,
  * about this.)
- * The MII_OUI() macro in "mii.h" reflects this.
+ * The MII_OUI() macro in "miivar.h" reflects this.
  * If a vendor uses a different mapping, an "xx" prefixed OUI is defined here
  * which is mangled accordingly to compensate.
  */
