@@ -1,4 +1,4 @@
-/*	$NetBSD: mboot.c,v 1.11 2012/04/06 09:38:40 isaki Exp $	*/
+/*	$NetBSD: mboot.c,v 1.12 2012/04/06 09:44:44 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ bootmain(int scsiid)
 		return 0;
 
 	if (IOCS_S_READCAP(scsiid, &cap) < 0) {
-		IOCS_B_PRINT("Error in reading.\r\n");
+		IOCS_B_PRINT(BOOT ": Error in reading.\r\n");
 		return 0;
 	}
 	size = cap.size >> 9;
