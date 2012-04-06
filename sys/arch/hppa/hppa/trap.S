@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.66 2012/04/06 12:21:59 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.67 2012/04/06 13:09:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -1094,19 +1094,6 @@ ALTENTRY(hppa_fpu_swap)
 	fstds,ma %fr30, 8(%arg0)
 	fstds    %fr31, 0(%arg0)
 
-	ldo	-248(%arg0), %arg0
-	ldil	L%dcache_stride, %r1
-	ldw	R%dcache_stride(%r1), %r1
-	fdc,m	%r1(%arg0)
-	fdc,m	%r1(%arg0)
-	fdc,m	%r1(%arg0)
-	fdc,m	%r1(%arg0)
-	fdc,m	%r1(%arg0)
-	fdc,m	%r1(%arg0)
-	fdc,m	%r1(%arg0)
-	fdc,m	%r1(%arg0)
-	sync
-
 L$fpu_swap_in:
 
 	/*
@@ -1159,18 +1146,6 @@ L$fpu_swap_in:
 	fldds,ma -8(%arg1), %fr2
 	fldds,ma -8(%arg1), %fr1
 	fldds     0(%arg1), %fr0	/* fr0 must be restored last */
-
-	ldil	L%dcache_stride, %r1
-	ldw	R%dcache_stride(%r1), %r1
-	fdc,m	%r1(%arg1)
-	fdc,m	%r1(%arg1)
-	fdc,m	%r1(%arg1)
-	fdc,m	%r1(%arg1)
-	fdc,m	%r1(%arg1)
-	fdc,m	%r1(%arg1)
-	fdc,m	%r1(%arg1)
-	fdc,m	%r1(%arg1)
-	sync
 
 L$fpu_swap_done:
 
