@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.56 2012/03/02 16:41:00 bouyer Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.57 2012/04/06 17:23:39 chs Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -515,6 +515,9 @@
 #define		BU_CFG_THRL2IDXCMPDIS	0x0000080000000000ULL
 #define		BU_CFG_WBPFSMCCHKDIS	0x0000200000000000ULL
 #define		BU_CFG_WBENHWSBDIS	0x0001000000000000ULL
+
+#define MSR_DE_CFG	0xc0011029
+#define		DE_CFG_ERRATA_721	0x00000001
 
 /* AMD Family10h MSRs */
 #define	MSR_OSVW_ID_LENGTH		0xc0010140
