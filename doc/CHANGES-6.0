@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.65 2012/04/03 17:32:12 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.66 2012/04/06 17:48:09 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1671,4 +1671,34 @@ sys/dev/bluetooth/btsco.c			1.28
 
 	Power management for bthub(4).  PR#39006.
 	[plunky, ticket #159]
+
+external/mit/xorg/server/xorg-server/hw/xfree86/loader/Makefile 1.11-1.12
+tests/lib/libppath/Makefile			1.4
+tests/lib/libppath/plist_to_c			1.2
+
+	Use :Q for quoting. Execute shell script using the host shell.
+	[joerg, ticket #147]
+
+sys/arch/landisk/landisk/bus_dma.c		1.15
+
+	Fix bus_dmamap_sync(9) bug which could cause FFS corruption on
+	IDE disks.
+	[tsutsui, ticket #160]
+
+sys/fs/msdosfs/msdosfs_vnops.c			1.81-1.82
+
+	Report the SF_ARCHIVED file flag if set.
+	[njoly, ticket #161]
+
+sys/dev/vnd.c					1.220
+sys/dev/vndvar.h				1.32
+
+	When backed by a sparse file limit the number of pending requests.
+	Fixes PR#45829.
+	[hannken, ticket #162]
+
+usr.sbin/cpuctl/arch/i386.c			1.30
+
+	Report L3 cache information on AMD Family 10h and newer processors.
+	[cegger, ticket #163]
 
