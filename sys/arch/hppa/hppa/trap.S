@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.67 2012/04/06 13:09:32 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.68 2012/04/06 13:13:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -911,10 +911,7 @@ LEAF_ENTRY_NOPROFILE(TLABEL(emu))
 
 	/*
 	 * If we're still here, this is a FPU coprocessor instruction.  That we
-	 * trapped to emulate it means one of three things.
-	 *
-	 * If we do not have a hardware FPU, we need to emulate this instr-
-	 * uction.
+	 * trapped to emulate it means one of two things.
 	 *
 	 * If we do have a hardware FPU but it is disabled, we trapped because
 	 * the current process' state is not loaded into the FPU.  We load that
@@ -925,12 +922,6 @@ LEAF_ENTRY_NOPROFILE(TLABEL(emu))
 	 * emulate it.
 	 */
 
-	/*
-	 * As an optimization, hppa_fpu_bootstrap replaces this branch inst-
-	 * ruction with a nop if there is a hardware FPU.
-	 *
-	 * Otherwise, this is the branch to emulate an FPU coprocessor.
-	 */
 hppa_fpu_emulate:
 
 	/*
