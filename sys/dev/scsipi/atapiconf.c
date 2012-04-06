@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.83 2010/06/07 01:41:39 pgoyette Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.84 2012/04/06 17:12:45 chs Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.83 2010/06/07 01:41:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.84 2012/04/06 17:12:45 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,6 +171,9 @@ atapibuschilddet(device_t self, device_t child)
 	struct scsipi_periph *periph;
 	int target;
 
+	/* XXXSMP scsipi */
+	KERNEL_LOCK(1, curlwp);
+
 	for (target = 0; target < chan->chan_ntargets; target++) {
 		periph = scsipi_lookup_periph(chan, target, 0);
 		if (periph == NULL || periph->periph_dev != child)
@@ -179,6 +182,9 @@ atapibuschilddet(device_t self, device_t child)
 		free(periph, M_DEVBUF);
 		break;
 	}
+
+	/* XXXSMP scsipi */
+	KERNEL_UNLOCK_ONE(curlwp);
 }
 
 static int
