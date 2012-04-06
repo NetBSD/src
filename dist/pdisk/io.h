@@ -57,11 +57,11 @@ extern const long kDefault;
 void bad_input(const char *fmt, ...);
 void flush_to_newline(int keep_newline);
 int get_command(const char *prompt, int promptBeforeGet, int *command);
-unsigned long get_multiplier(long divisor);
+uint32_t get_multiplier(long divisor);
 int get_number_argument(const char *prompt, long *number, long default_value);
 int get_okay(const char *prompt, int default_value);
 int get_partition_modifier(void);
 int get_string_argument(const char *prompt, char **string, int reprompt);
-int number_of_digits(unsigned long value);
+int number_of_digits(uint32_t value);
 
 #endif /* __io__ */
