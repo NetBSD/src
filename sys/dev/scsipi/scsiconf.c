@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.264 2012/03/12 02:44:16 mrg Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.265 2012/04/06 22:50:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.264 2012/03/12 02:44:16 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.265 2012/04/06 22:50:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -445,6 +445,8 @@ scsibusprint(void *aux, const char *pnp)
 }
 
 static const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
+	{{T_DIRECT, T_REMOV,
+	 "Apple   ", "iPod            ", ""},	  PQUIRK_START},
 	{{T_CDROM, T_REMOV,
 	 "CHINON  ", "CD-ROM CDS-431  ", ""},     PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,
