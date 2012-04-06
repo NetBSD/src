@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.41 2011/11/26 15:54:51 drochner Exp $ */
+/* $NetBSD: pcppi.c,v 1.42 2012/04/06 20:33:20 plunky Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.41 2011/11/26 15:54:51 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.42 2012/04/06 20:33:20 plunky Exp $");
 
 #include "attimer.h"
 
@@ -229,10 +229,8 @@ pcppi_attach(struct pcppi_softc *sc)
 #if NATTIMER > 0
 	config_defer(sc->sc_dv, pcppi_attach_speaker);
 #endif
-        if (!device_pmf_is_registered(self))
-		if (!pmf_device_register(self, NULL, NULL))
-			aprint_error_dev(self,
-			    "couldn't establish power handler\n"); 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	pa.pa_cookie = sc;
 	config_search_loc(pcppisearch, sc->sc_dv, "pcppi", NULL, &pa);
