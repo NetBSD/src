@@ -1,4 +1,4 @@
-$NetBSD: TODO.usbmp,v 1.1.2.9 2012/04/06 08:13:40 mrg Exp $
+$NetBSD: TODO.usbmp,v 1.1.2.10 2012/04/06 08:22:28 mrg Exp $
 
 
 the majority of the USB MP device interface is documented in usbdivar.h.
@@ -123,7 +123,7 @@ driver testing:		STATUS
   - ucycom
   - uep
   - udl
-  - ulpt
+  - ulpt		attaches ok
   - uhso		working (must take kernel lock for scsipi)
   - umass		working (must take kernel lock for scsipi)
   - uaudio		working
@@ -171,7 +171,7 @@ ucom attachments:
   - uftdi
   - uipaq
   - umct
-  - uplcom
+  - uplcom		attaches ok
   - uslsa
   - uvscom
   - moscom
