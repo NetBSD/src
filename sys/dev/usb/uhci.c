@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.240.6.19 2012/04/05 22:32:09 mrg Exp $	*/
+/*	$NetBSD: uhci.c,v 1.240.6.20 2012/04/06 08:11:41 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240.6.19 2012/04/05 22:32:09 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240.6.20 2012/04/06 08:11:41 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -2320,6 +2320,8 @@ uhci_device_intr_start(usbd_xfer_handle xfer)
 		panic("uhci_device_intr_transfer: a request");
 #endif
 
+	mutex_enter(&sc->sc_lock);
+
 	endpt = upipe->pipe.endpoint->edesc->bEndpointAddress;
 	isread = UE_GET_DIR(endpt) == UE_DIR_IN;
 
@@ -2328,8 +2330,11 @@ uhci_device_intr_start(usbd_xfer_handle xfer)
 	err = uhci_alloc_std_chain(upipe, sc, xfer->length, isread,
 				   xfer->flags, &xfer->dmabuf, &data,
 				   &dataend);
-	if (err)
+	if (err) {
+		mutex_exit(&sc->sc_lock);
 		return (err);
+	}
+
 	dataend->td.td_status |= htole32(UHCI_TD_IOC);
 	usb_syncmem(&dataend->dma,
 	    dataend->offs + offsetof(uhci_td_t, td_status),
@@ -2344,7 +2349,6 @@ uhci_device_intr_start(usbd_xfer_handle xfer)
 	}
 #endif
 
-	mutex_enter(&sc->sc_lock);
 	/* Set up interrupt info. */
 	ii->xfer = xfer;
 	ii->stdstart = data;
