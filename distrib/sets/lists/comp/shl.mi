@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.214 2012/03/10 21:52:02 joerg Exp $
+# $NetBSD: shl.mi,v 1.215 2012/04/06 10:49:28 spz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -265,7 +265,7 @@
 ./usr/libdata/debug/usr/lib/libedit.so.3.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libelf.so.0.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libevent.so.3.2.debug	comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libexpat.so.2.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libexpat.so.2.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libfetch.so.3.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libform.so.6.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libg2c.so.2.0.debug		comp-sys-debug	gcc=3,debug
