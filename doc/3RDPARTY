@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.932 2012/04/03 22:21:13 riz Exp $
+#	$NetBSD: 3RDPARTY,v 1.933 2012/04/06 10:55:19 spz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -311,7 +311,7 @@ Use src/gnu/dist/diffutils/diffutils2netbsd for preparing the source tree
 for the import.
 
 Package:	expat
-Version:	2.0.1
+Version:	2.1.0
 Current Vers:	2.1.0
 Maintainer:	mrg
 Archive Site:	http://sourceforge.net/projects/expat/files/expat/
