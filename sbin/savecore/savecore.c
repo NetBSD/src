@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.84 2011/09/13 19:55:28 christos Exp $	*/
+/*	$NetBSD: savecore.c,v 1.85 2012/04/07 16:44:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.84 2011/09/13 19:55:28 christos Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.85 2012/04/07 16:44:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -166,7 +166,6 @@ static int	get_crashtime(void);
 static void	kmem_setup(void);
 static void	Lseek(int, off_t, int);
 static int	Open(const char *, int rw);
-static char	*rawname(char *s);
 static void	save_core(void);
 __dead static void	usage(const char *fmt, ...) __printflike(1, 2);
 
@@ -656,7 +655,8 @@ save_core(void)
 {
 	FILE *fp;
 	int bounds, ifd, nr, nw, ofd, tryksyms;
-	char *rawp, path[MAXPATHLEN];
+	char path[MAXPATHLEN], rbuf[MAXPATHLEN];
+	const char *rawp;
 
 	ofd = -1;
 	/*
@@ -701,7 +701,12 @@ err1:			syslog(LOG_WARNING, "%s: %m", path);
 
 	if (dumpcdev == NODEV) {
 		/* Open the raw device. */
-		rawp = rawname(ddname);
+		rawp = getdiskrawname(rbuf, sizeof(rbuf), ddname);
+		if (rawp == NULL) {
+			syslog(LOG_WARNING, "%s: %m; can't convert to raw",
+			    ddname);
+			rawp = ddname;
+		}
 		if ((ifd = open(rawp, O_RDONLY)) == -1) {
 			syslog(LOG_WARNING, "%s: %m; using block device",
 			    rawp);
@@ -830,26 +835,6 @@ find_dev(dev_t dev, mode_t type)
 	syslog(LOG_ERR, "can't find device %lld/%lld",
 	    (long long)major(dev), (long long)minor(dev));
 	exit(1);
-}
-
-static char *
-rawname(char *s)
-{
-	char *sl;
-	char name[MAXPATHLEN];
-
-	if ((sl = strrchr(s, '/')) == NULL || sl[1] == '0') {
-		syslog(LOG_ERR,
-		    "can't make raw dump device name from %s", s);
-		return (s);
-	}
-	(void)snprintf(name, sizeof(name), "%.*s/r%s", (int)(sl - s), s,
-	    sl + 1);
-	if ((sl = strdup(name)) == NULL) {
-		syslog(LOG_ERR, "%m");
-		exit(1);
-	}
-	return (sl);
 }
 
 static int
