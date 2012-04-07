@@ -1,4 +1,4 @@
-/*	$NetBSD: softmagic.c,v 1.5 2012/02/22 17:53:51 christos Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.6 2012/04/07 17:30:56 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -37,7 +37,7 @@
 #if 0
 FILE_RCSID("@(#)$File: softmagic.c,v 1.147 2011/11/05 15:44:22 rrt Exp $")
 #else
-__RCSID("$NetBSD: softmagic.c,v 1.5 2012/02/22 17:53:51 christos Exp $");
+__RCSID("$NetBSD: softmagic.c,v 1.6 2012/04/07 17:30:56 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -1028,6 +1028,8 @@ mget(struct magic_set *ms, const unsigned char *s,
 {
 	uint32_t offset = ms->offset;
 	uint32_t count = m->str_range;
+	int rv;
+	char *sbuf, *rbuf;
 	union VALUETYPE *p = &ms->ms_value;
 
 	if (mcopy(ms, p, m->type, m->flag & INDIR, s, offset, nbytes, count) == -1)
@@ -1076,6 +1078,8 @@ mget(struct magic_set *ms, const unsigned char *s,
 						 (q->hl[3]<<8)|(q->hl[2]));
 				break;
 			}
+			if ((ms->flags & MAGIC_DEBUG) != 0)
+				fprintf(stderr, "indirect offs=%u\n", off);
 		}
 		switch (m->in_type) {
 		case FILE_BYTE:
@@ -1516,6 +1520,8 @@ mget(struct magic_set *ms, const unsigned char *s,
 
 		if (m->flag & INDIROFFADD) {
 			offset += ms->c.li[cont_level-1].off;
+			if ((ms->flags & MAGIC_DEBUG) != 0)
+				fprintf(stderr, "indirect +offs=%u\n", offset);
 		}
 		if (mcopy(ms, p, m->type, 0, s, offset, nbytes, count) == -1)
 			return -1;
@@ -1583,13 +1589,26 @@ mget(struct magic_set *ms, const unsigned char *s,
 		break;
 
 	case FILE_INDIRECT:
-	  	if ((ms->flags & (MAGIC_MIME|MAGIC_APPLE)) == 0 &&
-		    file_printf(ms, "%s", m->desc) == -1)
-			return -1;
 		if (nbytes < offset)
 			return 0;
-		return file_softmagic(ms, s + offset, nbytes - offset,
+		sbuf = ms->o.buf;
+		ms->o.buf = NULL;
+		rv = file_softmagic(ms, s + offset, nbytes - offset,
 		    BINTEST, text);
+		if ((ms->flags & MAGIC_DEBUG) != 0)
+			fprintf(stderr, "indirect @offs=%u[%d]\n", offset, rv);
+		if (rv == 1) {
+			rbuf = ms->o.buf;
+			ms->o.buf = sbuf;
+			if ((ms->flags & (MAGIC_MIME|MAGIC_APPLE)) == 0 &&
+			    file_printf(ms, m->desc, offset) == -1)
+				return -1;
+			if (file_printf(ms, "%s", rbuf) == -1)
+				return -1;
+			free(rbuf);
+		} else
+			ms->o.buf = sbuf;
+		return rv;
 
 	case FILE_DEFAULT:	/* nothing to check */
 	default:
