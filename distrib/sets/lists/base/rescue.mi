@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.32 2010/02/11 09:06:50 roy Exp $
+# $NetBSD: rescue.mi,v 1.33 2012/04/07 05:55:00 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -105,6 +105,7 @@
 ./rescue/newfs_lfs				base-rescue-root
 ./rescue/newfs_msdos				base-rescue-root
 ./rescue/pax					base-rescue-root
+./rescue/pdisk					base-rescue-root
 ./rescue/ping					base-rescue-root
 ./rescue/ping6					base-rescue-root	use_inet6
 ./rescue/pppoectl				base-rescue-root
