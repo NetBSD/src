@@ -1,4 +1,4 @@
-/*	$NetBSD: getfsspecname.c,v 1.1 2012/04/07 04:04:45 christos Exp $	*/
+/*	$NetBSD: getfsspecname.c,v 1.2 2012/04/07 17:10:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getfsspecname.c,v 1.1 2012/04/07 04:04:45 christos Exp $");
+__RCSID("$NetBSD: getfsspecname.c,v 1.2 2012/04/07 17:10:02 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/sysctl.h>
@@ -45,6 +45,8 @@ __RCSID("$NetBSD: getfsspecname.c,v 1.1 2012/04/07 04:04:45 christos Exp $");
 #include <unistd.h>
 #include <util.h>
 
+#define COMPAT_DKWEDGE	/* To be removed */
+
 const char *
 getfsspecname(char *buf, size_t bufsiz, const char *name)
 {
@@ -58,11 +60,35 @@ getfsspecname(char *buf, size_t bufsiz, const char *name)
 	drives = NULL;
 	vname = NULL;
 	if (strncasecmp(name, "NAME=", 5) != 0) {
+#ifdef COMPAT_DKWEDGE
+		/*
+		 * We try to open the disk name, and if we fail with EBUSY
+		 * we use the name as the label to find the wedge.
+		 */
+		char rbuf[MAXPATHLEN];
+		if (name[0] == '/') {
+			if (getdiskrawname(rbuf, sizeof(rbuf), name) == NULL) {
+				savee = errno;
+				strlcpy(buf, "makeraw failed", bufsiz);
+				goto out;
+			}
+			if ((fd = open(rbuf, O_RDONLY)) == -1) {
+				if (errno == EBUSY) {
+					name = strrchr(name, '/') + 1;
+					goto search;
+				}
+			} else
+				close(fd);
+		}
+#endif
 		strlcpy(buf, name, bufsiz);
 		return buf;
-	}
+	} else
+		name += 5;
 
-	name += 5;
+#ifdef COMPAT_DKWEDGE
+search:
+#endif
 	vname = malloc(strlen(name) * 4 + 1);
 	if (vname == NULL) {
 		savee = errno;
