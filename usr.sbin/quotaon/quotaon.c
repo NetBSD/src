@@ -1,4 +1,4 @@
-/*	$NetBSD: quotaon.c,v 1.29 2012/01/30 16:45:13 dholland Exp $	*/
+/*	$NetBSD: quotaon.c,v 1.30 2012/04/07 05:07:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quotaon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: quotaon.c,v 1.29 2012/01/30 16:45:13 dholland Exp $");
+__RCSID("$NetBSD: quotaon.c,v 1.30 2012/04/07 05:07:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,13 +63,15 @@ __RCSID("$NetBSD: quotaon.c,v 1.29 2012/01/30 16:45:13 dholland Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 
 static int	vflag;		/* verbose */
 
 static void usage(void) __dead;
-static int quotaonoff(struct fstab *, struct quotahandle *, int, int, int);
-static int readonly(struct fstab *);
+static int quotaonoff(struct fstab *, struct quotahandle *, int, int, int,
+    const char *);
+static int readonly(struct fstab *, const char *);
 static int oneof(const char *target, char *list[], int cnt);
 
 int
@@ -133,14 +135,21 @@ main(int argc, char *argv[])
 
 	setfsent();
 	while ((fs = getfsent()) != NULL) {
+		char buf[MAXPATHLEN];
+		const char *fsspec;
 		if ((strcmp(fs->fs_vfstype, "ffs") &&
 		     strcmp(fs->fs_vfstype, "lfs")) ||
 		    strcmp(fs->fs_type, FSTAB_RW))
 			continue;
 
+		fsspec = getfsspecname(buf, sizeof(buf), fs->fs_spec);
+		if (fsspec == NULL) {
+			warn("%s", buf);
+			continue;
+		}
 		if (!aflag) {
 			if ((argnum = oneof(fs->fs_file, argv, argc)) < 0 &&
-			    (argnum = oneof(fs->fs_spec, argv, argc)) < 0) {
+			    (argnum = oneof(fsspec, argv, argc)) < 0) {
 				continue;
 			}
 			done |= 1U << argnum;
@@ -176,14 +185,14 @@ main(int argc, char *argv[])
 		 */
 
 		if (noguflag) {
-			errs += quotaonoff(fs, qh, offmode, GRPQUOTA, 0);
-			errs += quotaonoff(fs, qh, offmode, USRQUOTA, 0);
+			errs += quotaonoff(fs, qh, offmode, GRPQUOTA, 0, fsspec);
+			errs += quotaonoff(fs, qh, offmode, USRQUOTA, 0, fsspec);
 		}
 		if (gflag) {
-			errs += quotaonoff(fs, qh, offmode, GRPQUOTA, 1);
+			errs += quotaonoff(fs, qh, offmode, GRPQUOTA, 1, fsspec);
 		}
 		if (uflag) {
-			errs += quotaonoff(fs, qh, offmode, USRQUOTA, 1);
+			errs += quotaonoff(fs, qh, offmode, USRQUOTA, 1, fsspec);
 		}
 		quota_close(qh);
 	}
@@ -205,11 +214,11 @@ usage(void)
 
 static int
 quotaonoff(struct fstab *fs, struct quotahandle *qh, int offmode, int idtype,
-	   int warn_on_enxio)
+    int warn_on_enxio, const char *fsspec)
 {
 	const char *mode = (offmode == 1) ? "off" : "on";
 
-	if (strcmp(fs->fs_file, "/") && readonly(fs)) {
+	if (strcmp(fs->fs_file, "/") && readonly(fs, fsspec)) {
 		return 1;
 	}
 
@@ -240,13 +249,13 @@ quotaonoff(struct fstab *fs, struct quotahandle *qh, int offmode, int idtype,
  * Verify file system is mounted and not readonly.
  */
 static int
-readonly(struct fstab *fs)
+readonly(struct fstab *fs, const char *fsspec)
 {
 	struct statvfs fsbuf;
 
 	if (statvfs(fs->fs_file, &fsbuf) < 0 ||
 	    strcmp(fsbuf.f_mntonname, fs->fs_file) ||
-	    strcmp(fsbuf.f_mntfromname, fs->fs_spec)) {
+	    strcmp(fsbuf.f_mntfromname, fsspec)) {
 		printf("%s: not mounted\n", fs->fs_file);
 		return 1;
 	}

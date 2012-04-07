@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.67 2012/02/19 19:49:20 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.68 2012/04/07 04:52:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.67 2012/02/19 19:49:20 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.68 2012/04/07 04:52:20 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ __RCSID("$NetBSD: main.c,v 1.67 2012/02/19 19:49:20 christos Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "dump.h"
 #include "pathnames.h"
@@ -85,7 +86,6 @@ int	readblksize = 32 * 1024; /* read block size */
 char    default_time_string[] = "%T %Z"; /* default timestamp string */
 char    *time_string = default_time_string; /* timestamp string */
 
-int	main(int, char *[]);
 static long numarg(const char *, long, long);
 static void obsolete(int *, char **[]);
 static void usage(void);
@@ -108,6 +108,7 @@ main(int argc, char *argv[])
 	char *mountpoint;
 	int just_estimate = 0;
 	char labelstr[LBLSIZE];
+	char buf[MAXPATHLEN];
 	char *new_time_format;
 	char *snap_backup = NULL;
 
@@ -294,7 +295,10 @@ main(int argc, char *argv[])
 			break;
 		}
 		if ((dt = fstabsearch(argv[i])) != NULL) {
-			disk = dt->fs_spec;
+			if (getfsspecname(buf, sizeof(buf), dt->fs_spec)
+			    == NULL)
+				quit("%s (%s)", buf, strerror(errno));
+			disk = buf;
 			mountpoint = xstrdup(dt->fs_file);
 			goto multicheck;
 		}
@@ -402,7 +406,9 @@ main(int argc, char *argv[])
 	mountpoint = NULL;
 	mntinfo = mntinfosearch(disk);
 	if ((dt = fstabsearch(disk)) != NULL) {
-		disk = rawname(dt->fs_spec);
+		if (getfsspecname(buf, sizeof(buf), dt->fs_spec) == NULL)
+			quit("%s (%s)", buf, strerror(errno));
+		disk = rawname(buf);
 		mountpoint = dt->fs_file;
 		msg("Found %s on %s in %s\n", disk, mountpoint, _PATH_FSTAB);
 	} else if (mntinfo != NULL) {

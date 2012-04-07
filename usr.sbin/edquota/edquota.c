@@ -1,4 +1,4 @@
-/*      $NetBSD: edquota.c,v 1.46 2012/01/30 19:19:20 dholland Exp $ */
+/*      $NetBSD: edquota.c,v 1.47 2012/04/07 05:07:32 christos Exp $ */
 /*
  * Copyright (c) 1980, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.46 2012/01/30 19:19:20 dholland Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.47 2012/04/07 05:07:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,6 +71,7 @@ __RCSID("$NetBSD: edquota.c,v 1.46 2012/01/30 19:19:20 dholland Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "printquota.h"
 
@@ -279,7 +280,8 @@ static struct quotause *
 getprivs1(long id, int idtype, const char *filesys)
 {
 	struct fstab *fs;
-	char qfpathname[MAXPATHLEN];
+	char qfpathname[MAXPATHLEN], xbuf[MAXPATHLEN];
+	const char *fsspec;
 	struct quotause *qup;
 	struct dqblk dqblk;
 	int fd;
@@ -288,7 +290,12 @@ getprivs1(long id, int idtype, const char *filesys)
 	while ((fs = getfsent()) != NULL) {
 		if (strcmp(fs->fs_vfstype, "ffs"))
 			continue;
-		if (strcmp(fs->fs_spec, filesys) == 0 ||
+		fsspec = getfsspecname(xbuf, sizeof(xbuf), fs->fs_spec);
+		if (fsspec == NULL) {
+			warn("%s", xbuf);
+			continue;
+		}
+		if (strcmp(fsspec, filesys) == 0 ||
 		    strcmp(fs->fs_file, filesys) == 0)
 			break;
 	}

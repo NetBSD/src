@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2011/08/14 12:13:24 christos Exp $
+#	$NetBSD: Makefile,v 1.14 2012/04/07 04:52:20 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 #	lfs_inode.c		LFS filestore-specific routines
@@ -20,6 +20,8 @@ SRCS=	itime.c main.c optr.c dumprmt.c rcache.c snapshot.c tape.c \
 MAN=	dump_lfs.8
 MLINKS+=dump_lfs.8 rdump_lfs.8
 #CFLAGS+=-g
+DPADD+= ${LIBUTIL}
+LDADD+= -lutil
 
 .if ${MACHINE_ARCH} == "m68000"
 COPTS.lfs_inode.c+=	-fno-tree-ter
