@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1694 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1695 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -46,4 +46,6 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	fstab: Add NAME=wedgename for fs_spec and routines to parse it. Now
 		wedges can be used in /etc/fstab, even in dynamic environments
 		where disks come and go and wedges get renumbered.
+		[christos 20120306]
+	pdisk(8): Make it work for 64 bit hosts, and make it MI.
 		[christos 20120306]
