@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.63 2011/03/05 23:57:05 sjg Exp $	*/
+/*	$NetBSD: dir.c,v 1.64 2012/04/07 18:29:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.63 2011/03/05 23:57:05 sjg Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.64 2012/04/07 18:29:08 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.63 2011/03/05 23:57:05 sjg Exp $");
+__RCSID("$NetBSD: dir.c,v 1.64 2012/04/07 18:29:08 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1428,7 +1428,7 @@ Dir_FindHereOrAbove(char *here, char *search_path, char *result, int rlen) {
  *-----------------------------------------------------------------------
  */
 int
-Dir_MTime(GNode *gn)
+Dir_MTime(GNode *gn, Boolean recheck)
 {
     char          *fullName;  /* the full pathname of name */
     struct stat	  stb;	      /* buffer for finding the mod time */
@@ -1481,19 +1481,16 @@ Dir_MTime(GNode *gn)
 	fullName = bmake_strdup(gn->name);
     }
 
-    entry = Hash_FindEntry(&mtimes, fullName);
+    if (!recheck)
+	entry = Hash_FindEntry(&mtimes, fullName);
+    else
+	entry = NULL;
     if (entry != NULL) {
-	/*
-	 * Only do this once -- the second time folks are checking to
-	 * see if the file was actually updated, so we need to actually go
-	 * to the file system.
-	 */
 	if (DEBUG(DIR)) {
 	    fprintf(debug_file, "Using cached time %s for %s\n",
 		    Targ_FmtTime(Hash_GetTimeValue(entry)), fullName);
 	}
 	stb.st_mtime = Hash_GetTimeValue(entry);
-	Hash_DeleteEntry(&mtimes, entry);
     } else if (stat(fullName, &stb) < 0) {
 	if (gn->type & OP_MEMBER) {
 	    if (fullName != gn->path)
@@ -1502,12 +1499,16 @@ Dir_MTime(GNode *gn)
 	} else {
 	    stb.st_mtime = 0;
 	}
-    } else if (stb.st_mtime == 0) {
-	/*
-	 * 0 handled specially by the code, if the time is really 0, return
-	 * something else instead
-	 */
-	stb.st_mtime = 1;
+    } else {
+	if (stb.st_mtime == 0) {
+		/*
+		 * 0 handled specially by the code, if the time is really 0,
+		 * return something else instead
+		 */
+		stb.st_mtime = 1;
+	}
+	entry = Hash_CreateEntry(&mtimes, fullName, NULL);
+	Hash_SetTimeValue(entry, stb.st_mtime);
     }
 	
     if (fullName && gn->path == NULL) {
