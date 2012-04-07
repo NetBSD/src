@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1046 2012/03/22 20:34:38 drochner Exp $
+#	$NetBSD: files,v 1.1047 2012/04/07 05:36:49 christos Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -87,6 +87,7 @@ defflag	opt_dkwedge.h		DKWEDGE_AUTODISCOVER
 				DKWEDGE_METHOD_BSDLABEL
 				DKWEDGE_METHOD_GPT
 				DKWEDGE_METHOD_MBR
+				DKWEDGE_METHOD_APPLE
 
 defflag	opt_veriexec.h		VERIFIED_EXEC_FP_SHA1
 				VERIFIED_EXEC_FP_SHA256
@@ -1430,6 +1431,7 @@ file	dev/clock_subr.c
 file	dev/clockctl.c			clockctl		needs-flag
 file	dev/dksubr.c			cgd | xbd | ccd | raid | dm
 file	dev/dkwedge/dk.c
+file	dev/dkwedge/dkwedge_apple.c	dkwedge_method_apple
 file	dev/dkwedge/dkwedge_bsdlabel.c	dkwedge_method_bsdlabel
 file	dev/dkwedge/dkwedge_gpt.c	dkwedge_method_gpt
 file	dev/dkwedge/dkwedge_mbr.c	dkwedge_method_mbr
