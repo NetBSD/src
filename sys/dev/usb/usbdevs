@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.610 2012/03/03 21:32:58 riz Exp $
+$NetBSD: usbdevs,v 1.611 2012/04/07 11:54:34 jakllsch Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -692,6 +692,7 @@ product ADMTEK PEGASUSII_3	0x8515	ADM8515 USB 2.0 Ethernet
 /* ADS products */
 product ADS UBS10BT		0x0008	UBS-10BT Ethernet
 product ADS UBS10BTX		0x0009	UBS-10BT Ethernet
+product ADS RDX155		0xa155	InstantFM Music
 
 /* AEI products */
 product AEI USBTOLAN		0x1701	AEI USB to Lan adapter
