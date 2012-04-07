@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.68 2012/04/07 04:52:20 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.69 2012/04/07 16:44:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.68 2012/04/07 04:52:20 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.69 2012/04/07 16:44:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,7 +108,7 @@ main(int argc, char *argv[])
 	char *mountpoint;
 	int just_estimate = 0;
 	char labelstr[LBLSIZE];
-	char buf[MAXPATHLEN];
+	char buf[MAXPATHLEN], rbuf[MAXPATHLEN];
 	char *new_time_format;
 	char *snap_backup = NULL;
 
@@ -408,11 +408,17 @@ main(int argc, char *argv[])
 	if ((dt = fstabsearch(disk)) != NULL) {
 		if (getfsspecname(buf, sizeof(buf), dt->fs_spec) == NULL)
 			quit("%s (%s)", buf, strerror(errno));
-		disk = rawname(buf);
+		if (getdiskrawname(rbuf, sizeof(rbuf), buf) == NULL)
+			quit("Can't get disk raw name for `%s' (%s)",
+			    buf, strerror(errno));
+		disk = rbuf;
 		mountpoint = dt->fs_file;
 		msg("Found %s on %s in %s\n", disk, mountpoint, _PATH_FSTAB);
 	} else if (mntinfo != NULL) {
-		disk = rawname(mntinfo->f_mntfromname);
+		if (getdiskrawname(rbuf, sizeof(rbuf), mntinfo->f_mntfromname)
+		    == NULL)
+			quit("Can't get disk raw name for `%s' (%s)",
+			    mntinfo->f_mntfromname, strerror(errno));
 		mountpoint = mntinfo->f_mntonname;
 		msg("Found %s on %s in mount table\n", disk, mountpoint);
 	}
@@ -719,20 +725,6 @@ sig(int signo)
 		(void)kill(0, SIGSEGV);
 		/* NOTREACHED */
 	}
-}
-
-char *
-rawname(char *cp)
-{
-	static char rawbuf[MAXPATHLEN];
-	char *dp = strrchr(cp, '/');
-
-	if (dp == NULL)
-		return (NULL);
-	*dp = '\0';
-	(void)snprintf(rawbuf, sizeof rawbuf, "%s/r%s", cp, dp + 1);
-	*dp = '/';
-	return (rawbuf);
 }
 
 /*
