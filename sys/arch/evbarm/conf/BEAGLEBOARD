@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARD,v 1.25 2012/02/09 19:07:37 matt Exp $
+#	$NetBSD: BEAGLEBOARD,v 1.26 2012/04/07 03:25:00 tsutsui Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -106,10 +106,6 @@ options 	COMPAT_30	# NetBSD 3.0 compatibility.
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 
 # Device options

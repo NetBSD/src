@@ -1,4 +1,4 @@
-#	$NetBSD: VIPER,v 1.23 2011/11/22 21:25:10 tls Exp $
+#	$NetBSD: VIPER,v 1.24 2012/04/07 03:25:00 tsutsui Exp $
 #
 #	Arcom Viper
 #
@@ -93,10 +93,6 @@ options 	COMPAT_30	# NetBSD 3.0 compatibility.
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
-options 	SEMMNI=10	# number of semaphore identifiers
-options 	SEMMNS=60	# number of semaphores in system
-options 	SEMUME=10	# max number of undo entries per process
-options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 
 # Device options
