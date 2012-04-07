@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.52 2012/03/10 21:51:57 joerg Exp $
+#	$NetBSD: GENERIC,v 1.53 2012/04/07 09:09:43 nonaka Exp $
 #
 # GENERIC machine description file
 #
@@ -164,7 +164,7 @@ options 	DDB			# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KGDB
 #makeoptions 	DEBUG="-g"		# compile full symbol table
-options 	SYMTAB_SPACE=512000
+options 	SYMTAB_SPACE=640000
 
 
 # Kernel root file system and dump configuration.
