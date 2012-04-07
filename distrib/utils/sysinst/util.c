@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.175 2012/04/06 23:48:54 riz Exp $	*/
+/*	$NetBSD: util.c,v 1.176 2012/04/07 19:02:57 jdf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -572,7 +572,7 @@ get_via_cdrom(void)
 	else {
 		umount_mnt2();
 		msg_display(MSG_cd_path_not_found);
-		msg_display_add("\r\n\r\n");
+		process_menu(MENU_ok, NULL);
 	}
 
 	/* ask for paths on the CD */
