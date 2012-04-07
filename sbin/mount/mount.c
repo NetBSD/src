@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.94 2012/04/07 03:13:32 christos Exp $	*/
+/*	$NetBSD: mount.c,v 1.95 2012/04/07 04:13:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,15 +39,13 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.94 2012/04/07 03:13:32 christos Exp $");
+__RCSID("$NetBSD: mount.c,v 1.95 2012/04/07 04:13:06 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/wait.h>
-#include <sys/disk.h>
-#include <sys/sysctl.h>
 
 #include <fs/puffs/puffs_msgif.h>
 
@@ -61,7 +59,6 @@ __RCSID("$NetBSD: mount.c,v 1.94 2012/04/07 03:13:32 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
-#include <vis.h>
 
 #define MOUNTNAMES
 #include <fcntl.h>
@@ -80,8 +77,6 @@ static const char *
 static struct statvfs *
 		getmntpt(const char *);
 static int 	getmntargs(struct statvfs *, char *, size_t);
-static const char *
-		getspec(char *, size_t, const char *);
 static int	hasopt(const char *, const char *);
 static void	mangle(char *, int *, const char ** volatile *, int *);
 static int	mountfs(const char *, const char *, const char *,
@@ -190,8 +185,10 @@ main(int argc, char *argv[])
 					mntfromname = mntbuf->f_mntfromname;
 				} else
 					mntfromname = fs->fs_spec;
-				mntfromname =
-				    getspec(buf, sizeof(buf), mntfromname);
+				mntfromname = getfsspecname(buf, sizeof(buf),
+				    mntfromname);
+				if (mntfromname == NULL)
+					err(EXIT_FAILURE, "%s", mntfromname);
 				if (mountfs(fs->fs_vfstype, mntfromname,
 				    fs->fs_file, init_flags, options,
 				    fs->fs_mntops, !forceall, NULL, 0))
@@ -276,7 +273,9 @@ out:
 			fstypename  = fs->fs_vfstype;
 			mountopts   = fs->fs_mntops;
 		}
-		mntfromname = getspec(buf, sizeof(buf), mntfromname);
+		mntfromname = getfsspecname(buf, sizeof(buf), mntfromname);
+		if (mntfromname == NULL)
+			err(EXIT_FAILURE, "%s", buf);
 		rval = mountfs(fstypename, mntfromname,
 		    mntonname, init_flags, options, mountopts, 0, NULL, 0);
 		break;
@@ -286,7 +285,9 @@ out:
 		 * a ':' or a '@' then assume that an NFS filesystem is being
 		 * specified ala Sun.
 		 */
-		mntfromname = getspec(buf, sizeof(buf), argv[0]);
+		mntfromname = getfsspecname(buf, sizeof(buf), argv[0]);
+		if (mntfromname == NULL)
+			err(EXIT_FAILURE, "%s", buf);
 		if (vfslist == NULL) {
 			if (strpbrk(argv[0], ":@") != NULL) {
 				fprintf(stderr, "WARNING: autoselecting nfs "
@@ -762,52 +763,6 @@ getfslab(const char *str)
 		vfstype = mountnames[fstype];
 
 	return (vfstype);
-}
-
-/* Query device path from disk name */
-static const char *
-getspec(char *buf, size_t bufsiz, const char *name)
-{
-	static const int mib[] = { CTL_HW, HW_DISKNAMES };
-	char *drives, *dk;
-	size_t len;
-	int fd;
-	char *vname;
-
-	if (strncasecmp(name, "NAME=", 5) != 0)
-		return name;
-	name += 5;
-	vname = emalloc(strlen(name) * 4 + 1);
-	strunvis(vname, name);
-
-	if (sysctl(mib, __arraycount(mib), NULL, &len, NULL, 0) == -1)
-		err(EXIT_FAILURE, "sysctl hw.disknames failed");
-
-	drives = emalloc(len);
-	if (sysctl(mib, __arraycount(mib), drives, &len, NULL, 0) == -1)
-		err(EXIT_FAILURE, "sysctl hw.disknames failed");
-
-	for (dk = strtok(drives, " "); dk != NULL; dk = strtok(NULL, " ")) {
-		struct dkwedge_info dkw;
-		if (strncmp(dk, "dk", 2) != 0)
-			continue;
-		fd = opendisk(dk, O_RDONLY, buf, bufsiz, 0);
-		if (fd == -1)
-			continue;
-		if (ioctl(fd, DIOCGWEDGEINFO, &dkw) == -1)
-			err(EXIT_FAILURE, "%s: getwedgeinfo", dk);
-		(void)close(fd);
-		if (strcmp(vname, (char *)dkw.dkw_wname) == 0) {
-			free(drives);
-			free(vname);
-			vname = strstr(buf, "/rdk");
-			if (vname++ == NULL) 
-				return buf;
-			strcpy(vname, vname + 1);
-			return buf;
-		}
-	}
-	err(EXIT_FAILURE, "Cannot find a match for `%s'", vname);
 }
 
 static void
