@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.c,v 1.21 2012/04/07 04:52:20 christos Exp $	*/
+/*	$NetBSD: fsutil.c,v 1.22 2012/04/07 16:44:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsutil.c,v 1.21 2012/04/07 04:52:20 christos Exp $");
+__RCSID("$NetBSD: fsutil.c,v 1.22 2012/04/07 16:44:10 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -167,45 +167,13 @@ panic(const char *fmt, ...)
 }
 
 const char *
-unrawname(const char *name)
-{
-	static char unrawbuf[MAXPATHLEN];
-	const char *dp;
-	struct stat stb;
-
-	if ((dp = strrchr(name, '/')) == 0)
-		return (name);
-	if (stat(name, &stb) < 0)
-		return (name);
-	if (!S_ISCHR(stb.st_mode))
-		return (name);
-	if (dp[1] != 'r')
-		return (name);
-	(void)snprintf(unrawbuf, sizeof(unrawbuf), "%.*s/%s",
-	    (int)(dp - name), name, dp + 2);
-	return (unrawbuf);
-}
-
-const char *
-rawname(const char *name)
-{
-	static char rawbuf[MAXPATHLEN];
-	const char *dp;
-
-	if ((dp = strrchr(name, '/')) == 0)
-		return (0);
-	(void)snprintf(rawbuf, sizeof(rawbuf), "%.*s/r%s",
-	    (int)(dp - name), name, dp + 1);
-	return (rawbuf);
-}
-
-const char *
 blockcheck(const char *origname)
 {
 	struct stat stslash, stblock, stchar;
 	const char *newname, *raw;
 	struct fstab *fsp;
 	int retried = 0;
+	static char buf[MAXPATHLEN];
 
 	hot = 0;
 	if (stat("/", &stslash) < 0) {
@@ -221,7 +189,11 @@ retry:
 	if (S_ISBLK(stblock.st_mode)) {
 		if (stslash.st_dev == stblock.st_rdev)
 			hot++;
-		raw = rawname(newname);
+		raw = getdiskrawname(buf, sizeof(buf), newname);
+		if (raw == NULL) {
+			perr("Can't convert to raw `%s'", newname);
+			return origname;
+		}
 		if (stat(raw, &stchar) < 0) {
 			perr("Can't stat `%s'", raw);
 			return (origname);
@@ -233,12 +205,17 @@ retry:
 			return (origname);
 		}
 	} else if (S_ISCHR(stblock.st_mode) && !retried) {
-		newname = unrawname(newname);
+		raw = getdiskcookedname(buf, sizeof(buf), newname);
+		if (raw == NULL) {
+			perr("Can't convert to cooked `%s'", newname);
+			return origname;
+		} else
+			newname = raw;
 		retried++;
 		goto retry;
 	} else if ((fsp = getfsfile(newname)) != 0 && !retried) {
-		char buf[MAXPATHLEN];
-		newname = getfsspecname(buf, sizeof(buf), fsp->fs_spec);
+		char rbuf[MAXPATHLEN];
+		newname = getfsspecname(rbuf, sizeof(rbuf), fsp->fs_spec);
 		if (newname == NULL)
 			perr("%s", buf);
 		retried++;
