@@ -1,4 +1,4 @@
-.\"	$NetBSD: getfsspecname.3,v 1.1 2012/04/07 04:04:45 christos Exp $
+.\"	$NetBSD: getfsspecname.3,v 1.2 2012/04/07 10:43:38 wiz Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,10 +49,10 @@ field in the
 .Fa spec
 argument of the form
 .Dq NAME=wedgename
-to the underlying 
-.Xr dk 4 
+to the underlying
+.Xr dk 4
 device node, and places the resulting pathname in
-.Fa buf 
+.Fa buf
 up to len
 .Fa bufsiz .
 .Pp
@@ -81,4 +81,4 @@ contains the reason for the error.
 The
 .Fn getfsspecname
 function appeared in
-.Nx 7.0
+.Nx 7.0 .
