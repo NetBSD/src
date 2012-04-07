@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.c,v 1.20 2011/06/09 19:57:50 christos Exp $	*/
+/*	$NetBSD: fsutil.c,v 1.21 2012/04/07 04:52:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsutil.c,v 1.20 2011/06/09 19:57:50 christos Exp $");
+__RCSID("$NetBSD: fsutil.c,v 1.21 2012/04/07 04:52:20 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: fsutil.c,v 1.20 2011/06/09 19:57:50 christos Exp $");
 #include <fcntl.h>
 #include <unistd.h>
 #include <err.h>
+#include <util.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -236,7 +237,10 @@ retry:
 		retried++;
 		goto retry;
 	} else if ((fsp = getfsfile(newname)) != 0 && !retried) {
-		newname = fsp->fs_spec;
+		char buf[MAXPATHLEN];
+		newname = getfsspecname(buf, sizeof(buf), fsp->fs_spec);
+		if (newname == NULL)
+			perr("%s", buf);
 		retried++;
 		goto retry;
 	}

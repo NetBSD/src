@@ -1,4 +1,4 @@
-/*	$NetBSD: preen.c,v 1.30 2008/02/23 21:41:47 christos Exp $	*/
+/*	$NetBSD: preen.c,v 1.31 2012/04/07 04:52:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)preen.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: preen.c,v 1.30 2008/02/23 21:41:47 christos Exp $");
+__RCSID("$NetBSD: preen.c,v 1.31 2012/04/07 04:52:20 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,10 +108,16 @@ checkfstab(int flags, int maxrun, void *(*docheck)(struct fstab *),
 			return FSCK_EXIT_CHECK_FAILED;
 		}
 		while ((fs = getfsent()) != 0) {
+			char buf[MAXPATHLEN];
+			const char *fsspec;
 			if ((auxarg = (*docheck)(fs)) == NULL)
 				continue;
-
-			name = blockcheck(fs->fs_spec);
+			fsspec = getfsspecname(buf, sizeof(buf), fs->fs_spec);
+			if (fsspec == NULL) {
+				warn("%s", buf);
+				return FSCK_EXIT_CHECK_FAILED;
+			}
+			name = blockcheck(fsspec);
 			if (flags & CHECK_DEBUG)
 				printf("pass %d, name %s\n", passno, name);
 
@@ -135,7 +141,7 @@ checkfstab(int flags, int maxrun, void *(*docheck)(struct fstab *),
 			} else if (passno == 2 && fs->fs_passno > 1) {
 				if (name == NULL) {
 					(void) fprintf(stderr,
-					    "BAD DISK NAME %s\n", fs->fs_spec);
+					    "BAD DISK NAME %s\n", fsspec);
 					sumstatus = FSCK_EXIT_CHECK_FAILED;
 					continue;
 				}
