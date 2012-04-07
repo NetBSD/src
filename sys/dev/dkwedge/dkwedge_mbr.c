@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_mbr.c,v 1.6 2008/04/28 20:23:48 martin Exp $	*/
+/*	$NetBSD: dkwedge_mbr.c,v 1.7 2012/04/07 05:09:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_mbr.c,v 1.6 2008/04/28 20:23:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_mbr.c,v 1.7 2012/04/07 05:09:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,12 +45,14 @@ __KERNEL_RCSID(0, "$NetBSD: dkwedge_mbr.c,v 1.6 2008/04/28 20:23:48 martin Exp $
 #include <sys/malloc.h>
 
 #include <sys/bootblock.h>
+#include <sys/disklabel.h>
 
 typedef struct mbr_args {
 	struct disk	*pdk;
 	struct vnode	*vp;
 	void		*buf;
 	int		error;
+	uint32_t	secsize;
 	int		mbr_count;
 } mbr_args_t;
 
@@ -86,10 +88,10 @@ getparts(mbr_args_t *a, uint32_t off, uint32_t extoff)
 	const char *ptype;
 	int i, error;
 
-	error = dkwedge_read(a->pdk, a->vp, off, a->buf, DEV_BSIZE);
+	error = dkwedge_read(a->pdk, a->vp, off, a->buf, a->secsize);
 	if (error) {
-		aprint_error("%s: unable to read MBR @ %u, "
-		    "error = %d\n", a->pdk->dk_name, off, a->error);
+		aprint_error("%s: unable to read MBR @ %u/%u, "
+		    "error = %d\n", a->pdk->dk_name, off, a->secsize, a->error);
 		a->error = error;
 		return;
 	}
@@ -166,8 +168,9 @@ dkwedge_discover_mbr(struct disk *pdk, struct vnode *vp)
 	mbr_args_t a;
 
 	a.pdk = pdk;
+	a.secsize = pdk->dk_label->d_secsize;
 	a.vp = vp;
-	a.buf = malloc(DEV_BSIZE, M_DEVBUF, M_WAITOK);
+	a.buf = malloc(a.secsize, M_DEVBUF, M_WAITOK);
 	a.error = 0;
 	a.mbr_count = 0;
 
