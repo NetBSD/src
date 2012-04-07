@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1749 2012/04/06 22:46:16 christos Exp $
+#	$NetBSD: mi,v 1.1750 2012/04/07 04:09:55 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6689,6 +6689,7 @@
 ./usr/share/man/cat3/getfsent.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getfsfile.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getfsspec.0		comp-c-catman		.cat
+./usr/share/man/cat3/getfsspecname.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getfstype.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/getfstypename.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getgrent.0			comp-c-catman		.cat
@@ -12994,6 +12995,7 @@
 ./usr/share/man/html3/getfsent.html		comp-c-htmlman		html
 ./usr/share/man/html3/getfsfile.html		comp-c-htmlman		html
 ./usr/share/man/html3/getfsspec.html		comp-c-htmlman		html
+./usr/share/man/html3/getfsspecname.html	comp-c-htmlman		html
 ./usr/share/man/html3/getfstypename.html	comp-c-htmlman		html
 ./usr/share/man/html3/getgrent.html		comp-c-htmlman		html
 ./usr/share/man/html3/getgrent_r.html		comp-c-htmlman		html
@@ -19213,6 +19215,7 @@
 ./usr/share/man/man3/getfsent.3			comp-c-man		.man
 ./usr/share/man/man3/getfsfile.3		comp-c-man		.man
 ./usr/share/man/man3/getfsspec.3		comp-c-man		.man
+./usr/share/man/man3/getfsspecname.3		comp-c-man		.man
 ./usr/share/man/man3/getfstype.3		comp-obsolete		obsolete
 ./usr/share/man/man3/getfstypename.3		comp-c-man		.man
 ./usr/share/man/man3/getgrent.3			comp-c-man		.man

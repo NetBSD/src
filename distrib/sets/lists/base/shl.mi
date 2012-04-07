@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.622 2012/04/06 10:49:28 spz Exp $
+# $NetBSD: shl.mi,v 1.623 2012/04/07 04:09:54 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -72,7 +72,7 @@
 ./lib/libtermlib.so.0.6				base-sys-shlib		dynamicroot
 ./lib/libutil.so				base-sys-shlib		dynamicroot
 ./lib/libutil.so.7				base-sys-shlib		dynamicroot
-./lib/libutil.so.7.19				base-sys-shlib		dynamicroot
+./lib/libutil.so.7.20				base-sys-shlib		dynamicroot
 ./lib/libz.so					base-sys-shlib		dynamicroot
 ./lib/libz.so.1					base-sys-shlib		dynamicroot
 ./lib/libz.so.1.0				base-sys-shlib		dynamicroot
@@ -687,7 +687,7 @@
 ./usr/lib/libusbhid.so.1.0			base-sys-shlib
 ./usr/lib/libutil.so				base-sys-shlib
 ./usr/lib/libutil.so.7				base-sys-shlib
-./usr/lib/libutil.so.7.19			base-sys-shlib
+./usr/lib/libutil.so.7.20			base-sys-shlib
 ./usr/lib/libuutil.so				base-zfs-shlib		dynamicroot,zfs
 ./usr/lib/libuutil.so.0				base-zfs-shlib		dynamicroot,zfs
 ./usr/lib/libuutil.so.0.0			base-zfs-shlib		zfs,dynamicroot
