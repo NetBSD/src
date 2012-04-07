@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_open.c,v 1.6 2011/11/27 00:38:12 tsutsui Exp $	*/
+/*	$NetBSD: subr_disk_open.c,v 1.7 2012/04/07 05:38:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.6 2011/11/27 00:38:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.7 2012/04/07 05:38:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -66,15 +66,20 @@ opendisk(struct device *dv)
 		    device_xname(dv));
 	error = VOP_OPEN(tmpvn, FREAD | FSILENT, NOCRED);
 	if (error) {
-#ifndef DEBUG
 		/*
 		 * Ignore errors caused by missing device, partition,
-		 * or medium.
+		 * medium, or busy [presumably because of a wedge covering it]
 		 */
-		if (error != ENXIO && error != ENODEV)
-#endif
+		switch (error) {
+		case ENXIO:
+		case ENODEV:
+		case EBUSY:
+			break;
+		default:
 			printf("%s: can't open dev %s (%d)\n",
 			    __func__, device_xname(dv), error);
+			break;
+		}
 		vput(tmpvn);
 		return NULL;
 	}
