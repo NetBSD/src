@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.87 2012/04/07 04:09:54 christos Exp $
+# $NetBSD: ad.mips64el,v 1.88 2012/04/07 16:48:23 christos Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -265,7 +265,7 @@
 ./usr/lib/64/libusbhid.so.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libusbhid.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libutil.so.7			base-compat-shlib	compat,pic
-./usr/lib/64/libutil.so.7.20			base-compat-shlib	compat,pic
+./usr/lib/64/libutil.so.7.21			base-compat-shlib	compat,pic
 ./usr/lib/64/libwind.so.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/64/libwind.so.0.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/64/libwrap.so.1			base-compat-shlib	compat,pic
@@ -563,7 +563,7 @@
 ./usr/lib/o32/libusbhid.so.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libusbhid.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libutil.so.7			base-compat-shlib	compat,pic
-./usr/lib/o32/libutil.so.7.20			base-compat-shlib	compat,pic
+./usr/lib/o32/libutil.so.7.21			base-compat-shlib	compat,pic
 ./usr/lib/o32/libwind.so.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/o32/libwind.so.0.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/o32/libwrap.so.1			base-compat-shlib	compat,pic
