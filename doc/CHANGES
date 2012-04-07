@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1693 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1694 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -40,3 +40,10 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	pcc: upgrade to 1.1.0.DEVEL 20120325 [plunky 20120325]
 	openresolv(8): Import openresolv-3.5.1 [roy 20120327]
 	dhcpcd(8): Import dhcpcd-5.5.6 [roy 20120328]
+	apple: Recognize the apple disk partitioning scheme, and auto-discover
+		wedges. Fix iPod disk mounting, by adding quirk.
+		[christos 20120306]
+	fstab: Add NAME=wedgename for fs_spec and routines to parse it. Now
+		wedges can be used in /etc/fstab, even in dynamic environments
+		where disks come and go and wedges get renumbered.
+		[christos 20120306]
