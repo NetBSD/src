@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.90 2012/04/07 17:22:10 christos Exp $
+# $NetBSD: rc.subr,v 1.91 2012/04/07 17:28:44 christos Exp $
 #
 # Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -47,9 +47,6 @@ nl='
 #
 checkyesno()
 {
-	case $_rc_prefix in
-	one)	eval \$${1}=YES; return 0;;
-	esac
 	eval _value=\$${1}
 	case $_value in
 
