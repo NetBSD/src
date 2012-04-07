@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.153 2012/02/25 10:55:27 shattered Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.154 2012/04/07 17:22:10 christos Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -57,6 +57,7 @@
 #	uu*	TU58 cassettes on DL11 controller
 #
 # Disks:
+#	dk*	wedge disk slices
 #	ccd*	concatenated disk devices
 #	cd*	SCSI or ATAPI CD-ROM
 #	cgd*	cryptographic disk devices
@@ -803,6 +804,8 @@ case $i in
 all)
 	makedev all_md
 	makedev std fd ptm pty0 pty1 pty2 pty3
+	makedev dk0 dk1 dk2 dk3 dk4 dk5 dk6 dk7
+	makedev dk8 dk9 dk10 dk11 dk12 dk13 dk14 dk15
 	makedev ccd0 ccd1 ccd2 ccd3
 	makedev cgd0 cgd1 cgd2 cgd3
 	makedev fss0 fss1 fss2 fss3
