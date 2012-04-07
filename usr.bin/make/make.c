@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.84 2011/09/16 15:38:04 joerg Exp $	*/
+/*	$NetBSD: make.c,v 1.85 2012/04/07 18:29:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.84 2011/09/16 15:38:04 joerg Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.85 2012/04/07 18:29:08 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.84 2011/09/16 15:38:04 joerg Exp $");
+__RCSID("$NetBSD: make.c,v 1.85 2012/04/07 18:29:08 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -221,7 +221,7 @@ Make_OODate(GNode *gn)
      * doesn't depend on their modification time...
      */
     if ((gn->type & (OP_JOIN|OP_USE|OP_USEBEFORE|OP_EXEC)) == 0) {
-	(void)Dir_MTime(gn);
+	(void)Dir_MTime(gn, 0);
 	if (DEBUG(MAKE)) {
 	    if (gn->mtime != 0) {
 		fprintf(debug_file, "modified %s...", Targ_FmtTime(gn->mtime));
@@ -406,7 +406,7 @@ MakeFindChild(void *gnp, void *pgnp)
     GNode          *gn = (GNode *)gnp;
     GNode          *pgn = (GNode *)pgnp;
 
-    (void)Dir_MTime(gn);
+    (void)Dir_MTime(gn, 0);
     Make_TimeStamp(pgn, gn);
     pgn->unmade--;
 
@@ -574,7 +574,7 @@ MakeHandleUse(void *cgnp, void *pgnp)
 time_t
 Make_Recheck(GNode *gn)
 {
-    time_t mtime = Dir_MTime(gn);
+    time_t mtime = Dir_MTime(gn, 1);
 
 #ifndef RECHECK
     /*
@@ -1336,7 +1336,7 @@ Make_ExpandUse(Lst targs)
 	    *eon = ')';
 	}
 
-	(void)Dir_MTime(gn);
+	(void)Dir_MTime(gn, 0);
 	Var_Set(TARGET, gn->path ? gn->path : gn->name, gn, 0);
 	Lst_ForEach(gn->children, MakeUnmark, gn);
 	Lst_ForEach(gn->children, MakeHandleUse, gn);
