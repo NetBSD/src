@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.6 2012/02/22 17:53:51 christos Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.7 2012/04/07 17:30:55 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -37,7 +37,7 @@
 #if 0
 FILE_RCSID("@(#)$File: apprentice.c,v 1.173 2011/12/08 12:38:24 rrt Exp $")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.6 2012/02/22 17:53:51 christos Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.7 2012/04/07 17:30:55 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -218,7 +218,7 @@ static const struct type_tbl_s {
 	{ XX("ledouble"),	FILE_LEDOUBLE,		FILE_FMT_DOUBLE },
 	{ XX("leid3"),		FILE_LEID3,		FILE_FMT_NUM },
 	{ XX("beid3"),		FILE_BEID3,		FILE_FMT_NUM },
-	{ XX("indirect"),	FILE_INDIRECT,		FILE_FMT_NONE },
+	{ XX("indirect"),	FILE_INDIRECT,		FILE_FMT_NUM },
 	{ XX_NULL,		FILE_INVALID,		FILE_FMT_NONE },
 # undef XX
 # undef XX_NULL
@@ -475,6 +475,9 @@ apprentice_magic_strength(const struct magic *m)
 	case FILE_BEDOUBLE:
 	case FILE_LEDOUBLE:
 		val += 8 * MULT;
+		break;
+
+	case FILE_INDIRECT:
 		break;
 
 	default:
