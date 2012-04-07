@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.14 2012/03/10 21:51:57 joerg Exp $
+# $NetBSD: INSTALL,v 1.15 2012/04/07 09:10:47 nonaka Exp $
 #
 # INSTALL config file (GENERIC with memory disk root)
 #
@@ -9,7 +9,7 @@ include 	"arch/zaurus/conf/GENERIC"
 options 	MEMORY_DISK_HOOKS	# enable root ramdisk
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=4096	# size of memory disk, in blocks
+options 	MEMORY_DISK_ROOT_SIZE=4224	# size of memory disk, in blocks
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # for reduce kernel size.
