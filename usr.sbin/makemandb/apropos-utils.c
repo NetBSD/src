@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.2 2012/02/07 19:17:16 joerg Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.3 2012/04/07 10:44:58 apb Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.2 2012/02/07 19:17:16 joerg Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.3 2012/04/07 10:44:58 apb Exp $");
 
 #include <sys/stat.h>
 
@@ -312,12 +312,14 @@ init_db(int db_flag)
 
 	rc = sqlite3_prepare_v2(db, "PRAGMA user_version", -1, &stmt, NULL);
 	if (rc != SQLITE_OK) {
-		warnx("Unable to query schema version");
+		warnx("Unable to query schema version: %s",
+		    sqlite3_errmsg(db));
 		goto error;
 	}
 	if (sqlite3_step(stmt) != SQLITE_ROW) {
 		sqlite3_finalize(stmt);
-		warnx("Unable to query schema version");
+		warnx("Unable to query schema version: %s",
+		    sqlite3_errmsg(db));
 		goto error;
 	}
 	if (sqlite3_column_int(stmt, 0) != APROPOS_SCHEMA_VERSION) {
@@ -333,14 +335,16 @@ init_db(int db_flag)
 	/* Register the zip and unzip functions for FTS compression */
 	rc = sqlite3_create_function(db, "zip", 1, SQLITE_ANY, NULL, zip, NULL, NULL);
 	if (rc != SQLITE_OK) {
-		warnx("Unable to register function: compress");
+		warnx("Unable to register function: compress: %s",
+		    sqlite3_errmsg(db));
 		goto error;
 	}
 
 	rc = sqlite3_create_function(db, "unzip", 1, SQLITE_ANY, NULL, 
                                  unzip, NULL, NULL);
 	if (rc != SQLITE_OK) {
-		warnx("Unable to register function: uncompress");
+		warnx("Unable to register function: uncompress: %s",
+		    sqlite3_errmsg(db));
 		goto error;
 	}
 	return db;
@@ -457,9 +461,11 @@ run_query(sqlite3 *db, const char *snippet_args[3], query_args *args)
 	rc = sqlite3_create_function(db, "rank_func", 1, SQLITE_ANY, (void *)&idf, 
 	                             rank_func, NULL, NULL);
 	if (rc != SQLITE_OK) {
+		warnx("Unable to register the ranking function: %s",
+		    sqlite3_errmsg(db));
 		sqlite3_close(db);
 		sqlite3_shutdown();
-		errx(EXIT_FAILURE, "Unable to register the ranking function");
+		exit(EXIT_FAILURE);
 	}
 	
 	/* We want to build a query of the form: "select x,y,z from mandb where
