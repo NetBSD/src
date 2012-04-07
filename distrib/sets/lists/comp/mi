@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1750 2012/04/07 04:09:55 christos Exp $
+#	$NetBSD: mi,v 1.1751 2012/04/07 16:48:24 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6682,6 +6682,8 @@
 ./usr/share/man/cat3/getdevmajor.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getdirentries.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getdiskbyname.0		comp-c-catman		.cat
+./usr/share/man/cat3/getdiskcookedname.0	comp-c-catman		.cat
+./usr/share/man/cat3/getdiskrawname.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getdomainname.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getdtablesize.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getenv.0			comp-c-catman		.cat
@@ -12988,6 +12990,8 @@
 ./usr/share/man/html3/getdevmajor.html		comp-c-htmlman		html
 ./usr/share/man/html3/getdirentries.html	comp-c-htmlman		html
 ./usr/share/man/html3/getdiskbyname.html	comp-c-htmlman		html
+./usr/share/man/html3/getdiskcookedname.html	comp-c-htmlman		html
+./usr/share/man/html3/getdiskrawname.html	comp-c-htmlman		html
 ./usr/share/man/html3/getdomainname.html	comp-c-htmlman		html
 ./usr/share/man/html3/getdtablesize.html	comp-c-htmlman		html
 ./usr/share/man/html3/getenv.html		comp-c-htmlman		html
@@ -19208,6 +19212,8 @@
 ./usr/share/man/man3/getdevmajor.3		comp-c-man		.man
 ./usr/share/man/man3/getdirentries.3		comp-c-man		.man
 ./usr/share/man/man3/getdiskbyname.3		comp-c-man		.man
+./usr/share/man/man3/getdiskcookedname.3	comp-c-man		.man
+./usr/share/man/man3/getdiskrawname.3		comp-c-man		.man
 ./usr/share/man/man3/getdomainname.3		comp-c-man		.man
 ./usr/share/man/man3/getdtablesize.3		comp-c-man		.man
 ./usr/share/man/man3/getenv.3			comp-c-man		.man
