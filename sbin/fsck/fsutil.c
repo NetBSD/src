@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.c,v 1.22 2012/04/07 16:44:10 christos Exp $	*/
+/*	$NetBSD: fsutil.c,v 1.23 2012/04/08 04:19:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsutil.c,v 1.22 2012/04/07 16:44:10 christos Exp $");
+__RCSID("$NetBSD: fsutil.c,v 1.23 2012/04/08 04:19:14 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -170,9 +170,10 @@ const char *
 blockcheck(const char *origname)
 {
 	struct stat stslash, stblock, stchar;
-	const char *newname, *raw;
+	const char *newname, *raw, *cooked;
 	struct fstab *fsp;
 	int retried = 0;
+	char cbuf[MAXPATHLEN];
 	static char buf[MAXPATHLEN];
 
 	hot = 0;
@@ -184,7 +185,7 @@ blockcheck(const char *origname)
 retry:
 	if (stat(newname, &stblock) < 0) {
 		perr("Can't stat `%s'", newname);
-		return (origname);
+		return origname;
 	}
 	if (S_ISBLK(stblock.st_mode)) {
 		if (stslash.st_dev == stblock.st_rdev)
@@ -196,26 +197,25 @@ retry:
 		}
 		if (stat(raw, &stchar) < 0) {
 			perr("Can't stat `%s'", raw);
-			return (origname);
+			return origname;
 		}
 		if (S_ISCHR(stchar.st_mode)) {
-			return (raw);
+			return raw;
 		} else {
-			printf("%s is not a character device\n", raw);
-			return (origname);
+			perr("%s is not a character device\n", raw);
+			return origname;
 		}
 	} else if (S_ISCHR(stblock.st_mode) && !retried) {
-		raw = getdiskcookedname(buf, sizeof(buf), newname);
-		if (raw == NULL) {
+		cooked = getdiskcookedname(cbuf, sizeof(cbuf), newname);
+		if (cooked == NULL) {
 			perr("Can't convert to cooked `%s'", newname);
 			return origname;
 		} else
-			newname = raw;
+			newname = cooked;
 		retried++;
 		goto retry;
 	} else if ((fsp = getfsfile(newname)) != 0 && !retried) {
-		char rbuf[MAXPATHLEN];
-		newname = getfsspecname(rbuf, sizeof(rbuf), fsp->fs_spec);
+		newname = getfsspecname(cbuf, sizeof(cbuf), fsp->fs_spec);
 		if (newname == NULL)
 			perr("%s", buf);
 		retried++;
@@ -225,7 +225,7 @@ retry:
 	 * Not a block or character device, just return name and
 	 * let the user decide whether to use it.
 	 */
-	return (origname);
+	return origname;
 }
 
 const char *
