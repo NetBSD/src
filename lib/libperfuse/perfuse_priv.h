@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_priv.h,v 1.27 2012/03/21 10:10:36 matt Exp $ */
+/*  $NetBSD: perfuse_priv.h,v 1.28 2012/04/08 15:13:06 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -28,10 +28,12 @@
 #ifndef _PERFUSE_PRIV_H_
 #define _PERFUSE_PRIV_H_
 
+#include <unistd.h>
 #include <syslog.h>
 #include <paths.h>
 #include <err.h>
 #include <sysexits.h>
+#include <signal.h>
 #include <puffs.h>
 
 #include "perfuse_if.h"
@@ -137,8 +139,8 @@ struct perfuse_node_data {
 	puffs_cookie_t pnd_pn;
 	char pnd_name[MAXPATHLEN];	/* node name */
 	TAILQ_HEAD(,perfuse_node_data) pnd_children;
-	struct timespec pnd_entry_expire;
-	struct timespec pnd_attr_expire;
+	struct timespec *pnd_entry_expire;
+	struct timespec *pnd_attr_expire;
 };
 
 #define PERFUSE_NODE_DATA(opc)	\
