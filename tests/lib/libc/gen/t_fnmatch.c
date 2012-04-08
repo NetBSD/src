@@ -1,4 +1,4 @@
-/* $NetBSD: t_fnmatch.c,v 1.2 2012/03/25 16:31:51 christos Exp $ */
+/* $NetBSD: t_fnmatch.c,v 1.3 2012/04/08 09:58:59 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,15 +29,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fnmatch.c,v 1.2 2012/03/25 16:31:51 christos Exp $");
+__RCSID("$NetBSD: t_fnmatch.c,v 1.3 2012/04/08 09:58:59 jruoho Exp $");
 
 #include <atf-c.h>
 #include <fnmatch.h>
 #include <stdio.h>
-
-/*
- * TODO: Test basic functionality of fnmatch(3) too.
- */
 
 ATF_TC(fnmatch_backslashes);
 ATF_TC_HEAD(fnmatch_backslashes, tc)
@@ -54,10 +50,118 @@ ATF_TC_BODY(fnmatch_backslashes, tc)
 		atf_tc_fail("fnmatch(3) did not translate '\\'");
 }
 
+ATF_TC(fnmatch_casefold);
+ATF_TC_HEAD(fnmatch_casefold, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test FNM_CASEFOLD");
+}
+
+ATF_TC_BODY(fnmatch_casefold, tc)
+{
+	ATF_CHECK(fnmatch("xxx", "XXX", 0) != 0);
+	ATF_CHECK(fnmatch("XXX", "xxx", 0) != 0);
+	ATF_CHECK(fnmatch("xxx", "XxX", 0) != 0);
+	ATF_CHECK(fnmatch("XxX", "xxx", 0) != 0);
+	ATF_CHECK(fnmatch("x*x", "XXX", 0) != 0);
+	ATF_CHECK(fnmatch("**x", "XXX", 0) != 0);
+	ATF_CHECK(fnmatch("*?x", "XXX", 0) != 0);
+
+	ATF_CHECK(fnmatch("xxx", "XXX", FNM_CASEFOLD) == 0);
+	ATF_CHECK(fnmatch("XXX", "xxx", FNM_CASEFOLD) == 0);
+	ATF_CHECK(fnmatch("xxx", "XxX", FNM_CASEFOLD) == 0);
+	ATF_CHECK(fnmatch("XxX", "xxx", FNM_CASEFOLD) == 0);
+	ATF_CHECK(fnmatch("x*x", "XXX", FNM_CASEFOLD) == 0);
+	ATF_CHECK(fnmatch("**x", "XXX", FNM_CASEFOLD) == 0);
+	ATF_CHECK(fnmatch("*?x", "XXX", FNM_CASEFOLD) == 0);
+}
+
+ATF_TC(fnmatch_leadingdir);
+ATF_TC_HEAD(fnmatch_leadingdir, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test FNM_LEADING_DIR");
+}
+
+ATF_TC_BODY(fnmatch_leadingdir, tc)
+{
+	ATF_CHECK(fnmatch("", "/*", 0) != 0);
+	ATF_CHECK(fnmatch(" ", " /*", 0) != 0);
+	ATF_CHECK(fnmatch("x", "x/*", 0) != 0);
+	ATF_CHECK(fnmatch("///", "////*", 0) != 0);
+
+	ATF_CHECK(fnmatch("", "/*", FNM_LEADING_DIR) == 0);
+	ATF_CHECK(fnmatch(" ", " /*", FNM_LEADING_DIR) == 0);
+	ATF_CHECK(fnmatch("x", "x/*", FNM_LEADING_DIR) == 0);
+	ATF_CHECK(fnmatch("///", "////*", FNM_LEADING_DIR) == 0);
+}
+
+ATF_TC(fnmatch_noescape);
+ATF_TC_HEAD(fnmatch_noescape, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test FNM_NOESCAPE");
+}
+
+ATF_TC_BODY(fnmatch_noescape, tc)
+{
+	ATF_CHECK(fnmatch("  \\x", "  \\x", 0) != 0);
+	ATF_CHECK(fnmatch("xx\\x", "xx\\x", 0) != 0);
+	ATF_CHECK(fnmatch("\\xxx", "\\xxx", 0) != 0);
+
+	ATF_CHECK(fnmatch("  \\x", "  \\x", FNM_NOESCAPE) == 0);
+	ATF_CHECK(fnmatch("xx\\x", "xx\\x", FNM_NOESCAPE) == 0);
+	ATF_CHECK(fnmatch("\\xxx", "\\xxx", FNM_NOESCAPE) == 0);
+}
+
+ATF_TC(fnmatch_pathname);
+ATF_TC_HEAD(fnmatch_pathname, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test FNM_PATHNAME");
+}
+
+ATF_TC_BODY(fnmatch_pathname, tc)
+{
+	ATF_CHECK(fnmatch("???x", "xxx/x", FNM_PATHNAME) != 0);
+	ATF_CHECK(fnmatch("***x", "xxx/x", FNM_PATHNAME) != 0);
+
+	ATF_CHECK(fnmatch("???x", "xxxx", FNM_PATHNAME) == 0);
+	ATF_CHECK(fnmatch("*/xxx", "/xxx", FNM_PATHNAME) == 0);
+	ATF_CHECK(fnmatch("x/*.y", "x/z.y", FNM_PATHNAME) == 0);
+}
+
+ATF_TC(fnmatch_period);
+ATF_TC_HEAD(fnmatch_period, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test FNM_PERIOD");
+}
+
+ATF_TC_BODY(fnmatch_period, tc)
+{
+	ATF_CHECK(fnmatch("*x*", "X", FNM_PERIOD) != 0);
+	ATF_CHECK(fnmatch("*x*", "X", FNM_PERIOD | FNM_CASEFOLD) == 0);
+
+	ATF_CHECK(fnmatch("x?y", "x.y", FNM_PATHNAME | FNM_PERIOD) == 0);
+	ATF_CHECK(fnmatch("x*y", "x.y", FNM_PATHNAME | FNM_PERIOD) == 0);
+	ATF_CHECK(fnmatch("*.c", "x.c", FNM_PATHNAME | FNM_PERIOD) == 0);
+	ATF_CHECK(fnmatch("*/?", "x/y", FNM_PATHNAME | FNM_PERIOD) == 0);
+	ATF_CHECK(fnmatch("*/*", "x/y", FNM_PATHNAME | FNM_PERIOD) == 0);
+	ATF_CHECK(fnmatch(".*/?", ".x/y", FNM_PATHNAME | FNM_PERIOD) == 0);
+	ATF_CHECK(fnmatch("*/.?", "x/.y", FNM_PATHNAME | FNM_PERIOD) == 0);
+	ATF_CHECK(fnmatch("x[.]y", "x.y", FNM_PATHNAME | FNM_PERIOD) == 0);
+
+	ATF_CHECK(fnmatch("?x/y", ".x/y", FNM_PATHNAME | FNM_PERIOD) != 0);
+	ATF_CHECK(fnmatch("*x/y", ".x/y", FNM_PATHNAME | FNM_PERIOD) != 0);
+	ATF_CHECK(fnmatch("x/?y", "x/.y", FNM_PATHNAME | FNM_PERIOD) != 0);
+	ATF_CHECK(fnmatch("x/*y", "x/.y", FNM_PATHNAME | FNM_PERIOD) != 0);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, fnmatch_backslashes);
+	ATF_TP_ADD_TC(tp, fnmatch_casefold);
+	ATF_TP_ADD_TC(tp, fnmatch_leadingdir);
+	ATF_TP_ADD_TC(tp, fnmatch_noescape);
+	ATF_TP_ADD_TC(tp, fnmatch_pathname);
+	ATF_TP_ADD_TC(tp, fnmatch_period);
 
 	return atf_no_error();
 }
