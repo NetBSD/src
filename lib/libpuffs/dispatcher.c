@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.38 2011/11/25 15:02:02 manu Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.39 2012/04/08 15:07:45 manu Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.38 2011/11/25 15:02:02 manu Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.39 2012/04/08 15:07:45 manu Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -48,7 +48,29 @@ __RCSID("$NetBSD: dispatcher.c,v 1.38 2011/11/25 15:02:02 manu Exp $");
 
 #include "puffs_priv.h"
 
+#define PUFFS_USE_FS_TTL(pu) (pu->pu_flags & PUFFS_KFLAG_CACHE_FS_TTL) 
+
 static void dispatch(struct puffs_cc *);
+
+static void 
+update_fs_ttl(struct puffs_usermount *pu, puffs_cookie_t opc, 
+	      struct vattr *rvap, 
+	      struct timespec *va_ttl, struct timespec *cn_ttl)
+{
+	struct puffs_node *pn = NULL;
+
+	pn = PU_CMAP(pu, opc);
+
+	(void)memcpy(rvap, &pn->pn_va, sizeof(*rvap));
+
+	va_ttl->tv_sec =  pn->pn_va_ttl.tv_sec;
+	va_ttl->tv_nsec =  pn->pn_va_ttl.tv_nsec;
+
+	if (cn_ttl != NULL) {
+		cn_ttl->tv_sec =  pn->pn_cn_ttl.tv_sec;
+		cn_ttl->tv_nsec =  pn->pn_cn_ttl.tv_nsec;
+	}
+}
 
 /* for our eyes only */
 void
@@ -258,6 +280,7 @@ dispatch(struct puffs_cc *pcc)
 			struct puffs_vnmsg_lookup *auxt = auxbuf;
 			struct puffs_newinfo pni;
 			struct puffs_cn pcn;
+			struct puffs_node *pn = NULL;
 
 			pcn.pcn_pkcnp = &auxt->pvnr_cn;
 			PUFFS_KCREDTOCRED(pcn.pcn_cred, &auxt->pvnr_cn_cred);
@@ -280,8 +303,6 @@ dispatch(struct puffs_cc *pcc)
 				if (error) {
 					pu->pu_pathfree(pu, &pcn.pcn_po_full);
 				} else {
-					struct puffs_node *pn;
-
 					/*
 					 * did we get a new node or a
 					 * recycled node?
@@ -294,6 +315,12 @@ dispatch(struct puffs_cc *pcc)
 						    &pcn.pcn_po_full);
 				}
 			}
+
+			if ((error == 0) && PUFFS_USE_FS_TTL(pu))
+				update_fs_ttl(pu, auxt->pvnr_newnode, 
+					      &auxt->pvnr_va,
+					      &auxt->pvnr_va_ttl, 
+					      &auxt->pvnr_cn_ttl);
 
 			break;
 		}
@@ -335,6 +362,12 @@ dispatch(struct puffs_cc *pcc)
 				}
 			}
 
+			if ((error == 0) && PUFFS_USE_FS_TTL(pu))
+				update_fs_ttl(pu, auxt->pvnr_newnode, 
+					      &auxt->pvnr_va,
+					      &auxt->pvnr_va_ttl, 
+					      &auxt->pvnr_cn_ttl);
+
 			break;
 		}
 
@@ -374,6 +407,12 @@ dispatch(struct puffs_cc *pcc)
 					pn->pn_po = pcn.pcn_po_full;
 				}
 			}
+
+			if ((error == 0) && PUFFS_USE_FS_TTL(pu))
+				update_fs_ttl(pu, auxt->pvnr_newnode, 
+					      &auxt->pvnr_va,
+					      &auxt->pvnr_va_ttl, 
+					      &auxt->pvnr_cn_ttl);
 
 			break;
 		}
@@ -435,6 +474,20 @@ dispatch(struct puffs_cc *pcc)
 
 			error = pops->puffs_node_getattr(pu,
 			    opcookie, &auxt->pvnr_va, pcr);
+
+			if ((error == 0) && PUFFS_USE_FS_TTL(pu)) {
+				struct puffs_node *pn;
+
+				pn = PU_CMAP(pu, opcookie);
+				auxt->pvnr_va_ttl = pn->pn_va_ttl;
+			}
+
+			if ((error == 0) && PUFFS_USE_FS_TTL(pu))
+				update_fs_ttl(pu, opcookie,
+					      &auxt->pvnr_va,
+					      &auxt->pvnr_va_ttl, 
+					      NULL);
+
 			break;
 		}
 
@@ -450,6 +503,12 @@ dispatch(struct puffs_cc *pcc)
 
 			error = pops->puffs_node_setattr(pu,
 			    opcookie, &auxt->pvnr_va, pcr);
+
+			if ((error == 0) && PUFFS_USE_FS_TTL(pu))
+				update_fs_ttl(pu, opcookie,
+					      &auxt->pvnr_va,
+					      &auxt->pvnr_va_ttl, 
+					      NULL);
 			break;
 		}
 
@@ -646,6 +705,12 @@ dispatch(struct puffs_cc *pcc)
 				}
 			}
 
+			if ((error == 0) && PUFFS_USE_FS_TTL(pu))
+				update_fs_ttl(pu, auxt->pvnr_newnode, 
+					      &auxt->pvnr_va,
+					      &auxt->pvnr_va_ttl, 
+					      &auxt->pvnr_cn_ttl);
+
 			break;
 		}
 
@@ -703,6 +768,12 @@ dispatch(struct puffs_cc *pcc)
 					pn->pn_po = pcn.pcn_po_full;
 				}
 			}
+
+			if ((error == 0) && PUFFS_USE_FS_TTL(pu))
+				update_fs_ttl(pu, auxt->pvnr_newnode, 
+					      &auxt->pvnr_va,
+					      &auxt->pvnr_va_ttl, 
+					      &auxt->pvnr_cn_ttl);
 
 			break;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: pnode.c,v 1.10 2008/08/12 19:44:39 pooka Exp $	*/
+/*	$NetBSD: pnode.c,v 1.11 2012/04/08 15:07:45 manu Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: pnode.c,v 1.10 2008/08/12 19:44:39 pooka Exp $");
+__RCSID("$NetBSD: pnode.c,v 1.11 2012/04/08 15:07:45 manu Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -135,6 +135,19 @@ puffs_pn_getmnt(struct puffs_node *pn)
 
 	return pn->pn_mnt;
 }
+
+struct timespec *
+puffs_pn_getvattl(struct puffs_node *pn)
+{
+	return &pn->pn_va_ttl;
+}
+
+struct timespec *
+puffs_pn_getcnttl(struct puffs_node *pn)
+{
+	return &pn->pn_cn_ttl;
+}
+
 
 /* convenience / shortcut */
 void *
