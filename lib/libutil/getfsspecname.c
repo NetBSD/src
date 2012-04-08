@@ -1,4 +1,4 @@
-/*	$NetBSD: getfsspecname.c,v 1.2 2012/04/07 17:10:02 christos Exp $	*/
+/*	$NetBSD: getfsspecname.c,v 1.3 2012/04/08 20:56:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getfsspecname.c,v 1.2 2012/04/07 17:10:02 christos Exp $");
+__RCSID("$NetBSD: getfsspecname.c,v 1.3 2012/04/08 20:56:12 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/sysctl.h>
@@ -67,18 +67,15 @@ getfsspecname(char *buf, size_t bufsiz, const char *name)
 		 */
 		char rbuf[MAXPATHLEN];
 		if (name[0] == '/') {
-			if (getdiskrawname(rbuf, sizeof(rbuf), name) == NULL) {
-				savee = errno;
-				strlcpy(buf, "makeraw failed", bufsiz);
-				goto out;
+			if (getdiskrawname(rbuf, sizeof(rbuf), name) != NULL) {
+				if ((fd = open(rbuf, O_RDONLY)) == -1) {
+					if (errno == EBUSY) {
+						name = strrchr(name, '/') + 1;
+						goto search;
+					}
+				} else
+					close(fd);
 			}
-			if ((fd = open(rbuf, O_RDONLY)) == -1) {
-				if (errno == EBUSY) {
-					name = strrchr(name, '/') + 1;
-					goto search;
-				}
-			} else
-				close(fd);
 		}
 #endif
 		strlcpy(buf, name, bufsiz);
