@@ -55,8 +55,8 @@ extern int hflag;
 //
 void do_help(void);
 void init_program_name(char **argv);
-void error(int value, const char *fmt, ...);
-void fatal(int value, const char *fmt, ...);
+void error(int value, const char *fmt, ...) __printflike(2, 3);
+void fatal(int value, const char *fmt, ...) __dead __printflike(2, 3);
 void usage(const char *kind);
 
 #endif /* __errors__ */
