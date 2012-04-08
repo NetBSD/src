@@ -1,6 +1,6 @@
 .\"	$OpenBSD: patch.1,v 1.22 2008/06/06 20:44:00 jmc Exp $
 .\"	$DragonFly: src/usr.bin/patch/patch.1,v 1.10 2008/08/18 19:15:55 joerg Exp $
-.\"	$NetBSD: patch.1,v 1.14 2009/03/10 13:57:08 joerg Exp $
+.\"	$NetBSD: patch.1,v 1.15 2012/04/08 22:00:39 wiz Exp $
 .\" Copyright 1986, Larry Wall
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,6 @@
 .Nd apply a diff file to an original
 .Sh SYNOPSIS
 .Nm
-.Bk -words
 .Op Fl bCcEeflNnRstuv
 .Op Fl B Ar backup-prefix
 .Op Fl D Ar symbol
@@ -44,7 +43,6 @@
 .Op Fl z Ar backup-ext
 .Op Fl Fl posix
 .Op Ar origfile Op Ar patchfile
-.Ek
 .Nm
 .Pf \*(Lt Ar patchfile
 .Sh DESCRIPTION

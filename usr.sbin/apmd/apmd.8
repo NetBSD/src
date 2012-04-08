@@ -1,4 +1,4 @@
-.\"	$NetBSD: apmd.8,v 1.21 2010/03/20 09:22:37 jruoho Exp $
+.\"	$NetBSD: apmd.8,v 1.22 2012/04/08 22:00:40 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,21 +36,11 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl adlqsv
-.Bk -words
-.Op Fl t Ar rate
-.Ek
-.Bk -words
-.Op Fl S Ar sockname
-.Ek
-.Bk -words
-.Op Fl m Ar sockmode
-.Ek
-.Bk -words
-.Op Fl o Ar sockowner:sockgroup
-.Ek
-.Bk -words
 .Op Fl f Ar devname
-.Ek
+.Op Fl m Ar sockmode
+.Op Fl o Ar sockowner:sockgroup
+.Op Fl S Ar sockname
+.Op Fl t Ar rate
 .Sh DESCRIPTION
 The
 .Nm
@@ -140,15 +130,15 @@ for the owner/group of
 .Pa /var/run/apmdev .
 .It Fl q
 Do not announce suspend and standby requests on the speaker.
-.It Fl s
-The current battery statistics are reported via
-.Xr syslog 3
-and exit without monitoring the APM status.
 .It Fl S Ar sockname
 Specify an alternate socket name (used by
 .Xr apm 8
 to communicate with
 .Nm ) .
+.It Fl s
+The current battery statistics are reported via
+.Xr syslog 3
+and exit without monitoring the APM status.
 .It Fl t Ar rate
 Change the polling rate from 600 seconds to
 .Ar rate
