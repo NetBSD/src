@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.78 2011/08/29 04:12:45 manu Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.79 2012/04/08 15:04:41 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -53,6 +53,7 @@ extern const struct vnodeopv_desc puffs_fifoop_opv_desc;
 extern const struct vnodeopv_desc puffs_msgop_opv_desc;
 
 extern struct pool puffs_pnpool;
+extern struct pool puffs_vapool;
 
 #ifdef DEBUG
 #ifndef PUFFSDEBUG
@@ -89,6 +90,8 @@ extern int puffsdebug; /* puffs_subr.c */
     (((pmp)->pmp_flags & PUFFS_KFLAG_NOCACHE_PAGE) == 0)
 #define PUFFS_USE_FULLPNBUF(pmp)	\
     ((pmp)->pmp_flags & PUFFS_KFLAG_LOOKUP_FULLPNBUF)
+#define PUFFS_USE_FS_TTL(pmp)	\
+    ((pmp)->pmp_flags & PUFFS_KFLAG_CACHE_FS_TTL)
 
 #define PUFFS_WCACHEINFO(pmp)	0
 
@@ -210,6 +213,10 @@ struct puffs_node {
 	struct lockf *	pn_lockf;
 
 	kmutex_t	pn_sizemtx;	/* size modification mutex	*/
+	
+	int		pn_cn_timeout;	/* path cache */
+	int		pn_va_timeout;	/* attribute cache */
+	struct vattr *	pn_va_cache;	/* attribute cache */
 
 	LIST_ENTRY(puffs_node) pn_hashent;
 };
