@@ -1,4 +1,4 @@
-.\"	$NetBSD: apm.8,v 1.20 2010/03/20 07:59:44 jruoho Exp $
+.\"	$NetBSD: apm.8,v 1.21 2012/04/08 22:00:40 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,15 +36,11 @@
 .Nd Advanced Power Management control program
 .Sh SYNOPSIS
 .Nm
-.Op Fl abdlmsSvz
-.Bk -words
+.Op Fl abdlmSsvz
 .Op Fl f Ar sockname
-.Ek
 .Nm zzz
 .Op Fl Sz
-.Bk -words
 .Op Fl f Ar sockname
-.Ek
 .Sh DESCRIPTION
 The
 .Nm
@@ -64,33 +60,33 @@ displays the current power management state in verbose form.
 .Pp
 Available command-line flags are:
 .Bl -tag -width "-f sockname" -compact
-.It Fl z
-Put the system into suspend (deep sleep) mode.
-.It Fl S
-Put the system into stand-by (light sleep) mode.
-.It Fl l
-Display the estimated battery lifetime in percent.
-.It Fl m
-Display the estimated battery lifetime in minutes.
+.It Fl a
+Display the external charger (A/C status):  0 means disconnected, 1
+means connected, 2 means backup power source, and 255 means unknown.
 .It Fl b
 Display the battery status:
 0 means high, 1 means low, 2 means critical, 3 means charging,
 4 means absent, and 255 means unknown.
-.It Fl a
-Display the external charger (A/C status):  0 means disconnected, 1
-means connected, 2 means backup power source, and 255 means unknown.
-.It Fl s
-Display if power management is enabled.
-.It Fl v
-Request more verbose description of the displayed states.
+.It Fl d
+Do not communicate with the APM daemon; attempt instead to manipulate
+the APM control device directly.
 .It Fl f Ar sockname
 Set the name of the socket via which to contact
 .Xr apmd 8
 to
 .Pa sockname .
-.It Fl d
-Do not communicate with the APM daemon; attempt instead to manipulate
-the APM control device directly.
+.It Fl l
+Display the estimated battery lifetime in percent.
+.It Fl m
+Display the estimated battery lifetime in minutes.
+.It Fl S
+Put the system into stand-by (light sleep) mode.
+.It Fl s
+Display if power management is enabled.
+.It Fl v
+Request more verbose description of the displayed states.
+.It Fl z
+Put the system into suspend (deep sleep) mode.
 .El
 .Pp
 The

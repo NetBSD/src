@@ -1,4 +1,4 @@
-.\"	$NetBSD: lp.1,v 1.10 2009/04/12 19:39:52 wiz Exp $
+.\"	$NetBSD: lp.1,v 1.11 2012/04/08 22:00:40 wiz Exp $
 .\"
 .\" Copyright (c) 1995 Joerg Wunsch
 .\"
@@ -43,15 +43,9 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl cs
-.Bk -words
-.Op Fl o Ar option
-.Ek
-.Bk -words
 .Op Fl d Ar printer
-.Ek
-.Bk -words
 .Op Fl n Ar num
-.Ek
+.Op Fl o Ar option
 .Op Ar
 .Sh DESCRIPTION
 .Nm
@@ -72,7 +66,7 @@ command exit only after further access to any of the input files is no
 longer required.
 The application can then safely delete or modify the files without
 affecting the output operation.
-.It Fl d Ar dest
+.It Fl d Ar printer
 Specify a particular printer.
 If no
 .Fl d
@@ -87,11 +81,11 @@ are taken as the destination printer.
 Specify that
 .Ar num
 copies of each of the named files shall be printed.
-.It Fl s
-Silent operation.
-.It Fl o
+.It Fl o Ar option
 Printer specific options.
 Not supported, provided only as a compatibility option for SVR4.
+.It Fl s
+Silent operation.
 .El
 .Sh ENVIRONMENT
 As described above, the variables

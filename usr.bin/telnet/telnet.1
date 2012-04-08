@@ -1,4 +1,4 @@
-.\"	$NetBSD: telnet.1,v 1.32 2012/03/22 07:58:20 wiz Exp $
+.\"	$NetBSD: telnet.1,v 1.33 2012/04/08 22:00:39 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,41 +39,14 @@
 protocol
 .Sh SYNOPSIS
 .Nm
-.Op Fl 4
-.Op Fl 6
-.Op Fl 8
-.Op Fl E
-.Op Fl F
-.Op Fl K
-.Op Fl L
-.Op Fl N
-.Bk -words
-.Op Fl S Ar tos
-.Ek
-.Bk -words
-.Op Fl X Ar authtype
-.Ek
-.Op Fl a
-.Op Fl c
-.Op Fl d
-.Bk -words
+.Op Fl 468acdEFfKLNrx
 .Op Fl e Ar escapechar
-.Ek
-.Op Fl f
-.Bk -words
 .Op Fl k Ar realm
-.Ek
-.Bk -words
 .Op Fl l Ar user
-.Ek
-.Bk -words
 .Op Fl n Ar tracefile
-.Ek
-.Bk -words
 .Op Fl P Ar policy
-.Ek
-.Op Fl r
-.Op Fl x
+.Op Fl S Ar tos
+.Op Fl X Ar authtype
 .Oo
 .Ar host
 .Op Ar port

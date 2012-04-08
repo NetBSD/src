@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslogd.8,v 1.50 2012/03/28 17:39:33 christos Exp $
+.\"	$NetBSD: syslogd.8,v 1.51 2012/04/08 22:00:41 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,36 +38,18 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl dnrSsTUv
-.Bk -words
 .Op Fl b Ar bind_address
-.Ek
-.Bk -words
 .Op Fl f Ar config_file
-.Ek
-.Bk -words
 .Op Fl g Ar group
-.Ek
-.Bk -words
 .Op Fl m Ar mark_interval
-.Ek
-.Bk -words
 .Op Fl o Ar output_format
-.Ek
-.Bk -words
 .Op Fl P Ar file_list
-.Ek
-.Bk -words
 .Oo
 .Fl p Ar log_socket
 .Op Fl p Ar log_socket2 ...
 .Oc
-.Ek
-.Bk -words
 .Op Fl t Ar chroot_dir
-.Ek
-.Bk -words
 .Op Fl u Ar user
-.Ek
 .Sh DESCRIPTION
 .Nm
 reads and logs messages to the system console, log files, other
