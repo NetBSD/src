@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1110 2012/04/07 17:26:16 christos Exp $
+$NetBSD: pcidevs,v 1.1111 2012/04/08 12:40:03 jakllsch Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -625,6 +625,7 @@ vendor ATTANSIC		0x1969	Attansic Technologies
 vendor JMICRON		0x197b	JMicron Technology
 vendor EVE		0x1adb	EVE
 vendor QUMRANET		0x1af4	Qumranet
+vendor FRESCO		0x1b73	Fresco Logic
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor SUNIX2		0x1fd4	SUNIX Co
@@ -2053,6 +2054,10 @@ product FORE PCA200E	0x0300	ATM PCA-200e
 /* Forte Media products */
 product FORTEMEDIA	FM801	0x0801	801 Sound
 product FORTEMEDIA	PCIJOY	0x0802	PCI Gameport Joystick
+
+/* Fresco Logic products */
+product FRESCO FL1000	0x1000	FL1000 USB3 Host Controller
+product FRESCO FL1009	0x1009	FL1009 USB3 Host Controller
 
 /* Future Domain products */
 product FUTUREDOMAIN TMC_18C30	0x0000	TMC-18C30 (36C70)
