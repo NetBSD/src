@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.27 2012/01/14 22:36:54 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.28 2012/04/08 10:38:34 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@ BRD_DECL(qnap);
 BRD_DECL(iomega);
 BRD_DECL(dlink);
 BRD_DECL(nhnas);
+BRD_DECL(kurot4);
 
 static void brdfixup(void);
 static void setup(void);
@@ -170,6 +171,13 @@ static struct brdprop brdlist[] = {
 	"eumb", 0x4500, 9600,
 	NULL, nhnasbrdfix, NULL, nhnasreset },
     {
+	"miconv2",
+	"KuroBox/T4",
+	BRD_KUROBOXT4,
+	0,
+	"eumb", 0x4600, 57600,
+	kurot4setup, kurot4brdfix, NULL, NULL },
+    {
 	"unknown",
 	"Unknown board",
 	BRD_UNKNOWN,
@@ -207,7 +215,7 @@ brdsetup(void)
 	char *consname;
 	int consport;
 	uint32_t extclk;
-	unsigned pchb, pcib, dev11, dev13, dev15, dev16, val;
+	unsigned pchb, pcib, dev11, dev12, dev13, dev15, dev16, val;
 	extern struct btinfo_memory bi_mem;
 	extern struct btinfo_console bi_cons;
 	extern struct btinfo_clock bi_clk;
@@ -229,6 +237,7 @@ brdsetup(void)
 	busclock = 0;
 
 	dev11 = pcimaketag(0, 11, 0);
+	dev12 = pcimaketag(0, 12, 0);
 	dev13 = pcimaketag(0, 13, 0);
 	dev15 = pcimaketag(0, 15, 0);
 	dev16 = pcimaketag(0, 16, 0);
@@ -243,7 +252,10 @@ brdsetup(void)
 	}
 	else if (PCI_CLASS(pcicfgread(dev11, PCI_CLASS_REG)) == PCI_CLASS_ETH) {
 		/* ADMtek AN985 (tlp) or RealTek 8169S (re) at dev 11 */
-		brdtype = BRD_KUROBOX;
+		if (PCI_VENDOR(pcicfgread(dev12, PCI_ID_REG)) != 0x1095)
+			brdtype = BRD_KUROBOX;
+		else
+			brdtype = BRD_KUROBOXT4;
 	}
 	else if (PCI_VENDOR(pcicfgread(dev15, PCI_ID_REG)) == 0x11ab) {
 		/* SKnet/Marvell (sk) at dev 15 */
@@ -761,6 +773,23 @@ nhnasreset()
 	NHGPIO_WRITE(0x02);
 	delay(100000);
 	/*NOTREACHED*/
+}
+
+void
+kurot4setup(struct brdprop *brd)
+{
+
+	if (PCI_VENDOR(pcicfgread(pcimaketag(0, 11, 0), PCI_ID_REG)) == 0x10ec)
+		brd->extclk = 32768000; /* decr 2457600Hz */
+	else
+		brd->extclk = 32521333; /* decr 2439100Hz */
+}
+
+void
+kurot4brdfix(struct brdprop *brd)
+{
+
+	init_uart(uart2base, 38400, LCR_8BITS | LCR_PEVEN);
 }
 
 void
