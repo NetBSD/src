@@ -54,7 +54,7 @@ extern const long kDefault;
 //
 // Forward declarations
 //
-void bad_input(const char *fmt, ...);
+void bad_input(const char *fmt, ...) __printflike(1, 2);
 void flush_to_newline(int keep_newline);
 int get_command(const char *prompt, int promptBeforeGet, int *command);
 uint32_t get_multiplier(long divisor);
