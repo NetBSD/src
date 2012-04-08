@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.100 2011/10/19 01:39:29 manu Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.101 2012/04/08 15:04:41 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.100 2011/10/19 01:39:29 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.101 2012/04/08 15:04:41 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -763,6 +763,8 @@ puffs_vfsop_init(void)
 
 	pool_init(&puffs_pnpool, sizeof(struct puffs_node), 0, 0, 0,
 	    "puffpnpl", &pool_allocator_nointr, IPL_NONE);
+	pool_init(&puffs_vapool, sizeof(struct vattr), 0, 0, 0,
+	    "puffvapl", &pool_allocator_nointr, IPL_NONE);
 	puffs_msgif_init();
 }
 
@@ -772,6 +774,7 @@ puffs_vfsop_done(void)
 
 	puffs_msgif_destroy();
 	pool_destroy(&puffs_pnpool);
+	pool_destroy(&puffs_vapool);
 }
 
 int
