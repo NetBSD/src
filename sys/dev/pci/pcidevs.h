@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1105 2012/04/07 17:27:25 christos Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1106 2012/04/08 12:44:02 jakllsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1110 2012/04/07 17:26:16 christos Exp
+ *	NetBSD: pcidevs,v 1.1112 2012/04/08 12:43:36 jakllsch Exp
  */
 
 /*
@@ -632,6 +632,7 @@
 #define	PCI_VENDOR_JMICRON	0x197b		/* JMicron Technology */
 #define	PCI_VENDOR_EVE	0x1adb		/* EVE */
 #define	PCI_VENDOR_QUMRANET	0x1af4		/* Qumranet */
+#define	PCI_VENDOR_FRESCO	0x1b73		/* Fresco Logic */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_SUNIX2	0x1fd4		/* SUNIX Co */
@@ -2061,6 +2062,10 @@
 #define	PCI_PRODUCT_FORTEMEDIA_FM801	0x0801		/* 801 Sound */
 #define	PCI_PRODUCT_FORTEMEDIA_PCIJOY	0x0802		/* PCI Gameport Joystick */
 
+/* Fresco Logic products */
+#define	PCI_PRODUCT_FRESCO_FL1000	0x1000		/* FL1000 USB3 Host Controller */
+#define	PCI_PRODUCT_FRESCO_FL1009	0x1009		/* FL1009 USB3 Host Controller */
+
 /* Future Domain products */
 #define	PCI_PRODUCT_FUTUREDOMAIN_TMC_18C30	0x0000		/* TMC-18C30 (36C70) */
 
@@ -3465,7 +3470,8 @@
 #define	PCI_PRODUCT_NEC_VRC4173_AC97U	0x00a6		/* VRC4173 AC97 Unit */
 #define	PCI_PRODUCT_NEC_PD72870	0x00cd		/* uPD72870 IEEE 1394 Host Controller */
 #define	PCI_PRODUCT_NEC_PD72871	0x00ce		/* uPD72871 IEEE 1394 Host Controller */
-#define	PCI_PRODUCT_NEC_PD720100A	0x00e0		/* USB Host Controller */
+#define	PCI_PRODUCT_NEC_PD720100A	0x00e0		/* USB2 Host Controller */
+#define	PCI_PRODUCT_NEC_PD720200	0x0194		/* USB3 Host Controller */
 #define	PCI_PRODUCT_NEC_VA26D	0x803c		/* Versa Pro LX VA26D */
 #define	PCI_PRODUCT_NEC_VERSALX	0x8058		/* Versa LX */
 
