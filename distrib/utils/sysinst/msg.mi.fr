@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.125 2012/04/07 23:25:18 riz Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.126 2012/04/08 03:11:14 uebayasi Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1085,10 +1085,6 @@ redémarré, vous pourrez utiliser 'pkgin' pour installer et aménager des
 paquetages additionnels.}
 
 message pkgpath
-{The following are the protocol, host, directory, user, and password that
-will be used.  If "user" is "ftp", then the password is not needed.
-
-}
 {Voici les configurations actuelles pour : protocole, serveur, répertoire,
 utilisateur et mot de passe qui seront utilisés.  Si "utilisateur" est "ftp",
 un mot de passe n'est pas requis.
