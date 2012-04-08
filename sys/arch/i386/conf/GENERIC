@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1069 2012/04/07 05:40:41 christos Exp $
+# $NetBSD: GENERIC,v 1.1070 2012/04/08 20:49:29 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1069 $"
+#ident 		"GENERIC-$Revision: 1.1070 $"
 
 maxusers	64		# estimated number of users
 
@@ -1061,6 +1061,7 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 # CardBus network cards
 ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11)
+bwi*	at cardbus? function ?	# Broadcom BCM43xx wireless
 ex*	at cardbus? function ?	# 3Com 3c575TX
 fxp*	at cardbus? function ?	# Intel i8255x
 ral*	at cardbus? function ?	# Ralink Technology RT25x0 802.11a/b/g
