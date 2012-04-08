@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.77 2011/09/27 01:48:57 christos Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.78 2012/04/08 15:04:41 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -159,8 +159,9 @@ struct puffs_kargs {
 #define PUFFS_KFLAG_WTCACHE		0x08	/* write-through page cache */
 #define PUFFS_KFLAG_IAONDEMAND		0x10	/* inactive only on demand  */
 #define PUFFS_KFLAG_LOOKUP_FULLPNBUF	0x20	/* full pnbuf in lookup     */
-#define PUFFS_KFLAG_MASK		0x3f
 #define PUFFS_KFLAG_NOCACHE_ATTR	0x40	/* no attrib cache (unused) */
+#define PUFFS_KFLAG_CACHE_FS_TTL	0x80	/* cache use TTL from FS    */
+#define PUFFS_KFLAG_MASK		0xbf
 
 #define PUFFS_FHFLAG_DYNAMIC		0x01
 #define PUFFS_FHFLAG_NFSV2		0x02
@@ -360,6 +361,10 @@ struct puffs_vnmsg_lookup {
 	enum vtype		pvnr_vtype;		/* IN	*/
 	voff_t			pvnr_size;		/* IN	*/
 	dev_t			pvnr_rdev;		/* IN	*/
+	/* Used only if PUFFS_KFLAG_CACHE_USE_TTL */
+	struct vattr		pvnr_va;		/* IN	*/
+	struct timespec		pvnr_va_ttl;		/* IN	*/
+	struct timespec		pvnr_cn_ttl;		/* IN	*/
 };
 
 struct puffs_vnmsg_create {
@@ -370,6 +375,9 @@ struct puffs_vnmsg_create {
 
 	struct vattr		pvnr_va;		/* OUT	*/
 	puffs_cookie_t		pvnr_newnode;		/* IN	*/
+	/* Used only if PUFFS_KFLAG_CACHE_USE_TTL */
+	struct timespec		pvnr_va_ttl;		/* IN	*/
+	struct timespec		pvnr_cn_ttl;		/* IN	*/
 };
 
 struct puffs_vnmsg_mknod {
@@ -380,6 +388,9 @@ struct puffs_vnmsg_mknod {
 
 	struct vattr		pvnr_va;		/* OUT	*/
 	puffs_cookie_t		pvnr_newnode;		/* IN	*/
+	/* Used only if PUFFS_KFLAG_CACHE_USE_TTL */
+	struct timespec		pvnr_va_ttl;		/* IN	*/
+	struct timespec		pvnr_cn_ttl;		/* IN	*/
 };
 
 struct puffs_vnmsg_open {
@@ -410,6 +421,8 @@ struct puffs_vnmsg_setgetattr {
 
 	struct puffs_kcred	pvnr_cred;		/* OUT	*/
 	struct vattr		pvnr_va;		/* IN/OUT (op depend) */
+	/* Used only if PUFFS_KFLAG_CACHE_USE_TTL */
+	struct timespec		pvnr_va_ttl;		/* IN	*/
 };
 
 #define puffs_vnmsg_read puffs_vnmsg_rw
@@ -480,6 +493,9 @@ struct puffs_vnmsg_mkdir {
 
 	struct vattr		pvnr_va;		/* OUT	*/
 	puffs_cookie_t		pvnr_newnode;		/* IN	*/
+	/* Used only if PUFFS_KFLAG_CACHE_USE_TTL */
+	struct timespec		pvnr_va_ttl;		/* IN	*/
+	struct timespec		pvnr_cn_ttl;		/* IN	*/
 };
 
 struct puffs_vnmsg_rmdir {
@@ -522,6 +538,9 @@ struct puffs_vnmsg_symlink {
 	struct vattr		pvnr_va;		/* OUT	*/
 	puffs_cookie_t		pvnr_newnode;		/* IN	*/
 	char			pvnr_link[MAXPATHLEN];	/* OUT	*/
+	/* Used only if PUFFS_KFLAG_CACHE_USE_TTL */
+	struct timespec		pvnr_va_ttl;		/* IN	*/
+	struct timespec		pvnr_cn_ttl;		/* IN	*/
 };
 
 struct puffs_vnmsg_readdir {
