@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.16 2012/02/22 22:56:44 nisimura Exp $ */
+/* $NetBSD: satmgr.c,v 1.17 2012/04/08 12:11:57 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -139,6 +139,7 @@ static void dbutton(struct satmgr_softc *, int);
 static void ibutton(struct satmgr_softc *, int);
 static void idosync(void *);
 static void iprepcmd(struct satmgr_softc *, int, int, int, int, int, int);
+static void mbutton(struct satmgr_softc *, int);
 static void guarded_pbutton(void *);
 static void sched_sysmon_pbutton(void *);
 
@@ -154,6 +155,7 @@ static struct satops satmodel[] = {
     { "dlink",    NULL,  NULL,    dpwroff, dbutton },
     { "iomega",   iinit, ireboot, ipwroff, ibutton },
     { "kurobox",  NULL,  kreboot, kpwroff, kbutton },
+    { "miconv2",  NULL,  NULL,    NULL,    mbutton },
     { "qnap",     qinit, qreboot, qpwroff, qbutton },
     { "synology", sinit, sreboot, spwroff, sbutton }
 };
@@ -947,6 +949,12 @@ iprepcmd(struct satmgr_softc *sc, int pow, int led, int rat, int fan,
 	 * XXX We should protect ourselves against other writers, while
 	 * XXX synchronization is active!
 	 */
+}
+
+static void
+mbutton(struct satmgr_softc *sc, int ch)
+{
+	/* do nothing */
 }
 
 static void
