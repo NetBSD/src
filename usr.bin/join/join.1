@@ -1,4 +1,4 @@
-.\"	$NetBSD: join.1,v 1.12 2003/08/07 11:14:10 agc Exp $
+.\"	$NetBSD: join.1,v 1.13 2012/04/08 22:00:39 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"   The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)join.1	8.3 (Berkeley) 4/28/95
-.\"	$NetBSD: join.1,v 1.12 2003/08/07 11:14:10 agc Exp $
+.\"	$NetBSD: join.1,v 1.13 2012/04/08 22:00:39 wiz Exp $
 .\"
 .Dd April 28, 1995
 .Dt JOIN 1
@@ -41,20 +41,10 @@
 .Nd relational database operator
 .Sh SYNOPSIS
 .Nm
-.Bk -words
-.Oo
-.Fl a Ar file_number | Fl v Ar file_number
-.Oc
-.Ek
-.Bk -words
+.Op Fl a Ar file_number | Fl v Ar file_number
 .Op Fl e Ar string
-.Ek
-.Bk -words
 .Op Fl j Ar file_number field
-.Ek
-.Bk -words
 .Op Fl o Ar list
-.Ek
 .Op Fl t Ar char
 .Op Fl \&1 Ar field
 .Op Fl \&2 Ar field
