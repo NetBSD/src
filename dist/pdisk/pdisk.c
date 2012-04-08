@@ -167,14 +167,12 @@ main(int argc, char **argv)
     init_program_name(argv);
 
     if (sizeof(DPME) != PBLOCK_SIZE) {
-	fatal(-1, "Size of partition map entry (%lu) "
-		"is not equal to block size (%d)\n",
-		(unsigned long)sizeof(DPME), PBLOCK_SIZE);
+	fatal(-1, "Size of partition map entry (%zu) "
+	    "is not equal to block size (%d)\n", sizeof(DPME), PBLOCK_SIZE);
     }
     if (sizeof(Block0) != PBLOCK_SIZE) {
-	fatal(-1, "Size of block zero structure (%lu) "
-		"is not equal to block size (%d)\n",
-		(unsigned long)sizeof(Block0), PBLOCK_SIZE);
+	fatal(-1, "Size of block zero structure (%zu) "
+	    "is not equal to block size (%d)\n", sizeof(Block0), PBLOCK_SIZE);
     }
     if (strcmp(VERSION, get_version_string()) != 0) {
 	fatal(-1, "Version string static form (%s) does not match dynamic form (%s)\n",
