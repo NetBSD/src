@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.26 2012/03/21 10:10:36 matt Exp $ */
+/*  $NetBSD: perfuse.c,v 1.27 2012/04/08 15:13:06 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -505,9 +505,27 @@ perfuse_init(struct perfuse_callbacks *pc, struct perfuse_mount_info *pmi)
 	 * mentioned bug got its execution time slashed by factor 50.
 	 *
 	 * PUFFS_KFLAG_NOCACHE_NAME is required so that we can see changes
-	 * done by other machines in networked filesystems.
+	 * done by other machines in networked filesystems. In later
+	 * NetBSD releases we use the alternative PUFFS_KFLAG_CACHE_FS_TTL, 
+	 * which implement name cache with a filesystem-provided TTL.
 	 */
+#ifdef PUFFS_KFLAG_CACHE_FS_TTL
+	puffs_flags = PUFFS_KFLAG_CACHE_FS_TTL;
+#else
 	puffs_flags = PUFFS_KFLAG_NOCACHE_NAME;
+#endif
+	
+	/* 
+	 * It would be nice to avoid useless inactive, and only
+	 * get them on file open for writing (PUFFS does 
+	 * CLOSE/WRITE/INACTIVE, therefore actual close must be
+	 * done at INACTIVE time). Unfortunatley, puffs_setback
+	 * crashes when called on OPEN, therefore leave it for 
+	 * another day.
+	 */
+#ifdef notyet
+	puffs_flags |= PUFFS_FLAG_IAONDEMAND;
+#endif
 
 	if (perfuse_diagflags & PDF_PUFFS)
 		puffs_flags |= PUFFS_FLAG_OPDUMP;

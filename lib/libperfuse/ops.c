@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.52 2012/03/21 10:10:36 matt Exp $ */
+/*  $NetBSD: ops.c,v 1.53 2012/04/08 15:13:06 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -49,9 +49,11 @@ extern int perfuse_diagflags;
 static void print_node(const char *, puffs_cookie_t);
 #endif
 static void set_expire(puffs_cookie_t, struct fuse_entry_out *, 
-   struct fuse_attr_out *);
+    struct fuse_attr_out *);
+#ifndef PUFFS_KFLAG_CACHE_FS_TTL
 static int attr_expired(puffs_cookie_t);
 static int entry_expired(puffs_cookie_t);
+#endif /* PUFFS_KFLAG_CACHE_FS_TTL */
 static int xchg_msg(struct puffs_usermount *, puffs_cookie_t, 
     perfuse_msg_t *, size_t, enum perfuse_xchg_pb_reply); 
 static int mode_access(puffs_cookie_t, const struct puffs_cred *, mode_t);
@@ -336,12 +338,18 @@ fuse_attr_to_vap(struct perfuse_state *ps, struct vattr *vap,
 
 static void 
 set_expire(puffs_cookie_t opc, struct fuse_entry_out *feo,
-	struct fuse_attr_out *fao)
+	   struct fuse_attr_out *fao)
 {
+ 	struct puffs_node *pn = (struct puffs_node *)opc;
+#ifndef PUFFS_KFLAG_CACHE_FS_TTL
 	struct perfuse_node_data *pnd = PERFUSE_NODE_DATA(opc);
 	struct timespec entry_ts;
 	struct timespec attr_ts;
 	struct timespec now;
+
+	if (clock_gettime(CLOCK_REALTIME, &now) != 0)
+		DERR(EX_OSERR, "clock_gettime failed");
+#endif /* PUFFS_KFLAG_CACHE_FS_TTL */
 
 	if ((feo == NULL) && (fao == NULL))
 		DERRX(EX_SOFTWARE, "%s: feo and fao NULL", __func__);
@@ -349,10 +357,13 @@ set_expire(puffs_cookie_t opc, struct fuse_entry_out *feo,
 	if ((feo != NULL) && (fao != NULL))
 		DERRX(EX_SOFTWARE, "%s: feo and fao != NULL", __func__);
 
-	if (clock_gettime(CLOCK_REALTIME, &now) != 0)
-		DERR(EX_OSERR, "clock_gettime failed");
-
 	if (feo != NULL) {
+#ifdef PUFFS_KFLAG_CACHE_FS_TTL
+		pn->pn_cn_ttl.tv_sec = feo->entry_valid;
+		pn->pn_cn_ttl.tv_nsec = feo->entry_valid_nsec;
+		pn->pn_va_ttl.tv_sec = feo->attr_valid;
+		pn->pn_va_ttl.tv_nsec = feo->attr_valid_nsec;
+#else /* PUFFS_KFLAG_CACHE_FS_TTL */
 		entry_ts.tv_sec = (time_t)feo->entry_valid;
 		entry_ts.tv_nsec = (long)feo->entry_valid_nsec;
 
@@ -362,18 +373,25 @@ set_expire(puffs_cookie_t opc, struct fuse_entry_out *feo,
 		attr_ts.tv_nsec = (long)feo->attr_valid_nsec;
 
 		timespecadd(&now, &attr_ts, &pnd->pnd_attr_expire);
+#endif /* PUFFS_KFLAG_CACHE_FS_TTL */
 	} 
 
 	if (fao != NULL) {
+#ifdef PUFFS_KFLAG_CACHE_FS_TTL
+		pn->pn_va_ttl.tv_sec = fao->attr_valid;
+		pn->pn_va_ttl.tv_nsec = fao->attr_valid_nsec;
+#else /* PUFFS_KFLAG_CACHE_FS_TTL */
 		attr_ts.tv_sec = (time_t)fao->attr_valid;
 		attr_ts.tv_nsec = (long)fao->attr_valid_nsec;
 
 		timespecadd(&now, &attr_ts, &pnd->pnd_attr_expire);
+#endif /* PUFFS_KFLAG_CACHE_FS_TTL */
 	} 
 
 	return;
 }
 
+#ifndef PUFFS_KFLAG_CACHE_FS_TTL
 static int
 attr_expired(puffs_cookie_t opc)
 {
@@ -405,6 +423,7 @@ entry_expired(puffs_cookie_t opc)
 
 	return timespeccmp(&expire, &now, <);
 }
+#endif /* PUFFS_KFLAG_CACHE_FS_TTL */
 
 
 /* 
@@ -483,6 +502,7 @@ node_lookup_common(struct puffs_usermount *pu, puffs_cookie_t opc,
 		break;
 	}
 
+#ifndef PUFFS_KFLAG_CACHE_FS_TTL
 	/*
 	 * Check for cached name
 	 */
@@ -491,6 +511,7 @@ node_lookup_common(struct puffs_usermount *pu, puffs_cookie_t opc,
 		*pnp = oldpnd->pnd_pn;
 		return 0;
 	}
+#endif /* PUFFS_KFLAG_CACHE_FS_TTL */
 
 	len = strlen(path) + 1;
 
@@ -1160,7 +1181,9 @@ perfuse_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
 	 * itself. If we want to live, hide that!
 	 */
 	if ((opc == (puffs_cookie_t)pn) && (strcmp(pcn->pcn_name, ".") != 0)) {
-		DWARNX("lookup returned parent");
+		DERRX(EX_SOFTWARE, "lookup \"%s\" in \"%s\" returned parent",
+		      pcn->pcn_name, perfuse_node_path(opc));
+		/* NOTREACHED */
 		return ESTALE;
 	}
 
@@ -1457,7 +1480,7 @@ perfuse_node_open(struct puffs_usermount *pu, puffs_cookie_t opc, int mode,
 	 * so that we can reuse it later
 	 */
 	perfuse_new_fh(opc, foo->fh, mode);
-	 
+
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & (PDF_FH|PDF_FILENAME))
 		DPRINTF("%s: opc = %p, file = \"%s\", "
@@ -1572,6 +1595,7 @@ perfuse_node_getattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 
 	ps = puffs_getspecific(pu);
 		
+#ifndef PUFFS_KFLAG_CACHE_FS_TTL
 	/*
 	 * Check for cached attributes
 	 * This still require serialized access to size.
@@ -1581,6 +1605,7 @@ perfuse_node_getattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 			     sizeof(*vap));
 		goto out;
 	}
+#endif /* PUFFS_KFLAG_CACHE_FS_TTL */
 
 	/*
 	 * FUSE_GETATTR_FH must be set in fgi->flags 
@@ -1722,6 +1747,7 @@ perfuse_node_setattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 		 * to avoid reordered GETATTR and SETATTR.
 		 * Out of order SETATTR can report stale size,
 		 * which will cause the kernel to truncate the file.
+		 * XXX Probably useless now we have a lock on GETATTR
 		 */
 		while (pnd->pnd_flags & PND_INRESIZE)
 			requeue_request(pu, opc, PCQ_RESIZE);
@@ -2597,9 +2623,24 @@ perfuse_node_reclaim(struct puffs_usermount *pu, puffs_cookie_t opc)
 			pnd->pnd_flags & PND_INOPEN ? " open" : "");
 #endif
 		if (!(pnd->pnd_flags & PND_RECLAIMED) ||
-		    (pnd->pnd_puffs_nlookup != 0) ||
 		    (pnd->pnd_childcount != 0))
 			return 0;
+
+		/*
+		 * lookup/reclaim activity differs whether name cache
+		 * is used or not. 
+		 * - With namecache off, we get as many reclaims as lookups,
+		 *   we therefore must keep track of pnd_puffs_nlookup
+		 * - With namecache on we have a single 
+		 *   reclaim for any amount of lookups. We therfore 
+		 *   ignore pnd_puffs_nlookup. On netbsd-5 there is a
+		 *   bug and this behavior occurs whatever cache setting
+		 *   we have.
+		 */
+#if !defined(PUFFS_KFLAG_CACHE_FS_TTL) && __NetBSD_Prereq__(5,99,0)
+		if (pnd->pnd_puffs_nlookup != 0)
+			return 0;
+#endif /* !PUFFS_KFLAG_CACHE_FS_TTL && NetBSD > 5.99.0 */
 
 #ifdef PERFUSE_DEBUG
 		if ((pnd->pnd_flags & PND_OPEN) ||
@@ -2646,6 +2687,7 @@ perfuse_node_inactive(struct puffs_usermount *pu, puffs_cookie_t opc)
 {
 	struct perfuse_state *ps;
 	struct perfuse_node_data *pnd;
+	int error;
 
 	ps = puffs_getspecific(pu);
 	pnd = PERFUSE_NODE_DATA(opc);
@@ -2663,11 +2705,11 @@ perfuse_node_inactive(struct puffs_usermount *pu, puffs_cookie_t opc)
 		requeue_request(pu, opc, PCQ_AFTERWRITE);
 
 	/*
-	 * The inactive operation may be cancelled.
+	 * The inactive operation may be cancelled,	
 	 * If no open is in progress, set PND_INOPEN
 	 * so that a new open will be queued.
 	 */
-	if (pnd->pnd_flags & PND_INOPEN)
+	if (pnd->pnd_flags & PND_INOPEN) 
 		return 0;
 
 	pnd->pnd_flags |= PND_INOPEN;
@@ -2675,17 +2717,27 @@ perfuse_node_inactive(struct puffs_usermount *pu, puffs_cookie_t opc)
 	/*
 	 * Sync data
 	 */
-	if (pnd->pnd_flags & PND_DIRTY)
-		(void)perfuse_node_fsync(pu, opc, NULL, 0, 0, 0);
+	if (pnd->pnd_flags & PND_DIRTY) {
+		if ((error = perfuse_node_fsync(pu, opc, NULL, 0, 0, 0)) != 0)
+			DWARN("%s: perfuse_node_fsync failed error = %d",
+			      __func__, error);
+	}
+
 	
 	/*
 	 * Close handles
 	 */
-	if (pnd->pnd_flags & PND_WFH)
-		(void)perfuse_node_close_common(pu, opc, FWRITE);
+	if (pnd->pnd_flags & PND_WFH) {
+		if ((error = perfuse_node_close_common(pu, opc, FWRITE)) != 0)
+			DWARN("%s: close write FH failed error = %d",
+			      __func__, error);
+	}
 
-	if (pnd->pnd_flags & PND_RFH)
-		(void)perfuse_node_close_common(pu, opc, FREAD);
+	if (pnd->pnd_flags & PND_RFH) {
+		if ((error = perfuse_node_close_common(pu, opc, FREAD)) != 0)
+			DWARN("%s: close read FH failed error = %d",
+			      __func__, error);
+	}
 
 	/*
 	 * This will cause a reclaim to be sent
