@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdisk.8,v 1.76 2012/04/06 20:09:26 christos Exp $
+.\"	$NetBSD: fdisk.8,v 1.77 2012/04/08 22:00:37 wiz Exp $
 .\"
 .Dd April 6, 2012
 .Dt FDISK 8
@@ -9,36 +9,18 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl aBFfIiSuv
-.Bk -words
 .Oo
 .Fl 0 | 1 | 2 | 3 | E Ar number
 .Op Fl s Ar id/start/size Ns Bq Ar /bootmenu
 .Oc
-.Ek
-.Bk -words
 .Op Fl r Ar file | Fl w Ar file
-.Ek
-.Bk -words
 .Op Fl A Ar ptn_alignment Ns Bq Ar /ptn_0_offset
-.Ek
-.Bk -words
 .Op Fl b Ar cylinders/heads/sectors
-.Ek
-.Bk -words
 .Op Fl c Ar bootcode
-.Ek
-.Bk -words
 .Op Fl T Ar disktype
-.Ek
-.Bk -words
 .Op Fl t Ar disktab
-.Ek
-.Bk -words
 .Op Fl z Ar sectorsize
-.Ek
-.Bk -words
 .Op Ar device
-.Ek
 .Nm
 .Fl l
 .Sh DESCRIPTION
