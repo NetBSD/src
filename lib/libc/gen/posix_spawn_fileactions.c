@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: posix_spawn_fileactions.c,v 1.1 2012/02/11 23:31:24 martin Exp $");
+__RCSID("$NetBSD: posix_spawn_fileactions.c,v 1.2 2012/04/08 11:27:44 martin Exp $");
 
 #include "namespace.h"
 
@@ -62,7 +62,7 @@ posix_spawn_file_actions_init(posix_spawn_file_actions_t *fa)
 int
 posix_spawn_file_actions_destroy(posix_spawn_file_actions_t *fa)
 {
-	int i;
+	unsigned int i;
 
 	if (fa == NULL)
 		return (-1);
@@ -80,7 +80,7 @@ static int
 posix_spawn_file_actions_getentry(posix_spawn_file_actions_t *fa)
 {
 	if (fa == NULL)
-		return (-1);
+		return -1;
 
 	if (fa->len < fa->size)
 		return fa->len;
@@ -89,7 +89,7 @@ posix_spawn_file_actions_getentry(posix_spawn_file_actions_t *fa)
 			sizeof(struct posix_spawn_file_actions_entry));
 
 	if (fa->fae == NULL)
-		return (-1);
+		return -1;
 
 	fa->size += MIN_SIZE;
 
