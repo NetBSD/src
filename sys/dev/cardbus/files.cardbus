@@ -1,4 +1,4 @@
-#	$NetBSD: files.cardbus,v 1.36 2010/03/27 03:04:51 nonaka Exp $
+#	$NetBSD: files.cardbus,v 1.37 2012/04/08 20:49:29 christos Exp $
 #
 # files.cardbus
 #
@@ -57,6 +57,12 @@ file	dev/cardbus/if_ral_cardbus.c	ral_cardbus
 #
 attach	tlp at cardbus with tlp_cardbus
 file	dev/cardbus/if_tlp_cardbus.c	tlp_cardbus
+
+#
+# Broadcom BCM43xx wireless
+#
+attach	bwi at cardbus with bwi_cardbus
+file	dev/cardbus/if_bwi_cardbus.c	bwi_cardbus
 
 #
 # OHCI USB controller
