@@ -1,4 +1,4 @@
-/* $NetBSD: t_log.c,v 1.7 2012/04/06 08:07:32 jruoho Exp $ */
+/* $NetBSD: t_log.c,v 1.8 2012/04/08 09:36:04 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_log.c,v 1.7 2012/04/06 08:07:32 jruoho Exp $");
+__RCSID("$NetBSD: t_log.c,v 1.8 2012/04/08 09:36:04 jruoho Exp $");
 
 #include <atf-c.h>
 #include <atf-c/config.h>
@@ -408,9 +408,6 @@ ATF_TC_BODY(log1pf_inf_pos, tc)
 {
 #ifndef __vax__
 	const float x = 1.0L / 0.0L;
-
-	if (strcmp(atf_config_get("atf_arch"), "alpha") == 0)
-		atf_tc_expect_fail("PR port-alpha/46301");
 
 	ATF_CHECK(log1pf(x) == x);
 #endif
