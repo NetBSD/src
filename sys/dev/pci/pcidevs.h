@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1106 2012/04/08 12:44:02 jakllsch Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1107 2012/04/08 13:14:29 jakllsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1112 2012/04/08 12:43:36 jakllsch Exp
+ *	NetBSD: pcidevs,v 1.1113 2012/04/08 13:14:04 jakllsch Exp
  */
 
 /*
@@ -1435,12 +1435,14 @@
 #define	PCI_PRODUCT_ATI_RADEON_X1600	0x71c5		/* Radeon Mobility X1600 */
 #define	PCI_PRODUCT_ATI_RADEON_RS300_7834	0x7834		/* Radeon 9100 PRO IGP */
 #define	PCI_PRODUCT_ATI_RADEON_RS300_7835	0x7835		/* Radeon 9200 IGP */
-#define	PCI_PRODUCT_ATI_RS690_HB	0x7911		/* RS690 Host Bridge */
-#define	PCI_PRODUCT_ATI_RS690_PPB_7912	0x7912		/* RS690 PCI to PCI Bridge */
-#define	PCI_PRODUCT_ATI_RS690_PPB_7913	0x7913		/* RS690 PCI to PCI-Express Port 0 Bridge */
-#define	PCI_PRODUCT_ATI_RS690_PPB_7915	0x7915		/* RS690 PCI to PCI-Express Port 1 Bridge */
-#define	PCI_PRODUCT_ATI_RS690_PPB_7916	0x7916		/* RS690 PCI to PCI-Express Port 2 Bridge */
-#define	PCI_PRODUCT_ATI_RS690_PPB_7917	0x7917		/* RS690 PCI to PCI-Express Port 3 Bridge */
+#define	PCI_PRODUCT_ATI_RS690_HB_7910	0x7910		/* RS690 Host Bridge */
+#define	PCI_PRODUCT_ATI_RS690_HB_7911	0x7911		/* RS740 Host Bridge */
+#define	PCI_PRODUCT_ATI_RS690_PPB_7912	0x7912		/* RS690 GFX Bridge */
+#define	PCI_PRODUCT_ATI_RS690_PPB_7913	0x7913		/* RS690 PCI Express Bridge GFX */
+#define	PCI_PRODUCT_ATI_RS690_PPB_7914	0x7914		/* RS690 PCI Express Bridge GPP Port A */
+#define	PCI_PRODUCT_ATI_RS690_PPB_7915	0x7915		/* RS690 PCI Express Bridge GPP Port B */
+#define	PCI_PRODUCT_ATI_RS690_PPB_7916	0x7916		/* RS690 PCI Express Bridge GPP Port C */
+#define	PCI_PRODUCT_ATI_RS690_PPB_7917	0x7917		/* RS690 PCI Express Bridge GPP Port D */
 #define	PCI_PRODUCT_ATI_RADEON_HD4650	0x9498		/* Radeon HD4650 */
 #define	PCI_PRODUCT_ATI_RADEON_HD2600_XT	0x9588		/* Radeon HD2600 XT GDDR3 */
 #define	PCI_PRODUCT_ATI_RADEON_HD4250_S	0x95C5		/* Radeon HD4250 GPU (RV610) Secondary */
