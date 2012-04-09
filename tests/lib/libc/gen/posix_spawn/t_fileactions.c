@@ -1,4 +1,4 @@
-/* $NetBSD: t_fileactions.c,v 1.4 2012/04/08 11:27:46 martin Exp $ */
+/* $NetBSD: t_fileactions.c,v 1.5 2012/04/09 19:42:07 martin Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -237,8 +237,7 @@ ATF_TC_BODY(t_spawn_open_nonexistent, tc)
 		 * return exit code 127
 		 */
 		waitpid(pid, &status, 0);
-		ATF_REQUIRE(WEXITSTATUS(status) == 127);
-		
+		ATF_REQUIRE(WIFEXITED(status) && WEXITSTATUS(status) == 127);
 	} else {
 		/*
 		 * The error has been noticed early enough, no child has
