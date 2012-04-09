@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.17 2012/04/08 12:11:57 nisimura Exp $ */
+/* $NetBSD: satmgr.c,v 1.18 2012/04/09 13:26:37 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@ static struct satops satmodel[] = {
     { "dlink",    NULL,  NULL,    dpwroff, dbutton },
     { "iomega",   iinit, ireboot, ipwroff, ibutton },
     { "kurobox",  NULL,  kreboot, kpwroff, kbutton },
-    { "miconv2",  NULL,  NULL,    NULL,    mbutton },
+    { "kurot4",   NULL,  NULL,    NULL,    mbutton },
     { "qnap",     qinit, qreboot, qpwroff, qbutton },
     { "synology", sinit, sreboot, spwroff, sbutton }
 };

@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.28 2012/04/08 10:38:34 nisimura Exp $ */
+/* $NetBSD: brdsetup.c,v 1.29 2012/04/09 13:26:37 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@ static struct brdprop brdlist[] = {
 	"eumb", 0x4500, 9600,
 	NULL, nhnasbrdfix, NULL, nhnasreset },
     {
-	"miconv2",
+	"kurot4",
 	"KuroBox/T4",
 	BRD_KUROBOXT4,
 	0,
