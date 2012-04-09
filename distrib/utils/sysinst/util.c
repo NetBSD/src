@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.176 2012/04/07 19:02:57 jdf Exp $	*/
+/*	$NetBSD: util.c,v 1.177 2012/04/09 23:18:31 jdf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1083,11 +1083,13 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 	if (set_status[SET_BASE] & SET_INSTALLED)
 		run_makedev();
 
-	/* Save keybard type */
-	save_kb_encoding();
+	if (!update) {
+		/* Save keybard type */
+		save_kb_encoding();
 
-	/* Other configuration. */
-	mnt_net_config();
+		/* Other configuration. */
+		mnt_net_config();
+	}
 
 	/* Mounted dist dir? */
 	umount_mnt2();
