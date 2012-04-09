@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.54 2012/02/13 01:47:16 mrg Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.55 2012/04/09 10:18:16 plunky Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.54 2012/02/13 01:47:16 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.55 2012/04/09 10:18:16 plunky Exp $");
 
 #include "sequencer.h"
 
@@ -136,7 +136,6 @@ static void seq_timeout(void *);
 static int seq_to_new(seq_event_t *, struct uio *);
 static void seq_softintr(void *);
 
-struct midi_softc;
 static int midiseq_out(struct midi_dev *, u_char *, u_int, int);
 static struct midi_dev *midiseq_open(int, int);
 static void midiseq_close(struct midi_dev *);

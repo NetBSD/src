@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.77 2012/04/05 20:25:53 plunky Exp $	*/
+/*	$NetBSD: midi.c,v 1.78 2012/04/09 10:18:16 plunky Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.77 2012/04/05 20:25:53 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.78 2012/04/09 10:18:16 plunky Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -137,13 +137,11 @@ midiprobe(device_t parent, cfdata_t match, void *aux)
 static void
 midiattach(device_t parent, device_t self, void *aux)
 {
-	struct midi_softc *sc;
-	struct audio_attach_args *sa;
+	struct midi_softc *sc = device_private(self);
+	struct audio_attach_args *sa = aux;
 	const struct midi_hw_if *hwp;
 	void *hdlp;
 
-	sc = device_private(self);
-	sa = aux;
 	hwp = sa->hwif;
 	hdlp = sa->hdl;
 
@@ -165,7 +163,7 @@ midiattach(device_t parent, device_t self, void *aux)
 	sc->dev = self;
 	sc->hw_if = hwp;
 	sc->hw_hdl = hdlp;
-	midi_attach(sc, parent);
+	midi_attach(sc);
 }
 
 static int
@@ -235,7 +233,7 @@ mididetach(device_t self, int flags)
 }
 
 void
-midi_attach(struct midi_softc *sc, device_t parent)
+midi_attach(struct midi_softc *sc)
 {
 	struct midi_info mi;
 	kmutex_t *dummy;
@@ -1768,8 +1766,6 @@ midi_register_hw_if_ext(struct midi_hw_if_ext *exthw)
 #endif /* NMIDI > 0 */
 
 #if NMIDI > 0 || NMIDIBUS > 0
-
-int	audioprint(void *, const char *);
 
 device_t
 midi_attach_mi(const struct midi_hw_if *mhwp, void *hdlp, device_t dev)
