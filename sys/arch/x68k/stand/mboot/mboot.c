@@ -1,4 +1,4 @@
-/*	$NetBSD: mboot.c,v 1.9.8.1 2012/04/09 18:08:31 riz Exp $	*/
+/*	$NetBSD: mboot.c,v 1.9.8.2 2012/04/09 18:10:10 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ bootmain(int scsiid)
 		return 0;
 
 	if (IOCS_S_READCAP(scsiid, &cap) < 0) {
-		IOCS_B_PRINT("Error in reading.\r\n");
+		IOCS_B_PRINT(BOOT ": Error in reading.\r\n");
 		return 0;
 	}
 	size = cap.size >> 9;
@@ -58,12 +58,12 @@ bootmain(int scsiid)
 	{
 		long *label = (void*) 0x3000;
 		if (IOCS_S_READ(0, 1, scsiid, size, label) < 0) {
-			IOCS_B_PRINT("Error in reading.\r\n");
+			IOCS_B_PRINT(BOOT ": Error in reading.\r\n");
 			return 0;
 		}
 		if (label[0] != 0x58363853 ||
 		    label[1] != 0x43534931) {
-			IOCS_B_PRINT("Invalid disk.\r\n");
+			IOCS_B_PRINT(BOOT ": Invalid disk.\r\n");
 			return 0;
 		}
 	}
@@ -74,12 +74,12 @@ bootmain(int scsiid)
 		unsigned char *t;
 
 		if (IOCS_S_READ(2<<(2-size), size?2:1, scsiid, size, label) < 0) {
-			IOCS_B_PRINT("Error in reading.\r\n");
+			IOCS_B_PRINT(BOOT ": Error in reading.\r\n");
 			return 0;
 		}
 		t = label->dosparts[0].dp_typname;
 		if (t[0] != 'X' || t[1] != '6' || t[2] != '8' || t[3] != 'K') {
-			IOCS_B_PRINT("Invalid disk.\r\n");
+			IOCS_B_PRINT(BOOT ": Invalid disk.\r\n");
 			return 0;
 		}
 
@@ -108,11 +108,11 @@ bootmain(int scsiid)
 						   size,
 						   (void*) 0x2400);
 			if (r < 0) {
-				IOCS_B_PRINT ("Error in reading.\r\n");
+				IOCS_B_PRINT(BOOT ": Error in reading.\r\n");
 				return 0;
 			}
 			if (*((char*) 0x2400) != 0x60) {
-				IOCS_B_PRINT("Invalid disk.\r\n");
+				IOCS_B_PRINT(BOOT ": Invalid disk.\r\n");
 				return 0;
 			}
 			__asm volatile ("movl %0,%%d4\n\t"
@@ -123,7 +123,7 @@ bootmain(int scsiid)
 				      : "d4");
 			return 0;
 		}
-		IOCS_B_PRINT ("No bootable partition.\r\n");
+		IOCS_B_PRINT(BOOT ": No bootable partition.\r\n");
 		return 0;
 	}
 
