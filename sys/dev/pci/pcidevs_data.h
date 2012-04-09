@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1106 2012/04/08 13:14:29 jakllsch Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1107 2012/04/09 08:10:30 mlelstv Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1113 2012/04/08 13:14:04 jakllsch Exp
+ *	NetBSD: pcidevs,v 1.1114 2012/04/09 08:09:36 mlelstv Exp
  */
 
 /*
@@ -3515,9 +3515,19 @@ static const uint16_t pci_products[] = {
 	    16084, 6266, 6656, 6266, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SANDYBRIDGE_IGD, 
 	    16084, 6266, 692, 1716, 2427, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SANDYBRIDGE_IGD_1, 
+	    16084, 6266, 692, 1716, 2427, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SANDYBRIDGE_IGD_2, 
+	    16084, 6266, 692, 1716, 2427, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SANDYBRIDGE_M_HB, 
 	    16084, 6266, 6656, 6266, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SANDYBRIDGE_M_IGD, 
+	    16084, 6266, 692, 1716, 2427, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SANDYBRIDGE_M_IGD_1, 
+	    16084, 6266, 692, 1716, 2427, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SANDYBRIDGE_M_IGD_2, 
+	    16084, 6266, 692, 1716, 2427, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SANDYBRIDGE_S_IGD, 
 	    16084, 6266, 692, 1716, 2427, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80312, 
 	    16090, 8051, 12907, 4562, 0,
@@ -8068,7 +8078,7 @@ static const char pci_words[] = { "."
 	    "Hitach\0" /* 1 refs @ 673 */
 	    "AMP\0" /* 1 refs @ 680 */
 	    "Silicon\0" /* 4 refs @ 684 */
-	    "Integrated\0" /* 67 refs @ 692 */
+	    "Integrated\0" /* 72 refs @ 692 */
 	    "Seiko\0" /* 1 refs @ 703 */
 	    "Tatung\0" /* 1 refs @ 709 */
 	    "Hewlett-Packard\0" /* 1 refs @ 716 */
@@ -8202,7 +8212,7 @@ static const char pci_words[] = { "."
 	    "Industrial\0" /* 2 refs @ 1688 */
 	    "Benchmarq\0" /* 1 refs @ 1699 */
 	    "Sierra\0" /* 2 refs @ 1709 */
-	    "Graphics\0" /* 66 refs @ 1716 */
+	    "Graphics\0" /* 71 refs @ 1716 */
 	    "ACC\0" /* 1 refs @ 1725 */
 	    "Digicom\0" /* 1 refs @ 1729 */
 	    "Honeywell\0" /* 1 refs @ 1737 */
@@ -8297,7 +8307,7 @@ static const char pci_words[] = { "."
 	    "F.\0" /* 1 refs @ 2404 */
 	    "Mikroelektronik\0" /* 1 refs @ 2407 */
 	    "I-O\0" /* 1 refs @ 2423 */
-	    "Device\0" /* 52 refs @ 2427 */
+	    "Device\0" /* 57 refs @ 2427 */
 	    "Soyo\0" /* 1 refs @ 2434 */
 	    "Fast\0" /* 22 refs @ 2439 */
 	    "NCube\0" /* 1 refs @ 2444 */
@@ -8806,7 +8816,7 @@ static const char pci_words[] = { "."
 	    "ACCM\0" /* 1 refs @ 6249 */
 	    "2188\0" /* 1 refs @ 6254 */
 	    "VL-PCI\0" /* 3 refs @ 6259 */
-	    "Bridge\0" /* 541 refs @ 6266 */
+	    "Bridge\0" /* 546 refs @ 6266 */
 	    "2051\0" /* 2 refs @ 6273 */
 	    "Single\0" /* 5 refs @ 6278 */
 	    "Solution\0" /* 2 refs @ 6285 */
@@ -10190,7 +10200,7 @@ static const char pci_words[] = { "."
 	    "Wireless-N\0" /* 2 refs @ 16063 */
 	    "1030\0" /* 2 refs @ 16074 */
 	    "6230\0" /* 2 refs @ 16079 */
-	    "Sandy\0" /* 4 refs @ 16084 */
+	    "Sandy\0" /* 9 refs @ 16084 */
 	    "80312\0" /* 1 refs @ 16090 */
 	    "80321\0" /* 1 refs @ 16096 */
 	    "IOP333\0" /* 2 refs @ 16102 */
