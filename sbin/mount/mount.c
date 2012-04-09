@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.95 2012/04/07 04:13:06 christos Exp $	*/
+/*	$NetBSD: mount.c,v 1.96 2012/04/09 15:50:20 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.95 2012/04/07 04:13:06 christos Exp $");
+__RCSID("$NetBSD: mount.c,v 1.96 2012/04/09 15:50:20 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -325,7 +325,8 @@ out:
 	}
 #endif
 
-	return 0;
+	exit(rval);
+	/* NOTREACHED */
 }
 
 int
