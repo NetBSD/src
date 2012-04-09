@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.66 2012/04/06 17:48:09 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.67 2012/04/09 18:17:45 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1701,4 +1701,71 @@ usr.sbin/cpuctl/arch/i386.c			1.30
 
 	Report L3 cache information on AMD Family 10h and newer processors.
 	[cegger, ticket #163]
+
+sys/dev/audio.c					1.259
+
+	PR#46232:  ensure locking around audio_clear() is handled
+	consistently and avoid locking against self.
+	[mrg, ticket #164]
+
+sys/dev/bluetooth/btsco.c			1.27
+
+	Fix a locking error in btsco(4). PR#46120.
+	[mrg, ticket #165]
+
+sys/dev/scsipi/atapiconf.c			1.84
+
+	Take the kernel lock during detach of atapibus.
+	[chs, ticket #166]
+
+sys/uvm/uvm_glue.c				1.158
+
+	Fix uarea_system_poolpage_free() to handle freeing a uarea
+	that was not allocated by cpu_uarea_alloc() (ie. on platforms
+	where cpu_uarea_alloc() failing is not fatal). PR#46284.
+	[chs, ticket #167]
+
+sys/arch/x86/include/specialreg.h		1.57
+sys/arch/x86/x86/errata.c			1.20
+
+	Implement the AMD suggested workaround for family 10h & 12h errata
+	721 "Processor May Incorrectly Update Stack Pointer."
+	[chs, ticket #168]
+
+sys/dev/wsfont/FreeMono_12x22.h			delete
+sys/dev/wsfont/files.wsfont			1.19
+sys/dev/wsfont/wsfont.c				1.55
+
+	Remove the FreeMono font for licensing reasons.
+	[macallan, ticket #169]
+
+etc/rc.subr					1.89
+
+	Match the changed error message when /var is not a
+	file system.
+	[apb, ticket #170]
+
+sys/arch/x68k/stand/Makefile			1.9
+sys/arch/x68k/stand/mboot/Makefile		1.16
+sys/arch/x68k/stand/mboot/mboot.c		1.10
+
+	Fix x68k boot problem. PR#46293.
+	[isaki, ticket #171]
+
+sys/arch/x68k/stand/mboot/mboot.c		1.11-1.12
+
+	Print x68k mboot progname in error messages.
+	[isaki, ticket #172]
+
+sys/uvm/uvm_amap.c				1.107
+
+	Fix crashes seen with web browsers and plugins, which was also the
+	cause of PR 46193.
+	[chs, ticket #173]
+
+lib/libpthread/pthread_cancelstub.c		1.36
+
+	Add a pthread cancel stub for sigwait, which will allow
+	csup to run on NetBSD. PR#45131.
+	[agc, ticket #174]
 
