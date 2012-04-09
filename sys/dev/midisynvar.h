@@ -1,4 +1,4 @@
-/*	$NetBSD: midisynvar.h,v 1.13 2011/11/23 23:07:31 jmcneill Exp $	*/
+/*	$NetBSD: midisynvar.h,v 1.14 2012/04/09 10:18:16 plunky Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -184,11 +184,9 @@ struct midisyn {
 
 #define MS_GETPGM(ms, vno) ((ms)->pgms[MS_GETCHAN(&(ms)->voices[vno])])
 
-struct midi_softc;
-
 extern const struct midi_hw_if midisyn_hw_if;
 
-void	midisyn_attach (struct midi_softc *, midisyn *);
+void	midisyn_init(midisyn *);
 
 /*
  * Convert a 14-bit volume or expression controller value to centibels using

@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_pcppi.c,v 1.25 2012/04/05 20:13:35 plunky Exp $	*/
+/*	$NetBSD: midi_pcppi.c,v 1.26 2012/04/09 10:18:17 plunky Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi_pcppi.c,v 1.25 2012/04/05 20:13:35 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi_pcppi.c,v 1.26 2012/04/09 10:18:17 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,18 +94,20 @@ midi_pcppi_attach(device_t parent, device_t self, void *aux)
 	struct pcppi_attach_args *pa = (struct pcppi_attach_args *)aux;
 	midisyn *ms;
 
-	sc->sc_mididev.dev = self;
+	midi_pcppi_attached++;
+
 	ms = &sc->sc_midisyn;
 	ms->mets = &midi_pcppi_hw;
 	strcpy(ms->name, "PC speaker");
 	ms->nvoice = 1;
 	ms->data = pa->pa_cookie;
 	ms->lock = &tty_lock;
+	midisyn_init(ms);
 
-	midi_pcppi_attached++;
-
-	midisyn_attach(&sc->sc_mididev, ms);
-	midi_attach(&sc->sc_mididev, parent);
+	sc->sc_mididev.dev = self;
+	sc->sc_mididev.hw_if = &midisyn_hw_if;
+	sc->sc_mididev.hw_hdl = ms;
+	midi_attach(&sc->sc_mididev);
 }
 
 static int
