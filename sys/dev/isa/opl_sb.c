@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_sb.c,v 1.19 2011/11/23 23:07:32 jmcneill Exp $	*/
+/*	$NetBSD: opl_sb.c,v 1.20 2012/04/09 10:18:17 plunky Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_sb.c,v 1.19 2011/11/23 23:07:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_sb.c,v 1.20 2012/04/09 10:18:17 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ opl_sb_attach(device_t parent, device_t self, void *aux)
 	struct  sbdsp_softc *ssc = device_private(parent);
 	struct opl_softc *sc = device_private(self);
 
-	sc->mididev.dev = self;
+	sc->dev = self;
 	sc->ioh = ssc->sc_ioh;
 	sc->iot = ssc->sc_iot;
 	sc->offs = 0;
