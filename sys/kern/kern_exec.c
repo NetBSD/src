@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.348 2012/04/08 11:27:44 martin Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.349 2012/04/09 19:42:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.348 2012/04/08 11:27:44 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.349 2012/04/09 19:42:06 martin Exp $");
 
 #include "opt_exec.h"
 #include "opt_ktrace.h"
@@ -2003,7 +2003,7 @@ spawn_return(void *arg)
 	 * A NetBSD specific workaround is POSIX_SPAWN_RETURNERROR as
 	 * flag bit in the attrp argument to posix_spawn(2), see above.
 	 */
-	exit1(l, W_EXITCODE(127, SIGABRT));
+	exit1(l, W_EXITCODE(127, 0));
 }
 
 void
