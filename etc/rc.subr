@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.88 2011/08/11 22:52:47 apb Exp $
+# $NetBSD: rc.subr,v 1.88.4.1 2012/04/09 18:05:28 riz Exp $
 #
 # Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -152,7 +152,7 @@ mount_critical_filesystems()
 				# multiple lines can't be good,
 				# not even if $_optional is true
 				;;
-			*'unknown special file or file system'*)
+			*[uU]'nknown special file or file system'*)
 				if $_optional; then
 					# ignore this error
 					print_rc_metadata \
