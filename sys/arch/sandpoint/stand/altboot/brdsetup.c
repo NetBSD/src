@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.29 2012/04/09 13:26:37 nisimura Exp $ */
+/* $NetBSD: brdsetup.c,v 1.30 2012/04/09 14:02:04 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -174,9 +174,9 @@ static struct brdprop brdlist[] = {
 	"kurot4",
 	"KuroBox/T4",
 	BRD_KUROBOXT4,
-	0,
+	32768000,
 	"eumb", 0x4600, 57600,
-	kurot4setup, kurot4brdfix, NULL, NULL },
+	NULL, kurot4brdfix, NULL, NULL },
     {
 	"unknown",
 	"Unknown board",
@@ -773,16 +773,6 @@ nhnasreset()
 	NHGPIO_WRITE(0x02);
 	delay(100000);
 	/*NOTREACHED*/
-}
-
-void
-kurot4setup(struct brdprop *brd)
-{
-
-	if (PCI_VENDOR(pcicfgread(pcimaketag(0, 11, 0), PCI_ID_REG)) == 0x10ec)
-		brd->extclk = 32768000; /* decr 2457600Hz */
-	else
-		brd->extclk = 32521333; /* decr 2439100Hz */
 }
 
 void
