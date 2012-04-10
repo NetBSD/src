@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fpsetmask.c,v 1.4 2012/04/10 03:59:59 jruoho Exp $ */
+/*	$NetBSD: t_fpsetmask.c,v 1.5 2012/04/10 12:43:06 jruoho Exp $ */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -296,12 +296,12 @@ sigfpe(int s, siginfo_t *si, void *c)
 		if (strcmp(atf_config_get("atf_arch"), "macppc") == 0)	\
 			atf_tc_expect_fail("PR port-macppc/46319");	\
 		if (system("cpuctl identify 0 | grep -q QEMU") == 0)	\
-			atf_tc_skip("Test not applicable on QEMU");	\
+			atf_tc_expect_fail("PR misc/44767");		\
 		if (system("cpuctl identify 0 | grep -q			\
 		  'cpu0: Intel Pentium II (Klamath) (686-class), id 0x633'")\
 		    == 0)						\
-			atf_tc_skip("Test not applicable on QEMU "	\
-			    "(heuristic match)");			\
+			atf_tc_expect_fail("PR misc/44767 "		\
+				"(heuristic match)");			\
 		m(t##_ops);						\
 	}
 
