@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.5 2011/12/17 20:05:39 tls Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.6 2012/04/10 14:02:28 tls Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <sys/cprng.h>
 
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.5 2011/12/17 20:05:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.6 2012/04/10 14:02:28 tls Exp $");
 
 void
 cprng_init(void)
@@ -75,10 +75,11 @@ static void
 cprng_strong_sched_reseed(cprng_strong_t *const c)
 {
 	KASSERT(mutex_owned(&c->mtx));
-	if (!(c->reseed_pending)) {
+	if (!(c->reseed_pending) && mutex_tryenter(&c->reseed.mtx)) {
 		c->reseed_pending = 1;
 		c->reseed.len = NIST_BLOCK_KEYLEN_BYTES;
 		rndsink_attach(&c->reseed);
+		mutex_spin_exit(&c->reseed.mtx);
 	}
 }
 
@@ -123,6 +124,7 @@ cprng_strong_create(const char *const name, int ipl, int flags)
 	c->reseed_pending = 0;
 	c->reseed.cb = cprng_strong_reseed;
 	c->reseed.arg = c;
+	mutex_init(&c->reseed.mtx, MUTEX_DEFAULT, IPL_VM);
 	strlcpy(c->reseed.name, name, sizeof(c->reseed.name));
 
 	mutex_init(&c->mtx, MUTEX_DEFAULT, ipl);
@@ -266,6 +268,7 @@ cprng_strong(cprng_strong_t *const c, void *const p, size_t len, int flags)
 void
 cprng_strong_destroy(cprng_strong_t *c)
 {
+	mutex_spin_enter(&c->reseed.mtx);
 	mutex_enter(&c->mtx);
 
 	if (c->flags & CPRNG_USE_CV) {
@@ -277,6 +280,8 @@ cprng_strong_destroy(cprng_strong_t *c)
 	if (c->reseed_pending) {
 		rndsink_detach(&c->reseed);
 	}
+	mutex_spin_exit(&c->reseed.mtx);
+
 	nist_ctr_drbg_destroy(&c->drbg);
 
 	mutex_exit(&c->mtx);

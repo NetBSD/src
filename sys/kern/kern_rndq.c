@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.1 2012/02/02 19:43:07 tls Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.2 2012/04/10 14:02:27 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.1 2012/02/02 19:43:07 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.2 2012/04/10 14:02:27 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -109,13 +109,17 @@ volatile int			rnd_timeout_pending;
 SIMPLEQ_HEAD(, _rnd_sample_t)	rnd_samples;
 kmutex_t			rnd_mtx;
 
+
 /*
  * Entropy sinks: usually other generators waiting to be rekeyed.
  *
  * A sink's callback MUST NOT re-add the sink to the list, or
- * list corruption will occur.
+ * list corruption will occur.  The list is protected by the
+ * rndsink_mtx, which must be released before calling any sink's
+ * callback.
  */
 TAILQ_HEAD(, rndsink)		rnd_sinks;
+kmutex_t			rndsink_mtx;
 
 /*
  * Memory pool for sample buffers
@@ -215,6 +219,7 @@ rnd_wakeup_readers(void)
 	/*
 	 * First, take care of in-kernel consumers needing rekeying.
 	 */
+	mutex_spin_enter(&rndsink_mtx);
 	TAILQ_FOREACH_SAFE(sink, &rnd_sinks, tailq, tsink) {
 		if ((sink->len + RND_ENTROPY_THRESHOLD) * 8 <
 			rndpool_get_entropy_count(&rnd_pool)) {
@@ -225,11 +230,16 @@ rnd_wakeup_readers(void)
 				panic("could not extract estimated "
 				      "entropy from pool");
 			}
+			/* Skip if busy, else mark in-progress */
+			if (!mutex_tryenter(&sink->mtx)) {
+			    continue;
+			}
 			/* Move this sink to the list of pending callbacks */
 			TAILQ_REMOVE(&rnd_sinks, sink, tailq);
 			TAILQ_INSERT_HEAD(&sunk, sink, tailq);
 		}
 	}
+	mutex_spin_exit(&rndsink_mtx);
 		
 	/*
 	 * If we still have enough new bits to do something, feed userspace.
@@ -261,6 +271,7 @@ rnd_wakeup_readers(void)
 #endif
 		sink->cb(sink->arg);
 		TAILQ_REMOVE(&sunk, sink, tailq);
+		mutex_spin_exit(&sink->mtx);
 	}
 }
 
@@ -362,6 +373,7 @@ rnd_init(void)
 		return;
 
 	mutex_init(&rnd_mtx, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&rndsink_mtx, MUTEX_DEFAULT, IPL_VM);
 
 	callout_init(&rnd_callout, CALLOUT_MPSAFE);
 	callout_setfunc(&rnd_callout, rnd_timeout, NULL);
@@ -962,9 +974,12 @@ rndsink_attach(rndsink_t *rs)
 	printf("rnd: entropy sink \"%s\" wants %d bytes of data.\n",
 	       rs->name, (int)rs->len);
 #endif
-	mutex_spin_enter(&rndpool_mtx);
+
+	KASSERT(mutex_owned(&rs->mtx));
+
+	mutex_spin_enter(&rndsink_mtx);
 	TAILQ_INSERT_TAIL(&rnd_sinks, rs, tailq);
-	mutex_spin_exit(&rndpool_mtx);
+	mutex_spin_exit(&rndsink_mtx);
 	mutex_spin_enter(&rnd_mtx);
 	if (rnd_timeout_pending == 0) {
 		rnd_timeout_pending = 1;
@@ -980,13 +995,16 @@ rndsink_detach(rndsink_t *rs)
 #ifdef RND_VERBOSE
 	printf("rnd: entropy sink \"%s\" no longer wants data.\n", rs->name);
 #endif
-	mutex_spin_enter(&rndpool_mtx);
+
+	KASSERT(mutex_owned(&rs->mtx));
+
+	mutex_spin_enter(&rndsink_mtx);
 	TAILQ_FOREACH_SAFE(sink, &rnd_sinks, tailq, tsink) {
 		if (sink == rs) {
 			TAILQ_REMOVE(&rnd_sinks, rs, tailq);
 		}
 	}
-	mutex_spin_exit(&rndpool_mtx);
+	mutex_spin_exit(&rndsink_mtx);
 }
 
 void
