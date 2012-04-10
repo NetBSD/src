@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.74 2012/04/10 12:51:31 jruoho Exp $
+.\" $NetBSD: acpi.4,v 1.75 2012/04/10 13:48:24 jruoho Exp $
 .\"
 .\" Copyright (c) 2002, 2004, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -133,8 +133,9 @@ power off
 A boolean variable that controls whether the
 .Tn PC
 speaker beeps upon resume.
+Only available on i386 and amd64 architectures.
 .It Ic hw.acpi.sleep.vbios
-Defines the handling of the graphics card.
+Defines the handling of the graphics card on i386 and amd64 architectures.
 The supported values are:
 .Bl -tag -width '2' -offset 2n
 .It 0
