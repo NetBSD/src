@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90 2012/03/16 07:41:54 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.91 2012/04/10 16:57:50 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -213,8 +213,12 @@ curcpu(void)
 	return ci;
 }
 
+#ifdef __clang__
+#define	curlwp			(curcpu()->ci_curlwp)
+#else
 register struct lwp *powerpc_curlwp __asm("r13");
 #define	curlwp			powerpc_curlwp
+#endif
 #define curpcb			(curcpu()->ci_curpcb)
 #define curpm			(curcpu()->ci_curpm)
 
