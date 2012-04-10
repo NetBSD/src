@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.31 2012/02/14 18:57:35 njoly Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.32 2012/04/10 14:02:28 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -167,7 +167,9 @@ arc4_randrekey(void *arg)
 				    "forcibly rekeying.\n");
 				r = rnd_extract_data(key, ARC4_KEYBYTES,
 				    RND_EXTRACT_ANY);
+				mutex_spin_enter(&rs.mtx);
 				rndsink_detach(&rs);
+				mutex_spin_exit(&rs.mtx);
 				callback_pending = 0;
 				goto got_entropy;
 			} else {
@@ -195,11 +197,13 @@ got_entropy:
 		callback_pending = 0;
 	} else if (!callback_pending) {
 		callback_pending = 1;
+		mutex_spin_enter(&rs.mtx);
 		strlcpy(rs.name, "arc4random", sizeof(rs.name));
 		rs.cb = arc4_randrekey;
 		rs.arg = &rs;
 		rs.len = ARC4_KEYBYTES;
 		rndsink_attach(&rs);
+		mutex_spin_exit(&rs.mtx);
 	}
 #endif
 	/*
@@ -260,6 +264,7 @@ arc4_init(void)
 	int n;
 
 	mutex_init(&arc4_mtx, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&rs.mtx, MUTEX_DEFAULT, IPL_VM);
 	arc4_i = arc4_j = 0;
 	for (n = 0; n < 256; n++)
 		arc4_sbox[n] = (u_int8_t) n;

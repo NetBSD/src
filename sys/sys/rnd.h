@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.29 2012/02/02 19:43:08 tls Exp $	*/
+/*	$NetBSD: rnd.h,v 1.30 2012/04/10 14:02:28 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -129,6 +129,7 @@ typedef struct krndsource {
 
 typedef struct rndsink {
         TAILQ_ENTRY(rndsink) tailq;     /* the queue */
+	kmutex_t	mtx;		/* lock to seed or unregister */
         void            (*cb)(void *);  /* callback function when ready */
         void            *arg;           /* callback function argument */
         char            name[16];       /* sink name */
