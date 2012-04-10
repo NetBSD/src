@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.6 2012/04/10 14:02:28 tls Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.7 2012/04/10 15:12:40 tls Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <sys/cprng.h>
 
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.6 2012/04/10 14:02:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.7 2012/04/10 15:12:40 tls Exp $");
 
 void
 cprng_init(void)
@@ -90,7 +90,10 @@ cprng_strong_reseed(void *const arg)
 	uint8_t key[NIST_BLOCK_KEYLEN_BYTES];
 	uint32_t cc = cprng_counter();
 
-	mutex_enter(&c->mtx);
+	if (!mutex_tryenter(&c->mtx)) {
+	    return;
+	}
+
 	if (c->reseed.len != sizeof(key)) {
 		panic("cprng_strong_reseed: bad entropy length %d "
 		      " (expected %d)", (int)c->reseed.len, (int)sizeof(key));
@@ -268,8 +271,8 @@ cprng_strong(cprng_strong_t *const c, void *const p, size_t len, int flags)
 void
 cprng_strong_destroy(cprng_strong_t *c)
 {
-	mutex_spin_enter(&c->reseed.mtx);
 	mutex_enter(&c->mtx);
+	mutex_spin_enter(&c->reseed.mtx);
 
 	if (c->flags & CPRNG_USE_CV) {
 		KASSERT(!cv_has_waiters(&c->cv));
@@ -281,6 +284,7 @@ cprng_strong_destroy(cprng_strong_t *c)
 		rndsink_detach(&c->reseed);
 	}
 	mutex_spin_exit(&c->reseed.mtx);
+	mutex_destroy(&c->reseed.mtx);
 
 	nist_ctr_drbg_destroy(&c->drbg);
 
