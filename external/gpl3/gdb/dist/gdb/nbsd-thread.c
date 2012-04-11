@@ -88,7 +88,7 @@ static void nbsd_find_new_threads (struct target_ops *);
 
 #define IS_LWP(ptid)		(GET_LWP (ptid) != 0)
 
-#define BUILD_LWP(lwp, ptid)	ptid_build (GET_PID(ptid), (lwp) - 1, 0)
+#define BUILD_LWP(lwp, ptid)	ptid_build (GET_PID(ptid), (lwp), 0)
 
 static td_proc_t *main_ta;
 
@@ -143,6 +143,7 @@ nbsd_thread_activate (void)
   nbsd_thread_active = 1;
   main_ptid = inferior_ptid;
   cached_thread = minus_one_ptid;
+  thread_change_ptid(inferior_ptid, BUILD_LWP(1, inferior_ptid));
   nbsd_find_new_threads (NULL);
   inferior_ptid = find_active_thread ();
 }
@@ -279,8 +280,6 @@ find_active_thread (void)
       while ((val != -1) && (pl.pl_lwpid != 0) &&
 	     (pl.pl_event != PL_EVENT_SIGNAL))
 	val = ptrace (PT_LWPINFO, GET_PID(inferior_ptid), (void *)&pl, sizeof(pl));
-      if (pl.pl_lwpid == 0)
-	 pl.pl_lwpid = 1;
     }
   else
     {
@@ -529,9 +528,6 @@ nbsd_find_new_threads (struct target_ops *ops)
 {
   int retval;
   ptid_t ptid;
-#ifdef notyet
-  td_thread_t *thread;
-#endif
 
   if (nbsd_thread_active == 0)
 	  return;
@@ -550,9 +546,6 @@ nbsd_find_new_threads (struct target_ops *ops)
       while ((retval != -1) && pl.pl_lwpid != 0)
 	{
 	  ptid = BUILD_LWP (pl.pl_lwpid, main_ptid);
-#ifdef notyet
-	  td_map_lwp2thr (main_ta, pl.pl_lwpid, &thread);
-#endif
 	  if (!in_thread_list (ptid))
 	    add_thread (ptid);
 	  retval = ptrace (PT_LWPINFO, GET_PID(inferior_ptid), (void *)&pl, sizeof(pl));
