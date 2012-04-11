@@ -1,4 +1,4 @@
-/*	$NetBSD: pgfs_subs.c,v 1.4 2012/04/11 14:26:19 yamt Exp $	*/
+/*	$NetBSD: pgfs_subs.c,v 1.5 2012/04/11 14:28:18 yamt Exp $	*/
 
 /*-
  * Copyright (c)2010,2011 YAMAMOTO Takashi,
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pgfs_subs.c,v 1.4 2012/04/11 14:26:19 yamt Exp $");
+__RCSID("$NetBSD: pgfs_subs.c,v 1.5 2012/04/11 14:28:18 yamt Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -335,6 +335,14 @@ my_lo_open(struct Xconn *xc, Oid loid, int32_t mode, int32_t *fdp)
 int
 my_lo_close(struct Xconn *xc, int32_t fd)
 {
+#if 1
+	/*
+	 * do nothing.
+	 *
+	 * LO handles are automatically closed at the end of transactions.
+	 * our transactions are small enough.
+	 */
+#else
 	static struct cmd *c;
 	int32_t ret;
 	int error;
@@ -349,6 +357,7 @@ my_lo_close(struct Xconn *xc, int32_t fd)
 		return error;
 	}
 	assert(ret == 0);
+#endif
 	return 0;
 }
 
