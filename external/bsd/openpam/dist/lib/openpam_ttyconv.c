@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_ttyconv.c,v 1.3 2012/01/03 18:56:49 christos Exp $	*/
+/*	$NetBSD: openpam_ttyconv.c,v 1.4 2012/04/11 02:28:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -82,6 +82,7 @@ prompt(const char *msg, FILE *infp, FILE *outfp, FILE *errfp)
 	saved_alarm = 0;
 	sigemptyset(&sigs);
 	sigaddset(&sigs, SIGINT);
+	sigaddset(&sigs, SIGQUIT);
 	sigaddset(&sigs, SIGTSTP);
 	sigprocmask(SIG_SETMASK, &sigs, &saved_sigset);
 	action.sa_handler = &timeout;
