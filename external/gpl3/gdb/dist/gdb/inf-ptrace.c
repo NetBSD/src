@@ -366,7 +366,11 @@ inf_ptrace_resume (struct target_ops *ops,
          all possible successor instructions), so we don't have to
          worry about that here.  */
       request = PT_STEP;
+#ifdef __NetBSD__
+      sig = ptid_get_lwp(ptid);
+#else
       sig = 0;
+#endif
     } else
       sig = target_signal_to_host (signal);
 
