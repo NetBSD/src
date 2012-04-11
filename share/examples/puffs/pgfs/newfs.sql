@@ -1,4 +1,4 @@
--- $NetBSD: newfs.sql,v 1.2 2012/04/11 14:26:19 yamt Exp $
+-- $NetBSD: newfs.sql,v 1.3 2012/04/11 14:27:15 yamt Exp $
 
 -- Copyright (c)2010,2011 YAMAMOTO Takashi,
 -- All rights reserved.
@@ -79,10 +79,10 @@ CREATE TABLE datafork (
 -- a row in the dirent table describes a directory entry.
 -- the ".." and "." entries are handled differently and never appear here.
 CREATE TABLE dirent (
-	parent_fileid fileid NOT NULL REFERENCES file,
+	parent_fileid fileid NOT NULL, -- REFERENCES file,
 	name text NOT NULL,
 	cookie int8 NOT NULL UNIQUE DEFAULT nextval('dircookie_seq'),
-	child_fileid fileid NOT NULL REFERENCES file,
+	child_fileid fileid NOT NULL, -- REFERENCES file,
 	CONSTRAINT dirent_pkey PRIMARY KEY(parent_fileid, name),
 	CONSTRAINT dirent_notdot CHECK(name <> '.'),
 	CONSTRAINT dirent_notdotdot CHECK(name <> '..'),
