@@ -1,4 +1,4 @@
-/*	$NetBSD: pgfs_puffs.c,v 1.2 2012/04/11 14:25:54 yamt Exp $	*/
+/*	$NetBSD: pgfs_puffs.c,v 1.3 2012/04/11 14:26:19 yamt Exp $	*/
 
 /*-
  * Copyright (c)2010,2011 YAMAMOTO Takashi,
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pgfs_puffs.c,v 1.2 2012/04/11 14:25:54 yamt Exp $");
+__RCSID("$NetBSD: pgfs_puffs.c,v 1.3 2012/04/11 14:26:19 yamt Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -720,7 +720,6 @@ pgfs_node_inactive(struct puffs_usermount *pu, puffs_cookie_t opc)
 {
 	struct Xconn *xc;
 	fileid_t fileid = cookie_to_fileid(opc);
-	struct vattr va;
 	int error;
 
 	/*
@@ -734,17 +733,9 @@ pgfs_node_inactive(struct puffs_usermount *pu, puffs_cookie_t opc)
 	DPRINTF("%llu\n", fileid);
 retry:
 	xc = begin(pu);
-	error = getattr(xc, fileid, &va, GETATTR_NLINK|GETATTR_TYPE);
+	error = cleanupfile(xc, fileid);
 	if (error != 0) {
-		DPRINTF("%llu GETATTR fail\n", fileid);
 		goto got_error;
-	}
-	if (va.va_nlink == 0) {
-		DPRINTF("%llu nlink=0\n", fileid);
-		error = cleanupfile(xc, fileid, &va);
-		if (error != 0) {
-			goto got_error;
-		}
 	}
 	error = commit(xc);
 	if (error != 0) {
