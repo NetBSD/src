@@ -1,4 +1,4 @@
--- $NetBSD: newfs.sql,v 1.3 2012/04/11 14:27:15 yamt Exp $
+-- $NetBSD: newfs.sql,v 1.4 2012/04/11 14:28:46 yamt Exp $
 
 -- Copyright (c)2010,2011 YAMAMOTO Takashi,
 -- All rights reserved.
@@ -44,8 +44,8 @@ CREATE DOMAIN uid AS int8 NOT NULL CHECK(VALUE >= 0);
 CREATE DOMAIN gid AS int8 NOT NULL CHECK(VALUE >= 0);
 CREATE DOMAIN mode AS int8 NOT NULL CHECK(VALUE >= 0 AND VALUE <= 7*8*8+7*8+7);
 CREATE DOMAIN nlink AS int8 NOT NULL CHECK(VALUE >= 0);
-CREATE SEQUENCE fileid_seq START WITH 1;
-CREATE SEQUENCE dircookie_seq START WITH 3;
+CREATE SEQUENCE fileid_seq START WITH 1; -- 1 will be used for root directory
+CREATE SEQUENCE dircookie_seq START WITH 3; -- see PGFS_DIRCOOKIE_*
 CREATE TYPE filetype AS ENUM (
 	'regular',
 	'directory',
