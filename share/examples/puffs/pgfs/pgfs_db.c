@@ -1,4 +1,4 @@
-/*	$NetBSD: pgfs_db.c,v 1.2 2012/04/11 14:26:44 yamt Exp $	*/
+/*	$NetBSD: pgfs_db.c,v 1.3 2012/04/11 14:27:43 yamt Exp $	*/
 
 /*-
  * Copyright (c)2010,2011 YAMAMOTO Takashi,
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pgfs_db.c,v 1.2 2012/04/11 14:26:44 yamt Exp $");
+__RCSID("$NetBSD: pgfs_db.c,v 1.3 2012/04/11 14:27:43 yamt Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -61,6 +61,7 @@ struct Xconn {
 	struct puffs_cc *owner;
 	bool in_trans;
 	int id;
+	const char *label;
 };
 
 static void
@@ -652,6 +653,11 @@ simplefetch(struct Xconn *xc, Oid type, ...)
 	return error;
 }
 
+/*
+ * setlabel: set the descriptive label for the connection.
+ *
+ * we use simple pointer comparison for label equality check.
+ */
 static void
 setlabel(struct Xconn *xc, const char *label)
 {
@@ -667,7 +673,7 @@ setlabel(struct Xconn *xc, const char *label)
 	 *	WHERE state <> 'idle'
 	 */
 
-	if (label != NULL) {
+	if (label != NULL && label != xc->label) {
 		struct cmd *c;
 		char cmd_str[1024];
 
@@ -677,6 +683,7 @@ setlabel(struct Xconn *xc, const char *label)
 		error = simplecmd(xc, c);
 		freecmd(c);
 		assert(error == 0);
+		xc->label = label;
 	} else {
 #if 0 /* don't bother to clear label */
 		static struct cmd *c;
@@ -878,6 +885,7 @@ pgfs_connectdb(struct puffs_usermount *pu, const char *dbname,
 		xc->owner = NULL;
 		xc->in_trans = false;
 		xc->id = xcid++;
+		xc->label = NULL;
 		assert(xc->id < 32);
 		PQsetNoticeReceiver(conn, pgfs_notice_receiver, xc);
 		TAILQ_INSERT_HEAD(&xclist, xc, list);
