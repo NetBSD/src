@@ -1,4 +1,4 @@
-/*	$NetBSD: pgfs_db.c,v 1.1 2011/10/12 01:05:00 yamt Exp $	*/
+/*	$NetBSD: pgfs_db.c,v 1.2 2012/04/11 14:26:44 yamt Exp $	*/
 
 /*-
  * Copyright (c)2010,2011 YAMAMOTO Takashi,
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pgfs_db.c,v 1.1 2011/10/12 01:05:00 yamt Exp $");
+__RCSID("$NetBSD: pgfs_db.c,v 1.2 2012/04/11 14:26:44 yamt Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -652,13 +652,50 @@ simplefetch(struct Xconn *xc, Oid type, ...)
 	return error;
 }
 
+static void
+setlabel(struct Xconn *xc, const char *label)
+{
+	int error;
+
+	/*
+	 * put the label into application_name so that it's shown in
+	 * pg_stat_activity.  we are sure that our labels don't need
+	 * PQescapeStringConn.
+	 *
+	 * example:
+	 *	SELECT pid,application_name,query FROM pg_stat_activity
+	 *	WHERE state <> 'idle'
+	 */
+
+	if (label != NULL) {
+		struct cmd *c;
+		char cmd_str[1024];
+
+		snprintf(cmd_str, sizeof(cmd_str),
+		    "SET application_name TO 'pgfs: %s'", label);
+		c = createcmd(cmd_str, CMD_NOPREPARE);
+		error = simplecmd(xc, c);
+		freecmd(c);
+		assert(error == 0);
+	} else {
+#if 0 /* don't bother to clear label */
+		static struct cmd *c;
+
+		CREATECMD_NOPARAM(c, "SET application_name TO 'pgfs'");
+		error = simplecmd(xc, c);
+		assert(error == 0);
+#endif
+	}
+}
+
 struct Xconn *
-begin(struct puffs_usermount *pu)
+begin(struct puffs_usermount *pu, const char *label)
 {
 	struct Xconn *xc = getxc(puffs_cc_getcc(pu));
 	static struct cmd *c;
 	int error;
 
+	setlabel(xc, label);
 	CREATECMD_NOPARAM(c, "BEGIN");
 	assert(!xc->in_trans);
 	error = simplecmd(xc, c);
@@ -669,12 +706,13 @@ begin(struct puffs_usermount *pu)
 }
 
 struct Xconn *
-begin_readonly(struct puffs_usermount *pu)
+begin_readonly(struct puffs_usermount *pu, const char *label)
 {
 	struct Xconn *xc = getxc(puffs_cc_getcc(pu));
 	static struct cmd *c;
 	int error;
 
+	setlabel(xc, label);
 	CREATECMD_NOPARAM(c, "BEGIN READ ONLY");
 	assert(!xc->in_trans);
 	error = simplecmd(xc, c);
@@ -706,6 +744,7 @@ rollback(struct Xconn *xc)
 		assert(error == 0);
 	}
 	DPRINTF("xc %p rollback %p\n", xc, xc->owner);
+	setlabel(xc, NULL);
 	relxc(xc);
 }
 
@@ -717,6 +756,7 @@ commit(struct Xconn *xc)
 
 	CREATECMD_NOPARAM(c, "COMMIT");
 	error = simplecmd(xc, c);
+	setlabel(xc, NULL);
 	if (error == 0) {
 		DPRINTF("xc %p commit %p\n", xc, xc->owner);
 		relxc(xc);
@@ -841,7 +881,7 @@ pgfs_connectdb(struct puffs_usermount *pu, const char *dbname,
 		assert(xc->id < 32);
 		PQsetNoticeReceiver(conn, pgfs_notice_receiver, xc);
 		TAILQ_INSERT_HEAD(&xclist, xc, list);
-		xc2 = begin(pu);
+		xc2 = begin(pu, NULL);
 		assert(xc2 == xc);
 		c = createcmd("SET search_path TO pgfs", CMD_NOPREPARE);
 		error = simplecmd(xc, c);
@@ -929,7 +969,7 @@ flush_xacts(struct puffs_usermount *pu)
 	DPRINTF("%p start flushing\n", cc);
 	flusher = cc;
 retry:
-	xc = begin(pu);
+	xc = begin(pu, "flush");
 	CREATECMD_NOPARAM(c, "SELECT setval('dummyseq', 1) WHERE "
 	    "pg_current_xlog_insert_location() <> pg_current_xlog_location()");
 	error = sendcmd(xc, c);
