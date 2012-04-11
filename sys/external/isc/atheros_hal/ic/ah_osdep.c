@@ -26,11 +26,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ah_osdep.c,v 1.5 2011/07/17 20:54:51 joerg Exp $
+ * $Id: ah_osdep.c,v 1.6 2012/04/11 13:48:11 nakayama Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_osdep.c,v 1.5 2011/07/17 20:54:51 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_osdep.c,v 1.6 2012/04/11 13:48:11 nakayama Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_athhal.h"
@@ -65,8 +65,8 @@ extern	void ath_hal_assert_failed(const char* filename,
 		int lineno, const char* msg);
 #endif
 #ifdef ATHHAL_DEBUG
-extern	void HALDEBUG(struct ath_hal *ah, const char* fmt, ...);
-extern	void HALDEBUGn(struct ath_hal *ah, u_int level, const char* fmt, ...);
+extern	void HALDEBUG(struct ath_hal *ah, u_int mask, const char* fmt, ...)
+	__printflike(3,4);
 #endif /* ATHHAL_DEBUG */
 
 #ifdef ATHHAL_DEBUG
@@ -171,20 +171,9 @@ ath_hal_ether_sprintf(const u_int8_t *mac)
 
 #ifdef ATHHAL_DEBUG
 void
-HALDEBUG(struct ath_hal *ah, const char* fmt, ...)
+HALDEBUG(struct ath_hal *ah, u_int mask, const char* fmt, ...)
 {
-	if (ath_hal_debug) {
-		va_list ap;
-		va_start(ap, fmt);
-		ath_hal_vprintf(ah, fmt, ap);
-		va_end(ap);
-	}
-}
-
-void
-HALDEBUGn(struct ath_hal *ah, u_int level, const char* fmt, ...)
-{
-	if (ath_hal_debug >= level) {
+	if (ath_hal_debug & mask) {
 		va_list ap;
 		va_start(ap, fmt);
 		ath_hal_vprintf(ah, fmt, ap);
