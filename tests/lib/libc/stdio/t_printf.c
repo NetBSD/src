@@ -1,4 +1,4 @@
-/* $NetBSD: t_printf.c,v 1.7 2012/03/18 08:13:57 jruoho Exp $ */
+/* $NetBSD: t_printf.c,v 1.8 2012/04/11 16:21:42 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ ATF_TC_BODY(snprintf_float, tc)
 
 	time(&now);
 	srand(now);
-	for (size_t i = 0; i < 1000000; i++) {
+	for (size_t i = 0; i < 10000; i++) {
 		ul = rand();
 		uh = rand();
 		u.bits = (uint64_t)uh << 32 | ul;
