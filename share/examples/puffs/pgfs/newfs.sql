@@ -1,4 +1,4 @@
--- $NetBSD: newfs.sql,v 1.1 2011/10/12 01:05:00 yamt Exp $
+-- $NetBSD: newfs.sql,v 1.2 2012/04/11 14:26:19 yamt Exp $
 
 -- Copyright (c)2010,2011 YAMAMOTO Takashi,
 -- All rights reserved.
@@ -71,7 +71,7 @@ CREATE TABLE file (
 -- datafork table maintains the association between our files and its backing
 -- large objects.
 CREATE TABLE datafork (
-	fileid fileid PRIMARY KEY REFERENCES file,
+	fileid fileid PRIMARY KEY, -- REFERENCES file
 	loid Oid NOT NULL UNIQUE);
 -- we want the following but lo lives in system catalogs.
 --	loid REFERENCES pg_largeobject_metadata(oid);
