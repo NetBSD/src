@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.1 2011/10/12 01:05:00 yamt Exp $	*/
+/*	$NetBSD: mount.c,v 1.2 2012/04/11 14:25:54 yamt Exp $	*/
 
 /*-
  * Copyright (c)2010,2011 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount.c,v 1.1 2011/10/12 01:05:00 yamt Exp $");
+__RCSID("$NetBSD: mount.c,v 1.2 2012/04/11 14:25:54 yamt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -73,7 +73,7 @@ main(int argc, char *argv[])
 		  .m_flag = PGFS_MNT_ALT_DUMMY, .m_altloc = 1, },
 		MOPT_NULL,
 	};
-	uint32_t pflags = PUFFS_KFLAG_NOCACHE_NAME|PUFFS_KFLAG_WTCACHE;
+	uint32_t pflags = PUFFS_KFLAG_IAONDEMAND;
 	unsigned int nconn = 8;
 	bool debug = false;
 	bool dosync;

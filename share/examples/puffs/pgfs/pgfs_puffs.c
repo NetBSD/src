@@ -1,4 +1,4 @@
-/*	$NetBSD: pgfs_puffs.c,v 1.1 2011/10/12 01:05:00 yamt Exp $	*/
+/*	$NetBSD: pgfs_puffs.c,v 1.2 2012/04/11 14:25:54 yamt Exp $	*/
 
 /*-
  * Copyright (c)2010,2011 YAMAMOTO Takashi,
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pgfs_puffs.c,v 1.1 2011/10/12 01:05:00 yamt Exp $");
+__RCSID("$NetBSD: pgfs_puffs.c,v 1.2 2012/04/11 14:25:54 yamt Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -655,6 +655,7 @@ retry:
 	if (error != 0) {
 		goto got_error;
 	}
+	puffs_setback(puffs_cc_getcc(pu), PUFFS_SETBACK_INACT_N2);
 	return 0;
 got_error:
 	rollback(xc);
@@ -704,6 +705,7 @@ retry:
 	if (error != 0) {
 		goto got_error;
 	}
+	puffs_setback(puffs_cc_getcc(pu), PUFFS_SETBACK_INACT_N2);
 	return 0;
 got_error:
 	rollback(xc);
