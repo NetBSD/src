@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fpsetmask.c,v 1.7 2012/04/11 10:18:25 jruoho Exp $ */
+/*	$NetBSD: t_fpsetmask.c,v 1.8 2012/04/11 16:18:39 jruoho Exp $ */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -296,7 +296,7 @@ sigfpe(int s, siginfo_t *si, void *c)
 		if (strcmp(atf_config_get("atf_arch"), "macppc") == 0)	\
 			atf_tc_expect_fail("PR port-macppc/46319");	\
 									\
-		if (strcmp(atf_config_get("atf_arch"), "amd64") == 0 &&	\
+		if (strcmp(atf_config_get("atf_arch"), "i386") == 0 &&	\
 		    system("cpuctl identify 0 | grep -q QEMU") == 0)	\
 			atf_tc_expect_fail("PR misc/44767");		\
 									\
