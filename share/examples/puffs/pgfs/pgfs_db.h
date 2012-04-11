@@ -1,4 +1,4 @@
-/*	$NetBSD: pgfs_db.h,v 1.1 2011/10/12 01:05:00 yamt Exp $	*/
+/*	$NetBSD: pgfs_db.h,v 1.2 2012/04/11 14:26:44 yamt Exp $	*/
 
 /*-
  * Copyright (c)2010,2011 YAMAMOTO Takashi,
@@ -60,8 +60,8 @@ void fetchinit(struct fetchstatus *, struct Xconn *);
 int fetchnext(struct fetchstatus *, unsigned int, const Oid *, ...);
 void fetchdone(struct fetchstatus *);
 
-struct Xconn *begin(struct puffs_usermount *);
-struct Xconn *begin_readonly(struct puffs_usermount *);
+struct Xconn *begin(struct puffs_usermount *, const char *);
+struct Xconn *begin_readonly(struct puffs_usermount *, const char *);
 void rollback(struct Xconn *);
 int commit(struct Xconn *);
 int commit_sync(struct Xconn *);
