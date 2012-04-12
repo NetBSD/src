@@ -1,4 +1,4 @@
-.\"	$NetBSD: getpass.3,v 1.15 2012/04/12 20:15:37 wiz Exp $
+.\"	$NetBSD: getpass.3,v 1.16 2012/04/12 22:07:44 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,6 +43,8 @@
 .Fn getpass "const char *prompt"
 .Ft char *
 .Fn getpass_r "const char *prompt" "char *buf" "size_t buflen"
+.Ft char *
+.Fn getpassfd "const char *prompt" "char *buf" "size_t buflen" "int fd[3]" "int flags"
 .Sh DESCRIPTION
 The
 .Fn getpass
@@ -71,6 +73,34 @@ only it puts its result in
 for up to
 .Fa buflen
 characters.
+If the
+.Fa buf
+argument is
+.Dv NULL ,
+then a buffer will be dynamically allocated.
+.Pp
+The
+.Fn getpassfd
+function allows one to specify the file descriptors used to be specified in
+.Fa fd ,
+and provides an extra
+.Fa flags
+argument to control its behavior:
+.Bl -tag -width GETPASS_BUF_LIMIT
+.It Dv GETPASS_NEED_TTY
+Fail if we are unable to set the tty modes like we want.
+.It Dv GETPASS_FAIL_EOF
+Fail if we get the end-of-file character instead of returning the result so far.
+.It Dv GETPASS_BUF_LIMIT
+Beep when the buffer limit is reached, instead of silently absorbing it.
+.It Dv GETPASS_NO_SIGNAL
+Don't make ttychars send signals.
+.It Dv GETPASS_NO_BEEP
+Don't beep if we erase past the beginning of the buffer or we try to enter past
+the end.
+.It Dv GETPASS_ECHO
+Echo characters as they are typed.
+.El
 .Sh RETURN VALUES
 The
 .Fn getpass
@@ -78,7 +108,9 @@ function returns a pointer to the NUL terminated password, or an empty
 string on error.
 The
 .Fn getpass_r
-function returns a pointer to the NUL terminated password, or
+and
+.Fn getpassfd
+functions return a pointer to the NUL terminated password, or
 .Dv NULL
 on error.
 .Sh FILES
@@ -103,7 +135,9 @@ function appeared in
 .At v7 .
 The
 .Fn getpass_r
-function appeared in
+and
+.Fn getpassfd
+functions appeared in
 .Nx 7.0 .
 .Sh BUGS
 The

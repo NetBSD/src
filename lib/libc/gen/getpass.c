@@ -1,4 +1,4 @@
-/*	$NetBSD: getpass.c,v 1.18 2012/04/12 20:08:01 christos Exp $	*/
+/*	$NetBSD: getpass.c,v 1.19 2012/04/12 22:07:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getpass.c,v 1.18 2012/04/12 20:08:01 christos Exp $");
+__RCSID("$NetBSD: getpass.c,v 1.19 2012/04/12 22:07:44 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: getpass.c,v 1.18 2012/04/12 20:08:01 christos Exp $");
 #include <fcntl.h>
 
 #ifdef __weak_alias
+__weak_alias(getpassfd,_getpassfd)
 __weak_alias(getpass_r,_getpass_r)
 __weak_alias(getpass,_getpass)
 #endif
@@ -58,46 +59,40 @@ __weak_alias(getpass,_getpass)
  * Notes:
  *	- There is no getpass_r in POSIX
  *	- Historically EOF is documented to be treated as EOL, we provide a
- *	  tunable for that DONT_TREAT_EOF_AS_EOL to disable this.
+ *	  tunable for that GETPASS_FAIL_EOF to disable this.
  *	- Historically getpass ate extra characters silently, we provide
- *	  a tunable for that DONT_DISCARD_SILENTLY to disable this.
+ *	  a tunable for that GETPASS_BUF_LIMIT to disable this.
  *	- Historically getpass "worked" by echoing characters when turning
- *	  off echo failed, we provide a tunable DONT_WORK_AND_ECHO to
+ *	  off echo failed, we provide a tunable GETPASS_NEED_TTY to
  *	  disable this.
  *	- Some implementations say that on interrupt the program shall
  *	  receive an interrupt signal before the function returns. We
  *	  send all the tty signals before we return, but we don't expect
  *	  suspend to do something useful unless the caller calls us again.
+ *	  We also provide a tunable to disable signal delivery
+ *	  GETPASS_NO_SIGNAL.
+ *	- GETPASS_NO_BEEP disables beeping.
+ *	- GETPASS_ECHO will echo the password (as pam likes it)
  */
 char *
-getpass_r(const char *prompt, char *ret, size_t len)
+/*ARGSUSED*/
+getpassfd(const char *prompt, char *buf, size_t len, int fd[], int flags)
 {
 	struct termios gt;
 	char c;
-	int infd, outfd, sig;
-	bool lnext, havetty;
+	int sig;
+	bool lnext, havetty, allocated;
 
 	_DIAGASSERT(prompt != NULL);
 
 	sig = 0;
-	/*
-	 * Try to use /dev/tty if possible; otherwise read from stdin and
-	 * write to stderr.
-	 */
-	if ((outfd = infd = open(_PATH_TTY, O_RDWR)) == -1) {
-		infd = STDIN_FILENO;
-		outfd = STDERR_FILENO;
-		havetty = false;
-	} else
-		havetty = true;
 
-	if (tcgetattr(infd, &gt) == -1) {
+	allocated = buf == NULL;
+	if (tcgetattr(fd[0], &gt) == -1) {
 		havetty = false;
-#ifdef DONT_WORK_AND_ECHO
-		goto out;
-#else
+		if (flags & GETPASS_NEED_TTY)
+			goto out;
 		memset(&gt, -1, sizeof(gt));
-#endif
 	} else
 		havetty = true;
 		
@@ -108,22 +103,33 @@ getpass_r(const char *prompt, char *ret, size_t len)
 		st.c_lflag &= ~(ECHO|ECHOK|ECHOE|ECHOKE|ECHOCTL|ISIG|ICANON);
 		st.c_cc[VMIN] = 1;
 		st.c_cc[VTIME] = 0;
-		if (tcsetattr(infd, TCSAFLUSH|TCSASOFT, &st) == -1)
+		if (tcsetattr(fd[0], TCSAFLUSH|TCSASOFT, &st) == -1)
 			goto out;
 	}
 
 	if (prompt != NULL) {
 		size_t plen = strlen(prompt);
-		(void)write(outfd, prompt, plen);
+		(void)write(fd[1], prompt, plen);
+	}
+
+	if (allocated) {
+		len = 1024;
+		if ((buf = malloc(len)) == NULL)
+			goto restore;
 	}
 
 	c = '\1';
 	lnext = false;
 	for (size_t l = 0; c != '\0'; ) {
-		if (read(infd, &c, 1) != 1)
+		if (read(fd[0], &c, 1) != 1)
 			goto restore;
 
-#define beep() write(outfd, "\a", 1)
+#define beep() do \
+	if (flags & GETPASS_NO_BEEP) \
+		(void)write(fd[2], "\a", 1); \
+	while (/*CONSTCOND*/ 0)
+#define erase() (void)write(fd[1], "\b \b", 3)
+
 #define C(a, b) (gt.c_cc[(a)] == _POSIX_VDISABLE ? (b) : gt.c_cc[(a)])
 
 		if (lnext) {
@@ -145,6 +151,10 @@ getpass_r(const char *prompt, char *ret, size_t len)
 
 		/* Line or word kill, treat as reset */
 		if (c == C(VKILL, CTRL('u')) || c == C(VWERASE, CTRL('w'))) {
+			if (flags & GETPASS_ECHO) {
+				while (l--)
+					erase();
+			}
 			l = 0;
 			continue;
 		}
@@ -153,8 +163,11 @@ getpass_r(const char *prompt, char *ret, size_t len)
 		if (c == C(VERASE, CTRL('h'))) {
 			if (l == 0)
 				beep();
-			else
+			else {
 				l--;
+				if (flags & GETPASS_ECHO)
+					erase();
+			}
 			continue;
 		}
 
@@ -174,13 +187,13 @@ getpass_r(const char *prompt, char *ret, size_t len)
 
 		/* EOF */
 		if (c == C(VEOF, CTRL('d')))  {
-#ifdef DONT_TREAT_EOF_AS_EOL
-			errno = ENODATA;
-			goto out;
-#else
-			c = '\0';
-			goto add;
-#endif
+			if (flags & GETPASS_FAIL_EOF) {
+				errno = ENODATA;
+				goto out;
+			} else {
+				c = '\0';
+				goto add;
+			}
 		}
 
 		/* End of line */
@@ -188,33 +201,75 @@ getpass_r(const char *prompt, char *ret, size_t len)
 			c = '\0';
 add:
 		if (l >= len) {
-#ifdef DONT_DISCARD_SILENTLY
-			beep();
-			continue;
-#else
-			if (c == '\0' && l > 0)
-				l--;
-			else
-				continue;
-#endif
+			if (allocated) {
+				len += 1024;
+				char *b = realloc(buf, len);
+				if (b == NULL)
+					goto restore;
+				buf = b;
+			} else {
+				if (flags & GETPASS_BUF_LIMIT) {
+					beep();
+					continue;
+				}
+				if (c == '\0' && l > 0)
+					l--;
+				else
+					continue;
+			}
 		}
-		ret[l++] = c;
+		buf[l++] = c;
+		if (c && (flags & GETPASS_ECHO))
+		    (void)write(fd[1], &c, 1);
 	}
 
 	if (havetty)
-		(void)tcsetattr(infd, TCSAFLUSH|TCSASOFT, &gt);
-	return ret;
+		(void)tcsetattr(fd[0], TCSAFLUSH|TCSASOFT, &gt);
+	return buf;
 restore:
-	c = errno;
-	if (havetty)
-		(void)tcsetattr(infd, TCSAFLUSH|TCSASOFT, &gt);
-	errno = c;
+	if (havetty) {
+		c = errno;
+		(void)tcsetattr(fd[0], TCSAFLUSH|TCSASOFT, &gt);
+		errno = c;
+	}
 out:
 	if (sig) {
-		(void)raise(sig);
+		if ((flags & GETPASS_NO_SIGNAL) == 0)
+			(void)raise(sig);
 		errno = EINTR;
 	}
+	memset(buf, 0, len);
+	if (allocated)
+		free(buf);
 	return NULL;
+}
+
+char *
+getpass_r(const char *prompt, char *buf, size_t len)
+{
+	bool opentty;
+	int fd[3];
+	char *rv;
+
+	/*
+	 * Try to use /dev/tty if possible; otherwise read from stdin and
+	 * write to stderr.
+	 */
+	if ((fd[0] = fd[1] = fd[2] = open(_PATH_TTY, O_RDWR)) == -1) {
+		opentty = false;
+		fd[0] = STDIN_FILENO;
+		fd[1] = fd[2] = STDERR_FILENO;
+	} else
+		opentty = true;
+
+	rv = getpassfd(prompt, buf, len, fd, 0);
+
+	if (opentty) {
+		int serrno = errno;
+		(void)close(fd[0]);
+		errno = serrno;
+	}
+	return rv;
 }
 
 char *
@@ -225,6 +280,11 @@ getpass(const char *prompt)
 	static long bufsiz;
 	char *rv;
 
+	/*
+	 * Strictly speaking we could double allocate here, if we get
+	 * called at the same time, but this function is not re-entrant
+	 * anyway and it is not supposed to work if called concurrently.
+	 */
 	if (buf == NULL) {
 		if ((bufsiz = sysconf(_SC_PASS_MAX)) == -1)
 			return e;
@@ -243,7 +303,8 @@ int
 main(int argc, char *argv[])
 {
 	char buf[28];
-	printf("[%s]\n", getpass_r("foo>", buf, sizeof(buf)));
+	int fd[3] = { 0, 1, 2 };
+	printf("[%s]\n", getpassfd("foo>", buf, sizeof(buf), fd, GETPASS_ECHO));
 	return 0;
 }
 #endif
