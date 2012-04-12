@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.134 2012/02/03 20:11:54 matt Exp $	*/
+/*	$NetBSD: exec.h,v 1.134.2.1 2012/04/12 17:05:38 riz Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -273,6 +273,7 @@ int	coredump_write		(void *, enum uio_seg, const void *, size_t);
 
 void	exec_free_emul_arg	(struct exec_package *);
 
+
 /*
  * Machine dependent functions
  */
@@ -295,6 +296,14 @@ void	new_vmcmd(struct exec_vmcmd_set *,
 typedef	int (*execve_fetch_element_t)(char * const *, size_t, char **);
 int	execve1(struct lwp *, const char *, char * const *, char * const *,
     execve_fetch_element_t);
+
+struct posix_spawn_file_actions;
+struct posix_spawnattr;
+int	check_posix_spawn	(struct lwp *);
+void	posix_spawn_fa_free(struct posix_spawn_file_actions *, size_t);
+int	do_posix_spawn(struct lwp *, pid_t *, bool*, const char *,
+    struct posix_spawn_file_actions *, struct posix_spawnattr *,
+    char *const *argv, char *const *, execve_fetch_element_t);
 
 extern int	maxexec;
 
