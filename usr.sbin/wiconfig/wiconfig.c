@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.43 2011/08/30 21:01:50 joerg Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.44 2012/04/12 11:46:14 joerg Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -68,7 +68,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 1999\
  Bill Paul.  All rights reserved.");
-__RCSID("$NetBSD: wiconfig.c,v 1.43 2011/08/30 21:01:50 joerg Exp $");
+__RCSID("$NetBSD: wiconfig.c,v 1.44 2012/04/12 11:46:14 joerg Exp $");
 #endif
 
 struct wi_table {
@@ -261,7 +261,7 @@ wi_apscan(char *iface)
 			rate = 2;
 			break;
 		case WI_APRATE_5:
-			rate = 5.5;
+			rate = 5;
 			break;
 		case WI_APRATE_11:
 			rate = 11;
