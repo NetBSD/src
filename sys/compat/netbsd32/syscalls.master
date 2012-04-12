@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.91 2012/02/01 05:40:01 dholland Exp $
+	$NetBSD: syscalls.master,v 1.91.2.1 2012/04/12 17:05:37 riz Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -1039,3 +1039,10 @@
 			    const netbsd32_timespecp_t tptr); }
 473	STD		{ int|netbsd32||__quotactl(const netbsd32_charp path, \
 			    netbsd32_voidp args); }
+474	NOERR		{ int|netbsd32||posix_spawn(netbsd32_pid_tp pid, \
+				const netbsd32_charp path, \
+				const netbsd32_posix_spawn_file_actionsp \
+				    file_actions, \
+				const netbsd32_posix_spawnattrp attrp, \
+				netbsd32_charpp argv, netbsd32_charpp envp); }
+

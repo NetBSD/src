@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.33 2012/01/31 22:53:56 matt Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.33.2.1 2012/04/12 17:05:38 riz Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -28,12 +28,16 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.33 2012/01/31 22:53:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.33.2.1 2012/04/12 17:05:38 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 #include <sys/mount.h>
+#include <sys/namei.h>
 #include <sys/stat.h>
+#include <sys/spawn.h>
+#include <sys/uidinfo.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
@@ -89,4 +93,141 @@ netbsd32_fexecve(struct lwp *l, const struct netbsd32_fexecve_args *uap,
 	NETBSD32TOP_UAP(envp, char * const);
 
 	return sys_fexecve(l, &ua, retval);
+}
+
+static int
+netbsd32_posix_spawn_fa_alloc(struct posix_spawn_file_actions **fap,
+    const struct netbsd32_posix_spawn_file_actions *ufa)
+{
+	struct posix_spawn_file_actions *fa;
+	struct netbsd32_posix_spawn_file_actions fa32;
+	struct netbsd32_posix_spawn_file_actions_entry *fae32 = NULL, *f32 = NULL;
+	struct posix_spawn_file_actions_entry *fae;
+	char *pbuf = NULL;
+	int error;
+	size_t fal, fal32, slen, i = 0;
+
+	error = copyin(ufa, &fa32, sizeof(fa32));
+	if (error)
+		return error;
+
+	if (fa32.len == 0)
+		return 0;
+
+	fa = kmem_alloc(sizeof(*fa), KM_SLEEP);
+	fa->len = fa->size = fa32.len;
+
+	fal = fa->len * sizeof(*fae);
+	fal32 = fa->len * sizeof(*fae32);
+
+	fa->fae = kmem_alloc(fal, KM_SLEEP);
+	fae32 = kmem_alloc(fal32, KM_SLEEP);
+	error = copyin(NETBSD32PTR64(fa32.fae), fae32, fal32);
+	if (error)
+		goto out;
+
+	pbuf = PNBUF_GET();
+	for (; i < fa->len; i++) {
+		fae = &fa->fae[i];
+		f32 = &fae32[i];
+		fae->fae_action = f32->fae_action;
+		fae->fae_fildes = f32->fae_fildes;
+		if (fae->fae_action == FAE_DUP2)
+			fae->fae_data.dup2.newfildes =
+			    f32->fae_data.dup2.newfildes;
+		if (fae->fae_action != FAE_OPEN)
+			continue;
+		error = copyinstr(NETBSD32PTR64(f32->fae_path), pbuf,
+		    MAXPATHLEN, &slen);
+		if (error)
+			goto out;
+		fae->fae_path = kmem_alloc(fal, KM_SLEEP);
+		memcpy(fae->fae_path, pbuf, slen);
+		fae->fae_oflag = f32->fae_oflag;
+		fae->fae_mode = f32->fae_mode;
+	}
+	PNBUF_PUT(pbuf);
+	if (fae32)
+		kmem_free(fae32, fal32);
+	*fap = fa;
+	return 0;
+
+out:
+	if (fae32)
+		kmem_free(fae32, fal32);
+	if (pbuf)
+		PNBUF_PUT(pbuf);
+	posix_spawn_fa_free(fa, i);
+	return error;
+}
+
+int
+netbsd32_posix_spawn(struct lwp *l,
+	const struct netbsd32_posix_spawn_args *uap, register_t *retval)
+{
+	/* {
+	syscallarg(netbsd32_pid_tp) pid;
+	syscallarg(const netbsd32_charp) path;
+	syscallarg(const netbsd32_posix_spawn_file_actionsp) file_actions;
+	syscallarg(const netbsd32_posix_spawnattrp) attrp;
+	syscallarg(netbsd32_charpp) argv;
+	syscallarg(netbsd32_charpp) envp;
+	} */
+
+	int error;
+	struct posix_spawn_file_actions *fa = NULL;
+	struct posix_spawnattr *sa = NULL;
+	pid_t pid;
+	bool child_ok = false;
+
+	error = check_posix_spawn(l);
+	if (error) {
+		*retval = error;
+		return 0;
+	}
+
+	/* copy in file_actions struct */
+	if (SCARG_P32(uap, file_actions) != NULL) {
+		error = netbsd32_posix_spawn_fa_alloc(&fa,
+		    SCARG_P32(uap, file_actions));
+		if (error)
+			goto error_exit;
+	}
+
+	/* copyin posix_spawnattr struct */
+	if (SCARG_P32(uap, attrp) != NULL) {
+		sa = kmem_alloc(sizeof(*sa), KM_SLEEP);
+		error = copyin(SCARG_P32(uap, attrp), sa, sizeof(*sa));
+		if (error)
+			goto error_exit;
+	}
+
+	/*
+	 * Do the spawn
+	 */
+	error = do_posix_spawn(l, &pid, &child_ok, SCARG_P32(uap, path), fa,
+	    sa, SCARG_P32(uap, argv), SCARG_P32(uap, envp),
+	    netbsd32_execve_fetch_element);
+	if (error)
+		goto error_exit;
+
+	if (error == 0 && SCARG_P32(uap, pid) != NULL)
+		error = copyout(&pid, SCARG_P32(uap, pid), sizeof(pid));
+
+	*retval = error;
+	return 0;
+
+ error_exit:
+ 	if (!child_ok) {
+		(void)chgproccnt(kauth_cred_getuid(l->l_cred), -1);
+		atomic_dec_uint(&nprocs);
+
+		if (sa)
+			kmem_free(sa, sizeof(*sa));
+		if (fa)
+			posix_spawn_fa_free(fa, fa->len);
+	}
+
+	*retval = error;
+	return 0;
 }

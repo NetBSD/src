@@ -1,4 +1,4 @@
-/* $NetBSD: t_fileactions.c,v 1.2.2.1 2012/02/20 21:54:57 sborrill Exp $ */
+/* $NetBSD: t_fileactions.c,v 1.2.2.2 2012/04/12 17:05:37 riz Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -222,7 +222,7 @@ ATF_TC_HEAD(t_spawn_open_nonexistent, tc)
 
 ATF_TC_BODY(t_spawn_open_nonexistent, tc)
 {
-	int err;
+	int err, status;
 	pid_t pid;
 	char * const args[2] = { __UNCONST("cat"), NULL };
 	posix_spawn_file_actions_t fa;
@@ -231,8 +231,57 @@ ATF_TC_BODY(t_spawn_open_nonexistent, tc)
 	posix_spawn_file_actions_addopen(&fa, STDIN_FILENO,
 	    "./non/ex/ist/ent", O_RDONLY, 0);
 	err = posix_spawn(&pid, "/bin/cat", &fa, NULL, args, NULL);
+	if (err == 0) {
+		/*
+		 * The child has been created - it should fail and
+		 * return exit code 127
+		 */
+		waitpid(pid, &status, 0);
+		ATF_REQUIRE(WIFEXITED(status) && WEXITSTATUS(status) == 127);
+	} else {
+		/*
+		 * The error has been noticed early enough, no child has
+		 * been run
+		 */
+		ATF_REQUIRE(err == ENOENT);
+	}
+	posix_spawn_file_actions_destroy(&fa);
+}
+
+ATF_TC(t_spawn_open_nonexistent_diag);
+
+ATF_TC_HEAD(t_spawn_open_nonexistent_diag, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "posix_spawn fails when a file to open does not exist "
+	    "and delivers proper diagnostic");
+	atf_tc_set_md_var(tc, "require.progs", "/bin/cat");
+}
+
+ATF_TC_BODY(t_spawn_open_nonexistent_diag, tc)
+{
+	int err;
+	pid_t pid;
+	char * const args[2] = { __UNCONST("cat"), NULL };
+	posix_spawnattr_t attr;
+	posix_spawn_file_actions_t fa;
+
+	posix_spawnattr_init(&attr);
+	/*
+	 * POSIX_SPAWN_RETURNERROR is a NetBSD specific flag that
+	 * will cause a "proper" return value from posix_spawn(2)
+	 * instead of a (potential) success there and a 127 exit
+	 * status from the child process (c.f. the non-diag variant
+	 * of this test).
+	 */
+	posix_spawnattr_setflags(&attr, POSIX_SPAWN_RETURNERROR);
+	posix_spawn_file_actions_init(&fa);
+	posix_spawn_file_actions_addopen(&fa, STDIN_FILENO,
+	    "./non/ex/ist/ent", O_RDONLY, 0);
+	err = posix_spawn(&pid, "/bin/cat", &fa, &attr, args, NULL);
 	ATF_REQUIRE(err == ENOENT);
 	posix_spawn_file_actions_destroy(&fa);
+	posix_spawnattr_destroy(&attr);
 }
 
 ATF_TC(t_spawn_fileactions);
@@ -327,6 +376,7 @@ ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, t_spawn_fileactions);
 	ATF_TP_ADD_TC(tp, t_spawn_open_nonexistent);
+	ATF_TP_ADD_TC(tp, t_spawn_open_nonexistent_diag);
 	ATF_TP_ADD_TC(tp, t_spawn_reopen);
 	ATF_TP_ADD_TC(tp, t_spawn_openmode);
 	ATF_TP_ADD_TC(tp, t_spawn_empty_fileactions);

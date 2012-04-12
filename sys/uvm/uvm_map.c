@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.313.2.1 2012/02/22 18:56:48 riz Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.313.2.2 2012/04/12 17:05:37 riz Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.313.2.1 2012/02/22 18:56:48 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.313.2.2 2012/04/12 17:05:37 riz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -4035,6 +4035,28 @@ uvmspace_unshare(struct lwp *l)
 
 #endif
 
+
+/*
+ * uvmspace_spawn: a new process has been spawned and needs a vmspace
+ */
+
+void
+uvmspace_spawn(struct lwp *l, vaddr_t start, vaddr_t end)
+{
+	struct proc *p = l->l_proc;
+	struct vmspace *nvm;
+
+#ifdef __HAVE_CPU_VMSPACE_EXEC
+	cpu_vmspace_exec(l, start, end);
+#endif
+
+	nvm = uvmspace_alloc(start, end);
+	kpreempt_disable();
+	p->p_vmspace = nvm;
+	pmap_activate(l);
+	kpreempt_enable();
+}
+
 /*
  * uvmspace_exec: the process wants to exec a new program
  */
@@ -4046,22 +4068,10 @@ uvmspace_exec(struct lwp *l, vaddr_t start, vaddr_t end)
 	struct vmspace *nvm, *ovm = p->p_vmspace;
 	struct vm_map *map;
 
+	KASSERT(ovm != NULL);
 #ifdef __HAVE_CPU_VMSPACE_EXEC
 	cpu_vmspace_exec(l, start, end);
 #endif
-
-	/*
-	 * Special case: no vmspace yet (see posix_spawn) -
-	 * no races possible in this case.
-	 */
-	if (ovm == NULL) {
-		ovm = uvmspace_alloc(start, end);
-		kpreempt_disable();
-		p->p_vmspace = ovm;
-		pmap_activate(l);
-		kpreempt_enable();
-		return;
-	}
 
 	map = &ovm->vm_map;
 	/*
