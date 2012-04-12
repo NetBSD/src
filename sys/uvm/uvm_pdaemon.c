@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.9 2012/04/12 01:40:27 matt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.10 2012/04/12 19:41:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.9 2012/04/12 01:40:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.10 2012/04/12 19:41:57 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -102,7 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.9 2012/04/12 01:40:27 mat
  * local prototypes
  */
 
-static void	uvmpd_scan(struct uvm_pggroup *);
+static bool	uvmpd_scan(struct uvm_pggroup *);
 static void	uvmpd_scan_queue(struct uvm_pggroup *);
 static void	uvmpd_tune(void);
 
@@ -359,6 +359,7 @@ uvm_pageout(void *arg)
 	struct pool *pp;
 	uint64_t where;
 	struct uvm_pdinfo * const pdinfo = &uvm_pdinfo;
+	bool progress = true;
 	UVMHIST_FUNC("uvm_pageout"); UVMHIST_CALLED(pdhist);
 
 	UVMHIST_LOG(pdhist,"<starting uvm pagedaemon>", 0, 0, 0, 0);
@@ -387,13 +388,18 @@ uvm_pageout(void *arg)
 		 * If we have no one waiting or all color requests have
 		 * active paging, then wait.
 		 */
-		if (pdinfo->pd_waiters == 0
-		    && TAILQ_FIRST(&pdinfo->pd_pendingq) == NULL) {
+		if (progress == false
+		    || (pdinfo->pd_waiters == 0
+		        && TAILQ_FIRST(&pdinfo->pd_pendingq) == NULL)) {
 			UVMHIST_LOG(pdhist,"  <<SLEEPING>>",0,0,0,0);
+			int timo = 0;
+			if (!progress && pdinfo->pd_waiters > 0)
+				timo = 2 * hz;
 			UVM_UNLOCK_AND_WAIT(&uvm.pagedaemon,
-			    &uvm_fpageqlock, false, "pgdaemon", 0);
+			    &uvm_fpageqlock, false, "pgdaemon", timo);
 			uvmexp.pdwoke++;
 			UVMHIST_LOG(pdhist,"  <<WOKE UP>>",0,0,0,0);
+			progress = false;
 		} else if (TAILQ_FIRST(&pdinfo->pd_pendingq) == NULL) {
 			/*
 			 * Someone is waiting but no group are pending.
@@ -462,7 +468,8 @@ uvm_pageout(void *arg)
 			if (grp->pgrp_paging < diff
 			    || uvmpdpol_needsscan_p(grp)) {
 				mutex_spin_exit(&uvm_fpageqlock);
-				uvmpd_scan(grp);
+				if (uvmpd_scan(grp))
+					progress = true;
 				mutex_spin_enter(&uvm_fpageqlock);
 			} else {
 				UVMHIST_LOG(pdhist,
@@ -1157,7 +1164,7 @@ uvmpd_scan_queue(struct uvm_pggroup *grp)
  * => called with pageq's locked
  */
 
-static void
+static bool
 uvmpd_scan(struct uvm_pggroup *grp)
 {
 	u_int swap_shortage, pages_freed;
@@ -1184,10 +1191,10 @@ uvmpd_scan(struct uvm_pggroup *grp)
 	 */
 
 	swap_shortage = 0;
-	if (grp->pgrp_free < grp->pgrp_freetarg &&
-	    uvmexp.swpginuse >= uvmexp.swpgavail &&
-	    !uvm_swapisfull() &&
-	    pages_freed == 0) {
+	if (pages_freed == 0
+	    && grp->pgrp_free < grp->pgrp_freetarg
+	    && uvmexp.swpginuse >= uvmexp.swpgavail
+	    && !uvm_swapisfull()) {
 		swap_shortage = grp->pgrp_freetarg - grp->pgrp_free;
 	}
 
@@ -1198,6 +1205,7 @@ uvmpd_scan(struct uvm_pggroup *grp)
 	 * free target.  we need to unlock the page queues for this.
 	 */
 
+#ifdef VMSWAP
 	if (grp->pgrp_free < grp->pgrp_freemin
 	    && uvmexp.nswapdev != 0 && uvm.swapout_enabled) {
 		grp->pgrp_pdswout++;
@@ -1208,6 +1216,9 @@ uvmpd_scan(struct uvm_pggroup *grp)
 		mutex_enter(&uvm_pageqlock);
 
 	}
+#endif /* VMSWAP */
+
+	return pages_freed != 0;
 }
 
 /*
