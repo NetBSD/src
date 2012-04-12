@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs.h,v 1.4 2011/11/28 12:50:07 ahoka Exp $	*/
+/*	$NetBSD: chfs.h,v 1.5 2012/04/12 15:31:01 ttoth Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -79,8 +79,6 @@ TAILQ_HEAD(chfs_dirent_list, chfs_dirent);
 #define MOUNT_CHFS "chfs"
 #endif
 
-#define CHFS_ROOTINO ROOTINO    /* ROOTINO == 2 */
-
 enum {
 	VNO_STATE_UNCHECKED,	/* CRC checks not yet done */
 	VNO_STATE_CHECKING,	/* CRC checks in progress */
@@ -90,6 +88,7 @@ enum {
 	VNO_STATE_READING,	/* In read_inode() */
 	VNO_STATE_CLEARING	/* In clear_inode() */
 };
+
 
 #define VNODECACHE_SIZE 128
 
@@ -185,7 +184,7 @@ struct chfs_dirent
 	uint64_t version;
 	ino_t vno;
 	uint32_t nhash;
-	enum vtype type;
+	enum chtype type;
 	uint8_t  nsize;
 	uint8_t  name[0];
 
@@ -631,7 +630,7 @@ int chfs_readvnode(struct mount *, ino_t, struct vnode **);
 int chfs_readdirent(struct mount *, struct chfs_node_ref *,
     struct chfs_inode *);
 int chfs_makeinode(int, struct vnode *, struct vnode **,
-    struct componentname *, int );
+    struct componentname *, enum vtype );
 void chfs_set_vnode_size(struct vnode *, size_t);
 void chfs_change_size_free(struct chfs_mount *,
 	struct chfs_eraseblock *, int);
@@ -665,7 +664,7 @@ int chfs_write_flash_dirent(struct chfs_mount *, struct chfs_inode *,
 int chfs_write_flash_dnode(struct chfs_mount *, struct vnode *,
     struct buf *, struct chfs_full_dnode *);
 int chfs_do_link(struct chfs_inode *,
-    struct chfs_inode *, const char *, int, enum vtype);
+    struct chfs_inode *, const char *, int, enum chtype);
 int chfs_do_unlink(struct chfs_inode *,
     struct chfs_inode *, const char *, int);
 
@@ -673,7 +672,7 @@ int chfs_do_unlink(struct chfs_inode *,
 size_t chfs_mem_info(bool);
 struct chfs_dirent * chfs_dir_lookup(struct chfs_inode *,
     struct componentname *);
-int chfs_filldir (struct uio *, ino_t, const char *, int, enum vtype);
+int chfs_filldir (struct uio *, ino_t, const char *, int, enum chtype);
 int chfs_chsize(struct vnode *, u_quad_t, kauth_cred_t);
 int chfs_chflags(struct vnode *, int, kauth_cred_t);
 void chfs_itimes(struct chfs_inode *, const struct timespec *,
