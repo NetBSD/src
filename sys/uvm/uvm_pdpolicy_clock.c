@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.5 2012/04/12 01:40:27 matt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.6 2012/04/12 19:39:55 matt Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
@@ -74,7 +74,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.5 2012/04/12 01:40:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.6 2012/04/12 19:39:55 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -348,7 +348,7 @@ uvmpdpol_pagedeactivate(struct vm_page *pg)
 	 * a backing store, don't bother marking it INACTIVE since it would
 	 * only be a "dirty reactivation".
 	 */
-	if (uvmexp.nswapdev < 1 && pg->uobject == NULL && pg->uanon != NULL) {
+	if (uvmexp.nswapdev < 1 && (pg->pqflags & PQ_SWAPBACKED) != 0) {
 		KASSERT(pg->pqflags & PQ_RADIOACTIVE);
 		return;
 	}
@@ -405,7 +405,7 @@ uvmpdpol_pageactivate(struct vm_page *pg)
 	KASSERT(mutex_owned(&uvm_pageqlock));
 
 	uvmpdpol_pagedequeue(pg);
-	if (uvmexp.nswapdev < 1 && pg->uanon != NULL && pg->uobject == NULL) {
+	if (uvmexp.nswapdev < 1 && (pg->pqflags & PQ_SWAPBACKED) != 0) {
 		TAILQ_INSERT_TAIL(&gs->gs_radioactiveq, pg, pageq.queue);
 		pg->pqflags |= PQ_RADIOACTIVE;
 		gs->gs_radioactive++;
@@ -488,7 +488,7 @@ uvmpdpol_estimatepageable(const struct uvm_pggroup *grp,
 	if (grp != NULL) {
 		struct uvmpdpol_groupstate * const gs = grp->pgrp_gs;
 		if (activep) {
-			*activep += gs->gs_active;
+			*activep += gs->gs_active + gs->gs_radioactive;
 		}
 		if (inactivep) {
 			*inactivep = gs->gs_inactive;
@@ -503,7 +503,7 @@ uvmpdpol_estimatepageable(const struct uvm_pggroup *grp,
 		//KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
 		//KDASSERT(gs->gs_inactive == clock_pglist_count(&gs->gs_inactiveq));
 
-		active += gs->gs_active;
+		active += gs->gs_active + gs->gs_radioactive;
 		inactive += gs->gs_inactive;
 	}
 
