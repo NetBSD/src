@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.92 2012/02/01 05:46:46 dholland Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.92.2.1 2012/04/12 17:05:37 riz Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -151,6 +151,10 @@ typedef netbsd32_pointer_t netbsd32_lwpidp;
 typedef netbsd32_pointer_t netbsd32_ucontextp;
 typedef netbsd32_pointer_t netbsd32_caddr_t;
 typedef netbsd32_pointer_t netbsd32_lwpctlp;
+typedef netbsd32_pointer_t netbsd32_posix_spawn_file_actionsp;
+typedef netbsd32_pointer_t netbsd32_posix_spawnattrp;
+typedef netbsd32_pointer_t netbsd32_posix_spawn_file_actions_entryp;
+typedef netbsd32_pointer_t netbsd32_pid_tp;
 
 /*
  * now, the compatibility structures and their fake pointer types.
@@ -933,6 +937,28 @@ struct netbsd32_nfs_args {
 	int32_t		leaseterm;	/* Ignored; Term (sec) of lease */
 	int32_t		deadthresh;	/* Retrans threshold */
 	netbsd32_charp	hostname;	/* server's name */
+};
+
+struct netbsd32_posix_spawn_file_actions_entry {
+	enum { FAE32_OPEN, FAE32_DUP2, FAE32_CLOSE } fae_action;
+
+	int fae_fildes;
+	union {
+		struct {
+			netbsd32_charp path;
+			int oflag;
+			mode_t mode;
+		} open;
+		struct {
+			int newfildes;
+		} dup2;
+	} fae_data;
+};
+
+struct netbsd32_posix_spawn_file_actions {
+	unsigned int size;	/* size of fae array */
+	unsigned int len;	/* how many slots are used */
+	netbsd32_posix_spawn_file_actions_entryp fae;
 };
 
 #if 0
