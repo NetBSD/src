@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1751 2012/04/07 16:48:24 christos Exp $
+#	$NetBSD: mi,v 1.1752 2012/04/12 19:38:30 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6738,6 +6738,7 @@
 ./usr/share/man/cat3/getpary.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getparyx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getpass.0			comp-c-catman		.cat
+./usr/share/man/cat3/getpass_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getpeereid.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getprogname.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getprotobyname.0		comp-c-catman		.cat
@@ -13045,6 +13046,7 @@
 ./usr/share/man/html3/getpary.html		comp-c-htmlman		html
 ./usr/share/man/html3/getparyx.html		comp-c-htmlman		html
 ./usr/share/man/html3/getpass.html		comp-c-htmlman		html
+./usr/share/man/html3/getpass_r.html		comp-c-htmlman		html
 ./usr/share/man/html3/getpeereid.html		comp-c-htmlman		html
 ./usr/share/man/html3/getprogname.html		comp-c-htmlman		html
 ./usr/share/man/html3/getprotobyname.html	comp-c-htmlman		html
@@ -19268,6 +19270,7 @@
 ./usr/share/man/man3/getpary.3			comp-c-man		.man
 ./usr/share/man/man3/getparyx.3			comp-c-man		.man
 ./usr/share/man/man3/getpass.3			comp-c-man		.man
+./usr/share/man/man3/getpass_r.3		comp-c-man		.man
 ./usr/share/man/man3/getpeereid.3		comp-c-man		.man
 ./usr/share/man/man3/getprogname.3		comp-c-man		.man
 ./usr/share/man/man3/getprotobyname.3		comp-c-man		.man

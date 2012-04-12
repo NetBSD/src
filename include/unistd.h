@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.128 2011/11/05 09:27:06 joerg Exp $	*/
+/*	$NetBSD: unistd.h,v 1.129 2012/04/12 19:36:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -327,6 +327,7 @@ int	 getdomainname(char *, size_t);
 int	 getgrouplist(const char *, gid_t, gid_t *, int *);
 int	 getgroupmembership(const char *, gid_t, gid_t *, int, int *);
 mode_t	 getmode(const void *, mode_t);
+char	*getpass_r(const char *, char *, size_t);
 int	 getpeereid(int, uid_t *, gid_t *);
 int	 getsubopt(char **, char * const *, char **);
 __aconst char *getusershell(void);
