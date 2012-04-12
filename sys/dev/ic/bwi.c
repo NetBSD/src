@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.19 2012/03/15 18:34:40 bouyer Exp $	*/
+/*	$NetBSD: bwi.c,v 1.20 2012/04/12 12:52:58 nakayama Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.19 2012/03/15 18:34:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.20 2012/04/12 12:52:58 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -7176,7 +7176,7 @@ bwi_init_statechg(struct bwi_softc *sc, int statechg)
 
 	/* power on cardbus socket */
 	if (sc->sc_enable != NULL)
-		(sc->sc_enable)(sc);
+		(sc->sc_enable)(sc, 0);
 
 	bwi_bbp_power_on(sc, BWI_CLOCK_MODE_FAST);
 
@@ -7556,8 +7556,8 @@ bwi_stop(struct ifnet *ifp, int state_chg)
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	/* power off cardbus socket */
-	if (sc->sc_disable)
-		(sc->sc_disable)(sc);
+	if (sc->sc_disable != NULL)
+		(sc->sc_disable)(sc, 0);
 
 	return;
 }
@@ -9711,6 +9711,8 @@ bwi_suspend(device_t dv, const pmf_qual_t *qual)
 	struct bwi_softc *sc = device_private(dv);
 
 	bwi_power_off(sc, 0);
+	if (sc->sc_disable != NULL)
+		(sc->sc_disable)(sc, 1);
 
 	return true;
 }
@@ -9720,6 +9722,8 @@ bwi_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct bwi_softc *sc = device_private(dv);
 
+	if (sc->sc_enable != NULL)
+		(sc->sc_enable)(sc, 1);
 	bwi_power_on(sc, 1);
 
 	return true;
