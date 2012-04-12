@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vfsops.c,v 1.2 2011/11/24 21:09:37 agc Exp $	*/
+/*	$NetBSD: chfs_vfsops.c,v 1.3 2012/04/12 15:31:01 ttoth Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -511,6 +511,7 @@ retry:
 	memset(ip, 0, sizeof(*ip));
 	vp->v_data = ip;
 	ip->vp = vp;
+	ip->ch_type = VTTOCHT(vp->v_type);
 	ip->ump = ump;
 	ip->chmp = chmp = ump->um_chfs;
 	ip->dev = dev;
@@ -529,6 +530,7 @@ retry:
 		dbg("SETROOT\n");
 		vp->v_vflag |= VV_ROOT;
 		vp->v_type = VDIR;
+		ip->ch_type = CHT_DIR;
 		ip->mode = IFMT | IEXEC | IWRITE | IREAD;
 		ip->iflag |= (IN_ACCESS | IN_CHANGE | IN_UPDATE);
 		chfs_update(vp, NULL, NULL, UPDATE_WAIT);
@@ -570,8 +572,8 @@ retry:
 
 		mutex_enter(&chmp->chm_lock_mountfields);
 		// init type specific things
-		switch (vp->v_type) {
-		case VDIR:
+		switch (ip->ch_type) {
+		case CHT_DIR:
 			nref = chvc->dirents;
 			while (nref &&
 			    (struct chfs_vnode_cache *)nref != chvc) {
@@ -580,8 +582,8 @@ retry:
 			}
 			chfs_set_vnode_size(vp, 512);
 			break;
-		case VREG:
-		case VSOCK:
+		case CHT_REG:
+		case CHT_SOCK:
 			//build the fragtree of the vnode
 			dbg("read_inode_internal | ino: %llu\n",
 				(unsigned long long)ip->ino);
@@ -593,7 +595,7 @@ retry:
 				return (error);
 			}
 			break;
-		case VLNK:
+		case CHT_LNK:
 			//build the fragtree of the vnode
 			dbg("read_inode_internal | ino: %llu\n",
 				(unsigned long long)ip->ino);
@@ -620,9 +622,9 @@ retry:
 			putiobuf(bp);
 
 			break;
-		case VCHR:
-		case VBLK:
-		case VFIFO:
+		case CHT_CHR:
+		case CHT_BLK:
+		case CHT_FIFO:
 			//build the fragtree of the vnode
 			dbg("read_inode_internal | ino: %llu\n",
 				(unsigned long long)ip->ino);
@@ -644,16 +646,16 @@ retry:
 			    bp->b_data, sizeof(dev_t));
 			kmem_free(bp->b_data, sizeof(dev_t));
 			putiobuf(bp);
-			if (vp->v_type == VFIFO)
+			if (ip->ch_type == CHT_FIFO) {
 				vp->v_op = chfs_fifoop_p;
-			else {
+			} else {
 				vp->v_op = chfs_specop_p;
 				spec_node_init(vp, ip->rdev);
 			}
 
 		    break;
-		case VNON:
-		case VBAD:
+		case CHT_BLANK:
+		case CHT_BAD:
 			break;
 		}
 		mutex_exit(&chmp->chm_lock_mountfields);
