@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.130 2012/04/12 22:08:02 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.131 2012/04/12 23:16:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -333,7 +333,8 @@ char	*getpassfd(const char *, char *, size_t, int[], int);
 #define	GETPASS_BUF_LIMIT	0x04	/* beep on buffer limit */
 #define	GETPASS_NO_SIGNAL	0x08	/* don't make ttychars send signals */
 #define	GETPASS_NO_BEEP		0x10	/* don't beep */
-#define	GETPASS_ECHO		0x20	/* don't turn echo off */
+#define	GETPASS_ECHO		0x20	/* echo characters as they are typed */
+#define	GETPASS_ECHO_STAR	0x40	/* ech '*' for each character */
 char	*getpass_r(const char *, char *, size_t);
 int	 getpeereid(int, uid_t *, gid_t *);
 int	 getsubopt(char **, char * const *, char **);

@@ -1,4 +1,4 @@
-/*	$NetBSD: getpass.c,v 1.19 2012/04/12 22:07:44 christos Exp $	*/
+/*	$NetBSD: getpass.c,v 1.20 2012/04/12 23:16:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getpass.c,v 1.19 2012/04/12 22:07:44 christos Exp $");
+__RCSID("$NetBSD: getpass.c,v 1.20 2012/04/12 23:16:38 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -72,6 +72,7 @@ __weak_alias(getpass,_getpass)
  *	  We also provide a tunable to disable signal delivery
  *	  GETPASS_NO_SIGNAL.
  *	- GETPASS_NO_BEEP disables beeping.
+ *	- GETPASS_ECHO_STAR will echo '*' for each character of the password
  *	- GETPASS_ECHO will echo the password (as pam likes it)
  */
 char *
@@ -151,7 +152,7 @@ getpassfd(const char *prompt, char *buf, size_t len, int fd[], int flags)
 
 		/* Line or word kill, treat as reset */
 		if (c == C(VKILL, CTRL('u')) || c == C(VWERASE, CTRL('w'))) {
-			if (flags & GETPASS_ECHO) {
+			if (flags & (GETPASS_ECHO | GETPASS_ECHO_STAR)) {
 				while (l--)
 					erase();
 			}
@@ -165,7 +166,7 @@ getpassfd(const char *prompt, char *buf, size_t len, int fd[], int flags)
 				beep();
 			else {
 				l--;
-				if (flags & GETPASS_ECHO)
+				if (flags & (GETPASS_ECHO | GETPASS_ECHO_STAR))
 					erase();
 			}
 			continue;
@@ -219,8 +220,12 @@ add:
 			}
 		}
 		buf[l++] = c;
-		if (c && (flags & GETPASS_ECHO))
-		    (void)write(fd[1], &c, 1);
+		if (c) {
+			if (flags & GETPASS_ECHO_STAR)
+				(void)write(fd[1], "*", 1);
+			else if (flags & GETPASS_ECHO)
+				(void)write(fd[1], &c, 1);
+		}
 	}
 
 	if (havetty)
@@ -304,7 +309,8 @@ main(int argc, char *argv[])
 {
 	char buf[28];
 	int fd[3] = { 0, 1, 2 };
-	printf("[%s]\n", getpassfd("foo>", buf, sizeof(buf), fd, GETPASS_ECHO));
+	printf("[%s]\n", getpassfd("foo>", buf, sizeof(buf), fd,
+	    GETPASS_ECHO_STAR));
 	return 0;
 }
 #endif
