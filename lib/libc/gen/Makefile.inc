@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.182 2012/02/11 23:31:24 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.183 2012/04/12 19:36:19 christos Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -117,6 +117,7 @@ MLINKS+=cgetcap.3 cgetclose.3 cgetcap.3 cgetent.3 \
 	cgetcap.3 cgetnum.3 cgetcap.3 cgetset.3 cgetcap.3 cgetstr.3 \
 	cgetcap.3 cgetustr.3
 MLINKS+=getcwd.3 getwd.3
+MLINKS+=getpass.3 getpass_r.3
 MLINKS+=getdiskbyname.3 setdisktab.3
 MLINKS+=getdomainname.3 setdomainname.3
 MLINKS+=getfsent.3 endfsent.3 getfsent.3 getfsfile.3 getfsent.3 getfsspec.3 \
