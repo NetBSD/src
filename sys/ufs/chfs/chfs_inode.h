@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_inode.h,v 1.2 2012/02/28 02:48:39 christos Exp $	*/
+/*	$NetBSD: chfs_inode.h,v 1.3 2012/04/12 15:31:01 ttoth Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -40,6 +40,30 @@
 #include <ufs/ufs/ufsmount.h>
 #include <miscfs/genfs/genfs_node.h>
 
+#define CHFS_ROOTINO 2
+
+/* chfs file types */
+enum chtype {
+	CHT_BLANK,	/* empty type */
+	CHT_REG,	/* regular file */
+	CHT_DIR,	/* directory */
+	CHT_BLK,	/* block device */
+	CHT_CHR,	/* character device */
+	CHT_LNK,	/* link */
+	CHT_SOCK,	/* socket */
+	CHT_FIFO,	/* fifo */
+	CHT_BAD		/* bad type */
+};
+
+/* these macros are needed because the compatibility */
+#define CHTTOVT(ch_type)	ch_type
+#define VTTOCHT(v_type)		v_type
+
+extern const enum chtype iftocht_tab[16];
+
+#define	IFTOCHT(mode)	(iftocht_tab[((mode) & S_IFMT) >> 12])
+
+
 struct chfs_inode
 {
 	struct genfs_node	gnode;
@@ -68,6 +92,7 @@ struct chfs_inode
 	//uint64_t highest_version;	/* highest vers. num. (used at data nodes) */
 	
 	uint32_t mode;		/* mode */
+	enum chtype ch_type;		/* chfs file type */
 	//int16_t nlink;		/* link count */
 	uint64_t size;		/* file byte count */
 	uint64_t write_size;	/* increasing while write the file out to the flash */
