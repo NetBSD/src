@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.67 2012/04/09 18:17:45 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.68 2012/04/12 17:06:58 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1768,4 +1768,21 @@ lib/libpthread/pthread_cancelstub.c		1.36
 	Add a pthread cancel stub for sigwait, which will allow
 	csup to run on NetBSD. PR#45131.
 	[agc, ticket #174]
+
+lib/libc/gen/posix_spawn_fileactions.c		1.2
+sys/compat/netbsd32/netbsd32.h			1.95
+sys/compat/netbsd32/netbsd32_execve.c		1.34
+sys/compat/netbsd32/syscalls.master		1.95
+sys/kern/exec_elf.c				1.38
+sys/kern/kern_exec.c				1.348-1.349 via patch
+sys/kern/kern_exit.c				1.238
+sys/sys/exec.h					1.135
+sys/sys/spawn.h					1.2
+sys/uvm/uvm_extern.h				1.183
+sys/uvm/uvm_glue.c				1.159
+sys/uvm/uvm_map.c				1.317
+tests/lib/libc/gen/posix_spawn/t_fileactions.c	1.4-1.5
+
+	Rework posix_spawn locking and memory management. PR#46286.
+	[martin, ticket #175]
 
