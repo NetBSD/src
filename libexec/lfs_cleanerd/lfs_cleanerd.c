@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.29 2012/02/02 03:47:11 perseant Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.30 2012/04/12 11:46:16 joerg Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -1365,7 +1365,7 @@ lfs_cleaner_main(int argc, char **argv)
 	 */
 	atatime	 = 1;
 	segwait_timeout = 300; /* Five minutes */
-	load_threshold	= 0.2;
+	load_threshold	= 0;
 	stat_report	= 0;
 	inval_segment	= -1;
 	copylog_filename = NULL;
