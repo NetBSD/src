@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.31.12.3 2012/02/16 04:20:46 matt Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.31.12.4 2012/04/12 01:40:27 matt Exp $	 */
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.31.12.3 2012/02/16 04:20:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.31.12.4 2012/04/12 01:40:27 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -211,7 +211,7 @@ uvmexp_print(void (*pr)(const char *, ...))
 	struct uvm_pggroup *grp;
 	int active, inactive;
 
-	uvm_estimatepageable(&active, &inactive);
+	uvm_estimatepageable(NULL, &active, &inactive);
 
 	(*pr)("Current UVM status:\n");
 	(*pr)("  pagesize=%d (0x%x), pagemask=0x%x, pageshift=%d,"

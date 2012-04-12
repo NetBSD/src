@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.4 2012/02/17 23:35:31 matt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.5 2012/04/12 01:40:27 matt Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
@@ -74,7 +74,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.4 2012/02/17 23:35:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.5 2012/04/12 01:40:27 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.4 2012/02/17 23:35:31
 
 #define PQ_INACTIVE	PQ_PRIVATE1	/* page is in inactive list */
 #define PQ_ACTIVE	PQ_PRIVATE2	/* page is in active list */
+#define	PQ_RADIOACTIVE	PQ_PRIVATE3	/* page is in radioactive list */
 
 #if !defined(CLOCK_INACTIVEPCT)
 #define	CLOCK_INACTIVEPCT	33
@@ -103,7 +104,9 @@ struct uvmpdpol_scanstate {
 struct uvmpdpol_groupstate {
 	struct pglist gs_activeq;	/* allocated pages, in use */
 	struct pglist gs_inactiveq;	/* pages between the clock hands */
+	struct pglist gs_radioactiveq;	/* allocated pages, in use */
 	u_int gs_active;
+	u_int gs_radioactive;
 	u_int gs_inactive;
 	u_int gs_inactarg;
 	struct uvmpdpol_scanstate gs_scanstate;
@@ -289,6 +292,18 @@ uvmpdpol_balancequeue(struct uvm_pggroup *grp, u_int swap_shortage)
 
 	//KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
 
+	/*
+	 * If swap was added, move all the pages from radioactive queue to the
+	 * active queue.
+	 */
+#ifdef VMSWAP
+	if (uvmexp.nswapdev > 0) {
+		while ((pg = TAILQ_FIRST(&gs->gs_radioactiveq)) != NULL) {
+			uvmpdpol_pageactivate(pg);
+		}
+	}
+#endif
+
 	u_int inactive_shortage = gs->gs_inactarg - gs->gs_inactive;
 	for (pg = TAILQ_FIRST(&gs->gs_activeq);
 	     pg != NULL && (inactive_shortage > 0 || swap_shortage > 0);
@@ -310,7 +325,6 @@ uvmpdpol_balancequeue(struct uvm_pggroup *grp, u_int swap_shortage)
 		/*
 		 * if there's a shortage of inactive pages, deactivate.
 		 */
-
 		if (inactive_shortage > 0) {
 			/* no need to check wire_count as pg is "active" */
 			uvmpdpol_pagedeactivate(pg);
@@ -328,6 +342,20 @@ uvmpdpol_pagedeactivate(struct vm_page *pg)
 	struct uvm_pggroup * const grp = uvm_page_to_pggroup(pg);
 	struct uvmpdpol_groupstate * const gs = grp->pgrp_gs;
 
+#if 0
+	/*
+	 * If there is no swap available and the page is anonymous without
+	 * a backing store, don't bother marking it INACTIVE since it would
+	 * only be a "dirty reactivation".
+	 */
+	if (uvmexp.nswapdev < 1 && pg->uobject == NULL && pg->uanon != NULL) {
+		KASSERT(pg->pqflags & PQ_RADIOACTIVE);
+		return;
+	}
+#else
+	KASSERT((pg->pqflags & PQ_RADIOACTIVE) == 0);
+#endif
+
 	KASSERT(!(pg->pqflags & PQ_FREE));
 	KASSERT(mutex_owned(&uvm_pageqlock));
 
@@ -342,6 +370,17 @@ uvmpdpol_pagedeactivate(struct vm_page *pg)
 	}
 
 	//KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
+	//KDASSERT(gs->gs_radioactive == clock_pglist_count(&gs->gs_radioactiveq));
+
+	if (pg->pqflags & PQ_RADIOACTIVE) {
+		TAILQ_REMOVE(&gs->gs_radioactiveq, pg, pageq.queue);
+		pg->pqflags &= ~PQ_RADIOACTIVE;
+		KASSERT(gs->gs_radioactive > 0);
+		gs->gs_radioactive--;
+		grp->pgrp_active--;
+	}
+
+	//KDASSERT(gs->gs_radioactive == clock_pglist_count(&gs->gs_radioactiveq));
 	//KDASSERT(gs->gs_inactive == clock_pglist_count(&gs->gs_inactiveq));
 
 	if ((pg->pqflags & PQ_INACTIVE) == 0) {
@@ -366,10 +405,16 @@ uvmpdpol_pageactivate(struct vm_page *pg)
 	KASSERT(mutex_owned(&uvm_pageqlock));
 
 	uvmpdpol_pagedequeue(pg);
-	TAILQ_INSERT_TAIL(&gs->gs_activeq, pg, pageq.queue);
-	pg->pqflags |= PQ_ACTIVE;
-	gs->gs_active++;
-	grp->pgrp_active++;
+	if (uvmexp.nswapdev < 1 && pg->uanon != NULL && pg->uobject == NULL) {
+		TAILQ_INSERT_TAIL(&gs->gs_radioactiveq, pg, pageq.queue);
+		pg->pqflags |= PQ_RADIOACTIVE;
+		gs->gs_radioactive++;
+	} else {
+		TAILQ_INSERT_TAIL(&gs->gs_activeq, pg, pageq.queue);
+		pg->pqflags |= PQ_ACTIVE;
+		gs->gs_active++;
+		grp->pgrp_active++;
+	}
 
 	//KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
 }
@@ -382,10 +427,20 @@ uvmpdpol_pagedequeue(struct vm_page *pg)
 
 	KASSERT(!(pg->pqflags & PQ_FREE));
 	KASSERT(mutex_owned(&uvm_pageqlock));
+	//KDASSERT(gs->gs_radioactive == clock_pglist_count(&gs->gs_radioactiveq));
+
+	if (pg->pqflags & PQ_RADIOACTIVE) {
+		TAILQ_REMOVE(&gs->gs_radioactiveq, pg, pageq.queue);
+		pg->pqflags &= ~PQ_RADIOACTIVE;
+		KASSERT(gs->gs_radioactive > 0);
+		gs->gs_radioactive--;
+		grp->pgrp_active--;
+	}
+
+	//KDASSERT(gs->gs_radioactive == clock_pglist_count(&gs->gs_radioactiveq));
 	//KDASSERT(gs->gs_active == clock_pglist_count(&gs->gs_activeq));
 
 	if (pg->pqflags & PQ_ACTIVE) {
-		KASSERT(mutex_owned(&uvm_pageqlock));
 		TAILQ_REMOVE(&gs->gs_activeq, pg, pageq.queue);
 		pg->pqflags &= ~PQ_ACTIVE;
 		KASSERT(gs->gs_active > 0);
@@ -397,7 +452,6 @@ uvmpdpol_pagedequeue(struct vm_page *pg)
 	//KDASSERT(gs->gs_inactive == clock_pglist_count(&gs->gs_inactiveq));
 
 	if (pg->pqflags & PQ_INACTIVE) {
-		KASSERT(mutex_owned(&uvm_pageqlock));
 		TAILQ_REMOVE(&gs->gs_inactiveq, pg, pageq.queue);
 		pg->pqflags &= ~PQ_INACTIVE;
 		KASSERT(gs->gs_inactive > 0);
@@ -424,15 +478,25 @@ bool
 uvmpdpol_pageisqueued_p(struct vm_page *pg)
 {
 
-	return (pg->pqflags & (PQ_ACTIVE | PQ_INACTIVE)) != 0;
+	return (pg->pqflags & (PQ_RADIOACTIVE | PQ_ACTIVE | PQ_INACTIVE)) != 0;
 }
 
 void
-uvmpdpol_estimatepageable(u_int *activep, u_int *inactivep)
+uvmpdpol_estimatepageable(const struct uvm_pggroup *grp,
+	u_int *activep, u_int *inactivep)
 {
-	struct uvm_pggroup *grp;
-	u_int active = 0, inactive = 0;
+	if (grp != NULL) {
+		struct uvmpdpol_groupstate * const gs = grp->pgrp_gs;
+		if (activep) {
+			*activep += gs->gs_active;
+		}
+		if (inactivep) {
+			*inactivep = gs->gs_inactive;
+		}
+		return;
+	}
 
+	u_int active = 0, inactive = 0;
 	STAILQ_FOREACH(grp, &uvm.page_groups, pgrp_uvm_link) {
 		struct uvmpdpol_groupstate * const gs = grp->pgrp_gs;
 
@@ -486,9 +550,11 @@ uvmpdpol_init(void *new_gs, size_t npggroups)
 	for (size_t pggroup = 0; pggroup < npggroups; pggroup++, gs++, grp++) {
 		TAILQ_INIT(&gs->gs_activeq);
 		TAILQ_INIT(&gs->gs_inactiveq);
+		TAILQ_INIT(&gs->gs_radioactiveq);
 		grp->pgrp_gs = gs;
 		KASSERT(gs->gs_active == 0);
 		KASSERT(gs->gs_inactive == 0);
+		KASSERT(gs->gs_radioactive == 0);
 		KASSERT(grp->pgrp_active == 0);
 		KASSERT(grp->pgrp_inactive == 0);
 	}
@@ -546,6 +612,7 @@ uvmpdpol_recolor(void *new_gs, struct uvm_pggroup *grparray,
 		struct uvmpdpol_groupstate * const dst_gs = &gs[i];
 		TAILQ_INIT(&dst_gs->gs_activeq);
 		TAILQ_INIT(&dst_gs->gs_inactiveq);
+		TAILQ_INIT(&dst_gs->gs_radioactiveq);
 		uvm.pggroups[i].pgrp_gs = dst_gs;
 	}
 
@@ -574,6 +641,19 @@ uvmpdpol_recolor(void *new_gs, struct uvm_pggroup *grparray,
 			src_gs->gs_active--;
 			xgs->gs_active++;
 			KDASSERT(xgs->gs_active == clock_pglist_count(&xgs->gs_activeq));
+			uvm.pggroups[pggroup].pgrp_active++;
+		}
+		KASSERT(src_gs->gs_active == 0);
+
+		KDASSERT(src_gs->gs_radioactive == clock_pglist_count(&src_gs->gs_radioactiveq));
+		while ((pg = TAILQ_FIRST(&src_gs->gs_radioactiveq)) != NULL) {
+			u_int pggroup = VM_PAGE_TO_PGGROUP(pg, uvmexp.ncolors);
+			struct uvmpdpol_groupstate * const xgs = &gs[pggroup];
+
+			TAILQ_INSERT_TAIL(&xgs->gs_radioactiveq, pg, pageq.queue);
+			src_gs->gs_radioactive--;
+			xgs->gs_radioactive++;
+			KDASSERT(xgs->gs_radioactive == clock_pglist_count(&xgs->gs_radioactiveq));
 			uvm.pggroups[pggroup].pgrp_active++;
 		}
 		KASSERT(src_gs->gs_active == 0);

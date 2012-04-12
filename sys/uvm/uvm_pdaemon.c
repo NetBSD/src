@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.8 2012/02/29 18:03:40 matt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.9 2012/04/12 01:40:27 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.8 2012/02/29 18:03:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.9 2012/04/12 01:40:27 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -247,8 +247,19 @@ uvm_kick_pdaemon(void)
 
 		if (prev_scan_needed != grp->pgrp_scan_needed) {
 			if (grp->pgrp_scan_needed) {
-				TAILQ_INSERT_TAIL(&pdinfo->pd_pendingq,
-				    grp, pgrp_pending_link);
+				struct uvm_pggroup *prev;
+				TAILQ_FOREACH(prev, &pdinfo->pd_pendingq,
+				    pgrp_pending_link) {
+					if (grp->pgrp_free < prev->pgrp_free)
+						break;
+				}
+				if (prev == NULL) {
+					TAILQ_INSERT_TAIL(&pdinfo->pd_pendingq,
+					    grp, pgrp_pending_link);
+				} else {
+					TAILQ_INSERT_BEFORE(prev, grp,
+					    pgrp_pending_link);
+				}
 				need_wakeup = true;
 			} else {
 				TAILQ_REMOVE(&pdinfo->pd_pendingq,
@@ -542,6 +553,15 @@ uvm_pageout_start(struct uvm_pggroup *grp, u_int npages)
 	uvmpd_checkgroup(grp);
 	uvmexp.paging += npages;
 	if (grp->pgrp_paging == 0) {
+		/*
+		 * If the group is in a paging queue, it can't be in a pending
+		 * queue so remove it if it is.
+		 */
+		if (grp->pgrp_scan_needed) {
+			TAILQ_REMOVE(&pdinfo->pd_pendingq, grp,
+			    pgrp_pending_link);
+			grp->pgrp_scan_needed = false;
+		}
 		TAILQ_INSERT_TAIL(&pdinfo->pd_pagingq, grp, pgrp_paging_link);
 	}
 	grp->pgrp_paging += npages;
@@ -1200,18 +1220,20 @@ uvmpd_scan(struct uvm_pggroup *grp)
  */
 
 bool
-uvm_reclaimable(void)
+uvm_reclaimable(u_int color, bool kmem_p)
 {
-	int filepages;
-	int active, inactive;
+	u_int filepages, npages;
+	u_int active, inactive;
 
 	/*
 	 * if swap is not full, no problem.
 	 */
 
+#ifdef VMSWAP
 	if (!uvm_swapisfull()) {
 		return true;
 	}
+#endif
 
 	/*
 	 * file-backed pages can be reclaimed even when swap is full.
@@ -1222,11 +1244,31 @@ uvm_reclaimable(void)
 	 * XXX should consider about other reclaimable memory.
 	 * XXX ie. pools, traditional buffer cache.
 	 */
+	active = 0;
+	inactive = 0;
+	filepages = 0;
+	npages = 0;
+	for (u_int lcv = 0; lcv < VM_NFREELIST; lcv++) {
+		struct uvm_pggroup * const grp =
+		    uvm.page_free[color].pgfl_pggroups[lcv];
 
-	filepages = uvmexp.filepages + uvmexp.execpages - uvmexp.wired;
-	uvm_estimatepageable(&active, &inactive);
-	if (filepages >= MIN((active + inactive) >> 4,
-	    5 * 1024 * 1024 >> PAGE_SHIFT)) {
+#ifdef VM_FREELIST_NORMALOK_P
+		/*
+		 * If this for kmem and it's a normal freelist, skip it.
+		 */
+		if (kmem_p && VM_FREELIST_NORMALOK_P(lcv))
+			continue;
+#endif
+
+		npages += grp->pgrp_npages;
+		filepages += grp->pgrp_filepages + grp->pgrp_execpages;
+		uvm_estimatepageable(grp, &active, &inactive);
+	}
+	filepages -= uvmexp.wired;
+	/*
+	 * 
+	 */
+	if (filepages >= MIN((active + inactive) >> 4, npages / 25)) {
 		return true;
 	}
 
@@ -1238,8 +1280,9 @@ uvm_reclaimable(void)
 }
 
 void
-uvm_estimatepageable(u_int *active, u_int *inactive)
+uvm_estimatepageable(const struct uvm_pggroup *grp,
+	u_int *active, u_int *inactive)
 {
 
-	uvmpdpol_estimatepageable(active, inactive);
+	uvmpdpol_estimatepageable(grp, active, inactive);
 }
