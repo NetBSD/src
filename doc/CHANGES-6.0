@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.68 2012/04/12 17:06:58 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.69 2012/04/12 17:16:14 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1785,4 +1785,28 @@ tests/lib/libc/gen/posix_spawn/t_fileactions.c	1.4-1.5
 
 	Rework posix_spawn locking and memory management. PR#46286.
 	[martin, ticket #175]
+
+sys/arch/x86/x86/ipmi.c				1.53
+
+	Fix handling of negative temperatures that can be set for
+	critmin/warnmin limits.
+	[njoly, ticket #176]
+
+etc/powerd/scripts/sensor_temperature		1.4
+
+	Gracefully shutdown upon reaching critical temperature levels.
+	Prevents few laptops (ThinkPad T61 and x61s, among others) from
+	hitting the in-CPU reset.
+	[jruoho, ticket #177]
+
+etc/skel/dot.profile				1.9
+
+	Fix use of setenv in a comment.
+	[dholland, ticket #178]
+
+sys/kern/vfs_vnops.c				1.184
+
+	Fix vn_lock() to return an invalid (dead, clean) vnode
+	only if the caller requested it by setting LK_RETRY. PR#46221.
+	[hannken, ticket #179]
 
