@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnode.c,v 1.3 2012/03/13 18:41:03 elad Exp $	*/
+/*	$NetBSD: chfs_vnode.c,v 1.4 2012/04/12 15:31:01 ttoth Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -41,6 +41,15 @@
 #include <sys/buf.h>
 
 #include <miscfs/genfs/genfs.h>
+
+/* vtype replaced with chtype, these are only for compatibility */
+const enum chtype iftocht_tab[16] = {
+	CHT_BLANK, CHT_FIFO, CHT_CHR, CHT_BLANK,
+	CHT_DIR, CHT_BLANK, CHT_BLK, CHT_BLANK,
+	CHT_REG, CHT_BLANK, CHT_LNK, CHT_BLANK,
+	CHT_SOCK, CHT_BLANK, CHT_BLANK, CHT_BAD,
+};
+
 
 struct vnode *
 chfs_vnode_lookup(struct chfs_mount *chmp, ino_t vno)
@@ -101,7 +110,8 @@ chfs_readvnode(struct mount* mp, ino_t ino, struct vnode** vpp)
 		chfvn = (struct chfs_flash_vnode*)buf;
 		chfs_set_vnode_size(vp, chfvn->dn_size);
 		ip->mode = chfvn->mode;
-		vp->v_type = IFTOVT(ip->mode);
+		ip->ch_type = IFTOCHT(ip->mode);
+		vp->v_type = CHTTOVT(ip->ch_type);
 		ip->version = chfvn->version;
 		//ip->chvc->highest_version = ip->version;
 		ip->uid = chfvn->uid;
@@ -186,7 +196,7 @@ chfs_readdirent(struct mount *mp, struct chfs_node_ref *chnr, struct chfs_inode 
  */
 int
 chfs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
-    struct componentname *cnp, int type)
+    struct componentname *cnp, enum vtype type)
 {
 	struct chfs_inode *ip, *pdir;
 	struct vnode *vp;
@@ -240,7 +250,8 @@ chfs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	ip->target = NULL;
 
 	ip->mode = mode;
-	vp->v_type = type;	/* Rest init'd in getnewvnode(). */
+	vp->v_type = type;		/* Rest init'd in getnewvnode(). */
+	ip->ch_type = VTTOCHT(vp->v_type);
 
 	/* Authorize setting SGID if needed. */
 	if (ip->mode & ISGID) {
@@ -280,7 +291,7 @@ chfs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	nfd = chfs_alloc_dirent(cnp->cn_namelen + 1);
 	nfd->vno = ip->ino;
 	nfd->version = (++pdir->chvc->highest_version);
-	nfd->type = type;
+	nfd->type = ip->ch_type;
 //	nfd->next = NULL;
 	nfd->nsize = cnp->cn_namelen;
 	memcpy(&(nfd->name), cnp->cn_nameptr, cnp->cn_namelen);
