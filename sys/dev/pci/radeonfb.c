@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.60 2012/03/26 21:59:01 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.61 2012/04/12 18:55:26 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.60 2012/03/26 21:59:01 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.61 2012/04/12 18:55:26 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2221,22 +2221,26 @@ radeonfb_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	if (ri->ri_depth == 32) {
 		ri->ri_flg |= RI_ENABLE_ALPHA;
 	}
-	if (ri->ri_depth == 8) {
-		ri->ri_flg |= RI_ENABLE_ALPHA | RI_8BIT_IS_RGB;
+	switch (ri->ri_depth) {
+		case 8:
+			ri->ri_flg |= RI_ENABLE_ALPHA | RI_8BIT_IS_RGB;
+			break;
+		case 32:
+			/* we run radeons in RGB even on SPARC hardware */
+			ri->ri_rnum = 8;
+			ri->ri_gnum = 8;
+			ri->ri_bnum = 8;
+			ri->ri_rpos = 16;
+			ri->ri_gpos = 8;
+			ri->ri_bpos = 0;
+			break;
 	}
+
 	ri->ri_bits = (void *)dp->rd_fbptr;
 
 #ifdef VCONS_DRAW_INTR
 	scr->scr_flags |= VCONS_DONT_READ;
 #endif
-
-	/* this is rgb in "big-endian order..." */
-	ri->ri_rnum = 8;
-	ri->ri_gnum = 8;
-	ri->ri_bnum = 8;
-	ri->ri_rpos = 16;
-	ri->ri_gpos = 8;
-	ri->ri_bpos = 0;
 
 	if (existing) {
 		ri->ri_flg |= RI_CLEAR;
