@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.125.6.1.4.5 2012/04/12 01:40:27 matt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.125.6.1.4.6 2012/04/12 19:38:27 matt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.125.6.1.4.5 2012/04/12 01:40:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.125.6.1.4.6 2012/04/12 19:38:27 matt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -369,7 +369,8 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 				uvmexp.fltnoram++;
 				UVMHIST_LOG(maphist, "  noram -- UVM_WAIT",0,
 				    0,0,0);
-				if (!uvm_reclaimable(atop(ufi->orig_rvaddr),
+				if (!uvm_reclaimable(
+				    atop(ufi->orig_rvaddr) & uvmexp.colormask,
 				    false)) {
 					return ENOMEM;
 				}
@@ -643,7 +644,8 @@ uvmfault_promote(struct uvm_faultinfo *ufi,
 		uvm_page_unbusy(&uobjpage, 1);
 		uvmfault_unlockall(ufi, amap, uobj, oanon);
 nomem:
-		if (!uvm_reclaimable(atop(ufi->orig_rvaddr), false)) {
+		if (!uvm_reclaimable(
+			    atop(ufi->orig_rvaddr) & uvmexp.colormask, false)) {
 			UVMHIST_LOG(maphist, "out of VM", 0,0,0,0);
 			uvmexp.fltnoanon++;
 			error = ENOMEM;
@@ -1406,7 +1408,8 @@ ReFault:
 		if (anon != oanon)
 			mutex_exit(&anon->an_lock);
 		uvmfault_unlockall(&ufi, amap, uobj, oanon);
-		if (!uvm_reclaimable(atop(ufi.orig_rvaddr), false)) {
+		if (!uvm_reclaimable(
+			    atop(ufi.orig_rvaddr) & uvmexp.colormask, false)) {
 			UVMHIST_LOG(maphist,
 			    "<- failed.  out of VM",0,0,0,0);
 			/* XXX instrumentation */
@@ -1791,7 +1794,8 @@ Case2:
 		pg->flags &= ~(PG_BUSY|PG_FAKE|PG_WANTED);
 		UVM_PAGE_OWN(pg, NULL, NULL);
 		uvmfault_unlockall(&ufi, amap, uobj, anon);
-		if (!uvm_reclaimable(atop(ufi.orig_rvaddr), false)) {
+		if (!uvm_reclaimable(
+			    atop(ufi.orig_rvaddr) & uvmexp.colormask, false)) {
 			UVMHIST_LOG(maphist,
 			    "<- failed.  out of VM",0,0,0,0);
 			/* XXX instrumentation */
