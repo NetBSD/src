@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.49.16.3 2012/02/09 03:05:00 matt Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.49.16.4 2012/04/12 01:40:27 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.49.16.3 2012/02/09 03:05:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.49.16.4 2012/04/12 01:40:27 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -163,9 +163,9 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
 	struct uvmexp_sysctl u;
-	int active, inactive;
+	u_int active = 0, inactive = 0;
 
-	uvm_estimatepageable(&active, &inactive);
+	uvm_estimatepageable(NULL, &active, &inactive);
 
 	memset(&u, 0, sizeof(u));
 
@@ -374,7 +374,7 @@ uvm_total(struct vmtotal *totalp)
 	struct vm_map *map;
 	int paging;
 #endif
-	int active;
+	u_int active = 0;
 
 	memset(totalp, 0, sizeof *totalp);
 
@@ -440,7 +440,7 @@ uvm_total(struct vmtotal *totalp)
 	/*
 	 * Calculate object memory usage statistics.
 	 */
-	uvm_estimatepageable(&active, NULL);
+	uvm_estimatepageable(NULL, &active, NULL);
 	totalp->t_free = uvmexp.free;
 	totalp->t_vm = uvmexp.npages - uvmexp.free + uvmexp.swpginuse;
 	totalp->t_avm = active + uvmexp.swpginuse;	/* XXX */

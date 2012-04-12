@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy.h,v 1.3.62.1 2012/02/09 03:05:01 matt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy.h,v 1.3.62.2 2012/04/12 01:40:27 matt Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -40,7 +40,7 @@ size_t uvmpdpol_space(void);
 void uvmpdpol_init(void *, size_t);
 void uvmpdpol_reinit(void);
 void uvmpdpol_recolor(void *, struct uvm_pggroup *, size_t, size_t);
-void uvmpdpol_estimatepageable(u_int *, u_int *);
+void uvmpdpol_estimatepageable(const struct uvm_pggroup *, u_int *, u_int *);
 bool uvmpdpol_needsscan_p(struct uvm_pggroup *);
 
 void uvmpdpol_pageactivate(struct vm_page *);
