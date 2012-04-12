@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.129 2012/04/12 19:36:34 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.130 2012/04/12 22:08:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -327,6 +327,13 @@ int	 getdomainname(char *, size_t);
 int	 getgrouplist(const char *, gid_t, gid_t *, int *);
 int	 getgroupmembership(const char *, gid_t, gid_t *, int, int *);
 mode_t	 getmode(const void *, mode_t);
+char	*getpassfd(const char *, char *, size_t, int[], int);
+#define	GETPASS_NEED_TTY	0x01	/* Fail if we cannot set tty */
+#define	GETPASS_FAIL_EOF	0x02	/* Fail on EOF */
+#define	GETPASS_BUF_LIMIT	0x04	/* beep on buffer limit */
+#define	GETPASS_NO_SIGNAL	0x08	/* don't make ttychars send signals */
+#define	GETPASS_NO_BEEP		0x10	/* don't beep */
+#define	GETPASS_ECHO		0x20	/* don't turn echo off */
 char	*getpass_r(const char *, char *, size_t);
 int	 getpeereid(int, uid_t *, gid_t *);
 int	 getsubopt(char **, char * const *, char **);
