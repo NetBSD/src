@@ -1,4 +1,4 @@
-/*	$NetBSD: getpass.c,v 1.17 2012/04/12 19:36:19 christos Exp $	*/
+/*	$NetBSD: getpass.c,v 1.18 2012/04/12 20:08:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getpass.c,v 1.17 2012/04/12 19:36:19 christos Exp $");
+__RCSID("$NetBSD: getpass.c,v 1.18 2012/04/12 20:08:01 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: getpass.c,v 1.17 2012/04/12 19:36:19 christos Exp $");
 #include <stdio.h>
 #endif
 #include <errno.h>
+#include <signal.h>
 #include <string.h>
 #include <paths.h>
 #include <stdbool.h>
@@ -64,20 +65,21 @@ __weak_alias(getpass,_getpass)
  *	  off echo failed, we provide a tunable DONT_WORK_AND_ECHO to
  *	  disable this.
  *	- Some implementations say that on interrupt the program shall
- *	  receive an interrupt signal before the function returns. This
- *	  does not sound useful, but it could be easy to implement using
- *	  raise(3).
+ *	  receive an interrupt signal before the function returns. We
+ *	  send all the tty signals before we return, but we don't expect
+ *	  suspend to do something useful unless the caller calls us again.
  */
 char *
 getpass_r(const char *prompt, char *ret, size_t len)
 {
 	struct termios gt;
 	char c;
-	int infd, outfd;
+	int infd, outfd, sig;
 	bool lnext, havetty;
 
 	_DIAGASSERT(prompt != NULL);
 
+	sig = 0;
 	/*
 	 * Try to use /dev/tty if possible; otherwise read from stdin and
 	 * write to stderr.
@@ -156,24 +158,33 @@ getpass_r(const char *prompt, char *ret, size_t len)
 			continue;
 		}
 
-		/* EOF or tty signal characters */
-		if (
-#ifdef DONT_TREAT_EOF_AS_EOL
-		    c == C(VEOF, CTRL('d')) ||
-#endif
-		    c == C(VINTR, CTRL('c')) || 
-		    c == C(VQUIT, CTRL('\\')) || c == C(VSUSP, CTRL('z')) || 
-		    c == C(VDSUSP, CTRL('y'))) {
-			errno = EINTR;
+		/* tty signal characters */
+		if (c == C(VINTR, CTRL('c'))) {
+			sig = SIGINT;
+			goto out;
+		}
+		if (c == C(VQUIT, CTRL('\\'))) {
+			sig = SIGQUIT;
+			goto out;
+		}
+		if (c == C(VSUSP, CTRL('z')) || c == C(VDSUSP, CTRL('y'))) {
+			sig = SIGTSTP;
 			goto out;
 		}
 
-		/* End of line */
-		if (
-#ifndef DONT_TREAT_EOF_AS_EOL
-		    c == C(VEOF, CTRL('d')) ||
+		/* EOF */
+		if (c == C(VEOF, CTRL('d')))  {
+#ifdef DONT_TREAT_EOF_AS_EOL
+			errno = ENODATA;
+			goto out;
+#else
+			c = '\0';
+			goto add;
 #endif
-		    c == C(VEOL, CTRL('j')) || c == C(VEOL2, CTRL('l')))
+		}
+
+		/* End of line */
+		if (c == C(VEOL, CTRL('j')) || c == C(VEOL2, CTRL('l')))
 			c = '\0';
 add:
 		if (l >= len) {
@@ -199,6 +210,10 @@ restore:
 		(void)tcsetattr(infd, TCSAFLUSH|TCSASOFT, &gt);
 	errno = c;
 out:
+	if (sig) {
+		(void)raise(sig);
+		errno = EINTR;
+	}
 	return NULL;
 }
 
