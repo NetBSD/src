@@ -1,4 +1,4 @@
-# $NetBSD: t_modload.sh,v 1.10 2012/03/20 05:50:11 jruoho Exp $
+# $NetBSD: t_modload.sh,v 1.11 2012/04/13 07:05:32 jruoho Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,11 +37,12 @@ plain_head() {
 }
 plain_body() {
 
-	# XXX: There should be a reliable way to detect MODULAR.
+	# XXX: Adjust when modctl(8) fails consistently.
 	#
-	sysctl machdep.xen > /dev/null 2>&1
+	$(atf_get_srcdir)/k_helper3/k_helper3 \
+		"%s/k_helper/k_helper.kmod" $(atf_get_srcdir)
 
-	if [ $? -eq 0 ]; then
+	if [ $? -eq 78 ]; then
 		atf_skip "host does not support modules"
 	fi
 
@@ -109,11 +110,12 @@ iflag_head() {
 }
 iflag_body() {
 
-	# XXX: There should be a reliable way to detect MODULAR.
+	# XXX: Adjust when modctl(8) fails consistently.
 	#
-	sysctl machdep.xen > /dev/null 2>&1
+	$(atf_get_srcdir)/k_helper3/k_helper3 \
+		"%s/k_helper/k_helper.kmod" $(atf_get_srcdir)
 
-	if [ $? -eq 0 ]; then
+	if [ $? -eq 78 ]; then
 		atf_skip "host does not support modules"
 	fi
 
@@ -162,11 +164,12 @@ sflag_head() {
 }
 sflag_body() {
 
-	# XXX: There should be a reliable way to detect MODULAR.
+	# XXX: Adjust when modctl(8) fails consistently.
 	#
-	sysctl machdep.xen > /dev/null 2>&1
+	$(atf_get_srcdir)/k_helper3/k_helper3 \
+		"%s/k_helper/k_helper.kmod" $(atf_get_srcdir)
 
-	if [ $? -eq 0 ]; then
+	if [ $? -eq 78 ]; then
 		atf_skip "host does not support modules"
 	fi
 
