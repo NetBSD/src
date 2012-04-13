@@ -1,4 +1,4 @@
-/*      $NetBSD: amdtemp.c,v 1.13 2012/03/02 19:26:41 nonaka Exp $ */
+/*      $NetBSD: amdtemp.c,v 1.14 2012/04/13 12:14:41 cegger Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.13 2012/03/02 19:26:41 nonaka Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.14 2012/04/13 12:14:41 cegger Exp $ ");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -197,6 +197,7 @@ amdtemp_match(device_t parent, cfdata_t match, void *aux)
 	case PCI_PRODUCT_AMD_AMD64_F10_MISC:
 	case PCI_PRODUCT_AMD_AMD64_F11_MISC:
 	case PCI_PRODUCT_AMD_F14_NB:	/* Family12h too */
+	case PCI_PRODUCT_AMD_F15_MISC:
 		break;
 	default:
 		return 0;
@@ -225,7 +226,7 @@ amdtemp_match(device_t parent, cfdata_t match, void *aux)
 
 
 	/* Not yet supported CPUs */
-	if (family > 0x14)
+	if (family > 0x15)
 		return 0;
 
 	return 2;	/* supercede pchb(4) */
@@ -270,6 +271,7 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 	case 0x11: /* AMD Griffin */
 	case 0x12: /* AMD Lynx/Sabine (Llano) */
 	case 0x14: /* AMD Brazos (Ontario/Zacate/Desna) */
+	case 0x15:
 		amdtemp_family10_init(sc);
 		break;
 
@@ -299,6 +301,7 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 	case 0x11:
 	case 0x12:
 	case 0x14:
+	case 0x15:
 		amdtemp_family10_setup_sensors(sc, device_unit(self));
 		break;
 	}
@@ -326,6 +329,7 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 	case 0x11:
 	case 0x12:
 	case 0x14:
+	case 0x15:
 		sc->sc_sme->sme_refresh = amdtemp_family10_refresh;
 		break;
 	}
@@ -358,6 +362,7 @@ amdtemp_detach(device_t self, int flags)
 {
 	struct amdtemp_softc *sc = device_private(self);
 
+	pmf_device_deregister(self);
 	if (sc->sc_sme != NULL)
 		sysmon_envsys_unregister(sc->sc_sme);
 
