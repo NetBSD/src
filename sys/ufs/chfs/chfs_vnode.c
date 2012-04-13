@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnode.c,v 1.4 2012/04/12 15:31:01 ttoth Exp $	*/
+/*	$NetBSD: chfs_vnode.c,v 1.5 2012/04/13 14:50:35 ttoth Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -41,15 +41,6 @@
 #include <sys/buf.h>
 
 #include <miscfs/genfs/genfs.h>
-
-/* vtype replaced with chtype, these are only for compatibility */
-const enum chtype iftocht_tab[16] = {
-	CHT_BLANK, CHT_FIFO, CHT_CHR, CHT_BLANK,
-	CHT_DIR, CHT_BLANK, CHT_BLK, CHT_BLANK,
-	CHT_REG, CHT_BLANK, CHT_LNK, CHT_BLANK,
-	CHT_SOCK, CHT_BLANK, CHT_BLANK, CHT_BAD,
-};
-
 
 struct vnode *
 chfs_vnode_lookup(struct chfs_mount *chmp, ino_t vno)

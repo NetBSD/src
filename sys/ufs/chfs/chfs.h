@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs.h,v 1.5 2012/04/12 15:31:01 ttoth Exp $	*/
+/*	$NetBSD: chfs.h,v 1.6 2012/04/13 14:50:35 ttoth Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -38,6 +38,9 @@
 #ifndef __CHFS_H__
 #define __CHFS_H__
 
+
+#ifdef _KERNEL
+
 #if 0
 #define DBG_MSG
 #define DBG_MSG_GC
@@ -71,13 +74,19 @@
 TAILQ_HEAD(chfs_dirent_list, chfs_dirent);
 
 #include "chfs_pool.h"
+#endif /* _KERNEL */
+
 #include "ebh.h"
 #include "media.h"
 #include "chfs_inode.h"
 
+#define CHFS_PAD(x) (((x)+3)&~3)
+
+#ifdef _KERNEL
+
 #ifndef MOUNT_CHFS
 #define MOUNT_CHFS "chfs"
-#endif
+#endif /* MOUNT_CHFS */
 
 enum {
 	VNO_STATE_UNCHECKED,	/* CRC checks not yet done */
@@ -96,8 +105,6 @@ enum {
 /* an eraseblock will be clean if its dirty size is smaller than this */
 #define MAX_DIRTY_TO_CLEAN 255
 #define VERY_DIRTY(chmp, size) ((size) >= (((chmp)->chm_ebh)->eb_size / 2))
-
-#define CHFS_PAD(x) (((x)+3)&~3)
 
 enum {
 	CHFS_NODE_OK = 0,
@@ -764,4 +771,5 @@ CHFS_PAGES_MAX(struct chfs_mount *chmp)
 #define IMPLIES(a, b) (!(a) || (b))
 #define IFF(a, b) (IMPLIES(a, b) && IMPLIES(b, a))
 
+#endif /* _KERNEL */
 #endif /* __CHFS_H__ */
