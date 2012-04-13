@@ -1,4 +1,4 @@
-/*	$NetBSD: readpassphrase.c,v 1.1 2009/06/07 22:38:47 christos Exp $	*/
+/*	$NetBSD: readpassphrase.c,v 1.2 2012/04/13 23:57:08 christos Exp $	*/
 /*
  * Copyright (c) 2000 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
@@ -43,16 +43,14 @@ static const char rcsid[] = "$OpenBSD: readpassphrase.c,v 1.7 2001/08/07 19:34:1
 #include <readpassphrase.h>
 
 char *
-readpassphrase(prompt, buf, bufsiz, flags)
-	const char *prompt;
-	char *buf;
-	size_t bufsiz;
-	int flags;
+readpassphrase(
+	const char *prompt,
+	char *buf,
+	size_t bufsiz,
+	int flags)
 {
-	struct termios term, oterm;
-	char ch, *p, *end;
 	int input, output;
-	sigset_t oset, nset;
+	char *ret;
 
 	/* I suppose we could alloc on demand in this case (XXX). */
 	if (bufsiz == 0) {
@@ -72,6 +70,11 @@ readpassphrase(prompt, buf, bufsiz, flags)
 		input = STDIN_FILENO;
 		output = STDERR_FILENO;
 	}
+
+#ifndef GETPASS_ECHO
+	struct termios term, oterm;
+	char ch, *p, *end;
+	sigset_t oset, nset;
 
 	/*
 	 * We block SIGINT and SIGTSTP so the terminal is not left
@@ -119,9 +122,33 @@ readpassphrase(prompt, buf, bufsiz, flags)
 	if (memcmp(&term, &oterm, sizeof(term)) != 0)
 		(void)tcsetattr(input, TCSAFLUSH|TCSASOFT, &oterm);
 	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
+	ret = buf;
+#else
+	int gflags = 0;
+	int fd[3];
+
+	if (flags & RPP_ECHO_ON)
+		gflags |= GETPASS_ECHO;
+	if (flags & RPP_REQUIRE_TTY)
+		gflags |= GETPASS_NEED_TTY;
+	if (flags & RPP_FORCELOWER)
+		gflags |= GETPASS_FORCE_LOWER;
+	if (flags & RPP_FORCEUPPER)
+		gflags |= GETPASS_FORCE_UPPER;
+	if (flags & RPP_SEVENBIT)
+		gflags |= GETPASS_7BIT;
+
+	fd[0] = input;
+	fd[1] = fd[2] = output;
+	ret = getpassfd(prompt, buf, bufsiz, fd, gflags, 0);
+	if ((gflags & GETPASS_ECHO) == 0)
+		(void)write(output, "\n", 1);
+
+#endif
 	if (input != STDIN_FILENO)
 		(void)close(input);
-	return(buf);
+	
+	return ret;
 }
 
 char *
