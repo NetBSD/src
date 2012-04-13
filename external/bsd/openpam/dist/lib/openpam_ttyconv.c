@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_ttyconv.c,v 1.4 2012/04/11 02:28:46 christos Exp $	*/
+/*	$NetBSD: openpam_ttyconv.c,v 1.5 2012/04/13 16:36:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -60,6 +60,28 @@
 
 int openpam_ttyconv_timeout = 0;
 
+#ifdef __NetBSD__
+static char *
+xprompt(const char *msg, FILE *infp, FILE *outfp, FILE *errfp, int fl)
+{
+	char *rv;
+	int fd[3];
+	fd[0] = fileno(infp);
+	fd[1] = fileno(outfp);
+	fd[2] = fileno(errfp);
+
+	rv = getpassfd(msg, NULL, 0, fd, GETPASS_NEED_TTY |
+	    GETPASS_FAIL_EOF | GETPASS_NO_SIGNAL |
+	    (fl == 0 ? GETPASS_ECHO : 0), openpam_ttyconv_timeout);
+	if (rv == NULL)
+		fprintf(errfp, " %s\n", strerror(errno));
+	else if (fl)
+		fputs("\n", errfp);
+	return rv;
+}
+#define prompt(m, i, o, e) xprompt(m, i, o, e, 0)
+#define prompt_echo_off(m, i, o, e) xprompt(m, i, o, e, 1)
+#else
 static void
 timeout(int sig)
 {
@@ -168,6 +190,7 @@ prompt_echo_off(const char *msg, FILE *infp, FILE *outfp, FILE *errfp)
 		fputs("\n", outfp);
 	return (ret);
 }
+#endif
 
 /*
  * OpenPAM extension
