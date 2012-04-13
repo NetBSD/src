@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.10 2012/04/12 19:41:57 matt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.11 2012/04/13 00:34:54 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.10 2012/04/12 19:41:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.11 2012/04/13 00:34:54 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -1235,6 +1235,8 @@ uvm_reclaimable(u_int color, bool kmem_p)
 {
 	u_int filepages, npages;
 	u_int active, inactive;
+
+	KASSERT(color < uvmexp.ncolors);
 
 	/*
 	 * if swap is not full, no problem.
