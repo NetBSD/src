@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.124 2012/03/12 21:37:12 bouyer Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.125 2012/04/13 15:34:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.124 2012/03/12 21:37:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.125 2012/04/13 15:34:42 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -763,7 +763,7 @@ again:
 			} else {
 				uvm_km_pgremove_intrsafe(kernel_map, va,
 				    va + size);
-				vmem_free(kmem_va_arena, va, size);
+				vmem_free(vm, va, size);
 				return ENOMEM;
 			}
 		}
