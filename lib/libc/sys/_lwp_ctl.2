@@ -1,4 +1,4 @@
-.\"     $NetBSD: _lwp_ctl.2,v 1.4 2012/03/14 13:24:48 jruoho Exp $
+.\"     $NetBSD: _lwp_ctl.2,v 1.5 2012/04/13 15:14:58 yamt Exp $
 .\"
 .\" Copyright (c)2007 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd March 14, 2012
+.Dd April 13, 2012
 .Dt _LWP_CTL 2
 .Os
 .Sh NAME
@@ -36,6 +36,7 @@
 .Lb libc
 .\" ------------------------------------------------------------
 .Sh SYNOPSIS
+.In sys/lwpctl.h
 .In lwp.h
 .Ft int
 .Fn _lwp_ctl "int features" "struct lwpctl **address"
