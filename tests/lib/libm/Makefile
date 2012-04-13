@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17 2011/10/16 13:43:26 jruoho Exp $
+# $NetBSD: Makefile,v 1.18 2012/04/13 12:31:19 njoly Exp $
 
 .include <bsd.own.mk>
 
@@ -27,9 +27,5 @@ TESTS_C+=	t_tanh
 
 LDADD+=		-lm
 #COPTS+=	-Wfloat-equal
-
-.if ${MACHINE_ARCH} == "alpha"
-COPTS+=                 -mieee
-.endif
 
 .include <bsd.test.mk>
