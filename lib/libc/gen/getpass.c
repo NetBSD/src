@@ -1,4 +1,4 @@
-/*	$NetBSD: getpass.c,v 1.22 2012/04/13 14:16:27 christos Exp $	*/
+/*	$NetBSD: getpass.c,v 1.23 2012/04/13 14:39:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getpass.c,v 1.22 2012/04/13 14:16:27 christos Exp $");
+__RCSID("$NetBSD: getpass.c,v 1.23 2012/04/13 14:39:34 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: getpass.c,v 1.22 2012/04/13 14:16:27 christos Exp $");
 #include <termios.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <poll.h>
 
 #ifdef __weak_alias
 __weak_alias(getpassfd,_getpassfd)
@@ -78,7 +79,8 @@ __weak_alias(getpass,_getpass)
  */
 char *
 /*ARGSUSED*/
-getpassfd(const char *prompt, char *buf, size_t len, int fd[], int flags)
+getpassfd(const char *prompt, char *buf, size_t len, int fd[], int flags,
+    int tout)
 {
 	struct termios gt;
 	char c;
@@ -123,15 +125,30 @@ getpassfd(const char *prompt, char *buf, size_t len, int fd[], int flags)
 	c = '\1';
 	lnext = false;
 	for (size_t l = 0; c != '\0'; ) {
+		if (tout) {
+			struct pollfd pfd;
+			pfd.fd = fd[0];
+			pfd.events = POLLIN|POLLRDNORM;
+			pfd.revents = 0;
+			switch (poll(&pfd, 1, tout * 1000)) {
+			case 0:
+				errno = ENODATA;
+				/*FALLTHROUGH*/
+			case -1:
+				goto restore;
+			default:
+				break;
+			}
+		}
 		if (read(fd[0], &c, 1) != 1)
 			goto restore;
 
-#define beep() do \
-	if (flags & GETPASS_NO_BEEP) \
-		(void)write(fd[2], "\a", 1); \
+#define beep() \
+	do \
+		if (flags & GETPASS_NO_BEEP) \
+			(void)write(fd[2], "\a", 1); \
 	while (/*CONSTCOND*/ 0)
 #define erase() (void)write(fd[1], "\b \b", 3)
-
 #define C(a, b) (gt.c_cc[(a)] == _POSIX_VDISABLE ? (b) : gt.c_cc[(a)])
 
 		if (lnext) {
@@ -270,7 +287,7 @@ getpass_r(const char *prompt, char *buf, size_t len)
 	} else
 		opentty = true;
 
-	rv = getpassfd(prompt, buf, len, fd, 0);
+	rv = getpassfd(prompt, buf, len, fd, 0, 0);
 
 	if (opentty) {
 		int serrno = errno;
@@ -313,7 +330,7 @@ main(int argc, char *argv[])
 	char buf[28];
 	int fd[3] = { 0, 1, 2 };
 	printf("[%s]\n", getpassfd("foo>", buf, sizeof(buf), fd,
-	    GETPASS_ECHO_STAR));
+	    GETPASS_ECHO_STAR, 2));
 	return 0;
 }
 #endif
