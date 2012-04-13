@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1108 2012/04/09 08:10:30 mlelstv Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1109 2012/04/13 12:04:11 cegger Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1114 2012/04/09 08:09:36 mlelstv Exp
+ *	NetBSD: pcidevs,v 1.1115 2012/04/13 12:03:14 cegger Exp
  */
 
 /*
@@ -939,6 +939,12 @@
 #define	PCI_PRODUCT_AMD_AMD64_F11_MISC	0x1303		/* AMD64 Family11h Miscellaneous Configuration */
 #define	PCI_PRODUCT_AMD_AMD64_F11_LINK	0x1304		/* AMD64 Family11h Link Configuration */
 #define	PCI_PRODUCT_AMD_F14_RC	0x1510		/* Family14h Root Complex */
+#define	PCI_PRODUCT_AMD_F15_HT	0x1600		/* Family15h HyperTransport Configuration */
+#define	PCI_PRODUCT_AMD_F15_ADDR	0x1601		/* Family15h Address Map Configuration */
+#define	PCI_PRODUCT_AMD_F15_DRAM	0x1602		/* Family15h DRAM Configuration */
+#define	PCI_PRODUCT_AMD_F15_MISC	0x1603		/* Family15h Miscellaneous Configuration */
+#define	PCI_PRODUCT_AMD_F15_LINK	0x1604		/* Family15h Link Configuration */
+#define	PCI_PRODUCT_AMD_F15_NB	0x1605		/* Family15h North Bridge Configuration */
 #define	PCI_PRODUCT_AMD_F14_HT	0x1700		/* Family12h/14h HyperTransport Configuration */
 #define	PCI_PRODUCT_AMD_F14_ADDR	0x1701		/* Family12h/14h Address Map Configuration */
 #define	PCI_PRODUCT_AMD_F14_DRAM	0x1702		/* Family12h/14h DRAM Configuration */
