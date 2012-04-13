@@ -1,4 +1,4 @@
-/*	$NetBSD: getpass.c,v 1.21 2012/04/13 02:20:50 christos Exp $	*/
+/*	$NetBSD: getpass.c,v 1.22 2012/04/13 14:16:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getpass.c,v 1.21 2012/04/13 02:20:50 christos Exp $");
+__RCSID("$NetBSD: getpass.c,v 1.22 2012/04/13 14:16:27 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: getpass.c,v 1.21 2012/04/13 02:20:50 christos Exp $");
 #include <stdio.h>
 #endif
 #include <errno.h>
+#include <ctype.h>
 #include <signal.h>
 #include <string.h>
 #include <paths.h>
@@ -139,7 +140,7 @@ getpassfd(const char *prompt, char *buf, size_t len, int fd[], int flags)
 		}
 
 		/* Ignored */
-		if (c == C(VREPRINT, CTRL('r')) || c == C(VSTART, CTRL('q')) || 
+		if (c == C(VREPRINT, CTRL('r')) || c == C(VSTART, CTRL('q')) ||
 		    c == C(VSTOP, CTRL('s')) || c == C(VSTATUS, CTRL('t')) || 
 		    c == C(VDISCARD, CTRL('o')))
 			continue;
@@ -203,12 +204,12 @@ getpassfd(const char *prompt, char *buf, size_t len, int fd[], int flags)
 add:
 		if (l >= len) {
 			if (allocated) {
-				char *b;
-				len += 1024;
-				b = realloc(buf, len);
-				if (b == NULL)
+				size_t nlen = len + 1024;
+				char *nbuf = realloc(buf, nlen);
+				if (nbuf == NULL)
 					goto restore;
-				buf = b;
+				buf = nbuf;
+				len = nlen;
 			} else {
 				if (flags & GETPASS_BUF_LIMIT) {
 					beep();
@@ -225,7 +226,8 @@ add:
 			if (flags & GETPASS_ECHO_STAR)
 				(void)write(fd[1], "*", 1);
 			else if (flags & GETPASS_ECHO)
-				(void)write(fd[1], &c, 1);
+				(void)write(fd[1], isprint((unsigned char)c) ?
+				    &c : "?", 1);
 		}
 	}
 
