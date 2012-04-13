@@ -1,4 +1,4 @@
-/*	$NetBSD: getpass.c,v 1.23 2012/04/13 14:39:34 christos Exp $	*/
+/*	$NetBSD: getpass.c,v 1.24 2012/04/13 14:42:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getpass.c,v 1.23 2012/04/13 14:39:34 christos Exp $");
+__RCSID("$NetBSD: getpass.c,v 1.24 2012/04/13 14:42:18 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -132,7 +132,7 @@ getpassfd(const char *prompt, char *buf, size_t len, int fd[], int flags,
 			pfd.revents = 0;
 			switch (poll(&pfd, 1, tout * 1000)) {
 			case 0:
-				errno = ENODATA;
+				errno = ETIMEDOUT;
 				/*FALLTHROUGH*/
 			case -1:
 				goto restore;
