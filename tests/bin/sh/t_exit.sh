@@ -1,4 +1,4 @@
-# $NetBSD: t_exit.sh,v 1.2 2012/03/25 17:30:59 christos Exp $
+# $NetBSD: t_exit.sh,v 1.3 2012/04/13 06:12:32 jruoho Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -31,6 +31,16 @@ crud() {
 	cat <<EOF
 $?
 EOF
+}
+
+atf_test_case background
+background_head() {
+	atf_set "descr" "Tests that sh(1) sets '$?' properly when running " \
+	                "a command in the background (PR bin/46327)"
+}
+background_body() {
+	atf_check -s exit:0 -o ignore -e ignore -x "true; true & echo $?"
+	atf_check -s exit:0 -o ignore -e ignore -x "false; true & echo $?"
 }
 
 atf_test_case function
@@ -85,6 +95,7 @@ trap_zero__explicit_return_body() {
 }
 
 atf_init_test_cases() {
+	atf_add_test_case background
 	atf_add_test_case function
 	atf_add_test_case readout
 	atf_add_test_case trap_subshell
