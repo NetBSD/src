@@ -1,4 +1,4 @@
-/*      $NetBSD: amdtemp.c,v 1.14 2012/04/13 12:14:41 cegger Exp $ */
+/*      $NetBSD: amdtemp.c,v 1.15 2012/04/13 13:11:17 cegger Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.14 2012/04/13 12:14:41 cegger Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.15 2012/04/13 13:11:17 cegger Exp $ ");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -189,19 +189,7 @@ amdtemp_match(device_t parent, cfdata_t match, void *aux)
 	pcireg_t cpu_signature;
 	uint32_t family;
 
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_AMD)
-		return 0;
-
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_AMD_AMD64_MISC:
-	case PCI_PRODUCT_AMD_AMD64_F10_MISC:
-	case PCI_PRODUCT_AMD_AMD64_F11_MISC:
-	case PCI_PRODUCT_AMD_F14_NB:	/* Family12h too */
-	case PCI_PRODUCT_AMD_F15_MISC:
-		break;
-	default:
-		return 0;
-	}
+	KASSERT(PCI_VENDOR(pa->pa_id) == PCI_VENDOR_AMD);
 
 	cpu_signature = pci_conf_read(pa->pa_pc,
 	    pa->pa_tag, CPUID_FAMILY_MODEL_R);
@@ -229,7 +217,7 @@ amdtemp_match(device_t parent, cfdata_t match, void *aux)
 	if (family > 0x15)
 		return 0;
 
-	return 2;	/* supercede pchb(4) */
+	return 1;
 }
 
 static void

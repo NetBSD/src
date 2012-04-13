@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1070 2012/04/08 20:49:29 christos Exp $
+# $NetBSD: GENERIC,v 1.1071 2012/04/13 13:11:16 cegger Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1070 $"
+#ident 		"GENERIC-$Revision: 1.1071 $"
 
 maxusers	64		# estimated number of users
 
@@ -446,7 +446,8 @@ pci*	at elansc? bus ?
 elansc* at mainbus? bus ?		# AMD Elan SC520 System Controller
 
 # Temperatures
-amdtemp* at pchb?			# AMD CPU Temperature sensors
+amdnb_misc* at pci?			# AMD NB Misc Configuration
+amdtemp* at amdnb_misc?			# AMD CPU Temperature sensors
 
 # PCI bridges
 #amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
