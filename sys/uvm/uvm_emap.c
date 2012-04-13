@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_emap.c,v 1.8 2011/09/02 22:25:08 dyoung Exp $	*/
+/*	$NetBSD: uvm_emap.c,v 1.9 2012/04/13 15:33:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -31,6 +31,40 @@
 
 /*
  * UVM ephemeral mapping interface.
+ */
+
+/*
+ * Overview:
+ *
+ * On multiprocessor systems, frequent uses of pmap_kenter_pa/pmap_kremove
+ * for ephemeral mappings are not desirable because they likely involve
+ * TLB flush IPIs because that pmap_kernel() is shared among all LWPs.
+ * This interface can be used instead, to reduce the number of IPIs.
+ *
+ * For a single-page mapping, PMAP_DIRECT_MAP is likely a better choice
+ * if available.  (__HAVE_DIRECT_MAP)
+ */
+
+/*
+ * How to use:
+ *
+ * Map pages at the address:
+ *
+ *	uvm_emap_enter(va, pgs, npages);
+ *	gen = uvm_emap_produce();
+ *
+ * Read pages via the mapping:
+ *
+ *	uvm_emap_consume(gen);
+ *	some_access(va);
+ *
+ * After finishing using the mapping:
+ *
+ *	uvm_emap_remove(va, len);
+ */
+
+/*
+ * Notes for pmap developers:
  *
  * Generic (more expensive) stubs are implemented for architectures which
  * do not support pmap.
@@ -46,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_emap.c,v 1.8 2011/09/02 22:25:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_emap.c,v 1.9 2012/04/13 15:33:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
