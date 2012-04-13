@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.322 2012/03/22 20:34:39 drochner Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.323 2012/04/13 15:35:57 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.322 2012/03/22 20:34:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.323 2012/04/13 15:35:57 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -4530,6 +4530,12 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	}
 	return (1);
 }
+
+/*
+ * syn_cache_respond: (re)send SYN+ACK.
+ *
+ * returns 0 on success.  otherwise returns an errno, typically ENOBUFS.
+ */
 
 int
 syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
