@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.36 2012/03/18 08:52:07 jruoho Exp $
+# $NetBSD: Makefile,v 1.37 2012/04/13 12:31:19 njoly Exp $
 
 .include <bsd.own.mk>
 
@@ -45,9 +45,5 @@ LDADD.t_nice+=		-lpthread
 DPADD.t_nice+=		${LIBPTHREAD}
 LDADD.t_syslog+=	-lpthread
 DPADD.t_syslog+=	${LIBPTHREAD}
-
-.if ${MACHINE_ARCH} == "alpha"
-COPTS+=			-mieee
-.endif
 
 .include <bsd.test.mk>
