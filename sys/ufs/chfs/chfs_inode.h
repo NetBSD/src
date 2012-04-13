@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_inode.h,v 1.3 2012/04/12 15:31:01 ttoth Exp $	*/
+/*	$NetBSD: chfs_inode.h,v 1.4 2012/04/13 14:50:35 ttoth Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -35,10 +35,12 @@
 #ifndef __CHFS_INODE_H__
 #define __CHFS_INODE_H__
 
+#ifdef _KERNEL
 #include <sys/vnode.h>
 #include <sys/stat.h>
 #include <ufs/ufs/ufsmount.h>
 #include <miscfs/genfs/genfs_node.h>
+#endif /* _KERNEL */
 
 #define CHFS_ROOTINO 2
 
@@ -59,11 +61,17 @@ enum chtype {
 #define CHTTOVT(ch_type)	ch_type
 #define VTTOCHT(v_type)		v_type
 
-extern const enum chtype iftocht_tab[16];
+/* vtype replaced with chtype, these are only for compatibility */
+static const enum chtype iftocht_tab[16] = {
+	CHT_BLANK, CHT_FIFO, CHT_CHR, CHT_BLANK,
+	CHT_DIR, CHT_BLANK, CHT_BLK, CHT_BLANK,
+	CHT_REG, CHT_BLANK, CHT_LNK, CHT_BLANK,
+	CHT_SOCK, CHT_BLANK, CHT_BLANK, CHT_BAD,
+};
 
 #define	IFTOCHT(mode)	(iftocht_tab[((mode) & S_IFMT) >> 12])
 
-
+#ifdef _KERNEL
 struct chfs_inode
 {
 	struct genfs_node	gnode;
@@ -159,4 +167,5 @@ struct chfs_inode
 #define	IFSOCK		0140000		/* UNIX domain socket. */
 #define	IFWHT		0160000		/* Whiteout. */
 
+#endif /* _KERNEL */
 #endif /* __CHFS_INODE_H__ */
