@@ -1,4 +1,4 @@
-/*	$NetBSD: rfc6056.c,v 1.5 2012/03/15 13:25:46 gson Exp $	*/
+/*	$NetBSD: rfc6056.c,v 1.6 2012/04/13 15:38:04 yamt Exp $	*/
 
 /*
  * Copyright 2011 Vlad Balan
@@ -28,8 +28,13 @@
  *
  */
 
+/*
+ * see:
+ *	RFC 6056 Recommendations for Transport-Protocol Port Randomization
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfc6056.c,v 1.5 2012/03/15 13:25:46 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfc6056.c,v 1.6 2012/04/13 15:38:04 yamt Exp $");
 
 #include "opt_inet.h"
 
