@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.463 2012/04/10 02:39:34 jruoho Exp $
+# $NetBSD: mi,v 1.464 2012/04/14 12:21:45 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3240,6 +3240,9 @@
 ./usr/tests/usr.sbin/mtree/d_merge_C_M.out	tests-usr.sbin-tests	atf
 ./usr/tests/usr.sbin/mtree/d_merge_C_M_S.out	tests-usr.sbin-tests	atf
 ./usr/tests/usr.sbin/mtree/t_mtree		tests-usr.sbin-tests	atf
+./usr/tests/usr.sbin/tcpdump			tests-usr.sbin-tests
+./usr/tests/usr.sbin/tcpdump/Atffile		tests-usr.sbin-tests	atf
+./usr/tests/usr.sbin/tcpdump/t_tcpdump		tests-usr.sbin-tests	atf
 ./usr/tests/usr.sbin/traceroute			tests-usr.sbin-tests
 ./usr/tests/usr.sbin/traceroute/Atffile		tests-usr.sbin-tests	atf
 ./usr/tests/usr.sbin/traceroute/t_traceroute	tests-usr.sbin-tests	atf
