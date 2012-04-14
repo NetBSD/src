@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.20 2012/04/12 12:52:58 nakayama Exp $	*/
+/*	$NetBSD: bwi.c,v 1.21 2012/04/14 02:15:01 nakayama Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.20 2012/04/12 12:52:58 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.21 2012/04/14 02:15:01 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -7901,19 +7901,6 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 
 	st = malloc(sizeof(*st), M_DEVBUF, M_WAITOK | M_ZERO);
 	sc->sc_txstats = st;
-
-	/*
-	 * Create TX stats descriptor DMA stuffs
-	 */
-	dma_size = roundup(desc_sz * BWI_TXSTATS_NDESC, BWI_RING_ALIGN);
-
-	error = bus_dmamap_create(sc->sc_dmat, dma_size, 1, dma_size, 0,
-	    BUS_DMA_NOWAIT, &st->stats_ring_dmap);
-	if (error) {
-		aprint_error_dev(sc->sc_dev,
-		    "can't create txstats ring DMA mem\n");
-		return (error);
-	}
 
 	/*
 	 * Create TX stats descriptor DMA stuffs
