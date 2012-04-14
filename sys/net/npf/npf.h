@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.15 2012/03/11 18:27:59 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.16 2012/04/14 19:01:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -45,10 +45,6 @@
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 
-#ifdef _NPF_TESTING
-#include "testing.h"
-#endif
-
 #define	NPF_VERSION		4
 
 /*
@@ -62,7 +58,7 @@ typedef uint8_t			npf_netmask_t;
 #define	NPF_MAX_NETMASK		(128)
 #define	NPF_NO_NETMASK		((npf_netmask_t)~0)
 
-#if defined(_KERNEL) || defined(_NPF_TESTING)
+#if defined(_KERNEL)
 
 /* Network buffer. */
 typedef void			nbuf_t;

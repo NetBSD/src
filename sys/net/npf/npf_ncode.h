@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ncode.h,v 1.6 2012/03/10 22:22:38 christos Exp $	*/
+/*	$NetBSD: npf_ncode.h,v 1.7 2012/04/14 19:01:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include "npf.h"
 
-#if defined(_KERNEL) || defined(_NPF_TESTING)
+#if defined(_KERNEL)
 /*
  * N-code processing, validation & building.
  */
