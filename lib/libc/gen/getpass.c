@@ -1,4 +1,4 @@
-/*	$NetBSD: getpass.c,v 1.24 2012/04/13 14:42:18 christos Exp $	*/
+/*	$NetBSD: getpass.c,v 1.25 2012/04/14 01:33:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getpass.c,v 1.24 2012/04/13 14:42:18 christos Exp $");
+__RCSID("$NetBSD: getpass.c,v 1.25 2012/04/14 01:33:43 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -76,21 +76,45 @@ __weak_alias(getpass,_getpass)
  *	- GETPASS_NO_BEEP disables beeping.
  *	- GETPASS_ECHO_STAR will echo '*' for each character of the password
  *	- GETPASS_ECHO will echo the password (as pam likes it)
+ *	- GETPASS_7BIT strips the 8th bit
+ *	- GETPASS_FORCE_UPPER forces to uppercase
+ *	- GETPASS_FORCE_LOWER forces to uppercase
+ *	- GETPASS_ECHO_NL echo's a new line on success if echo was off.
  */
 char *
 /*ARGSUSED*/
-getpassfd(const char *prompt, char *buf, size_t len, int fd[], int flags,
+getpassfd(const char *prompt, char *buf, size_t len, int *fd, int flags,
     int tout)
 {
 	struct termios gt;
 	char c;
 	int sig;
-	bool lnext, havetty, allocated;
+	bool lnext, havetty, allocated, opentty, good;
+	int fdc[3];
 
 	_DIAGASSERT(prompt != NULL);
 
-	sig = 0;
+	if (buf != NULL && len == 0) {
+		errno = EINVAL;
+		return NULL;
+	}
 
+	good = false;
+	opentty = false;
+	if (fd == NULL) {
+		/*
+		 * Try to use /dev/tty if possible; otherwise read from stdin
+		 * and write to stderr.
+		 */
+		fd = fdc;
+		if ((fd[0] = fd[1] = fd[2] = open(_PATH_TTY, O_RDWR)) == -1) {
+			fd[0] = STDIN_FILENO;
+			fd[1] = fd[2] = STDERR_FILENO;
+		} else
+			opentty = true;
+	}
+		 
+	sig = 0;
 	allocated = buf == NULL;
 	if (tcgetattr(fd[0], &gt) == -1) {
 		havetty = false;
@@ -100,7 +124,6 @@ getpassfd(const char *prompt, char *buf, size_t len, int fd[], int flags,
 	} else
 		havetty = true;
 		
-
 	if (havetty) {
 		struct termios st = gt;
 
@@ -238,6 +261,14 @@ add:
 					continue;
 			}
 		}
+
+		if (flags & GETPASS_7BIT)
+			c &= 0x7f;
+		if ((flags & GETPASS_FORCE_LOWER) && isupper((unsigned char)c))
+			c = tolower((unsigned char)c);
+		if ((flags & GETPASS_FORCE_UPPER) && islower((unsigned char)c))
+			c = toupper((unsigned char)c);
+
 		buf[l++] = c;
 		if (c) {
 			if (flags & GETPASS_ECHO_STAR)
@@ -247,10 +278,8 @@ add:
 				    &c : "?", 1);
 		}
 	}
+	good = true;
 
-	if (havetty)
-		(void)tcsetattr(fd[0], TCSAFLUSH|TCSASOFT, &gt);
-	return buf;
 restore:
 	if (havetty) {
 		c = errno;
@@ -258,6 +287,18 @@ restore:
 		errno = c;
 	}
 out:
+	if (good && (flags & GETPASS_ECHO_NL))
+		(void)write(fd[1], "\n", 1);
+
+	if (opentty) {
+		c = errno;
+		(void)close(fd[0]);
+		errno = c;
+	}
+
+	if (good)
+		return buf;
+
 	if (sig) {
 		if ((flags & GETPASS_NO_SIGNAL) == 0)
 			(void)raise(sig);
@@ -272,29 +313,7 @@ out:
 char *
 getpass_r(const char *prompt, char *buf, size_t len)
 {
-	bool opentty;
-	int fd[3];
-	char *rv;
-
-	/*
-	 * Try to use /dev/tty if possible; otherwise read from stdin and
-	 * write to stderr.
-	 */
-	if ((fd[0] = fd[1] = fd[2] = open(_PATH_TTY, O_RDWR)) == -1) {
-		opentty = false;
-		fd[0] = STDIN_FILENO;
-		fd[1] = fd[2] = STDERR_FILENO;
-	} else
-		opentty = true;
-
-	rv = getpassfd(prompt, buf, len, fd, 0, 0);
-
-	if (opentty) {
-		int serrno = errno;
-		(void)close(fd[0]);
-		errno = serrno;
-	}
-	return rv;
+	return getpassfd(prompt, buf, len, NULL, 0, 0);
 }
 
 char *
@@ -328,9 +347,8 @@ int
 main(int argc, char *argv[])
 {
 	char buf[28];
-	int fd[3] = { 0, 1, 2 };
-	printf("[%s]\n", getpassfd("foo>", buf, sizeof(buf), fd,
-	    GETPASS_ECHO_STAR, 2));
+	printf("[%s]\n", getpassfd("foo>", buf, sizeof(buf), NULL,
+	    GETPASS_ECHO_STAR|GETPASS_ECHO_NL, 2));
 	return 0;
 }
 #endif
