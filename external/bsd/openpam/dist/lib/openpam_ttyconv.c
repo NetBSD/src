@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_ttyconv.c,v 1.5 2012/04/13 16:36:37 christos Exp $	*/
+/*	$NetBSD: openpam_ttyconv.c,v 1.6 2012/04/14 15:14:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -60,7 +60,7 @@
 
 int openpam_ttyconv_timeout = 0;
 
-#ifdef __NetBSD__
+#ifdef GETPASS_ECHO
 static char *
 xprompt(const char *msg, FILE *infp, FILE *outfp, FILE *errfp, int fl)
 {
