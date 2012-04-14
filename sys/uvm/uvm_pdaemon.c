@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.11 2012/04/13 00:34:54 matt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.12 2012/04/14 00:49:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.11 2012/04/13 00:34:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.12 2012/04/14 00:49:35 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -113,6 +113,7 @@ static struct uvm_pdinfo {
 	unsigned int pd_scans_neededs;
 	struct uvm_pggrouplist pd_pagingq;
 	struct uvm_pggrouplist pd_pendingq;
+	bool pd_stalled;
 } uvm_pdinfo =  {
 	.pd_pagingq = TAILQ_HEAD_INITIALIZER(uvm_pdinfo.pd_pagingq),
 	.pd_pendingq = TAILQ_HEAD_INITIALIZER(uvm_pdinfo.pd_pendingq),
@@ -168,7 +169,8 @@ uvm_wait(const char *wmsg)
 	}
 
 	uvm_pdinfo.pd_waiters++;
-	wakeup(&uvm.pagedaemon);		/* wake the daemon! */
+	if (!uvm_pdinfo.pd_stalled)
+		wakeup(&uvm.pagedaemon);		/* wake the daemon! */
 	UVM_UNLOCK_AND_WAIT(&uvmexp.free, &uvm_fpageqlock, false, wmsg, timo);
 	uvm_pdinfo.pd_waiters--;
 }
@@ -269,11 +271,12 @@ uvm_kick_pdaemon(void)
 		}
 	}
 
-	if (need_wakeup)
+	const bool stalled = pdinfo->pd_stalled;
+	if (need_wakeup && !stalled)
 		wakeup(&uvm.pagedaemon);
 
-	UVMHIST_LOG(pdhist, " <- done: wakeup=%d!",
-	    need_wakeup, 0, 0, 0);
+	UVMHIST_LOG(pdhist, " <- done: wakeup=%d stalled=%d!",
+	    need_wakeup, stalled, 0, 0);
 }
 
 /*
@@ -392,13 +395,14 @@ uvm_pageout(void *arg)
 		    || (pdinfo->pd_waiters == 0
 		        && TAILQ_FIRST(&pdinfo->pd_pendingq) == NULL)) {
 			UVMHIST_LOG(pdhist,"  <<SLEEPING>>",0,0,0,0);
-			int timo = 0;
-			if (!progress && pdinfo->pd_waiters > 0)
-				timo = 2 * hz;
+			pdinfo->pd_stalled = !progress
+			    && pdinfo->pd_waiters > 0;
+			int timo = (pdinfo->pd_stalled ? 2 * hz : 0);
 			UVM_UNLOCK_AND_WAIT(&uvm.pagedaemon,
 			    &uvm_fpageqlock, false, "pgdaemon", timo);
 			uvmexp.pdwoke++;
 			UVMHIST_LOG(pdhist,"  <<WOKE UP>>",0,0,0,0);
+			pdinfo->pd_stalled = false;
 			progress = false;
 		} else if (TAILQ_FIRST(&pdinfo->pd_pendingq) == NULL) {
 			/*
@@ -465,11 +469,14 @@ uvm_pageout(void *arg)
 			/*
 			 * scan if needed
 			 */
+			bool local_progress = false;
 			if (grp->pgrp_paging < diff
 			    || uvmpdpol_needsscan_p(grp)) {
 				mutex_spin_exit(&uvm_fpageqlock);
-				if (uvmpd_scan(grp))
+				if (uvmpd_scan(grp)) {
 					progress = true;
+					local_progress = true;
+				}
 				mutex_spin_enter(&uvm_fpageqlock);
 			} else {
 				UVMHIST_LOG(pdhist,
@@ -480,11 +487,12 @@ uvm_pageout(void *arg)
 			}
 
 			/*
-			 * if there's any free memory to be had,
-			 * wake up any waiters.
+			 * if there's any free memory to be had for this group,
+			 * wake up any waiters but only if we made progress for
+			 * this group.
 			 */
 			if (grp->pgrp_free * uvmexp.npggroups > uvmexp.reserve_kernel
-			    || grp->pgrp_paging == 0) {
+			    || (local_progress && grp->pgrp_paging == 0)) {
 				need_wakeup = true;
 			}
 
@@ -492,7 +500,7 @@ uvm_pageout(void *arg)
 		if (need_wakeup) {
 			wakeup(&uvmexp.free);
 		}
-		KASSERT (!need_free || need_wakeup);
+		KASSERT(!need_free || need_wakeup);
 		mutex_spin_exit(&uvm_fpageqlock);
 
 		/*
@@ -1233,17 +1241,14 @@ uvmpd_scan(struct uvm_pggroup *grp)
 bool
 uvm_reclaimable(u_int color, bool kmem_p)
 {
-	u_int filepages, npages;
-	u_int active, inactive;
-
 	KASSERT(color < uvmexp.ncolors);
 
 	/*
 	 * if swap is not full, no problem.
 	 */
-
 #ifdef VMSWAP
 	if (!uvm_swapisfull()) {
+		KASSERT(uvmexp.nswapdev > 0);
 		return true;
 	}
 #endif
@@ -1257,10 +1262,10 @@ uvm_reclaimable(u_int color, bool kmem_p)
 	 * XXX should consider about other reclaimable memory.
 	 * XXX ie. pools, traditional buffer cache.
 	 */
-	active = 0;
-	inactive = 0;
-	filepages = 0;
-	npages = 0;
+	u_int active = 0;
+	u_int inactive = 0;
+	u_int filepages = 0;
+	u_int npages = 0;
 	for (u_int lcv = 0; lcv < VM_NFREELIST; lcv++) {
 		struct uvm_pggroup * const grp =
 		    uvm.page_free[color].pgfl_pggroups[lcv];
@@ -1294,8 +1299,8 @@ uvm_reclaimable(u_int color, bool kmem_p)
 
 void
 uvm_estimatepageable(const struct uvm_pggroup *grp,
-	u_int *active, u_int *inactive)
+	u_int *activep, u_int *inactivep)
 {
 
-	uvmpdpol_estimatepageable(grp, active, inactive);
+	uvmpdpol_estimatepageable(grp, activep, inactivep);
 }
