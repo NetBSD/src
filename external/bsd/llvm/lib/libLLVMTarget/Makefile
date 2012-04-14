@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2012/01/11 23:24:48 joerg Exp $
+#	$NetBSD: Makefile,v 1.8 2012/04/14 15:11:18 joerg Exp $
 
 LIB=	LLVMTarget
 
@@ -16,6 +16,7 @@ SRCS+=	Mangler.cpp \
 	TargetLibraryInfo.cpp \
 	TargetLoweringObjectFile.cpp \
 	TargetMachine.cpp \
+	TargetMachineC.cpp \
 	TargetRegisterInfo.cpp \
 	TargetSubtargetInfo.cpp
 
