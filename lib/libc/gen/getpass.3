@@ -1,4 +1,4 @@
-.\"	$NetBSD: getpass.3,v 1.21 2012/04/14 02:01:12 christos Exp $
+.\"	$NetBSD: getpass.3,v 1.22 2012/04/14 10:34:29 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -85,9 +85,9 @@ function allows one to specify the three file descriptors corresponding to
 .Dv stdin ,
 .Dv stdout ,
 and
-.Dv stderr 
+.Dv stderr
 in the
-.Fa fd 
+.Fa fd
 argument, or if
 .Fa fd
 is
@@ -129,9 +129,9 @@ Echoes a newline if successful.
 .It Dv GETPASS_7BIT
 Mask the high bit for each entered character.
 .It Dv GETPASS_FORCE_LOWER
-Lowcase each entered character.
+Lowercase each entered character.
 .It Dv GETPASS_FORCE_UPPER
-Upcase each entered character.
+Uppercase each entered character.
 .El
 .Pp
 Finally if the
