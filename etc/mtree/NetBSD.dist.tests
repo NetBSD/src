@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.72 2012/04/14 00:14:22 pgoyette Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.73 2012/04/14 02:48:44 pgoyette Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -239,7 +239,6 @@
 ./usr/tests/libexec/ld.elf_so/h_helper_symver_dso1
 ./usr/tests/libexec/ld.elf_so/h_helper_symver_dso2
 ./usr/tests/modules
-./usr/tests/modules/k_helper3
 ./usr/tests/net
 ./usr/tests/net/bpf
 ./usr/tests/net/carp
