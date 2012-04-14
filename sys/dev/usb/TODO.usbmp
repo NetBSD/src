@@ -1,7 +1,10 @@
-$NetBSD: TODO.usbmp,v 1.1.2.10 2012/04/06 08:22:28 mrg Exp $
+$NetBSD: TODO.usbmp,v 1.1.2.11 2012/04/14 23:11:02 mrg Exp $
 
 
 the majority of the USB MP device interface is documented in usbdivar.h.
+
+
+flesh out most of usbdi(9).
 
 
 host controllers needing to be ported:
@@ -18,11 +21,6 @@ add lots more asserts
 
 
 usb_event_thread() startup should use something to sync companions
-
-
-ehci issues:
-  - ehci_idone() has gone from splhigh() to splusb().  OK?
-  - ehci_suspend() no longer has splhardusb() across the whole function
 
 
 wake/wakeup conversion:
@@ -57,6 +55,7 @@ convert uhidev users to MPSAFE:
 
   uhid(4)
   - needs some locking here (not completely tested changes)
+  - MERGE ISSUE
 
   ukbd(4)
   ums(4)
@@ -123,7 +122,7 @@ driver testing:		STATUS
   - ucycom
   - uep
   - udl
-  - ulpt		attaches ok
+  - ulpt		attaches ok, MERGE ISSUE
   - uhso		working (must take kernel lock for scsipi)
   - umass		working (must take kernel lock for scsipi)
   - uaudio		working
@@ -155,7 +154,7 @@ driver testing:		STATUS
   - utoppy
   - uyap
   - udsbr
-  - ugen
+  - ugen		MERGE ISSUE
   - pseye
   - uvideo
   - auvitek		? (must take kernel lock for scsipi)
@@ -164,7 +163,7 @@ driver testing:		STATUS
   - aubtfwl
   - u3ginit
 ucom attachments:
-  - umodem
+  - umodem		working
   - uark
   - ubsa
   - uchcom
@@ -179,3 +178,6 @@ ucom attachments:
   - ukyopon
   - u3g
   - ugensa
+
+
+test two metwork cards.  MERGE ISSUE
