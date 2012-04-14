@@ -1,4 +1,4 @@
-# $NetBSD: t_tcpdump.sh,v 1.1 2012/04/14 12:21:45 jruoho Exp $
+# $NetBSD: t_tcpdump.sh,v 1.2 2012/04/14 15:13:57 jruoho Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -41,7 +41,7 @@ promiscuous_head() {
 
 promiscuous_body() {
 
-	ifs="lo0 age0 ath0 bge0 re0 sk0 iwn0 wm0 wpi0"
+	ifs="lo0 age0 ath0 bge0 dge0 re0 rtk0 sip0 sk0 iwn0 vr0 wm0 wpi0"
 
 	for i in $ifs; do
 
