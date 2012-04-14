@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.20 2012/04/04 10:42:01 joerg Exp $
+# $NetBSD: Makefile,v 1.21 2012/04/14 15:11:18 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -100,5 +100,10 @@ SUBDIR+= \
 	libclangStaticAnalyzerCore \
 	.WAIT \
 	libclangStaticAnalyzerFrontend
+
+.if ${NO_LLVM_DEVELOPER:Uno} == "no" && ${LLVM_DEVELOPER:U} == "yes"
+SUBDIR+= \
+	libclangTooling
+.endif
 
 .include <bsd.subdir.mk>
