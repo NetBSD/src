@@ -1,4 +1,4 @@
-# $NetBSD: module.mi,v 1.7 2012/04/13 07:05:32 jruoho Exp $
+# $NetBSD: module.mi,v 1.8 2012/04/14 02:47:27 pgoyette Exp $
 #
 # These are only made for ports doing modules.
 #
@@ -8,7 +8,7 @@
 ./usr/tests/modules/k_helper2			tests-sys-tests		atf
 ./usr/tests/modules/k_helper2/k_helper2.kmod	tests-sys-tests		atf
 ./usr/tests/modules/k_helper3			tests-sys-tests		atf
-./usr/tests/modules/k_helper3/k_helper3		tests-sys-tests		atf
+./usr/tests/modules/k_helper3/k_helper3		tests-obsolete		obsolete
 ./usr/tests/modules/k_uvm			tests-sys-tests		atf
 ./usr/tests/modules/k_uvm/k_uvm.kmod		tests-sys-tests		atf
 ./usr/tests/modules/t_abi_uvm			tests-sys-tests		atf
