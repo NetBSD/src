@@ -1,4 +1,4 @@
-# $NetBSD: t_modload.sh,v 1.11 2012/04/13 07:05:32 jruoho Exp $
+# $NetBSD: t_modload.sh,v 1.12 2012/04/14 02:46:17 pgoyette Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,7 +39,7 @@ plain_body() {
 
 	# XXX: Adjust when modctl(8) fails consistently.
 	#
-	$(atf_get_srcdir)/k_helper3/k_helper3 \
+	$(atf_get_srcdir)/k_helper3 \
 		"%s/k_helper/k_helper.kmod" $(atf_get_srcdir)
 
 	if [ $? -eq 78 ]; then
@@ -112,7 +112,7 @@ iflag_body() {
 
 	# XXX: Adjust when modctl(8) fails consistently.
 	#
-	$(atf_get_srcdir)/k_helper3/k_helper3 \
+	$(atf_get_srcdir)/k_helper3 \
 		"%s/k_helper/k_helper.kmod" $(atf_get_srcdir)
 
 	if [ $? -eq 78 ]; then
@@ -166,7 +166,7 @@ sflag_body() {
 
 	# XXX: Adjust when modctl(8) fails consistently.
 	#
-	$(atf_get_srcdir)/k_helper3/k_helper3 \
+	$(atf_get_srcdir)/k_helper3 \
 		"%s/k_helper/k_helper.kmod" $(atf_get_srcdir)
 
 	if [ $? -eq 78 ]; then
