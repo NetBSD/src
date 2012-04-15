@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.3 2012/04/07 10:44:58 apb Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.4 2012/04/15 15:56:52 wiz Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.3 2012/04/07 10:44:58 apb Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.4 2012/04/15 15:56:52 wiz Exp $");
 
 #include <sys/stat.h>
 
@@ -449,6 +449,8 @@ run_query(sqlite3 *db, const char *snippet_args[3], query_args *args)
 	const char *name_desc;
 	const char *machine;
 	const char *snippet;
+	const char *name_temp;
+	char *slash_ptr;
 	char *m = NULL;
 	int rc;
 	inverse_document_frequency idf = {0, 0};
@@ -549,13 +551,16 @@ run_query(sqlite3 *db, const char *snippet_args[3], query_args *args)
 
 	while (sqlite3_step(stmt) == SQLITE_ROW) {
 		section = (const char *) sqlite3_column_text(stmt, 0);
+		name_temp = (const char *) sqlite3_column_text(stmt, 1);
 		name_desc = (const char *) sqlite3_column_text(stmt, 2);
 		machine = (const char *) sqlite3_column_text(stmt, 3);
 		snippet = (const char *) sqlite3_column_text(stmt, 4);
+		if ((slash_ptr = strrchr(name_temp, '/')) != NULL)
+			name_temp = slash_ptr + 1;
 		if (machine && machine[0]) {
 			m = estrdup(machine);
 			easprintf(&name, "%s/%s", lower(m),
-				sqlite3_column_text(stmt, 1));
+				name_temp);
 			free(m);
 		} else {
 			name = estrdup((const char *) sqlite3_column_text(stmt, 1));
