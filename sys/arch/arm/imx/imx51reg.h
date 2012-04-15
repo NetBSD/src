@@ -1,4 +1,4 @@
-/* $NetBSD: imx51reg.h,v 1.3 2012/04/15 10:09:58 bsh Exp $ */
+/* $NetBSD: imx51reg.h,v 1.4 2012/04/15 16:34:11 bsh Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -43,9 +43,44 @@
 #define	GPU_BASE	0x30000000
 #define	GPU_SIZE	0x10000000
 
-/* LCD controller */
-#define	IPUEX_BASE	0x40000000
-#define	IPUEX_SIZE	0x20000000
+/* Image Prossasing Unit */
+#define	IPU_BASE	0x40000000
+#define	IPU_CM_BASE	(IPU_BASE + 0x1e000000)
+#define	IPU_CM_SIZE	0x8000
+#define	IPU_IDMAC_BASE	(IPU_BASE + 0x1e008000)
+#define	IPU_IDMAC_SIZE	0x8000
+#define	IPU_DP_BASE	(IPU_BASE + 0x1e018000)
+#define	IPU_DP_SIZE	0x8000
+#define	IPU_IC_BASE	(IPU_BASE + 0x1e020000)
+#define	IPU_IC_SIZE	0x8000
+#define	IPU_IRT_BASE	(IPU_BASE + 0x1e028000)
+#define	IPU_IRT_SIZE	0x8000
+#define	IPU_CSI0_BASE	(IPU_BASE + 0x1e030000)
+#define	IPU_CSI0_SIZE	0x8000
+#define	IPU_CSI1_BASE	(IPU_BASE + 0x1e038000)
+#define	IPU_CSI1_SIZE	0x8000
+#define	IPU_DI0_BASE	(IPU_BASE + 0x1e040000)
+#define	IPU_DI0_SIZE	0x8000
+#define	IPU_DI1_BASE	(IPU_BASE + 0x1e048000)
+#define	IPU_DI1_SIZE	0x8000
+#define	IPU_SMFC_BASE	(IPU_BASE + 0x1e050000)
+#define	IPU_SMFC_SIZE	0x8000
+#define	IPU_DC_BASE	(IPU_BASE + 0x1e058000)
+#define	IPU_DC_SIZE	0x8000
+#define	IPU_DMFC_BASE	(IPU_BASE + 0x1e060000)
+#define	IPU_DMFC_SIZE	0x8000
+#define	IPU_VDI_BASE	(IPU_BASE + 0x1e068000)
+#define	IPU_VDI_SIZE	0x8000
+#define	IPU_CPMEM_BASE	(IPU_BASE + 0x1f000000)
+#define	IPU_CPMEM_SIZE	0x20000
+#define	IPU_LUT_BASE	(IPU_BASE + 0x1f020000)
+#define	IPU_LUT_SIZE	0x20000
+#define	IPU_SRM_BASE	(IPU_BASE + 0x1f040000)
+#define	IPU_SRM_SIZE	0x20000
+#define	IPU_TPM_BASE	(IPU_BASE + 0x1f060000)
+#define	IPU_TPM_SIZE	0x20000
+#define	IPU_DCTMPL_BASE	(IPU_BASE + 0x1f080000)
+#define	IPU_DCTMPL_SIZE	0x20000
 
 #define	DEBUGROM_BASE	0x60000000
 #define	DEBUGROM_SIZE	0x1000
