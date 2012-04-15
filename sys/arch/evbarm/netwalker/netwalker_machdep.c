@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_machdep.c,v 1.5 2011/07/01 20:42:37 dyoung Exp $	*/
+/*	$NetBSD: netwalker_machdep.c,v 1.6 2012/04/15 10:34:14 bsh Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005, 2010  Genetec Corporation. 
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.5 2011/07/01 20:42:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.6 2012/04/15 10:34:14 bsh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -922,49 +922,264 @@ init_clocks(void)
 }
 
 struct iomux_setup {
-	size_t  	pad_ctl_reg;
-	uint32_t	pad_ctl_val;
-	size_t  	mux_ctl_reg;
-	uint32_t	mux_ctl_val;
+	/* iomux registers are 32-bit wide, but upper 16 bits are not
+	 * used. */
+	uint16_t	reg;
+	uint16_t	val;
 };
 
-#define	IOMUX_DATA(padname, mux, pad)	\
-	IOMUX_DATA2(__CONCAT(IOMUXC_SW_MUX_CTL_PAD_,padname), mux, \
-		    __CONCAT(IOMUXC_SW_PAD_CTL_PAD_,padname), pad)
-		    
-	
-#define	IOMUX_DATA2(muxreg, muxval, padreg, padval)	\
-	{						\
-		.pad_ctl_reg = (padreg),		\
-		.pad_ctl_val = (padval),		\
-		.mux_ctl_reg = (muxreg),		\
-		.mux_ctl_val = (muxval)			\
+#define	IOMUX_M(padname, mux)		\
+	IOMUX_DATA(__CONCAT(IOMUXC_SW_MUX_CTL_PAD_,padname), mux)
+
+#define	IOMUX_P(padname, pad)		\
+	IOMUX_DATA(__CONCAT(IOMUXC_SW_PAD_CTL_PAD_,padname), pad)
+
+#define	IOMUX_MP(padname, mux, pad)	\
+	IOMUX_M(padname, mux), \
+	IOMUX_P(padname, pad)
+
+
+#define	IOMUX_DATA(offset, value)	\
+	{				\
+		.reg = (offset),	\
+		.val = (value),		\
 	}
 
 
+/* 
+ * set same values to IOMUX registers as linux kernel does 
+ */
 const struct iomux_setup iomux_setup_data[] = {
+#define	HYS	PAD_CTL_HYS
+#define	ODE	PAD_CTL_ODE
+#define	DSEHIGH	PAD_CTL_DSE_HIGH
+#define	DSEMID	PAD_CTL_DSE_MID
+#define	DSELOW	PAD_CTL_DSE_LOW
+#define	DSEMAX	PAD_CTL_DSE_MAX
+#define	SRE	PAD_CTL_SRE
+#define	KEEPER	PAD_CTL_KEEPER
+#define	PULL	PAD_CTL_PULL
+#define	PU_22K	PAD_CTL_PUS_22K_PU
+#define	PU_47K	PAD_CTL_PUS_47K_PU
+#define	PU_100K	PAD_CTL_PUS_100K_PU
+#define	PD_100K	PAD_CTL_PUS_100K_PD
+#define	HVE	PAD_CTL_HVE	/* Low output voltage */
 
-	/* left buttons */
-	IOMUX_DATA(EIM_EB2, IOMUX_CONFIG_ALT1,
-		   PAD_CTL_HYS),
-	/* right buttons */
-	IOMUX_DATA(EIM_EB3, IOMUX_CONFIG_ALT1,
-		   PAD_CTL_HYS),
+#define	ALT0	IOMUX_CONFIG_ALT0
+#define	ALT1	IOMUX_CONFIG_ALT1
+#define	ALT2	IOMUX_CONFIG_ALT2
+#define	ALT3	IOMUX_CONFIG_ALT3
+#define	ALT4	IOMUX_CONFIG_ALT4
+#define	ALT5	IOMUX_CONFIG_ALT5
+#define	ALT6	IOMUX_CONFIG_ALT6
+#define	ALT7	IOMUX_CONFIG_ALT7
+#define	SION	IOMUX_CONFIG_SION
+
+	/* left button */
+	IOMUX_MP(EIM_EB2, ALT1, HYS),
+	/* right button */
+	IOMUX_MP(EIM_EB3, ALT1, HYS),
 
 	/* UART1 */
-#if 1
-	IOMUX_DATA(UART1_RXD, IOMUX_CONFIG_ALT0,
-		   PAD_CTL_DSE_HIGH | PAD_CTL_SRE),
-#else
-	IOMUX_DATA(UART1_RXD, IOMUX_CONFIG_ALT3,	/* gpio4[28] */
-		   PAD_CTL_DSE_HIGH | PAD_CTL_SRE),
+	IOMUX_MP(UART1_RXD, ALT0, HYS | PULL | DSEHIGH | SRE),
+	IOMUX_MP(UART1_TXD, ALT0, HYS | PULL | DSEHIGH | SRE),
+	IOMUX_MP(UART1_RTS, ALT0, HYS | PULL | DSEHIGH),
+	IOMUX_MP(UART1_CTS, ALT0, HYS | PULL | DSEHIGH),
+
+	/* LCD Display */
+	IOMUX_M(DI1_PIN2, ALT0),
+	IOMUX_M(DI1_PIN3, ALT0),
+
+	IOMUX_DATA(IOMUXC_SW_PAD_CTL_GRP_DISP1_PKE0, PAD_CTL_PKE),
+#if 0
+	IOMUX_MP(DISP1_DAT0, ALT0, SRE | DSEMAX | PULL),
+	IOMUX_MP(DISP1_DAT1, ALT0, SRE | DSEMAX | PULL),
+	IOMUX_MP(DISP1_DAT2, ALT0, SRE | DSEMAX | PULL),
+	IOMUX_MP(DISP1_DAT3, ALT0, SRE | DSEMAX | PULL),
+	IOMUX_MP(DISP1_DAT4, ALT0, SRE | DSEMAX | PULL),
+	IOMUX_MP(DISP1_DAT5, ALT0, SRE | DSEMAX | PULL),
 #endif
-	IOMUX_DATA(UART1_TXD, IOMUX_CONFIG_ALT0,
-		   PAD_CTL_DSE_HIGH | PAD_CTL_SRE),
-	IOMUX_DATA(UART1_RTS, IOMUX_CONFIG_ALT0,
-		   PAD_CTL_DSE_HIGH),
-	IOMUX_DATA(UART1_CTS, IOMUX_CONFIG_ALT0,
-		   PAD_CTL_DSE_HIGH),
+	IOMUX_M(DISP1_DAT6, ALT0),
+	IOMUX_M(DISP1_DAT7, ALT0),
+	IOMUX_M(DISP1_DAT8, ALT0),
+	IOMUX_M(DISP1_DAT9, ALT0),
+	IOMUX_M(DISP1_DAT10, ALT0),
+	IOMUX_M(DISP1_DAT11, ALT0),
+	IOMUX_M(DISP1_DAT12, ALT0),
+	IOMUX_M(DISP1_DAT13, ALT0),
+	IOMUX_M(DISP1_DAT14, ALT0),
+	IOMUX_M(DISP1_DAT15, ALT0),
+	IOMUX_M(DISP1_DAT16, ALT0),
+	IOMUX_M(DISP1_DAT17, ALT0),
+	IOMUX_M(DISP1_DAT18, ALT0),
+	IOMUX_M(DISP1_DAT19, ALT0),
+	IOMUX_M(DISP1_DAT20, ALT0),
+	IOMUX_M(DISP1_DAT21, ALT0),
+	IOMUX_M(DISP1_DAT22, ALT0),
+	IOMUX_M(DISP1_DAT23, ALT0),
+
+	IOMUX_MP(DI1_D0_CS, ALT4, KEEPER | DSEHIGH | SRE), /* GPIO3_3 */
+	IOMUX_DATA(IOMUXC_GPIO3_IPP_IND_G_IN_3_SELECT_INPUT, INPUT_DAISY_0),
+	IOMUX_MP(CSI2_D12, ALT3, KEEPER | DSEHIGH | SRE), /* GPIO4_9 */
+	IOMUX_MP(CSI2_D13, ALT3, KEEPER | DSEHIGH | SRE),
+	IOMUX_MP(GPIO1_2, ALT0, ODE | DSEHIGH),
+	IOMUX_MP(EIM_A19, ALT1, SRE | DSEHIGH),
+	/* XXX VGA pins */
+	IOMUX_M(DI_GP4, ALT4),
+	IOMUX_M(GPIO1_8, SION | ALT0),
+
+
+#if 0
+	IOMUX_MP(GPIO1_2, ALT1, DSEHIGH | ODE),	/* LCD backlight by PWM */
+#else
+	IOMUX_P(GPIO1_2, DSEHIGH | ODE),	/* LCD backlight by GPIO */
+#endif
+	IOMUX_MP(GPIO1_8, SION | ALT0, HYS | DSEMID | PU_100K),
+	/* I2C1 */
+	IOMUX_MP(EIM_D16, SION | ALT4, HYS | ODE | DSEHIGH | SRE),
+	IOMUX_MP(EIM_D19, SION | ALT4, SRE),	/* SCL */
+	IOMUX_MP(EIM_A19, ALT1, SRE | DSEHIGH), /* GPIO2_13 */
+
+#if 0
+	IOMUX_MP(EIM_A23, ALT1, 0),
+#else
+	IOMUX_M(EIM_A23, ALT1),	/* GPIO2_17 */
+#endif
+
+	/* BT */
+	IOMUX_M(EIM_D20, ALT1),	/* GPIO2_4 BT host wakeup */
+	IOMUX_M(EIM_D22, ALT1),	/* GPIO2_6 BT RESET */
+	IOMUX_M(EIM_D23, ALT1),	/* GPIO2_7 BT wakeup */
+
+	/* UART3 */
+	IOMUX_MP(EIM_D24, ALT3, KEEPER | PU_100K | DSEHIGH | SRE),
+	IOMUX_MP(EIM_D25, ALT3, KEEPER | PU_100K | DSEHIGH | SRE), /* CTS */
+	IOMUX_MP(EIM_D26, ALT3, KEEPER | PU_100K | DSEHIGH | SRE), /* TXD */
+	IOMUX_MP(EIM_D27, ALT3, KEEPER | PU_100K | DSEHIGH | SRE), /* RTS */
+	IOMUX_M(NANDF_D15, ALT3),	/* GPIO3_25 */
+	IOMUX_MP(NANDF_D14, ALT3, HYS | PULL | PU_100K ),	/* GPIO3_26 */
+	IOMUX_M(CSI1_D9, ALT3),			/* GPIO3_13 */
+	IOMUX_M(CSI1_VSYNC, ALT3),		/* GPIO3_14 */
+	IOMUX_M(CSI1_HSYNC, ALT3),		/* GPIO3_15 */
+
+	/* audio pins */
+	IOMUX_MP(AUD3_BB_TXD, ALT0, DSEHIGH | PU_100K | SRE),
+		/* XXX: linux code:
+		   (PAD_CTL_SRE_FAST	     | PAD_CTL_DRV_HIGH |
+		   PAD_CTL_100K_PU	     | PAD_CTL_HYS_NONE |
+		   PAD_CTL_DDR_INPUT_CMOS | PAD_CTL_DRV_VOT_LOW), */
+
+	IOMUX_MP(AUD3_BB_RXD, ALT0, KEEPER | DSEHIGH | SRE),
+	IOMUX_MP(AUD3_BB_CK, ALT0, KEEPER | DSEHIGH | SRE),
+	IOMUX_MP(AUD3_BB_FS, ALT0, KEEPER | DSEHIGH | SRE),
+
+	/* headphone detect */
+	IOMUX_MP(NANDF_D14, ALT3, HYS | PULL | PU_100K),
+	IOMUX_MP(CSPI1_RDY, ALT3, SRE | DSEHIGH),
+	/* XXX more audio pins ? */
+
+	/* CSPI */
+	/* ??? doesn't work ??? */
+	IOMUX_P(CSPI1_MOSI, HYS | PULL | PD_100K | DSEHIGH | SRE),
+	IOMUX_P(CSPI1_MISO, HYS | PULL | PD_100K | DSEHIGH | SRE),
+	IOMUX_M(CSPI1_SS0, ALT3),
+	IOMUX_MP(CSPI1_SS1, ALT0, HYS | KEEPER | DSEHIGH | SRE),
+	IOMUX_MP(DI1_PIN11, ALT7, HYS | PULL | DSEHIGH | SRE),
+	IOMUX_P(CSPI1_SCLK, HYS | KEEPER | DSEHIGH | SRE),
+	/* 26M Osc */
+	IOMUX_MP(DI1_PIN12, ALT4, KEEPER | DSEHIGH | SRE), /* GPIO3_1 */
+
+	/* I2C */
+	IOMUX_MP(KEY_COL4, SION | ALT3, SRE),
+	IOMUX_DATA(IOMUXC_I2C2_IPP_SCL_IN_SELECT_INPUT, INPUT_DAISY_1),
+	IOMUX_MP(KEY_COL5, SION | ALT3, HYS | ODE | DSEHIGH | SRE),
+	IOMUX_DATA(IOMUXC_I2C2_IPP_SDA_IN_SELECT_INPUT, INPUT_DAISY_1),
+	IOMUX_DATA(IOMUXC_UART3_IPP_UART_RTS_B_SELECT_INPUT, INPUT_DAISY_3),
+#if 1
+	/* NAND */
+	IOMUX_MP(NANDF_WE_B, ALT0, HVE | DSEHIGH | PULL | PU_47K),
+	IOMUX_MP(NANDF_RE_B, ALT0, HVE | DSEHIGH | PULL | PU_47K),
+	IOMUX_MP(NANDF_ALE, ALT0, HVE | DSEHIGH | KEEPER),
+	IOMUX_MP(NANDF_CLE, ALT0, HVE | DSEHIGH | KEEPER),
+	IOMUX_MP(NANDF_WP_B, ALT0, HVE | DSEHIGH | PULL | PU_100K),
+	IOMUX_MP(NANDF_RB0, ALT0, HVE | DSELOW | PULL | PU_100K),
+	IOMUX_MP(NANDF_RB1, ALT0, HVE | DSELOW | PULL | PU_100K),
+	IOMUX_MP(NANDF_D7, ALT0, HVE | DSEHIGH | KEEPER | PU_100K),
+	IOMUX_MP(NANDF_D6, ALT0, HVE | DSEHIGH | KEEPER | PU_100K),
+	IOMUX_MP(NANDF_D5, ALT0, HVE | DSEHIGH | KEEPER | PU_100K),
+	IOMUX_MP(NANDF_D4, ALT0, HVE | DSEHIGH | KEEPER | PU_100K),
+	IOMUX_MP(NANDF_D3, ALT0, HVE | DSEHIGH | KEEPER | PU_100K),
+	IOMUX_MP(NANDF_D2, ALT0, HVE | DSEHIGH | KEEPER | PU_100K),
+	IOMUX_MP(NANDF_D1, ALT0, HVE | DSEHIGH | KEEPER | PU_100K),
+	IOMUX_MP(NANDF_D0, ALT0, HVE | DSEHIGH | KEEPER | PU_100K),
+#endif
+
+	/* Batttery pins */
+	IOMUX_MP(NANDF_D13, ALT3, HYS | DSEHIGH),
+	IOMUX_MP(NANDF_D12, ALT3, HYS | DSEHIGH),
+#if 0
+	IOMUX_MP(NANDF_D11, ALT3, HYS | DSEHIGH),
+#endif
+	IOMUX_MP(NANDF_D10, ALT3, HYS | DSEHIGH),
+
+	/* SD1 */
+	IOMUX_MP(SD1_CMD, SION | ALT0, DSEHIGH | SRE),
+	IOMUX_MP(SD1_CLK, SION | ALT0, KEEPER | PU_47K | DSEHIGH),
+	IOMUX_MP(SD1_DATA0, ALT0, DSEHIGH | SRE),
+	IOMUX_MP(SD1_DATA1, ALT0, DSEHIGH | SRE),
+	IOMUX_MP(SD1_DATA2, ALT0, DSEHIGH | SRE),
+	IOMUX_MP(SD1_DATA3, ALT0, DSEHIGH | SRE),
+	IOMUX_MP(GPIO1_0, SION | ALT0, HYS | PU_100K),
+
+	/* SD2 */
+	IOMUX_P(SD2_CMD, HVE | PU_22K | DSEMAX | SRE),
+	IOMUX_P(SD2_CLK, HVE | PU_22K | DSEMAX | SRE),
+	IOMUX_P(SD2_DATA0, HVE | PU_22K | DSEMAX | SRE),
+	IOMUX_P(SD2_DATA1, HVE | PU_22K | DSEMAX | SRE),
+	IOMUX_P(SD2_DATA2, HVE | PU_22K | DSEMAX | SRE),
+	IOMUX_P(SD2_DATA3, HVE | PU_22K | DSEMAX | SRE),
+
+	/* USB */
+	IOMUX_MP(USBH1_CLK, ALT0, HYS | KEEPER | DSEHIGH | SRE),
+	IOMUX_MP(USBH1_DIR, ALT0, HYS | KEEPER | DSEHIGH | SRE),
+	IOMUX_MP(USBH1_STP, ALT0, HYS | KEEPER | DSEHIGH | SRE),
+	IOMUX_MP(USBH1_NXT, ALT0, HYS | KEEPER | PU_100K | DSEHIGH | SRE),
+	IOMUX_MP(USBH1_DATA0, ALT0, HYS | KEEPER | DSEHIGH | SRE),
+	IOMUX_MP(USBH1_DATA1, ALT0, HYS | KEEPER | DSEHIGH | SRE),
+	IOMUX_MP(USBH1_DATA2, ALT0, HYS | KEEPER | DSEHIGH | SRE),
+	IOMUX_MP(USBH1_DATA3, ALT0, HYS | KEEPER | DSEHIGH | SRE),
+	IOMUX_MP(USBH1_DATA4, ALT0, HYS | KEEPER | DSEHIGH | SRE),
+	IOMUX_MP(USBH1_DATA5, ALT0, HYS | KEEPER | DSEHIGH | SRE),
+	IOMUX_MP(USBH1_DATA6, ALT0, HYS | KEEPER | DSEHIGH | SRE),
+	IOMUX_MP(USBH1_DATA7, ALT0, HYS | KEEPER | DSEHIGH | SRE),
+	IOMUX_MP(EIM_D17, ALT1, KEEPER | DSEHIGH | SRE),
+	IOMUX_MP(EIM_D21, ALT1, KEEPER | DSEHIGH | SRE),
+	IOMUX_P(GPIO1_7, /*ALT0,*/ DSEHIGH | SRE),	/* USB Hub reset */
+
+#undef	ODE
+#undef	HYS
+#undef	SRE
+#undef	PULL
+#undef	KEEPER
+#undef	PU_22K
+#undef	PU_47K
+#undef	PU_100K
+#undef	PD_100K
+#undef	HVE
+#undef	DSEMAX
+#undef	DSEHIGH
+#undef	DSEMID
+#undef	DSELOW
+
+#undef	ALT0
+#undef	ALT1
+#undef	ALT2
+#undef	ALT3
+#undef	ALT4
+#undef	ALT5
+#undef	ALT6
+#undef	ALT7
+#undef	SION
 };
 
 static void
@@ -973,29 +1188,12 @@ setup_ioports(void)
 	int i;
 	const struct iomux_setup *p;
 
-#if 0	/* These are all done already by Netwalker's bootloader. */
-	/* set IO multiplexor for UART1 */
-	uint32_t reg;
-	uint32_t addr;
-
-	/* input */
-	addr = NETWALKER_IOMUXC_VBASE + MUX_IN_UART1_IPP_UART_RXD_MUX;
-	reg = INPUT_DAISY_0;
-	ioreg_write(addr, reg);
-	addr = NETWALKER_IOMUXC_VBASE + MUX_IN_UART1_IPP_UART_RTS_B;
-	reg = INPUT_DAISY_0;
-	ioreg_write(addr, reg);
-#endif
-
+	/* Initialize all IOMUX registers */
 	for (i=0; i < __arraycount(iomux_setup_data); ++i) {
 		p = iomux_setup_data + i;
 
-		ioreg_write(NETWALKER_IOMUXC_VBASE + 
-			    p->pad_ctl_reg,
-			    p->pad_ctl_val);
-		ioreg_write(NETWALKER_IOMUXC_VBASE + 
-			    p->mux_ctl_reg,
-			    p->mux_ctl_val);
+		ioreg_write(NETWALKER_IOMUXC_VBASE + p->reg,
+			    p->val);
 	}
 
 
@@ -1032,7 +1230,7 @@ int consrate = CONSPEED;
 #endif	/* CONSDEVNAME */
 
 #ifndef	IMXUART_FREQ
-#define	IMXUART_FREQ	66355200
+#define	IMXUART_FREQ	66500000
 #endif
 
 void
