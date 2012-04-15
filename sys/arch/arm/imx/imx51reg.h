@@ -1,4 +1,4 @@
-/* $NetBSD: imx51reg.h,v 1.2 2010/11/30 13:05:27 bsh Exp $ */
+/* $NetBSD: imx51reg.h,v 1.3 2012/04/15 10:09:58 bsh Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -185,6 +185,7 @@
 #define	IOMUXC_SIZE	0x4000
 
 #define	IOMUXC_MUX_CTL		0x001c		/* multiprex control */
+#define	 IOMUX_CONFIG_SION	__BIT(4)
 #define	 IOMUX_CONFIG_ALT0	(0)
 #define	 IOMUX_CONFIG_ALT1	(1)
 #define	 IOMUX_CONFIG_ALT2	(2)
@@ -193,8 +194,8 @@
 #define	 IOMUX_CONFIG_ALT5	(5)
 #define	 IOMUX_CONFIG_ALT6	(6)
 #define	 IOMUX_CONFIG_ALT7	(7)
-#define	 IOMUX_CONFIG_SION	__BIT(4)
 #define	IOMUXC_PAD_CTL		0x03f0		/* pad control */
+#define	 PAD_CTL_HVE		__BIT(13)
 #define	 PAD_CTL_DDR_INPUT	__BIT(9)
 #define	 PAD_CTL_HYS		__BIT(8)
 #define	 PAD_CTL_PKE		__BIT(7)
