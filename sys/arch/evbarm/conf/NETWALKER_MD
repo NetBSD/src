@@ -1,6 +1,6 @@
-#       $NetBSD: NETWALKER_MD,v 1.2 2010/11/23 11:13:56 hannken Exp $
+#       $NetBSD: NETWALKER_MD,v 1.3 2012/04/15 08:17:42 bsh Exp $
 #
-#	M2ID -- i.MX51 evaluation board
+#	NETWALKER_MD -- Sharp Netwalker kernel with a ramdisk.
 #
 
 include "arch/evbarm/conf/NETWALKER"
@@ -11,5 +11,5 @@ options 	MEMORY_DISK_ROOT_SIZE=8192	# Size in blocks
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # disk/mass storage pseudo-devices
-pseudo-device	md	
+pseudo-device	md
 
