@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.180 2012/03/03 23:43:17 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.181 2012/04/15 00:34:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.180 2012/03/03 23:43:17 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.181 2012/04/15 00:34:09 christos Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -2071,6 +2071,7 @@ check_mcontext(struct lwp *l, const mcontext_t *mcp, struct trapframe *tf)
 	uint16_t sel;
 	int error;
 	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
+	struct proc *p = l->l_proc;
 
 	gr = mcp->__gregs;
 
@@ -2104,33 +2105,42 @@ check_mcontext(struct lwp *l, const mcontext_t *mcp, struct trapframe *tf)
 			return error;
 #endif
 	} else {
+#define VUD(sel) \
+    ((p->p_flag & PK_32) ? VALID_USER_DSEL32(sel) : VALID_USER_DSEL(sel))
 		sel = gr[_REG_ES] & 0xffff;
-		if (sel != 0 && !VALID_USER_DSEL(sel))
+		if (sel != 0 && !VUD(sel))
 			return EINVAL;
 
+/* XXX: Shouldn't this be FSEL32? */
+#define VUF(sel) \
+    ((p->p_flag & PK_32) ? VALID_USER_DSEL32(sel) : VALID_USER_DSEL(sel))
 		sel = gr[_REG_FS] & 0xffff;
-		if (sel != 0 && !VALID_USER_DSEL(sel))
+		if (sel != 0 && !VUF(sel))
 			return EINVAL;
 
+#define VUG(sel) \
+    ((p->p_flag & PK_32) ? VALID_USER_GSEL32(sel) : VALID_USER_DSEL(sel))
 		sel = gr[_REG_GS] & 0xffff;
-		if (sel != 0 && !VALID_USER_DSEL(sel))
+		if (sel != 0 && !VUG(sel))
 			return EINVAL;
 
 		sel = gr[_REG_DS] & 0xffff;
-		if (!VALID_USER_DSEL(sel))
+		if (!VUD(sel))
 			return EINVAL;
 
 #ifndef XEN
 		sel = gr[_REG_SS] & 0xffff;
-		if (!VALID_USER_DSEL(sel)) 
+		if (!VUD(sel))
 			return EINVAL;
 #endif
 
 	}
 
 #ifndef XEN
+#define VUC(sel) \
+    ((p->p_flag & PK_32) ? VALID_USER_CSEL32(sel) : VALID_USER_CSEL(sel))
 	sel = gr[_REG_CS] & 0xffff;
-	if (!VALID_USER_CSEL(sel))
+	if (!VUC(sel))
 		return EINVAL;
 #endif
 
