@@ -25,7 +25,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_usb.c,v 1.2 2012/04/15 10:16:37 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_usb.c,v 1.3 2012/04/15 10:19:47 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,6 +273,13 @@ const struct iomux_conf iomux_usb1_config[] = {
 		.pin = MUX_PIN(GPIO1_7),
 		.mux = IOMUX_CONFIG_ALT0,
 		.pad = (PAD_CTL_DSE_HIGH | PAD_CTL_SRE),
+	},
+	{
+		/* 26M_OSC pin settings */
+		.pin = MUX_PIN(DI1_PIN12),
+		.mux = IOMUX_CONFIG_ALT4,
+		.pad = (PAD_CTL_DSE_HIGH | PAD_CTL_KEEPER |
+		    PAD_CTL_SRE),
 	},
 
 	/* end of table */
