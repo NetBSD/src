@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.17 2012/01/22 13:08:16 phx Exp $ */
+/* $NetBSD: main.c,v 1.18 2012/04/16 16:55:29 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -218,10 +218,9 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 	}
 
 	/* intialize a disk driver */
-	for (n = 0; n < nata; n++)
-		if (dskdv_init(&lata[n]) != 0)
-			break;
-	if (n >= nata)
+	for (i = 0, n = 0; i < nata; i++)
+		n += dskdv_init(&lata[i]);
+	if (n == 0)
 		printf("IDE/SATA device driver was not found\n");
 
 	/* initialize a network interface */
@@ -339,6 +338,7 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 			    btinfo_modulelist_size);
 	}
 
+	launchfixup();
 	netif_shutdown_all();
 
 	__syncicache((void *)marks[MARK_ENTRY],
