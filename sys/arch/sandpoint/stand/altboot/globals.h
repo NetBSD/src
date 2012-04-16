@@ -1,4 +1,4 @@
-/* $NetBSD: globals.h,v 1.17 2012/04/08 10:38:34 nisimura Exp $ */
+/* $NetBSD: globals.h,v 1.18 2012/04/16 16:55:29 phx Exp $ */
 
 #ifdef DEBUG
 #define	DPRINTF(x)	printf x
@@ -36,6 +36,7 @@ struct brdprop {
 	void (*setup)(struct brdprop *);
 	void (*brdfix)(struct brdprop *);
 	void (*pcifix)(struct brdprop *);
+	void (*launch)(struct brdprop *);
 	void (*reset)(void);
 };
 
@@ -79,8 +80,14 @@ struct pcidev {
 	unsigned pvd;	/* device ID */
 	void *drv;	/* driver */
 };
+extern struct pcidev lata[2];
+extern struct pcidev lnif[2];
+extern struct pcidev lusb[3];
+extern int nata, nnif, nusb;
+
 void  pcisetup(void);
 void  pcifixup(void);
+void  launchfixup(void);
 unsigned pcimaketag(int, int, int);
 void  pcidecomposetag(unsigned, int *, int *, int *);
 int   pcifinddev(unsigned, unsigned, unsigned *);
