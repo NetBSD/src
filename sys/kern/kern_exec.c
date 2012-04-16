@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.339.2.4 2012/04/12 17:05:36 riz Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.339.2.5 2012/04/16 15:28:19 riz Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.339.2.4 2012/04/12 17:05:36 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.339.2.5 2012/04/16 15:28:19 riz Exp $");
 
 #include "opt_exec.h"
 #include "opt_ktrace.h"
@@ -2012,8 +2012,16 @@ spawn_return(void *arg)
 	return;
 
  report_error:
- 	if (have_reflock)
+ 	if (have_reflock) {
+ 		/*
+		 * We have not passed through execve_runproc(),
+		 * which would have released the p_reflock and also
+		 * taken ownership of the sed_exec part of spawn_data,
+		 * so release/free both here.
+		 */
 		rw_exit(&l->l_proc->p_reflock);
+		execve_free_data(&spawn_data->sed_exec);
+	}
 
 	if (parent_is_waiting) {
 		/* pass error to parent */
