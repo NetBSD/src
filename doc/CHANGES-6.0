@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.69 2012/04/12 17:16:14 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.70 2012/04/16 15:37:49 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1809,4 +1809,28 @@ sys/kern/vfs_vnops.c				1.184
 	Fix vn_lock() to return an invalid (dead, clean) vnode
 	only if the caller requested it by setting LK_RETRY. PR#46221.
 	[hannken, ticket #179]
+
+sys/arch/x86/pci/amdtemp.c			1.14
+sys/dev/pci/pcidevs				1.1115 via patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Support AMD Family15h.
+	[cegger, ticket #180]
+
+sys/kern/kern_exec.c				1.350
+
+	Fix leak in a posix_spawn error path.
+	[martin, ticket #181]
+
+sys/dev/pci/ohci_pci.c				1.49
+
+	Avoid panic trying to attach an unconfigured ohci. PR#46146
+	[macallan, ticket #182]
+
+sys/fs/msdosfs/msdosfs_fat.c			1.20
+
+	Fix a crash: msdosfs_bmap -> pcbmap -> bread -> bio_doread
+	PR#46282.
+	[hannken, ticket #183]
 
