@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.30 2012/04/12 11:46:16 joerg Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.31 2012/04/16 10:48:27 joerg Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 /* XXX these top few should really be fs-specific */
 int use_fs_idle;	/* Use fs idle rather than cpu idle time */
 int use_bytes;		/* Use bytes written rather than segments cleaned */
-int load_threshold;	/* How idle is idle (CPU idle) */
+double load_threshold;	/* How idle is idle (CPU idle) */
 int atatime;		/* How many segments (bytes) to clean at a time */
 
 int nfss;		/* Number of filesystems monitored by this cleanerd */
@@ -1365,7 +1365,7 @@ lfs_cleaner_main(int argc, char **argv)
 	 */
 	atatime	 = 1;
 	segwait_timeout = 300; /* Five minutes */
-	load_threshold	= 0;
+	load_threshold	= 0.2;
 	stat_report	= 0;
 	inval_segment	= -1;
 	copylog_filename = NULL;
