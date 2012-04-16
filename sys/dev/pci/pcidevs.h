@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.1097.2.3 2012/04/03 15:52:45 riz Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1097.2.4 2012/04/16 15:25:46 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -938,14 +938,22 @@
 #define	PCI_PRODUCT_AMD_AMD64_F11_MISC	0x1303		/* AMD64 Family11h Miscellaneous Configuration */
 #define	PCI_PRODUCT_AMD_AMD64_F11_LINK	0x1304		/* AMD64 Family11h Link Configuration */
 #define	PCI_PRODUCT_AMD_F14_RC	0x1510		/* Family14h Root Complex */
-#define	PCI_PRODUCT_AMD_F14_HT	0x1700		/* Family14h HyperTransport Configuration */
-#define	PCI_PRODUCT_AMD_F14_ADDR	0x1701		/* Family14h Address Map Configuration */
-#define	PCI_PRODUCT_AMD_F14_DRAM	0x1702		/* Family14h DRAM Configuration */
-#define	PCI_PRODUCT_AMD_F14_NB	0x1703		/* Family14h North Bridge Configuration */
-#define	PCI_PRODUCT_AMD_F14_CSTATE	0x1704		/* Family14h CPU C-state Configuration */
-#define	PCI_PRODUCT_AMD_F14_MISC	0x1716		/* Family14h Misc. Configuration */
-#define	PCI_PRODUCT_AMD_F14_HB18	0x1718		/* Family14h Host Bridge */
-#define	PCI_PRODUCT_AMD_F14_HB19	0x1719		/* Family14h Host Bridge */
+#define	PCI_PRODUCT_AMD_F15_HT	0x1600		/* Family15h HyperTransport Configuration */
+#define	PCI_PRODUCT_AMD_F15_ADDR	0x1601		/* Family15h Address Map Configuration */
+#define	PCI_PRODUCT_AMD_F15_DRAM	0x1602		/* Family15h DRAM Configuration */
+#define	PCI_PRODUCT_AMD_F15_MISC	0x1603		/* Family15h Miscellaneous Configuration */
+#define	PCI_PRODUCT_AMD_F15_LINK	0x1604		/* Family15h Link Configuration */
+#define	PCI_PRODUCT_AMD_F15_NB	0x1605		/* Family15h North Bridge Configuration */
+#define	PCI_PRODUCT_AMD_F14_HT	0x1700		/* Family12h/14h HyperTransport Configuration */
+#define	PCI_PRODUCT_AMD_F14_ADDR	0x1701		/* Family12h/14h Address Map Configuration */
+#define	PCI_PRODUCT_AMD_F14_DRAM	0x1702		/* Family12h/14h DRAM Configuration */
+#define	PCI_PRODUCT_AMD_F14_NB	0x1703		/* Family12h/14h North Bridge Configuration */
+#define	PCI_PRODUCT_AMD_F14_CSTATE	0x1704		/* Family12h/14h CPU C-state Configuration */
+#define	PCI_PRODUCT_AMD_F12_RC	0x1705		/* Family12h Root Complex */
+#define	PCI_PRODUCT_AMD_F12_GPP0	0x1709		/* Family12h GPP0 Root Port */
+#define	PCI_PRODUCT_AMD_F14_MISC	0x1716		/* Family12h/14h Misc. Configuration */
+#define	PCI_PRODUCT_AMD_F14_HB18	0x1718		/* Family12h/14h Host Bridge */
+#define	PCI_PRODUCT_AMD_F14_HB19	0x1719		/* Family12h/14h Host Bridge */
 #define	PCI_PRODUCT_AMD_PCNET_PCI	0x2000		/* PCnet-PCI Ethernet */
 #define	PCI_PRODUCT_AMD_PCNET_HOME	0x2001		/* PCnet-Home HomePNA Ethernet */
 #define	PCI_PRODUCT_AMD_AM_1771_MBW	0x2003		/* Alchemy AM 1771 MBW */
