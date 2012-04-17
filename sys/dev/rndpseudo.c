@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.7 2012/03/30 20:15:18 drochner Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.8 2012/04/17 02:50:38 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.7 2012/03/30 20:15:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.8 2012/04/17 02:50:38 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.7 2012/03/30 20:15:18 drochner Exp $
 #include <sys/pool.h>
 #include <sys/kauth.h>
 #include <sys/cprng.h>
+#include <sys/cpu.h>
 #include <sys/stat.h>
 
 #include <sys/rnd.h>
@@ -94,6 +95,11 @@ extern int rnd_debug;
 
 static pool_cache_t rp_pc;
 static pool_cache_t rp_cpc;
+
+/*
+ * The per-CPU RNGs used for short requests
+ */
+cprng_strong_t **rp_cpurngs;
 
 /*
  * A context.  cprng plus a smidge.
@@ -193,6 +199,9 @@ rndattach(int num)
 	mutex_spin_enter(&rndpool_mtx);
 	rndpool_add_data(&rnd_pool, &c, sizeof(u_int32_t), 1);
 	mutex_spin_exit(&rndpool_mtx);
+
+	rp_cpurngs = kmem_zalloc(maxcpus * sizeof(cprng_strong_t *),
+				 KM_SLEEP);
 }
 
 int
@@ -251,8 +260,10 @@ rnd_read(struct file * fp, off_t *offp, struct uio *uio,
 	  kauth_cred_t cred, int flags)
 {
 	rp_ctx_t *ctx = fp->f_data;
+	cprng_strong_t *cprng;
 	u_int8_t *bf;
 	int strength, ret;
+	struct cpu_info *ci = curcpu();
 
 	DPRINTF(RND_DEBUG_READ,
 	    ("Random:  Read of %zu requested, flags 0x%08x\n",
@@ -261,14 +272,35 @@ rnd_read(struct file * fp, off_t *offp, struct uio *uio,
 	if (uio->uio_resid == 0)
 		return (0);
 
-	if (ctx->cprng == NULL) {
-		rnd_alloc_cprng(ctx);
-		if (__predict_false(ctx->cprng == NULL)) {
-			return EIO;
+	if (ctx->hard || uio->uio_resid > NIST_BLOCK_KEYLEN_BYTES) {
+		if (ctx->cprng == NULL) {
+			rnd_alloc_cprng(ctx);
 		}
+		cprng = ctx->cprng;
+	} else {
+		int index = cpu_index(ci);
+
+		if (__predict_false(rp_cpurngs[index] == NULL)) {
+			char rngname[32];
+
+			snprintf(rngname, sizeof(rngname),
+				 "%s-short", cpu_name(ci));
+			rp_cpurngs[index] =
+			    cprng_strong_create(rngname, IPL_NONE,
+						CPRNG_INIT_ANY |
+						CPRNG_REKEY_ANY);
+		}
+		cprng = rp_cpurngs[index];
+	}
+
+	if (__predict_false(cprng == NULL)) {
+		printf("NULL rng!\n");
+		return EIO;
         }
 
-	strength = cprng_strong_strength(ctx->cprng);
+	KASSERT(!mutex_owned(&cprng->reseed.mtx));
+
+	strength = cprng_strong_strength(cprng);
 	ret = 0;
 	bf = pool_cache_get(rp_pc, PR_WAITOK);
 	while (uio->uio_resid > 0) {
@@ -284,7 +316,7 @@ rnd_read(struct file * fp, off_t *offp, struct uio *uio,
 			n = want;
 		}
 
-		nread = cprng_strong(ctx->cprng, bf, n,
+		nread = cprng_strong(cprng, bf, n,
 				     (fp->f_flag & FNONBLOCK) ? FNONBLOCK : 0);
 		if (nread != n) {
 			if (fp->f_flag & FNONBLOCK) {
@@ -294,6 +326,7 @@ rnd_read(struct file * fp, off_t *offp, struct uio *uio,
 			}
 			goto out;
 		}
+		/* KASSERT(!mutex_owned(&cprng->reseed.mtx)); */
 		ret = uiomove((void *)bf, nread, uio);
 		if (ret != 0 || n < want) {
 			goto out;
@@ -302,9 +335,10 @@ rnd_read(struct file * fp, off_t *offp, struct uio *uio,
 out:
 	if (ctx->bytesonkey >= strength) {
 		/* Force reseed of underlying DRBG (prediction resistance) */
-		cprng_strong_deplete(ctx->cprng);
+		cprng_strong_deplete(cprng);
 		ctx->bytesonkey = 0;
 	}
+
 	pool_cache_put(rp_pc, bf);
 	return (ret);
 }
