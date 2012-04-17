@@ -1,4 +1,4 @@
-.\" $NetBSD: a1k2cp.4,v 1.1 2012/04/17 10:12:35 rkujawa Exp $
+.\" $NetBSD: a1k2cp.4,v 1.2 2012/04/17 10:16:37 wiz Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .Dt A1K2CP 4 amiga
 .Os
 .Sh NAME
-.Nm a1k2cp 
+.Nm a1k2cp
 .Nd Amiga 1200 on-board clockport driver
 .Sh SYNOPSIS
 .Cd "a1k2cp0 at mainbus0"
@@ -66,8 +66,8 @@ Even if connected to clockport header, Real Time Clock modules are
 supported by the
 .Xr a2kbbc
 and
-.Xr a34kbbc 
+.Xr a34kbbc
 drivers.
 .Pp
-Only one clockport is supported, even if clockport expander is present. This is
-a driver limitation.
+Only one clockport is supported, even if clockport expander is present.
+This is a driver limitation.
