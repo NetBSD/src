@@ -1,4 +1,4 @@
-#	$NetBSD: NETWALKER,v 1.9 2012/04/17 07:43:21 bsh Exp $
+#	$NetBSD: NETWALKER,v 1.10 2012/04/17 09:33:31 bsh Exp $
 #
 #	NETWALKER -- http://www.sharp.co.jp/netwalker/
 #
@@ -176,6 +176,10 @@ imxuart0	at axi? addr 0x73fbc000 irq 31		# UART1
 #imxuart1	at axi? addr 0x73fc0000 irq 32
 #imxuart2	at axi? addr 0x7000c000 irq 33
 options		IMXUARTCONSOLE
+
+# Clock Control
+imxccm0		at axi? addr 0x73fd4000
+options		IMX51_CKIL_FREQ=32768
 
 # Enhanced Periodic Interrupt Timer
 imxclock0	at axi? addr 0x73fac000 size 0x4000 irq 40
