@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.12 2012/04/14 00:49:35 matt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.13 2012/04/17 00:19:30 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.12 2012/04/14 00:49:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.13 2012/04/17 00:19:30 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -359,6 +359,7 @@ uvm_pageout(void *arg)
 	u_int npages = 0;
 	u_int extrapages = 0;
 	u_int npggroups = 0;
+	bool want_tune = false;
 	struct pool *pp;
 	uint64_t where;
 	struct uvm_pdinfo * const pdinfo = &uvm_pdinfo;
@@ -402,6 +403,7 @@ uvm_pageout(void *arg)
 			    &uvm_fpageqlock, false, "pgdaemon", timo);
 			uvmexp.pdwoke++;
 			UVMHIST_LOG(pdhist,"  <<WOKE UP>>",0,0,0,0);
+			want_tune = pdinfo->pd_stalled;
 			pdinfo->pd_stalled = false;
 			progress = false;
 		} else if (TAILQ_FIRST(&pdinfo->pd_pendingq) == NULL) {
@@ -424,11 +426,13 @@ uvm_pageout(void *arg)
 
 		if (npages != uvmexp.npages
 		    || extrapages != uvm_extrapages
-		    || npggroups != uvmexp.npggroups) {
+		    || npggroups != uvmexp.npggroups
+		    || want_tune) {
 			npages = uvmexp.npages;
 			extrapages = uvm_extrapages;
 			npggroups = uvmexp.npggroups;
 			uvmpd_tune();
+			want_tune = false;
 		}
 
 		/*
@@ -478,6 +482,14 @@ uvm_pageout(void *arg)
 					local_progress = true;
 				}
 				mutex_spin_enter(&uvm_fpageqlock);
+				if (!local_progress) {
+					/*
+					 * This should stop kick_pdaemon from
+					 * trying to reclaim pages until
+					 * another tune resets it.
+					 */
+					grp->pgrp_freemin = 0;
+				}
 			} else {
 				UVMHIST_LOG(pdhist,
 				    " [%zu]: diff/paging=%u/%u: "
@@ -491,8 +503,9 @@ uvm_pageout(void *arg)
 			 * wake up any waiters but only if we made progress for
 			 * this group.
 			 */
-			if (grp->pgrp_free * uvmexp.npggroups > uvmexp.reserve_kernel
-			    || (local_progress && grp->pgrp_paging == 0)) {
+			if (local_progress
+			      && (grp->pgrp_free * uvmexp.npggroups > uvmexp.reserve_kernel
+				  || grp->pgrp_paging == 0)) {
 				need_wakeup = true;
 			}
 
@@ -500,7 +513,7 @@ uvm_pageout(void *arg)
 		if (need_wakeup) {
 			wakeup(&uvmexp.free);
 		}
-		KASSERT(!need_free || need_wakeup);
+		KASSERT(!need_free || need_wakeup || !progress);
 		mutex_spin_exit(&uvm_fpageqlock);
 
 		/*
