@@ -9,6 +9,8 @@ struct imxclock_softc {
 
 	int sc_reload_value;
 
+	uint32_t sc_clksrc;
+
 	void *sc_ih;			/* interrupt handler */
 };
 
