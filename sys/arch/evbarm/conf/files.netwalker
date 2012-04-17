@@ -1,6 +1,6 @@
-#	$NetBSD: files.netwalker,v 1.2 2010/11/30 13:07:29 bsh Exp $
+#	$NetBSD: files.netwalker,v 1.3 2012/04/17 10:19:57 bsh Exp $
 #
-# Sharp
+# Sharp Netwalker
 #
 
 file	arch/evbarm/netwalker/netwalker_machdep.c
@@ -14,3 +14,8 @@ include "arch/arm/imx/files.imx51"
 device imxusbc_axi
 attach imxusbc at axi with imxusbc_axi
 file   arch/evbarm/netwalker/netwalker_usb.c	imxusbc_axi
+
+# LCD controller
+attach	ipu at axi with lcd_netwalker
+file	arch/evbarm/netwalker/netwalker_lcd.c	lcd_netwalker
+defflag	opt_netwalker_lcd.h			LCD_DEBUG
