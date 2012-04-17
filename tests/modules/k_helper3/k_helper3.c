@@ -1,4 +1,4 @@
-/*	$NetBSD: k_helper3.c,v 1.2 2012/04/17 05:18:54 jruoho Exp $ */
+/*	$NetBSD: k_helper3.c,v 1.3 2012/04/17 21:39:19 martin Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: k_helper3.c,v 1.2 2012/04/17 05:18:54 jruoho Exp $");
+__RCSID("$NetBSD: k_helper3.c,v 1.3 2012/04/17 21:39:19 martin Exp $");
 
 #include <sys/module.h>
 
@@ -58,7 +58,7 @@ main(int argc, char *argv[])
 static __printflike(1, 2) int
 load(const char *fmt, ...)
 {
-	char filename[MAXPATHLEN], *propsstr;
+	char filename[MAXPATHLEN], *propsstr, *shortname, *dot;
 	prop_dictionary_t props;
 	modctl_load_t ml;
 	int serrno, rv;
@@ -86,7 +86,15 @@ load(const char *fmt, ...)
 	if (rv != 0)
 		serrno = errno;
 
-	(void)modctl(MODCTL_UNLOAD, filename);
+	shortname = strrchr(filename, '/');
+	if (shortname != NULL)
+		shortname++;
+	else
+		shortname = filename;
+	dot = strrchr(shortname, '.');
+	if (dot)
+		*dot = 0;
+	(void)modctl(MODCTL_UNLOAD, shortname);
 
 	free(propsstr);
 
