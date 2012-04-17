@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC,v 1.285 2012/03/10 21:51:49 joerg Exp $
+# $NetBSD: GENERIC,v 1.286 2012/04/17 10:06:32 rkujawa Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.95 2012/01/19 22:43:11 rkujawa Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.98 2012/04/17 09:59:03 rkujawa Exp $
 #
 ##
 # GENERIC machine description file
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.285 $"
+#ident 		"GENERIC-$Revision: 1.286 $"
 
 
 maxusers	8
@@ -346,6 +346,11 @@ a34kbbc0	at mainbus0		# A3000/A4000 battery backed clock
 a2kbbc0 	at mainbus0		# A2000 battery backed clock
 aucc*		at mainbus0		# Amiga CC audio
 audio*		at aucc?
+
+#a1k2cp0         at mainbus0             # A1200 on-board clockport
+#clockport*      at a1k2cp0
+
+#com*            at clockport?           # Individual Computers SilverSurfer
 
 #wsmouse*	at ms?
 
