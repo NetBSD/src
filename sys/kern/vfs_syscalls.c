@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.450 2012/03/13 18:40:56 elad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.451 2012/04/17 19:15:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.450 2012/03/13 18:40:56 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.451 2012/04/17 19:15:15 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -3360,15 +3360,13 @@ change_owner(struct vnode *vp, uid_t uid, gid_t gid, struct lwp *l,
 		 * group-id settings intact in that case.
 		 */
 		if (vattr.va_mode & S_ISUID) {
-			error = kauth_authorize_vnode(l->l_cred,
-			    KAUTH_VNODE_RETAIN_SUID, vp, NULL, EPERM);
-			if (error)
+			if (kauth_authorize_vnode(l->l_cred,
+			    KAUTH_VNODE_RETAIN_SUID, vp, NULL, EPERM) != 0)
 				newmode &= ~S_ISUID;
 		}
 		if (vattr.va_mode & S_ISGID) {
-			error = kauth_authorize_vnode(l->l_cred,
-			    KAUTH_VNODE_RETAIN_SGID, vp, NULL, EPERM);
-			if (error)
+			if (kauth_authorize_vnode(l->l_cred,
+			    KAUTH_VNODE_RETAIN_SGID, vp, NULL, EPERM) != 0)
 				newmode &= ~S_ISGID;
 		}
 	} else {
