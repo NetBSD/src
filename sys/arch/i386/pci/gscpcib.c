@@ -1,4 +1,4 @@
-/*	$NetBSD: gscpcib.c,v 1.17 2011/09/04 15:05:26 sborrill Exp $	*/
+/*	$NetBSD: gscpcib.c,v 1.17.2.1 2012/04/17 00:06:29 yamt Exp $	*/
 /*	$OpenBSD: gscpcib.c,v 1.3 2004/10/05 19:02:33 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gscpcib.c,v 1.17 2011/09/04 15:05:26 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gscpcib.c,v 1.17.2.1 2012/04/17 00:06:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: gscpcib.c,v 1.17 2011/09/04 15:05:26 sborrill Exp $"
 
 #include <i386/pci/gscpcibreg.h>
 #include <arch/x86/pci/pcibvar.h>
+
+#include "gpio.h"
 
 struct gscpcib_softc {
 	struct pcib_softc sc_pcib;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.57 2011/06/12 03:36:00 rmind Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.57.2.1 2012/04/17 00:08:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.57 2011/06/12 03:36:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.57.2.1 2012/04/17 00:08:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -374,9 +374,23 @@ ext2fs_write(void *v)
 
 out:
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
-	if (resid > uio->uio_resid && ap->a_cred &&
-	    kauth_authorize_generic(ap->a_cred, KAUTH_GENERIC_ISSUSER, NULL))
-		ip->i_e2fs_mode &= ~(ISUID | ISGID);
+	if (vp->v_mount->mnt_flag & MNT_RELATIME)
+		ip->i_flag |= IN_ACCESS;
+	if (resid > uio->uio_resid && ap->a_cred) {
+		if (ip->i_e2fs_mode & ISUID) {
+			error = kauth_authorize_vnode(ap->a_cred, KAUTH_VNODE_RETAIN_SUID, vp,
+			    NULL, EPERM);
+			if (error)
+				ip->i_e2fs_mode &= ISUID;
+		}
+
+		if (ip->i_e2fs_mode & ISGID) {
+			error = kauth_authorize_vnode(ap->a_cred, KAUTH_VNODE_RETAIN_SGID, vp,
+			    NULL, EPERM);
+			if (error)
+				ip->i_e2fs_mode &= ~ISGID;
+		}
+	}
 	if (resid > uio->uio_resid)
 		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 	if (error) {

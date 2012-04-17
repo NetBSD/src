@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.95 2011/10/09 21:16:00 chs Exp $	*/
+/*	$NetBSD: fstat.c,v 1.95.2.1 2012/04/17 00:09:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.95 2011/10/09 21:16:00 chs Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.95.2.1 2012/04/17 00:09:32 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -974,9 +974,9 @@ socktrans(struct socket *sock, int i)
 				goto bad;
 			}
 			inet6_addrstr(lbuf, sizeof(lbuf), &in6pcb.in6p_laddr,
-			    in6pcb.in6p_lport);
+			    ntohs(in6pcb.in6p_lport));
 			inet6_addrstr(fbuf, sizeof(fbuf), &in6pcb.in6p_faddr,
-			    in6pcb.in6p_fport);
+			    ntohs(in6pcb.in6p_fport));
 			break;
 		default:
 			break;

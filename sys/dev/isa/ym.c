@@ -1,7 +1,7 @@
-/*	$NetBSD: ym.c,v 1.41 2011/06/02 14:12:25 tsutsui Exp $	*/
+/*	$NetBSD: ym.c,v 1.41.2.1 2012/04/17 00:07:40 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999-2002, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.41 2011/06/02 14:12:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.41.2.1 2012/04/17 00:07:40 yamt Exp $");
 
 #include "mpu_ym.h"
 #include "opt_ym.h"
@@ -151,7 +151,8 @@ static void ym_restore_codec_regs(struct ym_softc *);
 int	ym_codec_power_ctl(void *, int);
 static void ym_chip_powerdown(struct ym_softc *);
 static void ym_chip_powerup(struct ym_softc *, int);
-void	ym_powerdown_blocks(void *);
+static void	ym_powerdown_blocks(struct ym_softc *);
+static void	ym_powerdown_callout(void *);
 void	ym_power_ctl(struct ym_softc *, int, int);
 #endif
 
@@ -194,7 +195,7 @@ const struct audio_hw_if ym_hw_if = {
 	ad1848_isa_trigger_output,
 	ad1848_isa_trigger_input,
 	NULL,
-	NULL,	/* powerstate */
+	ad1848_get_locks,
 };
 
 static inline int ym_read(struct ym_softc *, int);
@@ -211,7 +212,9 @@ ym_attach(struct ym_softc *sc)
 	struct audio_attach_args arg;
 
 	ac = &sc->sc_ad1848.sc_ad1848;
-	callout_init(&sc->sc_powerdown_ch, 0);
+	callout_init(&sc->sc_powerdown_ch, CALLOUT_MPSAFE);
+	cv_init(&sc->sc_cv, "ym");
+	ad1848_init_locks(ac, IPL_AUDIO);
 
 	/* Mute the output to reduce noise during initialization. */
 	ym_mute(sc, SA3_VOL_L, 1);
@@ -279,6 +282,7 @@ ym_attach(struct ym_softc *sc)
 #endif
 
 	/* This must be AFTER the attachment of sub-devices. */
+	mutex_spin_enter(&sc->sc_ad1848.sc_ad1848.sc_intr_lock);
 	ym_init(sc);
 
 #ifndef AUDIO_NO_POWER_CTL
@@ -296,6 +300,7 @@ ym_attach(struct ym_softc *sc)
 	sc->sc_on_blocks |= YM_POWER_JOYSTICK;	/* prevents chip powerdown */
 #endif
 	ym_powerdown_blocks(sc);
+	mutex_spin_exit(&sc->sc_ad1848.sc_ad1848.sc_intr_lock);
 
 	if (!pmf_device_register(ac->sc_dev, ym_suspend, ym_resume)) {
 		aprint_error_dev(ac->sc_dev,
@@ -345,6 +350,8 @@ static void
 ym_init(struct ym_softc *sc)
 {
 	uint8_t dpd, apd;
+
+	KASSERT(mutex_owned(&sc->sc_ad1848.sc_ad1848.sc_intr_lock));
 
 	/* Mute SoundBlaster output if possible. */
 	if (sc->sc_sb_ioh) {
@@ -521,6 +528,8 @@ ym_set_3d(struct ym_softc *sc, mixer_ctrl_t *cp,
 {
 	uint8_t l, r, e;
 
+	KASSERT(mutex_owned(&sc->sc_ad1848.sc_ad1848.sc_intr_lock));
+
 	ad1848_to_vol(cp, val);
 
 	l = val->left;
@@ -572,6 +581,8 @@ ym_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 	/* SA2 doesn't have equalizer */
 	if (!YM_IS_SA3(sc) && YM_MIXER_SA3_ONLY(cp->dev))
 		return ENXIO;
+
+	mutex_spin_enter(&ac->sc_intr_lock);
 
 #ifndef AUDIO_NO_POWER_CTL
 	/* Power-up chip */
@@ -693,6 +704,7 @@ out:
 	/* Power-down chip */
 	ym_power_ctl(sc, YM_POWER_CODEC_CTL, 0);
 #endif
+	mutex_spin_exit(&ac->sc_intr_lock);
 
 	return error;
 }
@@ -717,6 +729,7 @@ ym_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 			 * SA2 doesn't have hardware volume interrupt.
 			 * Read current value and update every time.
 			 */
+			mutex_spin_enter(&ac->sc_intr_lock);
 #ifndef AUDIO_NO_POWER_CTL
 			/* Power-up chip */
 			ym_power_ctl(sc, YM_POWER_CODEC_CTL, 1);
@@ -726,6 +739,7 @@ ym_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 			/* Power-down chip */
 			ym_power_ctl(sc, YM_POWER_CODEC_CTL, 0);
 #endif
+			mutex_spin_exit(&ac->sc_intr_lock);
 		}
 		ad1848_from_vol(cp, &sc->master_gain);
 		return 0;
@@ -1021,10 +1035,13 @@ ym_intr(void *arg)
 	u_int8_t ist;
 	int processed;
 
+	mutex_spin_enter(&sc->sc_ad1848.sc_ad1848.sc_intr_lock);
+
 	/* OPL3 timer is currently unused. */
 	if (((ist = ym_read(sc, SA3_IRQA_STAT)) &
 	     ~(SA3_IRQ_STAT_SB|SA3_IRQ_STAT_OPL3)) == 0) {
 		DPRINTF(("%s: ym_intr: spurious interrupt\n", DVNAME(sc)));
+		mutex_spin_exit(&sc->sc_ad1848.sc_ad1848.sc_intr_lock);
 		return 0;
 	}
 
@@ -1057,6 +1074,7 @@ ym_intr(void *arg)
 		}
 	} while (processed && (ist = ym_read(sc, SA3_IRQA_STAT)));
 
+	mutex_spin_exit(&sc->sc_ad1848.sc_ad1848.sc_intr_lock);
 	return 1;
 }
 
@@ -1110,16 +1128,16 @@ static bool
 ym_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct ym_softc *sc = device_private(self);
-	int s;
 
 	DPRINTF(("%s: ym_power_hook: suspend\n", DVNAME(sc)));
 
-	s = splaudio();
+	mutex_spin_enter(&sc->sc_ad1848.sc_ad1848.sc_intr_lock);
 
 	/*
 	 * suspending...
 	 */
-	callout_stop(&sc->sc_powerdown_ch);
+	callout_halt(&sc->sc_powerdown_ch,
+	    &sc->sc_ad1848.sc_ad1848.sc_intr_lock);
 	if (sc->sc_turning_off)
 		ym_powerdown_blocks(sc);
 
@@ -1139,7 +1157,7 @@ ym_suspend(device_t self, const pmf_qual_t *qual)
 	sc->sc_sa3_scan[SA3_PWR_MNG] = ym_read(sc, SA3_PWR_MNG);
 	if (sc->sc_on_blocks)
 		ym_chip_powerdown(sc);
-	splx(s);
+	mutex_spin_exit(&sc->sc_ad1848.sc_ad1848.sc_intr_lock);
 	return true;
 }
 
@@ -1148,11 +1166,10 @@ ym_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct ym_softc *sc = device_private(self);
 	int i, xmax;
-	int s;
 
 	DPRINTF(("%s: ym_power_hook: resume\n", DVNAME(sc)));
 
-	s = splaudio();
+	mutex_spin_enter(&sc->sc_ad1848.sc_ad1848.sc_intr_lock);
 	/*
 	 * resuming...
 	 */
@@ -1175,7 +1192,7 @@ ym_resume(device_t self, const pmf_qual_t *qual)
 	ym_write(sc, SA3_PWR_MNG, sc->sc_sa3_scan[SA3_PWR_MNG]);
 	if (YM_IS_SA3(sc))
 		ym_write(sc, SA3_DPWRDWN, sc->sc_sa3_scan[SA3_DPWRDWN]);
-	splx(s);
+	mutex_spin_exit(&sc->sc_ad1848.sc_ad1848.sc_intr_lock);
 	return true;
 }
 
@@ -1189,6 +1206,7 @@ ym_codec_power_ctl(void *arg, int flags)
 	sc = arg;
 	ac = &sc->sc_ad1848.sc_ad1848;
 	DPRINTF(("%s: ym_codec_power_ctl: flags = 0x%x\n", DVNAME(sc), flags));
+	KASSERT(mutex_owned(&ac->sc_intr_lock));
 
 	if (flags != 0) {
 		parts = 0;
@@ -1211,8 +1229,6 @@ ym_codec_power_ctl(void *arg, int flags)
 /*
  * Enter Power Save mode or Global Power Down mode.
  * Total dissipation becomes 5mA and 10uA (typ.) respective.
- *
- * This must be called at splaudio().
  */
 static void
 ym_chip_powerdown(struct ym_softc *sc)
@@ -1220,6 +1236,7 @@ ym_chip_powerdown(struct ym_softc *sc)
 	int i, xmax;
 
 	DPRINTF(("%s: ym_chip_powerdown\n", DVNAME(sc)));
+	KASSERT(mutex_owned(&sc->sc_ad1848.sc_ad1848.sc_intr_lock));
 
 	xmax = YM_IS_SA3(sc) ? YM_SAVE_REG_MAX_SA3 : YM_SAVE_REG_MAX_SA2;
 
@@ -1236,17 +1253,14 @@ ym_chip_powerdown(struct ym_softc *sc)
 
 /*
  * Power up from Power Save / Global Power Down Mode.
- *
- * We assume no ym interrupt shall occur, since the chip is
- * in power-down mode (or should be blocked by splaudio()).
  */
 static void
 ym_chip_powerup(struct ym_softc *sc, int nosleep)
 {
-	int wchan;
 	uint8_t pw;
 
 	DPRINTF(("%s: ym_chip_powerup\n", DVNAME(sc)));
+	KASSERT(mutex_owned(&sc->sc_ad1848.sc_ad1848.sc_intr_lock));
 
 	pw = ym_read(sc, SA3_PWR_MNG);
 
@@ -1260,7 +1274,8 @@ ym_chip_powerup(struct ym_softc *sc, int nosleep)
 	if (nosleep)
 		delay(100000);
 	else
-		tsleep(&wchan, PWAIT, "ym_pu1", hz / 10);
+		kpause("ym_pu1", false, hz / 10, 
+		    &sc->sc_ad1848.sc_ad1848.sc_intr_lock);
 
 	pw &= ~(SA3_PWR_MNG_PSV | SA3_PWR_MNG_PDN);
 	ym_write(sc, SA3_PWR_MNG, pw);
@@ -1269,7 +1284,8 @@ ym_chip_powerup(struct ym_softc *sc, int nosleep)
 	if (nosleep)
 		delay(70000);
 	else
-		tsleep(&wchan, PWAIT, "ym_pu2", hz / 14);
+		kpause("ym_pu1", false, hz / 10, 
+		    &sc->sc_ad1848.sc_ad1848.sc_intr_lock);
 
 	/* The chip is muted automatically --- unmute it now. */
 	ym_mute(sc, SA3_VOL_L, sc->master_mute);
@@ -1277,21 +1293,31 @@ ym_chip_powerup(struct ym_softc *sc, int nosleep)
 }
 
 /* callout handler for power-down */
-void
-ym_powerdown_blocks(void *arg)
+static void
+ym_powerdown_callout(void *arg)
 {
 	struct ym_softc *sc;
+
+	sc = arg;
+
+	mutex_spin_enter(&sc->sc_ad1848.sc_ad1848.sc_intr_lock);
+	if ((sc->sc_in_power_ctl & YM_POWER_CTL_INUSE) == 0) {
+		ym_powerdown_blocks(sc);
+	}
+	mutex_spin_exit(&sc->sc_ad1848.sc_ad1848.sc_intr_lock);
+}
+
+static void
+ym_powerdown_blocks(struct ym_softc *sc)
+{
 	uint16_t parts;
 	uint16_t on_blocks;
 	uint8_t sv;
-	int s;
 
-	sc = arg;
 	on_blocks = sc->sc_on_blocks;
 	DPRINTF(("%s: ym_powerdown_blocks: turning_off 0x%x\n",
 		DVNAME(sc), sc->sc_turning_off));
-
-	s = splaudio();
+	KASSERT(mutex_owned(&sc->sc_ad1848.sc_ad1848.sc_intr_lock));
 
 	on_blocks = sc->sc_on_blocks;
 
@@ -1336,8 +1362,6 @@ ym_powerdown_blocks(void *arg)
 
 	/* Restore the state of the chip. */
 	bus_space_write_1(sc->sc_iot, sc->sc_controlioh, SA3_CTL_INDEX, sv);
-
-	splx(s);
 }
 
 /*
@@ -1346,31 +1370,26 @@ ym_powerdown_blocks(void *arg)
 void
 ym_power_ctl(struct ym_softc *sc, int parts, int onoff)
 {
-	int s;
 	int need_restore_codec;
+
+	KASSERT(mutex_owned(&sc->sc_ad1848.sc_ad1848.sc_intr_lock));
 
 	DPRINTF(("%s: ym_power_ctl: parts = 0x%x, %s\n",
 		DVNAME(sc), parts, onoff ? "on" : "off"));
 
-#ifdef DIAGNOSTIC
-	if (curproc == NULL)
-		panic("ym_power_ctl: no curproc");
-#endif
 	/* This function may sleep --- needs locking. */
 	while (sc->sc_in_power_ctl & YM_POWER_CTL_INUSE) {
 		sc->sc_in_power_ctl |= YM_POWER_CTL_WANTED;
 		DPRINTF(("%s: ym_power_ctl: sleeping\n", DVNAME(sc)));
-		tsleep(&sc->sc_in_power_ctl, PWAIT, "ym_pc", 0);
+		cv_wait(&sc->sc_cv, &sc->sc_ad1848.sc_ad1848.sc_intr_lock);
 		DPRINTF(("%s: ym_power_ctl: awaken\n", DVNAME(sc)));
 	}
 	sc->sc_in_power_ctl |= YM_POWER_CTL_INUSE;
 
-	/* Defeat softclock interrupts. */
-	s = splsoftclock();
-
 	/* If ON requested to parts which are scheduled to OFF, cancel it. */
 	if (onoff && sc->sc_turning_off && (sc->sc_turning_off &= ~parts) == 0)
-		callout_stop(&sc->sc_powerdown_ch);
+		callout_halt(&sc->sc_powerdown_ch,
+		    &sc->sc_ad1848.sc_ad1848.sc_intr_lock);
 
 	if (!onoff && sc->sc_turning_off)
 		parts &= ~sc->sc_turning_off;
@@ -1380,9 +1399,8 @@ ym_power_ctl(struct ym_softc *sc, int parts, int onoff)
 
 	/* Cancel previous timeout if needed. */
 	if (parts != 0 && sc->sc_turning_off)
-		callout_stop(&sc->sc_powerdown_ch);
-
-	(void) splx(s);
+		callout_halt(&sc->sc_powerdown_ch,
+		    &sc->sc_ad1848.sc_ad1848.sc_intr_lock);
 
 	if (parts == 0)
 		goto unlock;		/* no work to do */
@@ -1401,8 +1419,6 @@ ym_power_ctl(struct ym_softc *sc, int parts, int onoff)
 		if (parts & YM_POWER_CODEC_CTL)
 			parts |= YM_POWER_CODEC_P | YM_POWER_CODEC_R;
 
-		s = splaudio();
-
 		if (YM_IS_SA3(sc)) {
 			/* OPL3-SA3 */
 			ym_write(sc, SA3_DPWRDWN,
@@ -1418,8 +1434,6 @@ ym_power_ctl(struct ym_softc *sc, int parts, int onoff)
 		}
 		if (need_restore_codec)
 			ym_restore_codec_regs(sc);
-
-		(void) splx(s);
 	} else {
 		/* Turning off is delayed. */
 		sc->sc_turning_off |= parts;
@@ -1428,11 +1442,11 @@ ym_power_ctl(struct ym_softc *sc, int parts, int onoff)
 	/* Schedule turning off. */
 	if (sc->sc_pow_mode != YM_POWER_NOSAVE && sc->sc_turning_off)
 		callout_reset(&sc->sc_powerdown_ch, hz * sc->sc_pow_timeout,
-		    ym_powerdown_blocks, sc);
+		    ym_powerdown_callout, sc);
 
 unlock:
 	if (sc->sc_in_power_ctl & YM_POWER_CTL_WANTED)
-		wakeup(&sc->sc_in_power_ctl);
+		cv_broadcast(&sc->sc_cv);
 	sc->sc_in_power_ctl = 0;
 }
 #endif /* not AUDIO_NO_POWER_CTL */

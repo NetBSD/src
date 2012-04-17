@@ -2267,7 +2267,7 @@ enum
 };
 
 /* Define CC and CFLAGS which were used to build this version of GMP */
-#define __GMP_CC "/var/obj/mac68k/usr/src3/tooldir.NetBSD-5.99.48-amd64/bin/m68k--netbsdelf-gcc --sysroot=/var/obj/mac68k/usr/src3/destdir.mac68k -L/var/obj/mac68k/usr/src3/destdir.mac68k/lib -L/var/obj/mac68k/usr/src3/destdir.mac68k/usr/lib -B/var/obj/mac68k/usr/src3/destdir.mac68k/usr/lib/ -I/tmp/gmp-m68k/.native/gcc/include -std=gnu99"
+#define __GMP_CC "gcc -std=gnu99"
 #define __GMP_CFLAGS ""
 
 /* Major version number is the value of __GNU_MP__ too, above and in mp.h. */

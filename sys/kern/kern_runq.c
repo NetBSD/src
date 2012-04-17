@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.32 2011/08/07 21:13:05 rmind Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.32.2.1 2012/04/17 00:08:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.32 2011/08/07 21:13:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.32.2.1 2012/04/17 00:08:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -99,7 +99,7 @@ static void	sched_balance(void *);
 /*
  * Preemption control.
  */
-int		sched_upreempt_pri = PRI_KERNEL;
+int		sched_upreempt_pri = 0;
 #ifdef __HAVE_PREEMPTION
 # ifdef DEBUG
 int		sched_kpreempt_pri = 0;
@@ -638,6 +638,10 @@ no_migration:
 
 #else
 
+/*
+ * stubs for !MULTIPROCESSOR
+ */
+
 struct cpu_info *
 sched_takecpu(struct lwp *l)
 {
@@ -759,6 +763,10 @@ sched_nextlwp(void)
 
 	return l;
 }
+
+/*
+ * sched_curcpu_runnable_p: return if curcpu() should exit the idle loop.
+ */
 
 bool
 sched_curcpu_runnable_p(void)

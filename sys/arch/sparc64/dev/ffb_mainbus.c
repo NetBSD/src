@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb_mainbus.c,v 1.12 2011/10/31 08:28:46 jdc Exp $	*/
+/*	$NetBSD: ffb_mainbus.c,v 1.12.2.1 2012/04/17 00:06:55 yamt Exp $	*/
 /*	$OpenBSD: creator_mainbus.c,v 1.4 2002/07/26 16:39:04 jason Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb_mainbus.c,v 1.12 2011/10/31 08:28:46 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb_mainbus.c,v 1.12.2.1 2012/04/17 00:06:55 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -102,6 +102,14 @@ ffb_mainbus_attach(device_t parent, device_t self, void *aux)
 		goto unmap_fbc;
 	}
 
+	if (bus_space_map(sc->sc_bt, ma->ma_reg[FFB_REG_SFB32].ur_paddr,
+	    ma->ma_reg[FFB_REG_SFB32].ur_len, BUS_SPACE_MAP_LINEAR,
+	    &sc->sc_sfb32_h)) {
+		panic(": failed to map SFB32\n");
+		goto unmap_dac;
+	}
+	sc->sc_sfb32 = bus_space_vaddr(sc->sc_bt, sc->sc_sfb32_h);
+
 	for (i = 0; i < nregs; i++) {
 		sc->sc_addrs[i] = ma->ma_reg[i].ur_paddr;
 		sc->sc_sizes[i] = ma->ma_reg[i].ur_len;
@@ -118,11 +126,10 @@ ffb_mainbus_attach(device_t parent, device_t self, void *aux)
 
 	return;
 
-#if notyet
 unmap_dac:
 	bus_space_unmap(sc->sc_bt, sc->sc_dac_h,
 		    ma->ma_reg[FFB_REG_DAC].ur_len);
-#endif
+
 unmap_fbc:
 	bus_space_unmap(sc->sc_bt, sc->sc_fbc_h,
 		    ma->ma_reg[FFB_REG_FBC].ur_len);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rcsgen.c,v 1.4 1996/10/15 07:00:20 veego Exp $	*/
+/*	$NetBSD: rcsgen.c,v 1.4.66.1 2012/04/17 00:05:10 yamt Exp $	*/
 
 /* Generate RCS revisions.  */
 
@@ -31,6 +31,12 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsgen.c,v $
+ * Revision 1.4.66.1  2012/04/17 00:05:10  yamt
+ * sync with head
+ *
+ * Revision 1.5  2012/01/06 15:16:03  joerg
+ * Don't use dangling elses.
+ *
  * Revision 1.4  1996/10/15 07:00:20  veego
  * Merge rcs 5.7.
  *
@@ -449,7 +455,7 @@ getsstdin(option, name, note, buf)
 	   c = getcstdin(),  !feof(stdin);
 	   bufrealloc(buf, i+1),  p = buf->string,  p[i++] = c
 	)
-		if (c == '\n')
+		if (c == '\n') {
 			if (i  &&  p[i-1]=='.'  &&  (i==1 || p[i-2]=='\n')) {
 				/* Remove trailing '.'.  */
 				--i;
@@ -458,6 +464,7 @@ getsstdin(option, name, note, buf)
 				aputs(">> ", stderr);
 				eflush();
 			}
+		}
 	return cleanlogmsg(p, i);
 }
 

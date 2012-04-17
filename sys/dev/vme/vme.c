@@ -1,4 +1,4 @@
-/* $NetBSD: vme.c,v 1.24 2010/12/11 18:12:45 matt Exp $ */
+/* $NetBSD: vme.c,v 1.24.8.1 2012/04/17 00:08:11 yamt Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.24 2010/12/11 18:12:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.24.8.1 2012/04/17 00:08:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,22 +187,19 @@ vmeattach(device_t parent, device_t self, void *aux)
 	/*
 	 * set up address space accounting - assume incomplete decoding
 	 */
-	sc->vme32ext = extent_create("vme32", 0, 0xffffffff,
-				     M_DEVBUF, 0, 0, 0);
+	sc->vme32ext = extent_create("vme32", 0, 0xffffffff, 0, 0, 0);
 	if (!sc->vme32ext) {
 		printf("error creating A32 map\n");
 		return;
 	}
 
-	sc->vme24ext = extent_create("vme24", 0, 0x00ffffff,
-				     M_DEVBUF, 0, 0, 0);
+	sc->vme24ext = extent_create("vme24", 0, 0x00ffffff, 0, 0, 0);
 	if (!sc->vme24ext) {
 		printf("error creating A24 map\n");
 		return;
 	}
 
-	sc->vme16ext = extent_create("vme16", 0, 0x0000ffff,
-				     M_DEVBUF, 0, 0, 0);
+	sc->vme16ext = extent_create("vme16", 0, 0x0000ffff, 0, 0, 0);
 	if (!sc->vme16ext) {
 		printf("error creating A16 map\n");
 		return;

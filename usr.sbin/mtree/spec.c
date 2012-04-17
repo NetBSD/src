@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.79 2011/02/14 16:27:58 uebayasi Exp $	*/
+/*	$NetBSD: spec.c,v 1.79.4.1 2012/04/17 00:09:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.79 2011/02/14 16:27:58 uebayasi Exp $");
+__RCSID("$NetBSD: spec.c,v 1.79.4.1 2012/04/17 00:09:50 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ static	void	set(char *, NODE *);
 static	void	unset(char *, NODE *);
 static	void	addchild(NODE *, NODE *);
 static	int	nodecmp(const NODE *, const NODE *);
-static	int	appendfield(int, const char *, ...);
+static	int	appendfield(int, const char *, ...) __printflike(2, 3);
 
 #define REPLACEPTR(x,v)	do { if ((x)) free((x)); (x) = (v); } while (0)
 

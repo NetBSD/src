@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.74 2011/06/16 09:21:03 hannken Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.74.2.1 2012/04/17 00:08:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.74 2011/06/16 09:21:03 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.74.2.1 2012/04/17 00:08:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.74 2011/06/16 09:21:03 hannken Ex
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/trace.h>
 #include <sys/resourcevar.h>
 #include <sys/kauth.h>
@@ -499,7 +499,7 @@ ext2fs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	bap = (int32_t *)bp->b_data;	/* XXX ondisk32 */
 	if (lastbn >= 0) {
 		/* XXX ondisk32 */
-		copy = malloc(fs->e2fs_bsize, M_TEMP, M_WAITOK);
+		copy = kmem_alloc(fs->e2fs_bsize, KM_SLEEP);
 		memcpy((void *)copy, (void *)bap, (u_int)fs->e2fs_bsize);
 		memset((void *)&bap[last + 1], 0,
 			(u_int)(NINDIR(fs) - (last + 1)) * sizeof (uint32_t));
@@ -548,7 +548,7 @@ ext2fs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	}
 
 	if (copy != NULL) {
-		free(copy, M_TEMP);
+		kmem_free(copy, fs->e2fs_bsize);
 	} else {
 		brelse(bp, BC_INVAL);
 	}

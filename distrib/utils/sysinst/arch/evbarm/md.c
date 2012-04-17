@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.24.4.1 2011/11/10 14:31:17 yamt Exp $ */
+/*	$NetBSD: md.c,v 1.24.4.2 2012/04/17 00:02:51 yamt Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -67,6 +67,15 @@ md_get_info(void)
 	int fd;
 	char dev_name[100];
 
+	if (no_mbr)
+		return 1;
+
+	if (read_mbr(diskdev, &mbr) < 0)
+		memset(&mbr.mbr, 0, sizeof(mbr.mbr)-2);
+
+	if (edit_mbr(&mbr) == 0)
+		return 0;
+
 	if (strncmp(diskdev, "wd", 2) == 0)
 		disktype = "ST506";
 	else
@@ -131,6 +140,17 @@ md_check_partitions(void)
 int
 md_pre_disklabel(void)
 {
+	if (no_mbr)
+		return 0;
+
+	msg_display(MSG_dofdisk);
+
+	/* write edited MBR onto disk. */
+	if (write_mbr(diskdev, &mbr, 1) != 0) {
+		msg_display(MSG_wmbrfail);
+		process_menu(MENU_ok, NULL);
+		return 1;
+	}
 	return 0;
 }
 
@@ -186,4 +206,16 @@ int
 md_pre_mount()
 {
 	return 0;
+}
+
+int
+md_check_mbr(mbr_info_t *mbri)
+{
+	return 2;
+}
+
+int
+md_mbr_use_wholedisk(mbr_info_t *mbri)
+{
+	return mbr_use_wholedisk(mbri);
 }

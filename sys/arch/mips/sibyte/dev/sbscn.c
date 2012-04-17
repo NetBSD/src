@@ -1,4 +1,4 @@
-/* $NetBSD: sbscn.c,v 1.36 2011/07/10 23:32:03 matt Exp $ */
+/* $NetBSD: sbscn.c,v 1.36.2.1 2012/04/17 00:06:40 yamt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.36 2011/07/10 23:32:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.36.2.1 2012/04/17 00:06:40 yamt Exp $");
 
 #define	SBSCN_DEBUG
 
@@ -117,7 +117,7 @@ __KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.36 2011/07/10 23:32:03 matt Exp $");
 #include "ioconf.h"
 
 #include "rnd.h"
-#if NRND > 0 && defined(RND_SBSCN)
+#ifdef RND_SBSCN
 #include <sys/rnd.h>
 #endif
 
@@ -382,7 +382,7 @@ sbscn_attach_channel(struct sbscn_softc *sc, int chan, int intr)
 
 	ch->ch_si = softint_establish(SOFTINT_SERIAL, sbscn_soft, ch);
 
-#if NRND > 0 && defined(RND_SBSCN)
+#ifdef RND_SBSCN
 	rnd_attach_source(&ch->ch_rnd_source, device_xname(sc->sc_dev),
 			  RND_TYPE_TTY, 0);
 #endif
@@ -1661,7 +1661,7 @@ XXX
 	/* Wake up the poller. */
 	softint_schedule(ch->ch_si);
 
-#if NRND > 0 && defined(RND_SBSCN)
+#ifdef RND_SBSCN
 	rnd_add_uint32(&ch->ch_rnd_source, isr | sr);
 #endif
 }

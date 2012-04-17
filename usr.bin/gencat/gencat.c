@@ -1,4 +1,4 @@
-/*	$NetBSD: gencat.c,v 1.32 2011/09/21 14:33:35 christos Exp $	*/
+/*	$NetBSD: gencat.c,v 1.32.2.1 2012/04/17 00:09:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: gencat.c,v 1.32 2011/09/21 14:33:35 christos Exp $");
+__RCSID("$NetBSD: gencat.c,v 1.32.2.1 2012/04/17 00:09:32 yamt Exp $");
 #endif
 
 /***********************************************************
@@ -140,7 +140,7 @@ __dead static void	usage(void);
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: %s catfile msgfile ...\n", getprogname());
+	fprintf(stderr, "usage: %s catfile [msgfile|- ...]\n", getprogname());
 	exit(1);
 }
 
@@ -163,7 +163,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc < 2) {
+	if (argc < 1) {
 		usage();
 		/* NOTREACHED */
 	}
@@ -193,8 +193,8 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (((*argv)[0] == '-') && ((*argv)[1] == '\0')) {
-		if (argc != 2)
+	if (argc < 2 || (((*argv)[0] == '-') && ((*argv)[1] == '\0'))) {
+		if (argc > 2)
 			usage();
 			/* NOTREACHED */
 		MCParse(STDIN_FILENO);
@@ -345,11 +345,13 @@ getmsg(int fd, char *cptr, char quote)
 {
 	static char *msg = NULL;
 	static size_t msglen = 0;
-	size_t    clen, i;
+	size_t  clen, i;
+	int     in_quote = 0;
 	char   *tptr;
 
 	if (quote && *cptr == quote) {
 		++cptr;
+		in_quote = 1;
 	} 
 
 	clen = strlen(cptr) + 1;
@@ -366,11 +368,26 @@ getmsg(int fd, char *cptr, char quote)
 		if (quote && *cptr == quote) {
 			char   *tmp;
 			tmp = cptr + 1;
-			if (*tmp && (!isspace((unsigned char) *tmp) || *wskip(tmp))) {
+			if (!in_quote) {
+				/* XXX hard error? */
 				warning(cptr, "unexpected quote character, ignoring");
 				*tptr++ = *cptr++;
 			} else {
-				*cptr = '\0';
+				cptr++;
+				/* don't use wskip() */
+				while (*cptr && isspace((unsigned char) *cptr))
+#ifndef _BACKWARDS_COMPAT
+					cptr++;
+#else
+					*tptr++ = *cptr++;
+#endif
+				/* XXX hard error? */
+				if (*cptr)
+					warning(tmp, "unexpected extra characters, ignoring");
+				in_quote = 0;
+#ifndef _BACKWARDS_COMPAT
+				break;
+#endif
 			}
 		} else {
 			if (*cptr == '\\') {
@@ -437,6 +454,10 @@ getmsg(int fd, char *cptr, char quote)
 			}
 		}
 	}
+
+	if (in_quote)
+		warning(cptr, "unterminated quoted message, ignoring");
+
 	*tptr = '\0';
 	return (msg);
 }

@@ -1,5 +1,5 @@
 /*	Id: trees.c,v 1.304 2011/08/14 14:52:29 ragge Exp 	*/	
-/*	$NetBSD: trees.c,v 1.1.1.4 2011/09/01 12:47:04 plunky Exp $	*/
+/*	$NetBSD: trees.c,v 1.1.1.4.2.1 2012/04/17 00:04:04 yamt Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -144,7 +144,6 @@ static char *tnames[] = {
 
 	*/
 
-int bdebug = 0;
 extern int negrel[];
 
 /* Have some defaults for most common targets */
@@ -737,7 +736,7 @@ concast(NODE *p, TWORD t)
 		}
 		return 0;
 	}
-	if ((p->n_type & TMASK) || (t & TMASK)) /* no cast of pointers */
+	if (((p->n_type & TMASK) && t != BOOL) || (t & TMASK)) /* no pointers */
 		return 0;
 
 //printf("concast till %d\n", t);
@@ -1458,8 +1457,6 @@ ptmatch(NODE *p)
 
 	return(clocal(p));
 	}
-
-int tdebug = 0;
 
 /*
  * Satisfy the types of various arithmetic binary ops.
@@ -2629,7 +2626,6 @@ rmfldops(NODE *p)
 }
 #endif
 
-int edebug = 0;
 void
 ecomp(NODE *p)
 {

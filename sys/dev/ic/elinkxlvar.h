@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlvar.h,v 1.22 2010/03/22 23:03:30 dyoung Exp $	*/
+/*	$NetBSD: elinkxlvar.h,v 1.22.8.1 2012/04/17 00:07:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,11 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "rnd.h"
-
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 /*
  * Ethernet software status per interface.
@@ -109,9 +105,7 @@ struct ex_softc {
 #define EX_FLAGS_POWERMGMT		0x2000
 #define EX_FLAGS_ATTACHED		0x4000	/* attach has succeeded */
 
-#if NRND > 0
-	rndsource_element_t rnd_source;
-#endif
+	krndsource_t rnd_source;
 
 	/* power management hooks */
 	int (*enable)(struct ex_softc *);

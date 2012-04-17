@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_sableio.c,v 1.9 2009/12/04 11:13:04 njoly Exp $ */
+/* $NetBSD: pckbc_sableio.c,v 1.9.12.1 2012/04/17 00:05:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pckbc_sableio.c,v 1.9 2009/12/04 11:13:04 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_sableio.c,v 1.9.12.1 2012/04/17 00:05:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_sableio.c,v 1.9 2009/12/04 11:13:04 njoly Exp 
 #include <sys/bus.h>
 
 #include <dev/ic/i8042reg.h>
-#include <dev/ic/pckbcvar.h> 
+#include <dev/ic/pckbcvar.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/isa/isavar.h>

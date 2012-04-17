@@ -1,4 +1,4 @@
-/*	$NetBSD: ezload.c,v 1.12 2008/04/28 20:23:59 martin Exp $	*/
+/*	$NetBSD: ezload.c,v 1.12.34.1 2012/04/17 00:08:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ezload.c,v 1.12 2008/04/28 20:23:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ezload.c,v 1.12.34.1 2012/04/17 00:08:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: ezload.c,v 1.12 2008/04/28 20:23:59 martin Exp $");
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
+#include <dev/usb/usbdivar.h>
 
 #include <dev/usb/ezload.h>
 

@@ -1,21 +1,21 @@
-/* $NetBSD: autoconf.h,v 1.22 2005/12/11 12:16:16 christos Exp $ */
+/* $NetBSD: autoconf.h,v 1.22.112.1 2012/04/17 00:05:55 yamt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -103,7 +103,7 @@ struct bootinfo_kernel {
  * Lookup table entry for Alpha system variations.
  */
 struct alpha_variation_table {
-	u_int64_t	avt_variation;	/* variation, from HWRPB */
+	uint64_t	avt_variation;	/* variation, from HWRPB */
 	const char	*avt_model;	/* model string */
 };
 
@@ -111,7 +111,7 @@ struct alpha_variation_table {
 extern struct bootdev_data *bootdev_data;
 extern struct bootinfo_kernel bootinfo;
 
-const char *alpha_variation_name(u_int64_t,
+const char *alpha_variation_name(uint64_t,
     const struct alpha_variation_table *);
 const char *alpha_unknown_sysname(void);
 #endif /* _KERNEL */

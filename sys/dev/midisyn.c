@@ -1,11 +1,11 @@
-/*	$NetBSD: midisyn.c,v 1.22 2008/04/28 20:23:47 martin Exp $	*/
+/*	$NetBSD: midisyn.c,v 1.22.34.1 2012/04/17 00:07:25 yamt Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@NetBSD.org).
+ * by Lennart Augustsson (augustss@NetBSD.org), and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.22 2008/04/28 20:23:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.22.34.1 2012/04/17 00:07:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.22 2008/04/28 20:23:47 martin Exp $");
 #include <sys/vnode.h>
 #include <sys/select.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/kernel.h>
@@ -60,9 +60,9 @@ int	midisyndebug = 0;
 #define DPRINTFN(n,x)
 #endif
 
-int	midisyn_findvoice(midisyn *, int, int);
-void	midisyn_freevoice(midisyn *, int);
-uint_fast16_t	midisyn_allocvoice(midisyn *, uint_fast8_t, uint_fast8_t);
+static int	midisyn_findvoice(midisyn *, int, int);
+static void	midisyn_freevoice(midisyn *, int);
+static uint_fast16_t	midisyn_allocvoice(midisyn *, uint_fast8_t, uint_fast8_t);
 static void	midisyn_attackv_vel(midisyn *, uint_fast16_t, midipitch_t,
                                     int16_t, uint_fast8_t);
 
@@ -75,13 +75,14 @@ static void midisyn_chan_releasev(midisyn *, uint_fast8_t, uint_fast8_t);
 static void midisyn_upd_level(midisyn *, uint_fast8_t);
 static void midisyn_upd_pitch(midisyn *, uint_fast8_t);
 
-int	midisyn_open(void *, int,
-		     void (*iintr)(void *, int),
-		     void (*ointr)(void *), void *arg);
-void	midisyn_close(void *);
-int	midisyn_sysrt(void *, int);
-void	midisyn_getinfo(void *, struct midi_info *);
-int	midisyn_ioctl(void *, u_long, void *, int, struct lwp *);
+static int	midisyn_open(void *, int,
+			     void (*iintr)(void *, int),
+			     void (*ointr)(void *), void *arg);
+static void	midisyn_close(void *);
+static int	midisyn_sysrt(void *, int);
+static void	midisyn_getinfo(void *, struct midi_info *);
+static int	midisyn_ioctl(void *, u_long, void *, int, struct lwp *);
+static void	midisyn_get_locks(void *, kmutex_t **, kmutex_t **);
 
 const struct midi_hw_if midisyn_hw_if = {
 	midisyn_open,
@@ -89,11 +90,12 @@ const struct midi_hw_if midisyn_hw_if = {
 	midisyn_sysrt,
 	midisyn_getinfo,
 	midisyn_ioctl,
+	midisyn_get_locks,
 };
 
-int	midisyn_channelmsg(void *, int, int, u_char *, int);
-int	midisyn_commonmsg(void *, int, u_char *, int);
-int	midisyn_sysex(void *, u_char *, int);
+static int	midisyn_channelmsg(void *, int, int, u_char *, int);
+static int	midisyn_commonmsg(void *, int, u_char *, int);
+static int	midisyn_sysex(void *, u_char *, int);
 
 struct midi_hw_if_ext midisyn_hw_if_ext = {
 	.channel = midisyn_channelmsg,
@@ -123,20 +125,28 @@ struct channelstate { /* dyamically allocated in open() on account of size */
 #define PEND_ALL   (PEND_LEVEL|PEND_PITCH)
 };
 
-int
+static int
 midisyn_open(void *addr, int flags, void (*iintr)(void *, int),
     void (*ointr)(void *), void *arg)
 {
 	midisyn *ms = addr;
-	int rslt;
+	int rslt, error;
 	uint_fast8_t chan;
 
+	KASSERT(ms->lock != NULL);
+	KASSERT(mutex_owned(ms->lock));
 	DPRINTF(("midisyn_open: ms=%p ms->mets=%p\n", ms, ms->mets));
-	
-	midictl_open(&ms->ctl);
-	
-	ms->chnstate = malloc(MIDI_MAX_CHANS*sizeof *(ms->chnstate),
-	                      M_DEVBUF, M_WAITOK); /* init'd by RESET below */
+
+	mutex_exit(ms->lock);
+	ms->ctl.lock = ms->lock;
+	error = midictl_open(&ms->ctl);
+	if (error != 0) {
+		mutex_enter(ms->lock);	
+		return error;
+	}
+	ms->chnstate = kmem_alloc(MIDI_MAX_CHANS * sizeof(*ms->chnstate),
+	    KM_SLEEP); /* init'd by RESET below */
+	mutex_enter(ms->lock);	
 	
 	rslt = 0;
 	if (ms->mets->open)
@@ -152,13 +162,14 @@ midisyn_open(void *addr, int flags, void (*iintr)(void *, int),
 	return rslt;
 }
 
-void
+static void
 midisyn_close(void *addr)
 {
 	midisyn *ms = addr;
 	struct midisyn_methods *fs;
 	int chan;
 
+	KASSERT(mutex_owned(ms->lock));
 	DPRINTF(("midisyn_close: ms=%p ms->mets=%p\n", ms, ms->mets));
 	fs = ms->mets;
 
@@ -168,15 +179,18 @@ midisyn_close(void *addr)
 	if (fs->close)
 		fs->close(ms);
 
-	free(ms->chnstate, M_DEVBUF);
-
+	mutex_exit(ms->lock);
 	midictl_close(&ms->ctl);
+	kmem_free(ms->chnstate, MIDI_MAX_CHANS * sizeof(*ms->chnstate));
+	mutex_enter(ms->lock);
 }
 
-void
+static void
 midisyn_getinfo(void *addr, struct midi_info *mi)
 {
 	midisyn *ms = addr;
+
+	KASSERT(mutex_owned(ms->lock));
 
 	mi->name = ms->name;
 	/*
@@ -195,10 +209,21 @@ midisyn_getinfo(void *addr, struct midi_info *mi)
 	midi_register_hw_if_ext(&midisyn_hw_if_ext);
 }
 
-int
+static void
+midisyn_get_locks(void *addr, kmutex_t **intr, kmutex_t **proc)
+{
+	midisyn *ms = addr;
+
+	*intr = ms->lock;
+	*proc = NULL;
+}
+
+static int
 midisyn_ioctl(void *maddr, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	midisyn *ms = maddr;
+
+	KASSERT(mutex_owned(ms->lock));
 
 	if (ms->mets->ioctl)
 		return (ms->mets->ioctl(ms, cmd, addr, flag, l));
@@ -206,11 +231,13 @@ midisyn_ioctl(void *maddr, u_long cmd, void *addr, int flag, struct lwp *l)
 		return (EINVAL);
 }
 
-int
+static int
 midisyn_findvoice(midisyn *ms, int chan, int note)
 {
 	u_int cn;
 	int v;
+
+	KASSERT(mutex_owned(ms->lock));
 
 	cn = MS_CHANNOTE(chan, note);
 	for (v = 0; v < ms->nvoice; v++)
@@ -220,16 +247,19 @@ midisyn_findvoice(midisyn *ms, int chan, int note)
 }
 
 void
-midisyn_attach(struct midi_softc *sc, midisyn *ms)
+midisyn_init(midisyn *ms)
 {
+
+	KASSERT(ms->lock != NULL);
+
 	/*
 	 * XXX there should be a way for this function to indicate failure
 	 * (other than panic) if some preconditions aren't met, for example
 	 * if some nonoptional methods are missing.
 	 */
 	if (ms->mets->allocv == 0) {
-		ms->voices = malloc(ms->nvoice * sizeof (struct voice),
-				    M_DEVBUF, M_WAITOK|M_ZERO);
+		ms->voices = kmem_zalloc(ms->nvoice * sizeof(struct voice),
+		    KM_SLEEP);
 		ms->seqno = 1;
 		ms->mets->allocv = midisyn_allocvoice;
 	}
@@ -243,24 +273,27 @@ midisyn_attach(struct midi_softc *sc, midisyn *ms)
 		.notify = midisyn_notify
 	};
 	
-	sc->hw_if = &midisyn_hw_if;
-	sc->hw_hdl = ms;
-	DPRINTF(("midisyn_attach: ms=%p\n", sc->hw_hdl));
+	DPRINTF(("midisyn_init: ms=%p\n", ms));
 }
 
-void
+static void
 midisyn_freevoice(midisyn *ms, int voice)
 {
+
+	KASSERT(mutex_owned(ms->lock));
+
 	if (ms->mets->allocv != midisyn_allocvoice)
 		return;
 	ms->voices[voice].inuse = 0;
 }
 
-uint_fast16_t
+static uint_fast16_t
 midisyn_allocvoice(midisyn *ms, uint_fast8_t chan, uint_fast8_t note)
 {
 	int bestv, v;
 	u_int bestseq, s;
+
+	KASSERT(mutex_owned(ms->lock));
 
 	/* Find a free voice, or if no free voice is found the oldest. */
 	bestv = 0;
@@ -294,22 +327,28 @@ static void
 midisyn_attackv_vel(midisyn *ms, uint_fast16_t voice, midipitch_t mp,
                     int16_t level_cB, uint_fast8_t vel)
 {
+
+	KASSERT(mutex_owned(ms->lock));
+
 	ms->voices[voice].velcB = midisyn_vol2cB((uint_fast16_t)vel << 7);
 	ms->mets->attackv(ms, voice, mp, level_cB + ms->voices[voice].velcB);
 }
 
-int
+static int
 midisyn_sysrt(void *addr, int b)
 {
+
 	return 0;
 }
 
-int midisyn_channelmsg(void *addr, int status, int chan, u_char *buf,
-    int len)
+static int
+midisyn_channelmsg(void *addr, int status, int chan, u_char *buf, int len)
 {
 	midisyn *ms = addr;
 	int voice = 0;		/* initialize to keep gcc quiet */
 	struct midisyn_methods *fs;
+
+	KASSERT(mutex_owned(ms->lock));
 
 	DPRINTF(("midisyn_channelmsg: ms=%p status=%#02x chan=%d\n",
 	       ms, status, chan));
@@ -393,14 +432,17 @@ int midisyn_channelmsg(void *addr, int status, int chan, u_char *buf,
 	return 0;
 }
 
-int midisyn_commonmsg(void *addr, int status,
-    u_char *buf, int len)
+static int
+midisyn_commonmsg(void *addr, int status, u_char *buf, int len)
 {
+
 	return 0;
 }
 
-int midisyn_sysex(void *addr, u_char *buf, int len)
+static int
+midisyn_sysex(void *addr, u_char *buf, int len)
 {
+
 	/*
 	 * unimplemented by existing drivers. it is surely more sensible
 	 * to do some parsing of well-defined sysex messages here, either
@@ -419,6 +461,9 @@ midisyn_notify(void *cookie, midictl_evt evt,
 	int drvhandled;
 	
 	ms = (struct midisyn *)cookie;
+
+	KASSERT(mutex_owned(ms->lock));
+
 	drvhandled = 0;
 	if ( ms->mets->ctlnotice )
 		drvhandled = ms->mets->ctlnotice(ms, evt, chan, key);
@@ -542,6 +587,7 @@ midisyn_notify(void *cookie, midictl_evt evt,
 static midipitch_t
 midisyn_clamp_pitch(midipitch_t mp)
 {
+
 	if ( mp <= 0 )
 		return 0;
 	if ( mp >= MIDIPITCH_MAX )
@@ -553,6 +599,8 @@ static int16_t
 midisyn_adj_level(midisyn *ms, uint_fast8_t chan)
 {
 	int32_t level;
+
+	KASSERT(mutex_owned(ms->lock));
 	
 	level = ms->chnstate[chan].volume + ms->chnstate[chan].expression;
 	if ( level <= INT16_MIN )
@@ -564,6 +612,9 @@ static midipitch_t
 midisyn_adj_pitch(midisyn *ms, uint_fast8_t chan)
 {
 	struct channelstate *s = ms->chnstate + chan;
+
+	KASSERT(mutex_owned(ms->lock));
+
 	return s->bend + s->tuning_fine +s->tuning_coarse;
 }
 
@@ -583,6 +634,9 @@ midisyn_adj_pitch(midisyn *ms, uint_fast8_t chan)
 static void
 midisyn_chan_releasev(midisyn *ms, uint_fast8_t chan, uint_fast8_t vel)
 {
+
+	KASSERT(mutex_owned(ms->lock));
+
 	VOICECHAN_FOREACH_BEGIN(ms,vp,chan)
 		ms->mets->releasev(ms, vp - ms->voices, vel);
 		midisyn_freevoice(ms, vp - ms->voices);
@@ -594,6 +648,9 @@ midisyn_upd_level(midisyn *ms, uint_fast8_t chan)
 {
 	int32_t level;
 	int16_t chan_level;
+
+	KASSERT(mutex_owned(ms->lock));
+
 	if ( NULL == ms->mets->relevelv )
 		return;
 	
@@ -613,6 +670,8 @@ static void
 midisyn_upd_pitch(midisyn *ms, uint_fast8_t chan)
 {
 	midipitch_t chan_adj;
+
+	KASSERT(mutex_owned(ms->lock));
 	
 	if ( NULL == ms->mets->repitchv )
 		return;

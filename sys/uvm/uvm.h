@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.62.4.4 2011/12/26 16:03:10 yamt Exp $	*/
+/*	$NetBSD: uvm.h,v 1.62.4.5 2012/04/17 00:08:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -59,6 +59,7 @@
 #include <uvm/uvm_pager.h>
 #include <uvm/uvm_pdaemon.h>
 #include <uvm/uvm_swap.h>
+#include <sys/rnd.h>
 
 #ifdef _KERNEL
 
@@ -81,6 +82,11 @@ struct uvm_cpu {
 					   pages in the idle loop */
 	int pages[PGFL_NQUEUES];	/* total of pages in page_free */
 	u_int emap_gen;			/* emap generation number */
+
+	uintptr_t last_fltaddr;		/* last faulted address */
+	uintptr_t last_delta;		/* difference of last two flt addrs */
+	uintptr_t last_delta2;		/* difference of differences */
+	krndsource_t rs;		/* entropy source */
 
 	/*
 	 * pagestate

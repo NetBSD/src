@@ -1,4 +1,4 @@
-#	$NetBSD: ARCTIC,v 1.56 2011/03/06 17:08:20 bouyer Exp $
+#	$NetBSD: ARCTIC,v 1.56.4.1 2012/04/17 00:06:03 yamt Exp $
 #	$OpenBSD: ARCTIC,v 1.12 1999/08/29 12:14:03 niklas Exp $
 #
 #	configuration file for DeskStation
@@ -265,7 +265,6 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port arc yet.
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
 

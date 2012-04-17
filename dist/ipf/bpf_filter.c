@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.2 2006/05/14 02:37:46 christos Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.2.42.1 2012/04/17 00:02:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -42,7 +42,7 @@
 
 #if !(defined(lint) || defined(KERNEL) || defined(_KERNEL))
 static const char rcsid[] =
-    "@(#) $Header: /cvsroot/src/dist/ipf/Attic/bpf_filter.c,v 1.2 2006/05/14 02:37:46 christos Exp $ (LBL)";
+    "@(#) $Header: /cvsroot/src/dist/ipf/Attic/bpf_filter.c,v 1.2.42.1 2012/04/17 00:02:24 yamt Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -71,8 +71,8 @@ static const char rcsid[] =
 #define int32 bpf_int32
 #define u_int32 bpf_u_int32
 
-static int m_xword __P((mb_t *, int, int *));
-static int m_xhalf __P((mb_t *, int, int *));
+static int m_xword(mb_t *, int, int *);
+static int m_xhalf(mb_t *, int, int *);
 
 #ifndef LBL_ALIGN
 /*
@@ -117,9 +117,7 @@ static int m_xhalf __P((mb_t *, int, int *));
 }
 
 static int
-m_xword(m, k, err)
-	register mb_t *m;
-	register int k, *err;
+m_xword(register mb_t *m, register int k, register int *err)
 {
 	register int len;
 	register u_char *cp, *np;
@@ -153,9 +151,7 @@ m_xword(m, k, err)
 }
 
 static int
-m_xhalf(m, k, err)
-	register mb_t *m;
-	register int k, *err;
+m_xhalf(register mb_t *m, register int k, register int *err)
 {
 	register int len;
 	register u_char *cp;
@@ -185,11 +181,8 @@ m_xhalf(m, k, err)
  * in all other cases, p is a pointer to a buffer and buflen is its size.
  */
 u_int
-bpf_filter(pc, p, wirelen, buflen)
-	register struct bpf_insn *pc;
-	register u_char *p;
-	u_int wirelen;
-	register u_int buflen;
+bpf_filter(register struct bpf_insn *pc, register u_char *p, u_int wirelen,
+	register u_int buflen)
 {
 	register u_int32 A, X;
 	register int k;
@@ -478,9 +471,7 @@ bpf_filter(pc, p, wirelen, buflen)
  * Otherwise, a bogus program could easily crash the system.
  */
 int
-bpf_validate(f, len)
-	struct bpf_insn *f;
-	int len;
+bpf_validate(struct bpf_insn *f, int len)
 {
 	u_int i, from;
 	const struct bpf_insn *p;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.8 2008/12/29 04:01:21 christos Exp $	*/
+/*	$NetBSD: dump.c,v 1.8.8.1 2012/04/17 00:09:53 yamt Exp $	*/
 /*	$KAME: dump.c,v 1.34 2004/06/14 05:35:59 itojun Exp $	*/
 
 /*
@@ -59,12 +59,10 @@
 
 static FILE *fp;
 
-extern struct rainfo *ralist;
+static char *ether_str(struct sockaddr_dl *);
+static void if_dump(void);
 
-static char *ether_str __P((struct sockaddr_dl *));
-static void if_dump __P((void));
-
-static char *rtpref_str[] = {
+static const char *rtpref_str[] = {
 	"medium",		/* 00 */
 	"high",			/* 01 */
 	"rsv",			/* 10 */
@@ -72,8 +70,7 @@ static char *rtpref_str[] = {
 };
 
 static char *
-ether_str(sdl)
-	struct sockaddr_dl *sdl;
+ether_str(struct sockaddr_dl *sdl)
 {
 	static char hbuf[NI_MAXHOST];
 
@@ -88,19 +85,21 @@ ether_str(sdl)
 }
 
 static void
-if_dump()
+if_dump(void)
 {
 	struct rainfo *rai;
 	struct prefix *pfx;
-#ifdef ROUTEINFO
 	struct rtinfo *rti;
-#endif
+	struct rdnss *rdns;
+	struct rdnss_addr *rdnsa;
+	struct dnssl *dnsl;
+	struct dnssl_domain *dnsd;
+	char *p, len;
 	char prefixbuf[INET6_ADDRSTRLEN];
-	int first;
 	struct timeval now;
 
 	gettimeofday(&now, NULL); /* XXX: unused in most cases */
-	for (rai = ralist; rai; rai = rai->next) {
+	TAILQ_FOREACH(rai, &ralist, next) {
 		fprintf(fp, "%s:\n", rai->ifname);
 
 		fprintf(fp, "  Status: %s\n",
@@ -151,14 +150,11 @@ if_dump()
 			"CurHopLimit: %d\n", rai->reachabletime,
 			rai->retranstimer, rai->hoplimit);
 		if (rai->clockskew)
-			fprintf(fp, "  Clock skew: %ldsec\n",
+			fprintf(fp, "  Clock skew: %dsec\n",
 			    rai->clockskew);
-		for (first = 1, pfx = rai->prefix.next; pfx != &rai->prefix;
-		     pfx = pfx->next) {
-			if (first) {
+		TAILQ_FOREACH(pfx, &rai->prefix, next) {
+			if (pfx == TAILQ_FIRST(&rai->prefix))
 				fprintf(fp, "  Prefixes:\n");
-				first = 0;
-			}
 			fprintf(fp, "    %s/%d(",
 			    inet_ntop(AF_INET6, &pfx->prefix, prefixbuf,
 			    sizeof(prefixbuf)), pfx->prefixlen);
@@ -210,13 +206,10 @@ if_dump()
 			}
 			fprintf(fp, ")\n");
 		}
-#ifdef ROUTEINFO
-		for (first = 1, rti = rai->route.next; rti != &rai->route;
-		     rti = rti->next) {
-			if (first) {
+
+		TAILQ_FOREACH(rti, &rai->route, next) {
+			if (rti == TAILQ_FIRST(&rai->route))
 				fprintf(fp, "  Route Information:\n");
-				first = 0;
-			}
 			fprintf(fp, "    %s/%d (",
 				inet_ntop(AF_INET6, &rti->prefix,
 					  prefixbuf, sizeof(prefixbuf)),
@@ -229,13 +222,46 @@ if_dump()
 				fprintf(fp, "lifetime: %ld", (long)rti->ltime);
 			fprintf(fp, ")\n");
 		}
-#endif
+
+		TAILQ_FOREACH(rdns, &rai->rdnss, next) {
+			fprintf(fp, "  Recursive DNS Servers:\n");
+			if (rdns->lifetime == ND6_INFINITE_LIFETIME)
+				fprintf(fp, "    lifetime: infinity\n");
+			else
+				fprintf(fp, "    lifetime: %ld\n",
+				    (long)rdns->lifetime);
+			TAILQ_FOREACH(rdnsa, &rdns->list, next)
+				fprintf(fp, "    %s\n",
+				    inet_ntop(AF_INET6, &rdnsa->addr,
+				    prefixbuf, sizeof(prefixbuf)));
+		}
+
+		TAILQ_FOREACH(dnsl, &rai->dnssl, next) {
+			fprintf(fp, "  DNS Search List:\n");
+			if (dnsl->lifetime == ND6_INFINITE_LIFETIME)
+				fprintf(fp, "    lifetime: infinity\n");
+			else
+				fprintf(fp, "    lifetime: %ld\n",
+				    (long)dnsl->lifetime);
+			TAILQ_FOREACH(dnsd, &dnsl->list, next) {
+				fprintf(fp, "    ");
+				for (p = dnsd->domain, len = *p++;
+				    len != 0;
+				    len = *p++)
+				{
+					if (p != dnsd->domain)
+					    fputc('.', fp);
+					while(len-- != 0)	
+					    fputc(*p++, fp);
+				}
+				fputc('\n', fp);
+			}
+		}
 	}
 }
 
 void
-rtadvd_dump_file(dumpfile)
-	char *dumpfile;
+rtadvd_dump_file(const char *dumpfile)
 {
 	syslog(LOG_DEBUG, "<%s> dump current status to %s", __func__,
 	    dumpfile);

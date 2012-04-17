@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: makeerrnos.sh,v 1.5 2008/10/19 22:10:05 apb Exp $
+#	$NetBSD: makeerrnos.sh,v 1.5.20.1 2012/04/17 00:09:33 yamt Exp $
 
 if [ $# -ne 3 ]; then
 	echo "usage: makeerrnos.sh errno.h signal.h output"
@@ -35,7 +35,7 @@ ${AWK} '
 END {
 	print "	{ \"0\", 0 },\n";
 }
-' | sort -n +2 >> $CFILE
+' | sort -n -k 3 >> $CFILE
 echo "	{ 0L, 0},
 };" >> $CFILE
 lines=`wc -l $CFILE | ${AWK} ' { print $1; } ' -`
@@ -59,7 +59,7 @@ ${AWK} '
 END {
 	print "	{ \"0\", 0 },\n";
 }
-' | sort -n +2 >> $CFILE
+' | sort -n -k 3 >> $CFILE
 echo "	{ 0L, 0},
 };" >> $CFILE
 elines=`grep '{ "SIG' $CFILE | wc -l`

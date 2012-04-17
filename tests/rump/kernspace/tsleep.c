@@ -1,4 +1,4 @@
-/*	$NetBSD: tsleep.c,v 1.2 2011/08/07 14:03:16 rmind Exp $	*/
+/*	$NetBSD: tsleep.c,v 1.2.2.1 2012/04/17 00:09:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: tsleep.c,v 1.2 2011/08/07 14:03:16 rmind Exp $");
+__RCSID("$NetBSD: tsleep.c,v 1.2.2.1 2012/04/17 00:09:15 yamt Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -41,35 +41,6 @@ __RCSID("$NetBSD: tsleep.c,v 1.2 2011/08/07 14:03:16 rmind Exp $");
 #include "kernspace.h"
 
 #define NTHREADS 10
-
-/*
- * kernel lock is interlock
- */
-static void
-bigthread(void *arg)
-{
-	static int wakeups;
-	struct simplelock slock;
-	int i;
-
-	simple_lock_init(&slock);
-	for (i = 0; i < 1000; i++) {
-		wakeup(bigthread);
-		if (wakeups >= NTHREADS-1)
-			break;
-		if (arg) {
-			simple_lock(&slock);
-			ltsleep(bigthread, PNORELOCK, "hii", 0, &slock);
-		} else {
-			tsleep(bigthread, 0, "hii", 0);
-		}
-	}
-
-	wakeup(bigthread);
-	wakeups++;
-
-	kthread_exit(0);
-}
 
 /*
  * mpsafe thread.  need dedicated interlock
@@ -112,16 +83,8 @@ tinythread(void *arg)
 void
 rumptest_tsleep()
 {
-	struct lwp *bigl[NTHREADS];
 	struct lwp *notbigl[NTHREADS];
 	int rv, i;
-
-	for (i = 0; i < NTHREADS; i++) {
-		rv = kthread_create(PRI_NONE, KTHREAD_MUSTJOIN,
-		    NULL, bigthread, (void *)(uintptr_t)i, &bigl[i], "b");
-		if (rv)
-			panic("thread create failed: %d", rv);
-	}
 
 	mutex_init(&mymtx, MUTEX_DEFAULT, IPL_NONE);
 
@@ -130,10 +93,6 @@ rumptest_tsleep()
 		    NULL, tinythread, (void *)(uintptr_t)i, &notbigl[i], "nb");
 		if (rv)
 			panic("thread create failed: %d", rv);
-	}
-
-	for (i = 0; i < NTHREADS; i++) {
-		kthread_join(bigl[i]);
 	}
 
 	for (i = 0; i < NTHREADS; i++) {

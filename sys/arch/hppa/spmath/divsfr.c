@@ -1,4 +1,4 @@
-/*	$NetBSD: divsfr.c,v 1.4 2007/02/22 05:46:29 thorpej Exp $	*/
+/*	$NetBSD: divsfr.c,v 1.4.80.1 2012/04/17 00:06:27 yamt Exp $	*/
 
 /*	$OpenBSD: divsfr.c,v 1.4 2001/03/29 03:58:18 mickey Exp $	*/
 
@@ -42,15 +42,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: divsfr.c,v 1.4 2007/02/22 05:46:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: divsfr.c,v 1.4.80.1 2012/04/17 00:06:27 yamt Exp $");
 
 #include "md.h"
 
 void
-divsfr(opnd1,opnd2,result)
-
-int opnd1, opnd2;
-struct mdsfu_register *result;
+divsfr(int opnd1, int opnd2, struct mdsfu_register *result)
 {
 	int sign, op1_sign;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rcsbase.h,v 1.9 1998/09/14 18:36:07 tv Exp $	*/
+/*	$NetBSD: rcsbase.h,v 1.9.64.1 2012/04/17 00:05:10 yamt Exp $	*/
 
 /* RCS common definitions and data structures */
 
@@ -33,6 +33,25 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsbase.h,v $
+ * Revision 1.9.64.1  2012/04/17 00:05:10  yamt
+ * sync with head
+ *
+ * Revision 1.13  2012/03/08 21:32:28  christos
+ * Teach rcs about the new cvs "commitid" keyword, so that we don't bitch each
+ * time we play with an RCS file maintained by CVS.
+ *
+ * Revision 1.12  2012/01/12 14:10:56  joerg
+ * Second try to sort out the dangling elses. Just use {} markers.
+ * Produces identical on amd64.
+ *
+ * Revision 1.11  2012/01/08 13:57:31  tron
+ * Revert last change. The extra while loop intruced by the macro changes
+ * causes an end-less loop in ci(1) which uses "break" inside one of the
+ * macros.
+ *
+ * "/etc/security" will now no longer fill up "/" (or "/var" depending on
+ * file-system layout).
+ *
  * Revision 1.9  1998/09/14 18:36:07  tv
  * Increase "keylength" to 32, inspired by <prlw1@newn.cam.ac.uk> in PR
  * bin/5415.  This will not be a significant performance hit, but allows
@@ -283,14 +302,14 @@ Report problems and direct all questions to:
 #	if maps_memory
 #		define declarecache register Iptr_type ptr, lim
 #		define setupcache(f) (lim = (f)->lim)
-#		define Igeteof_(f,c,s) if ((f)->ptr==(f)->lim) s else (c)= *(f)->ptr++;
-#		define cachegeteof_(c,s) if (ptr==lim) s else (c)= *ptr++;
+#		define Igeteof_(f,c,s) { if ((f)->ptr==(f)->lim) s else (c)= *(f)->ptr++; }
+#		define cachegeteof_(c,s) { if (ptr==lim) s else (c)= *ptr++; }
 #	else
 		int Igetmore P((RILE*));
 #		define declarecache register Iptr_type ptr; register RILE *rRILE
 #		define setupcache(f) (rRILE = (f))
-#		define Igeteof_(f,c,s) if ((f)->ptr==(f)->readlim && !Igetmore(f)) s else (c)= *(f)->ptr++;
-#		define cachegeteof_(c,s) if (ptr==rRILE->readlim && !Igetmore(rRILE)) s else (c)= *ptr++;
+#		define Igeteof_(f,c,s) { if ((f)->ptr==(f)->readlim && !Igetmore(f)) s else (c)= *(f)->ptr++; }
+#		define cachegeteof_(c,s) { if (ptr==rRILE->readlim && !Igetmore(rRILE)) s else (c)= *ptr++; }
 #	endif
 #	define uncache(f) ((f)->ptr = ptr)
 #	define cache(f) (ptr = (f)->ptr)
@@ -371,6 +390,7 @@ struct hshentry {
 	char const	  * lockedby; /* who locks the revision		    */
 	char const	  * state;    /* state of revision (Exp by default) */
 	char const	  * name;     /* name (if any) by which retrieved   */
+	char const	  * commitid; /* unique commit identifier           */
 	struct cbuf	    log;      /* log message requested at checkin   */
         struct branchhead * branches; /* list of first revisions on branches*/
 	struct cbuf	    ig;	      /* ignored phrases in admin part	    */

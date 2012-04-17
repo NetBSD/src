@@ -1,4 +1,4 @@
-.\"     $NetBSD: rasops.9,v 1.12 2010/12/02 12:54:13 wiz Exp $
+.\"     $NetBSD: rasops.9,v 1.12.6.1 2012/04/17 00:05:49 yamt Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 7, 2001
+.Dd January 13, 2012
 .Dt RASOPS 9
 .Os
 .Sh NAME
@@ -106,7 +106,7 @@ struct rasops_info {
 	int	ri_fontscale;	/* fontheight * fontstride */
 	int	ri_xscale;	/* fontwidth * pelbytes */
 	int	ri_yscale;	/* fontheight * stride */
-	u_char  *ri_origbits;	/* where screen bits actually start */
+	u_char	*ri_origbits;	/* where screen bits actually start */
 	int	ri_xorigin;	/* where ri_bits begins (x) */
 	int	ri_yorigin;	/* where ri_bits begins (y) */
 	int32_t	ri_devcmap[16]; /* color -\*[Gt] framebuffer data */
@@ -128,24 +128,39 @@ Valid values for the
 .Em ri_flg
 member are:
 .Pp
-.Bl -tag -offset indent -width RI_CURSORCLIP -compact
-.It  RI_FULLCLEAR
-eraserows() hack to clear full screen
-.It  RI_FORCEMONO
+.Bl -tag -offset indent -width RI_ENABLE_ALPHA_XX -compact
+.It Dv RI_FULLCLEAR
+.Fn eraserows
+hack to clear full screen
+.It Dv RI_FORCEMONO
 monochrome output even if we can do color
-.It  RI_BSWAP
+.It Dv RI_BSWAP
 framebuffer endianness doesn't match CPU
-.It  RI_CURSOR
+.It Dv RI_CURSOR
 cursor is switched on
-.It  RI_CLEAR
+.It Dv RI_CLEAR
 clear display on startup
-.It  RI_CENTER
+.It Dv RI_CENTER
 center onscreen output
-.It  RI_CURSORCLIP
+.It Dv RI_CURSORCLIP
 cursor is currently clipped
-.It  RI_CFGDONE
+.It Dv RI_CFGDONE
 .Fn rasops_reconfig
 completed successfully
+.It Dv RI_NO_AUTO
+do not generate box drawing characters for ISO fonts.
+Use this when it is not safe to allocate memory, for example when setting up
+an early console.
+.It Dv RI_ENABLE_ALPHA
+set this if the caller supports anti-aliased fonts in the given colour depth.
+Without this flag
+.Fn rasops_init
+will only pick bitmap fonts.
+.It Dv RI_8BIT_IS_RGB
+set this if the caller uses an R3G3B2 colour map in 8 bit.
+.Fn rasops_init
+will generate an appropriate ri_devcmap[] but the caller still needs to set up
+the actual colour map.
 .El
 .Sh FUNCTIONS
 .Bl -tag -width compact
@@ -169,6 +184,12 @@ The arguments
 and
 .Fa wantcols
 are the number of rows and columns we'd like.
+Passing zero for either one of
+them uses the default - normally 80x25 but it can be changed with
+.Bd -literal -offset indent
+options RASOPS_DEFAULT_WIDTH=80
+options RASOPS_DEFAULT_HEIGHT=25
+.Ed
 If calling
 .Fn rasops_reconfig
 to change the font and ri_wsfcookie \*[Ge] 0, you must call

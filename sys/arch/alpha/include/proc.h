@@ -1,21 +1,21 @@
-/* $NetBSD: proc.h,v 1.20 2011/06/07 00:48:31 matt Exp $ */
+/* $NetBSD: proc.h,v 1.20.2.1 2012/04/17 00:05:55 yamt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -50,12 +50,12 @@ struct mdlwp {
  * 	A largely unused bit indicating the presence of FPU history.
  * 	Cleared on exec. Set but not used by the fpu context switcher
  * 	itself.
- * 
+ *
  * MDLWP_FP_C
  * 	The architected FP Control word. It should forever begin at bit 1,
  * 	as the bits are AARM specified and this way it doesn't need to be
  * 	shifted.
- * 
+ *
  * 	Until C99 there was never an IEEE 754 API, making most of the
  * 	standard useless.  Because of overlapping AARM, OSF/1, NetBSD, and
  * 	C99 API's, the use of the MDLWP_FP_C bits is defined variously in
@@ -71,7 +71,7 @@ struct mdlwp {
 struct lwp;
 struct mdproc {
 					/* this process's syscall vector */
-	void	(*md_syscall)(struct lwp *, u_int64_t, struct trapframe *);
+	void	(*md_syscall)(struct lwp *, uint64_t, struct trapframe *);
 };
 
 #ifdef _KERNEL

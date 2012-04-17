@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2011/08/16 08:07:12 christos Exp $
+#	$NetBSD: Makefile,v 1.13.2.1 2012/04/17 00:09:46 yamt Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -6,14 +6,21 @@ RUMPKERNEL=	yes	# XXX: Avoid -mcmodel=kernel
 
 CWARNFLAGS.clang+=	-Wno-format
 
-LDADD+=	-lutil -lkvm -ledit -lterminfo -T${.CURDIR}/ldscript.crash
+LDADD+=	-lutil -lkvm -ledit -lterminfo
 DPADD+=	${LIBUTIL} ${LIBKVM} ${LIBEDIT} ${LIBTERMINFO}
 
 # some ddb kernel components need limited modifications.  for now,
 # punt if not noted as implemented here.
 .if    ${MACHINE} == "amd64" \
+    || ${MACHINE} == "hp700" \
     || ${MACHINE} == "i386" \
-    || ${MACHINE} == "sparc64"
+    || ${MACHINE} == "sparc64" \
+    || (${MACHINE_ARCH} == "arm" && ${MACHINE} != "acorn26") \
+    || ${MACHINE_ARCH} == "m68k"
+SRCS+=	db_trace.c
+.if ${MACHINE_ARCH} != "m68k"
+SRCS+=	db_machdep.c
+.endif
 REALCRASH=yes
 .else
 REALCRASH=no
@@ -35,21 +42,27 @@ SRCS+=	db_expr.c db_lex.c db_output.c db_print.c
 SRCS+=	db_sym.c db_variables.c db_write_cmd.c
 
 .PATH:	${S}/arch/${MACHINE}/${MACHINE}
+.PATH:	${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
 SRCS+=	db_disasm.c
+
+CPPFLAGS+=	-I${S}/arch
 
 . if    ${MACHINE} == "amd64" \
      || ${MACHINE} == "i386"
 MACHINE_FAMILY = x86
-.PATH:	${S}/arch/x86/x86
-SRCS+=	db_trace.c
-SRCS+=	db_machdep.c
+. elif  ${MACHINE_ARCH} == "m68k" \
+     || ${MACHINE_ARCH} == "arm"
+MACHINE_FAMILY = ${MACHINE_ARCH}
 . else
 MACHINE_FAMILY = ${MACHINE}
 . endif
 
-. if ${MACHINE} == "sparc64"
-SRCS+=	db_trace.c db_interface.c
-. endif
+.if ${MACHINE_ARCH} == "arm"
+.PATH:	${S}/arch/arm/arm32
+SRCS+=disassem.c setstack.S cpufunc_asm.S
+.endif
+
+.PATH:	${S}/arch/${MACHINE_FAMILY}/${MACHINE_FAMILY}
 
 # crash main source
 SRCS+=	crash.c
@@ -67,7 +80,7 @@ COPTS.db_output.c += -Wno-format-nonliteral
 # vers.c
 SRCS+=	vers.c
 vers.c:	${S}/conf/newvers.sh
-	${HOST_SH} ${S}/conf/newvers.sh -r
+	${HOST_SH} ${S}/conf/newvers.sh -r -n
 CLEANFILES+=	vers.c version
 
 .else				# } {

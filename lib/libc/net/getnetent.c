@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetent.c,v 1.19 2011/10/15 23:00:02 christos Exp $	*/
+/*	$NetBSD: getnetent.c,v 1.19.2.1 2012/04/17 00:05:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@
 static char sccsid[] = "@(#)getnetent.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: getnetent.c,v 8.4 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: getnetent.c,v 1.19 2011/10/15 23:00:02 christos Exp $");
+__RCSID("$NetBSD: getnetent.c,v 1.19.2.1 2012/04/17 00:05:21 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,12 +71,11 @@ static struct netent net;
 static char *net_aliases[MAXALIASES];
 int _net_stayopen;
 
-static void __setnetent __P((int));
-static void __endnetent __P((void));
+static void __setnetent(int);
+static void __endnetent(void);
 
 void
-setnetent(stayopen)
-	int stayopen;
+setnetent(int stayopen)
 {
 
 	sethostent(stayopen);
@@ -84,7 +83,7 @@ setnetent(stayopen)
 }
 
 void
-endnetent()
+endnetent(void)
 {
 
 	endhostent();
@@ -92,8 +91,7 @@ endnetent()
 }
 
 static void
-__setnetent(f)
-	int f;
+__setnetent(int f)
 {
 
 	if (netf == NULL)
@@ -104,7 +102,7 @@ __setnetent(f)
 }
 
 static void
-__endnetent()
+__endnetent(void)
 {
 
 	if (netf) {
@@ -115,7 +113,7 @@ __endnetent()
 }
 
 struct netent *
-getnetent()
+getnetent(void)
 {
 	char *p;
 	register char *cp, **q;
@@ -129,7 +127,7 @@ getnetent()
 	net.__n_pad0 = 0;
 #endif
 again:
-	p = fgets(line, sizeof line, netf);
+	p = fgets(line, (int)sizeof line, netf);
 	if (p == NULL)
 		return (NULL);
 	if (*p == '#')

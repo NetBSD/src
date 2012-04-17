@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.129 2011/09/20 14:01:32 chs Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.129.2.1 2012/04/17 00:08:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.129 2011/09/20 14:01:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.129.2.1 2012/04/17 00:08:55 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.129 2011/09/20 14:01:32 chs Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/cprng.h>
 #include <sys/fstrans.h>
 #include <sys/kauth.h>
 #include <sys/kernel.h>
@@ -1388,7 +1389,7 @@ gotit:
 			 * Don't bother to swap, it's supposed to be
 			 * random, after all.
 			 */
-			dp2->di_gen = (arc4random() & INT32_MAX) / 2 + 1;
+			dp2->di_gen = (cprng_fast32() & INT32_MAX) / 2 + 1;
 			dp2++;
 		}
 		initediblk += INOPB(fs);

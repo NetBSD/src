@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.40 2011/03/16 21:36:55 plunky Exp $	*/
+/*	$NetBSD: ubt.c,v 1.40.4.1 2012/04/17 00:08:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.40 2011/03/16 21:36:55 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.40.4.1 2012/04/17 00:08:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -533,8 +533,10 @@ ubt_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_ok = 1;
+
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	return;
 }
 
@@ -546,8 +548,7 @@ ubt_detach(device_t self, int flags)
 
 	DPRINTF("sc=%p flags=%d\n", sc, flags);
 
-	if (device_pmf_is_registered(self))
-		pmf_device_deregister(self);
+	pmf_device_deregister(self);
 
 	sc->sc_dying = 1;
 
@@ -575,7 +576,7 @@ ubt_detach(device_t self, int flags)
 	/* wait for all processes to finish */
 	s = splusb();
 	if (sc->sc_refcnt-- > 0)
-		usb_detach_wait(sc->sc_dev);
+		usb_detach_waitold(sc->sc_dev);
 
 	splx(s);
 
@@ -680,7 +681,6 @@ ubt_set_isoc_config(struct ubt_softc *sc)
 		return ENOENT;
 	}
 
-#ifdef DIAGNOSTIC
 	if (rd_size > MLEN) {
 		aprint_error_dev(sc->sc_dev, "rd_size=%d exceeds MLEN\n",
 		    rd_size);
@@ -694,7 +694,6 @@ ubt_set_isoc_config(struct ubt_softc *sc)
 
 		return EOVERFLOW;
 	}
-#endif
 
 	sc->sc_scord_size = rd_size;
 	sc->sc_scord_addr = rd_addr;
@@ -729,8 +728,11 @@ ubt_sysctl_config(SYSCTLFN_ARGS)
 	if (sc->sc_enabled)
 		return EBUSY;
 
+	KERNEL_LOCK(1, curlwp);
 	sc->sc_config = t;
-	return ubt_set_isoc_config(sc);
+	error = ubt_set_isoc_config(sc);
+	KERNEL_UNLOCK_ONE(curlwp);
+	return error;
 }
 
 static void
@@ -1088,7 +1090,7 @@ ubt_xmit_cmd_complete(usbd_xfer_handle xfer,
 
 	if (--sc->sc_refcnt < 0) {
 		DPRINTF("sc_refcnt=%d\n", sc->sc_refcnt);
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 		return;
 	}
 
@@ -1199,7 +1201,7 @@ ubt_xmit_acl_complete(usbd_xfer_handle xfer,
 	sc->sc_aclwr_busy = 0;
 
 	if (--sc->sc_refcnt < 0) {
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 		return;
 	}
 
@@ -1364,7 +1366,7 @@ ubt_xmit_sco_complete(usbd_xfer_handle xfer,
 	}
 
 	if (--sc->sc_refcnt < 0) {
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 		return;
 	}
 
@@ -1499,7 +1501,7 @@ ubt_recv_acl_complete(usbd_xfer_handle xfer,
 
 	if (--sc->sc_refcnt < 0) {
 		DPRINTF("refcnt = %d\n", sc->sc_refcnt);
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 		return;
 	}
 
@@ -1590,7 +1592,7 @@ ubt_recv_sco_complete(usbd_xfer_handle xfer,
 
 	if (--sc->sc_refcnt < 0) {
 		DPRINTF("refcnt=%d\n", sc->sc_refcnt);
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 		return;
 	}
 

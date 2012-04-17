@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.25 2011/04/24 18:46:22 rmind Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.25.4.1 2012/04/17 00:08:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.25 2011/04/24 18:46:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.25.4.1 2012/04/17 00:08:25 yamt Exp $");
 
 #include "opt_pax.h"
 
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.25 2011/04/24 18:46:22 rmind Exp $");
 #include <sys/vnode.h>
 #include <sys/queue.h>
 #include <sys/kauth.h>
+#include <sys/cprng.h>
 
 #ifdef PAX_ASLR
 #include <sys/mman.h>
@@ -310,7 +311,7 @@ pax_aslr_init(struct lwp *l, struct vmspace *vm)
 	if (!pax_aslr_active(l))
 		return;
 
-	vm->vm_aslr_delta_mmap = PAX_ASLR_DELTA(arc4random(),
+	vm->vm_aslr_delta_mmap = PAX_ASLR_DELTA(cprng_fast32(),
 	    PAX_ASLR_DELTA_MMAP_LSB, PAX_ASLR_DELTA_MMAP_LEN);
 }
 
@@ -344,7 +345,7 @@ void
 pax_aslr_stack(struct lwp *l, struct exec_package *epp, u_long *max_stack_size)
 {
 	if (pax_aslr_active(l)) {
-		u_long d =  PAX_ASLR_DELTA(arc4random(),
+		u_long d =  PAX_ASLR_DELTA(cprng_fast32(),
 		    PAX_ASLR_DELTA_STACK_LSB,
 		    PAX_ASLR_DELTA_STACK_LEN);
 #ifdef PAX_ASLR_DEBUG

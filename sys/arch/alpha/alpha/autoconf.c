@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.50 2011/07/27 15:08:42 njoly Exp $ */
+/* $NetBSD: autoconf.c,v 1.50.2.1 2012/04/17 00:05:53 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.50 2011/07/27 15:08:42 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.50.2.1 2012/04/17 00:05:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ cpu_configure(void)
 	(void)spl0();
 
 	/*
-	 * Note that bootstrapping is finished, and set the HWRPB up  
+	 * Note that bootstrapping is finished, and set the HWRPB up
 	 * to do restarts.
 	 */
 	hwrpb_restart_setup();

@@ -1,4 +1,4 @@
-/*	$Id: light.c,v 1.5 2007/03/04 06:00:39 christos Exp $	*/
+/*	$Id: light.c,v 1.5.78.1 2012/04/17 00:06:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: light.c,v 1.5 2007/03/04 06:00:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: light.c,v 1.5.78.1 2012/04/17 00:06:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,7 +297,7 @@ light_attach_common(struct light_devconfig *dc, struct gio_attach_args *ga)
 	wsfont_init();
 
 	dc->dc_font = wsfont_find(NULL, 8, 16, 0, WSDISPLAY_FONTORDER_L2R,
-	    WSDISPLAY_FONTORDER_L2R);
+	    WSDISPLAY_FONTORDER_L2R, WSFONT_FIND_BITMAP);
 
 	if (dc->dc_font < 0)
 		panic("light_attach_common: no suitable fonts");

@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 m4_include([../version.m4])
-AC_PREREQ(2.61)
+AC_PREREQ([2.61])
 AC_INIT([sntp], [VERSION_NUMBER])
 AC_CONFIG_MACRO_DIR([../m4])
 AC_CONFIG_AUX_DIR([.])
@@ -41,10 +41,10 @@ dnl the 'host' machine is where the resulting stuff runs.
 AC_DEFINE_UNQUOTED([STR_SYSTEM], "$host", [canonical system (cpu-vendor-os) of where we should run])
 AC_CONFIG_HEADER([config.h])
 dnl AC_ARG_PROGRAM
-AC_PREREQ([2.53])
 
 # Checks for programs.
-AC_PROG_CC
+AM_PROG_CC_C_O
+AC_PROG_CPP
 
 # AC_PROG_CC_STDC has two functions.  It attempts to find a compiler
 # capable of C99, or failing that, for C89.  CC is set afterward with
@@ -60,41 +60,56 @@ case "$ac_cv_prog_cc_stdc" in
 		[version 4.2.5 and higher.])
 esac
 
+AC_CACHE_CHECK(
+    [if $CC can handle @%:@warning],
+    [ntp_cv_cpp_warning],
+    [AC_COMPILE_IFELSE(
+	[AC_LANG_PROGRAM([[]], [[#warning foo]])],
+	[ntp_cv_cpp_warning=yes],
+	[ntp_cv_cpp_warning=no]
+    )]
+)
+case "$ntp_cv_cpp_warning" in
+ no)
+    AC_DEFINE([NO_OPTION_NAME_WARNINGS], [1],
+	[Should we avoid @%:@warning on option name collisions?])
+esac
+
 case "$GCC" in
  yes)
-    SAVED_CFLAGS_AC="$CFLAGS"
+    SAVED_CFLAGS_NTP="$CFLAGS"
     CFLAGS="$CFLAGS -Wstrict-overflow"
     AC_CACHE_CHECK(
 	[if $CC can handle -Wstrict-overflow], 
-	ac_cv_gcc_Wstrict_overflow, 
+	[ntp_cv_gcc_Wstrict_overflow], 
+	[AC_COMPILE_IFELSE(
+	    [AC_LANG_PROGRAM([[]], [[]])],
+	    [ntp_cv_gcc_Wstrict_overflow=yes],
+	    [ntp_cv_gcc_Wstrict_overflow=no]
+	)	]
+    )
+    #
+    # $ntp_cv_gcc_Wstrict_overflow is tested later to add the 
+    # flag to CFLAGS.
+    #
+    CFLAGS="$SAVED_CFLAGS_NTP -Winit-self"
+    AC_CACHE_CHECK(
+	[if $CC can handle -Winit-self], 
+	[ntp_cv_gcc_Winit_self],
 	[
 	    AC_COMPILE_IFELSE(
-		[AC_LANG_PROGRAM([], [])],
-		[ac_cv_gcc_Wstrict_overflow=yes],
-		[ac_cv_gcc_Wstrict_overflow=no]
+		[AC_LANG_PROGRAM([[]], [[]])],
+		[ntp_cv_gcc_Winit_self=yes],
+		[ntp_cv_gcc_Winit_self=no]
 	    )
 	]
     )
-    CFLAGS="$SAVED_CFLAGS_AC"
-    SAVED_CFLAGS_AC=
-
-    CFLAGS="$CFLAGS -Wall"
-    # CFLAGS="$CFLAGS -Wcast-align"
-    CFLAGS="$CFLAGS -Wcast-qual"
-    # CFLAGS="$CFLAGS -Wconversion"
-    # CFLAGS="$CFLAGS -Werror"
-    # CFLAGS="$CFLAGS -Wextra"
-    # CFLAGS="$CFLAGS -Wfloat-equal"
-    CFLAGS="$CFLAGS -Wmissing-prototypes"
-    CFLAGS="$CFLAGS -Wpointer-arith"
-    CFLAGS="$CFLAGS -Wshadow"
-    CFLAGS="$CFLAGS -Wstrict-prototypes"
-    # CFLAGS="$CFLAGS -Wtraditional"
-    # CFLAGS="$CFLAGS -Wwrite-strings"
-    case "$ac_cv_gcc_Wstrict_overflow" in
-     yes)
-	CFLAGS="$CFLAGS -Wstrict-overflow"
-    esac
+    CFLAGS="$SAVED_CFLAGS_NTP"
+    AS_UNSET([SAVED_CFLAGS_NTP])
+    #
+    # $ntp_cv_gcc_Winit_self is tested later to add the 
+    # flag to CFLAGS.
+    #
 esac
 
 # HMS: These need to be moved to AM_CPPFLAGS and/or AM_CFLAGS
@@ -124,15 +139,38 @@ case "${enable_libopts_install+set}" in
  set) ;;
  *) enable_libopts_install=no ;;
 esac
-LIBOPTS_CHECK([libopts])
-
-m4_defun([_LT_AC_LANG_CXX_CONFIG], [:])
-m4_defun([_LT_AC_LANG_F77_CONFIG], [:])
+LIBOPTS_CHECK
 
 AC_PROG_LIBTOOL
 NTP_DIR_SEP
 
 # Checks for libraries.
+NTP_LIB_M
+
+case "$GCC" in
+ yes)
+    CFLAGS="$CFLAGS -Wall"
+    # CFLAGS="$CFLAGS -Wcast-align"
+    CFLAGS="$CFLAGS -Wcast-qual"
+    # CFLAGS="$CFLAGS -Wconversion"
+    # CFLAGS="$CFLAGS -Werror"
+    # CFLAGS="$CFLAGS -Wextra"
+    # CFLAGS="$CFLAGS -Wfloat-equal"
+    CFLAGS="$CFLAGS -Wmissing-prototypes"
+    CFLAGS="$CFLAGS -Wpointer-arith"
+    CFLAGS="$CFLAGS -Wshadow"
+    # CFLAGS="$CFLAGS -Wtraditional"
+    # CFLAGS="$CFLAGS -Wwrite-strings"
+    case "$ntp_cv_gcc_Winit_self" in
+     yes)
+	CFLAGS="$CFLAGS -Winit-self"
+    esac
+    case "$ntp_cv_gcc_Wstrict_overflow" in
+     yes)
+	CFLAGS="$CFLAGS -Wstrict-overflow"
+    esac
+    # -W[no-]strict-prototypes is added later depending on OpenSSL
+esac
 
 AC_CHECK_FUNC([gethostent], ,
 	[AC_SEARCH_LIBS([gethostent], [nsl], , , [$libxnet -lsocket])])
@@ -144,6 +182,53 @@ AC_SEARCH_LIBS([setsockopt], [socket xnet])
 
 # Checks for header files.
 AC_HEADER_STDC
+
+dnl  HP-UX 11.31 on HPPA has a net/if.h that can't be compiled with gcc4
+dnl  due to an incomplete type (a union) mpinfou used in an array.  gcc3
+dnl  compiles it without complaint.  The mpinfou union is defined later
+dnl  in the resulting preprocessed source than the spu_info array in
+dnl  /usr/include/machine/sys/getppdp.h:
+dnl	extern union mpinfou spu_info[];
+dnl  triggering the error.  Our strategy is on HP-UX only, test for
+dnl  net/netmp.h, which is the file included by net/if.h that leads to
+dnl  getppdp.h.  If it is present but can't be compiled, try adding
+dnl  a duplicate definition of mpinfou, which should then allow the
+dnl  following net/if.h and net/if6.h tests to proceed normally.
+dnl  Using net/netmp.h allows us to avoid polluting test results for
+dnl  net/if.h.
+#
+case "$host" in
+ *-hp-hpux*)
+    AC_CHECK_HEADERS(
+	[net/netmp.h],
+	[netmp_h_works=yes],
+	[netmp_h_works=no]
+    )
+    case "$netmp_h_works" in
+     no)
+	cat >>confdefs.h <<_ACEOF
+#ifndef MPINFOU_PREDECLARED
+# define MPINFOU_PREDECLARED
+typedef union mpinfou {		/* For lint */
+	struct pdk_mpinfo *pdkptr;
+	struct mpinfo *pikptr;
+} mpinfou_t;
+#endif
+_ACEOF
+	AH_BOTTOM([
+#ifndef MPINFOU_PREDECLARED
+# define MPINFOU_PREDECLARED
+typedef union mpinfou {		/* For lint */
+	struct pdk_mpinfo *pdkptr;
+	struct mpinfo *pikptr;
+} mpinfou_t;
+#endif
+])
+	;;
+    esac
+    ;;
+esac
+
 AC_CHECK_HEADERS([netdb.h netinet/in.h stdlib.h string.h strings.h syslog.h])
 AC_CHECK_HEADERS([sys/socket.h sys/time.h])
 AC_HEADER_TIME
@@ -152,6 +237,7 @@ AC_HEADER_TIME
 AC_HEADER_STDBOOL
 AC_C_CONST
 AC_TYPE_SIZE_T
+AC_CHECK_SIZEOF([time_t])
 
 AC_C_INLINE
 
@@ -192,38 +278,53 @@ case "$ac_cv_c_char_unsigned$ac_cv_sizeof_signed_char$ac_cv_type_s_char" in
 esac
 AC_TYPE_UID_T
 
-AC_MSG_CHECKING([type of socklen arg for getsockname()])
-AC_CACHE_VAL(ac_cv_func_getsockname_arg2,dnl
-[AC_CACHE_VAL(ac_cv_func_getsockname_socklen_type,dnl
- [for ac_cv_func_getsockname_arg2 in 'struct sockaddr *' 'void *'; do
-  for ac_cv_func_getsockname_socklen_type in 'socklen_t' 'size_t' 'unsigned int' 'int'; do
-   AC_TRY_COMPILE(dnl
-[#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-extern getsockname (int, $ac_cv_func_getsockname_arg2, $ac_cv_func_getsockname_socklen_type *);],,dnl
-    [ac_not_found=no ; break 2], ac_not_found=yes)
-   done
-  done
- ])dnl AC_CACHE_VAL
-])dnl AC_CACHE_VAL
-if test "$ac_not_found" = yes; then
- ac_cv_func_getsockname_socklen_type='socklen_t'
-fi
-AC_MSG_RESULT([$ac_cv_func_getsockname_socklen_type])
+NTP_OPENSSL
+
+AC_CACHE_CHECK(
+    [type of socklen arg for getsockname()],
+    [ntp_cv_getsockname_socklen_type],
+    [
+    getsockname_socklen_type_found=no
+    for getsockname_arg2 in 'struct sockaddr *' 'void *'; do
+	for ntp_cv_getsockname_socklen_type in 'socklen_t' 'size_t' 'unsigned int' 'int'; do
+	    AC_COMPILE_IFELSE(
+		[AC_LANG_PROGRAM(
+		    [[
+			#ifdef HAVE_SYS_TYPES_H
+			# include <sys/types.h>
+			#endif
+			#ifdef HAVE_SYS_SOCKET_H
+			# include <sys/socket.h>
+			#endif
+		    ]], [[
+			extern
+			getsockname(int, $getsockname_arg2, 
+				$ntp_cv_getsockname_socklen_type *);
+		    ]]
+		)],
+		[getsockname_socklen_type_found=yes ; break 2],
+		[]
+	    )
+	done
+    done
+    case "$getsockname_socklen_type_found" in
+     no)
+	ntp_cv_getsockname_socklen_type='socklen_t'
+    esac
+    AS_UNSET([getsockname_arg2])
+    AS_UNSET([getsockname_socklen_type_found])
+    ]
+)
 AC_DEFINE_UNQUOTED([GETSOCKNAME_SOCKLEN_TYPE],
-		   $ac_cv_func_getsockname_socklen_type,
+		   $ntp_cv_getsockname_socklen_type,
 		   [What is getsockname()'s socklen type?])
 
 AC_CACHE_CHECK(
     [for struct sockaddr_storage],
-    ntp_cv_sockaddr_storage,
-    [
-	AC_TRY_COMPILE(
-	    [
+    [ntp_cv_sockaddr_storage],
+    [AC_COMPILE_IFELSE(
+	[AC_LANG_PROGRAM(
+	    [[
 		#ifdef HAVE_SYS_TYPES_H
 		# include <sys/types.h>
 		#endif
@@ -233,26 +334,27 @@ AC_CACHE_CHECK(
 		#ifdef HAVE_NETINET_IN_H
 		# include <netinet/in.h>
 		#endif
-	    ],
-	    [
+	    ]],
+	    [[
 		struct sockaddr_storage n;
-	    ],
-	    [ntp_cv_sockaddr_storage="yes"],
-	    [ntp_cv_sockaddr_storage="no"]
-	)
-    ]
+	    ]]
+	)],
+	[ntp_cv_sockaddr_storage=yes],
+	[ntp_cv_sockaddr_storage=no]
+    )]
 )
 case "$ntp_cv_sockaddr_storage" in
  yes)
-    AC_DEFINE(HAVE_STRUCT_SOCKADDR_STORAGE, 1, [Does a system header define struct sockaddr_storage?])
+    AC_DEFINE([HAVE_STRUCT_SOCKADDR_STORAGE], [1],
+	[Does a system header define struct sockaddr_storage?])
 esac
 
 AC_CACHE_CHECK(
     [for sockaddr_storage.ss_family],
-    ntp_cv_have_ss_family,
-    [
-	AC_TRY_COMPILE(
-	    [
+    [ntp_cv_have_ss_family],
+    [AC_COMPILE_IFELSE(
+	[AC_LANG_PROGRAM(
+	    [[
 		#ifdef HAVE_SYS_TYPES_H
 		# include <sys/types.h>
 		#endif
@@ -262,25 +364,25 @@ AC_CACHE_CHECK(
 		#ifdef HAVE_NETINET_IN_H
 		# include <netinet/in.h>
 		#endif
-	    ],
-	    [
+	    ]],
+	    [[
 		struct sockaddr_storage s;
 		s.ss_family = 1;
-	    ],
-	    [ntp_cv_have_ss_family="yes"],
-	    [ntp_cv_have_ss_family="no"]
-	)
-    ]
+	    ]]
+	)],
+	[ntp_cv_have_ss_family=yes],
+	[ntp_cv_have_ss_family=no]
+    )]
 )
 
 case "$ntp_cv_have_ss_family" in
  no)
     AC_CACHE_CHECK(
 	[for sockaddr_storage.__ss_family],
-	ntp_cv_have___ss_family,
-	[
-	    AC_TRY_COMPILE(
-		[
+	[ntp_cv_have___ss_family],
+	[AC_COMPILE_IFELSE(
+	    [AC_LANG_PROGRAM(
+		[[
 		    #ifdef HAVE_SYS_TYPES_H
 		    # include <sys/types.h>
 		    #endif
@@ -290,19 +392,20 @@ case "$ntp_cv_have_ss_family" in
 		    #ifdef HAVE_NETINET_IN_H
 		    # include <netinet/in.h>
 		    #endif
-		],
-		[
+		]],
+		[[
 		    struct sockaddr_storage s;
 		    s.__ss_family = 1;
-		],
-		[ntp_cv_have___ss_family="yes"],
-		[ntp_cv_have___ss_family="no"]
-	    )
-	]
+		]]
+	    )],
+	    [ntp_cv_have___ss_family=yes],
+	    [ntp_cv_have___ss_family=no]
+	)]
     )
     case "$ntp_cv_have___ss_family" in
      yes)
-	AC_DEFINE(HAVE___SS_FAMILY_IN_SS, 1, [Does struct sockaddr_storage have __ss_family?])
+	AC_DEFINE([HAVE___SS_FAMILY_IN_SS], [1],
+	    [Does struct sockaddr_storage have __ss_family?])
     esac
 esac
 
@@ -318,10 +421,10 @@ AH_VERBATIM(
 
 AC_CACHE_CHECK(
     [for sockaddr_storage.ss_len],
-    ntp_cv_have_ss_len,
-    [
-	AC_TRY_COMPILE(
-	    [
+    [ntp_cv_have_ss_len],
+    [AC_COMPILE_IFELSE(
+	[AC_LANG_PROGRAM(
+	    [[
 		#ifdef HAVE_SYS_TYPES_H
 		# include <sys/types.h>
 		#endif
@@ -331,25 +434,25 @@ AC_CACHE_CHECK(
 		#ifdef HAVE_NETINET_IN_H
 		# include <netinet/in.h>
 		#endif
-	    ],
-	    [
+	    ]],
+	    [[
 		struct sockaddr_storage s;
 		s.ss_len = 1;
-	    ],
-	    [ntp_cv_have_ss_len="yes"],
-	    [ntp_cv_have_ss_len="no"]
-	)
-    ]
+	    ]]
+	)],
+	[ntp_cv_have_ss_len=yes],
+	[ntp_cv_have_ss_len=no]
+    )]
 )
 
 case "$ntp_cv_have_ss_len" in
  no)
     AC_CACHE_CHECK(
 	[for sockaddr_storage.__ss_len],
-	ntp_cv_have___ss_len,
-	[
-	    AC_TRY_COMPILE(
-		[
+	[ntp_cv_have___ss_len],
+	[AC_COMPILE_IFELSE(
+	    [AC_LANG_PROGRAM(
+		[[
 		    #ifdef HAVE_SYS_TYPES_H
 		    # include <sys/types.h>
 		    #endif
@@ -359,19 +462,20 @@ case "$ntp_cv_have_ss_len" in
 		    #ifdef HAVE_NETINET_IN_H
 		    # include <netinet/in.h>
 		    #endif
-		],
-		[
+		]],
+		[[
 		    struct sockaddr_storage s;
 		    s.__ss_len = 1;
-		],
-		[ntp_cv_have___ss_len="yes"],
-		[ntp_cv_have___ss_len="no"]
-	    )
-	]
+		]]
+	    )],
+	    [ntp_cv_have___ss_len=yes],
+	    [ntp_cv_have___ss_len=no]
+	)]
     )
     case "$ntp_cv_have___ss_len" in
      yes)
-	AC_DEFINE(HAVE___SS_LEN_IN_SS, 1, [Does struct sockaddr_storage have __ss_len?])
+	AC_DEFINE([HAVE___SS_LEN_IN_SS], [1],
+	    [Does struct sockaddr_storage have __ss_len?])
     esac
 esac
 
@@ -390,39 +494,124 @@ AH_VERBATIM(
 #
 AC_CACHE_CHECK(
     [for in_port_t],
-    isc_cv_have_in_port_t,
-    [
-	AC_TRY_COMPILE(
-	    [
+    [isc_cv_have_in_port_t],
+    [AC_COMPILE_IFELSE(
+	[AC_LANG_PROGRAM(
+	    [[
 		#include <sys/types.h>
 		#include <netinet/in.h>
-	    ],
-	    [
+	    ]],
+	    [[
 		in_port_t port = 25; 
 		return (0);
-	    ],
-	    [isc_cv_have_in_port_t=yes],
-	    [isc_cv_have_in_port_t=no]
-	)
-    ]
+	    ]]
+	)],
+	[isc_cv_have_in_port_t=yes],
+	[isc_cv_have_in_port_t=no]
+    )]
 )
 case "$isc_cv_have_in_port_t" in
  no)
-	AC_DEFINE(ISC_PLATFORM_NEEDPORTT, 1, [Declare in_port_t?])
+	AC_DEFINE([ISC_PLATFORM_NEEDPORTT], [1],
+	    [Declare in_port_t?])
 esac
 
-AC_SEARCH_LIBS([inet_ntop], [resolv], , , [-lsocket -lnsl])
-AC_CHECK_FUNC(inet_ntop, [], [AC_DEFINE(ISC_PLATFORM_NEEDNTOP, 1, [ISC: provide inet_ntop()])])
-AC_CHECK_FUNC(inet_pton, [], [AC_DEFINE(ISC_PLATFORM_NEEDPTON, 1, [ISC: provide inet_pton()])])
+AC_CACHE_CHECK(
+    [for multicast IP support],
+    [ntp_cv_multicast],
+    [
+	ntp_cv_multicast=no
+	case "$host" in
+	 i386-sequent-sysv4)
+	    ;;
+	 *)
+	    AC_COMPILE_IFELSE(
+		[AC_LANG_PROGRAM(
+		    [[
+			#ifdef HAVE_NETINET_IN_H
+			#include <netinet/in.h>
+			#endif
+		    ]],
+		    [[
+			struct ip_mreq ipmr;
+			ipmr.imr_interface.s_addr = 0;
+		    ]]
+		)],
+		[ntp_cv_multicast=yes],
+		[]
+	    )
+	esac
+    ]
+)
+case "$ntp_cv_multicast" in
+ yes)
+    AC_DEFINE([MCAST], [1], [Does the target support multicast IP?])
+    AC_CACHE_CHECK(
+	[arg type needed for setsockopt() IP*_MULTICAST_LOOP],
+	[ntp_cv_typeof_ip_multicast_loop],
+	[
+	    case "$host" in
+	     *-*-netbsd*|*-*-*linux*)
+		ntp_cv_typeof_ip_multicast_loop=u_int
+		;;
+	     *)
+		ntp_cv_typeof_ip_multicast_loop=u_char
+	    esac
+	]
+    )
+    AC_DEFINE_UNQUOTED([TYPEOF_IP_MULTICAST_LOOP],
+	$ntp_cv_typeof_ip_multicast_loop,
+	[What type to use for setsockopt])
+esac
 
-AC_ARG_ENABLE([ipv6], [AC_HELP_STRING([--enable-ipv6], [s use IPv6?])])
+# HMS: We don't need res_init, but since we may be using cached 
+# values from ntpd we need to test the same way 
+AC_SEARCH_LIBS([res_init], [resolv], , , [-lsocket -lnsl]) 
+AC_SEARCH_LIBS([inet_ntop], [resolv], , , [-lsocket -lnsl])
+AC_CHECK_FUNC([inet_ntop], [], 
+    [AC_DEFINE([ISC_PLATFORM_NEEDNTOP], [1], [ISC: provide inet_ntop()])])
+AC_CHECK_FUNC([inet_pton], [],
+    [AC_DEFINE([ISC_PLATFORM_NEEDPTON], [1], [ISC: provide inet_pton()])])
+
+AC_CACHE_CHECK(
+    [struct sockaddr for sa_len],
+    [isc_cv_platform_havesalen],
+    [AC_COMPILE_IFELSE(
+	[AC_LANG_PROGRAM(
+	    [[
+		#include <sys/types.h>
+		#include <sys/socket.h>
+	    ]],
+	    [[
+		extern struct sockaddr *ps;
+		return ps->sa_len;
+	    ]]
+	)],
+	[isc_cv_platform_havesalen=yes],
+	[isc_cv_platform_havesalen=no]
+    )]
+)
+case "$isc_cv_platform_havesalen" in
+ yes)
+    AC_DEFINE([ISC_PLATFORM_HAVESALEN], [1],
+	 [struct sockaddr has sa_len?])
+esac
+
+AC_ARG_ENABLE(
+    [ipv6],
+    [AS_HELP_STRING(
+	[--enable-ipv6],
+	[s use IPv6?]
+    )]
+)
 
 case "$enable_ipv6" in
  yes|''|autodetect)
     case "$host" in
-     powerpc-ibm-aix4*) ;;
+     powerpc-ibm-aix4*)
+	;;
      *)
-	AC_DEFINE([WANT_IPV6], ,[ISC: Want IPv6?])
+	AC_DEFINE([WANT_IPV6], [1], [configure --enable-ipv6])
 	;;
     esac
     ;;
@@ -430,27 +619,31 @@ case "$enable_ipv6" in
     ;;
 esac
 
+
+dnl [Bug 1984] ntp/libisc fails to compile on OS X 10.7 (Lion)
+case "$host" in
+ *-*-darwin*)
+    AC_DEFINE([__APPLE_USE_RFC_3542], [1], [Are we _special_?])
+esac
+
+
 AC_CACHE_CHECK(
     [for IPv6 structures],
-    ac_cv_isc_found_ipv6,
-    [
-	AC_COMPILE_IFELSE(
-	    [
-		AC_LANG_PROGRAM(
-		    [
-			#include <sys/types.h>
-			#include <sys/socket.h>
-			#include <netinet/in.h>
-		    ],
-		    [
-			struct sockaddr_in6 sin6;
-		    ]
-		)
-	    ],
-	    [ac_cv_isc_found_ipv6=yes],
-	    [ac_cv_isc_found_ipv6=no]
-	)
-    ]
+    [isc_cv_found_ipv6],
+    [AC_COMPILE_IFELSE(
+	[AC_LANG_PROGRAM(
+	    [[
+		#include <sys/types.h>
+		#include <sys/socket.h>
+		#include <netinet/in.h>
+	    ]],
+	    [[
+		struct sockaddr_in6 sin6;
+	    ]]
+	)],
+	[isc_cv_found_ipv6=yes],
+	[isc_cv_found_ipv6=no]
+    )]
 )
 
 #
@@ -458,10 +651,15 @@ AC_CACHE_CHECK(
 # This is done before other IPv6 linking tests so LIBS is properly set.
 #
 AC_MSG_CHECKING([for Kame IPv6 support])
-AC_ARG_WITH(kame,
-	[AC_HELP_STRING([--with-kame], [- =/usr/local/v6])],
-	use_kame="$withval", use_kame="no")
-
+AC_ARG_WITH(
+    [kame],
+    [AS_HELP_STRING(
+	[--with-kame],
+	[- =/usr/local/v6]
+    )],
+    [use_kame="$withval"],
+    [use_kame="no"]
+)
 case "$use_kame" in
  no)
     ;;
@@ -472,14 +670,13 @@ case "$use_kame" in
     kame_path="$use_kame"
     ;;
 esac
-
 case "$use_kame" in
  no)
-    AC_MSG_RESULT(no)
+    AC_MSG_RESULT([no])
     ;;
  *)
     if test -f $kame_path/lib/libinet6.a; then
-	AC_MSG_RESULT($kame_path/lib/libinet6.a)
+	AC_MSG_RESULT([$kame_path/lib/libinet6.a])
 	LIBS="-L$kame_path/lib -linet6 $LIBS"
     else
 	AC_MSG_ERROR([$kame_path/lib/libinet6.a not found.
@@ -502,13 +699,13 @@ esac
 #
 case "$host" in
  *-bsdi4.[[01]]*)
-    AC_DEFINE(ISC_PLATFORM_NEEDNETINET6IN6H, 1, [Do we need netinet6/in6.h?])
-    # does anything use LWRES_PLATFORM_NEEDNETINET6IN6H?  Can't it use above?
-    AC_DEFINE(LWRES_PLATFORM_NEEDNETINET6IN6H, 1, [Do we need netinet6/in6.h?])
+    AC_DEFINE([ISC_PLATFORM_NEEDNETINET6IN6H], [1],
+	[Do we need netinet6/in6.h?])
     isc_netinet6in6_hack="#include <netinet6/in6.h>"
     ;;
  *)
     isc_netinet6in6_hack=""
+    ;;
 esac
 
 #
@@ -516,186 +713,175 @@ esac
 #
 case "$host" in
  *-sco-sysv*uw*|*-*-sysv*UnixWare*|*-*-sysv*OpenUNIX*)
-    AC_DEFINE(ISC_PLATFORM_FIXIN6ISADDR, 1,[Do we need to fix in6isaddr?])
+    AC_DEFINE([ISC_PLATFORM_FIXIN6ISADDR], [1],
+	[Do we need to fix in6isaddr?])
     isc_netinetin6_hack="#include <netinet/in6.h>"
     ;;
  *)
     isc_netinetin6_hack=""
+    ;;
 esac
 
 
-case "$ac_cv_isc_found_ipv6" in
+case "$isc_cv_found_ipv6" in
  yes)
-    AC_DEFINE(ISC_PLATFORM_HAVEIPV6, ,[have IPv6?])
-
+    AC_DEFINE([ISC_PLATFORM_HAVEIPV6], [1], [have IPv6?])
     AC_CACHE_CHECK(
 	[for in6_pktinfo],
-	ac_cv_have_in6_pktinfo,
-	[
-	    AC_COMPILE_IFELSE(
-		[
-		    AC_LANG_PROGRAM(
-			[
-			    #include <sys/types.h>
-			    #include <sys/socket.h>
-			    #include <netinet/in.h>
-			    $isc_netinetin6_hack
-			    $isc_netinet6in6_hack
-			],
-			[
-			    struct in6_pktinfo xyzzy;
-			]
-		    )
-		],
-		[ac_cv_have_in6_pktinfo=yes],
-		[ac_cv_have_in6_pktinfo=no]
-	    )
-	]
+	[isc_cv_have_in6_pktinfo],
+	[AC_COMPILE_IFELSE(
+	    [AC_LANG_PROGRAM(
+		[[
+		    #include <sys/types.h>
+		    #include <sys/socket.h>
+		    #include <netinet/in.h>
+		    $isc_netinetin6_hack
+		    $isc_netinet6in6_hack
+		]],
+		[[
+		    struct in6_pktinfo xyzzy;
+		]]
+	    )],
+	    [isc_cv_have_in6_pktinfo=yes],
+	    [isc_cv_have_in6_pktinfo=no]
+	)]
     )
-
-    case "$ac_cv_have_in6_pktinfo" in
+    case "$isc_cv_have_in6_pktinfo" in
      yes)
-	AC_DEFINE(ISC_PLATFORM_HAVEIN6PKTINFO, , [have struct in6_pktinfo?])
+	AC_DEFINE([ISC_PLATFORM_HAVEIN6PKTINFO], [1],
+		[have struct in6_pktinfo?])
     esac
 
 
     # HMS: Use HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID instead?
     AC_CACHE_CHECK(
 	[for sockaddr_in6.sin6_scope_id],
-	ac_cv_have_sin6_scope_id,
-	[
-	    AC_COMPILE_IFELSE(
-		[
-		    AC_LANG_PROGRAM(
-			[
-			    #include <sys/types.h>
-			    #include <sys/socket.h>
-			    #include <netinet/in.h>
-			    $isc_netinetin6_hack
-			    $isc_netinet6in6_hack
-			],
-			[
-			    struct sockaddr_in6 xyzzy;
-			    xyzzy.sin6_scope_id = 0;
-			]
-		    )
-		],
-		[ac_cv_have_sin6_scope_id=yes],
-		[ac_cv_have_sin6_scope_id=no]
-	    )
-	]
+	[isc_cv_have_sin6_scope_id],
+	[AC_COMPILE_IFELSE(
+	    [AC_LANG_PROGRAM(
+		[[
+		    #include <sys/types.h>
+		    #include <sys/socket.h>
+		    #include <netinet/in.h>
+		    $isc_netinetin6_hack
+		    $isc_netinet6in6_hack
+		]],
+		[[
+		    struct sockaddr_in6 xyzzy;
+		    xyzzy.sin6_scope_id = 0;
+		]]
+	    )],
+	    [isc_cv_have_sin6_scope_id=yes],
+	    [isc_cv_have_sin6_scope_id=no]
+	)]
     )
 
-    case "$ac_cv_have_sin6_scope_id" in
+    case "$isc_cv_have_sin6_scope_id" in
      yes)
-	AC_DEFINE(ISC_PLATFORM_HAVESCOPEID, , [have sin6_scope_id?])
+	AC_DEFINE([ISC_PLATFORM_HAVESCOPEID], [1], [sin6_scope_id?])
     esac
 esac
 
 
-# We need this check run even without ac_cv_isc_found_ipv6=yes
+# We need this check run even without isc_cv_found_ipv6=yes
 
 AC_CACHE_CHECK(
     [for in6addr_any],
-    isc_cv_have_in6addr_any,
-    [
-	AC_LINK_IFELSE(
-	    [
-		AC_LANG_PROGRAM(
-		    [
-			#include <sys/types.h>
-			#include <sys/socket.h>
-			#include <netinet/in.h>
-			$isc_netinetin6_hack
-			$isc_netinet6in6_hack
-		    ],
-		    [
-			struct in6_addr in6; 
-			in6 = in6addr_any;
-		    ]
-		)
-	    ],
-	    [isc_cv_have_in6addr_any=yes],
-	    [isc_cv_have_in6addr_any=no]
-	)
-    ]
+    [isc_cv_have_in6addr_any],
+    [AC_LINK_IFELSE(
+	[AC_LANG_PROGRAM(
+	    [[
+		#include <sys/types.h>
+		#include <sys/socket.h>
+		#include <netinet/in.h>
+		$isc_netinetin6_hack
+		$isc_netinet6in6_hack
+	    ]],
+	    [[
+		struct in6_addr in6; 
+		in6 = in6addr_any;
+	    ]]
+	)],
+	[isc_cv_have_in6addr_any=yes],
+	[isc_cv_have_in6addr_any=no]
+    )]
 )
 
 case "$isc_cv_have_in6addr_any" in
  no)
-    AC_DEFINE(ISC_PLATFORM_NEEDIN6ADDRANY, , [missing in6addr_any?])
+    AC_DEFINE([ISC_PLATFORM_NEEDIN6ADDRANY], [1], [missing in6addr_any?])
 esac
 
 
 AC_CACHE_CHECK(
     [for struct if_laddrconf],
-    ac_cv_isc_struct_if_laddrconf,
-    [
-        AC_COMPILE_IFELSE(
-	    [
-		AC_LANG_PROGRAM(
-		    [
-			#include <sys/types.h>
-			#include <net/if6.h>
-		    ],
-		    [
-			struct if_laddrconf a;
-		    ]
-		)
-	    ],
-	    [ac_cv_isc_struct_if_laddrconf=yes],
-	    [ac_cv_isc_struct_if_laddrconf=no]
-	)
-    ]
+    [isc_cv_struct_if_laddrconf],
+    [AC_COMPILE_IFELSE(
+	[AC_LANG_PROGRAM(
+	    [[
+		#include <sys/types.h>
+		#include <net/if6.h>
+	    ]],
+	    [[
+		struct if_laddrconf a;
+	    ]]
+	)],
+	[isc_cv_struct_if_laddrconf=yes],
+	[isc_cv_struct_if_laddrconf=no]
+    )]
 )
 
-case "$ac_cv_isc_struct_if_laddrconf" in
+case "$isc_cv_struct_if_laddrconf" in
  yes)
-    AC_DEFINE(ISC_PLATFORM_HAVEIF_LADDRCONF, , [have struct if_laddrconf?])
+    AC_DEFINE([ISC_PLATFORM_HAVEIF_LADDRCONF], [1],
+	[have struct if_laddrconf?])
 esac
 
 AC_CACHE_CHECK(
     [for struct if_laddrreq],
-    ac_cv_isc_struct_if_laddrreq,
-    [
-        AC_COMPILE_IFELSE(
-	    [
-		AC_LANG_PROGRAM(
-		    [
-			#include <sys/types.h>
-			#include <net/if6.h>
-		    ],
-		    [
-			struct if_laddrreq a;
-		    ]
-		)
-	    ],
-	    [ac_cv_isc_struct_if_laddrreq=yes],
-	    [ac_cv_isc_struct_if_laddrreq=no]
-	)
-    ]
+    isc_cv_struct_if_laddrreq,
+    [AC_COMPILE_IFELSE(
+	[AC_LANG_PROGRAM(
+	    [[
+		#include <sys/types.h>
+		#include <net/if6.h>
+	    ]],
+	    [[
+		struct if_laddrreq a;
+	    ]]
+	)],
+	[isc_cv_struct_if_laddrreq=yes],
+	[isc_cv_struct_if_laddrreq=no]
+    )]
 )
 
-case "$ac_cv_isc_struct_if_laddrreq" in
+case "$isc_cv_struct_if_laddrreq" in
  yes)
-    AC_DEFINE(ISC_PLATFORM_HAVEIF_LADDRREQ, , [have struct if_laddrreq?])
+    AC_DEFINE([ISC_PLATFORM_HAVEIF_LADDRREQ], [1],
+	[have struct if_laddrreq?])
 esac
 
 
 ###
 
 # Hacks
-AC_DEFINE(HAVE_NO_NICE, 1, [sntp does not care about 'nice'])
-AC_DEFINE(HAVE_TERMIOS, 1, [sntp does not care about TTY stuff])
+# these need work if we're to move libntp under sntp
+AC_DEFINE([HAVE_NO_NICE], 1, [sntp does not care about 'nice'])
+AC_DEFINE([HAVE_TERMIOS], 1, [sntp does not care about TTY stuff])
 
 # Checks for library functions.
-AC_CHECK_FUNCS([atexit memset socket])
+AC_CHECK_FUNCS([socket vsnprintf vsprintf])
 
-AC_MSG_CHECKING(for bin subdirectory)
-AC_ARG_WITH(binsubdir,
-	[AC_HELP_STRING([--with-binsubdir], [bin ={bin,sbin}])],
-	use_binsubdir="$withval", use_binsubdir="bin")
-
+AC_MSG_CHECKING([for bin subdirectory])
+AC_ARG_WITH(
+    [binsubdir],
+    [AS_HELP_STRING(
+	[--with-binsubdir],
+	[bin ={bin,sbin}]
+    )],
+    [use_binsubdir="$withval"],
+    [use_binsubdir="bin"]
+)
 case "$use_binsubdir" in
  bin)
     ;;
@@ -705,9 +891,11 @@ case "$use_binsubdir" in
     AC_MSG_ERROR([<$use_binsubdir> is illegal - must be "bin" or "sbin"])
     ;;
 esac
-AC_MSG_RESULT($use_binsubdir)
+AC_MSG_RESULT([$use_binsubdir])
+
 BINSUBDIR=$use_binsubdir
-AC_SUBST(BINSUBDIR)
+AC_SUBST([BINSUBDIR])
+AM_CONDITIONAL([NTP_BINSUBDIR_IS_BIN], [test "bin" = "$BINSUBDIR"])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

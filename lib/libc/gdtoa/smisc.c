@@ -1,4 +1,4 @@
-/* $NetBSD: smisc.c,v 1.4 2011/03/20 23:15:35 christos Exp $ */
+/* $NetBSD: smisc.c,v 1.4.4.1 2012/04/17 00:05:18 yamt Exp $ */
 
 /****************************************************************
 
@@ -38,7 +38,7 @@ s2b
 #ifdef KR_headers
 	(s, nd0, nd, y9, dplen) CONST char *s; int dplen, nd0, nd; ULong y9;
 #else
-	(CONST char *s, int nd0, int nd, ULong y9, int dplen)
+	(CONST char *s, int nd0, int nd, ULong y9, size_t dplen)
 #endif
 {
 	Bigint *b;

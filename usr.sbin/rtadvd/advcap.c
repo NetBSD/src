@@ -1,4 +1,4 @@
-/*	$NetBSD: advcap.c,v 1.12 2006/03/18 22:07:15 dan Exp $	*/
+/*	$NetBSD: advcap.c,v 1.12.42.1 2012/04/17 00:09:53 yamt Exp $	*/
 /*	$KAME: advcap.c,v 1.11 2003/05/19 09:46:50 keiichi Exp $	*/
 
 /*
@@ -87,15 +87,15 @@ static	char *remotefile;
 
 extern char *conffile;
 
-int tgetent __P((char *, char *));
-int getent __P((char *, char *, char *));
-int tnchktc __P((void));
-int tnamatch __P((char *));
-static char *tskip __P((char *));
-int64_t tgetnum __P((char *));
-int tgetflag __P((char *));
-char *tgetstr __P((char *, char **));
-static char *tdecode __P((char *, char **));
+int tgetent(char *, char *);
+int getent(char *, char *, char *);
+int tnchktc(void);
+int tnamatch(char *);
+static char *tskip(char *);
+int64_t tgetnum(char *);
+int tgetflag(char *);
+char *tgetstr(char *, char **);
+static char *tdecode(char *, char **);
 
 /*
  * Get an entry for terminal name in buffer bp,
@@ -103,18 +103,16 @@ static char *tdecode __P((char *, char **));
  * we just notice escaped newlines.
  */
 int
-tgetent(bp, name)
-	char *bp, *name;
+tgetent(char *bp, char *name)
 {
 	char *cp;
 
-	remotefile = cp = conffile ? conffile : _PATH_RTADVDCONF;
+	remotefile = cp = conffile ? conffile : __UNCONST(_PATH_RTADVDCONF);
 	return (getent(bp, name, cp));
 }
 
 int
-getent(bp, name, cp)
-	char *bp, *name, *cp;
+getent(char *bp, char *name, char *cp)
 {
 	int c;
 	int i = 0, cnt = 0;
@@ -183,7 +181,7 @@ getent(bp, name, cp)
  * Note that this works because of the left to right scan.
  */
 int
-tnchktc()
+tnchktc(void)
 {
 	char *p, *q;
 	char tcname[16];	/* name of similar terminal */
@@ -232,8 +230,7 @@ tnchktc()
  * name (before the first field) stops us.
  */
 int
-tnamatch(np)
-	char *np;
+tnamatch(char *np)
 {
 	char *Np, *Bp;
 
@@ -259,8 +256,7 @@ tnamatch(np)
  * into the termcap file in octal.
  */
 static char *
-tskip(bp)
-	char *bp;
+tskip(char *bp)
 {
 	int dquote;
 
@@ -304,8 +300,7 @@ breakbreak:
  * Note that we handle octal numbers beginning with 0.
  */
 int64_t
-tgetnum(id)
-	char *id;
+tgetnum(char *id)
 {
 	int64_t i;
 	int base;
@@ -340,8 +335,7 @@ tgetnum(id)
  * not given.
  */
 int
-tgetflag(id)
-	char *id;
+tgetflag(char *id)
 {
 	char *bp = tbuf;
 
@@ -368,8 +362,7 @@ tgetflag(id)
  * No checking on area overflow.
  */
 char *
-tgetstr(id, area)
-	char *id, **area;
+tgetstr(char *id, char **area)
 {
 	char *bp = tbuf;
 
@@ -394,13 +387,11 @@ tgetstr(id, area)
  * string capability escapes.
  */
 static char *
-tdecode(str, area)
-	char *str;
-	char **area;
+tdecode(char *str, char **area)
 {
 	char *cp;
 	int c;
-	char *dp;
+	const char *dps = "E\033^^\\\\::n\nr\rt\tb\bf\f\"\"", *dp;
 	int i;
 	char term;
 
@@ -419,7 +410,7 @@ again:
 			break;
 
 		case '\\':
-			dp = "E\033^^\\\\::n\nr\rt\tb\bf\f\"\"";
+			dp = dps; 
 			c = *str++;
 nextc:
 			if (*dp++ == c) {

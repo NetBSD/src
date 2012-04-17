@@ -1,4 +1,4 @@
-/* $NetBSD: elantechvar.h,v 1.1 2008/12/14 00:42:33 jmcneill Exp $ */
+/* $NetBSD: elantechvar.h,v 1.1.24.1 2012/04/17 00:07:59 yamt Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #define _DEV_PCKBCPORT_ELANTECHVAR_H
 
 struct elantech_softc {
-	uint16_t	version;
+	uint32_t	version;
 
 	bool		initializing;
 	int16_t		last_x, last_y, last_z;

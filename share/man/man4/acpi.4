@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.73 2011/10/05 10:10:31 jruoho Exp $
+.\" $NetBSD: acpi.4,v 1.73.2.1 2012/04/17 00:05:45 yamt Exp $
 .\"
 .\" Copyright (c) 2002, 2004, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 5, 2011
+.Dd April 10, 2012
 .Dt ACPI 4
 .Os
 .Sh NAME
@@ -133,8 +133,9 @@ power off
 A boolean variable that controls whether the
 .Tn PC
 speaker beeps upon resume.
+Only available on i386 and amd64 architectures.
 .It Ic hw.acpi.sleep.vbios
-Defines the handling of the graphics card.
+Defines the handling of the graphics card on i386 and amd64 architectures.
 The supported values are:
 .Bl -tag -width '2' -offset 2n
 .It 0
@@ -181,7 +182,7 @@ The number of
 .Dq fixed events .
 .It Ic hw.acpi.stat.method
 The number of
-.Tn ACPI
+.Tn AML
 methods executed by the interpreter.
 .It Ic hw.acpi.power
 This read-only node describes the

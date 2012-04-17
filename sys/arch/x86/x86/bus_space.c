@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.37 2011/08/25 15:08:49 dyoung Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.37.2.1 2012/04/17 00:07:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.37 2011/08/25 15:08:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.37.2.1 2012/04/17 00:07:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,10 +126,10 @@ x86_bus_space_init(void)
 	 * extents of RAM are allocated from the map (0 -> ISA hole
 	 * and end of ISA hole -> end of RAM).
 	 */
-	ioport_ex = extent_create("ioport", 0x0, 0xffff, M_DEVBUF,
+	ioport_ex = extent_create("ioport", 0x0, 0xffff,
 	    (void *)ioport_ex_storage, sizeof(ioport_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
-	iomem_ex = extent_create("iomem", 0x0, 0xffffffff, M_DEVBUF,
+	iomem_ex = extent_create("iomem", 0x0, 0xffffffff,
 	    (void *)iomem_ex_storage, sizeof(iomem_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
 

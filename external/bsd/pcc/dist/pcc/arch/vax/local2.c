@@ -1,5 +1,5 @@
-/*	Id: local2.c,v 1.27 2011/07/30 08:09:29 ragge Exp 	*/	
-/*	$NetBSD: local2.c,v 1.1.1.4 2011/09/01 12:46:51 plunky Exp $	*/
+/*	Id: local2.c,v 1.28 2012/03/22 18:56:17 plunky Exp 	*/	
+/*	$NetBSD: local2.c,v 1.1.1.4.2.1 2012/04/17 00:04:03 yamt Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -506,13 +506,12 @@ zzzcode(NODE *p, int c)
 	case 'F':	/* register type of right operand */
 		{
 		register NODE *n;
-		extern int xdebug;
 		register int ty;
 
 		n = getlr( p, 'R' );
 		ty = n->n_type;
 
-		if (xdebug) printf("->%d<-", ty);
+		if (x2debug) printf("->%d<-", ty);
 
 		if ( ty==DOUBLE) printf("d");
 		else if ( ty==FLOAT ) printf("f");
@@ -540,10 +539,9 @@ zzzcode(NODE *p, int c)
 	case 'R':	/* type of right operand */
 		{
 		register NODE *n;
-		extern int xdebug;
 
 		n = getlr ( p, c);
-		if (xdebug) printf("->%d<-", n->n_type);
+		if (x2debug) printf("->%d<-", n->n_type);
 
 		prtype(n);
 		return;
@@ -794,9 +792,8 @@ shumul(NODE *p, int shape)
 int
 shumul( p, shape ) register NODE *p; int shape; {
 	register int o;
-	extern int xdebug;
 
-	if (xdebug) {
+	if (x2debug) {
 		 printf("\nshumul:op=%d,lop=%d,rop=%d", p->n_op, p->n_left->n_op, p->n_right->n_op);
 		printf(" prname=%s,plty=%d, prlval=%lld\n", p->n_right->n_name, p->n_left->n_type, p->n_right->n_lval);
 		}

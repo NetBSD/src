@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.54 2011/10/19 01:53:07 dyoung Exp $	*/
+/*	$NetBSD: mld6.c,v 1.54.2.1 2012/04/17 00:08:45 yamt Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.54 2011/10/19 01:53:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.54.2.1 2012/04/17 00:08:45 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -116,6 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.54 2011/10/19 01:53:07 dyoung Exp $");
 #include <sys/sysctl.h>
 #include <sys/kernel.h>
 #include <sys/callout.h>
+#include <sys/cprng.h>
 
 #include <net/if.h>
 
@@ -289,7 +290,7 @@ mld_start_listening(struct in6_multi *in6m)
 		in6m->in6m_state = MLD_OTHERLISTENER;
 	} else {
 		mld_sendpkt(in6m, MLD_LISTENER_REPORT, NULL);
-		in6m->in6m_timer = arc4random() %
+		in6m->in6m_timer = cprng_fast32() %
 		    (MLD_UNSOLICITED_REPORT_INTERVAL * hz);
 		in6m->in6m_state = MLD_IREPORTEDLAST;
 
@@ -443,7 +444,7 @@ mld_input(struct mbuf *m, int off)
 			} else if (in6m->in6m_timer == IN6M_TIMER_UNDEF ||
 			    mld_timerresid(in6m) > timer) {
 				in6m->in6m_timer =
-				   1 + (arc4random() % timer) * hz / 1000;
+				   1 + (cprng_fast32() % timer) * hz / 1000;
 				mld_starttimer(in6m);
 			}
 		}

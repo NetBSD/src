@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vtevar.h,v 1.1 2011/01/26 18:48:13 bouyer Exp $	*/
+/*	$NetBSD: if_vtevar.h,v 1.1.10.1 2012/04/17 00:07:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -138,9 +138,7 @@ struct vte_softc {
 	int			vte_int_rx_mod;
 	int			vte_int_tx_mod;
 
-#if NRND > 0
-	rndsource_element_t	rnd_source;
-#endif
+	krndsource_t	rnd_source;
 };
 
 #define vte_if	vte_ec.ec_if

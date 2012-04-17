@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.c,v 1.6 2009/04/25 12:20:48 skrll Exp $	*/
+/*	$NetBSD: bcmp.c,v 1.6.6.1 2012/04/17 00:01:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)bcmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bcmp.c,v 1.6 2009/04/25 12:20:48 skrll Exp $");
+__RCSID("$NetBSD: bcmp.c,v 1.6.6.1 2012/04/17 00:01:40 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,5 +66,5 @@ bcmp(const void *b1, const void *b2, size_t length)
 		if (*p1++ != *p2++)
 			break;
 	while (--length);
-	return(length);
+	return length != 0;
 }

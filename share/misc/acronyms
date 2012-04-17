@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.207 2011/08/28 08:41:01 jnemeth Exp $
+$NetBSD: acronyms,v 1.207.2.1 2012/04/17 00:05:49 yamt Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -72,6 +72,7 @@ BOHICA	bend over here it comes again
 BOT	back on topic
 BRB	[I'll] be right back
 BS	bullshit
+BSD	booze, sex, drugs
 BTDT	been there, done that
 BTFT	been there, fixed that
 BTTH	boot to the head
@@ -104,7 +105,9 @@ DTRT	do the right thing
 DTWT	do the wrong thing
 DYK	do you know?
 DWIM	do what I mean
+ECR	electronic cash register
 EDS	eternal downward spiral
+EFT	electronic funds transfer
 EG	evil grin
 EIE	enough is enough
 EMSG	email message
@@ -151,7 +154,7 @@ FTS	fuck that shit
 FTTT	from time to time
 FTW	for the win
 FUBAR	fucked up beyond all recognition
-FUD	fear, uncertainty and doubt
+FUD	fear, uncertainty, and doubt
 FWIW	for what it's worth
 FYEO	for your eyes only
 FYI	for your information
@@ -373,6 +376,7 @@ POC	proof of concept
 POLA	principle of least astonishment
 POLS	principle of least surprise
 POS	piece of shit
+POS	point of sale
 POV	point of view
 PPL	people
 PPL	pretty please

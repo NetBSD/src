@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.18 2011/08/23 09:59:20 christos Exp $	*/
+/*	$NetBSD: error.h,v 1.18.2.1 2012/04/17 00:01:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -89,33 +89,23 @@ extern volatile int intpending;
 #define int_pending() intpending
 
 #if ! defined(SHELL_BUILTIN)
-void exraise(int) __attribute__((__noreturn__));
+void exraise(int) __dead;
 void onint(void);
-void error(const char *, ...) __attribute__((__noreturn__))
-    __attribute__((__format__(__printf__, 1, 2)));
-void exerror(int, const char *, ...) __attribute__((__noreturn__))
-    __attribute__((__format__(__printf__, 2, 3)));
+void error(const char *, ...) __dead __printflike(1, 2);
+void exerror(int, const char *, ...) __dead __printflike(2, 3);
 const char *errmsg(int, int);
 #endif /* ! SHELL_BUILTIN */
 
-void sh_err(int, const char *, ...) __attribute__((__noreturn__))
-    __attribute__((__format__(__printf__, 2, 3)));
-void sh_verr(int, const char *, va_list) __attribute__((__noreturn__))
-    __attribute__((__format__(__printf__, 2, 0)));
-void sh_errx(int, const char *, ...) __attribute__((__noreturn__))
-    __attribute__((__format__(__printf__, 2, 3)));
-void sh_verrx(int, const char *, va_list) __attribute__((__noreturn__))
-    __attribute__((__format__(__printf__, 2, 0)));
-void sh_warn(const char *, ...)
-    __attribute__((__format__(__printf__, 1, 2)));
-void sh_vwarn(const char *, va_list)
-    __attribute__((__format__(__printf__, 1, 0)));
-void sh_warnx(const char *, ...)
-    __attribute__((__format__(__printf__, 1, 2)));
-void sh_vwarnx(const char *, va_list)
-    __attribute__((__format__(__printf__, 1, 0)));
+void sh_err(int, const char *, ...) __dead __printflike(2, 3);
+void sh_verr(int, const char *, va_list) __dead __printflike(2, 0);
+void sh_errx(int, const char *, ...) __dead __printflike(2, 3);
+void sh_verrx(int, const char *, va_list) __dead __printflike(2, 0);
+void sh_warn(const char *, ...) __printflike(1, 2);
+void sh_vwarn(const char *, va_list) __printflike(1, 0);
+void sh_warnx(const char *, ...) __printflike(1, 2);
+void sh_vwarnx(const char *, va_list) __printflike(1, 0);
 
-void sh_exit(int) __attribute__((__noreturn__));
+void sh_exit(int) __dead;
 
 
 /*

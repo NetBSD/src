@@ -1,9 +1,4 @@
-$NetBSD: TODO,v 1.16 2010/07/09 17:03:04 jruoho Exp $
-
-Bugs to fix:
-
-- Add locking to ld.elf_so so that multiple threads doing lazy binding
-  doesn't trash things.
+$NetBSD: TODO,v 1.16.6.1 2012/04/17 00:05:30 yamt Exp $
 
 Interfaces/features to implement:
 

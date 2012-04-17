@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.38 2011/08/31 18:31:02 plunky Exp $ */
+/*	$NetBSD: twa.c,v 1.38.2.1 2012/04/17 00:07:58 yamt Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.38 2011/08/31 18:31:02 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.38.2.1 2012/04/17 00:07:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -525,8 +525,8 @@ twa_unmap_request(struct twa_request *tr)
 	/* Free alignment buffer if it was used. */
 	if (tr->tr_flags & TWA_CMD_DATA_COPY_NEEDED) {
 		s = splvm();
-		uvm_km_free(kmem_map, (vaddr_t)tr->tr_data,
-		    tr->tr_length, UVM_KMF_WIRED);
+		uvm_km_kmem_free(kmem_va_arena, (vaddr_t)tr->tr_data,
+		    tr->tr_length);
 		splx(s);
 		tr->tr_data = tr->tr_real_data;
 		tr->tr_length = tr->tr_real_length;
@@ -1505,8 +1505,7 @@ twa_attach(device_t parent, device_t self, void *aux)
 	sc->pc = pa->pa_pc;
 	sc->tag = pa->pa_tag;
 
-	aprint_naive(": RAID controller\n");
-	aprint_normal(": 3ware Apache\n");
+	pci_aprint_devinfo_fancy(pa, "RAID controller", "3ware Apache", 0);
 
 	sc->sc_quirks = 0;
 		
@@ -1786,7 +1785,7 @@ int
 twa_map_request(struct twa_request *tr)
 {
 	struct twa_softc	*sc = tr->tr_sc;
-	int			 s, rv;
+	int			 s, rv, rc;
 
 	/* If the command involves data, map that too. */
 	if (tr->tr_data != NULL) {
@@ -1796,11 +1795,12 @@ twa_map_request(struct twa_request *tr)
 			tr->tr_real_data = tr->tr_data;
 			tr->tr_real_length = tr->tr_length;
 			s = splvm();
-			tr->tr_data = (void *)uvm_km_alloc(kmem_map,
-			    tr->tr_length, 512, UVM_KMF_NOWAIT|UVM_KMF_WIRED);
+			rc = uvm_km_kmem_alloc(kmem_va_arena,
+			    tr->tr_length, (VM_NOSLEEP | VM_INSTANTFIT),
+			    (vmem_addr_t *)&tr->tr_data);
 			splx(s);
 
-			if (tr->tr_data == NULL) {
+			if (rc != 0) {
 				tr->tr_data = tr->tr_real_data;
 				tr->tr_length = tr->tr_real_length;
 				return(ENOMEM);
@@ -1820,8 +1820,9 @@ twa_map_request(struct twa_request *tr)
 		if (rv != 0) {
 			if ((tr->tr_flags & TWA_CMD_DATA_COPY_NEEDED) != 0) {
 				s = splvm();
-				uvm_km_free(kmem_map, (vaddr_t)tr->tr_data,
-				    tr->tr_length, UVM_KMF_WIRED);
+				uvm_km_kmem_free(kmem_va_arena,
+				    (vaddr_t)tr->tr_data,
+				    tr->tr_length);
 				splx(s);
 			}
 			return (rv);
@@ -1833,8 +1834,8 @@ twa_map_request(struct twa_request *tr)
 
 			if (tr->tr_flags & TWA_CMD_DATA_COPY_NEEDED) {
 				s = splvm();
-				uvm_km_free(kmem_map, (vaddr_t)tr->tr_data,
-				    tr->tr_length, UVM_KMF_WIRED);
+				uvm_km_kmem_free(kmem_va_arena, (vaddr_t)tr->tr_data,
+				    tr->tr_length);
 				splx(s);
 				tr->tr_data = tr->tr_real_data;
 				tr->tr_length = tr->tr_real_length;

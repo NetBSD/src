@@ -1,4 +1,4 @@
-/*	$NetBSD: cfi_0002.c,v 1.4 2011/07/23 06:26:26 cliff Exp $	*/
+/*	$NetBSD: cfi_0002.c,v 1.4.4.1 2012/04/17 00:07:42 yamt Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
 #include "opt_flash.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfi_0002.c,v 1.4 2011/07/23 06:26:26 cliff Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: cfi_0002.c,v 1.4.4.1 2012/04/17 00:07:42 yamt Exp $"); 
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,17 +291,18 @@ cfi_0002_program_page(device_t self, flash_off_t offset, const uint8_t *datap)
 
 	bus_size_t count = chip->nc_page_size >> cfi->cfi_portwidth;
 							/* #words/page */
-	bus_size_t sa = offset >> cfi->cfi_portwidth;	/* sector addr */
+	bus_size_t sa = offset << (3 - cfi->cfi_portwidth);
+							/* sector addr */
 	uint32_t wc = count - 1;			/* #words - 1 */
 
 	int error = cfi_0002_busy_wait(cfi, offset, cfi_0002_time_dflt(cfi));
 	if (error != 0)
 		return ETIMEDOUT;
 
-	cfi_cmd(cfi, 0x555, 0xaa); /* unlock 1 */
-	cfi_cmd(cfi, 0x2aa, 0x55); /* unlock 2 */
-	cfi_cmd(cfi, sa,    0x25); /* Write To Buffer */
-	cfi_cmd(cfi, sa,    wc);
+	cfi_cmd(cfi, cfi->cfi_unlock_addr1, 0xaa);
+	cfi_cmd(cfi, cfi->cfi_unlock_addr2, 0x55);
+	cfi_cmd(cfi, sa,                    0x25); /* Write To Buffer */
+	cfi_cmd(cfi, sa,                    wc);
 
 	switch(cfi->cfi_portwidth) {
 	case 0:
@@ -320,7 +321,7 @@ cfi_0002_program_page(device_t self, flash_off_t offset, const uint8_t *datap)
 		panic("%s: bad port width %d\n", __func__, cfi->cfi_portwidth);
 	};
 
-	cfi_cmd(cfi, sa,    0x29);	/*  Write Buffer Program Confirm */
+	cfi_cmd(cfi, sa, 0x29);	/*  Write Buffer Program Confirm */
 
 	error = cfi_0002_busy_wait(cfi, offset, cfi_0002_time_write_nbyte(cfi));
 
@@ -335,8 +336,6 @@ cfi_0002_erase_all(device_t self)
 	KASSERT(sc->sc_nor_if != NULL);
 	struct cfi *cfi = (struct cfi * const)sc->sc_nor_if->private;
 	KASSERT(cfi != NULL);
-	struct nor_chip * const chip = &sc->sc_chip;
-	KASSERT(chip != NULL);
 
 	CFI_0002_STATS_INC(cfi, erase_all);
 
@@ -344,12 +343,12 @@ cfi_0002_erase_all(device_t self)
 	if (error != 0)
 		return ETIMEDOUT;
 
-	cfi_cmd(cfi, 0x555, 0xaa); /* unlock 1 */
-	cfi_cmd(cfi, 0x2aa, 0x55); /* unlock 2 */
-	cfi_cmd(cfi, 0x555, 0x80); /* erase start */
-	cfi_cmd(cfi, 0x555, 0xaa); /* unlock 1 */
-	cfi_cmd(cfi, 0x2aa, 0x55); /* unlock 2 */
-	cfi_cmd(cfi, 0x555, 0x10); /* erase chip */
+	cfi_cmd(cfi, cfi->cfi_unlock_addr1, 0xaa);
+	cfi_cmd(cfi, cfi->cfi_unlock_addr2, 0x55);
+	cfi_cmd(cfi, cfi->cfi_unlock_addr1, 0x80); /* erase start */
+	cfi_cmd(cfi, cfi->cfi_unlock_addr1, 0xaa);
+	cfi_cmd(cfi, cfi->cfi_unlock_addr2, 0x55);
+	cfi_cmd(cfi, cfi->cfi_unlock_addr1, 0x10); /* erase chip */
 
 	error = cfi_0002_busy_wait(cfi, 0, cfi_0002_time_erase_all(cfi));
 
@@ -364,28 +363,21 @@ cfi_0002_erase_block(device_t self, flash_off_t offset)
 	KASSERT(sc->sc_nor_if != NULL);
 	struct cfi *cfi = (struct cfi * const)sc->sc_nor_if->private;
 	KASSERT(cfi != NULL);
-	struct nor_chip * const chip = &sc->sc_chip;
-	KASSERT(chip != NULL);
-	KASSERT(chip->nc_block_mask != 0);
-	KASSERT((offset & ~chip->nc_block_mask) == 0);
-	KASSERT(chip->nc_block_size != 0);
-	KASSERT((chip->nc_block_size & ((1 << cfi->cfi_portwidth) - 1)) == 0);
 
 	CFI_0002_STATS_INC(cfi, erase_block);
 
-	/* scale sector addr by portwidth or chipwidth ?  */
-	bus_size_t sa = offset >> cfi->cfi_portwidth;
+	bus_size_t sa = offset << (3 - cfi->cfi_portwidth);
 
 	int error = cfi_0002_busy_wait(cfi, offset, cfi_0002_time_dflt(cfi));
 	if (error != 0)
 		return ETIMEDOUT;
 
-	cfi_cmd(cfi, 0x555, 0xaa); /* unlock 1 */
-	cfi_cmd(cfi, 0x2aa, 0x55); /* unlock 2 */
-	cfi_cmd(cfi, 0x555, 0x80); /* erase start */
-	cfi_cmd(cfi, 0x555, 0xaa); /* unlock 1 */
-	cfi_cmd(cfi, 0x2aa, 0x55); /* unlock 2 */
-	cfi_cmd(cfi, sa,    0x30); /* erase sector */
+	cfi_cmd(cfi, cfi->cfi_unlock_addr1, 0xaa);
+	cfi_cmd(cfi, cfi->cfi_unlock_addr2, 0x55);
+	cfi_cmd(cfi, cfi->cfi_unlock_addr1, 0x80); /* erase start */
+	cfi_cmd(cfi, cfi->cfi_unlock_addr1, 0xaa);
+	cfi_cmd(cfi, cfi->cfi_unlock_addr2, 0x55);
+	cfi_cmd(cfi, sa,                    0x30); /* erase sector */
 
 	error = cfi_0002_busy_wait(cfi, offset, cfi_0002_time_erase_blk(cfi));
 
@@ -561,7 +553,7 @@ cfi_0002_busy_reg(struct cfi * const cfi, flash_off_t offset)
 	bus_space_handle_t bsh = cfi->cfi_bsh;
 	uint32_t r;
 
-	cfi_cmd(cfi, 0x555, 0x70);	/* Status Register Read  */
+	cfi_cmd(cfi, cfi->cfi_unlock_addr1, 0x70); /* Status Register Read  */
 
 	switch(cfi->cfi_portwidth) {
 	case 0:

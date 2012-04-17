@@ -14,10 +14,12 @@
 		<p>Last update: <csobj format="ShortTime" h="25" locale="00000409" region="0" t="DateTime" w="61">18:53</csobj> UTC <csobj format="LongDate" h="25" locale="00000409" region="0" t="DateTime" w="308">Wednesday, January 16, 2008</csobj></p>
 		<hr>
 		<h4>Synopsis</h4>
-		<tt>tickadj [ -Aqs ] [ -a <i>tickadj</i> ] [ -t <i>tick</i> ]</tt>
+		<p><tt>tickadj [ <i>tick</i> ]</tt></p>
+		<p><tt>tickadj [ -Aqs ] [ -a <i>tickadj</i> ] [ -t <i>tick</i> ]</tt></p>
 		<h4>Description</h4>
 		<p>The <tt>tickadj</tt> program reads, and optionally modifies, several timekeeping-related variables in older kernels that do not have support for precision ttimekeeping, including HP-UX, SunOS, Ultrix, SGI and probably others. Those machines provide means to patch the kernel <tt>/dev/kmem</tt>. Newer machines with kernel time support, including Solaris, Tru64, FreeBSD and Linux, should NOT use the program, even if it appears to work, as it will destabilize the kernel time support. Use the <a href="ntptime.html"><tt>ntptime</tt></a> program instead.</p>
 		<p>The particular variables that can be changed with <tt>tickadj</tt> include <tt>tick</tt>, which is the number of microseconds added to the system time for a clock interrupt, <tt>tickadj</tt>, which sets the slew rate and resolution used by the <tt>adjtime</tt> system call, and <tt>dosynctodr</tt>, which indicates to the kernels on some machines whether they should internally adjust the system clock to keep it in line with time-of-day clock or not.</p>
+		<p>On Linux, only the <tt>tick</tt> variable is supported and the only allowed argument is the tick value.</p>
 		<p>By default, with no arguments, <tt>tickadj</tt> reads the variables of interest in the kernel and displays them. At the same time, it determines an &quot;optimal&quot; value for the value of the <tt>tickadj</tt> variable if the intent is to run the <tt>ntpd</tt> Network Time Protocol (NTP) daemon, and prints this as well. Since the operation of <tt>tickadj</tt> when reading the kernel mimics the operation of similar parts of the <tt>ntpd</tt> program fairly closely, this can be useful when debugging problems with <tt>ntpd</tt>.</p>
 		<p>Note that <tt>tickadj</tt> should be run with some caution when being used for the first time on different types of machines. The operations which <tt>tickadj</tt> tries to perform are not guaranteed to work on all Unix machines and may in rare cases cause the kernel to crash.</p>
 		<h4>Command Line Options</h4>

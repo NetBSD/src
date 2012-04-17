@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.179.2.1 2011/11/10 14:31:54 yamt Exp $	*/
+/*	$NetBSD: parse.c,v 1.179.2.2 2012/04/17 00:09:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.179.2.1 2011/11/10 14:31:54 yamt Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.179.2.2 2012/04/17 00:09:35 yamt Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.179.2.1 2011/11/10 14:31:54 yamt Exp $");
+__RCSID("$NetBSD: parse.c,v 1.179.2.2 2012/04/17 00:09:35 yamt Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -361,6 +361,9 @@ static void ParseDoInclude(char *);
 static void ParseSetParseFile(const char *);
 #ifdef SYSVINCLUDE
 static void ParseTraditionalInclude(char *);
+#endif
+#ifdef GMAKEEXPORT
+static void ParseGmakeExport(char *);
 #endif
 static int ParseEOF(void);
 static char *ParseReadLine(void);
@@ -2402,6 +2405,55 @@ ParseTraditionalInclude(char *line)
 }
 #endif
 
+#ifdef SYSVINCLUDE
+/*-
+ *---------------------------------------------------------------------
+ * ParseGmakeExport  --
+ *	Parse export <variable>=<value>
+ *
+ *	And set the environment with it.
+ *
+ * Results:
+ *	None
+ *
+ * Side Effects:
+ *	None
+ *---------------------------------------------------------------------
+ */
+static void
+ParseGmakeExport(char *line)
+{
+    char	  *variable = &line[6];
+    char	  *value;
+
+    if (DEBUG(PARSE)) {
+	    fprintf(debug_file, "ParseTraditionalInclude: %s\n", variable);
+    }
+
+    /*
+     * Skip over whitespace
+     */
+    while (isspace((unsigned char)*variable))
+	variable++;
+
+    for (value = variable; *value && *value != '='; value++)
+	continue;
+
+    if (*value != '=') {
+	Parse_Error(PARSE_FATAL,
+		     "Variable/Value missing from \"include\"");
+	return;
+    }
+
+    /*
+     * Substitute for any variables in the file name before trying to
+     * find the thing.
+     */
+    value = Var_Subst(NULL, value, VAR_CMD, FALSE);
+    setenv(variable, value, 1);
+}
+#endif
+
 /*-
  *---------------------------------------------------------------------
  * ParseEOF  --
@@ -2524,7 +2576,9 @@ ParseGetLine(int flags, int *length)
 	    }
 	    if (ch == '#' && comment == NULL) {
 		/* Remember first '#' for comment stripping */
-		comment = line_end;
+		/* Unless previous char was '[', as in modifier :[#] */
+		if (!(ptr > line && ptr[-1] == '['))
+		    comment = line_end;
 	    }
 	    ptr++;
 	    if (ch == '\n')
@@ -2846,6 +2900,17 @@ Parse_File(const char *name, int fd)
 		 * It's an S3/S5-style "include".
 		 */
 		ParseTraditionalInclude(line);
+		continue;
+	    }
+#endif
+#ifdef GMAKEEXPORT
+	    if (strncmp(line, "export", 6) == 0 &&
+		isspace((unsigned char) line[6]) &&
+		strchr(line, ':') == NULL) {
+		/*
+		 * It's an Gmake"export".
+		 */
+		ParseGmakeExport(line);
 		continue;
 	    }
 #endif

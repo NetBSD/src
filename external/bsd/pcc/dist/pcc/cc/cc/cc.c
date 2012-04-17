@@ -1,5 +1,5 @@
 /*	Id: cc.c,v 1.210 2011/08/31 18:27:09 plunky Exp 	*/	
-/*	$NetBSD: cc.c,v 1.1.1.4 2011/09/01 12:46:53 plunky Exp $	*/
+/*	$NetBSD: cc.c,v 1.1.1.4.2.1 2012/04/17 00:04:03 yamt Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -71,7 +71,7 @@
 #include <unistd.h>
 #endif
 
-#ifdef WIN32
+#ifdef os_win32
 #include <windows.h>
 #include <process.h>
 #include <io.h>
@@ -147,7 +147,7 @@ void dexit(int);
 void idexit(int);
 char *gettmp(void);
 void *ccmalloc(int size);
-#ifdef WIN32
+#ifdef os_win32
 char *win32pathsubst(char *);
 char *win32commandline(char *, char *[]);
 #endif
@@ -167,6 +167,7 @@ int	nm;
 int	nf;
 int	nw;
 int	sspflag;
+int	freestanding;
 int	pflag;
 int	sflag;
 int	cflag;
@@ -201,7 +202,7 @@ int	cxxflag;
 
 char	*passp = LIBEXECDIR PREPROCESSOR;
 char	*pass0 = LIBEXECDIR COMPILER;
-char	*passxx0 = LIBEXECDIR "c++com";
+char	*passxx0 = LIBEXECDIR "cxxcom";
 char	*as = ASSEMBLER;
 char	*ld = LINKER;
 char	*sysroot;
@@ -270,32 +271,19 @@ struct Wflags {
 	char *name;
 	int flags;
 #define	INWALL		1
-#define	NEGATIVE	2
 } Wflags[] = {
-	{ "-Wtruncate", 0 },
-	{ "-Wno-truncate", NEGATIVE },
-	{ "-Wstrict-prototypes", 0 },
-	{ "-Wno-strict-prototypes", NEGATIVE },
-	{ "-Wmissing-prototypes", 0 },
-	{ "-Wno-missing-prototypes", NEGATIVE },
-	{ "-Wimplicit-int", INWALL },
-	{ "-Wno-implicit-int", NEGATIVE },
-	{ "-Wimplicit-function-declaration", INWALL },
-	{ "-Wno-implicit-function-declaration", NEGATIVE },
-	{ "-Wshadow", 0 },
-	{ "-Wno-shadow", NEGATIVE },
-	{ "-Wpointer-sign", INWALL },
-	{ "-Wno-pointer-sign", NEGATIVE },
-	{ "-Wsign-compare", 0 },
-	{ "-Wno-sign-compare", NEGATIVE },
-	{ "-Wunknown-pragmas", INWALL },
-	{ "-Wno-unknown-pragmas", NEGATIVE },
-	{ "-Wunreachable-code", 0 },
-	{ "-Wno-unreachable-code", NEGATIVE },
-	{ 0, 0 },
+	{ "truncate", 0 },
+	{ "strict-prototypes", 0 },
+	{ "missing-prototypes", 0 },
+	{ "implicit-int", INWALL },
+	{ "implicit-function-declaration", INWALL },
+	{ "shadow", 0 },
+	{ "pointer-sign", INWALL },
+	{ "sign-compare", 0 },
+	{ "unknown-pragmas", INWALL },
+	{ "unreachable-code", 0 },
+	{ NULL, 0 },
 };
-
-#define	SZWFL	(sizeof(Wflags)/sizeof(Wflags[0]))
 
 #ifndef USHORT
 /* copied from mip/manifest.h */
@@ -367,7 +355,7 @@ main(int argc, char *argv[])
 		pass0 = passxx0;
 	}
 
-#ifdef WIN32
+#ifdef os_win32
 	/* have to prefix path early.  -B may override */
 	incdir = win32pathsubst(incdir);
 	altincdir = win32pathsubst(altincdir);
@@ -503,11 +491,15 @@ main(int argc, char *argv[])
 				} else if (strcmp(argv[i], "-WW") == 0) {
 					Wflag = 1;
 				} else {
-					/* check and set if available */
+					/* pass through, if supported */
+					t = &argv[i][2];
+					if (strncmp(t, "no-", 3) == 0)
+						t += 3;
+					if (strncmp(t, "error=", 6) == 0)
+						t += 6;
 					for (Wf = Wflags; Wf->name; Wf++) {
-						if (strcmp(argv[i], Wf->name))
-							continue;
-						wlist[nw++] = Wf->name;
+						if (strcmp(t, Wf->name) == 0)
+							wlist[nw++] = argv[i];
 					}
 				}
 				break;
@@ -518,7 +510,7 @@ main(int argc, char *argv[])
 				else if (strcmp(argv[i], "-fpic") == 0)
 					kflag = F_pic;
 				else if (strcmp(argv[i], "-ffreestanding") == 0)
-					flist[nf++] = argv[i];
+					freestanding = 1;
 				else if (strcmp(argv[i],
 				    "-fsigned-char") == 0)
 					xuchar = 0;
@@ -669,6 +661,8 @@ main(int argc, char *argv[])
 					Oflag++;
 				else if (argv[i][3] == '\0' && isdigit((unsigned char)argv[i][2]))
 					Oflag = argv[i][2] - '0';
+				else if (argv[i][3] == '\0' && argv[i][2] == 's')
+					Oflag = 1;	/* optimize for space only */
 				else
 					error("unknown option %s", argv[i]);
 				break;
@@ -771,7 +765,8 @@ main(int argc, char *argv[])
 					break;
 			}
 			if ((c=getsuf(t))!='c' && c!='S' &&
-			    c!='s' && c!='i' && j==nl) {
+			    c!='s' && c!='i' && j==nl &&
+			    !(cxxsuf(getsufp(t)) && cxxflag)) {
 				llist[nl++] = t;
 				if (nl >= MAXLIB) {
 					error("Too many object/library files");
@@ -850,6 +845,12 @@ main(int argc, char *argv[])
 		av[na++] = "-D__INT_MAX__=" MKS(MAX_INT);
 		av[na++] = "-D__LONG_MAX__=" MKS(MAX_LONG);
 		av[na++] = "-D__LONG_LONG_MAX__=" MKS(MAX_LONGLONG);
+		if (freestanding)
+			av[na++] = "-D__STDC_HOSTED__=0";
+		else
+			av[na++] = "-D__STDC_HOSTED__=1";
+		if (cxxflag)
+			av[na++] = "-D__cplusplus";
 		if (xuchar)
 			av[na++] = "-D__CHAR_UNSIGNED__";
 		if (ascpp)
@@ -972,26 +973,19 @@ main(int argc, char *argv[])
 	com:
 		na = 0;
 		av[na++]= cxxflag ? "c++com" : "ccom";
-		if (Wallflag) {
-			/* Set only the same flags as gcc */
+		if (Wflag || Wallflag) {
+			/* -Wall is same as gcc, -WW is all flags */
 			for (Wf = Wflags; Wf->name; Wf++) {
-				if (Wf->flags != INWALL)
-					continue;
-				av[na++] = Wf->name;
-			}
-		}
-		if (Wflag) {
-			/* set all positive flags */
-			for (Wf = Wflags; Wf->name; Wf++) {
-				if (Wf->flags == NEGATIVE)
-					continue;
-				av[na++] = Wf->name;
+				if (Wflag || Wf->flags == INWALL)
+					av[na++] = cat("-W", Wf->name);
 			}
 		}
 		for (j = 0; j < nw; j++)
 			av[na++] = wlist[j];
 		for (j = 0; j < nf; j++)
 			av[na++] = flist[j];
+		if (freestanding)
+			av[na++] = "-ffreestanding";
 #if !defined(os_sunos) && !defined(mach_i386)
 		if (vflag)
 			av[na++] = "-v";
@@ -1260,6 +1254,8 @@ nocom:
 				for (i = 0; libclibs_profile[i]; i++)
 					av[j++] = find_file(libclibs_profile[i], R_OK);
 			} else {
+				if (cxxflag)
+					av[j++] = "-lp++";
 				for (i = 0; libclibs[i]; i++)
 					av[j++] = find_file(libclibs[i], R_OK);
 			}
@@ -1454,7 +1450,7 @@ setsuf(char *s, char ch)
 	return(s);
 }
 
-#ifdef WIN32
+#ifdef os_win32
 #define MAX_CMDLINE_LENGTH 32768
 int
 callsys(char *f, char *v[])
@@ -1580,7 +1576,7 @@ cunlink(char *f)
 	return (unlink(f));
 }
 
-#ifdef WIN32
+#ifdef os_win32
 char *
 gettmp(void)
 {
@@ -1630,8 +1626,7 @@ ccmalloc(int size)
 	return rv;
 }
 
-#ifdef WIN32
-
+#ifdef os_win32
 char *
 win32pathsubst(char *s)
 {
@@ -1700,5 +1695,4 @@ win32commandline(char *f, char *args[])
 
 	return cmd;
 }
-
 #endif

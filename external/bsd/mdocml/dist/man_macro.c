@@ -1,4 +1,4 @@
-/*	$Vendor-Id: man_macro.c,v 1.65 2011/09/18 14:14:15 schwarze Exp $ */
+/*	$Vendor-Id: man_macro.c,v 1.71 2012/01/03 15:16:24 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -52,15 +52,15 @@ static	void		 rew_warn(struct man *,
 
 const	struct man_macro __man_macros[MAN_MAX] = {
 	{ in_line_eoln, MAN_NSCOPED }, /* br */
-	{ in_line_eoln, 0 }, /* TH */
-	{ blk_imp, MAN_SCOPED }, /* SH */
-	{ blk_imp, MAN_SCOPED }, /* SS */
-	{ blk_imp, MAN_SCOPED | MAN_FSCOPED }, /* TP */
-	{ blk_imp, 0 }, /* LP */
-	{ blk_imp, 0 }, /* PP */
-	{ blk_imp, 0 }, /* P */
-	{ blk_imp, 0 }, /* IP */
-	{ blk_imp, 0 }, /* HP */
+	{ in_line_eoln, MAN_BSCOPE }, /* TH */
+	{ blk_imp, MAN_BSCOPE | MAN_SCOPED }, /* SH */
+	{ blk_imp, MAN_BSCOPE | MAN_SCOPED }, /* SS */
+	{ blk_imp, MAN_BSCOPE | MAN_SCOPED | MAN_FSCOPED }, /* TP */
+	{ blk_imp, MAN_BSCOPE }, /* LP */
+	{ blk_imp, MAN_BSCOPE }, /* PP */
+	{ blk_imp, MAN_BSCOPE }, /* P */
+	{ blk_imp, MAN_BSCOPE }, /* IP */
+	{ blk_imp, MAN_BSCOPE }, /* HP */
 	{ in_line_eoln, MAN_SCOPED }, /* SM */
 	{ in_line_eoln, MAN_SCOPED }, /* SB */
 	{ in_line_eoln, 0 }, /* BI */
@@ -74,8 +74,8 @@ const	struct man_macro __man_macros[MAN_MAX] = {
 	{ in_line_eoln, 0 }, /* RI */
 	{ in_line_eoln, MAN_NSCOPED }, /* na */
 	{ in_line_eoln, MAN_NSCOPED }, /* sp */
-	{ in_line_eoln, 0 }, /* nf */
-	{ in_line_eoln, 0 }, /* fi */
+	{ in_line_eoln, MAN_BSCOPE }, /* nf */
+	{ in_line_eoln, MAN_BSCOPE }, /* fi */
 	{ blk_close, 0 }, /* RE */
 	{ blk_exp, MAN_EXPLICIT }, /* RS */
 	{ in_line_eoln, 0 }, /* DT */
@@ -84,6 +84,7 @@ const	struct man_macro __man_macros[MAN_MAX] = {
 	{ in_line_eoln, 0 }, /* AT */
 	{ in_line_eoln, 0 }, /* in */
 	{ in_line_eoln, 0 }, /* ft */
+	{ in_line_eoln, 0 }, /* OP */
 };
 
 const	struct man_macro * const man_macros = __man_macros;
@@ -120,7 +121,6 @@ man_unscope(struct man *m, const struct man_node *to,
 
 	assert(to);
 
-	assert(MAN_ROOT != m->last->type);
 	m->next = MAN_NEXT_SIBLING;
 
 	/* LINTED */

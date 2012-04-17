@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.49 2011/10/02 19:45:10 christos Exp $ */
+/* $NetBSD: scan.l,v 1.49.2.1 2012/04/17 00:09:44 yamt Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.49 2011/10/02 19:45:10 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.49.2.1 2012/04/17 00:09:44 yamt Exp $");
 #endif
 
 #include <stdlib.h>
@@ -953,7 +953,7 @@ getescc(int d)
 				/* bad octal digit %c */
 				warning(77, c);
 			pbc = c;
-			if (v > UCHAR_MAX) {
+			if (v > TARG_UCHAR_MAX) {
 				/* character escape does not fit in char. */
 				warning(76);
 				v &= CHAR_MASK;

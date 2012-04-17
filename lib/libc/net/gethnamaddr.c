@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.77 2011/10/15 23:00:02 christos Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.77.2.1 2012/04/17 00:05:21 yamt Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -57,7 +57,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.77 2011/10/15 23:00:02 christos Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.77.2.1 2012/04/17 00:05:21 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -257,7 +257,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 		h_errno = NO_RECOVERY;
 		return NULL;
 	}
-	n = dn_expand(answer->buf, eom, cp, bp, ep - bp);
+	n = dn_expand(answer->buf, eom, cp, bp, (int)(ep - bp));
 	if ((n < 0) || !(*name_ok)(bp)) {
 		h_errno = NO_RECOVERY;
 		return NULL;
@@ -268,7 +268,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 		 * same as the one we sent; this just gets the expanded name
 		 * (i.e., with the succeeding search-domain tacked on).
 		 */
-		n = strlen(bp) + 1;		/* for the \0 */
+		n = (int)strlen(bp) + 1;		/* for the \0 */
 		if (n >= MAXHOSTNAMELEN) {
 			h_errno = NO_RECOVERY;
 			return NULL;
@@ -287,7 +287,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 	haveanswer = 0;
 	had_error = 0;
 	while (ancount-- > 0 && cp < eom && !had_error) {
-		n = dn_expand(answer->buf, eom, cp, bp, ep - bp);
+		n = dn_expand(answer->buf, eom, cp, bp, (int)(ep - bp));
 		if ((n < 0) || !(*name_ok)(bp)) {
 			had_error++;
 			continue;
@@ -310,7 +310,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 		if ((qtype == T_A || qtype == T_AAAA) && type == T_CNAME) {
 			if (ap >= &host_aliases[MAXALIASES-1])
 				continue;
-			n = dn_expand(answer->buf, eom, cp, tbuf, sizeof tbuf);
+			n = dn_expand(answer->buf, eom, cp, tbuf, (int)sizeof tbuf);
 			if ((n < 0) || !(*name_ok)(tbuf)) {
 				had_error++;
 				continue;
@@ -322,14 +322,14 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 			}
 			/* Store alias. */
 			*ap++ = bp;
-			n = strlen(bp) + 1;	/* for the \0 */
+			n = (int)strlen(bp) + 1;	/* for the \0 */
 			if (n >= MAXHOSTNAMELEN) {
 				had_error++;
 				continue;
 			}
 			bp += n;
 			/* Get canonical name. */
-			n = strlen(tbuf) + 1;	/* for the \0 */
+			n = (int)strlen(tbuf) + 1;	/* for the \0 */
 			if (n > ep - bp || n >= MAXHOSTNAMELEN) {
 				had_error++;
 				continue;
@@ -340,7 +340,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 			continue;
 		}
 		if (qtype == T_PTR && type == T_CNAME) {
-			n = dn_expand(answer->buf, eom, cp, tbuf, sizeof tbuf);
+			n = dn_expand(answer->buf, eom, cp, tbuf, (int)sizeof tbuf);
 			if (n < 0 || !res_dnok(tbuf)) {
 				had_error++;
 				continue;
@@ -351,7 +351,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 				return NULL;
 			}
 			/* Get canonical name. */
-			n = strlen(tbuf) + 1;	/* for the \0 */
+			n = (int)strlen(tbuf) + 1;	/* for the \0 */
 			if (n > ep - bp || n >= MAXHOSTNAMELEN) {
 				had_error++;
 				continue;
@@ -378,7 +378,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 				cp += n;
 				continue;	/* XXX - had_error++ ? */
 			}
-			n = dn_expand(answer->buf, eom, cp, bp, ep - bp);
+			n = dn_expand(answer->buf, eom, cp, bp, (int)(ep - bp));
 			if ((n < 0) || !res_hnok(bp)) {
 				had_error++;
 				break;
@@ -396,7 +396,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 			else
 				n = -1;
 			if (n != -1) {
-				n = strlen(bp) + 1;	/* for the \0 */
+				n = (int)strlen(bp) + 1;	/* for the \0 */
 				if (n >= MAXHOSTNAMELEN) {
 					had_error++;
 					break;
@@ -442,7 +442,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 				int nn;
 
 				host.h_name = bp;
-				nn = strlen(bp) + 1;	/* for the \0 */
+				nn = (int)strlen(bp) + 1;	/* for the \0 */
 				bp += nn;
 			}
 
@@ -487,7 +487,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 		if (res->nsort && haveanswer > 1 && qtype == T_A)
 			addrsort(h_addr_ptrs, haveanswer, res);
 		if (!host.h_name) {
-			n = strlen(qname) + 1;	/* for the \0 */
+			n = (int)strlen(qname) + 1;	/* for the \0 */
 			if (n > ep - bp || n >= MAXHOSTNAMELEN)
 				goto no_recovery;
 			strlcpy(bp, qname, (size_t)(ep - bp));
@@ -747,7 +747,7 @@ _gethtent(void)
 		return NULL;
 	}
  again:
-	if (!(p = fgets(hostbuf, sizeof hostbuf, hostf))) {
+	if (!(p = fgets(hostbuf, (int)sizeof hostbuf, hostf))) {
 		h_errno = HOST_NOT_FOUND;
 		return NULL;
 	}
@@ -1002,7 +1002,8 @@ map_v4v6_hostent(struct hostent *hp, char **bpp, char *ep)
 	hp->h_addrtype = AF_INET6;
 	hp->h_length = IN6ADDRSZ;
 	for (ap = hp->h_addr_list; *ap; ap++) {
-		int i = sizeof(align) - (size_t)((u_long)*bpp % sizeof(align));
+		int i = (int)(sizeof(align) -
+		    (size_t)((u_long)*bpp % sizeof(align)));
 
 		if (ep - *bpp < (i + IN6ADDRSZ)) {
 			/* Out of memory.  Truncate address list here.  XXX */
@@ -1104,7 +1105,7 @@ _dns_gethtbyname(void *rv, void *cb_data, va_list ap)
 		free(buf);
 		return NS_NOTFOUND;
 	}
-	n = res_nsearch(res, name, C_IN, type, buf->buf, sizeof(buf->buf));
+	n = res_nsearch(res, name, C_IN, type, buf->buf, (int)sizeof(buf->buf));
 	if (n < 0) {
 		free(buf);
 		debugprintf("res_nsearch failed (%d)\n", res, n);
@@ -1185,7 +1186,7 @@ _dns_gethtbyaddr(void *rv, void	*cb_data, va_list ap)
 		free(buf);
 		return NS_NOTFOUND;
 	}
-	n = res_nquery(res, qbuf, C_IN, T_PTR, buf->buf, sizeof(buf->buf));
+	n = res_nquery(res, qbuf, C_IN, T_PTR, buf->buf, (int)sizeof(buf->buf));
 	if (n < 0) {
 		free(buf);
 		debugprintf("res_nquery failed (%d)\n", res, n);
@@ -1370,7 +1371,7 @@ _yp_gethtbyaddr(void *rv, void *cb_data, va_list ap)
 	 * XXX unfortunately, we cannot support IPv6 extended scoped address
 	 * notation here.  gethostbyaddr() is not scope-aware.  too bad.
 	 */
-	if (inet_ntop(af, uaddr, name, sizeof(name)) == NULL)
+	if (inet_ntop(af, uaddr, name, (socklen_t)sizeof(name)) == NULL)
 		return NS_UNAVAIL;
 	if (__ypcurrent)
 		free(__ypcurrent);

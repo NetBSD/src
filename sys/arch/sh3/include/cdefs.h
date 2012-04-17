@@ -1,7 +1,9 @@
-/*	$NetBSD: cdefs.h,v 1.5 2002/04/28 17:10:33 uch Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.5.152.1 2012/04/17 00:06:52 yamt Exp $	*/
 
 #ifndef _SH3_CDEFS_H_
 #define	_SH3_CDEFS_H_
+
+#define	__ALIGNBYTES		(sizeof(int) - 1)
 
 /*
  * The old NetBSD/sh3 ELF toolchain used underscores.  The new

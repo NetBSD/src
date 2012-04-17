@@ -29,7 +29,6 @@ options 	NTP		# NTP phase/frequency locked loop
 #options 	SYSVSEM		# System V-like semaphores
 #options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=2048	# 2048 pages is the default
-#options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 #options 	NMBCLUSTERS=1024
 #options 	MCLSHIFT=12 # 4k mbuf clusters (increases pool max's to 4k as well)
@@ -245,6 +244,5 @@ pseudo-device	vlan			# 802.1q
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random - in-kernel generator
 pseudo-device	clockctl		# /dev/clockctl - user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms - kernel symbols

@@ -1,4 +1,4 @@
-#	$NetBSD: RB800,v 1.13 2011/07/16 21:58:26 matt Exp $
+#	$NetBSD: RB800,v 1.13.2.1 2012/04/17 00:06:18 yamt Exp $
 #
 #	RB800 -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"RB800-$Revision: 1.13 $"
+ident 		"RB800-$Revision: 1.13.2.1 $"
 
 maxusers	32
 
@@ -88,7 +88,7 @@ file-system	PTYFS		# /dev/pts/N support
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
@@ -156,6 +156,12 @@ obio0		at cpunode?		# On-chip Peripheral Bus
 #wd*		at atabus?
 gpio*		at gpiobus?
 
+# NOR Flash
+#options 	NOR_VERBOSE
+cfi0	 	at obio0 cs 0
+nor*		at cfi?
+flash*		at nor? offset 0 size 0x1000000
+
 e500wdog*	at cpunode?		# Watchdog timer
 
 duart*		at cpunode?
@@ -218,7 +224,6 @@ ukphy*		at mii? phy ?			# generic unknown PHYs
 pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	pty			# pseudo-terminals

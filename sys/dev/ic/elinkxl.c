@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.113 2010/11/13 13:52:01 uebayasi Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.113.8.1 2012/04/17 00:07:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,9 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.113 2010/11/13 13:52:01 uebayasi Exp $");
-
-#include "rnd.h"
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.113.8.1 2012/04/17 00:07:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,9 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.113 2010/11/13 13:52:01 uebayasi Exp $
 #include <sys/syslog.h>
 #include <sys/select.h>
 #include <sys/device.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -440,10 +436,8 @@ ex_config(struct ex_softc *sc)
 
 	/* TODO: set queues to 0 */
 
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 			  RND_TYPE_NET, 0);
-#endif
 
 	if (pmf_device_register1(sc->sc_dev, NULL, NULL, ex_shutdown))
 		pmf_class_network_register(sc->sc_dev, &sc->sc_ethercom.ec_if);
@@ -1420,10 +1414,8 @@ ex_intr(void *arg)
 			}
 		}
 
-#if NRND > 0
 		if (stat)
 			rnd_add_uint32(&sc->rnd_source, stat);
-#endif
 	}
 
 	/* no more interrupts */
@@ -1707,9 +1699,7 @@ ex_detach(struct ex_softc *sc)
 	/* Delete all remaining media. */
 	ifmedia_delete_instance(&sc->ex_mii.mii_media, IFM_INST_ANY);
 
-#if NRND > 0
 	rnd_detach_source(&sc->rnd_source);
-#endif
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 

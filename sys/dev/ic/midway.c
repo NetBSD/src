@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.93 2011/07/18 00:58:51 mrg Exp $	*/
+/*	$NetBSD: midway.c,v 1.93.2.1 2012/04/17 00:07:35 yamt Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.93 2011/07/18 00:58:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.93.2.1 2012/04/17 00:07:35 yamt Exp $");
 
 #include "opt_natm.h"
 
@@ -1237,8 +1237,9 @@ STATIC int en_ioctl(struct ifnet *ifp, EN_IOCTL_CMDT cmd, void *data)
 		if (ifp == &sc->enif) {
 		  struct ifnet *sifp;
 
-		  if ((error = kauth_authorize_generic(curlwp->l_cred,
-		     KAUTH_GENERIC_ISSUSER, NULL)) != 0)
+		  if ((error = kauth_authorize_network(curlwp->l_cred,
+		     KAUTH_NETWORK_INTERFACE_PVC, KAUTH_REQ_NETWORK_INTERFACE_PVC_ADD,
+		     NULL, NULL, NULL)) != 0)
 		    break;
 
 		  if ((sifp = en_pvcattach(ifp)) != NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.45 2011/05/12 05:41:50 mrg Exp $ */
+/*	$NetBSD: param.h,v 1.45.4.1 2012/04/17 00:06:56 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -87,27 +87,9 @@
 #endif					/* XXX */
 #endif					/* XXX */
 
-/*
- * Round p (pointer or byte index) up to a correctly-aligned value for
- * the machine's strictest data type.  The result is u_int and must be
- * cast to any desired pointer type.
- *
- * ALIGNED_POINTER is a boolean macro that checks whether an address
- * is valid to fetch data elements of type t from on this architecture.
- * This does not reflect the optimal alignment, just the possibility
- * (within reasonable limits). 
- *
- */
 #define ALIGNBYTES32		0x7
 #define ALIGNBYTES64		0xf
-#ifdef __arch64__
-#define	ALIGNBYTES		ALIGNBYTES64
-#else
-#define	ALIGNBYTES		ALIGNBYTES32
-#endif
-#define	ALIGN(p)		(((u_long)(p) + ALIGNBYTES) & ~ALIGNBYTES)
 #define ALIGN32(p)		(((u_long)(p) + ALIGNBYTES32) & ~ALIGNBYTES32)
-#define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
 
 
 /*
@@ -211,11 +193,14 @@ extern int nbpg, pgofset, pgshift;
 #define MSGBUFSIZE	NBPG
 
 /*
- * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
+ * Minimum size of the kernel kmem_arena in PAGE_SIZE-sized
  * logical pages.
+ * Maximum of 2.5GB on sparc64 (it must fit into KERNEND - KERNBASE, and also
+ * leave space in the kernel_map for other allocations).
  */
-#define	NKMEMPAGES_MIN_DEFAULT	((6 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MIN_DEFAULT	((64 * 1024 * 1024) >> PAGE_SHIFT)
+#undef	NKMEMPAGES_MAX_UNLIMITED
+#define	NKMEMPAGES_MAX_DEFAULT	((2048UL * 1024 * 1024) >> PAGE_SHIFT)
 
 #ifdef _KERNEL
 #ifndef _LOCORE

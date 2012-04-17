@@ -1,8 +1,14 @@
-# $NetBSD: bsd.clang-analyze.mk,v 1.2 2011/09/01 12:25:10 joerg Exp $
+# $NetBSD: bsd.clang-analyze.mk,v 1.2.2.1 2012/04/17 00:05:50 yamt Exp $
 
 .ifndef CLANG_ANALYZE_SRCS
 
 CLANG_ANALYZE_FLAGS+=	--analyze
+
+CLANG_ANALYZE_CHECKERS+=	core deadcode security unix
+
+.for checker in ${CLANG_ANALYZE_CHECKERS}
+CLANG_ANALYZE_FLAGS+=	-Xanalyzer -analyzer-checker=${checker}
+.endfor
 
 .SUFFIXES: .c .cc .cpp .cxx .C .clang-analyzer
 

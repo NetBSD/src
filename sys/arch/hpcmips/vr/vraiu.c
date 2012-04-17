@@ -1,4 +1,4 @@
-/*	$NetBSD: vraiu.c,v 1.12 2007/03/04 05:59:54 christos Exp $	*/
+/*	$NetBSD: vraiu.c,v 1.12.78.1 2012/04/17 00:06:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,12 +26,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vraiu.c,v 1.12 2007/03/04 05:59:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vraiu.c,v 1.12.78.1 2012/04/17 00:06:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/bswap.h>
 
 #include <machine/cpu.h>
@@ -61,6 +60,8 @@ int vraiu_debug = VRAIU_DEBUG;
 
 struct vraiu_softc {
 	struct device		sc_dev;
+	kmutex_t		sc_lock;
+	kmutex_t		sc_intr_lock;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_dma_tag_t		sc_dmat;
@@ -116,6 +117,7 @@ int vraiu_query_devinfo(void *, mixer_devinfo_t *);
 int vraiu_set_params(void *, int, int, audio_params_t *, audio_params_t *,
 		     stream_filter_list_t *, stream_filter_list_t *);
 int vraiu_get_props(void *);
+void vraiu_get_locks(void *, kmutex_t **, kmutex_t **);
 
 const struct audio_hw_if vraiu_hw_if = {
 	vraiu_open,
@@ -142,6 +144,10 @@ const struct audio_hw_if vraiu_hw_if = {
 	NULL,
 	NULL,
 	vraiu_get_props,
+	NULL,
+	NULL,
+	NULL,
+	vraiu_get_locks,
 };
 
 /*
@@ -187,6 +193,8 @@ vraiu_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ac = va->va_ac;
 	sc->sc_dmat = &vrdcu_bus_dma_tag;
 	sc->sc_volume = 127;
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	if (!sc->sc_cc) {
 		printf(" not configured: cmu not found\n");
@@ -221,19 +229,19 @@ vraiu_attach(struct device *parent, struct device *self, void *aux)
 							 AIUINT_INTSIDLE), 0);
 
 	if (bus_dmamem_alloc(sc->sc_dmat, AUDIO_BUF_SIZE, 0, 0, &segs, 1,
-			     &rsegs, BUS_DMA_NOWAIT)) {
+			     &rsegs, BUS_DMA_WAITOK)) {
 		printf(": can't allocate memory.\n");
 		return;
 	}
 	if (bus_dmamem_map(sc->sc_dmat, &segs, rsegs, AUDIO_BUF_SIZE,
 			   (void **)&sc->sc_buf,
-			   BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) {
+			   BUS_DMA_WAITOK | BUS_DMA_COHERENT)) {
 		printf(": can't map memory.\n");
 		bus_dmamem_free(sc->sc_dmat, &segs, rsegs);
 		return;
 	}
 	if (bus_dmamap_create(sc->sc_dmat, AUDIO_BUF_SIZE, 1, AUDIO_BUF_SIZE,
-			      0, BUS_DMA_NOWAIT, &sc->sc_dmap)) {
+			      0, BUS_DMA_WAITOK, &sc->sc_dmap)) {
 		printf(": can't create DMA map.\n");
 		bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_buf,
 				 AUDIO_BUF_SIZE);
@@ -241,7 +249,7 @@ vraiu_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dmap, sc->sc_buf,
-				   AUDIO_BUF_SIZE, NULL, BUS_DMA_NOWAIT)) {
+				   AUDIO_BUF_SIZE, NULL, BUS_DMA_WAITOK)) {
 		printf(": can't load DMA map.\n");
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmap);
 		bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_buf,
@@ -626,6 +634,9 @@ vraiu_intr(void* self)
 
 	DPRINTFN(2, ("vraiu_intr"));
 	sc = self;
+
+	mutex_spin_enter(&sc->sc_intr_lock);
+
 	vrip_intr_setmask2(sc->sc_vrip, sc->sc_handler, AIUINT_INTSEND, 0);
 	vrip_intr_getstatus2(sc->sc_vrip, sc->sc_handler, &reg);
 	if (reg & AIUINT_INTSEND) {
@@ -639,6 +650,9 @@ vraiu_intr(void* self)
 		bus_space_write_2(sc->sc_iot, sc->sc_ioh, INT_REG_W, SENDINTR);
 	}
 	DPRINTFN(2, ("\n"));
+
+	mutex_spin_exit(&sc->sc_intr_lock);
+
 	return 0;
 }
 
@@ -755,6 +769,18 @@ vraiu_get_props(void *self)
 	DPRINTFN(3, ("vraiu_get_props\n"));
 
 	return 0;
+}
+
+void
+vraiu_get_locks(void *self, kmutex_t **intr, kmutex_t **thread)
+{
+	struct vraiu_softc *sc;
+
+	DPRINTFN(3, ("vraiu_get_locks\n"));
+	sc = self;
+
+	*intr = &sc->sc_intr_lock;
+	*thread = &sc->sc_lock;
 }
 
 unsigned char mulaw_to_lin[] = {

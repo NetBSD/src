@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.38 2009/12/17 21:03:10 bouyer Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.38.12.1 2012/04/17 00:07:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,6 +30,8 @@
 #ifdef _KERNEL_OPT
 #include "opt_wd_softbadsect.h"
 #endif
+
+#include <sys/rnd.h>
 
 struct wd_softc {
 	/* General disk infos */
@@ -66,9 +68,7 @@ struct wd_softc {
 	SLIST_HEAD(, disk_badsectors)	sc_bslist;
 	u_int sc_bscount;
 #endif
-#if NRND > 0
-	rndsource_element_t	rnd_source;
-#endif
+	krndsource_t	rnd_source;
 };
 
 #define sc_drive sc_wdc_bio.drive

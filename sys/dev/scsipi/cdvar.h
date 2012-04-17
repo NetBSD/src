@@ -1,4 +1,4 @@
-/*	$NetBSD: cdvar.h,v 1.29 2009/10/19 18:41:16 bouyer Exp $	*/
+/*	$NetBSD: cdvar.h,v 1.29.12.1 2012/04/17 00:08:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -47,7 +47,5 @@ struct cd_softc {
 	struct bufq_state *buf_queue;
 	struct callout sc_callout;
 
-#if NRND > 0
-	rndsource_element_t	rnd_source;
-#endif
+	krndsource_t	rnd_source;
 };

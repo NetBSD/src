@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.52 2011/10/18 23:43:36 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.52.2.1 2012/04/17 00:07:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -69,11 +69,11 @@
  *
  * The configuration method can be hard-coded in the config file by
  * using `options PCI_CONF_MODE=N', where `N' is the configuration mode
- * as defined section 3.6.4.1, `Generating Configuration Cycles'.
+ * as defined in section 3.6.4.1, `Generating Configuration Cycles'.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.52 2011/10/18 23:43:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.52.2.1 2012/04/17 00:07:05 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -139,13 +139,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.52 2011/10/18 23:43:36 dyoung Exp 
 
 #include "opt_pci_conf_mode.h"
 
-#ifdef __i386__
-#include "opt_xbox.h"
-#ifdef XBOX
-#include <machine/xbox.h>
-#endif
-#endif
-
 #ifdef PCI_CONF_MODE
 #if (PCI_CONF_MODE == 1) || (PCI_CONF_MODE == 2)
 static int pci_mode = PCI_CONF_MODE;
@@ -170,9 +163,9 @@ static void pci_conf_select(uint32_t);
 static void pci_conf_lock(struct pci_conf_lock *, uint32_t);
 static void pci_bridge_hook(pci_chipset_tag_t, pcitag_t, void *);
 struct pci_bridge_hook_arg {
-	void (*func)(pci_chipset_tag_t, pcitag_t, void *); 
-	void *arg; 
-}; 
+	void (*func)(pci_chipset_tag_t, pcitag_t, void *);
+	void *arg;
+};
 
 #define	PCI_MODE1_ENABLE	0x80000000UL
 #define	PCI_MODE1_ADDRESS_REG	0x0cf8
@@ -181,14 +174,15 @@ struct pci_bridge_hook_arg {
 #define	PCI_MODE2_ENABLE_REG	0x0cf8
 #define	PCI_MODE2_FORWARD_REG	0x0cfa
 
-#define _m1tag(b, d, f) \
-	(PCI_MODE1_ENABLE | ((b) << 16) | ((d) << 11) | ((f) << 8))
+#define _tag(b, d, f) \
+	{.mode1 = PCI_MODE1_ENABLE | ((b) << 16) | ((d) << 11) | ((f) << 8)}
 #define _qe(bus, dev, fcn, vend, prod) \
-	{_m1tag(bus, dev, fcn), PCI_ID_CODE(vend, prod)}
-struct {
-	uint32_t tag;
+	{_tag(bus, dev, fcn), PCI_ID_CODE(vend, prod)}
+const struct {
+	pcitag_t tag;
 	pcireg_t id;
 } pcim1_quirk_tbl[] = {
+	_qe(0, 0, 0, PCI_VENDOR_INVALID, 0x0000), /* patchable */
 	_qe(0, 0, 0, PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_TRIFLEX1),
 	/* XXX Triflex2 not tested */
 	_qe(0, 0, 0, PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_TRIFLEX2),
@@ -204,10 +198,10 @@ struct {
 	_qe(0, 0, 0, PCI_VENDOR_SIS, PCI_PRODUCT_SIS_740),
 	/* SIS 741 */
 	_qe(0, 0, 0, PCI_VENDOR_SIS, PCI_PRODUCT_SIS_741),
-	{0, 0xffffffff} /* patchable */
+	/* VIA Technologies VX900 */
+	_qe(0, 0, 0, PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VX900_HB)
 };
-#undef _m1tag
-#undef _id
+#undef _tag
 #undef _qe
 
 /*
@@ -389,20 +383,6 @@ pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 int
 pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 {
-
-#if defined(__i386__) && defined(XBOX)
-	/*
-	 * Scanning above the first device is fatal on the Microsoft Xbox.
-	 * If busno=1, only allow for one device.
-	 */
-	if (arch_i386_is_xbox) {
-		if (busno == 1)
-			return 1;
-		else if (busno > 1)
-			return 0;
-	}
-#endif
-
 	/*
 	 * Bus number is irrelevant.  If Configuration Mechanism 2 is in
 	 * use, can only have devices 0-15 on any bus.  If Configuration
@@ -500,15 +480,6 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 		return (*ipc->pc_ov->ov_conf_read)(ipc->pc_ctx, pc, tag, reg);
 	}
 
-#if defined(__i386__) && defined(XBOX)
-	if (arch_i386_is_xbox) {
-		int bus, dev, fn;
-		pci_decompose_tag(pc, tag, &bus, &dev, &fn);
-		if (bus == 0 && dev == 0 && (fn == 1 || fn == 2))
-			return (pcireg_t)-1;
-	}
-#endif
-
 	pci_conf_lock(&ocl, pci_conf_selector(tag, reg));
 	data = inl(pci_conf_port(tag, reg));
 	pci_conf_unlock(&ocl);
@@ -530,15 +501,6 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 		    data);
 		return;
 	}
-
-#if defined(__i386__) && defined(XBOX)
-	if (arch_i386_is_xbox) {
-		int bus, dev, fn;
-		pci_decompose_tag(pc, tag, &bus, &dev, &fn);
-		if (bus == 0 && dev == 0 && (fn == 1 || fn == 2))
-			return;
-	}
-#endif
 
 	pci_conf_lock(&ocl, pci_conf_selector(tag, reg));
 	outl(pci_conf_port(tag, reg), data);
@@ -576,10 +538,10 @@ pci_mode_detect(void)
 	for (i = 0; i < __arraycount(pcim1_quirk_tbl); i++) {
 		pcitag_t t;
 
-		if (!pcim1_quirk_tbl[i].tag)
-			break;
-		t.mode1 = pcim1_quirk_tbl[i].tag;
-		idreg = pci_conf_read(0, t, PCI_ID_REG); /* needs "pci_mode" */
+		if (PCI_VENDOR(pcim1_quirk_tbl[i].id) == PCI_VENDOR_INVALID)
+			continue;
+		t.mode1 = pcim1_quirk_tbl[i].tag.mode1;
+		idreg = pci_conf_read(NULL, t, PCI_ID_REG); /* needs "pci_mode" */
 		if (idreg == pcim1_quirk_tbl[i].id) {
 #ifdef DEBUG
 			printf("known mode 1 PCI chipset (%08x)\n",
@@ -713,7 +675,7 @@ pci_device_foreach_min(pci_chipset_tag_t pc, int minbus, int maxbus,
 			bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
 			if (PCI_HDRTYPE_MULTIFN(bhlcr) ||
 			     (qd != NULL &&
-		  	     (qd->quirks & PCI_QUIRK_MULTIFUNCTION) != 0))
+			     (qd->quirks & PCI_QUIRK_MULTIFUNCTION) != 0))
 				nfuncs = 8;
 			else
 				nfuncs = 1;
@@ -744,10 +706,10 @@ pci_bridge_foreach(pci_chipset_tag_t pc, int minbus, int maxbus,
 	struct pci_bridge_hook_arg bridge_hook;
 
 	bridge_hook.func = func;
-	bridge_hook.arg = ctx;  
+	bridge_hook.arg = ctx;
 
 	pci_device_foreach_min(pc, minbus, maxbus, pci_bridge_hook,
-		&bridge_hook);      
+		&bridge_hook);
 }
 
 static void
@@ -758,7 +720,7 @@ pci_bridge_hook(pci_chipset_tag_t pc, pcitag_t tag, void *ctx)
 
 	reg = pci_conf_read(pc, tag, PCI_CLASS_REG);
 	if (PCI_CLASS(reg) == PCI_CLASS_BRIDGE &&
- 	     (PCI_SUBCLASS(reg) == PCI_SUBCLASS_BRIDGE_PCI ||
+	    (PCI_SUBCLASS(reg) == PCI_SUBCLASS_BRIDGE_PCI ||
 		PCI_SUBCLASS(reg) == PCI_SUBCLASS_BRIDGE_CARDBUS)) {
 		(*bridge_hook->func)(pc, tag, bridge_hook->arg);
 	}
@@ -921,7 +883,7 @@ device_pci_register(device_t dev, void *aux)
 		 * passed by the boot ROM.  The ROM should stay usable if
 		 * the driver becomes obsolete.  The physical attachment
 		 * information (checked below) must be sufficient to
-		 * idenfity the device.
+		 * identify the device.
 		 */
 		if (bin->bus == BI_BUS_PCI &&
 		    device_is_a(device_parent(dev), "pci")) {
@@ -988,7 +950,7 @@ device_pci_register(device_t dev, void *aux)
 #endif
 				if (fbinfo->depth == 8) {
 					gfb_cb.gcc_cookie = NULL;
-					gfb_cb.gcc_set_mapreg = 
+					gfb_cb.gcc_set_mapreg =
 					    x86_genfb_set_mapreg;
 					prop_dictionary_set_uint64(dict,
 					    "cmap_callback",

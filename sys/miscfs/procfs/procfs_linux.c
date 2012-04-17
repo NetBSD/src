@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.61 2011/09/04 17:32:10 jmcneill Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.61.2.1 2012/04/17 00:08:35 yamt Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.61 2011/09/04 17:32:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.61.2.1 2012/04/17 00:08:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.61 2011/09/04 17:32:10 jmcneill E
 #include <sys/mount.h>
 #include <sys/conf.h>
 #include <sys/sysctl.h>
+#include <sys/kauth.h>
+#include <sys/filedesc.h>
 
 #include <miscfs/procfs/procfs.h>
 
@@ -556,53 +558,70 @@ out:
 	return error;
 }
 
+static int
+procfs_format_sfs(char **mtab, size_t *mlen, char *buf, size_t blen,
+    const struct statvfs *sfs, struct lwp *curl, int suser)
+{
+	const char *fsname;
+
+	/* Linux uses different names for some filesystems */
+	fsname = sfs->f_fstypename;
+	if (strcmp(fsname, "procfs") == 0)
+		fsname = "proc";
+	else if (strcmp(fsname, "ext2fs") == 0)
+		fsname = "ext2";
+
+	blen = snprintf(buf, blen, "%s %s %s %s%s%s%s%s%s 0 0\n",
+	    sfs->f_mntfromname, sfs->f_mntonname, fsname,
+	    (sfs->f_flag & ST_RDONLY) ? "ro" : "rw",
+	    (sfs->f_flag & ST_NOSUID) ? ",nosuid" : "",
+	    (sfs->f_flag & ST_NOEXEC) ? ",noexec" : "",
+	    (sfs->f_flag & ST_NODEV) ? ",nodev" : "",
+	    (sfs->f_flag & ST_SYNCHRONOUS) ? ",sync" : "",
+	    (sfs->f_flag & ST_NOATIME) ? ",noatime" : "");
+
+	*mtab = realloc(*mtab, *mlen + blen, M_TEMP, M_WAITOK);
+	memcpy(*mtab + *mlen, buf, blen);
+	*mlen += blen;
+	return sfs->f_mntonname[0] == '/' && sfs->f_mntonname[1] == '\0';
+}
+
 int
 procfs_domounts(struct lwp *curl, struct proc *p,
     struct pfsnode *pfs, struct uio *uio)
 {
 	char *bf, *mtab = NULL;
-	const char *fsname;
-	size_t len, mtabsz = 0;
+	size_t mtabsz = 0;
 	struct mount *mp, *nmp;
-	struct statvfs *sfs;
-	int error = 0;
+	int error = 0, root = 0;
+	struct cwdinfo *cwdi = curl->l_proc->p_cwdi;
 
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
+
 	mutex_enter(&mountlist_lock);
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
-	     mp = nmp) {
-		if (vfs_busy(mp, &nmp)) {
+	    mp = nmp) {
+		struct statvfs sfs;
+
+		if (vfs_busy(mp, &nmp))
 			continue;
-		}
 
-		sfs = &mp->mnt_stat;
-
-		/* Linux uses different names for some filesystems */
-		fsname = sfs->f_fstypename;
-		if (strcmp(fsname, "procfs") == 0)
-			fsname = "proc";
-		else if (strcmp(fsname, "ext2fs") == 0)
-			fsname = "ext2";
-
-		len = snprintf(bf, LBFSZ, "%s %s %s %s%s%s%s%s%s 0 0\n",
-			sfs->f_mntfromname,
-			sfs->f_mntonname,
-			fsname,
-			(mp->mnt_flag & MNT_RDONLY) ? "ro" : "rw",
-			(mp->mnt_flag & MNT_NOSUID) ? ",nosuid" : "",
-			(mp->mnt_flag & MNT_NOEXEC) ? ",noexec" : "",
-			(mp->mnt_flag & MNT_NODEV) ? ",nodev" : "",
-			(mp->mnt_flag & MNT_SYNCHRONOUS) ? ",sync" : "",
-			(mp->mnt_flag & MNT_NOATIME) ? ",noatime" : ""
-			);
-
-		mtab = realloc(mtab, mtabsz + len, M_TEMP, M_WAITOK);
-		memcpy(mtab + mtabsz, bf, len);
-		mtabsz += len;
+		if ((error = dostatvfs(mp, &sfs, curl, MNT_WAIT, 0)) == 0)
+			root |= procfs_format_sfs(&mtab, &mtabsz, bf, LBFSZ,
+			    &sfs, curl, 0);
 
 		vfs_unbusy(mp, false, &nmp);
 	}
 	mutex_exit(&mountlist_lock);
+
+	/*
+	 * If we are inside a chroot that is not itself a mount point,
+	 * fake a root entry.
+	 */
+	if (!root && cwdi->cwdi_rdir)
+		(void)procfs_format_sfs(&mtab, &mtabsz, bf, LBFSZ,
+		    &cwdi->cwdi_rdir->v_mount->mnt_stat, curl, 1);
+
 	free(bf, M_TEMP);
 
 	if (mtabsz > 0) {

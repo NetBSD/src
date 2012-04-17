@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.26 2011/06/07 00:48:30 matt Exp $ */
+/* $NetBSD: process_machdep.c,v 1.26.2.1 2012/04/17 00:05:54 yamt Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.26 2011/06/07 00:48:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.26.2.1 2012/04/17 00:05:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ process_set_pc(struct lwp *l, void *addr)
 {
 	struct trapframe *frame = lwp_frame(l);
 
-	frame->tf_regs[FRAME_PC] = (u_int64_t)addr;
+	frame->tf_regs[FRAME_PC] = (uint64_t)addr;
 	return (0);
 }
 

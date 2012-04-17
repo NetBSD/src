@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.275.2.1 2011/12/02 16:33:09 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.275.2.2 2012/04/17 00:06:56 yamt Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,13 +26,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.275.2.1 2011/12/02 16:33:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.275.2.2 2012/04/17 00:06:56 yamt Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
+#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -259,7 +260,34 @@ tsb_invalidate(vaddr_t va, pmap_t pm)
 struct prom_map *prom_map;
 int prom_map_size;
 
-#ifdef DEBUG
+#define	PDB_CREATE		0x000001
+#define	PDB_DESTROY		0x000002
+#define	PDB_REMOVE		0x000004
+#define	PDB_CHANGEPROT		0x000008
+#define	PDB_ENTER		0x000010
+#define	PDB_DEMAP		0x000020	/* used in locore */
+#define	PDB_REF			0x000040
+#define	PDB_COPY		0x000080
+#define	PDB_MMU_ALLOC		0x000100
+#define	PDB_MMU_STEAL		0x000200
+#define	PDB_CTX_ALLOC		0x000400
+#define	PDB_CTX_STEAL		0x000800
+#define	PDB_MMUREG_ALLOC	0x001000
+#define	PDB_MMUREG_STEAL	0x002000
+#define	PDB_CACHESTUFF		0x004000
+#define	PDB_ALIAS		0x008000
+#define PDB_EXTRACT		0x010000
+#define	PDB_BOOT		0x020000
+#define	PDB_BOOT1		0x040000
+#define	PDB_GROW		0x080000
+#define	PDB_CTX_FLUSHALL	0x100000
+#define	PDB_ACTIVATE		0x200000
+
+#if defined(DEBUG) && !defined(PMAP_DEBUG)
+#define PMAP_DEBUG
+#endif
+
+#ifdef PMAP_DEBUG
 struct {
 	int kernel;	/* entering kernel mapping */
 	int user;	/* entering user mapping */
@@ -287,28 +315,8 @@ struct {
 #define	ENTER_STAT(x)	do { enter_stats.x ++; } while (0)
 #define	REMOVE_STAT(x)	do { remove_stats.x ++; } while (0)
 
-#define	PDB_CREATE		0x000001
-#define	PDB_DESTROY		0x000002
-#define	PDB_REMOVE		0x000004
-#define	PDB_CHANGEPROT		0x000008
-#define	PDB_ENTER		0x000010
-#define	PDB_DEMAP		0x000020	/* used in locore */
-#define	PDB_REF			0x000040
-#define	PDB_COPY		0x000080
-#define	PDB_MMU_ALLOC		0x000100
-#define	PDB_MMU_STEAL		0x000200
-#define	PDB_CTX_ALLOC		0x000400
-#define	PDB_CTX_STEAL		0x000800
-#define	PDB_MMUREG_ALLOC	0x001000
-#define	PDB_MMUREG_STEAL	0x002000
-#define	PDB_CACHESTUFF		0x004000
-#define	PDB_ALIAS		0x008000
-#define PDB_EXTRACT		0x010000
-#define	PDB_BOOT		0x020000
-#define	PDB_BOOT1		0x040000
-#define	PDB_GROW		0x080000
-#define	PDB_CTX_FLUSHALL	0x100000
 int	pmapdebug = 0;
+//int	pmapdebug = 0 | PDB_CTX_ALLOC | PDB_ACTIVATE;
 /* Number of H/W pages stolen for page tables */
 int	pmap_pages_stolen = 0;
 
@@ -319,6 +327,7 @@ int	pmap_pages_stolen = 0;
 #define	REMOVE_STAT(x)	do { /* nothing */ } while (0)
 #define	BDPRINTF(n, f)
 #define	DPRINTF(n, f)
+#define pmapdebug 0
 #endif
 
 #define pv_check()
@@ -419,10 +428,8 @@ static void pmap_enter_kpage(vaddr_t va, int64_t data)
 		BDPRINTF(PDB_BOOT1,
 			 ("pseg_set: pm=%p va=%p data=%lx newp %lx\n",
 			  pmap_kernel(), va, (long)data, (long)newp));
-#ifdef DEBUG
 		if (pmapdebug & PDB_BOOT1)
 		{int i; for (i=0; i<140000000; i++) ;}
-#endif
 	}
 }
 
@@ -446,6 +453,8 @@ static void pmap_bootdebug(void)
 			break;
 		}
 }
+#else
+#define pmap_bootdebug()	/* nothing */
 #endif
 
 
@@ -669,6 +678,9 @@ pmap_read_memlist(const char *device, const char *property, void **ml,
 void
 pmap_bootstrap(u_long kernelstart, u_long kernelend)
 {
+#ifdef MODULAR
+	extern vaddr_t module_start, module_end;
+#endif
 	extern char etext[], data_start[];	/* start of data segment */
 	extern int msgbufmapped;
 	struct mem_region *mp, *mp1, *avail, *orig;
@@ -707,10 +719,7 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 	/* Initialize bootstrap allocator. */
 	kdata_alloc_init(kernelend + 1 * 1024 * 1024, ekdata);
 
-#ifdef DEBUG
 	pmap_bootdebug();
-#endif
-
 	pmap_alloc_bootargs();
 	pmap_mp_init();
 
@@ -757,7 +766,6 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 	phys_installed = prom_memlist;
 	phys_installed_size = prom_memlist_size / sizeof(*phys_installed);
 
-#ifdef DEBUG
 	if (pmapdebug & PDB_BOOT1) {
 		/* print out mem list */
 		prom_printf("Installed physical memory:\n");
@@ -767,7 +775,6 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 					(u_long)phys_installed[i].size);
 		}
 	}
-#endif
 
 	BDPRINTF(PDB_BOOT1, ("Calculating physmem:"));
 	for (i = 0; i < phys_installed_size; i++)
@@ -793,7 +800,6 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 	prom_map = prom_memlist;
 	prom_map_size = prom_memlist_size / sizeof(struct prom_map);
 
-#ifdef DEBUG
 	if (pmapdebug & PDB_BOOT) {
 		/* print out mem list */
 		prom_printf("Prom xlations:\n");
@@ -805,7 +811,6 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 		}
 		prom_printf("End of prom xlations\n");
 	}
-#endif
 
 	/*
 	 * Here's a quick in-lined reverse bubble sort.  It gets rid of
@@ -822,7 +827,6 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 			}
 		}
 	}
-#ifdef DEBUG
 	if (pmapdebug & PDB_BOOT) {
 		/* print out mem list */
 		prom_printf("Prom xlations:\n");
@@ -834,7 +838,6 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 		}
 		prom_printf("End of prom xlations\n");
 	}
-#endif
 
 	/*
 	 * Allocate a ncpu*64KB page for the cpu_info & stack structure now.
@@ -871,7 +874,6 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 				(u_long)ektext, (u_long)ektextp,
 				(u_long)kdata, (u_long)kdatap,
 				(u_long)ekdata, (u_long)ekdatap));
-#ifdef DEBUG
 	if (pmapdebug & PDB_BOOT1) {
 		/* print out mem list */
 		prom_printf("Available %lx physical memory before cleanup:\n",
@@ -887,7 +889,7 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 		prom_printf("kernel physical data size %08lx - %08lx\n",
 			    (u_long)kdatap, (u_long)ekdatap);
 	}
-#endif
+
 	/*
 	 * Here's a another quick in-lined bubble sort.
 	 */
@@ -979,7 +981,6 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 			VM_FREELIST_DEFAULT);
 	}
 
-#ifdef DEBUG
 	if (pmapdebug & PDB_BOOT) {
 		/* print out mem list */
 		prom_printf("Available physical memory after cleanup:\n");
@@ -989,7 +990,7 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 		}
 		prom_printf("End of available physical memory after cleanup\n");
 	}
-#endif
+
 	/*
 	 * Allocate and clear out pmap_kernel()->pm_segs[]
 	 */
@@ -1012,12 +1013,10 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 	/*
 	 * Tell pmap about our mesgbuf -- Hope this works already
 	 */
-#ifdef DEBUG
 	BDPRINTF(PDB_BOOT1, ("Calling consinit()\n"));
 	if (pmapdebug & PDB_BOOT1)
 		consinit();
 	BDPRINTF(PDB_BOOT1, ("Inserting mesgbuf into pmap_kernel()\n"));
-#endif
 	/* it's not safe to call pmap_enter so we need to do this ourselves */
 	va = (vaddr_t)msgbufp;
 	prom_map_phys(phys_msgbuf, msgbufsiz, (vaddr_t)msgbufp, -1);
@@ -1052,9 +1051,7 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 					      prom_map[i].vsize)
 						break;
 				}
-#ifdef DEBUG
 				page_size_map[k].use++;
-#endif
 				/* Enter PROM map into pmap_kernel() */
 				pmap_enter_kpage(prom_map[i].vstart + j,
 					(prom_map[i].tte + j) | TLB_EXEC |
@@ -1175,6 +1172,18 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 	}
 
 	vmmap = (vaddr_t)reserve_dumppages((void *)(u_long)vmmap);
+
+#ifdef MODULAR
+	/*
+	 * Reserve 16 MB of VA for module loading. Right now our full
+	 * GENERIC kernel is about 13 MB, so this looks good enough.
+	 * If we make this bigger, we should adjust the KERNEND and
+	 * associated defines in param.h.
+	 */
+	module_start = vmmap;
+	vmmap += 16 * 1024*1024;
+	module_end = vmmap;
+#endif
 
 	/*
 	 * Set up bounds of allocatable memory for vmstat et al.
@@ -1507,6 +1516,9 @@ pmap_activate_pmap(struct pmap *pmap)
 	if (pmap_ctx(pmap) == 0) {
 		(void) ctx_alloc(pmap);
 	}
+	DPRINTF(PDB_ACTIVATE,
+		("%s: cpu%d activating ctx %d\n", __func__,
+		 cpu_number(), pmap_ctx(pmap)));
 	dmmu_set_secondary_context(pmap_ctx(pmap));
 }
 
@@ -1516,6 +1528,10 @@ pmap_activate_pmap(struct pmap *pmap)
 void
 pmap_deactivate(struct lwp *l)
 {
+
+	DPRINTF(PDB_ACTIVATE,
+		("%s: cpu%d deactivating ctx %d\n", __func__,
+		 cpu_number(), pmap_ctx(l->l_proc->p_vmspace->vm_map.pmap)));
 }
 
 /*
@@ -1573,7 +1589,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		       (long long)ptp);
 		pmap_free_page_noflush(ptp);
 	}
-#ifdef DEBUG
+#ifdef PMAP_DEBUG
 	i = ptelookup_va(va);
 	if (pmapdebug & PDB_ENTER)
 		prom_printf("pmap_kenter_pa: va=%08x data=%08x:%08x "
@@ -1851,7 +1867,7 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	}
 
 	mutex_exit(&pmap_lock);
-#ifdef DEBUG
+#ifdef PMAP_DEBUG
 	i = ptelookup_va(va);
 	if (pmapdebug & PDB_ENTER)
 		prom_printf("pmap_enter: va=%08x data=%08x:%08x "
@@ -2101,13 +2117,15 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	}
 
 	sva = trunc_page(sva);
+	mutex_enter(&pmap_lock);
 	for (; sva < eva; sva += PAGE_SIZE) {
-#ifdef DEBUG
+#ifdef PMAP_DEBUG
 		/*
 		 * Is this part of the permanent 4MB mapping?
 		 */
 		if (pm == pmap_kernel() && sva >= ktext &&
 		    sva < roundup(ekdata, 4 * MEG)) {
+			mutex_exit(&pmap_lock);
 			prom_printf("pmap_protect: va=%08x in locked TLB\n",
 			    sva);
 			prom_abort();
@@ -2159,6 +2177,7 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		tlb_flush_pte(sva, pm);
 	}
 	pv_check();
+	mutex_exit(&pmap_lock);
 }
 
 /*
@@ -2197,7 +2216,6 @@ pmap_extract(struct pmap *pm, vaddr_t va, paddr_t *pap)
 	} else {
 		data = pseg_get(pm, va);
 		pa = data & TLB_PA_MASK;
-#ifdef DEBUG
 		if (pmapdebug & PDB_EXTRACT) {
 			paddr_t npa = ldxa((vaddr_t)&pm->pm_segs[va_to_seg(va)],
 					   ASI_PHYS_CACHED);
@@ -2225,7 +2243,6 @@ pmap_extract(struct pmap *pm, vaddr_t va, paddr_t *pap)
 			}
 			printf(" pseg_get: %lx\n", (long)pa);
 		}
-#endif
 	}
 	if ((data & TLB_V) == 0)
 		return (FALSE);

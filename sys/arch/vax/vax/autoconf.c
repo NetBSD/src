@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.92 2010/12/14 23:44:49 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.92.8.1 2012/04/17 00:07:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.92 2010/12/14 23:44:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.92.8.1 2012/04/17 00:07:01 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cputype.h"
@@ -117,8 +117,8 @@ mainbus_print(void *aux, const char *name)
 {
 	struct mainbus_attach_args * const ma = aux;
 	if (name) {
-		aprint_naive("%s at %s\n", ma->ma_type, name);
-		aprint_normal("%s at %s\n", ma->ma_type, name);
+		aprint_naive("%s at %s", ma->ma_type, name);
+		aprint_normal("%s at %s", ma->ma_type, name);
         }
 	return UNCONF;
 }

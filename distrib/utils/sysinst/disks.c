@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.116.2.1 2011/11/10 14:31:15 yamt Exp $ */
+/*	$NetBSD: disks.c,v 1.116.2.2 2012/04/17 00:02:49 yamt Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -47,10 +47,7 @@
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 #define FSTYPENAMES
-#define MOUNTNAMES
-#define static
 #include <sys/disklabel.h>
-#undef static
 
 #include <dev/scsipi/scsipi_all.h>
 #include <sys/scsiio.h>
@@ -90,6 +87,14 @@ static void fixsb(const char *, const char *, char);
 #endif
 
 static const char *disk_names[] = { DISK_NAMES, "vnd", NULL };
+
+const char *
+getfslabelname(uint8_t f)
+{
+	if (f >= __arraycount(fstypenames) || fstypenames[f] == NULL)
+		return "invalid";
+	return fstypenames[f];
+}
 
 /* from src/sbin/atactl/atactl.c
  * extract_string: copy a block of bytes out of ataparams and make
@@ -397,7 +402,7 @@ find_disks(const char *doingwhat)
 			NULL, NULL, NULL, NULL, NULL);
 		if (menu_no == -1)
 			return -1;
-		msg_display(MSG_ask_disk);
+		msg_display(MSG_ask_disk, doingwhat);
 		process_menu(menu_no, &selected_disk);
 		free_menu(menu_no);
 	}
@@ -459,7 +464,7 @@ fmt_fspart(menudesc *m, int ptn, void *arg)
 		else
 			desc = "FFSv1";
 	else
-		desc = fstypenames[p->pi_fstype];
+		desc = getfslabelname(p->pi_fstype);
 
 #ifdef PART_BOOT
 	if (ptn == PART_BOOT)
@@ -655,7 +660,7 @@ make_fstab(void)
 	/* Create the fstab. */
 	make_target_dir("/etc");
 	f = target_fopen("/etc/fstab", "w");
-	if (logging)
+	if (logfp)
 		(void)fprintf(logfp,
 		    "Creating %s/etc/fstab.\n", target_prefix());
 	scripting_fprintf(NULL, "cat <<EOF >%s/etc/fstab\n", target_prefix());
@@ -663,7 +668,7 @@ make_fstab(void)
 	if (f == NULL) {
 #ifndef DEBUG
 		msg_display(MSG_createfstab);
-		if (logging)
+		if (logfp)
 			(void)fprintf(logfp, "Failed to make /etc/fstab!\n");
 		process_menu(MENU_ok, NULL);
 		return 1;
@@ -672,7 +677,7 @@ make_fstab(void)
 #endif
 	}
 
-	scripting_fprintf(f, "# NetBSD /etc/fstab\n# See /usr/share/examples/"
+	scripting_fprintf(f, "# NetBSD %s/etc/fstab\n# See /usr/share/examples/"
 		"fstab/ for more examples.\n", target_prefix());
 	for (i = 0; i < getmaxpartitions(); i++) {
 		const char *s = "";

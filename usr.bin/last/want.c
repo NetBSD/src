@@ -1,4 +1,4 @@
-/*	$NetBSD: want.c,v 1.14 2011/09/16 15:39:27 joerg Exp $	*/
+/*	$NetBSD: want.c,v 1.14.2.1 2012/04/17 00:09:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -29,6 +29,7 @@
  * SUCH DAMAGE.
  */
 static struct utmp *buf;
+static time_t seentime;
 
 static void onintr(int);
 static int want(struct utmp *, int);
@@ -38,7 +39,7 @@ static const char *
 /*ARGSUSED*/
 gethost(struct utmp *ut, const char *host, int numeric)
 {
-#if FIRSTVALID == 0
+#if HAS_UT_SS == 0
 	return numeric ? "" : host;
 #else
 	if (numeric) {
@@ -130,7 +131,7 @@ wtmp(const char *file, int namesz, int linesz, int hostsz, int numeric)
 	if (!S_ISREG(stb.st_mode))
 		errx(EXIT_FAILURE, "%s: Not a regular file", file);
 
-	buf[FIRSTVALID].ut_timefld = time(NULL);
+	seentime = stb.st_mtime;
 	(void)signal(SIGINT, onintr);
 	(void)signal(SIGQUIT, onintr);
 
@@ -157,6 +158,9 @@ wtmp(const char *file, int namesz, int linesz, int hostsz, int numeric)
 			NULTERM(name);
 			NULTERM(line);
 			NULTERM(host);
+
+			seentime = bp->ut_timefld;
+
 			/*
 			 * if the terminal line is '~', the machine stopped.
 			 * see utmp(5) for more info.
@@ -250,7 +254,7 @@ wtmp(const char *file, int namesz, int linesz, int hostsz, int numeric)
 		}
 	}
 	fulltime = 1;	/* show full time */
-	crmsg = fmttime(buf[FIRSTVALID].ut_timefld, FULLTIME);
+	crmsg = fmttime(seentime, FULLTIME);
 	if ((ct = strrchr(file, '/')) != NULL)
 		ct++;
 	printf("\n%s begins %s\n", ct ? ct : file, crmsg);
@@ -305,8 +309,7 @@ static void
 onintr(int signo)
 {
 	/* FIXME: None of this is allowed in a signal handler */
-	printf("\ninterrupted %s\n", fmttime(buf[FIRSTVALID].ut_timefld,
-	    FULLTIME));
+	printf("\ninterrupted %s\n", fmttime(seentime, FULLTIME));
 	if (signo == SIGINT) {
 		(void)raise_default_signal(signo);
 		exit(EXIT_FAILURE);

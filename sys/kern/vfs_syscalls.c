@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.440 2011/10/14 09:23:31 hannken Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.440.2.1 2012/04/17 00:08:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.440 2011/10/14 09:23:31 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.440.2.1 2012/04/17 00:08:32 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -94,6 +94,8 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.440 2011/10/14 09:23:31 hannken E
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 #include <sys/vfs_syscalls.h>
+#include <sys/quota.h>
+#include <sys/quotactl.h>
 #include <sys/ktrace.h>
 #ifdef FILEASSOC
 #include <sys/fileassoc.h>
@@ -117,6 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.440 2011/10/14 09:23:31 hannken E
 static int change_flags(struct vnode *, u_long, struct lwp *);
 static int change_mode(struct vnode *, int, struct lwp *l);
 static int change_owner(struct vnode *, uid_t, gid_t, struct lwp *, int);
+static int do_open(lwp_t *, struct pathbuf *, int, int, int *);
 
 /*
  * This table is used to maintain compatibility with 4.3BSD
@@ -221,7 +224,7 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	mutex_enter(&mp->mnt_updating);
 
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
-	mp->mnt_flag |= flags & (MNT_RELOAD | MNT_FORCE | MNT_UPDATE);
+	mp->mnt_flag |= flags & MNT_OP_FLAGS;
 
 	/*
 	 * Set the mount level flags.
@@ -230,17 +233,8 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 		mp->mnt_flag |= MNT_RDONLY;
 	else if (mp->mnt_flag & MNT_RDONLY)
 		mp->mnt_iflag |= IMNT_WANTRDWR;
-	mp->mnt_flag &=
-	  ~(MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
-	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
-	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
-	    MNT_LOG | MNT_EXTATTR);
-	mp->mnt_flag |= flags &
-	   (MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
-	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
-	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
-	    MNT_LOG | MNT_EXTATTR | MNT_IGNORE);
-
+	mp->mnt_flag &= ~MNT_BASIC_FLAGS;
+	mp->mnt_flag |= flags & MNT_BASIC_FLAGS;
 	error = VFS_MOUNT(mp, path, data, data_len);
 
 	if (error && data != NULL) {
@@ -607,42 +601,418 @@ sys_sync(struct lwp *l, const void *v, register_t *retval)
 
 
 /*
- * Change filesystem quotas.
+ * Access or change filesystem quotas.
+ *
+ * (this is really 14 different calls bundled into one)
  */
+
+static int
+do_sys_quotactl_stat(struct mount *mp, struct quotastat *info_u)
+{
+	struct quotastat info_k;
+	int error;
+
+	/* ensure any padding bytes are cleared */
+	memset(&info_k, 0, sizeof(info_k));
+
+	error = vfs_quotactl_stat(mp, &info_k);
+	if (error) {
+		return error;
+	}
+
+	return copyout(&info_k, info_u, sizeof(info_k));
+}
+
+static int
+do_sys_quotactl_idtypestat(struct mount *mp, int idtype,
+    struct quotaidtypestat *info_u)
+{
+	struct quotaidtypestat info_k;
+	int error;
+
+	/* ensure any padding bytes are cleared */
+	memset(&info_k, 0, sizeof(info_k));
+
+	error = vfs_quotactl_idtypestat(mp, idtype, &info_k);
+	if (error) {
+		return error;
+	}
+
+	return copyout(&info_k, info_u, sizeof(info_k));
+}
+
+static int
+do_sys_quotactl_objtypestat(struct mount *mp, int objtype,
+    struct quotaobjtypestat *info_u)
+{
+	struct quotaobjtypestat info_k;
+	int error;
+
+	/* ensure any padding bytes are cleared */
+	memset(&info_k, 0, sizeof(info_k));
+
+	error = vfs_quotactl_objtypestat(mp, objtype, &info_k);
+	if (error) {
+		return error;
+	}
+
+	return copyout(&info_k, info_u, sizeof(info_k));
+}
+
+static int
+do_sys_quotactl_get(struct mount *mp, const struct quotakey *key_u,
+    struct quotaval *val_u)
+{
+	struct quotakey key_k;
+	struct quotaval val_k;
+	int error;
+
+	/* ensure any padding bytes are cleared */
+	memset(&val_k, 0, sizeof(val_k));
+
+	error = copyin(key_u, &key_k, sizeof(key_k));
+	if (error) {
+		return error;
+	}
+
+	error = vfs_quotactl_get(mp, &key_k, &val_k);
+	if (error) {
+		return error;
+	}
+
+	return copyout(&val_k, val_u, sizeof(val_k));
+}
+
+static int
+do_sys_quotactl_put(struct mount *mp, const struct quotakey *key_u,
+    const struct quotaval *val_u)
+{
+	struct quotakey key_k;
+	struct quotaval val_k;
+	int error;
+
+	error = copyin(key_u, &key_k, sizeof(key_k));
+	if (error) {
+		return error;
+	}
+
+	error = copyin(val_u, &val_k, sizeof(val_k));
+	if (error) {
+		return error;
+	}
+
+	return vfs_quotactl_put(mp, &key_k, &val_k);
+}
+
+static int
+do_sys_quotactl_delete(struct mount *mp, const struct quotakey *key_u)
+{
+	struct quotakey key_k;
+	int error;
+
+	error = copyin(key_u, &key_k, sizeof(key_k));
+	if (error) {
+		return error;
+	}
+
+	return vfs_quotactl_delete(mp, &key_k);
+}
+
+static int
+do_sys_quotactl_cursoropen(struct mount *mp, struct quotakcursor *cursor_u)
+{
+	struct quotakcursor cursor_k;
+	int error;
+
+	/* ensure any padding bytes are cleared */
+	memset(&cursor_k, 0, sizeof(cursor_k));
+
+	error = vfs_quotactl_cursoropen(mp, &cursor_k);
+	if (error) {
+		return error;
+	}
+
+	return copyout(&cursor_k, cursor_u, sizeof(cursor_k));
+}
+
+static int
+do_sys_quotactl_cursorclose(struct mount *mp, struct quotakcursor *cursor_u)
+{
+	struct quotakcursor cursor_k;
+	int error;
+
+	error = copyin(cursor_u, &cursor_k, sizeof(cursor_k));
+	if (error) {
+		return error;
+	}
+
+	return vfs_quotactl_cursorclose(mp, &cursor_k);
+}
+
+static int
+do_sys_quotactl_cursorskipidtype(struct mount *mp,
+    struct quotakcursor *cursor_u, int idtype)
+{
+	struct quotakcursor cursor_k;
+	int error;
+
+	error = copyin(cursor_u, &cursor_k, sizeof(cursor_k));
+	if (error) {
+		return error;
+	}
+
+	error = vfs_quotactl_cursorskipidtype(mp, &cursor_k, idtype);
+	if (error) {
+		return error;
+	}
+
+	return copyout(&cursor_k, cursor_u, sizeof(cursor_k));
+}
+
+static int
+do_sys_quotactl_cursorget(struct mount *mp, struct quotakcursor *cursor_u,
+    struct quotakey *keys_u, struct quotaval *vals_u, unsigned maxnum,
+    unsigned *ret_u)
+{
+#define CGET_STACK_MAX 8
+	struct quotakcursor cursor_k;
+	struct quotakey stackkeys[CGET_STACK_MAX];
+	struct quotaval stackvals[CGET_STACK_MAX];
+	struct quotakey *keys_k;
+	struct quotaval *vals_k;
+	unsigned ret_k;
+	int error;
+
+	if (maxnum > 128) {
+		maxnum = 128;
+	}
+
+	error = copyin(cursor_u, &cursor_k, sizeof(cursor_k));
+	if (error) {
+		return error;
+	}
+
+	if (maxnum <= CGET_STACK_MAX) {
+		keys_k = stackkeys;
+		vals_k = stackvals;
+		/* ensure any padding bytes are cleared */
+		memset(keys_k, 0, maxnum * sizeof(keys_k[0]));
+		memset(vals_k, 0, maxnum * sizeof(vals_k[0]));
+	} else {
+		keys_k = kmem_zalloc(maxnum * sizeof(keys_k[0]), KM_SLEEP);
+		vals_k = kmem_zalloc(maxnum * sizeof(vals_k[0]), KM_SLEEP);
+	}
+
+	error = vfs_quotactl_cursorget(mp, &cursor_k, keys_k, vals_k, maxnum,
+				       &ret_k);
+	if (error) {
+		goto fail;
+	}
+
+	error = copyout(keys_k, keys_u, ret_k * sizeof(keys_k[0]));
+	if (error) {
+		goto fail;
+	}
+
+	error = copyout(vals_k, vals_u, ret_k * sizeof(vals_k[0]));
+	if (error) {
+		goto fail;
+	}
+
+	error = copyout(&ret_k, ret_u, sizeof(ret_k));
+	if (error) {
+		goto fail;
+	}
+
+	/* do last to maximize the chance of being able to recover a failure */
+	error = copyout(&cursor_k, cursor_u, sizeof(cursor_k));
+
+fail:
+	if (keys_k != stackkeys) {
+		kmem_free(keys_k, maxnum * sizeof(keys_k[0]));
+	}
+	if (vals_k != stackvals) {
+		kmem_free(vals_k, maxnum * sizeof(vals_k[0]));
+	}
+	return error;
+}
+
+static int
+do_sys_quotactl_cursoratend(struct mount *mp, struct quotakcursor *cursor_u,
+    int *ret_u)
+{
+	struct quotakcursor cursor_k;
+	int ret_k;
+	int error;
+
+	error = copyin(cursor_u, &cursor_k, sizeof(cursor_k));
+	if (error) {
+		return error;
+	}
+
+	error = vfs_quotactl_cursoratend(mp, &cursor_k, &ret_k);
+	if (error) {
+		return error;
+	}
+
+	error = copyout(&ret_k, ret_u, sizeof(ret_k));
+	if (error) {
+		return error;
+	}
+
+	return copyout(&cursor_k, cursor_u, sizeof(cursor_k));
+}
+
+static int
+do_sys_quotactl_cursorrewind(struct mount *mp, struct quotakcursor *cursor_u)
+{
+	struct quotakcursor cursor_k;
+	int error;
+
+	error = copyin(cursor_u, &cursor_k, sizeof(cursor_k));
+	if (error) {
+		return error;
+	}
+
+	error = vfs_quotactl_cursorrewind(mp, &cursor_k);
+	if (error) {
+		return error;
+	}
+
+	return copyout(&cursor_k, cursor_u, sizeof(cursor_k));
+}
+
+static int
+do_sys_quotactl_quotaon(struct mount *mp, int idtype, const char *path_u)
+{
+	char *path_k;
+	int error;
+
+	/* XXX this should probably be a struct pathbuf */
+	path_k = PNBUF_GET();
+	error = copyin(path_u, path_k, PATH_MAX);
+	if (error) {
+		PNBUF_PUT(path_k);
+		return error;
+	}
+
+	error = vfs_quotactl_quotaon(mp, idtype, path_k);
+
+	PNBUF_PUT(path_k);
+	return error;
+}
+
+static int
+do_sys_quotactl_quotaoff(struct mount *mp, int idtype)
+{
+	return vfs_quotactl_quotaoff(mp, idtype);
+}
+
+int
+do_sys_quotactl(const char *path_u, const struct quotactl_args *args)
+{
+	struct mount *mp;
+	struct vnode *vp;
+	int error;
+
+	error = namei_simple_user(path_u, NSM_FOLLOW_TRYEMULROOT, &vp);
+	if (error != 0)
+		return (error);
+	mp = vp->v_mount;
+
+	switch (args->qc_op) {
+	    case QUOTACTL_STAT:
+		error = do_sys_quotactl_stat(mp, args->u.stat.qc_info);
+		break;
+	    case QUOTACTL_IDTYPESTAT:
+		error = do_sys_quotactl_idtypestat(mp,
+				args->u.idtypestat.qc_idtype,
+				args->u.idtypestat.qc_info);
+		break;
+	    case QUOTACTL_OBJTYPESTAT:
+		error = do_sys_quotactl_objtypestat(mp,
+				args->u.objtypestat.qc_objtype,
+				args->u.objtypestat.qc_info);
+		break;
+	    case QUOTACTL_GET:
+		error = do_sys_quotactl_get(mp,
+				args->u.get.qc_key,
+				args->u.get.qc_val);
+		break;
+	    case QUOTACTL_PUT:
+		error = do_sys_quotactl_put(mp,
+				args->u.put.qc_key,
+				args->u.put.qc_val);
+		break;
+	    case QUOTACTL_DELETE:
+		error = do_sys_quotactl_delete(mp, args->u.delete.qc_key);
+		break;
+	    case QUOTACTL_CURSOROPEN:
+		error = do_sys_quotactl_cursoropen(mp,
+				args->u.cursoropen.qc_cursor);
+		break;
+	    case QUOTACTL_CURSORCLOSE:
+		error = do_sys_quotactl_cursorclose(mp,
+				args->u.cursorclose.qc_cursor);
+		break;
+	    case QUOTACTL_CURSORSKIPIDTYPE:
+		error = do_sys_quotactl_cursorskipidtype(mp,
+				args->u.cursorskipidtype.qc_cursor,
+				args->u.cursorskipidtype.qc_idtype);
+		break;
+	    case QUOTACTL_CURSORGET:
+		error = do_sys_quotactl_cursorget(mp,
+				args->u.cursorget.qc_cursor,
+				args->u.cursorget.qc_keys,
+				args->u.cursorget.qc_vals,
+				args->u.cursorget.qc_maxnum,
+				args->u.cursorget.qc_ret);
+		break;
+	    case QUOTACTL_CURSORATEND:
+		error = do_sys_quotactl_cursoratend(mp,
+				args->u.cursoratend.qc_cursor,
+				args->u.cursoratend.qc_ret);
+		break;
+	    case QUOTACTL_CURSORREWIND:
+		error = do_sys_quotactl_cursorrewind(mp,
+				args->u.cursorrewind.qc_cursor);
+		break;
+	    case QUOTACTL_QUOTAON:
+		error = do_sys_quotactl_quotaon(mp,
+				args->u.quotaon.qc_idtype,
+				args->u.quotaon.qc_quotafile);
+		break;
+	    case QUOTACTL_QUOTAOFF:
+		error = do_sys_quotactl_quotaoff(mp,
+				args->u.quotaoff.qc_idtype);
+		break;
+	    default:
+		error = EINVAL;
+		break;
+	}
+
+	vrele(vp);
+	return error;
+}
+
 /* ARGSUSED */
 int
-sys___quotactl50(struct lwp *l, const struct sys___quotactl50_args *uap,
+sys___quotactl(struct lwp *l, const struct sys___quotactl_args *uap,
     register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
-		syscallarg(struct plistref *) pref;
+		syscallarg(struct quotactl_args *) args;
 	} */
-	struct mount *mp;
+	struct quotactl_args args;
 	int error;
-	struct vnode *vp;
-	prop_dictionary_t dict;
-	struct plistref pref;
 
-	error = namei_simple_user(SCARG(uap, path),
-				NSM_FOLLOW_TRYEMULROOT, &vp);
-	if (error != 0)
-		return (error);
-	mp = vp->v_mount;
-	error = copyin(SCARG(uap, pref), &pref, sizeof(pref));
-	if (error)
+	error = copyin(SCARG(uap, args), &args, sizeof(args));
+	if (error) {
 		return error;
-	error = prop_dictionary_copyin(&pref, &dict);
-	if (error)
-		return error;
-	error = VFS_QUOTACTL(mp, dict);
-	vrele(vp);
-	if (!error)
-		error = prop_dictionary_copyout(&pref, dict);
-	if (!error)
-		error = copyout(&pref, SCARG(uap, pref), sizeof(pref));
-	prop_object_release(dict);
-	return (error);
+	}
+
+	return do_sys_quotactl(SCARG(uap, path), &args);
 }
 
 int
@@ -1095,6 +1465,80 @@ chdir_lookup(const char *path, int where, struct vnode **vpp, struct lwp *l)
 }
 
 /*
+ * Internals of sys_open - path has already been converted into a pathbuf
+ * (so we can easily reuse this function from other parts of the kernel,
+ * like posix_spawn post-processing).
+ */
+static int
+do_open(lwp_t *l, struct pathbuf *pb, int open_flags, int open_mode, int *fd)
+{
+	struct proc *p = l->l_proc;
+	struct cwdinfo *cwdi = p->p_cwdi;
+	file_t *fp;
+	struct vnode *vp;
+	int flags, cmode;
+	int indx, error;
+	struct nameidata nd;
+
+	flags = FFLAGS(open_flags);
+	if ((flags & (FREAD | FWRITE)) == 0)
+		return EINVAL;
+
+	if ((error = fd_allocfile(&fp, &indx)) != 0) {
+		pathbuf_destroy(pb);
+		return error;
+	}
+	/* We're going to read cwdi->cwdi_cmask unlocked here. */
+	cmode = ((open_mode &~ cwdi->cwdi_cmask) & ALLPERMS) &~ S_ISTXT;
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, pb);
+	l->l_dupfd = -indx - 1;			/* XXX check for fdopen */
+	if ((error = vn_open(&nd, flags, cmode)) != 0) {
+		fd_abort(p, fp, indx);
+		if ((error == EDUPFD || error == EMOVEFD) &&
+		    l->l_dupfd >= 0 &&			/* XXX from fdopen */
+		    (error =
+			fd_dupopen(l->l_dupfd, &indx, flags, error)) == 0) {
+			*fd = indx;
+			pathbuf_destroy(pb);
+			return (0);
+		}
+		if (error == ERESTART)
+			error = EINTR;
+		pathbuf_destroy(pb);
+		return error;
+	}
+
+	l->l_dupfd = 0;
+	vp = nd.ni_vp;
+	pathbuf_destroy(pb);
+
+	if ((error = open_setfp(l, fp, vp, indx, flags)))
+		return error;
+
+	VOP_UNLOCK(vp);
+	*fd = indx;
+	fd_affix(p, fp, indx);
+	return 0;
+}
+
+int
+fd_open(const char *path, int open_flags, int open_mode, int *fd)
+{
+	struct pathbuf *pb;
+	int oflags;
+
+	oflags = FFLAGS(open_flags);
+	if ((oflags & (FREAD | FWRITE)) == 0)
+		return EINVAL;
+
+	pb = pathbuf_create(path);
+	if (pb == NULL)
+		return ENOMEM;
+
+	return do_open(curlwp, pb, open_flags, open_mode, fd);
+}
+
+/*
  * Check permissions, allocate an open file structure,
  * and call the device open routine if any.
  */
@@ -1106,59 +1550,23 @@ sys_open(struct lwp *l, const struct sys_open_args *uap, register_t *retval)
 		syscallarg(int) flags;
 		syscallarg(int) mode;
 	} */
-	struct proc *p = l->l_proc;
-	struct cwdinfo *cwdi = p->p_cwdi;
-	file_t *fp;
-	struct vnode *vp;
-	int flags, cmode;
-	int indx, error;
 	struct pathbuf *pb;
-	struct nameidata nd;
+	int result, flags, error;
 
 	flags = FFLAGS(SCARG(uap, flags));
 	if ((flags & (FREAD | FWRITE)) == 0)
 		return (EINVAL);
 
 	error = pathbuf_copyin(SCARG(uap, path), &pb);
-	if (error) {
-		return error;
-	}
-
-	if ((error = fd_allocfile(&fp, &indx)) != 0) {
-		pathbuf_destroy(pb);
-		return error;
-	}
-	/* We're going to read cwdi->cwdi_cmask unlocked here. */
-	cmode = ((SCARG(uap, mode) &~ cwdi->cwdi_cmask) & ALLPERMS) &~ S_ISTXT;
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, pb);
-	l->l_dupfd = -indx - 1;			/* XXX check for fdopen */
-	if ((error = vn_open(&nd, flags, cmode)) != 0) {
-		fd_abort(p, fp, indx);
-		if ((error == EDUPFD || error == EMOVEFD) &&
-		    l->l_dupfd >= 0 &&			/* XXX from fdopen */
-		    (error =
-			fd_dupopen(l->l_dupfd, &indx, flags, error)) == 0) {
-			*retval = indx;
-			pathbuf_destroy(pb);
-			return (0);
-		}
-		if (error == ERESTART)
-			error = EINTR;
-		pathbuf_destroy(pb);
-		return (error);
-	}
-
-	l->l_dupfd = 0;
-	vp = nd.ni_vp;
-	pathbuf_destroy(pb);
-
-	if ((error = open_setfp(l, fp, vp, indx, flags)))
+	if (error)
 		return error;
 
-	VOP_UNLOCK(vp);
-	*retval = indx;
-	fd_affix(p, fp, indx);
-	return (0);
+	error = do_open(l, pb, SCARG(uap, flags), SCARG(uap, mode), &result);
+	if (error)
+		return error;
+
+	*retval = result;
+	return 0;
 }
 
 int
@@ -2646,22 +3054,11 @@ change_flags(struct vnode *vp, u_long flags, struct lwp *l)
 	int error;
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	/*
-	 * Non-superusers cannot change the flags on devices, even if they
-	 * own them.
-	 */
-	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
-		if ((error = VOP_GETATTR(vp, &vattr, l->l_cred)) != 0)
-			goto out;
-		if (vattr.va_type == VCHR || vattr.va_type == VBLK) {
-			error = EINVAL;
-			goto out;
-		}
-	}
+
 	vattr_null(&vattr);
 	vattr.va_flags = flags;
 	error = VOP_SETATTR(vp, &vattr, l->l_cred);
-out:
+
 	return (error);
 }
 
@@ -2962,9 +3359,18 @@ change_owner(struct vnode *vp, uid_t uid, gid_t gid, struct lwp *l,
 		 * implementation-defined; we leave the set-user-id and set-
 		 * group-id settings intact in that case.
 		 */
-		if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-				      NULL) != 0)
-			newmode &= ~(S_ISUID | S_ISGID);
+		if (vattr.va_mode & S_ISUID) {
+			error = kauth_authorize_vnode(l->l_cred,
+			    KAUTH_VNODE_RETAIN_SUID, vp, NULL, EPERM);
+			if (error)
+				newmode &= ~S_ISUID;
+		}
+		if (vattr.va_mode & S_ISGID) {
+			error = kauth_authorize_vnode(l->l_cred,
+			    KAUTH_VNODE_RETAIN_SGID, vp, NULL, EPERM);
+			if (error)
+				newmode &= ~S_ISGID;
+		}
 	} else {
 		/*
 		 * NetBSD semantics: when changing owner and/or group,
@@ -3578,10 +3984,9 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 			error = -1;
 		else if (fromnd.ni_dvp == tdvp &&
 		    fromnd.ni_cnd.cn_namelen == tond.ni_cnd.cn_namelen &&
-		    !memcmp(fromnd.ni_cnd.cn_nameptr,
-		          tond.ni_cnd.cn_nameptr,
+		    !memcmp(fromnd.ni_cnd.cn_nameptr, tond.ni_cnd.cn_nameptr,
 		          fromnd.ni_cnd.cn_namelen))
-		error = -1;
+			error = -1;
 	}
 	/*
 	 * Prevent cross-mount operation.
@@ -3828,16 +4233,17 @@ int
 dorevoke(struct vnode *vp, kauth_cred_t cred)
 {
 	struct vattr vattr;
-	int error;
+	int error, fs_decision;
 
 	vn_lock(vp, LK_SHARED | LK_RETRY);
 	error = VOP_GETATTR(vp, &vattr, cred);
 	VOP_UNLOCK(vp);
 	if (error != 0)
 		return error;
-	if (kauth_cred_geteuid(cred) == vattr.va_uid ||
-	    (error = kauth_authorize_generic(cred,
-	    KAUTH_GENERIC_ISSUSER, NULL)) == 0)
+	fs_decision = (kauth_cred_geteuid(cred) == vattr.va_uid) ? 0 : EPERM;
+	error = kauth_authorize_vnode(cred, KAUTH_VNODE_REVOKE, vp, NULL,
+	    fs_decision);
+	if (!error)
 		VOP_REVOKE(vp, REVOKEALL);
 	return (error);
 }

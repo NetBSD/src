@@ -1,4 +1,4 @@
-/* $NetBSD: strpct.c,v 1.2 2011/09/02 10:13:44 christos Exp $ */
+/* $NetBSD: strpct.c,v 1.2.2.1 2012/04/17 00:05:34 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strpct.c,v 1.2 2011/09/02 10:13:44 christos Exp $");
+__RCSID("$NetBSD: strpct.c,v 1.2.2.1 2012/04/17 00:05:34 yamt Exp $");
 
 #include <stdint.h>
 #include <locale.h>
@@ -48,6 +48,41 @@ __RCSID("$NetBSD: strpct.c,v 1.2 2011/09/02 10:13:44 christos Exp $");
 #include <stdio.h>
 #include <errno.h>
 #include <util.h>
+
+char *
+strspct(char *buf, size_t bufsiz, intmax_t numerator, intmax_t denominator,
+    size_t digits)
+{
+	int sign;
+
+	switch (bufsiz) {
+	case 1:
+		*buf = '\0';
+		/*FALLTHROUGH*/
+	case 0:
+		return buf;
+	default:
+		break;
+	}
+
+	if (denominator < 0) {
+		denominator = -denominator;
+		sign = 1;
+	} else
+		sign = 0;
+
+	if (numerator < 0) {
+		numerator = -numerator;
+		sign++;
+	}
+
+	sign &= 1;
+	(void)strpct(buf + sign, bufsiz - sign, (uintmax_t)numerator,
+	    (uintmax_t)denominator, digits);
+	if (sign)
+		*buf = '-';
+	return buf;
+}
 
 char *
 strpct(char *buf, size_t bufsiz, uintmax_t numerator, uintmax_t denominator,

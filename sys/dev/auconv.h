@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.h,v 1.15 2008/04/28 20:23:46 martin Exp $	*/
+/*	$NetBSD: auconv.h,v 1.15.34.1 2012/04/17 00:07:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 extern void stream_filter_set_fetcher(stream_filter_t *, stream_fetcher_t *);
 extern void stream_filter_set_inputbuffer(stream_filter_t *, audio_stream_t *);
 extern stream_filter_t *auconv_nocontext_filter_factory
-	(int (*)(stream_fetcher_t *, audio_stream_t *, int));
+	(int (*)(struct audio_softc *, stream_fetcher_t *, audio_stream_t *, int));
 extern void auconv_nocontext_filter_dtor(struct stream_filter *);
 #define FILTER_LOOP_PROLOGUE(SRC, SRCFRAME, DST, DSTFRAME, MAXUSED) \
 do { \

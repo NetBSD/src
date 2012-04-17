@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.37 2008/10/16 14:36:40 dholland Exp $	*/
+/*	$NetBSD: error.c,v 1.37.18.1 2012/04/17 00:01:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)error.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: error.c,v 1.37 2008/10/16 14:36:40 dholland Exp $");
+__RCSID("$NetBSD: error.c,v 1.37.18.1 2012/04/17 00:01:38 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,7 +120,7 @@ onint(void)
 	/* NOTREACHED */
 }
 
-static void
+static __printflike(2, 0) void
 exvwarning(int sv_errno, const char *msg, va_list ap)
 {
 	/* Partially emulate line buffered output so that:
@@ -151,7 +151,7 @@ exvwarning(int sv_errno, const char *msg, va_list ap)
  * is not NULL then error prints an error message using printf style
  * formatting.  It then raises the error exception.
  */
-static void
+static __printflike(2, 0) void
 exverror(int cond, const char *msg, va_list ap)
 {
 	CLEAR_PENDING_INT;

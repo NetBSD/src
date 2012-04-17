@@ -1290,7 +1290,7 @@ static emul_syscall_descriptor netbsd_descriptors[] = {
   /* 253 */ { 0, "_ksem_trywait" },
   /* 254 */ { 0, "_ksem_getvalue" },
   /* 255 */ { 0, "_ksem_destroy" },
-  { 0, }, /* 256 */
+  /* 256 */ { 0, "_ksem_timedwait" },
   /* 257 */ { 0, "mq_open" },
   /* 258 */ { 0, "mq_close" },
   /* 259 */ { 0, "mq_unlink" },
@@ -1486,7 +1486,7 @@ static emul_syscall_descriptor netbsd_descriptors[] = {
   /* 449 */ { 0, "__wait450" },
   /* 450 */ { 0, "__mknod50" },
   /* 451 */ { 0, "__fhstat50" },
-  /* 452 */ { 0, "__quotactl50" },
+  { 0, }, /* 452 is obsolete 5.99 __quotactl50 */
   /* 453 */ { 0, "pipe2" },
   /* 454 */ { 0, "dup3" },
   /* 455 */ { 0, "kqueue1" },
@@ -1507,6 +1507,7 @@ static emul_syscall_descriptor netbsd_descriptors[] = {
   /* 470 */ { 0, "symlinkat" },
   /* 471 */ { 0, "unlinkat" },
   /* 472 */ { 0, "futimens" },
+  /* 473 */ { 0, "__quotactl" },
 };
 
 static char *(netbsd_error_names[]) = {

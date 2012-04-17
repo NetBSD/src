@@ -1,4 +1,4 @@
-/*	$NetBSD: flash_ebus.c,v 1.2 2011/06/12 03:29:33 tsutsui Exp $	*/
+/*	$NetBSD: flash_ebus.c,v 1.2.2.1 2012/04/17 00:06:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.2 2011/06/12 03:29:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.2.2.1 2012/04/17 00:06:12 yamt Exp $");
 
 /* Driver for the Intel 28F320/640/128 (J3A150) StrataFlash memory device
  * Extended to include the Intel JS28F256P30T95.
@@ -61,9 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.2 2011/06/12 03:29:33 tsutsui Exp $
 #include <sys/lock.h>
 #include <sys/queue.h>
 
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include "locators.h"
 #include <prop/proplib.h>
@@ -201,9 +199,7 @@ struct eflash_softc {
 
 	int retries; /* number of xfer retry */
 
-#if NRND > 0
-	rndsource_element_t	rnd_source;
-#endif
+	krndsource_t	rnd_source;
 
     /* flash-specific state */
 	struct _Flash *sc_dp;
@@ -1306,7 +1302,7 @@ static int eflash_write_at (struct eflash_softc *sc,
 /* Rest of code lifted with mods from the dev\ata\wd.c driver
  */
 
-/*	$NetBSD: flash_ebus.c,v 1.2 2011/06/12 03:29:33 tsutsui Exp $ */
+/*	$NetBSD: flash_ebus.c,v 1.2.2.1 2012/04/17 00:06:12 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -1458,10 +1454,8 @@ eflashattach(struct eflash_softc *sc)
 	 */
 	disk_attach(&sc->sc_dk);
 
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 			  RND_TYPE_DISK, 0);
-#endif
 
 }
 
@@ -1520,10 +1514,8 @@ eflashdetach(struct device *self, int flags)
 	/* Detach disk. */
 	disk_detach(&sc->sc_dk);
 
-#if NRND > 0
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->rnd_source);
-#endif
 
 	/*sc->drvp->drive_flags = 0; -- no drive any more here */
 
@@ -1828,9 +1820,7 @@ retry:		/* Just reset and retry. Can we do more ? */
 	}
 	disk_unbusy(&sc->sc_dk, (bp->b_bcount - bp->b_resid),
 	    (bp->b_flags & B_READ));
-#if NRND > 0
 	rnd_add_uint32(&sc->rnd_source, bp->b_blkno);
-#endif
     biodone(bp);
     sc->openings++;
 	eflashstart(sc);

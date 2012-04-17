@@ -1,4 +1,4 @@
-# $NetBSD: t_basic.sh,v 1.4 2011/05/11 22:08:12 njoly Exp $
+# $NetBSD: t_basic.sh,v 1.4.4.1 2012/04/17 00:09:22 yamt Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,14 +30,12 @@
 
 atf_test_case basic
 basic_head() {
-	atf_set "descr" "A basic test of unifdef(1)"
+	atf_set "descr" "A basic test of unifdef(1) (PR bin/42628)"
 	atf_set "require.progs" "unifdef"
 }
 
 basic_body() {
 
-	# See PR bin/42628.
-	#
 	atf_check -s ignore -o file:$(atf_get_srcdir)/d_basic.out \
 		-x "unifdef -U__FreeBSD__ $(atf_get_srcdir)/d_basic.in"
 }

@@ -1,4 +1,4 @@
-# $NetBSD: MODULAR,v 1.1 2011/09/21 10:18:52 ahoka Exp $
+# $NetBSD: MODULAR,v 1.1.2.1 2012/04/17 00:06:28 yamt Exp $
 #
 # MODULAR kernel
 # This kernel config prefers loading kernel drivers from file system.
@@ -8,7 +8,6 @@ include "arch/i386/conf/GENERIC"
 
 # these features are available as modules
 #
-no options	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 no options	AIO		# POSIX asynchronous I/O, built as a module
 no options	MQUEUE		# POSIX messsage queues, built as a module
 no options	NFSSERVER	# Network File System server

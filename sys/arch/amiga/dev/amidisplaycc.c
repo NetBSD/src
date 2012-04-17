@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.23 2011/07/17 20:54:36 joerg Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.23.2.1 2012/04/17 00:06:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.23 2011/07/17 20:54:36 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.23.2.1 2012/04/17 00:06:01 yamt Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -377,8 +377,6 @@ amidisplaycc_cninit(struct consdev  * cd)
 	/*
 	 * This will do the basic stuff we also need.
 	 */
-	config_console();
-
 	grfcc_probe();
 
 #if NVIEW>0
@@ -1838,7 +1836,8 @@ amidisplaycc_setfont(struct amidisplaycc_screen *scr, const char *fontname)
 		scr->fontheight,
 		1,
 		WSDISPLAY_FONTORDER_L2R,
-		WSDISPLAY_FONTORDER_L2R);
+		WSDISPLAY_FONTORDER_L2R,
+		WSFONT_FIND_BITMAP);
 
 	if (wsfontcookie == -1)
 		return (EINVAL);

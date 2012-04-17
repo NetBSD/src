@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_control.c,v 1.4 2011/08/16 05:15:21 christos Exp $	*/
+/*	$NetBSD: ntp_control.c,v 1.4.2.1 2012/04/17 00:03:47 yamt Exp $	*/
 
 /*
  * ntp_control.c - respond to control messages and send async traps
@@ -15,6 +15,7 @@
 #include "ntp_unixtime.h"
 #include "ntp_stdlib.h"
 #include "ntp_config.h"
+#include "ntp_crypto.h"
 #include "ntp_assert.h"
 
 #include <stdio.h>
@@ -60,7 +61,7 @@ static	void	ctl_putint	(const char *, long);
 static	void	ctl_putts	(const char *, l_fp *);
 static	void	ctl_putadr	(const char *, u_int32,
 				 sockaddr_u *);
-static	void	ctl_putid	(const char *, char *);
+static	void	ctl_putrefid	(const char *, u_int32);
 static	void	ctl_putarray	(const char *, double *, int);
 static	void	ctl_putsys	(int);
 static	void	ctl_putpeer	(int, struct peer *);
@@ -402,8 +403,8 @@ static u_char clocktypes[] = {
 	CTL_SST_TS_NTP,		/* not used (24) */
 	CTL_SST_TS_NTP, 	/* not used (25) */
 	CTL_SST_TS_UHF, 	/* REFCLK_GPS_HP (26) */
-	CTL_SST_TS_TELEPHONE,	/* REFCLK_ARCRON_MSF (27) */
-	CTL_SST_TS_TELEPHONE,	/* REFCLK_SHM (28) */
+	CTL_SST_TS_LF,		/* REFCLK_ARCRON_MSF (27) */
+	CTL_SST_TS_UHF,		/* REFCLK_SHM (28) */
 	CTL_SST_TS_UHF, 	/* REFCLK_PALISADE (29) */
 	CTL_SST_TS_UHF, 	/* REFCLK_ONCORE (30) */
 	CTL_SST_TS_UHF,		/* REFCLK_JUPITER (31) */
@@ -536,8 +537,6 @@ ctl_error(
 	if (res_authenticate && sys_authenticate) {
 		int maclen;
 
-		*(u_int32 *)((u_char *)&rpkt + CTL_HEADER_LEN) =
-		    htonl(res_keyid);
 		maclen = authencrypt(res_keyid, (u_int32 *)&rpkt,
 				     CTL_HEADER_LEN);
 		sendpkt(rmt_addr, lcl_inter, -2, (struct pkt *)&rpkt,
@@ -701,11 +700,11 @@ process_control(
 	 * If the length is less than required for the header, or
 	 * it is a response or a fragment, ignore this.
 	 */
-	if (rbufp->recv_length < CTL_HEADER_LEN
+	if (rbufp->recv_length < (int)CTL_HEADER_LEN
 	    || pkt->r_m_e_op & (CTL_RESPONSE|CTL_MORE|CTL_ERROR)
 	    || pkt->offset != 0) {
 		DPRINTF(1, ("invalid format in control packet\n"));
-		if (rbufp->recv_length < CTL_HEADER_LEN)
+		if (rbufp->recv_length < (int)CTL_HEADER_LEN)
 			numctltooshort++;
 		if (pkt->r_m_e_op & CTL_RESPONSE)
 			numctlinputresp++;
@@ -1083,9 +1082,9 @@ ctl_putdbl(
 	while (*cq != '\0')
 		*cp++ = *cq++;
 	*cp++ = '=';
-	(void)sprintf(cp, "%.3f", ts);
-	while (*cp != '\0')
-		cp++;
+	NTP_INSIST((cp - buffer) < (int)sizeof(buffer));
+	snprintf(cp, sizeof(buffer) - (cp - buffer), "%.3f", ts);
+	cp += strlen(cp);
 	ctl_putdata(buffer, (unsigned)(cp - buffer), 0);
 }
 
@@ -1108,9 +1107,9 @@ ctl_putuint(
 		*cp++ = *cq++;
 
 	*cp++ = '=';
-	(void) sprintf(cp, "%lu", uval);
-	while (*cp != '\0')
-		cp++;
+	NTP_INSIST((cp - buffer) < (int)sizeof(buffer));
+	snprintf(cp, sizeof(buffer) - (cp - buffer), "%lu", uval);
+	cp += strlen(cp);
 	ctl_putdata(buffer, (unsigned)( cp - buffer ), 0);
 }
 
@@ -1137,13 +1136,13 @@ ctl_putfs(
 	*cp++ = '=';
 	fstamp = uval - JAN_1970;
 	tm = gmtime(&fstamp);
-	if (tm == NULL)
+	if (NULL ==  tm)
 		return;
-
-	sprintf(cp, "%04d%02d%02d%02d%02d", tm->tm_year + 1900,
-		tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min);
-	while (*cp != '\0')
-		cp++;
+	NTP_INSIST((cp - buffer) < (int)sizeof(buffer));
+	snprintf(cp, sizeof(buffer) - (cp - buffer),
+		 "%04d%02d%02d%02d%02d", tm->tm_year + 1900,
+		 tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min);
+	cp += strlen(cp);
 	ctl_putdata(buffer, (unsigned)( cp - buffer ), 0);
 }
 
@@ -1168,9 +1167,9 @@ ctl_puthex(
 		*cp++ = *cq++;
 
 	*cp++ = '=';
-	(void) sprintf(cp, "0x%lx", uval);
-	while (*cp != '\0')
-		cp++;
+	NTP_INSIST((cp - buffer) < (int)sizeof(buffer));
+	snprintf(cp, sizeof(buffer) - (cp - buffer), "0x%lx", uval);
+	cp += strlen(cp);
 	ctl_putdata(buffer,(unsigned)( cp - buffer ), 0);
 }
 
@@ -1194,9 +1193,9 @@ ctl_putint(
 		*cp++ = *cq++;
 
 	*cp++ = '=';
-	(void) sprintf(cp, "%ld", ival);
-	while (*cp != '\0')
-		cp++;
+	NTP_INSIST((cp - buffer) < (int)sizeof(buffer));
+	snprintf(cp, sizeof(buffer) - (cp - buffer), "%ld", ival);
+	cp += strlen(cp);
 	ctl_putdata(buffer, (unsigned)( cp - buffer ), 0);
 }
 
@@ -1220,10 +1219,10 @@ ctl_putts(
 		*cp++ = *cq++;
 
 	*cp++ = '=';
-	(void) sprintf(cp, "0x%08lx.%08lx", ts->l_ui & 0xffffffffUL,
-		       ts->l_uf & 0xffffffffUL);
-	while (*cp != '\0')
-		cp++;
+	NTP_INSIST((cp - buffer) < (int)sizeof(buffer));
+	snprintf(cp, sizeof(buffer) - (cp - buffer), "0x%08lx.%08lx",
+		 ts->l_ui & 0xffffffffUL, ts->l_uf & 0xffffffffUL);
+	cp += strlen(cp);
 	ctl_putdata(buffer, (unsigned)( cp - buffer ), 0);
 }
 
@@ -1248,38 +1247,54 @@ ctl_putadr(
 		*cp++ = *cq++;
 
 	*cp++ = '=';
-	if (addr == NULL)
+	if (NULL == addr)
 		cq = numtoa(addr32);
 	else
 		cq = stoa(addr);
-	while (*cq != '\0')
-		*cp++ = *cq++;
+	NTP_INSIST((cp - buffer) < (int)sizeof(buffer));
+	snprintf(cp, sizeof(buffer) - (cp - buffer), "%s", cq);
+	cp += strlen(cp);
 	ctl_putdata(buffer, (unsigned)(cp - buffer), 0);
 }
 
+
 /*
- * ctl_putid - write a tagged clock ID into the response
+ * ctl_putrefid - send a u_int32 refid as printable text
  */
 static void
-ctl_putid(
-	const char *tag,
-	char *id
+ctl_putrefid(
+	const char *	tag,
+	u_int32		refid
 	)
 {
-	register char *cp;
-	register const char *cq;
-	char buffer[200];
+	char	output[16];
+	char *	optr;
+	char *	oplim;
+	char *	iptr;
+	char *	iplim;
+	char *	past_eq;
 
-	cp = buffer;
-	cq = tag;
-	while (*cq != '\0')
-		*cp++ = *cq++;
-
-	*cp++ = '=';
-	cq = id;
-	while (*cq != '\0' && (cq - id) < 4)
-		*cp++ = *cq++;
-	ctl_putdata(buffer, (unsigned)( cp - buffer ), 0);
+	optr = output;
+	oplim = output + sizeof(output);
+	while (optr < oplim && '\0' != *tag)
+		*optr++ = *tag++;
+	if (optr < oplim) {
+		*optr++ = '=';
+		past_eq = optr;
+	}
+	if (!(optr < oplim))
+		return;
+	iptr = (char *)&refid;
+	iplim = iptr + sizeof(refid);
+	for ( ; optr < oplim && iptr < iplim && '\0' != *iptr; 
+	     iptr++, optr++)
+		if (isprint((int)*iptr))
+			*optr = *iptr;
+		else
+			*optr = '.';
+	if (!(optr <= oplim))
+		optr = past_eq;
+	ctl_putdata(output, (u_int)(optr - output), FALSE);
 }
 
 
@@ -1306,9 +1321,10 @@ ctl_putarray(
 		if (i == 0)
 			i = NTP_SHIFT;
 		i--;
-		(void)sprintf(cp, " %.2f", arr[i] * 1e3);
-		while (*cp != '\0')
-			cp++;
+		NTP_INSIST((cp - buffer) < (int)sizeof(buffer));
+		snprintf(cp, sizeof(buffer) - (cp - buffer),
+			 " %.2f", arr[i] * 1e3);
+		cp += strlen(cp);
 	} while(i != start);
 	ctl_putdata(buffer, (unsigned)(cp - buffer), 0);
 }
@@ -1355,10 +1371,9 @@ ctl_putsys(
 
 	    case CS_REFID:
 		if (sys_stratum > 1 && sys_stratum < STRATUM_UNSPEC)
-			ctl_putadr(sys_var[CS_REFID].text, sys_refid, NULL);
+			ctl_putadr(sys_var[varid].text, sys_refid, NULL);
 		else
-			ctl_putid(sys_var[CS_REFID].text,
-				  (char *)&sys_refid);
+			ctl_putrefid(sys_var[varid].text, sys_refid);
 		break;
 
 	    case CS_REFTIME:
@@ -1413,7 +1428,8 @@ ctl_putsys(
 		ctl_putstr(sys_var[CS_SYSTEM].text, str_system,
 			   sizeof(str_system) - 1);
 #else
-		sprintf(str, "%s/%s", utsnamebuf.sysname, utsnamebuf.release);
+		snprintf(str, sizeof(str), "%s/%s", utsnamebuf.sysname,
+			 utsnamebuf.release);
 		ctl_putstr(sys_var[CS_SYSTEM].text, str, strlen(str));
 #endif /* HAVE_UNAME */
 		break;
@@ -1679,18 +1695,17 @@ ctl_putpeer(
 		break;
 
 	    case CP_REFID:
+#ifdef REFCLOCK
 		if (peer->flags & FLAG_REFCLOCK) {
-			ctl_putid(peer_var[CP_REFID].text,
-				  (char *)&peer->refid);
-		} else {
-			if (peer->stratum > 1 && peer->stratum <
-			    STRATUM_UNSPEC)
-				ctl_putadr(peer_var[CP_REFID].text,
-					   peer->refid, NULL);
-			else
-				ctl_putid(peer_var[CP_REFID].text,
-					  (char *)&peer->refid);
+			ctl_putrefid(peer_var[varid].text, peer->refid);
+			break;
 		}
+#endif
+		if (peer->stratum > 1 && peer->stratum < STRATUM_UNSPEC)
+			ctl_putadr(peer_var[varid].text, peer->refid,
+				   NULL);
+		else
+			ctl_putrefid(peer_var[varid].text, peer->refid);
 		break;
 
 	    case CP_REFTIME:
@@ -1924,8 +1939,9 @@ ctl_putclock(
 		break;
 
 	    case CC_FUDGETIME2:
-		if (mustput || (clock_stat->haveflags & CLK_HAVETIME2)) 			ctl_putdbl(clock_var[CC_FUDGETIME2].text,
-													   clock_stat->fudgetime2 * 1e3);
+		if (mustput || (clock_stat->haveflags & CLK_HAVETIME2))
+			ctl_putdbl(clock_var[CC_FUDGETIME2].text,
+				   clock_stat->fudgetime2 * 1e3);
 		break;
 
 	    case CC_FUDGEVAL1:
@@ -1938,10 +1954,10 @@ ctl_putclock(
 		if (mustput || (clock_stat->haveflags & CLK_HAVEVAL2)) {
 			if (clock_stat->fudgeval1 > 1)
 				ctl_putadr(clock_var[CC_FUDGEVAL2].text,
-					   (u_int32)clock_stat->fudgeval2, NULL);
+					   clock_stat->fudgeval2, NULL);
 			else
-				ctl_putid(clock_var[CC_FUDGEVAL2].text,
-					  (char *)&clock_stat->fudgeval2);
+				ctl_putrefid(clock_var[CC_FUDGEVAL2].text,
+					     clock_stat->fudgeval2);
 		}
 		break;
 
@@ -2452,7 +2468,9 @@ static void configure(
 	int restrict_mask
 	)
 {
-	int data_count, retval, replace_nl;
+	size_t data_count;
+	int retval;
+	int replace_nl;
 
 	/* I haven't yet implemented changes to an existing association.
 	 * Hence check if the association id is 0

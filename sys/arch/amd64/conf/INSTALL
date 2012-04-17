@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.87 2011/08/08 16:13:42 jakllsch Exp $
+# $NetBSD: INSTALL,v 1.87.2.1 2012/04/17 00:05:59 yamt Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -7,7 +7,8 @@
 
 include	"arch/amd64/conf/GENERIC"
 
-#ident 		"INSTALL-$Revision: 1.87 $"
+options		CONSDEVNAME="\"com\"",CONADDR=0x2f8,CONSPEED=115200
+#ident 		"INSTALL-$Revision: 1.87.2.1 $"
 
 no options	MEMORY_DISK_DYNAMIC
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk

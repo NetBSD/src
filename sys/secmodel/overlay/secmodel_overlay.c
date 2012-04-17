@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_overlay.c,v 1.10 2009/10/02 18:50:13 elad Exp $ */
+/* $NetBSD: secmodel_overlay.c,v 1.10.12.1 2012/04/17 00:08:50 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_overlay.c,v 1.10 2009/10/02 18:50:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_overlay.c,v 1.10.12.1 2012/04/17 00:08:50 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -36,8 +36,9 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_overlay.c,v 1.10 2009/10/02 18:50:13 elad E
 
 #include <sys/sysctl.h>
 
-#include <secmodel/overlay/overlay.h>
+#include <secmodel/secmodel.h>
 
+#include <secmodel/overlay/overlay.h>
 #include <secmodel/bsd44/bsd44.h>
 #include <secmodel/suser/suser.h>
 #include <secmodel/securelevel/securelevel.h>
@@ -66,6 +67,7 @@ static kauth_scope_t secmodel_overlay_iscope_vnode;
 static kauth_listener_t l_generic, l_system, l_process, l_network, l_machdep,
     l_device, l_vnode;
 
+static secmodel_t overlay_sm;
 static struct sysctllog *sysctl_overlay_log;
 
 /*
@@ -123,8 +125,6 @@ secmodel_overlay_init(void)
 	    secmodel_suser_device_cb, NULL);
 	kauth_listen_scope(OVERLAY_ISCOPE_DEVICE,
 	    secmodel_securelevel_device_cb, NULL);
-
-	secmodel_bsd44_init();
 }
 
 void
@@ -147,14 +147,14 @@ sysctl_security_overlay_setup(struct sysctllog **clog)
 	sysctl_createv(clog, 0, &rnode, &rnode,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "overlay",
-		       SYSCTL_DESCR("Overlay security model on-top of bsd44, "),
+		       SYSCTL_DESCR("Overlay security model on-top of bsd44"),
 		       NULL, 0, NULL, 0,
 		       CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &rnode, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "name", NULL,
-		       NULL, 0, __UNCONST("Overlay (on-top of bsd44)"), 0,
+		       NULL, 0, __UNCONST(SECMODEL_OVERLAY_NAME), 0,
 		       CTL_CREATE, CTL_EOL);
 }
 
@@ -178,8 +178,6 @@ secmodel_overlay_start(void)
 	    secmodel_overlay_device_cb, NULL);
 	l_vnode = kauth_listen_scope(KAUTH_SCOPE_VNODE,
 	    secmodel_overlay_vnode_cb, NULL);
-
-	/* secmodel_register(); */
 }
 
 /*
@@ -204,8 +202,16 @@ secmodel_overlay_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+		error = secmodel_register(&overlay_sm,
+		    SECMODEL_OVERLAY_ID, SECMODEL_OVERLAY_NAME,
+		    NULL, NULL, NULL);
+		if (error != 0)
+			printf("secmodel_overlay_modcmd::init: "
+			    "secmodel_register returned %d\n", error);
+
 		secmodel_overlay_init();
-		secmodel_bsd44_stop();
+		secmodel_suser_stop();
+		secmodel_securelevel_stop();
 		secmodel_overlay_start();
 		sysctl_security_overlay_setup(&sysctl_overlay_log);
 		break;
@@ -213,6 +219,11 @@ secmodel_overlay_modcmd(modcmd_t cmd, void *arg)
 	case MODULE_CMD_FINI:
 		sysctl_teardown(&sysctl_overlay_log);
 		secmodel_overlay_stop();
+
+		error = secmodel_deregister(overlay_sm);
+		if (error != 0)
+			printf("secmodel_overlay_modcmd::fini: "
+			    "secmodel_deregister returned %d\n", error);
 		break;
 
 	case MODULE_CMD_AUTOUNLOAD:

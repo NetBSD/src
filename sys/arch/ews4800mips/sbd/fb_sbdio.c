@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_sbdio.c,v 1.11 2010/05/15 16:35:37 tsutsui Exp $	*/
+/*	$NetBSD: fb_sbdio.c,v 1.11.8.1 2012/04/17 00:06:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define WIRED_FB_TLB
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.11 2010/05/15 16:35:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.11.8.1 2012/04/17 00:06:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,9 +214,9 @@ fb_common_init(struct rasops_info *ri, struct ga *ga)
 
 	wsfont_init();
 	/* prefer 12 pixel wide font */
-	cookie = wsfont_find(NULL, 12, 0, 0, 0, 0);
+	cookie = wsfont_find(NULL, 12, 0, 0, 0, 0, WSFONT_FIND_BITMAP);
 	if (cookie <= 0)
-		cookie = wsfont_find(NULL, 0, 0, 0, 0, 0);
+		cookie = wsfont_find(NULL, 0, 0, 0, 0, 0, WSFONT_FIND_BITMAP);
 	if (cookie <= 0) {
 		printf("sfb: font table is empty\n");
 		return;

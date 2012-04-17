@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte.h,v 1.6 2011/03/21 14:53:02 tnozaki Exp $ */
+/*	$NetBSD: multibyte.h,v 1.6.4.1 2012/04/17 00:02:25 yamt Exp $ */
 
 #ifndef MULTIBYTE_H
 #define MULTIBYTE_H
@@ -37,6 +37,7 @@
 #include <wctype.h>
 
 typedef wchar_t		RCHAR_T;
+#define REOF		WEOF
 typedef wchar_t		CHAR_T;
 typedef	wint_t		ARG_CHAR_T;
 typedef wint_t		UCHAR_T;
@@ -65,7 +66,10 @@ typedef wint_t		UCHAR_T;
 #define WC		"%lc"
 
 #else
+#include <stdio.h>
+
 typedef	char		RCHAR_T;
+#define REOF		EOF
 typedef	char		CHAR_T;
 typedef	int		ARG_CHAR_T;
 typedef	unsigned char	UCHAR_T;

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.155 2011/03/17 13:26:51 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.155.4.1 2012/04/17 00:07:02 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.155 $"
+#ident 		"GENERIC-$Revision: 1.155.4.1 $"
 
 maxusers	8
 
@@ -76,7 +76,6 @@ options 	KTRACE
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
-options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 ## Loadable kernel module support
 #options 	MODULAR		# new style module(7) framework
@@ -193,7 +192,7 @@ options 	NFSSERVER	# Sun NFS-compatible filesystem server
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
@@ -252,7 +251,6 @@ kbd0	at mfp0				# standard keyboard
 ite0	at grf0 grfaddr 0		# internal terminal emulator
 options 	ITE_KERNEL_ATTR=4	# bold for kernel messages
 					# see /sys/arch/x68k/dev/itevar.h
-pow0	at mfp0				# software power switch
 
 ## floppy disks
 fdc0	at intio0 addr 0xe94000 intr 96 dma 0 dmaintr 100 # floppy controller
@@ -288,6 +286,9 @@ par0	at intio0 addr 0xe8c000 	# Builtin printer port
 
 sram0	at intio0 addr 0xed0000		# battery-backuped static RAM
 pseudo-device	bell			# OPM bell
+
+powsw0	at mfp0				# Front switch
+#powsw1	at mfp0				# External power switch
 
 xcom0	at mainbus0			# NS16550 fast serial
 xcom1	at mainbus0
@@ -518,7 +519,6 @@ pseudo-device	pty			# pseudo-terminals
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.
 
-pseudo-device	rnd
 
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms

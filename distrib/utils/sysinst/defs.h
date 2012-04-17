@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.154.2.1 2011/11/10 14:31:15 yamt Exp $	*/
+/*	$NetBSD: defs.h,v 1.154.2.2 2012/04/17 00:02:49 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,8 +40,8 @@
 /* System includes needed for this. */
 #include <sys/types.h>
 #include <sys/disklabel.h>
-extern const char * const fstypenames[];
-extern const char * const mountnames[];
+
+const char *getfslabelname(uint8_t);
 
 static inline void *
 deconst(const void *p)
@@ -122,10 +122,18 @@ enum {
     SET_MD_2,		/* Machine dependent set */
     SET_MD_3,		/* Machine dependent set */
     SET_MD_4,		/* Machine dependent set */
+    
+    /* Source sets */
+    SET_SYSSRC,
+    SET_SRC,
+    SET_SHARESRC,
+    SET_GNUSRC,
+    SET_XSRC,
 
     SET_LAST,
     SET_GROUP,		/* Start of submenu */
     SET_GROUP_END,	/* End of submenu */
+    SET_PKGSRC,		/* pkgsrc, not counted as regular set */
 };
 
 /* Initialisers to select sets */
@@ -143,6 +151,9 @@ enum {
 
 /* All machine dependent sets */
 #define SET_MD SET_MD_1, SET_MD_2, SET_MD_3, SET_MD_4
+
+/* All source sets */
+#define SET_SOURCE SET_SYSSRC, SET_SRC, SET_SHARESRC, SET_GNUSRC, SET_XSRC
 
 /* Set list flags */
 #define SFLAG_MINIMAL	1
@@ -233,8 +244,6 @@ const char *multname;
 
 /* loging variables */
 
-int logging;
-int scripting;
 FILE *logfp;
 FILE *script;
 
@@ -280,20 +289,50 @@ int  clean_xfer_dir;
 #define SYSINST_FTP_DIR		"pub/NetBSD/NetBSD-" REL
 #endif
 
-/* Abs. path we extract from */
-char ext_dir[STRSIZE];
+#if !defined(SYSINST_PKG_HOST)
+#define SYSINST_PKG_HOST	SYSINST_FTP_HOST
+#endif
 
-/* Place we look in all fs types */
-char set_dir[STRSIZE];
+#if !defined(SYSINST_PKG_DIR)
+#define SYSINST_PKG_DIR		"pub/pkgsrc/packages/NetBSD"
+#endif
 
-struct {
+#if !defined(SYSINST_PKGSRC_HOST)
+#define SYSINST_PKGSRC_HOST	SYSINST_PKG_HOST
+#endif
+
+/* Abs. path we extract binary sets from */
+char ext_dir_bin[STRSIZE];
+
+/* Abs. path we extract source sets from */
+char ext_dir_src[STRSIZE];
+
+/* Abs. path we extract pkgsrc from */
+char ext_dir_pkgsrc[STRSIZE];
+
+/* Place we look for binary sets in all fs types */
+char set_dir_bin[STRSIZE];
+
+/* Place we look for source sets in all fs types */
+char set_dir_src[STRSIZE];
+
+/* Place we look for pkgs in all fs types */
+char pkg_dir[STRSIZE];
+
+/* Place we look for pkgsrc in all fs types */
+char pkgsrc_dir[STRSIZE];
+
+struct ftpinfo {
     char host[STRSIZE];
     char dir[STRSIZE] ;
     char user[SSTRSIZE];
     char pass[STRSIZE];
     char proxy[STRSIZE];
     const char *xfer_type;		/* "ftp" or "http" */
-} ftp;
+};
+
+/* use the same struct for sets ftp and to build pkgpath */
+struct ftpinfo ftp, pkg, pkgsrc;
 
 int (*fetch_fn)(const char *);
 char nfs_host[STRSIZE];
@@ -379,15 +418,18 @@ int	get_geom(const char *, struct disklabel *);
 int	get_real_geom(const char *, struct disklabel *);
 
 /* from net.c */
+extern int network_up;
 extern char net_namesvr6[STRSIZE];
 int	get_via_ftp(const char *);
 int	get_via_nfs(void);
 int	config_network(void);
 void	mnt_net_config(void);
+void	make_url(char *, struct ftpinfo *, const char *);
+int	get_pkgsrc(void);
 
 /* From run.c */
-int	collect(int, char **, const char *, ...);
-int	run_program(int, const char *, ...);
+int	collect(int, char **, const char *, ...) __printflike(3, 4);
+int	run_program(int, const char *, ...) __printflike(2, 3);
 void	do_logging(void);
 int	do_system(const char *);
 
@@ -416,12 +458,11 @@ unsigned int    set_X11_selected(void);
 int 	get_and_unpack_sets(int, msg, msg, msg);
 int	sanity_check(void);
 int	set_timezone(void);
-int	set_root_password(void);
-int	set_root_shell(void);
-void	scripting_fprintf(FILE *, const char *, ...);
-void	scripting_vfprintf(FILE *, const char *, va_list);
+void	scripting_fprintf(FILE *, const char *, ...) __printflike(2, 3);
+void	scripting_vfprintf(FILE *, const char *, va_list) __printflike(2, 0);
 void	add_rc_conf(const char *, ...);
-void	add_sysctl_conf(const char *, ...);
+int	del_rc_conf(const char *);
+void	add_sysctl_conf(const char *, ...) __printflike(1, 2);
 void	enable_rc_conf(void);
 void	set_sizemultname_cyl(void);
 void	set_sizemultname_meg(void);
@@ -429,6 +470,12 @@ int	check_lfs_progs(void);
 void	init_set_status(int);
 void	customise_sets(void);
 void	umount_mnt2(void);
+int 	set_is_source(const char *);
+const char *set_dir_for_set(const char *);
+const char *ext_dir_for_set(const char *);
+void	replace(const char *, const char *, ...);
+void	get_tz_default(void);
+int	extract_file(distinfo *, int);
 
 /* from target.c */
 #if defined(DEBUG)  ||	defined(DEBUG_ROOT)
@@ -439,7 +486,8 @@ const	char *target_expand(const char *);
 void	make_target_dir(const char *);
 void	append_to_target_file(const char *, const char *);
 void	echo_to_target_file(const char *, const char *);
-void	sprintf_to_target_file(const char *, const char *, ...);
+void	sprintf_to_target_file(const char *, const char *, ...)
+    __printflike(2, 3);
 void	trunc_target_file(const char *);
 const	char *target_prefix(void);
 int	target_chdir(const char *);
@@ -458,6 +506,7 @@ int	target_dir_exists_p(const char *);
 int	target_file_exists_p(const char *);
 int	target_symlink_exists_p(const char *);
 void	unwind_mounts(void);
+int	target_mounted(void);
 
 /* from bsddisklabel.c */
 int	make_bsd_partitions(void);
@@ -477,4 +526,11 @@ void	save_kb_encoding(void);
 #define	get_kb_encoding()
 #define	save_kb_encoding()
 #endif
+
+/* from configmenu.c */
+void	do_configmenu(void);
+
+/* from checkrc.c */
+int	check_rcvar(const char *);
+int	check_rcdefault(const char *);
 #endif	/* _DEFS_H_ */

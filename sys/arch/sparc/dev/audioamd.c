@@ -1,4 +1,4 @@
-/*	$NetBSD: audioamd.c,v 1.26 2011/06/04 01:27:57 tsutsui Exp $	*/
+/*	$NetBSD: audioamd.c,v 1.26.2.1 2012/04/17 00:06:54 yamt Exp $	*/
 /*	NetBSD: am7930_sparc.c,v 1.44 1999/03/14 22:29:00 jonathan Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audioamd.c,v 1.26 2011/06/04 01:27:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audioamd.c,v 1.26.2.1 2012/04/17 00:06:54 yamt Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -148,6 +148,7 @@ struct am7930_glue audioamd_glue = {
 int	audioamd_start_output(void *, void *, int, void (*)(void *), void *);
 int	audioamd_start_input(void *, void *, int, void (*)(void *), void *);
 int	audioamd_getdev(void *, struct audio_device *);
+void	audioamd_get_locks(void *opaque, kmutex_t **intr, kmutex_t **thread);
 
 const struct audio_hw_if sa_hw_if = {
 	am7930_open,
@@ -177,6 +178,7 @@ const struct audio_hw_if sa_hw_if = {
 	0,
 	0,
 	0,
+	audioamd_get_locks,
 };
 
 struct audio_device audioamd_device = {
@@ -474,16 +476,16 @@ am7930swintr(void *sc0)
 	DPRINTFN(1, ("audiointr: sc=%p\n", sc););
 
 	au = &sc->sc_au;
-	mutex_spin_enter(&sc->sc_lock);
+
+	mutex_spin_enter(&sc->sc_am7930.sc_lock);
 	if (au->au_rdata > au->au_rend && sc->sc_rintr != NULL) {
-		mutex_spin_exit(&sc->sc_lock);
 		(*sc->sc_rintr)(sc->sc_rarg);
-		mutex_spin_enter(&sc->sc_lock);
 	}
 	pint = (au->au_pdata > au->au_pend && sc->sc_pintr != NULL);
-	mutex_spin_exit(&sc->sc_lock);
 	if (pint)
 		(*sc->sc_pintr)(sc->sc_parg);
+
+	mutex_spin_exit(&sc->sc_am7930.sc_lock);
 }
 
 
@@ -556,6 +558,16 @@ audioamd_getdev(void *addr, struct audio_device *retp)
 
 	*retp = audioamd_device;
 	return 0;
+}
+
+void
+audioamd_get_locks(void *opaque, kmutex_t **intr, kmutex_t **thread)
+{
+	struct audioamd_softc *asc = opaque;
+	struct am7930_softc *sc = &asc->sc_am7930;
+ 
+	*intr = &sc->sc_intr_lock;
+	*thread = &sc->sc_lock;
 }
 
 #endif /* NAUDIO > 0 */

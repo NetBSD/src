@@ -290,9 +290,9 @@ vdev_disk_io_start(zio_t *zio)
 	bp->b_private = zio;
 
 	if (!(bp->b_flags & B_READ)) {
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		vp->v_numoutput++;
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 	}
 	
 	if (bp->b_bcount <= MAXPHYS) {

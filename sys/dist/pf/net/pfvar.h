@@ -1,4 +1,4 @@
-/*	$NetBSD: pfvar.h,v 1.19 2010/05/07 17:41:57 degroote Exp $	*/
+/*	$NetBSD: pfvar.h,v 1.19.8.1 2012/04/17 00:08:14 yamt Exp $	*/
 /*	$OpenBSD: pfvar.h,v 1.254 2007/07/13 09:17:48 markus Exp $ */
 
 /*
@@ -54,14 +54,6 @@
 #include <net/if_compat.h>
 #include <net/pf_mtag.h>
 #endif /* __NetBSD__ && _KERNEL */
-
-#ifdef __NetBSD__
-union sockaddr_union {
-	struct sockaddr         sa;
-	struct sockaddr_in      sin;
-	struct sockaddr_in6     sin6;
-};
-#endif /* __NetBSD__ */
 
 struct ip;
 struct ip6_hdr;
@@ -983,6 +975,15 @@ struct pfr_tstats {
 };
 #define	pfrts_name	pfrts_t.pfrt_name
 #define pfrts_flags	pfrts_t.pfrt_flags
+
+#ifndef _SOCKADDR_UNION_DEFINED
+#define _SOCKADDR_UNION_DEFINED
+union sockaddr_union {
+	struct sockaddr		sa;
+	struct sockaddr_in	sin;
+	struct sockaddr_in6	sin6;
+};
+#endif /* _SOCKADDR_UNION_DEFINED */
 
 SLIST_HEAD(pfr_kentryworkq, pfr_kentry);
 struct pfr_kentry {

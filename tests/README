@@ -1,0 +1,11 @@
+$NetBSD: README,v 1.3.4.2 2012/04/17 00:09:01 yamt Exp $
+
+When adding new tests, please try to follow the directory structure of
+the real source tree. For instance, interfaces available via the C library
+should follow:
+
+	src/lib/libc/gen -> src/tests/lib/libc/gen
+	src/lib/libc/sys -> src/tests/lib/libc/sys
+
+Equivalently, tests for a program residing in src/usr.bin/program should be
+added to the src/tests/usr.bin/program subdirectory.

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.133 2011/05/28 13:01:50 ryo Exp $
+#	$NetBSD: INSTALL_TINY,v 1.133.4.1 2012/04/17 00:06:28 yamt Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -516,5 +516,4 @@ pseudo-device	loop			# network loopback
 # miscellaneous pseudo-devices
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 options 	NO_DEV_PTM
-#pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)

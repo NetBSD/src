@@ -60,18 +60,18 @@
 #define	CPU_POWERSAVE		5	/* int: use CPU powersave mode */
 #define	CPU_MAXID		6	/* number of valid machdep ids */
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_KMEMUSER)
 
 /*
  * Kernel-only definitions
  */
 
-#ifndef _LKM
+#if !defined(_LKM) && defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #include "opt_cpuoptions.h"
 #include "opt_lockdebug.h"
 #include "opt_cputypes.h"
-#endif /* !_LKM */
+#endif /* !_LKM && _KERNEL_OPT */
 
 #include <arm/cpuconf.h>
 

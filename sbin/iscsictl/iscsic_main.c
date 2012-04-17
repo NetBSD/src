@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsic_main.c,v 1.3 2011/10/30 18:40:06 christos Exp $	*/
+/*	$NetBSD: iscsic_main.c,v 1.3.2.1 2012/04/17 00:05:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -219,7 +219,7 @@ int debug_level = ISCSI_DEBUG;			/* How much info to display */
  *    Cleanup and exit. Does not return.
 */
 
-static void
+__dead static void
 bye(void)
 {
 	close(sock);
@@ -596,7 +596,7 @@ main(int argc, char **argv)
 		sizeof(daemon_name.sun_path));
 
 	/* dispatch command */
-	res = (*c->proc)(optind + 1, &argv[optind + 1]);
+	res = (*c->proc)(argc - optind - 1, &argv[optind + 1]);
 
 	/* cleanup */
 	close(sock);

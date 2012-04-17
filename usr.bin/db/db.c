@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.25 2011/09/01 13:25:02 joerg Exp $	*/
+/*	$NetBSD: db.c,v 1.25.2.1 2012/04/17 00:09:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: db.c,v 1.25 2011/09/01 13:25:02 joerg Exp $");
+__RCSID("$NetBSD: db.c,v 1.25.2.1 2012/04/17 00:09:30 yamt Exp $");
 #endif /* __RCSID */
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ typedef enum {
 	F_IGNORECASE	= 1<<11,
 	F_ENDIAN_BIG	= 1<<12,
 	F_ENDIAN_LITTLE	= 1<<13,
-	F_NO_NUL	= 1<<14,
+	F_INCLUDE_NUL	= 1<<14,
 	F_CREATENEW	= 1<<20,
 	F_DUPLICATES	= 1<<21,
 	F_REPLACE	= 1<<22,
@@ -184,7 +184,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'N':
-			flags |= F_NO_NUL;
+			flags |= F_INCLUDE_NUL;
 			break;
 
 		case 'O':
@@ -383,7 +383,7 @@ db_print(DBT *key, DBT *val)
 	int	len;
 	char	*data;
 
-#define	MINUSNUL(x)	((x) > 0  ?  (x) - (flags & F_NO_NUL ? 0 : 1)  :  0)
+#define	MINUSNUL(x) ((x) > 0  ?  (x) - (flags & F_INCLUDE_NUL ? 0 : 1)  :  0)
 
 	if (flags & F_SHOW_KEY) {
 		if (flags & F_ENCODE_KEY) {
@@ -438,7 +438,7 @@ db_makekey(DBT *key, char *keystr, int downcase, int decode)
 		ks = keystr;
 	}
 	key->data = ks;
-	key->size = klen + (flags & F_NO_NUL ? 0 : 1);
+	key->size = klen + (flags & F_INCLUDE_NUL ? 0 : 1);
 	if (downcase && (flags & F_IGNORECASE)) {
 		for (p = ks; *p; p++)
 			if (isupper((int)*p))

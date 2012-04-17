@@ -36,4 +36,10 @@ extern void i386bsd_dr_reset_addr (int regnum);
 
 extern unsigned long i386bsd_dr_get_status (void);
 
+extern void i386bsd_supply_gregset (struct regcache *regcache,
+				    const void *gregs);
+
+extern void i386bsd_collect_gregset (const struct regcache *regcache,
+				     void *gregs, int regnum);
+
 #endif /* i386bsd-nat.h */

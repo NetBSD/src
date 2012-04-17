@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.295.2.1 2011/11/10 14:31:49 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.295.2.2 2012/04/17 00:08:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,11 +69,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.295.2.1 2011/11/10 14:31:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.295.2.2 2012/04/17 00:08:26 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
-#include "opt_sa.h"
 #include "opt_dtrace.h"
 
 #define	__MUTEX_PRIVATE
@@ -89,8 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.295.2.1 2011/11/10 14:31:49 yamt Ex
 #include <sys/pserialize.h>
 #include <sys/resourcevar.h>
 #include <sys/sched.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscall_stats.h>
 #include <sys/sleepq.h>
 #include <sys/lockdebug.h>
@@ -148,7 +145,11 @@ static struct evcnt	kpreempt_ev_immed	__cacheline_aligned;
  * be 0, or the lowest priority that is safe for use on the interrupt stack;
  * it can be made higher to block network software interrupts after panics.
  */
+#ifdef IPL_SAFEPRI
+int	safepri = IPL_SAFEPRI;
+#else
 int	safepri;
+#endif
 
 void
 synch_init(void)
@@ -176,28 +177,19 @@ synch_init(void)
  * signal needs to be delivered, ERESTART is returned if the current system
  * call should be restarted if possible, and EINTR is returned if the system
  * call should be interrupted by the signal (return EINTR).
- *
- * The interlock is held until we are on a sleep queue. The interlock will
- * be locked before returning back to the caller unless the PNORELOCK flag
- * is specified, in which case the interlock will always be unlocked upon
- * return.
  */
 int
-ltsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
-	volatile struct simplelock *interlock)
+tsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo)
 {
 	struct lwp *l = curlwp;
 	sleepq_t *sq;
 	kmutex_t *mp;
-	int error;
 
 	KASSERT((l->l_pflag & LP_INTR) == 0);
 	KASSERT(ident != &lbolt);
 
 	if (sleepq_dontsleep(l)) {
 		(void)sleepq_abort(NULL, 0);
-		if ((priority & PNORELOCK) != 0)
-			simple_unlock(interlock);
 		return 0;
 	}
 
@@ -205,18 +197,7 @@ ltsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
 	sq = sleeptab_lookup(&sleeptab, ident, &mp);
 	sleepq_enter(sq, l, mp);
 	sleepq_enqueue(sq, ident, wmesg, &sleep_syncobj);
-
-	if (interlock != NULL) {
-		KASSERT(simple_lock_held(interlock));
-		simple_unlock(interlock);
-	}
-
-	error = sleepq_block(timo, priority & PCATCH);
-
-	if (interlock != NULL && (priority & PNORELOCK) == 0)
-		simple_lock(interlock);
- 
-	return error;
+	return sleepq_block(timo, priority & PCATCH);
 }
 
 int
@@ -245,7 +226,7 @@ mtsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
 
 	if ((priority & PNORELOCK) == 0)
 		mutex_enter(mtx);
- 
+
 	return error;
 }
 
@@ -278,27 +259,6 @@ kpause(const char *wmesg, bool intr, int timo, kmutex_t *mtx)
 	return error;
 }
 
-#ifdef KERN_SA
-/*
- * sa_awaken:
- *
- *	We believe this lwp is an SA lwp. If it's yielding,
- * let it know it needs to wake up.
- *
- *	We are called and exit with the lwp locked. We are
- * called in the middle of wakeup operations, so we need
- * to not touch the locks at all.
- */
-void
-sa_awaken(struct lwp *l)
-{
-	/* LOCK_ASSERT(lwp_locked(l, NULL)); */
-
-	if (l == l->l_savp->savp_lwp && l->l_flag & LW_SA_YIELD)
-		l->l_flag &= ~LW_SA_IDLE;
-}
-#endif /* KERN_SA */
-
 /*
  * OBSOLETE INTERFACE
  *
@@ -316,26 +276,6 @@ wakeup(wchan_t ident)
 	sq = sleeptab_lookup(&sleeptab, ident, &mp);
 	sleepq_wake(sq, ident, (u_int)-1, mp);
 }
-
-/*
- * OBSOLETE INTERFACE
- *
- * Make the highest priority LWP first in line on the specified
- * identifier runnable.
- */
-void 
-wakeup_one(wchan_t ident)
-{
-	sleepq_t *sq;
-	kmutex_t *mp;
-
-	if (__predict_false(cold))
-		return;
-
-	sq = sleeptab_lookup(&sleeptab, ident, &mp);
-	sleepq_wake(sq, ident, 1, mp);
-}
-
 
 /*
  * General yield call.  Puts the current LWP back on its run queue and
@@ -982,11 +922,6 @@ setrunnable(struct lwp *l)
 	default:
 		panic("setrunnable: lwp %p state was %d", l, l->l_stat);
 	}
-
-#ifdef KERN_SA
-	if (l->l_proc->p_sa)
-		sa_awaken(l);
-#endif /* KERN_SA */
 
 	/*
 	 * If the LWP was sleeping, start it again.

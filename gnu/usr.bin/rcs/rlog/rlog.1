@@ -1,4 +1,4 @@
-.\"	$NetBSD: rlog.1,v 1.5 2002/02/08 01:26:52 ross Exp $
+.\"	$NetBSD: rlog.1,v 1.5.56.1 2012/04/17 00:05:10 yamt Exp $
 .\"
 .de Id
 .ds Rv \\$3
@@ -48,6 +48,8 @@ The options below restrict this output.
 .ds n \nn
 .if \n(.g .if r an-tag-sep .ds n \w'\f3\-V\fP\f2n\fP'u+\n[an-tag-sep]u
 .TP \*n
+.B \-c
+Print the commitid if available.
 .B \-L
 Ignore \*r files that have no locks set.
 This is convenient in combination with

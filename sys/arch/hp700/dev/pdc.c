@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.40 2011/10/01 15:51:17 chs Exp $	*/
+/*	$NetBSD: pdc.c,v 1.40.2.1 2012/04/17 00:06:21 yamt Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.40 2011/10/01 15:51:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.40.2.1 2012/04/17 00:06:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,8 +63,8 @@ enum pdc_type pdc_type;
 
 static struct pdc_result pdcret1 PDC_ALIGNMENT;
 static struct pdc_result pdcret2 PDC_ALIGNMENT;
+static char pdc_consbuf[IODC_MINIOSIZ] PDC_ALIGNMENT;
 
-char pdc_consbuf[IODC_MINIOSIZ] PDC_ALIGNMENT;
 iodcio_t pdc_cniodc, pdc_kbdiodc;
 pz_device_t *pz_kbd, *pz_cons;
 
@@ -105,10 +105,6 @@ static int pdcsettod(todr_chip_handle_t, struct timeval *);
 void
 pdc_init(void)
 {
-	static struct todr_chip_handle todr = {
-		.todr_settime = pdcsettod,
-		.todr_gettime = pdcgettod,
-	};
 	static int kbd_iodc[IODC_MAXSIZE/sizeof(int)];
 	static int cn_iodc[IODC_MAXSIZE/sizeof(int)];
 	int err;
@@ -116,11 +112,10 @@ pdc_init(void)
 
 	pagezero_cookie = hp700_pagezero_map();
 
-	/*
-	 * locore has updated pdc with (pdcio_t)PAGE0->mem_pdc
-	 */
 	pz_kbd = &PAGE0->mem_kbd;
 	pz_cons = &PAGE0->mem_cons;
+
+	pdc = (pdcio_t)PAGE0->mem_pdc;
 
 	/* XXX should we reset the console/kbd here?
 	   well, /boot did that for us anyway */
@@ -133,19 +128,13 @@ pdc_init(void)
 #endif
 	}
 
+	hp700_pagezero_unmap(pagezero_cookie);
+
 	pdc_cniodc = (iodcio_t)cn_iodc;
 	pdc_kbdiodc = (iodcio_t)kbd_iodc;
 
 	/* XXX make pdc current console */
 	cn_tab = &constab[0];
-
-	cn_init_magic(&pdc_cnm_state);
-	cn_set_magic("+++++");
-
-	hp700_pagezero_unmap(pagezero_cookie);
-
-	/* attach the TOD clock */
-	todr_attach(&todr);
 }
 
 void
@@ -235,13 +224,22 @@ pdcmatch(device_t parent, cfdata_t cf, void *aux)
 void
 pdcattach(device_t parent, device_t self, void *aux)
 {
+	static struct todr_chip_handle todr = {
+		.todr_settime = pdcsettod,
+		.todr_gettime = pdcgettod,
+	};
 	struct pdc_softc *sc = device_private(self);
 
 	sc->sc_dv = self;
 	pdc_attached = 1;
 
-	if (!pdc)
-		pdc_init();
+	KASSERT(pdc != NULL);
+
+	cn_init_magic(&pdc_cnm_state);
+	cn_set_magic("+++++");
+
+	/* attach the TOD clock */
+	todr_attach(&todr);
 
 	aprint_normal("\n");
 

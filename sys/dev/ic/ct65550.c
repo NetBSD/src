@@ -1,4 +1,4 @@
-/*	$NetBSD: ct65550.c,v 1.2 2011/03/23 04:02:43 macallan Exp $	*/
+/*	$NetBSD: ct65550.c,v 1.2.6.1 2012/04/17 00:07:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct65550.c,v 1.2 2011/03/23 04:02:43 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct65550.c,v 1.2.6.1 2012/04/17 00:07:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -774,8 +774,8 @@ chipsfb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
 	 */
-	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
-	    NULL) != 0) {
+	if (kauth_authorize_machdep(kauth_cred_get(), KAUTH_MACHDEP_UNMANAGEDMEM,
+	    NULL, NULL, NULL, NULL) != 0) {
 		aprint_normal_dev(sc->sc_dev, "mmap() rejected.\n");
 		return -1;
 	}
@@ -821,7 +821,7 @@ chipsfb_init_screen(void *cookie, struct vcons_screen *scr,
 		ri->ri_flg |= RI_CLEAR;
 	}
 
-	rasops_init(ri, sc->height/8, sc->width/8);
+	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 
 	rasops_reconfig(ri, sc->height / ri->ri_font->fontheight,

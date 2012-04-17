@@ -1,10 +1,10 @@
-#	$NetBSD: MERAKI,v 1.16 2011/06/30 20:09:29 wiz Exp $
+#	$NetBSD: MERAKI,v 1.16.2.1 2012/04/17 00:06:17 yamt Exp $
 
 include 	"arch/evbmips/conf/std.meraki"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MERAKI-$Revision: 1.16 $"
+#ident 		"MERAKI-$Revision: 1.16.2.1 $"
 
 maxusers	32
 
@@ -86,7 +86,7 @@ file-system	NFS		# Sun NFS-compatible filesystem client
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
@@ -202,7 +202,6 @@ pseudo-device	loop				# network loopback
 
 # Miscellaneous pseudo-devices
 pseudo-device	pty				# pseudo-terminals
-pseudo-device	rnd				# /dev/random & kernel generator
 pseudo-device	clockctl			# user control of clock subsystem
 pseudo-device	ksyms				# /dev/ksyms
 

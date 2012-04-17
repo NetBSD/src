@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.164 2011/10/19 10:51:47 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.164.2.1 2012/04/17 00:08:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,11 +211,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.164 2011/10/19 10:51:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.164.2.1 2012/04/17 00:08:24 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
-#include "opt_sa.h"
 #include "opt_dtrace.h"
 
 #define _LWP_API_PRIVATE
@@ -225,8 +224,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.164 2011/10/19 10:51:47 yamt Exp $");
 #include <sys/cpu.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/syscall_stats.h>
 #include <sys/kauth.h>
@@ -451,7 +448,7 @@ void
 lwp_unstop(struct lwp *l)
 {
 	struct proc *p = l->l_proc;
-    
+
 	KASSERT(mutex_owned(proc_lock));
 	KASSERT(mutex_owned(p->p_lock));
 
@@ -792,6 +789,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	} else
 		l2->l_prflag = 0;
 
+	l2->l_sigstk = l1->l_sigstk;
 	l2->l_sigmask = l1->l_sigmask;
 	CIRCLEQ_INIT(&l2->l_sigpend.sp_info);
 	sigemptyset(&l2->l_sigpend.sp_set);
@@ -870,7 +868,8 @@ lwp_startup(struct lwp *prev, struct lwp *new)
 	}
 	KPREEMPT_DISABLE(new);
 	spl0();
-	pmap_activate(new);
+	if (__predict_true(new->l_proc->p_vmspace))
+		pmap_activate(new);
 
 	/* Note trip through cpu_switchto(). */
 	pserialize_switchpoint();
@@ -1237,7 +1236,7 @@ lwp_find2(pid_t pid, lwpid_t lid)
 }
 
 /*
- * Look up a live LWP within the specified process, and return it locked.
+ * Look up a live LWP within the specified process.
  *
  * Must be called with p->p_lock held.
  */
@@ -1373,22 +1372,10 @@ lwp_userret(struct lwp *l)
 		softint_overlay();
 #endif
 
-#ifdef KERN_SA
-	/* Generate UNBLOCKED upcall if needed */
-	if (l->l_flag & LW_SA_BLOCKING) {
-		sa_unblock_userret(l);
-		/* NOTREACHED */
-	}
-#endif
-
 	/*
-	 * It should be safe to do this read unlocked on a multiprocessor
-	 * system..
-	 *
-	 * LW_SA_UPCALL will be handled after the while() loop, so don't
-	 * consider it now.
+	 * It is safe to do this read unlocked on a MP system..
 	 */
-	while ((l->l_flag & (LW_USERRET & ~(LW_SA_UPCALL))) != 0) {
+	while ((l->l_flag & LW_USERRET) != 0) {
 		/*
 		 * Process pending signals first, unless the process
 		 * is dumping core or exiting, where we will instead
@@ -1443,19 +1430,6 @@ lwp_userret(struct lwp *l)
 			lwp_unlock(l);
 		}
 	}
-
-#ifdef KERN_SA
-	/*
-	 * Timer events are handled specially.  We only try once to deliver
-	 * pending timer upcalls; if if fails, we can try again on the next
-	 * loop around.  If we need to re-enter lwp_userret(), MD code will
-	 * bounce us back here through the trap path after we return.
-	 */
-	if (p->p_timerpend)
-		timerupcall(l);
-	if (l->l_flag & LW_SA_UPCALL)
-		sa_upcall_userret(l);
-#endif /* KERN_SA */
 }
 
 /*

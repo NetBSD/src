@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.163 2011/02/08 20:20:18 rmind Exp $	*/
+/*	$NetBSD: locore.s,v 1.163.4.1 2012/04/17 00:06:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -298,6 +298,7 @@ LnokillTT:
 	movl	%a1,%a0@(4)		| + segtable address
 	pmove	%a0@,%srp		| load the supervisor root pointer
 	movl	#0x80000002,%a0@	| reinit upper half for CRP loads
+	pflusha
 	lea	_ASM_LABEL(longscratch),%a2
 #if PGSHIFT == 13
 	movl	#0x82d08b00,%a2@	| value to load %TC with
@@ -1014,14 +1015,6 @@ ENTRY(ecacheon)
 ENTRY(ecacheoff)
 	rts
 
-ENTRY_NOPROFILE(getsfc)
-	movc	%sfc,%d0
-	rts
-
-ENTRY_NOPROFILE(getdfc)
-	movc	%dfc,%d0
-	rts
-
 /*
  * Load a new user segment table pointer.
  */
@@ -1064,31 +1057,6 @@ ENTRY(spl0)
 	movw	#PSL_LOWIPL,%sp@	| and new SR
 	jra	Lgotsir			| go handle it
 Lspldone:
-	rts
-
-/*
- * Save and restore 68881 state.
- * Pretty awful looking since our assembler does not
- * recognize FP mnemonics.
- */
-ENTRY(m68881_save)
-	movl	%sp@(4),%a0		| save area pointer
-	fsave	%a0@			| save state
-	tstb	%a0@			| null state frame?
-	jeq	Lm68881sdone		| yes, all done
-	fmovem	%fp0-%fp7,%a0@(FPF_REGS)	| save FP general registers
-	fmovem	%fpcr/%fpsr/%fpi,%a0@(FPF_FPCR) | save FP control registers
-Lm68881sdone:
-	rts
-
-ENTRY(m68881_restore)
-	movl	%sp@(4),%a0		| save area pointer
-	tstb	%a0@			| null state frame?
-	jeq	Lm68881rdone		| yes, easy
-	fmovem	%a0@(FPF_FPCR),%fpcr/%fpsr/%fpi | restore FP control registers
-	fmovem	%a0@(FPF_REGS),%fp0-%fp7	| restore FP general registers
-Lm68881rdone:
-	frestore %a0@			| restore state
 	rts
 
 /*

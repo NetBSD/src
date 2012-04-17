@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.84 2010/09/11 20:49:28 chs Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.84.8.1 2012/04/17 00:07:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.84 2010/09/11 20:49:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.84.8.1 2012/04/17 00:07:17 yamt Exp $");
 
 #ifndef ELFSIZE
 /* XXX should die */
@@ -86,10 +86,10 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.84 2010/09/11 20:49:28 chs Ex
  * have a Linux binary if we find this section.
  */
 int
-ELFNAME2(linux,atexit_signature)(l, epp, eh)
-	struct lwp *l;
-	struct exec_package *epp;
-	Elf_Ehdr *eh;
+ELFNAME2(linux,atexit_signature)(
+	struct lwp *l,
+	struct exec_package *epp,
+	Elf_Ehdr *eh)
 {
 	size_t shsize;
 	int strndx;
@@ -162,10 +162,10 @@ out:
  * XXX NetBSD binaries as Linux.
  */
 int
-ELFNAME2(linux,gcc_signature)(l, epp, eh)
-	struct lwp *l;
-	struct exec_package *epp;
-	Elf_Ehdr *eh;
+ELFNAME2(linux,gcc_signature)(
+	struct lwp *l,
+	struct exec_package *epp,
+	Elf_Ehdr *eh)
 {
 	size_t shsize;
 	size_t i;
@@ -442,8 +442,7 @@ ELFNAME2(linux,copyargs)(struct lwp *l, struct exec_package *pack,
 		a->a_v = ap->arg_entry;
 		a++;
 
-		free(pack->ep_emul_arg, M_TEMP);
-		pack->ep_emul_arg = NULL;
+		exec_free_emul_arg(pack);
 	}
 
 	/* Linux-specific items */

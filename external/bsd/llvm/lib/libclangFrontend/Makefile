@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.2.1 2011/11/10 14:31:24 yamt Exp $
+#	$NetBSD: Makefile,v 1.6.2.2 2012/04/17 00:03:34 yamt Exp $
 
 LIB=	clangFrontend
 
@@ -10,10 +10,14 @@ SRCS+=	ASTConsumers.cpp \
 	ASTMerge.cpp \
 	ASTUnit.cpp \
 	CacheTokens.cpp \
+	ChainedDiagnosticConsumer.cpp \
+	ChainedIncludesSource.cpp \
 	CompilerInstance.cpp \
 	CompilerInvocation.cpp \
 	CreateInvocationFromCommandLine.cpp \
 	DependencyFile.cpp \
+	DependencyGraph.cpp \
+	DiagnosticRenderer.cpp \
 	FrontendAction.cpp \
 	FrontendActions.cpp \
 	FrontendOptions.cpp \
@@ -21,6 +25,7 @@ SRCS+=	ASTConsumers.cpp \
 	InitHeaderSearch.cpp \
 	InitPreprocessor.cpp \
 	LangStandards.cpp \
+	LayoutOverrideSource.cpp \
 	LogDiagnosticPrinter.cpp \
 	MultiplexConsumer.cpp \
 	PrintPreprocessedOutput.cpp \

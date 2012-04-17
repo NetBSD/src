@@ -1,21 +1,14 @@
-/*	$NetBSD: refclock_neoclock4x.c,v 1.3 2010/12/04 23:08:35 christos Exp $	*/
+/*	$NetBSD: refclock_neoclock4x.c,v 1.3.6.1 2012/04/17 00:03:48 yamt Exp $	*/
 
 /*
  *
  * Refclock_neoclock4x.c
  * - NeoClock4X driver for DCF77 or FIA Timecode
  *
- * Date: 2006-01-11 v1.15
+ * Date: 2009-12-04 v1.16
  *
  * see http://www.linum.com/redir/jump/id=neoclock4x&action=redir
  * for details about the NeoClock4X device
- *
- * Copyright (C) 2002-2004 by Linum Software GmbH <neoclock4x@linum.com>
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *
  *
  */
 
@@ -111,7 +104,7 @@
 #define NEOCLOCK4X_OFFSET_ANTENNA2         33
 #define NEOCLOCK4X_OFFSET_CRC              35
 
-#define NEOCLOCK4X_DRIVER_VERSION          "1.15 (2006-01-11)"
+#define NEOCLOCK4X_DRIVER_VERSION          "1.16 (2009-12-04)"
 
 #define NSEC_TO_MILLI                      1000000
 
@@ -1026,6 +1019,12 @@ neol_query_firmware(int fd,
     {
       NLOG(NLOG_CLOCKINFO)
 	msyslog(LOG_INFO, "NeoClock4X(%d): firmware version: %s", unit, firmware);
+
+      if(strstr(firmware, "/R2"))
+	{
+	  msyslog(LOG_INFO, "NeoClock4X(%d): Your NeoClock4X uses the new R2 firmware release. Please note the changed LED behaviour.", unit);
+	}
+
     }
 
   return (flag);
@@ -1112,4 +1111,16 @@ int refclock_neoclock4x_bs;
  * - remove some unsued #ifdefs
  * - fix nsec calculation, closes #499
  *
+ * 2009/12/04 cjh
+ * Revision 1.16
+ * - change license to ntp COPYRIGHT notice. This should allow Debian
+ *   to add this refclock driver in further releases.
+ * - detect R2 hardware
+ *
  */
+
+
+
+
+
+

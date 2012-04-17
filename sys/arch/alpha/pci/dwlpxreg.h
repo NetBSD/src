@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpxreg.h,v 1.10 2006/05/17 21:32:59 drochner Exp $ */
+/* $NetBSD: dwlpxreg.h,v 1.10.100.1 2012/04/17 00:05:56 yamt Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -170,7 +170,7 @@
 #define	PCIA_ERR_DPERR	(1<<10)		/* PCI Data Parity Error */
 #define	PCIA_ERR_APERR	(1<<9)		/* PCI Address Parity Error */
 #define	PCIA_ERR_DFLT	(1<<8)		/* SG Map RAM Invalid Entry Error */
-#define	PCIA_ERR_DPRTY	(1<<7)		/* DMA access of SG RAM Parity Error */ 
+#define	PCIA_ERR_DPRTY	(1<<7)		/* DMA access of SG RAM Parity Error */
 #define	PCIA_ERR_DRPERR	(1<<6)		/* DMA Read Return Parity Error */
 #define	PCIA_ERR_MABRT	(1<<5)		/* PCI Master Abort Error */
 #define	PCIA_ERR_CPRTY	(1<<4)		/* CSR Parity Error */

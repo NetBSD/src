@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.70 2010/06/03 10:40:17 pooka Exp $	*/
+/*	$NetBSD: pool.h,v 1.70.8.1 2012/04/17 00:08:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -67,11 +67,6 @@ struct pool_allocator {
 	uint32_t	pa_refcnt;	/* number of pools using this allocator */
 	int		pa_pagemask;
 	int		pa_pageshift;
-	struct vm_map *pa_backingmap;
-#if defined(_KERNEL)
-	struct vm_map **pa_backingmapptr;
-	SLIST_ENTRY(pool_allocator) pa_q;
-#endif /* defined(_KERNEL) */
 };
 
 LIST_HEAD(pool_pagelist,pool_item_header);
@@ -302,8 +297,9 @@ bool		pool_drain_end(struct pool *, uint64_t);
  */
 void		pool_print(struct pool *, const char *);
 void		pool_printit(struct pool *, const char *,
-		    void (*)(const char *, ...));
-void		pool_printall(const char *, void (*)(const char *, ...));
+    void (*)(const char *, ...) __printflike(1, 2));
+void		pool_printall(const char *, void (*)(const char *, ...)
+    __printflike(1, 2));
 int		pool_chk(struct pool *, const char *);
 
 /*
@@ -317,6 +313,7 @@ void		pool_cache_bootstrap(pool_cache_t, size_t, u_int, u_int, u_int,
 		    int (*)(void *, void *, int), void (*)(void *, void *),
 		    void *);
 void		pool_cache_destroy(pool_cache_t);
+void		pool_cache_bootstrap_destroy(pool_cache_t);
 void		*pool_cache_get_paddr(pool_cache_t, int, paddr_t *);
 void		pool_cache_put_paddr(pool_cache_t, void *, paddr_t);
 void		pool_cache_destruct_object(pool_cache_t, void *);
@@ -333,7 +330,8 @@ void		pool_cache_cpu_init(struct cpu_info *);
 #define		pool_cache_put(pc, o) pool_cache_put_paddr((pc), (o), \
 				          POOL_PADDR_INVALID)
 
-void 		pool_whatis(uintptr_t, void (*)(const char *, ...));
+void 		pool_whatis(uintptr_t, void (*)(const char *, ...)
+    __printflike(1, 2));
 #endif /* _KERNEL */
 
 #endif /* _SYS_POOL_H_ */

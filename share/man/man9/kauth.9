@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.91.4.1 2011/11/10 14:31:38 yamt Exp $
+.\" $NetBSD: kauth.9,v 1.91.4.2 2012/04/17 00:05:49 yamt Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 8, 2011
+.Dd March 13, 2012
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -155,17 +155,6 @@ Checks whether the credentials belong to the super-user.
 Using this request is strongly discouraged and should only be done as a
 temporary place-holder, as it is breaking the separation between the
 interface for authorization requests from the back-end implementation.
-.It Dv KAUTH_GENERIC_CANSEE
-Checks whether an object with one set of credentials can access
-information about another object, possibly with a different set of
-credentials.
-.Pp
-.Ar arg0
-contains the credentials of the object looked at.
-.Pp
-This request should be issued only in cases where generic credentials
-check is required; otherwise it is recommended to use the object-specific
-routines.
 .El
 .Ss System Scope
 The system scope,
@@ -214,15 +203,36 @@ Check if using
 .Xr ipkdb 4
 is allowed.
 .El
+.It Dv KAUTH_SYSTEM_DEVMAPPER
+Check if operations on the device mapper
+.Xr dm 4
+device are allowed.
 .It Dv KAUTH_SYSTEM_FILEHANDLE
-Check if filehandle operations allowed.
+Check if file handle operations allowed.
+.It Dv KAUTH_SYSTEM_FS_EXTATTR
+Check if starting, stopping, enabling, or disabling extended attributes
+is allowed.
+.Ar arg1
+is a
+.Ft struct mount *
+of the mount-point on which the operation is performed.
+.It Dv KAUTH_SYSTEM_FS_SNAPSHOT
+Check if setting up a file system snapshot is allowed.
+.Ar arg1
+is a
+.Ft struct mount *
+of the mount-point of which the snapshot is taken, and
+.Ar arg2
+is a
+.Ft struct vnode *
+of the vnode where the snapshot is expected to be.
 .It Dv KAUTH_SYSTEM_FS_QUOTA
-Check if file-system quota operations are allowed.
+Check if file system quota operations are allowed.
 .Pp
 .Ar arg1
 is a
 .Ft struct mount *
-describing the file-system mount in question.
+describing the file system mount in question.
 .Ar req
 can be one of the following:
 .Bl -tag -width compact
@@ -246,7 +256,36 @@ with the user-id of the user whose quota/quota use is to be set.
 Check if bypassing the quota (not enforcing it) is allowed.
 .El
 .It Dv KAUTH_SYSTEM_FS_RESERVEDSPACE
-Check if using the file-system reserved space is allowed.
+Check if using the file system reserved space is allowed.
+.It Dv KAUTH_SYSTEM_LFS
+Check if LFS-related operations are allowed.
+.Ar req
+can be one of the following:
+.Bl -tag -width compact
+.It Dv KAUTH_REQ_SYSTEM_LFS_MARKV
+Check if calling
+.Xr lfs_markv 2
+is allowed.
+.It Dv KAUTH_REQ_SYSTEM_LFS_BMAPV
+Check if calling
+.Xr lfs_bmapv 2
+is allowed.
+.It Dv KAUTH_REQ_SYSTEM_LFS_SEGCLEAN
+Check if calling
+.Xr lfs_segclean 2
+is allowed.
+.It Dv KAUTH_REQ_SYSTEM_LFS_SEGWAIT
+Check if calling
+.Xr lfs_segwait 2
+is allowed.
+.It Dv KAUTH_REQ_SYSTEM_LFS_FCNTL
+Check if operations on LFS through
+.Xr fcntl 2
+are allowed.
+.El
+.It Dv KAUTH_SYSTEM_MAP_VA_ZERO
+Check if changing the status of memory mapping of virtual address zero
+is allowed.
 .It Dv KAUTH_SYSTEM_MODULE
 Check if a module request is allowed.
 .Pp
@@ -260,6 +299,20 @@ Check if mount-related operations are allowed.
 .Ar req
 can be any of the following:
 .Bl -tag -width compact
+.It Dv KAUTH_REQ_SYSTEM_MOUNT_DEVICE
+Check if mounting a device is allowed.
+.Ar arg1
+is a
+.Ft vnode_t *
+of the device,
+.Ar arg2
+is a
+.Ft struct mount *
+with the mount-point, and
+.Ar arg3
+is a
+.Ft mode_t
+with the desired access mode.
 .It Dv KAUTH_REQ_SYSTEM_MOUNT_GET
 Check if retrieving information about a mount is allowed.
 .Ar arg1
@@ -269,14 +322,14 @@ with the mount structure in question,
 .Ar arg2
 is a
 .Ft void *
-with file-system specific data, if any.
+with file system specific data, if any.
 .It Dv KAUTH_REQ_SYSTEM_MOUNT_NEW
-Check if mounting a new file-system is allowed.
+Check if mounting a new file system is allowed.
 .Pp
 .Ar arg1
 is the
 .Ft struct vnode *
-on which the file-system is to be mounted,
+on which the file system is to be mounted,
 .Ar arg2
 is an
 .Ft int
@@ -284,9 +337,9 @@ with the mount flags, and
 .Ar arg3
 is a
 .Ft void *
-with file-system specific data, if any.
+with file system specific data, if any.
 .It Dv KAUTH_REQ_SYSTEM_MOUNT_UNMOUNT
-Checks if unmounting a file-system is allowed.
+Checks if unmounting a file system is allowed.
 .Pp
 .Ar arg1
 is a
@@ -306,8 +359,18 @@ with the new mount flags, and
 .Ar arg3
 is a
 .Ft void *
-with file-system specific data, if any.
+with file system specific data, if any.
+.It Dv KAUTH_REQ_SYSTEM_MOUNT_UMAP
+Check if mounting the user and group id remapping file system.
+See
+.Xr mount_umap 8 .
 .El
+.It Dv KAUTH_SYSTEM_MQUEUE
+Check if bypassing permissions on a message queue object are allowed.
+.Ar arg1
+is a
+.Ft mqueue_t *
+describing the message queue.
 .It Dv KAUTH_SYSTEM_PSET
 Check processor-set manipulation.
 .Pp
@@ -327,6 +390,12 @@ Destroy a processor-set.
 Check if rebooting is allowed.
 .It Dv KAUTH_SYSTEM_SETIDCORE
 Check if changing coredump settings for set-id processes is allowed.
+.It Dv KAUTH_SYSTEM_SEMAPHORE
+Check if access to a kernel semaphore is allowed.
+.Ar arg1
+is a
+.Ft ksem_t *
+describing the semaphore.
 .It Dv KAUTH_SYSTEM_SWAPCTL
 Check if privileged
 .Xr swapctl 2
@@ -359,6 +428,36 @@ This request might be deprecated in the future.
 Check if accessing private
 .Xr sysctl 9
 nodes is allowed.
+.El
+.It Dv KAUTH_SYSTEM_SYSVIPC
+Check SysV IPC related operations.
+.Ar req
+indicates the specific request and can be one of the following:
+.Bl -tag -width compact
+.It Dv KAUTH_REQ_SYSTEM_SYSVIPC_BYPASS
+Check if bypassing a SysV IPC object's permissions is allowed.
+.Ar arg1
+is a
+.Ft struct ipc_perm *
+with the object's permissions and
+.Ar arg2
+is a
+.Ft mode_t
+indicating the requested access mode.
+.It Dv KAUTH_REQ_SYSTEM_SYSVIPC_SHM_LOCK
+Check if shared memory locking is allowed.
+.It Dv KAUTH_REQ_SYSTEM_SYSVIPC_SHM_UNLOCK
+Check if shared memory unlocking is allowed.
+.It Dv KAUTH_REQ_SYSTEM_SYSVIPC_MSGQ_OVERSIZE
+Check if oversizing a message queue is allowed.
+.Ar arg1
+is a
+.Ft msglen_t
+indicating the size of the message buffer, and
+.Ar arg2
+is a
+.Ft msglen_t
+indicating the size of the message queue.
 .El
 .It Dv KAUTH_SYSTEM_TIME
 This request groups time-related operations.
@@ -396,6 +495,22 @@ or not.
 Check if changing the RTC offset is allowed.
 .It Dv KAUTH_REQ_SYSTEM_TIME_TIMECOUNTERS
 Check if manipulating timecounters is allowed.
+.El
+.It Dv KAUTH_SYSTEM_VERIEXEC
+Check if operations on the
+.Xr veriexec 8
+subsystem are allowed.
+.Ar req
+can be one of the following:
+.Bl -tag -width compact
+.It Dv KAUTH_REQ_SYSTEM_VERIEXEC_ACCESS
+Check if access to the
+.Xr veriexec 8
+subsystem is allowed.
+.It Dv KAUTH_REQ_SYSTEM_VERIEXEC_MODIFY
+Check if modifications to the state of
+.Xr veriexec 8
+are allowed.
 .El
 .El
 .Ss Process Scope
@@ -476,9 +591,9 @@ or
 Checks whether viewing the scheduler affinity is allowed.
 .It Dv KAUTH_PROCESS_SCHEDULER_SETAFFINITY
 Checks whether setting the scheduler affinity is allowed.
-.It Dv KAUTH_PROCESS_SCHEDULER_GETPARAMS
+.It Dv KAUTH_PROCESS_SCHEDULER_GETPARAM
 Checks whether viewing the scheduler policy and parameters is allowed.
-.It Dv KAUTH_PROCESS_SCHEDULER_SETPARAMS
+.It Dv KAUTH_PROCESS_SCHEDULER_SETPARAM
 Checks whether modifying the scheduler policy and parameters is allowed.
 .It Dv KAUTH_PROCESS_SIGNAL
 Checks whether an object with one set of credentials can post signals
@@ -527,7 +642,9 @@ can be
 .Dv KAUTH_REQ_PROCESS_RLIMIT_GET
 or
 .Dv KAUTH_REQ_PROCESS_RLIMIT_SET ,
-indicating access to read or write the process' resource limits, respectively.
+indicating access to read or write the process' resource limits, respectively, or
+.Dv KAUTH_REQ_PROCESS_RLIMIT_BYPASS
+to check if the limit enforcement can be bypassed.
 .Pp
 When modifying resource limits,
 .Ar arg2
@@ -636,6 +753,8 @@ Check if retrieving privileged information from the device is allowed.
 Check if setting parameters on the device is allowed.
 .It Dv KAUTH_REQ_NETWORK_INTERFACE_SETPRIV
 Check if setting privileged parameters on the device is allowed.
+.It Dv KAUTH_REQ_NETWORK_INTERFACE_FIRMWARE
+Check if manipulating the firmware on a network interface device is allowed.
 .El
 .Pp
 Note that unless the
@@ -645,6 +764,19 @@ for the interface was passed in
 there's no way to tell what structure
 .Ar arg3
 is.
+.It Dv KAUTH_NETWORK_INTERFACE_BRIDGE
+Check if operations performed on the
+.Xr bridge 4
+network interface are allowed.
+.Pp
+.Ar req
+can be one of the following:
+.Bl -tag -width compact
+.It Dv KAUTH_REQ_NETWORK_INTERFACE_BRIDGE_GETPRIV
+Check if getting privileges parameters is allowed.
+.It Dv KAUTH_REQ_NETWORK_INTERFACE_BRIDGE_SETPRIV
+Check if setting privileges parameters is allowed.
+.El
 .It Dv KAUTH_NETWORK_INTERFACE_PPP
 Checks if operations performed on the
 .Xr ppp 4
@@ -657,6 +789,16 @@ can be one of the following:
 Checks if adding and enabling a
 .Xr ppp 4
 interface to the system is allowed.
+.El
+.It Dv KAUTH_NETWORK_INTERFACE_PVC
+Check if operations performed on a PVC device (e.g.
+.Xr midway 4 )
+are allowed.
+.Ar req
+can be one of the following:
+.Bl -tag -width compact
+.It Dv KAUTH_REQ_NETWORK_INTERFACE_PVC_ADD
+Check if adding a PVC device is allowed.
 .El
 .It Dv KAUTH_NETWORK_INTERFACE_SLIP
 Checks if operations performed on the
@@ -697,6 +839,28 @@ Checks if adding and enabling a
 .Xr tun 4
 interface to the system is allowed.
 .El
+.It Dv KAUTH_NETWORK_IPSEC
+Check if operations related to
+.Xr ipsec 4
+connections are allowed.
+.Ar req
+can be one of the following:
+.Bl -tag -width compact
+.It Dv KAUTH_REQ_NETWORK_IPSEC_BYPASS
+Check if bypassing
+.Xr ipsec 4
+policy is allowed.
+.El
+.It Dv KAUTH_NETWORK_IPV6
+Check if IPv6-specific operations are allowed.
+.Ar req
+can be one of the following:
+.Bl -tag -width compact
+.It Dv KAUTH_REQ_NETWORK_IPV6_HOPBYHOP
+Check if setting hop-by-hop packet options is allowed.
+.It Dv KAUTH_REQ_NETWORK_IPV6_JOIN_MULTICAST
+Check if joining a multicast network is allowed.
+.El
 .It Dv KAUTH_NETWORK_FORWSRCRT
 Checks whether status of forwarding of source-routed packets can be modified
 or not.
@@ -720,6 +884,49 @@ Checks if a routing-related request is allowed.
 is the
 .Ft struct rt_msghdr *
 for the request.
+.It Dv KAUTH_NETWORK_SMB
+Check if operations related to SMB are allowed.
+.Pp
+.Ar req
+can be one of the following:
+.Bl -tag -width compact
+.It Dv KAUTH_REQ_NETWORK_SMB_SHARE_ACCESS
+Check if accessing an SMB share is allowed.
+.Pp
+.Ar arg1
+is a
+.Ft struct smb_share *
+describing the SMB share, and
+.Ar arg2
+is a
+.Ft mode_t
+with the desired access mode.
+.It Dv KAUTH_REQ_NETWORK_SMB_SHARE_CREATE
+Check if creating an SMB share is allowed.
+.Pp
+.Ar arg1
+is a
+.Ft struct smb_sharespec *
+describing the share to be created.
+.It Dv KAUTH_REQ_NETWORK_SMB_VC_ACCESS
+Check if accessing an SMB VC is allowed.
+.Pp
+.Ar arg1
+is a
+.Ft struct smb_vc *
+describing the SMB VC, and
+.Ar arg2
+is a
+.Ft mode_t
+with the desired access mode.
+.It Dv KAUTH_REQ_NETWORK_SMB_VC_CREATE
+Check if creating an SMB VC is allowed.
+.Pp
+.Ar arg1
+is a
+.Ft struct smb_vcspec *
+describing the VC to be created.
+.El
 .It Dv KAUTH_NETWORK_SOCKET
 Checks if a socket related operation is allowed.
 .Pp
@@ -786,6 +993,16 @@ Request to flush the whole CPU cache.
 Affects
 .Em m68k
 Linux emulation.
+.It Dv KAUTH_MACHDEP_CPU_UCODE_APPLY
+Request to apply a CPU microcode to a CPU.
+This is related to
+.Em CPU_UCODE ,
+see
+.Xr options 4 .
+Affects
+.Em i386
+and
+.Em xen .
 .It Dv KAUTH_MACHDEP_IOPERM_GET
 Request to get the I/O permission level.
 Affects
@@ -832,6 +1049,18 @@ Affects
 Request to access (read/write) the NVRAM.
 Affects
 .Em i386 .
+.It Dv KAUTH_MACHDEP_PXG
+Request to start or stop the
+.Xr pxg 4
+CPU.
+.Ar arg0
+is
+.Ft true
+or
+.Ft false ,
+respectively.
+Affects
+.Em pmax .
 .It Dv KAUTH_MACHDEP_UNMANAGEDMEM
 Request to access unmanaged memory.
 Affects
@@ -889,6 +1118,11 @@ device
 .Xr ioctl 2 ,
 allowing to inject characters into the terminal buffer, simulating terminal
 input.
+.It Dv KAUTH_DEVICE_TTY_VIRTUAL
+Control the virtual console.
+.Ar tty
+is the current console
+.Xr tty 4 .
 .El
 .Pp
 .Ft int Fn kauth_authorize_device_spec "kauth_cred_t cred" \
@@ -1050,6 +1284,206 @@ Check if adding data to the entropy pool is allowed.
 Check if privileged settings and information can be retrieved.
 .It KAUTH_DEVICE_RND_SETPRIV
 Check if privileged settings can be changed.
+.El
+.Ss Wscons devices
+Authorization actions relevant to
+.Xr wscons 4
+are done using the standard authorization wrapper, with the following actions:
+.Pp
+.Bl -tag -width compact
+.It KAUTH_DEVICE_WSCONS_KEYBOARD_BELL
+Check if setting the default bell is allowed.
+.It KAUTH_DEVICE_WSCONS_KEYBOARD_KEYREPEAT
+Check if setting the default key-repeat is allowed.
+.El
+.Ss Vnode Scope
+The vnode scope,
+.Dq org.netbsd.kauth.vnode ,
+authorizes operations made on vnodes representing file system objects.
+.Pp
+The authorization wrapper for this scope is declared as
+.Pp
+.Ft int Fn kauth_authorize_vnode "kauth_cred_t cred" "kauth_action_t action" \
+"vnode_t *vp" "vnode_t *dvp" "int fs_decision"
+.Pp
+This scope is heavily used in file system code and can potentially affect
+system-wide performance.
+Therefore, there are several things developers should know when using it.
+.Pp
+First, the
+.Ar action
+parameter is a bit-mask and multiple actions can be binary-OR'd and authorized
+in a single call.
+Two helper functions help generate the
+.Ar action
+value for a couple of common cases: translating file system access to a
+.Xr kauth 9
+action and checking access to a vnode.
+.Pp
+The first,
+.Fn kauth_mode_to_action "mode_t access_mode" ,
+and returns a
+.Ft kauth_action_t
+representing the desired access modes.
+Another function,
+.Fn kauth_access_action "mode_t access_mode" "enum vtype v_type" \
+"mode_t file_mode" ,
+returns a
+.Ft kauth_action_t
+suitable for use in many file system
+.Xr access 2
+implementations.
+It calls the aforementioned
+.Fn kauth_mode_to_action ,
+but before returning also adds the
+.Dv KAUTH_VNODE_IS_EXEC
+flag if needed.
+See below for the meaning of this flag and how its necessity is
+determined.
+.Pp
+Second, it is recommended to be very careful with adding listeners on this
+scope.
+A special parameter,
+.Ar fs_decision ,
+allows different file systems to instrument different policies without adding
+their own listener.
+This parameter is special because it also serves as a fall-back decision when
+no
+.Xr secmodel 9
+is present to prevent a fail-open scenario.
+It can take either an
+.Xr errno 2
+value or
+.Dq KAUTH_VNODE_REMOTEFS ,
+indicating that the file system on which the authorization is made is remote
+and cannot provide us with a fall-back decision.
+In this case,
+.Xr kauth 9
+can only short-circuit the request but the file system will have the last
+word if there is no definitive allow or deny decision.
+.Pp
+The value of
+.Ar fs_decision
+can be hard-coded or determined by calling an internal function implementing a
+policy.
+For the latter case,
+.Xr genfs 9
+provides a set of helper functions that implement common policies that
+file systems can use.
+The calling convention is as follows:
+.Bd -literal -offset indent
+int error;
+
+error = kauth_authorize_vnode(..., genfs_can_foo(...));
+.Ed
+.Pp
+Actions on the vnode scope are of two types: operations and flags.
+An operation is similar in concept to actions on other scopes in the sense
+that it represents an operation desired by the caller.
+A flag is an indicator of additional information about the vnode that
+a file system can set in order to allow the listener to make a more
+informed decision.
+.Pp
+Actions include the following:
+.Bl -tag -width compact -offset indent
+.It KAUTH_VNODE_READ_DATA
+Read file data.
+.It KAUTH_VNODE_LIST_DIRECTORY
+Read directory listing.
+Identical to the above.
+.It KAUTH_VNODE_WRITE_DATA
+Write file data.
+.It KAUTH_VNODE_ADD_FILE
+Add a file to a directory.
+Identical to the above.
+.It KAUTH_VNODE_EXECUTE
+Execute a file.
+.It KAUTH_VNODE_SEARCH
+Search (enter) a directory.
+Identical to the above.
+.It KAUTH_VNODE_DELETE
+Delete a file.
+.It KAUTH_VNODE_APPEND_DATA
+Append data to a file.
+.It KAUTH_VNODE_ADD_SUBDIRECTORY
+Add a subdirectory to a directory.
+Identical to the above.
+.It KAUTH_VNODE_READ_TIMES
+Read the created, last accessed, and last modified times of a file.
+.It KAUTH_VNODE_WRITE_TIMES
+Modify the created, last accessed, or last modified times of a file.
+.It KAUTH_VNODE_READ_FLAGS
+Read file flags.
+.It KAUTH_VNODE_WRITE_FLAGS
+Modify file flags.
+.It KAUTH_VNODE_READ_SYSFLAGS
+Read file system flags.
+.It KAUTH_VNODE_WRITE_SYSFLAGS
+Modify file system flags.
+.It KAUTH_VNODE_RENAME
+Rename a file.
+.It KAUTH_VNODE_CHANGE_OWNERSHIP
+Change ownership of a file.
+.It KAUTH_VNODE_READ_SECURITY
+Read the permissions of a file.
+.It KAUTH_VNODE_WRITE_SECURITY
+Change the permissions of a file, for example by using
+.Xr chmod 2 .
+.It KAUTH_VNODE_READ_ATTRIBUTES
+Read attributes of a file.
+.It KAUTH_VNODE_WRITE_ATTRIBUTES
+Modify attributes of a file.
+.It KAUTH_VNODE_READ_EXTATTRIBUTES
+Read extended attributes of a file.
+.It KAUTH_VNODE_WRITE_EXTATTRIBUTES
+Modify extended attributes of a file.
+.It KAUTH_VNODE_RETAIN_SUID
+Check if retaining the set-user-id bit on files after
+.Xr chown 2
+is allowed.
+.It KAUTH_VNODE_RETAIN_SGID
+Check if retaining the set-group-id bit on files after
+.Xr chown 2
+is allowed.
+.It KAUTH_VNODE_REVOKE
+Revoke a file.
+.El
+.Pp
+Flags include the following:
+.Bl -tag -width compact -offset indent
+.It KAUTH_VNODE_IS_EXEC
+The vnode is executable.
+.Pp
+The macro
+.Fn FS_OBJECT_CAN_EXEC
+can be used to help determine if this flag should be set.
+This macro determines a file system object to be executable if it is a
+directory (in which case we say it is searchable) or if it has at least one
+executable bit set in its mode.
+.Pp
+Setting this flag helps a listener know that a vnode is executable and is used
+in implementing privileged access to files and directories while maintaining
+semantics that prevent execution until a file is marked as an executable.
+An example for using this in listener code is:
+.Bd -literal -offset indent
+if (privileged) {
+	/* Always allow read/write; execute only if executable. */
+	if ((action & KAUTH_VNODE_EXECUTE) == 0 ||
+	    (action & KAUTH_VNODE_IS_EXEC))
+		result = KAUTH_RESULT_ALLOW;
+}
+.Ed
+.Pp
+Finally, the vnode scope authorization wrapper returns
+.Er EACCES
+in case of an error, to maintain file system semantics.
+File systems can override this value if needed.
+.It KAUTH_VNODE_HAS_SYSFLAGS
+The file system object represented by the vnode has system flags set.
+.It KAUTH_VNODE_ACCESS
+The authorization is advisory only and no actual operation is to be
+performed.
+This is not implemented.
 .El
 .Ss Credentials Scope
 The credentials scope,
@@ -1593,7 +2027,7 @@ The kernel authorization framework in
 first appeared in
 .Nx 4.0 ,
 and is a clean-room implementation based on Apple TN2127, available at
-http://developer.apple.com/technotes/tn2005/tn2127.html
+.Lk http://developer.apple.com/technotes/tn2005/tn2127.html
 .Sh NOTES
 As
 .Nm
@@ -1613,9 +2047,3 @@ implemented the kernel authorization framework in
 .Pp
 .An Jason R. Thorpe Aq thorpej@NetBSD.org
 provided guidance and answered questions about the Darwin implementation.
-.Sh ONE MORE THING
-The
-.Nm
-framework is dedicated to Brian Mitchell, one of the most talented people
-I know.
-Thanks for everything.

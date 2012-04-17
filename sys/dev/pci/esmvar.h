@@ -1,4 +1,4 @@
-/*	$NetBSD: esmvar.h,v 1.17 2009/05/07 06:08:02 cegger Exp $	*/
+/*	$NetBSD: esmvar.h,v 1.17.12.1 2012/04/17 00:07:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -151,6 +151,8 @@ struct esm_chinfo {
 
 struct esm_softc {
 	device_t		sc_dev;
+	kmutex_t		sc_lock;
+	kmutex_t		sc_intr_lock;
 
 	bus_space_tag_t		st;
 	bus_space_handle_t	sh;
@@ -218,10 +220,11 @@ int	esm_set_params(void *, int, int, audio_params_t *, audio_params_t *,
 int	esm_set_port(void *, mixer_ctrl_t *);
 int	esm_get_port(void *, mixer_ctrl_t *);
 int	esm_query_devinfo(void *, mixer_devinfo_t *);
-void	*esm_malloc(void *, int, size_t, struct malloc_type *, int);
-void	esm_free(void *, void *, struct malloc_type *);
+void	*esm_malloc(void *, int, size_t);
+void	esm_free(void *, void *, size_t);
 size_t	esm_round_buffersize(void *, int, size_t);
 paddr_t	esm_mappage(void *, void *, off_t, int);
 int	esm_get_props(void *);
+void	esm_get_locks(void *, kmutex_t **, kmutex_t **);
 
 enum esm_quirk_flags	esm_get_quirks(pcireg_t);

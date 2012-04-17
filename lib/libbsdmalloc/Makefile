@@ -1,6 +1,8 @@
-# $NetBSD: Makefile,v 1.3 2011/04/10 16:47:39 joerg Exp $
+# $NetBSD: Makefile,v 1.3.4.1 2012/04/17 00:05:12 yamt Exp $
 
 NOMAN=1
+
+WARNS=	2
 
 .include <bsd.own.mk>
 

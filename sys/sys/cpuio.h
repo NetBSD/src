@@ -1,7 +1,7 @@
-/*	$NetBSD: cpuio.h,v 1.5 2011/09/11 14:54:49 jdc Exp $	*/
+/*	$NetBSD: cpuio.h,v 1.5.2.1 2012/04/17 00:08:51 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2009, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,6 +37,7 @@
 #include <sys/ioccom.h>
 
 #ifndef _KERNEL
+#include <limits.h>
 #include <stdbool.h>
 #endif
 
@@ -61,5 +62,13 @@ typedef struct cpustate {
 #define	IOC_CPU_GETSTATE	_IOWR('c', 1, cpustate_t)
 #define	IOC_CPU_GETCOUNT	_IOR('c', 2, int)
 #define	IOC_CPU_MAPID		_IOWR('c', 3, int)
+
+struct cpu_ucode {
+	uint64_t version;
+	char fwname[PATH_MAX];
+};
+
+#define IOC_CPU_UCODE_GET_VERSION	_IOR('c', 4, struct cpu_ucode)
+#define IOC_CPU_UCODE_APPLY		_IOW('c', 5, struct cpu_ucode)
 
 #endif /* !_SYS_CPUIO_H_ */

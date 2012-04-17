@@ -1,4 +1,4 @@
-#	$NetBSD: shl.mi,v 1.30 2011/07/24 00:33:38 mrg Exp $
+#	$NetBSD: shl.mi,v 1.30.2.1 2012/04/17 00:02:46 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -39,7 +39,7 @@
 ./usr/X11R6/lib/libdmx_pic.a				-unknown-	x11
 ./usr/X11R6/lib/libdps_pic.a				-unknown-	x11
 ./usr/X11R6/lib/libdpstk_pic.a				-unknown-	x11
-./usr/X11R6/lib/libexpat_pic.a				-unknown-	x11
+./usr/X11R6/lib/libexpat_pic.a				-obsolete-	obsolete
 ./usr/X11R6/lib/libfontconfig_pic.a			-unknown-	x11
 ./usr/X11R6/lib/libfontenc_pic.a			-unknown-	x11
 ./usr/X11R6/lib/libfreetype_pic.a			-unknown-	x11
@@ -93,7 +93,7 @@
 ./usr/X11R7/lib/libXxf86vm_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/libdrm_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libdrm_radeon_pic.a			-unknown-	xorg
-./usr/X11R7/lib/libexpat_pic.a				-unknown-	xorg
+./usr/X11R7/lib/libexpat_pic.a				-obsolete-	obsolete
 ./usr/X11R7/lib/libfontconfig_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/libfontenc_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/libfreetype_pic.a			-unknown-	xorg
@@ -175,7 +175,7 @@
 ./usr/libdata/debug/usr/X11R6/lib/libdmx.so.1.0.debug			-unknown-		x11,debug
 ./usr/libdata/debug/usr/X11R6/lib/libdps.so.1.0.debug			-unknown-		x11,debug
 ./usr/libdata/debug/usr/X11R6/lib/libdpstk.so.1.0.debug			-unknown-		x11,debug
-./usr/libdata/debug/usr/X11R6/lib/libexpat.so.4.0.debug			-unknown-		x11,debug
+./usr/libdata/debug/usr/X11R6/lib/libexpat.so.4.0.debug			-obsolete-		obsolete
 ./usr/libdata/debug/usr/X11R6/lib/libfontconfig.so.1.0.debug		-unknown-		x11,debug
 ./usr/libdata/debug/usr/X11R6/lib/libfontenc.so.1.0.debug		-unknown-		x11,debug
 ./usr/libdata/debug/usr/X11R6/lib/libfreetype.so.9.0.debug		-unknown-		x11,debug
@@ -231,7 +231,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/libXxf86vm.so.2.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libdrm.so.3.2.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libdrm_radeon.so.0.0.debug	-unknown-		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/libexpat.so.2.0.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/libexpat.so.2.0.debug	-obsolete-		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/libfontconfig.so.2.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libfontenc.so.2.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libfreetype.so.7.3.debug	-unknown-		xorg,debug

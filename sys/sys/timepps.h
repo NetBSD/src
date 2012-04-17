@@ -1,4 +1,4 @@
-/*	$NetBSD: timepps.h,v 1.19 2009/06/14 13:16:32 kardel Exp $	*/
+/*	$NetBSD: timepps.h,v 1.19.12.1 2012/04/17 00:08:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -177,9 +177,7 @@ static __inline int time_pps_kcbind(pps_handle_t, const int, const int,
 	const int);
 
 static __inline int
-time_pps_create(filedes, handle)
-	int filedes;
-	pps_handle_t *handle;
+time_pps_create(int filedes, pps_handle_t *handle)
 {
 
 	*handle = filedes;
@@ -187,57 +185,44 @@ time_pps_create(filedes, handle)
 }
 
 static __inline int
-time_pps_destroy(handle)
-	pps_handle_t handle;
+time_pps_destroy(pps_handle_t handle)
 {
 
 	return (0);
 }
 
 static __inline int
-time_pps_setparams(handle, ppsparams)
-	pps_handle_t handle;
-	const pps_params_t *ppsparams;
+time_pps_setparams(pps_handle_t handle, const pps_params_t *ppsparams)
 {
 
 	return (ioctl(handle, PPS_IOC_SETPARAMS, __UNCONST(ppsparams)));
 }
 
 static __inline int
-time_pps_getparams(handle, ppsparams)
-	pps_handle_t handle;
-	pps_params_t *ppsparams;
+time_pps_getparams(pps_handle_t handle, pps_params_t *ppsparams)
 {
 
 	return (ioctl(handle, PPS_IOC_GETPARAMS, ppsparams));
 }
 
 static __inline int
-time_pps_getcap(handle, mode)
-	pps_handle_t handle;
-	int *mode;
+time_pps_getcap(pps_handle_t handle, int *mode)
 {
 
 	return (ioctl(handle, PPS_IOC_GETCAP, mode));
 }
 
 static __inline int
-time_pps_fetch(handle, tsformat, ppsinfobuf, timeout)
-	pps_handle_t handle;
-	const int tsformat;
-	pps_info_t *ppsinfobuf;
-	const struct timespec *timeout;
+time_pps_fetch(pps_handle_t handle, const int tsformat, pps_info_t *ppsinfobuf,
+	const struct timespec *timeout)
 {
 
 	return (ioctl(handle, PPS_IOC_FETCH, ppsinfobuf));
 }
 
 static __inline int
-time_pps_kcbind(handle, kernel_consumer, edge, tsformat)
-	pps_handle_t handle;
-	const int kernel_consumer;
-	const int edge;
-	const int tsformat;
+time_pps_kcbind(pps_handle_t handle, const int kernel_consumer, const int edge,
+	const int tsformat)
 {
 
 	if (tsformat != PPS_TSFMT_TSPEC) {

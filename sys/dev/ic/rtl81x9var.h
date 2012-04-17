@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.50 2010/07/27 21:02:00 jakllsch Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.50.8.1 2012/04/17 00:07:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -34,11 +34,7 @@
  *	FreeBSD Id: if_rlreg.h,v 1.9 1999/06/20 18:56:09 wpaul Exp
  */
 
-#include "rnd.h"
-
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #define RTK_ETHER_ALIGN	2
 #define RTK_RXSTAT_LEN	4
@@ -195,6 +191,7 @@ struct rtk_softc {
 #define RTKQ_NOEECMD		0x00000080	/* unusable EEPROM command */
 #define RTKQ_MACSTAT		0x00000100	/* set MACSTAT_DIS on init */
 #define RTKQ_CMDSTOP		0x00000200	/* set STOPREQ on stop */
+#define RTKQ_PHYWAKE_PM		0x00000400	/* wake PHY from power down */
 
 	bus_dma_tag_t		sc_dmat;
 
@@ -225,9 +222,8 @@ struct rtk_softc {
 	/* Power management hooks. */
 	int	(*sc_enable)	(struct rtk_softc *);
 	void	(*sc_disable)	(struct rtk_softc *);
-#if NRND > 0
-	rndsource_element_t     rnd_source;
-#endif
+
+	krndsource_t     rnd_source;
 };
 
 #define RE_TX_DESC_CNT(sc)	((sc)->re_ldata.re_tx_desc_cnt)

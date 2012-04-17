@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_intres.c,v 1.3 2010/12/04 23:08:35 christos Exp $	*/
+/*	$NetBSD: ntp_intres.c,v 1.3.6.1 2012/04/17 00:03:47 yamt Exp $	*/
 
 /*
  * ripped off from ../ntpres/ntpres.c by Greg Troxel 4/2/92
@@ -22,21 +22,18 @@
 # include <config.h>
 #endif
 
-#include "ntp_machine.h"
-#include "ntpd.h"
-#include "ntp_io.h"
-#include "ntp_request.h"
-#include "ntp_stdlib.h"
-#include "ntp_syslog.h"
-#include "ntp_config.h"
+#include "ntp_intres.h"
 
-#ifndef NO_INTRES		/* from ntp_config.h */
+#ifndef NO_INTRES
 
 #include <stdio.h>
 #include <ctype.h>
 #include <signal.h>
 
 /**/
+#ifdef HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
@@ -46,9 +43,31 @@
 # include <sys/param.h>		/* MAXHOSTNAMELEN (often) */
 #endif
 
-#if defined(HAVE_RES_INIT) || defined(HAVE___RES_INIT)
-#include <resolv.h>
+#if !defined(HAVE_RES_INIT) && defined(HAVE___RES_INIT)
+# define HAVE_RES_INIT
 #endif
+
+#if defined(HAVE_RESOLV_H) && defined(HAVE_RES_INIT)
+# ifdef HAVE_ARPA_NAMESER_H
+#  include <arpa/nameser.h> /* DNS HEADER struct */
+# endif
+# ifdef HAVE_NETDB_H
+#  include <netdb.h>
+# endif
+# include <resolv.h>
+#endif
+
+#ifdef RES_TIMEOUT
+#undef RES_TIMEOUT	/* resolv.h has one, we want ours */
+#endif
+
+#include "ntp_machine.h"
+#include "ntpd.h"
+#include "ntp_io.h"
+#include "ntp_request.h"
+#include "ntp_stdlib.h"
+#include "ntp_syslog.h"
+#include "ntp_config.h"
 
 #include <isc/net.h>
 #include <isc/result.h>
@@ -1230,7 +1249,7 @@ doconfigure(
 			    dores ? "with" : "without" );
 #endif
 
-#if defined(HAVE_RES_INIT) || defined(HAVE___RES_INIT)
+#if defined(HAVE_RES_INIT)
 	if (dores)	   /* Reload /etc/resolv.conf - bug 1226 */
 		res_init();
 #endif

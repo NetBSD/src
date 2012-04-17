@@ -1,4 +1,4 @@
-/*	$NetBSD: findfp.c,v 1.25 2010/09/06 14:52:55 christos Exp $	*/
+/*	$NetBSD: findfp.c,v 1.25.6.1 2012/04/17 00:05:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)findfp.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: findfp.c,v 1.25 2010/09/06 14:52:55 christos Exp $");
+__RCSID("$NetBSD: findfp.c,v 1.25.6.1 2012/04/17 00:05:24 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,13 +56,29 @@ int	__sdidinit;
 
 #define	NDYNAMIC 10		/* add ten more whenever necessary */
 
-#define	std(flags, file) \
-/*	  p     r  w  flags  file  bf     lfbsize  cookie       close */ \
-	{ NULL, 0, 0, flags, file, { NULL, 0 }, 0, __sF + file, __sclose, \
-/*	  read      seek     write     ext                              up */ \
-	  __sread,  __sseek, __swrite, { (void *)(__sFext + file), 0 }, NULL, \
-/*	  ur ubuf,                 nbuf      lb     blksize  offset */ \
-	  0, { '\0', '\0', '\0' }, { '\0' }, { NULL, 0 }, 0, (fpos_t)0 }
+#define	std(flags, file) { \
+	._p = NULL, \
+	._r = 0, \
+	._w = 0, \
+	._flags = (flags), \
+	._file = (file),  \
+	._bf = { ._base = NULL, ._size = 0 }, \
+	._lbfsize = 0,  \
+	._cookie = __sF + (file), \
+	._close = __sclose, \
+	._read = __sread, \
+	._seek = __sseek, \
+	._write = __swrite, \
+	._ext = { ._base = (void *)(__sFext + (file)), ._size = 0 }, \
+	._up = NULL, \
+        ._ur = 0, \
+	._ubuf = { [0] = '\0', [1] = '\0', [2] = '\0' }, \
+	._nbuf = { [0] = '\0' }, \
+	._flush = NULL, \
+	._lb_unused = { '\0' }, \
+	._blksize = 0, \
+	._offset = (off_t)0, \
+}
 
 				/* the usual - (stdin + stdout + stderr) */
 static FILE usual[FOPEN_MAX - 3];
@@ -85,26 +101,24 @@ FILE __sF[3] = {
 };
 struct glue __sglue = { &uglue, 3, __sF };
 
-static struct glue *moreglue __P((int));
-void f_prealloc __P((void));
+void f_prealloc(void);
 
 #ifdef _REENTRANT
 rwlock_t __sfp_lock = RWLOCK_INITIALIZER;
 #endif
 
 static struct glue *
-moreglue(n)
-	int n;
+moreglue(int n)
 {
 	struct glue *g;
 	FILE *p;
 	struct __sfileext *pext;
 	static FILE empty;
 
-	g = (struct glue *)malloc(sizeof(*g) + ALIGNBYTES + n * sizeof(FILE)
-		+ n * sizeof(struct __sfileext));
+	g = malloc(sizeof(*g) + ALIGNBYTES + n * sizeof(FILE)
+	    + n * sizeof(struct __sfileext));
 	if (g == NULL)
-		return (NULL);
+		return NULL;
 	p = (FILE *)ALIGN((u_long)(g + 1));
 	g->next = NULL;
 	g->niobs = n;
@@ -116,7 +130,7 @@ moreglue(n)
 		p++;
 		pext++;
 	}
-	return (g);
+	return g;
 }
 
 void
@@ -131,6 +145,7 @@ __sfpinit(FILE *fp)
 	fp->_lbfsize = 0;	/* not line buffered */
 	fp->_file = -1;		/* no file */
 /*	fp->_cookie = <any>; */	/* caller sets cookie, _read/_write etc */
+	fp->_flush = NULL;	/* default flush */
 	_UB(fp)._base = NULL;	/* no ungetc buffer */
 	_UB(fp)._size = 0;
 	memset(WCIO_GET(fp), 0, sizeof(struct wchar_io_data));
@@ -140,7 +155,7 @@ __sfpinit(FILE *fp)
  * Find a free FILE for fopen et al.
  */
 FILE *
-__sfp()
+__sfp(void)
 {
 	FILE *fp;
 	int n;
@@ -158,11 +173,11 @@ __sfp()
 			break;
 	}
 	rwlock_unlock(&__sfp_lock);
-	return (NULL);
+	return NULL;
 found:
 	__sfpinit(fp);
 	rwlock_unlock(&__sfp_lock);
-	return (fp);
+	return fp;
 }
 
 /*
@@ -170,14 +185,14 @@ found:
  * but documented historically for certain applications.  Bad applications.
  */
 void
-f_prealloc()
+f_prealloc(void)
 {
 	struct glue *g;
 	int n;
 
 	n = (int)sysconf(_SC_OPEN_MAX) - FOPEN_MAX + 20; /* 20 for slop. */
 	for (g = &__sglue; (n -= g->niobs) > 0 && g->next; g = g->next)
-		/* void */;
+		continue;
 	if (n > 0)
 		g->next = moreglue(n);
 }
@@ -190,7 +205,7 @@ f_prealloc()
  * The name `_cleanup' is, alas, fairly well known outside stdio.
  */
 void
-_cleanup()
+_cleanup(void)
 {
 	/* (void) _fwalk(fclose); */
 	(void) fflush(NULL);			/* `cheating' */
@@ -200,7 +215,7 @@ _cleanup()
  * __sinit() is called whenever stdio's internal variables must be set up.
  */
 void
-__sinit()
+__sinit(void)
 {
 	int i;
 

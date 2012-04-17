@@ -1,4 +1,4 @@
-/*	$NetBSD: mtsm.cpp,v 1.2 2010/05/06 18:54:35 drochner Exp $	*/
+/*	$NetBSD: mtsm.cpp,v 1.2.6.1 2012/04/17 00:05:09 yamt Exp $	*/
 
 // -*- C++ -*-
 /* Copyright (C) 2003, 2004 Free Software Foundation, Inc.
@@ -484,21 +484,24 @@ void mtsm::flush(FILE *fp, statem *s, string tag_list)
 void statem::display_state()
 {
   fprintf(stderr, " <state ");
-  if (bool_values[MTSM_BR].is_known)
+  if (bool_values[MTSM_BR].is_known) {
     if (bool_values[MTSM_BR].value)
       fprintf(stderr, "[br]");
     else
       fprintf(stderr, "[!br]");
-  if (bool_values[MTSM_EOL].is_known)
+  }
+  if (bool_values[MTSM_EOL].is_known) {
     if (bool_values[MTSM_EOL].value)
       fprintf(stderr, "[eol]");
     else
       fprintf(stderr, "[!eol]");
-  if (int_values[MTSM_SP].is_known)
+  }
+  if (int_values[MTSM_SP].is_known) {
     if (int_values[MTSM_SP].value)
       fprintf(stderr, "[sp %d]", int_values[MTSM_SP].value);
     else
       fprintf(stderr, "[!sp]");
+  }
   fprintf(stderr, ">");
   fflush(stderr);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.1 2011/03/31 08:36:25 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.1.8.1 2012/04/17 00:08:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1 2011/03/31 08:36:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1.8.1 2012/04/17 00:08:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -41,5 +41,5 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 	int error;
 
 	if ((error = rump_vfs_makeonedevnode(S_IFCHR, "/dev/pud", 178, 1)) != 0)
-		panic("cannot create raw cgd dev nodes: %d", error);
+		panic("cannot create /dev/pud: %d", error);
 }

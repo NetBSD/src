@@ -1,4 +1,4 @@
-/*	$NetBSD: _lwp.c,v 1.6 2011/02/24 04:28:43 joerg Exp $	*/
+/*	$NetBSD: _lwp.c,v 1.6.4.1 2012/04/17 00:05:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _lwp.c,v 1.6 2011/02/24 04:28:43 joerg Exp $");
+__RCSID("$NetBSD: _lwp.c,v 1.6.4.1 2012/04/17 00:05:14 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -53,7 +53,7 @@ _lwp_makecontext(ucontext_t *u, void (*start)(void *), void *arg,
 	u->uc_stack.ss_size = stack_size;
 
 
-	sp = (ulong *)(stack_base + stack_size);
+	sp = (void *)(stack_base + stack_size);
 	sp = (ulong *)((ulong)sp & ~0x07);
 
 	/* Make room for the fake caller stack frame (CCFSZ, only in words) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.82 2010/04/05 07:20:24 joerg Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.82.8.1 2012/04/17 00:07:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,10 +40,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.82 2010/04/05 07:20:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.82.8.1 2012/04/17 00:07:39 yamt Exp $");
 
 #include "opt_inet.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,9 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.82 2010/04/05 07:20:24 joerg Exp $");
 #include <sys/syslog.h>
 #include <sys/select.h>
 #include <sys/device.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -113,9 +110,7 @@ struct eg_softc {
 	void *	eg_inbuf;		/* Incoming packet buffer */
 	void *	eg_outbuf;		/* Outgoing packet buffer */
 
-#if NRND > 0
-	rndsource_element_t rnd_source;
-#endif
+	krndsource_t rnd_source;
 };
 
 int egprobe(device_t, cfdata_t, void *);
@@ -482,10 +477,8 @@ egattach(device_t parent, device_t self, void *aux)
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_NET, egintr, sc);
 
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sc_dev),
 			  RND_TYPE_NET, 0);
-#endif
 }
 
 void
@@ -713,9 +706,7 @@ egintr(void *arg)
 			break;
 		}
 
-#if NRND > 0
 		rnd_add_uint32(&sc->rnd_source, sc->eg_pcb[0]);
-#endif
 	}
 
 	return serviced;

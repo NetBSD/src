@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.51 2010/11/23 11:13:55 hannken Exp $
+#	$NetBSD: INSTALL,v 1.51.8.1 2012/04/17 00:06:10 yamt Exp $
 #
 # First try for BeBox config file
 #
@@ -69,7 +69,7 @@ file-system	PTYFS		# /dev/pts/N support
 # Filesystem options
 options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
-#options 	WAPBL		# File system journaling support - Experimental
+#options 	WAPBL		# File system journaling support
 
 #options 	NFSSERVER
 
@@ -190,4 +190,3 @@ pseudo-device	md
 pseudo-device	loop
 #pseudo-device	bpfilter		# packet filter
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
-pseudo-device	rnd			# /dev/random and in-kernel generator

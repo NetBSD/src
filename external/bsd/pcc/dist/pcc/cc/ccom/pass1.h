@@ -1,5 +1,5 @@
 /*	Id: pass1.h,v 1.235 2011/08/14 14:52:29 ragge Exp 	*/	
-/*	$NetBSD: pass1.h,v 1.1.1.4 2011/09/01 12:47:00 plunky Exp $	*/
+/*	$NetBSD: pass1.h,v 1.1.1.4.2.1 2012/04/17 00:04:04 yamt Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -169,7 +169,6 @@ int mygenswitch(int, TWORD, struct swents **, int);
 extern	int blevel;
 extern	int instruct, got_type;
 extern	int oldstyle;
-extern	int oflag;
 
 extern	int lineno, nerrors;
 
@@ -183,8 +182,8 @@ extern	OFFSZ inoff;
 extern	int reached;
 extern	int isinlining;
 extern	int xinline, xgnu89, xgnu99;
-
-extern	int sdebug, idebug, pdebug;
+extern	int bdebug, ddebug, edebug, idebug, ndebug;
+extern	int odebug, pdebug, sdebug, tdebug, xdebug;
 
 /* various labels */
 extern	int brklab;
@@ -491,6 +490,7 @@ enum {	ATTR_NONE,
 	GCC_ATYP_ALW_INL,
 	GCC_ATYP_TLSMODEL,
 	GCC_ATYP_ALIASWEAK,
+	GCC_ATYP_RETURNS_TWICE,
 
 	/* other stuff */
 	GCC_ATYP_BOUNDED,	/* OpenBSD extra boundary checks */

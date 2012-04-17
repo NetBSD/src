@@ -1,4 +1,4 @@
-/*	$NetBSD: gfb.c,v 1.4 2011/07/01 18:48:36 dyoung Exp $	*/
+/*	$NetBSD: gfb.c,v 1.4.2.1 2012/04/17 00:06:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gfb.c,v 1.4 2011/07/01 18:48:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gfb.c,v 1.4.2.1 2012/04/17 00:06:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,7 @@ gfb_attach(device_t parent, device_t self, void *aux)
 	ri = &sc->sc_console_screen.scr_ri;
 
 	j = 0;
-	for (i = 0; i < (1 << sc->sc_depth); i++) {
+	for (i = 0; i < 256; i++) {
 
 		sc->sc_cmap_red[i] = rasops_cmap[j];
 		sc->sc_cmap_green[i] = rasops_cmap[j + 1];
@@ -325,8 +325,8 @@ gfb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
 	 */
-	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
-	    NULL) != 0) {
+	if (kauth_authorize_machdep(kauth_cred_get(), KAUTH_MACHDEP_UNMANAGEDMEM,
+	    NULL, NULL, NULL, NULL) != 0) {
 		aprint_normal("%s: mmap() rejected.\n",
 		    device_xname(sc->sc_dev));
 		return -1;
@@ -348,7 +348,7 @@ gfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_stride;
-	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
+	ri->ri_flg = RI_CENTER | RI_FULLCLEAR | RI_ENABLE_ALPHA;
 
 	ri->ri_bits = (char *)sc->sc_fbaddr;
 	scr->scr_flags |= VCONS_DONT_READ;
@@ -357,7 +357,15 @@ gfb_init_screen(void *cookie, struct vcons_screen *scr,
 		ri->ri_flg |= RI_CLEAR;
 	}
 
-	rasops_init(ri, sc->sc_height / 8, sc->sc_width / 8);
+	/* explicitly request BGR in case the default changes */
+	ri->ri_rnum = 8;
+	ri->ri_gnum = 8;
+	ri->ri_bnum = 8;
+	ri->ri_rpos = 0;
+	ri->ri_gpos = 8;
+	ri->ri_bpos = 16;
+
+	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,

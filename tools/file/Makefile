@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2009/05/08 17:45:22 christos Exp $
+#	$NetBSD: Makefile,v 1.6.6.1 2012/04/17 00:09:27 yamt Exp $
 #
 
 GNUHOSTDIST=	${.CURDIR}/../../external/bsd/file/dist
@@ -14,3 +14,6 @@ CONFIGURE_ARGS=	--program-prefix=${_TOOL_PREFIX} --disable-shared \
 .NOTPARALLEL:
 
 .include "${.CURDIR}/../Makefile.gnuhost"
+
+# Force avoiding possibly non-executable install-sh.
+CONFIGURE_ENV+= ac_cv_path_mkdir="${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-install -d"

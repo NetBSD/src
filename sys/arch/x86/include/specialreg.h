@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.53 2011/10/03 17:31:35 njoly Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.53.2.1 2012/04/17 00:07:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -307,7 +307,7 @@
 /* Blacklists of CPUID flags - used to mask certain features */
 #ifdef XEN
 /* Not on Xen */
-#define CPUID_FEAT_BLACKLIST	 (CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR)
+#define CPUID_FEAT_BLACKLIST	 (CPUID_PGE|CPUID_PSE|CPUID_MTRR)
 #else
 #define CPUID_FEAT_BLACKLIST	 0
 #endif /* XEN */
@@ -381,6 +381,22 @@
 #define	MSR_MTRRphysMask6	0x20d
 #define	MSR_MTRRphysBase7	0x20e
 #define	MSR_MTRRphysMask7	0x20f
+#define	MSR_MTRRphysBase8	0x210
+#define	MSR_MTRRphysMask8	0x211
+#define	MSR_MTRRphysBase9	0x212
+#define	MSR_MTRRphysMask9	0x213
+#define	MSR_MTRRphysBase10	0x214
+#define	MSR_MTRRphysMask10	0x215
+#define	MSR_MTRRphysBase11	0x216
+#define	MSR_MTRRphysMask11	0x217
+#define	MSR_MTRRphysBase12	0x218
+#define	MSR_MTRRphysMask12	0x219
+#define	MSR_MTRRphysBase13	0x21a
+#define	MSR_MTRRphysMask13	0x21b
+#define	MSR_MTRRphysBase14	0x21c
+#define	MSR_MTRRphysMask14	0x21d
+#define	MSR_MTRRphysBase15	0x21e
+#define	MSR_MTRRphysMask15	0x21f
 #define	MSR_MTRRfix64K_00000	0x250
 #define	MSR_MTRRfix16K_80000	0x258
 #define	MSR_MTRRfix16K_A0000	0x259
@@ -500,9 +516,14 @@
 #define		BU_CFG_WBPFSMCCHKDIS	0x0000200000000000ULL
 #define		BU_CFG_WBENHWSBDIS	0x0001000000000000ULL
 
+#define MSR_DE_CFG	0xc0011029
+#define		DE_CFG_ERRATA_721	0x00000001
+
 /* AMD Family10h MSRs */
 #define	MSR_OSVW_ID_LENGTH		0xc0010140
 #define	MSR_OSVW_STATUS			0xc0010141
+#define	MSR_UCODE_AMD_PATCHLEVEL	0x0000008b
+#define	MSR_UCODE_AMD_PATCHLOADER	0xc0010020
 
 /* X86 MSRs */
 #define	MSR_RDTSCP_AUX			0xc0000103

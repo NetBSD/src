@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.17 2011/05/26 15:34:12 joerg Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.17.4.1 2012/04/17 00:06:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -34,7 +34,7 @@
 /*
  * Machine-dependent defines for new kernel debugger.
  */
-
+#include <sys/types.h>
 #include <uvm/uvm_extern.h>
 #include <arm/armreg.h>
 #include <machine/frame.h>

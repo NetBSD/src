@@ -1,5 +1,5 @@
 /*	$OpenBSD: misc.c,v 1.41 2009/10/14 17:19:47 sthen Exp $	*/
-/*	$NetBSD: misc.c,v 1.22 2011/09/06 18:16:01 joerg Exp $	*/
+/*	$NetBSD: misc.c,v 1.22.2.1 2012/04/17 00:09:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.22 2011/09/06 18:16:01 joerg Exp $");
+__RCSID("$NetBSD: misc.c,v 1.22.2.1 2012/04/17 00:09:35 yamt Exp $");
 #include <sys/types.h>
 #include <errno.h>
 #include <unistd.h>
@@ -160,7 +160,7 @@ pbunsigned(unsigned long n)
 }
 
 void 
-initspaces()
+initspaces(void)
 {
 	int i;
 
@@ -176,7 +176,7 @@ initspaces()
 }
 
 void 
-enlarge_strspace()
+enlarge_strspace(void)
 {
 	char *newstrspace;
 	int i;
@@ -197,7 +197,7 @@ enlarge_strspace()
 }
 
 void
-enlarge_bufspace()
+enlarge_bufspace(void)
 {
 	unsigned char *newbuf;
 	int i;
@@ -356,7 +356,7 @@ set_input(struct input_file *f, FILE *real, const char *name)
 }
 
 void
-do_emit_synchline()
+do_emit_synchline(void)
 {
 	fprintf(active, "#line %lu \"%s\"\n",
 	    infile[ilevel].lineno, infile[ilevel].name);
@@ -394,7 +394,7 @@ doprintfilename(struct input_file *f)
  * and later dump everything that was added since then to a file.
  */
 size_t
-buffer_mark()
+buffer_mark(void)
 {
 	return bp - buf;
 }

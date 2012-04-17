@@ -1,4 +1,4 @@
-#	$NetBSD: EXPLORA451,v 1.44 2011/05/15 13:38:20 he Exp $
+#	$NetBSD: EXPLORA451,v 1.44.4.1 2012/04/17 00:06:18 yamt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -52,7 +52,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=420000
+options 	SYMTAB_SPACE=430000
 
 # Compatibility options
 options 	COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
@@ -97,7 +97,7 @@ file-system	PTYFS		# /dev/pts/N support
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
@@ -194,7 +194,6 @@ pseudo-device	bridge			# simple inter-network bridging
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms

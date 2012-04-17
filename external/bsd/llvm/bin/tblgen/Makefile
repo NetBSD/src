@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2011/10/11 13:53:58 joerg Exp $
+#	$NetBSD: Makefile,v 1.7.2.1 2012/04/17 00:03:29 yamt Exp $
 
 PROG_CXX=	llvm-tblgen
 NOMAN=		yes
@@ -7,8 +7,7 @@ NOMAN=		yes
 
 .PATH: ${LLVM_SRCDIR}/utils/TableGen
 
-SRCS=	ARMDecoderEmitter.cpp \
-	AsmMatcherEmitter.cpp \
+SRCS=	AsmMatcherEmitter.cpp \
 	AsmWriterEmitter.cpp \
 	AsmWriterInst.cpp \
 	CallingConvEmitter.cpp \
@@ -22,12 +21,12 @@ SRCS=	ARMDecoderEmitter.cpp \
 	DAGISelMatcherEmitter.cpp \
 	DAGISelMatcherGen.cpp \
 	DAGISelMatcherOpt.cpp \
+	DFAPacketizerEmitter.cpp \
 	DisassemblerEmitter.cpp \
 	EDEmitter.cpp \
 	FastISelEmitter.cpp \
 	FixedLenDecoderEmitter.cpp \
 	FixedLenDecoderEmitter.h \
-	InstrEnumEmitter.cpp \
 	InstrInfoEmitter.cpp \
 	IntrinsicEmitter.cpp \
 	PseudoLoweringEmitter.cpp \
@@ -38,6 +37,7 @@ SRCS=	ARMDecoderEmitter.cpp \
 	TGValueTypes.cpp \
 	TableGen.cpp \
 	X86DisassemblerTables.cpp \
+	X86ModRMFilters.cpp \
 	X86RecognizableInstr.cpp
 
 LLVM_LIBS+= \

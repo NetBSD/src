@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.32 2010/11/13 13:52:00 uebayasi Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.32.8.1 2012/04/17 00:07:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.32 2010/11/13 13:52:00 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.32.8.1 2012/04/17 00:07:32 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -226,10 +226,7 @@ __KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.32 2010/11/13 13:52:00 uebayasi Exp $")
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 
-#include "rnd.h"
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -491,10 +488,8 @@ cs_attach(struct cs_softc *sc, u_int8_t *enaddr, int *media,
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 			  RND_TYPE_NET, 0);
-#endif
 	sc->sc_cfgflags |= CFGFLG_ATTACHED;
 
 	if (pmf_device_register1(sc->sc_dev, NULL, NULL, cs_shutdown))
@@ -519,9 +514,7 @@ cs_detach(struct cs_softc *sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	if (sc->sc_cfgflags & CFGFLG_ATTACHED) {
-#if NRND > 0
 		rnd_detach_source(&sc->rnd_source);
-#endif
 		ether_ifdetach(ifp);
 		if_detach(ifp);
 		sc->sc_cfgflags &= ~CFGFLG_ATTACHED;
@@ -1390,9 +1383,7 @@ cs_intr(void *arg)
 {
 	struct cs_softc *sc = arg;
 	u_int16_t Event;
-#if NRND > 0
 	u_int16_t rndEvent;
-#endif
 
 /*printf("cs_intr %p\n", sc);*/
 	/* Ignore any interrupts that happen while the chip is being reset */
@@ -1411,9 +1402,7 @@ cs_intr(void *arg)
 	if ((Event & REG_NUM_MASK) == 0 || Event == 0xffff)
 		return 0;	/* not ours */
 
-#if NRND > 0
 	rndEvent = Event;
-#endif
 
 	/* Process all the events in the Interrupt Status Queue */
 	while ((Event & REG_NUM_MASK) != 0 && Event != 0xffff) {
@@ -1446,9 +1435,7 @@ cs_intr(void *arg)
 	}
 
 	/* have handled the interrupt */
-#if NRND > 0
 	rnd_add_uint32(&sc->rnd_source, rndEvent);
-#endif
 	return 1;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_arc.c,v 1.2 2009/12/14 00:46:21 christos Exp $	*/
+/*	$NetBSD: refclock_arc.c,v 1.2.6.1 2012/04/17 00:03:48 yamt Exp $	*/
 
 /*
  * refclock_arc - clock driver for ARCRON MSF/DCF/WWVB receivers
@@ -593,7 +593,7 @@ arc_event_handler(
 	)
 {
 	struct refclockproc *pp = peer->procptr;
-	register struct arcunit *up = (struct arcunit *)pp->unitptr;
+	register struct arcunit *up = pp->unitptr;
 	int i;
 	char c;
 #ifdef DEBUG
@@ -629,50 +629,49 @@ arc_start(
 {
 	register struct arcunit *up;
 	struct refclockproc *pp;
+	int temp_fd;
 	int fd;
 	char device[20];
 #ifdef HAVE_TERMIOS
 	struct termios arg;
 #endif
 
-	msyslog(LOG_NOTICE, "ARCRON: %s: opening unit %d", arc_version, unit);
-#ifdef DEBUG
-	if(debug) {
-		printf("arc: %s: attempt to open unit %d.\n", arc_version, unit);
-	}
-#endif
-
-	/* Prevent a ridiculous device number causing overflow of device[]. */
-	if((unit < 0) || (unit > 255)) { return(0); }
+	msyslog(LOG_NOTICE, "MSF_ARCRON %s: opening unit %d",
+		arc_version, unit);
+	DPRINTF(1, ("arc: %s: attempt to open unit %d.\n", arc_version,
+		unit));
 
 	/*
 	 * Open serial port. Use CLK line discipline, if available.
 	 */
-	(void)sprintf(device, DEVICE, unit);
-	if (!(fd = refclock_open(device, SPEED, LDISC_CLK)))
-		return(0);
-#ifdef DEBUG
-	if(debug) { printf("arc: unit %d using open().\n", unit); }
-#endif
+	snprintf(device, sizeof(device), DEVICE, unit);
+	temp_fd = refclock_open(device, SPEED, LDISC_CLK);
+	if (temp_fd <= 0)
+		return 0;
+	DPRINTF(1, ("arc: unit %d using tty_open().\n", unit));
 	fd = tty_open(device, OPEN_FLAGS, 0777);
-	if(fd < 0) {
-#ifdef DEBUG
-		if(debug) { printf("arc: failed [tty_open()] to open %s.\n", device); }
-#endif
-		return(0);
+	if (fd < 0) {
+		msyslog(LOG_ERR, "MSF_ARCRON(%d): failed second open(%s, 0777): %m.\n",
+			unit, device);
+		close(temp_fd);
+		return 0;
 	}
+	close(temp_fd);
+	temp_fd = -1;
 
 #ifndef SYS_WINNT
 	fcntl(fd, F_SETFL, 0); /* clear the descriptor flags */
 #endif
-#ifdef DEBUG
-	if(debug)
-	{ printf("arc: opened RS232 port with file descriptor %d.\n", fd); }
-#endif
+	DPRINTF(1, ("arc: opened RS232 port with file descriptor %d.\n", fd));
 
 #ifdef HAVE_TERMIOS
 
-	tcgetattr(fd, &arg);
+	if (tcgetattr(fd, &arg) < 0) {
+		msyslog(LOG_ERR, "MSF_ARCRON(%d): tcgetattr(%s): %m.\n",
+			unit, device);
+		close(fd);
+		return 0;
+	}
 
 	arg.c_iflag = IGNBRK | ISTRIP;
 	arg.c_oflag = 0;
@@ -681,28 +680,36 @@ arc_start(
 	arg.c_cc[VMIN] = 1;
 	arg.c_cc[VTIME] = 0;
 
-	tcsetattr(fd, TCSANOW, &arg);
+	if (tcsetattr(fd, TCSANOW, &arg) < 0) {
+		msyslog(LOG_ERR, "MSF_ARCRON(%d): tcsetattr(%s): %m.\n",
+			unit, device);
+		close(fd);
+		return 0;
+	}
 
 #else
 
-	msyslog(LOG_ERR, "ARCRON: termios not supported in this driver");
+	msyslog(LOG_ERR, "ARCRON: termios required by this driver");
 	(void)close(fd);
 
 	return 0;
 
 #endif
 
-	up = (struct arcunit *) emalloc(sizeof(struct arcunit));
-	if(!up) { (void) close(fd); return(0); }
 	/* Set structure to all zeros... */
-	memset((char *)up, 0, sizeof(struct arcunit));
+	up = emalloc_zero(sizeof(*up));
 	pp = peer->procptr;
 	pp->io.clock_recv = arc_receive;
 	pp->io.srcclock = (caddr_t)peer;
 	pp->io.datalen = 0;
 	pp->io.fd = fd;
-	if(!io_addclock(&pp->io)) { (void) close(fd); free(up); return(0); }
-	pp->unitptr = (caddr_t)up;
+	if (!io_addclock(&pp->io)) {
+		close(fd);
+		pp->io.fd = -1;
+		free(up); 
+		return(0); 
+	}
+	pp->unitptr = up;
 
 	/*
 	 * Initialize miscellaneous variables
@@ -773,9 +780,11 @@ arc_shutdown(
 	peer->action = dummy_event_handler;
 
 	pp = peer->procptr;
-	up = (struct arcunit *)pp->unitptr;
-	io_closeclock(&pp->io);
-	free(up);
+	up = pp->unitptr;
+	if (-1 != pp->io.fd)
+		io_closeclock(&pp->io);
+	if (NULL != up)
+		free(up);
 }
 
 /*
@@ -873,7 +882,7 @@ arc_receive(
 	 */
 	peer = (struct peer *)rbufp->recv_srcclock;
 	pp = peer->procptr;
-	up = (struct arcunit *)pp->unitptr;
+	up = pp->unitptr;
 
 
 	/*
@@ -1450,7 +1459,7 @@ request_time(
 	)
 {
 	struct refclockproc *pp = peer->procptr;
-	register struct arcunit *up = (struct arcunit *)pp->unitptr;
+	register struct arcunit *up = pp->unitptr;
 #ifdef DEBUG
 	if(debug) { printf("arc: unit %d: requesting time.\n", unit); }
 #endif
@@ -1481,7 +1490,7 @@ arc_poll(
 	int resync_needed;              /* Should we start a resync? */
 
 	pp = peer->procptr;
-	up = (struct arcunit *)pp->unitptr;
+	up = pp->unitptr;
 #if 0
 	pp->lencode = 0;
 	memset(pp->a_lastcode, 0, sizeof(pp->a_lastcode));

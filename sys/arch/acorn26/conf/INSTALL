@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.32 2011/03/06 17:08:18 bouyer Exp $
+# $NetBSD: INSTALL,v 1.32.4.1 2012/04/17 00:05:51 yamt Exp $
 
 # INSTALL configuration, used to generate installation media
 
@@ -50,7 +50,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	NFSSERVER	# Sun NFS-compatible file system server
 options 	FFS_EI		# FFS endianness-independence support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 options 	NFS_V2_ONLY	# Make a smaller NFS
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
@@ -207,5 +207,3 @@ pseudo-device	pty
 #pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	wsmux			# keyboard/mouse multiplexor
 
-# rnd is EXPERIMENTAL
-pseudo-device	rnd			# /dev/random and in-kernel generator

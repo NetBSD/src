@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.229 2011/09/30 22:17:50 jym Exp $
+$NetBSD: UPDATING,v 1.229.2.1 2012/04/17 00:01:35 yamt Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,39 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20120319:
+	sys/conf/Makefile.kern.inc has been modified to adjust the
+	size of db_symtab automatically.  You need to update dbsym in
+	your $TOOLDIR to build kernels with options SYMTAB_SPACE.  If
+	you don't want this behavior, add AUTO_SYMTAB_SPACE=no to your
+	mk.conf.
+
+20120216:
+	Default for MKCATPAGES changed to NO. Update builds will fail
+	unless DESTDIR is cleaned manually. If you built between 20120207
+	and 20120216, daily and weekly could have created an unreable
+	/var/db/man.db index for apropos. Running makemandb -f or
+	the next run of weekly will fix it.
+
+20111227:
+	If you built between 20111225 and 20111227 you need to remove
+	/usr/lib/libpam.so.4* and /usr/lib/security/*.so.4, since the
+	bump has been reverted.
+
+20111125:
+	The "rnd" pseudodevice has been added to sys/conf/std, which
+	means it should no longer be explicitly listed in kernel
+	configuration files.  The line "pseudo-device rnd" should be
+	removed from any custom kernel config files users may have.
+
+20111119:
+	A problem with the datastructures used by the rndctl(8)
+	utility (pointers in datastructures in an array, making 32->64
+	bit compatibility very painful) has been fixed in a
+	non-backwards-compatible way.  If you replace your kernel,
+	replace your rndctl executable too.
+	
 20111001:
 	the prop_*_send_syscall() functions from proplib(3) have been
 	changed and their new version is not backward compatible with the old
@@ -463,7 +496,7 @@ Hints for a more successful build:
  
 What to do if things don't work:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-When things don't work there is usually a few things that commonly
+When things don't work there are usually a few things that commonly
 should be done.
     1)	make includes
 	This should be done automatically by make build.

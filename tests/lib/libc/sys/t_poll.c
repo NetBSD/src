@@ -1,4 +1,4 @@
-/*	$NetBSD: t_poll.c,v 1.2 2011/10/15 06:33:45 jruoho Exp $	*/
+/*	$NetBSD: t_poll.c,v 1.2.2.1 2012/04/17 00:09:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -338,7 +338,7 @@ ATF_TC_HEAD(pollts_sigmask, tc)
 {
 	atf_tc_set_md_var(tc, "timeout", "10");
 	atf_tc_set_md_var(tc, "descr",
-	    "Check that pollts(2) restores the signal mask");
+	    "Check that pollts(2) restores the signal mask (PR kern/44986)");
 }
 
 ATF_TC_BODY(pollts_sigmask, tc)
@@ -348,8 +348,6 @@ ATF_TC_BODY(pollts_sigmask, tc)
 	struct timespec timeout;
 	sigset_t mask;
 	int ret;
-
-	/* Cf kern/44986 */
 
 	fd = open(_PATH_DEVNULL, O_RDONLY);
 	ATF_REQUIRE(fd >= 0);

@@ -1,0 +1,8 @@
+#	$NetBSD: rc.conf.append,v 1.1.4.2 2012/04/17 00:02:58 yamt Exp $
+#
+# Arch-specific rc.conf(5) configuration.
+
+# All ADB keyboards and all supported laptops have power buttons which
+# generate events for powerd. Also, on most laptops we support AC and lid
+# events
+powerd=yes

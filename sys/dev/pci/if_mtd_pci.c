@@ -1,4 +1,4 @@
-/* $NetBSD: if_mtd_pci.c,v 1.16 2011/07/26 20:51:24 dyoung Exp $ */
+/* $NetBSD: if_mtd_pci.c,v 1.16.2.1 2012/04/17 00:07:47 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 /* TODO: Check why in IO space, the MII won't work. Memory mapped works */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mtd_pci.c,v 1.16 2011/07/26 20:51:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mtd_pci.c,v 1.16.2.1 2012/04/17 00:07:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -97,10 +97,8 @@ mtd_pci_attach(device_t parent, device_t self, void *aux)
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
 	int io_valid, mem_valid;
-	char devinfo[256];
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo(pa, NULL);
 
 	io_valid = (pci_mapreg_map(pa, PCI_IO_MAP_REG, PCI_MAPREG_TYPE_IO,
 			0, &iot, &ioh, NULL, NULL) == 0);

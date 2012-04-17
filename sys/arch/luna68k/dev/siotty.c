@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.32 2011/07/27 14:17:54 tsutsui Exp $ */
+/* $NetBSD: siotty.c,v 1.32.2.1 2012/04/17 00:06:35 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.32 2011/07/27 14:17:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.32.2.1 2012/04/17 00:06:35 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -202,7 +202,7 @@ siostart(struct tty *tp)
 	int s, c;
  
 	sc = device_lookup_private(&siotty_cd, minor(tp->t_dev));
-	s = spltty();
+	s = splserial();
 	if (tp->t_state & (TS_BUSY|TS_TIMEOUT|TS_TTSTOP))
 		goto out;
 	if (!ttypull(tp))
@@ -222,7 +222,7 @@ siostop(struct tty *tp, int flag)
 {
 	int s;
 
-        s = spltty();
+        s = splserial();
         if (TS_BUSY == (tp->t_state & (TS_BUSY|TS_TTSTOP))) {
                 /*
                  * Device is transmitting; must stop it.
@@ -282,7 +282,7 @@ sioparam(struct tty *tp, struct termios *t)
 	wr4 |= (tp->t_cflag & CSTOPB) ? WR4_STOP2 : WR4_STOP1;	
 	sc->sc_wr[WR4] = wr4;
 
-	s = spltty();
+	s = splserial();
 	setsioreg(sc->sc_ctl, WR4, sc->sc_wr[WR4]);
 	setsioreg(sc->sc_ctl, WR3, sc->sc_wr[WR3]);
 	setsioreg(sc->sc_ctl, WR5, sc->sc_wr[WR5]);
@@ -303,7 +303,7 @@ siomctl(struct siotty_softc *sc, int control, int op)
 		val |= WR5_DTR;
 	if (control & TIOCM_RTS)
 		val |= WR5_RTS;
-	s = spltty();
+	s = splserial();
 	wr5 = sc->sc_wr[WR5];
 	switch (op) {
 	case DMSET:
@@ -401,7 +401,7 @@ sioclose(dev_t dev, int flag, int mode, struct lwp *l)
 
 	(*tp->t_linesw->l_close)(tp, flag);
 
-	s = spltty();
+	s = splserial();
 	siomctl(sc, TIOCM_BREAK, DMBIC);
 #if 0 /* because unable to feed DTR signal */
 	if ((tp->t_cflag & HUPCL)

@@ -1,4 +1,4 @@
-#	$NetBSD: LOWMEM_WSCONS,v 1.56 2011/03/06 17:08:18 bouyer Exp $
+#	$NetBSD: LOWMEM_WSCONS,v 1.56.4.1 2012/04/17 00:05:52 yamt Exp $
 #
 #	LOWMEM_WSCONS -- RiscPC config with wscons for SMALL machines
 #
@@ -284,7 +284,6 @@ pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	md			# Ramdisk driver
-pseudo-device	rnd			# /dev/random and /dev/urandom
 pseudo-device	clockctl		# user control of clock subsystem
 
 # If the standard modes don't work for your monitor, you can specify

@@ -1,4 +1,4 @@
-/* $NetBSD: isa_machdep.h,v 1.13 2011/06/14 06:47:52 matt Exp $ */
+/* $NetBSD: isa_machdep.h,v 1.13.2.1 2012/04/17 00:05:55 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ struct alpha_isa_chipset {
 /*
  * alpha-specific ISA functions.
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
- */ 
+ */
 int	isa_display_console(bus_space_tag_t, bus_space_tag_t);
 void	isabeep(int, int);
 

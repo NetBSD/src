@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.13 2011/02/10 14:46:48 pooka Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.13.4.1 2012/04/17 00:07:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.13 2011/02/10 14:46:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.13.4.1 2012/04/17 00:07:06 yamt Exp $");
 
 #include "opt_mtrr.h"
 
@@ -93,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.13 2011/02/10 14:46:48 pooka Exp $"
 #include <sys/exec.h>
 #include <sys/ptrace.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <machine/cpu.h>
 #include <machine/gdt.h>
@@ -138,6 +138,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 {
 	struct pcb *pcb1, *pcb2;
 	struct trapframe *tf;
+	struct switchframe *sf;
 	vaddr_t uv;
 
 	pcb1 = lwp_getpcb(l1);
@@ -218,31 +219,23 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	l2->l_md.md_flags = l1->l_md.md_flags;
 	l2->l_md.md_astpending = 0;
 
-	cpu_setfunc(l2, func, arg);
-}
-
-void
-cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
-{
-	struct pcb *pcb = lwp_getpcb(l);
-	struct trapframe *tf = l->l_md.md_regs;
-	struct switchframe *sf = (struct switchframe *)tf - 1;
+	sf = (struct switchframe *)tf - 1;
 
 #ifdef __x86_64__
 	sf->sf_r12 = (uint64_t)func;
 	sf->sf_r13 = (uint64_t)arg;
-	if (func == child_return && !(l->l_proc->p_flag & PK_32))
+	if (func == child_return && !(l2->l_proc->p_flag & PK_32))
 		sf->sf_rip = (uint64_t)child_trampoline;
 	else
 		sf->sf_rip = (uint64_t)lwp_trampoline;
-	pcb->pcb_rsp = (uint64_t)sf;
-	pcb->pcb_rbp = (uint64_t)l;
+	pcb2->pcb_rsp = (uint64_t)sf;
+	pcb2->pcb_rbp = (uint64_t)l2;
 #else
 	sf->sf_esi = (int)func;
 	sf->sf_ebx = (int)arg;
 	sf->sf_eip = (int)lwp_trampoline;
-	pcb->pcb_esp = (int)sf;
-	pcb->pcb_ebp = (int)l;
+	pcb2->pcb_esp = (int)sf;
+	pcb2->pcb_ebp = (int)l2;
 #endif
 }
 
@@ -356,3 +349,58 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 }
+
+#ifdef __HAVE_CPU_UAREA_ROUTINES
+void *
+cpu_uarea_alloc(bool system)
+{
+	struct pglist pglist;
+	int error;
+
+	/*
+	 * Allocate a new physically contiguous uarea which can be
+	 * direct-mapped.
+	 */
+	error = uvm_pglistalloc(USPACE, 0, ptoa(physmem), 0, 0, &pglist, 1, 1);
+	if (error) {
+		return NULL;
+	}
+
+	/*
+	 * Get the physical address from the first page.
+	 */
+	const struct vm_page * const pg = TAILQ_FIRST(&pglist);
+	KASSERT(pg != NULL);
+	const paddr_t pa = VM_PAGE_TO_PHYS(pg);
+
+	/*
+	 * We need to return a direct-mapped VA for the pa.
+	 */
+
+	return (void *)PMAP_MAP_POOLPAGE(pa);
+}
+
+/*
+ * Return true if we freed it, false if we didn't.
+ */
+bool
+cpu_uarea_free(void *vva)
+{
+	vaddr_t va = (vaddr_t) vva;
+
+	if (va >= VM_MIN_KERNEL_ADDRESS && va < VM_MAX_KERNEL_ADDRESS) {
+		return false;
+	}
+
+	/*
+	 * Since the pages are physically contiguous, the vm_page structures
+	 * will be as well.
+	 */
+	struct vm_page *pg = PHYS_TO_VM_PAGE(PMAP_UNMAP_POOLPAGE(va));
+	KASSERT(pg != NULL);
+	for (size_t i = 0; i < UPAGES; i++, pg++) {
+		uvm_pagefree(pg);
+	}
+	return true;
+}
+#endif /* __HAVE_CPU_UAREA_ROUTINES */

@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_main.c,v 1.2 2011/10/29 16:54:49 christos Exp $	*/
+/*	$NetBSD: iscsid_main.c,v 1.2.2.1 2012/04/17 00:05:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -63,8 +63,8 @@ int debug_level = ISCSI_DEBUG;	/* How much info to display */
    (which it normally shouldn't, assuming we don't have thousands
    of list entries).
 */
-STATIC uint8_t req_buf[REQ_BUFFER_SIZE];	/* default buffer for requests */
-STATIC uint8_t rsp_buf[RSP_BUFFER_SIZE];	/* default buffer for responses */
+static uint8_t req_buf[REQ_BUFFER_SIZE];	/* default buffer for requests */
+static uint8_t rsp_buf[RSP_BUFFER_SIZE];	/* default buffer for responses */
 
 /* -------------------------------------------------------------------------- */
 
@@ -76,7 +76,7 @@ STATIC uint8_t rsp_buf[RSP_BUFFER_SIZE];	/* default buffer for responses */
  *    Returns 0 on success, else an error code.
  */
 
-STATIC int
+static int
 create_node_name(void)
 {
 	iscsi_set_node_name_parameters_t snp;
@@ -117,7 +117,7 @@ create_node_name(void)
  *    Returns:    <0 on error
  */
 
-STATIC int
+static int
 init_daemon(void)
 {
 	int sock, i;
@@ -232,7 +232,7 @@ make_rsp(size_t len, iscsid_response_t ** prsp, int *prsp_temp)
  *                      for static buffer.
  */
 
-STATIC void
+static void
 process_message(iscsid_request_t *req, iscsid_response_t **prsp, int *prsp_temp)
 {
 	iscsid_response_t *rsp;

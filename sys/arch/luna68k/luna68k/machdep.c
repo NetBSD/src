@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.84 2011/10/17 14:19:28 tsutsui Exp $ */
+/* $NetBSD: machdep.c,v 1.84.2.1 2012/04/17 00:06:35 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84 2011/10/17 14:19:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84.2.1 2012/04/17 00:06:35 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84 2011/10/17 14:19:28 tsutsui Exp $")
  * Info for CTL_HW
  */
 char	machine[] = MACHINE;
-char	cpu_model[60];
+char	cpu_model[120];
 
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
@@ -145,7 +145,7 @@ extern void syscnattach(int);
  * XXX -- is the above formula correct?
  */
 int	cpuspeed = 25;		/* only used for printing later */
-int	delay_divisor = 300;	/* for delay() loop count */
+int	delay_divisor = 30;	/* for delay() loop count */
 
 /*
  * Early initialization, before main() is called.
@@ -172,9 +172,8 @@ luna68k_init(void)
 	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
 	 */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * PAGE_SIZE,
-		    avail_end + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		pmap_kenter_pa((vaddr_t)msgbufaddr + i * PAGE_SIZE,
+		    avail_end + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 
@@ -284,13 +283,28 @@ void
 identifycpu(void)
 {
 	extern int cputype;
-	const char *cpu, *model;
+	const char *model, *fpu;
 
 	memset(cpu_model, 0, sizeof(cpu_model));
 	switch (cputype) {
 	case CPU_68030:
 		model ="LUNA-I";
-		cpu = "MC68030 CPU+MMU, MC68881 FPU";
+		switch (fputype) {
+		case FPU_68881:
+			fpu = "MC68881";
+			break;
+		case FPU_68882:
+			fpu = "MC68882";
+			break;
+		case FPU_NONE:
+			fpu = "no";
+			break;
+		default:
+			fpu = "unknown";
+			break;
+		}
+		snprintf(cpu_model, sizeof(cpu_model),
+		    "%s (MC68030 CPU+MMU, %s FPU)", model, fpu);
 		machtype = LUNA_I;
 		/* 20MHz 68030 */
 		cpuspeed = 20;
@@ -300,18 +314,20 @@ identifycpu(void)
 #if defined(M68040)
 	case CPU_68040:
 		model ="LUNA-II";
-		cpu = "MC68040 CPU+MMU+FPU, 4k on-chip physical I/D caches";
+		snprintf(cpu_model, sizeof(cpu_model),
+		    "%s (MC68040 CPU+MMU+FPU, 4k on-chip physical I/D caches)",
+		    model);
 		machtype = LUNA_II;
 		/* 25MHz 68040 */
 		cpuspeed = 25;
-		delay_divisor = 300;
+		delay_divisor = 30;
+		/* hz = 100 on LUNA-II */
 		break;
 #endif
 	default:
 		panic("unknown CPU type");
 	}
-	strcpy(cpu_model, cpu);
-	printf("%s (%s)\n", model, cpu);
+	printf("%s\n", cpu_model);
 }
 
 /*
@@ -520,20 +536,12 @@ long	dumplo = 0;		/* blocks */
 void
 cpu_dumpconf(void)
 {
-	const struct bdevsw *bdev;
 	int chdrsize;	/* size of dump header */
 	int nblks;	/* size of dump area */
 
 	if (dumpdev == NODEV)
 		return;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL) {
-		dumpdev = NODEV;
-		return;
-	}
-	if (bdev->d_psize == NULL)
-		return;
-	nblks = (*bdev->d_psize)(dumpdev);
+	nblks = bdev_size(dumpdev);
 	chdrsize = cpu_dumpsize();
 
 	dumpsize = btoc(cpu_kcore_hdr.un._m68k.ram_segs[0].size);
@@ -714,6 +722,8 @@ nmihand(struct frame frame)
 	innmihand = 1;
 
 	luna68k_abort("ABORT SWITCH");
+
+	innmihand = 0;
 }
 
 /*

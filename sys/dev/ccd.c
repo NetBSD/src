@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.142 2011/10/14 09:23:29 hannken Exp $	*/
+/*	$NetBSD: ccd.c,v 1.142.2.1 2012/04/17 00:07:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.142 2011/10/14 09:23:29 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.142.2.1 2012/04/17 00:07:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,15 +255,13 @@ ccdinit(struct ccd_softc *cs, char **cpaths, struct vnode **vpp,
     struct lwp *l)
 {
 	struct ccdcinfo *ci = NULL;
-	size_t size;
 	int ix;
 	struct vattr va;
-	size_t minsize;
-	int maxsecsize;
-	struct partinfo dpart;
 	struct ccdgeom *ccg = &cs->sc_geom;
 	char *tmppath;
 	int error, path_alloced;
+	uint64_t psize, minsize;
+	unsigned secsize, maxsecsize;
 
 #ifdef DEBUG
 	if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
@@ -327,40 +325,25 @@ ccdinit(struct ccd_softc *cs, char **cpaths, struct vnode **vpp,
 		/*
 		 * Get partition information for the component.
 		 */
-		error = VOP_IOCTL(vpp[ix], DIOCGPART, &dpart,
-		    FREAD, l->l_cred);
+		error = getdisksize(vpp[ix], &psize, &secsize);
 		if (error) {
 #ifdef DEBUG
 			if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
-				 printf("%s: %s: ioctl failed, error = %d\n",
+				 printf("%s: %s: disksize failed, error = %d\n",
 				     cs->sc_xname, ci->ci_path, error);
 #endif
 			goto out;
 		}
 
-/*
- * This diagnostic test is disabled (for now?) since not all port supports
- * on-disk BSD disklabel.
- */
-#if 0 /* def DIAGNOSTIC */
-		/* Check fstype field of component. */
-		if (dpart.part->p_fstype != FS_CCD)
-			printf("%s: WARNING: %s: fstype %d != FS_CCD\n",
-			    cs->sc_xname, ci->ci_path, dpart.part->p_fstype);
-#endif
-
 		/*
 		 * Calculate the size, truncating to an interleave
 		 * boundary if necessary.
 		 */
-		maxsecsize =
-		    ((dpart.disklab->d_secsize > maxsecsize) ?
-		    dpart.disklab->d_secsize : maxsecsize);
-		size = dpart.part->p_size;
+		maxsecsize = secsize > maxsecsize ? secsize : maxsecsize;
 		if (cs->sc_ileave > 1)
-			size -= size % cs->sc_ileave;
+			psize -= psize % cs->sc_ileave;
 
-		if (size == 0) {
+		if (psize == 0) {
 #ifdef DEBUG
 			if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
 				printf("%s: %s: size == 0\n",
@@ -370,10 +353,10 @@ ccdinit(struct ccd_softc *cs, char **cpaths, struct vnode **vpp,
 			goto out;
 		}
 
-		if (minsize == 0 || size < minsize)
-			minsize = size;
-		ci->ci_size = size;
-		cs->sc_size += size;
+		if (minsize == 0 || psize < minsize)
+			minsize = psize;
+		ci->ci_size = psize;
+		cs->sc_size += psize;
 	}
 
 	/*

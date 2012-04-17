@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_scan.c,v 1.14 2009/08/19 08:36:12 darrenr Exp $	*/
+/*	$NetBSD: ip_scan.c,v 1.14.12.1 2012/04/17 00:08:14 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -61,7 +61,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_scan.c,v 1.14 2009/08/19 08:36:12 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_scan.c,v 1.14.12.1 2012/04/17 00:08:14 yamt Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_scan.c,v 2.40.2.10 2007/06/02 21:22:28 darrenr Exp";
@@ -84,17 +84,23 @@ ipfrwlock_t	ipsc_rwlock;
 # endif
 
 
-int ipsc_add __P((void *));
-int ipsc_delete __P((void *));
-struct ipscan *ipsc_lookup __P((char *));
-int ipsc_matchstr __P((sinfo_t *, char *, int));
-int ipsc_matchisc __P((ipscan_t *, ipstate_t *, int, int, int *));
-int ipsc_match __P((ipstate_t *));
+int
+ipsc_add(void *);
+int
+ipsc_delete(void *);
+struct ipscan *ipsc_lookup(char *);
+int
+ipsc_matchstr(sinfo_t *, char *, int);
+int
+ipsc_matchisc(ipscan_t *, ipstate_t *, int, int, int *);
+int
+ipsc_match(ipstate_t *);
 
 static int	ipsc_inited = 0;
 
 
-int ipsc_init()
+int
+ipsc_init(void)
 {
 	RWLOCK_INIT(&ipsc_rwlock, "ip scan rwlock");
 	ipsc_inited = 1;
@@ -102,7 +108,8 @@ int ipsc_init()
 }
 
 
-void fr_scanunload()
+void
+fr_scanunload(void)
 {
 	if (ipsc_inited == 1) {
 		RW_DESTROY(&ipsc_rwlock);
@@ -111,8 +118,8 @@ void fr_scanunload()
 }
 
 
-int ipsc_add(data)
-void *data;
+int
+ipsc_add(void *data)
 {
 	ipscan_t *i, *isc;
 	int err;
@@ -158,8 +165,8 @@ void *data;
 }
 
 
-int ipsc_delete(data)
-void *data;
+int
+ipsc_delete(void *data)
 {
 	ipscan_t isc, *i;
 	int err;
@@ -197,8 +204,8 @@ void *data;
 }
 
 
-struct ipscan *ipsc_lookup(tag)
-char *tag;
+struct ipscan *
+ipsc_lookup(char *tag)
 {
 	ipscan_t *i;
 
@@ -209,8 +216,8 @@ char *tag;
 }
 
 
-int ipsc_attachfr(fr)
-struct frentry *fr;
+int
+ipsc_attachfr(struct frentry *fr)
 {
 	ipscan_t *i;
 
@@ -229,8 +236,8 @@ struct frentry *fr;
 }
 
 
-int ipsc_attachis(is)
-struct ipstate *is;
+int
+ipsc_attachis(struct ipstate *is)
 {
 	frentry_t *fr;
 	ipscan_t *i;
@@ -257,8 +264,8 @@ struct ipstate *is;
 }
 
 
-int ipsc_detachfr(fr)
-struct frentry *fr;
+int
+ipsc_detachfr(struct frentry *fr)
 {
 	ipscan_t *i;
 
@@ -270,8 +277,8 @@ struct frentry *fr;
 }
 
 
-int ipsc_detachis(is)
-struct ipstate *is;
+int
+ipsc_detachis(struct ipstate *is)
 {
 	ipscan_t *i;
 
@@ -289,10 +296,8 @@ struct ipstate *is;
 /*
  * 'string' compare for scanning
  */
-int ipsc_matchstr(sp, str, n)
-sinfo_t *sp;
-char *str;
-int n;
+int
+ipsc_matchstr(sinfo_t *sp, char *str, int n)
 {
 	char *s, *t, *up;
 	int i = n;
@@ -323,10 +328,8 @@ int n;
  * Returns 3 if both server and client match, 2 if just server,
  * 1 if just client
  */
-int ipsc_matchisc(isc, is, cl, sl, maxm)
-ipscan_t *isc;
-ipstate_t *is;
-int cl, sl, maxm[2];
+int
+ipsc_matchisc(ipscan_t *isc, ipstate_t *is, int cl, int sl, int maxm[2])
 {
 	int i, j, k, n, ret = 0, flags;
 
@@ -388,8 +391,8 @@ int cl, sl, maxm[2];
 }
 
 
-int ipsc_match(is)
-ipstate_t *is;
+int
+ipsc_match(ipstate_t *is)
 {
 	int i, j, k, n, cl, sl, maxm[2];
 	ipscan_t *isc, *lm;
@@ -515,9 +518,8 @@ ipstate_t *is;
 /*
  * check if a packet matches what we're scanning for
  */
-int ipsc_packet(fin, is)
-fr_info_t *fin;
-ipstate_t *is;
+int
+ipsc_packet(fr_info_t *fin, ipstate_t *is)
 {
 	int i, j, rv, dlen, off, thoff;
 	u_32_t seq, s0;
@@ -574,11 +576,8 @@ ipstate_t *is;
 }
 
 
-int fr_scan_ioctl(data, cmd, mode, uid, ctx)
-void * data;
-ioctlcmd_t cmd;
-int mode, uid;
-void *ctx;
+int
+fr_scan_ioctl(void * data, ioctlcmd_t cmd, int mode, int uid, void *ctx)
 {
 	ipscanstat_t ipscs;
 	int err = 0;

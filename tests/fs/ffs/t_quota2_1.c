@@ -1,4 +1,4 @@
-/*	$NetBSD: t_quota2_1.c,v 1.3 2011/06/16 15:33:24 joerg Exp $	*/
+/*	$NetBSD: t_quota2_1.c,v 1.3.2.1 2012/04/17 00:09:03 yamt Exp $	*/
 
 /*
  * Basic tests for quota2
@@ -72,10 +72,9 @@ ATF_TC(quota_##name);							\
 									\
 ATF_TC_HEAD(quota_##name, tc)						\
 {									\
-	char buf[1000];							\
-	snprintf(buf, sizeof(buf), "test quotas with %d users and groups, " \
-	    descr, nent);						\
-	atf_tc_set_md_var(tc, "descr", buf);				\
+	atf_tc_set_md_var(tc, "descr",					\
+	    "test quotas with %d users and groups, %s",			\
+	    nent, descr);						\
 }									\
 									\
 ATF_TC_BODY(quota_##name, tc)						\

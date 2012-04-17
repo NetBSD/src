@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.55 2011/06/23 12:07:00 mrg Exp $	*/
+/*	$NetBSD: boot2.c,v 1.55.2.1 2012/04/17 00:06:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -136,6 +136,7 @@ const struct bootblk_command commands[] = {
 	{ "multiboot",	command_multiboot },
 	{ "vesa",	command_vesa },
 	{ "splash",	splash_add },
+	{ "rndseed",	rnd_add },
 	{ "userconf",	userconf_add },
 	{ NULL,		NULL },
 };
@@ -397,6 +398,7 @@ command_help(char *arg)
 	       "load {path_to_module}\n"
 	       "multiboot [xdNx:][filename] [<args>]\n"
 	       "userconf {command}\n"
+	       "rndseed {path_to_rndseed_file}\n"
 	       "help|?\n"
 	       "quit\n");
 }
@@ -407,7 +409,7 @@ command_ls(char *arg)
 	const char *save = default_filename;
 
 	default_filename = "/";
-	ufs_ls(arg);
+	ls(arg);
 	default_filename = save;
 }
 

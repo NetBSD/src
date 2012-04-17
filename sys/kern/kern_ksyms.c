@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.65 2011/07/28 13:42:16 uebayasi Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.65.2.1 2012/04/17 00:08:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.65 2011/07/28 13:42:16 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.65.2.1 2012/04/17 00:08:24 yamt Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -107,8 +107,8 @@ static uint32_t *ksyms_nmap = NULL;
 static int ksyms_maxlen;
 static bool ksyms_isopen;
 static bool ksyms_initted;
-static struct ksyms_hdr ksyms_hdr;
 static kmutex_t ksyms_lock;
+static struct ksyms_symtab kernel_symtab;
 
 void ksymsattach(int);
 static void ksyms_hdr_init(void *);
@@ -128,12 +128,15 @@ char		db_symtab[SYMTAB_SPACE] = SYMTAB_FILLER;
 int		db_symtabsize = SYMTAB_SPACE;
 #endif
 
+/*
+ * used by savecore(8) so non-static
+ */
+struct ksyms_hdr ksyms_hdr;
 int ksyms_symsz;
 int ksyms_strsz;
-int ksyms_ctfsz;
+int ksyms_ctfsz;	/* this is not currently used by savecore(8) */
 TAILQ_HEAD(, ksyms_symtab) ksyms_symtabs =
     TAILQ_HEAD_INITIALIZER(ksyms_symtabs);
-static struct ksyms_symtab kernel_symtab;
 
 static int
 ksyms_verify(void *symstart, void *strstart)

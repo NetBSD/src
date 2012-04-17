@@ -1,4 +1,4 @@
-/*	$NetBSD: mlo_rule.c,v 1.1.1.1 2004/03/28 08:55:48 martti Exp $	*/
+/*	$NetBSD: mlo_rule.c,v 1.1.1.1.56.1 2012/04/17 00:02:24 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -32,25 +32,23 @@
 
 #ifdef	IPFILTER_LKM
 
-static int ipfruleaction __P((struct lkm_table *, int));
+static int ipfruleaction(struct lkm_table *, int);
 
-int	ipfrule __P((struct lkm_table *, int, int));
+int	ipfrule(struct lkm_table *, int, int);
 
 
 MOD_MISC("IPFilter Rules");
 
-int ipfrule(lkmtp, cmd, ver)
-struct lkm_table *lkmtp;
-int cmd, ver;
+int
+ipfrule(struct lkm_table *lkmtp, int cmd, int ver)
 {
 	DISPATCH(lkmtp, cmd, ver, ipfruleaction, ipfruleaction, ipfruleaction);
 }
 
-int lkmexists __P((struct lkm_table *)); /* defined in /sys/kern/kern_lkm.c */
+int lkmexists(struct lkm_table *); /* defined in /sys/kern/kern_lkm.c */
 
-static int ipfruleaction(lkmtp, cmd)
-struct lkm_table *lkmtp;
-int cmd;
+static int
+ipfruleaction(struct lkm_table *lkmtp, int cmd)
 {
 	int err = 0;
 

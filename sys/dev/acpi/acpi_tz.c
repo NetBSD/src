@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.84 2011/10/02 22:20:33 jmcneill Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.84.2.1 2012/04/17 00:07:27 yamt Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.84 2011/10/02 22:20:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.84.2.1 2012/04/17 00:07:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.84 2011/10/02 22:20:33 jmcneill Exp $"
 #include <sys/module.h>
 #include <sys/systm.h>
 #include <sys/kmem.h>
+#include <sys/rnd.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -95,6 +96,7 @@ struct acpitz_zone {
 	uint32_t		 fanmin;
 	uint32_t		 fanmax;
 	uint32_t		 fancurrent;
+	uint32_t		 fanprev;
 };
 
 struct acpitz_softc {
@@ -111,6 +113,8 @@ struct acpitz_softc {
 	bool			 sc_have_fan;
 	struct cpu_info	       **sc_psl;
 	size_t			 sc_psl_size;
+	krndsource_t		 sc_tmp_rs;
+	krndsource_t		 sc_fan_rs;
 };
 
 static int		acpitz_match(device_t, cfdata_t, void *);
@@ -163,6 +167,8 @@ acpitz_attach(device_t parent, device_t self, void *aux)
 {
 	struct acpitz_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
+	char tmpname[sizeof(sc->sc_tmp_rs.name)];
+	char fanname[sizeof(sc->sc_fan_rs.name)];
 	ACPI_INTEGER val;
 	ACPI_STATUS rv;
 
@@ -211,6 +217,20 @@ acpitz_attach(device_t parent, device_t self, void *aux)
 
 	acpitz_init_envsys(self);
 
+	if (sc->sc_have_fan) {
+		snprintf(fanname, sizeof(fanname), "%s-fan",
+			 device_xname(self));
+		snprintf(tmpname, sizeof(tmpname), "%s-tmp",
+			 device_xname(self));
+		rnd_attach_source(&sc->sc_fan_rs,
+				  fanname, RND_TYPE_ENV, 0);
+		rnd_attach_source(&sc->sc_tmp_rs,
+				  tmpname, RND_TYPE_ENV, 0);
+	} else {
+		rnd_attach_source(&sc->sc_tmp_rs,
+				  device_xname(self), RND_TYPE_ENV, 0);
+	}
+
 	callout_schedule(&sc->sc_callout, sc->sc_zone.tzp * hz / 10);
 }
 
@@ -225,6 +245,11 @@ acpitz_detach(device_t self, int flags)
 
 	callout_halt(&sc->sc_callout, NULL);
 	callout_destroy(&sc->sc_callout);
+
+	rnd_detach_source(&sc->sc_tmp_rs);
+	if (sc->sc_have_fan) {
+		rnd_detach_source(&sc->sc_fan_rs);
+	}
 
 	pmf_device_deregister(self);
 	acpi_deregister_notify(sc->sc_node);
@@ -295,10 +320,19 @@ acpitz_get_status(void *opaque)
 	if (sc->sc_first != false)
 		sc->sc_zone.prevtmp = tmp; /* XXX: Sanity check? */
 
-	if (acpitz_get_fanspeed(dv, &fmin, &fmax, &fcurrent) == 0) {
+	if (sc->sc_zone.prevtmp != sc->sc_zone.tmp) {
+		rnd_add_uint32(&sc->sc_tmp_rs, sc->sc_zone.tmp);
+	}
 
-		if (fcurrent != ATZ_TMP_INVALID)
+	if (acpitz_get_fanspeed(dv, &fmin, &fmax, &fcurrent) == 0) {
+		if (fcurrent != ATZ_TMP_INVALID) {
+			sc->sc_zone.fanprev = sc->sc_zone.fancurrent;
 			sc->sc_zone.fancurrent = fcurrent;
+			if (sc->sc_zone.fanprev != sc->sc_zone.fancurrent) {
+				rnd_add_uint32(&sc->sc_fan_rs,
+						sc->sc_zone.fancurrent);
+			}
+		}
 	}
 
 	sc->sc_temp_sensor.state = ENVSYS_SVALID;

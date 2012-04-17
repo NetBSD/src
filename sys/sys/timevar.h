@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.29 2010/04/08 11:51:13 njoly Exp $	*/
+/*	$NetBSD: timevar.h,v 1.29.8.1 2012/04/17 00:08:53 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2008 The NetBSD Foundation.
@@ -156,6 +156,7 @@ int	dotimer_gettime(int, struct proc *, struct itimerspec *);
 int	dotimer_settime(int, struct itimerspec *, struct itimerspec *, int,
 	    struct proc *);
 int	tshzto(const struct timespec *);
+int	tshztoup(const struct timespec *);
 int	tvhzto(const struct timeval *);
 void	inittimecounter(void);
 int	itimerfix(struct timeval *);
@@ -183,7 +184,7 @@ void	time_init(void);
 void	time_init2(void);
 bool	time_wraps(struct timespec *, struct timespec *);
 
-extern time_t time_second;	/* current second in the epoch */
-extern time_t time_uptime;	/* system uptime in seconds */
+extern volatile time_t time_second;	/* current second in the epoch */
+extern volatile time_t time_uptime;	/* system uptime in seconds */
 
 #endif /* !_SYS_TIMEVAR_H_ */

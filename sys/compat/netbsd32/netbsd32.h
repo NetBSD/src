@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.88 2011/10/12 23:04:22 dholland Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.88.2.1 2012/04/17 00:07:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -68,7 +68,7 @@ typedef uint32_t netbsd32_uintptr_t;
 /* netbsd32_[u]int64 are machine dependent and defined below */
 
 /*
- * machine depedant section; must define:
+ * machine dependant section; must define:
  *	netbsd32_pointer_t
  *		- 32-bit pointer type, normally uint32_t but can be int32_t
  *		  for platforms which rely on sign-extension of pointers
@@ -151,6 +151,10 @@ typedef netbsd32_pointer_t netbsd32_lwpidp;
 typedef netbsd32_pointer_t netbsd32_ucontextp;
 typedef netbsd32_pointer_t netbsd32_caddr_t;
 typedef netbsd32_pointer_t netbsd32_lwpctlp;
+typedef netbsd32_pointer_t netbsd32_posix_spawn_file_actionsp;
+typedef netbsd32_pointer_t netbsd32_posix_spawnattrp;
+typedef netbsd32_pointer_t netbsd32_posix_spawn_file_actions_entryp;
+typedef netbsd32_pointer_t netbsd32_pid_tp;
 
 /*
  * now, the compatibility structures and their fake pointer types.
@@ -267,6 +271,67 @@ struct netbsd32_export_args30 {
 
 /* from <sys/poll.h> */
 typedef netbsd32_pointer_t netbsd32_pollfdp_t;
+
+/* from <sys/quotactl.h> */
+typedef netbsd32_pointer_t netbsd32_quotactlargsp_t;
+struct netbsd32_quotactlargs {
+	unsigned qc_op;
+	union {
+		struct {
+			netbsd32_pointer_t qc_info;
+		} stat;
+		struct {
+			int qc_idtype;
+			netbsd32_pointer_t qc_info;
+		} idtypestat;
+		struct {
+			int qc_objtype;
+			netbsd32_pointer_t qc_info;
+		} objtypestat;
+		struct {
+			netbsd32_pointer_t qc_key;
+			netbsd32_pointer_t qc_val;
+		} get;
+		struct {
+			netbsd32_pointer_t qc_key;
+			netbsd32_pointer_t qc_val;
+		} put;
+		struct {
+			netbsd32_pointer_t qc_key;
+		} delete;
+		struct {
+			netbsd32_pointer_t qc_cursor;
+		} cursoropen;
+		struct {
+			netbsd32_pointer_t qc_cursor;
+		} cursorclose;
+		struct {
+			netbsd32_pointer_t qc_cursor;
+			int qc_idtype;
+		} cursorskipidtype;
+		struct {
+			netbsd32_pointer_t qc_cursor;
+			netbsd32_pointer_t qc_keys;
+			netbsd32_pointer_t qc_vals;
+			unsigned qc_maxnum;
+			netbsd32_pointer_t qc_ret;
+		} cursorget;
+		struct {
+			netbsd32_pointer_t qc_cursor;
+			netbsd32_pointer_t qc_ret;
+		} cursoratend;
+		struct {
+			netbsd32_pointer_t qc_cursor;
+		} cursorrewind;
+		struct {
+			int qc_idtype;
+			netbsd32_pointer_t qc_quotafile;
+		} quotaon;
+		struct {
+			int qc_idtype;
+		} quotaoff;
+	} u;
+};
 
 /* from <sys/resource.h> */
 typedef netbsd32_pointer_t netbsd32_rusage50p_t;
@@ -410,13 +475,6 @@ struct netbsd32_msqid_ds14 {
 	netbsd32_long	msg_pad3;
 	netbsd32_long	msg_pad4[4];
 };
-
-/* from  <sys/sa.h> */
-typedef netbsd32_pointer_t netbsd32_sa_upcall_t;
-typedef netbsd32_pointer_t netbsd32_sa_upcallp_t;
-
-void    netbsd32_cpu_upcall(struct lwp *, int, int, int, void *, void *,
-    void *, sa_upcall_t);
 
 /* from <sys/sem.h> */
 typedef netbsd32_pointer_t netbsd32_semp_t;
@@ -583,6 +641,7 @@ typedef netbsd32_pointer_t netbsd32_stackp_t;
 /* from <sys/socket.h> */
 typedef netbsd32_pointer_t netbsd32_sockaddrp_t;
 typedef netbsd32_pointer_t netbsd32_osockaddrp_t;
+typedef netbsd32_pointer_t netbsd32_socklenp_t;
 
 typedef netbsd32_pointer_t netbsd32_msghdrp_t;
 struct netbsd32_msghdr {
@@ -871,6 +930,41 @@ struct netbsd32_nfs_args {
 	int32_t		leaseterm;	/* Ignored; Term (sec) of lease */
 	int32_t		deadthresh;	/* Retrans threshold */
 	netbsd32_charp	hostname;	/* server's name */
+};
+struct netbsd32_msdosfs_args {
+	netbsd32_charp	fspec;		/* blocks special holding the fs to mount */
+	struct	netbsd32_export_args30 _pad1; /* compat with old userland tools */
+	uid_t	uid;		/* uid that owns msdosfs files */
+	gid_t	gid;		/* gid that owns msdosfs files */
+	mode_t  mask;		/* mask to be applied for msdosfs perms */
+	int	flags;		/* see below */
+
+	/* Following items added after versioning support */
+	int	version;	/* version of the struct */
+	mode_t  dirmask;	/* v2: mask to be applied for msdosfs perms */
+	int	gmtoff;		/* v3: offset from UTC in seconds */
+};
+
+struct netbsd32_posix_spawn_file_actions_entry {
+	enum { FAE32_OPEN, FAE32_DUP2, FAE32_CLOSE } fae_action;
+
+	int fae_fildes;
+	union {
+		struct {
+			netbsd32_charp path;
+			int oflag;
+			mode_t mode;
+		} open;
+		struct {
+			int newfildes;
+		} dup2;
+	} fae_data;
+};
+
+struct netbsd32_posix_spawn_file_actions {
+	unsigned int size;	/* size of fae array */
+	unsigned int len;	/* how many slots are used */
+	netbsd32_posix_spawn_file_actions_entryp fae;
 };
 
 #if 0

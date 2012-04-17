@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.55 2011/06/09 19:54:18 drochner Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.55.2.1 2012/04/17 00:08:46 yamt Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.55 2011/06/09 19:54:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.55.2.1 2012/04/17 00:08:46 yamt Exp $");
 
 /*
  * IPsec controller part.
@@ -1308,8 +1308,8 @@ ipsec_set_policy(
 
 	/* check privileged socket */
 	if (xpl->sadb_x_policy_type == IPSEC_POLICY_BYPASS) {
-		error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    NULL);
+		error = kauth_authorize_network(cred, KAUTH_NETWORK_IPSEC,
+		    KAUTH_REQ_NETWORK_IPSEC_BYPASS, NULL, NULL, NULL);
 		if (error)
 			return (error);
 	}

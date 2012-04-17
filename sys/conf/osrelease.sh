@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: osrelease.sh,v 1.120 2009/11/15 18:41:08 dsl Exp $
+#	$NetBSD: osrelease.sh,v 1.120.12.1 2012/04/17 00:07:23 yamt Exp $
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -54,6 +54,7 @@ done
 #     return the next major number (e.g. for 5.99.nn, return 6)
 # -n: return MM.mm
 # -s: return MMmmpp (no dots)
+# -k: return MM.mm on release branch, MM.mm.pp on current.
 
 option="$1"
 
@@ -67,11 +68,23 @@ rel_mm=${rel_MMmm#${rel_MM}}
 # Get patch from text version
 IFS=.
 set -- - $rel_text
+beta=${3#[0-9]}
+beta=${beta#[0-9]}
 shift 3
 IFS=' '
-set -- $rel_MM ${rel_mm#0} $*
+set -- $rel_MM ${rel_mm#0}$beta $*
 
 case "$option" in
+-k)
+	if [ ${rel_mm#0} = 99 ]
+	then
+		IFS=.
+		echo "$*"
+	else
+		echo "${rel_MM}.${rel_mm#0}"
+	fi
+	;;
+	     
 -m)
 	echo "$(((${rel_MMmm}+1)/100))"
 	;;

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.h,v 1.1 2009/03/02 09:33:02 nonaka Exp $	*/
+/*	$NetBSD: boot.h,v 1.1.18.1 2012/04/17 00:07:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 NONAKA Kimihiro
@@ -52,6 +52,7 @@ void bootmenu(void);
 /* conf.c */
 extern char devname_hd[];
 extern char devname_mmcd[];
+extern char devname_path[];
 
 /* loadfile_zboot.c */
 int loadfile_zboot(const char *fname, u_long *marks, int flags);

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.139 2011/09/24 17:18:17 christos Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.139.2.1 2012/04/17 00:08:40 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.139 2011/09/24 17:18:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.139.2.1 2012/04/17 00:08:40 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -132,10 +132,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.139 2011/09/24 17:18:17 christos Exp $"
 #include <netinet6/in6_pcb.h>
 #endif
 
-#ifdef IPSEC
-#include <netinet6/ipsec.h>
-#include <netkey/key.h>
-#elif FAST_IPSEC
+#ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/key.h>
 #endif /* IPSEC */
@@ -194,7 +191,7 @@ in_pcballoc(struct socket *so, void *v)
 	struct inpcbtable *table = v;
 	struct inpcb *inp;
 	int s;
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 	int error;
 #endif
 
@@ -210,7 +207,7 @@ in_pcballoc(struct socket *so, void *v)
 	inp->inp_errormtu = -1;
 	inp->inp_rfc6056algo = RFC6056_ALGO_DEFAULT;
 	inp->inp_bindportonsend = false;
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 	error = ipsec_init_pcbpolicy(so, &inp->inp_sp);
 	if (error != 0) {
 		s = splnet();
@@ -554,7 +551,7 @@ in_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 	}
 
 	in_pcbstate(inp, INP_CONNECTED);
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 	if (inp->inp_socket->so_type == SOCK_STREAM)
 		ipsec_pcbconn(inp->inp_sp);
 #endif
@@ -572,7 +569,7 @@ in_pcbdisconnect(void *v)
 	inp->inp_faddr = zeroin_addr;
 	inp->inp_fport = 0;
 	in_pcbstate(inp, INP_BOUND);
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 	ipsec_pcbdisconn(inp->inp_sp);
 #endif
 	if (inp->inp_socket->so_state & SS_NOFDREF)
@@ -589,7 +586,7 @@ in_pcbdetach(void *v)
 	if (inp->inp_af != AF_INET)
 		return;
 
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 	ipsec4_delete_pcbpolicy(inp);
 #endif /*IPSEC*/
 	so->so_pcb = 0;

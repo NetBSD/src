@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.73 2011/09/19 12:52:32 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.73.2.1 2012/04/17 00:07:00 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,18 +27,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.73 2011/09/19 12:52:32 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.73.2.1 2012/04/17 00:07:00 yamt Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
+#include "opt_misc.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/mutex.h>
 #include <sys/buf.h>
+#include <sys/kmem.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <machine/thunk.h>
+#include <machine/machdep.h>
+#include <machine/pcb.h>
 
 #include <uvm/uvm.h>
 
@@ -48,14 +52,20 @@ struct pv_entry {
 	uintptr_t	pv_ppn;		/* physical page number */
 	uintptr_t	pv_lpn;		/* logical page number  */
 	vm_prot_t	pv_prot;	/* logical protection */
-	int		pv_mmap_ppl;	/* programmed protection */
+	uint8_t		pv_mmap_ppl;	/* programmed protection */
 	uint8_t		pv_vflags;	/* per mapping flags */
 #define PV_WIRED	0x01		/* wired mapping */
 #define PV_UNMANAGED	0x02		/* entered by pmap_kenter_ */
-#define PV_MAPPEDIN	0x04		/* is actually mapped */
 	uint8_t		pv_pflags;	/* per phys page flags */
 #define PV_REFERENCED	0x01
 #define PV_MODIFIED	0x02
+};
+
+#define PMAP_L2_SIZE	 PAGE_SIZE
+#define PMAP_L2_NENTRY	(PMAP_L2_SIZE / sizeof(struct pv_entry *))
+
+struct pmap_l2 {
+	struct pv_entry *pm_l2[PMAP_L2_NENTRY];
 };
 
 struct pmap {
@@ -63,24 +73,30 @@ struct pmap {
 	int	pm_flags;
 #define PM_ACTIVE 0x01
 	struct	pmap_statistics pm_stats;
-	struct	pv_entry **pm_entries;
+	struct	pmap_l2 **pm_l1;
 };
 
-static struct pv_entry *pv_table;
-static struct pmap	pmap_kernel_store;
-struct pmap * const	kernel_pmap_ptr = &pmap_kernel_store;
+
+static struct pv_entry **kernel_pm_entries;
+static struct pv_entry  *pv_table;	/* physical pages info (direct mapped) */
+static struct pv_entry **tlb;		/* current tlb mappings (direct mapped) */
+static struct pmap	 pmap_kernel_store;
+struct pmap * const	 kernel_pmap_ptr = &pmap_kernel_store;
 
 static pmap_t active_pmap = NULL;
 
 static char  mem_name[20] = "";
 static int   mem_fh;
-static void *mem_uvm;	/* keeps all memory managed by UVM */
 
 static int phys_npages = 0;
 static int pm_nentries = 0;
+static int pm_nl1 = 0;
+static int pm_l1_size = 0;
 static uint64_t pm_entries_size = 0;
 
 static struct pool pmap_pool;
+static struct pool pmap_l1_pool;
+static struct pool pmap_pventry_pool;
 
 /* forwards */
 void		pmap_bootstrap(void);
@@ -99,33 +115,32 @@ extern void	setup_signal_handlers(void);
 
 /* exposed (to signal handler f.e.) */
 vaddr_t kmem_k_start, kmem_k_end;
-vaddr_t kmem_ext_start, kmem_ext_end;
+vaddr_t kmem_kvm_start, kmem_kvm_end;
 vaddr_t kmem_user_start, kmem_user_end;
-vaddr_t kmem_ext_cur_start, kmem_ext_cur_end;
+vaddr_t kmem_kvm_cur_start, kmem_kvm_cur_end;
 
 /* amount of physical memory */
 int	physmem; 
 int	num_pv_entries = 0;
+int	num_pmaps = 0;
 
 #define SPARSE_MEMFILE
 
-static uint8_t mem_kvm[KVMSIZE + 2*PAGE_SIZE];
 
 void
 pmap_bootstrap(void)
 {
 	struct pmap *pmap;
-	paddr_t totmem_len;
+	paddr_t DRAM_cfg;
 	paddr_t fpos, file_len;
-	paddr_t pv_fpos, pm_fpos;
+	paddr_t pv_fpos, tlb_fpos, pm_l1_fpos, pm_fpos;
 	paddr_t wlen;
-	paddr_t user_len, barrier_len;
+	paddr_t barrier_len;
 	paddr_t pv_table_size;
 	vaddr_t free_start, free_end;
-	vaddr_t mpos;
 	paddr_t pa;
 	vaddr_t va;
-	uintptr_t pg;
+	uintptr_t pg, l1;
 	void *addr;
 	int err;
 
@@ -138,70 +153,75 @@ pmap_bootstrap(void)
 	vm_min_addr = thunk_get_vm_min_address();
 	vm_min_addr = vm_min_addr < PAGE_SIZE ? PAGE_SIZE : vm_min_addr;
 
-	dprintf_debug("Information retrieved from system and elf image\n");
-	dprintf_debug("min VM address      at %p\n", (void *) vm_min_addr);
-	dprintf_debug("start kernel        at %p\n", _start);
-	dprintf_debug("  end kernel        at %p\n", &etext);
-	dprintf_debug("  end of init. data at %p\n", &edata);
-	dprintf_debug("1st end of data     at %p\n", &end);
-	dprintf_debug("CUR end data        at %p\n", thunk_sbrk(0));
+	thunk_printf_debug("Information retrieved from system and elf image\n");
+	thunk_printf_debug("min VM address      at %p\n", (void *) vm_min_addr);
+	thunk_printf_debug("start kernel        at %p\n", _start);
+	thunk_printf_debug("  end kernel        at %p\n", &etext);
+	thunk_printf_debug("  end of init. data at %p\n", &edata);
+	thunk_printf_debug("1st end of data     at %p\n", &end);
+	thunk_printf_debug("CUR end data        at %p\n", thunk_sbrk(0));
+
+	barrier_len = 2 * 1024 * 1024;
 
 	/* calculate kernel section (R-X) */
 	kmem_k_start = (vaddr_t) PAGE_SIZE * (atop(_start)    );
 	kmem_k_end   = (vaddr_t) PAGE_SIZE * (atop(&etext) + 1);
 
-	/* calculate total available memory space */
-	totmem_len  = (vaddr_t) mem_kvm + KVMSIZE;
+	/* calculate total available memory space & available pages */
+	DRAM_cfg = (vaddr_t) TEXTADDR;
+	physmem  = DRAM_cfg / PAGE_SIZE;
 
-	/* calculate the number of available pages */
-	physmem     = totmem_len / PAGE_SIZE;
-
-	/* calculate memory lengths */
-	barrier_len = 2 * 1024 * 1024;
-	user_len    = kmem_k_start - vm_min_addr - barrier_len;
-
-	/* devide memory */
-	mem_uvm = (void *) vm_min_addr;
-	mpos = vm_min_addr;
+	/* kvm at the top */
+	kmem_kvm_end    = kmem_k_start - barrier_len;
+	kmem_kvm_start  = kmem_kvm_end - KVMSIZE;
 
 	/* claim an area for userland (---/R--/RW-/RWX) */
-	kmem_user_start = mpos;
-	mpos += user_len;
-	kmem_user_end   = mpos;
-
-	/* calculate KVM section (RW-) */
-	kmem_ext_start = round_page((vaddr_t) mem_kvm);
-	mpos += KVMSIZE;
-	kmem_ext_end   = mpos;
+	kmem_user_start = vm_min_addr;
+	kmem_user_end   = kmem_kvm_start - barrier_len;
 
 	/* print summary */
 	aprint_verbose("\nMemory summary\n");
-	aprint_verbose("\tkmem_k_start\t%p\n",    (void *) kmem_k_start);
-	aprint_verbose("\tkmem_k_end\t%p\n",      (void *) kmem_k_end);
-	aprint_verbose("\tkmem_ext_start\t%p\n",  (void *) kmem_ext_start);
-	aprint_verbose("\tkmem_ext_end\t%p\n",    (void *) kmem_ext_end);
 	aprint_verbose("\tkmem_user_start\t%p\n", (void *) kmem_user_start);
 	aprint_verbose("\tkmem_user_end\t%p\n",   (void *) kmem_user_end);
+	aprint_verbose("\tkmem_k_start\t%p\n",    (void *) kmem_k_start);
+	aprint_verbose("\tkmem_k_end\t%p\n",      (void *) kmem_k_end);
+	aprint_verbose("\tkmem_kvm_start\t%p\n",  (void *) kmem_kvm_start);
+	aprint_verbose("\tkmem_kvm_end\t%p\n",    (void *) kmem_kvm_end);
 
-	aprint_verbose("\ttotmem_len\t%10d\n", (int) totmem_len);
+	aprint_verbose("\tDRAM_cfg\t%10d\n", (int) DRAM_cfg);
 	aprint_verbose("\tkvmsize\t\t%10d\n", (int) KVMSIZE);
-	aprint_verbose("\tuser_len\t%10d\n", (int) user_len);
+	aprint_verbose("\tuser_len\t%10d\n",
+		(int) (kmem_user_end - kmem_user_start));
 
 	aprint_verbose("\n\n");
 
+	/* make critical assertions before modifying anything */
+	if (sizeof(struct pcb) > USPACE) {
+		panic("sizeof(struct pcb) is %d bytes too big for USPACE. "
+		   "Please adjust TRAPSTACKSIZE calculation",
+		   (int) (USPACE - sizeof(struct pcb)));
+	}
+	if (TRAPSTACKSIZE < 4*PAGE_SIZE) {
+		panic("TRAPSTACKSIZE is too small, please increase UPAGES");
+	}
+
 	/* protect user memory UVM area (---) */
-	err = thunk_munmap(mem_uvm, kmem_user_end - vm_min_addr);
+	err = thunk_munmap((void *) kmem_user_start,
+			kmem_k_start - kmem_user_start);
 	if (err)
 		panic("pmap_bootstrap: userland uvm space protection "
 			"failed (%d)\n", thunk_geterrno());
 
-	/* protect kvm UVM area (---) */
-	err = thunk_munmap((void *) kmem_ext_start, KVMSIZE);
+#if 0
+	/* protect kvm UVM area if separate (---) */
+	err = thunk_munmap((void *) kmem_kvm_start,
+			kmem_kvm_end - kmem_kvm_start);
 	if (err)
 		panic("pmap_bootstrap: kvm uvm space protection "
 			"failed (%d)\n", thunk_geterrno());
+#endif
 
-	dprintf_debug("Creating memory mapped backend\n");
+	thunk_printf_debug("Creating memory mapped backend\n");
 
 	/* create memory file since mmap/maccess only can be on files */
 	strlcpy(mem_name, "/tmp/netbsd.XXXXXX", sizeof(mem_name));
@@ -213,7 +233,7 @@ pmap_bootstrap(void)
 		panic("pmap_bootstrap: can't unlink %s", mem_name);
 
 	/* file_len is the backing store length, nothing to do with placement */
-	file_len = totmem_len;
+	file_len = DRAM_cfg;
 
 #ifdef SPARSE_MEMFILE
 	{
@@ -242,73 +262,124 @@ pmap_bootstrap(void)
 #endif
 
 	/* protect the current kernel section */
-#if 0
-	int err;
 	err = thunk_mprotect((void *) kmem_k_start, kmem_k_end - kmem_k_start,
 		THUNK_PROT_READ | THUNK_PROT_EXEC);
 	assert(err == 0);
-#endif
 
-	/* set up pv_table; bootstrap problem! */
+	/* madvise the host kernel about our intentions with the memory */
+	/* no measured effect, but might make a difference on high load */
+	err = thunk_madvise((void *) kmem_user_start,
+		kmem_k_start - kmem_user_start,
+		THUNK_MADV_WILLNEED | THUNK_MADV_RANDOM);
+	assert(err == 0);
+
+	/* initialize counters */
 	fpos = 0;
 	free_start = fpos;     /* in physical space ! */
 	free_end   = file_len; /* in physical space ! */
+	kmem_kvm_cur_start = kmem_kvm_start;
 
+	/* calculate pv table size */
 	phys_npages = (free_end - free_start) / PAGE_SIZE;
 	pv_table_size = round_page(phys_npages * sizeof(struct pv_entry));
-
-	dprintf_debug("claiming %"PRIu64" KB of pv_table for "
+	thunk_printf_debug("claiming %"PRIu64" KB of pv_table for "
 		"%"PRIdPTR" pages of physical memory\n",
 		(uint64_t) pv_table_size/1024, (uintptr_t) phys_npages);
 
-	kmem_ext_cur_start = kmem_ext_start;
+	/* calculate number of pmap entries needed for a complete map */
+	pm_nentries = (kmem_k_start - VM_MIN_ADDRESS) / PAGE_SIZE;
+	pm_entries_size = round_page(pm_nentries * sizeof(struct pv_entry *));
+	thunk_printf_debug("tlb va->pa lookup table is %"PRIu64" KB for "
+		"%d logical pages\n", pm_entries_size/1024, pm_nentries);
+
+	/* calculate how big the l1 tables are going to be */
+	pm_nl1 = pm_nentries / PMAP_L2_NENTRY;
+	pm_l1_size = pm_nl1 * sizeof(struct pmap_l1 *);
+
+	/* claim pv table */
 	pv_fpos = fpos;
-	pv_table = (struct pv_entry *) kmem_ext_cur_start;
+	pv_table = (struct pv_entry *) kmem_kvm_cur_start;
 	addr = thunk_mmap(pv_table, pv_table_size,
 		THUNK_PROT_READ | THUNK_PROT_WRITE,
 		THUNK_MAP_FILE | THUNK_MAP_FIXED | THUNK_MAP_SHARED,
 		mem_fh, pv_fpos);
-	if (addr != (void *) kmem_ext_start)
+	if (addr != (void *) pv_table)
 		panic("pmap_bootstrap: can't map in pv table\n");
 
 	memset(pv_table, 0, pv_table_size);	/* test and clear */
 
-	dprintf_debug("pv_table initialiased correctly, mmap works\n");
+	thunk_printf_debug("pv_table initialiased correctly, mmap works\n");
 
 	/* advance */
-	kmem_ext_cur_start += pv_table_size;
+	kmem_kvm_cur_start += pv_table_size;
 	fpos += pv_table_size;
 
-	/* set up kernel pmap */
-	pm_nentries = (VM_MAX_ADDRESS - VM_MIN_ADDRESS) / PAGE_SIZE;
-	pm_entries_size = round_page(pm_nentries * sizeof(struct pv_entry *));
-	dprintf_debug("pmap va->pa lookup table is %"PRIu64" KB for %d logical pages\n",
-		pm_entries_size/1024, pm_nentries);
+	/* set up tlb space */
+	tlb = (struct pv_entry **) kmem_kvm_cur_start;
+	tlb_fpos = fpos;
+	addr = thunk_mmap(tlb, pm_entries_size,
+		THUNK_PROT_READ | THUNK_PROT_WRITE,
+		THUNK_MAP_FILE | THUNK_MAP_FIXED | THUNK_MAP_SHARED,
+		mem_fh, tlb_fpos);
+	if (addr != (void *) tlb)
+		panic("pmap_bootstrap: can't map in tlb entries\n");
 
+	memset(tlb, 0, pm_entries_size);	/* test and clear */
+
+	thunk_printf_debug("kernel tlb entries initialized correctly\n");
+
+	/* advance */
+	kmem_kvm_cur_start += pm_entries_size;
+	fpos += pm_entries_size;
+
+	/* set up kernel pmap and add a l1 map */
         pmap = pmap_kernel(); 
         memset(pmap, 0, sizeof(*pmap)); 
 	pmap->pm_count = 1;		/* reference */
 	pmap->pm_flags = PM_ACTIVE;	/* kernel pmap is allways active */
-	pmap->pm_entries = (struct pv_entry **) kmem_ext_cur_start;
+	pmap->pm_l1 = (struct pmap_l2 **) kmem_kvm_cur_start;
 
+	pm_l1_fpos = fpos;
+	addr = thunk_mmap(pmap->pm_l1, pm_l1_size,
+		THUNK_PROT_READ | THUNK_PROT_WRITE,
+		THUNK_MAP_FILE | THUNK_MAP_FIXED | THUNK_MAP_SHARED,
+		mem_fh, pm_l1_fpos);
+	if (addr != (void *) pmap->pm_l1)
+		panic("pmap_bootstrap: can't map in pmap l1 entries\n");
+
+	memset(pmap->pm_l1, 0, pm_l1_size);	/* test and clear */
+
+	thunk_printf_debug("kernel pmap l1 table initialiased correctly\n");
+
+	/* advance for l1 tables */
+	kmem_kvm_cur_start += round_page(pm_l1_size);
+	fpos += round_page(pm_l1_size);
+
+	/* followed by the pm entries */
 	pm_fpos = fpos;
-	addr = thunk_mmap(pmap->pm_entries, pm_entries_size,
+	kernel_pm_entries = (struct pv_entry **) kmem_kvm_cur_start;
+	addr = thunk_mmap(kernel_pm_entries, pm_entries_size,
 		THUNK_PROT_READ | THUNK_PROT_WRITE,
 		THUNK_MAP_FILE | THUNK_MAP_FIXED | THUNK_MAP_SHARED,
 		mem_fh, pm_fpos);
-	if (addr != (void *) pmap->pm_entries)
-		panic("pmap_bootstrap: can't map in pmap entries\n");
+	if (addr != (void *) kernel_pm_entries)
+		panic("pmap_bootstrap: can't map in kernel pmap entries\n");
 
-	memset(pmap->pm_entries, 0, pm_entries_size);	/* test and clear */
+	memset(kernel_pm_entries, 0, pm_entries_size);	/* test and clear */
 
-	dprintf_debug("kernel pmap entries initialiased correctly\n");
-
-	/* advance */
-	kmem_ext_cur_start += pm_entries_size;
+	/* advance for the statically allocated pm_entries */
+	kmem_kvm_cur_start += pm_entries_size;
 	fpos += pm_entries_size;
 
-	/* kmem used [kmem_ext_start - kmem_ext_cur_start] */
-	kmem_ext_cur_end = kmem_ext_cur_start;
+	/* put pointers in the l1 to point to the pv_entry space */
+	for (l1 = 0; l1 < pm_nl1; l1++) {
+		pmap = pmap_kernel();
+		pmap->pm_l1[l1] = (struct pmap_l2 *)
+			((vaddr_t) kernel_pm_entries + l1 * PMAP_L2_SIZE);
+	}
+
+	/* kmem used [kmem_kvm_start - kmem_kvm_cur_start] */
+	kmem_kvm_cur_end = kmem_kvm_cur_start;
 
 	/* manually enter the mappings into the kernel map */
 	for (pg = 0; pg < pv_table_size; pg += PAGE_SIZE) {
@@ -316,27 +387,43 @@ pmap_bootstrap(void)
 		va = (vaddr_t) pv_table + pg;
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 	}
-	dprintf_debug("pv_table mem added to the kernel pmap\n");
+	thunk_printf_debug("pv_table mem added to the kernel pmap\n");
 	for (pg = 0; pg < pm_entries_size; pg += PAGE_SIZE) {
-		pa = pm_fpos + pg;
-		va = (vaddr_t) pmap->pm_entries + pg;
+		pa = tlb_fpos + pg;
+		va = (vaddr_t) tlb + pg;
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 	}
-	dprintf_debug("kernel pmap entries mem added to the kernel pmap\n");
+	thunk_printf_debug("kernel tlb entries mem added to the kernel pmap\n");
+	for (pg = 0; pg < pm_l1_size; pg += PAGE_SIZE) {
+		pa = pm_l1_fpos + pg;
+		va = (vaddr_t) pmap->pm_l1 + pg;
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
+	}
+	thunk_printf_debug("kernel pmap l1 mem added to the kernel pmap\n");
+	for (pg = 0; pg < pm_entries_size; pg += PAGE_SIZE) {
+		pa = pm_fpos + pg;
+		va = (vaddr_t) kernel_pm_entries + pg;
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
+	}
+	thunk_printf_debug("kernel pmap entries mem added to the kernel pmap\n");
 
 	/* add file space to uvm's FREELIST */
-	/* XXX really from 0? or from fpos to have better stats */
 	uvm_page_physload(atop(0),
 	    atop(free_end),
 	    atop(free_start + fpos), /* mark used till fpos */
 	    atop(free_end), 
 	    VM_FREELIST_DEFAULT);
 
+	/* setup syscall emulation */
+	if (thunk_syscallemu_init((void *)VM_MIN_ADDRESS,
+	    (void *)VM_MAXUSER_ADDRESS) != 0)
+		panic("couldn't enable syscall emulation");
+
 	aprint_verbose("leaving pmap_bootstrap:\n");
 	aprint_verbose("\t%"PRIu64" MB of physical pages left\n",
 		(uint64_t) (free_end - (free_start + fpos))/1024/1024);
 	aprint_verbose("\t%"PRIu64" MB of kmem left\n",
-		(uint64_t) (kmem_ext_end - kmem_ext_cur_end)/1024/1024);
+		(uint64_t) (kmem_kvm_end - kmem_kvm_cur_end)/1024/1024);
 
 	setup_signal_handlers();
 }
@@ -344,15 +431,16 @@ pmap_bootstrap(void)
 void
 pmap_init(void)
 {
-	/* All deferred to pmap_create, because malloc() is nice. */
 }
 
 /* return kernel space start and end (including growth) */
 void
 pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
 {
-	*vstartp = kmem_ext_cur_start;	/* min to map in */
-	*vendp   = kmem_ext_end;	/* max available */
+	if (vstartp)
+		*vstartp = kmem_kvm_cur_start;		/* min to map in */
+	if (vendp)
+		*vendp   = kmem_kvm_end - PAGE_SIZE;	/* max available */
 }
 
 static void
@@ -363,6 +451,10 @@ pmap_deferred_init(void)
 	/* create pmap pool */
 	pool_init(&pmap_pool, sizeof(struct pmap), 0, 0, 0,
 	    "pmappool", NULL, IPL_NONE);
+	pool_init(&pmap_l1_pool, pm_l1_size, 0, 0, 0,
+	    "pmapl1pool", NULL, IPL_NONE);
+	pool_init(&pmap_pventry_pool, sizeof(struct pv_entry), 0, 0, 0,
+	    "pventry", NULL, IPL_HIGH);
 }
 
 pmap_t
@@ -376,16 +468,28 @@ pmap_create(void)
 		pmap_initialised = 1;
 	}
 
-	dprintf_debug("pmap_create\n");
+	thunk_printf_debug("pmap_create\n");
+	num_pmaps++;
+#if 0
+	printf("%s: pre alloc: num_pmaps %"PRIu64" (%"PRIu64" kb), "
+		   "num_pv_entries %"PRIu64" (%"PRIu64" kb)\n",
+		__func__,
+		(uint64_t) num_pmaps,
+		(uint64_t) num_pmaps * (sizeof(*pmap) + pm_l1_size)   / 1024,
+		(uint64_t) num_pv_entries,
+		(uint64_t) num_pv_entries * (sizeof(struct pv_entry)) / 1024);
+#endif
+
 	pmap = pool_get(&pmap_pool, PR_WAITOK);
 	memset(pmap, 0, sizeof(*pmap));
-		
 	pmap->pm_count = 1;
 	pmap->pm_flags = 0;
-	pmap->pm_entries = (struct pv_entry **) malloc(
-		pm_entries_size, M_VMPMAP,
-		M_WAITOK | M_ZERO);
-	dprintf_debug("\tpmap %p\n", pmap);
+
+	/* claim l1 table */
+	pmap->pm_l1 = pool_get(&pmap_l1_pool, PR_WAITOK);
+	memset(pmap->pm_l1, 0, pm_l1_size);
+
+	thunk_printf_debug("\tpmap %p\n", pmap);
 
 	return pmap;
 }
@@ -393,30 +497,46 @@ pmap_create(void)
 void
 pmap_destroy(pmap_t pmap)
 {
-	int i;
+	struct pmap_l2 *l2tbl;
+	int l1;
 
 	/* if multiple references exist just remove a reference */
-	dprintf_debug("pmap_destroy %p\n", pmap);
+	thunk_printf_debug("pmap_destroy %p\n", pmap);
 	if (--pmap->pm_count > 0)
 		return;
+	num_pmaps--;
 
 	/* safe guard against silly errors */
 	KASSERT((pmap->pm_flags & PM_ACTIVE) == 0);
 	KASSERT(pmap->pm_stats.resident_count == 0);
 	KASSERT(pmap->pm_stats.wired_count == 0);
 #ifdef DIAGNOSTIC
-	for (i = 0; i < pm_nentries; i++)
-		if (pmap->pm_entries[i] != NULL)
-			panic("pmap_destroy: pmap isn't empty");
+	for (l1 = 0; l1 < pm_nl1; l1++) {
+		int l2;
+
+		l2tbl = pmap->pm_l1[l1];
+		if (!l2tbl)
+			continue;
+		for (l2 = 0; l2 < PMAP_L2_NENTRY; l2++) {
+			if (l2tbl->pm_l2[l2])
+				panic("pmap_destroy: pmap isn't empty");
+		}
+	}
 #endif
-	free((void *)pmap->pm_entries, M_VMPMAP);
+	for (l1 = 0; l1 < pm_nl1; l1++) {
+		l2tbl = pmap->pm_l1[l1];
+		if (!l2tbl)
+			continue;
+		kmem_free(l2tbl, PMAP_L2_SIZE);
+	}
+	pool_put(&pmap_l1_pool, pmap->pm_l1);
 	pool_put(&pmap_pool, pmap);
 }
 
 void
 pmap_reference(pmap_t pmap)
 {
-	dprintf_debug("pmap_reference %p\n", (void *) pmap);
+	thunk_printf_debug("pmap_reference %p\n", (void *) pmap);
 	pmap->pm_count++;
 }
 
@@ -435,15 +555,20 @@ pmap_wired_count(pmap_t pmap)
 static struct pv_entry *
 pv_alloc(void)
 {
+	struct pv_entry *pv;
+
 	num_pv_entries++;
-	return malloc(sizeof(struct pv_entry), M_VMPMAP, M_NOWAIT | M_ZERO);
+	pv = pool_get(&pmap_pventry_pool, PR_WAITOK);
+	memset(pv, 0, sizeof(struct pv_entry));
+
+	return pv;
 }
 
 static void
 pv_free(struct pv_entry *pv)
 {
 	num_pv_entries--;
-	free(pv, M_VMPMAP);
+	pool_put(&pmap_pventry_pool, pv);
 }
 
 static struct pv_entry *
@@ -464,12 +589,11 @@ pv_get(pmap_t pmap, uintptr_t ppn, uintptr_t lpn)
 		}
 	}
 	/* Otherwise, allocate a new entry and link it in after the head. */
-	dprintf_debug("pv_get: multiple mapped page ppn %"PRIdPTR", "
+	thunk_printf_debug("pv_get: multiple mapped page ppn %"PRIdPTR", "
 		"lpn %"PRIdPTR"\n", ppn, lpn);
 
 	/* extra sanity */
 	assert(ppn < phys_npages);
-	assert(ppn >= 0);
 
 	pv = pv_alloc();
 	if (pv == NULL)
@@ -480,6 +604,43 @@ pv_get(pmap_t pmap, uintptr_t ppn, uintptr_t lpn)
 	pmap->pm_stats.resident_count++;
 
 	return pv;
+}
+
+static void
+pmap_set_pv(pmap_t pmap, uintptr_t lpn, struct pv_entry *pv)
+{
+	struct pmap_l2 *l2tbl;
+	int l1 = lpn / PMAP_L2_NENTRY;
+	int l2 = lpn % PMAP_L2_NENTRY;
+
+#ifdef DIAGNOSTIC
+	if (lpn >= pm_nentries)
+		panic("peeing outside box : addr in page around %"PRIx64"\n",
+			(uint64_t) lpn*PAGE_SIZE);
+#endif
+
+	l2tbl = pmap->pm_l1[l1];
+	if (!l2tbl) {
+		l2tbl = pmap->pm_l1[l1] = kmem_zalloc(PMAP_L2_SIZE, KM_SLEEP);
+		/* should be zero filled */
+	}
+	l2tbl->pm_l2[l2] = pv;
+}
+
+static struct pv_entry *
+pmap_lookup_pv(pmap_t pmap, uintptr_t lpn)
+{
+	struct pmap_l2 *l2tbl;
+	int l1 = lpn / PMAP_L2_NENTRY;
+	int l2 = lpn % PMAP_L2_NENTRY;
+
+	if (lpn >= pm_nentries)
+		return NULL;
+
+	l2tbl = pmap->pm_l1[l1];
+	if (l2tbl)
+		return l2tbl->pm_l2[l2];
+	return NULL;
 }
 
 /*
@@ -493,15 +654,15 @@ pmap_fault(pmap_t pmap, vaddr_t va, vm_prot_t *atype)
 	uintptr_t lpn, ppn;
 	int prot, cur_prot, diff;
 
-	dprintf_debug("pmap_fault pmap %p, va %p\n", pmap, (void *) va);
+	thunk_printf_debug("pmap_fault pmap %p, va %p\n", pmap, (void *) va);
 
 	/* get logical page from vaddr */
 	lpn = atop(va - VM_MIN_ADDRESS);	/* V->L */
-	pv  = pmap->pm_entries[lpn];
+	pv = pmap_lookup_pv(pmap, lpn);
 
 	/* not known! then it must be UVM's work */
 	if (pv == NULL) {
-		dprintf_debug("%s: no mapping yet\n", __func__);
+		thunk_printf_debug("%s: no mapping yet\n", __func__);
 		*atype = VM_PROT_READ;		/* assume it was a read */
 		return false;
 	}
@@ -519,10 +680,10 @@ pmap_fault(pmap_t pmap, vaddr_t va, vm_prot_t *atype)
 		return true;
 	}
 
-	/* if its not mapped in, we have a TBL fault */
-	if ((pv->pv_vflags & PV_MAPPEDIN) == 0) {
+	/* check the TLB, if NULL we have a TLB fault */
+	if (tlb[pv->pv_lpn] == NULL) {
 		if (pv->pv_mmap_ppl != THUNK_PROT_NONE) {
-			dprintf_debug("%s: tlb fault page lpn %"PRIiPTR"\n",
+			thunk_printf_debug("%s: tlb fault page lpn %"PRIiPTR"\n",
 				__func__, pv->pv_lpn);
 			pmap_page_activate(pv);
 			return true;
@@ -541,7 +702,7 @@ pmap_fault(pmap_t pmap, vaddr_t va, vm_prot_t *atype)
 
 	diff = prot & (prot ^ cur_prot);
 
-	dprintf_debug("%s: prot = %d, cur_prot = %d, diff = %d\n",
+	thunk_printf_debug("%s: prot = %d, cur_prot = %d, diff = %d\n",
 		__func__, prot, cur_prot, diff);
 	*atype = VM_PROT_READ;  /* assume its a read error */
 	if (diff & VM_PROT_READ) {
@@ -550,6 +711,7 @@ pmap_fault(pmap_t pmap, vaddr_t va, vm_prot_t *atype)
 			pmap_update_page(ppn);
 			return true;
 		}
+		panic("pmap: page not readable but marked referenced?");
 		return false;
 	}
 
@@ -579,6 +741,7 @@ pmap_fault(pmap_t pmap, vaddr_t va, vm_prot_t *atype)
 				return true;
 			}
 		}
+		panic("pmap: page not writable but marked modified?");
 		return false;
 	}
 
@@ -592,21 +755,23 @@ pmap_page_activate(struct pv_entry *pv)
 {
 	paddr_t pa = pv->pv_ppn * PAGE_SIZE;
 	vaddr_t va = pv->pv_lpn * PAGE_SIZE + VM_MIN_ADDRESS; /* L->V */
+	uint32_t map_flags;
 	void *addr;
 
+	map_flags = THUNK_MAP_FILE | THUNK_MAP_FIXED | THUNK_MAP_SHARED;
+
 	addr = thunk_mmap((void *) va, PAGE_SIZE, pv->pv_mmap_ppl,
-		THUNK_MAP_FILE | THUNK_MAP_FIXED | THUNK_MAP_SHARED,
-		mem_fh, pa);
-	dprintf_debug("page_activate: (va %p, pa %p, prot %d, ppl %d) -> %p\n",
+		map_flags, mem_fh, pa);
+	thunk_printf_debug("page_activate: (va %p, pa %p, prot %d, ppl %d) -> %p\n",
 		(void *) va, (void *) pa, pv->pv_prot, pv->pv_mmap_ppl,
 		(void *) addr);
 	if (addr != (void *) va)
 		panic("pmap_page_activate: mmap failed (expected %p got %p): %d",
 		    (void *)va, addr, thunk_geterrno());
 
-	pv->pv_vflags &= ~PV_MAPPEDIN;
+	tlb[pv->pv_lpn] = NULL;
 	if (pv->pv_mmap_ppl != THUNK_PROT_NONE)
-		pv->pv_vflags |= PV_MAPPEDIN;
+		tlb[pv->pv_lpn] = pv;
 }
 
 static void
@@ -614,16 +779,26 @@ pmap_page_deactivate(struct pv_entry *pv)
 {
 	paddr_t pa = pv->pv_ppn * PAGE_SIZE;
 	vaddr_t va = pv->pv_lpn * PAGE_SIZE + VM_MIN_ADDRESS; /* L->V */
+	uint32_t map_flags;
 	void *addr;
 
+	/* don't try to unmap pv entries that are already unmapped */
+	if (!tlb[pv->pv_lpn])
+		return;
+
+	if (tlb[pv->pv_lpn]->pv_mmap_ppl == THUNK_PROT_NONE)
+		goto deactivate;
+
+	map_flags = THUNK_MAP_FILE | THUNK_MAP_FIXED | THUNK_MAP_SHARED;
 	addr = thunk_mmap((void *) va, PAGE_SIZE, THUNK_PROT_NONE,
-		THUNK_MAP_FILE | THUNK_MAP_FIXED | THUNK_MAP_SHARED,
-		mem_fh, pa);
-	dprintf_debug("page_deactivate: (va %p, pa %p, ppl %d) -> %p\n",
+		map_flags, mem_fh, pa);
+	thunk_printf_debug("page_deactivate: (va %p, pa %p, ppl %d) -> %p\n",
 		(void *) va, (void *) pa, pv->pv_mmap_ppl, (void *) addr);
 	if (addr != (void *) va)
 		panic("pmap_page_deactivate: mmap failed");
-	pv->pv_vflags &= ~PV_MAPPEDIN;
+
+deactivate:
+	tlb[pv->pv_lpn] = NULL;
 }
 
 static void
@@ -653,8 +828,8 @@ pv_update(struct pv_entry *pv)
 		mmap_ppl = THUNK_PROT_NONE;
 	}
 
-	/* unmanaged pages are special; they dont track r/m */
-	if (vflags & PV_UNMANAGED)
+	/* unmanaged or wired pages are special; they dont track r/m */
+	if (vflags & (PV_UNMANAGED | PV_WIRED))
 		mmap_ppl = THUNK_PROT_READ | THUNK_PROT_WRITE;
 
 	pv->pv_mmap_ppl = mmap_ppl;
@@ -667,7 +842,7 @@ pmap_update_page(uintptr_t ppn)
 	struct pv_entry *pv;
 
 	for (pv = &pv_table[ppn]; pv != NULL; pv = pv->pv_next) {
-		dprintf_debug("pmap_update_page: ppn %"PRIdPTR", pv->pv_map = %p\n",
+		thunk_printf_debug("pmap_update_page: ppn %"PRIdPTR", pv->pv_map = %p\n",
 			ppn, pv->pv_pmap);
 		if (pv->pv_pmap != NULL) {
 			pv_update(pv);
@@ -691,7 +866,7 @@ pmap_do_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, uint flags, i
 	ppn = atop(pa);
 	lpn = atop(va - VM_MIN_ADDRESS);	/* V->L */
 #ifdef DIAGNOSTIC
-	if ((va < VM_MIN_ADDRESS) || (va > VM_MAX_ADDRESS))
+	if ((va < VM_MIN_ADDRESS) || (va > VM_MAX_KERNEL_ADDRESS))
 		panic("pmap_do_enter: invalid va isued\n");
 #endif
 
@@ -699,8 +874,8 @@ pmap_do_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, uint flags, i
 	s = splvm();
 
 	/* remove existing mapping at this lpn */
-	if (pmap->pm_entries[lpn] &&
-	    pmap->pm_entries[lpn]->pv_ppn != ppn)
+	pv = pmap_lookup_pv(pmap, lpn);
+	if (pv && pv->pv_ppn != ppn)
 		pmap_remove(pmap, va, va + PAGE_SIZE);
 
 	/* get our entry */
@@ -735,7 +910,7 @@ pmap_do_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, uint flags, i
 
 	/* map it in */
 	pmap_update_page(ppn);
-	pmap->pm_entries[lpn] = pv;
+	pmap_set_pv(pmap, lpn, pv);
 
 	/* adjust stats */
 	if (pv->pv_vflags & PV_WIRED)
@@ -753,7 +928,7 @@ pmap_do_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, uint flags, i
 int
 pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
-	dprintf_debug("pmap_enter %p : v %p, p %p, prot %d, flags %d\n",
+	thunk_printf_debug("pmap_enter %p : v %p, p %p, prot %d, flags %d\n",
 		(void *) pmap, (void *) va, (void *) pa, (int) prot, (int) flags);
 	return pmap_do_enter(pmap, va, pa, prot, flags, 0);
 }
@@ -764,7 +939,7 @@ pv_release(pmap_t pmap, uintptr_t ppn, uintptr_t lpn)
 {
 	struct pv_entry *pv, *npv;
 
-	dprintf_debug("pv_release ppn %"PRIdPTR", lpn %"PRIdPTR"\n", ppn, lpn);
+	thunk_printf_debug("pv_release ppn %"PRIdPTR", lpn %"PRIdPTR"\n", ppn, lpn);
 	pv = &pv_table[ppn];
 	/*
 	 * If it is the first entry on the list, it is actually
@@ -775,9 +950,9 @@ pv_release(pmap_t pmap, uintptr_t ppn, uintptr_t lpn)
 	if ((pmap == pv->pv_pmap) && (lpn == pv->pv_lpn)) {
 		npv = pv->pv_next;
 		if (npv) {
-			/* Pull up first entry from chain. */
+			/* pull up first entry from chain. */
 			memcpy(pv, npv, offsetof(struct pv_entry, pv_pflags));
-			pv->pv_pmap->pm_entries[pv->pv_lpn] = pv;
+			pmap_set_pv(pv->pv_pmap, pv->pv_lpn, pv);
 			pv_free(npv);
 		} else {
 			memset(pv, 0, offsetof(struct pv_entry, pv_pflags));
@@ -792,7 +967,7 @@ pv_release(pmap_t pmap, uintptr_t ppn, uintptr_t lpn)
 		pv->pv_next = npv->pv_next;
 		pv_free(npv);
 	}
-	pmap->pm_entries[lpn] = NULL;
+	pmap_set_pv(pmap, lpn, NULL);
 	pmap->pm_stats.resident_count--;
 }
 
@@ -806,19 +981,19 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	slpn = atop(sva - VM_MIN_ADDRESS);	/* V->L */
  	elpn = atop(eva - VM_MIN_ADDRESS);	/* V->L */
 
-	dprintf_debug("pmap_remove() called from "
+	thunk_printf_debug("pmap_remove() called from "
 		"lpn %"PRIdPTR" to lpn %"PRIdPTR"\n", slpn, elpn);
 
 	s = splvm();
 	for (lpn = slpn; lpn < elpn; lpn++) {
-		pv = pmap->pm_entries[lpn];
+		pv = pmap_lookup_pv(pmap, lpn);
 		if (pv != NULL) {
 			if (pmap->pm_flags & PM_ACTIVE) {
 				pmap_page_deactivate(pv);
 //				MEMC_WRITE(pv->pv_deactivate);
 //				cpu_cache_flush();
 			}
-			pmap->pm_entries[lpn] = NULL;
+			pmap_set_pv(pmap, lpn, NULL);
 			if (pv->pv_vflags & PV_WIRED)
 				pmap->pm_stats.wired_count--;
 			pv_release(pmap, pv->pv_ppn, lpn);
@@ -831,7 +1006,7 @@ void
 pmap_remove_all(pmap_t pmap)
 {
 	/* just a hint that all the entries are to be removed */
-	dprintf_debug("pmap_remove_all() dummy called\n");
+	thunk_printf_debug("pmap_remove_all() dummy called\n");
 
 	/* we dont do anything with the kernel pmap */
 	if (pmap == pmap_kernel())
@@ -868,12 +1043,12 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	slpn = atop(sva - VM_MIN_ADDRESS);	/* V->L */
  	elpn = atop(eva - VM_MIN_ADDRESS);	/* V->L */
 
-	dprintf_debug("pmap_protect() called from "
+	thunk_printf_debug("pmap_protect() called from "
 		"lpn %"PRIdPTR" to lpn %"PRIdPTR"\n", slpn, elpn);
 
 	s = splvm();
 	for (lpn = slpn; lpn < elpn; lpn++) {
-		pv = pmap->pm_entries[lpn];
+		pv = pmap_lookup_pv(pmap, lpn);
 		if (pv != NULL) {
 			pv->pv_prot &= prot;
 			pv_update(pv);
@@ -890,12 +1065,12 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 	struct pv_entry *pv;
 	intptr_t lpn;
 
-	dprintf_debug("pmap_unwire called\n'");
+	thunk_printf_debug("pmap_unwire called va = %p\n", (void *) va);
 	if (pmap == NULL)
 		return;
 
 	lpn = atop(va - VM_MIN_ADDRESS);	/* V->L */
-	pv = pmap->pm_entries[lpn];
+	pv = pmap_lookup_pv(pmap, lpn);
 	if (pv == NULL)
 		return;
 	/* but is it wired? */
@@ -903,6 +1078,9 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 		return;
 	pmap->pm_stats.wired_count--;
 	pv->pv_vflags &= ~PV_WIRED;
+
+	/* XXX needed? */
+	pmap_update_page(pv->pv_ppn);
 }
 
 bool
@@ -911,13 +1089,13 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *ppa)
 	struct pv_entry *pv;
 	intptr_t lpn;
 
-	dprintf_debug("pmap_extract: extracting va %p\n", (void *) va);
+	thunk_printf_debug("pmap_extract: extracting va %p\n", (void *) va);
 #ifdef DIAGNOSTIC
-	if ((va < VM_MIN_ADDRESS) || (va > VM_MAX_ADDRESS))
+	if ((va < VM_MIN_ADDRESS) || (va > VM_MAX_KERNEL_ADDRESS))
 		panic("pmap_extract: invalid va isued\n");
 #endif
 	lpn = atop(va - VM_MIN_ADDRESS);	/* V->L */
-	pv = pmap->pm_entries[lpn];
+	pv = pmap_lookup_pv(pmap, lpn);
 
 	if (pv == NULL)
 		return false;
@@ -933,7 +1111,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *ppa)
 void
 pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
-	dprintf_debug("pmap_kenter_pa : v %p, p %p, prot %d, flags %d\n",
+	thunk_printf_debug("pmap_kenter_pa : v %p, p %p, prot %d, flags %d\n",
 		(void *) va, (void *) pa, (int) prot, (int) flags);
 	pmap_do_enter(pmap_kernel(), va, pa, prot, prot | PMAP_WIRED, 1);
 }
@@ -948,13 +1126,13 @@ void
 pmap_copy(pmap_t dst_map, pmap_t src_map, vaddr_t dst_addr, vsize_t len,
     vaddr_t src_addr)
 {
-	dprintf_debug("pmap_copy (dummy)\n");
+	thunk_printf_debug("pmap_copy (dummy)\n");
 }
 
 void
 pmap_update(pmap_t pmap)
 {
-	dprintf_debug("pmap_update (dummy)\n");
+	thunk_printf_debug("pmap_update (dummy)\n");
 }
 
 void
@@ -964,7 +1142,7 @@ pmap_activate(struct lwp *l)
 	pmap_t pmap;
 
 	pmap = p->p_vmspace->vm_map.pmap;
-	dprintf_debug("pmap_activate for lwp %p, pmap = %p\n", l, pmap);
+	thunk_printf_debug("pmap_activate for lwp %p, pmap = %p\n", l, pmap);
 
 	if (pmap == pmap_kernel())
 		return; /* kernel pmap is always active */
@@ -980,11 +1158,13 @@ void
 pmap_deactivate(struct lwp *l)
 {
 	struct proc *p = l->l_proc;
+	struct pv_entry *pv;
+	struct pmap_l2 *l2tbl;
 	pmap_t pmap;
-	int i;
+	int l1, l2;
 
 	pmap = p->p_vmspace->vm_map.pmap;
-	dprintf_debug("pmap_DEactivate for lwp %p, pmap = %p\n", l, pmap);
+	thunk_printf_debug("pmap_DEactivate for lwp %p, pmap = %p\n", l, pmap);
 
 	if (pmap == pmap_kernel())
 		return; /* kernel pmap is always active */
@@ -994,12 +1174,20 @@ pmap_deactivate(struct lwp *l)
 
 	active_pmap = NULL;
 	pmap->pm_flags &=~ PM_ACTIVE;
-	for (i = 0; i < pm_nentries; i++) {
-		if (pmap->pm_entries[i] != NULL) {
-			pmap_page_deactivate(pmap->pm_entries[i]);
-//			MEMC_WRITE(pmap->pm_entries[i]->pv_deactivate);
+
+	for (l1 = 0; l1 < pm_nl1; l1++) {
+		l2tbl = pmap->pm_l1[l1];
+		if (!l2tbl)
+			continue;
+		for (l2 = 0; l2 < PMAP_L2_NENTRY; l2++) {
+			pv = l2tbl->pm_l2[l2];
+			if (pv) {
+				pmap_page_deactivate(pv);
+	//			MEMC_WRITE(pmap->pm_entries[i]->pv_deactivate);
+			}
 		}
 	}
+
 	/* dummy */
 //	cpu_cache_flush();
 }
@@ -1009,7 +1197,7 @@ pmap_zero_page(paddr_t pa)
 {
 	char *blob;
 
-	dprintf_debug("pmap_zero_page: pa %p\n", (void *) pa);
+	thunk_printf_debug("pmap_zero_page: pa %p\n", (void *) pa);
 
 	if (pa & (PAGE_SIZE-1))
 		panic("%s: unaligned address passed : %p\n", __func__, (void *) pa);
@@ -1036,7 +1224,7 @@ pmap_copy_page(paddr_t src_pa, paddr_t dst_pa)
 	if (dst_pa & (PAGE_SIZE-1))
 		panic("%s: unaligned address passed : %p\n", __func__, (void *) dst_pa);
 
-	dprintf_debug("pmap_copy_page: pa src %p, pa dst %p\n",
+	thunk_printf_debug("pmap_copy_page: pa src %p, pa dst %p\n",
 		(void *) src_pa, (void *) dst_pa);
 
 	sblob = thunk_mmap(NULL, PAGE_SIZE,
@@ -1067,7 +1255,7 @@ pmap_page_protect(struct vm_page *page, vm_prot_t prot)
 	struct pv_entry *pv, *npv;
 
 	ppn = atop(VM_PAGE_TO_PHYS(page));
-	dprintf_debug("pmap_page_protect page %"PRIiPTR" to prot %d\n", ppn, prot);
+	thunk_printf_debug("pmap_page_protect page %"PRIiPTR" to prot %d\n", ppn, prot);
 
 	if (prot == VM_PROT_NONE) {
 		/* visit all mappings */
@@ -1088,7 +1276,7 @@ pmap_page_protect(struct vm_page *page, vm_prot_t prot)
 				npv = pv->pv_next;
 
 			/* remove from pmap */
-			pv->pv_pmap->pm_entries[pv->pv_lpn] = NULL;
+			pmap_set_pv(pv->pv_pmap, pv->pv_lpn, NULL);
 			if (pv->pv_vflags & PV_WIRED)
 				pv->pv_pmap->pm_stats.wired_count--;
 			pv_release(pv->pv_pmap, ppn, pv->pv_lpn);
@@ -1121,7 +1309,7 @@ pmap_clear_modify(struct vm_page *page)
 	ppn = atop(VM_PAGE_TO_PHYS(page));
 	rv = pmap_is_modified(page);
 
-	dprintf_debug("pmap_clear_modify page %"PRIiPTR"\n", ppn);
+	thunk_printf_debug("pmap_clear_modify page %"PRIiPTR"\n", ppn);
 
 	/* if marked modified, clear it in all the pmap's referencing it */
 	if (rv) {
@@ -1146,7 +1334,7 @@ pmap_clear_reference(struct vm_page *page)
 	ppn = atop(VM_PAGE_TO_PHYS(page));
 	rv = pmap_is_referenced(page);
 
-	dprintf_debug("pmap_clear_reference page %"PRIiPTR"\n", ppn);
+	thunk_printf_debug("pmap_clear_reference page %"PRIiPTR"\n", ppn);
 
 	if (rv) {
 		pv_table[ppn].pv_pflags &= ~PV_REFERENCED;
@@ -1164,7 +1352,7 @@ pmap_is_modified(struct vm_page *page)
 	ppn = atop(VM_PAGE_TO_PHYS(page));
 	rv = (pv_table[ppn].pv_pflags & PV_MODIFIED) != 0;
 
-	dprintf_debug("pmap_is_modified page %"PRIiPTR" : %s\n", ppn, rv?"yes":"no");
+	thunk_printf_debug("pmap_is_modified page %"PRIiPTR" : %s\n", ppn, rv?"yes":"no");
 
 	return rv;
 }
@@ -1175,7 +1363,7 @@ pmap_is_referenced(struct vm_page *page)
 	intptr_t ppn;
 
 	ppn = atop(VM_PAGE_TO_PHYS(page));
-	dprintf_debug("pmap_is_referenced page %"PRIiPTR"\n", ppn);
+	thunk_printf_debug("pmap_is_referenced page %"PRIiPTR"\n", ppn);
 
 	return (pv_table[ppn].pv_pflags & PV_REFERENCED) != 0;
 }
@@ -1183,19 +1371,18 @@ pmap_is_referenced(struct vm_page *page)
 paddr_t
 pmap_phys_address(paddr_t cookie)
 {
-	panic("pmap_phys_address not implemented\n");
 	return ptoa(cookie);
 }
 
 vaddr_t
 pmap_growkernel(vaddr_t maxkvaddr)
 {
-	dprintf_debug("pmap_growkernel: till %p (adding %"PRIu64" KB)\n",
+	thunk_printf_debug("pmap_growkernel: till %p (adding %"PRIu64" KB)\n",
 		(void *) maxkvaddr,
-		(uint64_t) (maxkvaddr - kmem_ext_cur_end)/1024);
-	if (maxkvaddr > kmem_ext_end)
-		return kmem_ext_end;
-	kmem_ext_cur_end = maxkvaddr;
-	return kmem_ext_cur_end;
+		(uint64_t) (maxkvaddr - kmem_kvm_cur_end)/1024);
+	if (maxkvaddr > kmem_kvm_end)
+		return kmem_kvm_end;
+	kmem_kvm_cur_end = maxkvaddr;
+	return kmem_kvm_cur_end;
 }
 

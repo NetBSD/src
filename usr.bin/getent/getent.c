@@ -1,4 +1,4 @@
-/*	$NetBSD: getent.c,v 1.18 2011/10/11 19:24:43 christos Exp $	*/
+/*	$NetBSD: getent.c,v 1.18.2.1 2012/04/17 00:09:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getent.c,v 1.18 2011/10/11 19:24:43 christos Exp $");
+__RCSID("$NetBSD: getent.c,v 1.18.2.1 2012/04/17 00:09:32 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/socket.h>
@@ -175,7 +175,7 @@ parsenum(const char *word, unsigned long *result)
  *	then the aliases (beginning with prefix, separated by sep),
  *	then a newline
  */
-static void
+static __printflike(4, 5) void
 printfmtstrings(char *strings[], const char *prefix, const char *sep,
     const char *fmt, ...)
 {

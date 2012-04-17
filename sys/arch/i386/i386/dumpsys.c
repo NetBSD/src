@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpsys.c,v 1.13.2.1 2011/11/10 14:31:40 yamt Exp $	*/
+/*	$NetBSD: dumpsys.c,v 1.13.2.2 2012/04/17 00:06:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.13.2.1 2011/11/10 14:31:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.13.2.2 2012/04/17 00:06:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,7 +177,7 @@ dodumpsys(void)
 	    (unsigned long long)major(dumpdev),
 	    (unsigned long long)minor(dumpdev), dumplo);
 
-	psize = (*bdev->d_psize)(dumpdev);
+	psize = bdev_size(dumpdev);
 	printf("dump ");
 	if (psize == -1) {
 		printf("area unavailable\n");
@@ -274,19 +274,11 @@ failed:
 void
 cpu_dumpconf(void)
 {
-	const struct bdevsw *bdev;
 	int nblks, dumpblks;	/* size of dump area */
 
 	if (dumpdev == NODEV)
 		goto bad;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL) {
-		dumpdev = NODEV;
-		goto bad;
-	}
-	if (bdev->d_psize == NULL)
-		goto bad;
-	nblks = (*bdev->d_psize)(dumpdev);
+	nblks = bdev_size(dumpdev);
 	if (nblks <= ctod(1))
 		goto bad;
 
@@ -668,7 +660,6 @@ dumpsys_seg(paddr_t maddr, paddr_t bytes)
 		pmap_update(pmap_kernel());
 
 		error = (*dump)(dumpdev, blkno, (void *)dumpspace, n);
-		pmap_kremove(dumpspace, n * PAGE_SIZE);
 		if (error)
 			return error;
 		maddr += n;

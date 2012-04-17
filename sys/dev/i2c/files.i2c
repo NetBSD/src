@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.44 2011/10/03 22:27:23 jmcneill Exp $
+#	$NetBSD: files.i2c,v 1.44.2.1 2012/04/17 00:07:30 yamt Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -142,16 +142,6 @@ device	sgsmix
 attach	sgsmix at iic
 file	dev/i2c/sgsmix.c		sgsmix needs-flag
 defflag	opt_sgsmix.h	SGSMIX_DEBUG
-
-# Xbox PIC16LC System Management Controller
-device	pic16lc: sysmon_envsys
-attach	pic16lc at iic
-file	dev/i2c/pic16lc.c		pic16lc needs-flag
-
-# Xbox Serial EEPROM
-device	xbseeprom
-attach	xbseeprom at iic
-file	dev/i2c/xbseeprom.c		xbseeprom
 
 # Memory Serial Presence Detect
 attach	spdmem at iic with spdmem_iic

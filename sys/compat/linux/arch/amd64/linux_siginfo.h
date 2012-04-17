@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_siginfo.h,v 1.6 2009/06/08 11:46:07 njoly Exp $ */
+/*	$NetBSD: linux_siginfo.h,v 1.6.12.1 2012/04/17 00:07:15 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -51,11 +51,21 @@ typedef struct linux_siginfo {
 	int lsi_code;
 	union {
 		int _pad[LINUX_SI_PAD_SIZE];
+
+		/* kill() */
 		struct {
 			linux_pid_t _pid;
 			linux_uid_t _uid;
 		} _kill;
 
+		/* POSIX.1b signals */
+		struct {
+			linux_pid_t	_pid;
+			linux_uid_t	_uid;
+			linux_sigval_t	_sigval;
+		} _rt;
+
+		/* POSIX.1b timers */
 		struct {
 			linux_timer_t _tid;
 			int _overrun;
@@ -64,6 +74,7 @@ typedef struct linux_siginfo {
 			int _sys_private;
 		} _timer;
 
+		/* SIGCHLD */
 		struct {
 			linux_pid_t _pid;
 			linux_uid_t _uid;
@@ -72,15 +83,18 @@ typedef struct linux_siginfo {
 			linux_clock_t _stime;
 		} _sigchld;
 
-		struct {
-			void *_addr;
-		} _sigfault;
-
+		/* SIGPOLL */
 		struct {
 			long _band;
 			int _fd;
 		} _sigpoll;
-	} _sifields;
+
+		/* SIGILL, SIGFPE, SIGSEGV, SIGBUS */
+		struct {
+			void *_addr;
+		} _sigfault;
+
+	} _sidata;
 } linux_siginfo_t;
 
 #endif /* !_AMD64_LINUX_SIGINFO_H */

@@ -1,8 +1,10 @@
-# $NetBSD: Makefile,v 1.31.2.1 2011/11/10 14:31:52 yamt Exp $
+# $NetBSD: Makefile,v 1.31.2.2 2012/04/17 00:09:10 yamt Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/lib/libc/gen
+
+TESTS_SUBDIRS=	posix_spawn
 
 TESTS_C+=	t_alarm
 TESTS_C+=	t_assert
@@ -11,6 +13,7 @@ TESTS_C+=	t_closefrom
 TESTS_C+=	t_cpuset
 TESTS_C+=	t_dir
 TESTS_C+=	t_fmtcheck
+TESTS_C+=	t_fnmatch
 TESTS_C+=	t_fpclassify
 TESTS_C+=	t_fpsetmask
 TESTS_C+=	t_fpsetround
@@ -24,6 +27,7 @@ TESTS_C+=	t_nice
 TESTS_C+=	t_pause
 TESTS_C+=	t_raise
 TESTS_C+=	t_randomid
+TESTS_C+=	t_realpath
 TESTS_C+=	t_setdomainname
 TESTS_C+=	t_sethostname
 TESTS_C+=	t_siginfo
@@ -41,9 +45,5 @@ LDADD.t_nice+=		-lpthread
 DPADD.t_nice+=		${LIBPTHREAD}
 LDADD.t_syslog+=	-lpthread
 DPADD.t_syslog+=	${LIBPTHREAD}
-
-.if ${MACHINE_ARCH} == "alpha"
-COPTS+=			-mieee
-.endif
 
 .include <bsd.test.mk>

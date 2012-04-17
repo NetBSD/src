@@ -1,13 +1,12 @@
-/*	$NetBSD: windows-config.h,v 1.1.1.1 2009/12/13 16:57:25 kardel Exp $	*/
+/*	$NetBSD: windows-config.h,v 1.1.1.1.6.1 2012/04/17 00:03:52 yamt Exp $	*/
 
 
 /*
- * Time-stamp:        "2009-07-22 18:53:59 bkorb"
- *             by: bkorb
+ * Time-stamp:        "2010-02-24 08:39:04 bkorb"
  *
  *  This file is part of AutoGen.
  *
- *  AutoGen copyright (c) 1992-2009 by Bruce Korb - all rights reserved
+ *  AutoGen Copyright (c) 1992-2011 by Bruce Korb - all rights reserved
  *
  *  AutoGen is free software: you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the

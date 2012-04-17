@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.34 2011/10/09 08:42:15 tsutsui Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.34.2.1 2012/04/17 00:07:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -116,8 +116,10 @@
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
 				/* Actually VM_PSTRAT_UPPERFIRST is needed */
 
-#define	VM_NFREELIST		1
+#define	VM_NFREELIST		2
 #define	VM_FREELIST_DEFAULT	0
+#define	VM_FREELIST_HIGHMEM	VM_FREELIST_DEFAULT
+#define	VM_FREELIST_MAINMEM	1
 
 #define	__HAVE_PMAP_PHYSSEG
 

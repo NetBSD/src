@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_get_ldt.c,v 1.6 1999/07/02 15:14:07 simonb Exp $	*/
+/*	$NetBSD: i386_get_ldt.c,v 1.6.64.1 2012/04/17 00:05:12 yamt Exp $	*/
 
 /*
  *  Copyright (c) 1993 John Brezak
@@ -36,10 +36,7 @@
 #include <machine/sysarch.h>
 
 int
-i386_get_ldt(start, desc, num)
-	int start;
-	union descriptor *desc;
-	int num;
+i386_get_ldt(int start, union descriptor *desc, int num)
 {
 	struct i386_get_ldt_args p;
 

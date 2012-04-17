@@ -1,4 +1,4 @@
-/*	$NetBSD: framebuf.c,v 1.30 2010/01/12 18:42:38 pooka Exp $	*/
+/*	$NetBSD: framebuf.c,v 1.30.6.1 2012/04/17 00:05:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: framebuf.c,v 1.30 2010/01/12 18:42:38 pooka Exp $");
+__RCSID("$NetBSD: framebuf.c,v 1.30.6.1 2012/04/17 00:05:31 yamt Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -561,9 +561,8 @@ puffs_framev_enqueue_waitevent(struct puffs_cc *pcc, int fd, int *what)
 			EV_SET(&kev, fd, EVFILT_READ, EV_ENABLE,
 			    0, 0, (uintptr_t)fio);
 
-	rv = kevent(pu->pu_kq, &kev, 1, NULL, 0, NULL);
-	if (rv != 0)
-		return errno;
+	if (kevent(pu->pu_kq, &kev, 1, NULL, 0, NULL) == -1)
+		return -1;
 
 	if (*what & PUFFS_FBIO_READ)
 		fio->rwait++;

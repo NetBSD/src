@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.75 2011/10/14 09:23:30 hannken Exp $ */
+/* $NetBSD: cgd.c,v 1.75.2.1 2012/04/17 00:07:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.75 2011/10/14 09:23:30 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.75.2.1 2012/04/17 00:07:25 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -731,36 +731,15 @@ cgd_ioctl_clr(struct cgd_softc *cs, struct lwp *l)
 }
 
 static int
-getsize(struct lwp *l, struct vnode *vp, size_t *size)
-{
-	struct partinfo dpart;
-	struct dkwedge_info dkw;
-	int ret;
-
-	if ((ret = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD,
-	    l->l_cred)) == 0) {
-		*size = dkw.dkw_size;
-		return 0;
-	}
-
-	if ((ret = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, l->l_cred)) == 0) {
-		*size = dpart.part->p_size;
-		return 0;
-	}
-
-	return ret;
-}
-
-
-static int
 cgdinit(struct cgd_softc *cs, const char *cpath, struct vnode *vp,
 	struct lwp *l)
 {
 	struct	dk_geom *pdg;
 	struct	vattr va;
-	size_t	size;
 	int	ret;
 	char	*tmppath;
+	uint64_t psize;
+	unsigned secsize;
 
 	cs->sc_dksc.sc_size = 0;
 	cs->sc_tvn = vp;
@@ -781,15 +760,15 @@ cgdinit(struct cgd_softc *cs, const char *cpath, struct vnode *vp,
 
 	cs->sc_tdev = va.va_rdev;
 
-	if ((ret = getsize(l, vp, &size)) != 0)
+	if ((ret = getdisksize(vp, &psize, &secsize)) != 0)
 		goto bail;
 
-	if (!size) {
+	if (psize == 0) {
 		ret = ENODEV;
 		goto bail;
 	}
 
-	cs->sc_dksc.sc_size = size;
+	cs->sc_dksc.sc_size = psize;
 
 	/*
 	 * XXX here we should probe the underlying device.  If we

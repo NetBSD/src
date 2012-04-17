@@ -88,7 +88,7 @@ static struct option const long_options[] =
 };
 #endif /* HAVE_GETOPT_LONG */
 
-static void
+__dead static void
 tre_agrep_usage(int status)
 {
   if (status != 0)

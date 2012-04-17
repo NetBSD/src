@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.140 2011/06/12 03:35:59 rmind Exp $	*/
+/*	$NetBSD: conf.h,v 1.140.2.1 2012/04/17 00:08:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -166,6 +166,7 @@ dev_type_kqfilter(cdev_kqfilter);
 
 int	cdev_type(dev_t);
 int	bdev_type(dev_t);
+int	bdev_size(dev_t);
 
 /* symbolic sleep message strings */
 extern	const char devopn[], devio[], devwait[], devin[], devout[];

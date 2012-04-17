@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.117 2011/09/27 01:13:16 christos Exp $ */
+/* $NetBSD: udf_subr.c,v 1.117.2.1 2012/04/17 00:08:20 yamt Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.117 2011/09/27 01:13:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.117.2.1 2012/04/17 00:08:20 yamt Exp $");
 #endif /* not lint */
 
 
@@ -188,7 +188,8 @@ int
 udf_update_discinfo(struct udf_mount *ump)
 {
 	struct vnode *devvp = ump->devvp;
-	struct partinfo dpart;
+	uint64_t psize;
+	unsigned secsize;
 	struct mmc_discinfo *di;
 	int error;
 
@@ -204,9 +205,9 @@ udf_update_discinfo(struct udf_mount *ump)
 	}
 
 	/* disc partition support */
-	error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED);
+	error = getdisksize(devvp, &psize, &secsize);
 	if (error)
-		return ENODEV;
+		return error;
 
 	/* set up a disc info profile for partitions */
 	di->mmc_profile		= 0x01;	/* disc type */
@@ -222,8 +223,8 @@ udf_update_discinfo(struct udf_mount *ump)
 	di->disc_flags = MMC_DFLAGS_UNRESTRICTED;
 
 	/* TODO problem with last_possible_lba on resizable VND; request */
-	di->last_possible_lba = dpart.part->p_size;
-	di->sector_size       = dpart.disklab->d_secsize;
+	di->last_possible_lba = psize;
+	di->sector_size       = secsize;
 
 	di->num_sessions = 1;
 	di->num_tracks   = 1;

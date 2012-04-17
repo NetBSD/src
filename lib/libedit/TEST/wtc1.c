@@ -62,7 +62,7 @@ complete(EditLine *el, int ch)
 	char *buf, *bptr;
 	const LineInfoW *lf = el_wline(el);
 	int len, mblen, i;
-	unsigned char res;
+	unsigned char res = 0;
 	wchar_t dir[1024];
 
 	/* Find the last word */

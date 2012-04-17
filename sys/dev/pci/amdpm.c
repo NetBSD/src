@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.34 2010/02/07 20:55:46 pgoyette Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.34.12.1 2012/04/17 00:07:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.34 2010/02/07 20:55:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.34.12.1 2012/04/17 00:07:42 yamt Exp $");
 
 #include "opt_amdpm.h"
 
@@ -87,15 +87,11 @@ amdpm_attach(device_t parent, device_t self, void *aux)
 {
 	struct amdpm_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
-	char devinfo[256];
 	pcireg_t confreg, pmptrreg;
 	u_int32_t pmreg;
 	int i;
 
-	aprint_naive("\n");
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
-	    PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo(pa, NULL);
 
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NVIDIA_XBOX_SMBUS)
 		sc->sc_nforce = 1;

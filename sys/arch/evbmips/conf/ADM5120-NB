@@ -1,11 +1,11 @@
-#	$NetBSD: ADM5120-NB,v 1.9 2011/06/30 20:09:29 wiz Exp $
+#	$NetBSD: ADM5120-NB,v 1.9.2.1 2012/04/17 00:06:16 yamt Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"GENERIC-$Revision: 1.9 $"
+#ident 		"GENERIC-$Revision: 1.9.2.1 $"
 
 maxusers	32
 
@@ -157,7 +157,6 @@ pseudo-device	loop				# network loopback
 # Miscellaneous pseudo-devices
 pseudo-device	pty				# pseudo-terminals
 #pseudo-device	sequencer	1		# MIDI sequencer
-pseudo-device	rnd				# /dev/random & kernel generator
 
 # A pseudo device needed for Coda		# also needs CODA (above)
 #pseudo-device	vcoda		4		# coda minicache <-> venus comm.

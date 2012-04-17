@@ -596,6 +596,25 @@ update_fileproc (void *callerdat, struct file_info *finfo)
     status = Classify_File (finfo, tag, date, options, force_tag_match,
 			    aflag, &vers, pipeout);
 
+/* cvsacl patch */
+#ifdef SERVER_SUPPORT
+    if (use_cvs_acl /* && server_active */)
+    {
+	if (!access_allowed (finfo->file, finfo->repository, vers->tag, 5,
+			     NULL, NULL, 1))
+	{
+	    if (stop_at_first_permission_denied)
+		error (1, 0, "permission denied for %s",
+		       Short_Repository (finfo->repository));
+	    else
+		error (0, 0, "permission denied for %s/%s",
+		       Short_Repository (finfo->repository), finfo->file);
+			
+	    return (0);
+	}
+    }
+#endif
+
     /* Keep track of whether TAG is a branch tag.
        Note that if it is a branch tag in some files and a nonbranch tag
        in others, treat it as a nonbranch tag.  */
@@ -1039,7 +1058,8 @@ update_dirleave_proc (void *callerdat, const char *dir, int err,
     {
 	/* FIXME: chdir ("..") loses with symlinks.  */
 	/* Prune empty dirs on the way out - if necessary */
-	(void) CVS_CHDIR ("..");
+	if (CVS_CHDIR ("..") == -1)
+	    error (0, errno, "Cannot chdir to ..");
 	if (update_prune_dirs && isemptydir (dir, 0))
 	{
 	    /* I'm not sure the existence_error is actually possible (except

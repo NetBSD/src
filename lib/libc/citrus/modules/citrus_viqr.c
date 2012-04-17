@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_viqr.c,v 1.4 2008/06/14 16:01:08 tnozaki Exp $ */
+/* $NetBSD: citrus_viqr.c,v 1.4.2.1 2012/04/17 00:05:16 yamt Exp $ */
 
 /*-
  * Copyright (c)2006 Citrus Project,
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_viqr.c,v 1.4 2008/06/14 16:01:08 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_viqr.c,v 1.4.2.1 2012/04/17 00:05:16 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/queue.h>
@@ -360,7 +360,7 @@ _citrus_VIQR_wcrtomb_priv(_VIQREncodingInfo * __restrict ei,
 	_VIQRState * __restrict psenc, size_t * __restrict nresult)
 {
 	mnemonic_t *m;
-	int ch, escape;
+	int ch;
 	const char *p;
 
 	_DIAGASSERT(ei != NULL);

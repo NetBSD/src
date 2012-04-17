@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.1.1.1 2009/12/13 16:54:41 kardel Exp $	*/
+/*	$NetBSD: net.c,v 1.1.1.1.6.1 2012/04/17 00:03:45 yamt Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -49,11 +49,11 @@
 #define ISC_NET_PORTRANGEHIGH 65535
 #endif	/* ISC_NET_PORTRANGEHIGH */
 
-#if defined(ISC_PLATFORM_HAVEIPV6) && defined(ISC_PLATFORM_NEEDIN6ADDRANY)
+#if defined(ISC_PLATFORM_NEEDIN6ADDRANY)
 const struct in6_addr isc_net_in6addrany = IN6ADDR_ANY_INIT;
 #endif
 
-#if defined(ISC_PLATFORM_HAVEIPV6) && defined(ISC_PLATFORM_NEEDIN6ADDRLOOPBACK)
+#if defined(ISC_PLATFORM_NEEDIN6ADDRLOOPBACK)
 const struct in6_addr isc_net_in6addrloop = IN6ADDR_LOOPBACK_INIT;
 #endif
 
@@ -71,7 +71,6 @@ void InitSockets(void);
 static isc_result_t
 try_proto(int domain) {
 	SOCKET s;
-	isc_result_t result = ISC_R_SUCCESS;
 	char strbuf[ISC_STRERRORSIZE];
 	int errval;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.6 2011/04/12 18:24:28 matt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.6.4.1 2012/04/17 00:07:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,18 +64,25 @@ typedef struct {
 	__gregset_t	__gregs;	/* General Purpose Register set */
 } mcontext_t;
 
+/* Machine-dependent uc_flags */
+#define _UC_TLSBASE	0x00080000
+
 #define	_UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
 #define	_UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_PC])
 #define	_UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_R0])
 
 #define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
 
+#ifndef _KERNEL
+#include <sys/syscall.h>
+
 static __inline void *
 __lwp_getprivate_fast(void)
 {
 	register void *tcb __asm("r0");
-	__asm("chmu $1" ::: "r0");
+	__asm("chmk %0" :: "i"(SYS__lwp_getprivate) : "r0");
 	return tcb;
 }
+#endif
 
 #endif	/* !_VAX_MCONTEXT_H_ */

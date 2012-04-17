@@ -1,5 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.86 2011/03/29 07:48:13 mbalmer Exp $	*/
-/*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.86.4.1 2012/04/17 00:08:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -36,21 +35,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.86 2011/03/29 07:48:13 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.86.4.1 2012/04/17 00:08:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/fcntl.h>
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#elif defined(__FreeBSD__)
-#include <sys/ioccom.h>
-#include <sys/module.h>
-#include <sys/bus.h>
-#endif
 #include <sys/uio.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
@@ -128,14 +121,8 @@ struct ulpt_softc {
 
 	int sc_refcnt;
 	u_char sc_dying;
-
-#if defined(__FreeBSD__)
-	dev_t dev;
-	dev_t dev_noprime;
-#endif
 };
 
-#if defined(__NetBSD__)
 dev_type_open(ulptopen);
 dev_type_close(ulptclose);
 dev_type_write(ulptwrite);
@@ -146,35 +133,6 @@ const struct cdevsw ulpt_cdevsw = {
 	ulptopen, ulptclose, ulptread, ulptwrite, ulptioctl,
 	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
-#elif defined(__OpenBSD__)
-cdev_decl(ulpt);
-#elif defined(__FreeBSD__)
-Static d_open_t ulptopen;
-Static d_close_t ulptclose;
-Static d_write_t ulptwrite;
-Static d_ioctl_t ulptioctl;
-
-#define ULPT_CDEV_MAJOR 113
-
-Static struct cdevsw ulpt_cdevsw = {
-	/* open */	ulptopen,
-	/* close */	ulptclose,
-	/* read */	noread,
-	/* write */	ulptwrite,
-	/* ioctl */	ulptioctl,
-	/* poll */	nopoll,
-	/* mmap */	nommap,
-	/* strategy */	nostrategy,
-	/* name */	"ulpt",
-	/* maj */	ULPT_CDEV_MAJOR,
-	/* dump */	nodump,
-	/* psize */	nopsize,
-	/* flags */	0,
-#if !defined(__FreeBSD__) || (__FreeBSD__ < 5)
-	/* bmaj */	-1
-#endif
-};
-#endif
 
 void ulpt_disco(void *);
 
@@ -350,14 +308,6 @@ ulpt_attach(device_t parent, device_t self, void *aux)
 	}
 #endif
 
-#if defined(__FreeBSD__)
-	sc->dev = make_dev(&ulpt_cdevsw, device_get_unit(self),
-		UID_ROOT, GID_OPERATOR, 0644, "ulpt%d", device_get_unit(self));
-	sc->dev_noprime = make_dev(&ulpt_cdevsw,
-		device_get_unit(self)|ULPT_NOPRIME,
-		UID_ROOT, GID_OPERATOR, 0644, "unlpt%d", device_get_unit(self));
-#endif
-
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   sc->sc_dev);
 
@@ -367,7 +317,6 @@ ulpt_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 int
 ulpt_activate(device_t self, enum devact act)
 {
@@ -381,18 +330,13 @@ ulpt_activate(device_t self, enum devact act)
 		return EOPNOTSUPP;
 	}
 }
-#endif
 
 int 
 ulpt_detach(device_t self, int flags)
 {
 	struct ulpt_softc *sc = device_private(self);
 	int s;
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	int maj, mn;
-#elif defined(__FreeBSD__)
-	struct vnode *vp;
-#endif
 
 	DPRINTFN(1, ("ulpt_detach: sc=%p\n", sc));
 
@@ -406,35 +350,17 @@ ulpt_detach(device_t self, int flags)
 	if (--sc->sc_refcnt >= 0) {
 		/* There is noone to wake, aborting the pipe is enough */
 		/* Wait for processes to go away. */
-		usb_detach_wait(sc->sc_dev);
+		usb_detach_waitold(sc->sc_dev);
 	}
 	splx(s);
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	/* locate the major number */
-#if defined(__NetBSD__)
 	maj = cdevsw_lookup_major(&ulpt_cdevsw);
-#elif defined(__OpenBSD__)
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == ulptopen)
-			break;
-#endif
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 	vdevgone(maj, mn | ULPT_NOPRIME , mn | ULPT_NOPRIME, VCHR);
-#elif defined(__FreeBSD__)
-	vp = SLIST_FIRST(&sc->dev->si_hlist);
-	if (vp)
-		VOP_REVOKE(vp, REVOKEALL);
-	vp = SLIST_FIRST(&sc->dev_noprime->si_hlist);
-	if (vp)
-		VOP_REVOKE(vp, REVOKEALL);
-
-	destroy_dev(sc->dev);
-	destroy_dev(sc->dev_noprime);
-#endif
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   sc->sc_dev);
@@ -512,14 +438,6 @@ ulptopen(dev_t dev, int flag, int mode, struct lwp *l)
 	sc->sc_state = ULPT_INIT;
 	sc->sc_flags = flags;
 	DPRINTFN(2, ("ulptopen: flags=0x%x\n", (unsigned)flags));
-
-#if defined(ULPT_DEBUG) && defined(__FreeBSD__)
-	/* Ignoring these flags might not be a good idea */
-	if ((flags & ~ULPT_NOPRIME) != 0)
-		printf("ulptopen: flags ignored: %b\n", flags,
-			"\20\3POS_INIT\4POS_ACK\6PRIME_OPEN\7AUTOLF\10BYPASS");
-#endif
-
 
 	error = 0;
 	sc->sc_refcnt++;
@@ -612,7 +530,7 @@ ulptopen(dev_t dev, int flag, int mode, struct lwp *l)
 
  done:
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 
 	DPRINTFN(2, ("ulptopen: done, error=%d\n", error));
 	return (error);
@@ -728,7 +646,7 @@ ulptwrite(dev_t dev, struct uio *uio, int flags)
 	sc->sc_refcnt++;
 	error = ulpt_do_write(sc, uio, flags);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 	return (error);
 }
 
@@ -911,7 +829,7 @@ ulptread(dev_t dev, struct uio *uio, int flags)
 	sc->sc_refcnt++;
 	error = ulpt_do_read(sc, uio, flags);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 	return (error);
 }
 
@@ -1000,8 +918,4 @@ ieee1284_print_id(char *str)
 		}
 	}
 }
-#endif
-
-#if defined(__FreeBSD__)
-DRIVER_MODULE(ulpt, uhub, ulpt_driver, ulpt_devclass, usbd_driver_load, 0);
 #endif

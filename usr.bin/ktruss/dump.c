@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.38 2011/07/01 02:34:50 mrg Exp $	*/
+/*	$NetBSD: dump.c,v 1.38.2.1 2012/04/17 00:09:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.38 2011/07/01 02:34:50 mrg Exp $");
+__RCSID("$NetBSD: dump.c,v 1.38.2.1 2012/04/17 00:09:33 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -112,7 +112,7 @@ void	putpendq(struct ktr_entry *);
 void	syscallnameprint(int);
 void	syscallprint(struct ktr_header *);
 void	sysretprint(struct ktr_header *);
-int	wprintf(const char *, ...);
+int	wprintf(const char *, ...) __printflike(1, 2);
 void	*xrealloc(void *, size_t *, size_t);
 
 int
@@ -527,7 +527,7 @@ syscallprint(struct ktr_header *kth)
 	case SYS_rmdir:
 	case SYS___utimes50:
 	case SYS_compat_50_quotactl:
-	case SYS___quotactl50:
+	case SYS___quotactl:
 	case SYS_statvfs1:
 	case SYS_compat_30_getfh:
 	case SYS_pathconf:
@@ -635,7 +635,7 @@ sysretprint(struct ktr_header *kth)
 	} else
 		switch (ktr->ktr_code) {
 		case SYS_mmap:
-			wprintf(" = %p", (long)ret);
+			wprintf(" = %p", (void *)(intptr_t)ret);
 			break;
 		default:
 			wprintf(" = %ld", (long)ret);

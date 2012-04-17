@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.c,v 1.31 2010/12/20 00:25:24 matt Exp $ */
+/* $NetBSD: linux_syscall.c,v 1.31.8.1 2012/04/17 00:05:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,17 +65,17 @@
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -89,7 +89,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.31 2010/12/20 00:25:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.31.8.1 2012/04/17 00:05:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,8 +111,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.31 2010/12/20 00:25:24 matt Exp 
 #include <compat/linux/arch/alpha/linux_machdep.h>
 
 void	linux_syscall_intern(struct proc *);
-void	linux_syscall_plain(struct lwp *, u_int64_t, struct trapframe *);
-void	linux_syscall_fancy(struct lwp *, u_int64_t, struct trapframe *);
+void	linux_syscall_plain(struct lwp *, uint64_t, struct trapframe *);
+void	linux_syscall_fancy(struct lwp *, uint64_t, struct trapframe *);
 
 void
 linux_syscall_intern(struct proc *p)
@@ -138,12 +138,12 @@ linux_syscall_intern(struct proc *p)
  * a3, and v0 from the frame before returning to the user process.
  */
 void
-linux_syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
+linux_syscall_plain(struct lwp *l, uint64_t code, struct trapframe *framep)
 {
 	const struct sysent *callp;
 	int error;
-	u_int64_t rval[2];
-	u_int64_t *args, copyargs[10];				/* XXX */
+	uint64_t rval[2];
+	uint64_t *args, copyargs[10];				/* XXX */
 	u_int hidden, nargs;
 	struct proc *p = l->l_proc;
 
@@ -172,7 +172,7 @@ linux_syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	switch (nargs) {
 	default:
 		error = copyin((void *)alpha_pal_rdusp(), &copyargs[6],
-		    (nargs - 6) * sizeof(u_int64_t));
+		    (nargs - 6) * sizeof(uint64_t));
 		if (error)
 			goto bad;
 	case 6:	
@@ -222,12 +222,12 @@ linux_syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 }
 
 void
-linux_syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
+linux_syscall_fancy(struct lwp *l, uint64_t code, struct trapframe *framep)
 {
 	const struct sysent *callp;
 	int error;
-	u_int64_t rval[2];
-	u_int64_t *args, copyargs[10];
+	uint64_t rval[2];
+	uint64_t *args, copyargs[10];
 	u_int hidden, nargs;
 	struct proc *p = l->l_proc;
 
@@ -256,7 +256,7 @@ linux_syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	switch (nargs) {
 	default:
 		error = copyin((void *)alpha_pal_rdusp(), &copyargs[6],
-		    (nargs - 6) * sizeof(u_int64_t));
+		    (nargs - 6) * sizeof(uint64_t));
 		if (error) {
 			args = copyargs;
 			goto bad;

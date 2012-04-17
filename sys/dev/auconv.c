@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.24 2011/09/07 00:11:58 jmcneill Exp $	*/
+/*	$NetBSD: auconv.c,v 1.24.2.1 2012/04/17 00:07:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.24 2011/09/07 00:11:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.24.2.1 2012/04/17 00:07:24 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -224,7 +224,8 @@ stream_filter_set_inputbuffer(stream_filter_t *this, audio_stream_t *stream)
 
 stream_filter_t *
 auconv_nocontext_filter_factory(
-	int (*fetch_to)(stream_fetcher_t *, audio_stream_t *, int))
+	int (*fetch_to)(struct audio_softc *, stream_fetcher_t *,
+			audio_stream_t *, int))
 {
 	stream_filter_t *this;
 
@@ -249,7 +250,7 @@ auconv_nocontext_filter_dtor(struct stream_filter *this)
 
 #define DEFINE_FILTER(name)	\
 static int \
-name##_fetch_to(stream_fetcher_t *, audio_stream_t *, int); \
+name##_fetch_to(struct audio_softc *, stream_fetcher_t *, audio_stream_t *, int); \
 stream_filter_t * \
 name(struct audio_softc *sc, const audio_params_t *from, \
      const audio_params_t *to) \
@@ -257,7 +258,8 @@ name(struct audio_softc *sc, const audio_params_t *from, \
 	return auconv_nocontext_filter_factory(name##_fetch_to); \
 } \
 static int \
-name##_fetch_to(stream_fetcher_t *self, audio_stream_t *dst, int max_used)
+name##_fetch_to(struct audio_softc *sc, stream_fetcher_t *self, \
+    audio_stream_t *dst, int max_used)
 
 DEFINE_FILTER(change_sign8)
 {
@@ -265,7 +267,7 @@ DEFINE_FILTER(change_sign8)
 	int m, err;
 
 	this = (stream_filter_t *)self;
-	if ((err = this->prev->fetch_to(this->prev, this->src, max_used)))
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used)))
 		return err;
 	m = dst->end - dst->start;
 	m = min(m, max_used);
@@ -282,7 +284,7 @@ DEFINE_FILTER(change_sign16)
 
 	this = (stream_filter_t *)self;
 	max_used = (max_used + 1) & ~1; /* round up to even */
-	if ((err = this->prev->fetch_to(this->prev, this->src, max_used)))
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used)))
 		return err;
 	m = (dst->end - dst->start) & ~1;
 	m = min(m, max_used);
@@ -309,7 +311,7 @@ DEFINE_FILTER(swap_bytes)
 
 	this = (stream_filter_t *)self;
 	max_used = (max_used + 1) & ~1; /* round up to even */
-	if ((err = this->prev->fetch_to(this->prev, this->src, max_used)))
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used)))
 		return err;
 	m = (dst->end - dst->start) & ~1;
 	m = min(m, max_used);
@@ -327,7 +329,7 @@ DEFINE_FILTER(swap_bytes_change_sign16)
 
 	this = (stream_filter_t *)self;
 	max_used = (max_used + 1) & ~1; /* round up to even */
-	if ((err = this->prev->fetch_to(this->prev, this->src, max_used)))
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used)))
 		return err;
 	m = (dst->end - dst->start) & ~1;
 	m = min(m, max_used);
@@ -354,7 +356,7 @@ DEFINE_FILTER(linear8_to_linear16)
 
 	this = (stream_filter_t *)self;
 	max_used = (max_used + 1) & ~1; /* round up to even */
-	if ((err = this->prev->fetch_to(this->prev, this->src, max_used / 2)))
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used / 2)))
 		return err;
 	m = (dst->end - dst->start) & ~1;
 	m = min(m, max_used);
@@ -415,7 +417,7 @@ DEFINE_FILTER(linear16_to_linear8)
 	int m, err, enc_src, enc_dst;
 
 	this = (stream_filter_t *)self;
-	if ((err = this->prev->fetch_to(this->prev, this->src, max_used * 2)))
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used * 2)))
 		return err;
 	m = dst->end - dst->start;
 	m = min(m, max_used);

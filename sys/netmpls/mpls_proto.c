@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_proto.c,v 1.2 2011/03/31 19:40:53 dyoung Exp $ */
+/*	$NetBSD: mpls_proto.c,v 1.2.4.1 2012/04/17 00:08:47 yamt Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.2 2011/03/31 19:40:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.2.4.1 2012/04/17 00:08:47 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_mbuftrace.h"
@@ -65,7 +65,7 @@ int mpls_accept = 0;
 int mpls_mapprec_inet = 1;
 int mpls_mapclass_inet6 = 1;
 
-void mpls_init()
+void mpls_init(void)
 {
 #ifdef MBUFTRACE
 	MOWNER_ATTACH(&mpls_owner);

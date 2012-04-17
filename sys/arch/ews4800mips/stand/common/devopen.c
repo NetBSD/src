@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.4 2008/04/28 20:23:18 martin Exp $	*/
+/*	$NetBSD: devopen.c,v 1.4.34.1 2012/04/17 00:06:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,12 +46,8 @@ extern int kernel_binary_size;
 
 extern struct fs_ops datafs_ops;
 extern struct fs_ops bfs_ops;
-struct fs_ops ufs_ops = {
-	ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat
-};
-struct fs_ops nfs_ops = {
-	nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat
-};
+struct fs_ops ufs_ops = FS_OPS(ufs);
+struct fs_ops nfs_ops = FS_OPS(nfs);
 
 extern struct devsw netdevsw;
 extern struct devsw dkdevsw;

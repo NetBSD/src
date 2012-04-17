@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 2009/03/02 09:33:02 nonaka Exp $	*/
+/*	$NetBSD: conf.c,v 1.1.18.1 2012/04/17 00:07:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -30,20 +30,23 @@
 
 #include <lib/libsa/ufs.h>
 #include <lib/libsa/ext2fs.h>
+#include "pathfs.h"
 
 char devname_hd[] = "hd";
 char devname_mmcd[] = "mmcd";
+char devname_path[] = "path";
 
 struct devsw devsw[] = {
-    { devname_hd, unixstrategy, unixopen, unixclose, unixioctl},
-    { devname_mmcd, unixstrategy, unixopen, unixclose, unixioctl},
+    { devname_hd, unixstrategy, unixopen, unixclose, unixioctl },
+    { devname_mmcd, unixstrategy, unixopen, unixclose, unixioctl },
+    { devname_path, unixstrategy, unixpathopen, unixclose, unixioctl },
 };
 int ndevs = __arraycount(devsw);
 
 struct fs_ops file_system[] = {
-    FS_OPS(ufs),
     FS_OPS(ffsv1),
     FS_OPS(ffsv2),
     FS_OPS(ext2fs),
+    FS_OPS(pathfs),
 };
 int nfsys = __arraycount(file_system);

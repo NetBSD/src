@@ -1,4 +1,4 @@
-# $NetBSD: t_filter_parse.sh,v 1.2 2010/10/19 16:36:36 jmmv Exp $
+# $NetBSD: t_filter_parse.sh,v 1.2.6.1 2012/04/17 00:09:04 yamt Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -99,7 +99,7 @@ test_case i13 itest text ipf
 test_case i14 itest text ipf
 test_case i15 itest text ipf
 test_case i16 itest text ipf
-test_case i17 itest text ipftest
+broken_test_case i17 itest text ipftest
 test_case i18 itest text ipf
 test_case i19 itest_i19 text ipf
 test_case i20 itest text ipf

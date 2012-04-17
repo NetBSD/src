@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.250 2011/10/29 18:56:49 jakllsch Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.250.2.1 2012/04/17 00:06:40 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,8 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.250 2011/10/29 18:56:49 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.250.2.1 2012/04/17 00:06:40 yamt Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -134,8 +133,6 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.250 2011/10/29 18:56:49 jakllsch 
 #include <sys/kcore.h>
 #include <sys/kmem.h>
 #include <sys/ras.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/cpu.h>
 #include <sys/atomic.h>
 #include <sys/ucontext.h>
@@ -204,13 +201,6 @@ uint64_t mips3_cp0_tlb_entry_lo_probe(void);
 
 static void mips3_tlb_probe(void);
 #endif
-
-/*
- * safepri is a safe priority for sleepq to set for a spin-wait during
- * autoconfiguration or after a panic which will allows interrupts to
- * be delivered.  Used as an argument to splx().
- */
-int safepri = IPL_SOFTSERIAL;
 
 #if defined(MIPS1)
 static void	mips1_vector_init(const struct splsw *);
@@ -1787,19 +1777,11 @@ cpu_dump(void)
 void
 cpu_dumpconf(void)
 {
-	const struct bdevsw *bdev;
 	int nblks, dumpblks;	/* size of dump area */
 
 	if (dumpdev == NODEV)
 		goto bad;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL) {
-		dumpdev = NODEV;
-		goto bad;
-	}
-	if (bdev->d_psize == NULL)
-		goto bad;
-	nblks = (*bdev->d_psize)(dumpdev);
+	nblks = bdev_size(dumpdev);
 	if (nblks <= ctod(1))
 		goto bad;
 
@@ -1864,7 +1846,7 @@ dumpsys(void)
 	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
 	    minor(dumpdev), dumplo);
 
-	psize = (*bdev->d_psize)(dumpdev);
+	psize = bdev_size(dumpdev);
 	printf("dump ");
 	if (psize == -1) {
 		printf("area unavailable\n");
@@ -2388,3 +2370,14 @@ mips_watchpoint_init(void)
 	curcpu()->ci_cpuwatch_count = cpuwatch_discover();
 }
 #endif
+
+
+/*
+ * Process the tail end of a posix_spawn() for the child.
+ */
+void
+cpu_spawn_return(struct lwp *l)
+{
+	userret(l);
+}
+

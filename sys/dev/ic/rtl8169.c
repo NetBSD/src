@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.133 2010/07/28 23:30:21 msaitoh Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.133.8.1 2012/04/17 00:07:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.133 2010/07/28 23:30:21 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.133.8.1 2012/04/17 00:07:36 yamt Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -601,6 +601,15 @@ re_attach(struct rtk_softc *sc)
 			 */
 			sc->sc_quirk |= RTKQ_NOJUMBO;
 			break;
+		case RTK_HWREV_8168E:
+			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD |
+			    RTKQ_MACSTAT | RTKQ_CMDSTOP | RTKQ_PHYWAKE_PM |
+			    RTKQ_NOJUMBO;
+			break;
+		case RTK_HWREV_8168E_VL:
+			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD |
+			    RTKQ_MACSTAT | RTKQ_CMDSTOP | RTKQ_NOJUMBO;
+			break;
 		case RTK_HWREV_8100E:
 		case RTK_HWREV_8100E_SPIN2:
 		case RTK_HWREV_8101E:
@@ -658,6 +667,10 @@ re_attach(struct rtk_softc *sc)
 			eaddr[(i * 2) + 1] = val >> 8;
 		}
 	}
+
+	/* Take PHY out of power down mode. */
+	if ((sc->sc_quirk & RTKQ_PHYWAKE_PM) != 0)
+		CSR_WRITE_1(sc, RTK_PMCH, CSR_READ_1(sc, RTK_PMCH) | 0x80);
 
 	aprint_normal_dev(sc->sc_dev, "Ethernet address %s\n",
 	    ether_sprintf(eaddr));

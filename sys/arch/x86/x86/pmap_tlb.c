@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.3 2011/06/15 20:50:02 rmind Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.3.6.1 2012/04/17 00:07:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008-2011 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.3 2011/06/15 20:50:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.3.6.1 2012/04/17 00:07:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -52,7 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.3 2011/06/15 20:50:02 rmind Exp $");
 #include <uvm/uvm.h>
 
 #include <machine/cpuvar.h>
-#include <x86/pmap.h>
+#ifdef XEN
+#include <xen/xenpmap.h>
+#endif /* XEN */
 #include <x86/i82489reg.h>
 #include <x86/i82489var.h>
 
@@ -261,6 +263,64 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t va, pt_entry_t pte, tlbwhy_t why)
 	splx(s);
 }
 
+#ifdef MULTIPROCESSOR
+#ifdef XEN
+static inline
+void pmap_tlb_processpacket(pmap_tlb_packet_t *tp)
+{
+	struct cpu_info *self = curcpu();
+	if (tp->tp_count == (uint16_t)-1) {
+		xen_mcast_tlbflush(tp->tp_cpumask &
+				   cpus_running &
+				   ~self->ci_cpumask);
+	} else {
+		/* Invalidating a single page or a range of pages. */
+		int i;
+		for (i = tp->tp_count - 1; i >= 0; i--) {
+			xen_mcast_invlpg(tp->tp_va[i],
+					 tp->tp_cpumask & 
+					 cpus_running &
+					 ~self->ci_cpumask);
+		}
+	}
+
+	/* Ack the request */
+	atomic_and_32(&pmap_tlb_mailbox.tm_pending, ~tp->tp_cpumask);
+}
+#else /* XEN */
+static inline 
+void pmap_tlb_processpacket(pmap_tlb_packet_t *tp)
+{
+	int err = 0;
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *lci;
+
+	if (tp->tp_cpumask == cpus_running) {
+		err = x86_ipi(LAPIC_TLB_VECTOR, LAPIC_DEST_ALLEXCL,
+		    LAPIC_DLMODE_FIXED);
+	} else {
+		struct cpu_info *self = curcpu();
+		for (CPU_INFO_FOREACH(cii, lci)) {
+			if (__predict_false(lci == self)) {
+				continue;
+			}
+			if ((lci->ci_cpumask & pmap_tlb_mailbox.tm_pending) == 0) {
+				continue;
+			}
+			KASSERT(lci->ci_flags & CPUF_RUNNING);
+
+			err |= x86_ipi(LAPIC_TLB_VECTOR,
+				       lci->ci_cpuid, LAPIC_DLMODE_FIXED);
+		}
+	}
+
+	if (__predict_false(err != 0)) {
+		panic("pmap_tlb_shootdown: IPI failed");
+	}
+}
+#endif /* XEN */
+#endif /* MULTIPROCESSOR */
+
 /*
  * pmap_tlb_shootnow: process pending TLB shootdowns queued on current CPU.
  *
@@ -297,9 +357,7 @@ pmap_tlb_shootnow(void)
 
 #ifdef MULTIPROCESSOR
 	if (remote != 0) {
-		CPU_INFO_ITERATOR cii;
-		struct cpu_info *lci;
-		int count, err;
+		int count;
 		/*
 		 * Gain ownership of the shootdown mailbox.  We must stay
 		 * at IPL_VM once we own it or could deadlock against an
@@ -330,29 +388,19 @@ pmap_tlb_shootnow(void)
 		/*
 		 * Initiate shootdowns on remote CPUs.
 		 */
-		if (tp->tp_cpumask == cpus_running) {
-			err = x86_ipi(LAPIC_TLB_VECTOR, LAPIC_DEST_ALLEXCL,
-			    LAPIC_DLMODE_FIXED);
-		} else {
-			err = 0;
-			for (CPU_INFO_FOREACH(cii, lci)) {
-				if ((lci->ci_cpumask & remote) == 0) {
-					continue;
-				}
-				if ((lci->ci_flags & CPUF_RUNNING) == 0) {
-					remote &= ~lci->ci_cpumask;
-					atomic_and_32(&tm->tm_pending, remote);
-					continue;
-				}
-				err |= x86_ipi(LAPIC_TLB_VECTOR,
-				lci->ci_cpuid, LAPIC_DLMODE_FIXED);
-			}
-		}
-		if (__predict_false(err != 0)) {
-			panic("pmap_tlb_shootdown: IPI failed");
-		}
+		/* Trim mailbox wait to only for CPUF_RUNNING cpus */
+		atomic_and_32(&tm->tm_pending, cpus_running);
+
+		pmap_tlb_processpacket(tp);
+#ifdef XEN
+		/* 
+		 * remote CPUs have been synchronously flushed
+		 */
+		remote = 0; 
+#endif /* XEN */
 	}
-#endif
+#endif /* MULTIPROCESSOR */
+
 	/*
 	 * Shootdowns on remote CPUs are now in flight.  In the meantime,
 	 * perform local shootdowns and do not forget to update emap gen.

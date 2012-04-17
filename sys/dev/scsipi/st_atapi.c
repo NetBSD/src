@@ -1,4 +1,4 @@
-/*	$NetBSD: st_atapi.c,v 1.26 2009/12/06 22:48:17 dyoung Exp $ */
+/*	$NetBSD: st_atapi.c,v 1.26.12.1 2012/04/17 00:08:03 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 Manuel Bouyer.
@@ -22,14 +22,12 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_atapi.c,v 1.26 2009/12/06 22:48:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_atapi.c,v 1.26.12.1 2012/04/17 00:08:03 yamt Exp $");
 
 #include "opt_scsi.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -47,8 +45,14 @@ static void	st_atapibus_attach(device_t, device_t, void *);
 static int	st_atapibus_ops(struct st_softc *, int, int);
 static int	st_atapibus_mode_sense(struct st_softc *, int);
 
-CFATTACH_DECL(st_atapibus, sizeof(struct st_softc),
-    st_atapibus_match, st_atapibus_attach, stdetach, NULL);
+CFATTACH_DECL_NEW(
+	st_atapibus,
+	sizeof(struct st_softc),
+	st_atapibus_match,
+	st_atapibus_attach,
+	stdetach,
+	NULL
+);
 
 static const struct scsipi_inquiry_pattern st_atapibus_patterns[] = {
 	{T_SEQUENTIAL, T_REMOV,
@@ -56,20 +60,19 @@ static const struct scsipi_inquiry_pattern st_atapibus_patterns[] = {
 };
 
 static int
-st_atapibus_match(device_t parent, cfdata_t match,
-    void *aux)
+st_atapibus_match(device_t parent, cfdata_t match,  void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
 	int priority;
 
 	if (scsipi_periph_bustype(sa->sa_periph) != SCSIPI_BUSTYPE_ATAPI)
-		return (0);
+		return 0;
 
 	(void)scsipi_inqmatch(&sa->sa_inqbuf,
 	    st_atapibus_patterns,
 	    sizeof(st_atapibus_patterns)/sizeof(st_atapibus_patterns[0]),
 	    sizeof(st_atapibus_patterns[0]), &priority);
-	return (priority);
+	return priority;
 }
 
 static void
@@ -102,7 +105,7 @@ st_atapibus_attach(device_t parent, device_t self, void *aux)
 	}
 
 	st->ops = st_atapibus_ops;
-	stattach(parent, st, aux);
+	stattach(parent, self, aux);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: epsonlcd.c,v 1.1 2011/08/06 03:53:40 kiyohara Exp $ */
+/*	$NetBSD: epsonlcd.c,v 1.1.2.1 2012/04/17 00:06:23 yamt Exp $ */
 /*
  * Copyright (c) 2011 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epsonlcd.c,v 1.1 2011/08/06 03:53:40 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epsonlcd.c,v 1.1.2.1 2012/04/17 00:06:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -73,7 +73,7 @@ static void epsonlcd_setup_hpcfbif(struct epsonlcd_softc *,
 static void epsonlcd_get_video_chip(struct epsonlcd_softc *,
 				    struct video_chip *);
 
-CFATTACH_DECL_NEW(epsonlcd, sizeof(struct epsonlcd_softc), 
+CFATTACH_DECL_NEW(epsonlcd, sizeof(struct epsonlcd_softc),
     epsonlcd_match, epsonlcd_attach, NULL, NULL);
 
 
@@ -142,7 +142,7 @@ epsonlcd_attach(device_t parent, device_t self, void *aux)
 	haa.ha_curdspconf = 0;
 	haa.ha_ndspconf = 1;
 	haa.ha_dspconflist = &sc->sc_dsp;
-	
+
 	config_found(self, &haa, hpcfbprint);
 
 	if (!pmf_device_register(self, NULL, NULL))

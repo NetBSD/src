@@ -1,4 +1,4 @@
-.\"	$NetBSD: cp.1,v 1.41 2011/08/03 15:44:15 dholland Exp $
+.\"	$NetBSD: cp.1,v 1.41.2.1 2012/04/17 00:01:35 yamt Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)cp.1	8.3 (Berkeley) 4/18/94
 .\"
-.Dd August 3, 2011
+.Dd March 25, 2012
 .Dt CP 1
 .Os
 .Sh NAME
@@ -151,8 +151,15 @@ followed, and for
 to create special files rather than copying them as normal files.
 Created directories have the same mode as the corresponding source
 directory, unmodified by the process's umask.
+.Pp
+Note that
+.Nm
+copies hard linked files as separate files.
+If you need to preserve hard links, consider using a utility like
+.Xr pax 1
+instead.
 .It Fl v
-Cause
+Causes
 .Nm
 to be verbose, showing files as they are copied.
 .El
@@ -219,6 +226,7 @@ discouraged, as it does not correctly copy special files, symbolic links
 or fifo's.
 .Sh SEE ALSO
 .Xr mv 1 ,
+.Xr pax 1 ,
 .Xr rcp 1 ,
 .Xr umask 2 ,
 .Xr fts 3 ,

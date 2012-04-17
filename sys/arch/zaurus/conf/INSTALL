@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.10 2011/06/19 16:20:09 nonaka Exp $
+# $NetBSD: INSTALL,v 1.10.2.1 2012/04/17 00:07:12 yamt Exp $
 #
 # INSTALL config file (GENERIC with memory disk root)
 #
@@ -9,7 +9,7 @@ include 	"arch/zaurus/conf/GENERIC"
 options 	MEMORY_DISK_HOOKS	# enable root ramdisk
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=4096	# size of memory disk, in blocks
+options 	MEMORY_DISK_ROOT_SIZE=4224	# size of memory disk, in blocks
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # for reduce kernel size.
@@ -17,6 +17,12 @@ options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 # - see src/sys/arch/zaurus/stand/zbsdmod/zbsdmod.c:bsdimage[]
 
 makeoptions		COPTS="-Os"
+
+no options		EXEC_AOUT
+no options		RFC2292
+no options		PTRACE
+
+no options 		KLOADER
 
 no options 		INSECURE
 
@@ -26,12 +32,21 @@ no file-system		PROCFS
 no file-system		PTYFS
 no file-system		TMPFS
 
+no options		COMPAT_13
+no options		COMPAT_14
+no options		COMPAT_15
+no options		COMPAT_16
+no options		COMPAT_20
+no options		COMPAT_30
+no options		COMPAT_40
+no options		COMPAT_50
+no options		COMPAT_43
+
 no options 		COMPAT_OSSAUDIO
 
 no options 		SYSVMSG
 no options 		SYSVSEM
 no options 		SYSVSHM
-no options 		P1003_1B_SEMAPHORE
 
 options 		PIPE_SOCKETPAIR
 
@@ -47,7 +62,7 @@ no options 		SYMTAB_SPACE
 
 no zrc0 at pxaip?
 
-no ztp0 at pxaip?
+no ztp0 at zssp?
 no wsmouse* at ztp?
 
 no zaudio0 at iic?
@@ -55,6 +70,7 @@ no audio* at zaudio?
 
 no ums* at uhidev?
 no wsmouse* at ums?
+no ugen*
 
 no uk* at scsibus?
 
@@ -64,3 +80,4 @@ no pseudo-device	accf_data
 no pseudo-device	accf_http
 no pseudo-device	ksyms
 no pseudo-device	wsfont
+options 	NO_DEV_PTM

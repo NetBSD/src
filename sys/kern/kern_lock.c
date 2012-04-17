@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.151 2011/07/17 20:54:52 joerg Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.151.2.1 2012/04/17 00:08:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.151 2011/07/17 20:54:52 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.151.2.1 2012/04/17 00:08:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -304,4 +304,10 @@ _kernel_unlock(int nlocks, int *countp)
 
 	if (countp != NULL)
 		*countp = olocks;
+}
+
+bool
+_kernel_locked_p(void)
+{
+	return __SIMPLELOCK_LOCKED_P(kernel_lock);
 }

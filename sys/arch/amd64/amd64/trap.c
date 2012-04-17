@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.67.2.1 2011/11/10 14:31:38 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.67.2.2 2012/04/17 00:05:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.67.2.1 2011/11/10 14:31:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.67.2.2 2012/04/17 00:05:58 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -87,8 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.67.2.1 2011/11/10 14:31:38 yamt Exp $");
 #include <sys/syscall.h>
 #include <sys/cpu.h>
 #include <sys/ucontext.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -404,7 +402,7 @@ copyfault:
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_trap = type & ~T_USER;
-		ksi.ksi_addr = (void *)rcr2();
+		ksi.ksi_addr = (void *) frame->tf_rip;
 		switch (type) {
 		case T_PRIVINFLT|T_USER:
 			ksi.ksi_code = ILL_PRVOPC;
@@ -502,10 +500,6 @@ copyfault:
 		if (p->p_emul->e_usertrap != NULL &&
 		    (*p->p_emul->e_usertrap)(l, cr2, frame) != 0)
 			return;
-		if (l->l_flag & LW_SA) {
-			l->l_savp->savp_faultaddr = (vaddr_t)cr2;
-			l->l_pflag |= LP_SA_PAGEFAULT;
-		}
 faultcommon:
 		vm = p->p_vmspace;
 		if (__predict_false(vm == NULL)) {
@@ -594,7 +588,6 @@ faultcommon:
 				 */
 				pfail = kpreempt(0);
 			}
-			l->l_pflag &= ~LP_SA_PAGEFAULT;
 			goto out;
 		}
 		KSI_INIT_TRAP(&ksi);
@@ -630,7 +623,6 @@ faultcommon:
 			ksi.ksi_signo = SIGSEGV;
 		}
 		(*p->p_emul->e_trapsignal)(l, &ksi);
-		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		break;
 	}
 
@@ -701,16 +693,6 @@ startlwp(void *arg)
 	KASSERT(error == 0);
 
 	kmem_free(uc, sizeof(ucontext_t));
-	userret(l);
-}
-
-/*
- * XXX_SA: This is a terrible name.
- */
-void
-upcallret(struct lwp *l)
-{
-	KERNEL_UNLOCK_LAST(l);
 	userret(l);
 }
 

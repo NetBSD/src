@@ -1,4 +1,4 @@
-/*	$NetBSD: uinttoa.c,v 1.1.1.1 2009/12/13 16:55:06 kardel Exp $	*/
+/*	$NetBSD: uinttoa.c,v 1.1.1.1.6.1 2012/04/17 00:03:46 yamt Exp $	*/
 
 /*
  * uinttoa - return an asciized unsigned integer
@@ -16,7 +16,7 @@ uinttoa(
 	register char *buf;
 
 	LIB_GETBUF(buf);
+	snprintf(buf, LIB_BUFLENGTH, "%lu", uval);
 
-	(void) sprintf(buf, "%lu", (u_long)uval);
 	return buf;
 }

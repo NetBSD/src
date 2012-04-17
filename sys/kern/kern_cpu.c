@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_cpu.c,v 1.52 2011/10/29 11:41:32 jym Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.52.2.1 2012/04/17 00:08:22 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008, 2009, 2010, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -56,7 +56,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.52 2011/10/29 11:41:32 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.52.2.1 2012/04/17 00:08:22 yamt Exp $");
+
+#include "opt_cpu_ucode.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,12 +110,30 @@ int		ncpu			__read_mostly;
 int		ncpuonline		__read_mostly;
 bool		mp_online		__read_mostly;
 
-kcpuset_t *	kcpuset_attached	__read_mostly;
+/* Note: set on mi_cpu_attach() and idle_loop(). */
+kcpuset_t *	kcpuset_attached	__read_mostly	= NULL;
+kcpuset_t *	kcpuset_running		__read_mostly	= NULL;
 
 struct cpuqueue	cpu_queue		__cacheline_aligned
     = CIRCLEQ_HEAD_INITIALIZER(cpu_queue);
 
 static struct cpu_info **cpu_infos	__read_mostly;
+
+/*
+ * mi_cpu_init: early initialisation of MI CPU related structures.
+ *
+ * Note: may not block and memory allocator is not yet available.
+ */
+void
+mi_cpu_init(void)
+{
+
+	mutex_init(&cpu_lock, MUTEX_DEFAULT, IPL_NONE);
+
+	kcpuset_create(&kcpuset_attached, true);
+	kcpuset_create(&kcpuset_running, true);
+	kcpuset_set(kcpuset_running, 0);
+}
 
 int
 mi_cpu_attach(struct cpu_info *ci)
@@ -123,6 +143,8 @@ mi_cpu_attach(struct cpu_info *ci)
 	KASSERT(maxcpus > 0);
 
 	ci->ci_index = ncpu;
+	kcpuset_set(kcpuset_attached, cpu_index(ci));
+
 	CIRCLEQ_INSERT_TAIL(&cpu_queue, ci, ci_data.cpu_qchain);
 	TAILQ_INIT(&ci->ci_data.cpu_ld_locks);
 	__cpu_simple_lock_init(&ci->ci_data.cpu_ld_lock);
@@ -134,10 +156,8 @@ mi_cpu_attach(struct cpu_info *ci)
 	if (__predict_false(cpu_infos == NULL)) {
 		cpu_infos =
 		    kmem_zalloc(sizeof(cpu_infos[0]) * maxcpus, KM_SLEEP);
-		kcpuset_create(&kcpuset_attached, true);
 	}
 	cpu_infos[cpu_index(ci)] = ci;
-	kcpuset_set(kcpuset_attached, ci->ci_index);
 
 	sched_cpuattach(ci);
 
@@ -244,6 +264,21 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 	case IOC_CPU_GETCOUNT:
 		*(int *)data = ncpu;
 		break;
+
+#ifdef CPU_UCODE
+	case IOC_CPU_UCODE_GET_VERSION:
+		error = cpu_ucode_get_version(data);
+		break;
+
+	case IOC_CPU_UCODE_APPLY:
+		error = kauth_authorize_machdep(l->l_cred,
+		    KAUTH_MACHDEP_CPU_UCODE_APPLY,
+		    NULL, NULL, NULL, NULL);
+		if (error != 0)
+			break;
+		error = cpu_ucode_apply(data);
+		break;
+#endif
 
 	default:
 		error = ENOTTY;
@@ -507,3 +542,46 @@ cpu_softintr_p(void)
 
 	return (curlwp->l_pflag & LP_INTR) != 0;
 }
+
+#ifdef CPU_UCODE
+int
+cpu_ucode_load(struct cpu_ucode_softc *sc, const char *fwname)
+{
+	firmware_handle_t fwh;
+	int error;
+
+	if (sc->sc_blob != NULL) {
+		firmware_free(sc->sc_blob, 0);
+		sc->sc_blob = NULL;
+		sc->sc_blobsize = 0;
+	}
+
+	error = cpu_ucode_md_open(&fwh, fwname);
+	if (error != 0) {
+		aprint_error("ucode: firmware_open failed: %i\n", error);
+		goto err0;
+	}
+
+	sc->sc_blobsize = firmware_get_size(fwh);
+	sc->sc_blob = firmware_malloc(sc->sc_blobsize);
+	if (sc->sc_blob == NULL) {
+		error = ENOMEM;
+		firmware_close(fwh);
+		goto err0;
+	}
+
+	error = firmware_read(fwh, 0, sc->sc_blob, sc->sc_blobsize);
+	firmware_close(fwh);
+	if (error != 0)
+		goto err1;
+
+	return 0;
+
+err1:
+	firmware_free(sc->sc_blob, 0);
+	sc->sc_blob = NULL;
+	sc->sc_blobsize = 0;
+err0:
+	return error;
+}
+#endif

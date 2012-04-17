@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.38 2011/03/06 17:08:18 bouyer Exp $
+# $NetBSD: FOURMEG,v 1.38.4.1 2012/04/17 00:05:51 yamt Exp $
 
 # FOURMEG arm26 configuration -- something small
 
@@ -200,5 +200,3 @@ pseudo-device	pty
 pseudo-device	wsmux			# keyboard/mouse multiplexor
 pseudo-device	clockctl		# user control of clock subsystem
 
-# rnd is EXPERIMENTAL
-#pseudo-device	rnd			# /dev/random and in-kernel generator

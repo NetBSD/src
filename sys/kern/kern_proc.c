@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.180 2011/05/13 22:22:03 rmind Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.180.4.1 2012/04/17 00:08:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.180 2011/05/13 22:22:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.180.4.1 2012/04/17 00:08:25 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -89,8 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.180 2011/05/13 22:22:03 rmind Exp $"
 #include <sys/tty.h>
 #include <sys/signalvar.h>
 #include <sys/ras.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/filedesc.h>
 #include "sys/syscall_stats.h"
 #include <sys/kauth.h>
@@ -743,6 +741,11 @@ proc_alloc(void)
 	return p;
 }
 
+/*
+ * proc_alloc_pid: allocate PID and record the given proc 'p' so that
+ * proc_find_raw() can find it by the PID.
+ */
+
 pid_t
 proc_alloc_pid(struct proc *p)
 {
@@ -836,7 +839,7 @@ proc_free_mem(struct proc *p)
  * of the process.
  * Also mksess should only be set if we are creating a process group
  *
- * Only called from sys_setsid and sys_setpgid.
+ * Only called from sys_setsid, sys_setpgid and posix_spawn/spawn_return.
  */
 int
 proc_enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, bool mksess)
@@ -1567,7 +1570,6 @@ static const u_int sysctl_stflagmap[] = {
 const u_int sysctl_lwpflagmap[] = {
 	LW_SINTR, L_SINTR,
 	LW_SYSTEM, L_SYSTEM,
-	LW_SA, L_SA,	/* WRS ??? */
 	0
 };
 

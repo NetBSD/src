@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 2011/03/21 14:53:02 tnozaki Exp $ */
+/*	$NetBSD: extern.h,v 1.4.4.1 2012/04/17 00:02:25 yamt Exp $ */
 
 /* Do not edit: automatically built by build/distrib. */
 SCR *api_fscreen __P((int, char *));
@@ -28,7 +28,7 @@ TAGQ * api_tagq_new __P((SCR*, char*));
 void api_tagq_add __P((SCR*, TAGQ*, char*, char *, char *));
 int api_tagq_push __P((SCR*, TAGQ**));
 void api_tagq_free __P((SCR*, TAGQ*));
-int cut __P((SCR *, CHAR_T *, MARK *, MARK *, int));
+int cut __P((SCR *, ARG_CHAR_T *, MARK *, MARK *, int));
 int cut_line __P((SCR *, db_recno_t, size_t, size_t, CB *));
 void cut_close __P((WIN *));
 TEXT *text_init __P((SCR *, const CHAR_T *, size_t, size_t));
@@ -133,7 +133,7 @@ int f_w9600 __P((SCR *, OPTION *, const char *, u_long *));
 int f_window __P((SCR *, OPTION *, const char *, u_long *));
 int f_encoding __P((SCR *, OPTION *, const char *, u_long *));
 void thread_init __P((GS *gp));
-int put __P((SCR *, CB *, CHAR_T *, MARK *, MARK *, int));
+int put __P((SCR *, CB *, ARG_CHAR_T *, MARK *, MARK *, int));
 int rcv_tmp __P((SCR *, EXF *, char *));
 int rcv_init __P((SCR *));
 int rcv_sync __P((SCR *, u_int));

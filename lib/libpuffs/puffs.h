@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.119 2011/08/29 20:48:36 joerg Exp $	*/
+/*	$NetBSD: puffs.h,v 1.119.2.1 2012/04/17 00:05:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -90,7 +90,8 @@ struct puffs_node {
 
 	LIST_HEAD(,puffs_kcache)pn_cacheinfo;	/* PUFFS_KFLAG_CACHE	*/
 
-	void			*pn_spare[4];
+	struct timespec		pn_cn_ttl;	/* PUFFS_FLAG_CACHE_FS_TTL */
+	struct timespec		pn_va_ttl;	/* PUFFS_FLAG_CACHE_FS_TTL */
 };
 #define PUFFS_NODE_REMOVED	0x01		/* not on entry list	*/
 
@@ -486,6 +487,8 @@ void *			puffs_pn_getpriv(struct puffs_node *);
 void			puffs_pn_setpriv(struct puffs_node *, void *);
 struct puffs_pathobj	*puffs_pn_getpo(struct puffs_node *);
 struct puffs_usermount	*puffs_pn_getmnt(struct puffs_node *);
+struct timespec		*puffs_pn_getvattl(struct puffs_node *);
+struct timespec		*puffs_pn_getcnttl(struct puffs_node *);
 
 void	puffs_newinfo_setcookie(struct puffs_newinfo *, puffs_cookie_t);
 void	puffs_newinfo_setvtype(struct puffs_newinfo *, enum vtype);

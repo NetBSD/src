@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/09/26 14:31:25 christos Exp $
+#	$NetBSD: Makefile,v 1.2.2.1 2012/04/17 00:04:30 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -34,6 +34,8 @@ CPPFLAGS+=	-I${.CURDIR} \
 # XXX inf-ptrace.c has some bogus (PTRACE_TYPE_ARG3) casts, but in 
 # code that's never exercised on NetBSD.
 CPPFLAGS.inf-ptrace.c=	-Wno-error
+
+CWARNFLAGS.clang+=	-Wno-switch
 
 .include "../../Makefile.inc"
 .include <bsd.lib.mk>

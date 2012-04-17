@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.303 2011/05/20 09:23:37 reinoud Exp $	*/
+/*	$NetBSD: cd.c,v 1.303.4.1 2012/04/17 00:08:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,9 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.303 2011/05/20 09:23:37 reinoud Exp $");
-
-#include "rnd.h"
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.303.4.1 2012/04/17 00:08:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,9 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.303 2011/05/20 09:23:37 reinoud Exp $");
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -289,10 +285,8 @@ cdattach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 	aprint_naive("\n");
 
-#if NRND > 0
 	rnd_attach_source(&cd->rnd_source, device_xname(cd->sc_dev),
 			  RND_TYPE_DISK, 0);
-#endif
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -335,10 +329,8 @@ cddetach(device_t self, int flags)
 	disk_detach(&cd->sc_dk);
 	disk_destroy(&cd->sc_dk);
 
-#if NRND > 0
 	/* Unhook the entropy source. */
 	rnd_detach_source(&cd->rnd_source);
-#endif
 
 	return (0);
 }
@@ -904,9 +896,7 @@ cddone(struct scsipi_xfer *xs, int error)
 
 		disk_unbusy(&cd->sc_dk, bp->b_bcount - bp->b_resid,
 		    (bp->b_flags & B_READ));
-#if NRND > 0
 		rnd_add_uint32(&cd->rnd_source, bp->b_rawblkno);
-#endif
 
 		biodone(bp);
 	}
@@ -1354,10 +1344,10 @@ cdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 
 #ifdef __HAVE_OLD_DISKLABEL
 		if (cmd == ODIOCSDINFO || cmd == ODIOCWDINFO) {
-			newlabel = malloc(sizeof (*newlabel), M_TEMP, M_WAITOK);
+			newlabel = malloc(sizeof (*newlabel), M_TEMP,
+			    M_WAITOK | M_ZERO);
 			if (newlabel == NULL)
 				return (EIO);
-			memset(newlabel, 0, sizeof newlabel);
 			memcpy(newlabel, addr, sizeof (struct olddisklabel));
 			lp = newlabel;
 		} else
@@ -1771,12 +1761,12 @@ cdgetdisklabel(struct cd_softc *cd)
 }
 
 /*
- * Reading a discs total capacity is aparently a very difficult issue for the
+ * Reading a disc's total capacity is apparently a very difficult issue for the
  * SCSI standardisation group. Every disc type seems to have its own
  * (re)invented size request method and modifiers. The failsafe way of
  * determining the total (max) capacity i.e. not the recorded capacity but the
  * total maximum capacity is to request the info on the last track and
- * calucate the total size.
+ * calculate the total size.
  *
  * For ROM drives, we go for the CD recorded capacity. For recordable devices
  * we count.
@@ -1793,7 +1783,7 @@ read_cd_capacity(struct scsipi_periph *periph, u_int *blksize, u_long *size)
 	uint32_t track_start, track_size;
 	int error, flags, msb, lsb, last_track;
 
-	/* if the device doesn't grog capacity, return the dummies */
+	/* if the device doesn't grok capacity, return the dummies */
 	if (periph->periph_quirks & PQUIRK_NOCAPACITY)
 		return 0;
 

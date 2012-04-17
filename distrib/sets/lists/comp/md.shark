@@ -1,4 +1,5 @@
-# $NetBSD: md.shark,v 1.19 2011/07/19 15:08:55 dyoung Exp $
+# $NetBSD: md.shark,v 1.19.2.1 2012/04/17 00:02:39 yamt Exp $
+./usr/include/ieeefp.h				comp-c-include
 ./usr/include/shark				comp-c-include
 ./usr/include/shark/ansi.h			comp-c-include
 ./usr/include/shark/aout_machdep.h		comp-c-include
@@ -49,6 +50,6 @@
 ./usr/include/shark/varargs.h			comp-obsolete		obsolete
 ./usr/include/shark/vmparam.h			comp-c-include
 ./usr/include/shark/wchar_limits.h		comp-c-include
-./usr/include/ieeefp.h				comp-c-include
 ./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug,pic
+./usr/libdata/debug/usr/sbin/eeprom.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/ofctl.debug	comp-sysutil-debug	debug

@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vfsops.c,v 1.5 2010/08/11 13:26:25 pgoyette Exp $ */
+/* $NetBSD: nilfs_vfsops.c,v 1.5.8.1 2012/04/17 00:08:19 yamt Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.5 2010/08/11 13:26:25 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.5.8.1 2012/04/17 00:08:19 yamt Exp $");
 #endif /* not lint */
 
 
@@ -563,7 +563,8 @@ static int
 nilfs_mount_device(struct vnode *devvp, struct mount *mp, struct nilfs_args *args,
 	struct nilfs_device **nilfsdev_p)
 {
-	struct partinfo dpart;
+	uint64_t psize;
+	unsigned secsize;
 	struct nilfs_device *nilfsdev;
 	struct lwp *l = curlwp;
 	int openflags, accessmode, error;
@@ -606,7 +607,8 @@ nilfs_mount_device(struct vnode *devvp, struct mount *mp, struct nilfs_args *arg
 	if ((mp->mnt_flag & MNT_RDONLY) == 0)
 		accessmode |= VWRITE;
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = genfs_can_mount(devvp, accessmode, l->l_cred);
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
+	    KAUTH_REQ_SYSTEM_MOUNT_DEVICE, mp, devvp, KAUTH_ARG(accessmode));
 	VOP_UNLOCK(devvp);
 	if (error) {
 		vrele(devvp);
@@ -617,35 +619,36 @@ nilfs_mount_device(struct vnode *devvp, struct mount *mp, struct nilfs_args *arg
 	 * Open device read-write; TODO how about upgrading later when needed?
 	 */
 	openflags = FREAD | FWRITE;
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_OPEN(devvp, openflags, FSCRED);
+	VOP_UNLOCK(devvp);
 	if (error) {
 		vrele(devvp);
 		return error;
 	}
 
 	/* opened ok, try mounting */
-	nilfsdev = malloc(sizeof(struct nilfs_device), M_NILFSMNT, M_WAITOK);
-	KASSERT(nilfsdev);
+	nilfsdev = malloc(sizeof(*nilfsdev), M_NILFSMNT, M_WAITOK | M_ZERO);
 
 	/* initialise */
-	memset(nilfsdev, 0, sizeof(struct nilfs_device));
 	nilfsdev->refcnt        = 1;
 	nilfsdev->devvp         = devvp;
 	nilfsdev->uncomitted_bl = 0;
 	cv_init(&nilfsdev->sync_cv, "nilfssyn");
 	STAILQ_INIT(&nilfsdev->mounts);
 
+	/* register nilfs_device in list */
+	SLIST_INSERT_HEAD(&nilfs_devices, nilfsdev, next_device);
+
 	/* get our device's size */
-	error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED);
+	error = getdisksize(devvp, &psize, &secsize);
 	if (error) {
 		/* remove all our information */
 		nilfs_unmount_device(nilfsdev);
 		return EINVAL;
 	}
-	nilfsdev->devsize = dpart.part->p_size * dpart.disklab->d_secsize;
 
-	/* register nilfs_device in list */
-	SLIST_INSERT_HEAD(&nilfs_devices, nilfsdev, next_device);
+	nilfsdev->devsize = psize * secsize;
 
 	/* connect to the head for most recent files XXX really pass mp and args? */
 	error = nilfs_mount_base(nilfsdev, mp, args);

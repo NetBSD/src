@@ -1,4 +1,4 @@
-/* $NetBSD: sscom_var.h,v 1.8 2011/07/01 20:31:39 dyoung Exp $ */
+/* $NetBSD: sscom_var.h,v 1.8.2.1 2012/04/17 00:06:07 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -80,6 +80,9 @@
 #ifdef	SSCOM_S3C2410
 #include <arm/s3c2xx0/s3c2410reg.h>
 #include <arm/s3c2xx0/s3c2410var.h>
+#elif defined(SSCOM_S3C2440)
+#include <arm/s3c2xx0/s3c2440reg.h>
+#include <arm/s3c2xx0/s3c2440var.h>
 #endif
 
 /* Hardware flag masks */
@@ -94,7 +97,7 @@
 #define	SSCOM_RING_SIZE	2048
 
 struct sscom_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	void *sc_si;
 	struct tty *sc_tty;
 
@@ -171,8 +174,8 @@ struct sscom_softc {
 	pps_params_t ppsparam;
 #endif
 
-#if NRND > 0 && defined(RND_COM)
-	rndsource_element_t  rnd_source;
+#ifdef RND_COM
+	krndsource_t  rnd_source;
 #endif
 #if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(SSCOM_MPLOCK)
 	struct simplelock	sc_lock;
@@ -223,6 +226,25 @@ struct sscom_uart_info {
 	s3c2410_mask_subinterrupts(_sscom_intbit((sc)->sc_tx_irqno) | \
 			           _sscom_intbit((sc)->sc_rx_irqno))
 
+#elif defined(SSCOM_S3C2440)
+/* RXINTn, TXINTn and ERRn interrupts are cascaded to UARTn irq. */
+
+#define	_sscom_intbit(irqno)	(1<<((irqno)-S3C2440_SUBIRQ_MIN))
+
+#define	sscom_unmask_rxint(sc)	\
+	s3c2440_unmask_subinterrupts(_sscom_intbit((sc)->sc_rx_irqno))
+#define	sscom_mask_rxint(sc)	\
+	s3c2440_mask_subinterrupts(_sscom_intbit((sc)->sc_rx_irqno))
+#define	sscom_unmask_txint(sc)	\
+	s3c2440_unmask_subinterrupts(_sscom_intbit((sc)->sc_tx_irqno))
+#define	sscom_mask_txint(sc)	\
+	s3c2440_mask_subinterrupts(_sscom_intbit((sc)->sc_tx_irqno))
+#define	sscom_unmask_txrxint(sc)                                      \
+	s3c2440_unmask_subinterrupts(_sscom_intbit((sc)->sc_tx_irqno) | \
+			             _sscom_intbit((sc)->sc_rx_irqno))
+#define	sscom_mask_txrxint(sc)	                                    \
+	s3c2440_mask_subinterrupts(_sscom_intbit((sc)->sc_tx_irqno) | \
+			           _sscom_intbit((sc)->sc_rx_irqno))
 #else
 
 /* for S3C2800 and S3C2400 */

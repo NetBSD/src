@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.66 2011/04/13 23:31:25 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.66.4.1 2012/04/17 00:06:54 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1020,8 +1020,7 @@ cg14_init_screen(void *cookie, struct vcons_screen *scr,
 		ri->ri_flg |= RI_CLEAR;
 	}
 
-	rasops_init(ri, sc->sc_fb.fb_type.fb_height / 8,
-	     sc->sc_fb.fb_type.fb_width / 8);
+	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 
 	rasops_reconfig(ri,

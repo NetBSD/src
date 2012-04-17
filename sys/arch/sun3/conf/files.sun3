@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.79 2011/06/12 03:35:48 rmind Exp $
+#	$NetBSD: files.sun3,v 1.79.2.1 2012/04/17 00:06:58 yamt Exp $
 
 #
 # sun3-specific configuration info
@@ -33,12 +33,13 @@ file arch/sun3/sun3x/pmap.c			_sun3x_
 file arch/sun3/sun3/autoconf.c
 file arch/sun3/sun3/db_machdep.c		ddb
 file arch/sun3/sun3/db_memrw.c			ddb | kgdb
-file arch/sun3/sun3/fpu.c
+file arch/sun3/sun3/fpu_machdep.c
 file arch/sun3/sun3/leds.c
 file arch/sun3/sun3/sunmon.c
 file arch/sun3/sun3/sys_machdep.c
 file arch/sun3/sun3/trap.c
 file arch/m68k/m68k/cacheops.c			_sun3x_
+file arch/m68k/m68k/fpu.c
 
 include "arch/m68k/fpe/files.fpe"
 

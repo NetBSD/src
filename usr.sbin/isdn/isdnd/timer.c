@@ -27,7 +27,7 @@
  *	i4b daemon - timer/timing support routines
  *	------------------------------------------
  *
- *	$Id: timer.c,v 1.4 2003/10/06 09:43:27 itojun Exp $ 
+ *	$Id: timer.c,v 1.4.54.1 2012/04/17 00:09:47 yamt Exp $ 
  *
  * $FreeBSD$
  *
@@ -96,25 +96,25 @@ hr_callgate(void)
 	if ((tv_now.tv_sec - tv_last.tv_sec) < 1)
 	{
 	
-		DBGL(DL_TIME, (logit(LL_DBG, "time < 1 - last %ld:%ld now %ld:%ld",
-				tv_last.tv_sec, tv_last.tv_usec,
-				tv_now.tv_sec, tv_now.tv_usec)));
+		DBGL(DL_TIME, (logit(LL_DBG, "time < 1 - last %jd:%ld now %jd:%ld",
+				(intmax_t)tv_last.tv_sec, (long)tv_last.tv_usec,
+				(intmax_t)tv_now.tv_sec, (long)tv_now.tv_usec)));
 		return(1);
 	}
 	else if ((tv_now.tv_sec - tv_last.tv_sec) == 1)
 	{
 		if (((1000000 - tv_last.tv_usec) + tv_now.tv_usec) < 900000)
 		{
-			DBGL(DL_TIME, (logit(LL_DBG, "time < 900000us - last %ld:%ld now %ld:%ld",
-					tv_last.tv_sec, tv_last.tv_usec,
-					tv_now.tv_sec, tv_now.tv_usec)));
+			DBGL(DL_TIME, (logit(LL_DBG, "time < 900000us - last %jd:%ld now %jd:%ld",
+					(intmax_t)tv_last.tv_sec, (long)tv_last.tv_usec,
+					(intmax_t)tv_now.tv_sec, (long)tv_now.tv_usec)));
 			return(1);
 		}
 	}
 	
-	DBGL(DL_TIME, (logit(LL_DBG, "time OK! - last %ld:%ld now %ld:%ld",
-			tv_last.tv_sec, tv_last.tv_usec,
-			tv_now.tv_sec, tv_now.tv_usec)));
+	DBGL(DL_TIME, (logit(LL_DBG, "time OK! - last %jd:%ld now %jd:%ld",
+			(intmax_t)tv_last.tv_sec, (long)tv_last.tv_usec,
+			(intmax_t)tv_now.tv_sec, (long)tv_now.tv_usec)));
 	
 	gettimeofday(&tv_last, NULL);
 	

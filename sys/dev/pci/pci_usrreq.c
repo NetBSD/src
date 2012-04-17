@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_usrreq.c,v 1.23 2011/02/10 12:37:58 jmcneill Exp $	*/
+/*	$NetBSD: pci_usrreq.c,v 1.23.4.1 2012/04/17 00:07:52 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.23 2011/02/10 12:37:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.23.4.1 2012/04/17 00:07:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -119,8 +119,8 @@ pcimmap(dev_t dev, off_t offset, int prot)
 	int flags = 0;
 	int device, range;
 
-	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
-	    NULL) != 0) {
+	if (kauth_authorize_machdep(kauth_cred_get(), KAUTH_MACHDEP_UNMANAGEDMEM,
+	    NULL, NULL, NULL, NULL) != 0) {
 		return -1;
 	}
 	/*

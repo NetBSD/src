@@ -1,30 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.65 2009/12/31 02:20:36 elad Exp $ */
-
-/*-
- * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
+/* $NetBSD: kern_auth.c,v 1.65.12.1 2012/04/17 00:08:22 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -54,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.65 2009/12/31 02:20:36 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.65.12.1 2012/04/17 00:08:22 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,11 +44,13 @@ __KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.65 2009/12/31 02:20:36 elad Exp $");
 #include <sys/specificdata.h>
 #include <sys/vnode.h>
 
+#include <secmodel/secmodel.h>
+
 /*
  * Secmodel-specific credentials.
  */
 struct kauth_key {
-	const char *ks_secmodel;	/* secmodel */
+	secmodel_t ks_secmodel;		/* secmodel */
 	specificdata_key_t ks_key;	/* key */
 };
 
@@ -144,8 +120,6 @@ static kauth_scope_t kauth_builtin_scope_machdep;
 static kauth_scope_t kauth_builtin_scope_device;
 static kauth_scope_t kauth_builtin_scope_cred;
 static kauth_scope_t kauth_builtin_scope_vnode;
-
-static unsigned int nsecmodels = 0;
 
 static specificdata_domain_t kauth_domain;
 static pool_cache_t kauth_cred_cache;
@@ -507,7 +481,7 @@ kauth_cred_getgroups(kauth_cred_t cred, gid_t *grbuf, size_t len,
 }
 
 int
-kauth_register_key(const char *secmodel, kauth_key_t *result)
+kauth_register_key(secmodel_t secmodel, kauth_key_t *result)
 {
 	kauth_key_t k;
 	specificdata_key_t key;
@@ -993,7 +967,7 @@ kauth_authorize_action(kauth_scope_t scope, kauth_cred_t cred,
 	if (r == KAUTH_RESULT_ALLOW)
 		return (0);
 
-	if (!nsecmodels)
+	if (secmodel_nsecmodels() == 0)
 		return (0);
 
 	return (EPERM);
@@ -1098,6 +1072,30 @@ kauth_mode_to_action(mode_t mode)
 	return action;
 }
 
+kauth_action_t
+kauth_access_action(mode_t access_mode, enum vtype vn_type, mode_t file_mode)
+{
+	kauth_action_t action = kauth_mode_to_action(access_mode);
+
+	if (FS_OBJECT_CAN_EXEC(vn_type, file_mode))
+		action |= KAUTH_VNODE_IS_EXEC;
+
+	return action;
+}
+
+kauth_action_t
+kauth_extattr_action(mode_t access_mode)
+{
+	kauth_action_t action = 0;
+
+	if (access_mode & VREAD)
+		action |= KAUTH_VNODE_READ_EXTATTRIBUTES;
+	if (access_mode & VWRITE)
+		action |= KAUTH_VNODE_WRITE_EXTATTRIBUTES;
+
+	return action;
+}
+
 int
 kauth_authorize_vnode(kauth_cred_t cred, kauth_action_t action,
     struct vnode *vp, struct vnode *dvp, int fs_decision)
@@ -1140,24 +1138,4 @@ kauth_cred_hook(kauth_cred_t cred, kauth_action_t action, void *arg0,
 #endif /* DIAGNOSTIC */
 
 	return (r);
-}
-
-void
-secmodel_register(void)
-{
-	KASSERT(nsecmodels + 1 != 0);
-
-	rw_enter(&kauth_lock, RW_WRITER);
-	nsecmodels++;
-	rw_exit(&kauth_lock);
-}
-
-void
-secmodel_deregister(void)
-{
-	KASSERT(nsecmodels != 0);
-
-	rw_enter(&kauth_lock, RW_WRITER);
-	nsecmodels--;
-	rw_exit(&kauth_lock);
 }

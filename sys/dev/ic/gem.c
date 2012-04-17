@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.97 2011/05/22 11:19:23 jdc Exp $ */
+/*	$NetBSD: gem.c,v 1.97.4.1 2012/04/17 00:07:33 yamt Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.97 2011/05/22 11:19:23 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.97.4.1 2012/04/17 00:07:33 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -171,9 +171,7 @@ gem_detach(struct gem_softc *sc, int flags)
 #endif
 		evcnt_detach(&sc->sc_ev_intr);
 
-#if NRND > 0
 		rnd_detach_source(&sc->rnd_source);
-#endif
 		ether_ifdetach(ifp);
 		if_detach(ifp);
 		ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
@@ -580,10 +578,8 @@ gem_attach(struct gem_softc *sc, const uint8_t *enaddr)
 	ether_ifattach(ifp, enaddr);
 	ether_set_ifflags_cb(&sc->sc_ethercom, gem_ifflags_cb);
 
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 			  RND_TYPE_NET, 0);
-#endif
 
 	evcnt_attach_dynamic(&sc->sc_ev_intr, EVCNT_TYPE_INTR,
 	    NULL, device_xname(sc->sc_dev), "interrupts");
@@ -2236,9 +2232,7 @@ gem_intr(void *v)
 	if ((status & GEM_INTR_MIF) != 0)
 		aprintf_debug_dev(sc->sc_dev, "MIF interrupt\n");
 */
-#if NRND > 0
 	rnd_add_uint32(&sc->rnd_source, status);
-#endif
 	return (r);
 }
 

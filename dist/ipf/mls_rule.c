@@ -1,4 +1,4 @@
-/*	$NetBSD: mls_rule.c,v 1.1.1.1 2004/03/28 08:55:48 martti Exp $	*/
+/*	$NetBSD: mls_rule.c,v 1.1.1.1.56.1 2012/04/17 00:02:24 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -43,7 +43,7 @@
 extern	int	errno;
 
 
-int	xxxinit __P((u_int, struct vddrv *, caddr_t, struct vdstat *));
+int	xxxinit(u_int, struct vddrv *, caddr_t, struct vdstat *);
 
 int	ipl_major = 0;
 
@@ -85,11 +85,7 @@ struct vdldrv vd =
 #endif /* sun4m */
 
 
-xxxinit(fc, vdp, data, vds)
-u_int	fc;
-struct	vddrv	*vdp;
-caddr_t	data;
-struct	vdstat	*vds;
+xxxinit(u_int fc, struct vddrv *vdp, caddr_t data, struct vdstat *vds)
 {
 	struct vdioctl_load *vdi = (struct vdioctl_load *)data;
 	int err;

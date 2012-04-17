@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.61 2011/09/16 15:42:28 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.61.2.1 2012/04/17 00:02:49 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -60,8 +60,6 @@ static void cleanup(void);
 static void process_f_flag(char *);
 
 static int exit_cleanly = 0;	/* Did we finish nicely? */
-int logging;			/* are we logging everything? */
-int scripting;			/* are we building a script? */
 FILE *logfp;			/* log file */
 FILE *script;			/* script file */
 
@@ -82,10 +80,12 @@ static const struct f_arg fflagopts[] = {
 	{"release", REL, rel, sizeof rel},
 	{"machine", MACH, machine, sizeof machine},
 	{"xfer dir", "/usr/INSTALL", xfer_dir, sizeof xfer_dir},
-	{"ext dir", "", ext_dir, sizeof ext_dir},
+	{"ext dir", "", ext_dir_bin, sizeof ext_dir_bin},
+	{"ext src dir", "", ext_dir_src, sizeof ext_dir_src},
 	{"ftp host", SYSINST_FTP_HOST, ftp.host, sizeof ftp.host},
 	{"ftp dir", SYSINST_FTP_DIR, ftp.dir, sizeof ftp.dir},
-	{"ftp prefix", "/" MACH "/binary/sets", set_dir, sizeof set_dir},
+	{"ftp prefix", "/" MACH "/binary/sets", set_dir_bin, sizeof set_dir_bin},
+	{"ftp src prefix", "/source/sets", set_dir_src, sizeof set_dir_src},
 	{"ftp user", "ftp", ftp.user, sizeof ftp.user},
 	{"ftp pass", "", ftp.pass, sizeof ftp.pass},
 	{"ftp proxy", "", ftp.proxy, sizeof ftp.proxy},
@@ -99,6 +99,18 @@ static const struct f_arg fflagopts[] = {
 	{"targetroot mount", "/targetroot", targetroot_mnt, sizeof targetroot_mnt},
 	{"dist postfix", ".tgz", dist_postfix, sizeof dist_postfix},
 	{"diskname", "mydisk", bsddiskname, sizeof bsddiskname},
+	{"pkg host", SYSINST_PKG_HOST, pkg.host, sizeof pkg.host},
+	{"pkg dir", SYSINST_PKG_DIR, pkg.dir, sizeof pkg.dir},
+	{"pkg prefix", "/" MACH "/" REL "/All", pkg_dir, sizeof pkg_dir},
+	{"pkg user", "ftp", pkg.user, sizeof pkg.user},
+	{"pkg pass", "", pkg.pass, sizeof pkg.pass},
+	{"pkg proxy", "", pkg.proxy, sizeof pkg.proxy},
+	{"pkgsrc host", SYSINST_PKGSRC_HOST, pkgsrc.host, sizeof pkgsrc.host},
+	{"pkgsrc dir", "", pkgsrc.dir, sizeof pkgsrc.dir},
+	{"pkgsrc prefix", "pub/pkgsrc/stable", pkgsrc_dir, sizeof pkgsrc_dir},
+	{"pkgsrc user", "ftp", pkgsrc.user, sizeof pkgsrc.user},
+	{"pkgsrc pass", "", pkgsrc.pass, sizeof pkgsrc.pass},
+	{"pkgsrc proxy", "", pkgsrc.proxy, sizeof pkgsrc.proxy},
 
 	{NULL, NULL, NULL, 0}
 };
@@ -118,6 +130,7 @@ init(void)
 
 	for (arg = fflagopts; arg->name != NULL; arg++)
 		strlcpy(arg->var, arg->dflt, arg->size);
+	pkg.xfer_type = pkgsrc.xfer_type = "http";
 }
 
 int
@@ -126,13 +139,10 @@ main(int argc, char **argv)
 	WINDOW *win;
 	int ch;
 
-	logging = 0; /* shut them off unless turned on by the user */
 	init();
 #ifdef DEBUG
 	log_flip();
 #endif
-	scripting = 0;
-
 	/* Check for TERM ... */
 	if (!getenv("TERM")) {
 		(void)fprintf(stderr,
@@ -407,16 +417,18 @@ cleanup(void)
 
 	endwin();
 
-	if (logging) {
+	if (logfp) {
 		fprintf(logfp, "Log ended at: %s\n", asctime(localtime(&tloc)));
 		fflush(logfp);
 		fclose(logfp);
+		logfp = NULL;
 	}
-	if (scripting) {
+	if (script) {
 		fprintf(script, "# Script ended at: %s\n",
 		    asctime(localtime(&tloc)));
 		fflush(script);
 		fclose(script);
+		script = NULL;
 	}
 
 	if (!exit_cleanly)

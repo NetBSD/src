@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0var.h,v 1.14 2009/09/22 14:55:19 tsutsui Exp $	*/
+/*	$NetBSD: cs89x0var.h,v 1.14.12.1 2012/04/17 00:07:32 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -104,9 +104,7 @@ struct cs_softc {
 	int	eeprom_size;		/* how large is the eeprom (in bytes) */
 	u_int16_t *eeprom_data;		/* copy of the eeprom data */
 
-#if NRND > 0
-	rndsource_element_t rnd_source; /* random source */
-#endif
+	krndsource_t rnd_source; /* random source */
 
 	/* power management */
 	int (*sc_enable)(struct cs_softc *);

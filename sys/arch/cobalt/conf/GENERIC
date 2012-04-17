@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.131 2011/06/30 20:09:22 wiz Exp $
+# $NetBSD: GENERIC,v 1.131.2.1 2012/04/17 00:06:11 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.131 $"
+#ident 		"GENERIC-$Revision: 1.131.2.1 $"
 
 maxusers	32
 
@@ -31,7 +31,6 @@ options 	KTRACE		# system call tracing support
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
-options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 options 	NTP		# network time protocol
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -96,7 +95,7 @@ options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
@@ -357,7 +356,6 @@ pseudo-device   accf_http		# "httpready" accept filter
 # Miscellaneous pseudo-devices
 pseudo-device	pty				# pseudo-terminals
 #pseudo-device	sequencer	1		# MIDI sequencer
-pseudo-device	rnd				# /dev/random & kernel generator
 #options 	RND_COM				# use "com" randomness (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	nullcons			# no-op console

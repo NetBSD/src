@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.106 2011/06/25 05:45:12 nonaka Exp $	 */
+/*	$NetBSD: rtld.h,v 1.106.2.1 2012/04/17 00:05:36 yamt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -191,10 +191,14 @@ typedef struct Struct_Obj_Entry {
 	void            (*init)(void); 	/* Initialization function to call */
 	void            (*fini)(void);	/* Termination function to call */
 
-	/* Entry points for dlopen() and friends. */
+	/*
+	 * BACKWARDS COMPAT Entry points for dlopen() and friends.
+	 *
+	 * DO NOT MOVE OR ADD TO THE LIST
+	 *
+	 */
 	void           *(*dlopen)(const char *, int);
 	void           *(*dlsym)(void *, const char *);
-	void           *(*dlvsym)(void *, const char *, const char *);
 	char           *(*dlerror)(void);
 	int             (*dlclose)(void *);
 	int             (*dladdr)(const void *, Dl_info *);
@@ -327,12 +331,14 @@ __dso_public int dlinfo(void *, int, void *);
 __dso_public int dl_iterate_phdr(int (*)(struct dl_phdr_info *, size_t, void *),
     void *);
 
+__dso_public void *_dlauxinfo(void) __pure;
+
 /* These aren't exported */
 void _rtld_error(const char *, ...)
      __attribute__((__format__(__printf__,1,2)));
 void _rtld_die(void) __attribute__((__noreturn__));
 void *_rtld_objmain_sym(const char *);
-__dso_public void _rtld_debug_state(void);
+__dso_public void _rtld_debug_state(void) __noinline;
 void _rtld_linkmap_add(Obj_Entry *);
 void _rtld_linkmap_delete(Obj_Entry *);
 void _rtld_objlist_push_head(Objlist *, Obj_Entry *);

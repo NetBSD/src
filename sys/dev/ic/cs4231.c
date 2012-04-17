@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231.c,v 1.26 2011/06/02 00:23:28 christos Exp $	*/
+/*	$NetBSD: cs4231.c,v 1.26.2.1 2012/04/17 00:07:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.26 2011/06/02 00:23:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.26.2.1 2012/04/17 00:07:32 yamt Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -39,8 +39,9 @@ __KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.26 2011/06/02 00:23:28 christos Exp $")
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/bus.h>
+#include <sys/kmem.h>
+#include <sys/malloc.h>
 
 #include <machine/autoconf.h>
 #include <sys/cpu.h>
@@ -175,8 +176,7 @@ cs4231_common_attach(struct cs4231_softc *sc, device_t self,
 }
 
 void *
-cs4231_malloc(void *addr, int direction, size_t size,
-    struct malloc_type *pool, int flags)
+cs4231_malloc(void *addr, int direction, size_t size)
 {
 	struct cs4231_softc *sc;
 	bus_dma_tag_t dmatag;
@@ -184,7 +184,7 @@ cs4231_malloc(void *addr, int direction, size_t size,
 
 	sc = addr;
 	dmatag = sc->sc_dmatag;
-	p = malloc(sizeof(*p), pool, flags);
+	p = kmem_alloc(sizeof(*p), KM_SLEEP);
 	if (p == NULL)
 		return NULL;
 
@@ -221,12 +221,12 @@ fail3:
 fail2:
 	bus_dmamap_destroy(dmatag, p->dmamap);
 fail1:
-	free(p, pool);
+	kmem_free(p, sizeof(*p));
 	return NULL;
 }
 
 void
-cs4231_free(void *addr, void *ptr, struct malloc_type *pool)
+cs4231_free(void *addr, void *ptr, size_t size)
 {
 	struct cs4231_softc *sc;
 	bus_dma_tag_t dmatag;
@@ -242,7 +242,7 @@ cs4231_free(void *addr, void *ptr, struct malloc_type *pool)
 		bus_dmamem_free(dmatag, p->segs, p->nsegs);
 		bus_dmamap_destroy(dmatag, p->dmamap);
 		*pp = p->next;
-		free(p, pool);
+		kmem_free(p, sizeof(*p));
 		return;
 	}
 	printf("cs4231_free: rogue pointer\n");

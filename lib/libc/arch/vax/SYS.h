@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.11 2011/01/25 02:38:15 matt Exp $ */
+/*	$NetBSD: SYS.h,v 1.11.4.1 2012/04/17 00:05:15 yamt Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -85,5 +85,5 @@
 
 #define	ASMSTR		.asciz
 
-	.hidden CERROR
+	.protected	CERROR
 	.globl	CERROR

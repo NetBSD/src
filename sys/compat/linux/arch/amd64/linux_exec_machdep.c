@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.18 2010/07/07 01:30:33 chs Exp $ */
+/*	$NetBSD: linux_exec_machdep.c,v 1.18.8.1 2012/04/17 00:07:15 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.18 2010/07/07 01:30:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.18.8.1 2012/04/17 00:07:15 yamt Exp $");
 
 #define ELFSIZE 64
 
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.18 2010/07/07 01:30:33 chs 
 #include <sys/resource.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/exec_elf.h>
 #include <sys/vnode.h>
 #include <sys/lwp.h>
@@ -154,7 +154,7 @@ ELFNAME2(linux,copyargs)(struct lwp *l, struct exec_package *pack,
 	 */
 	if (ap == NULL) {
 		phsize = eh->e_phnum * sizeof(Elf_Phdr);
-		ph = (Elf_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
+		ph = (Elf_Phdr *)kmem_alloc(phsize, KM_SLEEP);
 		error = exec_read_from(l, pack->ep_vp, eh->e_phoff, ph, phsize);
 		if (error != 0) {
 			for (i = 0; i < eh->e_phnum; i++) {
@@ -164,7 +164,7 @@ ELFNAME2(linux,copyargs)(struct lwp *l, struct exec_package *pack,
 				}
 			}
 		}
-		free(ph, M_TEMP);
+		kmem_free(ph, phsize);
 	}
 
 
@@ -235,11 +235,8 @@ ELFNAME2(linux,copyargs)(struct lwp *l, struct exec_package *pack,
 		
 	strcpy(esd.hw_platform, LINUX_PLATFORM); 
 
-	if (ap) {
-		free((char *)ap, M_TEMP);
-		pack->ep_emul_arg = NULL;
-	}
-	
+	exec_free_emul_arg(pack);
+
 	/*
 	 * Copy out the ELF auxiliary table and hw platform name
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_ofisa.c,v 1.24 2009/09/22 16:44:08 tsutsui Exp $	*/
+/*	$NetBSD: if_cs_ofisa.c,v 1.24.12.1 2012/04/17 00:07:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa.c,v 1.24 2009/09/22 16:44:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa.c,v 1.24.12.1 2012/04/17 00:07:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,10 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa.c,v 1.24 2009/09/22 16:44:08 tsutsui Exp
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include "rnd.h"
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_ether.h>

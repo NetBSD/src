@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.39 2011/03/27 18:47:09 martin Exp $ */
+/*	$NetBSD: syscall.c,v 1.39.4.1 2012/04/17 00:06:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -79,15 +79,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.39 2011/03/27 18:47:09 martin Exp $");
-
-#include "opt_sa.h"
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.39.4.1 2012/04/17 00:06:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/signal.h>
 #include <sys/kmem.h>
 #include <sys/ktrace.h>
@@ -313,12 +309,6 @@ syscall_plain(struct trapframe64 *tf, register_t code, register_t pc)
 	if ((error = getargs(p, tf, &code, &callp, &args, &s64)) != 0)
 		goto bad;
 
-#ifdef KERN_SA
-	if (__predict_false((l->l_savp)
-            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
-		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
-#endif
-
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
 
@@ -407,11 +397,6 @@ syscall_fancy(struct trapframe64 *tf, register_t code, register_t pc)
 #else
 	ap = &args;
 #endif
-#ifdef KERN_SA
-	if (__predict_false((l->l_savp)
-            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
-		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
-#endif
 
 	if ((error = trace_enter(code, ap->r, callp->sy_narg)) != 0) {
 		goto out;
@@ -481,6 +466,16 @@ child_return(void *arg)
 	ktrsysret((l->l_proc->p_lflag & PL_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
 }
 
+/*
+ * Process the tail end of a posix_spawn() for the child.
+ */
+void
+cpu_spawn_return(struct lwp *l)
+{
+
+	userret(l, l->l_md.md_tf->tf_pc, 0);
+}
+
 /* 
  * Start a new LWP
  */
@@ -495,13 +490,5 @@ startlwp(void *arg)
 	KASSERT(error == 0);
 
 	kmem_free(uc, sizeof(ucontext_t));
-	userret(l, 0, 0);
-}
-
-void
-upcallret(struct lwp *l)
-{
-
-	KERNEL_UNLOCK_LAST(l);
 	userret(l, 0, 0);
 }

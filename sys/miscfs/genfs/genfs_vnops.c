@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.187 2011/06/12 03:35:58 rmind Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.187.2.1 2012/04/17 00:08:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.187 2011/06/12 03:35:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.187.2.1 2012/04/17 00:08:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -580,17 +580,6 @@ genfs_can_access(enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
 	mode_t mask;
 	int error, ismember;
 
-	/*
-	 * Super-user always gets read/write access, but execute access depends
-	 * on at least one execute bit being set.
-	 */
-	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) == 0) {
-		if ((acc_mode & VEXEC) && type != VDIR &&
-		    (file_mode & (S_IXUSR|S_IXGRP|S_IXOTH)) == 0)
-			return (EACCES);
-		return (0);
-	}
-
 	mask = 0;
 
 	/* Otherwise, check the owner. */
@@ -632,7 +621,6 @@ genfs_can_access(enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
  * Common routine to check if chmod() is allowed.
  *
  * Policy:
- *   - You must be root, or
  *   - You must own the file, and
  *     - You must not set the "sticky" bit (meaningless, see chmod(2))
  *     - You must be a member of the group if you're trying to set the
@@ -646,25 +634,19 @@ genfs_can_access(enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
  * Returns 0 if the change is allowed, or an error value otherwise.
  */
 int
-genfs_can_chmod(vnode_t *vp, kauth_cred_t cred, uid_t cur_uid,
+genfs_can_chmod(enum vtype type, kauth_cred_t cred, uid_t cur_uid,
     gid_t cur_gid, mode_t new_mode)
 {
 	int error;
 
-	/* Superuser can always change mode. */
-	error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    NULL);
-	if (!error)
-		return (0);
-
-	/* Otherwise, user must own the file. */
+	/* The user must own the file. */
 	if (kauth_cred_geteuid(cred) != cur_uid)
 		return (EPERM);
 
 	/*
-	 * Non-root users can't set the sticky bit on files.
+	 * Unprivileged users can't set the sticky bit on files.
 	 */
-	if ((vp->v_type != VDIR) && (new_mode & S_ISTXT))
+	if ((type != VDIR) && (new_mode & S_ISTXT))
 		return (EFTYPE);
 
 	/*
@@ -687,7 +669,6 @@ genfs_can_chmod(vnode_t *vp, kauth_cred_t cred, uid_t cur_uid,
  * Common routine to check if chown() is allowed.
  *
  * Policy:
- *   - You must be root, or
  *   - You must own the file, and
  *     - You must not try to change ownership, and
  *     - You must be member of the new group
@@ -699,21 +680,13 @@ genfs_can_chmod(vnode_t *vp, kauth_cred_t cred, uid_t cur_uid,
  * Returns 0 if the change is allowed, or an error value otherwise.
  */
 int	
-genfs_can_chown(vnode_t *vp, kauth_cred_t cred, uid_t cur_uid,
+genfs_can_chown(kauth_cred_t cred, uid_t cur_uid,
     gid_t cur_gid, uid_t new_uid, gid_t new_gid)
 {
 	int error, ismember;
 
 	/*
 	 * You can only change ownership of a file if:
-	 * You are the superuser, or...
-	 */
-	error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    NULL);
-	if (!error)
-		return (0);
-
-	/*
 	 * You own the file and...
 	 */
 	if (kauth_cred_geteuid(cred) == cur_uid) {
@@ -748,42 +721,13 @@ genfs_can_chown(vnode_t *vp, kauth_cred_t cred, uid_t cur_uid,
 	return (EPERM);
 }
 
-/*
- * Common routine to check if the device can be mounted.
- *
- * devvp - the locked vnode of the device
- * cred - credentials of the invoker
- * accessmode - the accessmode (VREAD, VWRITE)
- *
- * Returns 0 if the mount is allowed, or an error value otherwise.
- */
-int
-genfs_can_mount(vnode_t *devvp, mode_t accessmode, kauth_cred_t cred)
-{
-	int error;
-
-	/* Always allow for root. */
-	error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL);
-	if (!error)
-		return (0);
-
-	error = VOP_ACCESS(devvp, accessmode, cred);
-
-	return (error);
-}
-
 int
 genfs_can_chtimes(vnode_t *vp, u_int vaflags, uid_t owner_uid,
     kauth_cred_t cred)
 {
 	int error;
 
-	/* Must be root, or... */
-	error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL);
-	if (!error)
-		return (0);
-
-	/* must be owner, or... */
+	/* Must be owner, or... */
 	if (kauth_cred_geteuid(cred) == owner_uid)
 		return (0);
 
@@ -799,3 +743,70 @@ genfs_can_chtimes(vnode_t *vp, u_int vaflags, uid_t owner_uid,
 	return (0);
 }
 
+/*
+ * Common routine to check if chflags() is allowed.
+ *
+ * Policy:
+ *   - You must own the file, and
+ *   - You must not change system flags, and
+ *   - You must not change flags on character/block devices.
+ *
+ * cred - credentials of the invoker
+ * owner_uid - uid of the file-system object
+ * changing_sysflags - true if the invoker wants to change system flags
+ */
+int
+genfs_can_chflags(kauth_cred_t cred, enum vtype type, uid_t owner_uid,
+    bool changing_sysflags)
+{
+
+	/* The user must own the file. */
+	if (kauth_cred_geteuid(cred) != owner_uid) {
+		return EPERM;
+	}
+
+	if (changing_sysflags) {
+		return EPERM;
+	}
+
+	/*
+	 * Unprivileged users cannot change the flags on devices, even if they
+	 * own them.
+	 */
+	if (type == VCHR || type == VBLK) {
+		return EPERM;
+	}
+
+	return 0;
+}
+
+/*
+ * Common "sticky" policy.
+ *
+ * When a directory is "sticky" (as determined by the caller), this
+ * function may help implementing the following policy:
+ * - Renaming a file in it is only possible if the user owns the directory
+ *   or the file being renamed.
+ * - Deleting a file from it is only possible if the user owns the
+ *   directory or the file being deleted.
+ */
+int
+genfs_can_sticky(kauth_cred_t cred, uid_t dir_uid, uid_t file_uid)
+{
+	if (kauth_cred_geteuid(cred) != dir_uid &&
+	    kauth_cred_geteuid(cred) != file_uid)
+		return EPERM;
+
+	return 0;
+}
+
+int
+genfs_can_extattr(kauth_cred_t cred, int access_mode, vnode_t *vp,
+    const char *attr)
+{
+	/* We can't allow privileged namespaces. */
+	if (strncasecmp(attr, "system", 6) == 0)
+		return EPERM;
+
+	return VOP_ACCESS(vp, access_mode, cred);
+}

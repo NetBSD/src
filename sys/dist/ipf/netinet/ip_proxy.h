@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.h,v 1.10 2009/08/19 08:36:12 darrenr Exp $	*/
+/*	$NetBSD: ip_proxy.h,v 1.10.12.1 2012/04/17 00:08:14 yamt Exp $	*/
 
 /*
  * Copyright (C) 1997-2001 by Darren Reed.
@@ -99,14 +99,14 @@ typedef	struct	aproxy	{
 	u_char	apr_p;		/* protocol */
 	int	apr_ref;	/* +1 per rule referencing it */
 	int	apr_flags;
-	int	(* apr_init) __P((void));
-	void	(* apr_fini) __P((void));
-	int	(* apr_new) __P((fr_info_t *, ap_session_t *, struct nat *));
-	void	(* apr_del) __P((ap_session_t *));
-	int	(* apr_inpkt) __P((fr_info_t *, ap_session_t *, struct nat *));
-	int	(* apr_outpkt) __P((fr_info_t *, ap_session_t *, struct nat *));
-	int	(* apr_match) __P((fr_info_t *, ap_session_t *, struct nat *));
-	int	(* apr_ctl) __P((struct aproxy *, struct ap_control *));
+	int	(* apr_init)(void);
+	void	(* apr_fini)(void);
+	int	(* apr_new)(fr_info_t *, ap_session_t *, struct nat *);
+	void	(* apr_del)(ap_session_t *);
+	int	(* apr_inpkt)(fr_info_t *, ap_session_t *, struct nat *);
+	int	(* apr_outpkt)(fr_info_t *, ap_session_t *, struct nat *);
+	int	(* apr_match)(fr_info_t *, ap_session_t *, struct nat *);
+	int	(* apr_ctl)(struct aproxy *, struct ap_control *);
 } aproxy_t;
 
 #define	APR_DELETE	1
@@ -444,18 +444,18 @@ extern	aproxy_t	ap_proxies[];
 extern	int		ippr_ftp_pasvonly;
 extern	int		ipf_proxy_debug;
 
-extern	int	appr_add __P((aproxy_t *));
-extern	int	appr_ctl __P((ap_ctl_t *));
-extern	int	appr_del __P((aproxy_t *));
-extern	int	appr_init __P((void));
-extern	void	appr_unload __P((void));
-extern	int	appr_ok __P((fr_info_t *, tcphdr_t *, struct ipnat *));
-extern	int	appr_match __P((fr_info_t *, struct nat *));
-extern	void	appr_free __P((aproxy_t *));
-extern	void	aps_free __P((ap_session_t *));
-extern	int	appr_check __P((fr_info_t *, struct nat *));
-extern	aproxy_t	*appr_lookup __P((u_int, char *));
-extern	int	appr_new __P((fr_info_t *, struct nat *));
-extern	int	appr_ioctl __P((void *, ioctlcmd_t, int, void *));
+extern	int	appr_add(aproxy_t *);
+extern	int	appr_ctl(ap_ctl_t *);
+extern	int	appr_del(aproxy_t *);
+extern	int	appr_init(void);
+extern	void	appr_unload(void);
+extern	int	appr_ok(fr_info_t *, tcphdr_t *, struct ipnat *);
+extern	int	appr_match(fr_info_t *, struct nat *);
+extern	void	appr_free(aproxy_t *);
+extern	void	aps_free(ap_session_t *);
+extern	int	appr_check(fr_info_t *, struct nat *);
+extern	aproxy_t	*appr_lookup(u_int, char *);
+extern	int	appr_new(fr_info_t *, struct nat *);
+extern	int	appr_ioctl(void *, ioctlcmd_t, int, void *);
 
 #endif /* _NETINET_IP_PROXY_H_ */

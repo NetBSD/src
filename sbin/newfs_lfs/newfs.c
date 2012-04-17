@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.25 2010/02/16 23:20:30 mlelstv Exp $	*/
+/*	$NetBSD: newfs.c,v 1.25.6.1 2012/04/17 00:05:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.25 2010/02/16 23:20:30 mlelstv Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.25.6.1 2012/04/17 00:05:41 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -275,8 +275,18 @@ main(int argc, char **argv)
 		special = device;
 	}
 	if (!Nflag) {
-		fso = open(special,
-		    (debug ? O_CREAT : 0) | O_RDWR, DEFFILEMODE);
+		fso = open(special, O_RDWR, DEFFILEMODE);
+		if (debug && fso < 0) {
+			/* Create a file of the requested size. */
+			fso = open(special, O_CREAT | O_RDWR, DEFFILEMODE);
+			if (fso >= 0) {
+				char buf[512];
+				int i;
+				for (i = 0; i < fssize; i++)
+					write(fso, buf, sizeof(buf));
+				lseek(fso, 0, SEEK_SET);
+			}
+		}
 		if (fso < 0)
 			fatal("%s: %s", special, strerror(errno));
 	} else

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.18 2006/03/05 23:47:08 rpaulo Exp $	*/
+/*	$NetBSD: if.c,v 1.18.42.1 2012/04/17 00:09:53 yamt Exp $	*/
 /*	$KAME: if.c,v 1.36 2004/11/30 22:32:01 suz Exp $	*/
 
 /*
@@ -50,22 +50,20 @@
 #include "rtadvd.h"
 #include "if.h"
 
-#define ROUNDUP(a, size) \
-	(((a) & ((size)-1)) ? (1 + ((a) | ((size)-1))) : (a))
-
-#define NEXT_SA(ap) (ap) = (struct sockaddr *) \
-	((caddr_t)(ap) + ((ap)->sa_len ? ROUNDUP((ap)->sa_len,\
-						 sizeof(u_long)) :\
-			  			 sizeof(u_long)))
+#ifndef RT_ROUNDUP
+#define RT_ROUNDUP(a)							       \
+	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+#define RT_ADVANCE(x, n) (x += RT_ROUNDUP((n)->sa_len))
+#endif
 
 struct if_msghdr **iflist;
 int iflist_init_ok;
 size_t ifblock_size;
 char *ifblock;
 
-static void get_iflist __P((char **buf, size_t *size));
-static void parse_iflist __P((struct if_msghdr ***ifmlist_p, char *buf,
-		       size_t bufsize));
+static void get_iflist(char **buf, size_t *size);
+static void parse_iflist(struct if_msghdr ***ifmlist_p, char *buf,
+		       size_t bufsize);
 
 static void
 get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
@@ -75,7 +73,7 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 	for (i = 0; i < RTAX_MAX; i++) {
 		if (addrs & (1 << i)) {
 			rti_info[i] = sa;
-			NEXT_SA(sa);
+			RT_ADVANCE(sa, sa);
 		}
 		else
 			rti_info[i] = NULL;
@@ -83,7 +81,7 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 }
 
 struct sockaddr_dl *
-if_nametosdl(char *name)
+if_nametosdl(const char *name)
 {
 	struct ifaddrs *ifap, *ifa;
 	struct sockaddr_dl *sdl;
@@ -111,7 +109,7 @@ if_nametosdl(char *name)
 }
 
 int
-if_getmtu(char *name)
+if_getmtu(const char *name)
 {
 	struct ifaddrs *ifap, *ifa;
 	struct if_data *ifd;
@@ -140,7 +138,7 @@ if_getmtu(char *name)
 		ifr.ifr_addr.sa_family = AF_INET6;
 		strncpy(ifr.ifr_name, name,
 			sizeof(ifr.ifr_name));
-		if (ioctl(s, SIOCGIFMTU, (caddr_t)&ifr) < 0) {
+		if (ioctl(s, SIOCGIFMTU, &ifr) < 0) {
 			close(s);
 			return(0);
 		}
@@ -167,7 +165,7 @@ if_getflags(int ifindex, int oifflags)
 	}
 
 	if_indextoname(ifindex, ifr.ifr_name);
-	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifr) < 0) {
+	if (ioctl(s, SIOCGIFFLAGS, &ifr) < 0) {
 		syslog(LOG_ERR, "<%s> ioctl:SIOCGIFFLAGS: failed for %s",
 		       __func__, ifr.ifr_name);
 		close(s);
@@ -355,19 +353,19 @@ get_prefixlen(char *buf)
 {
 	struct rt_msghdr *rtm = (struct rt_msghdr *)buf;
 	struct sockaddr *sa, *rti_info[RTAX_MAX];
-	u_char *p, *lim;
+	unsigned char *p, *lim;
 	
 	sa = (struct sockaddr *)(rtm + 1);
 	get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 	sa = rti_info[RTAX_NETMASK];
 
-	p = (u_char *)(&SIN6(sa)->sin6_addr);
-	lim = (u_char *)sa + sa->sa_len;
+	p = (unsigned char *)(&SIN6(sa)->sin6_addr);
+	lim = (unsigned char *)sa + sa->sa_len;
 	return prefixlen(p, lim);
 }
 
 int
-prefixlen(u_char *p, u_char *lim)
+prefixlen(const unsigned char *p, const unsigned char *lim)
 {
 	int masklen;
 

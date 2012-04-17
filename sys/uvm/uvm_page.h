@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.73.2.9 2012/02/17 08:18:57 yamt Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.73.2.10 2012/04/17 00:09:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -64,78 +64,73 @@
 #ifndef _UVM_UVM_PAGE_H_
 #define _UVM_UVM_PAGE_H_
 
-/*
- * uvm_page.h
- */
-
-/*
- *	Resident memory system definitions.
- */
-
-/*
- *	Management of resident (logical) pages.
- *
- *	A small structure is kept for each resident
- *	page, indexed by page number.  Each structure
- *	is an element of several lists:
- *
- *		A list of all pages for a given object,
- *		so they can be quickly deactivated at
- *		time of deallocation.
- *
- *		An ordered list of pages due for pageout.
- *
- *	In addition, the structure contains the object
- *	and offset to which this page belongs (for pageout),
- *	and sundry status bits.
- *
- *	Fields in this structure are locked either by the lock on the
- *	object that the page belongs to (O) or by the lock on the page
- *	queues (P) [or both].
- */
-
-/*
- * locking note: the mach version of this data structure had bit
- * fields for the flags, and the bit fields were divided into two
- * items (depending on who locked what).  some time, in BSD, the bit
- * fields were dumped and all the flags were lumped into one short.
- * that is fine for a single threaded uniprocessor OS, but bad if you
- * want to actual make use of locking.  so, we've separated things
- * back out again.
- *
- * note the page structure has no lock of its own.
- */
-
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_pglist.h>
+
+/*
+ * Management of resident (logical) pages.
+ *
+ * Each resident page has a vm_page structure, indexed by page number.
+ * There are several lists in the structure:
+ *
+ * - A radix tree rooted with the containing object is used to
+ *   quickly perform object+offset lookups.
+ * - An ordered list of pages due for pageout.
+ *
+ * In addition, the structure contains the object and offset to which
+ * this page belongs (for pageout) and sundry status bits.
+ *
+ * Note that the page structure has no lock of its own.  The page is
+ * generally protected by its owner's lock (UVM object or amap/anon).
+ * It should be noted that UVM has to serialize pmap(9) operations on
+ * the managed pages, e.g. for pmap_enter() calls.  Hence, the lock
+ * order is as follows:
+ *
+ *	[vmpage-owner-lock] ->
+ *		any pmap locks (e.g. PV hash lock)
+ *
+ * Since the kernel is always self-consistent, no serialization is
+ * required for unmanaged mappings, e.g. for pmap_kenter_pa() calls.
+ *
+ * Field markings and the corresponding locks:
+ *
+ * o:	page owner's lock (UVM object or amap/anon)
+ * p:	lock on the page queues
+ * o|p:	either lock can be acquired
+ * o&p:	both locks are required
+ * ?:	locked by pmap or assumed page owner's lock
+ *
+ * UVM and pmap(9) may use uvm_page_locked_p() to assert whether the
+ * page owner's lock is acquired.
+ */
 
 struct vm_page {
 	union {
 		TAILQ_ENTRY(vm_page) queue;
 		LIST_ENTRY(vm_page) list;
-	} pageq;				/* queue info for FIFO
-						 * queue or free list (P) */
+	} pageq;				/* p: queue info for FIFO
+						 * queue or free list */
 
 	union {
 		struct {
-			struct vm_anon *o_anon;	/* anon (O,P) */
-			struct uvm_object *o_object; /* object (O,P) */
+			struct vm_anon *o_anon;	/* o,p: anon */
+			struct uvm_object *o_object; /* o,p: object */
 		} owner;
 #define uanon	u.owner.o_anon
 #define	uobject	u.owner.o_object
 		LIST_ENTRY(vm_page) cpulist;
 	} u;
-	voff_t			offset;		/* offset into object (O,P) */
-	uint16_t		flags;		/* object flags [O] */
+	voff_t			offset;		/* o,p: offset into object */
+	uint16_t		flags;		/* o: object flags */
 	uint16_t		loan_count;	/* number of active loans
-						 * to read: [O or P]
-						 * to modify: [O _and_ P] */
-	uint16_t		wire_count;	/* wired down map refs [P] */
-	uint16_t		pqflags;	/* page queue flags [P] */
+						 * o|p: for reading
+						 * o&p: for modification */
+	uint16_t		wire_count;	/* p: wired down map refs */
+	uint16_t		pqflags;	/* p: page queue flags */
 	paddr_t			phys_addr;	/* physical address of page */
 
 #ifdef __HAVE_VM_PAGE_MD
-	struct vm_page_md	mdpage;		/* pmap-specific data */
+	struct vm_page_md	mdpage;		/* ?: pmap-specific data */
 #endif
 
 #if defined(UVM_PAGE_TRKOWN)

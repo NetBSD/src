@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC,v 1.274 2011/10/30 11:19:56 rkujawa Exp $
+# $NetBSD: GENERIC,v 1.274.2.1 2012/04/17 00:06:00 yamt Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.86 2011/10/30 11:16:05 rkujawa Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.95 2012/01/19 22:43:11 rkujawa Exp $
 #
 ##
 # GENERIC machine description file
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.274 $"
+#ident 		"GENERIC-$Revision: 1.274.2.1 $"
 
 
 maxusers	8
@@ -126,7 +126,7 @@ file-system	TMPFS		# Efficient memory file-system
 # Filesystem options
 
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
@@ -169,7 +169,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 options 	SYSVSHM		# System V-like shared memory
 options 	SYSVMSG		# System V-like messages
 options 	SYSVSEM		# System V-like semaphores
-options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 #
 # Support for various kernel options
@@ -265,12 +264,13 @@ options        KFONT_CONS_ISO8859_1
 # wscons aware interface to amiga custom chips.
 # If you enable it enable also wskbd.
 #
-
 #amidisplaycc0	at mainbus0		# wscons interface to custom chips
 #wsdisplay0	at amidisplaycc0 console ?
 #options 	WSEMUL_VT100
 #options 	FONT_VT220L8x10
 #options	FONT_VT220ISO8x16
+
+p5bus0		at zbus0		# Phase5 CSPPC/BPPC internal bus
 
 grfcc0		at mainbus0		# custom chips
 grfrt0		at zbus0		# retina II
@@ -297,6 +297,9 @@ ite4		at grf4			# terminal emulators for grfs
 ite5		at grf5			# terminal emulators for grfs
 ite6		at grf6			# terminal emulators for grfs
 ite7		at grf7			# terminal emulators for grfs
+
+#wsdisplay*	at grf5 console ?	# wsdisplay on top of grf (CV64)
+#wsdisplay*	at grf7 console ?	# wsdisplay on top of grf (CV64/3D)
 
 msc0		at zbus0		# A2232 MSC multiport serial.
 mfc0		at zbus0		# MultiFaceCard I/O board
@@ -327,7 +330,6 @@ lpt*		at iobl? port ?		# IOBlix parallel ports
 # Don't enable wskbd if you use ite.
 #
 # XXX in std.amiga: kbd0 at mainbus0
-
 #wskbd0		at kbd0 console ?
 
 
@@ -344,7 +346,6 @@ a34kbbc0	at mainbus0		# A3000/A4000 battery backed clock
 a2kbbc0 	at mainbus0		# A2000 battery backed clock
 aucc*		at mainbus0		# Amiga CC audio
 audio*		at aucc?
-
 
 #wsmouse*	at ms?
 
@@ -402,7 +403,7 @@ mgnsc0		at zbus0		# Magnum scsi
 scsibus*	at mgnsc0
 wesc0		at zbus0		# Warp Engine scsi
 scsibus*	at wesc0
-bppcsc0		at zbus0		# BlizzardPPC 603e+ scsi
+bppcsc0		at p5bus0		# BlizzardPPC 603e+ scsi
 scsibus*	at bppcsc0
 afsc0		at zbus0		# A4091 scsi
 scsibus*	at afsc0
@@ -420,17 +421,17 @@ cbsc0		at zbus0		# CyberSCSI I
 scsibus*	at cbsc0
 cbiisc0 	at zbus0		# CyberSCSI II
 scsibus*	at cbiisc0
-cbiiisc0 	at zbus0		# Cyberstorm mk.III/Cyberstorm PPC SCSI
+cbiiisc0 	at p5bus0		# Cyberstorm mk.III/Cyberstorm PPC SCSI
 scsibus*	at cbiiisc0
 empsc0		at zbus0		# Emplant scsi
 scsibus*	at empsc0
 
 wdc0		at mainbus0		# A4000 & A1200 IDE bus
 wdc*		at zbus0		# Buddha / Catweasel
-efa0		at mainbus0		# ELBOX FastATA 1200 Mk-III/Mk-IV 
+#efa0		at mainbus0		# ELBOX FastATA 1200 Mk-III/Mk-IV 
 
 atabus* 	at wdc? channel ?	# ATA bus
-atabus*		at efa? channel ?	# ATA bus 
+#atabus*	at efa? channel ?	# ATA bus 
 wd*		at atabus? drive ?	#  + drives
 atapibus*	at atabus?		# ATAPI bus
 cd*		at atapibus? drive ?	# ATAPI CD-ROM drives
@@ -468,14 +469,24 @@ uk*	at scsibus? target ? lun ?	# scsi unknown
 # PCI bus support
 options		PCIVERBOSE              # verbose PCI device autoconfig messages
 #options	PCI_CONFIG_DUMP
-options		PCI_NETBSD_CONFIGURE
+options		PCI_NETBSD_CONFIGURE	# supported by mppb(4) and p5pb(4)
 
-p5pb0		at zbus0                # Phase5 PCI bridge (CVPPC/BVPPC)
+p5pb0		at p5bus0		# Phase5 PCI bridge (CVPPC/BVPPC/G-REX)
+p5membar*	at zbus0		# Phase5 PCI bridge autoconfiguring BARs
+#options	P5PB_DEBUG		# enable excessive debug for p5pb
+#options	P5PB_CONSOLE		# console on CVPPC/BVPPC/Voodoo3
 pci*		at p5pb0
-mppb*           at zbus0                # Matay Prometheus Zorro-PCI bridge
+
+mppb*           at zbus0		# Matay Prometheus Zorro-PCI bridge
 pci*            at mppb?
 
-ne*             at pci?                 # NE2000 Ethernet
+#cv3dpb*	at zbus0		# CyberVision 64/3D PCI bridge
+
+#genfb*		at pci?			# generic fb, CVPPC/BVPPC only
+#voodoofb*	at pci?			# 3Dfx Voodoo 3 in G-REX
+#radeonfb*	at pci?			# untested
+
+ne*             at pci?			# NE2000 Ethernet
 
 # Bluetooth Controller and Device support
 # tested only with btuart on an A1200
@@ -533,6 +544,7 @@ pseudo-device	agr			# IEEE 802.3ad link aggregation
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 pseudo-device	fss			# file system snapshot device
+pseudo-device	putter			# for puffs and pud
 
 pseudo-device	view		4	# views (needed for grfcc)
 pseudo-device	pty			# pseudo-terminals
@@ -556,7 +568,6 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 # options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 
 pseudo-device	ksyms			# /dev/ksyms (kernel symbols)

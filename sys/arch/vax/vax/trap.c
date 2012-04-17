@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.128 2011/07/03 02:18:21 matt Exp $     */
+/*	$NetBSD: trap.c,v 1.128.2.1 2012/04/17 00:07:01 yamt Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.128 2011/07/03 02:18:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.128.2.1 2012/04/17 00:07:01 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -44,8 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.128 2011/07/03 02:18:21 matt Exp $");
 #include <sys/exec.h>
 #include <sys/kauth.h>
 #include <sys/proc.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/signalvar.h>
 
 #include <uvm/uvm_extern.h>
@@ -221,11 +219,6 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 		else
 			ftype = VM_PROT_READ;
 
-		if ((usermode) && (l->l_flag & LW_SA)) {
-			l->l_savp->savp_faultaddr = (vaddr_t)tf->tf_code;
-			l->l_pflag |= LP_SA_PAGEFAULT;
-		}
-
 		pcb->pcb_onfault = NULL;
 		rv = uvm_fault(map, addr, ftype);
 		pcb->pcb_onfault = onfault;
@@ -238,7 +231,17 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 					tf->tf_r0 = rv;
 					return;
 				}
-				panic("Segv in kernel mode: pc %#lx addr %#lx",
+				printf("r0=%08lx r1=%08lx r2=%08lx r3=%08lx ",
+				    tf->tf_r0, tf->tf_r1, tf->tf_r2, tf->tf_r3);
+				printf("r4=%08lx r5=%08lx r6=%08lx r7=%08lx\n",
+				    tf->tf_r4, tf->tf_r5, tf->tf_r6, tf->tf_r7);
+				printf(
+				    "r8=%08lx r9=%08lx r10=%08lx r11=%08lx\n",
+				    tf->tf_r8, tf->tf_r9, tf->tf_r10,
+				    tf->tf_r11);
+				printf("ap=%08lx fp=%08lx sp=%08lx pc=%08lx\n",
+				    tf->tf_ap, tf->tf_fp, tf->tf_sp, tf->tf_pc);
+				panic("SEGV in kernel mode: pc %#lx addr %#lx",
 				    tf->tf_pc, tf->tf_code);
 			}
 			code = SEGV_ACCERR;
@@ -259,9 +262,6 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 			if (map != kernel_map && addr > 0
 			    && (void *)addr >= vm->vm_maxsaddr)
 				uvm_grow(p, addr);
-		}
-		if (usermode) {
-			l->l_pflag &= ~LP_SA_PAGEFAULT;
 		}
 		break;
 
@@ -391,12 +391,3 @@ startlwp(void *arg)
 	/* XXX - profiling spoiled here */
 	userret(l, l->l_md.md_utf, l->l_proc->p_sticks);
 }
-
-void
-upcallret(struct lwp *l)
-{
-
-	/* XXX - profiling */
-	userret(l, l->l_md.md_utf, l->l_proc->p_sticks);
-}
-

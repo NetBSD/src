@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/07/25 16:32:44 joerg Exp $
+#	$NetBSD: Makefile,v 1.2.2.1 2012/04/17 00:03:33 yamt Exp $
 
 LIB=	clangARCMigrate
 
@@ -8,6 +8,7 @@ LIB=	clangARCMigrate
 
 SRCS+=	ARCMT.cpp \
 	ARCMTActions.cpp \
+	ObjCMT.cpp \
 	FileRemapper.cpp \
 	PlistReporter.cpp \
 	TransAPIUses.cpp \
@@ -15,6 +16,8 @@ SRCS+=	ARCMT.cpp \
 	TransAutoreleasePool.cpp \
 	TransBlockObjCVariable.cpp \
 	TransEmptyStatementsAndDealloc.cpp \
+	TransGCAttrs.cpp \
+	TransGCCalls.cpp \
 	TransProperties.cpp \
 	TransRetainReleaseDealloc.cpp \
 	TransUnbridgedCasts.cpp \

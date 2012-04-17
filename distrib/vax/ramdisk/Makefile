@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.26 2010/02/11 09:06:51 roy Exp $
+#	$NetBSD: Makefile,v 1.26.6.1 2012/04/17 00:02:54 yamt Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 IMAGE=		ramdisk.fs
-IMAGESIZE=	1536k
+IMAGESIZE=	1664k
 MAKEFS_FLAGS=	-f 15
 
 WARNS=		1
@@ -17,7 +17,7 @@ IMAGEENDIAN=	le
 MAKEDEVTARGETS=	std mt0 st0 rd0 rd1 dz0 dl0 dhu0 rx0 ra0 ra1 ra2 ra3 hp0 hp1 \
 		sd0 sd1 sd2 md0 pty0 cd0 cd1
 IMAGEDEPENDS=	${CRUNCHBIN} \
-		dot.profile \
+		Makefile dot.profile \
 		${DESTDIR}/boot ${DESTDIR}/usr/mdec/xxboot \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
 		${NETBSDSRCDIR}/etc/netconfig ${DISTRIBDIR}/common/protocols \

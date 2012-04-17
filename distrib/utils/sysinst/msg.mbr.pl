@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.pl,v 1.14 2011/04/04 08:30:13 mbalmer Exp $	*/
+/*	$NetBSD: msg.mbr.pl,v 1.14.4.1 2012/04/17 00:02:50 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -86,7 +86,7 @@ podstawie podanych danych i rozmiaru dysku.
 }
 
 message nobiosgeom
-{Sysinst nie mogl automatycznie rozpoznac geometrii dysku z BIOS.
+{Sysinst nie mogl automatycznie rozpoznac geometrii dysku z BIOS. 
 Fizyczna geometria to %d cylindrow %d sektorow %d glowic\n}
 
 message biosguess

@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.c,v 1.42 2011/10/16 05:05:38 mrg Exp $	*/
+/*	$NetBSD: fts.c,v 1.42.2.1 2012/04/17 00:05:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: fts.c,v 1.42 2011/10/16 05:05:38 mrg Exp $");
+__RCSID("$NetBSD: fts.c,v 1.42.2.1 2012/04/17 00:05:18 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -77,6 +77,23 @@ static int	 fts_safe_changedir(const FTS *, const FTSENT *, int,
 #define	FTS_ALLOC_ALIGNED	1
 #else
 #undef	FTS_ALLOC_ALIGNED
+#endif
+
+#ifndef ftsent_namelen_truncate
+#define ftsent_namelen_truncate(a)	\
+    ((a) > UINT_MAX ? UINT_MAX : (unsigned int)(a))
+#endif
+#ifndef ftsent_pathlen_truncate
+#define ftsent_pathlen_truncate(a) \
+    ((a) > UINT_MAX ? UINT_MAX : (unsigned int)(a))
+#endif
+#ifndef fts_pathlen_truncate
+#define fts_pathlen_truncate(a)	\
+    ((a) > UINT_MAX ? UINT_MAX : (unsigned int)(a))
+#endif
+#ifndef fts_nitems_truncate
+#define fts_nitems_truncate(a) \
+    ((a) > UINT_MAX ? UINT_MAX : (unsigned int)(a))
 #endif
 
 #define	ISDOT(a)	(a[0] == '.' && (!a[1] || (a[1] == '.' && !a[2])))
@@ -235,7 +252,7 @@ fts_load(FTS *sp, FTSENT *p)
 	if ((cp = strrchr(p->fts_name, '/')) && (cp != p->fts_name || cp[1])) {
 		len = strlen(++cp);
 		memmove(p->fts_name, cp, len + 1);
-		p->fts_namelen = len;
+		p->fts_namelen = ftsent_namelen_truncate(len);
 	}
 	p->fts_accpath = p->fts_path = sp->fts_path;
 	sp->fts_dev = p->fts_dev;
@@ -790,7 +807,7 @@ mem1:				saved_errno = errno;
 		}
 #endif
 		p->fts_level = level;
-		p->fts_pathlen = len + dnamlen;
+		p->fts_pathlen = ftsent_pathlen_truncate(len + dnamlen);
 		p->fts_parent = sp->fts_cur;
 
 #ifdef FTS_WHITEOUT
@@ -994,7 +1011,7 @@ fts_sort(FTS *sp, FTSENT *head, size_t nitems)
 		if (new == 0)
 			return (head);
 		sp->fts_array = new;
-		sp->fts_nitems = nitems + 40;
+		sp->fts_nitems = fts_nitems_truncate(nitems + 40);
 	}
 	for (ap = sp->fts_array, p = head; p; p = p->fts_link)
 		*ap++ = p;
@@ -1052,7 +1069,7 @@ fts_alloc(FTS *sp, const char *name, size_t namelen)
 	/* Copy the name plus the trailing NULL. */
 	memmove(p->fts_name, name, namelen + 1);
 
-	p->fts_namelen = namelen;
+	p->fts_namelen = ftsent_namelen_truncate(namelen);
 	p->fts_path = sp->fts_path;
 	p->fts_errno = 0;
 	p->fts_flags = 0;
@@ -1131,7 +1148,7 @@ fts_palloc(FTS *sp, size_t size)
 	if (new == 0)
 		return (1);
 	sp->fts_path = new;
-	sp->fts_pathlen = size;
+	sp->fts_pathlen = fts_pathlen_truncate(size);
 	return (0);
 }
 

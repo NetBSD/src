@@ -1,0 +1,5 @@
+#	$NetBSD: shlib_version,v 1.2.2.2 2012/04/17 00:04:45 yamt Exp $
+#
+# XXX netbsd xsrc had major=4
+major=2
+minor=1

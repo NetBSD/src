@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.6.6.1 2011/11/10 14:31:50 yamt Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.6.6.2 2012/04/17 00:08:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
@@ -76,10 +76,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.6.6.1 2011/11/10 14:31:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.6.6.2 2012/04/17 00:08:39 yamt Exp $");
 
 #include <sys/param.h>
-#include <sys/kernel.h>
+#include <sys/types.h>
 
 #include <sys/atomic.h>
 #include <sys/bitops.h>
@@ -87,6 +87,8 @@ __KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.6.6.1 2011/11/10 14:31:50 yamt Exp $")
 #include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/pool.h>
+#include <sys/cprng.h>
+
 #include <net/pfil.h>
 #include <netinet/in.h>
 
@@ -110,7 +112,9 @@ typedef struct {
 #define	PORTMAP_MEM_SIZE	\
     (sizeof(npf_portmap_t) + (PORTMAP_SIZE * sizeof(uint32_t)))
 
-/* NAT policy structure. */
+/*
+ * NAT policy structure.
+ */
 struct npf_natpolicy {
 	LIST_HEAD(, npf_nat)	n_nat_list;
 	kmutex_t		n_lock;
@@ -126,7 +130,9 @@ struct npf_natpolicy {
 #define	NPF_NP_CMP_START	offsetof(npf_natpolicy_t, n_type)
 #define	NPF_NP_CMP_SIZE		(sizeof(npf_natpolicy_t) - NPF_NP_CMP_START)
 
-/* NAT translation entry for a session. */ 
+/*
+ * NAT translation entry for a session.
+ */
 struct npf_nat {
 	/* Association (list entry and a link pointer) with NAT policy. */
 	LIST_ENTRY(npf_nat)	nt_entry;
@@ -179,14 +185,19 @@ npf_nat_newpolicy(prop_dictionary_t natdict, npf_ruleset_t *nrlset)
 	npf_portmap_t *pm;
 
 	np = kmem_zalloc(sizeof(npf_natpolicy_t), KM_SLEEP);
-	mutex_init(&np->n_lock, MUTEX_DEFAULT, IPL_SOFTNET);
-	cv_init(&np->n_cv, "npfnatcv");
-	LIST_INIT(&np->n_nat_list);
 
 	/* Translation type and flags. */
 	prop_dictionary_get_int32(natdict, "type", &np->n_type);
 	prop_dictionary_get_uint32(natdict, "flags", &np->n_flags);
-	KASSERT(np->n_type == NPF_NATIN || np->n_type == NPF_NATOUT);
+
+	/* Should be exclusively either inbound or outbound NAT. */
+	if (((np->n_type == NPF_NATIN) ^ (np->n_type == NPF_NATOUT)) == 0) {
+		kmem_free(np, sizeof(npf_natpolicy_t));
+		return NULL;
+	}
+	mutex_init(&np->n_lock, MUTEX_DEFAULT, IPL_SOFTNET);
+	cv_init(&np->n_cv, "npfnatcv");
+	LIST_INIT(&np->n_nat_list);
 
 	/* Translation IP. */
 	obj = prop_dictionary_get(natdict, "translation-ip");
@@ -295,7 +306,7 @@ npf_nat_sharepm(npf_natpolicy_t *np, npf_natpolicy_t *mnp)
 	/* If NAT policy has an old port map - drop the reference. */
 	mpm = mnp->n_portmap;
 	if (mpm) {
-		/* Note: in such case, we must not be a last reference. */
+		/* Note: at this point we cannot hold a last reference. */
 		KASSERT(mpm->p_refcnt > 1);
 		mpm->p_refcnt--;
 	}
@@ -319,7 +330,7 @@ npf_nat_getport(npf_natpolicy_t *np)
 	u_int n = PORTMAP_SIZE, idx, bit;
 	uint32_t map, nmap;
 
-	idx = arc4random() % PORTMAP_SIZE;
+	idx = cprng_fast32() % PORTMAP_SIZE;
 	for (;;) {
 		KASSERT(idx < PORTMAP_SIZE);
 		map = pm->p_bitmap[idx];
@@ -400,6 +411,7 @@ npf_nat_inspect(npf_cache_t *npc, nbuf_t *nbuf, ifnet_t *ifp, const int di)
 	rlset = npf_core_natset();
 	rl = npf_ruleset_inspect(npc, nbuf, rlset, ifp, di, NPF_LAYER_3);
 	if (rl == NULL) {
+		npf_core_exit();
 		return NULL;
 	}
 	np = npf_rule_getnat(rl);
@@ -432,10 +444,6 @@ npf_nat_create(npf_cache_t *npc, npf_natpolicy_t *np)
 	nt->nt_session = NULL;
 	nt->nt_alg = NULL;
 
-	mutex_enter(&np->n_lock);
-	LIST_INSERT_HEAD(&np->n_nat_list, nt, nt_entry);
-	mutex_exit(&np->n_lock);
-
 	/* Save the original address which may be rewritten. */
 	if (np->n_type == NPF_NATOUT) {
 		/* Source (local) for Outbound NAT. */
@@ -453,8 +461,9 @@ npf_nat_create(npf_cache_t *npc, npf_natpolicy_t *np)
 	    (proto != IPPROTO_TCP && proto != IPPROTO_UDP)) {
 		nt->nt_oport = 0;
 		nt->nt_tport = 0;
-		return nt;
+		goto out;
 	}
+
 	/* Save the relevant TCP/UDP port. */
 	if (proto == IPPROTO_TCP) {
 		struct tcphdr *th = &npc->npc_l4.tcp;
@@ -472,6 +481,10 @@ npf_nat_create(npf_cache_t *npc, npf_natpolicy_t *np)
 	} else {
 		nt->nt_tport = np->n_tport;
 	}
+out:
+	mutex_enter(&np->n_lock);
+	LIST_INSERT_HEAD(&np->n_nat_list, nt, nt_entry);
+	mutex_exit(&np->n_lock);
 	return nt;
 }
 
@@ -518,6 +531,7 @@ npf_nat_translate(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt,
 	if (!npf_rwrcksum(npc, nbuf, n_ptr, di, addr, port)) {
 		return EINVAL;
 	}
+
 	/*
 	 * Address translation: rewrite source/destination address, depending
 	 * on direction (PFIL_OUT - for source, PFIL_IN - for destination).
@@ -529,6 +543,7 @@ npf_nat_translate(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt,
 		/* Done. */
 		return 0;
 	}
+
 	switch (npf_cache_ipproto(npc)) {
 	case IPPROTO_TCP:
 	case IPPROTO_UDP:

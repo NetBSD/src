@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io.c,v 1.8 2011/07/01 19:11:34 dyoung Exp $	*/
+/*	$NetBSD: isa_io.c,v 1.8.2.1 2012/04/17 00:06:16 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.8 2011/07/01 19:11:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.8.2.1 2012/04/17 00:06:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,10 +242,10 @@ isa_io_init(vm_offset_t isa_io_addr, vm_offset_t isa_mem_addr)
 	isa_io_bs_tag.bs_cookie = (void *)isa_io_addr;
 	isa_mem_bs_tag.bs_cookie = (void *)isa_mem_addr;
 
-	isaio_ex = extent_create("isaio", 0x0, 0xffff, M_DEVBUF, 
+	isaio_ex = extent_create("isaio", 0x0, 0xffff, 
 		(void *)isaio_ex_storage, sizeof(isaio_ex_storage),
 		EX_NOWAIT|EX_NOCOALESCE);
-	isamem_ex = extent_create("isamem", 0x0, 0xfffff, M_DEVBUF, 
+	isamem_ex = extent_create("isamem", 0x0, 0xfffff, 
 		(void *)isamem_ex_storage, sizeof(isamem_ex_storage),
 		EX_NOWAIT|EX_NOCOALESCE);
 	if (isaio_ex == NULL || isamem_ex == NULL)
@@ -303,14 +303,16 @@ isa_bs_subregion(void *t, bus_space_handle_t bsh, bus_size_t offset, bus_size_t 
 }
 
 int
-isa_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
-    bpap, bshp)
-	void *t;
-	bus_addr_t rstart, rend;
-	bus_size_t size, alignment, boundary;
-	int cacheable;
-	bus_addr_t *bpap;
-	bus_space_handle_t *bshp;
+isa_bs_alloc(
+	void *t,
+	bus_addr_t rstart,
+	bus_addr_t rend,
+	bus_size_t size,
+	bus_size_t alignment,
+	bus_size_t boundary,
+	int cacheable,
+	bus_addr_t *bpap,
+	bus_space_handle_t *bshp)
 {
 	struct extent *ex;
 	u_long bpa;

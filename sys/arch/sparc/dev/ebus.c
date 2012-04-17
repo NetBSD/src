@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.33 2011/07/18 00:31:13 mrg Exp $ */
+/*	$NetBSD: ebus.c,v 1.33.2.1 2012/04/17 00:06:54 yamt Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.33 2011/07/18 00:31:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.33.2.1 2012/04/17 00:06:54 yamt Exp $");
 
 #if defined(DEBUG) && !defined(EBUS_DEBUG)
 #define EBUS_DEBUG
@@ -332,7 +332,7 @@ ebus_setup_attach_args(struct ebus_softc *sc,
 	err = prom_getprop(node, "name", 1, &n, &ea->ea_name);
 	if (err != 0)
 		return (err);
-	ea->ea_name[n] = '\0';
+	KASSERT(ea->ea_name[n-1] == '\0');
 
 	ea->ea_node = node;
 	ea->ea_bustag = bustag;

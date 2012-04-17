@@ -1,4 +1,4 @@
-/*	$NetBSD: genget.c,v 1.11 2004/10/28 21:14:52 dsl Exp $	*/
+/*	$NetBSD: genget.c,v 1.11.48.1 2012/04/17 00:05:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)genget.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: genget.c,v 1.11 2004/10/28 21:14:52 dsl Exp $");
+__RCSID("$NetBSD: genget.c,v 1.11.48.1 2012/04/17 00:05:33 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,12 +49,11 @@ __RCSID("$NetBSD: genget.c,v 1.11 2004/10/28 21:14:52 dsl Exp $");
  * the length is returned.  If *s1 is a prefix of *s2,
  * the length of *s1 is returned.
  */
-	int
-isprefix(s1, s2)
-	register char *s1, *s2;
+int
+isprefix(char *s1, const char *s2)
 {
 	char *os1;
-	register char c1, c2;
+	char c1, c2;
 
 	if (*s1 == '\0')
 		return(-1);
@@ -72,11 +71,10 @@ isprefix(s1, s2)
 
 static char *ambiguous;		/* special return value for command routines */
 
-	char **
-genget(name, table, stlen)
-	char	*name;		/* name to match */
-	char	**table;	/* name entry in table */
-	int	stlen;
+char **
+genget( char	*name,		/* name to match */
+	char	**table,	/* name entry in table */
+	int	stlen)
 {
 	register char **c, **found;
 	register int n;
@@ -100,9 +98,8 @@ genget(name, table, stlen)
 /*
  * Function call version of Ambiguous()
  */
-	int
-Ambiguous(s)
-	void *s;
+int
+Ambiguous(void *s)
 {
 	return(s == &ambiguous);
 }

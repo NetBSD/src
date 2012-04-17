@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.21 2009/08/12 08:10:49 dholland Exp $	*/
+/*	$NetBSD: misc.c,v 1.21.6.1 2012/04/17 00:05:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.21 2009/08/12 08:10:49 dholland Exp $");
+__RCSID("$NetBSD: misc.c,v 1.21.6.1 2012/04/17 00:05:07 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,8 +106,9 @@ get_int(prompt)
 	for (;;) {
 		printf("%s", prompt);
 		fgets(buf, sizeof(buf), stdin);
+		/* if stdin is closed we cant really play anymore */
 		if (feof(stdin))
-			return 0;
+			quit();
 		sp = strchr(buf, '\n');
 		if (sp)
 			*sp = '\0';
@@ -294,6 +295,11 @@ void
 quit()
 {
 	putchar('\n');
+
+	/* We dont even have a chance to input y/n if stdin is closed */
+	if (feof(stdin))
+		exit(0);
+
 	if (getyn("Do you all really want to quit? ") == 0)
 		exit(0);
 }

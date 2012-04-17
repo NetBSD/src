@@ -1,4 +1,4 @@
-/*	$NetBSD: cfi.c,v 1.6 2011/08/02 03:37:25 cliff Exp $	*/
+/*	$NetBSD: cfi.c,v 1.6.2.1 2012/04/17 00:07:42 yamt Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_cfi.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfi.c,v 1.6 2011/08/02 03:37:25 cliff Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: cfi.c,v 1.6.2.1 2012/04/17 00:07:42 yamt Exp $"); 
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: cfi.c,v 1.6 2011/08/02 03:37:25 cliff Exp $");
 #include <dev/nor/cfi_0002.h>
 
 
-static bool cfi_chip_query(struct cfi * const);
 static int  cfi_scan_media(device_t self, struct nor_chip *chip);
 static void cfi_init(device_t);
 static void cfi_select(device_t, bool);
@@ -64,9 +63,7 @@ static void cfi_write_4(device_t, flash_off_t, uint32_t);
 static void cfi_write_buf_1(device_t, flash_off_t, const uint8_t *, size_t);
 static void cfi_write_buf_2(device_t, flash_off_t, const uint16_t *, size_t);
 static void cfi_write_buf_4(device_t, flash_off_t, const uint32_t *, size_t);
-static void cfi_jedec_id_1(struct cfi * const );
-static void cfi_jedec_id_2(struct cfi * const );
-static void cfi_jedec_id_4(struct cfi * const );
+static uint8_t cfi_read_qry(struct cfi * const, bus_size_t);
 static bool cfi_jedec_id(struct cfi * const);
 static bool cfi_emulate(struct cfi * const);
 static const struct cfi_jedec_tab * cfi_jedec_search(struct cfi *);
@@ -75,59 +72,6 @@ static void cfi_jedec_fill(struct cfi * const,
 #if defined(CFI_DEBUG_JEDEC) || defined(CFI_DEBUG_QRY)
 static void cfi_hexdump(flash_off_t, void * const, u_int, u_int);
 #endif
-
-
-
-/*
- * NOTE these opmode tables are informed by "Table 1. CFI Query Read"
- * in Intel "Common Flash Interface (CFI) and Command Sets"
- * Application Note 646, April 2000
- *
- * Assume the byte order of the flash (and of the signature there)
- * is the same as host byte order. The Intel App. Note describes the
- * little endian variant.
- *
- * XXX down-sized, interleaved & multi-chip opmodes not yet supported
- */
-
-#if BYTE_ORDER == BIG_ENDIAN
-/* BIG ENDIAN host */
-/* 1-byte access */
-static const struct cfi_opmodes cfi_opmodes_1[] = {
-	{ 0, 0, 0, 0x10,  3, "QRY", "x8 device operating in 8-bit mode" },
-};
-
-/* 2-byte access */
-static const struct cfi_opmodes cfi_opmodes_2[] = {
-	{ 1, 1, 0, 0x20,  6, "\0Q\0R\0Y",
-		"x16 device operating in 16-bit mode" },
-};
-
-/* 4-byte access */
-static const struct cfi_opmodes cfi_opmodes_4[] = {
-	{ 2, 2, 0, 0x40, 12, "\0\0\0Q\0\0\0R\0\0\0Y",
-		"x32 device operating in 32-bit mode" },
-};
-#else
-/* LITTLE ENDIAN host */
-/* 1-byte access */
-static const struct cfi_opmodes cfi_opmodes_1[] = {
-	{ 0, 0, 0, 0x10,  3, "QRY", "x8 device operating in 8-bit mode" },
-};
-
-/* 2-byte access */
-static const struct cfi_opmodes cfi_opmodes_2[] = {
-	{ 1, 1, 0, 0x20,  6, "Q\0R\0Y\0",
-		"x16 device operating in 16-bit mode" },
-};
-
-/* 4-byte access */
-static const struct cfi_opmodes cfi_opmodes_4[] = {
-	{ 2, 2, 0, 0x40, 12, "Q\0\0\0R\0\0\0Y\0\0\0",
-		"x32 device operating in 32-bit mode" },
-};
-#endif
-
 
 #define LOG2_64K	16
 #define LOG2_128K	17
@@ -166,7 +110,6 @@ const struct cfi_jedec_tab cfi_jedec_tab[] = {
 		.jt_write_nbyte_time_max = 0,
 		.jt_erase_blk_time_max = 1,
 		.jt_erase_chip_time_max = 1,
-		.jt_opmode = &cfi_opmodes_1[0],
 	},
 	{
 		.jt_name = "Pm39LV010",
@@ -188,7 +131,6 @@ const struct cfi_jedec_tab cfi_jedec_tab[] = {
 		.jt_write_nbyte_time_max = 0,
 		.jt_erase_blk_time_max = 1,
 		.jt_erase_chip_time_max = 1,
-		.jt_opmode = &cfi_opmodes_1[0],
 	},
 };
 
@@ -307,7 +249,7 @@ const struct nor_interface nor_interface_cfi = {
 		cfi_unpack_1(data[0x39]);				\
     } while (0)
 
-#define CFI_QRY_UNPACK_COMMON(cfi, data, type, found)			\
+#define CFI_QRY_UNPACK_COMMON(cfi, data, type)				\
     do {								\
 	struct cfi_query_data * const qryp = &cfi->cfi_qry_data;	\
 									\
@@ -321,13 +263,8 @@ const struct nor_interface nor_interface_cfi = {
 		    (cfi_unpack_1(data[qryp->addr_pri + 2]) == 'I')) {	\
 			type *pri_data = &data[qryp->addr_pri];		\
 			cfi_unpack_pri_0002(qryp, pri_data);		\
-			found = true;					\
 			break;						\
 		}							\
-	default:							\
-		printf("%s: unsupported id_pri=%#x\n",			\
-			__func__, qryp->id_pri);			\
-		break;	/* unknown command set */			\
 	}								\
     } while (0)
 
@@ -352,103 +289,49 @@ const struct nor_interface nor_interface_cfi = {
 #endif
 
 
-/*
- * cfi_chip_query_opmode - determine operational mode based on QRY signature
- */
-static bool
-cfi_chip_query_opmode(struct cfi *cfi, uint8_t *data,
-    const struct cfi_opmodes *tab, u_int nentries)
-{
-	for (u_int i=0; i < nentries; i++) {
-		if (memcmp(&data[tab[i].qsa], tab[i].sig, tab[i].len) == 0) {
-			cfi->cfi_opmode = &tab[i];
-			return true;
-		}
-	}
-	return false;
-}
-
-static bool
+static void
 cfi_chip_query_1(struct cfi * const cfi)
 {
 	uint8_t data[0x80];
 
 	bus_space_read_region_1(cfi->cfi_bst, cfi->cfi_bsh, 0, data,
-		__arraycount(data));
-
+	    __arraycount(data));
 	CFI_DUMP_QRY(0, data, sizeof(data), 1);
-
-	bool found = cfi_chip_query_opmode(cfi, data, cfi_opmodes_1,
-		__arraycount(cfi_opmodes_1));
-
-	if (found) {
-		CFI_QRY_UNPACK_COMMON(cfi, data, uint8_t, found);
-	}
-
-	return found;
+	CFI_QRY_UNPACK_COMMON(cfi, data, uint8_t);
 }
 
-static bool
+static void
 cfi_chip_query_2(struct cfi * const cfi)
 {
 	uint16_t data[0x80];
 
 	bus_space_read_region_2(cfi->cfi_bst, cfi->cfi_bsh, 0, data,
-		__arraycount(data));
-
+	    __arraycount(data));
 	CFI_DUMP_QRY(0, data, sizeof(data), 2);
-
-	bool found = cfi_chip_query_opmode(cfi, (uint8_t *)data,
-		cfi_opmodes_2, __arraycount(cfi_opmodes_2));
-
-	if (found) {
-		CFI_QRY_UNPACK_COMMON(cfi, data, uint16_t, found);
-	}
-
-	return found;
+	CFI_QRY_UNPACK_COMMON(cfi, data, uint16_t);
 }
 
-static bool
+static void
 cfi_chip_query_4(struct cfi * const cfi)
 {
 	uint32_t data[0x80];
 
 	bus_space_read_region_4(cfi->cfi_bst, cfi->cfi_bsh, 0, data,
-		__arraycount(data));
-
+	    __arraycount(data));
 	CFI_DUMP_QRY(0, data, sizeof(data), 4);
-
-	bool found = cfi_chip_query_opmode(cfi, (uint8_t *)data,
-		cfi_opmodes_4, __arraycount(cfi_opmodes_4));
-
-	if (found) {
-		CFI_QRY_UNPACK_COMMON(cfi, data, uint32_t, found);
-	}
-
-	return found;
+	CFI_QRY_UNPACK_COMMON(cfi, data, uint32_t);
 }
 
-static bool
+static void
 cfi_chip_query_8(struct cfi * const cfi)
 {
 #ifdef NOTYET
 	uint64_t data[0x80];
 
 	bus_space_read_region_8(cfi->cfi_bst, cfi->cfi_bsh, 0, data,
-		__arraycount(data));
-
+	    __arraycount(data));
 	CFI_DUMP_QRY(0, data, sizeof(data), 8);
-
-	bool found = cfi_chip_query_opmode(cfi, (uint8_t *)data,
-		cfi_opmodes_8, __arraycount(cfi_opmodes_8));
-
-	if (found) {
-		CFI_QRY_UNPACK_COMMON(cfi, data, uint64_t, found);
-	}
-
-	return found;
-#else
-	return false;
+	CFI_QRY_UNPACK_COMMON(cfi, data, uint64_t);
 #endif
 }
 
@@ -460,43 +343,57 @@ cfi_chip_query_8(struct cfi * const cfi)
 static bool
 cfi_chip_query(struct cfi * const cfi)
 {
-	bool found = false;
 	const bus_size_t cfi_query_offset[] = {
-		CFI_QUERY_MODE_ADDRESS,
-		CFI_QUERY_MODE_ALT_ADDRESS
+		CFI_QUERY_MODE_ADDR,
+		CFI_QUERY_MODE_ALT_ADDR
 	};
 
 	KASSERT(cfi != NULL);
 	KASSERT(cfi->cfi_bst != NULL);
 
-	for (int j=0; !found && j < __arraycount(cfi_query_offset); j++) {
+	for (int j=0; j < __arraycount(cfi_query_offset); j++) {
 
 		cfi_reset_default(cfi);
 		cfi_cmd(cfi, cfi_query_offset[j], CFI_QUERY_DATA);
 
-		switch(cfi->cfi_portwidth) {
-		case 0:
-			found = cfi_chip_query_1(cfi);
-			break;
-		case 1:
-			found = cfi_chip_query_2(cfi);
-			break;
-		case 2:
-			found = cfi_chip_query_4(cfi);
-			break;
-		case 3:
-			found = cfi_chip_query_8(cfi);
-			break;
-		default:
-			panic("%s: bad portwidth %d\n",
-				__func__, cfi->cfi_portwidth);
+		if (cfi_read_qry(cfi, 0x10) == 'Q' &&
+		    cfi_read_qry(cfi, 0x11) == 'R' &&
+		    cfi_read_qry(cfi, 0x12) == 'Y') {
+			switch(cfi->cfi_portwidth) {
+			case 0:
+				cfi_chip_query_1(cfi);
+				break;
+			case 1:
+				cfi_chip_query_2(cfi);
+				break;
+			case 2:
+				cfi_chip_query_4(cfi);
+				break;
+			case 3:
+				cfi_chip_query_8(cfi);
+				break;
+			default:
+				panic("%s: bad portwidth %d\n",
+				    __func__, cfi->cfi_portwidth);
+			}
+
+			switch (cfi->cfi_qry_data.id_pri) {
+			case 0x0002:
+				cfi->cfi_unlock_addr1 = CFI_AMD_UNLOCK_ADDR1;
+				cfi->cfi_unlock_addr2 = CFI_AMD_UNLOCK_ADDR2;
+				break;
+			default:
+				DPRINTF(("%s: unsupported CFI cmdset %#04x\n",
+				    __func__, cfi->cfi_qry_data.id_pri));
+				return false;
+			}
+
+			cfi->cfi_emulated = false;
+			return true;
 		}
 	}
 
-	if (found)
-		cfi->cfi_emulated = false;
-
-	return found;
+	return false;
 }
 
 /*
@@ -508,9 +405,7 @@ cfi_chip_query(struct cfi * const cfi)
  *   otherwise fail.
  *
  * NOTE:
- *   striped NOR chips design not supported yet,
- *   so force portwidth=chipwidth for now
- *   eventually permute portwidth seperately
+ *   striped NOR chips design not supported yet
  */
 bool
 cfi_probe(struct cfi * const cfi)
@@ -519,17 +414,24 @@ cfi_probe(struct cfi * const cfi)
 
 	KASSERT(cfi != NULL);
 
-	for (u_int cw = 0; cw < 3; cw++) {
-		cfi->cfi_portwidth = 		/* XXX */
-		cfi->cfi_chipwidth = cw;
-		found = cfi_chip_query(cfi);
-		cfi_jedec_id(cfi);
-		if (! found)
-			found = cfi_emulate(cfi);
-		if (found)
-			break;
+	/* XXX set default unlock address for cfi_jedec_id() */
+	cfi->cfi_unlock_addr1 = CFI_AMD_UNLOCK_ADDR1;
+	cfi->cfi_unlock_addr2 = CFI_AMD_UNLOCK_ADDR2;
+
+	for (u_int pw = 0; pw < 3; pw++) {
+		for (u_int cw = 0; cw <= pw; cw++) {
+			cfi->cfi_portwidth = pw;
+			cfi->cfi_chipwidth = cw;
+			found = cfi_chip_query(cfi);
+			cfi_jedec_id(cfi);
+			if (! found)
+				found = cfi_emulate(cfi);
+			if (found)
+				goto exit_qry;
+		}
 	}
 
+    exit_qry:
 	cfi_reset_default(cfi);		/* exit QRY mode */
 	return found;
 }
@@ -539,7 +441,6 @@ cfi_identify(struct cfi * const cfi)
 {
 	const bus_space_tag_t bst = cfi->cfi_bst;
 	const bus_space_handle_t bsh = cfi->cfi_bsh;
-	bool found;
 
 	KASSERT(cfi != NULL);
 	KASSERT(bst != NULL);
@@ -548,11 +449,7 @@ cfi_identify(struct cfi * const cfi)
 	cfi->cfi_bst = bst;		/* restore bus space */
 	cfi->cfi_bsh = bsh;		/*  "       "   "    */
 
-	found = cfi_probe(cfi);
-
-	cfi_reset_default(cfi);	/* exit QRY mode */
-
-	return found;
+	return cfi_probe(cfi);
 }
 
 static int
@@ -585,10 +482,6 @@ cfi_scan_media(device_t self, struct nor_chip *chip)
 	case 0x0002:
 		cfi_0002_init(sc, cfi, chip);
 		break;
-	default:
-		aprint_error_dev(self, "unsupported CFI cmdset %#04x\n",
-			cfi->cfi_qry_data.id_pri);
-		return -1;
 	}
 
 	return 0;
@@ -669,29 +562,48 @@ cfi_write_buf_4(device_t self, flash_off_t offset, const uint32_t *datap,
 {
 }
 
+/*
+ * cfi_cmd - write a CFI command word.
+ *
+ * The offset 'off' is given for 64-bit port width and will be scaled
+ * down to the actual port width of the chip.
+ * The command word will be constructed out of 'val' regarding port- and
+ * chip width.
+ */
 void
 cfi_cmd(struct cfi * const cfi, bus_size_t off, uint32_t val)
 {
 	const bus_space_tag_t bst = cfi->cfi_bst;
 	bus_space_handle_t bsh = cfi->cfi_bsh;
+	uint64_t cmd;
+	int cw, pw;
 
-	off <<= cfi->cfi_portwidth;
+	off >>= 3 - cfi->cfi_portwidth;
 
-	DPRINTF(("%s: %p %x %x %x\n", __func__, bst, bsh, off, val));
+	pw = 1 << cfi->cfi_portwidth;
+	cw = 1 << cfi->cfi_chipwidth;
+	cmd = 0;
+	while (pw > 0) {
+		cmd <<= cw << 3;
+		cmd += val;
+		pw -= cw;
+	}
 
-	switch(cfi->cfi_portwidth) {
+	DPRINTF(("%s: %p %x %x %" PRIx64 "\n", __func__, bst, bsh, off, cmd));
+
+	switch (cfi->cfi_portwidth) {
 	case 0:
-		bus_space_write_1(bst, bsh, off, (uint8_t)val);
+		bus_space_write_1(bst, bsh, off, cmd);
 		break;
 	case 1:
-		bus_space_write_2(bst, bsh, off, val);
+		bus_space_write_2(bst, bsh, off, cmd);
 		break;
 	case 2:
-		bus_space_write_4(bst, bsh, off, (uint32_t)val);
+		bus_space_write_4(bst, bsh, off, cmd);
 		break;
 #ifdef NOTYET
 	case 3:
-		bus_space_write_4(bst, bsh, off, (uint64_t)val);
+		bus_space_write_8(bst, bsh, off, cmd);
 		break;
 #endif
 	default:
@@ -700,14 +612,44 @@ cfi_cmd(struct cfi * const cfi, bus_size_t off, uint32_t val)
 	}
 }
 
+static uint8_t
+cfi_read_qry(struct cfi * const cfi, bus_size_t off)
+{
+	const bus_space_tag_t bst = cfi->cfi_bst;
+	bus_space_handle_t bsh = cfi->cfi_bsh;
+	uint8_t data;
+
+	off <<= cfi->cfi_portwidth;
+
+	switch (cfi->cfi_portwidth) {
+	case 0:
+		data = bus_space_read_1(bst, bsh, off);
+		break;
+	case 1:
+		data = bus_space_read_2(bst, bsh, off);
+		break;
+	case 2:
+		data = bus_space_read_4(bst, bsh, off);
+		break;
+	case 3:
+		data = bus_space_read_8(bst, bsh, off);
+		break;
+	default:
+		data = ~0;
+		break;
+	}
+	return data;
+}
+
 /*
  * cfi_reset_default - when we don't know which command will work, use both
  */
 void
 cfi_reset_default(struct cfi * const cfi)
 {
-	cfi_cmd(cfi, CFI_ADDRESS_ANY, CFI_RESET_DATA);
-	cfi_cmd(cfi, CFI_ADDRESS_ANY, CFI_ALT_RESET_DATA);
+
+	cfi_cmd(cfi, CFI_ADDR_ANY, CFI_RESET_DATA);
+	cfi_cmd(cfi, CFI_ADDR_ANY, CFI_ALT_RESET_DATA);
 }
 
 /*
@@ -716,7 +658,8 @@ cfi_reset_default(struct cfi * const cfi)
 void
 cfi_reset_std(struct cfi * const cfi)
 {
-	cfi_cmd(cfi, CFI_ADDRESS_ANY, CFI_RESET_DATA);
+
+	cfi_cmd(cfi, CFI_ADDR_ANY, CFI_RESET_DATA);
 }
 
 /*
@@ -725,7 +668,8 @@ cfi_reset_std(struct cfi * const cfi)
 void
 cfi_reset_alt(struct cfi * const cfi)
 {
-	cfi_cmd(cfi, CFI_ADDRESS_ANY, CFI_ALT_RESET_DATA);
+
+	cfi_cmd(cfi, CFI_ADDR_ANY, CFI_ALT_RESET_DATA);
 }
 
 static void
@@ -815,9 +759,10 @@ cfi_jedec_id(struct cfi * const cfi)
 
 	DPRINTF(("%s\n", __func__));
 
-	cfi_cmd(cfi, 0x555, 0xaa);
-	cfi_cmd(cfi, 0x2aa, 0x55);
-	cfi_cmd(cfi, 0x555, 0x90);
+	cfi_reset_default(cfi);
+	cfi_cmd(cfi, cfi->cfi_unlock_addr1, 0xaa);
+	cfi_cmd(cfi, cfi->cfi_unlock_addr2, 0x55);
+	cfi_cmd(cfi, cfi->cfi_unlock_addr1, 0x90);
 
 	switch(cfi->cfi_portwidth) {
 	case 0:
@@ -881,7 +826,6 @@ cfi_jedec_fill(struct cfi *cfi, const struct cfi_jedec_tab *jt)
 {
 
 	cfi->cfi_name = jt->jt_name;
-	cfi->cfi_opmode = jt->jt_opmode;
 
 	struct cfi_query_data *qryp = &cfi->cfi_qry_data;
 	memset(&qryp, 0, sizeof(*qryp));
@@ -926,7 +870,8 @@ cfi_print(device_t self, struct cfi * const cfi)
 		cfi->cfi_id_data.id_did[0],
 		cfi->cfi_id_data.id_did[1],
 		cfi->cfi_id_data.id_did[2]);
-	aprint_normal_dev(self, "%s\n", cfi->cfi_opmode->str);
+	aprint_normal_dev(self, "x%u device operating in %u-bit mode\n",
+		8 << cfi->cfi_portwidth, 8 << cfi->cfi_chipwidth);
 	aprint_normal_dev(self, "sw bits lo=%#x hi=%#x\n",
 		cfi->cfi_id_data.id_swb_lo,
 		cfi->cfi_id_data.id_swb_hi);

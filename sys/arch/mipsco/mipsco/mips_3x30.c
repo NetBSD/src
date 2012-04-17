@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_3x30.c,v 1.14 2011/03/10 17:30:12 tsutsui Exp $	*/
+/*	$NetBSD: mips_3x30.c,v 1.14.4.1 2012/04/17 00:06:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #define	__INTR_PRIVATE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_3x30.c,v 1.14 2011/03/10 17:30:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_3x30.c,v 1.14.4.1 2012/04/17 00:06:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,10 +154,7 @@ pizazz_level5_intr(uint32_t status, vaddr_t pc)
 }
 
 void
-pizazz_intr_establish(level, func, arg)
-	int level;
-	int (*func) (void *);
-	void *arg;
+pizazz_intr_establish(int level, int (*func) (void *), void *arg)
 {
 	if (level < 0 || level >= MAX_INTR_COOKIES)
 		panic("invalid interrupt level");

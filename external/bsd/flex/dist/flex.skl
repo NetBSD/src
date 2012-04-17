@@ -1232,7 +1232,7 @@ m4_ifdef( [[M4_YY_NOT_IN_HEADER]],
 [[
 /* Code executed at the end of each rule. */
 #ifndef YY_BREAK
-#define YY_BREAK break;
+#define YY_BREAK /*LINTED*/break;
 #endif
 ]])
 
@@ -1320,7 +1320,7 @@ m4_ifdef( [[M4_YY_USES_REJECT]],
 		yy_load_buffer_state( M4_YY_CALL_ONLY_ARG );
 		}
 
-	while ( 1 )		/* loops until end-of-file is reached */
+	while (/*CONSTCOND*/ 1 )		/* loops until end-of-file is reached */
 		{
 %% [8.0] yymore()-related code goes here
 		yy_cp = YY_G(yy_c_buf_p);

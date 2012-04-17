@@ -1,4 +1,4 @@
-/*	$NetBSD: regex2.h,v 1.3 2011/03/21 14:53:03 tnozaki Exp $ */
+/*	$NetBSD: regex2.h,v 1.3.4.1 2012/04/17 00:02:26 yamt Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -78,7 +78,7 @@
  * immediately *preceding* "execution" of that operator.
  */
 typedef char sop;	/* strip operator */
-typedef int sopno;
+typedef size_t sopno;
 /* operators			   meaning	operand			*/
 /*						(back, fwd are offsets)	*/
 #define	OEND	(1)		/* endmarker	-			*/
@@ -140,8 +140,8 @@ struct re_guts {
 #		define	MAGIC2	((('R'^0200)<<8)|'E')
 	sop *strip;		/* malloced area for strip */
 	RCHAR_T *stripdata;	/* malloced area for stripdata */
-	int csetsize;		/* number of bits in a cset vector */
-	int ncsets;		/* number of csets in use */
+	size_t csetsize;	/* number of bits in a cset vector */
+	size_t ncsets;		/* number of csets in use */
 	cset *sets;		/* -> cset [ncsets] */
 	uch *setbits;		/* -> uch[csetsize][ncsets/CHAR_BIT] */
 	int cflags;		/* copy of regcomp() cflags argument */
@@ -152,14 +152,14 @@ struct re_guts {
 #		define	USEBOL	01	/* used ^ */
 #		define	USEEOL	02	/* used $ */
 #		define	BAD	04	/* something wrong */
-	int nbol;		/* number of ^ used */
-	int neol;		/* number of $ used */
+	size_t nbol;		/* number of ^ used */
+	size_t neol;		/* number of $ used */
 #if 0
-	int ncategories;	/* how many character categories */
+	size_t ncategories;	/* how many character categories */
 	cat_t *categories;	/* ->catspace[-CHAR_MIN] */
 #endif
 	RCHAR_T *must;		/* match must contain this string */
-	int mlen;		/* length of must */
+	size_t mlen;		/* length of must */
 	size_t nsub;		/* copy of re_nsub */
 	int backrefs;		/* does it use back references? */
 	sopno nplus;		/* how deep does it nest +s? */
@@ -170,5 +170,5 @@ struct re_guts {
 };
 
 /* misc utilities */
-#define OUT	WEOF	/* a non-character value */
+#define OUT	REOF	/* a non-character value */
 #define	ISWORD(c) ((c) == '_' || (ISGRAPH((UCHAR_T)c) && !ISPUNCT((UCHAR_T)c)))

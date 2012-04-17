@@ -1,11 +1,13 @@
-#	$NetBSD: Makefile.inc,v 1.6 2009/03/05 10:28:02 nonaka Exp $
+#	$NetBSD: Makefile.inc,v 1.6.6.1 2012/04/17 00:02:58 yamt Exp $
 #
 #	etc.zaurus/Makefile.inc -- zaurus-specific etc Makefile targets
 #
 
 KERNEL_SETS=		GENERIC
+KERNEL_SETS+=		C700
 
 BUILD_KERNELS=		INSTALL
+BUILD_KERNELS+=		INSTALL_C700
 
 INSTALLATION_DIRS+=	installation/kernel
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_ndbmdatum.c,v 1.1 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: compat_ndbmdatum.c,v 1.1.44.1 2012/04/17 00:05:16 yamt Exp $	*/
 
 /*
  * Written by Klaus Klein <kleink@NetBSD.org>, April 28, 2004.
@@ -28,4 +28,6 @@ __warn_references(dbm_store,
     " include <ndbm.h> for correct reference")
 
 #define datum datum12
+#define datum_truncate(a)	((a) > INT_MAX ? INT_MAX : (int)(a))
+
 #include "db/hash/ndbmdatum.c"

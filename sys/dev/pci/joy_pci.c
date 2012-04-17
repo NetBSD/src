@@ -1,7 +1,7 @@
-/*	$NetBSD: joy_pci.c,v 1.17 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: joy_pci.c,v 1.17.34.1 2012/04/17 00:07:50 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_pci.c,v 1.17 2008/04/28 20:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_pci.c,v 1.17.34.1 2012/04/17 00:07:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,11 @@ __KERNEL_RCSID(0, "$NetBSD: joy_pci.c,v 1.17 2008/04/28 20:23:55 martin Exp $");
 #include <dev/pci/pcidevs.h>
 
 #include <dev/ic/joyvar.h>
+
+struct joy_pci_softc {
+	struct joy_softc sc_joy;
+	kmutex_t sc_lock;
+};
 
 static int bar_is_io(pci_chipset_tag_t pc, pcitag_t tag, int reg);
 
@@ -70,33 +75,26 @@ static int
 bar_is_io(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	pcireg_t address, mask;
-	int s;
 
-	/*
-	 * The splhigh() is not realy necessary at autoconfig time,
-	 * but maybe useful if used in lkm context later.
-	 */
-	s = splhigh();
 	address = pci_conf_read(pc, tag, reg);
 	pci_conf_write(pc, tag, reg, 0xffffffff);
 	mask = pci_conf_read(pc, tag, reg);
 	pci_conf_write(pc, tag, reg, address);
-	splx(s);
 
-	return (PCI_MAPREG_TYPE(address) == PCI_MAPREG_TYPE_IO && PCI_MAPREG_IO_SIZE(mask) > 0);
+	return (PCI_MAPREG_TYPE(address) == PCI_MAPREG_TYPE_IO &&
+	    PCI_MAPREG_IO_SIZE(mask) > 0);
 }
 
 static void
 joy_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct joy_softc *sc = device_private(self);
+	struct joy_pci_softc *psc = device_private(self);
+	struct joy_softc *sc = &psc->sc_joy;
 	struct pci_attach_args *pa = aux;
-	char devinfo[256];
 	bus_size_t mapsize;
 	int reg;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s (rev 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo(pa, NULL);
 	
 	for (reg = PCI_MAPREG_START; reg < PCI_MAPREG_END;
 	     reg += sizeof(pcireg_t))
@@ -115,16 +113,19 @@ joy_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (mapsize != 2) {
-		if (!bus_space_subregion(sc->sc_iot, sc->sc_ioh, 1, 1, &sc->sc_ioh) < 0) {
+		if (!bus_space_subregion(sc->sc_iot, sc->sc_ioh, 1, 1,
+		    &sc->sc_ioh) < 0) {
 			aprint_error_dev(self, "error mapping subregion\n");
 			return;
 		}
 	}
 
+	mutex_init(&psc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	sc->sc_dev = self;
+	sc->sc_lock = &psc->sc_lock;
 
 	joyattach(sc);
 }
 
-CFATTACH_DECL_NEW(joy_pci, sizeof(struct joy_softc),
+CFATTACH_DECL_NEW(joy_pci, sizeof(struct joy_pci_softc),
     joy_pci_match, joy_pci_attach, NULL, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.389 2011/10/27 13:07:37 jakllsch Exp $ */
+/*	$NetBSD: wd.c,v 1.389.2.1 2012/04/17 00:07:28 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,11 +54,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.389 2011/10/27 13:07:37 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.389.2.1 2012/04/17 00:07:28 yamt Exp $");
 
 #include "opt_ata.h"
-
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,9 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.389 2011/10/27 13:07:37 jakllsch Exp $");
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/vnode.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <sys/intr.h>
 #include <sys/bus.h>
@@ -391,10 +387,8 @@ wdattach(device_t parent, device_t self, void *aux)
 	disk_init(&wd->sc_dk, device_xname(wd->sc_dev), &wddkdriver);
 	disk_attach(&wd->sc_dk);
 	wd->sc_wdc_bio.lp = wd->sc_dk.dk_label;
-#if NRND > 0
 	rnd_attach_source(&wd->rnd_source, device_xname(wd->sc_dev),
 			  RND_TYPE_DISK, 0);
-#endif
 
 	/* Discover wedges on this disk. */
 	dkwedge_discover(&wd->sc_dk);
@@ -462,10 +456,8 @@ wddetach(device_t self, int flags)
 
 	pmf_device_deregister(self);
 
-#if NRND > 0
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->rnd_source);
-#endif
 
 	callout_destroy(&sc->sc_restart_ch);
 
@@ -829,9 +821,7 @@ noerror:	if ((wd->sc_wdc_bio.flags & ATA_CORR) || wd->retries > 0)
 	}
 	disk_unbusy(&wd->sc_dk, (bp->b_bcount - bp->b_resid),
 	    (bp->b_flags & B_READ));
-#if NRND > 0
 	rnd_add_uint32(&wd->rnd_source, bp->b_blkno);
-#endif
 	/* XXX Yuck, but we don't want to increment openings in this case */
 	if (__predict_false(bp->b_iodone == wd_split_mod15_write))
 		biodone(bp);
@@ -1276,10 +1266,10 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 
 #ifdef __HAVE_OLD_DISKLABEL
 		if (xfer == ODIOCSDINFO || xfer == ODIOCWDINFO) {
-			newlabel = malloc(sizeof *newlabel, M_TEMP, M_WAITOK);
+			newlabel = malloc(sizeof *newlabel, M_TEMP,
+			    M_WAITOK | M_ZERO);
 			if (newlabel == NULL)
 				return EIO;
-			memset(newlabel, 0, sizeof newlabel);
 			memcpy(newlabel, addr, sizeof (struct olddisklabel));
 			lp = newlabel;
 		} else
@@ -2068,13 +2058,16 @@ wdioctlstrategy(struct buf *bp)
 	if (wi->wi_atareq.flags & ATACMD_READREG)
 		ata_c.flags |= AT_READREG;
 
+	if ((wi->wi_atareq.flags & ATACMD_LBA) != 0)
+		ata_c.flags |= AT_LBA;
+
 	ata_c.flags |= AT_WAIT;
 
 	ata_c.timeout = wi->wi_atareq.timeout;
 	ata_c.r_command = wi->wi_atareq.command;
-	ata_c.r_head = wi->wi_atareq.head & 0x0f;
-	ata_c.r_cyl = wi->wi_atareq.cylinder;
-	ata_c.r_sector = wi->wi_atareq.sec_num;
+	ata_c.r_lba = ((wi->wi_atareq.head & 0x0f) << 24) |
+	    (wi->wi_atareq.cylinder << 8) |
+	    wi->wi_atareq.sec_num;
 	ata_c.r_count = wi->wi_atareq.sec_count;
 	ata_c.r_features = wi->wi_atareq.features;
 	ata_c.r_st_bmask = WDCS_DRDY;
@@ -2099,11 +2092,13 @@ wdioctlstrategy(struct buf *bp)
 	} else {
 		wi->wi_atareq.retsts = ATACMD_OK;
 		if (wi->wi_atareq.flags & ATACMD_READREG) {
-			wi->wi_atareq.head = ata_c.r_head ;
-			wi->wi_atareq.cylinder = ata_c.r_cyl;
-			wi->wi_atareq.sec_num = ata_c.r_sector;
+			wi->wi_atareq.command = ata_c.r_status;
+			wi->wi_atareq.features = ata_c.r_error;
 			wi->wi_atareq.sec_count = ata_c.r_count;
-			wi->wi_atareq.features = ata_c.r_features;
+			wi->wi_atareq.sec_num = ata_c.r_lba & 0xff;
+			wi->wi_atareq.head = (ata_c.r_device & 0xf0) |
+			    ((ata_c.r_lba >> 24) & 0x0f);
+			wi->wi_atareq.cylinder = (ata_c.r_lba >> 8) & 0xffff;
 			wi->wi_atareq.error = ata_c.r_error;
 		}
 	}

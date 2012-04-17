@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.38 2011/06/04 01:27:57 tsutsui Exp $ */
+/* $NetBSD: bba.c,v 1.38.2.1 2012/04/17 00:08:05 yamt Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -29,13 +29,13 @@
 /* maxine/alpha baseboard audio (bba) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.38 2011/06/04 01:27:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.38.2.1 2012/04/17 00:08:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <sys/bus.h>
 #include <machine/autoconf.h>
@@ -111,10 +111,10 @@ static void	bba_onclose(struct am7930_softc *);
 
 static stream_filter_factory_t bba_output_conv;
 static stream_filter_factory_t bba_input_conv;
-static int	bba_output_conv_fetch_to(stream_fetcher_t *, audio_stream_t *,
-					 int);
-static int	bba_input_conv_fetch_to(stream_fetcher_t *, audio_stream_t *,
-					int);
+static int	bba_output_conv_fetch_to(struct audio_softc *, stream_fetcher_t *,
+					 audio_stream_t *, int);
+static int	bba_input_conv_fetch_to(struct audio_softc *, stream_fetcher_t *,
+					audio_stream_t *, int);
 
 struct am7930_glue bba_glue = {
 	bba_codec_iread,
@@ -136,8 +136,8 @@ static int	bba_round_blocksize(void *, int, int, const audio_params_t *);
 static int	bba_halt_output(void *);
 static int	bba_halt_input(void *);
 static int	bba_getdev(void *, struct audio_device *);
-static void	*bba_allocm(void *, int, size_t, struct malloc_type *, int);
-static void	bba_freem(void *, void *, struct malloc_type *);
+static void	*bba_allocm(void *, int, size_t);
+static void	bba_freem(void *, void *, size_t);
 static size_t	bba_round_buffersize(void *, int, size_t);
 static int	bba_get_props(void *);
 static paddr_t	bba_mappage(void *, void *, off_t, int);
@@ -147,6 +147,8 @@ static int	bba_trigger_output(void *, void *, void *, int,
 static int	bba_trigger_input(void *, void *, void *, int,
 				  void (*)(void *), void *,
 				  const audio_params_t *);
+static void	bba_get_locks(void *opaque, kmutex_t **intr,
+			      kmutex_t **thread);
 
 static const struct audio_hw_if sa_hw_if = {
 	am7930_open,
@@ -176,6 +178,7 @@ static const struct audio_hw_if sa_hw_if = {
 	bba_trigger_output,		/* md */
 	bba_trigger_input,		/* md */
 	0,
+	bba_get_locks,
 };
 
 static struct audio_device bba_device = {
@@ -288,8 +291,7 @@ bba_reset(struct bba_softc *sc, int reset)
 
 
 static void *
-bba_allocm(void *addr, int direction, size_t size,
-	   struct malloc_type *pool, int flags)
+bba_allocm(void *addr, int direction, size_t size)
 {
 	struct am7930_softc *asc;
 	struct bba_softc *sc;
@@ -297,30 +299,28 @@ bba_allocm(void *addr, int direction, size_t size,
 	int rseg;
 	void *kva;
 	struct bba_mem *m;
-	int w;
 	int state;
 
 	DPRINTF(("bba_allocm: size = %zu\n", size));
 	asc = addr;
 	sc = addr;
 	state = 0;
-	w = (flags & M_NOWAIT) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK;
 
 	if (bus_dmamem_alloc(sc->sc_dmat, size, BBA_DMABUF_ALIGN,
-	    BBA_DMABUF_BOUNDARY, &seg, 1, &rseg, w)) {
+	    BBA_DMABUF_BOUNDARY, &seg, 1, &rseg, BUS_DMA_WAITOK)) {
 		aprint_error_dev(asc->sc_dev, "can't allocate DMA buffer\n");
 		goto bad;
 	}
 	state |= 1;
 
 	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
-	    &kva, w | BUS_DMA_COHERENT)) {
+	    &kva, BUS_DMA_WAITOK | BUS_DMA_COHERENT)) {
 		aprint_error_dev(asc->sc_dev, "can't map DMA buffer\n");
 		goto bad;
 	}
 	state |= 2;
 
-	m = malloc(sizeof(struct bba_mem), pool, flags);
+	m = kmem_alloc(sizeof(struct bba_mem), KM_SLEEP);
 	if (m == NULL)
 		goto bad;
 	m->addr = seg.ds_addr;
@@ -341,7 +341,7 @@ bad:
 
 
 static void
-bba_freem(void *addr, void *ptr, struct malloc_type *pool)
+bba_freem(void *addr, void *ptr, size_t size)
 {
 	struct bba_softc *sc;
 	struct bba_mem **mp, *m;
@@ -364,7 +364,7 @@ bba_freem(void *addr, void *ptr, struct malloc_type *pool)
 	seg.ds_addr = m->addr;
 	seg.ds_len = m->size;
 	bus_dmamem_free(sc->sc_dmat, &seg, 1);
-	free(m, pool);
+	kmem_free(m, sizeof(struct bba_mem));
 }
 
 
@@ -573,16 +573,26 @@ bad:
 	return 1;
 }
 
+static void
+bba_get_locks(void *opaque, kmutex_t **intr, kmutex_t **thread)
+{
+	struct bba_softc *bsc = opaque;
+	struct am7930_softc *sc = &bsc->sc_am7930;
+ 
+	*intr = &sc->sc_intr_lock;
+	*thread = &sc->sc_lock;
+}
+
 static int
 bba_intr(void *addr)
 {
 	struct bba_softc *sc;
 	struct bba_dma_state *d;
 	tc_addr_t nphys;
-	int s, mask;
+	int mask;
 
 	sc = addr;
-	s = splaudio();
+	mutex_enter(&sc->sc_am7930.sc_intr_lock);
 
 	mask = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_INTR);
 
@@ -605,7 +615,7 @@ bba_intr(void *addr)
 			(*d->intr)(d->intr_arg);
 	}
 
-	splx(s);
+	mutex_exit(&sc->sc_am7930.sc_intr_lock);
 
 	return 0;
 }
@@ -649,14 +659,14 @@ bba_input_conv(struct audio_softc *sc, const audio_params_t *from,
 }
 
 static int
-bba_input_conv_fetch_to(stream_fetcher_t *self, audio_stream_t *dst,
-			int max_used)
+bba_input_conv_fetch_to(struct audio_softc *sc, stream_fetcher_t *self,
+			audio_stream_t *dst, int max_used)
 {
 	stream_filter_t *this;
 	int m, err;
 
 	this = (stream_filter_t *)self;
-	if ((err = this->prev->fetch_to(this->prev, this->src, max_used * 4)))
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used * 4)))
 		return err;
 	m = dst->end - dst->start;
 	m = min(m, max_used);
@@ -674,15 +684,15 @@ bba_output_conv(struct audio_softc *sc, const audio_params_t *from,
 }
 
 static int
-bba_output_conv_fetch_to(stream_fetcher_t *self, audio_stream_t *dst,
-			  int max_used)
+bba_output_conv_fetch_to(struct audio_softc *sc, stream_fetcher_t *self,
+			 audio_stream_t *dst, int max_used)
 {
 	stream_filter_t *this;
 	int m, err;
 
 	this = (stream_filter_t *)self;
 	max_used = (max_used + 3) & ~3;
-	if ((err = this->prev->fetch_to(this->prev, this->src, max_used / 4)))
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used / 4)))
 		return err;
 	m = (dst->end - dst->start) & ~3;
 	m = min(m, max_used);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.40 2011/09/27 01:27:44 christos Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.40.2.1 2012/04/17 00:08:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.40 2011/09/27 01:27:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.40.2.1 2012/04/17 00:08:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,8 +117,10 @@ cd9660_check_permitted(struct vnode *vp, struct iso_node *ip, mode_t mode,
     kauth_cred_t cred)
 {
 
-	return genfs_can_access(vp->v_type, ip->inode.iso_mode & ALLPERMS,
-	    ip->inode.iso_uid, ip->inode.iso_gid, mode, cred);
+	return kauth_authorize_vnode(cred, kauth_access_action(mode,
+	    vp->v_type, ip->inode.iso_mode & ALLPERMS), vp, NULL,
+	    genfs_can_access(vp->v_type, ip->inode.iso_mode & ALLPERMS,
+	    ip->inode.iso_uid, ip->inode.iso_gid, mode, cred));
 }
 
 int

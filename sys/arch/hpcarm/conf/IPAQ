@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.65 2011/06/30 20:09:30 wiz Exp $
+#	$NetBSD: IPAQ,v 1.65.2.1 2012/04/17 00:06:23 yamt Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -50,7 +50,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	NFSSERVER
 
@@ -96,7 +96,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 # Device options
 
@@ -215,6 +214,5 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	biconsdev 1		# build-in console device
 
 pseudo-device	md			# Ramdisk driver
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms

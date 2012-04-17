@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2010 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2012 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,7 @@
 #define IF_OPTS "bc:de:f:gh:i:kl:m:no:pqr:s:t:u:v:wxy:z:ABC:DEF:GHI:JKLO:Q:S:TUVW:X:Z:"
 
 #define DEFAULT_TIMEOUT		30
-#define DEFAULT_REBOOT		10
+#define DEFAULT_REBOOT		5
 
 #define HOSTNAME_MAX_LEN	250	/* 255 - 3 (FQDN) - 2 (DNS enc) */
 #define VENDORCLASSID_MAX_LEN	255
@@ -48,35 +48,37 @@
 #define USERCLASS_MAX_LEN	255
 #define VENDOR_MAX_LEN		255
 
-#define DHCPCD_ARP		(1 << 0)
-#define DHCPCD_RELEASE		(1 << 1)
-#define DHCPCD_DOMAIN		(1 << 2)
-#define DHCPCD_GATEWAY		(1 << 3)
-#define DHCPCD_STATIC		(1 << 4)
-#define DHCPCD_DEBUG		(1 << 5)
-#define DHCPCD_LASTLEASE	(1 << 7)
-#define DHCPCD_INFORM		(1 << 8)
-#define DHCPCD_REQUEST		(1 << 9)
-#define DHCPCD_IPV4LL		(1 << 10)
-#define DHCPCD_DUID		(1 << 11)
-#define DHCPCD_PERSISTENT	(1 << 12)
-#define DHCPCD_DAEMONISE	(1 << 14)
-#define DHCPCD_DAEMONISED	(1 << 15)
-#define DHCPCD_TEST		(1 << 16)
-#define DHCPCD_MASTER		(1 << 17)
-#define DHCPCD_HOSTNAME		(1 << 18)
-#define DHCPCD_CLIENTID		(1 << 19)
-#define DHCPCD_LINK		(1 << 20)
-#define DHCPCD_QUIET		(1 << 21) 
-#define DHCPCD_BACKGROUND	(1 << 22)
-#define DHCPCD_VENDORRAW	(1 << 23)
-#define DHCPCD_TIMEOUT_IPV4LL	(1 << 24)
-#define DHCPCD_WAITIP		(1 << 25)
-#define DHCPCD_WAITUP		(1 << 26)
-#define DHCPCD_CSR_WARNED	(1 << 27)
-#define DHCPCD_XID_HWADDR	(1 << 28)
-#define DHCPCD_BROADCAST	(1 << 29)
-#define DHCPCD_DUMPLEASE	(1 << 30)
+#define DHCPCD_ARP			(1ULL << 0)
+#define DHCPCD_RELEASE			(1ULL << 1)
+#define DHCPCD_DOMAIN			(1ULL << 2)
+#define DHCPCD_GATEWAY			(1ULL << 3)
+#define DHCPCD_STATIC			(1ULL << 4)
+#define DHCPCD_DEBUG			(1ULL << 5)
+#define DHCPCD_LASTLEASE		(1ULL << 7)
+#define DHCPCD_INFORM			(1ULL << 8)
+#define DHCPCD_REQUEST			(1ULL << 9)
+#define DHCPCD_IPV4LL			(1ULL << 10)
+#define DHCPCD_DUID			(1ULL << 11)
+#define DHCPCD_PERSISTENT		(1ULL << 12)
+#define DHCPCD_DAEMONISE		(1ULL << 14)
+#define DHCPCD_DAEMONISED		(1ULL << 15)
+#define DHCPCD_TEST			(1ULL << 16)
+#define DHCPCD_MASTER			(1ULL << 17)
+#define DHCPCD_HOSTNAME			(1ULL << 18)
+#define DHCPCD_CLIENTID			(1ULL << 19)
+#define DHCPCD_LINK			(1ULL << 20)
+#define DHCPCD_QUIET			(1ULL << 21) 
+#define DHCPCD_BACKGROUND		(1ULL << 22)
+#define DHCPCD_VENDORRAW		(1ULL << 23)
+#define DHCPCD_TIMEOUT_IPV4LL		(1ULL << 24)
+#define DHCPCD_WAITIP			(1ULL << 25)
+#define DHCPCD_WAITUP			(1ULL << 26)
+#define DHCPCD_CSR_WARNED		(1ULL << 27)
+#define DHCPCD_XID_HWADDR		(1ULL << 28)
+#define DHCPCD_BROADCAST		(1ULL << 29)
+#define DHCPCD_DUMPLEASE		(1ULL << 30)
+#define DHCPCD_IPV6RS			(1ULL << 31)
+#define DHCPCD_IPV6RA_REQRDNSS		(1ULL << 32)
 
 extern const struct option cf_options[];
 
@@ -89,7 +91,7 @@ struct if_options {
 	uint32_t leasetime;
 	time_t timeout;
 	time_t reboot;
-	int options;
+	unsigned long long options;
 
 	struct in_addr req_addr;
 	struct in_addr req_mask;

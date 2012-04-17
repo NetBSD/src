@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_chronolog.c,v 1.1.1.1 2009/12/13 16:55:46 kardel Exp $	*/
+/*	$NetBSD: refclock_chronolog.c,v 1.1.1.1.6.1 2012/04/17 00:03:48 yamt Exp $	*/
 
 /*
  * refclock_chronolog - clock driver for Chronolog K-series WWVB receiver.
@@ -106,7 +106,7 @@ chronolog_start(
 	 * Open serial port. Don't bother with CLK line discipline, since
 	 * it's not available.
 	 */
-	(void)sprintf(device, DEVICE, unit);
+	snprintf(device, sizeof(device), DEVICE, unit);
 #ifdef DEBUG
 	if (debug)
 		printf ("starting Chronolog with device %s\n",device);
@@ -117,12 +117,8 @@ chronolog_start(
 	/*
 	 * Allocate and initialize unit structure
 	 */
-	if (!(up = (struct chronolog_unit *)
-	      emalloc(sizeof(struct chronolog_unit)))) {
-		(void) close(fd);
-		return (0);
-	}
-	memset((char *)up, 0, sizeof(struct chronolog_unit));
+	up = emalloc(sizeof(*up));
+	memset(up, 0, sizeof(*up));
 	pp = peer->procptr;
 	pp->unitptr = (caddr_t)up;
 	pp->io.clock_recv = chronolog_receive;
@@ -130,8 +126,10 @@ chronolog_start(
 	pp->io.datalen = 0;
 	pp->io.fd = fd;
 	if (!io_addclock(&pp->io)) {
-		(void) close(fd);
+		close(fd);
+		pp->io.fd = -1;
 		free(up);
+		pp->unitptr = NULL;
 		return (0);
 	}
 
@@ -159,8 +157,10 @@ chronolog_shutdown(
 
 	pp = peer->procptr;
 	up = (struct chronolog_unit *)pp->unitptr;
-	io_closeclock(&pp->io);
-	free(up);
+	if (-1 != pp->io.fd)
+		io_closeclock(&pp->io);
+	if (NULL != up)
+		free(up);
 }
 
 

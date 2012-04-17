@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi.h,v 1.2 2011/10/29 16:04:39 christos Exp $	*/
+/*	$NetBSD: iscsi.h,v 1.2.2.1 2012/04/17 00:07:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004,2006,2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #ifndef _ISCSI_H
 #define _ISCSI_H
 
-#define ISCSI_DEV_MAJOR    202
+#define ISCSI_DEV_MAJOR    203
 
 #define ISCSI_STRING_LENGTH   (223+1)
 #define ISCSI_ADDRESS_LENGTH  (255+1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.39 2011/03/14 17:18:12 tteras Exp $	*/
+/*	$NetBSD: handler.c,v 1.39.6.1 2012/04/17 00:01:41 yamt Exp $	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
@@ -213,7 +213,7 @@ getph1(ph1hint, local, remote, flags)
 			    (ph1hint->id->l != p->id->l ||
 			     memcmp(ph1hint->id->v, p->id->v, p->id->l) != 0)) {
 				plog(LLV_DEBUG2, LOCATION, NULL,
-				     "local identity does match hint\n");
+				     "local identity does not match hint\n");
 				continue;
 			}
 			if (ph1hint->id_p && ph1hint->id_p->l &&
@@ -221,7 +221,7 @@ getph1(ph1hint, local, remote, flags)
 			    (ph1hint->id_p->l != p->id_p->l ||
 			     memcmp(ph1hint->id_p->v, p->id_p->v, p->id_p->l) != 0)) {
 				plog(LLV_DEBUG2, LOCATION, NULL,
-				     "remote identity does match hint\n");
+				     "remote identity does not match hint\n");
 				continue;
 			}
 		}
@@ -611,9 +611,11 @@ getph2byid(src, dst, spid)
 	struct sockaddr *src, *dst;
 	u_int32_t spid;
 {
-	struct ph2handle *p;
+	struct ph2handle *p, *next;
 
-	LIST_FOREACH(p, &ph2tree, chain) {
+	for (p = LIST_FIRST(&ph2tree); p; p = next) {
+		next = LIST_NEXT(p, chain);
+
 		if (spid == p->spid &&
 		    cmpsaddr(src, p->src) <= CMPSADDR_WILDPORT_MATCH &&
 		    cmpsaddr(dst, p->dst) <= CMPSADDR_WILDPORT_MATCH){
@@ -985,9 +987,11 @@ void
 remcontacted(remote)
 	struct sockaddr *remote;
 {
-	struct contacted *p;
+	struct contacted *p, *next;
 
-	LIST_FOREACH(p, &ctdtree, chain) {
+	for (p = LIST_FIRST(&ctdtree); p; p = next) {
+		next = LIST_NEXT(p, chain);
+
 		if (cmpsaddr(remote, p->remote) <= CMPSADDR_WILDPORT_MATCH) {
 			LIST_REMOVE(p, chain);
 			racoon_free(p->remote);
@@ -1555,10 +1559,12 @@ int
 purgeph1bylogin(login)
 	char *login;
 {
-	struct ph1handle *p;
+	struct ph1handle *p, *next;
 	int found = 0;
 
-	LIST_FOREACH(p, &ph1tree, chain) {
+	for (p = LIST_FIRST(&ph1tree); p; p = next) {
+		next = LIST_NEXT(p, chain);
+
 		if (p->mode_cfg == NULL)
 			continue;
 		if (strncmp(p->mode_cfg->login, login, LOGINLEN) == 0) {

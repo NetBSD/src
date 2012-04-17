@@ -1,4 +1,4 @@
-/* $NetBSD: slhci_pcmcia.c,v 1.8 2011/03/08 04:58:21 kiyohara Exp $ */
+/* $NetBSD: slhci_pcmcia.c,v 1.8.4.1 2012/04/17 00:08:00 yamt Exp $ */
 /*
  * Not (c) 2007 Matthew Orgass
  * This file is public domain, meaning anyone can make any use of part or all 
@@ -11,7 +11,7 @@
 /* Glue for RATOC USB HOST CF+ Card (SL811HS chip) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slhci_pcmcia.c,v 1.8 2011/03/08 04:58:21 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slhci_pcmcia.c,v 1.8.4.1 2012/04/17 00:08:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -140,7 +140,7 @@ slhci_pcmcia_enable(struct slhci_pcmcia_softc *psc, int enable)
 		 */
 		slhci_preinit(sc, NULL, pioh->iot, pioh->ioh, 100, 2);
 
-		psc->sc_ih = pcmcia_intr_establish(pf, IPL_HARDUSB, 
+		psc->sc_ih = pcmcia_intr_establish(pf, IPL_USB,
 		    slhci_intr, sc);
 
 		if (psc->sc_ih == NULL) {

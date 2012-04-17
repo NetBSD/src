@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_test.c,v 1.1 2011/10/23 21:15:02 agc Exp $	*/
+/*	$NetBSD: iscsi_test.c,v 1.1.2.1 2012/04/17 00:07:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006,2011 The NetBSD Foundation, Inc.
@@ -269,7 +269,8 @@ test_get(pdu_t *pdu, mod_desc_t *mod, int error)
 STATIC int
 check_loss(test_pars_t *tp, int rxtx)
 {
-	return (tp->lose_random[rxtx]) ? (randb() % tp->lose_random[rxtx]) : 0;
+	return (tp->lose_random[rxtx]) ?
+		(cprng_fast32() % tp->lose_random[rxtx]) : 0;
 }
 
 

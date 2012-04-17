@@ -1,4 +1,4 @@
-/* $NetBSD: lcd.c,v 1.6 2009/03/18 10:22:31 cegger Exp $ */
+/* $NetBSD: lcd.c,v 1.6.12.1 2012/04/17 00:06:35 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>		/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lcd.c,v 1.6 2009/03/18 10:22:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcd.c,v 1.6.12.1 2012/04/17 00:06:35 yamt Exp $");
 
 /*
  * XXX
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: lcd.c,v 1.6 2009/03/18 10:22:31 cegger Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+
+#include <machine/cpu.h>
 
 #define PIO1_MODE_OUTPUT	0x84
 #define PIO1_MODE_INPUT		0x94
@@ -156,5 +158,7 @@ greeting(void)
 	lcdctrl(LCD_LOCATE(0, 0));
 	lcdshow(lcd_boot_message1);
 	lcdctrl(LCD_LOCATE(0, 1));
+	if (machtype == LUNA_II)
+		lcd_boot_message2[13] = '2';
 	lcdshow(lcd_boot_message2);
 }

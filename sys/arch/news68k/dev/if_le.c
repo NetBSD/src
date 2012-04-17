@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.18 2010/01/19 22:06:21 pooka Exp $	*/
+/*	$NetBSD: if_le.c,v 1.18.12.1 2012/04/17 00:06:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.18 2010/01/19 22:06:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.18.12.1 2012/04/17 00:06:43 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -137,7 +137,7 @@ le_match(device_t parent, cfdata_t cf, void *aux)
 	if (strcmp(ha->ha_name, "le"))
 		return 0;
 
-	addr = IIOV(ha->ha_address);
+	addr = (ha->ha_address);
 
 	if (badaddr((void *)addr, 1))
 		return 0;
@@ -154,10 +154,10 @@ le_attach(device_t parent, device_t self, void *aux)
 	const uint8_t *p;
 
 	sc->sc_dev = self;
-	lesc->sc_r1 = (void *)IIOV(ha->ha_address);
+	lesc->sc_r1 = (void *)(ha->ha_address);
 
 	if (ISIIOPA(ha->ha_address)) {
-		sc->sc_mem = (u_char *)IIOV(lance_mem_phys);
+		sc->sc_mem = (u_char *)(lance_mem_phys);
 		p = idrom_addr + 0x10;
 	} else {
 		sc->sc_mem = lesc->sc_r1 - 0x10000;

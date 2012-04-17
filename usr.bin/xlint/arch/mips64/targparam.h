@@ -1,4 +1,4 @@
-/*	$NetBSD: targparam.h,v 1.2 2011/01/18 08:30:10 matt Exp $	*/
+/*	$NetBSD: targparam.h,v 1.2.6.1 2012/04/17 00:09:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -34,9 +34,12 @@
 /*
  * Machine-dependent target parameters for lint1.
  */
-
+#include "schar.h"
+#ifdef _LP64
 #include "lp64.h"
-
+#else
+#include "ilp32.h"
+#endif
 /*    
  * Should be set to 1 if the difference of two pointers is of type long
  * or the value of sizeof is of type unsigned long.  Note this MUST be

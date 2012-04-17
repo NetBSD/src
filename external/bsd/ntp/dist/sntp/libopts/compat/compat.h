@@ -1,17 +1,16 @@
-/*	$NetBSD: compat.h,v 1.1.1.1 2009/12/13 16:57:25 kardel Exp $	*/
+/*	$NetBSD: compat.h,v 1.1.1.1.6.1 2012/04/17 00:03:52 yamt Exp $	*/
 
 /*  -*- Mode: C -*-  */
 
-/* compat.h --- fake the preprocessor into handlng portability
+/**
+ * \file compat.h --- fake the preprocessor into handlng portability
  *
- *  Time-stamp:      "2009-10-18 11:14:14 bkorb"
- *
- * Id: 27c1eb45f171295ab6176280aeca742cfdbe9fed
+ *  Time-stamp:      "2010-07-16 15:11:57 bkorb"
  *
  *  compat.h is free software.
  *  This file is part of AutoGen.
  *
- *  AutoGen copyright (c) 1992-2009 by Bruce Korb - all rights reserved
+ *  AutoGen Copyright (c) 1992-2011 by Bruce Korb - all rights reserved
  *
  *  AutoGen is free software: you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License as published by the

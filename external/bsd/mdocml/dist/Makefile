@@ -23,9 +23,23 @@ VDATE		 = 8 October 2011
 #
 CFLAGS	 	+= -DUSE_WCHAR
 
+# If your system has manpath(1), uncomment this.  This is most any
+# system that's not OpenBSD or NetBSD.  If uncommented, apropos(1),
+# mandocdb(8), and man.cgi will popen(3) manpath(1) to get the MANPATH
+# variable.
+#CFLAGS		+= -DUSE_MANPATH
+
+# If your system supports static binaries only, uncomment this.  This
+# appears only to be BSD UNIX systems (Mac OS X has no support and Linux
+# requires -pthreads for static libdb).
+STATIC		 = -static
+
 CFLAGS		+= -g -DHAVE_CONFIG_H -DVERSION="\"$(VERSION)\""
 CFLAGS     	+= -W -Wall -Wstrict-prototypes -Wno-unused-parameter -Wwrite-strings
 PREFIX		 = /usr/local
+WWWPREFIX	 = /var/www
+HTDOCDIR	 = $(WWWPREFIX)/htdocs
+CGIBINDIR	 = $(WWWPREFIX)/cgi-bin
 BINDIR		 = $(PREFIX)/bin
 INCLUDEDIR	 = $(PREFIX)/include/mandoc
 LIBDIR		 = $(PREFIX)/lib/mandoc
@@ -44,26 +58,34 @@ INSTALL_MAN	 = $(INSTALL_DATA)
 # comment out apropos and mandocdb. 
 #
 #DBLIB		 = -ldb
-DBBIN		 = apropos mandocdb
+DBBIN		 = apropos mandocdb man.cgi catman whatis
+DBLN		 = llib-lapropos.ln llib-lmandocdb.ln llib-lman.cgi.ln llib-lcatman.ln
 
 all: mandoc preconv demandoc $(DBBIN)
 
 SRCS		 = Makefile \
+		   TODO \
 		   apropos.1 \
 		   apropos.c \
+		   apropos_db.c \
+		   apropos_db.h \
 		   arch.c \
 		   arch.in \
 		   att.c \
 		   att.in \
+		   catman.8 \
+		   catman.c \
+		   cgi.c \
 		   chars.c \
 		   chars.in \
+		   compat_fgetln.c \
 		   compat_getsubopt.c \
 		   compat_strlcat.c \
 		   compat_strlcpy.c \
 		   config.h.post \
 		   config.h.pre \
-		   demandoc.c \
 		   demandoc.1 \
+		   demandoc.c \
 		   eqn.7 \
 		   eqn.c \
 		   eqn_html.c \
@@ -82,9 +104,11 @@ SRCS		 = Makefile \
 		   libroff.h \
 		   main.c \
 		   main.h \
-		   man.h \
 		   man.7 \
 		   man.c \
+		   man.cgi.7 \
+		   man-cgi.css \
+		   man.h \
 		   man_hash.c \
 		   man_html.c \
 		   man_macro.c \
@@ -94,12 +118,15 @@ SRCS		 = Makefile \
 		   mandoc.3 \
 		   mandoc.c \
 		   mandoc.h \
+		   mandoc_char.7 \
 		   mandocdb.8 \
 		   mandocdb.c \
-		   mandoc_char.7 \
-		   mdoc.h \
+		   mandocdb.h \
+		   manpath.c \
+		   manpath.h \
 		   mdoc.7 \
 		   mdoc.c \
+		   mdoc.h \
 		   mdoc_argv.c \
 		   mdoc_hash.c \
 		   mdoc_html.c \
@@ -115,6 +142,7 @@ SRCS		 = Makefile \
 		   preconv.c \
 		   predefs.in \
 		   read.c \
+		   regress \
 		   roff.7 \
 		   roff.c \
 		   st.c \
@@ -131,6 +159,7 @@ SRCS		 = Makefile \
 		   term.h \
 		   term_ascii.c \
 		   term_ps.c \
+		   test-fgetln.c \
 		   test-getsubopt.c \
 		   test-mmap.c \
 		   test-strlcat.c \
@@ -138,7 +167,8 @@ SRCS		 = Makefile \
 		   test-strptime.c \
 		   tree.c \
 		   vol.c \
-		   vol.in
+		   vol.in \
+		   whatis.1
 
 LIBMAN_OBJS	 = man.o \
 		   man_hash.o \
@@ -157,7 +187,6 @@ LIBMDOC_OBJS	 = arch.o \
 		   mdoc_hash.o \
 		   mdoc_macro.o \
 		   mdoc_validate.o \
-		   msec.o \
 		   st.o \
 		   vol.o
 LIBMDOC_LNS	 = arch.ln \
@@ -168,7 +197,6 @@ LIBMDOC_LNS	 = arch.ln \
 		   mdoc_hash.ln \
 		   mdoc_macro.ln \
 		   mdoc_validate.ln \
-		   msec.ln \
 		   st.ln \
 		   vol.ln
 
@@ -190,18 +218,22 @@ LIBMANDOC_OBJS	 = $(LIBMAN_OBJS) \
 		   $(LIBROFF_OBJS) \
 		   chars.o \
 		   mandoc.o \
+		   msec.o \
 		   read.o
 LIBMANDOC_LNS	 = $(LIBMAN_LNS) \
 		   $(LIBMDOC_LNS) \
 		   $(LIBROFF_LNS) \
 		   chars.ln \
 		   mandoc.ln \
+		   msec.ln \
 		   read.ln
 
-COMPAT_OBJS	 = compat_getsubopt.o \
+COMPAT_OBJS	 = compat_fgetln.o \
+		   compat_getsubopt.o \
 		   compat_strlcat.o \
 		   compat_strlcpy.o
-COMPAT_LNS	 = compat_getsubopt.ln \
+COMPAT_LNS	 = compat_fgetln.ln \
+		   compat_getsubopt.ln \
 		   compat_strlcat.ln \
 		   compat_strlcpy.ln
 
@@ -267,20 +299,45 @@ $(MANDOC_HTML_OBJS) $(MANDOC_HTML_LNS): html.h
 $(MANDOC_TERM_OBJS) $(MANDOC_TERM_LNS): term.h
 $(MANDOC_OBJS) $(MANDOC_LNS): main.h mandoc.h mdoc.h man.h config.h out.h
 
-MANDOCDB_OBJS	 = mandocdb.o
-MANDOCDB_LNS	 = mandocdb.ln
+MANDOCDB_OBJS	 = mandocdb.o manpath.o
+MANDOCDB_LNS	 = mandocdb.ln manpath.ln
 
-$(MANDOCDB_OBJS) $(MANDOCDB_LNS): mandoc.h mdoc.h man.h config.h
+$(MANDOCDB_OBJS) $(MANDOCDB_LNS): mandocdb.h mandoc.h mdoc.h man.h config.h manpath.h
 
 PRECONV_OBJS	 = preconv.o
 PRECONV_LNS	 = preconv.ln
 
 $(PRECONV_OBJS) $(PRECONV_LNS): config.h
 
-APROPOS_OBJS	 = apropos.o
-APROPOS_LNS	 = apropos.ln
+APROPOS_OBJS	 = apropos.o apropos_db.o manpath.o
+APROPOS_LNS	 = apropos.ln apropos_db.ln manpath.ln
 
-$(APROPOS_OBJS) $(APROPOS_LNS): config.h mandoc.h
+$(APROPOS_OBJS) $(APROPOS_LNS): config.h mandoc.h apropos_db.h manpath.h mandocdb.h
+
+CGI_OBJS	 = $(MANDOC_HTML_OBJS) \
+		   $(MANDOC_MAN_OBJS) \
+		   $(MANDOC_TERM_OBJS) \
+		   cgi.o \
+		   apropos_db.o \
+		   manpath.o \
+		   out.o \
+		   tree.o
+
+CGI_LNS	 	 = $(MANDOC_HTML_LNS) \
+		   $(MANDOC_MAN_LNS) \
+		   $(MANDOC_TERM_LNS) \
+		   cgi.ln \
+		   apropos_db.ln \
+		   manpath.ln \
+		   out.ln \
+		   tree.ln
+
+$(CGI_OBJS) $(CGI_LNS): main.h mdoc.h man.h out.h config.h mandoc.h apropos_db.h manpath.h mandocdb.h
+
+CATMAN_OBJS	 = catman.o manpath.o
+CATMAN_LNS 	 = catman.ln manpath.ln
+
+$(CATMAN_OBJS) $(CATMAN_LNS): config.h mandoc.h manpath.h mandocdb.h
 
 DEMANDOC_OBJS	 = demandoc.o
 DEMANDOC_LNS	 = demandoc.ln
@@ -292,6 +349,11 @@ INDEX_MANS	 = apropos.1.html \
 		   apropos.1.ps \
 		   apropos.1.pdf \
 		   apropos.1.txt \
+		   catman.8.html \
+		   catman.8.xhtml \
+		   catman.8.ps \
+		   catman.8.pdf \
+		   catman.8.txt \
 		   demandoc.1.html \
 		   demandoc.1.xhtml \
 		   demandoc.1.ps \
@@ -302,6 +364,11 @@ INDEX_MANS	 = apropos.1.html \
 		   mandoc.1.ps \
 		   mandoc.1.pdf \
 		   mandoc.1.txt \
+		   whatis.1.html \
+		   whatis.1.xhtml \
+		   whatis.1.ps \
+		   whatis.1.pdf \
+		   whatis.1.txt \
 		   mandoc.3.html \
 		   mandoc.3.xhtml \
 		   mandoc.3.ps \
@@ -317,6 +384,11 @@ INDEX_MANS	 = apropos.1.html \
 		   man.7.ps \
 		   man.7.pdf \
 		   man.7.txt \
+		   man.cgi.7.html \
+		   man.cgi.7.xhtml \
+		   man.cgi.7.ps \
+		   man.cgi.7.pdf \
+		   man.cgi.7.txt \
 		   mandoc_char.7.html \
 		   mandoc_char.7.xhtml \
 		   mandoc_char.7.ps \
@@ -359,7 +431,7 @@ INDEX_OBJS	 = $(INDEX_MANS) \
 
 www: index.html
 
-lint: llib-llibmandoc.ln llib-lmandoc.ln llib-lpreconv.ln llib-ldemandoc.ln
+lint: llib-lmandoc.ln llib-lpreconv.ln llib-ldemandoc.ln $(DBLN)
 
 clean:
 	rm -f libmandoc.a $(LIBMANDOC_OBJS)
@@ -368,8 +440,12 @@ clean:
 	rm -f llib-lmandocdb.ln $(MANDOCDB_LNS)
 	rm -f preconv $(PRECONV_OBJS)
 	rm -f llib-lpreconv.ln $(PRECONV_LNS)
-	rm -f apropos $(APROPOS_OBJS)
+	rm -f apropos whatis $(APROPOS_OBJS)
 	rm -f llib-lapropos.ln $(APROPOS_LNS)
+	rm -f man.cgi $(CGI_OBJS)
+	rm -f llib-lman.cgi.ln $(CGI_LNS)
+	rm -f catman $(CATMAN_OBJS)
+	rm -f llib-lcatman.ln $(CATMAN_LNS)
 	rm -f demandoc $(DEMANDOC_OBJS)
 	rm -f llib-ldemandoc.ln $(DEMANDOC_LNS)
 	rm -f mandoc $(MANDOC_OBJS)
@@ -377,6 +453,7 @@ clean:
 	rm -f config.h config.log $(COMPAT_OBJS) $(COMPAT_LNS)
 	rm -f mdocml.tar.gz mdocml-win32.zip mdocml-win64.zip mdocml-macosx.zip
 	rm -f index.html $(INDEX_OBJS)
+	rm -rf test-fgetln.DSYM
 	rm -rf test-strlcpy.DSYM
 	rm -rf test-strlcat.DSYM 
 	rm -rf test-strptime.DSYM 
@@ -400,6 +477,13 @@ install: all
 	$(INSTALL_MAN) man.7 mdoc.7 roff.7 eqn.7 tbl.7 mandoc_char.7 $(DESTDIR)$(MANDIR)/man7
 	$(INSTALL_DATA) example.style.css $(DESTDIR)$(EXAMPLEDIR)
 
+installcgi: all
+	mkdir -p $(DESTDIR)$(CGIBINDIR)
+	mkdir -p $(DESTDIR)$(HTDOCDIR)
+	$(INSTALL_PROGRAM) man.cgi $(DESTDIR)$(CGIBINDIR)
+	$(INSTALL_DATA) example.style.css $(DESTDIR)$(HTDOCDIR)/man.css
+	$(INSTALL_DATA) man-cgi.css $(DESTDIR)$(HTDOCDIR)
+
 installwww: www
 	mkdir -p $(PREFIX)/snapshots
 	mkdir -p $(PREFIX)/binaries
@@ -420,32 +504,47 @@ llib-llibmandoc.ln: $(COMPAT_LNS) $(LIBMANDOC_LNS)
 mandoc: $(MANDOC_OBJS) libmandoc.a
 	$(CC) $(LDFLAGS) -o $@ $(MANDOC_OBJS) libmandoc.a
 
-llib-lmandoc.ln: $(MANDOC_LNS)
-	$(LINT) $(LINTFLAGS) -Cmandoc $(MANDOC_LNS)
+llib-lmandoc.ln: $(MANDOC_LNS) llib-llibmandoc.ln
+	$(LINT) $(LINTFLAGS) -Cmandoc $(MANDOC_LNS) llib-llibmandoc.ln
 
 mandocdb: $(MANDOCDB_OBJS) libmandoc.a
 	$(CC) $(LDFLAGS) -o $@ $(MANDOCDB_OBJS) libmandoc.a $(DBLIB)
 
-llib-lmandocdb.ln: $(MANDOCDB_LNS)
-	$(LINT) $(LINTFLAGS) -Cmandocdb $(MANDOCDB_LNS)
+llib-lmandocdb.ln: $(MANDOCDB_LNS) llib-llibmandoc.ln
+	$(LINT) $(LINTFLAGS) -Cmandocdb $(MANDOCDB_LNS) llib-llibmandoc.ln
 
 preconv: $(PRECONV_OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(PRECONV_OBJS)
 
-llib-lpreconv.ln: $(PRECONV_LNS)
-	$(LINT) $(LINTFLAGS) -Cpreconv $(PRECONV_LNS)
+llib-lpreconv.ln: $(PRECONV_LNS) llib-llibmandoc.ln
+	$(LINT) $(LINTFLAGS) -Cpreconv $(PRECONV_LNS) llib-llibmandoc.ln
+
+whatis: apropos
+	cp -f apropos whatis
 
 apropos: $(APROPOS_OBJS) libmandoc.a
 	$(CC) $(LDFLAGS) -o $@ $(APROPOS_OBJS) libmandoc.a $(DBLIB)
 
-llib-lapropos.ln: $(APROPOS_LNS)
-	$(LINT) $(LINTFLAGS) -Capropos $(APROPOS_LNS)
+llib-lapropos.ln: $(APROPOS_LNS) llib-llibmandoc.ln
+	$(LINT) $(LINTFLAGS) -Capropos $(APROPOS_LNS) llib-llibmandoc.ln
+
+catman: $(CATMAN_OBJS) libmandoc.a
+	$(CC) $(LDFLAGS) -o $@ $(CATMAN_OBJS) libmandoc.a $(DBLIB)
+
+llib-lcatman.ln: $(CATMAN_LNS) llib-llibmandoc.ln
+	$(LINT) $(LINTFLAGS) -Ccatman $(CATMAN_LNS) llib-llibmandoc.ln
+
+man.cgi: $(CGI_OBJS) libmandoc.a
+	$(CC) $(LDFLAGS) $(STATIC) -o $@ $(CGI_OBJS) libmandoc.a $(DBLIB)
+
+llib-lman.cgi.ln: $(CGI_LNS) llib-llibmandoc.ln
+	$(LINT) $(LINTFLAGS) -Cman.cgi $(CGI_LNS) llib-llibmandoc.ln
 
 demandoc: $(DEMANDOC_OBJS) libmandoc.a
 	$(CC) $(LDFLAGS) -o $@ $(DEMANDOC_OBJS) libmandoc.a
 
-llib-ldemandoc.ln: $(DEMANDOC_LNS)
-	$(LINT) $(LINTFLAGS) -Cdemandoc $(DEMANDOC_LNS)
+llib-ldemandoc.ln: $(DEMANDOC_LNS) llib-llibmandoc.ln
+	$(LINT) $(LINTFLAGS) -Cdemandoc $(DEMANDOC_LNS) llib-llibmandoc.ln
 
 mdocml.md5: mdocml.tar.gz
 	md5 mdocml.tar.gz >$@
@@ -493,6 +592,10 @@ config.h: config.h.pre config.h.post
 	rm -f config.log
 	( cat config.h.pre; \
 	  echo; \
+	  if $(CC) $(CFLAGS) -Werror -o test-fgetln test-fgetln.c >> config.log 2>&1; then \
+		echo '#define HAVE_FGETLN'; \
+		rm test-fgetln; \
+	  fi; \
 	  if $(CC) $(CFLAGS) -Werror -o test-strptime test-strptime.c >> config.log 2>&1; then \
 		echo '#define HAVE_STRPTIME'; \
 		rm test-strptime; \

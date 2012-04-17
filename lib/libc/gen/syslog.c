@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.49 2011/10/15 23:00:01 christos Exp $	*/
+/*	$NetBSD: syslog.c,v 1.49.2.1 2012/04/17 00:05:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.49 2011/10/15 23:00:01 christos Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.49.2.1 2012/04/17 00:05:19 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -505,7 +505,7 @@ connectlog_r(struct syslog_data *data)
 	if (!data->connected) {
 		if (connect(data->log_file,
 		    (const struct sockaddr *)(const void *)&sun,
-		    sizeof(sun)) == -1) {
+		    (socklen_t)sizeof(sun)) == -1) {
 			(void)close(data->log_file);
 			data->log_file = -1;
 		} else

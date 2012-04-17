@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.102 2011/10/19 01:53:07 dyoung Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.102.2.1 2012/04/17 00:08:44 yamt Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.102 2011/10/19 01:53:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.102.2.1 2012/04/17 00:08:44 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -1018,8 +1018,7 @@ socket_send(struct socket *s, struct mbuf *mm, struct sockaddr_in6 *src)
 {
 	if (s) {
 		if (sbappendaddr(&s->so_rcv,
-				 (struct sockaddr *)src,
-				 mm, (struct mbuf *)0) != 0) {
+		    (struct sockaddr *)src, mm, NULL) != 0) {
 			sorwakeup(s);
 			return 0;
 		}

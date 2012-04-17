@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.46 2011/08/01 11:20:27 drochner Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.46.2.1 2012/04/17 00:07:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -36,10 +36,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.46 2011/08/01 11:20:27 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.46.2.1 2012/04/17 00:07:29 yamt Exp $");
 
 #include "opt_inet.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,9 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.46 2011/08/01 11:20:27 drochner
 #include <netinet/if_inarp.h>
 #endif
 
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <sys/bus.h>
 

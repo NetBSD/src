@@ -1,4 +1,4 @@
-/*     $NetBSD: vfs_syscalls.h,v 1.16 2011/08/17 09:29:59 manu Exp $        */
+/*     $NetBSD: vfs_syscalls.h,v 1.16.2.1 2012/04/17 00:08:53 yamt Exp $        */
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,8 +34,7 @@
 
 struct stat;
 struct statvfs;
-
-extern int dovfsusermount;
+struct quotactl_args;
 
 /*
  * syscall helpers for compat code.
@@ -68,6 +67,7 @@ int	do_sys_mknod(struct lwp *, const char *, mode_t, dev_t, register_t *,
     enum uio_seg);
 int	do_sys_mkdir(const char *, mode_t, enum uio_seg);
 int	do_sys_symlink(const char *, const char *, enum uio_seg);
+int	do_sys_quotactl(const char *, const struct quotactl_args *);
 void	do_sys_sync(struct lwp *);
 
 int	chdir_lookup(const char *, int, struct vnode **, struct lwp *);

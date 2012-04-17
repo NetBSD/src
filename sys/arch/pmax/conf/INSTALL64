@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL64,v 1.3 2010/04/16 13:48:35 pooka Exp $
+# 	$NetBSD: INSTALL64,v 1.3.8.1 2012/04/17 00:06:45 yamt Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -47,7 +47,7 @@ file-system 	KERNFS			# kernel data-structure filesystem
 # Filesystem options
 #options 	NFS_V2_ONLY		# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT		# No FFS snapshot support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL			# File system journaling support
 
 
 # Networking options
@@ -153,6 +153,5 @@ pseudo-device	bpfilter		# packet filter ports
 pseudo-device	loop
 pseudo-device	ccd		 4	# concatenated disks
 #pseudo-device	fss		 	# file system snapshot device
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	wsfont			# wsfont control device
 pseudo-device	wsmux			# wsmux control device

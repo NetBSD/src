@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.149 2011/07/04 07:54:38 manu Exp $	*/
+/*	$NetBSD: namespace.h,v 1.149.2.1 2012/04/17 00:05:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -326,6 +326,8 @@
 #define getopt_long		_getopt_long
 #define getpagesize		_getpagesize
 #define getpass			_getpass
+#define getpassfd		_getpassfd
+#define getpass_r		_getpass_r
 #define getprogname		_getprogname
 #define getprotobyname		_getprotobyname
 #define getprotobyname_r	_getprotobyname_r
@@ -439,6 +441,7 @@
 #define lockf			_lockf
 #define lrand48			_lrand48
 #define lseek			_lseek
+#define membar_producer		_membar_producer
 #define mergesort		_mergesort
 #define mi_vector_hash		_mi_vector_hash
 #define mkstemp			_mkstemp
@@ -800,6 +803,7 @@
 #define yp_unbind		_yp_unbind
 #define yperr_string		_yperr_string
 #define ypprot_err		_ypprot_err
+#define yp_setbindtries		_yp_setbindtries
 #define dlopen			__dlopen
 #define dlclose			__dlclose
 #define dlsym			__dlsym

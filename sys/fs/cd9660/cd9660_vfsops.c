@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.73 2011/09/27 01:01:43 christos Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.73.2.1 2012/04/17 00:08:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.73 2011/09/27 01:01:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.73.2.1 2012/04/17 00:08:18 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -264,14 +264,17 @@ cd9660_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * permissions on the device.
 	 */
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = genfs_can_mount(devvp, VREAD, l->l_cred);
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
+	    KAUTH_REQ_SYSTEM_MOUNT_DEVICE, mp, devvp, KAUTH_ARG(VREAD));
 	VOP_UNLOCK(devvp);
 	if (error) {
 		vrele(devvp);
 		return (error);
 	}
 	if ((mp->mnt_flag & MNT_UPDATE) == 0) {
+		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_OPEN(devvp, FREAD, FSCRED);
+		VOP_UNLOCK(devvp);
 		if (error)
 			goto fail;
 		error = iso_mountfs(devvp, mp, l, args);

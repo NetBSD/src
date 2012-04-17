@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2010/07/18 10:58:07 mrg Exp $
+#	$NetBSD: Makefile,v 1.2.6.1 2012/04/17 00:04:49 yamt Exp $
 
-SUBDIR= atom property event aux .WAIT \
-	reply image icccm keysyms render-util
+SUBDIR= reply keysyms render-util \
+	atom event aux .WAIT property .WAIT \
+	image icccm
 
 .include <bsd.subdir.mk>
 

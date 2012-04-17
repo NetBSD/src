@@ -1,5 +1,5 @@
 /*	$OpenBSD: tcp_subr.c,v 1.98 2007/06/25 12:17:43 markus Exp $	*/
-/*	$NetBSD: tcp_rndiss.c,v 1.2 2008/06/18 09:06:27 yamt Exp $	*/
+/*	$NetBSD: tcp_rndiss.c,v 1.2.34.1 2012/04/17 00:08:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -69,10 +69,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_rndiss.c,v 1.2 2008/06/18 09:06:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_rndiss.c,v 1.2.34.1 2012/04/17 00:08:15 yamt Exp $");
 
 #include <sys/param.h>
-#include <sys/rnd.h>
+#include <sys/cprng.h>
 
 #include <netinet/tcp.h>
 #include <netinet/tcp_seq.h>
@@ -104,8 +104,7 @@ tcp_rndiss_encrypt(u_int16_t val)
 void
 tcp_rndiss_init(void)
 {
-	rnd_extract_data(tcp_rndiss_sbox, sizeof(tcp_rndiss_sbox),
-	    RND_EXTRACT_ANY);
+	cprng_strong(kern_cprng, tcp_rndiss_sbox, sizeof(tcp_rndiss_sbox), 0);
 
 	tcp_rndiss_reseed = time_second + TCP_RNDISS_OUT;
 	tcp_rndiss_msb = tcp_rndiss_msb == 0x8000 ? 0 : 0x8000;
@@ -121,5 +120,5 @@ tcp_rndiss_next(void)
 
 	/* (arc4random() & 0x7fff) ensures a 32768 byte gap between ISS */
 	return ((tcp_rndiss_encrypt(tcp_rndiss_cnt++) | tcp_rndiss_msb) <<16) |
-		(arc4random() & 0x7fff);
+		(cprng_fast32() & 0x7fff);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.44 2011/02/17 15:13:49 pooka Exp $	*/
+/*	$NetBSD: input.c,v 1.44.4.1 2012/04/17 00:01:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.44 2011/02/17 15:13:49 pooka Exp $");
+__RCSID("$NetBSD: input.c,v 1.44.4.1 2012/04/17 00:01:38 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: input.c,v 1.44 2011/02/17 15:13:49 pooka Exp $");
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 

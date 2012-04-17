@@ -80,6 +80,7 @@ usbdivar.h		internal defines and structures for usbdi.c
 uscanner.c		minimal USB scanner driver
 usscanner.c		driver for some SCSI-over-USB scanners
 usbhid.h		USB HID class definitions
+uts.c			USB touchscreen driver
 uvisor.c		USB Handsping Visor driver
 uyap.c			Initial firmware downloader for Y@P phones
 uyap_firmware.h		Firmware for the Y@P phone

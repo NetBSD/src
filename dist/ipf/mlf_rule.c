@@ -1,4 +1,4 @@
-/*	$NetBSD: mlf_rule.c,v 1.1.1.1 2004/03/28 08:55:47 martti Exp $	*/
+/*	$NetBSD: mlf_rule.c,v 1.1.1.1.56.1 2012/04/17 00:02:24 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -68,19 +68,18 @@
 #include "netinet/ip_rules.h"
 
 
-int	xxxinit __P((struct lkm_table *, int, int));
+int	xxxinit(struct lkm_table *, int, int);
 
 #if !defined(__FreeBSD_version) || (__FreeBSD_version < 220000)
 MOD_DEV(IPL_VERSION, LM_DT_CHAR, -1, &ipldevsw);
 #endif
 
-static int ipfrule_ioctl __P((struct lkm_table *, int));
+static int ipfrule_ioctl(struct lkm_table *, int);
 
 #if defined(__FreeBSD_version) && (__FreeBSD_version < 220000)
 
-int xxxinit(lkmtp, cmd, ver)
-struct lkm_table *lkmtp;
-int cmd, ver;
+int
+xxxinit(struct lkm_table *lkmtp, int cmd, int ver)
 {
 	DISPATCH(lkmtp, cmd, ver, ipfrule_ioctl, ipfrule_ioctl, ipfrule_ioctl);
 }
@@ -103,12 +102,11 @@ static struct lkm_misc _module = {
 #  endif
 
 
-int ipfrule __P((struct lkm_table *, int, int));
+int ipfrule(struct lkm_table *, int, int);
 
 
-int ipfrule(lkmtp, cmd, ver)
-struct lkm_table *lkmtp;
-int cmd, ver;
+int
+ipfrule(struct lkm_table *lkmtp, int cmd, int ver)
 {
 #  if (__FreeBSD_version >= 300000)
 	MOD_DISPATCH(ipfrule, lkmtp, cmd, ver, ipfrule_ioctl, ipfrule_ioctl,
@@ -120,25 +118,22 @@ int cmd, ver;
 # endif /* IPFILTER_LKM */
 
 
-int ipfrule_load(lkmtp, cmd)
-struct lkm_table *lkmtp;
-int cmd;
+int
+ipfrule_load(struct lkm_table *lkmtp, int cmd)
 {
 	return ipfrule_add();
 }
 
 
-int ipfrule_unload(lkmtp, cmd)
-struct lkm_table *lkmtp;
-int cmd;
+int
+ipfrule_unload(struct lkm_table *lkmtp, int cmd)
 {
 	return ipfrule_remove();
 }
 
 
-static int ipfrule_ioctl(lkmtp, cmd)
-struct lkm_table *lkmtp;
-int cmd;
+static int
+ipfrule_ioctl(struct lkm_table *lkmtp, int cmd)
 {
 	int err = 0;
 

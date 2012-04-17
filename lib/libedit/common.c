@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.28 2011/07/29 20:58:07 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.28.2.1 2012/04/17 00:05:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: common.c,v 1.28 2011/07/29 20:58:07 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.28.2.1 2012/04/17 00:05:27 yamt Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -165,15 +165,12 @@ ed_delete_next_char(EditLine *el, Int c __attribute__((__unused__)))
 				return CC_ERROR;
 #endif
 			}
-		} else {
-			if (el->el_line.cursor != el->el_line.buffer)
-				el->el_line.cursor--;
-			else
+		} else
 				return CC_ERROR;
-		}
 	}
 	c_delafter(el, el->el_state.argument);	/* delete after dot */
-	if (el->el_line.cursor >= el->el_line.lastchar &&
+	if (el->el_map.type == MAP_VI &&
+	    el->el_line.cursor >= el->el_line.lastchar &&
 	    el->el_line.cursor > el->el_line.buffer)
 			/* bounds check */
 		el->el_line.cursor = el->el_line.lastchar - 1;

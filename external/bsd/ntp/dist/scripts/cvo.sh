@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# Copyright 2002, 2009, Harlan Stenn.  Used by NTP with permission.
+# Copyright 2002, 2009, 2010 Harlan Stenn.  Used by NTP with permission.
 # Author: Harlan Stenn <harlan+cvo@pfcs.com>
 
 # Possible output formats:
@@ -26,9 +26,10 @@ case "$#" in
     CVO_OS=$4
     case "$cvo_KERN" in
      linux)			# Braindamage.  We want OS, not kernel info
-	if false
+	if lsb_release > /dev/null 2>&1
 	then
-	    :
+	    CVO_OS=`lsb_release --id --short | tr '[:upper:]' '[:lower:]'`
+	    CVO_OS="$CVO_OS`lsb_release --release --short`"
 	elif test -f /etc/debian_version
 	then
 	    set `cat /etc/debian_version`

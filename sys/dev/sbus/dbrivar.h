@@ -1,4 +1,4 @@
-/*	$NetBSD: dbrivar.h,v 1.12 2011/01/11 00:49:50 macallan Exp $	*/
+/*	$NetBSD: dbrivar.h,v 1.12.8.1 2012/04/17 00:08:01 yamt Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -166,6 +166,9 @@ struct dbri_softc {
 	struct audio_params sc_params;
 
 	struct dbri_dma	*sc_dma;
+
+	kmutex_t	sc_lock;
+	kmutex_t	sc_intr_lock;
 };
 
 #define dbri_dma_off(member, elem)	\

@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.35 2010/04/30 20:47:18 pooka Exp $	*/
+/*	$NetBSD: defs.h,v 1.35.6.1 2012/04/17 00:09:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,6 +65,9 @@
 #ifndef __dead
 #define __dead
 #endif
+#ifndef __printflike
+#define __printflike(a, b)
+#endif
 #ifndef _PATH_DEVNULL
 #define _PATH_DEVNULL "/dev/null"
 #endif
@@ -120,7 +123,6 @@ struct nvlist {
 	int		nv_ifunit;		/* XXX XXX XXX */
 	int		nv_flags;
 #define	NV_DEPENDED	1
-#define	NV_OBSOLETE	2
 };
 
 /*
@@ -132,8 +134,19 @@ struct config {
 	int	cf_lineno;		/* source line */
 	const char *cf_fstype;		/* file system type */
 	struct	nvlist *cf_root;	/* "root on ra0a" */
-	struct	nvlist *cf_swap;	/* "swap on ra0b and ra1b" */
 	struct	nvlist *cf_dump;	/* "dumps on ra0b" */
+};
+
+/*
+ * Option definition list
+ */
+struct defoptlist {
+	struct defoptlist *dl_next;
+	const char *dl_name;
+	const char *dl_value;
+	const char *dl_lintvalue;
+	int dl_obsolete;
+	struct nvlist *dl_depends;
 };
 
 /*
@@ -155,12 +168,34 @@ struct attr {
 	const char *a_name;		/* name of this attribute */
 	int	a_iattr;		/* true => allows children */
 	const char *a_devclass;		/* device class described */
-	struct	nvlist *a_locs;		/* locators required */
+	struct	loclist *a_locs;	/* locators required */
 	int	a_loclen;		/* length of above list */
 	struct	nvlist *a_devs;		/* children */
 	struct	nvlist *a_refs;		/* parents */
-	struct	nvlist *a_deps;		/* we depend on these other attrs */
+	struct	attrlist *a_deps;	/* we depend on these other attrs */
 	int	a_expanding;		/* to detect cycles in attr graph */
+};
+
+/*
+ * List of attributes.
+ */
+struct attrlist {
+	struct attrlist *al_next;
+	struct attr *al_this;
+};
+
+/*
+ * List of locators. (Either definitions or uses...)
+ *
+ * XXX it would be nice if someone could clarify wtf ll_string and ll_num
+ * are actually holding. (This stuff was previously stored in a very ad
+ * hoc fashion, and the code is far from clear.)
+ */
+struct loclist {
+	const char *ll_name;
+	const char *ll_string;
+	long long ll_num;
+	struct loclist *ll_next;
 };
 
 /*
@@ -207,7 +242,7 @@ struct devbase {
 	int	d_isdef;		/* set once properly defined */
 	int	d_ispseudo;		/* is a pseudo-device */
 	devmajor_t d_major;		/* used for "root on sd0", e.g. */
-	struct	nvlist *d_attrs;	/* attributes, if any */
+	struct	attrlist *d_attrs;	/* attributes, if any */
 	int	d_umax;			/* highest unit number + 1 */
 	struct	devi *d_ihead;		/* first instance, if any */
 	struct	devi **d_ipp;		/* used for tacking on more instances */
@@ -223,7 +258,7 @@ struct deva {
 	int	d_isdef;		/* set once properly defined */
 	struct	devbase *d_devbase;	/* the base device */
 	struct	nvlist *d_atlist;	/* e.g., "at tg" (attr list) */
-	struct	nvlist *d_attrs;	/* attributes, if any */
+	struct	attrlist *d_attrs;	/* attributes, if any */
 	struct	devi *d_ihead;		/* first instance, if any */
 	struct	devi **d_ipp;		/* used for tacking on more instances */
 };
@@ -292,11 +327,9 @@ struct filetype
 /*
  * Files.  Each file is either standard (always included) or optional,
  * depending on whether it has names on which to *be* optional.  The
- * options field (fi_optx) is actually an expression tree, with nodes
- * for OR, AND, and NOT, as well as atoms (words) representing some   
- * particular option.  The node type is stored in the nv_num field.
- * Subexpressions appear in the `next' field; for the binary operators
- * AND and OR, the left subexpression is first stored in the nv_ptr field.
+ * options field (fi_optx) is an expression tree of type struct
+ * condexpr, with nodes for OR, AND, and NOT, as well as atoms (words)
+ * representing some particular option.
  * 
  * For any file marked as needs-count or needs-flag, fixfiles() will
  * build fi_optf, a `flat list' of the options with nv_num fields that
@@ -307,7 +340,7 @@ struct files {
 	TAILQ_ENTRY(files) fi_next;
 	const  char *fi_tail;	/* name, i.e., strrchr(fi_path, '/') + 1 */
 	const  char *fi_base;	/* tail minus ".c" (or whatever) */
-	struct nvlist *fi_optx; /* options expression */
+	struct condexpr *fi_optx; /* options expression */
 	struct nvlist *fi_optf; /* flattened version of above, if needed */
 	const  char *fi_mkrule;	/* special make rule, if any */
 };
@@ -331,7 +364,7 @@ struct files {
 struct objects {
 	struct  filetype oi_fit;
 	TAILQ_ENTRY(objects) oi_next;
-	struct  nvlist *oi_optx;/* options expression */
+	struct condexpr *oi_optx;	/* condition expression */
 	struct  nvlist *oi_optf;/* flattened version of above, if needed */
 };
 
@@ -346,10 +379,31 @@ struct objects {
 #define	OI_SEL		0x01	/* selected */
 #define	OI_NEEDSFLAG	0x02	/* needs-flag */
 
-#define	FX_ATOM		0	/* atom (in nv_name) */
-#define	FX_NOT		1	/* NOT expr (subexpression in nv_next) */
-#define	FX_AND		2	/* AND expr (lhs in nv_ptr, rhs in nv_next) */
-#define	FX_OR		3	/* OR expr (lhs in nv_ptr, rhs in nv_next) */
+/*
+ * Condition expressions.
+ */
+
+enum condexpr_types {
+	CX_ATOM,
+	CX_NOT,
+	CX_AND,
+	CX_OR,
+};
+struct condexpr {
+	enum condexpr_types cx_type;
+	union {
+		const char *atom;
+		struct condexpr *not;
+		struct {
+			struct condexpr *left;
+			struct condexpr *right;
+		} and, or;
+	} cx_u;
+};
+#define cx_atom	cx_u.atom
+#define cx_not	cx_u.not
+#define cx_and	cx_u.and
+#define cx_or	cx_u.or
 
 /*
  * File/object prefixes.  These are arranged in a stack, and affect
@@ -370,7 +424,7 @@ struct devm {
 	const char	*dm_name;	/* [bc]devsw name */
 	devmajor_t	dm_cmajor;	/* character major */
 	devmajor_t	dm_bmajor;	/* block major */
-	struct nvlist	*dm_opts;	/* options */
+	struct condexpr	*dm_opts;	/* options */
 	struct nvlist	*dm_devnodes;	/* information on /dev nodes */
 };
 
@@ -415,12 +469,12 @@ struct	hashtab *selecttab;	/* selects things that are "optional foo" */
 struct	hashtab *needcnttab;	/* retains names marked "needs-count" */
 struct	hashtab *opttab;	/* table of configured options */
 struct	hashtab *fsopttab;	/* table of configured file systems */
-struct	hashtab *defopttab;	/* options that have been "defopt"'d */
-struct	hashtab *defflagtab;	/* options that have been "defflag"'d */
-struct	hashtab *defparamtab;	/* options that have been "defparam"'d */
-struct	hashtab *defoptlint;	/* lint values for options */
-struct	hashtab *deffstab;	/* defined file systems */
-struct	hashtab *optfiletab;	/* "defopt"'d option .h files */
+struct	dlhash *defopttab;	/* options that have been "defopt"'d */
+struct	dlhash *defflagtab;	/* options that have been "defflag"'d */
+struct	dlhash *defparamtab;	/* options that have been "defparam"'d */
+struct	dlhash *defoptlint;	/* lint values for options */
+struct	nvhash *deffstab;	/* defined file systems */
+struct	dlhash *optfiletab;	/* "defopt"'d option .h files */
 struct	hashtab *attrtab;	/* attributes (locators, etc.) */
 struct	hashtab *bdevmtab;	/* block devm lookup */
 struct	hashtab *cdevmtab;	/* character devm lookup */
@@ -467,10 +521,9 @@ void	checkfiles(void);
 int	fixfiles(void);		/* finalize */
 int	fixobjects(void);
 int	fixdevsw(void);
-void	addfile(const char *, struct nvlist *, int, const char *);
-void	addobject(const char *, struct nvlist *, int);
-int	expr_eval(struct nvlist *, int (*)(const char *, void *), void *);
-void	expr_free(struct nvlist *);
+void	addfile(const char *, struct condexpr *, int, const char *);
+void	addobject(const char *, struct condexpr *, int);
+int	expr_eval(struct condexpr *, int (*)(const char *, void *), void *);
 
 /* hash.c */
 struct	hashtab *ht_new(void);
@@ -485,6 +538,20 @@ const char *intern(const char *);
 typedef int (*ht_callback)(const char *, void *, void *);
 int	ht_enumerate(struct hashtab *, ht_callback, void *);
 
+/* typed hash, named struct HT, whose type is string -> struct VT */
+#define DECLHASH(HT, VT) \
+	struct HT;							\
+	struct HT *HT##_create(void);					\
+	int HT##_insert(struct HT *, const char *, struct VT *);	\
+	int HT##_replace(struct HT *, const char *, struct VT *);	\
+	int HT##_remove(struct HT *, const char *);			\
+	struct VT *HT##_lookup(struct HT *, const char *);		\
+	int HT##_enumerate(struct HT *,					\
+			int (*)(const char *, struct VT *, void *),	\
+			void *)
+DECLHASH(nvhash, nvlist);
+DECLHASH(dlhash, defoptlist);
+
 /* lint.c */
 void	emit_instances(void);
 void	emit_options(void);
@@ -495,27 +562,27 @@ void	addoption(const char *, const char *);
 void	addfsoption(const char *);
 void	addmkoption(const char *, const char *);
 void	appendmkoption(const char *, const char *);
-void	appendcondmkoption(struct nvlist *, const char *, const char *);
+void	appendcondmkoption(struct condexpr *, const char *, const char *);
 void	deffilesystem(struct nvlist *, struct nvlist *);
-void	defoption(const char *, struct nvlist *, struct nvlist *);
-void	defflag(const char *, struct nvlist *, struct nvlist *, int);
-void	defparam(const char *, struct nvlist *, struct nvlist *, int);
+void	defoption(const char *, struct defoptlist *, struct nvlist *);
+void	defflag(const char *, struct defoptlist *, struct nvlist *, int);
+void	defparam(const char *, struct defoptlist *, struct nvlist *, int);
 void	deloption(const char *);
 void	delfsoption(const char *);
 void	delmkoption(const char *);
 int	devbase_has_instances(struct devbase *, int);
-struct nvlist * find_declared_option(const char *);
+int	is_declared_option(const char *);
 int	deva_has_instances(struct deva *, int);
 void	setupdirs(void);
 const char *strtolower(const char *);
 
 /* tests on option types */
-#define OPT_FSOPT(n)	(ht_lookup(deffstab, (n)) != NULL)
-#define OPT_DEFOPT(n)	(ht_lookup(defopttab, (n)) != NULL)
-#define OPT_DEFFLAG(n)	(ht_lookup(defflagtab, (n)) != NULL)
-#define OPT_DEFPARAM(n)	(ht_lookup(defparamtab, (n)) != NULL)
-#define OPT_OBSOLETE(n)	(ht_lookup(obsopttab, (n)) != NULL)
-#define DEFINED_OPTION(n) (find_declared_option((n)) != NULL)
+#define OPT_FSOPT(n)	(nvhash_lookup(deffstab, (n)) != NULL)
+#define OPT_DEFOPT(n)	(dlhash_lookup(defopttab, (n)) != NULL)
+#define OPT_DEFFLAG(n)	(dlhash_lookup(defflagtab, (n)) != NULL)
+#define OPT_DEFPARAM(n)	(dlhash_lookup(defparamtab, (n)) != NULL)
+#define OPT_OBSOLETE(n)	(dlhash_lookup(obsopttab, (n)) != NULL)
+#define DEFINED_OPTION(n) (is_declared_option((n)))
 
 /* main.c */
 void	logconfig_include(FILE *, const char *);
@@ -556,20 +623,31 @@ void	prefix_push(const char *);
 void	prefix_pop(void);
 char	*sourcepath(const char *);
 void	cfgwarn(const char *, ...)			/* immediate warns */
-     __attribute__((__format__(__printf__, 1, 2)));	
+     __printflike(1, 2);
 void	cfgxwarn(const char *, int, const char *, ...)	/* delayed warns */
-     __attribute__((__format__(__printf__, 3, 4)));
+     __printflike(3, 4);
 void	cfgerror(const char *, ...)			/* immediate errs */
-     __attribute__((__format__(__printf__, 1, 2)));
+     __printflike(1, 2);
 void	cfgxerror(const char *, int, const char *, ...)	/* delayed errs */
-     __attribute__((__format__(__printf__, 3, 4)));
+     __printflike(3, 4);
 __dead void panic(const char *, ...)
-     __attribute__((__format__(__printf__, 1, 2)));
+     __printflike(1, 2);
 struct nvlist *newnv(const char *, const char *, void *, long long, struct nvlist *);
 void	nvfree(struct nvlist *);
 void	nvfreel(struct nvlist *);
 struct nvlist *nvcat(struct nvlist *, struct nvlist *);
 void	autogen_comment(FILE *, const char *);
+struct defoptlist *defoptlist_create(const char *, const char *, const char *);
+void defoptlist_destroy(struct defoptlist *);
+struct defoptlist *defoptlist_append(struct defoptlist *, struct defoptlist *);
+struct attrlist *attrlist_create(void);
+struct attrlist *attrlist_cons(struct attrlist *, struct attr *);
+void attrlist_destroy(struct attrlist *);
+void attrlist_destroyall(struct attrlist *);
+struct loclist *loclist_create(const char *, const char *, long long);
+void loclist_destroy(struct loclist *);
+struct condexpr *condexpr_create(enum condexpr_types);
+void condexpr_destroy(struct condexpr *);
 
 /* liby */
 void	yyerror(const char *);

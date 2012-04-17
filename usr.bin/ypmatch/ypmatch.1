@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypmatch.1,v 1.16 2009/06/21 14:58:58 wiz Exp $
+.\"	$NetBSD: ypmatch.1,v 1.16.6.1 2012/04/17 00:09:44 yamt Exp $
 .\"
 .\" Copyright (c) 1993 Winning Strategies, Inc.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 20, 2009
+.Dd March 2, 2012
 .Dt YPMATCH 1
 .Os
 .Sh NAME
@@ -37,6 +37,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl ktz
+.Op Fl b Ar num_retry
 .Op Fl d Ar domainname
 .Ar key ...
 .Ar mapname
@@ -52,6 +53,13 @@ which may be a map name or a map nickname.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
+.It Fl b Ar num_retry
+Do not wait infinite time for the ypserver to come up.
+Retry only the specified number of times.
+See
+.Xr yp_setbindtries 3
+for explanation.
+The valid range is limited from 0 to 65535 by this program.
 .It Fl d Ar domainname
 Specify a domain other than the default domain.
 .It Fl k
@@ -78,6 +86,7 @@ the keys.
 .Xr domainname 1 ,
 .Xr ypcat 1 ,
 .Xr ypwhich 1 ,
+.Xr yp_setbindtries 3 ,
 .Xr nicknames 5 ,
 .Xr nis 8 ,
 .Xr ypbind 8 ,

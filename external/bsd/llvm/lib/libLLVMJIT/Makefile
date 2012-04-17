@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/06/01 14:13:42 joerg Exp $
+#	$NetBSD: Makefile,v 1.2.2.1 2012/04/17 00:03:31 yamt Exp $
 
 LIB=	LLVMJIT
 
@@ -8,12 +8,9 @@ CPPFLAGS+=	-DENABLE_X86_JIT
 
 .PATH: ${LLVM_SRCDIR}/lib/ExecutionEngine/JIT
 
-SRCS+=	Intercept.cpp \
-	JIT.cpp \
-	JITDebugRegisterer.cpp \
+SRCS+=	JIT.cpp \
 	JITDwarfEmitter.cpp \
 	JITEmitter.cpp \
-	JITMemoryManager.cpp \
-	OProfileJITEventListener.cpp
+	JITMemoryManager.cpp
 
 .include <bsd.lib.mk>

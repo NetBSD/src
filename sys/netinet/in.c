@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.140 2011/10/28 22:23:54 dyoung Exp $	*/
+/*	$NetBSD: in.c,v 1.140.2.1 2012/04/17 00:08:40 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.140 2011/10/28 22:23:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.140.2.1 2012/04/17 00:08:40 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -109,6 +109,8 @@ __KERNEL_RCSID(0, "$NetBSD: in.c,v 1.140 2011/10/28 22:23:54 dyoung Exp $");
 #include <sys/proc.h>
 #include <sys/syslog.h>
 #include <sys/kauth.h>
+
+#include <sys/cprng.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -401,7 +403,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 				ia->ia_broadaddr.sin_family = AF_INET;
 			}
 			ia->ia_ifp = ifp;
-			ia->ia_idsalt = arc4random() % 65535;
+			ia->ia_idsalt = cprng_fast32() % 65535;
 			LIST_INIT(&ia->ia_multiaddrs);
 			newifaddr = 1;
 		}
@@ -499,14 +501,20 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		           ifra->ifra_addr.sin_addr))
 			hostIsNew = 0;
 		if (ifra->ifra_mask.sin_len) {
-			in_ifscrub(ifp, ia);
+			/* Only scrub if we control the prefix route,
+			 * otherwise userland gets a bogus message */
+			if ((ia->ia_flags & IFA_ROUTE))
+				in_ifscrub(ifp, ia);
 			ia->ia_sockmask = ifra->ifra_mask;
 			ia->ia_subnetmask = ia->ia_sockmask.sin_addr.s_addr;
 			maskIsNew = 1;
 		}
 		if ((ifp->if_flags & IFF_POINTOPOINT) &&
 		    (ifra->ifra_dstaddr.sin_family == AF_INET)) {
-			in_ifscrub(ifp, ia);
+			/* Only scrub if we control the prefix route,
+			 * otherwise userland gets a bogus message */
+			if ((ia->ia_flags & IFA_ROUTE))
+				in_ifscrub(ifp, ia);
 			ia->ia_dstaddr = ifra->ifra_dstaddr;
 			maskIsNew  = 1; /* We lie; but the effect's the same */
 		}
@@ -921,9 +929,13 @@ in_addprefix(struct in_ifaddr *target, int flags)
 		 * interface address, we don't need to bother
 		 *
 		 * XXX RADIX_MPATH implications here? -dyoung
+		 *
+		 * But we should still notify userland of the new address
 		 */
-		if (ia->ia_flags & IFA_ROUTE)
+		if (ia->ia_flags & IFA_ROUTE) {
+			rt_newaddrmsg(RTM_NEWADDR, &target->ia_ifa, 0, NULL);
 			return 0;
+		}
 	}
 
 	/*
@@ -953,8 +965,11 @@ in_scrubprefix(struct in_ifaddr *target)
 	struct in_addr prefix, mask, p;
 	int error;
 
-	if ((target->ia_flags & IFA_ROUTE) == 0)
+	/* If we don't have IFA_ROUTE we should still inform userland */
+	if ((target->ia_flags & IFA_ROUTE) == 0) {
+		rt_newaddrmsg(RTM_DELADDR, &target->ia_ifa, 0, NULL);
 		return 0;
+	}
 
 	if (rtinitflags(target))
 		prefix = target->ia_dstaddr.sin_addr;

@@ -1,4 +1,4 @@
-.\" $NetBSD: perfused.8,v 1.5 2011/05/10 12:16:18 njoly Exp $
+.\" $NetBSD: perfused.8,v 1.5.4.1 2012/04/17 00:09:51 yamt Exp $
 .\"
 .\" Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 12, 2010
+.Dd January 29, 2012
 .Dt PERFUSED 8
 .Os
 .Sh NAME
@@ -118,6 +118,20 @@ is started from
 Enable debug output only when receiving
 .Li SIGINFO .
 .El
+.Sh SIGNALS
+.Bl -tag -width indent
+.It Dv SIGINFO
+If the
+.Fl s
+flag was used, toggle debug output.
+Do nothing otherwise.
+.It Dv SIGUSR1
+Toggle FUSE operation dump on and off.
+When toggling off, the trace
+is is stored in
+.Pa /var/run/perfuse-xxx.trace
+(xxx is the filesystem mount point).
+.El
 .Sh ERRORS
 The program logs to the syslog daemon as facility
 .Dq daemon .
@@ -132,3 +146,11 @@ For detailed debugging use the
 The program was written by
 .An Emmanuel Dreyfus
 .Aq manu@NetBSD.org .
+.Sh BUGS
+When
+.Nm
+runs in the foreground (using the
+.Fl f
+flag), some processes using the FUSE file system will
+sometime hang on
+.Sq uvn_fp2 .

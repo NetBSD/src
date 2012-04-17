@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.67 2011/09/21 12:40:25 rkujawa Exp $ */
+/*	$NetBSD: zbus.c,v 1.67.2.1 2012/04/17 00:06:02 yamt Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.67 2011/09/21 12:40:25 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.67.2.1 2012/04/17 00:06:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -244,6 +244,7 @@ static const char *aconflookup(int, int);
  * given a manufacturer id and product id, find quirks
  * for this board.
  */
+
 static uint8_t
 quirkslookup(int mid, int pid)
 {
@@ -251,7 +252,7 @@ quirkslookup(int mid, int pid)
 
 	eqdp = &quirkstab[nquirksent];
 	for (qdp = quirkstab; qdp < eqdp; qdp++)
-		if (qdp->manid == mid && qdp->prodid == pid)
+		if (qdp->manid == mid && qdp->prodid == pid) 
 			return(qdp->quirks);
 	return(0);
 }
@@ -335,6 +336,11 @@ zbusattach(device_t pdp, device_t dp, void *auxp)
 
 		za.pa = cdp->addr;
 		za.size = cdp->size;
+		za.manid = cdp->rom.manid;
+		za.prodid = cdp->rom.prodid;
+		za.serno = cdp->rom.serno;
+		za.slot = (((u_long)za.pa >> 16) & 0xF) - 0x9;
+
 		if (amiga_realconfig && pcp < epcp && pcp->vaddr)
 			za.va = pcp->vaddr;
 		else {
@@ -349,10 +355,6 @@ zbusattach(device_t pdp, device_t dp, void *auxp)
 			if (amiga_realconfig == 0)
 				pcp->vaddr = za.va;
 		}
-		za.manid = cdp->rom.manid;
-		za.prodid = cdp->rom.prodid;
-		za.serno = cdp->rom.serno;
-		za.slot = (((u_long)za.pa >> 16) & 0xF) - 0x9;
 		amiga_config_found(early_cfdata, dp, &za, zbusprint);
 	}
 }

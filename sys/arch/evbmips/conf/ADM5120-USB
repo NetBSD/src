@@ -1,11 +1,11 @@
-#	$NetBSD: ADM5120-USB,v 1.9 2011/06/30 20:09:29 wiz Exp $
+#	$NetBSD: ADM5120-USB,v 1.9.2.1 2012/04/17 00:06:16 yamt Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"GENERIC-$Revision: 1.9 $"
+#ident 		"GENERIC-$Revision: 1.9.2.1 $"
 
 maxusers	32
 
@@ -132,7 +132,6 @@ pseudo-device	pty				# pseudo-terminals
 #pseudo-device	tb		1		# tablet line discipline
 #pseudo-device	sequencer	1		# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.
-pseudo-device	rnd				# /dev/random & kernel generator
 #options 	RND_COM				# use "com" randomness (BROKEN)
 
 # A pseudo device needed for Coda		# also needs CODA (above)

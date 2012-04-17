@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.26 2011/02/20 07:56:16 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.26.4.1 2012/04/17 00:06:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.26 2011/02/20 07:56:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.26.4.1 2012/04/17 00:06:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -499,16 +499,17 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment, bus_si
  * Called by DMA-safe memory allocation methods.
  */
 int
-_bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
-    flags, low, high)
-	bus_dma_tag_t t; 
-	bus_size_t size, alignment, boundary;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int *rsegs;
-	int flags; 
-	paddr_t low;
-	paddr_t high;
+_bus_dmamem_alloc_range(
+	bus_dma_tag_t t,
+	bus_size_t size,
+	bus_size_t alignment,
+	bus_size_t boundary,
+	bus_dma_segment_t *segs,
+	int nsegs,
+	int *rsegs,
+	int flags,
+	paddr_t low,
+	paddr_t high)
 {
 
 	return (_bus_dmamem_alloc_range_common(t, size, alignment, boundary,

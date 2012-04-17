@@ -1,4 +1,4 @@
-/*	$NetBSD: iopaauvar.h,v 1.7 2008/04/27 18:58:45 matt Exp $	*/
+/*	$NetBSD: iopaauvar.h,v 1.7.34.1 2012/04/17 00:06:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -54,7 +54,7 @@
 #define	AAU_IO_BOUNDARY		4096
 
 struct iopaau_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct dmover_backend sc_dmb;
 
 	struct dmover_request *sc_running;

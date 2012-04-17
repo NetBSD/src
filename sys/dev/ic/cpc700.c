@@ -1,4 +1,4 @@
-/*	$NetBSD: cpc700.c,v 1.18 2011/05/17 17:34:54 dyoung Exp $	*/
+/*	$NetBSD: cpc700.c,v 1.18.4.1 2012/04/17 00:07:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpc700.c,v 1.18 2011/05/17 17:34:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpc700.c,v 1.18.4.1 2012/04/17 00:07:32 yamt Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"
@@ -191,9 +191,9 @@ cpc_attach(device_t self, pci_chipset_tag_t pc, bus_space_tag_t mem,
 
 #if NPCI > 0 && defined(PCI_NETBSD_CONFIGURE)
 	ioext  = extent_create("pciio",  CPC_PCI_IO_START, CPC_PCI_IO_END,
-	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_NOWAIT);
 	memext = extent_create("pcimem", CPC_PCI_MEM_BASE, CPC_PCI_MEM_END,
-	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_NOWAIT);
 
 	pci_configure_bus(0, ioext, memext, NULL, 0, 32);
 

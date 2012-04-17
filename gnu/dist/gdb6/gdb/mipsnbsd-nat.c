@@ -32,6 +32,9 @@
 #include "mips-tdep.h"
 #include "mipsnbsd-tdep.h"
 #include "inf-ptrace.h"
+#include "bsd-kvm.h"
+
+#include "machine/pcb.h"
 
 /* Determine if PT_GETREGS fetches this register.  */
 static int
@@ -104,6 +107,43 @@ mipsnbsd_store_inferior_registers (int regno)
 	perror_with_name (_("Couldn't write floating point status"));
     }
 }
+
+static int mipsnbsd_supply_pcb (struct regcache *, struct pcb *);
+
+static int
+mipsnbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
+{
+  struct label_t sf;
+
+  sf = pcb->pcb_context;
+
+  /* really should test for n{32,64} abi for this register
+     unless this is purely the "n" ABI */
+
+  regcache_raw_supply (regcache, MIPS_S0_REGNUM, &sf.val[_L_S0]);
+  regcache_raw_supply (regcache, MIPS_S1_REGNUM, &sf.val[_L_S1]);
+  regcache_raw_supply (regcache, MIPS_S2_REGNUM, &sf.val[_L_S2]);
+  regcache_raw_supply (regcache, MIPS_S3_REGNUM, &sf.val[_L_S3]);
+  regcache_raw_supply (regcache, MIPS_S4_REGNUM, &sf.val[_L_S4]);
+  regcache_raw_supply (regcache, MIPS_S5_REGNUM, &sf.val[_L_S5]);
+  regcache_raw_supply (regcache, MIPS_S6_REGNUM, &sf.val[_L_S6]);
+  regcache_raw_supply (regcache, MIPS_S7_REGNUM, &sf.val[_L_S7]);
+
+  regcache_raw_supply (regcache, MIPS_S8_REGNUM, &sf.val[_L_S8]);
+
+  regcache_raw_supply (regcache, MIPS_T8_REGNUM, &sf.val[_L_T8]);
+
+  regcache_raw_supply (regcache, MIPS_GP_REGNUM, &sf.val[_L_GP]);
+
+  regcache_raw_supply (regcache, MIPS_SP_REGNUM, &sf.val[_L_SP]);
+  regcache_raw_supply (regcache, MIPS_RA_REGNUM, &sf.val[_L_RA]);
+  regcache_raw_supply (regcache, MIPS_PS_REGNUM, &sf.val[_L_SR]);
+
+  /* provide the return address of the savectx as the current pc */
+  regcache_raw_supply (regcache, MIPS_EMBED_PC_REGNUM, &sf.val[_L_RA]);
+
+  return 0;
+}
 
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */
@@ -120,4 +160,7 @@ _initialize_mipsnbsd_nat (void)
   t->to_pid_to_exec_file = nbsd_pid_to_exec_file;
 
   add_target (t);
+
+  /* Support debugging kernel virtual memory images.  */
+  bsd_kvm_add_target (mipsnbsd_supply_pcb);
 }

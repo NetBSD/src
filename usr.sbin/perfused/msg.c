@@ -1,4 +1,4 @@
-/*  $NetBSD: msg.c,v 1.17 2011/10/30 05:17:41 manu Exp $ */
+/*  $NetBSD: msg.c,v 1.17.2.1 2012/04/17 00:09:51 yamt Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -41,7 +41,6 @@
 #include <sys/un.h>
 #include <machine/vmparam.h>
 
-#include "../../lib/libperfuse/perfuse_if.h"
 #include "perfused.h"
 
 static int xchg_pb_inloop(struct puffs_usermount *a, struct puffs_framebuf *,
@@ -50,7 +49,7 @@ static int xchg_pb_early(struct puffs_usermount *a, struct puffs_framebuf *,
 	int, enum perfuse_xchg_pb_reply);
 
 int
-perfuse_open_sock(void)
+perfused_open_sock(void)
 {
 	int s;
 	struct sockaddr_un sun;
@@ -111,7 +110,7 @@ perfuse_open_sock(void)
 
 
 void *
-perfuse_recv_early(int fd, struct sockcred *sockcred, size_t sockcred_len)
+perfused_recv_early(int fd, struct sockcred *sockcred, size_t sockcred_len)
 {
 	struct fuse_out_header foh;
 	size_t len;
@@ -166,7 +165,7 @@ perfuse_recv_early(int fd, struct sockcred *sockcred, size_t sockcred_len)
 
 
 perfuse_msg_t *
-perfuse_new_pb (struct puffs_usermount *pu, puffs_cookie_t opc, int opcode,
+perfused_new_pb (struct puffs_usermount *pu, puffs_cookie_t opc, int opcode,
     size_t payload_len, const struct puffs_cred *cred)
 {
 	struct puffs_framebuf *pb;
@@ -240,7 +239,7 @@ xchg_pb_early(struct puffs_usermount *pu, struct puffs_framebuf *pb, int fd,
 
 	done = 0;
 	while (done == 0) {
-		if ((error = perfuse_writeframe(pu, pb, fd, &done)) != 0)
+		if ((error = perfused_writeframe(pu, pb, fd, &done)) != 0)
 			return error;
 	}
 
@@ -253,7 +252,7 @@ xchg_pb_early(struct puffs_usermount *pu, struct puffs_framebuf *pb, int fd,
 
 	done = 0;
 	while (done == 0) {
-		if ((error = perfuse_readframe(pu, pb, fd, &done)) != 0)
+		if ((error = perfused_readframe(pu, pb, fd, &done)) != 0)
 			return error;
 	}
 
@@ -278,7 +277,7 @@ xchg_pb_inloop(struct puffs_usermount *pu, struct puffs_framebuf *pb, int fd,
 }
 
 int
-perfuse_xchg_pb(struct puffs_usermount *pu, perfuse_msg_t *pm,
+perfused_xchg_pb(struct puffs_usermount *pu, perfuse_msg_t *pm,
     size_t expected_len, enum perfuse_xchg_pb_reply reply)
 {
 	struct puffs_framebuf *pb = (struct puffs_framebuf *)(void *)pm;
@@ -292,7 +291,7 @@ perfuse_xchg_pb(struct puffs_usermount *pu, perfuse_msg_t *pm,
 	uint64_t unique_in;
 	uint64_t unique_out;
 
-	fih = perfuse_get_inhdr(pm);
+	fih = perfused_get_inhdr(pm);
 	unique_in = fih->unique;
 	nodeid = fih->nodeid;
 	opcode = fih->opcode;
@@ -303,11 +302,11 @@ perfuse_xchg_pb(struct puffs_usermount *pu, perfuse_msg_t *pm,
 			unique_in, nodeid, perfuse_opname(opcode), opcode);
 
 	if (perfuse_diagflags & PDF_DUMP)
-		perfuse_hexdump((char *)fih, fih->len);
+		perfused_hexdump((char *)fih, fih->len);
 
 #endif /* PERFUSE_DEBUG */
 
-	fd = (int)(long)perfuse_getspecific(pu);
+	fd = (int)(intptr_t)perfuse_getspecific(pu);
 
 	if (perfuse_inloop(pu))
 		error = xchg_pb_inloop(pu, pb, fd, reply);
@@ -320,7 +319,7 @@ perfuse_xchg_pb(struct puffs_usermount *pu, perfuse_msg_t *pm,
 	if (reply == no_reply)
 		return 0;
 
-	foh = perfuse_get_outhdr((perfuse_msg_t *)(void *)pb);
+	foh = perfused_get_outhdr((perfuse_msg_t *)(void *)pb);
 #ifdef PERFUSE_DEBUG
 	unique_out = foh->unique;	
 
@@ -331,7 +330,7 @@ perfuse_xchg_pb(struct puffs_usermount *pu, perfuse_msg_t *pm,
 			perfuse_opname(opcode), opcode, foh->error);
 
 	if (perfuse_diagflags & PDF_DUMP)
-		perfuse_hexdump((char *)foh, foh->len);
+		perfused_hexdump((char *)foh, foh->len);
 
 	if (unique_in != unique_out) {
 		printf("%s: packet mismatch unique %"PRId64" vs %"PRId64"\n",
@@ -365,7 +364,7 @@ perfuse_xchg_pb(struct puffs_usermount *pu, perfuse_msg_t *pm,
 
 
 struct fuse_in_header *
-perfuse_get_inhdr(perfuse_msg_t *pm)
+perfused_get_inhdr(perfuse_msg_t *pm)
 {
 	struct puffs_framebuf *pb;
 	struct fuse_in_header *fih;
@@ -385,7 +384,7 @@ perfuse_get_inhdr(perfuse_msg_t *pm)
 }
 
 struct fuse_out_header *
-perfuse_get_outhdr(perfuse_msg_t *pm)
+perfused_get_outhdr(perfuse_msg_t *pm)
 {
 	struct puffs_framebuf *pb;
 	struct fuse_out_header *foh;
@@ -405,7 +404,7 @@ perfuse_get_outhdr(perfuse_msg_t *pm)
 }
 
 char *
-perfuse_get_inpayload(perfuse_msg_t *pm)
+perfused_get_inpayload(perfuse_msg_t *pm)
 {
 	struct puffs_framebuf *pb;
 	struct fuse_in_header *fih;
@@ -432,7 +431,7 @@ perfuse_get_inpayload(perfuse_msg_t *pm)
 }
 
 char *
-perfuse_get_outpayload(perfuse_msg_t *pm)
+perfused_get_outpayload(perfuse_msg_t *pm)
 {
 	struct puffs_framebuf *pb;
 	struct fuse_out_header *foh;
@@ -473,7 +472,7 @@ perfuse_get_outpayload(perfuse_msg_t *pm)
 
 /* ARGSUSED0 */
 int
-perfuse_readframe(struct puffs_usermount *pu, struct puffs_framebuf *pufbuf,
+perfused_readframe(struct puffs_usermount *pu, struct puffs_framebuf *pufbuf,
     int fd, int *done)
 {
 	struct fuse_out_header foh;
@@ -489,14 +488,11 @@ perfuse_readframe(struct puffs_usermount *pu, struct puffs_framebuf *pufbuf,
 
 	switch (readen = recv(fd, data, len, MSG_NOSIGNAL|MSG_PEEK)) {
 	case 0:
-		DWARNX("%s: recv retunred 0", __func__);
-		return ECONNRESET;
-		/* NOTREACHED */
-		break;
+		perfused_panic();
 	case -1:
 		if (errno == EAGAIN)
 			return 0;
-		DWARN("%s: recv retunred -1", __func__);
+		DWARN("%s: recv returned -1", __func__);
 		return errno;
 		/* NOTREACHED */
 		break;
@@ -536,17 +532,13 @@ perfuse_readframe(struct puffs_usermount *pu, struct puffs_framebuf *pufbuf,
 
 	switch (readen = recv(fd, data, len, MSG_NOSIGNAL)) {
 	case 0:
-		DWARNX("%s: recv retunred 0", __func__);
-		return ECONNRESET;
-		/* NOTREACHED */
-		break;
+		DWARNX("%s: recv returned 0", __func__);
+		perfused_panic();
 	case -1:
 		if (errno == EAGAIN)
 			return 0;
-		DWARN("%s: recv retunred -1", __func__);
+		DWARN("%s: recv returned -1", __func__);
 		return errno;
-		/* NOTREACHED */
-		break;
 	default:
 		break;
 	}
@@ -563,7 +555,7 @@ perfuse_readframe(struct puffs_usermount *pu, struct puffs_framebuf *pufbuf,
 
 /* ARGSUSED0 */
 int
-perfuse_writeframe(struct puffs_usermount *pu, struct puffs_framebuf *pufbuf,
+perfused_writeframe(struct puffs_usermount *pu, struct puffs_framebuf *pufbuf,
     int fd, int *done)
 {
 	size_t len;
@@ -575,17 +567,24 @@ perfuse_writeframe(struct puffs_usermount *pu, struct puffs_framebuf *pufbuf,
 
 	switch (written = send(fd, data, len, MSG_NOSIGNAL)) {
 	case 0:
-		DWARNX("%s: send retunred 0", __func__);
+#ifdef PERFUSE_DEBUG
+		DERRX(EX_SOFTWARE, "%s: send returned 0", __func__);
+#else
 		return ECONNRESET;
+#endif
 		/* NOTREACHED */
 		break;
 	case -1:
-		DWARN("%s: send retunred -1, errno = %d", __func__, errno);
+		DWARN("%s: send returned -1, errno = %d", __func__, errno);
 		switch(errno) {
 		case EAGAIN:
 		case ENOBUFS:
 		case EMSGSIZE:
 			return 0;
+			break;
+		case EPIPE:
+			perfused_panic();
+			/* NOTREACHED */
 			break;
 		default:
 			return errno;
@@ -609,7 +608,7 @@ perfuse_writeframe(struct puffs_usermount *pu, struct puffs_framebuf *pufbuf,
 
 /* ARGSUSED0 */
 int
-perfuse_cmpframe(struct puffs_usermount *pu, struct puffs_framebuf *pb1,
+perfused_cmpframe(struct puffs_usermount *pu, struct puffs_framebuf *pb1,
     struct puffs_framebuf *pb2, int *match)
 {
 	struct fuse_in_header *fih;
@@ -631,7 +630,7 @@ perfuse_cmpframe(struct puffs_usermount *pu, struct puffs_framebuf *pb1,
 
 /* ARGSUSED0 */
 void
-perfuse_gotframe(struct puffs_usermount *pu, struct puffs_framebuf *pb)
+perfused_gotframe(struct puffs_usermount *pu, struct puffs_framebuf *pb)
 {
 	struct fuse_out_header *foh;
 	size_t len;
@@ -642,16 +641,16 @@ perfuse_gotframe(struct puffs_usermount *pu, struct puffs_framebuf *pb)
 	DWARNX("Unexpected frame: unique = %"PRId64", error = %d", 
 	       foh->unique, foh->error);
 #ifdef PERFUSE_DEBUG
-	perfuse_hexdump((char *)(void *)foh, foh->len);
+	perfused_hexdump((char *)(void *)foh, foh->len);
 #endif
 
 	return;	
 }
 
 void
-perfuse_fdnotify(struct puffs_usermount *pu, int fd, int what)
+perfused_fdnotify(struct puffs_usermount *pu, int fd, int what)
 {
-	if (fd != (int)(long)perfuse_getspecific(pu))
+	if (fd != (int)(intptr_t)perfuse_getspecific(pu))
 		DERRX(EX_SOFTWARE, "%s: unexpected notification for fd = %d",
 		      __func__, fd); 
 
@@ -672,11 +671,11 @@ perfuse_fdnotify(struct puffs_usermount *pu, int fd, int what)
 }
 
 void
-perfuse_umount(struct puffs_usermount *pu)
+perfused_umount(struct puffs_usermount *pu)
 {
 	int fd;
 
-	fd = (int)(long)perfuse_getspecific(pu);
+	fd = (int)(intptr_t)perfuse_getspecific(pu);
 
 	if (shutdown(fd, SHUT_RDWR) != 0)
 		DWARN("shutdown() failed");

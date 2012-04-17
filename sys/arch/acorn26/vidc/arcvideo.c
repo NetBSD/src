@@ -1,4 +1,4 @@
-/* $NetBSD: arcvideo.c,v 1.15 2011/07/19 16:05:11 dyoung Exp $ */
+/* $NetBSD: arcvideo.c,v 1.15.2.1 2012/04/17 00:05:52 yamt Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcvideo.c,v 1.15 2011/07/19 16:05:11 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcvideo.c,v 1.15.2.1 2012/04/17 00:05:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: arcvideo.c,v 1.15 2011/07/19 16:05:11 dyoung Exp $")
 #include <dev/rasops/rasops.h>
 
 #include <machine/boot.h>
-#include <machine/intr.h>
 #include <machine/irq.h>
 #include <machine/machdep.h>
 #include <machine/memcreg.h>
@@ -70,7 +69,6 @@ static void arcvideo_attach(device_t parent, device_t self, void *aux);
 static int arcvideo_setmode(device_t self, struct arcvideo_mode *mode);
 static void arcvideo_await_vsync(device_t self);
 #endif
-static int arcvideo_intr(void *cookie);
 static int arcvideo_ioctl(void *cookie, void *vs, u_long cmd, void *data,
 			       int flag, struct lwp *l);
 static paddr_t arcvideo_mmap(void *cookie, void *vs, off_t off, int prot);
@@ -87,11 +85,7 @@ static void arccons_8bpp_hack(struct rasops_info *ri);
 
 struct arcvideo_softc {
 	device_t		sc_dev;
-	paddr_t			sc_screenmem_base;
-	struct arcvideo_mode	sc_current_mode;
 	u_int32_t		sc_vidc_ctl;
-	struct irq_handler	*sc_irq;
-	struct evcnt		sc_intrcnt;
 	int			sc_flags;
 #define AV_VIDEO_ON	0x01
 };
@@ -131,7 +125,27 @@ arcvideo_attach(device_t parent, device_t self, void *aux)
 	struct arcvideo_softc *sc = device_private(self);
 
 	sc->sc_dev = the_arcvideo = self;
-	if (!arcvideo_isconsole) {
+	if (arcvideo_isconsole) {
+		struct rasops_info *ri = &arccons_ri;
+		long defattr;
+
+		if (rasops_init(ri, 1000, 1000) < 0)
+			panic("rasops_init failed");
+
+		/* Take rcons stuff and put it in arcscreen */
+		/* XXX shouldn't this kind of thing be done by rcons_init? */
+		arcscreen.name = "arccons";
+		arcscreen.ncols = ri->ri_cols;
+		arcscreen.nrows = ri->ri_rows;
+		arcscreen.textops = &ri->ri_ops;
+		arcscreen.fontwidth = ri->ri_font->fontwidth;
+		arcscreen.fontheight = ri->ri_font->fontheight;
+		arcscreen.capabilities = ri->ri_caps;
+
+		if ((ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr) != 0)
+			panic("allocattr failed");
+		wsdisplay_cnattach(&arcscreen, ri, 0, 0, defattr);
+	} else {
 		aprint_error(": Not console -- I can't cope with this!\n");
 		return;
 	}
@@ -140,13 +154,7 @@ arcvideo_attach(device_t parent, device_t self, void *aux)
 	/* Detect monitor type? */
 	/* Reset VIDC */
 
-	/* Find IRQ */
-	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-	    device_xname(sc->sc_dev), "vsync intr");
-	sc->sc_irq = irq_establish(IOC_IRQ_IR, IPL_TTY, arcvideo_intr, self,
-	    &sc->sc_intrcnt);
-	aprint_verbose(": VSYNC interrupts at %s", irq_string(sc->sc_irq));
-	irq_disable(sc->sc_irq);
+	aprint_verbose(": VSYNC interrupts at IRQ %d", IOC_IRQ_IR);
 
 	aprint_normal("\n");
 
@@ -274,14 +282,6 @@ arcvideo_await_vsync(device_t self)
 }
 #endif
 
-static int
-arcvideo_intr(void *cookie)
-{
-/*	struct arcvideo_softc *sc = cookie; */
-
-	return IRQ_HANDLED;
-}
-
 /*
  * In the standard RISC OS 8-bit palette (which we use), the bits go
  * BGgRbrTt, feeding RrTt, GgTt and BbTt to the DACs.  The top four of
@@ -299,15 +299,9 @@ static u_int8_t rasops_cmap_8bpp[] = {
 void
 arccons_init(void)
 {
-	long defattr;
-	int clear = 0;
-	int crow;
-	int i;
 	struct rasops_info *ri = &arccons_ri;
+	int i;
 
-	/* Force the screen to be at a known location */
-	if (bootconfig.screenbase != 0)
-		clear = 1;
 	MEMC_WRITE(MEMC_SET_PTR(MEMC_VSTART, 0));
 	MEMC_WRITE(MEMC_SET_PTR(MEMC_VINIT, 0));
 	MEMC_WRITE(MEMC_SET_PTR(MEMC_VEND, 0x00080000));
@@ -321,10 +315,7 @@ arccons_init(void)
 	ri->ri_width = bootconfig.xpixels;
 	ri->ri_height = bootconfig.ypixels;
 	ri->ri_stride = ((bootconfig.xpixels * bootconfig.bpp + 31) >> 5) << 2;
-	ri->ri_flg = RI_CENTER | (clear ? RI_CLEAR : 0);
-
-	if (rasops_init(ri, 1000, 1000) < 0)
-		panic("rasops_init failed");
+	ri->ri_flg = RI_CENTER | ((bootconfig.screenbase != 0) ? RI_CLEAR : 0);
 
 	/* Register video memory with UVM now we know how much we're using. */
 	uvm_page_physload(0, atop(MEMC_DMA_MAX),
@@ -339,31 +330,6 @@ arccons_init(void)
 			    VIDC_PALETTE_ENTRY(rasops_cmap[3*i + 0] >> 4,
 					       rasops_cmap[3*i + 1] >> 4,
 					       rasops_cmap[3*i + 2] >> 4, 0));
-
-	/* Take rcons stuff and put it in arcscreen */
-	/* XXX shouldn't this kind of thing be done by rcons_init? */
-	arcscreen.name = "arccons";
-	arcscreen.ncols = ri->ri_cols;
-	arcscreen.nrows = ri->ri_rows;
-	arcscreen.textops = &ri->ri_ops;
-	arcscreen.fontwidth = ri->ri_font->fontwidth;
-	arcscreen.fontheight = ri->ri_font->fontheight;
-	arcscreen.capabilities = ri->ri_caps;
-
-	/* work out cursor row */
-	if (clear)
-		crow = 0;
-	else
-		/* +/-1 is to round up */
-		crow = (bootconfig.cpixelrow - ri->ri_yorigin - 1) /
-			ri->ri_font->fontheight + 1;
-	if (crow < 0) crow = 0;
-	if (crow > ri->ri_rows) crow = ri->ri_rows;
-
-	if ((arccons_ri.ri_ops.allocattr)(&arccons_ri, 0, 0, 0, &defattr) !=
-	    0)
-		panic("allocattr failed");
-	wsdisplay_cnattach(&arcscreen, &arccons_ri, 0, crow, defattr);
 
 	/* That should be all */
 	arcvideo_isconsole = 1;

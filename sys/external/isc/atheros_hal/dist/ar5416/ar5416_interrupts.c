@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5416_interrupts.c,v 1.2 2011/03/07 11:25:44 cegger Exp $
+ * $Id: ar5416_interrupts.c,v 1.2.4.1 2012/04/17 00:08:17 yamt Exp $
  */
 #include "opt_ah.h"
 
@@ -55,6 +55,8 @@ ar5416IsInterruptPending(struct ath_hal *ah)
  * values.  The value returned is mapped to abstract the hw-specific bit
  * locations in the Interrupt Status Register.
  *
+ * (*masked) is cleared on initial call.
+ *
  * Returns: A hardware-abstracted bitmap of all non-masked-out
  *          interrupts pending, as well as an unmasked value
  */
@@ -73,10 +75,9 @@ ar5416GetPendingInterrupts(struct ath_hal *ah, HAL_INT *masked)
 		isr = 0;
 	sync_cause = OS_REG_READ(ah, AR_INTR_SYNC_CAUSE);
 	sync_cause &= AR_INTR_SYNC_DEFAULT;
-	if (isr == 0 && sync_cause == 0) {
-		*masked = 0;
+	*masked = 0;
+	if (isr == 0 && sync_cause == 0)
 		return AH_FALSE;
-	}
 
 	if (isr != 0) {
 		struct ath_hal_5212 *ahp = AH5212(ah);

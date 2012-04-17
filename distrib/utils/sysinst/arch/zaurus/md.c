@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8.2.1 2011/11/10 14:31:21 yamt Exp $	*/
+/*	$NetBSD: md.c,v 1.8.2.2 2012/04/17 00:02:54 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -35,6 +35,7 @@
 /* md.c -- zaurus machine specific routines */
 
 #include <sys/param.h>
+#include <sys/sysctl.h>
 
 #include <stdio.h>
 #include <util.h>
@@ -52,7 +53,20 @@ md_init(void)
 void
 md_init_set_status(int flags)
 {
-	(void)flags;
+	static const int mib[2] = {CTL_KERN, KERN_VERSION};
+	size_t len;
+	char *version;
+
+	/* check INSTALL kernel name to select an appropriate kernel set */
+	/* XXX: hw.cpu_model has a processor name on arm ports */
+	sysctl(mib, 2, NULL, &len, NULL, 0);
+	version = malloc(len);
+	if (version == NULL)
+		return;
+	sysctl(mib, 2, version, &len, NULL, 0);
+	if (strstr(version, "C700") != NULL)
+		set_kernel_set(SET_KERNEL_C700);
+	free(version);
 }
 
 int

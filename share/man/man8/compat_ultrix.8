@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_ultrix.8,v 1.19 2003/03/30 21:34:51 wiz Exp $
+.\"	$NetBSD: compat_ultrix.8,v 1.19.56.1 2012/04/17 00:05:48 yamt Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -41,11 +41,12 @@
 and
 .Nx Ns Tn /vax
 architectures can run Risc ULTRIX and VAX
-ULTRIX executables, respectively.  However, you have to worry about
-the legal issues of ensuring that you have a right to use any ULTRIX
-binaries on your machine.
+ULTRIX executables, respectively.
+However, you have to worry about the legal issues of ensuring that
+you have a right to use any ULTRIX binaries on your machine.
 .Pp
-Most executables will work.  The exceptions include programs that use
+Most executables will work.
+The exceptions include programs that use
 proprietary, ULTRIX-specific features (LAT, CI support, DECnet
 support) and various system calls,
 .Fn ioctl Ns 's ,
@@ -55,10 +56,11 @@ buggy (e.g. ULTRIX
 .Tn NIS ) .
 .Pp
 All ULTRIX executables are static, so no shared libraries are required
-for ULTRIX compatibility. However, ULTRIX is based on a
+for ULTRIX compatibility.
+However, ULTRIX is based on a
 .Bx 4.3
-alpha release.  ULTRIX commands and libraries are often much older
-than their
+alpha release.
+ULTRIX commands and libraries are often much older than their
 .Nx
 or even
 .Tn SunOS 4.x
@@ -100,7 +102,8 @@ ULTRIX uses
 to select an ordered search of
 .Tn NIS ,
 Hesiod,
-or local flat-file mappings.  You should create an
+or local flat-file mappings.
+You should create an
 .Pa /emul/ultrix/etc/svc.conf
 specifying either local files or bind (DNS)
 lookups for all ULTRIX name services.
@@ -109,14 +112,17 @@ lookups for all ULTRIX name services.
 .Sh BUGS
 RISC ULTRIX
 .Tn NIS
-(YP) is known to not work.  The ULTRIX
+(YP) is known to not work.
+The ULTRIX
 .Tn NIS
-libraries have a consistent endian-ness bug. ULTRIX
+libraries have a consistent endian-ness bug.
+ULTRIX
 .Tn NIS
 client will not inter-operate with the
 .Nx
 .Xr ypbind 8
-process.  The only workaround is to use
+process.
+The only workaround is to use
 .Pa /etc/svc.conf
 to disable
 .Tn NIS
@@ -133,7 +139,8 @@ would be a good one, if ULTRIX
 worked.
 .Pp
 The API used by Xservers to talk to the kernel is currently compatible
-with ULTRIX 4.1.  An implementation of the ULTRIX 4.2 Xws interface
+with ULTRIX 4.1.
+An implementation of the ULTRIX 4.2 Xws interface
 (used by X11R6) is in progress.
 .Pp
 A complete list of things which fail to work in ULTRIX compatibility

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_mace.c,v 1.13 2011/07/01 18:53:47 dyoung Exp $	*/
+/*	$NetBSD: pci_mace.c,v 1.13.2.1 2012/04/17 00:06:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001,2003 Christopher Sekiya
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.13 2011/07/01 18:53:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.13.2.1 2012/04/17 00:06:52 yamt Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -146,9 +146,9 @@ macepci_attach(struct device *parent, struct device *self, void *aux)
 
 #if NPCI > 0
 	pc->pc_ioext = extent_create("macepciio", 0x00001000, 0x01ffffff,
-	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_NOWAIT);
 	pc->pc_memext = extent_create("macepcimem", 0x80100000, 0x81ffffff,
-	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_NOWAIT);
 	pci_configure_bus(pc, pc->pc_ioext, pc->pc_memext, NULL, 0,
 	    mips_cache_info.mci_dcache_align);
 	memset(&pba, 0, sizeof pba);

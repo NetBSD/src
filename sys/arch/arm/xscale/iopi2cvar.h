@@ -1,4 +1,4 @@
-/*	$NetBSD: iopi2cvar.h,v 1.3 2007/12/08 13:54:32 ad Exp $	*/
+/*	$NetBSD: iopi2cvar.h,v 1.3.50.1 2012/04/17 00:06:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -39,7 +39,7 @@
 #define _ARM_XSCALE_IOPIICVAR_H_ 
 
 struct iopiic_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_st;
 	bus_space_handle_t sc_sh;
 

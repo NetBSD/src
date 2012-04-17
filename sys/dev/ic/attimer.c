@@ -1,4 +1,4 @@
-/*	$NetBSD: attimer.c,v 1.10 2009/04/07 22:30:09 dyoung Exp $	*/
+/*	$NetBSD: attimer.c,v 1.10.12.1 2012/04/17 00:07:31 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: attimer.c,v 1.10 2009/04/07 22:30:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: attimer.c,v 1.10.12.1 2012/04/17 00:07:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,6 +79,8 @@ attimer_detach(device_t self, int flags)
  *
  * There's not much at risk here, as there's about no chance to have a
  * computer with more than one pcppi/attimer accessible.
+ *
+ * Caller provides locking for this routine.
  */
 
 device_t
@@ -108,18 +110,19 @@ attimer_detach_speaker(device_t dev)
 	sc->sc_flags &= ~ATT_ATTACHED;
 }
 
+/*
+ * Caller provides locking for this routine.
+ */
+
 void
 attimer_set_pitch(device_t dev, int pitch)
 {
 	struct attimer_softc *sc = device_private(dev);
-	int s;
 
-	s = splhigh();
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, TIMER_MODE,
 	    TIMER_SEL2 | TIMER_16BIT | TIMER_SQWAVE);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, TIMER_CNTR2,
 	    TIMER_DIV(pitch) % 256);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, TIMER_CNTR2,
 	    TIMER_DIV(pitch) / 256);
-	splx(s);
 }

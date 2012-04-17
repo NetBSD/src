@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/02/26 19:17:37 plunky Exp $
+#	$NetBSD: Makefile,v 1.3.4.1 2012/04/17 00:03:37 yamt Exp $
 
 NOGCCERROR=yes
 
@@ -19,7 +19,7 @@ DPADD+=		${LIBISC}/libiscntp.a ${LIBOPTS}/libopts.a  ${LIBNTP}/libntp.a ${LIBM} 
 
 DIST=${IDIST}/util
 
-CPPFLAGS+=-I${IDIST}/include -I${IDIST}/libopts
+CPPFLAGS+=-I${IDIST}/include -I${IDIST}/sntp/libopts
 
 .PATH: ${DIST}
 

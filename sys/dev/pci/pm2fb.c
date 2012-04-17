@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.7 2011/01/22 15:14:28 cegger Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.7.4.1 2012/04/17 00:07:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.7 2011/01/22 15:14:28 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.7.4.1 2012/04/17 00:07:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,19 @@ __KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.7 2011/01/22 15:14:28 cegger Exp $");
 #include <dev/pci/wsdisplay_pci.h>
 
 #include <dev/i2c/i2cvar.h>
+#include <dev/i2c/i2c_bitbang.h>
+#include <dev/i2c/ddcvar.h>
+#include <dev/videomode/videomode.h>
+#include <dev/videomode/edidvar.h>
+#include <dev/videomode/edidreg.h>
+
+#include "opt_pm2fb.h"
+
+#ifdef PM2FB_DEBUG
+#define DPRINTF aprint_error
+#else
+#define DPRINTF while (0) printf
+#endif
 
 struct pm2fb_softc {
 	device_t sc_dev;
@@ -84,6 +97,9 @@ struct pm2fb_softc {
 	u_char sc_cmap_blue[256];
 	/* engine stuff */
 	uint32_t sc_pprod;
+	/* i2c stuff */
+	struct i2c_controller sc_i2c;
+	uint8_t sc_edid_data[128];
 };
 
 static int	pm2fb_match(device_t, cfdata_t, void *);
@@ -128,6 +144,34 @@ struct wsdisplay_accessops pm2fb_accessops = {
 	NULL, 	/* load_font */
 	NULL,	/* pollc */
 	NULL	/* scroll */
+};
+
+/* I2C glue */
+static int pm2fb_i2c_acquire_bus(void *, int);
+static void pm2fb_i2c_release_bus(void *, int);
+static int pm2fb_i2c_send_start(void *, int);
+static int pm2fb_i2c_send_stop(void *, int);
+static int pm2fb_i2c_initiate_xfer(void *, i2c_addr_t, int);
+static int pm2fb_i2c_read_byte(void *, uint8_t *, int);
+static int pm2fb_i2c_write_byte(void *, uint8_t, int);
+
+/* I2C bitbang glue */
+static void pm2fb_i2cbb_set_bits(void *, uint32_t);
+static void pm2fb_i2cbb_set_dir(void *, uint32_t);
+static uint32_t pm2fb_i2cbb_read(void *);
+
+static void pm2_setup_i2c(struct pm2fb_softc *);
+
+static const struct i2c_bitbang_ops pm2fb_i2cbb_ops = {
+	pm2fb_i2cbb_set_bits,
+	pm2fb_i2cbb_set_dir,
+	pm2fb_i2cbb_read,
+	{
+		PM2_DD_SDA_IN,
+		PM2_DD_SCL_IN,
+		0,
+		0
+	}
 };
 
 static inline void
@@ -180,7 +224,6 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 	struct pm2fb_softc	*sc = device_private(self);
 	struct pci_attach_args	*pa = aux;
 	struct rasops_info	*ri;
-	char devinfo[256];
 	struct wsemuldisplaydev_attach_args aa;
 	prop_dictionary_t	dict;
 	unsigned long		defattr;
@@ -194,8 +237,7 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iot = pa->pa_iot;
 	sc->sc_dev = self;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s\n", devinfo);
+	pci_aprint_devinfo(pa, NULL);
 
 	/* fill in parameters from properties */
 	dict = device_properties(self);
@@ -248,6 +290,8 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 	sc->sc_locked = 0;
 
+	pm2_setup_i2c(sc);
+
 	vcons_init(&sc->vd, sc, &sc->sc_defaultscreen_descr,
 	    &pm2fb_accessops);
 	sc->vd.init_screen = pm2fb_init_screen;
@@ -258,8 +302,7 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 	ri = &sc->sc_console_screen.scr_ri;
 
 	j = 0;
-	for (i = 0; i < (1 << sc->sc_depth); i++) {
-
+	for (i = 0; i < 256; i++) {
 		sc->sc_cmap_red[i] = rasops_cmap[j];
 		sc->sc_cmap_green[i] = rasops_cmap[j + 1];
 		sc->sc_cmap_blue[i] = rasops_cmap[j + 2];
@@ -356,6 +399,13 @@ pm2fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		}
 		}
 		return 0;
+	case WSDISPLAYIO_GET_EDID: {
+		struct wsdisplayio_edid_info *d = data;
+		d->data_size = 128;
+		if (d->buffer_size < 128)
+			return EAGAIN;
+		return copyout(sc->sc_edid_data, d->edid_data, 128);
+	}
 	}
 	return EPASSTHROUGH;
 }
@@ -378,8 +428,8 @@ pm2fb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
 	 */
-	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
-	    NULL) != 0) {
+	if (kauth_authorize_machdep(kauth_cred_get(), KAUTH_MACHDEP_UNMANAGEDMEM,
+	    NULL, NULL, NULL, NULL) != 0) {
 		aprint_normal("%s: mmap() rejected.\n",
 		    device_xname(sc->sc_dev));
 		return -1;
@@ -424,7 +474,7 @@ pm2fb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_stride = sc->sc_stride;
 	ri->ri_flg = RI_CENTER;
 
-	rasops_init(ri, sc->sc_height / 8, sc->sc_width / 8);
+	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
@@ -840,3 +890,114 @@ pm2fb_eraserows(void *cookie, int row, int nrows, long fillattr)
 	}
 }
 
+static void
+pm2_setup_i2c(struct pm2fb_softc *sc)
+{
+#ifdef PM2FB_DEBUG
+	struct edid_info ei;
+#endif
+	int i;
+
+	/* Fill in the i2c tag */
+	sc->sc_i2c.ic_cookie = sc;
+	sc->sc_i2c.ic_acquire_bus = pm2fb_i2c_acquire_bus;
+	sc->sc_i2c.ic_release_bus = pm2fb_i2c_release_bus;
+	sc->sc_i2c.ic_send_start = pm2fb_i2c_send_start;
+	sc->sc_i2c.ic_send_stop = pm2fb_i2c_send_stop;
+	sc->sc_i2c.ic_initiate_xfer = pm2fb_i2c_initiate_xfer;
+	sc->sc_i2c.ic_read_byte = pm2fb_i2c_read_byte;
+	sc->sc_i2c.ic_write_byte = pm2fb_i2c_write_byte;
+	sc->sc_i2c.ic_exec = NULL;
+
+	DPRINTF("data: %08x\n", bus_space_read_4(sc->sc_memt, sc->sc_regh,
+		PM2_DISPLAY_DATA));
+
+	/* make sure we're in i2c mode */
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_DISPLAY_DATA, 0);
+
+	/* zero out the EDID buffer */
+	memset(sc->sc_edid_data, 0, 128);
+
+	/* Some monitors don't respond first time */
+	i = 0;
+	while (sc->sc_edid_data[1] == 0 && i++ < 3)
+		ddc_read_edid(&sc->sc_i2c, sc->sc_edid_data, 128);
+#ifdef PM2FB_DEBUG
+	if (edid_parse(&sc->sc_edid_data[0], &ei) != -1) {
+		edid_print(&ei);
+	}
+#endif
+}
+
+/* I2C bitbanging */
+static void pm2fb_i2cbb_set_bits(void *cookie, uint32_t bits)
+{
+	struct pm2fb_softc *sc = cookie;
+	uint32_t out;
+
+	out = bits << 2;	/* bitmasks match the IN bits */
+
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_DISPLAY_DATA, out);
+}
+
+static void pm2fb_i2cbb_set_dir(void *cookie, uint32_t dir)
+{
+	/* Nothing to do */
+}
+
+static uint32_t pm2fb_i2cbb_read(void *cookie)
+{
+	struct pm2fb_softc *sc = cookie;
+	uint32_t bits;
+
+	bits = bus_space_read_4(sc->sc_memt, sc->sc_regh, PM2_DISPLAY_DATA);
+
+	return bits;
+}
+
+/* higher level I2C stuff */
+static int
+pm2fb_i2c_acquire_bus(void *cookie, int flags)
+{
+	/* private bus */
+	return (0);
+}
+
+static void
+pm2fb_i2c_release_bus(void *cookie, int flags)
+{
+	/* private bus */
+}
+
+static int
+pm2fb_i2c_send_start(void *cookie, int flags)
+{
+	return (i2c_bitbang_send_start(cookie, flags, &pm2fb_i2cbb_ops));
+}
+
+static int
+pm2fb_i2c_send_stop(void *cookie, int flags)
+{
+
+	return (i2c_bitbang_send_stop(cookie, flags, &pm2fb_i2cbb_ops));
+}
+
+static int
+pm2fb_i2c_initiate_xfer(void *cookie, i2c_addr_t addr, int flags)
+{
+
+	return (i2c_bitbang_initiate_xfer(cookie, addr, flags, 
+	    &pm2fb_i2cbb_ops));
+}
+
+static int
+pm2fb_i2c_read_byte(void *cookie, uint8_t *valp, int flags)
+{
+	return (i2c_bitbang_read_byte(cookie, valp, flags, &pm2fb_i2cbb_ops));
+}
+
+static int
+pm2fb_i2c_write_byte(void *cookie, uint8_t val, int flags)
+{
+	return (i2c_bitbang_write_byte(cookie, val, flags, &pm2fb_i2cbb_ops));
+}

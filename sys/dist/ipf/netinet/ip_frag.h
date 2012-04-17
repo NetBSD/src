@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.h,v 1.6 2009/08/19 08:36:10 darrenr Exp $	*/
+/*	$NetBSD: ip_frag.h,v 1.6.12.1 2012/04/17 00:08:13 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -62,45 +62,45 @@ extern	ipfr_t	*ipfr_natlist, **ipfr_nattail;
 extern	int	ipfr_size;
 extern	int	fr_ipfrttl;
 extern	int	fr_frag_lock;
-extern	int	fr_fraginit __P((void));
-extern	void	fr_fragunload __P((void));
-extern	ipfrstat_t	*fr_fragstats __P((void));
+extern	int	fr_fraginit(void);
+extern	void	fr_fragunload(void);
+extern	ipfrstat_t	*fr_fragstats(void);
 
-extern	int	fr_newfrag __P((fr_info_t *, u_32_t));
-extern	frentry_t *fr_knownfrag __P((fr_info_t *, u_32_t *));
+extern	int	fr_newfrag(fr_info_t *, u_32_t);
+extern	frentry_t *fr_knownfrag(fr_info_t *, u_32_t *);
 
-extern	int	fr_nat_newfrag __P((fr_info_t *, u_32_t, struct nat *));
-extern	nat_t	*fr_nat_knownfrag __P((fr_info_t *));
+extern	int	fr_nat_newfrag(fr_info_t *, u_32_t, struct nat *);
+extern	nat_t	*fr_nat_knownfrag(fr_info_t *);
 
-extern	int	fr_ipid_newfrag __P((fr_info_t *, u_32_t));
-extern	u_32_t	fr_ipid_knownfrag __P((fr_info_t *));
+extern	int	fr_ipid_newfrag(fr_info_t *, u_32_t);
+extern	u_32_t	fr_ipid_knownfrag(fr_info_t *);
 #ifdef USE_MUTEXES
-extern	void	fr_fragderef __P((ipfr_t **, ipfrwlock_t *));
-extern	int	fr_nextfrag __P((ipftoken_t *, ipfgeniter_t *, ipfr_t **, \
-				 ipfr_t ***, ipfrwlock_t *));
+extern	void	fr_fragderef(ipfr_t **, ipfrwlock_t *);
+extern	int	fr_nextfrag(ipftoken_t *, ipfgeniter_t *, ipfr_t **, \
+				 ipfr_t ***, ipfrwlock_t *);
 #else
-extern	void	fr_fragderef __P((ipfr_t **));
-extern	int	fr_nextfrag __P((ipftoken_t *, ipfgeniter_t *, ipfr_t **, \
-				 ipfr_t ***));
+extern	void	fr_fragderef(ipfr_t **);
+extern	int	fr_nextfrag(ipftoken_t *, ipfgeniter_t *, ipfr_t **, \
+				 ipfr_t ***);
 #endif
 
-extern	void	fr_forget __P((void *));
-extern	void	fr_forgetnat __P((void *));
-extern	void	fr_fragclear __P((void));
-extern	void	fr_fragexpire __P((void));
+extern	void	fr_forget(void *);
+extern	void	fr_forgetnat(void *);
+extern	void	fr_fragclear(void);
+extern	void	fr_fragexpire(void);
 
 #if defined(_KERNEL) && ((defined(BSD) && (BSD >= 199306)) || SOLARIS || \
     defined(__sgi) || defined(__osf__) || (defined(__sgi) && (IRIX >= 60500)))
 # if defined(SOLARIS2) && (SOLARIS2 < 7)
-extern	void	fr_slowtimer __P((void));
+extern	void	fr_slowtimer(void);
 # else
-extern	void	fr_slowtimer __P((void *));
+extern	void	fr_slowtimer(void *);
 # endif
 #else
 # if defined(linux) && defined(_KERNEL)
-extern	void	fr_slowtimer __P((long));
+extern	void	fr_slowtimer(long);
 # else
-extern	int	fr_slowtimer __P((void));
+extern	int	fr_slowtimer(void);
 # endif
 #endif
 

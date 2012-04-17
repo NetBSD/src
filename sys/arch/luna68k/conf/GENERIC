@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.93 2011/07/16 15:52:21 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.93.2.1 2012/04/17 00:06:34 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,13 +22,13 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.93 $"
+#ident 		"GENERIC-$Revision: 1.93.2.1 $"
 
 maxusers	8
 
 options 	M68030
-#options 	M68040
-#options 	FPSP	# on m68040 to emulate some missing FP instructions
+options 	M68040
+options 	FPSP	# on m68040 to emulate some missing FP instructions
 
 # Needs to be set per system.  i.e change these as you see fit
 
@@ -38,7 +38,6 @@ options 	KTRACE
 options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
 options 	SYSVSHM			# System V shared memory
-#options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -51,7 +50,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 # Debugging options
 options 	DDB
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
-#options 	SYMTAB_SPACE=72000	# place DDB symbols in data segment
+#options 	SYMTAB_SPACE=448000	# place DDB symbols in data segment
 #options 	DEBUG			# extra kernel debugging support
 #options 	DIAGNOSTIC		# extra kernel sanity checking
 #options 	SCSIVERBOSE		# Verbose SCSI errors
@@ -96,7 +95,7 @@ file-system	TMPFS		# Efficient memory file-system
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# ffs endian independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 
@@ -153,7 +152,7 @@ ws0	at sio0			# port for keyboard and mouse
 le0	at mainbus0
 # MB89532 SPC
 spc0	at mainbus0
-#spc1	at mainbus0		# 2nd SCSI on LUNA-II
+spc1	at mainbus0		# 2nd SCSI on LUNA-II
 # framebuffer
 fb0	at mainbus0		# 16 or 256 pseudo color
 
@@ -200,7 +199,6 @@ pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 #pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter

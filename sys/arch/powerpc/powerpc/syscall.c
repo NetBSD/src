@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.48 2011/04/26 15:51:25 joerg Exp $	*/
+/*	$NetBSD: syscall.c,v 1.48.4.1 2012/04/17 00:06:48 yamt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -34,7 +34,6 @@
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
-#include "opt_sa.h"
 /* DO NOT INCLUDE opt_compat_XXX.h */
 /* If needed, they will be included by file that includes this one */
 
@@ -44,8 +43,6 @@
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscallvar.h>
 
 #include <uvm/uvm_extern.h>
@@ -64,7 +61,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.48 2011/04/26 15:51:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.48.4.1 2012/04/17 00:06:48 yamt Exp $");
 
 void
 child_return(void *arg)
@@ -107,12 +104,6 @@ EMULNAME(syscall_plain)(struct trapframe *tf)
 	params = tf->tf_fixreg + FIRSTARG;
 	n = NARGREG;
 
-#ifdef KERN_SA
-	if (__predict_false((l->l_savp)
-            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
-		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
-#endif
-
 	{
 		switch (code) {
 		case EMULNAMEU(SYS_syscall):
@@ -133,7 +124,7 @@ EMULNAME(syscall_plain)(struct trapframe *tf)
 		default:
 			break;
 		}
-		
+
 		callp = p->p_emul->e_sysent +
 		    (code & (EMULNAMEU(SYS_NSYSENT)-1));
 	}
@@ -206,12 +197,6 @@ EMULNAME(syscall_fancy)(struct trapframe *tf)
 	params = tf->tf_fixreg + FIRSTARG;
 	n = NARGREG;
 
-#ifdef KERN_SA
-	if (__predict_false((l->l_savp)
-            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
-		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
-#endif
-
 	realcode = code;
 	{
 		switch (code) {
@@ -244,8 +229,8 @@ EMULNAME(syscall_fancy)(struct trapframe *tf)
 	if (argsize > n * sizeof(register_t)) {
 		memcpy(args, params, n * sizeof(register_t));
 		error = copyin(MOREARGS(tf->tf_fixreg[1]),
-		       args + n,
-		       argsize - n * sizeof(register_t));
+		    args + n,
+		    argsize - n * sizeof(register_t));
 		if (error)
 			goto bad;
 		params = args;
@@ -283,6 +268,7 @@ out:
 		break;
 	}
 	trace_exit(realcode, rval, error);
+
 	userret(l, tf);
 }
 

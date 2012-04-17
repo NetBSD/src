@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.34.2.1 2011/11/10 14:31:15 yamt Exp $
+# $NetBSD: mi,v 1.34.2.2 2012/04/17 00:02:44 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -23,6 +23,8 @@
 ./@MODULEDIR@/bpf/bpf.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/cd9660				base-kernel-modules	kmod
 ./@MODULEDIR@/cd9660/cd9660.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/chfs				base-kernel-modules	kmod
+./@MODULEDIR@/chfs/chfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/coda				base-kernel-modules	kmod
 ./@MODULEDIR@/coda/coda.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/coda5				base-kernel-modules	kmod
@@ -75,10 +77,12 @@
 ./@MODULEDIR@/hfs/hfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/iic				base-kernel-modules	kmod
 ./@MODULEDIR@/iic/iic.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/iscsi				base-kernel-modules	kmod,iscsi
+./@MODULEDIR@/iscsi/iscsi.kmod			base-kernel-modules	kmod,iscsi
 ./@MODULEDIR@/kernfs				base-kernel-modules	kmod
 ./@MODULEDIR@/kernfs/kernfs.kmod		base-kernel-modules	kmod
-./@MODULEDIR@/ksem				base-kernel-modules	kmod
-./@MODULEDIR@/ksem/ksem.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/ksem				base-obsolete		obsolete
+./@MODULEDIR@/ksem/ksem.kmod			base-obsolete		obsolete
 ./@MODULEDIR@/layerfs				base-kernel-modules	kmod
 ./@MODULEDIR@/layerfs/layerfs.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/lfs				base-kernel-modules	kmod
@@ -139,6 +143,8 @@
 ./@MODULEDIR@/sdt/sdt.kmod			base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/secmodel_bsd44			base-kernel-modules	kmod
 ./@MODULEDIR@/secmodel_bsd44/secmodel_bsd44.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/secmodel_extensions		base-kernel-modules	kmod
+./@MODULEDIR@/secmodel_extensions/secmodel_extensions.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/secmodel_overlay			base-kernel-modules	kmod
 ./@MODULEDIR@/secmodel_overlay/secmodel_overlay.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/securelevel			base-kernel-modules	kmod

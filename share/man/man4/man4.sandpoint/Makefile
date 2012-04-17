@@ -1,7 +1,7 @@
 # 	from: @(#)Makefile	8.2 (Berkeley) 2/16/94
-#	$NetBSD: Makefile,v 1.1 2011/01/26 11:25:51 nisimura Exp $
+#	$NetBSD: Makefile,v 1.1.6.1 2012/04/17 00:05:46 yamt Exp $
 
-MAN=	satmgr.4
+MAN=	nhpow.4 satmgr.4
 MLINKS=
 MANSUBDIR=/sandpoint
 

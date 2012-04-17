@@ -6,7 +6,7 @@ noinst_LIBRARIES = @MAKE_LIBPARSE@ @MAKE_LIBPARSE_KERNEL@
 EXTRA_LIBRARIES = libparse.a libparse_kernel.a
 EXTRA_PROGRAMS = parsestreams parsesolaris
 noinst_PROGRAMS = @MAKE_PARSEKMODULE@
-CLEANFILES = libparse.a libparse_kernel.a
+CLEANFILES = libparse.a libparse_kernel.a info_trimble.c
 
 K_CFLAGS = -DPARSESTREAM -DNTP_NEED_BOPS
 
@@ -33,24 +33,25 @@ libparse_a_SOURCES = parse.c \
 		     $(NULL)
 
 libparse_kernel_a_SOURCES = 
-libparse_kernel_a_LIBADD = kparse$U.o \
-			    kparse_conf$U.o \
-			    kclk_computime$U.o \
-			    kclk_dcf7000$U.o \
-			    kclk_hopf6021$U.o \
-			    kclk_meinberg$U.o \
-			    kclk_rawdcf$U.o \
-			    kclk_rcc8000$U.o \
-			    kclk_schmid$U.o \
-			    kclk_trimtaip$U.o \
-			    kclk_trimtsip$U.o \
-			    kclk_varitext$U.o \
-			    kclk_wharton$U.o \
-			    kbinio$U.o \
-			    kieee754io$U.o \
-			    kmfp_mul$U.o \
-			    kgpstolfp$U.o \
-			    $(NULL)
+libparse_kernel_a_LIBADD =	\
+	kparse.o		\
+	kparse_conf.o		\
+	kclk_computime.o	\
+	kclk_dcf7000.o		\
+	kclk_hopf6021.o		\
+	kclk_meinberg.o		\
+	kclk_rawdcf.o		\
+	kclk_rcc8000.o		\
+	kclk_schmid.o		\
+	kclk_trimtaip.o		\
+	kclk_trimtsip.o		\
+	kclk_varitext.o		\
+	kclk_wharton.o		\
+	kbinio.o		\
+	kieee754io.o		\
+	kmfp_mul.o		\
+	kgpstolfp.o		\
+	$(NULL)
 
 
 INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)/lib/isc/include \
@@ -65,9 +66,9 @@ EXTRA_DIST = parsesolaris.c parsestreams.c mkinfo_scmd.sed mkinfo_rcmd.sed info_
 # create info_trimble.c
 #
 info_trimble.c: $(top_srcdir)/include/trimble.h mkinfo_rcmd.sed mkinfo_scmd.sed
-	@rm -f info_trimble.c
-	sed -n -f $(srcdir)/mkinfo_scmd.sed $(top_srcdir)/include/trimble.h  > info_trimble.c || rm -f info_trimble.c
-	sed -n -f $(srcdir)/mkinfo_rcmd.sed $(top_srcdir)/include/trimble.h >> info_trimble.c || rm -f info_trimble.c
+	@rm -f $@
+	sed -n -f $(srcdir)/mkinfo_scmd.sed $(top_srcdir)/include/trimble.h  > $@ || rm -f $@
+	sed -n -f $(srcdir)/mkinfo_rcmd.sed $(top_srcdir)/include/trimble.h >> $@ || rm -f $@
 
 kieee754io.o: ieee754io.c
 	 $(COMPILE) $(K_CFLAGS) -c $(srcdir)/ieee754io.c -o $@

@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.126 2011/07/02 17:53:51 bouyer Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.126.2.1 2012/04/17 00:08:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@ struct socket {
 	short		so_options;	/* from socket call, see socket.h */
 	u_short		so_linger;	/* time to linger while closing */
 	short		so_state;	/* internal state flags SS_*, below */
-	int		so_nbio;	/* non-blocking I/O enabled */
+	int		so_unused;	/* used to be so_nbio */
 	void		*so_pcb;	/* protocol control block */
 	const struct protosw *so_proto;	/* protocol handle */
 /*
@@ -210,6 +210,7 @@ do {									\
 					 * more data coming
 					 */
 #define	SS_ISAPIPE 		0x1000	/* socket is implementing a pipe */
+#define	SS_NBIO			0x2000	/* socket is in non blocking I/O */
 
 #ifdef _KERNEL
 
@@ -507,7 +508,7 @@ void	sblastmbufchk(struct sockbuf *, const char *);
 #endif /* SOCKBUF_DEBUG */
 
 /* sosend loan */
-vaddr_t	sokvaalloc(vsize_t, struct socket *);
+vaddr_t	sokvaalloc(vaddr_t, vsize_t, struct socket *);
 void	sokvafree(vaddr_t, vsize_t);
 void	soloanfree(struct mbuf *, void *, size_t, void *);
 

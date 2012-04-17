@@ -1,4 +1,4 @@
-/*	$NetBSD: partutil.c,v 1.10 2010/03/06 00:30:54 christos Exp $	*/
+/*	$NetBSD: partutil.c,v 1.10.6.1 2012/04/17 00:05:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: partutil.c,v 1.10 2010/03/06 00:30:54 christos Exp $");
+__RCSID("$NetBSD: partutil.c,v 1.10.6.1 2012/04/17 00:05:39 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/disklabel.h>
@@ -109,47 +109,8 @@ part2wedge(struct dkwedge_info *dkw, const struct disklabel *lp, const char *s)
 	dkw->dkw_offset = pp->p_offset;
 	dkw->dkw_size = pp->p_size;
 	dkw->dkw_parent[0] = '*';
-	switch (pp->p_fstype) {
-	default:
-		(void)strcpy(dkw->dkw_ptype, DKW_PTYPE_UNKNOWN);
-		break;
-	case FS_UNUSED:
-		(void)strcpy(dkw->dkw_ptype, DKW_PTYPE_UNUSED);
-		break;
-	case FS_SWAP:
-		(void)strcpy(dkw->dkw_ptype, DKW_PTYPE_SWAP);
-		break;
-	case FS_BSDFFS:
-		(void)strcpy(dkw->dkw_ptype, DKW_PTYPE_FFS);
-		break;
-	case FS_BSDLFS:
-		(void)strcpy(dkw->dkw_ptype, DKW_PTYPE_LFS);
-		break;
-	case FS_EX2FS:
-		(void)strcpy(dkw->dkw_ptype, DKW_PTYPE_EXT2FS);
-		break;
-	case FS_ISO9660:
-		(void)strcpy(dkw->dkw_ptype, DKW_PTYPE_ISO9660);
-		break;
-	case FS_ADOS:
-		(void)strcpy(dkw->dkw_ptype, DKW_PTYPE_AMIGADOS);
-		break;
-	case FS_HFS:
-		(void)strcpy(dkw->dkw_ptype, DKW_PTYPE_APPLEHFS);
-		break;
-	case FS_MSDOS:
-		(void)strcpy(dkw->dkw_ptype, DKW_PTYPE_FAT);
-		break;
-	case FS_FILECORE:
-		(void)strcpy(dkw->dkw_ptype, DKW_PTYPE_FILECORE);
-		break;
-	case FS_APPLEUFS:
-		(void)strcpy(dkw->dkw_ptype, DKW_PTYPE_APPLEUFS);
-		break;
-	case FS_NTFS:
-		(void)strcpy(dkw->dkw_ptype, DKW_PTYPE_NTFS);
-		break;
-	}
+	strlcpy(dkw->dkw_ptype, getfstypename(pp->p_fstype),
+	    sizeof(dkw->dkw_ptype));
 }
 
 int

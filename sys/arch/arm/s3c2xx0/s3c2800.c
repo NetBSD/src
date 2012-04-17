@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800.c,v 1.12 2011/07/01 20:31:39 dyoung Exp $ */
+/*	$NetBSD: s3c2800.c,v 1.12.2.1 2012/04/17 00:06:07 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800.c,v 1.12 2011/07/01 20:31:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800.c,v 1.12.2.1 2012/04/17 00:06:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ static int	s3c2800_search(struct device *, struct cfdata *,
 			       const int *, void *);
 
 /* attach structures */
-CFATTACH_DECL(ssio, sizeof(struct s3c2800_softc), s3c2800_match, s3c2800_attach,
+CFATTACH_DECL_NEW(ssio, sizeof(struct s3c2800_softc), s3c2800_match, s3c2800_attach,
     NULL, NULL);
 
 extern struct bus_space s3c2xx0_bs_tag;
@@ -92,7 +92,7 @@ s3c2800_match(struct device *parent, struct cfdata *match, void *aux)
 void
 s3c2800_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct s3c2800_softc *sc = (struct s3c2800_softc *) self;
+	struct s3c2800_softc *sc = device_private(self);
 	bus_space_tag_t iot;
 	const char *which_registers;	/* for panic message */
 
@@ -169,7 +169,7 @@ int
 s3c2800_search(struct device * parent, struct cfdata * cf,
 	       const int *ldesc, void *aux)
 {
-	struct s3c2800_softc *sc = (struct s3c2800_softc *) parent;
+	struct s3c2800_softc *sc = device_private(parent);
 	struct s3c2xx0_attach_args aa;
 
 	aa.sa_sc = sc;

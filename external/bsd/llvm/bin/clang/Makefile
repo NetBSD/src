@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15.2.1 2011/11/10 14:31:22 yamt Exp $
+#	$NetBSD: Makefile,v 1.15.2.2 2012/04/17 00:03:28 yamt Exp $
 
 PROG_CXX=	clang
 NOMAN=		yes
@@ -20,6 +20,7 @@ CLANG_LIBS+= \
 	clangFrontendTool \
 	clangFrontend \
 	clangARCMigrate \
+	clangEdit \
 	clangStaticAnalyzerFrontend \
 	clangStaticAnalyzerCheckers \
 	clangStaticAnalyzerCore \
@@ -49,6 +50,7 @@ LLVM_LIBS+= \
 	MipsTargetInfo \
 	MipsMCTargetDesc \
 	MipsAsmPrinter \
+	MipsAsmParser \
 	PowerPCCodeGen \
 	PowerPCTargetInfo \
 	PowerPCMCTargetDesc \
@@ -65,6 +67,7 @@ LLVM_LIBS+= \
 	SelectionDAG \
 	AsmPrinter \
 	CodeGen \
+	Vectorize \
 	Target \
 	InstCombine \
 	Instrumentation \

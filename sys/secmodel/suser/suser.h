@@ -1,4 +1,4 @@
-/* $NetBSD: suser.h,v 1.1 2009/10/02 18:50:13 elad Exp $ */
+/* $NetBSD: suser.h,v 1.1.14.1 2012/04/17 00:08:51 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -28,6 +28,9 @@
 
 #ifndef _SECMODEL_SUSER_SUSER_H_
 #define	_SECMODEL_SUSER_SUSER_H_
+
+#define SECMODEL_SUSER_ID   "org.netbsd.secmodel.suser"
+#define SECMODEL_SUSER_NAME "Traditional NetBSD: Superuser"
 
 void secmodel_suser_init(void);
 void secmodel_suser_start(void);

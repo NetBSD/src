@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.68 2011/02/08 20:20:26 rmind Exp $	*/
+/*	$NetBSD: cons.c,v 1.68.4.1 2012/04/17 00:07:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.68 2011/02/08 20:20:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.68.4.1 2012/04/17 00:07:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -184,8 +184,8 @@ cnioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	 * output from the "virtual" console.
 	 */
 	if (cmd == TIOCCONS && constty != NULL) {
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL);
+		error = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_VIRTUAL, constty);
 		if (!error)
 			constty = NULL;
 		return (error);

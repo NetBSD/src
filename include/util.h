@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.59 2011/08/30 12:39:52 bouyer Exp $	*/
+/*	$NetBSD: util.h,v 1.59.2.1 2012/04/17 00:05:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -73,6 +73,10 @@ int		getlabelsector(void);
 int		getlabelusesmbr(void);
 int		getmaxpartitions(void);
 int		getrawpartition(void);
+const char     *getdiskrawname(char *, size_t, const char *);
+const char     *getdiskcookedname(char *, size_t, const char *);
+const char     *getfstypename(int);
+const char     *getfsspecname(char *, size_t, const char *);
 #ifndef __LIBC12_SOURCE__
 void		login(const struct utmp *) __RENAME(__login50);
 void		loginx(const struct utmpx *) __RENAME(__loginx50);
@@ -120,6 +124,7 @@ int		snprintb(char *, size_t, const char *, uint64_t);
 int		sockaddr_snprintf(char *, size_t, const char *,
     const struct sockaddr *);
 char 	       *strpct(char *, size_t, uintmax_t, uintmax_t, size_t);
+char 	       *strspct(char *, size_t, intmax_t, intmax_t, size_t);
 int		string_to_flags(char **, unsigned long *, unsigned long *);
 int		ttyaction(const char *, const char *, const char *);
 int		ttylock(const char *, int, pid_t *);

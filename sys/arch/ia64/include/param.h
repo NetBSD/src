@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.5 2011/10/01 15:59:28 chs Exp $	*/
+/*	$NetBSD: param.h,v 1.5.2.1 2012/04/17 00:06:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,22 +77,6 @@
 #endif
 #define	KSTACK_GUARD_PAGES 0		/* pages of kstack guard; 0 disables */
 
-/*
- * Round p (pointer or byte index) up to a correctly-aligned value
- * for all data types (int, long, ...).   The result is u_int and
- * must be cast to any desired pointer type.
- *
- * ALIGNED_POINTER is a boolean macro that checks whether an address
- * is valid to fetch data elements of type t from on this architecture.
- * This does not reflect the optimal alignment, just the possibility
- * (within reasonable limits). 
- *
- */
-
-#define	ALIGNBYTES		15
-#define	ALIGN(p)		(((u_long)(p) + ALIGNBYTES) &~ ALIGNBYTES)
-#define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
-
 #define ALIGNBYTES32		(sizeof(int) - 1)
 #define ALIGN32(p)		(((u_long)(p) + ALIGNBYTES32) &~ALIGNBYTES32)
 
@@ -119,9 +103,10 @@
 /*
  * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
  * logical pages.
+ * No enforced maxmimum an ia64
  */
-#define	NKMEMPAGES_MIN_DEFAULT	((12 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MIN_DEFAULT	((32 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_UNLIMITED 1
 
 /*
  * Mach derived conversion macros

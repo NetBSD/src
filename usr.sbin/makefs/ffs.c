@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.45 2011/10/09 21:33:43 christos Exp $	*/
+/*	$NetBSD: ffs.c,v 1.45.2.1 2012/04/17 00:09:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.45 2011/10/09 21:33:43 christos Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.45.2.1 2012/04/17 00:09:49 yamt Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -784,8 +784,8 @@ ffs_populate_dir(const char *dir, fsnode *root, fsinfo_t *fsopts)
 			continue;		/* skip hard-linked entries */
 		cur->inode->flags |= FI_WRITTEN;
 
-		if (snprintf(path, sizeof(path), "%s/%s", dir, cur->name)
-		    >= sizeof(path))
+		if ((size_t)snprintf(path, sizeof(path), "%s/%s/%s", cur->root,
+		    cur->path, cur->name) >= sizeof(path))
 			errx(1, "Pathname too long.");
 
 		if (cur->child != NULL)

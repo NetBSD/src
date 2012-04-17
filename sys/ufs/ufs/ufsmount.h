@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.36 2011/03/06 17:08:39 bouyer Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.36.4.1 2012/04/17 00:08:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,12 +81,14 @@ struct ufsmount {
 	union {					/* pointer to superblock */
 		struct	fs *fs;			/* FFS */
 		struct	lfs *lfs;		/* LFS */
-		struct  m_ext2fs *e2fs; /* EXT2FS */
+		struct  m_ext2fs *e2fs;		/* EXT2FS */
+		struct  chfs_mount *chfs;	/* CHFS */
 	} ufsmount_u;
 #define	um_fs	ufsmount_u.fs
 #define	um_lfs	ufsmount_u.lfs
 #define um_e2fs	ufsmount_u.e2fs
 #define um_e2fsb ufsmount_u.e2fs->s_es
+#define um_chfs	ufsmount_u.chfs
 
 	/* Extended attribute information. */
 	struct ufs_extattr_per_mount um_extattr;

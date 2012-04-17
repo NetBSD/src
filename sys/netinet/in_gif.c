@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.61 2011/07/17 20:54:53 joerg Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.61.2.1 2012/04/17 00:08:40 yamt Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.61 2011/07/17 20:54:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.61.2.1 2012/04/17 00:08:40 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -131,7 +131,7 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 		proto = IPPROTO_IPV6;
 		if (m->m_len < sizeof(*ip6)) {
 			m = m_pullup(m, sizeof(*ip6));
-			if (!m)
+			if (m == NULL)
 				return ENOBUFS;
 		}
 		ip6 = mtod(m, const struct ip6_hdr *);

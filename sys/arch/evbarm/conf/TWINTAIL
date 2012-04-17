@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.45 2011/09/30 04:05:07 he Exp $
+#	$NetBSD: TWINTAIL,v 1.45.2.1 2012/04/17 00:06:13 yamt Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -54,7 +54,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
@@ -106,10 +106,6 @@ options 	COMPAT_16	# NetBSD 1.6 compatibility.
 
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
 #options 	SYSVSHM		# System V-like memory sharing
 
 # Device options
@@ -141,7 +137,7 @@ options 	DIAGNOSTIC	# internally consistency checks
 #options 	KGDB
 #options  	DEBUG_KGDB
 makeoptions	DEBUG="-g -O2"	# compile full symbol table
-options 	SYMTAB_SPACE=610000
+options 	SYMTAB_SPACE=620000
 #options 	AUDIO_DEBUG=2
 
 config		netbsd		root on ? type ?
@@ -193,7 +189,8 @@ options G4250_LCD_TOSHIBA_LTM035
 #options G4250_LCD_NEC_NL3224BC35
 
 kmkbd* at obio?
-wskbd* at kmkbd? # console ?
+wskbd* at kmkbd? # mux 1 # console ?
+options WSDISPLAY_COMPAT_RAWKBD
 
 # GB-225 option board
 opio0 	at obio?  intr 2
@@ -407,10 +404,9 @@ pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 
 # wscons pseudo-devices
-#pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	wsfont
 pseudo-device	ksyms			# /dev/ksyms

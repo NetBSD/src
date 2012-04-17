@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.54 2011/05/16 13:22:55 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.54.4.1 2012/04/17 00:07:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,12 +41,6 @@
 #ifndef _X68K_CPU_H_
 #define	_X68K_CPU_H_
 
-#if defined(_KERNEL)
-
-/*
- * Exported definitions unique to x68k/68k cpu support.
- */
-
 #if defined(_KERNEL_OPT)
 #include "opt_m68k_arch.h"
 #include "opt_lockdebug.h"
@@ -56,6 +50,11 @@
  * Get common m68k CPU definitions.
  */
 #include <m68k/cpu.h>
+
+#if defined(_KERNEL)
+/*
+ * Exported definitions unique to x68k/68k cpu support.
+ */
 #define	M68K_MMU_MOTOROLA
 
 /*
@@ -126,9 +125,6 @@ extern int astpending;		/* need to trap before returning to user mode */
 extern int machineid;
 extern uint8_t *intiobase;
 extern uint8_t *intiolimit;
-
-/* fpu.c functions */
-int	fpu_probe(void);
 
 /* machdep.c functions */
 void	dumpsys(void);

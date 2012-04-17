@@ -1,4 +1,4 @@
-/*	$NetBSD: kerberos5.c,v 1.18 2011/04/24 19:00:31 elric Exp $	*/
+/*	$NetBSD: kerberos5.c,v 1.18.4.1 2012/04/17 00:05:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -96,10 +96,10 @@ krb5_context telnet_context;
 static krb5_auth_context auth_context;
 
 static int
-Data(Authenticator *ap, int type, void *d, int c)
+Data(Authenticator *ap, int type, const void *d, int c)
 {
 	unsigned char *p = str_data + 4;
-	unsigned char *cd = (unsigned char *) d;
+	const unsigned char *cd = (const unsigned char *) d;
 
 	if (c == -1)
 		c = strlen(cd);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bthub.c,v 1.17 2011/07/31 13:51:53 uebayasi Exp $	*/
+/*	$NetBSD: bthub.c,v 1.17.2.1 2012/04/17 00:07:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.17 2011/07/31 13:51:53 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.17.2.1 2012/04/17 00:07:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -110,11 +110,15 @@ bthub_attach(device_t parent, device_t self, void *aux)
 			addr->b[2], addr->b[1], addr->b[0]);
 
 	aprint_normal("\n");
+
+	pmf_device_register(self, NULL, NULL);
 }
 
 static int
 bthub_detach(device_t self, int flags)
 {
+
+	pmf_device_deregister(self);
 
 	return config_detach_children(self, flags);
 }

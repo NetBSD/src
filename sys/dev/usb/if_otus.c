@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.9 2010/12/02 17:38:05 christos Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.9.10.1 2012/04/17 00:08:06 yamt Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -31,7 +31,6 @@
 #include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-
 #include <sys/bus.h>
 #include <sys/endian.h>
 #include <sys/intr.h>
@@ -58,6 +57,7 @@
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
+#include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdevs.h>
 
 #include <dev/usb/if_otusreg.h>

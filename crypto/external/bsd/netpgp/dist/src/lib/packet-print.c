@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.41 2011/06/25 00:37:44 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.41.2.1 2012/04/17 00:01:43 yamt Exp $");
 #endif
 
 #include <string.h>
@@ -688,16 +688,17 @@ pgp_sprint_pubkey(const pgp_key_t *key, char *out, size_t outsize)
 	char	fp[(PGP_FINGERPRINT_SIZE * 3) + 1];
 	int	cc;
 
-	cc = snprintf(out, outsize, "key:%s:%d:%lld:%lld:%d:\n",
+	cc = snprintf(out, outsize, "key=%s\nname=%s\ncreation=%lld\nexpiry=%lld\nversion=%d\nalg=%d\n",
 		strhexdump(fp, key->sigfingerprint.fingerprint, PGP_FINGERPRINT_SIZE, ""),
-		key->key.pubkey.version,
+		key->uids[key->uid0],
 		(long long)key->key.pubkey.birthtime,
 		(long long)key->key.pubkey.days_valid,
+		key->key.pubkey.version,
 		key->key.pubkey.alg);
 	switch (key->key.pubkey.alg) {
 	case PGP_PKA_DSA:
 		cc += snprintf(&out[cc], outsize - cc,
-			"pubkey:p=%s:q=%s:g=%s:y=%s\n",
+			"p=%s\nq=%s\ng=%s\ny=%s\n",
 			BN_bn2hex(key->key.pubkey.key.dsa.p),
 			BN_bn2hex(key->key.pubkey.key.dsa.q),
 			BN_bn2hex(key->key.pubkey.key.dsa.g),
@@ -707,14 +708,14 @@ pgp_sprint_pubkey(const pgp_key_t *key, char *out, size_t outsize)
 	case PGP_PKA_RSA_ENCRYPT_ONLY:
 	case PGP_PKA_RSA_SIGN_ONLY:
 		cc += snprintf(&out[cc], outsize - cc,
-			"pubkey:n=%s:e=%s\n",
+			"n=%s\ne=%s\n",
 			BN_bn2hex(key->key.pubkey.key.rsa.n),
 			BN_bn2hex(key->key.pubkey.key.rsa.e));
 		break;
 	case PGP_PKA_ELGAMAL:
 	case PGP_PKA_ELGAMAL_ENCRYPT_OR_SIGN:
 		cc += snprintf(&out[cc], outsize - cc,
-			"pubkey:p=%s:g=%s:y=%s\n",
+			"p=%s\ng=%s\ny=%s\n",
 			BN_bn2hex(key->key.pubkey.key.elgamal.p),
 			BN_bn2hex(key->key.pubkey.key.elgamal.g),
 			BN_bn2hex(key->key.pubkey.key.elgamal.y));

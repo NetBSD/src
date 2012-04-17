@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.118 2011/10/07 09:35:06 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.118.2.1 2012/04/17 00:08:56 yamt Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.118 2011/10/07 09:35:06 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.118.2.1 2012/04/17 00:08:56 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -424,9 +424,9 @@ snapshot_setup(struct mount *mp, struct vnode *vp)
 		return EXDEV;
 	if (vp->v_usecount != 1 || vp->v_writecount != 0)
 		return EBUSY;
-	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    NULL) != 0 &&
-	    VTOI(vp)->i_uid != kauth_cred_geteuid(l->l_cred))
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_SNAPSHOT,
+	    0, mp, vp, NULL);
+	if (error)
 		return EACCES;
 
 	if (vp->v_size != 0) {

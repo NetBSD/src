@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec_ecoff.c,v 1.23 2010/06/24 13:03:07 hannken Exp $ */
+/* $NetBSD: osf1_exec_ecoff.c,v 1.23.8.1 2012/04/17 00:07:22 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,12 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.23 2010/06/24 13:03:07 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.23.8.1 2012/04/17 00:07:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/exec.h>
@@ -56,6 +56,7 @@ struct osf1_exec_emul_arg {
 };
 
 static int osf1_exec_ecoff_dynamic(struct lwp *l, struct exec_package *epp);
+static void osf1_free_emul_arg(void *);
 
 int
 osf1_exec_ecoff_probe(struct lwp *l, struct exec_package *epp)
@@ -69,8 +70,9 @@ osf1_exec_ecoff_probe(struct lwp *l, struct exec_package *epp)
 		return ENOEXEC;
 
 	/* set up the exec package emul arg as appropriate */
-	emul_arg = malloc(sizeof *emul_arg, M_TEMP, M_WAITOK);
+	emul_arg = kmem_alloc(sizeof(*emul_arg), KM_SLEEP);
 	epp->ep_emul_arg = emul_arg;
+	epp->ep_emul_arg_free = osf1_free_emul_arg;
 
 	emul_arg->flags = 0;
 	/* this cannot overflow because both are size PATH_MAX */
@@ -97,8 +99,7 @@ osf1_exec_ecoff_probe(struct lwp *l, struct exec_package *epp)
 	}
 
 	if (error) {
-		free(epp->ep_emul_arg, M_TEMP);
-		epp->ep_emul_arg = NULL;
+		exec_free_emul_arg(epp);
 		kill_vmcmds(&epp->ep_vmcmds);		/* if any */
 	}
 
@@ -166,8 +167,7 @@ osf1_copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *argin
 	*stackp += len;
 
 out:
-	free(pack->ep_emul_arg, M_TEMP);
-	pack->ep_emul_arg = NULL;
+	exec_free_emul_arg(pack);
 	return error;
 }
 
@@ -293,4 +293,13 @@ badunlock:
 bad:
 	vrele(ldr_vp);
 	return (error);
+}
+
+void
+osf1_free_emul_arg(void *arg)
+{
+	struct osf1_exec_emul_arg *emul_arg = arg;
+	KASSERT(emul_arg != NULL);
+
+	kmem_free(emul_arg, sizeof(*emul_arg));
 }

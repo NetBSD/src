@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.136 2011/05/17 04:18:06 mrg Exp $	*/
+/*	$NetBSD: db_command.c,v 1.136.4.1 2012/04/17 00:07:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.136 2011/05/17 04:18:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.136.4.1 2012/04/17 00:07:24 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -1304,6 +1304,7 @@ db_reboot_cmd(db_expr_t addr, bool have_addr,
 	 * called from cpu_reboot.
 	 */
 	db_recover = 0;
+	panicstr = "reboot forced via kernel debugger";
 	cpu_reboot((int)bootflags, NULL);
 #else	/* _KERNEL */
 	db_printf("This command can only be used in-kernel.\n");

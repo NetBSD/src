@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfbvar.h,v 1.11 2011/02/06 23:25:17 jmcneill Exp $ */
+/* $NetBSD: radeonfbvar.h,v 1.11.4.1 2012/04/17 00:07:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -53,6 +53,7 @@
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
+#include <dev/wscons/wsdisplay_glyphcachevar.h>
 #include <dev/videomode/videomode.h>
 #include <dev/videomode/edidvar.h>
 #ifdef SPLASHSCREEN
@@ -175,6 +176,8 @@ struct radeonfb_display {
 
 	struct callout          rd_bl_lvds_co;  /* delayed lvds operation */
 	uint32_t                rd_bl_lvds_val; /* value of delayed lvds */
+	int			rd_bl_on;
+	int			rd_bl_level;
 
 	int			rd_wsmode;
 
@@ -191,6 +194,7 @@ struct radeonfb_display {
 	struct vcons_screen	rd_vscreen;
 	struct vcons_data	rd_vd;
 	void (*rd_putchar)(void *, int, int, u_int, long);
+	glyphcache		rd_gc;
 
 #if 0
 	uint8_t			rd_cmap_red[256];
@@ -209,12 +213,10 @@ struct radeon_tmds_pll {
 };
 
 struct radeonfb_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	uint16_t		sc_family;
 	uint16_t		sc_flags;
 	pcireg_t		sc_id;
-
-	char			sc_devinfo[256];
 
 	bus_space_tag_t		sc_regt;
 	bus_space_handle_t	sc_regh;
@@ -317,6 +319,7 @@ struct radeonfb_softc {
 
 #define	GET32(sc, r)	radeonfb_get32(sc, r)
 #define	PUT32(sc, r, v)	radeonfb_put32(sc, r, v)
+#define	PUT32S(sc, r, v)	radeonfb_put32s(sc, r, v)
 #define	SET32(sc, r, v)	PUT32(sc, r, GET32(sc, r) | (v))
 #define	CLR32(sc, r, v)	PUT32(sc, r, GET32(sc, r) & ~(v))
 #define	PATCH32(sc, r, v, m)	PUT32(sc, r, (GET32(sc, r) & (m)) | (v))
@@ -343,12 +346,13 @@ struct radeonfb_softc {
 #define	GETBIOS32(sc, r)	\
 	((GETBIOS16(sc, (r) + 2) << 16) | GETBIOS16(sc, (r)))
 
-#define	XNAME(sc)	device_xname(&sc->sc_dev)
+#define	XNAME(sc)	device_xname(sc->sc_dev)
 
 #define	DIVIDE(x,y)	(((x) + (y / 2)) / (y))
 
 uint32_t radeonfb_get32(struct radeonfb_softc *, uint32_t);
 void radeonfb_put32(struct radeonfb_softc *, uint32_t, uint32_t);
+void radeonfb_put32s(struct radeonfb_softc *, uint32_t, uint32_t);
 void radeonfb_mask32(struct radeonfb_softc *, uint32_t, uint32_t, uint32_t);
 
 uint32_t radeonfb_getindex(struct radeonfb_softc *, uint32_t);

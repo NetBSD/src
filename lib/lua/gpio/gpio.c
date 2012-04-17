@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio.c,v 1.3 2011/10/10 20:41:05 christos Exp $ */
+/*	$NetBSD: gpio.c,v 1.3.2.1 2012/04/17 00:05:35 yamt Exp $ */
 
 /*
  * Copyright (c) 2011 Marc Balmer <marc@msys.ch>
@@ -45,7 +45,7 @@
 
 #define GPIO_METATABLE "GPIO object methods"
 
-static void
+static __printflike(2, 3) void
 gpio_error(lua_State *L, const char *fmt, ...)
 {
 	va_list ap;
@@ -112,7 +112,7 @@ gpio_get_pin(lua_State *L, int n, struct gpio_req *req)
 {
 	switch (lua_type(L, n)) {
 	case LUA_TNUMBER:
-		req->gp_pin = (int)lua_tointeger(L, n) - 1;	/* 1 based! */
+		req->gp_pin = (int)lua_tointeger(L, n);	/* not 1 based! */
 		break;
 	case LUA_TSTRING:
 		strlcpy(req->gp_name, lua_tostring(L, n), sizeof(req->gp_name));
@@ -224,56 +224,6 @@ gpio_attach(lua_State *L)
 	return 0;
 }
 
-static int
-gpio_pulse(lua_State *L)
-{
-	struct gpio_pulse pulse;
-	suseconds_t period, on, off, sec;
-	double freq, dc;
-	int *fd;
-
-	fd = luaL_checkudata(L, 1, GPIO_METATABLE);
-	freq = luaL_checknumber(L, 3);
-	dc = luaL_checknumber(L, 4);
-
-	if (freq < 0.0 || (dc < 0.0 || dc >= 100.0))
-		gpio_error(L, "%.f Hz, %.f%% duty cycle: invalid value",
-		    freq, dc);
-
-	memset(&pulse, 0, sizeof(pulse));
-	gpio_get_pin(L, 2, (void *)&pulse);
-
-	if (freq > 0.0 && dc > 0.0) {
-		period = 1000000 / freq;
-		on = period * dc / 100;
-		off = period - on;
-
-		if (on >= 1000000) {
-			pulse.gp_pulse_on.tv_sec = sec = on / 1000000;
-			on -= sec * 1000000;
-			pulse.gp_pulse_on.tv_usec = on;
-		} else {
-			pulse.gp_pulse_on.tv_sec = 0;
-			pulse.gp_pulse_on.tv_usec = on;
-		}
-		if (off >= 1000000) {
-			pulse.gp_pulse_off.tv_sec = sec = off / 1000000;
-			off -= sec * 1000000;
-			pulse.gp_pulse_off.tv_usec = off;
-		} else {
-			pulse.gp_pulse_off.tv_sec = 0;
-			pulse.gp_pulse_off.tv_usec = off;
-		}
-	} else {	/* gpio(4) defaults */
-		freq = 1.0;
-		dc = 50.0;
-	}
-
-	if (ioctl(*fd, GPIOPULSE, &pulse) == -1)
-		gpio_error(L, "GPIOPULSE");
-	return 0;
-}
-
 struct constant {
 	const char *name;
 	int value;
@@ -283,7 +233,6 @@ static const struct constant gpio_constant[] = {
 	/* GPIO pin states */
 	{ "PIN_LOW",		GPIO_PIN_LOW },
 	{ "PIN_HIGH",		GPIO_PIN_HIGH },
-	{ "PIN_PULSE",		GPIO_PIN_PULSE },
 
 	/* GPIO pin configuration flags */
 	{ "PIN_INPUT",		GPIO_PIN_INPUT },
@@ -298,8 +247,6 @@ static const struct constant gpio_constant[] = {
 	{ "PIN_INVOUT",		GPIO_PIN_INVOUT },
 	{ "PIN_USER",		GPIO_PIN_USER },
 	{ "PIN_PULSATE",	GPIO_PIN_PULSATE },
-	{ "PIN_INTR",		GPIO_PIN_INTR },
-	{ "PIN_INTR_HIGH",	GPIO_PIN_INTR_HIGH },
 	{ "PIN_SET",		GPIO_PIN_SET },
 	{ NULL,			0 }
 };
@@ -314,7 +261,7 @@ gpio_set_info(lua_State *L)
 	lua_pushliteral(L, "GPIO interface for Lua");
 	lua_settable(L, -3);
 	lua_pushliteral(L, "_VERSION");
-	lua_pushliteral(L, "gpio 1.0.0");
+	lua_pushliteral(L, "gpio 1.0.1");
 	lua_settable(L, -3);
 }
 
@@ -336,7 +283,6 @@ luaopen_gpio(lua_State* L)
 		{ "write",	gpio_write },
 		{ "toggle",	gpio_toggle },
 		{ "attach",	gpio_attach },
-		{ "pulse",	gpio_pulse },
 		{ NULL,		NULL }
 	};
 	int n;

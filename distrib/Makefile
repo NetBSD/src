@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.16 2008/11/21 15:39:51 ad Exp $
+#	$NetBSD: Makefile,v 1.16.8.1 2012/04/17 00:02:31 yamt Exp $
 
 .include <bsd.own.mk>
 
-.if ${MKMAN} != "no"
+.if ${MKGROFF} != "no"
 SUBDIR=	notes .WAIT
 .endif
+
+SUBDIR+= utils
 
 .if exists(${MACHINE}/miniroot/Makefile.inc)
 SUBDIR+= miniroot .WAIT
@@ -14,9 +16,9 @@ SUBDIR+= miniroot .WAIT
 SUBDIR+= ${RELEASEMACHINE}
 .endif
 
-SUBDIR+= utils
-
 TARGETS+=release
 TARGETS+=iso_image
+TARGETS+=live_image
+TARGETS+=install_image
 
 .include <bsd.subdir.mk>

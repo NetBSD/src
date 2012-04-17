@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751var.h,v 1.7 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: hifn7751var.h,v 1.7.110.1 2012/04/17 00:07:45 yamt Exp $	*/
 /*	$OpenBSD: hifn7751var.h,v 1.18 2000/06/02 22:36:45 deraadt Exp $	*/
 
 /*
@@ -168,7 +168,7 @@ struct hifn_softc {
 
 	struct callout		sc_rngto;	/* rng timeout */
 	struct callout		sc_tickto;	/* led-clear timeout */
-	rndsource_element_t	sc_rnd_source;
+	krndsource_t	sc_rnd_source;
 	int			sc_rngfirst;
 	int			sc_rnghz;
 	int			sc_c_busy;	/* command ring busy */

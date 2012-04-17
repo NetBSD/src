@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7xvar.h,v 1.27 2010/02/08 21:42:01 pgoyette Exp $ */
+/*	$NetBSD: nslm7xvar.h,v 1.27.10.1 2012/04/17 00:07:35 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _DEV_ISA_NSLM7XVAR_H_
 #define _DEV_ISA_NSLM7XVAR_H_
+
+#include <dev/sysmon/sysmonvar.h>
 
 /*
  * National Semiconductor LM78/79/81 registers.

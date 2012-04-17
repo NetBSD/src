@@ -21,22 +21,27 @@
 #define LLVM_BINDIR "/usr/bin"
 
 /* Time at which LLVM was configured */
-#define LLVM_CONFIGTIME "Thu Nov  3 00:22:51 CET 2011"
+#define LLVM_CONFIGTIME "Tue Feb 28 15:53:15 UTC 2012"
 
 /* Installation directory for data files */
 #define LLVM_DATADIR "/usr/share/llvm"
 
+/* Target triple LLVM will generate code for by default */
+#if 0
+#define LLVM_DEFAULT_TARGET_TRIPLE "x86_64--netbsd"
+#endif
+
 /* Installation directory for documentation */
 #define LLVM_DOCSDIR "/usr/share/doc/llvm"
+
+/* Define if threads enabled */
+#define LLVM_ENABLE_THREADS 0
 
 /* Installation directory for config files */
 #define LLVM_ETCDIR "/usr/etc/llvm"
 
 /* Has gcc/MSVC atomic intrinsics */
 #define LLVM_HAS_ATOMICS 1
-
-/* Host triple we were built on */
-#define LLVM_DEFAULT_TARGET_TRIPLE "x86_64--netbsd"
 
 /* Installation directory for include files */
 #define LLVM_INCLUDEDIR "/usr/include"
@@ -103,5 +108,11 @@
 
 /* Installation prefix directory */
 #define LLVM_PREFIX "/usr"
+
+/* Major version of the LLVM API */
+#define LLVM_VERSION_MAJOR 3
+
+/* Minor version of the LLVM API */
+#define LLVM_VERSION_MINOR 1
 
 #endif

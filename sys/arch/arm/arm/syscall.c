@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.51 2010/12/20 00:25:26 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.51.8.1 2012/04/17 00:06:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -71,9 +71,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.51 2010/12/20 00:25:26 matt Exp $");
-
-#include "opt_sa.h"
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.51.8.1 2012/04/17 00:06:04 yamt Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -87,7 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.51 2010/12/20 00:25:26 matt Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <sys/savar.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/pcb.h>
@@ -119,12 +116,6 @@ swi_handler(trapframe_t *frame)
 
 #ifdef acorn26
 	frame->tf_pc += INSN_SIZE;
-#endif
-
-#ifdef KERN_SA
-	if (__predict_false((l->l_savp)
-            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
-		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
 #endif
 
 #ifndef THUMB_CODE
@@ -336,3 +327,14 @@ child_return(void *arg)
 	userret(l);
 	ktrsysret(SYS_fork, 0, 0);
 }
+
+/*
+ * Process the tail end of a posix_spawn() for the child.
+ */
+void
+cpu_spawn_return(struct lwp *l)
+{
+
+	userret(l);
+}
+

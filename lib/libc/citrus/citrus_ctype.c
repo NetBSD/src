@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype.c,v 1.5 2008/06/14 16:01:07 tnozaki Exp $	*/
+/*	$NetBSD: citrus_ctype.c,v 1.5.2.1 2012/04/17 00:05:16 yamt Exp $	*/
 
 /*-
  * Copyright (c)1999, 2000, 2001, 2002 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_ctype.c,v 1.5 2008/06/14 16:01:07 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_ctype.c,v 1.5.2.1 2012/04/17 00:05:16 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -113,8 +113,10 @@ _initctypemodule(_citrus_ctype_t cc, char const *modname,
 	    cc->cc_ops->co_wcstombs == NULL ||
 	    cc->cc_ops->co_wctomb == NULL ||
 	    cc->cc_ops->co_btowc == NULL ||
-	    cc->cc_ops->co_wctob == NULL)
+	    cc->cc_ops->co_wctob == NULL) {
+		ret = EINVAL;
 		goto bad;
+	}
 
 	/* init and get closure */
 	ret = (*cc->cc_ops->co_init)(

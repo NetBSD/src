@@ -1,4 +1,4 @@
-/*	$NetBSD: bfs.h,v 1.5 2008/04/28 20:24:02 martin Exp $	*/
+/*	$NetBSD: bfs.h,v 1.5.34.1 2012/04/17 00:08:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -142,6 +142,8 @@ struct sector_io_ops {
 	bool (*write_n)(void *, uint8_t *, daddr_t, int);
 };
 
+struct vnode;
+
 int bfs_init2(struct bfs **, int, struct sector_io_ops *, bool);
 void bfs_fini(struct bfs *);
 int bfs_file_read(const struct bfs *, const char *, void *, size_t, size_t *);
@@ -153,10 +155,11 @@ int bfs_file_rename(struct bfs *, const char *, const char *);
 bool bfs_file_lookup(const struct bfs *, const char *, int *, int *,
     size_t *);
 size_t bfs_file_size(const struct bfs_inode *);
+void bfs_file_setsize(struct vnode *, size_t);
+
 bool bfs_dump(const struct bfs *);
 
 /* filesystem ops */
-struct vnode;
 int sysvbfs_bfs_init(struct bfs **, struct vnode *);
 void sysvbfs_bfs_fini(struct bfs *);
 bool bfs_inode_lookup(const struct bfs *, ino_t, struct bfs_inode **);

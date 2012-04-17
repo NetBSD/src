@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_com.c,v 1.2 2011/07/28 15:38:49 matt Exp $	*/
+/*	$NetBSD: ralink_com.c,v 1.2.2.1 2012/04/17 00:06:40 yamt Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -130,7 +130,7 @@
 /* ralink_com.c -- Ralink 3052 uart console driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_com.c,v 1.2 2011/07/28 15:38:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_com.c,v 1.2.2.1 2012/04/17 00:06:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -194,6 +194,45 @@ uart_write(const u_int offset, const uint32_t val)
 {
 	*RA_IOREG_VADDR(RA_UART_LITE_BASE, offset) = val;
 }
+
+#ifdef RALINK_CONSOLE_EARLY
+static int
+ralink_cngetc(dev_t dv)
+{
+        if ((uart_read(RA_UART_LSR) & LSR_RXRDY) == 0)
+		return -1;
+
+	return uart_read(RA_UART_RBR) & 0xff;
+}
+
+static void
+ralink_cnputc(dev_t dv, int c)
+{
+	int timo = 150000;
+
+        while ((uart_read(RA_UART_LSR) & LSR_TXRDY) == 0 && --timo > 0)
+		;
+
+	uart_write(RA_UART_TBR, c);
+	__asm __volatile("sync");
+
+	timo = 150000;
+        while ((uart_read(RA_UART_LSR) & LSR_TSRE) == 0 && --timo > 0)
+		;
+}
+
+static struct consdev ralink_earlycons = {
+	.cn_putc = ralink_cnputc,
+	.cn_getc = ralink_cngetc,
+	.cn_pollc = nullcnpollc,
+};
+
+void
+ralink_console_early(void)
+{
+	cn_tab = &ralink_earlycons;
+}
+#endif
 
 
 int

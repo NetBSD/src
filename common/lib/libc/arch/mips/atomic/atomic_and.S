@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_and.S,v 1.3 2011/08/27 13:23:52 bouyer Exp $	*/
+/*	$NetBSD: atomic_and.S,v 1.3.2.1 2012/04/17 00:01:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -26,11 +26,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #include <machine/asm.h>
 #include "atomic_op_asm.h"
 
-RCSID("$NetBSD: atomic_and.S,v 1.3 2011/08/27 13:23:52 bouyer Exp $")
+RCSID("$NetBSD: atomic_and.S,v 1.3.2.1 2012/04/17 00:01:39 yamt Exp $")
 
 	.text
 	.set	noreorder

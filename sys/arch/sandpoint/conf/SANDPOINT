@@ -1,4 +1,4 @@
-# $NetBSD: SANDPOINT,v 1.7 2010/06/30 17:49:32 phx Exp $
+# $NetBSD: SANDPOINT,v 1.7.8.1 2012/04/17 00:06:49 yamt Exp $
 #
 # Sandpoint X3/X2 machine description file
 # 
@@ -23,7 +23,7 @@ options 	PIC_I8259
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SANDPOINT-$Revision: 1.7 $"
+#ident 		"SANDPOINT-$Revision: 1.7.8.1 $"
 
 maxusers	32
 
@@ -44,7 +44,6 @@ options 	DDB
 options 	KTRACE
 #options 	PMAPCHECK
 #options 	PMAPDEBUG
-#options 	SYMTAB_SPACE=300000
 #options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -115,7 +114,6 @@ pseudo-device	loop
 #pseudo-device	wsmux
 
 # miscellaneous pseudo-devices
-#pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	vnd		
 #options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	cgd		4	# cryptographic disk devices

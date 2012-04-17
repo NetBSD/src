@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbsnd.c,v 1.19 2008/06/12 16:50:53 tsutsui Exp $ */
+/*	$NetBSD: ucbsnd.c,v 1.19.30.1 2012/04/17 00:06:24 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucbsnd.c,v 1.19 2008/06/12 16:50:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucbsnd.c,v 1.19.30.1 2012/04/17 00:06:24 yamt Exp $");
 
 #include "opt_use_poll.h"
 
@@ -522,7 +522,7 @@ ucbsndopen(dev_t dev, int flags, int ifmt, struct lwp *l)
 	if (sc == NULL)
 		return (ENXIO);
 	
-	s = splaudio();
+	s = splvm();
 	ringbuf_reset(&sc->sc_rb);
 	splx(s);
 
@@ -573,7 +573,7 @@ ucbsndwrite_subr(struct ucbsnd_softc *sc, u_int32_t *buf, size_t bufsize,
 	
 	ringbuf_producer_return(&sc->sc_rb, bufsize);
 
-	s = splaudio();
+	s = splvm();
 	if (sc->sa_state == UCBSND_IDLE && ringbuf_full(&sc->sc_rb)) {
 		sc->sa_transfer_mode = UCBSND_TRANSFERMODE_DMA;
 		sc->sa_state = UCBSND_INIT;
@@ -630,7 +630,7 @@ ucbsndwrite(dev_t dev, struct uio *uio, int ioflag)
 	return (error);
  errout:
 	printf("%s: timeout. reset ring-buffer.\n", sc->sc_dev.dv_xname);
-	s = splaudio();
+	s = splvm();
 	ringbuf_reset(&sc->sc_rb);
 	splx(s);
 
@@ -705,7 +705,7 @@ ringbuf_producer_get(struct ring_buf *rb)
 	u_int32_t ret;
 	int s;
 
-	s = splaudio();
+	s = splvm();
 	ret = ringbuf_full(rb) ? 0 : 
 	    rb->rb_buf + rb->rb_inp * rb->rb_blksize;
 	splx(s);
@@ -720,7 +720,7 @@ ringbuf_producer_return(struct ring_buf *rb, size_t cnt)
 
 	assert(cnt <= rb->rb_blksize);
 
-	s = splaudio();
+	s = splvm();
 	rb->rb_outp++;
 	
 	rb->rb_bufcnt[rb->rb_inp] = cnt;

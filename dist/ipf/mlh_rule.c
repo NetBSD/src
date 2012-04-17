@@ -1,4 +1,4 @@
-/*	$NetBSD: mlh_rule.c,v 1.1.1.1 2004/03/28 08:55:47 martti Exp $	*/
+/*	$NetBSD: mlh_rule.c,v 1.1.1.1.56.1 2012/04/17 00:02:24 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -82,7 +82,8 @@ struct	modwrapper	ipf_wrapper = {
 };
 
 
-static int ipf_load(void *arg)
+static int
+ipf_load(void *arg)
 {
 	int i;
 
@@ -98,7 +99,8 @@ static int ipf_load(void *arg)
 }
 
 
-static int ipf_unload(void *arg)
+static int
+ipf_unload(void *arg)
 {
 	int i;
 

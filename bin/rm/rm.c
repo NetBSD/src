@@ -1,4 +1,4 @@
-/* $NetBSD: rm.c,v 1.50 2011/08/29 14:48:46 joerg Exp $ */
+/* $NetBSD: rm.c,v 1.50.2.1 2012/04/17 00:01:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993, 1994, 2003
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.50 2011/08/29 14:48:46 joerg Exp $");
+__RCSID("$NetBSD: rm.c,v 1.50.2.1 2012/04/17 00:01:38 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,15 +54,18 @@ __RCSID("$NetBSD: rm.c,v 1.50 2011/08/29 14:48:46 joerg Exp $");
 #include <grp.h>
 #include <locale.h>
 #include <pwd.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 static int dflag, eval, fflag, iflag, Pflag, stdin_ok, vflag, Wflag;
+static sig_atomic_t pinfo;
 
 static int	check(char *, char *, struct stat *);
 static void	checkdot(char **);
+static void	progress(int);
 static void	rm_file(char **);
 static int	rm_overwrite(char *, struct stat *);
 static void	rm_tree(char **);
@@ -130,6 +133,8 @@ main(int argc, char *argv[])
 			return 0;
 		usage();
 	}
+
+	(void)signal(SIGINFO, progress);
 
 	checkdot(argv);
 
@@ -252,8 +257,10 @@ rm_tree(char **argv)
 		if (rval != 0) {
 			warn("%s", p->fts_path);
 			eval = 1;
-		} else if (vflag)
+		} else if (vflag || pinfo) {
+			pinfo = 0;
 			(void)printf("%s\n", p->fts_path);
+		}
 	}
 	if (errno)
 		err(1, "fts_read");
@@ -578,4 +585,11 @@ usage(void)
 	    getprogname());
 	exit(1);
 	/* NOTREACHED */
+}
+
+static void
+progress(int sig __unused)
+{
+	
+	pinfo++;
 }

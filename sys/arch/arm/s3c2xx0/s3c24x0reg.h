@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0reg.h,v 1.9 2010/02/21 06:08:53 bsh Exp $ */
+/* $NetBSD: s3c24x0reg.h,v 1.9.10.1 2012/04/17 00:06:07 yamt Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation  All rights reserved.
@@ -107,14 +107,17 @@
 #define	S3C24X0_INT_RTC  	30	/* RTC alarm */
 #define	S3C2400_INT_UTXD1	29	/* UART1 Tx INT  (2400 only) */
 #define	S3C2410_INT_SPI1	29	/* SPI 1 (2410 only) */
+#define	S3C2440_INT_SPI1	29	/* SPI 1 (2440 only) */
 #define	S3C2400_INT_UTXD0	28	/* UART0 Tx INT  (2400 only) */
 #define	S3C2410_INT_UART0	28	/* UART0 (2410 only) */
+#define	S3C2440_INT_UART0	28	/* UART0 (2440 only) */
 #define	S3C24X0_INT_IIC  	27
 #define	S3C24X0_INT_USBH	26	/* USB Host */
 #define	S3C24X0_INT_USBD	25	/* USB Device */
 #define	S3C2400_INT_URXD1	24	/* UART1 Rx INT (2400 only) */
 #define	S3C2400_INT_URXD0	23	/* UART0 Rx INT (2400 only) */
 #define	S3C2410_INT_UART1	23	/* UART0  (2410 only) */
+#define	S3C2440_INT_UART1	23	/* UART0  (2440 only) */
 #define	S3C24X0_INT_SPI0  	22	/* SPI 0 */
 #define	S3C2400_INT_MMC 	21
 #define	S3C2410_INT_SDI 	21
@@ -126,6 +129,7 @@
 
 #define	S3C2400_INT_UERR 	15	/* UART 0/1 Error int (2400) */
 #define	S3C2410_INT_UART2 	15	/* UART2 int (2410) */
+#define	S3C2440_INT_UART2 	15	/* UART2 int (2440) */
 #define	S3C24X0_INT_TIMER4	14
 #define	S3C24X0_INT_TIMER3	13
 #define	S3C24X0_INT_TIMER2	12
@@ -136,7 +140,9 @@
 #define	S3C24X0_INT_TICK 	8
 #define	S3C2410_INT_BFLT 	7	/* Battery fault */
 #define	S3C2410_INT_8_23	5	/* Ext int 8..23 */
+#define S3C2440_INT_8_23        5       /* EXT int 8..23 */
 #define	S3C2410_INT_4_7 	4	/* Ext int 4..7 */
+#define	S3C2440_INT_4_7 	4	/* Ext int 4..7 */
 #define	S3C24X0_INT_EXT(n)	(n) 	/* External interrupt [7:0] for 2400,
 					 * [3:0] for 2410 */
 /* DMA controller */

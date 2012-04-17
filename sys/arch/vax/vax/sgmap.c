@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap.c,v 1.16 2010/12/14 23:44:50 matt Exp $ */
+/* $NetBSD: sgmap.c,v 1.16.8.1 2012/04/17 00:07:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgmap.c,v 1.16 2010/12/14 23:44:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap.c,v 1.16.8.1 2012/04/17 00:07:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ vax_sgmap_init(bus_dma_tag_t t, struct vax_sgmap *sgmap, const char *name,
 	 * space.
 	 */
 	sgmap->aps_ex = extent_create(name, sgvabase, sgvasize - 1,
-	    M_DMAMAP, NULL, 0, EX_NOWAIT|EX_NOCOALESCE);
+	    NULL, 0, EX_NOWAIT|EX_NOCOALESCE);
 	if (sgmap->aps_ex == NULL) {
 		printf("unable to create extent map for sgmap `%s'\n", name);
 		goto die;

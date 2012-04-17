@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.48 2011/09/20 00:12:24 jym Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.48.2.1 2012/04/17 00:07:12 yamt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,10 +50,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.48 2011/09/20 00:12:24 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.48.2.1 2012/04/17 00:07:12 yamt Exp $");
 
 #include "opt_xen.h"
-#include "rnd.h"
+
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -73,15 +73,13 @@ __KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.48 2011/09/20 00:12:24 jym Exp $");
 
 #include <uvm/uvm.h>
 
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
 #include <xen/granttables.h>
-#include <xen/xen3-public/io/blkif.h>
-#include <xen/xen3-public/io/protocols.h>
+#include <xen/xen-public/io/blkif.h>
+#include <xen/xen-public/io/protocols.h>
 
 #include <xen/xenbus.h>
 #include "locators.h"
@@ -95,7 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.48 2011/09/20 00:12:24 jym Exp $");
 
 #define GRANT_INVALID_REF -1
 
-#define XBD_RING_SIZE __RING_SIZE((blkif_sring_t *)0, PAGE_SIZE)
+#define XBD_RING_SIZE __CONST_RING_SIZE(blkif, PAGE_SIZE)
+#define XBD_MAX_XFER (PAGE_SIZE * BLKIF_MAX_SEGMENTS_PER_REQUEST)
 
 #define XEN_BSHIFT      9               /* log2(XEN_BSIZE) */
 #define XEN_BSIZE       (1 << XEN_BSHIFT) 
@@ -154,9 +153,7 @@ struct xbd_xenbus_softc {
 	u_long sc_info; /* VDISK_* */
 	u_long sc_handle; /* from backend */
 	int sc_cache_flush; /* backend supports BLKIF_OP_FLUSH_DISKCACHE */
-#if NRND > 0
-	rndsource_element_t     sc_rnd_source;
-#endif
+	krndsource_t     sc_rnd_source;
 };
 
 #if 0
@@ -179,6 +176,8 @@ static void xbd_connect(struct xbd_xenbus_softc *);
 
 static int  xbd_map_align(struct xbd_req *);
 static void xbd_unmap_align(struct xbd_req *);
+
+static void xbdminphys(struct buf *);
 
 CFATTACH_DECL3_NEW(xbd, sizeof(struct xbd_xenbus_softc),
     xbd_xenbus_match, xbd_xenbus_attach, xbd_xenbus_detach, NULL, NULL, NULL,
@@ -217,7 +216,7 @@ static struct dk_intf dkintf_esdi = {
 
 static struct dkdriver xbddkdriver = {
         .d_strategy = xbdstrategy,
-	.d_minphys = minphys,
+	.d_minphys = xbdminphys,
 };
 
 static int
@@ -305,10 +304,8 @@ xbd_xenbus_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-#if NRND > 0
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(self),
 	    RND_TYPE_DISK, RND_FLAG_NO_COLLECT | RND_FLAG_NO_ESTIMATE);
-#endif
 
 	if (!pmf_device_register(self, xbd_xenbus_suspend, xbd_xenbus_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -370,10 +367,8 @@ xbd_xenbus_detach(device_t dev, int flags)
 		/* detach disk */
 		disk_detach(&sc->sc_dksc.sc_dkdev);
 		disk_destroy(&sc->sc_dksc.sc_dkdev);
-#if NRND > 0
 		/* Unhook the entropy source. */
 		rnd_detach_source(&sc->sc_rnd_source);
-#endif
 	}
 
 	hypervisor_mask_event(sc->sc_evtchn);
@@ -720,10 +715,8 @@ next:
 		disk_unbusy(&sc->sc_dksc.sc_dkdev,
 		    (bp->b_bcount - bp->b_resid),
 		    (bp->b_flags & B_READ));
-#if NRND > 0
 		rnd_add_uint32(&sc->sc_rnd_source,
 		    bp->b_blkno);
-#endif
 		biodone(bp);
 		SLIST_INSERT_HEAD(&sc->sc_xbdreq_head, xbdreq, req_next);
 	}
@@ -739,6 +732,15 @@ done:
 	if (sc->sc_xbdreq_wait)
 		wakeup(&sc->sc_xbdreq_wait);
 	return 1;
+}
+
+static void
+xbdminphys(struct buf *bp)
+{
+	if (bp->b_bcount > XBD_MAX_XFER) {
+		bp->b_bcount = XBD_MAX_XFER;
+	}
+	minphys(bp);
 }
 
 int
@@ -815,7 +817,7 @@ xbdread(dev_t dev, struct uio *uio, int flags)
 
 	if ((dksc->sc_flags & DKF_INITED) == 0)
 		return ENXIO;
-	return physio(xbdstrategy, NULL, dev, B_READ, minphys, uio);
+	return physio(xbdstrategy, NULL, dev, B_READ, xbdminphys, uio);
 }
 
 int
@@ -829,7 +831,7 @@ xbdwrite(dev_t dev, struct uio *uio, int flags)
 		return ENXIO;
 	if (__predict_false(sc->sc_info & VDISK_READONLY))
 		return EROFS;
-	return physio(xbdstrategy, NULL, dev, B_WRITE, minphys, uio);
+	return physio(xbdstrategy, NULL, dev, B_WRITE, xbdminphys, uio);
 }
 
 int
@@ -1015,7 +1017,11 @@ xbdstart(struct dk_softc *dksc, struct buf *bp)
 		bcount = bp->b_bcount;
 		bp->b_resid = 0;
 	}
-	for (seg = 0, bcount = bp->b_bcount; bcount > 0;) {
+	if (bcount > XBD_MAX_XFER) {
+		bp->b_resid += bcount - XBD_MAX_XFER;
+		bcount = XBD_MAX_XFER;
+	}
+	for (seg = 0; bcount > 0;) {
 		pmap_extract_ma(pmap_kernel(), va, &ma);
 		KASSERT((ma & (XEN_BSIZE - 1)) == 0);
 		if (bcount > PAGE_SIZE - off)
@@ -1064,11 +1070,13 @@ static int
 xbd_map_align(struct xbd_req *req)
 {
 	int s = splvm();
+	int rc;
 
-	req->req_data = (void *)uvm_km_alloc(kmem_map, req->req_bp->b_bcount,
-	    PAGE_SIZE, UVM_KMF_WIRED | UVM_KMF_NOWAIT);
+	rc = uvm_km_kmem_alloc(kmem_va_arena,
+	    req->req_bp->b_bcount, (VM_NOSLEEP | VM_INSTANTFIT),
+	    (vmem_addr_t *)&req->req_data);
 	splx(s);
-	if (__predict_false(req->req_data == NULL))
+	if (__predict_false(rc != 0))
 		return ENOMEM;
 	if ((req->req_bp->b_flags & B_READ) == 0)
 		memcpy(req->req_data, req->req_bp->b_data,
@@ -1084,7 +1092,6 @@ xbd_unmap_align(struct xbd_req *req)
 		memcpy(req->req_bp->b_data, req->req_data,
 		    req->req_bp->b_bcount);
 	s = splvm();
-	uvm_km_free(kmem_map, (vaddr_t)req->req_data, req->req_bp->b_bcount,
-	    UVM_KMF_WIRED);
+	uvm_km_kmem_free(kmem_va_arena, (vaddr_t)req->req_data, req->req_bp->b_bcount);
 	splx(s);
 }

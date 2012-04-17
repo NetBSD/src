@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21 2011/03/10 20:02:26 pooka Exp $
+# $NetBSD: Makefile,v 1.21.4.1 2012/04/17 00:09:03 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ TESTSDIR=	${TESTSBASE}/fs
 
 SUBDIR+= 	common .WAIT
 
-TESTS_SUBDIRS+=	ffs hfs kernfs lfs msdosfs nfs nullfs psshfs ptyfs puffs
+TESTS_SUBDIRS+=	ffs fifofs hfs kernfs lfs msdosfs nfs nullfs psshfs ptyfs puffs
 TESTS_SUBDIRS+=	tmpfs umapfs union
 TESTS_SUBDIRS+=	vfs
 

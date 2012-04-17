@@ -1,4 +1,4 @@
-/*	$NetBSD: v_at.c,v 1.3 2009/04/04 01:13:42 jld Exp $ */
+/*	$NetBSD: v_at.c,v 1.3.6.1 2012/04/17 00:02:26 yamt Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -38,7 +38,7 @@ int
 v_at(SCR *sp, VICMD *vp)
 {
 	CB *cbp;
-	CHAR_T name;
+	ARG_CHAR_T name;
 	TEXT *tp;
 	size_t len;
 	char nbuf[20];

@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.58 2011/09/22 23:02:35 jym Exp $ */
+/* $NetBSD: hypervisor.c,v 1.58.2.1 2012/04/17 00:07:12 yamt Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.58 2011/09/22 23:02:35 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.58.2.1 2012/04/17 00:07:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.58 2011/09/22 23:02:35 jym Exp $");
 #include <xen/xen.h>
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
-#include <xen/xen3-public/version.h>
+#include <xen/xen-public/version.h>
 
 #include <sys/cpu.h>
 #include <sys/dirent.h>
@@ -169,6 +169,8 @@ struct  x86_isa_chipset x86_isa_chipset;
 #endif
 #endif
 
+int xen_version;
+
 /* power management, for save/restore */
 static bool hypervisor_suspend(device_t, const pmf_qual_t *);
 static bool hypervisor_resume(device_t, const pmf_qual_t *);
@@ -201,7 +203,6 @@ hypervisor_vcpu_print(void *aux, const char *parent)
 void
 hypervisor_attach(device_t parent, device_t self, void *aux)
 {
-	int xen_version;
 
 #if NPCI >0
 #ifdef PCI_BUS_FIXUP
@@ -209,14 +210,18 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 #endif
 #endif /* NPCI */
 	union hypervisor_attach_cookie hac;
+	char xen_extra_version[XEN_EXTRAVERSION_LEN];
 
 	xenkernfs_init();
 
 	xen_version = HYPERVISOR_xen_version(XENVER_version, NULL);
-	aprint_normal(": Xen version %d.%d\n", (xen_version & 0xffff0000) >> 16,
-	       xen_version & 0x0000ffff);
+	memset(xen_extra_version, 0, sizeof(xen_extra_version));
+	HYPERVISOR_xen_version(XENVER_extraversion, xen_extra_version);
+	aprint_normal(": Xen version %d.%d%s\n", XEN_MAJOR(xen_version),
+		XEN_MINOR(xen_version), xen_extra_version);
 
 	xengnt_init();
+	events_init();
 
 	memset(&hac, 0, sizeof(hac));
 	hac.hac_vcaa.vcaa_name = "vcpu";
@@ -248,7 +253,6 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	}
 
 #endif /* MULTIPROCESSOR */
-	events_init();
 
 #if NXENBUS > 0
 	memset(&hac, 0, sizeof(hac));

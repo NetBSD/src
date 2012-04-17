@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.41 2011/09/24 08:39:39 njoly Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.41.2.1 2012/04/17 00:05:47 yamt Exp $
 .\"
 .\" Copyright (c) 2001, 2003, 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September  6, 2011
+.Dd February 25, 2012
 .Dt MAKEDEV 8
 .Os
 .Sh NAME
@@ -798,9 +798,6 @@ PCI bus access devices, see
 .Xr \&pci 4
 . It Ar pf
 PF packet filter
-. It Ar pow#
-Power management device (x68k), see
-.Xr \&x68k/pow 4
 . It Ar putter
 Pass-to-Userspace Transporter
 . It Ar px#
@@ -864,8 +861,6 @@ Video capture devices, see
 .Xr \&video 4
 . It Ar view#
 Generic interface to graphic displays (Amiga)
-. It Ar vmegen#
-Generic VME access
 . It Ar wsfont#
 Console font control, see
 .Xr \&wsfont 4
@@ -874,6 +869,11 @@ wscons event multiplexor, see
 .Xr \&wsmux 4
 . It Ar xenevt
 Xen event interface
+. El
+.It iSCSI communication devices
+. Bl -tag -width 0123456789 -compact
+. It Ar iscsi#
+ISCSI driver and /sbin/iscsid communication
 . El
 .El
 .Sh ENVIRONMENT

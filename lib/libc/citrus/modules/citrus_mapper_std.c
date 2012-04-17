@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mapper_std.c,v 1.9 2011/10/30 21:48:27 wiz Exp $	*/
+/*	$NetBSD: citrus_mapper_std.c,v 1.9.2.1 2012/04/17 00:05:16 yamt Exp $	*/
 
 /*-
  * Copyright (c)2003, 2006 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_mapper_std.c,v 1.9 2011/10/30 21:48:27 wiz Exp $");
+__RCSID("$NetBSD: citrus_mapper_std.c,v 1.9.2.1 2012/04/17 00:05:16 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -185,8 +185,11 @@ rowcol_parse_variable_compat(struct _citrus_mapper_std_rowcol *rc,
 	n = be32toh(rcx->rcx_src_row_end);
 	if (m + n > 0) {
 		ret = set_linear_zone(lz, m, n);
-		if (ret != 0)
+		if (ret != 0) {
+			free(rc->rc_src_rowcol);
+			rc->rc_src_rowcol = NULL;
 			return ret;
+		}
 		++rc->rc_src_rowcol_len, ++lz;
 	}
 	m = be32toh(rcx->rcx_src_col_begin);

@@ -1,4 +1,4 @@
-/*	$NetBSD: getmntinfo.c,v 1.16 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: getmntinfo.c,v 1.16.44.1 2012/04/17 00:05:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getmntinfo.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getmntinfo.c,v 1.16 2005/09/13 01:44:09 christos Exp $");
+__RCSID("$NetBSD: getmntinfo.c,v 1.16.44.1 2012/04/17 00:05:18 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,9 +51,7 @@ __RCSID("$NetBSD: getmntinfo.c,v 1.16 2005/09/13 01:44:09 christos Exp $");
  * Return information about mounted filesystems.
  */
 int
-getmntinfo(mntbufp, flags)
-	struct statvfs **mntbufp;
-	int flags;
+getmntinfo(struct statvfs **mntbufp, int flags)
 {
 	static struct statvfs *mntbuf;
 	static int mntsize;

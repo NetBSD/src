@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.103 2011/10/01 16:06:24 chs Exp $	*/
+/*	$NetBSD: libkern.h,v 1.103.2.1 2012/04/17 00:08:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -190,6 +190,8 @@ tolower(int ch)
 #endif
 
 #define	CTASSERT(x)		__CTASSERT(x)
+#define	CTASSERT_SIGNED(x)	__CTASSERT(((typeof(x))-1) < 0)
+#define	CTASSERT_UNSIGNED(x)	__CTASSERT(((typeof(x))-1) >= 0)
 
 #ifndef DIAGNOSTIC
 #define _DIAGASSERT(a)	(void)0
@@ -313,8 +315,6 @@ char	*intoa(u_int32_t);
 void	*memchr(const void *, int, size_t);
 void	*memmove(void *, const void *, size_t);
 int	 pmatch(const char *, const char *, const char **);
-u_int32_t arc4random(void);
-void	 arc4randbytes(void *, size_t);
 #ifndef SMALL_RANDOM
 void	 srandom(unsigned long);
 char	*initstate(unsigned long, char *, size_t);

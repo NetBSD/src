@@ -1,4 +1,4 @@
-/*	$NetBSD: obs600_locore.S,v 1.4 2011/06/20 19:56:11 matt Exp $	*/
+/*	$NetBSD: obs600_locore.S,v 1.4.2.1 2012/04/17 00:06:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
@@ -113,9 +113,9 @@ __start:
 	lis	%r3, __start@ha
 	addi	%r3, %r3, __start@l
 
-	mr	%r6, %r31		/* argc of 'go's */
-	mr	%r7, %r30		/* argv of 'go's */
-	mr	%r8, %r29		/* arg strings of 'bootm's */
+	mr	%r5, %r31		/* argc of 'go's */
+	mr	%r6, %r30		/* argv of 'go's */
+	mr	%r7, %r29		/* arg strings of 'bootm's */
 
 	bl	_C_LABEL(initppc)
 	bl	_C_LABEL(main)

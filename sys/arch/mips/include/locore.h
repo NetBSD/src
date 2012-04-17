@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.92 2011/08/17 14:39:59 matt Exp $ */
+/* $NetBSD: locore.h,v 1.92.2.1 2012/04/17 00:06:39 yamt Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -324,7 +324,6 @@ mips3_sw_a64(uint64_t addr, uint32_t val)
 typedef struct  {
 	void	(*ljv_cpu_switch_resume)(struct lwp *);
 	intptr_t ljv_lwp_trampoline;
-	intptr_t ljv_setfunc_trampoline;
 	void	(*ljv_wbflush)(void);
 	void	(*ljv_tlb_set_asid)(uint32_t pid);
 	void	(*ljv_tlb_invalidate_asids)(uint32_t, uint32_t);

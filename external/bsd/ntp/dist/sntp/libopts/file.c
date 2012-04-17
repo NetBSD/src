@@ -1,13 +1,14 @@
-/*	$NetBSD: file.c,v 1.1.1.1 2009/12/13 16:57:16 kardel Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.1.6.1 2012/04/17 00:03:51 yamt Exp $	*/
 
 
-/*
- *  Id: 1410aaa5f08a562e0cd6c28ffae5a49dc7a3164f
- *  Time-stamp:      "2009-07-23 17:23:46 bkorb"
+/**
+ * \file file.c
+ *
+ *  Time-stamp:      "2010-07-10 11:00:59 bkorb"
  *
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is copyright (c) 1992-2009 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (c) 1992-2011 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -90,8 +91,10 @@ optionFileCheck(tOptions* pOpts, tOptDesc* pOD,
         case FTYPE_MODE_MAY_EXIST:
         {
             char * p = strrchr(pOD->optArg.argString, DIRCH);
-            if (p != NULL)
-                *p = NUL;
+            if (p == NULL)
+                break; /* assume "." always exists. */
+
+            *p = NUL;
             if (  (stat(pOD->optArg.argString, &sb) != 0)
                || (errno = EINVAL, ! S_ISDIR(sb.st_mode)) ){
                 fprintf(stderr, zFSOptError, errno, strerror(errno),
@@ -133,7 +136,7 @@ optionFileCheck(tOptions* pOpts, tOptDesc* pOD,
         }
 
         if ((pOD->fOptState & OPTST_ALLOC_ARG) != 0)
-            pOD->optCookie = (void *)pOD->optArg.argString;
+            pOD->optCookie = (void *)(intptr_t)pOD->optArg.argString;
         else
             AGDUPSTR(pOD->optCookie, pOD->optArg.argString, "file name");
 
@@ -153,7 +156,7 @@ optionFileCheck(tOptions* pOpts, tOptDesc* pOD,
         }
 
         if ((pOD->fOptState & OPTST_ALLOC_ARG) != 0)
-            pOD->optCookie = (void *)pOD->optArg.argString;
+            pOD->optCookie = (void *)(intptr_t)pOD->optArg.argString;
         else
             AGDUPSTR(pOD->optCookie, pOD->optArg.argString, "file name");
 

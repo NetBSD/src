@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.93 2011/10/15 13:00:59 mbalmer Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.93.2.1 2012/04/17 00:02:58 yamt Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -71,6 +71,7 @@
 ./libdata/firmware/ral
 ./libdata/firmware/rum
 ./libdata/firmware/upgt
+./libdata/firmware/urtwn
 ./libdata/firmware/zyd
 ./libexec
 ./libexec/dhcpcd-hooks
@@ -172,7 +173,6 @@
 ./usr/include/ppath
 ./usr/include/prop
 ./usr/include/protocols
-./usr/include/quota
 ./usr/include/readline
 ./usr/include/rpc
 ./usr/include/rpcsvc
@@ -180,6 +180,8 @@
 ./usr/include/security
 ./usr/include/sys
 ./usr/include/ssp
+./usr/include/trousers
+./usr/include/tss
 ./usr/include/ufs
 ./usr/include/ufs/ext2fs
 ./usr/include/ufs/ffs
@@ -317,6 +319,8 @@
 ./usr/share/examples
 ./usr/share/examples/amd
 ./usr/share/examples/apm
+./usr/share/examples/asm
+./usr/share/examples/asm/hello
 ./usr/share/examples/atf
 ./usr/share/examples/dhcp
 ./usr/share/examples/emul
@@ -713,7 +717,6 @@
 ./usr/share/man/cat1/x68k
 ./usr/share/man/cat2
 ./usr/share/man/cat3
-./usr/share/man/cat3f
 ./usr/share/man/cat4
 ./usr/share/man/cat4/acorn26
 ./usr/share/man/cat4/acorn32
@@ -1166,6 +1169,7 @@
 ./var/spool/sockets		mode=0777
 ./var/tmp			mode=01777
 ./var/tmp/vi.recover		mode=01777
+./var/tpm			uname=_tss gname=_tss mode=0750
 ./var/www
 ./var/yp
 ./var/yp/binding

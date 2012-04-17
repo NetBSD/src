@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.85 2009/09/19 13:11:02 christos Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.85.12.1 2012/04/17 00:08:43 yamt Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.85 2009/09/19 13:11:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.85.12.1 2012/04/17 00:08:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.85 2009/09/19 13:11:02 christos E
 #include <sys/syslog.h>
 #include <sys/md5.h>
 #include <sys/socketvar.h>
+#include <sys/cprng.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -177,7 +178,6 @@ generate_tmp_ifid(u_int8_t *seed0, const u_int8_t *seed1, u_int8_t *ret)
 {
 	MD5_CTX ctxt;
 	u_int8_t seed[16], digest[16], nullbuf[8];
-	u_int32_t val32;
 	/*
 	 * interface ID for subnet anycast addresses.
 	 * XXX: we assume the unicast address range that requires IDs
@@ -191,12 +191,7 @@ generate_tmp_ifid(u_int8_t *seed0, const u_int8_t *seed1, u_int8_t *ret)
 	/* If there's no hisotry, start with a random seed. */
 	memset(nullbuf, 0, sizeof(nullbuf));
 	if (memcmp(nullbuf, seed0, sizeof(nullbuf)) == 0) {
-		int i;
-
-		for (i = 0; i < 2; i++) {
-			val32 = arc4random();
-			memcpy(seed + sizeof(val32) * i, &val32, sizeof(val32));
-		}
+		cprng_fast(seed, sizeof(seed));
 	} else
 		memcpy(seed, seed0, 8);
 
@@ -889,7 +884,7 @@ in6_ifdetach(struct ifnet *ifp)
 			rtrequest(RTM_DELETE, (struct sockaddr *)&ia->ia_addr,
 			    (struct sockaddr *)&ia->ia_addr,
 			    (struct sockaddr *)&ia->ia_prefixmask,
-			    rtflags, (struct rtentry **)0);
+			    rtflags, NULL);
 		}
 
 		/* remove from the linked list */

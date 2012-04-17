@@ -30,6 +30,7 @@
 #include <stdio.h>
 // for tolower()
 #include <ctype.h>
+#include <stdint.h>
 
 #include "version.h"
 #include "util.h"
@@ -72,7 +73,7 @@ static char dynamic_version[10];
  * Routines
  */
 void
-clear_memory(void *dataPtr, unsigned long size)
+clear_memory(void *dataPtr, uint32_t size)
 {
     char           *ptr;
 
@@ -111,8 +112,8 @@ TrapAvailable(short theTrap)
 int
 istrncmp(const char *x, const char *y, long len)
 {
-    const unsigned char *p = (const unsigned char *)x;
-    const unsigned char *q = (const unsigned char *)y;
+    const uint8_t *p = (const uint8_t *)x;
+    const uint8_t *q = (const uint8_t *)y;
 
     while (len > 0) {
 	if (tolower(*p) != tolower(*q)) {

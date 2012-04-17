@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.49 2011/02/24 04:28:45 joerg Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.49.4.1 2012/04/17 00:06:26 yamt Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.64 2008/09/30 18:54:26 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.49 2011/02/24 04:28:45 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.49.4.1 2012/04/17 00:06:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,9 +81,6 @@ void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
-	struct proc *p = l2->l_proc;
-	pmap_t pmap = p->p_vmspace->vm_map.pmap;
-	pa_space_t space = pmap->pm_space;
 	struct pcb *pcb1, *pcb2;
 	struct trapframe *tf;
 	register_t sp, osp;
@@ -128,22 +125,28 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	/* Fill out all the PAs we are going to need in locore. */
 	cpu_activate_pcb(l2);
 
-	/* Load all of the user's space registers. */
-	tf->tf_sr0 = tf->tf_sr1 = tf->tf_sr3 = tf->tf_sr2 = 
-	tf->tf_sr4 = tf->tf_sr5 = tf->tf_sr6 = space;
-	tf->tf_iisq_head = tf->tf_iisq_tail = space;
+	if (__predict_true(l2->l_proc->p_vmspace != NULL)) {
+		struct proc *p = l2->l_proc;
+		pmap_t pmap = p->p_vmspace->vm_map.pmap;
+		pa_space_t space = pmap->pm_space;
 
-	/* Load the protection registers */
-	tf->tf_pidr1 = tf->tf_pidr2 = pmap->pm_pid;
+		/* Load all of the user's space registers. */
+		tf->tf_sr0 = tf->tf_sr1 = tf->tf_sr3 = tf->tf_sr2 = 
+		tf->tf_sr4 = tf->tf_sr5 = tf->tf_sr6 = space;
+		tf->tf_iisq_head = tf->tf_iisq_tail = space;
 
-	/*
-	 * theoretically these could be inherited from the father,
-	 * but just in case.
-	 */
-	tf->tf_sr7 = HPPA_SID_KERNEL;
-	mfctl(CR_EIEM, tf->tf_eiem);
-	tf->tf_ipsw = PSW_C | PSW_Q | PSW_P | PSW_D | PSW_I /* | PSW_L */ |
-	    (curcpu()->ci_psw & PSW_O);
+		/* Load the protection registers */
+		tf->tf_pidr1 = tf->tf_pidr2 = pmap->pm_pid;
+
+		/*
+		 * theoretically these could be inherited from the father,
+		 * but just in case.
+		 */
+		tf->tf_sr7 = HPPA_SID_KERNEL;
+		mfctl(CR_EIEM, tf->tf_eiem);
+		tf->tf_ipsw = PSW_C | PSW_Q | PSW_P | PSW_D | PSW_I /* | PSW_L */ |
+		    (curcpu()->ci_psw & PSW_O);
+	}
 
 	/*
 	 * Set up return value registers as libc:fork() expects
@@ -179,44 +182,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 */
 	sp += HPPA_FRAME_SIZE + 16*4;
 	pcb2->pcb_ksp = sp;
-	fdcache(HPPA_SID_KERNEL, uv, sp - uv);
-}
-
-void
-cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
-{
-	struct pcb *pcb = lwp_getpcb(l);
-	vaddr_t uv = uvm_lwp_getuarea(l);
-	struct trapframe *tf;
-	register_t sp, osp;
-
-	sp = (register_t)pcb + PAGE_SIZE;
-	l->l_md.md_regs = tf = (struct trapframe *)sp;
-	sp += sizeof(struct trapframe);
-
-	cpu_activate_pcb(l);
-
-	/*
-	 * Build stack frames for the cpu_switchto & co.
-	 */
-	osp = sp;
-
-	/* setfunc_trampoline's frame */
-	sp += HPPA_FRAME_SIZE;
-
-	*(register_t *)(sp) = 0;	/* previous frame pointer */
-	*(register_t *)(sp + HPPA_FRAME_PSP) = osp;
-	*(register_t *)(sp + HPPA_FRAME_CRP) = (register_t)lwp_trampoline;
-
-	*HPPA_FRAME_CARG(2, sp) = KERNMODE(func);
-	*HPPA_FRAME_CARG(3, sp) = (register_t)arg;
-
-	/*
-	 * cpu_switchto's frame
-	 * 	stack usage is std frame + callee-save registers
-	 */
-	sp += HPPA_FRAME_SIZE + 16*4;
-	pcb->pcb_ksp = sp;
 	fdcache(HPPA_SID_KERNEL, uv, sp - uv);
 }
 
@@ -313,3 +278,4 @@ cpu_lwp_setprivate(lwp_t *l, void *addr)
 		mtctl(addr, CR_TLS);
 	return 0;
 }
+

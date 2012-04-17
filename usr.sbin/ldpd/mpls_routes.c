@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_routes.c,v 1.8 2011/06/16 20:42:15 kefren Exp $ */
+/* $NetBSD: mpls_routes.c,v 1.8.2.1 2012/04/17 00:09:48 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -532,7 +532,7 @@ get_route(struct rt_msg * rg, union sockunion * so_dest,
 		}
 
 	if (rlen <= (int)sizeof(struct rt_msghdr)) {
-		debugp("Got only %d bytes, expecting at least %u\n", rlen,
+		debugp("Got only %d bytes, expecting at least %zu\n", rlen,
 		    sizeof(struct rt_msghdr));
 		return LDP_E_ROUTE_ERROR;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cnmagic.c,v 1.11 2010/01/31 00:43:37 hubertf Exp $	*/
+/*	$NetBSD: cnmagic.c,v 1.11.12.1 2012/04/17 00:08:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Eduardo Horvath
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cnmagic.c,v 1.11 2010/01/31 00:43:37 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cnmagic.c,v 1.11.12.1 2012/04/17 00:08:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,33 +61,30 @@ cn_destroy_magic(cnm_state_t *cnm)
  * machine table.
  */
 int
-cn_set_magic(const char *magic)
+cn_set_magic(const char *smagic)
 {
-	unsigned int i, c, n;
+	const unsigned char *magic = (const unsigned char *)smagic;
+	unsigned short i, c, n;
 	unsigned short m[CNS_LEN];
 
 	for (i = 0; i < CNS_LEN; i++) {
-		c = (*magic++) & 0xff;
-		n = *magic ? i+1 : CNS_TERM;
+		c = *magic++;
 		switch (c) {
 		case 0:
 			/* End of string */
 			if (i == 0) {
 				/* empty string? */
-				cn_magic[0] = 0;
 #ifdef DEBUG
 				printf("cn_set_magic(): empty!\n");
 #endif
-				return (0);
 			}
-			do {
+			cn_magic[i] = 0;
+			while (i--)
 				cn_magic[i] = m[i];
-			} while (i--);
-			return(0);
+			return 0;
 		case 0x27:
 			/* Escape sequence */
-			c = (*magic++) & 0xff;
-			n = *magic ? i+1 : CNS_TERM;
+			c = *magic++;
 			switch (c) {
 			case 0x27:
 				break;
@@ -103,6 +100,7 @@ cn_set_magic(const char *magic)
 			/* FALLTHROUGH */
 		default:
 			/* Transition to the next state. */
+			n = *magic ? i + 1 : CNS_TERM;
 #ifdef DEBUG
 			if (!cold)
 				aprint_normal("mag %d %x:%x\n", i, c, n);
@@ -111,7 +109,7 @@ cn_set_magic(const char *magic)
 			break;
 		}
 	}
-	return (EINVAL);
+	return EINVAL;
 }
 
 /*
@@ -121,36 +119,51 @@ cn_set_magic(const char *magic)
 int
 cn_get_magic(char *magic, size_t maglen)
 {
-	size_t i, c;
+	size_t i, n = 0;
 
-	for (i = 0; i < CNS_LEN;) {
-		c = cn_magic[i];
+#define ADD_CHAR(x) \
+do \
+	if (n < maglen) \
+		magic[n++] = (x); \
+	else \
+		goto error; \
+while (/*CONSTCOND*/0)
+
+	for (i = 0; i < CNS_LEN; /* empty */) {
+		unsigned short c = cn_magic[i];
+		i = CNS_MAGIC_NEXT(c);
+		if (i == 0)
+			goto finish;
+
 		/* Translate a character */
 		switch (CNS_MAGIC_VAL(c)) {
 		case CNC_BREAK:
-			*magic++ = 0x27;
-			*magic++ = 0x01;
+			ADD_CHAR(0x27);
+			ADD_CHAR(0x01);
 			break;
 		case 0:
-			*magic++ = 0x27;
-			*magic++ = 0x02;
+			ADD_CHAR(0x27);
+			ADD_CHAR(0x02);
 			break;
 		case 0x27:
-			*magic++ = 0x27;
-			*magic++ = 0x27;
+			ADD_CHAR(0x27);
+			ADD_CHAR(0x27);
 			break;
 		default:
-			*magic++ = (c & 0x0ff);
+			ADD_CHAR(c);
 			break;
 		}
 		/* Now go to the next state */
-		i = CNS_MAGIC_NEXT(c);
-		if (i == CNS_TERM || i == 0) {
-			/* Either termination state or empty machine */
-			*magic++ = 0;
-			return (0);
-		}
+		if (i == CNS_TERM)
+			goto finish;
 	}
-	return (EINVAL);
+
+error:
+	return EINVAL;
+
+finish:
+	/* Either termination state or empty machine */
+	ADD_CHAR('\0');
+	return 0;
 }
 
