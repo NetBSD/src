@@ -1,6 +1,6 @@
-/*	$NetBSD: imxepitreg.h,v 1.1 2010/11/13 06:51:37 bsh Exp $ */
+/*	$NetBSD: imxepitreg.h,v 1.2 2012/04/17 09:12:08 bsh Exp $ */
 /*
- * Copyright (c) 2009, 2010  Genetec corp.  All rights reserved.
+ * Copyright (c) 2009, 2010, 2012  Genetec corp.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec corp.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,11 +37,15 @@
 #define	 EPITCR_IOVW	__BIT(17)
 #define	 EPITCR_DBGEN	__BIT(18)
 #define	 EPITCR_WAITEN	__BIT(19)
-#define	 EPITCR_DOZEN	__BIT(20)
+#define	 EPITCR_DOZEN	__BIT(20)	/* not in iMX51 */
 #define	 EPITCR_STOPEN	__BIT(21)
 #define	 EPITCR_OM	__BITS(22,23)
-#define	 EPITCR_CLKSRC_MASK	__BITS(24,25)
-#define	 EPITCR_CLKSRC_HIGH	(0x2 << 24)
+#define	 EPITCR_CLKSRC_SHIFT	24
+#define	 EPITCR_CLKSRC_MASK	__BITS(25, EPITCR_CLKSRC_SHIFT)
+#define	 EPITCR_CLKSRC_IPG	(1 << EPITCR_CLKSRC_SHIFT)
+#define	 EPITCR_CLKSRC_IPGHIGH	(2 << EPITCR_CLKSRC_SHIFT)
+#define	 EPITCR_CLKSRC_IPG32K	(3 << EPITCR_CLKSRC_SHIFT)
+#define	 EPITCR_CLKSRC_HIGH	(2 << EPITCR_CLKSRC_SHIFT)
 
 #define	EPIT_EPITSR	0x0004
 #define	EPIT_EPITLR	0x0008
