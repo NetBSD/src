@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.4 2012/04/12 15:31:01 ttoth Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.5 2012/04/17 19:15:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -969,16 +969,14 @@ out:
 	ip->iflag |= IN_CHANGE | IN_UPDATE;
 	if (resid > uio->uio_resid && ap->a_cred) {
 		if (ip->mode & ISUID) {
-			error = kauth_authorize_vnode(ap->a_cred, KAUTH_VNODE_RETAIN_SUID, vp,
-			    NULL, EPERM);
-			if (error)
+			if (kauth_authorize_vnode(ap->a_cred,
+			    KAUTH_VNODE_RETAIN_SUID, vp, NULL, EPERM) != 0)
 				ip->mode &= ~ISUID;
 		}
 
 		if (ip->mode & ISGID) {
-			error = kauth_authorize_vnode(ap->a_cred, KAUTH_VNODE_RETAIN_SGID, vp,
-			    NULL, EPERM);
-			if (error)
+			if (kauth_authorize_vnode(ap->a_cred,
+			    KAUTH_VNODE_RETAIN_SGID, vp, NULL, EPERM) != 0)
 				ip->mode &= ~ISGID;
 		}
 	}
