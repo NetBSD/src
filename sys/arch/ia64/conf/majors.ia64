@@ -1,4 +1,4 @@
-#	$NetBSD: majors.ia64,v 1.8 2011/06/30 20:09:31 wiz Exp $
+#	$NetBSD: majors.ia64,v 1.8.2.1 2012/04/17 00:06:33 yamt Exp $
 #
 # Device majors for ia64
 #
@@ -66,7 +66,7 @@ device-major	ugen		char 64			ugen
 device-major	wsmux		char 65			wsmux
 device-major	ucom		char 66			ucom
 device-major	sysmon		char 67			sysmon_envsys | sysmon_wdog | sysmon_power
-device-major	vmegeneric	char 68			vmegeneric
+
 device-major	ld		char 69  block 19	ld
 device-major	urio		char 70			urio
 device-major	bktr		char 71			bktr

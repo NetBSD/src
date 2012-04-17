@@ -152,32 +152,11 @@
 #define	curproc		curlwp
 #define	proc_pageout	uvm.pagedaemon_lwp
 
-#define	heap_arena	kernel_map
-#define	VMEM_ALLOC	1
-#define	VMEM_FREE	2
-static inline size_t
-vmem_size(struct vm_map *map, int flag)
-{
-	switch (flag) {
-	case VMEM_ALLOC:
-		return map->size;
-	case VMEM_FREE:
-		return vm_map_max(map) - vm_map_min(map) - map->size;
-	case VMEM_FREE|VMEM_ALLOC:
-		return vm_map_max(map) - vm_map_min(map);
-	default:
-		panic("vmem_size");
-	}
-}
 static void	*zio_arena;
 
 #include <sys/callback.h>
 /* Structures used for memory and kva space reclaim. */
 static struct callback_entry arc_kva_reclaim_entry;
-
-#ifdef _KERNEL
-static struct uvm_reclaim_hook arc_hook;
-#endif
 
 #endif	/* __NetBSD__ */
 
@@ -2028,7 +2007,7 @@ arc_reclaim_needed(void)
 	/*
 	 * If we're on an i386 platform, it's possible that we'll exhaust the
 	 * kernel heap space before we ever run out of available physical
-	 * memory.  Most checks of the size of the heap_area compare against
+	 * memory.  Most checks of the size of the kmem_area compare against
 	 * tune.t_minarmem, which is the minimum available real memory that we
 	 * can have in the system.  However, this is generally fixed at 25 pages
 	 * which is so low that it's useless.  In this comparison, we seek to
@@ -2036,8 +2015,8 @@ arc_reclaim_needed(void)
 	 * heap is allocated.  (Or, in the calculation, if less than 1/4th is
 	 * free)
 	 */
-	if (btop(vmem_size(heap_arena, VMEM_FREE)) <
-	    (btop(vmem_size(heap_arena, VMEM_FREE | VMEM_ALLOC)) >> 2))
+	if (btop(vmem_size(kmem_arena, VMEM_FREE)) <
+	    (btop(vmem_size(kmem_arena, VMEM_FREE | VMEM_ALLOC)) >> 2))
 		return (1);
 #endif
 
@@ -2095,7 +2074,7 @@ arc_kmem_reap_now(arc_reclaim_strategy_t strat)
 }
 
 static void
-arc_reclaim_thread(void)
+arc_reclaim_thread(void *unused __unused)
 {
 	clock_t			growtime = 0;
 	arc_reclaim_strategy_t	last_reclaim = ARC_RECLAIM_CONS;
@@ -3359,7 +3338,7 @@ arc_memory_throttle(uint64_t reserve, uint64_t inflight_data, uint64_t txg)
 	static uint64_t last_txg = 0;
 
 	available_memory =
-	    MIN(available_memory, vmem_size(heap_arena, VMEM_FREE));
+	    MIN(available_memory, vmem_size(kmem_arena, VMEM_FREE));
 	if (available_memory >= zfs_write_limit_max)
 		return (0);
 
@@ -3511,7 +3490,7 @@ arc_init(void)
 	 * than the addressable space (intel in 32-bit mode), we may
 	 * need to limit the cache to 1/8 of VM size.
 	 */
-	arc_c = MIN(arc_c, vmem_size(heap_arena, VMEM_ALLOC | VMEM_FREE) / 8);
+	arc_c = MIN(arc_c, vmem_size(kmem_arena, VMEM_ALLOC | VMEM_FREE) / 8);
 #endif
 
 	/* set min cache to 1/32 of all memory, or 64MB, whichever is more */
@@ -3615,11 +3594,11 @@ arc_init(void)
 	    TS_RUN, maxclsyspri);
 
 #if defined(__NetBSD__) && defined(_KERNEL)
-	arc_hook.uvm_reclaim_hook = &arc_uvm_reclaim_hook;
+/* 	arc_hook.uvm_reclaim_hook = &arc_uvm_reclaim_hook;
 
 	uvm_reclaim_hook_add(&arc_hook);
 	callback_register(&vm_map_to_kernel(kernel_map)->vmk_reclaim_callback,
-	    &arc_kva_reclaim_entry, NULL, arc_kva_reclaim_callback);
+	    &arc_kva_reclaim_entry, NULL, arc_kva_reclaim_callback); */
 
 #endif
 
@@ -3674,9 +3653,9 @@ arc_fini(void)
 	mutex_destroy(&zfs_write_limit_lock);
 
 #if defined(__NetBSD__) && defined(_KERNEL)
-	uvm_reclaim_hook_del(&arc_hook);
+/*	uvm_reclaim_hook_del(&arc_hook);
 	callback_unregister(&vm_map_to_kernel(kernel_map)->vmk_reclaim_callback,
-	    &arc_kva_reclaim_entry);
+	    &arc_kva_reclaim_entry); */
 #endif 	
 	
 	buf_fini();
@@ -4473,7 +4452,7 @@ l2arc_write_buffers(spa_t *spa, l2arc_dev_t *dev, uint64_t target_sz)
  * heart of the L2ARC.
  */
 static void
-l2arc_feed_thread(void)
+l2arc_feed_thread(void *unused __unused)
 {
 	callb_cpr_t cpr;
 	l2arc_dev_t *dev;

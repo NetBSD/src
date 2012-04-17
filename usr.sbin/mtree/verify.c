@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.39 2006/10/07 15:35:51 elad Exp $	*/
+/*	$NetBSD: verify.c,v 1.39.40.1 2012/04/17 00:09:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: verify.c,v 1.39 2006/10/07 15:35:51 elad Exp $");
+__RCSID("$NetBSD: verify.c,v 1.39.40.1 2012/04/17 00:09:50 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,7 +141,7 @@ vwalk(void)
 		if (ep)
 			continue;
  extra:
-		if (!eflag) {
+		if (!eflag && !(dflag && p->fts_info == FTS_SL)) {
 			printf("extra: %s", RP(p));
 			if (rflag) {
 				if ((S_ISDIR(p->fts_statp->st_mode)

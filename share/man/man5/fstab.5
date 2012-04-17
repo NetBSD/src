@@ -1,4 +1,4 @@
-.\"	$NetBSD: fstab.5,v 1.38 2011/03/06 17:22:50 wiz Exp $
+.\"	$NetBSD: fstab.5,v 1.38.4.1 2012/04/17 00:05:47 yamt Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)fstab.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd March 6, 2011
+.Dd February 10, 2012
 .Dt FSTAB 5
 .Os
 .Sh NAME
@@ -82,6 +82,14 @@ after the
 last
 .Dq /
 in the special file name.
+.Pp
+If the first field is of the form
+.Dq NAME=<value>
+then all the
+.Xr dk 4
+wedge partitions are searched for one that has a wedge name equal to
+.Ar <value>
+and the device corresponding to it is selected.
 .Pp
 The second field,
 .Pq Fa fs_file ,
@@ -212,12 +220,10 @@ or
 .Dq groupquota
 options.
 Migration of limits to the new in-file system quota can be handled
-by
-.Xr repquota 8
-with option
-.Fl x
+via
+.Xr quotadump 8
 and
-.Xr quotactl 8 .
+.Xr quotarestore 8 .
 .Pp
 The option
 .Dq rump

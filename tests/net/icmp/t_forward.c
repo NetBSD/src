@@ -1,4 +1,4 @@
-/*	$NetBSD: t_forward.c,v 1.7 2010/11/07 17:51:21 jmmv Exp $	*/
+/*	$NetBSD: t_forward.c,v 1.7.6.1 2012/04/17 00:09:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_forward.c,v 1.7 2010/11/07 17:51:21 jmmv Exp $");
+__RCSID("$NetBSD: t_forward.c,v 1.7.6.1 2012/04/17 00:09:15 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -128,9 +128,8 @@ ATF_TC_HEAD(returndatabytes, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "icmp.returndatabytes with certain "
-	    "packets can cause kernel panic");
+	    "packets can cause kernel panic (PR kern/43548)");
 	atf_tc_set_md_var(tc, "timeout", "4"); /* just in case */
-	/* PR kern/43548 */
 }
 
 ATF_TC_BODY(returndatabytes, tc)

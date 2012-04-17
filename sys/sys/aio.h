@@ -1,4 +1,4 @@
-/*	$NetBSD: aio.h,v 1.9 2009/01/11 02:45:55 christos Exp $	*/
+/*	$NetBSD: aio.h,v 1.9.14.1 2012/04/17 00:08:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -28,6 +28,9 @@
 
 #ifndef _SYS_AIO_H_
 #define _SYS_AIO_H_
+
+#include <sys/types.h>
+#include <sys/signal.h>
 
 /* Returned by aio_cancel() */
 #define AIO_CANCELED		0x1
@@ -115,7 +118,7 @@ struct aioproc {
 
 extern u_int aio_listio_max;
 /* Prototypes */
-void	aio_print_jobs(void (*pr)(const char *, ...));
+void	aio_print_jobs(void (*)(const char *, ...) __printflike(1, 2));
 int	aio_suspend1(struct lwp *, struct aiocb **, int, struct timespec *);
 
 #endif /* _KERNEL */

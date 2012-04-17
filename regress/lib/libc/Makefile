@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.80 2011/04/09 17:55:51 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.80.4.1 2012/04/17 00:05:37 yamt Exp $
 
-SUBDIR+= citrus divrem int_fmtio
+SUBDIR+= citrus divrem
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>

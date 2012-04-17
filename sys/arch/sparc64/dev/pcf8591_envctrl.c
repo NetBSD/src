@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8591_envctrl.c,v 1.5 2011/06/20 17:01:45 pgoyette Exp $	*/
+/*	$NetBSD: pcf8591_envctrl.c,v 1.5.2.1 2012/04/17 00:06:55 yamt Exp $	*/
 /*	$OpenBSD: pcf8591_envctrl.c,v 1.6 2007/10/25 21:17:20 kettenis Exp $ */
 
 /*
@@ -17,6 +17,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pcf8591_envctrl.c,v 1.5.2.1 2012/04/17 00:06:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

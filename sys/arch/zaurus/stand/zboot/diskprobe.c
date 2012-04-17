@@ -1,4 +1,4 @@
-/*	$NetBSD: diskprobe.c,v 1.2 2011/06/20 12:39:21 nonaka Exp $	*/
+/*	$NetBSD: diskprobe.c,v 1.2.2.1 2012/04/17 00:07:13 yamt Exp $	*/
 /*	$OpenBSD: diskprobe.c,v 1.3 2006/10/13 00:00:55 krw Exp $	*/
 
 /*
@@ -69,7 +69,6 @@ hardprobe(char *buf, size_t bufsiz)
 	static const int order[] = { 0x80, 0x82, 0x00 };
 	char devname[MAXDEVNAME];
 	struct diskinfo *dip;
-	u_int disk = 0;
 	u_int hd_disk = 0;
 	u_int mmcd_disk = 0;
 	uint unit = 0;
@@ -90,16 +89,13 @@ hardprobe(char *buf, size_t bufsiz)
 
 		bios_devname(order[i], devname, sizeof(devname));
 		if (order[i] & 0x80) {
-			unit = hd_disk;
-			snprintf(dip->devname, sizeof(dip->devname), "%s%d",
-			    devname, hd_disk++);
+			unit = hd_disk++;
 		} else {
-			unit = mmcd_disk;
-			snprintf(dip->devname, sizeof(dip->devname), "%s%d",
-			    devname, mmcd_disk++);
+			unit = mmcd_disk++;
 		}
+		snprintf(dip->devname, sizeof(dip->devname), "%s%d", devname,
+		    unit);
 		strlcat(buf, dip->devname, bufsiz);
-		disk++;
 
 		/* Try to find the label, to figure out device type. */
 		if (bios_getdisklabel(&dip->bios_info, &dip->disklabel)
@@ -111,6 +107,7 @@ hardprobe(char *buf, size_t bufsiz)
 				    sizeof(disk_devname));
 				default_devname = disk_devname;
 				default_unit = unit;
+				default_partition = 0;
 			}
 		} else {
 			/* Best guess */
@@ -131,8 +128,17 @@ hardprobe(char *buf, size_t bufsiz)
 
 		strlcat(buf, " ", bufsiz);
 	}
-	if (disk == 0)
-		strlcat(buf, "none...", bufsiz);
+
+	/* path */
+	strlcat(buf, devname_path, bufsiz);
+	strlcat(buf, "*", bufsiz);
+	if (first) {
+		first = 0;
+		strlcpy(disk_devname, devname_path, sizeof(disk_devname));
+		default_devname = disk_devname;
+		default_unit = 0;
+		default_partition = 0;
+	}
 }
 
 static void

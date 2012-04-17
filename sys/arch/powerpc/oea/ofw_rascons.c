@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_rascons.c,v 1.6 2011/07/01 18:59:19 dyoung Exp $	*/
+/*	$NetBSD: ofw_rascons.c,v 1.6.2.1 2012/04/17 00:06:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,32 +28,32 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.6 2011/07/01 18:59:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.6.2.1 2012/04/17 00:06:47 yamt Exp $");
+
+#include "wsdisplay.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>
+#include <sys/bus.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
-#include <powerpc/oea/bat.h>
 
 #include <dev/ofw/openfirm.h>
 #include <uvm/uvm_extern.h>
 
-#include <sys/bus.h>
 #include <machine/autoconf.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
-#include <dev/wsfont/wsfont.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
+#include <dev/wsfont/wsfont.h>
 
+#include <powerpc/oea/bat.h>
 #include <powerpc/oea/ofw_rasconsvar.h>
-#include "wsdisplay.h"
 
 /* we need a wsdisplay to do anything halfway useful */
 #if NWSDISPLAY > 0
@@ -199,17 +199,27 @@ rascons_init_rasops(int node, struct rasops_info *ri)
 	if (rascons_enable_cache) {
 		vaddr_t va;
 		/*
-		 * Let's try to find an empty BAT to use
+		 * Let's try to find an empty 256M BAT to use
 		 */
 		for (va = SEGMENT_LENGTH; va < (USER_SR << ADDR_SR_SHFT);
 		     va += SEGMENT_LENGTH) {
-			if (battable[va >> ADDR_SR_SHFT].batu == 0) {
-				battable[va >> ADDR_SR_SHFT].batl =
-				    BATL(fbaddr & 0xf0000000,
-					 BAT_G | BAT_W | BAT_M, BAT_PP_RW);
-				battable[va >> ADDR_SR_SHFT].batu =
-				    BATL(va, BAT_BL_256M, BAT_Vs);
-				fbaddr &= 0x0fffffff;
+			const u_int i = BAT_VA2IDX(va);
+			const u_int n = BAT_VA2IDX(SEGMENT_LENGTH);
+			u_int j;
+			for (j = 0; j < n; j++) {
+				if (battable[i+j].batu != 0) {
+					break;
+				}
+			}
+			if (j == n) {
+				register_t batl = BATL(fbaddr & 0xf0000000,
+				    BAT_G | BAT_W | BAT_M, BAT_PP_RW);
+				register_t batu = BATL(va, BAT_BL_256M, BAT_Vs);
+				for (j = 0; j < n; j++) {
+					battable[i+j].batl = batl;
+					battable[i+j].batu = batu;
+				}
+				fbaddr &= SEGMENT_MASK;
 				fbaddr |= va;
 				break;
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdpd.h,v 1.1 2009/05/12 10:05:07 plunky Exp $	*/
+/*	$NetBSD: sdpd.h,v 1.1.8.1 2012/04/17 00:09:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -134,14 +134,14 @@ void	db_release(server_t *, int);
 /* log.c */
 void	log_open(char const *, bool);
 void	log_close(void);
-void	log_emerg(char const *, ...);
-void	log_alert(char const *, ...);
-void	log_crit(char const *, ...);
-void	log_err(char const *, ...);
-void	log_warning(char const *, ...);
-void	log_notice(char const *, ...);
-void	log_info(char const *, ...);
-void	log_debug(char const *, ...);
+void	log_emerg(char const *, ...) __printflike(1, 2);
+void	log_alert(char const *, ...) __printflike(1, 2);
+void	log_crit(char const *, ...) __printflike(1, 2);
+void	log_err(char const *, ...) __printflike(1, 2);
+void	log_warning(char const *, ...) __printflike(1, 2);
+void	log_notice(char const *, ...) __printflike(1, 2);
+void	log_info(char const *, ...) __printflike(1, 2);
+void	log_debug(char const *, ...) __printflike(1, 2);
 
 /* record.c */
 uint16_t record_insert_request(server_t *, int);

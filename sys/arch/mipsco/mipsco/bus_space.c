@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.11 2009/03/18 10:22:32 cegger Exp $ 	*/
+/*	$NetBSD: bus_space.c,v 1.11.12.1 2012/04/17 00:06:41 yamt Exp $ 	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.11 2009/03/18 10:22:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.11.12.1 2012/04/17 00:06:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ void
 mipsco_bus_space_init_extent(bus_space_tag_t bst, void *storage, size_t storagesize)
 {
 	bst->bs_extent = extent_create(bst->bs_name,
-	    bst->bs_start, bst->bs_start + bst->bs_size, M_DEVBUF,
+	    bst->bs_start, bst->bs_start + bst->bs_size,
 	    storage, storagesize, EX_NOWAIT);
 	if (bst->bs_extent == NULL)
 	    panic("mipsco_bus_space_init_extent: cannot create extent map %s",

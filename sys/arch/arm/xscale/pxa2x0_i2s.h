@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_i2s.h,v 1.2 2011/07/01 20:32:51 dyoung Exp $	*/
+/*	$NetBSD: pxa2x0_i2s.h,v 1.2.2.1 2012/04/17 00:06:07 yamt Exp $	*/
 /*	$OpenBSD: pxa2x0_i2s.h,v 1.3 2006/04/04 11:45:40 pascoe Exp $	*/
 
 /*
@@ -27,6 +27,7 @@ struct audio_params;
 
 struct pxa2x0_i2s_softc {
 	struct device sc_dev;
+	kmutex_t *sc_intr_lock;
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
@@ -61,8 +62,8 @@ void	pxa2x0_i2s_write(struct pxa2x0_i2s_softc *, u_int32_t);
 
 void	pxa2x0_i2s_setspeed(struct pxa2x0_i2s_softc *, u_int *);
 
-void *	pxa2x0_i2s_allocm(void *, int, size_t, struct malloc_type *, int);
-void	pxa2x0_i2s_freem(void  *, void *, struct malloc_type *);
+void *	pxa2x0_i2s_allocm(void *, int, size_t);
+void	pxa2x0_i2s_freem(void  *, void *, size_t);
 paddr_t	pxa2x0_i2s_mappage(void *, void *, off_t, int);
 int	pxa2x0_i2s_round_blocksize(void *, int, int, const struct audio_params *);
 size_t	pxa2x0_i2s_round_buffersize(void *, int, size_t);

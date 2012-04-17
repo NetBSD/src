@@ -1,0 +1,100 @@
+.\" Copyright (C) 2006 International Business Machines Corporation
+.\" Written by Anthony Bussani based on the Trusted Computing Group Software Stack Specification Version 1.2
+.\"
+.de Sh \" Subsection
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+.de Sp \" Vertical space (when we can't use .PP)
+.if t .sp .5v
+.if n .sp
+..
+.de Ip \" List item
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH "Tspi_DAA_IssueSetup" 3 "2006-09-04" "TSS 1.2"
+.ce 1
+TCG Software Stack Developer's Reference
+.SH NAME
+Tspi_DAA_IssueSetup \- generate a DAA Issuer public and private key
+.SH "SYNOPSIS"
+.ad l
+.hy 0
+.nf
+.B #include <tss/tss_typedef.h>
+.B #include <tss/tss_structs.h>
+.B #include <tss/tspi.h>
+.sp
+.BI "TSPICALL Tspi_DAA_IssueSetup("
+.BI "    TSS_HDAA                  " hDAA ","
+.BI "    UINT32                    " issuerBaseNameLength ","
+.BI "    BYTE*                     " issuerBaseName ","
+.BI "    UINT32                    " numberPlatformAttributes ","
+.BI "    UINT32                    " numberIssuerAttributes ","
+.BI "    TSS_HKEY*                 " keyPair ","
+.BI "    TSS_DAA_PK_PROOF**        " identity_proof
+.BI ");"
+.fi
+.sp
+.ad
+.hy
+
+.SH "DESCRIPTION"
+.PP
+\Tspi_DAA_IssueSetup\fR
+is part of the DAA Issuer component. It defines the generation of a DAA Issuer
+public and secret key. Further it defines the generation of a non-interactive proof (using
+the Fiat-Shamir heuristic) that the public keys were chosen correctly. The latter will guarantee
+the security requirements of the platform (respectively, its user), i.e., that the privacy and
+anonymity of signatures will hold.
+The generation of the authentication keys of the DAA Issuer, which are used to authenticate
+(main) DAA Issuer keys, is not defined by this function.
+This is an optional function and does not require a TPM or a TCS.
+
+.SH "PARAMETERS"
+.PP
+.SS hDAA
+The \fIhDAA\fR parameter is used to specify the handle of the DAA object.
+.SS issuerBaseNameLength
+The \fIissuerBaseNameLength\fR parameter is the length of the issuerBaseName.
+.SS issuerBaseName
+The \fIissuerBaseName\fR parameter is the unique name of the DAA Issuer.
+.SS numberPlatformAttributes
+The \fInumberPlatformAttributes\fR parameter is the number of attributes that the Platform can choose and which will not be visible to the Issuer.
+.SS numberIssuerAttributes
+The \fInumberIssuerAttributes\fR parameter is number of attributes that the Issuer can choose and which will be visible to both the Platform and the Issuer.
+.SS keyPair
+The \fIkeyPair\fR parameter is the handle of the main DAA Issuer key pair (private and public portion).
+.SS publicKeyProof
+The \fIpublicKeyProof\fR parameter is the Handle of the proof of the main DAA Issuer public key.
+
+.SH "RETURN CODES"
+.PP
+\fBTspi_DAA_IssueSetup\fR returns TSS_SUCCESS on success, otherwise one of the
+following values is returned:
+.TP
+.SM TSS_E_INVALID_HANDLE
+Either the DAA is not valid.
+.TP
+.SM TSS_E_BAD_PARAMETER
+.TP
+.SM TSS_E_INTERNAL_ERROR
+An internal SW error has been detected.
+
+.SH "CONFORMING TO"
+.PP
+\fBTspi_DAA_IssueSetup\fR conforms to the Trusted Computing Group
+Software Specification version 1.2
+
+.SH "SEE ALSO"
+
+.PP
+\fBTspi_DAA_IssuerKeyVerification\fR(3)
+

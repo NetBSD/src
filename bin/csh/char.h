@@ -1,4 +1,4 @@
-/* $NetBSD: char.h,v 1.8 2003/08/07 09:05:03 agc Exp $ */
+/* $NetBSD: char.h,v 1.8.54.1 2012/04/17 00:01:35 yamt Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -58,6 +58,7 @@ extern unsigned char _cmap_lower[], _cmap_upper[];
 #define	_XD 	0x1000		/* 0-9, a-f, A-F */
 #define	_CMD	0x2000		/* lex end of command chars, ;&(|` */
 #define _CTR	0x4000		/* control */
+#define _PUN	0x8000		/* punctuation */
 
 #define cmap(c, bits)	\
 	(((c) & QUOTE) ? 0 : (_cmap[(unsigned char)(c)] & (bits)))

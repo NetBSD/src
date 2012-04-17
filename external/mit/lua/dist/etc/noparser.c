@@ -1,3 +1,5 @@
+/*	$NetBSD: noparser.c,v 1.1.1.1.6.1 2012/04/17 00:04:46 yamt Exp $	*/
+
 /*
 * The code below can be used to make a Lua core that does not contain the
 * parsing modules (lcode, llex, lparser), which represent 35% of the total core.

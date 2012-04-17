@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.136 2010/07/15 19:15:30 dyoung Exp $	*/
+/*	$NetBSD: nd6.c,v 1.136.8.1 2012/04/17 00:08:45 yamt Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.136 2010/07/15 19:15:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.136.8.1 2012/04/17 00:08:45 yamt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.136 2010/07/15 19:15:30 dyoung Exp $");
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
+#include <sys/cprng.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -67,10 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.136 2010/07/15 19:15:30 dyoung Exp $");
 #include <netinet6/nd6.h>
 #include <netinet/icmp6.h>
 #include <netinet6/icmp6_private.h>
-
-#ifdef IPSEC
-#include <netinet6/ipsec.h>
-#endif
 
 #include <net/net_osdep.h>
 
@@ -162,8 +159,7 @@ nd6_ifattach(struct ifnet *ifp)
 {
 	struct nd_ifinfo *nd;
 
-	nd = (struct nd_ifinfo *)malloc(sizeof(*nd), M_IP6NDP, M_WAITOK);
-	memset(nd, 0, sizeof(*nd));
+	nd = (struct nd_ifinfo *)malloc(sizeof(*nd), M_IP6NDP, M_WAITOK|M_ZERO);
 
 	nd->initialized = 1;
 
@@ -524,7 +520,6 @@ nd6_timer(void *ignored_arg)
 	struct nd_defrouter *next_dr, *dr;
 	struct nd_prefix *next_pr, *pr;
 	struct in6_ifaddr *ia6, *nia6;
-	struct in6_addrlifetime *lt6;
 
 	callout_reset(&nd6_timer_ch, nd6_prune * hz,
 	    nd6_timer, NULL);
@@ -534,8 +529,7 @@ nd6_timer(void *ignored_arg)
 
 	/* expire default router list */
 	
-	for (dr = TAILQ_FIRST(&nd_defrouter); dr != NULL; dr = next_dr) {
-		next_dr = TAILQ_NEXT(dr, dr_entry);
+	TAILQ_FOREACH_SAFE(dr, &nd_defrouter, dr_entry, next_dr) {
 		if (dr->expire && dr->expire < time_second) {
 			defrtrlist_del(dr);
 		}
@@ -551,7 +545,6 @@ nd6_timer(void *ignored_arg)
 	for (ia6 = in6_ifaddr; ia6; ia6 = nia6) {
 		nia6 = ia6->ia_next;
 		/* check address lifetime */
-		lt6 = &ia6->ia6_lifetime;
 		if (IFA6_IS_INVALID(ia6)) {
 			int regen = 0;
 
@@ -614,8 +607,7 @@ nd6_timer(void *ignored_arg)
 	}
 
 	/* expire prefix list */
-	for (pr = LIST_FIRST(&nd_prefix); pr != NULL; pr = next_pr) {
-		next_pr = LIST_NEXT(pr, ndpr_entry);
+	LIST_FOREACH_SAFE(pr, &nd_prefix, ndpr_entry, next_pr) {
 		/*
 		 * check prefix lifetime.
 		 * since pltime is just for autoconf, pltime processing for
@@ -725,7 +717,6 @@ nd6_accepts_rtadv(const struct nd_ifinfo *ndi)
 void
 nd6_purge(struct ifnet *ifp)
 {
-	struct nd_ifinfo *ndi = ND_IFINFO(ifp);
 	struct llinfo_nd6 *ln, *nln;
 	struct nd_defrouter *dr, *ndr;
 	struct nd_prefix *pr, *npr;
@@ -736,16 +727,15 @@ nd6_purge(struct ifnet *ifp)
 	 * in the routing table, in order to keep additional side effects as
 	 * small as possible.
 	 */
-	for (dr = TAILQ_FIRST(&nd_defrouter); dr != NULL; dr = ndr) {
-		ndr = TAILQ_NEXT(dr, dr_entry);
+	TAILQ_FOREACH_SAFE(dr, &nd_defrouter, dr_entry, ndr) {
 		if (dr->installed)
 			continue;
 
 		if (dr->ifp == ifp)
 			defrtrlist_del(dr);
 	}
-	for (dr = TAILQ_FIRST(&nd_defrouter); dr != NULL; dr = ndr) {
-		ndr = TAILQ_NEXT(dr, dr_entry);
+
+	TAILQ_FOREACH_SAFE(dr, &nd_defrouter, dr_entry, ndr) {
 		if (!dr->installed)
 			continue;
 
@@ -754,8 +744,7 @@ nd6_purge(struct ifnet *ifp)
 	}
 
 	/* Nuke prefix list entries toward ifp */
-	for (pr = LIST_FIRST(&nd_prefix); pr != NULL; pr = npr) {
-		npr = LIST_NEXT(pr, ndpr_entry);
+	LIST_FOREACH_SAFE(pr, &nd_prefix, ndpr_entry, npr) {
 		if (pr->ndpr_ifp == ifp) {
 			/*
 			 * Because if_detach() does *not* release prefixes
@@ -781,9 +770,12 @@ nd6_purge(struct ifnet *ifp)
 		nd6_setdefaultiface(0);
 
 	/* XXX: too restrictive? */
-	if (!ip6_forwarding && ndi && nd6_accepts_rtadv(ndi)) {
-		/* refresh default router list */
-		defrouter_select();
+	if (!ip6_forwarding && ifp->if_afdata[AF_INET6]) {
+		struct nd_ifinfo *ndi = ND_IFINFO(ifp);
+		if (ndi && nd6_accepts_rtadv(ndi)) {
+			/* refresh default router list */
+			defrouter_select();
+		}
 	}
 
 	/*
@@ -1594,10 +1586,8 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 		struct nd_prefix *pfx, *next;
 
 		s = splsoftnet();
-		for (pfx = LIST_FIRST(&nd_prefix); pfx; pfx = next) {
+		LIST_FOREACH_SAFE(pfx, &nd_prefix, ndpr_entry, next) {
 			struct in6_ifaddr *ia, *ia_next;
-
-			next = LIST_NEXT(pfx, ndpr_entry);
 
 			if (IN6_IS_ADDR_LINKLOCAL(&pfx->ndpr_prefix.sin6_addr))
 				continue; /* XXX */
@@ -1625,8 +1615,7 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 
 		s = splsoftnet();
 		defrouter_reset();
-		for (drtr = TAILQ_FIRST(&nd_defrouter); drtr; drtr = next) {
-			next = TAILQ_NEXT(drtr, dr_entry);
+		TAILQ_FOREACH_SAFE(drtr, &nd_defrouter, dr_entry, next) {
 			defrtrlist_del(drtr);
 		}
 		defrouter_select();
@@ -2132,10 +2121,6 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 		goto bad;
 	}
 
-#ifdef IPSEC
-	/* clean ipsec history once it goes out of the node */
-	ipsec_delaux(m);
-#endif
 	if ((ifp->if_flags & IFF_LOOPBACK) != 0)
 		return (*ifp->if_output)(origifp, m, sin6tocsa(dst), rt);
 	return (*ifp->if_output)(ifp, m, sin6tocsa(dst), rt);

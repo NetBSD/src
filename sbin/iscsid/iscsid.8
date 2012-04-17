@@ -1,4 +1,4 @@
-.\" $NetBSD: iscsid.8,v 1.1 2011/10/23 21:11:23 agc Exp $
+.\" $NetBSD: iscsid.8,v 1.1.2.1 2012/04/17 00:05:40 yamt Exp $
 .\"
 .\" Copyright (c) 2011 Alistair Crooks <agc@NetBSD.org>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd August 8, 2011
-.Dt ISCSICTL 8
+.Dt ISCSID 8
 .Os
 .Sh NAME
 .Nm iscsid
@@ -39,7 +39,7 @@ The
 .Nm
 utility itself interfaces to the kernel iSCSI driver, and also
 communicates, using
-.Xr libisns 3 ,
+.Xr isns 3 ,
 with the iSCSI name service running on other hosts
 to locate services and iSCSI instances.
 In normal operation,
@@ -69,7 +69,7 @@ is shown in
 .Xr iscsictl 8 .
 .Sh SEE ALSO
 .Xr daemon 3 ,
-.Xr libisns 3 ,
+.Xr isns 3 ,
 .Xr iscsictl 8
 .Sh HISTORY
 The

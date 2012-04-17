@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.66 2011/08/07 13:39:24 rmind Exp $	*/
+/*	$NetBSD: dpt.c,v 1.66.2.1 2012/04/17 00:07:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.66 2011/08/07 13:39:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.66.2.1 2012/04/17 00:07:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -417,15 +417,15 @@ dpt_init(struct dpt_softc *sc, const char *intrstr)
 	 * dpt0: interrupting at irq 10
 	 * dpt0: 64 queued commands, 1 channel(s), adapter on ID(s) 7
 	 */
-	for (i = 0; ei->ei_vendor[i] != ' ' && i < __arraycount(ei->ei_vendor);
+	for (i = 0; i < __arraycount(ei->ei_vendor) && ei->ei_vendor[i] != ' ';
 	    i++)
 		vendor[i] = ei->ei_vendor[i];
 	vendor[i] = '\0';
 
-	for (i = 0; ei->ei_model[i] != ' ' && i < __arraycount(ei->ei_model);
+	for (i = 0; i < __arraycount(ei->ei_model) && ei->ei_model[i] != ' ';
 	    i++)
 		model[i] = ei->ei_model[i];
-	for (j = 0; ei->ei_suffix[j] != ' ' && j < __arraycount(ei->ei_suffix);
+	for (j = 0; j < __arraycount(ei->ei_suffix) && ei->ei_suffix[j] != ' ';
 	    i++, j++)
 		model[i] = ei->ei_suffix[j];
 	model[i] = '\0';

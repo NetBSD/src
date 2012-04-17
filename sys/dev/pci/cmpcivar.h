@@ -1,7 +1,7 @@
-/*	$NetBSD: cmpcivar.h,v 1.10 2007/03/04 06:02:17 christos Exp $	*/
+/*	$NetBSD: cmpcivar.h,v 1.10.76.1 2012/04/17 00:07:44 yamt Exp $	*/
 
 /*
- * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -174,6 +174,8 @@ typedef struct cmpci_dmanode *cmpci_dmapool_t;
  */
 struct cmpci_softc {
 	struct device		sc_dev;
+	kmutex_t		sc_lock;
+	kmutex_t		sc_intr_lock;
 
 	/* model/rev */
 	uint32_t		sc_id;

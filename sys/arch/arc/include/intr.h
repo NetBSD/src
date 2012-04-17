@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.23 2011/02/20 07:52:42 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.23.4.1 2012/04/17 00:06:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
 
 #ifdef _KERNEL
 #ifndef _LOCORE
+
+struct clockframe;
 
 void arc_set_intr(uint32_t, uint32_t (*)(uint32_t, struct clockframe *), int);
 extern uint32_t cpu_int_mask;

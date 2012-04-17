@@ -1,4 +1,4 @@
-# $NetBSD: t_rquotad.sh,v 1.1 2011/03/12 14:03:38 bouyer Exp $ 
+# $NetBSD: t_rquotad.sh,v 1.1.4.1 2012/04/17 00:09:03 yamt Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -35,7 +35,7 @@ done
 
 get_nfs_quota()
 {
-	create_with_quotas $*
+	create_ffs $*
 	local q=$3
 	local expect
 
@@ -138,5 +138,5 @@ get_nfs_quota()
 	done
 
 	unset LD_PRELOAD
-	rump_shutdown
+	rump_quota_shutdown
 }

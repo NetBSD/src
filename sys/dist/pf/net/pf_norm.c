@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_norm.c,v 1.25 2011/08/29 09:50:04 jmcneill Exp $	*/
+/*	$NetBSD: pf_norm.c,v 1.25.2.1 2012/04/17 00:08:14 yamt Exp $	*/
 /*	$OpenBSD: pf_norm.c,v 1.109 2007/05/28 17:16:39 henning Exp $ */
 
 /*
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_norm.c,v 1.25 2011/08/29 09:50:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_norm.c,v 1.25.2.1 2012/04/17 00:08:14 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: pf_norm.c,v 1.25 2011/08/29 09:50:04 jmcneill Exp $"
 
 #ifdef __NetBSD__
 #include <sys/rnd.h>
+#include <sys/cprng.h>
 #else
 #include <dev/rndvar.h>
 #endif /* !__NetBSD__ */
@@ -1446,7 +1447,7 @@ pf_normalize_tcp_init(struct mbuf *m, int off, struct pf_pdesc *pd,
 					src->scrub->pfss_flags |=
 					    PFSS_TIMESTAMP;
 					src->scrub->pfss_ts_mod =
-					    htonl(arc4random());
+					    htonl(cprng_fast32());
 
 					/* note PFSS_PAWS not set yet */
 					memcpy(&tsval, &opt[2],

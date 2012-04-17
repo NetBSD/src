@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.65 2011/05/20 13:32:35 joerg Exp $	*/
+/*	$NetBSD: locore.S,v 1.65.4.1 2012/04/17 00:05:58 yamt Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -778,6 +778,11 @@ start:
 	cpuid
 	movl	%eax,_C_LABEL(cpuid_level)
 
+	movq	$cpu_info_primary, %rdi
+	movq	%rdi, CPU_INFO_SELF(%rdi) /* ci->ci_self = ci */
+	movq	$1, %rsi
+	call	cpu_init_msrs	/* cpu_init_msrs(ci, true); */
+
 	call	xen_pmap_bootstrap
 
 	/*
@@ -1290,10 +1295,11 @@ iret_return:
 	jmp	.Losyscall_checkast	/* re-check ASTs */
 
 /*
- * void sse2_idlezero_page(void *pg)
+ * bool sse2_idlezero_page(void *pg)
  *
  * Zero a page without polluting the cache.  Preemption must be
  * disabled by the caller. Abort if a preemption is pending.
+ * Returns true if the page is zeroed, false if not.
  */
 ENTRY(sse2_idlezero_page)
 	pushq	%rbp
@@ -1322,4 +1328,28 @@ ENTRY(sse2_idlezero_page)
 2:
 	sfence
 	popq	%rbp
+	ret
+
+/*
+ * void pagezero(vaddr_t va)
+ *
+ * Zero a page without polluting the cache.
+ */
+
+ENTRY(pagezero)
+	movq	$-PAGE_SIZE,%rdx
+	subq	%rdx,%rdi
+	xorq	%rax,%rax
+1:
+	movnti	%rax,(%rdi,%rdx)
+	movnti	%rax,8(%rdi,%rdx)
+	movnti	%rax,16(%rdi,%rdx)
+	movnti	%rax,24(%rdi,%rdx)
+	movnti	%rax,32(%rdi,%rdx)
+	movnti	%rax,40(%rdi,%rdx)
+	movnti	%rax,48(%rdi,%rdx)
+	movnti	%rax,56(%rdi,%rdx)
+	addq	$64,%rdx
+	jne	1b
+	sfence
 	ret

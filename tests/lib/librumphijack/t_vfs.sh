@@ -1,4 +1,4 @@
-#       $NetBSD: t_vfs.sh,v 1.4 2011/03/08 22:21:52 pooka Exp $
+#       $NetBSD: t_vfs.sh,v 1.4.4.1 2012/04/17 00:09:14 yamt Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,7 +27,7 @@
 
 img=ffs.img
 rumpsrv_ffs=\
-"rump_server -lrumpvfs -lrumpfs_ffs -d key=/img,hostpath=${img},size=host"
+"rump_server -lrumpvfs -lrumpfs_ffs -lrumpdev_disk -d key=/img,hostpath=${img},size=host"
 export RUMP_SERVER=unix://csock
 
 domount()

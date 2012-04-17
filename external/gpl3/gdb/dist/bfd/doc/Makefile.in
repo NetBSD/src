@@ -418,6 +418,8 @@ clean-libtool:
 	-rm -rf .libs _libs
 
 bfd.info: bfd.texinfo $(bfd_TEXINFOS)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_bfd.info:
 	restore=: && backupdir="$(am__leading_dot)am$$$$" && \
 	rm -rf $$backupdir && mkdir $$backupdir && \
 	if ($(MAKEINFO) --version) >/dev/null 2>&1; then \

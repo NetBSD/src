@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_red.c,v 1.28 2008/06/18 09:06:27 yamt Exp $	*/
+/*	$NetBSD: altq_red.c,v 1.28.30.1 2012/04/17 00:05:51 yamt Exp $	*/
 /*	$KAME: altq_red.c,v 1.20 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.28 2008/06/18 09:06:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.28.30.1 2012/04/17 00:05:51 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.28 2008/06/18 09:06:27 yamt Exp $");
 #include <sys/time.h>
 #endif
 #endif /* ALTQ3_COMPAT */
+#include <sys/cprng.h>
 
 #include <net/if.h>
 
@@ -505,7 +506,7 @@ drop_early(int fp_len, int fp_probd, int count)
 	 * drop probability = (avg - TH_MIN) / d
 	 */
 
-	if ((arc4random() % d) < fp_len) {
+	if ((cprng_fast32() % d) < fp_len) {
 		/* drop or mark */
 		return (1);
 	}

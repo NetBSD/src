@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.28 2011/03/14 17:18:12 tteras Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.28.6.1 2012/04/17 00:01:41 yamt Exp $	*/
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * Copyright (C) 2008 Timo Teras <timo.teras@iki.fi>.
@@ -280,7 +280,7 @@ myaddr_getsport(addr)
 			return extract_port((struct sockaddr *) &my->addr);
 	}
 
-	return PORT_ISAKMP;
+	return -1;
 }
 
 void

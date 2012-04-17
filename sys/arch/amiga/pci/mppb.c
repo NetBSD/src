@@ -1,4 +1,4 @@
-/*	$NetBSD: mppb.c,v 1.2 2011/09/19 19:15:29 rkujawa Exp $ */
+/*	$NetBSD: mppb.c,v 1.2.2.1 2012/04/17 00:06:02 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -55,6 +55,8 @@
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pciconf.h>
 
+#include "opt_pci.h"
+
 /* Zorro IDs */
 #define ZORRO_MANID_MATAY	44359
 #define ZORRO_PRODID_PROMETHEUS	1
@@ -100,11 +102,6 @@ mppb_match(device_t parent, cfdata_t cf, void *aux)
 	if (zap->prodid != ZORRO_PRODID_PROMETHEUS)
 		return 0;
 		
-#ifdef MPPB_DEBUG
-	aprint_normal("mppb matched by Zorro ID %d, %d\n", zap->manid,
-	    zap->prodid); 
-#endif
-
 	return 1;
 }
 
@@ -116,7 +113,9 @@ mppb_attach(device_t parent, device_t self, void *aux)
 	struct pcibus_attach_args pba;  
 	struct zbus_args *zap;
 	pci_chipset_tag_t pc;
+#ifdef PCI_NETBSD_CONFIGURE
 	struct extent *ioext, *memext;
+#endif /* PCI_NETBSD_CONFIGURE */
 
 	zap = aux;
 	sc = device_private(self);
@@ -137,10 +136,10 @@ mppb_attach(device_t parent, device_t self, void *aux)
 	sc->pci_io_area.absm = &amiga_bus_stride_1;
 	
 #ifdef MPPB_DEBUG 
-	aprint_normal("mppb mapped conf %x->%x, mem %x->%x\n, io %x->%x",
-	    (zap->pa) + MPPB_CONF_BASE, sc->pci_conf_area.base,
-	    (zap->pa) + MPPB_MEM_BASE, sc->pci_mem_area.base,
-	    (zap->pa) + MPPB_IO_BASE, sc->pci_io_area.base); 
+	aprint_normal("mppb mapped conf %x->%x, mem %x->%x\n, io %x->%x\n",
+	    kvtop((void*) sc->pci_conf_area.base), sc->pci_conf_area.base,
+	    kvtop((void*) sc->pci_mem_area.base), sc->pci_mem_area.base,
+	    kvtop((void*) sc->pci_io_area.base), sc->pci_io_area.base); 
 #endif 
 
 	sc->apc.pci_conf_datat = &(sc->pci_conf_area);
@@ -167,15 +166,20 @@ mppb_attach(device_t parent, device_t self, void *aux)
 	sc->apc.pc_conf_hook = amiga_pci_conf_hook;
 	sc->apc.pc_conf_interrupt = amiga_pci_conf_interrupt;
 
+#ifdef PCI_NETBSD_CONFIGURE
 	ioext = extent_create("mppbio",  MPPB_IO_BASE, 
-	    MPPB_IO_BASE + MPPB_IO_SIZE, M_DEVBUF, NULL, 0, EX_NOWAIT);
+	    MPPB_IO_BASE + MPPB_IO_SIZE, NULL, 0, EX_NOWAIT);
 	memext = extent_create("mppbmem",  MPPB_MEM_BASE, 
-	    MPPB_MEM_BASE + MPPB_MEM_SIZE, M_DEVBUF, NULL, 0, EX_NOWAIT);
-	
+	    MPPB_MEM_BASE + MPPB_MEM_SIZE, NULL, 0, EX_NOWAIT);
+
+#ifdef MPPB_DEBUG	
+	aprint_normal("mppb: reconfiguring the bus!\n");
+#endif /* MPPB_DEBUG */
 	pci_configure_bus(pc, ioext, memext, NULL, 0, CACHELINE_SIZE);
 
 	extent_destroy(ioext);
 	extent_destroy(memext);
+#endif /* PCI_NETBSD_CONFIGURE */
 
 	pba.pba_iot = &(sc->pci_io_area);
 	pba.pba_memt = &(sc->pci_mem_area);
@@ -199,11 +203,11 @@ mppb_pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 	
 	data = bus_space_read_4(pc->pci_conf_datat, pc->pci_conf_datah,
 	    (MPPB_CONF_STRIDE*dev) + reg);
-#ifdef MPPB_DEBUG
+#ifdef MPPB_DEBUG_CONF
 	aprint_normal("mppb conf read va: %lx, bus: %d, dev: %d, "
 	    "func: %d, reg: %d -r-> data %x\n",
 	    pc->pci_conf_datah, bus, dev, func, reg, data);
-#endif
+#endif /* MPPB_DEBUG_CONF */
 	return data;
 }
 
@@ -216,11 +220,11 @@ mppb_pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t val)
 	
 	bus_space_write_4(pc->pci_conf_datat, pc->pci_conf_datah,
 	    (MPPB_CONF_STRIDE*dev) + reg, val);
-#ifdef MPPB_DEBUG
+#ifdef MPPB_DEBUG_CONF
 	aprint_normal("mppb conf write va: %lx, bus: %d, dev: %d, "
 	    "func: %d, reg: %d -w-> data %x\n",
 	    pc->pci_conf_datah, bus, dev, func, reg, val);
-#endif
+#endif /* MPPB_DEBUG_CONF */
 	
 }
 

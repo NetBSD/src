@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpSnmpSubagentObject.h,v 1.1.1.1 2009/12/13 16:56:33 kardel Exp $	*/
+/*	$NetBSD: ntpSnmpSubagentObject.h,v 1.1.1.1.6.1 2012/04/17 00:03:49 yamt Exp $	*/
 
 /*****************************************************************************
  *
@@ -13,24 +13,23 @@
 #define NTPSNMPSUBAGENTOBJECT_H
 
 /* Function Prototypes */
-int ntpsnmpd_strip_string(char *string);
-int ntpsnmpd_parse_string(char *src, char *field, int fieldsize, char *value, int valuesize);
-int ntpsnmpd_cut_string(char *src, char *dest, const char delim, int fieldnumber, int maxsize);
-unsigned int read_ntp_value(char *variable, char *rbuffer, unsigned int maxlength);
+size_t ntpsnmpd_parse_string(const char *string, char *field, size_t
+			     fieldsize, char *value, size_t valuesize);
+size_t ntpsnmpd_cut_string(const char *string, char *dest, char delim,
+			   int fieldnumber, size_t maxsize);
+size_t read_ntp_value(const char *variable, char *value,
+		      size_t valuesize);
 
 /* Initialization */
-void            init_ntpSnmpSubagentObject(void);
+void init_ntpSnmpSubagentObject(void);
 
 /* MIB Section 1 Callback Functions*/
 Netsnmp_Node_Handler get_ntpEntSoftwareName;
 Netsnmp_Node_Handler get_ntpEntSoftwareVersion;
-Netsnmp_Node_Handler get_ntpEntSoftwareVersionVal;
 Netsnmp_Node_Handler get_ntpEntSoftwareVendor;
 Netsnmp_Node_Handler get_ntpEntSystemType;
 Netsnmp_Node_Handler get_ntpEntTimeResolution;
-Netsnmp_Node_Handler get_ntpEntTimeResolutionVal;
 Netsnmp_Node_Handler get_ntpEntTimePrecision;
-Netsnmp_Node_Handler get_ntpEntTimePrecisionVal;
 Netsnmp_Node_Handler get_ntpEntTimeDistance;
 
 /* MIB Section 2 Callback Functions (TODO) */
@@ -41,37 +40,44 @@ Netsnmp_Node_Handler get_ntpEntStatusActiveRefSourceId;
 Netsnmp_Node_Handler get_ntpEntStatusActiveRefSourceName;
 Netsnmp_Node_Handler get_ntpEntStatusActiveOffset;
 
-/* TODO: This needs to be changed as soon as the official OID has been registered with IANA */
-#define NTPV4_OID 1,3,6,1,4,1,5597,99
+#define NTPV4_OID 1,3,6,1,2,1,197	/* mib-2 197 */
 
 
-/* The following two macros simplify the registration of the callback functions 
- * and allow to easily specify the name and OID of either read-only (RO) or read-write (RW) functions
+/*
+ * The following macros simplify the registration of the callback
+ * functions and register the name and OID of either read-only (RO) or
+ * read-write (RW) functions.
  */
  
-#define _SETUP_OID_RO( _oidname, ... )  \
-    static oid _oidname##_oid [] = { __VA_ARGS__ };                                                                             \
-   {                                                                                                                                                                            \
-         netsnmp_register_read_only_instance(netsnmp_create_handler_registration                        \
-                                        ("#_oidname",                                                                                                             \
-                                         get_##_oidname,                                                                                                        \
-                                         _oidname##_oid,                                                                                                        \
-                                         OID_LENGTH                                                                                                             \
-                                         ( _oidname##_oid ),                                                                                                    \
-                                         HANDLER_CAN_RONLY));                                                                                           \
-   }
+#define SETUP_OID_RO(oidname, ...)				\
+static oid oidname##_oid [] = { __VA_ARGS__ };			\
+{								\
+	netsnmp_register_read_only_instance(			\
+		netsnmp_create_handler_registration(		\
+			"#oidname",				\
+			get_##oidname,				\
+			oidname##_oid,				\
+			OID_LENGTH				\
+			( oidname##_oid ),			\
+			HANDLER_CAN_RONLY));			\
+}
 
-#define _SETUP_OID_RW( _oidname, ... )                                                                                                          \
-    static oid _oidname##_oid [] = { __VA_ARGS__ };                                                                             \
-   {                                                                                                                                                                            \
-         netsnmp_register_instance(netsnmp_create_handler_registration                                          \
-                                        ("#_oidname",                                                                                                             \
-                                         do_##_oidname,                                                                                                         \
-                                         _oidname##_oid,                                                                                                        \
-                                         OID_LENGTH                                                                                                             \
-                                         ( _oidname##_oid ),                                                                                                    \
-                                         HANDLER_CAN_RWRITE));                                                                                          \
-   }
+#define SETUP_OID_RW(oidname, ...)				\
+static oid oidname##_oid [] = { __VA_ARGS__ };			\
+{								\
+	netsnmp_register_instance(				\
+		netsnmp_create_handler_registration(		\
+			"#oidname",				\
+			do_##oidname,				\
+			oidname##_oid,				\
+			OID_LENGTH				\
+			( oidname##_oid ),			\
+			HANDLER_CAN_RWRITE));			\
+}
 
+#define NTP_OID_RO(oidname, w, x, y, z)				\
+	SETUP_OID_RO(oidname, NTPV4_OID, w, x, y, z)
+#define NTP_OID_RW(oidname, w, x, y, z)				\
+	SETUP_OID_RW(oidname, NTPV4_OID, w, x, y, z)
 
 #endif

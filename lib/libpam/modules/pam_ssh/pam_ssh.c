@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_ssh.c,v 1.17 2011/05/06 17:22:09 drochner Exp $	*/
+/*	$NetBSD: pam_ssh.c,v 1.17.4.1 2012/04/17 00:05:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ssh/pam_ssh.c,v 1.40 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_ssh.c,v 1.17 2011/05/06 17:22:09 drochner Exp $");
+__RCSID("$NetBSD: pam_ssh.c,v 1.17.4.1 2012/04/17 00:05:30 yamt Exp $");
 #endif
 
 #include <sys/param.h>
@@ -67,6 +67,9 @@ __RCSID("$NetBSD: pam_ssh.c,v 1.17 2011/05/06 17:22:09 drochner Exp $");
 #include "authfd.h"
 #include "authfile.h"
 
+#define ssh_add_identity(auth, key, comment) \
+	ssh_add_identity_constrained(auth, key, comment, 0, 0)
+
 extern char **environ;
 
 struct pam_ssh_key {
@@ -81,12 +84,13 @@ static const char *pam_ssh_keyfiles[] = {
 	".ssh/identity",	/* SSH1 RSA key */
 	".ssh/id_rsa",		/* SSH2 RSA key */
 	".ssh/id_dsa",		/* SSH2 DSA key */
+	".ssh/id_ecdsa", 	/* SSH2 ECDSA key */
 	NULL
 };
 
 static const char *pam_ssh_agent = "/usr/bin/ssh-agent";
-static const char *pam_ssh_agent_argv[] = { "ssh_agent", "-s", NULL };
-static const char *pam_ssh_agent_envp[] = { NULL };
+static const char *const pam_ssh_agent_argv[] = { "ssh_agent", "-s", NULL };
+static const char *const pam_ssh_agent_envp[] = { NULL };
 
 /*
  * Attempts to load a private key from the specified file in the specified
@@ -94,18 +98,33 @@ static const char *pam_ssh_agent_envp[] = { NULL };
  * struct pam_ssh_key containing the key and its comment.
  */
 static struct pam_ssh_key *
-pam_ssh_load_key(struct passwd *pwd, const char *kfn, const char *passphrase)
+pam_ssh_load_key(const char *dir, const char *kfn, const char *passphrase,
+    int nullok)
 {
 	struct pam_ssh_key *psk;
 	char fn[PATH_MAX];
 	char *comment;
 	Key *key;
 
-	if (snprintf(fn, sizeof(fn), "%s/%s", pwd->pw_dir, kfn) >
-	    (int)sizeof(fn))
+	if (snprintf(fn, sizeof(fn), "%s/%s", dir, kfn) > (int)sizeof(fn))
 		return (NULL);
 	comment = NULL;
-	key = key_load_private(fn, passphrase, &comment);
+	/*
+	 * If the key is unencrypted, OpenSSL ignores the passphrase, so
+	 * it will seem like the user typed in the right one.  This allows
+	 * a user to circumvent nullok by providing a dummy passphrase.
+	 * Verify that the key really *is* encrypted by trying to load it
+	 * with an empty passphrase, and if the key is not encrypted,
+	 * accept only an empty passphrase.
+	 */
+	key = key_load_private(fn, "", &comment);
+	if (key != NULL && !(*passphrase == '\0' && nullok)) {
+		key_free(key);
+		free(comment);
+		return (NULL);
+	}
+	if (key == NULL)
+		key = key_load_private(fn, passphrase, &comment);
 	if (key == NULL) {
 		openpam_log(PAM_LOG_DEBUG, "failed to load key from %s", fn);
 		if (comment != NULL)
@@ -144,10 +163,13 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
     int argc __unused, const char *argv[] __unused)
 {
 	const char **kfn, *passphrase, *user;
+	const void *item;
 	struct passwd *pwd, pwres;
 	struct pam_ssh_key *psk;
-	int nkeys, pam_err, pass;
+	int nkeys, nullok, pam_err, pass;
 	char pwbuf[1024];
+
+	nullok = (openpam_get_option(pamh, "nullok") != NULL);
 
 	/* PEM is not loaded by default */
 	OpenSSL_add_all_algorithms();
@@ -162,45 +184,32 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	if (pwd->pw_dir == NULL)
 		return (PAM_AUTH_ERR);
 
+	nkeys = 0;
+	pass = (pam_get_item(pamh, PAM_AUTHTOK, &item) == PAM_SUCCESS &&
+	    item != NULL);
+ load_keys:
+	/* get passphrase */
+	pam_err = pam_get_authtok(pamh, PAM_AUTHTOK,
+	    &passphrase, pam_ssh_prompt);
+	if (pam_err != PAM_SUCCESS)
+		return (pam_err);
+
 	/* switch to user credentials */
 	pam_err = openpam_borrow_cred(pamh, pwd);
 	if (pam_err != PAM_SUCCESS)
 		return (pam_err);
 
-#ifdef notyet
-	for (kfn = pam_ssh_keyfiles; *kfn != NULL; ++kfn) {
-		char path[MAXPATHLEN];
-		(void)snprintf(path, sizeof(path), "%s/%s", pwd->pw_dir, *kfn);
-		if (access(path, R_OK) == 0)
-			break;
-	}
-
-	if (*kfn == NULL) {
-		openpam_restore_cred(pamh);
-		return (PAM_AUTH_ERR);
-	}
-#endif
-
-	pass = (pam_get_item(pamh, PAM_AUTHTOK,
-	    (const void **)__UNCONST(&passphrase)) == PAM_SUCCESS);
- load_keys:
-	/* get passphrase */
-	pam_err = pam_get_authtok(pamh, PAM_AUTHTOK,
-	    &passphrase, pam_ssh_prompt);
-	if (pam_err != PAM_SUCCESS) {
-		openpam_restore_cred(pamh);
-		return (pam_err);
-	}
-
 	/* try to load keys from all keyfiles we know of */
-	nkeys = 0;
 	for (kfn = pam_ssh_keyfiles; *kfn != NULL; ++kfn) {
-		psk = pam_ssh_load_key(pwd, *kfn, passphrase);
+		psk = pam_ssh_load_key(pwd->pw_dir, *kfn, passphrase, nullok);
 		if (psk != NULL) {
 			pam_set_data(pamh, *kfn, psk, pam_ssh_free_key);
 			++nkeys;
 		}
 	}
+
+	/* switch back to arbitrator credentials */
+	openpam_restore_cred(pamh);
 
 	/*
 	 * If we tried an old token and didn't get anything, and
@@ -213,9 +222,6 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 		pass = 0;
 		goto load_keys;
 	}
-
-	/* switch back to arbitrator credentials before returning */
-	openpam_restore_cred(pamh);
 
 	/* no keys? */
 	if (nkeys == 0)
@@ -298,19 +304,19 @@ pam_ssh_start_agent(pam_handle_t *pamh, struct passwd *pwd)
 #endif
 		/* child: drop privs, close fds and start agent */
 		if (setgid(pwd->pw_gid) == -1) {
-			openpam_log(PAM_LOG_DEBUG, "%s: Cannot setgid %d (%m)",
-			    __func__, (int)pwd->pw_gid);
+			openpam_log(PAM_LOG_DEBUG, "%s: Cannot setgid %d (%s)",
+			    __func__, (int)pwd->pw_gid, strerror(errno));
 			goto done;
 		}
 		if (initgroups(pwd->pw_name, pwd->pw_gid) == -1) {
 			openpam_log(PAM_LOG_DEBUG,
-			    "%s: Cannot initgroups for %s (%m)",
-			    __func__, pwd->pw_name);
+			    "%s: Cannot initgroups for %s (%s)",
+			    __func__, pwd->pw_name, strerror(errno));
 			goto done;
 		}
 		if (setuid(pwd->pw_uid) == -1) {
-			openpam_log(PAM_LOG_DEBUG, "%s: Cannot setuid %d (%m)",
-			    __func__, (int)pwd->pw_uid);
+			openpam_log(PAM_LOG_DEBUG, "%s: Cannot setuid %d (%s)",
+			    __func__, (int)pwd->pw_uid, strerror(errno));
 			goto done;
 		}
 		(void)close(STDIN_FILENO);
@@ -376,7 +382,7 @@ pam_ssh_add_keys_to_agent(pam_handle_t *pamh)
 		pam_err = pam_get_data(pamh, *kfn, &vp);
 		psk = vp;
 		if (pam_err == PAM_SUCCESS && psk != NULL) {
-			if (ssh_add_identity_constrained(ac, psk->key, psk->comment, 0, 0))
+			if (ssh_add_identity(ac, psk->key, psk->comment))
 				openpam_log(PAM_LOG_DEBUG,
 				    "added %s to ssh agent", psk->comment);
 			else

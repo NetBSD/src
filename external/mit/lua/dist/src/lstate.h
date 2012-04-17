@@ -1,7 +1,7 @@
-/*	$NetBSD: lstate.h,v 1.1.1.1 2010/10/31 11:16:58 mbalmer Exp $	*/
+/*	$NetBSD: lstate.h,v 1.1.1.1.6.1 2012/04/17 00:04:46 yamt Exp $	*/
 
 /*
-** Id: lstate.h,v 2.24.1.2 2008/01/03 15:20:39 roberto Exp
+** $Id: lstate.h,v 1.1.1.1.6.1 2012/04/17 00:04:46 yamt Exp $
 ** Global State
 ** See Copyright Notice in lua.h
 */

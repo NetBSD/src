@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.15 2011/10/16 12:41:45 hannken Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.15.2.1 2012/04/17 00:08:19 yamt Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.15 2011/10/16 12:41:45 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.15.2.1 2012/04/17 00:08:19 yamt Exp $");
 #endif /* not lint */
 
 
@@ -280,6 +280,8 @@ return EIO;
 
 	/* mark node changed and request update */
 	nilfs_node->i_flags |= IN_CHANGE | IN_UPDATE;
+	if (vp->v_mount->mnt_flag & MNT_RELATIME)
+		nilfs_node->i_flags |= IN_ACCESS;
 
 	/*
 	 * XXX TODO FFS has code here to reset setuid & setgid when we're not
@@ -1034,9 +1036,9 @@ nilfs_check_permitted(struct vnode *vp, struct vattr *vap, mode_t mode,
 {
 
 	/* ask the generic genfs_can_access to advice on security */
-	return genfs_can_access(vp->v_type,
-			vap->va_mode, vap->va_uid, vap->va_gid,
-			mode, cred);
+	return kauth_authorize_vnode(cred, kauth_access_action(mode,
+	    vp->v_type, vap->va_mode), vp, NULL, genfs_can_access(vp->v_type,
+	    vap->va_mode, vap->va_uid, vap->va_gid, mode, cred));
 }
 
 int

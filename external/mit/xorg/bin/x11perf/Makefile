@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/08/03 02:55:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.2.2.1 2012/04/17 00:04:47 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -23,6 +23,8 @@ SCRIPTS=		x11perfcomp Xmark \
 SCRIPTSDIR_fillblnk.sh=	${X11LIBDIR}/x11perfcomp
 SCRIPTSDIR_perfboth.sh=	${X11LIBDIR}/x11perfcomp
 SCRIPTSDIR_perfratio.sh=${X11LIBDIR}/x11perfcomp
+
+CLEANFILES+=	x11perfcomp
 
 LDADD+=	-lXft -lfontconfig -lfreetype -lexpat -lXrender
 DPADD+=	${LIBXFT} ${LIBFONTCONFIG} ${LIBFREETYPE} ${LIBEXPAT} ${LIBXRENDER}

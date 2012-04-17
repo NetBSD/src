@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_isa.c,v 1.23 2010/02/21 05:16:29 cnst Exp $ */
+/*	$NetBSD: lm_isa.c,v 1.23.10.1 2012/04/17 00:07:39 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.23 2010/02/21 05:16:29 cnst Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.23.10.1 2012/04/17 00:07:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/module.h>
 #include <sys/conf.h>
 
 #include <sys/bus.h>
@@ -43,121 +44,36 @@ __KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.23 2010/02/21 05:16:29 cnst Exp $");
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
-#include <dev/sysmon/sysmonvar.h>
-
-#include <dev/ic/nslm7xvar.h>
-
-int 	lm_isa_match(device_t, cfdata_t, void *);
-void 	lm_isa_attach(device_t, device_t, void *);
-int 	lm_isa_detach(device_t, int);
-
-uint8_t lm_isa_readreg(struct lm_softc *, int);
-void 	lm_isa_writereg(struct lm_softc *, int, int);
-
-struct lm_isa_softc {
-	struct lm_softc lmsc;
-	bus_space_tag_t lm_iot;
-	bus_space_handle_t lm_ioh;
-};
+#include <dev/isa/lm_isa_common_var.h>
 
 CFATTACH_DECL_NEW(lm_isa, sizeof(struct lm_isa_softc),
     lm_isa_match, lm_isa_attach, lm_isa_detach, NULL);
 
-CFATTACH_DECL_NEW(lm_wbsio, sizeof(struct lm_isa_softc),
-    lm_isa_match, lm_isa_attach, lm_isa_detach, NULL);
+MODULE(MODULE_CLASS_DRIVER, lm_isa, "lm_isa_common");
 
-int
-lm_isa_match(device_t parent, cfdata_t match, void *aux)
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+lm_isa_modcmd(modcmd_t cmd, void *priv)
 {
-	bus_space_handle_t ioh;
-	struct isa_attach_args *ia = aux;
-	struct lm_isa_softc sc;
-	int rv;
+	int error = 0;
 
-	/* Must supply an address */
-	if (ia->ia_nio < 1)
-		return 0;
-
-	if (ISA_DIRECT_CONFIG(ia))
-		return 0;
-
-	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
-		return 0;
-
-	if (bus_space_map(ia->ia_iot, ia->ia_io[0].ir_addr, 8, 0, &ioh))
-		return 0;
-
-
-	/* Bus independent probe */
-	sc.lm_iot = ia->ia_iot;
-	sc.lm_ioh = ioh;
-	sc.lmsc.lm_writereg = lm_isa_writereg;
-	sc.lmsc.lm_readreg = lm_isa_readreg;
-	rv = lm_probe(&sc.lmsc);
-
-	bus_space_unmap(ia->ia_iot, ioh, 8);
-
-	if (rv) {
-		ia->ia_nio = 1;
-		ia->ia_io[0].ir_size = 8;
-
-		ia->ia_niomem = 0;
-		ia->ia_nirq = 0;
-		ia->ia_ndrq = 0;
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_lm_isa,
+		    cfattach_ioconf_lm_isa, cfdata_ioconf_lm_isa);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_lm_isa,
+		    cfattach_ioconf_lm_isa, cfdata_ioconf_lm_isa);
+#endif
+		return error;
+	default:
+		return ENOTTY;
 	}
-
-	return rv;
 }
-
-
-void
-lm_isa_attach(device_t parent, device_t self, void *aux)
-{
-	struct lm_isa_softc *sc = device_private(self);
-	struct isa_attach_args *ia = aux;
-
-	sc->lm_iot = ia->ia_iot;
-
-	if (bus_space_map(ia->ia_iot, ia->ia_io[0].ir_addr, 8, 0,
-	    &sc->lm_ioh)) {
-		aprint_error(": can't map i/o space\n");
-		return;
-	}
-
-	/* Bus-independent attachment */
-	sc->lmsc.sc_dev = self;
-	sc->lmsc.lm_writereg = lm_isa_writereg;
-	sc->lmsc.lm_readreg = lm_isa_readreg;
-
-	lm_attach(&sc->lmsc);
-}
-
-int
-lm_isa_detach(device_t self, int flags)
-{
-	struct lm_isa_softc *sc = device_private(self);
-
-	lm_detach(&sc->lmsc);
-	bus_space_unmap(sc->lm_iot, sc->lm_ioh, 8);
-	return 0;
-}
-
-uint8_t
-lm_isa_readreg(struct lm_softc *lmsc, int reg)
-{
-	struct lm_isa_softc *sc = (struct lm_isa_softc *)lmsc;
-
-	bus_space_write_1(sc->lm_iot, sc->lm_ioh, LMC_ADDR, reg);
-	return bus_space_read_1(sc->lm_iot, sc->lm_ioh, LMC_DATA);
-}
-
-
-void
-lm_isa_writereg(struct lm_softc *lmsc, int reg, int val)
-{
-	struct lm_isa_softc *sc = (struct lm_isa_softc *)lmsc;
-
-	bus_space_write_1(sc->lm_iot, sc->lm_ioh, LMC_ADDR, reg);
-	bus_space_write_1(sc->lm_iot, sc->lm_ioh, LMC_DATA, val);
-}
-

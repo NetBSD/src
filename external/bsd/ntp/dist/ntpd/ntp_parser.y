@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_parser.y,v 1.4 2010/12/04 23:08:35 christos Exp $	*/
+/*	$NetBSD: ntp_parser.y,v 1.4.6.1 2012/04/17 00:03:47 yamt Exp $	*/
 
 /* ntp_parser.y
  *
@@ -15,9 +15,9 @@
   # include <config.h>
   #endif
 
+  #include "ntp.h"
   #include "ntpd.h"
   #include "ntp_machine.h"
-  #include "ntp.h"
   #include "ntp_stdlib.h"
   #include "ntp_filegen.h"
   #include "ntp_data_structures.h"
@@ -39,7 +39,7 @@
   #define YYFREE	free
   #define YYERROR_VERBOSE
   #define YYMAXDEPTH	1000   /* stop the madness sooner */
-  void yyerror (const char *msg);
+  void yyerror(const char *msg);
   extern int input_from_file;  /* 0=input from ntpq :config */
 %}
 
@@ -96,6 +96,7 @@
 %token	<Double>	T_Double
 %token	<Integer>	T_Driftfile
 %token	<Integer>	T_Drop
+%token	<Integer>	T_Ellipsis	/* "..." not "ellipsis" */
 %token	<Integer>	T_Enable
 %token	<Integer>	T_End
 %token	<Integer>	T_False
@@ -238,38 +239,59 @@
 %type	<Integer>	access_control_flag
 %type	<Queue>		ac_flag_list
 %type	<Address_node>	address
+%type	<Integer>	address_fam
 %type	<Queue>		address_list
 %type	<Integer>	boolean
 %type	<Integer>	client_type
 %type	<Attr_val>	crypto_command
-%type	<Queue>		crypto_command_line
 %type	<Queue>		crypto_command_list
+%type	<Integer>	crypto_str_keyword
 %type	<Attr_val>	discard_option
+%type	<Integer>	discard_option_keyword
 %type	<Queue>		discard_option_list
+%type	<Integer>	enable_disable
 %type	<Attr_val>	filegen_option
 %type	<Queue>		filegen_option_list
 %type	<Integer>	filegen_type
 %type	<Attr_val>	fudge_factor
+%type	<Integer>	fudge_factor_bool_keyword
+%type	<Integer>	fudge_factor_dbl_keyword
 %type	<Queue>		fudge_factor_list
 %type	<Queue>		integer_list
+%type	<Queue>		integer_list_range
+%type	<Attr_val>	integer_list_range_elt
+%type	<Attr_val>	integer_range
 %type	<Integer>	nic_rule_action
-%type	<Queue>		interface_command
+%type	<Integer>	interface_command
 %type	<Integer>	interface_nic
 %type	<Address_node>	ip_address
+%type	<Integer>	link_nolink
 %type	<Attr_val>	log_config_command
 %type	<Queue>		log_config_list
+%type	<Integer>	misc_cmd_dbl_keyword
+%type	<Integer>	misc_cmd_str_keyword
+%type	<Integer>	misc_cmd_str_lcl_keyword
 %type	<Integer>	nic_rule_class
 %type	<Double>	number
 %type	<Attr_val>	option
+%type	<Attr_val>	option_flag
+%type	<Integer>	option_flag_keyword
 %type	<Queue>		option_list
+%type	<Attr_val>	option_int
+%type	<Integer>	option_int_keyword
 %type	<Integer>	stat
 %type	<Queue>		stats_list
 %type	<Queue>		string_list
 %type	<Attr_val>	system_option
+%type	<Integer>	system_option_flag_keyword
 %type	<Queue>		system_option_list
+%type	<Integer>	t_default_or_zero
+%type	<Integer>	tinker_option_keyword
 %type	<Attr_val>	tinker_option
 %type	<Queue>		tinker_option_list
 %type	<Attr_val>	tos_option
+%type	<Integer>	tos_option_dbl_keyword
+%type	<Integer>	tos_option_int_keyword
 %type	<Queue>		tos_option_list
 %type	<Attr_val>	trap_option
 %type	<Queue>		trap_option_list
@@ -360,12 +382,20 @@ client_type
 
 address
 	:	ip_address
-	|	T_Ipv4_flag T_String	{ $$ = create_address_node($2, AF_INET); }
-	|	T_Ipv6_flag T_String	{ $$ = create_address_node($2, AF_INET6); }
+	|	address_fam T_String
+			{ $$ = create_address_node($2, $1); }
 	;
 
 ip_address
-	:	T_String { $$ = create_address_node($1, 0); }
+	:	T_String
+			{ $$ = create_address_node($1, 0); }
+	;
+
+address_fam
+	:	T_Ipv4_flag
+			{ $$ = AF_INET; }
+	|	T_Ipv6_flag
+			{ $$ = AF_INET6; }
 	;
 
 option_list
@@ -374,22 +404,42 @@ option_list
 	;
 
 option
-	:	T_Autokey		{ $$ = create_attr_ival(T_Flag, $1); }
-	|	T_Bias number		{ $$ = create_attr_dval($1, $2); }
-	|	T_Burst			{ $$ = create_attr_ival(T_Flag, $1); }
-	|	T_Iburst		{ $$ = create_attr_ival(T_Flag, $1); }
-	|	T_Key T_Integer		{ $$ = create_attr_ival($1, $2); }
-	|	T_Minpoll T_Integer	{ $$ = create_attr_ival($1, $2); }
-	|	T_Maxpoll T_Integer	{ $$ = create_attr_ival($1, $2); }
-	|	T_Noselect		{ $$ = create_attr_ival(T_Flag, $1); }
-	|	T_Preempt		{ $$ = create_attr_ival(T_Flag, $1); }
-	|	T_Prefer		{ $$ = create_attr_ival(T_Flag, $1); }
-	|	T_True			{ $$ = create_attr_ival(T_Flag, $1); }
-	|	T_Xleave		{ $$ = create_attr_ival(T_Flag, $1); }
-	|	T_Ttl T_Integer		{ $$ = create_attr_ival($1, $2); }
-	|	T_Mode T_Integer	{ $$ = create_attr_ival($1, $2); }
-	|	T_Version T_Integer	{ $$ = create_attr_ival($1, $2); }
+	:	option_flag
+	|	option_int
+	|	T_Bias number
+			{ $$ = create_attr_dval($1, $2); }
 	;
+
+option_flag
+	:	option_flag_keyword
+			{ $$ = create_attr_ival(T_Flag, $1); }
+	;
+
+option_flag_keyword
+	:	T_Autokey
+	|	T_Burst
+	|	T_Iburst
+	|	T_Noselect
+	|	T_Preempt
+	|	T_Prefer
+	|	T_True
+	|	T_Xleave
+	;
+
+option_int
+	:	option_int_keyword T_Integer
+			{ $$ = create_attr_ival($1, $2); }
+	;
+
+option_int_keyword
+	:	T_Key
+	|	T_Minpoll
+	|	T_Maxpoll
+	|	T_Ttl
+	|	T_Mode
+	|	T_Version
+	;
+
 
 
 /* unpeer commands
@@ -437,7 +487,7 @@ authentication_command
 			{ enqueue(cfgt.vars, create_attr_ival($1, $2)); }
 	|	T_ControlKey T_Integer
 			{ cfgt.auth.control_key = $2; }
-	|	T_Crypto crypto_command_line
+	|	T_Crypto crypto_command_list
 		{ 
 			cfgt.auth.cryptosw++;
 			append_queue(cfgt.auth.crypto_cmd_list, $2);
@@ -450,47 +500,26 @@ authentication_command
 			{ cfgt.auth.request_key = $2; }
 	|	T_Revoke T_Integer
 			{ cfgt.auth.revoke = $2; }
-	|	T_Trustedkey integer_list
+	|	T_Trustedkey integer_list_range
 			{ cfgt.auth.trusted_key_list = $2; }
 	|	T_NtpSignDsocket T_String
 			{ cfgt.auth.ntp_signd_socket = $2; }
 	;
 
-crypto_command_line
-	:	crypto_command_list
-	|	/* Null list */
-			{ $$ = create_queue(); }
-	;
-
 crypto_command_list
-	:	crypto_command_list crypto_command
+	:	/* empty list */
+			{ $$ = create_queue(); }
+	|	crypto_command_list crypto_command
 		{ 
 			if ($2 != NULL)
 				$$ = enqueue($1, $2);
 			else
 				$$ = $1;
 		}
-	|	crypto_command
-		{
-			if ($1 != NULL)
-				$$ = enqueue_in_new_queue($1);
-			else
-				$$ = create_queue();
-		}
 	;
 
 crypto_command
-	:	T_Host	T_String
-			{ $$ = create_attr_sval($1, $2); }
-	|	T_Ident	T_String
-			{ $$ = create_attr_sval($1, $2); }
-	|	T_Pw T_String
-			{ $$ = create_attr_sval($1, $2); }
-	|	T_Randfile T_String
-			{ $$ = create_attr_sval($1, $2); }
-	|	T_Sign	T_String
-			{ $$ = create_attr_sval($1, $2); }
-	|	T_Digest T_String
+	:	crypto_str_keyword T_String
 			{ $$ = create_attr_sval($1, $2); }
 	|	T_Revoke T_Integer
 		{
@@ -501,6 +530,15 @@ crypto_command
 				"please use 'revoke %d' instead.",
 				cfgt.auth.revoke, cfgt.auth.revoke);
 		}
+	;
+
+crypto_str_keyword
+	:	T_Host
+	|	T_Ident
+	|	T_Pw
+	|	T_Randfile
+	|	T_Sign
+	|	T_Digest
 	;
 
 
@@ -519,26 +557,27 @@ tos_option_list
 	;
 
 tos_option
-	:	T_Ceiling T_Integer
+	:	tos_option_int_keyword T_Integer
 			{ $$ = create_attr_dval($1, (double)$2); }
-	|	T_Floor T_Integer
-			{ $$ = create_attr_dval($1, (double)$2); }
+	|	tos_option_dbl_keyword number
+			{ $$ = create_attr_dval($1, $2); }
 	|	T_Cohort boolean
 			{ $$ = create_attr_dval($1, (double)$2); }
-	|	T_Orphan T_Integer
-			{ $$ = create_attr_dval($1, (double)$2); }
-	|	T_Mindist number
-			{ $$ = create_attr_dval($1, $2); }
-	|	T_Maxdist number
-			{ $$ = create_attr_dval($1, $2); }
-	|	T_Minclock number
-			{ $$ = create_attr_dval($1, $2); }
-	|	T_Maxclock number
-			{ $$ = create_attr_dval($1, $2); }
-	|	T_Minsane T_Integer
-			{ $$ = create_attr_dval($1, (double)$2); }
-	|	T_Beacon T_Integer
-			{ $$ = create_attr_dval($1, (double)$2); }
+	;
+
+tos_option_int_keyword
+	:	T_Ceiling
+	|	T_Floor
+	|	T_Orphan
+	|	T_Minsane
+	|	T_Beacon
+	;
+
+tos_option_dbl_keyword
+	:	T_Mindist
+	|	T_Maxdist
+	|	T_Minclock
+	|	T_Maxclock
 	;
 
 
@@ -551,10 +590,10 @@ monitoring_command
 			{ append_queue(cfgt.stats_list, $2); }
 	|	T_Statsdir T_String
 		{
-			if (input_from_file)
+			if (input_from_file) {
 				cfgt.stats_dir = $2;
-			else {
-				free($2);
+			} else {
+				YYFREE($2);
 				yyerror("statsdir remote configuration ignored");
 			}
 		}
@@ -582,62 +621,64 @@ stat
 	;
 
 filegen_option_list
-	:	filegen_option_list filegen_option
+	:	/* empty list */
+			{ $$ = create_queue(); }
+	|	filegen_option_list filegen_option
 		{
 			if ($2 != NULL)
 				$$ = enqueue($1, $2);
 			else
 				$$ = $1;
 		}
-	|	filegen_option
-		{
-			if ($1 != NULL)
-				$$ = enqueue_in_new_queue($1);
-			else
-				$$ = create_queue();
-		}
 	;
 
 filegen_option
 	:	T_File T_String
 		{
-			if (input_from_file)
+			if (input_from_file) {
 				$$ = create_attr_sval($1, $2);
-			else {
+			} else {
 				$$ = NULL;
-				free($2);
-				yyerror("filegen file remote configuration ignored");
+				YYFREE($2);
+				yyerror("filegen file remote config ignored");
 			}
 		}
 	|	T_Type filegen_type
 		{
-			if (input_from_file)
+			if (input_from_file) {
 				$$ = create_attr_ival($1, $2);
-			else {
+			} else {
 				$$ = NULL;
-				yyerror("filegen type remote configuration ignored");
+				yyerror("filegen type remote config ignored");
 			}
 		}
-	|	T_Link
+	|	link_nolink
 		{
-			if (input_from_file)
+			const char *err;
+			
+			if (input_from_file) {
 				$$ = create_attr_ival(T_Flag, $1);
-			else {
+			} else {
 				$$ = NULL;
-				yyerror("filegen link remote configuration ignored");
+				if (T_Link == $1)
+					err = "filegen link remote config ignored";
+				else
+					err = "filegen nolink remote config ignored";
+				yyerror(err);
 			}
 		}
+	|	enable_disable
+			{ $$ = create_attr_ival(T_Flag, $1); }
+	;
+
+link_nolink
+	:	T_Link
 	|	T_Nolink
-		{
-			if (input_from_file)
-				$$ = create_attr_ival(T_Flag, $1);
-			else {
-				$$ = NULL;
-				yyerror("filegen nolink remote configuration ignored");
-			}
-		}
-	|	T_Enable	{ $$ = create_attr_ival(T_Flag, $1); }
-	|	T_Disable	{ $$ = create_attr_ival(T_Flag, $1); }
+	;
+
+enable_disable
+	:	T_Enable
+	|	T_Disable
 	;
 
 filegen_type
@@ -678,7 +719,7 @@ access_control_command
 						estrdup("0.0.0.0"), 
 						AF_INET),
 					create_address_node(
-						estrdup("255.255.255.255"), 
+						estrdup("0.0.0.0"), 
 						AF_INET),
 					$4, 
 					ip_file->line_no));
@@ -691,7 +732,7 @@ access_control_command
 						estrdup("::"), 
 						AF_INET6),
 					create_address_node(
-						estrdup("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"),
+						estrdup("::"), 
 						AF_INET6),
 					$4, 
 					ip_file->line_no));
@@ -704,7 +745,7 @@ access_control_command
 	;
 
 ac_flag_list
-	:	/* Null statement */
+	:	/* empty list is allowed */
 			{ $$ = create_queue(); }
 	|	ac_flag_list access_control_flag
 			{ $$ = enqueue($1, create_ival($2)); }
@@ -735,10 +776,16 @@ discard_option_list
 	;
 
 discard_option
-	:	T_Average T_Integer { $$ = create_attr_ival($1, $2); }
-	|	T_Minimum T_Integer { $$ = create_attr_ival($1, $2); }
-	|	T_Monitor T_Integer { $$ = create_attr_ival($1, $2); }
+	:	discard_option_keyword T_Integer
+			{ $$ = create_attr_ival($1, $2); }
 	;
+
+discard_option_keyword
+	:	T_Average
+	|	T_Minimum
+	|	T_Monitor
+	;
+
 
 /* Fudge Commands
  * --------------
@@ -757,15 +804,28 @@ fudge_factor_list
 	;
 	
 fudge_factor
-	:	T_Time1 number		{ $$ = create_attr_dval($1, $2); }
-	|	T_Time2 number		{ $$ = create_attr_dval($1, $2); }
-	|	T_Stratum T_Integer	{ $$ = create_attr_ival($1, $2); }
-	|	T_Refid T_String	{ $$ = create_attr_sval($1, $2); }
-	|	T_Flag1 boolean		{ $$ = create_attr_ival($1, $2); }
-	|	T_Flag2	boolean		{ $$ = create_attr_ival($1, $2); }
-	|	T_Flag3	boolean		{ $$ = create_attr_ival($1, $2); }
-	|	T_Flag4 boolean		{ $$ = create_attr_ival($1, $2); }
+	:	fudge_factor_dbl_keyword number
+			{ $$ = create_attr_dval($1, $2); }
+	|	fudge_factor_bool_keyword boolean
+			{ $$ = create_attr_ival($1, $2); }
+	|	T_Stratum T_Integer
+			{ $$ = create_attr_ival($1, $2); }
+	|	T_Refid T_String
+			{ $$ = create_attr_sval($1, $2); }
 	;
+
+fudge_factor_dbl_keyword
+	:	T_Time1
+	|	T_Time2
+	;
+
+fudge_factor_bool_keyword
+	:	T_Flag1
+	|	T_Flag2
+	|	T_Flag3
+	|	T_Flag4
+	;
+
 
 /* Command for System Options
  * --------------------------
@@ -796,22 +856,28 @@ system_option_list
 	;
 
 system_option
-	:	T_Auth      { $$ = create_attr_ival(T_Flag, $1); }
-	|	T_Bclient   { $$ = create_attr_ival(T_Flag, $1); }
-	|	T_Calibrate { $$ = create_attr_ival(T_Flag, $1); }
-	|	T_Kernel    { $$ = create_attr_ival(T_Flag, $1); }
-	|	T_Monitor   { $$ = create_attr_ival(T_Flag, $1); }
-	|	T_Ntp       { $$ = create_attr_ival(T_Flag, $1); }
-	|	T_Stats     
+	:	system_option_flag_keyword
+			{ $$ = create_attr_ival(T_Flag, $1); }
+	|	T_Stats
 		{ 
-			if (input_from_file)
+			if (input_from_file) {
 				$$ = create_attr_ival(T_Flag, $1);
-			else {
+			} else {
 				$$ = NULL;
-				yyerror("enable/disable stats remote configuration ignored");
+				yyerror("enable/disable stats remote config ignored");
 			}
 		}
 	;
+
+system_option_flag_keyword
+	:	T_Auth
+	|	T_Bclient
+	|	T_Calibrate
+	|	T_Kernel
+	|	T_Monitor
+	|	T_Ntp
+	;
+
 
 /* Tinker Commands
  * ---------------
@@ -827,13 +893,18 @@ tinker_option_list
 	;
 
 tinker_option
-	:	T_Allan number	    { $$ = create_attr_dval($1, $2); }
-	|	T_Dispersion number { $$ = create_attr_dval($1, $2); }
-	|	T_Freq number	    { $$ = create_attr_dval($1, $2); }
-	|	T_Huffpuff number   { $$ = create_attr_dval($1, $2); }
-	|	T_Panic number	    { $$ = create_attr_dval($1, $2); }
-	|	T_Step number	    { $$ = create_attr_dval($1, $2); }
-	|	T_Stepout number    { $$ = create_attr_dval($1, $2); }
+	:	tinker_option_keyword number
+			{ $$ = create_attr_dval($1, $2); }
+	;
+
+tinker_option_keyword
+	:	T_Allan
+	|	T_Dispersion
+	|	T_Freq
+	|	T_Huffpuff
+	|	T_Panic
+	|	T_Step
+	|	T_Stepout
 	;
 
 
@@ -843,20 +914,53 @@ tinker_option
 
 miscellaneous_command
 	:	interface_command
+	|	misc_cmd_dbl_keyword number
+		{
+			struct attr_val *av;
+			
+			av = create_attr_dval($1, $2);
+			enqueue(cfgt.vars, av);
+		}
+	|	misc_cmd_str_keyword T_String
+		{
+			struct attr_val *av;
+			
+			av = create_attr_sval($1, $2);
+			enqueue(cfgt.vars, av);
+		}
+	|	misc_cmd_str_lcl_keyword T_String
+		{
+			char error_text[64];
+			struct attr_val *av;
+
+			if (input_from_file) {
+				av = create_attr_sval($1, $2);
+				enqueue(cfgt.vars, av);
+			} else {
+				YYFREE($2);
+				snprintf(error_text, sizeof(error_text),
+					 "%s remote config ignored",
+					 keyword($1));
+				yyerror(error_text);
+			}
+		}
 	|	T_Includefile T_String command
 		{
+			if (!input_from_file) {
+				yyerror("remote includefile ignored");
+				break;
+			}
 			if (curr_include_level >= MAXINCLUDELEVEL) {
 				fprintf(stderr, "getconfig: Maximum include file level exceeded.\n");
-				msyslog(LOG_ERR, "getconfig: Maximum include file level exceeded.");
-			}
-			else {
+				msyslog(LOG_ERR, "getconfig: Maximum include file level exceeded.\n");
+			} else {
 				fp[curr_include_level + 1] = F_OPEN(FindConfig($2), "r");
 				if (fp[curr_include_level + 1] == NULL) {
 					fprintf(stderr, "getconfig: Couldn't open <%s>\n", FindConfig($2));
-					msyslog(LOG_ERR, "getconfig: Couldn't open <%s>", FindConfig($2));
-				}
-				else
+					msyslog(LOG_ERR, "getconfig: Couldn't open <%s>\n", FindConfig($2));
+				} else {
 					ip_file = fp[++curr_include_level];
+				}
 			}
 		}
 	|	T_End
@@ -864,45 +968,14 @@ miscellaneous_command
 			while (curr_include_level != -1)
 				FCLOSE(fp[curr_include_level--]);
 		}
-
-	|	T_Broadcastdelay number
-			{ enqueue(cfgt.vars, create_attr_dval($1, $2)); }
 	|	T_Calldelay T_Integer
 			{ enqueue(cfgt.vars, create_attr_ival($1, $2)); }
-	|	T_Tick number
-			{ enqueue(cfgt.vars, create_attr_dval($1, $2)); }
 	|	T_Driftfile drift_parm
 			{ /* Null action, possibly all null parms */ }
-	|	T_Leapfile T_String
-			{ enqueue(cfgt.vars, create_attr_sval($1, $2)); }
-
-	|	T_Pidfile T_String
-			{ enqueue(cfgt.vars, create_attr_sval($1, $2)); }
-	|	T_Logfile T_String
-		{
-			if (input_from_file)
-				enqueue(cfgt.vars,
-					create_attr_sval($1, $2));
-			else {
-				free($2);
-				yyerror("logfile remote configuration ignored");
-			}
-		}
-
 	|	T_Logconfig log_config_list
 			{ append_queue(cfgt.logconfig, $2); }
 	|	T_Phone string_list
 			{ append_queue(cfgt.phone, $2); }
-	|	T_Saveconfigdir	T_String
-		{
-			if (input_from_file)
-				enqueue(cfgt.vars,
-					create_attr_sval($1, $2));
-			else {
-				free($2);
-				yyerror("saveconfigdir remote configuration ignored");
-			}
-		}
 	|	T_Setvar variable_assign
 			{ enqueue(cfgt.setvar, $2); }
 	|	T_Trap ip_address
@@ -911,10 +984,24 @@ miscellaneous_command
 			{ enqueue(cfgt.trap, create_addr_opts_node($2, $3)); }
 	|	T_Ttl integer_list
 			{ append_queue(cfgt.ttl, $2); }
-	|	T_Qos T_String
-			{ enqueue(cfgt.qos, create_attr_sval($1, $2)); }
 	;
-	
+
+misc_cmd_dbl_keyword
+	:	T_Broadcastdelay
+	|	T_Tick
+	;
+
+misc_cmd_str_keyword
+	:	T_Leapfile
+	|	T_Pidfile
+	|	T_Qos
+	;
+
+misc_cmd_str_lcl_keyword
+	:	T_Logfile
+	|	T_Saveconfigdir
+	;
+
 drift_parm
 	:	T_String
 			{ enqueue(cfgt.vars, create_attr_sval(T_Driftfile, $1)); }
@@ -926,10 +1013,14 @@ drift_parm
 	;
 
 variable_assign
-	:	T_String '=' T_String T_Default
+	:	T_String '=' T_String t_default_or_zero
 			{ $$ = create_setvar_node($1, $3, $4); }
-	|	T_String '=' T_String
-			{ $$ = create_setvar_node($1, $3, 0); }
+	;
+
+t_default_or_zero
+	:	T_Default
+	|	/* empty, no "default" modifier */
+		{ $$ = 0; }
 	;
 
 trap_option_list
@@ -1005,6 +1096,24 @@ integer_list
 	|	T_Integer { $$ = enqueue_in_new_queue(create_ival($1)); }
 	;
 
+integer_list_range
+	:	integer_list_range integer_list_range_elt
+			{ $$ = enqueue($1, $2); }
+	|	integer_list_range_elt
+			{ $$ = enqueue_in_new_queue($1); }
+	;
+
+integer_list_range_elt
+	:	T_Integer
+			{ $$ = create_attr_ival('i', $1); }
+	|	integer_range		/* default of $$ = $1 is good */
+	;
+
+integer_range		/* limited to unsigned shorts */
+	:	'(' T_Integer T_Ellipsis T_Integer ')'
+			{ $$ = create_attr_shorts('-', $2, $4); }
+	;
+
 string_list
 	:	string_list T_String { $$ = enqueue($1, create_pval($2)); }
 	|	T_String { $$ = enqueue_in_new_queue(create_pval($1)); }
@@ -1021,9 +1130,9 @@ boolean
 			if ($1 != 0 && $1 != 1) {
 				yyerror("Integer value is not boolean (0 or 1). Assuming 1");
 				$$ = 1;
-			}
-			else
+			} else {
 				$$ = $1;
+			}
 		}
 	|	T_True    { $$ = 1; }
 	|	T_False   { $$ = 0; }
@@ -1117,7 +1226,10 @@ sim_act_stmt
 
 %%
 
-void yyerror (const char *msg)
+void
+yyerror(
+	const char *msg
+	)
 {
 	int retval;
 
@@ -1147,8 +1259,9 @@ void yyerror (const char *msg)
 
 
 /*
- * token_name - convert T_ token integers to text
- *		example: token_name(T_Server) returns "T_Server"
+ * token_name - Convert T_ token integers to text.
+ *		Example: token_name(T_Server) returns "T_Server".
+ *		see also keyword(T_Server) which returns "server".
  */
 const char *
 token_name(

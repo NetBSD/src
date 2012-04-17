@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.28 2011/08/07 15:31:35 kiyohara Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.28.2.1 2012/04/17 00:06:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.28 2011/08/07 15:31:35 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.28.2.1 2012/04/17 00:06:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -135,9 +135,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	SIMPLEQ_INSERT_TAIL(&genppc_pct->pc_pbi, pbi, next);
 
 #ifdef PCI_NETBSD_CONFIGURE
-	ioext  = extent_create("pciio",  0x00008000, 0x0000ffff, M_DEVBUF,
+	ioext  = extent_create("pciio",  0x00008000, 0x0000ffff,
 	    NULL, 0, EX_NOWAIT);
-	memext = extent_create("pcimem", 0x00000000, 0x0fffffff, M_DEVBUF,
+	memext = extent_create("pcimem", 0x00000000, 0x0fffffff,
 	    NULL, 0, EX_NOWAIT);
 
 	pci_configure_bus(genppc_pct, ioext, memext, NULL, 0, CACHELINESIZE);

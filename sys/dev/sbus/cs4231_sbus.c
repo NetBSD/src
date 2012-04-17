@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.48 2011/06/02 00:23:28 christos Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.48.2.1 2012/04/17 00:08:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2002, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.48 2011/06/02 00:23:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.48.2.1 2012/04/17 00:08:01 yamt Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -124,7 +124,7 @@ const struct audio_hw_if audiocs_sbus_hw_if = {
 	cs4231_sbus_trigger_output,
 	cs4231_sbus_trigger_input,
 	NULL,			/* dev_ioctl */
-	NULL,			/* powerstate */
+	ad1848_get_locks,
 };
 
 
@@ -160,9 +160,9 @@ cs4231_sbus_attach(device_t parent, device_t self, void *aux)
 	sbsc->sc_bt = sc->sc_bustag = sa->sa_bustag;
 	sc->sc_dmatag = sa->sa_dmatag;
 
-	sbsc->sc_pint = sparc_softintr_establish(IPL_VM,
+	sbsc->sc_pint = sparc_softintr_establish(IPL_SCHED,
 	    (void *)cs4231_sbus_pint, sc);
-	sbsc->sc_rint = sparc_softintr_establish(IPL_VM,
+	sbsc->sc_rint = sparc_softintr_establish(IPL_SCHED,
 	    (void *)cs4231_sbus_rint, sc);
 
 	/*
@@ -187,6 +187,7 @@ cs4231_sbus_attach(device_t parent, device_t self, void *aux)
 	cs4231_common_attach(sc, self, bh);
 	printf("\n");
 
+	ad1848_init_locks(&sc->sc_ad1848, IPL_SCHED);
 	/* Establish interrupt channel */
 	if (sa->sa_nintr)
 		bus_intr_establish(sa->sa_bustag,
@@ -515,6 +516,8 @@ cs4231_sbus_intr(void *arg)
 	if ((csr & APC_INTR_MASK) == 0)	/* any interrupt pedning? */
 		return 0;
 
+	mutex_spin_enter(&sc->sc_ad1848.sc_intr_lock);
+
 	/* write back DMA status to clear interrupt */
 	bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CSR, csr);
 	++sc->sc_intrcnt.ev_count;
@@ -595,6 +598,8 @@ cs4231_sbus_intr(void *arg)
 		/* evcnt? */
 	}
 
+	mutex_spin_exit(&sc->sc_ad1848.sc_intr_lock);
+
 	return 1;
 }
 
@@ -604,11 +609,11 @@ cs4231_sbus_pint(void *cookie)
 	struct cs4231_softc *sc = cookie;
 	struct cs_transfer *t;
 
-	KERNEL_LOCK(1, NULL);
+	mutex_spin_enter(&sc->sc_ad1848.sc_intr_lock);
 	t = &sc->sc_playback;
 	if (t->t_intr != NULL)
 		(*t->t_intr)(t->t_arg);
-	KERNEL_UNLOCK_ONE(NULL);
+	mutex_spin_exit(&sc->sc_ad1848.sc_intr_lock);
 	return 0;
 }
 
@@ -618,11 +623,11 @@ cs4231_sbus_rint(void *cookie)
 	struct cs4231_softc *sc = cookie;
 	struct cs_transfer *t;
 
-	KERNEL_LOCK(1, NULL);
+	mutex_spin_enter(&sc->sc_ad1848.sc_intr_lock);
 	t = &sc->sc_capture;
 	if (t->t_intr != NULL)
 		(*t->t_intr)(t->t_arg);
-	KERNEL_UNLOCK_ONE(NULL);
+	mutex_spin_exit(&sc->sc_ad1848.sc_intr_lock);
 	return 0;
 }
 

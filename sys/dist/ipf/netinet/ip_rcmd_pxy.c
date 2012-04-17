@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_rcmd_pxy.c,v 1.12 2011/03/05 21:51:17 jakllsch Exp $	*/
+/*	$NetBSD: ip_rcmd_pxy.c,v 1.12.4.1 2012/04/17 00:08:14 yamt Exp $	*/
 
 /*
  * Copyright (C) 1998-2003 by Darren Reed
@@ -12,18 +12,25 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_rcmd_pxy.c,v 1.12 2011/03/05 21:51:17 jakllsch Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_rcmd_pxy.c,v 1.12.4.1 2012/04/17 00:08:14 yamt Exp $");
 
 #define	IPF_RCMD_PROXY
 
 
-int ippr_rcmd_init __P((void));
-void ippr_rcmd_fini __P((void));
-int ippr_rcmd_new __P((fr_info_t *, ap_session_t *, nat_t *));
-int ippr_rcmd_out __P((fr_info_t *, ap_session_t *, nat_t *));
-int ippr_rcmd_in __P((fr_info_t *, ap_session_t *, nat_t *));
-u_short ipf_rcmd_atoi __P((char *));
-int ippr_rcmd_portmsg __P((fr_info_t *, ap_session_t *, nat_t *));
+int
+ippr_rcmd_init(void);
+void
+ippr_rcmd_fini(void);
+int
+ippr_rcmd_new(fr_info_t *, ap_session_t *, nat_t *);
+int
+ippr_rcmd_out(fr_info_t *, ap_session_t *, nat_t *);
+int
+ippr_rcmd_in(fr_info_t *, ap_session_t *, nat_t *);
+u_short
+ipf_rcmd_atoi(char *);
+int
+ippr_rcmd_portmsg(fr_info_t *, ap_session_t *, nat_t *);
 
 static	frentry_t	rcmdfr;
 
@@ -33,7 +40,8 @@ int	rcmd_proxy_init = 0;
 /*
  * RCMD application proxy initialization.
  */
-int ippr_rcmd_init()
+int
+ippr_rcmd_init(void)
 {
 	bzero((char *)&rcmdfr, sizeof(rcmdfr));
 	rcmdfr.fr_ref = 1;
@@ -45,7 +53,8 @@ int ippr_rcmd_init()
 }
 
 
-void ippr_rcmd_fini()
+void
+ippr_rcmd_fini(void)
 {
 	if (rcmd_proxy_init == 1) {
 		MUTEX_DESTROY(&rcmdfr.fr_lock);
@@ -57,10 +66,8 @@ void ippr_rcmd_fini()
 /*
  * Setup for a new RCMD proxy.
  */
-int ippr_rcmd_new(fin, aps, nat)
-fr_info_t *fin;
-ap_session_t *aps;
-nat_t *nat;
+int
+ippr_rcmd_new(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	tcphdr_t *tcp = (tcphdr_t *)fin->fin_dp;
 
@@ -85,8 +92,8 @@ nat_t *nat;
 /*
  * ipf_rcmd_atoi - implement a simple version of atoi
  */
-u_short ipf_rcmd_atoi(ptr)
-char *ptr;
+u_short
+ipf_rcmd_atoi(char *ptr)
 {
 	register char *s = ptr, c;
 	register u_short i = 0;
@@ -99,10 +106,8 @@ char *ptr;
 }
 
 
-int ippr_rcmd_portmsg(fin, aps, nat)
-fr_info_t *fin;
-ap_session_t *aps;
-nat_t *nat;
+int
+ippr_rcmd_portmsg(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	tcphdr_t *tcp, tcph, *tcp2 = &tcph;
 	struct in_addr swip, swip2;
@@ -219,10 +224,8 @@ nat_t *nat;
 }
 
 
-int ippr_rcmd_out(fin, aps, nat)
-fr_info_t *fin;
-ap_session_t *aps;
-nat_t *nat;
+int
+ippr_rcmd_out(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	if (nat->nat_dir == NAT_OUTBOUND)
 		return ippr_rcmd_portmsg(fin, aps, nat);
@@ -230,10 +233,8 @@ nat_t *nat;
 }
 
 
-int ippr_rcmd_in(fin, aps, nat)
-fr_info_t *fin;
-ap_session_t *aps;
-nat_t *nat;
+int
+ippr_rcmd_in(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	if (nat->nat_dir == NAT_INBOUND)
 		return ippr_rcmd_portmsg(fin, aps, nat);

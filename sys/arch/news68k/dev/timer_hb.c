@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_hb.c,v 1.18 2010/12/20 00:25:40 matt Exp $	*/
+/*	$NetBSD: timer_hb.c,v 1.18.8.1 2012/04/17 00:06:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_hb.c,v 1.18 2010/12/20 00:25:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_hb.c,v 1.18.8.1 2012/04/17 00:06:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -106,7 +106,7 @@ timer_hb_attach(device_t parent, device_t self, void *aux)
 	if (ha->ha_ipl != TIMER_LEVEL)
 		panic("clock_hb_attach: wrong interrupt level");
 
-	ctrl_timer = (uint8_t *)IIOV(ha->ha_address); /* XXX needs bus_space */
+	ctrl_timer = (uint8_t *)(ha->ha_address); /* XXX needs bus_space */
 
 	printf("\n");
 

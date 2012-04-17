@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.h,v 1.29 2011/06/17 14:23:51 manu Exp $	*/
+/*	$NetBSD: fstypes.h,v 1.29.2.1 2012/04/17 00:08:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -83,9 +83,8 @@ typedef struct fhandle	fhandle_t;
  * one of the __MNT_UNUSED flags.
  */
 
-#define	__MNT_UNUSED1	0x00020000
-#define	__MNT_UNUSED2	0x00200000
-#define	__MNT_UNUSED3	0x00800000
+#define	__MNT_UNUSED1	0x00200000
+#define	__MNT_UNUSED2	0x00800000
 
 #define	MNT_RDONLY	0x00000001	/* read only filesystem */
 #define	MNT_SYNCHRONOUS	0x00000002	/* file system written synchronously */
@@ -95,6 +94,7 @@ typedef struct fhandle	fhandle_t;
 #define	MNT_UNION	0x00000020	/* union with underlying filesystem */
 #define	MNT_ASYNC	0x00000040	/* file system written asynchronously */
 #define	MNT_NOCOREDUMP	0x00008000	/* don't write core dumps to this FS */
+#define	MNT_RELATIME	0x00020000	/* only update access time if mod/ch */
 #define	MNT_IGNORE	0x00100000	/* don't show entry in df */
 #define	MNT_EXTATTR	0x01000000	/* enable extended attributes */
 #define	MNT_LOG		0x02000000	/* Use logging */
@@ -104,22 +104,27 @@ typedef struct fhandle	fhandle_t;
 #define	MNT_SOFTDEP	0x80000000	/* Use soft dependencies */
 
 #define	__MNT_BASIC_FLAGS \
-	{ MNT_RDONLY,		0,	"read-only" }, \
-	{ MNT_SYNCHRONOUS,	0,	"synchronous" }, \
+	{ MNT_ASYNC,		0,	"asynchronous" }, \
+	{ MNT_EXTATTR,		0,	"extattr" }, \
+	{ MNT_IGNORE,		0,	"hidden" }, \
+	{ MNT_LOG,		0,	"log" }, \
+	{ MNT_NOATIME,		0,	"noatime" }, \
+	{ MNT_NOCOREDUMP,	0,	"nocoredump" }, \
+	{ MNT_NODEV,		0,	"nodev" }, \
+	{ MNT_NODEVMTIME,	0,	"nodevmtime" }, \
 	{ MNT_NOEXEC,		0,	"noexec" }, \
 	{ MNT_NOSUID,		0,	"nosuid" }, \
-	{ MNT_NODEV,		0,	"nodev" }, \
-	{ MNT_UNION,		0,	"union" }, \
-	{ MNT_ASYNC,		0,	"asynchronous" }, \
-	{ MNT_NOCOREDUMP,	0,	"nocoredump" }, \
-	{ MNT_IGNORE,		0,	"hidden" }, \
-	{ MNT_NOATIME,		0,	"noatime" }, \
-	{ MNT_SYMPERM,		0,	"symperm" }, \
-	{ MNT_NODEVMTIME,	0,	"nodevmtime" }, \
+	{ MNT_RDONLY,		0,	"read-only" }, \
+	{ MNT_RELATIME,		0,	"relatime" }, \
 	{ MNT_SOFTDEP,		0,	"soft dependencies" }, \
-	{ MNT_LOG,		0,	"log" }, \
-	{ MNT_EXTATTR,		0,	"extattr" }, 
+	{ MNT_SYMPERM,		0,	"symperm" }, \
+	{ MNT_SYNCHRONOUS,	0,	"synchronous" }, \
+	{ MNT_UNION,		0,	"union" }, \
 
+#define MNT_BASIC_FLAGS (MNT_ASYNC | MNT_EXTATTR | MNT_LOG | MNT_NOATIME | \
+    MNT_NOCOREDUMP | MNT_NODEV | MNT_NODEVMTIME | MNT_NOEXEC | MNT_NOSUID | \
+    MNT_RDONLY | MNT_RELATIME | MNT_SOFTDEP | MNT_SYMPERM | \
+    MNT_SYNCHRONOUS | MNT_UNION)
 /*
  * exported mount flags.
  */
@@ -236,7 +241,7 @@ typedef struct fhandle	fhandle_t;
 	"\25MNT_IGNORE" \
 	"\24MNT_FORCE" \
 	"\23MNT_RELOAD" \
-	"\22MNT_UNUSED" \
+	"\22MNT_RELATIME" \
 	"\21MNT_UPDATE" \
 	"\20MNT_NOCOREDUMP" \
 	"\17MNT_ROOTFS" \

@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_quirks.c,v 1.19 2011/02/20 06:45:32 jruoho Exp $ */
+/* $NetBSD: acpi_quirks.c,v 1.19.4.1 2012/04/17 00:07:27 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.19 2011/02/20 06:45:32 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.19.4.1 2012/04/17 00:07:27 yamt Exp $");
 
 #include "opt_acpi.h"
 
@@ -129,7 +129,7 @@ acpi_quirks_revcmp(uint32_t tabval, uint32_t wanted, int op)
 static int
 acpi_quirks_bios_year(void)
 {
-	const char *datestr = pmf_get_platform("firmware-date");
+	const char *datestr = pmf_get_platform("bios-date");
 	unsigned long date;
 
 	if (datestr == NULL)

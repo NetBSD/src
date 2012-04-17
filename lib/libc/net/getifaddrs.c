@@ -1,4 +1,4 @@
-/*	$NetBSD: getifaddrs.c,v 1.14 2011/02/04 02:01:12 matt Exp $	*/
+/*	$NetBSD: getifaddrs.c,v 1.14.4.1 2012/04/17 00:05:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1999
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getifaddrs.c,v 1.14 2011/02/04 02:01:12 matt Exp $");
+__RCSID("$NetBSD: getifaddrs.c,v 1.14.4.1 2012/04/17 00:05:21 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef RUMP_ACTION
@@ -63,10 +63,17 @@ __weak_alias(freeifaddrs,_freeifaddrs)
 int
 getifaddrs(struct ifaddrs **pif)
 {
-	int icnt = 1;
-	int dcnt = 0;
-	int ncnt = 0;
-	int mib[6];
+	size_t icnt = 1;
+	size_t dcnt = 0;
+	size_t ncnt = 0;
+	static const int mib[] = {
+		CTL_NET,
+		PF_ROUTE,
+		0,			/* protocol */
+		0,			/* wildcard address family */
+		NET_RT_IFLIST,
+		0			/* no flags */
+	};
 	size_t needed;
 	char *buf;
 	char *next;
@@ -85,17 +92,11 @@ getifaddrs(struct ifaddrs **pif)
 
 	_DIAGASSERT(pif != NULL);
 
-	mib[0] = CTL_NET;
-	mib[1] = PF_ROUTE;
-	mib[2] = 0;             /* protocol */
-	mib[3] = 0;             /* wildcard address family */
-	mib[4] = NET_RT_IFLIST;
-	mib[5] = 0;             /* no flags */
-	if (sysctl(mib, __arraycount(mib), NULL, &needed, NULL, 0) < 0)
+	if (sysctl(mib, (u_int)__arraycount(mib), NULL, &needed, NULL, 0) < 0)
 		return (-1);
 	if ((buf = malloc(needed)) == NULL)
 		return (-1);
-	if (sysctl(mib, __arraycount(mib), buf, &needed, NULL, 0) < 0) {
+	if (sysctl(mib, (u_int)__arraycount(mib), buf, &needed, NULL, 0) < 0) {
 		free(buf);
 		return (-1);
 	}

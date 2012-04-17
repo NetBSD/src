@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.41 2011/04/07 11:02:24 matt Exp $	*/
+/*	$NetBSD: undefined.c,v 1.41.4.1 2012/04/17 00:06:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.41 2011/04/07 11:02:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.41.4.1 2012/04/17 00:06:04 yamt Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -151,6 +151,7 @@ cp15_trapper(u_int addr, u_int insn, struct trapframe *frame, int code)
 	 */
 	if ((insn & 0xffff0fff) == 0xee1d0f70) {
 		*regp = (uintptr_t)l->l_private;
+		frame->tf_pc += INSN_SIZE;
 		return 0;
 	}
 
@@ -163,6 +164,7 @@ cp15_trapper(u_int addr, u_int insn, struct trapframe *frame, int code)
 			*regp = pcb->pcb_user_pid_rw;
 		else
 			pcb->pcb_user_pid_rw = *regp;
+		frame->tf_pc += INSN_SIZE;
 		return 0;
 	}
 

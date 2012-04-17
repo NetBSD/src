@@ -1,7 +1,3 @@
-/*	$NetBSD: limits.h,v 1.1 2000/12/11 18:19:15 marcus Exp $	*/
-#ifndef _DREAMCAST_LIMITS_H_
-#define _DREAMCAST_LIMITS_H_
+/*	$NetBSD: limits.h,v 1.1.166.1 2012/04/17 00:06:12 yamt Exp $	*/
 
 #include <sh3/limits.h>
-
-#endif /* _DREAMCAST_LIMITS_H_ */

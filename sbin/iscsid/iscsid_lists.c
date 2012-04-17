@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_lists.c,v 1.2 2011/10/29 16:54:49 christos Exp $	*/
+/*	$NetBSD: iscsid_lists.c,v 1.2.2.1 2012/04/17 00:05:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "iscsid_globals.h"
 
 /* counter for initiator ID */
-STATIC uint32_t initiator_id = 0;
+static uint32_t initiator_id = 0;
 
 /* -------------------------------------------------------------------------- */
 
@@ -47,7 +47,7 @@ STATIC uint32_t initiator_id = 0;
  * Parameter:  The session pointer.
  */
 
-STATIC void
+static void
 verify_session(session_t * sess)
 {
 	generic_entry_t *curr, *next;
@@ -683,7 +683,7 @@ get_connection_info(iscsid_get_connection_info_req_t * req,
  *    Returns:    The pointer to the portal (or NULL if not found)
  */
 
-STATIC initiator_t *
+static initiator_t *
 find_initiator_by_addr(uint8_t * addr)
 {
 	generic_entry_t *curr;

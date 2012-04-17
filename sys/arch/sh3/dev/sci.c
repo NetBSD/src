@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.53 2011/04/24 16:26:57 rmind Exp $ */
+/* $NetBSD: sci.c,v 1.53.4.1 2012/04/17 00:06:52 yamt Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.53 2011/04/24 16:26:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.53.4.1 2012/04/17 00:06:52 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sci.h"
@@ -1263,7 +1263,7 @@ sciintr(void *arg)
 	/* Wake up the poller. */
 	softint_schedule(sc->sc_si);
 
-#if NRND > 0 && defined(RND_SCI)
+#ifdef RND_SCI
 	rnd_add_uint32(&sc->rnd_source, iir | lsr);
 #endif
 

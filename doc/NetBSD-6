@@ -35,12 +35,12 @@ Will be in 6.0
 + GPT-aware bootloader for i386/amd64 - jakllsch
 + gcc 4.5
 + clang - joerg
++ NetBSD/usermode - jmcneill, reinoud
 
 Possibly in 6.0
 ---------------
 + mobile IPv6 - we have the mods, need application of same to the repo
 + kernel modules need work
-+ TNF funding for release engineering
 
 May not make 6.0
 ----------------

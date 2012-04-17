@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.91 2011/07/28 03:42:20 uebayasi Exp $	*/
+/*	$NetBSD: rd.c,v 1.91.2.1 2012/04/17 00:06:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,10 +72,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.91 2011/07/28 03:42:20 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.91.2.1 2012/04/17 00:06:20 yamt Exp $");
 
 #include "opt_useleds.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,9 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.91 2011/07/28 03:42:20 uebayasi Exp $");
 #include <sys/proc.h>
 #include <sys/stat.h>
 
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <hp300/dev/hpibvar.h>
 
@@ -358,13 +355,11 @@ rdattach(device_t parent, device_t self, void *aux)
 	if (rddebug & RDB_ERROR)
 		rderrthresh = 0;
 #endif
-#if NRND > 0
 	/*
 	 * attach the device into the random source list
 	 */
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 	    RND_TYPE_DISK, 0);
-#endif
 }
 
 static int
@@ -919,9 +914,7 @@ rdintr(void *arg)
 	}
 	if (rdfinish(sc, bp))
 		rdustart(sc);
-#if NRND > 0
 	rnd_add_uint32(&sc->rnd_source, bp->b_blkno);
-#endif
 }
 
 static int

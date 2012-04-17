@@ -1,4 +1,4 @@
-/*	$NetBSD: form.h,v 1.20 2010/02/03 15:34:43 roy Exp $	*/
+/*	$NetBSD: form.h,v 1.20.6.1 2012/04/17 00:05:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -355,8 +355,7 @@ int          set_field_init(FORM *, Form_Hook);
 int          set_field_just(FIELD *, int);
 int          set_field_opts(FIELD *, Form_Options);
 int          set_field_pad(FIELD *, int);
-int          set_field_printf(FIELD *, int, char *, ...)
-				__attribute__((__format__(__printf__, 3, 4)));
+int          set_field_printf(FIELD *, int, char *, ...) __printflike(3, 4);
 int          set_field_status(FIELD *, int);
 int          set_field_term(FORM *, Form_Hook);
 int          set_field_type(FIELD *, FIELDTYPE *, ...);

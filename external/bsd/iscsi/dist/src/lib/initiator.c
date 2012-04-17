@@ -201,7 +201,7 @@ session_init_i(initiator_session_t ** sess, uint64_t isid)
         int			 mutual_auth;
 	int			 one = 1;
 
-	iscsi_trace(TRACE_ISCSI_DEBUG, "initializing session %llu\n", isid);
+	iscsi_trace(TRACE_ISCSI_DEBUG, "initializing session %" PRIu64 "\n", isid);
 
 	/* Get free session */
 	if ((*sess = iscsi_queue_remove(&g_session_q)) == NULL) {
@@ -294,7 +294,7 @@ session_init_i(initiator_session_t ** sess, uint64_t isid)
 
 	/* Start Tx worker */
 
-	iscsi_trace(TRACE_ISCSI_DEBUG, "starting Tx worker %llu\n", isid);
+	iscsi_trace(TRACE_ISCSI_DEBUG, "starting Tx worker %" PRIu64 "\n", isid);
 	if (iscsi_queue_init(&s->tx_queue, CONFIG_INITIATOR_QUEUE_DEPTH) == -1) {
 		iscsi_err(__FILE__, __LINE__, "iscsi_queue_init() failed\n");
 		return -1;
@@ -311,12 +311,12 @@ session_init_i(initiator_session_t ** sess, uint64_t isid)
 	ISCSI_UNLOCK(&s->tx_worker.exit_mutex, return -1);
 	if (s->state == INITIATOR_SESSION_STATE_DESTROYING) {
 		iscsi_trace(TRACE_ISCSI_DEBUG,
-			"session %llu is being destroyed, exiting\n", isid);
+			"session %" PRIu64 " is being destroyed, exiting\n", isid);
 		return -1;
 	}
 	if (s->tx_worker.state & ISCSI_WORKER_STATE_ERROR) {
 		iscsi_err(__FILE__, __LINE__,
-			"Tx worker %llu started with an error\n", isid);
+			"Tx worker %" PRIu64 " started with an error\n", isid);
 		return -1;
 	}
 	iscsi_trace(TRACE_ISCSI_DEBUG, "got signal from Tx worker\n");
@@ -337,7 +337,7 @@ session_destroy_i(initiator_session_t * sess)
 	}
 	if (g_target[(int)sess->isid].has_session == 0) {
 		iscsi_err(__FILE__, __LINE__,
-			"g_target[%llu].has_session==0??\n", sess->isid);
+			"g_target[%" PRIu64 "].has_session==0??\n", sess->isid);
 		return -1;
 	}
 	sess->state = INITIATOR_SESSION_STATE_DESTROYING;
@@ -354,15 +354,15 @@ session_destroy_i(initiator_session_t * sess)
 	if (sess->tx_worker.state & ISCSI_WORKER_STATE_STARTED) {
 		if (sess->tx_worker.state & ISCSI_WORKER_STATE_EXITING) {
 			iscsi_trace(TRACE_ISCSI_DEBUG,
-				"Tx worker %llu already signalled for exit\n",
+				"Tx worker %" PRIu64 " already signalled for exit\n",
 				sess->isid);
 		} else {
 			iscsi_trace(TRACE_ISCSI_DEBUG,
-				"signaling Tx worker %llu into exiting state\n",
+				"signaling Tx worker %" PRIu64 " into exiting state\n",
 				sess->isid);
 			ISCSI_LOCK(&sess->tx_worker.work_mutex, return -1);
 			iscsi_trace(TRACE_ISCSI_DEBUG,
-				"signaling socket shutdown to Tx worker %llu\n",				sess->isid);
+				"signaling socket shutdown to Tx worker %" PRIu64 "\n",				sess->isid);
 			if (iscsi_sock_shutdown(sess->sock, 1) != 0) {
 				iscsi_err(__FILE__, __LINE__,
 					"iscsi_sock_shutdown() failed\n");
@@ -376,7 +376,7 @@ session_destroy_i(initiator_session_t * sess)
 				ISCSI_WORKER_STATE_EXITING) {
 			ISCSI_SPIN;
 		}
-		iscsi_trace(TRACE_ISCSI_DEBUG, "Tx worker %llu has exited\n",
+		iscsi_trace(TRACE_ISCSI_DEBUG, "Tx worker %" PRIu64 " has exited\n",
 			sess->isid);
 	} else {
 		iscsi_trace(TRACE_ISCSI_DEBUG,
@@ -395,11 +395,11 @@ session_destroy_i(initiator_session_t * sess)
 	if (sess->rx_worker.state & ISCSI_WORKER_STATE_STARTED) {
 		if (sess->rx_worker.state & ISCSI_WORKER_STATE_EXITING) {
 			iscsi_trace(TRACE_ISCSI_DEBUG,
-				"Rx worker %llu already signalled for exit\n",
+				"Rx worker %" PRIu64 " already signalled for exit\n",
 				sess->isid);
 		} else {
 			iscsi_trace(TRACE_ISCSI_DEBUG,
-				"signaling Rx worker %llu into exiting state\n",				sess->isid);
+				"signaling Rx worker %" PRIu64 " into exiting state\n",				sess->isid);
 			if (iscsi_sock_shutdown(sess->sock, 0) != 0) {
 				iscsi_err(__FILE__, __LINE__,
 					"iscsi_sock_shutdown() failed\n");
@@ -411,7 +411,7 @@ session_destroy_i(initiator_session_t * sess)
 				ISCSI_WORKER_STATE_EXITING) {
 			ISCSI_SPIN;
 		}
-		iscsi_trace(TRACE_ISCSI_DEBUG, "Rx worker %llu has exited\n",
+		iscsi_trace(TRACE_ISCSI_DEBUG, "Rx worker %" PRIu64 " has exited\n",
 				sess->isid);
 	} else {
 		iscsi_trace(TRACE_ISCSI_DEBUG,
@@ -561,7 +561,7 @@ full_feature_negotiation_phase_i(initiator_session_t * sess, char *text,
 		/* Enqueue initiator command to Tx worker */
 
 		iscsi_trace(TRACE_ISCSI_DEBUG,
-			"enqueing text command to tx worker %llu\n",
+			"enqueing text command to tx worker %" PRIu64 "\n",
 			sess->isid);
 		ISCSI_LOCK(&iwait.mutex, FFN_ERROR);
 		ISCSI_LOCK(&sess->tx_worker.work_mutex, FFN_ERROR);
@@ -1091,7 +1091,7 @@ initiator_abort(initiator_cmd_t * cmd)
 	initiator_cmd_t *ptr, *prev;
 	initiator_session_t *sess;
 
-	iscsi_err(__FILE__, __LINE__, "aborting iSCSI cmd 0x%p (type %d, isid %llu)\n",
+	iscsi_err(__FILE__, __LINE__, "aborting iSCSI cmd 0x%p (type %d, isid %" PRIu64 ")\n",
 		    cmd, cmd->type, cmd->isid);
 
 	hash_remove(&g_tag_hash, cmd->key);
@@ -1123,7 +1123,7 @@ initiator_abort(initiator_cmd_t * cmd)
 			return -1;
 		}
 	}
-	iscsi_err(__FILE__, __LINE__, "successfully aborted iSCSI cmd 0x%p (type %d, isid %llu)\n",
+	iscsi_err(__FILE__, __LINE__, "successfully aborted iSCSI cmd 0x%p (type %d, isid %" PRIu64 ")\n",
 		    cmd, cmd->type, cmd->isid);
 	return 0;
 }
@@ -1171,7 +1171,7 @@ initiator_enqueue(initiator_cmd_t * cmd)
 	uint32_t        tag;
 
 	if ((target = cmd->isid) >= CONFIG_INITIATOR_NUM_TARGETS) {
-		iscsi_err(__FILE__, __LINE__, "target (%d) out of range [0..%d]\n", target, CONFIG_INITIATOR_NUM_TARGETS);
+		iscsi_err(__FILE__, __LINE__, "target (%" PRIu64 ") out of range [0..%d]\n", target, CONFIG_INITIATOR_NUM_TARGETS);
 		return -1;
 	}
 	sess = g_target[(int)target].sess;
@@ -1205,7 +1205,7 @@ initiator_enqueue(initiator_cmd_t * cmd)
 		ISCSI_LOCK(&sess->tx_worker.work_mutex, return -1);
 		ISCSI_SIGNAL(&sess->tx_worker.work_cond, return -1);
 		ISCSI_UNLOCK(&sess->tx_worker.work_mutex, return -1);
-		iscsi_trace(TRACE_ISCSI_DEBUG, "initiator_cmd_t 0x%p given to tx_worker[%llu]\n", cmd, cmd->isid);
+		iscsi_trace(TRACE_ISCSI_DEBUG, "initiator_cmd_t 0x%p given to tx_worker[%" PRIu64 "]\n", cmd, cmd->isid);
 	} else {
 
 		/*
@@ -1263,7 +1263,7 @@ enqueue_worker_proc(void *arg)
 			}
 			ISCSI_SET_TAG(&tag);
 			target = cmd->isid;
-			iscsi_trace(TRACE_ISCSI_CMD, "enqueue_worker: dequeued initiator_cmd_t 0x%p (type %d, target %llu)\n", cmd, cmd->type, target);
+			iscsi_trace(TRACE_ISCSI_CMD, "enqueue_worker: dequeued initiator_cmd_t 0x%p (type %d, target %" PRIu64 ")\n", cmd, cmd->type, target);
 			switch (cmd->type) {
 			case ISCSI_SCSI_CMD:
 				scsi_cmd = (iscsi_scsi_cmd_args_t *) cmd->ptr;
@@ -1283,14 +1283,14 @@ enqueue_worker_proc(void *arg)
 			/* Initialize session (if not already) */
 initialize:
 			if (!g_target[(int)target].has_session) {
-				iscsi_trace(TRACE_ISCSI_DEBUG, "enqueue_worker: initializing target %llu session\n", target);
+				iscsi_trace(TRACE_ISCSI_DEBUG, "enqueue_worker: initializing target %" PRIu64 " session\n", target);
 				if (session_init_i(&g_target[(int)target].sess, target) != 0) {
 					iscsi_err(__FILE__, __LINE__, "session_init_i() failed (ignoring command)\n");
 					goto next;
 				}
-				iscsi_trace(TRACE_ISCSI_DEBUG, "enqueue_worker: target %llu session initialized\n", target);
+				iscsi_trace(TRACE_ISCSI_DEBUG, "enqueue_worker: target %" PRIu64 " session initialized\n", target);
 			} else {
-				iscsi_trace(TRACE_ISCSI_DEBUG, "enqueue_worker: target %llu session already initialized\n", target);
+				iscsi_trace(TRACE_ISCSI_DEBUG, "enqueue_worker: target %" PRIu64 " session already initialized\n", target);
 			}
 			sess = g_target[(int)target].sess;
 			iscsi_trace(TRACE_ISCSI_DEBUG, "enqueue_worker: session 0x%p\n", sess);
@@ -1298,7 +1298,7 @@ initialize:
 			/* Discovery login if TargetName is zero length */
 
 			if (strlen(g_target[(int)target].TargetName) == 0) {
-				iscsi_trace(TRACE_ISCSI_DEBUG, "enqueue_worker: entering Discovery phase with target %llu\n", target);
+				iscsi_trace(TRACE_ISCSI_DEBUG, "enqueue_worker: entering Discovery phase with target %" PRIu64 "\n", target);
 				rc = discovery_phase((int)target, &g_target[(int)target].all_targets);
 				iscsi_trace(TRACE_ISCSI_DEBUG, "enqueue_worker: Discovery phase complete\n");
 
@@ -1331,12 +1331,12 @@ initialize:
 			/* Get into full feature if we're not already */
 
 			if (sess->state != INITIATOR_SESSION_STATE_LOGGED_IN_NORMAL) {
-				iscsi_trace(TRACE_ISCSI_DEBUG, "enqueue_worker: entering full feature with target %llu (sock %#x)\n", target, (int) sess->sock);
+				iscsi_trace(TRACE_ISCSI_DEBUG, "enqueue_worker: entering full feature with target %" PRIu64 " (sock %#x)\n", target, (int) sess->sock);
 				if (full_feature_phase(sess) != 0) {
 					iscsi_err(__FILE__, __LINE__, "enqueue_worker: full_feature_phase() failed (ignoring command)\n");
 					goto next;
 				} else {
-					iscsi_trace(TRACE_ISCSI_DEBUG, "enqueue_worker: now full feature with target %llu\n", target);
+					iscsi_trace(TRACE_ISCSI_DEBUG, "enqueue_worker: now full feature with target %" PRIu64 "\n", target);
 				}
 			}
 			/*
@@ -1356,7 +1356,7 @@ initialize:
 			}
 			ISCSI_SIGNAL(&sess->tx_worker.work_cond, goto done);
 			ISCSI_UNLOCK(&sess->tx_worker.work_mutex, goto done);
-			iscsi_trace(TRACE_ISCSI_CMD, "enqueue_worker: gave initiator_cmd_t 0x%p to tx_worker[%llu]\n", cmd, cmd->isid);
+			iscsi_trace(TRACE_ISCSI_CMD, "enqueue_worker: gave initiator_cmd_t 0x%p to tx_worker[%" PRIu64 "]\n", cmd, cmd->isid);
 next:
 			ISCSI_LOCK(&g_enqueue_worker.work_mutex, goto done);
 		} else {
@@ -1465,13 +1465,13 @@ tx_worker_proc_i(void *arg)
 			ISCSI_UNLOCK(&me->work_mutex, return -1);
 			iscsi_trace(TRACE_ISCSI_CMD,
 				"tx_worker[%d]: dequeued initiator_cmd_t 0x%p "
-				"(type %d, target %llu)\n",
+				"(type %d, target %" PRIu64 ")\n",
 				me->id, cmd, cmd->type, cmd->isid);
 
 			/* Make sure we've got the right command */
 			if (cmd->isid != (unsigned)me->id) {
 				iscsi_err(__FILE__, __LINE__,
-					"got command %#x for target %llu, "
+					"got command %#x for target %" PRIu64 ", "
 					"expected %d\n", cmd->type,
 					cmd->isid, me->id);
 				goto done;
@@ -1792,7 +1792,7 @@ text_command_i(initiator_cmd_t * cmd)
 	 * Insert cmd into the hash table, keyed by the tag. The Rx thread
 	 * will
 	 */
-	/* retreive the cmd ptr using the tag from the response PDU. */
+	/* retrieve the cmd ptr using the tag from the response PDU. */
 
 	if (hash_insert(&g_tag_hash, cmd, text_cmd->tag) != 0) {
 		iscsi_err(__FILE__, __LINE__, "hash_insert() failed\n");
@@ -1830,7 +1830,7 @@ login_command_i(initiator_cmd_t * cmd)
 	 * Insert cmd into the hash table, keyed by the tag. The Rx thread
 	 * will
 	 */
-	/* retreive the cmd ptr using the tag from the response PDU. */
+	/* retrieve the cmd ptr using the tag from the response PDU. */
 
 	if (hash_insert(&g_tag_hash, cmd, login_cmd->tag) != 0) {
 		iscsi_err(__FILE__, __LINE__, "hash_insert() failed\n");
@@ -1902,7 +1902,7 @@ logout_phase_i(initiator_session_t * sess)
 
 	/* Enqueue to Tx worker */
 
-	iscsi_trace(TRACE_ISCSI_DEBUG, "enqueing logout command to tx worker %llu\n", sess->isid);
+	iscsi_trace(TRACE_ISCSI_DEBUG, "enqueing logout command to tx worker %" PRIu64 "\n", sess->isid);
 	ISCSI_LOCK(&iwait.mutex, LO_ERROR);
 	ISCSI_LOCK(&sess->tx_worker.work_mutex, LO_ERROR);
 	if (iscsi_queue_insert(&sess->tx_queue, cmd) == -1) {
@@ -2016,7 +2016,7 @@ login_phase_i(initiator_session_t * sess, char *text, int text_len)
 
 		/* Enqueue initiator command to Tx worker */
 
-		iscsi_trace(TRACE_ISCSI_DEBUG, "enqueing login command to tx worker %llu\n", sess->isid);
+		iscsi_trace(TRACE_ISCSI_DEBUG, "enqueing login command to tx worker %" PRIu64 "\n", sess->isid);
 		ISCSI_LOCK(&iwait.mutex, LI_ERROR);
 		ISCSI_LOCK(&sess->tx_worker.work_mutex, LI_ERROR);
 		if (iscsi_queue_insert(&sess->tx_queue, cmd) == -1) {
@@ -2284,8 +2284,7 @@ login_response_i(initiator_session_t * sess, initiator_cmd_t * cmd, uint8_t *hea
 			}
 			if (login_rsp.isid != login_cmd->isid) {
 				iscsi_err(__FILE__, __LINE__,
-					"Bad \"ISID\": %" PRIu64 "u != %"
-							PRIu64 "u.\n",
+					"Bad \"ISID\": %uu != %uu.\n",
 					(unsigned)login_rsp.isid,
 					(unsigned)login_cmd->isid);
 				LIR_ERROR;
@@ -2324,7 +2323,7 @@ login_response_i(initiator_session_t * sess, initiator_cmd_t * cmd, uint8_t *hea
 			iscsi_trace(TRACE_ISCSI_DEBUG, "*********************************************\n");
 			iscsi_trace(TRACE_ISCSI_DEBUG, "*              LOGIN SUCCESSFUL             *\n");
 			iscsi_trace(TRACE_ISCSI_DEBUG, "* %20s:%20u *\n", "CID", sess->cid);
-			iscsi_trace(TRACE_ISCSI_DEBUG, "* %20s:%20llu *\n", "ISID", sess->isid);
+			iscsi_trace(TRACE_ISCSI_DEBUG, "* %20s:%20" PRIu64 " *\n", "ISID", sess->isid);
 			iscsi_trace(TRACE_ISCSI_DEBUG, "* %20s:%20u *\n", "TSIH", sess->tsih);
 			iscsi_trace(TRACE_ISCSI_DEBUG, "* %20s:%20u *\n", "CmdSN", sess->CmdSN);
 			iscsi_trace(TRACE_ISCSI_DEBUG, "* %20s:%20u *\n", "MaxCmdSN", sess->MaxCmdSN);
@@ -2383,7 +2382,7 @@ logout_command_i(initiator_cmd_t * cmd)
 	 * Insert cmd into the hash table, keyed by the tag. The Rx thread
 	 * will
 	 */
-	/* retreive the cmd ptr using the tag from the response PDU. */
+	/* retrieve the cmd ptr using the tag from the response PDU. */
 
 	if (hash_insert(&g_tag_hash, cmd, logout_cmd->tag) != 0) {
 		iscsi_err(__FILE__, __LINE__, "hash_insert() failed\n");
@@ -2469,7 +2468,7 @@ callback:
 	iscsi_trace(TRACE_ISCSI_DEBUG, "*********************************************\n");
 	iscsi_trace(TRACE_ISCSI_DEBUG, "*             LOGOUT SUCCESSFUL             *\n");
 	iscsi_trace(TRACE_ISCSI_DEBUG, "* %20s:%20u *\n", "CID", sess->cid);
-	iscsi_trace(TRACE_ISCSI_DEBUG, "* %20s:%20llu *\n", "ISID", sess->isid);
+	iscsi_trace(TRACE_ISCSI_DEBUG, "* %20s:%20" PRIu64 " *\n", "ISID", sess->isid);
 	iscsi_trace(TRACE_ISCSI_DEBUG, "* %20s:%20u *\n", "TSIH", sess->tsih);
 	iscsi_trace(TRACE_ISCSI_DEBUG, "*********************************************\n");
 
@@ -2492,7 +2491,7 @@ nop_out_i(initiator_cmd_t * cmd)
 		/*
 		 * Insert cmd into the hash table, keyed by
 		 * nop_out->tag.  Upon receipt of the NOP_IN_T, the Rx
-		 * thread will retreive the cmd ptr using the tag from
+		 * thread will retrieve the cmd ptr using the tag from
 		 * the NOP_IN_T PDU.  */
 
 		if (hash_insert(&g_tag_hash, cmd, nop_out->tag) != 0) {
@@ -2549,7 +2548,7 @@ scsi_command_i(initiator_cmd_t * cmd)
 	sg_len = sg_len_copy = sg_len_which = 0;
 	scsi_cmd->status = 0;
 
-	iscsi_trace(TRACE_ISCSI_DEBUG, "tx_worker[%llu]: scsi op %#x lun %llu trans_len %d length %d send_sg_len %d recv_sg_len %d\n", target, scsi_cmd->cdb[0], scsi_cmd->lun, scsi_cmd->trans_len, scsi_cmd->length, scsi_cmd->send_sg_len, scsi_cmd->recv_sg_len);
+	iscsi_trace(TRACE_ISCSI_DEBUG, "tx_worker[%" PRIu64 "]: scsi op %#x lun %" PRIu64 " trans_len %d length %d send_sg_len %d recv_sg_len %d\n", target, scsi_cmd->cdb[0], scsi_cmd->lun, scsi_cmd->trans_len, scsi_cmd->length, scsi_cmd->send_sg_len, scsi_cmd->recv_sg_len);
 
 	if ((uint32_t)target > CONFIG_INITIATOR_NUM_TARGETS) {
 		iscsi_err(__FILE__, __LINE__, "target %u\n",
@@ -2590,7 +2589,7 @@ scsi_command_i(initiator_cmd_t * cmd)
 	 * Insert cmd into the hash table, keyed by scsi_cmd->tag.  The Rx
 	 * thread will
 	 */
-	/* retreive the cmd ptr using the tag from the response PDU. */
+	/* retrieve the cmd ptr using the tag from the response PDU. */
 
 	if (hash_insert(&g_tag_hash, cmd, scsi_cmd->tag) != 0) {
 		iscsi_err(__FILE__, __LINE__, "hash_insert() failed\n");
@@ -3282,7 +3281,7 @@ scsi_response_i(initiator_session_t * sess, initiator_cmd_t * cmd, uint8_t *head
 		errmsg = "StatSN";
 	}
 	if (errmsg) {
-		iscsi_err(__FILE__, __LINE__, errmsg);
+		iscsi_err(__FILE__, __LINE__, "%s", errmsg);
 		NO_CLEANUP;
 		return -1;
 	}
@@ -3455,10 +3454,10 @@ scsi_read_data_i(initiator_session_t * sess, initiator_cmd_t * cmd, uint8_t *hea
 			errmsg = "Residual Count";
 		}
 	} else {
-		iscsi_warn(__FILE__, __LINE__, "Underflow %s\n", data.res_count);
+		iscsi_warn(__FILE__, __LINE__, "Underflow %" PRIu32 "\n", data.res_count);
 	}
 	if (errmsg) {
-		iscsi_err(__FILE__, __LINE__, errmsg);
+		iscsi_err(__FILE__, __LINE__, "%s", errmsg);
 		NO_CLEANUP;
 		return -1;
 	}

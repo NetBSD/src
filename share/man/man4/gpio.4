@@ -1,4 +1,4 @@
-.\" $NetBSD: gpio.4,v 1.22 2011/10/06 11:05:42 wiz Exp $
+.\" $NetBSD: gpio.4,v 1.22.2.1 2012/04/17 00:05:45 yamt Exp $
 .\"	$OpenBSD: gpio.4,v 1.5 2004/11/23 09:39:29 reyk Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd October 3, 2011
+.Dd November 13, 2011
 .Dt GPIO 4
 .Os
 .Sh NAME
@@ -123,31 +123,6 @@ Toggles the pin output value, i.e. changes it to the opposite.
 .Fa gp_value
 field is ignored and on return contains the old pin state.
 .Pp
-.It Dv GPIOPULSE (struct gpio_pulse)
-Starts pulsing the pin:
-.Bd -literal
-/* GPIO pulse request */
-struct gpio_pulse {
-	char		gp_name[GPIOMAXNAME];	/* pin name */
-	int		gp_pin;			/* pin number */
-	struct timeval	gp_pulse_on;		/* "on" period */
-	struct timeval	gp_pulse_off;		/* "off" period */
-};
-.Ed
-.Pp
-The
-.Fa gp_name
-or
-.Fa gp_pin
-field must be set before calling.
-If
-.Fa gp_pulse_on
-or
-.Fa gp_pulse_off
-is set to zero, a default of
-.Xr hz 9 / 2
-is assumed for both periods.
-.Pp
 .It Dv GPIOSET (struct gpio_set)
 Changes pin configuration flags with the new ones provided in the
 .Fa gpio_set
@@ -189,8 +164,8 @@ internal pull-down enabled
 invert input
 .It Dv GPIO_PIN_INVOUT
 invert output
-.It Dv GPIO_PIN_PULSE
-pulse output
+.It Dv GPIO_PIN_PULSATE
+pulsate output
 .El
 .Pp
 Note that the GPIO controller

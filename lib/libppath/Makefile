@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2011/08/25 14:55:36 dyoung Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2012/04/17 00:05:30 yamt Exp $
 
 .include <bsd.own.mk>
 
-WARNS=4
+WARNS?=5
 USE_SHLIBDIR=	yes
 
 PPATHLIBDIR=${NETBSDSRCDIR}/common/lib/libppath

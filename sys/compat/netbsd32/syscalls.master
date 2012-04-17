@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.87.2.1 2011/11/10 14:31:45 yamt Exp $
+	$NetBSD: syscalls.master,v 1.87.2.2 2012/04/17 00:07:22 yamt Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -41,7 +41,6 @@
 #include "opt_ntp.h"
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
-#include "opt_posix.h"
 #endif
 
 #include <sys/param.h>
@@ -517,7 +516,6 @@
 			    netbsd32_timespec50p_t timeout); }
 245	UNIMPL
 246	UNIMPL
-#if defined(P1003_1B_SEMAPHORE) || (!defined(_KERNEL_OPT) && defined(_LIBC))
 247	STD		{ int|netbsd32||_ksem_init(unsigned int value, \
 			    netbsd32_semidp_t idp); }
 248	STD		{ int|netbsd32||_ksem_open(netbsd32_charp name, \
@@ -531,19 +529,8 @@
 254	STD		{ int|netbsd32||_ksem_getvalue(netbsd32_intptr_t id, \
 			    netbsd32_intp value); }
 255	STD		{ int|netbsd32||_ksem_destroy(netbsd32_intptr_t id); }
-256	UNIMPL		sys__ksem_timedwait
-#else
-247	EXCL		sys__ksem_init
-248	EXCL		sys__ksem_open
-249	EXCL 		sys__ksem_unlink
-250	EXCL		sys__ksem_close
-251	EXCL		sys__ksem_post
-252	EXCL		sys__ksem_wait
-253	EXCL		sys__ksem_trywait
-254	EXCL		sys__ksem_getvalue
-255	EXCL		sys__ksem_destroy
-256	UNIMPL		sys__ksem_timedwait
-#endif
+256	STD		{ int|netbsd32||_ksem_timedwait(intptr_t id, \
+				const netbsd32_timespecp_t abstime); }
 257	UNIMPL
 258	UNIMPL
 259	UNIMPL
@@ -676,15 +663,12 @@
 327	UNIMPL
 328	UNIMPL
 329	UNIMPL
-330	STD		{ int|netbsd32||sa_register(netbsd32_sa_upcall_t new, \
-			    netbsd32_sa_upcallp_t old, int flags, \
-			    netbsd32_ssize_t stackinfo_offset); }
-331	STD		{ int|netbsd32||sa_stacks(int num, \
-			    netbsd32_stackp_t stacks); }
-332	NOARGS		{ int|sys||sa_enable(void); }
-333	STD		{ int|netbsd32||sa_setconcurrency(int concurrency); }
-334	NOARGS		{ int|sys||sa_yield(void); }
-335	STD		{ int|netbsd32||sa_preempt(int sa_id); }
+330	OBSOL		netbsd32_sa_register
+331	OBSOL		netbsd32_sa_stacks
+332	OBSOL		sa_enable
+333	OBSOL		netbsd32_sa_setconcurrency
+334	OBSOL		sa_yield
+335	OBSOL		netbsd32_sa_preempt
 336	OBSOL		sys_sa_unblockyield
 337	UNIMPL
 338	UNIMPL
@@ -969,8 +953,80 @@
 			    mode_t mode, netbsd32_dev_t dev); }
 451	STD	 	{ int|netbsd32|50|fhstat(const netbsd32_voidp fhp, \
 			    netbsd32_size_t fh_size, netbsd32_statp_t sb); }
-452	STD		{ int|netbsd32|50|quotactl(const netbsd32_charp path, \
-			    netbsd32_voidp pref); }
+452	OBSOL		5.99 quotactl
 453	STD		{ int|netbsd32||pipe2(netbsd32_intp fildes, int flags); }
 454	STD		{ int|netbsd32||dup3(int from, int to, int flags); }
 455	STD		{ int|netbsd32||kqueue1(int flags); }
+456	STD  		{ int|netbsd32||paccept(int s, \
+			    netbsd32_sockaddrp_t name, \
+			    netbsd32_socklenp_t anamelen, \
+			    const netbsd32_sigsetp_t mask, \
+			    int flags); }
+457	STD  		{ int|netbsd32||linkat(int fd1, \
+			    const netbsd32_charp name1, \
+			    int fd2, \
+			    const netbsd32_charp name2, \
+			    int flags); }
+458	STD  		{ int|netbsd32||renameat(int fromfd, \
+			    const netbsd32_charp from, \
+			    int tofd, \
+			    const netbsd32_charp to); }
+459	STD  		{ int|netbsd32||mkfifoat(int fd, \
+			    const netbsd32_charp path, \
+			    mode_t mode); }
+460	STD  		{ int|netbsd32||mknodat(int fd, \
+			    const netbsd32_charp path, \
+			    mode_t mode, \
+			    uint32_t dev); }
+461	STD  		{ int|netbsd32||mkdirat(int fd, \
+			    const netbsd32_charp path, \
+			    mode_t mode); }
+462	STD  		{ int|netbsd32||faccessat(int fd, \
+			    const netbsd32_charp path, \
+			    int amode, \
+			    int flag); }
+463	STD  		{ int|netbsd32||fchmodat(int fd, \
+			    const netbsd32_charp path, \
+			    mode_t mode, \
+			    int flag); }
+464	STD  		{ int|netbsd32||fchownat(int fd, \
+			    const netbsd32_charp path, \
+			    uid_t owner, \
+			    gid_t group, \
+			    int flag); }
+465	STD  		{ int|netbsd32||fexecve(int fd, \
+			    netbsd32_charpp argp, \
+			    netbsd32_charpp envp); }
+466	STD  		{ int|netbsd32||fstatat(int fd, \
+			    const netbsd32_charp path, \
+			    netbsd32_statp_t buf, \
+			    int flag); }
+467	STD  		{ int|netbsd32||utimensat(int fd, \
+			    const netbsd32_charp path, \
+			    const netbsd32_timespecp_t tptr, \
+			    int flag); }
+468	STD  		{ int|netbsd32||openat(int fd, \
+			    const netbsd32_charp path, \
+			    int oflags, ... \
+			    mode_t mode); }
+469	STD  		{ int|netbsd32||readlinkat(int fd, \
+			    const netbsd32_charp path, \
+			    netbsd32_charp buf, \
+			    size_t bufsize); }
+470	STD  		{ int|netbsd32||symlinkat(const netbsd32_charp path1, \
+			    int fd, \
+			    const netbsd32_charp path2); }
+471	STD  		{ int|netbsd32||unlinkat(int fd, \
+			    const netbsd32_charp path, \
+			    int flag); }
+472	STD  		{ int|netbsd32||futimens(int fd, \
+			    const netbsd32_timespecp_t tptr); }
+473	STD		{ int|netbsd32||__quotactl(const netbsd32_charp path, \
+			    netbsd32_voidp args); }
+474	NOERR		{ int|netbsd32||posix_spawn(netbsd32_pid_tp pid, \
+				const netbsd32_charp path, \
+				const netbsd32_posix_spawn_file_actionsp \
+				    file_actions, \
+				const netbsd32_posix_spawnattrp attrp, \
+				netbsd32_charpp argv, netbsd32_charpp envp); }
+

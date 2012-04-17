@@ -1,4 +1,4 @@
-.\"	$NetBSD: pr.1,v 1.17 2009/03/11 13:57:11 joerg Exp $
+.\"	$NetBSD: pr.1,v 1.17.6.1 2012/04/17 00:09:38 yamt Exp $
 .\"
 .\" Copyright (c) 1991 Keith Muller.
 .\" Copyright (c) 1993
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)pr.1	8.1 (Berkeley) 6/6/93
-.\"	$NetBSD: pr.1,v 1.17 2009/03/11 13:57:11 joerg Exp $
+.\"	$NetBSD: pr.1,v 1.17.6.1 2012/04/17 00:09:38 yamt Exp $
 .\"
 .Dd June 6, 1993
 .Dt PR 1
@@ -42,55 +42,33 @@
 .Nd print files
 .Sh SYNOPSIS
 .Nm
-.Bk -words
 .Op Ar \&+page
-.Ek
-.Bk -words
 .Op Fl Ar column
-.Ek
 .Op Fl adFmrt
-.Bk -words
 .Oo
 .Op Fl e
 .Op Ar char
 .Op Ar gap
 .Oc
-.Ek
-.Bk -words
 .Op Fl h Ar header
-.Ek
-.Bk -words
 .Oo
 .Op Fl i
 .Op Ar char
 .Op Ar gap
 .Oc
-.Ek
-.Bk -words
 .Op Fl l Ar lines
-.Ek
-.Bk -words
 .Op Fl o Ar offset
-.Ek
-.Bk -words
 .Oo
 .Op Fl s
 .Op Ar char
 .Oc
-.Ek
-.Bk -words
 .Op Fl T Ar timefmt
-.Ek
-.Bk -words
 .Oo
 .Op Fl n
 .Op Ar char
 .Op Ar width
 .Oc
-.Ek
-.Bk -words
 .Op Fl w Ar width
-.Ek
 .Op -
 .Op Ar file ...
 .Sh DESCRIPTION

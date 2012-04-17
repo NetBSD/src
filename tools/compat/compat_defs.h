@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.81.2.1 2011/11/10 14:31:53 yamt Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.81.2.2 2012/04/17 00:09:27 yamt Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -1052,9 +1052,9 @@ __GEN_ENDIAN_DEC(64, le)
 #define BYTE_ORDER LITTLE_ENDIAN
 #endif
 
-#ifndef DEV_BSIZE
+/* all references of DEV_BSIZE in tools are for NetBSD's file images */
+#undef DEV_BSIZE
 #define DEV_BSIZE (1 << 9)
-#endif
 
 #undef MIN
 #undef MAX

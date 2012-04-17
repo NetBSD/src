@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.16 2011/10/14 09:23:30 hannken Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.16.2.1 2012/04/17 00:07:30 yamt Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -248,7 +248,7 @@ dm_target_stripe_strategy(dm_table_entry_t * table_en, struct buf * bp)
 			tlc = TAILQ_NEXT(tlc, entries);
 
 		/* by this point we should have an tlc */
-		KASSERT(tlc == NULL);
+		KASSERT(tlc != NULL);
 
 		nestbuf->b_blkno += tlc->offset;
 

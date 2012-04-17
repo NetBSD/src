@@ -1,7 +1,7 @@
-/*	$NetBSD: loadlib.c,v 1.1.1.1 2010/10/31 11:16:57 mbalmer Exp $	*/
+/*	$NetBSD: loadlib.c,v 1.1.1.1.6.1 2012/04/17 00:04:46 yamt Exp $	*/
 
 /*
-** Id: loadlib.c,v 1.52.1.3 2008/08/06 13:29:28 roberto Exp
+** $Id: loadlib.c,v 1.1.1.1.6.1 2012/04/17 00:04:46 yamt Exp $
 ** Dynamic library loader for Lua
 ** See Copyright Notice in lua.h
 **
@@ -641,7 +641,7 @@ LUALIB_API int luaopen_package (lua_State *L) {
   lua_pushvalue(L, -1);
   lua_replace(L, LUA_ENVIRONINDEX);
   /* create `loaders' table */
-  lua_createtable(L, 0, sizeof(loaders)/sizeof(loaders[0]) - 1);
+  lua_createtable(L, sizeof(loaders)/sizeof(loaders[0]) - 1, 0);
   /* fill it with pre-defined loaders */
   for (i=0; loaders[i] != NULL; i++) {
     lua_pushcfunction(L, loaders[i]);

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.225 2011/09/06 21:32:30 riz Exp $
+# $NetBSD: mi,v 1.225.2.1 2012/04/17 00:02:42 yamt Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -212,6 +212,7 @@
 ./etc/rc.d/irdaattach				etc-sys-rc
 ./etc/rc.d/iscsi_target				etc-iscsi-rc
 ./etc/rc.d/isdnd				etc-isdn-rc
+./etc/rc.d/isibootd				etc-bootserver-rc
 ./etc/rc.d/kdc					etc-krb5-rc
 ./etc/rc.d/kerberos				etc-obsolete		obsolete
 ./etc/rc.d/ldconfig				etc-sys-rc
@@ -222,6 +223,7 @@
 ./etc/rc.d/local				etc-sys-rc
 ./etc/rc.d/lpd					etc-lpr-rc
 ./etc/rc.d/lvm					etc-sys-rc
+./etc/rc.d/makemandb				etc-man-rc
 ./etc/rc.d/mdnsd				etc-mdns-rc
 ./etc/rc.d/mixerctl				etc-audio-rc
 ./etc/rc.d/mopd					etc-bootserver-rc
@@ -254,6 +256,7 @@
 ./etc/rc.d/racoon				etc-net-rc
 ./etc/rc.d/raidframe				etc-sys-rc
 ./etc/rc.d/raidframeparity			etc-sys-rc
+./etc/rc.d/random_seed				etc-sys-rc
 ./etc/rc.d/rarpd				etc-bootserver-rc
 ./etc/rc.d/rbootd				etc-bootserver-rc
 ./etc/rc.d/rndctl				etc-sys-rc

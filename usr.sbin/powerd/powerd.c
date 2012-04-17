@@ -1,4 +1,4 @@
-/*	$NetBSD: powerd.c,v 1.16 2010/12/19 22:52:08 pgoyette Exp $	*/
+/*	$NetBSD: powerd.c,v 1.16.6.1 2012/04/17 00:09:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -75,7 +75,7 @@ static struct kevent *allocchange(void);
 static int wait_for_events(struct kevent *, size_t);
 static void dispatch_dev_power(struct kevent *);
 static void dispatch_power_event_state_change(int, power_event_t *);
-static void powerd_log(int, const char *, ...);
+static void powerd_log(int, const char *, ...) __printflike(2, 3);
 
 static const char *script_paths[] = {
 	NULL,

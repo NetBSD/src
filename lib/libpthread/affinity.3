@@ -1,4 +1,4 @@
-.\"	$NetBSD: affinity.3,v 1.6 2010/07/09 20:58:38 wiz Exp $
+.\"	$NetBSD: affinity.3,v 1.6.6.1 2012/04/17 00:05:30 yamt Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 9, 2010
+.Dd December 4, 2011
 .Dt AFFINITY 3
 .Os
 .Sh NAME
@@ -64,6 +64,22 @@ Note that
 .Fa set
 must be created and initialized using the
 .Xr cpuset 3
+functions.
+.Sh IMPLEMENTATION NOTES
+Setting CPU
+.Nm
+requires super-user privileges.
+Ordinary users can be allowed to control CPU affinity
+of their threads via the
+.Pa security.models.extensions.user_set_cpu_affinity
+.Xr sysctl 7 .
+See
+.Xr secmodel_extensions 9 .
+.Pp
+Portable applications should not use the
+.Fn pthread_setaffinity_np
+and
+.Fn pthread_getaffinity_np
 functions.
 .Sh RETURN VALUES
 The

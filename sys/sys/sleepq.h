@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.19 2010/12/18 01:36:20 rmind Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.19.8.1 2012/04/17 00:08:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -69,7 +69,6 @@ int	sleepq_abort(kmutex_t *, int);
 void	sleepq_changepri(lwp_t *, pri_t);
 void	sleepq_lendpri(lwp_t *, pri_t);
 int	sleepq_block(int, bool);
-void	sleepq_insert(sleepq_t *, lwp_t *, syncobj_t *);
 
 void	sleeptab_init(sleeptab_t *);
 
@@ -171,7 +170,8 @@ turnstile_t	*turnstile_lookup(wchan_t);
 void	turnstile_exit(wchan_t);
 void	turnstile_block(turnstile_t *, int, wchan_t, syncobj_t *);
 void	turnstile_wakeup(turnstile_t *, int, int, lwp_t *);
-void	turnstile_print(volatile void *, void (*)(const char *, ...));
+void	turnstile_print(volatile void *, void (*)(const char *, ...)
+    __printflike(1, 2));
 void	turnstile_unsleep(lwp_t *, bool);
 void	turnstile_changepri(lwp_t *, pri_t);
 

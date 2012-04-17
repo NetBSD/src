@@ -1,4 +1,4 @@
-/* $NetBSD: nvram_pnpbus.c,v 1.15 2011/06/18 08:08:29 matt Exp $ */
+/* $NetBSD: nvram_pnpbus.c,v 1.15.2.1 2012/04/17 00:06:49 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.15 2011/06/18 08:08:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.15.2.1 2012/04/17 00:06:49 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -63,7 +63,6 @@ static NVRAM_MAP *nvram;
 static char *nvramGEAp;		/* pointer to the GE area */
 static char *nvramCAp;		/* pointer to the Config area */
 static char *nvramOSAp;		/* pointer to the OSArea */
-struct simplelock nvram_slock;	/* lock */
 
 int prep_clock_mk48txx;
 
@@ -133,8 +132,6 @@ nvram_pnpbus_attach(device_t parent, device_t self, void *aux)
 		aprint_error("nvram: couldn't map registers\n");
 		return;
 	}
-
-	simple_lock_init(&nvram_slock);
 
 	/* Initialize the nvram header */
 	p = (uint8_t *) &prep_nvram_header;
@@ -373,14 +370,10 @@ prep_nvramioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 			return EINVAL;
 
 		error = nvramgetstr(pnv->pnv_namelen, pnv->pnv_name, &name);
-		simple_lock(&nvram_slock);
 		np = prep_nvram_get_var(name);
-		simple_unlock(&nvram_slock);
 		if (np == NULL)
 			return EINVAL;
-		simple_lock(&nvram_slock);
 		len = prep_nvram_get_var_len(name);
-		simple_unlock(&nvram_slock);
 
 		if (len > pnv->pnv_buflen) {
 			error = ENOMEM;
@@ -394,7 +387,6 @@ prep_nvramioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 
 	case PNVIOCGETNEXTNAME:
 		/* if the first one is null, we give them the first name */
-		simple_lock(&nvram_slock);
 		if (pnv->pnv_name == NULL) {
 			cp = nvramGEAp;
 		} else {
@@ -405,7 +397,6 @@ prep_nvramioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 				cp = prep_nvram_next_var(np);
 			}
 		}
-		simple_unlock(&nvram_slock);
 		if (cp == NULL)
 			error = EINVAL;
 		if (error)
@@ -427,9 +418,7 @@ prep_nvramioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 
 	case PNVIOCGETNUMGE:
 		/* count the GE variables */
-		simple_lock(&nvram_slock);
 		pnv->pnv_num = prep_nvram_count_vars();
-		simple_unlock(&nvram_slock);
 		break;
 	case PNVIOCSET:
 		/* this will require some real work.  Not ready yet */

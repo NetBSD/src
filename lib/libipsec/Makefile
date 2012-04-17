@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17 2007/05/28 12:06:19 tls Exp $
+# $NetBSD: Makefile,v 1.17.34.1 2012/04/17 00:05:28 yamt Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -10,8 +10,7 @@ WARNS=	0	# Will be fixed later
 DIST=	${NETBSDSRCDIR}/crypto/dist/ipsec-tools
 LIB=	ipsec
 CPPFLAGS+= -I${DIST}/src/libipsec -I. -DHAVE_CONFIG_H
-CPPFLAGS+= -DIPSEC_DEBUG -I${.CURDIR} -I${NETBSDSRCDIR}/sys
-CPPFLAGS+= -DSADB_X_EALG_AESCBC=SADB_X_EALG_AES
+CPPFLAGS+= -DIPSEC_DEBUG -I${.CURDIR}
 # Don't worry about argument promotion for now.
 LINTFLAGS+=     -X 58
 

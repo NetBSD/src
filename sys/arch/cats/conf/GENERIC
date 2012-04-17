@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.135 2011/06/30 20:09:21 wiz Exp $
+# $NetBSD: GENERIC,v 1.135.2.1 2012/04/17 00:06:10 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -47,6 +47,8 @@ options 	NTP		# NTP phase/frequency locked loop
 # For StrongARM systems
 options 	CPU_SA110	# Support the SA110 core
 makeoptions	CPUFLAGS="-march=armv4 -mtune=strongarm"
+#options 	VERBOSE_INIT_ARM
+#options 	FCOM_INIT_ARM	# early console attach
 
 # FPA options
 
@@ -80,7 +82,7 @@ options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	NFSSERVER
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
@@ -148,7 +150,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 # Device options
 
@@ -193,7 +194,7 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
-#options		SYMTAB_SPACE=500000
+#options 	SYMTAB_SPACE=900000
 
 config		netbsd	root on ? type ?
 
@@ -584,7 +585,6 @@ pseudo-device   accf_http		# "httpready" accept filter
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	sequencer	1	# MIDI sequencer
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_bancomm.c,v 1.1.1.1 2009/12/13 16:55:43 kardel Exp $	*/
+/*	$NetBSD: refclock_bancomm.c,v 1.1.1.1.6.1 2012/04/17 00:03:48 yamt Exp $	*/
 
 /* refclock_bancomm.c - clock driver for the  Datum/Bancomm bc635VME 
  * Time and Frequency Processor. It requires the BANCOMM bc635VME/
@@ -314,8 +314,10 @@ vme_shutdown(
 	vme = (struct vmeunit *)pp->unitptr;
 	io_closeclock(&pp->io);
 	pp->unitptr = NULL;
-	free(vme);
-	if (tfp_type == 2) bcStopPci(stfp_handle); 
+	if (NULL != vme)
+		free(vme);
+	if (tfp_type == 2)
+		bcStopPci(stfp_handle); 
 }
 
 
@@ -370,14 +372,15 @@ vme_poll(
 	  tadr = gmtime(&tloc);
 	  tptr->year = (unsigned short)(tadr->tm_year + 1900);
 
-	sprintf(pp->a_lastcode, 
-		"%3.3d %2.2d:%2.2d:%2.2d.%.6ld %1d",
-		tptr->day, 
-		tptr->hr, 
-		tptr->mn,
-		tptr->sec, 
-		tptr->frac, 
-		tptr->status);
+	snprintf(pp->a_lastcode,
+		 sizeof(pp->a_lastcode),
+		 "%3.3d %2.2d:%2.2d:%2.2d.%.6ld %1d",
+		 tptr->day, 
+		 tptr->hr, 
+		 tptr->mn,
+		 tptr->sec, 
+		 tptr->frac, 
+		 tptr->status);
 
 	pp->lencode = (u_short) strlen(pp->a_lastcode);
 
@@ -467,37 +470,41 @@ get_datumtime(struct vmedate *time_vme)
 		default:			/* legacy bancomm card */
 
 			if (ioctl(fd_vme, READTIME, &vts)) {
-	    		msyslog(LOG_ERR, "get_datumtime error: %m");
+				msyslog(LOG_ERR,
+					"get_datumtime error: %m");
 				return(NULL);
 			}
 			/* Get day */
-			sprintf(cbuf,"%3.3x", ((vts.btfp_time[ 0 ] & 0x000f) <<8) +
-				((vts.btfp_time[ 1 ] & 0xff00) >> 8));  
+			snprintf(cbuf, sizeof(cbuf), "%3.3x",
+				 ((vts.btfp_time[ 0 ] & 0x000f) << 8) +
+				  ((vts.btfp_time[ 1 ] & 0xff00) >> 8));  
 			time_vme->day = (unsigned short)atoi(cbuf);
 
 			/* Get hour */
-			sprintf(cbuf,"%2.2x", vts.btfp_time[ 1 ] & 0x00ff);
-
+			snprintf(cbuf, sizeof(cbuf), "%2.2x",
+				 vts.btfp_time[ 1 ] & 0x00ff);
 			time_vme->hr = (unsigned short)atoi(cbuf);
 
 			/* Get minutes */
-			sprintf(cbuf,"%2.2x", (vts.btfp_time[ 2 ] & 0xff00) >>8);
+			snprintf(cbuf, sizeof(cbuf), "%2.2x",
+				 (vts.btfp_time[ 2 ] & 0xff00) >> 8);
 			time_vme->mn = (unsigned short)atoi(cbuf);
 
 			/* Get seconds */
-			sprintf(cbuf,"%2.2x", vts.btfp_time[ 2 ] & 0x00ff);
+			snprintf(cbuf, sizeof(cbuf), "%2.2x",
+				 vts.btfp_time[ 2 ] & 0x00ff);
 			time_vme->sec = (unsigned short)atoi(cbuf);
 
 			/* Get microseconds.  Yes, we ignore the 0.1 microsecond digit so
 				 we can use the TVTOTSF function  later on...*/
 
-			sprintf(cbuf,"%4.4x%2.2x", vts.btfp_time[ 3 ],
-			vts.btfp_time[ 4 ]>>8);
-
+			snprintf(cbuf, sizeof(cbuf), "%4.4x%2.2x",
+				 vts.btfp_time[ 3 ],
+				 vts.btfp_time[ 4 ] >> 8);
 			time_vme->frac = (u_long) atoi(cbuf);
 
 			/* Get status bit */
-			time_vme->status = (vts.btfp_time[0] & 0x0010) >>4;
+			time_vme->status = (vts.btfp_time[0] & 0x0010) >> 4;
 
 			break;
 	}

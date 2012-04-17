@@ -1,6 +1,6 @@
-.\"	$NetBSD: npf.3,v 1.3 2011/03/22 07:28:41 jruoho Exp $
+.\"	$NetBSD: npf.3,v 1.3.4.1 2012/04/17 00:05:29 yamt Exp $
 .\"
-.\" Copyright (c) 2011 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This material is based upon work partially supported by The
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 22, 2011
+.Dd January 14, 2012
 .Dt NPF 3
 .Os
 .Sh NAME
@@ -44,6 +44,8 @@
 .Fn npf_config_submit "nl_config_t *ncf" "int fd"
 .Ft void
 .Fn npf_config_destroy "nl_config_t *ncf"
+.Ft int
+.Fn npf_config_flush "int fd"
 .\" ---
 .Ft nl_rule_t *
 .Fn npf_rule_create "char *name" "uint32_t attr" "u_int if_idx"
@@ -67,13 +69,13 @@
 .Fn npf_rproc_insert "nl_config_t *ncf" "nl_rproc_t *rp"
 .\" ---
 .Ft nl_nat_t *
-.Fn npf_nat_create "int type" "int flags" "u_int if_idx" \
+.Fn npf_nat_create "int type" "u_int flags" "u_int if_idx" \
 "npf_addr_t *addr" "int af" "in_port_t port"
 .Ft int
 .Fn npf_nat_insert "nl_config_t *ncf" "nl_nat_t *nt" "pri_t pri"
 .\" ---
 .Ft nl_table_t *
-.Fn npf_table_create "int index" "int type"
+.Fn npf_table_create "u_int id" "int type"
 .Ft int
 .Fn npf_table_add_entry "nl_table_t *tl" "in_addr_t addr" "in_addr_t mask"
 .Ft bool
@@ -84,7 +86,7 @@
 .Fn npf_table_destroy "nl_table_t *tl"
 .\" ---
 .Ft int
-.Fn npf_update_rule "int fd" "char *rname" "nl_rule_t *rl"
+.Fn npf_update_rule "int fd" "const char *rname" "nl_rule_t *rl"
 .Ft int
 .Fn npf_sessions_send "int fd" "const char *fpath"
 .Ft int
@@ -109,6 +111,8 @@ to the kernel.
 .It Fn npf_config_destroy "ncf"
 Destroy the configuration
 .Fa ncf .
+.It Fn npf_config_flush "fd"
+Flush the current configuration.
 .El
 .\" ---
 .Ss Rule interface
@@ -247,10 +251,10 @@ Insert NAT policy, its rule, into the specified configuration.
 .It Fn npf_table_create "index" "type"
 Create NPF table of specified type.
 The following types are supported:
-.Bl -tag -width "NPF_TABLE_RBTREE "
+.Bl -tag -width "NPF_TABLE_TREE "
 .It Dv NPF_TABLE_HASH
 Indicates to use hash table for storage.
-.It Dv NPF_TABLE_RBTREE
+.It Dv NPF_TABLE_TREE
 Indicates to use red-black tree for storage.
 Table is identified by
 .Fa index ,

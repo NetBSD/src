@@ -1,7 +1,7 @@
-/*	$NetBSD: interwave.c,v 1.34 2009/03/14 15:36:17 dsl Exp $	*/
+/*	$NetBSD: interwave.c,v 1.34.12.1 2012/04/17 00:07:34 yamt Exp $	*/
 
 /*
- * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1999, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Author: Kari Mettinen
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.34 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.34.12.1 2012/04/17 00:07:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,11 +42,12 @@ __KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.34 2009/03/14 15:36:17 dsl Exp $");
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-
 #include <sys/cpu.h>
 #include <sys/intr.h>
-#include <machine/pio.h>
 #include <sys/audioio.h>
+
+#include <machine/pio.h>
+
 #include <dev/audio_if.h>
 #include <dev/mulaw.h>
 
@@ -114,6 +115,9 @@ iwintr(void *arg)
 	sc = arg;
 	val = 0;
 	intrs = 0;
+
+	mutex_spin_enter(&sc->sc_intr_lock);
+
 	IW_READ_DIRECT_1(6, sc->p2xr_h, intrs);	/* UISR */
 
 	/* codec ints */
@@ -151,8 +155,10 @@ iwintr(void *arg)
 			sc->sc_playintr(sc->sc_playarg);
 		val = 1;
 	}
-	return val;
 
+	mutex_spin_exit(&sc->sc_intr_lock);
+
+	return val;
 }
 
 void
@@ -185,6 +191,9 @@ iwattach(struct iw_softc *sc)
 
 	sc->sc_dma_flags = 0;
 
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
+
 	/*
 	 * We can only use a few selected irqs, see if we got one from pnp
 	 * code that suits us.
@@ -197,6 +206,8 @@ iwattach(struct iw_softc *sc)
 	}
 	if (!got_irq) {
 		printf("\niwattach: couldn't get a suitable irq\n");
+		mutex_destroy(&sc->sc_lock);
+		mutex_destroy(&sc->sc_intr_lock);
 		return;
 	}
 	printf("\n");
@@ -885,9 +896,6 @@ void
 iw_trigger_dma(struct iw_softc *sc, u_char io)
 {
 	u_char	reg;
-	int	s;
-
-	s = splaudio();
 
 	IW_READ_CODEC_1(CSR3I, reg);
 	IW_WRITE_CODEC_1(CSR3I, reg & ~(io == IW_DMA_PLAYBACK ? 0x10 : 0x20));
@@ -899,8 +907,6 @@ iw_trigger_dma(struct iw_softc *sc, u_char io)
 	/* let the counter run */
 	IW_READ_CODEC_1(CFIG2I, reg);
 	IW_WRITE_CODEC_1(CFIG2I, reg & ~(io << 4));
-
-	splx(s);
 }
 
 void
@@ -1490,8 +1496,7 @@ iw_query_devinfo(void *addr, mixer_devinfo_t *dip)
 
 
 void *
-iw_malloc(void *addr, int direction, size_t size,
-    struct malloc_type *pool, int flags)
+iw_malloc(void *addr, int direction, size_t size)
 {
 	struct iw_softc *sc;
 	int drq;
@@ -1501,13 +1506,14 @@ iw_malloc(void *addr, int direction, size_t size,
 		drq = sc->sc_playdrq;
 	else
 		drq = sc->sc_recdrq;
-	return isa_malloc(sc->sc_ic, drq, size, pool, flags);
+	return isa_malloc(sc->sc_ic, drq, size, M_DEVBUF, M_WAITOK);
 }
 
 void
-iw_free(void *addr, void *ptr, struct malloc_type *pool)
+iw_free(void *addr, void *ptr, size_t size)
 {
-	isa_free(ptr, pool);
+
+	isa_free(ptr, M_DEVBUF);
 }
 
 size_t
@@ -1542,4 +1548,14 @@ iw_get_props(void *addr)
 	sc = addr;
 	return AUDIO_PROP_MMAP |
 		(sc->sc_fullduplex ? AUDIO_PROP_FULLDUPLEX : 0);
+}
+
+void
+iw_get_locks(void *addr, kmutex_t **intr, kmutex_t **thread)
+{
+	struct iw_softc *sc;
+
+	sc = addr;
+	*intr = &sc->sc_intr_lock;
+	*thread = &sc->sc_lock;
 }

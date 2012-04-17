@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_scan.h,v 1.1.1.3 2007/04/14 20:17:24 martin Exp $	*/
+/*	$NetBSD: ip_scan.h,v 1.1.1.3.34.1 2012/04/17 00:02:24 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -96,13 +96,13 @@ typedef	struct	ipscanstat	{
 } ipscanstat_t;
 
 
-extern	int fr_scan_ioctl __P((caddr_t, ioctlcmd_t, int, int, void *));
-extern	int ipsc_init __P((void));
-extern	int ipsc_attachis __P((struct ipstate *));
-extern	int ipsc_attachfr __P((struct frentry *));
-extern	int ipsc_detachis __P((struct ipstate *));
-extern	int ipsc_detachfr __P((struct frentry *));
-extern	int ipsc_packet __P((struct fr_info *, struct ipstate *));
-extern	void fr_scanunload __P((void));
+extern	int fr_scan_ioctl(caddr_t, ioctlcmd_t, int, int, void *);
+extern	int ipsc_init(void);
+extern	int ipsc_attachis(struct ipstate *);
+extern	int ipsc_attachfr(struct frentry *);
+extern	int ipsc_detachis(struct ipstate *);
+extern	int ipsc_detachfr(struct frentry *);
+extern	int ipsc_packet(struct fr_info *, struct ipstate *);
+extern	void fr_scanunload(void);
 
 #endif /* __IP_SCAN_H__ */

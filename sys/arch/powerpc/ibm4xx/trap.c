@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.62 2011/06/21 06:38:50 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.62.2.1 2012/04/17 00:06:46 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.62 2011/06/21 06:38:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.62.2.1 2012/04/17 00:06:46 yamt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -78,8 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.62 2011/06/21 06:38:50 matt Exp $");
 #include <sys/reboot.h>
 #include <sys/syscall.h>
 #include <sys/systm.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/userret.h>
 #include <sys/kauth.h>
 #include <sys/cpu.h>
@@ -113,7 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.62 2011/06/21 06:38:50 matt Exp $");
 #define	NARGREG		8		/* 8 args are in registers */
 #define	MOREARGS(sp)	((void *)((int)(sp) + 8)) /* more args go here */
 
-static int fix_unaligned(struct lwp *l, struct trapframe *frame);
+static int fix_unaligned(struct lwp *l, struct trapframe *tf);
 
 void trap(struct trapframe *);	/* Called from locore / trap_subr */
 /* Why are these not defined in a header? */
@@ -191,11 +189,6 @@ trap(struct trapframe *tf)
 				map = kernel_map;
 			} else {
 				map = &p->p_vmspace->vm_map;
-				if ((l->l_flag & LW_SA)
-				    && (~l->l_pflag & LP_SA_NOBLOCK)) {
-					l->l_savp->savp_faultaddr = va;
-					l->l_pflag |= LP_SA_PAGEFAULT;
-				}
 			}
 
 			if (tf->tf_esr & (ESR_DST|ESR_DIZ))
@@ -212,9 +205,6 @@ trap(struct trapframe *tf)
 			pcb->pcb_onfault = NULL;
 			rv = uvm_fault(map, trunc_page(va), ftype);
 			pcb->pcb_onfault = fb;
-			if (map != kernel_map) {
-				l->l_pflag &= ~LP_SA_PAGEFAULT;
-			}
 			if (rv == 0)
 				goto done;
 			if (fb != NULL) {
@@ -243,15 +233,10 @@ trap(struct trapframe *tf)
 		    tf->tf_srr0, (ftype & VM_PROT_WRITE) ? "write" : "read",
 		    tf->tf_dear, tf->tf_esr));
 		KASSERT(l == curlwp && (l->l_stat == LSONPROC));
-		if (l->l_flag & LW_SA) {
-			l->l_savp->savp_faultaddr = (vaddr_t)tf->tf_dear;
-			l->l_pflag |= LP_SA_PAGEFAULT;
-		}
 //		KASSERT(curpcb->pcb_onfault == NULL);
 		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(tf->tf_dear),
 		    ftype);
 		if (rv == 0) {
-			l->l_pflag &= ~LP_SA_PAGEFAULT;
 			break;
 		}
 		KSI_INIT_TRAP(&ksi);
@@ -267,15 +252,10 @@ trap(struct trapframe *tf)
 			ksi.ksi_signo = SIGKILL;
 		}
 		trapsignal(l, &ksi);
-		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		break;
 
 	case EXC_ITMISS|EXC_USER:
 	case EXC_ISI|EXC_USER:
-		if (l->l_flag & LW_SA) {
-			l->l_savp->savp_faultaddr = (vaddr_t)tf->tf_srr0;
-			l->l_pflag |= LP_SA_PAGEFAULT;
-		}
 		ftype = VM_PROT_EXECUTE;
 		DBPRINTF(TDB_ALL,
 		    ("trap(EXC_ISI|EXC_USER) at %lx execute fault tf %p\n",
@@ -284,7 +264,6 @@ trap(struct trapframe *tf)
 		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(tf->tf_srr0),
 		    ftype);
 		if (rv == 0) {
-			l->l_pflag &= ~LP_SA_PAGEFAULT;
 			break;
 		}
 		KSI_INIT_TRAP(&ksi);
@@ -293,7 +272,6 @@ trap(struct trapframe *tf)
 		ksi.ksi_addr = (void *)tf->tf_srr0;
 		ksi.ksi_code = (rv == EACCES ? SEGV_ACCERR : SEGV_MAPERR);
 		trapsignal(l, &ksi);
-		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		break;
 
 	case EXC_AST|EXC_USER:
@@ -466,7 +444,7 @@ copyin(const void *udaddr, void *kaddr, size_t len)
 		"   addi %[udaddr],%[udaddr],0x1;"  /* next udaddr byte */
 		"   sync; isync;"
 		"   mtpid %[pid]; sync;"
-		"   stb %[tmp],0(%[kaddr]);"        /* Store kernel byte */  
+		"   stb %[tmp],0(%[kaddr]);"        /* Store kernel byte */
 		"   dcbf 0,%[kaddr];"           /* flush cache */
 		"   addi %[kaddr],%[kaddr],0x1;"
 		"   sync; isync;"
@@ -570,7 +548,7 @@ copyout(const void *kaddr, void *udaddr, size_t len)
 		"   b 3b;"
 		"10:mtpid %[pid]; mtmsr %[msr]; sync; isync;" /* Restore PID and MSR */
 		: [msr] "=&r" (msr), [pid] "=&r" (pid), [tmp] "=&r" (tmp)
-		: [udaddr] "b" (udaddr), [ctx] "b" (ctx), [kaddr] "b" (kaddr), [len] "b" (len), [count] "b" (count)); 
+		: [udaddr] "b" (udaddr), [ctx] "b" (ctx), [kaddr] "b" (kaddr), [len] "b" (len), [count] "b" (count));
 
 	curpcb->pcb_onfault = NULL;
 	return 0;

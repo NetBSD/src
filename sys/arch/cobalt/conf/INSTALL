@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.45 2011/06/30 20:09:22 wiz Exp $
+# $NetBSD: INSTALL,v 1.45.2.1 2012/04/17 00:06:11 yamt Exp $
 #
 # INSTALL -- installation and rescue kernel.
 #
@@ -10,7 +10,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.45 $"
+#ident 		"INSTALL-$Revision: 1.45.2.1 $"
 
 makeoptions     COPTS="-Os -mmemcpy"
 makeoptions	CPUFLAGS="-march=vr5000 -mabi=32"
@@ -26,7 +26,6 @@ maxusers	32
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 #options 	SYSVSHM		# System V shared memory
-#options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 #options 	NTP		# network time protocol
 #options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -86,7 +85,7 @@ file-system	MFS		# memory-based filesystem
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
@@ -328,7 +327,6 @@ pseudo-device	loop				# network loopback
 pseudo-device	pty				# pseudo-terminals
 options 	NO_DEV_PTM
 #pseudo-device	sequencer	1		# MIDI sequencer
-pseudo-device	rnd				# /dev/random & kernel generator
 #options 	RND_COM				# use "com" randomness (BROKEN)
 #pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	nullcons			# no-op console

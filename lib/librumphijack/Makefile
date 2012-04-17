@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2011/02/25 16:01:41 pooka Exp $
+#	$NetBSD: Makefile,v 1.8.4.1 2012/04/17 00:05:33 yamt Exp $
 #
 
 LIB=		rumphijack
@@ -12,7 +12,7 @@ SRCS=		hijack.c hijackdlsym.c
 
 CPPFLAGS+=	-D_DIAGNOSTIC -D_REENTRANT
 
-WARNS=		4
+WARNS?=		5
 
 # make sure the compiler doesn't get clever, since we need
 # a stack frame

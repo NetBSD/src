@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2011 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2012 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -90,6 +90,15 @@ if_conf(_unused struct interface *iface)
 	return 0;
 }
 
+#ifdef DEBUG_MEMORY
+static void
+cleanup(void)
+{
+
+	free(link_buf);
+}
+#endif
+
 int
 init_sockets(void)
 {
@@ -129,6 +138,7 @@ getifssid(const char *ifname, char *ssid)
 	strlcpy(ireq.i_name, ifname, sizeof(ireq.i_name));
 	ireq.i_type = IEEE80211_IOC_SSID;
 	ireq.i_val = -1;
+	memset(nwid, 0, sizeof(nwid));
 	ireq.i_data = &nwid;
 	if (ioctl(socket_afnet, SIOCG80211, &ireq) == 0) {
 		retval = ireq.i_len;
@@ -177,9 +187,7 @@ if_address(const struct interface *iface, const struct in_addr *address,
 
 /* ARGSUSED4 */
 int
-if_route(const struct interface *iface, const struct in_addr *dest,
-    const struct in_addr *net, const struct in_addr *gate,
-    _unused int metric, int action)
+if_route(const struct rt *rt, int action)
 {
 	union sockunion {
 		struct sockaddr sa;
@@ -195,7 +203,7 @@ if_route(const struct interface *iface, const struct in_addr *dest,
 		struct rt_msghdr hdr;
 		char buffer[sizeof(su) * 4];
 	} rtm;
-	char *bp = rtm.buffer, *p;
+	char *bp = rtm.buffer;
 	size_t l;
 	int retval = 0;
 
@@ -223,12 +231,13 @@ if_route(const struct interface *iface, const struct in_addr *dest,
 		rtm.hdr.rtm_type = RTM_DELETE;
 	rtm.hdr.rtm_flags = RTF_UP;
 	/* None interface subnet routes are static. */
-	if (gate->s_addr != INADDR_ANY ||
-	    net->s_addr != iface->net.s_addr ||
-	    dest->s_addr != (iface->addr.s_addr & iface->net.s_addr))
+	if (rt->gate.s_addr != INADDR_ANY ||
+	    rt->net.s_addr != rt->iface->net.s_addr ||
+	    rt->dest.s_addr != (rt->iface->addr.s_addr & rt->iface->net.s_addr))
 		rtm.hdr.rtm_flags |= RTF_STATIC;
 	rtm.hdr.rtm_addrs = RTA_DST | RTA_GATEWAY;
-	if (dest->s_addr == gate->s_addr && net->s_addr == INADDR_BROADCAST)
+	if (rt->dest.s_addr == rt->gate.s_addr &&
+	    rt->net.s_addr == INADDR_BROADCAST)
 		rtm.hdr.rtm_flags |= RTF_HOST;
 	else {
 		rtm.hdr.rtm_addrs |= RTA_NETMASK;
@@ -238,35 +247,23 @@ if_route(const struct interface *iface, const struct in_addr *dest,
 			rtm.hdr.rtm_addrs |= RTA_IFA;
 	}
 
-	ADDADDR(dest);
+	ADDADDR(&rt->dest);
 	if (rtm.hdr.rtm_flags & RTF_HOST ||
 	    !(rtm.hdr.rtm_flags & RTF_STATIC))
 	{
 		/* Make us a link layer socket for the host gateway */
 		memset(&su, 0, sizeof(su));
 		su.sdl.sdl_len = sizeof(struct sockaddr_dl);
-		link_addr(iface->name, &su.sdl);
+		link_addr(rt->iface->name, &su.sdl);
 		ADDSU(su);
 	} else
-		ADDADDR(gate);
+		ADDADDR(&rt->gate);
 
-	if (rtm.hdr.rtm_addrs & RTA_NETMASK) {
-		/* Ensure that netmask is set correctly */
-		memset(&su, 0, sizeof(su));
-		su.sin.sin_family = AF_INET;
-		su.sin.sin_len = sizeof(su.sin);
-		memcpy(&su.sin.sin_addr, &net->s_addr, sizeof(su.sin.sin_addr));
-		p = su.sa.sa_len + (char *)&su;
-		for (su.sa.sa_len = 0; p > (char *)&su;)
-			if (*--p != 0) {
-				su.sa.sa_len = 1 + p - (char *)&su;
-				break;
-			}
-		ADDSU(su);
-	}
+	if (rtm.hdr.rtm_addrs & RTA_NETMASK)
+		ADDADDR(&rt->net);
 
 	if (rtm.hdr.rtm_addrs & RTA_IFA)
-		ADDADDR(&iface->addr);
+		ADDADDR(&rt->iface->addr);
 
 	rtm.hdr.rtm_msglen = l = bp - (char *)&rtm;
 	if (write(r_fd, &rtm, l) == -1)
@@ -278,6 +275,11 @@ int
 open_link_socket(void)
 {
 	int fd;
+
+#ifdef DEBUG_MEMORY
+	if (link_buf == NULL)
+		atexit(cleanup);
+#endif
 
 	fd = socket(PF_ROUTE, SOCK_RAW, 0);
 	if (fd != -1) {
@@ -362,13 +364,31 @@ manage_link(int fd)
 			case RTM_IFINFO:
 				ifm = (struct if_msghdr *)(void *)p;
 				memset(ifname, 0, sizeof(ifname));
-				if (if_indextoname(ifm->ifm_index, ifname))
-					handle_interface(0, ifname);
+				if (!(if_indextoname(ifm->ifm_index, ifname)))
+					break;
+				switch (ifm->ifm_data.ifi_link_state) {
+				case LINK_STATE_DOWN:
+					len = -1;
+					break;
+				case LINK_STATE_UP:
+					len = 1;
+					break;
+				default:
+					/* handle_carrier will re-load
+					 * the interface flags and check for
+					 * IFF_RUNNING as some drivers that
+					 * don't handle link state also don't
+					 * set IFF_RUNNING when this routing
+					 * message is generated.
+					 * As such, it is a race ...*/
+					len = 0;
+					break;
+				}
+				handle_carrier(len, ifm->ifm_flags, ifname);
 				break;
 			case RTM_DELETE:
-				if (!(rtm->rtm_addrs & RTA_DST) ||
-				    !(rtm->rtm_addrs & RTA_GATEWAY) ||
-				    !(rtm->rtm_addrs & RTA_NETMASK))
+				if (~rtm->rtm_addrs &
+				    (RTA_DST | RTA_GATEWAY | RTA_NETMASK))
 					break;
 				if (rtm->rtm_pid == getpid())
 					break;

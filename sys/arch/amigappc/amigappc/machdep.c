@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.48 2011/07/17 20:54:36 joerg Exp $ */
+/* $NetBSD: machdep.c,v 1.48.2.1 2012/04/17 00:06:02 yamt Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,9 +32,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2011/07/17 20:54:36 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.2.1 2012/04/17 00:06:02 yamt Exp $");
 
 #include <sys/param.h>
+#include <sys/device.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>
 #include <sys/kernel.h>
@@ -54,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2011/07/17 20:54:36 joerg Exp $");
 #include <amiga/amiga/cc.h>
 #include <amiga/amiga/cia.h>
 #include <amiga/amiga/custom.h>
+#include <amiga/amiga/device.h>
 #include <amiga/amiga/isr.h>
 #include <amiga/amiga/memlist.h>
 #include <amigappc/amigappc/p5reg.h>
@@ -642,10 +644,11 @@ void
 consinit(void)
 {
 
+	/* preconfigure graphics cards */
 	custom_chips_init();
-	/*
-	** Initialize the console before we print anything out.
-	*/
+	config_console();
+
+	/* Initialize the console before we print anything out. */
 	cninit();
 }
 

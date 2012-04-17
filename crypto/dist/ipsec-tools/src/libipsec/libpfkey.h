@@ -1,4 +1,4 @@
-/*	$NetBSD: libpfkey.h,v 1.18 2010/12/03 14:32:52 tteras Exp $	*/
+/*	$NetBSD: libpfkey.h,v 1.18.8.1 2012/04/17 00:01:41 yamt Exp $	*/
 
 /* Id: libpfkey.h,v 1.13 2005/12/04 20:26:43 manubsd Exp */
 
@@ -59,7 +59,11 @@ struct sadb_alg;
 
 #ifndef HAVE_IPSEC_POLICY_T
 typedef caddr_t ipsec_policy_t;
+#ifdef __NetBSD__
+#define __ipsec_const const
+#else
 #define __ipsec_const
+#endif
 #else
 #define __ipsec_const const
 #endif

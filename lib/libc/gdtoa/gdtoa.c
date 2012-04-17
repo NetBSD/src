@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoa.c,v 1.5 2011/03/20 23:15:35 christos Exp $ */
+/* $NetBSD: gdtoa.c,v 1.5.4.1 2012/04/17 00:05:18 yamt Exp $ */
 
 /****************************************************************
 
@@ -65,7 +65,9 @@ bitstob(ULong *bits, int nbits, int *bbits)
 		*x++ = (*bits >> 16) & ALL_ON;
 #endif
 		} while(++bits <= be);
-	i = x - x0;
+	ptrdiff_t td = x - x0;
+	_DIAGASSERT(__type_fit(int, td));
+	i = (int)td;
 	while(!x0[--i])
 		if (!i) {
 			b->wds = 0;

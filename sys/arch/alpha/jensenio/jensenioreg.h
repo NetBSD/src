@@ -1,4 +1,4 @@
-/* $NetBSD: jensenioreg.h,v 1.3 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: jensenioreg.h,v 1.3.34.1 2012/04/17 00:05:56 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * System register description for the DECpc AXP 150 ("Jensen").
  */
 
-#define	REGVAL(r)	(*(volatile u_int64_t *)ALPHA_PHYS_TO_K0SEG(r))
+#define	REGVAL(r)	(*(volatile uint64_t *)ALPHA_PHYS_TO_K0SEG(r))
 
 /*
  * EISA Interrupt Acknowledge:			1.0000.0000

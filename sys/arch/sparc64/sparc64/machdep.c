@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.262 2011/10/08 08:49:07 nakayama Exp $ */
+/*	$NetBSD: machdep.c,v 1.262.2.1 2012/04/17 00:06:56 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,10 +71,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.262 2011/10/08 08:49:07 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.262.2.1 2012/04/17 00:06:56 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
+#include "opt_modular.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
@@ -84,8 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.262 2011/10/08 08:49:07 nakayama Exp $
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/proc.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/ras.h>
@@ -152,6 +151,11 @@ int sigpid = 0;
 #endif
 
 extern vaddr_t avail_end;
+#ifdef MODULAR
+vaddr_t module_start, module_end;
+static struct vm_map module_map_store;
+extern struct vm_map *module_map;
+#endif
 
 int	physmem;
 
@@ -207,6 +211,12 @@ cpu_startup(void)
 
 #if 0
 	pmap_redzone();
+#endif
+
+#ifdef MODULAR
+	uvm_map_setup(&module_map_store, module_start, module_end, 0);
+	module_map_store.pmap = pmap_kernel();
+	module_map = &module_map_store;
 #endif
 }
 
@@ -514,45 +524,6 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
 }
 
-/*
- * Set the lwp to begin execution in the upcall handler.  The upcall
- * handler will then simply call the upcall routine and then exit.
- *
- * Because we have a bunch of different signal trampolines, the first
- * two instructions in the signal trampoline call the upcall handler.
- * Signal dispatch should skip the first two instructions in the signal
- * trampolines.
- */
-void 
-cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
-	void *sas, void *ap, void *sp, sa_upcall_t upcall)
-{
-       	struct trapframe64 *tf;
-	vaddr_t addr;
-
-	tf = l->l_md.md_tf;
-	addr = (vaddr_t) upcall;
-
-	/* Arguments to the upcall... */
-	tf->tf_out[0] = type;
-	tf->tf_out[1] = (vaddr_t) sas;
-	tf->tf_out[2] = nevents;
-	tf->tf_out[3] = ninterrupted;
-	tf->tf_out[4] = (vaddr_t) ap;
-
-	/*
-	 * Ensure the stack is double-word aligned, and provide a
-	 * valid C call frame.
-	 */
-	sp = (void *)(((vaddr_t)sp & ~0xf) - CCFSZ);
-
-	/* Arrange to begin execution at the upcall handler. */
-	tf->tf_pc = addr;
-	tf->tf_npc = addr + 4;
-	tf->tf_out[6] = (vaddr_t)sp - STACK_OFFSET;
-	tf->tf_out[7] = -1;		/* "you lose" if upcall returns */
-}
-
 struct pcb dumppcb;
 
 static void
@@ -698,18 +669,12 @@ long	dumplo = 0;
 void
 cpu_dumpconf(void)
 {
-	const struct bdevsw *bdev;
 	int nblks, dumpblks;
 
 	if (dumpdev == NODEV)
 		/* No usable dump device */
 		return;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL || bdev->d_psize == NULL)
-		/* No usable dump device */
-		return;
-
-	nblks = (*bdev->d_psize)(dumpdev);
+	nblks = bdev_size(dumpdev);
 
 	dumpblks = ctod(physmem) + pmap_dumpsize();
 	if (dumpblks > (nblks - ctod(1)))
@@ -784,7 +749,7 @@ dumpsys(void)
 	printf("\ndumping to dev %" PRId32 ",%" PRId32 " offset %ld\n",
 	    major(dumpdev), minor(dumpdev), dumplo);
 
-	psize = (*bdev->d_psize)(dumpdev);
+	psize = bdev_size(dumpdev);
 	if (psize == -1) {
 		printf("dump area unavailable\n");
 		return;
@@ -2310,7 +2275,7 @@ sparc_bus_map(bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
 		 */
 		io_space = extent_create("IOSPACE",
 					 (u_long)IODEV_BASE, (u_long)IODEV_END,
-					 M_DEVBUF, 0, 0, EX_NOWAIT);
+					 0, 0, EX_NOWAIT);
 
 
 	size = round_page(size);
@@ -2490,7 +2455,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 
 	/* First ensure consistent stack state (see sendsig). */ /* XXX? */
 	write_user_windows();
-	if ((l->l_flag & LW_SA_SWITCHING) == 0 && rwindow_save(l)) {
+	if (rwindow_save(l)) {
 		mutex_enter(l->l_proc->p_lock);
 		sigexit(l, SIGILL);
 	}

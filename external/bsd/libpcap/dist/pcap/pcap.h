@@ -49,6 +49,8 @@
 
 #ifndef PCAP_DONT_INCLUDE_PCAP_BPF_H
 #include <pcap/bpf.h>
+#else
+#include <net/bpf.h>
 #endif
 
 #include <stdio.h>

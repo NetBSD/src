@@ -1,4 +1,4 @@
-/*	$NetBSD: initdir.c,v 1.2 2011/10/15 23:00:01 christos Exp $	*/
+/*	$NetBSD: initdir.c,v 1.2.2.1 2012/04/17 00:05:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: initdir.c,v 1.2 2011/10/15 23:00:01 christos Exp $");
+__RCSID("$NetBSD: initdir.c,v 1.2.2.1 2012/04/17 00:05:18 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -236,7 +236,8 @@ retry:
 			}
 		}
 
-		dirp->dd_len = len;
+		_DIAGASSERT(__type_fit(int, len));
+		dirp->dd_len = (int)len;
 		dirp->dd_size = ddptr - dirp->dd_buf;
 	} else {
 		dirp->dd_len = incr;

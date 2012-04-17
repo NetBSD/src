@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_htable.h,v 1.1.1.2 2007/04/14 20:17:22 martin Exp $	*/
+/*	$NetBSD: ip_htable.h,v 1.1.1.2.34.1 2012/04/17 00:02:24 yamt Exp $	*/
 
 #ifndef __IP_HTABLE_H__
 #define __IP_HTABLE_H__
@@ -59,22 +59,22 @@ typedef	struct	iphtstat_s	{
 
 extern iphtable_t *ipf_htables[IPL_LOGSIZE];
 
-extern iphtable_t *fr_existshtable __P((int, char *));
-extern int fr_clearhtable __P((iphtable_t *));
-extern void fr_htable_unload __P((void));
-extern int fr_newhtable __P((iplookupop_t *));
-extern iphtable_t *fr_findhtable __P((int, char *));
-extern int fr_removehtable __P((int, char *));
-extern size_t fr_flushhtable __P((iplookupflush_t *));
-extern int fr_addhtent __P((iphtable_t *, iphtent_t *));
-extern int fr_delhtent __P((iphtable_t *, iphtent_t *));
-extern int fr_derefhtable __P((iphtable_t *));
-extern int fr_derefhtent __P((iphtent_t *));
-extern int fr_delhtable __P((iphtable_t *));
-extern void *fr_iphmfindgroup __P((void *, void *));
-extern int fr_iphmfindip __P((void *, int, void *));
-extern int fr_gethtablestat __P((iplookupop_t *));
-extern int fr_htable_getnext __P((ipftoken_t *, ipflookupiter_t *));
-extern void fr_htable_iterderef __P((u_int, int, void *));
+extern iphtable_t *fr_existshtable(int, char *);
+extern int fr_clearhtable(iphtable_t *);
+extern void fr_htable_unload(void);
+extern int fr_newhtable(iplookupop_t *);
+extern iphtable_t *fr_findhtable(int, char *);
+extern int fr_removehtable(int, char *);
+extern size_t fr_flushhtable(iplookupflush_t *);
+extern int fr_addhtent(iphtable_t *, iphtent_t *);
+extern int fr_delhtent(iphtable_t *, iphtent_t *);
+extern int fr_derefhtable(iphtable_t *);
+extern int fr_derefhtent(iphtent_t *);
+extern int fr_delhtable(iphtable_t *);
+extern void *fr_iphmfindgroup(void *, void *);
+extern int fr_iphmfindip(void *, int, void *);
+extern int fr_gethtablestat(iplookupop_t *);
+extern int fr_htable_getnext(ipftoken_t *, ipflookupiter_t *);
+extern void fr_htable_iterderef(u_int, int, void *);
 
 #endif /* __IP_HTABLE_H__ */

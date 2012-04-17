@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.6 2009/04/11 12:41:10 lukem Exp $	*/
+/*	$NetBSD: hash.c,v 1.6.6.1 2012/04/17 00:09:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -315,3 +315,76 @@ ht_enumerate(struct hashtab *ht, ht_callback cbfunc, void *arg)
 	}
 	return rval;
 }
+
+/************************************************************/
+
+/*
+ * Type-safe wrappers.
+ */
+
+#define DEFHASH(HT, VT) \
+	struct HT {						\
+		struct hashtab imp;				\
+	};							\
+								\
+	struct HT *						\
+	HT##_create(void)					\
+	{							\
+		struct HT *tbl;					\
+								\
+		tbl = ecalloc(1, sizeof(*tbl));			\
+		ht_init(&tbl->imp, 8);				\
+		return tbl;					\
+	}							\
+								\
+	int							\
+	HT##_insert(struct HT *tbl, const char *name, struct VT *val) \
+	{							\
+		return ht_insert(&tbl->imp, name, val);		\
+	}							\
+								\
+	int							\
+	HT##_replace(struct HT *tbl, const char *name, struct VT *val) \
+	{							\
+		return ht_replace(&tbl->imp, name, val);	\
+	}							\
+								\
+	int							\
+	HT##_remove(struct HT *tbl, const char *name)		\
+	{							\
+		return ht_remove(&tbl->imp, name);		\
+	}							\
+								\
+	struct VT *						\
+	HT##_lookup(struct HT *tbl, const char *name)		\
+	{							\
+		return ht_lookup(&tbl->imp, name);		\
+	}							\
+								\
+	struct HT##_enumcontext {				\
+		int (*func)(const char *, struct VT *, void *);	\
+		void *userctx;					\
+	};							\
+								\
+	static int						\
+	HT##_enumerate_thunk(const char *name, void *value, void *voidctx) \
+	{							\
+		struct HT##_enumcontext *ctx = voidctx;		\
+								\
+		return ctx->func(name, value, ctx->userctx);	\
+	}							\
+								\
+	int							\
+	HT##_enumerate(struct HT *tbl,				\
+		      int (*func)(const char *, struct VT *, void *), \
+		      void *userctx)				\
+	{							\
+		struct HT##_enumcontext ctx;			\
+								\
+		ctx.func = func;				\
+		ctx.userctx = userctx;				\
+		return ht_enumerate(&tbl->imp, HT##_enumerate_thunk, &ctx); \
+	}
+
+DEFHASH(nvhash, nvlist);
+DEFHASH(dlhash, defoptlist);

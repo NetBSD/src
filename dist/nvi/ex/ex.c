@@ -1,4 +1,4 @@
-/*	$NetBSD: ex.c,v 1.7 2011/03/21 14:53:03 tnozaki Exp $ */
+/*	$NetBSD: ex.c,v 1.7.4.1 2012/04/17 00:02:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -1051,7 +1051,7 @@ end_case23:		break;
 			 * not a two-line deletion.
 			 */
 			if (!ISDIGIT((UCHAR_T)ecp->cp[0])) {
-				ecp->buffer = *ecp->cp;
+				ecp->buffer = (UCHAR_T)*ecp->cp;
 				++ecp->cp;
 				--ecp->clen;
 				FL_SET(ecp->iflags, E_C_BUFFER);
@@ -1842,7 +1842,7 @@ ex_line(SCR *sp, EXCMD *ecp, MARK *mp, int *isaddrp, int *errp)
 	F_CLR(ecp, E_DELTA);
 
 	/* No addresses permitted until a file has been read in. */
-	if (sp->ep == NULL && STRCHR(L"$0123456789'\\/?.+-^", *ecp->cp)) {
+	if (sp->ep == NULL && STRCHR(L("$0123456789'\\/?.+-^"), *ecp->cp)) {
 		ex_badaddr(sp, NULL, A_EMPTY, NUM_OK);
 		*errp = 1;
 		return (0);
@@ -2356,7 +2356,7 @@ ex_comlog(sp, ecp)
 	if (ecp->flags)
 		vtrace(sp, " flags 0x%x", ecp->flags);
 	if (F_ISSET(&exc, E_BUFFER))
-		vtrace(sp, " buffer %c", ecp->buffer);
+		vtrace(sp, " buffer "WC, ecp->buffer);
 	if (ecp->argc)
 		for (cnt = 0; cnt < ecp->argc; ++cnt)
 			vtrace(sp, " arg %d: {%s}", cnt, ecp->argv[cnt]->bp);

@@ -1,6 +1,6 @@
-.\" $NetBSD: p5pb.4,v 1.4 2011/10/07 09:22:53 wiz Exp $
+.\" $NetBSD: p5pb.4,v 1.4.2.1 2012/04/17 00:05:46 yamt Exp $
 .\"
-.\" Copyright (c) 2011 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,38 +27,49 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 26, 2011
+.Dd January 19, 2012
 .Dt P5PB 4 amiga
 .Os
 .Sh NAME
 .Nm p5pb
 .Nd Phase5 PCI bridge driver
 .Sh SYNOPSIS
-.Cd "p5pb0 at zbus0"
+.Cd "p5pb0 at p5bus0"
 .Cd "pci* at p5pb?"
 .Cd "genfb* at pci?"
+.Cd "options P5PB_DEBUG"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the PCI bus present on BlizzardVisionPPC,
-CyberVisionPPC and CybrerVision 64/3D graphics cards.
+driver provides support for the PCI bus present on various devices equipped with
+the Phase5 PCI bridge.
+.Pp
+The
+.Nm
+driver provides necessary support for CyberVisionPPC and BlizzardVisionPPC,
+allowing attachment of
+.Xr genfb 4
+driver.
+.Pp
+Additional, excessive debugging output is enabled by the
+.Dv P5PB_DEBUG
+option.
 .Sh HARDWARE
 The
 .Nm
 driver supports the following hardware:
-.Bl -tag -width "BLIZZARDVISIONPPC" -offset indent
-.It Em BLIZZARDVISIONPPC
-Phase5 BlizzardVisionPPC graphics card.
-.It Em CYBERVISIONPPC
-Phase5 CyberVisionPPC graphics card.
-.It Em CYBERVISION 64/3D
-Phase5 CyberVision 64/3D graphics card.
+.Bl -tag -offset indent
+.It Phase5 BlizzardVisionPPC graphics card
+.It Phase5 CyberVisionPPC graphics card
+.It DCE Computer G-REX 1200 (experimental, first slot only)
+.It DCE Computer G-REX 4000 (experimental, first slot only)
 .El
 .Sh SEE ALSO
+.Xr cv3dpb 4 ,
 .Xr genfb 4 ,
-.Xr grfcv3d 4 ,
-.Xr pci 4
 .\" .Xr pm2fb 4
+.Xr p5membar 4 ,
+.Xr pci 4
 .Sh HISTORY
 The
 .Nm
@@ -71,24 +82,14 @@ The
 driver was written by
 .An Radoslaw Kujawa Aq radoslaw.kujawa@gmail.com .
 .Sh CAVEATS
-G-REX PCI bridge is currently not supported, however the driver
-will try to attach to it, because it has the same vendor and product
-ID as CVPPC/BVPPC cards.
-Due to similarities between these products, it may even detect the
-card inserted into first slot, but the driver will (most likely)
-not work properly.
+The
+.Nx
+developers don't have access to G-REX hardware or documentation.
+Support for this device is based on best wishes.
 .Pp
-Support for CV64/3D is disabled by default, since the
-.Xr grfcv3d 4
-driver does attach directly to
-.Xr zbus 4 .
-Machine independent PCI driver for S3 ViRGE does not exist yet.
+Support for
+.Xr genfb 4
+framebuffer on CVPPC/BVPPC needs more testing.
 .Sh BUGS
-Current version of this driver depends on PCI bus setup and enumeration
-done by the firmware.
-.Pp
-The driver will not attach at all, if there is no AutoConfig entry
-for CVPPC/BVPPC card (Zorro product ID 110).
-Some firmware revisions are known not to create this entry.
-.Pp
-It is not (yet) possible to use the CVPPC/BVPPC as a console.
+DMA to host memory is not supported.
+This is a driver limitation.

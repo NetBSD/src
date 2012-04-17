@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2007-2011 Roy Marples
+# Copyright (c) 2007-2012 Roy Marples
 # All rights reserved
 
 # Redistribution and use in source and binary forms, with or without
@@ -45,6 +45,7 @@ PRIVATEDIR="$VARDIR/private"
 
 : ${dynamic_order:=tap[0-9]* tun[0-9]* vpn vpn[0-9]* ppp[0-9]* ippp[0-9]*}
 : ${interface_order:=lo lo[0-9]*}
+: ${name_server_blacklist:=0.0.0.0}
 
 error_exit()
 {
@@ -84,16 +85,23 @@ usage()
 
 echo_resolv()
 {
-	local line=
+	local line= OIFS="$IFS"
+
 	[ -n "$1" -a -e "$IFACEDIR/$1" ] || return 1
 	echo "# resolv.conf from $1"
 	# Our variable maker works of the fact each resolv.conf per interface
 	# is separated by blank lines.
 	# So we remove them when echoing them.
-	while read line; do
-		[ -n "$line" ] && echo "$line"
+	while read -r line; do
+		IFS="$OIFS"
+		if [ -n "$line" ]; then
+			# We need to set IFS here to preserve any whitespace
+			IFS=''
+			printf "%s\n" "$line"
+		fi
 	done < "$IFACEDIR/$1"
 	echo
+	IFS="$OIFS"
 }
 
 # Parse resolv.conf's and make variables
@@ -101,8 +109,9 @@ echo_resolv()
 parse_resolv()
 {
 	local line= ns= ds= search= d= n= newns=
-	local new=true iface= private=false p=
+	local new=true iface= private=false p= domain=
 
+	echo "DOMAIN="
 	echo "DOMAINS="
 	echo "SEARCH=\"$search_domains\""
 	# let our subscribers know about global nameservers
@@ -116,7 +125,7 @@ parse_resolv()
 	echo "LOCALNAMESERVERS="
 	newns=
 
-	while read line; do
+	while read -r line; do
 		case "$line" in
 		"# resolv.conf from "*)
 			if ${new}; then
@@ -146,7 +155,14 @@ parse_resolv()
 			esac
 			ns="$ns${line#* } "
 			;;
-		"domain "*|"search "*)
+		"domain "*)
+			if [ -z "$domain" ]; then
+				domain="${line#* }"
+				echo "DOMAIN=\"$domain\""
+			fi
+			search="${line#* }"
+			;;
+		"search "*)
 			search="${line#* }"
 			;;
 		*)
@@ -185,6 +201,41 @@ uniqify()
 		shift
 	done
 	echo "${result# *}"
+}
+
+dirname()
+{
+	local dir= OIFS="$IFS"
+	local IFS=/
+	set -- $@
+	IFS="$OIFS"
+	if [ -n "$1" ]; then
+		printf %s .
+	else
+		shift
+	fi
+	while [ -n "$2" ]; do
+		printf "/%s" "$1"
+		shift
+	done
+	printf "\n"
+}
+
+config_mkdirs()
+{
+	local e=0 f d
+	for f; do
+		[ -n "$f" ] || continue
+		d="$(dirname "$f")"
+		if [ ! -d "$d" ]; then
+			if type install >/dev/null 2>&1; then
+				install -d "$d" || e=$?
+			else
+				mkdir "$d" || e=$?
+			fi
+		fi
+	done
+	return $e
 }
 
 list_resolv()
@@ -230,7 +281,7 @@ list_resolv()
 		fi
 		
 		if [ "$cmd" = i -o "$cmd" = "-i" ]; then
-			printf "$i "
+			printf %s "$i "
 		else
 			echo_resolv "$i"
 		fi
@@ -239,18 +290,45 @@ list_resolv()
 	return $retval
 }
 
+list_remove() {
+	local list= e= l= result= found= retval=0
+
+	[ -z "$2" ] && return 0
+	eval list=\"\$$1\"
+	shift
+
+	set -f
+	for e; do
+		found=false
+		for l in $list; do
+			case "$e" in
+			$l) found=true;;
+			esac
+			$found && break
+		done
+		if $found; then
+			retval=$(($retval + 1))
+		else
+			result="$result $e"
+		fi
+	done
+	set +f
+	echo "${result# *}"
+	return $retval
+}
+
 make_vars()
 {
+	local newdomains= d= dn= newns= ns=
 	eval "$(list_resolv -l "$@" | parse_resolv)"
 
 	# Ensure that we only list each domain once
-	newdomains=
 	for d in $DOMAINS; do
 		dn="${d%%:*}"
+		list_remove domain_blacklist "$dn" >/dev/null || continue
 		case " $newdomains" in
 		*" ${dn}:"*) continue;;
 		esac
-		newdomains="$newdomains${newdomains:+ }$dn:"
 		newns=
 		for nd in $DOMAINS; do
 			if [ "$dn" = "${nd%%:*}" ]; then
@@ -258,23 +336,35 @@ make_vars()
 				while [ -n "$ns" ]; do
 					case ",$newns," in
 					*,${ns%%,*},*) ;;
-					*) newns="$newns${newns:+,}${ns%%,*}";;
+					*) list_remove name_server_blacklist \
+						"$ns" >/dev/null \
+					&& newns="$newns${newns:+,}${ns%%,*}";;
 					esac
 					[ "$ns" = "${ns#*,}" ] && break
 					ns="${ns#*,}"
 				done
 			fi
 		done
-		newdomains="$newdomains$newns"
+		if [ -n "$newns" ]; then
+			newdomains="$newdomains${newdomains:+ }$dn:$newns"
+		fi
 	done
+	DOMAIN="$(list_remove domain_blacklist $DOMAIN)"
+	SEARCH="$(uniqify $SEARCH)"
+	SEARCH="$(list_remove domain_blacklist $SEARCH)"
+	NAMESERVERS="$(uniqify $NAMESERVERS)"
+	NAMESERVERS="$(list_remove name_server_blacklist $NAMESERVERS)"
+	LOCALNAMESERVERS="$(uniqify $LOCALNAMESERVERS)"
+	LOCALNAMESERVERS="$(list_remove name_server_blacklist $LOCALNAMESERVERS)"
+	echo "DOMAIN='$DOMAIN'"
+	echo "SEARCH='$SEARCH'"
+	echo "NAMESERVERS='$NAMESERVERS'"
+	echo "LOCALNAMESERVERS='$LOCALNAMESERVERS'"
 	echo "DOMAINS='$newdomains'"
-	echo "SEARCH='$(uniqify $SEARCH)'"
-	echo "NAMESERVERS='$(uniqify $NAMESERVERS)'"
-	echo "LOCALNAMESERVERS='$(uniqify $LOCALNAMESERVERS)'"
 }
 
 force=false
-while getopts a:d:fhIilm:puv OPT; do
+while getopts a:Dd:fhIilm:puv OPT; do
 	case "$OPT" in
 	f) force=true;;
 	h) usage;;
@@ -292,6 +382,12 @@ if [ "$cmd" = I ]; then
 	if [ -d "$VARDIR" ]; then
 		rm -rf "$VARDIR"/*
 	fi
+	exit $?
+fi
+
+# -D ensures that the listed config file base dirs exist
+if [ "$cmd" = D ]; then
+	config_mkdirs "$@"
 	exit $?
 fi
 
@@ -369,39 +465,54 @@ fi
 if [ "$cmd" = a ]; then
 	# Read resolv.conf from stdin
 	resolv="$(cat)"
+	changed=false
 	# If what we are given matches what we have, then do nothing
 	if [ -e "$IFACEDIR/$iface" ]; then
-		if [ "$(echo "$resolv")" = \
+		if [ "$(echo "$resolv")" != \
 			"$(cat "$IFACEDIR/$iface")" ]
 		then
-			exit 0
+			rm "$IFACEDIR/$iface"
+			changed=true
 		fi
-		rm "$IFACEDIR/$iface"
+	else
+		changed=true
 	fi
-	echo "$resolv" >"$IFACEDIR/$iface" || exit $?
+	if $changed; then
+		echo "$resolv" >"$IFACEDIR/$iface" || exit $?
+	fi
 	[ ! -d "$METRICDIR" ] && mkdir "$METRICDIR"
-	rm -f "$METRICDIR/"*" $iface"
+	oldmetric="$METRICDIR/"*" $iface"
+	newmetric=
 	if [ -n "$IF_METRIC" ]; then
 		# Pad metric to 6 characters, so 5 is less than 10
 		while [ ${#IF_METRIC} -le 6 ]; do
 			IF_METRIC="0$IF_METRIC"
 		done
-		echo " " >"$METRICDIR/$IF_METRIC $iface"
+		newmetric="$METRICDIR/$IF_METRIC $iface"
 	fi
+	rm -f "$METRICDIR/"*" $iface"
+	[ "$oldmetric" != "$newmetric" -a \
+	    "$oldmetric" != "$METRICDIR/* $iface" ] &&
+		changed=true
+	[ -n "$newmetric" ] && echo " " >"$newmetric"
 	case "$IF_PRIVATE" in
 	[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
 		if [ ! -d "$PRIVATEDIR" ]; then
 			[ -e "$PRIVATEDIR" ] && rm "$PRIVATEDIR"
 			mkdir "$PRIVATEDIR"
 		fi
+		[ -e "$PRIVATEDIR/$iface" ] || changed=true
 		[ -d "$PRIVATEDIR" ] && echo " " >"$PRIVATEDIR/$iface"
 		;;
 	*)
 		if [ -e "$PRIVATEDIR/$iface" ]; then
 			rm -f "$PRIVATEDIR/$iface"
+			changed=true
 		fi
 		;;
 	esac
+	$changed || exit 0
+	unset changed oldmetric newmetric
 fi
 
 eval "$(make_vars)"

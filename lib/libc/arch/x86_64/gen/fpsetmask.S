@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetmask.S,v 1.4 2011/10/19 15:24:58 njoly Exp $	*/
+/*	$NetBSD: fpsetmask.S,v 1.4.2.1 2012/04/17 00:05:15 yamt Exp $	*/
 
 /*
  * Written by Frank van der Linden at Wasabi Systems for NetBSD.
@@ -33,7 +33,7 @@ ENTRY(fpsetmask)
 
 	stmxcsr	-4(%rsp)
 	movl	-4(%rsp), %edx
-	andl	$0xfffff07f, %edx
+	andl	$0xffffe07f, %edx
 	sall	$7, %edi
 	orl	%edi, %edx
 	movl	%edx,-4(%rsp)

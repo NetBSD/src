@@ -1,4 +1,4 @@
-/* $NetBSD: quota.h,v 1.4 2011/06/07 14:56:13 bouyer Exp $ */
+/* $NetBSD: quota.h,v 1.4.2.1 2012/04/17 00:08:52 yamt Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -28,25 +28,54 @@
 #ifndef _SYS_QUOTA_H_
 #define _SYS_QUOTA_H_
 
-#if !defined(_KERNEL) && !defined(_STANDALONE)
-__BEGIN_DECLS
-int quotactl(const char *, struct plistref *) __RENAME(__quotactl50);
-__END_DECLS
-#endif
+#include <sys/types.h>
 
-/* strings used in dictionary for the different quota class */
-#define QUOTADICT_CLASS_USER "user"
-#define QUOTADICT_CLASS_GROUP "group"
+/* quota id types (entities being billed) */
+#define QUOTA_IDTYPE_USER	0
+#define QUOTA_IDTYPE_GROUP	1
 
-/* strings used in dictionary for the different limit types */
-#define QUOTADICT_LTYPE_BLOCK "block"
-#define QUOTADICT_LTYPE_FILE "file"
+/* quota object types (things being limited) */
+#define QUOTA_OBJTYPE_BLOCKS	0
+#define QUOTA_OBJTYPE_FILES	1
 
-/* strings used in dictionary for the different limit and usage values */
-#define QUOTADICT_LIMIT_SOFT "soft"
-#define QUOTADICT_LIMIT_HARD "hard"
-#define QUOTADICT_LIMIT_GTIME "grace time"
-#define QUOTADICT_LIMIT_USAGE "usage"
-#define QUOTADICT_LIMIT_ETIME "expire time"
+/* id value for "default" */
+#define QUOTA_DEFAULTID		((id_t)-1)
+
+/* limit value for "no limit" */
+#define QUOTA_NOLIMIT		((uint64_t)0xffffffffffffffffULL)
+
+/* time value for "no time" */
+#define QUOTA_NOTIME		((time_t)-1)
+
+/*
+ * Semantic restrictions. These are hints applications can use
+ * to help produce comprehensible error diagnostics when something
+ * unsupported is attempted.
+ */
+#define QUOTA_RESTRICT_NEEDSQUOTACHECK	0x1	/* quotacheck(8) required */
+#define QUOTA_RESTRICT_UNIFORMGRACE	0x2	/* grace time is global */
+#define QUOTA_RESTRICT_32BIT		0x4	/* values limited to 2^32 */
+#define QUOTA_RESTRICT_READONLY		0x8	/* updates not supported */
+
+
+/*
+ * Structure used to describe the key part of a quota record.
+ */
+struct quotakey {
+	int qk_idtype;		/* type of id (user, group, etc.) */
+	id_t qk_id;		/* actual id number */
+	int qk_objtype;		/* type of fs object (blocks, files, etc.) */
+};
+
+/*
+ * Structure used to describe the value part of a quota record.
+ */
+struct quotaval {
+        uint64_t qv_hardlimit;	/* absolute limit */
+	uint64_t qv_softlimit;	/* overflowable limit */
+	uint64_t qv_usage;	/* current usage */
+	time_t qv_expiretime;	/* time when softlimit grace expires */
+	time_t qv_grace;	/* allowed time for overflowing soft limit */
+};
 
 #endif /* _SYS_QUOTA_H_ */

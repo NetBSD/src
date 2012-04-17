@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_signal.h,v 1.2 2007/12/04 18:40:18 dsl Exp $ */
+/* $NetBSD: linux32_signal.h,v 1.2.50.1 2012/04/17 00:07:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,6 +33,7 @@
 #ifndef _LINUX32_SIGNAL_H_
 #define _LINUX32_SIGNAL_H_
 
+#include <compat/linux32/common/linux32_siginfo.h>
 #ifdef __amd64__
 #include <compat/linux32/arch/amd64/linux32_signal.h>
 #endif
@@ -51,5 +52,7 @@ void native_to_linux32_old_sigset(linux32_old_sigset_t *, const sigset_t *);
 void linux32_old_extra_to_native_sigset(sigset_t *,
     const linux32_old_sigset_t *, const unsigned long *);
 void linux32_old_to_native_sigset(sigset_t *, const linux32_old_sigset_t *);
+int native_to_linux32_si_code(int);
+int native_to_linux32_si_status(int, int);
 
 #endif /* _LINUX32_SIGNAL_H_ */

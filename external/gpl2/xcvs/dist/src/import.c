@@ -320,6 +320,20 @@ import (int argc, char **argv)
 	error (1, 0, "attempt to import the repository");
     }
 
+/* cvsacl patch */
+#ifdef SERVER_SUPPORT
+    if (use_cvs_acl /* && server_active */)
+    {
+	if (!access_allowed (NULL, repository, argv[1], 6, NULL, NULL, 1))
+	{
+	    error (stop_at_first_permission_denied, 0,
+		   "permission denied for %s", Short_Repository (repository));
+			
+	    return (0);
+	}
+    }
+#endif
+
     ulist = getlist ();
     p = getnode ();
     p->type = UPDATE;
@@ -595,7 +609,7 @@ process_import_file (char *message, char *vfile, char *vtag, int targc,
 		/* Attempt to make the Attic directory, in case it
 		   does not exist.  */
 		(void) sprintf (rcs, "%s/%s", repository, CVSATTIC);
-		if (CVS_MKDIR (rcs, 0777 ) != 0 && errno != EEXIST)
+		if (noexec == 0 && CVS_MKDIR (rcs, 0777 ) != 0 && errno != EEXIST)
 		    error (1, errno, "cannot make directory `%s'", rcs);
 
 		/* Note that the above clobbered the path name, so we

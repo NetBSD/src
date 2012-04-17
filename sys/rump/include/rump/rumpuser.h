@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.70 2011/08/29 20:48:36 joerg Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.70.2.1 2012/04/17 00:08:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -108,9 +108,11 @@ void rumpuser_seterrno(int);
 int rumpuser_writewatchfile_setup(int, int, intptr_t, int *);
 int rumpuser_writewatchfile_wait(int, intptr_t *, int *);
 
-int rumpuser_dprintf(const char *, ...);
+int rumpuser_dprintf(const char *, ...) __printflike(1, 2);
 
 int rumpuser_getnhostcpu(void);
+
+uint32_t rumpuser_arc4random(void);
 
 /* rumpuser_pth */
 void rumpuser_thrinit(kernel_lockfn, kernel_unlockfn, int);

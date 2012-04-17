@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.54 2010/02/24 22:38:00 dyoung Exp $ */
+/* $NetBSD: esa.c,v 1.54.10.1 2012/04/17 00:07:44 yamt Exp $ */
 
 /*
  * Copyright (c) 2001-2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,32 +39,31 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.54 2010/02/24 22:38:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.54.10.1 2012/04/17 00:07:44 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
 #include <sys/null.h>
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/exec.h>
 #include <sys/select.h>
 #include <sys/audioio.h>
-
 #include <sys/bus.h>
 #include <sys/intr.h>
-
-#include <dev/pci/pcidevs.h>
-#include <dev/pci/pcivar.h>
 
 #include <dev/audio_if.h>
 #include <dev/mulaw.h>
 #include <dev/auconv.h>
+
 #include <dev/ic/ac97var.h>
 #include <dev/ic/ac97reg.h>
 
+#include <dev/pci/pcidevs.h>
+#include <dev/pci/pcivar.h>
 #include <dev/pci/esareg.h>
 #include <dev/pci/esadsp.h>
 #include <dev/pci/esavar.h>
@@ -117,9 +116,8 @@ static int		esa_halt_input(void *);
 static int		esa_set_port(void *, mixer_ctrl_t *);
 static int		esa_get_port(void *, mixer_ctrl_t *);
 static int		esa_query_devinfo(void *, mixer_devinfo_t *);
-static void *		esa_malloc(void *, int, size_t, struct malloc_type *,
-				   int);
-static void		esa_free(void *, void *, struct malloc_type *);
+static void *		esa_malloc(void *, int, size_t);
+static void		esa_free(void *, void *, size_t);
 static int		esa_getdev(void *, struct audio_device *);
 static size_t		esa_round_buffersize(void *, int, size_t);
 static int		esa_get_props(void *);
@@ -129,6 +127,7 @@ static int		esa_trigger_output(void *, void *, void *, int,
 static int		esa_trigger_input(void *, void *, void *, int,
 					  void (*)(void *), void *,
 					  const audio_params_t *);
+static void		esa_get_locks(void *, kmutex_t **, kmutex_t **);
 
 static int		esa_intr(void *);
 static int		esa_allocmem(struct esa_softc *, size_t, size_t,
@@ -224,7 +223,7 @@ static const struct audio_hw_if esa_hw_if = {
 	esa_trigger_output,
 	esa_trigger_input,
 	NULL,	/* dev_ioctl */
-	NULL,	/* powerstate */
+	esa_get_locks,
 };
 
 CFATTACH_DECL2_NEW(esa, sizeof(struct esa_softc), esa_match, esa_attach,
@@ -456,22 +455,21 @@ esa_halt_input(void *hdl)
 }
 
 static void *
-esa_malloc(void *hdl, int direction, size_t size,
-    struct malloc_type *type, int flags)
+esa_malloc(void *hdl, int direction, size_t size)
 {
 	struct esa_voice *vc;
 	struct esa_softc *sc;
 	struct esa_dma *p;
 	int error;
 
-	p = malloc(sizeof(*p), type, flags);
+	p = kmem_alloc(sizeof(*p), KM_SLEEP);
 	if (p == NULL)
 		return NULL;
 	vc = hdl;
 	sc = device_private(vc->parent);
 	error = esa_allocmem(sc, size, 16, p);
 	if (error) {
-		free(p, type);
+		kmem_free(p, sizeof(*p));
 		aprint_error_dev(sc->sc_dev,
 		    "%s: not enough memory\n", __func__);
 		return 0;
@@ -483,7 +481,7 @@ esa_malloc(void *hdl, int direction, size_t size,
 }
 
 static void
-esa_free(void *hdl, void *addr, struct malloc_type *type)
+esa_free(void *hdl, void *addr, size_t size)
 {
 	struct esa_voice *vc;
 	struct esa_softc *sc;
@@ -496,7 +494,7 @@ esa_free(void *hdl, void *addr, struct malloc_type *type)
 		if (KERNADDR(p) == addr) {
 			esa_freemem(sc, p);
 			*pp = p->next;
-			free(p, type);
+			kmem_free(p, sizeof(*p));
 			return;
 		}
 }
@@ -837,12 +835,16 @@ esa_intr(void *hdl)
 	int i;
 
 	sc = hdl;
+	mutex_spin_enter(&sc->sc_intr_lock);
+
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 
 	status = bus_space_read_1(iot, ioh, ESA_HOST_INT_STATUS);
-	if (status == 0xff)
+	if (status == 0xff) {
+		mutex_spin_exit(&sc->sc_intr_lock);
 		return 0;
+	}
 
 	/* ack the interrupt */
 	bus_space_write_1(iot, ioh, ESA_HOST_INT_STATUS, status);
@@ -874,8 +876,10 @@ esa_intr(void *hdl)
 	    (bus_space_read_1(iot, ioh,
 	     ESA_ASSP_CONTROL_B) & ESA_STOP_ASSP_CLOCK) != 0 ||
 	    (bus_space_read_1(iot, ioh,
-	     ESA_ASSP_HOST_INT_STATUS) & ESA_DSP2HOST_REQ_TIMER) == 0)
+	     ESA_ASSP_HOST_INT_STATUS) & ESA_DSP2HOST_REQ_TIMER) == 0) {
+		mutex_spin_exit(&sc->sc_intr_lock);
 		return 1;
+	}
 
 	bus_space_write_1(iot, ioh, ESA_ASSP_HOST_INT_STATUS,
 	    ESA_DSP2HOST_REQ_TIMER);
@@ -914,6 +918,7 @@ esa_intr(void *hdl)
 		}
 	}
 
+	mutex_spin_exit(&sc->sc_intr_lock);
 	return 1;
 }
 
@@ -926,22 +931,22 @@ esa_allocmem(struct esa_softc *sc, size_t size, size_t align,
 	p->size = size;
 	error = bus_dmamem_alloc(sc->sc_dmat, p->size, align, 0,
 				 p->segs, sizeof(p->segs) / sizeof(p->segs[0]),
-				 &p->nsegs, BUS_DMA_NOWAIT);
+				 &p->nsegs, BUS_DMA_WAITOK);
 	if (error)
 		return error;
 
 	error = bus_dmamem_map(sc->sc_dmat, p->segs, p->nsegs, p->size,
-				&p->addr, BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
+				&p->addr, BUS_DMA_WAITOK | BUS_DMA_COHERENT);
 	if (error)
 		goto free;
 
 	error = bus_dmamap_create(sc->sc_dmat, p->size, 1, p->size, 0,
-				  BUS_DMA_NOWAIT, &p->map);
+				  BUS_DMA_WAITOK, &p->map);
 	if (error)
 		goto unmap;
 
 	error = bus_dmamap_load(sc->sc_dmat, p->map, p->addr, p->size, NULL,
-				BUS_DMA_NOWAIT);
+				BUS_DMA_WAITOK);
 	if (error)
 		goto destroy;
 
@@ -1003,20 +1008,16 @@ esa_attach(device_t parent, device_t self, void *aux)
 	const struct esa_card_type *card;
 	const char *intrstr;
 	uint32_t data;
-	char devinfo[256];
-	int revision, len;
-	int i;
-	int error;
+	int revision, i, error;
 
 	sc = device_private(self);
 	pa = (struct pci_attach_args *)aux;
 	tag = pa->pa_tag;
 	pc = pa->pa_pc;
-	aprint_naive(": Audio controller\n");
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
+	pci_aprint_devinfo(pa, "Audio controller");
+
 	revision = PCI_REVISION(pa->pa_class);
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, revision);
 
 	for (card = esa_card_types; card->pci_vendor_id; card++)
 		if (PCI_VENDOR(pa->pa_id) == card->pci_vendor_id &&
@@ -1045,9 +1046,14 @@ esa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pct = pc;
 	sc->sc_dmat = pa->pa_dmat;
 
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
+
 	/* Map and establish an interrupt */
 	if (pci_intr_map(pa, &ih)) {
 		aprint_error_dev(sc->sc_dev, "can't map interrupt\n");
+		mutex_destroy(&sc->sc_lock);
+		mutex_destroy(&sc->sc_intr_lock);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -1057,6 +1063,8 @@ esa_attach(device_t parent, device_t self, void *aux)
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
+		mutex_destroy(&sc->sc_lock);
+		mutex_destroy(&sc->sc_intr_lock);
 		return;
 	}
 	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
@@ -1065,6 +1073,8 @@ esa_attach(device_t parent, device_t self, void *aux)
 	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,
 	    pci_activate_null)) && error != EOPNOTSUPP) {
 		aprint_error_dev(sc->sc_dev, "cannot activate %d\n", error);
+		mutex_destroy(&sc->sc_lock);
+		mutex_destroy(&sc->sc_intr_lock);
 		return;
 	}
 
@@ -1072,16 +1082,20 @@ esa_attach(device_t parent, device_t self, void *aux)
 	if (esa_init(sc) == -1) {
 		aprint_error_dev(sc->sc_dev,
 		    "esa_attach: unable to initialize the card\n");
+		mutex_destroy(&sc->sc_lock);
+		mutex_destroy(&sc->sc_intr_lock);
 		return;
 	}
 
 	/* create suspend save area */
-	len = sizeof(uint16_t) * (ESA_REV_B_CODE_MEMORY_LENGTH
+	sc->savememsz = sizeof(uint16_t) * (ESA_REV_B_CODE_MEMORY_LENGTH
 	    + ESA_REV_B_DATA_MEMORY_LENGTH + 1);
-	sc->savemem = (uint16_t *)malloc(len, M_DEVBUF, M_NOWAIT | M_ZERO);
+	sc->savemem = (uint16_t *)kmem_zalloc(sc->savememsz, KM_SLEEP);
 	if (sc->savemem == NULL) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to allocate suspend buffer\n");
+		mutex_destroy(&sc->sc_lock);
+		mutex_destroy(&sc->sc_intr_lock);
 		return;
 	}
 
@@ -1102,18 +1116,6 @@ esa_attach(device_t parent, device_t self, void *aux)
 	else
 		sc->codec_flags = AC97_HOST_SWAPPED_CHANNELS;
 
-
-	/* Attach AC97 host interface */
-	sc->host_if.arg = sc;
-	sc->host_if.attach = esa_attach_codec;
-	sc->host_if.read = esa_read_codec;
-	sc->host_if.write = esa_write_codec;
-	sc->host_if.reset = esa_reset_codec;
-	sc->host_if.flags = esa_flags_codec;
-
-	if (ac97_attach(&sc->host_if, self) != 0)
-		return;
-
 	/* initialize list management structures */
 	sc->mixer_list.mem_addr = ESA_KDATA_MIXER_XFER0;
 	sc->mixer_list.max = ESA_MAX_VIRTUAL_MIXER_CHANNELS;
@@ -1131,6 +1133,22 @@ esa_attach(device_t parent, device_t self, void *aux)
 		sc->dma_list.indexmap[i] = -1;
 		sc->adc1_list.indexmap[i] = -1;
 	}
+
+	/* Attach AC97 host interface */
+	sc->host_if.arg = sc;
+	sc->host_if.attach = esa_attach_codec;
+	sc->host_if.read = esa_read_codec;
+	sc->host_if.write = esa_write_codec;
+	sc->host_if.reset = esa_reset_codec;
+	sc->host_if.flags = esa_flags_codec;
+
+	if (ac97_attach(&sc->host_if, self, &sc->sc_lock) != 0) {
+		mutex_destroy(&sc->sc_lock);
+		mutex_destroy(&sc->sc_intr_lock);
+		return;
+	}
+
+	/* Attach audio interface. */
 	for (i = 0; i < ESA_NUM_VOICES; i++) {
 		sc->voice[i].parent = sc->sc_dev;
 		sc->voice[i].index = i;
@@ -1176,7 +1194,9 @@ esa_detach(device_t self, int flags)
 	if (sc->sc_ios)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 
-	free(sc->savemem, M_DEVBUF);
+	kmem_free(sc->savemem, sc->savememsz);
+	mutex_destroy(&sc->sc_lock);
+	mutex_destroy(&sc->sc_intr_lock);
 
 	return 0;
 }
@@ -1337,6 +1357,8 @@ esa_init(struct esa_softc *sc)
 	    (ESA_MINISRC_IN_BUFFER_SIZE & ~1) +
 	    (ESA_MINISRC_OUT_BUFFER_SIZE & ~1) + 4) + 255) & ~255;
 
+	mutex_spin_enter(&sc->sc_intr_lock);
+
 	/* Disable legacy emulation */
 	data = pci_conf_read(pc, tag, PCI_LEGACY_AUDIO_CTRL);
 	data |= DISABLE_LEGACY;
@@ -1408,6 +1430,8 @@ esa_init(struct esa_softc *sc)
 
 	bus_space_write_1(iot, ioh, ESA_DSP_PORT_CONTROL_REG_B,
 	    reset_state | ESA_REGB_ENABLE_RESET);
+
+	mutex_spin_exit(&sc->sc_intr_lock);
 
 	return 0;
 }
@@ -1661,6 +1685,9 @@ esa_suspend(device_t dv, const pmf_qual_t *qual)
 
 	index = 0;
 
+	mutex_enter(&sc->sc_lock);
+	mutex_spin_enter(&sc->sc_intr_lock);
+
 	bus_space_write_2(iot, ioh, ESA_HOST_INT_CTRL, 0);
 	bus_space_write_1(iot, ioh, ESA_ASSP_CONTROL_C, 0);
 
@@ -1675,6 +1702,9 @@ esa_suspend(device_t dv, const pmf_qual_t *qual)
 	    i++)
 		sc->savemem[index++] = esa_read_assp(sc,
 		    ESA_MEMTYPE_INTERNAL_DATA, i);
+
+	mutex_spin_exit(&sc->sc_intr_lock);
+	mutex_exit(&sc->sc_lock);
 
 	return true;
 }
@@ -1692,6 +1722,9 @@ esa_resume(device_t dv, const pmf_qual_t *qual)
 	index = 0;
 
 	delay(10000);
+
+	mutex_enter(&sc->sc_lock);
+	mutex_spin_enter(&sc->sc_intr_lock);
 
 	data = pci_conf_read(sc->sc_pct, sc->sc_tag, PCI_LEGACY_AUDIO_CTRL);
 	pci_conf_write(sc->sc_pct, sc->sc_tag, PCI_LEGACY_AUDIO_CTRL,
@@ -1723,9 +1756,14 @@ esa_resume(device_t dv, const pmf_qual_t *qual)
 	esa_enable_interrupts(sc);
 	esa_amp_enable(sc);
 
+	mutex_spin_exit(&sc->sc_intr_lock);
+
 	/* Finally, power up AC97 codec */
 	delay(1000);
+
 	sc->codec_if->vtbl->restore_ports(sc->codec_if);
+
+	mutex_exit(&sc->sc_lock);
 
 	return true;
 }
@@ -1764,4 +1802,17 @@ esa_mappage(void *addr, void *mem, off_t off, int prot)
 		return -1;
 	return bus_dmamem_mmap(sc->sc_dmat, p->segs, p->nsegs,
 			       off, prot, BUS_DMA_WAITOK);
+}
+
+static void
+esa_get_locks(void *addr, kmutex_t **intr, kmutex_t **proc)
+{
+	struct esa_voice *vc;
+	struct esa_softc *sc;
+
+	vc = addr;
+	sc = device_private(vc->parent);
+
+	*intr = &sc->sc_intr_lock;
+	*proc = &sc->sc_lock;
 }

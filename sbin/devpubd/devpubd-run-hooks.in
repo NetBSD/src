@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: devpubd-run-hooks.in,v 1.1 2011/08/29 11:38:48 mrg Exp $
+# $NetBSD: devpubd-run-hooks.in,v 1.1.2.1 2012/04/17 00:05:38 yamt Exp $
 #
 # devpubd run hooks
 
@@ -19,3 +19,5 @@ device-attach|device-detach)
 *)
 	;;
 esac
+
+exit 0

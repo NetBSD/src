@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.13 2011/07/01 18:22:08 dyoung Exp $	*/
+/*	$NetBSD: pcib.c,v 1.13.2.1 2012/04/17 00:07:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.13 2011/07/01 18:22:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.13.2.1 2012/04/17 00:07:06 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -185,28 +185,18 @@ pcibattach(device_t parent, device_t self, void *aux)
 {
 	struct pcib_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
-	char devinfo[256];
-
-	aprint_naive("\n");
 
 	/*
 	 * Just print out a description and defer configuration
 	 * until all PCI devices have been attached.
 	 */
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
-	    PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo(pa, NULL);
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
 
-	/* If a more specific pcib implementation has already registered a
-	 * power handler, don't overwrite it.
-	 */
- 	if (!device_pmf_is_registered(self)) {
- 		if (!pmf_device_register(self, NULL, NULL))
- 	    		aprint_error_dev(self, "couldn't establish power handler\n");
-	}
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	config_defer(self, pcib_callback);
 }

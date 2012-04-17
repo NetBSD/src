@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.38 2011/09/20 00:12:24 jym Exp $	*/
+/*	$NetBSD: xencons.c,v 1.38.2.1 2012/04/17 00:07:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.38 2011/09/20 00:12:24 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.38.2.1 2012/04/17 00:07:12 yamt Exp $");
 
 #include "opt_xen.h"
 
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.38 2011/09/20 00:12:24 jym Exp $");
 #include <xen/evtchn.h>
 #include <uvm/uvm.h>
 #include <machine/pmap.h>
-#include <xen/xen3-public/io/console.h>
+#include <xen/xen-public/io/console.h>
 
 #include <dev/cons.h>
 

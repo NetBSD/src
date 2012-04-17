@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdformat.1,v 1.17 2008/04/30 13:11:00 martin Exp $
+.\"	$NetBSD: fdformat.1,v 1.17.4.1 2012/04/17 00:09:31 yamt Exp $
 .\"
 .\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,40 +35,18 @@
 .Nd format a floppy diskette
 .Sh SYNOPSIS
 .Nm
-.Bk -words
-.Op Fl f Ar device
-.Ek
-.Bk -words
-.Op Fl t Ar type
-.Ek
 .Op Fl n
-.Bk -words
 .Op Fl B Ar nbps
-.Ek
-.Bk -words
-.Op Fl S Ar nspt
-.Ek
-.Bk -words
-.Op Fl T Ar ntrk
-.Ek
-.Bk -words
 .Op Fl C Ar ncyl
-.Ek
-.Bk -words
-.Op Fl P Ar stepspercyl
-.Ek
-.Bk -words
-.Op Fl G Ar gaplen
-.Ek
-.Bk -words
 .Op Fl F Ar fillbyte
-.Ek
-.Bk -words
-.Op Fl X Ar xfer_rate
-.Ek
-.Bk -words
+.Op Fl f Ar device
+.Op Fl G Ar gaplen
 .Op Fl I Ar interleave
-.Ek
+.Op Fl P Ar stepspercyl
+.Op Fl S Ar nspt
+.Op Fl T Ar ntrk
+.Op Fl t Ar type
+.Op Fl X Ar xfer_rate
 .Sh DESCRIPTION
 The
 .Nm

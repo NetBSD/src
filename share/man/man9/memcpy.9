@@ -1,3 +1,5 @@
+.\"	$NetBSD: memcpy.9,v 1.7.58.1 2012/04/17 00:05:49 yamt Exp $
+.\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -30,16 +32,15 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)memcpy.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: memcpy.9,v 1.7 2003/09/08 17:54:35 wiz Exp $
 .\"
-.Dd July 7, 2001
+.Dd January 2, 2012
 .Dt MEMCPY 9
 .Os
 .Sh NAME
 .Nm memcpy
 .Nd copy byte string
 .Sh SYNOPSIS
-.In systm.h
+.In sys/systm.h
 .Ft void *
 .Fn memcpy "void * restrict dst" "const void * restrict src" "size_t len"
 .Sh DESCRIPTION

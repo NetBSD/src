@@ -1,4 +1,4 @@
-/* $NetBSD: sio_pic.c,v 1.41 2011/07/01 19:19:50 dyoung Exp $ */
+/* $NetBSD: sio_pic.c,v 1.41.2.1 2012/04/17 00:05:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -35,17 +35,17 @@
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.41 2011/07/01 19:19:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.41.2.1 2012/04/17 00:05:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,14 +114,14 @@ static struct alpha_shared_intr *sio_intr;
  * If prom console is broken, must remember the initial interrupt
  * settings and enforce them.  WHEE!
  */
-u_int8_t initial_ocw1[2];
-u_int8_t initial_elcr[2];
+uint8_t initial_ocw1[2];
+uint8_t initial_elcr[2];
 #endif
 
 void		sio_setirqstat(int, int, int);
 
-u_int8_t	(*sio_read_elcr)(int);
-void		(*sio_write_elcr)(int, u_int8_t);
+uint8_t	(*sio_read_elcr)(int);
+void		(*sio_write_elcr)(int, uint8_t);
 static void	specific_eoi(int);
 #ifdef BROKEN_PROM_CONSOLE
 void		sio_intr_shutdown(void *);
@@ -130,13 +130,13 @@ void		sio_intr_shutdown(void *);
 /******************** i82378 SIO ELCR functions ********************/
 
 int		i82378_setup_elcr(void);
-u_int8_t	i82378_read_elcr(int);
-void		i82378_write_elcr(int, u_int8_t);
+uint8_t	i82378_read_elcr(int);
+void		i82378_write_elcr(int, uint8_t);
 
 bus_space_handle_t sio_ioh_elcr;
 
 int
-i82378_setup_elcr()
+i82378_setup_elcr(void)
 {
 	int rv;
 
@@ -156,7 +156,7 @@ i82378_setup_elcr()
 	return (rv);
 }
 
-u_int8_t
+uint8_t
 i82378_read_elcr(int elcr)
 {
 
@@ -164,7 +164,7 @@ i82378_read_elcr(int elcr)
 }
 
 void
-i82378_write_elcr(int elcr, u_int8_t val)
+i82378_write_elcr(int elcr, uint8_t val)
 {
 
 	bus_space_write_1(sio_iot, sio_ioh_elcr, elcr, val);
@@ -173,13 +173,13 @@ i82378_write_elcr(int elcr, u_int8_t val)
 /******************** Cypress CY82C693 ELCR functions ********************/
 
 int		cy82c693_setup_elcr(void);
-u_int8_t	cy82c693_read_elcr(int);
-void		cy82c693_write_elcr(int, u_int8_t);
+uint8_t	cy82c693_read_elcr(int);
+void		cy82c693_write_elcr(int, uint8_t);
 
 const struct cy82c693_handle *sio_cy82c693_handle;
 
 int
-cy82c693_setup_elcr()
+cy82c693_setup_elcr(void)
 {
 	int device, maxndevs;
 	pcitag_t tag;
@@ -236,7 +236,7 @@ cy82c693_setup_elcr()
 	return (ENODEV);
 }
 
-u_int8_t
+uint8_t
 cy82c693_read_elcr(int elcr)
 {
 
@@ -244,7 +244,7 @@ cy82c693_read_elcr(int elcr)
 }
 
 void
-cy82c693_write_elcr(int elcr, u_int8_t val)
+cy82c693_write_elcr(int elcr, uint8_t val)
 {
 
 	cy82c693_write(sio_cy82c693_handle, CONFIG_ELCR1 + elcr, val);
@@ -259,7 +259,7 @@ cy82c693_write_elcr(int elcr, u_int8_t val)
  * they should panic.
  */
 
-int (*sio_elcr_setup_funcs[])(void) = {
+int (*const sio_elcr_setup_funcs[])(void) = {
 	cy82c693_setup_elcr,
 	i82378_setup_elcr,
 	NULL,
@@ -270,7 +270,7 @@ int (*sio_elcr_setup_funcs[])(void) = {
 void
 sio_setirqstat(int irq, int enabled, int type)
 {
-	u_int8_t ocw1[2], elcr[2];
+	uint8_t ocw1[2], elcr[2];
 	int icu, bit;
 
 #if 0

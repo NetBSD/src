@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isa.c,v 1.36 2008/03/15 21:09:02 cube Exp $	*/
+/*	$NetBSD: sb_isa.c,v 1.36.38.1 2012/04/17 00:07:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_isa.c,v 1.36 2008/03/15 21:09:02 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_isa.c,v 1.36.38.1 2012/04/17 00:07:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,6 +170,9 @@ sb_isa_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "sbfind failed\n");
 		return;
 	}
+
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_AUDIO, sbdsp_intr, sc);

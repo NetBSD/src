@@ -1,4 +1,4 @@
-/*	$NetBSD: mkstr.c,v 1.15 2009/11/17 18:31:13 drochner Exp $	*/
+/*	$NetBSD: mkstr.c,v 1.15.6.1 2012/04/17 00:09:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)mkstr.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mkstr.c,v 1.15 2009/11/17 18:31:13 drochner Exp $");
+__RCSID("$NetBSD: mkstr.c,v 1.15.6.1 2012/04/17 00:09:36 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,7 @@ main(int argc, char *argv[])
 }
 
 void
-process()
+process(void)
 {
 	int c;
 
@@ -166,7 +166,7 @@ match(const char *ocp)
 }
 
 void
-copystr()
+copystr(void)
 {
 	int c, ch;
 	char buf[512];
@@ -237,7 +237,7 @@ octdigit(char c)
 }
 
 void
-inithash()
+inithash(void)
 {
 	char buf[512];
 	long mesgpt = 0;

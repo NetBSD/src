@@ -1,4 +1,4 @@
-# 	$NetBSD: RAMDISK,v 1.15 2011/03/20 17:32:19 tsutsui Exp $
+# 	$NetBSD: RAMDISK,v 1.15.4.1 2012/04/17 00:06:19 yamt Exp $
 #
 # kernel config file with memory disk for installation
 #
@@ -26,7 +26,6 @@ no options 	KTRACE
 no options 	SYSVMSG
 no options 	SYSVSEM
 no options 	SYSVSHM
-no options 	P1003_1B_SEMAPHORE
 no options 	SYSCTL_INCLUDE_DESCR
 
 no options	COMPAT_13

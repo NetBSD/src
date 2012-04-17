@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.79 2011/06/30 20:09:21 wiz Exp $
+#	$NetBSD: INSTALL,v 1.79.2.1 2012/04/17 00:06:10 yamt Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -53,7 +53,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
@@ -462,7 +462,6 @@ pseudo-device	loop			# network loopback
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	sequencer	1	# MIDI sequencer
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 

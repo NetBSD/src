@@ -1,6 +1,6 @@
-.\"	$NetBSD: bozohttpd.8,v 1.29 2011/04/24 07:18:59 jmmv Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.29.4.1 2012/04/17 00:05:35 yamt Exp $
 .\"
-.\"	$eterna: bozohttpd.8,v 1.99 2010/09/20 22:26:28 mrg Exp $
+.\"	$eterna: bozohttpd.8,v 1.101 2011/11/18 01:25:11 mrg Exp $
 .\"
 .\" Copyright (c) 1997-2010 Matthew R. Green
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 24, 2011
+.Dd February 20, 2012
 .Dt HTTPD 8
 .Os
 .Sh NAME
@@ -34,19 +34,19 @@
 .Nd hyper text transfer protocol version 1.1 daemon
 .Sh SYNOPSIS
 .Nm
-.Op Fl befHnrsuVX
+.Op Fl CIMPSZciptvx
 .Op Fl C Ar suffix cgihandler
-.Op Fl c Ar cgibin
 .Op Fl I Ar port
-.Op Fl i Ar address
 .Op Fl M Ar suffix type encoding encoding11
 .Op Fl P Ar pidfile
-.Op Fl p Ar pubdir
 .Op Fl S Ar server_software
+.Op Fl Z Ar cert privkey
+.Op Fl c Ar cgibin
+.Op Fl i Ar address
+.Op Fl p Ar pubdir
 .Op Fl t Ar chrootdir
 .Op Fl v Ar virtualroot
 .Op Fl x Ar index
-.Op Fl Z Ar cert privkey
 .Ar slashdir
 .Op Ar myname
 .Sh DESCRIPTION
@@ -135,14 +135,18 @@ Also see
 .Fl X .
 .It Fl I Ar port
 Causes
+.Nm
+to use
 .Ar port
-to use used as the port to bind daemon mode.
-The default is the
+instead of the default
 .Dq http
 port.
-This option is only valid with the
+When used with the
 .Fl b
-option.
+option, it changes the bound port.
+Otherwise it forces redirections to use this port instead of the
+value obtained via
+.Xr getsockname 2 .
 .It Fl i Ar address
 Causes
 .Ar address
@@ -404,6 +408,14 @@ To disable SSL SUPPORT compile
 with
 .Dq -DNO_SSL_SUPPORT
 on the compiler command line.
+.Ss COMPRESSION
+.Nm
+supports a very basic form compression.
+.Nm
+will serve the requested file postpended with
+.Dq Pa .gz
+if it exists, it is readable, the client requested gzip compression, and
+the client did not make a ranged request.
 .Sh FILES
 .Nm
 looks for a couple of special files in directories that allow certain features

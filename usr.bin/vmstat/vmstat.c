@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.186.2.3 2011/12/28 13:28:03 yamt Exp $ */
+/* $NetBSD: vmstat.c,v 1.186.2.4 2012/04/17 00:09:41 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.186.2.3 2011/12/28 13:28:03 yamt Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.186.2.4 2012/04/17 00:09:41 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -665,7 +665,7 @@ getuptime(void)
 int	hz, hdrcnt;
 
 void
-print_total_hdr()
+print_total_hdr(void)
 {
 
 	(void)printf("procs         memory\n");

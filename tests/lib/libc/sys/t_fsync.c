@@ -1,4 +1,4 @@
-/* $NetBSD: t_fsync.c,v 1.1 2011/07/07 06:57:53 jruoho Exp $ */
+/* $NetBSD: t_fsync.c,v 1.1.2.1 2012/04/17 00:09:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fsync.c,v 1.1 2011/07/07 06:57:53 jruoho Exp $");
+__RCSID("$NetBSD: t_fsync.c,v 1.1.2.1 2012/04/17 00:09:12 yamt Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -43,7 +43,8 @@ __RCSID("$NetBSD: t_fsync.c,v 1.1 2011/07/07 06:57:53 jruoho Exp $");
 ATF_TC(fsync_err);
 ATF_TC_HEAD(fsync_err, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test error conditions of fsync(2)");
+	atf_tc_set_md_var(tc, "descr",
+	    "Test error conditions of fsync(2) (PR kern/30)");
 }
 
 ATF_TC_BODY(fsync_err, tc)
@@ -65,7 +66,7 @@ ATF_TC_BODY(fsync_err, tc)
 	/*
 	 * On the other hand, EINVAL should follow
 	 * if the operation is not possible with
-	 * the file descriptor (cf. PR kern/30).
+	 * the file descriptor.
 	 */
 	ATF_REQUIRE(pipe(fd) == 0);
 

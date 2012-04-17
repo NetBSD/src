@@ -1,4 +1,4 @@
-/*	$NetBSD: stack_protector.c,v 1.6 2011/09/16 16:05:59 joerg Exp $	*/
+/*	$NetBSD: stack_protector.c,v 1.6.2.1 2012/04/17 00:05:21 yamt Exp $	*/
 /*	$OpenBSD: stack_protector.c,v 1.10 2006/03/31 05:34:44 deraadt Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: stack_protector.c,v 1.6 2011/09/16 16:05:59 joerg Exp $");
+__RCSID("$NetBSD: stack_protector.c,v 1.6.2.1 2012/04/17 00:05:21 yamt Exp $");
 
 #ifdef _LIBC
 #include "namespace.h"
@@ -56,18 +56,15 @@ void __guard_setup(void);
 void
 __guard_setup(void)
 {
-	int mib[2];
+	static const int mib[2] = { CTL_KERN, KERN_ARND };
 	size_t len;
 
 	if (__stack_chk_guard[0] != 0)
 		return;
 
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_ARND;
-
 	len = sizeof(__stack_chk_guard);
-	if (__sysctl(mib, 2, __stack_chk_guard, &len, NULL, 0) == -1 ||
-	    len != sizeof(__stack_chk_guard)) {
+	if (__sysctl(mib, (u_int)__arraycount(mib), __stack_chk_guard, &len,
+	    NULL, 0) == -1 || len != sizeof(__stack_chk_guard)) {
 		/* If sysctl was unsuccessful, use the "terminator canary". */
 		((unsigned char *)(void *)__stack_chk_guard)[0] = 0;
 		((unsigned char *)(void *)__stack_chk_guard)[1] = 0;

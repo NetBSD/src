@@ -1,4 +1,4 @@
-/*	$NetBSD: skeysubr.c,v 1.26 2006/10/28 15:35:28 agc Exp $	*/
+/*	$NetBSD: skeysubr.c,v 1.26.40.1 2012/04/17 00:05:33 yamt Exp $	*/
 
 /* S/KEY v1.1b (skeysubr.c)
  *
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: skeysubr.c,v 1.26 2006/10/28 15:35:28 agc Exp $");
+__RCSID("$NetBSD: skeysubr.c,v 1.26.40.1 2012/04/17 00:05:33 yamt Exp $");
 
 #include <ctype.h>
 #include <stdio.h>
@@ -46,7 +46,7 @@ static int keycrunch_sha1(char *, const char *, const char *);
 /* static int keycrunch_rmd160(char *, const char *, const char *); */
 static void lowcase(char *);
 static void skey_echo(int);
-static void trapped(int);
+static void trapped(int) __dead;
 static char *mkSeedPassword(const char *, const char *, size_t *);
 
 /* Current hash type (index into skey_hash_types array) */
@@ -69,7 +69,7 @@ static struct skey_algorithm_table skey_algorithm_table[] = {
 #if 0
 	{ "rmd160", keycrunch_rmd160, f_rmd160 },
 #endif
-	{ NULL }
+	{ NULL, NULL, NULL }
 };
 
 /*
@@ -479,7 +479,7 @@ const char *skey_set_algorithm(const char *new)
 }
 
 /* Get current hash type */
-const char *skey_get_algorithm()
+const char *skey_get_algorithm(void)
 {
 	return(skey_algorithm_table[skey_hash_type].name);
 }

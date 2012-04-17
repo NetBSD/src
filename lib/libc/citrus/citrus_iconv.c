@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv.c,v 1.9 2011/03/30 08:22:01 jruoho Exp $	*/
+/*	$NetBSD: citrus_iconv.c,v 1.9.4.1 2012/04/17 00:05:16 yamt Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iconv.c,v 1.9 2011/03/30 08:22:01 jruoho Exp $");
+__RCSID("$NetBSD: citrus_iconv.c,v 1.9.4.1 2012/04/17 00:05:16 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -222,8 +222,10 @@ open_shared(struct _citrus_iconv_shared * __restrict * __restrict rci,
 	    ci->ci_ops->io_uninit_shared == NULL ||
 	    ci->ci_ops->io_init_context == NULL ||
 	    ci->ci_ops->io_uninit_context == NULL ||
-	    ci->ci_ops->io_convert == NULL)
+	    ci->ci_ops->io_convert == NULL) {
+		ret = EINVAL;
 		goto err;
+	}
 
 	/* initialize the converter */
 	ret = (*ci->ci_ops->io_init_shared)(ci, basedir, src, dst,

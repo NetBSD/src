@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.96 2008/06/28 01:34:05 rumble Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.96.30.1 2012/04/17 00:08:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -102,6 +102,8 @@ struct lfs;
 struct segment;
 struct block_info;
 
+__BEGIN_DECLS
+
 #if defined(_KERNEL)
 
 extern int lfs_allclean_wakeup;
@@ -119,7 +121,6 @@ extern int lfs_debug_log_subsys[];
 extern kcondvar_t lfs_writing_cv;
 extern kcondvar_t locked_queue_cv;
 
-__BEGIN_DECLS
 /* lfs_alloc.c */
 void lfs_vcreate(struct mount *, ino_t, struct vnode *);
 int lfs_valloc(struct vnode *, int, kauth_cred_t, struct vnode **);
@@ -240,8 +241,8 @@ int lfs_gop_alloc(struct vnode *, off_t, off_t, int, kauth_cred_t);
 void lfs_gop_size(struct vnode *, off_t, off_t *, int);
 int lfs_putpages_ext(void *, int);
 int lfs_gatherpages(struct vnode *);
-void lfs_flush_dirops(struct lfs *);
-void lfs_flush_pchain(struct lfs *);
+int lfs_flush_dirops(struct lfs *);
+int lfs_flush_pchain(struct lfs *);
 
 int lfs_bwrite	 (void *);
 int lfs_fsync	 (void *);

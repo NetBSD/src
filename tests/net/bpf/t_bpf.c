@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bpf.c,v 1.2 2011/01/03 02:53:15 christos Exp $	*/
+/*	$NetBSD: t_bpf.c,v 1.2.6.1 2012/04/17 00:09:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -76,7 +76,6 @@ ATF_TC_BODY(bpfwriteleak, tc)
 	char buf[28]; /* sizeof(garbage) > etherhdrlen */
 	struct ifreq ifr;
 	int ifnum, bpfd;
-	u_int x;
 
 	RZ(rump_init());
 	RZ(rump_pub_shmif_create(NULL, &ifnum));
@@ -84,7 +83,6 @@ ATF_TC_BODY(bpfwriteleak, tc)
 
 	RL(bpfd = rump_sys_open("/dev/bpf", O_RDWR));
 	RL(rump_sys_ioctl(bpfd, BIOCSETIF, &ifr));
-        x = 1;
 	RL(rump_sys_ioctl(bpfd, BIOCSFEEDBACK, &ifr));
 
 	if (getmtdata() != 0)
@@ -92,7 +90,6 @@ ATF_TC_BODY(bpfwriteleak, tc)
 
 	ATF_REQUIRE_ERRNO(ENETDOWN, rump_sys_write(bpfd, buf, sizeof(buf))==-1);
 
-	atf_tc_expect_fail("PR kern/44196");
 	ATF_REQUIRE_EQ(getmtdata(), 0);
 }
 

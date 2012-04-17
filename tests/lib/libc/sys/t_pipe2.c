@@ -1,4 +1,4 @@
-/* $NetBSD: t_pipe2.c,v 1.2 2011/10/31 21:30:16 christos Exp $ */
+/* $NetBSD: t_pipe2.c,v 1.2.2.1 2012/04/17 00:09:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_pipe2.c,v 1.2 2011/10/31 21:30:16 christos Exp $");
+__RCSID("$NetBSD: t_pipe2.c,v 1.2.2.1 2012/04/17 00:09:12 yamt Exp $");
 
 #include <atf-c.h>
 #include <fcntl.h>
@@ -75,6 +75,14 @@ run(int flags)
 		ATF_REQUIRE((fcntl(fd[1], F_GETFL) & O_NONBLOCK) == 0);
 	}
 
+	if (flags & O_NOSIGPIPE) {
+		ATF_REQUIRE(fcntl(fd[0], F_GETNOSIGPIPE) != 0);
+		ATF_REQUIRE(fcntl(fd[1], F_GETNOSIGPIPE) != 0);
+	} else {
+		ATF_REQUIRE(fcntl(fd[0], F_GETNOSIGPIPE) == 0);
+		ATF_REQUIRE(fcntl(fd[1], F_GETNOSIGPIPE) == 0);
+	}
+
 	ATF_REQUIRE(close(fd[0]) != -1);
 	ATF_REQUIRE(close(fd[1]) != -1);
 }
@@ -104,12 +112,23 @@ ATF_TC_BODY(pipe2_nonblock, tc)
 ATF_TC(pipe2_cloexec);
 ATF_TC_HEAD(pipe2_cloexec, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "A close-on-exec of pipe2(2)");
+	atf_tc_set_md_var(tc, "descr", "A close-on-exec test of pipe2(2)");
 }
 
 ATF_TC_BODY(pipe2_cloexec, tc)
 {
 	run(O_CLOEXEC);
+}
+
+ATF_TC(pipe2_nosigpipe);
+ATF_TC_HEAD(pipe2_nosigpipe, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A no sigpipe test of pipe2(2)");
+}
+
+ATF_TC_BODY(pipe2_nosigpipe, tc)
+{
+	run(O_NOSIGPIPE);
 }
 
 ATF_TC(pipe2_einval);
@@ -130,6 +149,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, pipe2_basic);
 	ATF_TP_ADD_TC(tp, pipe2_nonblock);
 	ATF_TP_ADD_TC(tp, pipe2_cloexec);
+	ATF_TP_ADD_TC(tp, pipe2_nosigpipe);
 	ATF_TP_ADD_TC(tp, pipe2_einval);
 
 	return atf_no_error();

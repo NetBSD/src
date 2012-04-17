@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.107 2011/06/16 09:21:03 hannken Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.107.2.1 2012/04/17 00:08:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.107 2011/06/16 09:21:03 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.107.2.1 2012/04/17 00:08:56 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.107 2011/06/16 09:21:03 hannken Exp 
 #include <sys/fstrans.h>
 #include <sys/kauth.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
@@ -269,8 +269,11 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 			uvm_vnp_setwritesize(ovp, eob);
 			error = ufs_balloc_range(ovp, osize, eob - osize,
 			    cred, aflag);
-			if (error)
+			if (error) {
+				(void) ffs_truncate(ovp, osize,
+				    ioflag & IO_SYNC, cred);
 				return error;
+			}
 			if (ioflag & IO_SYNC) {
 				mutex_enter(ovp->v_interlock);
 				VOP_PUTPAGES(ovp,
@@ -618,7 +621,7 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	else
 		bap2 = (int64_t *)bp->b_data;
 	if (lastbn >= 0) {
-		copy = malloc(fs->fs_bsize, M_TEMP, M_WAITOK);
+		copy = kmem_alloc(fs->fs_bsize, KM_SLEEP);
 		memcpy((void *)copy, bp->b_data, (u_int)fs->fs_bsize);
 		for (i = last + 1; i < NINDIR(fs); i++)
 			BAP_ASSIGN(ip, i, 0);
@@ -673,7 +676,7 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	}
 
 	if (copy != NULL) {
-		free(copy, M_TEMP);
+		kmem_free(copy, fs->fs_bsize);
 	} else {
 		brelse(bp, BC_INVAL);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.16 2011/06/20 21:45:16 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.16.4.1 2012/04/17 00:06:47 yamt Exp $	*/
 
 #ifndef _POWERPC_VMPARAM_H_
 #define _POWERPC_VMPARAM_H_
@@ -28,14 +28,17 @@
 #define	VM_DEFAULT_ADDRESS(da, sz) \
 	((VM_MAXUSER_ADDRESS - MAXSSIZ) - round_page(sz))
 
-#if defined(_MODULE)
+#if defined(_MODULE) || defined(MODULAR)
 /*
- * If we are a module, then we need with varible page sizes since BOOKE and OEA
- * use 4KB pages while IBM4XX use 16KB pages.
+ * If we are a module or a modular kernel, then we need to defined the range
+ * of our varible page sizes since BOOKE and OEA use 4KB pages while IBM4XX
+ * use 16KB pages.
  */
 #define	MIN_PAGE_SIZE	4096		/* BOOKE/OEA */
 #define	MAX_PAGE_SIZE	16384		/* IBM4XX */
+#endif
 
+#if defined(_MODULE)
 #if defined(_RUMPKERNEL)
 /*
  * Safe definitions for RUMP kernels

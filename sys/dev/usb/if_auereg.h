@@ -1,4 +1,4 @@
-/*	$NetBSD: if_auereg.h,v 1.23 2009/09/04 18:10:08 dyoung Exp $	*/
+/*	$NetBSD: if_auereg.h,v 1.23.12.1 2012/04/17 00:08:06 yamt Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -228,9 +228,7 @@ struct aue_softc {
 
 	struct ethercom		aue_ec;
 	struct mii_data		aue_mii;
-#if NRND > 0
-	rndsource_element_t	rnd_source;
-#endif
+	krndsource_t	rnd_source;
 	struct lwp		*aue_thread;
 	int			aue_closing;
 	kcondvar_t		aue_domc;

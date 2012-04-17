@@ -1,4 +1,4 @@
-/* $NetBSD: gpioctl.c,v 1.16 2011/10/03 11:16:48 mbalmer Exp $ */
+/* $NetBSD: gpioctl.c,v 1.16.2.1 2012/04/17 00:09:46 yamt Exp $ */
 
 /*
  * Copyright (c) 2008, 2010, 2011 Marc Balmer <mbalmer@NetBSD.org>
@@ -43,7 +43,6 @@ static int quiet = 0;
 static void getinfo(void);
 static void gpioread(int, char *);
 static void gpiowrite(int, char *, int);
-static void gpiopulse(int, char *, double, double);
 static void gpioset(int pin, char *name, int flags, char *alias);
 static void gpiounset(int pin, char *name);
 static void devattach(char *, int, uint32_t, uint32_t);
@@ -74,7 +73,6 @@ int
 main(int argc, char *argv[])
 {
 	const struct bitstr *bs;
-	double freq, dc;
 	int pin, ch, n, fl = 0, value = 0;
 	const char *errstr;
 	char *ep;
@@ -101,8 +99,6 @@ main(int argc, char *argv[])
 	if (argc < 1)
 		usage();
 	dev = argv[0];
-
-	freq = dc = 0.0;
 
 	if (strncmp(_PATH_DEV, dev, sizeof(_PATH_DEV) - 1)) {
 		(void)snprintf(devn, sizeof(devn), "%s%s", _PATH_DEV, dev);
@@ -174,19 +170,9 @@ main(int argc, char *argv[])
 						nam = argv[n];
 				}
 				gpioset(pin, nm, fl, nam);
-			} else if (!strcmp(argv[2], "unset")) {
+			} else if (!strcmp(argv[2], "unset"))
 				gpiounset(pin, nm);
-			} else if (!strcmp(argv[2], "pulse")) {
-				if (argc == 4) {
-					freq = atof(argv[3]);
-					dc = 50.0;
-				} else if (argc == 5) {
-					freq = atof(argv[3]);
-					dc = atof(argv[4]);
-				} else
-					freq = dc = 0.0;
-				gpiopulse(pin, nm, freq, dc);
-			} else {
+			else {
 				value = strtonum(argv[2], INT_MIN, INT_MAX,
 				   &errstr);
 				if (errstr) {
@@ -282,62 +268,6 @@ gpiowrite(int pin, char *gp_name, int value)
 }
 
 static void
-gpiopulse(int pin, char *gp_name, double freq, double dc)
-{
-	struct gpio_pulse pulse;
-	suseconds_t period, on, off;
-
-	if (freq < 0.0 || (dc < 0.0 || dc >= 100.0))
-		errx(EXIT_FAILURE, "%.f Hz, %.f%% duty cycle: invalid value",
-		    freq, dc);
-
-	memset(&pulse, 0, sizeof(pulse));
-	if (gp_name != NULL)
-		strlcpy(pulse.gp_name, gp_name, sizeof(pulse.gp_name));
-	else
-		pulse.gp_pin = pin;
-
-	if (freq > 0.0 && dc > 0.0) {
-		period = 1000000 / freq;
-		on = period * dc / 100;
-		off = period - on;
-
-		if (on >= 1000000) {
-			pulse.gp_pulse_on.tv_sec = on / 1000000;
-			on -= pulse.gp_pulse_on.tv_sec * 1000000;
-			pulse.gp_pulse_on.tv_usec = on;
-		} else {
-			pulse.gp_pulse_on.tv_sec = 0;
-			pulse.gp_pulse_on.tv_usec = on;
-		}
-		if (off >= 1000000) {
-			pulse.gp_pulse_off.tv_sec = off / 1000000;
-			off -= pulse.gp_pulse_off.tv_sec * 1000000;
-			pulse.gp_pulse_off.tv_usec = off;
-		} else {
-			pulse.gp_pulse_off.tv_sec = 0;
-			pulse.gp_pulse_off.tv_usec = off;
-		}
-	} else {	/* gpio(4) defaults */
-		freq = 1.0;
-		dc = 50.0;
-	}
-
-	if (ioctl(devfd, GPIOPULSE, &pulse) == -1)
-		err(EXIT_FAILURE, "GPIOPULSE");
-
-	if (quiet)
-		return;
-
-	if (gp_name)
-		printf("pin %s: pulse at %.f Hz with a %.f%% duty cylce\n",
-		    gp_name, freq, dc);
-	else
-		printf("pin %d: pulse at %.f Hz with a %.f%% duty cylce\n",
-		    pin, freq, dc);
-}
-
-static void
 gpioset(int pin, char *name, int fl, char *alias)
 {
 	struct gpio_set set;
@@ -416,8 +346,6 @@ usage(void)
 	progname = getprogname();
 	fprintf(stderr, "usage: %s [-q] device [pin] [0 | 1 | 2 | "
 	    "on | off | toggle]\n", progname);
-	fprintf(stderr, "usage: %s [-q] device pin pulse [frequency "
-	    "[duty cycle]]\n", progname);
 	fprintf(stderr, "       %s [-q] device pin set [flags] [name]\n",
 	    progname);
 	fprintf(stderr, "       %s [-q] device pin unset\n", progname);

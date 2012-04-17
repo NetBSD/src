@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.38 2011/05/19 03:11:58 rmind Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.38.4.1 2012/04/17 00:08:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.38 2011/05/19 03:11:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.38.4.1 2012/04/17 00:08:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -249,8 +249,9 @@ sysvbfs_check_permitted(struct vnode *vp, struct sysvbfs_node *bnode,
 {
 	struct bfs_fileattr *attr = &bnode->inode->attr;
 
-	return genfs_can_access(vp->v_type, attr->mode, attr->uid, attr->gid,
-	    mode, cred);
+	return kauth_authorize_vnode(cred, kauth_access_action(mode,
+	    vp->v_type, attr->mode), vp, NULL, genfs_can_access(vp->v_type,
+	    attr->mode, attr->uid, attr->gid, mode, cred));
 }
 
 int
@@ -331,6 +332,8 @@ sysvbfs_setattr(void *arg)
 	struct bfs_inode *inode = bnode->inode;
 	struct bfs_fileattr *attr = &inode->attr;
 	struct bfs *bfs = bnode->bmp->bfs;
+	kauth_cred_t cred = ap->a_cred;
+	int error;
 
 	DPRINTF("%s:\n", __func__);
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
@@ -342,18 +345,66 @@ sysvbfs_setattr(void *arg)
 	    ((int)vap->va_bytes != VNOVAL) || (vap->va_gen != VNOVAL))
 		return EINVAL;
 
-	if (vap->va_uid != (uid_t)VNOVAL)
-		attr->uid = vap->va_uid;
-	if (vap->va_gid != (uid_t)VNOVAL)
-		attr->gid = vap->va_gid;
-	if (vap->va_mode != (mode_t)VNOVAL)
-		attr->mode = vap->va_mode;
-	if (vap->va_atime.tv_sec != VNOVAL)
-		attr->atime = vap->va_atime.tv_sec;
-	if (vap->va_mtime.tv_sec != VNOVAL)
-		attr->mtime = vap->va_mtime.tv_sec;
-	if (vap->va_ctime.tv_sec != VNOVAL)
-		attr->ctime = vap->va_ctime.tv_sec;
+	if (vap->va_flags != VNOVAL)
+		return EOPNOTSUPP;
+
+	if (vap->va_uid != (uid_t)VNOVAL || vap->va_gid != (uid_t)VNOVAL) {
+		uid_t uid =
+		    (vap->va_uid != (uid_t)VNOVAL) ? vap->va_uid : attr->uid;
+		gid_t gid =
+		    (vap->va_gid != (gid_t)VNOVAL) ? vap->va_gid : attr->gid;
+		error = kauth_authorize_vnode(cred,
+		    KAUTH_VNODE_CHANGE_OWNERSHIP, vp, NULL,
+		    genfs_can_chown(cred, attr->uid, attr->gid, uid, gid));
+		if (error)
+			return error;
+		attr->uid = uid;
+		attr->gid = gid;
+	}
+
+	if (vap->va_size != VNOVAL)
+		switch (vp->v_type) {
+		case VDIR:
+			return EISDIR;
+		case VCHR:
+		case VBLK:
+		case VFIFO:
+			break;
+		case VREG:
+			if (vp->v_mount->mnt_flag & MNT_RDONLY)
+				return EROFS;
+			bfs_file_setsize(vp, vap->va_size);
+			break;
+		default:
+			return EOPNOTSUPP;
+		}
+
+	if (vap->va_mode != (mode_t)VNOVAL) {
+		mode_t mode = vap->va_mode;
+		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY,
+		    vp, NULL, genfs_can_chmod(vp->v_type, cred, attr->uid,
+		    attr->gid, mode));
+		if (error)
+			return error;
+		attr->mode = mode;
+	}
+
+	if ((vap->va_atime.tv_sec != VNOVAL) ||
+	    (vap->va_mtime.tv_sec != VNOVAL) ||
+	    (vap->va_ctime.tv_sec != VNOVAL)) {
+		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_TIMES, vp,
+		    NULL, genfs_can_chtimes(vp, vap->va_vaflags, attr->uid,
+		    cred));
+		if (error)
+			return error;
+
+		if (vap->va_atime.tv_sec != VNOVAL)
+			attr->atime = vap->va_atime.tv_sec;
+		if (vap->va_mtime.tv_sec != VNOVAL)
+			attr->mtime = vap->va_mtime.tv_sec;
+		if (vap->va_ctime.tv_sec != VNOVAL)
+			attr->ctime = vap->va_ctime.tv_sec;
+	}
 
 	bfs_inode_set_attr(bfs, inode, attr);
 
@@ -378,8 +429,14 @@ sysvbfs_read(void *arg)
 	const int advice = IO_ADV_DECODE(a->a_ioflag);
 
 	DPRINTF("%s: type=%d\n", __func__, v->v_type);
-	if (v->v_type != VREG)
+	switch (v->v_type) {
+	case VREG:
+		break;
+	case VDIR:
+		return EISDIR;
+	default:
 		return EINVAL;
+	}
 
 	while (uio->uio_resid > 0) {
 		if ((sz = MIN(filesz - uio->uio_offset, uio->uio_resid)) == 0)
@@ -408,7 +465,6 @@ sysvbfs_write(void *arg)
 	struct uio *uio = a->a_uio;
 	int advice = IO_ADV_DECODE(a->a_ioflag);
 	struct sysvbfs_node *bnode = v->v_data;
-	struct bfs_inode *inode = bnode->inode;
 	bool extended = false;
 	vsize_t sz;
 	int err = 0;
@@ -423,8 +479,7 @@ sysvbfs_write(void *arg)
 		return 0;
 
 	if (bnode->size < uio->uio_offset + uio->uio_resid) {
-		bnode->size = uio->uio_offset + uio->uio_resid;
-		uvm_vnp_setsize(v, bnode->size);
+		bfs_file_setsize(v, uio->uio_offset + uio->uio_resid);
 		extended = true;
 	}
 
@@ -436,11 +491,8 @@ sysvbfs_write(void *arg)
 			break;
 		DPRINTF("%s: write %ldbyte\n", __func__, sz);
 	}
-	inode->end_sector = bnode->data_block +
-	    (ROUND_SECTOR(bnode->size) >> DEV_BSHIFT) - 1;
-	inode->eof_offset_byte = bnode->data_block * DEV_BSIZE +
-	    bnode->size - 1;
-	bnode->update_mtime = true;
+	if (err)
+		bfs_file_setsize(v, bnode->size - uio->uio_resid);
 
 	VN_KNOTE(v, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 

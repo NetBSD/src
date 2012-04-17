@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/06 01:14:09 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.6.1 2012/04/17 00:03:34 yamt Exp $
 
 LIB=	clangRewrite
 
@@ -12,6 +12,7 @@ SRCS+=	DeltaTree.cpp \
 	HTMLPrint.cpp \
 	HTMLRewrite.cpp \
 	RewriteMacros.cpp \
+	RewriteModernObjC.cpp \
 	RewriteObjC.cpp \
 	RewriteRope.cpp \
 	RewriteTest.cpp \

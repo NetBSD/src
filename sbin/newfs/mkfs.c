@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.110 2011/08/25 16:17:58 joerg Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.110.2.1 2012/04/17 00:05:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.110 2011/08/25 16:17:58 joerg Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.110.2.1 2012/04/17 00:05:41 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -151,6 +151,8 @@ union {
 #define DIP(dp, field) \
 	((sblock.fs_magic == FS_UFS1_MAGIC) ? \
 	(dp)->dp1.di_##field : (dp)->dp2.di_##field)
+
+#define EXT2FS_SBOFF	1024	/* XXX: SBOFF in <ufs/ext2fs/ext2fs.h> */
 
 char *iobuf;
 int iobufsize;			/* size to end of 2nd inode block */
@@ -615,6 +617,12 @@ mkfs(const char *fsys, int fi, int fo,
 			for (sz = SBLOCKSIZE; sz <= 0x10000; sz <<= 1)
 				zap_old_sblock(roundup(sblkoff, sz));
 		}
+		/*
+		 * Also zap possible Ext2fs magic leftover to prevent
+		 * kernel vfs_mountroot() and bootloaders from mis-recognizing
+		 * this file system as Ext2fs.
+		 */
+		zap_old_sblock(EXT2FS_SBOFF);
 
 		if (isappleufs) {
 			struct appleufslabel appleufs;
@@ -1335,11 +1343,10 @@ static void
 iput(union dinode *ip, ino_t ino)
 {
 	daddr_t d;
-	int c, i;
+	int i;
 	struct ufs1_dinode *dp1;
 	struct ufs2_dinode *dp2;
 
-	c = ino_to_cg(&sblock, ino);
 	rdfs(fsbtodb(&sblock, cgtod(&sblock, 0)), sblock.fs_cgsize, &acg);
 	/* fs -> host byte order */
 	if (needswap)

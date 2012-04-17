@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.32 2011/07/01 20:52:02 dyoung Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.32.2.1 2012/04/17 00:06:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.32 2011/07/01 20:52:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.32.2.1 2012/04/17 00:06:49 yamt Exp $");
 
 #include "opt_pci.h"
 #include "opt_residual.h"
@@ -144,9 +144,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	setup_pciintr_map(pbi, 0, 0, 0);
 
 #ifdef PCI_NETBSD_CONFIGURE
-	ioext  = extent_create("pciio",  0x00008000, 0x0000ffff, M_DEVBUF,
+	ioext  = extent_create("pciio",  0x00008000, 0x0000ffff,
 	    NULL, 0, EX_NOWAIT);
-	memext = extent_create("pcimem", 0x00000000, 0x0fffffff, M_DEVBUF,
+	memext = extent_create("pcimem", 0x00000000, 0x0fffffff,
 	    NULL, 0, EX_NOWAIT);
 
 	pci_configure_bus(genppc_pct, ioext, memext, NULL, 0, CACHELINESIZE);

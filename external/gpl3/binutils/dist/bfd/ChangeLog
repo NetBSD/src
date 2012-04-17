@@ -1,3 +1,13 @@
+2011-12-11  John Davis Anglin  <dave.anglin@nrc-cnrc.gc.ca>
+
+	PR binutils/13476
+	* elf32-hppa.c (final_link_relocate): Convert R_PARISC_TLS_GD21L,
+	R_PARISC_TLS_LDM21L and R_PARISC_TLS_IE21L relocations to
+	R_PARISC_DPREL21L when not doing a shared link.  Likewise convert
+	R_PARISC_TLS_GD14R, R_PARISC_TLS_LDM14R and R_PARISC_TLS_IE14R to
+	R_PARISC_DPREL14R.  Handle R_PARISC_TLS_GD21L, R_PARISC_TLS_LDM21L
+	and R_PARISC_TLS_IE21L with R_PARISC_DLTIND21L.
+
 2011-06-27  Tristan Gingold  <gingold@adacore.com>
 
 	* configure.in: Bump version to 2.21.1

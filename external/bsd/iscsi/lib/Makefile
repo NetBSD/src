@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.3 2009/06/30 02:59:15 agc Exp $
+# $NetBSD: Makefile,v 1.3.6.1 2012/04/17 00:03:27 yamt Exp $
 
 .include <bsd.own.mk>
 
-USE_FORT?= yes	# network protocol library
+USE_FORT?= yes	# network protocol library 
 
 LIB= iscsi
 SRCS= conffile.c disk.c util.c parameters.c protocol.c storage.c

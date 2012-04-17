@@ -1288,7 +1288,7 @@ static emul_syscall_descriptor netbsd_descriptors[] = {
   /* 253 */ { 0, "_ksem_trywait" },
   /* 254 */ { 0, "_ksem_getvalue" },
   /* 255 */ { 0, "_ksem_destroy" },
-  { 0, }, /* 256 */
+  /* 256 */ { 0, "_ksem_timedwait" },
   /* 257 */ { 0, "mq_open" },
   /* 258 */ { 0, "mq_close" },
   /* 259 */ { 0, "mq_unlink" },

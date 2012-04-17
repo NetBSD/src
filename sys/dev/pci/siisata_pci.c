@@ -1,4 +1,4 @@
-/* $NetBSD: siisata_pci.c,v 1.9 2010/11/13 13:52:08 uebayasi Exp $ */
+/* $NetBSD: siisata_pci.c,v 1.9.8.1 2012/04/17 00:07:57 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata_pci.c,v 1.9 2010/11/13 13:52:08 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata_pci.c,v 1.9.8.1 2012/04/17 00:07:57 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -138,7 +138,6 @@ siisata_pci_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct siisata_pci_softc *psc = device_private(self);
 	struct siisata_softc *sc = &psc->si_sc;
-	char devinfo[256];
 	const char *intrstr;
 	pcireg_t csr, memtype;
 	const struct siisata_pci_board *spbp;
@@ -154,9 +153,7 @@ siisata_pci_attach(device_t parent, device_t self, void *aux)
 	psc->sc_pc = pa->pa_pc;
 	psc->sc_pcitag = pa->pa_tag;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 1, devinfo, sizeof(devinfo));
-	aprint_naive(": SATA-II HBA\n");
-	aprint_normal(": %s\n", devinfo);
+	pci_aprint_devinfo(pa, "SATA-II HBA");
 
 	/* map BAR 0, global registers */
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, SIISATA_PCI_BAR0);

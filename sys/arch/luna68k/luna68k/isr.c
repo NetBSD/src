@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.20 2010/12/20 00:25:36 matt Exp $	*/
+/*	$NetBSD: isr.c,v 1.20.8.1 2012/04/17 00:06:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.20 2010/12/20 00:25:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.20.8.1 2012/04/17 00:06:35 yamt Exp $");
 
 /*
  * Link and dispatch interrupts.
@@ -279,7 +279,7 @@ const uint16_t ipl2psl_table[NIPL] = {
 	[IPL_SOFTBIO]    = PSL_S|PSL_IPL1,
 	[IPL_SOFTNET]    = PSL_S|PSL_IPL1,
 	[IPL_SOFTSERIAL] = PSL_S|PSL_IPL1,
-	[IPL_VM]         = PSL_S|PSL_IPL7,
-	[IPL_SCHED]      = PSL_S|PSL_IPL7,
+	[IPL_VM]         = PSL_S|PSL_IPL4,
+	[IPL_SCHED]      = PSL_S|PSL_IPL5,
 	[IPL_HIGH]       = PSL_S|PSL_IPL7,
 };

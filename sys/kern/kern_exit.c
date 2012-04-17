@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.235 2011/10/09 20:30:37 chs Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.235.2.1 2012/04/17 00:08:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,11 +67,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.235 2011/10/09 20:30:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.235.2.1 2012/04/17 00:08:23 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
-#include "opt_sa.h"
 #include "opt_sysv.h"
 
 #include <sys/param.h>
@@ -98,8 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.235 2011/10/09 20:30:37 chs Exp $");
 #include <sys/ras.h>
 #include <sys/signalvar.h>
 #include <sys/sched.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
@@ -200,27 +197,17 @@ exit1(struct lwp *l, int rv)
 	struct pgrp	*pgrp;
 	ksiginfo_t	ksi;
 	ksiginfoq_t	kq;
-	int		wakeinit, sa;
+	int		wakeinit;
 
 	p = l->l_proc;
 
 	KASSERT(mutex_owned(p->p_lock));
+	KASSERT(p->p_vmspace != NULL);
 
-	if (__predict_false(p == initproc))
+	if (__predict_false(p == initproc)) {
 		panic("init died (signal %d, exit %d)",
 		    WTERMSIG(rv), WEXITSTATUS(rv));
-
-	/*
-	 * Disable scheduler activation upcalls.  We're trying to get out of
-	 * here.
-	 */
-	sa = 0;
-#ifdef KERN_SA
-	if ((p->p_sa != NULL)) {
-		l->l_pflag |= LP_SA_NOBLOCK;
-		sa = 1;
 	}
-#endif
 
 	p->p_sflag |= PS_WEXIT;
 
@@ -228,8 +215,9 @@ exit1(struct lwp *l, int rv)
 	 * Force all other LWPs to exit before we do.  Only then can we
 	 * begin to tear down the rest of the process state.
 	 */
-	if (sa || p->p_nlwps > 1)
+	if (p->p_nlwps > 1) {
 		exit_lwps(l);
+	}
 
 	ksiginfo_queue_init(&kq);
 
@@ -580,6 +568,7 @@ exit1(struct lwp *l, int rv)
 	 * case these resources are in the PCB.
 	 */
 	cpu_lwp_free(l, 1);
+
 	pmap_deactivate(l);
 
 	/* This process no longer needs to hold the kernel lock. */
@@ -606,40 +595,7 @@ exit_lwps(struct lwp *l)
 
 	p = l->l_proc;
 	KASSERT(mutex_owned(p->p_lock));
-
-#ifdef KERN_SA
-	if (p->p_sa != NULL) {
-		struct sadata_vp *vp;
-		SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
-			/*
-			 * Make SA-cached LWPs normal process interruptable
-			 * so that the exit code can wake them. Locking
-			 * savp_mutex locks all the lwps on this vp that
-			 * we need to adjust.
-			 */
-			mutex_enter(&vp->savp_mutex);
-			DPRINTF(("exit_lwps: Making cached LWPs of %d on "
-			    "VP %d interruptable: ", p->p_pid, vp->savp_id));
-			TAILQ_FOREACH(l2, &vp->savp_lwpcache, l_sleepchain) {
-				l2->l_flag |= LW_SINTR;
-				DPRINTF(("%d ", l2->l_lid));
-			}
-			DPRINTF(("\n"));
-
-			DPRINTF(("exit_lwps: Making unblocking LWPs of %d on "
-			    "VP %d interruptable: ", p->p_pid, vp->savp_id));
-			TAILQ_FOREACH(l2, &vp->savp_woken, l_sleepchain) {
-				vp->savp_woken_count--;
-				l2->l_flag |= LW_SINTR;
-				DPRINTF(("%d ", l2->l_lid));
-			}
-			DPRINTF(("\n"));
-			mutex_exit(&vp->savp_mutex);
-		}
-	}
-#endif
-
- retry:
+retry:
 	/*
 	 * Interrupt LWPs in interruptable sleep, unsuspend suspended
 	 * LWPs and then wait for everyone else to finish.
@@ -648,7 +604,6 @@ exit_lwps(struct lwp *l)
 		if (l2 == l)
 			continue;
 		lwp_lock(l2);
-		l2->l_flag &= ~LW_SA;
 		l2->l_flag |= LW_WEXIT;
 		if ((l2->l_stat == LSSLEEP && (l2->l_flag & LW_SINTR)) ||
 		    l2->l_stat == LSSUSPENDED || l2->l_stat == LSSTOP) {
@@ -920,12 +875,6 @@ proc_free(struct proc *p, struct rusage *ru)
 	if (ru != NULL)
 		*ru = p->p_stats->p_ru;
 	p->p_xstat = 0;
-
-	/* Release any SA state. */
-#ifdef KERN_SA
-	if (p->p_sa)
-		sa_release(p);
-#endif
 
 	/*
 	 * At this point we are going to start freeing the final resources. 

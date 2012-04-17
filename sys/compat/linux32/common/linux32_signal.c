@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_signal.c,v 1.13 2009/06/08 13:34:23 njoly Exp $ */
+/*	$NetBSD: linux32_signal.c,v 1.13.12.1 2012/04/17 00:07:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.13 2009/06/08 13:34:23 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.13.12.1 2012/04/17 00:07:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -40,12 +40,17 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.13 2009/06/08 13:34:23 njoly Ex
 #include <sys/lwp.h>
 #include <sys/time.h>
 #include <sys/proc.h>
+#include <sys/wait.h>
 
 #include <compat/netbsd32/netbsd32.h>
 
+#include <compat/linux/common/linux_signal.h>
 #include <compat/linux32/common/linux32_types.h>
 #include <compat/linux32/common/linux32_signal.h>
+#include <compat/linux32/common/linux32_siginfo.h>
 #include <compat/linux32/linux32_syscallargs.h>
+#include <compat/linux32/common/linux32_errno.h>
+#include <compat/linux32/common/linux32_sched.h>
 
 #define linux32_sigemptyset(s)    memset((s), 0, sizeof(*(s)))
 #define linux32_sigismember(s, n) ((s)->sig[((n) - 1) / LINUX32__NSIG_BPW]  \
@@ -88,6 +93,71 @@ native_to_linux32_sigset(linux32_sigset_t *lss, const sigset_t *bss)
 			newsig = native_to_linux32_signo[i];
 			if (newsig)
 				linux32_sigaddset(lss, newsig);
+		}
+	}
+}
+
+void
+native_to_linux32_siginfo(linux32_siginfo_t *lsi, const struct _ksiginfo *ksi)
+{
+	memset(lsi, 0, sizeof(*lsi));
+
+	lsi->lsi_signo = native_to_linux32_signo[ksi->_signo];
+	lsi->lsi_errno = native_to_linux32_errno[ksi->_errno];
+	lsi->lsi_code = native_to_linux32_si_code(ksi->_code);
+
+	switch (ksi->_code) {
+	case SI_NOINFO:
+		break;
+
+	case SI_USER:
+		lsi->lsi_pid = ksi->_reason._rt._pid;
+		lsi->lsi_uid = ksi->_reason._rt._uid;
+		if (lsi->lsi_signo == LINUX_SIGALRM ||
+		    lsi->lsi_signo >= LINUX_SIGRTMIN)
+			NETBSD32PTR32(lsi->lsi_value.sival_ptr,
+			    ksi->_reason._rt._value.sival_ptr);
+		break;
+
+	case SI_TIMER:
+	case SI_QUEUE:
+		lsi->lsi_uid = ksi->_reason._rt._uid;
+		lsi->lsi_uid = ksi->_reason._rt._uid;
+		NETBSD32PTR32(lsi->lsi_value.sival_ptr,
+		    ksi->_reason._rt._value.sival_ptr);
+		break;
+
+	case SI_ASYNCIO:
+	case SI_MESGQ:
+		NETBSD32PTR32(lsi->lsi_value.sival_ptr,
+		    ksi->_reason._rt._value.sival_ptr);
+		break;
+
+	default:
+		switch (ksi->_signo) {
+		case SIGCHLD:
+			lsi->lsi_uid = ksi->_reason._child._uid;
+			lsi->lsi_pid = ksi->_reason._child._pid;
+			lsi->lsi_status = native_to_linux32_si_status(
+			    ksi->_code, ksi->_reason._child._status);
+			lsi->lsi_utime = ksi->_reason._child._utime;
+			lsi->lsi_stime = ksi->_reason._child._stime;
+			break;
+
+		case SIGILL:
+		case SIGFPE:
+		case SIGSEGV:
+		case SIGBUS:
+		case SIGTRAP:
+			NETBSD32PTR32(lsi->lsi_addr, ksi->_reason._fault._addr);
+			break;
+
+		case SIGIO:
+			lsi->lsi_fd = ksi->_reason._poll._fd;
+			lsi->lsi_band = ksi->_reason._poll._band;
+			break;
+		default:
+			break;
 		}
 	}
 }
@@ -362,6 +432,63 @@ linux32_sys_rt_sigsuspend(struct lwp *l, const struct linux32_sys_rt_sigsuspend_
 	return sigsuspend1(l, &bss);
 }
 
+static int
+fetchss(const void *u, void *s, size_t len)
+{
+	int error;
+	linux32_sigset_t lss;
+	
+	if ((error = copyin(u, &lss, sizeof(lss))) != 0)
+		return error;
+
+	linux32_to_native_sigset(s, &lss);
+	return 0;
+}
+
+static int
+fetchts(const void *u, void *s, size_t len)
+{
+	int error;
+	struct linux32_timespec lts;
+	
+	if ((error = copyin(u, &lts, sizeof(lts))) != 0)
+		return error;
+
+	linux32_to_native_timespec(s, &lts);
+	return 0;
+}
+
+static int
+fakestorets(const void *u, void *s, size_t len)
+{
+	/* Do nothing, sigtimedwait does not alter timeout like ours */
+	return 0;
+}
+
+static int
+storeinfo(const void *s, void *u, size_t len)
+{
+	linux32_siginfo_t lsi;
+
+
+	native_to_linux32_siginfo(&lsi, &((const siginfo_t *)s)->_info);
+	return copyout(&lsi, u, sizeof(lsi));
+}
+
+int
+linux32_sys_rt_sigtimedwait(struct lwp *l,
+    const struct linux32_sys_rt_sigtimedwait_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(const linux32_sigset_t *) set;
+		syscallarg(linux32_siginfo_t *) info);
+		syscallarg(const struct linux32_timespec *) timeout;
+	} */
+
+	return sigtimedwait1(l, (const struct sys_____sigtimedwait50_args *)uap,
+	    retval, fetchss, storeinfo, fetchts, fakestorets);
+}
+
 int
 linux32_sys_signal(struct lwp *l, const struct linux32_sys_signal_args *uap, register_t *retval)
 {
@@ -469,4 +596,42 @@ linux32_sys_rt_queueinfo(struct lwp *l, const struct linux32_sys_rt_queueinfo_ar
 	/* XXX To really implement this we need to      */
 	/* XXX keep a list of queued signals somewhere. */
 	return linux32_sys_kill(l, (const void *)uap, retval);
+}
+
+int
+native_to_linux32_si_code(int code)
+{
+	int si_codes[] = {
+	    LINUX32_SI_USER, LINUX32_SI_QUEUE, LINUX32_SI_TIMER,
+	    LINUX32_SI_ASYNCIO, LINUX32_SI_MESGQ, LINUX32_SI_TKILL /* SI_LWP */
+	};
+
+	if (code <= 0 && -code < __arraycount(si_codes))
+		return si_codes[-code];
+
+	return code;
+}
+
+int
+native_to_linux32_si_status(int code, int status)
+{
+	int sts;
+
+	switch (code) {
+	case CLD_CONTINUED:
+		sts = LINUX_SIGCONT;
+		break;
+	case CLD_EXITED:
+		sts = WEXITSTATUS(status);
+		break;
+	case CLD_STOPPED:
+	case CLD_TRAPPED:
+	case CLD_DUMPED:
+	case CLD_KILLED:
+	default:
+		sts = native_to_linux32_signo[WTERMSIG(status)];
+		break;
+	}
+
+	return sts;
 }

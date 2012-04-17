@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.95 2011/01/02 18:48:05 tsutsui Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.95.8.1 2012/04/17 00:06:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.95 2011/01/02 18:48:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.95.8.1 2012/04/17 00:06:08 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -226,6 +226,7 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 	st_pool_phys   = stphysize - st_pool_size;
 	stphysize      = st_pool_phys;
 
+	physmem        = btoc(stphysize) + btoc(ttphysize);
 	machineid      = id;
 	esym           = esym_addr;
 
@@ -322,6 +323,12 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 	if (machineid & ATARI_MILAN)
 		ptextra += btoc(PCI_IO_SIZE + PCI_MEM_SIZE);
 	ptextra += btoc(BOOTM_VA_POOL);
+	/*
+	 * now need to account for the kmem area, which is allocated
+	 * before pmap_init() is called.  It is roughly the size of physical
+	 * memory.
+	 */
+	ptextra += physmem;
 
 	/*
 	 * The 'pt' (the initial kernel pagetable) has to map the kernel and
@@ -559,6 +566,7 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 		 * A = 8 bits, B = 11 bits
 		 */
 		tc = 0x82d08b00;
+		__asm volatile ("pflusha" : : );
 		__asm volatile ("pmove %0@,%%tc" : : "a" (&tc));
 	}
 
@@ -587,7 +595,7 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 	 * on the machine.  When the amount of RAM is found, all
 	 * extents of RAM are allocated from the map.
 	 */
-	iomem_ex = extent_create("iomem", 0x0, 0xffffffff, M_DEVBUF,
+	iomem_ex = extent_create("iomem", 0x0, 0xffffffff,
 	    (void *)iomem_ex_storage, sizeof(iomem_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
 

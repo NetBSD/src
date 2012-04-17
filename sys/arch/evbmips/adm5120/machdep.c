@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.21 2011/07/10 00:03:52 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.21.2.1 2012/04/17 00:06:16 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2011/07/10 00:03:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21.2.1 2012/04/17 00:06:16 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -126,7 +126,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2011/07/10 00:03:52 matt Exp $");
 /* Maps for VM objects. */
 struct vm_map *phys_map = NULL;
 
-int physmem;			/* # pages of physical memory */
 int maxmem;			/* max memory per process */
 
 int mem_cluster_cnt;

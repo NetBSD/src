@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_dechanyu.c,v 1.3 2008/06/14 16:01:07 tnozaki Exp $ */
+/* $NetBSD: citrus_dechanyu.c,v 1.3.2.1 2012/04/17 00:05:16 yamt Exp $ */
 
 /*-
  * Copyright (c)2007 Citrus Project,
@@ -27,7 +27,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_dechanyu.c,v 1.3 2008/06/14 16:01:07 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_dechanyu.c,v 1.3.2.1 2012/04/17 00:05:16 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -187,7 +187,7 @@ _citrus_DECHanyu_mbrtowc_priv(_DECHanyuEncodingInfo * __restrict ei,
 	_DECHanyuState * __restrict psenc, size_t * __restrict nresult)
 {
 	const char *s0;
-	int ch, i;
+	int ch;
 	wchar_t wc;
 
 	/* ei may be unused */

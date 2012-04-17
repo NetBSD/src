@@ -1,0 +1,81 @@
+.\" Copyright (C) 2004 International Business Machines Corporation
+.\" Written by Kathy Robertson based on the Trusted Computing Group Software Stack Specification Version 1.1 Golden
+.\"
+.de Sh \" Subsection
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+.de Sp \" Vertical space (when we can't use .PP)
+.if t .sp .5v
+.if n .sp
+..
+.de Ip \" List item
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH "Tspi_Context_GetKeyByPublicInfo" 3 "2004-05-26" "TSS 1.1" "TCG Software Stack Developer's Reference"
+.SH NAME
+Tspi_Context_GetKeyByPublicInfo \- search the persistent storage for a registered key using the provided public key information
+.SH "SYNOPSIS"
+.ad l
+.hy 0
+.nf
+.B #include <tss/platform.h>
+.B #include <tss/tcpa_defines.h>
+.B #include <tss/tcpa_typedef.h>
+.B #include <tss/tcpa_struct.h>
+.B #include <tss/tss_typedef.h>
+.B #include <tss/tss_structs.h>
+.B #include <tss/tspi.h>
+.sp
+.BI "TSS_RESULT Tspi_Context_GetKeyByPublicInfo(TSS_HCONTEXT     " hContext ",      TSS_FLAG  " persistentStorageType ","
+.BI "                                           TSS_ALGORITHM_ID " algID ",         UINT32    " ulPublicInfoLength ","
+.BI "                                           BYTE*            " rgbPublicInfo ", TSS_HKEY* " phKey ");"
+.fi
+.sp
+.ad
+.hy
+
+.SH "DESCRIPTION"
+.PP
+\fBTSS_Context_GetKeyByPublicInfo\fR  searches the persistent storage for a registered key using the provided public key information and creates a key object initalized according to the found data. On successful completion of the method a handle to the created new key object is returned.
+.SH "PARAMETERS"
+.PP
+.SS hContext
+The handle of the context object.
+.PP
+.SS persistentStorageType
+Flag indicating the persistent storage the key is registered in.
+.PP
+.SS algId
+This parameter indicates the algorithm of the requested key.
+.PP
+.SS ulPublicInfoLength
+The length of the public key info provided at the parameter rgbPublicInfo.
+.PP
+.SS rgbPublicInfo
+The public key info is provided to identify the key to be look for at the persistent storage. In case algID equals to TSS_ALG_RSA this prameter contains the modulus of the public RSA key. 
+.PP
+.SS hKey
+Recieves the handle of the key object representing the key. In case the key hasn't been found, this value will be NULL.
+.SH "RETURN CODES"
+.PP
+\fBTspi_Context_GetKeyByPublicInfo\fR returns TSS_SUCCESS on success, otherwise one of the following values are returned:
+.TP
+.SM TSS_E_INVALID_HANDLE - \fIhContext\fR is an invalid handle.
+.TP
+.SM TSS_E_INTERNAL_ERROR - An error occurred internal to the TSS.
+.SH "CONFORMING TO"
+
+.PP
+\fBTspi_Context_GetKeyByPublicInfo\fR conforms to the Trusted Computing Group Software Specification version 1.1 Golden
+.SH "SEE ALSO"
+
+.PP
+\fBTspi_Context_LoadKeyByUUID\fR(3).

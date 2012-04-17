@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inetany.c,v 1.14 2011/05/24 11:38:56 joerg Exp $	*/
+/*	$NetBSD: af_inetany.c,v 1.14.4.1 2012/04/17 00:05:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inetany.c,v 1.14 2011/05/24 11:38:56 joerg Exp $");
+__RCSID("$NetBSD: af_inetany.c,v 1.14.4.1 2012/04/17 00:05:40 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -81,7 +81,7 @@ commit_address(prop_dictionary_t env, prop_dictionary_t oenv,
 		err(EXIT_FAILURE, "%s: getsock", __func__);
 
 	if ((ifname = getifinfo(env, oenv, &flags)) == NULL)
-		return;
+		err(EXIT_FAILURE, "%s: getifinfo", __func__);
 
 	strlcpy(param->name[0].buf, ifname, param->name[0].buflen);
 	strlcpy(param->name[1].buf, ifname, param->name[1].buflen);

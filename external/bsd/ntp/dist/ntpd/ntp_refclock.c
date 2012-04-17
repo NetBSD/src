@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_refclock.c,v 1.2 2009/12/14 00:46:21 christos Exp $	*/
+/*	$NetBSD: ntp_refclock.c,v 1.2.6.1 2012/04/17 00:03:47 yamt Exp $	*/
 
 /*
  * ntp_refclock - processing support for reference clocks
@@ -13,6 +13,7 @@
 #include "ntp_tty.h"
 #include "ntp_refclock.h"
 #include "ntp_stdlib.h"
+#include "ntp_assert.h"
 
 #include <stdio.h>
 
@@ -352,7 +353,6 @@ refclock_transmit(
 /*
  * Compare two doubles - used with qsort()
  */
-#ifdef QSORT_USES_VOID_P
 static int
 refclock_cmpl_fp(
 	const void *p1,
@@ -363,30 +363,11 @@ refclock_cmpl_fp(
 	const double *dp2 = (const double *)p2;
 
 	if (*dp1 < *dp2)
-		return (-1);
-
+		return -1;
 	if (*dp1 > *dp2)
-		return (1);
-
-	return (0);
+		return 1;
+	return 0;
 }
-
-#else
-static int
-refclock_cmpl_fp(
-	const double *dp1,
-	const double *dp2
-	)
-{
-	if (*dp1 < *dp2)
-		return (-1);
-
-	if (*dp1 > *dp2)
-		return (1);
-
-	return (0);
-}
-#endif /* QSORT_USES_VOID_P */
 
 
 /*
@@ -483,7 +464,7 @@ refclock_sample(
 	struct refclockproc *pp		/* refclock structure pointer */
 	)
 {
-	int	i, j, k, m, n;
+	size_t	i, j, k, m, n;
 	double	off[MAXSTAGE];
 	double	offset;
 
@@ -501,13 +482,7 @@ refclock_sample(
 		return (0);
 
 	if (n > 1)
-		qsort(
-#ifdef QSORT_USES_VOID_P
-		    (void *)
-#else
-		    (char *)
-#endif
-		    off, (size_t)n, sizeof(double), refclock_cmpl_fp);
+		qsort((void *)off, n, sizeof(off[0]), refclock_cmpl_fp);
 
 	/*
 	 * Reject the furthest from the median of the samples until
@@ -539,9 +514,9 @@ refclock_sample(
 	if (debug)
 		printf(
 		    "refclock_sample: n %d offset %.6f disp %.6f jitter %.6f\n",
-		    n, pp->offset, pp->disp, pp->jitter);
+		    (int)n, pp->offset, pp->disp, pp->jitter);
 #endif
-	return (n);
+	return (int)n;
 }
 
 
@@ -743,6 +718,9 @@ refclock_open(
 {
 	int	fd;
 	int	omode;
+#ifdef O_NONBLOCK
+	char    trash[128];	/* litter bin for old input data */
+#endif
 
 	/*
 	 * Open serial port and set default options
@@ -760,6 +738,7 @@ refclock_open(
 		msyslog(LOG_ERR, "refclock_open %s: %m", dev);
 		return (0);
 	}
+	NTP_INSIST(fd != 0);
 	if (!refclock_setup(fd, speed, lflags)) {
 		close(fd);
 		return (0);
@@ -768,8 +747,19 @@ refclock_open(
 		close(fd);
 		return (0);
 	}
+#ifdef O_NONBLOCK
+	/*
+	 * We want to make sure there is no pending trash in the input
+	 * buffer. Since we have non-blocking IO available, this is a
+	 * good moment to read and dump all available outdated stuff
+	 * that might have become toxic for the driver.
+	 */
+	while (read(fd, trash, sizeof(trash)) > 0 || errno == EINTR)
+		/*NOP*/;
+#endif
 	return (fd);
 }
+
 
 /*
  * refclock_setup - initialize terminal interface structure
@@ -862,6 +852,14 @@ refclock_setup(
 		    "refclock_setup fd %d TCSANOW: %m", fd);
 		return (0);
 	}
+
+	/*
+	 * flush input and output buffers to discard any outdated stuff
+	 * that might have become toxic for the driver. Failing to do so
+	 * is logged, but we keep our fingers crossed otherwise.
+	 */
+	if (tcflush(fd, TCIOFLUSH) < 0)
+		msyslog(LOG_ERR, "refclock_setup fd %d tcflush(): %m", fd);
 #endif /* HAVE_TERMIOS */
 
 #ifdef HAVE_SYSV_TTYS
@@ -1045,7 +1043,7 @@ refclock_control(
 	clktype = (u_char)REFCLOCKTYPE(srcadr);
 	unit = REFCLOCKUNIT(srcadr);
 
-	peer = findexistingpeer(srcadr, NULL, -1);
+	peer = findexistingpeer(srcadr, NULL, -1, 0);
 
 	if (NULL == peer || NULL == peer->procptr)
 		return;
@@ -1144,7 +1142,7 @@ refclock_buginfo(
 	clktype = (u_char) REFCLOCKTYPE(srcadr);
 	unit = REFCLOCKUNIT(srcadr);
 
-	peer = findexistingpeer(srcadr, NULL, -1);
+	peer = findexistingpeer(srcadr, NULL, -1, 0);
 
 	if (NULL == peer || NULL == peer->procptr)
 		return;
@@ -1313,7 +1311,7 @@ refclock_pps(
 	/*
 	 * Convert to signed fraction offset and stuff in median filter.
 	 */
-	pp->lastrec.l_ui = ap->ts.tv_sec + JAN_1970;
+	pp->lastrec.l_ui = (u_int32)ap->ts.tv_sec + JAN_1970;
 	dtemp = ap->ts.tv_nsec / 1e9;
 	pp->lastrec.l_uf = (u_int32)(dtemp * FRAC);
 	if (dtemp > .5)

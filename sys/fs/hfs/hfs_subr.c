@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_subr.c,v 1.15 2011/02/24 23:48:59 christos Exp $	*/
+/*	$NetBSD: hfs_subr.c,v 1.15.4.1 2012/04/17 00:08:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */                                     
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.15 2011/02/24 23:48:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.15.4.1 2012/04/17 00:08:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.15 2011/02/24 23:48:59 christos Exp $
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/mount.h>
-#include <sys/disklabel.h>
+#include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
 #include <sys/buf.h>
@@ -155,8 +155,9 @@ hfs_libcb_opendev(
 {
 	hfs_libcb_data* cbdata = NULL;
 	hfs_libcb_argsopen* args;
-	struct partinfo dpart;
 	int result, mode;
+	uint64_t psize;
+	unsigned secsize;
 
 	result = 0;
 	args = (hfs_libcb_argsopen*)(cbargs->openvol);
@@ -177,8 +178,10 @@ hfs_libcb_opendev(
 	
 	/* Open the device node. */
 	mode = vol->readonly ? FREAD : FREAD|FWRITE;
-	if ((result = VOP_OPEN(args->devvp, mode,
-		FSCRED)) != 0)
+	vn_lock(args->devvp, LK_EXCLUSIVE | LK_RETRY);
+	result = VOP_OPEN(args->devvp, mode, FSCRED);
+	VOP_UNLOCK(args->devvp);
+	if (result != 0)
 		goto error;
 
 	/* Flush out any old buffers remaining from a previous use. */
@@ -193,11 +196,10 @@ hfs_libcb_opendev(
 	cbdata->devvp = args->devvp;
 
 	/* Determine the device's block size. Default to DEV_BSIZE if unavailable.*/
-	if (VOP_IOCTL(args->devvp, DIOCGPART, &dpart, FREAD, args->cred)
-		!= 0)
+	if (getdisksize(args->devvp, &psize, &secsize) != 0)
 		cbdata->devblksz = DEV_BSIZE;
 	else
-		cbdata->devblksz = dpart.disklab->d_secsize;
+		cbdata->devblksz = secsize;
 		
 	return 0;
 

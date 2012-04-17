@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.12 2009/12/13 09:01:45 mrg Exp $
+# $NetBSD: Makefile.inc,v 1.12.6.1 2012/04/17 00:05:29 yamt Exp $
 # Copyright 1998 Juniper Networks, Inc.
 # All rights reserved.
 #
@@ -50,3 +50,6 @@ CSHLIBFLAGS+= -DNO_STATIC_MODULES
 # version, and we need these variables early for module install rules.
 SHLIB_MAJOR=	3
 SHLIB_MINOR=	0
+
+# openpam requires the files to be owned by root
+BINOWN=        root

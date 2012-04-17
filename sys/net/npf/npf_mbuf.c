@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_mbuf.c,v 1.6 2011/01/18 20:33:46 rmind Exp $	*/
+/*	$NetBSD: npf_mbuf.c,v 1.6.8.1 2012/04/17 00:08:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.6 2011/01/18 20:33:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.6.8.1 2012/04/17 00:08:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -117,7 +117,7 @@ nbuf_rw_datum(const int wr, struct mbuf *m, void *n_ptr, size_t len, void *buf)
 
 	/* Current offset in mbuf. */
 	off = (uintptr_t)n_ptr - mtod(m, uintptr_t);
-	KASSERT(off < m->m_len);
+	KASSERT(off < (u_int)m->m_len);
 	wmark = m->m_len;
 
 	/* Is datum overlapping? */
@@ -153,7 +153,7 @@ nbuf_rw_datum(const int wr, struct mbuf *m, void *n_ptr, size_t len, void *buf)
 		off = 0;
 	}
 	KASSERT(n_ptr == d || mtod(m, uint8_t *) == d);
-	KASSERT(len <= m->m_len);
+	KASSERT(len <= (u_int)m->m_len);
 
 	/* Non-overlapping case: fetch the actual data. */
 	if (wr == NBUF_DATA_WRITE) {

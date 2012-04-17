@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp_data.c,v 1.3 2011/09/15 17:51:57 plunky Exp $	*/
+/*	$NetBSD: sdp_data.c,v 1.3.2.1 2012/04/17 00:05:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sdp_data.c,v 1.3 2011/09/15 17:51:57 plunky Exp $");
+__RCSID("$NetBSD: sdp_data.c,v 1.3.2.1 2012/04/17 00:05:12 yamt Exp $");
 
 #include <sdp.h>
 #include <stdarg.h>
@@ -325,7 +325,7 @@ sdp_data_valid(const sdp_data_t *data)
  *
  * print out a SDP data element list in human readable format
  */
-static void
+static __printflike(3, 4) void
 _sdp_put(int indent, const char *type, const char *fmt, ...)
 {
 	va_list ap;

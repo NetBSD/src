@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_16.c,v 1.1 2008/11/14 23:10:57 ad Exp $	*/
+/*	$NetBSD: kern_sig_16.c,v 1.1.24.1 2012/04/17 00:07:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,23 +66,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_16.c,v 1.1 2008/11/14 23:10:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_16.c,v 1.1.24.1 2012/04/17 00:07:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 #include <sys/wait.h>
 #include <sys/kmem.h>
 
-/* ARGSUSED */
 int
-compat_16_sys___sigaction14(struct lwp *l, const struct compat_16_sys___sigaction14_args *uap, register_t *retval)
+compat_16_sys___sigaction14(struct lwp *l,
+    const struct compat_16_sys___sigaction14_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(int)				signum;

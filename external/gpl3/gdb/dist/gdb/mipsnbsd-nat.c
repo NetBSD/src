@@ -27,6 +27,16 @@
 #include <sys/ptrace.h>
 #include <machine/reg.h>
 
+#ifndef HAVE_GREGSET_T
+typedef struct reg gregset_t;
+#endif
+
+#ifndef HAVE_FPREGSET_T
+typedef struct fpreg fpregset_t;
+#endif
+
+#include "gregset.h"
+
 #include "mips-tdep.h"
 #include "mipsnbsd-tdep.h"
 #include "inf-ptrace.h"
@@ -49,7 +59,7 @@ mipsnbsd_fetch_inferior_registers (struct target_ops *ops,
       struct reg regs;
 
       if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &regs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get registers"));
       
       mipsnbsd_supply_reg (regcache, (char *) &regs, regno);
@@ -63,7 +73,7 @@ mipsnbsd_fetch_inferior_registers (struct target_ops *ops,
       struct fpreg fpregs;
 
       if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &fpregs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       mipsnbsd_supply_fpreg (regcache, (char *) &fpregs, regno);
@@ -80,13 +90,13 @@ mipsnbsd_store_inferior_registers (struct target_ops *ops,
       struct reg regs;
 
       if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &regs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       mipsnbsd_fill_reg (regcache, (char *) &regs, regno);
 
       if (ptrace (PT_SETREGS, PIDGET (inferior_ptid), 
-		  (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &regs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't write registers"));
 
       if (regno != -1)
@@ -99,17 +109,43 @@ mipsnbsd_store_inferior_registers (struct target_ops *ops,
       struct fpreg fpregs; 
 
       if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &fpregs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       mipsnbsd_fill_fpreg (regcache, (char *) &fpregs, regno);
 
       if (ptrace (PT_SETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &fpregs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't write floating point status"));
     }
 }
 
+/* Wrapper functions.  These are only used by nbsd-thread.  */
+void
+supply_gregset (struct regcache *regcache, const gdb_gregset_t *gregsetp)
+{
+  mipsnbsd_supply_reg (regcache, (const char *) gregsetp, -1);
+}   
+
+void
+fill_gregset (const struct regcache *regcache,
+              gdb_gregset_t *gregsetp, int regno)
+{
+  mipsnbsd_fill_reg (regcache, (char *) gregsetp, -1);
+}   
+
+void
+supply_fpregset (struct regcache *regcache, const gdb_fpregset_t *fpregsetp)
+{   
+  mipsnbsd_supply_fpreg (regcache, (const char *) fpregsetp, -1);
+}
+
+void
+fill_fpregset (const struct regcache *regcache,
+               gdb_fpregset_t *fpregsetp, int regno)
+{
+  mipsnbsd_fill_fpreg (regcache, (char *) fpregsetp, -1);
+}
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */
 void _initialize_mipsnbsd_nat (void);

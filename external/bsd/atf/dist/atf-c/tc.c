@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -104,7 +104,7 @@ static void errno_test(struct context *, const char *, const size_t,
                        const int, const char *, const bool,
                        void (*)(struct context *, atf_dynstr_t *));
 static atf_error_t check_prog_in_dir(const char *, void *);
-static atf_error_t check_prog(struct context *, const char *, void *);
+static atf_error_t check_prog(struct context *, const char *);
 
 static void
 context_init(struct context *ctx, const atf_tc_t *tc, const char *resfile)
@@ -166,22 +166,24 @@ write_resfile(const int fd, const char *result, const int arg,
 
     INV(arg == -1 || reason != NULL);
 
-    iov[count].iov_base = __UNCONST(result);
+#define UNCONST(a) ((void *)(unsigned long)(const void *)(a))
+    iov[count].iov_base = UNCONST(result);
     iov[count++].iov_len = strlen(result);
 
     if (reason != NULL) {
-	if (arg != -1) {
-	    iov[count].iov_base = buf;
-	    iov[count++].iov_len = snprintf(buf, sizeof(buf), "(%d)", arg);
-	}
+        if (arg != -1) {
+            iov[count].iov_base = buf;
+            iov[count++].iov_len = snprintf(buf, sizeof(buf), "(%d)", arg);
+        }
 
-	iov[count].iov_base = CS;
-	iov[count++].iov_len = sizeof(CS) - 1;
+        iov[count].iov_base = CS;
+        iov[count++].iov_len = sizeof(CS) - 1;
 
-	r = atf_dynstr_cstring(reason);
-	iov[count].iov_base = __UNCONST(r);
-	iov[count++].iov_len = strlen(r);
+        r = atf_dynstr_cstring(reason);
+        iov[count].iov_base = UNCONST(r);
+        iov[count++].iov_len = strlen(r);
     }
+#undef UNCONST
 
     iov[count].iov_base = NL;
     iov[count++].iov_len = sizeof(NL) - 1;
@@ -460,7 +462,7 @@ out_p:
 }
 
 static atf_error_t
-check_prog(struct context *ctx, const char *prog, void *data)
+check_prog(struct context *ctx, const char *prog)
 {
     atf_error_t err;
     atf_fs_path_t p;
@@ -874,7 +876,7 @@ _atf_tc_pass(struct context *ctx)
 static void
 _atf_tc_require_prog(struct context *ctx, const char *prog)
 {
-    check_fatal_error(check_prog(ctx, prog, NULL));
+    check_fatal_error(check_prog(ctx, prog));
 }
 
 static void

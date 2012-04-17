@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlvar.h,v 1.14 2009/10/19 18:41:15 bouyer Exp $	*/
+/*	$NetBSD: if_tlvar.h,v 1.14.12.1 2012/04/17 00:07:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -30,11 +30,7 @@
  * available from www.ti.com
  */
 
-#include "rnd.h"
-
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <dev/i2c/i2cvar.h>
 
@@ -84,9 +80,7 @@ struct tl_softc {
 	int oerr_carrloss;
 	int oerr_mcopy;
 #endif
-#if NRND > 0
-	rndsource_element_t rnd_source;
-#endif
+	krndsource_t rnd_source;
 };
 #define tl_if            tl_ec.ec_if
 #define tl_bpf   tl_if.if_bpf

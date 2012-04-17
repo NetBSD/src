@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isapnp.c,v 1.26 2011/06/02 14:12:25 tsutsui Exp $	*/
+/*	$NetBSD: wss_isapnp.c,v 1.26.2.1 2012/04/17 00:07:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_isapnp.c,v 1.26 2011/06/02 14:12:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_isapnp.c,v 1.26.2.1 2012/04/17 00:07:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,6 @@ wss_isapnp_attach(device_t parent, device_t self, void *aux)
 	/* Set up AD1848 I/O handle. */
 	ac->sc_iot = sc->sc_iot;
 	ac->sc_ioh = sc->sc_ioh;
-	ac->mode = 2;
 
 	sc->sc_ad1848.sc_ic = ipa->ipa_ic;
 
@@ -161,6 +160,8 @@ wss_isapnp_attach(device_t parent, device_t self, void *aux)
 
 	aprint_error_dev(self, "%s %s", ipa->ipa_devident,
 	    ipa->ipa_devclass);
+
+	ac->mode = 2;
 
 	wssattach(sc);
 

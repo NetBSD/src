@@ -1,4 +1,4 @@
-# $NetBSD: t_missing.sh,v 1.2 2011/05/11 22:08:12 njoly Exp $
+# $NetBSD: t_missing.sh,v 1.2.4.1 2012/04/17 00:09:15 yamt Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,12 +30,10 @@
 
 atf_test_case missing
 missing_head() {
-	atf_set "descr" "Check route(8) with a missing argument"
+	atf_set "descr" "Check route(8) with a missing argument (PR bin/42179)"
 }
 
 missing_body() {
-
-	atf_expect_fail "PR bin/42179"
 
 	atf_check -s exit:1 \
 	-e not-inline:"route: writing to routing socket: Invalid argument\n" \

@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.94 2011/08/14 12:32:01 christos Exp $	*/
+/*	$NetBSD: setup.c,v 1.94.2.1 2012/04/17 00:05:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.94 2011/08/14 12:32:01 christos Exp $");
+__RCSID("$NetBSD: setup.c,v 1.94.2.1 2012/04/17 00:05:39 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -692,7 +692,7 @@ static int
 detect_byteorder(struct fs *fs, int sblockoff)
 {
 	if (sblockoff == SBLOCK_UFS2 && (fs->fs_magic == FS_UFS1_MAGIC ||
-	    fs->fs_magic == bswap32(FS_UFS1_MAGIC)))
+	    fs->fs_magic == FS_UFS1_MAGIC_SWAPPED))
 		/* Likely to be the first alternate of a fs with 64k blocks */
 		return -1;
 	if (fs->fs_magic == FS_UFS1_MAGIC || fs->fs_magic == FS_UFS2_MAGIC) {
@@ -704,8 +704,8 @@ detect_byteorder(struct fs *fs, int sblockoff)
 			doswap = do_blkswap = do_dirswap = 1;
 		}
 		return 0;
-	} else if (fs->fs_magic == bswap32(FS_UFS1_MAGIC) ||
-		   fs->fs_magic == bswap32(FS_UFS2_MAGIC)) {
+	} else if (fs->fs_magic == FS_UFS1_MAGIC_SWAPPED ||
+		   fs->fs_magic == FS_UFS2_MAGIC_SWAPPED) {
 		if (endian == 0 || BYTE_ORDER != endian) {
 			needswap = 1;
 			doswap = do_blkswap = do_dirswap = 0;

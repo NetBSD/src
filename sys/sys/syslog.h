@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.33 2011/07/17 20:54:54 joerg Exp $	*/
+/*	$NetBSD: syslog.h,v 1.33.2.1 2012/04/17 00:08:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -193,40 +193,33 @@ __BEGIN_DECLS
 void	closelog(void);
 void	openlog(const char *, int, int);
 int	setlogmask(int);
-void	syslog(int, const char *, ...)
-    __attribute__((__format__(__printf__,2,3)));
+void	syslog(int, const char *, ...) __printflike(2, 3);
 #if defined(_NETBSD_SOURCE)
-void	vsyslog(int, const char *, __va_list)
-    __attribute__((__format__(__printf__,2,0)));
+void	vsyslog(int, const char *, __va_list) __printflike(2, 0);
 void	closelog_r(struct syslog_data *);
 void	openlog_r(const char *, int, int, struct syslog_data *);
 int	setlogmask_r(int, struct syslog_data *);
 void	syslog_r(int, struct syslog_data *, const char *, ...)
-    __attribute__((__format__(__printf__,3,4)));
+    __printflike(3, 4);
 void	vsyslog_r(int, struct syslog_data *, const char *, __va_list)
-    __attribute__((__format__(__printf__,3,0)));
+    __printflike(3, 0);
 void syslogp(int, const char *, const char *, const char *, ...)
-    __attribute__((__format__(__printf__,4,5)));
+    __printflike(4, 5);
 void vsyslogp(int, const char *, const char *, const char *, __va_list)
-    __attribute__((__format__(__printf__,4,0)));
+    __printflike(4, 0);
 void syslogp_r(int, struct syslog_data *, const char *, const char *,
-    const char *, ...)
-    __attribute__((__format__(__printf__,5,6)));
+    const char *, ...) __printflike(5, 6);
 void vsyslogp_r(int, struct syslog_data *, const char *, const char *,
-    const char *, __va_list)
-    __attribute__((__format__(__printf__,5,0)));
+    const char *, __va_list) __printflike(5, 0);
 #endif
 __END_DECLS
 
 #else /* !_KERNEL */
 
 void	logpri(int);
-void	log(int, const char *, ...)
-    __attribute__((__format__(__printf__,2,3)));
-void	vlog(int, const char *, __va_list)
-    __attribute__((__format__(__printf__,2,0)));
-void	addlog(const char *, ...)
-    __attribute__((__format__(__printf__,1,2)));
+void	log(int, const char *, ...) __printflike(2, 3);
+void	vlog(int, const char *, __va_list) __printflike(2, 0);
+void	addlog(const char *, ...) __printflike(1, 2);
 void	logwakeup(void);
 
 #endif /* !_KERNEL */

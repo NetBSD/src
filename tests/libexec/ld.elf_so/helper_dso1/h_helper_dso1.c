@@ -31,7 +31,7 @@
 #include <stddef.h>
 #include <sys/tls.h>
 
-#if !defined(__HAVE_TLS_VARIANT_I) && !defined(__HAVE_TLS_VARIANT_II)
+#ifdef __HAVE_NO___THREAD
 #define	__thread
 #endif
 

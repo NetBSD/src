@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/02/27 12:42:44 gdt Exp $
+#	$NetBSD: Makefile,v 1.5.4.1 2012/04/17 00:03:37 yamt Exp $
 
 # NOGCCERROR=yes
 
@@ -19,7 +19,7 @@ LDADD+=		-L${LIBNTP} -lntp -L${LIBOPTS} -lopts -L${LIBISC} -liscntp -ledit -lter
 
 DIST=${IDIST}/ntpq
 
-CPPFLAGS+=-I${IDIST}/include -I${IDIST}/libopts
+CPPFLAGS+=-I${IDIST}/include -I${IDIST}/sntp/libopts
 
 .PATH: ${DIST}
 

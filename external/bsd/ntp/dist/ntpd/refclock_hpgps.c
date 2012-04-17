@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_hpgps.c,v 1.1.1.1 2009/12/13 16:55:49 kardel Exp $	*/
+/*	$NetBSD: refclock_hpgps.c,v 1.1.1.1.6.1 2012/04/17 00:03:48 yamt Exp $	*/
 
 /*
  * refclock_hpgps - clock driver for HP 58503A GPS receiver
@@ -164,7 +164,7 @@ hpgps_start(
 	 * Open serial port. Use CLK line discipline, if available.
 	 * Default is HP 58503A, mode arg selects HP Z3801A
 	 */
-	(void)sprintf(device, DEVICE, unit);
+	snprintf(device, sizeof(device), DEVICE, unit);
 	/* mode parameter to server config line shares ttl slot */
 	if ((peer->ttl == 1)) {
 		if (!(fd = refclock_open(device, SPEED232Z,
@@ -177,19 +177,16 @@ hpgps_start(
 	/*
 	 * Allocate and initialize unit structure
 	 */
-	if (!(up = (struct hpgpsunit *)
-	      emalloc(sizeof(struct hpgpsunit)))) {
-		(void) close(fd);
-		return (0);
-	}
-	memset((char *)up, 0, sizeof(struct hpgpsunit));
+	up = emalloc(sizeof(*up));
+	memset(up, 0, sizeof(*up));
 	pp = peer->procptr;
 	pp->io.clock_recv = hpgps_receive;
 	pp->io.srcclock = (caddr_t)peer;
 	pp->io.datalen = 0;
 	pp->io.fd = fd;
 	if (!io_addclock(&pp->io)) {
-		(void) close(fd);
+		close(fd);
+		pp->io.fd = -1;
 		free(up);
 		return (0);
 	}
@@ -234,8 +231,10 @@ hpgps_shutdown(
 
 	pp = peer->procptr;
 	up = (struct hpgpsunit *)pp->unitptr;
-	io_closeclock(&pp->io);
-	free(up);
+	if (-1 != pp->io.fd)
+		io_closeclock(&pp->io);
+	if (NULL != up)
+		free(up);
 }
 
 

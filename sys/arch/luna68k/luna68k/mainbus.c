@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.9 2011/06/05 17:03:18 matt Exp $ */
+/* $NetBSD: mainbus.c,v 1.9.2.1 2012/04/17 00:06:35 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9 2011/06/05 17:03:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9.2.1 2012/04/17 00:06:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,15 +40,21 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9 2011/06/05 17:03:18 matt Exp $");
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 
-static struct mainbus_attach_args devs[] = {
-	{ "clock",  0x45000000, -1 },	/* Mostek/Dallas TimeKeeper */
+static const struct mainbus_attach_args luna_devs[] = {
+	{ "clock",  0x45000000, -1 },	/* Mostek TimeKeeper */
 	{ "le",	    0xf1000000, 3 },	/* Am7990 */
 	{ "sio",    0x51000000, 6 },	/* uPD7201A */
 	{ "fb",	    0xc1100000, -1 },	/* BrookTree RAMDAC */
 	{ "spc",    0xe1000000, 2 },	/* MB89352 */
-#if 0
-	{ "spc",    0xe1000040, 2 },	/* ditto */
-#endif
+};
+
+static const struct mainbus_attach_args luna2_devs[] = {
+	{ "clock",  0x45000000, -1 },	/* Dallas TimeKeeper */
+	{ "le",	    0xf0000000, 3 },	/* Am7990 */
+	{ "sio",    0x51000000, 6 },	/* uPD7201A */
+	{ "fb",	    0xc1100000, -1 },	/* BrookTree RAMDAC */
+	{ "spc",    0xe1000000, 2 },	/* internal MB89352 */
+	{ "spc",    0xe1000040, 2 },	/* external MB89352 */
 };
 
 static void mainbus_attach(device_t, device_t, void *);
@@ -72,13 +78,22 @@ mainbus_match(device_t parent, cfdata_t cf, void *args)
 static void
 mainbus_attach(device_t parent, device_t self, void *args)
 {
-	int i;
+	int i, ndevs;
+	const struct mainbus_attach_args *devs;
+	struct mainbus_attach_args ma;
 	
-	if (machtype == LUNA_II)
-		devs[1].ma_addr = 0xf0000000;
+	if (machtype == LUNA_II) {
+		devs = luna2_devs;
+		ndevs = __arraycount(luna2_devs);
+	} else {
+		devs = luna_devs;
+		ndevs = __arraycount(luna_devs);
+	}
 	printf("\n");
-	for (i = 0; i < sizeof(devs)/sizeof(devs[0]); i++)
-		config_found(self, (void *)&devs[i], mainbus_print);
+	for (i = 0; i < ndevs; i++) {
+		ma = devs[i];
+		config_found(self, &ma, mainbus_print);
+	}
 }
 
 static int

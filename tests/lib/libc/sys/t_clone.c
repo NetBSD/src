@@ -1,4 +1,4 @@
-/* $NetBSD: t_clone.c,v 1.2 2011/07/07 16:31:11 jruoho Exp $ */
+/* $NetBSD: t_clone.c,v 1.2.2.1 2012/04/17 00:09:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_clone.c,v 1.2 2011/07/07 16:31:11 jruoho Exp $");
+__RCSID("$NetBSD: t_clone.c,v 1.2.2.1 2012/04/17 00:09:12 yamt Exp $");
 
 #include <sys/mman.h>
 #include <sys/resource.h>
@@ -52,18 +52,6 @@ __RCSID("$NetBSD: t_clone.c,v 1.2 2011/07/07 16:31:11 jruoho Exp $");
 #define	STACKSIZE	(8 * 1024)
 #define	FROBVAL		41973
 #define	CHILDEXIT	0xa5
-
-/*
- * return 1 if the stack grows down, 0 if it grows up.
- */
-static int
-stackdir(void *p)
-{
-	int val;
-	void *q = &val;
-
-	return p < q ? 0 : 1;
-}
 
 static int
 dummy(void *arg)
@@ -116,7 +104,10 @@ ATF_TC_BODY(clone_basic, tc)
 
 	ATF_REQUIRE_ERRNO(errno, allocstack != MAP_FAILED);
 
-	stack = (caddr_t) allocstack + STACKSIZE * stackdir(&stat);
+	stack = allocstack;
+#ifndef __MACHINE_STACK_GROWS_UP
+	stack = (char *)stack + STACKSIZE;
+#endif
 
 	printf("parent: stack = %p, frobme = %p\n", stack, frobme);
 	fflush(stdout);
@@ -200,12 +191,15 @@ ATF_TC_HEAD(clone_null_func, tc)
 ATF_TC_BODY(clone_null_func, tc)
 {
 	void *allocstack, *stack;
-	int rv, stat;
+	int rv;
 
 	allocstack = mmap(NULL, STACKSIZE, PROT_READ|PROT_WRITE|PROT_EXEC,
 	    MAP_PRIVATE|MAP_ANON, -1, (off_t) 0);
 	ATF_REQUIRE_ERRNO(errno, allocstack != MAP_FAILED);
-	stack = (caddr_t) allocstack + STACKSIZE * stackdir(&stat);
+	stack = allocstack;
+#ifndef __MACHINE_STACK_GROWS_UP
+	stack = (char *)stack + STACKSIZE;
+#endif
 
 	errno = 0;
 	rv = __clone(0, stack,

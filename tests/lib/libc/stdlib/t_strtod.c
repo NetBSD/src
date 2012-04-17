@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtod.c,v 1.27 2011/09/30 14:50:20 jruoho Exp $ */
+/*	$NetBSD: t_strtod.c,v 1.27.2.1 2012/04/17 00:09:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Public domain, Otto Moerbeek <otto@drijf.net>, 2006. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtod.c,v 1.27 2011/09/30 14:50:20 jruoho Exp $");
+__RCSID("$NetBSD: t_strtod.c,v 1.27.2.1 2012/04/17 00:09:12 yamt Exp $");
 
 #include <errno.h>
 #include <math.h>
@@ -92,7 +92,7 @@ ATF_TC_BODY(strtod_hex, tc)
 {
 	const char *str;
 	char *end;
-	double d;
+	volatile double d;
 
 	str = "-0x0";
 	d = strtod(str, &end);	/* -0.0 */
@@ -112,17 +112,14 @@ ATF_TC_BODY(strtod_hex, tc)
 ATF_TC(strtod_inf);
 ATF_TC_HEAD(strtod_inf, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "A strtod(3) with INF");
+	atf_tc_set_md_var(tc, "descr", "A strtod(3) with INF (PR lib/33262)");
 }
 
 ATF_TC_BODY(strtod_inf, tc)
 {
 #ifndef __vax__
-	/*
-	 * See the closed PR lib/33262.
-	 */
 	for (size_t i = 0; i < __arraycount(inf_strings); i++) {
-		double d = strtod(inf_strings[i], NULL);
+		volatile double d = strtod(inf_strings[i], NULL);
 		ATF_REQUIRE(isinf(d) != 0);
 	}
 #else
@@ -133,17 +130,14 @@ ATF_TC_BODY(strtod_inf, tc)
 ATF_TC(strtof_inf);
 ATF_TC_HEAD(strtof_inf, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "A strtof(3) with INF");
+	atf_tc_set_md_var(tc, "descr", "A strtof(3) with INF (PR lib/33262)");
 }
 
 ATF_TC_BODY(strtof_inf, tc)
 {
 #ifndef __vax__
-	/*
-	 * See the closed PR lib/33262.
-	 */
 	for (size_t i = 0; i < __arraycount(inf_strings); i++) {
-		float f = strtof(inf_strings[i], NULL);
+		volatile float f = strtof(inf_strings[i], NULL);
 		ATF_REQUIRE(isinf(f) != 0);
 	}
 #else
@@ -154,24 +148,18 @@ ATF_TC_BODY(strtof_inf, tc)
 ATF_TC(strtold_inf);
 ATF_TC_HEAD(strtold_inf, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "A strtold(3) with INF");
+	atf_tc_set_md_var(tc, "descr", "A strtold(3) with INF (PR lib/33262)");
 }
 
 ATF_TC_BODY(strtold_inf, tc)
 {
 #ifndef __vax__
 #   ifdef __HAVE_LONG_DOUBLE
-
-	/*
-	 * See the closed PR lib/33262.
-	 *
-	 * This may also fail under QEMU; cf. PR misc/44767.
-	 */
 	if (system("cpuctl identify 0 | grep -q QEMU") == 0)
 		atf_tc_expect_fail("PR misc/44767");
 
 	for (size_t i = 0; i < __arraycount(inf_strings); i++) {
-		long double ld = strtold(inf_strings[i], NULL);
+		volatile long double ld = strtold(inf_strings[i], NULL);
 		ATF_REQUIRE(isinf(ld) != 0);
 	}
 #   else
@@ -193,7 +181,7 @@ ATF_TC_BODY(strtod_nan, tc)
 #ifndef __vax__
 	char *end;
 
-	double d = strtod(nan_string, &end);
+	volatile double d = strtod(nan_string, &end);
 	ATF_REQUIRE(isnan(d) != 0);
 	ATF_REQUIRE(strcmp(end, "y") == 0);
 #else
@@ -212,7 +200,7 @@ ATF_TC_BODY(strtof_nan, tc)
 #ifndef __vax__
 	char *end;
 
-	float f = strtof(nan_string, &end);
+	volatile float f = strtof(nan_string, &end);
 	ATF_REQUIRE(isnanf(f) != 0);
 	ATF_REQUIRE(strcmp(end, "y") == 0);
 #else
@@ -223,7 +211,7 @@ ATF_TC_BODY(strtof_nan, tc)
 ATF_TC(strtold_nan);
 ATF_TC_HEAD(strtold_nan, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "A strtold(3) with NaN");
+	atf_tc_set_md_var(tc, "descr", "A strtold(3) with NaN (PR lib/45020)");
 }
 
 ATF_TC_BODY(strtold_nan, tc)
@@ -233,15 +221,10 @@ ATF_TC_BODY(strtold_nan, tc)
 
 	char *end;
 
-	/*
-	 * See PR lib/45020.
-	 *
-	 * This may also fail under QEMU; cf. PR misc/44767.
-	 */
 	if (system("cpuctl identify 0 | grep -q QEMU") == 0)
 		atf_tc_expect_fail("PR misc/44767");
 
-	long double ld = strtold(nan_string, &end);
+	volatile long double ld = strtold(nan_string, &end);
 	ATF_REQUIRE(isnan(ld) != 0);
 	ATF_REQUIRE(__isnanl(ld) != 0);
 	ATF_REQUIRE(strcmp(end, "y") == 0);
@@ -266,19 +249,17 @@ ATF_TC_BODY(strtod_round, tc)
 	/*
 	 * Test that strtod(3) honors the current rounding mode.
 	 * The used value is somewhere near 1 + DBL_EPSILON + FLT_EPSILON.
-	 *
-	 * May fail under QEMU; cf. PR misc/44767.
 	 */
 	const char *val =
 	    "1.00000011920928977282585492503130808472633361816406";
 
 	(void)fesetround(FE_UPWARD);
 
-	double d1 = strtod(val, NULL);
+	volatile double d1 = strtod(val, NULL);
 
 	(void)fesetround(FE_DOWNWARD);
 
-	double d2 = strtod(val, NULL);
+	volatile double d2 = strtod(val, NULL);
 
 	if (fabs(d1 - d2) > 0.0)
 		return;
@@ -311,7 +292,7 @@ ATF_TC_BODY(strtod_underflow, tc)
 	    "000000000000000002";
 
 	errno = 0;
-	double d = strtod(tmp, NULL);
+	volatile double d = strtod(tmp, NULL);
 
 	if (d != 0 || errno != ERANGE)
 		atf_tc_fail("strtod(3) did not detect underflow");

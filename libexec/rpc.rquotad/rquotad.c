@@ -1,4 +1,4 @@
-/*	$NetBSD: rquotad.c,v 1.30 2011/09/16 16:13:17 plunky Exp $	*/
+/*	$NetBSD: rquotad.c,v 1.30.2.1 2012/04/17 00:05:37 yamt Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr). Public domain.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rquotad.c,v 1.30 2011/09/16 16:13:17 plunky Exp $");
+__RCSID("$NetBSD: rquotad.c,v 1.30.2.1 2012/04/17 00:05:37 yamt Exp $");
 #endif
 
 #include <sys/param.h>
@@ -26,14 +26,13 @@ __RCSID("$NetBSD: rquotad.c,v 1.30 2011/09/16 16:13:17 plunky Exp $");
 #include <grp.h>
 #include <errno.h>
 #include <unistd.h>
-
 #include <syslog.h>
 
-#include <quota/quotaprop.h>
-#include <quota/quota.h>
 #include <rpc/rpc.h>
 #include <rpcsvc/rquota.h>
 #include <arpa/inet.h>
+
+#include <quota.h>
 
 static void rquota_service(struct svc_req *request, SVCXPRT *transp);
 static void ext_rquota_service(struct svc_req *request, SVCXPRT *transp);
@@ -41,15 +40,6 @@ static void sendquota(struct svc_req *request, int vers, SVCXPRT *transp);
 __dead static void cleanup(int);
 
 static int from_inetd = 1;
-
-static uint32_t
-qlim2rqlim(uint64_t lim)
-{
-	if (lim == UQUAD_MAX)
-		return 0;
-	else
-		return (lim + 1);
-}
 
 static void 
 cleanup(int dummy)
@@ -163,6 +153,58 @@ ext_rquota_service(struct svc_req *request, SVCXPRT *transp)
 		exit(0);
 }
 
+/*
+ * Convert a limit to rquota representation (where 0 == unlimited).
+ * Clamp the result into a uint32_t.
+ */
+static uint32_t
+limit_to_rquota(uint64_t lim)
+{
+	if (lim == QUOTA_NOLIMIT || lim > 0xfffffffeUL)
+		return 0;
+	else
+		return (lim + 1);
+}
+
+/*
+ * Convert a time to rquota representation.
+ */
+static uint32_t
+time_to_rquota(time_t when, time_t now)
+{
+	if (when == QUOTA_NOTIME) {
+		return 0;
+	} else {
+		return when - now;
+	}
+}
+
+/*
+ * Convert to rquota representation.
+ */
+static void
+quotavals_to_rquota(const struct quotaval *blocks,
+		    const struct quotaval *files,
+		    struct rquota *rq)
+{
+	struct timeval now;
+
+	gettimeofday(&now, NULL);
+
+	rq->rq_active = TRUE;
+	rq->rq_bsize = DEV_BSIZE;
+
+	rq->rq_bhardlimit = limit_to_rquota(blocks->qv_hardlimit);
+	rq->rq_bsoftlimit = limit_to_rquota(blocks->qv_softlimit);
+	rq->rq_curblocks = blocks->qv_usage;
+	rq->rq_btimeleft = time_to_rquota(blocks->qv_expiretime, now.tv_sec);
+
+	rq->rq_fhardlimit = limit_to_rquota(files->qv_hardlimit);
+	rq->rq_fsoftlimit = limit_to_rquota(files->qv_softlimit);
+	rq->rq_curfiles = files->qv_usage;
+	rq->rq_ftimeleft = time_to_rquota(files->qv_expiretime, now.tv_sec);
+}
+
 /* read quota for the specified id, and send it */
 static void
 sendquota(struct svc_req *request, int vers, SVCXPRT *transp)
@@ -170,9 +212,10 @@ sendquota(struct svc_req *request, int vers, SVCXPRT *transp)
 	struct getquota_args getq_args;
 	struct ext_getquota_args ext_getq_args;
 	struct getquota_rslt getq_rslt;
-	struct ufs_quota_entry qe[QUOTA_NLIMITS];
-	const char *class;
-	struct timeval timev;
+	struct quotahandle *qh;
+	struct quotakey qk;
+	struct quotaval blocks, files;
+	int idtype;
 
 	memset((char *)&getq_args, 0, sizeof(getq_args));
 	memset((char *)&ext_getq_args, 0, sizeof(ext_getq_args));
@@ -197,10 +240,10 @@ sendquota(struct svc_req *request, int vers, SVCXPRT *transp)
 	}
 	switch (ext_getq_args.gqa_type) {
 	case RQUOTA_USRQUOTA:
-		class = QUOTADICT_CLASS_USER;
+		idtype = QUOTA_IDTYPE_USER;
 		break;
 	case RQUOTA_GRPQUOTA:
-		class = QUOTADICT_CLASS_GROUP;
+		idtype = QUOTA_IDTYPE_GROUP;
 		break;
 	default:
 		getq_rslt.status = Q_NOQUOTA;
@@ -209,32 +252,52 @@ sendquota(struct svc_req *request, int vers, SVCXPRT *transp)
 	if (request->rq_cred.oa_flavor != AUTH_UNIX) {
 		/* bad auth */
 		getq_rslt.status = Q_EPERM;
-	} else if (!getufsquota(ext_getq_args.gqa_pathp, qe,
-	    ext_getq_args.gqa_id, class)) {
-		/* failed, return noquota */
-		getq_rslt.status = Q_NOQUOTA;
-	} else {
-		gettimeofday(&timev, NULL);
-		getq_rslt.status = Q_OK;
-		getq_rslt.getquota_rslt_u.gqr_rquota.rq_active = TRUE;
-		getq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize = DEV_BSIZE;
-		getq_rslt.getquota_rslt_u.gqr_rquota.rq_bhardlimit =
-		    qlim2rqlim(qe[QUOTA_LIMIT_BLOCK].ufsqe_hardlimit);
-		getq_rslt.getquota_rslt_u.gqr_rquota.rq_bsoftlimit =
-		    qlim2rqlim(qe[QUOTA_LIMIT_BLOCK].ufsqe_softlimit);
-		getq_rslt.getquota_rslt_u.gqr_rquota.rq_curblocks =
-		    qe[QUOTA_LIMIT_BLOCK].ufsqe_cur;
-		getq_rslt.getquota_rslt_u.gqr_rquota.rq_fhardlimit =
-		    qlim2rqlim(qe[QUOTA_LIMIT_FILE].ufsqe_hardlimit);
-		getq_rslt.getquota_rslt_u.gqr_rquota.rq_fsoftlimit =
-		    qlim2rqlim(qe[QUOTA_LIMIT_FILE].ufsqe_softlimit);
-		getq_rslt.getquota_rslt_u.gqr_rquota.rq_curfiles =
-		    qe[QUOTA_LIMIT_FILE].ufsqe_cur;
-		getq_rslt.getquota_rslt_u.gqr_rquota.rq_btimeleft =
-		    qe[QUOTA_LIMIT_BLOCK].ufsqe_time - timev.tv_sec;
-		getq_rslt.getquota_rslt_u.gqr_rquota.rq_ftimeleft =
-		    qe[QUOTA_LIMIT_FILE].ufsqe_time - timev.tv_sec;
+		goto out;
 	}
+
+	/*
+	 * XXX validate the path...
+	 */
+
+	qh = quota_open(ext_getq_args.gqa_pathp);
+	if (qh == NULL) {
+		/*
+		 * There are only three possible responses: success,
+		 * permission denied, and "no quota", so we return
+		 * the last for essentially all errors.
+		 */
+		if (errno == EPERM || errno == EACCES) {
+			getq_rslt.status = Q_EPERM;
+			goto out;
+		}
+		getq_rslt.status = Q_NOQUOTA;
+		goto out;
+	}
+
+	qk.qk_id = ext_getq_args.gqa_id;
+	qk.qk_idtype = idtype;
+	qk.qk_objtype = QUOTA_OBJTYPE_BLOCKS;
+	if (quota_get(qh, &qk, &blocks) < 0) {
+		/* failed, return noquota */
+		quota_close(qh);
+		getq_rslt.status = Q_NOQUOTA;
+		goto out;
+	}
+
+	qk.qk_objtype = QUOTA_OBJTYPE_FILES;
+	if (quota_get(qh, &qk, &files) < 0) {
+		/* failed, return noquota */
+		quota_close(qh);
+		getq_rslt.status = Q_NOQUOTA;
+		goto out;
+	}
+
+	quota_close(qh);
+
+	quotavals_to_rquota(&blocks, &files,
+			    &getq_rslt.getquota_rslt_u.gqr_rquota);
+	getq_rslt.status = Q_OK;
+
 out:
 	if (!svc_sendreply(transp, (xdrproc_t)xdr_getquota_rslt, (char *)&getq_rslt))
 		svcerr_systemerr(transp);

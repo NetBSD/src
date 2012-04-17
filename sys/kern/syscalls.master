@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.252 2011/08/17 07:22:34 manu Exp $
+	$NetBSD: syscalls.master,v 1.252.2.1 2012/04/17 00:08:29 yamt Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -494,7 +494,8 @@
 254	STD MODULAR RUMP { int|sys||_ksem_getvalue(intptr_t id, \
 			    unsigned int *value); }
 255	STD MODULAR RUMP { int|sys||_ksem_destroy(intptr_t id); }
-256	UNIMPL		sys__ksem_timedwait
+256	STD MODULAR RUMP { int|sys||_ksem_timedwait(intptr_t id, \
+				const struct timespec *abstime); }
 257	STD MODULAR	{ mqd_t|sys||mq_open(const char * name, int oflag, \
 			    mode_t mode, struct mq_attr *attr); }
 258	STD MODULAR	{ int|sys||mq_close(mqd_t mqdes); }
@@ -626,14 +627,13 @@
 328	UNIMPL
 329	UNIMPL
 ; SA system calls.
-330	STD 		{ int|sys||sa_register(sa_upcall_t new, \
-				sa_upcall_t *old, int flags, \
-				ssize_t stackinfo_offset); }
-331	STD 		{ int|sys||sa_stacks(int num, stack_t *stacks); }
-332	STD 		{ int|sys||sa_enable(void); }
-333	STD 		{ int|sys||sa_setconcurrency(int concurrency); }
-334	STD 		{ int|sys||sa_yield(void); }
-335	STD 		{ int|sys||sa_preempt(int sa_id); }
+330	COMPAT_60 	{ int|sys||sa_register(void *new, void **old, \
+				int flags, ssize_t stackinfo_offset); }
+331	COMPAT_60 	{ int|sys||sa_stacks(int num, stack_t *stacks); }
+332	COMPAT_60 	{ int|sys||sa_enable(void); }
+333	COMPAT_60 	{ int|sys||sa_setconcurrency(int concurrency); }
+334	COMPAT_60 	{ int|sys||sa_yield(void); }
+335	COMPAT_60 	{ int|sys||sa_preempt(int sa_id); }
 336	OBSOL 		sys_sa_unblockyield
 ;
 ; Syscalls 337-339 are reserved for other scheduler activation syscalls.
@@ -885,8 +885,8 @@
 			    dev_t dev); }
 451	STD  RUMP 	{ int|sys|50|fhstat(const void *fhp, \
 			    size_t fh_size, struct stat *sb); }
-452	STD  RUMP	{ int|sys|50|quotactl(const char *path, \
-			    struct plistref *pref); }
+; 452 only ever appeared in 5.99.x and can be reused after netbsd-7
+452	OBSOL		5.99 quotactl
 453	STD  RUMP	{ int|sys||pipe2(int *fildes, int flags); }
 454	STD  RUMP	{ int|sys||dup3(int from, int to, int flags); }
 455	STD  RUMP	{ int|sys||kqueue1(int flags); }
@@ -925,3 +925,10 @@
 			    int flag); }
 472	STD  RUMP	{ int|sys||futimens(int fd, \
 			    const struct timespec *tptr); }
+473	STD  RUMP	{ int|sys||__quotactl(const char *path, \
+			    struct quotactl_args *args); }
+474	NOERR		{ int|sys||posix_spawn(pid_t *pid, const char *path, \
+				const struct posix_spawn_file_actions *file_actions, \
+				const struct posix_spawnattr *attrp, \
+				char *const *argv, char *const *envp); }
+

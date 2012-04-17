@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.95.2.1 2011/11/10 14:31:49 yamt Exp $
+#	$NetBSD: Makefile,v 1.95.2.2 2012/04/17 00:08:35 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -15,6 +15,7 @@ SUBDIR+=	coda5
 SUBDIR+=	compat
 SUBDIR+=	compat_ossaudio
 SUBDIR+=	coredump
+SUBDIR+=	chfs
 SUBDIR+=	efs
 SUBDIR+=	ext2fs
 SUBDIR+=	exec_script
@@ -31,7 +32,6 @@ SUBDIR+=	gpiosim
 SUBDIR+=	hfs
 SUBDIR+=	iic
 SUBDIR+=	kernfs
-SUBDIR+=	ksem
 SUBDIR+=	layerfs
 SUBDIR+=	lfs
 SUBDIR+=	mfs
@@ -60,6 +60,7 @@ SUBDIR+=	puffs
 SUBDIR+=	putter
 SUBDIR+=	scsiverbose
 SUBDIR+=	secmodel_bsd44
+SUBDIR+=	secmodel_extensions
 SUBDIR+=	secmodel_overlay
 SUBDIR+=	securelevel
 SUBDIR+=	smbfs
@@ -188,6 +189,11 @@ SUBDIR+=	viadrm
 SUBDIR+=	aps
 SUBDIR+=	finsio
 SUBDIR+=	itesio
+SUBDIR+=	lm
+SUBDIR+=	lm_isa
+SUBDIR+=	lm_isa_common
+SUBDIR+=	lm_wbsio
+SUBDIR+=	wbsio
 .endif
 
 .if ${MACHINE_CPU} == "m68k"
@@ -248,6 +254,10 @@ SUBDIR+=	auvitek
 SUBDIR+=	coram
 SUBDIR+=	cxdtv
 SUBDIR+=	emdtv
+.endif
+
+.if (${MKISCSI} != "no")
+SUBDIR+=	iscsi
 .endif
 
 .include <bsd.subdir.mk>

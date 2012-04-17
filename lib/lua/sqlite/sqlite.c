@@ -1,4 +1,4 @@
-/*	$NetBSD: sqlite.c,v 1.3 2011/10/15 12:58:20 mbalmer Exp $ */
+/*	$NetBSD: sqlite.c,v 1.3.2.1 2012/04/17 00:05:35 yamt Exp $ */
 
 /*
  * Copyright (c) 2011 Marc Balmer <marc@msys.ch>
@@ -42,7 +42,7 @@
 
 int luaopen_sqlite(lua_State*);
 
-static void
+static __printflike(2, 3) void
 sqlite_error(lua_State *L, const char *fmt, ...)
 {
 	va_list ap;

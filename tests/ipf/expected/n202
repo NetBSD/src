@@ -1,0 +1,23 @@
+4500 0040 7ee9 4000 4006 5879 c0a8 7101 c0a8 7103 0017 ffdd 21dd ace0 0000 0000 b012 8000 83e8 0000 0204 05b4 0103 0300 0402 0101 0101 080a 0000 0000 0000 0000 
+
+List of active MAP/Redirect filters:
+encap out on bge0 proto tcp from 0/0 to 0/0 port = 23 -> src 1.1.1.1/32 dst 192.168.168.1/32;
+
+List of active sessions:
+ENC-MAP 192.168.168.1   <- -> 1.1.1.1         [192.168.168.1]
+
+Hostmap table:
+List of active state sessions:
+List of configured pools
+List of configured hash tables
+List of groups configured (set 0)
+List of groups configured (set 1)
+Rules configured (set 0, in)
+Rules configured (set 0, out)
+Rules configured (set 1, in)
+Rules configured (set 1, out)
+Accounting rules configured (set 0, in)
+Accounting rules configured (set 0, out)
+Accounting rules configured (set 1, in)
+Accounting rules configured (set 1, out)
+-------------------------------

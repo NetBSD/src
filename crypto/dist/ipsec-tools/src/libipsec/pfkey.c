@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.21 2011/01/20 16:08:35 vanhu Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.21.6.1 2012/04/17 00:01:41 yamt Exp $	*/
 
 /*	$KAME: pfkey.c,v 1.47 2003/10/02 19:52:12 itojun Exp $	*/
 
@@ -710,7 +710,7 @@ pfkey_send_register(int so, u_int satype)
 {
 	int len, algno;
 
-	if (satype == PF_UNSPEC) {
+	if (satype == SADB_SATYPE_UNSPEC) {
 		for (algno = 0;
 		     algno < sizeof(supported_map)/sizeof(supported_map[0]);
 		     algno++) {
@@ -1783,7 +1783,9 @@ int
 pfkey_open(void)
 {
 	int so;
-	int bufsiz = 128 * 1024;	/*is 128K enough?*/
+	int bufsiz_current, bufsiz_wanted;
+	int ret;
+	socklen_t len;
 
 	if ((so = socket(PF_KEY, SOCK_RAW, PF_KEY_V2)) < 0) {
 		__ipsec_set_strerror(strerror(errno));
@@ -1794,14 +1796,29 @@ pfkey_open(void)
 	 * This is a temporary workaround for KAME PR 154.
 	 * Don't really care even if it fails.
 	 */
-	(void)setsockopt(so, SOL_SOCKET, SO_SNDBUF, &bufsiz, sizeof(bufsiz));
-	(void)setsockopt(so, SOL_SOCKET, SO_RCVBUF, &bufsiz, sizeof(bufsiz));
-	bufsiz = 256 * 1024;
-	(void)setsockopt(so, SOL_SOCKET, SO_RCVBUF, &bufsiz, sizeof(bufsiz));
-	bufsiz = 512 * 1024;
-	(void)setsockopt(so, SOL_SOCKET, SO_RCVBUF, &bufsiz, sizeof(bufsiz));
-	bufsiz = 1024 * 1024;
-	(void)setsockopt(so, SOL_SOCKET, SO_RCVBUF, &bufsiz, sizeof(bufsiz));
+	/* Try to have 128k. If we have more, do not lower it. */
+	bufsiz_wanted = 128 * 1024;
+	len = sizeof(bufsiz_current);
+	ret = getsockopt(so, SOL_SOCKET, SO_SNDBUF,
+		&bufsiz_current, &len);
+	if ((ret < 0) || (bufsiz_current < bufsiz_wanted))
+		(void)setsockopt(so, SOL_SOCKET, SO_SNDBUF,
+			&bufsiz_wanted, sizeof(bufsiz_wanted));
+
+	/* Try to have have at least 2MB. If we have more, do not lower it. */
+	bufsiz_wanted = 2 * 1024 * 1024;
+	len = sizeof(bufsiz_current);
+	ret = getsockopt(so, SOL_SOCKET, SO_RCVBUF,
+		&bufsiz_current, &len);
+	if (ret < 0)
+		bufsiz_current = 128 * 1024;
+
+	for (; bufsiz_wanted > bufsiz_current; bufsiz_wanted /= 2) {
+		if (setsockopt(so, SOL_SOCKET, SO_RCVBUF,
+				&bufsiz_wanted, sizeof(bufsiz_wanted)) == 0)
+			break;
+	}
+
 	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return so;
 }
@@ -2017,6 +2034,9 @@ pfkey_align(struct sadb_msg *msg, caddr_t *mhp)
 		case SADB_X_EXT_NAT_T_TYPE:
 		case SADB_X_EXT_NAT_T_SPORT:
 		case SADB_X_EXT_NAT_T_DPORT:
+#ifdef SADB_X_EXT_NAT_T_FRAG
+		case SADB_X_EXT_NAT_T_FRAG:
+#endif
 		case SADB_X_EXT_NAT_T_OA:
 #endif
 #ifdef SADB_X_EXT_TAG

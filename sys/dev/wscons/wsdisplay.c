@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.134 2011/04/24 16:27:01 rmind Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.134.4.1 2012/04/17 00:08:11 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.134 2011/04/24 16:27:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.134.4.1 2012/04/17 00:08:11 yamt Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -592,6 +592,15 @@ int
 wsdisplay_emul_detach(device_t dev, int how)
 {
 	struct wsdisplay_softc *sc = device_private(dev);
+	int flag, i, res;
+
+	flag = (how & DETACH_FORCE ? WSDISPLAY_DELSCR_FORCE : 0);
+	for (i = 0; i < WSDISPLAY_MAXSCREEN; i++)
+		if (sc->sc_scr[i]) {
+			res = wsdisplay_delscreen(sc, i, flag);
+			if (res)
+				return res;
+		}
 
 	cv_destroy(&sc->sc_flagscv);
 	mutex_destroy(&sc->sc_flagsmtx);

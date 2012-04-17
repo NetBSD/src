@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_hb.c,v 1.12 2008/05/14 13:29:28 tsutsui Exp $	*/
+/*	$NetBSD: kb_hb.c,v 1.12.32.1 2012/04/17 00:06:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kb_hb.c,v 1.12 2008/05/14 13:29:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kb_hb.c,v 1.12.32.1 2012/04/17 00:06:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ kb_hb_match(device_t parent, cfdata_t cf, void *aux)
 	if (ha->ha_address == (u_int)-1)
 		return 0;
 
-	addr = IIOV(ha->ha_address); /* XXX */
+	addr = (ha->ha_address); /* XXX */
 
 	if (badaddr((void *)addr, 1))
 		return 0;

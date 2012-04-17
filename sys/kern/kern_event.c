@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.72 2011/06/26 16:42:42 christos Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.72.2.1 2012/04/17 00:08:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.72 2011/06/26 16:42:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.72.2.1 2012/04/17 00:08:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -598,6 +598,8 @@ filt_timerexpire(void *knx)
 	knote_activate(kn);
 	if ((kn->kn_flags & EV_ONESHOT) == 0) {
 		tticks = mstohz(kn->kn_sdata);
+		if (tticks <= 0)
+			tticks = 1;
 		callout_schedule((callout_t *)kn->kn_hook, tticks);
 	}
 	mutex_exit(&kqueue_misc_lock);
@@ -723,7 +725,7 @@ kqueue1(struct lwp *l, int flags, register_t *retval)
 
 	if ((error = fd_allocfile(&fp, &fd)) != 0)
 		return error;
-	fp->f_flag = FREAD | FWRITE | (flags & FNONBLOCK);
+	fp->f_flag = FREAD | FWRITE | (flags & (FNONBLOCK|FNOSIGPIPE));
 	fp->f_type = DTYPE_KQUEUE;
 	fp->f_ops = &kqueueops;
 	kq = kmem_zalloc(sizeof(*kq), KM_SLEEP);
@@ -914,18 +916,16 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 		return (EINVAL);
 	}
 
- 	mutex_enter(&fdp->fd_lock);
-
 	/* search if knote already exists */
 	if (kfilter->filtops->f_isfd) {
 		/* monitoring a file descriptor */
 		fd = kev->ident;
 		if ((fp = fd_getfile(fd)) == NULL) {
-		 	mutex_exit(&fdp->fd_lock);
 			rw_exit(&kqueue_filter_lock);
 			kmem_free(newkn, sizeof(*newkn));
 			return EBADF;
 		}
+		mutex_enter(&fdp->fd_lock);
 		ff = fdp->fd_dt->dt_ff[fd];
 		if (fd <= fdp->fd_lastkqfile) {
 			SLIST_FOREACH(kn, &ff->ff_knlist, kn_link) {
@@ -939,6 +939,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 		 * not monitoring a file descriptor, so
 		 * lookup knotes in internal hash table
 		 */
+		mutex_enter(&fdp->fd_lock);
 		if (fdp->fd_knhashmask != 0) {
 			list = &fdp->fd_knhash[
 			    KN_HASH((u_long)kev->ident, fdp->fd_knhashmask)];

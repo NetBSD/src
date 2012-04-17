@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.607.2.1 2011/11/10 14:31:12 yamt Exp $
+# $NetBSD: shl.mi,v 1.607.2.2 2012/04/17 00:02:38 yamt Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -15,7 +15,7 @@
 #
 ./lib/libc.so					base-sys-shlib		dynamicroot
 ./lib/libc.so.12				base-sys-shlib		dynamicroot
-./lib/libc.so.12.179				base-sys-shlib		dynamicroot
+./lib/libc.so.12.183				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so.1				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so.1.0				base-sys-shlib		dynamicroot
@@ -45,7 +45,7 @@
 ./lib/liblzf.so.0.0				base-sys-shlib		dynamicroot
 ./lib/liblzma.so				base-sys-shlib		dynamicroot
 ./lib/liblzma.so.1				base-sys-shlib		dynamicroot
-./lib/liblzma.so.1.0				base-sys-shlib		dynamicroot
+./lib/liblzma.so.1.1				base-sys-shlib		dynamicroot
 ./lib/libm.so					base-sys-shlib		dynamicroot
 ./lib/libm.so.0					base-sys-shlib		dynamicroot
 ./lib/libm.so.0.10				base-sys-shlib		dynamicroot
@@ -72,7 +72,7 @@
 ./lib/libtermlib.so.0.6				base-sys-shlib		dynamicroot
 ./lib/libutil.so				base-sys-shlib		dynamicroot
 ./lib/libutil.so.7				base-sys-shlib		dynamicroot
-./lib/libutil.so.7.19				base-sys-shlib		dynamicroot
+./lib/libutil.so.7.21				base-sys-shlib		dynamicroot
 ./lib/libz.so					base-sys-shlib		dynamicroot
 ./lib/libz.so.1					base-sys-shlib		dynamicroot
 ./lib/libz.so.1.0				base-sys-shlib		dynamicroot
@@ -173,7 +173,7 @@
 ./usr/lib/libbz2.so.1.1				base-sys-shlib
 ./usr/lib/libc.so				base-sys-shlib
 ./usr/lib/libc.so.12				base-sys-shlib
-./usr/lib/libc.so.12.179			base-sys-shlib
+./usr/lib/libc.so.12.183			base-sys-shlib
 ./usr/lib/libcdk.so				base-obsolete		obsolete
 ./usr/lib/libcom_err.so				base-krb5-shlib		kerberos
 ./usr/lib/libcom_err.so.7			base-krb5-shlib		kerberos
@@ -220,6 +220,9 @@
 ./usr/lib/libevent.so				base-sys-shlib
 ./usr/lib/libevent.so.3				base-sys-shlib
 ./usr/lib/libevent.so.3.2			base-sys-shlib
+./usr/lib/libexpat.so				base-sys-shlib
+./usr/lib/libexpat.so.2				base-sys-shlib
+./usr/lib/libexpat.so.2.1			base-sys-shlib
 ./usr/lib/libfetch.so				base-sys-shlib
 ./usr/lib/libfetch.so.3				base-sys-shlib
 ./usr/lib/libfetch.so.3.0			base-sys-shlib
@@ -313,7 +316,7 @@
 ./usr/lib/liblwres.so.5.6			base-bind-shlib
 ./usr/lib/liblzma.so				base-sys-shlib
 ./usr/lib/liblzma.so.1				base-sys-shlib
-./usr/lib/liblzma.so.1.0			base-sys-shlib
+./usr/lib/liblzma.so.1.1			base-sys-shlib
 ./usr/lib/liblzf.so				base-sys-shlib
 ./usr/lib/liblzf.so.0				base-sys-shlib
 ./usr/lib/liblzf.so.0.0				base-sys-shlib
@@ -375,7 +378,7 @@
 ./usr/lib/libprop.so.1.1			base-sys-shlib
 ./usr/lib/libpthread.so				base-sys-shlib
 ./usr/lib/libpthread.so.1			base-sys-shlib
-./usr/lib/libpthread.so.1.0			base-sys-shlib
+./usr/lib/libpthread.so.1.1			base-sys-shlib
 ./usr/lib/libpthread_dbg.so			base-sys-shlib
 ./usr/lib/libpthread_dbg.so.2			base-sys-shlib
 ./usr/lib/libpthread_dbg.so.2.0			base-sys-shlib
@@ -383,8 +386,8 @@
 ./usr/lib/libpuffs.so.2				base-puffs-shlib
 ./usr/lib/libpuffs.so.2.0			base-puffs-shlib
 ./usr/lib/libquota.so				base-sys-shlib
-./usr/lib/libquota.so.0				base-sys-shlib
-./usr/lib/libquota.so.0.0			base-sys-shlib
+./usr/lib/libquota.so.1				base-sys-shlib
+./usr/lib/libquota.so.1.0			base-sys-shlib
 ./usr/lib/libradius.so				base-net-shlib
 ./usr/lib/libradius.so.4			base-net-shlib
 ./usr/lib/libradius.so.4.0			base-net-shlib
@@ -402,7 +405,7 @@
 ./usr/lib/librpcsvc.so.1.0			base-net-shlib
 ./usr/lib/librt.so				base-sys-shlib
 ./usr/lib/librt.so.1				base-sys-shlib
-./usr/lib/librt.so.1.0				base-sys-shlib
+./usr/lib/librt.so.1.1				base-sys-shlib
 ./usr/lib/librump.so				base-rump-shlib
 ./usr/lib/librump.so.0				base-rump-shlib
 ./usr/lib/librump.so.0.0			base-rump-shlib
@@ -574,9 +577,9 @@
 ./usr/lib/librumpkern_crypto.so			base-rump-shlib
 ./usr/lib/librumpkern_crypto.so.0		base-rump-shlib
 ./usr/lib/librumpkern_crypto.so.0.0		base-rump-shlib
-./usr/lib/librumpkern_ksem.so			base-rump-shlib
-./usr/lib/librumpkern_ksem.so.0			base-rump-shlib
-./usr/lib/librumpkern_ksem.so.0.0		base-rump-shlib
+./usr/lib/librumpkern_ksem.so			base-obsolete		obsolete
+./usr/lib/librumpkern_ksem.so.0			base-obsolete		obsolete
+./usr/lib/librumpkern_ksem.so.0.0		base-obsolete		obsolete
 ./usr/lib/librumpkern_solaris.so		base-rump-shlib		zfs
 ./usr/lib/librumpkern_solaris.so.0		base-rump-shlib		zfs
 ./usr/lib/librumpkern_solaris.so.0.0		base-rump-shlib		zfs
@@ -646,7 +649,7 @@
 ./usr/lib/libsl.so.5.0				base-krb5-shlib		kerberos
 ./usr/lib/libsqlite3.so				base-sys-shlib
 ./usr/lib/libsqlite3.so.1			base-sys-shlib
-./usr/lib/libsqlite3.so.1.0			base-sys-shlib
+./usr/lib/libsqlite3.so.1.1			base-sys-shlib
 ./usr/lib/libss.so				base-obsolete		obsolete
 ./usr/lib/libssh.so				base-secsh-shlib	crypto
 ./usr/lib/libssh.so.18				base-secsh-shlib	crypto
@@ -684,7 +687,7 @@
 ./usr/lib/libusbhid.so.1.0			base-sys-shlib
 ./usr/lib/libutil.so				base-sys-shlib
 ./usr/lib/libutil.so.7				base-sys-shlib
-./usr/lib/libutil.so.7.19			base-sys-shlib
+./usr/lib/libutil.so.7.21			base-sys-shlib
 ./usr/lib/libuutil.so				base-zfs-shlib		dynamicroot,zfs
 ./usr/lib/libuutil.so.0				base-zfs-shlib		dynamicroot,zfs
 ./usr/lib/libuutil.so.0.0			base-zfs-shlib		zfs,dynamicroot

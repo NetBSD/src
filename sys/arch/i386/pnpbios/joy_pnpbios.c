@@ -1,7 +1,7 @@
-/*	$NetBSD: joy_pnpbios.c,v 1.13 2011/07/01 18:14:15 dyoung Exp $	*/
+/*	$NetBSD: joy_pnpbios.c,v 1.13.2.1 2012/04/17 00:06:30 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_pnpbios.c,v 1.13 2011/07/01 18:14:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_pnpbios.c,v 1.13.2.1 2012/04/17 00:06:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,10 +46,15 @@ __KERNEL_RCSID(0, "$NetBSD: joy_pnpbios.c,v 1.13 2011/07/01 18:14:15 dyoung Exp 
 
 #include <dev/ic/joyvar.h>
 
+struct joy_pnpbios_softc {
+	struct joy_softc sc_joy;
+	kmutex_t sc_lock;
+};
+
 static int	joy_pnpbios_match(device_t, cfdata_t, void *);
 static void	joy_pnpbios_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(joy_pnpbios, sizeof(struct joy_softc),
+CFATTACH_DECL_NEW(joy_pnpbios, sizeof(struct joy_pnpbios_softc),
     joy_pnpbios_match, joy_pnpbios_attach, NULL, NULL);
 
 static int
@@ -67,6 +72,7 @@ static void
 joy_pnpbios_attach(device_t parent, device_t self, void *aux)
 {
 	struct joy_softc *sc = device_private(self);
+	struct joy_pnpbios_softc *psc = device_private(self);
 	struct pnpbiosdev_attach_args *aa = aux;
 
 	if (pnpbios_io_map(aa->pbt, aa->resc, 0, &sc->sc_iot, &sc->sc_ioh)) {
@@ -77,6 +83,9 @@ joy_pnpbios_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 	sc->sc_dev = self;
 	pnpbios_print_devres(self, aa);
+
+	mutex_init(&psc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	sc->sc_lock = &psc->sc_lock;
 
 	joyattach(sc);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: pckbcvar.h,v 1.18 2010/11/14 03:22:01 uebayasi Exp $ */
+/* $NetBSD: pckbcvar.h,v 1.18.8.1 2012/04/17 00:07:36 yamt Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -34,10 +34,9 @@
 
 #include <dev/pckbport/pckbportvar.h>
 
-#include "rnd.h"
-#if NRND > 0
+
+
 #include <sys/rnd.h>
-#endif
 
 typedef void *pckbc_tag_t;
 typedef int pckbc_slot_t;

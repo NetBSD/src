@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 2011/06/04 02:08:50 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.3.2.1 2012/04/17 00:04:09 yamt Exp $
 
 .include "${.CURDIR}/../../Makefile.inc"
-
 PROG=	xcvs
 
 # So that cleandir works on case-insensitive file systems.
@@ -11,8 +10,8 @@ DIST=	${IDIST}/src
 .PATH:	${DIST} ${IDIST}/doc ${IDIST}/man
 
 MAN=	cvs.1 cvs.5
-SRCS=	add.c admin.c annotate.c buffer.c checkin.c checkout.c classify.c \
-	client.c commit.c create_adm.c cvsrc.c diff.c edit.c \
+SRCS=	acl.c add.c admin.c annotate.c buffer.c checkin.c checkout.c \
+	classify.c client.c commit.c create_adm.c cvsrc.c diff.c edit.c \
 	entries.c error.c exithandle.c expand_path.c fileattr.c filesubr.c \
 	find_names.c hardlink.c hash.c history.c ignore.c import.c \
 	lock.c log.c log-buffer.c login.c logmsg.c ls.c main.c mkmodules.c \

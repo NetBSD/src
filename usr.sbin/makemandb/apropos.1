@@ -1,0 +1,118 @@
+.\" $NetBSD: apropos.1,v 1.4.2.2 2012/04/17 00:09:49 yamt Exp $
+.\"
+.\" Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
+.\" All rights reserved.
+.\"
+.\" This code was developed as part of Google's Summer of Code 2011 program.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+.\" FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE
+.\" COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY OR CONSEQUENTIAL DAMAGES (INCLUDING,
+.\" BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+.\" AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+.\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd February 20, 2012
+.Dt APROPOS 1
+.Os
+.Sh NAME
+.Nm apropos
+.Nd search the complete content of all man pages
+.Sh SYNOPSIS
+.Nm
+.Op Fl 123456789Ccp
+.Op Fl n Ar Number of results
+.Op Fl S Ar machine
+.Op Fl s Ar section
+.Ar query
+.Sh DESCRIPTION
+The
+.Nm
+utility performs a full text search over the complete content of all man pages.
+It uses the FTS engine of Sqlite to perform the search.
+The database is created with the help of
+.Xr makemandb 8
+utility.
+.Pp
+This implementation of the
+.Nm
+utility is more sophisticated than the classical version of
+.Nm .
+Like modern search applications, it uses advanced techniques like stemming
+and term weighting to rank the matching results in decreasing order of
+relevance.
+By default
+.Nm
+will only display the top 10 matches in the output.
+.Pp
+Quotes are optional for specifying multiword queries.
+.Pp
+It supports the following options:
+.Bl -tag -width indent
+.It Fl 1
+Search only within section 1 manual pages.
+.It Fl 2
+Search only within section 2 manual pages.
+.It Fl 3
+Search only within section 3 manual pages.
+.It Fl 4
+Search only within section 4 manual pages.
+.It Fl 5
+Search only within section 5 manual pages.
+.It Fl 6
+Search only within section 6 manual pages.
+.It Fl 7
+Search only within section 7 manual pages.
+.It Fl 8
+Search only within section 8 manual pages.
+.It Fl 9
+Search only within section 9 manual pages.
+.It Fl C
+Do not show the context of the match.
+.It Fl c
+Do show the context of the match (default).
+.It Fl n
+Output up to the specified number of search results.
+The default limit is 10.
+.It Fl p
+Display all matching results and pipe them through a pager (defaulting to
+.Xr more 1 ) .
+.It Fl S Ar machine
+Limit the search to the pages for the specified machine architecture.
+By default pages for all architectures are shown in the search results.
+.It Fl s Ar section
+Restrict the search to the specified section of the manual.
+By default, pages from all section are shown.
+This option is for backwards compatibility with the classic version of apropos,
+using it is equivalent to using the
+.Op 123456789
+options directly.
+.El
+.Sh FILES
+.Bl -hang -width -compact
+.It Pa /var/db/man.db
+The Sqlite FTS database which contains an index of the manual pages.
+.El
+.Sh SEE ALSO
+.Xr man 1 ,
+.Xr whatis 1 ,
+.Xr makemandb 8
+.Sh AUTHORS
+.An Abhinav Upadhyay

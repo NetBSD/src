@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault_i.h,v 1.27 2011/06/12 03:36:03 rmind Exp $	*/
+/*	$NetBSD: uvm_fault_i.h,v 1.27.2.1 2012/04/17 00:08:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -107,16 +107,7 @@ uvmfault_lookup(struct uvm_faultinfo *ufi, bool write_lock)
 	 * only be two levels so we won't loop very long.
 	 */
 
-	/*CONSTCOND*/
-	while (1) {
-		/*
-		 * Make sure this is not an "interrupt safe" map.
-		 * Such maps are never supposed to be involved in
-		 * a fault.
-		 */
-		if (ufi->map->flags & VM_MAP_INTRSAFE)
-			return (false);
-
+	for (;;) {
 		/*
 		 * lock map
 		 */

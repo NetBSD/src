@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.44 2011/07/24 00:33:38 mrg Exp $
+# $NetBSD: shl.mi,v 1.44.2.1 2012/04/17 00:02:45 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -123,9 +123,9 @@
 ./usr/X11R6/lib/libdpstk.so			-unknown-		x11
 ./usr/X11R6/lib/libdpstk.so.1			-unknown-		x11
 ./usr/X11R6/lib/libdpstk.so.1.0			-unknown-		x11
-./usr/X11R6/lib/libexpat.so			-unknown-		x11
-./usr/X11R6/lib/libexpat.so.4			-unknown-		x11
-./usr/X11R6/lib/libexpat.so.4.0			-unknown-		x11
+./usr/X11R6/lib/libexpat.so			-obsolete-		obsolete
+./usr/X11R6/lib/libexpat.so.4			-obsolete-		obsolete
+./usr/X11R6/lib/libexpat.so.4.0			-obsolete-		obsolete
 ./usr/X11R6/lib/libfontconfig.so		-unknown-		x11
 ./usr/X11R6/lib/libfontconfig.so.1		-unknown-		x11
 ./usr/X11R6/lib/libfontconfig.so.1.0		-unknown-		x11
@@ -306,9 +306,9 @@
 ./usr/X11R7/lib/libdrm_radeon.so		-unknown-		xorg
 ./usr/X11R7/lib/libdrm_radeon.so.0		-unknown-		xorg
 ./usr/X11R7/lib/libdrm_radeon.so.0.0		-unknown-		xorg
-./usr/X11R7/lib/libexpat.so			-unknown-		xorg
-./usr/X11R7/lib/libexpat.so.2			-unknown-		xorg
-./usr/X11R7/lib/libexpat.so.2.0			-unknown-		xorg
+./usr/X11R7/lib/libexpat.so			-obsolete-		obsolete
+./usr/X11R7/lib/libexpat.so.2			-obsolete-		obsolete
+./usr/X11R7/lib/libexpat.so.2.0			-obsolete-		obsolete
 ./usr/X11R7/lib/libfontconfig.so		-unknown-		xorg
 ./usr/X11R7/lib/libfontconfig.so.2		-unknown-		xorg
 ./usr/X11R7/lib/libfontconfig.so.2.0		-unknown-		xorg

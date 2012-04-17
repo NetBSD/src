@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.2 2009/03/15 11:45:30 tsutsui Exp $
+# $NetBSD: Makefile.booters,v 1.2.14.1 2012/04/17 00:06:09 yamt Exp $
 
 BINDIR=		/usr/mdec/${BTYPE:tl}
 
@@ -11,5 +11,6 @@ CPPFLAGS+=	 -D__daddr_t=int32_t
 CFLAGS+=	-ffreestanding
 CFLAGS+=	-Wall
 CFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
+CFLAGS+=	-m68020-60
 
 .include <bsd.klinks.mk>

@@ -1,4 +1,4 @@
-/* $NetBSD: eumb.c,v 1.5 2011/07/01 19:16:06 dyoung Exp $ */
+/* $NetBSD: eumb.c,v 1.5.2.1 2012/04/17 00:06:50 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,14 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eumb.c,v 1.5 2011/07/01 19:16:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eumb.c,v 1.5.2.1 2012/04/17 00:06:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/tty.h>
 #include <sys/systm.h>
 
-#include <sys/bus.h>
+#include <machine/autoconf.h>
 #include <machine/intr.h>
 
 #include <sandpoint/sandpoint/eumbvar.h>
@@ -56,33 +56,35 @@ extern struct cfdriver eumb_cd;
 static int
 eumb_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char **ca_name = aux; /* XXX */
+	struct mainbus_attach_args *ma = aux;
 
-	if (strcmp(*ca_name, eumb_cd.cd_name) != 0)
-		return (0);
-	return (1);
+	if (strcmp(ma->ma_name, eumb_cd.cd_name) != 0)
+		return 0;
+	return 1;
 }
 
 static void
 eumb_attach(device_t parent, device_t self, void *aux)
 {
 
-	printf("\n");
-	config_search_ia(eumb_search, self, "eumb", NULL);
+	aprint_naive("\n");
+	aprint_normal("\n");
+	config_search_ia(eumb_search, self, "eumb", aux);
 }
 
 static int
 eumb_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
+	struct mainbus_attach_args *ma = aux;
 	struct eumb_attach_args eaa;
 
 	eaa.eumb_name = cf->cf_name;
-	eaa.eumb_bt = &sandpoint_eumb_space_tag;
+	eaa.eumb_bt = ma->ma_bst;
 	eaa.eumb_unit = cf->cf_loc[EUMBCF_UNIT];
         if (config_match(parent, cf, &eaa) > 0)
                 config_attach(parent, cf, &eaa, eumb_print);
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -94,5 +96,5 @@ eumb_print(void *aux, const char *pnp)
 		printf("%s at %s", eaa->eumb_name, pnp);
 	if (eaa->eumb_unit != EUMBCF_UNIT_DEFAULT)
 		printf(" unit %d", eaa->eumb_unit);
-	return (UNCONF);
+	return UNCONF;
 }

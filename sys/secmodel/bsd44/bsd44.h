@@ -1,4 +1,4 @@
-/* $NetBSD: bsd44.h,v 1.5 2009/10/02 18:50:13 elad Exp $ */
+/* $NetBSD: bsd44.h,v 1.5.12.1 2012/04/17 00:08:50 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -28,6 +28,9 @@
 
 #ifndef _SECMODEL_BSD44_BSD44_H_
 #define	_SECMODEL_BSD44_BSD44_H_
+
+#define SECMODEL_BSD44_ID   "org.netbsd.secmodel.bsd44"
+#define SECMODEL_BSD44_NAME "Traditional NetBSD: 4.4BSD"
 
 void secmodel_bsd44_init(void);
 void secmodel_bsd44_start(void);

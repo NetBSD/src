@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.43 2011/02/26 12:07:45 tsutsui Exp $ */
+/*	$NetBSD: tx39.c,v 1.43.4.1 2012/04/17 00:06:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39.c,v 1.43 2011/02/26 12:07:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39.c,v 1.43.4.1 2012/04/17 00:06:25 yamt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -285,7 +285,9 @@ tx_cons_init(void)
 	}
 	
 	return;
+#if (NM38813C > 0) || (NTC5165BUF > 0)
  panic:
+#endif
 	panic("tx_cons_init: can't init console");
 	/* NOTREACHED */
 }

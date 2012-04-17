@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.1 2011/01/26 01:18:50 pooka Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.1.10.1 2012/04/17 00:06:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.1 2011/01/26 01:18:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.1.10.1 2012/04/17 00:06:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,12 +51,12 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.1 2011/01/26 01:18:50 pooka Exp $");
 
 /* ARGSUSED */
 int
-bus_space_map(t, bpa, size, flags, bshp)
-	bus_space_tag_t t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int flags;
-	bus_space_handle_t *bshp;
+bus_space_map(
+	bus_space_tag_t t,
+	bus_addr_t bpa,
+	bus_size_t size,
+	int flags,
+	bus_space_handle_t *bshp)
 {
 	int cacheable = flags & BUS_SPACE_MAP_CACHEABLE;
 
@@ -70,14 +70,16 @@ bus_space_map(t, bpa, size, flags, bshp)
 
 /* ARGSUSED */
 int
-bus_space_alloc(t, rstart, rend, size, alignment, boundary, flags,
-    bpap, bshp)
-	bus_space_tag_t t;
-	bus_addr_t rstart, rend;
-	bus_size_t size, alignment, boundary;
-	int flags;
-	bus_addr_t *bpap;
-	bus_space_handle_t *bshp;
+bus_space_alloc(
+	bus_space_tag_t t,
+	bus_addr_t rstart,
+	bus_addr_t rend,
+	bus_size_t size,
+	bus_size_t alignment,
+	bus_size_t boundary,
+	int flags,
+	bus_addr_t *bpap,
+	bus_space_handle_t *bshp)
 {
 
 	/*
@@ -88,10 +90,10 @@ bus_space_alloc(t, rstart, rend, size, alignment, boundary, flags,
 
 /* ARGSUSED */
 void
-bus_space_free(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+bus_space_free(
+	bus_space_tag_t t,
+	bus_space_handle_t bsh,
+	bus_size_t size)
 {
 
 	/*
@@ -101,10 +103,10 @@ bus_space_free(t, bsh, size)
 }
 
 void
-bus_space_unmap(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+bus_space_unmap(
+	bus_space_tag_t t,
+	bus_space_handle_t bsh,
+	bus_size_t size)
 {
 
 	/* Nothing to do. */
@@ -112,11 +114,12 @@ bus_space_unmap(t, bsh, size)
 
 /* ARGSUSED */
 int
-bus_space_subregion(t, bsh, offset, size, nbshp)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, size;
-	bus_space_handle_t *nbshp;
+bus_space_subregion(
+	bus_space_tag_t t,
+	bus_space_handle_t bsh,
+	bus_size_t offset,
+	bus_size_t size,
+	bus_space_handle_t *nbshp)
 {
 
 	*nbshp = bsh + offset;

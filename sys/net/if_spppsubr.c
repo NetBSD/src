@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.123 2011/10/28 22:08:14 dyoung Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.123.2.1 2012/04/17 00:08:38 yamt Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.123 2011/10/28 22:08:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.123.2.1 2012/04/17 00:08:38 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.123 2011/10/28 22:08:14 dyoung Exp
 #include <sys/md5.h>
 #include <sys/inttypes.h>
 #include <sys/kauth.h>
+#include <sys/cprng.h>
 
 #include <net/if.h>
 #include <net/netisr.h>
@@ -1202,7 +1203,7 @@ sppp_cisco_input(struct sppp *sp, struct mbuf *m)
 			++sp->pp_loopcnt;
 
 			/* Generate new local sequence number */
-			sp->pp_seq[IDX_LCP] = arc4random();
+			sp->pp_seq[IDX_LCP] = cprng_fast32();
 			break;
 		}
 		sp->pp_loopcnt = 0;
@@ -2481,7 +2482,7 @@ sppp_lcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 				if (magic == ~sp->lcp.magic) {
 					if (debug)
 						addlog(" magic glitch");
-					sp->lcp.magic = arc4random();
+					sp->lcp.magic = cprng_fast32();
 				} else {
 					sp->lcp.magic = magic;
 					if (debug)
@@ -2665,7 +2666,7 @@ sppp_lcp_scr(struct sppp *sp)
 
 	if (sp->lcp.opts & (1 << LCP_OPT_MAGIC)) {
 		if (! sp->lcp.magic)
-			sp->lcp.magic = arc4random();
+			sp->lcp.magic = cprng_fast32();
 		opt[i++] = LCP_OPT_MAGIC;
 		opt[i++] = 6;
 		opt[i++] = sp->lcp.magic >> 24;
@@ -4229,7 +4230,7 @@ sppp_chap_tlu(struct sppp *sp)
 		 * Compute the re-challenge timeout.  This will yield
 		 * a number between 300 and 810 seconds.
 		 */
-		i = 300 + ((unsigned)(arc4random() & 0xff00) >> 7);
+		i = 300 + ((unsigned)(cprng_fast32() & 0xff00) >> 7);
 
 		callout_reset(&sp->ch[IDX_CHAP], i * hz, chap.TO, sp);
 	}
@@ -4286,7 +4287,7 @@ static void
 sppp_chap_scr(struct sppp *sp)
 {
 	uint32_t *ch;
-	u_char clen;
+	u_char clen = 4 * sizeof(uint32_t);
 
 	if (sp->myauth.name == NULL) {
 	    /* can't do anything useful */
@@ -4297,11 +4298,7 @@ sppp_chap_scr(struct sppp *sp)
 
 	/* Compute random challenge. */
 	ch = (uint32_t *)sp->myauth.challenge;
-	ch[0] = arc4random();
-	ch[1] = arc4random();
-	ch[2] = arc4random();
-	ch[3] = arc4random();
-	clen = 16;	/* 4 * sizeof(uint32_t) */
+	cprng_strong(kern_cprng, ch, clen, 0);
 
 	sp->confid[IDX_CHAP] = ++sp->pp_seq[IDX_CHAP];
 

@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.90 2011/03/06 17:08:25 bouyer Exp $
+#	$NetBSD: TX3922,v 1.90.4.1 2012/04/17 00:06:24 yamt Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -84,7 +84,7 @@ options 	INET6		# IPV6
 #options 	EON		# OSI tunneling over IP
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -359,7 +359,6 @@ pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	wsmux
 
 # miscellaneous pseudo-devices
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	clockctl		# user control of clock subsystem
 

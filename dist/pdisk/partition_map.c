@@ -42,6 +42,8 @@
 // for errno
 #include <errno.h>
 
+#include <inttypes.h>
+
 #include "partition_map.h"
 #include "pathname.h"
 #include "hfs_misc.h"
@@ -97,18 +99,18 @@ int coerce_block0(partition_map_header *map);
 int contains_driver(partition_map *entry);
 void combine_entry(partition_map *entry);
 long compute_device_size(partition_map_header *map, partition_map_header *oldmap);
-DPME* create_data(const char *name, const char *dptype, u32 base, u32 length);
+DPME* create_data(const char *name, const char *dptype, uint32_t base, uint32_t length);
 void delete_entry(partition_map *entry);
 char *get_HFS_name(partition_map *entry, int *kind);
 void insert_in_base_order(partition_map *entry);
 void insert_in_disk_order(partition_map *entry);
-int read_block(partition_map_header *map, unsigned long num, char *buf);
+int read_block(partition_map_header *map, uint32_t num, char *buf);
 int read_partition_map(partition_map_header *map);
 void remove_driver(partition_map *entry);
 void remove_from_disk_order(partition_map *entry);
 void renumber_disk_addresses(partition_map_header *map);
 void sync_device_size(partition_map_header *map);
-int write_block(partition_map_header *map, unsigned long num, char *buf);
+int write_block(partition_map_header *map, uint32_t num, char *buf);
 
 
 //
@@ -234,8 +236,8 @@ int
 read_partition_map(partition_map_header *map)
 {
     DPME *data;
-    u32 limit;
-    unsigned int ix;
+    uint32_t limit;
+    uint32_t ix;
     int old_logical;
     double d;
 
@@ -433,10 +435,10 @@ create_partition_map(char *name, partition_map_header *oldmap)
     MEDIA m;
     partition_map_header * map;
     DPME *data;
-    unsigned long default_number;
-    unsigned long number;
+    uint32_t default_number;
+    uint32_t number;
     long size;
-    unsigned long multiple;
+    uint32_t multiple;
 
     m = open_pathname_as_media(name, (rflag)?O_RDONLY:O_RDWR);
     if (m == 0) {
@@ -507,7 +509,7 @@ create_partition_map(char *name, partition_map_header *oldmap)
 
     number = compute_device_size(map, oldmap);
     if (interactive) {
-	printf("size of 'device' is %lu blocks (%d byte blocks): ",
+	printf("size of 'device' is %"PRIu32" blocks (%d byte blocks): ",
 		number, map->logical_block);
 	default_number = number;
 	flush_to_newline(0);
@@ -537,7 +539,7 @@ create_partition_map(char *name, partition_map_header *oldmap)
 	if (number < 4) {
 	    number = 4;
 	}
-	printf("new size of 'device' is %lu blocks (%d byte blocks)\n",
+	printf("new size of 'device' is %"PRIu32" blocks (%d byte blocks)\n",
 		number, map->logical_block);
     }
     map->media_size = number;
@@ -609,17 +611,17 @@ coerce_block0(partition_map_header *map)
 
 
 int
-add_partition_to_map(const char *name, const char *dptype, u32 base, u32 length,
+add_partition_to_map(const char *name, const char *dptype, uint32_t base, uint32_t length,
 	partition_map_header *map)
 {
     partition_map * cur;
     DPME *data;
     enum add_action act;
     int limit;
-    u32 adjusted_base = 0;
-    u32 adjusted_length = 0;
-    u32 new_base = 0;
-    u32 new_length = 0;
+    uint32_t adjusted_base = 0;
+    uint32_t adjusted_length = 0;
+    uint32_t new_base = 0;
+    uint32_t new_length = 0;
 
 	// find a block that starts includes base and length
     cur = map->base_order;
@@ -740,7 +742,7 @@ add_partition_to_map(const char *name, const char *dptype, u32 base, u32 length,
 
 
 DPME *
-create_data(const char *name, const char *dptype, u32 base, u32 length)
+create_data(const char *name, const char *dptype, uint32_t base, uint32_t length)
 {
     DPME *data;
 
@@ -843,13 +845,13 @@ long
 compute_device_size(partition_map_header *map, partition_map_header *oldmap)
 {
 #ifdef TEST_COMPUTE
-    unsigned long length;
+    uint32_t length;
     struct hd_geometry geometry;
     struct stat info;
     loff_t pos;
 #endif
     char* data;
-    unsigned long l, r, x = 0;
+    uint32_t l, r, x = 0;
     long long size;
     int valid = 0;
 #ifdef TEST_COMPUTE
@@ -951,7 +953,7 @@ void
 sync_device_size(partition_map_header *map)
 {
     Block0 *p;
-    unsigned long size;
+    uint32_t size;
     double d;
 
     p = map->misc;
@@ -1024,7 +1026,7 @@ contains_driver(partition_map *entry)
     DDMap *m;
     int i;
     int f;
-    u32 start;
+    uint32_t start;
 
     map = entry->the_map;
     p = map->misc;
@@ -1059,7 +1061,7 @@ void
 combine_entry(partition_map *entry)
 {
     partition_map *p;
-    u32 end;
+    uint32_t end;
 
     if (entry == NULL
 	    || istrncmp(entry->data->dpme_type, kFreeType, DPISTRLEN) != 0) {
@@ -1145,7 +1147,7 @@ delete_entry(partition_map *entry)
 
 
 partition_map *
-find_entry_by_disk_address(long ix, partition_map_header *map)
+find_entry_by_disk_address(int32_t ix, partition_map_header *map)
 {
     partition_map * cur;
 
@@ -1176,7 +1178,7 @@ find_entry_by_type(const char *type_name, partition_map_header *map)
 }
 
 partition_map *
-find_entry_by_base(u32 base, partition_map_header *map)
+find_entry_by_base(uint32_t base, partition_map_header *map)
 {
     partition_map * cur;
 
@@ -1192,7 +1194,7 @@ find_entry_by_base(u32 base, partition_map_header *map)
 
 
 void
-move_entry_in_map(long old_index, long ix, partition_map_header *map)
+move_entry_in_map(int32_t old_index, int32_t ix, partition_map_header *map)
 {
     partition_map * cur;
 
@@ -1302,11 +1304,11 @@ insert_in_base_order(partition_map *entry)
 
 
 void
-resize_map(unsigned long new_size, partition_map_header *map)
+resize_map(uint32_t new_size, partition_map_header *map)
 {
     partition_map * entry;
     partition_map * next;
-    unsigned int incr;
+    uint32_t incr;
 
     // find map entry
     entry = find_entry_by_type(kMapType, map);
@@ -1370,7 +1372,7 @@ remove_driver(partition_map *entry)
     int i;
     int j;
     int f;
-    u32 start;
+    uint32_t start;
 
     map = entry->the_map;
     p = map->misc;
@@ -1418,7 +1420,7 @@ remove_driver(partition_map *entry)
 }
 
 int
-read_block(partition_map_header *map, unsigned long num, char *buf)
+read_block(partition_map_header *map, uint32_t num, char *buf)
 {
 //printf("read block %d\n", num);
     return read_media(map->m, ((long long) num) * map->logical_block,
@@ -1427,7 +1429,7 @@ read_block(partition_map_header *map, unsigned long num, char *buf)
 
 
 int
-write_block(partition_map_header *map, unsigned long num, char *buf)
+write_block(partition_map_header *map, uint32_t num, char *buf)
 {
     return write_media(map->m, ((long long) num) * map->logical_block,
     		PBLOCK_SIZE, (void *)buf);

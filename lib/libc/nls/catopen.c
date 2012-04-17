@@ -1,4 +1,4 @@
-/*	$NetBSD: catopen.c,v 1.28 2009/03/10 13:15:40 joerg Exp $	*/
+/*	$NetBSD: catopen.c,v 1.28.6.1 2012/04/17 00:05:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: catopen.c,v 1.28 2009/03/10 13:15:40 joerg Exp $");
+__RCSID("$NetBSD: catopen.c,v 1.28.6.1 2012/04/17 00:05:22 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define _NLS_PRIVATE
@@ -50,15 +50,11 @@ __RCSID("$NetBSD: catopen.c,v 1.28 2009/03/10 13:15:40 joerg Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#ifdef HAVE_CITRUS
 #include "citrus_namespace.h"
 #include "citrus_bcs.h"
 #include "citrus_region.h"
 #include "citrus_lookup.h"
 #include "citrus_aliasname_local.h"
-#else
-#include "aliasname_local.h"
-#endif
 
 #define NLS_ALIAS_DB "/usr/share/nls/nls.alias"
 
@@ -69,12 +65,10 @@ __RCSID("$NetBSD: catopen.c,v 1.28 2009/03/10 13:15:40 joerg Exp $");
 __weak_alias(catopen, _catopen)
 #endif
 
-static nl_catd load_msgcat __P((const char *));
+static nl_catd load_msgcat(const char *);
 
 nl_catd
-_catopen(name, oflag)
-	const char *name;
-	int oflag;
+_catopen(const char *name, int oflag)
 {
 	char tmppath[PATH_MAX+1];
 	const char *nlspath;
@@ -151,8 +145,7 @@ _catopen(name, oflag)
 }
 
 static nl_catd
-load_msgcat(path)
-	const char *path;
+load_msgcat(const char *path)
 {
 	struct stat st;
 	nl_catd catd;

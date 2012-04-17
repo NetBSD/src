@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_mci.c,v 1.8 2011/02/05 15:29:16 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_mci.c,v 1.8.4.1 2012/04/17 00:06:08 yamt Exp $	*/
 /*	$OpenBSD: pxa2x0_mmc.c,v 1.5 2009/02/23 18:09:55 miod Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 /*-
- * Copyright (c) 2007-2010 NONAKA Kimihiro <nonaka@netbsd.org>
+ * Copyright (C) 2007-2010 NONAKA Kimihiro <nonaka@netbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,17 +30,16 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -54,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_mci.c,v 1.8 2011/02/05 15:29:16 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_mci.c,v 1.8.4.1 2012/04/17 00:06:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -253,7 +252,7 @@ pxamci_attach_sub(device_t self, struct pxaip_attach_args *pxa)
 
 		sc->sc_rxdr.ds_addr = PXA2X0_MMC_BASE + MMC_RXFIFO;
 		sc->sc_rxdr.ds_len = 1;
-		sc->sc_rxdx = pxa2x0_dmac_allocate_xfer(M_NOWAIT);
+		sc->sc_rxdx = pxa2x0_dmac_allocate_xfer();
 		if (sc->sc_rxdx == NULL) {
 			aprint_error_dev(sc->sc_dev,
 			    "couldn't alloc rx dma xfer\n");
@@ -274,7 +273,7 @@ pxamci_attach_sub(device_t self, struct pxaip_attach_args *pxa)
 
 		sc->sc_txdr.ds_addr = PXA2X0_MMC_BASE + MMC_TXFIFO;
 		sc->sc_txdr.ds_len = 1;
-		sc->sc_txdx = pxa2x0_dmac_allocate_xfer(M_NOWAIT);
+		sc->sc_txdx = pxa2x0_dmac_allocate_xfer();
 		if (sc->sc_txdx == NULL) {
 			aprint_error_dev(sc->sc_dev,
 			    "couldn't alloc tx dma xfer\n");

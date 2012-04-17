@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5212_misc.c,v 1.2 2011/03/07 11:25:43 cegger Exp $
+ * $Id: ar5212_misc.c,v 1.2.4.1 2012/04/17 00:08:17 yamt Exp $
  */
 #include "opt_ah.h"
 
@@ -570,7 +570,7 @@ ar5212SetDecompMask(struct ath_hal *ah, uint16_t keyidx, int en)
 	struct ath_hal_5212 *ahp = AH5212(ah);
 
         if (keyidx >= HAL_DECOMP_MASK_SIZE)
-                return HAL_EINVAL; 
+                return AH_FALSE; 
         OS_REG_WRITE(ah, AR_DCM_A, keyidx);
         OS_REG_WRITE(ah, AR_DCM_D, en ? AR_DCM_D_EN : 0);
         ahp->ah_decompMask[keyidx] = en;

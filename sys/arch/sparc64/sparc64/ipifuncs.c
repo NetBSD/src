@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.43 2011/10/08 08:49:07 nakayama Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.43.2.1 2012/04/17 00:06:56 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.43 2011/10/08 08:49:07 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.43.2.1 2012/04/17 00:06:56 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -156,7 +156,7 @@ sparc64_ipi_pause_thiscpu(void *arg)
  * Initialize IPI machinery.
  */
 void
-sparc64_ipi_init()
+sparc64_ipi_init(void)
 {
 
 	/* Clear all cpu sets. */

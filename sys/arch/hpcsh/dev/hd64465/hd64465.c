@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465.c,v 1.15 2011/07/19 15:30:52 dyoung Exp $	*/
+/*	$NetBSD: hd64465.c,v 1.15.2.1 2012/04/17 00:06:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64465.c,v 1.15 2011/07/19 15:30:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64465.c,v 1.15.2.1 2012/04/17 00:06:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ hd64465_intr_disestablish(void *handle)
 
 /* For the sake of Windows CE reboot clearly. */
 void
-hd64465_shutdown()
+hd64465_shutdown(void)
 {
 
 	/* Enable all interrupt */
@@ -184,7 +184,7 @@ hd64465_shutdown()
 }
 
 void
-hd64465_info()
+hd64465_info(void)
 {
 	uint16_t r;
 

@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mandoc.c,v 1.59 2011/09/18 14:14:15 schwarze Exp $ */
+/*	$Vendor-Id: mandoc.c,v 1.62 2011/12/03 16:08:51 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -161,8 +161,7 @@ mandoc_escape(const char **end, const char **start, int *sz)
 	case ('V'):
 		/* FALLTHROUGH */
 	case ('Y'):
-		if (ESCAPE_ERROR == gly)
-			gly = ESCAPE_IGNORE;
+		gly = ESCAPE_IGNORE;
 		/* FALLTHROUGH */
 	case ('f'):
 		if (ESCAPE_ERROR == gly)
@@ -222,10 +221,7 @@ mandoc_escape(const char **end, const char **start, int *sz)
 	case ('L'):
 		/* FALLTHROUGH */
 	case ('l'):
-		/* FALLTHROUGH */
-	case ('N'):
-		if (ESCAPE_ERROR == gly)
-			gly = ESCAPE_NUMBERED;
+		gly = ESCAPE_NUMBERED;
 		/* FALLTHROUGH */
 	case ('S'):
 		/* FALLTHROUGH */
@@ -240,6 +236,26 @@ mandoc_escape(const char **end, const char **start, int *sz)
 			return(ESCAPE_ERROR);
 		term = numeric = '\'';
 		break;
+
+	/*
+	 * Special handling for the numbered character escape.
+	 * XXX Do any other escapes need similar handling?
+	 */
+	case ('N'):
+		if ('\0' == cp[i])
+			return(ESCAPE_ERROR);
+		*end = &cp[++i];
+		if (isdigit((unsigned char)cp[i-1]))
+			return(ESCAPE_IGNORE);
+		while (isdigit((unsigned char)**end))
+			(*end)++;
+		if (start)
+			*start = &cp[i];
+		if (sz)
+			*sz = *end - &cp[i];
+		if ('\0' != **end)
+			(*end)++;
+		return(ESCAPE_NUMBERED);
 
 	/* 
 	 * Sizes get a special category of their own.
@@ -353,8 +369,15 @@ out:
 
 	switch (gly) {
 	case (ESCAPE_FONT):
-		if (1 != rlim)
+		/*
+		 * Pretend that the constant-width font modes are the
+		 * same as the regular font modes.
+		 */
+		if (2 == rlim && 'C' == *rstart)
+			rstart++;
+		else if (1 != rlim)
 			break;
+
 		switch (*rstart) {
 		case ('3'):
 			/* FALLTHROUGH */
@@ -600,9 +623,10 @@ mandoc_normdate(struct mparse *parse, char *in, int ln, int pos)
 		mandoc_msg(MANDOCERR_NODATE, parse, ln, pos, NULL);
 		time(&t);
 	}
+	else if (a2time(&t, "%Y-%m-%d", in))
+		t = 0;
 	else if (!a2time(&t, "$" "Mdocdate: %b %d %Y $", in) &&
-	    !a2time(&t, "%b %d, %Y", in) &&
-	    !a2time(&t, "%Y-%m-%d", in)) {
+	    !a2time(&t, "%b %d, %Y", in)) {
 		mandoc_msg(MANDOCERR_BADDATE, parse, ln, pos, NULL);
 		t = 0;
 	}

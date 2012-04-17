@@ -1,0 +1,6 @@
+#	$NetBSD: example.6,v 1.1.1.1.2.2 2012/04/17 00:03:24 yamt Exp $
+#
+# block all TCP packets with only the SYN flag set (this is the first
+# packet sent to establish a connection) out of the SYN-ACK pair.
+#
+block in proto tcp from any to any flags S/SA

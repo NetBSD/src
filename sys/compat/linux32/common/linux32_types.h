@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_types.h,v 1.14 2010/11/02 18:14:06 chs Exp $ */
+/*	$NetBSD: linux32_types.h,v 1.14.8.1 2012/04/17 00:07:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -109,11 +109,6 @@ struct linux32_sysinfo {
         netbsd32_u_long freebig;
         unsigned int mem_unit;
         char _f[20-2*sizeof(netbsd32_long)-sizeof(int)];	
-};
-
-struct linux32_timespec {
-	linux32_time_t	tv_sec;
-	netbsd32_long	tv_nsec;
 };
 
 #define LINUX32_MAXNAMLEN	255

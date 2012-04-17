@@ -1,4 +1,4 @@
-.\"	$NetBSD: hdaudio.4,v 1.6 2010/09/28 12:25:27 wiz Exp $
+.\"	$NetBSD: hdaudio.4,v 1.6.6.1 2012/04/17 00:05:45 yamt Exp $
 .\"
 .\" Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -93,8 +93,10 @@ be supported without requiring per-device quirks.
 .Xr mixer 4 ,
 .Xr pci 4 ,
 .Xr hdaudioctl 8 ,
-.Pa http://www.intel.com/standards/hdaudio/
-.Pa http://www.microsoft.com/whdc/device/audio/
+.Pp
+.Lk http://www.intel.com/design/chipsets/hdaudio.htm "Intel High Definition Audio"
+.Pp
+.Lk http://www.microsoft.com/whdc/device/audio/ "Audio Device Technologies for Windows"
 .Sh HISTORY
 The
 .Nm
@@ -106,7 +108,7 @@ The
 driver was written by
 .An Jared McNeill Aq jmcneill@NetBSD.org
 under contract by
-.An Precedence Technologies Ltd Aq http://www.precedence.co.uk/ .
+.Lk http://www.precedence.co.uk/ Precedence Technologies Ltd .
 The UAA-compliant widget parser is derived from the
 .Fx
 snd_hda(4) driver.

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/05/26 12:56:27 joerg Exp $
+#	$NetBSD: Makefile,v 1.3.4.1 2012/04/17 00:05:09 yamt Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -17,7 +17,7 @@ TEXINFO=	diff.texi
 
 COPTS.ifdef.c = -Wno-stack-protector
 
-CWARNFLAGS.clang+=	-Wno-unused-value
+CWARNFLAGS.clang+=	-Wno-unused-value -Wno-string-plus-int
 
 .include <bsd.info.mk>
 .include <bsd.prog.mk>

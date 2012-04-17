@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/10/11 13:54:00 joerg Exp $
+#	$NetBSD: Makefile,v 1.3.2.1 2012/04/17 00:03:34 yamt Exp $
 
 LIB=	clangCodeGen
 
@@ -34,7 +34,6 @@ SRCS+=	BackendUtil.cpp \
 	CGRecordLayoutBuilder.cpp \
 	CGRTTI.cpp \
 	CGStmt.cpp \
-	CGTemporaries.cpp \
 	CGVTables.cpp \
 	CGVTT.cpp \
 	CodeGenAction.cpp \

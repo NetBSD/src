@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.37 2011/10/11 15:19:09 macallan Exp $	*/
+/*	$NetBSD: i2c.c,v 1.37.2.1 2012/04/17 00:07:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.37 2011/10/11 15:19:09 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.37.2.1 2012/04/17 00:07:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,10 +118,10 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ia.ia_ncompat = 0;
 	ia.ia_compat = NULL;
 
-	if (config_match(parent, cf, &ia) > 0) {
-		if (ia.ia_addr != (i2c_addr_t)-1 &&
-		    ia.ia_addr <= I2C_MAX_ADDR &&
-		    !sc->sc_devices[ia.ia_addr])
+	if (ia.ia_addr != (i2c_addr_t)-1 &&
+	    ia.ia_addr <= I2C_MAX_ADDR &&
+	    !sc->sc_devices[ia.ia_addr])
+		if (config_match(parent, cf, &ia) > 0) {
 			sc->sc_devices[ia.ia_addr] =
 			    config_attach(parent, cf, &ia, iic_print);
 	}

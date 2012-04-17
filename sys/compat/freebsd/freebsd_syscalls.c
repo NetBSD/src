@@ -1,4 +1,4 @@
-/* $NetBSD: freebsd_syscalls.c,v 1.77 2011/03/06 17:08:33 bouyer Exp $ */
+/* $NetBSD: freebsd_syscalls.c,v 1.77.4.1 2012/04/17 00:07:14 yamt Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_syscalls.c,v 1.77 2011/03/06 17:08:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_syscalls.c,v 1.77.4.1 2012/04/17 00:07:14 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -16,7 +16,6 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_syscalls.c,v 1.77 2011/03/06 17:08:33 bouyer
 #include "opt_ntp.h"
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
-#include "opt_posix.h"
 #endif
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -483,7 +482,6 @@ const char *const freebsd_syscallnames[] = {
 	/* 397 */	"#397 (unimplemented fsstatfs)",
 	/* 398 */	"#398 (unimplemented fhstatfs)",
 	/* 399 */	"#399 (unimplemented nosys)",
-#if defined(P1003_1B_SEMAPHORE) || !defined(_KERNEL)
 	/* 400 */	"_ksem_close",
 	/* 401 */	"_ksem_post",
 	/* 402 */	"_ksem_wait",
@@ -493,17 +491,6 @@ const char *const freebsd_syscallnames[] = {
 	/* 406 */	"_ksem_unlink",
 	/* 407 */	"_ksem_getvalue",
 	/* 408 */	"_ksem_destroy",
-#else
-	/* 400 */	"#400 (excluded ksem_close)",
-	/* 401 */	"#401 (excluded ksem_post)",
-	/* 402 */	"#402 (excluded ksem_wait)",
-	/* 403 */	"#403 (excluded ksem_trywait)",
-	/* 404 */	"#404 (excluded ksem_init)",
-	/* 405 */	"#405 (excluded ksem_open)",
-	/* 406 */	"#406 (excluded ksem_unlink)",
-	/* 407 */	"#407 (excluded ksem_getvalue)",
-	/* 408 */	"#408 (excluded ksem_destroy)",
-#endif
 	/* 409 */	"#409 (unimplemented __mac_get_pid)",
 	/* 410 */	"#410 (unimplemented __mac_get_link)",
 	/* 411 */	"#411 (unimplemented __mac_set_link)",

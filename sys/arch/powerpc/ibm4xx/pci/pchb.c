@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.10 2011/06/22 18:06:34 matt Exp $	*/
+/*	$NetBSD: pchb.c,v 1.10.2.1 2012/04/17 00:06:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.10 2011/06/22 18:06:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.10.2.1 2012/04/17 00:06:46 yamt Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"
@@ -161,11 +161,11 @@ pchbattach(device_t parent, device_t self, void *aux)
 #ifdef PCI_NETBSD_CONFIGURE
 	struct extent *memext = extent_create("pcimem",
 	    IBM405GP_PCI_MEM_START,
-	    IBM405GP_PCI_MEM_START + 0x1fffffff, M_DEVBUF, NULL, 0,
+	    IBM405GP_PCI_MEM_START + 0x1fffffff, NULL, 0,
 	    EX_NOWAIT);
 	struct extent *ioext = extent_create("pciio",
 	    IBM405GP_PCI_PCI_IO_START,
-	    IBM405GP_PCI_PCI_IO_START + 0xffff, M_DEVBUF, NULL, 0, EX_NOWAIT);
+	    IBM405GP_PCI_PCI_IO_START + 0xffff, NULL, 0, EX_NOWAIT);
 	pci_configure_bus(pc, ioext, memext, NULL, 0, 32);
 	extent_destroy(ioext);
 	extent_destroy(memext);

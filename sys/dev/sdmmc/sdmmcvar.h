@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.11 2011/05/18 01:07:17 dyoung Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.11.4.1 2012/04/17 00:08:04 yamt Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -19,6 +19,10 @@
 
 #ifndef	_SDMMCVAR_H_
 #define	_SDMMCVAR_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_sdmmc.h"
+#endif
 
 #include <sys/queue.h>
 #include <sys/mutex.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.2 2011/03/21 14:53:02 tnozaki Exp $ */
+/*	$NetBSD: key.h,v 1.2.4.1 2012/04/17 00:02:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -28,7 +28,7 @@
     sp->conv.input2int(sp, n, nlen, &(cw), &wlen, &w)
 #define CONST
 #define CHAR_WIDTH(sp, ch)  wcwidth(ch)
-#define INTISWIDE(c)	(!!(c >> 8))	    /* XXX wrong name */
+#define INTISWIDE(c)	(wctob(c) == EOF)	    /* XXX wrong name */
 #else
 #define FILE2INT5(sp,buf,n,nlen,w,wlen) \
     (w = n, wlen = nlen, 0)

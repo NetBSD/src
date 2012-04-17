@@ -1,4 +1,4 @@
-/*	$NetBSD: frnd.c,v 1.4 2007/02/22 05:46:30 thorpej Exp $	*/
+/*	$NetBSD: frnd.c,v 1.4.80.1 2012/04/17 00:06:27 yamt Exp $	*/
 
 /*	$OpenBSD: frnd.c,v 1.5 2001/03/29 03:58:18 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frnd.c,v 1.4 2007/02/22 05:46:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frnd.c,v 1.4.80.1 2012/04/17 00:06:27 yamt Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/sgl_float.h"
@@ -56,10 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: frnd.c,v 1.4 2007/02/22 05:46:30 thorpej Exp $");
 
 /*ARGSUSED*/
 int
-sgl_frnd(srcptr,dstptr,status)
-
-sgl_floating_point *srcptr, *dstptr;
-unsigned int *status;
+sgl_frnd(sgl_floating_point *srcptr, sgl_floating_point *dstptr,
+    unsigned int *status)
 {
 	register unsigned int src, result;
 	register int src_exponent;
@@ -160,10 +158,8 @@ unsigned int *status;
 
 /*ARGSUSED*/
 int
-dbl_frnd(srcptr,dstptr,status)
-
-dbl_floating_point *srcptr, *dstptr;
-unsigned int *status;
+dbl_frnd(dbl_floating_point *srcptr, dbl_floating_point *dstptr,
+    unsigned int *status)
 {
 	register unsigned int srcp1, srcp2, resultp1, resultp2;
 	register int src_exponent;
@@ -263,10 +259,8 @@ unsigned int *status;
 
 /*ARGSUSED*/
 int
-quad_frnd(srcptr,dstptr,status)
-
-quad_floating_point *srcptr, *dstptr;
-unsigned int *status;
+quad_frnd(quad_floating_point *srcptr, quad_floating_point *dstptr,
+    unsigned int *status)
 {
 	return(UNIMPLEMENTEDEXCEPTION);
 }

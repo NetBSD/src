@@ -37,6 +37,7 @@ THIS SOFTWARE.
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
+#include <stdint.h>
 #include "awk.h"
 #include "awkgram.h"
 
@@ -405,7 +406,7 @@ Cell *awkgetline(Node **a, int n)	/* get next line from specific input */
 	FILE *fp;
 	uschar *buf;
 	int bufsize = recsize;
-	int mode;
+	int mode, newflag;
 
 	if ((buf = malloc(bufsize)) == NULL)
 		FATAL("out of memory in getline");
@@ -417,12 +418,12 @@ Cell *awkgetline(Node **a, int n)	/* get next line from specific input */
 		mode = ptoi(a[1]);
 		if (mode == '|')		/* input pipe */
 			mode = LE;	/* arbitrary flag */
-		fp = openfile(mode, getsval(x));
+		fp = openfile(mode, getsval(x), &newflag);
 		tempfree(x);
 		if (fp == NULL)
 			n = -1;
 		else
-			n = readrec(&buf, &bufsize, fp);
+			n = readrec(&buf, &bufsize, fp, newflag);
 		if (n <= 0) {
 			;
 		} else if (a[0] != NULL) {	/* getline var <file */
@@ -882,12 +883,15 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 		case 'd': case 'i':
 			flag = 'd';
 			if(*(s-1) == 'l') break;
-			*(t-1) = 'l';
+			*(t-1) = 'j';
 			*t = 'd';
 			*++t = '\0';
 			break;
 		case 'o': case 'x': case 'X': case 'u':
 			flag = *(s-1) == 'l' ? 'd' : 'u';
+			*(t-1) = 'j';
+			*t = *s;
+			*++t = '\0';
 			break;
 		case 's':
 			flag = 's';
@@ -920,8 +924,8 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 			snprintf(p, BUFSZ(p), "%s", t);
 			break;
 		case 'f':	snprintf(p, BUFSZ(p), fmt, getfval(x)); break;
-		case 'd':	snprintf(p, BUFSZ(p), fmt, (long) getfval(x)); break;
-		case 'u':	snprintf(p, BUFSZ(p), fmt, (int) getfval(x)); break;
+		case 'd':	snprintf(p, BUFSZ(p), fmt, (intmax_t) getfval(x)); break;
+		case 'u':	snprintf(p, BUFSZ(p), fmt, (uintmax_t) getfval(x)); break;
 		case 's':
 			t = getsval(x);
 			n = strlen(t);
@@ -1619,7 +1623,7 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 		if (isrec(x) || strlen(getsval(x)) == 0) {
 			flush_all();	/* fflush() or fflush("") -> all */
 			u = 0;
-		} else if ((fp = openfile(FFLUSH, getsval(x))) == NULL)
+		} else if ((fp = openfile(FFLUSH, getsval(x), NULL)) == NULL)
 			u = -1;
 		else
 			u = fflush(fp);
@@ -1711,7 +1715,7 @@ FILE *redirect(int a, Node *b)	/* set up all i/o redirections */
 
 	x = execute(b);
 	fname = getsval(x);
-	fp = openfile(a, fname);
+	fp = openfile(a, fname, NULL);
 	if (fp == NULL)
 		FATAL("can't open file %s", fname);
 	tempfree(x);
@@ -1742,7 +1746,7 @@ void stdinit(void)	/* in case stdin, etc., are not constants */
 	files[2].mode = GT;
 }
 
-FILE *openfile(int a, const char *us)
+FILE *openfile(int a, const char *us, int *pnewflag)
 {
 	const char *s = us;
 	size_t i;
@@ -1752,11 +1756,12 @@ FILE *openfile(int a, const char *us)
 	if (*s == '\0')
 		FATAL("null file name in print or getline");
 	for (i = 0; i < nfiles; i++)
-		if (files[i].fname && strcmp(s, files[i].fname) == 0) {
-			if (a == files[i].mode || (a==APPEND && files[i].mode==GT))
-				return files[i].fp;
-			if (a == FFLUSH)
-				return files[i].fp;
+		if (files[i].fname && strcmp(s, files[i].fname) == 0 &&
+		    (a == files[i].mode || (a==APPEND && files[i].mode==GT) ||
+		     a == FFLUSH)) {
+			if (pnewflag)
+				*pnewflag = 0;
+			return files[i].fp;
 		}
 	if (a == FFLUSH)	/* didn't find it, so don't create it! */
 		return NULL;
@@ -1793,6 +1798,8 @@ FILE *openfile(int a, const char *us)
 		files[i].fname = tostring(s);
 		files[i].fp = fp;
 		files[i].mode = m;
+		if (pnewflag)
+			*pnewflag = 1;
 	}
 	return fp;
 }

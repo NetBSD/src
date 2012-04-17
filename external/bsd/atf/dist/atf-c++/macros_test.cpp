@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
+// Copyright (c) 2008 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -51,7 +51,7 @@ extern "C" {
 
 static
 void
-create_ctl_file(const atf::tests::tc& tc, const char *name)
+create_ctl_file(const char *name)
 {
     ATF_REQUIRE(open(name, O_CREAT | O_WRONLY | O_TRUNC, 0644) != -1);
 }
@@ -67,9 +67,9 @@ ATF_TEST_CASE_HEAD(h_pass)
 }
 ATF_TEST_CASE_BODY(h_pass)
 {
-    create_ctl_file(*this, "before");
+    create_ctl_file("before");
     ATF_PASS();
-    create_ctl_file(*this, "after");
+    create_ctl_file("after");
 }
 
 ATF_TEST_CASE(h_fail);
@@ -79,9 +79,9 @@ ATF_TEST_CASE_HEAD(h_fail)
 }
 ATF_TEST_CASE_BODY(h_fail)
 {
-    create_ctl_file(*this, "before");
+    create_ctl_file("before");
     ATF_FAIL("Failed on purpose");
-    create_ctl_file(*this, "after");
+    create_ctl_file("after");
 }
 
 ATF_TEST_CASE(h_skip);
@@ -91,9 +91,9 @@ ATF_TEST_CASE_HEAD(h_skip)
 }
 ATF_TEST_CASE_BODY(h_skip)
 {
-    create_ctl_file(*this, "before");
+    create_ctl_file("before");
     ATF_SKIP("Skipped on purpose");
-    create_ctl_file(*this, "after");
+    create_ctl_file("after");
 }
 
 ATF_TEST_CASE(h_require);
@@ -105,9 +105,9 @@ ATF_TEST_CASE_BODY(h_require)
 {
     bool condition = atf::text::to_bool(get_config_var("condition"));
 
-    create_ctl_file(*this, "before");
+    create_ctl_file("before");
     ATF_REQUIRE(condition);
-    create_ctl_file(*this, "after");
+    create_ctl_file("after");
 }
 
 ATF_TEST_CASE(h_require_eq);
@@ -120,9 +120,9 @@ ATF_TEST_CASE_BODY(h_require_eq)
     long v1 = atf::text::to_type< long >(get_config_var("v1"));
     long v2 = atf::text::to_type< long >(get_config_var("v2"));
 
-    create_ctl_file(*this, "before");
+    create_ctl_file("before");
     ATF_REQUIRE_EQ(v1, v2);
-    create_ctl_file(*this, "after");
+    create_ctl_file("after");
 }
 
 ATF_TEST_CASE(h_require_in);
@@ -139,9 +139,9 @@ ATF_TEST_CASE_BODY(h_require_in)
     collection.insert("bar");
     collection.insert("baz");
 
-    create_ctl_file(*this, "before");
+    create_ctl_file("before");
     ATF_REQUIRE_IN(element, collection);
-    create_ctl_file(*this, "after");
+    create_ctl_file("after");
 }
 
 ATF_TEST_CASE(h_require_match);
@@ -154,9 +154,9 @@ ATF_TEST_CASE_BODY(h_require_match)
     const std::string regexp = get_config_var("regexp");
     const std::string string = get_config_var("string");
 
-    create_ctl_file(*this, "before");
+    create_ctl_file("before");
     ATF_REQUIRE_MATCH(regexp, string);
-    create_ctl_file(*this, "after");
+    create_ctl_file("after");
 }
 
 ATF_TEST_CASE(h_require_not_in);
@@ -173,9 +173,9 @@ ATF_TEST_CASE_BODY(h_require_not_in)
     collection.insert("bar");
     collection.insert("baz");
 
-    create_ctl_file(*this, "before");
+    create_ctl_file("before");
     ATF_REQUIRE_NOT_IN(element, collection);
-    create_ctl_file(*this, "after");
+    create_ctl_file("after");
 }
 
 ATF_TEST_CASE(h_require_throw);
@@ -185,7 +185,7 @@ ATF_TEST_CASE_HEAD(h_require_throw)
 }
 ATF_TEST_CASE_BODY(h_require_throw)
 {
-    create_ctl_file(*this, "before");
+    create_ctl_file("before");
 
     if (get_config_var("what") == "throw_int")
         ATF_REQUIRE_THROW(std::runtime_error, if (1) throw int(5));
@@ -196,7 +196,7 @@ ATF_TEST_CASE_BODY(h_require_throw)
         ATF_REQUIRE_THROW(std::runtime_error,
                         if (0) throw std::runtime_error("e"));
 
-    create_ctl_file(*this, "after");
+    create_ctl_file("after");
 }
 
 ATF_TEST_CASE(h_require_throw_re);
@@ -206,7 +206,7 @@ ATF_TEST_CASE_HEAD(h_require_throw_re)
 }
 ATF_TEST_CASE_BODY(h_require_throw_re)
 {
-    create_ctl_file(*this, "before");
+    create_ctl_file("before");
 
     if (get_config_var("what") == "throw_int")
         ATF_REQUIRE_THROW_RE(std::runtime_error, "5", if (1) throw int(5));
@@ -220,7 +220,7 @@ ATF_TEST_CASE_BODY(h_require_throw_re)
         ATF_REQUIRE_THROW_RE(std::runtime_error, "e",
                              if (0) throw std::runtime_error("e"));
 
-    create_ctl_file(*this, "after");
+    create_ctl_file("after");
 }
 
 static int
@@ -243,7 +243,7 @@ ATF_TEST_CASE_HEAD(h_check_errno)
 }
 ATF_TEST_CASE_BODY(h_check_errno)
 {
-    create_ctl_file(*this, "before");
+    create_ctl_file("before");
 
     if (get_config_var("what") == "no_error")
         ATF_CHECK_ERRNO(-1, errno_ok_stub() == -1);
@@ -254,7 +254,7 @@ ATF_TEST_CASE_BODY(h_check_errno)
     else
         UNREACHABLE;
 
-    create_ctl_file(*this, "after");
+    create_ctl_file("after");
 }
 
 ATF_TEST_CASE(h_require_errno);
@@ -264,7 +264,7 @@ ATF_TEST_CASE_HEAD(h_require_errno)
 }
 ATF_TEST_CASE_BODY(h_require_errno)
 {
-    create_ctl_file(*this, "before");
+    create_ctl_file("before");
 
     if (get_config_var("what") == "no_error")
         ATF_REQUIRE_ERRNO(-1, errno_ok_stub() == -1);
@@ -275,7 +275,7 @@ ATF_TEST_CASE_BODY(h_require_errno)
     else
         UNREACHABLE;
 
-    create_ctl_file(*this, "after");
+    create_ctl_file("after");
 }
 
 // ------------------------------------------------------------------------

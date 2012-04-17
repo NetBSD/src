@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_request.c,v 1.5 2011/08/16 05:15:21 christos Exp $	*/
+/*	$NetBSD: ntp_request.c,v 1.5.2.1 2012/04/17 00:03:47 yamt Exp $	*/
 
 /*
  * ntp_request.c - respond to information requests
@@ -584,16 +584,16 @@ process_private(
 		 */
 		if (!INFO_IS_AUTH(inpkt->auth_seq) || !info_auth_keyid
 		    || ntohl(tailinpkt->keyid) != info_auth_keyid) {
-			DPRINTF(5, ("failed auth %d info_auth_keyid %u pkt keyid %u maclen %zu\n",
+			DPRINTF(5, ("failed auth %d info_auth_keyid %u pkt keyid %u maclen %lu\n",
 				    INFO_IS_AUTH(inpkt->auth_seq),
 				    info_auth_keyid,
-				    ntohl(tailinpkt->keyid), mac_len));
+				    ntohl(tailinpkt->keyid), (u_long)mac_len));
 #ifdef DEBUG
 			msyslog(LOG_DEBUG,
-				"process_private: failed auth %d info_auth_keyid %u pkt keyid %u maclen %zu\n",
+				"process_private: failed auth %d info_auth_keyid %u pkt keyid %u maclen %lu\n",
 				INFO_IS_AUTH(inpkt->auth_seq),
 				info_auth_keyid,
-				ntohl(tailinpkt->keyid), mac_len);
+				ntohl(tailinpkt->keyid), (u_long)mac_len);
 #endif
 			req_ack(srcadr, inter, inpkt, INFO_ERR_AUTH);
 			return;
@@ -850,10 +850,11 @@ peer_info (
 			NSRCADR(&addr) = ipl->addr;
 		}
 #ifdef ISC_PLATFORM_HAVESALEN
-		addr.sas.ss_len = SOCKLEN(&addr);
+		addr.sa.sa_len = SOCKLEN(&addr);
 #endif
 		ipl++;
-		if ((pp = findexistingpeer(&addr, (struct peer *)0, -1)) == 0)
+		pp = findexistingpeer(&addr, NULL, -1, 0);
+		if (NULL == pp)
 			continue;
 		if (IS_IPV6(srcadr)) {
 			if (pp->dstadr)
@@ -983,7 +984,7 @@ peer_stats (
 			NSRCADR(&addr) = ipl->addr;
 		}	
 #ifdef ISC_PLATFORM_HAVESALEN
-		addr.sas.ss_len = SOCKLEN(&addr);
+		addr.sa.sa_len = SOCKLEN(&addr);
 #endif
 		DPRINTF(1, ("peer_stats: looking for %s, %d, %d\n",
 			    stoa(&addr), ipl->port, NSRCPORT(&addr)));
@@ -991,7 +992,8 @@ peer_stats (
 		ipl = (struct info_peer_list *)((char *)ipl +
 		    INFO_ITEMSIZE(inpkt->mbz_itemsize));
 
-		if ((pp = findexistingpeer(&addr, (struct peer *)0, -1)) == NULL)
+		pp = findexistingpeer(&addr, NULL, -1, 0);
+		if (NULL == pp)
 			continue;
 
 		DPRINTF(1, ("peer_stats: found %s\n", stoa(&addr)));
@@ -1256,26 +1258,21 @@ io_stats(
  */
 static void
 timer_stats(
-	sockaddr_u *srcadr,
-	struct interface *inter,
-	struct req_pkt *inpkt
+	sockaddr_u *		srcadr,
+	struct interface *	inter,
+	struct req_pkt *	inpkt
 	)
 {
-	register struct info_timer_stats *ts;
+	struct info_timer_stats *	ts;
+	u_long				sincereset;
 
-	/*
-	 * Importations from the timer module
-	 */
-	extern u_long timer_timereset;
-	extern u_long timer_overflows;
-	extern u_long timer_xmtcalls;
+	ts = (struct info_timer_stats *)prepare_pkt(srcadr, inter,
+						    inpkt, sizeof(*ts));
 
-	ts = (struct info_timer_stats *)prepare_pkt(srcadr, inter, inpkt,
-						    sizeof(struct info_timer_stats));
-
-	ts->timereset = htonl((u_int32)(current_time - timer_timereset));
-	ts->alarms = htonl((u_int32)alarm_overflow);
-	ts->overflows = htonl((u_int32)timer_overflows);
+	sincereset = current_time - timer_timereset;
+	ts->timereset = htonl((u_int32)sincereset);
+	ts->alarms = ts->timereset;
+	ts->overflows = htonl((u_int32)alarm_overflow);
 	ts->xmtcalls = htonl((u_int32)timer_xmtcalls);
 
 	(void) more_pkt();
@@ -1409,7 +1406,7 @@ do_conf(
 		}
 		NSRCPORT(&peeraddr) = htons(NTP_PORT);
 #ifdef ISC_PLATFORM_HAVESALEN
-		peeraddr.sas.ss_len = SOCKLEN(&peeraddr);
+		peeraddr.sa.sa_len = SOCKLEN(&peeraddr);
 #endif
 
 		/* XXX W2DO? minpoll/maxpoll arguments ??? */
@@ -1573,7 +1570,7 @@ do_unconf(
 		}
 		SET_PORT(&peeraddr, NTP_PORT);
 #ifdef ISC_PLATFORM_HAVESALEN
-		peeraddr.sas.ss_len = SOCKLEN(&peeraddr);
+		peeraddr.sa.sa_len = SOCKLEN(&peeraddr);
 #endif
 		found = 0;
 		peer = NULL;
@@ -1581,7 +1578,7 @@ do_unconf(
 		DPRINTF(1, ("searching for %s\n", stoa(&peeraddr)));
 
 		while (!found) {
-			peer = findexistingpeer(&peeraddr, peer, -1);
+			peer = findexistingpeer(&peeraddr, peer, -1, 0);
 			if (!peer)
 				break;
 			if (peer->flags & FLAG_CONFIG)
@@ -1618,13 +1615,13 @@ do_unconf(
 		}
 		SET_PORT(&peeraddr, NTP_PORT);
 #ifdef ISC_PLATFORM_HAVESALEN
-		peeraddr.sas.ss_len = SOCKLEN(&peeraddr);
+		peeraddr.sa.sa_len = SOCKLEN(&peeraddr);
 #endif
 		found = 0;
 		peer = NULL;
 
 		while (!found) {
-			peer = findexistingpeer(&peeraddr, peer, -1);
+			peer = findexistingpeer(&peeraddr, peer, -1, 0);
 			if (!peer)
 				break;
 			if (peer->flags & FLAG_CONFIG)
@@ -1683,7 +1680,8 @@ setclr_flags(
 	u_long set
 	)
 {
-	register u_int flags;
+	struct conf_sys_flags *sf;
+	u_int32 flags;
 	int prev_kern_enable;
 
 	prev_kern_enable = kern_enable;
@@ -1693,8 +1691,8 @@ setclr_flags(
 		return;
 	}
 
-	flags = inpkt->c_s_flags.flags;
-	flags = ntohl(flags);
+	sf = (struct conf_sys_flags *)inpkt->data;
+	flags = ntohl(sf->flags);
 	
 	if (flags & ~(SYS_FLAG_BCLIENT | SYS_FLAG_PPS |
 		      SYS_FLAG_NTP | SYS_FLAG_KERNEL | SYS_FLAG_MONITOR |
@@ -1733,6 +1731,58 @@ setclr_flags(
 	     	loop_config(LOOP_DRIFTCOMP, drift_comp);
 }
 
+/*
+ * list_restrict4 - recursive helper for list_restrict dumps IPv4
+ *		    restriction list in reverse order.
+ */
+static void
+list_restrict4(
+	restrict_u *		res,
+	struct info_restrict **	ppir
+	)
+{
+	struct info_restrict *	pir;
+
+	if (res->link != NULL)
+		list_restrict4(res->link, ppir);
+
+	pir = *ppir;
+	pir->addr = htonl(res->u.v4.addr);
+	if (client_v6_capable) 
+		pir->v6_flag = 0;
+	pir->mask = htonl(res->u.v4.mask);
+	pir->count = htonl(res->count);
+	pir->flags = htons(res->flags);
+	pir->mflags = htons(res->mflags);
+	*ppir = (struct info_restrict *)more_pkt();
+}
+
+
+/*
+ * list_restrict6 - recursive helper for list_restrict dumps IPv6
+ *		    restriction list in reverse order.
+ */
+static void
+list_restrict6(
+	restrict_u *		res,
+	struct info_restrict **	ppir
+	)
+{
+	struct info_restrict *	pir;
+
+	if (res->link != NULL)
+		list_restrict6(res->link, ppir);
+
+	pir = *ppir;
+	pir->addr6 = res->u.v6.addr; 
+	pir->mask6 = res->u.v6.mask;
+	pir->v6_flag = 1;
+	pir->count = htonl(res->count);
+	pir->flags = htons(res->flags);
+	pir->mflags = htons(res->mflags);
+	*ppir = (struct info_restrict *)more_pkt();
+}
+
 
 /*
  * list_restrict - return the restrict list
@@ -1744,41 +1794,24 @@ list_restrict(
 	struct req_pkt *inpkt
 	)
 {
-	register struct info_restrict *ir;
-	register struct restrictlist *rl;
-	register struct restrictlist6 *rl6;
+	struct info_restrict *ir;
 
-#ifdef DEBUG
-	if (debug > 2)
-	    printf("wants restrict list summary\n");
-#endif
+	DPRINTF(3, ("wants restrict list summary\n"));
 
 	ir = (struct info_restrict *)prepare_pkt(srcadr, inter, inpkt,
 	    v6sizeof(struct info_restrict));
 	
-	for (rl = restrictlist; rl != 0 && ir != 0; rl = rl->next) {
-		ir->addr = htonl(rl->addr);
-		if (client_v6_capable) 
-			ir->v6_flag = 0;
-		ir->mask = htonl(rl->mask);
-		ir->count = htonl((u_int32)rl->count);
-		ir->flags = htons(rl->flags);
-		ir->mflags = htons(rl->mflags);
-		ir = (struct info_restrict *)more_pkt();
-	}
+	/*
+	 * The restriction lists are kept sorted in the reverse order
+	 * than they were originally.  To preserve the output semantics,
+	 * dump each list in reverse order.  A recursive helper function
+	 * achieves that.
+	 */
+	list_restrict4(restrictlist4, &ir);
 	if (client_v6_capable)
-		for (rl6 = restrictlist6; rl6 != 0 && ir != 0; rl6 = rl6->next) {
-			ir->addr6 = rl6->addr6;
-			ir->mask6 = rl6->mask6;
-			ir->v6_flag = 1;
-			ir->count = htonl((u_int32)rl6->count);
-			ir->flags = htons(rl6->flags);
-			ir->mflags = htons(rl6->mflags);
-			ir = (struct info_restrict *)more_pkt();
-		}
+		list_restrict6(restrictlist6, &ir);
 	flush_pkt();
 }
-
 
 
 /*
@@ -2039,6 +2072,7 @@ reset_stats(
 	struct req_pkt *inpkt
 	)
 {
+	struct reset_flags *rflags;
 	u_long flags;
 	struct reset_entry *rent;
 
@@ -2048,9 +2082,9 @@ reset_stats(
 		return;
 	}
 
-	flags = inpkt->r_flags.flags;
-	flags = ntohl(flags);
-     
+	rflags = (struct reset_flags *)inpkt->data;
+	flags = ntohl(rflags->flags);
+
 	if (flags & ~RESET_ALLFLAGS) {
 		msyslog(LOG_ERR, "reset_stats: reset leaves %#lx",
 			flags & ~RESET_ALLFLAGS);
@@ -2060,7 +2094,7 @@ reset_stats(
 
 	for (rent = reset_entries; rent->flag != 0; rent++) {
 		if (flags & rent->flag)
-		    (rent->handler)();
+			(*rent->handler)();
 	}
 	req_ack(srcadr, inter, inpkt, INFO_OKAY);
 }
@@ -2102,9 +2136,9 @@ reset_peer(
 		}
 
 #ifdef ISC_PLATFORM_HAVESALEN
-		peeraddr.sas.ss_len = SOCKLEN(&peeraddr);
+		peeraddr.sa.sa_len = SOCKLEN(&peeraddr);
 #endif
-		peer = findexistingpeer(&peeraddr, NULL, -1);
+		peer = findexistingpeer(&peeraddr, NULL, -1, 0);
 		if (NULL == peer)
 			bad++;
 		cp = (struct conf_unpeer *)((char *)cp +
@@ -2133,12 +2167,12 @@ reset_peer(
 		}
 		SET_PORT(&peeraddr, 123);
 #ifdef ISC_PLATFORM_HAVESALEN
-		peeraddr.sas.ss_len = SOCKLEN(&peeraddr);
+		peeraddr.sa.sa_len = SOCKLEN(&peeraddr);
 #endif
-		peer = findexistingpeer(&peeraddr, NULL, -1);
+		peer = findexistingpeer(&peeraddr, NULL, -1, 0);
 		while (peer != NULL) {
 			peer_reset(peer);
-			peer = findexistingpeer(&peeraddr, peer, -1);
+			peer = findexistingpeer(&peeraddr, peer, -1, 0);
 		}
 		cp = (struct conf_unpeer *)((char *)cp +
 		    INFO_ITEMSIZE(inpkt->mbz_itemsize));
@@ -2461,7 +2495,7 @@ set_request_keyid(
 	struct req_pkt *inpkt
 	)
 {
-	keyid_t keyid;
+	keyid_t *pkeyid;
 
 	/*
 	 * Restrict ourselves to one item only.
@@ -2472,8 +2506,8 @@ set_request_keyid(
 		return;
 	}
 
-	keyid = ntohl(inpkt->ui);
-	info_auth_keyid = keyid;
+	pkeyid = (keyid_t *)inpkt->data;
+	info_auth_keyid = ntohl(*pkeyid);
 	req_ack(srcadr, inter, inpkt, INFO_OKAY);
 }
 
@@ -2489,7 +2523,7 @@ set_control_keyid(
 	struct req_pkt *inpkt
 	)
 {
-	keyid_t keyid;
+	keyid_t *pkeyid;
 	extern keyid_t ctl_auth_keyid;
 
 	/*
@@ -2501,8 +2535,8 @@ set_control_keyid(
 		return;
 	}
 
-	keyid = ntohl(inpkt->ui);
-	ctl_auth_keyid = keyid;
+	pkeyid = (keyid_t *)inpkt->data;
+	ctl_auth_keyid = ntohl(*pkeyid);
 	req_ack(srcadr, inter, inpkt, INFO_OKAY);
 }
 
@@ -2639,7 +2673,7 @@ get_clock_info(
 	ZERO_SOCK(&addr);
 	AF(&addr) = AF_INET;
 #ifdef ISC_PLATFORM_HAVESALEN
-	addr.sas.ss_len = SOCKLEN(&addr);
+	addr.sa.sa_len = SOCKLEN(&addr);
 #endif
 	SET_PORT(&addr, NTP_PORT);
 	items = INFO_NITEMS(inpkt->err_nitems);
@@ -2651,7 +2685,7 @@ get_clock_info(
 	while (items-- > 0) {
 		NSRCADR(&addr) = *clkaddr++;
 		if (!ISREFCLOCKADR(&addr) ||
-		    findexistingpeer(&addr, NULL, -1) == NULL) {
+		    findexistingpeer(&addr, NULL, -1, 0) == NULL) {
 			req_ack(srcadr, inter, inpkt, INFO_ERR_NODATA);
 			return;
 		}
@@ -2675,7 +2709,7 @@ get_clock_info(
 		DTOLFP(clock_stat.fudgetime2, &ltmp);
 		HTONL_FP(&ltmp, &ic->fudgetime2);
 		ic->fudgeval1 = htonl((u_int32)clock_stat.fudgeval1);
-		ic->fudgeval2 = htonl((u_int32)clock_stat.fudgeval2);
+		ic->fudgeval2 = htonl(clock_stat.fudgeval2);
 
 		free_varlist(clock_stat.kv_list);
 
@@ -2711,11 +2745,11 @@ set_clock_fudge(
 		AF(&addr) = AF_INET;
 		NSRCADR(&addr) = cf->clockadr;
 #ifdef ISC_PLATFORM_HAVESALEN
-		addr.sas.ss_len = SOCKLEN(&addr);
+		addr.sa.sa_len = SOCKLEN(&addr);
 #endif
 		SET_PORT(&addr, NTP_PORT);
 		if (!ISREFCLOCKADR(&addr) ||
-		    findexistingpeer(&addr, NULL, -1) == 0) {
+		    findexistingpeer(&addr, NULL, -1, 0) == 0) {
 			req_ack(srcadr, inter, inpkt, INFO_ERR_NODATA);
 			return;
 		}
@@ -2778,7 +2812,7 @@ get_clkbug_info(
 	ZERO_SOCK(&addr);
 	AF(&addr) = AF_INET;
 #ifdef ISC_PLATFORM_HAVESALEN
-	addr.sas.ss_len = SOCKLEN(&addr);
+	addr.sa.sa_len = SOCKLEN(&addr);
 #endif
 	SET_PORT(&addr, NTP_PORT);
 	items = INFO_NITEMS(inpkt->err_nitems);
@@ -2790,7 +2824,7 @@ get_clkbug_info(
 	while (items-- > 0) {
 		NSRCADR(&addr) = *clkaddr++;
 		if (!ISREFCLOCKADR(&addr) ||
-		    findexistingpeer(&addr, NULL, -1) == 0) {
+		    findexistingpeer(&addr, NULL, -1, 0) == 0) {
 			req_ack(srcadr, inter, inpkt, INFO_ERR_NODATA);
 			return;
 		}
@@ -2834,40 +2868,40 @@ fill_info_if_stats(void *data, interface_info_t *interface_info)
 {
 	struct info_if_stats **ifsp = (struct info_if_stats **)data;
 	struct info_if_stats *ifs = *ifsp;
-	struct interface *interface = interface_info->interface;
+	endpt *ep = interface_info->ep;
 	
 	memset(ifs, 0, sizeof(*ifs));
 	
-	if (IS_IPV6(&interface->sin)) {
+	if (IS_IPV6(&ep->sin)) {
 		if (!client_v6_capable) {
 			return;
 		}
 		ifs->v6_flag = 1;
-		ifs->unaddr.addr6 = SOCK_ADDR6(&interface->sin);
-		ifs->unbcast.addr6 = SOCK_ADDR6(&interface->bcast);
-		ifs->unmask.addr6 = SOCK_ADDR6(&interface->mask);
+		ifs->unaddr.addr6 = SOCK_ADDR6(&ep->sin);
+		ifs->unbcast.addr6 = SOCK_ADDR6(&ep->bcast);
+		ifs->unmask.addr6 = SOCK_ADDR6(&ep->mask);
 	} else {
 		ifs->v6_flag = 0;
-		ifs->unaddr.addr = SOCK_ADDR4(&interface->sin);
-		ifs->unbcast.addr = SOCK_ADDR4(&interface->bcast);
-		ifs->unmask.addr = SOCK_ADDR4(&interface->mask);
+		ifs->unaddr.addr = SOCK_ADDR4(&ep->sin);
+		ifs->unbcast.addr = SOCK_ADDR4(&ep->bcast);
+		ifs->unmask.addr = SOCK_ADDR4(&ep->mask);
 	}
 	ifs->v6_flag = htonl(ifs->v6_flag);
-	strncpy(ifs->name, interface->name, sizeof(ifs->name));
-	ifs->family = htons(interface->family);
-	ifs->flags = htonl(interface->flags);
-	ifs->last_ttl = htonl(interface->last_ttl);
-	ifs->num_mcast = htonl(interface->num_mcast);
-	ifs->received = htonl(interface->received);
-	ifs->sent = htonl(interface->sent);
-	ifs->notsent = htonl(interface->notsent);
-	ifs->scopeid = htonl(interface->scopeid);
-	/* ifindex was always zero, now no longer in struct interface */
-	ifs->ifindex = 0;
-	ifs->ifnum = htonl(interface->ifnum);
-	ifs->uptime = htonl(current_time - interface->starttime);
-	ifs->ignore_packets = interface->ignore_packets;
-	ifs->peercnt = htonl(interface->peercnt);
+	strncpy(ifs->name, ep->name, sizeof(ifs->name));
+	ifs->family = htons(ep->family);
+	ifs->flags = htonl(ep->flags);
+	ifs->last_ttl = htonl(ep->last_ttl);
+	ifs->num_mcast = htonl(ep->num_mcast);
+	ifs->received = htonl(ep->received);
+	ifs->sent = htonl(ep->sent);
+	ifs->notsent = htonl(ep->notsent);
+	ifs->ifindex = htonl(ep->ifindex);
+	/* scope no longer in struct interface, in in6_addr typically */
+	ifs->scopeid = ifs->ifindex;
+	ifs->ifnum = htonl(ep->ifnum);
+	ifs->uptime = htonl(current_time - ep->starttime);
+	ifs->ignore_packets = ep->ignore_packets;
+	ifs->peercnt = htonl(ep->peercnt);
 	ifs->action = interface_info->action;
 	
 	*ifsp = (struct info_if_stats *)more_pkt();

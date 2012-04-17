@@ -1,4 +1,4 @@
-/* $NetBSD: t_acos.c,v 1.2 2011/09/18 04:48:38 jruoho Exp $ */
+/* $NetBSD: t_acos.c,v 1.2.2.1 2012/04/17 00:09:13 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -138,8 +138,9 @@ ATF_TC_BODY(acos_cos, tc)
 		y = acos(cos(x[i]));
 
 		if (fabs(y - x[i]) > eps)
-			atf_tc_fail_nonfatal("acos(cos(%0.03f)) != %0.03f",
-			    x[i], x[i]);
+			atf_tc_fail_nonfatal(
+			    "acos(cos(%0.03f)) != %0.03f (eps=%0.03e)",
+			    x[i], x[i], fabs(y - x[i]));
 	}
 #endif
 }
@@ -250,8 +251,9 @@ ATF_TC_BODY(acosf_cosf, tc)
 		y = acosf(cosf(x[i]));
 
 		if (fabsf(y - x[i]) > eps)
-			atf_tc_fail_nonfatal("acosf(cosf(%0.03f)) != %0.03f",
-			    x[i], x[i]);
+			atf_tc_fail_nonfatal(
+			    "acosf(cosf(%0.03f)) != %0.03f (eps=%0.03e)",
+			    x[i], x[i], fabs(y - x[i]));
 	}
 #endif
 }

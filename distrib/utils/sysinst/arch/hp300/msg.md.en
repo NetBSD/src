@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.8 2011/04/04 08:30:28 mbalmer Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.8.4.1 2012/04/17 00:02:51 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,13 +46,6 @@ message md_may_remove_boot_medium
 
 message dobootblks
 {Installing boot blocks on %s....
-}
-
-message newdisk
-{It appears that your disk, %s, has no X68K disk mark. sysinst is
-writing a disk mark.
-Note that if you plan to use a part of %s from Human68k, you should abort
-here and format the disk with Human68k format.x utility.
 }
 
 message ordering

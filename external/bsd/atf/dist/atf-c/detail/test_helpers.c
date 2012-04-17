@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -77,7 +77,7 @@ build_check_c_o(const atf_tc_t *tc, const char *sfile, const char *failmsg)
 }
 
 void
-header_check(const atf_tc_t *tc, const char *hdrname)
+header_check(const char *hdrname)
 {
     FILE *srcfile;
     char failmsg[128];

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.35 2009/04/19 08:40:48 lukem Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.35.6.1 2012/04/17 00:09:53 yamt Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -66,9 +66,9 @@
 #include "dump.h"
 
 struct msghdr rcvmhdr;
-static u_char *rcvcmsgbuf;
+static unsigned char *rcvcmsgbuf;
 static size_t rcvcmsgbuflen;
-static u_char *sndcmsgbuf = NULL;
+static unsigned char *sndcmsgbuf = NULL;
 static size_t sndcmsgbuflen;
 volatile sig_atomic_t do_dump;
 volatile sig_atomic_t do_die;
@@ -76,9 +76,7 @@ struct msghdr sndmhdr;
 struct iovec rcviov[2];
 struct iovec sndiov[2];
 struct sockaddr_in6 rcvfrom;
-struct sockaddr_in6 sin6_allnodes = {sizeof(sin6_allnodes), AF_INET6};
-struct in6_addr in6a_site_allrouters;
-static char *dumpfilename = "/var/run/rtadvd.dump"; /* XXX: should be configurable */
+static const char *dumpfilename = "/var/run/rtadvd.dump"; /* XXX configurable */
 static char *mcastif;
 int sock;
 int rtsock = -1;
@@ -87,9 +85,10 @@ int dflag = 0, sflag = 0;
 
 char *conffile = NULL;
 
-struct rainfo *ralist = NULL;
+struct ralist_head_t ralist = TAILQ_HEAD_INITIALIZER(ralist);
+
 struct nd_optlist {
-	struct nd_optlist *next;
+	TAILQ_ENTRY(nd_optlist) next;
 	struct nd_opt_hdr *opt;
 };
 union nd_opts {
@@ -101,7 +100,7 @@ union nd_opts {
 		struct nd_opt_prefix_info *pi;
 		struct nd_opt_rd_hdr *rh;
 		struct nd_opt_mtu *mtu;
-		struct nd_optlist *list;
+		TAILQ_HEAD(, nd_optlist) list;
 	} nd_opt_each;
 };
 #define nd_opts_src_lladdr	nd_opt_each.src_lladdr
@@ -111,41 +110,62 @@ union nd_opts {
 #define nd_opts_mtu		nd_opt_each.mtu
 #define nd_opts_list		nd_opt_each.list
 
-#define NDOPT_FLAG_SRCLINKADDR 0x1
-#define NDOPT_FLAG_TGTLINKADDR 0x2
-#define NDOPT_FLAG_PREFIXINFO 0x4
-#define NDOPT_FLAG_RDHDR 0x8
-#define NDOPT_FLAG_MTU 0x10
+#define NDOPT_FLAG_SRCLINKADDR	(1 << 0)
+#define NDOPT_FLAG_TGTLINKADDR	(1 << 1)
+#define NDOPT_FLAG_PREFIXINFO	(1 << 2)
+#define NDOPT_FLAG_RDHDR	(1 << 3)
+#define NDOPT_FLAG_MTU		(1 << 4)
+#define NDOPT_FLAG_RDNSS	(1 << 5)
+#define NDOPT_FLAG_DNSSL	(1 << 6)
 
-u_int32_t ndopt_flags[] = {
-	0, NDOPT_FLAG_SRCLINKADDR, NDOPT_FLAG_TGTLINKADDR,
-	NDOPT_FLAG_PREFIXINFO, NDOPT_FLAG_RDHDR, NDOPT_FLAG_MTU,
+uint32_t ndopt_flags[] = {
+	[ND_OPT_SOURCE_LINKADDR] =	NDOPT_FLAG_SRCLINKADDR,
+	[ND_OPT_TARGET_LINKADDR] =	NDOPT_FLAG_TGTLINKADDR,
+	[ND_OPT_PREFIX_INFORMATION] =	NDOPT_FLAG_PREFIXINFO,
+	[ND_OPT_REDIRECTED_HEADER] =	NDOPT_FLAG_RDHDR,
+	[ND_OPT_MTU] =			NDOPT_FLAG_MTU,
+	[ND_OPT_RDNSS] =		NDOPT_FLAG_RDNSS,
+	[ND_OPT_DNSSL] =		NDOPT_FLAG_DNSSL,
 };
 
-int main __P((int, char *[]));
-static void set_die __P((int));
-static void die __P((void));
-static void sock_open __P((void));
-static void rtsock_open __P((void));
-static void rtadvd_input __P((void));
-static void rs_input __P((int, struct nd_router_solicit *,
-			  struct in6_pktinfo *, struct sockaddr_in6 *));
-static void ra_input __P((int, struct nd_router_advert *,
-			  struct in6_pktinfo *, struct sockaddr_in6 *));
-static int prefix_check __P((struct nd_opt_prefix_info *, struct rainfo *,
-			     struct sockaddr_in6 *));
-static int nd6_options __P((struct nd_opt_hdr *, int,
-			    union nd_opts *, u_int32_t));
-static void free_ndopts __P((union nd_opts *));
-static void ra_output __P((struct rainfo *));
-static void rtmsg_input __P((void));
-static void rtadvd_set_dump_file __P((int));
-static void set_short_delay __P((struct rainfo *));
+struct sockaddr_in6 sin6_linklocal_allnodes = {
+	.sin6_len =	sizeof(sin6_linklocal_allnodes),
+	.sin6_family =	AF_INET6,
+	.sin6_addr =	IN6ADDR_LINKLOCAL_ALLNODES_INIT,
+};
+#ifdef notdef
+struct sockaddr_in6 sin6_linklocal_allrouters = {
+	.sin6_len =	sizeof(sin6_linklocal_allrouters),
+	.sin6_family =	AF_INET6,
+	.sin6_addr =	IN6ADDR_LINKLOCAL_ALLROUTERS_INIT,
+};
+#endif
+struct sockaddr_in6 sin6_sitelocal_allrouters = {
+	.sin6_len =	sizeof(sin6_sitelocal_allrouters),
+	.sin6_family =	AF_INET6,
+	.sin6_addr =	IN6ADDR_SITELOCAL_ALLROUTERS_INIT,
+};
+
+static void set_die(int);
+static void die(void) __dead;
+static void sock_open(void);
+static void rtsock_open(void);
+static void rtadvd_input(void);
+static void rs_input(int, struct nd_router_solicit *,
+    struct in6_pktinfo *, struct sockaddr_in6 *);
+static void ra_input(int, struct nd_router_advert *,
+    struct in6_pktinfo *, struct sockaddr_in6 *);
+static int prefix_check(struct nd_opt_prefix_info *, struct rainfo *,
+    struct sockaddr_in6 *);
+static int nd6_options(struct nd_opt_hdr *, int, union nd_opts *, uint32_t);
+static void free_ndopts(union nd_opts *);
+static void ra_output(struct rainfo *);
+static void rtmsg_input(void);
+static void rtadvd_set_dump_file(int);
+static void set_short_delay(struct rainfo *);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct pollfd set[2];
 	struct timeval *timeout;
@@ -211,11 +231,6 @@ main(argc, argv)
 
 	while (argc--)
 		getconfig(*argv++);
-
-	if (inet_pton(AF_INET6, ALLNODES, &sin6_allnodes.sin6_addr) != 1) {
-		fprintf(stderr, "fatal: inet_pton failed\n");
-		exit(1);
-	}
 
 	if (!fflag)
 		daemon(1, 0);
@@ -286,21 +301,19 @@ main(argc, argv)
 }
 
 static void
-rtadvd_set_dump_file(sig)
-	int sig;
+rtadvd_set_dump_file(int sig)
 {
 	do_dump = 1;
 }
 
 static void
-set_die(sig)
-	int sig;
+set_die(int sig)
 {
 	do_die = 1;
 }
 
 static void
-die()
+die(void)
 {
 	struct rainfo *ra;
 	int i;
@@ -311,12 +324,12 @@ die()
 		    __func__);
 	}
 
-	for (ra = ralist; ra; ra = ra->next) {
+	TAILQ_FOREACH(ra, &ralist, next) {
 		ra->lifetime = 0;
 		make_packet(ra);
 	}
 	for (i = 0; i < retrans; i++) {
-		for (ra = ralist; ra; ra = ra->next)
+		TAILQ_FOREACH(ra, &ralist, next)
 			ra_output(ra);
 		sleep(MIN_DELAY_BETWEEN_RAS);
 	}
@@ -325,7 +338,7 @@ die()
 }
 
 static void
-rtmsg_input()
+rtmsg_input(void)
 {
 	int n, type, ifindex = 0, plen;
 	size_t len;
@@ -545,9 +558,9 @@ rtmsg_input()
 }
 
 void
-rtadvd_input()
+rtadvd_input(void)
 {
-	int i;
+	ssize_t i;
 	int *hlimp = NULL;
 #ifdef OLDRAWSOCKET
 	struct ip6_hdr *ip;
@@ -610,7 +623,7 @@ rtadvd_input()
 	}
 
 #ifdef OLDRAWSOCKET
-	if (i < sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr)) {
+	if ((size_t)i < sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr)) {
 		syslog(LOG_ERR,
 		       "<%s> packet size(%d) is too short",
 		       __func__, i);
@@ -620,9 +633,9 @@ rtadvd_input()
 	ip = (struct ip6_hdr *)rcvmhdr.msg_iov[0].iov_base;
 	icp = (struct icmp6_hdr *)(ip + 1); /* XXX: ext. hdr? */
 #else
-	if (i < sizeof(struct icmp6_hdr)) {
+	if ((size_t)i < sizeof(struct icmp6_hdr)) {
 		syslog(LOG_ERR,
-		       "<%s> packet size(%d) is too short",
+		       "<%s> packet size(%zd) is too short",
 		       __func__, i);
 		return;
 	}
@@ -657,10 +670,10 @@ rtadvd_input()
 			    if_indextoname(pi->ipi6_ifindex, ifnamebuf));
 			return;
 		}
-		if (i < sizeof(struct nd_router_solicit)) {
+		if ((size_t)i < sizeof(struct nd_router_solicit)) {
 			syslog(LOG_NOTICE,
 			    "<%s> RS from %s on %s does not have enough "
-			    "length (len = %d)",
+			    "length (len = %zd)",
 			    __func__,
 			    inet_ntop(AF_INET6, &rcvfrom.sin6_addr, ntopbuf,
 			    INET6_ADDRSTRLEN),
@@ -694,10 +707,10 @@ rtadvd_input()
 			    if_indextoname(pi->ipi6_ifindex, ifnamebuf));
 			return;
 		}
-		if (i < sizeof(struct nd_router_advert)) {
+		if ((size_t)i < sizeof(struct nd_router_advert)) {
 			syslog(LOG_NOTICE,
 			    "<%s> RA from %s on %s does not have enough "
-			    "length (len = %d)",
+			    "length (len = %zd)",
 			    __func__,
 			    inet_ntop(AF_INET6, &rcvfrom.sin6_addr, ntopbuf,
 			    INET6_ADDRSTRLEN),
@@ -749,6 +762,7 @@ rs_input(int len, struct nd_router_solicit *rs,
 
 	/* ND option check */
 	memset(&ndopts, 0, sizeof(ndopts));
+	TAILQ_INIT(&ndopts.nd_opts_list);
 	if (nd6_options((struct nd_opt_hdr *)(rs + 1),
 			len - sizeof(struct nd_router_solicit),
 			&ndopts, NDOPT_FLAG_SRCLINKADDR)) {
@@ -776,11 +790,9 @@ rs_input(int len, struct nd_router_solicit *rs,
 		goto done;
 	}
 
-	ra = ralist;
-	while (ra != NULL) {
+	TAILQ_FOREACH(ra, &ralist, next) {
 		if (pi->ipi6_ifindex == ra->ifindex)
 			break;
-		ra = ra->next;
 	}
 	if (ra == NULL) {
 		syslog(LOG_INFO,
@@ -798,13 +810,12 @@ rs_input(int len, struct nd_router_solicit *rs,
 	 */
 
 	/* record sockaddr waiting for RA, if possible */
-	sol = (struct soliciter *)malloc(sizeof(*sol));
+	sol = malloc(sizeof(*sol));
 	if (sol) {
 		sol->addr = *from;
 		/* XXX RFC2553 need clarification on flowinfo */
 		sol->addr.sin6_flowinfo = 0;
-		sol->next = ra->soliciter;
-		ra->soliciter = sol;
+		TAILQ_INSERT_HEAD(&ra->soliciter, sol, next);
 	}
 
 	/*
@@ -822,8 +833,7 @@ done:
 }
 
 static void
-set_short_delay(rai)
-	struct rainfo *rai;
+set_short_delay(struct rainfo *rai)
 {
 	long delay;	/* must not be greater than 1000000 */
 	struct timeval interval, now, min_delay, tm_tmp, *rest;
@@ -870,8 +880,9 @@ ra_input(int len, struct nd_router_advert *ra,
 	struct rainfo *rai;
 	char ntopbuf[INET6_ADDRSTRLEN], ifnamebuf[IFNAMSIZ];
 	union nd_opts ndopts;
-	char *on_off[] = {"OFF", "ON"};
-	u_int32_t reachabletime, retranstimer, mtu;
+	const char *on_off[] = {"OFF", "ON"};
+	uint32_t reachabletime, retranstimer, mtu;
+	struct nd_optlist *optp;
 	int inconsistent = 0;
 
 	syslog(LOG_DEBUG,
@@ -880,19 +891,22 @@ ra_input(int len, struct nd_router_advert *ra,
 	       inet_ntop(AF_INET6, &from->sin6_addr,
 			 ntopbuf, INET6_ADDRSTRLEN),
 	       if_indextoname(pi->ipi6_ifindex, ifnamebuf));
-	
+
 	/* ND option check */
 	memset(&ndopts, 0, sizeof(ndopts));
+	TAILQ_INIT(&ndopts.nd_opts_list);
 	if (nd6_options((struct nd_opt_hdr *)(ra + 1),
-			len - sizeof(struct nd_router_advert),
-			&ndopts, NDOPT_FLAG_SRCLINKADDR |
-			NDOPT_FLAG_PREFIXINFO | NDOPT_FLAG_MTU)) {
+	    len - sizeof(struct nd_router_advert),
+	    &ndopts, NDOPT_FLAG_SRCLINKADDR |
+	    NDOPT_FLAG_PREFIXINFO | NDOPT_FLAG_MTU |
+	    NDOPT_FLAG_RDNSS | NDOPT_FLAG_DNSSL))
+	{
 		syslog(LOG_INFO,
-		       "<%s> ND option check failed for an RA from %s on %s",
-		       __func__,
-		       inet_ntop(AF_INET6, &from->sin6_addr,
-				 ntopbuf, INET6_ADDRSTRLEN),
-		       if_indextoname(pi->ipi6_ifindex, ifnamebuf));
+		    "<%s> ND option check failed for an RA from %s on %s",
+		    __func__,
+		    inet_ntop(AF_INET6, &from->sin6_addr,
+		        ntopbuf, INET6_ADDRSTRLEN),
+		        if_indextoname(pi->ipi6_ifindex, ifnamebuf));
 		return;
 	}
 
@@ -999,20 +1013,13 @@ ra_input(int len, struct nd_router_advert *ra,
 		}
 	}
 	/* Preferred and Valid Lifetimes for prefixes */
-	{
-		struct nd_optlist *optp = ndopts.nd_opts_list;
-
-		if (ndopts.nd_opts_pi) {
-			if (prefix_check(ndopts.nd_opts_pi, rai, from))
-				inconsistent++;
-		}
-		while (optp) {
-			if (prefix_check((struct nd_opt_prefix_info *)optp->opt,
-					 rai, from))
-				inconsistent++;
-			optp = optp->next;
-		}
-	}
+	if (ndopts.nd_opts_pi)
+		if (prefix_check(ndopts.nd_opts_pi, rai, from))
+			inconsistent++;
+	TAILQ_FOREACH(optp, &ndopts.nd_opts_list, next)
+		if (prefix_check((struct nd_opt_prefix_info *)optp->opt,
+		    rai, from))
+			inconsistent++;
 
 	if (inconsistent)
 		rai->rainconsistent++;
@@ -1027,7 +1034,7 @@ static int
 prefix_check(struct nd_opt_prefix_info *pinfo,
 	     struct rainfo *rai, struct sockaddr_in6 *from)
 {
-	u_int32_t preferred_time, valid_time;
+	uint32_t preferred_time, valid_time;
 	struct prefix *pp;
 	int inconsistent = 0;
 	char ntopbuf[INET6_ADDRSTRLEN], prefixbuf[INET6_ADDRSTRLEN];
@@ -1156,9 +1163,9 @@ find_prefix(struct rainfo *rai, struct in6_addr *prefix, int plen)
 {
 	struct prefix *pp;
 	int bytelen, bitlen;
-	u_char bitmask;
+	unsigned char bitmask;
 
-	for (pp = rai->prefix.next; pp != &rai->prefix; pp = pp->next) {
+	TAILQ_FOREACH(pp, &rai->prefix, next) {
 		if (plen != pp->prefixlen)
 			continue;
 		bytelen = plen / 8;
@@ -1182,7 +1189,7 @@ prefix_match(struct in6_addr *p0, int plen0,
 	     struct in6_addr *p1, int plen1)
 {
 	int bytelen, bitlen;
-	u_char bitmask;
+	unsigned char bitmask;
 
 	if (plen0 < plen1)
 		return(0);
@@ -1202,17 +1209,17 @@ prefix_match(struct in6_addr *p0, int plen0,
 
 static int
 nd6_options(struct nd_opt_hdr *hdr, int limit,
-	    union nd_opts *ndopts, u_int32_t optflags)
+	    union nd_opts *ndopts, uint32_t optflags)
 {
 	int optlen = 0;
 
 	for (; limit > 0; limit -= optlen) {
-		if (limit < sizeof(struct nd_opt_hdr)) {
+		if ((size_t)limit < sizeof(struct nd_opt_hdr)) {
 			syslog(LOG_INFO, "<%s> short option header", __func__);
 			goto bad;
 		}
 
-		hdr = (struct nd_opt_hdr *)((caddr_t)hdr + optlen);
+		hdr = (struct nd_opt_hdr *)((char *)hdr + optlen);
 		if (hdr->nd_opt_len == 0) {
 			syslog(LOG_INFO,
 			    "<%s> bad ND option length(0) (type = %d)",
@@ -1225,7 +1232,9 @@ nd6_options(struct nd_opt_hdr *hdr, int limit,
 			goto bad;
 		}
 
-		if (hdr->nd_opt_type > ND_OPT_MTU)
+		if (hdr->nd_opt_type > ND_OPT_MTU &&
+		    hdr->nd_opt_type != ND_OPT_RDNSS &&
+		    hdr->nd_opt_type != ND_OPT_DNSSL)
 		{
 			syslog(LOG_INFO, "<%s> unknown ND option(type %d)",
 			    __func__, hdr->nd_opt_type);
@@ -1278,9 +1287,8 @@ nd6_options(struct nd_opt_hdr *hdr, int limit,
 				    __func__);
 				goto bad;
 			}
-			pfxlist->next = ndopts->nd_opts_list;
 			pfxlist->opt = hdr;
-			ndopts->nd_opts_list = pfxlist;
+			TAILQ_INSERT_TAIL(&ndopts->nd_opts_list, pfxlist, next);
 
 			break;
 		}
@@ -1300,28 +1308,27 @@ nd6_options(struct nd_opt_hdr *hdr, int limit,
 static void
 free_ndopts(union nd_opts *ndopts)
 {
-	struct nd_optlist *opt = ndopts->nd_opts_list, *next;
+	struct nd_optlist *opt;
 
-	while (opt) {
-		next = opt->next;
+	while ((opt = TAILQ_FIRST(&ndopts->nd_opts_list)) != NULL) {
+		TAILQ_REMOVE(&ndopts->nd_opts_list, opt, next);
 		free(opt);
-		opt = next;
 	}
 }
 
 void
-sock_open()
+sock_open(void)
 {
 	struct icmp6_filter filt;
 	struct ipv6_mreq mreq;
-	struct rainfo *ra = ralist;
+	struct rainfo *ra;
 	int on;
 	/* XXX: should be max MTU attached to the node */
-	static u_char answer[1500];
+	static unsigned char answer[1500];
 
 	rcvcmsgbuflen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
 				CMSG_SPACE(sizeof(int));
-	rcvcmsgbuf = (u_char *)malloc(rcvcmsgbuflen);
+	rcvcmsgbuf = malloc(rcvcmsgbuflen);
 	if (rcvcmsgbuf == NULL) {
 		syslog(LOG_ERR, "<%s> not enough core", __func__);
 		exit(1);
@@ -1329,7 +1336,7 @@ sock_open()
 
 	sndcmsgbuflen = CMSG_SPACE(sizeof(struct in6_pktinfo)) + 
 				CMSG_SPACE(sizeof(int));
-	sndcmsgbuf = (u_char *)malloc(sndcmsgbuflen);
+	sndcmsgbuf = malloc(sndcmsgbuflen);
 	if (sndcmsgbuf == NULL) {
 		syslog(LOG_ERR, "<%s> not enough core", __func__);
 		exit(1);
@@ -1393,13 +1400,13 @@ sock_open()
 	 * join all routers multicast address on each advertising interface.
 	 */
 	if (inet_pton(AF_INET6, ALLROUTERS_LINK,
-		      &mreq.ipv6mr_multiaddr.s6_addr)
-	    != 1) {
+	    mreq.ipv6mr_multiaddr.s6_addr) != 1)
+	{
 		syslog(LOG_ERR, "<%s> inet_pton failed(library bug?)",
-		       __func__);
+		    __func__);
 		exit(1);
 	}
-	while (ra) {
+	TAILQ_FOREACH(ra, &ralist, next) {
 		mreq.ipv6mr_interface = ra->ifindex;
 		if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq,
 			       sizeof(mreq)) < 0) {
@@ -1407,7 +1414,6 @@ sock_open()
 			       __func__, ra->ifname, strerror(errno));
 			exit(1);
 		}
-		ra = ra->next;
 	}
 
 	/*
@@ -1416,12 +1422,13 @@ sock_open()
 	 */
 	if (accept_rr) {
 		if (inet_pton(AF_INET6, ALLROUTERS_SITE,
-			      &in6a_site_allrouters) != 1) {
+		     mreq.ipv6mr_multiaddr.s6_addr) != 1)
+		{
 			syslog(LOG_ERR, "<%s> inet_pton failed(library bug?)",
-			       __func__);
+			    __func__);
 			exit(1);
 		}
-		mreq.ipv6mr_multiaddr = in6a_site_allrouters;
+		ra = TAILQ_FIRST(&ralist);
 		if (mcastif) {
 			if ((mreq.ipv6mr_interface = if_nametoindex(mcastif))
 			    == 0) {
@@ -1431,33 +1438,33 @@ sock_open()
 				exit(1);
 			}
 		} else
-			mreq.ipv6mr_interface = ralist->ifindex;
+			mreq.ipv6mr_interface = ra->ifindex;
 		if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP,
 			       &mreq, sizeof(mreq)) < 0) {
 			syslog(LOG_ERR,
 			       "<%s> IPV6_JOIN_GROUP(site) on %s: %s",
 			       __func__,
-			       mcastif ? mcastif : ralist->ifname,
+			       mcastif ? mcastif : ra->ifname,
 			       strerror(errno));
 			exit(1);
 		}
 	}
 	
 	/* initialize msghdr for receiving packets */
-	rcviov[0].iov_base = (caddr_t)answer;
+	rcviov[0].iov_base = answer;
 	rcviov[0].iov_len = sizeof(answer);
-	rcvmhdr.msg_name = (caddr_t)&rcvfrom;
+	rcvmhdr.msg_name = &rcvfrom;
 	rcvmhdr.msg_namelen = sizeof(rcvfrom);
 	rcvmhdr.msg_iov = rcviov;
 	rcvmhdr.msg_iovlen = 1;
-	rcvmhdr.msg_control = (caddr_t) rcvcmsgbuf;
+	rcvmhdr.msg_control = rcvcmsgbuf;
 	rcvmhdr.msg_controllen = rcvcmsgbuflen;
 
 	/* initialize msghdr for sending packets */
 	sndmhdr.msg_namelen = sizeof(struct sockaddr_in6);
 	sndmhdr.msg_iov = sndiov;
 	sndmhdr.msg_iovlen = 1;
-	sndmhdr.msg_control = (caddr_t)sndcmsgbuf;
+	sndmhdr.msg_control = (void *)sndcmsgbuf;
 	sndmhdr.msg_controllen = sndcmsgbuflen;
 	
 	return;
@@ -1465,7 +1472,7 @@ sock_open()
 
 /* open a routing socket to watch the routing table */
 static void
-rtsock_open()
+rtsock_open(void)
 {
 	if ((rtsock = socket(PF_ROUTE, SOCK_RAW, 0)) < 0) {
 		syslog(LOG_ERR,
@@ -1475,11 +1482,11 @@ rtsock_open()
 }
 
 struct rainfo *
-if_indextorainfo(int idx)
+if_indextorainfo(unsigned int idx)
 {
-	struct rainfo *rai = ralist;
+	struct rainfo *rai;
 
-	for (rai = ralist; rai; rai = rai->next) {
+	TAILQ_FOREACH(rai, &ralist, next) {
 		if (rai->ifindex == idx)
 			return(rai);
 	}
@@ -1488,13 +1495,12 @@ if_indextorainfo(int idx)
 }
 
 static void
-ra_output(rainfo)
-struct rainfo *rainfo;
+ra_output(struct rainfo *rainfo)
 {
 	int i;
 	struct cmsghdr *cm;
 	struct in6_pktinfo *pi;
-	struct soliciter *sol, *nextsol;
+	struct soliciter *sol;
 
 	if ((iflist[rainfo->ifindex]->ifm_flags & IFF_UP) == 0) {
 		syslog(LOG_DEBUG, "<%s> %s is not up, skip sending RA",
@@ -1504,8 +1510,8 @@ struct rainfo *rainfo;
 
 	make_packet(rainfo);	/* XXX: inefficient */
 
-	sndmhdr.msg_name = (caddr_t)&sin6_allnodes;
-	sndmhdr.msg_iov[0].iov_base = (caddr_t)rainfo->ra_data;
+	sndmhdr.msg_name = (void *)&sin6_linklocal_allnodes;
+	sndmhdr.msg_iov[0].iov_base = (void *)rainfo->ra_data;
 	sndmhdr.msg_iov[0].iov_len = rainfo->ra_datalen;
 
 	cm = CMSG_FIRSTHDR(&sndmhdr);
@@ -1534,7 +1540,7 @@ struct rainfo *rainfo;
 
 	i = sendmsg(sock, &sndmhdr, 0);
 
-	if (i < 0 || i != rainfo->ra_datalen)  {
+	if (i < 0 || (size_t)i != rainfo->ra_datalen)  {
 		if (i < 0) {
 			syslog(LOG_ERR, "<%s> sendmsg on %s: %s",
 			       __func__, rainfo->ifname,
@@ -1547,11 +1553,9 @@ struct rainfo *rainfo;
 	 * XXX commented out.  reason: though spec does not forbit it, unicast
 	 * advert does not really help
 	 */
-	for (sol = rainfo->soliciter; sol; sol = nextsol) {
-		nextsol = sol->next;
-
+	while ((sol = TAILQ_FIRST(&rainfo->soliciter)) != NULL) {
 #if 0
-		sndmhdr.msg_name = (caddr_t)&sol->addr;
+		sndmhdr.msg_name = (void *)&sol->addr;
 		i = sendmsg(sock, &sndmhdr, 0);
 		if (i < 0 || i != rainfo->ra_datalen)  {
 			if (i < 0) {
@@ -1562,11 +1566,9 @@ struct rainfo *rainfo;
 			}
 		}
 #endif
-
-		sol->next = NULL;
+		TAILQ_REMOVE(&rainfo->soliciter, sol, next);
 		free(sol);
 	}
-	rainfo->soliciter = NULL;
 
 	/* update counter */
 	if (rainfo->initcounter < MAX_INITIAL_RTR_ADVERTISEMENTS)

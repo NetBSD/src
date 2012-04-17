@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.195.2.1 2011/11/10 14:31:54 yamt Exp $
+.\"	$NetBSD: make.1,v 1.195.2.2 2012/04/17 00:09:35 yamt Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd November 6, 2011
+.Dd March 31, 2012
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -38,40 +38,18 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl BeikNnqrstWX
-.Bk -words
 .Op Fl C Ar directory
-.Ek
-.Bk -words
 .Op Fl D Ar variable
-.Ek
-.Bk -words
 .Op Fl d Ar flags
-.Ek
-.Bk -words
 .Op Fl f Ar makefile
-.Ek
-.Bk -words
 .Op Fl I Ar directory
-.Ek
-.Bk -words
 .Op Fl J Ar private
-.Ek
-.Bk -words
 .Op Fl j Ar max_jobs
-.Ek
-.Bk -words
 .Op Fl m Ar directory
-.Ek
-.Bk -words
 .Op Fl T Ar file
-.Ek
-.Bk -words
 .Op Fl V Ar variable
-.Ek
 .Op Ar variable=value
-.Bk -words
 .Op Ar target ...
-.Ek
 .Sh DESCRIPTION
 .Nm
 is a program designed to simplify the maintenance of other programs.
@@ -95,7 +73,7 @@ This manual page is intended as a reference document only.
 For a more thorough description of
 .Nm
 and makefiles, please refer to
-.%T "Make \- A Tutorial" .
+.%T "PMake \- A Tutorial" .
 .Pp
 .Nm
 will prepend the contents of the
@@ -788,6 +766,9 @@ will not create .meta files in
 This can be overridden by setting
 .Va bf
 to a value which represents True.
+.It Pa env
+For debugging, it can be useful to inlcude the environment
+in the .meta file.
 .It Pa verbose
 If in "meta" mode, print a clue about the target being built.
 This is useful if the build is otherwise running silently.
@@ -803,6 +784,7 @@ See also
 If
 .Va bf
 is True, when a .meta file is created, mark the target
+.Ic .SILENT .
 .El
 .It Va .MAKE.META.BAILIWICK
 In "meta" mode, provides a list of prefixes which
@@ -1256,6 +1238,9 @@ The ODE convention is that
 should start and end with a period.
 For example.
 .Dl ${LINKS:@.LINK.@${LN} ${TARGET} ${.LINK.}@}
+.Pp
+However a single character varaiable is often more readable:
+.Dl ${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'${.newline}@}
 .It Cm \&:U Ns Ar newval
 If the variable is undefined
 .Ar newval
@@ -1277,6 +1262,8 @@ The path of the node which has the same name as the variable
 is the value.
 If no such node exists or its path is null, then the
 name of the variable is used.
+In order for this modifier to work, the name (node) must at least have 
+appeared on the rhs of a dependency.
 .Sm off
 .It Cm \&:\&! Ar cmd Cm \&!
 .Sm on
@@ -1436,6 +1423,11 @@ except for internal variables (those that start with
 This is not affected by the
 .Fl X
 flag, so should be used with caution.
+For compatibility with other
+.Nm
+programs
+.Ql export variable=value
+is also accepted.
 .Pp
 Appending a variable name to
 .Va .MAKE.EXPORTED

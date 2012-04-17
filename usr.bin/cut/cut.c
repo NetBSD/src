@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.c,v 1.25 2008/07/21 14:19:22 lukem Exp $	*/
+/*	$NetBSD: cut.c,v 1.25.2.1 2012/04/17 00:09:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)cut.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: cut.c,v 1.25 2008/07/21 14:19:22 lukem Exp $");
+__RCSID("$NetBSD: cut.c,v 1.25.2.1 2012/04/17 00:09:30 yamt Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -285,8 +285,8 @@ f_cut(FILE *fp, const char *fname __unused)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage:\tcut -b list [-n] [file ...]\n"
-	    "\tcut -c list [file1 ...]\n"
+	(void)fprintf(stderr, "usage:\tcut -b list [-n] [file ...]\n"
+	    "\tcut -c list [file ...]\n"
 	    "\tcut -f list [-d delim] [-s] [file ...]\n");
 	exit(1);
 }

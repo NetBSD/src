@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.105.2.1 2011/11/10 14:31:46 yamt Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.105.2.2 2012/04/17 00:07:41 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.103 2011/11/02 19:55:57 jakllsch Exp
+ *	NetBSD: miidevs,v 1.107 2012/04/06 18:49:17 matt Exp
  */
 
 /*-
@@ -47,7 +47,7 @@
  * mapping; the bit positions are defined in IEEE 802-1990, figure 5.2.
  * (There is a formal 802.3 interpretation, number 1-07/98 of July 09 1998,
  * about this.)
- * The MII_OUI() macro in "mii.h" reflects this.
+ * The MII_OUI() macro in "miivar.h" reflects this.
  * If a vendor uses a different mapping, an "xx" prefixed OUI is defined here
  * which is mangled accordingly to compensate.
  */
@@ -252,6 +252,8 @@
 #define	MII_STR_CICADA_CS8201A	"Cicada CS8201 10/100/1000TX PHY"
 #define	MII_MODEL_CICADA_CS8201B	0x0021
 #define	MII_STR_CICADA_CS8201B	"Cicada CS8201 10/100/1000TX PHY"
+#define	MII_MODEL_xxCICADA_VSC8221	0x0015
+#define	MII_STR_xxCICADA_VSC8221	"Vitesse VSC8221 10/100/1000BASE-T PHY"
 #define	MII_MODEL_xxCICADA_VSC8244	0x002c
 #define	MII_STR_xxCICADA_VSC8244	"Vitesse VSC8244 Quad 10/100/1000BASE-T PHY"
 #define	MII_MODEL_xxCICADA_CS8201B	0x0021
@@ -346,6 +348,8 @@
 #define	MII_STR_xxMARVELL_E1116	"Marvell 88E1116 Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1116R	0x0024
 #define	MII_STR_xxMARVELL_E1116R	"Marvell 88E1116R Gigabit PHY"
+#define	MII_MODEL_xxMARVELL_E1116R_29	0x0029
+#define	MII_STR_xxMARVELL_E1116R_29	"Marvell 88E1116R Gigabit PHY"
 
 /* Myson Technology PHYs */
 #define	MII_MODEL_xxMYSON_MTD972	0x0000
@@ -368,6 +372,8 @@
 #define	MII_STR_xxNATSEMI_DP83861	"DP83861 1000BASE-T media interface"
 #define	MII_MODEL_xxNATSEMI_DP83865	0x0007
 #define	MII_STR_xxNATSEMI_DP83865	"DP83865 1000BASE-T media interface"
+#define	MII_MODEL_xxNATSEMI_DP83849	0x000a
+#define	MII_STR_xxNATSEMI_DP83849	"DP83849 10/100 media interface"
 
 /* PMC Sierra PHYs */
 #define	MII_MODEL_xxPMCSIERRA_PM8351	0x0000

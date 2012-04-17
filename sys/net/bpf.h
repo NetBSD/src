@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.58 2011/08/30 14:22:22 bouyer Exp $	*/
+/*	$NetBSD: bpf.h,v 1.58.2.1 2012/04/17 00:08:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -44,6 +44,8 @@
 
 /* BSD style release date */
 #define BPF_RELEASE 199606
+
+__BEGIN_DECLS
 
 typedef	int bpf_int32;
 typedef	u_int bpf_u_int32;
@@ -380,6 +382,8 @@ void	 bpfilterattach(int);
 
 int	 bpf_validate(const struct bpf_insn *, int);
 u_int	 bpf_filter(const struct bpf_insn *, const u_char *, u_int, u_int);
+
+__END_DECLS
 
 /*
  * Number of scratch memory words (for BPF_LD|BPF_MEM and BPF_ST).

@@ -1,0 +1,85 @@
+.\" Copyright (C) 2004 International Business Machines Corporation
+.\" Written by Megan Schneider based on the Trusted Computing Group Software Stack Specification Version 1.1 Golden
+.\"
+.de Sh \" Subsection
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+.de Sp \" Vertical space (when we can't use .PP)
+.if t .sp .5v
+.if n .sp
+..
+.de Ip \" List item
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH "Tspi_TPM_KillMaintenanceFeature" 3 "2004-05-25" "TSS 1.1"
+.ce 1
+TCG Software Stack Developer's Reference
+.SH NAME
+Tspi_TPM_KillMaintenanceFeature \- Disables the ability to create a maintenance archive
+.SH "SYNOPSIS"
+.ad l
+.hy 0
+.nf
+.B #include <tss/platform.h>
+.B #include <tss/tcpa_defines.h>
+.B #include <tss/tcpa_typedef.h>
+.B #include <tss/tcpa_struct.h>
+.B #include <tss/tss_typedef.h>
+.B #include <tss/tss_structs.h>
+.B #include <tss/tspi.h>
+.sp
+.BI "TSS_RESULT Tspi_TPM_KillMaintenanceFeature(TSS_HTPM " hTPM ");"
+.fi
+.sp
+.ad
+.hy
+
+.SH "DESCRIPTION"
+.PP
+\fBTspi_TPM_KillMaintenanceFeature\fR disables the
+functionality of creating a maintenance archive. \fBThis feature is
+not yet implemented\fR.
+
+.SH "PARAMETERS"
+.PP
+.SS hTPM
+The \fIhTPM\fR parameter is used to specify the handle of the TPM object.
+
+.SH "RETURN CODES"
+.PP
+\fBTspi_TPM_KillMaintenanceFeature\fR returns TSS_SUCCESS on success,
+otherwise one of the following values is returned:
+.TP
+.SM TSS_E_INVALID_HANDLE
+\fIhTPM\fR is not a valid handle.
+
+.TP
+.SM TSS_E_INTERNAL_ERROR
+An internal SW error has been detected.
+
+.TP
+.SM TSS_E_NOTIMPL
+The function is not implemented.
+
+
+.SH "CONFORMING TO"
+
+.PP
+\fBTspi_TPM_KillMaintenanceFeature\fR conforms to the Trusted Computing
+Group Software Specification version 1.1 Golden
+
+.SH "SEE ALSO"
+
+.PP
+\fBTspi_TPM_CreateMaintenanceArchive\fR(3),
+\fBTspi_TPM_LoadMaintenancePubKey\fR(3),
+\fBTspi_TPM_CheckMaintenancePubKey\fR(3).
+

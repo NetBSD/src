@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.53 2011/07/26 20:51:24 dyoung Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.53.2.1 2012/04/17 00:07:49 yamt Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.53 2011/07/26 20:51:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.53.2.1 2012/04/17 00:07:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,13 +290,7 @@ wi_pci_attach(device_t parent, device_t self, void *aux)
 		break;
 	}
 
-	{
-		char devinfo[256];
-
-		pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-		printf(": %s (rev. 0x%02x)\n", devinfo,
-		       PCI_REVISION(pa->pa_class));
-	}
+	pci_aprint_devinfo(pa, NULL);
 
 	sc->sc_enabled = 1;
 	sc->sc_enable = wi_pci_enable;

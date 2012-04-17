@@ -1,4 +1,4 @@
-# $NetBSD: files.acorn26,v 1.15 2011/06/12 03:35:36 rmind Exp $
+# $NetBSD: files.acorn26,v 1.15.2.1 2012/04/17 00:05:51 yamt Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -98,7 +98,7 @@ attach	wf at wfdc
 # Steal code from arch/atari/dev/fd{.c,reg.h}
 
 # Econet module (Motorola 6854) (usually at bank 2 fiq 2)
-device	eca: fiq, eco, ifnet
+device	eca: fiq, eco, arp, ifnet
 attach	eca at ioc
 file	arch/acorn26/ioc/if_eca.c		eca		needs-flag
 file	arch/acorn26/ioc/if_eca_fiq.S		eca

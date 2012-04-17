@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.66 2011/05/31 06:49:26 christos Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.66.4.1 2012/04/17 00:05:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.66 2011/05/31 06:49:26 christos Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.66.4.1 2012/04/17 00:05:21 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -246,14 +246,16 @@ resrcmd(struct addrinfo *res, char **ahost, u_int32_t rport,
 
 			hbuf[0] = '\0';
 			if (getnameinfo(r->ai_addr, r->ai_addrlen,
-			    hbuf, sizeof(hbuf), NULL, 0, niflags) != 0)
+			    hbuf, (socklen_t)sizeof(hbuf), NULL, 0, niflags) !=
+			    0)
 				strlcpy(hbuf, "(invalid)", sizeof(hbuf));
 			errno = oerrno;
 			warn("rcmd: connect to address %s", hbuf);
 			r = r->ai_next;
 			hbuf[0] = '\0';
 			if (getnameinfo(r->ai_addr, r->ai_addrlen,
-			    hbuf, sizeof(hbuf), NULL, 0, niflags) != 0)
+			    hbuf, (socklen_t)sizeof(hbuf), NULL, 0, niflags) !=
+			    0)
 				strlcpy(hbuf, "(invalid)", sizeof(hbuf));
 			(void)fprintf(stderr, "Trying %s...\n", hbuf);
 			continue;
@@ -318,7 +320,8 @@ resrcmd(struct addrinfo *res, char **ahost, u_int32_t rport,
 		case AF_INET6:
 #endif
 			if (getnameinfo((struct sockaddr *)(void *)&from, len,
-			    NULL, 0, num, sizeof(num), NI_NUMERICSERV) != 0 ||
+			    NULL, 0, num, (socklen_t)sizeof(num),
+			    NI_NUMERICSERV) != 0 ||
 			    (atoi(num) >= IPPORT_RESERVED ||
 			     atoi(num) < IPPORT_RESERVED / 2)) {
 				warnx(
@@ -625,7 +628,8 @@ iruserok(u_int32_t raddr, int superuser, const char *ruser, const char *luser)
 	irsin.sin_len = sizeof(irsin);
 #endif
 	memcpy(&irsin.sin_addr, &raddr, sizeof(irsin.sin_addr));
-	return iruserok_sa(&irsin, sizeof(irsin), superuser, ruser, luser);
+	return iruserok_sa(&irsin, (socklen_t)sizeof(irsin), superuser, ruser,
+	    luser);
 }
 
 /*
@@ -740,7 +744,7 @@ __ivaliduser(FILE *hostf, u_int32_t raddr, const char *luser,
 #endif
 	memcpy(&ivusin.sin_addr, &raddr, sizeof(ivusin.sin_addr));
 	return __ivaliduser_sa(hostf, (struct sockaddr *)(void *)&ivusin,
-	    sizeof(ivusin), luser, ruser);
+	    (socklen_t)sizeof(ivusin), luser, ruser);
 }
 
 #ifdef notdef	/*_LIBC*/
@@ -765,7 +769,7 @@ __ivaliduser_sa(FILE *hostf, const struct sockaddr *raddr, socklen_t salen,
 	_DIAGASSERT(luser != NULL);
 	_DIAGASSERT(ruser != NULL);
 
-	while (fgets(buf, sizeof(buf), hostf)) {
+	while (fgets(buf, (int)sizeof(buf), hostf)) {
 		p = buf;
 		/* Skip lines that are too long. */
 		if (strchr(p, '\n') == NULL) {
@@ -909,7 +913,8 @@ __icheckhost(const struct sockaddr *raddr, socklen_t salen, const char *lhost)
 	_DIAGASSERT(lhost != NULL);
 
 	h1[0] = '\0';
-	if (getnameinfo(raddr, salen, h1, sizeof(h1), NULL, 0, niflags) != 0)
+	if (getnameinfo(raddr, salen, h1, (socklen_t)sizeof(h1), NULL, 0,
+	    niflags) != 0)
 		return 0;
 
 	/* Resolve laddr into sockaddr */
@@ -926,8 +931,8 @@ __icheckhost(const struct sockaddr *raddr, socklen_t salen, const char *lhost)
 	 */
 	for (r = res; r; r = r->ai_next) {
 		h2[0] = '\0';
-		if (getnameinfo(r->ai_addr, r->ai_addrlen, h2, sizeof(h2),
-		    NULL, 0, niflags) != 0)
+		if (getnameinfo(r->ai_addr, r->ai_addrlen, h2,
+		    (socklen_t)sizeof(h2), NULL, 0, niflags) != 0)
 			continue;
 		if (strcmp(h1, h2) == 0) {
 			freeaddrinfo(res);
@@ -957,10 +962,11 @@ __gethostloop(const struct sockaddr *raddr, socklen_t salen)
 	_DIAGASSERT(raddr != NULL);
 
 	h1[0] = remotehost[0] = '\0';
-	if (getnameinfo(raddr, salen, remotehost, sizeof(remotehost),
+	if (getnameinfo(raddr, salen, remotehost, (socklen_t)sizeof(remotehost),
 	    NULL, 0, NI_NAMEREQD) != 0)
 		return NULL;
-	if (getnameinfo(raddr, salen, h1, sizeof(h1), NULL, 0, niflags) != 0)
+	if (getnameinfo(raddr, salen, h1, (socklen_t)sizeof(h1), NULL, 0,
+	    niflags) != 0)
 		return NULL;
 
 	/*
@@ -978,8 +984,8 @@ __gethostloop(const struct sockaddr *raddr, socklen_t salen)
 
 	for (r = res; r; r = r->ai_next) {
 		h2[0] = '\0';
-		if (getnameinfo(r->ai_addr, r->ai_addrlen, h2, sizeof(h2),
-		    NULL, 0, niflags) != 0)
+		if (getnameinfo(r->ai_addr, r->ai_addrlen, h2,
+		    (socklen_t)sizeof(h2), NULL, 0, niflags) != 0)
 			continue;
 		if (strcmp(h1, h2) == 0) {
 			freeaddrinfo(res);

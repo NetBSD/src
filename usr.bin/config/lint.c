@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.c,v 1.8 2009/08/30 21:07:41 cube Exp $	*/
+/*	$NetBSD: lint.c,v 1.8.6.1 2012/04/17 00:09:30 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -30,12 +30,13 @@
 #include "nbtool_config.h"
 #endif
 
+#include <assert.h>
 #include <stdlib.h>
 
 #include "defs.h"
 
 void
-emit_params()
+emit_params(void)
 {
 
 	printf("version\t%d\n", CONFIG_VERSION);
@@ -62,46 +63,70 @@ static struct opt_type {
 };
 
 static int
-do_emit_option(const char *name, void *value, void *v)
+do_emit_option(const char *name, struct defoptlist *dl, void *v)
 {
-	struct nvlist *nv = value;
 	const struct opt_type *ot = v;
+	const char *value;
 
-	if (nv->nv_flags & NV_OBSOLETE)
+	if (dl->dl_obsolete)
 		return 0;
 
 	if (ht_lookup(*(ot->ot_ht), name))
 		return 0;
 
-	printf("%s\t%s", ot->ot_name, nv->nv_name);
+	printf("%s\t%s", ot->ot_name, dl->dl_name);
 	if (ot->ot_type == OT_PARAM) {
-		struct nvlist *nv2  = ht_lookup(defoptlint, nv->nv_name);
-		if (nv2 == NULL)
-			nv2 = nv;
-		printf("=\"%s\"", nv2->nv_str ? nv2->nv_str : "1");
+		struct defoptlist *dl2 = dlhash_lookup(defoptlint, dl->dl_name);
+		if (dl2 != NULL)
+			value = dl2->dl_lintvalue;
+		else
+			value = dl->dl_value;
+		assert(dl2 == dl);
+		printf("=\"%s\"", value ? value : "1");
 	}
 	printf("\n");
+
+	return 1;
+}
+
+/*
+ * Same as do_emit_option but for filesystem definitions, which now
+ * have a different data type. XXX these should probably be unified
+ * again.
+ */
+static int
+do_emit_fs(const char *name, struct nvlist *nv, void *v)
+{
+	const struct opt_type *ot = v;
+
+	if (ht_lookup(*(ot->ot_ht), name))
+		return 0;
+
+	assert(ot->ot_type != OT_PARAM);
+	printf("%s\t%s\n", ot->ot_name, nv->nv_name);
 
 	return 1;
 }
 	
 
 void
-emit_options()
+emit_options(void)
 {
 
-	(void)ht_enumerate(defflagtab, do_emit_option, &opt_types[0]);
+	(void)dlhash_enumerate(defflagtab, do_emit_option, &opt_types[0]);
 	printf("\n");
-	(void)ht_enumerate(defparamtab, do_emit_option, &opt_types[1]);
+	(void)dlhash_enumerate(defparamtab, do_emit_option, &opt_types[1]);
 	printf("\n");
-	(void)ht_enumerate(deffstab, do_emit_option, &opt_types[2]);
+	(void)nvhash_enumerate(deffstab, do_emit_fs, &opt_types[2]);
 	printf("\n");
 }
 
 static void
 do_emit_instances(struct devbase *d, struct attr *at)
 {
-	struct nvlist *nv, *nv1;
+	struct nvlist *nv1;
+	struct loclist *ll;
+	struct attrlist *al;
 	struct attr *a;
 	struct deva *da;
 
@@ -129,10 +154,10 @@ do_emit_instances(struct devbase *d, struct attr *at)
 	else if (at != NULL && !d->d_ispseudo && da->d_ihead == NULL) {
 		printf("%s0\tat\t%s?", d->d_name, at->a_name);
 
-		for (nv = at->a_locs; nv != NULL; nv = nv->nv_next) {
-			if (nv->nv_num == 0)
-				printf(" %s %c", nv->nv_name,
-				    nv->nv_str ? '?' : '0');
+		for (ll = at->a_locs; ll != NULL; ll = ll->ll_next) {
+			if (ll->ll_num == 0)
+				printf(" %s %c", ll->ll_name,
+				    ll->ll_string ? '?' : '0');
 		}
 
 		printf("\n");
@@ -142,8 +167,8 @@ do_emit_instances(struct devbase *d, struct attr *at)
 	 * Children attachments are found the same way as in the orphan
 	 * detection code in main.c.
 	 */
-	for (nv = d->d_attrs; nv != NULL; nv = nv->nv_next) {
-		a = nv->nv_ptr;
+	for (al = d->d_attrs; al != NULL; al = al->al_next) {
+		a = al->al_this;
 		for (nv1 = a->a_devs; nv1 != NULL; nv1 = nv1->nv_next)
 			do_emit_instances(nv1->nv_ptr, a);
 	}
@@ -171,7 +196,7 @@ emit_pseudo_instance(const char *name, void *value, void *v)
 }
 
 void
-emit_instances()
+emit_instances(void)
 {
 
 	(void)ht_enumerate(devroottab, emit_root_instance, NULL);

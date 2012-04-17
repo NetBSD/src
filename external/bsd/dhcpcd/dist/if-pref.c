@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2010 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2012 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -55,9 +55,9 @@ ifcmp(struct interface *si, struct interface *ti)
 		sill = (si->state->new->cookie == htonl(MAGIC_COOKIE));
 		till = (ti->state->new->cookie == htonl(MAGIC_COOKIE));
 		if (!sill && till)
-			return -1;
-		if (sill && !till)
 			return 1;
+		if (sill && !till)
+			return -1;
 	}
 	/* Then carrier status. */
 	if (si->carrier > ti->carrier)

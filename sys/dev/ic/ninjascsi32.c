@@ -1,4 +1,4 @@
-/*	$NetBSD: ninjascsi32.c,v 1.21 2010/11/13 13:52:01 uebayasi Exp $	*/
+/*	$NetBSD: ninjascsi32.c,v 1.21.8.1 2012/04/17 00:07:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.21 2010/11/13 13:52:01 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.21.8.1 2012/04/17 00:07:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1399,9 +1399,13 @@ njsc32_reset_bus(struct njsc32_softc *sc)
 	/* initialize target structure */
 	njsc32_init_targets(sc);
 
+	/* XXXSMP scsipi */
+	KERNEL_LOCK(1, curlwp);
 	s = splbio();
 	scsipi_async_event(&sc->sc_channel, ASYNC_EVENT_RESET, NULL);
 	splx(s);
+	/* XXXSMP scsipi */
+	KERNEL_UNLOCK_ONE(curlwp);
 
 	/* release SCSI bus reset */
 	njsc32_write_1(sc, NJSC32_REG_SCSI_BUS_CONTROL, 0);

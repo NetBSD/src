@@ -1,4 +1,5 @@
-/*	$NetBSD: machdep.c,v 1.5 2011/08/16 06:59:19 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5.2.1 2012/04/17 00:06:17 yamt Exp $	*/
+
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -27,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2011/08/16 06:59:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5.2.1 2012/04/17 00:06:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/boot_flag.h>
@@ -52,15 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2011/08/16 06:59:19 matt Exp $");
 #include <mips/ralink/ralink_var.h>
 
 /* structures we define/alloc for other files in the kernel */
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
-struct cpu_info cpu_info_store;
-int physmem;		/* # pages of physical memory */
+
 int mem_cluster_cnt = 0;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
-
-/* structures others define for us */
-extern struct user *proc0paddr;
 
 void mach_init(void);
 
@@ -107,13 +103,13 @@ mach_init(void)
 
 	memset(edata, 0, kernend - (vaddr_t)edata);
 
-#ifdef RA_CONSOLE_EARLY
+#ifdef RALINK_CONSOLE_EARLY
 	/*
 	 * set up early console
 	 *  cannot printf until sometime (?) in mips_vector_init
 	 *  meanwhile can use the ra_console_putc primitive if necessary
 	 */
-	ra_console_early();
+	ralink_console_early();
 #endif
 
 	/* set CPU model info for sysctl_hw */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.39 2011/06/18 08:08:28 matt Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.39.2.1 2012/04/17 00:06:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,10 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.39 2011/06/18 08:08:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.39.2.1 2012/04/17 00:06:37 yamt Exp $");
 
 #include "opt_inet.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -41,9 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.39 2011/06/18 08:08:28 matt Exp $");
 #include <sys/systm.h>
 #include <sys/callout.h>
 
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -86,9 +83,7 @@ struct gmac_softc {
 	struct callout sc_tick_ch;
 	char sc_laddr[6];
 
-#if NRND > 0
-	rndsource_element_t sc_rnd_source; /* random source */
-#endif
+	krndsource_t sc_rnd_source; /* random source */
 };
 
 #define sc_if sc_ethercom.ec_if
@@ -252,9 +247,7 @@ gmac_attach(device_t parent, device_t self, void *aux)
 
 	if_attach(ifp);
 	ether_ifattach(ifp, laddr);
-#if NRND > 0 
 	rnd_attach_source(&sc->sc_rnd_source, xname, RND_TYPE_NET, 0); 
-#endif
 }
 
 u_int
@@ -337,9 +330,7 @@ gmac_intr(void *v)
 	if (status & GMAC_INT_TXEMPTY)
 		gmac_tint(sc);
 
-#if NRND > 0 
 	rnd_add_uint32(&sc->sc_rnd_source, status);
-#endif  
 	return 1;
 }
 

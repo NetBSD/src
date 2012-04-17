@@ -1,7 +1,7 @@
-/*	$NetBSD: mpu_ym.c,v 1.15 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: mpu_ym.c,v 1.15.34.1 2012/04/17 00:07:39 yamt Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_ym.c,v 1.15 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_ym.c,v 1.15.34.1 2012/04/17 00:07:39 yamt Exp $");
 
 #define NMPU_YM 1
 
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: mpu_ym.c,v 1.15 2008/04/28 20:23:52 martin Exp $");
 #include <sys/conf.h>
 #include <sys/audioio.h>
 #include <sys/midiio.h>
-
 #include <sys/bus.h>
 
 #include <dev/audio_if.h>
@@ -96,6 +95,7 @@ mpu_ym_attach(device_t parent, device_t self, void *aux)
 	sc->model = YM_IS_SA3(ssc) ?
 	    "OPL3-SA3 MPU-401 MIDI UART" : "OPL3-SA2 MPU-401 MIDI UART";
 	sc->sc_dev  = self;
+	sc->lock = &ssc->sc_ad1848.sc_ad1848.sc_intr_lock;
 
 	mpu_attach(sc);
 }

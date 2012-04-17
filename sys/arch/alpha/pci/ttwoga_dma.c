@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga_dma.c,v 1.6 2011/07/01 19:19:50 dyoung Exp $ */
+/* $NetBSD: ttwoga_dma.c,v 1.6.2.1 2012/04/17 00:05:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,17 +31,17 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ttwoga_dma.c,v 1.6 2011/07/01 19:19:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttwoga_dma.c,v 1.6.2.1 2012/04/17 00:05:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/device.h> 
+#include <sys/device.h>
 
 #define	_ALPHA_BUS_DMA_PRIVATE
 #include <sys/bus.h>
 
-#include <dev/pci/pcireg.h> 
+#include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
 #include <alpha/pci/ttwogareg.h>
@@ -83,7 +83,7 @@ void	ttwoga_bus_dmamap_unload_sgmap(bus_dma_tag_t, bus_dmamap_t);
  */
 #define	TTWOGA_TLB_INVALIDATE(tcp)					\
 do {									\
-	u_int64_t temp;							\
+	uint64_t temp;							\
 									\
 	alpha_mb();							\
 	temp = T2GA((tcp), T2_IOCSR);					\
@@ -194,7 +194,7 @@ ttwoga_dma_init(struct ttwoga_config *tcp)
 	 */
 	alpha_sgmap_init(t, &tcp->tc_sgmap, "ttwoga_sgmap",
 	    TTWOGA_SGMAP_MAPPED_BASE, 0, TTWOGA_SGMAP_MAPPED_SIZE,
-	    sizeof(u_int64_t), NULL, 0);
+	    sizeof(uint64_t), NULL, 0);
 
 	/*
 	 * Set up window 2 as an 8MB SGMAP-mapped window

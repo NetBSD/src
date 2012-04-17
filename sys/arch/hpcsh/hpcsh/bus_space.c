@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.18 2011/07/20 20:46:49 dyoung Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.18.2.1 2012/04/17 00:06:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.18 2011/07/20 20:46:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.18.2.1 2012/04/17 00:06:25 yamt Exp $");
 
 #include "debug_hpcsh.h"
 
@@ -156,7 +156,7 @@ bus_space_create(struct hpcsh_bus_space *hbs, const char *name,
 		hbs->hbs_base_addr = addr; /* no extent */
 	} else {
 		hbs->hbs_extent = extent_create(name, addr, addr + size - 1,
-						M_DEVBUF, 0, 0, EX_NOWAIT);
+						0, 0, EX_NOWAIT);
 		if (hbs->hbs_extent == NULL) {
 			panic("%s:: unable to create bus_space for "
 			      "0x%08lx-%#lx", __func__, addr, size);

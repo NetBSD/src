@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_ihash.c,v 1.7 2011/06/12 03:35:52 rmind Exp $	*/
+/*	$NetBSD: efs_ihash.c,v 1.7.2.1 2012/04/17 00:08:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -36,10 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_ihash.c,v 1.7 2011/06/12 03:35:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_ihash.c,v 1.7.2.1 2012/04/17 00:08:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/proc.h>
 #include <sys/mutex.h>

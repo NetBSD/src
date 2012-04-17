@@ -1,4 +1,4 @@
-/*	$NetBSD: msm6258.c,v 1.16 2011/10/16 03:10:18 isaki Exp $	*/
+/*	$NetBSD: msm6258.c,v 1.16.2.1 2012/04/17 00:07:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -30,11 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.16 2011/10/16 03:10:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.16.2.1 2012/04/17 00:07:35 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/select.h>
 #include <sys/audioio.h>
 
@@ -51,7 +51,8 @@ struct msm6258_codecvar {
 };
 
 static stream_filter_t *msm6258_factory
-	(int (*)(stream_fetcher_t *, audio_stream_t *, int));
+	(struct audio_softc *,
+	 int (*)(struct audio_softc *, stream_fetcher_t *, audio_stream_t *, int));
 static void msm6258_dtor(struct stream_filter *);
 static inline uint8_t	pcm2adpcm_step(struct msm6258_codecvar *, int16_t);
 static inline int16_t	adpcm2pcm_step(struct msm6258_codecvar *, uint8_t);
@@ -75,11 +76,12 @@ static const int adpcm_estimstep[16] = {
 };
 
 static stream_filter_t *
-msm6258_factory(int (*fetch_to)(stream_fetcher_t *, audio_stream_t *, int))
+msm6258_factory(struct audio_softc *asc,
+    int (*fetch_to)(struct audio_softc *, stream_fetcher_t *, audio_stream_t *, int))
 {
 	struct msm6258_codecvar *this;
 
-	this = malloc(sizeof(*this), M_DEVBUF, M_WAITOK | M_ZERO);
+	this = kmem_alloc(sizeof(struct msm6258_codecvar), KM_SLEEP);
 	this->base.base.fetch_to = fetch_to;
 	this->base.dtor = msm6258_dtor;
 	this->base.set_fetcher = stream_filter_set_fetcher;
@@ -91,7 +93,7 @@ static void
 msm6258_dtor(struct stream_filter *this)
 {
 	if (this != NULL)
-		free(this, M_DEVBUF);
+		kmem_free(this, sizeof(struct msm6258_codecvar));
 }
 
 /*
@@ -132,15 +134,15 @@ pcm2adpcm_step(struct msm6258_codecvar *mc, int16_t a)
 
 #define DEFINE_FILTER(name)	\
 static int \
-name##_fetch_to(stream_fetcher_t *, audio_stream_t *, int); \
+name##_fetch_to(struct audio_softc *, stream_fetcher_t *, audio_stream_t *, int); \
 stream_filter_t * \
 name(struct audio_softc *sc, const audio_params_t *from, \
      const audio_params_t *to) \
 { \
-	return msm6258_factory(name##_fetch_to); \
+	return msm6258_factory(sc, name##_fetch_to); \
 } \
 static int \
-name##_fetch_to(stream_fetcher_t *self, audio_stream_t *dst, int max_used)
+name##_fetch_to(struct audio_softc *asc, stream_fetcher_t *self, audio_stream_t *dst, int max_used)
 
 DEFINE_FILTER(msm6258_slinear16_to_adpcm)
 {
@@ -152,7 +154,7 @@ DEFINE_FILTER(msm6258_slinear16_to_adpcm)
 
 	this = (stream_filter_t *)self;
 	mc = (struct msm6258_codecvar *)self;
-	if ((err = this->prev->fetch_to(this->prev, this->src, max_used * 4)))
+	if ((err = this->prev->fetch_to(asc, this->prev, this->src, max_used * 4)))
 		return err;
 	m = dst->end - dst->start;
 	m = min(m, max_used);
@@ -215,7 +217,7 @@ DEFINE_FILTER(msm6258_linear8_to_adpcm)
 
 	this = (stream_filter_t *)self;
 	mc = (struct msm6258_codecvar *)self;
-	if ((err = this->prev->fetch_to(this->prev, this->src, max_used * 2)))
+	if ((err = this->prev->fetch_to(asc, this->prev, this->src, max_used * 2)))
 		return err;
 	m = dst->end - dst->start;
 	m = min(m, max_used);
@@ -286,7 +288,7 @@ DEFINE_FILTER(msm6258_adpcm_to_slinear16)
 	this = (stream_filter_t *)self;
 	mc = (struct msm6258_codecvar *)self;
 	max_used = (max_used + 3) & ~3; /* round up multiple of 4 */
-	if ((err = this->prev->fetch_to(this->prev, this->src, max_used / 4)))
+	if ((err = this->prev->fetch_to(asc, this->prev, this->src, max_used / 4)))
 		return err;
 	m = (dst->end - dst->start) & ~3;
 	m = min(m, max_used);
@@ -352,7 +354,7 @@ DEFINE_FILTER(msm6258_adpcm_to_linear8)
 	this = (stream_filter_t *)self;
 	mc = (struct msm6258_codecvar *)self;
 	max_used = (max_used + 1) & ~1; /* round up multiple of 4 */
-	if ((err = this->prev->fetch_to(this->prev, this->src, max_used / 2)))
+	if ((err = this->prev->fetch_to(asc, this->prev, this->src, max_used / 2)))
 		return err;
 	m = (dst->end - dst->start) & ~1;
 	m = min(m, max_used);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.223 2011/07/01 07:45:39 matt Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.223.2.1 2012/04/17 00:07:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,9 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.223 2011/07/01 07:45:39 matt Exp $");
-
-#include "rnd.h"
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.223.2.1 2012/04/17 00:07:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,9 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.223 2011/07/01 07:45:39 matt Exp $");
 #include <sys/queue.h>
 #include <sys/syslog.h>
 
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -378,9 +374,7 @@ struct wm_softc {
 
 	int sc_mchash_type;		/* multicast filter offset */
 
-#if NRND > 0
-	rndsource_element_t rnd_source;	/* random source */
-#endif
+	krndsource_t rnd_source;	/* random source */
 };
 
 #define	WM_RXCHAIN_RESET(sc)						\
@@ -1143,8 +1137,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 		sc->sc_dmat = pa->pa_dmat;
 
 	sc->sc_rev = PCI_REVISION(pci_conf_read(pc, pa->pa_tag, PCI_CLASS_REG));
-	aprint_naive(": Ethernet controller\n");
-	aprint_normal(": %s, rev. %d\n", wmp->wmp_name, sc->sc_rev);
+	pci_aprint_devinfo_fancy(pa, "Ethernet controller", wmp->wmp_name, 1);
 
 	sc->sc_type = wmp->wmp_type;
 	if (sc->sc_type < WM_T_82543) {
@@ -1911,7 +1904,9 @@ wm_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * If we're a i82543 or greater, we can support VLANs.
 	 */
-	if (sc->sc_type >= WM_T_82543)
+	if (sc->sc_type == WM_T_82575 || sc->sc_type == WM_T_82576)
+		sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
+	else if (sc->sc_type >= WM_T_82543)
 		sc->sc_ethercom.ec_capabilities |=
 		    ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING;
 
@@ -1957,9 +1952,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
 	ether_set_ifflags_cb(&sc->sc_ethercom, wm_ifflags_cb);
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, xname, RND_TYPE_NET, 0);
-#endif
 
 #ifdef WM_EVENT_COUNTERS
 	/* Attach event counters. */
@@ -2885,10 +2878,7 @@ wm_intr(void *arg)
 		icr = CSR_READ(sc, WMREG_ICR);
 		if ((icr & sc->sc_icr) == 0)
 			break;
-#if 0 /*NRND > 0*/
-		if (RND_ENABLED(&sc->rnd_source))
-			rnd_add_uint32(&sc->rnd_source, icr);
-#endif
+		rnd_add_uint32(&sc->rnd_source, icr);
 
 		handled = 1;
 

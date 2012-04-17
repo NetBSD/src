@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_ptyfs.c,v 1.12 2011/08/29 14:35:02 joerg Exp $	*/
+/*	$NetBSD: mount_ptyfs.c,v 1.12.2.1 2012/04/17 00:05:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_ptyfs.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_ptyfs.c,v 1.12 2011/08/29 14:35:02 joerg Exp $");
+__RCSID("$NetBSD: mount_ptyfs.c,v 1.12.2.1 2012/04/17 00:05:41 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -212,7 +212,6 @@ mount_ptyfs(int argc, char *argv[])
 	if (mntflags & MNT_GETARGS) {
 		char buf[1024];
 		(void)snprintb(buf, sizeof(buf), PTYFSMNT_BITS, args.flags);
-		printf("version=%d, flags=%s\n", args.version, buf);
 		printf("version=%d, gid=%lu, mode=0%o flags=%s\n", args.version,
 		    (unsigned long)args.gid, args.mode, buf);
 	}

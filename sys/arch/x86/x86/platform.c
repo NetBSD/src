@@ -1,4 +1,4 @@
-/* $NetBSD: platform.c,v 1.11 2011/01/18 07:47:16 jmmv Exp $ */
+/* $NetBSD: platform.c,v 1.11.6.1 2012/04/17 00:07:06 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,21 +29,36 @@
 #include "isa.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.11 2011/01/18 07:47:16 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.11.6.1 2012/04/17 00:07:06 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/kernel.h>
+#include <sys/sysctl.h>
+#include <sys/uuid.h>
 #include <sys/pmf.h>
 
 #include <dev/isa/isavar.h>
 
 #include <arch/x86/include/smbiosvar.h>
 
+static int platform_dminode = CTL_EOL;
+
 void		platform_init(void);	/* XXX */
 static void	platform_add(struct smbtable *, const char *, int);
 static void	platform_add_date(struct smbtable *, const char *, int);
+static void	platform_add_uuid(struct smbtable *, const char *,
+				  const uint8_t *);
+static int	platform_dmi_sysctl(SYSCTLFN_PROTO);
 static void	platform_print(void);
+
+/* list of private DMI sysctl nodes */
+static const char *platform_private_nodes[] = {
+	"board-serial",
+	"system-serial",
+	"system-uuid",
+	NULL
+};
 
 void
 platform_init(void)
@@ -51,6 +66,7 @@ platform_init(void)
 	struct smbtable smbios;
 	struct smbios_sys *psys;
 	struct smbios_struct_bios *pbios;
+	struct smbios_board *pboard;
 	struct smbios_slot *pslot;
 	int nisa, nother;
 
@@ -58,19 +74,31 @@ platform_init(void)
 	if (smbios_find_table(SMBIOS_TYPE_SYSTEM, &smbios)) {
 		psys = smbios.tblhdr;
 
-		platform_add(&smbios, "system-manufacturer", psys->vendor);
-		platform_add(&smbios, "system-product-name", psys->product);
+		platform_add(&smbios, "system-vendor", psys->vendor);
+		platform_add(&smbios, "system-product", psys->product);
 		platform_add(&smbios, "system-version", psys->version);
-		platform_add(&smbios, "system-serial-number", psys->serial);
+		platform_add(&smbios, "system-serial", psys->serial);
+		platform_add_uuid(&smbios, "system-uuid", psys->uuid);
 	}
 
 	smbios.cookie = 0;
 	if (smbios_find_table(SMBIOS_TYPE_BIOS, &smbios)) {
 		pbios = smbios.tblhdr;
 
-		platform_add(&smbios, "firmware-vendor", pbios->vendor);
-		platform_add(&smbios, "firmware-version", pbios->version);
-		platform_add_date(&smbios, "firmware-date", pbios->release);
+		platform_add(&smbios, "bios-vendor", pbios->vendor);
+		platform_add(&smbios, "bios-version", pbios->version);
+		platform_add_date(&smbios, "bios-date", pbios->release);
+	}
+
+	smbios.cookie = 0;
+	if (smbios_find_table(SMBIOS_TYPE_BASEBOARD, &smbios)) {
+		pboard = smbios.tblhdr;
+
+		platform_add(&smbios, "board-vendor", pboard->vendor);
+		platform_add(&smbios, "board-product", pboard->product);
+		platform_add(&smbios, "board-version", pboard->version);
+		platform_add(&smbios, "board-serial", pboard->serial);
+		platform_add(&smbios, "board-asset-tag", pboard->asset);
 	}
 
 	smbios.cookie = 0;
@@ -102,16 +130,16 @@ platform_init(void)
 static void
 platform_print(void)
 {
-	const char *manuf, *prod, *ver;
+	const char *vend, *prod, *ver;
 
-	manuf = pmf_get_platform("system-manufacturer");
-	prod = pmf_get_platform("system-product-name");
+	vend = pmf_get_platform("system-vendor");
+	prod = pmf_get_platform("system-product");
 	ver = pmf_get_platform("system-version");
 
-	if (manuf == NULL)
+	if (vend == NULL)
 		aprint_verbose("Generic");
 	else
-		aprint_verbose("%s", manuf);
+		aprint_verbose("%s", vend);
 	if (prod == NULL)
 		aprint_verbose(" PC");
 	else
@@ -121,13 +149,54 @@ platform_print(void)
 	aprint_verbose("\n");
 }
 
+static bool
+platform_sysctl_is_private(const char *key)
+{
+	unsigned int n;
+
+	for (n = 0; platform_private_nodes[n] != NULL; n++) {
+		if (strcmp(key, platform_private_nodes[n]) == 0) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+static void
+platform_create_sysctl(const char *key)
+{
+	int flags = 0, err;
+
+	if (pmf_get_platform(key) == NULL)
+		return;
+
+	/* If the key is marked private, set CTLFLAG_PRIVATE flag */
+	if (platform_sysctl_is_private(key))
+		flags |= CTLFLAG_PRIVATE;
+
+	err = sysctl_createv(NULL, 0, NULL, NULL,
+	    CTLFLAG_READONLY | flags, CTLTYPE_STRING,
+	    key, NULL, platform_dmi_sysctl, 0, NULL, 0,
+	    CTL_MACHDEP, platform_dminode, CTL_CREATE, CTL_EOL);
+	if (err != 0)
+		printf("platform: sysctl_createv "
+		    "(machdep.dmi.%s) failed, err = %d\n",
+		    key, err);
+}
+
 static void
 platform_add(struct smbtable *tbl, const char *key, int idx)
 {
 	char tmpbuf[128]; /* XXX is this long enough? */
 
-	if (smbios_get_string(tbl, idx, tmpbuf, 128) != NULL)
+	if (smbios_get_string(tbl, idx, tmpbuf, 128) != NULL) {
+		/* add to platform dictionary */
 		pmf_set_platform(key, tmpbuf);
+
+		/* create sysctl node */
+		platform_create_sysctl(key);
+	}
 }
 
 static int
@@ -173,4 +242,62 @@ platform_add_date(struct smbtable *tbl, const char *key, int idx)
 		year += 1900;
 	sprintf(datestr, "%04u%02u%02u", year, month, day);
 	pmf_set_platform(key, datestr);
+	platform_create_sysctl(key);
+}
+
+static void
+platform_add_uuid(struct smbtable *tbl, const char *key, const uint8_t *buf)
+{
+	struct uuid uuid;
+	char tmpbuf[UUID_STR_LEN];
+
+	uuid_dec_le(buf, &uuid);
+	uuid_snprintf(tmpbuf, sizeof(tmpbuf), &uuid);
+
+	pmf_set_platform(key, tmpbuf);
+	platform_create_sysctl(key);
+}
+
+static int
+platform_dmi_sysctl(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	const char *v;
+	int err = 0;
+
+	node = *rnode;
+
+	v = pmf_get_platform(node.sysctl_name);
+	if (v == NULL)
+		return ENOENT;
+
+	node.sysctl_data = __UNCONST(v);
+	err = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (err || newp == NULL)
+		return err;
+
+	return 0;
+}
+
+SYSCTL_SETUP(sysctl_dmi_setup, "sysctl machdep.dmi subtree setup")
+{
+	const struct sysctlnode *rnode;
+	int err;
+
+	err = sysctl_createv(clog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep",
+	    NULL, NULL, 0, NULL, 0,
+	    CTL_MACHDEP, CTL_EOL);
+	if (err)
+		return;
+
+	err = sysctl_createv(clog, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "dmi",
+	    SYSCTL_DESCR("DMI table information"),
+	    NULL, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL);
+	if (err)
+		return;
+
+	platform_dminode = rnode->sysctl_num;
 }

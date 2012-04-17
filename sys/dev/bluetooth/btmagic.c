@@ -1,4 +1,4 @@
-/*	$NetBSD: btmagic.c,v 1.1 2010/05/22 18:56:01 plunky Exp $	*/
+/*	$NetBSD: btmagic.c,v 1.1.16.1 2012/04/17 00:07:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.1 2010/05/22 18:56:01 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.1.16.1 2012/04/17 00:07:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -385,6 +385,8 @@ btmagic_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	pmf_device_register(self, NULL, NULL);
+
 	/*
 	 * start bluetooth connections
 	 */
@@ -432,6 +434,8 @@ btmagic_detach(device_t self, int flags)
 	callout_destroy(&sc->sc_timeout);
 
 	mutex_exit(bt_lock);
+
+	pmf_device_deregister(self);
 
 	sockopt_destroy(&sc->sc_mode);
 

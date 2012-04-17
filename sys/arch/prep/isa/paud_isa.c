@@ -1,4 +1,4 @@
-/*	$NetBSD: paud_isa.c,v 1.14 2011/07/01 16:57:29 dyoung Exp $	*/
+/*	$NetBSD: paud_isa.c,v 1.14.2.1 2012/04/17 00:06:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: paud_isa.c,v 1.14 2011/07/01 16:57:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: paud_isa.c,v 1.14.2.1 2012/04/17 00:06:49 yamt Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: paud_isa.c,v 1.14 2011/07/01 16:57:29 dyoung Exp $")
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <sys/bus.h>
 #include <machine/intr.h>
@@ -87,6 +87,7 @@ static struct audio_device paud_device = {
 	""
 };
 
+static int paud_intr(void *);
 static int paud_getdev(void *, struct audio_device *);
 static int paud_mixer_set_port(void *, mixer_ctrl_t *);
 static int paud_mixer_get_port(void *, mixer_ctrl_t *);
@@ -120,6 +121,7 @@ static const struct audio_hw_if paud_hw_if = {
 	ad1848_isa_trigger_output,
 	ad1848_isa_trigger_input,
 	NULL,
+	ad1848_get_locks,
 };
 
 /* autoconfig routines */
@@ -158,6 +160,9 @@ paud_attach_isa(device_t parent, device_t self, void *aux)
 	sc->sc_ad1848.sc_iot = ia->ia_iot;
 	sc->sc_ic = ia->ia_ic;
 
+	mutex_init(&sc->sc_ad1848.sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_ad1848.sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
+
 	if (ad1848_isa_mapprobe(sc, ia->ia_io[0].ir_addr) == 0) {
 		aprint_error(": attach failed\n");
 		return;
@@ -165,11 +170,24 @@ paud_attach_isa(device_t parent, device_t self, void *aux)
 	sc->sc_playdrq = ia->ia_drq[0].ir_drq;
 	sc->sc_recdrq = ia->ia_drq[1].ir_drq;
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
-	    IST_EDGE, IPL_AUDIO, ad1848_isa_intr, sc);
+	    IST_EDGE, IPL_AUDIO, paud_intr, sc);
 	ad1848_isa_attach(sc);
 	aprint_normal("\n");
 	audio_attach_mi(&paud_hw_if, &sc->sc_ad1848, self);
 
+}
+
+static int
+paud_intr(void *addr)
+{
+	struct ad1848_isa_softc *sc = addr;
+	int ret;
+
+	mutex_spin_enter(&sc->sc_ad1848.sc_intr_lock);
+	ret = ad1848_isa_intr(sc);
+	mutex_spin_exit(&sc->sc_ad1848.sc_intr_lock);
+
+	return ret;
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.36.4.1 2011/11/10 14:31:36 yamt Exp $	*/
+/*	$NetBSD: unvis.c,v 1.36.4.2 2012/04/17 00:05:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unvis.c,v 1.36.4.1 2011/11/10 14:31:36 yamt Exp $");
+__RCSID("$NetBSD: unvis.c,v 1.36.4.2 2012/04/17 00:05:19 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -488,7 +488,7 @@ int
 strnunvisx(char *dst, size_t dlen, const char *src, int flag)
 {
 	char c;
-	char t, *start = dst;
+	char t = '\0', *start = dst;
 	int state = 0;
 
 	_DIAGASSERT(src != NULL);
@@ -519,7 +519,7 @@ strnunvisx(char *dst, size_t dlen, const char *src, int flag)
 			errno = EINVAL;
 			return -1;
 		default:
-			_DIAGASSERT(0);
+			_DIAGASSERT(/*CONSTCOND*/0);
 			errno = EINVAL;
 			return -1;
 		}

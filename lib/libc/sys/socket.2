@@ -1,4 +1,4 @@
-.\"	$NetBSD: socket.2,v 1.37 2011/06/26 16:42:41 christos Exp $
+.\"	$NetBSD: socket.2,v 1.37.2.1 2012/04/17 00:05:26 yamt Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)socket.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd September 6, 2007
+.Dd January 23, 2012
 .Dt SOCKET 2
 .Os
 .Sh NAME
@@ -86,6 +86,11 @@ The following flags are valid:
 Set the close on exec property.
 .It Dv SOCK_NONBLOCK
 Sets non-blocking I/O.
+.It Dv SOCK_NOSIGPIPE
+Return
+.Er EPIPE
+instead of raising
+.Dv SIGPIPE .
 .El
 .Pp
 A

@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_ym.c,v 1.16 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: opl_ym.c,v 1.16.34.1 2012/04/17 00:07:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_ym.c,v 1.16 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_ym.c,v 1.16.34.1 2012/04/17 00:07:39 yamt Exp $");
 
 #include "mpu_ym.h"
 
@@ -83,7 +83,7 @@ opl_ym_attach(device_t parent, device_t self, void *aux)
 	struct ym_softc *ssc = device_private(parent);
 	struct opl_softc *sc = device_private(self);
 
-	sc->mididev.dev = self;
+	sc->dev = self;
 	sc->ioh = ssc->sc_opl_ioh;
 	sc->iot = ssc->sc_iot;
 	sc->offs = 0;
@@ -91,6 +91,7 @@ opl_ym_attach(device_t parent, device_t self, void *aux)
 	sc->powerctl = opl_ym_power_ctl;
 	sc->powerarg = ssc;
 #endif
+	sc->lock = &ssc->sc_ad1848.sc_ad1848.sc_intr_lock;
 	snprintf(sc->syn.name, sizeof(sc->syn.name), "%s ",
 	    ssc->sc_ad1848.sc_ad1848.chip_name);
 

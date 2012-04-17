@@ -1,11 +1,5 @@
-# $NetBSD: Makefile.usermode,v 1.24 2011/09/16 11:28:36 jmcneill Exp $
+# $NetBSD: Makefile.usermode,v 1.24.2.1 2012/04/17 00:06:59 yamt Exp $
 
-OPT_CPU_HOST=			%CPU_HOST%
-.if !empty(OPT_CPU_HOST)
-MACHINE_ARCH=			${OPT_CPU_HOST}
-.else
-MACHINE_ARCH=			usermode
-.endif
 USETOOLS?=			no
 NEED_OWN_INSTALL_TARGET?=	no
 .include <bsd.own.mk>
@@ -15,6 +9,7 @@ NEED_OWN_INSTALL_TARGET?=	no
 ##
 USERMODE=	$S/arch/usermode
 GENASSYM_CONF=	${USERMODE}/usermode/genassym.cf
+MACHINE_ARCH!=uname -p
 
 ##
 ## (2) compile settings
@@ -35,20 +30,10 @@ CPPFLAGS+=-D__NetBSD__ -Wno-unused-but-set-variable
 
 DEFCOPTS=	-fno-omit-frame-pointer
 CPPFLAGS+=	-Dusermode
+CPPFLAGS+=	-Dsyscall=kernel_syscall
 CPPFLAGS.init_main.c+=	-Dmain=kernmain
 
-OPT_SDL=	%SDL%
-OPT_URKELVISOR=	%URKELVISOR%
-
-.if !empty(OPT_SDL)
-SDL_CFLAGS!=	sdl-config --cflags
-SDL_LIBS!=	sdl-config --libs
-USERMODE_LIBS+=	-Wl,-Bdynamic ${SDL_LIBS}
-.endif
-
 CPPFLAGS.thunk.c+=	${USERMODE_CPPFLAGS}
-CPPFLAGS.thunk_sdl.c+=	${SDL_CFLAGS} ${USERMODE_CPPFLAGS}
-CPPFLAGS.urkelvisor.c+=	${USERMODE_CPPFLAGS}
 
 ##
 ## (3) libkern and compat
@@ -63,15 +48,8 @@ MD_OBJS=	thunk.o
 MD_CFILES=	${USERMODE}/usermode/thunk.c
 MD_SFILES=
 
-.if !empty(OPT_URKELVISOR)
-MD_OBJS+=	urkelvisor.o
-MD_CFILES+=	${USERMODE}/usermode/urkelvisor.c
-.endif
-
-.if !empty(OPT_SDL)
-MD_OBJS+=	thunk_sdl.o
-MD_CFILES+=	${USERMODE}/usermode/thunk_sdl.c
-.endif
+MD_OBJS+=	cpu_${MACHINE_ARCH}.o
+MD_CFILES+=	${USERMODE}/target/${MACHINE_ARCH}/cpu_${MACHINE_ARCH}.c
 
 ##
 ## (5) link settings
@@ -96,6 +74,8 @@ NVFLAGS=	-n
 .BEGIN:
 	@rm -f i386 && \
 		ln -s $S/arch/i386/include i386
+	@rm -f amd64 && \
+		ln -s $S/arch/amd64/include amd64
 .endif
 
 thunk.d: ${USERMODE}/usermode/thunk.c
@@ -103,21 +83,7 @@ thunk.d: ${USERMODE}/usermode/thunk.c
 	    ${CPPFLAGS.thunk.c} ${USERMODE}/usermode/thunk.c
 
 thunk.o: ${USERMODE}/usermode/thunk.c
-	${CC} ${CPPFLAGS.thunk.c} -c -o $@ ${USERMODE}/usermode/thunk.c
-
-thunk_sdl.d: ${USERMODE}/usermode/thunk.c
-	${MKDEP} -f ${.TARGET} -- ${MKDEP_CFLAGS} \
-	    ${CPPFLAGS.thunk_sdl.c} ${USERMODE}/usermode/thunk_sdl.c
-
-thunk_sdl.o: ${USERMODE}/usermode/thunk_sdl.c
-	${CC} ${CPPFLAGS.thunk_sdl.c} -c -o $@ ${USERMODE}/usermode/thunk_sdl.c
-
-urkelvisor.d: ${USERMODE}/usermode/urkelvisor.c
-	${MKDEP} -f ${.TARGET} -- ${MKDEP_CFLAGS} \
-	    ${CPPFLAGS.urkelvisor.c} ${USERMODE}/usermode/urkelvisor.c
-
-urkelvisor.o: ${USERMODE}/usermode/urkelvisor.c
-	${CC} ${CPPFLAGS.urkelvisor.c} -c -o $@ ${USERMODE}/usermode/urkelvisor.c
+	${CC} ${COPTS} ${CPPFLAGS.thunk.c} -c -o $@ ${USERMODE}/usermode/thunk.c
 
 ##
 ## (7) misc settings

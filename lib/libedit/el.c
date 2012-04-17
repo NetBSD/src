@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.68 2011/07/29 15:16:33 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.68.2.1 2012/04/17 00:05:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.68 2011/07/29 15:16:33 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.68.2.1 2012/04/17 00:05:27 yamt Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -219,7 +219,7 @@ FUN(el,set)(EditLine *el, int op, ...)
 		const Char *argv[20];
 		int i;
 
-		for (i = 1; i < 20; i++)
+		for (i = 1; i < (int)__arraycount(argv); i++)
 			if ((argv[i] = va_arg(ap, Char *)) == NULL)
 				break;
 
@@ -419,21 +419,12 @@ FUN(el,get)(EditLine *el, int op, ...)
 		char *argv[20];
 		int i;
 
- 		for (i = 1; i < (int)(sizeof(argv) / sizeof(argv[0])); i++)
+ 		for (i = 1; i < (int)__arraycount(argv); i++)
 			if ((argv[i] = va_arg(ap, char *)) == NULL)
 				break;
 
-		switch (op) {
-		case EL_GETTC:
-			argv[0] = name;
-			rv = terminal_gettc(el, i, argv);
-			break;
-
-		default:
-			rv = -1;
-			EL_ABORT((el->el_errfile, "Bad op %d\n", op));
-			break;
-		}
+		argv[0] = name;
+		rv = terminal_gettc(el, i, argv);
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.20 2009/04/11 07:40:37 lukem Exp $ */
+/* $NetBSD: utils.c,v 1.20.6.1 2012/04/17 00:05:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utils.c,v 1.20 2009/04/11 07:40:37 lukem Exp $");
+__RCSID("$NetBSD: utils.c,v 1.20.6.1 2012/04/17 00:05:38 yamt Exp $");
 #endif
 
 #include <sys/param.h>
@@ -139,7 +139,7 @@ struct string {
 };
 
 string_t *
-string_zero()
+string_zero(void)
 {
 	string_t *out;
 

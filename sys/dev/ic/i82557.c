@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.138 2011/09/02 03:16:18 msaitoh Exp $	*/
+/*	$NetBSD: i82557.c,v 1.138.2.1 2012/04/17 00:07:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,9 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.138 2011/09/02 03:16:18 msaitoh Exp $");
-
-#include "rnd.h"
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.138.2.1 2012/04/17 00:07:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,9 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.138 2011/09/02 03:16:18 msaitoh Exp $")
 
 #include <machine/endian.h>
 
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -412,10 +408,8 @@ fxp_attach(struct fxp_softc *sc)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 	    RND_TYPE_NET, 0);
-#endif
 
 #ifdef FXP_EVENT_COUNTERS
 	evcnt_attach_dynamic(&sc->sc_ev_txstall, EVCNT_TYPE_MISC,
@@ -1149,10 +1143,8 @@ fxp_intr(void *arg)
 		}
 	}
 
-#if NRND > 0
 	if (claimed)
 		rnd_add_uint32(&sc->rnd_source, statack);
-#endif
 	return (claimed);
 }
 
@@ -2526,9 +2518,7 @@ fxp_detach(struct fxp_softc *sc, int flags)
 	/* Delete all remaining media. */
 	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
 
-#if NRND > 0
 	rnd_detach_source(&sc->rnd_source);
-#endif
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 

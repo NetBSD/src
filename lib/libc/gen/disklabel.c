@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.34 2006/03/19 02:17:16 christos Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.34.44.1 2012/04/17 00:05:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.34 2006/03/19 02:17:16 christos Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.34.44.1 2012/04/17 00:05:18 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,9 +71,9 @@ __weak_alias(getdiskbyname,_getdiskbyname)
 #endif
 
 #if 0
-static void	error __P((int));
+static void	error(int);
 #endif
-static int	gettype __P((char *, const char *const *));
+static int	gettype(char *, const char *const *);
 
 static const char *db_array[2] = { _PATH_DISKTAB, 0 };
 
@@ -208,9 +208,7 @@ getdiskbyname(name)
 }
 
 static int
-gettype(t, names)
-	char *t;
-	const char *const *names;
+gettype(char *t, const char *const *names)
 {
 	const char *const *nm;
 
@@ -219,7 +217,7 @@ gettype(t, names)
 
 	for (nm = names; *nm; nm++)
 		if (strcasecmp(t, *nm) == 0)
-			return (nm - names);
+			return (int)(nm - names);
 	if (isdigit((unsigned char) *t))
 		return (atoi(t));
 	return (0);

@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.49 2011/04/02 08:11:31 mbalmer Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.49.4.1 2012/04/17 00:07:50 yamt Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.49 2011/04/02 08:11:31 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.49.4.1 2012/04/17 00:07:50 yamt Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -209,12 +209,11 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct pci_attach_args *pa = aux;
 	const char *intrstr;
-	char devinfo[256];
 	bus_space_tag_t memt;
 	bus_space_handle_t memh;
 	pci_intr_handle_t ih;
 	pcireg_t data;
-	int error, ac, revision;
+	int error, ac;
 
 	RUN_ONCE(&wpi_firmware_init, wpi_attach_once);
 	sc->fw_used = false;
@@ -226,9 +225,7 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	callout_init(&sc->calib_to, 0);
 	callout_setfunc(&sc->calib_to, wpi_calib_timeout, sc);
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof devinfo);
-	revision = PCI_REVISION(pa->pa_class);
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, revision);
+	pci_aprint_devinfo(pa, NULL);
 
 	/* enable bus-mastering */
 	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);

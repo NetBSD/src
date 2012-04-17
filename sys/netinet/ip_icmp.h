@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.26 2010/06/26 14:24:29 kefren Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.26.8.1 2012/04/17 00:08:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -62,7 +62,7 @@ struct icmp {
 			  n_short icd_id;
 			  n_short icd_seq;
 		} ih_idseq __packed;
-		int32_t   ih_void;
+		int32_t	  ih_void;
 
 		/* ICMP_UNREACH_NEEDFRAG -- Path MTU Discovery (RFC1191) */
 		struct ih_pmtu {
@@ -75,14 +75,14 @@ struct icmp {
 			u_int16_t irt_lifetime;
 		} ih_rtradv __packed;
 	} icmp_hun /* XXX __packed ??? */;
-#define	icmp_pptr	  icmp_hun.ih_pptr
-#define	icmp_gwaddr	  icmp_hun.ih_gwaddr
-#define	icmp_id		  icmp_hun.ih_idseq.icd_id
-#define	icmp_seq	  icmp_hun.ih_idseq.icd_seq
-#define	icmp_void	  icmp_hun.ih_void
-#define	icmp_pmvoid	  icmp_hun.ih_pmtu.ipm_void
-#define	icmp_nextmtu	  icmp_hun.ih_pmtu.ipm_nextmtu
-#define icmp_num_addrs    icmp_hun.ih_rtradv.irt_num_addrs
+#define icmp_pptr	  icmp_hun.ih_pptr
+#define icmp_gwaddr	  icmp_hun.ih_gwaddr
+#define icmp_id		  icmp_hun.ih_idseq.icd_id
+#define icmp_seq	  icmp_hun.ih_idseq.icd_seq
+#define icmp_void	  icmp_hun.ih_void
+#define icmp_pmvoid	  icmp_hun.ih_pmtu.ipm_void
+#define icmp_nextmtu	  icmp_hun.ih_pmtu.ipm_nextmtu
+#define icmp_num_addrs	  icmp_hun.ih_rtradv.irt_num_addrs
 #define icmp_wpa	  icmp_hun.ih_rtradv.irt_wpa
 #define icmp_lifetime	  icmp_hun.ih_rtradv.irt_lifetime
 	union {
@@ -99,13 +99,13 @@ struct icmp {
 		u_int32_t id_mask;
 		int8_t	  id_data[1];
 	} icmp_dun /* XXX __packed ??? */;
-#define	icmp_otime	  icmp_dun.id_ts.its_otime
-#define	icmp_rtime	  icmp_dun.id_ts.its_rtime
-#define	icmp_ttime	  icmp_dun.id_ts.its_ttime
-#define	icmp_ip		  icmp_dun.id_ip.idi_ip
+#define icmp_otime	  icmp_dun.id_ts.its_otime
+#define icmp_rtime	  icmp_dun.id_ts.its_rtime
+#define icmp_ttime	  icmp_dun.id_ts.its_ttime
+#define icmp_ip		  icmp_dun.id_ip.idi_ip
 #define icmp_radv	  icmp_dun.id_mask
-#define	icmp_mask	  icmp_dun.id_mask
-#define	icmp_data	  icmp_dun.id_data
+#define icmp_mask	  icmp_dun.id_mask
+#define icmp_data	  icmp_dun.id_data
 };
 
 /*
@@ -116,18 +116,18 @@ struct icmp {
  * data have been returned, since we need to check the returned
  * ip header length.
  */
-#define	ICMP_MINLEN	8				/* abs minimum */
-#define	ICMP_TSLEN	(8 + 3 * sizeof (n_time))	/* timestamp */
-#define	ICMP_MASKLEN	12				/* address mask */
-#define	ICMP_ADVLENMIN	(8 + sizeof (struct ip) + 8)	/* min */
-#define	ICMP_ADVLEN(p)	(8 + ((p)->icmp_ip.ip_hl << 2) + 8)
+#define ICMP_MINLEN	8				/* abs minimum */
+#define ICMP_TSLEN	(8 + 3 * sizeof (n_time))	/* timestamp */
+#define ICMP_MASKLEN	12				/* address mask */
+#define ICMP_ADVLENMIN	(8 + sizeof (struct ip) + 8)	/* min */
+#define ICMP_ADVLEN(p)	(8 + ((p)->icmp_ip.ip_hl << 2) + 8)
 	/* N.B.: must separately check that ip_hl >= 5 */
 
 /*
  * Definition of type and code field values.
  */
-#define	ICMP_ECHOREPLY		0		/* echo reply */
-#define	ICMP_UNREACH		3		/* dest unreachable, codes: */
+#define ICMP_ECHOREPLY		0		/* echo reply */
+#define ICMP_UNREACH		3		/* dest unreachable, codes: */
 #define		ICMP_UNREACH_NET	0		/* bad net */
 #define		ICMP_UNREACH_HOST	1		/* bad host */
 #define		ICMP_UNREACH_PROTOCOL	2		/* bad protocol */
@@ -137,37 +137,99 @@ struct icmp {
 #define		ICMP_UNREACH_NET_UNKNOWN 6		/* unknown net */
 #define		ICMP_UNREACH_HOST_UNKNOWN 7		/* unknown host */
 #define		ICMP_UNREACH_ISOLATED	8		/* src host isolated */
-#define		ICMP_UNREACH_NET_PROHIB	9		/* prohibited access */
+#define		ICMP_UNREACH_NET_PROHIB 9		/* prohibited access */
 #define		ICMP_UNREACH_HOST_PROHIB 10		/* ditto */
 #define		ICMP_UNREACH_TOSNET	11		/* bad tos for net */
 #define		ICMP_UNREACH_TOSHOST	12		/* bad tos for host */
 #define		ICMP_UNREACH_ADMIN_PROHIBIT 13		/* communication
 							   administratively
 							   prohibited */
-#define	ICMP_SOURCEQUENCH	4		/* packet lost, slow down */
-#define	ICMP_REDIRECT		5		/* shorter route, codes: */
+#define		ICMP_UNREACH_HOST_PREC	14		/* host precedence
+							   violation */
+#define		ICMP_UNREACH_PREC_CUTOFF 15		/* precedence cutoff */
+#define ICMP_SOURCEQUENCH	4		/* packet lost, slow down */
+#define ICMP_REDIRECT		5		/* shorter route, codes: */
 #define		ICMP_REDIRECT_NET	0		/* for network */
 #define		ICMP_REDIRECT_HOST	1		/* for host */
 #define		ICMP_REDIRECT_TOSNET	2		/* for tos and net */
 #define		ICMP_REDIRECT_TOSHOST	3		/* for tos and host */
-#define	ICMP_ECHO		8		/* echo service */
-#define	ICMP_ROUTERADVERT	9		/* router advertisement */
-#define	ICMP_ROUTERSOLICIT	10		/* router solicitation */
-#define	ICMP_TIMXCEED		11		/* time exceeded, code: */
+#define ICMP_ALTHOSTADDR	6		/* alternative host address */
+#define ICMP_ECHO		8		/* echo service */
+#define ICMP_ROUTERADVERT	9		/* router advertisement */
+#define		ICMP_ROUTERADVERT_NORMAL 0
+#define		ICMP_ROUTERADVERT_NOROUTE 16
+#define ICMP_ROUTERSOLICIT	10		/* router solicitation */
+#define ICMP_TIMXCEED		11		/* time exceeded, code: */
 #define		ICMP_TIMXCEED_INTRANS	0		/* ttl==0 in transit */
 #define		ICMP_TIMXCEED_REASS	1		/* ttl==0 in reass */
-#define	ICMP_PARAMPROB		12		/* ip header bad */
-#define		ICMP_PARAMPROB_OPTABSENT 1		/* req. opt. absent */
-#define	ICMP_TSTAMP		13		/* timestamp request */
-#define	ICMP_TSTAMPREPLY	14		/* timestamp reply */
-#define	ICMP_IREQ		15		/* information request */
-#define	ICMP_IREQREPLY		16		/* information reply */
-#define	ICMP_MASKREQ		17		/* address mask request */
-#define	ICMP_MASKREPLY		18		/* address mask reply */
+#define ICMP_PARAMPROB		12		/* ip header bad */
+#define		ICMP_PARAMPROB_ERRATPTR 0
+#define		ICMP_PARAMPROB_OPTABSENT 1
+#define		ICMP_PARAMPROB_LENGTH	2
+#define ICMP_TSTAMP		13		/* timestamp request */
+#define ICMP_TSTAMPREPLY	14		/* timestamp reply */
+#define ICMP_IREQ		15		/* information request */
+#define ICMP_IREQREPLY		16		/* information reply */
+#define ICMP_MASKREQ		17		/* address mask request */
+#define ICMP_MASKREPLY		18		/* address mask reply */
+#define ICMP_TRACEROUTE		30		/* traceroute */
+#define ICMP_DATACONVERR	31		/* data conversion error */
+#define ICMP_MOBILE_REDIRECT	32		/* mobile redirect */
+#define ICMP_IPV6_WHEREAREYOU	33		/* ipv6 where are you */
+#define ICMP_IPV6_IAMHERE	34		/* ipv6 i am here */
+#define ICMP_MOBILE_REGREQUEST	35		/* mobile registration req */
+#define ICMP_MOBILE_REGREPLY	36		/* mobile registration reply */
+#define ICMP_SKIP		39		/* SKIP */
+#define ICMP_PHOTURIS		40		/* security */
+#define		ICMP_PHOTURIS_UNKNOWN_INDEX	0	/* unknown sec index */
+#define		ICMP_PHOTURIS_AUTH_FAILED	1	/* auth failed */
+#define		ICMP_PHOTURIS_DECOMPRESS_FAILED 2	/* decompress failed */
+#define		ICMP_PHOTURIS_DECRYPT_FAILED	3	/* decrypt failed */
+#define		ICMP_PHOTURIS_NEED_AUTHN	4	/* no authentication */
+#define		ICMP_PHOTURIS_NEED_AUTHZ	5	/* no authorization */
 
-#define	ICMP_MAXTYPE		18
+#define ICMP_MAXTYPE		40
 
-#define	ICMP_INFOTYPE(type) \
+#ifdef ICMP_STRINGS
+static const char *icmp_type[] = {
+	"echoreply", "unassigned_1", "unassigned_2", "unreach",
+	"sourcequench", "redirect", "althostaddr", "unassigned_7",
+	"echo", "routeradvert", "routersolicit", "timxceed",
+	"paramprob", "tstamp", "tstampreply", "ireq",
+	"ireqreply", "maskreq", "maskreply", "reserved_19",
+	"reserved_20", "reserved_21", "reserved_22", "reserved_23",
+	"reserved_24", "reserved_25", "reserved_26", "reserved_27",
+	"reserved_28", "reserved_29", "traceroute", "dataconverr",
+	"mobile_redirect", "ipv6_whereareyou", "ipv6_iamhere",
+	"mobile_regrequest", "mobile_regreply", "reserved_37",
+	"reserved_38", "skip", "photuris", NULL
+};
+static const char *icmp_code_none[] = { "none", NULL };
+static const char *icmp_code_unreach[] = {
+	"net", "host", "oprt", "needfrag", "srcfail", "net_unknown",
+	"host_unknown", "isolated", "net_prohib", "host_prohib",
+	"tosnet", "toshost", "admin_prohibit", "host_prec", "prec_cutoff", NULL
+};
+static const char *icmp_code_redirect[] = {
+	"net", "host", "tosnet", "toshost", NULL
+};
+static const char *icmp_code_routeradvert[] = {
+	"normal", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
+	"noroute", NULL
+};
+static const char *icmp_code_timxceed[] = {
+	"intrans", "reass", NULL
+};
+static const char *icmp_code_paramprob[] = {
+	"erratptr", "optabsent", "length", NULL
+};
+static const char *icmp_code_photuris[] = {
+	"unknown_index", "auth_failed", "decompress_failed",
+	"decrypt_failed", "need_authn", "need_authz", NULL
+};
+#endif
+
+#define ICMP_INFOTYPE(type) \
 	((type) == ICMP_ECHOREPLY || (type) == ICMP_ECHO || \
 	(type) == ICMP_ROUTERADVERT || (type) == ICMP_ROUTERSOLICIT || \
 	(type) == ICMP_TSTAMP || (type) == ICMP_TSTAMPREPLY || \

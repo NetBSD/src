@@ -31,17 +31,17 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)alloca.s	8.1 (Berkeley) 6/4/93" */
-RCSID("$NetBSD: alloca.S,v 1.4 2011/01/25 02:38:15 matt Exp $")
+RCSID("$NetBSD: alloca.S,v 1.4.4.1 2012/04/17 00:05:15 yamt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 ENTRY(alloca, 0)
 	movl	4(%ap),%r0	# get allocation size
-	movl	16(%fp),%r2	# save return address before we smash it
+	movl	16(%fp),%r1	# save return address before we smash it
 	movab	here,16(%fp)
 	ret
 here:
 	subl2	%r0,%sp		# create stack space
 	bicl2	$3,%sp		# align to longword boundary
 	movl	%sp,%r0
-	jmp	(%r2)
+	jmp	(%r1)
 END(alloca)

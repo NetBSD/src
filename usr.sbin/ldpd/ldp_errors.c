@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_errors.c,v 1.1 2010/12/08 07:20:14 kefren Exp $ */
+/* $NetBSD: ldp_errors.c,v 1.1.6.1 2012/04/17 00:09:48 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 int	debug_f = 0, warn_f = 0, syslog_f = 0;
 
-static void do_syslog(int, const char*, va_list);
+static void do_syslog(int, const char*, va_list) __printflike(2, 0);
 
 void 
 debugp(const char *fmt, ...)

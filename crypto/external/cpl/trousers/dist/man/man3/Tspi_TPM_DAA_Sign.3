@@ -1,0 +1,109 @@
+.\" Copyright (C) 2006 International Business Machines Corporation
+.\" Written by Anthony Bussani based on the Trusted Computing Group Software Stack Specification Version 1.2
+.\"
+.de Sh \" Subsection
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+.de Sp \" Vertical space (when we can't use .PP)
+.if t .sp .5v
+.if n .sp
+..
+.de Ip \" List item
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH "Tspi_TPM_DAA_Sign" 3 "2006-09-04" "TSS 1.2"
+.ce 1
+TCG Software Stack Developer's Reference
+.SH NAME
+Tspi_TPM_DAA_Sign \- creates a DAA Signature that proofs ownership of the DAA Credential
+.SH "SYNOPSIS"
+.ad l
+.hy 0
+.nf
+.B #include <tss/tss_typedef.h>
+.B #include <tss/tss_structs.h>
+.B #include <tss/tspi.h>
+.sp
+.BI "TSS_RESULT Tspi_TPM_DAA_Sign("
+.BI "    TSS_HDAA                    " hDAA ","
+.BI "    TSS_HTPM                    " hTPM ","
+.BI "    TSS_HKEY                    " hDaaCredential ","
+.BI "    TSS_DAA_SELECTED_ATTRIB     " revealAttributes ","
+.BI "    UINT32                      " verifierBaseNameLength ","
+.BI "    BYTE*                       " verifierBaseName ","
+.BI "    UINT32                      " verifierNonceLength ","
+.BI "    BYTE*                       " verifierNonce ","
+.BI "    TSS_DAA_SIGN_DATA           " signData ","
+.BI "    TSS_DAA_SIGNATURE*          " daaSignature
+.BI ");"
+.fi
+.sp
+.ad
+.hy
+
+.SH "DESCRIPTION"
+.PP
+\Tspi_TPM_DAA_Sign\fR
+creates a DAA Signature that proofs ownership of the DAA Credential and includes a
+signature on either a public AIK or a message. If anonymity revocation is enabled, the value Nv
+is not provided in the clear anymore but encrypted under the public key of anonymity revocation
+authority, a trusted third party (TTP). Thus the DAA Verifier cannot check for revocation or link
+a transaction/signature to prior ones. Depending on how is chosen, the protocol either allows
+implementing anonymity revocation (i.e., using the DAA Issuer's long-term base name  as the DAA
+Verifier's base name ), or having the TTP doing the linking of different signatures for the same
+DAA Verifier (i.e., using the DAA Verifier's base name ).
+.SH "PARAMETERS"
+.PP
+.SS hDAA
+The \fIhDAA\fR parameter is used to specify the handle of the DAA object.
+.SS hTPM
+The \fIhTPM\fR parameter is the handle to the TPM object.
+.SS hDaaCredential
+The \fIhDaaCredential\fR parameter is the Handle of the DAA Credential.
+.SS revealAttributes
+The \fIrevealAttributes\fR parameter is the attributes which the credential owner wants to reveal
+to the DAA Verifier.
+.SS verifierBaseNameLength
+The \fIverifierBaseNameLength\fR parameter is the Length of verifierBaseName.
+.SS verifierBaseName
+The \fIverifierBaseName\fR parameter is the base name chosen by the DAA Verifier. If it equals to null,
+the platform chooses a random base name.
+.SS verifierNonceLength
+The \fIverifierNonceLength\fR parameter is the length of verifierNonceName (20 bytes).
+.SS verifierNonce
+The \fIverifierNonce\fR parameter is the nonce created by the DAA Verifier.
+.SS signData
+The \fIsignData\fR parameter is the handle of the received DAA Credential.
+.SS daaSignature
+The \fIdaaSignature\fR parameter is the DAA signature containing the proof of ownership of the DAA Credential,
+as well as a signature on either an AIK or a message.
+
+.SH "RETURN CODES"
+.PP
+\fBTspi_TPM_DAA_Sign\fR returns TSS_SUCCESS on success, otherwise one of the
+following values is returned:
+.TP
+.SM TSS_E_INVALID_HANDLE
+Either the DAA or the TPM handler is not valid.
+.TP
+.SM TSS_E_BAD_PARAMETER
+.TP
+.SM TSS_E_INTERNAL_ERROR
+An internal SW error has been detected.
+
+.SH "CONFORMING TO"
+.PP
+\fBTspi_TPM_DAA_Sign\fR conforms to the Trusted Computing Group
+Software Specification version 1.2
+
+.SH "SEE ALSO"
+
+.PP

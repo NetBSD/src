@@ -1,7 +1,7 @@
-/*	$NetBSD: sequencervar.h,v 1.13 2008/04/28 20:23:47 martin Exp $	*/
+/*	$NetBSD: sequencervar.h,v 1.13.34.1 2012/04/17 00:07:26 yamt Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,6 +30,7 @@
  */
 
 #include <sys/callout.h>
+#include <sys/vnode.h>
 
 struct midi_softc;
 
@@ -69,25 +70,33 @@ struct midi_dev {
 	struct	sequencer_softc *seq;
 	struct	midi_softc *msc;
 	char	doingsysex;	/* doing a SEQ_SYSEX */
+	vnode_t *vp;
 };
 
 struct sequencer_softc {
 	struct	device dev;
 	struct	device *sc_dev;	/* Hardware device struct */
-	struct	callout sc_callout;
-	int	isopen;		/* Open indicator */
+	callout_t sc_callout;
+	kmutex_t lock;
+	kcondvar_t wchan;
+	kcondvar_t rchan;
+	kcondvar_t lchan;
+	int	dvlock;
+	int	dying;
+	u_int	isopen;		/* Open indicator */
 	int	flags;		/* Open flags */
 	int	mode;
 #define SEQ_OLD 0
 #define SEQ_NEW 1
-	int	rchan, wchan;
 	int	pbus;
-	struct	selinfo wsel;	/* write selector */
-	struct	selinfo rsel;	/* read selector */
-	struct	proc *async;	/* process who wants audio SIGIO */
+	struct selinfo wsel;	/* write selector */
+	struct selinfo rsel;	/* read selector */
+	pid_t	async;	/* process who wants audio SIGIO */
 	void	*sih;
+	pcq_t	*pcq;
 
 	int	nmidi;		/* number of MIDI devices */
+	int	ndevs;
 	struct	midi_dev **devs;
 	struct	syn_timer timer;
 

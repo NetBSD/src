@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795var.h,v 1.11 2010/04/24 19:58:13 dbj Exp $	*/
+/*	$NetBSD: mb8795var.h,v 1.11.8.1 2012/04/17 00:06:44 yamt Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -24,10 +24,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "rnd.h"                /* is random device-driver configured? */
-#if NRND > 0
 #include <sys/rnd.h>
-#endif  /* NRND */
 
 #define MB8795_NRXBUFS (32)
 
@@ -71,9 +68,7 @@ struct mb8795_softc {
 
 	struct ifmedia sc_media;
 
-#if NRND > 0
-	rndsource_element_t     rnd_source;
-#endif /* NRND */
+	krndsource_t     rnd_source;
 
 };
 

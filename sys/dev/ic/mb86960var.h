@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960var.h,v 1.37 2009/05/12 14:25:17 cegger Exp $	*/
+/*	$NetBSD: mb86960var.h,v 1.37.12.1 2012/04/17 00:07:34 yamt Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -44,11 +44,7 @@
  * they are useful.
  */
 
-#include "rnd.h"
-
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 /*
  * Default settings for fe driver specific options.
@@ -161,9 +157,7 @@ struct mb86960_softc {
 
 	uint8_t sc_enaddr[ETHER_ADDR_LEN];
 
-#if NRND > 0
-	rndsource_element_t rnd_source;
-#endif
+	krndsource_t rnd_source;
 
 	uint32_t sc_stat;	/* driver status */
 #define FE_STAT_ENABLED		0x0001	/* power enabled on interface */

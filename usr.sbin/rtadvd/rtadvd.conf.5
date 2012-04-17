@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtadvd.conf.5,v 1.14 2009/11/01 15:19:19 jakllsch Exp $
+.\"	$NetBSD: rtadvd.conf.5,v 1.14.6.1 2012/04/17 00:09:53 yamt Exp $
 .\"	$KAME: rtadvd.conf.5,v 1.50 2005/01/14 05:30:59 jinmei Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 1, 2009
+.Dd December 7, 2012
 .Dt RTADVD.CONF 5
 .Os
 .Sh NAME
@@ -333,6 +333,64 @@ However, keywords that start with
 .Dq Li rtr
 have basically been obsoleted, and should not be used any more.
 .Pp
+The following items are for ICMPv6 Recursive DNS Server Option and
+DNS Search List Option
+.Pq RFC 6106 ,
+which will be attached to router advertisement header.
+These items are optional.
+.Bl -tag -width indent
+.It Cm \&rdnss
+(str) The IPv6 address of one or more recursive DNS servers.
+The argument must be inside double quotes.
+Multiple DNS servers can be specified in a comma-separated string.
+If different lifetimes are needed for different servers,
+separate entries can be given by using
+.Cm rdnss ,
+.Cm rdnss0 ,
+.Cm rdnss1 ,
+.Cm rdnss2 ...
+options with corresponding
+.Cm rdnssltime ,
+.Cm rdnssltime0 ,
+.Cm rdnssltime1 ,
+.Cm rdnssltime2 ...
+entries.
+Note that the maximum number of servers depends on the receiver side.
+See also the
+.Xr resolv.conf 5
+manual page for the resolver implementation.
+.It Cm \&rdnssltime
+The lifetime of the
+.Cm rdnss
+DNS server entries.
+The default value is 3/2 of the interval time.
+.It Cm \&dnssl
+(str) One or more domain names in a comma-separated string.
+These domain names will be used when making DNS queries on a
+non-fully-qualified domain name.
+If different lifetimes are needed for different domains, separate entries
+can be given by using
+.Cm dnssl ,
+.Cm dnssl0 ,
+.Cm dnssl1 ,
+.Cm dnssl2 ...
+options with corresponding
+.Cm dnsslltime ,
+.Cm dnsslltime0 ,
+.Cm dnsslltime1 ,
+.Cm dnsslltime2 ...
+entries.
+Note that the maximum number of names depends on the receiver side.
+See also the
+.Xr resolv.conf 5
+manual page for the resolver implementation.
+.It Cm \&dnsslltime
+The lifetime of the
+.Cm dnssl
+DNS search list entries.
+The default value is 3/2 of the interval time.
+.El
+.Pp
 You can also refer one line from another by using
 .Cm tc
 capability.
@@ -369,6 +427,17 @@ ef0:\\
 	:addr="2001:db8:ffff:1000::":prefixlen#64:
 .Ed
 .Pp
+The following example configures the
+.Li wlan0
+interface and adds two DNS servers and a DNS domain search options
+using the default option lifetime values.
+.Bd -literal -offset
+wlan0:\\
+	:addr="2001:db8:ffff:1000::":prefixlen#64:\\
+	:rdnss="2001:db8:ffff::10,2001:db8:ffff::2:43":\\
+	:dnssl="example.com":
+.Ed
+.Pp
 The following example presents the default values in an explicit manner.
 The configuration is provided just for reference purposes;
 YOU DO NOT NEED TO HAVE IT AT ALL.
@@ -395,6 +464,12 @@ Richard Draves,
 Default Router Preferences and More-Specific Routes
 .Dc ,
 RFC 4191
+.Pp
+J. Jeong, S. Park, L. Beloeil, S. Madanapalli
+.Do
+IPv6 Router Advertisement Options for DNS Configuration
+.Dc ,
+RFC 6106
 .Sh HISTORY
 The
 .Xr rtadvd 8

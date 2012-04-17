@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpSnmpSubagentObject.c,v 1.1.1.1 2009/12/13 16:56:34 kardel Exp $	*/
+/*	$NetBSD: ntpSnmpSubagentObject.c,v 1.1.1.1.6.1 2012/04/17 00:03:49 yamt Exp $	*/
 
 /*****************************************************************************
  *
@@ -17,67 +17,15 @@
  *  ntpd process.
  *
  ****************************************************************************/
-#include <net-snmp/net-snmp-config.h>
-#include <net-snmp/net-snmp-includes.h>
-#include <net-snmp/agent/net-snmp-agent-includes.h>
-#include "ntpSnmpSubagentObject.h"
+#include <ntp_snmp.h>
+#include <ctype.h>
+#include <ntp.h>
 #include <libntpq.h>
 
 /* general purpose buffer length definition */
 #define NTPQ_BUFLEN 2048
 
-static int      ntpSnmpSubagentObject = 3;
-
 char ntpvalue[NTPQ_BUFLEN];
-
-
-
-/*****************************************************************************
- *
- * ntpsnmpd_strip_string
- *
- *  This function removes white space characters and EOL chars 
- *  from the beginning and end of a given NULL terminated string. 
- *  Be aware that the parameter itself is altered.
- *  
- ****************************************************************************
- * Parameters:
- *	string		char*	The name of the string variable
- *						NOTE: must be NULL terminated!
- * Returns:
- *	int		length of resulting string (i.e. w/o white spaces)
- ****************************************************************************/
-
-int ntpsnmpd_strip_string(char *string)
-{
-	char newstring[2048] = { 0 };
-	int i = 0;
-	int j = 0;
-
-	if ( strlen(string) > 2047 ) 
-		string[2048]=0;
-
-	j = strlen(string);
-
-	for (i=0;i<strlen(string);i++)
-	{
-		switch(string[i])
-		{
-			case 0x09: 	// Tab
-			case 0x0A:	// LF
-			case 0x0D:	// CR
-			case ' ':  	// Space
-			  break;
-			default:
-			  strncpy(newstring,(char *) &string[i], sizeof(newstring));
-			  i=2048;
-			  break;
-		}
-	}
-	strncpy(string, newstring, j);
-
-	return(strlen(string));
-}
 
 
 /*****************************************************************************
@@ -98,91 +46,91 @@ int ntpsnmpd_strip_string(char *string)
  *  will result in a field string "SERVERHOSTNAME" and a value
  *  of "hello world!".
  *     My first Parameter		=		"  is this!    "
-  * results in a field string "MYFIRSTPARAMETER" and a vaue " is this!    "
+  * results in a field string "MYFIRSTPARAMETER" and a value " is this!    "
  ****************************************************************************
  * Parameters:
- *	src			char*	The name of the source string variable
- *						NOTE: must be NULL terminated!
- *	field			char*	The name of the string which takes the
- *						fieldname
- *	fieldsize		int		The maximum size of the field name
- *	value		char*	The name of the string which takes the
- *						value part
- *	valuesize		int		The maximum size of the value string
+ *	string		const char *	The source string to parse.
+ *					NOTE: must be NULL terminated!
+ *	field		char *		The buffer for the field name.
+ *	fieldsize	size_t		The size of the field buffer.
+ *	value		char *		The buffer for the value.
+ *	valuesize	size_t		The size of the value buffer.
  *
  * Returns:
- *	int			length of value string 
+ *	size_t			length of value string 
  ****************************************************************************/
 
-int ntpsnmpd_parse_string(char *src, char *field, int fieldsize, char *value, int valuesize)
+size_t
+ntpsnmpd_parse_string(
+	const char *	string,
+	char *		field,
+	size_t		fieldsize,
+	char *		value,
+	size_t		valuesize
+	)
 {
-	char string[2048];
-	int i = 0;
-	int j = 0;
-	int l = 0;
-	int a = 0;
+	int i;
+	int j;
+	int loop;
+	size_t str_cnt;
+	size_t val_cnt;
 
-	strncpy(string,  src, sizeof(string));
+	/* we need at least one byte to work with to simplify */
+	if (fieldsize < 1 || valuesize < 1)
+		return 0;
 
-	a = strlen(string);
+	str_cnt = strlen(string);
 
 	/* Parsing the field name */
-	for (i=0;l==0;i++)
-	{
-		if (i>=a)
-		   l=1;
-		else
-		{
-			switch(string[i])
-			{
-				case 0x09: 	// Tab
-				case 0x0A:	// LF
-				case 0x0D:	// CR
-				case ' ':  	// Space
-				  break;
-				case '=':
-				  l=1;
-				  break;
-				  
-				default:
-				  if ( j < fieldsize ) 
-				  {
-					if ( ( string[i] >= 'a' ) && ( string[i] <='z' ) )
-						field[j++]=( string[i] - 32 ); // convert to Uppercase
-					else
-						field[j++]=string[i]; 
-				  }	
+	j = 0;
+	loop = TRUE;
+	for (i = 0; loop && i <= str_cnt; i++) {
+		switch (string[i]) {
 
-			}
+		case '\t': 	/* Tab */
+		case '\n':	/* LF */
+		case '\r':	/* CR */
+		case ' ':  	/* Space */
+			break;
+
+		case '=':
+			loop = FALSE;
+			break;
+
+		default:
+			if (j < fieldsize)
+				field[j++] = toupper(string[i]);
 		}
 	}
 
-	field[j]=0; j=0; value[0]=0;
-
+	j = min(j, fieldsize - 1);
+	field[j] = '\0';
 
 	/* Now parsing the value */
-	for (l=0;i<a;i++)
-	{
-		if ( ( string[i] > 0x0D ) && ( string[i] != ' ' ) )
-		   l = j+1;
+	value[0] = '\0';
+	j = 0; 
+	for (val_cnt = 0; i < str_cnt; i++) {
+		if (string[i] > 0x0D && string[i] != ' ')
+			val_cnt = min(j + 1, valuesize - 1);
 		
-		if ( ( value[0] != 0 ) || ( ( string[i] > 0x0D ) && ( string[i] != ' ' ) ) )
-		{
-			if (j < valuesize )
-			   value[j++]=string[i];
+		if (value[0] != '\0' ||
+		    (string[i] > 0x0D && string[i] != ' ')) {
+			if (j < valuesize)
+				value[j++] = string[i];
+		}
+	}
+	value[val_cnt] = '\0';
+
+	if (value[0] == '"') {
+		val_cnt--;
+		strncpy(value, &value[1], valuesize);
+		if (val_cnt > 0 && value[val_cnt - 1] == '"') {
+			val_cnt--;
+			value[val_cnt] = '\0';
 		}
 	}
 
-	value[l]=0;
-
-	if ( value[0]=='"' )
-		strcpy(value, (char *) &value[1]);
-
-	if ( value[strlen(value)-1] == '"' ) 
-		value[strlen(value)-1]=0;
-
-	return (strlen(value));
-
+	return val_cnt;
 }
 
 
@@ -198,54 +146,51 @@ int ntpsnmpd_parse_string(char *src, char *field, int fieldsize, char *value, in
  *  will copy "lips" to RESULT.
  ****************************************************************************
  * Parameters:
- *	src			char*	The name of the source string variable
- *						NOTE: must be NULL terminated!
- *	dest			char*	The name of the string which takes the
- *						requested field content
- * 	delim			char	The delimiter character
- *	fieldnumber		int		The number of the required field
- *						(start counting with 0)
- *	maxsize			int		The maximum size of dest
+ *	src		const char *	The name of the source string variable
+ *					NOTE: must be NULL terminated!
+ *	dest		char *		The name of the string which takes the
+ *					requested field content
+ * 	delim		char		The delimiter character
+ *	fieldnumber	int		The number of the required field
+ *					(start counting with 0)
+ *	maxsize		size_t		The maximum size of dest
  *
  * Returns:
- *	int			length of resulting dest string 
+ *	size_t		length of resulting dest string 
  ****************************************************************************/
 
-int ntpsnmpd_cut_string(char *src, char *dest, const char delim, int fieldnumber, int maxsize)
+size_t
+ntpsnmpd_cut_string(
+	const char *	string,
+	char *		dest,
+	char		delim,
+	int		fieldnumber,
+	size_t		maxsize
+	)
 {
-	char string[2048];
-	int i = 0;
-	int j = 0;
-	int l = 0;
-	int a = 0;
+	size_t i;
+	size_t j;
+	int l;
+	size_t str_cnt;
 
-	strncpy (string, src, sizeof(string));
-	
-	a = strlen(string);
+	if (maxsize < 1)
+		return 0;
 
-        memset (dest, 0, maxsize);
+	str_cnt = strlen(string);
+	j = 0;
+	memset(dest, 0, maxsize);
 
 	/* Parsing the field name */
-	for (i=0;l<=fieldnumber;i++)
-	{
-		if (i>=a)
-		   l=fieldnumber+1; /* terminate loop */
-		else
-		{
-			if ( string[i] == delim )
-			{
-				  l++; /* next field */
-			}
-			else  if ( ( l == fieldnumber) && ( j < maxsize )  )
-			{
-				dest[j++]=string[i]; 
-			}	
-
-		}
+	for (i = 0, l = 0; i < str_cnt && l <= fieldnumber; i++) {
+		if (string[i] == delim)
+			l++;	/* next field */
+		else if (l == fieldnumber && j < maxsize)
+			dest[j++] = string[i]; 
 	}
+	j = min(j, maxsize - 1);
+	dest[j] = '\0';
 
-	return (strlen(dest));
-
+	return j;
 }
 
 
@@ -268,22 +213,24 @@ int ntpsnmpd_cut_string(char *src, char *dest, const char delim, int fieldnumber
  *			rbuffer 
  ****************************************************************************/
 
-unsigned int read_ntp_value(char *variable, char *rbuffer, unsigned int maxlength)
+size_t
+read_ntp_value(
+	const char *	variable,
+	char *		value,
+	size_t		valuesize
+	)
 {
-	unsigned int i, sv_len = 0;
-	char sv_data[NTPQ_BUFLEN];
+	size_t	sv_len;
+	char	sv_data[NTPQ_BUFLEN];
 	
-	memset (sv_data,0, NTPQ_BUFLEN);
-	sv_len= ntpq_read_sysvars ( sv_data, NTPQ_BUFLEN );
-		
-	if ( sv_len )
-	{
-		i=ntpq_getvar( sv_data, sv_len , variable, rbuffer, maxlength);
-		return i;
-	} else {
-		return 0;
-	}
+	memset(sv_data, 0, sizeof(sv_data));
+	sv_len = ntpq_read_sysvars(sv_data, sizeof(sv_data));
 
+	if (0 == sv_len)
+		return 0;
+	else
+		return ntpq_getvar(sv_data, sv_len, variable, value,
+				   valuesize);
 }
 
 
@@ -380,45 +327,6 @@ int get_ntpEntSoftwareVersion (netsnmp_mib_handler *handler,
 }
 
 
-int get_ntpEntSoftwareVersionVal (netsnmp_mib_handler *handler,
-                               netsnmp_handler_registration *reginfo,
-                               netsnmp_agent_request_info *reqinfo,
-                               netsnmp_request_info *requests)
-{
-   unsigned int i = 0;
-   switch (reqinfo->mode) {
-   case MODE_GET:
-   {
-    
-    if ( read_ntp_value("versionval", ntpvalue, NTPQ_BUFLEN) )
-    {
-	i=atoi(ntpvalue);
-	snmp_set_var_typed_value(requests->requestvb, ASN_UNSIGNED,
-                             (u_char *) &i,
-                             sizeof (i)
-                            );
-    } else {
-	i = 0;
-	snmp_set_var_typed_value(requests->requestvb, ASN_UNSIGNED,
-                             (u_char *) &i,
-                             sizeof(i)
-                            );
-    }
-    break;
-    
-  }
-
-
-  default:
-	  /* If we cannot get the information we need, we will return a generic error to the SNMP client */
-        return SNMP_ERR_GENERR;
-  }
-
-  return SNMP_ERR_NOERROR;
-}
-
-
-
 int get_ntpEntSoftwareVendor (netsnmp_mib_handler *handler,
                                netsnmp_handler_registration *reginfo,
                                netsnmp_agent_request_info *reqinfo,
@@ -495,153 +403,97 @@ int get_ntpEntSystemType (netsnmp_mib_handler *handler,
   return SNMP_ERR_NOERROR;
 }
 
-int get_ntpEntTimeResolution (netsnmp_mib_handler *handler,
-                               netsnmp_handler_registration *reginfo,
-                               netsnmp_agent_request_info *reqinfo,
-                               netsnmp_request_info *requests)
+
+/*
+ * ntpEntTimeResolution
+ *	"The time resolution in integer format, where the resolution
+ *	 is represented as divisions of a second, e.g., a value of 1000
+ *	 translates to 1.0 ms."
+ *
+ * ntpEntTimeResolution is a challenge for ntpd, as the resolution is
+ * not known nor exposed by ntpd, only the measured precision (time to
+ * read the clock).
+ *
+ * Logically the resolution must be at least the precision, so report
+ * it as our best approximation of resolution until/unless ntpd provides
+ * better.
+ */
+int
+get_ntpEntTimeResolution(
+	netsnmp_mib_handler *		handler,
+	netsnmp_handler_registration *	reginfo,
+	netsnmp_agent_request_info *	reqinfo,
+	netsnmp_request_info *		requests
+	)
 {
+	int	precision;
+	u_int32 resolution;
 
-   switch (reqinfo->mode) {
-   case MODE_GET:
-   {
-    
-    if ( read_ntp_value("resolution", ntpvalue, NTPQ_BUFLEN) )
-    {
-	snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
-                             (u_char *)ntpvalue,
-                             strlen(ntpvalue)
-                            );
-    } else {
-	snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
-                             (u_char *)"N/A",
-                             3
-                            );
-    }
-    break;
-    
-  }
+	switch (reqinfo->mode) {
 
+	case MODE_GET:
+		if (!read_ntp_value("precision", ntpvalue,
+				    sizeof(ntpvalue)))
+			return SNMP_ERR_GENERR;
+		if (1 != sscanf(ntpvalue, "%d", &precision))
+			return SNMP_ERR_GENERR;
+		if (precision >= 0)
+			return SNMP_ERR_GENERR;
+		precision = max(precision, -31);
+		resolution = 1 << -precision;
+		snmp_set_var_typed_value(
+			requests->requestvb,
+			ASN_UNSIGNED,
+			(void *)&resolution,
+			sizeof(resolution));
+		break;
 
-  default:
-	  /* If we cannot get the information we need, we will return a generic error to the SNMP client */
-        return SNMP_ERR_GENERR;
-  }
+	default:
+		return SNMP_ERR_GENERR;
+	}
 
-  return SNMP_ERR_NOERROR;
+	return SNMP_ERR_NOERROR;
 }
 
 
-int get_ntpEntTimeResolutionVal (netsnmp_mib_handler *handler,
-                               netsnmp_handler_registration *reginfo,
-                               netsnmp_agent_request_info *reqinfo,
-                               netsnmp_request_info *requests)
+/*
+ * ntpEntTimePrecision
+ *	"The entity's precision in integer format, shows the precision.
+ *	 A value of -5 would mean 2^-5 = 31.25 ms."
+ */
+int 
+get_ntpEntTimePrecision(
+	netsnmp_mib_handler *		handler,
+	netsnmp_handler_registration *	reginfo,
+	netsnmp_agent_request_info *	reqinfo,
+	netsnmp_request_info *		requests
+	)
 {
+	int	precision;
+	int32	precision32;
 
-   unsigned int i = 0;
-   switch (reqinfo->mode) {
-   case MODE_GET:
-   {
-    
-    if ( read_ntp_value("resolutionval", ntpvalue, NTPQ_BUFLEN) )
-    {
-	i=atoi(ntpvalue);
-	snmp_set_var_typed_value(requests->requestvb, ASN_UNSIGNED,
-                             (u_char *) &i,
-                             sizeof (i)
-                            );
-    } else {
-	i = 0;
-	snmp_set_var_typed_value(requests->requestvb, ASN_UNSIGNED,
-                             (u_char *) &i,
-                             sizeof(i)
-                            );
-    }
-    break;
-    
-  }
+	switch (reqinfo->mode) {
 
+	case MODE_GET:
+		if (!read_ntp_value("precision", ntpvalue, 
+				    sizeof(ntpvalue)))
+			return SNMP_ERR_GENERR;
+		if (1 != sscanf(ntpvalue, "%d", &precision))
+			return SNMP_ERR_GENERR;
+		precision32 = (int32)precision;
+		snmp_set_var_typed_value(
+			requests->requestvb,
+			ASN_INTEGER,
+			(void *)&precision32,
+			sizeof(precision32));
+		break;
 
-  default:
-	  /* If we cannot get the information we need, we will return a generic error to the SNMP client */
-        return SNMP_ERR_GENERR;
-  }
+	default:
+		return SNMP_ERR_GENERR;
+	}
 
-  return SNMP_ERR_NOERROR;
+	return SNMP_ERR_NOERROR;
 }
-
-
-int get_ntpEntTimePrecision (netsnmp_mib_handler *handler,
-                               netsnmp_handler_registration *reginfo,
-                               netsnmp_agent_request_info *reqinfo,
-                               netsnmp_request_info *requests)
-{
-   switch (reqinfo->mode) {
-   case MODE_GET:
-   {
-    
-    if ( read_ntp_value("precision", ntpvalue, NTPQ_BUFLEN) )
-    {
-	snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
-                             (u_char *)ntpvalue,
-                             strlen(ntpvalue)
-                            );
-    } else {
-	snmp_set_var_typed_value(requests->requestvb, ASN_OCTET_STR,
-                             (u_char *)"N/A",
-                             3
-                            );
-    }
-    break;
-    
-  }
-
-
-  default:
-	  /* If we cannot get the information we need, we will return a generic error to the SNMP client */
-        return SNMP_ERR_GENERR;
-  }
-
-  return SNMP_ERR_NOERROR;
-}
-
-int get_ntpEntTimePrecisionVal (netsnmp_mib_handler *handler,
-                               netsnmp_handler_registration *reginfo,
-                               netsnmp_agent_request_info *reqinfo,
-                               netsnmp_request_info *requests)
-{
-
-    int i = 0;
-   switch (reqinfo->mode) {
-   case MODE_GET:
-   {
-    
-    if ( read_ntp_value("precision", ntpvalue, NTPQ_BUFLEN) )
-    {
-	i=atoi(ntpvalue);
-	snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
-                             (u_char *) &i,
-                             sizeof (i)
-                            );
-    } else {
-	i = 0;
-	snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
-                             (u_char *) &i,
-                             sizeof(i)
-                            );
-    }
-    break;
-    
-  }
-
-
-  default:
-	  /* If we cannot get the information we need, we will return a generic error to the SNMP client */
-        return SNMP_ERR_GENERR;
-  }
-
-  return SNMP_ERR_NOERROR;
-}
-
 
 
 int get_ntpEntTimeDistance (netsnmp_mib_handler *handler,
@@ -682,26 +534,18 @@ int get_ntpEntTimeDistance (netsnmp_mib_handler *handler,
 /*
  *
  * Initialize sub agent
- * TODO: Define NTP MIB OID (has to be assigned by IANA)
- * At the moment we use a private MIB branch (enterprises.5597.99)
  */
 
 void
 init_ntpSnmpSubagentObject(void)
 {
-	
-    /* Register all MIB objects with the agentx master */
-	
-  _SETUP_OID_RO( ntpEntSoftwareName ,  	NTPV4_OID , 1, 1, 1, 0  );
-  _SETUP_OID_RO( ntpEntSoftwareVersion ,  	NTPV4_OID , 1, 1, 2, 0  );
-  _SETUP_OID_RO( ntpEntSoftwareVersionVal ,	NTPV4_OID , 1, 1, 3, 0  );
-  _SETUP_OID_RO( ntpEntSoftwareVendor ,  	NTPV4_OID , 1, 1, 4, 0  );
-  _SETUP_OID_RO( ntpEntSystemType ,  		NTPV4_OID , 1, 1, 5, 0  );
-  _SETUP_OID_RO( ntpEntTimeResolution ,  	NTPV4_OID , 1, 1, 6, 0  );
-  _SETUP_OID_RO( ntpEntTimeResolutionVal , 	NTPV4_OID , 1, 1, 7, 0  );
-  _SETUP_OID_RO( ntpEntTimePrecision ,  	NTPV4_OID , 1, 1, 8, 0  );
-  _SETUP_OID_RO( ntpEntTimePrecisionVal ,  	NTPV4_OID , 1, 1, 9, 0  );
-  _SETUP_OID_RO( ntpEntTimeDistance ,  	NTPV4_OID , 1, 1,10, 0  );
-
+	/* Register all MIB objects with the agentx master */
+	NTP_OID_RO( ntpEntSoftwareName,		1, 1, 1, 0);
+	NTP_OID_RO( ntpEntSoftwareVersion,	1, 1, 2, 0);
+	NTP_OID_RO( ntpEntSoftwareVendor,	1, 1, 3, 0);
+	NTP_OID_RO( ntpEntSystemType,		1, 1, 4, 0);
+	NTP_OID_RO( ntpEntTimeResolution,	1, 1, 5, 0);
+	NTP_OID_RO( ntpEntTimePrecision,	1, 1, 6, 0);
+	NTP_OID_RO( ntpEntTimeDistance,		1, 1, 7, 0);
 }
 

@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.54 2011/03/06 17:08:28 bouyer Exp $
+# 	$NetBSD: LIBERO,v 1.54.4.1 2012/04/17 00:06:43 yamt Exp $
 
 #	NEWS1750 config file;
 #
@@ -172,7 +172,6 @@ pseudo-device	bpfilter		# Berkeley Packet Filter
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
-pseudo-device	rnd			# /dev/random and in-kernle generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	wsmux
 pseudo-device	ksyms

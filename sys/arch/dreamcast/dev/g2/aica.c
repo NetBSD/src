@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.21 2011/07/19 15:52:29 dyoung Exp $	*/
+/*	$NetBSD: aica.c,v 1.21.2.1 2012/04/17 00:06:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.21 2011/07/19 15:52:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.21.2.1 2012/04/17 00:06:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.21 2011/07/19 15:52:29 dyoung Exp $");
 
 struct aica_softc {
 	device_t		sc_dev;		/* base device */
+	kmutex_t		sc_lock;
+	kmutex_t		sc_intr_lock;
 	bus_space_tag_t		sc_memt;
 	bus_space_handle_t	sc_aica_regh;
 	bus_space_handle_t	sc_aica_memh;
@@ -160,6 +162,7 @@ int aica_get_port(void *, mixer_ctrl_t *);
 int aica_query_devinfo(void *, mixer_devinfo_t *);
 void aica_encode(int, int, int, int, u_char *, u_short **);
 int aica_get_props(void *);
+void aica_get_locks(void *, kmutex_t **, kmutex_t **);
 
 const struct audio_hw_if aica_hw_if = {
 	aica_open,
@@ -191,6 +194,7 @@ const struct audio_hw_if aica_hw_if = {
 	aica_trigger_output,
 	aica_trigger_input,
 	NULL,				/* aica_dev_ioctl */
+	aica_get_locks,
 };
 
 int
@@ -216,6 +220,9 @@ aica_attach(device_t parent, device_t self, void *aux)
 	ga = aux;
 	sc->sc_dev = self;
 	sc->sc_memt = ga->ga_memt;
+
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
 
 	if (bus_space_map(sc->sc_memt, AICA_REG_ADDR, 0x3000, 0,
 	    &sc->sc_aica_regh) != 0) {
@@ -597,6 +604,9 @@ aica_intr(void *arg)
 	struct aica_softc *sc;
 
 	sc = arg;
+
+	mutex_spin_enter(&sc->sc_intr_lock);
+
 	aica_fillbuffer(sc);
 
 	/* call audio interrupt handler (audio_pint()) */
@@ -606,6 +616,9 @@ aica_intr(void *arg)
 
 	/* clear SPU interrupt */
 	bus_space_write_4(sc->sc_memt, sc->sc_aica_regh, 0x28bc, 0x20);
+
+	mutex_spin_exit(&sc->sc_intr_lock);
+
 	return 1;
 }
 
@@ -762,4 +775,14 @@ aica_get_props(void *addr)
 {
 
 	return 0;
+}
+
+void
+aica_get_locks(void *addr, kmutex_t **intr, kmutex_t **thread)
+{
+	struct aica_softc *sc;
+
+	sc = addr;
+	*intr = &sc->sc_intr_lock;
+	*thread = &sc->sc_lock;
 }

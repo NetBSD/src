@@ -1,0 +1,18 @@
+#!/bin/sh
+#
+# $NetBSD: isibootd,v 1.1.4.2 2012/04/17 00:02:59 yamt Exp $
+#
+
+# PROVIDE: isibootd
+# REQUIRE: DAEMON
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="isibootd"
+rcvar=$name
+command="/usr/sbin/${name}"
+pidfile="/var/run/${name}.pid"
+required_files="/etc/ethers"
+
+load_rc_config $name
+run_rc_command "$1"

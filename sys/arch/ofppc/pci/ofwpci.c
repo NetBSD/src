@@ -1,4 +1,4 @@
-/* $NetBSD: ofwpci.c,v 1.10 2011/06/18 08:08:29 matt Exp $ */
+/* $NetBSD: ofwpci.c,v 1.10.2.1 2012/04/17 00:06:45 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.10 2011/06/18 08:08:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.10.2.1 2012/04/17 00:06:45 yamt Exp $");
 
 #include "opt_pci.h"
 
@@ -202,9 +202,9 @@ ofwpci_attach(device_t parent, device_t self, void *aux)
 	ioext  = extent_create("pciio",
 	    modeldata.pciiodata[device_unit(self)].start,
 	    modeldata.pciiodata[device_unit(self)].limit,
-	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_NOWAIT);
 	memext = extent_create("pcimem", sc->sc_memt.pbs_base,
-	    sc->sc_memt.pbs_limit-1, M_DEVBUF, NULL, 0, EX_NOWAIT);
+	    sc->sc_memt.pbs_limit-1, NULL, 0, EX_NOWAIT);
 
 	if (pci_configure_bus(pc, ioext, memext, NULL, 0, CACHELINESIZE))
 		aprint_error("pci_configure_bus() failed\n");

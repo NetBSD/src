@@ -1,4 +1,4 @@
-/*	$NetBSD: v_txt.c,v 1.7 2011/03/21 14:53:04 tnozaki Exp $ */
+/*	$NetBSD: v_txt.c,v 1.7.4.1 2012/04/17 00:02:26 yamt Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -32,7 +32,7 @@ static const char sccsid[] = "Id: v_txt.c,v 10.108 2003/07/18 21:27:42 skimo Exp
 #include "../common/common.h"
 #include "vi.h"
 
-static int	 txt_abbrev __P((SCR *, TEXT *, CHAR_T *, int, int *, int *));
+static int	 txt_abbrev __P((SCR *, TEXT *, ARG_CHAR_T *, int, int *, int *));
 static void	 txt_ai_resolve __P((SCR *, TEXT *, int *));
 static TEXT	*txt_backup __P((SCR *, TEXTH *, TEXT *, u_int32_t *));
 static int	 txt_dent __P((SCR *, TEXT *, int));
@@ -41,7 +41,7 @@ static void	 txt_err __P((SCR *, TEXTH *));
 static int	 txt_fc __P((SCR *, TEXT *, int *));
 static int	 txt_fc_col __P((SCR *, int, ARGS **));
 static int	 txt_hex __P((SCR *, TEXT *));
-static int	 txt_insch __P((SCR *, TEXT *, CHAR_T *, u_int));
+static int	 txt_insch __P((SCR *, TEXT *, ARG_CHAR_T *, u_int));
 static int	 txt_isrch __P((SCR *, VICMD *, TEXT *, u_int8_t *));
 static int	 txt_map_end __P((SCR *));
 static int	 txt_map_init __P((SCR *));
@@ -1471,7 +1471,7 @@ alloc_err:
  *	Handle abbreviations.
  */
 static int
-txt_abbrev(SCR *sp, TEXT *tp, CHAR_T *pushcp, int isinfoline, int *didsubp, int *turnoffp)
+txt_abbrev(SCR *sp, TEXT *tp, ARG_CHAR_T *pushcp, int isinfoline, int *didsubp, int *turnoffp)
 {
 	VI_PRIVATE *vip;
 	CHAR_T ch, *p;
@@ -1596,7 +1596,7 @@ search:	if (isinfoline) {
 	 * queue would have to be adjusted, and the line state when an initial
 	 * abbreviated character was received would have to be saved.
 	 */
-	ch = *pushcp;
+	ch = (UCHAR_T)*pushcp;
 	if (v_event_push(sp, NULL, &ch, 1, CH_ABBREVIATED))
 		return (1);
 	if (v_event_push(sp, NULL, qp->output, qp->olen, CH_ABBREVIATED))
@@ -1898,7 +1898,7 @@ txt_backup(SCR *sp, TEXTH *tiqh, TEXT *tp, u_int32_t *flagsp)
 static int
 txt_dent(SCR *sp, TEXT *tp, int isindent)
 {
-	CHAR_T ch;
+	ARG_CHAR_T ch;
 	u_long sw, ts;
 	size_t cno, current, spaces, target, tabs;
 
@@ -2425,7 +2425,7 @@ nothex:		tp->lb[tp->cno] = savec;
  * of the screen space they require, but that it not overwrite other characters.
  */
 static int
-txt_insch(SCR *sp, TEXT *tp, CHAR_T *chp, u_int flags)
+txt_insch(SCR *sp, TEXT *tp, ARG_CHAR_T *chp, u_int flags)
 {
 	unsigned char *kp;
 	CHAR_T savech;
@@ -2439,7 +2439,7 @@ txt_insch(SCR *sp, TEXT *tp, CHAR_T *chp, u_int flags)
 	if (LF_ISSET(TXT_REPLACE)) {
 		if (tp->owrite) {
 			--tp->owrite;
-			tp->lb[tp->cno++] = *chp;
+			tp->lb[tp->cno++] = (UCHAR_T)*chp;
 			return (0);
 		}
 	} else if (tp->owrite) {		/* Overwrite a character. */
@@ -2514,7 +2514,7 @@ txt_insch(SCR *sp, TEXT *tp, CHAR_T *chp, u_int flags)
 
 		/* If we had enough overwrite characters, we're done. */
 		if (nlen == 0) {
-			tp->lb[tp->cno++] = *chp;
+			tp->lb[tp->cno++] = (UCHAR_T)*chp;
 			return (0);
 		}
 	}
@@ -2530,7 +2530,7 @@ txt_insch(SCR *sp, TEXT *tp, CHAR_T *chp, u_int flags)
 			MEMMOVEW(tp->lb + tp->cno + 1,
 			    tp->lb + tp->cno, tp->owrite + tp->insert);
 	}
-	tp->lb[tp->cno++] = *chp;
+	tp->lb[tp->cno++] = (UCHAR_T)*chp;
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext.h,v 1.20 2005/06/21 22:29:53 lha Exp $	*/
+/*	$NetBSD: ext.h,v 1.20.42.1 2012/04/17 00:05:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -81,7 +81,7 @@ extern void
 	add_slc(char, char, cc_t),
 	check_slc(void),
 	change_slc(int, int, cc_t),
-	cleanup(int),
+	cleanup(int) __dead,
 	clientstat(int, int, int),
 	copy_termbuf(char *, int),
 	deferslc(void),
@@ -90,9 +90,9 @@ extern void
 	doeof(void),
 	dooption(int),
 	dontoption(int),
-	edithost(char *, char *),
-	fatal(int, const char *),
-	fatalperror(int, const char *),
+	edithost(const char *, const char *),
+	fatal(int, const char *) __dead,
+	fatalperror(int, const char *) __dead,
 	get_slc_defaults(void),
 	init_env(void),
 	init_termbuf(void),
@@ -103,7 +103,7 @@ extern void
 	netflush(void),
 #ifdef DIAGNOSTICS
 	printoption(const char *, int),
-	printdata(char *, char *, int),
+	printdata(const char *, char *, int),
 #ifndef ENCRYPTION
 	printsub(int, unsigned char *, int),
 #endif
@@ -120,7 +120,7 @@ extern void
 	sendbrk(void),
 	sendsusp(void),
 	set_termbuf(void),
-	start_login(char *, int, char *),
+	start_login(char *, int, char *) __dead,
 	start_slc(int),
 	startslave(char *, int, char *),
 	suboption(void),
@@ -130,7 +130,7 @@ extern void
 	tty_binaryout(int);
 
 extern char *
-	putf(char *, char *);
+	putf(const char *, char *);
 
 extern int
 	end_slc(unsigned char **),

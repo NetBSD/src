@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.210 2011/10/31 14:20:12 chs Exp $
+#	$NetBSD: bsd.sys.mk,v 1.210.2.1 2012/04/17 00:05:50 yamt Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -13,7 +13,7 @@ CPPFLAGS+=	-Wp,-iremap,${DESTDIR}/:/
 # Enable c99 mode by default.
 # This has the side effect of complaining for missing prototypes
 # implicit type declarations and missing return statements.
-.if defined(HAVE_GCC)
+.if defined(HAVE_GCC) || defined(HAVE_LLVM)
 CFLAGS+=	-std=gnu99
 .endif
 
@@ -59,8 +59,13 @@ CXXFLAGS+=	-Wctor-dtor-privacy -Wnon-virtual-dtor -Wreorder \
 		-Wno-deprecated -Woverloaded-virtual -Wsign-promo -Wsynth
 CXXFLAGS+=	${${ACTIVE_CXX} == "gcc":? -Wno-non-template-friend -Wno-pmf-conversions :}
 .endif
-.if ${WARNS} > 3 && defined(HAVE_GCC)
+.if ${WARNS} > 3 && (defined(HAVE_GCC) || defined(HAVE_LLVM))
+.if ${WARNS} > 4
+CFLAGS+=	-Wold-style-definition
+.endif
 CFLAGS+=	-Wsign-compare -Wformat=2
+CFLAGS+=	${${ACTIVE_CC} == "clang":? -Wno-error=format-nonliteral :}
+CFLAGS+=	${${ACTIVE_CC} == "gcc":? -Wno-format-zero-length :}
 .endif
 .if ${WARNS} > 3 && defined(HAVE_LLVM)
 CFLAGS+=	${${ACTIVE_CC} == "clang":? -Wpointer-sign -Wmissing-noreturn :}
@@ -197,7 +202,7 @@ STRIP?=		strip
 
 .c.ln:
 	${_MKTARGET_COMPILE}
-	${LINT} ${LINTFLAGS} \
+	${LINT} ${LINTFLAGS} ${LINTFLAGS.${.IMPSRC:T}} \
 	    ${CPPFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
 	    ${CPPFLAGS.${.IMPSRC:T}:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
 	    -i ${.IMPSRC}
@@ -267,5 +272,8 @@ YFLAGS+=	${YPREFIX:D-p${YPREFIX}} ${YHEADER:D-d}
 .y.h: ${.TARGET:.h=.c}
 .endif
 .endif
+
+# Objcopy
+OBJCOPYLIBFLAGS?=${"${.TARGET:M*.po}" != "":?-X:-x}
 
 .endif	# !defined(_BSD_SYS_MK_)

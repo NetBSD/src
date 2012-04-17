@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpsnmpd.c,v 1.1.1.1 2009/12/13 16:56:33 kardel Exp $	*/
+/*	$NetBSD: ntpsnmpd.c,v 1.1.1.1.6.1 2012/04/17 00:03:49 yamt Exp $	*/
 
 /*****************************************************************************
  *
@@ -22,6 +22,7 @@
  *
  ****************************************************************************/
 
+#include <ntp_snmp.h>
 #include <signal.h>
 #include <sys/time.h>
 
@@ -29,21 +30,11 @@
 #include <siginfo.h>
 #endif
 
-#include <net-snmp/net-snmp-config.h>
-#include <net-snmp/net-snmp-includes.h>
-#include <net-snmp/agent/net-snmp-agent-includes.h>
-#include <ntpSnmpSubagentObject.h>
-
-#undef PACKAGE_BUGREPORT
-#undef PACKAGE_NAME
-#undef PACKAGE_STRING
-#undef PACKAGE_TARNAME
-#undef PACKAGE_VERSION
-
 #include <libntpq.h>
 #include <ntpsnmpd-opts.h>
 
 static int keep_running;
+RETSIGTYPE stop_server(int);
 
 RETSIGTYPE
 stop_server(int a) {
@@ -58,8 +49,6 @@ int
 main (int argc, char **argv) {
   int background = 0; /* start as background process */
   int use_syslog = 1; /* use syslog for logging */
-  char varvalue[1024];
-	
 
 	{
 		int optct = optionProcess(&ntpsnmpdOptions, argc, argv);
@@ -93,7 +82,7 @@ main (int argc, char **argv) {
 
   /* Set AgentX socket interface */
   netsnmp_ds_set_string(NETSNMP_DS_APPLICATION_ID,
-                            NETSNMP_DS_AGENT_X_SOCKET, "tcp:localhost:705");
+                            NETSNMP_DS_AGENT_X_SOCKET, OPT_ARG( AGENTXSOCKET ));
 
   init_agent("ntpsnmpd");
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.2.1 2011/11/10 14:31:23 yamt Exp $
+#	$NetBSD: Makefile,v 1.6.2.2 2012/04/17 00:03:30 yamt Exp $
 
 LIB=	LLVMARMCodeGen
 
@@ -23,6 +23,7 @@ SRCS+=	ARMAsmPrinter.cpp \
 	ARMJITInfo.cpp \
 	ARMLoadStoreOptimizer.cpp \
 	ARMMCInstLower.cpp \
+	ARMMachineFunctionInfo.cpp \
 	ARMRegisterInfo.cpp \
 	ARMSelectionDAGInfo.cpp \
 	ARMSubtarget.cpp \
@@ -52,7 +53,6 @@ TABLEGEN_OUTPUT= \
 	ARMGenCallingConv.inc|-gen-callingconv \
 	ARMGenSubtargetInfo.inc|-gen-subtarget \
 	ARMGenEDInfo.inc|-gen-enhanced-disassembly-info \
-	ARMGenDecoderTables.inc|-gen-arm-decoder \
 	ARMGenDisassemblerTables.inc|-gen-disassembler
 
 .include "${.PARSEDIR}/../../tablegen.mk"

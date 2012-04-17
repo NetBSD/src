@@ -1,4 +1,4 @@
-/* $NetBSD: fp_complete.c,v 1.13 2011/06/07 00:48:30 matt Exp $ */
+/* $NetBSD: fp_complete.c,v 1.13.2.1 2012/04/17 00:05:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.13 2011/06/07 00:48:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.13.2.1 2012/04/17 00:05:53 yamt Exp $");
 
 #include "opt_compat_osf1.h"
 
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.13 2011/06/07 00:48:30 matt Exp $"
 
 #include <lib/libkern/softfloat.h>
 
-#define	TSWINSIZE 4	/* size of trap shadow window in u_int32_t units */
+#define	TSWINSIZE 4	/* size of trap shadow window in uint32_t units */
 
 /*	Set Name		Opcodes			AARM C.* Symbols  */
 
@@ -111,19 +111,19 @@ struct evcnt fpevent_reuse;
  */
 
 struct alpha_shadow {
-	u_int64_t resolved;	/* cases trigger pc found */
-	u_int64_t unresolved;	/* cases it wasn't, code problems? */
-	u_int64_t scans;		/* trap shadow scans */
-	u_int64_t len;		/* number of instructions examined */
-	u_int64_t uop;		/* bit mask of unexpected opcodes */
-	u_int64_t sqrts;	/* ev6+ square root single count */
-	u_int64_t sqrtt;	/* ev6+ square root double count */
-	u_int32_t ufunc;	/* bit mask of unexpected functions */
-	u_int32_t max;		/* max trap shadow scan */
-	u_int32_t nilswop;	/* unexpected op codes */
-	u_int32_t nilswfunc;	/* unexpected function codes */
-	u_int32_t nilanyop;	/* this "cannot happen" */
-	u_int32_t vax;		/* sigs from vax fp opcodes */
+	uint64_t resolved;	/* cases trigger pc found */
+	uint64_t unresolved;	/* cases it wasn't, code problems? */
+	uint64_t scans;		/* trap shadow scans */
+	uint64_t len;		/* number of instructions examined */
+	uint64_t uop;		/* bit mask of unexpected opcodes */
+	uint64_t sqrts;	/* ev6+ square root single count */
+	uint64_t sqrtt;	/* ev6+ square root double count */
+	uint32_t ufunc;	/* bit mask of unexpected functions */
+	uint32_t max;		/* max trap shadow scan */
+	uint32_t nilswop;	/* unexpected op codes */
+	uint32_t nilswfunc;	/* unexpected function codes */
+	uint32_t nilanyop;	/* this "cannot happen" */
+	uint32_t vax;		/* sigs from vax fp opcodes */
 } alpha_shadow, alpha_shadow_zero;
 
 static float64 float64_unk(float64, float64);
@@ -131,10 +131,10 @@ static float64 compare_un(float64, float64);
 static float64 compare_eq(float64, float64);
 static float64 compare_lt(float64, float64);
 static float64 compare_le(float64, float64);
-static void cvt_qs_ts_st_gf_qf(u_int32_t, struct lwp *);
-static void cvt_gd(u_int32_t, struct lwp *);
-static void cvt_qt_dg_qg(u_int32_t, struct lwp *);
-static void cvt_tq_gq(u_int32_t, struct lwp *);
+static void cvt_qs_ts_st_gf_qf(uint32_t, struct lwp *);
+static void cvt_gd(uint32_t, struct lwp *);
+static void cvt_qt_dg_qg(uint32_t, struct lwp *);
+static void cvt_tq_gq(uint32_t, struct lwp *);
 
 static float32 (*swfp_s[])(float32, float32) = {
 	float32_add, float32_sub, float32_mul, float32_div,
@@ -146,7 +146,7 @@ static float64 (*swfp_t[])(float64, float64) = {
 	float64_unk, float64_unk, float64_unk, float64_unk
 };
 
-static void (*swfp_cvt[])(u_int32_t, struct lwp *) = {
+static void (*swfp_cvt[])(uint32_t, struct lwp *) = {
 	cvt_qs_ts_st_gf_qf, cvt_gd, cvt_qt_dg_qg, cvt_tq_gq
 };
 
@@ -155,7 +155,7 @@ this_cannot_happen(int what_cannot_happen, int64_t bits)
 {
 	static int total;
 	alpha_instruction inst;
-	static u_int64_t reported;
+	static uint64_t reported;
 
 	inst.bits = bits;
 	++alpha_shadow.nilswfunc;
@@ -232,7 +232,7 @@ compare_eq(float64 a, float64 b)
 }
 /*
  * A note regarding the VAX FP ops.
- * 
+ *
  * The AARM gives us complete leeway to set or not set status flags on VAX
  * ops, but we do any subnorm, NaN and dirty zero fixups anyway, and we set
  * flags by IEEE rules.  Many ops are common to d/f/g and s/t source types.
@@ -242,7 +242,7 @@ compare_eq(float64 a, float64 b)
  * decoder, so weird cases don't become security issues.
  */
 static void
-cvt_qs_ts_st_gf_qf(u_int32_t inst_bits, struct lwp *l)
+cvt_qs_ts_st_gf_qf(uint32_t inst_bits, struct lwp *l)
 {
 	t_float tfb, tfc;
 	s_float sfb, sfc;
@@ -280,21 +280,21 @@ cvt_qs_ts_st_gf_qf(u_int32_t inst_bits, struct lwp *l)
 }
 
 static void
-cvt_gd(u_int32_t inst_bits, struct lwp *l)
+cvt_gd(uint32_t inst_bits, struct lwp *l)
 {
 	t_float tfb, tfc;
 	alpha_instruction inst;
 
 	inst.bits = inst_bits;
 	stt(inst.float_detail.fb, &tfb, l);
-	(void) float64_to_float32(tfb.i); 
+	(void) float64_to_float32(tfb.i);
 	l->l_md.md_flags &= ~NETBSD_FLAG_TO_FP_C(FP_X_IMP);
 	tfc.i = float64_add(tfb.i, (float64)0);
 	ldt(inst.float_detail.fc, &tfc, l);
 }
 
 static void
-cvt_qt_dg_qg(u_int32_t inst_bits, struct lwp *l)
+cvt_qt_dg_qg(uint32_t inst_bits, struct lwp *l)
 {
 	t_float tfb, tfc;
 	alpha_instruction inst;
@@ -327,7 +327,7 @@ cvt_qt_dg_qg(u_int32_t inst_bits, struct lwp *l)
  *      the issue of trap handler pc and trapping results.
  */
 static void
-cvt_tq_gq(u_int32_t inst_bits, struct lwp *l)
+cvt_tq_gq(uint32_t inst_bits, struct lwp *l)
 {
 	t_float tfb, tfc;
 	alpha_instruction inst;
@@ -338,10 +338,10 @@ cvt_tq_gq(u_int32_t inst_bits, struct lwp *l)
 	alpha_ldt(inst.float_detail.fc, &tfc);	/* yes, ldt */
 }
 
-static u_int64_t
-fp_c_to_fpcr_1(u_int64_t fpcr, u_int64_t fp_c)
+static uint64_t
+fp_c_to_fpcr_1(uint64_t fpcr, uint64_t fp_c)
 {
-	u_int64_t disables;
+	uint64_t disables;
 
 	/*
 	 * It's hard to arrange for conforming bit fields, because the FP_C
@@ -349,7 +349,7 @@ fp_c_to_fpcr_1(u_int64_t fpcr, u_int64_t fp_c)
 	 * scrambled) bit numbers. Defining an internal unscrambled FP_C
 	 * wouldn't help much, because every user exception requires the
 	 * architected bit order in the sigcontext.
-	 * 
+	 *
 	 * Programs that fiddle with the fpcr exception bits (instead of fp_c)
 	 * will lose, because those bits can be and usually are subsetted;
 	 * the official home is in the fp_c. Furthermore, the kernel puts
@@ -399,9 +399,9 @@ fp_c_to_fpcr(struct lwp *l)
 }
 
 void
-alpha_write_fp_c(struct lwp *l, u_int64_t fp_c)
+alpha_write_fp_c(struct lwp *l, uint64_t fp_c)
 {
-	u_int64_t md_flags;
+	uint64_t md_flags;
 
 	fp_c &= MDLWP_FP_C;
 	md_flags = l->l_md.md_flags;
@@ -414,7 +414,7 @@ alpha_write_fp_c(struct lwp *l, u_int64_t fp_c)
 	alpha_pal_wrfen(0);
 }
 
-u_int64_t
+uint64_t
 alpha_read_fp_c(struct lwp *l)
 {
 	/*
@@ -432,7 +432,7 @@ float64_unk(float64 a, float64 b)
 	return 0;
 }
 
-/* 
+/*
  * The real function field encodings for IEEE and VAX FP instructions.
  *
  * Since there is only one operand type field, the cvtXX instructions
@@ -505,7 +505,7 @@ float64_unk(float64 a, float64 b)
  */
 
 static void
-alpha_fp_interpret(alpha_instruction *pc, struct lwp *l, u_int64_t bits)
+alpha_fp_interpret(alpha_instruction *pc, struct lwp *l, uint64_t bits)
 {
 	s_float sfa, sfb, sfc;
 	t_float tfa, tfb, tfc;
@@ -574,12 +574,12 @@ alpha_fp_interpret(alpha_instruction *pc, struct lwp *l, u_int64_t bits)
 
 static int
 alpha_fp_complete_at(alpha_instruction *trigger_pc, struct lwp *l,
-    u_int64_t *ucode)
+    uint64_t *ucode)
 {
 	int needsig;
 	alpha_instruction inst;
-	u_int64_t rm, fpcr, orig_fpcr;
-	u_int64_t orig_flags, new_flags, changed_flags, md_flags;
+	uint64_t rm, fpcr, orig_fpcr;
+	uint64_t orig_flags, new_flags, changed_flags, md_flags;
 
 	if (__predict_false(copyin(trigger_pc, &inst, sizeof inst))) {
 		this_cannot_happen(6, -1);
@@ -619,11 +619,11 @@ alpha_fp_complete_at(alpha_instruction *trigger_pc, struct lwp *l,
 }
 
 int
-alpha_fp_complete(u_long a0, u_long a1, struct lwp *l, u_int64_t *ucode)
+alpha_fp_complete(u_long a0, u_long a1, struct lwp *l, uint64_t *ucode)
 {
 	int t;
 	int sig;
-	u_int64_t op_class;
+	uint64_t op_class;
 	alpha_instruction inst;
 	/* "trigger_pc" is Compaq's term for the earliest faulting op */
 	alpha_instruction *trigger_pc, *usertrap_pc;
@@ -637,7 +637,7 @@ alpha_fp_complete(u_long a0, u_long a1, struct lwp *l, u_int64_t *ucode)
 			sig = alpha_fp_complete_at(trigger_pc, l, ucode);
 			goto done;
 		}
-	} 
+	}
 	*ucode = a0;
 	if (!(a0 & 1))
 		return sig;
@@ -645,13 +645,13 @@ alpha_fp_complete(u_long a0, u_long a1, struct lwp *l, u_int64_t *ucode)
  * At this point we are somewhere in the trap shadow of one or more instruc-
  * tions that have trapped with software completion specified.  We have a mask
  * of the registers written by trapping instructions.
- * 
+ *
  * Now step backwards through the trap shadow, clearing bits in the
  * destination write mask until the trigger instruction is found, and
  * interpret this one instruction in SW. If a SIGFPE is not required, back up
  * the PC until just after this instruction and restart. This will execute all
  * trap shadow instructions between the trigger pc and the trap pc twice.
- * 
+ *
  * If a SIGFPE is generated from the OSF1 emulation,  back up one more
  * instruction to the trigger pc itself. Native binaries don't because it
  * is non-portable and completely defeats the intended purpose of IEEE

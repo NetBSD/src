@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.29.2.1 2011/11/10 14:31:44 yamt Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.29.2.2 2012/04/17 00:07:07 yamt Exp $	*/
 
 /*
  *
@@ -53,6 +53,17 @@ void xen_bcast_tlbflush(void);
 void xen_mcast_invlpg(vaddr_t, uint32_t);
 void xen_bcast_invlpg(vaddr_t);
 
+void pmap_xen_resume(void);
+void pmap_xen_suspend(void);
+
+#ifdef PAE
+void	pmap_map_recursive_entries(void);
+void	pmap_unmap_recursive_entries(void);
+#endif /* PAE */
+
+#if defined(PAE) || defined(__x86_64__)
+void xen_kpm_sync(struct pmap *, int);
+#endif /* PAE || __x86_64__ */
 
 #define xpq_queue_pin_l1_table(pa)	\
 	xpq_queue_pin_table(pa, MMUEXT_PIN_L1_TABLE)

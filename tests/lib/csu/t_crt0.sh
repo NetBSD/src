@@ -1,4 +1,4 @@
-# $NetBSD: t_crt0.sh,v 1.3 2010/11/07 17:51:20 jmmv Exp $
+# $NetBSD: t_crt0.sh,v 1.3.6.1 2012/04/17 00:09:10 yamt Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -77,9 +77,28 @@ EOF
 	atf_check -o file:expout "$(atf_get_srcdir)/h_initfini3"
 }
 
+atf_test_case initfini4
+initfini4_head()
+{
+	atf_set "descr" "Checks support for init/fini sections in LD_PRELOAD"
+}
+initfini4_body()
+{
+	cat >expout <<EOF
+constructor2 executed
+constructor executed
+main executed
+destructor executed
+destructor2 executed
+EOF
+
+	atf_check -o file:expout -x "env LD_PRELOAD=$(atf_get_srcdir)/h_initfini3_dso.so $(atf_get_srcdir)/h_initfini1"
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case initfini1
 	atf_add_test_case initfini2
 	atf_add_test_case initfini3
+	atf_add_test_case initfini4
 }

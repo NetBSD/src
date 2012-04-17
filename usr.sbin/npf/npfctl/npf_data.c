@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_data.c,v 1.7.4.1 2011/11/10 14:31:55 yamt Exp $	*/
+/*	$NetBSD: npf_data.c,v 1.7.4.2 2012/04/17 00:09:50 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,484 +27,466 @@
  */
 
 /*
- * npfctl(8) helper routines.
+ * npfctl(8) data manipulation and helper routines.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.7.4.1 2011/11/10 14:31:55 yamt Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.7.4.2 2012/04/17 00:09:50 yamt Exp $");
 
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <net/if.h>
-#include <netinet/tcp.h>
+#include <sys/null.h>
 
-#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#define ICMP_STRINGS
+#include <netinet/ip_icmp.h>
+#include <netinet/tcp.h>
+#include <net/if.h>
 
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <ifaddrs.h>
 #include <netdb.h>
-#include <assert.h>
 
 #include "npfctl.h"
 
 static struct ifaddrs *		ifs_list = NULL;
-nl_config_t *			npf_conf = NULL;
 
-void
-npfctl_init_data(void)
+unsigned long
+npfctl_find_ifindex(const char *ifname)
 {
-
-	npf_conf = npf_config_create();
-	if (npf_conf == NULL) {
-		errx(EXIT_FAILURE, "npf_config_create");
-	}
-	if (getifaddrs(&ifs_list) == -1) {
-		err(EXIT_FAILURE, "getifaddrs");
-	}
-}
-
-int
-npfctl_ioctl_send(int fd)
-{
-	int error = npf_config_submit(npf_conf, fd);
-	npf_config_destroy(npf_conf);
-	return error;
-}
-
-/*
- * Helper routines:
- *
- *	npfctl_getif() - get interface addresses and index number from name.
- *	npfctl_parse_v4mask() - parse address/mask integers from CIDR block.
- *	npfctl_parse_port() - parse port number (which may be a service name).
- *	npfctl_parse_tcpfl() - parse TCP flags.
- */
-
-struct ifaddrs *
-npfctl_getif(char *ifname, unsigned int *if_idx, bool reqaddr, sa_family_t addrtype)
-{
-	struct ifaddrs *ifent;
-	struct sockaddr_in *sin;
-
-	for (ifent = ifs_list; ifent != NULL; ifent = ifent->ifa_next) {
-		sin = (struct sockaddr_in *)ifent->ifa_addr;
-		if (sin->sin_family != addrtype && reqaddr)
-			continue;
-		if (strcmp(ifent->ifa_name, ifname) == 0)
-			break;
-	}
-	if (ifent) {
-		*if_idx = if_nametoindex(ifname);
-	}
-	return ifent;
-}
-
-bool
-npfctl_parse_port(char *ostr, bool *range, in_port_t *fport, in_port_t *tport)
-{
-	char *str = xstrdup(ostr), *sep;
-
-	*range = false;
-	if ((sep = strchr(str, ':')) != NULL) {
-		/* Port range (only numeric). */
-		*range = true;
-		*sep = '\0';
-
-	} else if (isalpha((unsigned char)*str)) {
-		struct servent *se;
-
-		se = getservbyname(str, NULL);
-		if (se == NULL) {
-			free(str);
-			return false;
-		}
-		*fport = se->s_port;
-	} else {
-		*fport = htons(atoi(str));
-	}
-	*tport = sep ? htons(atoi(sep + 1)) : *fport;
-	free(str);
-	return true;
-}
-
-void
-npfctl_create_mask(sa_family_t family, u_int length, npf_addr_t *omask)
-{
-	uint32_t part;
-	uint32_t *mask = (uint32_t*)omask;
-
-	memset(omask, 0, sizeof(npf_addr_t));
-	if (family == AF_INET) {
-		part = htonl(0xffffffff << (32 - length));
-		memcpy(mask, &part, 4);
-	} else if (family == AF_INET6) {
-		while (length > 32) {
-			part = htonl(0xffffffff);
-			memcpy(mask, &part, 4);
-			mask += 1;
-			length -= 32;
-		}
-		part = htonl(0xffffffff << (32 - length));
-		memcpy(mask, &part, 4);
-	}
-}
-
-sa_family_t
-npfctl_get_addrfamily(const char *ostr)
-{
-	struct addrinfo hint, *res = NULL;
-	int ret; 
-	char *str = xstrdup(ostr);
-	char *p = strchr(str, '/');
-	sa_family_t family;
-
-	if (p)
-	    *p = '\0';
-	memset(&hint, '\0', sizeof(hint));
-	hint.ai_family = PF_UNSPEC;
-	hint.ai_flags = AI_NUMERICHOST;
-	ret = getaddrinfo(str, NULL, &hint, &res);
-	if (ret) {
-		family = AF_UNSPEC;
-	} else {
-		family = res->ai_family;
-		freeaddrinfo(res);
-	}
-	free(str);
-	return family;
-}
-
-sa_family_t
-npfctl_parse_cidr(char *str, sa_family_t addrfamily, npf_addr_t *addr, npf_netmask_t *mask)
-{
-
-	if (strcmp(str, "any") == 0) {
-		memset(addr, 0, sizeof(npf_addr_t));
-		memset(mask, 0, sizeof(npf_netmask_t));
-	} else if (isalpha((unsigned char)*str)) {
-		/* TODO: handle multiple addresses per interface */
-		struct ifaddrs *ifa;
-		struct sockaddr_in *sin;
-		u_int idx;
-		if ((ifa = npfctl_getif(str, &idx, true, AF_INET)) == NULL) {
-			errx(EXIT_FAILURE, "invalid interface '%s'", str);
-		}
-		/* Interface address. */
-		sin = (struct sockaddr_in *)ifa->ifa_addr;
-		memcpy(addr, &(sin->sin_addr.s_addr), sizeof(struct in_addr));
-		//v4mask = 0xffffffff; - TODO!
-	} else {
-		char *p = strchr(str, '/');
-		if (p != NULL) {
-			*p++ = '\0';
-			*mask = atoi(p);
-		} else {
-			if (addrfamily == AF_INET)
-				*mask = 32;
-			else
-				*mask = 128;
-		}
-		memset(addr, 0, sizeof(npf_addr_t));
-		int ret = inet_pton(addrfamily, str, addr);
-		if (ret != 1) {
-			printf("TODO: error");
-		}
-	}
-
-	return addrfamily;
+	return if_nametoindex(ifname);
 }
 
 static bool
-npfctl_parse_tcpfl(char *s, uint8_t *tfl, uint8_t *tfl_mask)
+npfctl_copy_address(sa_family_t fam, npf_addr_t *addr, const void *ptr)
 {
-	uint8_t tcpfl = 0;
-	bool mask = false;
+	switch (fam) {
+	case AF_INET: {
+		const struct sockaddr_in *sin = ptr;
+		memcpy(addr, &sin->sin_addr, sizeof(sin->sin_addr));
+		return true;
+	}
+	case AF_INET6: {
+		const struct sockaddr_in6 *sin6 = ptr;
+		memcpy(addr, &sin6->sin6_addr, sizeof(sin6->sin6_addr));
+		return true;
+	}
+	default:
+		yyerror("unknown address family %u", fam);
+		return false;
+	}
+}
 
-	while (*s) {
-		switch (*s) {
-		case 'F': tcpfl |= TH_FIN; break;
-		case 'S': tcpfl |= TH_SYN; break;
-		case 'R': tcpfl |= TH_RST; break;
-		case 'P': tcpfl |= TH_PUSH; break;
-		case 'A': tcpfl |= TH_ACK; break;
-		case 'U': tcpfl |= TH_URG; break;
-		case 'E': tcpfl |= TH_ECE; break;
-		case 'W': tcpfl |= TH_CWR; break;
-		case '/':
-			*s = '\0';
-			*tfl = tcpfl;
-			tcpfl = 0;
-			mask = true;
-			break;
-		default:
-			return false;
-		}
-		s++;
+static bool
+npfctl_parse_fam_addr(const char *name, sa_family_t *fam, npf_addr_t *addr)
+{
+	static const struct addrinfo hint = {
+		.ai_family = AF_UNSPEC,
+		.ai_flags = AI_NUMERICHOST
+	};
+	struct addrinfo *ai;
+	int ret;
+
+	ret = getaddrinfo(name, NULL, &hint, &ai);
+	if (ret) {
+		yyerror("cannot parse '%s' (%s)", name, gai_strerror(ret));
+		return false;
 	}
-	if (!mask) {
-		*tfl = tcpfl;
+	if (fam) {
+		*fam = ai->ai_family;
 	}
-	*tfl_mask = tcpfl;
+	if (!npfctl_copy_address(*fam, addr, ai->ai_addr)) {
+		return false;
+	}
+	freeaddrinfo(ai);
 	return true;
 }
 
-void
-npfctl_fill_table(nl_table_t *tl, char *fname)
+static bool
+npfctl_parse_mask(const char *s, sa_family_t fam, npf_netmask_t *mask)
 {
-	char *buf;
-	FILE *fp;
-	size_t n;
-	int l;
+	char *ep = NULL;
+	npf_addr_t addr;
+	uint8_t *ap;
 
-	fp = fopen(fname, "r");
-	if (fp == NULL) {
-		err(EXIT_FAILURE, "open '%s'", fname);
+	if (s) {
+		errno = 0;
+		*mask = (npf_netmask_t)strtol(s, &ep, 0);
+		if (*ep == '\0' && s != ep && errno != ERANGE)
+			return true;
+		if (!npfctl_parse_fam_addr(s, &fam, &addr))
+			return false;
 	}
-	l = 1;
-	buf = NULL;
-	while (getline(&buf, &n, fp) != -1) {
-		npf_addr_t addr;
-		npf_netmask_t mask;
 
-		if (*buf == '\n' || *buf == '#')
-			continue;
+	switch (fam) {
+	case AF_INET:
+		*mask = 32;
+		break;
+	case AF_INET6:
+		*mask = 128;
+		break;
+	default:
+		yyerror("unknown address family %u", fam);
+		return false;
+	}
 
-		if (!npfctl_parse_cidr(buf, npfctl_get_addrfamily(buf), &addr, &mask)) {
-			errx(EXIT_FAILURE, "invalid table entry at line %d", l);
+	if (ep == NULL) {
+		return true;
+	}
+	ap = addr.s6_addr + (*mask / 8) - 1;
+	while (ap >= addr.s6_addr) {
+		for (int j = 8; j > 0; j--) {
+			if (*ap & 1)
+				return true;
+			*ap >>= 1;
+			(*mask)--;
+			if (*mask == 0)
+				return true;
 		}
-
-		/* Create and add table entry. */
-		npf_table_add_entry(tl, &addr, mask);
-		l++;
+		ap--;
 	}
-	if (buf != NULL) {
-		free(buf);
-	}
+	return true;
 }
 
 /*
- * N-code generation helpers.
+ * npfctl_parse_fam_addr_mask: return address family, address and mask.
+ *
+ * => Mask is optional and can be NULL.
+ * => Returns true on success or false if unable to parse.
  */
-
-static void
-npfctl_rulenc_cidr(void **nc, int nblocks[], var_t *dat, bool sd, sa_family_t addrfamily)
+npfvar_t *
+npfctl_parse_fam_addr_mask(const char *addr, const char *mask,
+    unsigned long *nummask)
 {
-	element_t *el = dat->v_elements;
-	int foff;
+	npfvar_t *vp = npfvar_create(".addr");
+	fam_addr_mask_t fam;
 
-	/* If table, generate a single table matching block. */
-	if (dat->v_type == VAR_TABLE) {
-		u_int tid = atoi(el->e_data);
+	memset(&fam, 0, sizeof(fam));
 
-		nblocks[0]--;
-		foff = npfctl_failure_offset(nblocks);
-		npfctl_gennc_tbl(nc, foff, tid, sd);
-		return;
-	}
-
-	/* Generate v4/v6 CIDR matching blocks. */
-	for (el = dat->v_elements; el != NULL; el = el->e_next) {
-		npf_addr_t addr;
-		npf_netmask_t mask;
-
-		npfctl_parse_cidr(el->e_data, addrfamily, &addr, &mask);
-		if (addrfamily == AF_INET)
-		    nblocks[1]--;
-		else if (addrfamily == AF_INET6)
-		    nblocks[3]--;
-		foff = npfctl_failure_offset(nblocks);
-		if (addrfamily == AF_INET) 
-			npfctl_gennc_v4cidr(nc, foff, &addr, mask, sd);
-		else if (addrfamily == AF_INET6)
-			npfctl_gennc_v6cidr(nc, foff, &addr, mask, sd);
-	}
-}
-
-static void
-npfctl_rulenc_ports(void **nc, int nblocks[], var_t *dat, bool tcpudp,
-    bool both, bool sd)
-{
-	element_t *el = dat->v_elements;
-	int foff;
-
-	assert(dat->v_type != VAR_TABLE);
-
-	/* Generate TCP/UDP port matching blocks. */
-	for (el = dat->v_elements; el != NULL; el = el->e_next) {
-		in_port_t fport, tport;
-		bool range;
-
-		if (!npfctl_parse_port(el->e_data, &range, &fport, &tport)) {
-			errx(EXIT_FAILURE, "invalid service '%s'", el->e_data);
-		}
-		nblocks[0]--;
-		foff = both ? 0 : npfctl_failure_offset(nblocks);
-		npfctl_gennc_ports(nc, foff, fport, tport, tcpudp, sd);
-	}
-}
-
-static void
-npfctl_rulenc_block(void **nc, int nblocks[], var_t *cidr, var_t *ports,
-    bool both, bool tcpudp, bool sd, sa_family_t addrfamily)
-{
-
-	npfctl_rulenc_cidr(nc, nblocks, cidr, sd, addrfamily);
-	if (ports == NULL) {
-		return;
-	}
-	npfctl_rulenc_ports(nc, nblocks, ports, tcpudp, both, sd);
-	if (!both) {
-		return;
-	}
-	npfctl_rulenc_ports(nc, nblocks, ports, !tcpudp, false, sd);
-}
-
-void
-npfctl_rule_ncode(nl_rule_t *rl, char *proto, char *tcpfl, int icmp_type,
-    int icmp_code, var_t *from, sa_family_t addrfamily, var_t *fports, var_t *to, var_t *tports)
-{
-	int nblocks[4] = { 0, 0, 0, 0 };
-	bool icmp, tcpudp, both;
-	void *ncptr, *nc;
-	size_t sz, foff;
+	if (!npfctl_parse_fam_addr(addr, &fam.fam_family, &fam.fam_addr))
+		goto out;
 
 	/*
-	 * Default: both TCP and UDP.
+	 * Note: both mask and nummask may be NULL.  In such case,
+	 * npfctl_parse_mask() will handle and will set full mask.
 	 */
-	icmp = false;
-	tcpudp = true;
-	if (proto == NULL) {
-		both = true;
-		goto skip_proto;
-	}
-	both = false;
-
-	if (strcmp(proto, "icmp") == 0) {
-		/* ICMP case. */
-		fports = NULL;
-		tports = NULL;
-		icmp = true;
-
-	} else if (strcmp(proto, "tcp") == 0) {
-		/* Just TCP. */
-		tcpudp = true;
-
-	} else if (strcmp(proto, "udp") == 0) {
-		/* Just UDP. */
-		tcpudp = false;
-
-	} else {
-		/* Default. */
-	}
-skip_proto:
-	if (icmp || icmp_type != -1) {
-		assert(tcpfl == NULL);
-		icmp = true;
-		nblocks[2] += 1;
-	}
-	if (tcpudp && tcpfl) {
-		assert(icmp_type == -1 && icmp_code == -1);
-		nblocks[2] += 1;
+	if (nummask) {
+		fam.fam_mask = *nummask;
+	} else if (!npfctl_parse_mask(mask, fam.fam_family, &fam.fam_mask)) {
+		goto out;
 	}
 
-	/* Calculate how blocks to determince n-code. */
-	if (from && from->v_count) {
-		if (from->v_type == VAR_TABLE)
-			nblocks[0] += 1;
-		else {
-			if (addrfamily == AF_INET)
-				nblocks[1] += from->v_count;
-			else
-				nblocks[3] += from->v_count;
+	if (!npfvar_add_element(vp, NPFVAR_FAM, &fam, sizeof(fam)))
+		goto out;
+
+	return vp;
+out:
+	npfvar_destroy(vp);
+	return NULL;
+}
+
+npfvar_t *
+npfctl_parse_table_id(const char *id)
+{
+	npfvar_t *vp;
+
+	if (!npfctl_table_exists_p(id)) {
+		yyerror("table '%s' is not defined", id);
+		return NULL;
+	}
+	vp = npfvar_create(".table");
+
+	if (!npfvar_add_element(vp, NPFVAR_TABLE, id, strlen(id) + 1))
+		goto out;
+
+	return vp;
+out:
+	npfvar_destroy(vp);
+	return NULL;
+}
+
+/*
+ * npfctl_parse_port_range: create a port-range variable.  Note that the
+ * passed port numbers are in network byte order.
+ */
+npfvar_t *
+npfctl_parse_port_range(in_port_t s, in_port_t e)
+{
+	npfvar_t *vp = npfvar_create(".port_range");
+	port_range_t pr;
+
+	pr.pr_start = s;
+	pr.pr_end = e;
+
+	if (!npfvar_add_element(vp, NPFVAR_PORT_RANGE, &pr, sizeof(pr)))
+		goto out;
+
+	return vp;
+out:
+	npfvar_destroy(vp);
+	return NULL;
+}
+
+npfvar_t *
+npfctl_parse_port_range_variable(const char *v)
+{
+	npfvar_t *vp = npfvar_lookup(v);
+	in_port_t p;
+	port_range_t *pr;
+	size_t count = npfvar_get_count(vp);
+	npfvar_t *pvp = npfvar_create(".port_range");
+
+	for (size_t i = 0; i < count; i++) {
+		int type = npfvar_get_type(vp, i);
+		void *data = npfvar_get_data(vp, type, i);
+		switch (type) {
+		case NPFVAR_IDENTIFIER:
+		case NPFVAR_STRING:
+			p = npfctl_portno(data);
+			npfvar_add_elements(pvp, npfctl_parse_port_range(p, p));
+			break;
+		case NPFVAR_PORT_RANGE:
+			pr = data;
+			npfvar_add_element(pvp, NPFVAR_PORT_RANGE, pr,
+			    sizeof(*pr));
+			break;
+		case NPFVAR_NUM:
+			p = *(unsigned long *)data;
+			npfvar_add_elements(pvp, npfctl_parse_port_range(p, p));
+			break;
+		default:
+			yyerror("wrong variable '%s' type '%s' for port range",
+			    v, npfvar_type(type));
+			goto out;
 		}
-		if (fports && fports->v_count)
-			nblocks[0] += fports->v_count * (both ? 2 : 1);
 	}
-	if (to && to->v_count) {
-		if (to->v_type == VAR_TABLE)
-			nblocks[0] += 1;
-		else {
-			if (addrfamily == AF_INET)
-				nblocks[1] += to->v_count;
-			else
-				nblocks[3] += to->v_count;
+	return pvp;
+out:
+	npfvar_destroy(pvp);
+	return NULL;
+}
+
+npfvar_t *
+npfctl_parse_iface(const char *ifname)
+{
+	npfvar_t *vp = npfvar_create(".iface");
+	struct ifaddrs *ifa;
+	fam_addr_mask_t fam;
+	bool gotif = false;
+
+	if (ifs_list == NULL && getifaddrs(&ifs_list) == -1) {
+		err(EXIT_FAILURE, "getifaddrs");
+	}
+	memset(&fam, 0, sizeof(fam));
+
+	npfvar_t *ip = npfvar_create(".ifname");
+	if (!npfvar_add_element(ip, NPFVAR_STRING, ifname, strlen(ifname) + 1))
+		goto out;
+
+	for (ifa = ifs_list; ifa != NULL; ifa = ifa->ifa_next) {
+		struct sockaddr *sa;
+		sa_family_t family;
+
+		if (strcmp(ifa->ifa_name, ifname) != 0)
+			continue;
+
+		gotif = true;
+		if ((ifa->ifa_flags & IFF_UP) == 0)
+			warnx("interface '%s' is down", ifname);
+
+		sa = ifa->ifa_addr;
+		family = sa->sa_family;
+		if (family != AF_INET && family != AF_INET6)
+			continue;
+
+		fam.fam_family = family;
+		fam.fam_interface = ip;
+
+		if (!npfctl_copy_address(family, &fam.fam_addr, sa))
+			goto out;
+
+		if (!npfctl_parse_mask(NULL, fam.fam_family, &fam.fam_mask))
+			goto out;
+
+		if (!npfvar_add_element(vp, NPFVAR_FAM, &fam, sizeof(fam)))
+			goto out;
+	}
+	if (!gotif) {
+		yyerror("interface '%s' not found", ifname);
+		goto out;
+	}
+	if (npfvar_get_count(vp) == 0) {
+		yyerror("no addresses matched for interface '%s'", ifname);
+		goto out;
+	}
+	return vp;
+out:
+	npfvar_destroy(vp);
+	npfvar_destroy(ip);
+	return NULL;
+}
+
+fam_addr_mask_t *
+npfctl_parse_cidr(char *cidr)
+{
+	npfvar_t *vp;
+	char *p;
+
+	p = strchr(cidr, '/');
+	if (p) {
+		*p++ = '\0';
+	}
+	vp = npfctl_parse_fam_addr_mask(cidr, p, NULL);
+	if (vp == NULL) {
+		return NULL;
+	}
+	return npfvar_get_data(vp, NPFVAR_FAM, 0);
+}
+
+/*
+ * npfctl_portno: convert port identifier (string) to a number.
+ *
+ * => Returns port number in network byte order.
+ */
+in_port_t
+npfctl_portno(const char *port)
+{
+	struct addrinfo *ai, *rai;
+	in_port_t p = 0;
+	int e;
+
+	e = getaddrinfo(NULL, port, NULL, &rai);
+	if (e != 0) {
+		yyerror("invalid port name: '%s' (%s)", port, gai_strerror(e));
+		return 0;
+	}
+
+	for (ai = rai; ai; ai = ai->ai_next) {
+		switch (ai->ai_family) {
+		case AF_INET: {
+			struct sockaddr_in *sin = (void *)ai->ai_addr;
+			p = sin->sin_port;
+			goto out;
 		}
-		if (tports && tports->v_count)
-			nblocks[0] += tports->v_count * (both ? 2 : 1);
-	}
-
-	/* Any n-code to generate? */
-	if (!icmp && (nblocks[0] + nblocks[1] + nblocks[2] + nblocks[3]) == 0) {
-		/* Done, if none. */
-		return;
-	}
-
-	/* Allocate memory for the n-code. */
-	sz = npfctl_calc_ncsize(nblocks);
-	ncptr = malloc(sz);
-	if (ncptr == NULL) {
-		err(EXIT_FAILURE, "malloc");
-	}
-	nc = ncptr;
-
-	/*
-	 * Generate v4/v6 CIDR matching blocks and TCP/UDP port matching.
-	 */
-	if (from) {
-		npfctl_rulenc_block(&nc, nblocks, from, fports,
-		    both, tcpudp, true, addrfamily);
-	}
-	if (to) {
-		npfctl_rulenc_block(&nc, nblocks, to, tports,
-		    both, tcpudp, false, addrfamily);
-	}
-
-	if (icmp) {
-		/*
-		 * ICMP case.
-		 */
-		nblocks[2]--;
-		foff = npfctl_failure_offset(nblocks);
-		npfctl_gennc_icmp(&nc, foff, icmp_type, icmp_code);
-
-	} else if (tcpudp && tcpfl) {
-		/*
-		 * TCP case, flags.
-		 */
-		uint8_t tfl = 0, tfl_mask;
-
-		nblocks[2]--;
-		foff = npfctl_failure_offset(nblocks);
-		if (!npfctl_parse_tcpfl(tcpfl, &tfl, &tfl_mask)) {
-			errx(EXIT_FAILURE, "invalid TCP flags '%s'", tcpfl);
+		case AF_INET6: {
+			struct sockaddr_in6 *sin6 = (void *)ai->ai_addr;
+			p = sin6->sin6_port;
+			goto out;
 		}
-		npfctl_gennc_tcpfl(&nc, foff, tfl, tfl_mask);
+		default:
+			break;
+		}
 	}
-	npfctl_gennc_complete(&nc);
+out:
+	freeaddrinfo(rai);
+	return p;
+}
 
-	if ((uintptr_t)nc - (uintptr_t)ncptr != sz) {
-		errx(EXIT_FAILURE, "n-code size got wrong (%tu != %zu)",
-		    (uintptr_t)nc - (uintptr_t)ncptr, sz);
+npfvar_t *
+npfctl_parse_tcpflag(const char *s)
+{
+	uint8_t tfl = 0;
+
+	while (*s) {
+		switch (*s) {
+		case 'F': tfl |= TH_FIN; break;
+		case 'S': tfl |= TH_SYN; break;
+		case 'R': tfl |= TH_RST; break;
+		case 'P': tfl |= TH_PUSH; break;
+		case 'A': tfl |= TH_ACK; break;
+		case 'U': tfl |= TH_URG; break;
+		case 'E': tfl |= TH_ECE; break;
+		case 'W': tfl |= TH_CWR; break;
+		default:
+			yyerror("invalid flag '%c'", *s);
+			return NULL;
+		}
+		s++;
 	}
 
-#ifdef DEBUG
-	uint32_t *op = ncptr;
-	size_t n = sz;
-	do {
-		DPRINTF(("\t> |0x%02x|\n", (u_int)*op));
-		op++;
-		n -= sizeof(*op);
-	} while (n);
-#endif
-
-	/* Create a final memory block of data, ready to send. */
-	if (npf_rule_setcode(rl, NPF_CODE_NCODE, ncptr, sz) == -1) {
-		errx(EXIT_FAILURE, "npf_rule_setcode");
+	npfvar_t *vp = npfvar_create(".tcp_flag");
+	if (!npfvar_add_element(vp, NPFVAR_TCPFLAG, &tfl, sizeof(tfl))) {
+		npfvar_destroy(vp);
+		return NULL;
 	}
-	free(ncptr);
+
+	return vp;
+}
+
+uint8_t
+npfctl_icmptype(const char *type)
+{
+	for (uint8_t ul = 0; icmp_type[ul]; ul++)
+		if (strcmp(icmp_type[ul], type) == 0)
+			return ul;
+	return ~0;
+}
+
+uint8_t
+npfctl_icmpcode(uint8_t type, const char *code)
+{
+	const char **arr;
+
+	switch (type) {
+	case ICMP_ECHOREPLY:
+	case ICMP_SOURCEQUENCH:
+	case ICMP_ALTHOSTADDR:
+	case ICMP_ECHO:
+	case ICMP_ROUTERSOLICIT:
+	case ICMP_TSTAMP:
+	case ICMP_TSTAMPREPLY:
+	case ICMP_IREQ:
+	case ICMP_IREQREPLY:
+	case ICMP_MASKREQ:
+	case ICMP_MASKREPLY:
+		arr = icmp_code_none;
+		break;
+	case ICMP_ROUTERADVERT:
+		arr = icmp_code_routeradvert;
+		break;
+	case ICMP_UNREACH:
+		arr = icmp_code_unreach;
+		break;
+	case ICMP_REDIRECT:
+		arr = icmp_code_redirect;
+		break;
+	case ICMP_TIMXCEED:
+		arr = icmp_code_timxceed;
+		break;
+	case ICMP_PARAMPROB:
+		arr = icmp_code_paramprob;
+		break;
+	case ICMP_PHOTURIS:
+		arr = icmp_code_photuris;
+		break;
+	default:
+		return ~0;
+	}
+
+	for (uint8_t ul = 0; arr[ul]; ul++) {
+		if (strcmp(arr[ul], code) == 0)
+			return ul;
+	}
+	return ~0;
+}
+
+npfvar_t *
+npfctl_parse_icmp(uint8_t type, uint8_t code)
+{
+	npfvar_t *vp = npfvar_create(".icmp");
+
+	if (!npfvar_add_element(vp, NPFVAR_ICMP, &type, sizeof(type)))
+		goto out;
+
+	if (!npfvar_add_element(vp, NPFVAR_ICMP, &code, sizeof(code)))
+		goto out;
+
+	return vp;
+out:
+	npfvar_destroy(vp);
+	return NULL;
 }

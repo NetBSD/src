@@ -1,0 +1,106 @@
+.\" Copyright (C) 2006 International Business Machines Corporation
+.\" Written by Anthony Bussani based on the Trusted Computing Group Software Stack Specification Version 1.2
+.\"
+.de Sh \" Subsection
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+.de Sp \" Vertical space (when we can't use .PP)
+.if t .sp .5v
+.if n .sp
+..
+.de Ip \" List item
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH "Tspi_DAA_VerifySignature" 3 "2006-09-04" "TSS 1.2"
+.ce 1
+TCG Software Stack Developer's Reference
+.SH NAME
+Tspi_DAA_VerifySignature \- creates a challenge for the TCG platform
+.SH "SYNOPSIS"
+.ad l
+.hy 0
+.nf
+.B #include <tss/tss_typedef.h>
+.B #include <tss/tss_structs.h>
+.B #include <tss/tspi.h>
+.sp
+.BI "TSPICALL Tspi_DAA_VerifySignature("
+.BI "    TSS_HDAA                    " hDAA ","
+.BI "    TSS_DAA_SIGNATURE           " daaSignature ","
+.BI "    TSS_HKEY                    " hPubKeyIssuer ","
+.BI "    TSS_DAA_SIGN_DATA           " signData ","
+.BI "    UINT32                      " attributesLength ","
+.BI "    BYTE**                      " attributes ","
+.BI "    UINT32                      " nonceVerifierLength ","
+.BI "    BYTE*                       " nonceVerifier ","
+.BI "    UINT32                      " baseNameLength ","
+.BI "    BYTE*                       " baseName ","
+.BI "    TSS_BOOL*                   " isCorrect
+.BI ");"
+.fi
+.sp
+.ad
+.hy
+
+.SH "DESCRIPTION"
+.PP
+\Tspi_DAA_VerifySignature\fR
+is part of the DAA Verifier component. It's the last function out of 2 in order to verify a
+DAA Credential of a TCG platform. It verifies the DAA Credential and detects public rogue TPMs.
+This is an optional function and does not require a TPM or a TCS.
+
+.SH "PARAMETERS"
+.PP
+.SS hDAA
+The \fIhDAA\fR parameter is used to specify the handle of the DAA object.
+.SS daaSignature
+The \fIdaaSignature\fR parameter is the DAA signature contains proof of
+ownership of the DAA Credential, as well as a signature on either an AIK or a message.
+.SS hPubKeyIssuer
+The \fIhPubKeyIssuer\fR parameter is the handle of the DAA public key of the DAA Issuer
+of the credential.
+.SS signData
+The \fIsignData\fR parameter defines what data is signed (AIK or message).
+.SS attributesLength
+The \fIattributesLength\fR parameter is the Length of attributes array that is determined by
+the DAA Issuer public key (lh+li). The length of a single attribute is lf/8.
+.SS attributes
+The \fIattributes\fR parameter is the array of attributes which the DAA Credential owner reveals.
+.SS nonceVerifierLength
+The \fInonceVerifierLength\fR parameter is the length of nonceVerifier (20 bytes).
+.SS nonceVerifier
+The \fInonceVerifier\fR parameter is the nonce that was computed in the previous function (Tspi_VerifyInit).
+.SS baseNameLength
+The \fIbaseNameLength\fR parameter the length of the baseName.
+.SS baseName
+The \fIbaseName\fR parameter is the base name that was chosen for the DAA Signature.
+.SS isCorrect
+The \fIisCorrect\fR parameter denotes if the verification of the DAA Signature was successful.
+
+.SH "RETURN CODES"
+.PP
+\fBTspi_DAA_VerifySignature\fR returns TSS_SUCCESS on success, otherwise one of the
+following values is returned:
+.TP
+.SM TSS_E_BAD_PARAMETER
+.TP
+.SM TSS_E_INTERNAL_ERROR
+An internal SW error has been detected.
+.SH "CONFORMING TO"
+.PP
+\fBTspi_DAA_VerifySignature\fR conforms to the Trusted Computing Group
+Software Specification version 1.2
+
+.SH "SEE ALSO"
+
+.PP
+\fBTspi_DAA_IssuerKeyVerification\fR(3)
+

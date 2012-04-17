@@ -1,7 +1,7 @@
-/*	$NetBSD: liolib.c,v 1.1.1.1 2010/10/31 11:16:57 mbalmer Exp $	*/
+/*	$NetBSD: liolib.c,v 1.1.1.1.6.1 2012/04/17 00:04:46 yamt Exp $	*/
 
 /*
-** Id: liolib.c,v 2.73.1.3 2008/01/18 17:47:43 roberto Exp
+** $Id: liolib.c,v 1.1.1.1.6.1 2012/04/17 00:04:46 yamt Exp $
 ** Standard I/O (and system) library
 ** See Copyright Notice in lua.h
 */
@@ -278,7 +278,10 @@ static int read_number (lua_State *L, FILE *f) {
     lua_pushnumber(L, d);
     return 1;
   }
-  else return 0;  /* read fails */
+  else {
+    lua_pushnil(L);  /* "result" to be removed */
+    return 0;  /* read fails */
+  }
 }
 
 

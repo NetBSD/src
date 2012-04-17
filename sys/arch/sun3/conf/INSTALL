@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.49 2011/06/30 20:09:37 wiz Exp $
+# $NetBSD: INSTALL,v 1.49.2.1 2012/04/17 00:06:58 yamt Exp $
 #
 # INSTALL - Installation kernel for the Sun3
 #
@@ -83,7 +83,7 @@ file-system	KERNFS		# /kern
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 
 # Networking options
 options 	INET		# IP protocol stack support
@@ -195,7 +195,6 @@ pseudo-device	ppp			# PPP
 pseudo-device	tun			# network tunneling over tty
 #pseudo-device	gre			# generic L3 over IP tunnel
 #pseudo-device	ipfilter		# ip filter
-pseudo-device	rnd			# /dev/random and in-kernel generator
 
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 #pseudo-device	vnd			# paging to files

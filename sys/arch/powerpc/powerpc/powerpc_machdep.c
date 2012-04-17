@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.60 2011/07/31 10:00:52 kiyohara Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.60.2.1 2012/04/17 00:06:48 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.60 2011/07/31 10:00:52 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.60.2.1 2012/04/17 00:06:48 yamt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_modular.h"
@@ -46,8 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.60 2011/07/31 10:00:52 kiyohar
 #include <sys/kauth.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/signal.h>
 #include <sys/sysctl.h>
 #include <sys/ucontext.h>
@@ -250,6 +248,13 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       NULL, cpu_altivec, NULL, 0,
 		       CTL_MACHDEP, CPU_ALTIVEC, CTL_EOL);
 #endif
+#ifdef PPC_BOOKE
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "execprot", NULL,
+		       NULL, 1, NULL, 0,
+		       CTL_MACHDEP, CPU_EXECPROT, CTL_EOL);
+#endif
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "model", NULL,
@@ -280,20 +285,12 @@ long dumplo = -1;			/* blocks */
 void
 cpu_dumpconf(void)
 {
-	const struct bdevsw *bdev;
 	int nblks;		/* size of dump device */
 	int skip;
 
 	if (dumpdev == NODEV)
 		return;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL) {
-		dumpdev = NODEV;
-		return;
-	}
-	if (bdev->d_psize == NULL)
-		return;
-	nblks = (*bdev->d_psize)(dumpdev);
+	nblks = bdev_size(dumpdev);
 	if (nblks <= ctod(1))
 		return;
 
@@ -331,33 +328,15 @@ startlwp(void *arg)
 	userret(l, tf);
 }
 
+/*
+ * Process the tail end of a posix_spawn() for the child.
+ */
 void
-upcallret(struct lwp *l)
+cpu_spawn_return(struct lwp *l)
 {
 	struct trapframe * const tf = l->l_md.md_utf;
 
-	KERNEL_UNLOCK_LAST(l);
 	userret(l, tf);
-}
-
-void 
-cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
-	void *sas, void *ap, void *sp, sa_upcall_t upcall)
-{
-	struct trapframe * const tf = l->l_md.md_utf;
-
-	/*
-	 * Build context to run handler in.
-	 */
-	tf->tf_fixreg[1] = (register_t)((struct saframe *)sp - 1);
-	tf->tf_lr = 0;
-	tf->tf_fixreg[3] = (register_t)type;
-	tf->tf_fixreg[4] = (register_t)sas;
-	tf->tf_fixreg[5] = (register_t)nevents;
-	tf->tf_fixreg[6] = (register_t)ninterrupted;
-	tf->tf_fixreg[7] = (register_t)ap;
-	tf->tf_srr0 = (register_t)upcall;
-	tf->tf_srr1 &= ~PSL_SE;
 }
 
 bool

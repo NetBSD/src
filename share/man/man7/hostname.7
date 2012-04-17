@@ -1,4 +1,4 @@
-.\" $NetBSD: hostname.7,v 1.11 2010/09/29 14:34:07 wiz Exp $
+.\" $NetBSD: hostname.7,v 1.11.6.1 2012/04/17 00:05:47 yamt Exp $
 .\"
 .\" Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
 .\"
@@ -55,7 +55,7 @@ subdomain of the Internet Domain Name System would be represented as
 Hostnames are often used with network client and server programs,
 which must generally translate the name to an address for use.
 (This task is usually performed by the library routine
-.Xr gethostbyname  3 . )
+.Xr gethostbyname 3 . )
 The default method for resolving hostnames by the Internet name resolver is
 to follow RFC 1535's security recommendations.
 Actions can be taken by the administrator to override these
@@ -156,7 +156,7 @@ and
 options are present in the resolver configuration file, then only the
 .Em last
 one listed is used (see
-.Xr resolver 5 ) .
+.Xr resolv.conf 5 ) .
 .Pp
 If the name was not previously tried
 .Dq as-is
@@ -177,9 +177,9 @@ pairs.
 .Bl -tag -width "/etc/resolv.conf  " -compact
 .It Pa /etc/resolv.conf
 See
-.Xr resolver 5 .
+.Xr resolv.conf 5 .
 .El
 .Sh SEE ALSO
 .Xr gethostbyname 3 ,
-.Xr resolver 5 ,
+.Xr resolv.conf 5 ,
 .Xr mailaddr 7

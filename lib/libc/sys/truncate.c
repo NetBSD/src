@@ -1,4 +1,4 @@
-/*	$NetBSD: truncate.c,v 1.12 2007/11/23 12:39:16 uebayasi Exp $	*/
+/*	$NetBSD: truncate.c,v 1.12.30.1 2012/04/17 00:05:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)truncate.c	8.1 (Berkeley) 6/17/93";
 #else
-__RCSID("$NetBSD: truncate.c,v 1.12 2007/11/23 12:39:16 uebayasi Exp $");
+__RCSID("$NetBSD: truncate.c,v 1.12.30.1 2012/04/17 00:05:26 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,9 +49,7 @@ int __truncate(const char *, int, off_t);
  * is not supplied by GCC 1.X but is supplied by GCC 2.X.
  */
 int
-truncate(path, length)
-	const char *path;
-	off_t length;
+truncate(const char *path, off_t length)
 {
 
 	return __truncate(path, 0, length);

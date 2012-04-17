@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_if.h,v 1.17 2011/10/30 05:11:37 manu Exp $ */
+/*  $NetBSD: perfuse_if.h,v 1.17.2.1 2012/04/17 00:05:30 yamt Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -54,6 +54,7 @@ extern int perfuse_diagflags;
 #define PDF_SYSLOG	0x0400	/* use syslog */
 #define PDF_FILENAME	0x0800	/* File names */
 #define PDF_RESIZE	0x1000	/* Resize operations */
+#define PDF_TRACE	0x2000	/* Trace FUSE calls */
 
 /*
  * Diagnostic functions
@@ -206,5 +207,6 @@ const char *perfuse_opname(int);
 void perfuse_fs_init(struct puffs_usermount *);
 int perfuse_mainloop(struct puffs_usermount *);
 int perfuse_unmount(struct puffs_usermount *);
+void perfuse_trace_dump(struct puffs_usermount *, FILE *);
 
 #endif /* _PERFUSE_IF_H */

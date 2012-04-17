@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.38 2010/07/07 01:30:33 chs Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.38.8.1 2012/04/17 00:07:15 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.38 2010/07/07 01:30:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.38.8.1 2012/04/17 00:07:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -220,45 +220,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	sigframe.uc.luc_mcontext.cr2 = (long)pcb->pcb_onfault;
 	sigframe.uc.luc_mcontext.fpstate = fpsp;
 	native_to_linux_sigset(&sigframe.uc.luc_sigmask, mask);
-
-	/* 
-	 * the siginfo structure
-	 */
-	sigframe.info.lsi_signo = native_to_linux_signo[sig];
-	sigframe.info.lsi_errno = native_to_linux_errno[ksi->ksi_errno];
-	sigframe.info.lsi_code = native_to_linux_si_code(ksi->ksi_code);
-
-	/* XXX This is a rought conversion, taken from i386 code */
-	switch (sigframe.info.lsi_signo) {
-	case LINUX_SIGILL:
-	case LINUX_SIGFPE:
-	case LINUX_SIGSEGV:
-	case LINUX_SIGBUS:
-	case LINUX_SIGTRAP:
-		sigframe.info._sifields._sigfault._addr = ksi->ksi_addr;
-		break;
-	case LINUX_SIGCHLD:
-		sigframe.info._sifields._sigchld._pid = ksi->ksi_pid;
-		sigframe.info._sifields._sigchld._uid = ksi->ksi_uid;
-		sigframe.info._sifields._sigchld._utime = ksi->ksi_utime;
-		sigframe.info._sifields._sigchld._stime = ksi->ksi_stime;
-		sigframe.info._sifields._sigchld._status =
-		    native_to_linux_si_status(ksi->ksi_code, ksi->ksi_status);
-		break;
-	case LINUX_SIGIO:
-		sigframe.info._sifields._sigpoll._band = ksi->ksi_band;
-		sigframe.info._sifields._sigpoll._fd = ksi->ksi_fd;
-		break;
-	default:
-		sigframe.info._sifields._sigchld._pid = ksi->ksi_pid;
-		sigframe.info._sifields._sigchld._uid = ksi->ksi_uid;
-		if ((sigframe.info.lsi_signo == LINUX_SIGALRM) ||
-		    (sigframe.info.lsi_signo >= LINUX_SIGRTMIN))
-			sigframe.info._sifields._timer._sigval.sival_ptr =
-			     ksi->ksi_value.sival_ptr;
-		break;
-	}
-
+	native_to_linux_siginfo(&sigframe.info, &ksi->ksi_info);
 	sendsig_reset(l, sig);
 	mutex_exit(p->p_lock);
 	error = 0;

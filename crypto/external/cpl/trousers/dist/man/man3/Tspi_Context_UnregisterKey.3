@@ -1,0 +1,150 @@
+.\" Copyright (C) 2004 International Business Machines Corporation
+.\" Written by Kathy Robertson based on the Trusted Computing Group Software Stack Specification Version 1.1 Golden
+.\"
+.de Sh \" Subsection
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+.de Sp \" Vertical space (when we can't use .PP)
+.if t .sp .5v
+.if n .sp
+..
+.de Ip \" List item
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH "Tspi_Context_UnregisterKey" 3 "2004-05-26" "TSS 1.1" "TCG Software Stack Developer's Reference"
+.SH NAME
+Tspi_Context_UnregisterKey \- unregister a key from the persistent storage device.
+.SH "SYNOPSIS"
+.ad l
+.hy 0
+.nf
+.B #include <tss/platform.h>
+.B #include <tss/tcpa_defines.h>
+.B #include <tss/tcpa_typedef.h>
+.B #include <tss/tcpa_struct.h>
+.B #include <tss/tss_typedef.h>
+.B #include <tss/tss_structs.h>
+.B #include <tss/tspi.h>
+.sp
+.BI "TSS_RESULT Tspi_Context_UnregisterKey(TSS_HCONTEXT " hContext ", TSS_FLAG  " persistentStorageType ","
+.BI "                                      TSS_UUID     " uuidKey ",  TSS_HKEY* " phKey ");"
+.fi
+.sp
+.ad
+.hy
+
+.SH "DESCRIPTION"
+.PP
+\fBTSS_Context_UnregisterKey\fR  
+provides the capabilities of the TSS Core Service or TSS Service Provider
+.SH "PARAMETERS"
+.PP
+.SS hContext
+The handle of the context object.
+.PP
+.SS persistentStorageType
+Flag indicating the persistent storage.
+.PP
+.SS uuidKey
+The UUID of the key to be removed from the persistent storage.
+.PP
+.SS phKey
+Recieves the handle of a key object containing the information from the archive.
+.PP
+.SS pulRespDataLength
+Recieves the length (in bytes) of the prgbRespData parameter.
+.PP
+.SS prgbRespData
+On successful completion of the command, this parameter points to the buffer containing the actual data of the specified capability.
+The handle of the object to be destroyed
+
+.SH "RETURN CODES"
+.PP
+\fBTspi_Context_UnregisterKey\fR returns TSS_SUCCESS on success, otherwise one of the following values are returned:
+.TP
+.SM TSS_E_INVALID_HANDLE - the parameter \fIhContext\fR is an invalid parameter.
+.TP
+.SM TSS_E_PS_KEY_NOTFOUND - the parameter \fIuuidKey\fR is an invalid UUID.
+.TP
+.SM TSS_E_INTERNAL_ERROR - An error occurred internal to the TSS.
+.SH "EXAMPLE"
+.nf
+#include <trousers/tss.h>
+
+int
+main(void)
+{
+	TSS_FLAGS	initFlags = ...;
+	TSS_HKEY	hKey, hSRK;
+	TSS_UUID	keyUUID = {...};
+
+	// Create a TSP handle
+	result = Tspi_Context_Create(&hContext);
+	if (result != TSS_SUCCESS)
+		Error_Path();
+
+	// Connect to the TCSD
+	result = Tspi_Context_Connect(hContext, GLOBALSERVER);
+	if (result != TSS_SUCCESS)
+		Error_Path();
+
+	// Create the Key Object
+	result = Tspi_Context_CreateObject(hContext,
+			TSS_OBJECT_TYPE_RSAKEY,
+			initFlags, &hKey);
+	if (result != TSS_SUCCESS)
+		Error_Path();
+
+	// Load parent Key by UUID
+	result = Tspi_Context_LoadKeyByUUID(hContext, TSS_PS_TYPE_SYSTEM,
+			SRK_UUID, &hSRK);
+	if (result != TSS_SUCCESS)
+		Error_Path();
+
+	// Do policy/secret handling here
+
+	result = Tspi_Key_CreateKey(hKey, hSRK, 0);
+	if (result != TSS_SUCCESS)
+		Error_Path();
+
+	// Register the Key in System PS (on the TCSD's platform)
+	result = Tspi_Context_RegisterKey(hContext, hKey, TSS_PS_TYPE_SYSTEM,
+			keyUUID, TSS_PS_TYPE_SYSTEM,
+			SRK_UUID);
+	if (result != TSS_SUCCESS)
+		Error_Path();
+
+	/* ...
+	 *
+	 * Use the key as needed, exiting the program if necessary, reloading
+	 * the key using Tspi_Context_LoadKeyByUUID() after each restart. Once
+	 * the key is no longer useful, unregister it from system PS as part
+	 * of clean up.
+	 */
+
+	// Unregister the Key
+	result = Tspi_Context_UnregisterKey(hContext, TSS_PS_TYPE_SYSTEM,
+			migratableSignUUID, &hKey);
+	if (result != TSS_SUCCESS)
+		Error_Path();
+
+	// exit, discarding hKey
+}
+.fi
+
+.SH "CONFORMING TO"
+
+.PP
+\fBTspi_Context_UnregisterKey\fR conforms to the Trusted Computing Group Software Specification version 1.1 Golden
+.SH "SEE ALSO"
+
+.PP
+\fBTspi_Key_CreateKey\fR(3), \fBTspi_Context_RegisterKey\fR(3).

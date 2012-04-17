@@ -1,4 +1,4 @@
-/*	$NetBSD: zaudio.c,v 1.15 2011/06/23 10:56:03 nonaka Exp $	*/
+/*	$NetBSD: zaudio.c,v 1.15.2.1 2012/04/17 00:07:13 yamt Exp $	*/
 /*	$OpenBSD: zaurus_audio.c,v 1.8 2005/08/18 13:23:02 robert Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 /*-
- * Copyright (c) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
+ * Copyright (C) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,17 +30,16 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -51,13 +50,13 @@
 #include "opt_zaudio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zaudio.c,v 1.15 2011/06/23 10:56:03 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zaudio.c,v 1.15.2.1 2012/04/17 00:07:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kernel.h>
 #include <sys/audioio.h>
 #include <sys/mutex.h>
@@ -104,6 +103,8 @@ struct zaudio_volume {
 
 struct zaudio_softc {
 	device_t		sc_dev;
+	kmutex_t		sc_lock;
+	kmutex_t		sc_intr_lock;
 
 	/* i2s device softc */
 	/* NB: pxa2x0_i2s requires this to be the second struct member */
@@ -131,6 +132,7 @@ static void	zaudio_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(zaudio, sizeof(struct zaudio_softc), 
     zaudio_match, zaudio_attach, NULL, NULL);
 
+static int	zaudio_finalize(device_t);
 static bool	zaudio_suspend(device_t, const pmf_qual_t *);
 static bool	zaudio_resume(device_t, const pmf_qual_t *);
 static void	zaudio_volume_up(device_t);
@@ -213,11 +215,12 @@ static int zaudio_getdev(void *, struct audio_device *);
 static int zaudio_set_port(void *, struct mixer_ctrl *);
 static int zaudio_get_port(void *, struct mixer_ctrl *);
 static int zaudio_query_devinfo(void *, struct mixer_devinfo *);
-static void *zaudio_allocm(void *, int, size_t, struct malloc_type *, int);
-static void zaudio_freem(void  *, void *, struct malloc_type *);
+static void *zaudio_allocm(void *, int, size_t);
+static void zaudio_freem(void  *, void *, size_t);
 static size_t zaudio_round_buffersize(void *, int, size_t);
 static paddr_t zaudio_mappage(void *, void *, off_t, int);
 static int zaudio_get_props(void *);
+static void zaudio_get_locks(void *, kmutex_t **, kmutex_t **);
 
 struct audio_hw_if wm8750_hw_if = {
 	.open			= zaudio_open,
@@ -247,7 +250,7 @@ struct audio_hw_if wm8750_hw_if = {
 	.trigger_output		= NULL,
 	.trigger_input		= NULL,
 	.dev_ioctl		= NULL,
-	.powerstate		= NULL,
+	.get_locks		= zaudio_get_locks,
 };
 
 static const uint16_t playback_regs[][2] = {
@@ -317,6 +320,9 @@ zaudio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 
+	if (ZAURUS_ISC860)
+		return 0;	/* XXX for now */
+
 	if (ia->ia_name) {
 		/* direct config - check name */
 		if (strcmp(ia->ia_name, "zaudio") == 0)
@@ -338,6 +344,8 @@ zaudio_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
 
 	aprint_normal(": I2S, WM8750 Audio\n");
 	aprint_naive("\n");
@@ -345,6 +353,7 @@ zaudio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2s.sc_iot = &pxa2x0_bs_tag;
 	sc->sc_i2s.sc_dmat = &pxa2x0_bus_dma_tag;
 	sc->sc_i2s.sc_size = PXA2X0_I2S_SIZE;
+	sc->sc_i2s.sc_intr_lock = &sc->sc_intr_lock;
 	if (pxa2x0_i2s_attach_sub(&sc->sc_i2s)) {
 		aprint_error_dev(self, "unable to attach I2S\n");
 		goto fail_i2s;
@@ -376,7 +385,8 @@ zaudio_attach(device_t parent, device_t self, void *aux)
 	(void) pxa2x0_gpio_intr_establish(GPIO_HP_IN_C3000, IST_EDGE_BOTH,
 	    IPL_BIO, zaudio_jack_intr, sc);
 
-	zaudio_init(sc);
+	/* zaudio_init() implicitly depends on ioexp or scoop */
+	config_finalize_register(self, zaudio_finalize);
 
 	audio_attach_mi(&wm8750_hw_if, sc, self);
 
@@ -398,6 +408,15 @@ fail_i2c:
 	pxa2x0_i2s_detach_sub(&sc->sc_i2s);
 fail_i2s:
 	pmf_device_deregister(self);
+}
+
+static int
+zaudio_finalize(device_t dv)
+{
+	struct zaudio_softc *sc = device_private(dv);
+
+	zaudio_init(sc);
+	return 0;
 }
 
 static bool
@@ -1217,20 +1236,19 @@ mute:
 }
 
 static void *
-zaudio_allocm(void *hdl, int direction, size_t size, struct malloc_type *type,
-    int flags)
+zaudio_allocm(void *hdl, int direction, size_t size)
 {
 	struct zaudio_softc *sc = hdl;
 
-	return pxa2x0_i2s_allocm(&sc->sc_i2s, direction, size, type, flags);
+	return pxa2x0_i2s_allocm(&sc->sc_i2s, direction, size);
 }
 
 static void
-zaudio_freem(void *hdl, void *ptr, struct malloc_type *type)
+zaudio_freem(void *hdl, void *ptr, size_t size)
 {
 	struct zaudio_softc *sc = hdl;
 
-	return pxa2x0_i2s_freem(&sc->sc_i2s, ptr, type);
+	return pxa2x0_i2s_freem(&sc->sc_i2s, ptr, size);
 }
 
 static size_t
@@ -1276,6 +1294,7 @@ zaudio_start_output(void *hdl, void *block, int bsize, void (*intr)(void *),
 			zaudio_standby(sc);
 		sc->sc_playing = 0;
 	}
+
 	return rv;
 }
 
@@ -1300,4 +1319,13 @@ zaudio_start_input(void *hdl, void *block, int bsize, void (*intr)(void *),
 		sc->sc_recording = 0;
 	}
 	return rv;
+}
+
+static void
+zaudio_get_locks(void *hdl, kmutex_t **intr, kmutex_t **thread)
+{
+	struct zaudio_softc *sc = hdl;
+
+	*intr = &sc->sc_intr_lock;
+	*thread = &sc->sc_lock;
 }

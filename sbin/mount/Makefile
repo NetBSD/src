@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2004/08/19 23:02:27 christos Exp $
+#	$NetBSD: Makefile,v 1.29.52.1 2012/04/17 00:05:40 yamt Exp $
 #	@(#)Makefile	8.6 (Berkeley) 5/8/95
 
 .include <bsd.own.mk>
@@ -6,5 +6,7 @@
 PROG=	mount
 MAN=	mount.8
 SRCS=	mount.c vfslist.c
+LDADD+= -lutil
+DPADD+= ${LIBUTIL}
 
 .include <bsd.prog.mk>

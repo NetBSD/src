@@ -1,13 +1,13 @@
-/*	$NetBSD: text_mmap.c,v 1.1.1.1 2009/12/13 16:57:22 kardel Exp $	*/
+/*	$NetBSD: text_mmap.c,v 1.1.1.1.6.1 2012/04/17 00:03:52 yamt Exp $	*/
 
-/*
- * Id: 14e1f51d1a5a31d8395fdf1e93a07bace1c59e87
+/**
+ * \file text_mmap.c
  *
- * Time-stamp:      "2007-07-04 11:35:49 bkorb"
+ * Time-stamp:      "2010-07-17 10:15:32 bkorb"
  *
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is copyright (c) 1992-2009 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (c) 1992-2011 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -92,16 +92,16 @@
  * #include <mylib.h>
  * tmap_info_t mi;
  * int no_nul;
- * void* data = text_mmap( "file", PROT_WRITE, MAP_PRIVATE, &mi );
+ * void* data = text_mmap("file", PROT_WRITE, MAP_PRIVATE, &mi);
  * if (data == MAP_FAILED) return;
  * no_nul = (mi.txt_size == mi.txt_full_size);
  * << use the data >>
- * text_munmap( &mi );
+ * text_munmap(&mi);
 =*/
 void*
-text_mmap( char const* pzFile, int prot, int flags, tmap_info_t* pMI )
+text_mmap(char const* pzFile, int prot, int flags, tmap_info_t* pMI)
 {
-    memset( pMI, 0, sizeof(*pMI) );
+    memset(pMI, 0, sizeof(*pMI));
 #ifdef HAVE_MMAP
     pMI->txt_zero_fd = -1;
 #endif
@@ -112,12 +112,12 @@ text_mmap( char const* pzFile, int prot, int flags, tmap_info_t* pMI )
      */
     {
         struct stat sb;
-        if (stat( pzFile, &sb ) != 0) {
+        if (stat(pzFile, &sb) != 0) {
             pMI->txt_errno = errno;
             return MAP_FAILED_PTR;
         }
 
-        if (! S_ISREG( sb.st_mode )) {
+        if (! S_ISREG(sb.st_mode)) {
             pMI->txt_errno = errno = EINVAL;
             return MAP_FAILED_PTR;
         }
@@ -148,7 +148,7 @@ text_mmap( char const* pzFile, int prot, int flags, tmap_info_t* pMI )
         if (((flags & MAP_SHARED) == 0) && (prot & PROT_WRITE))
             o_flag |= O_EXCL;
 
-        pMI->txt_fd = open( pzFile, o_flag );
+        pMI->txt_fd = open(pzFile, o_flag);
     }
 
     if (pMI->txt_fd == AO_INVALID_FD) {
@@ -209,7 +209,7 @@ text_mmap( char const* pzFile, int prot, int flags, tmap_info_t* pMI )
         pMI->txt_errno = errno;
 
 #elif defined(HAVE_DEV_ZERO)
-        pMI->txt_zero_fd = open( "/dev/zero", O_RDONLY );
+        pMI->txt_zero_fd = open("/dev/zero", O_RDONLY);
 
         if (pMI->txt_zero_fd == AO_INVALID_FD) {
             pMI->txt_errno = errno;
@@ -224,7 +224,7 @@ text_mmap( char const* pzFile, int prot, int flags, tmap_info_t* pMI )
                 return pMI->txt_data;
 
             pMI->txt_errno = errno;
-            close( pMI->txt_zero_fd );
+            close(pMI->txt_zero_fd);
             pMI->txt_zero_fd = -1;
         }
 #endif
@@ -233,8 +233,8 @@ text_mmap( char const* pzFile, int prot, int flags, tmap_info_t* pMI )
     }
 
     {
-        void* p = AGALOC( pMI->txt_size+1, "file text" );
-        memcpy( p, pMI->txt_data, pMI->txt_size );
+        void* p = AGALOC(pMI->txt_size+1, "file text");
+        memcpy(p, pMI->txt_data, pMI->txt_size);
         ((char*)p)[pMI->txt_size] = NUL;
         munmap(pMI->txt_data, pMI->txt_size );
         pMI->txt_data = p;
@@ -244,7 +244,7 @@ text_mmap( char const* pzFile, int prot, int flags, tmap_info_t* pMI )
 
 #else /* * * * * * no HAVE_MMAP * * * * * */
 
-    pMI->txt_data = AGALOC( pMI->txt_size+1, "file text" );
+    pMI->txt_data = AGALOC(pMI->txt_size+1, "file text");
     if (pMI->txt_data == NULL) {
         pMI->txt_errno = ENOMEM;
         goto fail_return;
@@ -255,12 +255,12 @@ text_mmap( char const* pzFile, int prot, int flags, tmap_info_t* pMI )
         char*  pz = pMI->txt_data;
 
         while (sz > 0) {
-            ssize_t rdct = read( pMI->txt_fd, pz, sz );
+            ssize_t rdct = read(pMI->txt_fd, pz, sz);
             if (rdct <= 0) {
                 pMI->txt_errno = errno;
-                fprintf( stderr, zFSErrReadFile,
-                         errno, strerror( errno ), pzFile );
-                free( pMI->txt_data );
+                fprintf(stderr, zFSErrReadFile,
+                        errno, strerror(errno), pzFile);
+                free(pMI->txt_data);
                 goto fail_return;
             }
 
@@ -283,7 +283,7 @@ text_mmap( char const* pzFile, int prot, int flags, tmap_info_t* pMI )
 
  fail_return:
     if (pMI->txt_fd >= 0) {
-        close( pMI->txt_fd );
+        close(pMI->txt_fd);
         pMI->txt_fd = -1;
     }
     errno = pMI->txt_errno;
@@ -312,7 +312,7 @@ text_mmap( char const* pzFile, int prot, int flags, tmap_info_t* pMI )
  * err: Any error code issued by munmap(2) or close(2) is possible.
 =*/
 int
-text_munmap( tmap_info_t* pMI )
+text_munmap(tmap_info_t* pMI)
 {
 #ifdef HAVE_MMAP
     int res = 0;
@@ -328,26 +328,26 @@ text_munmap( tmap_info_t* pMI )
             if (lseek(pMI->txt_fd, (size_t)0, SEEK_SET) != 0)
                 goto error_return;
 
-            res = (write( pMI->txt_fd, pMI->txt_data, pMI->txt_size ) < 0)
+            res = (write(pMI->txt_fd, pMI->txt_data, pMI->txt_size) < 0)
                 ? errno : 0;
         }
 
-        AGFREE( pMI->txt_data );
+        AGFREE(pMI->txt_data);
         errno = res;
     } else {
-        res = munmap( pMI->txt_data, pMI->txt_full_size );
+        res = munmap(pMI->txt_data, pMI->txt_full_size);
     }
     if (res != 0)
         goto error_return;
 
-    res = close( pMI->txt_fd );
+    res = close(pMI->txt_fd);
     if (res != 0)
         goto error_return;
 
     pMI->txt_fd = -1;
     errno = 0;
     if (pMI->txt_zero_fd != -1) {
-        res = close( pMI->txt_zero_fd );
+        res = close(pMI->txt_zero_fd);
         pMI->txt_zero_fd = -1;
     }
 
@@ -363,14 +363,14 @@ text_munmap( tmap_info_t* pMI )
      *  THEN rewrite the data.
      */
     if (   FILE_WRITABLE(pMI->txt_prot, pMI->txt_flags)
-        && (lseek( pMI->txt_fd, 0, SEEK_SET ) >= 0) ) {
-        write( pMI->txt_fd, pMI->txt_data, pMI->txt_size );
+        && (lseek(pMI->txt_fd, 0, SEEK_SET) >= 0) ) {
+        write(pMI->txt_fd, pMI->txt_data, pMI->txt_size);
     }
 
-    close( pMI->txt_fd );
+    close(pMI->txt_fd);
     pMI->txt_fd = -1;
     pMI->txt_errno = errno;
-    free( pMI->txt_data );
+    free(pMI->txt_data);
 
     return pMI->txt_errno;
 #endif /* HAVE_MMAP */

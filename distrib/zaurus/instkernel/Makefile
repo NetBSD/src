@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2009/01/28 11:43:28 nonaka Exp $
+#	$NetBSD: Makefile,v 1.3.8.1 2012/04/17 00:02:55 yamt Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -6,7 +6,9 @@
 RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
 RAMDISK=	${RAMDISKDIR}/ramdisk.fs
 
-MDSETTARGETS=		INSTALL ${RAMDISK} netbsd-INSTALL 
+MDSETTARGETS=		INSTALL ${RAMDISK} netbsd-INSTALL \
+			INSTALL_C700 ${RAMDISK} netbsd-INSTALL_C700
+
 MDSET_RELEASEDIR=	installation/kernel
 
 MDSET_NOGZIP=		# defined

@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.51.2.1 2011/11/10 14:31:40 yamt Exp $	*/
+/*	$NetBSD: gdt.c,v 1.51.2.2 2012/04/17 00:06:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.51.2.1 2011/11/10 14:31:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.51.2.2 2012/04/17 00:06:28 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -214,9 +214,10 @@ gdt_init_cpu(struct cpu_info *ci)
 		    * properly yet, ie; curcpu() won't work at this
 		    * point and spl() will break.
 		    */
-		   xpq_queue_pte_update(xpmap_ptetomach(ptp),
-					*ptp & ~PG_RW);
-		   xpq_flush_queue();
+			if (HYPERVISOR_update_va_mapping((vaddr_t)va,
+				*ptp & ~PG_RW, UVMF_INVLPG) < 0) {
+				panic("%s page RO update failed.\n", __func__);
+			}
 		}
 	}
 

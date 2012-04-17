@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.79 2011/03/06 17:08:20 bouyer Exp $
+#	$NetBSD: RAMDISK,v 1.79.4.1 2012/04/17 00:06:03 yamt Exp $
 #
 #	memory disk based configuration file for MIPS R4x00 ARC Systems
 #
@@ -22,7 +22,6 @@ no options 	NTP
 no options 	SYSVMSG
 no options 	SYSVSEM
 no options 	SYSVSHM
-no options 	P1003_1B_SEMAPHORE
 no options 	SYSCTL_INCLUDE_DESCR
 no options 	COMPAT_10
 no options 	COMPAT_11

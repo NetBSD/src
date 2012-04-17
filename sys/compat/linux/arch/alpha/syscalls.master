@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.75 2011/07/09 14:49:40 christos Exp $
+	$NetBSD: syscalls.master,v 1.75.2.1 2012/04/17 00:07:15 yamt Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -567,7 +567,10 @@
 354	STD		{ int|linux_sys||rt_sigpending( \
 			    linux_sigset_t *set, \
 			    size_t sigsetsize); }
-355	UNIMPL		rt_sigtimedwait
+355	STD		{ int|linux_sys||rt_sigtimedwait( \
+			    const linux_sigset_t *set, \
+			    linux_siginfo_t *info, \
+			    const struct linux_timespec *timeout); }
 356	STD		{ int|linux_sys||rt_queueinfo(int pid, int signum, \
 			    linux_siginfo_t *uinfo); }
 357	STD		{ int|linux_sys||rt_sigsuspend(linux_sigset_t *unewset, \

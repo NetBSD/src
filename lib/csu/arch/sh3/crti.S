@@ -1,4 +1,4 @@
-/* $NetBSD: crti.S,v 1.1 2010/08/07 18:01:34 joerg Exp $ */
+/* $NetBSD: crti.S,v 1.1.6.1 2012/04/17 00:05:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -35,12 +35,18 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: crti.S,v 1.1 2010/08/07 18:01:34 joerg Exp $")
+RCSID("$NetBSD: crti.S,v 1.1.6.1 2012/04/17 00:05:11 yamt Exp $")
 
 #include "sysident.S"
 
+
+/*
+ * Provide function prologues for the code in .init and .fini sections.
+ * Corresponding epilogues are in crtn.S
+ */
+
 	.section ".init", "ax", @progbits
-	.align 4
+	.p2align 2
 	.globl _init
 _init:
 	mov.l	r14, @-sp
@@ -48,7 +54,7 @@ _init:
 	mov	sp, r14
 
 	.section ".fini", "ax", @progbits
-	.align 4
+	.p2align 2
 	.globl _fini
 _fini:
 	mov.l	r14, @-sp

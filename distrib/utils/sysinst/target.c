@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.52 2009/09/19 14:57:27 abs Exp $	*/
+/*	$NetBSD: target.c,v 1.52.6.1 2012/04/17 00:02:50 yamt Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.52 2009/09/19 14:57:27 abs Exp $");
+__RCSID("$NetBSD: target.c,v 1.52.6.1 2012/04/17 00:02:50 yamt Exp $");
 #endif
 
 /*
@@ -284,11 +284,11 @@ do_target_chdir(const char *dir, int must_succeed)
 	/* chdir returns -1 on error and sets errno. */
 	if (chdir(tgt_dir) < 0)
 		error = errno;
-	if (logging) {
+	if (logfp) {
 		fprintf(logfp, "cd to %s\n", tgt_dir);
 		fflush(logfp);
 	}
-	if (scripting) {
+	if (script) {
 		scripting_fprintf(NULL, "cd %s\n", tgt_dir);
 		fflush(script);
 	}
@@ -296,7 +296,7 @@ do_target_chdir(const char *dir, int must_succeed)
 	if (error && must_succeed) {
 		fprintf(stderr, msg_string(MSG_realdir),
 		       target_prefix(), strerror(error));
-		if (logging)
+		if (logfp)
 			fprintf(logfp, msg_string(MSG_realdir),
 			       target_prefix(), strerror(error));
 		exit(1);
@@ -465,7 +465,7 @@ target_collect_file(int kind, char **buffer, const char *name)
 #ifdef	DEBUG
 	printf("collect real name %s\n", realname);
 #endif
-	return collect(kind, buffer, realname);
+	return collect(kind, buffer, "%s", realname);
 }
 
 /*
@@ -537,4 +537,10 @@ target_symlink_exists_p(const char *path)
 {
 
 	return (target_test_symlink(path) == 0);
+}
+
+int
+target_mounted(void)
+{
+	return (unwind_mountlist != NULL);
 }

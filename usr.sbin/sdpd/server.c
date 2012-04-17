@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.10 2011/07/01 03:07:21 joerg Exp $	*/
+/*	$NetBSD: server.c,v 1.10.2.1 2012/04/17 00:09:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: server.c,v 1.10 2011/07/01 03:07:21 joerg Exp $");
+__RCSID("$NetBSD: server.c,v 1.10.2.1 2012/04/17 00:09:53 yamt Exp $");
 
 #include <sys/select.h>
 #include <sys/stat.h>
@@ -112,7 +112,7 @@ server_init(server_t *srv, char const *control, char const *sgroup)
 	srv->ctllen = CMSG_SPACE(SOCKCREDSIZE(MAX_GROUPS));
 	srv->ctlbuf = malloc(srv->ctllen);
 	if (srv->ctlbuf == NULL) {
-		log_crit("Malloc cmsg buffer (len=%d) failed.", srv->ctllen);
+		log_crit("Malloc cmsg buffer (len=%zu) failed.", srv->ctllen);
 		goto fail;
 	}
 

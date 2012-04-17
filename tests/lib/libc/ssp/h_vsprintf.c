@@ -1,4 +1,4 @@
-/* $NetBSD: h_vsprintf.c,v 1.2 2010/12/28 16:18:46 christos Exp $ */
+/* $NetBSD: h_vsprintf.c,v 1.2.6.1 2012/04/17 00:09:11 yamt Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,12 +29,12 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: h_vsprintf.c,v 1.2 2010/12/28 16:18:46 christos Exp $");
+__RCSID("$NetBSD: h_vsprintf.c,v 1.2.6.1 2012/04/17 00:09:11 yamt Exp $");
 
 #include <stdio.h>
 #include <stdarg.h>
 
-static void wrap(const char *, ...);
+static void wrap(const char *, ...) __printflike(1, 2);
 
 static void
 wrap(const char *fmt, ...)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.23 2011/10/31 21:31:29 christos Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.23.2.1 2012/04/17 00:08:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.23 2011/10/31 21:31:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.23.2.1 2012/04/17 00:08:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ sys_dup(struct lwp *l, const struct sys_dup_args *uap, register_t *retval)
 /*
  * Duplicate a file descriptor to a particular value.
  */
-static int
+int
 dodup(struct lwp *l, int from, int to, int flags, register_t *retval)
 {
 	int error;
@@ -401,6 +401,18 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 	case F_SETFD:
 		fd_set_exclose(l, fd,
 		    ((long)SCARG(uap, arg) & FD_CLOEXEC) != 0);
+		break;
+
+	case F_GETNOSIGPIPE:
+		*retval = (fp->f_flag & FNOSIGPIPE) != 0;
+		break;
+
+	case F_SETNOSIGPIPE:
+		if (SCARG(uap, arg))
+			atomic_or_uint(&fp->f_flag, FNOSIGPIPE);
+		else
+			atomic_and_uint(&fp->f_flag, ~FNOSIGPIPE);
+		*retval = 0;
 		break;
 
 	case F_GETFL:

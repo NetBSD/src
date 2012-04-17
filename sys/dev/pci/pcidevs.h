@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1096 2011/10/18 23:23:20 jmcneill Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1096.2.1 2012/04/17 00:07:52 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1101 2011/10/18 23:23:07 jmcneill Exp
+ *	NetBSD: pcidevs,v 1.1115 2012/04/13 12:03:14 cegger Exp
  */
 
 /*
@@ -632,6 +632,7 @@
 #define	PCI_VENDOR_JMICRON	0x197b		/* JMicron Technology */
 #define	PCI_VENDOR_EVE	0x1adb		/* EVE */
 #define	PCI_VENDOR_QUMRANET	0x1af4		/* Qumranet */
+#define	PCI_VENDOR_FRESCO	0x1b73		/* Fresco Logic */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_SUNIX2	0x1fd4		/* SUNIX Co */
@@ -938,14 +939,22 @@
 #define	PCI_PRODUCT_AMD_AMD64_F11_MISC	0x1303		/* AMD64 Family11h Miscellaneous Configuration */
 #define	PCI_PRODUCT_AMD_AMD64_F11_LINK	0x1304		/* AMD64 Family11h Link Configuration */
 #define	PCI_PRODUCT_AMD_F14_RC	0x1510		/* Family14h Root Complex */
-#define	PCI_PRODUCT_AMD_F14_HT	0x1700		/* Family14h HyperTransport Configuration */
-#define	PCI_PRODUCT_AMD_F14_ADDR	0x1701		/* Family14h Address Map Configuration */
-#define	PCI_PRODUCT_AMD_F14_DRAM	0x1702		/* Family14h DRAM Configuration */
-#define	PCI_PRODUCT_AMD_F14_NB	0x1703		/* Family14h North Bridge Configuration */
-#define	PCI_PRODUCT_AMD_F14_CSTATE	0x1704		/* Family14h CPU C-state Configuration */
-#define	PCI_PRODUCT_AMD_F14_MISC	0x1716		/* Family14h Misc. Configuration */
-#define	PCI_PRODUCT_AMD_F14_HB18	0x1718		/* Family14h Host Bridge */
-#define	PCI_PRODUCT_AMD_F14_HB19	0x1719		/* Family14h Host Bridge */
+#define	PCI_PRODUCT_AMD_F15_HT	0x1600		/* Family15h HyperTransport Configuration */
+#define	PCI_PRODUCT_AMD_F15_ADDR	0x1601		/* Family15h Address Map Configuration */
+#define	PCI_PRODUCT_AMD_F15_DRAM	0x1602		/* Family15h DRAM Configuration */
+#define	PCI_PRODUCT_AMD_F15_MISC	0x1603		/* Family15h Miscellaneous Configuration */
+#define	PCI_PRODUCT_AMD_F15_LINK	0x1604		/* Family15h Link Configuration */
+#define	PCI_PRODUCT_AMD_F15_NB	0x1605		/* Family15h North Bridge Configuration */
+#define	PCI_PRODUCT_AMD_F14_HT	0x1700		/* Family12h/14h HyperTransport Configuration */
+#define	PCI_PRODUCT_AMD_F14_ADDR	0x1701		/* Family12h/14h Address Map Configuration */
+#define	PCI_PRODUCT_AMD_F14_DRAM	0x1702		/* Family12h/14h DRAM Configuration */
+#define	PCI_PRODUCT_AMD_F14_NB	0x1703		/* Family12h/14h North Bridge Configuration */
+#define	PCI_PRODUCT_AMD_F14_CSTATE	0x1704		/* Family12h/14h CPU C-state Configuration */
+#define	PCI_PRODUCT_AMD_F12_RC	0x1705		/* Family12h Root Complex */
+#define	PCI_PRODUCT_AMD_F12_GPP0	0x1709		/* Family12h GPP0 Root Port */
+#define	PCI_PRODUCT_AMD_F14_MISC	0x1716		/* Family12h/14h Misc. Configuration */
+#define	PCI_PRODUCT_AMD_F14_HB18	0x1718		/* Family12h/14h Host Bridge */
+#define	PCI_PRODUCT_AMD_F14_HB19	0x1719		/* Family12h/14h Host Bridge */
 #define	PCI_PRODUCT_AMD_PCNET_PCI	0x2000		/* PCnet-PCI Ethernet */
 #define	PCI_PRODUCT_AMD_PCNET_HOME	0x2001		/* PCnet-Home HomePNA Ethernet */
 #define	PCI_PRODUCT_AMD_AM_1771_MBW	0x2003		/* Alchemy AM 1771 MBW */
@@ -1007,8 +1016,18 @@
 #define	PCI_PRODUCT_AMD_PBC8111_AC	0x746d		/* AMD8111 AC97 Audio */
 #define	PCI_PRODUCT_AMD_PBC8111_MC97	0x746e		/* AMD8111 MC97 Modem */
 #define	PCI_PRODUCT_AMD_PBC8111_AC_756b	0x756b		/* AMD8111 756b ACPI Controller */
-#define	PCI_PRODUCT_AMD_HUDSON2_IDE	0x780c		/* HUDSON-2 IDE Controller */
-#define	PCI_PRODUCT_AMD_HUDSON2_SATA	0x7800		/* HUDSON-2 SATA Controller */
+#define	PCI_PRODUCT_AMD_HUDSON_SATA	0x7800		/* Hudson SATA Controller */
+#define	PCI_PRODUCT_AMD_HUDSON_SATA_AHCI	0x7801		/* Hudson AHCI SATA Controller */
+#define	PCI_PRODUCT_AMD_HUDSON_SDHC	0x7806		/* Hudson SD Flash Controller */
+#define	PCI_PRODUCT_AMD_HUDSON_OHCI	0x7807		/* Hudson USB OHCI Controller */
+#define	PCI_PRODUCT_AMD_HUDSON_EHCI	0x7808		/* Hudson USB EHCI Controller */
+#define	PCI_PRODUCT_AMD_HUDSON_OHCI_2	0x7809		/* Hudson USB OHCI Controller */
+#define	PCI_PRODUCT_AMD_HUDSON_SMB	0x780b		/* Hudson SMBus Controller */
+#define	PCI_PRODUCT_AMD_HUDSON_IDE	0x780c		/* Hudson IDE Controller */
+#define	PCI_PRODUCT_AMD_HUDSON_HDAUDIO	0x780d		/* Hudson HD Audio Controller */
+#define	PCI_PRODUCT_AMD_HUDSON_LPC	0x780e		/* Hudson LPC Bridge */
+#define	PCI_PRODUCT_AMD_HUDSON_PCI	0x780f		/* Hudson PCI Bridge */
+#define	PCI_PRODUCT_AMD_HUDSON_XHCI	0x7812		/* Hudson USB xHCI Controller */
 #define	PCI_PRODUCT_AMD_RS880_HB	0x9601		/* RS880 Host Bridge */
 #define	PCI_PRODUCT_AMD_RS780_PPB_GFX	0x9602		/* RS780 PCI-PCI Bridge (int gfx) */
 #define	PCI_PRODUCT_AMD_RS780_PPB_GFX0	0x9603		/* RS780 PCI-PCI Bridge (ext gfx port 0) */
@@ -1132,6 +1151,8 @@
 
 /* ATI products */
 /* See http://www.x.org/wiki/Radeon%20ASICs */
+#define	PCI_PRODUCT_ATI_RADEON_WRESTLER_HDMI	0x1314		/* Wrestler HDMI Audio */
+#define	PCI_PRODUCT_ATI_RADEON_BEAVERCREEK_HDMI	0x1714		/* BeaverCreek HDMI Audio */
 #define	PCI_PRODUCT_ATI_RADEON_RV380_3150	0x3150		/* Radeon Mobility X600 (M24) 3150 */
 #define	PCI_PRODUCT_ATI_RADEON_RV380_3154	0x3154		/* FireGL M24 GL 3154 */
 #define	PCI_PRODUCT_ATI_RADEON_RV380_3E50	0x3e50		/* Radeon X600 (RV380) 3E50 */
@@ -1192,7 +1213,6 @@
 #define	PCI_PRODUCT_ATI_SB600_PPB_4384	0x4384		/* SB600 PCI to PCI Bridge */
 #define	PCI_PRODUCT_ATI_SB600_SMB	0x4385		/* SB600/SB700/SB800 SMBus Controller */
 #define	PCI_PRODUCT_ATI_SB600_USB_EHCI	0x4386		/* SB600 USB EHCI Controller */
-#define	PCI_PRODUCT_ATI_SB600_USB_OHCI0	0x4387		/* SB600 USB OHCI0 Controller */
 #define	PCI_PRODUCT_ATI_SB600_USB_OHCI1	0x4388		/* SB600 USB OHCI1 Controller */
 #define	PCI_PRODUCT_ATI_SB600_USB_OHCI2	0x4389		/* SB600 USB OHCI2 Controller */
 #define	PCI_PRODUCT_ATI_SB600_USB_OHCI3	0x438a		/* SB600 USB OHCI3 Controller */
@@ -1421,15 +1441,18 @@
 #define	PCI_PRODUCT_ATI_RADEON_X1600	0x71c5		/* Radeon Mobility X1600 */
 #define	PCI_PRODUCT_ATI_RADEON_RS300_7834	0x7834		/* Radeon 9100 PRO IGP */
 #define	PCI_PRODUCT_ATI_RADEON_RS300_7835	0x7835		/* Radeon 9200 IGP */
-#define	PCI_PRODUCT_ATI_RS690_HB	0x7911		/* RS690 Host Bridge */
-#define	PCI_PRODUCT_ATI_RS690_PPB_7912	0x7912		/* RS690 PCI to PCI Bridge */
-#define	PCI_PRODUCT_ATI_RS690_PPB_7913	0x7913		/* RS690 PCI to PCI-Express Port 0 Bridge */
-#define	PCI_PRODUCT_ATI_RS690_PPB_7915	0x7915		/* RS690 PCI to PCI-Express Port 1 Bridge */
-#define	PCI_PRODUCT_ATI_RS690_PPB_7916	0x7916		/* RS690 PCI to PCI-Express Port 2 Bridge */
-#define	PCI_PRODUCT_ATI_RS690_PPB_7917	0x7917		/* RS690 PCI to PCI-Express Port 3 Bridge */
+#define	PCI_PRODUCT_ATI_RS690_HB_7910	0x7910		/* RS690 Host Bridge */
+#define	PCI_PRODUCT_ATI_RS690_HB_7911	0x7911		/* RS740 Host Bridge */
+#define	PCI_PRODUCT_ATI_RS690_PPB_7912	0x7912		/* RS690 GFX Bridge */
+#define	PCI_PRODUCT_ATI_RS690_PPB_7913	0x7913		/* RS690 PCI Express Bridge GFX */
+#define	PCI_PRODUCT_ATI_RS690_PPB_7914	0x7914		/* RS690 PCI Express Bridge GPP Port A */
+#define	PCI_PRODUCT_ATI_RS690_PPB_7915	0x7915		/* RS690 PCI Express Bridge GPP Port B */
+#define	PCI_PRODUCT_ATI_RS690_PPB_7916	0x7916		/* RS690 PCI Express Bridge GPP Port C */
+#define	PCI_PRODUCT_ATI_RS690_PPB_7917	0x7917		/* RS690 PCI Express Bridge GPP Port D */
 #define	PCI_PRODUCT_ATI_RADEON_HD4650	0x9498		/* Radeon HD4650 */
 #define	PCI_PRODUCT_ATI_RADEON_HD2600_XT	0x9588		/* Radeon HD2600 XT GDDR3 */
 #define	PCI_PRODUCT_ATI_RADEON_HD4250_S	0x95C5		/* Radeon HD4250 GPU (RV610) Secondary */
+#define	PCI_PRODUCT_ATI_RADEON_HD6520G	0x9647		/* Radeon HD6520G */
 #define	PCI_PRODUCT_ATI_RADEON_HD4200	0x9712		/* Radeon HD4200 Mobility */
 #define	PCI_PRODUCT_ATI_RADEON_HD4250	0x9715		/* Radeon HD4250 GPU (RS880) */
 #define	PCI_PRODUCT_ATI_RADEON_HD6310	0x9802		/* Radeon HD6310 Graphics */
@@ -1610,10 +1633,10 @@
 #define	PCI_PRODUCT_BROADCOM_BCM5906M	0x1713		/* BCM5906M NetLink Fast Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM4303	0x4301		/* BCM4303 */
 #define	PCI_PRODUCT_BROADCOM_BCM4307	0x4307		/* BCM4307 */
-#define	PCI_PRODUCT_BROADCOM_BCM4311	0x4311		/* BCM4311 */
-#define	PCI_PRODUCT_BROADCOM_BCM4312	0x4312		/* BCM4312 */
-#define	PCI_PRODUCT_BROADCOM_BCM4313	0x4313		/* BCM4313 */
-#define	PCI_PRODUCT_BROADCOM_BCM4315	0x4315		/* BCM4315 */
+#define	PCI_PRODUCT_BROADCOM_BCM4311	0x4311		/* BCM4311 2.4GHz */
+#define	PCI_PRODUCT_BROADCOM_BCM4312	0x4312		/* BCM4312 Dualband */
+#define	PCI_PRODUCT_BROADCOM_BCM4313	0x4313		/* BCM4313 5GHz */
+#define	PCI_PRODUCT_BROADCOM_BCM4315	0x4315		/* BCM4315 2.4GHz */
 #define	PCI_PRODUCT_BROADCOM_BCM4318	0x4318		/* BCM4318 AirForce One 54g */
 #define	PCI_PRODUCT_BROADCOM_BCM4319	0x4319		/* BCM4319 */
 #define	PCI_PRODUCT_BROADCOM_BCM4306	0x4320		/* BCM4306 */
@@ -1627,6 +1650,10 @@
 #define	PCI_PRODUCT_BROADCOM_BCM432B	0x432b		/* BCM432B 802.11a/b/g/n */
 #define	PCI_PRODUCT_BROADCOM_BCM432C	0x432c		/* BCM432C 802.11b/g/n */
 #define	PCI_PRODUCT_BROADCOM_BCM432D	0x432d		/* BCM432D 802.11 */
+#define	PCI_PRODUCT_BROADCOM_BCM43224	0x4353		/* BCM43224 Dualband 802.11 */
+#define	PCI_PRODUCT_BROADCOM_BCM43225	0x4357		/* BCM43225 2.4GHz 802.11 */
+#define	PCI_PRODUCT_BROADCOM_BCM43227	0x4358		/* BCM43227 2.4GHz 802.11 */
+#define	PCI_PRODUCT_BROADCOM_BCM43228	0x4359		/* BCM43228 Dualband 802.11 */
 #define	PCI_PRODUCT_BROADCOM_BCM4401	0x4401		/* BCM4401 10/100 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_5801	0x5801		/* 5801 Security Processor */
 #define	PCI_PRODUCT_BROADCOM_5802	0x5802		/* 5802 Security Processor */
@@ -2043,6 +2070,10 @@
 #define	PCI_PRODUCT_FORTEMEDIA_FM801	0x0801		/* 801 Sound */
 #define	PCI_PRODUCT_FORTEMEDIA_PCIJOY	0x0802		/* PCI Gameport Joystick */
 
+/* Fresco Logic products */
+#define	PCI_PRODUCT_FRESCO_FL1000	0x1000		/* FL1000 USB3 Host Controller */
+#define	PCI_PRODUCT_FRESCO_FL1009	0x1009		/* FL1009 USB3 Host Controller */
+
 /* Future Domain products */
 #define	PCI_PRODUCT_FUTUREDOMAIN_TMC_18C30	0x0000		/* TMC-18C30 (36C70) */
 
@@ -2109,6 +2140,7 @@
 #define	PCI_PRODUCT_MARVELL_YUKON_8036	0x4351		/* Yukon 88E8036 */
 #define	PCI_PRODUCT_MARVELL_YUKON_8038	0x4352		/* Yukon 88E8038 */
 #define	PCI_PRODUCT_MARVELL_YUKON_8039	0x4353		/* Yukon 88E8039 */
+#define	PCI_PRODUCT_MARVELL_YUKON_8040	0x4354		/* Yukon 88E8040 */
 #define	PCI_PRODUCT_MARVELL_YUKON_C033	0x4356		/* Yukon 88EC033 */
 #define	PCI_PRODUCT_MARVELL_YUKON_8052	0x4360		/* Yukon 88E8052 */
 #define	PCI_PRODUCT_MARVELL_YUKON_8050	0x4361		/* Yukon 88E8050 */
@@ -2341,8 +2373,13 @@
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_6230_2	0x0091		/* Centrino Advanced-N 6230 */
 #define	PCI_PRODUCT_INTEL_SANDYBRIDGE_HB	0x0100		/* Sandy Bridge Host Bridge */
 #define	PCI_PRODUCT_INTEL_SANDYBRIDGE_IGD	0x0102		/* Sandy Bridge Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_SANDYBRIDGE_IGD_1	0x0112		/* Sandy Bridge Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_SANDYBRIDGE_IGD_2	0x0122		/* Sandy Bridge Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_SANDYBRIDGE_M_HB	0x0104		/* Sandy Bridge Host Bridge */
 #define	PCI_PRODUCT_INTEL_SANDYBRIDGE_M_IGD	0x0106		/* Sandy Bridge Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_SANDYBRIDGE_M_IGD_1	0x0116		/* Sandy Bridge Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_SANDYBRIDGE_M_IGD_2	0x0126		/* Sandy Bridge Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_SANDYBRIDGE_S_IGD	0x010A		/* Sandy Bridge Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_80312	0x030d		/* 80312 I/O Companion Chip */
 #define	PCI_PRODUCT_INTEL_80321	0x0319		/* 80321 I/O Processor */
 #define	PCI_PRODUCT_INTEL_IOP333_A	0x0370		/* IOP333 PCI Express-to-PCI Bridge #0 */
@@ -3123,6 +3160,7 @@
 /* JMicron products */
 #define	PCI_PRODUCT_JMICRON_JMB360	0x2360		/* JMB360 SATA Controller */
 #define	PCI_PRODUCT_JMICRON_JMB361	0x2361		/* JMB361 SATA/PATA Controller */
+#define	PCI_PRODUCT_JMICRON_JMB362	0x2362		/* JMB362 SATA Controller */
 #define	PCI_PRODUCT_JMICRON_JMB363	0x2363		/* JMB363 SATA/PATA Controller */
 #define	PCI_PRODUCT_JMICRON_JMB365	0x2365		/* JMB365 SATA/PATA Controller */
 #define	PCI_PRODUCT_JMICRON_JMB366	0x2366		/* JMB366 SATA/PATA Controller */
@@ -3402,6 +3440,10 @@
 #define	PCI_PRODUCT_SYMBIOS_SAS1078	0x0060		/* SAS1078 PCI */
 #define	PCI_PRODUCT_SYMBIOS_SAS1078_PCIE	0x0062		/* SAS1078 PCI Express */
 #define	PCI_PRODUCT_SYMBIOS_SAS2008	0x0072		/* SAS2008 */
+#define	PCI_PRODUCT_SYMBIOS_SAS2008_1	0x0073		/* MegaRAID SAS2008 */
+#define	PCI_PRODUCT_SYMBIOS_SAS2108_3	0x0074		/* SAS2108 */
+#define	PCI_PRODUCT_SYMBIOS_SAS2108_4	0x0076		/* SAS2108 */
+#define	PCI_PRODUCT_SYMBIOS_SAS2108_5	0x0077		/* SAS2108 */
 #define	PCI_PRODUCT_SYMBIOS_SAS2108_1	0x0078		/* MegaRAID SAS2108 CRYPTO GEN2 */
 #define	PCI_PRODUCT_SYMBIOS_SAS2108_2	0x0079		/* MegaRAID SAS2108 GEN2 */
 #define	PCI_PRODUCT_SYMBIOS_SAS1078DE	0x007c		/* SAS1078DE */
@@ -3441,7 +3483,8 @@
 #define	PCI_PRODUCT_NEC_VRC4173_AC97U	0x00a6		/* VRC4173 AC97 Unit */
 #define	PCI_PRODUCT_NEC_PD72870	0x00cd		/* uPD72870 IEEE 1394 Host Controller */
 #define	PCI_PRODUCT_NEC_PD72871	0x00ce		/* uPD72871 IEEE 1394 Host Controller */
-#define	PCI_PRODUCT_NEC_PD720100A	0x00e0		/* USB Host Controller */
+#define	PCI_PRODUCT_NEC_PD720100A	0x00e0		/* USB2 Host Controller */
+#define	PCI_PRODUCT_NEC_PD720200	0x0194		/* USB3 Host Controller */
 #define	PCI_PRODUCT_NEC_VA26D	0x803c		/* Versa Pro LX VA26D */
 #define	PCI_PRODUCT_NEC_VERSALX	0x8058		/* Versa LX */
 
@@ -4061,6 +4104,9 @@
 #define	PCI_PRODUCT_RICOH_RxDPCC	0x0852		/* xD-Picture Card Controller */
 #define	PCI_PRODUCT_RICOH_Rx5C853	0x0853		/* 5C853 PCI-CardBus Bridge/SD/MMC/MMC+/MS/xD/SC/Firewire */
 #define	PCI_PRODUCT_RICOH_Rx5U230	0xe230		/* 5U230 Memory Stick Controller */
+#define	PCI_PRODUCT_RICOH_Rx5U230	0xe230		/* 5U230 Memory Stick Controller */
+#define	PCI_PRODUCT_RICOH_Rx5U822	0xe822		/* 5U822 SD/MMC Controller */
+#define	PCI_PRODUCT_RICOH_Rx5U823	0xe823		/* 5U823 SD/MMC Controller */
 #define	PCI_PRODUCT_RICOH_Rx5U832	0xe832		/* 5U832 Firewire Controller */
 #define	PCI_PRODUCT_RICOH_Rx5C852	0xe852		/* 5C852 xD Controller */
 
@@ -4596,6 +4642,7 @@
 #define	PCI_PRODUCT_VIATECH_VT8363_HB	0x0305		/* VT8363 (Apollo KT133) Host Bridge */
 #define	PCI_PRODUCT_VIATECH_VT3351_HB_0351	0x0351		/* VT3351 Host Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8371_HB	0x0391		/* VT8371 (Apollo KX133) Host Bridge */
+#define	PCI_PRODUCT_VIATECH_VX900_HB	0x0410		/* VX900 Host Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8501_MVP4	0x0501		/* VT8501 (Apollo MVP4) Host Bridge */
 #define	PCI_PRODUCT_VIATECH_VT82C505	0x0505		/* VT82C505 (Pluto) */
 #define	PCI_PRODUCT_VIATECH_VT82C561	0x0561		/* VT82C561 */
@@ -4683,6 +4730,7 @@
 #define	PCI_PRODUCT_VIATECH_VT82C597AGP	0x8597		/* VT82C597 (Apollo VP3) CPU-AGP Bridge */
 #define	PCI_PRODUCT_VIATECH_VT82C598AGP	0x8598		/* VT82C598 (Apollo MVP3) CPU-AGP Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8605AGP	0x8605		/* VT8605 (Apollo ProMedia 133) Host-AGP Bridge */
+#define	PCI_PRODUCT_VIATECH_VX900_IDE	0x9001		/* VX900 IDE Controller */
 #define	PCI_PRODUCT_VIATECH_K8T890_PPB_A238	0xa238		/* K8T890 PCI-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8633AGP	0xb091		/* VT8633 (Apollo Pro 266) CPU-AGP Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8366AGP	0xb099		/* VT8366 (Apollo KT266) CPU-AGP Bridge */

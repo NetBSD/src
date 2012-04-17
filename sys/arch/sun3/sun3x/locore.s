@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.62 2011/02/08 20:20:25 rmind Exp $	*/
+/*	$NetBSD: locore.s,v 1.62.4.1 2012/04/17 00:06:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -626,16 +626,6 @@ GLOBAL(getsp)
 	movl	%d0,%a0
 	rts
 
-ENTRY(getsfc)
-	movc	%sfc,%d0
-	movl	%d0,%a0
-	rts
-
-ENTRY(getdfc)
-	movc	%dfc,%d0
-	movl	%d0,%a0
-	rts
-
 ENTRY(getvbr)
 	movc	%vbr,%d0
 	movl	%d0,%a0
@@ -702,29 +692,6 @@ ENTRY(_splraise)
 	movl	%sp@(4),%d1
 	movw	%d1,%sr
 Lsplr:
-	rts
-
-/*
- * Save and restore 68881 state.
- */
-ENTRY(m68881_save)
-	movl	%sp@(4),%a0		| save area pointer
-	fsave	%a0@			| save state
-	tstb	%a0@			| null state frame?
-	jeq	Lm68881sdone		| yes, all done
-	fmovem	%fp0-%fp7,%a0@(FPF_REGS)	| save FP general regs
-	fmovem	%fpcr/%fpsr/%fpi,%a0@(FPF_FPCR)	| save FP control regs
-Lm68881sdone:
-	rts
-
-ENTRY(m68881_restore)
-	movl	%sp@(4),%a0		| save area pointer
-	tstb	%a0@			| null state frame?
-	jeq	Lm68881rdone		| yes, easy
-	fmovem	%a0@(FPF_FPCR),%fpcr/%fpsr/%fpi	| restore FP control regs
-	fmovem	%a0@(FPF_REGS),%fp0-%fp7	| restore FP general regs
-Lm68881rdone:
-	frestore %a0@			| restore state
 	rts
 
 /*

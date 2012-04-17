@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.73.2.1 2011/11/10 14:31:11 yamt Exp $
+# $NetBSD: ad.mips64eb,v 1.73.2.2 2012/04/17 00:02:37 yamt Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -66,7 +66,7 @@
 ./usr/lib/64/libbz2.so.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libbz2.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libc.so.12				base-compat-shlib	compat,pic
-./usr/lib/64/libc.so.12.179			base-compat-shlib	compat,pic
+./usr/lib/64/libc.so.12.183			base-compat-shlib	compat,pic
 ./usr/lib/64/libcom_err.so.7			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/64/libcom_err.so.7.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/64/libcrypt.so.1			base-compat-shlib	compat,pic
@@ -93,6 +93,8 @@
 ./usr/lib/64/libelf.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libevent.so.3			base-compat-shlib	compat,pic
 ./usr/lib/64/libevent.so.3.2			base-compat-shlib	compat,pic
+./usr/lib/64/libexpat.so.2			base-compat-shlib	compat,pic
+./usr/lib/64/libexpat.so.2.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libfetch.so.3			base-compat-shlib	compat,pic
 ./usr/lib/64/libfetch.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libform.so.6			base-compat-shlib	compat,pic
@@ -154,7 +156,7 @@
 ./usr/lib/64/liblzf.so.0			base-compat-shlib	compat,pic
 ./usr/lib/64/liblzf.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/64/liblzma.so.1			base-compat-shlib	compat,pic
-./usr/lib/64/liblzma.so.1.0			base-compat-shlib	compat,pic
+./usr/lib/64/liblzma.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libm.so.0				base-compat-shlib	compat,pic
 ./usr/lib/64/libm.so.0.10			base-compat-shlib	compat,pic
 ./usr/lib/64/libmagic.so.3			base-compat-shlib	compat,pic
@@ -194,13 +196,13 @@
 ./usr/lib/64/libprop.so.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libprop.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libpthread.so.1			base-compat-shlib	compat,pic
-./usr/lib/64/libpthread.so.1.0			base-compat-shlib	compat,pic
+./usr/lib/64/libpthread.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libpthread_dbg.so.2		base-compat-shlib	compat,pic
 ./usr/lib/64/libpthread_dbg.so.2.0		base-compat-shlib	compat,pic
 ./usr/lib/64/libpuffs.so.2			base-compat-shlib	compat,pic
 ./usr/lib/64/libpuffs.so.2.0			base-compat-shlib	compat,pic
-./usr/lib/64/libquota.so.0			base-compat-shlib	compat,pic
-./usr/lib/64/libquota.so.0.0			base-compat-shlib	compat,pic
+./usr/lib/64/libquota.so.1			base-compat-shlib	compat,pic
+./usr/lib/64/libquota.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libradius.so.4			base-compat-shlib	compat,pic
 ./usr/lib/64/libradius.so.4.0			base-compat-shlib	compat,pic
 ./usr/lib/64/librefuse.so.2			base-compat-shlib	compat,pic
@@ -212,7 +214,7 @@
 ./usr/lib/64/librpcsvc.so.1			base-compat-shlib	compat,pic
 ./usr/lib/64/librpcsvc.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/64/librt.so.1				base-compat-shlib	compat,pic
-./usr/lib/64/librt.so.1.0			base-compat-shlib	compat,pic
+./usr/lib/64/librt.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/64/librump.so.0			base-compat-shlib	compat,pic
 ./usr/lib/64/librump.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/64/librumpclient.so.0			base-compat-shlib	compat,pic
@@ -238,7 +240,7 @@
 ./usr/lib/64/libsl.so.5				base-compat-shlib	compat,pic,kerberos
 ./usr/lib/64/libsl.so.5.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/64/libsqlite3.so.1			base-compat-shlib	compat,pic
-./usr/lib/64/libsqlite3.so.1.0			base-compat-shlib	compat,pic
+./usr/lib/64/libsqlite3.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libss.so.6				base-compat-shlib	obsolete
 ./usr/lib/64/libss.so.6.0			base-compat-shlib	obsolete
 ./usr/lib/64/libssh.so.18			base-compat-shlib	compat,pic,crypto
@@ -263,7 +265,7 @@
 ./usr/lib/64/libusbhid.so.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libusbhid.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libutil.so.7			base-compat-shlib	compat,pic
-./usr/lib/64/libutil.so.7.19			base-compat-shlib	compat,pic
+./usr/lib/64/libutil.so.7.21			base-compat-shlib	compat,pic
 ./usr/lib/64/libwind.so.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/64/libwind.so.0.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/64/libwrap.so.1			base-compat-shlib	compat,pic
@@ -362,7 +364,7 @@
 ./usr/lib/o32/libbz2.so.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libbz2.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libc.so.12			base-compat-shlib	compat,pic
-./usr/lib/o32/libc.so.12.179			base-compat-shlib	compat,pic
+./usr/lib/o32/libc.so.12.183			base-compat-shlib	compat,pic
 ./usr/lib/o32/libcom_err.so.7			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/o32/libcom_err.so.7.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/o32/libcrypt.so.1			base-compat-shlib	compat,pic
@@ -389,6 +391,8 @@
 ./usr/lib/o32/libelf.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libevent.so.3			base-compat-shlib	compat,pic
 ./usr/lib/o32/libevent.so.3.2			base-compat-shlib	compat,pic
+./usr/lib/o32/libexpat.so.2			base-compat-shlib	compat,pic
+./usr/lib/o32/libexpat.so.2.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libfetch.so.3			base-compat-shlib	compat,pic
 ./usr/lib/o32/libfetch.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libform.so.6			base-compat-shlib	compat,pic
@@ -450,7 +454,7 @@
 ./usr/lib/o32/liblzf.so.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblzf.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblzma.so.1			base-compat-shlib	compat,pic
-./usr/lib/o32/liblzma.so.1.0			base-compat-shlib	compat,pic
+./usr/lib/o32/liblzma.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libm.so.0				base-compat-shlib	compat,pic
 ./usr/lib/o32/libm.so.0.10			base-compat-shlib	compat,pic
 ./usr/lib/o32/libmagic.so.3			base-compat-shlib	compat,pic
@@ -490,13 +494,13 @@
 ./usr/lib/o32/libprop.so.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libprop.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libpthread.so.1			base-compat-shlib	compat,pic
-./usr/lib/o32/libpthread.so.1.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libpthread.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libpthread_dbg.so.2		base-compat-shlib	compat,pic
 ./usr/lib/o32/libpthread_dbg.so.2.0		base-compat-shlib	compat,pic
 ./usr/lib/o32/libpuffs.so.2			base-compat-shlib	compat,pic
 ./usr/lib/o32/libpuffs.so.2.0			base-compat-shlib	compat,pic
-./usr/lib/o32/libquota.so.0			base-compat-shlib	compat,pic
-./usr/lib/o32/libquota.so.0.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libquota.so.1			base-compat-shlib	compat,pic
+./usr/lib/o32/libquota.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libradius.so.4			base-compat-shlib	compat,pic
 ./usr/lib/o32/libradius.so.4.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/librefuse.so.2			base-compat-shlib	compat,pic
@@ -508,7 +512,7 @@
 ./usr/lib/o32/librpcsvc.so.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/librpcsvc.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/librt.so.1			base-compat-shlib	compat,pic
-./usr/lib/o32/librt.so.1.0			base-compat-shlib	compat,pic
+./usr/lib/o32/librt.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/librump.so.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/librump.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/librumpclient.so.0			base-compat-shlib	compat,pic
@@ -534,7 +538,7 @@
 ./usr/lib/o32/libsl.so.5			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/o32/libsl.so.5.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/o32/libsqlite3.so.1			base-compat-shlib	compat,pic
-./usr/lib/o32/libsqlite3.so.1.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libsqlite3.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libss.so.6			base-compat-shlib	obsolete
 ./usr/lib/o32/libss.so.6.0			base-compat-shlib	obsolete
 ./usr/lib/o32/libssh.so.18			base-compat-shlib	compat,pic,crypto
@@ -559,7 +563,7 @@
 ./usr/lib/o32/libusbhid.so.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libusbhid.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libutil.so.7			base-compat-shlib	compat,pic
-./usr/lib/o32/libutil.so.7.19			base-compat-shlib	compat,pic
+./usr/lib/o32/libutil.so.7.21			base-compat-shlib	compat,pic
 ./usr/lib/o32/libwind.so.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/o32/libwind.so.0.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/o32/libwrap.so.1			base-compat-shlib	compat,pic

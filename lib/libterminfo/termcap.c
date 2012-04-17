@@ -1,4 +1,4 @@
-/* $NetBSD: termcap.c,v 1.16 2011/10/03 12:31:51 roy Exp $ */
+/* $NetBSD: termcap.c,v 1.16.2.1 2012/04/17 00:05:33 yamt Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: termcap.c,v 1.16 2011/10/03 12:31:51 roy Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.16.2.1 2012/04/17 00:05:33 yamt Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -79,7 +79,7 @@ tgetflag(const char *id2)
 	uint32_t ind;
 	size_t i;
 	TERMUSERDEF *ud;
-	const char id[] = { id2[0], id2[1], '\0' };
+	const char id[] = { id2[0], id2[0] ? id2[1] : '\0', '\0' };
 
 	if (cur_term == NULL)
 		return 0;
@@ -104,7 +104,7 @@ tgetnum(const char *id2)
 	size_t i;
 	TERMUSERDEF *ud;
 	const TENTRY *te;
-	const char id[] = { id2[0], id2[1], '\0' };
+	const char id[] = { id2[0], id2[0] ? id2[1] : '\0', '\0' };
 
 	if (cur_term == NULL)
 		return -1;
@@ -136,7 +136,7 @@ tgetstr(const char *id2, char **area)
 	size_t i;
 	TERMUSERDEF *ud;
 	const char *str;
-	const char id[] = { id2[0], id2[1], '\0' };
+	const char id[] = { id2[0], id2[0] ? id2[1] : '\0', '\0' };
 
 	if (cur_term == NULL)
 		return NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.94 2011/04/10 15:23:06 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.94.4.1 2012/04/17 00:07:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,9 +64,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.94 2011/04/10 15:23:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.94.4.1 2012/04/17 00:07:02 yamt Exp $");
 
-#include "rnd.h"
 #include "opt_ddb.h"
 #include "opt_m68k_arch.h"
 
@@ -88,9 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.94 2011/04/10 15:23:06 tsutsui Exp $");
 #include <sys/syslog.h>
 #include <sys/queue.h>
 #include <sys/fdio.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -244,9 +241,7 @@ struct fd_softc {
 #define	SEC_P01	0x01		/* second part */
 #define	SEC_P11	0x03		/* both part */
 
-#if NRND > 0
-	rndsource_element_t	rnd_source;
-#endif
+	krndsource_t	rnd_source;
 };
 
 /* floppy driver configuration */
@@ -605,10 +600,8 @@ fdattach(device_t parent, device_t self, void *aux)
 	 */
 	mountroothook_establish(fd_mountroot_hook, fd->sc_dev);
 
-#if NRND > 0
 	rnd_attach_source(&fd->rnd_source, device_xname(fd->sc_dev),
 			  RND_TYPE_DISK, 0);
-#endif
 }
 
 inline struct fd_type *
@@ -737,9 +730,7 @@ fdfinish(struct fd_softc *fd, struct buf *bp)
 	bp->b_resid = fd->sc_bcount;
 	fd->sc_skip = 0;
 
-#if NRND > 0
 	rnd_add_uint32(&fd->rnd_source, bp->b_blkno);
-#endif
 
 	biodone(bp);
 	/* turn off motor 5s from now */

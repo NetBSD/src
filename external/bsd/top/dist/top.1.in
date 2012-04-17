@@ -237,6 +237,9 @@ These commands are currently recognized:
 Display a summary of the commands (help screen).  Version information
 is included in this display.
 .TP
+.B 1
+Toggle the display of per-cpu states.
+.TP
 .B C
 Toggle the use of color in the display.
 .TP

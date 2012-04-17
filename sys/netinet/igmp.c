@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.52 2011/07/17 20:54:53 joerg Exp $	*/
+/*	$NetBSD: igmp.c,v 1.52.2.1 2012/04/17 00:08:40 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.52 2011/07/17 20:54:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.52.2.1 2012/04/17 00:08:40 yamt Exp $");
 
 #include "opt_mrouting.h"
 
@@ -191,7 +191,7 @@ igmp_input(struct mbuf *m, ...)
 	}
 	if (((m->m_flags & M_EXT) && (ip->ip_src.s_addr & IN_CLASSA_NET) == 0)
 	    || m->m_len < minlen) {
-		if ((m = m_pullup(m, minlen)) == 0) {
+		if ((m = m_pullup(m, minlen)) == NULL) {
 			IGMP_STATINC(IGMP_STAT_RCV_TOOSHORT);
 			return;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucomvar.h,v 1.19 2010/11/03 22:34:23 dyoung Exp $	*/
+/*	$NetBSD: ucomvar.h,v 1.19.8.1 2012/04/17 00:08:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ struct ucom_attach_args {
 	const char *info;	/* attach message */
 	usbd_device_handle device;
 	usbd_interface_handle iface;
-	struct ucom_methods *methods;
+	const struct ucom_methods *methods;
 	void *arg;
 };
 

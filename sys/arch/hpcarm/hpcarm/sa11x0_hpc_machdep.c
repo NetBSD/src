@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_hpc_machdep.c,v 1.3 2011/07/19 15:37:39 dyoung Exp $	*/
+/*	$NetBSD: sa11x0_hpc_machdep.c,v 1.3.2.1 2012/04/17 00:06:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_hpc_machdep.c,v 1.3 2011/07/19 15:37:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_hpc_machdep.c,v 1.3.2.1 2012/04/17 00:06:24 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x0_hpc_machdep.c,v 1.3 2011/07/19 15:37:39 dyoun
 #include <sys/msgbuf.h>
 #include <sys/exec.h>
 #include <sys/ksyms.h>
-#include <sys/boot_flag.h>
 #include <sys/conf.h>	/* XXX for consinit related hacks */
 #include <sys/device.h>
 #include <sys/termios.h>
@@ -94,12 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x0_hpc_machdep.c,v 1.3 2011/07/19 15:37:39 dyoun
 #include <dev/hpc/apm/apmvar.h>
 #include <dev/hpc/bicons.h>
 
-#include <sys/mount.h>
-#include <nfs/rpcv2.h>
-#include <nfs/nfsproto.h>
-#include <nfs/nfs.h>
-#include <nfs/nfsmount.h>
-
 /* Kernel text starts 256K in from the bottom of the kernel address space. */
 #define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00040000)
 #define	KERNEL_VM_BASE		(KERNEL_BASE + 0x00C00000)
@@ -118,9 +111,6 @@ u_int cpu_reset_address = 0;
 #define UND_STACK_SIZE	1
 
 extern BootConfig bootconfig;		/* Boot config storage */
-extern struct bootinfo *bootinfo, bootinfo_storage;
-extern char booted_kernel_storage[80];
-extern char *booted_kernel;
 
 extern paddr_t physical_start;
 extern paddr_t physical_freestart;
@@ -133,9 +123,6 @@ extern pv_addr_t irqstack;
 extern pv_addr_t undstack;
 extern pv_addr_t abtstack;
 extern pv_addr_t kernelstack;
-
-extern char *boot_args;
-extern char boot_file[16];
 
 extern vaddr_t msgbufphys;
 
@@ -174,7 +161,7 @@ void prefetch_abort_handler(trapframe_t *);
 void undefinedinstruction_bounce(trapframe_t *);
 u_int cpu_get_control(void);
 
-u_int initarm(int, char **, struct bootinfo *);
+u_int init_sa11x0(int, char **, struct bootinfo *);
 
 #ifdef BOOT_DUMP
 void    dumppages(char *, int);
@@ -208,83 +195,23 @@ static const struct pmap_devmap sa11x0_devmap[] = {
 };
 
 /*
- * Initial entry point on startup. This gets called before main() is
- * entered.
  * It should be responsible for setting up everything that must be
  * in place when main is called.
  * This includes:
- *   Taking a copy of the boot configuration structure.
  *   Initializing the physical console so characters can be printed.
  *   Setting up page tables for the kernel.
  */
 u_int
-initarm(int argc, char **argv, struct bootinfo *bi)
+init_sa11x0(int argc, char **argv, struct bootinfo *bi)
 {
 	u_int kerneldatasize, symbolsize;
 	u_int l1pagetable;
 	vaddr_t freemempos;
 	vsize_t pt_size;
-	int loop, i;
+	int loop;
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	Elf_Shdr *sh;
 #endif
-
-	__sleep_func = NULL;
-	__sleep_ctx = NULL;
-
-	/* parse kernel args */
-	boothowto = 0;
-	boot_file[0] = '\0';
-	strncpy(booted_kernel_storage, argv[0], sizeof(booted_kernel_storage));
-	for (i = 1; i < argc; i++) {
-		char *cp = argv[i];
-
-		switch (*cp) {
-		case 'b':
-			/* boot device: -b=sd0 etc. */
-			cp = cp + 2;
-			if (strcmp(cp, MOUNT_NFS) == 0)
-				rootfstype = MOUNT_NFS;
-			else
-				strncpy(boot_file, cp, sizeof(boot_file));
-			break;
-		default:
-			BOOT_FLAG(*cp, boothowto);
-			break;
-		}
-	}
-
-	/* copy bootinfo into known kernel space */
-	bootinfo_storage = *bi;
-	bootinfo = &bootinfo_storage;
-
-#ifdef BOOTINFO_FB_WIDTH
-	bootinfo->fb_line_bytes = BOOTINFO_FB_LINE_BYTES;
-	bootinfo->fb_width = BOOTINFO_FB_WIDTH;
-	bootinfo->fb_height = BOOTINFO_FB_HEIGHT;
-	bootinfo->fb_type = BOOTINFO_FB_TYPE;
-#endif
-
-	if (bootinfo->magic == BOOTINFO_MAGIC) {
-		platid.dw.dw0 = bootinfo->platid_cpu;
-		platid.dw.dw1 = bootinfo->platid_machine;
-	}
-
-#ifndef RTC_OFFSET
-	/*
-	 * rtc_offset from bootinfo.timezone set by hpcboot.exe
-	 */
-	if (rtc_offset == 0 &&
-	    (bootinfo->timezone > (-12 * 60) &&
-	     bootinfo->timezone <= (12 * 60)))
-		rtc_offset = bootinfo->timezone;
-#endif
-
-	/*
-	 * Heads up ... Setup the CPU / MMU / TLB functions.
-	 */
-	set_cpufuncs();
-	IRQdisable;
 
 #ifdef DEBUG_BEFOREMMU
 	/*

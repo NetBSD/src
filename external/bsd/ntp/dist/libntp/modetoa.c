@@ -1,4 +1,4 @@
-/*	$NetBSD: modetoa.c,v 1.2 2010/12/04 23:08:34 christos Exp $	*/
+/*	$NetBSD: modetoa.c,v 1.2.6.1 2012/04/17 00:03:46 yamt Exp $	*/
 
 /*
  * modetoa - return an asciized mode
@@ -26,9 +26,9 @@ modetoa(
 		"bclient",
 	};
 
-	if (mode >= (sizeof modestrings)/sizeof(char *)) {
+	if (mode >= COUNTOF(modestrings)) {
 		LIB_GETBUF(bp);
-		(void)sprintf(bp, "mode#%zu", mode);
+		snprintf(bp, LIB_BUFLENGTH, "mode#%zu", mode);
 		return bp;
 	}
 

@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.46 2011/07/01 18:53:47 dyoung Exp $ */
+/* $NetBSD: if_mec.c,v 1.46.2.1 2012/04/17 00:06:52 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,10 +61,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.46 2011/07/01 18:53:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.46.2.1 2012/04/17 00:06:52 yamt Exp $");
 
 #include "opt_ddb.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,9 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.46 2011/07/01 18:53:47 dyoung Exp $");
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -316,9 +313,7 @@ struct mec_softc {
 
 	int sc_rxptr;			/* next ready RX buffer */
 
-#if NRND > 0
-	rndsource_element_t sc_rnd_source; /* random source */
-#endif
+	krndsource_t sc_rnd_source; /* random source */
 #ifdef MEC_EVENT_COUNTERS
 	struct evcnt sc_ev_txpkts;	/* TX packets queued total */
 	struct evcnt sc_ev_txdpad;	/* TX packets padded in txdesc buf */
@@ -624,10 +619,8 @@ mec_attach(device_t parent, device_t self, void *aux)
 	/* establish interrupt */
 	cpu_intr_establish(maa->maa_intr, maa->maa_intrmask, mec_intr, sc);
 
-#if NRND > 0
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(self),
 	    RND_TYPE_NET, 0);
-#endif
 
 #ifdef MEC_EVENT_COUNTERS
 	evcnt_attach_dynamic(&sc->sc_ev_txpkts , EVCNT_TYPE_MISC,
@@ -1619,10 +1612,8 @@ mec_intr(void *arg)
 		mec_start(ifp);
 	}
 
-#if NRND > 0
 	if (handled)
 		rnd_add_uint32(&sc->sc_rnd_source, statreg);
-#endif
 
 	return handled;
 }

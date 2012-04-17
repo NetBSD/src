@@ -1,0 +1,18 @@
+# $NetBSD: C700,v 1.1.6.2 2012/04/17 00:07:12 yamt Exp $
+#
+# kernel config file for SL-C700
+#
+
+include 	"arch/zaurus/conf/GENERIC"
+
+no options 	CPU_XSCALE_PXA270
+
+no makeoptions	KERNEL_BASE_PHYS
+makeoptions	KERNEL_BASE_PHYS="0xa0400000"
+no makeoptions	LOADADDRESS
+makeoptions	LOADADDRESS="0xc0400000"
+
+no scoop1 at pxaip?
+
+no lcd0 at pxaip?
+no wsdisplay* at lcd?

@@ -1,4 +1,4 @@
-/*	$NetBSD: essvar.h,v 1.25 2010/05/22 16:35:00 tsutsui Exp $	*/
+/*	$NetBSD: essvar.h,v 1.25.8.1 2012/04/17 00:07:38 yamt Exp $	*/
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 /*
-** @(#) $RCSfile: essvar.h,v $ $Revision: 1.25 $ (SHARK) $Date: 2010/05/22 16:35:00 $
+** @(#) $RCSfile: essvar.h,v $ $Revision: 1.25.8.1 $ (SHARK) $Date: 2012/04/17 00:07:38 $
 **
 **++
 **
@@ -127,9 +127,11 @@ struct ess_softc
 	isa_chipset_tag_t sc_ic;
 	bus_space_tag_t sc_iot;		/* tag */
 	bus_space_handle_t sc_ioh;	/* handle */
+	kmutex_t sc_lock;
+	kmutex_t sc_intr_lock;
 
-	struct callout sc_poll1_ch;	/* audio1 poll */
-	struct callout sc_poll2_ch;	/* audio2 poll */
+	callout_t sc_poll1_ch;		/* audio1 poll */
+	callout_t sc_poll2_ch;		/* audio2 poll */
 
 	int	sc_iobase;		/* I/O port base address */
 

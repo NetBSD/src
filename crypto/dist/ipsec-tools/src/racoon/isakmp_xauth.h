@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_xauth.h,v 1.7 2011/03/14 15:50:36 vanhu Exp $	*/
+/*	$NetBSD: isakmp_xauth.h,v 1.7.6.1 2012/04/17 00:01:42 yamt Exp $	*/
 
 /*	$KAME$ */
 
@@ -160,6 +160,7 @@ struct xauth_ldap_config {
 	int		pver;
 	vchar_t 	*host;
 	int		port;
+	int		tls;
 	vchar_t		*base;
 	int		subtree;
 	vchar_t		*bind_dn;

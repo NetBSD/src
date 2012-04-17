@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.52 2009/04/20 09:56:08 mschuett Exp $	*/
+/*	$NetBSD: queue.h,v 1.52.12.1 2012/04/17 00:08:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -166,6 +166,10 @@ struct {								\
 		(var);							\
 		(var) = ((var)->field.le_next))
 
+#define	LIST_FOREACH_SAFE(var, head, field, tvar)			\
+	for ((var) = LIST_FIRST((head));				\
+		(var) && ((tvar) = LIST_NEXT((var), field), 1);		\
+		(var) = (tvar))
 /*
  * List access methods.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.194 2011/09/16 15:39:26 joerg Exp $	*/
+/*	$NetBSD: fetch.c,v 1.194.2.1 2012/04/17 00:09:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.194 2011/09/16 15:39:26 joerg Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.194.2.1 2012/04/17 00:09:32 yamt Exp $");
 #endif /* not lint */
 
 /*
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: fetch.c,v 1.194 2011/09/16 15:39:26 joerg Exp $");
 #include <arpa/ftp.h>
 #include <arpa/inet.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -699,7 +700,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		hints.ai_protocol = 0;
 		error = getaddrinfo(host, port, &hints, &res0);
 		if (error) {
-			warnx("Can't lookup `%s:%s': %s", host, port,
+			warnx("Can't LOOKUP `%s:%s': %s", host, port,
 			    (error == EAI_SYSTEM) ? strerror(errno)
 						  : gai_strerror(error));
 			goto cleanup_fetch_url;
@@ -1125,6 +1126,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	(void)xsignal(SIGQUIT, psummary);
 	oldintr = xsignal(SIGINT, aborthttp);
 
+	assert(rcvbuf_size > 0);
 	if ((size_t)rcvbuf_size > bufsize) {
 		if (xferbuf)
 			(void)free(xferbuf);
@@ -1685,6 +1687,7 @@ static int
 go_fetch(const char *url)
 {
 	char *proxyenv;
+	char *p;
 
 #ifndef NO_ABOUT
 	/*
@@ -1727,6 +1730,18 @@ go_fetch(const char *url)
 	 */
 	if (STRNEQUAL(url, HTTP_URL) || STRNEQUAL(url, FILE_URL))
 		return (fetch_url(url, NULL, NULL, NULL));
+
+	/*
+	 * If it contains "://" but does not begin with ftp://
+	 * or something that was already handled, then it's
+	 * unsupported.
+	 *
+	 * If it contains ":" but not "://" then we assume the
+	 * part before the colon is a host name, not an URL scheme,
+	 * so we don't try to match that here.
+	 */
+	if ((p = strstr(url, "://")) != NULL && ! STRNEQUAL(url, FTP_URL))
+		errx(1, "Unsupported URL scheme `%.*s'", (int)(p - url), url);
 
 	/*
 	 * Try FTP URL-style and host:file arguments next.

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.30 2011/05/26 15:34:13 joerg Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.30.4.1 2012/04/17 00:06:35 yamt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -31,6 +31,12 @@
  */
 #ifndef	_M68K_DB_MACHDEP_H_
 #define	_M68K_DB_MACHDEP_H_
+
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+#include <stddef.h>
+#include <stdbool.h>
+#include <string.h>
+#endif /* _KERNEL || _STANDALONE */
 
 #include <sys/types.h>
 

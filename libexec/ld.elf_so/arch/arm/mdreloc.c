@@ -1,8 +1,8 @@
-/*	$NetBSD: mdreloc.c,v 1.36 2011/04/12 16:40:04 matt Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.36.4.1 2012/04/17 00:05:36 yamt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.36 2011/04/12 16:40:04 matt Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.36.4.1 2012/04/17 00:05:36 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -179,7 +179,6 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			rdbg(("COPY (avoid in main)"));
 			break;
 
-#ifdef __HAVE_TLS_VARIANT_I
 		case R_TYPE(TLS_DTPOFF32):
 			def = _rtld_find_symdef(symnum, obj, &defobj, false);
 			if (def == NULL)
@@ -232,7 +231,6 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			    obj->strtab + obj->symtab[symnum].st_name,
 			    obj->path, (void *)tmp));
 			break;
-#endif /* __HAVE_TLS_VARIANT_I */
 
 		default:
 			rdbg(("sym = %lu, type = %lu, offset = %p, "

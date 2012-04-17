@@ -45,21 +45,23 @@
         </ul>
         <h4>Compiling Requirements</h4>
         <ul>
-            <li>Windows NT 4.0 Windows 2000, Windows XP, or Windows.NET Server 2003
-            <li>Microsoft Visual C++ 6.0. <B>NOTE</B>VC++ 7.0 (aka .NET) is not yet supported
-            but will probably work fine.
+            <li>Windows NT 4.0 Windows 2000, Windows XP,Windows Vista or Windows.NET Server 2003
+            <li>Microsoft Visual C++ 2008 EE or Visual C++ 2010 EE
             <li>Some way of uncompressing and untarring the gzipped tar file.
             <li>OpenSSL must be built on the box before building NTP. Additional steps would
             be required to not use OpenSSL.
-        </ul>
-        <a name="Compiling">Compiling Instructions</a>
+        <li>Microsoft Visual C++ redistributables</ul>
+        <a name="Compiling"><B>Compiling Instructions</B></a>
         <ol>
-            <li>Unpack and build OpenSSL according to the OpenSSL instructions for building on Windows. Currently the NTP build requires OpenSSL 0.9.7b as it looks for the path to that build for the include and libeay32.lib files. If you have a different version you will need to adjust both the preprocessor path and the link path to point to the correct locations of the include files and the lib file respectively.
-            <li>Unpack the NTP-4.x.tar.gz using utilities such as WinZip.
-            <li>Open the .\ports\winnt\ntp.dsw Visual C workspace
-            <li>Batch build all projects
-            <li>The built binaries can be found in the port\winnt\bin\Release subdirectory
-            <li>In addition you will need to install the OpenSSL libeay32.dll
+            <li>Install Micosoft Visual C++ <a href="http://www.microsoft.com/downloads/details.aspx?familyid=9B2DA534-3E03-4391-8A4D-074B9F2BC1BF">redistributables</a>
+            <li>Install <a href="http://www.slproweb.com/products/Win32OpenSSL.html">OpenSSL full installer for Windows</a>. Add the following to your system environment variables in the control panel (adjusting paths as appropriate to point to the directory containing only an openssl subdirectory, for OPENSSL_INC, and to the directory containing openssl .lib files for OPENSSL_LIB:
+<ul><li>	OPENSSL_INC=C:\OpenSSL\include
+<li>	OPENSSL_LIB=C:\OpenSSL\lib</ul>
+            <li>Unpack the NTP-4.x.tar.gz using utilities such as WinZip or WinRar.
+            <li>Run Microsoft Visual C++ 2008 EE.  On Windows Vista and later, Run as Administrator.
+            <li>Open the ports\winnt\vs2008\ntp.sln solution file
+            <li>Batch build all projects (Build menu, Batch Build..., select all, build).
+            <li>The built binaries can be found in the ports\winnt\v2008\bin\ directory.
             <li>If you are shipping binaries in a kit it is strongly recommended that you ship this file (winnt.html) along with the binaries.
         </ol>
         <h4>Configuration File</h4>

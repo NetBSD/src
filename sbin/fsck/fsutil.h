@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.h,v 1.18 2011/08/27 17:34:44 joerg Exp $	*/
+/*	$NetBSD: fsutil.h,v 1.18.2.1 2012/04/17 00:05:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -33,8 +33,6 @@ void pwarn(const char *, ...) __printflike(1, 2);
 void perr(const char *, ...) __printflike(1, 2);
 void panic(const char *, ...) __printflike(1, 2) __dead;
 void vmsg(int, const char *, va_list) __printflike(2, 0);
-const char *rawname(const char *);
-const char *unrawname(const char *);
 const char *blockcheck(const char *);
 const char *cdevname(void);
 void setcdevname(const char *, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ferror.c,v 1.11 2003/08/07 16:43:22 agc Exp $	*/
+/*	$NetBSD: ferror.c,v 1.11.56.1 2012/04/17 00:05:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ferror.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ferror.c,v 1.11 2003/08/07 16:43:22 agc Exp $");
+__RCSID("$NetBSD: ferror.c,v 1.11.56.1 2012/04/17 00:05:24 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,8 +52,7 @@ __RCSID("$NetBSD: ferror.c,v 1.11 2003/08/07 16:43:22 agc Exp $");
 #undef ferror
 
 int
-ferror(fp)
-	FILE *fp;
+ferror(FILE *fp)
 {
 	int r;
 

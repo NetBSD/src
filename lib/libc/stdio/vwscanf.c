@@ -1,4 +1,4 @@
-/*	$NetBSD: vwscanf.c,v 1.1 2005/05/14 23:51:02 christos Exp $	*/
+/*	$NetBSD: vwscanf.c,v 1.1.44.1 2012/04/17 00:05:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 Tim J. Robbins
@@ -31,7 +31,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vwscanf.c,v 1.1 2002/09/23 12:40:06 tjr Exp $");
 #else
-__RCSID("$NetBSD: vwscanf.c,v 1.1 2005/05/14 23:51:02 christos Exp $");
+__RCSID("$NetBSD: vwscanf.c,v 1.1.44.1 2012/04/17 00:05:25 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -43,5 +43,5 @@ int
 vwscanf(const wchar_t * __restrict fmt, va_list ap)
 {
 
-	return (vfwscanf(stdin, fmt, ap));
+	return vfwscanf(stdin, fmt, ap);
 }

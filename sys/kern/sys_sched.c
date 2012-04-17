@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.38 2011/08/07 21:38:32 rmind Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.38.2.1 2012/04/17 00:08:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008, 2011 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.38 2011/08/07 21:38:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.38.2.1 2012/04/17 00:08:29 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -53,16 +53,12 @@ __KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.38 2011/08/07 21:38:32 rmind Exp $")
 #include <sys/mutex.h>
 #include <sys/proc.h>
 #include <sys/pset.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/sched.h>
 #include <sys/syscallargs.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/unistd.h>
-
-#include "opt_sa.h"
 
 static struct sysctllog *sched_sysctl_log;
 static kauth_listener_t sched_listener;
@@ -96,6 +92,11 @@ convert_pri(lwp_t *l, int policy, pri_t pri)
 	/* Real-time -> time-sharing */
 	if (policy == SCHED_OTHER) {
 		KASSERT(l->l_class == SCHED_FIFO || l->l_class == SCHED_RR);
+		/*
+		 * this is a bit arbitrary because the priority is dynamic
+		 * for SCHED_OTHER threads and will likely be changed by
+		 * the scheduler soon anyway.
+		 */
 		return l->l_priority - PRI_USER_RT;
 	}
 
@@ -218,6 +219,11 @@ out:
 	return error;
 }
 
+/*
+ * do_sched_getparam:
+ *
+ * if lid=0, returns the parameter of the first LWP in the process.
+ */
 int
 do_sched_getparam(pid_t pid, lwpid_t lid, int *policy,
     struct sched_param *params)
@@ -226,8 +232,7 @@ do_sched_getparam(pid_t pid, lwpid_t lid, int *policy,
 	struct lwp *t;
 	int error, lpolicy;
 
-	/* Locks the LWP */
-	t = lwp_find2(pid, lid);
+	t = lwp_find2(pid, lid); /* acquire p_lock */
 	if (t == NULL)
 		return ESRCH;
 
@@ -242,7 +247,17 @@ do_sched_getparam(pid_t pid, lwpid_t lid, int *policy,
 	lwp_lock(t);
 	lparams.sched_priority = t->l_priority;
 	lpolicy = t->l_class;
+	lwp_unlock(t);
+	mutex_exit(t->l_proc->p_lock);
 
+	/*
+	 * convert to the user-visible priority value.
+	 * it's an inversion of convert_pri().
+	 *
+	 * the SCHED_OTHER case is a bit arbitrary given that
+	 *	- we don't allow setting the priority.
+	 *	- the priority is dynamic.
+	 */
 	switch (lpolicy) {
 	case SCHED_OTHER:
 		lparams.sched_priority -= PRI_USER;
@@ -259,8 +274,6 @@ do_sched_getparam(pid_t pid, lwpid_t lid, int *policy,
 	if (params != NULL)
 		*params = lparams;
 
-	lwp_unlock(t);
-	mutex_exit(t->l_proc->p_lock);
 	return error;
 }
 
@@ -353,8 +366,9 @@ sys__sched_setaffinity(struct lwp *l,
 	for (CPU_INFO_FOREACH(cii, ici)) {
 		struct schedstate_percpu *ispc;
 
-		if (kcpuset_isset(kcset, cpu_index(ici)) == 0)
+		if (!kcpuset_isset(kcset, cpu_index(ici))) {
 			continue;
+		}
 
 		ispc = &ici->ci_schedstate;
 		/* Check that CPU is not in the processor-set */
@@ -415,15 +429,6 @@ sys__sched_setaffinity(struct lwp *l,
 		mutex_exit(p->p_lock);
 		goto out;
 	}
-
-#ifdef KERN_SA
-	/* Changing the affinity of a SA process is not supported */
-	if ((p->p_sflag & (PS_SA | PS_WEXIT)) != 0 || p->p_sa != NULL) {
-		mutex_exit(p->p_lock);
-		error = EINVAL;
-		goto out;
-	}
-#endif
 
 	/* Iterate through LWP(s). */
 	lcnt = 0;
@@ -534,11 +539,6 @@ sys_sched_yield(struct lwp *l, const void *v, register_t *retval)
 {
 
 	yield();
-#ifdef KERN_SA
-	if (l->l_flag & LW_SA) {
-		sa_preempt(l);
-	}
-#endif
 	return 0;
 }
 

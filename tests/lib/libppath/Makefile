@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2011/08/27 18:55:52 dyoung Exp $
+# $Id: Makefile,v 1.2.2.1 2012/04/17 00:09:13 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,7 @@ CPPFLAGS+=-I$(.OBJDIR)
 	echo "extern const char " ${.TARGET:S,.h$,,} "[];" > ${.TARGET}
 
 .plist.c:
-	${.CURDIR}/plist_to_c ${.TARGET:S,.c$,,} < ${.IMPSRC} > ${.TARGET}
+	AWK=${TOOL_AWK:Q} ${HOST_SH} ${.CURDIR}/plist_to_c ${.TARGET:S,.c$,,} < ${.IMPSRC} > ${.TARGET}
 
 CLEANFILES+=personnel.c personnel.h
 

@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.409 2011/10/02 16:39:46 jmcneill Exp $
+.\"	$NetBSD: options.4,v 1.409.2.1 2012/04/17 00:05:45 yamt Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd October 2, 2011
+.Dd March 21, 2012
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -810,10 +810,11 @@ for details.
 .It Cd file-system UDF
 .Bq Em EXPERIMENTAL
 Includes code for the UDF file system commonly found on CD and DVD
-media but also more and more on USB sticks.
-Useful primarily if you have a CD or a DVD drive, be it a read-only
-or a rewritable device.
-Currently only supports read-access.
+media but also on USB sticks.
+Currently supports read and write access upto UDF 2.01 and somewhat limited
+write support for UDF 2.50.
+It is marked experimental since there is no
+.Xr fsck_udf 8 .
 See
 .Xr mount_udf 8
 for details.
@@ -849,7 +850,9 @@ network outages.
 In Coda, both the client and server are outside the kernel which makes
 them easier to experiment with.
 Coda is available for several UNIX and non-UNIX platforms.
-See http://www.coda.cs.cmu.edu for more details.
+See
+.Lk http://www.coda.cs.cmu.edu
+for more details.
 .Em NOTE :
 You also need to enable the pseudo-device, vcoda, for the Coda
 file system to work.
@@ -1093,6 +1096,9 @@ Synonym of
 .El
 .Ss Miscellaneous Options
 .Bl -ohang
+.It Cd options CPU_UCODE
+Support cpu microcode loading via
+.Xr cpuctl 8 .
 .It Cd options MEMORY_DISK_DYNAMIC
 This option makes the
 .Xr md 4
@@ -1646,22 +1652,17 @@ for details.
 .It Cd options IPSEC
 Includes support for the
 .Tn IPsec
-protocol, using the KAME implementation.
+protocol, using the FAST_IPSEC implementation.
 See
-.Xr ipsec 4
+.Xr fast_ipsec 4
 for details.
+(This option is an alias for the
+.Cd FAST_IPSEC
+option described below.)
 .It Cd options IPSEC_DEBUG
 Enables debugging code in
 .Tn IPsec
 stack.
-See
-.Xr ipsec 4
-for details.
-.It Cd options IPSEC_ESP
-Includes support for
-.Tn IPsec
-.Tn ESP
-protocol, using the KAME implementation.
 See
 .Xr ipsec 4
 for details.
@@ -2379,25 +2380,6 @@ and is only needed on 68040+PPC, not on
 has shut
 down and will only restart after a keyboard reset or a power cycle.
 .El
-.Ss arm32-specific Options
-.Bl -ohang
-.It Cd options FRENCH_KBD
-Include translation for French keyboards when using
-.Em pccons
-on a Shark.
-.It Cd options FINNISH_KBD
-Include translation for Finnish keyboards when using
-.Em pccons
-on a Shark.
-.It Cd options GERMAN_KBD
-Include translation for German keyboards when using
-.Em pccons
-on a Shark.
-.It Cd options NORWEGIAN_KBD
-Include translation for French keyboards when using
-.Em pccons
-on a Shark.
-.El
 .Ss atari-specific Options
 .Bl -ohang
 .It Cd options DISKLABEL_AHDI
@@ -2473,10 +2455,6 @@ Overrides the extended memory size passed in from the boot block.
 (Value given in kilobytes.
 Extended memory does not include the first megabyte.)
 Use this option only if the boot block reports the size incorrectly.
-.It Cd options FRENCH_KBD,FINNISH_KBD,GERMAN_KBD,NORWEGIAN_KBD
-Select a non-US keyboard layout for the
-.Em pccons
-console driver.
 .It Cd options CYRIX_CACHE_WORKS
 Relevant only to the Cyrix 486DLC CPU.
 This option is used to turn on the cache in hold-flush mode.

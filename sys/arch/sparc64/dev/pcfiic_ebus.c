@@ -1,4 +1,4 @@
-/*	$NetBSD: pcfiic_ebus.c,v 1.2 2011/07/01 18:48:36 dyoung Exp $	*/
+/*	$NetBSD: pcfiic_ebus.c,v 1.2.2.1 2012/04/17 00:06:55 yamt Exp $	*/
 /*	$OpenBSD: pcfiic_ebus.c,v 1.13 2008/06/08 03:07:40 deraadt Exp $ */
 
 /*
@@ -16,6 +16,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pcfiic_ebus.c,v 1.2.2.1 2012/04/17 00:06:55 yamt Exp $");
 
 /*
  * Device specific driver for the EBus i2c devices found on some sun4u

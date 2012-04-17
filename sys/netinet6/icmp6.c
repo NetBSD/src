@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.157 2011/08/31 18:31:03 plunky Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.157.2.1 2012/04/17 00:08:42 yamt Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.157 2011/08/31 18:31:03 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.157.2.1 2012/04/17 00:08:42 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -98,11 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.157 2011/08/31 18:31:03 plunky Exp $");
 #include <netinet6/in6_ifattach.h>
 #include <netinet6/ip6protosw.h>
 #include <netinet6/scope6_var.h>
-
-#ifdef IPSEC
-#include <netinet6/ipsec.h>
-#include <netkey/key.h>
-#endif
 
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
@@ -1162,9 +1157,6 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
  * - joins NI group address at in6_ifattach() time only, does not cope
  *   with hostname changes by sethostname(3)
  */
-#ifndef offsetof		/* XXX */
-#define	offsetof(type, member)	((size_t)(&((type *)0)->member))
-#endif
 static struct mbuf *
 ni6_input(struct mbuf *m, int off)
 {
@@ -2322,7 +2314,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 
 		sockaddr_in6_init(&sdst, &reddst6, 0, 0, 0);
 		pfctlinput(PRC_REDIRECT_HOST, (struct sockaddr *)&sdst);
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 		key_sa_routechange((struct sockaddr *)&sdst);
 #endif
 	}
@@ -2690,8 +2682,7 @@ icmp6_mtudisc_clone(struct sockaddr *dst)
 		struct rtentry *nrt;
 
 		error = rtrequest((int) RTM_ADD, dst,
-		    (struct sockaddr *) rt->rt_gateway,
-		    (struct sockaddr *) 0,
+		    (struct sockaddr *) rt->rt_gateway, NULL,
 		    RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC, &nrt);
 		if (error) {
 			rtfree(rt);

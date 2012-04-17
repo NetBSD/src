@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.h,v 1.10 2010/11/03 22:34:24 dyoung Exp $	*/
+/*	$NetBSD: uhidev.h,v 1.10.8.1 2012/04/17 00:08:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,10 +30,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "rnd.h"
-#if NRND > 0
+
 #include <sys/rnd.h>
-#endif
 
 struct uhidev_softc {
 	device_t sc_dev;		/* base device */
@@ -67,9 +65,7 @@ struct uhidev {
 	int sc_in_rep_size;
 #define	UHIDEV_OPEN	0x01	/* device is open */
 	void (*sc_intr)(struct uhidev *, void *, u_int);
-#if NRND > 0
-        rndsource_element_t     rnd_source;
-#endif
+        krndsource_t     rnd_source;
 };
 
 struct uhidev_attach_arg {

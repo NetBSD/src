@@ -182,6 +182,16 @@ int RAND_poll(void)
 	u_int32_t rnd = 0, i;
 	unsigned char buf[ENTROPY_NEEDED];
 
+	/*
+	 * XXX is this really a good idea?  It has the seemingly
+	 * XXX very undesirable eventual result of keying the CTR_DRBG
+	 * XXX generator exclusively with key material produced by
+	 * XXX the libc arc4random().  It also guarantees that even
+	 * XXX if the generator tries to use RAND_poll() to rekey
+	 * XXX itself after a call to fork() etc, it will end up with
+	 * XXX the same state, since the libc arc4 state will be the same
+	 * XXX unless explicitly updated by the application.
+	 */
 	for (i = 0; i < sizeof(buf); i++) {
 		if (i % 4 == 0)
 			rnd = arc4random();

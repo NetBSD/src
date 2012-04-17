@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfsops.9,v 1.43 2010/12/02 12:54:13 wiz Exp $
+.\"     $NetBSD: vfsops.9,v 1.43.6.1 2012/04/17 00:05:49 yamt Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 22, 2009
+.Dd February 13, 2012
 .Dt VFSOPS 9
 .Os
 .Sh NAME
@@ -60,7 +60,7 @@
 .Ft int
 .Fn VFS_ROOT "struct mount *mp" "struct vnode **vpp"
 .Ft int
-.Fn VFS_QUOTACTL "struct mount *mp" "int cmds" "uid_t uid" "void *arg"
+.Fn VFS_QUOTACTL "struct mount *mp" "struct quotactl_args *args"
 .Ft int
 .Fn VFS_STATVFS "struct mount *mp" "struct statvfs *sbp"
 .Ft int
@@ -280,21 +280,20 @@ While resolving the pathname, the pathname translation algorithm will
 have to go through the directory tree in the file system associated
 with that mount point and therefore requires the root vnode of the
 file system.
-.It Fn VFS_QUOTACTL "mp" "cmds" "uid" "arg"
+.It Fn VFS_QUOTACTL "mp" "args"
 Query/modify user space quotas for the file system specified by the
 mount structure
 .Fa mp .
-The argument specifies the control command to perform.
-The userid is specified in
-.Fa id
+The argument structure provides the operation ID and arguments to
+perform.
+This is the same interface as documented in
+.Xr __quotactl 2
+except that the file system argument has been resolved.
+All
+.Xr copyin 9
 and
-.Fa arg
-allows command-specific data to be returned to the system call
-interface.
-.Fn VFS_QUOTACTL
-is the file system type specific implementation of the
-.Xr quotactl 2
-system call.
+.Xr copyout 9
+processing is handled by code above the file system.
 .It Fn VFS_STATVFS "mp" "sbp"
 Get file system statistics for the file system specified by the mount
 structure

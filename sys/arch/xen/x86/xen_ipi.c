@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.5.2.1 2011/11/10 14:31:44 yamt Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.5.2.2 2012/04/17 00:07:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,22 +33,21 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.5.2.1 2011/11/10 14:31:44 yamt Exp $"); 
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.5.2.2 2012/04/17 00:07:11 yamt Exp $"); 
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.5.2.1 2011/11/10 14:31:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.5.2.2 2012/04/17 00:07:11 yamt Exp $");
 
 #include <sys/types.h>
 
 #include <sys/atomic.h>
-#include <sys/mutex.h>
 #include <sys/cpu.h>
+#include <sys/mutex.h>
 #include <sys/device.h>
 #include <sys/xcall.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
 
-#include <machine/cpu.h>
 #ifdef __x86_64__
 #include <machine/fpu.h>
 #else
@@ -60,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.5.2.1 2011/11/10 14:31:44 yamt Exp $")
 #include <xen/intr.h>
 #include <xen/intrdefs.h>
 #include <xen/hypervisor.h>
-#include <xen/xen3-public/vcpu.h>
+#include <xen/xen-public/vcpu.h>
 
 #ifdef __x86_64__
 extern void ddb_ipi(struct trapframe);
@@ -116,7 +115,7 @@ xen_ipi_init(void)
 	ci = curcpu();
 
 	vcpu = ci->ci_cpuid;
-	KASSERT(vcpu < MAX_VIRT_CPUS);
+	KASSERT(vcpu < XEN_LEGACY_MAX_VCPUS);
 
 	evtchn = bind_vcpu_to_evtch(vcpu);
 	ci->ci_ipi_evtchn = evtchn;
@@ -289,7 +288,6 @@ xc_send_ipi(struct cpu_info *ci)
 
 	KASSERT(kpreempt_disabled());
 	KASSERT(curcpu() != ci);
-	printf("xc_send_ipi called \n");
 	if (ci) {
 		if (0 != xen_send_ipi(ci, XEN_IPI_XCALL)) {
 			panic("xen_send_ipi(XEN_IPI_XCALL) failed\n");
@@ -304,10 +302,8 @@ xen_ipi_hvcb(struct cpu_info *ci, struct intrframe *intrf)
 {
 	KASSERT(ci != NULL);
 	KASSERT(intrf != NULL);
-
-	volatile struct vcpu_info *vci = ci->ci_vcpu;
-
 	KASSERT(ci == curcpu());
-	KASSERT(!vci->evtchn_upcall_mask);
+	KASSERT(!ci->ci_vcpu->evtchn_upcall_mask);
+
 	hypervisor_force_callback();
 }

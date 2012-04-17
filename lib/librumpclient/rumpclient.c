@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.45 2011/04/30 12:25:05 alnsn Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.45.4.1 2012/04/17 00:05:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpclient.c,v 1.45 2011/04/30 12:25:05 alnsn Exp $");
+__RCSID("$NetBSD: rumpclient.c,v 1.45.4.1 2012/04/17 00:05:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/event.h>
@@ -588,8 +588,8 @@ static int
 dupgood(int myfd, int mustchange)
 {
 	int ofds[4];
-	int i;
 	int sverrno;
+	unsigned int i;
 
 	for (i = 0; (myfd <= 2 || mustchange) && myfd != -1; i++) {
 		assert(i < __arraycount(ofds));
@@ -605,7 +605,7 @@ dupgood(int myfd, int mustchange)
 	if (myfd == -1 && i > 0)
 		sverrno = errno;
 
-	for (i--; i >= 0; i--) {
+	while (i-- > 0) {
 		host_close(ofds[i]);
 	}
 
@@ -733,19 +733,19 @@ doinit(void)
 }
 
 void *rumpclient__dlsym(void *, const char *);
-void *rumphijack_dlsym(void *, const char *);
+void *rumphijack_dlsym(void *, const char *) __attribute__((__weak__));
 void *
 rumpclient__dlsym(void *handle, const char *symbol)
 {
 
 	return dlsym(handle, symbol);
 }
-__weak_alias(rumphijack_dlsym,rumpclient__dlsym);
+__weak_alias(rumphijack_dlsym,rumpclient__dlsym)
 
 static pid_t init_done = 0;
 
 int
-rumpclient_init()
+rumpclient_init(void)
 {
 	char *p;
 	int error;
@@ -995,7 +995,7 @@ rumpclient__closenotify(int *fdp, enum rumpclient_closevariant variant)
 }
 
 pid_t
-rumpclient_fork()
+rumpclient_fork(void)
 {
 
 	return rumpclient__dofork(fork);

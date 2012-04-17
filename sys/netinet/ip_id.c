@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_id.c,v 1.14 2010/11/05 01:35:57 rmind Exp $	*/
+/*	$NetBSD: ip_id.c,v 1.14.8.1 2012/04/17 00:08:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_id.c,v 1.14 2010/11/05 01:35:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_id.c,v 1.14.8.1 2012/04/17 00:08:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
+#include <sys/cprng.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
@@ -54,7 +55,7 @@ struct ipid_state {
 static inline uint32_t
 ipid_random(void)
 {
-	return arc4random();
+	return cprng_fast32();
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.h,v 1.9 2006/10/04 14:22:58 christos Exp $	*/
+/*	$NetBSD: gmon.h,v 1.9.88.1 2012/04/17 00:08:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1992, 1993
@@ -96,7 +96,7 @@ struct gmonhdr {
  */
 #define ARCDENSITY	2
 #define MINARCS		50
-#define MAXARCS		((1 << (8 * sizeof(HISTCOUNTER))) - 2)
+#define MAXARCS		((1 << (unsigned int)(8 * sizeof(HISTCOUNTER))) - 2)
 
 struct tostruct {
 	u_long	selfpc;

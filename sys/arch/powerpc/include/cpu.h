@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.88 2011/06/30 00:52:59 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.88.2.1 2012/04/17 00:06:47 yamt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -213,8 +213,12 @@ curcpu(void)
 	return ci;
 }
 
+#ifdef __clang__
+#define	curlwp			(curcpu()->ci_curlwp)
+#else
 register struct lwp *powerpc_curlwp __asm("r13");
 #define	curlwp			powerpc_curlwp
+#endif
 #define curpcb			(curcpu()->ci_curpcb)
 #define curpm			(curcpu()->ci_curpm)
 
@@ -405,7 +409,7 @@ void	oea_init(void (*)(void));
 void	oea_startup(const char *);
 void	oea_dumpsys(void);
 void	oea_install_extint(void (*)(void));
-paddr_t	kvtop(void *); 
+paddr_t	kvtop(void *);
 
 extern paddr_t msgbuf_paddr;
 extern int cpu_altivec;
@@ -444,6 +448,7 @@ void	__syncicache(void *, size_t);
 #define	CPU_POWERSAVE		8	/* int: use CPU powersave mode */
 #define	CPU_BOOTED_DEVICE	9	/* string: device we booted from */
 #define	CPU_BOOTED_KERNEL	10	/* string: kernel we booted */
-#define	CPU_MAXID		11	/* number of valid machdep ids */
+#define	CPU_EXECPROT		11	/* bool: PROT_EXEC works */
+#define	CPU_MAXID		12	/* number of valid machdep ids */
 
 #endif	/* _POWERPC_CPU_H_ */

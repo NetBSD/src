@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_svr4.8,v 1.25 2009/10/21 01:07:46 snj Exp $
+.\"	$NetBSD: compat_svr4.8,v 1.25.6.1 2012/04/17 00:05:48 yamt Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas
 .\" All rights reserved.
@@ -35,11 +35,12 @@
 .Nd setup procedure for running 32-bit SVR4/iBCS2 binaries
 .Sh DESCRIPTION
 .Nx
-supports running SVR4/iBCS2 binaries. This code has been tested on
+supports running SVR4/iBCS2 binaries.
+This code has been tested on
 i386 (with binaries from SCO OpenServer and XENIX), m68k (with binaries from
 .Tn AMIX )
-and sparc (with binaries from Solaris) systems. Most programs should work,
-but not ones that use or depend on:
+and sparc (with binaries from Solaris) systems.
+Most programs should work, but not ones that use or depend on:
 .sp
 .Bl -item -compact -offset indent
 .It
@@ -79,7 +80,8 @@ and/or
 Another compatibility feature is
 .Dv COMPAT_SVR4_32 ,
 which allows the execution of 32-bit SVR4 binaries on a machine
-with a 64-bit kernel. This requires
+with a 64-bit kernel.
+This requires
 .Dv EXEC_ELF32
 and
 .Dv COMPAT_NETBSD32
@@ -104,19 +106,20 @@ Execution of 32-bit SVR4 binaries on a machine with a 32-bit kernel uses
 not
 .Dv COMPAT_SVR4_32 .
 .Pp
-Most SVR4 programs are dynamically linked. This means that you will
-also need the shared libraries that the program depends on and the
-runtime linker. Also, you will need to create a
+Most SVR4 programs are dynamically linked.
+This means that you will also need the shared libraries that the
+program depends on and the runtime linker.
+Also, you will need to create a
 .Dq shadow root
 directory for SVR4 binaries on your
 .Nx
-system. This directory
-is named
+system.
+This directory is named
 .Pa /emul/svr4 .
 Any file operations done by SVR4 programs run under
 .Nx
-will look in this directory first. So, if a SVR4
-program opens, for example,
+will look in this directory first.
+So, if a SVR4 program opens, for example,
 .Pa /etc/passwd ,
 .Nx
 will
@@ -125,13 +128,14 @@ first try to open
 and if that does not exist open the
 .Sq real
 .Pa /etc/passwd
-file. It is recommended that you install
+file.
+It is recommended that you install
 SVR4 packages that include configuration files, etc under
 .Pa /emul/svr4 ,
 to avoid naming conflicts with possible
 .Nx
-counterparts. Shared
-libraries should also be installed in the shadow tree.
+counterparts.
+Shared libraries should also be installed in the shadow tree.
 .Pp
 The simplest way to set up your system for SVR4 binaries is:
 .Bl -enum -compact
@@ -235,18 +239,21 @@ and then override with other mounts
 and
 .Pa /emul/svr4/dev .
 .Sh BUGS
-Many system calls are still not emulated. The streams emulation is
+Many system calls are still not emulated.
+The streams emulation is
 incomplete (socketpair does not work yet).
 .Pp
 Most SVR4 executables can not handle directory offset cookies \*[Gt] 32
-bits. More recent ones, compiled for large file support (Solaris 2.6
-and up) can. With older programs, you will see the message
-.Dq svr4_getdents: dir offset too large for emulated program"
-when this happens. Currently,
-this can only happen on NFS mounted filesystems, mounted from servers
-that return offsets with information in the upper 32 bits. These errors
-should rarely happen, but can be avoided by mounting this filesystem with
-offset translation enabled. See the
+bits.
+More recent ones, compiled for large file support (Solaris 2.6 and up) can.
+With older programs, you will see the message
+.Dq svr4_getdents: dir offset too large for emulated program
+when this happens.
+Currently, this can only happen on NFS mounted filesystems, mounted
+from servers that return offsets with information in the upper 32 bits.
+These errors should rarely happen, but can be avoided by mounting
+this filesystem with offset translation enabled.
+See the
 .Fl X
 option to
 .Xr mount_nfs 8 .

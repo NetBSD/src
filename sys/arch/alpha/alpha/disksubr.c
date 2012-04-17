@@ -1,21 +1,21 @@
-/* $NetBSD: disksubr.c,v 1.40 2011/06/14 15:34:22 matt Exp $ */
+/* $NetBSD: disksubr.c,v 1.40.2.1 2012/04/17 00:05:53 yamt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Authors: Keith Bostic, Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.40 2011/06/14 15:34:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.40.2.1 2012/04/17 00:05:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, stru
 	if (lp->d_secsize == 0)
 		lp->d_secsize = DEV_BSIZE;
 	if (lp->d_secperunit == 0)
-		lp->d_secperunit = 0x1fffffff; 
+		lp->d_secperunit = 0x1fffffff;
 	lp->d_npartitions = RAW_PART + 1;
 	if (lp->d_partitions[RAW_PART].p_size == 0)
 		lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
@@ -80,7 +80,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, stru
 	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags |= B_READ;
-	(*strat)(bp);  
+	(*strat)(bp);
 
 	/* if successful, locate disk label within block and validate */
 	if (biowait(bp)) {
@@ -157,7 +157,7 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask, stru
 #ifdef notdef
 	/* XXX WHY WAS THIS HERE?! */
 	/* special case to allow disklabel to be invalidated */
-	if (nlp->d_magic == 0xffffffff) { 
+	if (nlp->d_magic == 0xffffffff) {
 		*olp = *nlp;
 		return (0);
 	}
@@ -190,18 +190,18 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask, stru
 	nlp->d_checksum = 0;
 	nlp->d_checksum = dkcksum(nlp);
 	*olp = *nlp;
-	return (0);     
+	return (0);
 }
 
 /*
  * Write disk label back to device after modification.
- * This means write out the rigid disk blocks to represent the 
+ * This means write out the rigid disk blocks to represent the
  * label.  Hope the user was careful.
  */
 int
 writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, struct cpu_disklabel *clp)
 {
-	struct buf *bp; 
+	struct buf *bp;
 	struct disklabel *dlp;
 	int error = 0;
 
@@ -241,5 +241,5 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, str
 
 done:
 	brelse(bp, 0);
-	return (error); 
+	return (error);
 }

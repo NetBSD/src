@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem_i2c.c,v 1.3 2011/10/02 19:03:56 jmcneill Exp $ */
+/* $NetBSD: spdmem_i2c.c,v 1.3.2.1 2012/04/17 00:07:30 yamt Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.3 2011/10/02 19:03:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.3.2.1 2012/04/17 00:07:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -77,7 +77,8 @@ spdmem_i2c_match(device_t parent, cfdata_t match, void *aux)
 
 	if (ia->ia_name) {
 		/* add other names as we find more firmware variations */
-		if (strcmp(ia->ia_name, "dimm-spd"))
+		if (strcmp(ia->ia_name, "dimm-spd") &&
+		    strcmp(ia->ia_name, "dimm"))
 			return 0;
 	}
 

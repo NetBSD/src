@@ -1,4 +1,4 @@
-/*	$NetBSD: getservbyname_r.c,v 1.8 2011/04/03 22:14:15 christos Exp $	*/
+/*	$NetBSD: getservbyname_r.c,v 1.8.4.1 2012/04/17 00:05:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getservbyname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getservbyname_r.c,v 1.8 2011/04/03 22:14:15 christos Exp $");
+__RCSID("$NetBSD: getservbyname_r.c,v 1.8.4.1 2012/04/17 00:05:21 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -78,8 +78,8 @@ _servent_getbyname(struct servent_data *sd, struct servent *sp,
 		if (namelen + protolen > 255)
 			return NULL;
 
-		buf[0] = namelen;
-		buf[1] = protolen;
+		buf[0] = (uint8_t)namelen;
+		buf[1] = (uint8_t)protolen;
 		memcpy(buf + 2, name, namelen);
 		memcpy(buf + 2 + namelen, proto, protolen);
 

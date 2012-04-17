@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.361 2011/08/27 12:47:49 bouyer Exp $
+#	$NetBSD: files.i386,v 1.361.2.1 2012/04/17 00:06:28 yamt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -15,8 +15,8 @@ defparam opt_kernbase.h	KERNBASE
 # delay before cpu_reset() for reboot.
 defparam		CPURESET_DELAY
 
-# Xbox support
-defflag			XBOX
+# Obsolete Xbox support
+obsolete defflag	XBOX
 
 # VM86 emulation
 defflag			VM86
@@ -327,17 +327,6 @@ include "dev/apm/files.apm"
 attach	apm at apmbus with apmbios: bioscall
 file	arch/i386/i386/apmbios.c	apmbios	needs-flag
 file	arch/i386/i386/apmcall.S	apmbios
-
-# XBox LED & system support
-file	arch/i386/xbox/xbox.c			xbox
-
-# XBox X3LCD support (*very* rudimentary)
-file	arch/i386/xbox/xboxlcd.c		xbox
-
-# XBox framebuffer support
-device	xboxfb: wsemuldisplaydev, rasops32, vcons
-attach	xboxfb at pci
-file	arch/i386/xbox/xboxfb.c			xboxfb needs-flag
 
 #
 # Compatibility modules

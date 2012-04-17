@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_discover.c,v 1.2 2011/10/29 16:54:49 christos Exp $	*/
+/*	$NetBSD: iscsid_discover.c,v 1.2.2.1 2012/04/17 00:05:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ ISNS_HANDLE isns_handle = ISNS_INVALID_HANDLE;
  * Returns:     status
  */
 
-STATIC void
+static void
 xlate_ip(uint8_t *dest, size_t size, void *data)
 {
 	uint16_t *wdt = (uint16_t *) data;
@@ -98,7 +98,7 @@ xlate_ip(uint8_t *dest, size_t size, void *data)
  * Returns:     status
  */
 
-STATIC uint32_t
+static uint32_t
 get_isns_target_info(isns_t * isns, uint8_t * TargetName)
 {
 	int retval;
@@ -678,7 +678,7 @@ update_isns_server_info(isns_t * isns)
  *    Returns:    Pointer to isns structure, NULL if allocation failed.
  */
 
-STATIC isns_t *
+static isns_t *
 create_isns(iscsid_add_isns_server_req_t * req)
 {
 	isns_t *isns;

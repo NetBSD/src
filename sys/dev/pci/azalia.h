@@ -1,7 +1,7 @@
-/*	$NetBSD: azalia.h,v 1.20 2008/08/14 23:43:27 jmcneill Exp $	*/
+/*	$NetBSD: azalia.h,v 1.20.28.1 2012/04/17 00:07:43 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -578,13 +578,16 @@ typedef struct codec_t {
 	int running;
 
 	int nmixers, maxmixers;
+	size_t szmixers;
 	mixer_item_t *mixers;
 
 	struct audio_format *formats;
 	int nformats;
+	size_t szformats;
 	struct audio_encoding_set *encodings;
 
 	uint32_t *extra;
+	size_t szextra;
 } codec_t;
 
 

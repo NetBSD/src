@@ -34,7 +34,16 @@
 
 #include "nbsd-nat.h"
 
+#ifndef HAVE_GREGSET_T
+typedef struct reg gregset_t;
+#endif
 
+#ifndef HAVE_FPREGSET_T
+struct fpreg { };
+typedef struct fpreg fpregset_t;
+#endif
+#include "gregset.h"
+ 
 /* Determine if PT_GETREGS fetches this register.  */
 #define GETREGS_SUPPLIES(gdbarch, regno) \
   (((regno) >= R0_REGNUM && (regno) <= (R0_REGNUM + 15)) \
@@ -89,6 +98,22 @@ shnbsd_store_inferior_registers (struct target_ops *ops,
       if (regno != -1)
 	return;
     }
+}
+
+void
+supply_gregset (struct regcache *regcache, const gregset_t *gregs)
+{
+      if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
+		  (PTRACE_TYPE_ARG3) gregs, TIDGET (inferior_ptid)) == -1)
+	perror_with_name (_("Couldn't set registers"));
+}
+
+void
+fill_gregset (const struct regcache *regcache, gregset_t *gregs, int regnum)
+{
+   if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
+	(PTRACE_TYPE_ARG3) gregs, TIDGET (inferior_ptid)) == -1)
+	perror_with_name (_("Couldn't get registers"));
 }
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */

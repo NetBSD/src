@@ -1,12 +1,12 @@
-.\"	$NetBSD: prep,v 1.7 2011/02/03 21:04:52 phx Exp $
+.\"	$NetBSD: prep,v 1.7.4.1 2012/04/17 00:02:36 yamt Exp $
 .
 To install
 .Nx \*V
-on your 824x based NAS system you need to get access to its serial console.
+on your 824x based NAS system you need to get access to the serial console.
 This requires to open the case, locate the serial header on the main board
 and attach a (usually
-.Tn "MAX232"
-based) RS/232 cable to it, which you will
+.Tn "MAX3232"
+based) 3.3V TTL level to RS/232 converter to it, which you will
 connect to a terminal.
 The procedure how to build such a cable for your NAS system is not
 part of this documentation. Please refer to

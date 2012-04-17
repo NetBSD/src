@@ -1,4 +1,4 @@
-/* $NetBSD: pciide.c,v 1.9 2011/11/02 04:10:33 nisimura Exp $ */
+/* $NetBSD: pciide.c,v 1.9.2.1 2012/04/17 00:06:50 yamt Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -35,18 +35,20 @@
 
 #include "globals.h"
 
-static int cmdidefix(struct dkdev_ata *);
-static int apoidefix(struct dkdev_ata *);
+static void cmdidefix(struct dkdev_ata *);
+static void apoidefix(struct dkdev_ata *);
+static void iteidefix(struct dkdev_ata *);
 
 static uint32_t pciiobase = PCI_XIOBASE;
 
 struct myops {
-	int (*chipfix)(struct dkdev_ata *);
+	void (*chipfix)(struct dkdev_ata *);
 	int (*presense)(struct dkdev_ata *, int);
 };
 static struct myops defaultops = { NULL, NULL };
 static struct myops cmdideops = { cmdidefix, NULL };
 static struct myops apoideops = { apoidefix, NULL };
+static struct myops iteideops = { iteidefix, NULL };
 static struct myops *myops;
 
 int
@@ -65,6 +67,8 @@ pciide_match(unsigned tag, void *data)
 		myops = &apoideops;
 		return 1;
 	case PCI_DEVICE(0x1283, 0x8211): /* ITE 8211 IDE */
+		myops = &iteideops;
+		return 1;
 	case PCI_DEVICE(0x10ad, 0x0105): /* Symphony Labs 82C105 IDE */
 	case PCI_DEVICE(0x10b8, 0x5229): /* ALi IDE */
 	case PCI_DEVICE(0x1191, 0x0008): /* ACARD ATP865 */
@@ -78,7 +82,8 @@ pciide_match(unsigned tag, void *data)
 void *
 pciide_init(unsigned tag, void *data)
 {
-	int native, n;
+	static int cntrl = 0;
+	int native, n, retries;
 	unsigned val;
 	struct dkdev_ata *l;
 
@@ -89,8 +94,7 @@ pciide_init(unsigned tag, void *data)
 
 	/* chipset specific fixes */
 	if (myops->chipfix)
-		if (!(*myops->chipfix)(l))
-			return NULL;
+		(*myops->chipfix)(l);
 
 	val = pcicfgread(tag, PCI_CLASS_REG);
 	native = PCI_CLASS(val) != PCI_CLASS_IDE ||
@@ -125,20 +129,41 @@ pciide_init(unsigned tag, void *data)
 	}
 
 	for (n = 0; n < 2; n++) {
-		if (myops->presense && (*myops->presense)(l, n) == 0)
-			l->presense[n] = 0; /* found not exist */
-		else {
+		if (myops->presense != NULL && (*myops->presense)(l, n) == 0) {
+			DPRINTF(("channel %d not present\n", n));
+			l->presense[n] = 0;
+			continue;
+		} else if (get_drive_config(cntrl * 2 + n) == 0) {
+			DPRINTF(("channel %d disabled by config\n", n));
+			l->presense[n] = 0;
+			continue;
+		}
+
+		if (atachkpwr(l, n) != ATA_PWR_ACTIVE) {
+			/* drive is probably sleeping, wake it up */
+			for (retries = 0; retries < 10; retries++) {
+				wakeup_drive(l, n);
+				DPRINTF(("channel %d spinning up...\n", n));
+				delay(1000 * 1000);
+				l->presense[n] = perform_atareset(l, n);
+				if (atachkpwr(l, n) == ATA_PWR_ACTIVE)
+					break;
+			}
+		} else {
 			/* check to see whether soft reset works */
+			DPRINTF(("channel %d active\n", n));
 			l->presense[n] = perform_atareset(l, n);
 		}
+
 		if (l->presense[n])
 			printf("channel %d present\n", n);
 	}
 
+	cntrl++;	/* increment controller number for next call */
 	return l;
 }
 
-static int
+static void
 cmdidefix(struct dkdev_ata *l)
 {
 	unsigned v;
@@ -151,11 +176,9 @@ cmdidefix(struct dkdev_ata *l)
 	pcicfgwrite(l->tag, 0xa4, (v & ~0xffff) | 0x328a);
 	v = pcicfgread(l->tag, 0xb4);
 	pcicfgwrite(l->tag, 0xb4, (v & ~0xffff) | 0x328a);
-
-	return 1;
 }
 
-static int
+static void
 apoidefix(struct dkdev_ata *l)
 {
 	unsigned v;
@@ -163,6 +186,18 @@ apoidefix(struct dkdev_ata *l)
 	/* enable primary and secondary channel */
 	v = pcicfgread(l->tag, 0x40) & ~0x03;
 	pcicfgwrite(l->tag, 0x40, v | 0x03);
+}
 
-	return 1;
+static void
+iteidefix(struct dkdev_ata *l)
+{
+	unsigned v;
+
+	/* set PCI mode and 66Mhz reference clock, disable IT8212 RAID */
+	v = pcicfgread(l->tag, 0x50);
+	pcicfgwrite(l->tag, 0x50, v & ~0x83);
+
+	/* i/o configuration, enable channels, cables, IORDY */
+	v = pcicfgread(l->tag, 0x40);
+	pcicfgwrite(l->tag, 0x40, (v & ~0xffffff) | 0x36a0f3);
 }

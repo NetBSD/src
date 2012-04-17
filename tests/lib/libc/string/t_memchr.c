@@ -1,4 +1,4 @@
-/* $NetBSD: t_memchr.c,v 1.2 2011/07/14 05:46:04 jruoho Exp $ */
+/* $NetBSD: t_memchr.c,v 1.2.2.1 2012/04/17 00:09:12 yamt Exp $ */
 
 /*
  * Written by J.T. Conklin <jtc@acorntoolworks.com>
@@ -169,7 +169,6 @@ ATF_TC_HEAD(memrchr_simple, tc)
 ATF_TC_BODY(memrchr_simple, tc)
 {
 	char buf[] = "abcdabcd";
-	short i = 8;
 
 	ATF_CHECK(memrchr(buf, 'a', 0) == NULL);
 	ATF_CHECK(memrchr(buf, 'g', 0) == NULL);
@@ -178,15 +177,10 @@ ATF_TC_BODY(memrchr_simple, tc)
 	ATF_CHECK(memrchr("\0", 'x', 0) == NULL);
 	ATF_CHECK(memrchr("\0", 'x', 1) == NULL);
 
-	while (i <= 16) {
-
-		ATF_CHECK(memrchr(buf, 'a', i) == buf + 4);
-		ATF_CHECK(memrchr(buf, 'b', i) == buf + 5);
-		ATF_CHECK(memrchr(buf, 'c', i) == buf + 6);
-		ATF_CHECK(memrchr(buf, 'd', i) == buf + 7);
-
-		i *= 2;
-	}
+	ATF_CHECK(memrchr(buf, 'a', 8) == buf + 4);
+	ATF_CHECK(memrchr(buf, 'b', 8) == buf + 5);
+	ATF_CHECK(memrchr(buf, 'c', 8) == buf + 6);
+	ATF_CHECK(memrchr(buf, 'd', 8) == buf + 7);
 }
 
 ATF_TP_ADD_TCS(tp)

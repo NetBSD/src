@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39power.c,v 1.19 2008/04/28 20:23:21 martin Exp $ */
+/*	$NetBSD: tx39power.c,v 1.19.34.1 2012/04/17 00:06:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39power.c,v 1.19 2008/04/28 20:23:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39power.c,v 1.19.34.1 2012/04/17 00:06:25 yamt Exp $");
 
 #include "opt_tx39power_debug.h"
 
@@ -145,7 +145,7 @@ tx39power_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-tx39power_suspend_cpu() /* I assume already splhigh */
+tx39power_suspend_cpu(void) /* I assume already splhigh */
 {
 	tx_chipset_tag_t tc = tx_conf_get_tag();
 	struct tx39power_softc *sc = tc->tc_powert;

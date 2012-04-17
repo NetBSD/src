@@ -35,7 +35,7 @@
  *	i4b daemon - charging rates description file handling
  *	-----------------------------------------------------
  *
- *	$Id: rates.c,v 1.6 2004/10/30 08:19:30 dsl Exp $ 
+ *	$Id: rates.c,v 1.6.48.1 2012/04/17 00:09:47 yamt Exp $ 
  *
  * $FreeBSD$
  *
@@ -391,8 +391,8 @@ get_current_rate(struct cfg_entry *cep, int dolog)
 	{
 	case ULSRC_CMDL:	/* specified on commandline     */
 		if (dolog)
-			logit(LL_CHD, "%05d %s rate %d sec/unit (cmdl)",
-				cep->cdid, cep->name, unit_length);
+			logit(LL_CHD, "%05d %s rate %jd sec/unit (cmdl)",
+				cep->cdid, cep->name, (intmax_t)unit_length);
 		return(unit_length);
 		break;
 
@@ -493,7 +493,7 @@ getrate(int rate_type )
 		if ((time_now >= hd->start_time ) &&
 		    (time_now < hd->end_time ))
 		{
-			DBGL(DL_RATES, (logit(LL_DBG, "rate=%d sec/unit (day=%d, beg=%d:%2.2d, end=%d:2.2d, current=%d:%2.2d)",
+			DBGL(DL_RATES, (logit(LL_DBG, "rate=%d sec/unit (day=%d, beg=%d:%2.2d, end=%d:%2.2d, current=%d:%2.2d)",
 				hd->rate,
 				ptr->tm_wday,
 				hd->start_time/60, hd->start_time%60,

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.18 2011/05/26 04:25:28 uebayasi Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.18.4.1 2012/04/17 00:07:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -175,6 +175,7 @@ struct bi_modulelist_entry {
 #define	BI_MODULE_NONE		0x00
 #define	BI_MODULE_ELF		0x01
 #define	BI_MODULE_IMAGE		0x02
+#define BI_MODULE_RND		0x03
 
 struct btinfo_modulelist {
 	struct btinfo_common common;

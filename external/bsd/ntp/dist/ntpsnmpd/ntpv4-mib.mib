@@ -1,127 +1,38 @@
 -- *********************************************************************
 --
---Id: draft-ietf-ntp-ntpv4-mib-05.xml 1.12 2007/11/28 00:00:00Z chelliot
---$Name:  $
---
 --    The Network Time Protocol Version 4
 --    Management Information Base (MIB)
 --
 --    Authors: Heiko Gerstung (heiko.gerstung@meinberg.de)
---             Chris Elliott (chelliot@cisco.com)
+--             Chris Elliott (chelliot@pobox.com)
 --
 --    for the Internet Engineering Task Force (IETF)
 --    NTP Working Group (ntpwg)
 --
 --
 -- *********************************************************************
---
---  $Log: ntpv4-mib.mib,v $
---  Revision 1.1.1.1  2009/12/13 16:56:33  kardel
---  Import ntp 4.2.6
---
---  Revision 1.14  2008/08/29 00:00:00Z heiko
---  Re-submitted after expiration:
---    - The working group agreed to forward this draft in its current form (04),
---       but it expired before that could be done
---  Revision 1.13  2008/02/25 00:00:00Z chelliot
---  MIB:
---    - Added statistics table on a per-packet mode basis
---      (ntpEntStatPktModeTable)
---  Revision 1.12  2007/11/28 00:00:00Z chelliot
---  MIB:
---    - Added protocol statistics at the entity and association level
---  XML/RFC:
---    - Changed a couple of instances of "instance" to "entity" and "srv"
---      to "ent".
---    - Changed Meinberg address and Heiko's phone number.
---  Revision 1.11  2007/07/23 00:00:00Z chelliot
---  MIB:
---    - Modified Contact Info
---    - Added Stratum and NTP time TCs
---    - Changed ntpEntNotifNotInSync to ntpEntNotifCurrentMode and
---      deleted ntpEntNotifEntityStarted and ntpEntNotifEntityStopped
---    - Added compliance for SNTP entities
---    - Changed ntpTime to ntpDateTime
---  Revision 1.10  2007/07/09 00:00:00Z chelliot
---  XML/RFC:
---    - Changed RFC to Internet
---    - Changed service and service instance* to entity/entities
---    - Revised the Security Considerations to include read-write object
---      security considerations
---    - Added Chris Elliott as an author
---    - Fixed several lines to be 72 characters long or less
---  MIB:
---    - Changed "service" and "service instance" to "entity",
---      and Srv to Ent
---    - Changed status to mode
---    - Added association status object
---    - Added leap second objects
---  Revision 1.9  2007/03/04 06:59:44Z  chelliot
---  MIB:
---    - Added time objects, comments, changed notifications
---    - Changed server to service
---  Revision 1.8  2006/10/23 03:37:44Z  chelliot
---  MIB:
---    - Changed various object types, added notification control object
---  Revision 1.7  2006/06/16 07:13:50Z  heiko
---  XML/RFC:
---    - Added/changed comments about the to-be-done IANA SMI assignment
---  Revision 1.6  2006/06/16 07:04:43Z  heiko
---  RFC/XML:
---    - phone number corrected
---    - removed unused references
---  MIB:
---    - added ntpSrvTimePrecision
---    - changed INTEGER objects to Integer32
---    - changed default value for ntpSrvStatusStratum from 99 to 16
---    - changed default value for ntpSrvStatusActiveRefclockId from 99-0
---    - changed object names to ntpSrvStatusActiveRefSourceName
---      (from ntpSrvStatusActiveRefclockName) and to
---      ntpSrvStatusNumberOfRefSources (from
---      ntpSrvStatusNumberOfRefclocks)
---    - removed ntpSrvStatusAuthKeyId object
---    - added ntpSrvStatusDispersion to provide the current root
---      dispersion
---    - major rework of section 3 (Status of associations) to compile
---      cleanly,including:
---      - added dispersion to the association dataset
---      - renaming of objects
---      - added an index to the association table
---      - formal changes
---    - traps are now reverse mappable
---    - traps are now define with payload where applicable
---    - added compliance statements
---  Revision 1.5  2006/02/27 08:28:16Z  heiko
---    - changed to RFC format and added header as well as
---      introduction and technical description
---    - added other necessary RFC components (copyright statement etc.)
---  Revision 1.4  2006/02/27 07:06:49Z  heiko
---    - removed all objects with data type REAL
---    - everything that needs to be floating point is now defined as
---      DisplayString
---  Revision 1.2  2006/01/23 08:58:11Z  heiko
---    - changed the datatype of offset, jitter and delay objects from
---      Integer32 to REAL
+--   Rev 1.00
+--         Published as RFC 5907
 --
 -- *********************************************************************
 
 NTPv4-MIB DEFINITIONS ::= BEGIN
 
-
 IMPORTS
-    MODULE-IDENTITY, OBJECT-TYPE , enterprises, mib-2, Integer32, NOTIFICATION-TYPE,
-    Unsigned32, Counter32
-        FROM SNMPv2-SMI
+    MODULE-IDENTITY, OBJECT-TYPE , mib-2, Integer32, NOTIFICATION-TYPE,
+    Unsigned32, Counter32, TimeTicks
+        FROM SNMPv2-SMI -- RFC 2578
     MODULE-COMPLIANCE, OBJECT-GROUP, NOTIFICATION-GROUP
-        FROM SNMPv2-CONF
+        FROM SNMPv2-CONF -- RFC 2580
     DisplayString, TEXTUAL-CONVENTION
-        FROM SNMPv2-TC
+        FROM SNMPv2-TC -- RFC 2579
     InetAddressType, InetAddress
-        FROM INET-ADDRESS-MIB;
+        FROM INET-ADDRESS-MIB -- RFC 4001
+    Utf8String
+        FROM SYSAPPL-MIB; -- RFC 2287
 
 ntpSnmpMIB MODULE-IDENTITY
-    LAST-UPDATED "200802250000Z" -- February 25, 2008
-
+    LAST-UPDATED "201005170000Z" -- May 17, 2010
     ORGANIZATION "The IETF NTP Working Group (ntpwg)"
     CONTACT-INFO
             "     WG Email: ntpwg@lists.ntp.isc.org
@@ -138,44 +49,38 @@ ntpSnmpMIB MODULE-IDENTITY
                   Email: heiko.gerstung@meinberg.de
 
                   Chris Elliott
-                  Cisco Systems, Inc.
-                  7025 Kit Creek Rd., P.O. Box 14987
-                  Research Triangle Park  27709
+                  1516 Kent St.
+                  Durham, NC 27707
                   USA
 
-                  Phone: +1 919-392-2146
-                  Email: chelliot@cisco.com"
-     DESCRIPTION
-        "The Management Information Base for NTP time entities."
-    REVISION     "200802250000Z"
-    DESCRIPTION
-        "Added ntpEntStatPktModeTable"
-    REVISION     "200711280000Z"
-    DESCRIPTION
-        "Multiple proposed changes for IETF 70"
-    REVISION     "200707230000Z"
-    DESCRIPTION
-        "Multiple proposed changes for IETF 69"
-    REVISION     "200707090000Z"
-    DESCRIPTION
-        "Multiple changes from IETF 68"
-    REVISION     "200703040000Z"
-    DESCRIPTION
-        "More MIB review modifications."
-    REVISION     "200610230000Z"
-    DESCRIPTION
-        "Modifications from MIB review."
-    REVISION     "200606190000Z"
-    DESCRIPTION
-        "First Draft Version"
-    REVISION     "200512190000Z"
-    DESCRIPTION
-        "revised edition (added traps and stuff)"
-    REVISION     "200511160000Z"
-    DESCRIPTION
-        "Initial draft"
-    ::= { enterprises 5597 99 }
+                  Phone: +1-919-308-1216
+                  Email: chelliot@pobox.com
 
+                  Brian Haberman
+                  11100 Johns Hopkins Road
+                  Laurel, MD 20723
+                  USA
+
+                  Phone: +1-443-778-1319
+                  Email: brian@innovationslab.net"
+     DESCRIPTION
+        "The Management Information Base for NTP time entities.
+
+         Copyright (c) 2010 IETF Trust and the persons identified as
+         authors of the code.  All rights reserved.
+
+         Redistribution and use in source and binary forms, with or
+         without modification, is permitted pursuant to, and subject
+         to the license terms contained in, the Simplified BSD License
+         set forth in Section 4.c of the IETF Trust's Legal Provisions
+         Relating to IETF Documents
+         (http://trustee.ietf.org/license-info)."
+
+    REVISION     "201005170000Z"
+    DESCRIPTION
+        "This revision of the MIB module is published as RFC 5907."
+
+    ::= { mib-2 197 }
 
 ntpSnmpMIBObjects  OBJECT IDENTIFIER ::= { ntpSnmpMIB 1 }
 
@@ -186,7 +91,6 @@ ntpEntStatus       OBJECT IDENTIFIER ::= { ntpSnmpMIBObjects 2 }
 ntpAssociation     OBJECT IDENTIFIER ::= { ntpSnmpMIBObjects 3 }
 ntpEntControl      OBJECT IDENTIFIER ::= { ntpSnmpMIBObjects 4 }
 ntpEntNotifObjects OBJECT IDENTIFIER ::= { ntpSnmpMIBObjects 5 }
-ntpEntNotifPrefix  OBJECT IDENTIFIER ::= { ntpSnmpMIBObjects 6 }
 
 --
 -- Textual Conventions
@@ -204,21 +108,13 @@ NtpDateTime ::= TEXTUAL-CONVENTION
     STATUS      current
     DESCRIPTION
         "NTP date/time on the device, in 128-bit
-         NTP date format. Ref: draft-ietf-ntp-ntpv4-proto-06,
-         section 6:
-          It includes a 64-bit signed seconds field
-          spanning 584 billion years and a 64-bit fraction
-          field resolving .05 attosecond (i.e. 0.5e-18).
-          For convenience in mapping between formats, the
-          seconds field is divided into a 32-bit era field
-          and a 32-bit timestamp field.
+         NTP date format.  If time is not syncronized, this
+         field shall be a zero-length string.
 
-         If time is not syncronized this field shall be a
-         zero-length string.
-
-         This TC is not to be used for objects that are used
-         to set the time of the node querying this object.
-         NTP should be used for this--or at least SNTP."
+         This trusted certificate (TC) is not to be used for objects
+         that are used to set the time of the node querying this
+         object.  NTP should be used for this -- or at least SNTP."
+    REFERENCE "RFC 5905, section 6"
     SYNTAX      OCTET STRING (SIZE (0 | 16))
 
 --
@@ -227,99 +123,58 @@ NtpDateTime ::= TEXTUAL-CONVENTION
 --
 
 ntpEntSoftwareName OBJECT-TYPE
-    SYNTAX      DisplayString
+    SYNTAX      Utf8String
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-        "The product name of the installed NTP version."
-    -- the product name of the running ntp implementation, e.g. "ntpd"
+        "The product name of the running NTP version, e.g., 'ntpd'."
     ::= { ntpEntInfo  1 }
 
 ntpEntSoftwareVersion OBJECT-TYPE
-    SYNTAX      DisplayString
+    SYNTAX      Utf8String
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-        "The software version of the installed NTP implementation."
-    -- full version string, e.g. "ntpd-4.2.0b@1.1433 ..."
+        "The software version of the installed NTP implementation
+         as a full version string, e.g., 'ntpd-4.2.0b@1.1433 ...'"
     ::= { ntpEntInfo  2 }
 
-ntpEntSoftwareVersionVal OBJECT-TYPE
-    SYNTAX      Unsigned32
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "Software version of installed NTP as an unsigned integer
-         value."
-    -- e.g. if version string is "4.2.0b" this could be translated into
-    --  4202. This could be useful to find out if version of entity on a
-    --  is newer or older than version of the entity on b (without too
-    --  much string parsing trouble)
-    ::= { ntpEntInfo 3 }
-
 ntpEntSoftwareVendor OBJECT-TYPE
-    SYNTAX      DisplayString
+    SYNTAX      Utf8String
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
         "The vendor/author of the installed NTP version."
-    ::= { ntpEntInfo  4 }
+    ::= { ntpEntInfo  3 }
 
 ntpEntSystemType OBJECT-TYPE
-    SYNTAX      DisplayString
+    SYNTAX      Utf8String
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-        "General hardware/os platform information."
-    -- e.g. "Linux 2.6.12 / x86"
+        "General hardware/os platform information,
+         e.g., 'Linux 2.6.12 / x86'."
     -- freely configurable, default is OS Version / Hardware platform
-    ::= { ntpEntInfo  5 }
+    ::= { ntpEntInfo  4 }
 
 ntpEntTimeResolution OBJECT-TYPE
-    SYNTAX      DisplayString
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "A string describing the time resolution of the running NTP
-         implementation."
-    -- e.g. "100 ns"
-    -- depends on the NTP implementation and the underlying OS. The
-    --  current resolution should be used, so if the OS only supports
-    --  10ms and ntpd is capable of 1ns, the 10ms should be advertised
-    ::= { ntpEntInfo  6 }
-
-ntpEntTimeResolutionVal OBJECT-TYPE
     SYNTAX      Unsigned32
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-        "The time resolution in integer format."
-    -- ntpEntTimeResolution in Integer format
-    -- shows the resolution based on 1 second, e.g. "1ms" translates to
-    --  1000
-    ::= { ntpEntInfo  7 }
+        "The time resolution in integer format, where the resolution
+        is represented as divisions of a second, e.g., a value of 1000
+        translates to 1.0 ms."
+    ::= { ntpEntInfo  5 }
 
 ntpEntTimePrecision OBJECT-TYPE
-    SYNTAX      DisplayString
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "A string describing the precision with which the NTP entity
-         implementation/OS manages its time base."
-    -- e.g. "-18" means 2^-18 = 0.000003814697265625 seconds
-    --      "-5" means 2^-5 = 0.03125 seconds
-    -- depends on the NTP implementation and the underlying OS.
-    ::= { ntpEntInfo  8 }
-
-ntpEntTimePrecisionVal OBJECT-TYPE
     SYNTAX      Integer32
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-        "The entity's precision in integer format."
-    -- ntpEntTimePrecision in signed Integer format
-    -- shows the precision. A value of -5 would mean 2^-5 = 31.25 ms
-    ::= { ntpEntInfo  9 }
+        "The entity's precision in integer format, shows the precision.
+         A value of -5 would mean 2^-5 = 31.25 ms."
+    ::= { ntpEntInfo  6 }
 
 ntpEntTimeDistance OBJECT-TYPE
     SYNTAX      DisplayString
@@ -327,38 +182,14 @@ ntpEntTimeDistance OBJECT-TYPE
     STATUS      current
     DESCRIPTION
         "The distance from this NTP entity to the root time reference
-        (stratum 0) source."
-    -- including the unit
-    -- e.g. "13.243 ms"
-    ::= { ntpEntInfo  10 }
+        (stratum 0) source including the unit, e.g., '13.243 ms'."
+    ::= { ntpEntInfo  7 }
 
 --
 -- Section 2: Current NTP status (dynamic information)
 --
 
 ntpEntStatusCurrentMode OBJECT-TYPE
-    SYNTAX      DisplayString
-    MAX-ACCESS  read-only
-    STATUS      current
-    DESCRIPTION
-        "The actual mode of NTP as a string"
-    --- possible strings:
-    --- "not running" : NTP is not running
-    --- "not synchronized" : NTP is not synchronized to any time source
-    ---   (stratum = 16)
-    --- "none configured" : NTP is not synchronized and does not have a
-    ---                     server configured
-    ---   (stratum = 16)
-    --- "sync to local" : NTP is synchronized to own local clock
-    ---   (degraded reliability)
-    --- "sync to refclock" : NTP is synchronized to a local hardware
-    ---   refclock (e.g. GPS)
-    --- "sync to remote server" : NTP is synchronized to a remote NTP
-    ---   server ("upstream" server)
-    --- "unknown" : The state of NTP is unknown.
-    ::= { ntpEntStatus 1 }
-
-ntpEntStatusCurrentModeVal OBJECT-TYPE
     SYNTAX      INTEGER {
                             notRunning(1),
                             notSynchronized(2),
@@ -371,20 +202,32 @@ ntpEntStatusCurrentModeVal OBJECT-TYPE
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-        "The current mode of the NTP as integer value."
-    -- see ntpEntStatusCurrentMode
-    DEFVAL { 99 }
-    ::= { ntpEntStatus 2 }
+        "The current mode of the NTP.  The definition of each possible
+         value is:
+            notRunning(1) - NTP is not running.
+            notSynchronized(2) - NTP is not synchronized to any time
+                                 source (stratum = 16).
+            noneConfigured(3) - NTP is not synchronized and does not
+                                have a reference configured
+                                (stratum = 16).
+            syncToLocal(4) - NTP is distributing time based on its
+                             local clock (degraded accuracy and/or
+                             reliability).
+            syncToRefclock(5) - NTP is synchronized to a local
+                                hardware refclock (e.g., GPS).
+            syncToRemoteServer(6) - NTP is synchronized to a remote
+                                    NTP server ('upstream' server).
+            unknown(99) - The state of NTP is unknown."
+    ::= { ntpEntStatus 1 }
 
 ntpEntStatusStratum OBJECT-TYPE
     SYNTAX      NtpStratum
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-        "The NTP entity's own stratum value."
-    -- should be stratum of syspeer + 1 (or 16 if no syspeer)
-    DEFVAL { 16 }
-    ::= { ntpEntStatus 3 }
+        "The NTP entity's own stratum value.  Should be a stratum of
+         syspeer + 1 (or 16 if no syspeer)."
+    ::= { ntpEntStatus 2 }
 
 ntpEntStatusActiveRefSourceId OBJECT-TYPE
     SYNTAX      Unsigned32 ( 0..99999 )
@@ -392,30 +235,26 @@ ntpEntStatusActiveRefSourceId OBJECT-TYPE
     STATUS      current
     DESCRIPTION
         "The association ID of the current syspeer."
-    DEFVAL { 0 }
-    ::= { ntpEntStatus 4 }
+    ::= { ntpEntStatus 3 }
 
 ntpEntStatusActiveRefSourceName OBJECT-TYPE
-    SYNTAX      DisplayString
+    SYNTAX      Utf8String
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
         "The hostname/descriptive name of the current reference source
-         selected as syspeer."
-    -- e.g. "ntp1.ptb.de" or "GPS" or "DCFi" ...
-    -- maybe something like "RefClk(8)"="hardware clock using driver 8"
-    -- would be nice
-    ::= { ntpEntStatus 5 }
+         selected as syspeer, e.g., 'ntp1.ptb.de' or 'GPS' or
+         'DCFi', ..."
+    ::= { ntpEntStatus 4 }
 
 ntpEntStatusActiveOffset OBJECT-TYPE
     SYNTAX      DisplayString
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-        "The Time offset to the current selected reference time source
-         as a string."
-    -- including unit, e.g. "0.032 ms" or "1.232 s"
-    ::= { ntpEntStatus 6 }
+        "The time offset to the current selected reference time source
+         as a string including unit, e.g., '0.032 ms' or '1.232 s'."
+    ::= { ntpEntStatus 5 }
 
 ntpEntStatusNumberOfRefSources OBJECT-TYPE
     SYNTAX      Unsigned32 (0..99)
@@ -423,28 +262,25 @@ ntpEntStatusNumberOfRefSources OBJECT-TYPE
     STATUS      current
     DESCRIPTION
         "The number of reference sources configured for NTP."
-    DEFVAL { 0 }
-    ::= { ntpEntStatus 7 }
+    ::= { ntpEntStatus 6 }
 
 ntpEntStatusDispersion OBJECT-TYPE
     SYNTAX      DisplayString
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-        "The root dispersion of the running NTP entity."
-    -- e.g. "6.927"
-    DEFVAL { "n/a" }
-    ::= { ntpEntStatus 8 }
+        "The root dispersion of the running NTP entity, e.g., '6.927'."
+    ::= { ntpEntStatus 7 }
 
 ntpEntStatusEntityUptime OBJECT-TYPE
-    SYNTAX      Unsigned32
+    SYNTAX      TimeTicks
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-        "The uptime of the NTP entity in seconds."
-    -- time since ntpd was (re-)started (not sysUptime!)
-    DEFVAL { 0 }
-    ::= { ntpEntStatus 9 }
+        "The uptime of the NTP entity, (i.e., the time since ntpd was
+         (re-)initialized not sysUptime!).  The time is represented in
+         hundreds of seconds since Jan 1, 1970 (00:00:00.000) UTC."
+    ::= { ntpEntStatus 8 }
 
 ntpEntStatusDateTime OBJECT-TYPE
     SYNTAX      NtpDateTime
@@ -452,111 +288,128 @@ ntpEntStatusDateTime OBJECT-TYPE
     STATUS      current
     DESCRIPTION
         "The current NTP date/time on the device, in 128-bit
-         NTP date format. Ref: draft-ietf-ntp-ntpv4-proto-06,
-         section 6:
-          It includes a 64-bit signed seconds field
-          spanning 584 billion years and a 64-bit fraction
-          field resolving .05 attosecond (i.e. 0.5e-18).
-          For convenience in mapping between formats, the
-          seconds field is divided into a 32-bit era field
-          and a 32-bit timestamp field.
-
-         If time is not syncronized this field shall be a
-         zero-length string.
+         NTP date format.  If time is not syncronized, this
+         field shall be a zero-length string.
 
          This object can be used to timestamp events on this
-         node and allow a management station to coorelate
-         different time objects. For example, a management
+         node and allow a management station to correlate
+         different time objects.  For example, a management
          station could query this object and sysUpTime in
          the same operation to be able to relate sysUpTime
          to NTP time.
 
          This object is not to be used to set the time of
-         the node querying this object. NTP should be used
-         for this--or at least SNTP."
-    ::= { ntpEntStatus 10 }
+         the node querying this object.  NTP should be used
+         for this -- or at least SNTP."
+    REFERENCE "RFC 5905, section 6"
+    ::= { ntpEntStatus 9 }
 
 ntpEntStatusLeapSecond OBJECT-TYPE
-    SYNTAX      Integer32
+    SYNTAX      NtpDateTime
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-        "Date the next known leap second will occur. If there is
-         no leap second announced then this object should be 0."
-    DEFVAL { 0 }
-    ::= { ntpEntStatus 11 }
+        "Date the next known leap second will occur.  If there is
+         no leap second announced, then this object should be 0."
+    ::= { ntpEntStatus 10 }
 
 ntpEntStatusLeapSecDirection OBJECT-TYPE
     SYNTAX      Integer32 (-1..1)
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-        "Direction of next known leap second. If there is no
-         leap second announced then this object should be 0."
-    DEFVAL { 0 }
-    ::= { ntpEntStatus 12 }
+        "Direction of next known leap second.  If there is no
+         leap second announced, then this object should be 0."
+    ::= { ntpEntStatus 11 }
 
 ntpEntStatusInPkts OBJECT-TYPE
     SYNTAX      Counter32
+    UNITS       "packets"
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
         "The total number of NTP messages delivered to the
-         NTP entity from the transport service."
-    ::= { ntpEntStatus 13 }
+         NTP entity from the transport service.
+         Discountinuities in the value of this counter can occur
+         upon cold start or reinitialization of the NTP entity, the
+         management system and at other times as indicated by
+         discontinuities in the value of sysUpTime."
+    ::= { ntpEntStatus 12 }
 
 ntpEntStatusOutPkts OBJECT-TYPE
     SYNTAX      Counter32
+    UNITS       "packets"
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
         "The total number of NTP messages delivered to the
-         transport service by this NTP entity."
-    ::= { ntpEntStatus 14 }
+         transport service by this NTP entity.
+         Discountinuities in the value of this counter can occur
+         upon cold start or reinitialization of the NTP entity, the
+         management system and at other times as indicated by
+         discontinuities in the value of sysUpTime."
+    ::= { ntpEntStatus 13 }
 
 ntpEntStatusBadVersion OBJECT-TYPE
     SYNTAX      Counter32
+    UNITS       "packets"
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-        "The total number of NTP messages which were delivered
+        "The total number of NTP messages that were delivered
          to this NTP entity and were for an unsupported NTP
-         version."
-    ::= { ntpEntStatus 15 }
+         version.
+         Discountinuities in the value of this counter can occur
+         upon cold start or reinitialization of the NTP entity, the
+         management system and at other times as indicated by
+         discontinuities in the value of sysUpTime."
+    ::= { ntpEntStatus 14 }
 
 ntpEntStatusProtocolError OBJECT-TYPE
     SYNTAX      Counter32
+    UNITS       "packets"
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-        "The total number of NTP messages which were delivered
+        "The total number of NTP messages that were delivered
          to this NTP entity and this entity was not able to
-         process due to an NTP protocol error."
-    ::= { ntpEntStatus 16 }
+         process due to an NTP protocol error.
+         Discountinuities in the value of this counter can occur
+         upon cold start or reinitialization of the NTP entity, the
+         management system and at other times as indicated by
+         discontinuities in the value of sysUpTime."
+    ::= { ntpEntStatus 15 }
 
 ntpEntStatusNotifications OBJECT-TYPE
     SYNTAX      Counter32
+    UNITS       "notifications"
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-        "The total number of SNMP notifications which this NTP
-         entity has generated."
-    ::= { ntpEntStatus 17 }
+        "The total number of SNMP notifications that this NTP
+         entity has generated.
+         Discountinuities in the value of this counter can occur
+         upon cold start or reinitialization of the NTP entity, the
+         management system and at other times as indicated by
+         discontinuities in the value of sysUpTime."
+    ::= { ntpEntStatus 16 }
 
 ntpEntStatPktModeTable OBJECT-TYPE
     SYNTAX           SEQUENCE OF NtpEntStatPktModeEntry
     MAX-ACCESS       not-accessible
     STATUS           current
     DESCRIPTION
-        "The number of packets sent and received by packet mode."
-    ::= { ntpEntStatus 18 }
+        "The number of packets sent and received by packet mode.
+         One entry per packet mode."
+    ::= { ntpEntStatus 17 }
 
 ntpEntStatPktModeEntry OBJECT-TYPE
     SYNTAX      NtpEntStatPktModeEntry
     MAX-ACCESS  not-accessible
     STATUS      current
     DESCRIPTION
-        "The number of packets sent and received by packet mode."
+        "A statistical record of the number of packets sent and
+         received for each packet mode."
     INDEX       { ntpEntStatPktMode }
     ::= { ntpEntStatPktModeTable 1 }
 
@@ -583,18 +436,29 @@ ntpEntStatPktMode OBJECT-TYPE
 
 ntpEntStatPktSent OBJECT-TYPE
     SYNTAX      Counter32
+    UNITS       "packets"
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-        "The number of NTP packets sent with this packet mode."
+        "The number of NTP packets sent with this packet mode.
+         Discountinuities in the value of this counter can occur
+         upon cold start or reinitialization of the NTP entity, the
+         management system and at other times as indicated by
+         discontinuities in the value of sysUpTime."
     ::= { ntpEntStatPktModeEntry 2 }
 
 ntpEntStatPktReceived OBJECT-TYPE
     SYNTAX      Counter32
+    UNITS       "packets"
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-        "The number of NTP packets received with this packet mode."
+        "The number of NTP packets received with this packet mode.
+
+         Discountinuities in the value of this counter can occur
+         upon cold start or reinitialization of the NTP entity, the
+         management system and at other times as indicated by
+         discontinuities in the value of sysUpTime."
     ::= { ntpEntStatPktModeEntry 3 }
 
 --
@@ -620,7 +484,7 @@ ntpAssociationEntry OBJECT-TYPE
 
 NtpAssociationEntry   ::= SEQUENCE {
         ntpAssocId                  Unsigned32,
-        ntpAssocName                DisplayString,
+        ntpAssocName                Utf8String,
         ntpAssocRefId               DisplayString,
         ntpAssocAddressType         InetAddressType,
         ntpAssocAddress             InetAddress,
@@ -636,11 +500,11 @@ ntpAssocId      OBJECT-TYPE
     MAX-ACCESS  not-accessible
     STATUS      current
     DESCRIPTION
-        "The association ID. This is an internal, unique ID."
+        "The association ID.  This is an internal, unique ID."
     ::= { ntpAssociationEntry 1 }
 
 ntpAssocName    OBJECT-TYPE
-    SYNTAX      DisplayString
+    SYNTAX      Utf8String
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
@@ -658,21 +522,24 @@ ntpAssocRefId   OBJECT-TYPE
     ::= { ntpAssociationEntry 3 }
 
 ntpAssocAddressType OBJECT-TYPE
-    SYNTAX      InetAddressType
+    SYNTAX      InetAddressType { ipv4(1), ipv6(2), ipv4z(3), ipv6z(4) }
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-        "The type of address of the association."
-    -- contains the type of address for uni/multi/broadcast associations
+        "The type of address of the association.  Can be either IPv4 or
+         IPv6 (both with or without zone index) and contains the type of
+         address for unicast, multicast, and broadcast associations."
     ::= { ntpAssociationEntry 4 }
 
 ntpAssocAddress OBJECT-TYPE
-    SYNTAX      InetAddress
+    SYNTAX      InetAddress (SIZE (4|8|16|20))
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-        "The IP address (IPv4 or IPv6) of the association."
-    -- contains IP address of uni/multi/broadcast associations
+        "The IP address (IPv4 or IPv6, with or without zone index) of
+         the association.  The type and size depends on the
+         ntpAssocAddressType object.  Represents the IP address of a
+         uni/multi/broadcast association."
     ::= { ntpAssociationEntry 5 }
 
 ntpAssocOffset  OBJECT-TYPE
@@ -681,7 +548,7 @@ ntpAssocOffset  OBJECT-TYPE
     STATUS      current
     DESCRIPTION
         "The time offset to the association as a string."
-    -- including unit, e.g. "0.032 ms" or "1.232 s"
+    -- including unit, e.g., "0.032 ms" or "1.232 s"
     ::= { ntpAssociationEntry 6 }
 
 ntpAssocStratum OBJECT-TYPE
@@ -697,7 +564,7 @@ ntpAssocStatusJitter OBJECT-TYPE
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-        "The jitter in miliseconds as a string."
+        "The jitter in milliseconds as a string."
     ::= { ntpAssociationEntry 8 }
 
 ntpAssocStatusDelay OBJECT-TYPE
@@ -705,7 +572,7 @@ ntpAssocStatusDelay OBJECT-TYPE
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-        "The network delay in miliseconds as a string."
+        "The network delay in milliseconds as a string."
     ::= { ntpAssociationEntry 9 }
 
 ntpAssocStatusDispersion OBJECT-TYPE
@@ -714,7 +581,7 @@ ntpAssocStatusDispersion OBJECT-TYPE
     STATUS      current
     DESCRIPTION
         "The root dispersion of the association."
-    -- e.g. "6.927"
+    -- e.g., "6.927"
     ::= { ntpAssociationEntry 10 }
 
 ntpAssociationStatisticsTable OBJECT-TYPE
@@ -742,31 +609,46 @@ NtpAssociationStatisticsEntry   ::= SEQUENCE {
 
 ntpAssocStatInPkts OBJECT-TYPE
     SYNTAX      Counter32
+    UNITS       "packets"
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
         "The total number of NTP messages delivered to the
-         NTP entity from this association."
+         NTP entity from this association.
+         Discountinuities in the value of this counter can occur
+         upon cold start or reinitialization of the NTP entity, the
+         management system and at other times as indicated by
+         discontinuities in the value of sysUpTime."
     ::= { ntpAssociationStatisticsEntry 1 }
 
 ntpAssocStatOutPkts OBJECT-TYPE
     SYNTAX      Counter32
+    UNITS       "packets"
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
         "The total number of NTP messages delivered to the
          transport service by this NTP entity for this
-         association."
+         association.
+         Discountinuities in the value of this counter can occur
+         upon cold start or reinitialization of the NTP entity, the
+         management system and at other times as indicated by
+         discontinuities in the value of sysUpTime."
     ::= { ntpAssociationStatisticsEntry 2 }
 
 ntpAssocStatProtocolError OBJECT-TYPE
     SYNTAX      Counter32
+    UNITS       "packets"
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-        "The total number of NTP messages which were delivered
+        "The total number of NTP messages that were delivered
          to this NTP entity from this association and this entity
-         was not able to process due to an NTP protocol error."
+         was not able to process due to an NTP protocol error.
+         Discountinuities in the value of this counter can occur
+         upon cold start or reinitialization of the NTP entity, the
+         management system and at other times as indicated by
+         discontinuities in the value of sysUpTime."
     ::= { ntpAssociationStatisticsEntry 3 }
 
 --
@@ -775,13 +657,16 @@ ntpAssocStatProtocolError OBJECT-TYPE
 
 ntpEntHeartbeatInterval OBJECT-TYPE
     SYNTAX      Unsigned32
+    UNITS       "seconds"
     MAX-ACCESS  read-write
     STATUS      current
     DESCRIPTION
         "The interval at which the ntpEntNotifHeartbeat notification
-         should be sent, in seconds. If set to 0 and the
-         entNotifHeartbeat bit in ntpEntNotifBits is 1 then
-         ntpEntNotifHeartbeat is sent once."
+         should be sent, in seconds.  If set to 0 and the
+         entNotifHeartbeat bit in ntpEntNotifBits is 1, then
+         ntpEntNotifHeartbeat is sent once.
+         This value is stored persistently and will be restored to its
+         last set value upon cold start or restart."
     DEFVAL { 60 }
     ::= { ntpEntControl 1 }
 
@@ -801,8 +686,10 @@ ntpEntNotifBits OBJECT-TYPE
     MAX-ACCESS  read-write
     STATUS      current
     DESCRIPTION
-        "A bit for each notification. A 1 for a particular bit enables
-         that particular notification, a 0 disables it."
+        "A bit for each notification.  A 1 for a particular bit enables
+         that particular notification, a 0 disables it.
+         This value is stored persistently and will be restored to its
+         last set value upon cold start or restart."
     ::= { ntpEntControl 2 }
 
 --
@@ -810,12 +697,12 @@ ntpEntNotifBits OBJECT-TYPE
 --
 
 ntpEntNotifMessage OBJECT-TYPE
-    SYNTAX      DisplayString
+    SYNTAX      Utf8String
     MAX-ACCESS  accessible-for-notify
     STATUS      current
     DESCRIPTION
-        "Used as a payload object for all notifications. Holds a clear
-         text event message."
+        "Used as a payload object for all notifications.  Holds a
+         cleartext event message."
     DEFVAL { "no event" }
     ::= { ntpEntNotifObjects 1 }
 
@@ -823,14 +710,14 @@ ntpEntNotifMessage OBJECT-TYPE
 -- SNMP notification definitions
 --
 
-ntpEntNotifications OBJECT IDENTIFIER ::= { ntpEntNotifPrefix 0 }
+ntpEntNotifications OBJECT IDENTIFIER ::= { ntpSnmpMIB 0 }
 
 ntpEntNotifModeChange NOTIFICATION-TYPE
-    OBJECTS     { ntpEntStatusCurrentModeVal }
+    OBJECTS     { ntpEntStatusCurrentMode }
     STATUS      current
     DESCRIPTION
         "The notification to be sent when the NTP entity changes mode,
-         including starting and stopping (if possible)"
+         including starting and stopping (if possible)."
     ::= { ntpEntNotifications 1 }
 
 ntpEntNotifStratumChange NOTIFICATION-TYPE
@@ -851,7 +738,7 @@ ntpEntNotifSyspeerChanged NOTIFICATION-TYPE
     ::= { ntpEntNotifications 3 }
 
 ntpEntNotifAddAssociation NOTIFICATION-TYPE
-    OBJECTS     { ntpEntStatusDateTime, ntpAssocName, ntpEntNotifMessage }
+    OBJECTS  { ntpEntStatusDateTime, ntpAssocName, ntpEntNotifMessage }
     STATUS      current
     DESCRIPTION
         "The notification to be sent when a new association is
@@ -859,7 +746,7 @@ ntpEntNotifAddAssociation NOTIFICATION-TYPE
     ::= { ntpEntNotifications 4 }
 
 ntpEntNotifRemoveAssociation NOTIFICATION-TYPE
-    OBJECTS     { ntpEntStatusDateTime, ntpAssocName,  ntpEntNotifMessage }
+    OBJECTS  { ntpEntStatusDateTime, ntpAssocName,  ntpEntNotifMessage }
     STATUS      current
     DESCRIPTION
         "The notification to be sent when an association is
@@ -871,9 +758,8 @@ ntpEntNotifConfigChanged NOTIFICATION-TYPE
     STATUS      current
     DESCRIPTION
         "The notification to be sent when the NTP configuration has
-         changed."
-    -- e.g. when the system connected to the internet and was assigned
-    -- a new IP address by the ISPs DHCP server
+         changed, e.g., when the system connected to the Internet and
+         was assigned a new IP address by the ISPs DHCP server."
     ::= { ntpEntNotifications 6 }
 
 ntpEntNotifLeapSecondAnnounced NOTIFICATION-TYPE
@@ -885,7 +771,7 @@ ntpEntNotifLeapSecondAnnounced NOTIFICATION-TYPE
     ::= { ntpEntNotifications 7 }
 
 ntpEntNotifHeartbeat NOTIFICATION-TYPE
-    OBJECTS     { ntpEntStatusDateTime, ntpEntStatusCurrentModeVal,
+    OBJECTS     { ntpEntStatusDateTime, ntpEntStatusCurrentMode,
                   ntpEntHeartbeatInterval, ntpEntNotifMessage }
     STATUS      current
     DESCRIPTION
@@ -898,7 +784,7 @@ ntpEntNotifHeartbeat NOTIFICATION-TYPE
 -- Conformance/Compliance statements
 --
 
-ntpEntConformance OBJECT IDENTIFIER ::= { ntpSnmpMIB 6 }
+ntpEntConformance OBJECT IDENTIFIER ::= { ntpSnmpMIB 2 }
 
 ntpEntCompliances OBJECT IDENTIFIER ::= { ntpEntConformance 1 }
 ntpEntGroups      OBJECT IDENTIFIER ::= { ntpEntConformance 2 }
@@ -906,32 +792,35 @@ ntpEntGroups      OBJECT IDENTIFIER ::= { ntpEntConformance 2 }
 ntpEntNTPCompliance MODULE-COMPLIANCE
     STATUS      current
     DESCRIPTION
-        "The compliance statement for SNMP entities which use NTP and
-         implement the NTP MIB"
+        "The compliance statement for SNMP entities that use NTP and
+         implement the NTP MIB."
     MODULE  -- this module
         MANDATORY-GROUPS {
-                           ntpEntObjectsGroup1,
-                           ntpEntObjectsGroup2,
-                           ntpEntNotifPrefixGroup
+                           ntpEntObjectsGroup1
         }
         ::= { ntpEntCompliances 1 }
 
 ntpEntSNTPCompliance MODULE-COMPLIANCE
     STATUS      current
     DESCRIPTION
-        "The compliance statement for SNMP entities which use SNTP and
-         implement the NTP MIB"
+        "The compliance statement for SNMP entities that use SNTP and
+         implement the NTP MIB."
     MODULE  -- this module
         MANDATORY-GROUPS {
                            ntpEntObjectsGroup1
         }
+        GROUP ntpEntObjectsGroup2
+        DESCRIPTION
+                "Optional object group."
+        GROUP ntpEntNotifGroup
+        DESCRIPTION
+                "Optional notifications for this MIB."
         ::= { ntpEntCompliances 2 }
 
 ntpEntObjectsGroup1 OBJECT-GROUP
     OBJECTS {
               ntpEntSoftwareName,
               ntpEntSoftwareVersion,
-              ntpEntSoftwareVersionVal,
               ntpEntSoftwareVendor,
               ntpEntSystemType,
               ntpEntStatusEntityUptime,
@@ -943,19 +832,15 @@ ntpEntObjectsGroup1 OBJECT-GROUP
     }
     STATUS      current
     DESCRIPTION
-        "A collection of objects for the NTP MIB that all NTP
-         or SNTP entities should implement."
+        "A collection of objects for the NTP MIB."
     ::= { ntpEntGroups 1 }
 
 ntpEntObjectsGroup2 OBJECT-GROUP
     OBJECTS {
               ntpEntTimeResolution,
-              ntpEntTimeResolutionVal,
               ntpEntTimePrecision,
-              ntpEntTimePrecisionVal,
               ntpEntTimeDistance,
               ntpEntStatusCurrentMode,
-              ntpEntStatusCurrentModeVal,
               ntpEntStatusStratum,
               ntpEntStatusActiveRefSourceId,
               ntpEntStatusActiveRefSourceName,
@@ -985,11 +870,10 @@ ntpEntObjectsGroup2 OBJECT-GROUP
     }
     STATUS      current
     DESCRIPTION
-        "A collection of objects for the NTP MIB that are optional
-         for NTP or SNTP entities to implement."
+        "A collection of objects for the NTP MIB."
     ::= { ntpEntGroups 2 }
 
-ntpEntNotifPrefixGroup NOTIFICATION-GROUP
+ntpEntNotifGroup NOTIFICATION-GROUP
     NOTIFICATIONS {
                     ntpEntNotifModeChange,
                     ntpEntNotifStratumChange,

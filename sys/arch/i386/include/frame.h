@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.34 2011/06/02 18:46:51 dsl Exp $	*/
+/*	$NetBSD: frame.h,v 1.34.2.1 2012/04/17 00:06:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,6 @@
 #define _I386_FRAME_H_
 
 #include <sys/signal.h>
-#include <sys/sa.h>
 
 /*
  * System stack frames.
@@ -168,18 +167,6 @@ struct sigframe_siginfo {
 	ucontext_t	*sf_ucp;	/* "ucp" argument for handler */
 	siginfo_t	sf_si;		/* actual saved siginfo */
 	ucontext_t	sf_uc;		/* actual saved ucontext */
-};
-
-/*
- * Scheduler activations upcall frame
- */
-struct saframe {
-	int		sa_ra;
-	int		sa_type;
-	struct sa_t**	sa_sas;
-	int		sa_events;
-	int		sa_interrupted;
-	void*		sa_arg;
 };
 
 #ifdef _KERNEL

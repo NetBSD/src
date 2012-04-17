@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm_smbus.c,v 1.16 2009/02/03 16:27:13 pgoyette Exp $ */
+/*	$NetBSD: amdpm_smbus.c,v 1.16.14.1 2012/04/17 00:07:42 yamt Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -32,14 +32,14 @@
  * AMD-8111 HyperTransport I/O Hub
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.16 2009/02/03 16:27:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.16.14.1 2012/04/17 00:07:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/rnd.h>
-#include <sys/rwlock.h>
+#include <sys/mutex.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -52,14 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.16 2009/02/03 16:27:13 pgoyette Ex
 #include <dev/pci/amdpmvar.h>
 
 #include <dev/pci/amdpm_smbusreg.h>
-
-#ifdef __i386__
-#include "opt_xbox.h"
-#endif
-
-#ifdef XBOX
-extern int arch_i386_is_xbox;
-#endif
 
 static int       amdpm_smbus_acquire_bus(void *, int);
 static void      amdpm_smbus_release_bus(void *, int);
@@ -75,18 +67,10 @@ static int       amdpm_smbus_write_1(struct amdpm_softc *, uint8_t,
 static int       amdpm_smbus_receive_1(struct amdpm_softc *, i2c_op_t);
 static int       amdpm_smbus_read_1(struct amdpm_softc *sc, uint8_t, i2c_op_t);
 
-#ifdef XBOX
-static int	 amdpm_smbus_intr(void *);
-#endif
-
 void
 amdpm_smbus_attach(struct amdpm_softc *sc)
 {
         struct i2cbus_attach_args iba;
-#ifdef XBOX
-	pci_intr_handle_t ih;
-	const char *intrstr;
-#endif
 	
 	/* register with iic */
 	sc->sc_i2c.ic_cookie = sc; 
@@ -99,75 +83,18 @@ amdpm_smbus_attach(struct amdpm_softc *sc)
 	sc->sc_i2c.ic_write_byte = NULL;
 	sc->sc_i2c.ic_exec = amdpm_smbus_exec;
 
-	rw_init(&sc->sc_rwlock);
-
-#ifdef XBOX
-#define XBOX_SMBA	0x8000
-#define XBOX_SMSIZE	256
-#define XBOX_INTRLINE	12
-#define XBOX_REG_ACPI_PM1a_EN		0x02
-#define XBOX_REG_ACPI_PM1a_EN_TIMER		0x01
-	/* XXX pci0 dev 1 function 2 "System Management" doesn't probe */
-	if (arch_i386_is_xbox) {
-		uint16_t val;
-		sc->sc_pa->pa_intrline = XBOX_INTRLINE;
-
-		if (bus_space_map(sc->sc_iot, XBOX_SMBA, XBOX_SMSIZE,
-		    0, &sc->sc_sm_ioh) == 0) {
-			aprint_normal_dev(&sc->sc_dev, "system management at 0x%04x\n", XBOX_SMBA);
-
-			/* Disable PM ACPI timer SCI interrupt */
-			val = bus_space_read_2(sc->sc_iot, sc->sc_sm_ioh,
-			    XBOX_REG_ACPI_PM1a_EN);
-			bus_space_write_2(sc->sc_iot, sc->sc_sm_ioh,
-			    XBOX_REG_ACPI_PM1a_EN,
-			    val & ~XBOX_REG_ACPI_PM1a_EN_TIMER);
-		}
-	}
-
-	if (pci_intr_map(sc->sc_pa, &ih))
-		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
-	else {
-		intrstr = pci_intr_string(sc->sc_pc, ih);
-		sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_BIO,
-		    amdpm_smbus_intr, sc);
-		if (sc->sc_ih != NULL)
-			aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n",
-			    intrstr);
-	}
-#endif
+	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_NONE);
 
 	iba.iba_tag = &sc->sc_i2c;
 	(void)config_found_ia(&sc->sc_dev, "i2cbus", &iba, iicbus_print);
 }
-
-#ifdef XBOX
-static int
-amdpm_smbus_intr(void *cookie)
-{
-	struct amdpm_softc *sc;
-	uint32_t status;
-
-	sc = (struct amdpm_softc *)cookie;
-
-	if (arch_i386_is_xbox) {
-		status = bus_space_read_4(sc->sc_iot, sc->sc_sm_ioh, 0x20);
-		bus_space_write_4(sc->sc_iot, sc->sc_sm_ioh, 0x20, status);
-	
-		if (status & 2)
-			return iic_smbus_intr(&sc->sc_i2c);
-	}
-
-	return 0;
-}
-#endif
 
 static int
 amdpm_smbus_acquire_bus(void *cookie, int flags)
 {
 	struct amdpm_softc *sc = cookie;
 
-	rw_enter(&sc->sc_rwlock, RW_WRITER);
+	mutex_enter(&sc->sc_mutex);
 	return 0;
 }
 
@@ -176,7 +103,7 @@ amdpm_smbus_release_bus(void *cookie, int flags)
 {
 	struct amdpm_softc *sc = cookie;
 
-	rw_exit(&sc->sc_rwlock);
+	mutex_exit(&sc->sc_mutex);
 }
 
 static int

@@ -1,4 +1,4 @@
-/* $NetBSD: common.h,v 1.15 2011/03/07 05:09:09 joerg Exp $ */
+/* $NetBSD: common.h,v 1.15.4.1 2012/04/17 00:05:11 yamt Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -66,7 +66,7 @@ do {						\
 static char	*_strrchr(char *, int);
 
 char	**environ;
-char	*__progname = "";
+char	*__progname = __UNCONST("");
 struct ps_strings *__ps_strings = 0;
 
 extern void	_init(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.158 2011/10/19 01:53:07 dyoung Exp $	*/
+/*	$NetBSD: in6.c,v 1.158.2.1 2012/04/17 00:08:42 yamt Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.158 2011/10/19 01:53:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.158.2.1 2012/04/17 00:08:42 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.158 2011/10/19 01:53:07 dyoung Exp $");
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/kauth.h>
+#include <sys/cprng.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -799,8 +800,10 @@ in6_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	case OSIOCAIFADDR_IN6:
 #endif
 	case SIOCAIFADDR_IN6:
-		if (l == NULL || kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL))
+		if (kauth_authorize_network(l->l_cred,
+		    KAUTH_NETWORK_SOCKET,
+		    KAUTH_REQ_NETWORK_SOCKET_SETPRIV,
+		    so, NULL, NULL))
 			return EPERM;
 		break;
 	}
@@ -1119,7 +1122,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			 * avoid report collision.
 			 * [draft-ietf-ipv6-rfc2462bis-02.txt]
 			 */
-			dad_delay = arc4random() %
+			dad_delay = cprng_fast32() %
 			    (MAX_RTR_SOLICITATION_DELAY * hz);
 		}
 
@@ -1210,7 +1213,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			 * The spec doesn't say anything about delay for this
 			 * group, but the same logic should apply.
 			 */
-			dad_delay = arc4random() %
+			dad_delay = cprng_fast32() %
 			    (MAX_RTR_SOLICITATION_DELAY * hz);
 		}
 		if (in6_nigroup(ifp, hostname, hostnamelen, &mltaddr) != 0)
@@ -1318,7 +1321,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 				dad_delay = 0;
 			else {
 				dad_delay =
-				    (arc4random() % (maxdelay - mindelay)) +
+				    (cprng_fast32() % (maxdelay - mindelay)) +
 				    mindelay;
 			}
 		}
@@ -2157,7 +2160,8 @@ in6_if_up(struct ifnet *ifp)
 			 * case, but we impose delays just in case.
 			 */
 			nd6_dad_start(ifa,
-			    arc4random() % (MAX_RTR_SOLICITATION_DELAY * hz));
+			    cprng_fast32() %
+				(MAX_RTR_SOLICITATION_DELAY * hz));
 		}
 	}
 

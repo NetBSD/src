@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.425 2011/09/01 09:04:08 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.425.2.1 2012/04/17 00:08:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.425 2011/09/01 09:04:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.425.2.1 2012/04/17 00:08:31 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -166,6 +166,7 @@ vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l,
 	mutex_enter(&bufcache_lock);
 restart:
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
+		KASSERT(bp->b_vp == vp);
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		error = bbusy(bp, catch, slptimeo, NULL);
 		if (error != 0) {
@@ -178,6 +179,7 @@ restart:
 	}
 
 	for (bp = LIST_FIRST(&vp->v_cleanblkhd); bp; bp = nbp) {
+		KASSERT(bp->b_vp == vp);
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		error = bbusy(bp, catch, slptimeo, NULL);
 		if (error != 0) {
@@ -236,6 +238,7 @@ vtruncbuf(struct vnode *vp, daddr_t lbn, bool catch, int slptimeo)
 	mutex_enter(&bufcache_lock);
 restart:
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
+		KASSERT(bp->b_vp == vp);
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		if (bp->b_lblkno < lbn)
 			continue;
@@ -250,6 +253,7 @@ restart:
 	}
 
 	for (bp = LIST_FIRST(&vp->v_cleanblkhd); bp; bp = nbp) {
+		KASSERT(bp->b_vp == vp);
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		if (bp->b_lblkno < lbn)
 			continue;
@@ -285,6 +289,7 @@ vflushbuf(struct vnode *vp, int sync)
 loop:
 	mutex_enter(&bufcache_lock);
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
+		KASSERT(bp->b_vp == vp);
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		if ((bp->b_cflags & BC_BUSY))
 			continue;
@@ -791,7 +796,9 @@ vaccess(enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
 	printf("vaccess: deprecated interface used.\n");
 #endif /* DIAGNOSTIC */
 
-	return genfs_can_access(type, file_mode, uid, gid, acc_mode, cred);
+	return kauth_authorize_vnode(cred, kauth_access_action(acc_mode,
+	    type, file_mode), NULL /* This may panic. */, NULL,
+	    genfs_can_access(type, file_mode, uid, gid, acc_mode, cred));
 }
 
 /*
@@ -1001,14 +1008,14 @@ VFS_ROOT(struct mount *mp, struct vnode **a)
 }
 
 int
-VFS_QUOTACTL(struct mount *mp, prop_dictionary_t dict)
+VFS_QUOTACTL(struct mount *mp, struct quotactl_args *args)
 {
 	int error;
 
 	if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
 		KERNEL_LOCK(1, NULL);
 	}
-	error = (*(mp->mnt_op->vfs_quotactl))(mp, dict);
+	error = (*(mp->mnt_op->vfs_quotactl))(mp, args);
 	if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
 		KERNEL_UNLOCK_ONE(NULL);
 	}

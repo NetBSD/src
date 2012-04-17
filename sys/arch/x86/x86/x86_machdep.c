@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.56 2011/08/13 21:04:05 christos Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.56.2.1 2012/04/17 00:07:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.56 2011/08/13 21:04:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.56.2.1 2012/04/17 00:07:06 yamt Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.56 2011/08/13 21:04:05 christos Ex
 #include <sys/module.h>
 #include <sys/sysctl.h>
 #include <sys/extent.h>
+#include <sys/rnd.h>
 
 #include <x86/cpuvar.h>
 #include <x86/cputypes.h>
@@ -172,6 +173,14 @@ module_init_md(void)
 			splash_setimage(
 			    (void *)((uintptr_t)bi->base + KERNBASE), bi->len);
 #endif
+			break;
+		case BI_MODULE_RND:
+			aprint_debug("Random seed data path=%s len=%d pa=%x\n",
+				     bi->path, bi->len, bi->base);
+			KASSERT(trunc_page(bi->base) == bi->base);
+			rnd_seed(
+			    (void *)((uintptr_t)bi->base + KERNBASE),
+			     bi->len);
 			break;
 		default:
 			aprint_debug("Skipping non-ELF module\n");

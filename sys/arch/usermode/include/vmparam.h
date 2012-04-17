@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.11 2011/08/26 11:01:32 jmcneill Exp $ */
+/* $NetBSD: vmparam.h,v 1.11.2.1 2012/04/17 00:06:59 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,14 +35,15 @@
 #define __USE_TOPDOWN_VM
 
 extern paddr_t kmem_k_start, kmem_k_end;
-extern paddr_t kmem_ext_start, kmem_ext_end;
+extern paddr_t kmem_kvm_start, kmem_kvm_end;
+extern paddr_t kmem_kvm_cur_end;
 extern paddr_t kmem_user_start, kmem_user_end;
 
-#define VM_MIN_KERNEL_ADDRESS	kmem_k_start
-#define VM_MAX_KERNEL_ADDRESS 	kmem_k_end
 #define VM_MIN_ADDRESS		kmem_user_start
+#define VM_MAX_ADDRESS		kmem_user_end
 #define VM_MAXUSER_ADDRESS	kmem_user_end
-#define VM_MAX_ADDRESS		kmem_ext_end
+#define VM_MIN_KERNEL_ADDRESS	kmem_kvm_start
+#define VM_MAX_KERNEL_ADDRESS 	kmem_kvm_end
 
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
 #define VM_PHYSSEG_MAX		1
@@ -50,6 +51,13 @@ extern paddr_t kmem_user_start, kmem_user_end;
 #define	VM_FREELIST_DEFAULT	0
 
 #define	USRSTACK		VM_MAXUSER_ADDRESS
+
+/*
+ * When an architecture has little KVA then override the default pager_map
+ * size in its block by limiting it like this:
+ *
+ * #define PAGER_MAP_DEFAULT_SIZE	(8 * 1024 * 1024)
+ */
 
 #if defined(__i386__) 
 #define	PAGE_SHIFT		12

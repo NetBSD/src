@@ -1,4 +1,4 @@
-/*	$NetBSD: fixunsgen_ieee754.c,v 1.2 2011/08/31 22:36:36 matt Exp $	*/
+/*	$NetBSD: fixunsgen_ieee754.c,v 1.2.2.1 2012/04/17 00:05:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if !defined(FIXUNSNAME) && defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fixunsgen_ieee754.c,v 1.2 2011/08/31 22:36:36 matt Exp $");
+__RCSID("$NetBSD: fixunsgen_ieee754.c,v 1.2.2.1 2012/04/17 00:05:18 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <stddef.h>
@@ -83,7 +83,7 @@ FIXUNSNAME(__fixunsgen)(int exp, bool sign, size_t mant_dig, size_t fracbits,
 			 * Shift the current value over and insert the bits
 			 * we want.  We're done.
 			 */
-			tmp <<= ebits;
+			tmp <<= (unsigned int)ebits;
 			tmp |= *frac >> (fracbits - ebits);
 			break;
 		}
@@ -94,7 +94,7 @@ FIXUNSNAME(__fixunsgen)(int exp, bool sign, size_t mant_dig, size_t fracbits,
 			 */
 			tmp = *frac--;
 		} else {
-			tmp <<= fracbits;
+			tmp <<= (unsigned int)fracbits;
 			tmp |= *frac--;
 		}
 		ebits -= fracbits;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_htable.c,v 1.1.1.6 2009/08/19 08:28:39 darrenr Exp $	*/
+/*	$NetBSD: ip_htable.c,v 1.1.1.6.6.1 2012/04/17 00:02:24 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -59,7 +59,7 @@ static const char rcsid[] = "@(#)Id: ip_htable.c,v 2.34.2.13 2009/05/13 19:13:36
 #endif
 
 #ifdef	IPFILTER_LOOKUP
-static iphtent_t *fr_iphmfind __P((iphtable_t *, struct in_addr *));
+static iphtent_t *fr_iphmfind(iphtable_t *, struct in_addr *);
 static	u_long	ipht_nomem[IPL_LOGSIZE] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 static	u_long	ipf_nhtables[IPL_LOGSIZE] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 static	u_long	ipf_nhtnodes[IPL_LOGSIZE] = { 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -68,7 +68,8 @@ iphtable_t *ipf_htables[IPL_LOGSIZE] = { NULL, NULL, NULL, NULL,
 					 NULL, NULL, NULL, NULL };
 
 
-void fr_htable_unload()
+void
+fr_htable_unload(void)
 {
 	iplookupflush_t fop;
 
@@ -77,8 +78,8 @@ void fr_htable_unload()
 }
 
 
-int fr_gethtablestat(op)
-iplookupop_t *op;
+int
+fr_gethtablestat(iplookupop_t *op)
 {
 	iphtstat_t stats;
 
@@ -98,8 +99,8 @@ iplookupop_t *op;
 /*
  * Create a new hash table using the template passed.
  */
-int fr_newhtable(op)
-iplookupop_t *op;
+int
+fr_newhtable(iplookupop_t *op)
 {
 	iphtable_t *iph, *oiph;
 	char name[FR_GROUPLEN];
@@ -179,9 +180,8 @@ iplookupop_t *op;
 
 /*
  */
-int fr_removehtable(unit, name)
-int unit;
-char *name;
+int
+fr_removehtable(int unit, char *name)
 {
 	iphtable_t *iph;
 
@@ -205,8 +205,8 @@ char *name;
 }
 
 
-int fr_clearhtable(iph)
-iphtable_t *iph;
+int
+fr_clearhtable(iphtable_t *iph)
 {
 	iphtent_t *ipe;
 
@@ -217,8 +217,8 @@ iphtable_t *iph;
 }
 
 
-int fr_delhtable(iph)
-iphtable_t *iph;
+int
+fr_delhtable(iphtable_t *iph)
 {
 
 	if (fr_clearhtable(iph) != 0)
@@ -238,9 +238,8 @@ iphtable_t *iph;
 /*
  * Delete an entry from a hash table.
  */
-int fr_delhtent(iph, ipe)
-iphtable_t *iph;
-iphtent_t *ipe;
+int
+fr_delhtent(iphtable_t *iph, iphtent_t *ipe)
 {
 
 	if (ipe->ipe_phnext != NULL)
@@ -270,8 +269,8 @@ iphtent_t *ipe;
 }
 
 
-int fr_derefhtable(iph)
-iphtable_t *iph;
+int
+fr_derefhtable(iphtable_t *iph)
 {
 	int refs;
 
@@ -287,8 +286,8 @@ iphtable_t *iph;
 }
 
 
-int fr_derefhtent(ipe)
-iphtent_t *ipe;
+int
+fr_derefhtent(iphtent_t *ipe)
 {
 
 	ipe->ipe_ref--;
@@ -304,9 +303,8 @@ iphtent_t *ipe;
 }
 
 
-iphtable_t *fr_existshtable(unit, name)
-int unit;
-char *name;
+iphtable_t *
+fr_existshtable(int unit, char *name)
 {
 	iphtable_t *iph;
 
@@ -317,9 +315,8 @@ char *name;
 }
 
 
-iphtable_t *fr_findhtable(unit, name)
-int unit;
-char *name;
+iphtable_t *
+fr_findhtable(int unit, char *name)
 {
 	iphtable_t *iph;
 
@@ -331,8 +328,8 @@ char *name;
 }
 
 
-size_t fr_flushhtable(op)
-iplookupflush_t *op;
+size_t
+fr_flushhtable(iplookupflush_t *op)
 {
 	iphtable_t *iph;
 	size_t freed;
@@ -359,9 +356,8 @@ iplookupflush_t *op;
 /*
  * Add an entry to a hash table.
  */
-int fr_addhtent(iph, ipeo)
-iphtable_t *iph;
-iphtent_t *ipeo;
+int
+fr_addhtent(iphtable_t *iph, iphtent_t *ipeo)
 {
 	iphtent_t *ipe;
 	u_int hv;
@@ -417,8 +413,8 @@ iphtent_t *ipeo;
 }
 
 
-void *fr_iphmfindgroup(tptr, aptr)
-void *tptr, *aptr;
+void *
+fr_iphmfindgroup(void *tptr, void *aptr)
 {
 	struct in_addr *addr;
 	iphtable_t *iph;
@@ -448,9 +444,8 @@ void *tptr, *aptr;
 /*                                                                          */
 /* Search the hash table for a given address and return a search result.    */
 /* ------------------------------------------------------------------------ */
-int fr_iphmfindip(tptr, ipversion, aptr)
-void *tptr, *aptr;
-int ipversion;
+int
+fr_iphmfindip(void *tptr, int ipversion, void *aptr)
 {
 	struct in_addr *addr;
 	iphtable_t *iph;
@@ -478,9 +473,8 @@ int ipversion;
 
 
 /* Locks:  ip_poolrw */
-static iphtent_t *fr_iphmfind(iph, addr)
-iphtable_t *iph;
-struct in_addr *addr;
+static iphtent_t *
+fr_iphmfind(iphtable_t *iph, struct in_addr *addr)
 {
 	u_32_t hmsk, msk, ips;
 	iphtent_t *ipe;
@@ -515,9 +509,8 @@ maskloop:
 }
 
 
-int fr_htable_getnext(token, ilp)
-ipftoken_t *token;
-ipflookupiter_t *ilp;
+int
+fr_htable_getnext(ipftoken_t *token, ipflookupiter_t *ilp)
 {
 	iphtent_t *node, zn, *nextnode;
 	iphtable_t *iph, zp, *nextiph;
@@ -632,10 +625,8 @@ ipflookupiter_t *ilp;
 }
 
 
-void fr_htable_iterderef(otype, unit, data)
-u_int otype;
-int unit;
-void *data;
+void
+fr_htable_iterderef(u_int otype, int unit, void *data)
 {
 
 	if (data == NULL)

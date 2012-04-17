@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipsec.4,v 1.31 2009/05/17 02:22:43 fair Exp $
+.\"	$NetBSD: ipsec.4,v 1.31.8.1 2012/04/17 00:05:45 yamt Exp $
 .\"	$KAME: ipsec.4,v 1.17 2001/06/27 15:25:10 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,21 +28,12 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 16, 2009
+.Dd January 16, 2012
 .Dt IPSEC 4
 .Os
 .Sh NAME
 .Nm ipsec
 .Nd IP security protocol
-.Sh SYNOPSIS
-.In sys/types.h
-.In netinet/in.h
-.In netinet6/ipsec.h
-.Pp
-.Cd options IPSEC
-.Cd options IPSEC_ESP
-.Cd options IPSEC_NAT_T
-.Cd options IPSEC_DEBUG
 .Sh DESCRIPTION
 .Nm
 is a security protocol in Internet Protocol (IP) layer.
@@ -79,60 +70,12 @@ and is designed for security gateways, as in Virtual Private Network
 configurations.
 .El
 .Pp
-The following kernel options are available:
-.Bl -ohang
-.It Cd options IPSEC
-Includes support for the
-.Tn IPsec
-protocol.
-.Em IPSEC
-will enable
-secret key management part,
-policy management part,
-.Tn AH
-and
-.Tn IPComp .
-Kernel binary will not be subject to export control in most of countries,
-even if compiled with
-.Em IPSEC .
-For example, it should be okay to export it from the United States of America.
-.Em INET6
-and
-.Em IPSEC
-are orthogonal so you can get IPv4-only kernel with IPsec support,
-IPv4/v6 dual support kernel without IPsec, and so forth.
-This option requires
-.Em INET
-at this moment, but it should not.
-.It Cd options IPSEC_DEBUG
-Enables debugging code in
-.Tn IPsec
-stack.
-This option assumes
-.Em IPSEC .
-.It Cd options IPSEC_ESP
-Includes support for
-.Tn IPsec
-.Tn ESP
-protocol.
-.Em IPSEC_ESP
-will enable source code that is subject to export control in some countries
-.Pq including the United States ,
-and compiled kernel binary will be subject to certain restriction.
-This option assumes
-.Em IPSEC .
-.It Cd options IPSEC_NAT_T
-Includes support for
-.Tn IPsec
-Network Address Translator Traversal (NAT-T), as described in RFCs 3947
-and 3948.
-This feature might be patent-encumbered in some countries.
-This option assumes
-.Em IPSEC
-and
-.Em IPSEC_ESP .
-.El
-.\"
+Since version 6,
+.Nx
+uses the IPSEC implementation formerly known as FAST_IPSEC.
+Its specifics and kernel options are describes in the
+.Xr fast_ipsec 4
+manual page.
 .Ss Kernel interface
 .Nm
 is controlled by key management engine and policy engine,
@@ -346,13 +289,12 @@ routines from looking into IP payload.
 .%R RFC
 .%N 2367
 .Re
-.Sh HISTORY
-The implementation described herein appeared in WIDE/KAME IPv6/IPsec stack.
 .Sh BUGS
 The IPsec support is subject to change as the IPsec protocols develop.
 .Pp
 There is no single standard for policy engine API,
-so the policy engine API described herein is just for KAME implementation.
+so the policy engine API described herein is just for the version
+introduced by KAME.
 .Pp
 AH and tunnel mode encapsulation may not work as you might expect.
 If you configure inbound

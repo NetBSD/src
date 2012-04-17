@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_wss.c,v 1.13 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: opl_wss.c,v 1.13.34.1 2012/04/17 00:07:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_wss.c,v 1.13 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_wss.c,v 1.13.34.1 2012/04/17 00:07:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,10 +77,11 @@ opl_wss_attach(device_t parent, device_t self, void *aux)
 	struct wss_softc *ssc = device_private(parent);
 	struct opl_softc *sc = device_private(self);
 
-	sc->mididev.dev = self;
+	sc->dev = self;
 	sc->ioh = ssc->sc_opl_ioh;
 	sc->iot = ssc->sc_iot;
 	sc->offs = 0;
+	sc->lock = &ssc->sc_ad1848.sc_ad1848.sc_intr_lock;
 	strcpy(sc->syn.name, "WSS ");
 
 	opl_attach(sc);

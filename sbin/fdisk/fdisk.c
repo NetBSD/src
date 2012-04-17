@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.134 2011/08/28 15:46:26 gson Exp $ */
+/*	$NetBSD: fdisk.c,v 1.134.2.1 2012/04/17 00:05:39 yamt Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.134 2011/08/28 15:46:26 gson Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.134.2.1 2012/04/17 00:05:39 yamt Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -155,7 +155,7 @@ static char *boot_path = NULL;			/* name of file we actually opened */
 #define BOOTSEL_OPTIONS	
 #define change_part(e, p, id, st, sz, bm) change__part(e, p, id, st, sz)
 #endif
-#define OPTIONS	BOOTSEL_OPTIONS "0123FSafiluvA:b:c:E:r:s:w:"
+#define OPTIONS	BOOTSEL_OPTIONS "0123FSafiIluvA:b:c:E:r:s:w:z:"
 
 /*
  * Disk geometry and partition alignment.
@@ -224,6 +224,7 @@ static char *disk_type = NULL;
 
 static int a_flag;		/* set active partition */
 static int i_flag;		/* init bootcode */
+static int I_flag;		/* ignore errors */
 static int u_flag;		/* update partition data */
 static int v_flag;		/* more verbose */
 static int sh_flag;		/* Output data as shell defines */
@@ -244,6 +245,8 @@ static int F_flag = 1;
 static struct gpt_hdr gpt1, gpt2;	/* GUID partition tables */
 
 static struct mbr_sector bootcode[8192 / sizeof (struct mbr_sector)];
+static ssize_t secsize = 512;	/* sector size */
+static char *iobuf;		/* buffer for non 512 sector I/O */
 static int bootsize;		/* actual size of bootcode */
 static int boot_installed;	/* 1 if we've copied code into the mbr */
 
@@ -278,14 +281,14 @@ static void	change_active(int);
 static void	change_bios_geometry(void);
 static void	dos(int, unsigned char *, unsigned char *, unsigned char *);
 static int	open_disk(int);
-static int	read_disk(daddr_t, void *);
-static int	write_disk(daddr_t, void *);
+static ssize_t	read_disk(daddr_t, void *);
+static ssize_t	write_disk(daddr_t, void *);
 static int	get_params(void);
 static int	read_s0(daddr_t, struct mbr_sector *);
 static int	write_mbr(void);
 static int	read_gpt(daddr_t, struct gpt_hdr *);
 static int	delete_gpt(struct gpt_hdr *);
-static int	yesno(const char *, ...);
+static int	yesno(const char *, ...) __printflike(1, 2);
 static int64_t	decimal(const char *, int64_t, int, int64_t, int64_t);
 #define DEC_SEC		1		/* asking for a sector number */
 #define	DEC_RND		2		/* round to end of first track */
@@ -383,6 +386,9 @@ main(int argc, char *argv[])
 		case 'i':	/* Always update bootcode */
 			i_flag = 1;
 			break;
+		case 'I':	/* Ignore errors */
+			I_flag = 1;
+			break;
 		case 'l':	/* List known partition types */
 			for (len = 0; len < KNOWN_SYSIDS; len++)
 				printf("%03d %s\n", mbr_ptypes[len].id,
@@ -449,6 +455,19 @@ main(int argc, char *argv[])
 			break;
 		case 'T':
 			disk_type = optarg;
+			break;
+		case 'z':
+			secsize = atoi(optarg);
+			if (secsize <= 512)
+out:				 errx(EXIT_FAILURE, "Invalid sector size %zd",
+				    secsize);
+			for (ch = secsize; (ch & 1) == 0; ch >>= 1)
+				continue;
+			if (ch != 1)
+				goto out;
+			if ((iobuf = malloc(secsize)) == NULL)
+				err(EXIT_FAILURE, "Cannot allocate %zd buffer",
+				    secsize);
 			break;
 		default:
 			usage();
@@ -600,7 +619,7 @@ usage(void)
 {
 	int indent = 7 + (int)strlen(getprogname()) + 1;
 
-	(void)fprintf(stderr, "usage: %s [-afiluvBS] "
+	(void)fprintf(stderr, "usage: %s [-aBFfIilSuv] "
 		"[-A ptn_alignment[/ptn_0_offset]] \\\n"
 		"%*s[-b cylinders/heads/sectors] \\\n"
 		"%*s[-0123 | -E num "
@@ -611,6 +630,7 @@ usage(void)
 		"\t-a change active partition\n"
 		"\t-f force - not interactive\n"
 		"\t-i initialise MBR code\n"
+		"\t-I ignore errors about no space or overlapping partitions\n"
 		"\t-l list partition types\n"
 		"\t-u update partition data\n"
 		"\t-v verbose output, -v -v more verbose still\n"
@@ -2061,7 +2081,7 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 					p = -1;
 				}
 			}
-			if (start >= disksectors) {
+			if (start >= disksectors && !I_flag) {
 				printf("No free space\n");
 				return 0;
 			}
@@ -2156,7 +2176,7 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 		errtext = check_ext_overlap(part, sysid, start, size, 0);
 	else
 		errtext = check_overlap(part, sysid, start, size, 0);
-	if (errtext != NULL) {
+	if (errtext != NULL && !I_flag) {
 		if (f_flag)
 			errx(2, "%s\n", errtext);
 		printf("%s\n", errtext);
@@ -2170,14 +2190,15 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 	 * This also fixes the base of each extended partition if the
 	 * partition itself has moved.
 	 */
+	if (!I_flag) {
+		if (extended)
+			errtext = check_ext_overlap(part, sysid, start, size, 1);
+		else
+			errtext = check_overlap(part, sysid, start, size, 1);
+		if (errtext)
+			errx(1, "%s\n", errtext);
+	}
 
-	if (extended)
-		errtext = check_ext_overlap(part, sysid, start, size, 1);
-	else
-		errtext = check_overlap(part, sysid, start, size, 1);
-
-	if (errtext)
-		errx(1, "%s\n", errtext);
 
 	if (sysid == 0) {
 		/* delete this partition - save info though */
@@ -2462,26 +2483,62 @@ open_disk(int update)
 	return (0);
 }
 
-static int
+static ssize_t
 read_disk(daddr_t sector, void *buf)
 {
+	ssize_t nr;
 
 	if (*rfd == -1)
 		errx(1, "read_disk(); fd == -1");
-	if (lseek(*rfd, sector * (off_t)512, 0) == -1)
-		return (-1);
-	return (read(*rfd, buf, 512));
-}
 
-static int
+	off_t offs = sector * (off_t)512;
+	off_t mod = offs & (secsize - 1);
+	off_t rnd = offs & ~(secsize - 1);
+
+	if (lseek(*rfd, rnd, SEEK_SET) == (off_t)-1)
+		return -1;
+
+	if (secsize == 512)
+		return read(*rfd, buf, 512);
+
+	if ((nr = read(*rfd, iobuf, secsize)) != secsize)
+		return nr;
+
+	memcpy(buf, &iobuf[mod], 512);
+
+	return 512;
+}	
+
+static ssize_t
 write_disk(daddr_t sector, void *buf)
 {
+	ssize_t nr;
 
 	if (wfd == -1)
 		errx(1, "write_disk(); wfd == -1");
-	if (lseek(wfd, sector * (off_t)512, 0) == -1)
-		return (-1);
-	return (write(wfd, buf, 512));
+
+	off_t offs = sector * (off_t)512;
+	off_t mod = offs & (secsize - 1);
+	off_t rnd = offs & ~(secsize - 1);
+
+	if (lseek(wfd, rnd, SEEK_SET) == (off_t)-1)
+		return -1;
+
+	if (secsize == 512)
+		return write(wfd, buf, 512);
+
+	if ((nr = read(wfd, iobuf, secsize)) != secsize)
+		return nr;
+
+	if (lseek(wfd, rnd, SEEK_SET) == (off_t)-1)
+		return -1;
+
+	memcpy(&iobuf[mod], buf, 512);
+
+	if ((nr = write(wfd, iobuf, secsize)) != secsize)
+		return nr;
+
+	return 512;
 }
 
 static void

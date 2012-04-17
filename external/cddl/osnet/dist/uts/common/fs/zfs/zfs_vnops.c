@@ -4776,8 +4776,9 @@ zfs_pathconf(vnode_t *vp, int cmd, ulong_t *valp, cred_t *cr,
 }
 
 static int
-zfs_netbsd_open(struct vop_open_args *ap)
+zfs_netbsd_open(void *v)
 {
+	struct vop_open_args *ap = v;
 	vnode_t	*vp = ap->a_vp;
 	znode_t *zp = VTOZ(vp);
 	int error;
@@ -4788,15 +4789,17 @@ zfs_netbsd_open(struct vop_open_args *ap)
 }
 
 static int
-zfs_netbsd_close(struct vop_close_args *ap)
+zfs_netbsd_close(void *v)
 {
+	struct vop_close_args *ap = v;
 
 	return (zfs_close(ap->a_vp, ap->a_fflag, 0, 0, ap->a_cred, NULL));
 }
 
 static int
-zfs_netbsd_ioctl(struct vop_ioctl_args *ap)
+zfs_netbsd_ioctl(void *v)
 {
+	struct vop_ioctl_args *ap = v;
 
 	return (zfs_ioctl(ap->a_vp, ap->a_command, (intptr_t)ap->a_data,
 		ap->a_fflag, ap->a_cred, NULL, NULL));
@@ -4804,22 +4807,25 @@ zfs_netbsd_ioctl(struct vop_ioctl_args *ap)
 
 
 static int
-zfs_netbsd_read(struct vop_read_args *ap)
+zfs_netbsd_read(void *v)
 {
+	struct vop_read_args *ap = v;
 
 	return (zfs_read(ap->a_vp, ap->a_uio, ap->a_ioflag, ap->a_cred, NULL));
 }
 
 static int
-zfs_netbsd_write(struct vop_write_args *ap)
+zfs_netbsd_write(void *v)
 {
+	struct vop_write_args *ap = v;
 
 	return (zfs_write(ap->a_vp, ap->a_uio, ap->a_ioflag, ap->a_cred, NULL));
 }
 
 static int
-zfs_netbsd_access(struct vop_access_args *ap)
+zfs_netbsd_access(void *v)
 {
+	struct vop_access_args *ap = v;
 
 	/*
 	 * ZFS itself only knowns about VREAD, VWRITE and VEXEC, the rest
@@ -4838,8 +4844,9 @@ zfs_netbsd_access(struct vop_access_args *ap)
 }
 
 static int
-zfs_netbsd_lookup(struct vop_lookup_args *ap)
+zfs_netbsd_lookup(void *v)
 {
+	struct vop_lookup_args *ap = v;
 	struct componentname *cnp = ap->a_cnp;
 	char nm[NAME_MAX + 1];
 	int err;
@@ -4854,8 +4861,9 @@ zfs_netbsd_lookup(struct vop_lookup_args *ap)
 }
 
 static int
-zfs_netbsd_create(struct vop_create_args *ap)
+zfs_netbsd_create(void *v)
 {
+	struct vop_create_args *ap = v;
 	struct componentname *cnp = ap->a_cnp;
 	vattr_t *vap = ap->a_vap;
 	int mode;
@@ -4868,16 +4876,18 @@ zfs_netbsd_create(struct vop_create_args *ap)
 }
 
 static int
-zfs_netbsd_remove(struct vop_remove_args *ap)
+zfs_netbsd_remove(void *v)
 {
+	struct vop_remove_args *ap = v;
 
 	return (zfs_remove(ap->a_dvp, (char *)ap->a_cnp->cn_nameptr,
 	    ap->a_cnp->cn_cred, NULL, 0));
 }
 
 static int
-zfs_netbsd_mkdir(struct vop_mkdir_args *ap)
+zfs_netbsd_mkdir(void *v)
 {
+	struct vop_mkdir_args *ap = v;
 	vattr_t *vap = ap->a_vap;
 
 	vattr_init_mask(vap);
@@ -4887,31 +4897,35 @@ zfs_netbsd_mkdir(struct vop_mkdir_args *ap)
 }
 
 static int
-zfs_netbsd_rmdir(struct vop_rmdir_args *ap)
+zfs_netbsd_rmdir(void *v)
 {
+	struct vop_rmdir_args *ap = v;
 	struct componentname *cnp = ap->a_cnp;
 
 	return (zfs_rmdir(ap->a_dvp, (char *)cnp->cn_nameptr, NULL, cnp->cn_cred, NULL, 0));
 }
 
 static int
-zfs_netbsd_readdir(struct vop_readdir_args *ap)
+zfs_netbsd_readdir(void *v)
 {
+	struct vop_readdir_args *ap = v;
 
 	return (zfs_readdir(ap->a_vp, ap->a_uio, ap->a_cred, ap->a_eofflag,
 		ap->a_ncookies, (u_long **)ap->a_cookies));
 }
 
 static int
-zfs_netbsd_fsync(struct vop_fsync_args *ap)
+zfs_netbsd_fsync(void *v)
 {
+	struct vop_fsync_args *ap = v;
 
 	return (zfs_fsync(ap->a_vp, ap->a_flags, ap->a_cred, NULL));
 }
 
 static int
-zfs_netbsd_getattr(struct vop_getattr_args *ap)
+zfs_netbsd_getattr(void *v)
 {
+	struct vop_getattr_args *ap = v;
 	vattr_t *vap = ap->a_vap;
 	xvattr_t xvap;
 	u_long fflags = 0;
@@ -4951,8 +4965,9 @@ zfs_netbsd_getattr(struct vop_getattr_args *ap)
 }
 
 static int
-zfs_netbsd_setattr(struct vop_setattr_args *ap)
+zfs_netbsd_setattr(void *v)
 {
+	struct vop_setattr_args *ap = v;
 	vnode_t *vp = ap->a_vp;
 	vattr_t *vap = ap->a_vap;
 	cred_t *cred = ap->a_cred;
@@ -5026,7 +5041,8 @@ zfs_netbsd_setattr(struct vop_setattr_args *ap)
 }
 
 static int
-zfs_netbsd_rename(ap)
+zfs_netbsd_rename(void *v)
+{
 	struct vop_rename_args  /* {
 		struct vnode *a_fdvp;
 		struct vnode *a_fvp;
@@ -5034,8 +5050,7 @@ zfs_netbsd_rename(ap)
 		struct vnode *a_tdvp;
 		struct vnode *a_tvp;
 		struct componentname *a_tcnp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	vnode_t *fdvp = ap->a_fdvp;
 	vnode_t *fvp = ap->a_fvp;
 	vnode_t *tdvp = ap->a_tdvp;
@@ -5058,8 +5073,9 @@ zfs_netbsd_rename(ap)
 }
 
 static int
-zfs_netbsd_symlink(struct vop_symlink_args *ap)
+zfs_netbsd_symlink(void *v)
 {
+	struct vop_symlink_args *ap = v;
 	struct componentname *cnp = ap->a_cnp;
 	vattr_t *vap = ap->a_vap;
 
@@ -5237,23 +5253,26 @@ static int zfs_isdir();
 #endif
 
 static int
-zfs_netbsd_readlink(struct vop_readlink_args *ap)
+zfs_netbsd_readlink(void *v)
 {
+	struct vop_readlink_args *ap = v;
 
 	return (zfs_readlink(ap->a_vp, ap->a_uio, ap->a_cred, NULL));
 }
 
 static int
-zfs_netbsd_link(struct vop_link_args *ap)
+zfs_netbsd_link(void *v)
 {
+	struct vop_link_args *ap = v;
 	struct componentname *cnp = ap->a_cnp;
 
 	return (zfs_link(ap->a_dvp, ap->a_vp, (char *)cnp->cn_nameptr, cnp->cn_cred, NULL, 0));
 }
 
 static int
-zfs_netbsd_inactive(struct vop_inactive_args *ap)
+zfs_netbsd_inactive(void *v)
 {
+	struct vop_inactive_args *ap = v;
 	vnode_t *vp = ap->a_vp;
 	znode_t	*zp = VTOZ(vp);
 
@@ -5271,7 +5290,7 @@ zfs_netbsd_inactive(struct vop_inactive_args *ap)
  * Destroy znode from taskq thread without ZFS_OBJ_MUTEX held.
  */
 static void
-zfs_reclaim_deferred(void *arg, int pending)
+zfs_reclaim_deferred(void *arg)
 {
 	znode_t *zp = arg;
 	zfsvfs_t *zfsvfs = zp->z_zfsvfs;
@@ -5288,8 +5307,9 @@ zfs_reclaim_deferred(void *arg, int pending)
 }
 
 static int
-zfs_netbsd_reclaim(struct vop_reclaim_args *ap)
+zfs_netbsd_reclaim(void *v)
 {
+	struct vop_reclaim_args *ap = v;
 	vnode_t	*vp = ap->a_vp;
 	znode_t	*zp = VTOZ(vp);
 	zfsvfs_t *zfsvfs;
@@ -5354,15 +5374,17 @@ zfs_netbsd_reclaim(struct vop_reclaim_args *ap)
 }
 
 static int
-zfs_netbsd_fid(struct vop_fid_args *ap)
+zfs_netbsd_fid(void *v)
 {
+	struct vop_fid_args *ap = v;
 
 	return (zfs_fid(ap->a_vp, (void *)ap->a_fid, NULL));
 }
 
 static int
-zfs_netbsd_pathconf(struct vop_pathconf_args *ap)
+zfs_netbsd_pathconf(void *v)
 {
+	struct vop_pathconf_args *ap = v;
 	ulong_t val;
 	int error;
 
@@ -5404,8 +5426,9 @@ zfs_netbsd_pathconf(struct vop_pathconf_args *ap)
 }
 
 int
-zfs_netbsd_lock(struct vop_lock_args *ap)
+zfs_netbsd_lock(void *v)
 {
+	struct vop_lock_args *ap = v;
 
 	return 0;
 }

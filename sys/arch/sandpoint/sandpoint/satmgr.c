@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.12 2011/07/01 19:16:06 dyoung Exp $ */
+/* $NetBSD: satmgr.c,v 1.12.2.1 2012/04/17 00:06:50 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@ struct satmgr_softc {
 	struct selinfo		sc_rsel;
 	callout_t		sc_ch_wdog;
 	callout_t		sc_ch_pbutton;
+	callout_t		sc_ch_sync;
 	struct sysmon_pswitch	sc_sm_pbutton;
 	int			sc_open;
 	void			*sc_si;
@@ -79,6 +80,10 @@ struct satmgr_softc {
 	struct satops		*sc_ops;
 	char			sc_btn_buf[8];
 	int			sc_btn_cnt;
+	char			sc_cmd_buf[8];
+	int			sc_sysctl_wdog;
+	int			sc_sysctl_fanlow;
+	int			sc_sysctl_fanhigh;
 };
 
 static int  satmgr_match(device_t, cfdata_t, void *);
@@ -105,8 +110,11 @@ const struct cdevsw satmgr_cdevsw = {
 
 static void satmgr_reboot(int);
 static int satmgr_sysctl_wdogenable(SYSCTLFN_PROTO);
+static int satmgr_sysctl_fanlow(SYSCTLFN_PROTO);
+static int satmgr_sysctl_fanhigh(SYSCTLFN_PROTO);
 static void wdog_tickle(void *);
 static void send_sat(struct satmgr_softc *, const char *);
+static void send_sat_len(struct satmgr_softc *, const char *, int);
 static int hwintr(void *);
 static void rxintr(struct satmgr_softc *);
 static void txintr(struct satmgr_softc *);
@@ -114,17 +122,24 @@ static void startoutput(struct satmgr_softc *);
 static void swintr(void *);
 static void sinit(struct satmgr_softc *);
 static void qinit(struct satmgr_softc *);
+static void iinit(struct satmgr_softc *);
 static void kreboot(struct satmgr_softc *);
 static void sreboot(struct satmgr_softc *);
 static void qreboot(struct satmgr_softc *);
+static void ireboot(struct satmgr_softc *);
 static void kpwroff(struct satmgr_softc *);
 static void spwroff(struct satmgr_softc *);
 static void qpwroff(struct satmgr_softc *);
 static void dpwroff(struct satmgr_softc *);
+static void ipwroff(struct satmgr_softc *);
 static void kbutton(struct satmgr_softc *, int);
 static void sbutton(struct satmgr_softc *, int);
 static void qbutton(struct satmgr_softc *, int);
 static void dbutton(struct satmgr_softc *, int);
+static void ibutton(struct satmgr_softc *, int);
+static void idosync(void *);
+static void iprepcmd(struct satmgr_softc *, int, int, int, int, int, int);
+static void mbutton(struct satmgr_softc *, int);
 static void guarded_pbutton(void *);
 static void sched_sysmon_pbutton(void *);
 
@@ -137,8 +152,10 @@ struct satops {
 };
 
 static struct satops satmodel[] = {
-    { "dlink",    NULL, NULL, dpwroff, dbutton },
-    { "kurobox",  NULL, kreboot, kpwroff, kbutton },
+    { "dlink",    NULL,  NULL,    dpwroff, dbutton },
+    { "iomega",   iinit, ireboot, ipwroff, ibutton },
+    { "kurobox",  NULL,  kreboot, kpwroff, kbutton },
+    { "kurot4",   NULL,  NULL,    NULL,    mbutton },
     { "qnap",     qinit, qreboot, qpwroff, qbutton },
     { "synology", sinit, sreboot, spwroff, sbutton }
 };
@@ -154,8 +171,6 @@ static struct satops satmodel[] = {
 #define LSR		5
 #define CSR_READ(t,r)	bus_space_read_1((t)->sc_iot, (t)->sc_ioh, (r))
 #define CSR_WRITE(t,r,v) bus_space_write_1((t)->sc_iot, (t)->sc_ioh, (r), (v))
-
-static int satmgr_wdog;
 
 static int
 satmgr_match(device_t parent, cfdata_t match, void *aux)
@@ -192,6 +207,7 @@ satmgr_attach(device_t parent, device_t self, void *aux)
 	}
 	if (ops == NULL)
 		goto notavail;
+	aprint_naive(": button manager\n");
 	aprint_normal(": button manager (%s)\n", ops->family);
 	sc->sc_ops = ops;
 
@@ -210,14 +226,16 @@ satmgr_attach(device_t parent, device_t self, void *aux)
 	selinit(&sc->sc_rsel);
 	callout_init(&sc->sc_ch_wdog, 0);
 	callout_init(&sc->sc_ch_pbutton, 0);
+	callout_init(&sc->sc_ch_sync, 0);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
 	cv_init(&sc->sc_rdcv, "satrd");
 	cv_init(&sc->sc_wrcv, "satwr");
 	sc->sc_btn_cnt = 0;
 
 	epicirq = (eaa->eumb_unit == 0) ? 24 : 25;
-	intr_establish(epicirq + 16, IST_LEVEL, IPL_SERIAL, hwintr, sc);
-	aprint_normal_dev(self, "interrupting at irq %d\n", epicirq + 16);
+	intr_establish(epicirq + I8259_ICU, IST_LEVEL, IPL_SERIAL, hwintr, sc);
+	aprint_normal_dev(self, "interrupting at irq %d\n",
+	    epicirq + I8259_ICU);
 	sc->sc_si = softint_establish(SOFTINT_SERIAL, swintr, sc);
 
 	CSR_WRITE(sc, IER, 0x7f); /* all but MSR */
@@ -233,11 +251,11 @@ satmgr_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev,
 		    "unable to register power button with sysmon\n");
 
+	/* create machdep.satmgr subtree for those models which support it */
 	if (strcmp(ops->family, "kurobox") == 0) {
 		const struct sysctlnode *rnode;
 		struct sysctllog *clog;
 
-		/* create machdep.satmgr.* subtree */
 		clog = NULL;
 		sysctl_createv(&clog, 0, NULL, &rnode,
 			CTLFLAG_PERMANENT,
@@ -254,6 +272,34 @@ satmgr_attach(device_t parent, device_t self, void *aux)
 			CTLTYPE_INT, "hwwdog_enable",
 			SYSCTL_DESCR("watchdog enable"),
 			satmgr_sysctl_wdogenable, 0, NULL, 0,
+			CTL_CREATE, CTL_EOL);
+	}
+	else if (strcmp(ops->family, "iomega") == 0) {
+		const struct sysctlnode *rnode;
+		struct sysctllog *clog;
+
+		clog = NULL;
+		sysctl_createv(&clog, 0, NULL, &rnode,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_NODE, "machdep", NULL,
+			NULL, 0, NULL, 0,
+			CTL_MACHDEP, CTL_EOL);
+		sysctl_createv(&clog, 0, &rnode, &rnode,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_NODE, "satmgr", NULL,
+			NULL, 0, NULL, 0,
+			CTL_CREATE, CTL_EOL);
+		sysctl_createv(&clog, 0, &rnode, NULL,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "fan_low_temp",
+			SYSCTL_DESCR("Turn off fan below this temperature"),
+			satmgr_sysctl_fanlow, 0, NULL, 0,
+			CTL_CREATE, CTL_EOL);
+		sysctl_createv(&clog, 0, &rnode, NULL,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "fan_high_temp",
+			SYSCTL_DESCR("Turn on fan above this temperature"),
+			satmgr_sysctl_fanhigh, 0, NULL, 0,
 			CTL_CREATE, CTL_EOL);
 	}
 
@@ -287,21 +333,21 @@ satmgr_reboot(int howto)
 static int
 satmgr_sysctl_wdogenable(SYSCTLFN_ARGS)
 {
-	int error, t;
 	struct sysctlnode node;
 	struct satmgr_softc *sc;
+	int error, t;
 
+	sc = device_lookup_private(&satmgr_cd, 0);
 	node = *rnode;
-	t = satmgr_wdog;
+	t = sc->sc_sysctl_wdog;
 	node.sysctl_data = &t;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return error;
-
 	if (t < 0 || t > 1)
 		return EINVAL;
 
-	sc = device_lookup_private(&satmgr_cd, 0);
+	sc->sc_sysctl_wdog = t;
 	if (t == 1) {
 		callout_setfunc(&sc->sc_ch_wdog, wdog_tickle, sc);
 		callout_schedule(&sc->sc_ch_wdog, 90 * hz);
@@ -323,20 +369,72 @@ wdog_tickle(void *arg)
 	callout_schedule(&sc->sc_ch_wdog, 90 * hz);
 }
 
+static int
+satmgr_sysctl_fanlow(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	struct satmgr_softc *sc;
+	int error, t;
+
+	sc = device_lookup_private(&satmgr_cd, 0);
+	node = *rnode;
+	t = sc->sc_sysctl_fanlow;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+	if (t < 0 || t > 99)
+		return EINVAL;
+	sc->sc_sysctl_fanlow = t;
+	iprepcmd(sc, 'b', 'b', 10, 'a',
+	    sc->sc_sysctl_fanhigh, sc->sc_sysctl_fanlow);
+	return 0;
+}
+
+static int
+satmgr_sysctl_fanhigh(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	struct satmgr_softc *sc;
+	int error, t;
+
+	sc = device_lookup_private(&satmgr_cd, 0);
+	node = *rnode;
+	t = sc->sc_sysctl_fanhigh;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+	if (t < 0 || t > 99)
+		return EINVAL;
+	sc->sc_sysctl_fanhigh = t;
+	iprepcmd(sc, 'b', 'b', 10, 'a',
+	    sc->sc_sysctl_fanhigh, sc->sc_sysctl_fanlow);
+	return 0;
+}
+
 static void
 send_sat(struct satmgr_softc *sc, const char *msg)
 {
-	unsigned lsr, ch, n;
+
+	send_sat_len(sc, msg, strlen(msg));
+}
+
+
+static void
+send_sat_len(struct satmgr_softc *sc, const char *msg, int len)
+{
+	unsigned lsr;
+	int n;
 
  again:
 	do {
 		lsr = CSR_READ(sc, LSR);
 	} while ((lsr & LSR_TXRDY) == 0);
 	n = 16; /* FIFO depth */
-	while ((ch = *msg++) != '\0' && n-- > 0) {
-		CSR_WRITE(sc, THR, ch);
-	}
-	if (ch != '\0')
+	while (len-- > 0 && n-- > 0)
+		CSR_WRITE(sc, THR, *msg++);
+	if (len > 0)
 		goto again;
 }
 
@@ -582,11 +680,11 @@ txintr(struct satmgr_softc *sc)
 static void
 startoutput(struct satmgr_softc *sc)
 {
-	int n, ch;
+	int n;
 
 	n = min(sc->sc_wr_cnt, 16);
-	while ((ch = *sc->sc_wr_ptr) && n-- > 0) {
-		CSR_WRITE(sc, THR, ch);
+	while (n-- > 0) {
+		CSR_WRITE(sc, THR, *sc->sc_wr_ptr);
 		if (++sc->sc_wr_ptr == sc->sc_wr_lim)
 			sc->sc_wr_ptr = &sc->sc_wr_buf[0];
 		sc->sc_wr_cnt -= 1;
@@ -759,6 +857,104 @@ dbutton(struct satmgr_softc *sc, int ch)
 		sc->sc_btn_cnt = 0;
 	} else if (sc->sc_btn_cnt < 7)
 		sc->sc_btn_buf[sc->sc_btn_cnt++] = ch;
+}
+
+static void
+iinit(struct satmgr_softc *sc)
+{
+
+	/* LED blue, auto-fan, turn on at 50C, turn off at 45C */
+	sc->sc_sysctl_fanhigh = 50;
+	sc->sc_sysctl_fanlow = 45;
+	iprepcmd(sc, 'b', 'b', 10, 'a',
+	    sc->sc_sysctl_fanhigh, sc->sc_sysctl_fanlow);
+}
+
+static void
+ireboot(struct satmgr_softc *sc)
+{
+
+	iprepcmd(sc, 'g', 0, 0, 0, 0, 0);
+}
+
+static void
+ipwroff(struct satmgr_softc *sc)
+{
+
+	iprepcmd(sc, 'c', 0, 0, 0, 0, 0);
+}
+
+static void
+ibutton(struct satmgr_softc *sc, int ch)
+{
+	int i;
+	char cksum;
+
+	sc->sc_btn_buf[sc->sc_btn_cnt++] = ch;
+
+	if (sc->sc_btn_cnt >= 8) {
+		sc->sc_btn_cnt = 0;
+
+		if (callout_active(&sc->sc_ch_sync) == true) {
+			/* now we can send a pending command packet */
+			callout_stop(&sc->sc_ch_sync);
+			for (i = 0, cksum = 0; i < 7; i++)
+				cksum += sc->sc_cmd_buf[i];
+			sc->sc_cmd_buf[7] = cksum & 0x7f;
+			send_sat_len(sc, sc->sc_cmd_buf, 8);
+		}
+	}
+}
+
+static void
+idosync(void *arg)
+{
+	/*
+	 * Send 0-bytes until the 68HC908 sends a reply packet.
+	 * This means we are synchronized again, and the pending command,
+	 * constructed by iprepcmd(), is transmitted automatically.
+	 */
+	struct satmgr_softc *sc = arg;
+	unsigned lsr;
+
+	/* we're now in callout(9) context */
+	do {
+		lsr = CSR_READ(sc, LSR);
+	} while ((lsr & LSR_TXRDY) == 0);
+	callout_schedule(&sc->sc_ch_sync, hz / 5);
+	CSR_WRITE(sc, THR, 0);
+}
+
+static void
+iprepcmd(struct satmgr_softc *sc, int pow, int led, int rat, int fan,
+    int fhi, int flo)
+{
+	char *p = sc->sc_cmd_buf;
+
+	/*
+	 * Construct the command packet. Values of -1 (0xff) will be
+	 * replaced later by the current values from the last status.
+	 */
+	p[0] = pow;
+	p[1] = led;
+	p[2] = rat;
+	p[3] = fan;
+	p[4] = fhi;
+	p[5] = flo;
+	p[6] = 7; /* host id */
+
+	/* synchronize transmitter, before packet can be sent */
+	callout_reset(&sc->sc_ch_sync, hz / 5, idosync, sc);
+	/*
+	 * XXX We should protect ourselves against other writers, while
+	 * XXX synchronization is active!
+	 */
+}
+
+static void
+mbutton(struct satmgr_softc *sc, int ch)
+{
+	/* do nothing */
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: iha_pci.c,v 1.17 2010/11/13 13:52:07 uebayasi Exp $ */
+/*	$NetBSD: iha_pci.c,v 1.17.8.1 2012/04/17 00:07:50 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha_pci.c,v 1.17 2010/11/13 13:52:07 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha_pci.c,v 1.17.8.1 2012/04/17 00:07:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,13 +111,10 @@ iha_pci_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	pcireg_t command;
 	int ioh_valid;
-	char devinfo[256];
 
 	sc->sc_dev = self;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s (rev. 0x%02x)\n",
-	    devinfo, PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo(pa, NULL);
 
 	command  = pci_conf_read(pa->pa_pc,pa->pa_tag,PCI_COMMAND_STATUS_REG);
 	command |= PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_PARITY_ENABLE;

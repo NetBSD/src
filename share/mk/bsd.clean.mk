@@ -1,4 +1,4 @@
-# $NetBSD: bsd.clean.mk,v 1.4 2011/10/05 12:34:04 apb Exp $
+# $NetBSD: bsd.clean.mk,v 1.4.2.1 2012/04/17 00:05:50 yamt Exp $
 
 # <bsd.clean.mk>
 #
@@ -44,18 +44,27 @@ __docleandir:	.PHONY .MADE __cleanuse CLEANDIRFILES
 # If the list of files is empty, then the commands
 # reduce to "true", with an "@" prefix to prevent echoing.
 #
+# The use of :M* is needed to handle the case that CLEANFILES
+# or CLEANDIRFILES is not completely empty but contains spaces.
+# This can easily happen when CLEANFILES or CLEANDIRFILES is set
+# from other variables that happen to be empty.)
+#
+# The use of :Q is needed to handle the case that CLEANFILES
+# or CLEANDIRFILES contains quoted strings, such as
+# CLEANFILES = "filename with spaces".
+#
 __cleanuse: .USE
 .if 0	# print "# clean CLEANFILES" for debugging
-	${"${.ALLSRC:@v@${${v}:M*}@}" == "":?@true:${_MKMSG} \
+	${"${.ALLSRC:@v@${${v}:M*}@:Q}" == "":?@true:${_MKMSG} \
 		"clean" ${.ALLSRC} }
 .endif
 .for _d in ${"${.OBJDIR}" == "${.CURDIR}" || "${MKCLEANSRC}" == "no" \
 		:? ${.OBJDIR} \
 		:  ${.OBJDIR} ${.CURDIR} }
-	${"${.ALLSRC:@v@${${v}:M*}@}" == "":?@true: \
+	${"${.ALLSRC:@v@${${v}:M*}@:Q}" == "":?@true: \
 	    (cd ${_d} && rm -f ${.ALLSRC:@v@${${v}}@} || true) }
 .if "${MKCLEANVERIFY}" == "yes"
-	@${"${.ALLSRC:@v@${${v}:M*}@}" == "":?true: \
+	@${"${.ALLSRC:@v@${${v}:M*}@:Q}" == "":?true: \
 	    bad="\$(cd ${_d} && ls -d ${.ALLSRC:@v@${${v}}@} 2>/dev/null)"; \
 	    if test -n "\$bad"; then \
 	        echo "Failed to remove files from ${_d}:" ; \

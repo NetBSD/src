@@ -1,4 +1,4 @@
-/* $NetBSD: prep_machdep.c,v 1.8 2011/08/07 14:47:05 kiyohara Exp $ */
+/* $NetBSD: prep_machdep.c,v 1.8.2.1 2012/04/17 00:06:47 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,14 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: prep_machdep.c,v 1.8 2011/08/07 14:47:05 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prep_machdep.c,v 1.8.2.1 2012/04/17 00:06:47 yamt Exp $");
 
 #include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/extent.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/reboot.h>
 #include <sys/ksyms.h>
 
@@ -148,7 +147,7 @@ prep_initppc(u_long startkernel, u_long endkernel, u_int args)
 	    PREP_BUS_SPACE_MEM, BAT_BL_256M,
 	    PREP_BUS_SPACE_IO,  BAT_BL_256M,
 #if defined(bebox)
-	    0x7ffff000, BAT_BL_128K,	/* BeBox Mainboard Registers (4KB) */
+	    0x7ffff000, BAT_BL_8M,	/* BeBox Mainboard Registers (4KB) */
 #elif defined(prep)
 	    0xbf800000, BAT_BL_8M,
 #endif

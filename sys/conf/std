@@ -1,4 +1,4 @@
-# $NetBSD: std,v 1.13 2009/10/21 21:12:05 rmind Exp $
+# $NetBSD: std,v 1.13.12.1 2012/04/17 00:07:23 yamt Exp $
 #
 # standard MI 'options'
 #
@@ -27,3 +27,11 @@ options	secmodel_bsd44	# Traditional 4.4BSD security model
 options	SCHED_4BSD
 
 pseudo-device	cpuctl
+
+#
+# Kernel entropy pool and random-number generator pseudodevice.
+# The pseudodevice might stop being "std" when the two are torn
+# apart some day but the entropy pool itself never will (they are
+# presently implemented in the same source file)
+#
+pseudo-device	rnd

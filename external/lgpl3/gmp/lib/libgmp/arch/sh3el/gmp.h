@@ -2271,7 +2271,7 @@ enum
 };
 
 /* Define CC and CFLAGS which were used to build this version of GMP */
-#define __GMP_CC "/var/obj/landisk/usr/src3/tooldir.NetBSD-5.99.48-amd64/bin/shle--netbsdelf-gcc -isystem /var/obj/landisk/usr/src3/destdir.landisk/usr/include -L/var/obj/landisk/usr/src3/destdir.landisk/lib -L/var/obj/landisk/usr/src3/destdir.landisk/usr/lib -B/var/obj/landisk/usr/src3/destdir.landisk/usr/lib/ -std=gnu99"
+#define __GMP_CC "gcc -std=gnu99"
 #define __GMP_CFLAGS "-O2 -pedantic"
 
 /* Major version number is the value of __GNU_MP__ too, above and in mp.h. */

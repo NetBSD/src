@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.60 2011/02/28 21:22:35 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.60.4.1 2012/04/17 00:06:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -244,7 +244,7 @@ syscall_entry:
 
 	GET_CURCPU_SPACE(%sr1, %t1)
 	ldw	CI_PSW(%sr1, %t1), %t1
-	stw	%r1, TF_CR15-TRAPFRAME_SIZEOF(%sr1, %t3)	/* eiem ,bc */
+	stw	%r1, TF_CR15-TRAPFRAME_SIZEOF(%sr1, %t3)	/* eiem ,bc (block copy cache control hint) */
 	stw	%t1, TF_CR22-TRAPFRAME_SIZEOF(%sr1, %t3)	/* ipsw */
  
 	mfsp	%sr3, %t1
@@ -267,7 +267,6 @@ syscall_entry:
 	/* We can now set the frame pointer */
 	copy	%t3, %r3
 
-#if defined(DDB) || defined(KGDB) || defined(FPEMUL)
 	stw	%r4 , TF_R4 -TRAPFRAME_SIZEOF(%sr1, %t3)
 	stw	%r5 , TF_R5 -TRAPFRAME_SIZEOF(%sr1, %t3)
 	stw	%r6 , TF_R6 -TRAPFRAME_SIZEOF(%sr1, %t3)
@@ -283,7 +282,7 @@ syscall_entry:
 	stw	%r16, TF_R16-TRAPFRAME_SIZEOF(%sr1, %t3)
 	stw	%r17, TF_R17-TRAPFRAME_SIZEOF(%sr1, %t3)
 	stw	%r18, TF_R18-TRAPFRAME_SIZEOF(%sr1, %t3)
-#endif /* DDB || KGDB || FPEMUL */
+
 	stw	%r0, 0(%sr1, %t3)	/* terminate frame */
 	copy	%r0 , %r3
 	stw	%r0, HPPA_FRAME_PSP(%sr1, %sp)
@@ -445,11 +444,11 @@ syscall_return:
 	ldw	TF_R1(%t3), %r1
 	ldw	TF_R2(%t3), %r2
 	ldw	TF_R3(%t3), %r3
+
 	/*
 	 * See the comment in the trap handling code below about why we need to
 	 * save and restore all general registers under these cases.
 	 */
-#if defined(DDB) || defined(KGDB) || defined(FPEMUL)
 	ldw	TF_R4(%t3), %r4
 	ldw	TF_R5(%t3), %r5
 	ldw	TF_R6(%t3), %r6
@@ -465,7 +464,7 @@ syscall_return:
 	ldw	TF_R16(%t3), %r16
 	ldw	TF_R17(%t3), %r17
 	ldw	TF_R18(%t3), %r18
-#endif /* DDB || KGDB || FPEMUL */
+
 	ldw	TF_R19(%t3), %t4
 	/*	%r20(%t3) is used as a temporary and will be restored later */
 	/*	%r21(%t2) is used as a temporary and will be restored later */
@@ -513,7 +512,7 @@ syscall_return:
 	mtctl	%t2, CR_FPPADDR
 
 	ldw	TF_CR0(%sr3, %t3), %t1
-	mtctl	%t1, %rctr
+	mtctl	%t1, CR_RCTR
 
 	GET_CURCPU_SPACE(%sr3, %t3)
 
@@ -640,7 +639,8 @@ LDILDO(tlbd_l)
 #endif
 
 #if defined(HP8000_CPU) || defined(HP8200_CPU) || \
-    defined(HP8500_CPU) || defined(HP8600_CPU)
+    defined(HP8500_CPU) || defined(HP8600_CPU) || \
+    defined(HP8700_CPU)
 LDILDO(itlb_u)
 LDILDO(itlbna_u)
 LDILDO(dtlb_u)
@@ -899,7 +899,7 @@ LEAF_ENTRY_NOPROFILE(TLABEL(emu))
 	 */
 	extru	%arg0, 5, 6, %r1
 	comib,=,n 4, %r1, L$emulate_sfu
-	comib,=,n 0xe, %r1, hppa_fpu_nop0
+	comib,=,n 0xe, %r1, hppa_fpu_emulate
 
 	/*
 	 * If the uid field in the instruction is not zero or one, indicating a
@@ -911,10 +911,7 @@ LEAF_ENTRY_NOPROFILE(TLABEL(emu))
 
 	/*
 	 * If we're still here, this is a FPU coprocessor instruction.  That we
-	 * trapped to emulate it means one of three things.
-	 *
-	 * If we do not have a hardware FPU, we need to emulate this instr-
-	 * uction.
+	 * trapped to emulate it means one of two things.
 	 *
 	 * If we do have a hardware FPU but it is disabled, we trapped because
 	 * the current process' state is not loaded into the FPU.  We load that
@@ -925,20 +922,13 @@ LEAF_ENTRY_NOPROFILE(TLABEL(emu))
 	 * emulate it.
 	 */
 
-	/*
-	 * As an optimization, hppa_fpu_bootstrap replaces this branch inst-
-	 * ruction with a nop if there is a hardware FPU.
-	 *
-	 * Otherwise, this is the branch to emulate an FPU coprocessor.
-	 */
-ALTENTRY(hppa_fpu_nop0)
-	b,n	L$emulate_fpu
+hppa_fpu_emulate:
 
 	/*
 	 * We have a hardware FPU.  If it is enabled,  branch to emulate the
 	 * instruction.
 	 */
-	mfctl	%ccr, %arg0
+	mfctl	CR_CCR, %arg0
 	extru,= %arg0, 25, 2, %r1
 	b,n	L$emulate_fpu
 
@@ -1054,10 +1044,10 @@ ALTENTRY(hppa_fpu_swap)
 	 * 
 	 * Also, branch if there's no FPU state to swap out.
 	 */
-	mfctl	%ccr, %r1
+	mfctl	CR_CCR, %r1
 	depi	3, 25, 2, %r1
 	comb,=	%r0, %arg0, L$fpu_swap_in
-	mtctl	%r1, %ccr
+	mtctl	%r1, CR_CCR
 
 	/*
 	 * Swap out the current FPU state.
@@ -1094,19 +1084,6 @@ ALTENTRY(hppa_fpu_swap)
 	fstds,ma %fr29, 8(%arg0)
 	fstds,ma %fr30, 8(%arg0)
 	fstds    %fr31, 0(%arg0)
-
-	ldo	-248(%arg0), %arg0
-	ldil	L%dcache_stride, %r1
-	ldw	R%dcache_stride(%r1), %r1
-	fdc,m	%r1(%arg0)
-	fdc,m	%r1(%arg0)
-	fdc,m	%r1(%arg0)
-	fdc,m	%r1(%arg0)
-	fdc,m	%r1(%arg0)
-	fdc,m	%r1(%arg0)
-	fdc,m	%r1(%arg0)
-	fdc,m	%r1(%arg0)
-	sync
 
 L$fpu_swap_in:
 
@@ -1161,18 +1138,6 @@ L$fpu_swap_in:
 	fldds,ma -8(%arg1), %fr1
 	fldds     0(%arg1), %fr0	/* fr0 must be restored last */
 
-	ldil	L%dcache_stride, %r1
-	ldw	R%dcache_stride(%r1), %r1
-	fdc,m	%r1(%arg1)
-	fdc,m	%r1(%arg1)
-	fdc,m	%r1(%arg1)
-	fdc,m	%r1(%arg1)
-	fdc,m	%r1(%arg1)
-	fdc,m	%r1(%arg1)
-	fdc,m	%r1(%arg1)
-	fdc,m	%r1(%arg1)
-	sync
-
 L$fpu_swap_done:
 
 	/* Increment the switch count and return. */
@@ -1185,10 +1150,10 @@ L$fpu_swap_done:
 L$fpu_no_swap_in:
 
 	/* We didn't swap any FPU state in, so disable the FPU. */
-	mfctl	%ccr, %r1
+	mfctl	CR_CCR, %r1
 	depi	0, 25, 2, %r1
 	b	L$fpu_swap_done
-	mtctl	%r1, %ccr
+	mtctl	%r1, CR_CCR
 EXIT(hppa_fpu_swapout)
 
 	/* Construct the virtual address tag. */
@@ -1227,7 +1192,6 @@ EXIT(hppa_fpu_swapout)
 #define	TLB_STATS_AFT(t)	/**/
 #endif
 
-#if defined(HP7000_CPU) || defined(HP7100_CPU) || defined(HP7200_CPU)
 #define	TLB_PULL(bits,lbl)						! \
 	/* space:pgaddr -- %r8:%r9 */					! \
 	mfctl	CR_VTOP, %r16						! \
@@ -1249,6 +1213,36 @@ EXIT(hppa_fpu_swapout)
 	dep	%r0, 31, 12, %r17	/* needed ? */			! \
 	addi	2, %r25, %r25						! \
 	extru	%r17, 24, 25, %r17
+
+/*
+ * possible optimizations:
+ *	change pte to reduce number of shifts
+ *	reorder to reduce stalls
+ */
+#define	TLB_PULL_L(bits,lbl)						! \
+	/* space:pgaddr -- %r8:%r9 */					! \
+	mfctl	CR_VTOP, %r16						! \
+	ldwx,s	%r8(%r16), %r17		/* space -> page directory */	! \
+	extru	%r9, 9, 10, %r25					! \
+	combt,=,n %r0, %r17, lbl					! \
+	ldwx,s	%r25(%r17), %r24	/* page -> page table */	! \
+	extru	%r9, 19, 10, %r16					! \
+	combt,=,n %r0, %r24, lbl					! \
+	ldwx,s	%r16(%r24), %r17	/* va -> pa:prot */		! \
+	sh2addl	%r16, %r24, %r25					! \
+	combt,=,n %r0, %r17, lbl					! \
+	copy	%r17, %r16						! \
+	depi	(bits), 21+bits, 1+bits, %r17				! \
+	sub,=	%r16, %r17, %r0		/* do not store if unchanged */	! \
+	stws	%r17, 0(%r25)		/* store back w/ the bits */	! \
+	shd	%r17, %r0, 13, %r25					! \
+	dep	%r8, 30, 15, %r25	/* mix0r the pid from the sid */! \
+	dep	%r0, 31, 12, %r17	/* needed ? */			! \
+	addi	2, %r25, %r25						! \
+	extru	%r17, 24, 25, %r17	/* tlbbtop(%r17) */		! \
+	sync
+
+#if defined(HP7000_CPU) || defined(HP7100_CPU) || defined(HP7200_CPU)
 
 	.align	32
 
@@ -1403,34 +1397,6 @@ EXIT(TLABEL(dtlbna_s))
 #define	IITLBPF(r)	.word	0x04000400 | ((r) << 16)
 #define	IDTLBAF(r)	.word	0x04001440 | ((r) << 16)
 #define	IDTLBPF(r)	.word	0x04001400 | ((r) << 16)
-
-/*
- * possible optimizations:
- *	change pte to reduce number of shifts
- *	reorder to reduce stalls
- */
-#define	TLB_PULL_L(bits,lbl)						! \
-	/* space:pgaddr -- %r8:%r9 */					! \
-	mfctl	CR_VTOP, %r16						! \
-	ldwx,s	%r8(%r16), %r17		/* space -> page directory */	! \
-	extru	%r9, 9, 10, %r25					! \
-	combt,=,n %r0, %r17, lbl					! \
-	ldwx,s	%r25(%r17), %r24	/* page -> page table */	! \
-	extru	%r9, 19, 10, %r16					! \
-	combt,=,n %r0, %r24, lbl					! \
-	ldwx,s	%r16(%r24), %r17	/* va -> pa:prot */		! \
-	sh2addl	%r16, %r24, %r25					! \
-	combt,=,n %r0, %r17, lbl					! \
-	copy	%r17, %r16						! \
-	depi	(bits), 21+bits, 1+bits, %r17				! \
-	sub,=	%r16, %r17, %r0		/* do not store if unchanged */	! \
-	stws	%r17, 0(%r25)		/* store back w/ the bits */	! \
-	shd	%r17, %r0, 13, %r25					! \
-	dep	%r8, 30, 15, %r25	/* mix0r the pid from the sid */! \
-	dep	%r0, 31, 12, %r17	/* needed ? */			! \
-	addi	2, %r25, %r25						! \
-	extru	%r17, 24, 25, %r17	/* tlbbtop(%r17) */		! \
-	sync
 
 	.align	32
 
@@ -1605,7 +1571,10 @@ L$dtlb_done_l:
 EXIT(TLABEL(dtlb_l))
 #endif /* defined(HP7100LC_CPU) || defined(HP7300LC_CPU) */
 
-#if defined(HP8000_CPU) || defined(HP8200_CPU) || defined(HP8500_CPU)
+#if defined(HP8000_CPU) || defined(HP8200_CPU) || \
+    defined(HP8500_CPU) || defined(HP8600_CPU) || \
+    defined(HP8700_CPU)
+
 	.level	2.0w
 
 	/* xlate 32bit->64bit pte */
@@ -1743,7 +1712,7 @@ EXIT(TLABEL(dtlb_u))
 	.level	1.1
 #endif /* HP8000_CPU */
 
-#if defined(HP7000_CPU) || defined(HP7100_CPU)
+#if defined(HP7000_CPU)
 /*
  * int desidhash_s(void)
  * int desidhash_x(void)
@@ -1767,7 +1736,7 @@ ALTENTRY(desidhash_x)
 	bv	0(%rp)
 	extru	%t1, 4, 5, %ret0	/* return chip revision */
 EXIT(desidhash_s)
-#endif /* defined(HP7000_CPU) || defined(HP7100_CPU) */
+#endif /* defined(HP7000_CPU) */
 
 #if defined(HP7100_CPU) || defined(HP7200_CPU)
 /*
@@ -1876,7 +1845,10 @@ EXIT(desidhash_l)
 
 #endif /* defined(HP7100LC_CPU) || defined(HP7300LC_CPU) */
 
-#if defined(HP8000_CPU) || defined(HP8200_CPU) || defined(HP8500_CPU)
+#if defined(HP8000_CPU) || defined(HP8200_CPU) || \
+    defined(HP8500_CPU) || defined(HP8600_CPU) || \
+    defined(HP8700_CPU)
+
 	.level	2.0w
 LEAF_ENTRY_NOPROFILE(desidhash_u)
 	MFCPU_U(2,28)
@@ -1898,7 +1870,7 @@ LEAF_ENTRY_NOPROFILE(pbtlb_u)
 	nop
 EXIT(pbtlb_u)
 	.level	1.1
-#endif /* HP8000_CPU */
+#endif /* HP8000_CPU || HP8200_CPU || HP8500_CPU || HP8600_CPU || HP8700_CPU */
 
 	.align	64
 	.export	TLABEL(all), entry
@@ -2045,7 +2017,7 @@ L$trap_have_stack:
 	stw	%r1, CI_TRAPSAVE + TF_FLAGS(%t3)
 
 	/* gotta get it before R is up */
-	mfctl	%rctr, %t1
+	mfctl	CR_RCTR, %t1
 
 	copy	%sp, %t3
 	ldo	HPPA_FRAME_SIZE+TRAPFRAME_SIZEOF(%sp), %sp
@@ -2065,7 +2037,7 @@ trapnowvirt:
 	 * %sp is loaded w/ the right VA (we did not need it being physical)
 	 */
 
-	mfctl	%ccr, %t2
+	mfctl	CR_CCR, %t2
 	stw	%t1, TF_CR0(%sr3, %t3)
 	stw	%t2, TF_CR10(%sr3, %t3)
 
@@ -2152,7 +2124,6 @@ trapnowvirt:
 	 *
 	 * See similar #ifdefs in the syscall entry and exit code.
 	 */
-#if defined(DDB) || defined(KGDB) || defined(FPEMUL)
 	stw	%r4, TF_R4(%t3)
 	stw	%r5, TF_R5(%t3)
 	stw	%r6, TF_R6(%t3)
@@ -2168,7 +2139,7 @@ trapnowvirt:
 	stw	%r16, TF_R16(%t3)
 	stw	%r17, TF_R17(%t3)
 	stw	%r18, TF_R18(%t3)
-#endif /* DDB || KGDB || FPEMUL */
+
 	stw	%t4, TF_R19(%t3)
 	stw	%r23,TF_R23(%t3)
 	stw	%r24,TF_R24(%t3)

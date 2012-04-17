@@ -1,11 +1,11 @@
-/*	$NetBSD: midi_pcppi.c,v 1.23 2009/04/10 10:18:50 mlelstv Exp $	*/
+/*	$NetBSD: midi_pcppi.c,v 1.23.12.1 2012/04/17 00:07:39 yamt Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@NetBSD.org).
+ * by Lennart Augustsson (augustss@NetBSD.org), and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,20 +30,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi_pcppi.c,v 1.23 2009/04/10 10:18:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi_pcppi.c,v 1.23.12.1 2012/04/17 00:07:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/select.h>
 #include <sys/audioio.h>
 #include <sys/midiio.h>
-
+#include <sys/tty.h>
 #include <sys/bus.h>
 
 #include <dev/isa/pcppivar.h>
@@ -64,16 +63,16 @@ static int	midi_pcppi_match(device_t, cfdata_t , void *);
 static void	midi_pcppi_attach(device_t, device_t, void *);
 static int	midi_pcppi_detach(device_t, int);
 
-void	midi_pcppi_on   (midisyn *, uint_fast16_t, midipitch_t, int16_t);
-void	midi_pcppi_off  (midisyn *, uint_fast16_t, uint_fast8_t);
-void	midi_pcppi_close(midisyn *);
-static void midi_pcppi_repitchv(midisyn *, uint_fast16_t, midipitch_t);
+static void	midi_pcppi_on   (midisyn *, uint_fast16_t, midipitch_t, int16_t);
+static void	midi_pcppi_off  (midisyn *, uint_fast16_t, uint_fast8_t);
+static void	midi_pcppi_close(midisyn *);
+static void	midi_pcppi_repitchv(midisyn *, uint_fast16_t, midipitch_t);
 
 CFATTACH_DECL3_NEW(midi_pcppi, sizeof(struct midi_pcppi_softc),
     midi_pcppi_match, midi_pcppi_attach, midi_pcppi_detach, NULL, NULL, NULL,
     DVF_DETACH_SHUTDOWN);
 
-struct midisyn_methods midi_pcppi_hw = {
+static struct midisyn_methods midi_pcppi_hw = {
 	.close    = midi_pcppi_close,
 	.attackv  = midi_pcppi_on,
 	.releasev = midi_pcppi_off,
@@ -95,21 +94,20 @@ midi_pcppi_attach(device_t parent, device_t self, void *aux)
 	struct pcppi_attach_args *pa = (struct pcppi_attach_args *)aux;
 	midisyn *ms;
 
-	sc->sc_mididev.dev = self;
+	midi_pcppi_attached++;
+
 	ms = &sc->sc_midisyn;
 	ms->mets = &midi_pcppi_hw;
 	strcpy(ms->name, "PC speaker");
 	ms->nvoice = 1;
 	ms->data = pa->pa_cookie;
+	ms->lock = &tty_lock;
+	midisyn_init(ms);
 
-	midi_pcppi_attached++;
-
-	midisyn_attach(&sc->sc_mididev, ms);
-	midi_attach(&sc->sc_mididev, parent);
-        if (!device_pmf_is_registered(self))
-		if (!pmf_device_register(self, NULL, NULL))
-			aprint_error_dev(self,
-			    "couldn't establish power handler\n"); 
+	sc->sc_mididev.dev = self;
+	sc->sc_mididev.hw_if = &midisyn_hw_if;
+	sc->sc_mididev.hw_hdl = ms;
+	midi_attach(&sc->sc_mididev);
 }
 
 static int
@@ -121,37 +119,44 @@ midi_pcppi_detach(device_t self, int flags)
 	return mididetach(self, flags);
 } 
 
-void
+static void
 midi_pcppi_on(midisyn *ms,
     uint_fast16_t voice, midipitch_t mp, int16_t level)
 {
 	pcppi_tag_t t = ms->data;
 
-	pcppi_bell(t,
-	           MIDIHZ18_TO_HZ(MIDIPITCH_TO_HZ18(mp)),
-	           MAX_DURATION * hz, 0);
+	KASSERT(mutex_owned(&tty_lock));
+
+	pcppi_bell_locked(t, MIDIHZ18_TO_HZ(MIDIPITCH_TO_HZ18(mp)),
+	    MAX_DURATION * hz, 0);
 }
 
-void
+static void
 midi_pcppi_off(midisyn *ms, uint_fast16_t voice, uint_fast8_t vel)
 {
 	pcppi_tag_t t = ms->data;
 
+	KASSERT(mutex_owned(&tty_lock));
+
 	/*printf("OFF %p %d\n", t, note >> 16);*/
-	pcppi_bell(t, 0, 0, 0);
+	pcppi_bell_locked(t, 0, 0, 0);
 }
 
-void
+static void
 midi_pcppi_close(midisyn *ms)
 {
 	pcppi_tag_t t = ms->data;
 
+	KASSERT(mutex_owned(&tty_lock));
+
 	/* Make sure we are quiet. */
-	pcppi_bell(t, 0, 0, 0);
+	pcppi_bell_locked(t, 0, 0, 0);
 }
 
 static void
 midi_pcppi_repitchv(midisyn *ms, uint_fast16_t voice, midipitch_t newpitch)
 {
+	KASSERT(mutex_owned(&tty_lock));
+
 	midi_pcppi_on(ms, voice, newpitch, 64);
 }

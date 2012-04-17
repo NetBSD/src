@@ -1,4 +1,4 @@
-#	$NetBSD: M403,v 1.52 2011/03/06 17:08:20 bouyer Exp $
+#	$NetBSD: M403,v 1.52.4.1 2012/04/17 00:06:03 yamt Exp $
 #
 #	configuration file for MIPS Magnum 4000 system
 #
@@ -212,7 +212,6 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port arc yet.
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
 

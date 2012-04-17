@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.5 2011/04/04 08:30:29 mbalmer Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.5.4.1 2012/04/17 00:02:52 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,3 +50,6 @@ message dobootblks
 
 message set_kernel_1
 {Kernel (GENERIC)}
+
+message md_pdclimit
+{La partición raíz se extiende más allá del límite de 2 GB PDC}

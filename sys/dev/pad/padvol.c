@@ -1,4 +1,4 @@
-/* $NetBSD: padvol.c,v 1.5 2011/02/28 16:56:39 riz Exp $ */
+/* $NetBSD: padvol.c,v 1.5.4.1 2012/04/17 00:07:42 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: padvol.c,v 1.5 2011/02/28 16:56:39 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: padvol.c,v 1.5.4.1 2012/04/17 00:07:42 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,7 +57,8 @@ pad_filter_dtor(stream_filter_t *this)
 
 static stream_filter_t *
 pad_filter_factory(struct audio_softc *sc,
-    int (*fetch_to)(stream_fetcher_t *, audio_stream_t *, int))
+    int (*fetch_to)(struct audio_softc *, stream_fetcher_t *,
+    audio_stream_t *, int))
 {
 	pad_filter_t *this;
 
@@ -84,7 +85,7 @@ PAD_DEFINE_FILTER(pad_vol_slinear16_le)
 	this = &pf->base;
 	max_used = (max_used + 1) & ~1;
 
-	if ((err = this->prev->fetch_to(this->prev, this->src, max_used)))
+	if ((err = this->prev->fetch_to(asc, this->prev, this->src, max_used)))
 		return err;
 	m = (dst->end - dst->start) & ~1;
 	m = min(m, max_used);
@@ -110,7 +111,7 @@ PAD_DEFINE_FILTER(pad_vol_slinear16_be)
 	this = &pf->base;
 	max_used = (max_used + 1) & ~1;
 
-	if ((err = this->prev->fetch_to(this->prev, this->src, max_used)))
+	if ((err = this->prev->fetch_to(asc, this->prev, this->src, max_used)))
 		return err;
 	m = (dst->end - dst->start) & ~1;
 	m = min(m, max_used);

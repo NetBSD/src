@@ -45,7 +45,8 @@ copy_file (const char *from, const char *to)
     if ((rsize = islink (from)) > 0)
     {
 	char *source = Xreadlink (from, rsize);
-	symlink (source, to);
+	if (symlink (source, to) == -1)
+	    error (1, errno, "cannot symlink %s to %s", source, to);
 	free (source);
 	return;
     }

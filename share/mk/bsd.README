@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.289.2.1 2011/11/10 14:31:38 yamt Exp $
+#	$NetBSD: bsd.README,v 1.289.2.2 2012/04/17 00:05:50 yamt Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -128,7 +128,7 @@ MKBSDTAR	If "yes", use the libarchive based cpio and tar instead of
 		Default: no
 
 MKCATPAGES	If "no", don't build or install the catman pages.
-		Default: yes
+		Default: no
 
 MKCOMPAT  	If "no", don't build or install the src/compat.
 		Default: yes on amd64/sparc64, no elsewhere.
@@ -253,7 +253,7 @@ MKMANDOC	If "yes", mandoc is built as tool and used to compile
 		catman or html pages.  A directory can be exempted by
 		defining NOMANDOC.  Individual man pages are exempted
 		if NOMANDOC.${target} is set to "yes".
-		Default: no
+		Default: yes
 
 MKMANZ		If not "no", compress manual pages at installation time.
 		Default: no
@@ -512,7 +512,7 @@ MANMODE		Manual mode.  [${NONBINMODE}]
 
 MANINSTALL	Manual installation type.  Space separated list:
 			catinstall, htmlinstall, maninstall
-		[catinstall maninstall htmlinstall]
+		Default value derived from MKCATPAGES and MKHTML.
 
 LDSTATIC	Control program linking; if set blank, link everything
 		dynamically.  If set to "-static", link everything statically.
@@ -1412,6 +1412,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBDNS?=	${DESTDIR}/usr/lib/libdns.a
 		LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
 		LIBEVENT?=	${DESTDIR}/usr/lib/libevent.a
+		LIBEXPAT?=	${DESTDIR}/usr/lib/libexpat.a
 		LIBFETCH?=	${DESTDIR}/usr/lib/libfetch.a
 		LIBFORM?=	${DESTDIR}/usr/lib/libform.a
 		LIBFL?=		${DESTDIR}/usr/lib/libfl.a
@@ -1523,7 +1524,6 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBXXF86MISC?=	${DESTDIR}/usr/X11R7/lib/libXxf86misc.a
 		LIBXXF86VM?=	${DESTDIR}/usr/X11R7/lib/libXxf86vm.a
 		LIBDPS?=	${DESTDIR}/usr/X11R7/lib/libdps.a
-		LIBEXPAT?=	${DESTDIR}/usr/X11R7/lib/libexpat.a
 		LIBFNTSTUBS?=	${DESTDIR}/usr/X11R7/lib/libfntstubs.a
 		LIBFONTCACHE?=	${DESTDIR}/usr/X11R7/lib/libfontcache.a
 		LIBFONTCONFIG?=	${DESTDIR}/usr/X11R7/lib/libfontconfig.a
@@ -1730,6 +1730,9 @@ OBJC		Objective C compiler.  [${CC}]
 OBJCFLAGS	Options to ${OBJC}.  [${CFLAGS}]
 
 OBJCOPY		Copy and translate object files.  [objcopy]
+
+OBJCOPYLIBFLAGS	Flags to pass to objcopy when library objects are
+		being built. [${.TARGET} =~ "*.po" ? -X : -x]
 
 OBJDUMP		Display information from object files.  [objdump]
 

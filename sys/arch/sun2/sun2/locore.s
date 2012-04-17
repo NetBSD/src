@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.23 2010/02/25 07:21:20 skrll Exp $	*/
+/*	$NetBSD: locore.s,v 1.23.10.1 2012/04/17 00:06:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -575,14 +575,6 @@ Ldorte:
 GLOBAL(getsp)
 	movl	%sp,%d0			| get current SP
 	addql	#4,%d0			| compensate for return address
-	rts
-
-ENTRY(getsfc)
-	movc	%sfc,%d0
-	rts
-
-ENTRY(getdfc)
-	movc	%dfc,%d0
 	rts
 
 ENTRY(getvbr)

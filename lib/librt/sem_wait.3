@@ -1,4 +1,4 @@
-.\" $NetBSD: sem_wait.3,v 1.1 2003/01/24 01:52:45 thorpej Exp $
+.\" $NetBSD: sem_wait.3,v 1.1.54.1 2012/04/17 00:05:32 yamt Exp $
 .\"
 .\" Copyright (C) 2000 Jason Evans <jasone@FreeBSD.org>.
 .\" All rights reserved.
@@ -27,11 +27,12 @@
 .\" OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 .\" EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 22, 2003
+.Dd February 29, 2012
 .Dt SEM_WAIT 3
 .Os
 .Sh NAME
 .Nm sem_wait ,
+.Nm sem_timedwait ,
 .Nm sem_trywait
 .Nd decrement (lock) a semaphore
 .Sh LIBRARY
@@ -40,6 +41,8 @@
 .In semaphore.h
 .Ft int
 .Fn sem_wait "sem_t *sem"
+.Ft int
+.Fn sem_timedwait "sem_t *sem" "const struct timespec * restrict abstime"
 .Ft int
 .Fn sem_trywait "sem_t *sem"
 .Sh DESCRIPTION
@@ -52,6 +55,14 @@ but blocks if the value of
 is zero, until the value is non-zero and the value can be decremented.
 .Pp
 The
+.Fn sem_timedwait
+function performs the same action, but will not wait beyond
+.Fa abstime
+for the value of
+.Fa sem
+to be non-zero.
+.Pp
+The
 .Fn sem_trywait
 function decrements (locks) the semaphore pointed to by
 .Fa sem
@@ -60,7 +71,8 @@ Otherwise, the semaphore is not decremented and an error is returned.
 .Sh RETURN VALUES
 .Rv -std sem_wait
 .Sh ERRORS
-.Fn sem_wait
+.Fn sem_wait ,
+.Fn sem_timedwait ,
 and
 .Fn sem_trywait
 will fail if:
@@ -76,6 +88,15 @@ will fail if:
 .Bl -tag -width Er
 .It Bq Er EAGAIN
 The semaphore value was zero, and thus could not be decremented.
+.El
+.Pp
+.Fn sem_timedwait
+will also fail if:
+.Bl -tag -width Er
+.It Bq Er ETIMEDOUT
+The semaphore value was zero and
+.Fa abstime
+was reached.
 .El
 .Sh SEE ALSO
 .Xr sem_post 3

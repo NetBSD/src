@@ -1,7 +1,7 @@
-/*	$NetBSD: gus_isapnp.c,v 1.35 2009/05/12 10:16:35 cegger Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.35.12.1 2012/04/17 00:07:40 yamt Exp $	*/
 
 /*
- * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1999, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Author: Kari Mettinen
@@ -29,27 +29,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.35 2009/05/12 10:16:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.35.12.1 2012/04/17 00:07:40 yamt Exp $");
 
 #include "guspnp.h"
 #if NGUSPNP > 0
 
 #include <sys/param.h>
-#include <sys/fcntl.h>
-#include <sys/vnode.h>
-#include <sys/poll.h>
-#include <sys/malloc.h>
-#include <sys/select.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-
 #include <sys/bus.h>
-
 #include <sys/audioio.h>
+
 #include <dev/audio_if.h>
 #include <dev/audiovar.h>
 #include <dev/mulaw.h>
@@ -60,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.35 2009/05/12 10:16:35 cegger Exp $
 #include <dev/isapnp/isapnpreg.h>
 #include <dev/isapnp/isapnpvar.h>
 #include <dev/isapnp/isapnpdevs.h>
-
 
 #include <dev/ic/interwavevar.h>
 #include <dev/ic/interwavereg.h>
@@ -98,7 +91,7 @@ static const struct audio_hw_if guspnp_hw_if = {
 	NULL,			/* trigger_output */
 	NULL,			/* trigger_input */
 	NULL,			/* dev_ioctl */
-	NULL,			/* powerstate */
+	iw_get_locks,
 };
 
 CFATTACH_DECL(guspnp, sizeof(struct iw_softc),

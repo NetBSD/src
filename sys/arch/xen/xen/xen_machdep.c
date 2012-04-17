@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.8 2011/09/20 00:12:24 jym Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.8.2.1 2012/04/17 00:07:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.8 2011/09/20 00:12:24 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.8.2.1 2012/04/17 00:07:12 yamt Exp $");
 
 #include "opt_xen.h"
 
@@ -285,17 +285,8 @@ xen_prepare_suspend(void)
 {
 	kpreempt_disable();
 
-	/*
-	 * Xen lazy evaluation of recursive mappings requires
-	 * to flush the APDP entries
-	 */
-	pmap_unmap_all_apdp_pdes();
-
-#ifdef PAE
-	pmap_unmap_recursive_entries();
-#endif
-
-	xen_suspendclocks();
+	pmap_xen_suspend();
+	xen_suspendclocks(curcpu());
 
 	/*
 	 * save/restore code does not translate these MFNs to their
@@ -330,9 +321,7 @@ xen_prepare_resume(void)
 		HYPERVISOR_crash();
 	}
 
-#ifdef PAE
-	pmap_map_recursive_entries();
-#endif
+	pmap_xen_resume();
 
 	if (xen_start_info.nr_pages != physmem) {
 		/*
@@ -348,7 +337,7 @@ xen_prepare_resume(void)
 
 	xen_suspend_allow = false;
 
-	xen_resumeclocks();
+	xen_resumeclocks(curcpu());
 
 	kpreempt_enable();
 

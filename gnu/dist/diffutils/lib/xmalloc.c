@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.c,v 1.1.1.1 2003/01/26 00:43:15 wiz Exp $	*/
+/*	$NetBSD: xmalloc.c,v 1.1.1.1.54.1 2012/04/17 00:05:07 yamt Exp $	*/
 
 /* xmalloc.c -- malloc with out of memory checking
    Copyright (C) 1990-1999, 2000, 2002 Free Software Foundation, Inc.
@@ -84,7 +84,7 @@ xmalloc (size_t n)
   void *p;
 
   p = malloc (n);
-  if (p == 0)
+  if (p == 0 && n)
     xalloc_die ();
   return p;
 }
@@ -96,7 +96,7 @@ void *
 xrealloc (void *p, size_t n)
 {
   p = realloc (p, n);
-  if (p == 0)
+  if (p == 0 && n)
     xalloc_die ();
   return p;
 }
@@ -109,7 +109,7 @@ xcalloc (size_t n, size_t s)
   void *p;
 
   p = calloc (n, s);
-  if (p == 0)
+  if (p == 0 && n && s)
     xalloc_die ();
   return p;
 }

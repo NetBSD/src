@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.350 2011/10/30 12:12:21 hannken Exp $
+#	$NetBSD: files.pci,v 1.350.2.1 2012/04/17 00:07:45 yamt Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -826,7 +826,7 @@ attach	machfb at pci
 file	dev/pci/machfb.c		machfb
 
 # 3Dfx Voodoo3 framebuffer console driver
-device	voodoofb: wsemuldisplaydev, rasops8, vcons, videomode, drm
+device	voodoofb: wsemuldisplaydev, rasops8, vcons, videomode, drm, i2cbus, i2c_bitbang, ddc_read_edid, edid
 attach	voodoofb at pci
 file	dev/pci/voodoofb.c		voodoofb
 
@@ -837,7 +837,7 @@ file	dev/pci/unichromefb.c		unichromefb needs-flag
 
 # ATI Radeon framebuffer console driver
 # (Note: to enable the BIOS parser, add options RADEON_BIOS_INIT to the config)
-device	radeonfb: wsemuldisplaydev, videomode, rasops8, rasops32, vcons, splash, iic, i2c_bitbang, ddc_read_edid, edid, drm
+device	radeonfb: wsemuldisplaydev, videomode, rasops8, rasops32, vcons, splash, i2cbus, i2c_bitbang, ddc_read_edid, edid, drm, glyphcache
 attach	radeonfb at pci
 file	dev/pci/radeonfb.c	radeonfb
 file	dev/pci/radeonfb_i2c.c	radeonfb
@@ -846,6 +846,7 @@ defflag opt_radeonfb.h	RADEONFB_DEBUG
 defflag opt_radeonfb.h	RADEONFB_BIOS_INIT
 defflag opt_radeonfb.h	RADEONFB_BIOS_DEBUG
 defflag opt_radeonfb.h	RADEONFB_MMAP_BARS
+defflag opt_radeonfb.h	RADEONFB_DEPTH_32
 
 # Chelsio Terminator 3 (T3) 10 gigabit ethernet
 device	cxgbc { }
@@ -979,7 +980,7 @@ attach	ichsmb at pci
 file	dev/pci/ichsmb.c		ichsmb
 
 # ATI Rage 128 framebuffer console driver
-device	r128fb: wsemuldisplaydev, rasops8, vcons, videomode, iic, i2c_bitbang
+device	r128fb: wsemuldisplaydev, rasops8, rasops32, vcons, videomode, i2cbus, i2c_bitbang, glyphcache
 attach	r128fb at pci
 file	dev/pci/r128fb.c		r128fb
 defflag	opt_r128fb.h	R128FB_DEBUG
@@ -1031,7 +1032,7 @@ file	dev/pci/mvsata_pci.c		mvsata_pci
 
 include "dev/pci/voyager/files.voyager"
 # Silicon Motion SM502 / Voyager GX
-device	voyager: iic, i2c_bitbang, voyagerbus, i2cbus
+device	voyager: i2c_bitbang, voyagerbus, i2cbus
 attach	voyager at pci
 file	dev/pci/voyager.c		voyager
 defflag	opt_voyager.h	VOYAGER_DEBUG
@@ -1040,7 +1041,7 @@ defflag	opt_voyager.h	VOYAGER_DEBUG
 include "dev/pci/hdaudio/files.hdaudio"
 
 # Permedia 2 / Sun PGX32 / Raptor
-device	pm2fb: wsemuldisplaydev, rasops8, vcons, videomode, iic, i2c_bitbang
+device	pm2fb: wsemuldisplaydev, rasops8, rasops32, vcons, videomode, i2cbus, i2c_bitbang, ddc_read_edid, edid
 attach	pm2fb at pci
 file	dev/pci/pm2fb.c		pm2fb
 defflag	opt_pm2fb.h	PM2FB_DEBUG
@@ -1101,3 +1102,8 @@ file	dev/pci/viomb.c		viomb
 device	vioif
 attach	vioif at virtio
 file	dev/pci/if_vioif.c	vioif
+
+# Silicon Motion SM712(LynxEM+) frame buffer
+device	lynxfb: wsemuldisplaydev, rasops16
+attach	lynxfb at pci
+file	dev/pci/lynxfb.c	lynxfb needs-flag

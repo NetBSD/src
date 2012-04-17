@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0_spi.h,v 1.2 2005/12/11 12:16:51 christos Exp $ */
+/* $NetBSD: s3c24x0_spi.h,v 1.2.114.1 2012/04/17 00:06:07 yamt Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec corporation.  All rights reserved.
@@ -53,5 +53,10 @@ struct ssspi_attach_args {
 
 
 int s3c24x0_spi_setup(struct ssspi_softc *, uint32_t, int, int);
+int s3c24x0_spi_master_send(struct ssspi_softc *, uint8_t);
+int s3c24x0_spi_wait(struct ssspi_softc *, uint8_t*);
+void s3c24x0_spi_spin_wait(struct ssspi_softc *sc);
+int s3c24x0_spi_bps(struct ssspi_softc *sc, int bps);
+
 
 #endif /* _S3C2410_SPI_H_ */

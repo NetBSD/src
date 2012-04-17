@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.81 2011/09/16 15:39:27 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.81.2.1 2012/04/17 00:09:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.81 2011/09/16 15:39:27 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.81.2.1 2012/04/17 00:09:37 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -232,7 +232,7 @@ struct protox {
 	  carp_stats,	NULL,		0,	"carp" },
 #ifdef IPSEC
 	{ -1,		N_IPSECSTAT,	1,	0,
-	  ipsec_switch,	NULL,		0,	"ipsec" },
+	  fast_ipsec_stats, NULL,	0,	"ipsec" },
 #endif
 	{ -1,		N_PIMSTAT,	1,	0,
 	  pim_stats,	NULL,		0,	"pim" },
@@ -259,7 +259,7 @@ struct protox ip6protox[] = {
 	  udp6_stats,	NULL,		0,	"udp6" },
 #ifdef IPSEC
 	{ -1,		N_IPSEC6STAT,	1,	0,
-	  ipsec_switch,	NULL,		0,	"ipsec6" },
+	  fast_ipsec_stats, NULL,	0,	"ipsec6" },
 #endif
 	{ -1,		N_PIM6STAT,	1,	0,
 	  pim6_stats,	NULL,		0,	"pim6" },
@@ -435,9 +435,7 @@ prepare(const char *nf, const char *mf, struct protox *tp)
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct protoent *p;
 	struct protox *tp;	/* for printing cblocks & stats */
@@ -749,9 +747,7 @@ main(argc, argv)
  * is not in the namelist, ignore this one.
  */
 static void
-printproto(tp, name)
-	struct protox *tp;
-	const char *name;
+printproto(struct protox *tp, const char *name)
 {
 	void (*pr) __P((u_long, const char *));
 	u_long off;
@@ -780,7 +776,7 @@ printproto(tp, name)
  * Print softintrq status.
  */
 void
-print_softintrq()
+print_softintrq(void)
 {
 	struct ifqueue intrq, *ifq = &intrq;
 	const struct softintrq *siq;
@@ -803,10 +799,7 @@ print_softintrq()
  * Read kernel memory, return 0 on success.
  */
 int
-kread(addr, buf, size)
-	u_long addr;
-	char *buf;
-	int size;
+kread(u_long addr, char *buf, int size)
 {
 
 	if (kvm_read(kvmd, addr, buf, size) != size) {
@@ -817,16 +810,14 @@ kread(addr, buf, size)
 }
 
 const char *
-plural(n)
-	int n;
+plural(int n)
 {
 
 	return (n != 1 ? "s" : "");
 }
 
 const char *
-plurales(n)
-	int n;
+plurales(int n)
 {
 
 	return (n != 1 ? "es" : "");
@@ -846,8 +837,7 @@ get_hardticks(void)
  * Find the protox for the given "well-known" name.
  */
 static struct protox *
-knownname(name)
-	const char *name;
+knownname(const char *name)
 {
 	struct protox **tpp, *tp;
 
@@ -862,8 +852,7 @@ knownname(name)
  * Find the protox corresponding to name.
  */
 static struct protox *
-name2protox(name)
-	const char *name;
+name2protox(const char *name)
 {
 	struct protox *tp;
 	char **alias;			/* alias from p->aliases */
@@ -890,7 +879,7 @@ name2protox(name)
 }
 
 static void
-usage()
+usage(void)
 {
 	const char *progname = getprogname();
 

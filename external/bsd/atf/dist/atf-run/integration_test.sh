@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008, 2009, 2010, 2011 The NetBSD Foundation, Inc.
+# Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -381,8 +381,9 @@ EOF
 
     create_atffile helper
 
+    re='^tc-end: [0-9][0-9]*\.[0-9]*, tc1,'
     atf_check -s eq:1 \
-        -o match:'^tc-end: tc1, failed,.*failed to create' \
+        -o match:"${re} failed,.*failed to create" \
         -o not-match:'resfile found' \
         -e empty atf-run
 }
@@ -407,7 +408,8 @@ EOF
 
     create_atffile helper
 
-    atf_check -s eq:1 -o match:'^tc-end: tc1, .*line 1.*line 2' -e empty atf-run
+    re='^tc-end: [0-9][0-9]*\.[0-9]*, tc1,'
+    atf_check -s eq:1 -o match:"${re} .*line 1.*line 2" -e empty atf-run
 }
 
 atf_test_case broken_tp_list
@@ -436,7 +438,7 @@ EOF
 
     create_atffile helper
 
-    re='^tp-end: helper,'
+    re='^tp-end: [0-9][0-9]*\.[0-9]*, helper,'
     re="${re} Invalid format for test case list:.*First property.*ident"
     atf_check -s eq:1 -o match:"${re}" -e empty atf-run
 }
@@ -458,8 +460,9 @@ EOF
 
     create_atffile helper
 
+    re='^tp-end: [0-9][0-9]*\.[0-9]*, helper,'
     atf_check -s eq:1 \
-        -o match:'^tp-end: helper,.*Invalid format for test case list' \
+        -o match:"${re} .*Invalid format for test case list" \
         -e empty atf-run
 }
 
@@ -479,8 +482,9 @@ EOF
 
     create_atffile helper
 
+    re='^tc-end: [0-9][0-9]*\.[0-9]*, tc1,'
     atf_check -s eq:1 \
-        -o match:'^tc-end: tc1,.*exited successfully.*reported failure' \
+        -o match:"${re} .*exited successfully.*reported failure" \
         -e empty atf-run
 }
 
@@ -503,7 +507,8 @@ EOF
 
     create_atffile helper
 
-    atf_check -s eq:1 -o match:'^tc-end: tc2,.*received signal 9' \
+    re='^tc-end: [0-9][0-9]*\.[0-9]*, tc2,'
+    atf_check -s eq:1 -o match:"${re} .*received signal 9" \
         -e empty atf-run
 }
 

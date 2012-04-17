@@ -1,4 +1,4 @@
-/*	$NetBSD: t_modctl.c,v 1.5 2010/11/03 16:10:23 christos Exp $	*/
+/*	$NetBSD: t_modctl.c,v 1.5.6.1 2012/04/17 00:09:14 yamt Exp $	*/
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: t_modctl.c,v 1.5 2010/11/03 16:10:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: t_modctl.c,v 1.5.6.1 2012/04/17 00:09:14 yamt Exp $");
 
 #include <sys/module.h>
 #include <sys/sysctl.h>
@@ -44,54 +44,32 @@ __KERNEL_RCSID(0, "$NetBSD: t_modctl.c,v 1.5 2010/11/03 16:10:23 christos Exp $"
 
 #include <atf-c.h>
 
-static bool have_modular = false;
-
 enum presence_check { both_checks, stat_check, sysctl_check };
+
+static bool	skip_nonmodular(void);
+static bool	get_modstat_info(const char *, modstat_t *);
+static bool	get_sysctl(const char *, void *buf, const size_t);
+static bool	k_helper_is_present_stat(void);
+static bool	k_helper_is_present_sysctl(void);
+static bool	k_helper_is_present(enum presence_check);
+static int	load(prop_dictionary_t, bool, const char *, ...);
+static int	unload(const char *, bool);
+static void	unload_cleanup(const char *);
 
 /* --------------------------------------------------------------------- */
 /* Auxiliary functions                                                   */
 /* --------------------------------------------------------------------- */
 
 /*
- * Checks if the kernel has 'options MODULAR' built into it and returns
- * a boolean indicating this condition.  This function must be called
- * during the test program's initialization and the result be stored
- * globally for further (efficient) usage of require_modular().
+ * A function that is called if the kernel is detected to be non-MODULAR.
  */
-static
-bool
-check_modular(void)
+static bool
+skip_nonmodular(void)
 {
-	bool res;
-	struct iovec iov;
-
-	iov.iov_base = NULL;
-	iov.iov_len = 0;
-
-	if (modctl(MODCTL_STAT, &iov) == 0)
-		res = true;
-	else
-		res = (errno != ENOSYS);
-
-	return res;
+	atf_tc_skip("Kernel does not have 'options MODULAR'.");
 }
 
-/*
- * Makes sure that the kernel has 'options MODULAR' built into it and
- * skips the test otherwise.  Cannot be called unless check_modular()
- * has been executed before.
- */
-static
-void
-require_modular(void)
-{
-
-	if (!have_modular)
-		atf_tc_skip("Kernel does not have 'options MODULAR'.");
-}
-
-static
-bool
+static bool
 get_modstat_info(const char *name, modstat_t *msdest)
 {
 	bool found;
@@ -102,7 +80,14 @@ get_modstat_info(const char *name, modstat_t *msdest)
 	for (len = 4096; ;) {
 		iov.iov_base = malloc(len);
 		iov.iov_len = len;
+
+		errno = 0;
+
 		if (modctl(MODCTL_STAT, &iov) != 0) {
+
+			if (errno == ENOSYS)
+				skip_nonmodular();
+
 			int err = errno;
 			fprintf(stderr, "modctl(MODCTL_STAT) failed: %s\n",
 			    strerror(err));
@@ -133,8 +118,7 @@ get_modstat_info(const char *name, modstat_t *msdest)
 /*
  * Queries a sysctl property.
  */
-static
-bool
+static bool
 get_sysctl(const char *name, void *buf, const size_t len)
 {
 	size_t len2 = len;
@@ -153,8 +137,7 @@ get_sysctl(const char *name, void *buf, const size_t len)
  * successfully.  This implementation uses modctl(2)'s MODCTL_STAT
  * subcommand to do the check.
  */
-static
-bool
+static bool
 k_helper_is_present_stat(void)
 {
 
@@ -166,8 +149,7 @@ k_helper_is_present_stat(void)
  * successfully.  This implementation uses the module's sysctl
  * installed node to do the check.
  */
-static
-bool
+static bool
 k_helper_is_present_sysctl(void)
 {
 	size_t present;
@@ -181,8 +163,7 @@ k_helper_is_present_sysctl(void)
  * successfully.  The 'how' parameter specifies the implementation to
  * use to do the check.
  */
-static
-bool
+static bool
 k_helper_is_present(enum presence_check how)
 {
 	bool found;
@@ -214,8 +195,7 @@ k_helper_is_present(enum presence_check how)
  * occurs when loading the module, an error message is printed and the
  * test case is aborted.
  */
-static
-int
+static __printflike(3, 4) int
 load(prop_dictionary_t props, bool fatal, const char *fmt, ...)
 {
 	int err;
@@ -243,8 +223,13 @@ load(prop_dictionary_t props, bool fatal, const char *fmt, ...)
 	ml.ml_propslen = strlen(propsstr);
 
 	printf("Loading module %s\n", filename);
-	err = 0;
+	errno = err = 0;
+
 	if (modctl(MODCTL_LOAD, &ml) == -1) {
+
+		if (errno == ENOSYS)
+			skip_nonmodular();
+
 		err = errno;
 		fprintf(stderr, "modctl(MODCTL_LOAD, %s), failed: %s\n",
 		    filename, strerror(err));
@@ -261,15 +246,19 @@ load(prop_dictionary_t props, bool fatal, const char *fmt, ...)
  * Unloads the specified module.  If silent is true, nothing will be
  * printed and no errors will be raised if the unload was unsuccessful.
  */
-static
-int
+static int
 unload(const char *name, bool fatal)
 {
 	int err;
 
 	printf("Unloading module %s\n", name);
-	err = 0;
+	errno = err = 0;
+
 	if (modctl(MODCTL_UNLOAD, __UNCONST(name)) == -1) {
+
+		if (errno == ENOSYS)
+			skip_nonmodular();
+
 		err = errno;
 		fprintf(stderr, "modctl(MODCTL_UNLOAD, %s) failed: %s\n",
 		    name, strerror(err));
@@ -283,8 +272,7 @@ unload(const char *name, bool fatal)
  * A silent version of unload, to be called as part of the cleanup
  * process only.
  */
-static
-void
+static void
 unload_cleanup(const char *name)
 {
 
@@ -306,15 +294,13 @@ ATF_TC_BODY(cmd_load, tc)
 	char longname[MAXPATHLEN];
 	size_t i;
 
-	require_modular();
-
 	ATF_CHECK(load(NULL, false, "") == ENOENT);
 	ATF_CHECK(load(NULL, false, "non-existent.o") == ENOENT);
 
 	for (i = 0; i < MAXPATHLEN - 1; i++)
 		longname[i] = 'a';
 	longname[MAXPATHLEN - 1] = '\0';
-	ATF_CHECK(load(NULL, false, longname) == ENAMETOOLONG);
+	ATF_CHECK(load(NULL, false, "%s", longname) == ENAMETOOLONG);
 
 	ATF_CHECK(!k_helper_is_present(stat_check));
 	load(NULL, true, "%s/k_helper/k_helper.kmod",
@@ -337,8 +323,6 @@ ATF_TC_HEAD(cmd_load_props, tc)
 ATF_TC_BODY(cmd_load_props, tc)
 {
 	prop_dictionary_t props;
-
-	require_modular();
 
 	printf("Loading module without properties\n");
 	props = prop_dictionary_create();
@@ -410,8 +394,6 @@ ATF_TC_BODY(cmd_load_recurse, tc)
 	prop_dictionary_t props;
 	char filename[MAXPATHLEN];
 
-	require_modular();
-
 	printf("Loading module with request to load another module\n");
 	props = prop_dictionary_create();
 	snprintf(filename, sizeof(filename), "%s/k_helper2/k_helper2.kmod",
@@ -446,8 +428,6 @@ ATF_TC_HEAD(cmd_stat, tc)
 }
 ATF_TC_BODY(cmd_stat, tc)
 {
-	require_modular();
-
 	ATF_CHECK(!k_helper_is_present(both_checks));
 
 	load(NULL, true, "%s/k_helper/k_helper.kmod",
@@ -478,8 +458,6 @@ ATF_TC_HEAD(cmd_unload, tc)
 }
 ATF_TC_BODY(cmd_unload, tc)
 {
-	require_modular();
-
 	load(NULL, true, "%s/k_helper/k_helper.kmod",
 	    atf_tc_get_config_var(tc, "srcdir"));
 
@@ -503,7 +481,6 @@ ATF_TC_CLEANUP(cmd_unload, tc)
 
 ATF_TP_ADD_TCS(tp)
 {
-	have_modular = check_modular();
 
 	ATF_TP_ADD_TC(tp, cmd_load);
 	ATF_TP_ADD_TC(tp, cmd_load_props);

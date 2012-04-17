@@ -1,4 +1,4 @@
-/*	$NetBSD: sign.c,v 1.3 2009/01/18 10:35:26 lukem Exp $	*/
+/*	$NetBSD: sign.c,v 1.3.8.1 2012/04/17 00:09:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sign.c,v 1.3 2009/01/18 10:35:26 lukem Exp $");
+__RCSID("$NetBSD: sign.c,v 1.3.8.1 2012/04/17 00:09:53 yamt Exp $");
 
 #ifndef DISABLE_SIGN
 #include "syslogd.h"
@@ -258,6 +258,8 @@ sign_get_keys()
 		}
 		if (i2d_DSA_PUBKEY(dsa, &ptr_der_pubkey) <= 0) {
 			logerror("i2d_DSA_PUBKEY() failed");
+			free(der_pubkey);
+			free(pubkey_b64);
 			return false;
 		}
 		b64_ntop(der_pubkey, der_len, pubkey_b64, der_len*2);

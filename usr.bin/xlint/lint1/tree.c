@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.68 2011/02/05 17:14:14 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.68.4.1 2012/04/17 00:09:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.68 2011/02/05 17:14:14 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.68.4.1 2012/04/17 00:09:44 yamt Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1874,24 +1874,24 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 		case BOOL:
 			max = 1;		min = 0;		break;
 		case CHAR:
-			max = CHAR_MAX;		min = CHAR_MIN;		break;
+			max = TARG_CHAR_MAX;	min = TARG_CHAR_MIN;	break;
 		case UCHAR:
-			max = UCHAR_MAX;	min = 0;		break;
+			max = TARG_UCHAR_MAX;	min = 0;		break;
 		case SCHAR:
-			max = SCHAR_MAX;	min = SCHAR_MIN;	break;
+			max = TARG_SCHAR_MAX;	min = TARG_SCHAR_MIN;	break;
 		case SHORT:
-			max = SHRT_MAX;		min = SHRT_MIN;		break;
+			max = TARG_SHRT_MAX;	min = TARG_SHRT_MIN;	break;
 		case USHORT:
-			max = USHRT_MAX;	min = 0;		break;
+			max = TARG_USHRT_MAX;	min = 0;		break;
 		case ENUM:
 		case INT:
-			max = INT_MAX;		min = INT_MIN;		break;
+			max = TARG_INT_MAX;	min = TARG_INT_MIN;	break;
 		case UINT:
-			max = (u_int)UINT_MAX;	min = 0;		break;
+			max = (u_int)TARG_UINT_MAX;min = 0;		break;
 		case LONG:
-			max = LONG_MAX;		min = LONG_MIN;		break;
+			max = TARG_LONG_MAX;	min = TARG_LONG_MIN;	break;
 		case ULONG:
-			max = (u_long)ULONG_MAX; min = 0;		break;
+			max = (u_long)TARG_ULONG_MAX; min = 0;		break;
 		case QUAD:
 			max = QUAD_MAX;		min = QUAD_MIN;		break;
 		case UQUAD:
@@ -2676,7 +2676,7 @@ fold(tnode_t *tn)
 		break;
 	case UMINUS:
 		q = -sl;
-		if (msb(q, t, -1) == msb(sl, t, -1))
+		if (sl != 0 && msb(q, t, -1) == msb(sl, t, -1))
 			ovfl = 1;
 		break;
 	case COMPL:

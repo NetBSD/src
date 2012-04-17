@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.55 2010/05/04 05:10:25 macallan Exp $ */
+/*	$NetBSD: p9100.c,v 1.55.8.1 2012/04/17 00:08:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.55 2010/05/04 05:10:25 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.55.8.1 2012/04/17 00:08:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1231,7 +1231,7 @@ p9100_init_screen(void *cookie, struct vcons_screen *scr,
 	DPRINTF("addr: %08lx\n",(ulong)ri->ri_bits);
 #endif
 
-	rasops_init(ri, sc->sc_height/8, sc->sc_width/8);
+	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 		    sc->sc_width / ri->ri_font->fontwidth);

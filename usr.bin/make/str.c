@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.33 2009/02/25 21:17:21 sno Exp $	*/
+/*	$NetBSD: str.c,v 1.33.6.1 2012/04/17 00:09:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: str.c,v 1.33 2009/02/25 21:17:21 sno Exp $";
+static char rcsid[] = "$NetBSD: str.c,v 1.33.6.1 2012/04/17 00:09:36 yamt Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: str.c,v 1.33 2009/02/25 21:17:21 sno Exp $");
+__RCSID("$NetBSD: str.c,v 1.33.6.1 2012/04/17 00:09:36 yamt Exp $");
 #endif
 #endif				/* not lint */
 #endif
@@ -318,6 +318,8 @@ Str_FindSubstring(const char *string, const char *substring)
  * Results: Non-zero is returned if string matches pattern, 0 otherwise. The
  * matching operation permits the following special characters in the
  * pattern: *?\[] (see the man page for details on what these mean).
+ *
+ * XXX this function does not detect or report malformed patterns.
  *
  * Side effects: None.
  */

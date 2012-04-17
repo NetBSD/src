@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_globals.h,v 1.2 2011/10/29 16:54:49 christos Exp $	*/
+/*	$NetBSD: iscsid_globals.h,v 1.2.2.1 2012/04/17 00:05:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -386,14 +386,10 @@ int debug_level;				/* How much info to display */
 #define DEBOUT(x) printf x
 #define DEB(lev,x) {if (debug_level >= lev) printf x ;}
 
-#define STATIC static
-
 #else
 
 #define DEBOUT(x)
 #define DEB(lev,x)
-
-#define STATIC static
 
 #endif
 
@@ -418,7 +414,7 @@ int debug_level;				/* How much info to display */
 /* iscsid_main.c */
 
 iscsid_response_t *make_rsp(size_t, iscsid_response_t **, int *);
-void exit_daemon(void);
+void exit_daemon(void) __dead;
 
 /* iscsid_lists.c */
 

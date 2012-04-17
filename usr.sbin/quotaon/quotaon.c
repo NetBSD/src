@@ -1,4 +1,4 @@
-/*	$NetBSD: quotaon.c,v 1.27 2011/09/30 22:08:20 jym Exp $	*/
+/*	$NetBSD: quotaon.c,v 1.27.2.1 2012/04/17 00:09:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quotaon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: quotaon.c,v 1.27 2011/09/30 22:08:20 jym Exp $");
+__RCSID("$NetBSD: quotaon.c,v 1.27.2.1 2012/04/17 00:09:52 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,10 +53,8 @@ __RCSID("$NetBSD: quotaon.c,v 1.27 2011/09/30 22:08:20 jym Exp $");
 #include <sys/file.h>
 #include <sys/mount.h>
 
-#include <quota/quotaprop.h>
+#include <quota.h>
 #include <ufs/ufs/quota1.h>
-#include <sys/quota.h>
-
 
 #include <err.h>
 #include <fstab.h>
@@ -65,26 +63,31 @@ __RCSID("$NetBSD: quotaon.c,v 1.27 2011/09/30 22:08:20 jym Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
-#include "quotautil.h"
 
-static int	aflag;		/* all file systems */
-static int	gflag;		/* operate on group quotas */
-static int	uflag;		/* operate on user quotas */
 static int	vflag;		/* verbose */
 
-static void usage(void) __attribute__((__noreturn__));
-static int quotaonoff(struct fstab *, int, int, const char *);
-static int readonly(struct fstab *);
+static void usage(void) __dead;
+static int quotaonoff(struct fstab *, struct quotahandle *, int, int, int,
+    const char *);
+static int readonly(struct fstab *, const char *);
+static int oneof(const char *target, char *list[], int cnt);
 
 int
 main(int argc, char *argv[])
 {
 	struct fstab *fs;
-	char qfnp[MAXPATHLEN];
+	struct quotahandle *qh;
 	long argnum, done = 0;
 	int i, offmode = 0, errs = 0;
+	unsigned restrictions;
 	int ch;
+
+	int aflag = 0;		/* all file systems */
+	int gflag = 0;		/* operate on group quotas */
+	int uflag = 0;		/* operate on user quotas */
+	int noguflag = 0;	/* operate on both (by default) */
 
 	if (strcmp(getprogname(), "quotaoff") == 0)
 		offmode++;
@@ -117,30 +120,81 @@ main(int argc, char *argv[])
 		usage();
 
 	if (!gflag && !uflag) {
-		gflag++;
-		uflag++;
+		noguflag = 1;
 	}
+
+	/*
+	 * XXX at the moment quota_open also uses getfsent(), but it
+	 * uses it only up front. To avoid conflicting with it, let it
+	 * initialize first.
+	 */
+	qh = quota_open("/");
+	if (qh != NULL) {
+		quota_close(qh);
+	}
+
 	setfsent();
 	while ((fs = getfsent()) != NULL) {
+		char buf[MAXPATHLEN];
+		const char *fsspec;
 		if ((strcmp(fs->fs_vfstype, "ffs") &&
 		     strcmp(fs->fs_vfstype, "lfs")) ||
 		    strcmp(fs->fs_type, FSTAB_RW))
 			continue;
-		if (aflag) {
-			if (gflag && hasquota(qfnp, sizeof(qfnp), fs, GRPQUOTA))
-				errs += quotaonoff(fs, offmode, GRPQUOTA, qfnp);
-			if (uflag && hasquota(qfnp, sizeof(qfnp), fs, USRQUOTA))
-				errs += quotaonoff(fs, offmode, USRQUOTA, qfnp);
+
+		fsspec = getfsspecname(buf, sizeof(buf), fs->fs_spec);
+		if (fsspec == NULL) {
+			warn("%s", buf);
 			continue;
 		}
-		if ((argnum = oneof(fs->fs_file, argv, argc)) >= 0 ||
-		    (argnum = oneof(fs->fs_spec, argv, argc)) >= 0) {
+		if (!aflag) {
+			if ((argnum = oneof(fs->fs_file, argv, argc)) < 0 &&
+			    (argnum = oneof(fsspec, argv, argc)) < 0) {
+				continue;
+			}
 			done |= 1U << argnum;
-			if (gflag && hasquota(qfnp, sizeof(qfnp), fs, GRPQUOTA))
-				errs += quotaonoff(fs, offmode, GRPQUOTA, qfnp);
-			if (uflag && hasquota(qfnp, sizeof(qfnp), fs, USRQUOTA))
-				errs += quotaonoff(fs, offmode, USRQUOTA, qfnp);
 		}
+
+		qh = quota_open(fs->fs_file);
+		if (qh == NULL) {
+			if (!aflag) {
+				warn("quota_open");
+				errs++;
+			}
+			continue;
+		}
+
+		restrictions = quota_getrestrictions(qh);
+		if ((restrictions & QUOTA_RESTRICT_NEEDSQUOTACHECK) == 0) {
+			/* Not a quota v1 volume, skip it */
+			if (!aflag) {
+				errno = EBUSY;
+				warn("%s", fs->fs_file);
+				errs++;
+			}
+			quota_close(qh);
+			continue;
+		}
+
+		/*
+		 * The idea here is to warn if someone explicitly
+		 * tries to turn on group quotas and there are no
+		 * group quotas, and likewise for user quotas, but not
+		 * to warn if just doing the default thing and one of
+		 * the quota types isn't configured.
+		 */
+
+		if (noguflag) {
+			errs += quotaonoff(fs, qh, offmode, GRPQUOTA, 0, fsspec);
+			errs += quotaonoff(fs, qh, offmode, USRQUOTA, 0, fsspec);
+		}
+		if (gflag) {
+			errs += quotaonoff(fs, qh, offmode, GRPQUOTA, 1, fsspec);
+		}
+		if (uflag) {
+			errs += quotaonoff(fs, qh, offmode, USRQUOTA, 1, fsspec);
+		}
+		quota_close(qh);
 	}
 	endfsent();
 	for (i = 0; i < argc; i++)
@@ -159,76 +213,34 @@ usage(void)
 }
 
 static int
-quotaonoff( struct fstab *fs, int offmode, int type, const char *qfpathname)
+quotaonoff(struct fstab *fs, struct quotahandle *qh, int offmode, int idtype,
+    int warn_on_enxio, const char *fsspec)
 {
 	const char *mode = (offmode == 1) ? "off" : "on";
-	prop_dictionary_t dict, data, cmd;
-	prop_array_t cmds, datas;
-	struct plistref pref;
-	int8_t error8;
 
-	dict = quota_prop_create();
-	cmds = prop_array_create();
-	datas = prop_array_create();
-
-	if (strcmp(fs->fs_file, "/") && readonly(fs))
+	if (strcmp(fs->fs_file, "/") && readonly(fs, fsspec)) {
 		return 1;
-
-	if (dict == NULL || cmds == NULL || datas == NULL)
-		errx(1, "can't allocate proplist");
+	}
 
 	if (offmode) {
-		if (!quota_prop_add_command(cmds, "quotaoff",
-		    qfextension[type], datas))
-			err(1, "prop_add_command");
+		if (quota_quotaoff(qh, idtype)) {
+			if (warn_on_enxio || errno != ENXIO) {
+				warn("quota%s for %s", mode, fs->fs_file);
+			}
+			return 1;
+		}
 	} else {
-		data = prop_dictionary_create();
-		if (data == NULL)
-			errx(1, "can't allocate proplist");
-		if (!prop_dictionary_set_cstring(data, "quotafile", 
-		    qfpathname))
-			err(1, "prop_dictionary_set(quotafile)");
-		if (!prop_array_add_and_rel(datas, data))
-			err(1, "prop_array_add(data)");
-		if (!quota_prop_add_command(cmds, "quotaon",
-		    qfextension[type], datas))
-			err(1, "prop_add_command");
-	}
-	if (!prop_dictionary_set(dict, "commands", cmds))
-		err(1, "prop_dictionary_set(command)");
-
-	if (prop_dictionary_send_syscall(dict, &pref) != 0)
-		err(1, "prop_dictionary_send_syscall");
-	prop_object_release(dict);
-
-	if (quotactl(fs->fs_file, &pref) != 0) {
-		warn("quotactl(%s)", fs->fs_file);
-		return(1);
-	}
-
-	if (prop_dictionary_recv_syscall(&pref, &dict) != 0)
-		err(1, "prop_dictionary_recv_syscall");
-
-	if ((errno = quota_get_cmds(dict, &cmds)) != 0)
-		err(1, "quota_get_cmds");
-
-	/* only one command, no need to iter */
-	cmd = prop_array_get(cmds, 0);
-	if (cmd == NULL)
-		err(1, "prop_array_get(cmd)");
-
-	if (!prop_dictionary_get_int8(cmd, "return", &error8))
-		err(1, "prop_get(return)");
-
-	if (error8) {
-		errno = error8;
-		warn("quota%s for %s", mode, fs->fs_file);
-		return 1;
+		if (quota_quotaon(qh, idtype)) {
+			if (warn_on_enxio || errno != ENXIO) {
+				warn("quota%s for %s", mode, fs->fs_file);
+			}
+			return 1;
+		}
 	}
 
 	if (vflag) {
 		printf("%s: %s quotas turned %s\n",
-		    fs->fs_file, qfextension[type], mode);
+		    fs->fs_file, quota_idtype_getname(qh, idtype), mode);
 	}
 	return 0;
 }
@@ -237,13 +249,13 @@ quotaonoff( struct fstab *fs, int offmode, int type, const char *qfpathname)
  * Verify file system is mounted and not readonly.
  */
 static int
-readonly(struct fstab *fs)
+readonly(struct fstab *fs, const char *fsspec)
 {
 	struct statvfs fsbuf;
 
 	if (statvfs(fs->fs_file, &fsbuf) < 0 ||
 	    strcmp(fsbuf.f_mntonname, fs->fs_file) ||
-	    strcmp(fsbuf.f_mntfromname, fs->fs_spec)) {
+	    strcmp(fsbuf.f_mntfromname, fsspec)) {
 		printf("%s: not mounted\n", fs->fs_file);
 		return 1;
 	}
@@ -252,4 +264,18 @@ readonly(struct fstab *fs)
 		return 1;
 	}
 	return 0;
+}
+
+/*
+ * Check to see if target appears in list of size cnt.
+ */
+static int
+oneof(const char *target, char *list[], int cnt)
+{
+	int i;
+
+	for (i = 0; i < cnt; i++)
+		if (strcmp(target, list[i]) == 0)
+			return i;
+	return -1;
 }

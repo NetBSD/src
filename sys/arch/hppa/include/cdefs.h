@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.1 2002/06/05 01:04:21 fredette Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.1.150.1 2012/04/17 00:06:26 yamt Exp $	*/
 
 #ifndef	_HPPA_CDEFS_H_
 #define	_HPPA_CDEFS_H_
@@ -9,5 +9,7 @@
  * statement delimiter.
  */
 #define __ASM_DELIMITER "\n\t"
+
+#define	__ALIGNBYTES	7
 
 #endif /* !_HPPA_CDEFS_H_ */

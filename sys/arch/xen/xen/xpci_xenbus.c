@@ -1,4 +1,4 @@
-/*      $NetBSD: xpci_xenbus.c,v 1.8 2011/09/01 15:10:31 christos Exp $      */
+/*      $NetBSD: xpci_xenbus.c,v 1.8.2.1 2012/04/17 00:07:12 yamt Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -26,10 +26,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.8 2011/09/01 15:10:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.8.2.1 2012/04/17 00:07:12 yamt Exp $");
 
 #include "opt_xen.h"
-#include "rnd.h"
+
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.8 2011/09/01 15:10:31 christos Exp
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
 #include <xen/granttables.h>
-#include <xen/xen3-public/io/pciif.h>
+#include <xen/xen-public/io/pciif.h>
 #include <xen/xenbus.h>
 
 #include "locators.h"
@@ -499,7 +499,7 @@ xpci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, int size,
 	op.bus = bus;
 	op.devfn = (dev << 3) | func;
 	op.offset = reg;
-	op.size   = 4;
+	op.size   = size;
 	op.value = data;
 	xpci_do_op(&op);
 	DPRINTF((" err %d\n", op.err));

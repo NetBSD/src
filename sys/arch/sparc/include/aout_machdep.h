@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_machdep.h,v 1.9 2002/12/10 17:14:20 thorpej Exp $ */
+/*	$NetBSD: aout_machdep.h,v 1.9.146.1 2012/04/17 00:06:54 yamt Exp $ */
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -52,6 +52,7 @@ struct relocation_info_sparc {
 	unsigned int r_symbolnum : 24,	/* ordinal number of add symbol */
 			r_extern :  1,	/* 1 if need to add symbol to value */
 				 :  2;	/* unused bits */
+	/*BITFIELDTYPE*/
 	enum reloc_type r_type   :  5;	/* relocation type time copy */
 	long r_addend;			/* relocation addend */
 };

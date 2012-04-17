@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.53 2011/03/13 12:58:02 he Exp $
+# 	$NetBSD: INSTALL,v 1.53.4.1 2012/04/17 00:06:43 yamt Exp $
 
 #	config for bootable floppy kernel
 #
@@ -71,7 +71,7 @@ file-system	MSDOSFS		# MS-DOS FAT file system
 #options 	FFS_EI		# ffs endian independent support
 options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 
 # Networking options
 options 	INET		# Internet protocols
@@ -146,6 +146,9 @@ sd*	at scsibus? target ? lun ?		# SCSI disks
 st*	at scsibus? target ? lun ?		# SCSI tapes
 cd*	at scsibus? target ? lun ?		# SCSI CD-ROMs
 
+# PROM console support
+#romcons0 at mainbus0
+
 # Misc.
 pseudo-device	loop			# loopback interface; required
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
@@ -153,4 +156,3 @@ pseudo-device	md			# memory disk device
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	sl			# SLIP interfaces
 
-pseudo-device	rnd			# /dev/random and in-kernel generator

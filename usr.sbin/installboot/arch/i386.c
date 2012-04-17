@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.37 2011/08/14 17:50:17 christos Exp $ */
+/* $NetBSD: i386.c,v 1.37.2.1 2012/04/17 00:09:47 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.37 2011/08/14 17:50:17 christos Exp $");
+__RCSID("$NetBSD: i386.c,v 1.37.2.1 2012/04/17 00:09:47 yamt Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -79,13 +79,15 @@ struct ib_mach ib_mach_i386 =
 	{ "i386", i386_setboot, no_clearboot, i386_editboot,
 		IB_RESETVIDEO | IB_CONSOLE | IB_CONSPEED | IB_CONSADDR |
 		IB_KEYMAP | IB_PASSWORD | IB_TIMEOUT |
-		IB_MODULES | IB_BOOTCONF };
+		IB_MODULES | IB_BOOTCONF |
+		IB_STAGE1START };
 
 struct ib_mach ib_mach_amd64 =
 	{ "amd64", i386_setboot, no_clearboot, i386_editboot,
 		IB_RESETVIDEO | IB_CONSOLE | IB_CONSPEED | IB_CONSADDR |
 		IB_KEYMAP | IB_PASSWORD | IB_TIMEOUT |
-		IB_MODULES | IB_BOOTCONF };
+		IB_MODULES | IB_BOOTCONF |
+		IB_STAGE1START };
 
 /*
  * Attempting to write the 'labelsector' (or a sector near it - within 8k?)
@@ -249,7 +251,7 @@ update_i386_boot_params(ib_params *params, struct x86_boot_params  *bpp)
 		if (i == __arraycount(consoles)) {
 			warnx("invalid console name, valid names are:");
 			(void)fprintf(stderr, "\t%s", consoles[0].name);
-			for (i = 1; consoles[i].name != NULL; i++)
+			for (i = 1; i < __arraycount(consoles); i++)
 				(void)fprintf(stderr, ", %s", consoles[i].name);
 			(void)fprintf(stderr, "\n");
 			return 1;
@@ -440,6 +442,9 @@ i386_setboot(ib_params *params)
 				/* Old BPB is shorter, leave zero filled */
 				u = disk_buf.b[1];
 			}
+			if (params->s1start != 0)
+				/* Fixup physical offset of filesytem */
+				bpb->bpbHiddenSecs = htole32(params->s1start);
 			memcpy(bootstrap.b + 2, disk_buf.b + 2, u);
 		}
 		#undef USE_F

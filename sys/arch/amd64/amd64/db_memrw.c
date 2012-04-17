@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.8 2010/12/20 00:25:24 matt Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.8.8.1 2012/04/17 00:05:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -51,9 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.8 2010/12/20 00:25:24 matt Exp $");
-
-#include "opt_xen.h"
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.8.8.1 2012/04/17 00:05:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -99,7 +97,7 @@ db_read_bytes(vaddr_t addr, size_t size, char *data)
 static void
 db_write_text(vaddr_t addr, size_t size, const char *data)
 {
-	pt_entry_t *pte, oldpte, tmppte;
+	pt_entry_t *ppte, pte;
 	vaddr_t pgva;
 	size_t limit;
 	char *dst;
@@ -113,10 +111,10 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 		/*
 		 * Get the PTE for the page.
 		 */
-		pte = kvtopte(addr);
-		oldpte = *pte;
+		ppte = kvtopte(addr);
+		pte = *ppte;
 
-		if ((oldpte & PG_V) == 0) {
+		if ((pte & PG_V) == 0) {
 			printf(" address %p not a valid page\n", dst);
 			return;
 		}
@@ -124,7 +122,7 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 		/*
 		 * Get the VA for the page.
 		 */
-		if (oldpte & PG_PS)
+		if (pte & PG_PS)
 			pgva = (vaddr_t)dst & PG_LGFRAME;
 		else
 			pgva = x86_trunc_page(dst);
@@ -134,7 +132,7 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 		 * with this mapping and subtract it from the
 		 * total size.
 		 */
-		if (oldpte & PG_PS)
+		if (pte & PG_PS)
 			limit = NBPD_L2 - ((vaddr_t)dst & (NBPD_L2 - 1));
 		else
 			limit = PAGE_SIZE - ((vaddr_t)dst & PGOFSET);
@@ -142,12 +140,11 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 			limit = size;
 		size -= limit;
 
-		tmppte = (oldpte & ~PG_KR) | PG_KW;
-#ifdef XEN
-		xpmap_update(pte, tmppte);
-#else
-		*pte = tmppte;
-#endif
+		/*
+		 * Make the kernel text page writable.
+		 */
+		pmap_pte_clearbits(ppte, PG_KR);
+		pmap_pte_setbits(ppte, PG_KW);
 		pmap_update_pg(pgva);
 
 		/*
@@ -158,14 +155,10 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 			*dst++ = *data++;
 
 		/*
-		 * Restore the old PTE.
+		 * Turn the page back to read-only.
 		 */
-#ifdef XEN
-		xpmap_update(pte, oldpte);
-#else
-		*pte = oldpte;
-#endif
-
+		pmap_pte_clearbits(ppte, PG_KW);
+		pmap_pte_setbits(ppte, PG_KR);
 		pmap_update_pg(pgva);
 		
 	} while (size != 0);

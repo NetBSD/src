@@ -1,19 +1,28 @@
-#	$NetBSD: Makefile,v 1.4 2011/10/11 13:53:58 joerg Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 2012/04/17 00:03:30 yamt Exp $
 
 .include <bsd.init.mk>
 
 .PATH:	${CLANG_SRCDIR}/lib/Headers
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
-INCS=	avxintrin.h \
+INCS=	avx2intrin.h \
+	avxintrin.h \
+	bmi2intrin.h \
+	bmiintrin.h \
 	emmintrin.h \
+	fma4intrin.h \
 	immintrin.h \
+	lzcntintrin.h \
 	mm3dnow.h \
 	mmintrin.h \
 	mm_malloc.h \
+	nmmintrin.h \
 	pmmintrin.h \
+	popcntintrin.h \
 	smmintrin.h \
 	tmmintrin.h \
+	wmmintrin.h \
+	x86intrin.h \
 	xmmintrin.h
 .elif ${MACHINE_ARCH} == "powerpc"
 INCS=	altivec.h
@@ -49,6 +58,9 @@ CLANG_TABLEGEN_OUTPUT.Attr.td= \
 	clang/Basic/AttrList.inc|-gen-clang-attr-list \
 	clang/Lex/AttrSpellings.inc|-gen-clang-attr-spelling-list \
 	clang/Parse/AttrLateParsed.inc|-gen-clang-attr-late-parsed-list \
+	clang/Sema/AttrTemplateInstantiate.inc|-gen-clang-attr-template-instantiate \
+	clang/Sema/AttrParsedAttrKinds.inc|-gen-clang-attr-parsed-attr-kinds \
+	clang/Sema/AttrParsedAttrList.inc|-gen-clang-attr-parsed-attr-list \
 	clang/Serialization/AttrPCHRead.inc|-gen-clang-attr-pch-read \
 	clang/Serialization/AttrPCHWrite.inc|-gen-clang-attr-pch-write
 
@@ -68,6 +80,7 @@ CLANG_TABLEGEN_OUTPUT.Diagnostic.td= \
 	clang/Basic/DiagnosticLexKinds.inc|-gen-clang-diags-defs^-clang-component=Lex \
 	clang/Basic/DiagnosticParseKinds.inc|-gen-clang-diags-defs^-clang-component=Parse \
 	clang/Basic/DiagnosticSemaKinds.inc|-gen-clang-diags-defs^-clang-component=Sema \
+	clang/Basic/DiagnosticSerializationKinds.inc|-gen-clang-diags-defs^-clang-component=Serialization \
 	clang/Basic/DiagnosticGroups.inc|-gen-clang-diag-groups \
 	clang/Basic/DiagnosticIndexName.inc|-gen-clang-diags-index-name
 

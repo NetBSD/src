@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.119 2011/06/12 03:35:39 rmind Exp $
+#	$NetBSD: files.atari,v 1.119.2.1 2012/04/17 00:06:08 yamt Exp $
 
 maxpartitions 16
 
@@ -212,11 +212,12 @@ file	arch/atari/atari/mainbus.c
 file	arch/atari/atari/pmap_bootstrap.c
 file	arch/atari/atari/trap.c
 file	arch/atari/atari/stalloc.c
-file	arch/atari/atari/fpu.c
+file	arch/atari/atari/fpu_machdep.c
 file	arch/atari/dev/ym2149.c			_atarihw_
 file	arch/atari/atari/intr.c
 file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/db_memrw.c		ddb
+file	arch/m68k/m68k/fpu.c
 file	arch/m68k/m68k/pmap_motorola.c
 file	arch/m68k/m68k/procfs_machdep.c		procfs
 file	arch/m68k/m68k/sys_machdep.c

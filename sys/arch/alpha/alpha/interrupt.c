@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.79 2010/12/20 00:25:24 matt Exp $ */
+/* $NetBSD: interrupt.c,v 1.79.8.1 2012/04/17 00:05:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -34,17 +34,17 @@
  * All rights reserved.
  *
  * Authors: Keith Bostic, Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.79 2010/12/20 00:25:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.79.8.1 2012/04/17 00:05:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ scb_free(u_long vec)
 	    (vec & (SCB_VECSIZE - 1)) != 0)
 		panic("scb_free: bad vector 0x%lx", vec);
 
-	idx = SCB_VECTOIDX(vec - SCB_IOVECBASE); 
+	idx = SCB_VECTOIDX(vec - SCB_IOVECBASE);
 
 	if (scb_iovectab[idx].scb_func == scb_stray)
 		panic("scb_free: vector 0x%lx is empty", vec);
@@ -338,7 +338,7 @@ machine_check(unsigned long mces, struct trapframe *framep,
 
 	/* Processor correctable errors. */
 	if (mces & ALPHA_MCES_PCE)
-		printf("Warning: received processor correctable error.\n"); 
+		printf("Warning: received processor correctable error.\n");
 
 	/* Clear pending machine checks and correctable errors */
 	alpha_pal_wrmces(mces);
@@ -362,7 +362,7 @@ fatal:
 	printf("    code    = 0x%lx\n", *(unsigned long *)(param + 0x10));
 	printf("    curlwp = %p\n", curlwp);
 	if (curlwp != NULL)
-		printf("        pid = %d.%d, comm = %s\n", 
+		printf("        pid = %d.%d, comm = %s\n",
 		    curproc->p_pid, curlwp->l_lid,
 		    curproc->p_comm);
 	printf("\n");
@@ -393,20 +393,20 @@ badaddr_read(void *addr, size_t size, void *rptr)
 	/* Read from the test address, and make sure the read happens. */
 	alpha_mb();
 	switch (size) {
-	case sizeof (u_int8_t):
-		rcpt = *(volatile u_int8_t *)addr;
+	case sizeof (uint8_t):
+		rcpt = *(volatile uint8_t *)addr;
 		break;
 
-	case sizeof (u_int16_t):
-		rcpt = *(volatile u_int16_t *)addr;
+	case sizeof (uint16_t):
+		rcpt = *(volatile uint16_t *)addr;
 		break;
 
-	case sizeof (u_int32_t):
-		rcpt = *(volatile u_int32_t *)addr;
+	case sizeof (uint32_t):
+		rcpt = *(volatile uint32_t *)addr;
 		break;
 
-	case sizeof (u_int64_t):
-		rcpt = *(volatile u_int64_t *)addr;
+	case sizeof (uint64_t):
+		rcpt = *(volatile uint64_t *)addr;
 		break;
 
 	default:
@@ -429,20 +429,20 @@ badaddr_read(void *addr, size_t size, void *rptr)
 	 */
 	if (rptr && rv == 0) {
 		switch (size) {
-		case sizeof (u_int8_t):
-			*(volatile u_int8_t *)rptr = rcpt;
+		case sizeof (uint8_t):
+			*(volatile uint8_t *)rptr = rcpt;
 			break;
 
-		case sizeof (u_int16_t):
-			*(volatile u_int16_t *)rptr = rcpt;
+		case sizeof (uint16_t):
+			*(volatile uint16_t *)rptr = rcpt;
 			break;
 
-		case sizeof (u_int32_t):
-			*(volatile u_int32_t *)rptr = rcpt;
+		case sizeof (uint32_t):
+			*(volatile uint32_t *)rptr = rcpt;
 			break;
 
-		case sizeof (u_int64_t):
-			*(volatile u_int64_t *)rptr = rcpt;
+		case sizeof (uint64_t):
+			*(volatile uint64_t *)rptr = rcpt;
 			break;
 		}
 	}

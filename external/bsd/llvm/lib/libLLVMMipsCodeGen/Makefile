@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.2.1 2011/11/10 14:31:23 yamt Exp $
+#	$NetBSD: Makefile,v 1.4.2.2 2012/04/17 00:03:31 yamt Exp $
 
 LIB=	LLVMMipsCodeGen
 
@@ -6,7 +6,8 @@ LIB=	LLVMMipsCodeGen
 
 .PATH: ${LLVM_SRCDIR}/lib/Target/Mips
 
-SRCS+=	MipsAsmPrinter.cpp \
+SRCS+=	MipsAnalyzeImmediate.cpp \
+	MipsAsmPrinter.cpp \
 	MipsCodeEmitter.cpp \
 	MipsDelaySlotFiller.cpp \
 	MipsEmitGPRestore.cpp \
@@ -16,8 +17,8 @@ SRCS+=	MipsAsmPrinter.cpp \
 	MipsISelDAGToDAG.cpp \
 	MipsISelLowering.cpp \
 	MipsJITInfo.cpp \
+	MipsMachineFunction.cpp \
 	MipsMCInstLower.cpp \
-	MipsMCSymbolRefExpr.cpp \
 	MipsRegisterInfo.cpp \
 	MipsSubtarget.cpp \
 	MipsTargetMachine.cpp \
@@ -30,9 +31,10 @@ TABLEGEN_OUTPUT= \
 	MipsGenRegisterInfo.inc|-gen-register-info \
 	MipsGenInstrInfo.inc|-gen-instr-info \
 	MipsGenAsmWriter.inc|-gen-asm-writer \
+	MipsGenCallingConv.inc|-gen-callingconv \
 	MipsGenCodeEmitter.inc|-gen-emitter \
 	MipsGenDAGISel.inc|-gen-dag-isel \
-	MipsGenCallingConv.inc|-gen-callingconv \
+	MipsGenMCCodeEmitter.inc|-gen-emitter^-mc-emitter \
 	MipsGenSubtargetInfo.inc|-gen-subtarget
 
 .include "${.PARSEDIR}/../../tablegen.mk"

@@ -1,4 +1,4 @@
--- $NetBSD: newfs.sql,v 1.1 2011/10/12 01:05:00 yamt Exp $
+-- $NetBSD: newfs.sql,v 1.1.2.1 2012/04/17 00:05:44 yamt Exp $
 
 -- Copyright (c)2010,2011 YAMAMOTO Takashi,
 -- All rights reserved.
@@ -44,8 +44,8 @@ CREATE DOMAIN uid AS int8 NOT NULL CHECK(VALUE >= 0);
 CREATE DOMAIN gid AS int8 NOT NULL CHECK(VALUE >= 0);
 CREATE DOMAIN mode AS int8 NOT NULL CHECK(VALUE >= 0 AND VALUE <= 7*8*8+7*8+7);
 CREATE DOMAIN nlink AS int8 NOT NULL CHECK(VALUE >= 0);
-CREATE SEQUENCE fileid_seq START WITH 1;
-CREATE SEQUENCE dircookie_seq START WITH 3;
+CREATE SEQUENCE fileid_seq START WITH 1; -- 1 will be used for root directory
+CREATE SEQUENCE dircookie_seq START WITH 3; -- see PGFS_DIRCOOKIE_*
 CREATE TYPE filetype AS ENUM (
 	'regular',
 	'directory',
@@ -71,7 +71,7 @@ CREATE TABLE file (
 -- datafork table maintains the association between our files and its backing
 -- large objects.
 CREATE TABLE datafork (
-	fileid fileid PRIMARY KEY REFERENCES file,
+	fileid fileid PRIMARY KEY, -- REFERENCES file
 	loid Oid NOT NULL UNIQUE);
 -- we want the following but lo lives in system catalogs.
 --	loid REFERENCES pg_largeobject_metadata(oid);
@@ -79,10 +79,10 @@ CREATE TABLE datafork (
 -- a row in the dirent table describes a directory entry.
 -- the ".." and "." entries are handled differently and never appear here.
 CREATE TABLE dirent (
-	parent_fileid fileid NOT NULL REFERENCES file,
+	parent_fileid fileid NOT NULL, -- REFERENCES file,
 	name text NOT NULL,
 	cookie int8 NOT NULL UNIQUE DEFAULT nextval('dircookie_seq'),
-	child_fileid fileid NOT NULL REFERENCES file,
+	child_fileid fileid NOT NULL, -- REFERENCES file,
 	CONSTRAINT dirent_pkey PRIMARY KEY(parent_fileid, name),
 	CONSTRAINT dirent_notdot CHECK(name <> '.'),
 	CONSTRAINT dirent_notdotdot CHECK(name <> '..'),

@@ -1,5 +1,5 @@
 /*	Id: init.c,v 1.76 2011/08/14 07:32:39 ragge Exp 	*/	
-/*	$NetBSD: init.c,v 1.1.1.4 2011/09/01 12:46:58 plunky Exp $	*/
+/*	$NetBSD: init.c,v 1.1.1.4.2.1 2012/04/17 00:04:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2007 Anders Magnusson (ragge@ludd.ltu.se).
@@ -111,8 +111,6 @@
  * TO FIX:
  * - Alignment of structs on like i386 char members.
  */
-
-int idebug;
 
 /*
  * Struct used in array initialisation.
@@ -403,7 +401,7 @@ beginit(struct symtab *sp)
 			basesz = SZINT;
 		}
 	} else
-		basesz = tsize(DECREF(sp->stype), sp->sdf, sp->sap);
+		basesz = tsize(sp->stype, sp->sdf, sp->sap);
 	SLIST_INIT(&lpole);
 
 	/* first element */

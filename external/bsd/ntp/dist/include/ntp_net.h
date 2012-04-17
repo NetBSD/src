@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_net.h,v 1.1.1.1 2009/12/13 16:54:52 kardel Exp $	*/
+/*	$NetBSD: ntp_net.h,v 1.1.1.1.6.1 2012/04/17 00:03:44 yamt Exp $	*/
 
 /*
  * ntp_net.h - definitions for NTP network stuff
@@ -11,15 +11,23 @@
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
+#ifdef HAVE_NET_IF_H
+#include <net/if.h>
+#endif
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
+#ifdef HAVE_NET_IF_VAR_H
+#include <net/if_var.h>
+#endif
+#ifdef HAVE_NETINET_IN_VAR_H
+#include <netinet/in_var.h>
 #endif
 
 #include "ntp_rfc2553.h"
 
 typedef union {
 	struct sockaddr		sa;
-	struct sockaddr_storage	sas;
 	struct sockaddr_in	sa4;
 	struct sockaddr_in6	sa6;
 } sockaddr_u;
@@ -33,7 +41,7 @@ typedef union {
 #define PSOCK_ADDR4(psau)	(&SOCK_ADDR4(psau))
 #define PSOCK_ADDR6(psau)	(&SOCK_ADDR6(psau))
 
-#define AF(psau)		((psau)->sas.ss_family)
+#define AF(psau)		((psau)->sa.sa_family)
 
 #define IS_IPV4(psau)		(AF_INET == AF(psau))
 #define IS_IPV6(psau)		(AF_INET6 == AF(psau))
@@ -97,6 +105,15 @@ typedef union {
 	    ? IN_CLASSD(SRCADR(psau))				\
 	    : IN6_IS_ADDR_MULTICAST(PSOCK_ADDR6(psau)))
 
+/* v6 is interface ID scope universal, as with MAC-derived addresses */
+#define IS_IID_UNIV(psau)					\
+	(!!(0x02 & NSRCADR6(psau)[8]))
+
+#define SIZEOF_INADDR(fam)					\
+	((AF_INET == (fam))					\
+	    ? sizeof(struct in_addr)				\
+	    : sizeof(struct in6_addr))
+
 #define SIZEOF_SOCKADDR(fam)					\
 	((AF_INET == (fam))					\
 	    ? sizeof(struct sockaddr_in)			\
@@ -108,11 +125,11 @@ typedef union {
 	    : sizeof((psau)->sa6))
 
 #define ZERO_SOCK(psau)						\
-	memset(&(psau)->sas, 0, sizeof((psau)->sas))
+	memset((psau), 0, sizeof(*(psau)))
 
 /* blast a byte value across sockaddr_u v6 address */
 #define	MEMSET_ADDR6(psau, v)					\
-	memset((void *)(psau)->sa6.sin6_addr.s6_addr, (v),	\
+	memset((psau)->sa6.sin6_addr.s6_addr, (v),		\
 		sizeof((psau)->sa6.sin6_addr.s6_addr))
 
 #define SET_ONESMASK(psau)					\
@@ -131,19 +148,30 @@ typedef union {
 		SET_ONESMASK(psau);				\
 	} while (0)
 
-/* compare a in6_addr with socket address */
+/* 
+ * compare two in6_addr returning negative, 0, or positive.
+ * ADDR6_CMP is negative if *pin6A is lower than *pin6B, zero if they
+ * are equal, positive if *pin6A is higher than *pin6B.  IN6ADDR_ANY
+ * is the lowest address (128 zero bits).
+ */
+#define	ADDR6_CMP(pin6A, pin6B)					\
+	memcmp((pin6A)->s6_addr, (pin6B)->s6_addr,		\
+	       sizeof(pin6A)->s6_addr)
+
+/* compare two in6_addr for equality only */
 #if !defined(SYS_WINNT) || !defined(in_addr6)
-#define S_ADDR6_EQ(psau, my_in6_addr)				\
-	(!memcmp(&(psau)->sa6.sin6_addr,			\
-		 (my_in6_addr),					\
-		 sizeof((psau)->sa6.sin6_addr)))
+#define ADDR6_EQ(pin6A, pin6B)					\
+	(!ADDR6_CMP(pin6A, pin6B))
 #else
-#define S_ADDR6_EQ(psau, my_in6_addr)				\
-	IN6_ADDR_EQUAL(&(psau)->sa6.sin6_addr,			\
-		       (my_in6_addr))
+#define ADDR6_EQ(pin6A, pin6B)					\
+	IN6_ADDR_EQUAL(pin6A, pin6B)
 #endif
 
-/* are two sockaddr_u's addresses equal? */
+/* compare a in6_addr with socket address */
+#define	S_ADDR6_EQ(psau, pin6)					\
+	ADDR6_EQ(&(psau)->sa6.sin6_addr, pin6)
+
+/* are two sockaddr_u's addresses equal? (port excluded) */
 #define SOCK_EQ(psau1, psau2)					\
 	((AF(psau1) != AF(psau2))				\
 	     ? 0						\
@@ -151,6 +179,12 @@ typedef union {
 		   ? (NSRCADR(psau1) == NSRCADR(psau2))		\
 		   : (S_ADDR6_EQ((psau1), PSOCK_ADDR6(psau2))	\
 		      && SCOPE_EQ((psau1), (psau2))))
+
+/* are two sockaddr_u's addresses and ports equal? */
+#define ADDR_PORT_EQ(psau1, psau2)				\
+	((NSRCPORT(psau1) != NSRCPORT(psau2)			\
+	     ? 0						\
+	     : SOCK_EQ((psau1), (psau2))))
 
 /* is sockaddr_u address unspecified? */
 #define SOCK_UNSPEC(psau)					\

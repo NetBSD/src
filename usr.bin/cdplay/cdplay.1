@@ -1,4 +1,4 @@
-.\"	$NetBSD: cdplay.1,v 1.22 2007/04/23 11:47:55 tron Exp $
+.\"	$NetBSD: cdplay.1,v 1.22.34.1 2012/04/17 00:09:29 yamt Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andrew Doran.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" from FreeBSD: cdcontrol.1,v 1.16.2.2 1999/01/31 15:36:01 billf Exp
 .\"
-.Dd April 23, 2007
+.Dd January 3, 2012
 .Dt CDPLAY 1
 .Os
 .Sh NAME
@@ -57,6 +57,12 @@ and
 will be tried (in this order) to find the device; as a last resort,
 .Pa /dev/sound
 will be used.
+If the
+.Dq Fl a
+command line option is used, or the
+.Ev CDPLAY_DIGITAL
+environment variable is present,
+digital transfer mode is switched on automatically.
 .It Fl f Ar device
 Specify the control device to use.
 Both absolute paths and paths relative to
@@ -183,6 +189,8 @@ stereo samples).
 Audio data are read and written in groups of
 .Ar n
 frames (5 by default, or 1/15 seconds).
+.It Cm analog
+Switch from digital back to analog mode.
 .It Cm help
 Print the list of available commands.
 .It Cm reset

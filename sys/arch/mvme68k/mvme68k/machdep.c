@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.149 2011/06/12 03:35:44 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.149.2.1 2012/04/17 00:06:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149 2011/06/12 03:35:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149.2.1 2012/04/17 00:06:42 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -837,19 +837,11 @@ long	dumplo = 0;		/* blocks */
 void
 cpu_dumpconf(void)
 {
-	const struct bdevsw *bdev;
 	int nblks, dumpblks;	/* size of dump area */
 
 	if (dumpdev == NODEV)
 		goto bad;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL) {
-		dumpdev = NODEV;
-		goto bad;
-	}
-	if (bdev->d_psize == NULL)
-		goto bad;
-	nblks = (*bdev->d_psize)(dumpdev);
+	nblks = bdev_size(dumpdev);
 	if (nblks <= ctod(1))
 		goto bad;
 
@@ -909,7 +901,7 @@ dumpsys(void)
 	printf("\ndumping to dev %u,%u offset %ld\n",
 	    major(dumpdev), minor(dumpdev), dumplo);
 
-	psize = (*bdev->d_psize)(dumpdev);
+	psize = bdev_size(dumpdev);
 	printf("dump ");
 	if (psize == -1) {
 		printf("area unavailable\n");

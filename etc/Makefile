@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.392.2.1 2011/11/10 14:31:21 yamt Exp $
+#	$NetBSD: Makefile,v 1.392.2.2 2012/04/17 00:02:56 yamt Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -423,7 +423,7 @@ release snapshot: .PHONY .MAKE check_DESTDIR check_RELEASEDIR snap_md_post
 #	Note: At least mkisofs 2.0 should be used.
 #
 CDROM_NAME_ADD?=
-CDROM.image?=${RELEASEDIR}/iso/${MACHINE}cd.iso
+CDROM_IMAGE?=${RELEASEDIR}/iso/NetBSD-${DISTRIBVER}-${MACHINE}.iso
 CDROM.dir=	${.OBJDIR}/cdrom.dir
 CDROM.pathlist=	${.OBJDIR}/cdrom.pathlist
 
@@ -432,7 +432,7 @@ iso-image:
 .if ${MKISOFS} != true
 do-iso-image: .PHONY check_DESTDIR check_RELEASEDIR iso-image-md-post
 	${MAKESUMS} -t ${RELEASEDIR}/iso/ '*.iso'
-	@echo "iso-image created as: ${CDROM.image}"
+	@echo "iso-image created as: ${CDROM_IMAGE}"
 .else
 do-iso-image:
 	@echo iso-image: mkisofs not found
@@ -458,7 +458,7 @@ iso-image-mi: .PHONY check_DESTDIR check_RELEASEDIR iso-image-md-pre
 		false; \
 	fi
 	${MKISOFS} ${MKISOFS_FLAGS} -graft-points -path-list ${CDROM.pathlist} \
-	    -o ${CDROM.image} ${CDROM.dir}
+	    -o ${CDROM_IMAGE} ${CDROM.dir}
 
 # iso-image-md-pre --
 #	Setup ${CDROM.dir} to produce a bootable CD image.
@@ -474,6 +474,33 @@ iso-image-md-pre: .PHONY check_DESTDIR check_RELEASEDIR iso-image-setup
 iso-image-md-post: .PHONY check_DESTDIR check_RELEASEDIR iso-image-mi
 #	(empty -- look in the machine-dependent Makefile.inc)
 
+
+# live-image --
+#	Standalone target to create live images after the release was composed.
+#	Should be run after "make release" in src and xsrc.
+#	LIVEIMG_RELEASEDIR specifies where to install live images and
+#	it can be set in MD etc.${MACHINE}/Makefile.inc.
+#
+LIVEIMG_RELEASEDIR?= ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/liveimage
+
+live-image: .PHONY check_DESTDIR check_RELEASEDIR
+	${MAKEDIRTARGET} ${NETBSDSRCDIR}/distrib live_image \
+	    LIVEIMG_RELEASEDIR=${LIVEIMG_RELEASEDIR}
+	${MAKESUMS} -t ${LIVEIMG_RELEASEDIR} '*.img.gz'
+
+# install-image --
+#	Standalone target to create installation images
+#	after the release was composed.
+#	Should be run after "make release" in src and xsrc.
+#	INSTIMG_RELEASEDIR specifies where to install live images and
+#	it can be set in MD etc.${MACHINE}/Makefile.inc.
+#
+INSTIMG_RELEASEDIR?= ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/installimage
+
+install-image: .PHONY check_DESTDIR check_RELEASEDIR
+	${MAKEDIRTARGET} ${NETBSDSRCDIR}/distrib install_image \
+	    INSTIMG_RELEASEDIR=${INSTIMG_RELEASEDIR}
+	${MAKESUMS} -t ${INSTIMG_RELEASEDIR} '*.img.gz'
 
 # snap_pre --
 #	Create ${RELEASEDIR} and necessary subdirectories.

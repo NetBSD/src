@@ -1,7 +1,7 @@
-/*	$NetBSD: lzio.c,v 1.1.1.1 2010/10/31 11:17:00 mbalmer Exp $	*/
+/*	$NetBSD: lzio.c,v 1.1.1.1.6.1 2012/04/17 00:04:47 yamt Exp $	*/
 
 /*
-** Id: lzio.c,v 1.31.1.1 2007/12/27 13:02:25 roberto Exp
+** $Id: lzio.c,v 1.1.1.1.6.1 2012/04/17 00:04:47 yamt Exp $
 ** a generic input stream interface
 ** See Copyright Notice in lua.h
 */

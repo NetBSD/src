@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.234.4.1 2011/11/02 21:53:59 yamt Exp $	*/
+/*	$NetBSD: rump.c,v 1.234.4.2 2012/04/17 00:08:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.234.4.1 2011/11/02 21:53:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.234.4.2 2012/04/17 00:08:49 yamt Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -69,6 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.234.4.1 2011/11/02 21:53:59 yamt Exp $");
 #include <sys/vmem.h>
 #include <sys/xcall.h>
 #include <sys/simplelock.h>
+#include <sys/cprng.h>
 
 #include <rump/rumpuser.h>
 
@@ -161,19 +162,6 @@ rump_proc_vfs_init_fn rump_proc_vfs_init;
 rump_proc_vfs_release_fn rump_proc_vfs_release;
 
 static void add_linkedin_modules(const struct modinfo *const *, size_t);
-
-static void __noinline
-messthestack(void)
-{
-	volatile uint32_t mess[64];
-	uint64_t d1, d2;
-	int i, error;
-
-	for (i = 0; i < 64; i++) {
-		rumpuser_gettime(&d1, &d2, &error);
-		mess[i] = d2;
-	}
-}
 
 /*
  * Create kern.hostname.  why only this you ask.  well, init_sysctl
@@ -282,14 +270,6 @@ rump__init(int rump_version)
 	initmsgbuf(rump_msgbuf, sizeof(rump_msgbuf));
 	aprint_verbose("%s%s", copyright, version);
 
-	/*
-	 * Seed arc4random() with a "reasonable" amount of randomness.
-	 * Yes, this is a quick kludge which depends on the arc4random
-	 * implementation.
-	 */
-	messthestack();
-	arc4random();
-
 	if (rump_version != RUMP_VERSION) {
 		printf("rump version mismatch, %d vs. %d\n",
 		    rump_version, RUMP_VERSION);
@@ -320,7 +300,6 @@ rump__init(int rump_version)
 	kernconfig_lock_init();
 	prop_kern_init();
 
-	pool_subsystem_init();
 	kmem_init();
 
 	radix_tree_init(); /* used for page cache */
@@ -335,6 +314,17 @@ rump__init(int rump_version)
 	loginit();
 
 	kauth_init();
+
+	secmodel_init();
+
+	rnd_init();
+
+	/*
+	 * Create the kernel cprng.  Yes, it's currently stubbed out
+	 * to arc4random() for RUMP, but this won't always be so.
+	 */
+	kern_cprng = cprng_strong_create("kernel", IPL_VM,
+					 CPRNG_INIT_ANY|CPRNG_REKEY_ANY);
 
 	procinit();
 	proc0_init();

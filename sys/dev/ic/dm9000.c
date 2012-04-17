@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.3 2011/06/30 20:09:39 wiz Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.3.2.1 2012/04/17 00:07:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -89,6 +89,7 @@
 #include <sys/cdefs.h>
 
 #include <sys/param.h>
+#include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/syslog.h>
@@ -117,7 +118,7 @@
 
 #if 1
 #undef DM9000_DEBUG
-#undef  DM9000_TX_DEBUG
+#undef DM9000_TX_DEBUG
 #undef DM9000_TX_DATA_DEBUG
 #undef DM9000_RX_DEBUG
 #undef  DM9000_RX_DATA_DEBUG
@@ -159,9 +160,13 @@
 #define TX_DATA_DPRINTF(s) do {} while (/*CONSTCOND*/0)
 #endif
 
-
+/*** Internal PHY functions ***/
 uint16_t dme_phy_read(struct dme_softc *sc, int reg);
-void dme_phy_write(struct dme_softc *sc, int reg, uint16_t value);
+void	dme_phy_write(struct dme_softc *sc, int reg, uint16_t value);
+void	dme_phy_init(struct dme_softc *sc);
+void	dme_phy_reset(struct dme_softc *sc);
+void	dme_phy_update_media(struct dme_softc *sc);
+void	dme_phy_check_link(void *arg);
 
 /*** Methods registered in struct ifnet ***/
 void	dme_start_output(struct ifnet *ifp);
@@ -186,6 +191,17 @@ void    dme_receive(struct dme_softc *sc, struct ifnet *ifp);
 /* Software Initialize/Reset of the DM9000 */
 void    dme_reset(struct dme_softc *sc);
 
+/* Configure multicast filter */
+void	dme_set_addr_filter(struct dme_softc *sc);
+
+/* Set media */
+int	dme_set_media(struct dme_softc *sc, int media);
+
+/* Read/write packet data from/to DM9000 IC in various transfer sizes */
+int	dme_pkt_read_2(struct dme_softc *sc, struct ifnet *ifp, struct mbuf **outBuf);
+int	dme_pkt_write_2(struct dme_softc *sc, struct mbuf *bufChain);
+/* TODO: Implement 8 and 32 bit read/write functions */
+
 uint16_t
 dme_phy_read(struct dme_softc *sc, int reg)
 {
@@ -198,9 +214,6 @@ dme_phy_read(struct dme_softc *sc, int reg)
 
 	/* Wait until access to PHY has completed */
 	while (dme_read(sc, DM9000_EPCR) & DM9000_EPCR_ERRE);
-
-	/* XXX: The delay is probably not necessary as we just busy-waited */
-	delay(200);
 
 	/* Reset ERPRR-bit */
 	dme_write(sc, DM9000_EPCR, DM9000_EPCR_EPOS_PHY);
@@ -228,19 +241,172 @@ dme_phy_write(struct dme_softc *sc, int reg, uint16_t value)
 	/* Wait until access to PHY has completed */
 	while(dme_read(sc, DM9000_EPCR) & DM9000_EPCR_ERRE);
 
-
-	/* XXX: The delay is probably not necessary as we just busy-waited */
-	delay(200);
-
 	/* Reset ERPRR-bit */
 	dme_write(sc, DM9000_EPCR, DM9000_EPCR_EPOS_PHY);
 }
 
-int
-dme_attach(struct dme_softc *sc, uint8_t *enaddr)
+void
+dme_phy_init(struct dme_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	uint8_t b[2];
+	u_int ifm_media = sc->sc_media.ifm_media;
+	uint32_t bmcr, anar;
+
+	bmcr = dme_phy_read(sc, DM9000_PHY_BMCR);
+	anar = dme_phy_read(sc, DM9000_PHY_ANAR);
+
+	anar = anar & ~DM9000_PHY_ANAR_10_HDX
+		& ~DM9000_PHY_ANAR_10_FDX
+		& ~DM9000_PHY_ANAR_TX_HDX
+		& ~DM9000_PHY_ANAR_TX_FDX;
+
+	switch (IFM_SUBTYPE(ifm_media)) {
+	case IFM_AUTO:
+		bmcr |= DM9000_PHY_BMCR_AUTO_NEG_EN;
+		anar |= DM9000_PHY_ANAR_10_HDX |
+			DM9000_PHY_ANAR_10_FDX |
+			DM9000_PHY_ANAR_TX_HDX |
+			DM9000_PHY_ANAR_TX_FDX;
+		break;
+	case IFM_10_T:
+		//bmcr &= ~DM9000_PHY_BMCR_AUTO_NEG_EN;
+		bmcr &= ~DM9000_PHY_BMCR_SPEED_SELECT;
+		if (ifm_media & IFM_FDX)
+			anar |= DM9000_PHY_ANAR_10_FDX;
+		else
+			anar |= DM9000_PHY_ANAR_10_HDX;
+		break;
+	case IFM_100_TX:
+		//bmcr &= ~DM9000_PHY_BMCR_AUTO_NEG_EN;
+		bmcr |= DM9000_PHY_BMCR_SPEED_SELECT;
+		if (ifm_media & IFM_FDX)
+			anar |= DM9000_PHY_ANAR_TX_FDX;
+		else
+			anar |= DM9000_PHY_ANAR_TX_HDX;
+
+		break;
+	}
+
+	if(ifm_media & IFM_FDX) {
+		bmcr |= DM9000_PHY_BMCR_DUPLEX_MODE;
+	} else {
+		bmcr &= ~DM9000_PHY_BMCR_DUPLEX_MODE;
+	}
+
+	dme_phy_write(sc, DM9000_PHY_BMCR, bmcr);
+	dme_phy_write(sc, DM9000_PHY_ANAR, anar);
+}
+
+void
+dme_phy_reset(struct dme_softc *sc)
+{
+	uint32_t reg;
+
+	/* PHY Reset */
+	dme_phy_write(sc, DM9000_PHY_BMCR, DM9000_PHY_BMCR_RESET);
+
+	reg = dme_read(sc, DM9000_GPCR);
+	dme_write(sc, DM9000_GPCR, reg & ~DM9000_GPCR_GPIO0_OUT);
+	reg = dme_read(sc, DM9000_GPR);
+	dme_write(sc, DM9000_GPR, reg | DM9000_GPR_PHY_PWROFF);
+
+	dme_phy_init(sc);
+
+	reg = dme_read(sc, DM9000_GPR);
+	dme_write(sc, DM9000_GPR, reg & ~DM9000_GPR_PHY_PWROFF);
+	reg = dme_read(sc, DM9000_GPCR);
+	dme_write(sc, DM9000_GPCR, reg | DM9000_GPCR_GPIO0_OUT);
+
+	dme_phy_update_media(sc);
+}
+
+void
+dme_phy_update_media(struct dme_softc *sc)
+{
+	u_int ifm_media = sc->sc_media.ifm_media;
+	uint32_t reg;
+
+	if (IFM_SUBTYPE(ifm_media) == IFM_AUTO) {
+		/* If auto-negotiation is used, ensures that it is completed
+		 before trying to extract any media information. */
+		reg = dme_phy_read(sc, DM9000_PHY_BMSR);
+		if ((reg & DM9000_PHY_BMSR_AUTO_NEG_AB) == 0) {
+			/* Auto-negotation not possible, therefore there is no
+			   reason to try obtain any media information. */
+			return;
+		}
+
+		/* Then loop until the negotiation is completed. */
+		while ((reg & DM9000_PHY_BMSR_AUTO_NEG_COM) == 0) {
+			/* TODO: Bail out after a finite number of attempts
+			 in case something goes wrong. */
+			preempt();
+			reg = dme_phy_read(sc, DM9000_PHY_BMSR);
+		}
+	}
+
+
+	sc->sc_media_active = IFM_ETHER;
+	reg = dme_phy_read(sc, DM9000_PHY_BMCR);
+
+	if (reg & DM9000_PHY_BMCR_SPEED_SELECT) {
+		sc->sc_media_active |= IFM_100_TX;
+	} else {
+		sc->sc_media_active |= IFM_10_T;
+	}
+
+	if (reg & DM9000_PHY_BMCR_DUPLEX_MODE) {
+		sc->sc_media_active |= IFM_FDX;
+	}
+}
+
+void
+dme_phy_check_link(void *arg)
+{
+	struct dme_softc *sc = arg;
+	uint32_t reg;
+	int s;
+
+	s = splnet();
+
+	reg = dme_read(sc, DM9000_NSR) & DM9000_NSR_LINKST;
+
+	if( reg )
+		reg = IFM_ETHER | IFM_AVALID | IFM_ACTIVE;
+	else {
+		reg = IFM_ETHER | IFM_AVALID;
+		sc->sc_media_active = IFM_NONE;
+	}
+
+	if ( (sc->sc_media_status != reg) && (reg & IFM_ACTIVE)) {
+		dme_phy_reset(sc);
+	}
+
+	sc->sc_media_status = reg;
+
+	callout_schedule(&sc->sc_link_callout, mstohz(2000));
+	splx(s);
+}
+
+int
+dme_set_media(struct dme_softc *sc, int media)
+{
+	int s;
+
+	s = splnet();
+	sc->sc_media.ifm_media = media;
+	dme_phy_reset(sc);
+
+	splx(s);
+
+	return 0;
+}
+
+int
+dme_attach(struct dme_softc *sc, const uint8_t *enaddr)
+{
+	struct ifnet	*ifp = &sc->sc_ethercom.ec_if;
+	uint8_t		b[2];
+	uint16_t	io_mode;
 
 	dme_read_c(sc, DM9000_VID0, b, 2);
 #if BYTE_ORDER == BIG_ENDIAN
@@ -260,16 +426,6 @@ dme_attach(struct dme_softc *sc, uint8_t *enaddr)
 		    sc->sc_product_id);
 	}
 
-#if 0
-	{
-		/* Force 10Mbps to test dme_phy_write */
-		uint16_t bmcr;
-		bmcr = dme_phy_read(sc, DM9000_PHY_BMCR);
-		bmcr &= ~DM9000_PHY_BMCR_AUTO_NEG_EN;
-		bmcr &= ~DM9000_PHY_BMCR_SPEED_SELECT; /* select 100Mbps */
-		dme_phy_write(sc, DM9000_PHY_BMCR, bmcr);
-	}
-#endif
 	/* Initialize ifnet structure. */
 	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -278,17 +434,28 @@ dme_attach(struct dme_softc *sc, uint8_t *enaddr)
 	ifp->if_ioctl = dme_ioctl;
 	ifp->if_stop = dme_stop;
 	ifp->if_watchdog = NULL;	/* no watchdog at this stage */
-	ifp->if_flags = IFF_SIMPLEX | IFF_NOTRAILERS |
-		IFF_BROADCAST; /* No multicast support for now */
+	ifp->if_flags = IFF_SIMPLEX | IFF_NOTRAILERS | IFF_BROADCAST |
+			IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Initialize ifmedia structures. */
 	ifmedia_init(&sc->sc_media, 0, dme_mediachange, dme_mediastatus);
-	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10_T|IFM_100_TX, 0, NULL);
-	ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_10_T|IFM_100_TX);
+	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_AUTO, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10_T, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
+	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_100_TX, 0, NULL);
+
+	ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_AUTO);
 
 	if (enaddr != NULL)
 		memcpy(sc->sc_enaddr, enaddr, sizeof(sc->sc_enaddr));
+	/* TODO: Support an EEPROM attached to the DM9000 chip */
+
+	callout_init(&sc->sc_link_callout, 0);
+	callout_setfunc(&sc->sc_link_callout, dme_phy_check_link, sc);
+
+	sc->sc_media_status = 0;
 
 	/* Configure DM9000 with the MAC address */
 	dme_write_c(sc, DM9000_PAB0, sc->sc_enaddr, 6);
@@ -325,28 +492,34 @@ dme_attach(struct dme_softc *sc, uint8_t *enaddr)
 	}
 #endif
 
-	sc->io_mode = (dme_read(sc, DM9000_ISR) &
+	io_mode = (dme_read(sc, DM9000_ISR) &
 	    DM9000_IOMODE_MASK) >> DM9000_IOMODE_SHIFT;
-	if (sc->io_mode != DM9000_MODE_16BIT )
+	if (io_mode != DM9000_MODE_16BIT )
 		panic("DM9000: Only 16-bit mode is supported!\n");
-#ifdef DM9000_DEBUG
-	printf("DM9000 Operation Mode: ");
-	switch( sc->io_mode) {
+
+	DPRINTF(("DM9000 Operation Mode: "));
+	switch( io_mode) {
 	case DM9000_MODE_16BIT:
-		printf("16-bit mode");
+		DPRINTF(("16-bit mode"));
+		sc->sc_data_width = 2;
+		sc->sc_pkt_write = dme_pkt_write_2;
+		sc->sc_pkt_read = dme_pkt_read_2;
 		break;
 	case DM9000_MODE_32BIT:
-		printf("32-bit mode");
+		DPRINTF(("32-bit mode"));
+		sc->sc_data_width = 4;
 		break;
 	case DM9000_MODE_8BIT:
-		printf("8-bit mode");
+		DPRINTF(("8-bit mode"));
+		sc->sc_data_width = 1;
 		break;
-	case 3:
-		printf("Invalid mode");
+	default:
+		DPRINTF(("Invalid mode"));
 		break;
 	}
-	printf("\n");
-#endif
+	DPRINTF(("\n"));
+
+	callout_schedule(&sc->sc_link_callout, mstohz(2000));
 
 	return 0;
 }
@@ -356,6 +529,9 @@ int dme_intr(void *arg)
 	struct dme_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	uint8_t status;
+
+
+	DPRINTF(("dme_intr: Begin\n"));
 
 	/* Disable interrupts */
 	dme_write(sc, DM9000_IMR, DM9000_IMR_PAR );
@@ -412,6 +588,8 @@ int dme_intr(void *arg)
 	dme_write(sc, DM9000_IMR, DM9000_IMR_PAR | DM9000_IMR_PRM |
 		 DM9000_IMR_PTM);
 
+	DPRINTF(("dme_intr: End\n"));
+
 	return 1;
 }
 
@@ -421,6 +599,8 @@ dme_start_output(struct ifnet *ifp)
 	struct dme_softc *sc;
 
 	sc = ifp->if_softc;
+
+	DPRINTF(("dme_start_output: Begin\n"));
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING) {
 		printf("No output\n");
@@ -444,15 +624,15 @@ dme_start_output(struct ifnet *ifp)
 		 */
 		ifp->if_flags |= IFF_OACTIVE;
 	}
+
+	DPRINTF(("dme_start_output: End\n"));
 }
 
 void
 dme_prepare(struct dme_softc *sc, struct ifnet *ifp)
 {
-	struct mbuf *buf;
 	struct mbuf *bufChain;
 	uint16_t length;
-	uint8_t *write_ptr;
 
 	TX_DPRINTF(("dme_prepare: Entering\n"));
 
@@ -471,106 +651,16 @@ dme_prepare(struct dme_softc *sc, struct ifnet *ifp)
 	if (ifp->if_bpf)
 		bpf_mtap(ifp, bufChain);
 
-
-	length = 0;
-
-	/* XXX: This support 16-bit I/O mode only. */
-	/* XXX: This code must be factored out, such that architecture
-	   dependent versions can be supplied */
-
-	int left_over_count = 0; /* Number of bytes from previous mbuf, which
-				    need to be written with the next.*/
-	uint16_t left_over_buf = 0;
-
 	/* Setup the DM9000 to accept the writes, and then write each buf in
 	   the chain. */
 
 	TX_DATA_DPRINTF(("dme_prepare: Writing data: "));
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, sc->dme_io, DM9000_MWCMD);
-	for (buf = bufChain; buf != NULL; buf = buf->m_next) {
-		int to_write = buf->m_len;
-
-		length += to_write;
-
-		write_ptr = buf->m_data;
-		while (to_write > 0 ||
-		       (buf->m_next == NULL && left_over_count > 0)
-		       ) {
-			if (left_over_count > 0) {
-				uint8_t b = 0;
-				DPRINTF(("dme_prepare: "
-					"Writing left over byte\n"));
-
-				if (to_write > 0) {
-					b = *write_ptr;
-					to_write--;
-					write_ptr++;
-
-					DPRINTF(("Took single byte\n"));
-				} else {
-					DPRINTF(("Leftover in last run\n"));
-					length++;
-				}
-
-				/* Does shift direction depend on endianess? */
-				left_over_buf = left_over_buf | (b << 8);
-
-				bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-						  sc->dme_data, left_over_buf);
-				TX_DATA_DPRINTF(("%02X ", left_over_buf));
-				left_over_count = 0;
-			} else if ((long)write_ptr % 2 != 0) {
-				/* Misaligned data */
-				DPRINTF(("dme_prepare: "
-					"Detected misaligned data\n"));
-				left_over_buf = *write_ptr;
-				left_over_count = 1;
-				write_ptr++;
-				to_write--;
-			} else {
-				int i;
-				uint16_t *dptr = (uint16_t*)write_ptr;
-
-				/* A block of aligned data. */
-				for(i = 0; i < to_write/2; i++) {
-					/* buf will be half-word aligned
-					 * all the time
-					 */
-					bus_space_write_2(sc->sc_iot,
-					    sc->sc_ioh, sc->dme_data, *dptr);
-					TX_DATA_DPRINTF(("%02X %02X ",
-					    *dptr & 0xFF, (*dptr>>8) & 0xFF));
-					dptr++;
-				}
-
-				write_ptr += i*2;
-				if (to_write % 2 != 0) {
-					DPRINTF(("dme_prepare: "
-						"to_write %% 2: %d\n",
-						to_write % 2));
-					left_over_count = 1;
-					/* XXX: Does this depend on
-					 * the endianess?
-					 */
-					left_over_buf = *write_ptr;
-					
-					write_ptr++;
-					to_write--;
-					DPRINTF(("dme_prepare: "
-						"to_write (after): %d\n",
-						to_write));
-					DPRINTF(("dme_prepare: i*2: %d\n",
-						i*2));
-				}
-				to_write -= i*2;
-			}
-		} /* while(...) */
-	} /* for(...) */
-
+	length = sc->sc_pkt_write(sc, bufChain);
 	TX_DATA_DPRINTF(("\n"));
 
-	if (length % 2 == 1) {
-		panic("dme_prepare: length is not a word-length");
+	if (length % sc->sc_data_width != 0) {
+		panic("dme_prepare: length is not compatible with IO_MODE");
 	}
 
 	sc->txready_length = length;
@@ -622,6 +712,14 @@ dme_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	default:
 		error = ether_ioctl(ifp, cmd, data);
+		if (error == ENETRESET) {
+			if (ifp->if_flags && IFF_RUNNING) {
+				/* Address list has changed, reconfigure
+				   filter */
+				dme_set_addr_filter(sc);
+			}
+			error = 0;
+		}
 		break;
 	}
 
@@ -647,22 +745,18 @@ dme_stop(struct ifnet *ifp, int disable)
 int
 dme_mediachange(struct ifnet *ifp)
 {
-	/* TODO: Make this function do something useful. */
-	return 0;
+	struct dme_softc *sc = ifp->if_softc;
+
+	return dme_set_media(sc, sc->sc_media.ifm_cur->ifm_media);
 }
 
 void
 dme_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
-	/* TODO: Make this function do something useful. */
 	struct dme_softc *sc = ifp->if_softc;
-	ifmr->ifm_active = sc->sc_media.ifm_cur->ifm_media;
 
-	if (ifp->if_flags & IFF_UP) {
-		ifmr->ifm_status = IFM_AVALID | IFM_ACTIVE;
-	} else {
-		ifmr->ifm_status = 0;
-	}
+	ifmr->ifm_active = sc->sc_media_active;
+	ifmr->ifm_status = sc->sc_media_status;
 }
 
 void
@@ -704,69 +798,14 @@ dme_receive(struct dme_softc *sc, struct ifnet *ifp)
 		ready = bus_space_read_1(sc->sc_iot, sc->sc_ioh, sc->dme_data);
 		ready &= 0x03;	/* we only want bits 1:0 */
 		if (ready == 0x01) {
-			uint8_t rx_status;
-
-			uint16_t data;
-			uint16_t frame_length;
-			uint16_t i;
-			struct mbuf *m;
-			uint16_t *buf;
-			int pad;
-
-			/* TODO: Add support for 8-bit and
-			 *  32-bit transfer modes.
-			 */
+			uint8_t		rx_status;
+			struct mbuf	*m;
 
 			/* Read with address increment. */
 			bus_space_write_1(sc->sc_iot, sc->sc_ioh,
-			    sc->dme_io, DM9000_MRCMD);
-			data = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-			    sc->dme_data);
+					  sc->dme_io, DM9000_MRCMD);
 
-			rx_status = data & 0xFF;
-			frame_length = bus_space_read_2(sc->sc_iot,
-			    sc->sc_ioh, sc->dme_data);
-
-			RX_DPRINTF(("dme_receive: "
-				"rx_statux: 0x%x, frame_length: %d\n",
-				rx_status, frame_length));
-
-
-			MGETHDR(m, M_DONTWAIT, MT_DATA);
-			m->m_pkthdr.rcvif = ifp;
-			/* Ensure that we always allocate an even number of
-			 * bytes in order to avoid writing beyond the buffer
-			 */
-			m->m_pkthdr.len = frame_length + (frame_length % 2);
-			pad = ALIGN(sizeof(struct ether_header)) -
-			    sizeof(struct ether_header);
-			/* All our frames have the CRC attached */
-			m->m_flags |= M_HASFCS;
-			if (m->m_pkthdr.len + pad > MHLEN )
-				MCLGET(m, M_DONTWAIT);
-
-			m->m_data += pad;
-			m->m_len = frame_length + (frame_length % 2);
-			buf = mtod(m, uint16_t*);
-
-			RX_DPRINTF(("dme_receive: "));
-
-			for(i=0; i< frame_length; i+=2 ) {
-				data = bus_space_read_2(sc->sc_iot,
-				    sc->sc_ioh, sc->dme_data);
-				if ( (frame_length % 2 != 0) &&
-				    (i == frame_length-1) ) {
-					data = data & 0xff;
-					RX_DPRINTF((" L "));
-				}
-				*buf = data;
-				buf++;
-				RX_DATA_DPRINTF(("%02X %02X ", data & 0xff,
-					    (data>>8) & 0xff));
-			}
-
-			RX_DATA_DPRINTF(("\n"));
-			RX_DPRINTF(("Read %d bytes\n", i));
+			rx_status = sc->sc_pkt_read(sc, ifp, &m);
 
 			if (rx_status & (DM9000_RSR_CE | DM9000_RSR_PLE)) {
 				/* Error while receiving the packet,
@@ -786,7 +825,8 @@ dme_receive(struct dme_softc *sc, struct ifnet *ifp)
 
 		} else if (ready != 0x00) {
 			/* Should this be logged somehow? */
-			DPRINTF(("DM9000: Resetting chip\n"));
+			printf("%s: Resetting chip\n",
+			       device_xname(sc->sc_dev));
 			dme_reset(sc);
 		}
 	}
@@ -797,28 +837,46 @@ dme_reset(struct dme_softc *sc)
 {
 	uint8_t var;
 
-	/* Enable PHY */
-	var = dme_read(sc, DM9000_GPCR);
-	dme_write(sc, DM9000_GPCR, var | DM9000_GPCR_GPIO0_OUT);
-	var = dme_read(sc, DM9000_GPR);
-	dme_write(sc, DM9000_GPR, var & ~DM9000_GPR_PHY_PWROFF);
+	/* We only re-initialized the PHY in this function the first time it is
+	   called. */
+	if( !sc->sc_phy_initialized) {
+		/* PHY Reset */
+		dme_phy_write(sc, DM9000_PHY_BMCR, DM9000_PHY_BMCR_RESET);
 
-	/* Reset the DM9000 twice, as describe din section 5.2 of the
-	 * Application Notes
+		/* PHY Power Down */
+		var = dme_read(sc, DM9000_GPR);
+		dme_write(sc, DM9000_GPR, var | DM9000_GPR_PHY_PWROFF);
+	}
+
+	/* Reset the DM9000 twice, as described in section 2 of the Programming
+	   Guide.
+	   The PHY is initialized and enabled between those two resets.
 	 */
+
+	/* Software Reset*/
 	dme_write(sc, DM9000_NCR,
 	    DM9000_NCR_RST | DM9000_NCR_LBK_MAC_INTERNAL);
-	
 	delay(20);
 	dme_write(sc, DM9000_NCR, 0x0);
-	dme_write(sc, DM9000_NCR,
-	    DM9000_NCR_RST | DM9000_NCR_LBK_MAC_INTERNAL);
-	
-	delay(20);
-	dme_write(sc, DM9000_NCR, 0x0);
+
+	if( !sc->sc_phy_initialized) {
+		/* PHY Initialization */
+		dme_phy_init(sc);
+
+		/* PHY Enable */
+		var = dme_read(sc, DM9000_GPR);
+		dme_write(sc, DM9000_GPR, var & ~DM9000_GPR_PHY_PWROFF);
+		var = dme_read(sc, DM9000_GPCR);
+		dme_write(sc, DM9000_GPCR, var | DM9000_GPCR_GPIO0_OUT);
+
+		dme_write(sc, DM9000_NCR,
+			  DM9000_NCR_RST | DM9000_NCR_LBK_MAC_INTERNAL);
+		delay(20);
+		dme_write(sc, DM9000_NCR, 0x0);
+	}
 
 	/* Select internal PHY, no wakeup event, no collosion mode,
-	 * normal loopback mode, and no full duplex mode
+	 * normal loopback mode.
 	 */
 	dme_write(sc, DM9000_NCR, DM9000_NCR_LBK_NORMAL );
 
@@ -831,9 +889,245 @@ dme_reset(struct dme_softc *sc)
 	dme_write(sc, DM9000_IMR,
 	    DM9000_IMR_PAR | DM9000_IMR_PRM | DM9000_IMR_PTM);
 
-	/* Enable RX without watchdog */
-	dme_write(sc, DM9000_RCR, DM9000_RCR_RXEN | DM9000_RCR_WTDIS);
+	/* Setup multicast address filter, and enable RX. */
+	dme_set_addr_filter(sc);
+
+	/* Obtain media information from PHY */
+	dme_phy_update_media(sc);
 
 	sc->txbusy = 0;
 	sc->txready = 0;
+	sc->sc_phy_initialized = 1;
+}
+
+void
+dme_set_addr_filter(struct dme_softc *sc)
+{
+	struct ether_multi	*enm;
+	struct ether_multistep	step;
+	struct ethercom		*ec;
+	struct ifnet		*ifp;
+	uint16_t		af[4];
+	int			i;
+
+	ec = &sc->sc_ethercom;
+	ifp = &ec->ec_if;
+
+	if (ifp->if_flags & IFF_PROMISC) {
+		dme_write(sc, DM9000_RCR, DM9000_RCR_RXEN  |
+					  DM9000_RCR_WTDIS |
+					  DM9000_RCR_PRMSC);
+		ifp->if_flags |= IFF_ALLMULTI;
+		return;
+	}
+
+	af[0] = af[1] = af[2] = af[3] = 0x0000;
+	ifp->if_flags &= ~IFF_ALLMULTI;
+
+	ETHER_FIRST_MULTI(step, ec, enm);
+	while (enm != NULL) {
+		uint16_t hash;
+		if (memcpy(enm->enm_addrlo, enm->enm_addrhi,
+		    sizeof(enm->enm_addrlo))) {
+			/*
+	                 * We must listen to a range of multicast addresses.
+	                 * For now, just accept all multicasts, rather than
+	                 * trying to set only those filter bits needed to match
+	                 * the range.  (At this time, the only use of address
+	                 * ranges is for IP multicast routing, for which the
+	                 * range is big enough to require all bits set.)
+	                 */
+			ifp->if_flags |= IFF_ALLMULTI;
+			af[0] = af[1] = af[2] = af[3] = 0xffff;
+			break;
+		} else {
+			hash = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN) & 0x3F;
+			af[(uint16_t)(hash>>4)] |= (uint16_t)(1 << (hash % 16));
+			ETHER_NEXT_MULTI(step, enm);
+		}
+	}
+
+	/* Write the multicast address filter */
+	for(i=0; i<4; i++) {
+		dme_write(sc, DM9000_MAB0+i*2, af[i] & 0xFF);
+		dme_write(sc, DM9000_MAB0+i*2+1, (af[i] >> 8) & 0xFF);
+	}
+
+	/* Setup RX controls */
+	dme_write(sc, DM9000_RCR, DM9000_RCR_RXEN | DM9000_RCR_WTDIS);
+}
+
+int
+dme_pkt_write_2(struct dme_softc *sc, struct mbuf *bufChain)
+{
+	int left_over_count = 0; /* Number of bytes from previous mbuf, which
+				    need to be written with the next.*/
+	uint16_t left_over_buf = 0;
+	int length = 0;
+	struct mbuf *buf;
+	uint8_t *write_ptr;
+
+	/* We expect that the DM9000 has been setup to accept writes before
+	   this function is called. */
+
+	for (buf = bufChain; buf != NULL; buf = buf->m_next) {
+		int to_write = buf->m_len;
+
+		length += to_write;
+
+		write_ptr = buf->m_data;
+		while (to_write > 0 ||
+		       (buf->m_next == NULL && left_over_count > 0)
+		       ) {
+			if (left_over_count > 0) {
+				uint8_t b = 0;
+				DPRINTF(("dme_pkt_write_16: "
+					 "Writing left over byte\n"));
+
+				if (to_write > 0) {
+					b = *write_ptr;
+					to_write--;
+					write_ptr++;
+
+					DPRINTF(("Took single byte\n"));
+				} else {
+					DPRINTF(("Leftover in last run\n"));
+					length++;
+				}
+
+				/* Does shift direction depend on endianess? */
+				left_over_buf = left_over_buf | (b << 8);
+
+				bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+						  sc->dme_data, left_over_buf);
+				TX_DATA_DPRINTF(("%02X ", left_over_buf));
+				left_over_count = 0;
+			} else if ((long)write_ptr % 2 != 0) {
+				/* Misaligned data */
+				DPRINTF(("dme_pkt_write_16: "
+					 "Detected misaligned data\n"));
+				left_over_buf = *write_ptr;
+				left_over_count = 1;
+				write_ptr++;
+				to_write--;
+			} else {
+				int i;
+				uint16_t *dptr = (uint16_t*)write_ptr;
+
+				/* A block of aligned data. */
+				for(i = 0; i < to_write/2; i++) {
+					/* buf will be half-word aligned
+					 * all the time
+					 */
+					bus_space_write_2(sc->sc_iot,
+							  sc->sc_ioh, sc->dme_data, *dptr);
+					TX_DATA_DPRINTF(("%02X %02X ",
+							 *dptr & 0xFF, (*dptr>>8) & 0xFF));
+					dptr++;
+				}
+
+				write_ptr += i*2;
+				if (to_write % 2 != 0) {
+					DPRINTF(("dme_pkt_write_16: "
+						 "to_write %% 2: %d\n",
+						 to_write % 2));
+					left_over_count = 1;
+					/* XXX: Does this depend on
+					 * the endianess?
+					 */
+					left_over_buf = *write_ptr;
+
+					write_ptr++;
+					to_write--;
+					DPRINTF(("dme_pkt_write_16: "
+						 "to_write (after): %d\n",
+						 to_write));
+					DPRINTF(("dme_pkt_write_16: i*2: %d\n",
+						 i*2));
+				}
+				to_write -= i*2;
+			}
+		} /* while(...) */
+	} /* for(...) */
+
+	return length;
+}
+
+int
+dme_pkt_read_2(struct dme_softc *sc, struct ifnet *ifp, struct mbuf **outBuf)
+{
+	uint8_t rx_status;
+	struct mbuf *m;
+	uint16_t data;
+	uint16_t frame_length;
+	uint16_t i;
+	uint16_t *buf;
+
+	data = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
+				sc->dme_data);
+
+	rx_status = data & 0xFF;
+	frame_length = bus_space_read_2(sc->sc_iot,
+					sc->sc_ioh, sc->dme_data);
+	if (frame_length > ETHER_MAX_LEN) {
+		printf("Got frame of length: %d\n", frame_length);
+		printf("ETHER_MAX_LEN is: %d\n", ETHER_MAX_LEN);
+		panic("Something is rotten");
+	}
+	RX_DPRINTF(("dme_receive: "
+		    "rx_statux: 0x%x, frame_length: %d\n",
+		    rx_status, frame_length));
+
+
+	m = dme_alloc_receive_buffer(ifp, frame_length);
+
+	buf = mtod(m, uint16_t*);
+
+	RX_DPRINTF(("dme_receive: "));
+
+	for(i=0; i< frame_length; i+=2 ) {
+		data = bus_space_read_2(sc->sc_iot,
+					sc->sc_ioh, sc->dme_data);
+		if ( (frame_length % 2 != 0) &&
+		     (i == frame_length-1) ) {
+			data = data & 0xff;
+			RX_DPRINTF((" L "));
+		}
+		*buf = data;
+		buf++;
+		RX_DATA_DPRINTF(("%02X %02X ", data & 0xff,
+				 (data>>8) & 0xff));
+	}
+
+	RX_DATA_DPRINTF(("\n"));
+	RX_DPRINTF(("Read %d bytes\n", i));
+
+	*outBuf = m;
+	return rx_status;
+}
+
+struct mbuf*
+dme_alloc_receive_buffer(struct ifnet *ifp, unsigned int frame_length)
+{
+	struct dme_softc *sc = ifp->if_softc;
+	struct mbuf *m;
+	int pad;
+
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	m->m_pkthdr.rcvif = ifp;
+	/* Ensure that we always allocate an even number of
+	 * bytes in order to avoid writing beyond the buffer
+	 */
+	m->m_pkthdr.len = frame_length + (frame_length % sc->sc_data_width);
+	pad = ALIGN(sizeof(struct ether_header)) -
+		sizeof(struct ether_header);
+	/* All our frames have the CRC attached */
+	m->m_flags |= M_HASFCS;
+	if (m->m_pkthdr.len + pad > MHLEN )
+		MCLGET(m, M_DONTWAIT);
+
+	m->m_data += pad;
+	m->m_len = frame_length + (frame_length % sc->sc_data_width);
+
+	return m;
 }

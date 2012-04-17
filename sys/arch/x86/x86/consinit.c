@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.22 2011/07/01 18:21:31 dyoung Exp $	*/
+/*	$NetBSD: consinit.c,v 1.22.2.1 2012/04/17 00:07:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.22 2011/07/01 18:21:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.22.2.1 2012/04/17 00:07:06 yamt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -68,13 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.22 2011/07/01 18:21:31 dyoung Exp $")
 
 #if (NGENFB > 0)
 #include <dev/wsfb/genfbvar.h>
-#endif
-
-#ifdef __i386__
-#include "xboxfb.h"
-#if (NXBOXFB > 0)
-#include <machine/xbox.h>
-#endif
 #endif
 
 #include "com.h"
@@ -176,18 +169,6 @@ consinit(void)
 			goto dokbd;
 		}
 		genfb_disable();
-#endif
-#if (NXBOXFB > 0)
-		switch (xboxfb_cnattach()) {
-		case 0:
-			goto dokbd;
-		case 1:
-			break;
-		case -1:
-			/* defer initialization until later */
-			initted = 0;
-			return;
-		}
 #endif
 #if (NVGA > 0)
 		if (!vga_cnattach(x86_bus_space_io, x86_bus_space_mem,

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.341 2011/07/23 21:12:57 jakllsch Exp $
+# $NetBSD: GENERIC,v 1.341.2.1 2012/04/17 00:05:55 yamt Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.341 $"
+ident		"GENERIC-$Revision: 1.341.2.1 $"
 
 maxusers 32
 
@@ -94,7 +94,7 @@ file-system	TMPFS		# Efficient memory file-system
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Sun NFS-compatible file system server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -169,7 +169,6 @@ options 	SYSVSEM
 options 	SYSVSHM
 
 # p1003.1b semaphore support
-options 	P1003_1B_SEMAPHORE
 
 # Loadable Kernel Modules
 
@@ -736,7 +735,6 @@ pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	sequencer	1	# MIDI sequencer
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness too
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.

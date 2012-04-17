@@ -1,4 +1,4 @@
-/*	$NetBSD: null.c,v 1.30 2011/06/27 12:06:19 manu Exp $	*/
+/*	$NetBSD: null.c,v 1.30.2.1 2012/04/17 00:05:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: null.c,v 1.30 2011/06/27 12:06:19 manu Exp $");
+__RCSID("$NetBSD: null.c,v 1.30.2.1 2012/04/17 00:05:31 yamt Exp $");
 #endif /* !lint */
 
 /*
@@ -480,9 +480,13 @@ puffs_null_node_rename(struct puffs_usermount *pu, puffs_cookie_t opc,
 	puffs_cookie_t targ_dir, puffs_cookie_t targ,
 	const struct puffs_cn *pcn_targ)
 {
+	struct puffs_node *pn_targ = targ;
 
 	if (rename(PCNPATH(pcn_src), PCNPATH(pcn_targ)) == -1)
 		return errno;
+
+        if (pn_targ)
+		puffs_pn_remove(pn_targ);
 
 	return 0;
 }

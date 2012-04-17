@@ -1,4 +1,4 @@
-/* $NetBSD: kern_fileassoc.c,v 1.34 2009/12/25 20:07:18 elad Exp $ */
+/* $NetBSD: kern_fileassoc.c,v 1.34.12.1 2012/04/17 00:08:23 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.34 2009/12/25 20:07:18 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.34.12.1 2012/04/17 00:08:23 yamt Exp $");
 
 #include "opt_fileassoc.h"
 
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.34 2009/12/25 20:07:18 elad Exp
 
 #define	FILEASSOC_INITIAL_TABLESIZE	128
 
-static specificdata_domain_t fileassoc_domain;
+static specificdata_domain_t fileassoc_domain = NULL;
 static specificdata_key_t fileassoc_mountspecific_key;
 static ONCE_DECL(control);
 
@@ -510,6 +510,10 @@ fileassoc_file_delete(struct vnode *vp)
 	struct fileassoc_table *tbl;
 	struct fileassoc_file *faf;
 
+	/* Pre-check if fileassoc is used. XXX */
+	if (!fileassoc_domain) {
+		return ENOENT;
+	}
 	KERNEL_LOCK(1, NULL);
 
 	faf = fileassoc_file_lookup(vp, NULL);

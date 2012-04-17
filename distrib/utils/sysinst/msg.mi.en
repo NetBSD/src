@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.165 2011/04/17 12:33:42 martin Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.165.4.1 2012/04/17 00:02:50 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -70,10 +70,10 @@ message hello
 {NetBSD/@@MACHINE@@ @@VERSION@@
 
 This menu-driven tool is designed to help you install NetBSD to a hard
-disk, or upgrade an existing NetBSD system, with a minimum of work.
+disk, or upgrade an existing NetBSD system, with a minimum of work. 
 In the following menus type the reference letter (a, b, c, ...) to
-select an item, or type CTRL+N/CTRL+P to select the next/previous item.
-The arrow keys and Page-up/Page-down may also work.
+select an item, or type CTRL+N/CTRL+P to select the next/previous item. 
+The arrow keys and Page-up/Page-down may also work. 
 Activate the current selection from the menu by typing the enter key.
 }
 
@@ -124,12 +124,12 @@ returned to the original menu.
 }
 
 message onedisk
-{I found only one disk, %s.
+{I found only one disk, %s. 
 Therefore I assume you want to %s NetBSD on it.
 }
 
 message ask_disk
-{On which disk do you want to install NetBSD? }
+{On which disk do you want to %s NetBSD? }
 
 message Available_disks
 {Available disks}
@@ -241,7 +241,7 @@ partition.
 }
 
 message fspart
-{We now have your BSD-disklabel partitions as:
+{We now have your BSD-disklabel partitions as: 
 This is your last chance to change them.
 
 }
@@ -261,7 +261,7 @@ message partition_sizes_ok
 {Partition sizes ok}
 
 message edfspart
-{The current values for partition `%c' are,
+{The current values for partition `%c' are, 
 Select the field you wish to change:
 
                           MB cylinders   sectors
@@ -406,7 +406,7 @@ password files.
 
 
 message unpackcomplete
-{Unpacking additional release sets of NetBSD-@@VERSION@@ is now complete.
+{Unpacking additional release sets of NetBSD-@@VERSION@@ is now complete.  
 You will now need to follow the instructions in the INSTALL document
 to get your system reconfigured for your situation.
 The afterboot(8) manpage can also be of some help.
@@ -446,7 +446,7 @@ message dev
 {device}
 
 message nfssource
-{Enter the nfs host and server directory where the distribution is located.
+{Enter the nfs host and server directory where the distribution is located. 
 Remember, the directory should contain the .tgz files and
 must be nfs mountable.
 
@@ -460,7 +460,7 @@ file system.  The set files must be in the root directory of the floppies.
 
 message cdromsource
 {Enter the CDROM device to be used and directory on the CDROM where
-the distribution is located.
+the distribution is located. 
 Remember, the directory should contain the .tgz files.
 
 }
@@ -477,13 +477,13 @@ CD. Please check device and path name.}
 
 message localfssource
 {Enter the unmounted local device and directory on that device where
-the distribution is located.
+the distribution is located. 
 Remember, the directory should contain the .tgz files.
 
 }
 
 message localdir
-{Enter the already-mounted local directory where the distribution is located.
+{Enter the already-mounted local directory where the distribution is located. 
 Remember, the directory should contain the .tgz files.
 
 }
@@ -544,33 +544,33 @@ message net_media
 message netok
 {The following are the values you entered.
 
-DNS Domain:		%s
-Host Name:		%s
-Primary Interface:	%s
-Host IP:		%s
-Netmask:		%s
-IPv4 Nameserver:	%s
-IPv4 Gateway:		%s
-Media type:		%s
+DNS Domain:		%s 
+Host Name:		%s 
+Primary Interface:	%s 
+Host IP:		%s 
+Netmask:		%s 
+IPv4 Nameserver:	%s 
+IPv4 Gateway:		%s 
+Media type:		%s 
 }
 
 message netok_slip
 {The following are the values you entered.  Are they OK?
 
-DNS Domain:		%s
-Host Name:		%s
-Primary Interface:	%s
-Host IP:		%s
-Server IP:		%s
-Netmask:		%s
-IPv4 Nameserver:	%s
-IPv4 Gateway:		%s
-Media type:		%s
+DNS Domain:		%s 
+Host Name:		%s 
+Primary Interface:	%s 
+Host IP:		%s 
+Server IP:		%s 
+Netmask:		%s 
+IPv4 Nameserver:	%s 
+IPv4 Gateway:		%s 
+Media type:		%s 
 }
 
 message netokv6
-{IPv6 autoconf:		%s
-IPv6 Nameserver:	%s
+{IPv6 autoconf:		%s 
+IPv6 Nameserver:	%s 
 }
 
 message netok_ok
@@ -649,16 +649,16 @@ message badetcfstab
 }
 
 message X_oldexists
-{I cannot save /usr/X11R6/bin/X as /usr/X11R6/bin/X.old, because the
-target disk already has an /usr/X11R6/bin/X.old. Please fix this before
+{I cannot save %s/bin/X as %s/bin/X.old, because the
+target disk already has an %s/bin/X.old. Please fix this before
 continuing.
 
 One way is to start a shell from the Utilities menu, examine the
-target /usr/X11R6/bin/X and /usr/X11R6/bin/X.old.  If
-/usr/X11R6/bin/X.old is from a completed upgrade, you can rm -f
-/usr/X11R6/bin/X.old and restart.  Or if /usr/X11R6/bin/X.old is from
-a recent, incomplete upgrade, you can rm -f /usr/X11R6/bin/X and mv
-/usr/X11R6/bin/X.old to /usr/X11R6/bin/X.
+target %s/bin/X and %s/bin/X.old.  If
+%s/bin/X.old is from a completed upgrade, you can rm -f
+%s/bin/X.old and restart.  Or if %s/bin/X.old is from
+a recent, incomplete upgrade, you can rm -f %s/bin/X and mv
+%s/bin/X.old to %s/bin/X
 
 Aborting upgrade.}
 
@@ -700,7 +700,7 @@ message fdnotfound
 }
 
 message fdremount
-{The floppy was not mounted successfully.
+{The floppy was not mounted successfully. 
 }
 
 message fdmount
@@ -769,6 +769,24 @@ message set_X11_servers
 message set_X11_prog
 {X11 programming}
 
+message set_source
+{Source sets}
+
+message set_syssrc
+{Kernel sources}
+
+message set_src
+{Base sources}
+
+message set_sharesrc
+{Share sources}
+
+message set_gnusrc
+{GNU sources}
+
+message set_xsrc
+{X11 sources}
+
 message cur_distsets_row
 {%-27s %3s}
 
@@ -813,13 +831,13 @@ message config_open_error
 {Could not open config file %s\n}
 
 message choose_timezone
-{Please choose the timezone that fits you best from the list below.
-Press RETURN to select an entry.
-Press 'x' followed by RETURN to quit the timezone selection.
+{Please choose the timezone that fits you best from the list below. 
+Press RETURN to select an entry. 
+Press 'x' followed by RETURN to quit the timezone selection. 
 
- Default:	%s
- Selected:	%s
- Local time: 	%s %s
+ Default:	%s 
+ Selected:	%s 
+ Local time: 	%s %s 
 }
 
 message tz_back
@@ -906,7 +924,8 @@ message Custom_installation {Custom installation}
 message hidden {** hidden **}
 message Host {Host}
 message Base_dir {Base directory}
-message Set_dir {Set directory}
+message Set_dir_bin {Binary set directory}
+message Set_dir_src {Source set directory}
 message Xfer_dir {Transfer directory}
 message User {User}
 message Password {Password}
@@ -953,3 +972,61 @@ message license
 {To use the network interface %s, you must agree to the license in
 file %s. To view this file now, you can type ^Z, look at the contents of
 the file and then type "fg" to resume.}
+
+message binpkg
+{To configure the binary package system, please choose the network location
+to fetch packages from.  Once your system comes up, you can use 'pkgin'
+to install additional packages, or remove packages.}
+
+message pkgpath
+{Enabling binary packages with pkgin requires setting up the repository.
+The following are the host, directory, user, and password that
+will be used.  If "user" is "ftp", then the password is not needed.
+
+}
+message rcconf_backup_failed {Making backup of rc.conf failed. Continue?}
+message rcconf_backup_succeeded {rc.conf backup saved to %s.}
+message rcconf_restore_failed {Restoring backup rc.conf failed.}
+message rcconf_delete_failed {Deleting old %s entry failed.}
+message Pkg_dir {Package directory}
+message configure_prior {configure a prior installation of}
+message configure {configure}
+message change {change}
+message password_set {password set}
+message YES {YES}
+message NO {NO}
+message DONE {DONE}
+message abandoned {Abandoned}
+message empty {***EMPTY***}
+message timezone {Timezone}
+message change_rootpw {Change root password}
+message enable_binpkg {Enable installation of binary packages}
+message enable_sshd {Enable sshd}
+message enable_ntpd {Enable ntpd}
+message run_ntpdate {Run ntpdate at boot}
+message enable_mdnsd {Enable mdnsd}
+message configmenu {Configure the additional items as needed.}
+message doneconfig {Finished configuring}
+message Install_pkgin {Install pkgin and update package summary}
+message binpkg_installed
+{Your system is now configured to use pkgin to install binary packages.  To
+install a package, run:
+
+pkgin install <packagename>
+
+from a root shell.  Read the pkgin(1) manual page for further information.}
+message Install_pkgsrc {Fetch and unpack pkgsrc}
+message pkgsrc
+{Installing pkgsrc requires unpacking an archive retrieved over the network.
+The following are the host, directory, user, and password that
+will be used.  If "user" is "ftp", then the password is not needed.
+
+}
+message Pkgsrc_dir {pkgsrc directory}
+message get_pkgsrc {Fetch and unpack pkgsrc for building from source}
+message retry_pkgsrc_network {Network configuration failed.  Retry?}
+message quit_pkgsrc {Quit without installing pkgsrc}
+message pkgin_failed
+{Installation of pkgin failed, possibly because no binary packages
+exist.  Please check the package path and try again.}
+message failed {Failed}

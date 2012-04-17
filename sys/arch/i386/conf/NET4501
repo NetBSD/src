@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.76 2011/05/28 13:01:50 ryo Exp $
+# $NetBSD: NET4501,v 1.76.4.1 2012/04/17 00:06:28 yamt Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.76 $"
+#ident 		"NET4501-$Revision: 1.76.4.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -286,7 +286,6 @@ pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
 #pseudo-device	fss			# file system snapshot device

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.61 2011/09/27 01:13:16 christos Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.61.2.1 2012/04/17 00:08:20 yamt Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.61 2011/09/27 01:13:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.61.2.1 2012/04/17 00:08:20 yamt Exp $");
 #endif /* not lint */
 
 
@@ -380,7 +380,8 @@ udf_mount(struct mount *mp, const char *path,
 	if ((mp->mnt_flag & MNT_RDONLY) == 0)
 		accessmode |= VWRITE;
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = genfs_can_mount(devvp, accessmode, l->l_cred);
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
+	    KAUTH_REQ_SYSTEM_MOUNT_DEVICE, mp, devvp, KAUTH_ARG(accessmode));
 	VOP_UNLOCK(devvp);
 	if (error) {
 		vrele(devvp);
@@ -395,7 +396,9 @@ udf_mount(struct mount *mp, const char *path,
 	} else {
 		openflags = FREAD | FWRITE;
 	}
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_OPEN(devvp, openflags, FSCRED);
+	VOP_UNLOCK(devvp);
 	if (error == 0) {
 		/* opened ok, try mounting */
 		error = udf_mountfs(devvp, mp, l, args);

@@ -1,4 +1,4 @@
-/*	$NetBSD: _lwp.c,v 1.6 2011/03/12 07:55:09 matt Exp $	*/
+/*	$NetBSD: _lwp.c,v 1.6.4.1 2012/04/17 00:05:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -37,10 +37,11 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _lwp.c,v 1.6 2011/03/12 07:55:09 matt Exp $");
+__RCSID("$NetBSD: _lwp.c,v 1.6.4.1 2012/04/17 00:05:14 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+#include <sys/param.h>
 #include <sys/types.h>
 #include <ucontext.h>
 #include <lwp.h>
@@ -50,7 +51,7 @@ void
 _lwp_makecontext(ucontext_t *u, void (*start)(void *), void *arg,
 	void *tcb, caddr_t stack_base, size_t stack_size)
 {
-	void	**sp;
+	uintptr_t sp;
 
 	getcontext(u);
 	u->uc_link = NULL;
@@ -58,12 +59,14 @@ _lwp_makecontext(ucontext_t *u, void (*start)(void *), void *arg,
 	u->uc_stack.ss_sp = stack_base;
 	u->uc_stack.ss_size = stack_size;
 
-	sp = (void **) (stack_base + stack_size);
+	sp = (uintptr_t)stack_base + stack_size;
+	sp -= STACK_ALIGNBYTES + 1;
+	sp &= ~STACK_ALIGNBYTES;
 
-	u->uc_mcontext.__gregs[3] = (int) arg;		/* arg1 */
-	u->uc_mcontext.__gregs[1] = ((int) sp) - 12;	/* stack */
-	u->uc_mcontext.__gregs[33] = (int) _lwp_exit;	/* LR */
-	u->uc_mcontext.__gregs[34] = (int) start;	/* PC */
+	u->uc_mcontext.__gregs[3] = (uintptr_t) arg;		/* arg1 */
+	u->uc_mcontext.__gregs[1] = sp;				/* stack */
+	u->uc_mcontext.__gregs[33] = (uintptr_t) _lwp_exit;	/* LR */
+	u->uc_mcontext.__gregs[34] = (uintptr_t) start;		/* PC */
 	u->uc_mcontext.__gregs[_REG_R2] =
-	    (__greg_t)tcb + TLS_TP_OFFSET + sizeof(struct tls_tcb);
+	    (uintptr_t)tcb + TLS_TP_OFFSET + sizeof(struct tls_tcb);
 }

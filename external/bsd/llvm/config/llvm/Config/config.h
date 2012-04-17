@@ -5,22 +5,10 @@
 #define CONFIG_H
 
 /* Bug report URL. */
-#define BUG_REPORT_URL "http://llvm.org"
+#define BUG_REPORT_URL "http://llvm.org/bugs/"
 
 /* Relative directory for resource files */
 #define CLANG_RESOURCE_DIR ""
-
-/* 32 bit multilib directory. */
-#define CXX_INCLUDE_32BIT_DIR ""
-
-/* 64 bit multilib directory. */
-#define CXX_INCLUDE_64BIT_DIR ""
-
-/* Arch the libstdc++ headers. */
-#define CXX_INCLUDE_ARCH ""
-
-/* Directory with the libstdc++ headers. */
-#define CXX_INCLUDE_ROOT ""
 
 /* Directories clang will search for headers */
 #define C_INCLUDE_DIRS "/usr/include/clang-3.0:/usr/include"
@@ -31,11 +19,11 @@
 /* Define if position independent code is enabled */
 #define ENABLE_PIC 1
 
-/* Define if threads enabled */
-#define ENABLE_THREADS 1
-
 /* Define if timestamp information (e.g., __DATE___) is allowed */
-#define ENABLE_TIMESTAMPS 1
+#define ENABLE_TIMESTAMPS 0
+
+/* Directory where gcc is installed. */
+#define GCC_INSTALL_PREFIX ""
 
 /* Define to 1 if you have the `argz_append' function. */
 /* #undef HAVE_ARGZ_APPEND */
@@ -211,7 +199,7 @@
 /* #undef HAVE_LIBPSAPI */
 
 /* Define to 1 if you have the `pthread' library (-lpthread). */
-#define HAVE_LIBPTHREAD 1
+/* #undef HAVE_LIBPTHREAD */
 
 /* Define to 1 if you have the `udis86' library (-ludis86). */
 /* #undef HAVE_LIBUDIS86 */
@@ -291,10 +279,13 @@
 #define HAVE_OPENDIR 1
 
 /* Define to 1 if you have the `posix_spawn' function. */
-/* #undef HAVE_POSIX_SPAWN */
+#define HAVE_POSIX_SPAWN 1
 
 /* Define to 1 if you have the `powf' function. */
 #define HAVE_POWF 1
+
+/* Define to 1 if you have the `pread' function. */
+#define HAVE_PREAD 1
 
 /* Define if libtool can extract symbol lists from object files. */
 #define HAVE_PRELOADED_SYMBOLS 1
@@ -303,16 +294,16 @@
 #define HAVE_PRINTF_A 1
 
 /* Have pthread_getspecific */
-#define HAVE_PTHREAD_GETSPECIFIC 1
+/* #undef HAVE_PTHREAD_GETSPECIFIC */
 
 /* Define to 1 if you have the <pthread.h> header file. */
-#define HAVE_PTHREAD_H 1
+/* #undef HAVE_PTHREAD_H */
 
 /* Have pthread_mutex_lock */
-#define HAVE_PTHREAD_MUTEX_LOCK 1
+/* #undef HAVE_PTHREAD_MUTEX_LOCK */
 
 /* Have pthread_rwlock_init */
-#define HAVE_PTHREAD_RWLOCK_INIT 1
+/* #undef HAVE_PTHREAD_RWLOCK_INIT */
 
 /* Define to 1 if srand48/lrand48/drand48 exist in <stdlib.h> */
 #define HAVE_RAND48 1
@@ -539,16 +530,21 @@
 #define LLVM_BINDIR "/usr/bin"
 
 /* Time at which LLVM was configured */
-#define LLVM_CONFIGTIME "Thu Nov  3 00:22:51 CET 2011"
+#define LLVM_CONFIGTIME "Tue Feb 28 15:53:15 UTC 2012"
 
 /* Installation directory for data files */
 #define LLVM_DATADIR "/usr/share/llvm"
 
 /* Target triple LLVM will generate code for by default */
+#if 0
 #define LLVM_DEFAULT_TARGET_TRIPLE "x86_64--netbsd"
+#endif
 
 /* Installation directory for documentation */
 #define LLVM_DOCSDIR "/usr/share/doc/llvm"
+
+/* Define if threads enabled */
+#define LLVM_ENABLE_THREADS 0
 
 /* Installation directory for config files */
 #define LLVM_ETCDIR "/usr/etc/llvm"
@@ -622,6 +618,12 @@
 /* Installation prefix directory */
 #define LLVM_PREFIX "/usr"
 
+/* Major version of the LLVM API */
+#define LLVM_VERSION_MAJOR 3
+
+/* Minor version of the LLVM API */
+#define LLVM_VERSION_MINOR 1
+
 /* Define if the OS needs help to load dependent libraries for dlopen(). */
 /* #undef LTDL_DLOPEN_DEPLIBS */
 
@@ -647,16 +649,16 @@
 /* #undef NEED_USCORE */
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "llvmbugs@cs.uiuc.edu"
+#define PACKAGE_BUGREPORT "http://llvm.org/bugs/"
 
 /* Define to the full name of this package. */
-#define PACKAGE_NAME "llvm"
+#define PACKAGE_NAME "LLVM"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "llvm 3.1svn"
+#define PACKAGE_STRING "LLVM 3.1svn"
 
 /* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME "-llvm-"
+#define PACKAGE_TARNAME "llvm"
 
 /* Define to the version of this package. */
 #define PACKAGE_VERSION "3.1svn"

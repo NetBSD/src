@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.40.2.1 2011/11/10 14:31:43 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.40.2.2 2012/04/17 00:07:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -68,8 +68,9 @@
 #include <sys/device_if.h> /* for device_t */
 
 #ifdef XEN
-#include <xen/xen3-public/xen.h>
-#include <xen/xen3-public/event_channel.h>
+#include <xen/xen-public/xen.h>
+#include <xen/xen-public/event_channel.h>
+#include <sys/mutex.h>
 #endif /* XEN */
 
 struct intrsource;
@@ -126,6 +127,7 @@ struct cpu_info {
 
 #ifdef XEN
 	struct iplsource  *ci_isources[NIPL];
+	u_long ci_evtmask[NR_EVENT_CHANNELS]; /* events allowed on this CPU */
 #else
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
 #endif
@@ -176,19 +178,21 @@ struct cpu_info {
 #endif
 
 #ifdef PAE
-	paddr_t	ci_pae_l3_pdirpa; /* PA of L3 PD */
+	uint32_t	ci_pae_l3_pdirpa; /* PA of L3 PD */
 	pd_entry_t *	ci_pae_l3_pdir; /* VA pointer to L3 PD */
 #endif
 
 #if defined(XEN) && (defined(PAE) || defined(__x86_64__))
 	/* Currently active user PGD (can't use rcr3() with Xen) */
 	pd_entry_t *	ci_kpm_pdir;	/* per-cpu PMD (va) */
-	paddr_t		ci_kpm_pdirpa; /* per-cpu PMD (pa) */
+	paddr_t		ci_kpm_pdirpa;  /* per-cpu PMD (pa) */
+	kmutex_t	ci_kpm_mtx;
 #if defined(__x86_64__)
+	/* per-cpu version of normal_pdes */
+	pd_entry_t *	ci_normal_pdes[3]; /* Ok to hardcode. only for x86_64 && XEN */
 	paddr_t		ci_xen_current_user_pgd;
 #endif /* __x86_64__ */
 #endif /* XEN et.al */
-
 
 	char *ci_doubleflt_stack;
 	char *ci_ddbipi_stack;
@@ -315,7 +319,7 @@ lwp_t   *x86_curlwp(void);
 void cpu_boot_secondary_processors(void);
 void cpu_init_idle_lwps(void);
 void cpu_init_msrs(struct cpu_info *, bool);
-void cpu_load_pmap(struct pmap *);
+void cpu_load_pmap(struct pmap *, struct pmap *);
 void cpu_broadcast_halt(void);
 void cpu_kick(struct cpu_info *);
 
@@ -400,7 +404,6 @@ struct region_descriptor;
 void	lgdt(struct region_descriptor *);
 #ifdef XEN
 void	lgdt_finish(void);
-void	i386_switch_context(lwp_t *);
 #endif
 
 struct pcb;
@@ -411,8 +414,8 @@ void	child_trampoline(void);
 void	startrtclock(void);
 void	xen_delay(unsigned int);
 void	xen_initclocks(void);
-void	xen_suspendclocks(void);
-void	xen_resumeclocks(void);
+void	xen_suspendclocks(struct cpu_info *);
+void	xen_resumeclocks(struct cpu_info *);
 #else
 /* clock.c */
 void	initrtclock(u_long);

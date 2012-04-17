@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.85 2011/09/06 21:32:29 riz Exp $
+# $NetBSD: Makefile,v 1.85.2.1 2012/04/17 00:02:59 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -23,16 +23,17 @@ CONFIGFILES=\
 		gpio \
 		hostapd httpd \
 		identd ifwatchd inetd ipfilter ipfs ipmon ipnat ipsec \
-		irdaattach iscsi_target isdnd \
+		irdaattach iscsi_target isdnd isibootd \
 		kdc \
 		ldconfig ldpd local lpd lvm \
-		mdnsd mixerctl mopd motd mountall mountcritlocal \
+		makemandb mdnsd mixerctl mopd motd mountall mountcritlocal \
 		mountcritremote mountd moused mrouted \
 		named ndbootd network newsyslog nfsd nfslocking npf ntpd ntpdate \
 		perusertmp pf pf_boot pflogd postfix powerd ppp pwcheck \
 		quota \
-		racoon rpcbind raidframe raidframeparity rarpd rbootd rndctl \
-		root route6d routed rtadvd rtclocaltime rtsold rwho \
+		racoon rpcbind raidframe raidframeparity random_seed rarpd \
+		rbootd rndctl root route6d routed rtadvd rtclocaltime \
+		rtsold rwho \
 		savecore screenblank securelevel sshd \
 		staticroute swap1 swap2 sysctl sysdb syslogd \
 		timed tpctl ttys \

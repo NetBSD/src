@@ -1,21 +1,21 @@
-/* $NetBSD: vm_machdep.c,v 1.108 2011/06/14 07:53:29 matt Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.108.2.1 2012/04/17 00:05:54 yamt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.108 2011/06/14 07:53:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.108.2.1 2012/04/17 00:05:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.108 2011/06/14 07:53:29 matt Exp $"
 #include <sys/core.h>
 #include <sys/exec.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <machine/cpu.h>
 #include <machine/alpha.h>
@@ -62,7 +62,7 @@ cpu_lwp_free2(struct lwp *l)
 /*
  * Finish a fork operation, with thread l2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
- * 
+ *
  * Rig the child's kernel stack so that it will start out in
  * lwp_trampoline() and call child_return() with l2 as an
  * argument. This causes the newly-created child thread to go
@@ -157,24 +157,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		pcb2->pcb_context[7] =
 		    (uint64_t)lwp_trampoline;		/* ra: assembly magic */
 	}
-}
-
-void
-cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
-{
-	struct pcb *pcb = lwp_getpcb(l);
-	extern void setfunc_trampoline(void);
-
-	pcb->pcb_hw.apcb_ksp =
-	    (uint64_t)l->l_md.md_tf;
-	pcb->pcb_context[0] =
-	    (uint64_t)func;			/* s0: pc */
-	pcb->pcb_context[1] =
-	    (uint64_t)exception_return;		/* s1: ra */
-	pcb->pcb_context[2] =
-	    (uint64_t)arg;			/* s2: arg */
-	pcb->pcb_context[7] =
-	    (uint64_t)setfunc_trampoline;	/* ra: assembly magic */
 }
 
 /*
@@ -276,7 +258,7 @@ cpu_uarea_free(void *vva)
 		return false;
 
 	/*
-	 * Since the pages are physically contiguous, the vm_page structurs
+	 * Since the pages are physically contiguous, the vm_page structure
 	 * will be as well.
 	 */
 	struct vm_page *pg = PHYS_TO_VM_PAGE(PMAP_UNMAP_POOLPAGE(va));

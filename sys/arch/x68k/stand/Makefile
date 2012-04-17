@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.8 2002/01/27 01:07:00 minoura Exp $
+#	$NetBSD: Makefile,v 1.8.156.1 2012/04/17 00:07:03 yamt Exp $
 
-SUBDIR= mboot newdisk aout2hux libdos libiocs .WAIT loadbsd # common
-SUBDIR+= libsa .WAIT boot boot_ufs boot_ustar installboot
+SUBDIR= libdos libiocs libsa .WAIT
+SUBDIR+= aout2hux .WAIT
+SUBDIR+= newdisk loadbsd mboot boot boot_ufs boot_ustar installboot
 
 .include <bsd.subdir.mk>

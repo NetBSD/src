@@ -1,4 +1,4 @@
-/* $NetBSD: gpiovar.h,v 1.14 2011/10/02 09:33:19 mbalmer Exp $ */
+/* $NetBSD: gpiovar.h,v 1.14.2.1 2012/04/17 00:07:30 yamt Exp $ */
 /*	$OpenBSD: gpiovar.h,v 1.3 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -40,9 +40,6 @@ typedef struct gpio_pin {
 	int			pin_flags;	/* current configuration */
 	int			pin_state;	/* current state */
 	int			pin_mapped;	/* is mapped */
-	callout_t		pin_pulse;	/* for pulsing */
-	int			pin_ticks_on;	/* "on" period */
-	int			pin_ticks_off;	/* "off" period */
 	gpio_chipset_tag_t	pin_gc;		/* reference the controller */
 } gpio_pin_t;
 

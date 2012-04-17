@@ -1,4 +1,4 @@
-/*	$NetBSD: t_tcsetpgrp.c,v 1.1 2011/05/01 11:39:38 jruoho Exp $ */
+/*	$NetBSD: t_tcsetpgrp.c,v 1.1.4.1 2012/04/17 00:09:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_tcsetpgrp.c,v 1.1 2011/05/01 11:39:38 jruoho Exp $");
+__RCSID("$NetBSD: t_tcsetpgrp.c,v 1.1.4.1 2012/04/17 00:09:12 yamt Exp $");
 
 #include <sys/wait.h>
 
@@ -41,7 +41,8 @@ __RCSID("$NetBSD: t_tcsetpgrp.c,v 1.1 2011/05/01 11:39:38 jruoho Exp $");
 ATF_TC(tcsetpgrp_err);
 ATF_TC_HEAD(tcsetpgrp_err, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test errors from tcsetpgrp(3)");
+	atf_tc_set_md_var(tc, "descr", "Test errors from tcsetpgrp(3)"
+	    " (PR lib/41673)");
 }
 
 ATF_TC_BODY(tcsetpgrp_err, tc)
@@ -51,8 +52,6 @@ ATF_TC_BODY(tcsetpgrp_err, tc)
 
 	if (isatty(STDIN_FILENO) == 0)
 		return;
-
-	atf_tc_expect_fail("PR lib/41673");
 
 	pid = fork();
 	ATF_REQUIRE(pid >= 0);

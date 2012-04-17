@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.35 2011/04/17 12:33:42 martin Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.35.4.1 2012/04/17 00:02:50 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -74,11 +74,11 @@ message hello
 {Bienvenido a sysinst, la herramienta de instalación de NetBSD-@@VERSION@@.
 Esta herramienta guiada por menús está diseñada para ayudarle a instalar
 NetBSD en un disco duro, o actualizar un sistema NetBSD existente con
-un trabajo mínimo.
+un trabajo mínimo. 
 En los siguientes menús teclee la letra de referencia (a, b, c, ...) para
 seleccionar una opción, o teclee CTRL+N/CTRL+P para seleccionar la opción
-siguiente/anterior.
-Las teclas de cursor y AvPág/RePág puede que también funcionen.
+siguiente/anterior. 
+Las teclas de cursor y AvPág/RePág puede que también funcionen. 
 Active la selección actual desde el menú pulsando la tecla Intro.
 }
 
@@ -131,12 +131,12 @@ Se le volverá a llevar al menú original.
 }
 
 message onedisk
-{Solamente se ha encontrado un disco, %s.
+{Solamente se ha encontrado un disco, %s. 
 Por tanto se entiende que quiere %s NetBSD en él.
 }
 
 message ask_disk
-{¿En cuál disco quiere instalar NetBSD? }
+{¿En cuál disco quiere %s NetBSD? }
 
 message Available_disks
 {Discos disponibles}
@@ -184,7 +184,7 @@ Seleccionar sectores le permitirá especificar los tamaños de manera
 más precisa.  En discos ZBR modernos, el tamaño real del cilindro varía
 a lo largo del disco y no hay mucha ventaja real en el alineamiento de
 cilindros.  En discos más viejos, lo más eficiente es seleccionar
-tamaños de partición que sean multiples exactos del tamaño real del
+tamaños de partición que sean multiples exactos del tamaño real del 
 cilindro.
 
 Escoja su especificador de tamaño}
@@ -255,7 +255,7 @@ message fspart
 }
 
 message fspart_header
-{   Inicio %3s Fin %3s   Tamaño %3s Tipo FS    Newfs Mont. Punto mont.
+{   Inicio %3s Fin %3s   Tamaño %3s Tipo FS    Newfs Mont. Punto mont. 
    ---------- --------- ---------- ---------- ----- ----- -----------
 }
 
@@ -269,7 +269,7 @@ message partition_sizes_ok
 {Tamaños de partición ok}
 
 message edfspart
-{Los valores actuales de la particion `%c' son,
+{Los valores actuales de la particion `%c' son, 
 Seleccione el campo que desee cambiar:
 
                           MB cilindros  sectores
@@ -490,7 +490,7 @@ CD. Please check device and path name.}
 
 message localfssource
 {Introduzca el dispositivo local desmontado y el directorio de ese
-dispositivo donde se encuentre la distribución.
+dispositivo donde se encuentre la distribución. 
 Recuerde, el directorio debe contener los archivos .tgz.
 
 }
@@ -558,33 +558,33 @@ message net_media
 message netok
 {Ha introducido los siguientes valores.
 
-Dominio DNS: 		%s
-Nombre de máquina:	%s
-Interfaz primaria:	%s
-IP de la máquina:	%s
-Máscara de red:		%s
-Serv de nombres IPv4:	%s
-Pasarela IPv4:		%s
-Tipo de medio:		%s
+Dominio DNS: 		%s 
+Nombre de máquina:	%s 
+Interfaz primaria:	%s 
+IP de la máquina:	%s 
+Máscara de red:		%s 
+Serv de nombres IPv4:	%s 
+Pasarela IPv4:		%s 
+Tipo de medio:		%s 
 }
 
 message netok_slip
 {Ha introducido los siguientes valores. ¿Son correctos?
 
-Dominio DNS: 		%s
-Nombre de la máquina:	%s
-Interfaz primaria:	%s
-IP de la máquina:	%s
-IP del servidor:	%s
-Máscara de red:		%s
-Serv de nombres IPv4:	%s
-Pasarela IPv4:		%s
-Tipo de medio:		%s
+Dominio DNS: 		%s 
+Nombre de la máquina:	%s 
+Interfaz primaria:	%s 
+IP de la máquina:	%s 
+IP del servidor:	%s 
+Máscara de red:		%s 
+Serv de nombres IPv4:	%s 
+Pasarela IPv4:		%s 
+Tipo de medio:		%s 
 }
 
 message netokv6
-{IPv6 autoconf:		%s
-Serv de nombres IPv6:	%s
+{IPv6 autoconf:		%s 
+Serv de nombres IPv6:	%s 
 }
 
 message netok_ok
@@ -648,7 +648,7 @@ a mano.  Instalación interrumpida.
 }
 
 message abortunpack
-{El desempaquetamiento de los conjuntos adicionales no ha sido satisfactorio.
+{El desempaquetamiento de los conjuntos adicionales no ha sido satisfactorio. 
 Necesitará proceder a mano, o escoger una fuente diferente para los conjuntos
 de esta distribución y volver a intentarlo.
 }
@@ -669,16 +669,16 @@ Interrumpiendo la actualización.
 }
 
 message X_oldexists
-{No se puede guardar /usr/X11R6/bin/X como /usr/X11R6/bin/X.old, porque el
-disco objetivo ya tiene un /usr/X11R6/bin/X.old.  Por favor, arregle esto
+{No se puede guardar %s/bin/X como %s/bin/X.old, porque el
+disco objetivo ya tiene un %s/bin/X.old.  Por favor, arregle esto
 antes de continuar.
 
 Una manera es iniciando una shell desde el menú Utilidades, y examinar
-el objetivo /usr/X11R6/bin/X y /usr/X11R6/bin/X.old.  Si
-/usr/X11R6/bin/X.old es de una actualización completada, puede rm -f
-/usr/X11R6/bin/X.old y reiniciar.  O si /usr/X11R6/bin/X.old es de
-una actualizacion reciente e incompleta, puede rm -f /usr/X11R6/bin/X
-y mv /usr/X11R6/bin/X.old a /usr/X11R6/bin/X.
+el objetivo %s/bin/X y %s/bin/X.old.  Si
+%s/bin/X.old es de una actualización completada, puede rm -f
+%s/bin/X.old y reiniciar.  O si %s/bin/X.old es de
+una actualizacion reciente e incompleta, puede rm -f %s/bin/X
+y mv %s/bin/X.old a %s/bin/X.
 
 Interrumpiendo la actualización.}
 
@@ -792,6 +792,24 @@ message set_X11_servers
 message set_X11_prog
 {Programación de X11}
 
+message set_source
+{Source sets}
+
+message set_syssrc
+{Kernel sources}
+
+message set_src
+{Base sources}
+
+message set_sharesrc
+{Share sources}
+
+message set_gnusrc
+{GNU sources}
+
+message set_xsrc
+{X11 sources}
+
 message cur_distsets_row
 {%-27s %3s}
 
@@ -836,14 +854,14 @@ message config_open_error
 {No se ha podido abrir el fichero de configuración %s\n}
 
 message choose_timezone
-{Por favor, escoja de la siguiente lista la zona horaria que le convenga.
-Presione RETURN para seleccionar una entrada.
+{Por favor, escoja de la siguiente lista la zona horaria que le convenga.  
+Presione RETURN para seleccionar una entrada. 
 Presione «x» seguido de RETURN para salir de la selección de la
 zona horaria.
 
- Predefinida:	%s
- Seleccionada:	%s
- Hora local: 	%s %s
+ Predefinida:	%s 
+ Seleccionada:	%s 
+ Hora local: 	%s %s 
 }
 
 message tz_back
@@ -931,7 +949,8 @@ message Custom_installation {Instalación personalizada}
 message hidden {** oculto **}
 message Host {Máquina}
 message Base_dir {Directorio base}
-message Set_dir {Directorio de conjuntos}
+message Set_dir_src {Directorio de conjuntos binary} /* fix XLAT */
+message Set_dir_bin {Directorio de conjuntos source} /* fix XLAT */
 message Xfer_dir {Directorio a transferir a}
 message User {Usuario}
 message Password {Contraseña}
@@ -993,3 +1012,59 @@ message license
 file %s.
 To view this file now, you can type ^Z, look at the contents of
 the file and then type "fg" to resume.}
+
+message binpkg
+{To configure the binary package system, please choose the network location
+to fetch packages from.  Once your system comes up, you can use 'pkgin'
+to install additional packages, or remove packages.}
+
+message pkgpath
+{The following are the protocol, host, directory, user, and password that
+will be used.  If "user" is "ftp", then the password is not needed.
+
+}
+message rcconf_backup_failed {Making backup of rc.conf failed. Continue?}
+message rcconf_backup_succeeded {rc.conf backup saved to %s.}
+message rcconf_restore_failed {Restoring backup rc.conf failed.}
+message rcconf_delete_failed {Deleting old %s entry failed.}
+message Pkg_dir {Package directory}
+message configure_prior {configure a prior installation of}
+message configure {configure}
+message change {change}
+message password_set {password set}
+message YES {YES}
+message NO {NO}
+message DONE {DONE}
+message abandoned {Abandoned}
+message empty {***EMPTY***}
+message timezone {Timezone}
+message change_rootpw {Change root password}
+message enable_binpkg {Enable installation of binary packages}
+message enable_sshd {Enable sshd}
+message enable_ntpd {Enable ntpd}
+message run_ntpdate {Run ntpdate at boot}
+message enable_mdnsd {Enable mdnsd}
+message configmenu {Configure the additional items as needed.}
+message doneconfig {Finished configuring}
+message Install_pkgin {Install pkgin and update package summary}
+message binpkg_installed 
+{You are now configured to use pkgin to install binary packages.  To
+install a package, run:
+
+pkgin install <packagename>
+
+from a root shell.  Read the pkgin(1) manual page for further information.}
+message Install_pkgsrc {Fetch and unpack pkgsrc}
+message pkgsrc
+{Installing pkgsrc requires unpacking an archive retrieved over the network.
+The following are the host, directory, user, and password that
+will be used.  If "user" is "ftp", then the password is not needed.
+
+}
+message Pkgsrc_dir {pkgsrc directory}
+message get_pkgsrc {Fetch and unpack pkgsrc for building from source}
+message retry_pkgsrc_network {Network configuration failed.  Retry?}
+message quit_pkgsrc {Quit without installing pkgsrc}
+message pkgin_failed 
+{Installation of pkgin failed, possibly because no binary packages  exist.  Please check the package path and try again.}
+message failed {Failed}

@@ -1,4 +1,4 @@
-/*	$NetBSD: newportreg.h,v 1.5 2011/02/20 07:59:50 matt Exp $	*/
+/*	$NetBSD: newportreg.h,v 1.5.4.1 2012/04/17 00:06:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -194,6 +194,7 @@
 
 #define REX3_REG_STATUS			0x1338
 #define  REX3_STATUS_GFXBUSY		0x00000008
+#define  REX3_STATUS_PIPELEVEL_MASK	0x00001f80
 
 /* VC2 */
 
@@ -261,6 +262,7 @@
 #define XMAP9_DCBCRS_MODE_SETUP		5
 #define  XMAP9_MODE_GAMMA_BYPASS	0x000004
 #define  XMAP9_MODE_PIXSIZE_8BPP	0x000400
+#define  XMAP9_MODE_PIXSIZE_24BPP	0x000c00
 #define XMAP9_DCBCRS_MODE_SELECT	7
 
 /* DCB addresses */

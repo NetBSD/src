@@ -1,4 +1,4 @@
-/*	$NetBSD: ksem.h,v 1.11 2008/11/14 15:49:21 ad Exp $	*/
+/*	$NetBSD: ksem.h,v 1.11.16.1 2012/04/17 00:08:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Alfred Perlstein <alfred@FreeBSD.org>
@@ -31,14 +31,16 @@
 
 #include <sys/cdefs.h>
 
+struct timespec;
+
 #ifdef _KERNEL
 #define	KSEM_MAX	128
 
 int do_ksem_init(struct lwp *, unsigned int, intptr_t *, copyout_t);
 int do_ksem_open(struct lwp *, const char *, int, mode_t, unsigned int,
     intptr_t *, copyout_t);
+int do_ksem_wait(struct lwp *, intptr_t, bool, struct timespec *);
 
-extern int	posix_semaphores;
 extern int	ksem_max;
 #endif
 
@@ -50,6 +52,7 @@ int _ksem_getvalue(intptr_t, int *);
 int _ksem_init(unsigned int, intptr_t *);
 int _ksem_open(const char *, int, mode_t, unsigned int, intptr_t *);
 int _ksem_post(intptr_t);
+int _ksem_timedwait(intptr_t, const struct timespec * __restrict);
 int _ksem_trywait(intptr_t);
 int _ksem_unlink(const char *);
 int _ksem_wait(intptr_t);

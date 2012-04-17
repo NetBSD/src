@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.183 2011/08/30 12:39:59 bouyer Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.183.2.1 2012/04/17 00:08:22 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,15 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.183 2011/08/30 12:39:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.183.2.1 2012/04/17 00:08:22 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
 #include "opt_modular.h"
-#include "opt_sa.h"
-#include "opt_posix.h"
 #include "pty.h"
-#include "rnd.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.183 2011/08/30 12:39:59 bouyer Exp
 #include <sys/kernel.h>
 #include <sys/unistd.h>
 #include <sys/disklabel.h>
-#include <sys/rnd.h>
+#include <sys/cprng.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
@@ -74,17 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.183 2011/08/30 12:39:59 bouyer Exp
 #include <compat/sys/time.h>
 #endif
 
-#ifdef KERN_SA
-#include <sys/sa.h>
-#endif
-
 #include <sys/cpu.h>
-
-#if defined(MODULAR) || defined(P1003_1B_SEMAPHORE)
-int posix_semaphores = 200112;
-#else
-int posix_semaphores;
-#endif
 
 int security_setidcore_dump;
 char security_setidcore_path[MAXPATHLEN] = "/var/crash/%n.core";
@@ -616,13 +603,13 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       NULL, _POSIX_THREADS, NULL, 0,
 		       CTL_KERN, KERN_POSIX_THREADS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "posix_semaphores",
 		       SYSCTL_DESCR("Version of IEEE Std 1003.1 and its "
 				    "Semaphores option to which the system "
 				    "attempts to conform"), NULL,
-		       0, &posix_semaphores,
-		       0, CTL_KERN, KERN_POSIX_SEMAPHORES, CTL_EOL);
+		       200112, NULL, 0,
+		       CTL_KERN, KERN_POSIX_SEMAPHORES, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "posix_barriers",
@@ -741,20 +728,11 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       0,
 		       CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-#ifndef KERN_SA
-		       CTLFLAG_IMMEDIATE|
-#endif
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLFLAG_IMMEDIATE|CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "no_sa_support",
 		       SYSCTL_DESCR("0 if the kernel supports SA, otherwise "
 		       "it doesn't"),
-		       NULL, 
-#ifndef KERN_SA
-		       1, NULL,
-#else
-		       0, &sa_system_disabled,
-#endif
-		       0,
+		       NULL, 1, NULL, 0,
 		       CTL_KERN, CTL_CREATE, CTL_EOL);
 	/* kern.posix. */
 	sysctl_createv(clog, 0, NULL, &rnode,
@@ -1395,12 +1373,9 @@ sysctl_kern_sbmax(SYSCTLFN_ARGS)
 static int
 sysctl_kern_urnd(SYSCTLFN_ARGS)
 {
-#if NRND > 0
 	int v, rv;
 
-	KERNEL_LOCK(1, NULL);
-	rv = rnd_extract_data(&v, sizeof(v), RND_EXTRACT_ANY);
-	KERNEL_UNLOCK_ONE(NULL);
+	rv = cprng_strong(sysctl_prng, &v, sizeof(v), 0);
 	if (rv == sizeof(v)) {
 		struct sysctlnode node = *rnode;
 		node.sysctl_data = &v;
@@ -1408,9 +1383,6 @@ sysctl_kern_urnd(SYSCTLFN_ARGS)
 	}
 	else
 		return (EIO);	/*XXX*/
-#else
-	return (EOPNOTSUPP);
-#endif
 }
 
 /*
@@ -1420,26 +1392,37 @@ sysctl_kern_urnd(SYSCTLFN_ARGS)
 static int
 sysctl_kern_arnd(SYSCTLFN_ARGS)
 {
-#if NRND > 0
 	int error;
 	void *v;
 	struct sysctlnode node = *rnode;
 
 	if (*oldlenp == 0)
 		return 0;
-	if (*oldlenp > 8192)
+	/*
+	 * This code used to allow sucking 8192 bytes at a time out
+	 * of the kernel arc4random generator.  Evidently there is some
+	 * very old OpenBSD application code that may try to do this.
+	 *
+	 * Note that this node is documented as type "INT" -- 4 or 8
+	 * bytes, not 8192.
+	 *
+	 * We continue to support this abuse of the "len" pointer here
+	 * but only 256 bytes at a time, as, anecdotally, the actual
+	 * application use here was to generate RC4 keys in userspace.
+	 *
+	 * Support for such large requests will probably be removed
+	 * entirely in the future.
+	 */
+	if (*oldlenp > 256)
 		return E2BIG;
 
 	v = kmem_alloc(*oldlenp, KM_SLEEP);
-	arc4randbytes(v, *oldlenp);
+	cprng_fast(v, *oldlenp);
 	node.sysctl_data = v;
 	node.sysctl_size = *oldlenp;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	kmem_free(v, *oldlenp);
 	return error;
-#else
-	return (EOPNOTSUPP);
-#endif
 }
 /*
  * sysctl helper routine to do kern.lwp.* work.
@@ -1656,9 +1639,6 @@ sysctl_kern_drivers(SYSCTLFN_ARGS)
 	int i;
 	extern struct devsw_conv *devsw_conv;
 	extern int max_devsw_convs;
-
-	if (newp != NULL || namelen != 0)
-		return (EINVAL);
 
 	start = where = oldp;
 	buflen = *oldlenp;

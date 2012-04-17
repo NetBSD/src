@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.86 2010/04/05 07:20:24 joerg Exp $	*/
+/*	$NetBSD: if_el.c,v 1.86.8.1 2012/04/17 00:07:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,10 +19,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.86 2010/04/05 07:20:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.86.8.1 2012/04/17 00:07:39 yamt Exp $");
 
 #include "opt_inet.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -32,9 +31,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.86 2010/04/05 07:20:24 joerg Exp $");
 #include <sys/socket.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -79,9 +76,7 @@ struct el_softc {
 	bus_space_tag_t sc_iot;		/* bus space identifier */
 	bus_space_handle_t sc_ioh;	/* i/o handle */
 
-#if NRND > 0
-	rndsource_element_t rnd_source;
-#endif
+	krndsource_t rnd_source;
 };
 
 /*
@@ -256,11 +251,9 @@ elattach(device_t parent, device_t self, void *aux)
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_NET, elintr, sc);
 
-#if NRND > 0
 	DPRINTF(("Attaching to random...\n"));
 	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sc_dev),
 			  RND_TYPE_NET, 0);
-#endif
 
 	DPRINTF(("elattach() finished.\n"));
 }
@@ -554,9 +547,7 @@ elintr(void *arg)
 		if ((bus_space_read_1(iot, ioh, EL_AS) & EL_AS_RXBUSY) != 0)
 			break;
 
-#if NRND > 0
 		rnd_add_uint32(&sc->rnd_source, rxstat);
-#endif
 
 		DPRINTF(("<rescan> "));
 	}

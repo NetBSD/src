@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.94 2011/08/02 07:16:56 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.94.2.1 2012/04/17 00:01:43 yamt Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1077,33 +1077,21 @@ netpgp_match_pubkeys(netpgp_t *netpgp, char *name, void *vp)
 {
 	const pgp_key_t	*key;
 	unsigned	 k;
-	strings_t	 pubs;
 	ssize_t		 cc;
+	char		 out[1024 * 64];
 	FILE		*fp = (FILE *)vp;
 
-	(void) memset(&pubs, 0x0, sizeof(pubs));
+	k = 0;
 	do {
 		key = pgp_getnextkeybyname(netpgp->io, netpgp->pubring,
 						name, &k);
 		if (key != NULL) {
-			char	out[1024 * 64];
-
-			ALLOC(char *, pubs.v, pubs.size, pubs.c, 10, 10,
-					"netpgp_match_pubkeys", return 0);
 			cc = pgp_sprint_pubkey(key, out, sizeof(out));
-			(void) snprintf(&out[cc], sizeof(out) - cc, "name=%s\n",
-				key->uids[0]);
-			pubs.v[pubs.c++] = netpgp_strdup(out);
+			(void) fprintf(fp, "%.*s", (int)cc, out);
 			k += 1;
 		}
 	} while (key != NULL);
-	(void) fprintf(fp, "info:%d:%d\n", HKP_VERSION, pubs.c);
-	for (k = 0 ; k < pubs.c ; k++) {
-		(void) fprintf(fp, "%s", pubs.v[k]);
-		free(pubs.v[k]);
-	}
-	free(pubs.v);
-	return pubs.c;
+	return k;
 }
 
 /* find a key in a keyring */

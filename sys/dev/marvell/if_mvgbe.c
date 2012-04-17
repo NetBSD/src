@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.13 2011/09/06 19:38:23 rjs Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.13.2.1 2012/04/17 00:07:41 yamt Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,9 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.13 2011/09/06 19:38:23 rjs Exp $");
-
-#include "rnd.h"
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.13.2.1 2012/04/17 00:07:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,9 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.13 2011/09/06 19:38:23 rjs Exp $");
 #include <netinet/ip.h>
 
 #include <net/bpf.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -215,9 +211,7 @@ struct mvgbe_softc {
 	LIST_HEAD(__mvgbe_jinusehead, mvgbe_jpool_entry) sc_jinuse_listhead;
 	SIMPLEQ_HEAD(__mvgbe_txmaphead, mvgbe_txmap_entry) sc_txmap_head;
 
-#if NRND > 0
-	rndsource_element_t sc_rnd_source;
-#endif
+	krndsource_t sc_rnd_source;
 };
 
 
@@ -784,10 +778,8 @@ mvgbe_attach(device_t parent, device_t self, void *aux)
 	ether_ifattach(ifp, sc->sc_enaddr);
 	ether_set_ifflags_cb(&sc->sc_ethercom, mvgbe_ifflags_cb);
 
-#if NRND > 0
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dev),
 	    RND_TYPE_NET, 0);
-#endif
 
 	return;
 
@@ -851,10 +843,7 @@ mvgbe_intr(void *arg)
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		mvgbe_start(ifp);
 
-#if NRND > 0
-	if (RND_ENABLED(&sc->sc_rnd_source))
-		rnd_add_uint32(&sc->sc_rnd_source, datum);
-#endif
+	rnd_add_uint32(&sc->sc_rnd_source, datum);
 
 	return claimed;
 }
@@ -1517,6 +1506,7 @@ mvgbe_encap(struct mvgbe_softc *sc, struct mbuf *m_head,
 	bus_dmamap_t txmap;
 	uint32_t first, current, last, cmdsts = 0;
 	int m_csumflags, i;
+	bool needs_defrag = false;
 
 	DPRINTFN(3, ("mvgbe_encap\n"));
 
@@ -1535,6 +1525,16 @@ mvgbe_encap(struct mvgbe_softc *sc, struct mbuf *m_head,
 	 */
 	m_csumflags = m_head->m_pkthdr.csum_flags;
 
+do_defrag:
+	if (__predict_false(needs_defrag == true)) {
+		/* A small unaligned segment was detected. */
+		struct mbuf *m_new;
+		m_new = m_defrag(m_head, M_DONTWAIT);
+		if (m_new == NULL)
+			return EFBIG;
+		m_head = m_new;
+	}
+
 	/*
 	 * Start packing the mbufs in this chain into
 	 * the fragment pointers. Stop when we run out
@@ -1543,6 +1543,25 @@ mvgbe_encap(struct mvgbe_softc *sc, struct mbuf *m_head,
 	if (bus_dmamap_load_mbuf(sc->sc_dmat, txmap, m_head, BUS_DMA_NOWAIT)) {
 		DPRINTFN(1, ("mvgbe_encap: dmamap failed\n"));
 		return ENOBUFS;
+	}
+
+	txseg = txmap->dm_segs;
+
+	if (__predict_true(needs_defrag == false)) {
+		/*
+		 * Detect rarely encountered DMA limitation.
+		 */
+		for (i = 0; i < txmap->dm_nsegs; i++) {
+			if (((txseg[i].ds_addr & 7) != 0) &&
+			    (txseg[i].ds_len <= 8) &&
+			    (txseg[i].ds_len >= 1)
+			    ) {
+				txseg = NULL;
+				bus_dmamap_unload(sc->sc_dmat, txmap);
+				needs_defrag = true;
+				goto do_defrag;
+			}
+		}
 	}
 
 	/* Sync the DMA map. */
@@ -1556,7 +1575,6 @@ mvgbe_encap(struct mvgbe_softc *sc, struct mbuf *m_head,
 		return ENOBUFS;
 	}
 
-	txseg = txmap->dm_segs;
 
 	DPRINTFN(2, ("mvgbe_encap: dm_nsegs=%d\n", txmap->dm_nsegs));
 

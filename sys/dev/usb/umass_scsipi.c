@@ -1,12 +1,12 @@
-/*	$NetBSD: umass_scsipi.c,v 1.38 2011/08/24 11:28:50 mbalmer Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.38.2.1 2012/04/17 00:08:08 yamt Exp $	*/
 
 /*
- * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2003, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Lennart Augustsson (lennart@augustsson.net) at
- * Carlstedt Research & Technology and by Charles M. Hamnnum.
+ * Carlstedt Research & Technology, Charles M. Hamnnum and Matthew R. Green.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.38 2011/08/24 11:28:50 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.38.2.1 2012/04/17 00:08:08 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_umass.h"
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.38 2011/08/24 11:28:50 mbalmer Ex
 #include <sys/bufq.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
+#include <sys/lwp.h>
 #include <sys/malloc.h>
 
 /* SCSI & ATAPI */
@@ -138,7 +139,7 @@ umass_scsi_attach(struct umass_softc *sc)
 	    config_found_ia(sc->sc_dev, "scsi", &scbus->sc_channel,
 		scsiprint);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 
 	return (0);
 }
@@ -166,7 +167,7 @@ umass_atapi_attach(struct umass_softc *sc)
 	    config_found_ia(sc->sc_dev, "atapi", &scbus->sc_channel,
 		atapiprint);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(sc->sc_dev);
+		usb_detach_wakeupold(sc->sc_dev);
 
 	return (0);
 }
@@ -281,13 +282,12 @@ umass_scsipi_request(struct scsipi_channel *chan,
 			/* Use sync transfer. XXX Broken! */
 			DPRINTF(UDMASS_SCSI,
 			    ("umass_scsi_cmd: sync dir=%d\n", dir));
-			sc->sc_xfer_flags = USBD_SYNCHRONOUS;
 			scbus->sc_sync_status = USBD_INVAL;
 			sc->sc_methods->wire_xfer(sc, periph->periph_lun, cmd,
 						  cmdlen, xs->data,
 						  xs->datalen, dir,
-						  xs->timeout, 0, xs);
-			sc->sc_xfer_flags = 0;
+						  xs->timeout, USBD_SYNCHRONOUS,
+						  0, xs);
 			DPRINTF(UDMASS_SCSI, ("umass_scsi_cmd: done err=%d\n",
 					      scbus->sc_sync_status));
 			switch (scbus->sc_sync_status) {
@@ -310,14 +310,16 @@ umass_scsipi_request(struct scsipi_channel *chan,
 			sc->sc_methods->wire_xfer(sc, periph->periph_lun, cmd,
 						  cmdlen, xs->data,
 						  xs->datalen, dir,
-						  xs->timeout,
+						  xs->timeout, 0,
 						  umass_scsipi_cb, xs);
 			return;
 		}
 
 		/* Return if command finishes early. */
  done:
+		KERNEL_LOCK(1, curlwp);
 		scsipi_done(xs);
+		KERNEL_UNLOCK_ONE(curlwp);
 		return;
 	default:
 		/* Not supported, nothing to do. */
@@ -432,7 +434,7 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 		sc->sc_methods->wire_xfer(sc, periph->periph_lun,
 					  &scbus->sc_sense_cmd, cmdlen,
 					  &xs->sense, sizeof(xs->sense),
-					  DIR_IN, xs->timeout,
+					  DIR_IN, xs->timeout, 0,
 					  umass_scsipi_sense_cb, xs);
 		return;
 
@@ -451,7 +453,9 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 	     xs->error, xs->xs_status, xs->resid));
 
 	s = splbio();
+	KERNEL_LOCK(1, curlwp);
 	scsipi_done(xs);
+	KERNEL_UNLOCK_ONE(curlwp);
 	splx(s);
 }
 
@@ -490,7 +494,9 @@ umass_scsipi_sense_cb(struct umass_softc *sc, void *priv, int residue,
 		xs->resid));
 
 	s = splbio();
+	KERNEL_LOCK(1, curlwp);
 	scsipi_done(xs);
+	KERNEL_UNLOCK_ONE(curlwp);
 	splx(s);
 }
 
@@ -510,12 +516,17 @@ umass_atapi_probe_device(struct atapibus_softc *atapi, int target)
 	if (target != UMASS_ATAPI_DRIVE)	/* only probe drive 0 */
 		return;
 
+	KERNEL_LOCK(1, curlwp);
+
 	/* skip if already attached */
-	if (scsipi_lookup_periph(chan, target, 0) != NULL)
+	if (scsipi_lookup_periph(chan, target, 0) != NULL) {
+		KERNEL_UNLOCK_ONE(curlwp);
 		return;
+	}
 
 	periph = scsipi_alloc_periph(M_NOWAIT);
 	if (periph == NULL) {
+		KERNEL_UNLOCK_ONE(curlwp);
 		aprint_error_dev(atapi->sc_dev,
 		    "can't allocate link for drive %d\n", target);
 		return;
@@ -531,6 +542,7 @@ umass_atapi_probe_device(struct atapibus_softc *atapi, int target)
 	/* Now go ask the device all about itself. */
 	memset(&inqbuf, 0, sizeof(inqbuf));
 	if (scsipi_inquire(periph, &inqbuf, XS_CTL_DISCOVERY) != 0) {
+		KERNEL_UNLOCK_ONE(curlwp);
 		DPRINTF(UDMASS_SCSI, ("umass_atapi_probe_device: "
 		    "scsipi_inquire failed\n"));
 		free(periph, M_DEVBUF);
@@ -556,5 +568,7 @@ umass_atapi_probe_device(struct atapibus_softc *atapi, int target)
 			      "'%s' '%s' '%s'\n", vendor, product, revision));
 	atapi_probe_device(atapi, target, periph, &sa);
 	/* atapi_probe_device() frees the periph when there is no device.*/
+
+	KERNEL_UNLOCK_ONE(curlwp);
 }
 #endif

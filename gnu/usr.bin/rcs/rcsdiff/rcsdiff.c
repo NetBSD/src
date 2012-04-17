@@ -1,4 +1,4 @@
-/*	$NetBSD: rcsdiff.c,v 1.7 2011/05/15 14:33:12 christos Exp $	*/
+/*	$NetBSD: rcsdiff.c,v 1.7.4.1 2012/04/17 00:05:10 yamt Exp $	*/
 
 /* Compare RCS revisions.  */
 
@@ -31,6 +31,12 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsdiff.c,v $
+ * Revision 1.7.4.1  2012/04/17 00:05:10  yamt
+ * sync with head
+ *
+ * Revision 1.8  2012/01/06 15:16:03  joerg
+ * Don't use dangling elses.
+ *
  * Revision 1.7  2011/05/15 14:33:12  christos
  * register c -> int c
  *
@@ -381,13 +387,14 @@ mainProg(rcsdiffId, "rcsdiff", "Id: rcsdiff.c,v 5.19 1995/06/16 06:19:24 eggert 
 		    lexpandarg = "-kkvl";
 	    Izclose(&workptr);
 #if DIFF_L
-	    if (diff_label2)
+	    if (diff_label2) {
 		if (revnums == 2)
 		    *diff_label2 = setup_label(&labelbuf[1], target->num, target->date);
 		else {
 		    time2date(workstat.st_mtime, date2);
 		    *diff_label2 = setup_label(&labelbuf[1], (char*)0, date2);
 		}
+	    }
 #endif
 
 	    diagnose("retrieving revision %s\n", xrev1);

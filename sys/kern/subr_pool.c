@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.190 2011/09/27 01:02:39 jym Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.190.2.1 2012/04/17 00:08:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.190 2011/09/27 01:02:39 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.190.2.1 2012/04/17 00:08:28 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.190 2011/09/27 01:02:39 jym Exp $");
 #include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/vmem.h>
 #include <sys/pool.h>
 #include <sys/syslog.h>
 #include <sys/debug.h>
@@ -55,9 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.190 2011/09/27 01:02:39 jym Exp $");
 #include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
-#ifdef DIAGNOSTIC
-#include <uvm/uvm_km.h>	/* uvm_km_va_drain */
-#endif
 
 /*
  * Pool resource management utility.
@@ -86,16 +84,14 @@ static struct pool phpool[PHPOOL_MAX];
 static struct pool psppool;
 #endif
 
-static SLIST_HEAD(, pool_allocator) pa_deferinitq =
-    SLIST_HEAD_INITIALIZER(pa_deferinitq);
-
 static void *pool_page_alloc_meta(struct pool *, int);
 static void pool_page_free_meta(struct pool *, void *);
 
 /* allocator for pool metadata */
 struct pool_allocator pool_allocator_meta = {
-	pool_page_alloc_meta, pool_page_free_meta,
-	.pa_backingmapptr = &kmem_map,
+	.pa_alloc = pool_page_alloc_meta,
+	.pa_free = pool_page_free_meta,
+	.pa_pagesz = 0
 };
 
 /* # of seconds to retain page after last use */
@@ -529,108 +525,59 @@ pr_rmpage(struct pool *pp, struct pool_item_header *ph,
 	pool_update_curpage(pp);
 }
 
-static bool
-pa_starved_p(struct pool_allocator *pa)
-{
-
-	if (pa->pa_backingmap != NULL) {
-		return vm_map_starved_p(pa->pa_backingmap);
-	}
-	return false;
-}
-
-static int
-pool_reclaim_callback(struct callback_entry *ce, void *obj, void *arg)
-{
-	struct pool *pp = obj;
-	struct pool_allocator *pa = pp->pr_alloc;
-
-	KASSERT(&pp->pr_reclaimerentry == ce);
-	pool_reclaim(pp);
-	if (!pa_starved_p(pa)) {
-		return CALLBACK_CHAIN_ABORT;
-	}
-	return CALLBACK_CHAIN_CONTINUE;
-}
-
-static void
-pool_reclaim_register(struct pool *pp)
-{
-	struct vm_map *map = pp->pr_alloc->pa_backingmap;
-	int s;
-
-	if (map == NULL) {
-		return;
-	}
-
-	s = splvm(); /* not necessary for INTRSAFE maps, but don't care. */
-	callback_register(&vm_map_to_kernel(map)->vmk_reclaim_callback,
-	    &pp->pr_reclaimerentry, pp, pool_reclaim_callback);
-	splx(s);
-
-#ifdef DIAGNOSTIC
-	/* Diagnostic drain attempt. */
-	uvm_km_va_drain(map, 0);
-#endif
-}
-
-static void
-pool_reclaim_unregister(struct pool *pp)
-{
-	struct vm_map *map = pp->pr_alloc->pa_backingmap;
-	int s;
-
-	if (map == NULL) {
-		return;
-	}
-
-	s = splvm(); /* not necessary for INTRSAFE maps, but don't care. */
-	callback_unregister(&vm_map_to_kernel(map)->vmk_reclaim_callback,
-	    &pp->pr_reclaimerentry);
-	splx(s);
-}
-
-static void
-pa_reclaim_register(struct pool_allocator *pa)
-{
-	struct vm_map *map = *pa->pa_backingmapptr;
-	struct pool *pp;
-
-	KASSERT(pa->pa_backingmap == NULL);
-	if (map == NULL) {
-		SLIST_INSERT_HEAD(&pa_deferinitq, pa, pa_q);
-		return;
-	}
-	pa->pa_backingmap = map;
-	TAILQ_FOREACH(pp, &pa->pa_list, pr_alloc_list) {
-		pool_reclaim_register(pp);
-	}
-}
-
 /*
  * Initialize all the pools listed in the "pools" link set.
  */
 void
 pool_subsystem_init(void)
 {
-	struct pool_allocator *pa;
+	size_t size;
+	int idx;
 
 	mutex_init(&pool_head_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&pool_allocator_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&pool_busy, "poolbusy");
 
-	while ((pa = SLIST_FIRST(&pa_deferinitq)) != NULL) {
-		KASSERT(pa->pa_backingmapptr != NULL);
-		KASSERT(*pa->pa_backingmapptr != NULL);
-		SLIST_REMOVE_HEAD(&pa_deferinitq, pa_q);
-		pa_reclaim_register(pa);
+	/*
+	 * Initialize private page header pool and cache magazine pool if we
+	 * haven't done so yet.
+	 */
+	for (idx = 0; idx < PHPOOL_MAX; idx++) {
+		static char phpool_names[PHPOOL_MAX][6+1+6+1];
+		int nelem;
+		size_t sz;
+
+		nelem = PHPOOL_FREELIST_NELEM(idx);
+		snprintf(phpool_names[idx], sizeof(phpool_names[idx]),
+		    "phpool-%d", nelem);
+		sz = sizeof(struct pool_item_header);
+		if (nelem) {
+			sz = offsetof(struct pool_item_header,
+			    ph_bitmap[howmany(nelem, BITMAP_SIZE)]);
+		}
+		pool_init(&phpool[idx], sz, 0, 0, 0,
+		    phpool_names[idx], &pool_allocator_meta, IPL_VM);
 	}
+#ifdef POOL_SUBPAGE
+	pool_init(&psppool, POOL_SUBPAGE, POOL_SUBPAGE, 0,
+	    PR_RECURSIVE, "psppool", &pool_allocator_meta, IPL_VM);
+#endif
+
+	size = sizeof(pcg_t) +
+	    (PCG_NOBJECTS_NORMAL - 1) * sizeof(pcgpair_t);
+	pool_init(&pcg_normal_pool, size, coherency_unit, 0, 0,
+	    "pcgnormal", &pool_allocator_meta, IPL_VM);
+
+	size = sizeof(pcg_t) +
+	    (PCG_NOBJECTS_LARGE - 1) * sizeof(pcgpair_t);
+	pool_init(&pcg_large_pool, size, coherency_unit, 0, 0,
+	    "pcglarge", &pool_allocator_meta, IPL_VM);
 
 	pool_init(&cache_pool, sizeof(struct pool_cache), coherency_unit,
-	    0, 0, "pcache", &pool_allocator_nointr, IPL_NONE);
+	    0, 0, "pcache", &pool_allocator_meta, IPL_NONE);
 
 	pool_init(&cache_cpu_pool, sizeof(pool_cache_cpu_t), coherency_unit,
-	    0, 0, "pcachecpu", &pool_allocator_nointr, IPL_NONE);
+	    0, 0, "pcachecpu", &pool_allocator_meta, IPL_NONE);
 }
 
 /*
@@ -688,10 +635,6 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 		mutex_init(&palloc->pa_lock, MUTEX_DEFAULT, IPL_VM);
 		palloc->pa_pagemask = ~(palloc->pa_pagesz - 1);
 		palloc->pa_pageshift = ffs(palloc->pa_pagesz) - 1;
-
-		if (palloc->pa_backingmapptr != NULL) {
-			pa_reclaim_register(palloc);
-		}
 	}
 	if (!cold)
 		mutex_exit(&pool_allocator_lock);
@@ -826,45 +769,6 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	cv_init(&pp->pr_cv, wchan);
 	pp->pr_ipl = ipl;
 
-	/*
-	 * Initialize private page header pool and cache magazine pool if we
-	 * haven't done so yet.
-	 * XXX LOCKING.
-	 */
-	if (phpool[0].pr_size == 0) {
-		int idx;
-		for (idx = 0; idx < PHPOOL_MAX; idx++) {
-			static char phpool_names[PHPOOL_MAX][6+1+6+1];
-			int nelem;
-			size_t sz;
-
-			nelem = PHPOOL_FREELIST_NELEM(idx);
-			snprintf(phpool_names[idx], sizeof(phpool_names[idx]),
-			    "phpool-%d", nelem);
-			sz = sizeof(struct pool_item_header);
-			if (nelem) {
-				sz = offsetof(struct pool_item_header,
-				    ph_bitmap[howmany(nelem, BITMAP_SIZE)]);
-			}
-			pool_init(&phpool[idx], sz, 0, 0, 0,
-			    phpool_names[idx], &pool_allocator_meta, IPL_VM);
-		}
-#ifdef POOL_SUBPAGE
-		pool_init(&psppool, POOL_SUBPAGE, POOL_SUBPAGE, 0,
-		    PR_RECURSIVE, "psppool", &pool_allocator_meta, IPL_VM);
-#endif
-
-		size = sizeof(pcg_t) +
-		    (PCG_NOBJECTS_NORMAL - 1) * sizeof(pcgpair_t);
-		pool_init(&pcg_normal_pool, size, coherency_unit, 0, 0,
-		    "pcgnormal", &pool_allocator_meta, IPL_VM);
-
-		size = sizeof(pcg_t) +
-		    (PCG_NOBJECTS_LARGE - 1) * sizeof(pcgpair_t);
-		pool_init(&pcg_large_pool, size, coherency_unit, 0, 0,
-		    "pcglarge", &pool_allocator_meta, IPL_VM);
-	}
-
 	/* Insert into the list of all pools. */
 	if (!cold)
 		mutex_enter(&pool_head_lock);
@@ -885,8 +789,6 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	TAILQ_INSERT_TAIL(&palloc->pa_list, pp, pr_alloc_list);
 	if (!cold)
 		mutex_exit(&palloc->pa_lock);
-
-	pool_reclaim_register(pp);
 }
 
 /*
@@ -908,7 +810,6 @@ pool_destroy(struct pool *pp)
 	mutex_exit(&pool_head_lock);
 
 	/* Remove this pool from its allocator's list of pools. */
-	pool_reclaim_unregister(pp);
 	mutex_enter(&pp->pr_alloc->pa_lock);
 	TAILQ_REMOVE(&pp->pr_alloc->pa_list, pp, pr_alloc_list);
 	mutex_exit(&pp->pr_alloc->pa_lock);
@@ -1674,8 +1575,7 @@ pool_reclaim(struct pool *pp)
 			break;
 
 		KASSERT(ph->ph_nmissing == 0);
-		if (curtime - ph->ph_time < pool_inactive_time
-		    && !pa_starved_p(pp->pr_alloc))
+		if (curtime - ph->ph_time < pool_inactive_time)
 			continue;
 
 		/*
@@ -2157,6 +2057,19 @@ pool_cache_bootstrap(pool_cache_t pc, size_t size, u_int align,
 void
 pool_cache_destroy(pool_cache_t pc)
 {
+
+	pool_cache_bootstrap_destroy(pc);
+	pool_put(&cache_pool, pc);
+}
+
+/*
+ * pool_cache_bootstrap_destroy:
+ *
+ *	Destroy a pool cache.
+ */
+void
+pool_cache_bootstrap_destroy(pool_cache_t pc)
+{
 	struct pool *pp = &pc->pc_pool;
 	u_int i;
 
@@ -2182,7 +2095,6 @@ pool_cache_destroy(pool_cache_t pc)
 	/* Finally, destroy it. */
 	mutex_destroy(&pc->pc_lock);
 	pool_destroy(pp);
-	pool_put(&cache_pool, pc);
 }
 
 /*
@@ -2806,28 +2718,29 @@ void	pool_page_free(struct pool *, void *);
 
 #ifdef POOL_SUBPAGE
 struct pool_allocator pool_allocator_kmem_fullpage = {
-	pool_page_alloc, pool_page_free, 0,
-	.pa_backingmapptr = &kmem_map,
+	.pa_alloc = pool_page_alloc,
+	.pa_free = pool_page_free,
+	.pa_pagesz = 0
 };
 #else
 struct pool_allocator pool_allocator_kmem = {
-	pool_page_alloc, pool_page_free, 0,
-	.pa_backingmapptr = &kmem_map,
+	.pa_alloc = pool_page_alloc,
+	.pa_free = pool_page_free,
+	.pa_pagesz = 0
 };
 #endif
 
-void	*pool_page_alloc_nointr(struct pool *, int);
-void	pool_page_free_nointr(struct pool *, void *);
-
 #ifdef POOL_SUBPAGE
 struct pool_allocator pool_allocator_nointr_fullpage = {
-	pool_page_alloc_nointr, pool_page_free_nointr, 0,
-	.pa_backingmapptr = &kernel_map,
+	.pa_alloc = pool_page_alloc,
+	.pa_free = pool_page_free,
+	.pa_pagesz = 0
 };
 #else
 struct pool_allocator pool_allocator_nointr = {
-	pool_page_alloc_nointr, pool_page_free_nointr, 0,
-	.pa_backingmapptr = &kernel_map,
+	.pa_alloc = pool_page_alloc,
+	.pa_free = pool_page_free,
+	.pa_pagesz = 0
 };
 #endif
 
@@ -2836,16 +2749,15 @@ void	*pool_subpage_alloc(struct pool *, int);
 void	pool_subpage_free(struct pool *, void *);
 
 struct pool_allocator pool_allocator_kmem = {
-	pool_subpage_alloc, pool_subpage_free, POOL_SUBPAGE,
-	.pa_backingmapptr = &kmem_map,
+	.pa_alloc = pool_subpage_alloc,
+	.pa_free = pool_subpage_free,
+	.pa_pagesz = POOL_SUBPAGE
 };
 
-void	*pool_subpage_alloc_nointr(struct pool *, int);
-void	pool_subpage_free_nointr(struct pool *, void *);
-
 struct pool_allocator pool_allocator_nointr = {
-	pool_subpage_alloc, pool_subpage_free, POOL_SUBPAGE,
-	.pa_backingmapptr = &kmem_map,
+	.pa_alloc = pool_subpage_alloc,
+	.pa_free = pool_subpage_free,
+	.pa_pagesz = POOL_SUBPAGE
 };
 #endif /* POOL_SUBPAGE */
 
@@ -2881,31 +2793,41 @@ pool_allocator_free(struct pool *pp, void *v)
 void *
 pool_page_alloc(struct pool *pp, int flags)
 {
-	bool waitok = (flags & PR_WAITOK) ? true : false;
+	const vm_flag_t vflags = (flags & PR_WAITOK) ? VM_SLEEP: VM_NOSLEEP;
+	vmem_addr_t va;
+	int ret;
 
-	return ((void *) uvm_km_alloc_poolpage_cache(kmem_map, waitok));
+	ret = uvm_km_kmem_alloc(kmem_va_arena, pp->pr_alloc->pa_pagesz,
+	    vflags | VM_INSTANTFIT, &va);
+
+	return ret ? NULL : (void *)va;
 }
 
 void
 pool_page_free(struct pool *pp, void *v)
 {
 
-	uvm_km_free_poolpage_cache(kmem_map, (vaddr_t) v);
+	uvm_km_kmem_free(kmem_va_arena, (vaddr_t)v, pp->pr_alloc->pa_pagesz);
 }
 
 static void *
 pool_page_alloc_meta(struct pool *pp, int flags)
 {
-	bool waitok = (flags & PR_WAITOK) ? true : false;
+	const vm_flag_t vflags = (flags & PR_WAITOK) ? VM_SLEEP: VM_NOSLEEP;
+	vmem_addr_t va;
+	int ret;
 
-	return ((void *) uvm_km_alloc_poolpage(kmem_map, waitok));
+	ret = vmem_alloc(kmem_meta_arena, pp->pr_alloc->pa_pagesz,
+	    vflags | VM_INSTANTFIT, &va);
+
+	return ret ? NULL : (void *)va;
 }
 
 static void
 pool_page_free_meta(struct pool *pp, void *v)
 {
 
-	uvm_km_free_poolpage(kmem_map, (vaddr_t) v);
+	vmem_free(kmem_meta_arena, (vmem_addr_t)v, pp->pr_alloc->pa_pagesz);
 }
 
 #ifdef POOL_SUBPAGE
@@ -2922,35 +2844,7 @@ pool_subpage_free(struct pool *pp, void *v)
 	pool_put(&psppool, v);
 }
 
-/* We don't provide a real nointr allocator.  Maybe later. */
-void *
-pool_subpage_alloc_nointr(struct pool *pp, int flags)
-{
-
-	return (pool_subpage_alloc(pp, flags));
-}
-
-void
-pool_subpage_free_nointr(struct pool *pp, void *v)
-{
-
-	pool_subpage_free(pp, v);
-}
 #endif /* POOL_SUBPAGE */
-void *
-pool_page_alloc_nointr(struct pool *pp, int flags)
-{
-	bool waitok = (flags & PR_WAITOK) ? true : false;
-
-	return ((void *) uvm_km_alloc_poolpage_cache(kernel_map, waitok));
-}
-
-void
-pool_page_free_nointr(struct pool *pp, void *v)
-{
-
-	uvm_km_free_poolpage_cache(kernel_map, (vaddr_t) v);
-}
 
 #if defined(DDB)
 static bool

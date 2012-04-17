@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cdnr.c,v 1.19 2007/03/04 05:59:01 christos Exp $	*/
+/*	$NetBSD: altq_cdnr.c,v 1.19.76.1 2012/04/17 00:05:51 yamt Exp $	*/
 /*	$KAME: altq_cdnr.c,v 1.15 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.19 2007/03/04 05:59:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.19.76.1 2012/04/17 00:05:51 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.19 2007/03/04 05:59:01 christos Exp 
 #include <sys/kernel.h>
 #include <sys/queue.h>
 #include <sys/kauth.h>
+#include <sys/cprng.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -801,7 +802,7 @@ tswtcm_input(struct cdnr_block *cb, struct cdnr_pktinfo *pktinfo)
 	 * marker
 	 */
 	if (avg_rate > tsw->cmtd_rate) {
-		u_int32_t randval = arc4random() % avg_rate;
+		u_int32_t randval = cprng_fast32() % avg_rate;
 
 		if (avg_rate > tsw->peak_rate) {
 			if (randval < avg_rate - tsw->peak_rate) {

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2011/09/16 16:41:20 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.9.2.1 2012/04/17 00:03:37 yamt Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=yes
@@ -11,6 +11,7 @@ CWARNFLAGS.clang+=	-Wno-unneeded-internal-declaration \
 			-Wno-parentheses -Wno-constant-logical-operand
 
 WARNS?=	4
+
 
 .include <bsd.own.mk>
 

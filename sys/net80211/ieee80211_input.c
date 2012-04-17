@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.71 2011/07/17 20:54:52 joerg Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.71.2.1 2012/04/17 00:08:39 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.71 2011/07/17 20:54:52 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.71.2.1 2012/04/17 00:08:39 yamt Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -1732,12 +1732,12 @@ ieee80211_parse_wmeparams(struct ieee80211com *ic, u_int8_t *frm,
 		    wh, "WME", "too short, len %u", len);
 		return -1;
 	}
-	qosinfo = frm[__offsetof(struct ieee80211_wme_param, param_qosInfo)];
+	qosinfo = frm[offsetof(struct ieee80211_wme_param, param_qosInfo)];
 	qosinfo &= WME_QOSINFO_COUNT;
 	/* XXX do proper check for wraparound */
 	if (qosinfo == wme->wme_wmeChanParams.cap_info)
 		return 0;
-	frm += __offsetof(struct ieee80211_wme_param, params_acParams);
+	frm += offsetof(struct ieee80211_wme_param, params_acParams);
 	for (i = 0; i < WME_NUM_AC; i++) {
 		struct wmeParams *wmep =
 			&wme->wme_wmeChanParams.cap_wmeParams[i];

@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.21 2011/07/10 06:24:19 matt Exp $ */
+/* $Id: if_ae.c,v 1.21.2.1 2012/04/17 00:06:39 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.21 2011/07/10 06:24:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.21.2.1 2012/04/17 00:06:39 yamt Exp $");
 
 
 #include <sys/param.h>
@@ -384,10 +384,8 @@ ae_attach(device_t parent, device_t self, void *aux)
 	ether_ifattach(ifp, enaddr);
 	ether_set_ifflags_cb(&sc->sc_ethercom, ae_ifflags_cb);
 
-#if NRND > 0
 	rnd_attach_source(&sc->sc_rnd_source, sc->sc_dev.dv_xname,
 	    RND_TYPE_NET, 0);
-#endif
 
 	/*
 	 * Make sure the interface is shutdown during reboot.
@@ -487,9 +485,7 @@ ae_detach(device_t self, int flags)
 	/* Delete all remaining media. */
 	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
 
-#if NRND > 0
 	rnd_detach_source(&sc->sc_rnd_source);
-#endif
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
@@ -999,10 +995,8 @@ ae_intr(void *arg)
 	/* Try to get more packets going. */
 	ae_start(ifp);
 
-#if NRND > 0
 	if (handled)
 		rnd_add_uint32(&sc->sc_rnd_source, status);
-#endif
 	return (handled);
 }
 

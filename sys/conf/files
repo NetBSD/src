@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1030 2011/11/02 09:47:57 martin Exp $
+#	$NetBSD: files,v 1.1030.2.1 2012/04/17 00:07:23 yamt Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -61,7 +61,6 @@ defflag				CPU_IN_CKSUM
 
 defflag opt_dtrace.h		KDTRACE_HOOKS
 
-defflag opt_posix.h		P1003_1B_SEMAPHORE
 defflag	opt_sysv.h		SYSVMSG SYSVSEM	SYSVSHM
 defparam opt_sysvparam.h	SHMMAXPGS SEMMNI SEMMNS SEMUME SEMMNU
 
@@ -88,6 +87,7 @@ defflag	opt_dkwedge.h		DKWEDGE_AUTODISCOVER
 				DKWEDGE_METHOD_BSDLABEL
 				DKWEDGE_METHOD_GPT
 				DKWEDGE_METHOD_MBR
+				DKWEDGE_METHOD_APPLE
 
 defflag	opt_veriexec.h		VERIFIED_EXEC_FP_SHA1
 				VERIFIED_EXEC_FP_SHA256
@@ -123,10 +123,9 @@ defparam opt_wapbl.h		WAPBL_DEBUG_PRINT
 
 # compatibility options
 #
-defflag	opt_sa.h		KERN_SA
 defflag opt_compat_netbsd.h	COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_50: COMPAT_NETBSD
-defflag	opt_compat_netbsd.h	COMPAT_40: COMPAT_50, KERN_SA, COMPAT_NETBSD
+defflag	opt_compat_netbsd.h	COMPAT_40: COMPAT_50, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_30: COMPAT_40, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_20: COMPAT_30, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_16: COMPAT_20, COMPAT_NETBSD
@@ -165,9 +164,11 @@ include "crypto/cast128/files.cast128"
 include "crypto/rijndael/files.rijndael"
 include "crypto/skipjack/files.skipjack"
 include "crypto/camellia/files.camellia"
-
 # General-purpose crypto processing framework.
 include "opencrypto/files.opencrypto"
+
+# NIST SP800.90 CTR DRBG
+include "crypto/nist_ctr_drbg/files.nist_ctr_drbg"
 
 #
 # Kernel history/tracing. Old UVMHIST depends upon this.
@@ -194,7 +195,6 @@ include "netatalk/files.netatalk"
 include "netbt/files.netbt"
 include "netinet/files.netinet"
 include "netinet6/files.netinet6"
-include "netinet6/files.ipsec"
 include "netipsec/files.netipsec"
 include "netiso/files.netiso"
 include "netmpls/files.netmpls"
@@ -392,8 +392,12 @@ define	hippi
 define	ieee1394
 define	token
 define	sppp
-define	wlan: rijndael
+define	wlan
 define	crypto
+
+# TPM
+device	tpm
+file	dev/ic/tpm.c			tpm			needs-flag
 
 # devices ARPing IPv4 pull this in:
 #
@@ -907,6 +911,10 @@ file	dev/ic/cs4231.c			audiocs
 define	ac97
 file	dev/ic/ac97.c			ac97
 
+# UDA1341 CODEC support
+define	uda1341
+file	dev/ic/uda1341.c		uda1341
+
 # Oki MSM6258 support code
 #
 define msm6258
@@ -1082,6 +1090,7 @@ define drm {}
 include "external/bsd/drm/conf/files.drm"
 include "dev/drm/files.drm"
 
+
 # Definitions for wscons
 # device attributes: display, display with emulator, keyboard, and mouse
 #
@@ -1117,7 +1126,7 @@ file	dev/ic/vga_common.c	vga | vga_rasterconsole
 
 # Integraphics Systems IGA168x and CyberPro framebuffers (linear non-VGA mode)
 #
-device	igsfb: wsemuldisplaydev, wsrasteremulops, rasops8, vcons, videomode
+device	igsfb: wsemuldisplaydev, rasops8, vcons, videomode
 file	dev/ic/igsfb.c			igsfb			needs-flag
 file	dev/ic/igsfb_subr.c		igsfb
 
@@ -1280,7 +1289,7 @@ file	dev/ic/dm9000.c			dme
 defpseudodev vnd:	disk
 defflag opt_vnd.h	VND_COMPRESSION
 defpseudo ccd:		disk
-defpseudodev cgd:	disk, des, blowfish, cast128, rijndael
+defpseudodev cgd:	disk, des, blowfish, cast128
 defpseudodev md:	disk
 defpseudodev fss:	disk
 
@@ -1352,6 +1361,7 @@ file	kern/kern_drvctl.c		drvctl		needs-flag
 
 # cpu control
 defpseudo cpuctl
+defflag				CPU_UCODE: firmload
 
 # pass-to-userspace transporter
 defpseudo putter
@@ -1408,7 +1418,6 @@ include "secmodel/files.secmodel"
 # kernel sources
 #
 file	compat/common/compat_mod.c	compat_netbsd
-file	compat/sa/compat_sa.c
 file	conf/debugsyms.c
 file	dev/auconv.c			auconv | mulaw
 file	dev/audio.c			audio | midi | midibus	needs-flag
@@ -1422,6 +1431,7 @@ file	dev/clock_subr.c
 file	dev/clockctl.c			clockctl		needs-flag
 file	dev/dksubr.c			cgd | xbd | ccd | raid | dm
 file	dev/dkwedge/dk.c
+file	dev/dkwedge/dkwedge_apple.c	dkwedge_method_apple
 file	dev/dkwedge/dkwedge_bsdlabel.c	dkwedge_method_bsdlabel
 file	dev/dkwedge/dkwedge_gpt.c	dkwedge_method_gpt
 file	dev/dkwedge/dkwedge_mbr.c	dkwedge_method_mbr
@@ -1437,8 +1447,7 @@ file	dev/mm.c
 file	dev/mulaw.c			mulaw			needs-flag
 file	dev/nullcons_subr.c		nullcons		needs-flag
 file	dev/radio.c			radio			needs-flag
-file	dev/rnd.c			rnd			needs-flag
-file	dev/rndpool.c			rnd			needs-flag
+file	dev/rndpseudo.c			rnd			needs-flag
 file	dev/sequencer.c			sequencer		needs-flag
 file	dev/video.c			video			needs-flag
 file	dev/vnd.c			vnd			needs-flag
@@ -1497,6 +1506,8 @@ file	kern/kern_prot.c
 file	kern/kern_ras.c
 file	kern/kern_rate.c
 file	kern/kern_resource.c
+file	kern/kern_rndpool.c
+file	kern/kern_rndq.c
 file	kern/kern_runq.c
 file	kern/kern_rwlock.c
 file	kern/kern_rwlock_obj.c
@@ -1525,6 +1536,7 @@ file	kern/subr_autoconf.c
 file	kern/subr_blist.c		vmswap
 file	kern/subr_bufq.c
 file	kern/subr_callback.c
+file	kern/subr_cprng.c
 file	kern/subr_cpufreq.c
 file	kern/subr_copy.c
 file	kern/subr_debug.c		debug
@@ -1593,7 +1605,7 @@ file	kern/uipc_mbuf.c
 file	kern/uipc_mbuf2.c
 file	net/link_proto.c
 file	kern/uipc_proto.c
-file	kern/uipc_sem.c			p1003_1b_semaphore
+file	kern/uipc_sem.c
 file	kern/uipc_socket.c
 file	kern/uipc_socket2.c
 file	kern/uipc_syscalls.c
@@ -1608,6 +1620,7 @@ file	kern/vfs_init.c
 file	kern/vfs_lockf.c
 file	kern/vfs_lookup.c
 file	kern/vfs_mount.c
+file	kern/vfs_quotactl.c
 file	kern/vfs_subr.c
 file	kern/vfs_syscalls.c
 file	kern/vfs_trans.c
@@ -1672,7 +1685,7 @@ file	net/route.c
 file	net/rtbl.c
 file	net/rtsock.c
 file	net/slcompress.c		sl | ppp | strip | (irip & irip_vj)
-file	net/zlib.c			(ppp & ppp_deflate) | ipsec | opencrypto | vnd_compression
+file	net/zlib.c			(ppp & ppp_deflate) | kame_ipsec | opencrypto | vnd_compression
 file	netinet/accf_data.c		accf_data
 file	netinet/accf_http.c		accf_http
 file	netinet/cpu_in_cksum.c		(inet | inet6) & !cpu_in_cksum
@@ -1682,7 +1695,7 @@ file	netinet/in4_cksum.c		inet
 file	netinet/in_cksum.c		inet
 file	netinet/in_gif.c		gif & inet
 file	netinet/ip_carp.c		carp & (inet | inet6)	needs-flag
-file	netinet/ip_ecn.c		ipsec | fast_ipsec | gif | stf
+file	netinet/ip_ecn.c		kame_ipsec | fast_ipsec | gif | stf
 file	netinet/ip_encap.c		inet | inet6
 file	netinet/ip_etherip.c		etherip & inet
 file	netinet6/ip6_etherip.c		etherip & inet6
@@ -1744,3 +1757,8 @@ include "dev/nand/files.nand"
 # NOR subsytem
 #
 include "dev/nor/files.nor"
+
+#
+# iscsi
+#
+include "dev/iscsi/files.iscsi"

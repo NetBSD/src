@@ -1,4 +1,4 @@
-/* $NetBSD: toccata.c,v 1.14 2011/07/19 15:55:27 dyoung Exp $ */
+/* $NetBSD: toccata.c,v 1.14.2.1 2012/04/17 00:06:02 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.14 2011/07/19 15:55:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.14.2.1 2012/04/17 00:06:02 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -174,6 +174,8 @@ int toccata_set_port(void *, mixer_ctrl_t *);
 int toccata_get_port(void *, mixer_ctrl_t *);
 int toccata_query_devinfo(void *, mixer_devinfo_t *);
 
+void toccata_get_locks(void *, kmutex_t **, kmutex_t **);
+
 const struct audio_hw_if audiocs_hw_if = {
 	toccata_open,
 	toccata_close,
@@ -205,6 +207,8 @@ const struct audio_hw_if audiocs_hw_if = {
 	toccata_get_props,
 	0,	/* trigger_output */
 	0,
+	0,
+	toccata_get_locks,
 };
 
 struct toccata_softc {
@@ -219,6 +223,9 @@ struct toccata_softc {
 
 	void			(*sc_playmore)(void *);
 	void			 *sc_playarg;
+
+	kmutex_t		sc_lock;
+	kmutex_t		sc_intr_lock;
 };
 
 int toccata_match(device_t, cfdata_t, void *);
@@ -275,6 +282,9 @@ toccata_attach(device_t parent, device_t self, void *aux)
 	sc->sc_captbuf = 0;
 	sc->sc_playmore = 0;
 
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+
 	sc->sc_isr.isr_ipl = 6;
 	sc->sc_isr.isr_arg = sc;
 	sc->sc_isr.isr_intr = toccata_intr;
@@ -294,14 +304,20 @@ toccata_intr(void *tag) {
 	int i;
 
 	sc = tag;
+
+	mutex_spin_enter(&sc->sc_intr_lock);
+
 	status = *(sc->sc_boardp);
 
-	if (status & TOCC_FIFO_INT)	/* active low */
+	if (status & TOCC_FIFO_INT) {	/* active low */
+		mutex_spin_exit(&sc->sc_intr_lock);
 		return 0;
+	}
 
 	if (status & TOCC_FIFO_PBHE) {
 		if (sc->sc_playmore) {
 			(*sc->sc_playmore)(sc->sc_playarg);
+			mutex_spin_exit(&sc->sc_intr_lock);
 			return 1;
 		}
 	} else if (status & TOCC_FIFO_CPHF) {
@@ -318,6 +334,7 @@ toccata_intr(void *tag) {
 
 			/* XXX if (sc->sc_captmore) { */
 			(*sc->sc_captmore)(sc->sc_captarg);
+			mutex_spin_exit(&sc->sc_intr_lock);
 			return 1;
 		}
 	}
@@ -333,6 +350,7 @@ toccata_intr(void *tag) {
 	    device_xname(sc->sc_ad.sc_dev), status);
 #endif
 	*sc->sc_boardp = TOCC_ACT;
+	mutex_spin_exit(&sc->sc_intr_lock);
 	return 1;
 }
 
@@ -440,6 +458,15 @@ int
 toccata_get_props(void *addr)
 {
 	return 0;
+}
+
+void
+toccata_get_locks(void *opaque, kmutex_t **intr, kmutex_t **thread)
+{
+	struct toccata_softc *sc = opaque;
+
+	*intr = &sc->sc_intr_lock;
+	*thread = &sc->sc_lock;
 }
 
 int

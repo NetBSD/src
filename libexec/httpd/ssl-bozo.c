@@ -1,9 +1,9 @@
-/*	$NetBSD: ssl-bozo.c,v 1.12 2011/08/27 15:33:59 joerg Exp $	*/
+/*	$NetBSD: ssl-bozo.c,v 1.12.2.1 2012/04/17 00:05:35 yamt Exp $	*/
 
-/*	$eterna: ssl-bozo.c,v 1.13 2010/05/12 12:24:58 rtr Exp $	*/
+/*	$eterna: ssl-bozo.c,v 1.15 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2010 Matthew R. Green
+ * Copyright (c) 1997-2011 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,7 +64,7 @@ typedef struct sslinfo_t {
  * the error provided by the caller at the point of error it pops and
  * prints all errors from the SSL error queue.
  */
-BOZO_DEAD static void
+BOZO_PRINTFLIKE(3, 4) BOZO_DEAD static void
 bozo_ssl_err(bozohttpd_t *httpd, int code, const char *fmt, ...)
 {
         va_list ap;
@@ -96,7 +96,7 @@ bozo_ssl_err(bozohttpd_t *httpd, int code, const char *fmt, ...)
 	exit(code);
 }
 
-static int
+static BOZO_PRINTFLIKE(2, 0) int
 bozo_ssl_printf(bozohttpd_t *httpd, const char * fmt, va_list ap)
 {
 	sslinfo_t	*sslinfo;
@@ -176,8 +176,8 @@ bozo_ssl_init(bozohttpd_t *httpd)
 		bozo_ssl_err(httpd, EXIT_FAILURE,
 		    "SSL context creation failed");
 
-	if (1 != SSL_CTX_use_certificate_file(sslinfo->ssl_context,
-	    sslinfo->certificate_file, SSL_FILETYPE_PEM))
+	if (1 != SSL_CTX_use_certificate_chain_file(sslinfo->ssl_context,
+	    sslinfo->certificate_file))
 		bozo_ssl_err(httpd, EXIT_FAILURE,
 		    "Unable to use certificate file '%s'",
 		    sslinfo->certificate_file);

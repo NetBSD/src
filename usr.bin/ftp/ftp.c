@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.162 2011/09/16 15:39:26 joerg Exp $	*/
+/*	$NetBSD: ftp.c,v 1.162.2.1 2012/04/17 00:09:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.162 2011/09/16 15:39:26 joerg Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.162.2.1 2012/04/17 00:09:32 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,6 +108,7 @@ __RCSID("$NetBSD: ftp.c,v 1.162 2011/09/16 15:39:26 joerg Exp $");
 #include <arpa/ftp.h>
 #include <arpa/telnet.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -765,6 +766,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 	if (dout == NULL)
 		goto abort;
 
+	assert(sndbuf_size > 0);
 	if ((size_t)sndbuf_size > bufsize) {
 		if (buf)
 			(void)free(buf);
@@ -1026,6 +1028,7 @@ recvrequest(const char *cmd, const char *volatile local, const char *remote,
 		progress = 0;
 		preserve = 0;
 	}
+	assert(rcvbuf_size > 0);
 	if ((size_t)rcvbuf_size > bufsize) {
 		if (buf)
 			(void)free(buf);

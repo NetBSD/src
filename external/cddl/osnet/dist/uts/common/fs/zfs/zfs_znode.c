@@ -951,11 +951,11 @@ again:
 			err = ENOENT;
 		} else {
 			if ((vp = ZTOV(zp)) != NULL) {
-				mutex_enter(&vp->v_interlock);
+				mutex_enter(vp->v_interlock);
 				mutex_exit(&zp->z_lock);
 				if (vget(vp, 0) != 0) {
 					dmu_buf_rele(db, NULL);
-					mutex_exit(&vp->v_interlock);
+					mutex_exit(vp->v_interlock);
 					goto again;
 				}
 				mutex_enter(&zp->z_lock);

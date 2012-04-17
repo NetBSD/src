@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.178 2011/06/12 03:35:49 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.178.2.1 2012/04/17 00:07:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.178 2011/06/12 03:35:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.178.2.1 2012/04/17 00:07:04 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -180,7 +180,7 @@ x68k_init(void)
 	 */
 	uvm_page_physload(atop(avail_start), atop(avail_end),
 	    atop(avail_start), atop(avail_end),
-	    VM_FREELIST_DEFAULT);
+	    VM_FREELIST_MAINMEM);
 #ifdef EXTENDED_MEMORY
 	setmemrange();
 #endif
@@ -585,21 +585,13 @@ cpu_dumpconf(void)
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
-	const struct bdevsw *bdev;
 	int chdrsize;	/* size of dump header */
 	int nblks;	/* size of dump area */
 	int i;
 
 	if (dumpdev == NODEV)
 		return;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL) {
-		dumpdev = NODEV;
-		return;
-	}
-	if (bdev->d_psize == NULL)
-		return;
-	nblks = (*bdev->d_psize)(dumpdev);
+	nblks = bdev_size(dumpdev);
 	chdrsize = cpu_dumpsize();
 
 	dumpsize = 0;
@@ -1000,8 +992,8 @@ mem_exists(void *mem, u_long basemax)
 	void *begin_check, *end_check;
 	label_t	faultbuf;
 
-	DPRINTF(("Enter mem_exists(%p, %x)\n", mem, basemax));
-	DPRINTF((" pmap_enter(%p, %p) for target... ", mem_v, mem));
+	DPRINTF(("Enter mem_exists(%p, %lx)\n", mem, basemax));
+	DPRINTF((" pmap_enter(%" PRIxVADDR ", %p) for target... ", mem_v, mem));
 	pmap_enter(pmap_kernel(), mem_v, (paddr_t)mem,
 	    VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|PMAP_WIRED);
 	pmap_update(pmap_kernel());
@@ -1009,7 +1001,7 @@ mem_exists(void *mem, u_long basemax)
 
 	/* only 24bits are significant on normal X680x0 systems */
 	base = (void *)((u_long)mem & 0x00FFFFFF);
-	DPRINTF((" pmap_enter(%p, %p) for shadow... ", base_v, base));
+	DPRINTF((" pmap_enter(%" PRIxVADDR ", %p) for shadow... ", base_v, base));
 	pmap_enter(pmap_kernel(), base_v, (paddr_t)base,
 	    VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|PMAP_WIRED);
 	pmap_update(pmap_kernel());
@@ -1152,7 +1144,7 @@ setmemrange(void)
 		if ((u_long)mlist[i].base < h) {
 			uvm_page_physload(atop(mlist[i].base), atop(h),
 			    atop(mlist[i].base), atop(h),
-			    VM_FREELIST_DEFAULT);
+			    VM_FREELIST_HIGHMEM);
 			mem_size += h - (u_long) mlist[i].base;
 		}
 	}

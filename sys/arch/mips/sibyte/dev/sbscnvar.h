@@ -1,4 +1,4 @@
-/* $NetBSD: sbscnvar.h,v 1.4 2011/02/01 03:16:54 matt Exp $ */
+/* $NetBSD: sbscnvar.h,v 1.4.4.1 2012/04/17 00:06:41 yamt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -65,7 +65,7 @@
  */
 
 #include "rnd.h"
-#if NRND > 0 && defined(RND_SBSCN)
+#ifdef RND_SBSCN
 #include <sys/rnd.h>
 #endif
 
@@ -156,8 +156,8 @@ struct sbscn_channel {
 	u_char		ch_i_dcd_pin, ch_i_cts_pin, ch_i_dsr_pin, ch_i_ri_pin;
 	u_char		ch_o_dtr_pin, ch_o_rts_pin;
 
-#if NRND > 0 && defined(RND_SBSCN)
-	rndsource_element_t  ch_rnd_source;
+#ifdef RND_SBSCN
+	krndsource_t  ch_rnd_source;
 #endif
 };
 

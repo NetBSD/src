@@ -1,5 +1,5 @@
 #
-# $NetBSD: MILAN-ISAIDE,v 1.73 2010/12/12 09:58:29 tsutsui Exp $
+# $NetBSD: MILAN-ISAIDE,v 1.73.8.1 2012/04/17 00:06:08 yamt Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -41,7 +41,7 @@ file-system PUFFS # Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system EXT2FS # second extended file system (linux)
 file-system PTYFS # /dev/pts/N support
 file-system TMPFS # Efficient memory file-system
-options WAPBL # File system journaling support - Experimental
+options WAPBL # File system journaling support
 options NFSSERVER # Network File System server side code
 options PANICWAIT # Require keystroke to dump/reboot
 options DDB # Kernel debugger
@@ -64,7 +64,6 @@ options COMPAT_BSDPTY # /dev/[pt]ty?? ptys.
 options SYSVSHM # System V shared memory
 options SYSVMSG # System V messages
 options SYSVSEM # System V semaphores
-options P1003_1B_SEMAPHORE # p1003.1b semaphore support
 options KTRACE # Add kernel tracing system call
 options USERCONF # userconf(4) support
 options SYSCTL_INCLUDE_DESCR # Include sysctl descriptions in kernel
@@ -94,7 +93,6 @@ pseudo-device stf # 6to4 IPv6 over IPv4 encapsulation
 pseudo-device ccd 4 # concatenating disk driver
 pseudo-device fss # file system snapshot device
 pseudo-device ipfilter # IP filtering device
-pseudo-device rnd # /dev/random and in-kernel generator
 pseudo-device clockctl # user control of clock subsystem
 pseudo-device ksyms # /dev/ksyms
 exphy* at mii? phy ? # 3Com internal PHYs

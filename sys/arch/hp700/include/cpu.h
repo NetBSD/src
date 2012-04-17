@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.66 2011/02/07 12:19:35 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.66.4.1 2012/04/17 00:06:22 yamt Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -253,6 +253,7 @@ int	clock_intr(void *);
  * entry within the cpu_info struct.
  */
 struct cpu_info {
+	/* Keep this first to simplify the trap handlers */
 	register_t	ci_trapsave[16];/* the "phys" part of frame */
 
 	struct cpu_data ci_data;	/* MI per-cpu data */
@@ -273,12 +274,15 @@ struct cpu_info {
 	u_long		ci_itmr;
 
 #if defined(MULTIPROCESSOR)
-	struct	lwp	*ci_curlwp;	/* CPU owner */
+	struct lwp	*ci_curlwp;	/* CPU owner */
 	paddr_t		ci_stack;	/* stack for spin up */
 	volatile int	ci_flags;	/* CPU status flags */
 #define	CPUF_PRIMARY	0x0001		/* ... is monarch/primary */
 #define	CPUF_RUNNING	0x0002 		/* ... is running. */
 
+	volatile u_long	ci_ipi;		/* IPIs pending */
+
+	struct cpu_softc *ci_softc;
 #endif
 
 #endif /* !_KMEMUSER */

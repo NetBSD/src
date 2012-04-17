@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.290.2.1 2011/11/02 21:54:00 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.290.2.2 2012/04/17 00:08:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.290.2.1 2011/11/02 21:54:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.290.2.2 2012/04/17 00:08:56 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -129,6 +129,7 @@ extern const struct vnodeopv_desc lfs_specop_opv_desc;
 extern const struct vnodeopv_desc lfs_fifoop_opv_desc;
 
 pid_t lfs_writer_daemon = 0;
+lwpid_t lfs_writer_lid = 0;
 int lfs_do_flush = 0;
 #ifdef LFS_KERNEL_RFW
 int lfs_do_rfw = 0;
@@ -399,85 +400,152 @@ struct pool lfs_lbnentry_pool;
 static void
 lfs_writerd(void *arg)
 {
-	struct mount *mp, *nmp;
-	struct lfs *fs;
-	int fsflags;
-	int loopcount;
-
-	lfs_writer_daemon = curproc->p_pid;
-
+ 	struct mount *mp, *nmp;
+ 	struct lfs *fs;
+	struct vfsops *vfs = NULL;
+ 	int fsflags;
+ 	int loopcount;
+	int skipc;
+	int lfsc;
+	int wrote_something = 0;
+ 
 	mutex_enter(&lfs_lock);
-	for (;;) {
-		mtsleep(&lfs_writer_daemon, PVM | PNORELOCK, "lfswriter", hz/10,
-		    &lfs_lock);
+ 	lfs_writer_daemon = curproc->p_pid;
+	lfs_writer_lid = curlwp->l_lid;
+	mutex_exit(&lfs_lock);
 
-		/*
-		 * Look through the list of LFSs to see if any of them
-		 * have requested pageouts.
-		 */
-		mutex_enter(&mountlist_lock);
-		for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
-		     mp = nmp) {
-			if (vfs_busy(mp, &nmp)) {
-				continue;
-			}
-			if (strncmp(mp->mnt_stat.f_fstypename, MOUNT_LFS,
-			    sizeof(mp->mnt_stat.f_fstypename)) == 0) {
-				fs = VFSTOUFS(mp)->um_lfs;
-				mutex_enter(&lfs_lock);
-				fsflags = 0;
-				if ((fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs) ||
-				     lfs_dirvcount > LFS_MAX_DIROP) &&
-				    fs->lfs_dirops == 0)
-					fsflags |= SEGM_CKP;
-				if (fs->lfs_pdflush) {
-					DLOG((DLOG_FLUSH, "lfs_writerd: pdflush set\n"));
-					fs->lfs_pdflush = 0;
-					lfs_flush_fs(fs, fsflags);
-					mutex_exit(&lfs_lock);
-				} else if (!TAILQ_EMPTY(&fs->lfs_pchainhd)) {
-					DLOG((DLOG_FLUSH, "lfs_writerd: pchain non-empty\n"));
-					mutex_exit(&lfs_lock);
-					lfs_writer_enter(fs, "wrdirop");
-					lfs_flush_pchain(fs);
-					lfs_writer_leave(fs);
-				} else
-					mutex_exit(&lfs_lock);
-			}
-			vfs_unbusy(mp, false, &nmp);
-		}
-		mutex_exit(&mountlist_lock);
+	/* Take an extra reference to the LFS vfsops. */
+	vfs = vfs_getopsbyname(MOUNT_LFS);
+ 
+ 	mutex_enter(&lfs_lock);
+ 	for (;;) {
+		KASSERT(mutex_owned(&lfs_lock));
+		if (wrote_something == 0)
+			mtsleep(&lfs_writer_daemon, PVM, "lfswriter", hz/10 + 1,
+				&lfs_lock);
+
+		KASSERT(mutex_owned(&lfs_lock));
+		loopcount = 0;
+		wrote_something = 0;
 
 		/*
 		 * If global state wants a flush, flush everything.
 		 */
-		mutex_enter(&lfs_lock);
-		loopcount = 0;
 		if (lfs_do_flush || locked_queue_count > LFS_MAX_BUFS ||
 			locked_queue_bytes > LFS_MAX_BYTES ||
 			lfs_subsys_pages > LFS_MAX_PAGES) {
 
 			if (lfs_do_flush) {
-				DLOG((DLOG_FLUSH, "daemon: lfs_do_flush\n"));
+				DLOG((DLOG_FLUSH, "lfs_writerd: lfs_do_flush\n"));
 			}
 			if (locked_queue_count > LFS_MAX_BUFS) {
-				DLOG((DLOG_FLUSH, "daemon: lqc = %d, max %d\n",
+				DLOG((DLOG_FLUSH, "lfs_writerd: lqc = %d, max %d\n",
 				      locked_queue_count, LFS_MAX_BUFS));
 			}
 			if (locked_queue_bytes > LFS_MAX_BYTES) {
-				DLOG((DLOG_FLUSH, "daemon: lqb = %ld, max %ld\n",
+				DLOG((DLOG_FLUSH, "lfs_writerd: lqb = %ld, max %ld\n",
 				      locked_queue_bytes, LFS_MAX_BYTES));
 			}
 			if (lfs_subsys_pages > LFS_MAX_PAGES) {
-				DLOG((DLOG_FLUSH, "daemon: lssp = %d, max %d\n",
+				DLOG((DLOG_FLUSH, "lfs_writerd: lssp = %d, max %d\n",
 				      lfs_subsys_pages, LFS_MAX_PAGES));
 			}
 
 			lfs_flush(NULL, SEGM_WRITERD, 0);
 			lfs_do_flush = 0;
+			KASSERT(mutex_owned(&lfs_lock));
+			continue;
 		}
-	}
-	/* NOTREACHED */
+		KASSERT(mutex_owned(&lfs_lock));
+		mutex_exit(&lfs_lock);
+ 
+ 		/*
+ 		 * Look through the list of LFSs to see if any of them
+ 		 * have requested pageouts.
+ 		 */
+ 		mutex_enter(&mountlist_lock);
+		lfsc = 0;
+		skipc = 0;
+ 		for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
+ 		     mp = nmp) {
+ 			if (vfs_busy(mp, &nmp)) {
+				++skipc;
+ 				continue;
+ 			}
+			KASSERT(!mutex_owned(&lfs_lock));
+ 			if (strncmp(mp->mnt_stat.f_fstypename, MOUNT_LFS,
+ 			    sizeof(mp->mnt_stat.f_fstypename)) == 0) {
+				++lfsc;
+ 				fs = VFSTOUFS(mp)->um_lfs;
+				int32_t ooffset = 0;
+				fsflags = SEGM_SINGLE;
+
+ 				mutex_enter(&lfs_lock);
+				ooffset = fs->lfs_offset;
+
+				if (fs->lfs_nextseg < fs->lfs_curseg && fs->lfs_nowrap) {
+					/* Don't try to write if we're suspended */
+					mutex_exit(&lfs_lock);
+					vfs_unbusy(mp, false, &nmp);
+					continue;
+				}
+				if (LFS_STARVED_FOR_SEGS(fs)) {
+					mutex_exit(&lfs_lock);
+
+					DLOG((DLOG_FLUSH, "lfs_writerd: need cleaning before writing possible\n"));
+					lfs_wakeup_cleaner(fs);
+					vfs_unbusy(mp, false, &nmp);
+					continue;
+				}
+
+ 				if ((fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs) ||
+ 				     lfs_dirvcount > LFS_MAX_DIROP) &&
+				    fs->lfs_dirops == 0) {
+					fsflags &= ~SEGM_SINGLE;
+ 					fsflags |= SEGM_CKP;
+					DLOG((DLOG_FLUSH, "lfs_writerd: checkpoint\n"));
+					lfs_flush_fs(fs, fsflags);
+				} else if (fs->lfs_pdflush) {
+ 					DLOG((DLOG_FLUSH, "lfs_writerd: pdflush set\n"));
+ 					lfs_flush_fs(fs, fsflags);
+ 				} else if (!TAILQ_EMPTY(&fs->lfs_pchainhd)) {
+ 					DLOG((DLOG_FLUSH, "lfs_writerd: pchain non-empty\n"));
+ 					mutex_exit(&lfs_lock);
+ 					lfs_writer_enter(fs, "wrdirop");
+ 					lfs_flush_pchain(fs);
+ 					lfs_writer_leave(fs);
+					mutex_enter(&lfs_lock);
+				}
+				if (fs->lfs_offset != ooffset)
+					++wrote_something;
+				mutex_exit(&lfs_lock);
+ 			}
+			KASSERT(!mutex_owned(&lfs_lock));
+ 			vfs_unbusy(mp, false, &nmp);
+ 		}
+		if (lfsc + skipc == 0) {
+			mutex_enter(&lfs_lock);
+			lfs_writer_daemon = 0;
+			lfs_writer_lid = 0;
+			mutex_exit(&lfs_lock);
+			mutex_exit(&mountlist_lock);
+			break;
+		}
+ 		mutex_exit(&mountlist_lock);
+ 
+ 		mutex_enter(&lfs_lock);
+ 	}
+	KASSERT(!mutex_owned(&lfs_lock));
+	KASSERT(!mutex_owned(&mountlist_lock));
+
+	/* Give up our extra reference so the module can be unloaded. */
+	mutex_enter(&vfs_list_lock);
+	if (vfs != NULL)
+		vfs->vfs_refcount--;
+	mutex_exit(&vfs_list_lock);
+
+	/* Done! */
+	kthread_exit(0);
 }
 
 /*
@@ -654,7 +722,9 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		    (mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = genfs_can_mount(devvp, accessmode, l->l_cred);
+		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
+		    KAUTH_REQ_SYSTEM_MOUNT_DEVICE, mp, devvp,
+		    KAUTH_ARG(accessmode));
 		VOP_UNLOCK(devvp);
 	}
 
@@ -670,7 +740,9 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			flags = FREAD;
 		else
 			flags = FREAD|FWRITE;
+		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_OPEN(devvp, flags, FSCRED);
+		VOP_UNLOCK(devvp);
 		if (error)
 			goto fail;
 		error = lfs_mountfs(devvp, mp, l);		/* LFS */
@@ -1061,16 +1133,12 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	vput(vp);
 
 	/* Start the pagedaemon-anticipating daemon */
-	if (lfs_writer_daemon == 0 && kthread_create(PRI_BIO, 0, NULL,
+	mutex_enter(&lfs_lock);
+	if (lfs_writer_daemon == 0 && lfs_writer_lid == 0 &&
+	    kthread_create(PRI_BIO, 0, NULL,
 	    lfs_writerd, NULL, NULL, "lfs_writer") != 0)
 		panic("fork lfs_writer");
-	/*
-	 * XXX: Get extra reference to LFS vfsops.  This prevents unload,
-	 * but also prevents kernel panic due to text being unloaded
-	 * from below lfs_writerd.  When lfs_writerd can exit, remove
-	 * this!!!
-	 */
-	vfs_getopsbyname(MOUNT_LFS);
+	mutex_exit(&lfs_lock);
 
 	printf("WARNING: the log-structured file system is experimental\n"
 	    "WARNING: it may cause system crashes and/or corrupt data\n");
@@ -1574,6 +1642,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	struct lfs *fs = ip->i_lfs;
 	struct segment *sp = fs->lfs_sp;
 	UVMHIST_FUNC("lfs_gop_write"); UVMHIST_CALLED(ubchist);
+	const char * failreason = NULL;
 
 	ASSERT_SEGLOCK(fs);
 
@@ -1589,8 +1658,10 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	 * We must write everything, however, if our vnode is being
 	 * reclaimed.
 	 */
-	if (LFS_STARVED_FOR_SEGS(fs) && vp != fs->lfs_flushvp)
-		goto tryagain;
+	if (LFS_STARVED_FOR_SEGS(fs) && !(vp->v_iflag & VI_XLOCK)) {
+		failreason = "Starved for segs and not flushing vp";
+ 		goto tryagain;
+	}
 
 	/*
 	 * Sometimes things slip past the filters in lfs_putpages,
@@ -1608,9 +1679,16 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	 *
 	 * XXXUBC that last statement is an oversimplification of course.
 	 */
-	if (!LFS_SEGLOCK_HELD(fs) ||
-	    (ip->i_lfs_iflags & LFSI_NO_GOP_WRITE) ||
-	    (pgs[0]->offset & fs->lfs_bmask) != 0) {
+	if (!LFS_SEGLOCK_HELD(fs)) {
+		failreason = "Seglock not held";
+		goto tryagain;
+	}
+	if (ip->i_lfs_iflags & LFSI_NO_GOP_WRITE) {
+		failreason = "Inode with no_gop_write";
+		goto tryagain;
+	}
+	if ((pgs[0]->offset & fs->lfs_bmask) != 0) {
+		failreason = "Bad page offset";
 		goto tryagain;
 	}
 
@@ -1630,6 +1708,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	KASSERT(eof >= 0);
 
 	if (startoffset >= eof) {
+		failreason = "Offset beyond EOF";
 		goto tryagain;
 	} else
 		bytes = MIN(npages << PAGE_SHIFT, eof - startoffset);
@@ -1644,9 +1723,11 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 			pgs[i]->flags &= ~PG_DELWRI;
 			pgs[i]->flags |= PG_PAGEOUT;
 			uvm_pageout_start(1);
+			mutex_enter(vp->v_interlock);
 			mutex_enter(&uvm_pageqlock);
 			uvm_pageunwire(pgs[i]);
 			mutex_exit(&uvm_pageqlock);
+			mutex_exit(vp->v_interlock);
 		}
 	}
 
@@ -1766,7 +1847,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 			nestiobuf_setup(mbp, bp, offset - pg->offset, iobytes);
 			/*
 			 * LFS doesn't like async I/O here, dies with
-			 * and assert in lfs_bwrite().  Is that assert
+			 * an assert in lfs_bwrite().  Is that assert
 			 * valid?  I retained non-async behaviour when
 			 * converted this to use nestiobuf --pooka
 			 */
@@ -1803,6 +1884,10 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 		lfs_flush(fs, 0, 1);
 		mutex_exit(&lfs_lock);
 	}
+
+	if ((sp->seg_flags & SEGM_SINGLE) && fs->lfs_curseg != fs->lfs_startseg)
+		return EAGAIN;
+
 	return (0);
 
     tryagain:
@@ -1813,18 +1898,13 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	mutex_enter(vp->v_interlock);
 
 	/* Tell why we're here, if we know */
-	if (ip->i_lfs_iflags & LFSI_NO_GOP_WRITE) {
-		DLOG((DLOG_PAGE, "lfs_gop_write: clean pages dirtied\n"));
-	} else if ((pgs[0]->offset & fs->lfs_bmask) != 0) {
-		DLOG((DLOG_PAGE, "lfs_gop_write: not on block boundary\n"));
-	} else if (haveeof && startoffset >= eof) {
-		DLOG((DLOG_PAGE, "lfs_gop_write: ino %d start 0x%" PRIx64
-		      " eof 0x%" PRIx64 " npages=%d\n", VTOI(vp)->i_number,
-		      pgs[0]->offset, eof, npages));
-	} else if (LFS_STARVED_FOR_SEGS(fs)) {
-		DLOG((DLOG_PAGE, "lfs_gop_write: avail too low\n"));
-	} else {
-		DLOG((DLOG_PAGE, "lfs_gop_write: seglock not held\n"));
+	if (failreason != NULL) {
+		DLOG((DLOG_PAGE, "lfs_gop_write: %s\n", failreason));
+	}
+	if (haveeof && startoffset >= eof) {
+ 		DLOG((DLOG_PAGE, "lfs_gop_write: ino %d start 0x%" PRIx64
+ 		      " eof 0x%" PRIx64 " npages=%d\n", VTOI(vp)->i_number,
+ 		      pgs[0]->offset, eof, npages));
 	}
 
 	mutex_enter(&uvm_pageqlock);
@@ -1897,14 +1977,14 @@ lfs_vinit(struct mount *mp, struct vnode **vpp)
 			    i == 0)
 				continue;
 			if (ip->i_ffs1_db[i] != 0) {
-inconsistent:
 				lfs_dump_dinode(ip->i_din.ffs1_din);
-				panic("inconsistent inode");
+				panic("inconsistent inode (direct)");
 			}
 		}
 		for ( ; i < NDADDR + NIADDR; i++) {
 			if (ip->i_ffs1_ib[i - NDADDR] != 0) {
-				goto inconsistent;
+				lfs_dump_dinode(ip->i_din.ffs1_din);
+				panic("inconsistent inode (indirect)");
 			}
 		}
 #endif /* DEBUG */
@@ -2012,7 +2092,6 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	 * (XXX this could be done better.)
 	 */
 	rw_enter(&fs->lfs_iflock, RW_WRITER);
-	vn_lock(ivp, LK_EXCLUSIVE | LK_RETRY);
 	for (i = 0; i < ilast; i++) {
 		bread(ivp, i, fs->lfs_bsize, NOCRED, 0, &bp);
 		brelse(bp, 0);
@@ -2128,7 +2207,6 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	VOP_BWRITE(bp->b_vp, bp);
 
 	/* Let Ifile accesses proceed */
-	VOP_UNLOCK(ivp);
 	rw_exit(&fs->lfs_iflock);
 
     out:

@@ -1,7 +1,7 @@
-/*	$NetBSD: ldebug.c,v 1.1.1.1 2010/10/31 11:16:56 mbalmer Exp $	*/
+/*	$NetBSD: ldebug.c,v 1.1.1.1.6.1 2012/04/17 00:04:46 yamt Exp $	*/
 
 /*
-** Id: ldebug.c,v 2.29.1.6 2008/05/08 16:56:26 roberto Exp
+** $Id: ldebug.c,v 1.1.1.1.6.1 2012/04/17 00:04:46 yamt Exp $
 ** Debug Interface
 ** See Copyright Notice in lua.h
 */

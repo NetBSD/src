@@ -206,6 +206,7 @@
 <p>All cryptographically sound key generation schemes must have means to randomize the entropy seed used to initialize the internal pseudo-random number generator used by the OpenSSL library routines. If a site supports <tt>ssh</tt>, it is very likely that means to do this are already available. The entropy seed used by the OpenSSL library is contained in a file, usually called <tt>.rnd</tt>, which must be available when starting the <tt>ntp-keygen</tt> program or <tt>ntpd</tt> daemon.</p>
 
 <p>The OpenSSL library looks for the file using the path specified by the <tt>RANDFILE</tt> environment variable in the user home directory, whether root or some other user. If the <tt>RANDFILE</tt> environment variable is not present, the library looks for the <tt>.rnd</tt> file in the user home directory. Since both the <tt>ntp-keygen</tt> program and <tt>ntpd</tt> daemon must run as root, the logical place to put this file is in <tt>/.rnd</tt> or <tt>/root/.rnd</tt>. If the file is not available or cannot be written, the program exits with a message to the system log.</p>
+<p>On systems that provide /dev/urandom, the randomness device is used instead and the file specified by the <tt>randfile</tt> subcommand or the <tt>RANDFILE</tt> environment variable is ignored.</p>
 
 <h4 id="priv">Cryptographic Data Files</h4>
 

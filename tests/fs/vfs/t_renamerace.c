@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.24 2011/10/08 13:08:54 njoly Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.24.2.1 2012/04/17 00:09:04 yamt Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -81,9 +81,6 @@ renamerace(const atf_tc_t *tc, const char *mp)
 	pthread_t pt1[NWRK], pt2[NWRK];
 	int i;
 
-	if (FSTYPE_LFS(tc))
-		atf_tc_expect_signal(-1, "PR kern/43582");
-
 	if (FSTYPE_RUMPFS(tc))
 		atf_tc_skip("rename not supported by file system");
 
@@ -105,13 +102,6 @@ renamerace(const atf_tc_t *tc, const char *mp)
 	for (i = 0; i < NWRK; i++)
 		pthread_join(pt2[i], NULL);
 	RL(rump_sys_chdir("/"));
-
-	/*
-	 * XXX: does not always fail on LFS, especially for unicpu
-	 * configurations.  see other ramblings about racy tests.
-	 */
-	if (FSTYPE_LFS(tc))
-		abort();
 
 	if (FSTYPE_MSDOS(tc)) {
 		atf_tc_expect_fail("PR kern/44661");
@@ -139,7 +129,7 @@ renamerace_dirs(const atf_tc_t *tc, const char *mp)
 		atf_tc_skip("rename not supported by file system");
 
 	/* XXX: msdosfs also sometimes hangs */
-	if (FSTYPE_EXT2FS(tc) || FSTYPE_LFS(tc) || FSTYPE_MSDOS(tc))
+	if (FSTYPE_EXT2FS(tc) || FSTYPE_MSDOS(tc))
 		atf_tc_expect_signal(-1, "PR kern/43626");
 
 	/* XXX: unracy execution not caught */
@@ -164,7 +154,7 @@ renamerace_dirs(const atf_tc_t *tc, const char *mp)
 	 * Doesn't always trigger when run on a slow backend
 	 * (i.e. not on tmpfs/mfs).  So do the usual kludge.
 	 */
-	if (FSTYPE_EXT2FS(tc) || FSTYPE_LFS(tc) || FSTYPE_MSDOS(tc))
+	if (FSTYPE_EXT2FS(tc) || FSTYPE_MSDOS(tc))
 		abort();
 
 	if (FSTYPE_P2K_FFS(tc)) {

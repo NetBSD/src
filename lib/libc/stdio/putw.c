@@ -1,4 +1,4 @@
-/*	$NetBSD: putw.c,v 1.11 2003/08/07 16:43:29 agc Exp $	*/
+/*	$NetBSD: putw.c,v 1.11.56.1 2012/04/17 00:05:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)putw.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: putw.c,v 1.11 2003/08/07 16:43:29 agc Exp $");
+__RCSID("$NetBSD: putw.c,v 1.11.56.1 2012/04/17 00:05:24 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,9 +49,7 @@ __RCSID("$NetBSD: putw.c,v 1.11 2003/08/07 16:43:29 agc Exp $");
 #include "local.h"
 
 int
-putw(w, fp)
-	int w;
-	FILE *fp;
+putw(int w, FILE *fp)
 {
 	struct __suio uio;
 	struct __siov iov;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: rndctl.8,v 1.18 2011/10/01 02:55:00 pgoyette Exp $
+.\"	$NetBSD: rndctl.8,v 1.18.2.1 2012/04/17 00:05:42 yamt Exp $
 .\"
 .\" Copyright (c) 1997 Michael Graff
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 4, 2009
+.Dd November 23, 2011
 .Dt RNDCTL 8
 .Os
 .Sh NAME
@@ -39,6 +39,10 @@
 .Nm
 .Fl ls
 .Op Fl d Ar devname | Fl t Ar devtype
+.Nm
+.Fl L Ar save-file
+.Nm
+.Fl S Ar save-file
 .Sh DESCRIPTION
 The
 .Nm
@@ -72,6 +76,11 @@ but no entropy is assumed to be present.
 .It Fl e
 Enable entropy estimation using the collected timing information
 for the given device name or device type.
+.It Fl L
+Load saved entropy from file
+.Ar save-file ,
+which will be overwritten and deleted before the entropy is loaded into
+the kernel.
 .It Fl l
 List all sources, or, if the
 .Fl t
@@ -82,6 +91,12 @@ flags are specified, only those specified by the
 or
 .Ar devname
 specified.
+.It Fl S
+Save entropy pool to file
+.Ar save-file .
+The file format is specific to
+.Nm
+and includes an estimate of the amount of saved entropy and a checksum.
 .It Fl s
 Display statistics on the current state of the random collection pool.
 .It Fl t

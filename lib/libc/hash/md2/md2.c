@@ -1,4 +1,4 @@
-/*	$NetBSD: md2.c,v 1.5 2008/04/28 20:23:00 martin Exp $	*/
+/*	$NetBSD: md2.c,v 1.5.4.1 2012/04/17 00:05:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: md2.c,v 1.5 2008/04/28 20:23:00 martin Exp $");
+__RCSID("$NetBSD: md2.c,v 1.5.4.1 2012/04/17 00:05:19 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -168,10 +168,9 @@ MD2Final(digest, context)
 }
 
 /*static*/ void
-MD2Transform(context)
-	MD2_CTX *context;
+MD2Transform(MD2_CTX *context)
 {
-	u_int32_t l, j, k, t;
+	uint32_t l, j, k, t;
 
 	/* set block "3" and update "checksum" */
 	for (l = context->C[15], j = 0; j < 16; j++) {

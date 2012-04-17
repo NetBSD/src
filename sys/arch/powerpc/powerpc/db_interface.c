@@ -1,8 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.47 2011/06/20 05:59:06 matt Exp $ */
+/*	$NetBSD: db_interface.c,v 1.47.2.1 2012/04/17 00:06:48 yamt Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.47 2011/06/20 05:59:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.47.2.1 2012/04/17 00:06:48 yamt Exp $");
 
 #define USERACC
 
@@ -26,6 +26,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.47 2011/06/20 05:59:06 matt Exp $
 #if defined (PPC_OEA) || defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 #include <powerpc/oea/spr.h>
 #include <powerpc/oea/bat.h>
+#include <powerpc/oea/cpufeat.h>
 #endif
 
 #ifdef PPC_IBM4XX
@@ -133,7 +134,7 @@ const struct db_command db_machine_command_table[] = {
 	  "Display instruction translation storage buffer information.",
 	  NULL,NULL) },
 #endif /* PPC_BOOKE */
-	{ DDB_ADD_CMD(NULL,	NULL,			0, 
+	{ DDB_ADD_CMD(NULL,	NULL,			0,
 	  NULL,NULL,NULL) }
 };
 
@@ -249,10 +250,10 @@ kdb_trap(int type, void *v)
 static void
 print_battranslation(struct bat *bat, unsigned int blidx)
 {
-	static const char *const batsizes[] = {
-		"128kB",
-		"256kB",
-		"512kB",
+	static const char const batsizes[][6] = {
+		"128KB",
+		"256KB",
+		"512KB",
 		"1MB",
 		"2MB",
 		"4MB",
@@ -261,7 +262,11 @@ print_battranslation(struct bat *bat, unsigned int blidx)
 		"32MB",
 		"64MB",
 		"128MB",
-		"256MB"
+		"256MB",
+		"512MB",
+		"1GB",
+		"2GB",
+		"4GB",
 	};
 	vsize_t len;
 
@@ -305,7 +310,8 @@ print_bat(struct bat *bat)
 		db_printf("\tdisabled\n\n");
 		return;
 	}
-	print_battranslation(bat, 30 - __builtin_clz((bat->batu & BAT_BL)|2));
+	print_battranslation(bat,
+	    30 - __builtin_clz((bat->batu & (BAT_XBL|BAT_BL))|2));
 	print_batmodes(bat->batu & BAT_Vs, bat->batu & BAT_Vu,
 	    bat->batl & BAT_PP);
 	print_wimg(bat->batl & BAT_WIMG);
@@ -331,49 +337,69 @@ print_bat601(struct bat *bat)
 static void
 db_show_bat(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
-	struct bat ibat[4];
-	struct bat dbat[4];
+	struct bat ibat[8];
+	struct bat dbat[8];
 	unsigned int cpuvers;
-	int i;
+	u_int i;
+	u_int maxbat = (oeacpufeat & OEACPU_HIGHBAT) ? 8 : 4;
+
+	if (oeacpufeat & OEACPU_NOBAT)
+		return;
 
 	cpuvers = mfpvr() >> 16;
 
-	__asm volatile ("mfibatu %0,0" : "=r"(ibat[0].batu));
-	__asm volatile ("mfibatl %0,0" : "=r"(ibat[0].batl));
-	__asm volatile ("mfibatu %0,1" : "=r"(ibat[1].batu));
-	__asm volatile ("mfibatl %0,1" : "=r"(ibat[1].batl));
-	__asm volatile ("mfibatu %0,2" : "=r"(ibat[2].batu));
-	__asm volatile ("mfibatl %0,2" : "=r"(ibat[2].batl));
-	__asm volatile ("mfibatu %0,3" : "=r"(ibat[3].batu));
-	__asm volatile ("mfibatl %0,3" : "=r"(ibat[3].batl));
+	ibat[0].batu = mfspr(SPR_IBAT0U);
+	ibat[0].batl = mfspr(SPR_IBAT0L);
+	ibat[1].batu = mfspr(SPR_IBAT1U);
+	ibat[1].batl = mfspr(SPR_IBAT1L);
+	ibat[2].batu = mfspr(SPR_IBAT2U);
+	ibat[2].batl = mfspr(SPR_IBAT2L);
+	ibat[3].batu = mfspr(SPR_IBAT3U);
+	ibat[3].batl = mfspr(SPR_IBAT3L);
+	if (maxbat == 8) {
+		ibat[4].batu = mfspr(SPR_IBAT4U);
+		ibat[4].batl = mfspr(SPR_IBAT4L);
+		ibat[5].batu = mfspr(SPR_IBAT5U);
+		ibat[5].batl = mfspr(SPR_IBAT5L);
+		ibat[6].batu = mfspr(SPR_IBAT6U);
+		ibat[6].batl = mfspr(SPR_IBAT6L);
+		ibat[7].batu = mfspr(SPR_IBAT7U);
+		ibat[7].batl = mfspr(SPR_IBAT7L);
+	}
 
 	if (cpuvers != MPC601) {
 		/* The 601 has only four unified BATs */
-		__asm volatile ("mfdbatu %0,0" : "=r"(dbat[0].batu));
-		__asm volatile ("mfdbatl %0,0" : "=r"(dbat[0].batl));
-		__asm volatile ("mfdbatu %0,1" : "=r"(dbat[1].batu));
-		__asm volatile ("mfdbatl %0,1" : "=r"(dbat[1].batl));
-		__asm volatile ("mfdbatu %0,2" : "=r"(dbat[2].batu));
-		__asm volatile ("mfdbatl %0,2" : "=r"(dbat[2].batl));
-		__asm volatile ("mfdbatu %0,3" : "=r"(dbat[3].batu));
-		__asm volatile ("mfdbatl %0,3" : "=r"(dbat[3].batl));
+		dbat[0].batu = mfspr(SPR_DBAT0U);
+		dbat[0].batl = mfspr(SPR_DBAT0L);
+		dbat[1].batu = mfspr(SPR_DBAT1U);
+		dbat[1].batl = mfspr(SPR_DBAT1L);
+		dbat[2].batu = mfspr(SPR_DBAT2U);
+		dbat[2].batl = mfspr(SPR_DBAT2L);
+		dbat[3].batu = mfspr(SPR_DBAT3U);
+		dbat[3].batl = mfspr(SPR_DBAT3L);
+		if (maxbat == 8) {
+			dbat[4].batu = mfspr(SPR_DBAT4U);
+			dbat[4].batl = mfspr(SPR_DBAT4L);
+			dbat[5].batu = mfspr(SPR_DBAT5U);
+			dbat[5].batl = mfspr(SPR_DBAT5L);
+			dbat[6].batu = mfspr(SPR_DBAT6U);
+			dbat[6].batl = mfspr(SPR_DBAT6L);
+			dbat[7].batu = mfspr(SPR_DBAT7U);
+			dbat[7].batl = mfspr(SPR_DBAT7L);
+		}
 	}
 
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < maxbat; i++) {
 #ifdef PPC_OEA601
 		if (cpuvers == MPC601) {
-			db_printf("bat%d:", i);
+			db_printf("bat[%u]:\n", i);
 			print_bat601(&ibat[i]);
 		} else
 #endif
 		{
-			db_printf("ibat%d:", i);
+			db_printf("ibat[%u]:\n", i);
 			print_bat(&ibat[i]);
-		}
-	}
-	if (cpuvers != MPC601) {
-		for (i = 0; i < 4; i++) {
-			db_printf("dbat%d:", i);
+			db_printf("dbat[%u]:\n", i);
 			print_bat(&dbat[i]);
 		}
 	}
@@ -383,26 +409,27 @@ static void
 db_show_mmu(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	paddr_t sdr1;
-#if !defined(PPC_OEA64) && !defined(PPC_OEA64_BRIDGE)
-	register_t sr;
-	vaddr_t saddr;
-	int i;
-#endif
 
 	__asm volatile ("mfsdr1 %0" : "=r"(sdr1));
 	db_printf("sdr1\t\t0x%08lx\n", sdr1);
 
 #if defined(PPC_OEA64) || defined(PPC_OEA64_BRIDGE)
-	__asm volatile ("mfasr %0" : "=r"(sdr1));
-	db_printf("asr\t\t0x%08lx\n", sdr1);
-#else
-	saddr = 0;
-	for (i = 0; i<= 0xf; i++) {
-		if ((i & 3) == 0)
-			db_printf("sr%d-%d\t\t", i, i+3);
-		__asm volatile ("mfsrin %0,%1" : "=r"(sr) : "r"(saddr));
-		db_printf("0x%08lx   %c", sr, (i&3) == 3 ? '\n' : ' ');
-		saddr += 1 << ADDR_SR_SHFT;
+	if (oeacpufeat & (OEACPU_64|OEACPU_64_BRIDGE)) {
+		__asm volatile ("mfasr %0" : "=r"(sdr1));
+		db_printf("asr\t\t0x%08lx\n", sdr1);
+	}
+#endif
+#if defined(PPC_OEA) || defined(PPC_OEA64_BRIDGE)
+	if ((oeacpufeat & OEACPU_64) == 0) {
+		vaddr_t saddr = 0;
+		for (u_int i = 0; i <= 0xf; i++) {
+			register_t sr;
+			if ((i & 3) == 0)
+				db_printf("sr%d-%d\t\t", i, i+3);
+			__asm volatile ("mfsrin %0,%1" : "=r"(sr) : "r"(saddr));
+			db_printf("0x%08lx   %c", sr, (i&3) == 3 ? '\n' : ' ');
+			saddr += 1 << ADDR_SR_SHFT;
+		}
 	}
 #endif
 }
@@ -476,7 +503,7 @@ db_ppc4xx_pv(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	pv = pa_to_pv(addr);
 	db_printf("pv at %p\n", pv);
 	while (pv && pv->pv_pm) {
-		db_printf("next %p va %p pmap %p\n", pv->pv_next, 
+		db_printf("next %p va %p pmap %p\n", pv->pv_next,
 			(void *)pv->pv_va, pv->pv_pm);
 		pv = pv->pv_next;
 	}
@@ -499,7 +526,7 @@ db_ppc4xx_tf(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	if (have_addr) {
 		tf = (struct trapframe *)addr;
 
-		db_printf("r0-r3:  \t%8.8lx %8.8lx %8.8lx %8.8lx\n", 
+		db_printf("r0-r3:  \t%8.8lx %8.8lx %8.8lx %8.8lx\n",
 			tf->tf_fixreg[0], tf->tf_fixreg[1],
 			tf->tf_fixreg[2], tf->tf_fixreg[3]);
 		db_printf("r4-r7:  \t%8.8lx %8.8lx %8.8lx %8.8lx\n",
@@ -567,7 +594,7 @@ db_ppc4xx_dumptlb(db_expr_t addr, bool have_addr, db_expr_t count,
 			"mtpid %4;"
 			"mtmsr %3;"
 			"sync; isync"
-			: "=&r" (tlblo), "=&r" (tlbhi), "=r" (pid), 
+			: "=&r" (tlblo), "=&r" (tlbhi), "=r" (pid),
 			"=&r" (msr), "=&r" (opid) : "r" (i));
 
 		if (strchr(modif, 'v') && !(tlbhi & TLB_VALID))

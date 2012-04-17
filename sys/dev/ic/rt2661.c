@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.28 2010/04/05 07:19:36 joerg Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.28.8.1 2012/04/17 00:07:36 yamt Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.28 2010/04/05 07:19:36 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.28.8.1 2012/04/17 00:07:36 yamt Exp $");
 
 
 #include <sys/param.h>
@@ -224,16 +224,16 @@ rt2661_attach(void *xsc, int id)
 		DELAY(1000);
 	}
 	if (ntries == 1000) {
-		aprint_error_dev(&sc->sc_dev, "timeout waiting for NIC to initialize\n");
+		aprint_error_dev(sc->sc_dev, "timeout waiting for NIC to initialize\n");
 		return EIO;
 	}
 
 	/* retrieve RF rev. no and various other things from EEPROM */
 	rt2661_read_eeprom(sc);
-	aprint_normal_dev(&sc->sc_dev, "802.11 address %s\n",
+	aprint_normal_dev(sc->sc_dev, "802.11 address %s\n",
 	    ether_sprintf(ic->ic_myaddr));
 
-	aprint_normal_dev(&sc->sc_dev, "MAC/BBP RT%X, RF %s\n", val,
+	aprint_normal_dev(sc->sc_dev, "MAC/BBP RT%X, RF %s\n", val,
 	    rt2661_get_rf(sc->rf_rev));
 
 	/*
@@ -241,37 +241,37 @@ rt2661_attach(void *xsc, int id)
 	 */
 	error = rt2661_alloc_tx_ring(sc, &sc->txq[0], RT2661_TX_RING_COUNT);
 	if (error != 0) {
-		aprint_error_dev(&sc->sc_dev, "could not allocate Tx ring 0\n");
+		aprint_error_dev(sc->sc_dev, "could not allocate Tx ring 0\n");
 		goto fail1;
 	}
 
 	error = rt2661_alloc_tx_ring(sc, &sc->txq[1], RT2661_TX_RING_COUNT);
 	if (error != 0) {
-		aprint_error_dev(&sc->sc_dev, "could not allocate Tx ring 1\n");
+		aprint_error_dev(sc->sc_dev, "could not allocate Tx ring 1\n");
 		goto fail2;
 	}
 
 	error = rt2661_alloc_tx_ring(sc, &sc->txq[2], RT2661_TX_RING_COUNT);
 	if (error != 0) {
-		aprint_error_dev(&sc->sc_dev, "could not allocate Tx ring 2\n");
+		aprint_error_dev(sc->sc_dev, "could not allocate Tx ring 2\n");
 		goto fail3;
 	}
 
 	error = rt2661_alloc_tx_ring(sc, &sc->txq[3], RT2661_TX_RING_COUNT);
 	if (error != 0) {
-		aprint_error_dev(&sc->sc_dev, "could not allocate Tx ring 3\n");
+		aprint_error_dev(sc->sc_dev, "could not allocate Tx ring 3\n");
 		goto fail4;
 	}
 
 	error = rt2661_alloc_tx_ring(sc, &sc->mgtq, RT2661_MGT_RING_COUNT);
 	if (error != 0) {
-		aprint_error_dev(&sc->sc_dev, "could not allocate Mgt ring\n");
+		aprint_error_dev(sc->sc_dev, "could not allocate Mgt ring\n");
 		goto fail5;
 	}
 
 	error = rt2661_alloc_rx_ring(sc, &sc->rxq, RT2661_RX_RING_COUNT);
 	if (error != 0) {
-		aprint_error_dev(&sc->sc_dev, "could not allocate Rx ring\n");
+		aprint_error_dev(sc->sc_dev, "could not allocate Rx ring\n");
 		goto fail6;
 	}
 
@@ -283,7 +283,7 @@ rt2661_attach(void *xsc, int id)
 	ifp->if_start = rt2661_start;
 	ifp->if_watchdog = rt2661_watchdog;
 	IFQ_SET_READY(&ifp->if_snd);
-	memcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
+	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 
 	ic->ic_ifp = ifp;
 	ic->ic_phytype = IEEE80211_T_OFDM; /* not only, but not used */
@@ -361,10 +361,10 @@ rt2661_attach(void *xsc, int id)
 
 	ieee80211_announce(ic);
 
-	if (pmf_device_register(&sc->sc_dev, NULL, NULL))
-		pmf_class_network_register(&sc->sc_dev, ifp);
+	if (pmf_device_register(sc->sc_dev, NULL, NULL))
+		pmf_class_network_register(sc->sc_dev, ifp);
 	else
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "couldn't establish power handler\n");
 
 	return 0;
@@ -386,7 +386,7 @@ rt2661_detach(void *xsc)
 	callout_stop(&sc->scan_ch);
 	callout_stop(&sc->amrr_ch);
 
-	pmf_device_deregister(&sc->sc_dev);
+	pmf_device_deregister(sc->sc_dev);
 
 	ieee80211_ifdetach(&sc->sc_ic);
 	if_detach(ifp);
@@ -414,14 +414,14 @@ rt2661_alloc_tx_ring(struct rt2661_softc *sc, struct rt2661_tx_ring *ring,
 	error = bus_dmamap_create(sc->sc_dmat, count * RT2661_TX_DESC_SIZE, 1,
 	    count * RT2661_TX_DESC_SIZE, 0, BUS_DMA_NOWAIT, &ring->map);
 	if (error != 0) {
-		aprint_error_dev(&sc->sc_dev, "could not create desc DMA map\n");
+		aprint_error_dev(sc->sc_dev, "could not create desc DMA map\n");
 		goto fail;
 	}
 
 	error = bus_dmamem_alloc(sc->sc_dmat, count * RT2661_TX_DESC_SIZE,
 	    PAGE_SIZE, 0, &ring->seg, 1, &nsegs, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		aprint_error_dev(&sc->sc_dev, "could not allocate DMA memory\n");
+		aprint_error_dev(sc->sc_dev, "could not allocate DMA memory\n");
 		goto fail;
 	}
 
@@ -429,14 +429,14 @@ rt2661_alloc_tx_ring(struct rt2661_softc *sc, struct rt2661_tx_ring *ring,
 	    count * RT2661_TX_DESC_SIZE, (void **)&ring->desc,
 	    BUS_DMA_NOWAIT);
 	if (error != 0) {
-		aprint_error_dev(&sc->sc_dev, "could not map desc DMA memory\n");
+		aprint_error_dev(sc->sc_dev, "could not map desc DMA memory\n");
 		goto fail;
 	}
 
 	error = bus_dmamap_load(sc->sc_dmat, ring->map, ring->desc,
 	    count * RT2661_TX_DESC_SIZE, NULL, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		aprint_error_dev(&sc->sc_dev, "could not load desc DMA map\n");
+		aprint_error_dev(sc->sc_dev, "could not load desc DMA map\n");
 		goto fail;
 	}
 
@@ -446,7 +446,7 @@ rt2661_alloc_tx_ring(struct rt2661_softc *sc, struct rt2661_tx_ring *ring,
 	ring->data = malloc(count * sizeof (struct rt2661_tx_data), M_DEVBUF,
 	    M_NOWAIT);
 	if (ring->data == NULL) {
-		aprint_error_dev(&sc->sc_dev, "could not allocate soft data\n");
+		aprint_error_dev(sc->sc_dev, "could not allocate soft data\n");
 		error = ENOMEM;
 		goto fail;
 	}
@@ -457,7 +457,7 @@ rt2661_alloc_tx_ring(struct rt2661_softc *sc, struct rt2661_tx_ring *ring,
 		    RT2661_MAX_SCATTER, MCLBYTES, 0, BUS_DMA_NOWAIT,
 		    &ring->data[i].map);
 		if (error != 0) {
-			aprint_error_dev(&sc->sc_dev, "could not create DMA map\n");
+			aprint_error_dev(sc->sc_dev, "could not create DMA map\n");
 			goto fail;
 		}
 	}
@@ -554,14 +554,14 @@ rt2661_alloc_rx_ring(struct rt2661_softc *sc, struct rt2661_rx_ring *ring,
 	error = bus_dmamap_create(sc->sc_dmat, count * RT2661_RX_DESC_SIZE, 1,
 	    count * RT2661_RX_DESC_SIZE, 0, BUS_DMA_NOWAIT, &ring->map);
 	if (error != 0) {
-		aprint_error_dev(&sc->sc_dev, "could not create desc DMA map\n");
+		aprint_error_dev(sc->sc_dev, "could not create desc DMA map\n");
 		goto fail;
 	}
 
 	error = bus_dmamem_alloc(sc->sc_dmat, count * RT2661_RX_DESC_SIZE,
 	    PAGE_SIZE, 0, &ring->seg, 1, &nsegs, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		aprint_error_dev(&sc->sc_dev, "could not allocate DMA memory\n");
+		aprint_error_dev(sc->sc_dev, "could not allocate DMA memory\n");
 		goto fail;
 	}
 
@@ -569,14 +569,14 @@ rt2661_alloc_rx_ring(struct rt2661_softc *sc, struct rt2661_rx_ring *ring,
 	    count * RT2661_RX_DESC_SIZE, (void **)&ring->desc,
 	    BUS_DMA_NOWAIT);
 	if (error != 0) {
-		aprint_error_dev(&sc->sc_dev, "could not map desc DMA memory\n");
+		aprint_error_dev(sc->sc_dev, "could not map desc DMA memory\n");
 		goto fail;
 	}
 
 	error = bus_dmamap_load(sc->sc_dmat, ring->map, ring->desc,
 	    count * RT2661_RX_DESC_SIZE, NULL, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		aprint_error_dev(&sc->sc_dev, "could not load desc DMA map\n");
+		aprint_error_dev(sc->sc_dev, "could not load desc DMA map\n");
 		goto fail;
 	}
 
@@ -586,7 +586,7 @@ rt2661_alloc_rx_ring(struct rt2661_softc *sc, struct rt2661_rx_ring *ring,
 	ring->data = malloc(count * sizeof (struct rt2661_rx_data), M_DEVBUF,
 	    M_NOWAIT);
 	if (ring->data == NULL) {
-		aprint_error_dev(&sc->sc_dev, "could not allocate soft data\n");
+		aprint_error_dev(sc->sc_dev, "could not allocate soft data\n");
 		error = ENOMEM;
 		goto fail;
 	}
@@ -602,20 +602,20 @@ rt2661_alloc_rx_ring(struct rt2661_softc *sc, struct rt2661_rx_ring *ring,
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
 		    0, BUS_DMA_NOWAIT, &data->map);
 		if (error != 0) {
-			aprint_error_dev(&sc->sc_dev, "could not create DMA map\n");
+			aprint_error_dev(sc->sc_dev, "could not create DMA map\n");
 			goto fail;
 		}
 
 		MGETHDR(data->m, M_DONTWAIT, MT_DATA);
 		if (data->m == NULL) {
-			aprint_error_dev(&sc->sc_dev, "could not allocate rx mbuf\n");
+			aprint_error_dev(sc->sc_dev, "could not allocate rx mbuf\n");
 			error = ENOMEM;
 			goto fail;
 		}
 
 		MCLGET(data->m, M_DONTWAIT);
 		if (!(data->m->m_flags & M_EXT)) {
-			aprint_error_dev(&sc->sc_dev, "could not allocate rx mbuf cluster\n");
+			aprint_error_dev(sc->sc_dev, "could not allocate rx mbuf cluster\n");
 			error = ENOMEM;
 			goto fail;
 		}
@@ -623,7 +623,7 @@ rt2661_alloc_rx_ring(struct rt2661_softc *sc, struct rt2661_rx_ring *ring,
 		error = bus_dmamap_load(sc->sc_dmat, data->map,
 		    mtod(data->m, void *), MCLBYTES, NULL, BUS_DMA_NOWAIT);
 		if (error != 0) {
-			aprint_error_dev(&sc->sc_dev, "could not load rx buf DMA map");
+			aprint_error_dev(sc->sc_dev, "could not load rx buf DMA map");
 			goto fail;
 		}
 
@@ -957,7 +957,7 @@ rt2661_tx_intr(struct rt2661_softc *sc)
 
 		default:
 			/* other failure */
-			aprint_error_dev(&sc->sc_dev, "sending data frame failed 0x%08x\n", val);
+			aprint_error_dev(sc->sc_dev, "sending data frame failed 0x%08x\n", val);
 			ifp->if_oerrors++;
 		}
 
@@ -1091,7 +1091,7 @@ rt2661_rx_intr(struct rt2661_softc *sc)
 			if (error != 0) {
 				/* very unlikely that it will fail... */
 				panic("%s: could not load old rx mbuf",
-				    device_xname(&sc->sc_dev));
+				    device_xname(sc->sc_dev));
 			}
 			/* physical address may have changed */
 			desc->physaddr = htole32(data->map->dm_segs->ds_addr);
@@ -1494,7 +1494,7 @@ rt2661_tx_mgt(struct rt2661_softc *sc, struct mbuf *m0,
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
 	    BUS_DMA_NOWAIT);
 	if (error != 0) {
-		aprint_error_dev(&sc->sc_dev, "could not map mbuf (error %d)\n",
+		aprint_error_dev(sc->sc_dev, "could not map mbuf (error %d)\n",
 		    error);
 		m_freem(m0);
 		return error;
@@ -1562,7 +1562,7 @@ rt2661_get_rts(struct rt2661_softc *sc, struct ieee80211_frame *wh,
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL) {
 		sc->sc_ic.ic_stats.is_tx_nobuf++;
-		aprint_error_dev(&sc->sc_dev, "could not allocate RTS frame\n");
+		aprint_error_dev(sc->sc_dev, "could not allocate RTS frame\n");
 		return NULL;
 	}
 
@@ -1651,7 +1651,7 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 
 		m = rt2661_get_rts(sc, wh, dur);
 		if (m == NULL) {
-			aprint_error_dev(&sc->sc_dev, "could not allocate RTS "
+			aprint_error_dev(sc->sc_dev, "could not allocate RTS "
 			    "frame\n");
 			m_freem(m0);
 			return ENOBUFS;
@@ -1663,7 +1663,7 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
 		    BUS_DMA_NOWAIT);
 		if (error != 0) {
-			aprint_error_dev(&sc->sc_dev, "could not map mbuf (error %d)\n", error);
+			aprint_error_dev(sc->sc_dev, "could not map mbuf (error %d)\n", error);
 			m_freem(m);
 			m_freem(m0);
 			return error;
@@ -1697,7 +1697,7 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
 	    BUS_DMA_NOWAIT);
 	if (error != 0 && error != EFBIG) {
-		aprint_error_dev(&sc->sc_dev, "could not map mbuf (error %d)\n",
+		aprint_error_dev(sc->sc_dev, "could not map mbuf (error %d)\n",
 		    error);
 		m_freem(m0);
 		return error;
@@ -1729,7 +1729,7 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
 		    BUS_DMA_NOWAIT);
 		if (error != 0) {
-			aprint_error_dev(&sc->sc_dev, "could not map mbuf (error %d)\n", error);
+			aprint_error_dev(sc->sc_dev, "could not map mbuf (error %d)\n", error);
 			m_freem(m0);
 			return error;
 		}
@@ -1867,7 +1867,7 @@ rt2661_watchdog(struct ifnet *ifp)
 
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
-			aprint_error_dev(&sc->sc_dev, "device timeout\n");
+			aprint_error_dev(sc->sc_dev, "device timeout\n");
 			rt2661_init(ifp);
 			ifp->if_oerrors++;
 			return;
@@ -1973,7 +1973,7 @@ rt2661_bbp_write(struct rt2661_softc *sc, uint8_t reg, uint8_t val)
 		DELAY(1);
 	}
 	if (ntries == 100) {
-		aprint_error_dev(&sc->sc_dev, "could not write to BBP\n");
+		aprint_error_dev(sc->sc_dev, "could not write to BBP\n");
 		return;
 	}
 
@@ -1995,7 +1995,7 @@ rt2661_bbp_read(struct rt2661_softc *sc, uint8_t reg)
 		DELAY(1);
 	}
 	if (ntries == 100) {
-		aprint_error_dev(&sc->sc_dev, "could not read from BBP\n");
+		aprint_error_dev(sc->sc_dev, "could not read from BBP\n");
 		return 0;
 	}
 
@@ -2009,7 +2009,7 @@ rt2661_bbp_read(struct rt2661_softc *sc, uint8_t reg)
 		DELAY(1);
 	}
 
-	aprint_error_dev(&sc->sc_dev, "could not read from BBP\n");
+	aprint_error_dev(sc->sc_dev, "could not read from BBP\n");
 	return 0;
 }
 
@@ -2025,7 +2025,7 @@ rt2661_rf_write(struct rt2661_softc *sc, uint8_t reg, uint32_t val)
 		DELAY(1);
 	}
 	if (ntries == 100) {
-		aprint_error_dev(&sc->sc_dev, "could not write to RF\n");
+		aprint_error_dev(sc->sc_dev, "could not write to RF\n");
 		return;
 	}
 	tmp = RT2661_RF_BUSY | RT2661_RF_21BIT | (val & 0x1fffff) << 2 |
@@ -2498,7 +2498,7 @@ rt2661_bbp_init(struct rt2661_softc *sc)
 		DELAY(100);
 	}
 	if (ntries == 100) {
-		aprint_error_dev(&sc->sc_dev, "timeout waiting for BBP\n");
+		aprint_error_dev(sc->sc_dev, "timeout waiting for BBP\n");
 		return EIO;
 	}
 
@@ -2535,7 +2535,7 @@ rt2661_init(struct ifnet *ifp)
 	/* for CardBus, power on the socket */
 	if (!(sc->sc_flags & RT2661_ENABLED)) {
 		if (sc->sc_enable != NULL && (*sc->sc_enable)(sc) != 0) {
-			aprint_error_dev(&sc->sc_dev, "could not enable device\n");
+			aprint_error_dev(sc->sc_dev, "could not enable device\n");
 			return EIO;
 		}
 		sc->sc_flags |= RT2661_ENABLED;
@@ -2557,21 +2557,21 @@ rt2661_init(struct ifnet *ifp)
 		}
 
 		if (firmware_open("ral", name, &fh) != 0) {
-			aprint_error_dev(&sc->sc_dev, "could not open microcode %s\n", name);
+			aprint_error_dev(sc->sc_dev, "could not open microcode %s\n", name);
 			rt2661_stop(ifp, 1);
 			return EIO;
 		}
 
 		size = firmware_get_size(fh);
 		if (!(ucode = firmware_malloc(size))) {
-			aprint_error_dev(&sc->sc_dev, "could not alloc microcode memory\n");
+			aprint_error_dev(sc->sc_dev, "could not alloc microcode memory\n");
 			firmware_close(fh);
 			rt2661_stop(ifp, 1);
 			return ENOMEM;
 		}
 
 		if (firmware_read(fh, 0, ucode, size) != 0) {
-			aprint_error_dev(&sc->sc_dev, "could not read microcode %s\n", name);
+			aprint_error_dev(sc->sc_dev, "could not read microcode %s\n", name);
 			firmware_free(ucode, 0);
 			firmware_close(fh);
 			rt2661_stop(ifp, 1);
@@ -2579,7 +2579,7 @@ rt2661_init(struct ifnet *ifp)
 		}
 
 		if (rt2661_load_microcode(sc, ucode, size) != 0) {
-			aprint_error_dev(&sc->sc_dev, "could not load 8051 microcode\n");
+			aprint_error_dev(sc->sc_dev, "could not load 8051 microcode\n");
 			firmware_free(ucode, 0);
 			firmware_close(fh);
 			rt2661_stop(ifp, 1);
@@ -2922,7 +2922,7 @@ rt2661_prepare_beacon(struct rt2661_softc *sc)
 
 	m0 = ieee80211_beacon_alloc(ic, ni, &bo);
 	if (m0 == NULL) {
-		aprint_error_dev(&sc->sc_dev, "could not allocate beacon frame\n");
+		aprint_error_dev(sc->sc_dev, "could not allocate beacon frame\n");
 		return ENOBUFS;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.152 2011/08/27 09:05:54 christos Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.152.2.1 2012/04/17 00:08:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.152 2011/08/27 09:05:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.152.2.1 2012/04/17 00:08:40 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -161,7 +161,7 @@ struct	ifqueue arpintrq = {
 	.ifq_maxlen = 50,
 	.ifq_drops = 0,
 };
-int	arp_inuse, arp_allocated, arp_intimer;
+int	arp_inuse, arp_allocated;
 int	arp_maxtries = 5;
 int	useloopback = 1;	/* use loopback interface for local traffic */
 int	arpinit_done = 0;
@@ -1238,7 +1238,7 @@ reply:
 	arps[ARP_STAT_SNDTOTAL]++;
 	arps[ARP_STAT_SNDREPLY]++;
 	ARP_STAT_PUTREF();
-	(*ifp->if_output)(ifp, m, &sa, (struct rtentry *)0);
+	(*ifp->if_output)(ifp, m, &sa, NULL);
 	return;
 }
 

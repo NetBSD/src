@@ -1,29 +1,26 @@
-/*	$NetBSD: ntpsnmpd-opts.h,v 1.1.1.1 2009/12/13 16:56:34 kardel Exp $	*/
+/*	$NetBSD: ntpsnmpd-opts.h,v 1.1.1.1.6.1 2012/04/17 00:03:49 yamt Exp $	*/
 
 /*  
  *  EDIT THIS FILE WITH CAUTION  (ntpsnmpd-opts.h)
  *  
- *  It has been AutoGen-ed  December 10, 2009 at 05:03:45 AM by AutoGen 5.10
+ *  It has been AutoGen-ed  December 24, 2011 at 06:34:36 PM by AutoGen 5.12
  *  From the definitions    ntpsnmpd-opts.def
  *  and the template file   options
  *
- * Generated from AutoOpts 33:0:8 templates.
- */
-
-/*
- *  This file was produced by an AutoOpts template.  AutoOpts is a
- *  copyrighted work.  This header file is not encumbered by AutoOpts
- *  licensing, but is provided under the licensing terms chosen by the
- *  ntpsnmpd author or copyright holder.  AutoOpts is licensed under
- *  the terms of the LGPL.  The redistributable library (``libopts'') is
- *  licensed under the terms of either the LGPL or, at the users discretion,
- *  the BSD license.  See the AutoOpts and/or libopts sources for details.
+ * Generated from AutoOpts 35:0:10 templates.
+ *
+ *  AutoOpts is a copyrighted work.  This header file is not encumbered
+ *  by AutoOpts licensing, but is provided under the licensing terms chosen
+ *  by the ntpsnmpd author or copyright holder.  AutoOpts is
+ *  licensed under the terms of the LGPL.  The redistributable library
+ *  (``libopts'') is licensed under the terms of either the LGPL or, at the
+ *  users discretion, the BSD license.  See the AutoOpts and/or libopts sources
+ *  for details.
  *
  * This source file is copyrighted and licensed under the following terms:
  *
- * ntpsnmpd copyright (c) 1970-2009 David L. Mills and/or others - all rights reserved
- *
- * see html/copyright.html
+ *  see html/copyright.html
+ *  
  */
 /*
  *  This file contains the programmatic interface to the Automated
@@ -43,7 +40,7 @@
  *  tolerable version is at least as old as what was current when the header
  *  template was released.
  */
-#define AO_TEMPLATE_VERSION 135168
+#define AO_TEMPLATE_VERSION 143360
 #if (AO_TEMPLATE_VERSION < OPTIONS_MINIMUM_VERSION) \
  || (AO_TEMPLATE_VERSION > OPTIONS_STRUCT_VERSION)
 # error option template version mismatches autoopts/options.h header
@@ -54,23 +51,24 @@
  *  Enumeration of each option:
  */
 typedef enum {
-    INDEX_OPT_NOFORK      =  0,
-    INDEX_OPT_SYSLOG      =  1,
-    INDEX_OPT_VERSION     =  2,
-    INDEX_OPT_HELP        =  3,
-    INDEX_OPT_MORE_HELP   =  4,
-    INDEX_OPT_SAVE_OPTS   =  5,
-    INDEX_OPT_LOAD_OPTS   =  6
+    INDEX_OPT_NOFORK        =  0,
+    INDEX_OPT_SYSLOG        =  1,
+    INDEX_OPT_AGENTXSOCKET  =  2,
+    INDEX_OPT_VERSION       =  3,
+    INDEX_OPT_HELP          =  4,
+    INDEX_OPT_MORE_HELP     =  5,
+    INDEX_OPT_SAVE_OPTS     =  6,
+    INDEX_OPT_LOAD_OPTS     =  7
 } teOptIndex;
 
-#define OPTION_CT    7
-#define NTPSNMPD_VERSION       "4.2.6"
-#define NTPSNMPD_FULL_VERSION  "ntpsnmpd - NTP SNMP MIB agent - Ver. 4.2.6"
+#define OPTION_CT    8
+#define NTPSNMPD_VERSION       "4.2.6p5"
+#define NTPSNMPD_FULL_VERSION  "ntpsnmpd 4.2.6p5"
 
 /*
  *  Interface defines for all options.  Replace "n" with the UPPER_CASED
  *  option name (as in the teOptIndex enumeration above).
- *  e.g. HAVE_OPT( NOFORK )
+ *  e.g. HAVE_OPT(NOFORK)
  */
 #define         DESC(n) (ntpsnmpdOptions.pOptDesc[INDEX_OPT_## n])
 #define     HAVE_OPT(n) (! UNUSED_OPT(& DESC(n)))
@@ -84,10 +82,18 @@ typedef enum {
 #define STACKLST_OPT(n) (((tArgList*)(DESC(n).optCookie))->apzArgs)
 #define    CLEAR_OPT(n) STMTS( \
                 DESC(n).fOptState &= OPTST_PERSISTENT_MASK;   \
-                if ( (DESC(n).fOptState & OPTST_INITENABLED) == 0) \
+                if ((DESC(n).fOptState & OPTST_INITENABLED) == 0) \
                     DESC(n).fOptState |= OPTST_DISABLED; \
                 DESC(n).optCookie = NULL )
 
+/* * * * * *
+ *
+ *  Enumeration of ntpsnmpd exit codes
+ */
+typedef enum {
+    NTPSNMPD_EXIT_SUCCESS = 0,
+    NTPSNMPD_EXIT_FAILURE = 1
+} ntpsnmpd_exit_code_t;
 /*
  *  Make sure there are no #define name conflicts with the option names
  */
@@ -100,9 +106,14 @@ typedef enum {
 #  warning undefining SYSLOG due to option name conflict
 #  undef   SYSLOG
 # endif
+# ifdef    AGENTXSOCKET
+#  warning undefining AGENTXSOCKET due to option name conflict
+#  undef   AGENTXSOCKET
+# endif
 #else  /* NO_OPTION_NAME_WARNINGS */
 # undef NOFORK
 # undef SYSLOG
+# undef AGENTXSOCKET
 #endif  /*  NO_OPTION_NAME_WARNINGS */
 
 /* * * * * *
@@ -111,6 +122,7 @@ typedef enum {
  */
 #define VALUE_OPT_NOFORK         'n'
 #define VALUE_OPT_SYSLOG         'p'
+#define VALUE_OPT_AGENTXSOCKET   2
 #define VALUE_OPT_HELP          '?'
 #define VALUE_OPT_MORE_HELP     '!'
 #define VALUE_OPT_VERSION       INDEX_OPT_VERSION
@@ -123,32 +135,32 @@ typedef enum {
 /*
  *  Interface defines not associated with particular options
  */
-#define ERRSKIP_OPTERR  STMTS( ntpsnmpdOptions.fOptSet &= ~OPTPROC_ERRSTOP )
-#define ERRSTOP_OPTERR  STMTS( ntpsnmpdOptions.fOptSet |= OPTPROC_ERRSTOP )
+#define ERRSKIP_OPTERR  STMTS(ntpsnmpdOptions.fOptSet &= ~OPTPROC_ERRSTOP)
+#define ERRSTOP_OPTERR  STMTS(ntpsnmpdOptions.fOptSet |= OPTPROC_ERRSTOP)
 #define RESTART_OPT(n)  STMTS( \
                 ntpsnmpdOptions.curOptIdx = (n); \
-                ntpsnmpdOptions.pzCurOpt  = NULL )
+                ntpsnmpdOptions.pzCurOpt  = NULL)
 #define START_OPT       RESTART_OPT(1)
-#define USAGE(c)        (*ntpsnmpdOptions.pUsageProc)( &ntpsnmpdOptions, c )
-/* extracted from /usr/local/gnu/share/autogen/opthead.tpl near line 409 */
+#define USAGE(c)        (*ntpsnmpdOptions.pUsageProc)(&ntpsnmpdOptions, c)
+/* extracted from opthead.tlib near line 451 */
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 /* * * * * *
  *
  *  Declare the ntpsnmpd option descriptor.
  */
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
-extern tOptions   ntpsnmpdOptions;
+extern tOptions ntpsnmpdOptions;
 
 #if defined(ENABLE_NLS)
 # ifndef _
 #   include <stdio.h>
-    static inline char* aoGetsText( char const* pz ) {
-        if (pz == NULL) return NULL;
-        return (char*)gettext( pz );
-    }
+static inline char* aoGetsText(char const* pz) {
+    if (pz == NULL) return NULL;
+    return (char*)gettext(pz);
+}
 #   define _(s)  aoGetsText(s)
 # endif /* _() */
 

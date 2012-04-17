@@ -1,4 +1,4 @@
-.\"	$NetBSD: pool_cache.9,v 1.18 2011/06/01 20:49:22 dyoung Exp $
+.\"	$NetBSD: pool_cache.9,v 1.18.2.1 2012/04/17 00:05:49 yamt Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd June 1, 2011
+.Dd November 15, 2011
 .Dt POOL_CACHE 9
 .Os
 .\" ------------------------------------------------------------
@@ -68,7 +68,8 @@
 .Nm pool_cache_destruct_object ,
 .Nm pool_cache_invalidate ,
 .Nm pool_cache_sethiwat ,
-.Nm pool_cache_setlowat
+.Nm pool_cache_setlowat ,
+.Nm pool_cache_sethardlimit
 .Nd resource-pool cache manager
 .\" ------------------------------------------------------------
 .Sh SYNOPSIS
@@ -114,6 +115,9 @@
 .Ft void
 .Fn pool_cache_setlowat \
 "pool_cache_t pc" "int nitems"
+.Ft void
+.Fn pool_cache_sethardlimit \
+"pool_cache_t pc" "int nitems" "const char *warnmess" "int ratecap"
 .\" ------------------------------------------------------------
 .Sh DESCRIPTION
 These utility routines provide management of pools of fixed-sized
@@ -124,8 +128,19 @@ This can be used by applications to guarantee the availability of a minimum
 amount of memory needed to continue operation independent of the memory
 resources currently available from the system-wide memory allocator.
 .Pp
-Global and per-CPU caches of constructed objects are maintained.
-The two levels of cache work together to allow for low overhead
+.Nm
+follows the
+.Xr pool 9
+API closely and offers routines that are functionally equivalent to
+their
+.Xr pool 9
+counterparts.
+In addition,
+.Nm
+provides object management functions used to manipulate
+objects allocated from the pool.
+It also maintains global and per-CPU caches, both levels
+of cache work together to allow for low overhead
 allocation and release of objects, and improved L1/L2/L3 hardware
 cache locality in multiprocessor systems.
 .\" ------------------------------------------------------------
@@ -281,7 +296,7 @@ It's implemented as a macro.
 .Pp
 Force destruction of an object
 .Fa object
-and its release back into the pool.
+and release it back into the pool.
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn pool_cache_invalidate "pc"
 .Pp
@@ -320,6 +335,18 @@ at which point the VM system will try to reclaim unused pages.
 Set the minimum number of items to keep in the pool.
 The number pages in the pool will not decrease below the required value to
 accommodate the minimum number of items specified by this function.
+.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+.It Fn pool_cache_sethardlimit "pc" "nitems" "warnmess" "ratecap"
+Set the hard limit for the backing
+.Xr pool 9
+to
+.Fa nitems .
+When the hard limit is reached, the warning message
+.Fa warnmess
+will be logged.
+.Fa ratecap
+represents the minimal interval (in seconds) after which another warning
+message is issued when the pool hits its hard limit again.
 .El
 .\" ------------------------------------------------------------
 .Sh CODE REFERENCES

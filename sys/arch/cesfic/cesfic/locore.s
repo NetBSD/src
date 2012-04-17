@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.25 2010/12/27 15:39:07 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.25.8.1 2012/04/17 00:06:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -307,6 +307,7 @@ Lstploaddone:
 	jmp	Lenab1:l		| avoid pc-relative
 Lmotommu2:
 	/* XXX do TT here */
+	pflusha
 	RELOC(prototc, %a2)
 	movl	#0x82c0aa00,%a2@	| value to load TC with
 	pmove	%a2@,%tc		| load it
@@ -989,14 +990,6 @@ Lsldone:
 	rts
 #endif
 
-ENTRY_NOPROFILE(getsfc)
-	movc	%sfc,%d0
-	rts
-
-ENTRY_NOPROFILE(getdfc)
-	movc	%dfc,%d0
-	rts
-
 /*
  * Load a new user segment table pointer.
  */
@@ -1089,31 +1082,6 @@ ENTRY_NOPROFILE(_delay)
 L_delay:
 	subl	%d1,%d0
 	jgt	L_delay
-	rts
-
-/*
- * Save and restore 68881 state.
- * Pretty awful looking since our assembler does not
- * recognize FP mnemonics.
- */
-ENTRY(m68881_save)
-	movl	%sp@(4),%a0		| save area pointer
-	fsave	%a0@			| save state
-	tstb	%a0@			| null state frame?
-	jeq	Lm68881sdone		| yes, all done
-	fmovem	%fp0-%fp7,%a0@(216)	| save FP general registers
-	fmovem	%fpcr/%fpsr/%fpi,%a0@(312)	| save FP control registers
-Lm68881sdone:
-	rts
-
-ENTRY(m68881_restore)
-	movl	%sp@(4),%a0		| save area pointer
-	tstb	%a0@			| null state frame?
-	jeq	Lm68881rdone		| yes, easy
-	fmovem	%a0@(312),%fpcr/%fpsr/%fpi	| restore FP control registers
-	fmovem	%a0@(216),%fp0-%fp7	| restore FP general registers
-Lm68881rdone:
-	frestore %a0@			| restore state
 	rts
 
 ENTRY_NOPROFILE(doboot)

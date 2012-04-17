@@ -1,4 +1,4 @@
-/* 	$NetBSD: initfini.c,v 1.9 2011/03/09 23:10:06 joerg Exp $	 */
+/* 	$NetBSD: initfini.c,v 1.9.4.1 2012/04/17 00:05:21 yamt Exp $	 */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: initfini.c,v 1.9 2011/03/09 23:10:06 joerg Exp $");
+__RCSID("$NetBSD: initfini.c,v 1.9.4.1 2012/04/17 00:05:21 yamt Exp $");
 
 #ifdef _LIBC
 #include "namespace.h"
@@ -53,11 +53,27 @@ void	__libc_env_init(void);
 __dso_hidden void	__libc_static_tls_setup(void);
 #endif
 
+#ifdef __weak_alias
+__weak_alias(_dlauxinfo,___dlauxinfo)
+static void *__libc_dlauxinfo;
+
+void *___dlauxinfo(void) __pure;
+
+void *
+___dlauxinfo(void)
+{
+	return __libc_dlauxinfo;
+}
+#endif
+
 static bool libc_initialised;
 
 void _libc_init(void);
 
-__dso_hidden void	*__auxinfo;
+/*
+ * Declare as common symbol to allow new libc with older binaries to
+ * not trigger an undefined reference.
+ */
 struct ps_strings *__ps_strings;
 
 /*
@@ -74,7 +90,7 @@ _libc_init(void)
 	libc_initialised = 1;
 
 	if (__ps_strings != NULL)
-		__auxinfo = __ps_strings->ps_argvstr +
+		__libc_dlauxinfo = __ps_strings->ps_argvstr +
 		    __ps_strings->ps_nargvstr + __ps_strings->ps_nenvstr + 2;
 
 	/* For -fstack-protector */

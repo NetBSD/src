@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.52 2011/01/06 01:08:48 jakllsch Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.52.8.1 2012/04/17 00:08:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -860,6 +860,26 @@ struct apple_part_map_entry {
 	uint32_t	pmLgDataStart;	/* first logical block of data area */
 	uint32_t	pmDataCnt;	/* number of blocks in data area */
 	uint32_t	pmPartStatus;	/* partition status information */
+/*
+ * Partition Status Information from Apple Tech Note 1189
+ */
+#define	APPLE_PS_VALID		0x00000001	/* Entry is valid */
+#define	APPLE_PS_ALLOCATED	0x00000002	/* Entry is allocated */
+#define	APPLE_PS_IN_USE		0x00000004	/* Entry in use */
+#define	APPLE_PS_BOOT_INFO	0x00000008	/* Entry contains boot info */
+#define	APPLE_PS_READABLE	0x00000010	/* Entry is readable */
+#define	APPLE_PS_WRITABLE	0x00000020	/* Entry is writable */
+#define	APPLE_PS_BOOT_CODE_PIC	0x00000040	/* Boot code has position
+						 * independent code */
+#define	APPLE_PS_CC_DRVR	0x00000100	/* Partition contains chain-
+						 * compatible driver */
+#define	APPLE_PS_RL_DRVR	0x00000200	/* Partition contains real
+						 * driver */
+#define	APPLE_PS_CH_DRVR	0x00000400	/* Partition contains chain
+						 * driver */
+#define	APPLE_PS_AUTO_MOUNT	0x40000000	/* Mount automatically at
+						 * startup */
+#define	APPLE_PS_STARTUP	0x80000000	/* Is the startup partition */
 	uint32_t	pmLgBootStart;	/* first logical block of boot code */
 	uint32_t	pmBootSize;	/* size of boot code, in bytes */
 	uint32_t	pmBootLoad;	/* boot code load address */

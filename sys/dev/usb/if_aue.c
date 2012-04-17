@@ -1,4 +1,5 @@
-/*	$NetBSD: if_aue.c,v 1.121 2010/11/03 22:28:31 dyoung Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.121.8.1 2012/04/17 00:08:06 yamt Exp $	*/
+
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,10 +78,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.121 2010/11/03 22:28:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.121.8.1 2012/04/17 00:08:06 yamt Exp $");
 
 #include "opt_inet.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,9 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.121 2010/11/03 22:28:31 dyoung Exp $");
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/device.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_arp.h>
@@ -427,7 +425,7 @@ aue_unlock_mii(struct aue_softc *sc)
 {
 	mutex_exit(&sc->aue_mii_lock);
 	if (--sc->aue_refcnt < 0)
-		usb_detach_wakeup((sc->aue_dev));
+		usb_detach_wakeupold(sc->aue_dev);
 }
 
 Static int
@@ -857,10 +855,8 @@ aue_attach(device_t parent, device_t self, void *aux)
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp, eaddr);
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->aue_dev),
 	    RND_TYPE_NET, 0);
-#endif
 
 	callout_init(&(sc->aue_stat_ch), 0);
 
@@ -910,9 +906,7 @@ aue_detach(device_t self, int flags)
 	if (ifp->if_flags & IFF_RUNNING)
 		aue_stop(sc);
 
-#if NRND > 0
 	rnd_detach_source(&sc->rnd_source);
-#endif
 	mii_detach(&sc->aue_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 	ifmedia_delete_instance(&sc->aue_mii.mii_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);
@@ -930,7 +924,7 @@ aue_detach(device_t self, int flags)
 
 	if (--sc->aue_refcnt >= 0) {
 		/* Wait for processes to go away. */
-		usb_detach_wait((sc->aue_dev));
+		usb_detach_waitold(sc->aue_dev);
 	}
 	splx(s);
 

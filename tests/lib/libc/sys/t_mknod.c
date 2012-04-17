@@ -1,4 +1,4 @@
-/* $NetBSD: t_mknod.c,v 1.1 2011/07/07 06:57:54 jruoho Exp $ */
+/* $NetBSD: t_mknod.c,v 1.1.2.1 2012/04/17 00:09:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mknod.c,v 1.1 2011/07/07 06:57:54 jruoho Exp $");
+__RCSID("$NetBSD: t_mknod.c,v 1.1.2.1 2012/04/17 00:09:12 yamt Exp $");
 
 #include <sys/stat.h>
 
@@ -47,7 +47,8 @@ static char	 path[] = "node";
 ATF_TC_WITH_CLEANUP(mknod_err);
 ATF_TC_HEAD(mknod_err, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test error conditions of mknod(2)");
+	atf_tc_set_md_var(tc, "descr",
+	    "Test error conditions of mknod(2) (PR kern/45111)");
 	atf_tc_set_md_var(tc, "require.user", "root");
 }
 
@@ -57,9 +58,6 @@ ATF_TC_BODY(mknod_err, tc)
 
 	(void)memset(buf, 'x', sizeof(buf));
 
-	/*
-	 * See the old PR kern/45111.
-	 */
 	errno = 0;
 	ATF_REQUIRE_ERRNO(EINVAL, mknod(path, S_IFCHR, -1) == -1);
 

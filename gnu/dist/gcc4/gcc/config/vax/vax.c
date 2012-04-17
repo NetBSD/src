@@ -1097,14 +1097,14 @@ vax_output_int_move (rtx insn ATTRIBUTE_UNUSED, rtx *operands,
 	      || GET_CODE (XEXP (operands[0], 0)) == PRE_DEC
 	      || GET_CODE (XEXP (operands[0], 0)) == POST_INC
 	      || !illegal_addsub_di_memory_operand (operands[0], DImode))
-	  && ((GET_CODE (operands[1]) == CONST_INT
+	  && ((CONST_INT_P (operands[1])
 	       && (unsigned HOST_WIDE_INT) INTVAL (operands[1]) >= 64)
 	      || GET_CODE (operands[1]) == CONST_DOUBLE))
 	{
 	  hi[0] = operands[0];
 	  hi[1] = operands[1];
 
-	  split_quadword_operands(insn, SET, hi, lo, 2);
+	  split_quadword_operands (insn, SET, hi, lo, 2);
 
 	  pattern_lo = vax_output_int_move (NULL, lo, SImode);
 	  pattern_hi = vax_output_int_move (NULL, hi, SImode);
@@ -1545,8 +1545,34 @@ mkrtx(enum rtx_code code, enum machine_mode mode, rtx base, HOST_WIDE_INT off)
 
   if (GET_CODE (base) == PLUS)
     {
-      off += INTVAL (XEXP (base, 1));
-      base = XEXP (base, 0);
+      rtx a = XEXP (base, 0);
+      rtx b = XEXP (base, 1);
+      if (GET_CODE (b) == CONST)
+	b = XEXP (b, 0);
+      if (CONST_INT_P (b))
+	{
+          off += INTVAL (b);
+          base = a;
+	}
+      else if (REG_P (a) && GET_CODE (b) == SYMBOL_REF)
+	{
+	  if (off != 0)
+	    {
+	      base = gen_rtx_PLUS (Pmode, a, plus_constant(b, off));
+	      off = 0;
+	    }
+	}
+      else if (REG_P (a) && GET_CODE (b) == PLUS)
+	{
+          off += INTVAL (XEXP (b, 1));
+	  base = gen_rtx_PLUS (Pmode, a, plus_constant(XEXP (b, 0), off));
+	  off = 0;
+	}
+      else
+        {
+	  debug_rtx(base);
+	  gcc_unreachable ();
+	}
     }
   if (code == POST_INC)
     tmp = gen_rtx_POST_INC (SImode, base);

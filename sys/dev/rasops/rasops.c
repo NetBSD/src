@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.66 2010/07/21 12:12:58 tsutsui Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.66.8.1 2012/04/17 00:08:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.66 2010/07/21 12:12:58 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.66.8.1 2012/04/17 00:08:01 yamt Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -52,6 +52,20 @@ __KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.66 2010/07/21 12:12:58 tsutsui Exp $");
 #ifndef _KERNEL
 #include <errno.h>
 #endif
+
+#ifdef RASOPS_DEBUG
+#define DPRINTF aprint_error
+#else
+#define DPRINTF while (0) printf
+#endif
+
+struct rasops_matchdata {
+	struct rasops_info *ri;
+	int wantcols, wantrows;
+	int bestscore;
+	struct wsdisplay_font *pick;
+	int ident;
+};	
 
 /* ANSI colormap (R,G,B). Upper 8 are high-intensity */
 const u_char rasops_cmap[256*3] = {
@@ -162,9 +176,61 @@ struct rotatedfont {
 void	rasops_make_box_chars_8(struct rasops_info *);
 void	rasops_make_box_chars_16(struct rasops_info *);
 void	rasops_make_box_chars_32(struct rasops_info *);
+void	rasops_make_box_chars_alpha(struct rasops_info *);
 
 extern int cold;
 
+/*
+ * Rate a font based on how many character cells we would get out of it in the
+ * current video mode. Lower is better.
+ */
+static void
+rasops_matches(struct wsdisplay_font *font, void *cookie, int ident)
+{
+	struct rasops_matchdata *md = cookie;
+	struct rasops_info *ri = md->ri;
+	int cols, score = 1;
+
+	/* first weed out fonts the caller doesn't claim support for */
+	if (FONT_IS_ALPHA(font)) {
+		/*
+		 * If we end up with a bitmap font and an alpha font with
+		 * otherwise identical scores, prefer alpha
+		 */
+		score = 0;
+		if ((ri->ri_flg & RI_ENABLE_ALPHA) == 0)
+			return;
+	}
+	cols = ri->ri_width / font->fontwidth;
+	/*
+	 * if the font is too small to allow 80 columns give those closer to
+	 * 80 a better score but with a huge penalty compared to fonts that
+	 * give us 80 columns or more
+	 */ 
+	if (cols < md->wantcols) {
+		score += 100000 + 2 * (md->wantcols - cols);
+	} else 
+		score += 2 * cols;
+	DPRINTF("%s: %d\n", font->name, score);
+	if (score < md->bestscore) {
+		md->bestscore = score;
+		md->pick = font;
+		md->ident = ident;
+	}
+}
+
+static int
+rasops_find(struct rasops_info *ri, int wantrows, int wantcols)
+{
+	struct rasops_matchdata md =
+	    { ri, wantcols, wantrows, 1000000, NULL, 0};
+
+	wsfont_walk(rasops_matches, &md);
+	if (md.pick == NULL)
+		return -1;
+	return (wsfont_make_cookie(md.ident, WSDISPLAY_FONTORDER_L2R,
+			    WSDISPLAY_FONTORDER_L2R));
+}
 /*
  * Initialize a 'rasops_info' descriptor.
  */
@@ -176,19 +242,25 @@ rasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 #ifdef _KERNEL
 	/* Select a font if the caller doesn't care */
 	if (ri->ri_font == NULL) {
-		int cookie;
+		int cookie = -1;
 
 		wsfont_init();
 
-		/* Want 8 pixel wide, don't care about aesthetics */
-		cookie = wsfont_find(NULL, 8, 0, 0, WSDISPLAY_FONTORDER_L2R,
-		    WSDISPLAY_FONTORDER_L2R);
-		if (cookie <= 0)
-			cookie = wsfont_find(NULL, 0, 0, 0,
-			    WSDISPLAY_FONTORDER_L2R, WSDISPLAY_FONTORDER_L2R);
+		/*
+		 * first, try to find something that's as close as possible
+		 * to the caller's requested terminal size
+		 */ 
+		if (wantrows == 0)
+			wantrows = RASOPS_DEFAULT_HEIGHT;
+		if (wantcols == 0)
+			wantcols = RASOPS_DEFAULT_WIDTH;
+		cookie = rasops_find(ri, wantrows, wantcols);
 
+		/*
+		 * this means there is no supported font in the list
+		 */
 		if (cookie <= 0) {
-			printf("rasops_init: font table is empty\n");
+			aprint_error("rasops_init: font table is empty\n");
 			return (-1);
 		}
 
@@ -206,7 +278,7 @@ rasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 #endif
 
 		if (wsfont_lock(cookie, &ri->ri_font)) {
-			printf("rasops_init: couldn't lock font\n");
+			aprint_error("rasops_init: couldn't lock font\n");
 			return (-1);
 		}
 
@@ -217,12 +289,12 @@ rasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 	/* This should never happen in reality... */
 #ifdef DEBUG
 	if ((long)ri->ri_bits & 3) {
-		printf("rasops_init: bits not aligned on 32-bit boundary\n");
+		aprint_error("rasops_init: bits not aligned on 32-bit boundary\n");
 		return (-1);
 	}
 
 	if ((int)ri->ri_stride & 3) {
-		printf("rasops_init: stride not aligned on 32-bit boundary\n");
+		aprint_error("rasops_init: stride not aligned on 32-bit boundary\n");
 		return (-1);
 	}
 #endif
@@ -244,6 +316,11 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 
 	s = splhigh();
 
+	if (wantrows == 0)
+		wantrows = RASOPS_DEFAULT_HEIGHT;
+	if (wantcols == 0)
+		wantcols = RASOPS_DEFAULT_WIDTH;
+
 	/* throw away old line drawing character bitmaps, if we have any */
 	if (ri->ri_optfont.data != NULL) {
 		kmem_free(ri->ri_optfont.data, ri->ri_optfont.stride * 
@@ -263,17 +340,20 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 	if (((ri->ri_flg & RI_NO_AUTO) == 0) && 
 	  ((ri->ri_optfont.data = kmem_zalloc(len, KM_SLEEP)) != NULL)) {
 
-	
-		switch (ri->ri_optfont.stride) {
-		case 1:
-			rasops_make_box_chars_8(ri);
-			break;
-		case 2:
-			rasops_make_box_chars_16(ri);
-			break;
-		case 4:
-			rasops_make_box_chars_32(ri);
-			break;
+		if (ri->ri_optfont.stride < ri->ri_optfont.fontwidth) {
+			switch (ri->ri_optfont.stride) {
+			case 1:
+				rasops_make_box_chars_8(ri);
+				break;
+			case 2:
+				rasops_make_box_chars_16(ri);
+				break;
+			case 4:
+				rasops_make_box_chars_32(ri);
+				break;
+			}
+		} else {
+			rasops_make_box_chars_alpha(ri);
 		}
 	} else
 		memset(&ri->ri_optfont, 0, sizeof(ri->ri_optfont));
@@ -798,9 +878,12 @@ rasops_init_devcmap(struct rasops_info *ri)
 		return;
 
 	case 8:
-		for (i = 0; i < 16; i++)
-			ri->ri_devcmap[i] = i | (i<<8) | (i<<16) | (i<<24);
-		return;
+		if ((ri->ri_flg & RI_8BIT_IS_RGB) == 0) {
+			for (i = 0; i < 16; i++)
+				ri->ri_devcmap[i] =
+				    i | (i<<8) | (i<<16) | (i<<24);
+			return;
+		}
 	}
 
 	p = rasops_cmap;
@@ -827,7 +910,10 @@ rasops_init_devcmap(struct rasops_info *ri)
 		/* Fill the word for generic routines, which want this */
 		if (ri->ri_depth == 24)
 			c = c | ((c & 0xff) << 24);
-		else if (ri->ri_depth <= 16)
+		else if (ri->ri_depth == 8) {
+			c = c | (c << 8);
+			c |= c << 16;
+		} else if (ri->ri_depth <= 16)
 			c = c | (c << 16);
 
 		/* 24bpp does bswap on the fly. {32,16,15}bpp do it here. */
@@ -1619,6 +1705,57 @@ rasops_make_box_chars_32(struct rasops_info *ri)
 			/* left segment */
 			data[mid - 1] |= hmask_left;
 			data[mid] |= hmask_left;
+		}
+	}
+}
+
+void
+rasops_make_box_chars_alpha(struct rasops_info *ri)
+{
+	uint8_t *data = (uint8_t *)ri->ri_optfont.data;
+	uint8_t *ddata;
+	int c, i, hmid, vmid, wi, he;
+
+	wi = ri->ri_font->fontwidth;
+	he = ri->ri_font->fontheight;
+	
+	vmid = (he + 1) >> 1;
+	hmid = (wi + 1) >> 1;
+
+	/* 0x00 would be empty anyway so don't bother */
+	for (c = 1; c < 16; c++) {
+		data += ri->ri_fontscale;
+		if (c & 1) {
+			/* upper segment */
+			ddata = data + hmid;
+			for (i = 0; i <= vmid; i++) {
+				*ddata = 0xff;
+				ddata += wi;
+			}
+		}
+		if (c & 4) {
+			/* lower segment */
+			ddata = data + wi * vmid + hmid;
+			for (i = vmid; i < he; i++) {
+				*ddata = 0xff;
+				ddata += wi;
+			}
+		}
+		if (c & 2) {
+			/* right segment */
+			ddata = data + wi * vmid + hmid;
+			for (i = hmid; i < wi; i++) {
+				*ddata = 0xff;
+				ddata++;
+			}
+		}
+		if (c & 8) {
+			/* left segment */
+			ddata = data + wi * vmid;
+			for (i = 0; i <= hmid; i++) {
+				*ddata = 0xff;
+				ddata++;
+			}
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: schizovar.h,v 1.5 2011/06/03 02:58:07 christos Exp $	*/
+/*	$NetBSD: schizovar.h,v 1.5.2.1 2012/04/17 00:06:56 yamt Exp $	*/
 /*	$OpenBSD: schizovar.h,v 1.10 2007/01/14 16:19:49 kettenis Exp $	*/
 
 /*
@@ -63,6 +63,7 @@ struct schizo_softc {
 
 	int sc_busa;
 	int sc_tomatillo;
+	uint32_t sc_ver;
 };
 
 #define	schizo_read(sc,r) \

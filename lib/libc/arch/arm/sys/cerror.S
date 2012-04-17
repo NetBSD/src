@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.7 2011/01/14 06:12:17 matt Exp $	*/
+/*	$NetBSD: cerror.S,v 1.7.6.1 2012/04/17 00:05:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #include "SYS.h"
 
 #ifdef PIC
-	.hidden	CERROR
+	.protected	CERROR
 #endif
 
 ASENTRY(CERROR)

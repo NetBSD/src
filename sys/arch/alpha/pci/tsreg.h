@@ -1,4 +1,4 @@
-/* $NetBSD: tsreg.h,v 1.4 2010/10/07 19:55:02 hans Exp $ */
+/* $NetBSD: tsreg.h,v 1.4.8.1 2012/04/17 00:05:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -202,7 +202,7 @@
  * Tsunami Generic Register Type
  */
 typedef struct _ts_gr {
-	volatile u_int64_t tsg_r;
+	volatile uint64_t tsg_r;
 	long	tsg_deadspace[7];
 } TS_GR;
 

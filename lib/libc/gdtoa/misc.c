@@ -1,4 +1,4 @@
-/* $NetBSD: misc.c,v 1.7 2011/03/21 04:52:09 christos Exp $ */
+/* $NetBSD: misc.c,v 1.7.4.1 2012/04/17 00:05:18 yamt Exp $ */
 
 /****************************************************************
 
@@ -76,8 +76,10 @@ Balloc
 		else
 			rv = (Bigint*)MALLOC(len*sizeof(double));
 #endif
-		if (rv == NULL)
+		if (rv == NULL) {
+			FREE_DTOA_LOCK(0);
 			return NULL;
+		}
 		rv->k = k;
 		rv->maxwds = x;
 		}
@@ -415,8 +417,10 @@ pow5mult
 		ACQUIRE_DTOA_LOCK(1);
 		if (!(p5 = p5s)) {
 			p5 = p5s = i2b(625);
-			if (p5 == NULL)
+			if (p5 == NULL) {
+				FREE_DTOA_LOCK(1);
 				return NULL;
+			}
 			p5->next = 0;
 			}
 		FREE_DTOA_LOCK(1);
@@ -432,6 +436,7 @@ pow5mult
 			b1 = mult(b, p5);
 			if (b1 == NULL)
 				return NULL;
+			Bfree(b);
 			b = b1;
 			}
 		if (!(k = (unsigned int)k >> 1))
@@ -441,8 +446,10 @@ pow5mult
 			ACQUIRE_DTOA_LOCK(1);
 			if (!(p51 = p5->next)) {
 				p51 = p5->next = mult(p5,p5);
-				if (p51 == NULL)
+				if (p51 == NULL) {
+					FREE_DTOA_LOCK(1);
 					return NULL;
+				}
 				p51->next = 0;
 				}
 			FREE_DTOA_LOCK(1);

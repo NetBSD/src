@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.43 2010/05/04 05:10:25 macallan Exp $ */
+/*	$NetBSD: tcx.c,v 1.43.8.1 2012/04/17 00:08:01 yamt Exp $ */
 
 /*
  *  Copyright (c) 1996, 1998, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.43 2010/05/04 05:10:25 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.43.8.1 2012/04/17 00:08:01 yamt Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -821,7 +821,7 @@ tcx_init_screen(void *cookie, struct vcons_screen *scr,
 
 	ri->ri_bits = sc->sc_fbaddr;
 
-	rasops_init(ri, ri->ri_height/8, ri->ri_width/8);
+	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 	rasops_reconfig(ri, ri->ri_height / ri->ri_font->fontheight,
 		    ri->ri_width / ri->ri_font->fontwidth);

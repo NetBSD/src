@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.79 2011/02/23 08:27:17 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.79.4.1 2012/04/17 00:06:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.79 2011/02/23 08:27:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.79.4.1 2012/04/17 00:06:22 yamt Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -101,8 +101,6 @@ int mbusdebug = 1;
 
 struct mainbus_softc {
 	device_t sc_dv;
-
-	hppa_hpa_t sc_hpa;
 };
 
 int	mbmatch(device_t, cfdata_t, void *);
@@ -118,38 +116,38 @@ static int mb_attached;
 /* from machdep.c */
 extern struct extent *hp700_io_extent;
 
-u_int8_t mbus_r1(void *, bus_space_handle_t, bus_size_t);
-u_int16_t mbus_r2(void *, bus_space_handle_t, bus_size_t);
-u_int32_t mbus_r4(void *, bus_space_handle_t, bus_size_t);
-u_int64_t mbus_r8(void *, bus_space_handle_t, bus_size_t);
-void mbus_w1(void *, bus_space_handle_t, bus_size_t, u_int8_t);
-void mbus_w2(void *, bus_space_handle_t, bus_size_t, u_int16_t);
-void mbus_w4(void *, bus_space_handle_t, bus_size_t, u_int32_t);
-void mbus_w8(void *, bus_space_handle_t, bus_size_t, u_int64_t);
-void mbus_rm_1(void *, bus_space_handle_t, bus_size_t, u_int8_t *, bus_size_t);
-void mbus_rm_2(void *, bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t);
-void mbus_rm_4(void *, bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t);
-void mbus_rm_8(void *, bus_space_handle_t, bus_size_t, u_int64_t *, bus_size_t);
-void mbus_wm_1(void *, bus_space_handle_t, bus_size_t, const u_int8_t *, bus_size_t);
-void mbus_wm_2(void *, bus_space_handle_t, bus_size_t, const u_int16_t *, bus_size_t);
-void mbus_wm_4(void *, bus_space_handle_t, bus_size_t, const u_int32_t *, bus_size_t);
-void mbus_wm_8(void *, bus_space_handle_t, bus_size_t, const u_int64_t *, bus_size_t);
-void mbus_rr_1(void *, bus_space_handle_t, bus_size_t, u_int8_t *, bus_size_t);
-void mbus_rr_2(void *, bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t);
-void mbus_rr_4(void *, bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t);
-void mbus_rr_8(void *, bus_space_handle_t, bus_size_t, u_int64_t *, bus_size_t);
-void mbus_wr_1(void *, bus_space_handle_t, bus_size_t, const u_int8_t *, bus_size_t);
-void mbus_wr_2(void *, bus_space_handle_t, bus_size_t, const u_int16_t *, bus_size_t);
-void mbus_wr_4(void *, bus_space_handle_t, bus_size_t, const u_int32_t *, bus_size_t);
-void mbus_wr_8(void *, bus_space_handle_t, bus_size_t, const u_int64_t *, bus_size_t);
-void mbus_sm_1(void *, bus_space_handle_t, bus_size_t, u_int8_t, bus_size_t);
-void mbus_sm_2(void *, bus_space_handle_t, bus_size_t, u_int16_t, bus_size_t);
-void mbus_sm_4(void *, bus_space_handle_t, bus_size_t, u_int32_t, bus_size_t);
-void mbus_sm_8(void *, bus_space_handle_t, bus_size_t, u_int64_t, bus_size_t);
-void mbus_sr_1(void *, bus_space_handle_t, bus_size_t, u_int8_t, bus_size_t);
-void mbus_sr_2(void *, bus_space_handle_t, bus_size_t, u_int16_t, bus_size_t);
-void mbus_sr_4(void *, bus_space_handle_t, bus_size_t, u_int32_t, bus_size_t);
-void mbus_sr_8(void *, bus_space_handle_t, bus_size_t, u_int64_t, bus_size_t);
+uint8_t mbus_r1(void *, bus_space_handle_t, bus_size_t);
+uint16_t mbus_r2(void *, bus_space_handle_t, bus_size_t);
+uint32_t mbus_r4(void *, bus_space_handle_t, bus_size_t);
+uint64_t mbus_r8(void *, bus_space_handle_t, bus_size_t);
+void mbus_w1(void *, bus_space_handle_t, bus_size_t, uint8_t);
+void mbus_w2(void *, bus_space_handle_t, bus_size_t, uint16_t);
+void mbus_w4(void *, bus_space_handle_t, bus_size_t, uint32_t);
+void mbus_w8(void *, bus_space_handle_t, bus_size_t, uint64_t);
+void mbus_rm_1(void *, bus_space_handle_t, bus_size_t, uint8_t *, bus_size_t);
+void mbus_rm_2(void *, bus_space_handle_t, bus_size_t, uint16_t *, bus_size_t);
+void mbus_rm_4(void *, bus_space_handle_t, bus_size_t, uint32_t *, bus_size_t);
+void mbus_rm_8(void *, bus_space_handle_t, bus_size_t, uint64_t *, bus_size_t);
+void mbus_wm_1(void *, bus_space_handle_t, bus_size_t, const uint8_t *, bus_size_t);
+void mbus_wm_2(void *, bus_space_handle_t, bus_size_t, const uint16_t *, bus_size_t);
+void mbus_wm_4(void *, bus_space_handle_t, bus_size_t, const uint32_t *, bus_size_t);
+void mbus_wm_8(void *, bus_space_handle_t, bus_size_t, const uint64_t *, bus_size_t);
+void mbus_rr_1(void *, bus_space_handle_t, bus_size_t, uint8_t *, bus_size_t);
+void mbus_rr_2(void *, bus_space_handle_t, bus_size_t, uint16_t *, bus_size_t);
+void mbus_rr_4(void *, bus_space_handle_t, bus_size_t, uint32_t *, bus_size_t);
+void mbus_rr_8(void *, bus_space_handle_t, bus_size_t, uint64_t *, bus_size_t);
+void mbus_wr_1(void *, bus_space_handle_t, bus_size_t, const uint8_t *, bus_size_t);
+void mbus_wr_2(void *, bus_space_handle_t, bus_size_t, const uint16_t *, bus_size_t);
+void mbus_wr_4(void *, bus_space_handle_t, bus_size_t, const uint32_t *, bus_size_t);
+void mbus_wr_8(void *, bus_space_handle_t, bus_size_t, const uint64_t *, bus_size_t);
+void mbus_sm_1(void *, bus_space_handle_t, bus_size_t, uint8_t, bus_size_t);
+void mbus_sm_2(void *, bus_space_handle_t, bus_size_t, uint16_t, bus_size_t);
+void mbus_sm_4(void *, bus_space_handle_t, bus_size_t, uint32_t, bus_size_t);
+void mbus_sm_8(void *, bus_space_handle_t, bus_size_t, uint64_t, bus_size_t);
+void mbus_sr_1(void *, bus_space_handle_t, bus_size_t, uint8_t, bus_size_t);
+void mbus_sr_2(void *, bus_space_handle_t, bus_size_t, uint16_t, bus_size_t);
+void mbus_sr_4(void *, bus_space_handle_t, bus_size_t, uint32_t, bus_size_t);
+void mbus_sr_8(void *, bus_space_handle_t, bus_size_t, uint64_t, bus_size_t);
 void mbus_cp_1(void *, bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t);
 void mbus_cp_2(void *, bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t);
 void mbus_cp_4(void *, bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t);
@@ -361,174 +359,163 @@ mbus_mmap(void *v, bus_addr_t addr, off_t off, int prot, int flags)
 	return -1;
 }
 
-u_int8_t
+uint8_t
 mbus_r1(void *v, bus_space_handle_t h, bus_size_t o)
 {
-	return *((volatile u_int8_t *)(h + o));
+	return *((volatile uint8_t *)(h + o));
 }
 
-u_int16_t
+uint16_t
 mbus_r2(void *v, bus_space_handle_t h, bus_size_t o)
 {
-	return *((volatile u_int16_t *)(h + o));
+	return *((volatile uint16_t *)(h + o));
 }
 
-u_int32_t
+uint32_t
 mbus_r4(void *v, bus_space_handle_t h, bus_size_t o)
 {
-	return *((volatile u_int32_t *)(h + o));
+	return *((volatile uint32_t *)(h + o));
 }
 
-u_int64_t
+uint64_t
 mbus_r8(void *v, bus_space_handle_t h, bus_size_t o)
 {
-	return *((volatile u_int64_t *)(h + o));
+	return *((volatile uint64_t *)(h + o));
 }
 
 void
-mbus_w1(void *v, bus_space_handle_t h, bus_size_t o, u_int8_t vv)
+mbus_w1(void *v, bus_space_handle_t h, bus_size_t o, uint8_t vv)
 {
-	*((volatile u_int8_t *)(h + o)) = vv;
+	*((volatile uint8_t *)(h + o)) = vv;
 }
 
 void
-mbus_w2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t vv)
+mbus_w2(void *v, bus_space_handle_t h, bus_size_t o, uint16_t vv)
 {
-	*((volatile u_int16_t *)(h + o)) = vv;
+	*((volatile uint16_t *)(h + o)) = vv;
 }
 
 void
-mbus_w4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t vv)
+mbus_w4(void *v, bus_space_handle_t h, bus_size_t o, uint32_t vv)
 {
-	*((volatile u_int32_t *)(h + o)) = vv;
+	*((volatile uint32_t *)(h + o)) = vv;
 }
 
 void
-mbus_w8(void *v, bus_space_handle_t h, bus_size_t o, u_int64_t vv)
+mbus_w8(void *v, bus_space_handle_t h, bus_size_t o, uint64_t vv)
 {
-	*((volatile u_int64_t *)(h + o)) = vv;
+	*((volatile uint64_t *)(h + o)) = vv;
 }
 
 
 void
-mbus_rm_1(void *v, bus_space_handle_t h, bus_size_t o, u_int8_t *a, bus_size_t c)
-{
-	h += o;
-	while (c--)
-		*(a++) = *(volatile u_int8_t *)h;
-}
-
-void
-mbus_rm_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t *a, bus_size_t c)
+mbus_rm_1(void *v, bus_space_handle_t h, bus_size_t o, uint8_t *a, bus_size_t c)
 {
 	h += o;
 	while (c--)
-		*(a++) = *(volatile u_int16_t *)h;
+		*(a++) = *(volatile uint8_t *)h;
 }
 
 void
-mbus_rm_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t *a, bus_size_t c)
+mbus_rm_2(void *v, bus_space_handle_t h, bus_size_t o, uint16_t *a, bus_size_t c)
 {
 	h += o;
 	while (c--)
-		*(a++) = *(volatile u_int32_t *)h;
+		*(a++) = *(volatile uint16_t *)h;
 }
 
 void
-mbus_rm_8(void *v, bus_space_handle_t h, bus_size_t o, u_int64_t *a, bus_size_t c)
+mbus_rm_4(void *v, bus_space_handle_t h, bus_size_t o, uint32_t *a, bus_size_t c)
 {
 	h += o;
 	while (c--)
-		*(a++) = *(volatile u_int64_t *)h;
+		*(a++) = *(volatile uint32_t *)h;
 }
 
 void
-mbus_wm_1(void *v, bus_space_handle_t h, bus_size_t o, const u_int8_t *a, bus_size_t c)
+mbus_rm_8(void *v, bus_space_handle_t h, bus_size_t o, uint64_t *a, bus_size_t c)
 {
 	h += o;
 	while (c--)
-		*(volatile u_int8_t *)h = *(a++);
+		*(a++) = *(volatile uint64_t *)h;
 }
 
 void
-mbus_wm_2(void *v, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, bus_size_t c)
+mbus_wm_1(void *v, bus_space_handle_t h, bus_size_t o, const uint8_t *a, bus_size_t c)
 {
 	h += o;
 	while (c--)
-		*(volatile u_int16_t *)h = *(a++);
+		*(volatile uint8_t *)h = *(a++);
 }
 
 void
-mbus_wm_4(void *v, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, bus_size_t c)
+mbus_wm_2(void *v, bus_space_handle_t h, bus_size_t o, const uint16_t *a, bus_size_t c)
 {
 	h += o;
 	while (c--)
-		*(volatile u_int32_t *)h = *(a++);
+		*(volatile uint16_t *)h = *(a++);
 }
 
 void
-mbus_wm_8(void *v, bus_space_handle_t h, bus_size_t o, const u_int64_t *a, bus_size_t c)
+mbus_wm_4(void *v, bus_space_handle_t h, bus_size_t o, const uint32_t *a, bus_size_t c)
 {
 	h += o;
 	while (c--)
-		*(volatile u_int64_t *)h = *(a++);
+		*(volatile uint32_t *)h = *(a++);
 }
 
 void
-mbus_sm_1(void *v, bus_space_handle_t h, bus_size_t o, u_int8_t vv, bus_size_t c)
+mbus_wm_8(void *v, bus_space_handle_t h, bus_size_t o, const uint64_t *a, bus_size_t c)
 {
 	h += o;
 	while (c--)
-		*(volatile u_int8_t *)h = vv;
+		*(volatile uint64_t *)h = *(a++);
 }
 
 void
-mbus_sm_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t vv, bus_size_t c)
+mbus_sm_1(void *v, bus_space_handle_t h, bus_size_t o, uint8_t vv, bus_size_t c)
 {
 	h += o;
 	while (c--)
-		*(volatile u_int16_t *)h = vv;
+		*(volatile uint8_t *)h = vv;
 }
 
 void
-mbus_sm_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t vv, bus_size_t c)
+mbus_sm_2(void *v, bus_space_handle_t h, bus_size_t o, uint16_t vv, bus_size_t c)
 {
 	h += o;
 	while (c--)
-		*(volatile u_int32_t *)h = vv;
+		*(volatile uint16_t *)h = vv;
 }
 
 void
-mbus_sm_8(void *v, bus_space_handle_t h, bus_size_t o, u_int64_t vv, bus_size_t c)
+mbus_sm_4(void *v, bus_space_handle_t h, bus_size_t o, uint32_t vv, bus_size_t c)
 {
 	h += o;
 	while (c--)
-		*(volatile u_int64_t *)h = vv;
+		*(volatile uint32_t *)h = vv;
 }
 
-void mbus_rrm_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t*a, bus_size_t c);
-void mbus_rrm_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t*a, bus_size_t c);
-void mbus_rrm_8(void *v, bus_space_handle_t h, bus_size_t o, u_int64_t*a, bus_size_t c);
-
-void mbus_wrm_2(void *v, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, bus_size_t c);
-void mbus_wrm_4(void *v, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, bus_size_t c);
-void mbus_wrm_8(void *v, bus_space_handle_t h, bus_size_t o, const u_int64_t *a, bus_size_t c);
-
 void
-mbus_rr_1(void *v, bus_space_handle_t h, bus_size_t o, u_int8_t *a, bus_size_t c)
+mbus_sm_8(void *v, bus_space_handle_t h, bus_size_t o, uint64_t vv, bus_size_t c)
 {
-	volatile u_int8_t *p;
-
 	h += o;
-	p = (void *)h;
 	while (c--)
-		*a++ = *p++;
+		*(volatile uint64_t *)h = vv;
 }
 
+void mbus_rrm_2(void *v, bus_space_handle_t h, bus_size_t o, uint16_t*a, bus_size_t c);
+void mbus_rrm_4(void *v, bus_space_handle_t h, bus_size_t o, uint32_t*a, bus_size_t c);
+void mbus_rrm_8(void *v, bus_space_handle_t h, bus_size_t o, uint64_t*a, bus_size_t c);
+
+void mbus_wrm_2(void *v, bus_space_handle_t h, bus_size_t o, const uint16_t *a, bus_size_t c);
+void mbus_wrm_4(void *v, bus_space_handle_t h, bus_size_t o, const uint32_t *a, bus_size_t c);
+void mbus_wrm_8(void *v, bus_space_handle_t h, bus_size_t o, const uint64_t *a, bus_size_t c);
+
 void
-mbus_rr_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t *a, bus_size_t c)
+mbus_rr_1(void *v, bus_space_handle_t h, bus_size_t o, uint8_t *a, bus_size_t c)
 {
-	volatile u_int16_t *p;
+	volatile uint8_t *p;
 
 	h += o;
 	p = (void *)h;
@@ -537,9 +524,9 @@ mbus_rr_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t *a, bus_size_t 
 }
 
 void
-mbus_rr_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t *a, bus_size_t c)
+mbus_rr_2(void *v, bus_space_handle_t h, bus_size_t o, uint16_t *a, bus_size_t c)
 {
-	volatile u_int32_t *p;
+	volatile uint16_t *p;
 
 	h += o;
 	p = (void *)h;
@@ -548,9 +535,9 @@ mbus_rr_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t *a, bus_size_t 
 }
 
 void
-mbus_rr_8(void *v, bus_space_handle_t h, bus_size_t o, u_int64_t *a, bus_size_t c)
+mbus_rr_4(void *v, bus_space_handle_t h, bus_size_t o, uint32_t *a, bus_size_t c)
 {
-	volatile u_int64_t *p;
+	volatile uint32_t *p;
 
 	h += o;
 	p = (void *)h;
@@ -559,9 +546,20 @@ mbus_rr_8(void *v, bus_space_handle_t h, bus_size_t o, u_int64_t *a, bus_size_t 
 }
 
 void
-mbus_wr_1(void *v, bus_space_handle_t h, bus_size_t o, const u_int8_t *a, bus_size_t c)
+mbus_rr_8(void *v, bus_space_handle_t h, bus_size_t o, uint64_t *a, bus_size_t c)
 {
-	volatile u_int8_t *p;
+	volatile uint64_t *p;
+
+	h += o;
+	p = (void *)h;
+	while (c--)
+		*a++ = *p++;
+}
+
+void
+mbus_wr_1(void *v, bus_space_handle_t h, bus_size_t o, const uint8_t *a, bus_size_t c)
+{
+	volatile uint8_t *p;
 
 	h += o;
 	p = (void *)h;
@@ -570,9 +568,9 @@ mbus_wr_1(void *v, bus_space_handle_t h, bus_size_t o, const u_int8_t *a, bus_si
 }
 
 void
-mbus_wr_2(void *v, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, bus_size_t c)
+mbus_wr_2(void *v, bus_space_handle_t h, bus_size_t o, const uint16_t *a, bus_size_t c)
 {
-	volatile u_int16_t *p;
+	volatile uint16_t *p;
 
 	h += o;
 	p = (void *)h;
@@ -581,9 +579,9 @@ mbus_wr_2(void *v, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, bus_s
 }
 
 void
-mbus_wr_4(void *v, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, bus_size_t c)
+mbus_wr_4(void *v, bus_space_handle_t h, bus_size_t o, const uint32_t *a, bus_size_t c)
 {
-	volatile u_int32_t *p;
+	volatile uint32_t *p;
 
 	h += o;
 	p = (void *)h;
@@ -592,9 +590,9 @@ mbus_wr_4(void *v, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, bus_s
 }
 
 void
-mbus_wr_8(void *v, bus_space_handle_t h, bus_size_t o, const u_int64_t *a, bus_size_t c)
+mbus_wr_8(void *v, bus_space_handle_t h, bus_size_t o, const uint64_t *a, bus_size_t c)
 {
-	volatile u_int64_t *p;
+	volatile uint64_t *p;
 
 	h += o;
 	p = (void *)h;
@@ -602,18 +600,18 @@ mbus_wr_8(void *v, bus_space_handle_t h, bus_size_t o, const u_int64_t *a, bus_s
 		*p++ = *a++;
 }
 
-void mbus_rrr_2(void *, bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t);
-void mbus_rrr_4(void *, bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t);
-void mbus_rrr_8(void *, bus_space_handle_t, bus_size_t, u_int64_t *, bus_size_t);
+void mbus_rrr_2(void *, bus_space_handle_t, bus_size_t, uint16_t *, bus_size_t);
+void mbus_rrr_4(void *, bus_space_handle_t, bus_size_t, uint32_t *, bus_size_t);
+void mbus_rrr_8(void *, bus_space_handle_t, bus_size_t, uint64_t *, bus_size_t);
 
-void mbus_wrr_2(void *, bus_space_handle_t, bus_size_t, const u_int16_t *, bus_size_t);
-void mbus_wrr_4(void *, bus_space_handle_t, bus_size_t, const u_int32_t *, bus_size_t);
-void mbus_wrr_8(void *, bus_space_handle_t, bus_size_t, const u_int64_t *, bus_size_t);
+void mbus_wrr_2(void *, bus_space_handle_t, bus_size_t, const uint16_t *, bus_size_t);
+void mbus_wrr_4(void *, bus_space_handle_t, bus_size_t, const uint32_t *, bus_size_t);
+void mbus_wrr_8(void *, bus_space_handle_t, bus_size_t, const uint64_t *, bus_size_t);
 
 void
-mbus_sr_1(void *v, bus_space_handle_t h, bus_size_t o, u_int8_t vv, bus_size_t c)
+mbus_sr_1(void *v, bus_space_handle_t h, bus_size_t o, uint8_t vv, bus_size_t c)
 {
-	volatile u_int8_t *p;
+	volatile uint8_t *p;
 
 	h += o;
 	p = (void *)h;
@@ -622,9 +620,9 @@ mbus_sr_1(void *v, bus_space_handle_t h, bus_size_t o, u_int8_t vv, bus_size_t c
 }
 
 void
-mbus_sr_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t vv, bus_size_t c)
+mbus_sr_2(void *v, bus_space_handle_t h, bus_size_t o, uint16_t vv, bus_size_t c)
 {
-	volatile u_int16_t *p;
+	volatile uint16_t *p;
 
 	h += o;
 	p = (void *)h;
@@ -633,9 +631,9 @@ mbus_sr_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t vv, bus_size_t 
 }
 
 void
-mbus_sr_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t vv, bus_size_t c)
+mbus_sr_4(void *v, bus_space_handle_t h, bus_size_t o, uint32_t vv, bus_size_t c)
 {
-	volatile u_int32_t *p;
+	volatile uint32_t *p;
 
 	h += o;
 	p = (void *)h;
@@ -644,9 +642,9 @@ mbus_sr_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t vv, bus_size_t 
 }
 
 void
-mbus_sr_8(void *v, bus_space_handle_t h, bus_size_t o, u_int64_t vv, bus_size_t c)
+mbus_sr_8(void *v, bus_space_handle_t h, bus_size_t o, uint64_t vv, bus_size_t c)
 {
-	volatile u_int64_t *p;
+	volatile uint64_t *p;
 
 	h += o;
 	p = (void *)h;
@@ -658,7 +656,7 @@ void
 mbus_cp_1(void *v, bus_space_handle_t h1, bus_size_t o1,
 	  bus_space_handle_t h2, bus_size_t o2, bus_size_t c)
 {
-	volatile u_int8_t *p1, *p2;
+	volatile uint8_t *p1, *p2;
 
 	h1 += o1;
 	h2 += o2;
@@ -672,7 +670,7 @@ void
 mbus_cp_2(void *v, bus_space_handle_t h1, bus_size_t o1,
 	  bus_space_handle_t h2, bus_size_t o2, bus_size_t c)
 {
-	volatile u_int16_t *p1, *p2;
+	volatile uint16_t *p1, *p2;
 
 	h1 += o1;
 	h2 += o2;
@@ -686,7 +684,7 @@ void
 mbus_cp_4(void *v, bus_space_handle_t h1, bus_size_t o1,
 	  bus_space_handle_t h2, bus_size_t o2, bus_size_t c)
 {
-	volatile u_int32_t *p1, *p2;
+	volatile uint32_t *p1, *p2;
 
 	h1 += o1;
 	h2 += o2;
@@ -700,7 +698,7 @@ void
 mbus_cp_8(void *v, bus_space_handle_t h1, bus_size_t o1,
 	  bus_space_handle_t h2, bus_size_t o2, bus_size_t c)
 {
-	volatile u_int64_t *p1, *p2;
+	volatile uint64_t *p1, *p2;
 
 	h1 += o1;
 	h2 += o2;
@@ -1359,7 +1357,9 @@ mbattach(device_t parent, device_t self, void *aux)
 	struct mainbus_softc *sc = device_private(self);
 	struct confargs nca;
 	bus_space_handle_t ioh;
+#if NLCD > 0
 	int err;
+#endif
 
 	sc->sc_dv = self;
 	mb_attached = 1;
@@ -1384,8 +1384,6 @@ mbattach(device_t parent, device_t self, void *aux)
 	 */
 	((struct iomod *)(hppa_mcpuhpa & HPPA_FLEX_MASK))[FPA_IOMOD].io_flex =
 		(void *)((hppa_mcpuhpa & HPPA_FLEX_MASK) | DMA_ENABLE);
-
-	sc->sc_hpa = hppa_mcpuhpa;
 
 	aprint_normal(" [flex %lx]\n", hppa_mcpuhpa & HPPA_FLEX_MASK);
 
@@ -1453,19 +1451,6 @@ mbattach(device_t parent, device_t self, void *aux)
 	pdc_scanbus(self, &nca, mb_module_callback);
 
 	hppa_modules_done();
-}
-
-/*
- * retrive CPU #N HPA value
- */
-hppa_hpa_t
-cpu_gethpa(int n)
-{
-	struct mainbus_softc *sc;
-
-	sc = device_lookup_private(&mainbus_cd, 0);
-
-	return sc->sc_hpa;
 }
 
 int

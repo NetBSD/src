@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_cis.c,v 1.3 2010/10/07 16:26:37 kiyohara Exp $	*/
+/*	$NetBSD: sdmmc_cis.c,v 1.3.8.1 2012/04/17 00:08:03 yamt Exp $	*/
 /*	$OpenBSD: sdmmc_cis.c,v 1.1 2006/06/01 21:53:41 uwe Exp $	*/
 
 /*
@@ -20,7 +20,11 @@
 /* Routines to decode the Card Information Structure of SD I/O cards */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_cis.c,v 1.3 2010/10/07 16:26:37 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_cis.c,v 1.3.8.1 2012/04/17 00:08:03 yamt Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_sdmmc.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_ncgen.c,v 1.4.6.1 2011/11/10 14:31:55 yamt Exp $	*/
+/*	$NetBSD: npf_ncgen.c,v 1.4.6.2 2012/04/17 00:09:50 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -30,194 +30,317 @@
  */
 
 /*
- * N-code generation.
- *
- * WARNING: Update npfctl_calc_ncsize() and npfctl_failure_offset()
- * calculations, when changing generation routines.
+ * N-code generation interface.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_ncgen.c,v 1.4.6.1 2011/11/10 14:31:55 yamt Exp $");
+__RCSID("$NetBSD: npf_ncgen.c,v 1.4.6.2 2012/04/17 00:09:50 yamt Exp $");
 
-#include <sys/types.h>
-#include <string.h>
+#include <stdlib.h>
+#include <stddef.h>
+#include <inttypes.h>
+#include <assert.h>
+#include <err.h>
 
 #include "npfctl.h"
 
-/*
- * npfctl_calc_ncsize: calculate size required for the n-code.
- */
-size_t
-npfctl_calc_ncsize(int nblocks[])
-{
+/* Reduce re-allocations by expanding in 64 byte blocks. */
+#define	NC_ALLOC_MASK		(64 - 1)
+#define	NC_ALLOC_ROUND(x)	(((x) + NC_ALLOC_MASK) & ~NC_ALLOC_MASK)
+
+struct nc_ctx {
 	/*
-	 * Blocks:
-	 * - 5 words each by npfctl_gennc_ports/tbl(), stored in nblocks[0].
-	 * - 6 words each by npfctl_gennc_v4cidr(), stored in nblocks[1].
-	 * - 4 words by npfctl_gennc_{icmp,tcpfl}(), stored in nblocks[2].
-	 * - 9 words each by npfctl_gennc_v6cidr(), stored in nblocks[3].
-	 * - 4 words by npfctl_gennc_complete(), single last fragment.
+	 * Original buffer address, size of the buffer and instruction
+	 * pointer for appending n-code fragments.
 	 */
-	return nblocks[0] * 5 * sizeof(uint32_t) +
-	    nblocks[1] * 6 * sizeof(uint32_t) +
-	    nblocks[2] * 4 * sizeof(uint32_t) +
-	    nblocks[3] * 9 * sizeof(uint32_t) +
-	    4 * sizeof(uint32_t);
+	void *			nc_buf;
+	void *			nc_iptr;
+	size_t			nc_len;
+	/* Expected number of words for diagnostic check. */
+	size_t			nc_expected;
+	/* List of jump values, length of the memory and iterator. */
+	ptrdiff_t *		nc_jmp_list;
+	size_t			nc_jmp_len;
+	size_t			nc_jmp_it;
+	/* Current logical operation for a group and saved iterator. */
+	size_t			nc_saved_it;
+};
+
+/*
+ * npfctl_ncgen_getptr: return the instruction pointer and make sure that
+ * buffer is large enough to add a new fragment of a given size.
+ */
+static uint32_t *
+npfctl_ncgen_getptr(nc_ctx_t *ctx, size_t nwords)
+{
+	size_t offset, reqlen;
+
+	/* Save the number of expected words for diagnostic check. */
+	assert(ctx->nc_expected == 0);
+	ctx->nc_expected = (sizeof(uint32_t) * nwords);
+
+	/*
+	 * Calculate the required length.  If buffer size is large enough,
+	 * just return the pointer.
+	 */
+	offset = (uintptr_t)ctx->nc_iptr - (uintptr_t)ctx->nc_buf;
+	assert(offset <= ctx->nc_len);
+	reqlen = offset + ctx->nc_expected;
+	if (reqlen < ctx->nc_len) {
+		return ctx->nc_iptr;
+	}
+
+	/* Otherwise, re-allocate the buffer and update the pointers. */
+	ctx->nc_len = NC_ALLOC_ROUND(reqlen);
+	ctx->nc_buf = xrealloc(ctx->nc_buf, ctx->nc_len);
+	ctx->nc_iptr = (uint8_t *)ctx->nc_buf + offset;
+	return ctx->nc_iptr;
 }
 
 /*
- * npfctl_failure_offset: calculate offset value to the failure block.
+ * npfctl_ncgen_putptr: perform a diagnostic check whether expected words
+ * were appended and save the instruction pointer.
  */
-size_t
-npfctl_failure_offset(int nblocks[])
+static void
+npfctl_ncgen_putptr(nc_ctx_t *ctx, void *nc)
 {
-	size_t tblport_blocks, v4cidr_blocks, v6cidr_blocks, icmp_tcpfl;
-	/*
-	 * Take into account all blocks (plus 2 words for comparison each),
-	 * and additional 4 words to skip the last comparison and success path.
-	 */
-	tblport_blocks = (3 + 2) * nblocks[0];
-	v4cidr_blocks = (4 + 2) * nblocks[1];
-	icmp_tcpfl = (2 + 2) * nblocks[2];
-	v6cidr_blocks = (7 + 2) * nblocks[3];
-	return tblport_blocks + v4cidr_blocks + v6cidr_blocks + icmp_tcpfl + 4;
+	ptrdiff_t diff = (uintptr_t)nc - (uintptr_t)ctx->nc_iptr;
+
+	if ((ptrdiff_t)ctx->nc_expected != diff) {
+		errx(EXIT_FAILURE, "unexpected n-code fragment size "
+		    "(expected words %zu, diff %td)", ctx->nc_expected, diff);
+	}
+	ctx->nc_expected = 0;
+	ctx->nc_iptr = nc;
 }
 
-#if 0
 /*
- * npfctl_gennc_ether: initial n-code fragment to check Ethernet frame.
+ * npfctl_ncgen_addjmp: add the compare/jump opcode, dummy value and
+ * its pointer into the list.
  */
-void
-npfctl_gennc_ether(void **ncptr, int foff, uint16_t ethertype)
+static void
+npfctl_ncgen_addjmp(nc_ctx_t *ctx, uint32_t **nc_ptr)
 {
-	uint32_t *nc = *ncptr;
+	size_t reqlen, i = ctx->nc_jmp_it++;
+	uint32_t *nc = *nc_ptr;
 
-	/* NPF handler will set REG_0 to either NPF_LAYER_2 or NPF_LAYER_3. */
-	*nc++ = NPF_OPCODE_CMP;
-	*nc++ = NPF_LAYER_3;
-	*nc++ = 0;
+	reqlen = NC_ALLOC_ROUND(ctx->nc_jmp_it * sizeof(ptrdiff_t));
 
-	/* Skip all further code, if layer 3. */
-	*nc++ = NPF_OPCODE_BEQ;
-	*nc++ = 0x0a;
+	if (reqlen > NC_ALLOC_ROUND(ctx->nc_jmp_len)) {
+		ctx->nc_jmp_list = xrealloc(ctx->nc_jmp_list, reqlen);
+		ctx->nc_jmp_len = reqlen;
+	}
 
-	/* Otherwise, assume layer 2 and perform NPF_OPCODE_ETHER. */
-	*nc++ = NPF_OPCODE_ETHER;
-	*nc++ = 0x00;		/* reserved */
-	*nc++ = 0x00;		/* reserved */
-	*nc++ = ethertype;
+	/* Save the offset (note: we cannot save the pointer). */
+	ctx->nc_jmp_list[i] = (uintptr_t)nc - (uintptr_t)ctx->nc_buf;
 
-	/* Fail (+ 2 words of ADVR) or advance to layer 3 (IPv4) header. */
+	/* Note: if OR grouping case, BNE will be replaced with BEQ. */
 	*nc++ = NPF_OPCODE_BNE;
-	*nc++ = foff + 2;
-	/* Offset to the header is returned by NPF_OPCODE_ETHER in REG_3. */
-	*nc++ = NPF_OPCODE_ADVR;
-	*nc++ = 3;
-
-	/* + 13 words. */
-	*ncptr = (void *)nc;
+	*nc++ = 0xdeadbeef;
+	*nc_ptr = nc;
 }
-#endif
 
-void
-npfctl_gennc_v6cidr(void **ncptr, int foff,
-    const npf_addr_t *netaddr, const npf_netmask_t mask, bool sd)
+/*
+ * npfctl_ncgen_create: new n-code generation context.
+ */
+nc_ctx_t *
+npfctl_ncgen_create(void)
 {
-	uint32_t *nc = *ncptr;
+	return zalloc(sizeof(nc_ctx_t));
+}
+
+/*
+ * npfctl_ncgen_complete: complete generation, destroy the context and
+ * return a pointer to the final buffer containing n-code.
+ */
+void *
+npfctl_ncgen_complete(nc_ctx_t *ctx, size_t *sz)
+{
+	uint32_t *nc = npfctl_ncgen_getptr(ctx, 4 /* words */);
+	ptrdiff_t foff;
+	size_t i;
+
+	assert(ctx->nc_saved_it == 0);
+
+	/* Success path (return 0x0). */
+	*nc++ = NPF_OPCODE_RET;
+	*nc++ = 0x0;
+
+	/* Failure path (return 0xff). */
+	foff = ((uintptr_t)nc - (uintptr_t)ctx->nc_buf) / sizeof(uint32_t);
+	*nc++ = NPF_OPCODE_RET;
+	*nc++ = 0xff;
+
+	/* + 4 words. */
+	npfctl_ncgen_putptr(ctx, nc);
+
+	/* Change the jump values. */
+	for (i = 0; i < ctx->nc_jmp_it; i++) {
+		ptrdiff_t off = ctx->nc_jmp_list[i] / sizeof(uint32_t);
+		uint32_t *jmpop = (uint32_t *)ctx->nc_buf + off;
+		uint32_t *jmpval = jmpop + 1;
+
+		assert(foff > off);
+		assert(*jmpop == NPF_OPCODE_BNE);
+		assert(*jmpval == 0xdeadbeef);
+		*jmpval = foff - off;
+	}
+
+	/* Return the buffer, destroy the context. */
+	void *buf = ctx->nc_buf;
+	*sz = (uintptr_t)ctx->nc_iptr - (uintptr_t)ctx->nc_buf;
+	free(ctx->nc_jmp_list);
+	free(ctx);
+	return buf;
+}
+
+/*
+ * npfctl_ncgen_group: begin a logical group.
+ */
+void
+npfctl_ncgen_group(nc_ctx_t *ctx)
+{
+	assert(ctx->nc_expected == 0);
+	assert(ctx->nc_saved_it == 0);
+	ctx->nc_saved_it = ctx->nc_jmp_it;
+}
+
+/*
+ * npfctl_ncgen_endgroup: end a logical group, fix up the code accordingly.
+ */
+void
+npfctl_ncgen_endgroup(nc_ctx_t *ctx)
+{
+	uint32_t *nc;
+
+	/* If there are no fragments or only one - nothing to do. */
+	if ((ctx->nc_jmp_it - ctx->nc_saved_it) <= 1) {
+		ctx->nc_saved_it = 0;
+		return;
+	}
+
+	/* Append failure return for OR grouping. */
+	nc = npfctl_ncgen_getptr(ctx, 2 /* words */);
+	*nc++ = NPF_OPCODE_RET;
+	*nc++ = 0xff;
+	npfctl_ncgen_putptr(ctx, nc);
+
+	/* Update any group jumps values on success to the current point. */
+	for (size_t i = ctx->nc_saved_it; i < ctx->nc_jmp_it; i++) {
+		ptrdiff_t off = ctx->nc_jmp_list[i] / sizeof(uint32_t);
+		uint32_t *jmpop = (uint32_t *)ctx->nc_buf + off;
+		uint32_t *jmpval = jmpop + 1;
+
+		assert(*jmpop == NPF_OPCODE_BNE);
+		assert(*jmpval == 0xdeadbeef);
+
+		*jmpop = NPF_OPCODE_BEQ;
+		*jmpval = nc - jmpop;
+		ctx->nc_jmp_list[i] = 0;
+	}
+
+	/* Reset the iterator. */
+	ctx->nc_jmp_it = ctx->nc_saved_it;
+	ctx->nc_saved_it = 0;
+}
+
+/*
+ * npfctl_gennc_v6cidr: fragment to match IPv6 CIDR.
+ */
+void
+npfctl_gennc_v6cidr(nc_ctx_t *ctx, int opts, const npf_addr_t *netaddr,
+    const npf_netmask_t mask)
+{
+	uint32_t *nc = npfctl_ncgen_getptr(ctx, 9 /* words */);
 	const uint32_t *addr = (const uint32_t *)netaddr;
 
-	/* OP, direction, netaddr/subnet (10 words) */
+	assert(((opts & NC_MATCH_SRC) != 0) ^ ((opts & NC_MATCH_DST) != 0));
+	assert((mask && mask <= NPF_MAX_NETMASK) || mask == NPF_NO_NETMASK);
+
+	/* OP, direction, netaddr/subnet (7 words) */
 	*nc++ = NPF_OPCODE_IP6MASK;
-	*nc++ = (sd ? 0x01 : 0x00);
+	*nc++ = (opts & (NC_MATCH_DST | NC_MATCH_SRC)) >> 1;
 	*nc++ = addr[0];
 	*nc++ = addr[1];
 	*nc++ = addr[2];
 	*nc++ = addr[3];
 	*nc++ = mask;
 
-	/* If not equal, jump to failure block, continue otherwise (2 words). */
-	*nc++ = NPF_OPCODE_BNE;
-	*nc++ = foff;
+	/* Comparison block (2 words). */
+	npfctl_ncgen_addjmp(ctx, &nc);
 
 	/* + 9 words. */
-	*ncptr = (void *)nc;
+	npfctl_ncgen_putptr(ctx, nc);
 }
-
 
 /*
  * npfctl_gennc_v4cidr: fragment to match IPv4 CIDR.
  */
 void
-npfctl_gennc_v4cidr(void **ncptr, int foff,
-    const npf_addr_t *netaddr, const npf_netmask_t mask, bool sd)
+npfctl_gennc_v4cidr(nc_ctx_t *ctx, int opts, const npf_addr_t *netaddr,
+    const npf_netmask_t mask)
 {
-	uint32_t *nc = *ncptr;
+	uint32_t *nc = npfctl_ncgen_getptr(ctx, 6 /* words */);
 	const uint32_t *addr = (const uint32_t *)netaddr;
+
+	assert(((opts & NC_MATCH_SRC) != 0) ^ ((opts & NC_MATCH_DST) != 0));
+	assert((mask && mask <= NPF_MAX_NETMASK) || mask == NPF_NO_NETMASK);
 
 	/* OP, direction, netaddr/subnet (4 words) */
 	*nc++ = NPF_OPCODE_IP4MASK;
-	*nc++ = (sd ? 0x01 : 0x00);
+	*nc++ = (opts & (NC_MATCH_DST | NC_MATCH_SRC)) >> 1;
 	*nc++ = addr[0];
 	*nc++ = mask;
 
-	/* If not equal, jump to failure block, continue otherwise (2 words). */
-	*nc++ = NPF_OPCODE_BNE;
-	*nc++ = foff;
+	/* Comparison block (2 words). */
+	npfctl_ncgen_addjmp(ctx, &nc);
 
 	/* + 6 words. */
-	*ncptr = (void *)nc;
+	npfctl_ncgen_putptr(ctx, nc);
 }
 
 /*
  * npfctl_gennc_ports: fragment to match TCP or UDP ports.
  */
 void
-npfctl_gennc_ports(void **ncptr, int foff,
-    in_port_t pfrom, in_port_t pto, bool tcpudp, bool sd)
+npfctl_gennc_ports(nc_ctx_t *ctx, int opts, in_port_t from, in_port_t to)
 {
-	uint32_t *nc = *ncptr;
+	uint32_t *nc = npfctl_ncgen_getptr(ctx, 5 /* words */);
+
+	assert(((opts & NC_MATCH_SRC) != 0) ^ ((opts & NC_MATCH_DST) != 0));
+	assert(((opts & NC_MATCH_TCP) != 0) ^ ((opts & NC_MATCH_UDP) != 0));
 
 	/* OP, direction, port range (3 words). */
-	*nc++ = (tcpudp ? NPF_OPCODE_TCP_PORTS : NPF_OPCODE_UDP_PORTS);
-	*nc++ = (sd ? 0x01 : 0x00);
-	*nc++ = ((uint32_t)pfrom << 16) | pto;
+	*nc++ = (opts & NC_MATCH_TCP) ?
+	    NPF_OPCODE_TCP_PORTS : NPF_OPCODE_UDP_PORTS;
+	*nc++ = (opts & (NC_MATCH_DST | NC_MATCH_SRC)) >> 1;
+	*nc++ = ((uint32_t)from << 16) | to;
 
-	/*
-	 * If not equal, jump to failure block, continue otherwise (2 words).
-	 * Specific case (foff == 0): when matching both TCP and UDP ports,
-	 * skip next port-matching fragment on success (5 + 2 words).
-	 */
-	if (foff) {
-		*nc++ = NPF_OPCODE_BNE;
-		*nc++ = foff;
-	} else {
-		*nc++ = NPF_OPCODE_BEQ;
-		*nc++ = 5 + 2;
-	}
+	/* Comparison block (2 words). */
+	npfctl_ncgen_addjmp(ctx, &nc);
 
 	/* + 5 words. */
-	*ncptr = (void *)nc;
+	npfctl_ncgen_putptr(ctx, nc);
 }
 
 /*
  * npfctl_gennc_icmp: fragment to match ICMP type and code.
  */
 void
-npfctl_gennc_icmp(void **ncptr, int foff, int type, int code)
+npfctl_gennc_icmp(nc_ctx_t *ctx, int type, int code)
 {
-	uint32_t *nc = *ncptr;
+	uint32_t *nc = npfctl_ncgen_getptr(ctx, 4 /* words */);
 
 	/* OP, code, type (2 words) */
 	*nc++ = NPF_OPCODE_ICMP4;
 	*nc++ = (type == -1 ? 0 : (1 << 31) & (type & 0xff << 8)) |
 		(code == -1 ? 0 : (1 << 31) & (code & 0xff));
 
-	/* If not equal, jump to failure block, continue otherwise (2 words). */
-	*nc++ = NPF_OPCODE_BNE;
-	*nc++ = foff;
+	/* Comparison block (2 words). */
+	npfctl_ncgen_addjmp(ctx, &nc);
 
 	/* + 4 words. */
-	*ncptr = (void *)nc;
+	npfctl_ncgen_putptr(ctx, nc);
 }
 
 /*
@@ -225,59 +348,54 @@ npfctl_gennc_icmp(void **ncptr, int foff, int type, int code)
  * the packet against table specified by ID.
  */
 void
-npfctl_gennc_tbl(void **ncptr, int foff, u_int tid, bool sd)
+npfctl_gennc_tbl(nc_ctx_t *ctx, int opts, u_int tableid)
 {
-	uint32_t *nc = *ncptr;
+	uint32_t *nc = npfctl_ncgen_getptr(ctx, 5 /* words */);
+
+	assert(((opts & NC_MATCH_SRC) != 0) ^ ((opts & NC_MATCH_DST) != 0));
 
 	/* OP, direction, table ID (3 words). */
 	*nc++ = NPF_OPCODE_TABLE;
-	*nc++ = (sd ? 0x01 : 0x00);
-	*nc++ = tid;
+	*nc++ = (opts & (NC_MATCH_DST | NC_MATCH_SRC)) >> 1;
+	*nc++ = tableid;
 
-	/* If not equal, jump to failure block, continue otherwise (2 words). */
-	*nc++ = NPF_OPCODE_BNE;
-	*nc++ = foff;
+	/* Comparison block (2 words). */
+	npfctl_ncgen_addjmp(ctx, &nc);
 
 	/* + 5 words. */
-	*ncptr = (void *)nc;
+	npfctl_ncgen_putptr(ctx, nc);
 }
 
 /*
  * npfctl_gennc_tcpfl: fragment to match TCP flags/mask.
  */
 void
-npfctl_gennc_tcpfl(void **ncptr, int foff, uint8_t tf, uint8_t tf_mask)
+npfctl_gennc_tcpfl(nc_ctx_t *ctx, uint8_t tf, uint8_t tf_mask)
 {
-	uint32_t *nc = *ncptr;
+	uint32_t *nc = npfctl_ncgen_getptr(ctx, 4 /* words */);
 
 	/* OP, code, type (2 words) */
 	*nc++ = NPF_OPCODE_TCP_FLAGS;
 	*nc++ = (tf << 8) | tf_mask;
 
-	/* If not equal, jump to failure block, continue otherwise (2 words). */
-	*nc++ = NPF_OPCODE_BNE;
-	*nc++ = foff;
+	/* Comparison block (2 words). */
+	npfctl_ncgen_addjmp(ctx, &nc);
 
 	/* + 4 words. */
-	*ncptr = (void *)nc;
+	npfctl_ncgen_putptr(ctx, nc);
 }
 
-/*
- * npfctl_gennc_complete: append success and failure fragments.
- */
 void
-npfctl_gennc_complete(void **ncptr)
+npfctl_ncgen_print(const void *code, size_t len)
 {
-	uint32_t *nc = *ncptr;
+#if 0
+	const uint32_t *op = code;
 
-	/* Success path (return 0x0). */
-	*nc++ = NPF_OPCODE_RET;
-	*nc++ = 0x0;
-
-	/* Failure path (return 0xff). */
-	*nc++ = NPF_OPCODE_RET;
-	*nc++ = 0xff;
-
-	/* + 4 words. */
-	*ncptr = (void *)nc;
+	while (len) {
+		printf("\t> |0x%02x|\n", (u_int)*op++);
+		len -= sizeof(*op);
+	}
+#else
+	npfctl_ncode_disassemble(stdout, code, len);
+#endif
 }

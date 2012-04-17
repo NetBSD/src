@@ -1,4 +1,4 @@
-/*	$NetBSD: socktohost.c,v 1.1.1.1 2009/12/13 16:55:05 kardel Exp $	*/
+/*	$NetBSD: socktohost.c,v 1.1.1.1.6.1 2012/04/17 00:03:46 yamt Exp $	*/
 
 /*
  * socktoa - return a numeric host name from a sockaddr_storage structure
@@ -23,7 +23,7 @@
 
 char *
 socktohost(
-	sockaddr_u *sock
+	const sockaddr_u *sock
 	)
 {
 	register char *buffer;

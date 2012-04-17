@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.50 2010/07/26 22:33:24 jym Exp $	*/
+/*	$NetBSD: yds.c,v 1.50.8.1 2012/04/17 00:07:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.50 2010/07/26 22:33:24 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.50.8.1 2012/04/17 00:07:58 yamt Exp $");
 
 #include "mpu.h"
 
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.50 2010/07/26 22:33:24 jym Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/fcntl.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/proc.h>
 
@@ -167,12 +167,13 @@ static int	yds_halt_input(void *);
 static int	yds_getdev(void *, struct audio_device *);
 static int	yds_mixer_set_port(void *, mixer_ctrl_t *);
 static int	yds_mixer_get_port(void *, mixer_ctrl_t *);
-static void   *yds_malloc(void *, int, size_t, struct malloc_type *, int);
-static void	yds_free(void *, void *, struct malloc_type *);
+static void   *yds_malloc(void *, int, size_t);
+static void	yds_free(void *, void *, size_t);
 static size_t	yds_round_buffersize(void *, int, size_t);
 static paddr_t yds_mappage(void *, void *, off_t, int);
 static int	yds_get_props(void *);
 static int	yds_query_devinfo(void *, mixer_devinfo_t *);
+static void	yds_get_locks(void *, kmutex_t **, kmutex_t **);
 
 static int     yds_attach_codec(void *, struct ac97_codec_if *);
 static int	yds_read_codec(void *, uint8_t, uint16_t *);
@@ -229,7 +230,7 @@ static const struct audio_hw_if yds_hw_if = {
 	yds_trigger_output,
 	yds_trigger_input,
 	NULL,
-	NULL,	/* powerstate */
+	yds_get_locks,
 };
 
 static const struct audio_device yds_device = {
@@ -442,7 +443,6 @@ yds_allocate_slots(struct yds_softc *sc)
 		i = yds_allocmem(sc, memsize, 16, p);
 		if (i) {
 			aprint_error_dev(sc->sc_dev, "couldn't alloc/map DSP DMA buffer, reason %d\n", i);
-			free(p, M_DEVBUF);
 			return 1;
 		}
 	}
@@ -683,10 +683,14 @@ yds_suspend(device_t dv, const pmf_qual_t *qual)
 	pci_chipset_tag_t pc = sc->sc_pc;
 	pcitag_t tag = sc->sc_pcitag;
 
+	mutex_enter(&sc->sc_lock);
+	mutex_spin_enter(&sc->sc_intr_lock);
 	sc->sc_dsctrl = pci_conf_read(pc, tag, YDS_PCI_DSCTRL);
 	sc->sc_legacy = pci_conf_read(pc, tag, YDS_PCI_LEGACY);
 	sc->sc_ba[0] = pci_conf_read(pc, tag, YDS_PCI_FM_BA);
 	sc->sc_ba[1] = pci_conf_read(pc, tag, YDS_PCI_MPU_BA);
+	mutex_spin_exit(&sc->sc_intr_lock);
+	mutex_exit(&sc->sc_lock);
 
 	return true;
 }
@@ -700,6 +704,8 @@ yds_resume(device_t dv, const pmf_qual_t *qual)
 	pcireg_t reg;
 
 	/* Disable legacy mode */
+	mutex_enter(&sc->sc_lock);
+	mutex_spin_enter(&sc->sc_intr_lock);
 	reg = pci_conf_read(pc, tag, YDS_PCI_LEGACY);
 	pci_conf_write(pc, tag, YDS_PCI_LEGACY, reg & YDS_PCI_LEGACY_LAD);
 
@@ -711,11 +717,15 @@ yds_resume(device_t dv, const pmf_qual_t *qual)
 	reg = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 	if (yds_init(sc)) {
 		aprint_error_dev(dv, "reinitialize failed\n");
+		mutex_spin_exit(&sc->sc_intr_lock);
+		mutex_exit(&sc->sc_lock);
 		return false;
 	}
 
 	pci_conf_write(pc, tag, YDS_PCI_DSCTRL, sc->sc_dsctrl);
+	mutex_spin_exit(&sc->sc_intr_lock);
 	sc->sc_codec[0].codec_if->vtbl->restore_ports(sc->sc_codec[0].codec_if);
+	mutex_exit(&sc->sc_lock);
 
 	return true;
 }
@@ -730,7 +740,6 @@ yds_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t reg;
 	struct yds_codec_softc *codec;
-	char devinfo[256];
 	int i, r, to;
 	int revision;
 	int ac97_id2;
@@ -739,9 +748,9 @@ yds_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	pa = (struct pci_attach_args *)aux;
 	pc = pa->pa_pc;
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	revision = PCI_REVISION(pa->pa_class);
-	printf(": %s (rev. 0x%02x)\n", devinfo, revision);
+
+	pci_aprint_devinfo(pa, NULL);
 
 	/* Map register to memory */
 	if (pci_mapreg_map(pa, YDS_PCI_MBA, PCI_MAPREG_TYPE_MEM, 0,
@@ -755,6 +764,10 @@ yds_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
+
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_AUDIO); /* XXX IPL_NONE? */
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
+
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, yds_intr, sc);
 	if (sc->sc_ih == NULL) {
@@ -762,6 +775,8 @@ yds_attach(device_t parent, device_t self, void *aux)
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
+		mutex_destroy(&sc->sc_lock);
+		mutex_destroy(&sc->sc_intr_lock);
 		return;
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
@@ -800,6 +815,8 @@ yds_attach(device_t parent, device_t self, void *aux)
 	/* Initialize the device */
 	if (yds_init(sc)) {
 		aprint_error_dev(self, "initialize failed\n");
+		mutex_destroy(&sc->sc_lock);
+		mutex_destroy(&sc->sc_intr_lock);
 		return;
 	}
 
@@ -819,6 +836,8 @@ yds_attach(device_t parent, device_t self, void *aux)
 	}
 	if (to == AC97_TIMEOUT) {
 		aprint_error_dev(self, "no AC97 available\n");
+		mutex_destroy(&sc->sc_lock);
+		mutex_destroy(&sc->sc_intr_lock);
 		return;
 	}
 
@@ -893,15 +912,21 @@ detected:
 		codec->host_if.write = yds_write_codec;
 		codec->host_if.reset = yds_reset_codec;
 
-		if ((r = ac97_attach(&codec->host_if, self)) != 0) {
+		r = ac97_attach(&codec->host_if, self, &sc->sc_lock);
+		if (r != 0) {
 			aprint_error_dev(self, "can't attach codec (error 0x%X)\n", r);
+			mutex_destroy(&sc->sc_lock);
+			mutex_destroy(&sc->sc_intr_lock);
 			return;
 		}
 	}
 
 	if (0 != auconv_create_encodings(yds_formats, YDS_NFORMATS,
-					 &sc->sc_encodings))
+	    &sc->sc_encodings)) {
+		mutex_destroy(&sc->sc_lock);
+		mutex_destroy(&sc->sc_intr_lock);
 		return;
+	}
 
 	audio_attach_mi(&yds_hw_if, sc, self);
 
@@ -1015,6 +1040,8 @@ yds_intr(void *p)
 #endif
 	u_int status;
 
+	mutex_spin_enter(&sc->sc_intr_lock);
+
 	status = YREAD4(sc, YDS_STATUS);
 	DPRINTFN(1, ("yds_intr: status=%08x\n", status));
 	if ((status & (YDS_STAT_INT|YDS_STAT_TINT)) == 0) {
@@ -1022,6 +1049,7 @@ yds_intr(void *p)
 		if (sc_mpu)
 			return mpu_intr(sc_mpu);
 #endif
+		mutex_spin_exit(&sc->sc_intr_lock);
 		return 0;
 	}
 
@@ -1122,6 +1150,7 @@ yds_intr(void *p)
 		}
 	}
 
+	mutex_spin_exit(&sc->sc_intr_lock);
 	return 1;
 }
 
@@ -1133,22 +1162,22 @@ yds_allocmem(struct yds_softc *sc, size_t size, size_t align, struct yds_dma *p)
 	p->size = size;
 	error = bus_dmamem_alloc(sc->sc_dmatag, p->size, align, 0,
 				 p->segs, sizeof(p->segs)/sizeof(p->segs[0]),
-				 &p->nsegs, BUS_DMA_NOWAIT);
+				 &p->nsegs, BUS_DMA_WAITOK);
 	if (error)
 		return error;
 
 	error = bus_dmamem_map(sc->sc_dmatag, p->segs, p->nsegs, p->size,
-			       &p->addr, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+			       &p->addr, BUS_DMA_WAITOK|BUS_DMA_COHERENT);
 	if (error)
 		goto free;
 
 	error = bus_dmamap_create(sc->sc_dmatag, p->size, 1, p->size,
-				  0, BUS_DMA_NOWAIT, &p->map);
+				  0, BUS_DMA_WAITOK, &p->map);
 	if (error)
 		goto unmap;
 
 	error = bus_dmamap_load(sc->sc_dmatag, p->map, p->addr, p->size, NULL,
-				BUS_DMA_NOWAIT);
+				BUS_DMA_WAITOK);
 	if (error)
 		goto destroy;
 	return 0;
@@ -1192,9 +1221,6 @@ yds_open(void *addr, int flags)
 	return 0;
 }
 
-/*
- * Close function is called at splaudio().
- */
 static void
 yds_close(void *addr)
 {
@@ -1628,20 +1654,19 @@ yds_query_devinfo(void *addr, mixer_devinfo_t *dip)
 }
 
 static void *
-yds_malloc(void *addr, int direction, size_t size,
-	   struct malloc_type *pool, int flags)
+yds_malloc(void *addr, int direction, size_t size)
 {
 	struct yds_softc *sc;
 	struct yds_dma *p;
 	int error;
 
-	p = malloc(sizeof(*p), pool, flags);
+	p = kmem_alloc(sizeof(*p), KM_SLEEP);
 	if (p == NULL)
 		return NULL;
 	sc = addr;
 	error = yds_allocmem(sc, size, 16, p);
 	if (error) {
-		free(p, pool);
+		kmem_free(p, sizeof(*p));
 		return NULL;
 	}
 	p->next = sc->sc_dmas;
@@ -1650,7 +1675,7 @@ yds_malloc(void *addr, int direction, size_t size,
 }
 
 static void
-yds_free(void *addr, void *ptr, struct malloc_type *pool)
+yds_free(void *addr, void *ptr, size_t size)
 {
 	struct yds_softc *sc;
 	struct yds_dma **pp, *p;
@@ -1660,7 +1685,7 @@ yds_free(void *addr, void *ptr, struct malloc_type *pool)
 		if (KERNADDR(p) == ptr) {
 			yds_freemem(sc, p);
 			*pp = p->next;
-			free(p, pool);
+			kmem_free(p, sizeof(*p));
 			return;
 		}
 	}
@@ -1711,4 +1736,14 @@ yds_get_props(void *addr)
 
 	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT |
 	    AUDIO_PROP_FULLDUPLEX;
+}
+
+static void
+yds_get_locks(void *addr, kmutex_t **intr, kmutex_t **thread)
+{
+	struct yds_softc *sc;
+
+	sc = addr;
+	*intr = &sc->sc_intr_lock;
+	*thread = &sc->sc_lock;
 }

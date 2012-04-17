@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.18 2006/05/09 20:18:06 mrg Exp $	*/
+/*	$NetBSD: socket.c,v 1.18.42.1 2012/04/17 00:05:34 yamt Exp $	*/
 
  /*
   * This module determines the type of socket (datagram, stream), the client
@@ -22,7 +22,7 @@
 #if 0
 static char sccsid[] = "@(#) socket.c 1.15 97/03/21 19:27:24";
 #else
-__RCSID("$NetBSD: socket.c,v 1.18 2006/05/09 20:18:06 mrg Exp $");
+__RCSID("$NetBSD: socket.c,v 1.18.42.1 2012/04/17 00:05:34 yamt Exp $");
 #endif
 #endif
 
@@ -77,8 +77,8 @@ const char *name;
 
 /* sock_host - look up endpoint addresses and install conversion methods */
 
-void    sock_host(request)
-struct request_info *request;
+void
+sock_host(struct request_info *request)
 {
     static struct sockaddr_storage client;
     static struct sockaddr_storage server;
@@ -134,8 +134,8 @@ struct request_info *request;
 
 /* sock_hostaddr - map endpoint address to printable form */
 
-void    sock_hostaddr(host)
-struct host_info *host;
+void
+sock_hostaddr(struct host_info *host)
 {
     struct sockaddr *sa = host->sin;
 
@@ -148,8 +148,8 @@ struct host_info *host;
 
 /* sock_hostname - map endpoint address to host name */
 
-void    sock_hostname(host)
-struct host_info *host;
+void
+sock_hostname(struct host_info *host)
 {
     struct sockaddr *sa = host->sin;
     char h1[NI_MAXHOST], h2[NI_MAXHOST];
@@ -275,8 +275,8 @@ struct host_info *host;
 
 /* sock_sink - absorb unreceived IP datagram */
 
-static void sock_sink(fd)
-int     fd;
+static void
+sock_sink(int fd)
 {
     char    buf[BUFSIZ];
     struct sockaddr_storage ss;

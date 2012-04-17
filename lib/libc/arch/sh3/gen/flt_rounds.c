@@ -1,4 +1,4 @@
-/*	$NetBSD: flt_rounds.c,v 1.4 2007/01/17 23:24:22 hubertf Exp $	*/
+/*	$NetBSD: flt_rounds.c,v 1.4.36.1 2012/04/17 00:05:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: flt_rounds.c,v 1.4 2007/01/17 23:24:22 hubertf Exp $");
+__RCSID("$NetBSD: flt_rounds.c,v 1.4.36.1 2012/04/17 00:05:14 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -75,7 +75,7 @@ static const int map[] = {
 extern int __flt_rounds __P((void));
 
 int
-__flt_rounds()
+__flt_rounds(void)
 {
 	return(map[fpgetround()]);
 }

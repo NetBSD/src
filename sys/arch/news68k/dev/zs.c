@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.30 2008/04/28 20:23:30 martin Exp $	*/
+/*	$NetBSD: zs.c,v 1.30.34.1 2012/04/17 00:06:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.30 2008/04/28 20:23:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.30.34.1 2012/04/17 00:06:43 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -166,7 +166,7 @@ zs_match(device_t parent, cfdata_t cf, void *aux)
 	if (ha->ha_address == (u_int)-1)
 		return 0;
 
-	addr = IIOV(ha->ha_address);
+	addr = (ha->ha_address);
 	/* This returns -1 on a fault (bus error). */
 	if (badaddr((void *)addr, 1))
 		return 0;
@@ -191,7 +191,7 @@ zs_attach(device_t parent, device_t self, void *aux)
 
 	zsc->zsc_dev = self;
 
-	zs = (void *)IIOV(ha->ha_address);
+	zs = (void *)(ha->ha_address);
 
 	clk = cf->cf_flags;
 	if (clk < 0 || clk >= NPCLK)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_lastlog.c,v 1.13 2009/01/26 04:01:14 lukem Exp $	*/
+/*	$NetBSD: pam_lastlog.c,v 1.13.8.1 2012/04/17 00:05:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -47,7 +47,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_lastlog/pam_lastlog.c,v 1.20 2004/01/26 19:28:37 des Exp $");
 #else
-__RCSID("$NetBSD: pam_lastlog.c,v 1.13 2009/01/26 04:01:14 lukem Exp $");
+__RCSID("$NetBSD: pam_lastlog.c,v 1.13.8.1 2012/04/17 00:05:30 yamt Exp $");
 #endif
 
 #include <sys/param.h>
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: pam_lastlog.c,v 1.13 2009/01/26 04:01:14 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <errno.h>
 #include <time.h>
 #include <unistd.h>
 #include <stdarg.h>
@@ -291,10 +292,10 @@ doutmpx(const char *username, const char *hostname, const char *tty,
 		(void)strncpy(utmpx.ut_id, tty, sizeof(utmpx.ut_id));
 	}
 	if (pututxline(&utmpx) == NULL)
-		logit(LOG_NOTICE, "Cannot update utmpx %m");
+		logit(LOG_NOTICE, "Cannot update utmpx: %s", strerror(errno));
 	endutxent();
 	if (updwtmpx(_PATH_WTMPX, &utmpx) != 0)
-		logit(LOG_NOTICE, "Cannot update wtmpx %m");
+		logit(LOG_NOTICE, "Cannot update wtmpx: %s", strerror(errno));
 }
 
 static void
@@ -323,7 +324,7 @@ dolastlogx(pam_handle_t *pamh, int quiet, const struct passwd *pwd,
 		(void)memset(&ll.ll_ss, 0, sizeof(ll.ll_ss));
 
 	if (updlastlogx(_PATH_LASTLOGX, pwd->pw_uid, &ll) != 0)
-		logit(LOG_NOTICE, "Cannot update lastlogx %m");
+		logit(LOG_NOTICE, "Cannot update lastlogx: %s", strerror(errno));
 	PAM_LOG("Login recorded in %s", _PATH_LASTLOGX);
 }
 #endif
@@ -352,7 +353,8 @@ dolastlog(pam_handle_t *pamh, int quiet, const struct passwd *pwd,
 	int fd;
 
 	if ((fd = open(_PATH_LASTLOG, O_RDWR, 0)) == -1) {
-		logit(LOG_NOTICE, "Cannot open `%s' %m", _PATH_LASTLOG);
+		logit(LOG_NOTICE, "Cannot open `%s': %s", _PATH_LASTLOG,
+		    strerror(errno));
 		return;
 	}
 	(void)lseek(fd, (off_t)(pwd->pw_uid * sizeof(ll)), SEEK_SET);

@@ -1,7 +1,7 @@
-/*	$NetBSD: ltable.c,v 1.1.1.1 2010/10/31 11:16:59 mbalmer Exp $	*/
+/*	$NetBSD: ltable.c,v 1.1.1.1.6.1 2012/04/17 00:04:47 yamt Exp $	*/
 
 /*
-** Id: ltable.c,v 2.32.1.2 2007/12/28 15:32:23 roberto Exp
+** $Id: ltable.c,v 1.1.1.1.6.1 2012/04/17 00:04:47 yamt Exp $
 ** Lua tables (hash)
 ** See Copyright Notice in lua.h
 */

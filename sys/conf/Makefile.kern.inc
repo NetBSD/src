@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.149 2011/09/25 22:26:33 joerg Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.149.2.1 2012/04/17 00:07:23 yamt Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -37,6 +37,7 @@ GENASSYM?=	${TOOL_GENASSYM:Ugenassym}
 _MKMSG?=		@\#
 _MKSHMSG?=		echo
 _MKSHECHO?=		echo
+_MKSHNOECHO=		:
 _MKMSG_CREATE?=		:
 _MKTARGET_COMPILE?=	:
 _MKTARGET_CREATE?=	:
@@ -65,6 +66,7 @@ DEFWARNINGS?=	yes
 .if (${DEFWARNINGS} == "yes")
 CWARNFLAGS+=	-Wall -Wno-main -Wno-format-zero-length -Wpointer-arith
 CWARNFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes
+CWARNFLAGS+=	-Wold-style-definition
 CWARNFLAGS+=	-Wswitch -Wshadow
 CWARNFLAGS+=	-Wcast-qual -Wwrite-strings
 CWARNFLAGS+=	-Wno-unreachable-code
@@ -74,6 +76,9 @@ CWARNFLAGS+=	-Wno-pointer-sign -Wno-attributes
 	${MACHINE_ARCH} == "sparc64" || ${MACHINE} == "prep"
 CWARNFLAGS+=	-Wextra -Wno-unused-parameter
 .  endif
+.  if ${MACHINE} == "i386" || ${MACHINE_ARCH} == "x86_64"
+CWARNFLAGS+=	-Wold-style-definition
+.  endif
 . endif
 # Add -Wno-sign-compare.  -Wsign-compare is included in -Wall as of GCC 3.3,
 # but our sources aren't up for it yet.
@@ -82,6 +87,9 @@ CWARNFLAGS+=	-Wno-sign-compare
 
 CWARNFLAGS.clang+=	-Wno-unknown-pragmas -Wno-conversion \
 			-Wno-self-assign
+
+CWARNFLAGS.ah_regdomain.c= ${${ACTIVE_CC} == "clang":? \
+    -Wno-shift-count-negative -Wno-shift-count-overflow:}
 
 CFLAGS+=	-ffreestanding -fno-zero-initialized-in-bss
 CFLAGS+=	${DEBUG} ${COPTS}
@@ -129,7 +137,7 @@ COMPILE_CTFCONVERT=	${_MKSHECHO}\
 			${CTFCONVERT} ${CTFFLAGS} ${.TARGET} && \
 			${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
 .else
-COMPILE_CTFCONVERT=	${_MKSHECHO}
+COMPILE_CTFCONVERT=	${_MKSHNOECHO}
 .endif
 
 # compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
@@ -226,9 +234,43 @@ SYSTEM_LD?=	@${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
 		${LD} -Map $@.map --cref ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o; \
 		${LD} -Map $@.map --cref ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
-SYSTEM_LD_TAIL?=@${TOOL_SED} '/const char sccs/!d;s/.*@(.)//;s/\\.*//' vers.c; \
+
+AUTO_SYMTAB_SPACE?=   yes
+
+.if empty(AUTO_SYMTAB_SPACE:M[Yy][Ee][Ss]) || defined(_SYMTAB_SPACE_ADJUSTED)
+SYSTEM_LD_TAIL_DBSYM?=	true
+.else
+SYSTEM_LD_TAIL_DBSYM?=	\
+	if grep '^\#define.*SYMTAB_SPACE' opt_ksyms.h > /dev/null; then \
+		_modify_opt_ksyms_h () {				\
+			${TOOL_SED}					\
+	-e 's/^\(\#define.*SYMTAB_SPACE[ 	]*\)[0-9]*/\1'$$1/	\
+	-e 's/\(.equiv[ 	]*_KERNEL_OPT_SYMTAB_SPACE,0x\)[0-9a-f]*/\1'$$(printf %x $$1)/ \
+			opt_ksyms.h > opt_ksyms.h.ADJ &&		\
+			mv opt_ksyms.h.ADJ opt_ksyms.h &&		\
+			${MAKE} ${MFLAGS} _SYMTAB_SPACE_ADJUSTED=1 $@;	\
+		};							\
+		_adj_symtab_space () {				\
+			set -- $$(${DBSYM} -p $@); 		\
+			echo Symtab size: $$1, space: $$2;	\
+			if [ "$$1" -gt "$$2" ]; then		\
+				echo Adjusting symtab space;	\
+				rm -f $@;			\
+				_modify_opt_ksyms_h $$1;	\
+			fi;					\
+		};						\
+		_adj_symtab_space;				\
+	fi
+.endif
+
+.if defined(_SYMTAB_SPACE_ADJUSTED)
+SYSTEM_LD_TAIL?=true
+.else
+SYSTEM_LD_TAIL?=@${SYSTEM_LD_TAIL_DBSYM} ; \
+		${TOOL_SED} '/const char sccs/!d;s/.*@(.)//;s/\\.*//' vers.c; \
 		${SIZE} $@; chmod 755 $@; \
 		${SYSTEM_CTFMERGE}
+.endif
 
 TEXTADDR?=	${LOADADDRESS}			# backwards compatibility
 LINKTEXT?=	${TEXTADDR:C/.+/-Ttext &/}
@@ -252,21 +294,24 @@ SYSTEM_LD_TAIL+=${SYSTEM_LD_TAIL_DEBUG}
 LINKFLAGS+=	${LINKFLAGS_DEBUG}
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.gdb@}
 CTFFLAGS+=	-g
+.if !defined(_SYMTAB_SPACE_ADJUSTED)
 SYSTEM_LD_TAIL+=; \
 	if grep '^\#define.*SYMTAB_SPACE' opt_ksyms.h > /dev/null; then \
 		echo "${DBSYM} $@.gdb"; \
 		${DBSYM} $@.gdb || (rm -f $@ ; exit 1) || exit 1; \
 	fi
-
+.endif
 .elifndef PROF
 LINKFLAGS+=	${LINKFLAGS_NORMAL}
 .endif
 
+.if !defined(_SYMTAB_SPACE_ADJUSTED)
 SYSTEM_LD_TAIL+=; \
 	if grep '^\#define.*SYMTAB_SPACE' opt_ksyms.h > /dev/null; then \
 		echo "${DBSYM} $@"; \
 		${DBSYM} $@ || (rm -f $@ ; exit 1) || exit 1; \
 	fi
+.endif
 
 SYSTEM_LD_HEAD+=${SYSTEM_LD_HEAD_EXTRA}
 SYSTEM_LD_TAIL+=${SYSTEM_LD_TAIL_EXTRA}
@@ -278,7 +323,7 @@ SYSTEM_LD_TAIL+=${SYSTEM_LD_TAIL_EXTRA}
 assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS}
 	${_MKTARGET_CREATE}
 	cat ${GENASSYM_CONF} ${GENASSYM_EXTRAS} | \
-	    ${GENASSYM} -- ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	    ${GENASSYM} -- ${CC} ${CFLAGS:N-Wa,*} ${CPPFLAGS} ${PROF} \
 	    > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 ${MD_SFILES:C/\.[Ss]/.o/} ${SFILES:C/\.[Ss]/.o/}: assym.h
@@ -384,7 +429,7 @@ assym.d: assym.h
 	${_MKTARGET_CREATE}
 	cat ${GENASSYM_CONF} ${GENASSYM_EXTRAS} | \
 	    ${GENASSYM} -- ${MKDEP} -f assym.dep -- \
-	    ${CFLAGS} ${CPPFLAGS}
+	    ${CFLAGS:N-Wa,*} ${CPPFLAGS}
 	${TOOL_SED} -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >${.TARGET}
 	rm -f assym.dep
 

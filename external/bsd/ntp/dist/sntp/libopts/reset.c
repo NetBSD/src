@@ -1,13 +1,14 @@
-/*	$NetBSD: reset.c,v 1.1.1.1 2009/12/13 16:57:20 kardel Exp $	*/
+/*	$NetBSD: reset.c,v 1.1.1.1.6.1 2012/04/17 00:03:52 yamt Exp $	*/
 
 
-/*
- *  Id: 808e536555f06924b450ab6b5a72c03b67c5b99a
- *  Time-stamp:      "2009-11-01 11:45:57 bkorb"
+/**
+ * \file reset.c
+ *
+ *  Time-stamp:      "2010-07-10 10:56:34 bkorb"
  *
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is copyright (c) 1992-2009 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (c) 1992-2011 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -109,7 +110,7 @@ optionResetOpt( tOptions* pOpts, tOptDesc* pOD )
             assert(0 == 1);
         }
     } else {
-        succ = longOptionFind(pOpts, (char *)pzArg, &opt_state);
+        succ = longOptionFind(pOpts, (char *)(intptr_t)pzArg, &opt_state);
         if (! SUCCESSFUL(succ)) {
             fprintf(stderr, zIllOptStr, pOpts->pzProgPath, pzArg);
             pOpts->pUsageProc(pOpts, EXIT_FAILURE);

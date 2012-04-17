@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_node.c,v 1.22 2011/10/19 01:39:29 manu Exp $	*/
+/*	$NetBSD: puffs_node.c,v 1.22.2.1 2012/04/17 00:08:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.22 2011/10/19 01:39:29 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.22.2.1 2012/04/17 00:08:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/hash.h>
@@ -63,6 +63,7 @@ static struct puffs_node *puffs_cookie2pnode(struct puffs_mount *,
 					     puffs_cookie_t);
 
 struct pool puffs_pnpool;
+struct pool puffs_vapool;
 
 /*
  * Grab a vnode, intialize all the puffs-dependent stuff.
@@ -321,8 +322,14 @@ puffs_makeroot(struct puffs_mount *pmp)
 	if (vp) {
 		mutex_enter(vp->v_interlock);
 		mutex_exit(&pmp->pmp_lock);
-		if (vget(vp, 0) == 0)
+		switch (vget(vp, 0)) {
+		case ENOENT:
+			goto retry;
+		case 0:
 			return 0;
+		default:
+			break;
+		}
 	} else
 		mutex_exit(&pmp->pmp_lock);
 
@@ -387,6 +394,7 @@ puffs_cookie2vnode(struct puffs_mount *pmp, puffs_cookie_t ck, int lock,
 		return 0;
 	}
 
+ retry:
 	mutex_enter(&pmp->pmp_lock);
 	pnode = puffs_cookie2pnode(pmp, ck);
 	if (pnode == NULL) {
@@ -406,8 +414,14 @@ puffs_cookie2vnode(struct puffs_mount *pmp, puffs_cookie_t ck, int lock,
 	vgetflags = 0;
 	if (lock)
 		vgetflags |= LK_EXCLUSIVE;
-	if ((rv = vget(vp, vgetflags)))
+	switch (rv = vget(vp, vgetflags)) {
+	case ENOENT:
+		goto retry;
+	case 0:
+		break;
+	default:
 		return rv;
+	}
 
 	*vpp = vp;
 	return 0;
@@ -470,6 +484,8 @@ puffs_releasenode(struct puffs_node *pn)
 		mutex_destroy(&pn->pn_mtx);
 		mutex_destroy(&pn->pn_sizemtx);
 		seldestroy(&pn->pn_sel);
+		if (pn->pn_va_cache != NULL)
+			pool_put(&puffs_vapool, pn->pn_va_cache);
 		pool_put(&puffs_pnpool, pn);
 	} else {
 		mutex_exit(&pn->pn_mtx);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_pptp_pxy.c,v 1.9 2009/08/19 08:36:11 darrenr Exp $	*/
+/*	$NetBSD: ip_pptp_pxy.c,v 1.9.12.1 2012/04/17 00:08:14 yamt Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Darren Reed
@@ -11,7 +11,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_pptp_pxy.c,v 1.9 2009/08/19 08:36:11 darrenr Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_pptp_pxy.c,v 1.9.12.1 2012/04/17 00:08:14 yamt Exp $");
 
 #define	IPF_PPTP_PROXY
 
@@ -39,27 +39,38 @@ typedef	struct pptp_hdr {
 #define	PPTP_MTCTL_LINKINFO	15
 
 
-int ippr_pptp_init __P((void));
-void ippr_pptp_fini __P((void));
-int ippr_pptp_new __P((fr_info_t *, ap_session_t *, nat_t *));
-void ippr_pptp_del __P((ap_session_t *));
-int ippr_pptp_inout __P((fr_info_t *, ap_session_t *, nat_t *));
-void ippr_pptp_donatstate __P((fr_info_t *, nat_t *, pptp_pxy_t *));
-int ippr_pptp_message __P((fr_info_t *, nat_t *, pptp_pxy_t *, pptp_side_t *));
-int ippr_pptp_nextmessage __P((fr_info_t *, nat_t *, pptp_pxy_t *, int));
-int ippr_pptp_mctl __P((fr_info_t *, nat_t *, pptp_pxy_t *, pptp_side_t *));
+int
+ippr_pptp_init(void);
+void
+ippr_pptp_fini(void);
+int
+ippr_pptp_new(fr_info_t *, ap_session_t *, nat_t *);
+void
+ippr_pptp_del(ap_session_t *);
+int
+ippr_pptp_inout(fr_info_t *, ap_session_t *, nat_t *);
+void
+ippr_pptp_donatstate(fr_info_t *, nat_t *, pptp_pxy_t *);
+int
+ippr_pptp_message(fr_info_t *, nat_t *, pptp_pxy_t *, pptp_side_t *);
+int
+ippr_pptp_nextmessage(fr_info_t *, nat_t *, pptp_pxy_t *, int);
+int
+ippr_pptp_mctl(fr_info_t *, nat_t *, pptp_pxy_t *, pptp_side_t *);
 
 static	frentry_t	pptpfr;
 
 int	pptp_proxy_init = 0;
 int	ippr_pptp_debug = 0;
-int	ippr_pptp_gretimeout = IPF_TTLVAL(120);	/* 2 minutes */
+int	ippr_pptp_gretimeout =
+IPF_TTLVAL(120);	/* 2 minutes */
 
 
 /*
  * PPTP application proxy initialization.
  */
-int ippr_pptp_init()
+int
+ippr_pptp_init(void)
 {
 	bzero((char *)&pptpfr, sizeof(pptpfr));
 	pptpfr.fr_ref = 1;
@@ -73,7 +84,8 @@ int ippr_pptp_init()
 }
 
 
-void ippr_pptp_fini()
+void
+ippr_pptp_fini(void)
 {
 	if (pptp_proxy_init == 1) {
 		MUTEX_DESTROY(&pptpfr.fr_lock);
@@ -88,10 +100,8 @@ void ippr_pptp_fini()
  * NOTE: The printf's are broken up with %s in them to prevent them being
  * optimised into puts statements on FreeBSD (this doesn't exist in the kernel)
  */
-int ippr_pptp_new(fin, aps, nat)
-fr_info_t *fin;
-ap_session_t *aps;
-nat_t *nat;
+int
+ippr_pptp_new(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	pptp_pxy_t *pptp;
 	ipnat_t *ipn;
@@ -153,10 +163,8 @@ nat_t *nat;
 }
 
 
-void ippr_pptp_donatstate(fin, nat, pptp)
-fr_info_t *fin;
-nat_t *nat;
-pptp_pxy_t *pptp;
+void
+ippr_pptp_donatstate(fr_info_t *fin, nat_t *nat, pptp_pxy_t *pptp)
 {
 	fr_info_t fi;
 	grehdr_t gre;
@@ -241,11 +249,8 @@ pptp_pxy_t *pptp;
  * build it up completely (fits in our buffer) then pass it off to the message
  * parsing function.
  */
-int ippr_pptp_nextmessage(fin, nat, pptp, rev)
-fr_info_t *fin;
-nat_t *nat;
-pptp_pxy_t *pptp;
-int rev;
+int
+ippr_pptp_nextmessage(fr_info_t *fin, nat_t *nat, pptp_pxy_t *pptp, int rev)
 {
 	static const char *funcname = "ippr_pptp_nextmessage";
 	pptp_side_t *pptps;
@@ -365,11 +370,8 @@ int rev;
 /*
  * handle a complete PPTP message
  */
-int ippr_pptp_message(fin, nat, pptp, pptps)
-fr_info_t *fin;
-nat_t *nat;
-pptp_pxy_t *pptp;
-pptp_side_t *pptps;
+int
+ippr_pptp_message(fr_info_t *fin, nat_t *nat, pptp_pxy_t *pptp, pptp_side_t *pptps)
 {
 	pptp_hdr_t *hdr = (pptp_hdr_t *)pptps->pptps_buffer;
 
@@ -389,11 +391,8 @@ pptp_side_t *pptps;
 /*
  * handle a complete PPTP control message
  */
-int ippr_pptp_mctl(fin, nat, pptp, pptps)
-fr_info_t *fin;
-nat_t *nat;
-pptp_pxy_t *pptp;
-pptp_side_t *pptps;
+int
+ippr_pptp_mctl(fr_info_t *fin, nat_t *nat, pptp_pxy_t *pptp, pptp_side_t *pptps)
 {
 	u_short *buffer = (u_short *)(pptps->pptps_buffer);
 	pptp_side_t *pptpo;
@@ -477,10 +476,8 @@ pptp_side_t *pptps;
  * For outgoing PPTP packets.  refresh timeouts for NAT & state entries, if
  * we can.  If they have disappeared, recreate them.
  */
-int ippr_pptp_inout(fin, aps, nat)
-fr_info_t *fin;
-ap_session_t *aps;
-nat_t *nat;
+int
+ippr_pptp_inout(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	pptp_pxy_t *pptp;
 	tcphdr_t *tcp;
@@ -509,8 +506,8 @@ nat_t *nat;
 /*
  * clean up after ourselves.
  */
-void ippr_pptp_del(aps)
-ap_session_t *aps;
+void
+ippr_pptp_del(ap_session_t *aps)
 {
 	pptp_pxy_t *pptp;
 

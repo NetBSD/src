@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.42 2008/04/30 13:10:58 martin Exp $
+.\"	$NetBSD: audio.9,v 1.42.22.1 2012/04/17 00:05:49 yamt Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 10, 2007
+.Dd November 23, 2011
 .Dt AUDIO 9
 .Os
 .Sh NAME
@@ -87,9 +87,7 @@ struct audio_hw_if {
 	int	(*trigger_input)(void *, void *, void *, int,
 		    void (*)(void *), void *, const audio_params_t *);
 	int	(*dev_ioctl)(void *, u_long, void *, int, struct lwp *);
-	int	(*powerstate)(void *, int);
-#define	AUDIOPOWER_ON	1
-#define	AUDIOPOWER_OFF	0
+	void	(*get_locks)(void *, kmutex_t **, kmutex_t **);
 };
 
 typedef struct audio_params {
@@ -505,16 +503,8 @@ optional, is called when an
 .Xr ioctl 2
 is not recognized by the generic audio driver.
 Return 0 on success, otherwise an error code.
-.It Dv int powerstate(void *hdl, int state)
-.Pp
-optional, is called on the first open and last close of the audio
-device.
-.Va state
-may be one of
-.Dv AUDIOPOWER_ON
-or
-.Dv AUDIOPOWER_OFF .
-Returns 0 on success, otherwise an error code.
+.It Dv void get_locks(void *hdl, kmutex_t **intr, kmutex_t **thread)
+Returns the interrupt and thread locks to the common audio layer.
 .El
 .Pp
 The

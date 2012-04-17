@@ -1,4 +1,4 @@
-/*	$NetBSD: cfi.h,v 1.5 2011/08/02 01:11:08 cliff Exp $	*/
+/*	$NetBSD: cfi.h,v 1.5.2.1 2012/04/17 00:07:42 yamt Exp $	*/
 
 #ifndef _CFI_H_
 #define _CFI_H_
@@ -120,19 +120,6 @@ struct cfi_jedec_id_data {
 	uint8_t		id_swb_hi;	/* upper software bits */
 };
 
-/*
- * table entry used to determine operating mode by QRY signature
- */
-struct cfi_opmodes {
-	uint8_t		portwidth;	/* (1<<N) bytes */
-	uint8_t		chipwidth;	/* (1<<N) bytes */
-	uint8_t		interleave;	/* (1<<N) bytes */
-	uint8_t		qsa;		/* Query Start Address (in bytes) */
-	uint8_t		len;		/* signature length */
-	const uint8_t  *sig;		/* signature */
-	const char     *str;		/* descriptive string */
-};
-
 struct cfi;	/* fwd ref */
 
 struct cfi_ops {
@@ -188,12 +175,12 @@ struct cfi {
 	uint8_t			cfi_portwidth;	/* port width, 1<<N bytes */
 	uint8_t			cfi_chipwidth;	/* chip width, 1<<N bytes */
 	bool			cfi_emulated;	/* ary data are faked */
+	bus_size_t		cfi_unlock_addr1;
+	bus_size_t		cfi_unlock_addr2;
 	struct cfi_query_data	cfi_qry_data;	/* CFI Query data */
 	struct cfi_jedec_id_data
 				cfi_id_data;	/* JEDEC ID data */
 	const char	       *cfi_name;	/* optional chip name */
-	const struct cfi_opmodes 
-			       *cfi_opmode;
 	struct cfi_ops		cfi_ops;	/* chip dependent functions */
 	u_long			cfi_yield_time;	/* thresh. for yield in wait */
 #ifdef CFI_0002_STATS
@@ -230,21 +217,20 @@ struct cfi_jedec_tab {
 	uint8_t		jt_write_nbyte_time_max;	/* typ<<N msec */
 	uint8_t		jt_erase_blk_time_max;		/* typ<<N msec */
 	uint8_t		jt_erase_chip_time_max;		/* typ<<N msec */
-	/* XXX operation mode, perhaps cannot be tabulated */
-	const struct cfi_opmodes
-		       *jt_opmode;
 };
 
 
 enum {
-	CFI_ADDRESS_ANY = 0x00,		    /* XXX "don't care" */
-
+	CFI_ADDR_ANY = 0x00*8,		    /* XXX "don't care" */
 	CFI_RESET_DATA = 0xf0,
 	CFI_ALT_RESET_DATA = 0xff,
 
-	CFI_QUERY_MODE_ADDRESS = 0x55,	    /* some devices accept anything */
-	CFI_QUERY_MODE_ALT_ADDRESS = 0x555,
+	CFI_QUERY_MODE_ADDR = 0x55*8,	    /* some devices accept anything */
+	CFI_QUERY_MODE_ALT_ADDR = 0x555*8,
 	CFI_QUERY_DATA = 0x98,
+
+	CFI_AMD_UNLOCK_ADDR1 = 0x555*8,
+	CFI_AMD_UNLOCK_ADDR2 = 0x555*4,
 };
 
 static inline void

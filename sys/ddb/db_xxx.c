@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.64 2011/06/12 03:35:51 rmind Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.64.2.1 2012/04/17 00:07:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.64 2011/06/12 03:35:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.64.2.1 2012/04/17 00:07:24 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kgdb.h"
@@ -106,18 +106,31 @@ db_kill_proc(db_expr_t addr, bool haddr,
 	       db_error("?\n");
 	       /*NOTREACHED*/
 	}
-
+	/* We might stop when the mutex is held or when not */
+	t = mutex_tryenter(proc_lock);
+#ifdef DIAGNOSTIC
+	if (!t) {
+	       db_error("could not acquire proc_lock mutex\n");
+	       /*NOTREACHED*/
+	}
+#endif
 	p = proc_find((pid_t)pid);
 	if (p == NULL) {
-	       db_error("no such proc\n");
-	       /*NOTREACHED*/
+		if (t)
+			mutex_exit(proc_lock);
+		db_error("no such proc\n");
+		/*NOTREACHED*/
 	}
 	KSI_INIT(&ksi);
 	ksi.ksi_signo = sig;
 	ksi.ksi_code = SI_USER;
 	ksi.ksi_pid = 0;
 	ksi.ksi_uid = 0;
+	mutex_enter(p->p_lock);
 	kpsignal2(p, &ksi);
+	mutex_exit(p->p_lock);
+	if (t)
+		mutex_exit(proc_lock);
 #else
 	db_printf("This command is not currently supported.\n");
 #endif

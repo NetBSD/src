@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_login_access.c,v 1.3 2006/11/03 18:03:23 christos Exp $	*/
+/*	$NetBSD: pam_login_access.c,v 1.3.40.1 2012/04/17 00:05:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Mark R V Murray
@@ -40,7 +40,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_login_access/pam_login_access.c,v 1.11 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_login_access.c,v 1.3 2006/11/03 18:03:23 christos Exp $");
+__RCSID("$NetBSD: pam_login_access.c,v 1.3.40.1 2012/04/17 00:05:30 yamt Exp $");
 #endif
 
 #define _BSD_SOURCE
@@ -90,14 +90,14 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags __unused,
 		if (login_access(user, tty) != 0)
 			return (PAM_SUCCESS);
 		PAM_VERBOSE_ERROR("%s is not allowed to log in on %s",
-		    user, tty);
+		    (const char *)user, (const char *)tty);
 	} else {
 		PAM_LOG("Checking login.access for user %s from host %s",
 		    (const char *)user, (const char *)rhost);
 		if (login_access(user, rhost) != 0)
 			return (PAM_SUCCESS);
 		PAM_VERBOSE_ERROR("%s is not allowed to log in from %s",
-		    user, rhost);
+		    (const char *)user, (const char *)rhost);
 	}
 
 	return (PAM_AUTH_ERR);

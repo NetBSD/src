@@ -1,4 +1,4 @@
-/* $NetBSD: securelevel.h,v 1.3 2009/10/02 18:50:14 elad Exp $ */
+/* $NetBSD: securelevel.h,v 1.3.12.1 2012/04/17 00:08:51 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -28,6 +28,9 @@
 
 #ifndef _SECMODEL_SECURELEVEL_SECURELEVEL_H_
 #define	_SECMODEL_SECURELEVEL_SECURELEVEL_H_
+
+#define SECMODEL_SECURELEVEL_ID   "org.netbsd.secmodel.securelevel"
+#define SECMODEL_SECURELEVEL_NAME "Traditional NetBSD: Securelevel"
 
 int secmodel_securelevel_sysctl(SYSCTLFN_PROTO);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.24 2011/07/07 01:26:55 mrg Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.24.2.1 2012/04/17 00:06:38 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -48,6 +48,7 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/byteorder.h>
 #include <lib/libsa/cd9660.h>
+#include <lib/libsa/dosfs.h>
 #include <lib/libsa/nfs.h>
 #include <lib/libsa/ufs.h>
 #include <lib/libsa/lfs.h>
@@ -122,8 +123,9 @@ static struct fs_ops file_system_hfs = FS_OPS(hfs);
 static struct fs_ops file_system_ustarfs = FS_OPS(ustarfs);
 static struct fs_ops file_system_cd9660 = FS_OPS(cd9660);
 static struct fs_ops file_system_nfs = FS_OPS(nfs);
+static struct fs_ops file_system_dosfs = FS_OPS(dosfs);
 
-struct fs_ops file_system[8];
+struct fs_ops file_system[9];
 int nfsys;
 
 static struct of_dev ofdev = {
@@ -423,7 +425,8 @@ devopen(struct open_file *of, const char *name, char **file)
 		return ENXIO;
 	if (!strcmp(buf, "block") && strrchr(devname, ':') == NULL)
 		/* indicate raw partition, when missing */
-		strlcat(devname, ":0", sizeof(devname));
+		if (ofw_version >= 3)
+			strlcat(devname, ":0", sizeof(devname));
 	if ((handle = OF_open(devname)) == -1)
 		return ENXIO;
 	memset(&ofdev, 0, sizeof ofdev);
@@ -473,7 +476,8 @@ devopen(struct open_file *of, const char *name, char **file)
 		file_system[4] = file_system_ustarfs;
 		file_system[5] = file_system_cd9660;
 		file_system[6] = file_system_hfs;
-		nfsys = 7;
+		file_system[7] = file_system_dosfs;
+		nfsys = 8;
 		return 0;
 	}
 	if (!strcmp(buf, "network")) {

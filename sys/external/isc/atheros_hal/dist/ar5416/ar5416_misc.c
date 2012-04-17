@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5416_misc.c,v 1.1.1.1 2008/12/11 04:46:48 alc Exp $
+ * $Id: ar5416_misc.c,v 1.1.1.1.24.1 2012/04/17 00:08:17 yamt Exp $
  */
 #include "opt_ah.h"
 
@@ -113,7 +113,7 @@ ar5416SetAntennaSwitch(struct ath_hal *ah, HAL_ANT_SETTING settings)
 HAL_BOOL
 ar5416SetDecompMask(struct ath_hal *ah, uint16_t keyidx, int en)
 {
-	return HAL_OK;
+	return AH_TRUE;
 }
 
 /* Setup coverage class */

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.27 2011/04/04 08:30:17 mbalmer Exp $	*/
+/*	$NetBSD: md.h,v 1.27.4.1 2012/04/17 00:02:51 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -55,7 +55,7 @@
 /* use UFS2 by default for ffs */
 #define	DEFAULT_UFS2
 
-/* have support for booting form UFS2 */
+/* have support for booting from UFS2 */
 #define	HAVE_UFS2_BOOT
 
 /* allow using tmpfs for /tmp instead of mfs */

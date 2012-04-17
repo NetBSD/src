@@ -1,4 +1,4 @@
-/*	$NetBSD: mlo_ipl.c,v 1.1.1.3 2007/04/14 20:17:25 martin Exp $	*/
+/*	$NetBSD: mlo_ipl.c,v 1.1.1.3.34.1 2012/04/17 00:02:24 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -41,17 +41,17 @@
 #endif
 
 
-extern	int	lkmenodev __P((void));
+extern	int	lkmenodev(void);
 
 #if OpenBSD >= 200311
-int	if_ipl_lkmentry __P((struct lkm_table *, int, int));
+int	if_ipl_lkmentry(struct lkm_table *, int, int);
 #else
-int	if_ipl __P((struct lkm_table *, int, int));
+int	if_ipl(struct lkm_table *, int, int);
 #endif
-static	int	ipl_unload __P((void));
-static	int	ipl_load __P((void));
-static	int	ipl_remove __P((void));
-static	int	iplaction __P((struct lkm_table *, int));
+static	int	ipl_unload(void);
+static	int	ipl_load(void);
+static	int	ipl_remove(void);
+static	int	iplaction(struct lkm_table *, int);
 static	char	*ipf_devfiles[] = { IPL_NAME, IPNAT_NAME, IPSTATE_NAME,
 				    IPAUTH_NAME, IPSYNC_NAME, IPSCAN_NAME,
 				    IPLOOKUP_NAME, NULL };
@@ -75,15 +75,17 @@ int	ipl_major = 0;
 
 MOD_DEV(IPL_VERSION, LM_DT_CHAR, -1, &ipldevsw);
 
-extern int vd_unuseddev __P((void));
+extern int vd_unuseddev(void);
 extern struct cdevsw cdevsw[];
 extern int nchrdev;
 
 
 #if OpenBSD >= 200311
-int if_ipl_lkmentry (lkmtp, cmd, ver)
+int
+if_ipl_lkmentry(lkmtp, cmd, ver)
 #else
-int if_ipl(lkmtp, cmd, ver)
+int
+if_ipl(lkmtp, cmd, ver)
 #endif
 struct lkm_table *lkmtp;
 int cmd, ver;
@@ -91,11 +93,10 @@ int cmd, ver;
 	DISPATCH(lkmtp, cmd, ver, iplaction, iplaction, iplaction);
 }
 
-int lkmexists __P((struct lkm_table *)); /* defined in /sys/kern/kern_lkm.c */
+int lkmexists(struct lkm_table *); /* defined in /sys/kern/kern_lkm.c */
 
-static int iplaction(lkmtp, cmd)
-struct lkm_table *lkmtp;
-int cmd;
+static int
+iplaction(struct lkm_table *lkmtp, int cmd)
 {
 	int i;
 	struct lkm_dev *args = lkmtp->private.lkm_dev;
@@ -136,7 +137,8 @@ int cmd;
 }
 
 
-static int ipl_remove()
+static int
+ipl_remove(void)
 {
 	struct nameidata nd;
 	int error, i;
@@ -167,7 +169,8 @@ static int ipl_remove()
 }
 
 
-static int ipl_unload()
+static int
+ipl_unload(void)
 {
 	int error = 0;
 
@@ -189,7 +192,8 @@ static int ipl_unload()
 }
 
 
-static int ipl_load()
+static int
+ipl_load(void)
 {
 	struct nameidata nd;
 	struct vattr vattr;

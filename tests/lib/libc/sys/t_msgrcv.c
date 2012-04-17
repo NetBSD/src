@@ -1,4 +1,4 @@
-/* $NetBSD: t_msgrcv.c,v 1.1.2.2 2011/11/10 14:31:52 yamt Exp $ */
+/* $NetBSD: t_msgrcv.c,v 1.1.2.3 2012/04/17 00:09:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_msgrcv.c,v 1.1.2.2 2011/11/10 14:31:52 yamt Exp $");
+__RCSID("$NetBSD: t_msgrcv.c,v 1.1.2.3 2012/04/17 00:09:12 yamt Exp $");
 
 #include <sys/msg.h>
 #include <sys/stat.h>
@@ -127,7 +127,7 @@ ATF_TC_BODY(msgrcv_block, tc)
 	/*
 	 * Below msgsnd(2) should unblock the child,
 	 * and hence kill(2) should fail with ESRCH.
-	  */
+	 */
 	(void)sleep(1);
 	(void)msgsnd(id, &msg, sizeof(struct msg), IPC_NOWAIT);
 	(void)sleep(1);

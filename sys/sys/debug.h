@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.h,v 1.3 2008/04/28 20:24:10 martin Exp $	*/
+/*	$NetBSD: debug.h,v 1.3.34.1 2012/04/17 00:08:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@ void	debug_init(void);
 void	freecheck_out(void **, void *);
 void	freecheck_in(void **, void *);
 
-#ifdef DEBUG
+#if defined(DEBUG) && defined(_HARDKERNEL)
 #define	FREECHECK_OUT(h, a)	freecheck_out((h), (a))
 #define	FREECHECK_IN(h, a)	freecheck_in((h), (a))
 #else

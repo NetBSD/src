@@ -1,4 +1,4 @@
-/*	$NetBSD: via_padlock.h,v 1.6 2011/02/19 13:52:28 jmcneill Exp $	*/
+/*	$NetBSD: via_padlock.h,v 1.6.4.1 2012/04/17 00:07:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -61,7 +61,7 @@ struct via_padlock_softc {
 
 	int			sc_rnd_hz;
 	struct callout		sc_rnd_co;
-	rndsource_element_t	sc_rnd_source;
+	krndsource_t	sc_rnd_source;
 	bool			sc_rnd_attached;
 
 	/* normal softc stuff */

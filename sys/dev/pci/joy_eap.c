@@ -1,18 +1,20 @@
-/* $NetBSD: joy_eap.c,v 1.12 2009/05/07 07:56:03 cegger Exp $ */
+/* $NetBSD: joy_eap.c,v 1.12.12.1 2012/04/17 00:07:50 yamt Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_eap.c,v 1.12 2009/05/07 07:56:03 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_eap.c,v 1.12.12.1 2012/04/17 00:07:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/audioio.h>
-#include <dev/audio_if.h>
 #include <sys/bus.h>
+
+#include <dev/audio_if.h>
 
 #include <dev/pci/eapreg.h>
 #include <dev/pci/eapvar.h>
+
 #include <dev/ic/joyvar.h>
 
 struct joy_eap_aa {
@@ -98,6 +100,7 @@ static void
 joy_eap_attach(device_t parent, device_t self, void *aux)
 {
 	struct joy_softc *sc = device_private(self);
+	struct eap_softc *esc = device_private(parent);
 	struct joy_eap_aa *eaa = aux;
 
 	aprint_normal("\n");
@@ -105,6 +108,7 @@ joy_eap_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iot = eaa->aa_iot;
 	sc->sc_ioh = eaa->aa_ioh;
 	sc->sc_dev = self;
+	sc->sc_lock = &esc->sc_lock;
 
 	joyattach(sc);
 }

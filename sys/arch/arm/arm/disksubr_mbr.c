@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_mbr.c,v 1.12 2009/03/15 22:23:16 cegger Exp $	*/
+/*	$NetBSD: disksubr_mbr.c,v 1.12.12.1 2012/04/17 00:06:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr_mbr.c,v 1.12 2009/03/15 22:23:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr_mbr.c,v 1.12.12.1 2012/04/17 00:06:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,13 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr_mbr.c,v 1.12 2009/03/15 22:23:16 cegger Exp
 #define MBRSIGOFS 0x1fe
 static char mbrsig[2] = {0x55, 0xaa};
 
-int fat_types[] = {
-	MBR_PTYPE_FAT12, MBR_PTYPE_FAT16S,
-	MBR_PTYPE_FAT16B, MBR_PTYPE_FAT32,
-	MBR_PTYPE_FAT32L, MBR_PTYPE_FAT16L,
-	-1
-};
-
 int
 mbr_label_read(dev_t dev,
 	void (*strat)(struct buf *),
@@ -97,7 +90,7 @@ mbr_label_read(dev_t dev,
 {
 	struct mbr_partition *mbrp;
 	struct partition *pp;
-	int cyl, mbrpartoff, i, *ip;
+	int cyl, mbrpartoff, i;
 	struct buf *bp;
 	int rv = 1;
 
@@ -160,12 +153,7 @@ mbr_label_read(dev_t dev,
 			pp = &lp->d_partitions['e' - 'a' + i];
 			pp->p_offset = mbrp->mbrp_start;
 			pp->p_size = mbrp->mbrp_size;
-			for (ip = fat_types; *ip != -1; ip++) {
-				if (mbrp->mbrp_type == *ip)
-					pp->p_fstype = FS_MSDOS;
-			}
-			if (mbrp->mbrp_type == MBR_PTYPE_LNXEXT2)
-				pp->p_fstype = FS_EX2FS;
+			pp->p_fstype = xlat_mbr_fstype(mbrp->mbrp_type);
 
 			/* is this ours? */
 			if (mbrp == ourmbrp) {

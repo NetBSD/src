@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.22 2011/02/08 20:20:08 rmind Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.22.4.1 2012/04/17 00:06:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,30 +41,48 @@
 struct ite_softc;
 
 #ifdef _KERNEL
+/* maximum console size */
+#define MAXROWS 200
+#define MAXCOLS 200
+
 /*
  * this struct is owned by the driver (grfcc, grfrt)
  * and is passed to grf when grf is configed. The ite also
  * uses it...
  */
 struct	grf_softc {
-	struct device  g_device;	/* config sets this up. */
-	struct grfinfo g_display;	/* hardware description (for ioctl) */
-	volatile void *g_regkva;	/* KVA of registers */
-	volatile void *g_fbkva;	/* KVA of framebuffer */
-	int     g_flags;		/* software flags */
-	int	g_unit;			/* grf unit we want/have */
-	dev_t	g_itedev;		/* ite device number */
-	dev_t	g_grfdev;		/* grf device number */
-	void *g_data;			/* device dependent data */
-	int  (*g_mode)(struct grf_softc *, u_long, void *, u_long, int);
-	int    g_conpri;		/* priority of ite as console */
-	void (*g_iteinit)(struct ite_softc *);
-	void (*g_itedeinit)(struct ite_softc *);
-	void (*g_iteclear)(struct ite_softc *, int, int, int, int);
-	void (*g_iteputc)(struct ite_softc *, int, int, int, int);
-	void (*g_itecursor)(struct ite_softc *, int);
-	void (*g_itescroll)(struct ite_softc *, int, int, int, int);
-	int	g_blank;		/* shadow copy of blank value */
+	struct device	g_device;	/* config sets this up. */
+	struct grfinfo	g_display;	/* hardware description (for ioctl) */
+	volatile void	*g_regkva;	/* KVA of registers */
+	volatile void	*g_fbkva;	/* KVA of framebuffer */
+	int		g_flags;	/* software flags */
+	int		g_unit;		/* grf unit we want/have */
+	dev_t		g_itedev;	/* ite device number */
+	dev_t		g_grfdev;	/* grf device number */
+	void		*g_data;	/* device dependent data */
+	int		g_blank;	/* shadow copy of blank value */
+	int		(*g_mode)(struct grf_softc *, u_long, void *,
+				  u_long, int);
+#if NWSDISPLAY > 0
+	struct wsdisplay_accessops	*g_accessops;
+	struct wsdisplay_emulops	*g_emulops;
+	struct wsscreen_descr		g_defaultscreen;
+	struct wsscreen_descr		*g_screens[1];
+	struct wsscreen_list		g_screenlist;
+	struct vcons_data		g_vd;
+	struct ws_ao_ioctl		*g_wsioctl;
+	uint16_t g_rowoffset[MAXROWS];	/* speed up putchar-multiplication */
+	int	g_wsmode;		/* current wsdisplay mode */ 
+	
+#else
+	int	g_conpri;		/* priority of ite as console */
+	void 	(*g_iteinit)(struct ite_softc *);
+	void 	(*g_itedeinit)(struct ite_softc *);
+	void 	(*g_iteclear)(struct ite_softc *, int, int, int, int);
+	void 	(*g_iteputc)(struct ite_softc *, int, int, int, int);
+	void 	(*g_itecursor)(struct ite_softc *, int);
+	void 	(*g_itescroll)(struct ite_softc *, int, int, int, int);
+#endif /* NWSDISPLAY */
 };
 #endif /* _KERNEL */
 
@@ -74,6 +92,7 @@ struct	grf_softc {
 #define GF_EXCLUDE	0x04
 #define GF_WANTED	0x08
 #define GF_GRFON	0x10
+#define GF_CONSOLE	0x20
 
 /* software ids defined in grfioctl.h */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd_args.c,v 1.1.1.1 2009/12/13 16:56:08 kardel Exp $	*/
+/*	$NetBSD: cmd_args.c,v 1.1.1.1.6.1 2012/04/17 00:03:47 yamt Exp $	*/
 
 /*
  * cmd_args.c = command-line argument processing
@@ -18,7 +18,6 @@
  */
 extern char const *progname;
 extern const char *specific_interface;
-extern short default_ai_family;
 
 #ifdef HAVE_NETINFO
 extern int	check_netinfo;
@@ -43,10 +42,18 @@ getCmdOpts(
 	 */
 	errflg = 0;
 
-	if (HAVE_OPT( IPV4 ))
-		default_ai_family = AF_INET;
-	else if (HAVE_OPT( IPV6 ))
-		default_ai_family = AF_INET6;
+	if (ipv4_works && ipv6_works) {
+		if (HAVE_OPT( IPV4 ))
+			ipv6_works = 0;
+		else if (HAVE_OPT( IPV6 ))
+			ipv4_works = 0;
+	} else if (!ipv4_works && !ipv6_works) {
+		msyslog(LOG_ERR, "Neither IPv4 nor IPv6 networking detected, fatal.");
+		exit(1);
+	} else if (HAVE_OPT( IPV4 ) && !ipv4_works)
+		msyslog(LOG_WARNING, "-4/--ipv4 ignored, IPv4 networking not found.");
+	else if (HAVE_OPT( IPV6 ) && !ipv6_works)
+		msyslog(LOG_WARNING, "-6/--ipv6 ignored, IPv6 networking not found.");
 
 	if (HAVE_OPT( AUTHREQ ))
 		proto_config(PROTO_AUTHENTICATE, 1, 0., NULL);

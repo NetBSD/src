@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2010/07/18 07:01:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.6.1 2012/04/17 00:04:49 yamt Exp $
 
 XCBUTIL=	icccm
 
@@ -6,12 +6,12 @@ SRCS=	icccm.c
 
 SHLIB_MAJOR=	1
 
-.include "../xcb-util.mk"
-
-LIBDPLIBS+=\
+XCBUTIL_EXTRA_DPLIBS+=\
 	xcb-atom	${.CURDIR}/../atom \
 	xcb-property	${.CURDIR}/../property \
 	xcb-event	${.CURDIR}/../event
+
+.include "../xcb-util.mk"
 
 CPPFLAGS+=	-I${X11SRCDIR.xcb-util}/atom
 CPPFLAGS+=	-I${X11SRCDIR.xcb-util}/property

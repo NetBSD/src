@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.38 2011/06/07 15:57:51 drochner Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.38.2.1 2012/04/17 00:08:48 yamt Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.38 2011/06/07 15:57:51 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.38.2.1 2012/04/17 00:08:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ swcr_encdec(struct cryptodesc *crd, const struct swcr_data *sw, void *bufv,
 			for (i = 0;
 			    i + sizeof (u_int32_t) <= EALG_MAX_BLOCK_LEN;
 			    i += sizeof (u_int32_t)) {
-				u_int32_t temp = arc4random();
+				u_int32_t temp = cprng_fast32();
 
 				memcpy(iv + i, &temp, sizeof(u_int32_t));
 			}
@@ -116,7 +116,7 @@ swcr_encdec(struct cryptodesc *crd, const struct swcr_data *sw, void *bufv,
 			 * what arc4random() returns ?
 			 */
 			if (EALG_MAX_BLOCK_LEN % sizeof (u_int32_t) != 0) {
-				u_int32_t temp = arc4random();
+				u_int32_t temp = cprng_fast32();
 
 				bcopy (&temp, iv + i,
 				    EALG_MAX_BLOCK_LEN - i);
@@ -628,7 +628,7 @@ swcr_combined(struct cryptop *crp, int outtype)
 		} else if (exf->reinit)
 			exf->reinit(swe->sw_kschedule, 0, iv);
 		else
-			arc4randbytes(iv, ivlen);
+			cprng_fast(iv, ivlen);
 
 		/* Do we need to write the IV */
 		if (!(crde->crd_flags & CRD_F_IV_PRESENT))

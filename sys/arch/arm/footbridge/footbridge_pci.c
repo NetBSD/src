@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.21 2011/07/01 19:32:28 dyoung Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.21.2.1 2012/04/17 00:06:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.21 2011/07/01 19:32:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.21.2.1 2012/04/17 00:06:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -339,11 +339,12 @@ footbridge_pci_intr_string(void *pcv, pci_intr_handle_t ih)
 }
 
 void *
-footbridge_pci_intr_establish(pcv, ih, level, func, arg)
-	void *pcv;
-	pci_intr_handle_t ih;
-	int level, (*func)(void *);
-	void *arg;
+footbridge_pci_intr_establish(
+	void *pcv,
+	pci_intr_handle_t ih,
+	int level,
+	int (*func)(void *),
+	void *arg)
 {
 	void *intr;
 	int length;

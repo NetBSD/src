@@ -1,8 +1,6 @@
-.\" $NetBSD: bpf.4,v 1.46 2010/06/08 04:11:06 jruoho Exp $
-.\"
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.46 2010/06/08 04:11:06 jruoho Exp $
+.\"	$NetBSD: bpf.4,v 1.46.6.1 2012/04/17 00:05:45 yamt Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -26,7 +24,7 @@
 .\" This document is derived in part from the enet man page (enet.4)
 .\" distributed with 4.3BSD Unix.
 .\"
-.Dd June 8, 2010
+.Dd December 31, 2011
 .Dt BPF 4
 .Os
 .Sh NAME
@@ -45,7 +43,7 @@ The packet filter appears as a character special device,
 .Pa /dev/bpf .
 After opening the device, the file descriptor must be bound to a
 specific network interface with the
-.Dv BIOSETIF
+.Dv BIOCSETIF
 ioctl.
 A given interface can be shared by multiple listeners, and the filter
 underlying each descriptor will see an identical packet stream.
@@ -64,17 +62,10 @@ the same size as the buffers used internally by
 .Nm .
 This size is returned by the
 .Dv BIOCGBLEN
-ioctl (see below), and under
-BSD, can be set with
+ioctl (see below), and can be set with
 .Dv BIOCSBLEN .
 Note that an individual packet larger than this size is necessarily
 truncated.
-.Pp
-The packet filter will support any link level protocol that has fixed length
-headers.
-Currently, only Ethernet, SLIP and PPP drivers have been
-modified to interact with
-.Nm .
 .Pp
 Since packet data is in network byte order, applications should use the
 .Xr byteorder 3
@@ -133,7 +124,7 @@ The device types, prefixed with
 are defined in
 .In net/bpf.h .
 .It Dv BIOCGDLTLIST (struct bpf_dltlist)
-Returns an array of available type of the data link layer
+Returns an array of the available types of the data link layer
 underlying the attached interface:
 .Bd -literal -offset indent
 struct bpf_dltlist {
@@ -142,13 +133,15 @@ struct bpf_dltlist {
 };
 .Ed
 .Pp
-The available type is returned to the array pointed to the
+The available types are returned in the array pointed to by the
 .Va bfl_list
-field while its length in u_int is supplied to the
+field while their length in u_int is supplied to the
 .Va bfl_len
 field.
 .Er ENOMEM
-is returned if there is not enough buffer.
+is returned if there is not enough buffer space and
+.Er EFAULT
+is returned if a bad address is encountered.
 The
 .Va bfl_len
 field is modified on return to indicate the actual length in u_int
@@ -159,9 +152,9 @@ is
 .Dv NULL ,
 the
 .Va bfl_len
-field is returned to indicate the required length of an array in u_int.
+field is set to indicate the required length of an array in u_int.
 .It Dv BIOCSDLT (u_int)
-Change the type of the data link layer underlying the attached interface.
+Changes the type of the data link layer underlying the attached interface.
 .Er EINVAL
 is returned if no interface has been specified or the specified
 type is not available for the interface.
@@ -185,7 +178,7 @@ The name is returned in the ifr_name field of
 .Fa ifr .
 All other fields are undefined.
 .It Dv BIOCSETIF (struct ifreq)
-Sets the hardware interface associate with the file.
+Sets the hardware interface associated with the file.
 This command must be performed before any packets can be read.
 The device is indicated by name using the
 .Dv ifr_name
@@ -194,7 +187,7 @@ field of the
 Additionally, performs the actions of
 .Dv BIOCFLUSH .
 .It Dv BIOCSRTIMEOUT, BIOCGRTIMEOUT (struct timeval)
-Set or get the read timeout parameter.
+Sets or gets the read timeout parameter.
 The
 .Fa timeval
 specifies the length of time to wait before timing
@@ -227,7 +220,7 @@ traffic); and
 the number of packets accepted by the filter.
 .El
 .It Dv BIOCIMMEDIATE (u_int)
-Enable or disable
+Enables or disables
 .Dq immediate mode ,
 based on the truth value of the argument.
 When immediate mode is enabled, reads return immediately upon packet
@@ -241,7 +234,7 @@ The default for a new file is off.
 .It Dv BIOCSETF (struct bpf_program)
 Sets the filter program used by the kernel to discard uninteresting
 packets.
-An array of instructions and its length is passed in using the following structure:
+An array of instructions and its length are passed in using the following structure:
 .Bd -literal -offset indent
 struct bpf_program {
 	u_int bf_len;
@@ -288,13 +281,21 @@ An incompatible filter
 may result in undefined behavior (most likely, an error returned by
 .Xr ioctl 2
 or haphazard packet matching).
+.It Dv BIOCSRSIG BIOCGRSIG (u_int)
+Sets or gets the receive signal.
+This signal will be sent to the process or process group specified by
+.Dv FIOSETOWN .
+It defaults to
+.Dv SIGIO .
 .It Dv BIOCGHDRCMPLT BIOCSHDRCMPLT (u_int)
-Enable/disable or get the
+Sets or gets the status of the
 .Dq header complete
-flag status.
-If enabled, packets written to the bpf file descriptor will not have
-network layer headers rewritten in the interface output routine.
-By default, the flag is disabled (value is 0).
+flag.
+Set to zero if the link level source address should be filled in
+automatically by the interface output routine.
+Set to one if the link level source address will be written,
+as provided, to the wire.
+This flag is initialized to zero by default.
 .It Dv BIOCGSEESENT BIOCSSEESENT (u_int)
 Enable/disable or get the
 .Dq see sent
@@ -316,7 +317,8 @@ compatibility, the two others follow the Get/Set convention.
 .\"direction is set, injected
 Injected
 outgoing packets are not returned by BPF to avoid
-duplication. This flag is initialized to zero by default.
+duplication.
+This flag is initialized to zero by default.
 .El
 .Sh STANDARD IOCTLS
 .Nm
@@ -371,7 +373,7 @@ struct bpf_hdr {
 };
 .Ed
 .Pp
-The fields, whose values are stored in host order, and are:
+The fields, whose values are stored in host order, are:
 .Bl -tag -width bh_datalen -offset indent
 .It Va bh_tstamp
 The time at which the packet was processed by the packet filter.
@@ -451,7 +453,7 @@ struct bpf_insn {
 	uint16_t code;
 	u_char 	jt;
 	u_char 	jf;
-	int32_t k;
+	uint32_t k;
 };
 .Ed
 .Pp
@@ -497,7 +499,7 @@ These instructions copy a value into the accumulator.
 The type of the source operand is specified by an
 .Dq addressing mode
 and can be a constant
-.Sy ( BBPF_IMM ) ,
+.Sy ( BPF_IMM ) ,
 packet data at a fixed offset
 .Sy ( BPF_ABS ) ,
 packet data at a variable offset
@@ -516,6 +518,8 @@ halfword
 .Sy ( BPF_H ) ,
 or byte
 .Sy ( BPF_B ) .
+Arithmetic overflow when calculating a variable offset terminates
+the filter program and the packet is ignored.
 The semantics of all the recognized BPF_LD instructions follow.
 .Bl -column "BPF_LD_BPF_W_BPF_ABS" "A \*[Lt]- P[k:4]" -offset indent
 .It Sy BPF_LD+BPF_W+BPF_ABS Ta A \*[Lt]- P[k:4]
@@ -754,8 +758,6 @@ This could be fixed in the kernel with additional processing overhead.
 However, we favor the model where
 all files must assume that the interface is promiscuous, and if
 so desired, must use a filter to reject foreign packets.
-.Pp
-Data link protocols with variable length headers are not currently supported.
 .Pp
 Under SunOS, if a BPF application reads more than 2^31 bytes of
 data, read will fail in

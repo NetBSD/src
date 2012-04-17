@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq-subs.c,v 1.3 2010/12/04 23:08:35 christos Exp $	*/
+/*	$NetBSD: ntpq-subs.c,v 1.3.6.1 2012/04/17 00:03:49 yamt Exp $	*/
 
 /*
  * ntpq_ops.c - subroutines which are called to perform operations by ntpq
@@ -15,26 +15,27 @@
 
 extern const char *	chosts[];
 extern char currenthost[];
+extern int currenthostisnum;
 extern int	numhosts;
 int 	maxhostlen;
 
 /*
  * Declarations for command handlers in here
  */
-static	int	checkassocid	(u_int32);
+static	associd_t checkassocid	(u_int32);
 static	struct varlist *findlistvar (struct varlist *, char *);
-static	void	doaddvlist	(struct varlist *, char *);
-static	void	dormvlist	(struct varlist *, char *);
+static	void	doaddvlist	(struct varlist *, const char *);
+static	void	dormvlist	(struct varlist *, const char *);
 static	void	doclearvlist	(struct varlist *);
 static	void	makequerydata	(struct varlist *, int *, char *);
-static	int	doquerylist	(struct varlist *, int, int, int, 
-				 u_short *, int *, char **);
+static	int	doquerylist	(struct varlist *, int, associd_t, int,
+				 u_short *, int *, const char **);
 static	void	doprintvlist	(struct varlist *, FILE *);
 static	void	addvars 	(struct parse *, FILE *);
 static	void	rmvars		(struct parse *, FILE *);
 static	void	clearvars	(struct parse *, FILE *);
 static	void	showvars	(struct parse *, FILE *);
-static	int	dolist		(struct varlist *, int, int, int,
+static	int	dolist		(struct varlist *, associd_t, int, int,
 				 FILE *);
 static	void	readlist	(struct parse *, FILE *);
 static	void	writelist	(struct parse *, FILE *);
@@ -58,9 +59,9 @@ static	void	radiostatus (struct parse *, FILE *);
 
 static	void	pstatus 	(struct parse *, FILE *);
 static	long	when		(l_fp *, l_fp *, l_fp *);
-static	char *	prettyinterval	(char *, long);
-static	int	doprintpeers	(struct varlist *, int, int, int, char *, FILE *, int);
-static	int	dogetpeers	(struct varlist *, int, FILE *, int);
+static	char *	prettyinterval	(char *, size_t, long);
+static	int	doprintpeers	(struct varlist *, int, int, int, const char *, FILE *, int);
+static	int	dogetpeers	(struct varlist *, associd_t, FILE *, int);
 static	void	dopeers 	(int, FILE *, int);
 static	void	peers		(struct parse *, FILE *);
 static	void	lpeers		(struct parse *, FILE *);
@@ -220,16 +221,24 @@ extern struct ctl_var peer_var[];
 /*
  * checkassocid - return the association ID, checking to see if it is valid
  */
-static int
+static associd_t
 checkassocid(
 	u_int32 value
 	)
 {
-	if (value == 0 || value >= 65536) {
-		(void) fprintf(stderr, "***Invalid association ID specified\n");
+	associd_t	associd;
+	u_long		ulvalue;
+
+	associd = (associd_t)value;
+	if (0 == associd || value != associd) {
+		ulvalue = value;
+		fprintf(stderr,
+			"***Invalid association ID %lu specified\n",
+			ulvalue);
 		return 0;
 	}
-	return (int)value;
+
+	return associd;
 }
 
 
@@ -259,7 +268,7 @@ findlistvar(
 static void
 doaddvlist(
 	struct varlist *vlist,
-	char *vars
+	const char *vars
 	)
 {
 	register struct varlist *vl;
@@ -294,7 +303,7 @@ doaddvlist(
 static void
 dormvlist(
 	struct varlist *vlist,
-	char *vars
+	const char *vars
 	)
 {
 	register struct varlist *vl;
@@ -393,11 +402,11 @@ static int
 doquerylist(
 	struct varlist *vlist,
 	int op,
-	int associd,
+	associd_t associd,
 	int auth,
 	u_short *rstatus,
 	int *dsize,
-	char **datap
+	const char **datap
 	)
 {
 	char data[CTL_MAX_DATA_LEN];
@@ -498,13 +507,13 @@ showvars(
 static int
 dolist(
 	struct varlist *vlist,
-	int associd,
+	associd_t associd,
 	int op,
 	int type,
 	FILE *fp
 	)
 {
-	char *datap;
+	const char *datap;
 	int res;
 	int dsize;
 	u_short rstatus;
@@ -553,7 +562,8 @@ readlist(
 	FILE *fp
 	)
 {
-	int associd;
+	associd_t	associd;
+	int		type;
 
 	if (pcmd->nargs == 0) {
 		associd = 0;
@@ -565,8 +575,10 @@ readlist(
 			return;
 	}
 
-	(void) dolist(g_varlist, associd, CTL_OP_READVAR,
-			  (associd == 0) ? TYPE_SYS : TYPE_PEER, fp);
+	type = (0 == associd)
+		   ? TYPE_SYS
+		   : TYPE_PEER;
+	dolist(g_varlist, associd, CTL_OP_READVAR, type, fp);
 }
 
 
@@ -579,9 +591,9 @@ writelist(
 	FILE *fp
 	)
 {
-	char *datap;
+	const char *datap;
 	int res;
-	int associd;
+	associd_t associd;
 	int dsize;
 	u_short rstatus;
 
@@ -623,8 +635,10 @@ readvar(
 	FILE *fp
 	)
 {
-	int associd;
-	struct varlist tmplist[MAXLIST];
+	associd_t	associd;
+	int		type;
+	struct varlist	tmplist[MAXLIST];
+
 
 	/* HMS: uval? */
 	if (pcmd->nargs == 0 || pcmd->argval[0].uval == 0)
@@ -632,12 +646,14 @@ readvar(
 	else if ((associd = checkassocid(pcmd->argval[0].uval)) == 0)
 		return;
 
-	memset((char *)tmplist, 0, sizeof(tmplist));
+	memset(tmplist, 0, sizeof(tmplist));
 	if (pcmd->nargs >= 2)
 		doaddvlist(tmplist, pcmd->argval[1].string);
 
-	(void) dolist(tmplist, associd, CTL_OP_READVAR,
-			  (associd == 0) ? TYPE_SYS : TYPE_PEER, fp);
+	type = (0 == associd)
+		   ? TYPE_SYS
+		   : TYPE_PEER;
+	dolist(tmplist, associd, CTL_OP_READVAR, type, fp);
 
 	doclearvlist(tmplist);
 }
@@ -652,9 +668,10 @@ writevar(
 	FILE *fp
 	)
 {
-	char *datap;
+	const char *datap;
 	int res;
-	int associd;
+	associd_t associd;
+	int type;
 	int dsize;
 	u_short rstatus;
 	struct varlist tmplist[MAXLIST];
@@ -677,16 +694,15 @@ writevar(
 		return;
 
 	if (numhosts > 1)
-		(void) fprintf(fp, "server=%s ", currenthost);
+		fprintf(fp, "server=%s ", currenthost);
 	if (dsize == 0)
-		(void) fprintf(fp, "done! (no data returned)\n");
+		fprintf(fp, "done! (no data returned)\n");
 	else {
-		(void) fprintf(fp,"associd=%d ",associd);
-		printvars(dsize, datap, (int)rstatus,
-			  (associd != 0)
-			      ? TYPE_PEER 
-			      : TYPE_SYS, 
-			  0, fp);
+		fprintf(fp,"associd=%d ",associd);
+		type = (0 == associd)
+			   ? TYPE_SYS
+			   : TYPE_PEER;
+		printvars(dsize, datap, (int)rstatus, type, 0, fp);
 	}
 	return;
 }
@@ -701,7 +717,7 @@ clocklist(
 	FILE *fp
 	)
 {
-	int associd;
+	associd_t associd;
 
 	/* HMS: uval? */
 	if (pcmd->nargs == 0) {
@@ -713,7 +729,7 @@ clocklist(
 			return;
 	}
 
-	(void) dolist(g_varlist, associd, CTL_OP_READCLOCK, TYPE_CLOCK, fp);
+	dolist(g_varlist, associd, CTL_OP_READCLOCK, TYPE_CLOCK, fp);
 }
 
 
@@ -726,7 +742,7 @@ clockvar(
 	FILE *fp
 	)
 {
-	int associd;
+	associd_t associd;
 	struct varlist tmplist[MAXLIST];
 
 	/* HMS: uval? */
@@ -735,11 +751,11 @@ clockvar(
 	else if ((associd = checkassocid(pcmd->argval[0].uval)) == 0)
 		return;
 
-	memset((char *)tmplist, 0, sizeof(tmplist));
+	memset(tmplist, 0, sizeof(tmplist));
 	if (pcmd->nargs >= 2)
 		doaddvlist(tmplist, pcmd->argval[1].string);
 
-	(void) dolist(tmplist, associd, CTL_OP_READCLOCK, TYPE_CLOCK, fp);
+	dolist(tmplist, associd, CTL_OP_READCLOCK, TYPE_CLOCK, fp);
 
 	doclearvlist(tmplist);
 }
@@ -756,48 +772,38 @@ findassidrange(
 	int *to
 	)
 {
-	register int i;
-	int f, t;
+	associd_t	assids[2];
+	int		ind[COUNTOF(assids)];
+	int		i;
+	size_t		a;
 
-	if (assid1 == 0 || assid1 > 65535) {
-		(void) fprintf(stderr,
-				   "***Invalid association ID %lu specified\n", (u_long)assid1);
+	assids[0] = checkassocid(assid1);
+	if (0 == assids[0])
 		return 0;
-	}
-
-	if (assid2 == 0 || assid2 > 65535) {
-	fprintf(stderr,
-	    "***Invalid association ID %lu specified\n", (u_long)assid2);
+	assids[1] = checkassocid(assid2);
+	if (0 == assids[1])
 		return 0;
-	}
 
-	f = t = -1;
-	for (i = 0; i < numassoc; i++) {
-		if (assoc_cache[i].assid == assid1) {
-			f = i;
-			if (t != -1)
-				break;
+	for (a = 0; a < COUNTOF(assids); a++) {
+		ind[a] = -1;
+		for (i = 0; i < numassoc; i++)
+			if (assoc_cache[i].assid == assids[a])
+				ind[a] = i;
+	}
+	for (a = 0; a < COUNTOF(assids); a++)
+		if (-1 == ind[a]) {
+			fprintf(stderr,
+				"***Association ID %u not found in list\n",
+				assids[a]);
+			return 0;
 		}
-		if (assoc_cache[i].assid == assid2) {
-			t = i;
-			if (f != -1)
-				break;
-		}
-	}
 
-	if (f == -1 || t == -1) {
-		(void) fprintf(stderr,
-				   "***Association ID %lu not found in list\n",
-				   (f == -1) ? (u_long)assid1 : (u_long)assid2);
-		return 0;
-	}
-
-	if (f < t) {
-		*from = f;
-		*to = t;
+	if (ind[0] < ind[1]) {
+		*from = ind[0];
+		*to = ind[1];
 	} else {
-		*from = t;
-		*to = f;
+		*to = ind[0];
+		*from = ind[1];
 	}
 	return 1;
 }
@@ -846,21 +852,26 @@ mreadvar(
 	int from;
 	int to;
 	struct varlist tmplist[MAXLIST];
+	struct varlist *pvars;
 
 	/* HMS: uval? */
 	if (!findassidrange(pcmd->argval[0].uval, pcmd->argval[1].uval,
 				&from, &to))
 		return;
 
-	memset((char *)tmplist, 0, sizeof(tmplist));
-	if (pcmd->nargs >= 3)
+	if (pcmd->nargs >= 3) {
+		memset(tmplist, 0, sizeof(tmplist));
 		doaddvlist(tmplist, pcmd->argval[2].string);
+		pvars = tmplist;
+	} else {
+		pvars = g_varlist;
+	}
 
 	for (i = from; i <= to; i++) {
 		if (i != from)
-			(void) fprintf(fp, "\n");
-		if (!dolist(g_varlist, (int)assoc_cache[i].assid,
-				CTL_OP_READVAR, TYPE_PEER, fp))
+			fprintf(fp, "\n");
+		if (!dolist(pvars, (int)assoc_cache[i].assid,
+			    CTL_OP_READVAR, TYPE_PEER, fp))
 			break;
 	}
 	doclearvlist(tmplist);
@@ -876,7 +887,7 @@ dogetassoc(
 	FILE *fp
 	)
 {
-	char *datap;
+	const char *datap;
 	int res;
 	int dsize;
 	u_short rstatus;
@@ -905,9 +916,9 @@ dogetassoc(
 
 	numassoc = 0;
 	while (dsize > 0) {
-		assoc_cache[numassoc].assid = ntohs(*((u_short *)datap));
+		assoc_cache[numassoc].assid = ntohs(*((const u_short *)datap));
 		datap += sizeof(u_short);
-		assoc_cache[numassoc].status = ntohs(*((u_short *)datap));
+		assoc_cache[numassoc].status = ntohs(*((const u_short *)datap));
 		datap += sizeof(u_short);
 		if (++numassoc >= MAXASSOC)
 			break;
@@ -1093,14 +1104,16 @@ printassoc(
 			break;
 		}
 		cnt = uinttoa(event_count);
-		sprintf(buf,
-		    "%3d %5u  %04x   %3.3s  %4s  %4.4s %9.9s %11s %2s",
-		    i + 1, assoc_cache[i].assid, assoc_cache[i].status,
-		    conf, reach, auth, condition, last_event, cnt);
-		bp = &buf[strlen(buf)];
-		while (bp > buf && *(bp-1) == ' ')
-			*(--bp) = '\0';
-		(void) fprintf(fp, "%s\n", buf);
+		snprintf(buf, sizeof(buf),
+			 "%3d %5u  %04x   %3.3s  %4s  %4.4s %9.9s %11s %2s",
+			 i + 1, assoc_cache[i].assid,
+			 assoc_cache[i].status, conf, reach, auth,
+			 condition, last_event, cnt);
+		bp = buf + strlen(buf);
+		while (bp > buf && ' ' == bp[-1])
+			--bp;
+		bp[0] = '\0';
+		fprintf(fp, "%s\n", buf);
 	}
 }
 
@@ -1172,7 +1185,7 @@ saveconfig(
 	FILE *fp
 	)
 {
-	char *datap;
+	const char *datap;
 	int res;
 	int dsize;
 	u_short rstatus;
@@ -1190,10 +1203,8 @@ saveconfig(
 
 	if (0 == dsize)
 		fprintf(fp, "(no response message, curiously)");
-	else {
-		datap[dsize] = '\0';
-		fprintf(fp, "%s", datap);
-	}
+	else
+		fprintf(fp, "%.*s", dsize, datap);
 }
 
 
@@ -1239,9 +1250,9 @@ pstatus(
 	FILE *fp
 	)
 {
-	char *datap;
+	const char *datap;
 	int res;
-	int associd;
+	associd_t associd;
 	int dsize;
 	u_short rstatus;
 
@@ -1249,22 +1260,22 @@ pstatus(
 	if ((associd = checkassocid(pcmd->argval[0].uval)) == 0)
 		return;
 
-	res = doquery(CTL_OP_READSTAT, associd, 0, 0, (char *)0, &rstatus,
-			  &dsize, &datap);
+	res = doquery(CTL_OP_READSTAT, associd, 0, 0, NULL, &rstatus,
+		      &dsize, &datap);
 
 	if (res != 0)
 		return;
 
 	if (numhosts > 1)
-		(void) fprintf(fp, "server=%s ", currenthost);
+		fprintf(fp, "server=%s ", currenthost);
 	if (dsize == 0) {
-		(void) fprintf(fp,
-				   "No information returned for association %u\n",
-				   associd);
+		fprintf(fp,
+			"No information returned for association %u\n",
+			associd);
 		return;
 	}
 
-	(void) fprintf(fp,"associd=%d ",associd);
+	fprintf(fp, "associd=%u ", associd);
 	printvars(dsize, datap, (int)rstatus, TYPE_PEER, 0, fp);
 }
 
@@ -1298,6 +1309,7 @@ when(
 static char *
 prettyinterval(
 	char *buf,
+	size_t cb,
 	long diff
 	)
 {
@@ -1308,24 +1320,24 @@ prettyinterval(
 	}
 
 	if (diff <= 2048) {
-		(void) sprintf(buf, "%ld", (long int)diff);
+		snprintf(buf, cb, "%ld", diff);
 		return buf;
 	}
 
 	diff = (diff + 29) / 60;
 	if (diff <= 300) {
-		(void) sprintf(buf, "%ldm", (long int)diff);
+		snprintf(buf, cb, "%ldm", diff);
 		return buf;
 	}
 
 	diff = (diff + 29) / 60;
 	if (diff <= 96) {
-		(void) sprintf(buf, "%ldh", (long int)diff);
+		snprintf(buf, cb, "%ldh", diff);
 		return buf;
 	}
 
 	diff = (diff + 11) / 24;
-	(void) sprintf(buf, "%ldd", (long int)diff);
+	snprintf(buf, cb, "%ldd", diff);
 	return buf;
 }
 
@@ -1421,7 +1433,7 @@ doprintpeers(
 	int associd,
 	int rstatus,
 	int datalen,
-	char *data,
+	const char *data,
 	FILE *fp,
 	int af
 	)
@@ -1433,8 +1445,11 @@ doprintpeers(
 
 	sockaddr_u srcadr;
 	sockaddr_u dstadr;
+	sockaddr_u refidadr;
 	u_long srcport = 0;
 	const char *dstadr_refid = "0.0.0.0";
+	const char *serverlocal;
+	size_t drlen;
 	u_long stratum = 0;
 	long ppoll = 0;
 	long hpoll = 0;
@@ -1480,10 +1495,10 @@ doprintpeers(
 			case CP_DSTADR:
 			if (decodenetnum(value, &dum_store)) {
 				type = decodeaddrtype(&dum_store);
+				havevar[HAVE_DSTADR] = 1;
+				dstadr = dum_store;
 				if (pvl == opeervarlist) {
-					havevar[HAVE_DSTADR] = 1;
-					dstadr = dum_store;
-					dstadr_refid = stoa(&dstadr);
+					dstadr_refid = trunc_left(stoa(&dstadr), 15);
 				}
 			}
 			break;
@@ -1491,23 +1506,23 @@ doprintpeers(
 			if (pvl == peervarlist) {
 				havevar[HAVE_REFID] = 1;
 				if (*value == '\0') {
-					dstadr_refid = "0.0.0.0";
-				} else if ((int)strlen(value) <= 4) {
+					dstadr_refid = "";
+				} else if (strlen(value) <= 4) {
 					refid_string[0] = '.';
 					(void) strcpy(&refid_string[1], value);
 					i = strlen(refid_string);
 					refid_string[i] = '.';
 					refid_string[i+1] = '\0';
 					dstadr_refid = refid_string;
-				} else if (decodenetnum(value, &dstadr)) {
-					if (SOCK_UNSPEC(&dstadr))
+				} else if (decodenetnum(value, &refidadr)) {
+					if (SOCK_UNSPEC(&refidadr))
 						dstadr_refid = "0.0.0.0";
-					else if (ISREFCLOCKADR(&dstadr))
+					else if (ISREFCLOCKADR(&refidadr))
 						dstadr_refid =
-						    refnumtoa(&dstadr);
+						    refnumtoa(&refidadr);
 					else
 						dstadr_refid =
-						    stoa(&dstadr);
+						    stoa(&refidadr);
 				} else {
 					havevar[HAVE_REFID] = 0;
 				}
@@ -1585,19 +1600,39 @@ doprintpeers(
 		c = flash3[CTL_PEER_STATVAL(rstatus) & 0x7];
 	else
 		c = flash2[CTL_PEER_STATVAL(rstatus) & 0x3];
-	if (numhosts > 1)
-		(void) fprintf(fp, "%-*s ", maxhostlen, currenthost);
-	if (af == 0 || AF(&srcadr) == af) {
-		strcpy(clock_name, nntohost(&srcadr));
-		
-		(void) fprintf(fp,
-			"%c%-15.15s %-15.15s %2ld %c %4.4s %4.4s  %3lo  %7.7s %8.7s %7.7s\n",
-			c, clock_name, dstadr_refid, stratum, type,
-			prettyinterval(whenbuf, when(&ts, &rec, &reftime)),
-			prettyinterval(pollbuf, (int)poll_sec), reach,
-			lfptoms(&estdelay, 3), lfptoms(&estoffset, 3),
-			havevar[HAVE_JITTER] ? lfptoms(&estjitter, 3) :
-			lfptoms(&estdisp, 3));
+	if (numhosts > 1) {
+		if (peervarlist == pvl && havevar[HAVE_DSTADR]) {
+			serverlocal = nntohost_col(&dstadr,
+			    (size_t)min(LIB_BUFLENGTH - 1, maxhostlen),
+			    TRUE);
+		} else {
+			if (currenthostisnum)
+				serverlocal = trunc_left(currenthost,
+							 maxhostlen);
+			else
+				serverlocal = currenthost;
+		}
+		fprintf(fp, "%-*s ", maxhostlen, serverlocal);
+	}
+	if (AF_UNSPEC == af || AF(&srcadr) == af) {
+		strncpy(clock_name, nntohost(&srcadr), sizeof(clock_name));		
+		fprintf(fp, "%c%-15.15s ", c, clock_name);
+		drlen = strlen(dstadr_refid);
+		makeascii(drlen, dstadr_refid, fp);
+		while (drlen++ < 15)
+			fputc(' ', fp);
+		fprintf(fp,
+			" %2ld %c %4.4s %4.4s  %3lo  %7.7s %8.7s %7.7s\n",
+			stratum, type,
+			prettyinterval(whenbuf, sizeof(whenbuf),
+				       when(&ts, &rec, &reftime)),
+			prettyinterval(pollbuf, sizeof(pollbuf), 
+				       (int)poll_sec),
+			reach, lfptoms(&estdelay, 3),
+			lfptoms(&estoffset, 3),
+			(havevar[HAVE_JITTER])
+			    ? lfptoms(&estjitter, 3)
+			    : lfptoms(&estdisp, 3));
 		return (1);
 	}
 	else
@@ -1628,12 +1663,12 @@ doprintpeers(
 static int
 dogetpeers(
 	struct varlist *pvl,
-	int associd,
+	associd_t associd,
 	FILE *fp,
 	int af
 	)
 {
-	char *datap;
+	const char *datap;
 	int res;
 	int dsize;
 	u_short rstatus;
@@ -1645,7 +1680,7 @@ dogetpeers(
 	/*
 	 * Damn fuzzballs
 	 */
-	res = doquery(CTL_OP_READVAR, associd, 0, 0, (char *)0, &rstatus,
+	res = doquery(CTL_OP_READVAR, associd, 0, 0, NULL, &rstatus,
 			  &dsize, &datap);
 #endif
 
@@ -1654,14 +1689,15 @@ dogetpeers(
 
 	if (dsize == 0) {
 		if (numhosts > 1)
-			(void) fprintf(stderr, "server=%s ", currenthost);
-		(void) fprintf(stderr,
-				   "***No information returned for association %d\n",
-				   associd);
+			fprintf(stderr, "server=%s ", currenthost);
+		fprintf(stderr,
+			"***No information returned for association %u\n",
+			associd);
 		return 0;
 	}
 
-	return doprintpeers(pvl, associd, (int)rstatus, dsize, datap, fp, af);
+	return doprintpeers(pvl, associd, (int)rstatus, dsize, datap,
+			    fp, af);
 }
 
 
@@ -1675,27 +1711,32 @@ dopeers(
 	int af
 	)
 {
-	register int i;
-	char fullname[LENHOSTNAME];
-	sockaddr_u netnum;
+	int		i;
+	char		fullname[LENHOSTNAME];
+	sockaddr_u	netnum;
+	const char *		name_or_num;
+	size_t		sl;
 
 	if (!dogetassoc(fp))
 		return;
 
 	for (i = 0; i < numhosts; ++i) {
-		if (getnetnum(chosts[i], &netnum, fullname, af))
-			if ((int)strlen(fullname) > maxhostlen)
-				maxhostlen = strlen(fullname);
+		if (getnetnum(chosts[i], &netnum, fullname, af)) {
+			name_or_num = nntohost(&netnum);
+			sl = strlen(name_or_num);
+			maxhostlen = max(maxhostlen, (int)sl);
+		}
 	}
 	if (numhosts > 1)
-		(void) fprintf(fp, "%-*.*s ", maxhostlen, maxhostlen, "server");
-	(void) fprintf(fp,
-			   "     remote           refid      st t when poll reach   delay   offset  jitter\n");
+		fprintf(fp, "%-*.*s ", maxhostlen, maxhostlen,
+			"server (local)");
+	fprintf(fp,
+		"     remote           refid      st t when poll reach   delay   offset  jitter\n");
 	if (numhosts > 1)
 		for (i = 0; i <= maxhostlen; ++i)
-		(void) fprintf(fp, "=");
-	(void) fprintf(fp,
-			   "==============================================================================\n");
+			fprintf(fp, "=");
+	fprintf(fp,
+		"==============================================================================\n");
 
 	for (i = 0; i < numassoc; i++) {
 		if (!showall &&
@@ -1855,18 +1896,19 @@ config (
 	char *cfgcmd;
 	u_short rstatus;
 	int rsize;
-	char *rdata;
+	const char *rdata;
+	char *resp;
 	int res;
 	int col;
 	int i;
 
 	cfgcmd = pcmd->argval[0].string;
 
-	if (debug > 2) {
-		printf("In Config\n");
-		printf("Keyword = %s\n", pcmd->keyword);
-		printf("Command = %s\n", cfgcmd);
-	}
+	if (debug > 2)
+		fprintf(stderr, 
+			"In Config\n"
+			"Keyword = %s\n"
+			"Command = %s\n", pcmd->keyword, cfgcmd);
 
 	res = doquery(CTL_OP_CONFIGURE, 0, 1, strlen(cfgcmd), cfgcmd,
 		      &rstatus, &rsize, &rdata);
@@ -1876,10 +1918,13 @@ config (
 
 	if (rsize > 0 && '\n' == rdata[rsize - 1])
 		rsize--;
-	rdata[rsize] = '\0';
+
+	resp = emalloc(rsize + 1);
+	memcpy(resp, rdata, rsize);
+	resp[rsize] = '\0';
 
 	col = -1;
-	if (1 == sscanf(rdata, "column %d syntax error", &col)
+	if (1 == sscanf(resp, "column %d syntax error", &col)
 	    && col >= 0 && (size_t)col <= strlen(cfgcmd) + 1) {
 		if (interactive) {
 			printf("______");	/* "ntpq> " */
@@ -1890,7 +1935,8 @@ config (
 			putchar('_');
 		printf("^\n");
 	}
-	printf("%s\n", rdata);
+	printf("%s\n", resp);
+	free(resp);
 }
 
 
@@ -1915,7 +1961,7 @@ config_from_file (
 {
 	u_short rstatus;
 	int rsize;
-	char *rdata;
+	const char *rdata;
 	int res;
 	FILE *config_fd;
 	char config_cmd[MAXLINE];
@@ -1923,11 +1969,12 @@ config_from_file (
 	int i;
 	int retry_limit;
 
-	if (debug > 2) {
-		printf("In Config\n");
-		printf("Keyword = %s\n", pcmd->keyword);
-		printf("Filename = %s\n", pcmd->argval[0].string);
-	}
+	if (debug > 2)
+		fprintf(stderr,
+			"In Config\n"
+			"Keyword = %s\n"
+			"Filename = %s\n", pcmd->keyword,
+			pcmd->argval[0].string);
 
 	config_fd = fopen(pcmd->argval[0].string, "r");
 	if (NULL == config_fd) {
@@ -1964,8 +2011,8 @@ config_from_file (
 			rsize--;
 		if (rsize > 0 && '\r' == rdata[rsize - 1])
 			rsize--;
-		rdata[rsize] = '\0';
-		printf("Line No: %d %s: %s", i, rdata, config_cmd);
+		printf("Line No: %d %.*s: %s", i, rsize, rdata,
+		       config_cmd);
 	}
 	printf("Done sending file\n");
 	fclose(config_fd);

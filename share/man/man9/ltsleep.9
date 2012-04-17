@@ -1,4 +1,4 @@
-.\"	$NetBSD: ltsleep.9,v 1.12 2008/04/30 13:10:58 martin Exp $
+.\"	$NetBSD: ltsleep.9,v 1.12.22.1 2012/04/17 00:05:49 yamt Exp $
 .\"
 .\" Copyright (c) 1996, 2002, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 17, 2007
+.Dd January 28, 2012
 .Dt LTSLEEP 9
 .Os
 .Sh NAME
@@ -38,14 +38,16 @@
 .Sh SYNOPSIS
 .In sys/proc.h
 .Ft int
-.Fn "ltsleep" "wchan_t ident" "pri_t priority" "const char *wmesg" "int timo" "volatile struct simplelock *slock"
-.Ft int
 .Fn "tsleep" "wchan_t ident" "pri_t priority" "const char *wmesg" "int timo"
 .Ft void
 .Fn "wakeup" "wchan_t ident"
 .Sh DESCRIPTION
 .Em The interfaces described in this manual page are obsolete
 .Em and will be removed from a future version of the system.
+.Pp
+.Em The
+.Em Fn ltsleep
+.Em interface has been obsoleted and removed from the system.
 .Pp
 .Em Please see the
 .Xr condvar 9 ,
@@ -55,10 +57,8 @@
 .Em manual pages for information on kernel synchronisation primitives.
 .Pp
 These functions implement voluntary context switching.
-.Fn ltsleep
-and
 .Fn tsleep
-are used throughout the kernel whenever processing in the current context
+is used throughout the kernel whenever processing in the current context
 can not continue for any of the following reasons:
 .Bl -bullet -offset indent
 .It
@@ -82,7 +82,7 @@ again -- retry the action that blocked its operation to see if the
 condition has cleared.
 .Pp
 The
-.Fn ltsleep
+.Fn tsleep
 function takes the following arguments:
 .Bl -tag -width priority
 .It Fa ident
@@ -108,12 +108,6 @@ If the flag
 is OR'ed into
 .Fa priority
 the process checks for posted signals before and after sleeping.
-If the flag
-.Dv PNORELOCK
-is OR'ed into
-.Fa priority ,
-.Fa slock
-is NOT re-locked after process resume.
 .It Fa wmesg
 A pointer to a character string indicating the reason a process is sleeping.
 The kernel does not use the string, but makes it available
@@ -132,25 +126,7 @@ was posted,
 .Fn tsleep
 will return
 .Er EWOULDBLOCK .
-.It Fa slock
-If not NULL, the
-.Fa slock
-interlock is unlocked once the scheduler lock is acquired.
-Unless
-.Dv PNORELOCK
-was set,
-.Fa slock
-is locked again once
-the process is resumed from sleep.
-This provides wakeup-before-sleep condition protection facility.
 .El
-.Pp
-The
-.Fn tsleep
-macro is functionally equivalent to:
-.Bd -literal -offset indent
-ltsleep(ident, priority, wmesg, timo, NULL)
-.Ed
 .Pp
 The
 .Fn wakeup
@@ -172,11 +148,11 @@ lock
 only one of them will succeed in acquiring the lock when it is released.
 All others will have to go back to sleep and wait for the next opportunity.
 .Sh RETURN VALUES
-.Fn ltsleep
+.Fn tsleep
 returns 0 if it returns as a result of a
 .Fn wakeup .
 If a
-.Fn ltsleep
+.Fn tsleep
 returns as a result of a signal, the return value is
 .Er ERESTART
 if the signal has the
@@ -187,7 +163,7 @@ and
 .Er EINTR
 otherwise.
 If
-.Fn ltsleep
+.Fn tsleep
 returns because of a timeout it returns
 .Er EWOULDBLOCK .
 .Sh SEE ALSO

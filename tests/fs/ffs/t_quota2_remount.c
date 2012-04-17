@@ -1,4 +1,4 @@
-/*	$NetBSD: t_quota2_remount.c,v 1.3 2011/06/16 15:33:25 joerg Exp $	*/
+/*	$NetBSD: t_quota2_remount.c,v 1.3.2.1 2012/04/17 00:09:03 yamt Exp $	*/
 
 /*
  * Basic tests for quota2
@@ -104,10 +104,8 @@ ATF_TC(quota_##name);							\
 									\
 ATF_TC_HEAD(quota_##name, tc)						\
 {									\
-	char buf[1000];							\
-	snprintf(buf, sizeof(buf), "test filesystem remount with quotas, " \
-	    descr);						\
-	atf_tc_set_md_var(tc, "descr", buf);				\
+	atf_tc_set_md_var(tc, "descr", 					\
+	    "test filesystem remount with quotas, %s", descr);		\
 }									\
 									\
 ATF_TC_BODY(quota_##name, tc)						\

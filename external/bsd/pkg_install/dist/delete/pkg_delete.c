@@ -34,7 +34,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: pkg_delete.c,v 1.1.1.7 2010/02/03 14:23:46 joerg Exp $");
+__RCSID("$NetBSD: pkg_delete.c,v 1.1.1.7.6.1 2012/04/17 00:04:07 yamt Exp $");
 
 #if HAVE_ERR_H
 #include <err.h>
@@ -307,7 +307,7 @@ struct find_leaves_data {
  * Packages that are marked as not for deletion are not considered as
  * leaves.  For all other packages it is checked if at least one package
  * that depended on them is to be removed AND no depending package remains.
- * If that is the case, the package is appened to the sorted list.
+ * If that is the case, the package is appended to the sorted list.
  * As this package can't have depending packages left, the topological order
  * remains consistent.
  */
@@ -338,7 +338,7 @@ find_new_leaves_iter(const char *pkg, void *cookie)
 	if (process_required_by(pkg, NULL, data->pkgs, 3) == 1) {
 		lpp = alloc_lpkg(pkg);
 		TAILQ_INSERT_TAIL(data->pkgs, lpp, lp_link);
-		data->progress = 0;
+		data->progress = 1;
 	}
 
 	return 0;

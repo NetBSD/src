@@ -1,5 +1,4 @@
-int siopdbg = 0;
-/*	$NetBSD: siop.c,v 1.1 2010/10/14 06:58:22 kiyohara Exp $	*/
+/*	$NetBSD: siop.c,v 1.1.12.1 2012/04/17 00:06:10 yamt Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.

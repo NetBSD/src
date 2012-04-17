@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.181 2011/07/01 23:48:20 mrg Exp $ */
+/*	$NetBSD: ehci.c,v 1.181.2.1 2012/04/17 00:08:05 yamt Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181 2011/07/01 23:48:20 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181.2.1 2012/04/17 00:08:05 yamt Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.181 2011/07/01 23:48:20 mrg Exp $");
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <machine/endian.h>
 
@@ -246,67 +247,67 @@ Static void		ehci_dump_exfer(struct ehci_xfer *);
 #define ehci_active_intr_list(ex) ((ex)->inext.tqe_prev != NULL)
 
 Static const struct usbd_bus_methods ehci_bus_methods = {
-	ehci_open,
-	ehci_softintr,
-	ehci_poll,
-	ehci_allocm,
-	ehci_freem,
-	ehci_allocx,
-	ehci_freex,
+	.open_pipe =	ehci_open,
+	.soft_intr =	ehci_softintr,
+	.do_poll =	ehci_poll,
+	.allocm =	ehci_allocm,
+	.freem =	ehci_freem,
+	.allocx =	ehci_allocx,
+	.freex =	ehci_freex,
 };
 
 Static const struct usbd_pipe_methods ehci_root_ctrl_methods = {
-	ehci_root_ctrl_transfer,
-	ehci_root_ctrl_start,
-	ehci_root_ctrl_abort,
-	ehci_root_ctrl_close,
-	ehci_noop,
-	ehci_root_ctrl_done,
+	.transfer =	ehci_root_ctrl_transfer,
+	.start =	ehci_root_ctrl_start,
+	.abort =	ehci_root_ctrl_abort,
+	.close =	ehci_root_ctrl_close,
+	.cleartoggle =	ehci_noop,
+	.done =		ehci_root_ctrl_done,
 };
 
 Static const struct usbd_pipe_methods ehci_root_intr_methods = {
-	ehci_root_intr_transfer,
-	ehci_root_intr_start,
-	ehci_root_intr_abort,
-	ehci_root_intr_close,
-	ehci_noop,
-	ehci_root_intr_done,
+	.transfer =	ehci_root_intr_transfer,
+	.start =	ehci_root_intr_start,
+	.abort =	ehci_root_intr_abort,
+	.close =	ehci_root_intr_close,
+	.cleartoggle =	ehci_noop,
+	.done =		ehci_root_intr_done,
 };
 
 Static const struct usbd_pipe_methods ehci_device_ctrl_methods = {
-	ehci_device_ctrl_transfer,
-	ehci_device_ctrl_start,
-	ehci_device_ctrl_abort,
-	ehci_device_ctrl_close,
-	ehci_noop,
-	ehci_device_ctrl_done,
+	.transfer =	ehci_device_ctrl_transfer,
+	.start =	ehci_device_ctrl_start,
+	.abort =	ehci_device_ctrl_abort,
+	.close =	ehci_device_ctrl_close,
+	.cleartoggle =	ehci_noop,
+	.done =		ehci_device_ctrl_done,
 };
 
 Static const struct usbd_pipe_methods ehci_device_intr_methods = {
-	ehci_device_intr_transfer,
-	ehci_device_intr_start,
-	ehci_device_intr_abort,
-	ehci_device_intr_close,
-	ehci_device_clear_toggle,
-	ehci_device_intr_done,
+	.transfer =	ehci_device_intr_transfer,
+	.start =	ehci_device_intr_start,
+	.abort =	ehci_device_intr_abort,
+	.close =	ehci_device_intr_close,
+	.cleartoggle =	ehci_device_clear_toggle,
+	.done =		ehci_device_intr_done,
 };
 
 Static const struct usbd_pipe_methods ehci_device_bulk_methods = {
-	ehci_device_bulk_transfer,
-	ehci_device_bulk_start,
-	ehci_device_bulk_abort,
-	ehci_device_bulk_close,
-	ehci_device_clear_toggle,
-	ehci_device_bulk_done,
+	.transfer =	ehci_device_bulk_transfer,
+	.start =	ehci_device_bulk_start,
+	.abort =	ehci_device_bulk_abort,
+	.close =	ehci_device_bulk_close,
+	.cleartoggle =	ehci_device_clear_toggle,
+	.done =		ehci_device_bulk_done,
 };
 
 Static const struct usbd_pipe_methods ehci_device_isoc_methods = {
-	ehci_device_isoc_transfer,
-	ehci_device_isoc_start,
-	ehci_device_isoc_abort,
-	ehci_device_isoc_close,
-	ehci_noop,
-	ehci_device_isoc_done,
+	.transfer =	ehci_device_isoc_transfer,
+	.start =	ehci_device_isoc_start,
+	.abort =	ehci_device_isoc_abort,
+	.close =	ehci_device_isoc_close,
+	.cleartoggle =	ehci_noop,
+	.done =		ehci_device_isoc_done,
 };
 
 static const uint8_t revbits[EHCI_MAX_POLLRATE] = {
@@ -613,7 +614,6 @@ ehci_intr1(ehci_softc_t *sc)
 		return (0);
 
 	EOWRITE4(sc, EHCI_USBSTS, intrs); /* Acknowledge */
-	sc->sc_bus.intr_context++;
 	sc->sc_bus.no_intrs++;
 	if (eintrs & EHCI_STS_IAA) {
 		DPRINTF(("ehci_intr1: door bell\n"));
@@ -636,8 +636,6 @@ ehci_intr1(ehci_softc_t *sc)
 		ehci_pcd(sc, sc->sc_intrxfer);
 		eintrs &= ~EHCI_STS_PCD;
 	}
-
-	sc->sc_bus.intr_context--;
 
 	if (eintrs != 0) {
 		/* Block unprocessed interrupts. */
@@ -687,10 +685,7 @@ ehci_softintr(void *v)
 	ehci_softc_t *sc = bus->hci_private;
 	struct ehci_xfer *ex, *nextex;
 
-	DPRINTFN(10,("%s: ehci_softintr (%d)\n", device_xname(sc->sc_dev),
-		     sc->sc_bus.intr_context));
-
-	sc->sc_bus.intr_context++;
+	DPRINTFN(10,("%s: ehci_softintr\n", device_xname(sc->sc_dev)));
 
 	/*
 	 * The only explanation I can think of for why EHCI is as brain dead
@@ -709,14 +704,10 @@ ehci_softintr(void *v)
 		callout_reset(&(sc->sc_tmo_intrlist),
 		    (hz), (ehci_intrlist_timeout), (sc));
 
-#ifdef USB_USE_SOFTINTR
 	if (sc->sc_softwake) {
 		sc->sc_softwake = 0;
 		wakeup(&sc->sc_softwake);
 	}
-#endif /* USB_USE_SOFTINTR */
-
-	sc->sc_bus.intr_context--;
 }
 
 /* Check for an interrupt. */
@@ -1730,7 +1721,6 @@ ehci_open(usbd_pipe_handle pipe)
 Static void
 ehci_add_qh(ehci_soft_qh_t *sqh, ehci_soft_qh_t *head)
 {
-	SPLUSBCHECK;
 
 	usb_syncmem(&head->dma, head->offs + offsetof(ehci_qh_t, qh_link),
 	    sizeof(head->qh.qh_link), BUS_DMASYNC_POSTWRITE);
@@ -1759,7 +1749,6 @@ ehci_rem_qh(ehci_softc_t *sc, ehci_soft_qh_t *sqh, ehci_soft_qh_t *head)
 {
 	ehci_soft_qh_t *p;
 
-	SPLUSBCHECK;
 	/* XXX */
 	for (p = head; p != NULL && p->next != sqh; p = p->next)
 		;
@@ -2723,14 +2712,14 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 			ehci_physaddr_t a = dataphys + i * EHCI_PAGE_SIZE;
 			if (i != 0) /* use offset only in first buffer */
 				a = EHCI_PAGE(a);
-			cur->qtd.qtd_buffer[i] = htole32(a);
-			cur->qtd.qtd_buffer_hi[i] = 0;
-#ifdef DIAGNOSTIC
 			if (i >= EHCI_QTD_NBUFFERS) {
+#ifdef DIAGNOSTIC
 				printf("ehci_alloc_sqtd_chain: i=%d\n", i);
+#endif
 				goto nomem;
 			}
-#endif
+			cur->qtd.qtd_buffer[i] = htole32(a);
+			cur->qtd.qtd_buffer_hi[i] = 0;
 		}
 		cur->nextqtd = next;
 		cur->qtd.qtd_next = cur->qtd.qtd_altnext = nextphys;
@@ -2920,7 +2909,7 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 		return;
 	}
 
-	if (xfer->device->bus->intr_context)
+	if (cpu_intr_p() || cpu_softintr_p())
 		panic("ehci_abort_xfer: not in process context");
 
 	/*
@@ -2982,13 +2971,9 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	 */
 	ehci_sync_hc(sc);
 	s = splusb();
-#ifdef USB_USE_SOFTINTR
 	sc->sc_softwake = 1;
-#endif /* USB_USE_SOFTINTR */
 	usb_schedsoftintr(&sc->sc_bus);
-#ifdef USB_USE_SOFTINTR
 	tsleep(&sc->sc_softwake, PZERO, "ehciab", 0);
-#endif /* USB_USE_SOFTINTR */
 	splx(s);
 
 	/*
@@ -3111,13 +3096,9 @@ ehci_abort_isoc_xfer(usbd_xfer_handle xfer, usbd_status status)
 	splx(s);
 
         s = splusb();
-#ifdef USB_USE_SOFTINTR
         sc->sc_softwake = 1;
-#endif /* USB_USE_SOFTINTR */
         usb_schedsoftintr(&sc->sc_bus);
-#ifdef USB_USE_SOFTINTR
         tsleep(&sc->sc_softwake, PZERO, "ehciab", 0);
-#endif /* USB_USE_SOFTINTR */
         splx(s);
 
 #ifdef DIAGNOSTIC

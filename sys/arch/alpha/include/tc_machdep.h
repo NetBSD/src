@@ -1,4 +1,4 @@
-/* $NetBSD: tc_machdep.h,v 1.4 2000/06/01 00:04:50 cgd Exp $ */
+/* $NetBSD: tc_machdep.h,v 1.4.166.1 2012/04/17 00:05:56 yamt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -57,7 +57,7 @@
  *			region that is not cached.
  */
 
-typedef u_int64_t	tc_addr_t;
+typedef uint64_t	tc_addr_t;
 typedef int32_t		tc_offset_t;
 
 #define	tc_mb()		alpha_mb()
@@ -70,13 +70,13 @@ typedef int32_t		tc_offset_t;
  */
 #define	tc_syncbus()							\
     do {								\
-	volatile u_int32_t no_optimize;					\
+	volatile uint32_t no_optimize;					\
 	no_optimize =	 						\
-	    *(volatile u_int32_t *)ALPHA_PHYS_TO_K0SEG(0x00000001f0080220); \
+	    *(volatile uint32_t *)ALPHA_PHYS_TO_K0SEG(0x00000001f0080220); \
     } while (0)
 
 #define	tc_badaddr(tcaddr)						\
-    badaddr((void *)(tcaddr), sizeof (u_int32_t))
+    badaddr((void *)(tcaddr), sizeof (uint32_t))
 
 #define	TC_SPACE_IND		0xffffffffe0000003
 #define	TC_SPACE_DENSE		0x0000000000000000

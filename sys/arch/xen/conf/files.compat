@@ -1,4 +1,4 @@
-#	$NetBSD: files.compat,v 1.22 2009/10/03 20:56:39 jmcneill Exp $
+#	$NetBSD: files.compat,v 1.22.12.1 2012/04/17 00:07:07 yamt Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 
 # options for MP configuration through the MP spec
@@ -47,9 +47,6 @@ defflag	opt_largepages.h		XXXLARGEPAGES
 
 # kernel stack debug
 defflag	opt_kstack_dr0.h		XXXKSTACK_CHECK_DR0
-
-# Microsoft Xbox support
-defflag	opt_xbox.h			XXXXBOX
 
 #Pentium 4+ Thermal Monitor ODCM (aka On Demand Clock Modulation)
 defflag opt_intel_odcm.h	XXXINTEL_ONDEMAND_CLOCKMOD

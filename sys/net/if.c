@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.256 2011/10/28 20:11:58 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.256.2.1 2012/04/17 00:08:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.256 2011/10/28 20:11:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.256.2.1 2012/04/17 00:08:38 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -810,13 +810,18 @@ again:
 	/* Walk the routing table looking for stragglers. */
 	for (i = 0; i <= AF_MAX; i++) {
 		while (rt_walktree(i, if_rt_walktree, ifp) == ERESTART)
-			;
+			continue;
 	}
 
 	DOMAIN_FOREACH(dp) {
 		if (dp->dom_ifdetach != NULL && ifp->if_afdata[dp->dom_family])
-			(*dp->dom_ifdetach)(ifp,
-			    ifp->if_afdata[dp->dom_family]);
+		{
+			void *p = ifp->if_afdata[dp->dom_family];
+			if (p) {
+				ifp->if_afdata[dp->dom_family] = NULL;
+				(*dp->dom_ifdetach)(ifp, p);
+			}
+		}
 
 		/*
 		 * One would expect multicast memberships (INET and
@@ -859,9 +864,11 @@ again:
 	 */
 	DOMAIN_FOREACH(dp) {
 		for (i = 0; i < __arraycount(dp->dom_ifqueues); i++) {
-			if (dp->dom_ifqueues[i] == NULL)
+			struct ifqueue *iq = dp->dom_ifqueues[i];
+			if (iq == NULL)
 				break;
-			if_detach_queues(ifp, dp->dom_ifqueues[i]);
+			dp->dom_ifqueues[i] = NULL;
+			if_detach_queues(ifp, iq);
 		}
 	}
 
@@ -1415,10 +1422,9 @@ int
 ifpromisc(struct ifnet *ifp, int pswitch)
 {
 	int pcount, ret;
-	short flags, nflags;
+	short nflags;
 
 	pcount = ifp->if_pcount;
-	flags = ifp->if_flags;
 	if (pswitch) {
 		/*
 		 * Allow the device to be "placed" into promiscuous
@@ -1428,20 +1434,10 @@ ifpromisc(struct ifnet *ifp, int pswitch)
 		if (ifp->if_pcount++ != 0)
 			return 0;
 		nflags = ifp->if_flags | IFF_PROMISC;
-		if ((nflags & IFF_UP) == 0)
-			return 0;
 	} else {
 		if (--ifp->if_pcount > 0)
 			return 0;
 		nflags = ifp->if_flags & ~IFF_PROMISC;
-		/*
-		 * If the device is not configured up, we should not need to
-		 * turn off promiscuous mode (device should have turned it
-		 * off when interface went down; and will look at IFF_PROMISC
-		 * again next time interface comes up).
-		 */
-		if ((nflags & IFF_UP) == 0)
-			return 0;
 	}
 	ret = if_flags_set(ifp, nflags);
 	/* Restore interface state if not successful. */
@@ -1954,6 +1950,8 @@ ifioctl_detach(struct ifnet *ifp)
 	ifp->if_ioctl_lock = NULL;
 	percpu_free(il->il_nenter, sizeof(uint64_t));
 	il->il_nenter = NULL;
+	cv_destroy(&il->il_emptied);
+	mutex_destroy(&il->il_lock);
 	kmem_free(il, sizeof(*il));
 }
 
@@ -2158,14 +2156,23 @@ if_flags_set(ifnet_t *ifp, const short flags)
 	if (ifp->if_setflags != NULL)
 		rc = (*ifp->if_setflags)(ifp, flags);
 	else {
-		short cantflags;
+		short cantflags, chgdflags;
 		struct ifreq ifr;
 
-		memset(&ifr, 0, sizeof(ifr));
+		chgdflags = ifp->if_flags ^ flags;
+		cantflags = chgdflags & IFF_CANTCHANGE;
 
-		cantflags = (ifp->if_flags ^ flags) & IFF_CANTCHANGE;
 		if (cantflags != 0)
 			ifp->if_flags ^= cantflags;
+
+                /* Traditionally, we do not call if_ioctl after
+                 * setting/clearing only IFF_PROMISC if the interface
+                 * isn't IFF_UP.  Uphold that tradition.
+		 */
+		if (chgdflags == IFF_PROMISC && (ifp->if_flags & IFF_UP) == 0)
+			return 0;
+
+		memset(&ifr, 0, sizeof(ifr));
 
 		ifr.ifr_flags = flags & ~IFF_CANTCHANGE;
 		rc = (*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, &ifr);

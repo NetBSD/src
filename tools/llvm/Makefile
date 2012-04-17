@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2011/07/18 19:11:28 joerg Exp $
+#	$NetBSD: Makefile,v 1.11.2.1 2012/04/17 00:09:28 yamt Exp $
 
 .include <bsd.init.mk>
 
@@ -23,6 +23,7 @@ config/config.status: ${LLVM_SRCDIR}/configure
 	    --enable-targets=x86,powerpc,sparc,arm,mips \
 	    --host=${MACHINE_GNU_PLATFORM} \
 	    --with-c-include-dirs=/usr/include/clang-3.0:/usr/include \
+	    --with-clang-srcdir=${CLANG_SRCDIR} \
 	    --enable-optimized
 # --disable-assertions
 

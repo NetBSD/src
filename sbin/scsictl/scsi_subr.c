@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_subr.c,v 1.12 2008/04/28 20:23:09 martin Exp $	*/
+/*	$NetBSD: scsi_subr.c,v 1.12.20.1 2012/04/17 00:05:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsi_subr.c,v 1.12 2008/04/28 20:23:09 martin Exp $");
+__RCSID("$NetBSD: scsi_subr.c,v 1.12.20.1 2012/04/17 00:05:43 yamt Exp $");
 #endif
 
 
@@ -59,13 +59,14 @@ __RCSID("$NetBSD: scsi_subr.c,v 1.12 2008/04/28 20:23:09 martin Exp $");
 #define	STRVIS_ISWHITE(x) ((x) == ' ' || (x) == '\0' || (x) == (u_char)'\377')
 
 void
-scsi_command(int fd, void *cmd, size_t cmdlen, void *data, size_t datalen, 
-	int timeout, int flags)
+scsi_command(int fd, const void *cmd, size_t cmdlen,
+	void *data, size_t datalen, int timeout, int flags)
 {
 	scsireq_t req;
 
 	memset(&req, 0, sizeof(req));
 
+	cmdlen = MIN(cmdlen, sizeof(req.cmd));
 	memcpy(req.cmd, cmd, cmdlen);
 	req.cmdlen = cmdlen;
 	req.databuf = data;

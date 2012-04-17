@@ -76,7 +76,7 @@ arc4_swap(u_int8_t *a, u_int8_t *b)
  * Stir our S-box.
  */
 static void
-arc4_randomstir (void)
+arc4_randomstir(void)
 {
 	u_int8_t key[256];
 	int r, n;

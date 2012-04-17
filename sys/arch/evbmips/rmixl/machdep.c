@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2011/04/12 00:21:10 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9.4.1 2012/04/17 00:06:18 yamt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2011/04/12 00:21:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9.4.1 2012/04/17 00:06:18 yamt Exp $");
 
 #define __INTR_PRIVATE
 
@@ -197,13 +197,8 @@ static u_long rmixl_physaddr_storage[
 /* For sysctl_hw. */
 extern char cpu_model[];
 
-/* Our exported CPU info; we can have only one. */  
-struct cpu_info cpu_info_store;
-
 /* Maps for VM objects. */
 struct vm_map *phys_map = NULL;
-
-int	physmem;		/* Total physical memory */
 
 int	netboot;		/* Are we netbooting? */
 
@@ -424,7 +419,7 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
  * set up Processor Control Regs for this core
  */
 void
-rmixl_pcr_init_core()
+rmixl_pcr_init_core(void)
 {
 	uint32_t r;
 
@@ -611,7 +606,7 @@ rmixl_physaddr_init(void)
 	u_long size;
 	uint32_t r;
 
-	ext = extent_create("physaddr", start, end, M_DEVBUF,
+	ext = extent_create("physaddr", start, end,
 		(void *)rmixl_physaddr_storage, sizeof(rmixl_physaddr_storage),
 		EX_NOWAIT | EX_NOCOALESCE);
 
@@ -983,7 +978,7 @@ consinit(void)
  * Allocate memory for variable-sized tables,
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];

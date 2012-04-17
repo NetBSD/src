@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_unity.c,v 1.9 2007/10/19 03:37:19 manu Exp $	*/
+/*	$NetBSD: isakmp_unity.c,v 1.9.22.1 2012/04/17 00:01:41 yamt Exp $	*/
 
 /* Id: isakmp_unity.c,v 1.10 2006/07/31 04:49:23 manubsd Exp */
 
@@ -62,6 +62,9 @@
 #endif
 #include <ctype.h>
 #include <resolv.h>
+#ifdef HAVE_STRINGS_H
+#include <strings.h>
+#endif
 
 #include "var.h"
 #include "misc.h"
@@ -387,8 +390,9 @@ char * splitnet_list_2str(list, splitnet_ipaddr)
 		netentry = netentry->next;
 	}
 
-	/* allocate network list string */
-	str = racoon_malloc(len);
+	/* allocate network list string; we need the extra byte temporarily
+	 * as sprintf() will write trailing 0-byte after the space. */
+	str = racoon_malloc(len + 1);
 	if (str == NULL)
 		return NULL;
 
@@ -398,22 +402,24 @@ char * splitnet_list_2str(list, splitnet_ipaddr)
 	while (netentry != NULL) {
 
 		inet_ntop(AF_INET, &netentry->network.addr4, tmp1, 40);
-		inet_ntop(AF_INET, &netentry->network.mask4, tmp2, 40);
 		if (splitnet_ipaddr == CIDR) {
 			uint32_t tmp3;
 			int cidrmask;
 
 			tmp3 = ntohl(netentry->network.mask4.s_addr);
-			for (cidrmask = 0; tmp3 != 0; cidrmask++)
-				tmp3 <<= 1;
+			cidrmask = 33 - ffs(tmp3);
+			if (cidrmask == 33) cidrmask = 0;
+			
 			len += sprintf(str+len, "%s/%d ", tmp1, cidrmask);
 		} else {
+			inet_ntop(AF_INET, &netentry->network.mask4, tmp2, 40);
 			len += sprintf(str+len, "%s/%s ", tmp1, tmp2);
 		}
 
 		netentry = netentry->next;
 	}
 
+	/* trim the string to not have trailing spaces */
 	str[len-1]=0;
 
 	return str;

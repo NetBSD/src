@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.h,v 1.12 2009/08/19 08:36:13 darrenr Exp $	*/
+/*	$NetBSD: ip_state.h,v 1.12.12.1 2012/04/17 00:08:14 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -238,25 +238,25 @@ extern	ipstate_t	*ips_list;
 extern	ipftq_t	*ips_utqe;
 extern	ipftq_t	ips_tqtqb[IPF_TCP_NSTATES];
 
-extern	int	fr_stateinit __P((void));
-extern	ipstate_t *fr_addstate __P((fr_info_t *, ipstate_t **, u_int));
-extern	frentry_t *fr_checkstate __P((struct fr_info *, u_32_t *));
-extern	ipstate_t *fr_stlookup __P((fr_info_t *, tcphdr_t *, ipftq_t **));
-extern	void	fr_statesync __P((void *));
-extern	void	fr_timeoutstate __P((void));
-extern	int	fr_tcp_age __P((struct ipftqent *, struct fr_info *,
-				struct ipftq *, int));
-extern	int	fr_tcpinwindow __P((struct fr_info *, struct tcpdata *,
-				    struct tcpdata *, tcphdr_t *, int));
-extern	void	fr_stateunload __P((void));
-extern	void	ipstate_log __P((struct ipstate *, u_int));
-extern	int	fr_state_ioctl __P((void *, ioctlcmd_t, int, int, void *));
-extern	void	fr_stinsert __P((struct ipstate *, int));
-extern	void	fr_sttab_init __P((struct ipftq *));
-extern	void	fr_sttab_destroy __P((struct ipftq *));
-extern	void	fr_updatestate __P((fr_info_t *, ipstate_t *, ipftq_t *));
-extern	void	fr_statederef __P((ipstate_t **));
-extern	void	fr_setstatequeue __P((ipstate_t *, int));
-extern	int	fr_state_flush __P((int, int));
+extern	int	fr_stateinit(void);
+extern	ipstate_t *fr_addstate(fr_info_t *, ipstate_t **, u_int);
+extern	frentry_t *fr_checkstate(struct fr_info *, u_32_t *);
+extern	ipstate_t *fr_stlookup(fr_info_t *, tcphdr_t *, ipftq_t **);
+extern	void	fr_statesync(void *);
+extern	void	fr_timeoutstate(void);
+extern	int	fr_tcp_age(struct ipftqent *, struct fr_info *,
+				struct ipftq *, int);
+extern	int	fr_tcpinwindow(struct fr_info *, struct tcpdata *,
+				    struct tcpdata *, tcphdr_t *, int);
+extern	void	fr_stateunload(void);
+extern	void	ipstate_log(struct ipstate *, u_int);
+extern	int	fr_state_ioctl(void *, ioctlcmd_t, int, int, void *);
+extern	void	fr_stinsert(struct ipstate *, int);
+extern	void	fr_sttab_init(struct ipftq *);
+extern	void	fr_sttab_destroy(struct ipftq *);
+extern	void	fr_updatestate(fr_info_t *, ipstate_t *, ipftq_t *);
+extern	void	fr_statederef(ipstate_t **);
+extern	void	fr_setstatequeue(ipstate_t *, int);
+extern	int	fr_state_flush(int, int);
 
 #endif /* _NETINET_IP_STATE_H_ */

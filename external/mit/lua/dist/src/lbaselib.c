@@ -1,7 +1,7 @@
-/*	$NetBSD: lbaselib.c,v 1.1.1.1 2010/10/31 11:16:55 mbalmer Exp $	*/
+/*	$NetBSD: lbaselib.c,v 1.1.1.1.6.1 2012/04/17 00:04:46 yamt Exp $	*/
 
 /*
-** Id: lbaselib.c,v 1.191.1.6 2008/02/14 16:46:22 roberto Exp
+** $Id: lbaselib.c,v 1.1.1.1.6.1 2012/04/17 00:04:46 yamt Exp $
 ** Basic library
 ** See Copyright Notice in lua.h
 */
@@ -633,7 +633,7 @@ static void base_open (lua_State *L) {
   luaL_register(L, "_G", base_funcs);
   lua_pushliteral(L, LUA_VERSION);
   lua_setglobal(L, "_VERSION");  /* set global _VERSION */
-  /* `ipairs' and `pairs' need auxliliary functions as upvalues */
+  /* `ipairs' and `pairs' need auxiliary functions as upvalues */
   auxopen(L, "ipairs", luaB_ipairs, ipairsaux);
   auxopen(L, "pairs", luaB_pairs, luaB_next);
   /* `newproxy' needs a weaktable as upvalue */

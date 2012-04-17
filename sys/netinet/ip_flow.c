@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.59 2010/04/01 00:24:41 tls Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.59.8.1 2012/04/17 00:08:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.59 2010/04/01 00:24:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.59.8.1 2012/04/17 00:08:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,6 @@ struct ipflow {
 	u_long ipf_dropped;		/* ENOBUFS retured by if_output */
 	u_long ipf_errors;		/* other errors returned by if_output */
 	u_int ipf_timer;		/* lifetime timer */
-	time_t ipf_start;		/* creation time */
 };
 
 #define	IPFLOW_HASHBITS		6	/* should not be a multiple of 8 */
@@ -481,7 +480,7 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 	ipf->ipf_src = ip->ip_src;
 	ipf->ipf_tos = ip->ip_tos;
 	PRT_SLOW_ARM(ipf->ipf_timer, IPFLOW_TIMER);
-	ipf->ipf_start = time_uptime;
+
 	/*
 	 * Insert into the approriate bucket of the flow table.
 	 */

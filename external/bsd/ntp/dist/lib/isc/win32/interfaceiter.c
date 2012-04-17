@@ -1,4 +1,4 @@
-/*	$NetBSD: interfaceiter.c,v 1.1.1.1 2009/12/13 16:54:40 kardel Exp $	*/
+/*	$NetBSD: interfaceiter.c,v 1.1.1.1.6.1 2012/04/17 00:03:45 yamt Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -19,14 +19,10 @@
 
 /* Id: interfaceiter.c,v 1.13.110.2 2009/01/18 23:47:41 tbox Exp */
 
-/*
- * Note that this code will need to be revisited to support IPv6 Interfaces.
- * For now we just iterate through IPv4 interfaces.
- */
-
 #include <config.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <iphlpapi.h>
 #include <sys/types.h>
 
 #include <stdio.h>
@@ -40,19 +36,9 @@
 #include <isc/strerror.h>
 #include <isc/types.h>
 #include <isc/util.h>
+#include <isc/win32os.h>
 
 void InitSockets(void);
-
-/* Common utility functions */
-
-/*
- * Extract the network address part from a "struct sockaddr".
- *
- * The address family is given explicitly
- * instead of using src->sa_family, because the latter does not work
- * for copying a network mask obtained by SIOCGIFNETMASK (it does
- * not have a valid address family).
- */
 
 
 #define IFITER_MAGIC		0x49464954U	/* IFIT. */
@@ -60,7 +46,16 @@ void InitSockets(void);
 
 struct isc_interfaceiter {
 	unsigned int		magic;		/* Magic number. */
+	/* common fields */
 	isc_mem_t		*mctx;
+	isc_interface_t		current;	/* Current interface data. */
+	isc_result_t		result;		/* Last result code. */
+	/* fields used if GetAdaptersAddresses is available at runtime */
+	IP_ADAPTER_ADDRESSES *	ipaa;		/* GAA() result buffer */
+	ULONG			ipaasize;	/* Bytes allocated */
+	IP_ADAPTER_ADDRESSES *	ipaaCur;	/* enumeration position */
+	IP_ADAPTER_UNICAST_ADDRESS *ipuaCur;	/* enumeration subposition */
+	/* fields used for the older address enumeration ioctls */
 	int			socket;
 	INTERFACE_INFO		IFData;		/* Current Interface Info */
 	int			numIF;		/* Current Interface count */
@@ -73,9 +68,20 @@ struct isc_interfaceiter {
 	unsigned int		pos6;		/* buf6 index, counts down */
 	struct in6_addr		loop__1;	/* ::1 node-scope localhost */
 	struct in6_addr		loopfe80__1;	/* fe80::1 link-scope localhost */
-	isc_interface_t		current;	/* Current interface data. */
-	isc_result_t		result;		/* Last result code. */
 };
+
+typedef ULONG (WINAPI *PGETADAPTERSADDRESSES)(
+    ULONG Family,
+    ULONG Flags,
+    PVOID Reserved,
+    PIP_ADAPTER_ADDRESSES AdapterAddresses,
+    PULONG SizePointer
+);
+
+static	isc_boolean_t		use_GAA;
+static	isc_boolean_t		use_GAA_determined;
+static	HMODULE			hmod_iphlpapi;
+static	PGETADAPTERSADDRESSES	pGAA;
 
 
 /*
@@ -87,26 +93,8 @@ struct isc_interfaceiter {
 #define IFCONF_SIZE_INCREMENT	  64
 #define IFCONF_SIZE_MAX		1040
 
-static void
-get_addr(unsigned int family, isc_netaddr_t *dst, struct sockaddr *src) {
-	dst->family = family;
-	switch (family) {
-	case AF_INET:
-		memcpy(&dst->type.in,
-		       &((struct sockaddr_in *) src)->sin_addr,
-		       sizeof(struct in_addr));
-		break;
-	case	AF_INET6:
-		memcpy(&dst->type.in6,
-		       &((struct sockaddr_in6 *) src)->sin6_addr,
-		       sizeof(struct in6_addr));
-		dst->zone = ((struct sockaddr_in6 *) src)->sin6_scope_id;
-		break;
-	default:
-		INSIST(0);
-		break;
-	}
-}
+
+/* Common utility functions */
 
 /*
  * Windows always provides 255.255.255.255 as the the broadcast
@@ -132,6 +120,11 @@ isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
 	char strbuf[ISC_STRERRORSIZE];
 	isc_interfaceiter_t *iter;
 	isc_result_t result;
+	unsigned int major;
+	unsigned int minor;
+	unsigned int spmajor;
+	ULONG err;
+	int tries;
 	int error;
 	unsigned long bytesReturned = 0;
 
@@ -146,9 +139,13 @@ isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
 	InitSockets();
 
 	iter->mctx = mctx;
+	iter->ipaa = NULL;
 	iter->buf4 = NULL;
 	iter->buf6 = NULL;
 	iter->pos4 = NULL;
+	iter->ipaaCur = NULL;
+	iter->ipuaCur = NULL;
+	iter->ipaasize = 0;
 	iter->pos6 = 0;
 	iter->buf6size = 0;
 	iter->buf4size = 0;
@@ -156,6 +153,66 @@ isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
 	iter->numIF = 0;
 	iter->v4IF = 0;
 
+	/*
+	 * Use GetAdaptersAddresses in preference to ioctls when running
+	 * on Windows XP SP1 or later.  Earlier GetAdaptersAddresses do
+	 * not appear to provide enough information to associate unicast
+	 * addresses with their prefixes.
+	 */
+	if (!use_GAA_determined) {
+		major = isc_win32os_majorversion();
+		minor = isc_win32os_minorversion();
+		spmajor = isc_win32os_servicepackmajor();
+		if (major > 5 || (5 == major &&
+		    (minor > 1 || (1 == minor && spmajor >= 1)))) {
+			if (NULL == hmod_iphlpapi)
+				hmod_iphlpapi = LoadLibrary("iphlpapi");
+			if (NULL != hmod_iphlpapi)
+				pGAA = (PGETADAPTERSADDRESSES)
+				    GetProcAddress(
+					hmod_iphlpapi,
+					"GetAdaptersAddresses");
+			if (NULL != pGAA)
+				use_GAA = ISC_TRUE;
+		}
+		use_GAA_determined = ISC_TRUE;
+	}
+
+	if (!use_GAA)
+		goto use_ioctls;
+
+	iter->ipaasize = 16 * 1024;
+
+	for (tries = 0; tries < 5; tries++) {
+		iter->ipaa = isc_mem_reallocate(mctx, iter->ipaa,
+						 iter->ipaasize);
+		if (NULL == iter->ipaa) {
+			result = ISC_R_NOMEMORY;
+			goto put_iter;
+		}
+		err = (*pGAA)(
+			AF_UNSPEC,
+			GAA_FLAG_INCLUDE_PREFIX | GAA_FLAG_SKIP_ANYCAST,
+			NULL,
+			iter->ipaa,
+			&iter->ipaasize);
+		if (NO_ERROR == err || ERROR_BUFFER_OVERFLOW != err)
+			break;
+	}
+
+	if (NO_ERROR != err) {
+		isc__strerror(err, strbuf, sizeof(strbuf));
+		UNEXPECTED_ERROR(__FILE__, __LINE__,
+				"GetAdaptersAddresses: %s",
+				strbuf);
+		result = ISC_R_UNEXPECTED;
+		goto gaa_failure;
+	}
+	
+	iter->ipaaCur = iter->ipaa;
+	goto success;
+
+ use_ioctls:
 	/*
 	 * Create an unbound datagram socket to do the
 	 * SIO_GET_INTERFACE_LIST WSAIoctl on.
@@ -169,7 +226,7 @@ isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
 				"making interface scan socket: %s",
 				strbuf);
 		result = ISC_R_UNEXPECTED;
-		goto socket_failure;
+		goto put_iter;
 	}
 
 	/*
@@ -243,13 +300,13 @@ isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
 	if ((iter->socket = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
 		error = WSAGetLastError();
 		if (error == WSAEAFNOSUPPORT)
-			goto inet_only;
+			goto success;
 		isc__strerror(error, strbuf, sizeof(strbuf));
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
 				"making interface scan socket: %s",
 				strbuf);
 		result = ISC_R_UNEXPECTED;
-		goto ioctl_failure;
+		goto put_iter;
 	}
 
 	/*
@@ -312,10 +369,14 @@ isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
 
 	closesocket(iter->socket);
 
- inet_only:
+ success:
 	iter->magic = IFITER_MAGIC;
 	*iterp = iter;
 	return (ISC_R_SUCCESS);
+
+ gaa_failure:
+	isc_mem_put(mctx, iter->ipaa, iter->ipaasize);
+	goto put_iter;
 
  ioctl6_failure:
 	isc_mem_put(mctx, iter->buf6, iter->buf6size);
@@ -328,9 +389,117 @@ isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
 	if (iter->socket >= 0)
 		(void) closesocket(iter->socket);
 
- socket_failure:
+ put_iter:
 	isc_mem_put(mctx, iter, sizeof(*iter));
 	return (result);
+}
+
+static unsigned char
+GAA_find_prefix(isc_interfaceiter_t *iter) {
+	IP_ADAPTER_PREFIX *	ipap;
+	IP_ADAPTER_PREFIX *	ipap_match;
+	int			match_len;
+	int			max_len;
+	isc_netaddr_t		target;
+	u_short			af;
+	isc_netaddr_t		pfx;
+	int			pfx_len;
+	size_t			nbytes;
+	unsigned char		nbits;
+	unsigned char *		pbits;
+	unsigned int		octets;
+
+	match_len = 0;
+	ipap_match = NULL;
+	isc_netaddr_fromsockaddr(&target,
+	    (isc_sockaddr_t *)iter->ipuaCur->Address.lpSockaddr);
+	af = (u_short)target.family;
+	INSIST(AF_INET == af || AF_INET6 == af);
+	max_len = (AF_INET6 == af) ? 128 : 32;
+	iter->current.netmask.family = af;
+	for (ipap = iter->ipaaCur->FirstPrefix;
+	     ipap != NULL;
+	     ipap = ipap->Next) {
+		if (ipap->Address.lpSockaddr->sa_family != af)
+			continue;
+		isc_netaddr_fromsockaddr(&pfx,
+		    (isc_sockaddr_t *)ipap->Address.lpSockaddr);
+		pfx_len = ipap->PrefixLength;
+		INSIST(0 <= pfx_len && pfx_len <= max_len);
+		if (pfx_len > match_len && pfx_len < max_len &&
+		    isc_netaddr_eqprefix(&target, &pfx, pfx_len)) {
+			ipap_match = ipap;
+			match_len = pfx_len;
+		}
+	}
+	if (NULL == ipap_match) {
+		/* presume all-ones mask */
+		if (AF_INET6 == af)
+			octets = sizeof(iter->current.netmask.type.in6);
+		else
+			octets = sizeof(iter->current.netmask.type.in);
+		memset(&iter->current.netmask.type, 0xFF, octets);
+		return (8 * (unsigned char)octets);
+	}
+	nbytes = match_len / 8;
+	nbits = match_len % 8;
+	memset(&iter->current.netmask.type.in6, 0xFF, nbytes);
+	pbits = (void *)&iter->current.netmask.type.in6;
+	pbits += nbytes;
+	*pbits |= 0xFF << (8 - nbits);
+	return ((unsigned char)match_len);
+}
+
+static isc_result_t
+internal_current_GAA(isc_interfaceiter_t *iter) {
+	IP_ADAPTER_ADDRESSES *adap;
+	IP_ADAPTER_UNICAST_ADDRESS *addr;
+	unsigned char prefix_len;
+
+	REQUIRE(iter->ipaaCur != NULL);
+	REQUIRE(iter->ipuaCur != NULL);
+	adap = iter->ipaaCur;
+	addr = iter->ipuaCur;
+	if (IpDadStatePreferred != addr->DadState)
+		return (ISC_R_IGNORE);
+	memset(&iter->current, 0, sizeof(iter->current));
+	iter->current.af = addr->Address.lpSockaddr->sa_family;
+	isc_netaddr_fromsockaddr(&iter->current.address,
+	    (isc_sockaddr_t *)addr->Address.lpSockaddr);
+	if (AF_INET6 == iter->current.af)
+		iter->current.ifindex = adap->Ipv6IfIndex;
+	iter->current.name[0] = '\0';
+	WideCharToMultiByte(
+		CP_ACP, 
+		0, 
+		adap->FriendlyName,
+		-1,
+		iter->current.name,
+		sizeof(iter->current.name),
+		NULL,
+		NULL);
+	iter->current.name[sizeof(iter->current.name) - 1] = '\0';
+	if (IfOperStatusUp == adap->OperStatus)
+		iter->current.flags |= INTERFACE_F_UP;
+	if (IF_TYPE_PPP == adap->IfType)
+		iter->current.flags |= INTERFACE_F_POINTTOPOINT;
+	else if (IF_TYPE_SOFTWARE_LOOPBACK == adap->IfType)
+		iter->current.flags |= INTERFACE_F_LOOPBACK;
+	if ((IP_ADAPTER_NO_MULTICAST & adap->Flags) == 0)
+		iter->current.flags |= INTERFACE_F_MULTICAST;
+	if (IpSuffixOriginRandom == addr->SuffixOrigin)
+		iter->current.flags |= INTERFACE_F_PRIVACY;
+
+	prefix_len = GAA_find_prefix(iter);
+	/* I'm failing to see a broadcast flag via GAA */
+	if (AF_INET == iter->current.af && prefix_len < 32 &&
+	    (INTERFACE_F_LOOPBACK & iter->current.flags) == 0) {
+		iter->current.flags |= INTERFACE_F_BROADCAST;
+		get_broadcastaddr(&iter->current.broadcast,
+				  &iter->current.address,
+				  &iter->current.netmask);
+	}
+	return (ISC_R_SUCCESS);
 }
 
 /*
@@ -352,8 +521,8 @@ internal_current(isc_interfaceiter_t *iter) {
 	memset(&iter->current, 0, sizeof(iter->current));
 	iter->current.af = AF_INET;
 
-	get_addr(AF_INET, &iter->current.address,
-		 (struct sockaddr *)&(iter->IFData.iiAddress));
+	isc_netaddr_fromsockaddr(&iter->current.address,
+	    (isc_sockaddr_t *)&(iter->IFData.iiAddress));
 
 	/*
 	 * Get interface flags.
@@ -373,30 +542,30 @@ internal_current(isc_interfaceiter_t *iter) {
 
 	if ((flags & IFF_POINTTOPOINT) != 0) {
 		iter->current.flags |= INTERFACE_F_POINTTOPOINT;
-		sprintf(iter->current.name, "PPP %d", iter->numIF);
+		snprintf(iter->current.name, sizeof(iter->current.name),
+			 "PPP %d", iter->numIF);
 		ifNamed = TRUE;
 	}
 
 	if ((flags & IFF_LOOPBACK) != 0) {
 		iter->current.flags |= INTERFACE_F_LOOPBACK;
-		sprintf(iter->current.name, "v4loop %d", 
-			iter->numIF);
+		snprintf(iter->current.name, sizeof(iter->current.name),
+			"v4loop %d", iter->numIF);
 		ifNamed = TRUE;
 	}
 
 	/*
 	 * If the interface is point-to-point, get the destination address.
 	 */
-	if ((iter->current.flags & INTERFACE_F_POINTTOPOINT) != 0) {
-		get_addr(AF_INET, &iter->current.dstaddress,
-		(struct sockaddr *)&(iter->IFData.iiBroadcastAddress));
-	}
+	if ((iter->current.flags & INTERFACE_F_POINTTOPOINT) != 0)
+		isc_netaddr_fromsockaddr(&iter->current.dstaddress,
+		    (isc_sockaddr_t *)&(iter->IFData.iiBroadcastAddress));
 
 	/*
 	 * Get the network mask.
 	 */
-	get_addr(AF_INET, &iter->current.netmask,
-		 (struct sockaddr *)&(iter->IFData.iiNetmask));
+	isc_netaddr_fromsockaddr(&iter->current.netmask,
+	    (isc_sockaddr_t *)&(iter->IFData.iiNetmask));
 
 	/*
 	 * If the interface is broadcast, get the broadcast address,
@@ -408,7 +577,7 @@ internal_current(isc_interfaceiter_t *iter) {
 				  &iter->current.netmask);
 
 	if (ifNamed == FALSE)
-		sprintf(iter->current.name,
+		snprintf(iter->current.name, sizeof(iter->current.name),
 			"IPv4 %d", iter->numIF);
 
 	return (ISC_R_SUCCESS);
@@ -447,10 +616,10 @@ internal_current6(isc_interfaceiter_t *iter) {
 			iter->pos6 = iter->buf6->iAddressCount - 1;
 	}
 
-	if (iter->pos6 < (unsigned)iter->buf6->iAddressCount)
-		get_addr(AF_INET6, &iter->current.address,
-			 iter->buf6->Address[iter->pos6].lpSockaddr);
-	else {
+	if (iter->pos6 < (unsigned)iter->buf6->iAddressCount) {
+		isc_netaddr_fromsockaddr(&iter->current.address,
+		    (isc_sockaddr_t *)iter->buf6->Address[iter->pos6].lpSockaddr);
+	} else {
 		iter->current.address.family = AF_INET6;
 		memcpy(&iter->current.address.type.in6, &iter->loop__1,
 		       sizeof(iter->current.address.type.in6));
@@ -468,18 +637,38 @@ internal_current6(isc_interfaceiter_t *iter) {
 	            sizeof(iter->current.address.type.in6))) {
 
 		iter->current.flags |= INTERFACE_F_LOOPBACK;
-		sprintf(iter->current.name, "v6loop %d", 
-			iter->buf6->iAddressCount - iter->pos6);
+		snprintf(iter->current.name, sizeof(iter->current.name),
+			 "v6loop %d",
+			 iter->buf6->iAddressCount - iter->pos6);
 		ifNamed = TRUE;
 	}
 
 	if (ifNamed == FALSE)
-		sprintf(iter->current.name, "IPv6 %d",
-			iter->buf6->iAddressCount - iter->pos6);
+		snprintf(iter->current.name, sizeof(iter->current.name),
+			 "IPv6 %d",
+			 iter->buf6->iAddressCount - iter->pos6);
 
 	memset(iter->current.netmask.type.in6.s6_addr, 0xff,
 	       sizeof(iter->current.netmask.type.in6.s6_addr));
 	iter->current.netmask.family = AF_INET6;
+	return (ISC_R_SUCCESS);
+}
+
+static isc_result_t
+internal_next_GAA(isc_interfaceiter_t *iter) {
+	REQUIRE(use_GAA);
+	if (NULL == iter->ipaaCur)
+		return (ISC_R_NOMORE);
+	if (NULL == iter->ipuaCur)
+		iter->ipuaCur = iter->ipaaCur->FirstUnicastAddress;
+	else
+		iter->ipuaCur = iter->ipuaCur->Next;
+	while (NULL == iter->ipuaCur) {
+		iter->ipaaCur = iter->ipaaCur->Next;
+		if (NULL == iter->ipaaCur)
+			return (ISC_R_NOMORE);
+		iter->ipuaCur = iter->ipaaCur->FirstUnicastAddress;
+	}
 	return (ISC_R_SUCCESS);
 }
 
@@ -534,21 +723,22 @@ isc_interfaceiter_current(isc_interfaceiter_t *iter,
 
 isc_result_t
 isc_interfaceiter_first(isc_interfaceiter_t *iter) {
-
 	REQUIRE(VALID_IFITER(iter));
-
+	REQUIRE(use_GAA_determined);
 	/*
 	 * SIO_ADDRESS_LIST_QUERY (used to query IPv6 addresses)
-	 * intentionally omits localhost addresses ::1 and ::fe80 in
-	 * some cases.  ntpd depends on enumerating ::1 to listen on
+	 * intentionally omits localhost addresses [::1] and [::fe80] in
+	 * some cases.  ntpd depends on enumerating [::1] to listen on
 	 * it, and ntpq and ntpdc default to "localhost" as the target,
 	 * so they will attempt to talk to [::1]:123 and fail. This
 	 * means we need to synthesize ::1, which we will do first,
-	 * hence + 1.
+	 * hence iAddressCount + 1.  internal_next6() will decrement
+	 * it before the first use as an index, and internal_current6()
+	 * will treat pos6 == iAddressCount as a sign to synthesize
+	 * [::1] if needed.
 	 */
-	if (iter->buf6 != NULL)
+	if (!use_GAA && iter->buf6 != NULL)
 		iter->pos6 = iter->buf6->iAddressCount + 1;
-
 	iter->result = ISC_R_SUCCESS;
 	return (isc_interfaceiter_next(iter));
 }
@@ -559,6 +749,17 @@ isc_interfaceiter_next(isc_interfaceiter_t *iter) {
 
 	REQUIRE(VALID_IFITER(iter));
 	REQUIRE(iter->result == ISC_R_SUCCESS);
+	REQUIRE(use_GAA_determined);
+
+	if (use_GAA) {
+		do {
+			result = internal_next_GAA(iter);
+			if (ISC_R_NOMORE == result)
+				goto set_result;
+			result = internal_current_GAA(iter);
+		} while (ISC_R_IGNORE == result);
+		goto set_result;
+	}
 
 	for (;;) {
 		result = internal_next(iter);
@@ -575,6 +776,7 @@ isc_interfaceiter_next(isc_interfaceiter_t *iter) {
 		if (result != ISC_R_IGNORE)
 			break;
 	}
+ set_result:
 	iter->result = result;
 	return (result);
 }
@@ -582,14 +784,24 @@ isc_interfaceiter_next(isc_interfaceiter_t *iter) {
 void
 isc_interfaceiter_destroy(isc_interfaceiter_t **iterp) {
 	isc_interfaceiter_t *iter;
+
 	REQUIRE(iterp != NULL);
 	iter = *iterp;
 	REQUIRE(VALID_IFITER(iter));
+	REQUIRE(use_GAA_determined);
 
-	if (iter->buf4 != NULL)
-		isc_mem_put(iter->mctx, iter->buf4, iter->buf4size);
-	if (iter->buf6 != NULL)
-		isc_mem_put(iter->mctx, iter->buf6, iter->buf6size);
+	if (use_GAA) {
+		REQUIRE(NULL == iter->buf4);
+		REQUIRE(NULL == iter->buf4);
+		if (iter->ipaa != NULL)
+			isc_mem_put(iter->mctx, iter->ipaa, iter->ipaasize);
+	} else {
+		REQUIRE(NULL == iter->ipaa);
+		if (iter->buf4 != NULL)
+			isc_mem_put(iter->mctx, iter->buf4, iter->buf4size);
+		if (iter->buf6 != NULL)
+			isc_mem_put(iter->mctx, iter->buf6, iter->buf6size);
+	}
 
 	iter->magic = 0;
 	isc_mem_put(iter->mctx, iter, sizeof(*iter));

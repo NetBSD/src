@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.40 2011/02/20 07:40:24 macallan Exp $	*/
+/*	$NetBSD: awacs.c,v 1.40.4.1 2012/04/17 00:06:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,15 +27,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.40 2011/02/20 07:40:24 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.40.4.1 2012/04/17 00:06:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/kthread.h>
 #include <sys/kernel.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 
 #include <dev/auconv.h>
 #include <dev/audio_if.h>
@@ -85,7 +86,7 @@ struct awacs_softc {
 	int vol_l, vol_r;
 	int sc_bass, sc_treble;
 	lwp_t *sc_thread;
-	int sc_event;
+	kcondvar_t sc_event;
 	int sc_output_wanted;
 	int sc_need_parallel_output;
 #if NSGSMIX > 0
@@ -108,6 +109,9 @@ struct awacs_softc {
 
 #define AWACS_NFORMATS	2
 	struct audio_format sc_formats[AWACS_NFORMATS];
+
+	kmutex_t sc_lock;
+	kmutex_t sc_intr_lock;
 };
 
 static int awacs_match(device_t, struct cfdata *, void *);
@@ -134,6 +138,7 @@ static int awacs_query_devinfo(void *, mixer_devinfo_t *);
 static size_t awacs_round_buffersize(void *, int, size_t);
 static paddr_t awacs_mappage(void *, void *, off_t, int);
 static int awacs_get_props(void *);
+static void awacs_get_locks(void *, kmutex_t **, kmutex_t **);
 
 static inline u_int awacs_read_reg(struct awacs_softc *, int);
 static inline void awacs_write_reg(struct awacs_softc *, int, int);
@@ -185,6 +190,7 @@ const struct audio_hw_if awacs_hw_if = {
 	awacs_trigger_output,
 	awacs_trigger_input,
 	NULL,
+	awacs_get_locks,
 };
 
 struct audio_device awacs_device = {
@@ -376,6 +382,11 @@ awacs_attach(device_t parent, device_t self, void *aux)
 	intr_establish(cirq, cirq_type, IPL_BIO, awacs_status_intr, sc);
 	intr_establish(oirq, oirq_type, IPL_AUDIO, awacs_intr, sc);
 	intr_establish(iirq, iirq_type, IPL_AUDIO, awacs_intr, sc);
+
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
+
+	cv_init(&sc->sc_event, "awacs_wait");
 
 	/* check if the chip is a screamer */
 	sc->sc_screamer = (of_compatible(ca->ca_node, screamer) != -1);
@@ -570,11 +581,13 @@ awacs_setup_sgsmix(device_t cookie)
 	sc->sc_codecctl1 &= ~AWACS_MUTE_HEADPHONE;
 	awacs_write_codec(sc, sc->sc_codecctl1);
 
+	mutex_enter(&sc->sc_intr_lock);
 	awacs_select_output(sc, sc->sc_output_mask);
 	awacs_set_volume(sc, sc->vol_l, sc->vol_r);
 	awacs_set_bass(sc, 128);
 	awacs_set_treble(sc, 128);
-	wakeup(&sc->sc_event);	
+	cv_signal(&sc->sc_event);	
+	mutex_exit(&sc->sc_intr_lock);
 #endif
 	return 0;
 }
@@ -618,6 +631,7 @@ awacs_intr(void *v)
 	int status;
 
 	sc = v;
+	mutex_spin_enter(&sc->sc_intr_lock);
 	cmd = sc->sc_odmacmd;
 	count = sc->sc_opages;
 	/* Fill used buffer(s). */
@@ -632,6 +646,7 @@ awacs_intr(void *v)
 		}
 		cmd++;
 	}
+	mutex_spin_exit(&sc->sc_intr_lock);
 
 	return 1;
 }
@@ -838,11 +853,15 @@ awacs_set_port(void *h, mixer_ctrl_t *mc)
 		/* No change necessary? */
 		if (mc->un.mask == sc->sc_output_mask)
 			return 0;
+		mutex_enter(&sc->sc_intr_lock);
 		awacs_select_output(sc, mc->un.mask);
+		mutex_exit(&sc->sc_intr_lock);
 		return 0;
 
 	case AWACS_VOL_MASTER:
+		mutex_enter(&sc->sc_intr_lock);
 		awacs_set_volume(sc, l, r);
+		mutex_exit(&sc->sc_intr_lock);
 		return 0;
 
 	case AWACS_INPUT_SELECT:
@@ -883,11 +902,15 @@ awacs_set_port(void *h, mixer_ctrl_t *mc)
 
 #if NSGSMIX > 0
 	case AWACS_BASS:
+		mutex_enter(&sc->sc_intr_lock);
 		awacs_set_bass(sc, l);
+		mutex_exit(&sc->sc_intr_lock);
 		return 0;
 
 	case AWACS_TREBLE:
+		mutex_enter(&sc->sc_intr_lock);
 		awacs_set_treble(sc, l);
+		mutex_exit(&sc->sc_intr_lock);
 		return 0;
 #endif
 	}
@@ -1142,6 +1165,15 @@ awacs_trigger_input(void *h, void *start, void *end, int bsize,
 	DPRINTF("awacs_trigger_input called\n");
 	return 1;
 }
+  
+static void
+awacs_get_locks(void *opaque, kmutex_t **intr, kmutex_t **thread)
+{
+	struct awacs_softc *sc = opaque;
+
+	*intr = &sc->sc_intr_lock;
+	*thread = &sc->sc_lock;
+}
 
 static void
 awacs_select_output(struct awacs_softc *sc, int mask)
@@ -1369,14 +1401,16 @@ awacs_status_intr(void *cookie)
 	struct awacs_softc *sc = cookie;
 	int mask;
 	
+	mutex_spin_enter(&sc->sc_intr_lock);
 	mask = awacs_check_headphones(sc) ? OUTPUT_HEADPHONES : OUTPUT_SPEAKER;
 	if (mask != sc->sc_output_mask) {
 
 		sc->sc_output_wanted = mask;
-		wakeup(&sc->sc_event);
+		cv_signal(&sc->sc_event);
 	}
 	/* clear the interrupt */
 	awacs_write_reg(sc, AWACS_SOUND_CTRL, sc->sc_soundctl | AWACS_PORTCHG);
+	mutex_spin_exit(&sc->sc_intr_lock);
 	return 1;
 }
 
@@ -1385,8 +1419,9 @@ awacs_thread(void *cookie)
 {
 	struct awacs_softc *sc = cookie;
 	
+	mutex_enter(&sc->sc_intr_lock);
 	while (1) {
-		tsleep(&sc->sc_event, PWAIT, "awacs_wait", hz);
+		cv_timedwait(&sc->sc_event, &sc->sc_intr_lock, hz);
 		if (sc->sc_output_wanted == sc->sc_output_mask)
 			continue;
 

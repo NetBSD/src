@@ -1,4 +1,4 @@
-/*	$NetBSD: openpic.h,v 1.7 2009/03/14 14:46:05 dsl Exp $	*/
+/*	$NetBSD: openpic.h,v 1.7.12.1 2012/04/17 00:06:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -32,40 +32,35 @@
 
 extern volatile unsigned char *openpic_base;
 
-static __inline u_int openpic_read(int);
-static __inline void openpic_write(int, u_int);
+static __inline uint32_t openpic_read(u_int);
+static __inline void openpic_write(u_int, uint32_t);
 static __inline int openpic_read_irq(int);
 static __inline void openpic_eoi(int);
 
-static __inline u_int
-openpic_read(reg)
-	int reg;
+static __inline uint32_t
+openpic_read(u_int reg)
 {
-	volatile unsigned char *addr = openpic_base + reg;
+	volatile uint8_t *addr = openpic_base + reg;
 
 	return in32rb(addr);
 }
 
 static __inline void
-openpic_write(reg, val)
-	int reg;
-	u_int val;
+openpic_write(u_int reg, uint32_t val)
 {
-	volatile unsigned char *addr = openpic_base + reg;
+	volatile uint8_t *addr = openpic_base + reg;
 
 	out32rb(addr, val);
 }
 
 static __inline int
-openpic_read_irq(cpu)
-	int cpu;
+openpic_read_irq(int cpu)
 {
 	return openpic_read(OPENPIC_IACK(cpu)) & OPENPIC_VECTOR_MASK;
 }
 
 static __inline void
-openpic_eoi(cpu)
-	int cpu;
+openpic_eoi(int cpu)
 {
 	openpic_write(OPENPIC_EOI(cpu), 0);
 	openpic_read(OPENPIC_EOI(cpu));

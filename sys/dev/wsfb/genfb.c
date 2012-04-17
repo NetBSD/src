@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.42 2011/07/13 22:47:29 macallan Exp $ */
+/*	$NetBSD: genfb.c,v 1.42.2.1 2012/04/17 00:08:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.42 2011/07/13 22:47:29 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.42.2.1 2012/04/17 00:08:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,7 @@ static int	genfb_putcmap(struct genfb_softc *, struct wsdisplay_cmap *);
 static int 	genfb_getcmap(struct genfb_softc *, struct wsdisplay_cmap *);
 static int 	genfb_putpalreg(struct genfb_softc *, uint8_t, uint8_t,
 			    uint8_t, uint8_t);
+static void	genfb_init_palette(struct genfb_softc *);
 
 static void	genfb_brightness_up(device_t);
 static void	genfb_brightness_down(device_t);
@@ -196,9 +197,9 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	struct rasops_info *ri;
 	uint16_t crow;
 	long defattr;
-	int i, j;
 	bool console;
 #ifdef SPLASHSCREEN
+	int i, j;
 	int error = ENXIO;
 #endif
 
@@ -267,6 +268,11 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
 	sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
 
+	if (crow >= ri->ri_rows) {
+		crow = 0;
+		sc->sc_want_clear = 1;
+	}
+
 	if (console)
 		wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, crow,
 		    defattr);
@@ -275,14 +281,9 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	if (sc->sc_want_clear)
 		(*ri->ri_ops.eraserows)(ri, 0, ri->ri_rows, defattr);
 
+#ifdef SPLASHSCREEN
 	j = 0;
 	for (i = 0; i < min(1 << sc->sc_depth, 256); i++) {
-#ifndef SPLASHSCREEN
-		sc->sc_cmap_red[i] = rasops_cmap[j];
-		sc->sc_cmap_green[i] = rasops_cmap[j + 1];
-		sc->sc_cmap_blue[i] = rasops_cmap[j + 2];
-		j += 3;
-#else
 		if (i >= SPLASH_CMAP_OFFSET &&
 		    i < SPLASH_CMAP_OFFSET + SPLASH_CMAP_SIZE) {
 			splash_get_cmap(i,
@@ -295,11 +296,9 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 			sc->sc_cmap_blue[i] = rasops_cmap[j + 2];
 		}
 		j += 3;
-#endif
 	}
 	genfb_restore_palette(sc);
 
-#ifdef SPLASHSCREEN
 	sc->sc_splash.si_depth = sc->sc_depth;
 	sc->sc_splash.si_bits = sc->sc_console_screen.scr_ri.ri_bits;
 	sc->sc_splash.si_hwbits = sc->sc_fbaddr;
@@ -312,10 +311,12 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 		    SPLASH_F_CENTER|SPLASH_F_FILL);
 		if (error) {
 			SCREEN_ENABLE_DRAWING(&sc->sc_console_screen);
+			genfb_init_palette(sc);
 			vcons_replay_msgbuf(&sc->sc_console_screen);
 		}
 	}
 #else
+	genfb_init_palette(sc);
 	vcons_replay_msgbuf(&sc->sc_console_screen);
 #endif
 
@@ -401,6 +402,7 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 						SPLASH_F_CENTER|SPLASH_F_FILL);
 			} else {
 				SCREEN_ENABLE_DRAWING(&sc->sc_console_screen);
+				genfb_init_palette(sc);
 			}
 			vcons_redraw_screen(ms);
 			return 0;
@@ -505,7 +507,36 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 		ri->ri_flg |= RI_CLEAR;
 	}
 
-	rasops_init(ri, sc->sc_height / 8, sc->sc_width / 8);
+	if (ri->ri_depth == 32) {
+		bool is_bgr = false;
+
+		ri->ri_flg |= RI_ENABLE_ALPHA;
+		prop_dictionary_get_bool(device_properties(sc->sc_dev),
+		    "is_bgr", &is_bgr);
+		if (is_bgr) {
+			/* someone requested BGR */
+			ri->ri_rnum = 8;
+			ri->ri_gnum = 8;
+			ri->ri_bnum = 8;
+			ri->ri_rpos = 0;
+			ri->ri_gpos = 8;
+			ri->ri_bpos = 16;
+		} else {
+			/* assume RGB */
+			ri->ri_rnum = 8;
+			ri->ri_gnum = 8;
+			ri->ri_bnum = 8;
+			ri->ri_rpos = 16;
+			ri->ri_gpos = 8;
+			ri->ri_bpos = 0;
+		}
+	}	
+
+	if (ri->ri_depth == 8 && sc->sc_cmcb != NULL)
+		ri->ri_flg |= RI_ENABLE_ALPHA | RI_8BIT_IS_RGB;
+
+
+	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
@@ -593,6 +624,47 @@ genfb_restore_palette(struct genfb_softc *sc)
 		for (i = 0; i < (1 << sc->sc_depth); i++) {
 			genfb_putpalreg(sc, i, sc->sc_cmap_red[i],
 			    sc->sc_cmap_green[i], sc->sc_cmap_blue[i]);
+		}
+	}
+}
+
+static void
+genfb_init_palette(struct genfb_softc *sc)
+{
+	int i, j, tmp;
+
+	if (sc->sc_depth == 8) {
+		/* generate an r3g3b2 colour map */
+		for (i = 0; i < 256; i++) {
+			tmp = i & 0xe0;
+			/*
+			 * replicate bits so 0xe0 maps to a red value of 0xff
+			 * in order to make white look actually white
+			 */
+			tmp |= (tmp >> 3) | (tmp >> 6);
+			sc->sc_cmap_red[i] = tmp;
+
+			tmp = (i & 0x1c) << 3;
+			tmp |= (tmp >> 3) | (tmp >> 6);
+			sc->sc_cmap_green[i] = tmp;
+
+			tmp = (i & 0x03) << 6;
+			tmp |= tmp >> 2;
+			tmp |= tmp >> 4;
+			sc->sc_cmap_blue[i] = tmp;
+
+			genfb_putpalreg(sc, i, sc->sc_cmap_red[i],
+				       sc->sc_cmap_green[i],
+				       sc->sc_cmap_blue[i]);
+		}
+	} else {
+		/* steal rasops' ANSI cmap */
+		j = 0;
+		for (i = 0; i < 256; i++) {
+			sc->sc_cmap_red[i] = rasops_cmap[j];
+			sc->sc_cmap_green[i] = rasops_cmap[j + 1];
+			sc->sc_cmap_blue[i] = rasops_cmap[j + 2];
+			j += 3;
 		}
 	}
 }

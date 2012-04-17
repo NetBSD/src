@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000var.h,v 1.1 2010/09/08 22:01:29 ahoka Exp $	*/
+/*	$NetBSD: dm9000var.h,v 1.1.14.1 2012/04/17 00:07:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -63,7 +63,7 @@
 #ifndef _DEV_IC_DM9000VAR_H_
 #define _DEV_IC_DM9000VAR_H_
 
-#include <sys/mutex.h>
+#include <sys/callout.h>
 
 #define DM9000_MODE_8BIT 2
 #define DM9000_MODE_16BIT 0
@@ -75,6 +75,9 @@ struct dme_softc {
 	struct ethercom sc_ethercom;	/* Ethernet common data */
 	struct ifmedia	sc_media;	/* Media control structures */
 
+	uint		sc_media_active;
+	uint		sc_media_status;
+
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	void		*sc_ih;
@@ -85,7 +88,7 @@ struct dme_softc {
 	uint16_t	sc_vendor_id;
 	uint16_t	sc_product_id;
 
-	uint16_t	io_mode;
+	uint8_t		sc_data_width;
 
 	uint8_t		sc_enaddr[ETHER_ADDR_LEN];
 
@@ -94,15 +97,25 @@ struct dme_softc {
 					   for transmission. */
 	uint16_t	txready_length;
 
+	int (*sc_pkt_write)(struct dme_softc*, struct mbuf *);
+	int (*sc_pkt_read)(struct dme_softc*, struct ifnet *, struct mbuf **);
+
+	callout_t	sc_link_callout;
+
+	bool		sc_phy_initialized;
+
 #ifdef DIAGNOSTIC
 	bool		sc_inside_interrupt;
 #endif
 };
 
 /* Function declarations */
-int	dme_attach(struct dme_softc *, uint8_t *);
+int	dme_attach(struct dme_softc *, const uint8_t *);
 int	dme_detach(struct dme_softc *);
 int	dme_intr(void *);
+
+/* Helper method used by sc_pkt_read */
+struct mbuf* dme_alloc_receive_buffer(struct ifnet *, unsigned int);
 
 /* Inline memory access methods */
 static inline uint8_t

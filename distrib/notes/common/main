@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.482 2011/11/01 02:04:43 tcort Exp $
+.\"	$NetBSD: main,v 1.482.2.1 2012/04/17 00:02:35 yamt Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -171,18 +171,18 @@ bootloader
 and the installation kernel
 .Pa macppc/binary/kernel/netbsd-GENERIC_MD.gz .
 If you have a CD-R, you can fetch the CD image,
-.Pa macppccd-\*V.iso .
+.Pa NetBSD-\*V-macppc.iso .
 .\}
 .if \n[sparc] \{\
 Fetch a CD image,
-.Pa sparccd-\*V.iso
+.Pa NetBSD-\*V-sparc.iso
 or the floppy disk images,
 .Pa sparc/install/floppy/disk1.gz No and Pa sparc/install/floppy/disk2 .
 You need either the pair of floppies or the CD to boot your system.
 .\}
 .if \n[sparc64] \{\
 This is either a CD image,
-.Pa sparc64cd-\*V.iso
+.Pa NetBSD-\*V-sparc64.iso
 or the installation kernel and bootloader,
 .Pa sparc64/binary/kernel/netbsd-INSTALL.gz No and Pa sparc64/installation/misc/ofwboot
 which can be booted from a
@@ -1222,6 +1222,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Wayne Knowles Ta Mt wdk@NetBSD.org
 .It Ta Takayoshi Kochi Ta Mt kochi@NetBSD.org
 .It Ta Jonathan A. Kollasch Ta Mt jakllsch@NetBSD.org
+.It Ta Joseph Koshy Ta Mt jkoshy@NetBSD.org
 .It Ta Radoslaw Kujawa Ta Mt rkujawa@NetBSD.org
 .It Ta Jochen Kunz Ta Mt jkunz@NetBSD.org
 .It Ta Martti Kuparinen Ta Mt martti@NetBSD.org
@@ -1340,6 +1341,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta T K Spindler Ta Mt dogcow@NetBSD.org
 .It Ta Matthew Sporleder Ta Mt mspo@NetBSD.org
 .It Ta Bill Squier Ta Mt groo@NetBSD.org
+.It Ta Adrian Steinmann Ta Mt ast@NetBSD.org
 .It Ta Bill Studenmund Ta Mt wrstuden@NetBSD.org
 .It Ta Kevin Sullivan Ta Mt sullivan@NetBSD.org
 .It Ta Kimmo Suominen Ta Mt kim@NetBSD.org
@@ -1353,6 +1355,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Matt Thomas Ta Mt matt@NetBSD.org
 .It Ta Jason Thorpe Ta Mt thorpej@NetBSD.org
 .It Ta Christoph Toshok Ta Mt toshok@NetBSD.org
+.It Ta Tam\('as T\('oth Ta Mt ttoth@NetBSD.org
 .It Ta Greg Troxel Ta Mt gdt@NetBSD.org
 .It Ta Tsubai Masanari Ta Mt tsubai@NetBSD.org
 .It Ta Izumi Tsutsui Ta Mt tsutsui@NetBSD.org

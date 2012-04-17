@@ -1,4 +1,4 @@
-/* $NetBSD: logout.h,v 1.7 2010/10/07 19:55:02 hans Exp $ */
+/* $NetBSD: logout.h,v 1.7.8.1 2012/04/17 00:05:55 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -39,7 +39,7 @@
  */
 
 /*
- * Avanti (AlphaStation 200 and 400) Specific PALcode Exception Logout 
+ * Avanti (AlphaStation 200 and 400) Specific PALcode Exception Logout
  * Area Definitions
  */
 
@@ -88,70 +88,70 @@ typedef struct {
 
 typedef struct {
 	/* Registers from the CPU */
-	u_int64_t	paltemp[32];	/* PAL TEMP REGS.		*/
-	u_int64_t	exc_addr;	/* Address of excepting ins.	*/
-	u_int64_t	exc_sum;	/* Summary of arithmetic traps.	*/
-	u_int64_t	exc_mask;	/* Exception mask.		*/ 
-	u_int64_t	iccsr;
-	u_int64_t	pal_base;	/* Base address for PALcode.	*/
-	u_int64_t	hier;
-	u_int64_t	hirr;
-	u_int64_t	mm_csr;
-	u_int64_t	dc_stat;
-	u_int64_t	dc_addr;
-	u_int64_t	abox_ctl;
-	u_int64_t	biu_stat;	/* Bus Interface Unit Status.	*/
-	u_int64_t	biu_addr;
-	u_int64_t	biu_ctl;
-	u_int64_t	fill_syndrome;
-	u_int64_t	fill_addr;
-	u_int64_t	va;
-	u_int64_t	bc_tag;
+	uint64_t	paltemp[32];	/* PAL TEMP REGS.		*/
+	uint64_t	exc_addr;	/* Address of excepting ins.	*/
+	uint64_t	exc_sum;	/* Summary of arithmetic traps.	*/
+	uint64_t	exc_mask;	/* Exception mask.		*/
+	uint64_t	iccsr;
+	uint64_t	pal_base;	/* Base address for PALcode.	*/
+	uint64_t	hier;
+	uint64_t	hirr;
+	uint64_t	mm_csr;
+	uint64_t	dc_stat;
+	uint64_t	dc_addr;
+	uint64_t	abox_ctl;
+	uint64_t	biu_stat;	/* Bus Interface Unit Status.	*/
+	uint64_t	biu_addr;
+	uint64_t	biu_ctl;
+	uint64_t	fill_syndrome;
+	uint64_t	fill_addr;
+	uint64_t	va;
+	uint64_t	bc_tag;
 
 	/* Registers from the cache and memory controller (21071-CA) */
-	u_int64_t	coma_gcr;	/* Error and Diag. Status.	*/
-	u_int64_t	coma_edsr;
-	u_int64_t	coma_ter;
-	u_int64_t	coma_elar;
-	u_int64_t	coma_ehar;
-	u_int64_t	coma_ldlr;
-	u_int64_t	coma_ldhr;
-	u_int64_t	coma_base0;
-	u_int64_t	coma_base1;
-	u_int64_t	coma_base2;
-	u_int64_t	coma_cnfg0;
-	u_int64_t	coma_cnfg1;
-	u_int64_t	coma_cnfg2;
+	uint64_t	coma_gcr;	/* Error and Diag. Status.	*/
+	uint64_t	coma_edsr;
+	uint64_t	coma_ter;
+	uint64_t	coma_elar;
+	uint64_t	coma_ehar;
+	uint64_t	coma_ldlr;
+	uint64_t	coma_ldhr;
+	uint64_t	coma_base0;
+	uint64_t	coma_base1;
+	uint64_t	coma_base2;
+	uint64_t	coma_cnfg0;
+	uint64_t	coma_cnfg1;
+	uint64_t	coma_cnfg2;
 
 	/* Registers from the PCI bridge (21071-DA) */
-	u_int64_t	epic_dcsr;	 /* Diag. Control and Status.	*/
-	u_int64_t	epic_pear;
-	u_int64_t	epic_sear;
-	u_int64_t	epic_tbr1;
-	u_int64_t	epic_tbr2;
-	u_int64_t	epic_pbr1;
-	u_int64_t	epic_pbr2;
-	u_int64_t	epic_pmr1;
-	u_int64_t	epic_pmr2;
-	u_int64_t	epic_harx1;
-	u_int64_t	epic_harx2;
-	u_int64_t	epic_pmlt;
-	u_int64_t	epic_tag0;
-	u_int64_t	epic_tag1;
-	u_int64_t	epic_tag2;
-	u_int64_t	epic_tag3;
-	u_int64_t	epic_tag4;
-	u_int64_t	epic_tag5;
-	u_int64_t	epic_tag6;
-	u_int64_t	epic_tag7;
-	u_int64_t	epic_data0;
-	u_int64_t	epic_data1;
-	u_int64_t	epic_data2;
-	u_int64_t	epic_data3;
-	u_int64_t	epic_data4;
-	u_int64_t	epic_data5;
-	u_int64_t	epic_data6;
-	u_int64_t	epic_data7;
+	uint64_t	epic_dcsr;	 /* Diag. Control and Status.	*/
+	uint64_t	epic_pear;
+	uint64_t	epic_sear;
+	uint64_t	epic_tbr1;
+	uint64_t	epic_tbr2;
+	uint64_t	epic_pbr1;
+	uint64_t	epic_pbr2;
+	uint64_t	epic_pmr1;
+	uint64_t	epic_pmr2;
+	uint64_t	epic_harx1;
+	uint64_t	epic_harx2;
+	uint64_t	epic_pmlt;
+	uint64_t	epic_tag0;
+	uint64_t	epic_tag1;
+	uint64_t	epic_tag2;
+	uint64_t	epic_tag3;
+	uint64_t	epic_tag4;
+	uint64_t	epic_tag5;
+	uint64_t	epic_tag6;
+	uint64_t	epic_tag7;
+	uint64_t	epic_data0;
+	uint64_t	epic_data1;
+	uint64_t	epic_data2;
+	uint64_t	epic_data3;
+	uint64_t	epic_data4;
+	uint64_t	epic_data5;
+	uint64_t	epic_data6;
+	uint64_t	epic_data7;
 } mc_uc_avanti;
 
 /*
@@ -189,53 +189,53 @@ typedef struct {
  */
 
 typedef struct {
-	u_int64_t	shadow[8];	/* Shadow reg. 8-14, 25		*/
-	u_int64_t	paltemp[24];	/* PAL TEMP REGS.		*/
-	u_int64_t	exc_addr;	/* Address of excepting ins.	*/
-	u_int64_t	exc_sum;	/* Summary of arithmetic traps.	*/
-	u_int64_t	exc_mask;	/* Exception mask.		*/ 
-	u_int64_t	pal_base;	/* Base address for PALcode.	*/
-	u_int64_t	isr;		/* Interrupt Status Reg.	*/
-	u_int64_t	icsr;		/* CURRENT SETUP OF EV5 IBOX	*/
-	u_int64_t	ic_perr_stat;	/*
+	uint64_t	shadow[8];	/* Shadow reg. 8-14, 25		*/
+	uint64_t	paltemp[24];	/* PAL TEMP REGS.		*/
+	uint64_t	exc_addr;	/* Address of excepting ins.	*/
+	uint64_t	exc_sum;	/* Summary of arithmetic traps.	*/
+	uint64_t	exc_mask;	/* Exception mask.		*/
+	uint64_t	pal_base;	/* Base address for PALcode.	*/
+	uint64_t	isr;		/* Interrupt Status Reg.	*/
+	uint64_t	icsr;		/* CURRENT SETUP OF EV5 IBOX	*/
+	uint64_t	ic_perr_stat;	/*
 					 * I-CACHE Reg:
 					 *	<13> IBOX Timeout
 					 *	<12> TAG parity
 					 *	<11> Data parity
 					 */
-	u_int64_t	dc_perr_stat;	/* D-CACHE error Reg:
+	uint64_t	dc_perr_stat;	/* D-CACHE error Reg:
 					 * Bits set to 1:
 					 *  <2> Data error in bank 0
 					 *  <3> Data error in bank 1
 					 *  <4> Tag error in bank 0
 					 *  <5> Tag error in bank 1
 					 */
-	u_int64_t	va;		/* Effective VA of fault or miss. */
-	u_int64_t	mm_stat;	/*
-					 * Holds the reason for D-stream 
+	uint64_t	va;		/* Effective VA of fault or miss. */
+	uint64_t	mm_stat;	/*
+					 * Holds the reason for D-stream
 					 * fault or D-cache parity errors
 					 */
-	u_int64_t	sc_addr;	/*
+	uint64_t	sc_addr;	/*
 					 * Address that was being accessed
 					 * when EV5 detected Secondary cache
 					 * failure.
 					 */
-	u_int64_t	sc_stat;	/*
+	uint64_t	sc_stat;	/*
 					 * Helps determine if the error was
 					 * TAG/Data parity(Secondary Cache)
 					 */
-	u_int64_t	bc_tag_addr;	/* Contents of EV5 BC_TAG_ADDR	  */
-	u_int64_t	ei_addr;	/*
+	uint64_t	bc_tag_addr;	/* Contents of EV5 BC_TAG_ADDR	  */
+	uint64_t	ei_addr;	/*
 					 * Physical address of any transfer
 					 * that is logged in the EV5 EI_STAT
 					 */
-	u_int64_t	fill_syndrome;	/* For correcting ECC errors.	  */
-	u_int64_t	ei_stat;	/*
-					 * Helps identify reason of any 
+	uint64_t	fill_syndrome;	/* For correcting ECC errors.	  */
+	uint64_t	ei_stat;	/*
+					 * Helps identify reason of any
 					 * processor uncorrectable error
-					 * at its external interface.	  
+					 * at its external interface.	
 					 */
-	u_int64_t	ld_lock;	/* Contents of EV5 LD_LOCK register*/
+	uint64_t	ld_lock;	/* Contents of EV5 LD_LOCK register*/
 } mc_uc_ev5;
 #define	EV5_IC_PERR_IBOXTMO	0x2000
 
@@ -245,17 +245,17 @@ typedef struct {
  * This is used to log correctable errors such as Single bit ECC errors.
  */
 typedef struct {
-	u_int64_t	ei_addr;	/*
+	uint64_t	ei_addr;	/*
 					 * Physical address of any transfer
 					 * that is logged in the EV5 EI_STAT
 					 */
-	u_int64_t	fill_syndrome;	/* For correcting ECC errors.	  */
-	u_int64_t	ei_stat;	/*
-					 * Helps identify reason of any 
+	uint64_t	fill_syndrome;	/* For correcting ECC errors.	  */
+	uint64_t	ei_stat;	/*
+					 * Helps identify reason of any
 					 * processor uncorrectable error
-					 * at its external interface.	  
+					 * at its external interface.	
 					 */
-	u_int64_t	isr;		/* Interrupt Status Reg. 	  */
+	uint64_t	isr;		/* Interrupt Status Reg. 	  */
 } mc_cc_ev5;
 
 

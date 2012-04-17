@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_stdlib.h,v 1.2 2010/12/04 23:08:33 christos Exp $	*/
+/*	$NetBSD: ntp_stdlib.h,v 1.2.6.1 2012/04/17 00:03:44 yamt Exp $	*/
 
 /*
  * ntp_stdlib.h - Prototypes for NTP lib.
@@ -14,6 +14,7 @@
 #include "l_stdlib.h"
 #include "ntp_rfc2553.h"
 #include "ntp_types.h"
+#include "ntp_malloc.h"
 #include "ntp_string.h"
 #include "ntp_net.h"
 #include "ntp_syslog.h"
@@ -35,7 +36,17 @@
 # endif
 #endif
 
-extern	void	msyslog		(int, const char *, ...)
+extern	int	mprintf(const char *, ...)
+			__attribute__((__format__(__printf__, 1, 2)));
+extern	int	mfprintf(FILE *, const char *, ...)
+			__attribute__((__format__(__printf__, 2, 3)));
+extern	int	mvfprintf(FILE *, const char *, va_list)
+			__attribute__((__format__(__printf__, 2, 0)));
+extern	int	mvsnprintf(char *, size_t, const char *, va_list)
+			__attribute__((__format__(__printf__, 3, 0)));
+extern	int	msnprintf(char *, size_t, const char *, ...)
+			__attribute__((__format__(__printf__, 3, 4)));
+extern	void	msyslog(int, const char *, ...)
 				__attribute__((__format__(__printf__, 2, 3)));
 
 /*
@@ -48,6 +59,7 @@ extern	void	msyslog		(int, const char *, ...)
 #define EVP_MAX_MD_SIZE	64	/* longest known is SHA512 */
 #endif
 
+/* authkeys.c */
 extern	void	auth_delkeys	(void);
 extern	int	auth_havekey	(keyid_t);
 extern	int	authdecrypt	(keyid_t, u_int32 *, int, int);
@@ -61,17 +73,6 @@ extern	int	authusekey	(keyid_t, int, const u_char *);
 extern	u_long	calyearstart	(u_long);
 extern	const char *clockname	(int);
 extern	int	clocktime	(int, int, int, int, int, u_long, u_long *, u_int32 *);
-#if !defined(_MSC_VER) || !defined(_DEBUG)
-extern	void *	emalloc		(size_t);
-extern	void *	erealloc	(void *, size_t);
-extern	char *	estrdup		(const char *);
-#else
-extern	void *	debug_erealloc	(void *, size_t, const char *, int);
-#define		emalloc(c)	debug_erealloc(NULL, (c), __FILE__, __LINE__)
-#define		erealloc(p, c)	debug_erealloc((p), (c), __FILE__, __LINE__)
-extern	char *	debug_estrdup	(const char *, const char *, int);
-#define		estrdup(s)	debug_estrdup((s), __FILE__, __LINE__)
-#endif
 extern	int	ntp_getopt	(int, char **, const char *);
 extern	void	init_auth	(void);
 extern	void	init_lib	(void);
@@ -84,6 +85,32 @@ extern	int	MD5authdecrypt	(int, u_char *, u_int32 *, int, int);
 extern	int	MD5authencrypt	(int, u_char *, u_int32 *, int);
 extern	void	MD5auth_setkey	(keyid_t, int, const u_char *, size_t);
 extern	u_int32	addr2refid	(sockaddr_u *);
+
+/* emalloc.c */
+#ifndef EREALLOC_CALLSITE	/* ntp_malloc.h defines */
+extern	void *	ereallocz	(void *, size_t, size_t, int);
+#define	erealloczsite(p, n, o, z, f, l) ereallocz(p, n, o, (z))
+#define	emalloc(n)		ereallocz(NULL, n, 0, FALSE)
+#define	emalloc_zero(c)		ereallocz(NULL, (c), 0, TRUE)
+#define	erealloc(p, c)		ereallocz(p, (c), 0, FALSE)
+#define erealloc_zero(p, n, o)	ereallocz(p, n, (o), TRUE)
+extern	char *	estrdup_impl	(const char *);
+#define	estrdup(s)		estrdup_impl(s)
+#else
+extern	void *	ereallocz	(void *, size_t, size_t, int,
+				 const char *, int);
+#define erealloczsite		ereallocz
+#define	emalloc(c)		ereallocz(NULL, (c), 0, FALSE, \
+					  __FILE__, __LINE__)
+#define	emalloc_zero(c)		ereallocz(NULL, (c), 0, TRUE, \
+					  __FILE__, __LINE__)
+#define	erealloc(p, c)		ereallocz(p, (c), 0, FALSE, \
+					  __FILE__, __LINE__)
+#define	erealloc_zero(p, n, o)	ereallocz(p, n, (o), TRUE, \
+					  __FILE__, __LINE__)
+extern	char *	estrdup_impl	(const char *, const char *, int);
+#define	estrdup(s) estrdup_impl((s), __FILE__, __LINE__)
+#endif
 
 
 extern	int	atoint		(const char *, long *);
@@ -103,8 +130,8 @@ extern  const char * clockstatstr (int);
 extern	sockaddr_u * netof	(sockaddr_u *);
 extern	char *	numtoa		(u_int32);
 extern	char *	numtohost	(u_int32);
-extern	char *	socktoa		(sockaddr_u *);
-extern	char *	socktohost	(sockaddr_u *);
+extern	char *	socktoa		(const sockaddr_u *);
+extern	char *	socktohost	(const sockaddr_u *);
 extern	int	octtoint	(const char *, u_long *);
 extern	u_long	ranp2		(int);
 extern	char *	refnumtoa	(sockaddr_u *);
@@ -146,6 +173,7 @@ extern int	authnumfreekeys;
  */
 extern keyid_t	cache_keyid;		/* key identifier */
 extern u_char *	cache_key;		/* key pointer */
+extern int	cache_type;		/* key type */
 extern u_int	cache_keylen;		/* key length */
 
 /* getopt.c */
@@ -175,6 +203,7 @@ extern	int	ssl_init_done;
 #endif
 extern	int	keytype_from_text	(const char *,	size_t *);
 extern	const char *keytype_name	(int);
+extern	char *	getpass_keytype		(int);
 
 
 /* lib/isc/win32/strerror.c

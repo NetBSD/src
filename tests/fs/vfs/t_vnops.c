@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.29 2011/10/08 13:08:54 njoly Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.29.2.1 2012/04/17 00:09:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -176,10 +176,6 @@ dir_rmdirdotdot(const atf_tc_t *tc, const char *mp)
 		xerrno = ESTALE;
 	else
 		xerrno = ENOENT;
-	/*
-	if (FSTYPE_TMPFS(tc))
-		atf_tc_expect_signal(-1, "PR kern/44657");
-	*/
 	ATF_REQUIRE_ERRNO(xerrno, rump_sys_chdir("..") == -1);
 	FSTEST_EXIT();
 }
@@ -296,10 +292,6 @@ rename_dir(const atf_tc_t *tc, const char *mp)
 	if (! FSTYPE_MSDOS(tc))
 		ATF_CHECK_EQ(sb.st_nlink, 3);
 	RL(rump_sys_rmdir(pb3));
-	/*
-	if (FSTYPE_TMPFS(tc))
-		atf_tc_expect_signal(-1, "PR kern/44288");
-	*/
 	RL(rump_sys_rmdir(pb1));
 }
 
@@ -325,13 +317,7 @@ rename_dotdot(const atf_tc_t *tc, const char *mp)
 
 	if (rump_sys_rename("dir1/..", "sometarget") != -1 || errno != EINVAL)
 		atf_tc_fail_errno("self-dotdot from");
-	atf_tc_expect_pass();
 
-	/*
-	if (FSTYPE_TMPFS(tc)) {
-		atf_tc_expect_fail("PR kern/43617");
-	}
-	*/
 	if (rump_sys_rename("dir1", "dir2/..") != -1 || errno != EINVAL)
 		atf_tc_fail("other-dotdot");
 
@@ -827,13 +813,35 @@ access_simple(const atf_tc_t *tc, const char *mp)
 	FSTEST_EXIT();
 }
 
+static void
+read_directory(const atf_tc_t *tc, const char *mp)
+{
+	char buf[1024];
+	int fd, res;
+	ssize_t size;
+
+	FSTEST_ENTER();
+	fd = rump_sys_open(".", O_DIRECTORY | O_RDONLY, 0777);
+	ATF_REQUIRE(fd != -1);
+
+	size = rump_sys_pread(fd, buf, sizeof(buf), 0);
+	ATF_CHECK(size != -1 || errno == EISDIR);
+	size = rump_sys_read(fd, buf, sizeof(buf));
+	ATF_CHECK(size != -1 || errno == EISDIR);
+
+	res = rump_sys_close(fd);
+	ATF_REQUIRE(res != -1);
+	FSTEST_EXIT();
+}
+
 ATF_TC_FSAPPLY(lookup_simple, "simple lookup (./.. on root)");
 ATF_TC_FSAPPLY(lookup_complex, "lookup of non-dot entries");
 ATF_TC_FSAPPLY(dir_simple, "mkdir/rmdir");
 ATF_TC_FSAPPLY(dir_notempty, "non-empty directories cannot be removed");
-ATF_TC_FSAPPLY(dir_rmdirdotdot, "remove .. and try to cd out");
-ATF_TC_FSAPPLY(rename_dir, "exercise various directory renaming ops");
-ATF_TC_FSAPPLY(rename_dotdot, "rename dir ..");
+ATF_TC_FSAPPLY(dir_rmdirdotdot, "remove .. and try to cd out (PR kern/44657)");
+ATF_TC_FSAPPLY(rename_dir, "exercise various directory renaming ops "
+"(PR kern/44288)");
+ATF_TC_FSAPPLY(rename_dotdot, "rename dir .. (PR kern/43617)");
 ATF_TC_FSAPPLY(rename_reg_nodir, "rename regular files, no subdirectories");
 ATF_TC_FSAPPLY(create_nametoolong, "create file with name too long");
 ATF_TC_FSAPPLY(create_exist, "create with O_EXCL");
@@ -844,6 +852,7 @@ ATF_TC_FSAPPLY(attrs, "check setting attributes works");
 ATF_TC_FSAPPLY(fcntl_lock, "check fcntl F_SETLK");
 ATF_TC_FSAPPLY(fcntl_getlock_pids,"fcntl F_GETLK w/ many procs, PR kern/44494");
 ATF_TC_FSAPPLY(access_simple, "access(2)");
+ATF_TC_FSAPPLY(read_directory, "read(2) on directories");
 
 ATF_TP_ADD_TCS(tp)
 {
@@ -865,6 +874,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_FSAPPLY(fcntl_lock);
 	ATF_TP_FSAPPLY(fcntl_getlock_pids);
 	ATF_TP_FSAPPLY(access_simple);
+	ATF_TP_FSAPPLY(read_directory);
 
 	return atf_no_error();
 }

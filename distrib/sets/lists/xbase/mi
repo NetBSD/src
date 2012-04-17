@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.111 2011/10/22 22:23:50 jmcneill Exp $
+# $NetBSD: mi,v 1.111.2.1 2012/04/17 00:02:45 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1340,7 +1340,7 @@
 ./usr/X11R6/man/man7/XProjectTeam.7			xbase-obsolete	obsolete
 ./usr/X11R6/man/man7/XStandards.7			-unknown-	.man,x11
 ./usr/X11R6/man/man7/Xsecurity.7			-unknown-	.man,x11
-./usr/X11R6/man/whatis.db				-unknown-	man,x11
+./usr/X11R6/man/whatis.db				-unknown-	man,x11,!makemandb
 ./usr/X11R6/share					base-x11-root	x11
 ./usr/X11R6/share/examples				base-x11-root	x11
 ./usr/X11R6/share/examples/ssh-askpass			base-x11-root	x11
@@ -2568,7 +2568,7 @@
 ./usr/X11R7/man/cat1/xmessage.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xmh.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xmkmf.0				-unknown-	.cat,xorg
-./usr/X11R7/man/cat1/xmlwf.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/xmlwf.0				-obsolete-	obsolete
 ./usr/X11R7/man/cat1/xmodmap.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xmore.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xphelloworld.0			-obsolete-	obsolete
@@ -2706,7 +2706,7 @@
 ./usr/X11R7/man/html1/xmessage.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/xmh.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/xmkmf.html			-unknown-	html,xorg
-./usr/X11R7/man/html1/xmlwf.html			-unknown-	html,xorg
+./usr/X11R7/man/html1/xmlwf.html			-obsolete-	obsolete
 ./usr/X11R7/man/html1/xmodmap.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/xmore.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/xphelloworld.html			-obsolete-	obsolete
@@ -2845,7 +2845,7 @@
 ./usr/X11R7/man/man1/xmessage.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xmh.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xmkmf.1				-unknown-	.man,xorg
-./usr/X11R7/man/man1/xmlwf.1				-unknown-	.man,xorg
+./usr/X11R7/man/man1/xmlwf.1				-obsolete-	obsolete
 ./usr/X11R7/man/man1/xmodmap.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xmore.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xphelloworld.1			-obsolete-	obsolete
@@ -2888,7 +2888,7 @@
 ./usr/X11R7/man/man7/XOrgFoundation.7			-unknown-	.man,xorg
 ./usr/X11R7/man/man7/XProjectTeam.7			-unknown-	.man,xorg
 ./usr/X11R7/man/man7/Xsecurity.7			-unknown-	.man,xorg
-./usr/X11R7/man/whatis.db				-unknown-	man,xorg
+./usr/X11R7/man/whatis.db				-unknown-	man,xorg,!makemandb
 ./usr/X11R7/share					base-x11-root	xorg
 ./usr/X11R7/share/aclocal				base-x11-root	xorg
 ./usr/X11R7/share/examples				base-x11-root	xorg

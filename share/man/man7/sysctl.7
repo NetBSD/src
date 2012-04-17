@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.67.2.1 2011/11/10 14:31:37 yamt Exp $
+.\"	$NetBSD: sysctl.7,v 1.67.2.2 2012/04/17 00:05:47 yamt Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -2341,7 +2341,7 @@ Specifies the default global policy for programs without an
 explicit enable/disable flag.
 .Pp
 When non-zero, all programs will get PaX ASLR, except those exempted with
-.Xr paxctl 8  .
+.Xr paxctl 8 .
 Otherwise, all programs will not get PaX ASLR, except those specifically
 marked as such with
 .Xr paxctl 8 .
@@ -2364,7 +2364,7 @@ explicit enable/disable flag.
 .Pp
 When non-zero, all programs will get the PaX MPROTECT restrictions,
 except those exempted with
-.Xr paxctl 8  .
+.Xr paxctl 8 .
 Otherwise, all programs will not get the PaX MPROTECT restrictions,
 except those specifically marked as such with
 .Xr paxctl 8 .
@@ -2389,7 +2389,7 @@ explicit enable/disable flag.
 .Pp
 When non-zero, all programs will get the PaX Segvguard,
 except those exempted with
-.Xr paxctl 8  .
+.Xr paxctl 8 .
 Otherwise, no program will get the PaX Segvguard restrictions,
 except those specifically marked as such with
 .Xr paxctl 8 .

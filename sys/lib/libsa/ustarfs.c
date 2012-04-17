@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.33 2011/06/16 13:27:58 joerg Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.33.2.1 2012/04/17 00:08:34 yamt Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -536,6 +536,16 @@ ustarfs_stat(struct open_file *f, struct stat *sb)
 	sb->st_size = ustf->uas_filesize;
 	return 0;
 }
+
+
+#if defined(LIBSA_ENABLE_LS_OP)
+__compactcall void
+ustarfs_ls(struct open_file *f, const char *pattern)
+{
+	printf("Currently ls command is unsupported by ustarfs\n");
+	return;
+}
+#endif
 
 #ifndef LIBSA_NO_FS_CLOSE
 __compactcall int

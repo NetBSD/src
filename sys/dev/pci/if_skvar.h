@@ -1,4 +1,4 @@
-/* $NetBSD: if_skvar.h,v 1.15 2008/09/08 21:20:03 christos Exp $ */
+/* $NetBSD: if_skvar.h,v 1.15.28.1 2012/04/17 00:07:48 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -80,11 +80,7 @@
 #ifndef _DEV_PCI_IF_SKVAR_H_
 #define _DEV_PCI_IF_SKVAR_H_
 
-#include "rnd.h"
-
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 struct sk_jpool_entry {
 	int                             slot;
@@ -204,9 +200,7 @@ struct sk_softc {
 	int			sk_int_mod_pending;
 	bus_dma_tag_t		sc_dmatag;
 	struct sk_if_softc	*sk_if[2];
-#if NRND > 0
-	rndsource_element_t     rnd_source;
-#endif
+	krndsource_t     rnd_source;
 };
 
 /* Softc for each logical interface */

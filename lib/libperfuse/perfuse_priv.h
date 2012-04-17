@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_priv.h,v 1.23 2011/10/30 05:11:37 manu Exp $ */
+/*  $NetBSD: perfuse_priv.h,v 1.23.2.1 2012/04/17 00:05:30 yamt Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -28,14 +28,29 @@
 #ifndef _PERFUSE_PRIV_H_
 #define _PERFUSE_PRIV_H_
 
+#include <unistd.h>
 #include <syslog.h>
 #include <paths.h>
 #include <err.h>
 #include <sysexits.h>
+#include <signal.h>
 #include <puffs.h>
 
 #include "perfuse_if.h"
 #include "fuse.h"
+
+#define PERFUSE_TRACECOUNT_MAX 4096
+#define PERFUSE_TRACEPATH_MAX 256
+struct perfuse_trace {
+	int pt_opcode;
+	char pt_path[PERFUSE_TRACEPATH_MAX];
+	char pt_extra[BUFSIZ];
+	int pt_error;
+	enum { inxchg, done } pt_status;
+	struct timespec pt_start;
+	struct timespec pt_end;
+	TAILQ_ENTRY(perfuse_trace) pt_list;
+};
 
 struct perfuse_state {
 	void *ps_private;	/* Private field for libperfuse user */
@@ -66,6 +81,8 @@ struct perfuse_state {
 	perfuse_get_outhdr_fn ps_get_outhdr;
 	perfuse_get_outpayload_fn ps_get_outpayload;
 	perfuse_umount_fn ps_umount;
+	TAILQ_HEAD(,perfuse_trace) ps_trace;
+	uint64_t ps_tracecount;
 };
 
 
@@ -80,7 +97,7 @@ enum perfuse_qtype {
 };
 
 #ifdef PERFUSE_DEBUG
-extern const char *perfuse_qtypestr[];
+extern const char * const perfuse_qtypestr[];
 #endif
 
 struct perfuse_cc_queue {
@@ -93,7 +110,8 @@ struct perfuse_node_data {
 	uint64_t pnd_rfh;
 	uint64_t pnd_wfh;
 	uint64_t pnd_nodeid;			/* nodeid, this is not inode */
-	uint64_t pnd_nlookup;			/* vnode refcount */
+	uint64_t pnd_fuse_nlookup;		/* vnode refcount */
+	int pnd_puffs_nlookup;			/* vnode refcount */
 	uint64_t pnd_lock_owner;
 	struct dirent *pnd_dirent;		/* native buffer for readdir */
 	off_t pnd_dirent_len;
@@ -121,8 +139,8 @@ struct perfuse_node_data {
 	puffs_cookie_t pnd_pn;
 	char pnd_name[MAXPATHLEN];	/* node name */
 	TAILQ_HEAD(,perfuse_node_data) pnd_children;
-	struct timespec pnd_entry_expire;
-	struct timespec pnd_attr_expire;
+	struct timespec *pnd_entry_expire;
+	struct timespec *pnd_attr_expire;
 };
 
 #define PERFUSE_NODE_DATA(opc)	\
@@ -236,6 +254,11 @@ int perfuse_node_listextattr(struct puffs_usermount *, puffs_cookie_t,
     int, size_t *, uint8_t *, size_t *, int, const struct puffs_cred *);
 int perfuse_node_deleteextattr(struct puffs_usermount *, puffs_cookie_t,
     int, const char *, const struct puffs_cred *);
+
+struct perfuse_trace *perfuse_trace_begin(struct perfuse_state *, 
+    puffs_cookie_t, perfuse_msg_t *);
+void perfuse_trace_end(struct perfuse_state *, struct perfuse_trace *, int);
+char *perfuse_opdump_in(struct perfuse_state *, perfuse_msg_t *);
 
 __END_DECLS
 

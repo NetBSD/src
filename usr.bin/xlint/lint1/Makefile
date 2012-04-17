@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46 2011/02/04 23:32:44 christos Exp $
+#	$NetBSD: Makefile,v 1.46.4.1 2012/04/17 00:09:44 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -7,8 +7,9 @@ SRCS=		cgram.y scan.l mem1.c mem.c err.c main1.c decl.c tree.c func.c \
 		init.c emit.c emit1.c inittyp.c tyname.c print.c
 MAN=		lint.7
 YHEADER=
-#CFLAGS+=-g
+#DBG=-g
 #CPPFLAGS+=-DYYDEBUG=1
+#YFLAGS+=-v
 
 CPPFLAGS+=	-I${.CURDIR} -I. -DPASS=\"${PROG}.h\"
 

@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008, 2009, 2011 The NetBSD Foundation, Inc.
+// Copyright (c) 2007 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -137,9 +137,9 @@ retry_chmod:
                 subdirs = d.names();
                 ok = true;
             } catch (const atf::system_error& e) {
+                retries--;
                 if (retries == 0)
                     throw e;
-                retries--;
                 ::sleep(retry_delay_in_seconds);
             }
         }

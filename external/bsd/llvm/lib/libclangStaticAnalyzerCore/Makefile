@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.1 2011/11/10 14:31:24 yamt Exp $
+#	$NetBSD: Makefile,v 1.5.2.2 2012/04/17 00:03:35 yamt Exp $
 
 LIB=	clangStaticAnalyzerCore
 
@@ -6,14 +6,14 @@ LIB=	clangStaticAnalyzerCore
 
 .PATH: ${CLANG_SRCDIR}/lib/StaticAnalyzer/Core
 
-SRCS+=	AggExprVisitor.cpp \
-	AnalysisManager.cpp \
+SRCS+=	AnalysisManager.cpp \
 	BasicConstraintManager.cpp \
 	BasicValueFactory.cpp \
 	BlockCounter.cpp \
 	BugReporter.cpp \
 	BugReporterVisitors.cpp \
 	Checker.cpp \
+	CheckerContext.cpp \
 	CheckerHelpers.cpp \
 	CheckerManager.cpp \
 	CheckerRegistry.cpp \
@@ -25,6 +25,7 @@ SRCS+=	AggExprVisitor.cpp \
 	ExprEngineCXX.cpp \
 	ExprEngineCallAndReturn.cpp \
 	ExprEngineObjC.cpp \
+	FunctionSummary.cpp \
 	HTMLDiagnostics.cpp \
 	MemRegion.cpp \
 	ObjCMessage.cpp \
@@ -38,6 +39,7 @@ SRCS+=	AggExprVisitor.cpp \
 	Store.cpp \
 	SValBuilder.cpp \
 	SVals.cpp \
+	SubEngine.cpp \
 	SymbolManager.cpp \
 	TextPathDiagnostics.cpp
 

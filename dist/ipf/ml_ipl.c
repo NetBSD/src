@@ -1,4 +1,4 @@
-/*	$NetBSD: ml_ipl.c,v 1.6 2008/05/20 07:08:06 darrenr Exp $	*/
+/*	$NetBSD: ml_ipl.c,v 1.6.2.1 2012/04/17 00:02:24 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -102,11 +102,7 @@ extern int vd_unuseddev();
 extern struct cdevsw cdevsw[];
 extern int nchrdev;
 
-xxxinit(fc, vdp, vdi, vds)
-u_int	fc;
-struct	vddrv	*vdp;
-caddr_t	vdi;
-struct	vdstat	*vds;
+xxxinit(u_int fc, struct vddrv *vdp, caddr_t vdi, struct vdstat *vds)
 {
 	struct	vdlinkage *v;
 	int	i;
@@ -133,9 +129,8 @@ struct	vdstat	*vds;
 	}
 }
 
-static unload(vdp, vdi)
-	struct vddrv *vdp;
-	struct vdioctl_unload  *vdi;
+static
+unload(struct vddrv *vdp, struct vdioctl_unload *vdi)
 {
 	int	i;
 

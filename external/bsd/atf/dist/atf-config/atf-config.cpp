@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,10 @@
 #include <iostream>
 #include <map>
 #include <string>
+
+extern "C" {
+#include "atf-c/defs.h"
+}
 
 #include "atf-c++/config.hpp"
 
@@ -67,7 +71,7 @@ atf_config::atf_config(void) :
 }
 
 void
-atf_config::process_option(int ch, const char* arg)
+atf_config::process_option(int ch, const char* arg ATF_DEFS_ATTRIBUTE_UNUSED)
 {
     switch (ch) {
     case 't':

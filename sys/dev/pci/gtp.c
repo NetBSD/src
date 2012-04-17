@@ -1,4 +1,4 @@
-/* $NetBSD: gtp.c,v 1.17 2009/05/12 08:23:00 cegger Exp $ */
+/* $NetBSD: gtp.c,v 1.17.12.1 2012/04/17 00:07:45 yamt Exp $ */
 /*	$OpenBSD: gtp.c,v 1.1 2002/06/03 16:13:21 mickey Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
 /* Gemtek PCI Radio Card Device Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtp.c,v 1.17 2009/05/12 08:23:00 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtp.c,v 1.17.12.1 2012/04/17 00:07:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,13 +147,8 @@ gtp_attach(device_t parent, device_t self, void *aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	bus_size_t iosize;
 	pcireg_t csr;
-	char devinfo[256];
 
-	aprint_naive(": Radio controller\n");
-
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
-	    PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo(pa, "Radio controller");
 
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0, &sc->tea.iot,

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cl.c,v 1.45 2009/10/26 19:16:54 cegger Exp $ */
+/*	$NetBSD: grf_cl.c,v 1.45.12.1 2012/04/17 00:06:01 yamt Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -36,9 +36,10 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.45 2009/10/26 19:16:54 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.45.12.1 2012/04/17 00:06:01 yamt Exp $");
 
 #include "grfcl.h"
+#include "ite.h"
 #if NGRFCL > 0
 
 /*
@@ -366,13 +367,17 @@ grfclattach(struct device *pdp, struct device *dp, void *auxp)
 
 		gp->g_unit = GRF_CL5426_UNIT;
 		gp->g_mode = cl_mode;
+#if NITE > 0
 		gp->g_conpri = grfcl_cnprobe();
+#endif
 		gp->g_flags = GF_ALIVE;
 
 		/* wakeup the board */
 		cl_boardinit(gp);
 #ifdef CL5426CONSOLE
+#if NITE > 0
 		grfcl_iteinit(gp);
+#endif
 		(void) cl_load_mon(gp, &clconsole_mode);
 #endif
 
@@ -1027,7 +1032,9 @@ cl_setmonitor(struct grf_softc *gp, struct grfvideo_mode *gv)
 		clconsole_mode.cols = gv->disp_width / clconsole_mode.fx;
 		if (!(gp->g_flags & GF_GRFON))
 			cl_load_mon(gp, &clconsole_mode);
+#if NITE > 0
 		ite_reinit(gp->g_itedev);
+#endif
 		return (0);
 	}
 #endif

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ath_arbus.c,v 1.21 2011/07/10 06:24:19 matt Exp $ */
+/* $NetBSD: if_ath_arbus.c,v 1.21.2.1 2012/04/17 00:06:39 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.21 2011/07/10 06:24:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.21.2.1 2012/04/17 00:06:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -163,7 +163,7 @@ ath_arbus_attach(device_t parent, device_t self, void *opaque)
 		return;
 	}
 
-	ATH_LOCK_INIT(sc);
+	//ATH_LOCK_INIT(sc);
 
 	if (!pmf_device_register(self, NULL, ath_arbus_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");

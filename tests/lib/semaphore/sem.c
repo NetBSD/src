@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.8 2011/03/23 13:57:04 joerg Exp $	*/
+/*	$NetBSD: sem.c,v 1.8.4.1 2012/04/17 00:09:14 yamt Exp $	*/
 
 /*
  * Common code for semaphore tests.  This can be included both into
@@ -202,6 +202,31 @@ ATF_TC_BODY(blockwait, tc)
 	pthread_join(pt, NULL);
 }
 
+ATF_TC(blocktimedwait);
+ATF_TC_HEAD(blocktimedwait, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "tests sem_timedwait can handle blocking"
+	    " (%s)", LIBNAME);
+	atf_tc_set_md_var(tc, "timeout", "2");
+}
+
+ATF_TC_BODY(blocktimedwait, tc)
+{
+	sem_t semid;
+	struct timespec tp;
+
+	rump_init();
+
+	clock_gettime(CLOCK_REALTIME, &tp);
+	tp.tv_nsec += 50000000;
+	tp.tv_sec += tp.tv_nsec / 1000000000;
+	tp.tv_nsec %= 1000000000;
+
+	ATF_REQUIRE_EQ(sem_init(&semid, 1, 0), 0);
+	ATF_REQUIRE_ERRNO(ETIMEDOUT, sem_timedwait(&semid, &tp) == -1);
+}
+
 ATF_TC(named);
 ATF_TC_HEAD(named, tc)
 {
@@ -284,7 +309,6 @@ ATF_TC_BODY(unlink, tc)
 
 	if (sem_unlink(SEM) == -1)
 		atf_tc_fail_errno("unlink");
-	atf_tc_expect_fail("PR kern/43452");
 	if (sem_close(sem) == -1)
 		atf_tc_fail_errno("close unlinked semaphore");
 }
@@ -302,6 +326,7 @@ F1(unlink, const char *);
 F1(trywait, intptr_t);
 F1(wait, intptr_t);
 F2(getvalue, intptr_t, unsigned int *);
+F2(timedwait, intptr_t, const struct timespec *);
 int _ksem_open(const char *, int, mode_t, unsigned int, intptr_t *);
 int _ksem_open(const char *a, int b, mode_t c, unsigned int d, intptr_t *e)
     {return rump_sys__ksem_open(a,b,c,d,e);}

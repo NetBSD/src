@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.6 2011/08/30 17:06:21 plunky Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.6.2.1 2012/04/17 00:09:03 yamt Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.6 2011/08/30 17:06:21 plunky Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.6.2.1 2012/04/17 00:09:03 yamt Exp $");
 #endif
 #endif				/* not lint */
 
@@ -278,8 +278,8 @@ rumpwrite(void *cookie, const char *buf, int count)
 	return rump_sys_write(C2FD(cookie), buf, count);
 }
 
-static fpos_t
-rumpseek(void *cookie, fpos_t off, int whence)
+static off_t
+rumpseek(void *cookie, off_t off, int whence)
 {
 
 	return rump_sys_lseek(C2FD(cookie), off, whence);

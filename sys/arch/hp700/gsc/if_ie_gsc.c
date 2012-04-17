@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_gsc.c,v 1.25 2011/07/01 18:33:09 dyoung Exp $	*/
+/*	$NetBSD: if_ie_gsc.c,v 1.25.2.1 2012/04/17 00:06:22 yamt Exp $	*/
 
 /*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.25 2011/07/01 18:33:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.25.2.1 2012/04/17 00:06:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,15 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.25 2011/07/01 18:33:09 dyoung Exp $"
 #include <dev/ic/i82586var.h>
 
 #define	I82596_DEBUG	I82586_DEBUG
-
-/*
- * XXX fredette - I'm defining these on a hunch.  When things
- * appear to be working, remove these.
- */
-#if 1
-#define fdcache_small fdcache
-#define pdcache_small pdcache
-#endif
 
 #ifdef __for_reference_only
 struct ie_gsc_regs {

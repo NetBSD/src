@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.183 2011/07/09 15:03:35 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.183.2.1 2012/04/17 00:06:56 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.183 2011/07/09 15:03:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.183.2.1 2012/04/17 00:06:56 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.183 2011/07/09 15:03:35 mrg Exp $");
 #include <machine/cpu.h>
 #include <machine/pmap.h>
 #include <machine/bootinfo.h>
+#include <sparc64/sparc64/cache.h>
 #include <sparc64/sparc64/timerreg.h>
 
 #include <dev/ata/atavar.h>
@@ -196,7 +197,7 @@ static void
 get_ncpus(void)
 {
 #ifdef MULTIPROCESSOR
-	int node;
+	int node, l;
 	char sbuf[32];
 
 	node = findroot();
@@ -208,9 +209,16 @@ get_ncpus(void)
 		if (strcmp(sbuf, "cpu") != 0)
 			continue;
 		sparc_ncpus++;
+		l = prom_getpropint(node, "dcache-line-size", 0);
+		if (l > dcache_line_size)
+			dcache_line_size = l;
+		l = prom_getpropint(node, "icache-line-size", 0);
+		if (l > icache_line_size)
+			icache_line_size = l;
 	}
 #else
 	/* #define sparc_ncpus 1 */
+	icache_line_size = dcache_line_size = 8; /* will be fixed later */
 #endif
 }
 
@@ -1040,9 +1048,30 @@ noether:
 			prop_dictionary_t props = device_properties(busdev);
 			prop_object_t cfg = prop_dictionary_get(props,
 				"i2c-child-devices");
-			if (!cfg)
+			if (!cfg) {
+				int node;
+				const char *name;
+
+				/*
+				 * pmu's i2c devices are under the "i2c" node,
+				 * so find it out.
+				 */
+				name = prom_getpropstring(busnode, "name");
+				if (strcmp(name, "pmu") == 0) {
+					for (node = OF_child(busnode);
+					     node != 0; node = OF_peer(node)) {
+						name = prom_getpropstring(node,
+						    "name");
+						if (strcmp(name, "i2c") == 0) {
+							busnode = node;
+							break;
+						}
+					}
+				}
+
 				of_enter_i2c_devs(props, busnode,
 				    sizeof(cell_t));
+			}
 		}
 	}
 

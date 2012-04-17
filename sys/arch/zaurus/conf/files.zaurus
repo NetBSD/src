@@ -1,4 +1,4 @@
-#	$NetBSD: files.zaurus,v 1.9 2011/06/19 16:20:09 nonaka Exp $
+#	$NetBSD: files.zaurus,v 1.9.2.1 2012/04/17 00:07:12 yamt Exp $
 #
 # Sharp Zaurus specific configuration info
 #
@@ -67,13 +67,24 @@ attach ioexp at iic
 file arch/zaurus/dev/ioexp.c		ioexp needs-flag
 
 # Dedicated SSP unit for ADC, touch screen, and backlight
-device zssp
+device zssp {}
 attach zssp at pxaip
 file arch/zaurus/dev/zssp.c		zssp
 
-# LCD frame buffer
+# PXA2x0 integrated LCDC frame buffer
 attach lcd at pxaip with zlcd
 file arch/zaurus/dev/zlcd.c		zlcd
+
+# LCD frame buffer for SL-C7x0
+device w100lcd: wsemuldisplaydev, rasops16, rasops8, rasops4, rasops_rotation
+attach w100lcd at pxaip
+file arch/zaurus/dev/w100lcd.c		w100lcd needs-flag
+file arch/zaurus/dev/w100.c		w100lcd
+
+# backlight, brightness Controller
+device lcdctl
+attach lcdctl at zssp
+file arch/zaurus/dev/lcdctl.c		lcdctl needs-flag
 
 # GPIO keyboard
 device zkbd: wskbddev
@@ -82,7 +93,7 @@ file arch/zaurus/dev/zkbd.c		zkbd
 
 # Zaurus touchpad
 device ztp: wsmousedev, hpctpanel
-attach ztp at pxaip
+attach ztp at zssp
 file arch/zaurus/dev/ztp.c		ztp
 
 # WM8750 audio

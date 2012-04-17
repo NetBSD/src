@@ -1,4 +1,4 @@
-/*	$NetBSD: cyzfirm2h.c,v 1.6 2009/03/18 10:22:41 cegger Exp $	*/
+/*	$NetBSD: cyzfirm2h.c,v 1.6.12.1 2012/04/17 00:07:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cyzfirm2h.c,v 1.6 2009/03/18 10:22:41 cegger Exp $");
+__RCSID("$NetBSD: cyzfirm2h.c,v 1.6.12.1 2012/04/17 00:07:41 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: cyzfirm2h.c,v 1.6 2009/03/18 10:22:41 cegger Exp $");
 #include <unistd.h>
 
 int	main(int argc, char *argv[]);
-void	usage(void);
+static void	usage(void) __dead;
 
 int
 main(int argc, char *argv[])
@@ -83,8 +83,8 @@ main(int argc, char *argv[])
 		err(1, "unable to allocate include name");
 
 	for (cp = include_name; *cp != '\0'; cp++) {
-		if (isalpha(*cp))
-			*cp = toupper(*cp);
+		if (isalpha((unsigned char)*cp))
+			*cp = toupper((unsigned char)*cp);
 		else if (*cp == '.')
 			*cp = '_';
 	}
@@ -99,14 +99,14 @@ main(int argc, char *argv[])
 		err(1, "unable to mmap input file");
 	(void) close(i);
 
-	fprintf(out_file, "/*\t$NetBSD: cyzfirm2h.c,v 1.6 2009/03/18 10:22:41 cegger Exp $\t*/\n\n");
-	fprintf(out_file, "\
-/*
- * Firmware for Cyclades Z series multiport serial boards.
- * Automatically generated from:
- *
- *	%s
- */\n\n", argv[1]);
+	fprintf(out_file, "/*\t$""NetBSD""$\t*/\n\n");
+	fprintf(out_file,
+	    "/*\n"
+	    " * Firmware for Cyclades Z series multiport serial boards.\n"
+	    " * Automatically generated from:\n"
+	    " *\n"
+	    " *\t%s\n"
+	    " */\n\n", argv[1]);
 	fprintf(out_file, "#ifndef _%s_\n", include_name);
 	fprintf(out_file, "#define\t_%s_\n\n", include_name);
 
@@ -116,13 +116,15 @@ main(int argc, char *argv[])
 	while (in_len != 0) {
 		if (i == 0)
 			fprintf(out_file, "\t");
-		fprintf(out_file, "0x%02x, ", *in_ptr);
+		fprintf(out_file, "0x%02x,", *in_ptr);
 		in_ptr++;
 		in_len--;
 		i++;
 		if (i == 10) {
 			fprintf(out_file, "\n");
 			i = 0;
+		} else if (in_len != 0) {
+			fprintf(out_file, " ");
 		}
 	}
 	fprintf(out_file, "\n};\n\n");
@@ -130,7 +132,7 @@ main(int argc, char *argv[])
 	fprintf(out_file, "#endif /* _%s_ */\n", include_name);
 }
 
-void
+__dead static void
 usage(void)
 {
 

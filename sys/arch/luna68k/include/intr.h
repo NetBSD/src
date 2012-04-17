@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.13 2008/07/10 16:14:16 tsutsui Exp $ */
+/* $NetBSD: intr.h,v 1.13.28.1 2012/04/17 00:06:35 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -44,8 +44,8 @@
 #define splsoftbio()	splraise1()
 #define splsoftnet()	splraise1()
 #define splsoftserial()	splraise1()
-#define splvm()		spl7()
-#define splsched()	spl7()
+#define splvm()		splraise4()
+#define splsched()	splraise5()
 #define splhigh()	spl7()
 
 /* watch out for side effects */

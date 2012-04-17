@@ -1,4 +1,4 @@
-# $NetBSD: VAX780,v 1.5 2011/06/30 20:09:38 wiz Exp $
+# $NetBSD: VAX780,v 1.5.2.1 2012/04/17 00:07:00 yamt Exp $
 #
 # 11/780,750,730 machine description file
 # 
@@ -102,7 +102,7 @@ file-system	PTYFS		# /dev/pts/N support
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-#options 	WAPBL		# File system journaling support - Experimental
+#options 	WAPBL		# File system journaling support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	NFSSERVER
 options 	NFS_BOOT_BOOTP,NFS_BOOT_DHCP	# Use bootp <> dhcp
@@ -118,7 +118,6 @@ options 	NFS_BOOT_BOOTPARAM	# Use the Sun way for netbooting.
 options 	SYSVMSG
 options 	SYSVSEM
 options 	SYSVSHM
-options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 # Old compat stuff; needed to run 4.3BSD Reno programs.
 # Note that if COMPAT_ULTRIX is set, you lose compatibility with
@@ -319,7 +318,6 @@ pseudo-device	pty			# pseudo-terminals
 # options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 # options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 #pseudo-device	fss			# file system snapshot device
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	leds			# control the leds on vaxstations.
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms

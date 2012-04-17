@@ -619,7 +619,7 @@ do_recursion (struct recursion_frame *frame)
     if (frame->flags == R_SKIP_ALL)
 	return 0;
 
-    locktype = noexec ? CVS_LOCK_NONE : frame->locktype;
+    locktype = (nolock || noexec) ? CVS_LOCK_NONE : frame->locktype;
 
     /* The fact that locks are not active here is what makes us fail to have
        the

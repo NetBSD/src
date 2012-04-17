@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.691 2011/11/02 00:10:08 uwe Exp $
+#	$NetBSD: bsd.own.mk,v 1.691.2.1 2012/04/17 00:05:50 yamt Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -47,14 +47,8 @@ NEED_OWN_INSTALL_TARGET?=	yes
 TOOLCHAIN_MISSING?=	no
 
 #
-# Platforms still using GCC 4.1
-#
-.if ${MACHINE_CPU}  == "vax"
-HAVE_GCC?=    4
-.else
-# Otherwise, default to GCC4.5
+# Everyone uses GCC4.5
 HAVE_GCC?=    45
-.endif
 
 .if \
     ${MACHINE_ARCH} == "i386" || \
@@ -68,10 +62,7 @@ USE_COMPILERCRTSTUFF?=	yes
 #
 # Platforms still using GDB 6
 #
-.if ${MACHINE_ARCH} == "alpha"	|| \
-    ${MACHINE_ARCH} == "hppa"	|| \
-    ${MACHINE_CPU}  == "mips"	|| \
-    ${MACHINE_ARCH} == "vax"
+.if ${MACHINE_CPU}  == "mips"
 HAVE_GDB?= 6
 .else
 # Otherwise, default to GDB7
@@ -534,7 +525,7 @@ MANDIR?=	/usr/share/man
 MANGRP?=	wheel
 MANOWN?=	root
 MANMODE?=	${NONBINMODE}
-MANINSTALL?=	catinstall htmlinstall maninstall
+MANINSTALL?=	${_MANINSTALL}
 
 INFODIR?=	/usr/share/info
 INFOGRP?=	wheel
@@ -807,7 +798,7 @@ MKZFS?=		yes
 _MKVARS.yes= \
 	MKATF \
 	MKBINUTILS \
-	MKCATPAGES MKCRYPTO MKCOMPLEX MKCVS MKCXX \
+	MKCRYPTO MKCOMPLEX MKCVS MKCXX \
 	MKDOC \
 	MKGCC MKGCCCMDS MKGDB MKGROFF \
 	MKHESIOD MKHTML \
@@ -815,8 +806,9 @@ _MKVARS.yes= \
 	MKKERBEROS \
 	MKKMOD \
 	MKLDAP MKLINKLIB MKLINT MKLVM \
-	MKMAN \
+	MKMAN MKMANDOC \
 	MKMDNS \
+	MKMAKEMANDB \
 	MKNLS \
 	MKNPF \
 	MKOBJ \
@@ -841,9 +833,10 @@ ${var}?=	yes
 # default for some platforms, see above.
 #
 _MKVARS.no= \
-	MKBSDGREP MKBSDTAR MKCRYPTO_IDEA MKCRYPTO_MDC2 MKCRYPTO_RC5 MKDEBUG \
+	MKBSDGREP MKBSDTAR \
+	MKCATPAGES MKCRYPTO_IDEA MKCRYPTO_MDC2 MKCRYPTO_RC5 MKDEBUG \
 	MKDEBUGLIB MKDTRACE MKEXTSRC \
-	MKMANDOC MKMANZ MKOBJDIRS \
+	MKMANZ MKOBJDIRS \
 	MKLLVM MKPCC \
 	MKPIGZGZIP \
 	MKREPRO \
@@ -888,6 +881,14 @@ MKLDAP:=	no
 .if ${MKMAN} == "no"
 MKCATPAGES:=	no
 MKHTML:=	no
+.endif
+
+_MANINSTALL=	maninstall
+.if ${MKCATPAGES} != "no"
+_MANINSTALL+=	catinstall
+.endif
+.if ${MKHTML} != "no"
+_MANINSTALL+=	htmlinstall
 .endif
 
 .if ${MKLINKLIB} == "no"

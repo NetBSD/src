@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.10 2008/06/23 02:16:54 matt Exp $
+#	$NetBSD: Makefile,v 1.10.18.1 2012/04/17 00:02:48 yamt Exp $
 
-SUBDIR=		ramdisk miniroot .WAIT cdroms
+SUBDIR=		ramdisk miniroot .WAIT cdroms liveimage
 TARGETS+=	release
 
 .include <bsd.own.mk>
@@ -21,5 +21,8 @@ release: check_RELEASEDIR .WAIT \
 
 iso_image:
 	${MAKEDIRTARGET} cdroms iso_image
+
+live_image:
+	${MAKEDIRTARGET} liveimage live_image
 
 .include <bsd.subdir.mk>

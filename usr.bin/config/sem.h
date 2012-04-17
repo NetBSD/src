@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.7 2010/04/30 20:47:18 pooka Exp $	*/
+/*	$NetBSD: sem.h,v 1.7.6.1 2012/04/17 00:09:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,10 +46,10 @@ void		setversion(int);
 void		setdefmaxusers(int, int, int);
 void		setmaxusers(int);
 void		setident(const char *);
-int		defattr(const char *, struct nvlist *, struct nvlist *, int);
-void		defdev(struct devbase *, struct nvlist *, struct nvlist *, int);
+int		defattr(const char *, struct loclist *, struct attrlist *, int);
+void		defdev(struct devbase *, struct loclist *, struct attrlist *, int);
 void		defdevattach(struct deva *, struct devbase *, struct nvlist *,
-			     struct nvlist *);
+			     struct attrlist *);
 struct devbase *getdevbase(const char *);
 struct deva    *getdevattach(const char *);
 struct attr    *getattr(const char *);
@@ -60,7 +60,7 @@ void		addconf(struct config *);
 void		setconf(struct nvlist **, const char *, struct nvlist *);
 void		delconf(const char *);
 void		setfstype(const char **, const char *);
-void		adddev(const char *, const char *, struct nvlist *, int);
+void		adddev(const char *, const char *, struct loclist *, int);
 void		deldevi(const char *, const char *);
 void		deldeva(const char *);
 void		deldev(const char *);
@@ -68,12 +68,12 @@ void		addpseudo(const char *, int);
 void		delpseudo(const char *);
 void		addpseudoroot(const char *);
 void		adddevm(const char *, int, int,
-			struct nvlist *, struct nvlist *);
+			struct condexpr *, struct nvlist *);
 int		fixdevis(void);
 const char     *ref(const char *);
 const char     *starref(const char *);
 const char     *wildref(const char *);
-int		has_attr(struct nvlist *, const char *);
+int		has_attr(struct attrlist *, const char *);
 
 extern const char *s_qmark;
 extern const char *s_none;

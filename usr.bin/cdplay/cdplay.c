@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.43 2011/08/29 14:00:54 joerg Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.43.2.1 2012/04/17 00:09:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.43 2011/08/29 14:00:54 joerg Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.43.2.1 2012/04/17 00:09:29 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -69,6 +69,7 @@ __RCSID("$NetBSD: cdplay.c,v 1.43 2011/08/29 14:00:54 joerg Exp $");
 #include <util.h>
 
 enum cmd {
+	CMD_ANALOG,
 	CMD_CLOSE,
 	CMD_DIGITAL,
 	CMD_EJECT,
@@ -96,18 +97,19 @@ static struct cmdtab {
 	unsigned int	min;
 	const char	*args;
 } const cmdtab[] = {
-	{ CMD_HELP,	"?",	   1, 0 },
+	{ CMD_ANALOG,	"analog",  1, NULL },
 	{ CMD_CLOSE,	"close",   1, NULL },
 	{ CMD_DIGITAL,	"digital", 1, "fpw" },
 	{ CMD_EJECT,	"eject",   1, NULL },
+	{ CMD_HELP,	"?",	   1, 0 },
 	{ CMD_HELP,	"help",    1, NULL },
 	{ CMD_INFO,	"info",    1, NULL },
 	{ CMD_NEXT,	"next",    1, NULL },
 	{ CMD_PAUSE,	"pause",   2, NULL },
-	{ CMD_PLAY,	"play",    1, "min1:sec1[.fram1] [min2:sec2[.fram2]]" },
-	{ CMD_PLAY,	"play",    1, "track1[.index1] [track2[.index2]]" },
-	{ CMD_PLAY,	"play",    1, "tr1 m1:s1[.f1] [[tr2] [m2:s2[.f2]]]" },
 	{ CMD_PLAY,	"play",    1, "[#block [len]]" },
+	{ CMD_PLAY,	"play",    1, "min1:sec1[.fram1] [min2:sec2[.fram2]]" },
+	{ CMD_PLAY,	"play",    1, "tr1 m1:s1[.f1] [[tr2] [m2:s2[.f2]]]" },
+	{ CMD_PLAY,	"play",    1, "track1[.index1] [track2[.index2]]" },
 	{ CMD_PREV,	"prev",    2, NULL },
 	{ CMD_QUIT,	"quit",    1, NULL },
 	{ CMD_RESET,	"reset",   4, NULL },
@@ -179,6 +181,8 @@ static const char	*prompt(void);
 static int	readaudio(int, int, int, u_char *);
 static int	read_toc_entrys(int);
 static int	run(int, const char *);
+static int	start_analog(void);
+static int	start_digital(const char *);
 static int	setvol(int, int);
 static void	sig_timer(int);
 static int	skip(int, int);
@@ -200,6 +204,7 @@ main(int argc, char **argv)
 	const char *elline;
 	int scratch, rv;
 	struct sigaction sa_timer;
+	const char *use_digital = NULL; /* historical default */
 
 	cdname = getenv("MUSIC_CD");
 	if (cdname == NULL)
@@ -215,10 +220,14 @@ main(int argc, char **argv)
 	if (!da.auname)
 		da.auname = "/dev/sound";
 
+	use_digital = getenv("CDPLAY_DIGITAL");
+
 	while ((c = getopt(argc, argv, "a:f:h")) != -1)
 		switch (c) {
 		case 'a':
 			da.auname = optarg;
+			if (!use_digital)
+				use_digital = "";
 			continue;
 		case 'f':
 			cdname = optarg;
@@ -241,8 +250,16 @@ main(int argc, char **argv)
 	}
 
 	opencd();
-	srandom((u_long)time(NULL));
 	da.afd = -1;
+
+	sigemptyset(&sa_timer.sa_mask);
+	sa_timer.sa_handler = sig_timer;
+	sa_timer.sa_flags = SA_RESTART;
+	if ((rv = sigaction(SIGALRM, &sa_timer, NULL)) < 0)
+		err(EXIT_FAILURE, "sigaction()");
+
+	if (use_digital)
+		start_digital(use_digital);
 
 	if (argc > 0) {
 		interactive = 0;
@@ -273,12 +290,6 @@ main(int argc, char **argv)
 	el_set(elptr, EL_HIST, history, hist);
 	el_set(elptr, EL_SIGNAL, 1);
 	el_source(elptr, NULL);
-
-	sigemptyset(&sa_timer.sa_mask);
-	sa_timer.sa_handler = sig_timer;
-	sa_timer.sa_flags = SA_RESTART;
-	if ((rv = sigaction(SIGALRM, &sa_timer, NULL)) < 0)
-		err(EXIT_FAILURE, "sigaction()");
 
 	for (;;) {
 		line = NULL;
@@ -342,6 +353,75 @@ help(void)
 	printf(
 	    "\nThe word \"play\" is not required for the play commands.\n"
 	    "The plain target address is taken as a synonym for play.\n");
+}
+
+static int
+start_digital(const char *arg)
+{
+
+	int fpw, intv_usecs, hz_usecs, rv;
+
+	fpw = atoi(arg);
+	if (fpw > 0)
+		da.fpw = fpw;
+	else
+		da.fpw = 5;
+	da.read_errors = 0;
+
+	/* real rate: 75 frames per second */
+	intv_usecs = 13333 * da.fpw;
+	/*
+	 * interrupt earlier for safety, by a value which
+	 * doesn't hurt interactice response if we block
+	 * in the signal handler
+	 */
+	intv_usecs -= 50000;
+	hz_usecs = 1000000 / sysconf(_SC_CLK_TCK);
+	if (intv_usecs < hz_usecs) {
+		/* can't have a shorter interval, increase
+		   buffer size to compensate */
+		da.fpw += (hz_usecs - intv_usecs) / 13333;
+		intv_usecs = hz_usecs;
+	}
+
+	da.aubuf = malloc(da.fpw * CDDA_SIZE);
+	if (da.aubuf == NULL) {
+		warn("Not enough memory for audio buffers");
+		return (1);
+	}
+	if (da.afd == -1 && !openaudio()) {
+		warn("Cannot open audio device");
+		return (1);
+	}
+	itv_timer.it_interval.tv_sec = itv_timer.it_value.tv_sec =
+		intv_usecs / 1000000;
+	itv_timer.it_interval.tv_usec = itv_timer.it_value.tv_usec =
+		intv_usecs % 1000000;
+	rv = setitimer(ITIMER_REAL, &itv_timer, NULL);
+	if (rv == 0) {
+		digital = 1;
+	} else
+		warn("setitimer in CMD_DIGITAL");
+	msf = 0;
+	tbvalid = 0;
+	return rv;
+}
+
+static int
+start_analog(void)
+{
+	int rv;
+	if (shuffle == 1)
+		itv_timer.it_interval.tv_sec = itv_timer.it_value.tv_sec = 1;
+	else
+		itv_timer.it_interval.tv_sec = itv_timer.it_value.tv_sec = 0;
+	itv_timer.it_interval.tv_usec = itv_timer.it_value.tv_usec = 0;
+	digital = 0;
+	rv = setitimer(ITIMER_REAL, &itv_timer, NULL);
+	free(da.audata);
+	close(da.afd);
+	da.afd = -1;
+	return rv;
 }
 
 static int
@@ -481,65 +561,22 @@ run(int cmd, const char *arg)
 		break;
 
 	case CMD_DIGITAL:
-		if (digital == 0) {
-			int fpw, intv_usecs, hz_usecs;
-
-			fpw = atoi(arg);
-			if (fpw > 0)
-				da.fpw = fpw;
-			else
-				da.fpw = 5;
-			da.read_errors = 0;
-
-			/* real rate: 75 frames per second */
-			intv_usecs = 13333 * da.fpw;
-			/*
-			 * interrupt earlier for safety, by a value which
-			 * doesn't hurt interactice response if we block
-			 * in the signal handler
-			 */
-			intv_usecs -= 50000;
-			hz_usecs = 1000000 / sysconf(_SC_CLK_TCK);
-			if (intv_usecs < hz_usecs) {
-				/* can't have a shorter interval, increase
-				   buffer size to compensate */
-				da.fpw += (hz_usecs - intv_usecs) / 13333;
-				intv_usecs = hz_usecs;
-			}
-
-			da.aubuf = malloc(da.fpw * CDDA_SIZE);
-			if (da.aubuf == NULL) {
-				warn("Not enough memory for audio buffers");
-				return (1);
-			}
-			if (da.afd == -1 && !openaudio()) {
-				warn("Cannot open audio device");
-				return (1);
-			}
-			itv_timer.it_interval.tv_sec = itv_timer.it_value.tv_sec =
-				intv_usecs / 1000000;
-			itv_timer.it_interval.tv_usec = itv_timer.it_value.tv_usec =
-				intv_usecs % 1000000;
-			rv = setitimer(ITIMER_REAL, &itv_timer, NULL);
-			if (rv == 0) {
-				digital = 1;
-			} else
-				warnx("setitimer in CMD_DIGITAL");
-			msf = 0;
-			tbvalid = 0;
-		} else {
-			if (shuffle == 1)
-				itv_timer.it_interval.tv_sec = itv_timer.it_value.tv_sec = 1;
-			else
-				itv_timer.it_interval.tv_sec = itv_timer.it_value.tv_sec = 0;
-			itv_timer.it_interval.tv_usec = itv_timer.it_value.tv_usec = 0;
-			digital = 0;
-			rv = setitimer(ITIMER_REAL, &itv_timer, NULL);
-			free(da.audata);
-			close(da.afd);
-			da.afd = -1;
+		if (digital == 0)
+			rv = start_digital(arg);
+		else {
+			warnx("Already in digital mode");
+			rv = 1;
 		}
-		return (0);
+		break;
+
+	case CMD_ANALOG:
+		if (digital == 1)
+			rv = start_analog();
+		else {
+			warnx("Already in analog mode");
+			rv = 1;
+		}
+		break;
 
 	case CMD_SKIP:
 		if (!interactive)
@@ -1100,8 +1137,13 @@ play_track(int tstart, int istart, int tend, int iend)
 	t.end_track = tend;
 	t.end_index = iend;
 
-	if ((rv = ioctl(fd, CDIOCPLAYTRACKS, &t)) < 0)
+	if ((rv = ioctl(fd, CDIOCPLAYTRACKS, &t)) < 0) {
+		int oerrno = errno;
+		if (errno == EINVAL && start_digital("") == 0)
+			return play_track(tstart, istart, tend, iend);
+		errno = oerrno;
 		warn("ioctl(CDIOCPLAYTRACKS)");
+	}
 	return (rv);
 }
 
@@ -1125,6 +1167,9 @@ play_digital(int start, int end)
 	da.lba_start = start;
 	da.lba_end = --end;
 	da.changed = da.playing = 1;
+	if (!interactive)
+		while (da.playing)
+			sleep(1);
 	return (0);
 }
 

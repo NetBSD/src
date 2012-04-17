@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2010/10/03 22:06:43 christos Exp $
+#	$NetBSD: Makefile,v 1.8.6.1 2012/04/17 00:04:47 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,8 @@ CPPFLAGS+=	-I${X11SRCDIR.${PROG}} \
 		-DHAVE_CONFIG_H \
 		-D_REENTRANT \
 		${X11FLAGS.VERSION}
+
+CWARNFLAGS.clang+=	-Wno-empty-body
 
 APPDEFS=XTerm.ad XTerm-color.ad
 

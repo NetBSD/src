@@ -1,4 +1,4 @@
-/*	$NetBSD: enc-proto.h,v 1.8 2005/02/06 18:00:30 agc Exp $	*/
+/*	$NetBSD: enc-proto.h,v 1.8.48.1 2012/04/17 00:05:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -85,7 +85,7 @@ void encrypt_enc_keyid(unsigned char *, int);
 void encrypt_dec_keyid(unsigned char *, int);
 struct key_info;
 void encrypt_keyid(struct key_info *, unsigned char *, int);
-void encrypt_send_keyid(int, unsigned char *, int, int);
+void encrypt_send_keyid(int, const unsigned char *, int, int);
 void encrypt_auto(int);
 void decrypt_auto(int);
 void encrypt_start_output(int);
@@ -134,7 +134,7 @@ void ofb64_session(Session_Key *, int);
 int ofb64_keyid(int, unsigned char *, int *);
 void ofb64_printsub(unsigned char *, int, unsigned char *, int);
 
-void fb64_printsub(unsigned char *, int, unsigned char *, int,
-    unsigned char *);
+void fb64_printsub(const unsigned char *, int, unsigned char *, int,
+    const unsigned char *);
 
 #endif	/* ENCRYPTION */

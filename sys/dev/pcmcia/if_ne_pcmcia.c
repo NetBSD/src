@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.158 2010/01/02 01:43:11 christos Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.158.12.1 2012/04/17 00:07:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.158 2010/01/02 01:43:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.158.12.1 2012/04/17 00:07:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,6 +298,10 @@ static const struct ne2000dev {
     { PCMCIA_VENDOR_DAYNA, PCMCIA_PRODUCT_DAYNA_COMMUNICARD_E_2,
       PCMCIA_CIS_INVALID,
       0, -1, { 0x00, 0x80, 0x19 }, 0 },
+
+    { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_COREGA_ETHER_CF_TD,
+      0, -1, { 0x00, 0x00, 0xf4 }, 0 },
 
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_COREGA_ETHER_PCC_T,

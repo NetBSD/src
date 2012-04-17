@@ -1,4 +1,4 @@
-.\"	$NetBSD: virtio.4,v 1.2.2.2 2011/11/10 14:31:37 yamt Exp $
+.\"	$NetBSD: virtio.4,v 1.2.2.3 2012/04/17 00:05:46 yamt Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,17 +45,27 @@ device driver represents an emulated PCI device that the hypervisor makes
 available to the virtual machine.
 .Pp
 .Nm
-supports the following devices:
+driver itself provides the core infrastructure to communicate
+with the hypervisor (called virtqueues) and supports the following devices:
 .Bl -tag -width xxxxx
-.It Nm ld
+.It Xr ld 4
 A Disk device.
-.It Nm vioif
+.It Xr vioif 4
 An Ethernet device.
-.It Nm viomb
+.It Xr viomb 4
 A pseudo-device to release memory back to the hypervisor.
 .El
 .Sh SEE ALSO
-.Xr ld 4
+.Xr ld 4 ,
+.Xr pci 4 ,
+.Xr vioif 4 ,
+.Xr viomb 4
+.Pp
+.Rs
+.%A Rusty Russell, IBM Corporation
+.%T Virtio PCI Card Specification
+.%U http://ozlabs.org/~rusty/virtio-spec/
+.Re
 .Sh HISTORY
 The
 .Nm

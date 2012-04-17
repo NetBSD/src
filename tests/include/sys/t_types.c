@@ -1,4 +1,4 @@
-/*	$NetBSD: t_types.c,v 1.2 2011/07/11 16:12:56 njoly Exp $ */
+/*	$NetBSD: t_types.c,v 1.2.2.1 2012/04/17 00:09:04 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_types.c,v 1.2 2011/07/11 16:12:56 njoly Exp $");
+__RCSID("$NetBSD: t_types.c,v 1.2.2.1 2012/04/17 00:09:04 yamt Exp $");
 
 #include <sys/types.h>
 
@@ -76,7 +76,8 @@ ATF_TC_BODY(types_limits, tc)
 ATF_TC(types_signed);
 ATF_TC_HEAD(types_signed, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Signed types(3)");
+	atf_tc_set_md_var(tc, "descr", "Signed types(3)"
+	    " (PR standards/44847)");
 }
 
 ATF_TC_BODY(types_signed, tc)
@@ -91,8 +92,6 @@ ATF_TC_BODY(types_signed, tc)
 	 * As noted in types(3), the following
 	 * types should be signed integers.
 	 */
-	atf_tc_expect_fail("PR standards/44847");
-
 	bc = 0;
 	bs = 0;
 	off = 0;
@@ -109,7 +108,8 @@ ATF_TC_BODY(types_signed, tc)
 ATF_TC(types_unsigned);
 ATF_TC_HEAD(types_unsigned, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Unsigned types(3)");
+	atf_tc_set_md_var(tc, "descr", "Unsigned types(3)"
+		" (PR standards/18067)");
 }
 
 ATF_TC_BODY(types_unsigned, tc)
@@ -123,19 +123,14 @@ ATF_TC_BODY(types_unsigned, tc)
 	fb = 0;
 	ff = 0;
 	ino = 0;
+	lim = 0;
 	size = 0;
 
 	ATF_CHECK((fb - 1) > 0);
 	ATF_CHECK((ff - 1) > 0);
 	ATF_CHECK((ino - 1) > 0);
-	ATF_CHECK((size - 1) > 0);
-
-	/*
-	 * Test also rlim_t; PR standards/18067.
-	 */
-	lim = 0;
-
 	ATF_CHECK((lim - 1) > 0);
+	ATF_CHECK((size - 1) > 0);
 }
 
 ATF_TP_ADD_TCS(tp)

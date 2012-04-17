@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.27 2011/02/08 20:20:16 rmind Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.27.4.1 2012/04/17 00:06:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -346,6 +346,68 @@ ENTRY(m68k_make_fpu_idle_frame)
 #endif
 
 /*
+ * Save and restore 68881 state.
+ */
+#ifdef FPCOPROC
+ENTRY(m68881_save)
+	movl	%sp@(4),%a0		| save area pointer
+	fsave	%a0@			| save state
+#if defined(M68020) || defined(M68030) || defined(M68040)
+#if defined(M68060)
+	cmpl	#FPU_68060,_C_LABEL(fputype)
+	jeq	Lm68060fpsave
+#endif
+Lm68881fpsave:  
+	tstb	%a0@			| null state frame?
+	jeq	Lm68881sdone		| yes, all done
+	fmovem	%fp0-%fp7,%a0@(FPF_REGS)	| save FP general registers
+	fmovem	%fpcr/%fpsr/%fpi,%a0@(FPF_FPCR) | save FP control registers
+Lm68881sdone:
+	rts
+#endif
+#if defined(M68060)
+Lm68060fpsave:
+	tstb	%a0@(2)			| null state frame?
+	jeq	Lm68060sdone		| yes, all done
+	fmovem	%fp0-%fp7,%a0@(FPF_REGS)	| save FP general registers
+	fmovem	%fpcr,%a0@(FPF_FPCR)	| save FP control registers
+	fmovem	%fpsr,%a0@(FPF_FPSR)           
+	fmovem	%fpi,%a0@(FPF_FPI)
+Lm68060sdone:   
+        rts
+#endif  
+
+ENTRY(m68881_restore)
+	movl	%sp@(4),%a0		| save area pointer
+#if defined(M68020) || defined(M68030) || defined(M68040)
+#if defined(M68060)
+	cmpl	#FPU_68060,_C_LABEL(fputype)
+	jeq	Lm68060fprestore
+#endif
+Lm68881fprestore:
+	tstb	%a0@			| null state frame?
+	jeq	Lm68881rdone		| yes, easy
+	fmovem	%a0@(FPF_FPCR),%fpcr/%fpsr/%fpi | restore FP control registers
+	fmovem	%a0@(FPF_REGS),%fp0-%fp7	| restore FP general registers
+Lm68881rdone:
+	frestore %a0@			| restore state
+	rts
+#endif
+#if defined(M68060)
+Lm68060fprestore:
+	tstb	%a0@(2)			| null state frame?
+	jeq	Lm68060fprdone		| yes, easy
+	fmovem	%a0@(FPF_FPCR),%fpcr	| restore FP control registers
+	fmovem	%a0@(FPF_FPSR),%fpsr
+	fmovem	%a0@(FPF_FPI),%fpi
+	fmovem	%a0@(FPF_REGS),%fp0-%fp7 | restore FP general registers
+Lm68060fprdone:
+	frestore %a0@			| restore state
+	rts
+#endif
+#endif
+
+/*
  * lwp_trampoline: call function in register %a2 with %a3 as an arg
  * and then rei.
  * %a0 will have old lwp from cpu_switchto(), and %a4 is new lwp
@@ -355,19 +417,6 @@ ENTRY_NOPROFILE(lwp_trampoline)
 	movl	%a0,%sp@-		| old lpw
 	jbsr	_C_LABEL(lwp_startup)
 	addql	#8,%sp
-	movl	%a3,%sp@-		| push function arg
-	jbsr	%a2@			| call function
-	addql	#4,%sp			| pop arg
-	movl	%sp@(FR_SP),%a0		| grab and load
-	movl	%a0,%usp		|   user SP
-	moveml	%sp@+,#0x7FFF		| restore most user regs
-	addql	#8,%sp			| toss SP and stack adjust
-	jra	_ASM_LABEL(rei)		| and return
-
-/*
- * Very similar to lwp_trampoline, but do not call lwp_startup
- */
-ENTRY_NOPROFILE(setfunc_trampoline)
 	movl	%a3,%sp@-		| push function arg
 	jbsr	%a2@			| call function
 	addql	#4,%sp			| pop arg

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.75 2011/07/01 18:50:41 dyoung Exp $ */
+/*	$NetBSD: sbus.c,v 1.75.2.1 2012/04/17 00:06:54 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.75 2011/07/01 18:50:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.75.2.1 2012/04/17 00:06:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -444,7 +444,7 @@ sbus_setup_attach_args(struct sbus_softc *sc,
 	error = prom_getprop(node, "name", 1, &n, &sa->sa_name);
 	if (error != 0)
 		return (error);
-	sa->sa_name[n] = '\0';
+	KASSERT(sa->sa_name[n-1] == '\0');
 
 	sa->sa_bustag = bustag;
 	sa->sa_dmatag = dmatag;

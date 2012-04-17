@@ -1,4 +1,4 @@
-/*	$NetBSD: mlfk_ipl.c,v 1.1.1.11 2008/05/20 06:44:25 darrenr Exp $	*/
+/*	$NetBSD: mlfk_ipl.c,v 1.1.1.11.2.1 2012/04/17 00:02:24 yamt Exp $	*/
 
 /*
  * Copyright (C) 2000 by Darren Reed.
@@ -174,7 +174,7 @@ ipfilter_modevent(module_t mod, int type, void *unused)
 
 
 static int
-ipf_modload()
+ipf_modload(void)
 {
 	char *defpass, *c, *str;
 	int i, j, error;
@@ -236,7 +236,7 @@ ipf_modload()
 
 
 static int
-ipf_modunload()
+ipf_modunload(void)
 {
 	int error, i;
 

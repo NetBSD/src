@@ -1,4 +1,4 @@
-/* $NetBSD: cat.c,v 1.47 2008/07/20 00:52:39 lukem Exp $	*/
+/* $NetBSD: cat.c,v 1.47.2.1 2012/04/17 00:01:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.47 2008/07/20 00:52:39 lukem Exp $");
+__RCSID("$NetBSD: cat.c,v 1.47.2.1 2012/04/17 00:01:35 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -295,8 +295,8 @@ raw_cat(int rfd)
 	if (buf == NULL) {
 		struct stat sbuf;
 
-		if (fstat(wfd, &sbuf) == 0 &&
-		    sbuf.st_blksize > sizeof(fb_buf)) {
+		if (fstat(wfd, &sbuf) == 0 && sbuf.st_blksize > 0 &&
+		    (size_t)sbuf.st_blksize > sizeof(fb_buf)) {
 			bsize = sbuf.st_blksize;
 			buf = malloc(bsize);
 		}

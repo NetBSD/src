@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3 2011/04/04 08:30:46 mbalmer Exp $	*/
+/*	$NetBSD: md.h,v 1.3.4.1 2012/04/17 00:02:54 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -48,14 +48,19 @@
 /* Megs required for a full X installation. */
 #define XNEEDMB 60
 
+/* have support for booting from UFS2 */
+#define HAVE_UFS2_BOOT
+
 /*
  *  Default filesets to fetch and install during installation
  *  or upgrade. The standard sets are:
  *      base etc comp games man misc tests text xbase xcomp xetc xfont xserver
  */
 #define SET_KERNEL_GENERIC	SET_KERNEL_1
+#define SET_KERNEL_C700		SET_KERNEL_2
 
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
+#define SET_KERNEL_2_NAME	"kern-C700"
 
 /*
  * Machine-specific command to write a new label to a disk.

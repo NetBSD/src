@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.170 2011/10/17 16:35:22 mbalmer Exp $	*/
+/*	$NetBSD: util.c,v 1.170.2.1 2012/04/17 00:02:51 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -68,7 +68,7 @@
 #define MD_SETS_SELECTED_NOX SET_KERNEL_1, SET_SYSTEM, SET_MD
 #endif
 #ifndef MD_SETS_VALID
-#define MD_SETS_VALID SET_KERNEL, SET_SYSTEM, SET_X11, SET_MD
+#define MD_SETS_VALID SET_KERNEL, SET_SYSTEM, SET_X11, SET_MD, SET_SOURCE
 #endif
 
 #define MAX_CD_DEVS	256	/* how many cd drives do we expect to attach */
@@ -149,6 +149,14 @@ distinfo dist_list[] = {
 #ifdef SET_MD_4_NAME
 	{SET_MD_4_NAME,		SET_MD_4,		MSG_set_md_4, NULL},
 #endif
+
+	{NULL,			SET_GROUP,		MSG_set_source, NULL},
+	{"syssrc",		SET_SYSSRC,		MSG_set_syssrc, NULL},
+	{"src",			SET_SRC,		MSG_set_src, NULL},
+	{"sharesrc",		SET_SHARESRC,		MSG_set_sharesrc, NULL},
+	{"gnusrc",		SET_GNUSRC,		MSG_set_gnusrc, NULL},
+	{"xsrc",		SET_XSRC,		MSG_set_xsrc, NULL},
+	{NULL,			SET_GROUP_END,		NULL, NULL},
 
 	{NULL,			SET_LAST,		NULL, NULL},
 };
@@ -279,7 +287,6 @@ run_makedev(void)
  *
  * replace("/etc/some-file.conf", "s/prop1=NO/prop1=YES/;s/foo/bar/");
  */
-static
 void
 replace(const char *path, const char *patterns, ...)
 {
@@ -357,7 +364,8 @@ get_via_floppy(void)
 	fetch_fn = floppy_fetch;
 
 	/* Set ext_dir for absolute path. */
-	snprintf(ext_dir, sizeof ext_dir, "%s/%s", target_prefix(), xfer_dir);
+	snprintf(ext_dir_bin, sizeof ext_dir_bin, "%s/%s", target_prefix(), xfer_dir);
+	snprintf(ext_dir_src, sizeof ext_dir_src, "%s/%s", target_prefix(), xfer_dir);
 
 	return SET_OK;
 }
@@ -400,7 +408,7 @@ get_iso9660_volname(int dev, int sess, char *volname)
  * the number of entries collected.
  */
 static int
-get_available_cds()
+get_available_cds(void)
 {
 	char dname[16], volname[80];
 	struct cd_info *info = cds;
@@ -473,8 +481,9 @@ cd_has_sets(void)
 
 	mnt2_mounted = 1;
 
-	snprintf(ext_dir, sizeof ext_dir, "%s/%s", "/mnt2", set_dir);
-	return dir_exists_p(ext_dir);
+	snprintf(ext_dir_bin, sizeof ext_dir_bin, "%s/%s", "/mnt2", set_dir_bin);
+	snprintf(ext_dir_src, sizeof ext_dir_src, "%s/%s", "/mnt2", set_dir_src);
+	return dir_exists_p(ext_dir_bin);
 }
 
 
@@ -520,10 +529,11 @@ get_via_cdrom(void)
 	bool silent = false;
 
 	/* If root is a CD-ROM and we have sets, skip this step. */
-	if (statvfs(set_dir, &sb) == 0 &&
+	if (statvfs(set_dir_bin, &sb) == 0 &&
 	    (strcmp(sb.f_fstypename, MOUNT_CD9660) == 0
 		    || strcmp(sb.f_fstypename, MOUNT_UDF) == 0)) {
-	    	strlcpy(ext_dir, set_dir, sizeof ext_dir);
+	    	strlcpy(ext_dir_bin, set_dir_bin, sizeof ext_dir_bin);
+	    	strlcpy(ext_dir_src, set_dir_src, sizeof ext_dir_src);
 		return SET_OK;
 	}
 
@@ -562,7 +572,7 @@ get_via_cdrom(void)
 	else {
 		umount_mnt2();
 		msg_display(MSG_cd_path_not_found);
-		msg_display_add("\r\n\r\n");
+		process_menu(MENU_ok, NULL);
 	}
 
 	/* ask for paths on the CD */
@@ -593,8 +603,10 @@ get_via_localfs(void)
 
 	mnt2_mounted = 1;
 
-	snprintf(ext_dir, sizeof ext_dir, "%s/%s/%s",
-		"/mnt2", localfs_dir, set_dir);
+	snprintf(ext_dir_bin, sizeof ext_dir_bin, "%s/%s/%s",
+		"/mnt2", localfs_dir, set_dir_bin);
+	snprintf(ext_dir_src, sizeof ext_dir_src, "%s/%s/%s",
+		"/mnt2", localfs_dir, set_dir_src);
 
 	return SET_OK;
 }
@@ -614,7 +626,8 @@ get_via_localdir(void)
 	 * We have to have an absolute path ('cos pax runs in a
 	 * different directory), make it so.
 	 */
-	snprintf(ext_dir, sizeof ext_dir, "/%s/%s", localfs_dir, set_dir);
+	snprintf(ext_dir_bin, sizeof ext_dir_bin, "/%s/%s", localfs_dir, set_dir_bin);
+	snprintf(ext_dir_src, sizeof ext_dir_src, "/%s/%s", localfs_dir, set_dir_src);
 
 	return SET_OK;
 }
@@ -844,7 +857,7 @@ customise_sets(void)
  * full path name to the directory.
  */
 
-static int
+int
 extract_file(distinfo *dist, int update)
 {
 	char path[STRSIZE];
@@ -856,7 +869,7 @@ extract_file(distinfo *dist, int update)
 		make_target_dir(xfer_dir);
 
 	(void)snprintf(path, sizeof path, "%s/%s%s",
-	    ext_dir, dist->name, dist_postfix);
+	    ext_dir_for_set(dist->name), dist->name, dist_postfix);
 
 	owd = getcwd(NULL, 0);
 
@@ -872,11 +885,11 @@ extract_file(distinfo *dist, int update)
 
 #ifdef SUPPORT_8_3_SOURCE_FILESYSTEM
 	/*
-	 * Update path to use dist->name tuncated to the first eight
+	 * Update path to use dist->name truncated to the first eight
 	 * characters and check again
 	 */
 	(void)snprintf(path, sizeof path, "%s/%.8s%.4s", /* 4 as includes '.' */
-	    ext_dir, dist->name, dist_postfix);
+	    ext_dir_for_set(dist->name), dist->name, dist_postfix);
 		if (!file_exists_p(path)) {
 #endif /* SUPPORT_8_3_SOURCE_FILESYSTEM */
 
@@ -895,7 +908,9 @@ extract_file(distinfo *dist, int update)
 	if (update && (dist->set == SET_ETC || dist->set == SET_X11_ETC)) {
 		make_target_dir("/.sysinst");
 		target_chdir_or_die("/.sysinst");
-	} else
+	} else if (dist->set == SET_PKGSRC)
+		target_chdir_or_die("/usr");
+	else
 		target_chdir_or_die("/");
 
 	/*
@@ -967,7 +982,7 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 
 	/* Ensure mountpoint for distribution files exists in current root. */
 	(void)mkdir("/mnt2", S_IRWXU| S_IRGRP|S_IXGRP | S_IROTH|S_IXOTH);
-	if (scripting)
+	if (script)
 		(void)fprintf(script, "mkdir -m 755 /mnt2\n");
 
 	/* reset failure/success counters */
@@ -1068,11 +1083,13 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 	if (set_status[SET_BASE] & SET_INSTALLED)
 		run_makedev();
 
-	/* Save keybard type */
-	save_kb_encoding();
+	if (!update) {
+		/* Save keybard type */
+		save_kb_encoding();
 
-	/* Other configuration. */
-	mnt_net_config();
+		/* Other configuration. */
+		mnt_net_config();
+	}
 
 	/* Mounted dist dir? */
 	umount_mnt2();
@@ -1167,7 +1184,7 @@ sanity_check(void)
 static char zoneinfo_dir[STRSIZE];
 static int zonerootlen;
 static char *tz_selected;	/* timezonename (relative to share/zoneinfo */
-static const char *tz_default;	/* UTC, or whatever /etc/localtime points to */
+const char *tz_default;		/* UTC, or whatever /etc/localtime points to */
 static char tz_env[STRSIZE];
 static int save_cursel, save_topline;
 
@@ -1318,21 +1335,13 @@ tzm_set_names(menudesc *m, void *arg)
 	qsort(tz_menu, nfiles, sizeof *tz_menu, tz_sort);
 }
 
-/*
- * Choose from the files in usr/share/zoneinfo and set etc/localtime
- */
-int
-set_timezone(void)
+void
+get_tz_default(void)
 {
 	char localtime_link[STRSIZE];
-	char localtime_target[STRSIZE];
+	static char localtime_target[STRSIZE];
 	int rc;
-	time_t t;
-	int menu_no;
 
-	strlcpy(zoneinfo_dir, target_expand("/usr/share/zoneinfo/"),
-	    sizeof zoneinfo_dir - 1);
-	zonerootlen = strlen(zoneinfo_dir);
 	strlcpy(localtime_link, target_expand("/etc/localtime"),
 	    sizeof localtime_link);
 
@@ -1349,6 +1358,24 @@ set_timezone(void)
 		localtime_target[rc] = '\0';
 		tz_default = strchr(strstr(localtime_target, "zoneinfo"), '/') + 1;
 	}
+}
+
+/*
+ * Choose from the files in usr/share/zoneinfo and set etc/localtime
+ */
+int
+set_timezone(void)
+{
+	char localtime_link[STRSIZE];
+	char localtime_target[STRSIZE];
+	time_t t;
+	int menu_no;
+
+	strlcpy(zoneinfo_dir, target_expand("/usr/share/zoneinfo/"),
+	    sizeof zoneinfo_dir - 1);
+	zonerootlen = strlen(zoneinfo_dir);
+
+	get_tz_default();
 
 	tz_selected = strdup(tz_default);
 	snprintf(tz_env, sizeof(tz_env), "%s%s", zoneinfo_dir, tz_selected);
@@ -1375,34 +1402,13 @@ set_timezone(void)
 
 	snprintf(localtime_target, sizeof(localtime_target),
 		 "/usr/share/zoneinfo/%s", tz_selected);
+	strlcpy(localtime_link, target_expand("/etc/localtime"),
+	    sizeof localtime_link);
 	unlink(localtime_link);
 	symlink(localtime_target, localtime_link);
 
 done:
 	return 1;
-}
-
-int
-set_root_password(void)
-{
-
-	msg_display(MSG_rootpw);
-	process_menu(MENU_yesno, NULL);
-	if (yesno)
-		run_program(RUN_DISPLAY | RUN_PROGRESS | RUN_CHROOT,
-			    "passwd -l root");
-	return 0;
-}
-
-int
-set_root_shell(void)
-{
-	const char *shellpath;
-
-	msg_display(MSG_rootsh);
-	process_menu(MENU_rootsh, &shellpath);
-	run_program(RUN_DISPLAY | RUN_CHROOT, "chpass -s %s root", shellpath);
-	return 0;
 }
 
 void
@@ -1411,7 +1417,7 @@ scripting_vfprintf(FILE *f, const char *fmt, va_list ap)
 
 	if (f)
 		(void)vfprintf(f, fmt, ap);
-	if (scripting)
+	if (script)
 		(void)vfprintf(script, fmt, ap);
 }
 
@@ -1441,6 +1447,102 @@ add_rc_conf(const char *fmt, ...)
 		scripting_fprintf(NULL, "EOF\n");
 	}
 	va_end(ap);
+}
+
+int
+del_rc_conf(const char *value)
+{
+	FILE *fp, *nfp;
+	char buf[4096]; /* Ridiculously high, but should be enough in any way */
+	char *rcconf, *tempname, *bakname;
+	char *cp;
+	int done = 0;
+	int fd;
+	int retval = 0;
+
+	/* The paths might seem strange, but using /tmp would require copy instead 
+	 * of rename operations. */
+	if (asprintf(&rcconf, "%s", target_expand("/etc/rc.conf")) < 0
+			|| asprintf(&tempname, "%s", target_expand("/etc/rc.conf.tmp.XXXXXX")) < 0
+			|| asprintf(&bakname, "%s", target_expand("/etc/rc.conf.bak.XXXXXX")) < 0) {
+		if (rcconf)
+			free(rcconf);
+		if (tempname)
+			free(tempname);
+		msg_display(MSG_rcconf_delete_failed, value);
+		process_menu(MENU_ok, NULL);
+		return -1;
+	}
+
+	if ((fd = mkstemp(bakname)) < 0) {
+		msg_display(MSG_rcconf_delete_failed, value);
+		process_menu(MENU_ok, NULL);
+		return -1;
+	}
+	close(fd);
+
+	if (!(fp = fopen(rcconf, "r+")) || (fd = mkstemp(tempname)) < 0) {
+		if (fp)
+			fclose(fp);
+		msg_display(MSG_rcconf_delete_failed, value);
+		process_menu(MENU_ok, NULL);
+		return -1;
+	}
+
+	nfp = fdopen(fd, "w");
+	if (!nfp) {
+		fclose(fp);
+		close(fd);
+		msg_display(MSG_rcconf_delete_failed, value);
+		process_menu(MENU_ok, NULL);
+		return -1;
+	}
+
+	while (fgets(buf, sizeof buf, fp) != NULL) {
+
+		cp = buf + strspn(buf, " \t"); /* Skip initial spaces */
+		if (strncmp(cp, value, strlen(value)) == 0) {
+			cp += strlen(value);
+			if (*cp != '=')
+				scripting_fprintf(nfp, "%s", buf);
+			else
+				done = 1;
+		} else {
+			scripting_fprintf(nfp, "%s", buf);
+		}
+	}
+	fclose(fp);
+	fclose(nfp);
+	
+	if (done) {
+		if (rename(rcconf, bakname)) {
+			msg_display(MSG_rcconf_backup_failed);
+			process_menu(MENU_noyes, NULL);
+			if (!yesno) {
+				retval = -1;
+				goto done;
+			}
+		}
+
+		if (rename(tempname, rcconf)) {
+			if (rename(bakname, rcconf)) {
+				msg_display(MSG_rcconf_restore_failed);
+				process_menu(MENU_ok, NULL);
+			} else {
+				msg_display(MSG_rcconf_delete_failed, value);
+				process_menu(MENU_ok, NULL);
+			}
+		} else {
+			(void)unlink(bakname);
+		}
+	}
+
+done:
+	(void)unlink(tempname);
+	free(rcconf);
+	free(tempname);
+	free(bakname);
+	return retval;
 }
 
 void
@@ -1480,3 +1582,24 @@ check_lfs_progs(void)
 	return 0;
 #endif
 }
+
+int
+set_is_source(const char *set_name) {
+	int len = strlen(set_name);
+	return len >= 3 && memcmp(set_name + len - 3, "src", 3) == 0;
+}
+
+const char *
+set_dir_for_set(const char *set_name) {
+	if (strcmp(set_name, "pkgsrc") == 0)
+		return pkgsrc_dir;
+	return set_is_source(set_name) ? set_dir_src : set_dir_bin;
+}
+
+const char *
+ext_dir_for_set(const char *set_name) {
+	if (strcmp(set_name, "pkgsrc") == 0)
+		return ext_dir_pkgsrc;
+	return set_is_source(set_name) ? ext_dir_src : ext_dir_bin;
+}
+

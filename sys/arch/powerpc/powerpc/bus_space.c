@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.28 2011/06/30 00:53:00 matt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.28.2.1 2012/04/17 00:06:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.28 2011/06/30 00:53:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.28.2.1 2012/04/17 00:06:48 yamt Exp $");
 
 #define _POWERPC_BUS_SPACE_PRIVATE
 
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.28 2011/06/30 00:53:00 matt Exp $");
 #include <sys/device.h>
 #include <sys/endian.h>
 #include <sys/extent.h>
-#include <sys/malloc.h>
 #include <sys/bus.h>
 
 #include <uvm/uvm.h>
@@ -401,7 +400,7 @@ bus_space_init(struct powerpc_bus_space *t, const char *extent_name,
 {
 	if (t->pbs_extent == NULL && extent_name != NULL) {
 		t->pbs_extent = extent_create(extent_name, t->pbs_base,
-		    t->pbs_limit-1, M_DEVBUF, storage, storage_size,
+		    t->pbs_limit-1, storage, storage_size,
 		    EX_NOCOALESCE|EX_NOWAIT);
 		if (t->pbs_extent == NULL)
 			return ENOMEM;
@@ -526,7 +525,7 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 	size = _BUS_SPACE_STRIDE(t, size);
 	bpa = _BUS_SPACE_STRIDE(t, bpa);
 
-	if (bpa + size > t->pbs_limit) {
+	if (t->pbs_limit != 0 && bpa + size > t->pbs_limit) {
 #ifdef DEBUG
 		printf("bus_space_map(%p[%x:%x], %#x, %#x) failed: EINVAL\n",
 		    t, t->pbs_base, t->pbs_limit, bpa, size);
@@ -550,20 +549,21 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 		 */
 		if (extent_flags) {
 #endif
-		/*
-		 * Before we go any further, let's make sure that this
-		 * region is available.
-		 */
-		error = extent_alloc_region(t->pbs_extent, bpa, size,
-		    EX_NOWAIT | extent_flags);
-		if (error) {
+			/*
+			 * Before we go any further, let's make sure that this
+			 * region is available.
+			 */
+			error = extent_alloc_region(t->pbs_extent, bpa, size,
+			    EX_NOWAIT | extent_flags);
+			if (error) {
 #ifdef DEBUG
-			printf("bus_space_map(%p[%x:%x], %#x, %#x) failed"
-			    ": %d\n",
-			    t, t->pbs_base, t->pbs_limit, bpa, size, error);
+				printf("bus_space_map(%p[%x:%x], %#x, %#x)"
+				    " failed: %d\n",
+				    t, t->pbs_base, t->pbs_limit,
+				    bpa, size, error);
 #endif
-			return (error);
-		}
+				return (error);
+			}
 #ifdef PPC_IBM4XX
 		}
 #endif
@@ -600,14 +600,15 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 
 	if (t->pbs_extent != NULL) {
 #if !defined(PPC_IBM4XX)
-	if (extent_flags == 0) {
-		extent_free(t->pbs_extent, bpa, size, EX_NOWAIT);
+		if (extent_flags == 0) {
+			extent_free(t->pbs_extent, bpa, size, EX_NOWAIT);
 #ifdef DEBUG
-		printf("bus_space_map(%p[%x:%x], %#x, %#x) failed: ENOMEM\n",
-		    t, t->pbs_base, t->pbs_limit, bpa, size);
+			printf("bus_space_map(%p[%x:%x], %#x, %#x)"
+			    " failed: ENOMEM\n",
+			    t, t->pbs_base, t->pbs_limit, bpa, size);
 #endif
-		return (ENOMEM);
-	}
+			return (ENOMEM);
+		}
 #endif
 	}
 
@@ -617,7 +618,10 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 	*bshp = (bus_space_handle_t) mapiodev(pa, size,
 	    (flags & BUS_SPACE_MAP_PREFETCHABLE) != 0);
 	if (*bshp == 0) {
-		extent_free(t->pbs_extent, bpa, size, EX_NOWAIT | extent_flags);
+		if (t->pbs_extent != NULL) {
+			extent_free(t->pbs_extent, bpa, size,
+			    EX_NOWAIT | extent_flags);
+		}
 #ifdef DEBUG
 		printf("bus_space_map(%p[%x:%x], %#x, %#x) failed: ENOMEM\n",
 		    t, t->pbs_base, t->pbs_limit, bpa, size);
@@ -702,7 +706,7 @@ memio_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 	if (t->pbs_extent == NULL)
 		return ENOMEM;
 
-	if (rstart + size > t->pbs_limit) {
+	if (t->pbs_limit != 0 && rstart + size > t->pbs_limit) {
 #ifdef DEBUG
 		printf("%s(%p[%x:%x], %#x, %#x) failed: EINVAL\n",
 		   __func__, t, t->pbs_base, t->pbs_limit, rstart, size);

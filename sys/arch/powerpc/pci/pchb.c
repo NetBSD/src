@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.8 2011/07/01 18:59:19 dyoung Exp $	*/
+/*	$NetBSD: pchb.c,v 1.8.2.1 2012/04/17 00:06:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.8 2011/07/01 18:59:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.8.2.1 2012/04/17 00:06:48 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -241,6 +241,7 @@ pchbattach(device_t parent, device_t self, void *aux)
 	volatile unsigned char *python;
 	uint32_t v;
 	
+	aprint_naive("\n");
 	aprint_normal("\n");
 
 	/*

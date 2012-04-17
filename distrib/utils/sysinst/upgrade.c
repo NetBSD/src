@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.51 2011/04/04 08:30:14 mbalmer Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.51.4.1 2012/04/17 00:02:51 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -34,6 +34,7 @@
 
 /* upgrade.c -- upgrade an installation. */
 
+#include <sys/param.h>
 #include <stdio.h>
 #include <curses.h>
 #include <errno.h>
@@ -44,8 +45,8 @@
 /*
  * local prototypes
  */
-static int save_X(void);
-static int merge_X(void);
+static int save_X(const char *);
+static int merge_X(const char *);
 
 /*
  * Do the system upgrade.
@@ -76,7 +77,9 @@ do_upgrade(void)
 	/*
 	 * Save X symlink, ...
 	 */
-	if (save_X())
+	if (save_X("/usr/X11R6"))
+		return;
+	if (save_X("/usr/X11R7"))
 		return;
 
 #ifdef AOUT2ELF
@@ -100,7 +103,8 @@ do_upgrade(void)
 	if (!md_post_extract() == 0)
 		return;
 
-	merge_X();
+	merge_X("/usr/X11R6");
+	merge_X("/usr/X11R7");
 
 	sanity_check();
 }
@@ -109,23 +113,31 @@ do_upgrade(void)
  * Save X symlink to X.old so it can be recovered later
  */
 static int
-save_X(void)
+save_X(const char *xroot)
 {
+	char newx[MAXPATHLEN], oldx[MAXPATHLEN];
+
+	strlcpy(newx, xroot, sizeof(newx));
+	strlcat(newx, "/bin/X", sizeof(newx));
+	strlcpy(oldx, newx, sizeof(oldx));
+	strlcat(oldx, ".old", sizeof(oldx));
+
 	/* Only care for X if it's a symlink */
-	if (target_symlink_exists_p("/usr/X11R6/bin/X")) {
-		if (target_symlink_exists_p("/usr/X11R6/bin/X.old")) {
-			msg_display(MSG_X_oldexists);
+	if (target_symlink_exists_p(newx)) {
+		if (target_symlink_exists_p(oldx)) {
+			msg_display(MSG_X_oldexists, xroot, xroot, xroot,
+			    xroot, xroot, xroot, xroot, xroot, xroot, xroot,
+			    xroot);
 			process_menu(MENU_ok, NULL);
 			return EEXIST;
 		}
 
 #ifdef DEBUG
-		printf("saving /usr/X11R6/bin/X as .../X.old ...");
+		printf("saving %s as %s ...", newx, oldx);
 #endif
 
 		/* Move target .../X to .../X.old.  Abort on error. */
-		mv_within_target_or_die("/usr/X11R6/bin/X",
-					"/usr/X11R6/bin/X.old");
+		mv_within_target_or_die(newx, oldx);
 	}
 
 	return 0;
@@ -136,13 +148,19 @@ save_X(void)
  * sets has completed.
  */
 static int
-merge_X(void)
+merge_X(const char *xroot)
 {
-	if (target_symlink_exists_p("/usr/X11R6/bin/X.old")) {
+	char newx[MAXPATHLEN], oldx[MAXPATHLEN];
+
+	strlcpy(newx, xroot, sizeof(newx));
+	strlcat(newx, "/bin/X", sizeof(newx));
+	strlcpy(oldx, newx, sizeof(oldx));
+	strlcat(oldx, ".old", sizeof(oldx));
+
+	if (target_symlink_exists_p(oldx)) {
 		/* Only move back X if it's a symlink - we don't want
 		 * to restore old binaries */
-		mv_within_target_or_die("/usr/X11R6/bin/X.old",
-					"/usr/X11R6/bin/X");
+		mv_within_target_or_die(oldx, newx);
 	}
 
 	return 0;

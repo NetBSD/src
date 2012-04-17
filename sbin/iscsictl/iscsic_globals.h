@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsic_globals.h,v 1.3 2011/10/30 18:40:06 christos Exp $	*/
+/*	$NetBSD: iscsic_globals.h,v 1.3.2.1 2012/04/17 00:05:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -152,13 +152,13 @@ ntohq(uint64_t x)
 
 /* iscsic_main.c */
 
-void arg_error(char *, const char *, ...) __printflike(2, 3);
-void arg_missing(const char *);
-void io_error(const char *, ...) __printflike(1, 2);
-void gen_error(const char *, ...) __printflike(1, 2);
+void arg_error(char *, const char *, ...) __printflike(2, 3) __dead;
+void arg_missing(const char *) __dead;
+void io_error(const char *, ...) __printflike(1, 2) __dead;
+void gen_error(const char *, ...) __printflike(1, 2) __dead;
 void check_extra_args(int, char **);
-void status_error(unsigned);
-void status_error_slist(unsigned);
+void status_error(unsigned) __dead;
+void status_error_slist(unsigned) __dead;
 
 void send_request(unsigned, size_t, void *);
 iscsid_response_t *get_response(int);

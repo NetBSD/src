@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.63.2.1 2011/11/10 14:31:41 yamt Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.63.2.2 2012/04/17 00:06:36 yamt Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.63.2.1 2011/11/10 14:31:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.63.2.2 2012/04/17 00:06:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,7 +243,7 @@ vsize_t		Sysptsize = VM_KERNEL_PT_PAGES;
 static struct pmap kernel_pmap_store;
 struct pmap	*const kernel_pmap_ptr = &kernel_pmap_store;
 struct vm_map	*st_map, *pt_map;
-struct vm_map_kernel st_map_store, pt_map_store;
+struct vm_map st_map_store, pt_map_store;
 
 vaddr_t		lwp0uarea;	/* lwp0 u-area VA, initialized in bootstrap */
 

@@ -191,7 +191,7 @@
   ""
   "*
 {
-  if (GET_CODE (operands[1]) == CONST_INT)
+  if (CONST_INT_P (operands[1]))
     {
       int i = INTVAL (operands[1]);
       if (i == 0)
@@ -212,7 +212,7 @@
   ""
   "*
 {
-  if (GET_CODE (operands[1]) == CONST_INT)
+  if (CONST_INT_P (operands[1]))
     {
       int i = INTVAL (operands[1]);
       if (i == 0)
@@ -565,14 +565,14 @@
   rtx op1 = operands[1];
 
   /* If there is a constant argument, complement that one.  */
-  if (GET_CODE (operands[2]) == CONST_INT && GET_CODE (op1) != CONST_INT)
+  if (CONST_INT_P (operands[2]) && ! CONST_INT_P (op1))
     {
       operands[1] = operands[2];
       operands[2] = op1;
       op1 = operands[1];
     }
 
-  if (GET_CODE (op1) == CONST_INT)
+  if (CONST_INT_P (op1))
     operands[1] = GEN_INT (~INTVAL (op1));
   else
     operands[1] = expand_unop (<MODE>mode, one_cmpl_optab, op1, 0, 1);
@@ -658,7 +658,7 @@
   ""
   "
 {
-  if (GET_CODE (operands[2]) != CONST_INT)
+  if (! CONST_INT_P (operands[2]))
     operands[2] = gen_rtx_NEG (QImode, negate_rtx (QImode, operands[2]));
 }")
 
@@ -685,8 +685,7 @@
 {
   if (operands[2] == const1_rtx && rtx_equal_p (operands[0], operands[1]))
     return \"addl2 %0,%0\";
-  if (GET_CODE (operands[1]) == REG
-      && GET_CODE (operands[2]) == CONST_INT)
+  if (REG_P (operands[1]) && CONST_INT_P (operands[2]))
     {
       int i = INTVAL (operands[2]);
       if (i == 1)
@@ -760,7 +759,7 @@
   ""
   "
 {
-  if (GET_CODE (operands[2]) != CONST_INT)
+  if (! CONST_INT_P (operands[2]))
     operands[2] = gen_rtx_NEG (QImode, negate_rtx (QImode, operands[2]));
 }")
 
@@ -806,7 +805,7 @@
 	(match_operand:SI 3 "general_operand" "g"))]
    "(INTVAL (operands[1]) == 8 || INTVAL (operands[1]) == 16)
    && INTVAL (operands[2]) % INTVAL (operands[1]) == 0
-   && (GET_CODE (operands[0]) == REG
+   && (REG_P (operands[0])
        || ! mode_dependent_address_p (XEXP (operands[0], 0)))"
   "*
 {
@@ -834,7 +833,7 @@
 			 (match_operand:SI 3 "const_int_operand" "n")))]
   "(INTVAL (operands[2]) == 8 || INTVAL (operands[2]) == 16)
    && INTVAL (operands[3]) % INTVAL (operands[2]) == 0
-   && (GET_CODE (operands[1]) == REG
+   && (REG_P (operands[1])
        || ! mode_dependent_address_p (XEXP (operands[1], 0)))"
   "*
 {
@@ -861,7 +860,7 @@
 			 (match_operand:SI 3 "const_int_operand" "n")))]
   "(INTVAL (operands[2]) == 8 || INTVAL (operands[2]) == 16)
    && INTVAL (operands[3]) % INTVAL (operands[2]) == 0
-   && (GET_CODE (operands[1]) == REG
+   && (REG_P (operands[1])
        || ! mode_dependent_address_p (XEXP (operands[1], 0)))"
   "*
 {
@@ -916,8 +915,8 @@
   ""
   "*
 {
-  if (GET_CODE (operands[3]) != CONST_INT || GET_CODE (operands[2]) != CONST_INT
-      || GET_CODE (operands[0]) != REG
+  if (! CONST_INT_P (operands[3]) || ! CONST_INT_P (operands[2])
+      || ! REG_P (operands[0])
       || (INTVAL (operands[2]) != 8 && INTVAL (operands[2]) != 16))
     return \"extv %3,%2,%1,%0\";
   if (INTVAL (operands[2]) == 8)
@@ -933,8 +932,8 @@
   ""
   "*
 {
-  if (GET_CODE (operands[3]) != CONST_INT || GET_CODE (operands[2]) != CONST_INT
-      || GET_CODE (operands[0]) != REG)
+  if (! CONST_INT_P (operands[3]) || ! CONST_INT_P (operands[2])
+      || ! REG_P (operands[0]))
     return \"extzv %3,%2,%1,%0\";
   if (INTVAL (operands[2]) == 8)
     return \"rotl %R3,%1,%0\;movzbl %0,%0\";
@@ -979,8 +978,8 @@
   ""
   "*
 {
-  if (!REG_P (operands[0]) || !CONST_INT_P (operands[2])
-      || !CONST_INT_P (operands[3])
+  if (! REG_P (operands[0]) || ! CONST_INT_P (operands[2])
+      || ! CONST_INT_P (operands[3])
       || (INTVAL (operands[2]) != 8 && INTVAL (operands[2]) != 16)
       || INTVAL (operands[2]) + INTVAL (operands[3]) > 32
       || side_effects_p (operands[1])
@@ -1008,8 +1007,8 @@
   ""
   "*
 {
-  if (!REG_P (operands[0]) || !CONST_INT_P (operands[2])
-      || !CONST_INT_P (operands[3])
+  if (! REG_P (operands[0]) || ! CONST_INT_P (operands[2])
+      || ! CONST_INT_P (operands[3])
       || INTVAL (operands[2]) + INTVAL (operands[3]) > 32
       || side_effects_p (operands[1])
       || (MEM_P (operands[1])
@@ -1137,8 +1136,8 @@
 	 (pc)))]
   "! mode_dependent_address_p (XEXP (operands[0], 0))
    && (GET_CODE (XEXP (operands[0], 0)) != PLUS
-       || !REG_P (XEXP (XEXP (operands[0], 0), 0))
-       || !CONST_INT_P (XEXP (XEXP (operands[0], 0), 1))
+       || ! REG_P (XEXP (XEXP (operands[0], 0), 0))
+       || ! CONST_INT_P (XEXP (XEXP (operands[0], 0), 1))
        || (INTVAL (XEXP (XEXP (operands[0], 0), 1)) & 3) == 0)"
   "jlbs %0,%l1")
 
@@ -1165,8 +1164,8 @@
 	 (pc)))]
   "! mode_dependent_address_p (XEXP (operands[0], 0))
    && (GET_CODE (XEXP (operands[0], 0)) != PLUS
-       || !REG_P (XEXP (XEXP (operands[0], 0), 0))
-       || !CONST_INT_P (XEXP (XEXP (operands[0], 0), 1))
+       || ! REG_P (XEXP (XEXP (operands[0], 0), 0))
+       || ! CONST_INT_P (XEXP (XEXP (operands[0], 0), 1))
        || (INTVAL (XEXP (XEXP (operands[0], 0), 1)) & 3) == 0)"
   "jlbc %0,%l1")
 
@@ -1269,7 +1268,7 @@
    (set (match_dup 0)
 	(plus:SI (match_dup 0)
 		 (const_int 1)))]
-  "!TARGET_UNIX_ASM && GET_CODE (operands[1]) == CONST_INT"
+  "!TARGET_UNIX_ASM && CONST_INT_P (operands[1])"
   "jaoblss %P1,%0,%l2")
 
 (define_insn ""
@@ -1296,7 +1295,7 @@
    (set (match_dup 0)
 	(plus:SI (match_dup 0)
 		 (const_int 1)))]
-  "!TARGET_UNIX_ASM && GET_CODE (operands[1]) == CONST_INT"
+  "!TARGET_UNIX_ASM && CONST_INT_P (operands[1])"
   "jaobleq %P1,%0,%l2")
 
 ;; Something like a sob insn, but compares against -1.

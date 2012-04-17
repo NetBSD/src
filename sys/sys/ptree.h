@@ -1,4 +1,4 @@
-/* $NetBSD: ptree.h,v 1.4 2011/07/30 16:37:05 christos Exp $ */
+/* $NetBSD: ptree.h,v 1.4.2.1 2012/04/17 00:08:52 yamt Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -52,9 +52,9 @@ typedef struct pt_node {
 #define	PT_SLOT_ROOT			0u
 #define	PT_SLOT_OTHER			1u
 #define	PT_SLOT_ODDMAN			1u
-#define	PT_TYPE_LEAF			0x00000000u
-#define	PT_TYPE_BRANCH			0x00000001u
-#define	PT_TYPE_MASK			0x00000001u
+#define	PT_TYPE_LEAF			((uintptr_t)0x00000000u)
+#define	PT_TYPE_BRANCH			((uintptr_t)0x00000001u)
+#define	PT_TYPE_MASK			((uintptr_t)0x00000001u)
 #endif /* _PT_PRIVATE */
 
 	uint32_t ptn_nodedata;

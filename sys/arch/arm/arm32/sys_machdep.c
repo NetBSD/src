@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.13 2011/06/30 20:09:20 wiz Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.13.2.1 2012/04/17 00:06:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.13 2011/06/30 20:09:20 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.13.2.1 2012/04/17 00:06:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,6 +122,6 @@ cpu_lwp_setprivate(lwp_t *l, void *addr)
 	}
 	return 0;
 #else
-	return ENOSYS;
+	return 0;
 #endif
 }

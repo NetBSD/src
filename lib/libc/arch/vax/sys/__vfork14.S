@@ -31,7 +31,7 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)Ovfork.s	8.1 (Berkeley) 6/4/93" */
-RCSID("$NetBSD: __vfork14.S,v 1.6 2011/01/25 02:38:15 matt Exp $")
+RCSID("$NetBSD: __vfork14.S,v 1.6.4.1 2012/04/17 00:05:15 yamt Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 /*
@@ -51,10 +51,11 @@ RCSID("$NetBSD: __vfork14.S,v 1.6 2011/01/25 02:38:15 matt Exp $")
  */
 
 ENTRY(__vfork14, 0)
-	movl	16(%fp),%r2	# save return address before we smash it
+	movl	16(%fp),%r0	# save return address before we smash it
 	movab	here,16(%fp)
 	ret
 here:
+	movl	%r0,%r2
 	chmk	$ SYS___vfork14
 	bcs	err		# if failed, set errno and return -1
 	/* this next trick is Chris Torek's fault */

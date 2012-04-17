@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.54 2011/05/24 18:07:11 spz Exp $	*/
+/*	$NetBSD: nd6.h,v 1.54.4.1 2012/04/17 00:08:45 yamt Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -32,11 +32,6 @@
 
 #ifndef _NETINET6_ND6_H_
 #define _NETINET6_ND6_H_
-
-/* see net/route.h, or net/if_inarp.h */
-#ifndef RTF_ANNOUNCE
-#define RTF_ANNOUNCE	RTF_PROTO2
-#endif
 
 #include <sys/queue.h>
 #include <sys/callout.h>
@@ -260,7 +255,7 @@ struct	in6_ndifreq {
 #define TEMPADDR_REGEN_ADVANCE		5	/* sec */
 #define MAX_TEMP_DESYNC_FACTOR		600	/* 10 min */
 #define ND_COMPUTE_RTIME(x) \
-		(((MIN_RANDOM_FACTOR * (x >> 10)) + (arc4random() & \
+		(((MIN_RANDOM_FACTOR * (x >> 10)) + (cprng_fast32() & \
 		((MAX_RANDOM_FACTOR - MIN_RANDOM_FACTOR) * (x >> 10)))) /1000)
 
 TAILQ_HEAD(nd_drhead, nd_defrouter);

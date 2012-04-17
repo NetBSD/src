@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.104 2011/09/29 10:59:26 dholland Exp $
+#	$NetBSD: bsd.x11.mk,v 1.104.2.1 2012/04/17 00:05:50 yamt Exp $
 
 .include <bsd.init.mk>
 
@@ -123,7 +123,7 @@ X11FLAGS.EXTENSION+=	-D__GLX_ALIGN64
     ${MACHINE} == "zaurus"
 #	LOADABLE
 X11FLAGS.LOADABLE=	-DXFree86LOADER -DIN_MODULE -DXFree86Module \
-			-fno-merge-constants
+			${${ACTIVE_CXX} == "gcc":? -fno-merge-constants :}
 .endif
   
 # XXX FIX ME
@@ -285,7 +285,7 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 		s,@Z_LIBS@,-lz,; \
 		s,@LIBZ@,-lz,; \
 		s,@LIBBZ2@,-lbz2,; \
-		s,@xkb_base@,\\$$\{libdir\}/X11/xkb,; \
+		s,@xkb_base@,\\$$\{prefix\}/lib/X11/xkb,; \
 		s,@xcbincludedir@,\\$$\{prefix\}/share/xcb,; \
 		s,@fontrootdir@,\\$$\{libdir\}/X11/fonts,; \
 		s,@LIBXML2_LIBS@,,; \

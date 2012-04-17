@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_set_ioperm.c,v 1.6 2008/04/28 20:22:55 martin Exp $	*/
+/*	$NetBSD: i386_set_ioperm.c,v 1.6.4.1 2012/04/17 00:05:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,8 +37,7 @@
 int i386_set_ioperm(u_long *);
 
 int
-i386_set_ioperm(iomap)
-	u_long *iomap;
+i386_set_ioperm(u_long *iomap)
 {
 	struct i386_set_ioperm_args p;
 

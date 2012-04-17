@@ -1,4 +1,4 @@
-/*	$NetBSD: union.h,v 1.21 2011/08/23 07:39:37 hannken Exp $	*/
+/*	$NetBSD: union.h,v 1.21.2.1 2012/04/17 00:08:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -105,28 +105,36 @@ struct union_mount {
 #define	UN_FILEMODE	(S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH)
 
 /*
- * A cache of vnode references
+ * A cache of vnode references.
+ * Lock requirements are:
+ *
+ *	:	stable
+ *	c	unheadlock[hash]
+ *	l	un_lock
+ *	m	un_lock or vnode lock to read, un_lock and
+ *			exclusive vnode lock to write
+ *	v	vnode lock to read, exclusive vnode lock to write
+ *
+ * Lock order is vnode then un_lock.
  */
 struct union_node {
-	LIST_ENTRY(union_node)	un_cache;	/* Hash chain */
-	struct vnode		*un_vnode;	/* Back pointer */
-	struct vnode	        *un_uppervp;	/* overlaying object */
-	struct vnode	        *un_lowervp;	/* underlying object */
-	struct vnode		*un_dirvp;	/* Parent dir of uppervp */
-	struct vnode		*un_pvp;	/* Parent vnode */
-	char			*un_path;	/* saved component name */
-	int			un_hash;	/* saved un_path hash value */
-	int			un_openl;	/* # of opens on lowervp */
-	unsigned int		un_flags;
-	struct vnode		**un_dircache;	/* cached union stack */
-	off_t			un_uppersz;	/* size of upper object */
-	off_t			un_lowersz;	/* size of lower object */
-	lwp_t			*un_lwp;		/* DIAGNOSTIC only */
+	kmutex_t		un_lock;
+	LIST_ENTRY(union_node)	un_cache;	/* c: Hash chain */
+	struct vnode		*un_vnode;	/* :: Back pointer */
+	struct vnode	        *un_uppervp;	/* m: overlaying object */
+	struct vnode	        *un_lowervp;	/* v: underlying object */
+	struct vnode		*un_dirvp;	/* v: Parent dir of uppervp */
+	struct vnode		*un_pvp;	/* v: Parent vnode */
+	char			*un_path;	/* v: saved component name */
+	int			un_hash;	/* v: saved un_path hash */
+	int			un_openl;	/* v: # of opens on lowervp */
+	unsigned int		un_flags;	/* v: node flags */
+	unsigned int		un_cflags;	/* c: cache flags */
+	struct vnode		**un_dircache;	/* v: cached union stack */
+	off_t			un_uppersz;	/* l: size of upper object */
+	off_t			un_lowersz;	/* l: size of lower object */
 };
 
-#define UN_WANTED	0x01
-#define UN_LOCKED	0x02
-#define UN_ULOCK	0x04		/* Upper node is locked */
 #define UN_KLOCK	0x08		/* Keep upper node locked on vput */
 #define UN_CACHED	0x10		/* In union cache */
 
@@ -162,10 +170,12 @@ int union_readdirhook(struct vnode **, struct file *, struct lwp *);
 #define	LOWERVP(vp) (VTOUNION(vp)->un_lowervp)
 #define	UPPERVP(vp) (VTOUNION(vp)->un_uppervp)
 #define OTHERVP(vp) (UPPERVP(vp) ? UPPERVP(vp) : LOWERVP(vp))
+#define LOCKVP(vp) (UPPERVP(vp) ? UPPERVP(vp) : (vp))
 
 extern int (**union_vnodeop_p)(void *);
 
 void union_init(void);
+void union_reinit(void);
 void union_done(void);
 int union_freevp(struct vnode *);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: cxdtv.c,v 1.9 2011/09/26 18:07:37 jakllsch Exp $ */
+/* $NetBSD: cxdtv.c,v 1.9.2.1 2012/04/17 00:07:44 yamt Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.9 2011/09/26 18:07:37 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.9.2.1 2012/04/17 00:07:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -161,20 +161,21 @@ static int
 cxdtv_match(device_t parent, cfdata_t match, void *aux)
 {
 	const struct pci_attach_args *pa;
+	pcireg_t reg;
 
 	pa = aux;
 
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_CONEXANT)
 		return 0;
 
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_CONEXANT_CX2388XMPEG:
-		return 1;
-	}
+	if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_CONEXANT_CX2388XMPEG)
+		return 0;
 
-	/* XXX only match supported boards */
+	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+	if (cxdtv_board_lookup(PCI_VENDOR(reg), PCI_PRODUCT(reg)) == NULL)
+		return 0;
 
-	return 0;
+	return 1;
 }
 
 static void
@@ -185,7 +186,6 @@ cxdtv_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t reg;
 	const char *intrstr;
-	char devinfo[76];
 	struct i2cbus_attach_args iba;
 
 	sc = device_private(self);
@@ -193,22 +193,15 @@ cxdtv_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_pc = pa->pa_pc;
 
-	aprint_naive("\n");
-
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 
 	sc->sc_vendor = PCI_VENDOR(reg);
 	sc->sc_product = PCI_PRODUCT(reg);
 
 	sc->sc_board = cxdtv_board_lookup(sc->sc_vendor, sc->sc_product);
+	KASSERT(sc->sc_board != NULL);
 
-	if (sc->sc_board == NULL) {
-		aprint_error_dev(self ,"unsupported device 0x%08x\n", reg);
-		return;
-	}
-
-	pci_devinfo(reg, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo(pa, NULL);
 
 	if (pci_mapreg_map(pa, CXDTV_MMBASE, PCI_MAPREG_TYPE_MEM, 0,
 			   &sc->sc_memt, &sc->sc_memh, NULL, &sc->sc_mems)) {

@@ -1,9 +1,15 @@
-#	$NetBSD: Makefile,v 1.21 2009/04/03 22:36:35 perry Exp $
+#	$NetBSD: Makefile,v 1.21.6.1 2012/04/17 00:02:33 yamt Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 .include <bsd.kernobj.mk>
+
+#
+# `make' or `make all' builds all gzimg files defined in ${TARGETS}.
+# `make _KERNELNAME_' builds all gzimg files for specified kernels.
+#
+
 
 
 #	TARGETS is a list of:
@@ -75,7 +81,16 @@ gzimg_${I}_flash_${R}.gz: .NOTMAIN gzimg_${I}_flash_${R}
 CLEANFILES+=	gzimg_${I}_flash_${R}.kern gzimg_${I}_flash_${R}.kern.gz \
 		gzimg_${I}_flash_${R}
 
+.if empty(GZKERNELS:M${K})
+GZKERNELS+=	$K
+.endif
+KZ${K}+=	gzimg_${I}_flash_${R}.gz
+
 .endfor							# }
+
+.for K in ${GZKERNELS}
+${K}: .PHONY ${KZ${K}}
+.endfor
 
 CLEANFILES+=	${GZIMGS}
 

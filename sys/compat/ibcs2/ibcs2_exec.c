@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.75 2010/07/22 03:18:30 christos Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.75.8.1 2012/04/17 00:07:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.75 2010/07/22 03:18:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.75.8.1 2012/04/17 00:07:14 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -112,7 +112,6 @@ struct emul emul_ibcs2 = {
 	.e_fault =		NULL,
 	.e_vm_default_addr =	uvm_default_mapaddr,
 	.e_usertrap =		NULL,
-	.e_sa =			NULL,
 	.e_ucsize =		0,
 	.e_startlwp =		NULL
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_irc_pxy.c,v 1.1.1.7 2009/08/19 08:28:58 darrenr Exp $	*/
+/*	$NetBSD: ip_irc_pxy.c,v 1.1.1.7.6.1 2012/04/17 00:02:24 yamt Exp $	*/
 
 /*
  * Copyright (C) 2000-2003 Darren Reed
@@ -13,13 +13,13 @@
 #define	IPF_IRCBUFSZ	96	/* This *MUST* be >= 64! */
 
 
-int ippr_irc_init __P((void));
-void ippr_irc_fini __P((void));
-int ippr_irc_new __P((fr_info_t *, ap_session_t *, nat_t *));
-int ippr_irc_out __P((fr_info_t *, ap_session_t *, nat_t *));
-int ippr_irc_send __P((fr_info_t *, nat_t *));
-int ippr_irc_complete __P((ircinfo_t *, char *, size_t));
-u_short ipf_irc_atoi __P((char **));
+int ippr_irc_init(void);
+void ippr_irc_fini(void);
+int ippr_irc_new(fr_info_t *, ap_session_t *, nat_t *);
+int ippr_irc_out(fr_info_t *, ap_session_t *, nat_t *);
+int ippr_irc_send(fr_info_t *, nat_t *);
+int ippr_irc_complete(ircinfo_t *, char *, size_t);
+u_short ipf_irc_atoi(char **);
 
 static	frentry_t	ircnatfr;
 
@@ -29,7 +29,8 @@ int	irc_proxy_init = 0;
 /*
  * Initialize local structures.
  */
-int ippr_irc_init()
+int
+ippr_irc_init(void)
 {
 	bzero((char *)&ircnatfr, sizeof(ircnatfr));
 	ircnatfr.fr_ref = 1;
@@ -41,7 +42,8 @@ int ippr_irc_init()
 }
 
 
-void ippr_irc_fini()
+void
+ippr_irc_fini(void)
 {
 	if (irc_proxy_init == 1) {
 		MUTEX_DESTROY(&ircnatfr.fr_lock);
@@ -66,10 +68,8 @@ const char *ippr_irc_dcctypes[] = {
  */
 
 
-int ippr_irc_complete(ircp, buf, len)
-ircinfo_t *ircp;
-char *buf;
-size_t len;
+int
+ippr_irc_complete(ircinfo_t *ircp, char *buf, size_t len)
 {
 	register char *s, c;
 	register size_t i;
@@ -224,10 +224,8 @@ size_t len;
 }
 
 
-int ippr_irc_new(fin, aps, nat)
-fr_info_t *fin;
-ap_session_t *aps;
-nat_t *nat;
+int
+ippr_irc_new(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	ircinfo_t *irc;
 
@@ -246,9 +244,8 @@ nat_t *nat;
 }
 
 
-int ippr_irc_send(fin, nat)
-fr_info_t *fin;
-nat_t *nat;
+int
+ippr_irc_send(fr_info_t *fin, nat_t *nat)
 {
 	char ctcpbuf[IPF_IRCBUFSZ], newbuf[IPF_IRCBUFSZ];
 	tcphdr_t *tcp, tcph, *tcp2 = &tcph;
@@ -425,10 +422,8 @@ nat_t *nat;
 }
 
 
-int ippr_irc_out(fin, aps, nat)
-fr_info_t *fin;
-ap_session_t *aps;
-nat_t *nat;
+int
+ippr_irc_out(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	aps = aps;	/* LINT */
 	return ippr_irc_send(fin, nat);

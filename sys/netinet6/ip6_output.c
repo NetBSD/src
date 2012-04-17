@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.140 2011/04/25 22:20:59 yamt Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.140.4.1 2012/04/17 00:08:44 yamt Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.140 2011/04/25 22:20:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.140.4.1 2012/04/17 00:08:44 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -98,12 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.140 2011/04/25 22:20:59 yamt Exp $"
 #include <netinet6/nd6.h>
 #include <netinet6/ip6protosw.h>
 #include <netinet6/scope6_var.h>
-
-#ifdef IPSEC
-#include <netinet6/ipsec.h>
-#include <netinet6/ipsec_private.h>
-#include <netkey/key.h>
-#endif /* IPSEC */
 
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
@@ -189,12 +183,6 @@ ip6_output(
 	struct route *ro_pmtu = NULL;
 	int hdrsplit = 0;
 	int needipsec = 0;
-#ifdef IPSEC
-	int needipsectun = 0;
-	struct secpolicy *sp = NULL;
-
-	ip6 = mtod(m, struct ip6_hdr *);
-#endif /* IPSEC */
 #ifdef FAST_IPSEC
 	struct secpolicy *sp = NULL;
 	int s;
@@ -244,64 +232,6 @@ ip6_output(
 		MAKE_EXTHDR(opt->ip6po_dest2, &exthdrs.ip6e_dest2);
 	}
 
-#ifdef IPSEC
-	if ((flags & IPV6_FORWARDING) != 0) {
-		needipsec = 0;
-		goto skippolicycheck;
-	}
-
-	/* get a security policy for this packet */
-	if (so == NULL)
-		sp = ipsec6_getpolicybyaddr(m, IPSEC_DIR_OUTBOUND, 0, &error);
-	else {
-		if (IPSEC_PCB_SKIP_IPSEC(sotoinpcb_hdr(so)->inph_sp,
-					 IPSEC_DIR_OUTBOUND)) {
-			needipsec = 0;
-			goto skippolicycheck;
-		}
-		sp = ipsec6_getpolicybysock(m, IPSEC_DIR_OUTBOUND, so, &error);
-	}
-
-	if (sp == NULL) {
-		IPSEC6_STATINC(IPSEC_STAT_OUT_INVAL);
-		goto freehdrs;
-	}
-
-	error = 0;
-
-	/* check policy */
-	switch (sp->policy) {
-	case IPSEC_POLICY_DISCARD:
-		/*
-		 * This packet is just discarded.
-		 */
-		IPSEC6_STATINC(IPSEC_STAT_OUT_POLVIO);
-		goto freehdrs;
-
-	case IPSEC_POLICY_BYPASS:
-	case IPSEC_POLICY_NONE:
-		/* no need to do IPsec. */
-		needipsec = 0;
-		break;
-
-	case IPSEC_POLICY_IPSEC:
-		if (sp->req == NULL) {
-			/* XXX should be panic ? */
-			printf("ip6_output: No IPsec request specified.\n");
-			error = EINVAL;
-			goto freehdrs;
-		}
-		needipsec = 1;
-		break;
-
-	case IPSEC_POLICY_ENTRUST:
-	default:
-		printf("ip6_output: Invalid policy found. %d\n", sp->policy);
-	}
-
-  skippolicycheck:;
-#endif /* IPSEC */
-
 	/*
 	 * Calculate the total length of the extension header chain.
 	 * Keep the length of the unfragmentable part for fragmentation.
@@ -317,10 +247,6 @@ ip6_output(
 #ifdef FAST_IPSEC
 	/* Check the security policy (SP) for the packet */
     
-	/* XXX For moment, we doesn't support packet with extented action */
-	if (optlen !=0)
-		goto freehdrs;
-
 	sp = ipsec6_check_policy(m,so,flags,&needipsec,&error);
 	if (error != 0) {
 		/*
@@ -439,62 +365,6 @@ ip6_output(
 
 		M_CSUM_DATA_IPv6_HL_SET(m->m_pkthdr.csum_data,
 		    sizeof(struct ip6_hdr) + optlen);
-
-#ifdef IPSEC
-		if (!needipsec)
-			goto skip_ipsec2;
-
-		/*
-		 * pointers after IPsec headers are not valid any more.
-		 * other pointers need a great care too.
-		 * (IPsec routines should not mangle mbufs prior to AH/ESP)
-		 */
-		exthdrs.ip6e_dest2 = NULL;
-
-	    {
-		struct ip6_rthdr *rh = NULL;
-		int segleft_org = 0;
-		struct ipsec_output_state state;
-
-		if (exthdrs.ip6e_rthdr) {
-			rh = mtod(exthdrs.ip6e_rthdr, struct ip6_rthdr *);
-			segleft_org = rh->ip6r_segleft;
-			rh->ip6r_segleft = 0;
-		}
-
-		memset(&state, 0, sizeof(state));
-		state.m = m;
-		error = ipsec6_output_trans(&state, nexthdrp, mprev, sp, flags,
-		    &needipsectun);
-		m = state.m;
-		if (error) {
-			rh = mtod(exthdrs.ip6e_rthdr, struct ip6_rthdr *);
-			/* mbuf is already reclaimed in ipsec6_output_trans. */
-			m = NULL;
-			switch (error) {
-			case EHOSTUNREACH:
-			case ENETUNREACH:
-			case EMSGSIZE:
-			case ENOBUFS:
-			case ENOMEM:
-				break;
-			default:
-				printf("ip6_output (ipsec): error code %d\n", error);
-				/* FALLTHROUGH */
-			case ENOENT:
-				/* don't show these error codes to the user */
-				error = 0;
-				break;
-			}
-			goto bad;
-		}
-		if (exthdrs.ip6e_rthdr) {
-			/* ah6_output doesn't modify mbuf chain */
-			rh->ip6r_segleft = segleft_org;
-		}
-	    }
-skip_ipsec2:;
-#endif
 	}
 
 	/*
@@ -596,56 +466,6 @@ skip_ipsec2:;
 			ip6->ip6_hlim = ip6_defmcasthlim;
 	}
 
-#ifdef IPSEC
-	if (needipsec && needipsectun) {
-		struct ipsec_output_state state;
-
-		/*
-		 * All the extension headers will become inaccessible
-		 * (since they can be encrypted).
-		 * Don't panic, we need no more updates to extension headers
-		 * on inner IPv6 packet (since they are now encapsulated).
-		 *
-		 * IPv6 [ESP|AH] IPv6 [extension headers] payload
-		 */
-		memset(&exthdrs, 0, sizeof(exthdrs));
-		exthdrs.ip6e_ip6 = m;
-
-		memset(&state, 0, sizeof(state));
-		state.m = m;
-		state.ro = ro;
-		state.dst = rtcache_getdst(ro);
-
-		error = ipsec6_output_tunnel(&state, sp, flags);
-
-		m = state.m;
-		ro_pmtu = ro = state.ro;
-		dst = satocsin6(state.dst);
-		if (error) {
-			/* mbuf is already reclaimed in ipsec6_output_tunnel. */
-			m0 = m = NULL;
-			m = NULL;
-			switch (error) {
-			case EHOSTUNREACH:
-			case ENETUNREACH:
-			case EMSGSIZE:
-			case ENOBUFS:
-			case ENOMEM:
-				break;
-			default:
-				printf("ip6_output (ipsec): error code %d\n", error);
-				/* FALLTHROUGH */
-			case ENOENT:
-				/* don't show these error codes to the user */
-				error = 0;
-				break;
-			}
-			goto bad;
-		}
-
-		exthdrs.ip6e_ip6 = m;
-	}
-#endif /* IPSEC */
 #ifdef FAST_IPSEC
 	if (needipsec) {
 		s = splsoftnet();
@@ -681,7 +501,10 @@ skip_ipsec2:;
 		 * If in6_selectroute() does not return a route entry,
 		 * dst may not have been updated.
 		 */
-		rtcache_setdst(ro, sin6tosa(&dst_sa));
+		error = rtcache_setdst(ro, sin6tosa(&dst_sa));
+		if (error) {
+			goto bad;
+		}
 	}
 
 	/*
@@ -817,10 +640,6 @@ skip_ipsec2:;
 	if ((error = ip6_getpmtu(ro_pmtu, ro, ifp, &finaldst, &mtu,
 	    &alwaysfrag)) != 0)
 		goto bad;
-#ifdef IPSEC
-	if (needipsectun)
-		mtu = IPV6_MMTU;
-#endif
 
 	/*
 	 * The caller of this function may specify to use the minimum MTU
@@ -858,28 +677,18 @@ skip_ipsec2:;
 	 * it must be examined and processed even by the source node.
 	 * (RFC 2460, section 4.)
 	 */
-	if (exthdrs.ip6e_hbh) {
-		struct ip6_hbh *hbh = mtod(exthdrs.ip6e_hbh, struct ip6_hbh *);
+	if (ip6->ip6_nxt == IPV6_HOPOPTS) {
 		u_int32_t dummy1; /* XXX unused */
 		u_int32_t dummy2; /* XXX unused */
+		int hoff = sizeof(struct ip6_hdr);
 
-		/*
-		 *  XXX: if we have to send an ICMPv6 error to the sender,
-		 *       we need the M_LOOP flag since icmp6_error() expects
-		 *       the IPv6 and the hop-by-hop options header are
-		 *       continuous unless the flag is set.
-		 */
-		m->m_flags |= M_LOOP;
-		m->m_pkthdr.rcvif = ifp;
-		if (ip6_process_hopopts(m, (u_int8_t *)(hbh + 1),
-		    ((hbh->ip6h_len + 1) << 3) - sizeof(struct ip6_hbh),
-		    &dummy1, &dummy2) < 0) {
+		if (ip6_hopopts_input(&dummy1, &dummy2, &m, &hoff)) {
 			/* m was already freed at this point */
 			error = EINVAL;/* better error? */
 			goto done;
 		}
-		m->m_flags &= ~M_LOOP; /* XXX */
-		m->m_pkthdr.rcvif = NULL;
+
+		ip6 = mtod(m, struct ip6_hdr *);
 	}
 
 #ifdef PFIL_HOOKS
@@ -959,10 +768,6 @@ skip_ipsec2:;
 			/* Record statistics for this interface address. */
 			ia6->ia_ifa.ifa_data.ifad_outbytes += m->m_pkthdr.len;
 		}
-#ifdef IPSEC
-		/* clean ipsec history once it goes out of the node */
-		ipsec_delaux(m);
-#endif
 
 		sw_csum = m->m_pkthdr.csum_flags & ~ifp->if_csum_flags_tx;
 		if ((sw_csum & (M_CSUM_UDPv6|M_CSUM_TCPv6)) != 0) {
@@ -1120,7 +925,7 @@ skip_ipsec2:;
 				;
 			mlast->m_next = m_frgpart;
 			m->m_pkthdr.len = len + hlen + sizeof(*ip6f);
-			m->m_pkthdr.rcvif = (struct ifnet *)0;
+			m->m_pkthdr.rcvif = NULL;
 			ip6f->ip6f_reserved = 0;
 			ip6f->ip6f_ident = id;
 			ip6f->ip6f_nxt = nextproto;
@@ -1153,10 +958,6 @@ sendorfree:
 				ia6->ia_ifa.ifa_data.ifad_outbytes +=
 				    m->m_pkthdr.len;
 			}
-#ifdef IPSEC
-			/* clean ipsec history once it goes out of the node */
-			ipsec_delaux(m);
-#endif
 			KASSERT(dst != NULL);
 			error = nd6_output(ifp, origifp, m, dst, rt);
 		} else
@@ -1169,10 +970,6 @@ sendorfree:
 done:
 	rtcache_free(&ip6route);
 
-#ifdef IPSEC
-	if (sp != NULL)
-		key_freesp(sp);
-#endif /* IPSEC */
 #ifdef FAST_IPSEC
 	if (sp != NULL)
 		KEY_FREESP(&sp);
@@ -1503,8 +1300,9 @@ ip6_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 		case IPV6_RECVHOPOPTS:
 		case IPV6_RECVDSTOPTS:
 		case IPV6_RECVRTHDRDSTOPTS:
-			error = kauth_authorize_generic(kauth_cred_get(),
-			    KAUTH_GENERIC_ISSUSER, NULL);
+			error = kauth_authorize_network(kauth_cred_get(),
+			    KAUTH_NETWORK_IPV6, KAUTH_REQ_NETWORK_IPV6_HOPBYHOP,
+			    NULL, NULL, NULL);
 			if (error)
 				break;
 			/* FALLTHROUGH */
@@ -1742,16 +1540,20 @@ else 					\
 				 * See comments for IPV6_RECVHOPOPTS.
 				 */
 				error =
-				    kauth_authorize_generic(kauth_cred_get(),
-				    KAUTH_GENERIC_ISSUSER, NULL);
+				    kauth_authorize_network(kauth_cred_get(),
+				    KAUTH_NETWORK_IPV6,
+				    KAUTH_REQ_NETWORK_IPV6_HOPBYHOP, NULL,
+				    NULL, NULL);
 				if (error)
 					return (error);
 				OPTSET2292(IN6P_HOPOPTS);
 				break;
 			case IPV6_2292DSTOPTS:
 				error =
-				    kauth_authorize_generic(kauth_cred_get(),
-				    KAUTH_GENERIC_ISSUSER, NULL);
+				    kauth_authorize_network(kauth_cred_get(),
+				    KAUTH_NETWORK_IPV6,
+				    KAUTH_REQ_NETWORK_IPV6_HOPBYHOP, NULL,
+				    NULL, NULL);
 				if (error)
 					return (error);
 				OPTSET2292(IN6P_DSTOPTS|IN6P_RTHDRDSTOPTS); /* XXX */
@@ -1832,7 +1634,7 @@ else 					\
 			break;
 
 
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 		case IPV6_IPSEC_POLICY:
 			error = ipsec6_set_policy(in6p, optname,
 			    sopt->sopt_data, sopt->sopt_size, kauth_cred_get());
@@ -2016,7 +1818,7 @@ else 					\
 			error = ip6_getmoptions(sopt, in6p->in6p_moptions);
 			break;
 
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 		case IPV6_IPSEC_POLICY:
 		    {
 			struct mbuf *m = NULL;
@@ -2337,7 +2139,7 @@ do {								\
 	if (src->type) {					\
 		int hlen = (((struct ip6_ext *)src->type)->ip6e_len + 1) << 3;\
 		dst->type = malloc(hlen, M_IP6OPT, canwait);	\
-		if (dst->type == NULL && canwait == M_NOWAIT)	\
+		if (dst->type == NULL)				\
 			goto bad;				\
 		memcpy(dst->type, src->type, hlen);		\
 	}							\
@@ -2352,14 +2154,14 @@ copypktopts(struct ip6_pktopts *dst, struct ip6_pktopts *src, int canwait)
 	if (src->ip6po_pktinfo) {
 		dst->ip6po_pktinfo = malloc(sizeof(*dst->ip6po_pktinfo),
 		    M_IP6OPT, canwait);
-		if (dst->ip6po_pktinfo == NULL && canwait == M_NOWAIT)
+		if (dst->ip6po_pktinfo == NULL)
 			goto bad;
 		*dst->ip6po_pktinfo = *src->ip6po_pktinfo;
 	}
 	if (src->ip6po_nexthop) {
 		dst->ip6po_nexthop = malloc(src->ip6po_nexthop->sa_len,
 		    M_IP6OPT, canwait);
-		if (dst->ip6po_nexthop == NULL && canwait == M_NOWAIT)
+		if (dst->ip6po_nexthop == NULL)
 			goto bad;
 		memcpy(dst->ip6po_nexthop, src->ip6po_nexthop,
 		    src->ip6po_nexthop->sa_len);
@@ -2389,7 +2191,7 @@ ip6_copypktopts(struct ip6_pktopts *src, int canwait)
 	struct ip6_pktopts *dst;
 
 	dst = malloc(sizeof(*dst), M_IP6OPT, canwait);
-	if (dst == NULL && canwait == M_NOWAIT)
+	if (dst == NULL)
 		return (NULL);
 	ip6_initpktopts(dst);
 
@@ -2518,8 +2320,8 @@ ip6_setmoptions(const struct sockopt *sopt, struct ip6_moptions **im6op)
 			 * all multicast addresses. Only super user is allowed
 			 * to do this.
 			 */
-			if (kauth_authorize_generic(l->l_cred,
-			    KAUTH_GENERIC_ISSUSER, NULL))
+			if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_IPV6,
+			    KAUTH_REQ_NETWORK_IPV6_JOIN_MULTICAST, NULL, NULL, NULL))
 			{
 				error = EACCES;
 				break;
@@ -2993,8 +2795,8 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 	case IPV6_2292NEXTHOP:
 #endif
 	case IPV6_NEXTHOP:
-		error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    NULL);
+		error = kauth_authorize_network(cred, KAUTH_NETWORK_IPV6,
+		    KAUTH_REQ_NETWORK_IPV6_HOPBYHOP, NULL, NULL, NULL);
 		if (error)
 			return (error);
 
@@ -3051,8 +2853,8 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 		 * options, since per-option restriction has too much
 		 * overhead.
 		 */
-		error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    NULL);
+		error = kauth_authorize_network(cred, KAUTH_NETWORK_IPV6,
+		    KAUTH_REQ_NETWORK_IPV6_HOPBYHOP, NULL, NULL, NULL);
 		if (error)
 			return (error);
 
@@ -3089,8 +2891,8 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 		int destlen;
 
 		/* XXX: see the comment for IPV6_HOPOPTS */
-		error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    NULL);
+		error = kauth_authorize_network(cred, KAUTH_NETWORK_IPV6,
+		    KAUTH_REQ_NETWORK_IPV6_HOPBYHOP, NULL, NULL, NULL);
 		if (error)
 			return (error);
 

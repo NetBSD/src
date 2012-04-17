@@ -3,7 +3,7 @@
 /* Generated from: NetBSD: mknative.common,v 1.9 2007/02/05 18:26:01 apb Exp  */
 
 /* Generated automatically. */
-static const char configuration_arguments[] = "/usr/src3/tools/gcc/../../external/gpl3/gcc/dist/configure --target=powerpc64--netbsd --enable-long-long --enable-threads --with-bugurl=http://www.NetBSD.org/Misc/send-pr.html --with-pkgversion='NetBSD nb1 20110620' --enable-__cxa_atexit --with-mpc=/var/obj/mknative/evbppc/usr/src3/destdir.evbppc/usr --with-mpfr=/var/obj/mknative/evbppc/usr/src3/destdir.evbppc/usr --with-gmp=/var/obj/mknative/evbppc/usr/src3/destdir.evbppc/usr --disable-multilib --disable-symvers --disable-libstdcxx-pch --build=x86_64-unknown-netbsd5.99.54 --host=powerpc64--netbsd";
+static const char configuration_arguments[] = "/usr/src2/tools/gcc/../../external/gpl3/gcc/dist/configure --target=powerpc64--netbsd --enable-long-long --enable-threads --with-bugurl=http://www.NetBSD.org/Misc/send-pr.html --with-pkgversion='NetBSD nb2 20111202' --enable-__cxa_atexit --with-mpc=/var/obj/mknative/evbppc/usr/src2/destdir.evbppc/usr --with-mpfr=/var/obj/mknative/evbppc/usr/src2/destdir.evbppc/usr --with-gmp=/var/obj/mknative/evbppc/usr/src2/destdir.evbppc/usr --enable-tls --disable-multilib --disable-symvers --disable-libstdcxx-pch --build=x86_64-unknown-netbsd5.99.56 --host=powerpc64--netbsd";
 static const char thread_model[] = "posix";
 
 static const struct {

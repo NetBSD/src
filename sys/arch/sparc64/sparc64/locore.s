@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.338 2011/09/04 12:17:13 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.338.2.1 2012/04/17 00:06:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -491,7 +491,7 @@ _C_LABEL(trapbase):
 	VTRAP(0x060, interrupt_vector); ! 060 = interrupt vector
 	TRAP(T_PA_WATCHPT)		! 061 = physical address data watchpoint
 	TRAP(T_VA_WATCHPT)		! 062 = virtual address data watchpoint
-	UTRAP(T_ECCERR)			! We'll implement this one later
+	TRAP(T_ECCERR)			! 063 = corrected ECC error
 ufast_IMMU_miss:			! 064 = fast instr access MMU miss
 	ldxa	[%g0] ASI_IMMU_8KPTR, %g2 ! Load IMMU 8K TSB pointer
 #ifdef NO_TSB
@@ -727,7 +727,7 @@ kdatafault:
 	VTRAP(0x060, interrupt_vector); ! 060 = interrupt vector
 	TRAP(T_PA_WATCHPT)		! 061 = physical address data watchpoint
 	TRAP(T_VA_WATCHPT)		! 062 = virtual address data watchpoint
-	UTRAP(T_ECCERR)			! We'll implement this one later
+	TRAP(T_ECCERR)			! 063 = corrected ECC error
 kfast_IMMU_miss:			! 064 = fast instr access MMU miss
 	ldxa	[%g0] ASI_IMMU_8KPTR, %g2 ! Load IMMU 8K TSB pointer
 #ifdef NO_TSB
@@ -5381,16 +5381,6 @@ ENTRY(lwp_trampoline)
 	ba,a,pt	%icc, return_from_trap
 	 nop
 
-	/*
-	 * Like lwp_trampoline, but for cpu_setfunc(), i.e. without newlwp
-	 * arguement and will not call lwp_startup.
-	 */
-ENTRY(setfunc_trampoline)
-	call	%l0			! re-use current frame
-	 mov	%l1, %o0
-	ba,a,pt	%icc, return_from_trap
-	 nop
-
 /*
  * pmap_zero_page_phys(pa)
  *
@@ -5527,6 +5517,9 @@ ENTRY(pmap_copy_page_phys)
  */
 ENTRY(pseg_get_real)
 !	flushw			! Make sure we don't have stack probs & lose hibits of %o
+#ifndef _LP64
+	clruw	%o1					! Zero extend
+#endif
 	ldx	[%o0 + PM_PHYS], %o2			! pmap->pm_segs
 
 	srax	%o1, HOLESHIFT, %o3			! Check for valid address

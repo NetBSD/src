@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.16 2011/01/22 19:19:24 joerg Exp $	*/
+/*	$NetBSD: boot.c,v 1.16.4.1 2012/04/17 00:07:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -53,7 +53,7 @@ static void help(void);
 static int get_scsi_host_adapter(void);
 static void doboot(const char *, int);
 static void boot(char *);
-static void ls(char *);
+static void cmd_ls(char *);
 int bootmenu(void);
 void bootmain(int);
 extern int detectmpu(void);
@@ -124,8 +124,10 @@ doboot(const char *file, int flags)
 		printf("XXX: unknown corruption in /boot.\n");
 	}
 
+#ifdef DEBUG
 	printf("dev = %x, unit = %d, part = %c, name = %s\n",
 	       dev, unit, part + 'a', name);
+#endif
 
 	if (dev == 0) {		/* SCSI */
 		dev = X68K_MAKESCSIBOOTDEV(X68K_MAJOR_SD,
@@ -135,6 +137,7 @@ doboot(const char *file, int flags)
 	} else {
 		dev = X68K_MAKEBOOTDEV(X68K_MAJOR_FD, unit & 3, 0);
 	}
+#ifdef DEBUG
 	printf("boot device = %x\n", dev);
 	printf("if = %d, unit = %d, id = %d, lun = %d, part = %c\n",
 	       B_X68K_SCSI_IF(dev),
@@ -142,9 +145,12 @@ doboot(const char *file, int flags)
 	       B_X68K_SCSI_ID(dev),
 	       B_X68K_SCSI_LUN(dev),
 	       B_X68K_SCSI_PART(dev) + 'a');
+#endif
 
 	p = ((short*) marks[MARK_ENTRY]) - 1;
+#ifdef DEBUG
 	printf("Kernel Version: 0x%x\n", *p);
+#endif
 	if (*p != 0x4e73 && *p != 0) {
 		/*
 		 * XXX temporary solution; compatibility loader
@@ -201,7 +207,7 @@ boot(char *arg)
 }
 
 static void
-ls(char *arg)
+cmd_ls(char *arg)
 {
 	char filename[80];
 
@@ -217,7 +223,7 @@ ls(char *arg)
 		if (*(strchr(arg, ':')+1) == 0)
 			strcat(filename, "/");
 	}
-	ufs_ls(filename);
+	ls(filename);
 	devopen_open_dir = 0;
 }
 
@@ -266,7 +272,7 @@ bootmenu(void)
 		else if ((strcmp("halt", p) == 0) ||(strcmp("reboot", p) == 0))
 			exit(0);
 		else if (strcmp("ls", p) == 0)
-			ls(options);
+			cmd_ls(options);
 		else
 			printf("Unknown command %s\n", p);
 	}

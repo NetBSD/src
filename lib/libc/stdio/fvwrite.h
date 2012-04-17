@@ -1,4 +1,4 @@
-/*	$NetBSD: fvwrite.h,v 1.7 2003/08/07 16:43:26 agc Exp $	*/
+/*	$NetBSD: fvwrite.h,v 1.7.56.1 2012/04/17 00:05:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -43,8 +43,8 @@ struct __siov {
 };
 struct __suio {
 	struct	__siov *uio_iov;
-	int	uio_iovcnt;
-	int	uio_resid;
+	size_t	uio_iovcnt;
+	size_t	uio_resid;
 };
 
 extern int __sfvwrite(FILE *, struct __suio *);

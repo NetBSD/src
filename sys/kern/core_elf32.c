@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.35 2009/12/14 00:48:35 matt Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.35.12.1 2012/04/17 00:08:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.35 2009/12/14 00:48:35 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.35.12.1 2012/04/17 00:08:22 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -57,7 +57,7 @@ __KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.35 2009/12/14 00:48:35 matt Exp $")
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <sys/ptrace.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kauth.h>
 
 #include <machine/reg.h>
@@ -104,6 +104,7 @@ ELFNAMEEND(coredump)(struct lwp *l, void *cookie)
 	struct proc *p;
 	Elf_Ehdr ehdr;
 	Elf_Phdr phdr, *psections;
+	size_t psectionssize;
 	struct countsegs_state cs;
 	struct writesegs_state ws;
 	off_t notestart, secstart, offset;
@@ -180,8 +181,8 @@ ELFNAMEEND(coredump)(struct lwp *l, void *cookie)
 	notestart = offset + sizeof(phdr) * cs.npsections;
 	secstart = notestart + notesize;
 
-	psections = malloc(cs.npsections * sizeof(Elf_Phdr),
-	    M_TEMP, M_WAITOK|M_ZERO);
+	psectionssize = cs.npsections * sizeof(Elf_Phdr);
+	psections = kmem_zalloc(psectionssize, KM_SLEEP);
 
 	/* Pass 2: now write the P-section headers. */
 	ws.secoff = secstart;
@@ -250,7 +251,7 @@ ELFNAMEEND(coredump)(struct lwp *l, void *cookie)
 
   out:
 	if (psections)
-		free(psections, M_TEMP);
+		kmem_free(psections, psectionssize);
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: t_join.c,v 1.6 2011/08/22 00:35:07 dholland Exp $ */
+/* $NetBSD: t_join.c,v 1.6.2.1 2012/04/17 00:09:13 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_join.c,v 1.6 2011/08/22 00:35:07 dholland Exp $");
+__RCSID("$NetBSD: t_join.c,v 1.6.2.1 2012/04/17 00:09:13 yamt Exp $");
 
 #include <errno.h>
 #include <pthread.h>
@@ -42,6 +42,8 @@ __RCSID("$NetBSD: t_join.c,v 1.6 2011/08/22 00:35:07 dholland Exp $");
 #ifdef CHECK_STACK_ALIGNMENT
 extern int check_stack_alignment(void);
 #endif
+
+#define STACKSIZE	65536
 
 static bool error;
 
@@ -72,6 +74,7 @@ threadfunc1(void *arg)
 	void *val = NULL;
 	uintptr_t i;
 	int rv;
+	pthread_attr_t attr;
 
 	caller = pthread_self();
 
@@ -94,20 +97,17 @@ threadfunc1(void *arg)
 	ATF_REQUIRE(rv != 0);
 	ATF_REQUIRE_EQ(rv, EDEADLK);
 
+	ATF_REQUIRE(pthread_attr_init(&attr) == 0);
+
 	for (i = 0; i < __arraycount(thread); i++) {
 
 		error = true;
 
-		rv = pthread_create(&thread[i], NULL, threadfunc2, (void *)i);
+		ATF_REQUIRE(pthread_attr_setstacksize(&attr, STACKSIZE * (i + 1)) == 0);
+
+		rv = pthread_create(&thread[i], &attr, threadfunc2, (void *)i);
 
 		ATF_REQUIRE_EQ(rv, 0);
-
-		/*
-		 * Try to join an invalid thread.
-		 */
-		rv = pthread_join(thread[i + 1], NULL);
-
-		ATF_REQUIRE_EQ(rv, ESRCH);
 
 		/*
 		 * Check join and exit condition.
@@ -135,6 +135,8 @@ threadfunc1(void *arg)
 		ATF_REQUIRE(rv != 0);
 	}
 
+	ATF_REQUIRE(pthread_attr_destroy(&attr) == 0);
+
 	pthread_exit(NULL);
 
 	return NULL;
@@ -145,8 +147,15 @@ threadfunc2(void *arg)
 {
 	static uintptr_t i = 0;
 	uintptr_t j;
+	pthread_attr_t attr;
+	size_t stacksize;
 
 	j = (uintptr_t)arg;
+
+	ATF_REQUIRE(pthread_attr_get_np(pthread_self(), &attr) == 0);
+	ATF_REQUIRE(pthread_attr_getstacksize(&attr, &stacksize) == 0);
+	ATF_REQUIRE(stacksize == STACKSIZE * (j + 1));
+	ATF_REQUIRE(pthread_attr_destroy(&attr) == 0);
 
 	if (i++ == j)
 		error = false;

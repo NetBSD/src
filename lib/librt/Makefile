@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.14 2011/10/27 18:45:44 christos Exp $
+#	$NetBSD: Makefile,v 1.14.2.1 2012/04/17 00:05:32 yamt Exp $
 #
 
 .include <bsd.own.mk>
 
-WARNS=	4
+WARNS?=	5
 
 LIB=	rt
 SRCS=	sem.c
@@ -23,6 +23,7 @@ MLINKS+=	mq_send.3 mq_timedsend.3
 
 MLINKS+=	sem_open.3 sem_close.3
 MLINKS+=	sem_open.3 sem_unlink.3
+MLINKS+=	sem_wait.3 sem_timedwait.3
 MLINKS+=	sem_wait.3 sem_trywait.3
 
 MLINKS+=	pset.3 pset_create.3

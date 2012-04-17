@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.83.2.1 2011/11/10 14:31:48 yamt Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.83.2.2 2012/04/17 00:08:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.83.2.1 2011/11/10 14:31:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.83.2.2 2012/04/17 00:08:25 yamt Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -795,8 +795,6 @@ module_do_builtin(const char *name, module_t **modp, prop_dictionary_t props)
 	if (modp != NULL) {
 		*modp = mod;
 	}
-	if (mi->mi_class == MODULE_CLASS_SECMODEL)
-		secmodel_register();
 	module_enqueue(mod);
 	return 0;
 }
@@ -1071,9 +1069,6 @@ module_do_load(const char *name, bool isdep, int flags,
 		goto fail;
 	}
 
-	if (mi->mi_class == MODULE_CLASS_SECMODEL)
-		secmodel_register();
-
 	/*
 	 * Good, the module loaded successfully.  Put it onto the
 	 * list and add references to its requisite modules.
@@ -1121,6 +1116,7 @@ module_do_unload(const char *name, bool load_requires_force)
 	u_int i;
 
 	KASSERT(kernconfig_is_held());
+	KASSERT(name != NULL);
 
 	mod = module_lookup(name);
 	if (mod == NULL) {
@@ -1149,13 +1145,12 @@ module_do_unload(const char *name, bool load_requires_force)
 		    error);
 		return error;
 	}
-	if (mod->mod_info->mi_class == MODULE_CLASS_SECMODEL)
-		secmodel_deregister();
 	module_count--;
 	TAILQ_REMOVE(&module_list, mod, mod_chain);
 	for (i = 0; i < mod->mod_nrequired; i++) {
 		mod->mod_required[i]->mod_refcnt--;
 	}
+	module_print("unloaded module `%s'", name);
 	if (mod->mod_kobj != NULL) {
 		kobj_unload(mod->mod_kobj);
 	}
@@ -1170,7 +1165,6 @@ module_do_unload(const char *name, bool load_requires_force)
 	}
 	module_gen++;
 
-	module_print("unloaded module `%s'", name);
 	return 0;
 }
 

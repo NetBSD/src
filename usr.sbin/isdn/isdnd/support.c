@@ -27,7 +27,7 @@
  *	i4b daemon - misc support routines
  *	----------------------------------
  *
- *	$Id: support.c,v 1.15 2009/04/16 05:56:32 lukem Exp $ 
+ *	$Id: support.c,v 1.15.6.1 2012/04/17 00:09:47 yamt Exp $ 
  *
  * $FreeBSD$
  *
@@ -679,7 +679,7 @@ handle_charge(struct cfg_entry *cep)
 	{
 		if (cep->aoc_diff != cep->unitlength)
 		{
-			DBGL(DL_MSG, (logit(LL_DBG, "handle_charge: AOCD unit length updated %d -> %d secs", cep->unitlength, cep->aoc_diff)));
+			DBGL(DL_MSG, (logit(LL_DBG, "handle_charge: AOCD unit length updated %d -> %jd secs", cep->unitlength, (intmax_t)cep->aoc_diff)));
 
 			cep->unitlength = cep->aoc_diff;
 

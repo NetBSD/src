@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.102 2011/08/31 16:24:54 plunky Exp $	*/
+/*	$NetBSD: eval.c,v 1.102.2.1 2012/04/17 00:01:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.102 2011/08/31 16:24:54 plunky Exp $");
+__RCSID("$NetBSD: eval.c,v 1.102.2.1 2012/04/17 00:01:38 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,6 +92,7 @@ int evalskip;			/* set if we are skipping commands */
 STATIC int skipcount;		/* number of levels to skip */
 MKINIT int loopnest;		/* current loop nesting level */
 int funcnest;			/* depth of function calls */
+STATIC int builtin_flags;	/* evalcommand flags for builtins */
 
 
 const char *commandname;
@@ -181,7 +182,7 @@ evalcmd(int argc, char **argv)
                         STPUTC('\0', concat);
                         p = grabstackstr(concat);
                 }
-                evalstring(p, 0);
+                evalstring(p, builtin_flags & EV_TESTED);
         }
         return exitstatus;
 }
@@ -1010,6 +1011,7 @@ normal_fork:
 			/* and getopt */
 			optreset = 1;
 			optind = 1;
+			builtin_flags = flags;
 			exitstatus = cmdentry.u.bltin(argc, argv);
 		} else {
 			e = exception;

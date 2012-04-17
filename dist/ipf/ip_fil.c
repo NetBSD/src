@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.19 2010/06/01 08:53:20 plunky Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.19.6.1 2012/04/17 00:02:24 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -148,19 +148,19 @@ extern	struct	protosw	inetsw[];
 static	struct	ifnet **ifneta = NULL;
 static	int	nifs = 0;
 
-static	void	fr_setifpaddr __P((struct ifnet *, char *));
-void	init_ifp __P((void));
+static	void	fr_setifpaddr(struct ifnet *, char *);
+void	init_ifp(void);
 #if defined(__sgi) && (IRIX < 60500)
-static int 	no_output __P((struct ifnet *, struct mbuf *,
-			       struct sockaddr *));
-static int	write_output __P((struct ifnet *, struct mbuf *,
-				  struct sockaddr *));
+static int 	no_output(struct ifnet *, struct mbuf *,
+			       struct sockaddr *);
+static int	write_output(struct ifnet *, struct mbuf *,
+				  struct sockaddr *);
 #else
 # if TRU64 >= 1885
-static int 	no_output __P((struct ifnet *, struct mbuf *,
-			       struct sockaddr *, struct rtentry *, char *));
-static int	write_output __P((struct ifnet *, struct mbuf *,
-				  struct sockaddr *, struct rtentry *, char *));
+static int 	no_output(struct ifnet *, struct mbuf *,
+			       struct sockaddr *, struct rtentry *, char *);
+static int	write_output(struct ifnet *, struct mbuf *,
+				  struct sockaddr *, struct rtentry *, char *);
 # else
 #if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 499001100)
 static int 	no_output(struct ifnet *, struct mbuf *,
@@ -168,23 +168,25 @@ static int 	no_output(struct ifnet *, struct mbuf *,
 static int	write_output(struct ifnet *, struct mbuf *,
 	    const struct sockaddr *, struct rtentry *);
 #else
-static int 	no_output __P((struct ifnet *, struct mbuf *,
-			       struct sockaddr *, struct rtentry *));
-static int	write_output __P((struct ifnet *, struct mbuf *,
-				  struct sockaddr *, struct rtentry *));
+static int 	no_output(struct ifnet *, struct mbuf *,
+			       struct sockaddr *, struct rtentry *);
+static int	write_output(struct ifnet *, struct mbuf *,
+				  struct sockaddr *, struct rtentry *);
 #endif
 # endif
 #endif
 
 
-int ipfattach()
+int
+ipfattach(void)
 {
 	fr_running = 1;
 	return 0;
 }
 
 
-int ipfdetach()
+int
+ipfdetach(void)
 {
 	fr_running = -1;
 	return 0;
@@ -194,11 +196,8 @@ int ipfdetach()
 /*
  * Filter ioctl interface.
  */
-int iplioctl(dev, cmd, data, mode)
-int dev;
-ioctlcmd_t cmd;
-void *data;
-int mode;
+int
+iplioctl(int dev, ioctlcmd_t cmd, void *data, int mode)
 {
 	int error = 0, unit = 0, uid;
 	SPL_INT(s);
@@ -219,8 +218,8 @@ int mode;
 }
 
 
-void fr_forgetifp(ifp)
-void *ifp;
+void
+fr_forgetifp(void *ifp)
 {
 	register frentry_t *f;
 
@@ -257,22 +256,24 @@ void *ifp;
 
 
 #if defined(__sgi) && (IRIX < 60500)
-static int no_output(ifp, m, s)
+static int
+no_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *s)
 #else
 # if TRU64 >= 1885
-static int no_output (ifp, m, s, rt, cp)
-char *cp;
+static int
+no_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *s,
+	struct rtentry *rt, char *cp)
 # else
-static int no_output(ifp, m, s, rt)
+#  if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 499001100)
+static int
+no_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *s,
+	struct rtentry *rt)
+#  else
+static int
+no_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *s,
+	struct rtentry *rt)
+#  endif
 # endif
-struct rtentry *rt;
-#endif
-struct ifnet *ifp;
-struct mbuf *m;
-#if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 499001100)
-const struct sockaddr *s;
-#else
-struct sockaddr *s;
 #endif
 {
 	return 0;
@@ -280,22 +281,24 @@ struct sockaddr *s;
 
 
 #if defined(__sgi) && (IRIX < 60500)
-static int write_output(ifp, m, s)
+static int
+write_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *s)
 #else
 # if TRU64 >= 1885
-static int write_output (ifp, m, s, rt, cp)
-char *cp;
+static int
+write_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *s,
+	struct rtentry *rt, char *cp)
 # else
-static int write_output(ifp, m, s, rt)
+#  if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 499001100)
+static int
+write_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *s,
+	struct rtentry *rt)
+#  else
+static int
+write_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *s,
+	struct rtentry *rt)
+#  endif
 # endif
-struct rtentry *rt;
-#endif
-struct ifnet *ifp;
-struct mbuf *m;
-#if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 499001100)
-const struct sockaddr *s;
-#else
-struct sockaddr *s;
 #endif
 {
 	char fname[32];
@@ -324,9 +327,8 @@ struct sockaddr *s;
 }
 
 
-static void fr_setifpaddr(ifp, addr)
-struct ifnet *ifp;
-char *addr;
+static void
+fr_setifpaddr(struct ifnet *ifp, char *addr)
 {
 #ifdef __sgi
 	struct in_ifaddr *ifa;
@@ -370,9 +372,8 @@ char *addr;
 	}
 }
 
-struct ifnet *get_unit(name, v)
-char *name;
-int v;
+struct ifnet *
+get_unit(char *name, int v)
 {
 	struct ifnet *ifp, **ifpp, **old_ifneta;
 	char *addr;
@@ -474,8 +475,8 @@ int v;
 }
 
 
-char *get_ifname(ifp)
-struct ifnet *ifp;
+char *
+get_ifname(struct ifnet *ifp)
 {
 	static char ifname[LIFNAMSIZ];
 
@@ -490,7 +491,8 @@ struct ifnet *ifp;
 
 
 
-void init_ifp()
+void
+init_ifp(void)
 {
 	struct ifnet *ifp, **ifpp;
 	char fname[32];
@@ -523,10 +525,8 @@ void init_ifp()
 }
 
 
-int fr_fastroute(m, mpp, fin, fdp)
-mb_t *m, **mpp;
-fr_info_t *fin;
-frdest_t *fdp;
+int
+fr_fastroute(mb_t *m, mb_t **mpp, fr_info_t *fin, frdest_t *fdp)
 {
 	struct ifnet *ifp = fdp->fd_ifp;
 	ip_t *ip = fin->fin_ip;
@@ -582,51 +582,45 @@ done:
 }
 
 
-int fr_send_reset(fin)
-fr_info_t *fin;
+int
+fr_send_reset(fr_info_t *fin)
 {
 	verbose("- TCP RST sent\n");
 	return 0;
 }
 
 
-int fr_send_icmp_err(type, fin, dst)
-int type;
-fr_info_t *fin;
-int dst;
+int
+fr_send_icmp_err(int type, fr_info_t *fin, int dst)
 {
 	verbose("- ICMP unreachable sent\n");
 	return 0;
 }
 
 
-void frsync(ifp)
-void *ifp;
+void
+frsync(void *ifp)
 {
 	return;
 }
 
 
-void m_freem(m)
-mb_t *m;
+void
+m_freem(mb_t *m)
 {
 	return;
 }
 
 
-void m_copydata(m, off, len, cp)
-mb_t *m;
-int off, len;
-void *cp;
+void
+m_copydata(mb_t *m, int off, int len, void *cp)
 {
 	bcopy((char *)m + off, cp, len);
 }
 
 
-int ipfuiomove(buf, len, rwflag, uio)
-void *buf;
-int len, rwflag;
-struct uio *uio;
+int
+ipfuiomove(void *buf, int len, int rwflag, struct uio *uio)
 {
 	int left, ioc, num, offset;
 	struct iovec *io;
@@ -663,8 +657,8 @@ struct uio *uio;
 }
 
 
-u_32_t fr_newisn(fin)
-fr_info_t *fin;
+u_32_t
+fr_newisn(fr_info_t *fin)
 {
 	static int iss_seq_off = 0;
 	u_char hash[16];
@@ -709,8 +703,8 @@ fr_info_t *fin;
 /*                                                                          */
 /* Returns the next IPv4 ID to use for this packet.                         */
 /* ------------------------------------------------------------------------ */
-EXTERN_INLINE u_short fr_nextipid(fin)
-fr_info_t *fin;
+EXTERN_INLINE u_short
+fr_nextipid(fr_info_t *fin)
 {
 	static u_short ipid = 0;
 	u_short id;
@@ -723,8 +717,8 @@ fr_info_t *fin;
 }
 
 
-EXTERN_INLINE void fr_checkv4sum(fin)
-fr_info_t *fin;
+EXTERN_INLINE void
+fr_checkv4sum(fr_info_t *fin)
 {
 	if (fr_checkl4sum(fin) == -1)
 		fin->fin_flx |= FI_BAD;
@@ -732,8 +726,8 @@ fr_info_t *fin;
 
 
 #ifdef	USE_INET6
-EXTERN_INLINE void fr_checkv6sum(fin)
-fr_info_t *fin;
+EXTERN_INLINE void
+fr_checkv6sum(fr_info_t *fin)
 {
 	if (fr_checkl4sum(fin) == -1)
 		fin->fin_flx |= FI_BAD;
@@ -744,9 +738,8 @@ fr_info_t *fin;
 /*
  * See above for description, except that all addressing is in user space.
  */
-int copyoutptr(src, dst, size)
-void *src, *dst;
-size_t size;
+int
+copyoutptr(void *src, void *dst, size_t size)
 {
 	caddr_t ca;
 
@@ -759,9 +752,8 @@ size_t size;
 /*
  * See above for description, except that all addressing is in user space.
  */
-int copyinptr(src, dst, size)
-void *src, *dst;
-size_t size;
+int
+copyinptr(void *src, void *dst, size_t size)
 {
 	caddr_t ca;
 
@@ -774,10 +766,9 @@ size_t size;
 /*
  * return the first IP Address associated with an interface
  */
-int fr_ifpaddr(v, atype, ifptr, inp, inpmask)
-int v, atype;
-void *ifptr;
-struct in_addr *inp, *inpmask;
+int
+fr_ifpaddr(int v, int atype, void *ifptr, struct in_addr *inp,
+	struct in_addr *inpmask)
 {
 	struct ifnet *ifp = ifptr;
 #ifdef __sgi
@@ -812,7 +803,8 @@ struct in_addr *inp, *inpmask;
 }
 
 
-int ipfsync()
+int
+ipfsync(void)
 {
 	return 0;
 }
@@ -823,7 +815,7 @@ int ipfsync()
  * sequence of numbers that isn't linear to show "randomness".
  */
 u_32_t
-ipf_random()
+ipf_random(void)
 {
 	static int last = 0xa5a5a5a5;
 	static int calls = 0;

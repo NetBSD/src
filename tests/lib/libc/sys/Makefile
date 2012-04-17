@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17.2.1 2011/11/10 14:31:52 yamt Exp $
+# $NetBSD: Makefile,v 1.17.2.2 2012/04/17 00:09:12 yamt Exp $
 
 MKMAN=	no
 
@@ -24,9 +24,11 @@ TESTS_C+=		t_getrusage
 TESTS_C+=		t_getsid
 TESTS_C+=		t_gettimeofday
 TESTS_C+=		t_issetugid
+TESTS_C+=		t_kevent
 TESTS_C+=		t_kill
 TESTS_C+=		t_link
 TESTS_C+=		t_listen
+TESTS_C+=		t_lwp_ctl
 TESTS_C+=		t_mincore
 TESTS_C+=		t_mkdir
 TESTS_C+=		t_mkfifo

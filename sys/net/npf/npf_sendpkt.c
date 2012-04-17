@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_sendpkt.c,v 1.4.8.1 2011/11/10 14:31:50 yamt Exp $	*/
+/*	$NetBSD: npf_sendpkt.c,v 1.4.8.2 2012/04/17 00:08:39 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -34,10 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.4.8.1 2011/11/10 14:31:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.4.8.2 2012/04/17 00:08:39 yamt Exp $");
 
 #include <sys/param.h>
-#include <sys/kernel.h>
+#include <sys/types.h>
 
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.4.8.1 2011/11/10 14:31:50 yamt Exp
  * npf_return_tcp: return a TCP reset (RST) packet.
  */
 static int
-npf_return_tcp(npf_cache_t *npc, nbuf_t *nbuf)
+npf_return_tcp(npf_cache_t *npc)
 {
 	struct mbuf *m;
 	struct ip *ip = NULL;
@@ -71,7 +71,7 @@ npf_return_tcp(npf_cache_t *npc, nbuf_t *nbuf)
 	/* Fetch relevant data. */
 	KASSERT(npf_iscached(npc, NPC_IP46));
 	KASSERT(npf_iscached(npc, NPC_LAYER4));
-	tcpdlen = npf_tcpsaw(npc, nbuf, &seq, &ack, &win);
+	tcpdlen = npf_tcpsaw(npc, &seq, &ack, &win);
 	oth = &npc->npc_l4.tcp;
 
 	if (oth->th_flags & TH_RST) {
@@ -79,9 +79,9 @@ npf_return_tcp(npf_cache_t *npc, nbuf_t *nbuf)
 	}
 
 	/* Create and setup a network buffer. */
-	if (npf_iscached(npc, NPC_IP4))
+	if (npf_iscached(npc, NPC_IP4)) {
 		len = sizeof(struct ip) + sizeof(struct tcphdr);
-	else {
+	} else {
 		KASSERT(npf_iscached(npc, NPC_IP6));
 		len = sizeof(struct ip6_hdr) + sizeof(struct tcphdr);
 	}
@@ -158,7 +158,7 @@ npf_return_tcp(npf_cache_t *npc, nbuf_t *nbuf)
 	}
 
 	/* Pass to IP layer. */
-	if (npc->npc_info & NPC_IP4) {
+	if (npf_iscached(npc, NPC_IP4)) {
 		return ip_output(m, NULL, NULL, IP_FORWARDING, NULL, NULL);
 	} else {
 #ifdef INET6
@@ -206,7 +206,7 @@ npf_return_block(npf_cache_t *npc, nbuf_t *nbuf, const int retfl)
 			if (!npf_fetch_tcp(npc, nbuf, n_ptr)) {
 				return;
 			}
-			(void)npf_return_tcp(npc, nbuf);
+			(void)npf_return_tcp(npc);
 		}
 		break;
 	case IPPROTO_UDP:

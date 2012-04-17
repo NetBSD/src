@@ -1,4 +1,4 @@
-.\" $NetBSD: cproj.3,v 1.2 2010/09/15 18:40:27 wiz Exp $
+.\" $NetBSD: cproj.3,v 1.2.6.1 2012/04/17 00:05:28 yamt Exp $
 .\" Copyright (c) 2001-2003 The Open Group, All Rights Reserved
 .TH "CPROJ" 3P 2003 "IEEE/The Open Group" "POSIX Programmer's Manual"
 .\" cproj
@@ -18,7 +18,7 @@ long double cprojl(long double complex\fP \fIz\fP\fB);
 \fP
 .SH DESCRIPTION
 .LP
-These functions compute a projection of \fIz\fP ono the Riemann sphere:
+These functions compute a projection of \fIz\fP onto the Riemann sphere:
 \fIz\fP projects to \fIz\fP , except that all complex infinities (even those
 with one infinite part and one NaN part) project to positive infinity on the
 real axis. If \fIz\fP has an infinite part, then cproj(z) shall be equivalent to:

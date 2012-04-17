@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3pci.c,v 1.11 2011/09/27 01:02:35 jym Exp $	*/
+/*	$NetBSD: pq3pci.c,v 1.11.2.1 2012/04/17 00:06:46 yamt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.11 2011/09/27 01:02:35 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.11.2.1 2012/04/17 00:06:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -858,9 +858,9 @@ pq3pci_cpunode_attach(device_t parent, device_t self, void *aux)
 		}
 
 		struct extent *ioext = extent_create("pciio", 0, PCI_IOSIZE,
-		     M_DEVBUF, NULL, 0, EX_NOWAIT);
+		     NULL, 0, EX_NOWAIT);
 		struct extent *memext = extent_create("pcimem", membase,
-		     membase + PCI_MEMSIZE, M_DEVBUF, NULL, 0, EX_NOWAIT);
+		     membase + PCI_MEMSIZE, NULL, 0, EX_NOWAIT);
 
 		error = pci_configure_bus(pc, ioext, memext, NULL, 0,
 		    curcpu()->ci_ci.dcache_line_size);

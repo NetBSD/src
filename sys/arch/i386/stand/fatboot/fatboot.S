@@ -1,4 +1,4 @@
-/*	$NetBSD: fatboot.S,v 1.3 2008/04/29 06:53:02 martin Exp $	*/
+/*	$NetBSD: fatboot.S,v 1.3.34.1 2012/04/17 00:06:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -50,9 +50,11 @@
 #endif
 
 /* Support for FAT32 could be added - but hasn't been yet. */
-#if FAT_ENTRY_SIZE != 16
+#if FAT_ENTRY_SIZE != 16 && FAT_ENTRY_SIZE != 12
 #error Unsupported FAT_ENTRY_SIZE value
 #endif
+
+#define FAT_SIZE_STR (('0'+ FAT_ENTRY_SIZE / 10) | ('0' + FAT_ENTRY_SIZE % 10) << 8)
 
 #define PBR_AFTERBPB	62		/* BPB size in floppy master BR */
 
@@ -112,8 +114,13 @@ start0:
 	mov	%sp, %bp		/* to access the pbp */
 	push	%dx			/* save drive at -2(%bp) */
 
+/* We put the LBA bios command block on stack.
+ * Since we only want a 32bit sector number, stack a zero */
+	push	%cs			/* %cs is zero */
+	push	%cs			/* 64-bit for LBA read */
+
 	set_err(ERR_NOT_FAT16)
-	cmpl	$'A'|'T'<<8|'1'<<16|'6'<<24, bs_file_sys_type+1(%bp)
+	cmpl	$'A'|'T'<<8|FAT_SIZE_STR<<16, bs_file_sys_type+1(%bp)
 	jne	error
 
 /* Add 'reserved' (inside ptn) to 'hidden' (ptn offset) */
@@ -121,14 +128,21 @@ start0:
 	addl	bpb_hidden_secs(%bp), %eax
 	mov	%eax, fat_sector(%bp)	/* To get first sector of FAT */
 
+#if FAT_ENTRY_SIZE == 12
+/* Read the entire FAT */
+	push	%eax
+	push	%ds
+	push	$fat_buffer
+	push	$12			/* 12 sectors is assumed 6k */
+	call	read_lba
+#endif
+
 /* Determine base of root directory */
 	movzbw	bpb_FATs(%bp), %ax	/* Count of FATs */
 	mulw	bpb_FAT_secs(%bp)	/* FAT size in %dx:%ax */
 	shl	$16,%edx
 	xchg	%ax,%dx			/* FAT size now in %edx */
 	addl	fat_sector(%bp), %edx	/* Directory is after FATs */
-	push	%cs			/* %cs is zero */
-	push	%cs			/* 64-bit for LBA read */
 	pushl	%edx			/* Sector number of root dir */
 
 	push	$0x1000			/* Read to 0x10000:0 */
@@ -149,7 +163,7 @@ start0:
 /* Read in the entire root directory */
 	push	%ax			/* Sectors in root directory */
 	cwtl
-	addl	%eax, %edx		/* %edx now sector of first file */
+	addl	%eax, %edx		/* %edx now sector of first cluster */
 	call	read_lba		/* Read entire directory */
 
 /* Scan directory for our file */
@@ -195,16 +209,16 @@ found_boot:
 	jnz	1b
 	dec %cx
 	dec %cx
-	movw	%es:15(%di), %ax	/* Cluster number for file start */
+	movw	%es:(26-11)(%di), %ax	/* Cluster number for file start */
 	push	%es			/* We increment the 'segment' ... */
 	pop	%di			/* ... after each read, offset is 0 */
 
 read_data_block:
 	mov	%ax, %bx		/* Save cluster number */
 	shl	%cl, %eax		/* Convert to sector number */
-	add	%eax, %edx
-	pushl	%edx			/* Sector to read */
-	sub	%eax, %edx		/* Recover base segment */
+	jz	error			/* Sanity bail-out */
+	add	%edx, %eax
+	pushl	%eax			/* Sector to read */
 	push	%di			/* Target address segment! */
 	push	$0
 	push	sec_p_cl_w(%bp)
@@ -218,6 +232,20 @@ read_data_block:
 
 /* Lookup FAT slot number in FAT table */
 	mov	%bx, %ax		/* Recover cluster number */
+#if FAT_ENTRY_SIZE == 12
+	shr	$1, %ax
+	jc	1f
+	add	%ax, %bx
+	mov	fat_buffer(%bx), %ax
+	and	$0xf,%ah
+	jmp	2f
+1:	add	%ax, %bx
+	mov	fat_buffer(%bx), %ax
+	shr	$4, %ax
+2:
+	cmp	$0x0fff, %ax
+	jb	read_data_block
+#else
 	push	%dx
 	xor	%dx, %dx
 	divw	bpb_bytes_per_sec(%bp)
@@ -243,6 +271,7 @@ lookup_fat:
 	movzwl	fat_buffer(%bx), %eax	/* Next FAT slot */
 	cmp	$0xfff0, %ax
 	jb	read_data_block
+#endif
 
 /* Found end of FAT chain - must be EOF  - leap into loaded code */
 	mov	$0x1000, %ax
@@ -255,7 +284,7 @@ err1:	jmp	error
 /* Set parameters expected by /boot */
 magic_ok:
 	mov	bpb_hidden_secs(%bp), %ebx	/* ptn base sector */
-	movb	-2(%bp), %dl		/* disk number (could pop %dx) */
+	movb	-2(%bp), %dl		/* disk number */
 	mov	$boot_params + 4, %si
 	push	%es
 	push	$0
@@ -286,6 +315,7 @@ read_lba:
 #include <message.S>
 #if 0
 #include <dump_eax.S>
+dump_eax_buff = start
 #endif
 
 errtxt: .ascii	"Error "		/* runs into newline... */
@@ -296,7 +326,9 @@ newline:
 #ifndef TERSE_ERROR
 ERR_READ:		.asciz	"Disk read"
 ERR_NO_BOOT:		.asciz	"No /boot"
-ERR_NOT_FAT16:		.asciz	"Not FAT16 ptn"
+ERR_NOT_FAT16:		.ascii	"Not FAT"
+			.word	FAT_SIZE_STR
+			.asciz	" ptn"
 ERR_NO_BOOT_MAGIC_2:	.asciz	"No magic in /boot"
 #endif
 
@@ -321,3 +353,4 @@ fat_cache:	.word	0xffff		/* Sector number in buffer */
 	. = _C_LABEL(start) + 0x1fe
 	.word	0xaa55
 fat_buffer:				/* 2 sectors worth of FAT table */
+					/* 6k for FAT12 */

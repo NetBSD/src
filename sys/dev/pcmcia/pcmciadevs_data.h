@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.230 2008/09/06 22:08:38 rmind Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.230.28.1 2012/04/17 00:07:59 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.227 2008/09/06 22:07:11 rmind Exp
+ *	NetBSD: pcmciadevs,v 1.229 2011/11/26 02:16:27 nonaka Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -1350,6 +1350,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "CNet",
 	    "CNet CN40BC NE2000 Compatible",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_ETHER_CF_TD,
+	    PCMCIA_CIS_COREGA_ETHER_CF_TD,
+	    0,
+	    "Corega K.K.",
+	    "Corega Ether CF-TD LAN Card",	}
 	,
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_ETHER_PCC_T,

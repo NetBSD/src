@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.32 2010/04/21 21:38:47 dyoung Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.32.8.1 2012/04/17 00:07:42 yamt Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.32 2010/04/21 21:38:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.32.8.1 2012/04/17 00:07:42 yamt Exp $");
 
 #define AHD_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHD_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
@@ -80,6 +80,7 @@ ahd_compose_id(u_int device, u_int vendor, u_int subdevice, u_int subvendor)
 #define ID_AIC7901			0x800F9005FFFF9005ull
 #define ID_AHA_29320A			0x8000900500609005ull
 #define ID_AHA_29320ALP			0x8017900500449005ull
+#define ID_AHA_29320LPE			0x8017900500459005ull
 
 #define ID_AIC7901A			0x801E9005FFFF9005ull
 #define ID_AHA_29320LP			0x8014900500449005ull
@@ -141,6 +142,12 @@ static struct ahd_pci_identity ahd_pci_ident_table [] =
 		ID_AHA_29320ALP,
 		ID_ALL_MASK,
 		"Adaptec 29320ALP Ultra320 SCSI adapter",
+		ahd_aic7901_setup
+	},
+	{
+		ID_AHA_29320LPE,
+		ID_ALL_MASK,
+		"Adaptec 29320LPE Ultra320 SCSI adapter",
 		ahd_aic7901_setup
 	},
 	/* aic7901A based controllers */

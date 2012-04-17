@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.54 2011/08/02 05:17:18 uebayasi Exp $	*/
+/*	$NetBSD: esp.c,v 1.54.2.1 2012/04/17 00:06:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.54 2011/08/02 05:17:18 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.54.2.1 2012/04/17 00:06:37 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -869,7 +869,7 @@ gotintr:
 	/*
 	 * We have been called from the MI ncr53c9x_intr() handler,
 	 * which protects itself against multiple invocation with a
-	 * simple_lock. Follow the example of ncr53c9x_poll().
+	 * lock.  Follow the example of ncr53c9x_poll().
 	 */
 	mutex_exit(&sc->sc_lock);
 	ncr53c9x_intr(sc);

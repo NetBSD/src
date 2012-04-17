@@ -31,6 +31,9 @@
  *
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: upa.c,v 1.17.2.1 2012/04/17 00:06:56 yamt Exp $");
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>

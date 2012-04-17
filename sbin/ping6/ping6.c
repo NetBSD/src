@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.78 2011/09/16 16:13:18 plunky Exp $	*/
+/*	$NetBSD: ping6.c,v 1.78.2.1 2012/04/17 00:05:42 yamt Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.78 2011/09/16 16:13:18 plunky Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.78.2.1 2012/04/17 00:05:42 yamt Exp $");
 #endif
 #endif
 
@@ -132,8 +132,8 @@ __RCSID("$NetBSD: ping6.c,v 1.78 2011/09/16 16:13:18 plunky Exp $");
 #include <poll.h>
 
 #ifdef IPSEC
-#include <netinet6/ah.h>
-#include <netinet6/ipsec.h>
+#include <netinet/ip6.h>
+#include <netipsec/ipsec.h>
 #endif
 
 #include <md5.h>
@@ -2446,8 +2446,8 @@ pr_retip(struct ip6_hdr *ip6, u_char *end)
 #ifdef IPSEC
 		case IPPROTO_AH:
 			printf("AH ");
-			hlen = (((struct ah *)cp)->ah_len+2) << 2;
-			nh = ((struct ah *)cp)->ah_nxt;
+			hlen = (((struct ip6_ext *)cp)->ip6e_len+2) << 2;
+			nh = ((struct ip6_ext *)cp)->ip6e_nxt;
 			break;
 #endif
 		case IPPROTO_ICMPV6:

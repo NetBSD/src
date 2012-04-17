@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.109 2011/06/27 11:52:24 uch Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.109.2.1 2012/04/17 00:08:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -311,7 +311,10 @@ x(RUMPD,	21,     "rumpd")	/* rump virtual disk */ \
     
 #ifndef _LOCORE
 #define DKTYPE_NUMS(tag, number, name) __CONCAT(DTYPE_,tag=number),
-enum { DKTYPE_DEFN(DKTYPE_NUMS) DKMAXTYPES };
+#ifndef DKTYPE_ENUMNAME
+#define DKTYPE_ENUMNAME
+#endif
+enum DKTYPE_ENUMNAME { DKTYPE_DEFN(DKTYPE_NUMS) DKMAXTYPES };
 #undef	DKTYPE_NUMS
 #endif
 
@@ -353,12 +356,17 @@ x(VINUM,   23, "vinum",      NULL,    NULL)   /* Vinum */ \
 x(UDF,     24, "UDF",        NULL,   "udf")   /* UDF */ \
 x(SYSVBFS, 25, "SysVBFS",    NULL,  "sysvbfs")/* System V boot file system */ \
 x(EFS,     26, "EFS",        NULL,   "efs")   /* SGI's Extent Filesystem */ \
-x(NILFS,   27, "NiLFS",      NULL,   "nilfs") /* NTT's NiLFS(2) */
+x(NILFS,   27, "NiLFS",      NULL,   "nilfs") /* NTT's NiLFS(2) */ \
+x(CGD,     28, "cgd",	     NULL,   NULL)    /* Cryptographic disk */ \
+x(MINIXFS3,29, "MINIX FSv3", NULL,   NULL)    /* MINIX file system v3 */
 
 
 #ifndef _LOCORE
 #define	FS_TYPENUMS(tag, number, name, fsck, mount) __CONCAT(FS_,tag=number),
-enum { FSTYPE_DEFN(FS_TYPENUMS) FSMAXTYPES };
+#ifndef FSTYPE_ENUMNAME
+#define FSTYPE_ENUMNAME
+#endif
+enum FSTYPE_ENUMNAME { FSTYPE_DEFN(FS_TYPENUMS) FSMAXTYPES };
 #undef	FS_TYPENUMS
 #endif
 
@@ -455,6 +463,7 @@ const char *convertdisklabel(struct disklabel *, void (*)(struct buf *),
     struct buf *, uint32_t);
 int	 bounds_check_with_label(struct disk *, struct buf *, int);
 int	 bounds_check_with_mediasize(struct buf *, int, uint64_t);
+const char *getfstypename(int);
 #endif
 #endif /* _LOCORE */
 

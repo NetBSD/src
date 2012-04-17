@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.29 2011/02/06 21:38:09 pooka Exp $ */
+/*	$NetBSD: util.c,v 1.29.4.1 2012/04/17 00:05:43 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2006 The NetBSD Foundation, Inc.
@@ -126,6 +126,7 @@ static struct nameint dpytype_tab[] = {
 	{ WSDISPLAY_TYPE_TVRX,		"hp-tiger" },
 	{ WSDISPLAY_TYPE_HYPERION,	"hp-hyperion" },
 	{ WSDISPLAY_TYPE_AMIGACC,	"amiga-cc" },
+	{ WSDISPLAY_TYPE_GRF,		"grf" },
 	{ WSDISPLAY_TYPE_SUN24,		"sun24" },
 	{ WSDISPLAY_TYPE_NEWPORT,	"sgi-newport" },
 	{ WSDISPLAY_TYPE_GR2,		"sgi-gr2" },

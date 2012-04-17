@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.25 2010/11/13 13:52:09 uebayasi Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.25.8.1 2012/04/17 00:07:58 yamt Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.25 2010/11/13 13:52:09 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.25.8.1 2012/04/17 00:07:58 yamt Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.25 2010/11/13 13:52:09 uebayasi Exp $");
  #include <dev/rndvar.h>
  #include <sys/md5k.h>
 #else
- #include <sys/rnd.h>
+ #include <sys/cprng.h>
  #include <sys/md5.h>
 #endif
 #include <sys/sha1.h>
@@ -313,9 +313,7 @@ ubsec_attach(device_t parent, device_t self, void *aux)
 		panic("ubsec_attach: impossible");
 	}
 
-	aprint_naive(": Crypto processor\n");
-	aprint_normal(": %s, rev. %d\n", up->ubsec_name,
-	    PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo_fancy(pa, "Crypto processor", up->ubsec_name, 1);
 
 	SIMPLEQ_INIT(&sc->sc_queue);
 	SIMPLEQ_INIT(&sc->sc_qchip);
@@ -808,8 +806,7 @@ ubsec_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 	if (encini) {
 		/* get an IV, network byte order */
 #ifdef __NetBSD__
-		rnd_extract_data(ses->ses_iv,
-		    sizeof(ses->ses_iv), RND_EXTRACT_ANY);
+		cprng_fast(ses->ses_iv, sizeof(ses->ses_iv));
 #else
 		get_random_bytes(ses->ses_iv, sizeof(ses->ses_iv));
 #endif

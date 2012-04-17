@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_machine.h,v 1.1.1.1 2009/12/13 16:54:51 kardel Exp $	*/
+/*	$NetBSD: ntp_machine.h,v 1.1.1.1.6.1 2012/04/17 00:03:44 yamt Exp $	*/
 
 /*
  * Collect all machine dependent idiosyncrasies in one place.
@@ -232,7 +232,10 @@ typedef unsigned long u_long;
 typedef int SOCKET;
 # define INVALID_SOCKET	-1
 # define SOCKET_ERROR	-1
+# define socket_errno()		(errno)
 # define closesocket(fd)	close(fd)
+#else	/* SYS_WINNT follows */
+# define socket_errno()		(errno = WSAGetLastError())
 #endif
 
 int ntp_set_tod (struct timeval *tvp, void *tzp);

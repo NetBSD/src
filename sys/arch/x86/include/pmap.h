@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.43.2.2 2011/11/18 00:51:28 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.43.2.3 2012/04/17 00:07:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -125,6 +125,11 @@ extern struct pmap_head pmaps;
 extern kmutex_t pmaps_lock;    /* protects pmaps */
 
 /*
+ * pool_cache(9) that PDPs are allocated from 
+ */
+extern struct pool_cache pmap_pdp_cache;
+
+/*
  * the pmap structure
  *
  * note that the pm_obj contains the lock pointer, the reference count,
@@ -157,6 +162,8 @@ struct pmap {
 	uint32_t pm_cpus;		/* mask of CPUs using pmap */
 	uint32_t pm_kernel_cpus;	/* mask of CPUs using kernel part
 					 of pmap */
+	uint32_t pm_xen_ptp_cpus;	/* mask of CPUs which have this pmap's
+					 ptp mapped */
 	uint64_t pm_ncsw;		/* for assertions */
 	struct vm_page *pm_gc_ptp;	/* pages from pmap g/c */
 };
@@ -257,8 +264,6 @@ int		pmap_pdes_invalid(vaddr_t, pd_entry_t * const *, pd_entry_t *);
 u_int		x86_mmap_flags(paddr_t);
 
 bool		pmap_is_curpmap(struct pmap *);
-
-void		pmap_invalidate_pool_caches(void);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
@@ -408,15 +413,7 @@ vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t);
 void	pmap_cpu_init_late(struct cpu_info *);
 bool	sse2_idlezero_page(void *);
 
-
 #ifdef XEN
-
-void	pmap_unmap_all_apdp_pdes(void);
-#ifdef PAE
-void	pmap_map_recursive_entries(void);
-void	pmap_unmap_recursive_entries(void);
-#endif /* PAE */
-
 #include <sys/bitops.h>
 
 #define XPTE_MASK	L1_FRAME
@@ -442,32 +439,11 @@ xpmap_ptetomach(pt_entry_t *pte)
 	return (paddr_t) (((*up_pte) & PG_FRAME) + (((vaddr_t) pte) & (~PG_FRAME & ~VA_SIGN_MASK)));
 }
 
-/*
- * xpmap_update()
- * Update an active pt entry with Xen
- * Equivalent to *pte = npte
- */
-
-static __inline void
-xpmap_update (pt_entry_t *pte, pt_entry_t npte)
-{
-        int s = splvm();
-
-        xpq_queue_pte_update(xpmap_ptetomach(pte), npte);
-        xpq_flush_queue();
-        splx(s);
-}
-
-
 /* Xen helpers to change bits of a pte */
 #define XPMAP_UPDATE_DIRECT	1	/* Update direct map entry flags too */
 
 paddr_t	vtomach(vaddr_t);
 #define vtomfn(va) (vtomach(va) >> PAGE_SHIFT)
-
-void	pmap_apte_flush(struct pmap *);
-void	pmap_unmap_apdp(void);
-
 #endif	/* XEN */
 
 /* pmap functions with machine addresses */
@@ -480,6 +456,27 @@ bool	pmap_extract_ma(pmap_t, vaddr_t, paddr_t *);
  * Hooks for the pool allocator.
  */
 #define	POOL_VTOPHYS(va)	vtophys((vaddr_t) (va))
+
+#ifdef __HAVE_DIRECT_MAP
+
+#define L4_SLOT_DIRECT		509
+#define PDIR_SLOT_DIRECT	L4_SLOT_DIRECT
+
+#define PMAP_DIRECT_BASE	(VA_SIGN_NEG((L4_SLOT_DIRECT * NBPD_L4)))
+#define PMAP_DIRECT_END		(VA_SIGN_NEG(((L4_SLOT_DIRECT + 1) * NBPD_L4)))
+
+#define PMAP_DIRECT_MAP(pa)	((vaddr_t)PMAP_DIRECT_BASE + (pa))
+#define PMAP_DIRECT_UNMAP(va)	((paddr_t)(va) - PMAP_DIRECT_BASE)
+
+/*
+ * Alternate mapping hooks for pool pages.
+ */
+#define PMAP_MAP_POOLPAGE(pa)	PMAP_DIRECT_MAP((pa))
+#define PMAP_UNMAP_POOLPAGE(va)	PMAP_DIRECT_UNMAP((va))
+
+void	pagezero(vaddr_t);
+
+#endif /* __HAVE_DIRECT_MAP */
 
 #endif /* _KERNEL */
 

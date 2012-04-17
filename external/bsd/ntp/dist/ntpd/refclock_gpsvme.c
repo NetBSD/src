@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_gpsvme.c,v 1.1.1.1 2009/12/13 16:55:48 kardel Exp $	*/
+/*	$NetBSD: refclock_gpsvme.c,v 1.1.1.1.6.1 2012/04/17 00:03:48 yamt Exp $	*/
 
 /* refclock_psc.c:  clock driver for Brandywine PCI-SyncClock32/HP-UX 11.X */
 
@@ -106,13 +106,9 @@ psc_start(
 	return 0;
     }
 
-    if (!up) {
-	msyslog(LOG_ERR, "psc_start: unit: %d, emalloc: %m", unit);
-	return 0;
-    }
     memset(up, '\0', sizeof *up);
 
-    sprintf(buf, DEVICE, unit);		/* dev file name	*/
+    snprintf(buf, sizeof(buf), DEVICE, unit);	/* dev file name	*/
     fd[unit] = open(buf, O_RDONLY);	/* open device file	*/
     if (fd[unit] < 0) {
 	msyslog(LOG_ERR, "psc_start: unit: %d, open failed.  %m", unit);
@@ -133,7 +129,7 @@ psc_start(
     pp->io.fd = -1;
     pp->unitptr = (caddr_t) up;
     get_systime(&pp->lastrec);
-    memcpy((char *)&pp->refid, REFID, 4);
+    memcpy(&pp->refid, REFID, 4);
     peer->precision = PRECISION;
     pp->clockdesc = DESCRIPTION;
     up->unit = unit;
@@ -151,8 +147,10 @@ psc_shutdown(
     struct peer	*peer
     )
 {
-    free(peer->procptr->unitptr);
-    close(fd[unit]);
+    if (NULL != peer->procptr->unitptr)
+	free(peer->procptr->unitptr);
+    if (fd[unit] > 0)
+	close(fd[unit]);
 }
 
 /* psc_poll:  read, decode, and record device time */
@@ -198,9 +196,10 @@ psc_poll(
     pp->nsec	= 1000000*BCD2INT3((tlo & 0x00FFF000) >> 12) +
 	BCD2INT3(tlo & 0x00000FFF);
 
-    sprintf(pp->a_lastcode, "%3.3d %2.2d:%2.2d:%2.2d.%09ld %02x %08x %08x",
-	pp->day, pp->hour, pp->minute, pp->second, pp->nsec, status, thi,
-	tlo);
+    snprintf(pp->a_lastcode, sizeof(pp->a_lastcode),
+	     "%3.3d %2.2d:%2.2d:%2.2d.%09ld %02x %08x %08x", pp->day,
+	     pp->hour, pp->minute, pp->second, pp->nsec, status, thi,
+	     tlo);
     pp->lencode = strlen(pp->a_lastcode);
 
     /* compute the timecode timestamp	*/

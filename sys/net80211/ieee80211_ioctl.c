@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.56 2011/06/12 00:07:19 christos Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.56.2.1 2012/04/17 00:08:39 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.56 2011/06/12 00:07:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.56.2.1 2012/04/17 00:08:39 yamt Exp $");
 #endif
 
 /*
@@ -962,7 +962,7 @@ ieee80211_ioctl_getchaninfo(struct ieee80211com *ic, struct ieee80211req *ireq)
 			chans->ic_chans[chans->ic_nchans].ic_flags = c->ic_flags;
 			chans->ic_nchans++;
 		}
-	space = __offsetof(struct ieee80211req_chaninfo,
+	space = offsetof(struct ieee80211req_chaninfo,
 	    ic_chans[chans->ic_nchans]);
 	if (space > ireq->i_len)
 		space = ireq->i_len;
@@ -1004,7 +1004,7 @@ ieee80211_ioctl_getstastats(struct ieee80211com *ic, struct ieee80211req *ireq)
 {
 	struct ieee80211_node *ni;
 	u_int8_t macaddr[IEEE80211_ADDR_LEN];
-	const size_t off = __offsetof(struct ieee80211req_sta_stats, is_stats);
+	const size_t off = offsetof(struct ieee80211req_sta_stats, is_stats);
 	int error;
 
 	if (ireq->i_len < off)

@@ -38,6 +38,7 @@ THIS SOFTWARE.
 
 char	EMPTY[] = { '\0' };
 FILE	*infile	= NULL;
+int	innew;		/* 1 = infile has not been read by readrec */
 char	*file	= EMPTY;
 uschar	*record;
 int	recsize	= RECSIZE;
@@ -104,6 +105,7 @@ void initgetrec(void)
 		argno++;
 	}
 	infile = stdin;		/* no filenames, so use stdin */
+	innew = 1;
 }
 
 static int firsttime = 1;
@@ -146,9 +148,12 @@ int getrec(uschar **pbuf, int *pbufsize, int isrecord)	/* get next input record 
 				infile = stdin;
 			else if ((infile = fopen(file, "r")) == NULL)
 				FATAL("can't open file %s", file);
+			innew = 1;
 			setfval(fnrloc, 0.0);
 		}
-		c = readrec(&buf, &bufsize, infile);
+		c = readrec(&buf, &bufsize, infile, innew);
+		if (innew)
+			innew = 0;
 		if (c != 0 || buf[0] != '\0') {	/* normal record */
 			if (isrecord) {
 				if (freeable(fldtab[0]))
@@ -186,9 +191,9 @@ void nextfile(void)
 	argno++;
 }
 
-int readrec(uschar **pbuf, int *pbufsize, FILE *inf)	/* read one record into buf */
+int readrec(uschar **pbuf, int *pbufsize, FILE *inf, int newflag)	/* read one record into buf */
 {
-	int sep, c;
+	int sep, c, isrec, found, tempstat;
 	uschar *rr, *buf = *pbuf;
 	int bufsize = *pbufsize;
 	size_t len;
@@ -202,48 +207,26 @@ int readrec(uschar **pbuf, int *pbufsize, FILE *inf)	/* read one record into buf
 			FATAL("field separator %.10s... is too long", *FS);
 		memcpy(inputFS, *FS, len_inputFS);
 	}
-	if ((sep = **RS) == 0) {
-		sep = '\n';
-		while ((c=getc(inf)) == '\n' && c != EOF)	/* skip leading \n's */
-			;
-		if (c != EOF)
-			ungetc(c, inf);
-	} else if ((*RS)[1]) {
+	if (**RS && (*RS)[1]) {
 		fa *pfa = makedfa(*RS, 1);
-		int tempstat = pfa->initstat;
-		char *brr = buf;
-		char *rrr = NULL;
-		int x;
-		for (rr = buf; ; ) {
-			while ((c = getc(inf)) != EOF) {
-				if (rr-buf+3 > bufsize)
-					if (!adjbuf(&buf, &bufsize, 3+rr-buf,
-					    recsize, &rr, "readrec 2"))
-						FATAL("input record `%.30s...'"
-						    " too long", buf);
-				*rr++ = c;
-				*rr = '\0';
-				if (!(x = nematch(pfa, brr))) {
-					pfa->initstat = tempstat;
-					if (rrr) {
-						rr = rrr;
-						ungetc(c, inf);
-						break;
-					}
-				} else {
-					pfa->initstat = 2;
-					brr = rrr = rr = patbeg;
-				}
-			}
-			if (rrr || c == EOF)
-				break;
-			if ((c = getc(inf)) == '\n' || c == EOF)
-				/* 2 in a row */
-				break;
-			*rr++ = '\n';
-			*rr++ = c;
+		if (newflag)
+			found = fnematch(pfa, inf, &buf, &bufsize, recsize);
+		else {
+			tempstat = pfa->initstat;
+			pfa->initstat = 2;
+			found = fnematch(pfa, inf, &buf, &bufsize, recsize);
+			pfa->initstat = tempstat;
 		}
+		if (found)
+			*patbeg = 0;
 	} else {
+		if ((sep = **RS) == 0) {
+			sep = '\n';
+			while ((c=getc(inf)) == '\n' && c != EOF)	/* skip leading \n's */
+				;
+			if (c != EOF)
+				ungetc(c, inf);
+		}
 		for (rr = buf; ; ) {
 			for (; (c=getc(inf)) != sep && c != EOF; ) {
 				if (rr-buf+1 > bufsize)
@@ -264,14 +247,15 @@ int readrec(uschar **pbuf, int *pbufsize, FILE *inf)	/* read one record into buf
 			*rr++ = '\n';
 			*rr++ = c;
 		}
+		if (!adjbuf(&buf, &bufsize, 1+rr-buf, recsize, &rr, "readrec 3"))
+			FATAL("input record `%.30s...' too long", buf);
+		*rr = 0;
 	}
-	if (!adjbuf(&buf, &bufsize, 1+rr-buf, recsize, &rr, "readrec 3"))
-		FATAL("input record `%.30s...' too long", buf);
-	*rr = 0;
-	   dprintf( ("readrec saw <%s>, returns %d\n", buf, c == EOF && rr == buf ? 0 : 1) );
 	*pbuf = buf;
 	*pbufsize = bufsize;
-	return c == EOF && rr == buf ? 0 : 1;
+	isrec = *buf || !feof(inf);
+	   dprintf( ("readrec saw <%s>, returns %d\n", buf, isrec) );
+	return isrec;
 }
 
 char *getargv(int n)	/* get ARGV[n] */

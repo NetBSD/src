@@ -1,0 +1,83 @@
+.\" Copyright (C) 2004 International Business Machines Corporation
+.\" Written by Kathy Robertson based on the Trusted Computing Group Software Stack Specification Version 1.1 Golden
+.\"
+.de Sh \" Subsection
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+.de Sp \" Vertical space (when we can't use .PP)
+.if t .sp .5v
+.if n .sp
+..
+.de Ip \" List item
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH "Tspi_Context_GetCapability" 3 "2004-05-26" "TSS 1.1" "TCG Software Stack Developer's Reference"
+.SH NAME
+Tspi_Context_GetCapability \- provide the capabilites of a TSS Core Service, TSS Service Provider, or TPM.
+.SH "SYNOPSIS"
+.ad l
+.hy 0
+.nf
+.B #include <tss/platform.h>
+.B #include <tss/tcpa_defines.h>
+.B #include <tss/tcpa_typedef.h>
+.B #include <tss/tcpa_struct.h>
+.B #include <tss/tss_typedef.h>
+.B #include <tss/tss_structs.h>
+.B #include <tss/tspi.h>
+.sp
+.BI "TSS_RESULT Tspi_Context_GetCapability(TSS_HCONTEXT " hContext ",          TSS_FLAG " capArea ","
+.BI "                                      UINT32       " ulSubCapLength ",    BYTE*    " rgbSubCap ","
+.BI "                                      UINT32*      " pulRespDataLength ", BYTE**   " prgbRespData ");"
+.fi
+.sp
+.ad
+.hy
+
+.SH "DESCRIPTION"
+.PP
+\fBTSS_Context_GetCapability\fR  provides the capabilities of the TSS Core Service or TSS Service Provider
+.SH "PARAMETERS"
+.PP
+.SS hContext
+The handle of the context object.
+.PP
+.SS capArea
+Flag indicating the attribute to query.
+.PP
+.SS ulSubCapLength
+The length (in bytes) of the rgbSubCap parameter.
+.PP
+.SS rgbSubCap
+Data indicating the attribute to query.
+.PP
+.SS pulRespDataLength
+Recieves the length (in bytes) of the prgbRespData parameter.
+.PP
+.SS prgbRespData
+On successful completion of the command, this parameter points to a buffer containing the actual data of the specified capability. 
+.SH "RETURN CODES"
+.PP
+\fBTspi_Context_GetCapability\fR returns TSS_SUCCESS on success, otherwise one of the following values are returned:
+.TP
+.SM TSS_E_INVALID_HANDLE - \fIhContext\fR is an invalid handle.
+.TP
+.SM TSS_E_BAD_PARAMETER - One of the parameters did not match. 
+.TP
+.SM TSS_E_INTERNAL_ERROR - An error occurred internal to the TSS.
+.SH "CONFORMING TO"
+
+.PP
+\fBTspi_Context_GetCapability\fR conforms to the Trusted Computing Group Software Specification version 1.1 Golden
+.SH "SEE ALSO"
+
+.PP
+\fB(none)\fR.

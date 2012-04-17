@@ -1,4 +1,4 @@
-/*	$NetBSD: eln.c,v 1.13 2011/08/16 16:25:15 christos Exp $	*/
+/*	$NetBSD: eln.c,v 1.13.2.1 2012/04/17 00:05:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: eln.c,v 1.13 2011/08/16 16:25:15 christos Exp $");
+__RCSID("$NetBSD: eln.c,v 1.13.2.1 2012/04/17 00:05:27 yamt Exp $");
 #endif /* not lint && not SCCSID */
 
 #include "histedit.h"
@@ -154,7 +154,7 @@ el_set(EditLine *el, int op, ...)
 			    break;
 		argv[0] = NULL;
 		wargv = (const wchar_t **)
-		    ct_decode_argv(i, argv, &el->el_lgcyconv);
+		    ct_decode_argv(i + 1, argv, &el->el_lgcyconv);
 		if (!wargv) {
 		    ret = -1;
 		    goto out;

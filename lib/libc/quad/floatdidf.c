@@ -1,4 +1,4 @@
-/*	$NetBSD: floatdidf.c,v 1.7 2011/07/04 06:23:50 matt Exp $	*/
+/*	$NetBSD: floatdidf.c,v 1.7.2.1 2012/04/17 00:05:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)floatdidf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: floatdidf.c,v 1.7 2011/07/04 06:23:50 matt Exp $");
+__RCSID("$NetBSD: floatdidf.c,v 1.7.2.1 2012/04/17 00:05:22 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,7 +69,7 @@ __floatdidf(quad_t x)
 	 * code and does not know how to get at an exponent.  Machine-
 	 * specific code may be able to do this more efficiently.
 	 */
-	d = (double)u.ul[H] * (((int)1 << (INT_BITS - 2)) * 4.0);
+	d = (double)u.ul[H] * (((int)1 << (unsigned int)(INT_BITS - 2)) * 4.0);
 	d += u.ul[L];
 
 	return (neg ? -d : d);

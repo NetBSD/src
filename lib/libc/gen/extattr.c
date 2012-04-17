@@ -1,4 +1,4 @@
-/*	$NetBSD: extattr.c,v 1.3 2011/08/03 04:11:17 manu Exp $	*/
+/*	$NetBSD: extattr.c,v 1.3.2.1 2012/04/17 00:05:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Robert N. M. Watson
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: extattr.c,v 1.3 2011/08/03 04:11:17 manu Exp $");
+__RCSID("$NetBSD: extattr.c,v 1.3.2.1 2012/04/17 00:05:18 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -103,7 +103,7 @@ extattr_copy_fd(int from_fd, int to_fd, int namespace)
 	size_t alen;
 	void *alist = NULL;
 	void *aval = NULL;
-	int i;
+	size_t i;
 	int error = -1;
 
 	llen = extattr_list_fd(from_fd, namespace, NULL, 0);
@@ -130,7 +130,7 @@ extattr_copy_fd(int from_fd, int to_fd, int namespace)
 	if ((aval = malloc((size_t)maxvlen)) == NULL)
 		goto out;
 
-	for (i = 0; i < llen; i += alen + 1) {
+	for (i = 0; i < (size_t)llen; i += alen + 1) {
 		char aname[NAME_MAX + 1];
 		char *ap;
 
@@ -176,7 +176,7 @@ extattr_copy_file(const char *from, const char *to, int namespace)
 	size_t alen;
 	void *alist = NULL;
 	void *aval = NULL;
-	int i;
+	size_t i;
 	int error = -1;
 
 	llen = extattr_list_file(from, namespace, NULL, 0);
@@ -203,7 +203,7 @@ extattr_copy_file(const char *from, const char *to, int namespace)
 	if ((aval = malloc((size_t)maxvlen)) == NULL)
 		goto out;
 
-	for (i = 0; i < llen; i += alen + 1) {
+	for (i = 0; i < (size_t)llen; i += alen + 1) {
 		char aname[NAME_MAX + 1];
 		char *ap;
 
@@ -248,7 +248,7 @@ extattr_copy_link(const char *from, const char *to, int namespace)
 	size_t alen;
 	void *alist = NULL;
 	void *aval = NULL;
-	int i;
+	size_t i;
 	int error = -1;
 
 	llen = extattr_list_link(from, namespace, NULL, 0);
@@ -275,7 +275,7 @@ extattr_copy_link(const char *from, const char *to, int namespace)
 	if ((aval = malloc((size_t)maxvlen)) == NULL)
 		goto out;
 
-	for (i = 0; i < llen; i += alen + 1) {
+	for (i = 0; i < (size_t)llen; i += alen + 1) {
 		char aname[NAME_MAX + 1];
 		char *ap;
 

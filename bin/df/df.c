@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.89 2011/08/29 17:30:28 gson Exp $ */
+/*	$NetBSD: df.c,v 1.89.2.1 2012/04/17 00:01:36 yamt Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.89 2011/08/29 17:30:28 gson Exp $");
+__RCSID("$NetBSD: df.c,v 1.89.2.1 2012/04/17 00:01:36 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -473,7 +473,7 @@ prtstat(struct statvfs *sfsp, int maxwidth)
 		    fsbtoblk(sfsp->f_blocks, sfsp->f_frsize, blocksize),
 		    fsbtoblk(used, sfsp->f_frsize, blocksize),
 		    fsbtoblk(bavail, sfsp->f_frsize, blocksize),
-		    availblks == 0 ? full : strpct(pb, sizeof(pb), used,
+		    availblks == 0 ? full : strspct(pb, sizeof(pb), used,
 		    availblks, 0), sfsp->f_mntonname);
 		/*
 		 * another concession by the structured programming police to
@@ -495,15 +495,14 @@ prtstat(struct statvfs *sfsp, int maxwidth)
 		    fsbtoblk(bavail, sfsp->f_frsize, blocksize));
 	(void)printf(" %3s%%",
 	    availblks == 0 ? full :
-	    /* We know that these values are never negative */
-	    strpct(pb, sizeof(pb), used, availblks, 0));
+	    strspct(pb, sizeof(pb), used, availblks, 0));
 	if (iflag) {
 		inodes = sfsp->f_files;
 		used = inodes - sfsp->f_ffree;
 		(void)printf(" %8jd %8jd %3s%%",
 		    (intmax_t)used, (intmax_t)sfsp->f_ffree,
 		    inodes == 0 ? (used == 0 ? empty : full) :
-		    strpct(pb, sizeof(pb), used, inodes, 0));
+		    strspct(pb, sizeof(pb), used, inodes, 0));
 	}
 	(void)printf(" %s\n", sfsp->f_mntonname);
 }

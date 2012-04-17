@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmenu.c,v 1.1 2009/03/02 09:33:02 nonaka Exp $	*/
+/*	$NetBSD: bootmenu.c,v 1.1.18.1 2012/04/17 00:07:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ parsebootconf(const char *conf)
 	/* automatically switch between letter and numbers on menu */
 	bootconf.menuformat = MENUFORMAT_AUTO;
 
-	fd = open(_PATH_BOOTCONF, 0);
+	fd = open(conf, 0);
 	if (fd < 0)
 		return;
 
@@ -118,6 +118,7 @@ parsebootconf(const char *conf)
 	bc = alloc(st.st_size + 1);
 	if (bc == NULL) {
 		printf("Could not allocate memory for boot configuration\n");
+		close(fd);
 		return;
 	}
 

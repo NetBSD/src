@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.32 2011/03/08 03:22:29 macallan Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.32.4.1 2012/04/17 00:07:45 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.32 2011/03/08 03:22:29 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.32.4.1 2012/04/17 00:07:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,11 +101,8 @@ pci_genfb_attach(device_t parent, device_t self, void *aux)
 	struct genfb_ops ops;
 	pcireg_t rom;
 	int idx, bar, type;
-	char devinfo[256];
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_naive("\n");
-	aprint_normal(": %s\n", devinfo);
+	pci_aprint_devinfo(pa, NULL);
 
 	sc->sc_gen.sc_dev = self;
 	sc->sc_memt = pa->pa_memt;
@@ -271,8 +268,8 @@ pci_genfb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
 	 */
-	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
-	    NULL) != 0) {
+	if (kauth_authorize_machdep(kauth_cred_get(), KAUTH_MACHDEP_UNMANAGEDMEM,
+	    NULL, NULL, NULL, NULL) != 0) {
 		aprint_normal_dev(sc->sc_gen.sc_dev, "mmap() rejected.\n");
 		return -1;
 	}

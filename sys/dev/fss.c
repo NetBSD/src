@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.78 2011/08/07 14:03:16 rmind Exp $	*/
+/*	$NetBSD: fss.c,v 1.78.2.1 2012/04/17 00:07:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.78 2011/08/07 14:03:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.78.2.1 2012/04/17 00:07:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,11 +300,20 @@ fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int error;
 	struct fss_softc *sc = device_lookup_private(&fss_cd, minor(dev));
+	struct fss_set _fss;
 	struct fss_set *fss = (struct fss_set *)data;
+	struct fss_set50 *fss50 = (struct fss_set50 *)data;
 	struct fss_get *fsg = (struct fss_get *)data;
+#ifndef _LP64
+	struct fss_get50 *fsg50 = (struct fss_get50 *)data;
+#endif
 
 	switch (cmd) {
 	case FSSIOCSET50:
+		fss = &_fss;
+		fss->fss_mount = fss50->fss_mount;
+		fss->fss_bstore = fss50->fss_bstore;
+		fss->fss_csize = fss50->fss_csize;
 		fss->fss_flags = 0;
 		/* Fall through */
 	case FSSIOCSET:
@@ -330,6 +339,34 @@ fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			error = fss_delete_snapshot(sc, l);
 		mutex_exit(&sc->sc_lock);
 		break;
+
+#ifndef _LP64
+	case FSSIOCGET50:
+		mutex_enter(&sc->sc_lock);
+		switch (sc->sc_flags & (FSS_PERSISTENT | FSS_ACTIVE)) {
+		case FSS_ACTIVE:
+			memcpy(fsg50->fsg_mount, sc->sc_mntname, MNAMELEN);
+			fsg50->fsg_csize = FSS_CLSIZE(sc);
+			timeval_to_timeval50(&sc->sc_time, &fsg50->fsg_time);
+			fsg50->fsg_mount_size = sc->sc_clcount;
+			fsg50->fsg_bs_size = sc->sc_clnext;
+			error = 0;
+			break;
+		case FSS_PERSISTENT | FSS_ACTIVE:
+			memcpy(fsg50->fsg_mount, sc->sc_mntname, MNAMELEN);
+			fsg50->fsg_csize = 0;
+			timeval_to_timeval50(&sc->sc_time, &fsg50->fsg_time);
+			fsg50->fsg_mount_size = 0;
+			fsg50->fsg_bs_size = 0;
+			error = 0;
+			break;
+		default:
+			error = ENXIO;
+			break;
+		}
+		mutex_exit(&sc->sc_lock);
+		break;
+#endif /* _LP64 */
 
 	case FSSIOCGET:
 		mutex_enter(&sc->sc_lock);

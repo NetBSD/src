@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.233 2011/08/18 21:04:23 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.233.2.1 2012/04/17 00:06:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.233 2011/08/18 21:04:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.233.2.1 2012/04/17 00:06:40 yamt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -56,8 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.233 2011/08/18 21:04:23 matt Exp $");
 #include <sys/syscall.h>
 #include <sys/buf.h>
 #include <sys/ktrace.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/kauth.h>
 #include <sys/atomic.h>
 
@@ -258,7 +256,8 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 			pte = kvtopte(vaddr);
 			pt_entry = pte->pt_entry;
 			if (!mips_pg_v(pt_entry)) {
-				panic("ktlbmod: invalid pte");
+				panic("ktlbmod: %#"PRIxVADDR": invalid pte",
+				    vaddr);
 			}
 			if (pt_entry & mips_pg_ro_bit()) {
 				/* write to read only page in the kernel */
@@ -412,11 +411,6 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		}
 #endif /* PMAP_FAULTINFO */
 
-		if ((l->l_flag & LW_SA) && (~l->l_pflag & LP_SA_NOBLOCK)) {
-			l->l_savp->savp_faultaddr = (vaddr_t)vaddr;
-			l->l_pflag |= LP_SA_PAGEFAULT;
-		}
-
 		onfault = pcb->pcb_onfault;
 		pcb->pcb_onfault = NULL;
 		if (p->p_emul->e_fault)
@@ -444,7 +438,6 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 			else if (rv == EACCES)
 				rv = EFAULT;
 		}
-		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		if (rv == 0) {
 #ifdef PMAP_FAULTINFO
 			if (pfi->pfi_repeats == 0) {

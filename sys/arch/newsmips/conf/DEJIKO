@@ -1,4 +1,4 @@
-# 	$NetBSD: DEJIKO,v 1.28 2010/05/08 22:16:28 mrg Exp $
+# 	$NetBSD: DEJIKO,v 1.28.8.1 2012/04/17 00:06:44 yamt Exp $
 #
 #	Dejiko's sekai-seifuku NEWS5000 nyo.
 
@@ -85,6 +85,5 @@ pseudo-device	ipfilter		# ip filter
 pseudo-device	bpfilter		# Berkeley Packet Filter
 pseudo-device	vnd			# disk-like interface to files
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 #pseudo-device	fss			# file system snapshot device

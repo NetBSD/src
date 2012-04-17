@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.40 2011/09/25 13:34:54 chs Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.40.2.1 2012/04/17 00:05:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hppa_reloc.c,v 1.40 2011/09/25 13:34:54 chs Exp $");
+__RCSID("$NetBSD: hppa_reloc.c,v 1.40.2.1 2012/04/17 00:05:36 yamt Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -81,6 +81,30 @@ store_ptr(void *where, Elf_Addr val)
 	else
 		(void)memcpy(where, &val, sizeof(val));
 }
+
+static __inline void
+fdc(void *addr)
+{
+	__asm volatile("fdc %%r0(%%sr0, %0)" : : "r" (addr));
+}
+
+static __inline void
+fic(void *addr)     
+{                   
+	__asm volatile("fic %%r0(%%sr0,%0)" : : "r" (addr));
+} 
+
+static __inline void
+sync(void)
+{
+	__asm volatile("sync" : : : "memory");
+}
+
+#define PLT_STUB_MAGIC1	0x00c0ffee
+#define PLT_STUB_MAGIC2	0xdeadbeef
+
+#define PLT_STUB_INSN1	0x0e801081	/* ldw	0(%r20), %r1 */
+#define PLT_STUB_INSN2	0xe820c000	/* bv	%r0(%r1) */
 
 /*
  * In the runtime architecture (ABI), PLABEL function pointers are
@@ -355,7 +379,34 @@ _rtld_function_descriptor_function(const void *addr)
 void
 _rtld_setup_pltgot(const Obj_Entry *obj)
 {
-	__rtld_setup_hppa_pltgot(obj, obj->pltgot);
+	Elf_Word *got = obj->pltgot;
+
+	assert(got[-2] == PLT_STUB_MAGIC1);
+	assert(got[-1] == PLT_STUB_MAGIC2);
+	
+	__rtld_setup_hppa_pltgot(obj, got);
+
+	fdc(&got[-2]);
+	fdc(&got[-1]);
+	fdc(&got[1]);
+	sync();
+	fic(&got[-2]);
+	fic(&got[-1]);
+	fic(&got[1]);
+	sync();
+
+	/*
+	 * libc makes use of %t1 (%r22) to pass errno values to __cerror. Fixup
+	 * the PLT stub to not use %r22.
+	 */
+	got[-7] = PLT_STUB_INSN1;
+	got[-6] = PLT_STUB_INSN2;
+	fdc(&got[-7]);
+	fdc(&got[-6]);
+	sync();
+	fic(&got[-7]);
+	fic(&got[-6]);
+	sync();
 }
 
 int
@@ -481,7 +532,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			if (!defobj->tls_done && _rtld_tls_offset_allocate(obj))
 				return -1;
 
-			*where = (Elf_Addr)(obj->tlsoffset + def->st_value +
+			*where = (Elf_Addr)(defobj->tlsoffset + def->st_value +
 			    rela->r_addend + sizeof(struct tls_tcb));
 
 			rdbg(("TPREL32 %s in %s --> %p in %s",

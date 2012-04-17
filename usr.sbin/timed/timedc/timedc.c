@@ -1,4 +1,4 @@
-/*	$NetBSD: timedc.c,v 1.21 2008/07/21 13:37:00 lukem Exp $	*/
+/*	$NetBSD: timedc.c,v 1.21.2.1 2012/04/17 00:09:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1993\
 #if 0
 static char sccsid[] = "@(#)timedc.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: timedc.c,v 1.21 2008/07/21 13:37:00 lukem Exp $");
+__RCSID("$NetBSD: timedc.c,v 1.21.2.1 2012/04/17 00:09:54 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -105,7 +105,7 @@ main(int argc, char *argv[])
 			printf("timedc> ");
 			(void) fflush(stdout);
 		}
-		if (fgets(cmdline, sizeof(cmdline), stdin) == 0)
+		if (fgets(cmdline, sizeof(cmdline), stdin) == NULL)
 			quit(0, NULL);
 		if (cmdline[0] == 0)
 			break;

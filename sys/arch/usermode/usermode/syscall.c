@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.10 2011/09/15 12:26:51 reinoud Exp $ */
+/* $NetBSD: syscall.c,v 1.10.2.1 2012/04/17 00:07:00 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10 2011/09/15 12:26:51 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10.2.1 2012/04/17 00:07:00 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,29 +45,41 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10 2011/09/15 12:26:51 reinoud Exp $")
 #include <machine/thunk.h>
 #include <machine/machdep.h>
 
-
-void userret(struct lwp *l);
-
-void
-userret(struct lwp *l)
-{
-	/* invoke MI userret code */
-	mi_userret(l);
-}
-
 void
 child_return(void *arg)
 {
 	lwp_t *l = arg;
-//	struct pcb *pcb = lwp_getpcb(l);
+	register_t rval[2];
+	struct pcb *pcb = lwp_getpcb(l);
+	ucontext_t *ucp = &pcb->pcb_userret_ucp;
 
-	/* XXX? */
-//	frame->registers[0] = 0;
+	/* return value zero */
+	rval[0] = 0;
+	rval[1] = 0;
+	md_syscall_set_returnargs(l, ucp, 0, rval);
 
 	aprint_debug("child return! lwp %p\n", l);
 	userret(l);
 	ktrsysret(SYS_fork, 0, 0);
 }
+
+/*
+ * Process the tail end of a posix_spawn() for the child.
+ */
+void
+cpu_spawn_return(struct lwp *l)
+{
+
+	userret(l);
+}
+
+extern const char *const syscallnames[];
+
+static void syscall_args_print(lwp_t *l, int code, int nargs, int argsize,
+	register_t *args);
+static void syscall_retvals_print(lwp_t *l, lwp_t *clwp,
+	int code, int nargs, register_t *args, int error, register_t *rval);
+
 
 void
 syscall(void)
@@ -76,11 +88,11 @@ syscall(void)
 	const struct proc * const p = l->l_proc;
 	const struct sysent *callp;
 	struct pcb *pcb = lwp_getpcb(l);
-	ucontext_t *ucp = &pcb->pcb_userland_ucp;
+	ucontext_t *ucp = &pcb->pcb_userret_ucp;
 	register_t copyargs[2+SYS_MAXSYSARGS];
 	register_t *args;
 	register_t rval[2];
-	uint32_t code;
+	uint32_t code, opcode;
 	uint nargs, argsize;
 	int error;
 
@@ -89,6 +101,7 @@ syscall(void)
 	LWP_CACHE_CREDS(l, l->l_proc);
 
 	/* XXX do we want do do emulation? */
+	md_syscall_get_opcode(ucp, &opcode);
 	md_syscall_get_syscallnumber(ucp, &code);
 	code &= (SYS_NSYSENT -1);
 
@@ -103,48 +116,36 @@ syscall(void)
 #if 0
 	aprint_debug("syscall no. %d, ", code);
 	aprint_debug("nargs %d, argsize %d =>  ", nargs, argsize);
-	dprintf_debug("syscall no. %d, ", code);
-	dprintf_debug("nargs %d, argsize %d =>  ", nargs, argsize);
+	thunk_printf_debug("syscall no. %d, ", code);
+	thunk_printf_debug("nargs %d, argsize %d =>  ", nargs, argsize);
 #endif
-	if ((code == 4)) {
-		dprintf_debug("[us] %s", (char *) args[1]);
-		printf("[us] %s", (char *) args[1]);
+
+	/*
+	 * TODO change the pre and post printing into functions so they can be
+	 * easily adjusted and dont clobber up this space
+	 */
+
+	if (!error)
+		syscall_args_print(l, code, nargs, argsize, args);
+
+	md_syscall_inc_pc(ucp, opcode);
+
+	if (!error) {
+		if (!__predict_false(p->p_trace_enabled)
+		    || __predict_false(callp->sy_flags & SYCALL_INDIRECT)
+		    || (error = trace_enter(code, args, callp->sy_narg)) == 0) {
+			error = (*callp->sy_call)(l, args, rval);
+		}
+
+		if (__predict_false(p->p_trace_enabled)
+		    && !__predict_false(callp->sy_flags & SYCALL_INDIRECT)) {
+			trace_exit(code, rval, error);
+		}
 	}
 
-	if (code == 5)
-		aprint_debug("open('%s', %d,...) => ", (char *) (args[0]),
-			(int) (args[1]));
-#if 0
+	syscall_retvals_print(l, curlwp, code, nargs, args, error, rval);
 
-	if (code == 3)
-		aprint_debug("read(%d, %p, %d) => ", (int) args[0],
-			(void *) args[1], (int) args[2]);
-#if 0
-	if (code == 4)
-		aprint_debug("write(%d, %p ('%s'), %d) => ",
-			(int) args[0], (void *) args[1],
-			(char *) args[1], (int) args[2]);
-	if (code == 5)
-		aprint_debug("open('%s', %d,...) => ", (char *) (args[0]),
-			(int) (args[1]));
-#endif
-	if (code == 440)
-		aprint_debug("stat(%d, %p) => ", (uint32_t) args[0],
-			(void *) args[1]);
-#endif
-
-	if (!error) 
-		error = (*callp->sy_call)(l, args, rval);
-
-	if (code == 5)
-		aprint_debug("%s\n", error ? "error":"OK");
-#if 0
-	if (code ==3)
-		aprint_debug("{'%s'} => ", (char *) args[1]);
-	aprint_debug("error = %d, rval[0] = 0x%"PRIx32", retval[1] = 0x%"PRIx32"\n",
-		error, (uint) (rval[0]), (uint) (rval[1]));
-#endif
-
+//out:
 	switch (error) {
 	default:
 		/* fall trough */
@@ -152,14 +153,95 @@ syscall(void)
 		md_syscall_set_returnargs(l, ucp, error, rval);
 		/* fall trough */
 	case EJUSTRETURN:
-		md_syscall_inc_pc(ucp);
 		break;
 	case ERESTART:
+		md_syscall_dec_pc(ucp, opcode);
 		/* nothing to do */
 		break;
 	}
+	//thunk_printf_debug("end of syscall : return to userland\n");
+//if (code != 4) thunk_printf("userret() code %d\n", code);
+}
 
-//	aprint_debug("end of syscall : return to userland\n");
-	userret(l);
+
+static void
+syscall_args_print(lwp_t *l, int code, int nargs, int argsize, register_t *args)
+{
+	char **argv, **envp;
+
+return;
+	if (code != 4) {
+		thunk_printf("lwp %p, code %3d, nargs %d, argsize %3d\t%s(", 
+			l, code, nargs, argsize, syscallnames[code]);
+		switch (code) {
+		case 5:
+			thunk_printf("\"%s\", %"PRIx32", %"PRIx32"", (char *) (args[0]), (uint) args[1], (uint) args[2]);
+			break;
+		case 33:
+			thunk_printf("\"%s\", %"PRIx32"", (char *) (args[0]), (uint) args[1]);
+			break;
+		case 50:
+			thunk_printf("\"%s\"", (char *) (args[0]));
+			break;
+		case 58:
+			thunk_printf("\"%s\", %"PRIx32", %"PRIx32"", (char *) (args[0]), (uint) (args[1]), (uint) args[2]);
+			break;
+		case 59:
+			thunk_printf("\"%s\", [", (char *) (args[0]));
+			argv = (char **) (args[1]);
+			if (*argv) {
+				while (*argv) {
+					thunk_printf("\"%s\", ", *argv);
+					argv++;
+				}
+				thunk_printf("\b\b");
+			}
+			thunk_printf("], [");
+			envp = (char **) (args[2]);
+			if (*envp) {
+				while (*envp) {
+					thunk_printf("\"%s\", ", *envp);
+					envp++;
+				}
+				thunk_printf("\b\b");
+			}
+			thunk_printf("]");
+			break;
+		default:
+			for (int i = 0; i < nargs; i++)
+				thunk_printf("%"PRIx32", ", (uint) args[i]);
+			if (nargs)
+				thunk_printf("\b\b");
+		}
+		thunk_printf(") ");
+	}
+#if 0
+	if ((code == 4)) {
+//		thunk_printf_debug("[us] %s", (char *) args[1]);
+		thunk_printf("[us] %s", (char *) args[1]);
+	}
+#endif
+}
+
+
+static void
+syscall_retvals_print(lwp_t *l, lwp_t *clwp, int code, int nargs, register_t *args, int error, register_t *rval)
+{
+	char const *errstr;
+
+return;
+	switch (error) {
+	case EJUSTRETURN:
+		errstr = "EJUSTRETURN";
+		break;
+	case EAGAIN:
+		errstr = "EGAIN";
+		break;
+	default:
+		errstr = "OK";
+	}
+	if (code != 4)
+		thunk_printf("=> %s: %d, (%"PRIx32", %"PRIx32")\n",
+			errstr, error, (uint) (rval[0]), (uint) (rval[1]));
 }
 

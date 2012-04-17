@@ -1,4 +1,4 @@
-/*	$NetBSD: flags.c,v 1.15 2011/06/26 16:42:41 christos Exp $	*/
+/*	$NetBSD: flags.c,v 1.15.2.1 2012/04/17 00:05:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)flags.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: flags.c,v 1.15 2011/06/26 16:42:41 christos Exp $");
+__RCSID("$NetBSD: flags.c,v 1.15.2.1 2012/04/17 00:05:24 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -83,7 +83,7 @@ __sflags(const char *mode, int *optr)
 
 	default:	/* illegal mode */
 		errno = EINVAL;
-		return (0);
+		return 0;
 	}
 
 	/*
@@ -110,5 +110,5 @@ __sflags(const char *mode, int *optr)
 		}
 
 	*optr = m | o;
-	return (ret);
+	return ret;
 }

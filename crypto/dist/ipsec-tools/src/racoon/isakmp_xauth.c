@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_xauth.c,v 1.23 2011/05/15 17:13:23 christos Exp $	*/
+/*	$NetBSD: isakmp_xauth.c,v 1.23.4.1 2012/04/17 00:01:41 yamt Exp $	*/
 
 /* Id: isakmp_xauth.c,v 1.38 2006/08/22 18:17:17 manubsd Exp */
 
@@ -802,6 +802,7 @@ xauth_ldap_init_conf(void)
 	xauth_ldap_config.pver = 3;
 	xauth_ldap_config.host = NULL;
 	xauth_ldap_config.port = LDAP_PORT;
+	xauth_ldap_config.tls = 0;
 	xauth_ldap_config.base = NULL;
 	xauth_ldap_config.subtree = 0;
 	xauth_ldap_config.bind_dn = NULL;
@@ -915,6 +916,17 @@ xauth_login_ldap(iph1, usr, pwd)
 	/* initialize the protocol version */
 	ldap_set_option(ld, LDAP_OPT_PROTOCOL_VERSION,
 		&xauth_ldap_config.pver);
+
+	/* Enable TLS */
+	if (xauth_ldap_config.tls) {
+		res = ldap_start_tls_s(ld, NULL, NULL);
+		if (res != LDAP_SUCCESS) {
+			plog(LLV_ERROR, LOCATION, NULL,
+			     "ldap_start_tls_s failed: %s\n",
+			     ldap_err2string(res));
+			goto ldap_end;
+		}
+	}
 
 	/*
 	 * attempt to bind to the ldap server.
@@ -1143,6 +1155,17 @@ xauth_group_ldap(udn, grp)
 	/* initialize the protocol version */
 	ldap_set_option(ld, LDAP_OPT_PROTOCOL_VERSION,
 		&xauth_ldap_config.pver);
+
+	/* Enable TLS */
+	if (xauth_ldap_config.tls) {
+		res = ldap_start_tls_s(ld, NULL, NULL);
+		if (res != LDAP_SUCCESS) {
+			plog(LLV_ERROR, LOCATION, NULL,
+			     "ldap_start_tls_s failed: %s\n",
+			     ldap_err2string(res));
+			goto ldap_group_end;
+		}
+	}
 
 	/*
 	 * attempt to bind to the ldap server.

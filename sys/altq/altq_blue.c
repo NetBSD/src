@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_blue.c,v 1.22 2007/03/04 05:59:00 christos Exp $	*/
+/*	$NetBSD: altq_blue.c,v 1.22.76.1 2012/04/17 00:05:51 yamt Exp $	*/
 /*	$KAME: altq_blue.c,v 1.15 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.22 2007/03/04 05:59:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.22.76.1 2012/04/17 00:05:51 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.22 2007/03/04 05:59:00 christos Exp 
 #include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/kauth.h>
+#include <sys/cprng.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -504,7 +505,7 @@ blue_addq(blue_t *rp, class_queue_t *q, struct mbuf *m,
 static int
 drop_early(blue_t *rp)
 {
-	if ((arc4random() % rp->blue_max_pmark) < rp->blue_pmark) {
+	if ((cprng_fast32() % rp->blue_max_pmark) < rp->blue_pmark) {
 		/* drop or mark */
 		return (1);
 	}

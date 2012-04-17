@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2011/04/12 14:07:35 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.20.4.1 2012/04/17 00:07:03 yamt Exp $
 
 NOMAN=		# defined
 
@@ -32,7 +32,7 @@ SRCS+=		vers.c
 CLEANFILES+=	vers.c
 vers.c:	${VERSIONFILE}
 	${_MKTARGET_CREATE}
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	${HOST_SH} ${S}/conf/newvers_stand.sh \
 	    ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
 
 CPPFLAGS+=	-nostdinc -I$S -I${.OBJDIR} -I$M/stand/libsa
@@ -40,6 +40,7 @@ CPPFLAGS+=	-I$M/stand/libiocs -I${COMMONDIR}
 CPPFLAGS+=	-D_STANDALONE -DHEAP_VARIABLE
 CPPFLAGS+=	-DTEXTADDR="0x${TEXT}" 
 CPPFLAGS+=	-DBOOT=\"${BOOT}\" -DBOOT_VERS=\"${VERSION}\"
+CPPFLAGS+=	-DLIBSA_ENABLE_LS_OP
 CFLAGS=		-Wno-main -Os -m68020-60
 LINKFLAGS=	-N -static -T ${.CURDIR}/boot.ldscript
 LIBIOCS!=	cd $M/stand/libiocs && ${PRINTOBJDIR}

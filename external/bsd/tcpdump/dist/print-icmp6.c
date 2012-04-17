@@ -25,7 +25,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-icmp6.c,v 1.86 2008-02-05 19:36:13 guy Exp";
 #else
-__RCSID("$NetBSD: print-icmp6.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+__RCSID("$NetBSD: print-icmp6.c,v 1.2.6.1 2012/04/17 00:04:07 yamt Exp $");
 #endif
 #endif
 
@@ -355,15 +355,20 @@ icmp6_print(netdissect_options *ndo,
         printf("ICMP6, %s", tok2str(icmp6_type_values,"unknown icmp6 type (%u)",dp->icmp6_type));
 
         /* display cosmetics: print the packet length for printer that use the vflag now */
-        if (vflag && (dp->icmp6_type ==
-                      ND_ROUTER_SOLICIT ||
-                      ND_ROUTER_ADVERT ||
-                      ND_NEIGHBOR_ADVERT ||
-                      ND_NEIGHBOR_SOLICIT ||
-                      ND_REDIRECT ||
-                      ICMP6_HADISCOV_REPLY ||
-                      ICMP6_MOBILEPREFIX_ADVERT ))
-            printf(", length %u", length);
+        if (vflag)
+		switch (dp->icmp6_type) {
+		case ND_ROUTER_SOLICIT:
+		case ND_ROUTER_ADVERT:
+		case ND_NEIGHBOR_ADVERT:
+		case ND_NEIGHBOR_SOLICIT:
+		case ND_REDIRECT:
+		case ICMP6_HADISCOV_REPLY:
+		case ICMP6_MOBILEPREFIX_ADVERT:
+			printf(", length %u", length);
+			break;
+		default:
+			break;
+		}
                       
 	switch (dp->icmp6_type) {
 	case ICMP6_DST_UNREACH:

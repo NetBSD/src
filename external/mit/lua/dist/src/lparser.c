@@ -1,7 +1,7 @@
-/*	$NetBSD: lparser.c,v 1.1.1.1 2010/10/31 11:16:58 mbalmer Exp $	*/
+/*	$NetBSD: lparser.c,v 1.1.1.1.6.1 2012/04/17 00:04:46 yamt Exp $	*/
 
 /*
-** Id: lparser.c,v 2.42.1.3 2007/12/28 15:32:23 roberto Exp
+** $Id: lparser.c,v 1.1.1.1.6.1 2012/04/17 00:04:46 yamt Exp $
 ** Lua Parser
 ** See Copyright Notice in lua.h
 */
@@ -376,9 +376,9 @@ static void close_func (LexState *ls) {
   lua_assert(luaG_checkcode(f));
   lua_assert(fs->bl == NULL);
   ls->fs = fs->prev;
-  L->top -= 2;  /* remove table and prototype from the stack */
   /* last token read was anchored in defunct function; must reanchor it */
   if (fs) anchor_token(ls);
+  L->top -= 2;  /* remove table and prototype from the stack */
 }
 
 

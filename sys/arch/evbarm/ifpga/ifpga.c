@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga.c,v 1.24 2011/05/17 17:34:49 dyoung Exp $ */
+/*	$NetBSD: ifpga.c,v 1.24.4.1 2012/04/17 00:06:14 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.24 2011/05/17 17:34:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.24.4.1 2012/04/17 00:06:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -296,13 +296,13 @@ ifpga_attach(device_t parent, device_t self, void *aux)
 
 #if defined(PCI_NETBSD_CONFIGURE)
 	ioext = extent_create("pciio", 0x00000000,
-	    0x00000000 + IFPGA_PCI_IO_VSIZE, M_DEVBUF, NULL, 0, EX_NOWAIT);
+	    0x00000000 + IFPGA_PCI_IO_VSIZE, NULL, 0, EX_NOWAIT);
 	memext = extent_create("pcimem", IFPGA_PCI_APP0_BASE,
 	    IFPGA_PCI_APP0_BASE + IFPGA_PCI_APP0_SIZE,
-	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_NOWAIT);
 	pmemext = extent_create("pcipmem", IFPGA_PCI_APP1_BASE,
 	    IFPGA_PCI_APP1_BASE + IFPGA_PCI_APP1_SIZE,
-	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_NOWAIT);
 	ifpga_pci_chipset.pc_conf_v = (void *)pci_sc;
 	pci_configure_bus(&ifpga_pci_chipset, ioext, memext, pmemext, 0,
 	    arm_dcache_align);

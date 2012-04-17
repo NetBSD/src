@@ -1,4 +1,4 @@
-/* $NetBSD: iscsi.h,v 1.3 2009/06/30 02:44:52 agc Exp $ */
+/* $NetBSD: iscsi.h,v 1.3.6.1 2012/04/17 00:03:27 yamt Exp $ */
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,6 +30,8 @@
  */
 #ifndef ISCSI_H_
 #define ISCSI_H_	1
+
+#include <inttypes.h>
 
 enum {
 	ISCSI_MAXSOCK = 8

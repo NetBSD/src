@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2011/08/25 17:05:45 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.13.2.1 2012/04/17 00:04:33 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -44,6 +44,13 @@ CPPFLAGS+=	-DUSE_TLS
 # IPv6 support.
 .if ${MKINET6} == "no"
 CPPFLAGS+=	-DNO_IPV6
+.endif
+
+# SQLite support.
+CPPFLAGS+=	-DHAS_SQLITE
+. if defined(PROG)
+DPADD+=		${LIBSQLITE3}
+LDADD+=		-lsqlite3
 .endif
 
 # LDAP support.

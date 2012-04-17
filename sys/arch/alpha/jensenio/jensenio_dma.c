@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio_dma.c,v 1.4 2011/07/01 19:22:35 dyoung Exp $ */
+/* $NetBSD: jensenio_dma.c,v 1.4.2.1 2012/04/17 00:05:56 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio_dma.c,v 1.4 2011/07/01 19:22:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio_dma.c,v 1.4.2.1 2012/04/17 00:05:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ jensenio_dma_init(struct jensenio_config *jcp)
 	t->_next_window = NULL;
 	t->_boundary = 0;
 	t->_sgmap = NULL;
-	t->_get_tag = jensenio_dma_get_tag; 
+	t->_get_tag = jensenio_dma_get_tag;
 	t->_dmamap_create = isadma_bounce_dmamap_create;
 	t->_dmamap_destroy = isadma_bounce_dmamap_destroy;
 	t->_dmamap_load = isadma_bounce_dmamap_load;

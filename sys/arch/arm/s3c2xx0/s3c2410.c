@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2410.c,v 1.11 2011/07/01 20:31:39 dyoung Exp $ */
+/*	$NetBSD: s3c2410.c,v 1.11.2.1 2012/04/17 00:06:06 yamt Exp $ */
 
 /*
  * Copyright (c) 2003, 2005  Genetec corporation.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410.c,v 1.11 2011/07/01 20:31:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410.c,v 1.11.2.1 2012/04/17 00:06:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ s3c2410_match(struct device *parent, struct cfdata *match, void *aux)
 void
 s3c2410_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct s3c24x0_softc *sc = (struct s3c24x0_softc *) self;
+	struct s3c24x0_softc *sc = device_private(self);
 	bus_space_tag_t iot;
 	const char *which_registers;	/* for panic message */
 
@@ -179,7 +179,7 @@ int
 s3c2410_search(struct device * parent, struct cfdata * cf,
 	       const int *ldesc, void *aux)
 {
-	struct s3c24x0_softc *sc = (struct s3c24x0_softc *) parent;
+	struct s3c24x0_softc *sc = device_private(parent);
 	struct s3c2xx0_attach_args aa;
 
 	aa.sa_sc = sc;

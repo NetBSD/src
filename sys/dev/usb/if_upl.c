@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.38 2010/11/03 22:28:31 dyoung Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.38.8.1 2012/04/17 00:08:06 yamt Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,10 +34,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.38 2010/11/03 22:28:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.38.8.1 2012/04/17 00:08:06 yamt Exp $");
 
 #include "opt_inet.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,9 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.38 2010/11/03 22:28:31 dyoung Exp $");
 #include <sys/socket.h>
 
 #include <sys/device.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -134,9 +131,7 @@ struct upl_softc {
 	device_t		sc_dev;
 
 	struct ifnet		sc_if;
-#if NRND > 0
-	rndsource_element_t	sc_rnd_source;
-#endif
+	krndsource_t	sc_rnd_source;
 
 	struct callout		sc_stat_ch;
 
@@ -312,10 +307,8 @@ upl_attach(device_t parent, device_t self, void *aux)
 	if_alloc_sadl(ifp);
 
 	bpf_attach(ifp, DLT_RAW, 0);
-#if NRND > 0
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dev),
 	    RND_TYPE_NET, 0);
-#endif
 
 	sc->sc_attached = 1;
 	splx(s);
@@ -346,9 +339,7 @@ upl_detach(device_t self, int flags)
 	if (ifp->if_flags & IFF_RUNNING)
 		upl_stop(sc);
 
-#if NRND > 0
 	rnd_detach_source(&sc->sc_rnd_source);
-#endif
 	bpf_detach(ifp);
 
 	if_detach(ifp);

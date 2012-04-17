@@ -1,4 +1,4 @@
-/* $NetBSD: conffile.c,v 1.2 2009/06/30 02:44:52 agc Exp $ */
+/* $NetBSD: conffile.c,v 1.2.6.1 2012/04/17 00:03:27 yamt Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -206,7 +206,7 @@ safe_write_ent(FILE *fp, conffile_t *sp, ent_t *ep)
 #endif
 
 /* report an error and clear up */
-static int
+static __printflike(3, 4) int
 report_error(FILE *fp, char *name, const char *fmt, ...)
 {
 	va_list	vp;

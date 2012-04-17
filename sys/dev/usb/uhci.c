@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.240 2011/08/07 18:58:52 jakllsch Exp $	*/
+/*	$NetBSD: uhci.c,v 1.240.2.1 2012/04/17 00:08:07 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240 2011/08/07 18:58:52 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240.2.1 2012/04/17 00:08:07 yamt Exp $");
 
 #include "opt_usb.h"
 
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.240 2011/08/07 18:58:52 jakllsch Exp $");
 #include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <machine/endian.h>
 
@@ -281,67 +282,67 @@ UREAD4(uhci_softc_t *sc, bus_size_t r)
 #define UHCI_INTR_ENDPT 1
 
 const struct usbd_bus_methods uhci_bus_methods = {
-	uhci_open,
-	uhci_softintr,
-	uhci_poll,
-	uhci_allocm,
-	uhci_freem,
-	uhci_allocx,
-	uhci_freex,
+	.open_pipe =	uhci_open,
+	.soft_intr =	uhci_softintr,
+	.do_poll =	uhci_poll,
+	.allocm =	uhci_allocm,
+	.freem =	uhci_freem,
+	.allocx =	uhci_allocx,
+	.freex =	uhci_freex,
 };
 
 const struct usbd_pipe_methods uhci_root_ctrl_methods = {
-	uhci_root_ctrl_transfer,
-	uhci_root_ctrl_start,
-	uhci_root_ctrl_abort,
-	uhci_root_ctrl_close,
-	uhci_noop,
-	uhci_root_ctrl_done,
+	.transfer =	uhci_root_ctrl_transfer,
+	.start =	uhci_root_ctrl_start,
+	.abort =	uhci_root_ctrl_abort,
+	.close =	uhci_root_ctrl_close,
+	.cleartoggle =	uhci_noop,
+	.done =		uhci_root_ctrl_done,
 };
 
 const struct usbd_pipe_methods uhci_root_intr_methods = {
-	uhci_root_intr_transfer,
-	uhci_root_intr_start,
-	uhci_root_intr_abort,
-	uhci_root_intr_close,
-	uhci_noop,
-	uhci_root_intr_done,
+	.transfer =	uhci_root_intr_transfer,
+	.start =	uhci_root_intr_start,
+	.abort =	uhci_root_intr_abort,
+	.close =	uhci_root_intr_close,
+	.cleartoggle =	uhci_noop,
+	.done =		uhci_root_intr_done,
 };
 
 const struct usbd_pipe_methods uhci_device_ctrl_methods = {
-	uhci_device_ctrl_transfer,
-	uhci_device_ctrl_start,
-	uhci_device_ctrl_abort,
-	uhci_device_ctrl_close,
-	uhci_noop,
-	uhci_device_ctrl_done,
+	.transfer =	uhci_device_ctrl_transfer,
+	.start =	uhci_device_ctrl_start,
+	.abort =	uhci_device_ctrl_abort,
+	.close =	uhci_device_ctrl_close,
+	.cleartoggle =	uhci_noop,
+	.done =		uhci_device_ctrl_done,
 };
 
 const struct usbd_pipe_methods uhci_device_intr_methods = {
-	uhci_device_intr_transfer,
-	uhci_device_intr_start,
-	uhci_device_intr_abort,
-	uhci_device_intr_close,
-	uhci_device_clear_toggle,
-	uhci_device_intr_done,
+	.transfer =	uhci_device_intr_transfer,
+	.start =	uhci_device_intr_start,
+	.abort =	uhci_device_intr_abort,
+	.close =	uhci_device_intr_close,
+	.cleartoggle =	uhci_device_clear_toggle,
+	.done =		uhci_device_intr_done,
 };
 
 const struct usbd_pipe_methods uhci_device_bulk_methods = {
-	uhci_device_bulk_transfer,
-	uhci_device_bulk_start,
-	uhci_device_bulk_abort,
-	uhci_device_bulk_close,
-	uhci_device_clear_toggle,
-	uhci_device_bulk_done,
+	.transfer =	uhci_device_bulk_transfer,
+	.start =	uhci_device_bulk_start,
+	.abort =	uhci_device_bulk_abort,
+	.close =	uhci_device_bulk_close,
+	.cleartoggle =	uhci_device_clear_toggle,
+	.done =		uhci_device_bulk_done,
 };
 
 const struct usbd_pipe_methods uhci_device_isoc_methods = {
-	uhci_device_isoc_transfer,
-	uhci_device_isoc_start,
-	uhci_device_isoc_abort,
-	uhci_device_isoc_close,
-	uhci_noop,
-	uhci_device_isoc_done,
+	.transfer =	uhci_device_isoc_transfer,
+	.start =	uhci_device_isoc_start,
+	.abort =	uhci_device_isoc_abort,
+	.close =	uhci_device_isoc_close,
+	.cleartoggle =	uhci_noop,
+	.done =		uhci_device_isoc_done,
 };
 
 #define uhci_add_intr_info(sc, ii) \
@@ -1014,9 +1015,7 @@ uhci_poll_hub(void *addr)
 	xfer->actlen = 1;
 	xfer->status = USBD_NORMAL_COMPLETION;
 	s = splusb();
-	xfer->device->bus->intr_context++;
 	usb_transfer_complete(xfer);
-	xfer->device->bus->intr_context--;
 	splx(s);
 }
 
@@ -1076,8 +1075,6 @@ uhci_add_hs_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 {
 	uhci_soft_qh_t *eqh;
 
-	SPLUSBCHECK;
-
 	DPRINTFN(10, ("uhci_add_ctrl: sqh=%p\n", sqh));
 	eqh = sc->sc_hctl_end;
 	usb_syncmem(&eqh->dma, eqh->offs + offsetof(uhci_qh_t, qh_hlink),
@@ -1102,8 +1099,6 @@ void
 uhci_remove_hs_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 {
 	uhci_soft_qh_t *pqh;
-
-	SPLUSBCHECK;
 
 	DPRINTFN(10, ("uhci_remove_hs_ctrl: sqh=%p\n", sqh));
 #ifdef UHCI_CTL_LOOP
@@ -1153,8 +1148,6 @@ uhci_add_ls_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 {
 	uhci_soft_qh_t *eqh;
 
-	SPLUSBCHECK;
-
 	DPRINTFN(10, ("uhci_add_ls_ctrl: sqh=%p\n", sqh));
 	eqh = sc->sc_lctl_end;
 	usb_syncmem(&eqh->dma, eqh->offs + offsetof(uhci_qh_t, qh_hlink),
@@ -1175,8 +1168,6 @@ void
 uhci_remove_ls_ctrl(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 {
 	uhci_soft_qh_t *pqh;
-
-	SPLUSBCHECK;
 
 	DPRINTFN(10, ("uhci_remove_ls_ctrl: sqh=%p\n", sqh));
 	/* See comment in uhci_remove_hs_ctrl() */
@@ -1210,8 +1201,6 @@ uhci_add_bulk(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 {
 	uhci_soft_qh_t *eqh;
 
-	SPLUSBCHECK;
-
 	DPRINTFN(10, ("uhci_add_bulk: sqh=%p\n", sqh));
 	eqh = sc->sc_bulk_end;
 	usb_syncmem(&eqh->dma, eqh->offs + offsetof(uhci_qh_t, qh_hlink),
@@ -1233,8 +1222,6 @@ void
 uhci_remove_bulk(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 {
 	uhci_soft_qh_t *pqh;
-
-	SPLUSBCHECK;
 
 	DPRINTFN(10, ("uhci_remove_bulk: sqh=%p\n", sqh));
 	uhci_rem_loop(sc);
@@ -1361,10 +1348,7 @@ uhci_softintr(void *v)
 	uhci_softc_t *sc = bus->hci_private;
 	uhci_intr_info_t *ii, *nextii;
 
-	DPRINTFN(10,("%s: uhci_softintr (%d)\n", device_xname(sc->sc_dev),
-		     sc->sc_bus.intr_context));
-
-	sc->sc_bus.intr_context++;
+	DPRINTFN(10,("%s: uhci_softintr\n", device_xname(sc->sc_dev)));
 
 	/*
 	 * Interrupts on UHCI really suck.  When the host controller
@@ -1382,14 +1366,10 @@ uhci_softintr(void *v)
 		uhci_check_intr(sc, ii);
 	}
 
-#ifdef USB_USE_SOFTINTR
 	if (sc->sc_softwake) {
 		sc->sc_softwake = 0;
 		wakeup(&sc->sc_softwake);
 	}
-#endif /* USB_USE_SOFTINTR */
-
-	sc->sc_bus.intr_context--;
 }
 
 /* Check for an interrupt. */
@@ -2092,7 +2072,7 @@ uhci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 		return;
 	}
 
-	if (xfer->device->bus->intr_context || !curproc)
+	if (cpu_intr_p() || cpu_softintr_p())
 		panic("uhci_abort_xfer: not in process context");
 
 	/*
@@ -2142,14 +2122,10 @@ uhci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	 */
 	usb_delay_ms(upipe->pipe.device->bus, 2); /* Hardware finishes in 1ms */
 	s = splusb();
-#ifdef USB_USE_SOFTINTR
 	sc->sc_softwake = 1;
-#endif /* USB_USE_SOFTINTR */
 	usb_schedsoftintr(&sc->sc_bus);
-#ifdef USB_USE_SOFTINTR
 	DPRINTFN(1,("uhci_abort_xfer: tsleep\n"));
 	tsleep(&sc->sc_softwake, PZERO, "uhciab", 0);
-#endif /* USB_USE_SOFTINTR */
 	splx(s);
 
 	/*

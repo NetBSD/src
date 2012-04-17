@@ -1,4 +1,4 @@
-/*	$NetBSD: file_ufs.cpp,v 1.4 2008/04/28 20:23:20 martin Exp $	*/
+/*	$NetBSD: file_ufs.cpp,v 1.4.34.1 2012/04/17 00:06:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -67,15 +67,23 @@ BOOL
 UfsFile::setRoot(TCHAR *drive)
 {
 	char name[MAX_PATH];
-	int unit;
+	char devname[4] = "DSK";
+	int unit = 1;
 
 	_to_ascii(name, drive, MAX_PATH);
 	if ('1' <= name[0] && name[0] <= '9' && name[1] == ':')
 		unit = name[0] - '0';
-	else
-		unit = 1;
+	else if (isalpha((unsigned char)name[0]) &&
+	    isalpha((unsigned char)name[1]) &&
+	    isalpha((unsigned char)name[2]) &&
+	    '1' <= name[3] && name[3] <= '9' && name[4] == ':') {
+		devname[0] = name[0];
+		devname[1] = name[1];
+		devname[2] = name[2];
+		unit = name[3] - '0';
+	}
 
-	winblkopen(_f, "DSK", unit, 0);
+	winblkopen(_f, devname, unit, 0);
 
 	return TRUE;
 }

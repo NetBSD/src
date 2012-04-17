@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/usr.sbin/ndiscvt/ndiscvt.c,v 1.9.2.2 2005/02/23 16:31:47 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__RCSID("$NetBSD: ndiscvt.c,v 1.9 2006/05/28 11:33:56 jnemeth Exp $");
+__RCSID("$NetBSD: ndiscvt.c,v 1.9.42.1 2012/04/17 00:09:50 yamt Exp $");
 #endif
 
 
@@ -164,7 +164,7 @@ int insert_padding(imgbase, imglen)
 	return(0);
 }
 
-static void
+__dead static void
 usage(void)
 {
 	fprintf(stderr, "Usage: %s [-O] [-i <inffile>] -s <sysfile> "
@@ -239,7 +239,7 @@ bincvt(char *sysfile, char *outfile, void *img, int fsize)
 	return;
 }
    
-static void
+__dead static void
 firmcvt(char *firmfile)
 {
 	char			*basefile, *outfile, *ptr;

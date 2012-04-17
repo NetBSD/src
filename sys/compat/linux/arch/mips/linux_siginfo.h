@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_siginfo.h,v 1.6 2008/11/23 23:48:48 njoly Exp $ */
+/*	$NetBSD: linux_siginfo.h,v 1.6.16.1 2012/04/17 00:07:17 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -100,12 +100,7 @@ typedef struct linux_siginfo {
 	} _sidata;	/* This is _sifields for Linux/mips */
 } linux_siginfo_t;
 
-#define lsi_pid _sidata._kill._pid
-#define lsi_uid _sidata._kill._uid
-
 /* si_code specific values (IRIX compatible) */
-#define LINUX_SI_CODE_ARCH
-
 #define LINUX_SI_ASYNCIO	-2
 #define LINUX_SI_TIMER		-3
 #define LINUX_SI_MESGQ		-4

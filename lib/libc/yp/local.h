@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.3 2009/10/21 01:07:46 snj Exp $	*/
+/*	$NetBSD: local.h,v 1.3.6.1 2012/04/17 00:05:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -25,6 +25,6 @@
  */
 
 __BEGIN_DECLS
-void __yp_unbind __P((struct dom_binding *));
-int _yp_invalid_domain __P((const char *));
+void __yp_unbind(struct dom_binding *);
+int _yp_invalid_domain(const char *);
 __END_DECLS

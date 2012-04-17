@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.31 2009/02/12 06:35:54 lukem Exp $	*/
+/*	$NetBSD: hash.c,v 1.31.6.1 2012/04/17 00:05:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hash.c,v 1.31 2009/02/12 06:35:54 lukem Exp $");
+__RCSID("$NetBSD: hash.c,v 1.31.6.1 2012/04/17 00:05:17 yamt Exp $");
 
 #include "namespace.h"
 #include <sys/param.h>
@@ -212,7 +212,7 @@ __hash_open(const char *file, int flags, mode_t mode, const HASHINFO *info,
 	dbp->sync = hash_sync;
 	dbp->type = DB_HASH;
 
-#ifdef DEBUG
+#ifdef DEBUG1
 	(void)fprintf(stderr,
 "%s\n%s%p\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%x\n%s%x\n%s%d\n%s%d\n",
 	    "init_htab:",
@@ -813,7 +813,9 @@ __expand_table(HTAB *hashp)
 			dirsize = hashp->DSIZE * sizeof(SEGMENT *);
 			if (!hash_realloc(&hashp->dir, dirsize, dirsize << 1))
 				return (-1);
-			hashp->DSIZE = dirsize << 1;
+			dirsize <<= 1;
+			_DBFIT(dirsize, uint32_t);
+			hashp->DSIZE = (uint32_t)dirsize;
 		}
 		if ((hashp->dir[new_segnum] =
 		    calloc((size_t)hashp->SGSIZE, sizeof(SEGMENT))) == NULL)

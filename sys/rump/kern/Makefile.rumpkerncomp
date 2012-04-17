@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.rumpkerncomp,v 1.4 2011/03/05 03:15:25 joerg Exp $
+#	$NetBSD: Makefile.rumpkerncomp,v 1.4.6.1 2012/04/17 00:08:48 yamt Exp $
 #
 
 .include <bsd.own.mk>
 
-RUMPKERNCOMPS=	crypto ksem tty z
+RUMPKERNCOMPS=	crypto tty z
 
 .if ${MKZFS} != "no"
 RUMPKERNCOMPS+=    solaris

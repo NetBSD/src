@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.h,v 1.19 2011/05/16 13:22:53 tsutsui Exp $	*/
+/*	$NetBSD: m68k.h,v 1.19.4.1 2012/04/17 00:06:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -103,20 +103,22 @@ void	copypage040(void *fromaddr, void *toaddr);
 void	copypage(void *fromaddr, void *toaddr);
 void	zeropage(void *addr);
 
-/* locore.s (XXX: move to support.s?) */
+/* support.s */
 int 	getdfc(void);
 int 	getsfc(void);
-void	m68881_save(struct fpframe *);
-void	m68881_restore(struct fpframe *); 
 
 /* switch_subr.s */
 void	lwp_trampoline(void);
+void	m68881_save(struct fpframe *);
+void	m68881_restore(struct fpframe *); 
 void	savectx(struct pcb *);
-void	setfunc_trampoline(void);
 
 /* w16copy.s */
 void	w16zero(void *, u_int);
 void	w16copy(const void *, void *, u_int);
+
+/* fpu.c */
+int	fpu_probe(void);
 
 #ifdef MAPPEDCOPY
 /* mappedcopy.c */

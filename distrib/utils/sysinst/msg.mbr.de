@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.de,v 1.11 2011/04/04 08:30:12 mbalmer Exp $	*/
+/*	$NetBSD: msg.mbr.de,v 1.11.4.1 2012/04/17 00:02:50 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -68,7 +68,7 @@ message part_header
    Start(%3s) Größe(%3s) Flag Typ                    Bootmenü
    ---------- ---------- ---- ---------------------- --------
 .else
-   Start(%3s) Größe(%3s) Flag Typ
+   Start(%3s) Größe(%3s) Flag Typ 
    ---------- ---------- ---- ----------------
 .endif
 }
@@ -143,12 +143,12 @@ message No_free_space {Kein freier Speicherplatz}
 message Only_one_extended_ptn {Hier ist nur eine erweiterte Partition möglich}
 
 message editparttable
-{Die aktuelle MBR-Partition wird unten angezeigt.
+{Die aktuelle MBR-Partition wird unten angezeigt. 
 Flag: a => (A)ktive Startpartition,
 .if BOOTSEL
-d => Stan(D)ardauswahl,
+d => Stan(D)ardauswahl, 
 .endif
-I => hier (I)nstallieren.
+I => hier (I)nstallieren. 
 Wählen Sie die Partition, die Sie verändern möchten:
 
 }

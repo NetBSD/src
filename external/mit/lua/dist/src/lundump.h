@@ -1,7 +1,7 @@
-/*	$NetBSD: lundump.h,v 1.1.1.1 2010/10/31 11:17:01 mbalmer Exp $	*/
+/*	$NetBSD: lundump.h,v 1.1.1.1.6.1 2012/04/17 00:04:47 yamt Exp $	*/
 
 /*
-** Id: lundump.h,v 1.37.1.1 2007/12/27 13:02:25 roberto Exp
+** $Id: lundump.h,v 1.1.1.1.6.1 2012/04/17 00:04:47 yamt Exp $
 ** load precompiled Lua chunks
 ** See Copyright Notice in lua.h
 */

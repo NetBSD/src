@@ -1,4 +1,4 @@
-/*	$NetBSD: psh3lcd.c,v 1.5 2009/12/19 07:08:55 kiyohara Exp $	*/
+/*	$NetBSD: psh3lcd.c,v 1.5.12.1 2012/04/17 00:06:25 yamt Exp $	*/
 /*
  * Copyright (c) 2005 KIYOHARA Takashi
  * All rights reserved.
@@ -130,7 +130,7 @@ static int psh3lcd_power(void *, int, long, void *);
 
 
 static inline int
-psh3lcd_x0_bcd_get()
+psh3lcd_x0_bcd_get(void)
 {
 	int i;
 	uint8_t bcr0, bcr1, bcr2;
@@ -150,7 +150,7 @@ psh3lcd_x0_bcd_get()
 }
 
 static inline int
-psh3lcd_xx0_bcd_get()
+psh3lcd_xx0_bcd_get(void)
 {
 	int i;
 	uint8_t bcr1, bcr2;

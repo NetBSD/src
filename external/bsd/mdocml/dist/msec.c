@@ -1,4 +1,4 @@
-/*	$Vendor-Id: msec.c,v 1.9 2011/03/22 14:33:05 kristaps Exp $ */
+/*	$Vendor-Id: msec.c,v 1.10 2011/12/02 01:37:14 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -21,15 +21,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "mdoc.h"
 #include "mandoc.h"
-#include "libmdoc.h"
+#include "libmandoc.h"
 
 #define LINE(x, y) \
 	if (0 == strcmp(p, x)) return(y);
 
 const char *
-mdoc_a2msec(const char *p)
+mandoc_a2msec(const char *p)
 {
 
 #include "msec.in"

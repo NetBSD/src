@@ -1,4 +1,4 @@
-/* $NetBSD: rune.c,v 1.42 2011/03/25 00:45:24 joerg Exp $ */
+/* $NetBSD: rune.c,v 1.42.4.1 2012/04/17 00:05:20 yamt Exp $ */
 
 /*-
  * Copyright (c)2010 Citrus Project,
@@ -47,7 +47,6 @@
 #include "citrus_ctype.h"
 
 #include "runetype_local.h"
-#include "bsdctype_local.h"
 
 #include "multibyte.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: viareg.h,v 1.8 2009/03/14 14:46:01 dsl Exp $	*/
+/*	$NetBSD: viareg.h,v 1.8.12.1 2012/04/17 00:06:37 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -201,46 +201,41 @@ static inline void write_via_reg(int, int, int);
 static inline int read_via_reg(int, int);
 
 static inline void
-via_reg_and(ign, reg, val) 
-	int ign, reg, val;
+via_reg_and(int ign, int reg, int val) 
 {
-	volatile unsigned char *addr = Via1Base + reg;
+	volatile uint8_t *addr = Via1Base + reg;
 
 	out8(addr, in8(addr) & val);
 }
 
 static inline void
-via_reg_or(ign, reg, val) 
-	int ign, reg, val;
+via_reg_or(int ign, int reg, int val) 
 {
-	volatile unsigned char *addr = Via1Base + reg;
+	volatile uint8_t *addr = Via1Base + reg;
 
 	out8(addr, in8(addr) | val);
 }
 
 static inline void
-via_reg_xor(ign, reg, val) 
-	int ign, reg, val;
+via_reg_xor(int ign, int reg, int val) 
 {
-	volatile unsigned char *addr = Via1Base + reg;
+	volatile uint8_t *addr = Via1Base + reg;
 
 	out8(addr, in8(addr) ^ val);
 }
 
 static inline int
-read_via_reg(ign, reg)
-	int ign, reg;
+read_via_reg(int ign, int reg)
 {
-	volatile unsigned char *addr = Via1Base + reg;
+	volatile uint8_t *addr = Via1Base + reg;
 
 	return in8(addr);
 }
 
 static inline void
-write_via_reg(ign, reg, val)
-	int ign, reg, val;
+write_via_reg(int ign, int reg, int val)
 {
-	volatile unsigned char *addr = Via1Base + reg;
+	volatile uint8_t *addr = Via1Base + reg;
 
 	out8(addr, val);
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46 2011/09/26 21:16:14 christos Exp $
+#	$NetBSD: Makefile,v 1.46.2.1 2012/04/17 00:09:28 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -37,7 +37,7 @@ COMMON_CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} \
 			--enable-long-long \
 			--enable-threads \
 			--with-bugurl=http://www.NetBSD.org/Misc/send-pr.html \
-			--with-pkgversion="NetBSD nb1 20110620" \
+			--with-pkgversion="NetBSD nb2 20111202" \
 			${VAX_CONFIGURE_ARGS} \
 			--enable-__cxa_atexit
 .if defined(GCC_CONFIG_ARCH.${MACHINE_ARCH})
@@ -103,7 +103,7 @@ BUILD_MAKE=${TOOL_GMAKE}
 # mknative-gcc specific stuff
 #
 
-.if ${HAVE_GCC} >= 45
+.if ${HAVE_GCC} < 45
 GCCSRCDIR=${.CURDIR}/../../gnu/dist/gcc4
 .else
 GCCSRCDIR=${.CURDIR}/../../external/gpl3/gcc/dist
@@ -117,7 +117,7 @@ MKNATIVE?=	${.CURDIR}/mknative-gcc
 
 bootstrap-libgcc: .configure_done
 	@echo 'Creating files needed for libgcc by a native bootstrap build.'
-	@MAKE=${BUILD_MAKE:Q} ${HOST_SH} ${MKNATIVE} lib${MODULE} \
+	@MAKE=${BUILD_MAKE:Q} ${HOST_SH} ${MKNATIVE} lib${MKNATIVE_TARGET} \
 		${.OBJDIR}/build ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM} \
 		${DESTDIR}
 
@@ -133,6 +133,10 @@ NATIVE_CONFIGURE_ARGS+=	\
 			--with-mpc=${DESTDIR}/usr \
 			--with-mpfr=${DESTDIR}/usr \
 			--with-gmp=${DESTDIR}/usr
+
+.  if ${MACHINE_ARCH} != "vax"
+NATIVE_CONFIGURE_ARGS+= --enable-tls
+.  endif
 .endif
 NATIVE_CONFIGURE_ARGS+=	\
 			--disable-multilib \

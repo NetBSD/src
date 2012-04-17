@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.8 2011/09/16 15:36:18 joerg Exp $	*/
+/*	$NetBSD: sshd.c,v 1.8.2.1 2012/04/17 00:01:44 yamt Exp $	*/
 /* $OpenBSD: sshd.c,v 1.385 2011/06/23 09:34:13 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -44,7 +44,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd.c,v 1.8 2011/09/16 15:36:18 joerg Exp $");
+__RCSID("$NetBSD: sshd.c,v 1.8.2.1 2012/04/17 00:01:44 yamt Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -129,7 +129,10 @@ int deny_severity = LOG_WARNING;
 #define REEXEC_DEVCRYPTO_RESERVED_FD	(STDERR_FILENO + 1)
 #define REEXEC_STARTUP_PIPE_FD		(STDERR_FILENO + 2)
 #define REEXEC_CONFIG_PASS_FD		(STDERR_FILENO + 3)
-#define REEXEC_MIN_FREE_FD		(STDERR_FILENO + 4)
+#define REEXEC_DEVURANDOM_FD		(STDERR_FILENO + 4)
+#define REEXEC_MIN_FREE_FD		(STDERR_FILENO + 5)
+
+int urandom_fd = -1;
 
 int myflag = 0;
 
@@ -582,16 +585,19 @@ demote_sensitive_data(void)
 static void
 privsep_preauth_child(void)
 {
-	u_int32_t rnd[256];
+	u_int32_t rnd[32];
 	gid_t gidset[1];
 	struct passwd *pw;
 
 	/* Enable challenge-response authentication for privilege separation */
 	privsep_challenge_enable();
 
-	arc4random_stir();
-	arc4random_buf(rnd, sizeof(rnd));
+	if (read(urandom_fd, rnd, sizeof(rnd)) != sizeof(rnd)) {
+	    fatal("privsep_preauth_child: entropy read failed");
+	}
 	RAND_seed(rnd, sizeof(rnd));
+
+	arc4random_stir();
 
 	/* Demote the private keys to public keys. */
 	demote_sensitive_data();
@@ -689,7 +695,7 @@ privsep_preauth(Authctxt *authctxt)
 static void
 privsep_postauth(Authctxt *authctxt)
 {
-	u_int32_t rnd[256];
+	u_int32_t rnd[32];
 
 	if (authctxt->pw->pw_uid == 0 || options.use_login) {
 		/* File descriptor passing is broken or root login */
@@ -720,9 +726,12 @@ privsep_postauth(Authctxt *authctxt)
 	/* Demote the private keys to public keys. */
 	demote_sensitive_data();
 
-	arc4random_stir();
-	arc4random_buf(rnd, sizeof(rnd));
+	if (read(urandom_fd, rnd, sizeof(rnd)) != sizeof(rnd)) {
+	    fatal("privsep_postauth: entropy read failed");
+	}
 	RAND_seed(rnd, sizeof(rnd));
+
+	arc4random_stir();
 
 	/* Drop privileges */
 	do_setusercontext(authctxt->pw);
@@ -1091,6 +1100,7 @@ server_accept_loop(int *sock_in, int *sock_out, int *newsock, int *config_s)
 	struct sockaddr_storage from;
 	socklen_t fromlen;
 	pid_t pid;
+	uint8_t rnd[32];
 
 	/* setup fd set for accept */
 	fdset = NULL;
@@ -1283,6 +1293,12 @@ server_accept_loop(int *sock_in, int *sock_out, int *newsock, int *config_s)
 			 * Ensure that our random state differs
 			 * from that of the child
 			 */
+			if (read(urandom_fd, rnd, sizeof(rnd)) !=
+			    sizeof(rnd)) {
+				fatal("server_accept_loop: "
+				      "entropy read failed");
+			}
+			RAND_seed(rnd, sizeof(rnd));
 			arc4random_stir();
 		}
 
@@ -1312,6 +1328,7 @@ main(int ac, char **av)
 	mode_t new_umask;
 	Key *key;
 	Authctxt *authctxt;
+	uint8_t rnd[32];
 
 	/* Save argv. */
 	saved_argv = av;
@@ -1460,6 +1477,35 @@ main(int ac, char **av)
 		closefrom(REEXEC_DEVCRYPTO_RESERVED_FD);
 
 	OpenSSL_add_all_algorithms();
+
+	/*
+	 * The OpenSSL PRNG is used by key-generation functions we
+	 * rely on for security.  Seed it ourselves, so that:
+	 *
+	 *	A) it does not seed itself from somewhere questionable,
+	 *	   such as the libc arc4random or, worse, getpid().
+	 *	B) it does not reopen /dev/urandom on systems where
+	 *	   this is expensive (generator keyed on open, etc).
+	 *
+	 * Note that /dev/urandom will never return the same data to
+	 * two callers, even if they have the same dup'd reference to it.
+	 */
+	if (rexeced_flag) {
+		urandom_fd = REEXEC_DEVURANDOM_FD;
+	} else {
+		urandom_fd = open("/dev/urandom", O_RDONLY);
+		if (urandom_fd == -1) {
+			fatal("sshd requires random device");
+		}
+		/* Might as well do this here; why do it later? */
+		dup2(urandom_fd, REEXEC_DEVURANDOM_FD);
+		close(urandom_fd);
+		urandom_fd = REEXEC_DEVURANDOM_FD;
+	}
+	if (read(urandom_fd, rnd, sizeof(rnd)) != sizeof(rnd)) {
+		fatal("entropy read failed");
+	}
+	RAND_seed(rnd, sizeof(rnd));
 
 	/*
 	 * Force logging to stderr until we have loaded the private host
@@ -1703,7 +1749,7 @@ main(int ac, char **av)
 	/* Reinitialize the log (because of the fork above). */
 	log_init(__progname, options.log_level, options.log_facility, log_stderr);
 
-	/* Initialize the random number generator. */
+	/* Initialize the fast random number generator. */
 	arc4random_stir();
 
 	/* Chdir to the root directory so that the current disk can be

@@ -1,4 +1,4 @@
-/* $NetBSD: dkscan_util.h,v 1.3 2011/08/27 16:43:07 joerg Exp $ */
+/* $NetBSD: dkscan_util.h,v 1.3.2.1 2012/04/17 00:05:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,8 +37,8 @@ u_int dkcksum_sized(struct disklabel *, size_t);
 int dkwedge_read(struct disk *pdk, struct vnode *vp, daddr_t blkno,
 	void *tbuf, size_t len);
 int dkwedge_add(struct dkwedge_info *dkw);
-void aprint_error(const char *format, ...);
-void aprint_verbose(const char *format, ...);
+void aprint_error(const char *format, ...) __printflike(1, 2);
+void aprint_verbose(const char *format, ...) __printflike(1, 2);
 
 extern int verbose;	/* are we verbose? */
 extern int no_action;	/* don't do anything, just print info */

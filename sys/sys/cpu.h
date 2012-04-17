@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.33 2011/08/07 13:33:02 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.33.2.1 2012/04/17 00:08:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -40,6 +40,10 @@ struct cpu_info;
 #ifdef _KERNEL
 #ifndef cpu_idle
 void cpu_idle(void);
+#endif
+
+#ifdef CPU_UCODE
+#include <dev/firmload.h>
 #endif
 
 /*
@@ -90,7 +94,8 @@ extern kmutex_t cpu_lock;
 extern u_int maxcpus;
 extern struct cpuqueue cpu_queue;
 extern kcpuset_t *kcpuset_attached;
-  
+extern kcpuset_t *kcpuset_running;
+
 static inline u_int
 cpu_index(struct cpu_info *ci)
 {
@@ -102,6 +107,19 @@ cpu_name(struct cpu_info *ci)
 {
 	return ci->ci_data.cpu_name;
 }
+
+#ifdef CPU_UCODE
+struct cpu_ucode_softc {
+	char *sc_blob;
+	off_t sc_blobsize;
+};
+
+int cpu_ucode_get_version(void *);
+int cpu_ucode_apply(void *);
+int cpu_ucode_load(struct cpu_ucode_softc *, const char *);
+int cpu_ucode_md_open(firmware_handle_t *, const char *);
+#endif
+
 #endif
 #endif	/* !_LOCORE */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.48 2010/11/03 22:34:23 dyoung Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.48.8.1 2012/04/17 00:08:08 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
 /*
@@ -157,9 +157,7 @@ typedef struct uhci_softc {
 	u_int8_t sc_saved_sof;
 	u_int16_t sc_saved_frnum;
 
-#ifdef USB_USE_SOFTINTR
 	char sc_softwake;
-#endif /* USB_USE_SOFTINTR */
 
 	char sc_isreset;
 	char sc_suspend;
@@ -175,21 +173,14 @@ typedef struct uhci_softc {
 	char sc_vendor[32];		/* vendor string for root hub */
 	int sc_id_vendor;		/* vendor ID for root hub */
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	device_t sc_child;		/* /dev/usb# device */
-#endif
-#ifdef __NetBSD__
 	struct usb_dma_reserve sc_dma_reserve;
-#endif
 } uhci_softc_t;
 
 usbd_status	uhci_init(uhci_softc_t *);
 int		uhci_intr(void *);
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 int		uhci_detach(uhci_softc_t *, int);
 void		uhci_childdet(device_t, device_t);
 int		uhci_activate(device_t, enum devact);
 bool		uhci_resume(device_t, const pmf_qual_t *);
 bool		uhci_suspend(device_t, const pmf_qual_t *);
-#endif
-

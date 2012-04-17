@@ -1,4 +1,4 @@
-/* $NetBSD: clockvar.h,v 1.5 2007/07/21 11:59:56 tsutsui Exp $ */
+/* $NetBSD: clockvar.h,v 1.5.68.1 2012/04/17 00:05:53 yamt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 /*
- * Definitions for CPU-independent clock handling for the alpha 
+ * Definitions for CPU-independent clock handling for the alpha
  */
 
 void clockattach(void (*)(void *), void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.122 2011/08/27 09:11:52 christos Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.122.2.1 2012/04/17 00:08:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.122 2011/08/27 09:11:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.122.2.1 2012/04/17 00:08:30 yamt Exp $");
 
 #define SYSVSHM
 
@@ -574,8 +574,10 @@ shmctl1(struct lwp *l, int shmid, int cmd, struct shmid_ds *shmbuf)
 		break;
 	case SHM_LOCK:
 	case SHM_UNLOCK:
-		if ((error = kauth_authorize_generic(cred,
-		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
+		if ((error = kauth_authorize_system(cred,
+		    KAUTH_SYSTEM_SYSVIPC,
+		    (cmd == SHM_LOCK) ? KAUTH_REQ_SYSTEM_SYSVIPC_SHM_LOCK :
+		    KAUTH_REQ_SYSTEM_SYSVIPC_SHM_UNLOCK, NULL, NULL, NULL)) != 0)
 			break;
 		error = shm_memlock(l, shmseg, shmid, cmd);
 		break;
@@ -979,6 +981,8 @@ shminit(void)
 	shm_committed = 0;
 	shm_realloc_disable = 0;
 	shm_realloc_state = false;
+
+	sysvipcinit();
 }
 
 static int

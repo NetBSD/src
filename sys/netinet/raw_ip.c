@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.112 2011/07/17 20:54:53 joerg Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.112.2.1 2012/04/17 00:08:41 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.112 2011/07/17 20:54:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.112.2.1 2012/04/17 00:08:41 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -93,11 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.112 2011/07/17 20:54:53 joerg Exp $");
 #include <netinet/in_pcb.h>
 #include <netinet/in_proto.h>
 #include <netinet/in_var.h>
-
-#ifdef IPSEC
-#include <netinet6/ipsec.h>
-#include <netinet6/ipsec_private.h>
-#endif /* IPSEC */
 
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
@@ -208,7 +203,7 @@ rip_input(struct mbuf *m, ...)
 			continue;
 		if (last == NULL)
 			;
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 		/* check AH/ESP integrity. */
 		else if (ipsec4_in_reject_so(m, last->inp_socket)) {
 			IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
@@ -222,7 +217,7 @@ rip_input(struct mbuf *m, ...)
 		}
 		last = inp;
 	}
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 	/* check AH/ESP integrity. */
 	if (last != NULL && ipsec4_in_reject_so(m, last->inp_socket)) {
 		m_freem(m);

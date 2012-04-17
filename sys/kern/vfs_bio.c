@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.232 2011/10/05 01:53:03 jakllsch Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.232.2.1 2012/04/17 00:08:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.232 2011/10/05 01:53:03 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.232.2.1 2012/04/17 00:08:31 yamt Exp $");
 
 #include "opt_bufcache.h"
 
@@ -234,7 +234,7 @@ bufpool_page_alloc(struct pool *pp, int flags)
 
 	return (void *)uvm_km_alloc(buf_map,
 	    MAXBSIZE, MAXBSIZE,
-	    ((flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT | UVM_KMF_TRYLOCK)
+	    ((flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT|UVM_KMF_TRYLOCK)
 	    | UVM_KMF_WIRED);
 }
 
@@ -474,7 +474,6 @@ bufinit(void)
 	bufio_cache = pool_cache_init(sizeof(buf_t), 0, 0, 0,
 	    "biopl", NULL, IPL_BIO, NULL, NULL, NULL);
 
-	bufmempool_allocator.pa_backingmap = buf_map;
 	for (i = 0; i < NMEMPOOLS; i++) {
 		struct pool_allocator *pa;
 		struct pool *pp = &bmempools[i];
@@ -1705,6 +1704,7 @@ sysctl_dobuf(SYSCTLFN_ARGS)
 						break;
 					}
 					mutex_exit(&bufcache_lock);
+					sysctl_relock();
 					goto retry;
 				}
 				dp += elem_size;

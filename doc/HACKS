@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.120.2.1 2011/11/10 14:31:21 yamt Exp $
+# $NetBSD: HACKS,v 1.120.2.2 2012/04/17 00:02:55 yamt Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -537,6 +537,23 @@ port	arm
 		really should be enough, but turns out not to be.
 	kcah
 
+	hack	gcc-4.5 arm CNAME hostname lookup failure on
+		certain DNS environment (probably -ftree-ter problem)
+	cdate	Sat Dec 24 04:59:00 UTC 2011
+	mdate	
+	who	tsutsui
+	file	lib/libc/net/Makefile.inc 1.79
+	descr	Hostname lookup against CNAMEs by some commands fails
+		on certain DNS environments if lib/libc/net/gethnamaddr.c
+		(ping(8) etc) and lib/libc/net/getaddrinfo.c (ftp(1) etc)
+		are compiled with -O2, even though nslookup(1) against
+		the same CNAME returns proper hostname.
+		They works properly if compiled with -O2 -fno-tree-ter.
+		Also -O2 fails but -O2 -fno-tree-ter works on the following
+		test case in gcc bugzilla:
+		http://gcc.gnu.org/bugzilla/show_bug.cgi?id=48863#c4
+	kcah
+
 
 port	sh3
 
@@ -589,19 +606,6 @@ port	sparc
 		would crash due to NULL IPI.  This was fixed by re-using the
 		right IPL value.  However, GCC 4.5.3 build kernels have the
 		same problems.  For now, the hack is re-instated.
-	kcah
-
-
-port	sparc64
-
-	hack	disable optimzations for uvm_bio.c on 32 bit kernels
-	cdate	Sun Mar 21 14:14:04 MET 2004
-	who	martin
-	file	sys/arch/sparc64/conf/Makefile.sparc64 : 1.53-1.54
-	file	sys/arch/sparc64/conf/files.sparc64 : 1.93
-	descr
-		The sparc compiler miscompiles uvm_bio.c when using
-		any optimization. This results in ubc_release panics.
 	kcah
 
 

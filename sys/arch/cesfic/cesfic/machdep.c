@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60 2011/06/12 03:35:40 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60.2.1 2012/04/17 00:06:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60 2011/06/12 03:35:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.2.1 2012/04/17 00:06:10 yamt Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -192,15 +192,12 @@ zs_check_kgdb(struct zs_chanstate *cs, int dev)
 }
 
 void zs_kgdb_cnputc(dev_t, int);
-void zs_kgdb_cnputc(dev, c)
-dev_t dev;
-int c;
+void zs_kgdb_cnputc(dev_t dev, int c)
 {
 	zscnputc(dev, c);
 }
 int zs_kgdb_cngetc(dev_t);
-int zs_kgdb_cngetc(dev)
-dev_t dev;
+int zs_kgdb_cngetc(dev_t dev)
 {
 	return (zscngetc(dev));
 }
@@ -388,19 +385,11 @@ long	dumplo = 0;		/* blocks */
 void
 cpu_dumpconf(void)
 {
-	const struct bdevsw *bdev;
 	int nblks;	/* size of dump area */
 
 	if (dumpdev == NODEV)
 		return;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL) {
-		dumpdev = NODEV;
-		return;
-	}
-	if (bdev->d_psize == NULL)
-		return;
-	nblks = (*bdev->d_psize)(dumpdev);
+	nblks = bdev_size(dumpdev);
 	if (nblks <= ctod(1))
 		return;
 

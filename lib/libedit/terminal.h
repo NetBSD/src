@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.h,v 1.3 2011/07/29 23:44:45 christos Exp $	*/
+/*	$NetBSD: terminal.h,v 1.3.2.1 2012/04/17 00:05:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -79,7 +79,8 @@ typedef struct {
 #define	A_K_RT		3
 #define	A_K_HO		4
 #define	A_K_EN		5
-#define	A_K_NKEYS	6
+#define	A_K_DE		6
+#define	A_K_NKEYS	7
 
 protected void	terminal_move_to_line(EditLine *, int);
 protected void	terminal_move_to_char(EditLine *, int);

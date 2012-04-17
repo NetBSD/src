@@ -1,21 +1,21 @@
-/* $NetBSD: tc_3000_500.c,v 1.30 2011/06/14 15:08:33 matt Exp $ */
+/* $NetBSD: tc_3000_500.c,v 1.30.2.1 2012/04/17 00:05:58 yamt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.30 2011/06/14 15:08:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.30.2.1 2012/04/17 00:05:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ void	tc_3000_500_intr_disestablish(device_t, void *);
 void	tc_3000_500_iointr(void *, unsigned long);
 
 int	tc_3000_500_intrnull(void *);
-int	tc_3000_500_fb_cnattach(u_int64_t);
+int	tc_3000_500_fb_cnattach(uint64_t);
 
 #define C(x)	((void *)(u_long)x)
 #define	KV(x)	(ALPHA_PHYS_TO_K0SEG(x))
@@ -91,7 +91,7 @@ struct tc_builtin tc_3000_500_nographics_builtins[] = {
 int tc_3000_500_nographics_nbuiltins = sizeof(tc_3000_500_nographics_builtins) /
     sizeof(tc_3000_500_nographics_builtins[0]);
 
-u_int32_t tc_3000_500_intrbits[TC_3000_500_NCOOKIES] = {
+uint32_t tc_3000_500_intrbits[TC_3000_500_NCOOKIES] = {
 	TC_3000_500_IR_OPT0,
 	TC_3000_500_IR_OPT1,
 	TC_3000_500_IR_OPT2,
@@ -109,10 +109,10 @@ struct tcintr {
 	struct evcnt tci_evcnt;
 } tc_3000_500_intr[TC_3000_500_NCOOKIES];
 
-u_int32_t tc_3000_500_imask;	/* intrs we want to ignore; mirrors IMR. */
+uint32_t tc_3000_500_imask;	/* intrs we want to ignore; mirrors IMR. */
 
 void
-tc_3000_500_intr_setup()
+tc_3000_500_intr_setup(void)
 {
 	char *cp;
 	u_long i;
@@ -121,16 +121,16 @@ tc_3000_500_intr_setup()
 	 * Disable all slot interrupts.  Note that this cannot
 	 * actually disable CXTurbo, TCDS, and IOASIC interrupts.
 	 */
-	tc_3000_500_imask = *(volatile u_int32_t *)TC_3000_500_IMR_READ;
+	tc_3000_500_imask = *(volatile uint32_t *)TC_3000_500_IMR_READ;
 	for (i = 0; i < TC_3000_500_NCOOKIES; i++)
 		tc_3000_500_imask |= tc_3000_500_intrbits[i];
-	*(volatile u_int32_t *)TC_3000_500_IMR_WRITE = tc_3000_500_imask;
+	*(volatile uint32_t *)TC_3000_500_IMR_WRITE = tc_3000_500_imask;
 	tc_mb();
 
-        /*
+	/*
 	 * Set up interrupt handlers.
 	 */
-        for (i = 0; i < TC_3000_500_NCOOKIES; i++) {
+	for (i = 0; i < TC_3000_500_NCOOKIES; i++) {
 		tc_3000_500_intr[i].tci_func = tc_3000_500_intrnull;
 		tc_3000_500_intr[i].tci_arg = (void *)i;
 
@@ -140,7 +140,7 @@ tc_3000_500_intr_setup()
 		sprintf(cp, "slot %lu", i);
 		evcnt_attach_dynamic(&tc_3000_500_intr[i].tci_evcnt,
 		    EVCNT_TYPE_INTR, NULL, "tc", cp);
-        }
+	}
 }
 
 const struct evcnt *
@@ -171,7 +171,7 @@ tc_3000_500_intr_establish(device_t tcadev, void *cookie, tc_intrlevel_t level, 
 	tc_3000_500_intr[dev].tci_arg = arg;
 
 	tc_3000_500_imask &= ~tc_3000_500_intrbits[dev];
-	*(volatile u_int32_t *)TC_3000_500_IMR_WRITE = tc_3000_500_imask;
+	*(volatile uint32_t *)TC_3000_500_IMR_WRITE = tc_3000_500_imask;
 	tc_mb();
 }
 
@@ -189,7 +189,7 @@ tc_3000_500_intr_disestablish(device_t tcadev, void *cookie)
 		    dev);
 
 	tc_3000_500_imask |= tc_3000_500_intrbits[dev];
-	*(volatile u_int32_t *)TC_3000_500_IMR_WRITE = tc_3000_500_imask;
+	*(volatile uint32_t *)TC_3000_500_IMR_WRITE = tc_3000_500_imask;
 	tc_mb();
 
 	tc_3000_500_intr[dev].tci_func = tc_3000_500_intrnull;
@@ -207,7 +207,7 @@ tc_3000_500_intrnull(void *val)
 void
 tc_3000_500_iointr(void *arg, unsigned long vec)
 {
-        u_int32_t ir;
+	uint32_t ir;
 	int ifound;
 
 #ifdef DIAGNOSTIC
@@ -223,7 +223,7 @@ tc_3000_500_iointr(void *arg, unsigned long vec)
 
 	do {
 		tc_syncbus();
-		ir = *(volatile u_int32_t *)TC_3000_500_IR_CLEAR;
+		ir = *(volatile uint32_t *)TC_3000_500_IR_CLEAR;
 
 		/* Ignore interrupts that we haven't enabled. */
 		ir &= ~(tc_3000_500_imask & 0x1ff);
@@ -281,9 +281,9 @@ tc_3000_500_iointr(void *arg, unsigned long vec)
  * framebuffer as the output side of the console.
  */
 int
-tc_3000_500_fb_cnattach(u_int64_t turbo_slot)
+tc_3000_500_fb_cnattach(uint64_t turbo_slot)
 {
-	u_int32_t output_slot;
+	uint32_t output_slot;
 
 	output_slot = turbo_slot & 0xffffffff;
 
@@ -320,13 +320,13 @@ tc_3000_500_fb_cnattach(u_int64_t turbo_slot)
  *	Set the PBS bits for devices on the TC.
  */
 void
-tc_3000_500_ioslot(u_int32_t slot, u_int32_t flags, int set)
+tc_3000_500_ioslot(uint32_t slot, uint32_t flags, int set)
 {
-	volatile u_int32_t *iosp;
-	u_int32_t ios;
+	volatile uint32_t *iosp;
+	uint32_t ios;
 	int s;
 	
-	iosp = (volatile u_int32_t *)TC_3000_500_IOSLOT;
+	iosp = (volatile uint32_t *)TC_3000_500_IOSLOT;
 	ios = *iosp;
 	flags <<= (slot * 3);
 	if (set)

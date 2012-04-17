@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_globals.h,v 1.1 2011/10/23 21:15:02 agc Exp $	*/
+/*	$NetBSD: iscsi_globals.h,v 1.1.2.1 2012/04/17 00:07:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -553,25 +553,6 @@ uint32_t num_send_threads;		/* the number of active send threads */
 uint8_t InitiatorName[ISCSI_STRING_LENGTH];
 uint8_t InitiatorAlias[ISCSI_STRING_LENGTH];
 login_isid_t InitiatorISID;
-
-
-/* -------------------------  Global Functions  ----------------------------- */
-
-#ifdef __NetBSD__
-#define GEN_RAND(buffer, len) rnd_extract_data (buffer, len, RND_EXTRACT_ANY)
-#else
-#define GEN_RAND(buffer, len) get_random_bytes (buffer, len)
-#endif
-
-static __inline uint8_t
-randb(void)
-{
-	uint8_t buf;
-
-	GEN_RAND(&buf, 1);
-	return buf;
-}
-
 
 /* Debugging and profiling stuff */
 

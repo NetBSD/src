@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.52 2010/07/27 14:34:34 jakllsch Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.52.8.1 2012/04/17 00:07:34 yamt Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.52 2010/07/27 14:34:34 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.52.8.1 2012/04/17 00:07:34 yamt Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -127,6 +127,9 @@ __KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.52 2010/07/27 14:34:34 jakllsch Exp $"
 /* threshold length for DMA transfer */
 #define SPC_MIN_DMA_LEN	32
 
+#ifdef luna68k	/* XXX old drives like DK312C in LUNAs require this */
+#define NO_MANUAL_XFER
+#endif
 #ifdef x68k	/* XXX it seems x68k SPC SCSI hardware has some quirks */
 #define NEED_DREQ_ON_HARDWARE_XFER
 #define NO_MANUAL_XFER

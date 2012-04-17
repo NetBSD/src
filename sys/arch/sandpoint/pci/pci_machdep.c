@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.29.2.1 2011/11/10 14:31:42 yamt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.29.2.2 2012/04/17 00:06:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.29.2.1 2011/11/10 14:31:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.29.2.2 2012/04/17 00:06:50 yamt Exp $");
 
 #include "opt_pci.h"
 
@@ -364,13 +364,16 @@ pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		break;
 	case BRD_STORCENTER:
 		/* map line 13,14A,14B,14C,15 to EPIC IRQ 1,2,3,4,0 */
-		*ihp =	(line == 15) ? 0 : 1;
-		if (line == 14)
-			*ihp += pin;
+		*ihp =	(line == 15) ? 0 :
+			(line == 13) ? 1 : 1 + pin;
 		break;
 	default:
 		/* simply map line 12-15 to EPIC IRQ0-3 */
 		*ihp = line - 12;
+#if defined(DIAGNOSTIC) || defined(DEBUG)
+		printf("pci_intr_map: line %d, pin %c for unknown board"
+		    " mapped to irq %d\n", line, pin + '@', *ihp);
+#endif
 		break;
 	}
 #ifdef EPIC_DEBUGIRQ
@@ -391,7 +394,7 @@ pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 		panic("pci_intr_string: bogus handle 0x%x", ih);
 
 	sprintf(irqstr, "irq %d", ih + I8259_ICU);
-	return (irqstr);
+	return irqstr;
 	
 }
 
@@ -420,11 +423,26 @@ void *
 pci_intr_establish(void *v, pci_intr_handle_t ih, int level,
     int (*func)(void *), void *arg)
 {
+	int type;
+
+	if (brdtype == BRD_STORCENTER && ih == 1) {
+		/*
+		 * XXX This is a workaround for the VT6410 IDE controller!
+		 * Apparently its interrupt cannot be disabled and remains
+		 * asserted during the whole device probing procedure,
+		 * causing an interrupt storm.
+		 * Using an edge-trigger fixes that and triggers the
+		 * interrupt only once during probing.
+		 */
+		 type = IST_EDGE;
+	} else
+		type = IST_LEVEL;
+	
 	/*
 	 * ih is the value assigned in pci_intr_map(), above.
 	 * It's the EPIC IRQ #.
 	 */
-	return intr_establish(ih + I8259_ICU, IST_LEVEL, level, func, arg);
+	return intr_establish(ih + I8259_ICU, type, level, func, arg);
 }
 
 void

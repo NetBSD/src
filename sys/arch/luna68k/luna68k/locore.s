@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.37.4.1 2011/11/10 14:31:41 yamt Exp $ */
+/* $NetBSD: locore.s,v 1.37.4.2 2012/04/17 00:06:35 yamt Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -244,11 +244,11 @@ Lmotommu0:
 	.long	0x4e7b0004		| movc %d0,%itt0
 	.long	0x4e7b0006		| movc %d0,%dtt0
 	RELOC(proto040tt1,%a0)
-	movl	%a0@,%d0		| tt1 range 8000.0000-feff.ffff
+	movl	%a0@,%d0		| tt1 range 8000.0000-ffff.ffff
 	.long	0x4e7b0005		| movc %d0,%itt1
 	.long	0x4e7b0007		| movc %d0,%dtt1
 	.word	0xf4d8			| cinva bc
-	pflusha				| flush entire ATC
+	.word	0xf518			| pflusha
 	RELOC(proto040tc,%a0)
 	movl	%a0@,%d0
 	.long	0x4e7b0003		| movc %d0,%tc
@@ -266,6 +266,7 @@ Lmotommu1:
 	.long	0xf0100800		| pmove %a0@,mmutt0
 	RELOC(protott1,%a0)		| tt1 range 8000.0000-ffff.ffff
 	.long	0xf0100c00		| pmove %a0@,mmutt1
+	pflusha
 	RELOC(prototc,%a0)		| %tc: SRP,CRP,4KB page,A=10bit,B=10bit
 	pmove	%a0@,%tc
 /*
@@ -281,6 +282,9 @@ Lenab1:
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
 
+/* detect FPU type */
+	jbsr	_C_LABEL(fpu_probe)
+	movl	%d0,_C_LABEL(fputype)
 	tstl	_C_LABEL(fputype)	| Have an FPU?
 	jeq	Lenab2			| No, skip.
 	clrl	%a1@(PCB_FPCTX)		| ensure null FP context
@@ -288,7 +292,7 @@ Lenab1:
 	jbsr	_C_LABEL(m68881_restore) | restore it (does not kill %a1)
 	addql	#4,%sp
 Lenab2:
-	pflusha				| flush entire ATC 
+	jbsr	_C_LABEL(_TBIA)		| invalidate TLB
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
 	jeq	Lenab3			| yes, cache already on
 	tstl	_C_LABEL(mmutype)
@@ -956,14 +960,6 @@ ENTRY(ecacheon)
 ENTRY(ecacheoff)
 	rts
 
-ENTRY_NOPROFILE(getsfc)
-	movc	%sfc,%d0
-	rts
-
-ENTRY_NOPROFILE(getdfc)
-	movc	%dfc,%d0
-	rts
-
 /*
  * Load a new user segment table pointer.
  */
@@ -974,16 +970,18 @@ ENTRY(loadustp)
 #if defined(M68040)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
 	jne	LmotommuC		| no, skip
+	.word	0xf518			| yes, pflusha
 	.long	0x4e7b0806		| movc %d0,%urp
 	rts
 LmotommuC:
 #endif
+	pflusha				| flush entire TLB
 	lea	_C_LABEL(protocrp),%a0	| %crp prototype
 	movl	%d0,%a0@(4)		| stash USTP
 	pmove	%a0@,%crp		| load root pointer
-	movl	#DC_CLEAR,%d0
-	movc	%d0,%cacr		| invalidate on-chip d-cache
-	rts				|   since pmove flushes ATC
+	movl	#CACHE_CLR,%d0
+	movc	%d0,%cacr		| invalidate cache(s)
+	rts
 
 ENTRY(ploadw)
 #if defined(M68040)
@@ -1047,29 +1045,6 @@ ENTRY_NOPROFILE(_delay)
 L_delay:
 	subl	%d1,%d0
 	jgt	L_delay
-	rts
-
-/*
- * Save and restore 68881 state.
- */
-ENTRY(m68881_save)
-	movl	%sp@(4),%a0		| save area pointer
-	fsave	%a0@			| save state
-	tstb	%a0@			| null state frame?
-	jeq	Lm68881sdone		| yes, all done
-	fmovem	%fp0-%fp7,%a0@(FPF_REGS) | save FP general registers
-	fmovem	%fpcr/%fpsr/%fpi,%a0@(FPF_FPCR) | save FP control registers
-Lm68881sdone:
-	rts
-
-ENTRY(m68881_restore)
-	movl	%sp@(4),%a0		| save area pointer
-	tstb	%a0@			| null state frame?
-	jeq	Lm68881rdone		| yes, easy
-	fmovem	%a0@(FPF_FPCR),%fpcr/%fpsr/%fpi | restore FP control registers
-	fmovem	%a0@(FPF_REGS),%fp0-%fp7 | restore FP general registers
-Lm68881rdone:
-	frestore %a0@			| restore state
 	rts
 
 /*
@@ -1153,8 +1128,8 @@ GLOBAL(proto040tc)
 	.long	0x8000		| %tc (4KB page)
 GLOBAL(proto040tt0)		| tt0 0x4000.0000-0x7fff.ffff
 	.long	0x403fa040	| kernel only, cache inhebit, serialized
-GLOBAL(proto040tt1)		| tt1 0x8000.0000-0xfeff.ffff
-	.long	0x807ea040	| kernel only, cache inhebit, serialized
+GLOBAL(proto040tt1)		| tt1 0x8000.0000-0xffff.ffff
+	.long	0x807fa040	| kernel only, cache inhebit, serialized
 nullrp:
 	.long	0x7fff0001	| do-nothing MMU root pointer
 

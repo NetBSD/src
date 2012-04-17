@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.c,v 1.21 2008/07/15 16:18:08 christos Exp $	*/
+/*	$NetBSD: altq_rmclass.c,v 1.21.28.1 2012/04/17 00:05:51 yamt Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.21 2008/07/15 16:18:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.21.28.1 2012/04/17 00:05:51 yamt Exp $");
 
 /* #ident "@(#)rm_class.c  1.48     97/12/05 SMI" */
 
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.21 2008/07/15 16:18:08 christos E
 #ifdef ALTQ3_COMPAT
 #include <sys/kernel.h>
 #endif
+#include <sys/cprng.h>
 
 #include <net/if.h>
 #ifdef ALTQ3_COMPAT
@@ -1777,7 +1778,7 @@ _getq_random(class_queue_t *q)
 	} else {
 		struct mbuf *prev = NULL;
 
-		n = arc4random() % qlen(q) + 1;
+		n = cprng_fast32() % qlen(q) + 1;
 		for (i = 0; i < n; i++) {
 			prev = m;
 			m = m->m_nextpkt;

@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.h,v 1.11 2011/10/03 11:16:47 mbalmer Exp $ */
+/* $NetBSD: gpio.h,v 1.11.2.1 2012/04/17 00:08:51 yamt Exp $ */
 /*	$OpenBSD: gpio.h,v 1.7 2008/11/26 14:51:20 mbalmer Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Marc Balmer <marc@msys.ch>
@@ -25,7 +25,6 @@
 /* GPIO pin states */
 #define GPIO_PIN_LOW		0x00	/* low level (logical 0) */
 #define GPIO_PIN_HIGH		0x01	/* high level (logical 1) */
-#define GPIO_PIN_PULSE		0x02	/* pulsing, or-ed with state */
 
 /* Max name length of a pin */
 #define GPIOMAXNAME		64
@@ -43,8 +42,6 @@
 #define GPIO_PIN_INVOUT		0x0200	/* invert output */
 #define GPIO_PIN_USER		0x0400	/* user != 0 can access */
 #define GPIO_PIN_PULSATE	0x0800	/* pulsate in hardware */
-#define GPIO_PIN_INTR		0x1000	/* can be as an interrupt */
-#define GPIO_PIN_INTR_HIGH	0x2000	/* interrupt leading edge high */
 #define GPIO_PIN_SET		0x8000	/* set for securelevel access */
 
 /* GPIO controller description */
@@ -57,14 +54,6 @@ struct gpio_req {
 	char		gp_name[GPIOMAXNAME];	/* pin name */
 	int		gp_pin;			/* pin number */
 	int		gp_value;		/* value */
-};
-
-/* GPIO pulse request */
-struct gpio_pulse {
-	char		gp_name[GPIOMAXNAME];	/* pin name */
-	int		gp_pin;			/* pin number */
-	struct timeval	gp_pulse_on;		/* "on" period */
-	struct timeval	gp_pulse_off;		/* "off" period */
 };
 
 /* GPIO pin configuration */
@@ -92,7 +81,6 @@ struct gpio_attach {
 #define GPIOWRITE		_IOWR('G', 8, struct gpio_req)
 #define GPIOTOGGLE		_IOWR('G', 9, struct gpio_req)
 #define GPIOATTACH		_IOWR('G', 10, struct gpio_attach)
-#define GPIOPULSE		_IOWR('G', 12, struct gpio_pulse)
 
 #ifdef COMPAT_50
 /* Old structure to attach/detach devices */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.13 2009/04/11 12:41:10 lukem Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.13.6.1 2012/04/17 00:09:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -551,15 +551,17 @@ static void
 emitappmkoptions(FILE *fp)
 {
 	struct nvlist *nv;
+	struct condexpr *cond;
 
 	for (nv = appmkoptions; nv != NULL; nv = nv->nv_next)
 		fprintf(fp, "%s+=%s\n", nv->nv_name, nv->nv_str);
 
-	for (nv = condmkoptions; nv != NULL; nv = nv->nv_next)
-	{
-		if (expr_eval(nv->nv_ptr, selectopt, NULL))
+	for (nv = condmkoptions; nv != NULL; nv = nv->nv_next) {
+		cond = nv->nv_ptr;
+		if (expr_eval(cond, selectopt, NULL))
 			fprintf(fp, "%s+=%s\n", nv->nv_name, nv->nv_str);
-		expr_free(nv->nv_ptr);
+		condexpr_destroy(cond);
+		nv->nv_ptr = NULL;
 	}
 }
 

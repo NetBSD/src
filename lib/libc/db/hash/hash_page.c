@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_page.c,v 1.24 2011/04/17 23:12:38 christos Exp $	*/
+/*	$NetBSD: hash_page.c,v 1.24.4.1 2012/04/17 00:05:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hash_page.c,v 1.24 2011/04/17 23:12:38 christos Exp $");
+__RCSID("$NetBSD: hash_page.c,v 1.24.4.1 2012/04/17 00:05:17 yamt Exp $");
 
 /*
  * PACKAGE:  hashing
@@ -85,7 +85,7 @@ static int	 ugly_split(HTAB *, uint32_t, BUFHEAD *, BUFHEAD *, int, int);
 #define	PAGE_INIT(P) { \
 	((uint16_t *)(void *)(P))[0] = 0; \
 	temp = 3 * sizeof(uint16_t); \
-	_DIAGASSERT(hashp->BSIZE >= temp); \
+	_DIAGASSERT((size_t)hashp->BSIZE >= temp); \
 	((uint16_t *)(void *)(P))[1] = (uint16_t)(hashp->BSIZE - temp); \
 	((uint16_t *)(void *)(P))[2] = hashp->BSIZE; \
 }

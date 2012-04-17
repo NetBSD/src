@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.171 2011/04/14 16:08:53 yamt Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.171.4.1 2012/04/17 00:08:41 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.171 2011/04/14 16:08:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.171.4.1 2012/04/17 00:08:41 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -182,9 +182,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.171 2011/04/14 16:08:53 yamt Exp $"
 #include <netipsec/ipsec6.h>
 #endif
 #endif	/* FAST_IPSEC*/
-#ifdef IPSEC
-#include <netinet6/ipsec.h>
-#endif
 
 #include <netinet/tcp.h>
 #define	TCPOUTFLAGS
@@ -198,10 +195,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.171 2011/04/14 16:08:53 yamt Exp $"
 #include <netinet/tcp_debug.h>
 #include <netinet/in_offload.h>
 #include <netinet6/in6_offload.h>
-
-#ifdef IPSEC
-#include <netkey/key.h>
-#endif
 
 #ifdef notyet
 extern struct mbuf *m_copypack();
@@ -357,7 +350,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 	 */
 #ifdef INET
 	if (inp) {
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 		if (! IPSEC_PCB_SKIP_IPSEC(inp->inp_sp, IPSEC_DIR_OUTBOUND))
 			optlen += ipsec4_hdrsiz_tcp(tp);
 #endif
@@ -367,7 +360,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 #ifdef INET6
 #ifdef INET
 	if (in6p && tp->t_family == AF_INET) {
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 		if (! IPSEC_PCB_SKIP_IPSEC(in6p->in6p_sp, IPSEC_DIR_OUTBOUND))
 			optlen += ipsec4_hdrsiz_tcp(tp);
 #endif
@@ -375,7 +368,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 	} else
 #endif
 	if (in6p && tp->t_family == AF_INET6) {
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 		if (! IPSEC_PCB_SKIP_IPSEC(in6p->in6p_sp, IPSEC_DIR_OUTBOUND))
 			optlen += ipsec6_hdrsiz_tcp(tp);
 #endif
@@ -633,7 +626,7 @@ tcp_output(struct tcpcb *tp)
 	has_tso4 = has_tso6 = false;
 #if defined(INET)
 	has_tso4 = tp->t_inpcb != NULL &&
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 		  IPSEC_PCB_SKIP_IPSEC(tp->t_inpcb->inp_sp,
 		  		       IPSEC_DIR_OUTBOUND) &&
 #endif
@@ -642,7 +635,7 @@ tcp_output(struct tcpcb *tp)
 #endif /* defined(INET) */
 #if defined(INET6)
 	has_tso6 = tp->t_in6pcb != NULL &&
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 		  IPSEC_PCB_SKIP_IPSEC(tp->t_in6pcb->in6p_sp,
 		  		       IPSEC_DIR_OUTBOUND) &&
 #endif
@@ -1288,7 +1281,7 @@ send:
 		m->m_data += max_linkhdr;
 		m->m_len = hdrlen;
 	}
-	m->m_pkthdr.rcvif = (struct ifnet *)0;
+	m->m_pkthdr.rcvif = NULL;
 	switch (af) {
 #ifdef INET
 	case AF_INET:
@@ -1605,8 +1598,7 @@ timer:
 			opts = NULL;
 		error = ip_output(m, opts, ro,
 			(tp->t_mtudisc ? IP_MTUDISC : 0) |
-			(so->so_options & SO_DONTROUTE),
-			(struct ip_moptions *)0, so);
+			(so->so_options & SO_DONTROUTE), NULL, so);
 		break;
 	    }
 #endif

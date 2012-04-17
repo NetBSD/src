@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.210 2011/10/31 13:16:01 yamt Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.210.2.1 2012/04/17 00:08:41 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.210 2011/10/31 13:16:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.210.2.1 2012/04/17 00:08:41 yamt Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -128,13 +128,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.210 2011/10/31 13:16:01 yamt Exp $")
 #ifdef MROUTING
 #include <netinet/ip_mroute.h>
 #endif
-
-#ifdef IPSEC
-#include <netinet6/ipsec.h>
-#include <netinet6/ipsec_private.h>
-#include <netkey/key.h>
-#include <netkey/key_debug.h>
-#endif /*IPSEC*/
 
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
@@ -187,9 +180,6 @@ ip_output(struct mbuf *m0, ...)
 #ifdef IPSEC_NAT_T
 	int natt_frag = 0;
 #endif
-#ifdef IPSEC
-	struct secpolicy *sp = NULL;
-#endif /*IPSEC*/
 #ifdef FAST_IPSEC
 	struct inpcb *inp;
 	struct secpolicy *sp = NULL;
@@ -503,159 +493,6 @@ sendit:
 	/* Remember the current ip_len */
 	ip_len = ntohs(ip->ip_len);
 
-#ifdef IPSEC
-	/* get SP for this packet */
-	if (so == NULL)
-		sp = ipsec4_getpolicybyaddr(m, IPSEC_DIR_OUTBOUND,
-		    flags, &error);
-	else {
-		if (IPSEC_PCB_SKIP_IPSEC(sotoinpcb_hdr(so)->inph_sp,
-					 IPSEC_DIR_OUTBOUND))
-			goto skip_ipsec;
-		sp = ipsec4_getpolicybysock(m, IPSEC_DIR_OUTBOUND, so, &error);
-	}
-
-	if (sp == NULL) {
-		IPSEC_STATINC(IPSEC_STAT_IN_INVAL);
-		goto bad;
-	}
-
-	error = 0;
-
-	/* check policy */
-	switch (sp->policy) {
-	case IPSEC_POLICY_DISCARD:
-		/*
-		 * This packet is just discarded.
-		 */
-		IPSEC_STATINC(IPSEC_STAT_OUT_POLVIO);
-		goto bad;
-
-	case IPSEC_POLICY_BYPASS:
-	case IPSEC_POLICY_NONE:
-		/* no need to do IPsec. */
-		goto skip_ipsec;
-
-	case IPSEC_POLICY_IPSEC:
-		if (sp->req == NULL) {
-			/* XXX should be panic ? */
-			printf("ip_output: No IPsec request specified.\n");
-			error = EINVAL;
-			goto bad;
-		}
-		break;
-
-	case IPSEC_POLICY_ENTRUST:
-	default:
-		printf("ip_output: Invalid policy found. %d\n", sp->policy);
-	}
-
-#ifdef IPSEC_NAT_T
-	/*
-	 * NAT-T ESP fragmentation: don't do IPSec processing now,
-	 * we'll do it on each fragmented packet.
-	 */
-	if (sp->req->sav &&
-	    ((sp->req->sav->natt_type & UDP_ENCAP_ESPINUDP) ||
-	     (sp->req->sav->natt_type & UDP_ENCAP_ESPINUDP_NON_IKE))) {
-		if (ntohs(ip->ip_len) > sp->req->sav->esp_frag) {
-			natt_frag = 1;
-			mtu = sp->req->sav->esp_frag;
-			goto skip_ipsec;
-		}
-	}
-#endif /* IPSEC_NAT_T */
-
-	/*
-	 * ipsec4_output() expects ip_len and ip_off in network
-	 * order.  They have been set to network order above.
-	 */
-
-    {
-	struct ipsec_output_state state;
-	memset(&state, 0, sizeof(state));
-	state.m = m;
-	if (flags & IP_ROUTETOIF) {
-		state.ro = &iproute;
-		memset(&iproute, 0, sizeof(iproute));
-	} else
-		state.ro = ro;
-	state.dst = sintocsa(dst);
-
-	/*
-	 * We can't defer the checksum of payload data if
-	 * we're about to encrypt/authenticate it.
-	 *
-	 * XXX When we support crypto offloading functions of
-	 * XXX network interfaces, we need to reconsider this,
-	 * XXX since it's likely that they'll support checksumming,
-	 * XXX as well.
-	 */
-	if (m->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
-		in_delayed_cksum(m);
-		m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
-	}
-
-	error = ipsec4_output(&state, sp, flags);
-
-	m = state.m;
-	if (flags & IP_ROUTETOIF) {
-		/*
-		 * if we have tunnel mode SA, we may need to ignore
-		 * IP_ROUTETOIF.
-		 */
-		if (state.ro != &iproute ||
-		    rtcache_validate(state.ro) != NULL) {
-			flags &= ~IP_ROUTETOIF;
-			ro = state.ro;
-		}
-	} else
-		ro = state.ro;
-	dst = satocsin(state.dst);
-	if (error) {
-		/* mbuf is already reclaimed in ipsec4_output. */
-		m0 = NULL;
-		switch (error) {
-		case EHOSTUNREACH:
-		case ENETUNREACH:
-		case EMSGSIZE:
-		case ENOBUFS:
-		case ENOMEM:
-			break;
-		default:
-			printf("ip4_output (ipsec): error code %d\n", error);
-			/*fall through*/
-		case ENOENT:
-			/* don't show these error codes to the user */
-			error = 0;
-			break;
-		}
-		goto bad;
-	}
-
-	/* be sure to update variables that are affected by ipsec4_output() */
-	ip = mtod(m, struct ip *);
-	hlen = ip->ip_hl << 2;
-	ip_len = ntohs(ip->ip_len);
-
-	if ((rt = rtcache_validate(ro)) == NULL) {
-		if ((flags & IP_ROUTETOIF) == 0) {
-			printf("ip_output: "
-				"can't update route after IPsec processing\n");
-			error = EHOSTUNREACH;	/*XXX*/
-			goto bad;
-		}
-	} else {
-		/* nobody uses ia beyond here */
-		if (state.encap) {
-			ifp = rt->rt_ifp;
-			if ((mtu = rt->rt_rmx.rmx_mtu) == 0)
-				mtu = ifp->if_mtu;
-		}
-	}
-    }
-skip_ipsec:
-#endif /*IPSEC*/
 #ifdef FAST_IPSEC
 	/*
 	 * Check the security policy (SP) for the packet and, if
@@ -816,11 +653,6 @@ spd_done:
 			}
 		}
 
-#ifdef IPSEC
-		/* clean ipsec history once it goes out of the node */
-		ipsec_delaux(m);
-#endif
-
 		if (__predict_true(
 		    (m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0 ||
 		    (ifp->if_capenable & IFCAP_TSOv4) != 0)) {
@@ -882,11 +714,6 @@ spd_done:
 				ia->ia_ifa.ifa_data.ifad_outbytes +=
 				    ntohs(ip->ip_len);
 #endif
-#ifdef IPSEC
-			/* clean ipsec history once it goes out of the node */
-			ipsec_delaux(m);
-#endif /* IPSEC */
-
 #ifdef IPSEC_NAT_T
 			/*
 			 * If we get there, the packet has not been handeld by
@@ -896,7 +723,7 @@ spd_done:
 			 */
 			if (natt_frag) {
 				error = ip_output(m, opt,
-				    ro, flags, imo, so, mtu_p);
+				    ro, flags | IP_RAWOUTPUT | IP_NOIPNEWID, imo, so, mtu_p);
 			} else
 #endif /* IPSEC_NAT_T */
 			{
@@ -918,13 +745,6 @@ spd_done:
 done:
 	rtcache_free(&iproute);
 
-#ifdef IPSEC
-	if (sp != NULL) {
-		KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-			printf("DP ip_output call free SP:%p\n", sp));
-		key_freesp(sp);
-	}
-#endif /* IPSEC */
 #ifdef FAST_IPSEC
 	if (sp != NULL)
 		KEY_FREESP(&sp);
@@ -1006,7 +826,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 			goto sendorfree;
 		}
 		m->m_pkthdr.len = mhlen + len;
-		m->m_pkthdr.rcvif = (struct ifnet *)0;
+		m->m_pkthdr.rcvif = NULL;
 		mhip->ip_sum = 0;
 		KASSERT((m->m_pkthdr.csum_flags & M_CSUM_IPv4) == 0);
 		if (sw_csum & M_CSUM_IPv4) {
@@ -1214,7 +1034,7 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 	struct inpcb *inp = sotoinpcb(so);
 	int optval = 0;
 	int error = 0;
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 	struct lwp *l = curlwp;	/*XXX*/
 #endif
 
@@ -1321,7 +1141,7 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			/* INP_UNLOCK(inp); */
 			break;
 
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 		case IP_IPSEC_POLICY:
 		    {
 			error = ipsec4_set_policy(inp, sopt->sopt_name,
@@ -1405,7 +1225,7 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			error = sockopt_setint(sopt, optval);
 			break;
 
-#if 0	/* defined(IPSEC) || defined(FAST_IPSEC) */
+#if 0	/* defined(FAST_IPSEC) */
 		case IP_IPSEC_POLICY:
 		{
 			struct mbuf *m = NULL;

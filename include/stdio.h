@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.79 2011/07/17 20:54:34 joerg Exp $	*/
+/*	$NetBSD: stdio.h,v 1.79.2.1 2012/04/17 00:05:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -64,13 +64,10 @@ typedef __va_list va_list;
  * innards of an fpos_t anyway.  The library internally uses off_t,
  * which we assume is exactly as big as eight chars.
  */
-#if (!defined(_ANSI_SOURCE) && !defined(__STRICT_ANSI__)) || defined(_LIBC)
-typedef __off_t fpos_t;
-#else
 typedef struct __sfpos {
 	__off_t _pos;
+	__mbstate_t _mbstate_in, _mbstate_out;
 } fpos_t;
-#endif
 
 #define	_FSTDIO			/* Define for new stdio with functions. */
 
@@ -124,9 +121,9 @@ typedef	struct __sFILE {
 	/* operations */
 	void	*_cookie;	/* cookie passed to io functions */
 	int	(*_close)(void *);
-	int	(*_read) (void *, char *, int);
-	fpos_t	(*_seek) (void *, fpos_t, int);
-	int	(*_write)(void *, const char *, int);
+	ssize_t	(*_read) (void *, void *, size_t);
+	__off_t	(*_seek) (void *, __off_t, int);
+	ssize_t	(*_write)(void *, const void *, size_t);
 
 	/* file extension */
 	struct	__sbuf _ext;
@@ -139,12 +136,13 @@ typedef	struct __sFILE {
 	unsigned char _ubuf[3];	/* guarantee an ungetc() buffer */
 	unsigned char _nbuf[1];	/* guarantee a getc() buffer */
 
+	int	(*_flush)(void *);
 	/* Formerly used by fgetln/fgetwln; kept for binary compatibility */
-	struct	__sbuf _lb__unused;
+	char	_lb_unused[sizeof(struct __sbuf) - sizeof(int (*)(void *))];
 
 	/* Unix stdio files get aligned to block boundaries on fseek() */
 	int	_blksize;	/* stat.st_blksize (may be != _bf._size) */
-	fpos_t	_offset;	/* current lseek offset */
+	__off_t	_offset;	/* current lseek offset */
 } FILE;
 
 __BEGIN_DECLS
@@ -228,7 +226,6 @@ int	 feof(FILE *);
 int	 ferror(FILE *);
 int	 fflush(FILE *);
 int	 fgetc(FILE *);
-int	 fgetpos(FILE * __restrict, fpos_t * __restrict);
 char	*fgets(char * __restrict, int, FILE * __restrict);
 FILE	*fopen(const char * __restrict , const char * __restrict);
 int	 fprintf(FILE * __restrict , const char * __restrict, ...)
@@ -241,7 +238,6 @@ FILE	*freopen(const char * __restrict, const char * __restrict,
 int	 fscanf(FILE * __restrict, const char * __restrict, ...)
 		__scanflike(2, 3);
 int	 fseek(FILE *, long, int);
-int	 fsetpos(FILE *, const fpos_t *);
 long	 ftell(FILE *);
 size_t	 fwrite(const void * __restrict, size_t, size_t, FILE * __restrict);
 int	 getc(FILE *);
@@ -287,6 +283,10 @@ int	 rename (const char *, const char *);
 #endif
 __END_DECLS
 
+#ifndef __LIBC12_SOURCE__
+int	 fgetpos(FILE * __restrict, fpos_t * __restrict) __RENAME(__fgetpos50);
+int	 fsetpos(FILE *, const fpos_t *) __RENAME(__fsetpos50);
+#endif
 /*
  * IEEE Std 1003.1-90
  */
@@ -428,13 +428,21 @@ __END_DECLS
  */
 __BEGIN_DECLS
 FILE	*funopen(const void *,
-		int (*)(void *, char *, int),
-		int (*)(void *, const char *, int),
-		fpos_t (*)(void *, fpos_t, int),
-		int (*)(void *));
+    int (*)(void *, char *, int),
+    int (*)(void *, const char *, int),
+    off_t (*)(void *, off_t, int),
+    int (*)(void *));
+FILE	*funopen2(const void *,
+    ssize_t (*)(void *, void *, size_t),
+    ssize_t (*)(void *, const void *, size_t),
+    off_t (*)(void *, off_t, int),
+    int (*)(void *),
+    int (*)(void *));
 __END_DECLS
 #define	fropen(cookie, fn) funopen(cookie, fn, 0, 0, 0)
 #define	fwopen(cookie, fn) funopen(cookie, 0, fn, 0, 0)
+#define	fropen2(cookie, fn) funopen2(cookie, fn, 0, 0, 0, 0)
+#define	fwopen2(cookie, fn) funopen2(cookie, 0, fn, 0, 0, 0)
 #endif /* _NETBSD_SOURCE */
 
 /*

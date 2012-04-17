@@ -1,4 +1,4 @@
-#	$NetBSD: MMTA,v 1.45 2011/03/06 17:08:27 bouyer Exp $
+#	$NetBSD: MMTA,v 1.45.4.1 2012/04/17 00:06:41 yamt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -221,5 +221,4 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	clockctl		# user control of clock subsystem
 
 # rnd is EXPERIMENTAL at this point.
-#pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)

@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.10 2009/03/13 18:24:41 cube Exp $	*/
+/*	$NetBSD: files.c,v 1.10.6.1 2012/04/17 00:09:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,7 +82,7 @@ initfiles(void)
 }
 
 void
-addfile(const char *path, struct nvlist *optx, int flags, const char *rule)
+addfile(const char *path, struct condexpr *optx, int flags, const char *rule)
 {
 	struct files *fi;
 	const char *dotp, *tail;
@@ -160,11 +160,11 @@ addfile(const char *path, struct nvlist *optx, int flags, const char *rule)
 	TAILQ_INSERT_TAIL(&allfiles, fi, fi_next);
 	return;
  bad:
-	expr_free(optx);
+	condexpr_destroy(optx);
 }
 
 void
-addobject(const char *path, struct nvlist *optx, int flags)
+addobject(const char *path, struct condexpr *optx, int flags)
 {
 	struct objects *oi;
 
@@ -494,62 +494,31 @@ fixsel(const char *name, void *context)
  * our mixing of C's bitwise & boolean here may give surprises).
  */
 int
-expr_eval(struct nvlist *expr, int (*fn)(const char *, void *), void *context)
+expr_eval(struct condexpr *expr, int (*fn)(const char *, void *), void *ctx)
 {
 	int lhs, rhs;
 
-	switch (expr->nv_num) {
+	switch (expr->cx_type) {
 
-	case FX_ATOM:
-		return ((*fn)(expr->nv_name, context));
+	case CX_ATOM:
+		return ((*fn)(expr->cx_atom, ctx));
 
-	case FX_NOT:
-		return (!expr_eval(expr->nv_next, fn, context));
+	case CX_NOT:
+		return (!expr_eval(expr->cx_not, fn, ctx));
 
-	case FX_AND:
-		lhs = expr_eval(expr->nv_ptr, fn, context);
-		rhs = expr_eval(expr->nv_next, fn, context);
+	case CX_AND:
+		lhs = expr_eval(expr->cx_and.left, fn, ctx);
+		rhs = expr_eval(expr->cx_and.right, fn, ctx);
 		return (lhs & rhs);
 
-	case FX_OR:
-		lhs = expr_eval(expr->nv_ptr, fn, context);
-		rhs = expr_eval(expr->nv_next, fn, context);
+	case CX_OR:
+		lhs = expr_eval(expr->cx_or.left, fn, ctx);
+		rhs = expr_eval(expr->cx_or.right, fn, ctx);
 		return (lhs | rhs);
 	}
-	panic("expr_eval %lld", expr->nv_num);
+	panic("invalid condexpr type %d", (int)expr->cx_type);
 	/* NOTREACHED */
 	return (0);
-}
-
-/*
- * Free an expression tree.
- */
-void
-expr_free(struct nvlist *expr)
-{
-	struct nvlist *rhs;
-
-	/* This loop traverses down the RHS of each subexpression. */
-	for (; expr != NULL; expr = rhs) {
-		switch (expr->nv_num) {
-
-		/* Atoms and !-exprs have no left hand side. */
-		case FX_ATOM:
-		case FX_NOT:
-			break;
-
-		/* For AND and OR nodes, free the LHS. */
-		case FX_AND:
-		case FX_OR:
-			expr_free(expr->nv_ptr);
-			break;
-
-		default:
-			panic("expr_free %lld", expr->nv_num);
-		}
-		rhs = expr->nv_next;
-		nvfree(expr);
-	}
 }
 
 #ifdef DEBUG

@@ -1,9 +1,10 @@
 #	from: @(#)Makefile	5.8 (Berkeley) 7/28/90
-#	$NetBSD: Makefile,v 1.16 2009/12/13 05:01:33 nakayama Exp $
+#	$NetBSD: Makefile,v 1.16.6.1 2012/04/17 00:09:46 yamt Exp $
 
 .if ${MACHINE} == "sun3" || ${MACHINE} == "sun3x" \
 	|| ${MACHINE} == "sparc" || ${MACHINE} == "sparc64" \
-	|| ${MACHINE} == "macppc" || ${MACHINE} == "prep"
+	|| ${MACHINE} == "macppc" || ${MACHINE} == "prep" \
+	|| ${MACHINE} == "shark"
 PROG=	eeprom
 
 SRCS=	main.c
@@ -18,7 +19,7 @@ SRCS+=	ophandlers.c
 SRCS+=	eehandlers.c
 .endif
 
-.if ${MACHINE} == "macppc"
+.if ${MACHINE} == "macppc" || ${MACHINE} == "shark"
 SRCS+=		ofhandlers.c
 CPPFLAGS+=	-DUSE_OPENFIRM
 .endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.57 2011/07/06 01:20:03 mrg Exp $	*/
+/*	$NetBSD: label.c,v 1.57.2.1 2012/04/17 00:02:49 yamt Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.57 2011/07/06 01:20:03 mrg Exp $");
+__RCSID("$NetBSD: label.c,v 1.57.2.1 2012/04/17 00:02:49 yamt Exp $");
 #endif
 
 #include <sys/types.h>
@@ -387,7 +387,7 @@ edit_ptn(menudesc *menu, void *arg)
 
 	if (all_fstype_menu == -1) {
 		for (i = 0; i < nelem(all_fstypes); i++) {
-			all_fstypes[i].opt_name = fstypenames[i];
+			all_fstypes[i].opt_name = getfslabelname(i);
 			all_fstypes[i].opt_menu = OPT_NOMENU;
 			all_fstypes[i].opt_flags = 0;
 			all_fstypes[i].opt_action = set_fstype;
@@ -487,7 +487,7 @@ set_ptn_label(menudesc *m, int opt, void *arg)
 			else
 				c = "FFSv1";
 		else
-			c = fstypenames[p->pi_fstype];
+			c = getfslabelname(p->pi_fstype);
 		wprintw(m->mw, msg_string(MSG_fstype_fmt), c);
 		break;
 	case PTN_MENU_START:

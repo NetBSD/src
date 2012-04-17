@@ -1,4 +1,4 @@
-/*	$NetBSD: h_tls_dlopen.c,v 1.1 2011/03/09 23:10:08 joerg Exp $	*/
+/*	$NetBSD: h_tls_dlopen.c,v 1.1.4.1 2012/04/17 00:09:13 yamt Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,16 +32,20 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_tls_dlopen.c,v 1.1 2011/03/09 23:10:08 joerg Exp $");
+__RCSID("$NetBSD: h_tls_dlopen.c,v 1.1.4.1 2012/04/17 00:09:13 yamt Exp $");
 
+#include <atf-c.h>
+#include <unistd.h>
 #include <sys/tls.h>
 
-#if !defined(__HAVE_TLS_VARIANT_I) && !defined(__HAVE_TLS_VARIANT_II)
+#ifdef __HAVE_NO___THREAD
 #define	__thread
 #endif
 
 extern __thread int var1;
 extern __thread int var2;
+extern __thread int *var3;
+static __thread pid_t (*local_var)(void) = getpid;
 
 void testf_dso_helper(int x, int y);
 
@@ -50,4 +54,6 @@ testf_dso_helper(int x, int y)
 {
 	var1 = x;
 	var2 = y;
+	var3 = &optind;
+	ATF_CHECK_EQ(local_var, getpid);
 }

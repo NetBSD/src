@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.19 2011/10/07 16:51:45 dyoung Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.19.2.1 2012/04/17 00:08:39 yamt Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.8 2005/08/08 18:46:35 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.19 2011/10/07 16:51:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.19.2.1 2012/04/17 00:08:39 yamt Exp $");
 #endif
 
 /*
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.19 2011/10/07 16:51:45 dyoung
 #include <sys/once.h>
 
 #include <sys/socket.h>
+
+#include <sys/cprng.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -640,14 +642,7 @@ ieee80211_getmgtframe(u_int8_t **frm, u_int pktlen)
 void
 get_random_bytes(void *p, size_t n)
 {
-	u_int8_t *dp = p;
-
-	while (n > 0) {
-		u_int32_t v = arc4random();
-		size_t nb = n > sizeof(u_int32_t) ? sizeof(u_int32_t) : n;
-		(void)memcpy(dp, &v, nb);
-		dp += sizeof(u_int32_t), n -= nb;
-	}
+	cprng_fast(p, n);
 }
 
 void

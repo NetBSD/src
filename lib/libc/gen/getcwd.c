@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.50 2011/02/21 00:40:07 joerg Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.50.4.1 2012/04/17 00:05:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.50 2011/02/21 00:40:07 joerg Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.50.4.1 2012/04/17 00:05:18 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,10 +71,11 @@ char *
 realpath(const char *path, char *resolved)
 {
 	struct stat sb;
-	int idx = 0, n, nlnk = 0;
+	int idx = 0, nlnk = 0;
 	const char *q;
 	char *p, wbuf[2][MAXPATHLEN];
 	size_t len;
+	ssize_t n;
 
 	_DIAGASSERT(resolved != NULL);
 

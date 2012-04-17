@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.174 2011/03/10 13:16:58 jmmv Exp $
+# $NetBSD: mi,v 1.174.4.1 2012/04/17 00:02:44 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -317,7 +317,6 @@
 ./usr/share/doc/html/postfix/SCHEDULER_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/SMTPD_ACCESS_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/SMTPD_POLICY_README.html	misc-postfix-htmldoc	postfix,doc
-./usr/share/doc/html/postfix/SMTPD_PROXY_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/SMTPD_PROXY_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/SOHO_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/SQLITE_README.html		misc-postfix-htmldoc	postfix,doc
@@ -672,6 +671,12 @@
 ./usr/share/examples/amd/master			misc-obsolete		obsolete
 ./usr/share/examples/amd/net			misc-amd-examples	share
 ./usr/share/examples/apm/script			misc-amd-examples	share
+./usr/share/examples/asm			misc-asm-examples
+./usr/share/examples/asm/Makefile.inc		misc-asm-examples	share
+./usr/share/examples/asm/README			misc-asm-examples	share
+./usr/share/examples/asm/hello			misc-asm-examples
+./usr/share/examples/asm/hello/Makefile		misc-asm-examples	share
+./usr/share/examples/asm/hello/powerpc.s	misc-asm-examples	share
 ./usr/share/examples/atf			misc-atf-examples
 ./usr/share/examples/atf/atf-run.hooks		misc-atf-examples	share,atf
 ./usr/share/examples/atf/tests-results.css	misc-atf-examples	share,atf

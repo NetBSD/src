@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.10 2011/04/04 08:30:24 mbalmer Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.10.4.1 2012/04/17 00:02:51 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -77,6 +77,8 @@ message set_kernel_3
 message set_kernel_4
 {Kernel (IQ80321)}
 message set_kernel_5
-{Kernel (TEAMASA_NPWR)}
+{Kernel (MINI2440)}
 message set_kernel_6
+{Kernel (TEAMASA_NPWR)}
+message set_kernel_7
 {Kernel (TS7200)}

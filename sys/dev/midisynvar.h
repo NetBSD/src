@@ -1,4 +1,4 @@
-/*	$NetBSD: midisynvar.h,v 1.12 2008/04/28 20:23:47 martin Exp $	*/
+/*	$NetBSD: midisynvar.h,v 1.12.34.1 2012/04/17 00:07:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -164,6 +164,7 @@ struct midisyn {
 	int nvoice;
 	int flags;
 	void *data;
+	kmutex_t *lock;
 
 	/* Set up by midisyn but available to synth driver for reading ctls */
 	/*
@@ -183,11 +184,9 @@ struct midisyn {
 
 #define MS_GETPGM(ms, vno) ((ms)->pgms[MS_GETCHAN(&(ms)->voices[vno])])
 
-struct midi_softc;
-
 extern const struct midi_hw_if midisyn_hw_if;
 
-void	midisyn_attach (struct midi_softc *, midisyn *);
+void	midisyn_init(midisyn *);
 
 /*
  * Convert a 14-bit volume or expression controller value to centibels using

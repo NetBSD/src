@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_instr.c,v 1.5.8.1 2011/11/10 14:31:50 yamt Exp $	*/
+/*	$NetBSD: npf_instr.c,v 1.5.8.2 2012/04/17 00:08:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -34,10 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.5.8.1 2011/11/10 14:31:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.5.8.2 2012/04/17 00:08:39 yamt Exp $");
 
 #include <sys/param.h>
-#include <sys/kernel.h>
+#include <sys/types.h>
 
 #include <net/if.h>
 #include <net/ethertypes.h>
@@ -50,9 +50,9 @@ __KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.5.8.1 2011/11/10 14:31:50 yamt Exp $
 #define	NPF_PORTRANGE_MATCH(r, p)	(p >= (r >> 16) && p <= (r & 0xffff))
 
 /*
- * npf_match_ether: find and check Ethernet and possible VLAN headers.
+ * npf_match_ether: find and check Ethernet with possible VLAN headers.
  *
- * => Stores value in to advance to layer 3 header (usually, IPv4).
+ * => Stores value in the register for advancing to layer 3 header.
  * => Returns zero on success or -1 on failure.
  */
 int
@@ -98,6 +98,8 @@ npf_match_table(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
 {
 	npf_addr_t *addr;
 
+	KASSERT(npf_core_locked());
+
 	if (!npf_iscached(npc, NPC_IP46)) {
 		if (!npf_fetch_ip(npc, nbuf, n_ptr)) {
 			return -1;
@@ -107,7 +109,7 @@ npf_match_table(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
 	addr = sd ? npc->npc_srcip : npc->npc_dstip;
 
 	/* Match address against NPF table. */
-	return npf_table_match_addr(tid, addr);
+	return npf_table_match_addr(npf_core_tableset(), tid, addr) ? -1 : 0;
 }
 
 /*
@@ -115,9 +117,9 @@ npf_match_table(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
  */
 int
 npf_match_ipmask(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
-    const int sd, const npf_addr_t *netaddr, npf_netmask_t omask)
+    const int sd, const npf_addr_t *netaddr, npf_netmask_t mask)
 {
-	npf_addr_t *addr1, addr2;
+	npf_addr_t *addr, cmpaddr;
 
 	if (!npf_iscached(npc, NPC_IP46)) {
 		if (!npf_fetch_ip(npc, nbuf, n_ptr)) {
@@ -125,13 +127,12 @@ npf_match_ipmask(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
 		}
 		KASSERT(npf_iscached(npc, NPC_IP46));
 	}
-	if (omask == 0) {
-		return 0;
+	addr = sd ? npc->npc_srcip : npc->npc_dstip;
+	if (mask != NPF_NO_NETMASK) {
+		npf_calculate_masked_addr(&cmpaddr, addr, mask);
+		addr = &cmpaddr;
 	}
-
-	addr1 = sd ? npc->npc_srcip : npc->npc_dstip;
-	npf_calculate_masked_addr(&addr2, netaddr, omask);
-	return memcmp(addr1, &addr2, npc->npc_ipsz) ? -1 : 0;
+	return memcmp(netaddr, addr, npc->npc_ipsz) ? -1 : 0;
 }
 
 /*

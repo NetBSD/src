@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.26 2011/03/07 05:09:09 joerg Exp $ */
+/* $NetBSD: crt0.c,v 1.26.4.1 2012/04/17 00:05:11 yamt Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -40,11 +40,8 @@ void __start __P((char **, void (*cleanup) __P((void)), const Obj_Entry *,
 		struct ps_strings *));
 
 void
-__start(sp, cleanup, obj, ps_strings)
-	char **sp;
-	void (*cleanup) __P((void));		/* from shared loader */
-	const Obj_Entry *obj;			/* from shared loader */
-	struct ps_strings *ps_strings;
+__start(char **sp, void (*cleanup)(void), 
+	const Obj_Entry *obj, struct ps_strings *ps_strings)
 {
 	long argc;
 	char **argv, *namep;
@@ -86,7 +83,7 @@ __start(sp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.26 2011/03/07 05:09:09 joerg Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.26.4.1 2012/04/17 00:05:11 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"

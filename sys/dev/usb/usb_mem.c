@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.50 2011/09/27 01:02:38 jym Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.50.2.1 2012/04/17 00:08:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.50 2011/09/27 01:02:38 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.50.2.1 2012/04/17 00:08:09 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -52,10 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.50 2011/09/27 01:02:38 jym Exp $");
 #include <sys/device.h>		/* for usbdivar.h */
 #include <sys/bus.h>
 #include <sys/cpu.h>
-
-#ifdef __NetBSD__
 #include <sys/extent.h>
-#endif
 
 #ifdef DIAGNOSTIC
 #include <sys/proc.h>
@@ -349,7 +346,6 @@ usb_syncmem(usb_dma_t *p, bus_addr_t offset, bus_size_t len, int ops)
 }
 
 
-#ifdef __NetBSD__
 usbd_status
 usb_reserve_allocm(struct usb_dma_reserve *rs, usb_dma_t *dma, u_int32_t size)
 {
@@ -432,8 +428,7 @@ usb_setup_reserve(device_t dv, struct usb_dma_reserve *rs, bus_dma_tag_t dtag,
 
 	rs->paddr = rs->map->dm_segs[0].ds_addr;
 	rs->extent = extent_create(device_xname(dv), (u_long)rs->paddr,
-	    (u_long)(rs->paddr + USB_MEM_RESERVE - 1),
-	    M_USB, 0, 0, 0);
+	    (u_long)(rs->paddr + USB_MEM_RESERVE - 1), 0, 0, 0);
 	if (rs->extent == NULL) {
 		rs->vaddr = 0;
 		return ENOMEM;
@@ -452,4 +447,3 @@ usb_setup_reserve(device_t dv, struct usb_dma_reserve *rs, bus_dma_tag_t dtag,
 
 	return error;
 }
-#endif

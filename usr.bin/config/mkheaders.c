@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.18 2010/03/22 14:40:54 pooka Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.18.6.1 2012/04/17 00:09:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,7 +61,7 @@ static int emitcnt(struct nvlist *);
 static int emitopts(void);
 static int emittime(void);
 static int herr(const char *, const char *, FILE *);
-static int defopts_print(const char *, void *, void *);
+static int defopts_print(const char *, struct defoptlist *, void *);
 static char *cntname(const char *);
 
 /*
@@ -221,10 +221,11 @@ fprintstr(FILE *fp, const char *str)
  */
 static int
 /*ARGSUSED*/
-defopts_print(const char *name, void *value, void *arg)
+defopts_print(const char *name, struct defoptlist *value, void *arg)
 {
 	char tfname[BUFSIZ];
-	struct nvlist *nv, *option;
+	struct nvlist *option;
+	struct defoptlist *dl;
 	const char *opt_value;
 	int isfsoption;
 	FILE *fp;
@@ -233,39 +234,39 @@ defopts_print(const char *name, void *value, void *arg)
 	if ((fp = fopen(tfname, "w")) == NULL)
 		return (herr("open", tfname, NULL));
 
-	for (nv = value; nv != NULL; nv = nv->nv_next) {
-		isfsoption = OPT_FSOPT(nv->nv_name);
+	for (dl = value; dl != NULL; dl = dl->dl_next) {
+		isfsoption = OPT_FSOPT(dl->dl_name);
 
-		if (nv->nv_flags & NV_OBSOLETE) {
+		if (dl->dl_obsolete) {
 			fprintf(fp, "/* %s `%s' is obsolete */\n",
 			    isfsoption ? "file system" : "option",
-			    nv->nv_name);
-			fprint_global(fp, nv->nv_name, 0xdeadbeef);
+			    dl->dl_name);
+			fprint_global(fp, dl->dl_name, 0xdeadbeef);
 			continue;
 		}
 
-		if (((option = ht_lookup(opttab, nv->nv_name)) == NULL &&
-		    (option = ht_lookup(fsopttab, nv->nv_name)) == NULL) &&
-		    (nv->nv_str == NULL)) {
+		if (((option = ht_lookup(opttab, dl->dl_name)) == NULL &&
+		    (option = ht_lookup(fsopttab, dl->dl_name)) == NULL) &&
+		    (dl->dl_value == NULL)) {
 			fprintf(fp, "/* %s `%s' not defined */\n",
 			    isfsoption ? "file system" : "option",
-			    nv->nv_name);
-			fprint_global(fp, nv->nv_name, UNDEFINED);
+			    dl->dl_name);
+			fprint_global(fp, dl->dl_name, UNDEFINED);
 			continue;
 		}
 
-		opt_value = option != NULL ? option->nv_str : nv->nv_str;
+		opt_value = option != NULL ? option->nv_str : dl->dl_value;
 		if (isfsoption == 1)
 			/* For filesysteme we'd output the lower case name */
 			opt_value = NULL;
 
-		fprintf(fp, "#define\t%s", nv->nv_name);
+		fprintf(fp, "#define\t%s", dl->dl_name);
 		if (opt_value != NULL)
 			fprintstr(fp, opt_value);
 		else if (!isfsoption)
 			fprintstr(fp, "1");
 		fputc('\n', fp);
-		fprint_global(fp, nv->nv_name,
+		fprint_global(fp, dl->dl_name,
 		    opt_value == NULL ? 1 : global_hash(opt_value));
 	}
 
@@ -286,7 +287,7 @@ static int
 emitopts(void)
 {
 
-	return (ht_enumerate(optfiletab, defopts_print, NULL));
+	return (dlhash_enumerate(optfiletab, defopts_print, NULL));
 }
 
 /*
@@ -298,7 +299,7 @@ static int
 locators_print(const char *name, void *value, void *arg)
 {
 	struct attr *a;
-	struct nvlist *nv;
+	struct loclist *ll;
 	int i;
 	char *locdup, *namedup;
 	char *cp;
@@ -316,24 +317,24 @@ locators_print(const char *name, void *value, void *arg)
 		for (cp = locdup; *cp; cp++)
 			if (islower((unsigned char)*cp))
 				*cp = toupper((unsigned char)*cp);
-		for (i = 0, nv = a->a_locs; nv; nv = nv->nv_next, i++) {
-			if (strchr(nv->nv_name, ' ') != NULL ||
-			    strchr(nv->nv_name, '\t') != NULL)
+		for (i = 0, ll = a->a_locs; ll; ll = ll->ll_next, i++) {
+			if (strchr(ll->ll_name, ' ') != NULL ||
+			    strchr(ll->ll_name, '\t') != NULL)
 				/*
 				 * name contains a space; we can't generate
 				 * usable defines, so ignore it.
 				 */
 				continue;
-			namedup = estrdup(nv->nv_name);
+			namedup = estrdup(ll->ll_name);
 			for (cp = namedup; *cp; cp++)
 				if (islower((unsigned char)*cp))
 					*cp = toupper((unsigned char)*cp);
 				else if (*cp == ARRCHR)
 					*cp = '_';
 			fprintf(fp, "#define %sCF_%s %d\n", locdup, namedup, i);
-			if (nv->nv_str != NULL)
+			if (ll->ll_string != NULL)
 				fprintf(fp, "#define %sCF_%s_DEFAULT %s\n",
-				    locdup, namedup, nv->nv_str);
+				    locdup, namedup, ll->ll_string);
 			free(namedup);
 		}
 		/* assert(i == a->a_loclen) */

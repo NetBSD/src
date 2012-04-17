@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2010/06/07 13:52:29 tnozaki Exp $
+#	$NetBSD: Makefile.inc,v 1.6.6.1 2012/04/17 00:05:16 yamt Exp $
 
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys
 
@@ -10,6 +10,7 @@ COMPATARCHDIR=${COMPATDIR}/arch/${ARCHSUBDIR}
 .include "${COMPATDIR}/gen/Makefile.inc"
 .include "${COMPATDIR}/net/Makefile.inc"
 .include "${COMPATDIR}/rpc/Makefile.inc"
+.include "${COMPATDIR}/stdio/Makefile.inc"
 .include "${COMPATDIR}/stdlib/Makefile.inc"
 .include "${COMPATDIR}/sys/Makefile.inc"
 .include "${COMPATDIR}/time/Makefile.inc"

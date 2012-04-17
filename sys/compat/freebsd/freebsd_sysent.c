@@ -1,4 +1,4 @@
-/* $NetBSD: freebsd_sysent.c,v 1.79 2011/03/06 17:08:33 bouyer Exp $ */
+/* $NetBSD: freebsd_sysent.c,v 1.79.4.1 2012/04/17 00:07:14 yamt Exp $ */
 
 /*
  * System call switch table.
@@ -8,14 +8,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sysent.c,v 1.79 2011/03/06 17:08:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sysent.c,v 1.79.4.1 2012/04/17 00:07:14 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
 #include "opt_ntp.h"
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
-#include "opt_posix.h"
 #endif
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -905,7 +904,6 @@ struct sysent freebsd_sysent[] = {
 	    sys_nosys },			/* 398 = unimplemented fhstatfs */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 399 = unimplemented nosys */
-#if defined(P1003_1B_SEMAPHORE) || !defined(_KERNEL)
 	{ ns(struct sys__ksem_close_args), 0,
 	    (sy_call_t *)sys__ksem_close },	/* 400 = _ksem_close */
 	{ ns(struct sys__ksem_post_args), 0,
@@ -924,26 +922,6 @@ struct sysent freebsd_sysent[] = {
 	    (sy_call_t *)sys__ksem_getvalue },	/* 407 = _ksem_getvalue */
 	{ ns(struct sys__ksem_destroy_args), 0,
 	    (sy_call_t *)sys__ksem_destroy },	/* 408 = _ksem_destroy */
-#else
-	{ 0, 0, 0,
-	    sys_nosys },			/* 400 = excluded ksem_close */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 401 = excluded ksem_post */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 402 = excluded ksem_wait */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 403 = excluded ksem_trywait */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 404 = excluded ksem_init */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 405 = excluded ksem_open */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 406 = excluded ksem_unlink */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 407 = excluded ksem_getvalue */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 408 = excluded ksem_destroy */
-#endif
 	{ 0, 0, 0,
 	    sys_nosys },			/* 409 = unimplemented __mac_get_pid */
 	{ 0, 0, 0,

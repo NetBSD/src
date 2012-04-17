@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2010/12/30 00:46:38 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.10.6.1 2012/04/17 00:04:15 yamt Exp $
 
 LIBISPRIVATE=	yes
 
@@ -17,6 +17,8 @@ SRCS=	__fpending.c asnprintf.c basename.c canon-host.c canonicalize.c \
 	quotearg.c regex.c rpmatch.c save-cwd.c sighandle.c strftime.c \
 	stripslash.c vasnprintf.c xalloc-die.c xgetcwd.c xgethostname.c \
 	xmalloc.c xreadlink.c yesno.c
+
+CWARNFLAGS.clang+=	-Wno-string-plus-int
 
 .include <bsd.lib.mk>
 # bsd.lib.mk includes bsd.sys.mk which defines the suffix rules, so we

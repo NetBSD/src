@@ -1,4 +1,4 @@
-/*	$NetBSD: node.cpp,v 1.1.1.3 2006/02/06 18:14:14 wiz Exp $	*/
+/*	$NetBSD: node.cpp,v 1.1.1.3.42.1 2012/04/17 00:05:09 yamt Exp $	*/
 
 // -*- C++ -*-
 /* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002, 2003, 2004, 2005
@@ -4602,7 +4602,7 @@ void hline_node::tprint(troff_output_file *out)
   }
   else {
     hunits rem = x - w*i;
-    if (rem > H0)
+    if (rem > H0) {
       if (n->overlaps_horizontally()) {
 	if (out->is_on())
 	  n->tprint(out);
@@ -4610,6 +4610,7 @@ void hline_node::tprint(troff_output_file *out)
       }
       else
 	out->right(rem);
+    }
     while (--i >= 0)
       if (out->is_on())
 	n->tprint(out);

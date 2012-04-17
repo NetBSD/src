@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.188 2011/08/16 06:55:12 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.188.2.1 2012/04/17 00:06:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -165,7 +165,7 @@ _C_LABEL(kernel_text):
 	 */
 	mfc0	v0, MIPS_COP_0_STATUS
 	or	v0, MIPS_SR_INT_IE
-	mfc0	v0, MIPS_COP_0_STATUS
+	mtc0	v0, MIPS_COP_0_STATUS
 	COP0_SYNC
 
 	jal	_C_LABEL(main)			# main(void)

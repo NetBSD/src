@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.71 2011/07/01 20:35:31 dyoung Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.71.2.1 2012/04/17 00:06:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.71 2011/07/01 20:35:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.71.2.1 2012/04/17 00:06:10 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -385,7 +385,8 @@ initarm(void *arm_bootargs)
 
 	if (ebsabootinfo.bt_magic != BT_MAGIC_NUMBER_EBSA
 	    && ebsabootinfo.bt_magic != BT_MAGIC_NUMBER_CATS)
-		panic("Incompatible magic number passed in boot args");
+		panic("Incompatible magic number %#x passed in boot args",
+		    ebsabootinfo.bt_magic);
 
 #ifdef VERBOSE_INIT_ARM
 	/* output the incoming bootinfo */
@@ -581,8 +582,11 @@ initarm(void *arm_bootargs)
 #endif
 
 	/* Now we fill in the L2 pagetable for the kernel static code/data */
-#ifdef ABLEELF
-	{
+	struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
+	if (N_GETMAGIC(kernexec[0]) != ZMAGIC) {
+		/*
+		 * If it's not a.out, assume ELF.
+		 */
 		extern char etext[], _end[];
 		size_t textsize = (uintptr_t) etext - KERNEL_BASE;
 		size_t totalsize = (uintptr_t) _end - KERNEL_BASE;
@@ -598,35 +602,27 @@ initarm(void *arm_bootargs)
 		(void) pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
 		    physical_start + logical, totalsize - textsize,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-	}
-#else
-	{
-		struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
-		if (N_GETMAGIC(kernexec[0]) != ZMAGIC)
-			panic("Illegal kernel format");
-		else {
-			extern int end;
-			u_int logical;
+	} else {
+		extern int end;
+		u_int logical;
 			
-			logical = pmap_map_chunk(l1pagetable, KERNEL_TEXT_BASE,
-					physical_start, kernexec->a_text,
-					VM_PROT_READ, PTE_CACHE);
-			logical += pmap_map_chunk(l1pagetable,
-					KERNEL_TEXT_BASE + logical,
-					physical_start + logical, kernexec->a_data,
-					VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-			logical += pmap_map_chunk(l1pagetable,
-					KERNEL_TEXT_BASE + logical,
-					physical_start + logical, kernexec->a_bss,
-					VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-			logical += pmap_map_chunk(l1pagetable,
-					KERNEL_TEXT_BASE + logical,
-					physical_start + logical, kernexec->a_syms + sizeof(int)
-					+ *(u_int *)((int)&end + kernexec->a_syms + sizeof(int)),
-					VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-		}
+		logical = pmap_map_chunk(l1pagetable, KERNEL_TEXT_BASE,
+			physical_start, kernexec->a_text,
+			VM_PROT_READ, PTE_CACHE);
+		logical += pmap_map_chunk(l1pagetable,
+			KERNEL_TEXT_BASE + logical,
+			physical_start + logical, kernexec->a_data,
+			VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+		logical += pmap_map_chunk(l1pagetable,
+			KERNEL_TEXT_BASE + logical,
+			physical_start + logical, kernexec->a_bss,
+			VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+		logical += pmap_map_chunk(l1pagetable,
+			KERNEL_TEXT_BASE + logical,
+			physical_start + logical, kernexec->a_syms + sizeof(int)
+			+ *(u_int *)((int)&end + kernexec->a_syms + sizeof(int)),
+			VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	}
-#endif
 
 	/*
 	 * PATCH PATCH ...
@@ -695,7 +691,7 @@ initarm(void *arm_bootargs)
 	 */
 #ifdef VERBOSE_INIT_ARM
 	/* checking sttb address */
-	printf("cpu_setttb address = %p\n", cpu_setttb);
+	printf("cpu_setttb address = %p\n", cpufuncs.cf_setttb);
 
 	printf("kernel_l1pt=0x%08x old = 0x%08x, phys = 0x%08x\n",
 			((uint*)kernel_l1pt.pv_va)[0xf00],

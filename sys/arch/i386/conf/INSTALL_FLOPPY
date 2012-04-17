@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.13 2011/05/28 13:01:50 ryo Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.13.4.1 2012/04/17 00:06:28 yamt Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -740,6 +740,11 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 # Planetconnect Satellite receiver driver.
 #satlink0 at isa? port 0x300 drq 1
 
+# Virtio devices
+virtio*	at pci? dev ? function ?	# Virtio PCI device
+viomb*	at virtio?			# Virtio memory balloon device
+ld*	at virtio?			# Virtio disk device
+vioif*	at virtio?			# Virtio network device
 
 # Pull in optional local configuration
 cinclude "arch/i386/conf/INSTALL.local"
@@ -770,7 +775,6 @@ pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 options NO_DEV_PTM
 #pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 
 # a pseudo device needed for Coda	# also needs CODA (above)

@@ -1,4 +1,4 @@
-/* $NetBSD: compile.c,v 1.5 2011/04/11 21:37:19 roy Exp $ */
+/* $NetBSD: compile.c,v 1.5.4.1 2012/04/17 00:05:33 yamt Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: compile.c,v 1.5 2011/04/11 21:37:19 roy Exp $");
+__RCSID("$NetBSD: compile.c,v 1.5.4.1 2012/04/17 00:05:33 yamt Exp $");
 
 #if !HAVE_NBTOOL_CONFIG_H || HAVE_SYS_ENDIAN_H
 #include <sys/endian.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: compile.c,v 1.5 2011/04/11 21:37:19 roy Exp $");
 #include <term_private.h>
 #include <term.h>
 
-static void __attribute__((__format__(__printf__, 2, 3)))
+static void __printflike(2, 3)
 dowarn(int flags, const char *fmt, ...)
 {
 	va_list va;

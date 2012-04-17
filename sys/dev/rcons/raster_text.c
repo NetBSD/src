@@ -1,4 +1,4 @@
-/*	$NetBSD: raster_text.c,v 1.9 2007/03/04 06:02:39 christos Exp $ */
+/*	$NetBSD: raster_text.c,v 1.9.76.1 2012/04/17 00:08:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raster_text.c,v 1.9 2007/03/04 06:02:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raster_text.c,v 1.9.76.1 2012/04/17 00:08:01 yamt Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -61,25 +61,27 @@ __KERNEL_RCSID(0, "$NetBSD: raster_text.c,v 1.9 2007/03/04 06:02:39 christos Exp
 
 /* Draws text.  Returns 0 on success, -1 on failure. */
 int
-raster_text( r, x, y, rop, rf, text )
-    struct raster* r;
-    int x, y;
-    int rop;
-    struct raster_font* rf;
-    unsigned char* text;
+raster_text(
+    struct raster* r,
+    int x,
+    int y,
+    int rop,
+    struct raster_font* rf,
+    unsigned char* text)
     {
     return raster_textn( r, x, y, rop, rf, text, strlen( text ) );
     }
 
 /* Draws n characters of text.  Returns 0 on success, -1 on failure. */
 int
-raster_textn( r, x, y, rop, rf, text, n )
-    struct raster* r;
-    int x, y;
-    int rop;
-    struct raster_font* rf;
-    unsigned char* text;
-    int n;
+raster_textn(
+    struct raster* r,
+    int x,
+    int y,
+    int rop,
+    struct raster_font* rf,
+    unsigned char* text,
+    int n)
     {
     int clip;
     int x1, y1;
@@ -223,8 +225,10 @@ raster_textn( r, x, y, rop, rf, text, n )
 #ifdef COLORFONT_CACHE
 /* Allocates a raster.  Returns (struct raster*) 0 on failure. */
 struct raster*
-raster_alloc( width, height, depth )
-    int width, height, depth;
+raster_alloc(
+    int width,
+    int height,
+    int depth)
     {
     struct raster* r;
     int linelongs;

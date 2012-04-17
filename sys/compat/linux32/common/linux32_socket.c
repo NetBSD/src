@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socket.c,v 1.15 2009/12/12 10:30:09 njoly Exp $ */
+/*	$NetBSD: linux32_socket.c,v 1.15.12.1 2012/04/17 00:07:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.15 2009/12/12 10:30:09 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.15.12.1 2012/04/17 00:07:19 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -533,7 +533,7 @@ linux32_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 
 	if (strncmp(lreq.ifr_name, "eth", 3) == 0) {
 		for (ifnum = 0, index = 3;
-		     lreq.ifr_name[index] != '\0' && index < LINUX32_IFNAMSIZ;
+		     index < LINUX32_IFNAMSIZ && lreq.ifr_name[index] != '\0';
 		     index++) {
 			ifnum *= 10;
 			ifnum += lreq.ifr_name[index] - '0';

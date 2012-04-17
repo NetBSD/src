@@ -1,4 +1,4 @@
-/*	$NetBSD: pr.c,v 1.21 2011/09/06 18:26:06 joerg Exp $	*/
+/*	$NetBSD: pr.c,v 1.21.2.1 2012/04/17 00:09:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: pr.c,v 1.21 2011/09/06 18:26:06 joerg Exp $");
+__RCSID("$NetBSD: pr.c,v 1.21.2.1 2012/04/17 00:09:38 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -1138,14 +1138,7 @@ otln(char *buf, int cnt, int *svips, int *svops, int mor)
 			/*
 			 * got a non space char; contract out spaces
 			 */
-			while (ops < ips) {
-				/*
-				 * use one space if necessary
-				 */
-				if (ips - ops == 1) {
-					putchar(' ');
-					break;
-				}
+			while (ips - ops > 1) {
 				/*
 				 * use as many ochar as will fit
 				 */
@@ -1190,14 +1183,7 @@ otln(char *buf, int cnt, int *svips, int *svops, int mor)
 		}
 
 		if (mor < 0) {
-			while (ops < ips) {
-				/*
-				 * use one space if necessary
-				 */
-				if (ips - ops == 1) {
-					putchar(' ');
-					break;
-				}
+			while (ips - ops > 1) {
 				/*
 				 * use as many ochar as will fit
 				 */

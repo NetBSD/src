@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.160 2010/06/13 03:09:32 tsutsui Exp $
+#	$NetBSD: files.isa,v 1.160.8.1 2012/04/17 00:07:38 yamt Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -459,7 +459,9 @@ file	dev/isa/wbsio.c			wbsio
 # LM78 temp/fanspeed monitor
 attach	lm at isa with lm_isa
 attach	lm at wbsio with lm_wbsio
-file	dev/isa/lm_isa.c		lm_isa | lm_wbsio
+file	dev/isa/lm_isa_common.c		lm_isa | lm_wbsio
+file	dev/isa/lm_isa.c		lm_isa
+file	dev/isa/lm_wbsio.c		lm_wbsio
 
 # iTE Super I/O with hardware monitor
 device	itesio: sysmon_envsys, sysmon_wdog
@@ -520,6 +522,10 @@ file	dev/isa/toasterlcd.c		toasterlcd
 device toaster
 attach toaster at tsdio
 file	dev/isa/toaster.c		toaster
+
+# Trusted Platform Module
+attach tpm at isa with tpm_isa
+file   dev/isa/tpm_isa.c		tpm_isa	needs-flag
 
 #
 # ISA Plug 'n Play autoconfiguration glue.

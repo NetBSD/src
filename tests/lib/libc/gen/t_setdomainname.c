@@ -1,4 +1,4 @@
-/* $NetBSD: t_setdomainname.c,v 1.1 2011/06/03 05:42:09 jruoho Exp $ */
+/* $NetBSD: t_setdomainname.c,v 1.1.4.1 2012/04/17 00:09:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_setdomainname.c,v 1.1 2011/06/03 05:42:09 jruoho Exp $");
+__RCSID("$NetBSD: t_setdomainname.c,v 1.1.4.1 2012/04/17 00:09:11 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -43,7 +43,7 @@ static char domain[MAXHOSTNAMELEN];
 static const char domains[][MAXHOSTNAMELEN] = {
 	"1234567890",
 	"abcdefghijklmnopqrst",
-	"!#¤%&/(..xasS812=!=!(I(!;X;;X.as.dasa=?;,..<>|**^¨",
+	"!#\xa4%&/(..xasS812=!=!(I(!;X;;X.as.dasa=?;,..<>|**^\xa8",
 	"--------------------------------------------------------------------"
 };
 

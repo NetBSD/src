@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/06 01:14:06 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.6.1 2012/04/17 00:03:34 yamt Exp $
 
 LIB=	clangDriver
 
@@ -14,7 +14,6 @@ SRCS+=	Action.cpp \
 	Compilation.cpp \
 	Driver.cpp \
 	DriverOptions.cpp \
-	HostInfo.cpp \
 	Job.cpp \
 	Option.cpp \
 	OptTable.cpp \
@@ -23,7 +22,8 @@ SRCS+=	Action.cpp \
 	ToolChain.cpp \
 	ToolChains.cpp \
 	Tools.cpp \
-	Types.cpp
+	Types.cpp \
+	WindowsToolChain.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

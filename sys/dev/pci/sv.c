@@ -1,8 +1,8 @@
-/*      $NetBSD: sv.c,v 1.44 2009/11/26 15:17:10 njoly Exp $ */
+/*      $NetBSD: sv.c,v 1.44.12.1 2012/04/17 00:07:57 yamt Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -67,12 +67,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.44 2009/11/26 15:17:10 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.44.12.1 2012/04/17 00:07:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 
 #include <dev/pci/pcireg.h>
@@ -159,11 +159,12 @@ static int	sv_getdev(void *, struct audio_device *);
 static int	sv_mixer_set_port(void *, mixer_ctrl_t *);
 static int	sv_mixer_get_port(void *, mixer_ctrl_t *);
 static int	sv_query_devinfo(void *, mixer_devinfo_t *);
-static void *	sv_malloc(void *, int, size_t, struct malloc_type *, int);
-static void	sv_free(void *, void *, struct malloc_type *);
+static void *	sv_malloc(void *, int, size_t);
+static void	sv_free(void *, void *, size_t);
 static size_t	sv_round_buffersize(void *, int, size_t);
 static paddr_t	sv_mappage(void *, void *, off_t, int);
 static int	sv_get_props(void *);
+static void	sv_get_locks(void *, kmutex_t **, kmutex_t **);
 
 #ifdef AUDIO_DEBUG
 void    sv_dumpregs(struct sv_softc *sc);
@@ -197,7 +198,7 @@ static const struct audio_hw_if sv_hw_if = {
 	sv_trigger_output,
 	sv_trigger_input,
 	NULL,
-	NULL,
+	sv_get_locks,
 };
 
 #define SV_NFORMATS	4
@@ -235,12 +236,9 @@ static uint8_t
 sv_read_indirect(struct sv_softc *sc, uint8_t reg)
 {
 	uint8_t val;
-	int s;
 
-	s = splaudio();
 	sv_write(sc, SV_CODEC_IADDR, reg & SV_IADDR_MASK);
 	val = sv_read(sc, SV_CODEC_IDATA);
-	splx(s);
 	return val;
 }
 
@@ -248,16 +246,13 @@ static void
 sv_write_indirect(struct sv_softc *sc, uint8_t reg, uint8_t val)
 {
 	uint8_t iaddr;
-	int s;
 
 	iaddr = reg & SV_IADDR_MASK;
-	s = splaudio();
 	if (reg == SV_DMA_DATA_FORMAT)
 		iaddr |= SV_IADDR_MCE;
 
 	sv_write(sc, SV_CODEC_IADDR, iaddr);
 	sv_write(sc, SV_CODEC_IDATA, val);
-	splx(s);
 }
 
 static int
@@ -425,19 +420,15 @@ sv_attach(device_t parent, device_t self, void *aux)
 
 	DPRINTF(("sv_attach: control=0x%x\n", sv_read(sc, SV_CODEC_CONTROL)));
 
-	/* Enable DMA interrupts */
-	reg = sv_read(sc, SV_CODEC_INTMASK);
-	reg &= ~(SV_INTMASK_DMAA | SV_INTMASK_DMAC);
-	reg |= SV_INTMASK_UD | SV_INTMASK_SINT | SV_INTMASK_MIDI;
-	sv_write(sc, SV_CODEC_INTMASK, reg);
-
-	sv_read(sc, SV_CODEC_STATUS);
-
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
 		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
+
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
+
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, sv_intr, sc);
 	if (sc->sc_ih == NULL) {
@@ -445,6 +436,8 @@ sv_attach(device_t parent, device_t self, void *aux)
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
+		mutex_destroy(&sc->sc_lock);
+		mutex_destroy(&sc->sc_intr_lock);
 		return;
 	}
 	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);
@@ -455,6 +448,13 @@ sv_attach(device_t parent, device_t self, void *aux)
 	if (!(sv_read_indirect(sc, SV_WAVETABLE_SOURCE_SELECT) & SV_WSS_WT0))
 		printf(", wavetable ROM present");
 	printf("\n");
+
+	/* Enable DMA interrupts */
+	reg = sv_read(sc, SV_CODEC_INTMASK);
+	reg &= ~(SV_INTMASK_DMAA | SV_INTMASK_DMAC);
+	reg |= SV_INTMASK_UD | SV_INTMASK_SINT | SV_INTMASK_MIDI;
+	sv_write(sc, SV_CODEC_INTMASK, reg);
+	sv_read(sc, SV_CODEC_STATUS);
 
 	sv_init_mixer(sc);
 
@@ -500,11 +500,11 @@ sv_intr(void *p)
 	uint8_t intr;
 
 	sc = p;
+
+	mutex_spin_enter(&sc->sc_intr_lock);
+
 	intr = sv_read(sc, SV_CODEC_STATUS);
 	DPRINTFN(5,("sv_intr: intr=0x%x\n", intr));
-
-	if (!(intr & (SV_INTSTATUS_DMAA | SV_INTSTATUS_DMAC)))
-		return 0;
 
 	if (intr & SV_INTSTATUS_DMAA) {
 		if (sc->sc_pintr)
@@ -516,7 +516,9 @@ sv_intr(void *p)
 			sc->sc_rintr(sc->sc_rarg);
 	}
 
-	return 1;
+	mutex_spin_exit(&sc->sc_intr_lock);
+
+	return (intr & (SV_INTSTATUS_DMAA | SV_INTSTATUS_DMAC)) != 0;
 }
 
 static int
@@ -527,22 +529,22 @@ sv_allocmem(struct sv_softc *sc, size_t size, size_t align,
 
 	p->size = size;
 	error = bus_dmamem_alloc(sc->sc_dmatag, p->size, align, 0,
-	    p->segs, ARRAY_SIZE(p->segs), &p->nsegs, BUS_DMA_NOWAIT);
+	    p->segs, ARRAY_SIZE(p->segs), &p->nsegs, BUS_DMA_WAITOK);
 	if (error)
 		return error;
 
 	error = bus_dmamem_map(sc->sc_dmatag, p->segs, p->nsegs, p->size,
-	    &p->addr, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+	    &p->addr, BUS_DMA_WAITOK|BUS_DMA_COHERENT);
 	if (error)
 		goto free;
 
 	error = bus_dmamap_create(sc->sc_dmatag, p->size, 1, p->size,
-	    0, BUS_DMA_NOWAIT, &p->map);
+	    0, BUS_DMA_WAITOK, &p->map);
 	if (error)
 		goto unmap;
 
 	error = bus_dmamap_load(sc->sc_dmatag, p->map, p->addr, p->size, NULL,
-	    BUS_DMA_NOWAIT | (direction == AUMODE_RECORD) ? BUS_DMA_READ : BUS_DMA_WRITE);
+	    BUS_DMA_WAITOK | (direction == AUMODE_RECORD) ? BUS_DMA_READ : BUS_DMA_WRITE);
 	if (error)
 		goto destroy;
 	DPRINTF(("sv_allocmem: pa=%lx va=%lx pba=%lx\n",
@@ -694,8 +696,10 @@ sv_set_params(void *addr, int setmode, int usemode, audio_params_t *play,
 	if (val > 65535)
 		val = 65535;
 
+	mutex_spin_enter(&sc->sc_intr_lock);
 	sv_write_indirect(sc, SV_PCM_SAMPLE_RATE_0, val & 0xff);
 	sv_write_indirect(sc, SV_PCM_SAMPLE_RATE_1, val >> 8);
+	mutex_spin_exit(&sc->sc_intr_lock);
 
 #define F_REF 24576000
 
@@ -754,9 +758,11 @@ sv_set_params(void *addr, int setmode, int usemode, audio_params_t *play,
 		best_n -= 2;
 		best_m -= 2;
 
+		mutex_spin_enter(&sc->sc_intr_lock);
 		sv_write_indirect(sc, SV_ADC_PLL_M, best_m);
 		sv_write_indirect(sc, SV_ADC_PLL_N,
 				  best_n | (a << SV_PLL_R_SHIFT));
+		mutex_spin_exit(&sc->sc_intr_lock);
 	}
 
 	return 0;
@@ -1102,6 +1108,7 @@ sv_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 			if (cp->type != AUDIO_MIXER_ENUM)
 				return EINVAL;
 
+			mutex_spin_enter(&sc->sc_intr_lock);
 			reg = sv_read_indirect(sc, ports[idx].l_port);
 			if (cp->un.ord)
 				reg |= SV_MUTE_BIT;
@@ -1117,6 +1124,7 @@ sv_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 					reg &= ~SV_MUTE_BIT;
 				sv_write_indirect(sc, ports[idx].r_port, reg);
 			}
+			mutex_spin_exit(&sc->sc_intr_lock);
 		} else {
 			int  lval, rval;
 
@@ -1140,7 +1148,7 @@ sv_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 				rval = cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
 			}
 
-
+			mutex_spin_enter(&sc->sc_intr_lock);
 			reg = sv_read_indirect(sc, ports[idx].l_port);
 			reg &= ~(ports[idx].mask);
 			lval = (AUDIO_MAX_GAIN - lval) * ports[idx].mask /
@@ -1160,6 +1168,7 @@ sv_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 			}
 
 			sv_read_indirect(sc, ports[idx].l_port);
+			mutex_spin_exit(&sc->sc_intr_lock);
 		}
 
 		return 0;
@@ -1179,6 +1188,7 @@ sv_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 		return EINVAL;
 
 	found:
+		mutex_spin_enter(&sc->sc_intr_lock);
 		reg = sv_read_indirect(sc, SV_LEFT_ADC_INPUT_CONTROL);
 		reg &= ~SV_REC_SOURCE_MASK;
 		reg |= (((cp->un.ord) << SV_REC_SOURCE_SHIFT) & SV_REC_SOURCE_MASK);
@@ -1188,6 +1198,7 @@ sv_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 		reg &= ~SV_REC_SOURCE_MASK;
 		reg |= (((cp->un.ord) << SV_REC_SOURCE_SHIFT) & SV_REC_SOURCE_MASK);
 		sv_write_indirect(sc, SV_RIGHT_ADC_INPUT_CONTROL, reg);
+		mutex_spin_exit(&sc->sc_intr_lock);
 		return 0;
 
 	case SV_RECORD_GAIN:
@@ -1203,6 +1214,7 @@ sv_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 		val = (cp->un.value.level[AUDIO_MIXER_LEVEL_MONO]
 		    * SV_REC_GAIN_MASK) / AUDIO_MAX_GAIN;
 
+		mutex_spin_enter(&sc->sc_intr_lock);
 		reg = sv_read_indirect(sc, SV_LEFT_ADC_INPUT_CONTROL);
 		reg &= ~SV_REC_GAIN_MASK;
 		reg |= val;
@@ -1212,6 +1224,7 @@ sv_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 		reg &= ~SV_REC_GAIN_MASK;
 		reg |= val;
 		sv_write_indirect(sc, SV_RIGHT_ADC_INPUT_CONTROL, reg);
+		mutex_spin_exit(&sc->sc_intr_lock);
 	}
 	return (0);
 
@@ -1219,6 +1232,7 @@ sv_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 		if (cp->type != AUDIO_MIXER_ENUM)
 			return EINVAL;
 
+		mutex_spin_enter(&sc->sc_intr_lock);
 		reg = sv_read_indirect(sc, SV_LEFT_ADC_INPUT_CONTROL);
 		if (cp->un.ord) {
 			reg |= SV_MIC_BOOST_BIT;
@@ -1227,12 +1241,14 @@ sv_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 		}
 
 		sv_write_indirect(sc, SV_LEFT_ADC_INPUT_CONTROL, reg);
+		mutex_spin_exit(&sc->sc_intr_lock);
 		return 0;
 
 	case SV_SRS_MODE:
 		if (cp->type != AUDIO_MIXER_ENUM)
 			return EINVAL;
 
+		mutex_spin_enter(&sc->sc_intr_lock);
 		reg = sv_read_indirect(sc, SV_SRS_SPACE_CONTROL);
 		if (cp->un.ord) {
 			reg &= ~SV_SRS_SPACE_ONOFF;
@@ -1241,6 +1257,7 @@ sv_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 		}
 
 		sv_write_indirect(sc, SV_SRS_SPACE_CONTROL, reg);
+		mutex_spin_exit(&sc->sc_intr_lock);
 		return 0;
 	}
 
@@ -1251,10 +1268,14 @@ static int
 sv_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 {
 	struct sv_softc *sc;
-	int val;
+	int val, error;
 	uint8_t reg;
 
 	sc = addr;
+	error = 0;
+
+	mutex_spin_enter(&sc->sc_intr_lock);
+
 	if (cp->dev >= SV_FIRST_MIXER &&
 	    cp->dev <= SV_LAST_MIXER) {
 		int off = cp->dev - SV_FIRST_MIXER;
@@ -1266,83 +1287,101 @@ sv_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 		idx = off / 2;
 		if (mute) {
 			if (cp->type != AUDIO_MIXER_ENUM)
-				return EINVAL;
-
-			reg = sv_read_indirect(sc, ports[idx].l_port);
-			cp->un.ord = ((reg & SV_MUTE_BIT) ? 1 : 0);
+				error = EINVAL;
+			else {
+				reg = sv_read_indirect(sc, ports[idx].l_port);
+				cp->un.ord = ((reg & SV_MUTE_BIT) ? 1 : 0);
+			}
 		} else {
-			if (cp->type != AUDIO_MIXER_VALUE)
-				return EINVAL;
-
-			if (cp->un.value.num_channels != 1 &&
-			    cp->un.value.num_channels != 2)
-				return EINVAL;
-
-			if ((ports[idx].r_port == 0 &&
+			if (cp->type != AUDIO_MIXER_VALUE ||
+			    (cp->un.value.num_channels != 1 &&
+			    cp->un.value.num_channels != 2) ||
+			   ((ports[idx].r_port == 0 &&
 			     cp->un.value.num_channels != 1) ||
 			    (ports[idx].r_port != 0 &&
-			     cp->un.value.num_channels != 2))
-				return EINVAL;
-
-			reg = sv_read_indirect(sc, ports[idx].l_port);
-			reg &= ports[idx].mask;
-
-			val = AUDIO_MAX_GAIN - ((reg * AUDIO_MAX_GAIN) / ports[idx].mask);
-
-			if (ports[idx].r_port != 0) {
-				cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = val;
-
-				reg = sv_read_indirect(sc, ports[idx].r_port);
+			     cp->un.value.num_channels != 2)))
+				error = EINVAL;
+			else {
+				reg = sv_read_indirect(sc, ports[idx].l_port);
 				reg &= ports[idx].mask;
 
-				val = AUDIO_MAX_GAIN - ((reg * AUDIO_MAX_GAIN)
-				    / ports[idx].mask);
-				cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = val;
-			} else
-				cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] = val;
+				val = AUDIO_MAX_GAIN -
+				    ((reg * AUDIO_MAX_GAIN) / ports[idx].mask);
+
+				if (ports[idx].r_port != 0) {
+					cp->un.value.level
+					    [AUDIO_MIXER_LEVEL_LEFT] = val;
+
+					reg = sv_read_indirect(sc,
+					    ports[idx].r_port);
+					reg &= ports[idx].mask;
+
+					val = AUDIO_MAX_GAIN -
+					    ((reg * AUDIO_MAX_GAIN)
+					    / ports[idx].mask);
+					cp->un.value.level
+					    [AUDIO_MIXER_LEVEL_RIGHT] = val;
+				} else
+					cp->un.value.level
+					    [AUDIO_MIXER_LEVEL_MONO] = val;
+			}
 		}
 
-		return 0;
+		return error;
 	}
 
 	switch (cp->dev) {
 	case SV_RECORD_SOURCE:
-		if (cp->type != AUDIO_MIXER_ENUM)
-			return EINVAL;
+		if (cp->type != AUDIO_MIXER_ENUM) {
+			error = EINVAL;
+			break;
+		}
 
 		reg = sv_read_indirect(sc, SV_LEFT_ADC_INPUT_CONTROL);
 		cp->un.ord = ((reg & SV_REC_SOURCE_MASK) >> SV_REC_SOURCE_SHIFT);
 
-		return 0;
+		break;
 
 	case SV_RECORD_GAIN:
-		if (cp->type != AUDIO_MIXER_VALUE)
-			return EINVAL;
-		if (cp->un.value.num_channels != 1)
-			return EINVAL;
+		if (cp->type != AUDIO_MIXER_VALUE) {
+			error = EINVAL;
+			break;
+		}
+		if (cp->un.value.num_channels != 1) {
+			error = EINVAL;
+			break;
+		}
 
 		reg = sv_read_indirect(sc, SV_LEFT_ADC_INPUT_CONTROL) & SV_REC_GAIN_MASK;
 		cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
 			(((unsigned int)reg) * AUDIO_MAX_GAIN) / SV_REC_GAIN_MASK;
 
-		return 0;
+		break;
 
 	case SV_MIC_BOOST:
-		if (cp->type != AUDIO_MIXER_ENUM)
-			return EINVAL;
+		if (cp->type != AUDIO_MIXER_ENUM) {
+			error = EINVAL;
+			break;
+		}
 		reg = sv_read_indirect(sc, SV_LEFT_ADC_INPUT_CONTROL);
 		cp->un.ord = ((reg & SV_MIC_BOOST_BIT) ? 1 : 0);
-		return 0;
+		break;
 
 	case SV_SRS_MODE:
-		if (cp->type != AUDIO_MIXER_ENUM)
-			return EINVAL;
+		if (cp->type != AUDIO_MIXER_ENUM) {
+			error = EINVAL;
+			break;
+		}
 		reg = sv_read_indirect(sc, SV_SRS_SPACE_CONTROL);
 		cp->un.ord = ((reg & SV_SRS_SPACE_ONOFF) ? 0 : 1);
-		return 0;
+		break;
+	default:
+		error = EINVAL;
+		break;
 	}
 
-	return EINVAL;
+	mutex_spin_exit(&sc->sc_intr_lock);
+	return error;
 }
 
 static void
@@ -1369,20 +1408,19 @@ sv_init_mixer(struct sv_softc *sc)
 }
 
 static void *
-sv_malloc(void *addr, int direction, size_t size,
-    struct malloc_type *pool, int flags)
+sv_malloc(void *addr, int direction, size_t size)
 {
 	struct sv_softc *sc;
 	struct sv_dma *p;
 	int error;
 
 	sc = addr;
-	p = malloc(sizeof(*p), pool, flags);
+	p = kmem_alloc(sizeof(*p), KM_SLEEP);
 	if (p == NULL)
 		return NULL;
 	error = sv_allocmem(sc, size, 16, direction, p);
 	if (error) {
-		free(p, pool);
+		kmem_free(p, sizeof(*p));
 		return 0;
 	}
 	p->next = sc->sc_dmas;
@@ -1391,7 +1429,7 @@ sv_malloc(void *addr, int direction, size_t size,
 }
 
 static void
-sv_free(void *addr, void *ptr, struct malloc_type *pool)
+sv_free(void *addr, void *ptr, size_t size)
 {
 	struct sv_softc *sc;
 	struct sv_dma **pp, *p;
@@ -1401,7 +1439,7 @@ sv_free(void *addr, void *ptr, struct malloc_type *pool)
 		if (KERNADDR(p) == ptr) {
 			sv_freemem(sc, p);
 			*pp = p->next;
-			free(p, pool);
+			kmem_free(p, sizeof(*p));
 			return;
 		}
 	}
@@ -1435,4 +1473,14 @@ static int
 sv_get_props(void *addr)
 {
 	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
+}
+
+static void
+sv_get_locks(void *addr, kmutex_t **intr, kmutex_t **thread)
+{
+	struct sv_softc *sc;
+
+	sc = addr;
+	*intr = &sc->sc_intr_lock;
+	*thread = &sc->sc_lock;
 }

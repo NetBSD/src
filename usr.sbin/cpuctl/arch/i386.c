@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.25 2011/05/03 09:06:22 jruoho Exp $	*/
+/*	$NetBSD: i386.c,v 1.25.4.1 2012/04/17 00:09:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.25 2011/05/03 09:06:22 jruoho Exp $");
+__RCSID("$NetBSD: i386.c,v 1.25.4.1 2012/04/17 00:09:45 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -182,6 +182,7 @@ static const char * const amd_brand[] = {
 static int cpu_vendor;
 static char cpu_brand_string[49];
 static char amd_brand_name[48];
+static int use_pae, largepagesize;
 
 static void via_cpu_probe(struct cpu_info *);
 static void amd_family6_probe(struct cpu_info *);
@@ -1380,6 +1381,9 @@ identifycpu(const char *cpuname)
 
 	sz = sizeof(ci->ci_tsc_freq);
 	(void)sysctlbyname("machdep.tsc_freq", &ci->ci_tsc_freq, &sz, NULL, 0);
+	sz = sizeof(use_pae);
+	(void)sysctlbyname("machdep.pae", &use_pae, &sz, NULL, 0);
+	largepagesize = (use_pae ? 2 * 1024 * 1024 : 4 * 1024 * 1024);
 
 	snprintf(cpu_model, sizeof(cpu_model), "%s%s%s%s%s%s%s (%s-class)",
 	    vendorname,
@@ -1390,9 +1394,9 @@ identifycpu(const char *cpuname)
 	aprint_normal("%s: %s", cpuname, cpu_model);
 
 	if (ci->ci_tsc_freq != 0)
-		aprint_normal(", %qd.%02qd MHz",
-		    (ci->ci_tsc_freq + 4999) / 1000000,
-		    ((ci->ci_tsc_freq + 4999) / 10000) % 100);
+		aprint_normal(", %ju.%02ju MHz",
+		    ((uintmax_t)ci->ci_tsc_freq + 4999) / 1000000,
+		    (((uintmax_t)ci->ci_tsc_freq + 4999) / 10000) % 100);
 	if (ci->ci_signature != 0)
 		aprint_normal(", id 0x%x", ci->ci_signature);
 	aprint_normal("\n");
@@ -1513,9 +1517,10 @@ identifycpu(const char *cpuname)
 #endif
 
 	aprint_normal_dev(ci->ci_dev, "family %02x model %02x "
-	    "extfamily %02x extmodel %02x\n", CPUID2FAMILY(ci->ci_signature),
-	    CPUID2MODEL(ci->ci_signature), CPUID2EXTFAMILY(ci->ci_signature),
-	    CPUID2EXTMODEL(ci->ci_signature));
+	    "extfamily %02x extmodel %02x stepping %02x\n",
+	    CPUID2FAMILY(ci->ci_signature), CPUID2MODEL(ci->ci_signature),
+	    CPUID2EXTFAMILY(ci->ci_signature), CPUID2EXTMODEL(ci->ci_signature),
+	    CPUID2STEPPING(ci->ci_signature));
 }
 
 static const char *
@@ -1669,12 +1674,12 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 		cai = &ci->ci_cinfo[CAI_ITLB2];
 		cai->cai_totalsize = AMD_L1_EAX_ITLB_ENTRIES(descs[0]);
 		cai->cai_associativity = AMD_L1_EAX_ITLB_ASSOC(descs[0]);
-		cai->cai_linesize = (4 * 1024 * 1024);
+		cai->cai_linesize = largepagesize;
 
 		cai = &ci->ci_cinfo[CAI_DTLB2];
 		cai->cai_totalsize = AMD_L1_EAX_DTLB_ENTRIES(descs[0]);
 		cai->cai_associativity = AMD_L1_EAX_DTLB_ASSOC(descs[0]);
-		cai->cai_linesize = (4 * 1024 * 1024);
+		cai->cai_linesize = largepagesize;
 	}
 
 	cai = &ci->ci_cinfo[CAI_ITLB];
@@ -1690,7 +1695,7 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 	cai = &ci->ci_cinfo[CAI_DCACHE];
 	cai->cai_totalsize = AMD_L1_ECX_DC_SIZE(descs[2]);
 	cai->cai_associativity = AMD_L1_ECX_DC_ASSOC(descs[2]);
-	cai->cai_linesize = AMD_L1_EDX_IC_LS(descs[2]);
+	cai->cai_linesize = AMD_L1_ECX_DC_LS(descs[2]);
 
 	cai = &ci->ci_cinfo[CAI_ICACHE];
 	cai->cai_totalsize = AMD_L1_EDX_IC_SIZE(descs[3]);
@@ -1707,6 +1712,50 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 
 	x86_cpuid(0x80000006, descs);
 
+	cai = &ci->ci_cinfo[CAI_L2_ITLB];
+	cai->cai_totalsize = AMD_L2_EBX_IUTLB_ENTRIES(descs[1]);
+	cai->cai_associativity = AMD_L2_EBX_IUTLB_ASSOC(descs[1]);
+	cai->cai_linesize = (4 * 1024);
+	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
+	    cai->cai_associativity);
+	if (cp != NULL)
+		cai->cai_associativity = cp->cai_associativity;
+	else
+		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
+
+	cai = &ci->ci_cinfo[CAI_L2_ITLB2];
+	cai->cai_totalsize = AMD_L2_EAX_IUTLB_ENTRIES(descs[0]);
+	cai->cai_associativity = AMD_L2_EAX_IUTLB_ASSOC(descs[0]);
+	cai->cai_linesize = largepagesize;
+	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
+	    cai->cai_associativity);
+	if (cp != NULL)
+		cai->cai_associativity = cp->cai_associativity;
+	else
+		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
+
+	cai = &ci->ci_cinfo[CAI_L2_DTLB];
+	cai->cai_totalsize = AMD_L2_EBX_DTLB_ENTRIES(descs[1]);
+	cai->cai_associativity = AMD_L2_EBX_DTLB_ASSOC(descs[1]);
+	cai->cai_linesize = (4 * 1024);
+	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
+	    cai->cai_associativity);
+	if (cp != NULL)
+		cai->cai_associativity = cp->cai_associativity;
+	else
+		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
+
+	cai = &ci->ci_cinfo[CAI_L2_DTLB2];
+	cai->cai_totalsize = AMD_L2_EAX_DTLB_ENTRIES(descs[0]);
+	cai->cai_associativity = AMD_L2_EAX_DTLB_ASSOC(descs[0]);
+	cai->cai_linesize = largepagesize;
+	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
+	    cai->cai_associativity);
+	if (cp != NULL)
+		cai->cai_associativity = cp->cai_associativity;
+	else
+		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
+
 	cai = &ci->ci_cinfo[CAI_L2CACHE];
 	cai->cai_totalsize = AMD_L2_ECX_C_SIZE(descs[2]);
 	cai->cai_associativity = AMD_L2_ECX_C_ASSOC(descs[2]);
@@ -1720,9 +1769,9 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
 
 	/*
-	 * Determine L3 cache info on AMD Family 10h processors
+	 * Determine L3 cache info on AMD Family 10h and newer processors
 	 */
-	if (family == 0x10) {
+	if (family >= 0x10) {
 		cai = &ci->ci_cinfo[CAI_L3CACHE];
 		cai->cai_totalsize = AMD_L3_EDX_C_SIZE(descs[3]);
 		cai->cai_associativity = AMD_L3_EDX_C_ASSOC(descs[3]);
@@ -1735,6 +1784,60 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 		else
 			cai->cai_associativity = 0;	/* XXX Unkn/Rsvd */
 	}
+
+	/*
+	 * Determine 1GB TLB info.
+	 */
+	if (lfunc < 0x80000019) {
+		/* No 1GB TLB info available. */
+		return;
+	}
+
+	x86_cpuid(0x80000019, descs);
+
+	cai = &ci->ci_cinfo[CAI_L1_1GBITLB];
+	cai->cai_totalsize = AMD_L1_1GB_EAX_IUTLB_ENTRIES(descs[0]);
+	cai->cai_associativity = AMD_L1_1GB_EAX_IUTLB_ASSOC(descs[0]);
+	cai->cai_linesize = (1024 * 1024 * 1024);
+	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
+	    cai->cai_associativity);
+	if (cp != NULL)
+		cai->cai_associativity = cp->cai_associativity;
+	else
+		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
+
+	cai = &ci->ci_cinfo[CAI_L1_1GBDTLB];
+	cai->cai_totalsize = AMD_L1_1GB_EAX_DTLB_ENTRIES(descs[0]);
+	cai->cai_associativity = AMD_L1_1GB_EAX_DTLB_ASSOC(descs[0]);
+	cai->cai_linesize = (1024 * 1024 * 1024);
+	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
+	    cai->cai_associativity);
+	if (cp != NULL)
+		cai->cai_associativity = cp->cai_associativity;
+	else
+		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
+
+	cai = &ci->ci_cinfo[CAI_L2_1GBITLB];
+	cai->cai_totalsize = AMD_L2_1GB_EBX_IUTLB_ENTRIES(descs[1]);
+	cai->cai_associativity = AMD_L2_1GB_EBX_IUTLB_ASSOC(descs[1]);
+	cai->cai_linesize = (1024 * 1024 * 1024);
+	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
+	    cai->cai_associativity);
+	if (cp != NULL)
+		cai->cai_associativity = cp->cai_associativity;
+	else
+		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
+
+	cai = &ci->ci_cinfo[CAI_L2_1GBDTLB];
+	cai->cai_totalsize = AMD_L2_1GB_EBX_DUTLB_ENTRIES(descs[1]);
+	cai->cai_associativity = AMD_L2_1GB_EBX_DUTLB_ASSOC(descs[1]);
+	cai->cai_linesize = (1024 * 1024 * 1024);
+	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
+	    cai->cai_associativity);
+	if (cp != NULL)
+		cai->cai_associativity = cp->cai_associativity;
+	else
+		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
 }
 
 static void
@@ -1832,6 +1935,11 @@ x86_print_cacheinfo(struct cpu_info *ci)
 		if (sep != NULL)
 			aprint_verbose("\n");
 	}
+	if (ci->ci_cinfo[CAI_L3CACHE].cai_totalsize != 0) {
+		sep = print_cache_config(ci, CAI_L3CACHE, "L3 cache", NULL);
+		if (sep != NULL)
+			aprint_verbose("\n");
+	}
 	if (ci->ci_cinfo[CAI_ITLB].cai_totalsize != 0) {
 		sep = print_tlb_config(ci, CAI_ITLB, "ITLB", NULL);
 		sep = print_tlb_config(ci, CAI_ITLB2, NULL, sep);
@@ -1844,8 +1952,35 @@ x86_print_cacheinfo(struct cpu_info *ci)
 		if (sep != NULL)
 			aprint_verbose("\n");
 	}
-	if (ci->ci_cinfo[CAI_L3CACHE].cai_totalsize != 0) {
-		sep = print_cache_config(ci, CAI_L3CACHE, "L3 cache", NULL);
+	if (ci->ci_cinfo[CAI_L2_ITLB].cai_totalsize != 0) {
+		sep = print_tlb_config(ci, CAI_L2_ITLB, "L2 ITLB", NULL);
+		sep = print_tlb_config(ci, CAI_L2_ITLB2, NULL, sep);
+		if (sep != NULL)
+			aprint_verbose("\n");
+	}
+	if (ci->ci_cinfo[CAI_L2_DTLB].cai_totalsize != 0) {
+		sep = print_tlb_config(ci, CAI_L2_DTLB, "L2 DTLB", NULL);
+		sep = print_tlb_config(ci, CAI_L2_DTLB2, NULL, sep);
+		if (sep != NULL)
+			aprint_verbose("\n");
+	}
+	if (ci->ci_cinfo[CAI_L1_1GBITLB].cai_totalsize != 0) {
+		sep = print_tlb_config(ci, CAI_L1_1GBITLB, "L1 1GB page ITLB", NULL);
+		if (sep != NULL)
+			aprint_verbose("\n");
+	}
+	if (ci->ci_cinfo[CAI_L1_1GBDTLB].cai_totalsize != 0) {
+		sep = print_tlb_config(ci, CAI_L1_1GBDTLB, "L1 1GB page DTLB", NULL);
+		if (sep != NULL)
+			aprint_verbose("\n");
+	}
+	if (ci->ci_cinfo[CAI_L2_1GBITLB].cai_totalsize != 0) {
+		sep = print_tlb_config(ci, CAI_L2_1GBITLB, "L2 1GB page ITLB", NULL);
+		if (sep != NULL)
+			aprint_verbose("\n");
+	}
+	if (ci->ci_cinfo[CAI_L2_1GBDTLB].cai_totalsize != 0) {
+		sep = print_tlb_config(ci, CAI_L2_1GBDTLB, "L2 1GB page DTLB", NULL);
 		if (sep != NULL)
 			aprint_verbose("\n");
 	}

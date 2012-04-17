@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.47 2011/06/08 17:47:48 bouyer Exp $	*/
+/*	$NetBSD: cache.c,v 1.47.2.1 2012/04/17 00:06:39 yamt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.47 2011/06/08 17:47:48 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.47.2.1 2012/04/17 00:06:39 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -124,7 +124,7 @@ static void mips_config_cache_prehistoric(void);
 static void mips_config_cache_emips(void);
 #endif
 #if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
-static void mips_config_cache_modern(void);
+static void mips_config_cache_modern(uint32_t);
 #endif
 
 #if defined(MIPS1) || defined(MIPS3) || defined(MIPS4)
@@ -184,7 +184,7 @@ mips_config_cache(void)
 #endif
 #if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
 	if (MIPS_PRID_CID(cpu_id) != MIPS_PRID_CID_PREHISTORIC)
-		mips_config_cache_modern();
+		mips_config_cache_modern(cpu_id);
 #endif
 
 #ifdef DIAGNOSTIC
@@ -1011,7 +1011,7 @@ static void cache_noop(void) __unused;
 static void cache_noop(void) {}
 
 static void
-mips_config_cache_modern(void)
+mips_config_cache_modern(uint32_t cpu_id)
 {
 	struct mips_cache_info * const mci = &mips_cache_info;
 	struct mips_cache_ops * const mco = &mips_cache_ops;
@@ -1191,6 +1191,16 @@ mips_config_cache_modern(void)
 	default:
 		panic("no Dcache ops for %d byte lines",
 		    mci->mci_pdcache_line_size);
+	}
+
+	/*
+	 * RMI (NetLogic/Broadcom) don't support WB (op 6) so we have to make
+	 * do with WBINV (op 5).  This is merely for correctness since because
+	 * the caches are coherent, these routines will become noops in a bit.
+	 */
+	if (MIPS_PRID_CID(cpu_id) == MIPS_PRID_CID_RMI) {
+		mco->mco_pdcache_wb_range = mco->mco_pdcache_wbinv_range;
+		mco->mco_intern_pdcache_wb_range = mco->mco_pdcache_wbinv_range;
 	}
 
 	mipsNN_cache_init(cfg, cfg1);

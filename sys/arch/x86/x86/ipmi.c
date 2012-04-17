@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.50 2010/08/11 11:31:45 pgoyette Exp $ */
+/*	$NetBSD: ipmi.c,v 1.50.8.1 2012/04/17 00:07:06 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.50 2010/08/11 11:31:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.50.8.1 2012/04/17 00:07:06 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.50 2010/08/11 11:31:45 pgoyette Exp $");
 #include <sys/kthread.h>
 #include <sys/bus.h>
 #include <sys/intr.h>
+#include <sys/rnd.h>
 
 #include <x86/smbiosvar.h>
 
@@ -87,13 +88,15 @@ struct ipmi_sensor {
 	sysmon_envsys_lim_t i_limits, i_deflims;
 	uint32_t	i_props, i_defprops;
 	SLIST_ENTRY(ipmi_sensor) i_list;
+	int32_t		i_prevval;	/* feed rnd source on change */
+	krndsource_t	i_rnd;
 };
 
 int	ipmi_nintr;
 int	ipmi_dbg = 0;
 int	ipmi_enabled = 0;
 
-#define SENSOR_REFRESH_RATE (5 * hz)
+#define SENSOR_REFRESH_RATE (hz / 2)
 
 #define SMBIOS_TYPE_IPMI	0x26
 
@@ -1436,7 +1439,12 @@ ipmi_convert(uint8_t v, struct sdrtype1 *s1, long adj)
 {
 	int64_t	M, B;
 	char	K1, K2;
-	int64_t	val, v1, v2;
+	int64_t	val, v1, v2, vs;
+	int sign = (s1->units1 >> 6) & 0x3;
+
+	vs = (sign == 0x1 || sign == 0x2) ? (int8_t)v : v;
+	if ((vs < 0) && (sign == 0x1))
+		vs++;
 
 	/* Calculate linear reading variables */
 	M  = signextend((((short)(s1->m_tolerance & 0xC0)) << 2) + s1->m, 10);
@@ -1451,7 +1459,7 @@ ipmi_convert(uint8_t v, struct sdrtype1 *s1, long adj)
 	 *  y = L(M*v * 10^(K2+adj) + B * 10^(K1+K2+adj)); */
 	v1 = powx(FIX10, INT2FIX(K2 + adj));
 	v2 = powx(FIX10, INT2FIX(K1 + K2 + adj));
-	val = M * v * v1 + B * v2;
+	val = M * vs * v1 + B * v2;
 
 	/* Linearization function: y = f(x) 0 : y = x 1 : y = ln(x) 2 : y =
 	 * log10(x) 3 : y = log2(x) 4 : y = e^x 5 : y = 10^x 6 : y = 2^x 7 : y
@@ -1498,6 +1506,10 @@ ipmi_convert_sensor(uint8_t *reading, struct ipmi_sensor *psensor)
 	default:
 		val = 0;
 		break;
+	}
+	if (val != psensor->i_prevval) {
+		rnd_add_uint32(&psensor->i_rnd, val);
+		psensor->i_prevval = val;
 	}
 	return val;
 }
@@ -1852,6 +1864,22 @@ add_child_sensors(struct ipmi_softc *sc, uint8_t *psdr, int count,
 			         ipmi_is_dupname(psensor->i_envdesc));
 		}
 
+		/*
+		 * Add entropy source.
+		 */
+		switch (psensor->i_envtype) {
+		    case ENVSYS_STEMP:
+		    case ENVSYS_SFANRPM:
+			rnd_attach_source(&psensor->i_rnd,
+					  psensor->i_envdesc,
+					  RND_TYPE_ENV, 0);
+		        break;
+		    default:	/* XXX intrusion sensors? */
+			rnd_attach_source(&psensor->i_rnd,
+					  psensor->i_envdesc,
+					  RND_TYPE_POWER, 0);
+		}
+		    
 		dbg_printf(5, "add sensor:%.4x %.2x:%d ent:%.2x:%.2x %s\n",
 		    s1->sdrhdr.record_id, s1->sensor_type,
 		    typ, s1->entity_id, s1->entity_instance,
@@ -2125,6 +2153,7 @@ ipmi_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_ia = *(struct ipmi_attach_args *)aux;
 	sc->sc_dev = self;
+	aprint_naive("\n");
 	aprint_normal("\n");
 
 	/* lock around read_sensor so that no one messes with the bmc regs */

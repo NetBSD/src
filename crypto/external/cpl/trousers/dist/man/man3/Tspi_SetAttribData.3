@@ -1,0 +1,87 @@
+.\" Copyright (C) 2004 International Business Machines Corporation
+.\" Written by Kathy Robertson based on the Trusted Computing Group Software Stack Specification Version 1.1 Golden
+.\"
+.de Sh \" Subsection
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+.de Sp \" Vertical space (when we can't use .PP)
+.if t .sp .5v
+.if n .sp
+..
+.de Ip \" List item
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH "Tspi_SetAttribData" 3 "2004-05-26" "TSS 1.1" "TCG Software Stack Developer's Reference"
+.SH NAME
+Tspi_SetAttribData \- set a non 32bit attribute of an object.
+.SH "SYNOPSIS"
+.ad l
+.hy 0
+.nf
+.B #include <tss/platform.h>
+.B #include <tss/tcpa_defines.h>
+.B #include <tss/tcpa_typedef.h>
+.B #include <tss/tcpa_struct.h>
+.B #include <tss/tss_typedef.h>
+.B #include <tss/tss_structs.h>
+.B #include <tss/tspi.h>
+.sp
+.BI "TSS_RESULT Tspi_SetAttribData(TSS_HOBJECT " hObject ", TSS_FLAG " attribFlag ","
+.BI "                              TSS_FLAG    " subFlag ", UINT32   " ulAttribDataSize ","
+.BI "                              BYTE*       " rgbAttribData ");"
+.fi
+.sp
+.ad
+.hy
+
+.SH "DESCRIPTION"
+.PP
+\fBTspi_SetAttribData\fR  sets the attributes associated with a given class of object that aren't UINT32. The structure and size of hte attribute data depends on the attribute.
+.SH "PARAMETERS"
+.PP
+.SS hObject
+Handle of the object where the attribute is to be set.
+.PP
+.SS attribFlag
+Flag indicating the attribute to set.
+.PP
+.SS subFlag
+Sub flag indicating the attribute to set
+.PP
+.SS ulAttribDataSize
+Supplies the length (in bytes) of the rgbAttribData.
+.PP
+.SS rgbAttribData
+Pointer to the actual data which is to be set for the specified attribute.
+.SH "RETURN CODES"
+.PP
+\fBTspi_SetAttribData\fR returns TSS_SUCCESS on success, otherwise one of the following values are returned:
+.TP
+.SM TSS_E_INVALID_HANDLE - \fIhObject\fR is an invalid parameter.
+.TP
+.SM TSS_E_ATTRIB_FLAG - \fIattribFlag\fR is an invalid parameter.
+.TP
+.SM TSS_E_ATTRIB_SUBFLAG - \fIsubFlag\fR is an invalid parameter.
+.TP
+.SM TSS_E_ATTRIB_DATA - \fIrgbAttribData\fR is an invalid parameter.
+.TP
+.SM TSS_E_BAD_PARAMETER
+.TP
+.SM TSS_E_INTERNAL_ERROR - An error occurred internal to the TSS.
+
+.SH "CONFORMING TO"
+
+.PP
+\fBTspi_SetAttribData\fR conforms to the Trusted Computing Group Software Specification version 1.1 Golden
+.SH "SEE ALSO"
+
+.PP
+\fBTspi_GetAttribData\fR(3).

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_fp.h,v 1.2 2010/12/04 23:08:33 christos Exp $	*/
+/*	$NetBSD: ntp_fp.h,v 1.2.6.1 2012/04/17 00:03:44 yamt Exp $	*/
 
 /*
  * ntp_fp.h - definitions for NTP fixed/floating-point arithmetic
@@ -72,7 +72,7 @@ typedef int32 s_fp;
 typedef u_int32 u_fp;
 
 /*
- * A unit second in fp format.  Actually 2**(half_the_bits_in_a_long)
+ * A unit second in fp format.	Actually 2**(half_the_bits_in_a_long)
  */
 #define	FP_SECOND	(0x10000)
 
@@ -88,9 +88,9 @@ typedef u_int32 u_fp;
 #define	NTOHL_MFP(ni, nf, hi, hf) \
 	do { (hi) = ntohl(ni); (hf) = ntohl(nf); } while (0)
 #define	HTONL_MFP(hi, hf, ni, nf) \
-	do { (ni) = ntohl(hi); (nf) = ntohl(hf); } while (0)
+	do { (ni) = htonl(hi); (nf) = htonl(hf); } while (0)
 
-/* funny ones.  Converts ts fractions to net order ts */
+/* funny ones.	Converts ts fractions to net order ts */
 #define	HTONL_UF(uf, nts) \
 	do { (nts)->l_ui = 0; (nts)->l_uf = htonl(uf); } while (0)
 #define	HTONL_F(f, nts) do { (nts)->l_uf = htonl(f); \
@@ -120,7 +120,7 @@ typedef u_int32 u_fp;
  * be replaced by inline assembler for particular machines someday.
  * These are the (kind of inefficient) run-anywhere versions.
  */
-#define	M_NEG(v_i, v_f) 	/* v = -v */ \
+#define	M_NEG(v_i, v_f)		/* v = -v */ \
 	do { \
 		if ((v_f) == 0) \
 			(v_i) = -((s_fp)(v_i)); \
@@ -130,7 +130,7 @@ typedef u_int32 u_fp;
 		} \
 	} while(0)
 
-#define	M_NEGM(r_i, r_f, a_i, a_f) 	/* r = -a */ \
+#define	M_NEGM(r_i, r_f, a_i, a_f)	/* r = -a */ \
 	do { \
 		if ((a_f) == 0) { \
 			(r_f) = 0; \
@@ -141,7 +141,7 @@ typedef u_int32 u_fp;
 		} \
 	} while(0)
 
-#define M_ADD(r_i, r_f, a_i, a_f) 	/* r += a */ \
+#define M_ADD(r_i, r_f, a_i, a_f)	/* r += a */ \
 	do { \
 		register u_int32 lo_tmp; \
 		register u_int32 hi_tmp; \
@@ -240,7 +240,7 @@ typedef u_int32 u_fp;
 		(v_f) <<= 1; \
 	} while (0)
 
-#define	M_ADDUF(r_i, r_f, uf) 		/* r += uf, uf is u_int32 fraction */ \
+#define	M_ADDUF(r_i, r_f, uf)		/* r += uf, uf is u_int32 fraction */ \
 	M_ADD((r_i), (r_f), 0, (uf))	/* let optimizer worry about it */
 
 #define	M_SUBUF(r_i, r_f, uf)		/* r -= uf, uf is u_int32 fraction */ \
@@ -254,7 +254,7 @@ typedef u_int32 u_fp;
 			M_ADD((r_i), (r_f), (-1), (f));\
 	} while(0)
 
-#define	M_ISNEG(v_i, v_f) 		/* v < 0 */ \
+#define	M_ISNEG(v_i, v_f)		/* v < 0 */ \
 	(((v_i) & 0x80000000) != 0)
 
 #define	M_ISHIS(a_i, a_f, b_i, b_f)	/* a >= b unsigned */ \
@@ -293,7 +293,7 @@ typedef u_int32 u_fp;
 /*
  * s_fp/double and u_fp/double conversions
  */
-#define FRIC		65536.	 		/* 2^16 as a double */
+#define FRIC		65536.			/* 2^16 as a double */
 #define DTOFP(r)	((s_fp)((r) * FRIC))
 #define DTOUFP(r)	((u_fp)((r) * FRIC))
 #define FPTOD(r)	((double)(r) / FRIC)
@@ -301,8 +301,8 @@ typedef u_int32 u_fp;
 /*
  * l_fp/double conversions
  */
-#define FRAC		4294967296. 		/* 2^32 as a double */
-#define M_DTOLFP(d, r_i, r_uf) 			/* double to l_fp */ \
+#define FRAC		4294967296.		/* 2^32 as a double */
+#define M_DTOLFP(d, r_i, r_uf)			/* double to l_fp */ \
 	do { \
 		register double d_tmp; \
 		\
@@ -317,7 +317,7 @@ typedef u_int32 u_fp;
 			(r_uf) = (u_int32)(((d_tmp) - (double)(r_i)) * FRAC); \
 		} \
 	} while (0)
-#define M_LFPTOD(r_i, r_uf, d) 			/* l_fp to double */ \
+#define M_LFPTOD(r_i, r_uf, d)			/* l_fp to double */ \
 	do { \
 		register l_fp l_tmp; \
 		\
@@ -330,8 +330,8 @@ typedef u_int32 u_fp;
 			(d) = (double)l_tmp.l_i + ((double)l_tmp.l_uf) / FRAC; \
 		} \
 	} while (0)
-#define DTOLFP(d, v) 	M_DTOLFP((d), (v)->l_ui, (v)->l_uf)
-#define LFPTOD(v, d) 	M_LFPTOD((v)->l_ui, (v)->l_uf, (d))
+#define DTOLFP(d, v)	M_DTOLFP((d), (v)->l_ui, (v)->l_uf)
+#define LFPTOD(v, d)	M_LFPTOD((v)->l_ui, (v)->l_uf, (d))
 
 /*
  * Prototypes
@@ -344,12 +344,12 @@ extern	int	buftvtots	(const char *, l_fp *);
 extern	char *	fptoa		(s_fp, short);
 extern	char *	fptoms		(s_fp, short);
 extern	int	hextolfp	(const char *, l_fp *);
-extern  void    gpstolfp        (int, int, unsigned long, l_fp *);
+extern	void	gpstolfp	(int, int, unsigned long, l_fp *);
 extern	int	mstolfp		(const char *, l_fp *);
 extern	char *	prettydate	(l_fp *);
 extern	char *	gmprettydate	(l_fp *);
 extern	char *	uglydate	(l_fp *);
-extern  void    mfp_mul         (int32 *, u_int32 *, int32, u_int32, int32, u_int32);
+extern	void	mfp_mul		(int32 *, u_int32 *, int32, u_int32, int32, u_int32);
 
 extern	void	get_systime	(l_fp *);
 extern	int	step_systime	(double);

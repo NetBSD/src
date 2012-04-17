@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.36 2011/08/31 20:09:57 dyoung Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.36.2.1 2012/04/17 00:08:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,11 +62,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.36 2011/08/31 20:09:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.36.2.1 2012/04/17 00:08:26 yamt Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
-#include "opt_sa.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -106,7 +105,6 @@ __weak_alias(ktr_mibio,nullop);
 __weak_alias(ktr_namei,nullop);
 __weak_alias(ktr_namei2,nullop);
 __weak_alias(ktr_psig,nullop);
-__weak_alias(ktr_saupcall,nullop);
 __weak_alias(ktr_syscall,nullop);
 __weak_alias(ktr_sysret,nullop);
 __weak_alias(ktr_kuser,nullop);
@@ -149,10 +147,9 @@ __weak_alias(userconf_prompt, voidop);
 
 __weak_alias(kobj_renamespace, nullop);
 
-#if !defined(KERN_SA)
 /*
- * Scheduler activations system calls.  These need to remain, even when
- * KERN_SA isn't defined, until libc's major version is bumped.
+ * Scheduler activations system calls.  These need to remain until libc's
+ * major version is bumped.
  */
 __strong_alias(sys_sa_register,sys_nosys);
 __strong_alias(sys_sa_stacks,sys_nosys);
@@ -167,7 +164,6 @@ __strong_alias(sys_sa_unblockyield,sys_nosys);
  */
 __strong_alias(dosa_register,sys_nosys);
 __strong_alias(sa_stacks1,sys_nosys);
-#endif
 
 /*
  * Stubs for architectures that do not support kernel preemption.
@@ -272,7 +268,6 @@ voidop(void)
 /*
  * Generic null operation, always returns success.
  */
-/*ARGSUSED*/
 int
 nullop(void *v)
 {

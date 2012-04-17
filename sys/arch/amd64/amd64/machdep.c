@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.168.2.1 2011/11/10 14:31:38 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.168.2.2 2012/04/17 00:05:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.168.2.1 2011/11/10 14:31:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.168.2.2 2012/04/17 00:05:58 yamt Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -147,8 +147,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.168.2.1 2011/11/10 14:31:38 yamt Exp $
 #include <sys/ucontext.h>
 #include <machine/kcore.h>
 #include <sys/ras.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/ksyms.h>
 #include <sys/device.h>
@@ -219,10 +217,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.168.2.1 2011/11/10 14:31:38 yamt Exp $
 char machine[] = "amd64";		/* CPU "architecture" */
 char machine_arch[] = "x86_64";		/* machine == machine_arch */
 
-/* Our exported CPU info; we have only one right now. */  
-struct cpu_info cpu_info_primary;
-struct cpu_info *cpu_info_list;
-
 extern struct bi_devmatch *x86_alldisks;
 extern int x86_ndisks;
 
@@ -238,7 +232,6 @@ int	cpu_class = CPUCLASS_686;
 struct mtrr_funcs *mtrr_funcs;
 #endif
 
-int	physmem;
 uint64_t	dumpmem_low;
 uint64_t	dumpmem_high;
 int	cpu_class;
@@ -278,7 +271,7 @@ vaddr_t lo32_vaddr;
 paddr_t lo32_paddr;
 
 vaddr_t module_start, module_end;
-static struct vm_map_kernel module_map_store;
+static struct vm_map module_map_store;
 extern struct vm_map *module_map;
 vaddr_t kern_end;
 
@@ -315,6 +308,8 @@ int	cpu_dumpsize(void);
 u_long	cpu_dump_mempagecnt(void);
 void	dodumpsys(void);
 void	dumpsys(void);
+
+extern int time_adjusted;	/* XXX no common header */
 
 void dump_misc_init(void);
 void dump_seg_prep(void);
@@ -386,9 +381,9 @@ cpu_startup(void)
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, false, NULL);
 
-	uvm_map_setup_kernel(&module_map_store, module_start, module_end, 0);
-	module_map_store.vmk_map.pmap = pmap_kernel();
-	module_map = &module_map_store.vmk_map;
+	uvm_map_setup(&module_map_store, module_start, module_end, 0);
+	module_map_store.pmap = pmap_kernel();
+	module_map = &module_map_store;
 
 	/* Say hello. */
 	banner();
@@ -414,23 +409,53 @@ cpu_startup(void)
 void hypervisor_callback(void);
 void failsafe_callback(void);
 void x86_64_switch_context(struct pcb *);
+void x86_64_tls_switch(struct lwp *);
 
 void
 x86_64_switch_context(struct pcb *new)
 {
-	struct cpu_info *ci;
-	ci = curcpu();
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), new->pcb_rsp0);
 	struct physdev_op physop;
 	physop.cmd = PHYSDEVOP_SET_IOPL;
 	physop.u.set_iopl.iopl = new->pcb_iopl;
 	HYPERVISOR_physdev_op(&physop);
-	if (new->pcb_fpcpu != ci) {
-		HYPERVISOR_fpu_taskswitch(1);
-	}
 }
 
-#endif
+void
+x86_64_tls_switch(struct lwp *l)
+{
+	struct cpu_info *ci = curcpu();
+	struct pcb *pcb = lwp_getpcb(l);
+	struct trapframe *tf = l->l_md.md_regs;
+
+	/*
+	 * Raise the IPL to IPL_HIGH.
+	 * FPU IPIs can alter the LWP's saved cr0.  Dropping the priority
+	 * is deferred until mi_switch(), when cpu_switchto() returns.
+	 */
+	(void)splhigh();
+	/*
+	 * If our floating point registers are on a different CPU,
+	 * set CR0_TS so we'll trap rather than reuse bogus state.
+	 */
+	if (l != ci->ci_fpcurlwp) {
+		HYPERVISOR_fpu_taskswitch(1);
+	}
+
+	/* Update TLS segment pointers */
+	if (pcb->pcb_flags & PCB_COMPAT32) {
+		update_descriptor(&curcpu()->ci_gdt[GUFS_SEL], &pcb->pcb_fs);
+		update_descriptor(&curcpu()->ci_gdt[GUGS_SEL], &pcb->pcb_gs);
+		setfs(tf->tf_fs);
+		HYPERVISOR_set_segment_base(SEGBASE_GS_USER_SEL, tf->tf_gs);
+	} else {
+		setfs(0);
+		HYPERVISOR_set_segment_base(SEGBASE_GS_USER_SEL, 0);
+		HYPERVISOR_set_segment_base(SEGBASE_FS, pcb->pcb_fs);
+		HYPERVISOR_set_segment_base(SEGBASE_GS_USER, pcb->pcb_gs);
+	}
+}
+#endif /* XEN */
 
 /*
  * Set up proc0's TSS and LDT.
@@ -688,45 +713,12 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
 }
 
-void 
-cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)
-{
-	struct trapframe *tf;
-
-	tf = l->l_md.md_regs;
-
-#if 0
-	printf("proc %d: upcall to lwp %d, type %d ev %d int %d sas %p to %p\n",
-	    (int)l->l_proc->p_pid, (int)l->l_lid, type, nevents, ninterrupted,
-	    sas, (void *)upcall);
-#endif
-
-	tf->tf_rdi = type;
-	tf->tf_rsi = (u_int64_t)sas;
-	tf->tf_rdx = nevents;
-	tf->tf_rcx = ninterrupted;
-	tf->tf_r8 = (u_int64_t)ap;
-
-	tf->tf_rip = (u_int64_t)upcall;
-	tf->tf_rsp = ((unsigned long)sp & ~15) - 8;
-	tf->tf_rbp = 0; /* indicate call-frame-top to debuggers */
-	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
-	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
-
-	l->l_md.md_flags |= MDP_IRET;
-}
-
-int	waittime = -1;
 struct pcb dumppcb;
 
 void
 cpu_reboot(int howto, char *bootstr)
 {
+	static bool syncdone = false;
 	int s = IPL_NONE;
 
 	if (cold) {
@@ -735,15 +727,37 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 	boothowto = howto;
-	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
-		waittime = 0;
-		vfs_shutdown();
-		/*
-		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now.
-		 */
-		resettodr();
-	}
+
+	/* i386 maybe_dump() */
+
+	/*
+	 * If we've panic'd, don't make the situation potentially
+	 * worse by syncing or unmounting the file systems.
+	 */
+	if ((howto & RB_NOSYNC) == 0 && panicstr == NULL) {
+		if (!syncdone) {
+			syncdone = true;
+			/* XXX used to force unmount as well, here */
+			vfs_sync_all(curlwp);
+			/*
+			 * If we've been adjusting the clock, the todr
+			 * will be out of synch; adjust it now.
+			 *
+			 * XXX used to do this after unmounting all
+			 * filesystems with vfs_shutdown().
+			 */
+			if (time_adjusted != 0)
+				resettodr();
+		}
+
+		while (vfs_unmountall1(curlwp, false, false) ||
+		       config_detach_all(boothowto) ||
+		       vfs_unmount_forceone(curlwp))
+			;	/* do nothing */
+	} else
+		suspendsched();
+
+	pmf_system_shutdown(boothowto);
 
 	/* Disable interrupts. */
 	s = splhigh();
@@ -754,8 +768,6 @@ cpu_reboot(int howto, char *bootstr)
 
 haltsys:
 	doshutdownhooks();
-
-	pmf_system_shutdown(boothowto);
 
         if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #ifndef XEN
@@ -1182,7 +1194,6 @@ dumpsys_seg(paddr_t maddr, paddr_t bytes)
 		pmap_update(pmap_kernel());
 
 		error = (*dump)(dumpdev, blkno, (void *)dumpspace, n);
-		pmap_kremove(dumpspace, n * PAGE_SIZE);
 		if (error)
 			return error;
 		maddr += n;
@@ -1227,7 +1238,7 @@ dodumpsys(void)
 	    (unsigned long long)major(dumpdev),
 	    (unsigned long long)minor(dumpdev), dumplo);
 
-	psize = (*bdev->d_psize)(dumpdev);
+	psize = bdev_size(dumpdev);
 	printf("dump ");
 	if (psize == -1) {
 		printf("area unavailable\n");
@@ -1324,19 +1335,11 @@ failed:
 void
 cpu_dumpconf(void)
 {
-	const struct bdevsw *bdev;
 	int nblks, dumpblks;	/* size of dump area */
 
 	if (dumpdev == NODEV)
 		goto bad;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL) {
-		dumpdev = NODEV;
-		goto bad;
-	}
-	if (bdev->d_psize == NULL)
-		goto bad;
-	nblks = (*bdev->d_psize)(dumpdev);
+	nblks = bdev_size(dumpdev);
 	if (nblks <= ctod(1))
 		goto bad;
 
@@ -1640,8 +1643,6 @@ init_x86_64(paddr_t first_avail)
 	__PRINTK(("init_x86_64(0x%lx)\n", first_avail));
 #endif /* XEN */
 
-	cpu_feature[0] &= ~CPUID_FEAT_BLACKLIST;
-
 	cpu_init_msrs(&cpu_info_primary, true);
 
 	pcb = lwp_getpcb(&lwp0);
@@ -1649,6 +1650,7 @@ init_x86_64(paddr_t first_avail)
 	use_pae = 1; /* PAE always enabled in long mode */
 
 #ifdef XEN
+	mutex_init(&pte_lock, MUTEX_DEFAULT, IPL_VM);
 	pcb->pcb_cr3 = xen_start_info.pt_base - KERNBASE;
 	__PRINTK(("pcb_cr3 0x%lx\n", xen_start_info.pt_base - KERNBASE));
 #endif
@@ -1679,6 +1681,26 @@ init_x86_64(paddr_t first_avail)
 	 * Page 7:	Temporary page map level 4
 	 */
 	avail_start = 8 * PAGE_SIZE;
+
+#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
+
+	/*
+	 * Check to see if we have a memory map from the BIOS (passed
+	 * to us by the boot program.
+	 */
+	bim = lookup_bootinfo(BTINFO_MEMMAP);
+	if (bim != NULL && bim->num > 0)
+		initx86_parse_memmap(bim, iomem_ex);
+
+#endif	/* ! REALBASEMEM && ! REALEXTMEM */
+
+	/*
+	 * If the loop above didn't find any valid segment, fall back to
+	 * former code.
+	 */
+	if (mem_cluster_cnt == 0)
+		initx86_fake_memmap(iomem_ex);
+
 #else	/* XEN */
 	/* Parse Xen command line (replace bootinfo */
 	xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
@@ -1702,25 +1724,6 @@ init_x86_64(paddr_t first_avail)
 		pmap_prealloc_lowmem_ptps();
 
 #ifndef XEN
-#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
-
-	/*
-	 * Check to see if we have a memory map from the BIOS (passed
-	 * to us by the boot program.
-	 */
-	bim = lookup_bootinfo(BTINFO_MEMMAP);
-	if (bim != NULL && bim->num > 0)
-		initx86_parse_memmap(bim, iomem_ex);
-
-#endif	/* ! REALBASEMEM && ! REALEXTMEM */
-
-	/*
-	 * If the loop above didn't find any valid segment, fall back to
-	 * former code.
-	 */
-	if (mem_cluster_cnt == 0)
-		initx86_fake_memmap(iomem_ex);
-
 	initx86_load_memmap(first_avail);
 
 #else	/* XEN */
@@ -2068,6 +2071,7 @@ check_mcontext(struct lwp *l, const mcontext_t *mcp, struct trapframe *tf)
 	uint16_t sel;
 	int error;
 	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
+	struct proc *p = l->l_proc;
 
 	gr = mcp->__gregs;
 
@@ -2101,33 +2105,42 @@ check_mcontext(struct lwp *l, const mcontext_t *mcp, struct trapframe *tf)
 			return error;
 #endif
 	} else {
+#define VUD(sel) \
+    ((p->p_flag & PK_32) ? VALID_USER_DSEL32(sel) : VALID_USER_DSEL(sel))
 		sel = gr[_REG_ES] & 0xffff;
-		if (sel != 0 && !VALID_USER_DSEL(sel))
+		if (sel != 0 && !VUD(sel))
 			return EINVAL;
 
+/* XXX: Shouldn't this be FSEL32? */
+#define VUF(sel) \
+    ((p->p_flag & PK_32) ? VALID_USER_DSEL32(sel) : VALID_USER_DSEL(sel))
 		sel = gr[_REG_FS] & 0xffff;
-		if (sel != 0 && !VALID_USER_DSEL(sel))
+		if (sel != 0 && !VUF(sel))
 			return EINVAL;
 
+#define VUG(sel) \
+    ((p->p_flag & PK_32) ? VALID_USER_GSEL32(sel) : VALID_USER_DSEL(sel))
 		sel = gr[_REG_GS] & 0xffff;
-		if (sel != 0 && !VALID_USER_DSEL(sel))
+		if (sel != 0 && !VUG(sel))
 			return EINVAL;
 
 		sel = gr[_REG_DS] & 0xffff;
-		if (!VALID_USER_DSEL(sel))
+		if (!VUD(sel))
 			return EINVAL;
 
 #ifndef XEN
 		sel = gr[_REG_SS] & 0xffff;
-		if (!VALID_USER_DSEL(sel)) 
+		if (!VUD(sel))
 			return EINVAL;
 #endif
 
 	}
 
 #ifndef XEN
+#define VUC(sel) \
+    ((p->p_flag & PK_32) ? VALID_USER_CSEL32(sel) : VALID_USER_CSEL(sel))
 	sel = gr[_REG_CS] & 0xffff;
-	if (!VALID_USER_CSEL(sel))
+	if (!VUC(sel))
 		return EINVAL;
 #endif
 
@@ -2306,25 +2319,24 @@ cpu_fsgs_reload(struct lwp *l, int fssel, int gssel)
 	}
 }
 
-#ifdef XEN
-void x86_64_tls_switch(struct lwp *);
 
-void
-x86_64_tls_switch(struct lwp *l)
+#ifdef __HAVE_DIRECT_MAP
+bool
+mm_md_direct_mapped_io(void *addr, paddr_t *paddr)
 {
-	struct pcb *pcb = lwp_getpcb(l);
-	struct trapframe *tf = l->l_md.md_regs;
+	vaddr_t va = (vaddr_t)addr;
 
-	if (pcb->pcb_flags & PCB_COMPAT32) {
-		update_descriptor(&curcpu()->ci_gdt[GUFS_SEL], &pcb->pcb_fs);
-		update_descriptor(&curcpu()->ci_gdt[GUGS_SEL], &pcb->pcb_gs);
-		setfs(tf->tf_fs);
-		HYPERVISOR_set_segment_base(SEGBASE_GS_USER_SEL, tf->tf_gs);
-	} else {
-		setfs(0);
-		HYPERVISOR_set_segment_base(SEGBASE_GS_USER_SEL, 0);
-		HYPERVISOR_set_segment_base(SEGBASE_FS, pcb->pcb_fs);
-		HYPERVISOR_set_segment_base(SEGBASE_GS_USER, pcb->pcb_gs);
+	if (va >= PMAP_DIRECT_BASE && va < PMAP_DIRECT_END) {
+		*paddr = PMAP_DIRECT_UNMAP(va);
+		return true;
 	}
+	return false;
+}
+
+bool
+mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)
+{
+	*vaddr = PMAP_DIRECT_MAP(paddr);
+	return true;
 }
 #endif

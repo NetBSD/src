@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: keywords.sh,v 1.9 2010/06/26 14:29:36 kefren Exp $
+# $NetBSD: keywords.sh,v 1.9.6.1 2012/04/17 00:05:42 yamt Exp $
 # @(#)keywords	8.2 (Berkeley) 3/19/94
 #
 # WARNING!  If you change this file, re-run it!
@@ -63,6 +63,7 @@ noblackhole
 noreject
 mpls
 tag
+proxy
 _EOF_
 
 

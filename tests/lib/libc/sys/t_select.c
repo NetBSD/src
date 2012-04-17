@@ -1,4 +1,4 @@
-/*	$NetBSD: t_select.c,v 1.1 2011/07/07 06:57:54 jruoho Exp $ */
+/*	$NetBSD: t_select.c,v 1.1.2.1 2012/04/17 00:09:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -132,10 +132,8 @@ child(const struct timespec *ts)
 ATF_TC(pselect_sigmask);
 ATF_TC_HEAD(pselect_sigmask, tc)
 {
-
-	/* Cf. PR lib/43625. */
 	atf_tc_set_md_var(tc, "descr", "Checks pselect's temporary mask "
-	    "setting when a signal is received");
+	    "setting when a signal is received (PR lib/43625)");
 }
 
 ATF_TC_BODY(pselect_sigmask, tc)
@@ -192,7 +190,7 @@ ATF_TC_BODY(pselect_timeout, tc)
 	case -1:
 		err(1, "fork");
 	default:
-		usleep(5000);
+		sleep(1);
 		switch (waitpid(pid, &status, WNOHANG)) {
 		case -1:
 			err(1, "wait");

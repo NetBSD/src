@@ -1,4 +1,4 @@
-/* $NetBSD: fdfs.c,v 1.8 2011/07/01 02:48:48 joerg Exp $	 */
+/* $NetBSD: fdfs.c,v 1.8.2.1 2012/04/17 00:05:36 yamt Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ fd_vget(int fd, int bsize, int segsize, int nseg)
 	vp = (struct uvnode *) malloc(sizeof(*vp));
 	if (vp == NULL) {
 		if (fs->fd_bufp) {
-			for (i = nseg - 1; i >= 0; i--)
+			for (i = 0; i < nseg; i++)
 				free(fs->fd_bufp[i].buf);
 			free(fs->fd_bufp);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.14 2009/10/21 01:07:44 snj Exp $	*/
+/*	$NetBSD: extern.h,v 1.14.6.1 2012/04/17 00:05:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -25,10 +25,17 @@
  */
 
 #include <string.h>
+#include <stdint.h>
 
 /* crc.c */
-void crc_start(void);
-unsigned long crc(const char *, int);
+struct crcstate {
+	uint32_t crcval;
+	unsigned step;
+};
+
+void crc_start(struct crcstate *);
+void crc_add(struct crcstate *, const void *, size_t);
+uint32_t crc_get(struct crcstate *);
 
 /* done.c */
 int score(void);

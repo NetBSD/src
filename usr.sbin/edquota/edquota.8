@@ -29,9 +29,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)edquota.8	8.2 (Berkeley) 4/27/95
-.\"	$NetBSD: edquota.8,v 1.14 2011/03/06 17:32:38 wiz Exp $
+.\"	$NetBSD: edquota.8,v 1.14.4.1 2012/04/17 00:09:46 yamt Exp $
 .\"
-.Dd February 6, 2011
+.Dd January 29, 2012
 .Dt EDQUOTA 8
 .Os
 .Sh NAME
@@ -39,20 +39,20 @@
 .Nd edit user quotas
 .Sh SYNOPSIS
 .Nm
-.Op Fl DHu
+.Op Fl Hu
 .Op Fl f Ar file-system
 .Op Fl p Ar proto-username
 .Ar -d |
 .Ar username ...
 .Nm
-.Op Fl DH
+.Op Fl H
 .Fl g
 .Op Fl f Ar file-system
 .Op Fl p Ar proto-groupname
 .Ar -d |
 .Ar groupname ...
 .Nm
-.Op Fl DHu
+.Op Fl Hu
 .Op Fl f Ar file-system
 .Op Fl h Ar block#/inode#
 .Op Fl s Ar block#/inode#
@@ -60,7 +60,7 @@
 .Ar -d |
 .Ar username ...
 .Nm
-.Op Fl DH
+.Op Fl H
 .Fl g
 .Op Fl f Ar file-system
 .Op Fl h Ar block#/inode#
@@ -69,12 +69,12 @@
 .Ar -d |
 .Ar groupname ...
 .Nm
-.Op Fl DHu
+.Op Fl Hu
 .Fl c
 .Op Fl f Ar file-system
 .Ar username ...
 .Nm
-.Op Fl DH
+.Op Fl H
 .Fl g
 .Fl c
 .Op Fl f Ar file-system
@@ -180,11 +180,6 @@ flag cause edquota to clear quota entries for the specified users or groups.
 If disk or inode usages is not 0, limits are reverted to the default quota.
 If disk and inode usages are 0, the existing quota entries are freed.
 .Pp
-The
-.Fl D
-flag cause edquota to print to the standard error property lists sent to
-and received from the kernel.
-.Pp
 Only the super-user may edit quotas.
 .Sh EXAMPLES
 Edit quotas for group games on all quota-enabled file systems:
@@ -196,10 +191,10 @@ time for the default quotas on file system
 .Dl edquota -h 4M/2k -s 2M/1k -t 2W3D/2W3D -f /home -u -d
 .Sh SEE ALSO
 .Xr quota 1 ,
-.Xr quotactl 2 ,
 .Xr humanize_number 3 ,
+.Xr libquota 3 ,
 .Xr fstab 5 ,
 .Xr quotacheck 8 ,
-.Xr quotactl 8 ,
 .Xr quotaon 8 ,
+.Xr quotarestore 8 ,
 .Xr repquota 8

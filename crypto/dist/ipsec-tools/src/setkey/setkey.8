@@ -1,4 +1,4 @@
-.\"	$NetBSD: setkey.8,v 1.28 2011/05/24 08:54:40 wiz Exp $
+.\"	$NetBSD: setkey.8,v 1.28.4.1 2012/04/17 00:01:42 yamt Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 23, 2011
+.Dd February 18, 2012
 .Dt SETKEY 8
 .Os
 .\"
@@ -255,6 +255,8 @@ is one of following:
 ESP based on rfc2406
 .It Li esp-old
 ESP based on rfc1827
+.It Li esp-udp
+UDP encapsulated ESP for NAT traversal (rfc3948)
 .It Li ah
 AH based on rfc2402
 .It Li ah-old
@@ -330,6 +332,9 @@ Specify hard/soft life time duration of the SA measured in seconds.
 .It Fl bh Ar bytes
 .It Fl bs Ar bytes
 Specify hard/soft life time duration of the SA measured in bytes transported.
+.\"
+.It Fl esp_frag Ar bytes
+Specify esp fragment size for NAT-T (only valid for NAT-T SAs).
 .\"
 .It Fl ctx Ar doi Ar algorithm Ar context-name
 Specify an access control label.
@@ -723,11 +728,19 @@ rijndael-cbc	128/192/256	rfc3602
 twofish-cbc	0 to 256	draft-ietf-ipsec-ciph-aes-cbc-01
 aes-ctr		160/224/288	rfc3686
 camellia-cbc	128/192/256	rfc4312
+aes-gcm-16	160/224/288	rfc4106
+aes-gmac	160/224/288	rfc4543
 .Ed
 .Pp
 Note that the first 128/192/256 bits of a key for
-.Li aes-ctr
+.Li aes-ctr ,
+.Li aes-gcm-16
+or
+.Li aes-gmac
 will be used as AES key, and the remaining 32 bits will be used as nonce.
+Also note that
+.Li aes-gmac
+does not encrypt the payload, it only provides authentication.
 .Pp
 These compression algorithms can be used as
 .Ar calgo

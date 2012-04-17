@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_zero.c,v 1.11 2010/05/18 15:10:38 haad Exp $      */
+/*        $NetBSD: dm_target_zero.c,v 1.11.8.1 2012/04/17 00:07:30 yamt Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@ dm_target_zero_sync(dm_table_entry_t * table_en)
 
 	return 0;
 }
-/* Doesn't not need to do anything here. */
+/* Does not need to do anything here. */
 int
 dm_target_zero_destroy(dm_table_entry_t * table_en)
 {
@@ -167,7 +167,7 @@ dm_target_zero_destroy(dm_table_entry_t * table_en)
 
 	return 0;
 }
-/* Doesn't not need to do anything here. */
+/* Does not need to do anything here. */
 int
 dm_target_zero_deps(dm_table_entry_t * table_en, prop_array_t prop_array)
 {

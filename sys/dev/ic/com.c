@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.301 2011/05/28 19:30:19 matt Exp $ */
+/* $NetBSD: com.c,v 1.301.4.1 2012/04/17 00:07:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.301 2011/05/28 19:30:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.301.4.1 2012/04/17 00:07:32 yamt Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.301 2011/05/28 19:30:19 matt Exp $");
 #include "opt_ntp.h"
 
 #include "rnd.h"
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 #include <sys/rnd.h>
 #endif
 
@@ -183,7 +183,7 @@ void	comcnputc(dev_t, int);
 void	comcnpollc(dev_t, int);
 
 #define	integrate	static inline
-void 	comsoft(void *);
+void	comsoft(void *);
 integrate void com_rxsoft(struct com_softc *, struct tty *);
 integrate void com_txsoft(struct com_softc *, struct tty *);
 integrate void com_stsoft(struct com_softc *, struct tty *);
@@ -424,12 +424,12 @@ com_attach_subr(struct com_softc *sc)
 		SET(sc->sc_hwflags, COM_HW_FIFO);
 		goto fifodelay;
 
- 	case COM_TYPE_OMAP:
- 		sc->sc_fifolen = 64;
- 		fifo_msg = "OMAP UART, working fifo";
- 		SET(sc->sc_hwflags, COM_HW_FIFO);
- 		goto fifodelay;
-  	}
+	case COM_TYPE_OMAP:
+		sc->sc_fifolen = 64;
+		fifo_msg = "OMAP UART, working fifo";
+		SET(sc->sc_hwflags, COM_HW_FIFO);
+		goto fifodelay;
+	}
 
 	sc->sc_fifolen = 1;
 	/* look for a NS 16550AF UART with FIFOs */
@@ -554,7 +554,7 @@ fifodone:
 
 	sc->sc_si = softint_establish(SOFTINT_SERIAL, comsoft, sc);
 
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 			  RND_TYPE_TTY, 0);
 #endif
@@ -641,7 +641,7 @@ com_detach(device_t self, int flags)
 	if (ISSET(sc->sc_hwflags, COM_HW_KGDB))
 		return EBUSY;
 
-        if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE) &&
+	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE) &&
 	    (flags & DETACH_SHUTDOWN) != 0)
 		return EBUSY;
 
@@ -650,7 +650,7 @@ com_detach(device_t self, int flags)
 		sc->enabled = 0;
 	}
 
-        if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
+	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
 		comconsattached = 0;
 		cn_tab = NULL;
 	}
@@ -684,7 +684,7 @@ com_detach(device_t self, int flags)
 	/* Unhook the soft interrupt handler. */
 	softint_disestablish(sc->sc_si);
 
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->rnd_source);
 #endif
@@ -2012,7 +2012,7 @@ again:	do {
 	    /*
 	     * Since some device (e.g., ST16C1550) doesn't clear IIR_TXRDY
 	     * by IIR read, so we can't do this way: `process all interrupts,
-	     * then do TX if possble'.
+	     * then do TX if possible'.
 	     */
 	    (iir & IIR_IMASK) != IIR_TXRDY);
 
@@ -2070,7 +2070,7 @@ again:	do {
 	/* Wake up the poller. */
 	softint_schedule(sc->sc_si);
 
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 	rnd_add_uint32(&sc->rnd_source, iir | lsr);
 #endif
 

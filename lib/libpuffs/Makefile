@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.24 2010/12/06 14:50:34 pooka Exp $
+#	$NetBSD: Makefile,v 1.24.6.1 2012/04/17 00:05:31 yamt Exp $
 #
 
 .include <bsd.own.mk>
 
-USE_FORT?= yes	# data-driven bugs?
+USE_FORT?=	yes	# data-driven bugs?
 
-WARNS=		4
+WARNS?=		5
 
 LIB=		puffs
 

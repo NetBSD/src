@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2011/10/31 08:14:44 mrg Exp $
+#	$NetBSD: Makefile,v 1.21.2.1 2012/04/17 00:09:27 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -28,6 +28,9 @@ INSTALL_TARGET+=install-gprof
 .include "${.CURDIR}/../Makefile.gnuhost"
 
 CCADDFLAGS=	-I${DESTDIR}/usr/include -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/
+
+# Force avoiding possibly non-executable install-sh.
+CONFIGURE_ENV+= ac_cv_path_mkdir="${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-install -d"
 
 NEWCONFIGDIR?=	${.CURDIR}/../..
 MKNATIVE?=	${.CURDIR}/mknative-binutils

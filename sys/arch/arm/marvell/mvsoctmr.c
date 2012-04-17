@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoctmr.c,v 1.2 2011/06/09 13:43:44 jakllsch Exp $	*/
+/*	$NetBSD: mvsoctmr.c,v 1.2.2.1 2012/04/17 00:06:06 yamt Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoctmr.c,v 1.2 2011/06/09 13:43:44 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoctmr.c,v 1.2.2.1 2012/04/17 00:06:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -151,7 +151,7 @@ setstatclockrate(int newhz)
  *	Initialize the clock and get them going.
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	struct mvsoctmr_softc *sc;
 	void *clock_ih;

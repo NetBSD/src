@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: menu.cpp,v 1.12 2010/04/06 16:20:28 nonaka Exp $	*/
+/* -*-C++-*-	$NetBSD: menu.cpp,v 1.12.8.1 2012/04/17 00:06:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -549,6 +549,22 @@ ConsoleTabWindow::_open_log_file()
 //
 // Common utility
 //
+static BOOL
+is_ignore_directory(TCHAR *filename)
+{
+	static const TCHAR *dirs[] = {
+		// Network (in Japanese)
+		(const TCHAR *)"\xcd\x30\xc3\x30\xc8\x30\xef\x30\xfc\x30\xaf\x30\x00\x00",
+	};
+
+	for (int i = 0; i < sizeof(dirs) / sizeof(dirs[0]); i++) {
+		if (wcscmp(filename, dirs[i]) == 0) {
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
 BOOL
 _find_pref_dir(TCHAR *path)
 {
@@ -562,7 +578,8 @@ _find_pref_dir(TCHAR *path)
 		do {
 			int attr = fd.dwFileAttributes;
 			if ((attr & FILE_ATTRIBUTE_DIRECTORY) &&
-			    (attr & FILE_ATTRIBUTE_TEMPORARY)) {
+			    (attr & FILE_ATTRIBUTE_TEMPORARY) &&
+			    !is_ignore_directory(fd.cFileName)) {
 				wcscpy(path, fd.cFileName);
 				FindClose(find);
 				return TRUE;

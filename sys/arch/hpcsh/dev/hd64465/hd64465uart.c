@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465uart.c,v 1.18 2011/07/19 15:30:52 dyoung Exp $	*/
+/*	$NetBSD: hd64465uart.c,v 1.18.2.1 2012/04/17 00:06:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64465uart.c,v 1.18 2011/07/19 15:30:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64465uart.c,v 1.18.2.1 2012/04/17 00:06:25 yamt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -117,7 +117,7 @@ hd64465uartcninit(struct consdev *cp)
 
 #ifdef KGDB
 int
-hd64465uart_kgdb_init()
+hd64465uart_kgdb_init(void)
 {
 
 	if (strcmp(kgdb_devname, "hd64465uart") != 0)
@@ -184,7 +184,7 @@ hd64465uart_attach(device_t parent, device_t self, void *aux)
 }
 
 void
-hd64465uart_init()
+hd64465uart_init(void)
 {
 
 	if (hd64465uart_chip.io_tag)

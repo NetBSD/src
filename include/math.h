@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.56 2011/07/28 22:32:28 joerg Exp $	*/
+/*	$NetBSD: math.h,v 1.56.2.1 2012/04/17 00:05:10 yamt Exp $	*/
 
 /*
  * ====================================================
@@ -88,10 +88,10 @@ extern const union __long_double_u __infinityl;
 #endif
 
 /* 7.12#4 INFINITY */
-#if __GNUC_PREREQ__(3, 3)
-#define	INFINITY	__builtin_inff()
-#elif defined(__INFINITY)
+#if defined(__INFINITY)
 #define	INFINITY	__INFINITY	/* float constant which overflows */
+#elif __GNUC_PREREQ__(3, 3)
+#define	INFINITY	__builtin_inff()
 #else
 #define	INFINITY	HUGE_VALF	/* positive infinity */
 #endif /* __INFINITY */

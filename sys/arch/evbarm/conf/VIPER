@@ -1,4 +1,4 @@
-#	$NetBSD: VIPER,v 1.22 2011/06/30 20:09:24 wiz Exp $
+#	$NetBSD: VIPER,v 1.22.2.1 2012/04/17 00:06:13 yamt Exp $
 #
 #	Arcom Viper
 #
@@ -93,10 +93,6 @@ options 	COMPAT_30	# NetBSD 3.0 compatibility.
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
-options 	SEMMNI=10	# number of semaphore identifiers
-options 	SEMMNS=60	# number of semaphores in system
-options 	SEMUME=10	# max number of undo entries per process
-options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 
 # Device options
@@ -182,7 +178,6 @@ pseudo-device	kttcp			# network loopback
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #options	RND_COM
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms

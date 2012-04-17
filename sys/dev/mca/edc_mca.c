@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.45 2011/08/07 13:39:24 rmind Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.45.2.1 2012/04/17 00:07:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,9 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.45 2011/08/07 13:39:24 rmind Exp $");
-
-#include "rnd.h"
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.45.2.1 2012/04/17 00:07:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,9 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.45 2011/08/07 13:39:24 rmind Exp $");
 #include <sys/vnode.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <sys/bus.h>
 #include <sys/intr.h>
@@ -840,9 +836,7 @@ edcworker(void *arg)
 
 			disk_unbusy(&ed->sc_dk, (bp->b_bcount - bp->b_resid),
 			    (bp->b_flags & B_READ));
-#if NRND > 0
 			rnd_add_uint32(&ed->rnd_source, bp->b_blkno);
-#endif
 			biodone(bp);
 		}
 	}

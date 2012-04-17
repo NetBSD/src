@@ -61,6 +61,8 @@
 #include <linux/hdreg.h>
 #endif
 
+#include <stdint.h>
+
 #include "pdisk.h"
 #include "io.h"
 #include "partition_map.h"
@@ -165,14 +167,12 @@ main(int argc, char **argv)
     init_program_name(argv);
 
     if (sizeof(DPME) != PBLOCK_SIZE) {
-	fatal(-1, "Size of partition map entry (%d) "
-		"is not equal to block size (%d)\n",
-		sizeof(DPME), PBLOCK_SIZE);
+	fatal(-1, "Size of partition map entry (%zu) "
+	    "is not equal to block size (%d)\n", sizeof(DPME), PBLOCK_SIZE);
     }
     if (sizeof(Block0) != PBLOCK_SIZE) {
-	fatal(-1, "Size of block zero structure (%d) "
-		"is not equal to block size (%d)\n",
-		sizeof(Block0), PBLOCK_SIZE);
+	fatal(-1, "Size of block zero structure (%zu) "
+	    "is not equal to block size (%d)\n", sizeof(Block0), PBLOCK_SIZE);
     }
     if (strcmp(VERSION, get_version_string()) != 0) {
 	fatal(-1, "Version string static form (%s) does not match dynamic form (%s)\n",
@@ -226,7 +226,7 @@ main(int argc, char **argv)
 
 
 void
-print_top_notes()
+print_top_notes(void)
 {
     printf("Notes:\n");
     printf("  Disks have fake names of the form /dev/scsi<bus>.<id>\n");
@@ -239,7 +239,7 @@ print_top_notes()
 
 
 void
-interact()
+interact(void)
 {
     char *name;
     int command;
@@ -504,7 +504,7 @@ get_options(int argc, char **argv)
 
 
 void
-print_edit_notes()
+print_edit_notes(void)
 {
     printf("Notes:\n");
     printf("  Base and length fields are blocks, which vary in size between media.\n");
@@ -761,7 +761,7 @@ get_size_argument(long *number, partition_map_header *map)
 {
     partition_map * entry;
     int result = 0;
-    unsigned long multiple;
+    uint32_t multiple;
 
     if (get_number_argument("Length in blocks: ", number, kDefault) == 0) {
 	bad_input("Bad length");
@@ -958,7 +958,7 @@ do_write_partition_map(partition_map_header *map)
 
 
 void
-print_expert_notes()
+print_expert_notes(void)
 {
     printf("Notes:\n");
     printf("  The expert commands are for low level and experimental features.\n");
@@ -1068,7 +1068,7 @@ do_display_block(partition_map_header *map, char *alt_name)
     MEDIA m;
     long number;
     char *name;
-    static unsigned char *display_block;
+    static uint8_t *display_block;
     static int display_g;
     int g;
     static long next_number = -1;
@@ -1106,7 +1106,7 @@ do_display_block(partition_map_header *map, char *alt_name)
     	    free(display_block);
     	    display_g = 0;
 	}
-	display_block = (unsigned char *) malloc(g);
+	display_block = (uint8_t *) malloc(g);
 	if (display_block == NULL) {
 	    error(errno, "can't allocate memory for display block buffer");
 	    goto xit;
@@ -1115,7 +1115,7 @@ do_display_block(partition_map_header *map, char *alt_name)
     }
     if (read_media(m, ((long long)number) * g, g, (char *)display_block) != 0) {
 	printf("block %ld -", number);
-	dump_block((unsigned char*) display_block, g);
+	dump_block((uint8_t*) display_block, g);
 	next_number = number + 1;
     }
 

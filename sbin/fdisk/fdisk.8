@@ -1,6 +1,6 @@
-.\"	$NetBSD: fdisk.8,v 1.71 2011/04/25 22:23:47 wiz Exp $
+.\"	$NetBSD: fdisk.8,v 1.71.4.1 2012/04/17 00:05:39 yamt Exp $
 .\"
-.Dd April 6, 2010
+.Dd April 6, 2012
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -8,34 +8,19 @@
 .Nd MS-DOS partition maintenance program
 .Sh SYNOPSIS
 .Nm
-.Op Fl aBFfiSuv
-.Bk -words
+.Op Fl aBFfIiSuv
 .Oo
 .Fl 0 | 1 | 2 | 3 | E Ar number
 .Op Fl s Ar id/start/size Ns Bq Ar /bootmenu
 .Oc
-.Ek
-.Bk -words
 .Op Fl r Ar file | Fl w Ar file
-.Ek
-.Bk -words
 .Op Fl A Ar ptn_alignment Ns Bq Ar /ptn_0_offset
-.Ek
-.Bk -words
 .Op Fl b Ar cylinders/heads/sectors
-.Ek
-.Bk -words
 .Op Fl c Ar bootcode
-.Ek
-.Bk -words
 .Op Fl T Ar disktype
-.Ek
-.Bk -words
 .Op Fl t Ar disktab
-.Ek
-.Bk -words
+.Op Fl z Ar sectorsize
 .Op Ar device
-.Ek
 .Nm
 .Fl l
 .Sh DESCRIPTION
@@ -60,7 +45,8 @@ and (optionally, depending on the boot code) a menu
 for selecting a partition to be booted.
 There can be at most 4 partitions defined in sector 0,
 one of which can be an extended
-partition which can be split into any number of sub-partitions.
+partition which can be split into any number of sub-partitions (then called
+logical partitions).
 .Pp
 The boot code in the MBR is usually invoked by the BIOS or firmware,
 and the MBR passes control to the next stage boot code
@@ -164,7 +150,7 @@ Specify partition slot 2 to be printed or updated.
 Specify partition slot 3 to be printed or updated.
 .It Fl A Ar ptn_alignment Ns Bq Ar /ptn_0_offset
 Specify the alignment for all partitions and optionally the offset for the
-first partition of the disk and of extended partitions.
+first partition of the disk and of logical partitions.
 If
 .Ar ptn_alignment
 is specified and
@@ -223,11 +209,11 @@ was specified for any partitions
 on an i386 machine, and leave the bootcode empty for other
 machines.
 .It Fl E Ar number
-Specify extended partition
+Specify logical partition
 .Ar number
 to be printed or updated.
-If the specified extended partition doesn't exist on updating partition data
-an additional extended partition will be created.
+If the specified logical partition doesn't exist on updating partition data
+an additional logical partition will be created.
 .It Fl F
 Indicate that
 .Ar device
@@ -270,6 +256,14 @@ and
 fields
 .Pq only Ar start No and Ar size No can be specified by Fl s No option .
 They will be automatically computed using the BIOS geometry.
+.It Fl I
+Ignore errors from overlapping partitions.
+Some devices (cameras CHDK) require overlapping partitions to support
+bigger than 4GB cards.
+The
+.Fl I
+flag ignores overlapping error checks and does not fix them, allowing these
+incorrect configurations to be used.
 .It Fl i
 Explicitly request initialisation of the master boot code
 (similar to what
@@ -388,6 +382,10 @@ allows the user to change more parameters than normally permitted.
 Write the modified partition table to file
 .Ar file
 instead of the disk.
+.It Fl z Ar sectorsize
+Specify a sector size other than 512, for devices that only
+support larger sector sizes.
+The sector size needs to be a power of two greater than 512.
 .El
 .Pp
 When called with no arguments, it prints the partition table.
@@ -428,7 +426,7 @@ An example follows:
 .Pp
 This example disk is divided into four partitions, the last of which is
 an extended partition.
-The sub-partitions of the extended partition are also shown.
+The logical partitions of the extended partition are also shown.
 In this case there is no free space in either the disk or in the extended
 partition.
 .Pp
@@ -481,7 +479,7 @@ If the partition starts (or ends) on a cylinder boundary the head and
 sector values are omitted.
 If
 .Fl v
-is not specified the start of extended partitions and the first partition
+is not specified the start of logical partitions and the first partition
 on the disk are rounded down to include the mandatory red tape in the
 preceding track.
 .It Active
@@ -593,7 +591,8 @@ Default location of i386 bootcode
 .It Pa /usr/mdec/mbr_bootsel
 Default location of i386 bootselect code
 .It Pa /usr/mdec/mbr_ext
-Default location of i386 bootselect for extended partitions
+Default location of i386 bootselect for extended partitions (i.e., NetBSD on
+logical partitions)
 .El
 .Sh EXAMPLES
 Update MBR partition data of

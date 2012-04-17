@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.14.2.1 2011/11/02 21:53:59 yamt Exp $
+#	$NetBSD: Makefile.libkern,v 1.14.2.2 2012/04/17 00:08:33 yamt Exp $
 
 # 
 # Variable definitions for libkern.  
@@ -33,7 +33,6 @@ CPPFLAGS+=	-I$M ${KERNCPPFLAGS} ${KERNMISCCPPFLAGS}
 .include "${.PARSEDIR}/../../../common/lib/libutil/Makefile.inc"
 .include "${.PARSEDIR}/../../../common/lib/libprop/Makefile.inc"
 .include "${.PARSEDIR}/../../../common/lib/libppath/Makefile.inc"
-.include "${.PARSEDIR}/../../../common/lib/libquota/Makefile.inc"
 
 CPPFLAGS+=	-I${KERNDIR}/../../../common/include
 
@@ -58,7 +57,7 @@ SRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
 
 # Other stuff
 SRCS+=	kern_assert.c __main.c
-SRCS+=	__cmsg_alignbytes.c cpuset.c inet_addr.c intoa.c
+SRCS+=	cpuset.c inet_addr.c intoa.c
 .if empty(SRCS:Mbyte_swap_8.*)
 SRCS+=	bswap64.c
 .endif
@@ -82,6 +81,7 @@ SRCS+=	strtoul.c strtoll.c strtoull.c strtoumax.c
 
 SRCS+=	scanc.c skpc.c
 SRCS+=	random.c
+SRCS+=	rngtest.c
 
 SRCS+=	memchr.c
 SRCS+=	strcat.c strcmp.c strcpy.c strlen.c

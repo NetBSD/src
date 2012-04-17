@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.38 2011/08/11 17:59:00 cherry Exp $      */
+/*      $NetBSD: xenevt.c,v 1.38.2.1 2012/04/17 00:07:12 yamt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.38 2011/08/11 17:59:00 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.38.2.1 2012/04/17 00:07:12 yamt Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -112,7 +112,9 @@ struct xenevt_d {
 	u_int ring_write; /* pointer of the writer */
 	u_int flags;
 #define XENEVT_F_OVERFLOW 0x01 /* ring overflow */
+#define XENEVT_F_FREE 0x02 /* free entry */
 	struct selinfo sel; /* used by poll */
+	struct cpu_info *ci; /* prefered CPU for events for this device */
 };
 
 /* event -> user device mapping */
@@ -123,8 +125,8 @@ static void *devevent_sih;
 static kmutex_t devevent_lock;
 static STAILQ_HEAD(, xenevt_d) devevent_pending;
 
-static void xenevt_donotify(struct xenevt_d *);
 static void xenevt_record(struct xenevt_d *, evtchn_port_t);
+static void xenevt_free(struct xenevt_d *);
 
 /* pending events */
 long xenevt_ev1;
@@ -160,7 +162,7 @@ xenevtattach(int n)
 	ih->ih_fun = ih->ih_realfun = xenevt_processevt;
 	ih->ih_arg = ih->ih_realarg = NULL;
 	ih->ih_ipl_next = NULL;
-	ih->ih_cpu = curcpu();
+	ih->ih_cpu = &cpu_info_primary;
 #ifdef MULTIPROCESSOR
 	if (!mpsafe) {
 		ih->ih_fun = intr_biglock_wrapper;
@@ -177,9 +179,9 @@ xenevtattach(int n)
 void
 xenevt_setipending(int l1, int l2)
 {
-	xenevt_ev1 |= 1UL << l1;
-	xenevt_ev2[l1] |= 1UL << l2;
-	curcpu()/*XXX*/->ci_ipending |= 1 << IPL_HIGH;
+	atomic_or_ulong(&xenevt_ev1, 1UL << l1);
+	atomic_or_ulong(&xenevt_ev2[l1], 1UL << l2);
+	atomic_or_32(&cpu_info_primary.ci_ipending, 1 << IPL_HIGH);
 }
 
 /* process pending events */
@@ -213,21 +215,20 @@ xenevt_event(int port)
 {
 	struct xenevt_d *d;
 
+	mutex_enter(&devevent_lock);
 	d = devevent[port];
 	if (d != NULL) {
 		xenevt_record(d, port);
 
-		if (d->pending) {
+		if (d->pending == false) {
+			STAILQ_INSERT_TAIL(&devevent_pending, d, pendingq);
+			d->pending = true;
+			mutex_exit(&devevent_lock);
+			softint_schedule(devevent_sih);
 			return;
 		}
-
-		mutex_enter(&devevent_lock);
-		STAILQ_INSERT_TAIL(&devevent_pending, d, pendingq);
-		d->pending = true;
-		mutex_exit(&devevent_lock);
-
-		softint_schedule(devevent_sih);
 	}
+	mutex_exit(&devevent_lock);
 }
 
 void
@@ -244,20 +245,17 @@ xenevt_notify(void)
 		}
 		STAILQ_REMOVE_HEAD(&devevent_pending, pendingq);
 		d->pending = false;
-		mutex_exit(&devevent_lock);
-
-		xenevt_donotify(d);
+		mutex_enter(&d->lock);
+		if (d->flags & XENEVT_F_FREE) {
+			xenevt_free(d);
+			mutex_exit(&devevent_lock);
+		} else {
+			mutex_exit(&devevent_lock);
+			selnotify(&d->sel, 0, 1);
+			cv_broadcast(&d->cv);
+			mutex_exit(&d->lock);
+		}
 	}
-}
-
-static void
-xenevt_donotify(struct xenevt_d *d)
-{
-
-	mutex_enter(&d->lock);
-	selnotify(&d->sel, 0, 1);
-	cv_broadcast(&d->cv);
-	mutex_exit(&d->lock);
 }
 
 static void
@@ -270,6 +268,7 @@ xenevt_record(struct xenevt_d *d, evtchn_port_t port)
 	 * complex
 	 */
 
+	mutex_enter(&d->lock);
 	if (d->ring_read ==
 	    ((d->ring_write + 1) & XENEVT_RING_MASK)) {
 		d->flags |= XENEVT_F_OVERFLOW;
@@ -278,6 +277,7 @@ xenevt_record(struct xenevt_d *d, evtchn_port_t port)
 		d->ring[d->ring_write] = port;
 		d->ring_write = (d->ring_write + 1) & XENEVT_RING_MASK;
 	}
+	mutex_exit(&d->lock);
 }
 
 /* open the xenevt device; this is where we clone */
@@ -295,7 +295,8 @@ xenevtopen(dev_t dev, int flags, int mode, struct lwp *l)
 			return error;
 
 		d = malloc(sizeof(*d), M_DEVBUF, M_WAITOK | M_ZERO);
-		mutex_init(&d->lock, MUTEX_DEFAULT, IPL_SOFTSERIAL);
+		d->ci = &cpu_info_primary;
+		mutex_init(&d->lock, MUTEX_DEFAULT, IPL_HIGH);
 		cv_init(&d->cv, "xenevt");
 		selinit(&d->sel);
 		return fd_clone(fp, fd, flags, &xenevt_fileops, d);
@@ -350,11 +351,12 @@ xenevtmmap(dev_t dev, off_t off, int prot)
 	return -1;
 }
 
-static int
-xenevt_fclose(struct file *fp)
+static void
+xenevt_free(struct xenevt_d *d)
 {
-	struct xenevt_d *d = fp->f_data;
 	int i;
+	KASSERT(mutex_owned(&devevent_lock));
+	KASSERT(mutex_owned(&d->lock));
 
 	for (i = 0; i < NR_EVENT_CHANNELS; i++ ) {
 		if (devevent[i] == d) {
@@ -362,6 +364,7 @@ xenevt_fclose(struct file *fp)
 			int error;
 
 			hypervisor_mask_event(i);
+			xen_atomic_clear_bit(&d->ci->ci_evtmask[0], i);
 			devevent[i] = NULL;
 
 			op.cmd = EVTCHNOP_close;
@@ -372,12 +375,29 @@ xenevt_fclose(struct file *fp)
 			}
 		}
 	}
+	mutex_exit(&d->lock);
 	seldestroy(&d->sel);
 	cv_destroy(&d->cv);
 	mutex_destroy(&d->lock);
-	fp->f_data = NULL;
 	free(d, M_DEVBUF);
+}
 
+static int
+xenevt_fclose(struct file *fp)
+{
+	struct xenevt_d *d = fp->f_data;
+
+	mutex_enter(&devevent_lock);
+	mutex_enter(&d->lock);
+	if (d->pending) {
+		d->flags |= XENEVT_F_FREE;
+		mutex_exit(&d->lock);
+	} else {
+		xenevt_free(d);
+	}
+
+	mutex_exit(&devevent_lock);
+	fp->f_data = NULL;
 	return (0);
 }
 
@@ -467,12 +487,14 @@ xenevt_fwrite(struct file *fp, off_t *offp, struct uio *uio,
 	error = uiomove(chans, uio->uio_resid, uio);
 	if (error)
 		goto out;
+	mutex_enter(&devevent_lock);
 	for (i = 0; i < nentries; i++) {
 		if (chans[i] < NR_EVENT_CHANNELS &&
 		    devevent[chans[i]] == d) {
 			hypervisor_unmask_event(chans[i]);
 		}
 	}
+	mutex_exit(&devevent_lock);
 out:
 	kmem_free(chans, nentries * sizeof(uint16_t));
 	return 0;
@@ -488,8 +510,10 @@ xenevt_fioctl(struct file *fp, u_long cmd, void *addr)
 	switch(cmd) {
 	case EVTCHN_RESET:
 	case IOCTL_EVTCHN_RESET:
+		mutex_enter(&d->lock);
 		d->ring_read = d->ring_write = 0;
 		d->flags = 0;
+		mutex_exit(&d->lock);
 		break;
 	case IOCTL_EVTCHN_BIND_VIRQ:
 	{
@@ -502,7 +526,11 @@ xenevt_fioctl(struct file *fp, u_long cmd, void *addr)
 			return -error;
 		}
 		bind_virq->port = op.u.bind_virq.port;
+		mutex_enter(&devevent_lock);
+		KASSERT(devevent[bind_virq->port] == NULL);
 		devevent[bind_virq->port] = d;
+		mutex_exit(&devevent_lock);
+		xen_atomic_set_bit(&d->ci->ci_evtmask[0], bind_virq->port);
 		hypervisor_unmask_event(bind_virq->port);
 		break;
 	}
@@ -515,7 +543,11 @@ xenevt_fioctl(struct file *fp, u_long cmd, void *addr)
 		if ((error = HYPERVISOR_event_channel_op(&op)))
 			return -error;
 		bind_intd->port = op.u.bind_interdomain.local_port;
+		mutex_enter(&devevent_lock);
+		KASSERT(devevent[bind_intd->port] == NULL);
 		devevent[bind_intd->port] = d;
+		mutex_exit(&devevent_lock);
+		xen_atomic_set_bit(&d->ci->ci_evtmask[0], bind_intd->port);
 		hypervisor_unmask_event(bind_intd->port);
 		break;
 	}
@@ -528,7 +560,11 @@ xenevt_fioctl(struct file *fp, u_long cmd, void *addr)
 		if ((error = HYPERVISOR_event_channel_op(&op)))
 			return -error;
 		bind_unbound->port = op.u.alloc_unbound.port;
+		mutex_enter(&devevent_lock);
+		KASSERT(devevent[bind_unbound->port] == NULL);
 		devevent[bind_unbound->port] = d;
+		mutex_exit(&devevent_lock);
+		xen_atomic_set_bit(&d->ci->ci_evtmask[0], bind_unbound->port);
 		hypervisor_unmask_event(bind_unbound->port);
 		break;
 	}
@@ -538,10 +574,15 @@ xenevt_fioctl(struct file *fp, u_long cmd, void *addr)
 		
 		if (unbind->port > NR_EVENT_CHANNELS)
 			return EINVAL;
-		if (devevent[unbind->port] != d)
+		mutex_enter(&devevent_lock);
+		if (devevent[unbind->port] != d) {
+			mutex_exit(&devevent_lock);
 			return ENOTCONN;
+		}
 		devevent[unbind->port] = NULL;
+		mutex_exit(&devevent_lock);
 		hypervisor_mask_event(unbind->port);
+		xen_atomic_clear_bit(&d->ci->ci_evtmask[0], unbind->port);
 		op.cmd = EVTCHNOP_close;
 		op.u.close.port = unbind->port;
 		if ((error = HYPERVISOR_event_channel_op(&op)))
@@ -554,9 +595,13 @@ xenevt_fioctl(struct file *fp, u_long cmd, void *addr)
 		
 		if (notify->port > NR_EVENT_CHANNELS)
 			return EINVAL;
-		if (devevent[notify->port] != d)
+		mutex_enter(&devevent_lock);
+		if (devevent[notify->port] != d) {
+			mutex_exit(&devevent_lock);
 			return ENOTCONN;
+		}
 		hypervisor_notify_via_evtchn(notify->port);
+		mutex_exit(&devevent_lock);
 		break;
 	}
 	case FIONBIO:

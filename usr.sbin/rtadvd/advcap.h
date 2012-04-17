@@ -1,4 +1,4 @@
-/*	$NetBSD: advcap.h,v 1.6 2006/03/05 23:47:08 rpaulo Exp $	*/
+/*	$NetBSD: advcap.h,v 1.6.42.1 2012/04/17 00:09:53 yamt Exp $	*/
 /*	$KAME: advcap.h,v 1.5 2003/06/09 05:40:54 t-momose Exp $	*/
 
 /*
@@ -36,10 +36,10 @@
 
 __BEGIN_DECLS
 
-extern int agetent __P((char *, const char *));
-extern int agetflag __P((const char *));
-extern int64_t agetnum __P((const char *));
-extern char *agetstr __P((const char *, char **));
+extern int agetent(char *, const char *);
+extern int agetflag(const char *);
+extern int64_t agetnum(const char *);
+extern char *agetstr(const char *, char **);
 
 __END_DECLS
 

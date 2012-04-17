@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.7 2011/07/01 18:38:49 dyoung Exp $	*/
+/*	$NetBSD: ahci.c,v 1.7.2.1 2012/04/17 00:06:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.7 2011/07/01 18:38:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.7.2.1 2012/04/17 00:06:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -460,9 +460,7 @@ ahci_poll_hub(void *arg)
 	xfer->actlen = 1;
 	xfer->status = USBD_NORMAL_COMPLETION;
 	s = splusb();
-	xfer->device->bus->intr_context++;
 	usb_transfer_complete(xfer);
-	xfer->device->bus->intr_context--;
 	splx(s);
 }
 
@@ -1289,9 +1287,7 @@ ahci_poll_device(void *arg)
 
 	xfer->status = USBD_NORMAL_COMPLETION;
 	s = splusb();
-	xfer->device->bus->intr_context++;
 	usb_transfer_complete(xfer);
-	xfer->device->bus->intr_context--;
 	splx(s);
 }
 

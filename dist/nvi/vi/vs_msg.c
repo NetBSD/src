@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_msg.c,v 1.4 2010/05/13 17:52:11 tnozaki Exp $ */
+/*	$NetBSD: vs_msg.c,v 1.4.6.1 2012/04/17 00:02:26 yamt Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -897,7 +897,8 @@ vs_msgsave(SCR *sp, mtype_t mt, char *p, size_t len)
 	if ((mp_c = gp->msgq.lh_first) == NULL) {
 		LIST_INSERT_HEAD(&gp->msgq, mp_n, q);
 	} else {
-		for (; mp_c->q.le_next != NULL; mp_c = mp_c->q.le_next);
+		while (mp_c->q.le_next != NULL)
+			mp_c = mp_c->q.le_next;
 		LIST_INSERT_AFTER(mp_c, mp_n, q);
 	}
 	return;

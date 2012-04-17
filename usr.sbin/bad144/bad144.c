@@ -1,4 +1,4 @@
-/*	$NetBSD: bad144.c,v 1.28 2011/08/31 16:24:59 plunky Exp $	*/
+/*	$NetBSD: bad144.c,v 1.28.2.1 2012/04/17 00:09:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)bad144.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: bad144.c,v 1.28 2011/08/31 16:24:59 plunky Exp $");
+__RCSID("$NetBSD: bad144.c,v 1.28.2.1 2012/04/17 00:09:45 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,29 +76,28 @@ __RCSID("$NetBSD: bad144.c,v 1.28 2011/08/31 16:24:59 plunky Exp $");
 #define RETRIES	10		/* number of retries on reading old sectors */
 
 #ifdef __vax__
-int	fflag;
+static int	fflag;
 #endif
-int	add, copy, verbose, nflag;
-int	dups;
-int	badfile = -1;		/* copy of badsector table to use, -1 if any */
+static int	add, copy, verbose, nflag;
+static int	dups;
+static int	badfile = -1;		/* copy of badsector table to use, -1 if any */
 #define MAXSECSIZE	1024
-struct	dkbad curbad, oldbad;
+static struct	dkbad curbad, oldbad;
 #define	DKBAD_MAGIC	0x4321
 
-daddr_t	size;
-struct	disklabel *dp;
-struct	disklabel label;
-char	diskname[MAXPATHLEN];
+static daddr_t	size;
+static struct	disklabel *dp;
+static struct	disklabel label;
+static char	diskname[MAXPATHLEN];
 
-daddr_t	badsn(const struct bt_bad *);
-int	blkcopy(int, daddr_t, daddr_t);
-void	blkzero(int, daddr_t);
-int	checkold(void);
-int	compare(const void *, const void *);
-daddr_t	getold(int, struct dkbad *);
-int	main(int, char **);
-void	shift(int, int, int);
-void	usage(void);
+static daddr_t	badsn(const struct bt_bad *);
+static int	blkcopy(int, daddr_t, daddr_t);
+static void	blkzero(int, daddr_t);
+static int	checkold(void);
+static int	compare(const void *, const void *);
+static daddr_t	getold(int, struct dkbad *);
+static void	shift(int, int, int);
+__dead static void	usage(void);
 
 #ifdef __vax__
 #define OPTSTRING "01234acfvn"
@@ -318,7 +317,7 @@ main(int argc, char *argv[])
 	return (0);
 }
 
-daddr_t
+static daddr_t
 getold(int f, struct dkbad *bad)
 {
 	int i;
@@ -345,7 +344,7 @@ getold(int f, struct dkbad *bad)
 	/*NOTREACHED*/
 }
 
-int
+static int
 checkold(void)
 {
 	int i;
@@ -400,7 +399,7 @@ checkold(void)
  * to make room for the new bad sectors.
  * new is the new number of bad sectors, old is the previous count.
  */
-void
+static void
 shift(int f, int new, int old)
 {
 	daddr_t repl;
@@ -431,12 +430,12 @@ shift(int f, int new, int old)
 	}
 }
 
-char *buf;
+static char *buf;
 
 /*
  *  Copy disk sector s1 to s2.
  */
-int
+static int
 blkcopy(int f, daddr_t s1, daddr_t s2)
 {
 	int tries, n;
@@ -470,7 +469,7 @@ blkcopy(int f, daddr_t s1, daddr_t s2)
 	return(1);
 }
 
-void
+static void
 blkzero(int f, daddr_t sn)
 {
 	char *zbuf;
@@ -490,7 +489,7 @@ blkzero(int f, daddr_t sn)
 	free(zbuf);
 }
 
-int
+static int
 compare(const void *v1, const void *v2)
 {
 	const struct bt_bad *b1 = v1;
@@ -505,7 +504,7 @@ compare(const void *v1, const void *v2)
 	return (b1->bt_trksec - b2->bt_trksec);
 }
 
-daddr_t
+static daddr_t
 badsn(const struct bt_bad *bt)
 {
 
@@ -537,10 +536,11 @@ struct hpuphdr {
 #define	HPUP_OKSECT	0xc000		/* this normally means sector is good */
 #define	HPUP_16BIT	0x1000		/* 1 == 16 bit format */
 };
-int rp06format(struct formats *, struct disklabel *, daddr_t, char *, int);
-int hpupformat(struct formats *, struct disklabel *, daddr_t, char *, int);
 
-struct	formats {
+static int rp06format(struct formats *, struct disklabel *, daddr_t, char *, int);
+static int hpupformat(struct formats *, struct disklabel *, daddr_t, char *, int);
+
+static struct	formats {
 	char	*f_name;		/* disk name */
 	int	f_bufsize;		/* size of sector + header */
 	int	f_bic;			/* value to bic in hpup_cyl */
@@ -557,7 +557,7 @@ struct	formats {
 };
 
 /*ARGSUSED*/
-int
+static int
 hpupformat(struct formats *fp, struct disklabel *dp, daddr_t blk, char *buf,
 	   int count)
 {
@@ -575,7 +575,7 @@ hpupformat(struct formats *fp, struct disklabel *dp, daddr_t blk, char *buf,
 }
 
 /*ARGSUSED*/
-int
+static int
 rp06format(struct formats *fp, struct disklabel *dp, daddr_t blk, char *buf,
 	   int count)
 {
@@ -587,7 +587,7 @@ rp06format(struct formats *fp, struct disklabel *dp, daddr_t blk, char *buf,
 	return (0);
 }
 
-void
+static void
 format(int fd, daddr_t blk)
 {
 	struct formats *fp;
@@ -647,7 +647,7 @@ format(int fd, daddr_t blk)
 }
 #endif
 
-void
+static void
 usage(void)
 {
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.74 2011/06/12 03:35:49 rmind Exp $
+#	$NetBSD: files.x68k,v 1.74.2.1 2012/04/17 00:07:02 yamt Exp $
 #
 # new style config file for x68k architecture
 #
@@ -30,10 +30,10 @@ file	arch/x68k/x68k/disksubr.c	disk
 file	arch/x68k/x68k/machdep.c
 file	arch/x68k/x68k/pmap_bootstrap.c	compile-with "${NOPROF_C}"
 file	arch/x68k/x68k/trap.c
-file	arch/x68k/x68k/fpu.c
 file	arch/x68k/x68k/bus.c
 file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/db_memrw.c	ddb
+file	arch/m68k/m68k/fpu.c
 file	arch/m68k/m68k/pmap_motorola.c
 file	arch/m68k/m68k/procfs_machdep.c	procfs
 file	arch/m68k/m68k/sys_machdep.c
@@ -96,9 +96,9 @@ device kbd: event
 attach	kbd at mfp
 file	arch/x68k/dev/kbd.c		kbd needs-flag
 
-device pow: sysmon_power, sysmon_taskq
-attach	pow at mfp
-file	arch/x68k/dev/pow.c		pow
+device powsw: sysmon_power, sysmon_taskq
+attach	powsw at mfp
+file	arch/x68k/dev/powsw.c		powsw
 
 device rtc
 attach	rtc at intio

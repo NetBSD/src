@@ -1,4 +1,4 @@
-/* $NetBSD: padvol.h,v 1.2 2008/05/09 03:44:51 jmcneill Exp $ */
+/* $NetBSD: padvol.h,v 1.2.32.1 2012/04/17 00:07:42 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -36,17 +36,18 @@ stream_filter_t *	pad_vol_slinear16_be(struct audio_softc *,
 
 #define PAD_DEFINE_FILTER(name)						\
 	static int							\
-	name##_fetch_to(stream_fetcher_t *, audio_stream_t *, int);	\
+	name##_fetch_to(struct audio_softc *, stream_fetcher_t *, 	\
+			audio_stream_t *, int);				\
 	stream_filter_t * name(struct audio_softc *,			\
 	    const audio_params_t *, const audio_params_t *);		\
 	stream_filter_t *						\
-	name(struct audio_softc *sc, const audio_params_t *from,	\
+	name(struct audio_softc *asc, const audio_params_t *from,	\
 	    const audio_params_t *to)					\
 	{								\
-		return pad_filter_factory(sc, name##_fetch_to);		\
+		return pad_filter_factory(asc, name##_fetch_to);	\
 	}								\
 	static int							\
-	name##_fetch_to(stream_fetcher_t *self, audio_stream_t *dst,	\
-	    int max_used)
+	name##_fetch_to(struct audio_softc *asc, stream_fetcher_t *self, \
+			audio_stream_t *dst, int max_used)
 
 #endif /* !_SYS_DEV_PAD_PADVOL_H */

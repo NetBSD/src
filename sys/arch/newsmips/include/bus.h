@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.19 2008/04/28 20:23:30 martin Exp $	*/
+/*	$NetBSD: bus.h,v 1.19.34.1 2012/04/17 00:06:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -147,12 +147,12 @@ static __inline void __CONCAT(bus_space_read_multi_,BYTES)		\
 	__PB_TYPENAME(BITS) *, size_t);					\
 									\
 static __inline void							\
-__CONCAT(bus_space_read_multi_,BYTES)(t, h, o, a, c)			\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	__PB_TYPENAME(BITS) *a;						\
-	size_t c;							\
+__CONCAT(bus_space_read_multi_,BYTES)(					\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h,						\
+	bus_size_t o,							\
+	__PB_TYPENAME(BITS) *a,						\
+	size_t c)							\
 {									\
 									\
 	while (c--)							\
@@ -185,12 +185,12 @@ static __inline void __CONCAT(bus_space_read_region_,BYTES)		\
 	__PB_TYPENAME(BITS) *, size_t);					\
 									\
 static __inline void							\
-__CONCAT(bus_space_read_region_,BYTES)(t, h, o, a, c)			\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	__PB_TYPENAME(BITS) *a;						\
-	size_t c;							\
+__CONCAT(bus_space_read_region_,BYTES)(					\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h,						\
+	bus_size_t o,							\
+	__PB_TYPENAME(BITS) *a,						\
+	size_t c)							\
 {									\
 									\
 	while (c--) {							\
@@ -255,12 +255,12 @@ static __inline void __CONCAT(bus_space_write_multi_,BYTES)		\
 	const __PB_TYPENAME(BITS) *, size_t);				\
 									\
 static __inline void							\
-__CONCAT(bus_space_write_multi_,BYTES)(t, h, o, a, c)			\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	const __PB_TYPENAME(BITS) *a;					\
-	size_t c;							\
+__CONCAT(bus_space_write_multi_,BYTES)(					\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h,						\
+	bus_size_t o,							\
+	const __PB_TYPENAME(BITS) *a,					\
+	size_t c)							\
 {									\
 									\
 	while (c--)							\
@@ -293,12 +293,12 @@ static __inline void __CONCAT(bus_space_write_region_,BYTES)		\
 	const __PB_TYPENAME(BITS) *, size_t);				\
 									\
 static __inline void							\
-__CONCAT(bus_space_write_region_,BYTES)(t, h, o, a, c)			\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	const __PB_TYPENAME(BITS) *a;					\
-	size_t c;							\
+__CONCAT(bus_space_write_region_,BYTES)(				\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h,						\
+	bus_size_t o,							\
+	const __PB_TYPENAME(BITS) *a,					\
+	size_t c)							\
 {									\
 									\
 	while (c--) {							\
@@ -333,12 +333,12 @@ static __inline void __CONCAT(bus_space_set_multi_,BYTES)		\
 	__PB_TYPENAME(BITS), size_t);					\
 									\
 static __inline void							\
-__CONCAT(bus_space_set_multi_,BYTES)(t, h, o, v, c)			\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	__PB_TYPENAME(BITS) v;						\
-	size_t c;							\
+__CONCAT(bus_space_set_multi_,BYTES)(					\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h,						\
+	bus_size_t o,							\
+	__PB_TYPENAME(BITS) v,						\
+	size_t c)							\
 {									\
 									\
 	while (c--)							\
@@ -371,12 +371,12 @@ static __inline void __CONCAT(bus_space_set_region_,BYTES)		\
 	__PB_TYPENAME(BITS), size_t);					\
 									\
 static __inline void							\
-__CONCAT(bus_space_set_region_,BYTES)(t, h, o, v, c)			\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	__PB_TYPENAME(BITS) v;						\
-	size_t c;							\
+__CONCAT(bus_space_set_region_,BYTES)(					\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h,						\
+	bus_size_t o,							\
+	__PB_TYPENAME(BITS) v,						\
+	size_t c)							\
 {									\
 									\
 	while (c--) {							\
@@ -414,10 +414,13 @@ static __inline void __CONCAT(bus_space_copy_region_,BYTES)		\
 	    bus_size_t count);						\
 									\
 static __inline void							\
-__CONCAT(bus_space_copy_region_,BYTES)(t, h1, o1, h2, o2, c)		\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h1, h2;					\
-	bus_size_t o1, o2, c;						\
+__CONCAT(bus_space_copy_region_,BYTES)(					\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h1,						\
+	bus_size_t o1,							\
+	bus_space_handle_t h2,						\
+	bus_size_t o2,							\
+	bus_size_t c)							\
 {									\
 	bus_size_t o;							\
 									\

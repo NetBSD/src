@@ -1,4 +1,4 @@
-/*	$NetBSD: dfcmp.c,v 1.3 2005/12/11 12:17:40 christos Exp $	*/
+/*	$NetBSD: dfcmp.c,v 1.3.112.1 2012/04/17 00:06:26 yamt Exp $	*/
 
 /*	$OpenBSD: dfcmp.c,v 1.4 2001/03/29 03:58:17 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dfcmp.c,v 1.3 2005/12/11 12:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dfcmp.c,v 1.3.112.1 2012/04/17 00:06:26 yamt Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/dbl_float.h"
@@ -51,11 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: dfcmp.c,v 1.3 2005/12/11 12:17:40 christos Exp $");
  * dbl_cmp: compare two values
  */
 int
-dbl_fcmp(leftptr, rightptr, cond, status)
-    dbl_floating_point *leftptr, *rightptr;
-    unsigned int cond; /* The predicate to be tested */
-    unsigned int *status;
-    {
+dbl_fcmp(dbl_floating_point *leftptr, dbl_floating_point *rightptr,
+    unsigned int cond, unsigned int *status)
+{
     register unsigned int leftp1, leftp2, rightp1, rightp2;
     register int xorresult;
 

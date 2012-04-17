@@ -1,4 +1,4 @@
-/*	$NetBSD: esovar.h,v 1.9 2009/05/06 10:34:32 cegger Exp $	*/
+/*	$NetBSD: esovar.h,v 1.9.12.1 2012/04/17 00:07:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004 Klaus J. Klein
@@ -86,6 +86,9 @@
  */
 struct eso_softc {
 	struct device		sc_dev;
+	kmutex_t		sc_lock;
+	kmutex_t		sc_intr_lock;
+
 	pci_intr_handle_t *	sc_ih;
 	unsigned int		sc_revision;	/* PCI Revision ID */
 
@@ -124,6 +127,8 @@ struct eso_softc {
 	void *			sc_parg;
 	void			(*sc_rintr)(void *);
 	void *			sc_rarg;
+	kcondvar_t		sc_pcv;
+	kcondvar_t		sc_rcv;
 
 	/* Auto-initialize DMA transfer block drain timeouts, in ticks */
 	int			sc_pdrain;

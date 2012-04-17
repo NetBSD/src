@@ -1,7 +1,7 @@
-/*	$NetBSD: npfctl.c,v 1.6.2.1 2011/11/10 14:31:55 yamt Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.6.2.2 2012/04/17 00:09:50 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.6.2.1 2011/11/10 14:31:55 yamt Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.6.2.2 2012/04/17 00:09:50 yamt Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -44,6 +44,11 @@ __RCSID("$NetBSD: npfctl.c,v 1.6.2.1 2011/11/10 14:31:55 yamt Exp $");
 #include <unistd.h>
 
 #include "npfctl.h"
+
+extern int		yylineno, yycolumn;
+extern const char *	yyfilename;
+extern int		yyparse(void);
+extern void		yyrestart(FILE *);
 
 #define	NPFCTL_START		1
 #define	NPFCTL_STOP		2
@@ -77,9 +82,8 @@ static struct operations_s {
 void *
 zalloc(size_t sz)
 {
-	void *p;
+	void *p = malloc(sz);
 
-	p = malloc(sz);
 	if (p == NULL) {
 		err(EXIT_FAILURE, "zalloc");
 	}
@@ -87,14 +91,36 @@ zalloc(size_t sz)
 	return p;
 }
 
+void *
+xrealloc(void *ptr, size_t size)
+{
+	void *p = realloc(ptr, size);
+
+	if (p == NULL) {
+		err(EXIT_FAILURE, "xrealloc");
+	}
+	return p;
+}
+
 char *
 xstrdup(const char *s)
 {
-	char *p;
+	char *p = strdup(s);
 
-	p = strdup(s);
 	if (p == NULL) {
 		err(EXIT_FAILURE, "xstrdup");
+	}
+	return p;
+}
+
+char *
+xstrndup(const char *s, size_t len)
+{
+	char *p;
+
+	p = strndup(s, len);
+	if (p == NULL) {
+		err(EXIT_FAILURE, "xstrndup");
 	}
 	return p;
 }
@@ -123,37 +149,24 @@ usage(void)
 static void
 npfctl_parsecfg(const char *cfg)
 {
-	char *buf, *p;
 	FILE *fp;
-	size_t n;
-	int l;
 
 	fp = fopen(cfg, "r");
 	if (fp == NULL) {
 		err(EXIT_FAILURE, "open '%s'", cfg);
 	}
-	l = 0;
-	buf = NULL;
-	while (getline(&buf, &n, fp) != -1) {
-		l++;
-		p = strpbrk(buf, "#\n");
-		if (p != NULL) {
-			*p = '\0';
-		}
-		if (npf_parseline(buf)) {
-			fprintf(stderr, "invalid syntax at line %d\n", l);
-			exit(EXIT_FAILURE);
-		}
-	}
-	if (buf != NULL) {
-		free(buf);
-	}
+	yyrestart(fp);
+	yylineno = 1;
+	yycolumn = 0;
+	yyfilename = cfg;
+	yyparse();
+	fclose(fp);
 }
 
 static int
 npfctl_print_stats(int fd)
 {
-	uint64_t *st = malloc(NPF_STATS_SIZE);
+	uint64_t *st = zalloc(NPF_STATS_SIZE);
 
 	if (ioctl(fd, IOC_NPF_STATS, &st) != 0) {
 		err(EXIT_FAILURE, "ioctl(IOC_NPF_STATS)");
@@ -194,6 +207,31 @@ npfctl_print_stats(int fd)
 	return 0;
 }
 
+void
+npfctl_print_error(const nl_error_t *ne)
+{
+	static const char *ncode_errors[] = {
+		[-NPF_ERR_OPCODE]	= "invalid instruction",
+		[-NPF_ERR_JUMP]		= "invalid jump",
+		[-NPF_ERR_REG]		= "invalid register",
+		[-NPF_ERR_INVAL]	= "invalid argument value",
+		[-NPF_ERR_RANGE]	= "processing out of range"
+	};
+	const int nc_err = ne->ne_ncode_error;
+	const char *srcfile = ne->ne_source_file;
+
+	if (srcfile) {
+		warnx("source %s line %d", srcfile, ne->ne_source_line);
+	}
+	if (nc_err) {
+		warnx("n-code error (%d): %s at offset 0x%x",
+		    nc_err, ncode_errors[-nc_err], ne->ne_ncode_errat);
+	}
+	if (ne->ne_id) {
+		warnx("object: %d", ne->ne_id);
+	}
+}
+
 static void
 npfctl(int action, int argc, char **argv)
 {
@@ -221,18 +259,12 @@ npfctl(int action, int argc, char **argv)
 		ret = ioctl(fd, IOC_NPF_SWITCH, &boolval);
 		break;
 	case NPFCTL_RELOAD:
-		npfctl_init_data();
+		npfctl_config_init(false);
 		npfctl_parsecfg(argc < 3 ? NPF_CONF_PATH : argv[2]);
-		ret = npfctl_ioctl_send(fd);
+		ret = npfctl_config_send(fd);
 		break;
 	case NPFCTL_FLUSH:
-		/* Pass empty configuration to flush. */
-		npfctl_init_data();
-		ret = npfctl_ioctl_send(fd);
-		if (ret) {
-			break;
-		}
-		ret = npf_sessions_send(fd, NULL);
+		ret = npf_config_flush(fd);
 		break;
 	case NPFCTL_TABLE:
 		if (argc < 5) {
@@ -252,12 +284,17 @@ npfctl(int action, int argc, char **argv)
 			tbl.nct_action = 0;
 			arg = argv[3];
 		}
-		if (!npfctl_parse_cidr(arg,
-		    npfctl_get_addrfamily(arg),
-		    &tbl.nct_addr, &tbl.nct_mask)) {
+		fam_addr_mask_t *fam = npfctl_parse_cidr(arg);
+		if (fam == NULL) {
 			errx(EXIT_FAILURE, "invalid CIDR '%s'", arg);
 		}
+		memcpy(&tbl.nct_addr, &fam->fam_addr, sizeof(npf_addr_t));
+		tbl.nct_mask = fam->fam_mask;
 		ret = ioctl(fd, IOC_NPF_TABLE, &tbl);
+		if (tbl.nct_action == 0) {
+			printf("%s\n", ret ? "not found" : "found");
+			exit(ret ? EXIT_FAILURE : EXIT_SUCCESS);
+		}
 		break;
 	case NPFCTL_STATS:
 		ret = npfctl_print_stats(fd);
@@ -287,28 +324,26 @@ int
 main(int argc, char **argv)
 {
 	char *cmd;
-	int n;
 
 	if (argc < 2) {
 		usage();
 	}
 	cmd = argv[1];
 
-#ifdef _NPF_TESTING
-	/* Special testing case. */
-	npfctl_init_data();
-	npfctl_parsecfg("npf.conf");
-	npfctl_ioctl_send(0);
-	return 0;
-#endif
+	if (strcmp(cmd, "debug") == 0) {
+		const char *cfg = argc > 2 ? argv[2] : "npf.conf";
+		npfctl_config_init(true);
+		npfctl_parsecfg(cfg);
+		npfctl_config_send(0);
+		return EXIT_SUCCESS;
+	}
 
 	/* Find and call the subroutine */
-	for (n = 0; operations[n].cmd != NULL; n++) {
+	for (int n = 0; operations[n].cmd != NULL; n++) {
 		if (strcmp(cmd, operations[n].cmd) != 0)
 			continue;
 		npfctl(operations[n].action, argc, argv);
-		return 0;
+		return EXIT_SUCCESS;
 	}
 	usage();
-	return 0;
 }

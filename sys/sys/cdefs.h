@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.88.2.1 2011/11/10 14:31:51 yamt Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.88.2.2 2012/04/17 00:08:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -149,7 +149,7 @@
 #define	__CTASSERT(x)		__CTASSERT0(x, __ctassert, __LINE__)
 #endif
 #define	__CTASSERT0(x, y, z)	__CTASSERT1(x, y, z)
-#define	__CTASSERT1(x, y, z)	typedef char y ## z[(x) ? 1 : -1];
+#define	__CTASSERT1(x, y, z)	typedef char y ## z[/*CONSTCOND*/(x) ? 1 : -1]
 
 /*
  * The following macro is used to remove const cast-away warnings
@@ -338,7 +338,9 @@
 #define	__restrict	/* delete __restrict when not supported */
 #elif __STDC_VERSION__ >= 199901L
 #define	__restrict	restrict
-#elif !__GNUC_PREREQ__(2, 92)
+#elif __GNUC_PREREQ__(2, 92)
+#define	__restrict	__restrict__
+#else
 #define	__restrict	/* delete __restrict when not supported */
 #endif
 
@@ -527,5 +529,38 @@
 #else
 #define __CAST(__dt, __st)	((__dt)(__st))
 #endif
+
+#define __type_mask(t) (/*LINTED*/sizeof(t) < sizeof(intmax_t) ? \
+    (~((1ULL << (sizeof(t) * NBBY)) - 1)) : 0ULL)
+
+#ifndef __ASSEMBLER__
+static __inline long long __zeroll(void) { return 0; }
+static __inline int __negative_p(double x) { return x < 0; }
+#else
+#define __zeroll() (0LL)
+#define __negative_p(x) ((x) < 0)
+#endif
+
+#define __type_min_s(t) ((t)((1ULL << (sizeof(t) * NBBY - 1))))
+#define __type_max_s(t) ((t)~((1ULL << (sizeof(t) * NBBY - 1))))
+#define __type_min_u(t) ((t)0ULL)
+#define __type_max_u(t) ((t)~0ULL)
+#define __type_is_signed(t) (/*LINTED*/__type_min_s(t) + (t)1 < (t)1)
+#define __type_min(t) (__type_is_signed(t) ? __type_min_s(t) : __type_min_u(t))
+#define __type_max(t) (__type_is_signed(t) ? __type_max_s(t) : __type_max_u(t))
+
+
+#define __type_fit_u(t, a) (/*LINTED*/sizeof(t) < sizeof(intmax_t) ? \
+    (((a) & __type_mask(t)) == 0) : !__negative_p(a))
+
+#define __type_fit_s(t, a) (/*LINTED*/__negative_p(a) ? \
+    ((intmax_t)((a) + __zeroll()) >= (intmax_t)__type_min_s(t)) : \
+    ((intmax_t)((a) + __zeroll()) <= (intmax_t)__type_max_s(t)))
+
+/*
+ * return true if value 'a' fits in type 't'
+ */
+#define __type_fit(t, a) (__type_is_signed(t) ? \
+    __type_fit_s(t, a) : __type_fit_u(t, a))
 
 #endif /* !_SYS_CDEFS_H_ */

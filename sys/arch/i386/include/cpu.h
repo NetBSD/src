@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.177 2011/07/26 12:56:39 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.177.2.1 2012/04/17 00:06:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -85,6 +85,10 @@ cpu_set_curpri(int pri)
 #define	CLKF_PC(frame)		((frame)->cf_if.if_eip)
 #define	CLKF_INTR(frame)	(curcpu()->ci_idepth > 0)
 #define	LWP_PC(l)		((l)->l_md.md_regs->tf_eip)
+
+#ifdef PAE
+void cpu_alloc_l3_page(struct cpu_info *);
+#endif /* PAE */
 
 #endif	/* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.46 2011/02/03 22:16:11 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.46.4.1 2012/04/17 00:08:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.46 2011/02/03 22:16:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.46.4.1 2012/04/17 00:08:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.46 2011/02/03 22:16:11 pooka Exp $");
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
+#include <sys/cprng.h>
 
 #include <rump/rumpuser.h>
 
@@ -326,7 +327,7 @@ rumpblk_init(void)
 		    &error) == 0) {
 			randstate = strtoul(buf, NULL, 10);
 		} else {
-			randstate = arc4random();
+			randstate = cprng_fast32();
 		}
 		printf("rumpblk: FAULT INJECTION ACTIVE! fail %d/%d. "
 		    "seed %u\n", blkfail, BLKFAIL_MAX, randstate);

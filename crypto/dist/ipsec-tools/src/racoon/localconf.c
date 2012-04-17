@@ -1,4 +1,4 @@
-/*	$NetBSD: localconf.c,v 1.7 2008/12/23 14:04:42 tteras Exp $	*/
+/*	$NetBSD: localconf.c,v 1.7.10.1 2012/04/17 00:01:42 yamt Exp $	*/
 
 /*	$KAME: localconf.c,v 1.33 2001/08/09 07:32:19 sakane Exp $	*/
 
@@ -63,20 +63,48 @@
 #include "admin.h"
 #include "gcmalloc.h"
 
-struct localconf *lcconf;
+struct localconf *lcconf = NULL;
 
 static void setdefault __P((void));
 
 void
 initlcconf()
 {
-	lcconf = racoon_calloc(1, sizeof(*lcconf));
-	if (lcconf == NULL)
-		errx(1, "failed to allocate local conf.");
+	if (lcconf == NULL) {
+		lcconf = racoon_calloc(1, sizeof(*lcconf));
+		if (lcconf == NULL)
+			errx(1, "failed to allocate local conf.");
+
+		// Important: assure all pointers within lcconf to be NULL.
+		memset(lcconf, 0, sizeof(*lcconf));
+	}
 
 	setdefault();
-
 	lcconf->racoon_conf = LC_DEFAULT_CF;
+}
+
+void
+lcconf_setchroot(char* chroot)
+{
+	if (lcconf->chroot) {
+		racoon_free(lcconf->chroot);
+		lcconf->chroot = NULL;
+	}
+	lcconf->chroot = chroot;
+}
+
+int
+lcconf_setpath(char* path, unsigned int path_type)
+{
+	if (path_type >= LC_PATHTYPE_MAX)
+		return -1;
+
+	if (lcconf->pathinfo[path_type])
+		racoon_free(lcconf->pathinfo[path_type]);
+
+	lcconf->pathinfo[path_type] = path;
+
+	return 0;
 }
 
 void
@@ -100,7 +128,19 @@ setdefault()
 {
 	lcconf->uid = 0;
 	lcconf->gid = 0;
-	lcconf->chroot = NULL;
+
+	{
+		int i = 0;
+		for (; i < LC_PATHTYPE_MAX; i++) {
+			if (lcconf->pathinfo[i]) {
+				racoon_free(lcconf->pathinfo[i]);
+				lcconf->pathinfo[i] = NULL;
+			}
+		}
+	}
+
+	lcconf_setchroot(NULL); 
+
 	lcconf->port_isakmp = PORT_ISAKMP;
 	lcconf->port_isakmp_natt = PORT_ISAKMP_NATT;
 	lcconf->default_af = AF_INET;

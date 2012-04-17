@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.47 2011/10/11 12:25:56 tsutsui Exp $ */
+/*	$NetBSD: pmap.c,v 1.47.2.1 2012/04/17 00:09:38 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.47 2011/10/11 12:25:56 tsutsui Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.47.2.1 2012/04/17 00:09:38 yamt Exp $");
 #endif
 
 #include <string.h>
@@ -143,9 +143,8 @@ dump_vm_map(kvm_t *kd, struct kinfo_proc2 *proc,
 		       D(vm_map, vm_map)->hint);
 		printf("%*s    first_free = %p,", indent(2), "",
 		       D(vm_map, vm_map)->first_free);
-		printf(" flags = %x <%s%s%s%s%s >,\n", D(vm_map, vm_map)->flags,
+		printf(" flags = %x <%s%s%s%s >,\n", D(vm_map, vm_map)->flags,
 		       D(vm_map, vm_map)->flags & VM_MAP_PAGEABLE ? " PAGEABLE" : "",
-		       D(vm_map, vm_map)->flags & VM_MAP_INTRSAFE ? " INTRSAFE" : "",
 		       D(vm_map, vm_map)->flags & VM_MAP_WIREFUTURE ? " WIREFUTURE" : "",
 #ifdef VM_MAP_DYING
 		       D(vm_map, vm_map)->flags & VM_MAP_DYING ? " DYING" :
@@ -302,12 +301,11 @@ dump_vm_map_entry(kvm_t *kd, struct kinfo_proc2 *proc, struct kbit *vmspace,
 		printf("%*s    aref = { ar_pageoff = %x, ar_amap = %p },",
 		       indent(2), "", vme->aref.ar_pageoff, vme->aref.ar_amap);
 		printf(" advice = %d,\n", vme->advice);
-		printf("%*s    flags = %x <%s%s%s%s%s > }\n", indent(2), "",
+		printf("%*s    flags = %x <%s%s%s%s > }\n", indent(2), "",
 		       vme->flags,
 		       vme->flags & UVM_MAP_KERNEL ? " KERNEL" : "",
 		       vme->flags & UVM_MAP_KMAPENT ? " KMAPENT" : "",
-		       vme->flags & UVM_MAP_FIRST ? " FIRST" : "",
-		       vme->flags & UVM_MAP_QUANTUM ? " QUANTUM" : "",
+		       vme->flags & UVM_MAP_STATIC ? " STATIC" : "",
 		       vme->flags & UVM_MAP_NOMERGE ? " NOMERGE" : "");
 	}
 

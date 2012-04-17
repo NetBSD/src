@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.51 2011/10/18 09:22:53 hannken Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.51.2.1 2012/04/17 00:08:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.51 2011/10/18 09:22:53 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.51.2.1 2012/04/17 00:08:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,17 +93,16 @@ __KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.51 2011/10/18 09:22:53 hannken Exp 
 #include <uvm/uvm_extern.h>
 
 #include <fs/union/union.h>
+#include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 
-/* must be power of two, otherwise change UNION_HASH() */
-#define NHASH 32
-
-/* unsigned int ... */
+static LIST_HEAD(uhashhead, union_node) *uhashtbl;
+static u_long uhash_mask;		/* size of hash table - 1 */
 #define UNION_HASH(u, l) \
-	(((((unsigned long) (u)) + ((unsigned long) l)) >> 8) & (NHASH-1))
+	((((u_long) (u) + (u_long) (l)) >> 8) & uhash_mask)
+#define NOHASH	((u_long)-1)
 
-static LIST_HEAD(unhead, union_node) unhead[NHASH];
-static kmutex_t unheadlock[NHASH];
+static kmutex_t uhash_lock;
 
 void union_updatevp(struct union_node *, struct vnode *, struct vnode *);
 static int union_do_lookup(struct vnode *, struct componentname *, kauth_cred_t,    const char *, u_long);
@@ -114,12 +113,34 @@ struct vnode *union_dircache(struct vnode *, struct lwp *);
 void
 union_init(void)
 {
+
+	mutex_init(&uhash_lock, MUTEX_DEFAULT, IPL_NONE);
+	uhashtbl = hashinit(desiredvnodes, HASH_LIST, true, &uhash_mask);
+}
+
+void
+union_reinit(void)
+{
+	struct union_node *un;
+	struct uhashhead *oldhash, *hash;
+	u_long oldmask, mask, val;
 	int i;
 
-	for (i = 0; i < NHASH; i++) {
-		LIST_INIT(&unhead[i]);
-		mutex_init(&unheadlock[i], MUTEX_DEFAULT, IPL_NONE);
+	hash = hashinit(desiredvnodes, HASH_LIST, true, &mask);
+	mutex_enter(&uhash_lock);
+	oldhash = uhashtbl;
+	oldmask = uhash_mask;
+	uhashtbl = hash;
+	uhash_mask = mask;
+	for (i = 0; i <= oldmask; i++) {
+		while ((un = LIST_FIRST(&oldhash[i])) != NULL) {
+			LIST_REMOVE(un, un_cache);
+			val = UNION_HASH(un->un_uppervp, un->un_lowervp);
+			LIST_INSERT_HEAD(&hash[val], un, un_cache);
+		}
 	}
+	mutex_exit(&uhash_lock);
+	hashdone(oldhash, HASH_LIST, oldmask);
 }
 
 /*
@@ -128,10 +149,9 @@ union_init(void)
 void
 union_done(void)
 {
-	int i;
 
-	for (i = 0; i < NHASH; i++)
-		mutex_destroy(&unheadlock[i]);
+	hashdone(uhashtbl, HASH_LIST, uhash_mask);
+	mutex_destroy(&uhash_lock);
 
 	/* Make sure to unset the readdir hook. */
 	vn_union_readdir_hook = NULL;
@@ -144,34 +164,18 @@ union_updatevp(struct union_node *un, struct vnode *uppervp,
 	int ohash = UNION_HASH(un->un_uppervp, un->un_lowervp);
 	int nhash = UNION_HASH(uppervp, lowervp);
 	int docache = (lowervp != NULLVP || uppervp != NULLVP);
-	int lhash, uhash;
+	bool un_unlock;
 
-	/*
-	 * Ensure locking is ordered from lower to higher
-	 * to avoid deadlocks.
-	 */
-	if (nhash < ohash) {
-		lhash = nhash;
-		uhash = ohash;
-	} else {
-		lhash = ohash;
-		uhash = nhash;
-	}
+	KASSERT(VOP_ISLOCKED(UNIONTOV(un)) == LK_EXCLUSIVE);
 
-	if (lhash != uhash)
-		mutex_enter(&unheadlock[lhash]);
+	mutex_enter(&uhash_lock);
 
-	mutex_enter(&unheadlock[uhash]);
-
-	if (ohash != nhash || !docache) {
-		if (un->un_flags & UN_CACHED) {
-			un->un_flags &= ~UN_CACHED;
+	if (!docache || ohash != nhash) {
+		if (un->un_cflags & UN_CACHED) {
+			un->un_cflags &= ~UN_CACHED;
 			LIST_REMOVE(un, un_cache);
 		}
 	}
-
-	if (ohash != nhash)
-		mutex_exit(&unheadlock[ohash]);
 
 	if (un->un_lowervp != lowervp) {
 		if (un->un_lowervp) {
@@ -186,15 +190,30 @@ union_updatevp(struct union_node *un, struct vnode *uppervp,
 			}
 		}
 		un->un_lowervp = lowervp;
+		mutex_enter(&un->un_lock);
 		un->un_lowersz = VNOVAL;
+		mutex_exit(&un->un_lock);
 	}
 
 	if (un->un_uppervp != uppervp) {
-		if (un->un_uppervp)
+		if (un->un_uppervp) {
+			un_unlock = false;
 			vrele(un->un_uppervp);
+		} else
+			un_unlock = true;
 
+		mutex_enter(&un->un_lock);
 		un->un_uppervp = uppervp;
+		mutex_exit(&un->un_lock);
+		if (un_unlock) {
+			struct vop_unlock_args ap;
+
+			ap.a_vp = UNIONTOV(un);
+			genfs_unlock(&ap);
+		}
+		mutex_enter(&un->un_lock);
 		un->un_uppersz = VNOVAL;
+		mutex_exit(&un->un_lock);
 		/* Update union vnode interlock. */
 		if (uppervp != NULL) {
 			mutex_obj_hold(uppervp->v_interlock);
@@ -204,11 +223,11 @@ union_updatevp(struct union_node *un, struct vnode *uppervp,
 	}
 
 	if (docache && (ohash != nhash)) {
-		LIST_INSERT_HEAD(&unhead[nhash], un, un_cache);
-		un->un_flags |= UN_CACHED;
+		LIST_INSERT_HEAD(&uhashtbl[nhash], un, un_cache);
+		un->un_cflags |= UN_CACHED;
 	}
 
-	mutex_exit(&unheadlock[nhash]);
+	mutex_exit(&uhash_lock);
 }
 
 void
@@ -229,20 +248,23 @@ union_newupper(struct union_node *un, struct vnode *uppervp)
  * Keep track of size changes in the underlying vnodes.
  * If the size changes, then callback to the vm layer
  * giving priority to the upper layer size.
+ *
+ * Mutex un_lock hold on entry and released on return.
  */
 void
 union_newsize(struct vnode *vp, off_t uppersz, off_t lowersz)
 {
-	struct union_node *un;
+	struct union_node *un = VTOUNION(vp);
 	off_t sz;
 
+	KASSERT(mutex_owned(&un->un_lock));
 	/* only interested in regular files */
 	if (vp->v_type != VREG) {
+		mutex_exit(&un->un_lock);
 		uvm_vnp_setsize(vp, 0);
 		return;
 	}
 
-	un = VTOUNION(vp);
 	sz = VNOVAL;
 
 	if ((uppersz != VNOVAL) && (un->un_uppersz != uppersz)) {
@@ -256,6 +278,7 @@ union_newsize(struct vnode *vp, off_t uppersz, off_t lowersz)
 		if (sz == VNOVAL)
 			sz = un->un_lowersz;
 	}
+	mutex_exit(&un->un_lock);
 
 	if (sz != VNOVAL) {
 #ifdef UNION_DIAGNOSTIC
@@ -315,9 +338,12 @@ union_allocvp(
 	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
 	voff_t uppersz, lowersz;
 	dev_t rdev;
-	int hash = 0;
-	int vflag, iflag;
+	u_long hash[3];
+	int vflag, iflag, lflag;
 	int try;
+
+	if (uppervp)
+		KASSERT(VOP_ISLOCKED(uppervp) == LK_EXCLUSIVE);
 
 	if (uppervp == NULLVP && lowervp == NULLVP)
 		panic("union: unidentifiable allocation");
@@ -341,94 +367,69 @@ union_allocvp(
 		vflag = VV_ROOT;
 	}
 
-loop:
 	if (!docache) {
-		un = 0;
-	} else for (try = 0; try < 3; try++) {
-		switch (try) {
-		case 0:
-			if (lowervp == NULLVP)
-				continue;
-			hash = UNION_HASH(uppervp, lowervp);
-			break;
-
-		case 1:
-			if (uppervp == NULLVP)
-				continue;
-			hash = UNION_HASH(uppervp, NULLVP);
-			break;
-
-		case 2:
-			if (lowervp == NULLVP)
-				continue;
-			hash = UNION_HASH(NULLVP, lowervp);
-			break;
-		}
-
-		mutex_enter(&unheadlock[hash]);
-
-		for (un = unhead[hash].lh_first; un != 0;
-					un = un->un_cache.le_next) {
-			if ((un->un_lowervp == lowervp ||
-			     un->un_lowervp == NULLVP) &&
-			    (un->un_uppervp == uppervp ||
-			     un->un_uppervp == NULLVP) &&
-			    (UNIONTOV(un)->v_mount == mp)) {
-				vp = UNIONTOV(un);
-				mutex_enter(vp->v_interlock);
-				if (vget(vp, 0)) {
-					mutex_exit(&unheadlock[hash]);
-					goto loop;
-				}
-				break;
-			}
-		}
-
-		mutex_exit(&unheadlock[hash]);
-
-		if (un)
-			break;
+		un = NULL;
+		goto found;
 	}
 
-	if (un) {
-		/*
-		 * Obtain a lock on the union_node.
-		 * uppervp is locked, though un->un_uppervp
-		 * may not be.  this doesn't break the locking
-		 * hierarchy since in the case that un->un_uppervp
-		 * is not yet locked it will be vrele'd and replaced
-		 * with uppervp.
-		 */
+	/*
+	 * If both uppervp and lowervp are not NULL we have to
+	 * search union nodes with one vnode as NULL too.
+	 */
+	hash[0] = UNION_HASH(uppervp, lowervp);
+	if (uppervp == NULL || lowervp == NULL) {
+		hash[1] = hash[2] = NOHASH;
+	} else {
+		hash[1] = UNION_HASH(uppervp, NULLVP);
+		hash[2] = UNION_HASH(NULLVP, lowervp);
+	}
 
-		if ((dvp != NULLVP) && (uppervp == dvp)) {
+loop:
+	mutex_enter(&uhash_lock);
+
+	for (try = 0; try < 3; try++) {
+		if (hash[try] == NOHASH)
+			continue;
+		LIST_FOREACH(un, &uhashtbl[hash[try]], un_cache) {
+			if ((un->un_lowervp && un->un_lowervp != lowervp) ||
+			    (un->un_uppervp && un->un_uppervp != uppervp) ||
+			    UNIONTOV(un)->v_mount != mp)
+				continue;
+
+			if (uppervp != NULL &&
+			    (uppervp == dvp || uppervp == un->un_uppervp))
+				/* "." or already locked. */
+				lflag = 0;
+			else
+				lflag = LK_EXCLUSIVE;
+			vp = UNIONTOV(un);
+			mutex_enter(vp->v_interlock);
 			/*
-			 * Access ``.'', so (un) will already
-			 * be locked.  Since this process has
-			 * the lock on (uppervp) no other
-			 * process can hold the lock on (un).
+			 * If this node being cleaned out and our caller
+			 * holds a lock, then ignore it and continue.  To
+			 * allow the cleaning to succeed the current thread
+			 * must make progress.  For a brief time the cache
+			 * may contain more than one vnode referring to
+			 * a lower node.
 			 */
-			KASSERT((un->un_flags & UN_LOCKED) != 0);
-			KASSERT(curlwp == NULL || un->un_lwp == NULL ||
-			    un->un_lwp == curlwp);
-		} else {
-			if (un->un_flags & UN_LOCKED) {
-				vrele(UNIONTOV(un));
-				un->un_flags |= UN_WANTED;
-				(void) tsleep(&un->un_flags, PINOD,
-				    "unionalloc", 0);
-				goto loop;
+			if ((vp->v_iflag & VI_XLOCK) != 0 && lflag == 0) {
+				mutex_exit(vp->v_interlock);
+				continue;
 			}
-			un->un_flags |= UN_LOCKED;
-
-			un->un_lwp = curlwp;
+			mutex_exit(&uhash_lock);
+			if (vget(vp, lflag))
+				goto loop;
+			goto found;
 		}
+	}
 
-		/*
-		 * At this point, the union_node is locked,
-		 * un->un_uppervp may not be locked, and uppervp
-		 * is locked or nil.
-		 */
+	mutex_exit(&uhash_lock);
 
+found:
+	if (un) {
+		KASSERT(VOP_ISLOCKED(UNIONTOV(un)) == LK_EXCLUSIVE);
+		KASSERT(uppervp == NULL ||
+		    VOP_ISLOCKED(uppervp) == LK_EXCLUSIVE);
 		/*
 		 * Save information about the upper layer.
 		 */
@@ -438,10 +439,8 @@ loop:
 			vrele(uppervp);
 		}
 
-		if (un->un_uppervp) {
-			un->un_flags |= UN_ULOCK;
+		if (un->un_uppervp)
 			un->un_flags &= ~UN_KLOCK;
-		}
 
 		/*
 		 * Save information about the lower layer.
@@ -479,7 +478,6 @@ loop:
 		if (error == 0)
 			lowersz = va.va_size;
 	}
-	hash = UNION_HASH(uppervp, lowervp);
 
 	/*
 	 * Get a new vnode and share the lock with upper layer vnode,
@@ -498,20 +496,31 @@ loop:
 		if (lowervp)
 			vrele(lowervp);
 
-		goto out;
+		return error;
 	}
 
 	if (docache) {
-		mutex_enter(&unheadlock[hash]);
-		LIST_FOREACH(un1, &unhead[hash], un_cache) {
+		mutex_enter(&uhash_lock);
+		LIST_FOREACH(un1, &uhashtbl[hash[0]], un_cache) {
 			if (un1->un_lowervp == lowervp &&
 			    un1->un_uppervp == uppervp &&
 			    UNIONTOV(un1)->v_mount == mp) {
+				vp = UNIONTOV(un1);
+				mutex_enter(vp->v_interlock);
+				/*
+				 * Ignore nodes being cleaned out.
+				 * See the cache lookup above.
+				 */
+				if ((vp->v_iflag & VI_XLOCK) != 0) {
+					mutex_exit(vp->v_interlock);
+					continue;
+				}
+				mutex_exit(vp->v_interlock);
 				/*
 				 * Another thread beat us, push back freshly
 				 * allocated vnode and retry.
 				 */
-				mutex_exit(&unheadlock[hash]);
+				mutex_exit(&uhash_lock);
 				ungetnewvnode(*vpp);
 				goto loop;
 			}
@@ -536,6 +545,7 @@ loop:
 		spec_node_init(*vpp, rdev);
 
 	un = VTOUNION(*vpp);
+	mutex_init(&un->un_lock, MUTEX_DEFAULT, IPL_NONE);
 	un->un_vnode = *vpp;
 	un->un_uppervp = uppervp;
 	un->un_lowervp = lowervp;
@@ -544,15 +554,23 @@ loop:
 		vref(undvp);
 	un->un_dircache = 0;
 	un->un_openl = 0;
-	un->un_flags = UN_LOCKED;
+	un->un_flags = 0;
+	un->un_cflags = 0;
 
+	if (uppervp == NULL) {
+		struct vop_lock_args ap;
+
+		ap.a_vp = UNIONTOV(un);
+		ap.a_flags = LK_EXCLUSIVE;
+		error = genfs_lock(&ap);
+		KASSERT(error == 0);
+	}
+
+	mutex_enter(&un->un_lock);
 	un->un_uppersz = VNOVAL;
 	un->un_lowersz = VNOVAL;
 	union_newsize(*vpp, uppersz, lowersz);
 
-	if (un->un_uppervp)
-		un->un_flags |= UN_ULOCK;
-	un->un_lwp = curlwp;
 	if (dvp && cnp && (lowervp != NULLVP)) {
 		un->un_hash = cnp->cn_hash;
 		un->un_path = malloc(cnp->cn_namelen+1, M_TEMP, M_WAITOK);
@@ -567,16 +585,15 @@ loop:
 	}
 
 	if (docache) {
-		LIST_INSERT_HEAD(&unhead[hash], un, un_cache);
-		un->un_flags |= UN_CACHED;
+		LIST_INSERT_HEAD(&uhashtbl[hash[0]], un, un_cache);
+		un->un_cflags |= UN_CACHED;
 	}
 
 	if (xlowervp)
 		vrele(xlowervp);
 
-out:
 	if (docache)
-		mutex_exit(&unheadlock[hash]);
+		mutex_exit(&uhash_lock);
 
 	return (error);
 }
@@ -589,12 +606,12 @@ union_freevp(struct vnode *vp)
 
 	hash = UNION_HASH(un->un_uppervp, un->un_lowervp);
 
-	mutex_enter(&unheadlock[hash]);
-	if (un->un_flags & UN_CACHED) {
-		un->un_flags &= ~UN_CACHED;
+	mutex_enter(&uhash_lock);
+	if (un->un_cflags & UN_CACHED) {
+		un->un_cflags &= ~UN_CACHED;
 		LIST_REMOVE(un, un_cache);
 	}
-	mutex_exit(&unheadlock[hash]);
+	mutex_exit(&uhash_lock);
 
 	if (un->un_pvp != NULLVP)
 		vrele(un->un_pvp);
@@ -606,6 +623,7 @@ union_freevp(struct vnode *vp)
 		vrele(un->un_dirvp);
 	if (un->un_path)
 		free(un->un_path, M_TEMP);
+	mutex_destroy(&un->un_lock);
 
 	free(vp->v_data, M_TEMP);
 	vp->v_data = NULL;
@@ -637,11 +655,6 @@ union_copyfile(struct vnode *fvp, struct vnode *tvp, kauth_cred_t cred,
 
 	uio.uio_offset = 0;
 	UIO_SETUP_SYSSPACE(&uio);
-
-	VOP_UNLOCK(fvp);			/* XXX */
-	vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY);	/* XXX */
-	VOP_UNLOCK(tvp);			/* XXX */
-	vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);	/* XXX */
 
 	tbuf = malloc(MAXBSIZE, M_TEMP, M_WAITOK);
 
@@ -696,9 +709,8 @@ union_copyup(struct union_node *un, int docopy, kauth_cred_t cred,
 	if (error)
 		return (error);
 
-	/* at this point, uppervp is locked */
+	KASSERT(VOP_ISLOCKED(uvp) == LK_EXCLUSIVE);
 	union_newupper(un, uvp);
-	un->un_flags |= UN_ULOCK;
 
 	lvp = un->un_lowervp;
 
@@ -959,8 +971,10 @@ union_vn_close(struct vnode *vp, int fmode, kauth_cred_t cred, struct lwp *l)
 void
 union_removed_upper(struct union_node *un)
 {
+	struct vnode *vp = UNIONTOV(un);
 	int hash;
 
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 #if 1
 	/*
 	 * We do not set the uppervp to NULLVP here, because lowervp
@@ -977,18 +991,14 @@ union_removed_upper(struct union_node *un)
 #endif
 
 	hash = UNION_HASH(un->un_uppervp, un->un_lowervp);
+	VOP_UNLOCK(vp);
 
-	mutex_enter(&unheadlock[hash]);
-	if (un->un_flags & UN_CACHED) {
-		un->un_flags &= ~UN_CACHED;
+	mutex_enter(&uhash_lock);
+	if (un->un_cflags & UN_CACHED) {
+		un->un_cflags &= ~UN_CACHED;
 		LIST_REMOVE(un, un_cache);
 	}
-	mutex_exit(&unheadlock[hash]);
-
-	if (un->un_flags & UN_ULOCK) {
-		un->un_flags &= ~UN_ULOCK;
-		VOP_UNLOCK(un->un_uppervp);
-	}
+	mutex_exit(&uhash_lock);
 }
 
 #if 0
@@ -1106,6 +1116,7 @@ union_diruncache(struct union_node *un)
 {
 	struct vnode **vpp;
 
+	KASSERT(VOP_ISLOCKED(UNIONTOV(un)) == LK_EXCLUSIVE);
 	if (un->un_dircache != 0) {
 		for (vpp = un->un_dircache; *vpp != NULLVP; vpp++)
 			vrele(*vpp);
@@ -1221,7 +1232,9 @@ union_readdirhook(struct vnode **vpp, struct file *fp, struct lwp *l)
 	 * If the directory is opaque,
 	 * then don't show lower entries
 	 */
+	vn_lock(vp, LK_SHARED | LK_RETRY);
 	error = VOP_GETATTR(vp, &va, fp->f_cred);
+	VOP_UNLOCK(vp);
 	if (error || (va.va_flags & OPAQUE))
 		return error;
 

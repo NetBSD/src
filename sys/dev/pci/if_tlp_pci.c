@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.118 2011/07/26 20:51:24 dyoung Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.118.2.1 2012/04/17 00:07:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.118 2011/07/26 20:51:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.118.2.1 2012/04/17 00:07:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1341,7 +1341,7 @@ tlp_pci_phobos_21140_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr)
 	struct tulip_softc *sc = &psc->sc_tulip;
 
 	/*
-	 * Phobo boards just use MII-on_SIO.
+	 * Phobos boards just use MII-on-SIO.
 	 */
 	sc->sc_mediasw = &tlp_sio_mii_mediasw;
 	sc->sc_reset = tlp_pci_phobos_21140_reset;
@@ -1357,7 +1357,7 @@ static void
 tlp_pci_phobos_21140_reset(struct tulip_softc *sc)
 {
 
-	TULIP_WRITE(sc, CSR_GPP, 0x1fd);
+	TULIP_WRITE(sc, CSR_GPP, GPP_GPC | 0xfd);
 	delay(10);
 	TULIP_WRITE(sc, CSR_GPP, 0xfd);
 	delay(10);
@@ -1380,9 +1380,6 @@ tlp_pci_smc_21140_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr)
 {
 	struct tulip_softc *sc = &psc->sc_tulip;
 
-	if (sc->sc_mediasw != NULL) {
-		return;
-	}
 	strcpy(psc->sc_tulip.sc_name, "SMC 9332DST");
 	sc->sc_mediasw = &tlp_smc9332dst_mediasw;
 }
@@ -1656,7 +1653,7 @@ tlp_pci_netwinder_21142_quirks(struct tulip_pci_softc *psc,
 	struct tulip_softc *sc = &psc->sc_tulip;
 
 	/*
-	 * Netwinders just use MII-on_SIO.
+	 * Netwinders just use MII-on-SIO.
 	 */
 	sc->sc_mediasw = &tlp_sio_mii_mediasw;
 	sc->sc_reset = tlp_pci_netwinder_21142_reset;
@@ -1685,7 +1682,7 @@ tlp_pci_phobos_21142_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr)
 	struct tulip_softc *sc = &psc->sc_tulip;
 
 	/*
-	 * Phobo boards just use MII-on_SIO.
+	 * Phobos boards just use MII-on-SIO.
 	 */
 	sc->sc_mediasw = &tlp_sio_mii_mediasw;
 	sc->sc_reset = tlp_pci_phobos_21142_reset;

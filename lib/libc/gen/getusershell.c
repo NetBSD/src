@@ -1,4 +1,4 @@
-/*	$NetBSD: getusershell.c,v 1.28 2011/10/15 23:00:01 christos Exp $	*/
+/*	$NetBSD: getusershell.c,v 1.28.2.1 2012/04/17 00:05:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2005 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)getusershell.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getusershell.c,v 1.28 2011/10/15 23:00:01 christos Exp $");
+__RCSID("$NetBSD: getusershell.c,v 1.28.2.1 2012/04/17 00:05:18 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -189,7 +189,8 @@ _files_getusershell(void *nsrv, void *nscb, va_list ap)
 			return rv;
 	}
 
-	while (fgets(curshell, sizeof(curshell) - 1, _files_state.fp) != NULL) {
+	while (fgets(curshell, (int)sizeof(curshell) - 1, _files_state.fp)
+	    != NULL) {
 		sp = cp = curshell;
 		while (*cp != '#' && *cp != '/' && *cp != '\0')
 			cp++;

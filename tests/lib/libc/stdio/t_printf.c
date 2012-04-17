@@ -1,4 +1,4 @@
-/* $NetBSD: t_printf.c,v 1.2 2011/07/13 11:17:03 jruoho Exp $ */
+/* $NetBSD: t_printf.c,v 1.2.2.1 2012/04/17 00:09:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -26,17 +26,43 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/types.h>
+#include <sys/resource.h>
 #include <atf-c.h>
 #include <math.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
+#include <time.h>
+#include <stdlib.h>
+
+ATF_TC(snprintf_c99);
+ATF_TC_HEAD(snprintf_c99, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr",
+	    "Test printf(3) C99 conformance (PR lib/22019)");
+}
+
+ATF_TC_BODY(snprintf_c99, tc)
+{
+	char s[4];
+
+	(void)memset(s, '\0', sizeof(s));
+	(void)snprintf(s, sizeof(s), "%#.o", 0);
+	(void)printf("printf = %#.o\n", 0);
+	(void)fprintf(stderr, "snprintf = %s", s);
+
+	ATF_REQUIRE(strlen(s) == 1);
+	ATF_REQUIRE(s[0] == '0');
+}
 
 ATF_TC(snprintf_dotzero);
 ATF_TC_HEAD(snprintf_dotzero, tc)
 {
 
-	atf_tc_set_md_var(tc, "descr", \
-	    "PR lib/32951: %.0f formats (0.0,0.5] to \"0.\"");
+	atf_tc_set_md_var(tc, "descr",
+	    "PR lib/32951: %%.0f formats (0.0,0.5] to \"0.\"");
 }
 
 ATF_TC_BODY(snprintf_dotzero, tc)
@@ -47,11 +73,93 @@ ATF_TC_BODY(snprintf_dotzero, tc)
 	ATF_REQUIRE_STREQ(s, "0");
 }
 
+ATF_TC(snprintf_posarg);
+ATF_TC_HEAD(snprintf_posarg, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "test for positional arguments");
+}
+
+ATF_TC_BODY(snprintf_posarg, tc)
+{
+	char s[16];
+
+	ATF_CHECK(snprintf(s, sizeof(s), "%1$d", -23) == 3);
+	ATF_REQUIRE_STREQ(s, "-23");
+}
+
+ATF_TC(snprintf_posarg_width);
+ATF_TC_HEAD(snprintf_posarg_width, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "test for positional arguments with "
+	    "field width");
+}
+
+ATF_TC_BODY(snprintf_posarg_width, tc)
+{
+	char s[16];
+
+	ATF_CHECK(snprintf(s, sizeof(s), "%1$*2$d", -23, 4) == 4);
+	ATF_REQUIRE_STREQ(s, " -23");
+}
+
+ATF_TC(snprintf_posarg_error);
+ATF_TC_HEAD(snprintf_posarg_error, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "test for positional arguments out "
+	    "of bounds");
+}
+
+ATF_TC_BODY(snprintf_posarg_error, tc)
+{
+	char s[16], fmt[32];
+
+	snprintf(fmt, sizeof(fmt), "%%%zu$d", SIZE_MAX / sizeof(size_t));
+
+	ATF_CHECK(snprintf(s, sizeof(s), fmt, -23) == -1);
+}
+
+ATF_TC(snprintf_float);
+ATF_TC_HEAD(snprintf_float, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "test that floating conversions don't"
+	    " leak memory");
+}
+
+ATF_TC_BODY(snprintf_float, tc)
+{
+	union {
+		double d;
+		uint64_t bits;
+	} u;
+	uint32_t ul, uh;
+	time_t now;
+	char buf[1000];
+	struct rlimit rl;
+
+	rl.rlim_cur = rl.rlim_max = 1 * 1024 * 1024;
+	ATF_CHECK(setrlimit(RLIMIT_AS, &rl) != -1);
+	rl.rlim_cur = rl.rlim_max = 1 * 1024 * 1024;
+	ATF_CHECK(setrlimit(RLIMIT_DATA, &rl) != -1);
+
+	time(&now);
+	srand(now);
+	for (size_t i = 0; i < 10000; i++) {
+		ul = rand();
+		uh = rand();
+		u.bits = (uint64_t)uh << 32 | ul;
+		ATF_CHECK(snprintf(buf, sizeof buf, " %.2f", u.d) != -1);
+	}
+}
+
 ATF_TC(sprintf_zeropad);
 ATF_TC_HEAD(sprintf_zeropad, tc)
 {
-
-	atf_tc_set_md_var(tc, "descr", "output format zero padding");
+	atf_tc_set_md_var(tc, "descr",
+	    "Test output format zero padding (PR lib/44113)");
 }
 
 ATF_TC_BODY(sprintf_zeropad, tc)
@@ -63,7 +171,7 @@ ATF_TC_BODY(sprintf_zeropad, tc)
 
 	/* ieeefp */
 #ifndef __vax__
-	/* PR/44113: printf(3) should ignore zero padding for nan/inf */
+	/* printf(3) should ignore zero padding for nan/inf */
 	ATF_CHECK(sprintf(str, "%010f", NAN) == 10);
 	ATF_REQUIRE_STREQ(str, "       nan");
 	ATF_CHECK(sprintf(str, "%010f", INFINITY) == 10);
@@ -74,7 +182,12 @@ ATF_TC_BODY(sprintf_zeropad, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
+	ATF_TP_ADD_TC(tp, snprintf_c99);
 	ATF_TP_ADD_TC(tp, snprintf_dotzero);
+	ATF_TP_ADD_TC(tp, snprintf_posarg);
+	ATF_TP_ADD_TC(tp, snprintf_posarg_width);
+	ATF_TP_ADD_TC(tp, snprintf_posarg_error);
+	ATF_TP_ADD_TC(tp, snprintf_float);
 	ATF_TP_ADD_TC(tp, sprintf_zeropad);
 
 	return atf_no_error();

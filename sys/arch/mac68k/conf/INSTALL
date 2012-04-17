@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.47 2010/11/24 13:53:34 hauke Exp $
+#	$NetBSD: INSTALL,v 1.47.8.1 2012/04/17 00:06:36 yamt Exp $
 #
 # INSTALL
 
@@ -66,7 +66,7 @@ file-system 	KERNFS		# /kern
 # Filesystem options
 #options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP
@@ -205,4 +205,3 @@ pseudo-device	sl		 	# Serial Line IP
 pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 
-pseudo-device	rnd			# /dev/random and in-kernel generator

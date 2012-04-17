@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.32 2011/05/17 17:34:49 dyoung Exp $ */
+/*	$NetBSD: dino.c,v 1.32.4.1 2012/04/17 00:06:21 yamt Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.32 2011/05/17 17:34:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.32.4.1 2012/04/17 00:06:21 yamt Exp $");
 
 /* #include "cardbus.h" */
 
@@ -1608,6 +1608,7 @@ dinoattach(device_t parent, device_t self, void *aux)
 	struct confargs *ca = (struct confargs *)aux, nca;
 	struct pcibus_attach_args pba;
 	volatile struct dino_regs *r;
+	struct cpu_info *ci = &cpus[0];
 	const char *p = NULL;
 	u_int data;
 	int s, ver;
@@ -1643,7 +1644,7 @@ dinoattach(device_t parent, device_t self, void *aux)
 	snprintf(sc->sc_ioexname, sizeof(sc->sc_ioexname),
 	    "%s_io", device_xname(self));
 	if ((sc->sc_ioex = extent_create(sc->sc_ioexname, 0, 0xffff,
-	    M_DEVBUF, NULL, 0, EX_NOWAIT | EX_MALLOCOK)) == NULL) {
+	    NULL, 0, EX_NOWAIT | EX_MALLOCOK)) == NULL) {
 		aprint_error(": can't allocate I/O extent map\n");
 		bus_space_unmap(sc->sc_bt, sc->sc_bh, PAGE_SIZE);
 		return;
@@ -1655,7 +1656,7 @@ dinoattach(device_t parent, device_t self, void *aux)
 	r->imr = ~0;
 	data = r->irr0;
 	r->imr = 0;
-	r->iar0 = cpu_gethpa(0) | (31 - ca->ca_irq);
+	r->iar0 = ci->ci_hpa | (31 - ca->ca_irq);
 	splx(s);
 	/* Establish the interrupt register. */
 	hp700_interrupt_register_establish(&sc->sc_ir);

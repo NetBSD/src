@@ -1,4 +1,4 @@
-.\"	$NetBSD: lprm.1,v 1.15 2003/08/07 11:25:30 agc Exp $
+.\"	$NetBSD: lprm.1,v 1.15.54.1 2012/04/17 00:09:48 yamt Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,12 +38,8 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl
-.Bk -words
 .Op Fl P Ar printer
-.Ek
-.Bk -words
 .Op Fl w Ar maxwait
-.Ek
 .Op Ar job# ...
 .Op Ar user ...
 .Sh DESCRIPTION
@@ -84,7 +80,7 @@ is useful only to the super-user.
 .It Ar job\ \&#
 A user may dequeue an individual job by specifying its job number.
 This number may be obtained from the
-.Xr lpq  1
+.Xr lpq 1
 program, e.g.
 .Pp
 .Bd -literal -offset indent

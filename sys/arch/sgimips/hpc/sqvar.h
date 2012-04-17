@@ -1,4 +1,4 @@
-/*	$NetBSD: sqvar.h,v 1.12 2011/01/25 13:12:39 tsutsui Exp $	*/
+/*	$NetBSD: sqvar.h,v 1.12.4.1 2012/04/17 00:06:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -30,14 +30,10 @@
 #ifndef _ARCH_SGIMIPS_HPC_SQVAR_H_
 #define	_ARCH_SGIMIPS_HPC_SQVAR_H_
 
-#include "rnd.h"
-
 #include <sys/queue.h>
 #include <sys/callout.h>
 
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <sgimips/hpc/hpcvar.h>
 #include <sgimips/hpc/hpcreg.h>
@@ -156,9 +152,7 @@ struct sq_softc {
 
 	struct evcnt		sq_intrcnt;	/* count interrupts */
 
-#if NRND > 0
-	rndsource_element_t	rnd_source;	/* random source */
-#endif
+	krndsource_t	rnd_source;	/* random source */
 	struct hpc_values       *hpc_regs;      /* HPC register definitions */
 
 	int			sq_trace_idx;

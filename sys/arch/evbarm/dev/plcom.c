@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.32 2011/04/24 16:26:55 rmind Exp $	*/
+/*	$NetBSD: plcom.c,v 1.32.4.1 2012/04/17 00:06:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.32 2011/04/24 16:26:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.32.4.1 2012/04/17 00:06:13 yamt Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -103,7 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.32 2011/04/24 16:26:55 rmind Exp $");
 #include "opt_multiprocessor.h"
 
 #include "rnd.h"
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 #include <sys/rnd.h>
 #endif
 
@@ -280,9 +280,9 @@ plcomspeed(long speed, long frequency)
 #ifdef PLCOM_DEBUG
 int	plcom_debug = 0;
 
-void plcomstatus (struct plcom_softc *, char *);
+void plcomstatus (struct plcom_softc *, const char *);
 void
-plcomstatus(struct plcom_softc *sc, char *str)
+plcomstatus(struct plcom_softc *sc, const char *str)
 {
 	struct tty *tp = sc->sc_tty;
 
@@ -304,6 +304,7 @@ plcomstatus(struct plcom_softc *sc, char *str)
 }
 #endif
 
+/* XXX this function is not used? */
 int
 plcomprobe1(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
@@ -436,7 +437,7 @@ plcom_attach_subr(struct plcom_softc *sc)
 
 	sc->sc_si = softint_establish(SOFTINT_SERIAL, plcomsoft, sc);
 
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
 			  RND_TYPE_TTY, 0);
 #endif
@@ -499,7 +500,7 @@ plcom_detach(struct device *self, int flags)
 	/* Unhook the soft interrupt handler. */
 	softint_disestablish(sc->sc_si);
 
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->rnd_source);
 #endif
@@ -1935,7 +1936,7 @@ plcomintr(void *arg)
 	/* Wake up the poller. */
 	softint_schedule(sc->sc_si);
 
-#if NRND > 0 && defined(RND_COM)
+#ifdef RND_COM
 	rnd_add_uint32(&sc->rnd_source, iir | rsr);
 #endif
 

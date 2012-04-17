@@ -1,6 +1,6 @@
 .\" @(#) Header: /tcpdump/master/tcpdump/tcpdump.1.in,v 1.2 2008-11-09 23:35:03 mcr Exp (LBL)
 .\"
-.\"	$NetBSD: tcpdump.1.in,v 1.4 2010/12/17 10:35:10 wiz Exp $
+.\"	$NetBSD: tcpdump.1.in,v 1.4.6.1 2012/04/17 00:04:07 yamt Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -184,7 +184,7 @@ and will continue capturing packets.
 .LP
 Reading packets from a network interface may require that you have
 special privileges; see the
-.B pcap (3PCAP)
+.B pcap (3)
 man page for details.  Reading a saved packet file doesn't require
 special privileges.
 .SH OPTIONS
@@ -539,7 +539,7 @@ them out.
 They can later be printed with the \-r option.
 Standard output is used if \fIfile\fR is ``-''.
 See
-.BR pcap-savefile (@MAN_FILE_FORMATS@)
+.BR pcap-savefile (5)
 for a description of the file format.
 .TP
 .B \-W
@@ -638,7 +638,7 @@ Otherwise,
 only packets for which \fIexpression\fP is `true' will be dumped.
 .LP
 For the \fIexpression\fP syntax, see
-.BR pcap-filter (@MAN_MISC_INFO@).
+.BR pcap-filter (7).
 .LP
 Expression arguments can be passed to \fItcpdump\fP as either a single
 argument or as multiple arguments, whichever is more convenient.

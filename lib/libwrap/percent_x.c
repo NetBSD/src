@@ -1,4 +1,4 @@
-/*	$NetBSD: percent_x.c,v 1.4 1999/07/03 12:30:41 simonb Exp $	*/
+/*	$NetBSD: percent_x.c,v 1.4.64.1 2012/04/17 00:05:34 yamt Exp $	*/
 
  /*
   * percent_x() takes a string and performs %<char> expansions. It aborts the
@@ -17,7 +17,7 @@
 #if 0
 static char sccsid[] = "@(#) percent_x.c 1.4 94/12/28 17:42:37";
 #else
-__RCSID("$NetBSD: percent_x.c,v 1.4 1999/07/03 12:30:41 simonb Exp $");
+__RCSID("$NetBSD: percent_x.c,v 1.4.64.1 2012/04/17 00:05:34 yamt Exp $");
 #endif
 #endif
 
@@ -35,19 +35,17 @@ __RCSID("$NetBSD: percent_x.c,v 1.4 1999/07/03 12:30:41 simonb Exp $");
 
 /* percent_x - do %<char> expansion, abort if result buffer is too small */
 
-char   *percent_x(result, result_len, string, request)
-char   *result;
-int     result_len;
-char   *string;
-struct request_info *request;
+char *
+percent_x(char *result, int result_len, char *string,
+    struct request_info *request)
 {
     char   *bp = result;
     char   *end = result + result_len - 1;	/* end of result buffer */
     char   *expansion;
-    int     expansion_len;
-    static char ok_chars[] = "1234567890!@%-_=+:,./\
-abcdefghijklmnopqrstuvwxyz\
-ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    size_t  expansion_len;
+    static const char ok_chars[] = "1234567890!@%-_=+:,./"
+	"abcdefghijklmnopqrstuvwxyz"
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     char   *str = string;
     char   *cp;
     int     ch;
@@ -72,7 +70,8 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 		ch == 'p' ? eval_pid(request) :
 		ch == 's' ? eval_server(request) :
 		ch == 'u' ? eval_user(request) :
-		ch == '%' ? "%" : (tcpd_warn("unrecognized %%%c", ch), "");
+		ch == '%' ? __UNCONST("%")
+		          : (tcpd_warn("unrecognized %%%c", ch), __UNCONST(""));
 	    for (cp = expansion; *(cp += strspn(cp, ok_chars)); /* */ )
 		*cp = '_';
 	    expansion_len = cp - expansion;

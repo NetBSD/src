@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.55 2011/02/10 14:46:46 pooka Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.55.4.1 2012/04/17 00:06:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.55 2011/02/10 14:46:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.55.4.1 2012/04/17 00:06:04 yamt Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -101,20 +101,6 @@ cpu_proc_fork(struct proc *p1, struct proc *p2)
 #endif
 }
 
-void
-cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
-{
-	struct pcb *pcb = lwp_getpcb(l);
-	struct trapframe *tf = pcb->pcb_tf;
-	struct switchframe *sf = (struct switchframe *)tf - 1;
-
-	sf->sf_r4 = (u_int)func;
-	sf->sf_r5 = (u_int)arg;
-	sf->sf_sp = (u_int)tf;
-	sf->sf_pc = (u_int)lwp_trampoline;
-	pcb->pcb_un.un_32.pcb32_sp = (u_int)sf;
-}
-
 /*
  * Finish a fork operation, with LWP l2 nearly set up.
  *
@@ -133,6 +119,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 {
 	struct pcb *pcb1, *pcb2;
 	struct trapframe *tf;
+	struct switchframe *sf;
 	vaddr_t uv;
 
 	pcb1 = lwp_getpcb(l1);
@@ -202,7 +189,12 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	if (stack != NULL)
 		tf->tf_usr_sp = (u_int)stack + stacksize;
 
-	cpu_setfunc(l2, func, arg);
+	sf = (struct switchframe *)tf - 1;
+	sf->sf_r4 = (u_int)func;
+	sf->sf_r5 = (u_int)arg;
+	sf->sf_sp = (u_int)tf;
+	sf->sf_pc = (u_int)lwp_trampoline;
+	pcb2->pcb_un.un_32.pcb32_sp = (u_int)sf;
 }
 
 /*

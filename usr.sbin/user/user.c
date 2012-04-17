@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.126 2011/01/04 10:30:21 wiz Exp $ */
+/* $NetBSD: user.c,v 1.126.6.1 2012/04/17 00:09:54 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,12 +33,13 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.126 2011/01/04 10:30:21 wiz Exp $");
+__RCSID("$NetBSD: user.c,v 1.126.6.1 2012/04/17 00:09:54 yamt Exp $");
 #endif
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 
 #include <ctype.h>
 #include <dirent.h>
@@ -48,7 +49,6 @@ __RCSID("$NetBSD: user.c,v 1.126 2011/01/04 10:30:21 wiz Exp $");
 #ifdef EXTENSIONS
 #include <login_cap.h>
 #endif
-#include <paths.h>
 #include <pwd.h>
 #include <regex.h>
 #include <stdarg.h>
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: user.c,v 1.126 2011/01/04 10:30:21 wiz Exp $");
 #include <util.h>
 #include <errno.h>
 
+#include "pathnames.h"
 #include "defs.h"
 #include "usermgmt.h"
 
@@ -141,8 +142,6 @@ enum {
 #define LOCK		1
 #define LOCKED		"*LOCKED*"
 
-#define	PATH_LOGINCONF	"/etc/login.conf"
-
 #ifndef DEF_GROUP
 #define DEF_GROUP	"users"
 #endif
@@ -207,20 +206,10 @@ enum {
 	DES_Len = 13,
 };
 
-/* Full paths of programs used here */
-#define CHMOD		"/bin/chmod"
-#define CHOWN		"/usr/sbin/chown"
-#define MKDIR		"/bin/mkdir"
-#define MV		"/bin/mv"
-#define NOLOGIN		"/sbin/nologin"
-#define PAX		"/bin/pax"
-#define RM		"/bin/rm"
-
 #define UNSET_INACTIVE	"Null (unset)"
 #define UNSET_EXPIRY	"Null (unset)"
 
-static int		asystem(const char *fmt, ...)
-			    __attribute__((__format__(__printf__, 1, 2)));
+static int		asystem(const char *fmt, ...) __printflike(1, 2);
 static int		is_number(const char *);
 static struct group	*find_group_info(const char *);
 static int		verbose;
@@ -266,8 +255,13 @@ asystem(const char *fmt, ...)
 	if (verbose) {
 		(void)printf("Command: %s\n", buf);
 	}
-	if ((ret = system(buf)) != 0) {
+	ret = system(buf);
+	if (ret == -1) {
 		warn("Error running `%s'", buf);
+	} else if (WIFSIGNALED(ret)) {
+		warnx("Error running `%s': Signal %d", buf, WTERMSIG(ret));
+	} else if (WIFEXITED(ret) && WEXITSTATUS(ret) != 0) {
+		warnx("Error running `%s': Exit %d", buf, WEXITSTATUS(ret));
 	}
 	return ret;
 }
@@ -303,7 +297,8 @@ removehomedir(struct passwd *pwp)
 
 	(void)seteuid(pwp->pw_uid);
 	/* we add the "|| true" to keep asystem() quiet if there is a non-zero exit status. */
-	(void)asystem("%s -rf %s > /dev/null 2>&1 || true", RM, pwp->pw_dir);
+	(void)asystem("%s -rf %s > /dev/null 2>&1 || true", _PATH_RM,
+		      pwp->pw_dir);
 	(void)seteuid(0);
 	if (rmdir(pwp->pw_dir) < 0) {
 		warn("Unable to remove all files in `%s'", pwp->pw_dir);
@@ -360,12 +355,12 @@ copydotfiles(char *skeldir, int uid, int gid, char *dir, mode_t homeperm)
 		warnx("No \"dot\" initialisation files found");
 	} else {
 		(void)asystem("cd %s && %s -rw -pe %s . %s",
-				skeldir, PAX, (verbose) ? "-v" : "", dir);
+			skeldir, _PATH_PAX, (verbose) ? "-v" : "", dir);
 	}
-	(void)asystem("%s -R -h %d:%d %s", CHOWN, uid, gid, dir);
-	(void)asystem("%s -R u+w %s", CHMOD, dir);
+	(void)asystem("%s -R -h %d:%d %s", _PATH_CHOWN, uid, gid, dir);
+	(void)asystem("%s -R u+w %s", _PATH_CHMOD, dir);
 #ifdef EXTENSIONS
-	(void)asystem("%s 0%o %s", CHMOD, homeperm, dir);
+	(void)asystem("%s 0%o %s", _PATH_CHMOD, homeperm, dir);
 #endif
 	return n;
 }
@@ -989,9 +984,9 @@ valid_class(char *class)
 	 * user the actual login class does not exist.
 	 */
 
-	if (access(PATH_LOGINCONF, R_OK) == -1) {
+	if (access(_PATH_LOGINCONF, R_OK) == -1) {
 		warn("Access failed for `%s'; will not validate class `%s'",
-		    PATH_LOGINCONF, class);
+		    _PATH_LOGINCONF, class);
 		return 1;
 	}
 
@@ -1016,7 +1011,7 @@ valid_shell(const char *shellname)
 	} 
 
 	/* if nologin is used as a shell, consider it a valid shell */
-	if (strcmp(shellname, NOLOGIN) == 0)
+	if (strcmp(shellname, _PATH_SBIN_NOLOGIN) == 0)
 		return 1;
 
 	while ((shellp = getusershell()) != NULL)
@@ -1257,7 +1252,7 @@ adduser(char *login_name, user_t *up)
 			    "Can't add user `%s': home directory `%s' "
 			    "already exists", login_name, home);
 		} else {
-			if (asystem("%s -p %s", MKDIR, home) != 0) {
+			if (asystem("%s -p %s", _PATH_MKDIR, home) != 0) {
 				(void)close(ptmpfd);
 				(void)pw_abort();
 				errx(EXIT_FAILURE, "Can't add user `%s': "
@@ -1699,7 +1694,7 @@ moduser(char *login_name, char *newlogin, user_t *up, int allow_samba)
 	}
 	if (up != NULL) {
 		if ((up->u_flags & F_MKDIR) &&
-		    asystem("%s %s %s", MV, homedir, pwp->pw_dir) != 0) {
+		    asystem("%s %s %s", _PATH_MV, homedir, pwp->pw_dir) != 0) {
 			(void)close(ptmpfd);
 			(void)pw_abort();
 			errx(EXIT_FAILURE, "Can't modify user `%s': "
@@ -2205,7 +2200,8 @@ userdel(int argc, char **argv)
 	}
 	if (up->u_preserve) {
 		up->u_flags |= F_SHELL;
-		memsave(&up->u_shell, NOLOGIN, strlen(NOLOGIN));
+		memsave(&up->u_shell, _PATH_SBIN_NOLOGIN,
+			strlen(_PATH_SBIN_NOLOGIN));
 		(void)memset(password, '*', DES_Len);
 		password[DES_Len] = 0;
 		memsave(&up->u_password, password, strlen(password));

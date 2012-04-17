@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.56 2011/07/19 15:07:43 dyoung Exp $	*/
+/*	$NetBSD: ofw.c,v 1.56.2.1 2012/04/17 00:06:53 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.56 2011/07/19 15:07:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.56.2.1 2012/04/17 00:06:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,7 @@ pv_addr_t irqstack;
 #endif
 pv_addr_t undstack;
 pv_addr_t abtstack;
-pv_addr_t kernelstack;
+extern pv_addr_t kernelstack;
 
 paddr_t msgbufphys;
 
@@ -332,8 +332,8 @@ ofw_boot(int howto, char *bootstr)
 	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_vm=%08x\n",
 	    irqmasks[IPL_BIO], irqmasks[IPL_NET], irqmasks[IPL_TTY],
 	    irqmasks[IPL_VM]);
-	printf("ipl_audio=%08x ipl_clock=%08x ipl_none=%08x\n",
-	    irqmasks[IPL_AUDIO], irqmasks[IPL_CLOCK], irqmasks[IPL_NONE]);
+	printf("ipl_clock=%08x ipl_none=%08x\n",
+	    irqmasks[IPL_CLOCK], irqmasks[IPL_NONE]);
 
 	dump_spl_masks();
 #endif

@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.8 2011/09/19 10:40:35 wiz Exp $
+.\" $NetBSD: gpt.8,v 1.8.2.1 2012/04/17 00:05:40 yamt Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd September 19, 2011
+.Dd November 11, 2011
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -145,7 +145,7 @@ option allows the user to specify the filename that
 .Nm
 should read the bootcode from.
 The default is to read from
-.Pa /usr/mdec/mbr_gpt .
+.Pa /usr/mdec/gptmbr.bin .
 .Pp
 The
 .Fl i
@@ -301,6 +301,38 @@ option takes precedence over the
 .Fl u
 option.
 .El
+.Sh EXAMPLES
+.Bd -literal
+nas# gpt show wd3
+       start        size  index  contents
+           0           1         PMBR
+           1  3907029167
+nas# gpt create wd3
+nas# gpt show wd3
+       start        size  index  contents
+           0           1         PMBR
+           1           1         Pri GPT header
+           2          32         Pri GPT table
+          34  3907029101
+  3907029135          32         Sec GPT table
+  3907029167           1         Sec GPT header
+nas# gpt add -s 10486224 -t swap -i 1 wd3
+Partition added, use:
+        dkctl rwd3d addwedge dk<N> 34 10486224 <type>
+to create a wedge for it
+nas# gpt label -i 1 -l swap_1 wd3
+parition 1 on rwd3d labeled swap_1
+nas# gpt show wd3
+       start        size  index  contents
+           0           1         PMBR
+           1           1         Pri GPT header
+           2          32         Pri GPT table
+          34    10486224      1  GPT part - NetBSD swap
+    10486258  3896542877
+  3907029135          32         Sec GPT table
+  3907029167           1         Sec GPT header
+nas#
+.Ed
 .Sh SEE ALSO
 .Xr boot 8 ,
 .Xr fdisk 8 ,

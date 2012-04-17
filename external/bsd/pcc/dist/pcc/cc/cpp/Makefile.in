@@ -1,5 +1,5 @@
 #	Id: Makefile.in,v 1.39 2011/06/19 14:27:23 plunky Exp 	
-#	$NetBSD: Makefile.in,v 1.1.1.4 2011/09/01 12:46:53 plunky Exp $
+#	$NetBSD: Makefile.in,v 1.1.1.4.2.1 2012/04/17 00:04:04 yamt Exp $
 #
 # Makefile.in for cpp
 #
@@ -27,6 +27,7 @@ YACC = @YACC@
 YFLAGS = @YFLAGS@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
 TARGMACH = @targmach@
 
 OBJS=cpp.o cpy.o token.o compat.o
@@ -97,7 +98,7 @@ install:
 		echo strip ${DESTDIR}${libexecdir}/${DEST} ;	\
 	fi
 	test -z "${DESTDIR}$(mandir)/man1" || mkdir -p "${DESTDIR}$(mandir)/man1"
-	${INSTALL} $(srcdir)/cpp.1 ${DESTDIR}${mandir}/man1/$(DEST).1
+	${INSTALL_DATA} $(srcdir)/cpp.1 ${DESTDIR}${mandir}/man1/$(DEST).1
 
 clean:
 	rm -f $(OBJS) $(DEST) lex.yy.c y.tab.[ch] tests/run*

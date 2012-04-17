@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.179.2.1 2011/11/10 14:31:36 yamt Exp $
+#	$NetBSD: Makefile,v 1.179.2.2 2012/04/17 00:05:11 yamt Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -66,6 +66,7 @@ SUBDIR+=	../external/bsd/liblzf/lib
 SUBDIR+=	../external/bsd/libpcap/lib
 
 SUBDIR+=	../external/mit/lua/lib
+SUBDIR+=	../external/mit/expat/lib
 
 SUBDIR+=	../external/public-domain/sqlite/lib
 SUBDIR+=	../external/public-domain/xz/lib
@@ -178,6 +179,8 @@ SUBDIR+=	libpam		# depends on heimdal
 .if (${MKCRYPTO} != "no")
 SUBDIR+=	../crypto/external/bsd/libsaslc	# depends on heimdal, openssl
 .endif
+
+SUBDIR+=	../external/bsd/mdocml/lib
 
 #==================== 4th library dependency barrier ====================
 SUBDIR+=	.WAIT

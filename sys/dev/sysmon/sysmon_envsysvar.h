@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.40 2011/06/19 03:09:43 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.40.2.1 2012/04/17 00:08:05 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -105,7 +105,8 @@ extern	prop_dictionary_t sme_propd;	/* the global sensor dictionary */
 /* 
  * linked list for the sysmon envsys devices.
  */
-LIST_HEAD(, sysmon_envsys) sysmon_envsys_list;
+LIST_HEAD(sysmon_envsys_lh, sysmon_envsys);
+extern	struct sysmon_envsys_lh sysmon_envsys_list;
 
 /* 
  * functions to handle sysmon envsys devices.

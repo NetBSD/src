@@ -1,4 +1,4 @@
-# $NetBSD: dri.mk,v 1.10 2010/05/23 21:31:52 mrg Exp $
+# $NetBSD: dri.mk,v 1.10.6.1 2012/04/17 00:04:48 yamt Exp $
 
 # XXX DRI_LIB_DEPS
 
@@ -43,7 +43,7 @@ LIB=		${MODULE}_dri
 LIBDIR=		${X11USRLIBDIR}/modules/dri
 
 LIBDPLIBS+= 	drm		${.CURDIR}/../../libdrm
-LIBDPLIBS+=	expat		${.CURDIR}/../../expat
+LIBDPLIBS+=	expat		${NETBSDSRCDIR}/external/mit/expat/lib/libexpat
 LIBDPLIBS+=	m		${NETBSDSRCDIR}/lib/libm
 LIBDPLIBS+= 	mesa_dri	${.CURDIR}/../libmesa
 # to find mesa_dri.so

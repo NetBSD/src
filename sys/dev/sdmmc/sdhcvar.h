@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcvar.h,v 1.5 2011/06/29 06:21:16 matt Exp $	*/
+/*	$NetBSD: sdhcvar.h,v 1.5.2.1 2012/04/17 00:08:03 yamt Exp $	*/
 /*	$OpenBSD: sdhcvar.h,v 1.3 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
@@ -37,9 +37,12 @@ struct sdhc_softc {
 	uint32_t		sc_flags;
 #define	SDHC_FLAG_USE_DMA	0x0001
 #define	SDHC_FLAG_FORCE_DMA	0x0002
-#define	SDHC_FLAG_NO_PWR0	0x0004
-#define	SDHC_FLAG_HAVE_DVS	0x0008
-#define	SDHC_FLAG_32BIT_ACCESS	0x0010
+#define	SDHC_FLAG_NO_PWR0	0x0004	/* Freescale ESDHC */
+#define	SDHC_FLAG_HAVE_DVS	0x0008	/* Freescale ESDHC */
+#define	SDHC_FLAG_32BIT_ACCESS	0x0010	/* Freescale ESDHC */
+#define	SDHC_FLAG_ENHANCED	0x0020	/* Freescale ESDHC */
+#define	SDHC_FLAG_8BIT_MODE	0x0040	/* MMC 8bit mode is supported */
+#define	SDHC_FLAG_HAVE_CGM	0x0080	/* Netlogic XLP */
 	uint32_t		sc_clkbase;
 };
 

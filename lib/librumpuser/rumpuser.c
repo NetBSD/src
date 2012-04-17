@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.15 2011/02/06 21:05:53 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.15.4.1 2012/04/17 00:05:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.15 2011/02/06 21:05:53 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.15.4.1 2012/04/17 00:05:33 yamt Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -639,4 +639,10 @@ rumpuser_getnhostcpu(void)
 #else
 	return 1;
 #endif
+}
+
+uint32_t
+rumpuser_arc4random(void)
+{
+	return arc4random();
 }

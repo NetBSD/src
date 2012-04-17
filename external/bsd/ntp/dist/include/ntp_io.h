@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.h,v 1.1.1.1 2009/12/13 16:54:51 kardel Exp $	*/
+/*	$NetBSD: ntp_io.h,v 1.1.1.1.6.1 2012/04/17 00:03:44 yamt Exp $	*/
 
 #ifndef NTP_IO_H
 #define NTP_IO_H
@@ -33,12 +33,12 @@
 #include <isc/boolean.h>
 #include <isc/netaddr.h>
 
-#if HAVE_NETINET_IN_H && HAVE_NETINET_IP_H
-#include <netinet/in.h>
-# if HAVE_NETINET_IN_SYSTM_H
+#if defined(HAVE_NETINET_IN_H) && defined(HAVE_NETINET_IP_H)
+# include <netinet/in.h>
+# ifdef HAVE_NETINET_IN_SYSTM_H
 #  include <netinet/in_systm.h>
 # endif
-#include <netinet/ip.h>
+# include <netinet/ip.h>
 #endif
 
 /*
@@ -83,7 +83,7 @@ typedef enum {
 
 
 isc_boolean_t	get_broadcastclient_flag(void);
-isc_boolean_t	is_ip_address(const char *, isc_netaddr_t *);
+extern int	is_ip_address(const char *, sockaddr_u *);
 extern void	sau_from_netaddr(sockaddr_u *, const isc_netaddr_t *);
 extern void add_nic_rule(nic_rule_match match_type, const char *if_name,
 			 int prefixlen, nic_rule_action action);

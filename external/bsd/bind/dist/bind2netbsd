@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bind2netbsd,v 1.5 2011/10/08 19:28:38 christos Exp $
+#	$NetBSD: bind2netbsd,v 1.5.2.1 2012/04/17 00:03:04 yamt Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -44,6 +44,10 @@
 #	  /usr/src/external/bsd/bind/include
 #	- check makefiles to see if any extra sources have been added.
 #	- update distrib/sets if necessary.
+#
+# Note that properly the import message should include a short summary
+# of changes since the previous import rather than just "Import bind 9.x.y".
+#
 
 if [ $# -ne 2 ]; then echo "bind2netbsd src dest"; exit 1; fi
 

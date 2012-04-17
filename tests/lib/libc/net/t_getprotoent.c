@@ -1,4 +1,4 @@
-/* $NetBSD: t_getprotoent.c,v 1.1 2011/07/15 06:41:29 jruoho Exp $ */
+/* $NetBSD: t_getprotoent.c,v 1.1.2.1 2012/04/17 00:09:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_getprotoent.c,v 1.1 2011/07/15 06:41:29 jruoho Exp $");
+__RCSID("$NetBSD: t_getprotoent.c,v 1.1.2.1 2012/04/17 00:09:11 yamt Exp $");
 
 #include <atf-c.h>
 #include <netdb.h>
@@ -107,7 +107,7 @@ ATF_TC_HEAD(getprotobyname_err, tc)
 ATF_TC_BODY(getprotobyname_err, tc)
 {
 	static const char * name[] =
-	    { "xxx", "yyy", "xyz", ".as.d}9x.._?!!#¤,¨^//&%%,",
+	    { "xxx", "yyy", "xyz", ".as.d}9x.._?!!#\xa4,\xa8^//&%%,",
 	      "0", "", "tCp", "uDp", "t c p", "tcp ", " tcp" };
 
 	size_t i;

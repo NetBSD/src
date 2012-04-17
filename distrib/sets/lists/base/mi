@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.969.2.1 2011/11/10 14:31:11 yamt Exp $
+# $NetBSD: mi,v 1.969.2.2 2012/04/17 00:02:38 yamt Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -182,6 +182,7 @@
 ./libdata/firmware/rum/rum-license		base-firmware-root
 ./libdata/firmware/rum/rum-rt2573		base-firmware-root
 ./libdata/firmware/upgt				base-firmware-root
+./libdata/firmware/urtwn			base-firmware-root
 ./libdata/firmware/zyd				base-firmware-root
 ./libdata/firmware/zyd/zd1211-licence		base-obsolete			obsolete
 ./libdata/firmware/zyd/zd1211-license		base-firmware-root
@@ -255,6 +256,8 @@
 ./sbin/init					base-sysutil-root
 ./sbin/ipf					base-ipf-root		ipfilter
 ./sbin/ipppctl					base-netutil-root
+./sbin/iscsictl					base-iscsi-bin		iscsi
+./sbin/iscsid					base-iscsi-bin		iscsi
 ./sbin/ispppcontrol				base-obsolete		obsolete
 ./sbin/lmcctl					base-obsolete		obsolete
 ./sbin/lvm					base-lvm-root		lvm
@@ -266,6 +269,7 @@
 ./sbin/mount					base-sysutil-root
 ./sbin/mount_ados				base-adosfs-root
 ./sbin/mount_cd9660				base-sysutil-root
+./sbin/mount_chfs				base-sysutil-root
 ./sbin/mount_efs				base-efs-root
 ./sbin/mount_ext2fs				base-ext2fs-root
 ./sbin/mount_fdesc				base-miscfs-root
@@ -307,6 +311,7 @@
 ./sbin/nfsd					base-obsolete		obsolete
 ./sbin/nfsiod					base-obsolete		obsolete
 ./sbin/nologin					base-sysutil-root
+./sbin/pdisk					base-sysutil-root
 ./sbin/pfctl					base-pf-root		pf
 ./sbin/pflogd					base-pf-root		pf
 ./sbin/pfs						base-pf-root		pf
@@ -444,6 +449,7 @@
 ./usr/bin/false					base-util-bin
 ./usr/bin/fgrep					base-util-bin
 ./usr/bin/file					base-util-bin
+./usr/bin/fincore				base-util-bin
 ./usr/bin/find					base-util-bin
 ./usr/bin/finger				base-util-bin
 ./usr/bin/fmt					base-util-bin
@@ -495,7 +501,7 @@
 ./usr/bin/kgetcred				base-krb5-bin		kerberos
 ./usr/bin/kinit					base-krb5-bin		kerberos
 ./usr/bin/klist					base-krb5-bin		kerberos
-./usr/bin/kpasswd				base-krb5-bin		use_kerberos
+./usr/bin/kpasswd				base-krb5-bin		kerberos
 ./usr/bin/krb5-config				base-krb5-bin		kerberos
 ./usr/bin/ktrace				base-debug-bin
 ./usr/bin/ktruss				base-debug-bin
@@ -687,6 +693,7 @@
 ./usr/bin/tn3270				base-obsolete		obsolete
 ./usr/bin/top					base-util-bin
 ./usr/bin/touch					base-util-bin
+./usr/bin/tpfmt					base-util-bin
 ./usr/bin/tput					base-util-bin
 ./usr/bin/tr					base-util-bin
 ./usr/bin/true					base-util-bin
@@ -737,9 +744,10 @@
 ./usr/bin/who					base-util-bin
 ./usr/bin/whoami				base-util-bin
 ./usr/bin/whois					base-netutil-bin
-./usr/bin/window				base-util-bin
+./usr/bin/window				base-obsolete		obsolete
 ./usr/bin/write					base-util-bin
 ./usr/bin/xargs					base-util-bin
+./usr/bin/xmlwf					base-util-bin
 ./usr/bin/xz					base-util-bin
 ./usr/bin/xzcat					base-util-bin
 ./usr/bin/yes					base-util-bin
@@ -783,6 +791,7 @@
 ./usr/include/dev/ir				base-c-usr
 ./usr/include/dev/isa				base-c-usr
 ./usr/include/dev/isapnp			base-obsolete		obsolete
+./usr/include/dev/iscsi				base-c-usr		iscsi
 ./usr/include/dev/microcode			base-obsolete		obsolete
 ./usr/include/dev/microcode/aic7xxx		base-obsolete		obsolete
 ./usr/include/dev/microcode/isp			base-obsolete		obsolete
@@ -883,7 +892,7 @@
 ./usr/include/ppath				base-c-usr
 ./usr/include/prop				base-c-usr
 ./usr/include/protocols				base-c-usr
-./usr/include/quota				base-c-usr
+./usr/include/quota				base-obsolete		obsolete
 ./usr/include/readline				base-c-usr
 ./usr/include/rpc				base-c-usr
 ./usr/include/rpcsvc				base-c-usr
@@ -892,6 +901,8 @@
 ./usr/include/ss				base-obsolete		obsolete
 ./usr/include/ssp				base-c-usr
 ./usr/include/sys				base-c-usr
+./usr/include/trousers				base-c-usr
+./usr/include/tss				base-c-usr
 ./usr/include/ufs				base-c-usr
 ./usr/include/ufs/ext2fs			base-c-usr
 ./usr/include/ufs/ffs				base-c-usr
@@ -1015,7 +1026,7 @@
 ./usr/libexec/fingerd				base-netutil-bin
 ./usr/libexec/ftp-proxy				base-obsolete		obsolete
 ./usr/libexec/ftpd				base-netutil-bin
-./usr/libexec/getNAME				base-man-bin
+./usr/libexec/getNAME				base-man-bin		!makemandb
 ./usr/libexec/getty				base-sysutil-bin
 ./usr/libexec/hprop				base-obsolete		obsolete
 ./usr/libexec/hpropd				base-krb5-bin		kerberos
@@ -1036,7 +1047,7 @@
 ./usr/libexec/lpr/pjlfilter			base-lpr-bin
 ./usr/libexec/mail.local			base-mail-bin
 ./usr/libexec/makekey				base-crypto-bin
-./usr/libexec/makewhatis			base-man-bin
+./usr/libexec/makewhatis			base-man-bin		!makemandb
 ./usr/libexec/named-xfer			base-obsolete		obsolete
 ./usr/libexec/ntalkd				base-netutil-bin
 ./usr/libexec/pfspamd				base-obsolete		obsolete
@@ -1062,7 +1073,7 @@
 ./usr/libexec/postfix/postfix-script		base-postfix-bin	postfix
 ./usr/libexec/postfix/postfix-wrapper		base-postfix-bin	postfix
 ./usr/libexec/postfix/postmulti-script		base-postfix-bin	postfix
-./usr/libexec/postfix/postscreen		base-postfix-bin	postfix
+./usr/libexec/postfix/postscreen		base-postfix-bin	postfix,crypto
 ./usr/libexec/postfix/proxymap			base-postfix-bin	postfix
 ./usr/libexec/postfix/qmgr			base-postfix-bin	postfix
 ./usr/libexec/postfix/qmqpd			base-obsolete		obsolete
@@ -1254,6 +1265,7 @@
 ./usr/sbin/isdntel				base-isdn-bin
 ./usr/sbin/isdntelctl				base-isdn-bin
 ./usr/sbin/isdntrace				base-isdn-bin
+./usr/sbin/isibootd				base-bootserver-bin
 ./usr/sbin/ispppcontrol				base-obsolete		obsolete
 ./usr/sbin/iwictl				base-sysutil-bin
 ./usr/sbin/kadmin				base-krb5-bin		kerberos
@@ -1380,9 +1392,11 @@
 ./usr/sbin/pwd_mkdb				base-sysutil-bin
 ./usr/sbin/quot					base-sysutil-bin
 ./usr/sbin/quotacheck				base-sysutil-bin
-./usr/sbin/quotactl				base-sysutil-bin
+./usr/sbin/quotactl				base-obsolete		obsolete
+./usr/sbin/quotadump				base-sysutil-bin
 ./usr/sbin/quotaoff				base-sysutil-bin
 ./usr/sbin/quotaon				base-sysutil-bin
+./usr/sbin/quotarestore				base-sysutil-bin
 ./usr/sbin/racoon				base-netutil-bin	crypto
 ./usr/sbin/racoonctl				base-netutil-bin	crypto
 ./usr/sbin/rarpd				base-bootserver-bin
@@ -1463,6 +1477,7 @@
 ./usr/sbin/tcpdump				base-netutil-bin
 ./usr/sbin/timed				base-timed-bin
 ./usr/sbin/timedc				base-timed-bin
+./usr/sbin/tprof				base-sysutil-bin
 ./usr/sbin/traceroute				base-netutil-bin
 ./usr/sbin/traceroute6				base-netutil-bin	use_inet6
 ./usr/sbin/trpt					base-netutil-bin
@@ -2534,7 +2549,7 @@
 ./usr/share/locale/ca_ES.ISO8859-15/LC_TIME	base-locale-ca		nls
 ./usr/share/locale/cs				base-locale-cs
 ./usr/share/locale/cs/LC_MESSAGES		base-locale-cs
-./usr/share/locale/cs/LC_MESSAGES/grep.mo	base-util_locale-cs	nls,! bsdgrep
+./usr/share/locale/cs/LC_MESSAGES/grep.mo	base-util_locale-cs	nls,!bsdgrep
 ./usr/share/locale/cs/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/cs/LC_MESSAGES/texinfo.mo	base-texinfo_locale-cs	nls
 ./usr/share/locale/cs/LC_MESSAGES/xz.mo	base-util_locale-cs	nls
@@ -2565,7 +2580,7 @@
 ./usr/share/locale/da_DK.ISO8859-15/LC_TIME	base-locale-da		nls
 ./usr/share/locale/de				base-locale-de
 ./usr/share/locale/de/LC_MESSAGES		base-locale-de
-./usr/share/locale/de/LC_MESSAGES/grep.mo	base-util_locale-de	nls,! bsdgrep
+./usr/share/locale/de/LC_MESSAGES/grep.mo	base-util_locale-de	nls,!bsdgrep
 ./usr/share/locale/de/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/de/LC_MESSAGES/texinfo.mo	base-texinfo_locale-de	nls
 ./usr/share/locale/de/LC_MESSAGES/xz.mo		base-util_locale-de	nls
@@ -2616,7 +2631,7 @@
 ./usr/share/locale/de_DE.ISO8859-15/LC_TIME	base-locale-de		nls
 ./usr/share/locale/el				base-locale-el
 ./usr/share/locale/el/LC_MESSAGES		base-locale-el
-./usr/share/locale/el/LC_MESSAGES/grep.mo	base-util_locale-el	nls,! bsdgrep
+./usr/share/locale/el/LC_MESSAGES/grep.mo	base-util_locale-el	nls,!bsdgrep
 ./usr/share/locale/el_GR.ISO8859-7		base-locale-el
 ./usr/share/locale/el_GR.ISO8859-7/LC_CTYPE	base-locale-el		nls
 ./usr/share/locale/el_GR.ISO8859-7/LC_MESSAGES	base-locale-el
@@ -2716,11 +2731,11 @@
 ./usr/share/locale/en_US.UTF-8/LC_TIME		base-locale-en		nls
 ./usr/share/locale/eo				base-locale-eo
 ./usr/share/locale/eo/LC_MESSAGES		base-locale-eo
-./usr/share/locale/eo/LC_MESSAGES/grep.mo	base-util_locale-eo	nls,! bsdgrep
+./usr/share/locale/eo/LC_MESSAGES/grep.mo	base-util_locale-eo	nls,!bsdgrep
 ./usr/share/locale/eo/LC_MESSAGES/texinfo.mo	base-texinfo_locale-eo	nls
 ./usr/share/locale/es				base-locale-es
 ./usr/share/locale/es/LC_MESSAGES		base-locale-es
-./usr/share/locale/es/LC_MESSAGES/grep.mo	base-util_locale-es	nls,! bsdgrep
+./usr/share/locale/es/LC_MESSAGES/grep.mo	base-util_locale-es	nls,!bsdgrep
 ./usr/share/locale/es/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/es_ES.ISO8859-1		base-locale-es
 ./usr/share/locale/es_ES.ISO8859-1/LC_CTYPE	base-locale-es		nls
@@ -2738,7 +2753,7 @@
 ./usr/share/locale/es_ES.ISO8859-15/LC_TIME	base-locale-es		nls
 ./usr/share/locale/et				base-locale-et
 ./usr/share/locale/et/LC_MESSAGES		base-locale-et
-./usr/share/locale/et/LC_MESSAGES/grep.mo	base-util_locale-et	nls,! bsdgrep
+./usr/share/locale/et/LC_MESSAGES/grep.mo	base-util_locale-et	nls,!bsdgrep
 ./usr/share/locale/et/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/et_EE.ISO8859-15		base-locale-et
 ./usr/share/locale/et_EE.ISO8859-15/LC_CTYPE	base-locale-et		nls
@@ -2779,7 +2794,7 @@
 ./usr/share/locale/fi_FI.ISO8859-15/LC_TIME	base-locale-fi		nls
 ./usr/share/locale/fr				base-locale-fr
 ./usr/share/locale/fr/LC_MESSAGES		base-locale-fr
-./usr/share/locale/fr/LC_MESSAGES/grep.mo	base-util_locale-fr	nls,! bsdgrep
+./usr/share/locale/fr/LC_MESSAGES/grep.mo	base-util_locale-fr	nls,!bsdgrep
 ./usr/share/locale/fr/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/fr/LC_MESSAGES/texinfo.mo	base-texinfo_locale-fr	nls
 ./usr/share/locale/fr_BE.ISO8859-1		base-locale-fr
@@ -2868,13 +2883,13 @@
 ./usr/share/locale/fr_FR.UTF-8/LC_TIME		base-locale-fr		nls
 ./usr/share/locale/gl				base-locale-gl
 ./usr/share/locale/gl/LC_MESSAGES		base-locale-gl
-./usr/share/locale/gl/LC_MESSAGES/grep.mo	base-util_locale-gl	nls,! bsdgrep
+./usr/share/locale/gl/LC_MESSAGES/grep.mo	base-util_locale-gl	nls,!bsdgrep
 ./usr/share/locale/he				base-locale-he
 ./usr/share/locale/he/LC_MESSAGES		base-locale-he
 ./usr/share/locale/he/LC_MESSAGES/texinfo.mo	base-texinfo_locale-he	nls
 ./usr/share/locale/hr				base-locale-hr
 ./usr/share/locale/hr/LC_MESSAGES		base-locale-hr
-./usr/share/locale/hr/LC_MESSAGES/grep.mo	base-util_locale-hr	nls,! bsdgrep
+./usr/share/locale/hr/LC_MESSAGES/grep.mo	base-util_locale-hr	nls,!bsdgrep
 ./usr/share/locale/hr/LC_MESSAGES/texinfo.mo	base-texinfo_locale-hr	nls
 ./usr/share/locale/hr_HR.ISO8859-2		base-locale-hr
 ./usr/share/locale/hr_HR.ISO8859-2/LC_CTYPE	base-locale-hr		nls
@@ -2899,7 +2914,7 @@
 ./usr/share/locale/hy_AM.ARMSCII-8/LC_TIME	base-locale-hy		nls
 ./usr/share/locale/id				base-locale-id
 ./usr/share/locale/id/LC_MESSAGES		base-locale-id
-./usr/share/locale/id/LC_MESSAGES/grep.mo	base-util_locale-id	nls,! bsdgrep
+./usr/share/locale/id/LC_MESSAGES/grep.mo	base-util_locale-id	nls,!bsdgrep
 ./usr/share/locale/id/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/is_IS.ISO8859-1		base-locale-is
 ./usr/share/locale/is_IS.ISO8859-1/LC_CTYPE	base-locale-is		nls
@@ -2917,7 +2932,7 @@
 ./usr/share/locale/is_IS.ISO8859-15/LC_TIME	base-locale-is		nls
 ./usr/share/locale/it				base-locale-it
 ./usr/share/locale/it/LC_MESSAGES		base-locale-it
-./usr/share/locale/it/LC_MESSAGES/grep.mo	base-util_locale-it	nls,! bsdgrep
+./usr/share/locale/it/LC_MESSAGES/grep.mo	base-util_locale-it	nls,!bsdgrep
 ./usr/share/locale/it/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/it/LC_MESSAGES/xz.mo		base-util_locale-it	nls
 ./usr/share/locale/it_CH.ISO8859-1		base-locale-it
@@ -2950,7 +2965,7 @@
 ./usr/share/locale/it_IT.ISO8859-15/LC_TIME	base-locale-it		nls
 ./usr/share/locale/ja				base-locale-ja
 ./usr/share/locale/ja/LC_MESSAGES		base-locale-ja
-./usr/share/locale/ja/LC_MESSAGES/grep.mo	base-util_locale-ja	nls,! bsdgrep
+./usr/share/locale/ja/LC_MESSAGES/grep.mo	base-util_locale-ja	nls,!bsdgrep
 ./usr/share/locale/ja/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/ja/LC_MESSAGES/texinfo.mo	base-texinfo_locale-ja	nls
 ./usr/share/locale/ja_JP.ISO-2022-JP			base-locale-ja
@@ -3001,7 +3016,7 @@
 ./usr/share/locale/kk_KZ.PT154/LC_TIME		base-locale-kk		nls
 ./usr/share/locale/ko				base-locale-ko
 ./usr/share/locale/ko/LC_MESSAGES		base-locale-ko
-./usr/share/locale/ko/LC_MESSAGES/grep.mo	base-locale-ko		nls,! bsdgrep
+./usr/share/locale/ko/LC_MESSAGES/grep.mo	base-locale-ko		nls,!bsdgrep
 ./usr/share/locale/ko/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/ko_KR.UTF-8			base-obsolete		obsolete
 ./usr/share/locale/ko_KR.UTF-8/LC_CTYPE		base-obsolete		obsolete
@@ -3032,7 +3047,7 @@
 ./usr/share/locale/nb/LC_MESSAGES/texinfo.mo	base-texinfo_locale-nb	nls
 ./usr/share/locale/nl				base-locale-nl
 ./usr/share/locale/nl/LC_MESSAGES		base-locale-nl
-./usr/share/locale/nl/LC_MESSAGES/grep.mo	base-locale-nl		nls,! bsdgrep
+./usr/share/locale/nl/LC_MESSAGES/grep.mo	base-locale-nl		nls,!bsdgrep
 ./usr/share/locale/nl/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/nl/LC_MESSAGES/texinfo.mo	base-texinfo_locale-nl	nls
 ./usr/share/locale/nl_BE.ISO8859-1		base-locale-nl
@@ -3081,7 +3096,7 @@
 ./usr/share/locale/nn_NO.ISO8859-15/LC_TIME	base-locale-nn		nls
 ./usr/share/locale/no				base-locale-no
 ./usr/share/locale/no/LC_MESSAGES		base-locale-no
-./usr/share/locale/no/LC_MESSAGES/grep.mo	base-locale-no		nls,! bsdgrep
+./usr/share/locale/no/LC_MESSAGES/grep.mo	base-locale-no		nls,!bsdgrep
 ./usr/share/locale/no/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/no/LC_MESSAGES/texinfo.mo	base-texinfo_locale-no	nls
 ./usr/share/locale/no@nynorsk			base-locale-no
@@ -3102,7 +3117,7 @@
 ./usr/share/locale/no_NO.ISO8859-15/LC_TIME	base-locale-no		nls
 ./usr/share/locale/pl				base-locale-pl
 ./usr/share/locale/pl/LC_MESSAGES		base-locale-pl
-./usr/share/locale/pl/LC_MESSAGES/grep.mo	base-locale-pl		nls,! bsdgrep
+./usr/share/locale/pl/LC_MESSAGES/grep.mo	base-locale-pl		nls,!bsdgrep
 ./usr/share/locale/pl/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/pl/LC_MESSAGES/texinfo.mo	base-texinfo_locale-pl	nls
 ./usr/share/locale/pl_PL.ISO8859-2		base-locale-pl
@@ -3124,7 +3139,7 @@
 ./usr/share/locale/pt_BR.ISO8859-1/LC_NUMERIC	base-locale-pt		nls
 ./usr/share/locale/pt_BR.ISO8859-1/LC_TIME	base-locale-pt		nls
 ./usr/share/locale/pt_BR/LC_MESSAGES		base-locale-pt
-./usr/share/locale/pt_BR/LC_MESSAGES/grep.mo	base-locale-pt		nls,! bsdgrep
+./usr/share/locale/pt_BR/LC_MESSAGES/grep.mo	base-locale-pt		nls,!bsdgrep
 ./usr/share/locale/pt_BR/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/pt_PT.ISO8859-1		base-locale-pt
 ./usr/share/locale/pt_PT.ISO8859-1/LC_CTYPE	base-locale-pt		nls
@@ -3152,7 +3167,7 @@
 ./usr/share/locale/ro_RO.ISO8859-2/LC_TIME	base-locale-ro		nls
 ./usr/share/locale/ru				base-locale-ru
 ./usr/share/locale/ru/LC_MESSAGES		base-locale-ru
-./usr/share/locale/ru/LC_MESSAGES/grep.mo	base-locale-ru		nls,! bsdgrep
+./usr/share/locale/ru/LC_MESSAGES/grep.mo	base-locale-ru		nls,!bsdgrep
 ./usr/share/locale/ru/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/ru/LC_MESSAGES/texinfo.mo	base-texinfo_locale-ru	nls
 ./usr/share/locale/ru_BY.CP1251			base-locale-ru
@@ -3207,7 +3222,7 @@
 ./usr/share/locale/sk_SK.ISO8859-2/LC_TIME	base-locale-sk		nls
 ./usr/share/locale/sl				base-locale-sl
 ./usr/share/locale/sl/LC_MESSAGES		base-locale-sl
-./usr/share/locale/sl/LC_MESSAGES/grep.mo	base-locale-sl		nls,! bsdgrep
+./usr/share/locale/sl/LC_MESSAGES/grep.mo	base-locale-sl		nls,!bsdgrep
 ./usr/share/locale/sl/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/sl_SI.ISO8859-2		base-locale-sl
 ./usr/share/locale/sl_SI.ISO8859-2/LC_CTYPE	base-locale-sl		nls
@@ -3252,7 +3267,7 @@
 ./usr/share/locale/sr_YU.ISO8859-5/LC_CTYPE	base-obsolete		obsolete
 ./usr/share/locale/sv				base-locale-sv
 ./usr/share/locale/sv/LC_MESSAGES		base-locale-sv
-./usr/share/locale/sv/LC_MESSAGES/grep.mo	base-util_locale-sv	nls,! bsdgrep
+./usr/share/locale/sv/LC_MESSAGES/grep.mo	base-util_locale-sv	nls,!bsdgrep
 ./usr/share/locale/sv/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/sv/LC_MESSAGES/texinfo.mo	base-texinfo_locale-sv	nls
 ./usr/share/locale/sv_SE.ISO8859-1		base-locale-sv
@@ -3359,7 +3374,7 @@
 ./usr/share/man/cat2				base-man-share
 ./usr/share/man/cat3				base-man-share
 ./usr/share/man/cat3/atari			base-obsolete		obsolete
-./usr/share/man/cat3f				base-man-share
+./usr/share/man/cat3f				base-obsolete		obsolete
 ./usr/share/man/cat4				base-man-share
 ./usr/share/man/cat4/acorn26			base-man-share
 ./usr/share/man/cat4/acorn32			base-man-share
@@ -3604,7 +3619,7 @@
 ./usr/share/man/html9/vax			base-man-share
 ./usr/share/man/html9/x68k			base-man-share
 ./usr/share/man/html9/x86			base-man-share
-./usr/share/man/makewhatis.sed			base-man-share		share
+./usr/share/man/makewhatis.sed			base-man-share		!makemandb,share
 ./usr/share/man/man1				base-man-share
 ./usr/share/man/man1/atari			base-man-share
 ./usr/share/man/man1/hp300			base-man-share
@@ -3732,7 +3747,7 @@
 ./usr/share/man/man9/vax			base-man-share
 ./usr/share/man/man9/x68k			base-man-share
 ./usr/share/man/man9/x86			base-man-share
-./usr/share/man/whatis.db			base-man-share		man
+./usr/share/man/whatis.db			base-man-share		man,!makemandb
 ./usr/share/me					base-groff-share
 ./usr/share/misc				base-terminfo-share
 ./usr/share/misc/acronyms			base-reference-share	share
@@ -4340,6 +4355,7 @@
 ./usr/share/zoneinfo/America/Costa_Rica		base-sys-share		share
 ./usr/share/zoneinfo/America/Cuiaba		base-sys-share		share
 ./usr/share/zoneinfo/America/Curacao		base-sys-share		share
+./usr/share/zoneinfo/America/Creston		base-sys-share		share
 ./usr/share/zoneinfo/America/Danmarkshavn	base-sys-share		share
 ./usr/share/zoneinfo/America/Dawson		base-sys-share		share
 ./usr/share/zoneinfo/America/Dawson_Creek	base-sys-share		share
@@ -4997,6 +5013,7 @@
 ./var/spool/uucppublic				base-obsolete		obsolete
 ./var/tmp					base-sys-root
 ./var/tmp/vi.recover				base-util-root
+./var/tpm					base-sys-root
 ./var/www					base-netutil-root
 ./var/yp					base-nis-root
 ./var/yp/binding				base-nis-root

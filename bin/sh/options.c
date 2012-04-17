@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.42 2011/06/18 21:18:46 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.42.2.1 2012/04/17 00:01:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: options.c,v 1.42 2011/06/18 21:18:46 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.42.2.1 2012/04/17 00:01:38 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -372,8 +372,7 @@ setcmd(int argc, char **argv)
 
 
 void
-getoptsreset(value)
-	const char *value;
+getoptsreset(const char *value)
 {
 	if (number(value) == 1) {
 		shellparam.optnext = NULL;

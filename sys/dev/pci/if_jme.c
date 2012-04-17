@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.17 2011/03/30 18:11:37 bouyer Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.17.4.1 2012/04/17 00:07:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.17 2011/03/30 18:11:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.17.4.1 2012/04/17 00:07:47 yamt Exp $");
 
 
 #include <sys/param.h>
@@ -87,10 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.17 2011/03/30 18:11:37 bouyer Exp $");
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
 
-#include "rnd.h"
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -167,9 +164,7 @@ struct jme_softc {
 	u_int32_t jme_flags;		/* device features, see below */
 	uint32_t jme_txcsr;		/* TX config register */
 	uint32_t jme_rxcsr;		/* RX config register */
-#if NRND > 0
-	rndsource_element_t rnd_source;
-#endif
+	krndsource_t rnd_source;
 	/* interrupt coalition parameters */
 	struct sysctllog *jme_clog;
 	int jme_intrxto;		/* interrupt RX timeout */
@@ -513,10 +508,9 @@ jme_pci_attach(device_t parent, device_t self, void *aux)
 	else
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(self),
 	    RND_TYPE_NET, 0);
-#endif
+
 	sc->jme_intrxto = PCCRX_COAL_TO_DEFAULT;
 	sc->jme_intrxct = PCCRX_COAL_PKT_DEFAULT;
 	sc->jme_inttxto = PCCTX_COAL_TO_DEFAULT;
@@ -1221,11 +1215,8 @@ jme_intr_rx(jme_softc_t *sc) {
 		}
 		(*ifp->if_input)(ifp, mhead);
 	}
-#if NRND > 0
-	if (ipackets && RND_ENABLED(&sc->rnd_source))
+	if (ipackets)
 		rnd_add_uint32(&sc->rnd_source, ipackets);
-#endif /* NRND > 0 */
-
 }
 
 static int

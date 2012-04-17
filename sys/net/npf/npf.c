@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.5.4.1 2011/11/10 14:31:50 yamt Exp $	*/
+/*	$NetBSD: npf.c,v 1.5.4.2 2012/04/17 00:08:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.5.4.1 2011/11/10 14:31:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.5.4.2 2012/04/17 00:08:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -70,6 +70,8 @@ typedef struct {
 	npf_ruleset_t *		n_rules;
 	npf_tableset_t *	n_tables;
 	npf_ruleset_t *		n_nat_rules;
+	prop_dictionary_t	n_dict;
+	bool			n_default_pass;
 } npf_core_t;
 
 static void	npf_core_destroy(npf_core_t *);
@@ -92,6 +94,7 @@ npf_init(void)
 #endif
 	npf_ruleset_t *rset, *nset;
 	npf_tableset_t *tset;
+	prop_dictionary_t dict;
 	int error = 0;
 
 	rw_init(&npf_lock);
@@ -103,10 +106,11 @@ npf_init(void)
 	npflogattach(1);
 
 	/* Load empty configuration. */
+	dict = prop_dictionary_create();
 	rset = npf_ruleset_create();
 	tset = npf_tableset_create();
 	nset = npf_ruleset_create();
-	npf_reload(rset, tset, nset);
+	npf_reload(dict, rset, tset, nset, true);
 	KASSERT(npf_core != NULL);
 
 #ifdef _MODULE
@@ -124,20 +128,20 @@ static int
 npf_fini(void)
 {
 
-	/*
-	 * At first, detach device, remove pfil hooks and unload existing
-	 * configuration, destroy structures.
-	 */
+	/* At first, detach device and remove pfil hooks. */
 #ifdef _MODULE
 	devsw_detach(NULL, &npf_cdevsw);
 #endif
-	npf_unregister_pfil();
-	npf_core_destroy(npf_core);
 	npflogdetach();
+	npf_pfil_unregister();
 
-	/* Note: order is particular. */
-	npf_nat_sysfini();
+	/* Flush all sessions, destroy configuration (ruleset, etc). */
+	npf_session_tracking(false);
+	npf_core_destroy(npf_core);
+
+	/* Finally, safe to destroy the subsystems. */
 	npf_alg_sysfini();
+	npf_nat_sysfini();
 	npf_session_sysfini();
 	npf_tableset_sysfini();
 	percpu_free(npf_stats_percpu, NPF_STATS_SIZE);
@@ -176,7 +180,8 @@ npf_dev_open(dev_t dev, int flag, int mode, lwp_t *l)
 {
 
 	/* Available only for super-user. */
-	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
+	if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_FIREWALL,
+	    KAUTH_REQ_NETWORK_FIREWALL_FW, NULL, NULL, NULL)) {
 		return EPERM;
 	}
 	return 0;
@@ -195,7 +200,8 @@ npf_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 	int error;
 
 	/* Available only for super-user. */
-	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
+	if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_FIREWALL,
+	    KAUTH_REQ_NETWORK_FIREWALL_FW, NULL, NULL, NULL)) {
 		return EPERM;
 	}
 
@@ -209,6 +215,9 @@ npf_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		break;
 	case IOC_NPF_RELOAD:
 		error = npfctl_reload(cmd, data);
+		break;
+	case IOC_NPF_GETCONF:
+		error = npfctl_getconf(cmd, data);
 		break;
 	case IOC_NPF_TABLE:
 		error = npfctl_table(data);
@@ -254,6 +263,7 @@ static void
 npf_core_destroy(npf_core_t *nc)
 {
 
+	prop_object_release(nc->n_dict);
 	npf_ruleset_destroy(nc->n_rules);
 	npf_ruleset_destroy(nc->n_nat_rules);
 	npf_tableset_destroy(nc->n_tables);
@@ -265,15 +275,18 @@ npf_core_destroy(npf_core_t *nc)
  * Then destroy old (unloaded) structures.
  */
 void
-npf_reload(npf_ruleset_t *rset, npf_tableset_t *tset, npf_ruleset_t *nset)
+npf_reload(prop_dictionary_t dict, npf_ruleset_t *rset,
+    npf_tableset_t *tset, npf_ruleset_t *nset, bool flush)
 {
 	npf_core_t *nc, *onc;
 
 	/* Setup a new core structure. */
-	nc = kmem_alloc(sizeof(npf_core_t), KM_SLEEP);
+	nc = kmem_zalloc(sizeof(npf_core_t), KM_SLEEP);
 	nc->n_rules = rset;
 	nc->n_tables = tset;
 	nc->n_nat_rules = nset;
+	nc->n_dict = dict;
+	nc->n_default_pass = flush;
 
 	/* Lock and load the core structure. */
 	rw_enter(&npf_lock, RW_WRITER);
@@ -284,9 +297,6 @@ npf_reload(npf_ruleset_t *rset, npf_tableset_t *tset, npf_ruleset_t *nset)
 	}
 	/* Unlock.  Everything goes "live" now. */
 	rw_exit(&npf_lock);
-
-	/* Turn on/off session tracking accordingly. */
-	npf_session_tracking(true);
 
 	if (onc) {
 		/* Destroy unloaded structures. */
@@ -331,6 +341,20 @@ bool
 npf_core_locked(void)
 {
 	return rw_lock_held(&npf_lock);
+}
+
+prop_dictionary_t
+npf_core_dict(void)
+{
+	KASSERT(rw_lock_held(&npf_lock));
+	return npf_core->n_dict;
+}
+
+bool
+npf_default_pass(void)
+{
+	KASSERT(rw_lock_held(&npf_lock));
+	return npf_core->n_default_pass;
 }
 
 /*

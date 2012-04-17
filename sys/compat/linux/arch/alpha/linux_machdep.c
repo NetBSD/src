@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.48 2011/06/09 13:41:40 matt Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.48.2.1 2012/04/17 00:07:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.48 2011/06/09 13:41:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.48.2.1 2012/04/17 00:07:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,13 +108,15 @@ linux_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 }
 
 void
-setup_linux_rt_sigframe(struct trapframe *tf, int sig, const sigset_t *mask)
+setup_linux_rt_sigframe(struct trapframe *tf, const ksiginfo_t *ksi,
+    const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct linux_rt_sigframe *sfp, sigframe;
 	int onstack, error;
 	int fsize, rndfsize;
+	int sig = ksi->ksi_signo;
 	extern char linux_rt_sigcode[], linux_rt_esigcode[];
 
 	/* Do we need to jump onto the signal stack? */
@@ -163,19 +165,7 @@ setup_linux_rt_sigframe(struct trapframe *tf, int sig, const sigset_t *mask)
 	sigframe.uc.uc_mcontext.sc_traparg_a0 = tf->tf_regs[FRAME_A0];
 	sigframe.uc.uc_mcontext.sc_traparg_a1 = tf->tf_regs[FRAME_A1];
 	sigframe.uc.uc_mcontext.sc_traparg_a2 = tf->tf_regs[FRAME_A2];
-
-	/*
-	 * XXX XAX Create bogus siginfo data.  This can't really
-	 * XXX be fixed until NetBSD has realtime signals.
-	 * XXX Or we do the emuldata thing.
-	 * XXX -erh
-	 */
-	memset(&sigframe.info, 0, sizeof(struct linux_siginfo));
-	sigframe.info.lsi_signo = sig;
-	sigframe.info.lsi_code = LINUX_SI_USER;
-	sigframe.info.lsi_pid = p->p_pid;
-	sigframe.info.lsi_uid = kauth_cred_geteuid(l->l_cred);	/* Use real uid here? */
-
+	native_to_linux_siginfo(&sigframe.info, &ksi->ksi_info);
 	sendsig_reset(l, sig);
 	mutex_exit(p->p_lock);
 	error = copyout((void *)&sigframe, (void *)sfp, fsize);
@@ -211,16 +201,15 @@ setup_linux_rt_sigframe(struct trapframe *tf, int sig, const sigset_t *mask)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
 }
 
-void setup_linux_sigframe(tf, sig, mask)
-	struct trapframe *tf;
-	int sig;
-	const sigset_t *mask;
+void setup_linux_sigframe(struct trapframe *tf, const ksiginfo_t *ksi,
+    const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct linux_sigframe *sfp, sigframe;
 	int onstack, error;
 	int fsize, rndfsize;
+	int sig = ksi->ksi_signo;
 	extern char linux_sigcode[], linux_esigcode[];
 
 	/* Do we need to jump onto the signal stack? */
@@ -336,10 +325,10 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	edp = 0;
 #endif
 	if (edp && sigismember(&edp->ps_siginfo, sig))
-		setup_linux_rt_sigframe(tf, sig, mask);
+		setup_linux_rt_sigframe(tf, ksi, mask);
 	else
 #endif /* notyet */
-		setup_linux_sigframe(tf, sig, mask);
+		setup_linux_sigframe(tf, ksi, mask);
 
 	/* Signal handler for trampoline code */
 	tf->tf_regs[FRAME_T12] = (u_int64_t)catcher;

@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.80 2011/08/31 16:24:55 plunky Exp $	*/
+/*	$NetBSD: parser.c,v 1.80.2.1 2012/04/17 00:01:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,11 +37,12 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.80 2011/08/31 16:24:55 plunky Exp $");
+__RCSID("$NetBSD: parser.c,v 1.80.2.1 2012/04/17 00:01:38 yamt Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdlib.h>
+#include <limits.h>
 
 #include "shell.h"
 #include "parser.h"
@@ -1108,7 +1109,7 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 			case CEOF:
 				goto endword;		/* exit outer loop */
 			default:
-				if (varnest == 0)
+				if (varnest == 0 && !ISDBLQUOTE())
 					goto endword;	/* exit outer loop */
 				USTPUTC(c, out);
 			}

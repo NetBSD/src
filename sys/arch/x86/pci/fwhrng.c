@@ -1,4 +1,4 @@
-/*	$NetBSD: fwhrng.c,v 1.3 2011/07/01 18:22:08 dyoung Exp $	*/
+/*	$NetBSD: fwhrng.c,v 1.3.2.1 2012/04/17 00:07:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -29,13 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwhrng.c,v 1.3 2011/07/01 18:22:08 dyoung Exp $");
-
-#include "rnd.h"        
-                            
-#if NRND == 0
-#error fwhrng requires rnd pseudo-device
-#endif  
+__KERNEL_RCSID(0, "$NetBSD: fwhrng.c,v 1.3.2.1 2012/04/17 00:07:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +48,7 @@ struct fwhrng_softc {
 	bus_space_handle_t sc_sh;
 
 	struct callout sc_rnd_ch;
-	rndsource_element_t sc_rnd_source;
+	krndsource_t sc_rnd_source;
 
 	int sc_rnd_i;
 	uint32_t sc_rnd_ax;

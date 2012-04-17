@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.101 2011/09/11 17:18:52 christos Exp $	*/
+/*	$NetBSD: ping.c,v 1.101.2.1 2012/04/17 00:05:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.101 2011/09/11 17:18:52 christos Exp $");
+__RCSID("$NetBSD: ping.c,v 1.101.2.1 2012/04/17 00:05:42 yamt Exp $");
 #endif
 
 #include <stdio.h>
@@ -89,7 +89,7 @@ __RCSID("$NetBSD: ping.c,v 1.101 2011/09/11 17:18:52 christos Exp $");
 #include <netdb.h>
 
 #ifdef IPSEC
-#include <netinet6/ipsec.h>
+#include <netipsec/ipsec.h>
 #endif /*IPSEC*/
 
 #include "prog_ops.h"

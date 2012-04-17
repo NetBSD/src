@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.57 2011/03/15 13:20:14 vanhu Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.57.6.1 2012/04/17 00:01:42 yamt Exp $	*/
 
-/* $Id: pfkey.c,v 1.57 2011/03/15 13:20:14 vanhu Exp $ */
+/* $Id: pfkey.c,v 1.57.6.1 2012/04/17 00:01:42 yamt Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1853,8 +1853,8 @@ pk_recvacquire(mhp)
 	 *       should ignore such a acquire message because the phase 2
 	 *       is just negotiating.
 	 *    2. its state is equal to PHASE2ST_ESTABLISHED, then racoon
-	 *       has to prcesss such a acquire message because racoon may
-	 *       lost the expire message.
+	 *       has to process such an acquire message because racoon may
+	 *       have lost the expire message.
 	 */
 	iph2 = getph2byid(src, dst, xpl->sadb_x_policy_id);
 	if (iph2 != NULL) {

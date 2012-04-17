@@ -1,0 +1,20 @@
+# $NetBSD: GENERIC.amd64,v 1.3.6.2 2012/04/17 00:06:59 yamt Exp $
+
+machine usermode
+include "arch/usermode/conf/GENERIC.common"
+include "arch/amd64/conf/majors.amd64"
+
+no options EXEC_ELF32
+
+options 	INSECURE		# required by sysinst
+
+options		TEXTADDR=0x40000000	# 1 Gb `phys ram' / total space
+options		KVMSIZE= 0x10000000	# KVM space reserved in VM map, 256 Mb
+options		NKMEMPAGES_MAX=32768	# 128 Mb max
+
+makeoptions	COPTS+="-m64"
+makeoptions	LD="ld -melf_amd64"
+
+#options 	INCLUDE_CONFIG_FILE
+#ident 		"GENERIC32-$Revision: 1.3.6.2 $"
+

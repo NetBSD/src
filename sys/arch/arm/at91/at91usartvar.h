@@ -1,4 +1,4 @@
-/*      $NetBSD: at91usartvar.h,v 1.3 2009/10/23 06:53:13 snj Exp $	*/
+/*      $NetBSD: at91usartvar.h,v 1.3.12.1 2012/04/17 00:06:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -85,8 +85,8 @@ struct at91usart_softc {
 	int			(*disable)(struct at91usart_softc *);
 
 	int			enabled;
-#if NRND > 0 && defined(RND_COM)
-	rndsource_element_t  rnd_source;
+#ifdef RND_COM
+	krndsource_t  rnd_source;
 #endif
 };
 

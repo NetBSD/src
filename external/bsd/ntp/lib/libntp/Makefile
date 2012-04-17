@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/08/25 16:29:39 joerg Exp $
+#	$NetBSD: Makefile,v 1.3.2.1 2012/04/17 00:03:53 yamt Exp $
 
 LIBISPRIVATE=yes
 
@@ -8,7 +8,7 @@ LIB=ntp
 
 .include "${.CURDIR}/../Makefile.inc"
 
-DIST=	${IDIST}/libntp
+DIST=	${IDIST}/libntp 
 
 .PATH.c:	${DIST}
 
@@ -22,8 +22,9 @@ SRCS=systime.c a_md5encrypt.c adjtime.c atoint.c atolfp.c atouint.c audio.c \
      ntp_rfc2553.c numtoa.c numtohost.c octtoint.c prettydate.c ntp_random.c \
      recvbuff.c refnumtoa.c snprintf.c socktoa.c socktohost.c ssl_init.c \
      statestr.c strdup.c strstr.c syssignal.c tsftomsu.c tstotv.c tvtots.c \
-     uglydate.c uinttoa.c ymd2yd.c 
+     uglydate.c uinttoa.c ymd2yd.c ntp_libopts.c
 
 COPTS.msyslog.c+= -Wno-format-nonliteral
+CPPFLAGS+= -I${IDIST}/sntp/libopts
 
 .include <bsd.lib.mk>

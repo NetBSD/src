@@ -1,4 +1,4 @@
-/*	$NetBSD: quad.h,v 1.4 2011/07/09 02:36:01 matt Exp $	*/
+/*	$NetBSD: quad.h,v 1.4.2.1 2012/04/17 00:01:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,8 +94,8 @@ union uu {
  * (sizeof(int)*CHAR_BIT/2).
  */
 #define	HHALF(x)	((u_int)(x) >> HALF_BITS)
-#define	LHALF(x)	((u_int)(x) & (((int)1 << HALF_BITS) - 1))
-#define	LHUP(x)		((u_int)(x) << HALF_BITS)
+#define	LHALF(x)	((u_int)(x) & (((int)1 << (u_int)HALF_BITS) - 1))
+#define	LHUP(x)		((u_int)(x) << (u_int)HALF_BITS)
 
 /*
  * XXX
@@ -110,35 +110,35 @@ typedef u_quad_t	qshift_t;
 #endif
 
 __BEGIN_DECLS
-quad_t __adddi3 __P((quad_t, quad_t));
-quad_t __anddi3 __P((quad_t, quad_t));
-quad_t __ashldi3 __P((quad_t, qshift_t));
-quad_t __ashrdi3 __P((quad_t, qshift_t));
-int __cmpdi2 __P((quad_t, quad_t));
-quad_t __divdi3 __P((quad_t, quad_t));
-quad_t __fixtfdi __P((long double));
-quad_t __fixdfdi __P((double));
-quad_t __fixsfdi __P((float));
-u_quad_t __fixunstfdi __P((long double));
-u_quad_t __fixunsdfdi __P((double));
-u_quad_t __fixunssfdi __P((float));
-long double __floatditf __P((quad_t));
-double __floatdidf __P((quad_t));
-float __floatdisf __P((quad_t));
-long double __floatunditf __P((u_quad_t));
-double __floatundidf __P((u_quad_t));
-float __floatundisf __P((u_quad_t));
-quad_t __iordi3 __P((quad_t, quad_t));
-quad_t __lshldi3 __P((quad_t, qshift_t));
-quad_t __lshrdi3 __P((quad_t, qshift_t));
-quad_t __moddi3 __P((quad_t, quad_t));
-quad_t __muldi3 __P((quad_t, quad_t));
-quad_t __negdi2 __P((quad_t));
-quad_t __one_cmpldi2 __P((quad_t));
-u_quad_t __qdivrem __P((u_quad_t, u_quad_t, u_quad_t *));
-quad_t __subdi3 __P((quad_t, quad_t));
-int __ucmpdi2 __P((u_quad_t, u_quad_t));
-u_quad_t __udivdi3 __P((u_quad_t, u_quad_t ));
-u_quad_t __umoddi3 __P((u_quad_t, u_quad_t ));
-quad_t __xordi3 __P((quad_t, quad_t));
+quad_t __adddi3(quad_t, quad_t);
+quad_t __anddi3(quad_t, quad_t);
+quad_t __ashldi3(quad_t, qshift_t);
+quad_t __ashrdi3(quad_t, qshift_t);
+int __cmpdi2(quad_t, quad_t);
+quad_t __divdi3(quad_t, quad_t);
+quad_t __fixtfdi(long double);
+quad_t __fixdfdi(double);
+quad_t __fixsfdi(float);
+u_quad_t __fixunstfdi(long double);
+u_quad_t __fixunsdfdi(double);
+u_quad_t __fixunssfdi(float);
+long double __floatditf(quad_t);
+double __floatdidf(quad_t);
+float __floatdisf(quad_t);
+long double __floatunditf(u_quad_t);
+double __floatundidf(u_quad_t);
+float __floatundisf(u_quad_t);
+quad_t __iordi3(quad_t, quad_t);
+quad_t __lshldi3(quad_t, qshift_t);
+quad_t __lshrdi3(quad_t, qshift_t);
+quad_t __moddi3(quad_t, quad_t);
+quad_t __muldi3(quad_t, quad_t);
+quad_t __negdi2(quad_t);
+quad_t __one_cmpldi2(quad_t);
+u_quad_t __qdivrem(u_quad_t, u_quad_t, u_quad_t *);
+quad_t __subdi3(quad_t, quad_t);
+int __ucmpdi2(u_quad_t, u_quad_t);
+u_quad_t __udivdi3(u_quad_t, u_quad_t );
+u_quad_t __umoddi3(u_quad_t, u_quad_t );
+quad_t __xordi3(quad_t, quad_t);
 __END_DECLS

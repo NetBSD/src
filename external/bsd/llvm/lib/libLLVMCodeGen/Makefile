@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.2.1 2011/11/10 14:31:23 yamt Exp $
+#	$NetBSD: Makefile,v 1.8.2.2 2012/04/17 00:03:31 yamt Exp $
 
 LIB=	LLVMCodeGen
 
@@ -15,11 +15,10 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	CodeGen.cpp \
 	CodePlacementOpt.cpp \
 	CriticalAntiDepBreaker.cpp \
+	DFAPacketizer.cpp \
 	DeadMachineInstructionElim.cpp \
 	DwarfEHPrepare.cpp \
 	EdgeBundles.cpp \
-	ELFCodeEmitter.cpp \
-	ELFWriter.cpp \
 	ExecutionDepsFix.cpp \
 	ExpandISelPseudos.cpp \
 	ExpandPostRAPseudos.cpp \
@@ -30,6 +29,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	InlineSpiller.cpp \
 	InterferenceCache.cpp \
 	IntrinsicLowering.cpp \
+	JITCodeEmitter.cpp \
 	LLVMTargetMachine.cpp \
 	LatencyPriorityQueue.cpp \
 	LexicalScopes.cpp \
@@ -46,6 +46,8 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachineBranchProbabilityInfo.cpp \
 	MachineBlockFrequencyInfo.cpp \
 	MachineBlockPlacement.cpp \
+	MachineCodeEmitter.cpp \
+	MachineCopyPropagation.cpp \
 	MachineCSE.cpp \
 	MachineDominators.cpp \
 	MachineFunction.cpp \
@@ -53,6 +55,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachineFunctionPass.cpp \
 	MachineFunctionPrinterPass.cpp \
 	MachineInstr.cpp \
+	MachineInstrBundle.cpp \
 	MachineLICM.cpp \
 	MachineLoopInfo.cpp \
 	MachineLoopRanges.cpp \
@@ -61,9 +64,9 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachinePassRegistry.cpp \
 	MachineRegisterInfo.cpp \
 	MachineSSAUpdater.cpp \
+	MachineScheduler.cpp \
 	MachineSink.cpp \
 	MachineVerifier.cpp \
-	ObjectCodeEmitter.cpp \
 	OcamlGC.cpp \
 	OptimizePHIs.cpp \
 	PHIElimination.cpp \
@@ -75,17 +78,16 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	ProcessImplicitDefs.cpp \
 	PrologEpilogInserter.cpp \
 	PseudoSourceValue.cpp \
+	RegAllocBase.cpp \
 	RegAllocBasic.cpp \
 	RegAllocFast.cpp \
 	RegAllocGreedy.cpp \
-	RegAllocLinearScan.cpp \
 	RegAllocPBQP.cpp \
 	RegisterClassInfo.cpp \
 	RegisterCoalescer.cpp \
 	RegisterScavenging.cpp \
 	RenderMachineFunction.cpp \
 	ScheduleDAG.cpp \
-	ScheduleDAGEmit.cpp \
 	ScheduleDAGInstrs.cpp \
 	ScheduleDAGPrinter.cpp \
 	ShadowStackGC.cpp \
@@ -95,17 +97,17 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	Spiller.cpp \
 	SpillPlacement.cpp \
 	SplitKit.cpp \
-	Splitter.cpp \
 	StackProtector.cpp \
 	StackSlotColoring.cpp \
 	StrongPHIElimination.cpp \
 	TailDuplication.cpp \
+	TargetFrameLoweringImpl.cpp \
 	TargetInstrInfoImpl.cpp \
 	TargetLoweringObjectFileImpl.cpp \
+	TargetOptionsImpl.cpp \
 	TwoAddressInstructionPass.cpp \
 	UnreachableBlockElim.cpp \
-	VirtRegMap.cpp \
-	VirtRegRewriter.cpp
+	VirtRegMap.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

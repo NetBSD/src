@@ -54,6 +54,7 @@ static const char rcsid[] _U_ =
 
 #ifdef __NetBSD__
 #include <sys/param.h>
+#include <net/dlt.h>
 #endif
 
 #include <netinet/in.h>

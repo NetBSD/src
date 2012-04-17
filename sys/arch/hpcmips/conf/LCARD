@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LCARD,v 1.13 2011/03/02 08:25:08 ahoka Exp $
+# 	$NetBSD: LCARD,v 1.13.4.1 2012/04/17 00:06:24 yamt Exp $
 #
 include		"arch/hpcmips/conf/std.lcard"
 
@@ -73,7 +73,6 @@ vrflash0	at vr4181ip? addr 0x1f800000 size 0x800000
 vrflash1	at vr4181ip? addr 0x1e000000 size 0x800000
 
 pseudo-device	md			# memory disk device (ramdisk)
-pseudo-device	rnd			# /dev/random and in-kernel generator
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter

@@ -1,4 +1,4 @@
-/* $NetBSD: strtod.c,v 1.8 2011/03/27 11:21:54 he Exp $ */
+/* $NetBSD: strtod.c,v 1.8.4.1 2012/04/17 00:05:18 yamt Exp $ */
 
 /****************************************************************
 
@@ -97,7 +97,10 @@ strtod
 #ifdef Avoid_Underflow
 	int scale;
 #endif
-	int bb2, bb5, bbe, bd2, bd5, bbbits, bs2, c, decpt, dsign,
+#ifdef INFNAN_CHECK
+	int decpt;
+#endif
+	int bb2, bb5, bbe, bd2, bd5, bbbits, bs2, c, dsign,
 		 e, e1, esign, i, j, k, nd, nd0, nf, nz, nz0, sign;
 	CONST char *s, *s0, *s1;
 	double aadj;
@@ -119,7 +122,7 @@ strtod
 #else
 	char *decimalpoint;
 	static char *decimalpoint_cache;
-	static int dplen;
+	static size_t dplen;
 	if (!(s0 = decimalpoint_cache)) {
 		s0 = localeconv()->decimal_point;
 		if ((decimalpoint_cache = MALLOC(strlen(s0) + 1)) != NULL) {
@@ -148,7 +151,10 @@ strtod
 #endif /*}}*/
 #endif /*}*/
 
-	sign = nz0 = nz = decpt = 0;
+#ifdef INFNAN_CHECK
+	decpt = 0;
+#endif
+	sign = nz0 = nz = 0;
 	dval(&rv) = 0.;
 	for(s = s00;;s++) switch(*s) {
 		case '-':
@@ -229,7 +235,9 @@ strtod
 	if (c == '.') {
 		c = *++s;
 #endif
+#ifdef INFNAN_CHECK
 		decpt = 1;
+#endif
 		if (!nd) {
 			for(; c == '0'; c = *++s)
 				nz++;
@@ -546,13 +554,13 @@ strtod
 					if (j >= 53)
 					 word0(&rv) = (P+2)*Exp_msk1;
 					else
-					 word0(&rv) &= 0xffffffff << (j-32);
+					 word0(&rv) &= 0xffffffffU << (j-32);
 					}
 				else
-					word1(&rv) &= 0xffffffff << j;
+					word1(&rv) &= 0xffffffffU << j;
 				}
 #else
-			for(j = 0; e1 > 1; j++, e1 >>= 1)
+			for(j = 0; e1 > 1; j++, e1 = (unsigned int)e1 >> 1)
 				if (e1 & 1)
 					dval(&rv) *= tinytens[j];
 			/* The last multiplication could underflow. */
@@ -948,6 +956,7 @@ strtod
 			aadj *= 0.5;
 			dval(&aadj1) = dsign ? aadj : -aadj;
 #ifdef Check_FLT_ROUNDS
+			/* CONSTCOND */
 			switch(Rounding) {
 				case 2: /* towards +infinity */
 					dval(&aadj1) -= 0.5;
@@ -957,6 +966,7 @@ strtod
 					dval(&aadj1) += 0.5;
 				}
 #else
+			/* CONSTCOND */
 			if (Flt_Rounds == 0)
 				dval(&aadj1) += 0.5;
 #endif /*Check_FLT_ROUNDS*/

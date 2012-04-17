@@ -1,4 +1,4 @@
-/*	$NetBSD: aria.c,v 1.33 2010/07/27 05:38:18 jakllsch Exp $	*/
+/*	$NetBSD: aria.c,v 1.33.8.1 2012/04/17 00:07:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996, 1998 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.33 2010/07/27 05:38:18 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.33.8.1 2012/04/17 00:07:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,17 +61,15 @@ __KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.33 2010/07/27 05:38:18 jakllsch Exp $");
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/fcntl.h>
-
 #include <sys/cpu.h>
 #include <sys/bus.h>
-
 #include <sys/audioio.h>
+
 #include <dev/audio_if.h>
 #include <dev/auconv.h>
-
 #include <dev/mulaw.h>
-#include <dev/isa/isavar.h>
 
+#include <dev/isa/isavar.h>
 #include <dev/isa/ariareg.h>
 
 #ifdef AUDIO_DEBUG
@@ -96,6 +94,8 @@ struct aria_mixmaster {
 
 struct aria_softc {
 	struct	device sc_dev;		/* base device */
+	kmutex_t sc_lock;
+	kmutex_t sc_intr_lock;
 	void	*sc_ih;			/* interrupt vectoring */
 	bus_space_tag_t sc_iot;		/* Tag on 'da bus. */
 	bus_space_handle_t sc_ioh;	/* Handle of iospace */
@@ -154,6 +154,7 @@ int	aria_commit_settings(void *);
 int	aria_set_params(void *, int, int, audio_params_t *, audio_params_t *,
 			stream_filter_list_t *, stream_filter_list_t *);
 int	aria_get_props(void *);
+void	aria_get_locks(void *, kmutex_t **, kmutex_t **);
 
 int	aria_start_output(void *, void *, int, void (*)(void *), void*);
 int	aria_start_input(void *, void *, int, void (*)(void *), void*);
@@ -227,7 +228,7 @@ const struct audio_hw_if aria_hw_if = {
 	NULL,
 	NULL,
 	NULL,
-	NULL,
+	aria_get_locks,
 };
 
 /*
@@ -411,6 +412,9 @@ ariaattach(device_t parent, device_t self, void *aux)
 	sc->sc_iot = ia->ia_iot;
 	sc->sc_ioh = ioh;
 	sc->sc_ic = ia->ia_ic;
+
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_AUDIO, aria_intr, sc);
@@ -1065,6 +1069,9 @@ aria_intr(void *arg)
 	u_short address;
 
 	sc = arg;
+
+	mutex_spin_enter(&sc->sc_intr_lock);
+
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 	pdata = sc->sc_pdiobuffer;
@@ -1072,8 +1079,10 @@ aria_intr(void *arg)
 #if 0 /*  XXX --  BAD BAD BAD (That this is #define'd out */
 	DPRINTF(("Checking to see if this is our intr\n"));
 
-	if ((inw(iobase) & 1) != 0x1)
+	if ((inw(iobase) & 1) != 0x1) {
+		mutex_spin_exit(&sc->sc_intr_lock);
 		return 0;  /* not for us */
+	}
 #endif
 
 	sc->sc_interrupts++;
@@ -1104,6 +1113,7 @@ aria_intr(void *arg)
 
 	aria_sendcmd(sc, ARIADSPC_TRANSCOMPLETE, -1, -1, -1);
 
+	mutex_spin_exit(&sc->sc_intr_lock);
 	return 1;
 }
 
@@ -1656,4 +1666,14 @@ mute:
 		/*NOTREACHED*/
 	}
 	return 0;
+}
+
+void
+aria_get_locks(void *addr, kmutex_t **intr, kmutex_t **thread)
+{
+	struct aria_softc *sc;
+
+	sc = addr;
+	*intr = &sc->sc_intr_lock;
+	*thread = &sc->sc_lock;
 }

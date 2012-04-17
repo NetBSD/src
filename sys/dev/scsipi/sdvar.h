@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.32 2009/04/10 17:36:42 dyoung Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.32.12.1 2012/04/17 00:08:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,10 +50,8 @@
 #define _DEV_SCSIPI_SDVAR_H_
 
 #include "opt_scsi.h"
-#include "rnd.h"
-#if NRND > 0
+
 #include <sys/rnd.h>
-#endif
 
 #ifndef	SDRETRIES
 #define	SDRETRIES	4
@@ -91,9 +89,7 @@ struct sd_softc {
 	u_int8_t type;
 	char name[16]; /* product name, for default disklabel */
 
-#if NRND > 0
-	rndsource_element_t rnd_source;
-#endif
+	krndsource_t rnd_source;
 };
 
 #define	SDGP_RESULT_OK		0	/* parameters obtained */

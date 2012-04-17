@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.h,v 1.15 2009/03/14 14:46:11 dsl Exp $	*/
+/*	$NetBSD: keysock.h,v 1.15.12.1 2012/04/17 00:08:47 yamt Exp $	*/
 /*	$KAME: keysock.h,v 1.8 2000/03/27 05:11:06 sumikawa Exp $	*/
 
 /*
@@ -30,59 +30,5 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _NETKEY_KEYSOCK_H_
-#define _NETKEY_KEYSOCK_H_
-
-/* statistics for pfkey socket */
-#define	PFKEY_STAT_OUT_TOTAL	0	/* # of total calls */
-#define	PFKEY_STAT_OUT_BYTES	1	/* total bytecount */
-#define	PFKEY_STAT_OUT_MSGTYPE	2	/* message type histogram */
-		/* space for 256 counters */
-#define	PFKEY_STAT_OUT_INVLEN	258	/* invalid length field */
-#define	PFKEY_STAT_OUT_INVVER	259	/* invalid version field */
-#define	PFKEY_STAT_OUT_INVMSGTYPE 260	/* invalid message type field */
-#define	PFKEY_STAT_OUT_TOOSHORT	261	/* message too short */
-#define	PFKEY_STAT_OUT_NOMEM	262	/* memory allocation failure */
-#define	PFKEY_STAT_OUT_DUPEXT	263	/* duplicate extension */
-#define	PFKEY_STAT_OUT_INVEXTTYPE 264	/* invalid extension type */
-#define	PFKEY_STAT_OUT_INVSATYPE 265	/* invalid sa type */
-#define	PFKEY_STAT_OUT_INVADDR	266	/* invalid address extension */
-#define	PFKEY_STAT_IN_TOTAL	267	/* # of total calls */
-#define	PFKEY_STAT_IN_BYTES	268	/* total bytecount */
-#define	PFKEY_STAT_IN_MSGTYPE	269	/* message type histogram */
-		/* space for 256 counters */
-#define	PFKEY_STAT_IN_MSGTARGET	525	/* one/all/registered */
-		/* space for 3 counters */
-#define	PFKEY_STAT_IN_NOMEM	528	/* memory alloation failure */
-#define	PFKEY_STAT_SOCKERR	529	/* # of socket related errors */
-
-#define	PFKEY_NSTATS		530
-
-#define KEY_SENDUP_ONE		0
-#define KEY_SENDUP_ALL		1
-#define KEY_SENDUP_REGISTERED	2
-#define KEY_SENDUP_CANWAIT	4
-
-#ifdef _KERNEL
-struct keycb {
-	struct rawcb kp_raw;	/* rawcb */
-	int kp_promisc;		/* promiscuous mode */
-	int kp_registered;	/* registered socket */
-	int (*kp_receive) (struct socket *, struct mbuf **, struct uio *,
-		struct mbuf **, struct mbuf **, int *);
-	struct mbuf *kp_queue;	/* queued mbufs, linked by m_nextpkt */
-};
-
-extern int key_output(struct mbuf *, ...);
-#ifndef __NetBSD__
-extern int key_usrreq(struct socket *,
-	int, struct mbuf *, struct mbuf *, struct mbuf *);
-#else
-extern int key_usrreq(struct socket *,
-	int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
-#endif
-
-extern int key_sendup_mbuf(struct socket *, struct mbuf *, int);
-#endif /* _KERNEL */
-
-#endif /* !_NETKEY_KEYSOCK_H_ */
+/* this file exists for userland API compatibility only */
+#include <netipsec/keysock.h>

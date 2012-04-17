@@ -23,7 +23,7 @@
 <p>Our resident cryptographer; now you see him, now you don't.</p>
 
 <p>Last update: 
-			<!-- #BeginDate format:En2m -->13-Nov-2009  0:37<!-- #EndDate -->
+			<!-- #BeginDate format:En2m -->14-Apr-2010  20:49<!-- #EndDate -->
 UTC</p>
 <br clear="left">
 
@@ -208,11 +208,7 @@ UTC</p>
 <table width="100%" border="1" cellpadding="4">
 
 <tr>
-<td rowspan="2" align="center">Client</td>
-<td colspan="5" align="center">Server</td>
-</tr>
-
-<tr>
+<td align="center">Client/Server</td>
 <td align="center">NONE</td>
 <td align="center">AUTH</td>
 <td align="center">PC</td>
@@ -354,8 +350,13 @@ UTC</p>
 <dt id=automax><tt>automax [<i>logsec</i>]</tt></dt>
 <dd>Specifies the interval between regenerations of the session key list used with the Autokey protocol, as a power of 2 in seconds. Note that the size of the key list for each association depends on this interval and the current poll interval. The default interval is 12 (about 1.1 h). For poll intervals above the specified interval, a session key list with a single entry will be regenerated for every message sent.</dd>
 
-<dt id="controlkey"><tt>controlkey <i>key</i></tt></dt>
-<dd>Specifies the key ID to use with the <a href="ntpq.html"><tt>ntpq</tt></a> utility, which uses the standard protocol defined in RFC-1305. The <tt><i>key</i></tt> argument is the key ID for a trusted key, where the value can be in the range 1 to 65,534, inclusive.</dd>
+<dt id="controlkey"><tt>controlkey <i>keyid</i></tt></dt>
+<dd>Specifies the key ID to use with the <a
+	href="ntpq.html"><tt>ntpq</tt></a> utility, which uses the
+	standard protocol defined in RFC-1305. The <tt><i>keyid</i></tt>
+	argument is the key ID for a <a href="#trustedkey">trusted
+	key</a>, where the value can be in the range 1 to 65534,
+	inclusive.</dd>
 
 <dt id="crypto"><tt>crypto [randfile <i>file</i>] [host <i>name</i>] [ident <i>name</i>] [pw <i>password</i>]</tt></dt>
 <dd>This command requires the OpenSSL library. It activates public key cryptography
@@ -397,14 +398,31 @@ UTC</p>
 <dt id="keysdir"><tt>keysdir <i>path</i></tt>K</dt>
 <dd>This command specifies the default directory path for Autokey cryptographic keys, parameters and certificates. The default is <tt>/usr/local/etc/</tt>. Note that the path for the symmetric keys file is specified by the <tt>keys</tt> command.</dd>
 
-<dt id="requestkey"><tt>requestkey <i>key</i></tt></dt>
-<dd>Specifies the key ID to use with the <a href="ntpq.html"><tt>ntpq</tt></a> and <a href="ntpdc.html"><tt>ntpdc</tt></a> utility programs, which uses a proprietary protocol specific to this implementation of <tt>ntpd</tt>. The <tt><i>key</i></tt> argument is a key ID for the trusted key, where the value can be in the range 1 to 65,534, inclusive.</dd>
+<dt id="requestkey"><tt>requestkey <i>keyid</i></tt></dt>
+<dd>Specifies the key ID to use with the
+	<a href="ntpdc.html"><tt>ntpdc</tt></a> utility program, which
+	uses a proprietary protocol specific to this implementation of
+	<tt>ntpd</tt>. The <tt><i>keyid</i></tt> argument is a key ID
+	for a <a href="#trustedkey">trusted key</a>, in the range 1 to
+	65534, inclusive.</dd>
 
 <dt id="revoke"><tt>revoke [<i>logsec</i>]</tt></dt>
 <dd>Specifies the interval between re-randomization of certain cryptographic values used by the Autokey scheme, as a power of 2 in seconds. These values need to be updated frequently in order to deflect brute-force attacks on the algorithms; however, updating some values is a relatively expensive operation. The default interval is 17 (about 36 h). For poll intervals above the specified interval, the values will be updated for every message sent.</dd>
 
-<dt id="trustedkey"><tt>trustedkey <i>key</i> [...]</tt></dt>
-<dd>Specifies the key ID(s) which are trusted for the purposes of authenticating peers with symmetric key cryptography, as well as keys used by the <tt>ntpq</tt> and <tt>ntpdc</tt> programs. The authentication procedures require that both the local and remote servers share the same key and key ID for this purpose, although different keys can be used with different servers.</dd>
+<dt id="trustedkey"><tt>trustedkey [<i>keyid</i> | (<i>lowid</i> ... <i>highid</i>)] [...]</tt></dt>
+<dd>Specifies the key ID(s) which are trusted for the purposes of
+	authenticating peers with symmetric key cryptography.  Key IDs
+	used to authenticate <tt>ntpq</tt> and <tt>ntpdc</tt> operations
+	must be listed here and additionally be enabled with
+	<a href="#controlkey">controlkey</a> and/or
+	<a href="#requestkey">requestkey</a>. The authentication
+	procedure for time transfer require that both the local and
+	remote NTP servers employ the same key ID and secret for this
+	purpose, although different keys IDs may be used with different
+	servers. Ranges of trusted key IDs may be specified:
+	"<tt>trustedkey (1 ... 19) 1000 (100 ... 199)</tt>" enables the
+	lowest 120 key IDs which start with the digit 1. The spaces
+	surrounding the ellipsis are required when specifying a range.</dd>
 </dl>
 
 <h4 id="err">Error Codes</h4>

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rnd.c,v 1.4 2010/12/06 16:37:25 christos Exp $	*/
+/*	$NetBSD: t_rnd.c,v 1.4.6.1 2012/04/17 00:09:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_rnd.c,v 1.4 2010/12/06 16:37:25 christos Exp $");
+__RCSID("$NetBSD: t_rnd.c,v 1.4.6.1 2012/04/17 00:09:10 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/fcntl.h>
@@ -44,10 +44,11 @@ __RCSID("$NetBSD: t_rnd.c,v 1.4 2010/12/06 16:37:25 christos Exp $");
 ATF_TC(RNDADDDATA);
 ATF_TC_HEAD(RNDADDDATA, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "checks ioctl(RNDADDDATA)");
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks ioctl(RNDADDDATA) (PR kern/42020)");
 }
 
-/* Adapted from example provided by Juho Salminen in PR kern/42020 */
+/* Adapted from example provided by Juho Salminen in the noted PR. */
 ATF_TC_BODY(RNDADDDATA, tc)
 {
 	rnddata_t rd;
@@ -57,7 +58,7 @@ ATF_TC_BODY(RNDADDDATA, tc)
 	fd = rump_sys_open("/dev/random", O_RDWR, 0);
 	if (fd == -1)
 		atf_tc_fail_errno("cannot open /dev/random");
-		
+
 	rd.entropy = 1;
 	rd.len = 1;
 	if (rump_sys_ioctl(fd, RNDADDDATA, &rd) == -1)

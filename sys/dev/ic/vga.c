@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.107 2011/06/08 10:25:21 drochner Exp $ */
+/* $NetBSD: vga.c,v 1.107.2.1 2012/04/17 00:07:37 yamt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.107 2011/06/08 10:25:21 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.107.2.1 2012/04/17 00:07:37 yamt Exp $");
 
 /* for WSCONS_SUPPORT_PCVTFONTS */
 #include "opt_wsdisplay_compat.h"
@@ -325,7 +325,7 @@ egavga_getfont(struct vga_config *vc, struct vgascreen *scr, const char *name,
 
 	TAILQ_FOREACH(f, &vc->vc_fontlist, next) {
 		if (wsfont_matches(f->wsfont, name,
-		    8, scr->pcs.type->fontheight, 0) &&
+		    8, scr->pcs.type->fontheight, 0, WSFONT_FIND_BITMAP) &&
 		    (!primary || vga_valid_primary_font(f))) {
 #ifdef VGAFONTDEBUG
 			if (scr != &vga_console_screen || vga_console_attached)
@@ -337,7 +337,7 @@ egavga_getfont(struct vga_config *vc, struct vgascreen *scr, const char *name,
 	}
 
 	cookie = wsfont_find(name, 8, scr->pcs.type->fontheight, 0,
-	    WSDISPLAY_FONTORDER_L2R, 0);
+	    WSDISPLAY_FONTORDER_L2R, 0, WSFONT_FIND_BITMAP);
 	/* XXX obey "primary" */
 	if (cookie == -1) {
 #ifdef VGAFONTDEBUG
@@ -570,7 +570,7 @@ vga_init(struct vga_config *vc, bus_space_tag_t iot, bus_space_tag_t memt)
 		int cookie;
 
 		cookie = wsfont_find(NULL, 8, 16, 0,
-		     WSDISPLAY_FONTORDER_L2R, 0);
+		     WSDISPLAY_FONTORDER_L2R, 0, WSFONT_FIND_BITMAP);
 		if (cookie == -1 || wsfont_lock(cookie, &wf))
 			panic("vga_init: can't load console font");
 		vga_loadchars(&vc->hdl, 0, wf->firstchar, wf->numchars,

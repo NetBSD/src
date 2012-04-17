@@ -1,5 +1,5 @@
-/*	Id: code.c,v 1.62 2011/08/20 12:54:27 ragge Exp 	*/	
-/*	$NetBSD: code.c,v 1.1.1.3 2011/09/01 12:46:27 plunky Exp $	*/
+/*	Id: code.c,v 1.63 2011/09/27 08:10:45 plunky Exp 	*/	
+/*	$NetBSD: code.c,v 1.1.1.3.2.1 2012/04/17 00:04:02 yamt Exp $	*/
 /*
  * Copyright (c) 2008 Michael Shalayeff
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -355,7 +355,7 @@ ejobcode(int flag )
 	if (flag)
 		return;
 
-#ifdef MACHOAPI
+#ifdef MACHOABI
 #define PT(x)
 #else
 #define	PT(x) printf(".type __pcc_" x ",@function\n")

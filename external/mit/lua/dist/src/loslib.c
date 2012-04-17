@@ -1,7 +1,7 @@
-/*	$NetBSD: loslib.c,v 1.1.1.1 2010/10/31 11:16:58 mbalmer Exp $	*/
+/*	$NetBSD: loslib.c,v 1.1.1.1.6.1 2012/04/17 00:04:46 yamt Exp $	*/
 
 /*
-** Id: loslib.c,v 1.19.1.3 2008/01/18 16:38:18 roberto Exp
+** $Id: loslib.c,v 1.1.1.1.6.1 2012/04/17 00:04:46 yamt Exp $
 ** Standard Operating System library
 ** See Copyright Notice in lua.h
 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_cardbus.c,v 1.3 2011/08/01 11:20:28 drochner Exp $	*/
+/*	$NetBSD: sdhc_cardbus.c,v 1.3.2.1 2012/04/17 00:07:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_cardbus.c,v 1.3 2011/08/01 11:20:28 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_cardbus.c,v 1.3.2.1 2012/04/17 00:07:29 yamt Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_sdmmc.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/device.h>

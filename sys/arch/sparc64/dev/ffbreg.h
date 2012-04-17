@@ -1,4 +1,4 @@
-/*	$NetBSD: ffbreg.h,v 1.9 2011/10/23 06:06:24 jdc Exp $	*/
+/*	$NetBSD: ffbreg.h,v 1.9.2.1 2012/04/17 00:06:55 yamt Exp $	*/
 /*	$OpenBSD: creatorreg.h,v 1.5 2002/07/29 06:21:45 jason Exp $	*/
 
 /*
@@ -308,5 +308,19 @@
 #define FBC_CFG0_STEREO		0x10	/* Stereo */
 #define FBC_CFG0_SINGLE_BUF	0x20	/* Single buffer */
 #define FBC_CFG0_DOUBLE_BUF	0x30	/* Double buffer */
+
+/* Alpha Blend Control */
+#define FFB_BLENDC_FORCE_ONE	0x00000010 /* Defines 0xff as 1.0 */
+#define FFB_BLENDC_DF_MASK	0x0000000c /* Destination Frac Mask */
+#define FFB_BLENDC_DF_ZERO	0x00000000 /* Destination Frac: 0.00 */
+#define FFB_BLENDC_DF_ONE	0x00000004 /* Destination Frac: 1.00 */
+#define FFB_BLENDC_DF_ONE_M_A	0x00000008 /* Destination Frac: 1.00 - Xsrc */
+#define FFB_BLENDC_DF_A		0x0000000c /* Destination Frac: Xsrc */
+#define FFB_BLENDC_SF_MASK	0x00000003 /* Source Frac Mask */
+#define FFB_BLENDC_SF_ZERO	0x00000000 /* Source Frac: 0.00 */
+#define FFB_BLENDC_SF_ONE	0x00000001 /* Source Frac: 1.00 */
+#define FFB_BLENDC_SF_ONE_M_A	0x00000002 /* Source Frac: 1.00 - Xsrc */
+#define FFB_BLENDC_SF_A		0x00000003 /* Source Frac: Xsrc */
+
 
 #endif /* FFB_REG_H */

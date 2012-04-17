@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2011/08/27 13:42:44 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.2.1 2012/04/17 00:06:17 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1 2011/08/27 13:42:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.2.1 2012/04/17 00:06:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,5 +130,18 @@ device_register(struct device *dev, void *aux)
 		prop_dictionary_set_uint32(dict, "depth", 16);
 		prop_dictionary_set_uint32(dict, "linebytes", 2048);
 		prop_dictionary_set_uint32(dict, "address", 0x04000000);
+	}
+	if (device_is_a(dev, "lynxfb")) {
+		dict = device_properties(dev);
+		/*
+		 * this is a hack
+		 * is_console and address need to be checked against reality
+		 */
+		prop_dictionary_set_bool(dict, "is_console", 1);
+		prop_dictionary_set_uint32(dict, "width", 1024);
+		prop_dictionary_set_uint32(dict, "height", 600);
+		prop_dictionary_set_uint32(dict, "depth", 16);
+		prop_dictionary_set_uint32(dict, "linebytes", 2048);
+		prop_dictionary_set_bool(dict, "swapBR", 1);
 	}
 }

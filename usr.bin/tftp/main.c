@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.29 2011/09/17 15:15:46 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.29.2.1 2012/04/17 00:09:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.29 2011/09/17 15:15:46 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.29.2.1 2012/04/17 00:09:40 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -540,17 +540,14 @@ get(int argc, char *argv[])
 }
 
 static void
-getUsage(s)
-	char *s;
+getUsage(char *s)
 {
 	(void)printf("Usage: %s host:file host:file ... file, or\n", s);
 	(void)printf("       %s file file ... file if connected\n", s);
 }
 
 void
-setblksize(argc, argv)
-	int argc;
-	char *argv[];
+setblksize(int argc, char *argv[])
 {
 	int t;
 
@@ -662,7 +659,7 @@ command(void)
 
 	for (;;) {
 		(void)printf("%s> ", prompt);
-		if (fgets(line, LBUFLEN, stdin) == 0) {
+		if (fgets(line, LBUFLEN, stdin) == NULL) {
 			if (feof(stdin)) {
 				exit(0);
 			} else {

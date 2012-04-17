@@ -73,6 +73,7 @@ ATF_TC_BODY(getopt, tc)
         }
     }
 
+    ATF_REQUIRE(zflag);
     ATF_REQUIRE_EQ_MSG(1, argc - optind, "Invalid number of arguments left "
         "after the call to getopt(3)");
     ATF_CHECK_STREQ_MSG("foo", argv[optind], "The non-option argument is "

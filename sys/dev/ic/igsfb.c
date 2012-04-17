@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.50 2011/07/26 08:59:37 mrg Exp $ */
+/*	$NetBSD: igsfb.c,v 1.50.2.1 2012/04/17 00:07:34 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.50 2011/07/26 08:59:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.50.2.1 2012/04/17 00:07:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -432,14 +432,15 @@ igsfb_init_wsdisplay(void *cookie, struct vcons_screen *scr, int existing,
 	/* prefer gallant that is identical to the one the prom uses */
 	wsfcookie = wsfont_find("Gallant", 12, 22, 0,
 				WSDISPLAY_FONTORDER_L2R,
-				WSDISPLAY_FONTORDER_L2R);
+				WSDISPLAY_FONTORDER_L2R, WSFONT_FIND_BITMAP);
 	if (wsfcookie <= 0) {
 #ifdef DIAGNOSTIC
 		printf("unable to find font Gallant 12x22\n");
 #endif
 		wsfcookie = wsfont_find(NULL, 0, 0, 0, /* any font at all? */
 					WSDISPLAY_FONTORDER_L2R,
-					WSDISPLAY_FONTORDER_L2R);
+					WSDISPLAY_FONTORDER_L2R,
+					WSFONT_FIND_BITMAP);
 	}
 
 	if (wsfcookie <= 0) {
@@ -455,7 +456,7 @@ igsfb_init_wsdisplay(void *cookie, struct vcons_screen *scr, int existing,
 
 
 	/* XXX: TODO: compute term size based on font dimensions? */
-	rasops_init(ri, 34, 80);
+	rasops_init(ri, 0, 0);
 	rasops_reconfig(ri, ri->ri_height / ri->ri_font->fontheight,
 	    ri->ri_width / ri->ri_font->fontwidth);
 

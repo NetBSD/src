@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_bus_window.c,v 1.3 2008/04/28 20:22:55 martin Exp $	*/
+/*	$NetBSD: alpha_bus_window.c,v 1.3.4.1 2012/04/17 00:05:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ alpha_bus_getwindows(int type, struct alpha_bus_window **abwp)
 	struct alpha_bus_get_window_count_args count_args;
 	struct alpha_bus_get_window_args window_args;
 	struct alpha_bus_window *abw;
-	int i;
+	unsigned int i;
 
 	count_args.type = type;
 	if (sysarch(ALPHA_BUS_GET_WINDOW_COUNT, &count_args) != 0)

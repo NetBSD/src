@@ -31,6 +31,10 @@
 #include "vax-tdep.h"
 #include "inf-ptrace.h"
 
+#ifndef HAVE_GREGSET_T
+typedef struct reg gregset_t;
+#endif
+
 /* Supply the general-purpose registers stored in GREGS to REGCACHE.  */
 
 static void
@@ -60,6 +64,24 @@ vaxbsd_collect_gregset (const struct regcache *regcache,
     }
 }
 
+void
+supply_gregset (struct regcache *regcache, const gregset_t *gregs)
+{
+  if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
+	      (PTRACE_TYPE_ARG3) gregs, TIDGET (inferior_ptid)) == -1)
+    perror_with_name (_("Couldn't write registers"));
+}
+
+void
+fill_gregset (const struct regcache *regcache, gregset_t *gregs, int regnum)
+{
+  if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
+	      (PTRACE_TYPE_ARG3) gregs, TIDGET (inferior_ptid)) == -1)
+    perror_with_name (_("Couldn't get registers"));
+}
+
+
+/* Support for debugging kernel virtual memory images.  */
 
 /* Fetch register REGNUM from the inferior.  If REGNUM is -1, do this
    for all registers.  */
@@ -68,13 +90,11 @@ static void
 vaxbsd_fetch_inferior_registers (struct target_ops *ops,
 				 struct regcache *regcache, int regnum)
 {
-  struct reg regs;
+  gregset_t gregs;
 
-  if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
-    perror_with_name (_("Couldn't get registers"));
+  fill_gregset (regcache, &gregs, regnum);
 
-  vaxbsd_supply_gregset (regcache, &regs);
+  vaxbsd_supply_gregset (regcache, &gregs);
 }
 
 /* Store register REGNUM back into the inferior.  If REGNUM is -1, do
@@ -84,21 +104,15 @@ static void
 vaxbsd_store_inferior_registers (struct target_ops *ops,
 				 struct regcache *regcache, int regnum)
 {
-  struct reg regs;
+  gregset_t gregs;
 
-  if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
-    perror_with_name (_("Couldn't get registers"));
+  fill_gregset (regcache, &gregs, regnum);
 
-  vaxbsd_collect_gregset (regcache, &regs, regnum);
+  vaxbsd_collect_gregset (regcache, &gregs, regnum);
 
-  if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
-	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
-    perror_with_name (_("Couldn't write registers"));
+  supply_gregset (regcache, &gregs);
 }
 
-
-/* Support for debugging kernel virtual memory images.  */
 
 #include <sys/types.h>
 #include <machine/pcb.h>

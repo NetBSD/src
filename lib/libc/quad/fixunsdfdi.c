@@ -1,4 +1,4 @@
-/*	$NetBSD: fixunsdfdi.c,v 1.8 2011/07/04 06:23:50 matt Exp $	*/
+/*	$NetBSD: fixunsdfdi.c,v 1.8.2.1 2012/04/17 00:05:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,13 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)fixunsdfdi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fixunsdfdi.c,v 1.8 2011/07/04 06:23:50 matt Exp $");
+__RCSID("$NetBSD: fixunsdfdi.c,v 1.8.2.1 2012/04/17 00:05:22 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "quad.h"
 
-#define	ONE_FOURTH	((int)1 << (INT_BITS - 2))
+#define	ONE_FOURTH	((int)1 << (unsigned int)(INT_BITS - 2))
 #define	ONE_HALF	(ONE_FOURTH * 2.0)
 #define	ONE		(ONE_FOURTH * 4.0)
 

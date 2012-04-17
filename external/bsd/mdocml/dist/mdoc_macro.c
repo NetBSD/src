@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc_macro.c,v 1.111 2011/09/18 14:14:15 schwarze Exp $ */
+/*	$Vendor-Id: mdoc_macro.c,v 1.115 2012/01/05 00:43:51 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -228,7 +228,6 @@ mdoc_macroend(struct mdoc *m)
 static enum mdoct
 lookup(enum mdoct from, const char *p)
 {
-	/* FIXME: make -diag lists be un-PARSED. */
 
 	if ( ! (MDOC_PARSED & mdoc_macros[from].flags))
 		return(MDOC_MAX);
@@ -984,7 +983,7 @@ in_line(MACRO_PROT_ARGS)
 static int
 blk_full(MACRO_PROT_ARGS)
 {
-	int		  la, nl;
+	int		  la, nl, nparsed;
 	struct mdoc_arg	 *arg;
 	struct mdoc_node *head; /* save of head macro */
 	struct mdoc_node *body; /* save of body macro */
@@ -1037,6 +1036,14 @@ blk_full(MACRO_PROT_ARGS)
 		return(0);
 
 	head = body = NULL;
+
+	/*
+	 * Exception: Heads of `It' macros in `-diag' lists are not
+	 * parsed, even though `It' macros in general are parsed.
+	 */
+	nparsed = MDOC_It == tok &&
+		MDOC_Bl == m->last->parent->tok &&
+		LIST_diag == m->last->parent->norm->Bl.type;
 
 	/*
 	 * The `Nd' macro has all arguments in its body: it's a hybrid
@@ -1146,7 +1153,8 @@ blk_full(MACRO_PROT_ARGS)
 			continue;
 		}
 
-		ntok = ARGS_QWORD == ac ? MDOC_MAX : lookup(tok, p);
+		ntok = nparsed || ARGS_QWORD == ac ? 
+			MDOC_MAX : lookup(tok, p);
 
 		if (MDOC_MAX == ntok) {
 			if ( ! dword(m, line, la, p, DELIM_MAX))
@@ -1443,18 +1451,15 @@ blk_part_exp(MACRO_PROT_ARGS)
 
 	/* Clean-up to leave in a consistent state. */
 
-	if (NULL == head) {
+	if (NULL == head)
 		if ( ! mdoc_head_alloc(m, line, ppos, tok))
 			return(0);
-		head = m->last;
-	}
 
 	if (NULL == body) {
 		if ( ! rew_sub(MDOC_HEAD, m, tok, line, ppos))
 			return(0);
 		if ( ! mdoc_body_alloc(m, line, ppos, tok))
 			return(0);
-		body = m->last;
 	}
 
 	/* Standard appending of delimiters. */
@@ -1571,22 +1576,6 @@ in_line_argn(MACRO_PROT_ARGS)
 				return(0);
 			flushed = 1;
 		}
-
-		/* 
-		 * XXX: this is a hack to work around groff's ugliness
-		 * as regards `Xr' and extraneous arguments.  It should
-		 * ideally be deprecated behaviour, but because this is
-		 * code is no here, it's unlikely to be removed.
-		 */
-
-#ifdef __OpenBSD__
-		if (MDOC_Xr == tok && j == maxargs) {
-			if ( ! mdoc_elem_alloc(m, line, la, MDOC_Ns, NULL))
-				return(0);
-			if ( ! rew_elem(m, MDOC_Ns))
-				return(0);
-		}
-#endif
 
 		if ( ! dword(m, line, la, p, DELIM_MAX))
 			return(0);

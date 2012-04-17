@@ -1,7 +1,9 @@
-#	$Id: files.netipsec,v 1.7 2007/11/16 21:15:20 christos Exp $
+#	$Id: files.netipsec,v 1.7.52.1 2012/04/17 00:08:46 yamt Exp $
 #
 #
 defflag opt_ipsec.h	FAST_IPSEC:	opencrypto
+defflag opt_ipsec.h	IPSEC: FAST_IPSEC
+defflag opt_ipsec.h	IPSEC_NAT_T
 defflag opt_ipsec.h	IPSEC_DEBUG
 
 file	netipsec/ipsec.c		fast_ipsec	needs-flag

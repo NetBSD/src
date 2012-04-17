@@ -23,6 +23,7 @@ _httpd:*:24:
 _mdnsd:*:25:
 _tests:*:26:
 _tcpdump:*:27:
+_tss:*:28:
 guest:*:31:root
 nobody:*:39:
 utmp:*:45:
