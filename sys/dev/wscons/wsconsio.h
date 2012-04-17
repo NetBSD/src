@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.103 2012/01/24 04:34:05 macallan Exp $ */
+/* $NetBSD: wsconsio.h,v 1.104 2012/04/17 10:19:57 bsh Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -328,6 +328,7 @@ struct wsmouse_repeat {
 #define WSDISPLAY_TYPE_GRF	52	/* wsdisplay on top of grf(4) */
 #define WSDISPLAY_TYPE_VNC	53	/* Usermode vnc framebuffer */
 #define WSDISPLAY_TYPE_VALKYRIE	54	/* Apple onboard video 'valkyrie' */
+#define WSDISPLAY_TYPE_IMXIPU	55	/* i.MX ipu */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
