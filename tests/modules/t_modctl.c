@@ -1,4 +1,4 @@
-/*	$NetBSD: t_modctl.c,v 1.8 2012/03/15 02:02:23 joerg Exp $	*/
+/*	$NetBSD: t_modctl.c,v 1.9 2012/04/17 06:23:52 jruoho Exp $	*/
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: t_modctl.c,v 1.8 2012/03/15 02:02:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: t_modctl.c,v 1.9 2012/04/17 06:23:52 jruoho Exp $");
 
 #include <sys/module.h>
 #include <sys/sysctl.h>
@@ -294,7 +294,7 @@ ATF_TC_BODY(cmd_load, tc)
 	char longname[MAXPATHLEN];
 	size_t i;
 
-	ATF_CHECK(load(NULL, false, "") == ENOENT);
+	ATF_CHECK(load(NULL, false, " ") == ENOENT);
 	ATF_CHECK(load(NULL, false, "non-existent.o") == ENOENT);
 
 	for (i = 0; i < MAXPATHLEN - 1; i++)
