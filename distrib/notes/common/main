@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.486 2012/04/12 15:39:09 ttoth Exp $
+.\"	$NetBSD: main,v 1.487 2012/04/17 14:11:59 khorben Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1290,6 +1290,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Matthias Pfaller Ta Mt matthias@NetBSD.org
 .It Ta Chris Pinnock Ta Mt cjep@NetBSD.org
 .It Ta Adrian Portelli Ta Mt adrianp@NetBSD.org
+.It Ta Pierre Pronchery Ta Mt khorben@NetBSD.org
 .It Ta Chris Provenzano Ta Mt proven@NetBSD.org
 .It Ta Mindaugas Rasiukevicius Ta Mt rmind@NetBSD.org
 .It Ta Michael Rauch Ta Mt mrauch@NetBSD.org
