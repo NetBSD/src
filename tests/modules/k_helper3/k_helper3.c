@@ -1,4 +1,4 @@
-/*	$NetBSD: k_helper3.c,v 1.1 2012/04/13 07:05:32 jruoho Exp $ */
+/*	$NetBSD: k_helper3.c,v 1.2 2012/04/17 05:18:54 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: k_helper3.c,v 1.1 2012/04/13 07:05:32 jruoho Exp $");
+__RCSID("$NetBSD: k_helper3.c,v 1.2 2012/04/17 05:18:54 jruoho Exp $");
 
 #include <sys/module.h>
 
@@ -82,10 +82,11 @@ load(const char *fmt, ...)
 	errno = serrno = 0;
 
 	rv = modctl(MODCTL_LOAD, &ml);
-	serrno = errno;
 
-	if (rv != -1)
-		(void)modctl(MODCTL_UNLOAD, filename);
+	if (rv != 0)
+		serrno = errno;
+
+	(void)modctl(MODCTL_UNLOAD, filename);
 
 	free(propsstr);
 
