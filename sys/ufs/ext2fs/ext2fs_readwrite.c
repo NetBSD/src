@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.59 2012/03/13 18:41:03 elad Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.60 2012/04/17 19:15:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.59 2012/03/13 18:41:03 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.60 2012/04/17 19:15:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -378,16 +378,14 @@ out:
 		ip->i_flag |= IN_ACCESS;
 	if (resid > uio->uio_resid && ap->a_cred) {
 		if (ip->i_e2fs_mode & ISUID) {
-			error = kauth_authorize_vnode(ap->a_cred, KAUTH_VNODE_RETAIN_SUID, vp,
-			    NULL, EPERM);
-			if (error)
+			if (kauth_authorize_vnode(ap->a_cred,
+			    KAUTH_VNODE_RETAIN_SUID, vp, NULL, EPERM) != 0)
 				ip->i_e2fs_mode &= ISUID;
 		}
 
 		if (ip->i_e2fs_mode & ISGID) {
-			error = kauth_authorize_vnode(ap->a_cred, KAUTH_VNODE_RETAIN_SGID, vp,
-			    NULL, EPERM);
-			if (error)
+			if (kauth_authorize_vnode(ap->a_cred,
+			    KAUTH_VNODE_RETAIN_SGID, vp, NULL, EPERM) != 0)
 				ip->i_e2fs_mode &= ~ISGID;
 		}
 	}
