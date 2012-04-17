@@ -1,4 +1,4 @@
-.\"	$NetBSD: com.4,v 1.18 2011/06/07 20:22:56 wiz Exp $
+.\"	$NetBSD: com.4,v 1.19 2012/04/17 10:55:41 rkujawa Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -57,6 +57,8 @@
 .Cd options PPS_SYNC
 .Cd options PPS_TRAILING_EDGE
 .Cd options RND_COM
+.Ss Amiga
+.Cd "com* at clockport?"
 .Ss Arm32
 .Cd "com0 at mainbus? base 0x00210fe0"
 .Cd "com1 at mainbus? base 0x00210be0"
