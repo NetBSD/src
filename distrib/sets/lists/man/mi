@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1385 2012/03/25 00:11:17 nonaka Exp $
+# $NetBSD: mi,v 1.1386 2012/04/17 10:14:12 rkujawa Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -723,6 +723,7 @@
 ./usr/share/man/cat4/amdpm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/amdtemp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/amhphy.0			man-sys-catman		.cat
+./usr/share/man/cat4/amiga/a1k2cp.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/afsc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/ahsc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/amidisplaycc.0	man-sys-catman		.cat
@@ -730,6 +731,7 @@
 ./usr/share/man/cat4/amiga/autoconf.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/bah.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/bppcsc.0		man-sys-catman		.cat
+./usr/share/man/cat4/amiga/clockport.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/console.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/cv3dpb.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/ed.0			man-sys-catman		.cat
@@ -3631,6 +3633,7 @@
 ./usr/share/man/html4/amdpm.html		man-sys-htmlman		html
 ./usr/share/man/html4/amdtemp.html		man-sys-htmlman		html
 ./usr/share/man/html4/amhphy.html		man-sys-htmlman		html
+./usr/share/man/html4/amiga/a1k2cp.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/afsc.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/ahsc.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/amidisplaycc.html	man-sys-htmlman		html
@@ -3638,6 +3641,7 @@
 ./usr/share/man/html4/amiga/autoconf.html	man-sys-htmlman		html
 ./usr/share/man/html4/amiga/bah.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/bppcsc.html		man-sys-htmlman		html
+./usr/share/man/html4/amiga/clockport.html	man-sys-htmlman		html
 ./usr/share/man/html4/amiga/console.html	man-sys-htmlman		html
 ./usr/share/man/html4/amiga/cv3dpb.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/ed.html		man-sys-htmlman		html
@@ -6236,6 +6240,7 @@
 ./usr/share/man/man4/amdpm.4			man-sys-man		.man
 ./usr/share/man/man4/amdtemp.4			man-sys-man		.man
 ./usr/share/man/man4/amhphy.4			man-sys-man		.man
+./usr/share/man/man4/amiga/a1k2cp.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/afsc.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/ahsc.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/amidisplaycc.4	man-sys-man		.man
@@ -6244,6 +6249,7 @@
 ./usr/share/man/man4/amiga/bah.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/bppcsc.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/console.4		man-sys-man		.man
+./usr/share/man/man4/amiga/clockport.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/cv3dpb.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/ed.4			man-sys-man		.man
 ./usr/share/man/man4/amiga/efa.4		man-sys-man		.man
