@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.49 2011/10/27 22:30:11 rkujawa Exp $
+.\"	$NetBSD: hardware,v 1.50 2012/04/17 15:34:51 rkujawa Exp $
 .
 .Nx \*V
 runs on any Amiga that has a 68020 or better CPU with
@@ -68,6 +68,10 @@ Prometheus PCI bridge
 .It
 Phase5 PCI bridge: CyberVision PPC, BlizzardVision PPC
 .bullet)
+.It
+Clockports
+.(bullet -compact
+Amiga 1200 on-board clockport
 .It
 Video controllers
 .(bullet -compact
@@ -156,6 +160,8 @@ HD floppy is inserted at boot time.
 Amiga parallel port
 .It
 Amiga serial port
+.It
+SilverSurfer clockport-based serial port
 .It
 Amiga mouse
 .It
