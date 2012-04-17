@@ -1,4 +1,4 @@
-#	$NetBSD: NETWALKER,v 1.10 2012/04/17 09:33:31 bsh Exp $
+#	$NetBSD: NETWALKER,v 1.11 2012/04/17 10:19:57 bsh Exp $
 #
 #	NETWALKER -- http://www.sharp.co.jp/netwalker/
 #
@@ -247,6 +247,26 @@ ucom*	at uvscom? portno ?
 ugensa* at uhub? port ?
 ucom*	at ugensa?
 
+# IPUv3 LCD Controller
+ipu0		at axi?
+wsdisplay0	at wsemuldisplaydev? console ?
+wsdisplay*	at wsemuldisplaydev?
+#options	IPUV3_DEBUG=1
+#options	LCD_DEBUG
+options 	IMXIPUCONSOLE
+
+# various options for wscons - we try to look as much like a standard
+# sun console as possible
+options 	WSEMUL_VT100		# sun terminal emulation
+options 	WS_DEFAULT_FG=WSCOL_WHITE
+options 	WS_DEFAULT_BG=WSCOL_BLACK
+options		WS_KERNEL_FG=WSCOL_GREEN
+options		WS_KERNEL_BG=WSCOL_BLACK
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+options 	WSDISPLAY_DEFAULTSCREENS=4
+
 # SCSI bus support
 scsibus* at scsi?
 
@@ -275,3 +295,4 @@ pseudo-device	clockctl		# NTP clockctl
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont
