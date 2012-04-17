@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx51,v 1.3 2011/03/11 03:16:13 bsh Exp $
+#	$NetBSD: files.imx51,v 1.4 2012/04/17 10:19:57 bsh Exp $
 #
 # Configuration info for the Freescale i.MX51
 #
@@ -56,10 +56,11 @@ device	imxiomux : bus_space_generic
 attach	imxiomux at axi
 file	arch/arm/imx/imx51_iomux.c		imxiomux
 
-# LCD controller
-# device	lcd : bus_dma_generic, wsemuldisplaydev, rasops16, rasops8, rasops4, rasops_rotation
-# file	arch/arm/imx/imx31_lcd.c		lcd		needs-flag
-# defflag	opt_imx31_lcd.h				IMXLCDCONSOLE
+# IPU v3 controller
+device	ipu : bus_dma_generic, wsemuldisplaydev, rasops16, rasops8, rasops4, rasops_rotation, vcons
+file	arch/arm/imx/imx51_ipuv3.c	ipu	 needs-flag
+defflag	opt_imx51_ipuv3.h		IMXIPUCONSOLE
+defparam opt_imx51_ipuv3.h		IPUV3_DEBUG
 
 # iMX M3IF - Multi Master Memory Interface
 # iMX ESDCTL/MDDRC - Enhanced SDRAM/LPDDR memory controller
