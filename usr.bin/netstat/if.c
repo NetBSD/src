@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.72 2011/09/16 15:39:27 joerg Exp $	*/
+/*	$NetBSD: if.c,v 1.72.2.1 2012/04/17 00:09:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.72 2011/09/16 15:39:27 joerg Exp $");
+__RCSID("$NetBSD: if.c,v 1.72.2.1 2012/04/17 00:09:37 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,8 @@ struct	iftot {
 	int ift_dr;			/* drops */
 };
 
-static void print_addr(struct sockaddr *, struct sockaddr **, struct if_data *);
+static void print_addr(struct sockaddr *, struct sockaddr **, struct if_data *,
+    struct ifnet *);
 static void sidewaysintpr(u_int, u_long);
 
 static void iftot_banner(struct iftot *);
@@ -106,10 +107,7 @@ bool	signalled;			/* set if alarm goes off "early" */
  * which is a TAILQ_HEAD.
  */
 void
-intpr(interval, ifnetaddr, pfunc)
-	int interval;
-	u_long ifnetaddr;
-	void (*pfunc)(const char *);
+intpr(int interval, u_long ifnetaddr, void (*pfunc)(const char *))
 {
 
 	if (interval) {
@@ -220,7 +218,7 @@ intpr_sysctl(void)
 			}
 
 			printf("%-5s %-5" PRIu64, name, ifd->ifi_mtu);
-			print_addr(rti_info[RTAX_IFP], rti_info, ifd);
+			print_addr(rti_info[RTAX_IFP], rti_info, ifd, NULL);
 			break;
 
 		case RTM_NEWADDR:
@@ -238,24 +236,26 @@ intpr_sysctl(void)
 			get_rtaddrs(ifam->ifam_addrs, sa, rti_info);
 
 			printf("%-5s %-5" PRIu64, name, ifd->ifi_mtu);
-			print_addr(rti_info[RTAX_IFA], rti_info, ifd);
+			print_addr(rti_info[RTAX_IFA], rti_info, ifd, NULL);
 			break;
 		}
 	}
 }
 
+union ifaddr_u {
+	struct ifaddr ifa;
+	struct in_ifaddr in;
+#ifdef INET6
+	struct in6_ifaddr in6;
+#endif /* INET6 */
+	struct iso_ifaddr iso;
+};
+
 static void
 intpr_kvm(u_long ifnetaddr, void (*pfunc)(const char *))
 {
 	struct ifnet ifnet;
-	union {
-		struct ifaddr ifa;
-		struct in_ifaddr in;
-#ifdef INET6
-		struct in6_ifaddr in6;
-#endif /* INET6 */
-		struct iso_ifaddr iso;
-	} ifaddr;
+	union ifaddr_u ifaddr;
 	u_long ifaddraddr;
 	struct ifnet_head ifhead;	/* TAILQ_HEAD */
 	char name[IFNAMSIZ + 1];	/* + 1 for `*' */
@@ -321,7 +321,7 @@ intpr_kvm(u_long ifnetaddr, void (*pfunc)(const char *))
 			cp = (CP(ifaddr.ifa.ifa_addr) - CP(ifaddraddr)) +
 			    CP(&ifaddr);
 			sa = (struct sockaddr *)cp;
-			print_addr(sa, (void *)&ifaddr, &ifnet.if_data);
+			print_addr(sa, (void *)&ifaddr, &ifnet.if_data, &ifnet);
 		}
 		ifaddraddr = (u_long)ifaddr.ifa.ifa_list.tqe_next;
 	}
@@ -329,7 +329,8 @@ intpr_kvm(u_long ifnetaddr, void (*pfunc)(const char *))
 }
 
 static void
-print_addr(struct sockaddr *sa, struct sockaddr **rtinfo, struct if_data *ifd)
+print_addr(struct sockaddr *sa, struct sockaddr **rtinfo, struct if_data *ifd,
+    struct ifnet *ifnet)
 {
 	char hexsep = '.';		/* for hexprint */
 	static const char hexfmt[] = "%02x%c";	/* for hexprint */
@@ -380,13 +381,13 @@ print_addr(struct sockaddr *sa, struct sockaddr **rtinfo, struct if_data *ifd)
 			n = 17;
 		printf("%-*.*s ", n, n, cp);
 
-#if 0 /* XXX-elad */
-		if (aflag) {
+		if (aflag && ifnet) {
 			u_long multiaddr;
 			struct in_multi inm;
+			union ifaddr_u *ifaddr = (union ifaddr_u *)rtinfo;
 
 			multiaddr = (u_long)
-			    ifaddr.in.ia_multiaddrs.lh_first;
+			    ifaddr->in.ia_multiaddrs.lh_first;
 			while (multiaddr != 0) {
 				kread(multiaddr, (char *)&inm,
 				   sizeof inm);
@@ -397,7 +398,6 @@ print_addr(struct sockaddr *sa, struct sockaddr **rtinfo, struct if_data *ifd)
 				   (u_long)inm.inm_list.le_next;
 			}
 		}
-#endif /* 0 */
 		break;
 #ifdef INET6
 	case AF_INET6:
@@ -441,14 +441,14 @@ print_addr(struct sockaddr *sa, struct sockaddr **rtinfo, struct if_data *ifd)
 			n = 17;
 		printf("%-*.*s ", n, n, cp);
 
-#if 0 /* XXX-elad */
-		if (aflag) {
+		if (aflag && ifnet) {
 			u_long multiaddr;
 			struct in6_multi inm;
 			struct sockaddr_in6 as6;
+			union ifaddr_u *ifaddr = (union ifaddr_u *)rtinfo;
 		
 			multiaddr = (u_long)
-			    ifaddr.in6.ia6_multiaddrs.lh_first;
+			    ifaddr->in6.ia6_multiaddrs.lh_first;
 			while (multiaddr != 0) {
 				kread(multiaddr, (char *)&inm,
 				   sizeof inm);
@@ -484,7 +484,6 @@ print_addr(struct sockaddr *sa, struct sockaddr **rtinfo, struct if_data *ifd)
 				   (u_long)inm.in6m_entry.le_next;
 			}
 		}
-#endif /* 0 */
 		break;
 #endif /*INET6*/
 #ifndef SMALL
@@ -548,9 +547,9 @@ print_addr(struct sockaddr *sa, struct sockaddr **rtinfo, struct if_data *ifd)
 			(unsigned long long)ifd->ifi_collisions);
 	}
 	if (tflag)
-		printf(" %4d", 0 /* XXX-elad ifnet.if_timer */);
+		printf(" %4d", ifnet ? ifnet->if_timer : 0);
 	if (dflag)
-		printf(" %5d", 0 /* XXX-elad ifnet.if_snd.ifq_drops */);
+		printf(" %5d", ifnet ? ifnet->if_snd.ifq_drops : 0);
 	putchar('\n');
 }
 
@@ -924,9 +923,7 @@ loop:
  * First line printed at top of screen is always cumulative.
  */
 static void
-sidewaysintpr(interval, off)
-	unsigned interval;
-	u_long off;
+sidewaysintpr(unsigned int interval, u_long off)
 {
 
 	if (use_sysctl) {
@@ -941,8 +938,7 @@ sidewaysintpr(interval, off)
  * Sets a flag to not wait for the alarm.
  */
 static void
-catchalarm(signo)
-	int signo;
+catchalarm(int signo)
 {
 
 	signalled = true;

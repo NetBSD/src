@@ -1,4 +1,4 @@
-/*	$NetBSD: pgfs_subs.h,v 1.1 2011/10/12 01:05:00 yamt Exp $	*/
+/*	$NetBSD: pgfs_subs.h,v 1.1.2.1 2012/04/17 00:05:44 yamt Exp $	*/
 
 /*-
  * Copyright (c)2010,2011 YAMAMOTO Takashi,
@@ -68,6 +68,6 @@ int mklinkfile(struct Xconn *, fileid_t, const char *, enum vtype, mode_t,
     uid_t, gid_t, fileid_t *);
 int mklinkfile_lo(struct Xconn *, fileid_t, const char *, enum vtype, mode_t,
     uid_t, gid_t, fileid_t *, int *);
-int cleanupfile(struct Xconn *, fileid_t, struct vattr *);
+int cleanupfile(struct Xconn *, fileid_t);
 int check_path(struct Xconn *, fileid_t, fileid_t);
 int isempty(struct Xconn *, fileid_t, bool *);

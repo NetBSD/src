@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.28 2009/09/03 11:42:21 jmcneill Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.28.12.1 2012/04/17 00:08:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.28 2009/09/03 11:42:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.28.12.1 2012/04/17 00:08:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.28 2009/09/03 11:42:21 jmcneill Exp
 #include <sys/tty.h>
 #include <sys/cpu.h>
 #include <sys/buf.h>
+#include <sys/reboot.h>
 
 #ifdef DEVSW_DEBUG
 #define	DPRINTF(x)	printf x
@@ -790,6 +791,29 @@ bdev_type(dev_t dev)
 	if ((d = bdevsw_lookup(dev)) == NULL)
 		return D_OTHER;
 	return d->d_flag & D_TYPEMASK;
+}
+
+int
+bdev_size(dev_t dev)
+{
+	const struct bdevsw *d;
+	int rv, mpflag = 0;
+
+	if ((d = bdevsw_lookup(dev)) == NULL ||
+	    d->d_psize == NULL)
+		return -1;
+
+	/*
+	 * Don't to try lock the device if we're dumping.
+	 * XXX: is there a better way to test this?
+	 */
+	if ((boothowto & RB_DUMP) == 0)
+		DEV_LOCK(d);
+	rv = (*d->d_psize)(dev);
+	if ((boothowto & RB_DUMP) == 0)
+		DEV_UNLOCK(d);
+
+	return rv;
 }
 
 int

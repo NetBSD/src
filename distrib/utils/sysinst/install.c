@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.45 2011/04/04 08:30:12 mbalmer Exp $	*/
+/*	$NetBSD: install.c,v 1.45.4.1 2012/04/17 00:02:49 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -117,10 +117,7 @@ do_install(void)
 	if (md_post_extract() != 0)
 		return;
 
-	set_timezone();
-
-	set_root_password();
-	set_root_shell();
+	do_configmenu();
 
 	sanity_check();
 

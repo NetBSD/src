@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.146 2011/09/21 18:10:25 christos Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.146.2.1 2012/04/17 00:08:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -925,7 +925,8 @@ m_length(const struct mbuf *m)
 	return pktlen;
 }
 
-void m_print(const struct mbuf *, const char *, void (*)(const char *, ...));
+void m_print(const struct mbuf *, const char *, void (*)(const char *, ...)
+    __printflike(1, 2));
 
 #endif /* _KERNEL */
 #endif /* !_SYS_MBUF_H_ */

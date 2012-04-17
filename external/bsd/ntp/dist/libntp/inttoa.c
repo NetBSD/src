@@ -1,4 +1,4 @@
-/*	$NetBSD: inttoa.c,v 1.1.1.1 2009/12/13 16:55:03 kardel Exp $	*/
+/*	$NetBSD: inttoa.c,v 1.1.1.1.6.1 2012/04/17 00:03:46 yamt Exp $	*/
 
 /*
  * inttoa - return an asciized signed integer
@@ -17,7 +17,7 @@ inttoa(
 	register char *buf;
 
 	LIB_GETBUF(buf);
-	snprintf(buf, sizeof(buf), "%ld", val);
+	snprintf(buf, LIB_BUFLENGTH, "%ld", val);
 
 	return buf;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus_mainbus.c,v 1.8 2011/08/14 08:14:00 mrg Exp $	*/
+/*	$NetBSD: ebus_mainbus.c,v 1.8.2.1 2012/04/17 00:06:55 yamt Exp $	*/
 /*	$OpenBSD: ebus_mainbus.c,v 1.7 2010/11/11 17:58:23 miod Exp $	*/
 
 /*
@@ -16,6 +16,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ebus_mainbus.c,v 1.8.2.1 2012/04/17 00:06:55 yamt Exp $");
 
 #ifdef DEBUG
 #define	EDB_PROM	0x01

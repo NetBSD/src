@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.2 2011/01/22 19:19:19 joerg Exp $	*/
+/*	$NetBSD: boot2.c,v 1.2.4.1 2012/04/17 00:06:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -329,7 +329,7 @@ bootcmd_ls(char *arg)
 	const char *save = default_filename;
 
 	default_filename = "/";
-	ufs_ls(arg);
+	ls(arg);
 	default_filename = save;
 }
 

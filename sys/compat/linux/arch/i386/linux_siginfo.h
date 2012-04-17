@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_siginfo.h,v 1.7 2008/11/23 23:48:48 njoly Exp $	*/
+/*	$NetBSD: linux_siginfo.h,v 1.7.16.1 2012/04/17 00:07:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,17 +87,5 @@ typedef struct linux_siginfo {
 		} _sigfault;
 	} _sidata;
 } linux_siginfo_t;
-
-#define lsi_pid		_sidata._kill._pid
-#define lsi_uid		_sidata._kill._uid
-#define lsi_status      _sidata._sigchld._status
-#define lsi_utime       _sidata._sigchld._utime
-#define lsi_stime       _sidata._sigchld._stime
-#define lsi_value       _sidata._rt._sigval
-#define lsi_int         _sidata._rt._sigval.sival_int
-#define lsi_ptr         _sidata._rt._sigval.sival_ptr
-#define lsi_addr        _sidata._sigfault._addr
-#define lsi_band        _sidata._sigpoll._band
-#define lsi_fd          _sidata._sigpoll._fd
 
 #endif /* !_I386_LINUX_SIGINFO_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_text.c,v 1.1 2011/10/23 21:15:02 agc Exp $	*/
+/*	$NetBSD: iscsi_text.c,v 1.1.2.1 2012/04/17 00:07:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #include "iscsi_globals.h"
 #include "base64.h"
 #include <sys/md5.h>
+#include <sys/cprng.h>
 
 #define isdigit(x) ((x) >= '0' && (x) <= '9')
 #define toupper(x) ((x) & ~0x20)
@@ -1456,7 +1457,9 @@ assemble_security_parameters(connection_t *conn, ccb_t *ccb, pdu_t *rx_pdu,
 				return ISCSI_STATUS_PARAMETER_MISSING;
 			}
 
-			GEN_RAND(&state->temp_buf[CHAP_MD5_SIZE], CHAP_CHALLENGE_LEN + 1);
+			cprng_strong(kern_cprng,
+				     &state->temp_buf[CHAP_MD5_SIZE],
+				     CHAP_CHALLENGE_LEN + 1, 0);
 			set_key_n(state, K_Auth_CHAP_Identifier,
 					  state->temp_buf[CHAP_MD5_SIZE]);
 			cpar = set_key_s(state, K_Auth_CHAP_Challenge,

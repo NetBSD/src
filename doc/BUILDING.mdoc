@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.85 2011/09/09 18:48:34 apb Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.85.2.1 2012/04/17 00:02:55 yamt Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1153,6 +1153,77 @@ utility, which is not part of
 but which can be installed from
 .Pa pkgsrc/sysutils/cdrtools .
 .
+.It Sy install-image
+Create a bootable
+.Nx
+installation disk image in the
+.Sy RELEASEDIR/RELEASEMACHINEDIR Ns Pa /installation/installimage
+directory.
+The installation disk image is suitable for copying to
+bootable USB flash memory sticks, etc., for machines which
+are able to boot from such devices.
+The file system in the bootable disk image will have a layout
+as described in
+.Xr release 7 .
+.Pp
+The installation image is bootable, and will automatically
+run the
+.Xr sysinst 8
+menu-based installation program, which can be used to install or upgrade a
+.Nx
+system.
+The image also contains tools that may be
+useful in repairing a damaged
+.Nx
+installation.
+.Pp
+Before
+.Dq make install-image
+is attempted,
+.Sy RELEASEDIR
+must be populated by
+.Dq make release
+or equivalent.
+The build must have been performed with
+.Sy MKUNPRIVED=yes 
+because
+.Dq make install-image
+relies on information in
+.Sy DESTDIR Ns Pa /METALOG .
+.
+.It live-image
+Create
+.Nx
+live images in the
+.Sy RELEASEDIR/RELEASEMACHINEDIR Ns Pa /installation/liveimage
+directory.
+The live image contains all necessary files
+to boot
+.Nx
+up to multi-user mode, including all files
+which should be extracted during installation,
+.Nx
+disklabel, bootloaders, etc.
+.Pp
+The live image is suitable for use as a disk image in
+virtual machine environments such as QEMU,
+and also useful to boot
+.Nx
+from a USB flash memory stick
+on a real machine, without the need for installation.
+.Pp
+Before
+.Dq make live-image
+is attempted, RELEASEDIR must be populated by
+.Dq make release
+or equivalent.
+The build must have been performed with
+.Sy MKUNPRIVED=yes 
+because
+.Dq make install-image
+relies on information in
+.Sy DESTDIR Ns Pa /METALOG .
+.
 .It Sy regression-tests
 Can only be run after building the regression tests in the directory
 .Dq regress .
@@ -1387,6 +1458,14 @@ Perform
 .It Sy iso-image-source
 Perform
 .Dq make iso-image-source .
+.
+.It Sy install-image
+Perform
+.Dq make install-image .
+.
+.It Sy live-image
+Perform
+.Dq make live-image .
 .
 .El
 .

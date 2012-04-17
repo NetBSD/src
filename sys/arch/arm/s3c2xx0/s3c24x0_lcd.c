@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0_lcd.c,v 1.7 2011/07/01 20:31:39 dyoung Exp $ */
+/* $NetBSD: s3c24x0_lcd.c,v 1.7.2.1 2012/04/17 00:06:07 yamt Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c24x0_lcd.c,v 1.7 2011/07/01 20:31:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c24x0_lcd.c,v 1.7.2.1 2012/04/17 00:06:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: s3c24x0_lcd.c,v 1.7 2011/07/01 20:31:39 dyoung Exp $
 #include <dev/wscons/wscons_callbacks.h>
 #include <dev/rasops/rasops.h>
 #include <dev/wsfont/wsfont.h>
+
+#include <dev/hpc/hpcfbio.h>
 
 #include <sys/bus.h>
 #include <machine/cpu.h>
@@ -317,11 +319,13 @@ s3c24x0_lcd_new_screen(struct s3c24x0_lcd_softc *sc,
 	const struct s3c24x0_lcd_panel_info *panel_info = sc->panel_info;
 
 
+#if 0 /* Does this make any sense? */
 #ifdef DIAGNOSTIC
 	if (size > 1 << 22) {
 		aprint_error("%s: too big screen size\n", sc->dev.dv_xname);
 		return NULL;
 	}
+#endif
 #endif
 
 	width = panel_info->panel_width;
@@ -337,11 +341,11 @@ s3c24x0_lcd_new_screen(struct s3c24x0_lcd_softc *sc,
 	case 12: case 24:
 	default:
 		aprint_error("%s: Unknown depth (%d)\n",
-		    sc->dev.dv_xname, depth);
+		    device_xname(sc->sc_dev), depth);
 		return NULL;
 	}
 
-	scr = malloc(sizeof *scr, M_DEVBUF, 
+	scr = malloc(sizeof *scr, M_DEVBUF,
 	    M_ZERO | (cold ? M_NOWAIT : M_WAITOK));
 
 	if (scr == NULL)
@@ -358,6 +362,9 @@ s3c24x0_lcd_new_screen(struct s3c24x0_lcd_softc *sc,
 	align = 1 << 20;
 	while (align < size)
 		align <<= 1;
+
+	printf("%s: Allocating LCD frame buffer of size %ld\n",
+	       device_xname(sc->sc_dev), size);
 
         error = bus_dmamem_alloc(sc->dma_tag, size, align, 0,
 	    scr->segs, 1, &(scr->nsegs), busdma_flag);
@@ -560,7 +567,7 @@ s3c24x0_lcd_alloc_screen(void *v, const struct wsscreen_descr *_type,
 
 		cookie = wsfont_find(NULL, type->c.fontwidth, 
 		    type->c.fontheight, 0, WSDISPLAY_FONTORDER_L2R,
-		    WSDISPLAY_FONTORDER_L2R);
+		    WSDISPLAY_FONTORDER_L2R, WSFONT_FIND_BITMAP);
 
 		if (cookie > 0) {
 			if (wsfont_lock(cookie, &scr->rinfo.ri_font))
@@ -577,7 +584,7 @@ s3c24x0_lcd_alloc_screen(void *v, const struct wsscreen_descr *_type,
 
 		aprint_error("%s: can't allocate a screen with requested size:"
 		    "%d x %d -> %d x %d\n",
-		    sc->dev.dv_xname,
+		    device_xname(sc->sc_dev),
 		    type->c.ncols, type->c.nrows,
 		    scr->rinfo.ri_cols, scr->rinfo.ri_rows);
 	}
@@ -639,6 +646,10 @@ s3c24x0_lcd_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		wsdisp_info->cmsize = 0;
 		return 0;
 
+	case WSDISPLAYIO_LINEBYTES:
+		*(u_int *)data = sc->panel_info->panel_width * (16/8);
+		return 0;
+
 	case WSDISPLAYIO_GETCMAP:
 	case WSDISPLAYIO_PUTCMAP:
 		return EPASSTHROUGH;	/* XXX Colormap */
@@ -664,6 +675,46 @@ s3c24x0_lcd_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		*(u_int *)data = sc->lcd_on;
 		return 0;
 
+	/* XXX: Hack to support /usr/sbin/tpctl */
+	case HPCFBIO_GCONF:
+	{
+		struct hpcfb_fbconf *fbconf = (struct hpcfb_fbconf*)data;
+		if (fbconf->hf_conf_index != 0 &&
+		    fbconf->hf_conf_index != HPCFB_CURRENT_CONFIG)
+			return EINVAL;
+
+		fbconf->hf_nconfs = 1;
+		fbconf->hf_class = HPCFB_CLASS_RGBCOLOR;
+		strncpy(fbconf->hf_name, "S3C24X0 LCD", HPCFB_MAXNAMELEN);
+		strncpy(fbconf->hf_conf_name, "default", HPCFB_MAXNAMELEN);
+		fbconf->hf_height = sc->panel_info->panel_height;
+		fbconf->hf_width = sc->panel_info->panel_width;
+		fbconf->hf_baseaddr = 0x0;
+		fbconf->hf_offset = 0x0;
+		fbconf->hf_bytes_per_line = sc->panel_info->panel_width * (16/8);
+		fbconf->hf_nplanes = 0;
+		fbconf->hf_bytes_per_plane = 0;
+		fbconf->hf_pack_width = 16;
+		fbconf->hf_pixels_per_pack = 1;
+		fbconf->hf_pixel_width = 16;
+
+		fbconf->hf_access_flags = 0;
+		fbconf->hf_order_flags = HPCFB_REVORDER_WORD;
+		fbconf->hf_reg_offset = 0x0;
+
+		fbconf->hf_u.hf_rgb.hf_red_width = 5;
+		fbconf->hf_u.hf_rgb.hf_red_shift = 11;
+		fbconf->hf_u.hf_rgb.hf_green_width = 6;
+		fbconf->hf_u.hf_rgb.hf_green_shift = 5;
+		fbconf->hf_u.hf_rgb.hf_blue_width = 5;
+		fbconf->hf_u.hf_rgb.hf_blue_shift = 0;
+
+		fbconf->hf_ext_size = 0;
+		fbconf->hf_ext_data = NULL;
+
+		return 0;
+	}
+
 	case WSDISPLAYIO_GCURPOS:
 	case WSDISPLAYIO_SCURPOS:
 	case WSDISPLAYIO_GCURMAX:
@@ -680,12 +731,17 @@ s3c24x0_lcd_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct s3c24x0_lcd_softc *sc = v;
 	struct s3c24x0_lcd_screen *screen = sc->active;  /* ??? */
+	paddr_t ret;
+
+	/*	printf("s3c24x0_lcd_mmap: screen: %p, offset: %ld\n", screen, (long)offset);*/
 
 	if (screen == NULL)
 		return -1;
 
-	return bus_dmamem_mmap(sc->dma_tag, screen->segs, screen->nsegs,
+	ret = bus_dmamem_mmap(sc->dma_tag, screen->segs, screen->nsegs,
 	    offset, prot, BUS_DMA_WAITOK|BUS_DMA_COHERENT);
+	/*	printf("s3c24x0_lcd_mmap: ret: %lx\n", ret);*/
+	return ret;
 	return -1;
 }
 

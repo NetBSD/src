@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_overflow.c,v 1.17 2011/06/26 22:20:31 christos Exp $	*/
+/*	$NetBSD: bt_overflow.c,v 1.17.2.1 2012/04/17 00:05:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_overflow.c,v 1.17 2011/06/26 22:20:31 christos Exp $");
+__RCSID("$NetBSD: bt_overflow.c,v 1.17.2.1 2012/04/17 00:05:17 yamt Exp $");
 
 #include "namespace.h"
 #include <sys/param.h>
@@ -155,7 +155,7 @@ __ovfl_put(BTREE *t, const DBT *dbt, pgno_t *pg)
 	p = dbt->data;
 	temp = dbt->size;
 	_DBFIT(temp, uint32_t);
-	sz = temp;
+	sz = (uint32_t)temp;
 	for (;; p = (char *)p + plen, last = h) {
 		if ((h = __bt_new(t, &npg)) == NULL)
 			return (RET_ERROR);

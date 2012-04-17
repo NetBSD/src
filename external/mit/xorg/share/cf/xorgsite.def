@@ -1,6 +1,6 @@
-/* $NetBSD: xorgsite.def,v 1.1 2008/09/17 03:56:06 cube Exp $ */
+/* $NetBSD: xorgsite.def,v 1.1.4.1 2012/04/17 00:04:51 yamt Exp $ */
 
-#define HasSecureRPC YES
+#define HasSecureRPC NO
 #define InstallXdmConfig YES
 #define InstallXinitConfig YES
 #define UseGccMakeDepend NO

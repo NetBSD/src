@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.20 2007/05/28 12:06:22 tls Exp $
+#	$NetBSD: Makefile,v 1.20.34.1 2012/04/17 00:05:35 yamt Exp $
+
+WARNS=	3
 
 USE_FORT?= yes	# data-driven bugs?
 

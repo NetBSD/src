@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_cac.c,v 1.25 2009/05/12 14:25:17 cegger Exp $	*/
+/*	$NetBSD: ld_cac.c,v 1.25.12.1 2012/04/17 00:07:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006 The NetBSD Foundation, Inc.
@@ -34,9 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.25 2009/05/12 14:25:17 cegger Exp $");
-
-#include "rnd.h"
+__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.25.12.1 2012/04/17 00:07:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,9 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.25 2009/05/12 14:25:17 cegger Exp $");
 #include <sys/endian.h>
 #include <sys/dkio.h>
 #include <sys/disk.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <sys/bus.h>
 
@@ -107,7 +103,7 @@ ld_cac_attach(device_t parent, device_t self, void *aux)
 
 	ld->sc_secsize = CAC_GET2(dinfo.secsize);
 	ld->sc_maxxfer = CAC_MAX_XFER;
-	ld->sc_maxqueuecnt = CAC_MAX_CCBS / cac->sc_nunits;	/* XXX */
+	ld->sc_maxqueuecnt = (CAC_MAX_CCBS - 1) / cac->sc_nunits;
 	ld->sc_secperunit = CAC_GET2(dinfo.ncylinders) *
 	    CAC_GET1(dinfo.nheads) * CAC_GET1(dinfo.nsectors);
 	ld->sc_start = ld_cac_start;

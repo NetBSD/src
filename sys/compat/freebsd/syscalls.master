@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.65 2011/03/06 17:08:34 bouyer Exp $
+	$NetBSD: syscalls.master,v 1.65.4.1 2012/04/17 00:07:14 yamt Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -36,7 +36,6 @@
 #include "opt_ntp.h"
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
-#include "opt_posix.h"
 #endif
 
 #include <sys/param.h>
@@ -646,7 +645,6 @@
 397	UNIMPL		fsstatfs
 398	UNIMPL		fhstatfs
 399	UNIMPL		nosys
-#if defined(P1003_1B_SEMAPHORE) || !defined(_KERNEL)
 400	NOARGS		{ int|sys||_ksem_close(intptr_t id); }
 401	NOARGS		{ int|sys||_ksem_post(intptr_t id); }
 402	NOARGS		{ int|sys||_ksem_wait(intptr_t id); }
@@ -657,17 +655,6 @@
 407	NOARGS		{ int|sys||_ksem_getvalue(intptr_t id, \
 			    unsigned int *value); }
 408	NOARGS		{ int|sys||_ksem_destroy(intptr_t id); }
-#else
-400	EXCL		ksem_close
-401	EXCL		ksem_post
-402	EXCL		ksem_wait
-403	EXCL		ksem_trywait
-404	EXCL		ksem_init
-405	EXCL		ksem_open
-406	EXCL		ksem_unlink
-407	EXCL		ksem_getvalue
-408	EXCL		ksem_destroy
-#endif
 409	UNIMPL		__mac_get_pid
 410	UNIMPL		__mac_get_link
 411	UNIMPL		__mac_set_link

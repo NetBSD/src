@@ -1,7 +1,7 @@
-/*	$NetBSD: mpu_isapnp.c,v 1.17 2008/03/27 10:22:01 xtraeme Exp $	*/
+/*	$NetBSD: mpu_isapnp.c,v 1.17.38.1 2012/04/17 00:07:40 yamt Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_isapnp.c,v 1.17 2008/03/27 10:22:01 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_isapnp.c,v 1.17.38.1 2012/04/17 00:07:40 yamt Exp $");
 
 #include "midi.h"
 
@@ -12,10 +12,9 @@ __KERNEL_RCSID(0, "$NetBSD: mpu_isapnp.c,v 1.17 2008/03/27 10:22:01 xtraeme Exp 
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-
 #include <sys/bus.h>
-
 #include <sys/audioio.h>
+
 #include <dev/audio_if.h>
 #include <dev/midi_if.h>
 #include <dev/mulaw.h>
@@ -34,6 +33,7 @@ static void	mpu_isapnp_attach(device_t, device_t, void *);
 
 struct mpu_isapnp_softc {
 	void *sc_ih;
+	kmutex_t sc_lock;
 
 	struct mpu_softc sc_mpu;
 };
@@ -65,13 +65,22 @@ mpu_isapnp_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_AUDIO);
+
 	sc->sc_mpu.iot = ipa->ipa_iot;
 	sc->sc_mpu.ioh = ipa->ipa_io[0].h;
+	sc->sc_mpu.lock = &sc->sc_lock;
+
+	mutex_enter(&sc->sc_lock);
 
 	if (!mpu_find(&sc->sc_mpu)) {
 		aprint_error_dev(self, "find failed\n");
+		mutex_exit(&sc->sc_lock);
+		mutex_destroy(&sc->sc_lock);
 		return;
 	}
+
+	mutex_exit(&sc->sc_lock);
 
 	aprint_normal_dev(self, "%s %s\n", ipa->ipa_devident,
 	       ipa->ipa_devclass);

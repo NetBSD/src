@@ -1,4 +1,4 @@
-/* $NetBSD: t_setrlimit.c,v 1.2 2011/08/22 00:33:16 dholland Exp $ */
+/* $NetBSD: t_setrlimit.c,v 1.2.2.1 2012/04/17 00:09:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_setrlimit.c,v 1.2 2011/08/22 00:33:16 dholland Exp $");
+__RCSID("$NetBSD: t_setrlimit.c,v 1.2.2.1 2012/04/17 00:09:12 yamt Exp $");
 
 #include <sys/resource.h>
 #include <sys/mman.h>
@@ -460,8 +460,7 @@ ATF_TC_BODY(setrlimit_perm, tc)
 		errno = 0;
 		res.rlim_max = res.rlim_max + 1;
 
-		ATF_REQUIRE(setrlimit(rlimit[i], &res) != 0);
-		ATF_REQUIRE(errno == EPERM);
+		ATF_CHECK_ERRNO(EPERM, setrlimit(rlimit[i], &res) != 0);
 	}
 }
 

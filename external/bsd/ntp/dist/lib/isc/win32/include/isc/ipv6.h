@@ -1,4 +1,4 @@
-/*	$NetBSD: ipv6.h,v 1.1.1.1 2009/12/13 16:54:47 kardel Exp $	*/
+/*	$NetBSD: ipv6.h,v 1.1.1.1.6.1 2012/04/17 00:03:45 yamt Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -113,14 +113,14 @@ LIBISC_EXTERNAL_DATA extern const struct in6_addr isc_net_in6addrloop;
  */
 #ifndef IN6_IS_ADDR_LINKLOCAL
 #define IN6_IS_ADDR_LINKLOCAL(a)	(\
-(*((u_long *)((a)->s6_addr)    ) == 0xfe) && \
-((*((u_long *)((a)->s6_addr) + 1) & 0xc0) == 0x80))
+	((a)->s6_addr[0] == 0xfe) && \
+	(((a)->s6_addr[1] & 0xc0) == 0x80))
 #endif
 
 #ifndef IN6_IS_ADDR_SITELOCAL
 #define IN6_IS_ADDR_SITELOCAL(a)	(\
-(*((u_long *)((a)->s6_addr)    ) == 0xfe) && \
-((*((u_long *)((a)->s6_addr) + 1) & 0xc0) == 0xc0))
+	((a)->s6_addr[0] == 0xfe) && \
+	(((a)->s6_addr[1] & 0xc0) == 0xc0))
 #endif
 
 #endif /* ISC_IPV6_H */

@@ -1,3 +1,4 @@
+/*	$NetBSD: glx.c,v 1.1.2.1 2012/04/17 00:06:17 yamt Exp $	*/
 /*	$OpenBSD: glx.c,v 1.6 2010/10/14 21:23:04 pirofti Exp $	*/
 
 /*
@@ -21,8 +22,7 @@
  * XXX too many hardcoded numbers... need to expand glxreg.h
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: glx.c,v 1.1 2011/08/27 13:42:45 bouyer Exp $");
-
+__KERNEL_RCSID(0, "$NetBSD: glx.c,v 1.1.2.1 2012/04/17 00:06:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,6 @@ glx_init(pci_chipset_tag_t pc, pcitag_t tag, int dev)
 	/*
 	 * Route usb and audio
 	 */
-
 	msr = 0;
 	msr |= 11 << 8;
 	msr |= 9 << 16;
@@ -157,10 +156,17 @@ glx_init(pci_chipset_tag_t pc, pcitag_t tag, int dev)
 	msr |= 1 << 14;
 	wrmsr(GCSC_PIC_IRQM_PRIM, msr);
 
+	/*
+	 * keyboard and mouse interrupts
+	 */
+	msr = 0;
+	msr |= 1 << 1;	/* keyboard */
+	msr |= 1 << 12;	/* mouse */
+	wrmsr(GCSC_PIC_IRQM_LPC, msr);
+
 	/* no interrupts from theses */
 	wrmsr(GCSC_PIC_ZSEL_LOW, 0);
 	wrmsr(GCSC_PIC_ZSEL_HIGH, 0);
-	wrmsr(GCSC_PIC_IRQM_LPC, 0);
 
 	DPRINTF(("IO space 0x%" PRIx64 "\n", rdmsr(0x80000014)));
 }
@@ -295,7 +301,7 @@ glx_pci_write_hook(void *v, pcitag_t tag,
 }
 
 pcireg_t
-glx_get_status()
+glx_get_status(void)
 {
 	uint64_t msr;
 	pcireg_t data;
@@ -485,7 +491,7 @@ glx_fn2_read(int reg)
 		data = glx_get_status();
 		data |= PCI_COMMAND_IO_ENABLE;
 		msr = rdmsr(GCSC_GLIU_PAE);
-		if ((msr & (0x3 << 4)) == 0x03)
+		if ((msr & (0x3 << 4)) == (0x3 << 4))
 			data |= PCI_COMMAND_MASTER_ENABLE;
 		break;
 	case PCI_CLASS_REG:
@@ -612,7 +618,7 @@ glx_fn3_read(int reg)
 		data = glx_get_status();
 		data |= PCI_COMMAND_IO_ENABLE;
 		msr = rdmsr(GCSC_GLIU_PAE);
-		if ((msr & (0x3 << 8)) == 0x03)
+		if ((msr & (0x3 << 8)) == (0x3 << 8))
 			data |= PCI_COMMAND_MASTER_ENABLE;
 		break;
 	case PCI_CLASS_REG:

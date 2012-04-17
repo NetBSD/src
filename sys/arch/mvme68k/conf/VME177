@@ -1,4 +1,4 @@
-#	$NetBSD: VME177,v 1.30 2011/06/30 20:09:33 wiz Exp $
+#	$NetBSD: VME177,v 1.30.2.1 2012/04/17 00:06:41 yamt Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -77,7 +77,6 @@ pseudo-device	loop
 pseudo-device	bpfilter
 pseudo-device	ksyms
 pseudo-device	pty
-pseudo-device	rnd
 pseudo-device	clockctl		# user control of clock subsystem
 #pseudo-device	fss			# file system snapshot device
 

@@ -1,4 +1,4 @@
-/* $NetBSD: csh.c,v 1.42 2011/08/29 14:51:17 joerg Exp $ */
+/* $NetBSD: csh.c,v 1.42.2.1 2012/04/17 00:01:36 yamt Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-__RCSID("$NetBSD: csh.c,v 1.42 2011/08/29 14:51:17 joerg Exp $");
+__RCSID("$NetBSD: csh.c,v 1.42.2.1 2012/04/17 00:01:36 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ int reenter = 0;
 extern char **environ;
 
 static int readf(void *, char *, int);
-static fpos_t seekf(void *, fpos_t, int);
+static off_t seekf(void *, off_t, int);
 static int writef(void *, const char *, int);
 static int closef(void *);
 static int srccat(Char *, Char *);
@@ -1245,8 +1245,8 @@ writef(void *oreo, const char *buf, int siz)
     return write(DESC(oreo), buf, siz);
 }
 
-static fpos_t
-seekf(void *oreo, fpos_t off, int whence)
+static off_t
+seekf(void *oreo, off_t off, int whence)
 {
     return lseek(DESC(oreo), off, whence);
 }

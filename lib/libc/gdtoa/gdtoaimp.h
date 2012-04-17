@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoaimp.h,v 1.12 2011/06/04 14:18:10 christos Exp $ */
+/* $NetBSD: gdtoaimp.h,v 1.12.2.1 2012/04/17 00:05:18 yamt Exp $ */
 
 /****************************************************************
 
@@ -179,6 +179,7 @@ THIS SOFTWARE.
 
 /* #define IEEE_{BIG,LITTLE}_ENDIAN in ${ARCHDIR}/gdtoa/arith.h */
 
+#include <assert.h>
 #include <stdint.h>
 #define Short   int16_t
 #define UShort uint16_t
@@ -617,7 +618,7 @@ extern void memcpy_D2A ANSI((void*, const void*, size_t));
  extern double ratio ANSI((Bigint*, Bigint*));
  extern void rshift ANSI((Bigint*, int));
  extern char *rv_alloc ANSI((size_t));
- extern Bigint *s2b ANSI((CONST char*, int, int, ULong, int));
+ extern Bigint *s2b ANSI((CONST char*, int, int, ULong, size_t));
  extern Bigint *set_ones ANSI((Bigint*, int));
  extern char *strcp ANSI((char*, const char*));
  extern int strtoIg ANSI((CONST char*, char**, FPI*, Long*, Bigint**, int*));

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.7 2011/05/18 01:02:43 dyoung Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.7.4.1 2012/04/17 00:07:46 yamt Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -289,9 +289,7 @@ struct bge_softc {
 
 	struct sysctllog	*bge_log;
 
-#if NRND > 0
-	rndsource_element_t	rnd_source;	/* random source */
-#endif
+	krndsource_t	rnd_source;	/* random source */
 };
 
 #endif /* _DEV_PCI_IF_BGEVAR_H_ */

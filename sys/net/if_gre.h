@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.41 2011/11/02 01:17:59 dyoung Exp $ */
+/*	$NetBSD: if_gre.h,v 1.41.2.1 2012/04/17 00:08:38 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -44,9 +44,11 @@
 #include <sys/condvar.h>
 #include <sys/malloc.h>
 #include <sys/mallocvar.h>
-#include <sys/pcq.h>
 
 #ifdef _KERNEL
+
+#include <sys/pcq.h>
+
 struct gre_soparm {
 	struct socket		*sp_so;
 	struct sockaddr_storage sp_src;	/* source of gre packets */

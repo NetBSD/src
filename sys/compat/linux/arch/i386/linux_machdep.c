@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.150 2011/03/04 22:25:31 joerg Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.150.4.1 2012/04/17 00:07:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.150 2011/03/04 22:25:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.150.4.1 2012/04/17 00:07:16 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -253,7 +253,6 @@ linux_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct trapframe *tf;
 	struct linux_rt_sigframe *fp, frame;
 	int onstack, error;
-	linux_siginfo_t *lsi;
 	int sig = ksi->ksi_signo;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct sigaltstack *sas = &l->l_sigstk;
@@ -286,37 +285,7 @@ linux_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * XXX: the following code assumes that the constants for
 	 * siginfo are the same between linux and NetBSD.
 	 */
-	(void)memset(lsi = &frame.sf_si, 0, sizeof(frame.sf_si));
-	lsi->lsi_errno = native_to_linux_errno[ksi->ksi_errno];
-	lsi->lsi_code = native_to_linux_si_code(ksi->ksi_code);
-	switch (lsi->lsi_signo = frame.sf_sig) {
-	case LINUX_SIGILL:
-	case LINUX_SIGFPE:
-	case LINUX_SIGSEGV:
-	case LINUX_SIGBUS:
-	case LINUX_SIGTRAP:
-		lsi->lsi_addr = ksi->ksi_addr;
-		break;
-	case LINUX_SIGCHLD:
-		lsi->lsi_uid = ksi->ksi_uid;
-		lsi->lsi_pid = ksi->ksi_pid;
-		lsi->lsi_utime = ksi->ksi_utime;
-		lsi->lsi_stime = ksi->ksi_stime;
-		lsi->lsi_status =
-		    native_to_linux_si_status(ksi->ksi_code, ksi->ksi_status);
-		break;
-	case LINUX_SIGIO:
-		lsi->lsi_band = ksi->ksi_band;
-		lsi->lsi_fd = ksi->ksi_fd;
-		break;
-	default:
-		lsi->lsi_uid = ksi->ksi_uid;
-		lsi->lsi_pid = ksi->ksi_pid;
-		if (lsi->lsi_signo == LINUX_SIGALRM ||
-		    lsi->lsi_signo >= LINUX_SIGRTMIN)
-			lsi->lsi_value.sival_ptr = ksi->ksi_value.sival_ptr;
-		break;
-	}
+	native_to_linux_siginfo(&frame.sf_si, &ksi->ksi_info);
 
 	/* Save register context. */
 	linux_save_ucontext(l, tf, mask, sas, &frame.sf_uc);

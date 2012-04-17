@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.178.2.13 2012/02/17 08:18:57 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.178.2.14 2012/04/17 00:09:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.178.2.13 2012/02/17 08:18:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.178.2.14 2012/04/17 00:09:00 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -74,7 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.178.2.13 2012/02/17 08:18:57 yamt Exp
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/sched.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
@@ -139,9 +138,7 @@ static vaddr_t      virtual_space_end;
  * uvm_pageboot_alloc().
  */
 
-static bool have_recolored_pages /* = false */;
-
-MALLOC_DEFINE(M_VMPAGE, "VM page", "VM page");
+static size_t recolored_pages_memsize /* = 0 */;
 
 #ifdef DEBUG
 vaddr_t uvm_zerocheckkva;
@@ -338,7 +335,6 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 
 	uvm.cpus[0] = &boot_cpu;
 	curcpu()->ci_data.cpu_uvm = &boot_cpu;
-	uvm_reclaim_init();
 	uvmpdpol_init();
 	mutex_init(&uvm_pageqlock, MUTEX_DRIVER, IPL_NONE);
 	mutex_init(&uvm_fpageqlock, MUTEX_DRIVER, IPL_VM);
@@ -751,7 +747,7 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 
 	/*
 	 * check to see if this is a "preload" (i.e. uvm_page_init hasn't been
-	 * called yet, so malloc is not available).
+	 * called yet, so kmem is not available).
 	 */
 
 	for (lcv = 0 ; lcv < vm_nphysmem ; lcv++) {
@@ -761,7 +757,7 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 	preload = (lcv == vm_nphysmem);
 
 	/*
-	 * if VM is already running, attempt to malloc() vm_page structures
+	 * if VM is already running, attempt to kmem_alloc vm_page structures
 	 */
 
 	if (!preload) {
@@ -969,6 +965,7 @@ uvm_page_recolor(int newncolors)
 	struct pgfreelist gpgfl, pgfl;
 	struct vm_page *pg;
 	vsize_t bucketcount;
+	size_t bucketmemsize, oldbucketmemsize;
 	int lcv, color, i, ocolors;
 	struct uvm_cpu *ucpu;
 
@@ -983,8 +980,8 @@ uvm_page_recolor(int newncolors)
 	}
 
 	bucketcount = newncolors * VM_NFREELIST;
-	bucketarray = malloc(bucketcount * sizeof(struct pgflbucket) * 2,
-	    M_VMPAGE, M_NOWAIT);
+	bucketmemsize = bucketcount * sizeof(struct pgflbucket) * 2;
+	bucketarray = kmem_alloc(bucketmemsize, KM_SLEEP);
 	cpuarray = bucketarray + bucketcount;
 	if (bucketarray == NULL) {
 		printf("WARNING: unable to allocate %ld page color buckets\n",
@@ -997,7 +994,7 @@ uvm_page_recolor(int newncolors)
 	/* Make sure we should still do this. */
 	if (newncolors <= uvmexp.ncolors) {
 		mutex_spin_exit(&uvm_fpageqlock);
-		free(bucketarray, M_VMPAGE);
+		kmem_free(bucketarray, bucketmemsize);
 		return;
 	}
 
@@ -1033,14 +1030,14 @@ uvm_page_recolor(int newncolors)
 		ucpu->page_free[lcv].pgfl_buckets = pgfl.pgfl_buckets;
 	}
 
-	if (!have_recolored_pages)
-		oldbucketarray = NULL;
+	oldbucketmemsize = recolored_pages_memsize;
 
-	have_recolored_pages = true;
+	recolored_pages_memsize = bucketmemsize;
 	mutex_spin_exit(&uvm_fpageqlock);
 
-	if (oldbucketarray)
-		free(oldbucketarray, M_VMPAGE);
+	if (oldbucketmemsize) {
+		kmem_free(oldbucketarray, recolored_pages_memsize);
+	}
 
 	/*
 	 * this calls uvm_km_alloc() which may want to hold
@@ -1064,7 +1061,7 @@ uvm_cpu_attach(struct cpu_info *ci)
 
 	if (CPU_IS_PRIMARY(ci)) {
 		/* Already done in uvm_page_init(). */
-		return;
+		goto attachrnd;
 	}
 
 	/* Add more reserve pages for this CPU. */
@@ -1072,8 +1069,8 @@ uvm_cpu_attach(struct cpu_info *ci)
 
 	/* Configure this CPU's free lists. */
 	bucketcount = uvmexp.ncolors * VM_NFREELIST;
-	bucketarray = malloc(bucketcount * sizeof(struct pgflbucket),
-	    M_VMPAGE, M_WAITOK);
+	bucketarray = kmem_alloc(bucketcount * sizeof(struct pgflbucket),
+	    KM_SLEEP);
 	ucpu = kmem_zalloc(sizeof(*ucpu), KM_SLEEP);
 	uvm.cpus[cpu_index(ci)] = ucpu;
 	ci->ci_data.cpu_uvm = ucpu;
@@ -1082,6 +1079,14 @@ uvm_cpu_attach(struct cpu_info *ci)
 		uvm_page_init_buckets(&pgfl);
 		ucpu->page_free[lcv].pgfl_buckets = pgfl.pgfl_buckets;
 	}
+
+attachrnd:
+	/*
+	 * Attach RNG source for this CPU's VM events
+	 */
+        rnd_attach_source(&uvm.cpus[cpu_index(ci)]->rs,
+			  ci->ci_data.cpu_name, RND_TYPE_VM, 0);
+
 }
 
 /*
@@ -1106,6 +1111,10 @@ uvm_pagealloc_pgfl(struct uvm_cpu *ucpu, int flist, int try1, int try2,
 		/* cpu, try1 */
 		if ((pg = LIST_FIRST((freeq =
 		    &pgfl->pgfl_buckets[color].pgfl_queues[try1]))) != NULL) {
+			KASSERT(pg->pqflags & PQ_FREE);
+			KASSERT(try1 == PGFL_ZEROS || !(pg->flags & PG_ZERO));
+			KASSERT(try1 == PGFL_UNKNOWN || (pg->flags & PG_ZERO));
+			KASSERT(ucpu == VM_FREE_PAGE_TO_CPU(pg));
 			VM_FREE_PAGE_TO_CPU(pg)->pages[try1]--;
 		    	uvmexp.cpuhit++;
 			goto gotit;
@@ -1113,6 +1122,10 @@ uvm_pagealloc_pgfl(struct uvm_cpu *ucpu, int flist, int try1, int try2,
 		/* global, try1 */
 		if ((pg = LIST_FIRST((freeq =
 		    &gpgfl->pgfl_buckets[color].pgfl_queues[try1]))) != NULL) {
+			KASSERT(pg->pqflags & PQ_FREE);
+			KASSERT(try1 == PGFL_ZEROS || !(pg->flags & PG_ZERO));
+			KASSERT(try1 == PGFL_UNKNOWN || (pg->flags & PG_ZERO));
+			KASSERT(ucpu != VM_FREE_PAGE_TO_CPU(pg));
 			VM_FREE_PAGE_TO_CPU(pg)->pages[try1]--;
 		    	uvmexp.cpumiss++;
 			goto gotit;
@@ -1120,6 +1133,10 @@ uvm_pagealloc_pgfl(struct uvm_cpu *ucpu, int flist, int try1, int try2,
 		/* cpu, try2 */
 		if ((pg = LIST_FIRST((freeq =
 		    &pgfl->pgfl_buckets[color].pgfl_queues[try2]))) != NULL) {
+			KASSERT(pg->pqflags & PQ_FREE);
+			KASSERT(try2 == PGFL_ZEROS || !(pg->flags & PG_ZERO));
+			KASSERT(try2 == PGFL_UNKNOWN || (pg->flags & PG_ZERO));
+			KASSERT(ucpu == VM_FREE_PAGE_TO_CPU(pg));
 			VM_FREE_PAGE_TO_CPU(pg)->pages[try2]--;
 		    	uvmexp.cpuhit++;
 			goto gotit;
@@ -1127,6 +1144,10 @@ uvm_pagealloc_pgfl(struct uvm_cpu *ucpu, int flist, int try1, int try2,
 		/* global, try2 */
 		if ((pg = LIST_FIRST((freeq =
 		    &gpgfl->pgfl_buckets[color].pgfl_queues[try2]))) != NULL) {
+			KASSERT(pg->pqflags & PQ_FREE);
+			KASSERT(try2 == PGFL_ZEROS || !(pg->flags & PG_ZERO));
+			KASSERT(try2 == PGFL_UNKNOWN || (pg->flags & PG_ZERO));
+			KASSERT(ucpu != VM_FREE_PAGE_TO_CPU(pg));
 			VM_FREE_PAGE_TO_CPU(pg)->pages[try2]--;
 		    	uvmexp.cpumiss++;
 			goto gotit;
@@ -1509,7 +1530,9 @@ uvm_pagefree(struct vm_page *pg)
 	KASSERT((pg->flags & PG_PAGEOUT) == 0);
 	KASSERT(!(pg->pqflags & PQ_FREE));
 	KASSERT(mutex_owned(&uvm_pageqlock) || !uvmpdpol_pageisqueued_p(pg));
-	KASSERT(uvm_page_locked_p(pg));
+	KASSERT(pg->uobject == NULL || mutex_owned(pg->uobject->vmobjlock));
+	KASSERT(pg->uobject != NULL || pg->uanon == NULL ||
+		mutex_owned(pg->uanon->an_lock));
 
 	/*
 	 * if the page is loaned, resolve the loan instead of freeing.
@@ -1559,6 +1582,7 @@ uvm_pagefree(struct vm_page *pg)
 		if (pg->loan_count) {
 			KASSERT(pg->uobject == NULL);
 			if (pg->uanon == NULL) {
+				KASSERT(mutex_owned(&uvm_pageqlock));
 				uvm_pagedequeue(pg);
 			}
 			ucpu = uvm_cpu_get();
@@ -1596,7 +1620,6 @@ uvm_pagefree(struct vm_page *pg)
 	/*
 	 * now remove the page from the queues.
 	 */
-
 	uvm_pagedequeue(pg);
 
 	/*
@@ -1675,11 +1698,7 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 			continue;
 		}
 
-		KASSERT(pg->uobject == NULL ||
-		    mutex_owned(pg->uobject->vmobjlock));
-		KASSERT(pg->uobject != NULL ||
-		    (pg->uanon != NULL && mutex_owned(pg->uanon->an_lock)));
-
+		KASSERT(uvm_page_locked_p(pg));
 		KASSERT(pg->flags & PG_BUSY);
 		KASSERT((pg->flags & PG_PAGEOUT) == 0);
 		if (pg->flags & PG_WANTED) {
@@ -1720,12 +1739,7 @@ uvm_page_own(struct vm_page *pg, const char *tag)
 
 	uobj = pg->uobject;
 	anon = pg->uanon;
-	if (uobj != NULL) {
-		KASSERT(mutex_owned(uobj->vmobjlock));
-	} else if (anon != NULL) {
-		KASSERT(mutex_owned(anon->an_lock));
-	}
-
+	KASSERT(uvm_page_locked_p(pg));
 	KASSERT((pg->flags & PG_WANTED) == 0);
 
 	/* gain ownership? */

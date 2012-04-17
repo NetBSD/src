@@ -1,4 +1,4 @@
-.\" $NetBSD: iwn.4,v 1.9 2010/05/28 13:25:54 wiz Exp $
+.\" $NetBSD: iwn.4,v 1.9.6.1 2012/04/17 00:05:45 yamt Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,12 +15,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd May 27, 2010
+.Dd February 25, 2012
 .Dt IWN 4
 .Os
 .Sh NAME
 .Nm iwn
-.Nd Intel Wireless 4965AGN IEEE 802.11 driver
+.Nd Intel Wireless 4965AGN and 5100AGN IEEE 802.11 driver
 .Sh SYNOPSIS
 .Cd "iwn* at pci? dev ? function ?"
 .Sh DESCRIPTION
@@ -28,7 +28,7 @@ The
 .Nm
 driver provides support for
 .Tn Intel
-Wireless WiFi Link 4965AGN Mini PCI Express network adapters.
+Wireless WiFi Link 4965AGN and 5100AGN Mini PCI Express network adapters.
 .Pp
 By default, the
 .Nm

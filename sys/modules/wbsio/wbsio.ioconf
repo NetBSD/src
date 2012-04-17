@@ -1,0 +1,11 @@
+# $NetBSD: wbsio.ioconf,v 1.1.4.2 2012/04/17 00:08:37 yamt Exp $
+
+ioconf wbsio
+
+include "conf/files"
+include "dev/isa/files.isa"
+
+pseudo-root isa*
+
+wbsio* at isa? port 0x2e
+wbsio* at isa? port 0x4e

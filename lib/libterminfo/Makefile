@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.18.2.1 2011/11/10 14:31:37 yamt Exp $
+#	$NetBSD: Makefile,v 1.18.2.2 2012/04/17 00:05:33 yamt Exp $
 
 .include <bsd.own.mk>
 
 USE_SHLIBDIR=	yes
 
 LIB=		terminfo
-WARNS=		4
+WARNS?=		5
 
 CPPFLAGS+=	-I${.CURDIR}
 

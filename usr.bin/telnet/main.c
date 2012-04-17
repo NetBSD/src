@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.27 2008/07/21 14:19:26 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.27.2.1 2012/04/17 00:09:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.27 2008/07/21 14:19:26 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.27.2.1 2012/04/17 00:09:40 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,7 @@ tninit(void)
 }
 
 	void
-usage()
+usage(void)
 {
 	fprintf(stderr, "usage: %s %s%s%s%s\n",
 	    prompt,
@@ -325,6 +325,7 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (argc) {
+		static char ml[] = "-l";
 		char *args[7];
 		char ** volatile argp;	/* avoid longjmp clobbering */
 
@@ -333,7 +334,7 @@ main(int argc, char *argv[])
 			usage();
 		*argp++ = prompt;
 		if (user) {
-			*argp++ = "-l";
+			*argp++ = ml;
 			*argp++ = user;
 		}
 		*argp++ = argv[0];		/* host */

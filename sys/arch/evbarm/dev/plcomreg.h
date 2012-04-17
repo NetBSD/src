@@ -1,4 +1,4 @@
-/*	$NetBSD: plcomreg.h,v 1.1 2001/10/27 16:22:06 rearnsha Exp $	*/
+/*	$NetBSD: plcomreg.h,v 1.1.160.1 2012/04/17 00:06:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -34,14 +34,14 @@
 #define	PLCOM_TOLERANCE	30	/* baud rate tolerance, in 0.1% units */
 
 /* control register */
-#define CR_LBE		0x80	/* Loopback enable */
-#define CR_RTIE		0x40	/* Receive timeout interrupt enable */
-#define CR_TIE		0x20	/* Transmit interrupt enable */
-#define CR_RIE		0x10	/* Receive interrrupt enable */
-#define CR_MSIE		0x08	/* Modem status interrupt enable */
-#define CR_SIRLP	0x04	/* IrDA SIR Low power mode */
-#define CR_SIREN	0x02	/* SIR Enable */
-#define CR_UARTEN	0x01	/* Uart enable */
+#define	CR_LBE		0x80	/* Loopback enable */
+#define	CR_RTIE		0x40	/* Receive timeout interrupt enable */
+#define	CR_TIE		0x20	/* Transmit interrupt enable */
+#define	CR_RIE		0x10	/* Receive interrrupt enable */
+#define	CR_MSIE		0x08	/* Modem status interrupt enable */
+#define	CR_SIRLP	0x04	/* IrDA SIR Low power mode */
+#define	CR_SIREN	0x02	/* SIR Enable */
+#define	CR_UARTEN	0x01	/* Uart enable */
 
 /* interrupt identification register */
 #define	IIR_IMASK	0x0f
@@ -51,15 +51,15 @@
 #define	IIR_MIS		0x01
 
 /* line control register */
-#define LCR_WLEN	0x60	/* Mask of size bits */
+#define	LCR_WLEN	0x60	/* Mask of size bits */
 #define	LCR_8BITS	0x60	/* 8 bits per serial word */
 #define	LCR_7BITS	0x40	/* 7 bits */
 #define	LCR_6BITS	0x20	/* 6 bits */
 #define	LCR_5BITS	0x00	/* 5 bits */
-#define LCR_FEN		0x10	/* FIFO enable */
+#define	LCR_FEN		0x10	/* FIFO enable */
 #define	LCR_STP2	0x08	/* 2 stop bits per serial word */
-#define LCR_EPS		0x04	/* Even parity select */
-#define LCR_PEN		0x02	/* Parity enable */
+#define	LCR_EPS		0x04	/* Even parity select */
+#define	LCR_PEN		0x02	/* Parity enable */
 #define	LCR_PEVEN	(LCR_PEN | LCR_EPS)
 #define	LCR_PODD	LCR_PEN
 #define	LCR_PNONE	0x00	/* No parity */
@@ -71,10 +71,10 @@
 
 /* receive status register */
 
-#define RSR_OE		0x08	/* Overrun Error */
-#define RSR_BE		0x04	/* Break */
-#define RSR_PE		0x02	/* Parity Error */
-#define RSR_FE		0x01	/* Framing Error */
+#define	RSR_OE		0x08	/* Overrun Error */
+#define	RSR_BE		0x04	/* Break */
+#define	RSR_PE		0x02	/* Parity Error */
+#define	RSR_FE		0x01	/* Framing Error */
 
 /* flag register */
 #define	FR_TXFE		0x80	/* Transmit fifo empty */
@@ -93,17 +93,17 @@
 #define	MSR_CTS		FR_CTS
 
 /* Register offsets */
-#define plcom_dr	0x00
-#define plcom_rsr	0x04
-#define plcom_ecr	0x04
-#define plcom_lcr	0x08
-#define plcom_dlbh	0x0c
-#define plcom_dlbl	0x10
-#define plcom_cr	0x14
-#define plcom_fr	0x18
-#define plcom_iir	0x1c
-#define plcom_icr	0x1c
-#define plcom_ilpr	0x20
+#define	plcom_dr	0x00
+#define	plcom_rsr	0x04
+#define	plcom_ecr	0x04
+#define	plcom_lcr	0x08
+#define	plcom_dlbh	0x0c
+#define	plcom_dlbl	0x10
+#define	plcom_cr	0x14
+#define	plcom_fr	0x18
+#define	plcom_iir	0x1c
+#define	plcom_icr	0x1c
+#define	plcom_ilpr	0x20
 
 /* IFPGA specific */
-#define PLCOM_UART_SIZE	0x24
+#define	PLCOM_UART_SIZE	0x24

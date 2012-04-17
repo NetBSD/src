@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.1 2000/05/23 11:37:58 itojun Exp $	*/
+/*	$NetBSD: dump.h,v 1.1.60.1 2012/04/17 00:09:53 yamt Exp $	*/
 /*	$KAME: dump.h,v 1.1 2000/05/23 11:31:26 itojun Exp $	*/
 
 /*
@@ -30,4 +30,4 @@
  * SUCH DAMAGE.
  */
 
-extern void rtadvd_dump_file __P((char *));
+extern void rtadvd_dump_file(const char *);

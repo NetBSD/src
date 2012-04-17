@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.11.4.1 2011/11/10 14:31:17 yamt Exp $	*/
+/*	$NetBSD: md.c,v 1.11.4.2 2012/04/17 00:02:52 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,6 +50,8 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
+#define HP700_PDC_LIMIT	((unsigned)2*1024*1024*1024)
+
 void
 md_init(void)
 {
@@ -72,14 +74,14 @@ md_get_info(void)
 
 	fd = open(dev_name, O_RDONLY, 0);
 	if (fd < 0) {
-		if (logging)
+		if (logfp)
 			(void)fprintf(logfp, "Can't open %s\n", dev_name);
 		endwin();
 		fprintf(stderr, "Can't open %s\n", dev_name);
 		exit(1);
 	}
 	if (ioctl(fd, DIOCGDINFO, &disklabel) == -1) {
-		if (logging)
+		if (logfp)
 			(void)fprintf(logfp, "Can't read disklabel on %s.\n",
 				dev_name);
 		endwin();
@@ -108,7 +110,7 @@ md_get_info(void)
 	/*
 	 * hp700 PDC can only address up to 2GB.
 	 */
-	root_limit = ((unsigned)2*1024*1024*1024) / (unsigned)sectorsize;
+	root_limit = HP700_PDC_LIMIT / (unsigned)sectorsize;
 
 	return 1;
 }
@@ -128,6 +130,23 @@ md_make_bsd_partitions(void)
 int
 md_check_partitions(void)
 {
+	/* Check the root partition is sane. */
+	uint32_t limit = HP700_PDC_LIMIT / (unsigned)sectorsize;
+	int part;
+
+	for (part = PART_A; part < MAXPARTITIONS; part++) {
+		if (strcmp(bsdlabel[part].pi_mount, "/") == 0) {
+			uint32_t offset = bsdlabel[part].pi_offset;
+			uint32_t size = bsdlabel[part].pi_size;
+
+			if (offset > limit || offset + size > limit) {
+				msg_display(MSG_md_pdclimit);
+				process_menu(MENU_ok, NULL);
+				return 0;
+			}
+		}
+	}
+
 	return 1;
 }
 

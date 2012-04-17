@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.73 2011/07/17 20:54:52 joerg Exp $	*/
+/*	$NetBSD: stand.h,v 1.73.2.1 2012/04/17 00:08:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -87,7 +87,7 @@
 
 struct open_file;
 
-#define FS_DEF(fs) \
+#define FS_DEF_BASE(fs) \
 	extern __compactcall int	__CONCAT(fs,_open)(const char *, struct open_file *); \
 	extern __compactcall int	__CONCAT(fs,_close)(struct open_file *); \
 	extern __compactcall int	__CONCAT(fs,_read)(struct open_file *, void *, \
@@ -96,6 +96,15 @@ struct open_file;
 						size_t, size_t *); \
 	extern __compactcall off_t	__CONCAT(fs,_seek)(struct open_file *, off_t, int); \
 	extern __compactcall int	__CONCAT(fs,_stat)(struct open_file *, struct stat *)
+
+#if defined(LIBSA_ENABLE_LS_OP)
+#define FS_DEF(fs) \
+	FS_DEF_BASE(fs);\
+	extern __compactcall void	__CONCAT(fs,_ls)(struct open_file *, const char *)
+#else
+#define FS_DEF(fs) FS_DEF_BASE(fs)
+#endif
+
 
 /*
  * This structure is used to define file system operations in a file system
@@ -112,11 +121,24 @@ struct fs_ops {
 	__compactcall int	(*write)(struct open_file *, void *, size_t size, size_t *);
 	__compactcall off_t	(*seek)(struct open_file *, off_t, int);
 	__compactcall int	(*stat)(struct open_file *, struct stat *);
+#if defined(LIBSA_ENABLE_LS_OP)
+	__compactcall void	(*ls)(struct open_file *, const char *);
+#endif
 };
 
 extern struct fs_ops file_system[];
 extern int nfsys;
 
+#if defined(LIBSA_ENABLE_LS_OP)
+#define FS_OPS(fs) { \
+	__CONCAT(fs,_open), \
+	__CONCAT(fs,_close), \
+	__CONCAT(fs,_read), \
+	__CONCAT(fs,_write), \
+	__CONCAT(fs,_seek), \
+	__CONCAT(fs,_stat), \
+	__CONCAT(fs,_ls) }
+#else
 #define FS_OPS(fs) { \
 	__CONCAT(fs,_open), \
 	__CONCAT(fs,_close), \
@@ -124,6 +146,7 @@ extern int nfsys;
 	__CONCAT(fs,_write), \
 	__CONCAT(fs,_seek), \
 	__CONCAT(fs,_stat) }
+#endif
 
 #define	FS_OPEN(fs)		((fs)->open)
 #define	FS_CLOSE(fs)		((fs)->close)
@@ -131,6 +154,9 @@ extern int nfsys;
 #define	FS_WRITE(fs)		((fs)->write)
 #define	FS_SEEK(fs)		((fs)->seek)
 #define	FS_STAT(fs)		((fs)->stat)
+#if defined(LIBSA_ENABLE_LS_OP)
+#define	FS_LS(fs)		((fs)->ls)
+#endif
 
 #else
 
@@ -140,6 +166,9 @@ extern int nfsys;
 #define	FS_WRITE(fs)		___CONCAT(LIBSA_SINGLE_FILESYSTEM,_write)
 #define	FS_SEEK(fs)		___CONCAT(LIBSA_SINGLE_FILESYSTEM,_seek)
 #define	FS_STAT(fs)		___CONCAT(LIBSA_SINGLE_FILESYSTEM,_stat)
+#if defined(LIBSA_ENABLE_LS_OP)
+#define	FS_LS(fs)		___CONCAT(LIBSA_SINGLE_FILESYSTEM,_ls)
+#endif
 
 FS_DEF(LIBSA_SINGLE_FILESYSTEM);
 
@@ -256,6 +285,9 @@ off_t	lseek(int, off_t, int);
 int	ioctl(int, u_long, char *);
 int	stat(const char *, struct stat *);
 int	fstat(int, struct stat *);
+#if defined(LIBSA_ENABLE_LS_OP)
+void	ls(const char *);
+#endif
 
 typedef int cmp_t(const void *, const void *);
 void	qsort(void *, size_t, size_t, cmp_t *);
@@ -287,6 +319,8 @@ off_t	olseek(int, off_t, int);
 #endif
 
 extern const char hexdigits[];
+
+int	fnmatch(const char *, const char *);
 
 /* XXX: These should be removed eventually. */
 void	bcopy(const void *, void *, size_t);

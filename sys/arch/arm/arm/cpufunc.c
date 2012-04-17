@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.103 2011/03/10 08:06:27 bsh Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.103.4.1 2012/04/17 00:06:03 yamt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.103 2011/03/10 08:06:27 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.103.4.1 2012/04/17 00:06:03 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1298,7 +1298,7 @@ get_cachesize_cp15(int cssr)
 #endif
 
 static void
-get_cachetype_cp15()
+get_cachetype_cp15(void)
 {
 	u_int ctype, isize, dsize;
 	u_int multiplier;
@@ -2772,8 +2772,7 @@ struct cpu_option armv7_options[] = {
 };
 
 void
-armv7_setup(args)
-	char *args;
+armv7_setup(char *args)
 {
 	int cpuctrl, cpuctrlmask;
 
@@ -2816,7 +2815,7 @@ armv7_setup(args)
 
 /* Clean the data cache to the level of coherency. Slow. */
 void
-armv7_dcache_wbinv_all()
+armv7_dcache_wbinv_all(void)
 {
 	u_int clidr, loc, level;
 

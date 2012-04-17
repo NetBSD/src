@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2004/06/13 11:47:41 lukem Exp $
+#	$NetBSD: Makefile,v 1.4.48.1 2012/04/17 00:09:56 yamt Exp $
 
 .include "../../../Makefile.serverlib"
+
+WARNS?=	2
 
 LIB=	x68k
 

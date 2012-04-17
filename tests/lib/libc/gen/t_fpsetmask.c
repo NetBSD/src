@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fpsetmask.c,v 1.3 2011/10/19 15:27:16 njoly Exp $ */
+/*	$NetBSD: t_fpsetmask.c,v 1.3.2.1 2012/04/17 00:09:10 yamt Exp $ */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -27,6 +27,7 @@
  */
 
 #include <atf-c.h>
+#include <atf-c/config.h>
 
 #include <stdio.h>
 #include <signal.h>
@@ -292,14 +293,12 @@ sigfpe(int s, siginfo_t *si, void *c)
 									\
 	ATF_TC_BODY(m##_##t, tc)					\
 	{								\
+		if (strcmp(atf_config_get("atf_arch"), "macppc") == 0)	\
+			atf_tc_expect_fail("PR port-macppc/46319");	\
 									\
 		if (system("cpuctl identify 0 | grep -q QEMU") == 0)	\
-			atf_tc_skip("Test not applicable on QEMU");	\
-		if (system("cpuctl identify 0 | grep -q			\
-		  'cpu0: Intel Pentium II (Klamath) (686-class), id 0x633'")\
-		    == 0)						\
-			atf_tc_skip("Test not applicable on QEMU "	\
-			    "(heuristic match)");			\
+			atf_tc_expect_fail("PR misc/44767");		\
+									\
 		m(t##_ops);						\
 	}
 

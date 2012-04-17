@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.luna68k,v 1.22 2011/07/20 12:00:04 tsutsui Exp $
+#	$NetBSD: Makefile.luna68k,v 1.22.2.1 2012/04/17 00:06:34 yamt Exp $
 
 # Makefile for NetBSD
 #
@@ -42,7 +42,7 @@ AFLAGS+=	-x assembler-with-cpp
 ## (4) local objects, compile rules, and dependencies
 ##
 # for the Motorola 68040 Floating Point Software Product
-# .include "$S/arch/m68k/fpsp/Makefile.inc"
+.include "$S/arch/m68k/fpsp/Makefile.inc"
 
 MD_OBJS=	locore.o ${FPSP}
 MD_CFILES=

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.27 2011/09/14 12:28:08 christos Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.27.2.1 2012/04/17 00:07:17 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.27 2011/09/14 12:28:08 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.27.2.1 2012/04/17 00:07:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -54,8 +54,6 @@ __KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.27 2011/09/14 12:28:08 christos Ex
 #include <compat/linux/common/linux_sched.h>
 #include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/linux_syscallargs.h>
-
-void linux_to_native_timespec(struct timespec *, struct linux_timespec *);
 
 struct futex;
 

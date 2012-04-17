@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.79 2011/03/31 19:40:52 dyoung Exp $	*/
+/*	$NetBSD: route.h,v 1.79.4.1 2012/04/17 00:08:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -154,6 +154,7 @@ struct ortentry {
 #define RTF_PROTO2	0x4000		/* protocol specific routing flag */
 #define RTF_PROTO1	0x8000		/* protocol specific routing flag */
 #define RTF_SRC		0x10000		/* route has fixed source address */
+#define	RTF_ANNOUNCE	0x20000		/* announce new arp or ndp entry */
 
 
 /*
@@ -425,7 +426,6 @@ rt_setkey(struct rtentry *rt, const struct sockaddr *key, int flags)
 		sockaddr_free(rt->_rt_key);
 	rt->_rt_key = sockaddr_dup(key, flags);
 out:
-	KASSERT(rt->_rt_key != NULL);
 	rt->rt_nodes->rn_key = (const char *)rt->_rt_key;
 	return rt->_rt_key;
 }

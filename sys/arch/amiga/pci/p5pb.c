@@ -1,7 +1,7 @@
-/*	$NetBSD: p5pb.c,v 1.4 2011/10/07 23:08:33 rkujawa Exp $ */
+/*	$NetBSD: p5pb.c,v 1.4.2.1 2012/04/17 00:06:02 yamt Exp $ */
 
 /*-
- * Copyright (c) 2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,6 +36,7 @@
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/extent.h>
 
 #include <uvm/uvm_extern.h>
@@ -45,20 +46,20 @@
 
 #include <m68k/bus_dma.h>
 #include <amiga/dev/zbusvar.h>
+#include <amiga/dev/p5busvar.h>
 #include <amiga/pci/p5pbreg.h>
 #include <amiga/pci/p5pbvar.h>
+#include <amiga/pci/p5membarvar.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
+#ifdef PCI_NETBSD_CONFIGURE
 #include <dev/pci/pciconf.h>
+#endif /* PCI_NETBSD_CONFIGURE */
 
-/* Zorro IDs */
-#define ZORRO_MANID_P5		8512
-#define ZORRO_PRODID_BPPC	110		/* BlizzardPPC */
-#define ZORRO_PRODID_CSPPC	100		/* CyberStormPPC */
-#define ZORRO_PRODID_P5PB	101		/* CVPPC/BVPPC/G-REX */
-#define ZORRO_PRODID_CV643D_Z3	67		/* CV64/3D */
+#include "opt_p5pb.h"
+#include "opt_pci.h"
 
 /* Initial CVPPC/BVPPC resolution as configured by the firmware */
 #define P5GFX_WIDTH		640
@@ -66,37 +67,14 @@
 #define P5GFX_DEPTH		8
 #define P5GFX_LINEBYTES		640
 
-/* #define P5PB_MATCH_CV643D	1 */
-/* #define P5PB_DEBUG		1 */
-
-static struct p5pb_bridge_type p5pb_bridge_cvppc = {
-	"Phase5 CVPPC/BVPPC PCI bridge",
-	false,
-	true,
-	1,
-};
-
-static struct p5pb_bridge_type p5pb_bridge_cv643d = {
-	"Phase5 CyberVision 64/3D PCI bridge",
-	false,
-	false,
-	1,
-};
-
-/* const struct p5pb_bridge_type p5pb_bridge_grex {
-	"DCE Computer G-REX PCI bridge",
-	true,
-	false,
-	5
-}
-*/
-
 static int	p5pb_match(struct device *, struct cfdata *, void *);
 static void	p5pb_attach(struct device *, struct device *, void *);
 void		p5pb_set_props(struct p5pb_softc *sc);
 pcireg_t	p5pb_pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void		p5pb_pci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
-int		p5pb_pci_bus_maxdevs(pci_chipset_tag_t pc, int busno); 
+int		p5pb_pci_bus_maxdevs_cvppc(pci_chipset_tag_t pc, int busno); 
+int		p5pb_pci_bus_maxdevs_grex1200(pci_chipset_tag_t pc, int busno); 
+int		p5pb_pci_bus_maxdevs_grex4000(pci_chipset_tag_t pc, int busno); 
 int		p5pb_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, 
 		    int func, pcireg_t id);
 void		p5pb_pci_attach_hook (struct device *parent, 
@@ -107,116 +85,111 @@ void		p5pb_pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag,
 		    int *bp, int *dp, int *fp);
 int		p5pb_pci_intr_map(const struct pci_attach_args *pa, 
 		    pci_intr_handle_t *ihp);
-bool	p5pb_bus_map_cv643d(struct p5pb_softc *sc);
-static bool	p5pb_bus_map_cvppc(struct p5pb_softc *sc);
+bool		p5pb_bus_map_memio(struct p5pb_softc *sc);
+bool		p5pb_bus_map_conf(struct p5pb_softc *sc);
+uint8_t		p5pb_find_resources(struct p5pb_softc *sc);
+static bool	p5pb_identify_bridge(struct p5pb_softc *sc);
+void		p5pb_membar_grex(struct p5pb_softc *sc);
+static bool	p5pb_cvppc_probe(struct p5pb_softc *sc);
+#ifdef PCI_NETBSD_CONFIGURE
+bool		p5pb_bus_reconfigure(struct p5pb_softc *sc);
+#endif /* PCI_NETBSD_CONFIGURE */
+#ifdef P5PB_DEBUG
+void		p5pb_usable_ranges(struct p5pb_softc *sc);
+void		p5pb_badaddr_range(struct p5pb_softc *sc, bus_space_tag_t bust, 
+		    bus_addr_t base, size_t len);
+void		p5pb_conf_search(struct p5pb_softc *sc, uint16_t val);
+#endif /* P5PB_DEBUG */
 
 CFATTACH_DECL_NEW(p5pb, sizeof(struct p5pb_softc),
     p5pb_match, p5pb_attach, NULL, NULL);
 
-static int p5pb_present = 0;
-
 static int
 p5pb_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct zbus_args *zap;
+	struct p5bus_attach_args *p5baa;
 
-	zap = aux;
+	p5baa = (struct p5bus_attach_args *) aux;
 
-	if (zap->manid != ZORRO_MANID_P5)
-		return 0;
+	if (strcmp(p5baa->p5baa_name, "p5pb") == 0)
+		return 1;
 
-#ifdef I_HAVE_P5PB_REALLY
-	/* 
-	 * At least some firmware versions do not create AutoConfig entries for 
-	 * CyberVisionPPC/BlizzardVisionPPC (product ID 0101). There's no "nice"
-	 * way to detect the PCI bus in this case. At least check for CSPPC/BPPC.
-         */
-	if ((zap->prodid != ZORRO_PRODID_BPPC) && 
-	    (zap->prodid != ZORRO_PRODID_CSPPC)) {
-		if (!p5pb_present) {
-			p5pb_present = 1;
-			return 100; /* XXX: This will break SCSI! */
-		}
-	}
-#endif 
-
-	if ((zap->prodid != ZORRO_PRODID_P5PB)
-#ifdef P5PB_MATCH_CV643D
-	/*
-	 * This should not be used now, because CV64/3D grf driver does
-	 * attach directly to Zorro bus. Might get useful if we ever get
-	 * virgefb..
-	 */
-		&& (zap->prodid != ZORRO_PRODID_CV643D_Z3)
-
-#endif
-	    )
-		return 0;
-		
-#ifdef P5PB_DEBUG
-	aprint_normal("p5pb matched by Zorro ID %d, %d\n", zap->manid,
-	    zap->prodid); 
-#endif
-
-	if (p5pb_present)
-		return 0; /* Allow only one. */
-
-
-	p5pb_present = 1;
-	return 10;
+	return 0;
 }
-
 
 static void
 p5pb_attach(device_t parent, device_t self, void *aux)
 {
 	struct p5pb_softc *sc; 
 	struct pcibus_attach_args pba;  
-	struct p5pb_bridge_type *bt;
-	struct zbus_args *zap;
 
 	sc = device_private(self);
-	pci_chipset_tag_t pc = &sc->apc;
 	sc->sc_dev = self;
-	zap = aux;
-	
-	if(zap->prodid == ZORRO_PRODID_CV643D_Z3) {
-		bt = &p5pb_bridge_cv643d;
-		sc->p5pb_bus_map = &p5pb_bus_map_cv643d;
-		sc->ba = zap->va;
-	} else {
-		bt = &p5pb_bridge_cvppc;
-		sc->p5pb_bus_map = p5pb_bus_map_cvppc;
-	}
+	sc->p5baa = (struct p5bus_attach_args *) aux;
 
-	if(!(sc->p5pb_bus_map(sc))) {
+	pci_chipset_tag_t pc = &sc->apc;
+
+	if (!p5pb_bus_map_conf(sc)) {
 		aprint_error_dev(self,
-		    "couldn't map PCI configuration registers\n");
+		    "couldn't map PCI configuration space\n");
 		return;
 	}
 
-	aprint_normal(": %s\n", bt->name); 
+	if (!p5pb_identify_bridge(sc)) {
+		return;
+	}
+
+	if (sc->bridge_type == P5PB_BRIDGE_CVPPC) {
+		sc->pci_mem_lowest = P5BUS_PCI_MEM_BASE;
+		sc->pci_mem_highest = P5BUS_PCI_MEM_BASE + P5BUS_PCI_MEM_SIZE;
+	} else {
+		p5pb_membar_grex(sc);
+	}
+
+	if (!p5pb_bus_map_memio(sc)) {
+		aprint_error_dev(self,
+		    "couldn't map PCI I/O and memory space\n");
+		return;
+	}
 
 #ifdef P5PB_DEBUG
-	aprint_normal("p5pb: mapped %x -> %x, %x -> %x\n, %x -> %x\n",
-	    P5BUS_PCI_CONF_BASE, sc->pci_conf_area.base,
-	    P5BUS_PCI_IO_BASE, sc->pci_conf_area.base,
-	    P5BUS_PCI_MEM_BASE, sc->pci_mem_area.base ); 
+	aprint_normal("p5pb: map conf %x -> %x, io %x -> %x, mem %x -> %x\n",
+	    kvtop((void*) sc->pci_conf_area.base), sc->pci_conf_area.base,
+	    kvtop((void*) sc->pci_io_area.base), sc->pci_io_area.base,
+	    kvtop((void*) sc->pci_mem_area.base), sc->pci_mem_area.base ); 
 #endif 
 
 	/* Initialize the PCI chipset tag. */
+
+	if (sc->bridge_type == P5PB_BRIDGE_GREX1200)
+		sc->apc.pc_bus_maxdevs = p5pb_pci_bus_maxdevs_grex1200;
+	else if (sc->bridge_type == P5PB_BRIDGE_GREX4000)
+		sc->apc.pc_bus_maxdevs = p5pb_pci_bus_maxdevs_grex4000;
+	else
+		sc->apc.pc_bus_maxdevs = p5pb_pci_bus_maxdevs_cvppc;
+
 	sc->apc.pc_conf_v = (void*) pc;
-	sc->apc.pc_bus_maxdevs = p5pb_pci_bus_maxdevs;
 	sc->apc.pc_make_tag = amiga_pci_make_tag;
 	sc->apc.pc_decompose_tag = amiga_pci_decompose_tag;
 	sc->apc.pc_conf_read = p5pb_pci_conf_read;
 	sc->apc.pc_conf_write = p5pb_pci_conf_write;
+	sc->apc.pc_conf_hook = p5pb_pci_conf_hook;
+	sc->apc.pc_conf_interrupt = amiga_pci_conf_interrupt;
 	sc->apc.pc_attach_hook = p5pb_pci_attach_hook;
       
 	sc->apc.pc_intr_map = p5pb_pci_intr_map; 
 	sc->apc.pc_intr_string = amiga_pci_intr_string;	
 	sc->apc.pc_intr_establish = amiga_pci_intr_establish;
 	sc->apc.pc_intr_disestablish = amiga_pci_intr_disestablish;
+
+#ifdef PCI_NETBSD_CONFIGURE
+	/* Never reconfigure the bus on CVPPC/BVPPC, avoid the fb breakage. */
+	if (sc->bridge_type != P5PB_BRIDGE_CVPPC) {
+		p5pb_bus_reconfigure(sc);
+	}
+#endif /* PCI_NETBSD_CONFIGURE */
+
+	/* Initialize the bus attachment structure. */
  
 	pba.pba_iot = &(sc->pci_io_area);
 	pba.pba_memt = &(sc->pci_mem_area);
@@ -233,8 +206,100 @@ p5pb_attach(device_t parent, device_t self, void *aux)
 }
 
 /*
+ * Try to detect what kind of bridge are we dealing with. 
+ */
+static bool 
+p5pb_identify_bridge(struct p5pb_softc *sc) 
+{
+	int pcires_count;	/* Number of AutoConfig(TM) PCI resources */
+
+	pcires_count = p5pb_find_resources(sc);
+
+	switch (pcires_count) {
+	case 0:
+		/*
+		 * Zero AutoConfig(TM) PCI resources, means that there's nothing
+		 * OR there's a CVPPC/BVPPC with a pre-44.69 firmware.
+		 */ 
+		if (p5pb_cvppc_probe(sc)) {
+			sc->bridge_type = P5PB_BRIDGE_CVPPC;
+			aprint_normal(": Phase5 CVPPC/BVPPC PCI bridge\n");
+		} else {
+			aprint_normal(": no PCI bridges detected\n");
+			return false;
+		}
+		break;
+	case 6:
+		/*
+		 * We have a slight possibility, that there's a CVPPC/BVPPC with
+		 * the new firmware. So check for it first. 
+		 */
+		if (p5pb_cvppc_probe(sc)) {
+			/* New firmware, treat as one-slot GREX. */
+			sc->bridge_type = P5PB_BRIDGE_CVPPC;
+			aprint_normal(
+			    ": Phase5 CVPPC/BVPPC PCI bridge (44.69/44.71)\n");
+			break;
+		}
+	default:
+		/* We have a G-REX surely. */
+
+		if (sc->p5baa->p5baa_cardtype == P5_CARDTYPE_CS) {
+			sc->bridge_type = P5PB_BRIDGE_GREX4000;
+			aprint_normal(": DCE G-REX 4000 PCI bridge\n");
+		} else {
+			sc->bridge_type = P5PB_BRIDGE_GREX1200;
+			aprint_normal(": DCE G-REX 1200 PCI bridge\n");
+		}
+		break;
+	}
+	return true;
+}
+
+/* 
+ * Find AutoConfig(TM) resuorces (for boards running G-REX firmware). Return the
+ * total number of found resources.
+ */
+uint8_t
+p5pb_find_resources(struct p5pb_softc *sc) 
+{
+	uint8_t i, rv;
+	struct p5pb_autoconf_entry *auto_entry;
+	struct p5membar_softc *membar_sc;
+	device_t p5membar_dev;
+	
+	rv = 0;
+
+	TAILQ_INIT(&sc->auto_bars);
+
+	/* 255 should be enough for everybody */
+	for(i = 0; i < 255; i++) {
+
+		if ((p5membar_dev = 
+		    device_find_by_driver_unit("p5membar", i)) != NULL) {
+
+			rv++;
+
+			membar_sc = device_private(p5membar_dev);
+			if (membar_sc->sc_type == P5MEMBAR_TYPE_INTERNAL)
+				continue;
+
+			auto_entry = 
+			    kmem_alloc(sizeof(struct p5pb_autoconf_entry), 
+			    KM_SLEEP);
+
+			auto_entry->base = membar_sc->sc_base;
+			auto_entry->size = membar_sc->sc_size;
+
+			TAILQ_INSERT_TAIL(&sc->auto_bars, auto_entry, entries);
+		}
+	}	
+	return rv;	
+}
+
+/*
  * Set properties needed to support fb driver. These are read later during
- * autoconfg in device_register().
+ * autoconfg in device_register(). Needed for CVPPC/BVPPC and Voodoo in G-REX.
  */
 void
 p5pb_set_props(struct p5pb_softc *sc) 
@@ -244,20 +309,27 @@ p5pb_set_props(struct p5pb_softc *sc)
 	
 	dev = sc->sc_dev;
 	dict = device_properties(dev);
-	
+
 	prop_dictionary_set_uint32(dict, "width", P5GFX_WIDTH);
 	prop_dictionary_set_uint32(dict, "height", P5GFX_HEIGHT);
 	prop_dictionary_set_uint8(dict, "depth", P5GFX_DEPTH);
-	prop_dictionary_set_uint16(dict, "linebytes", P5GFX_LINEBYTES);
-	prop_dictionary_set_uint64(dict, "address", P5BUS_PCI_MEM_BASE);
+
+	/* genfb needs additional properties, like virtual, physical address */
 #if (NGENFB > 0)
-	/*
-	 * Framebuffer starts at P5BUS_PCI_MEM_BASE, but genfb needs virtual
-	 * address.
-	 */
+	/* XXX: currently genfb is supported only on CVPPC/BVPPC */
+	prop_dictionary_set_uint16(dict, "linebytes", P5GFX_LINEBYTES);
 	prop_dictionary_set_uint64(dict, "virtual_address",
 	    sc->pci_mem_area.base);
+	prop_dictionary_set_uint64(dict, "address", 
+	    kvtop((void*) sc->pci_mem_area.base)); 
 #endif
+
+#ifdef P5PB_CONSOLE
+	prop_dictionary_set_bool(dict, "is_console", true);
+#else
+	prop_dictionary_set_bool(dict, "is_console", false);
+#endif
+
 }
 
 pcireg_t
@@ -269,8 +341,8 @@ p5pb_pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 
 	data = bus_space_read_4(pc->pci_conf_datat, pc->pci_conf_datah,
-	    (func<<5) + reg);
-#ifdef P5PB_DEBUG
+	    + reg + (dev * OFF_PCI_DEVICE));
+#ifdef P5PB_DEBUG_CONF
 	aprint_normal("p5pb conf read va: %lx, bus: %d, dev: %d, "
 	    "func: %d, reg: %d -r-> data %x\n",
 	    pc->pci_conf_datah, bus, dev, func, reg, data);
@@ -286,8 +358,8 @@ p5pb_pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t val)
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 	
 	bus_space_write_4(pc->pci_conf_datat, pc->pci_conf_datah,
-	    (func << 5) + reg, val);
-#ifdef P5PB_DEBUG
+	    + reg + (dev * OFF_PCI_DEVICE), val);
+#ifdef P5PB_DEBUG_CONF
 	aprint_normal("p5pb conf write va: %lx, bus: %d, dev: %d, "
 	    "func: %d, reg: %d -w-> data %x\n",
 	    pc->pci_conf_datah, bus, dev, func, reg, val);
@@ -296,10 +368,24 @@ p5pb_pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t val)
 }
 
 int
-p5pb_pci_bus_maxdevs(pci_chipset_tag_t pc, int busno) 
+p5pb_pci_bus_maxdevs_cvppc(pci_chipset_tag_t pc, int busno) 
 {
-	/* G-Rex has max 5 slots. CVPPC/BVPPC has only 1. */
+	/* CVPPC/BVPPC has only 1 "slot". */
 	return 1;
+}
+
+int
+p5pb_pci_bus_maxdevs_grex4000(pci_chipset_tag_t pc, int busno) 
+{
+	/* G-REX 4000 has 4, G-REX 4000T has 3 slots? */
+	return 1; /* XXX: 4 not yet! */
+}
+
+int
+p5pb_pci_bus_maxdevs_grex1200(pci_chipset_tag_t pc, int busno) 
+{
+	/* G-REX 1200 has 5 slots. */
+	return 1; /* XXX: 5 not yet! */
 }
 
 void
@@ -317,31 +403,116 @@ p5pb_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	return 0;
 }
 
+/* Probe for CVPPC/BVPPC. */
 static bool
-p5pb_bus_map_cvppc(struct p5pb_softc *sc) 
+p5pb_cvppc_probe(struct p5pb_softc *sc) 
 {
-#ifdef P5PB_DEBUG
-	aprint_normal("p5pb: p5pb_bus_map_cvppc called\n");
+	bus_space_handle_t probe_h;
+	uint16_t prodid, manid;
+	void* data;
+	bool rv;
+
+	manid = 0; prodid = 0;
+	rv = false;
+
+	if (bus_space_map(sc->apc.pci_conf_datat, 0, 4, 0, &probe_h)) 
+		return rv; 
+
+	data = bus_space_vaddr(sc->apc.pci_conf_datat, probe_h);
+
+	if (badaddr((void *)__UNVOLATILE((uint32_t) data))) {
+#ifdef P5PB_DEBUG_PROBE
+		aprint_normal("p5pb: CVPPC configuration space not usable!\n");
+#endif /* P5PB_DEBUG_PROBE */
+	} else {
+		prodid = bus_space_read_2(sc->apc.pci_conf_datat, probe_h, 0);	
+		manid = bus_space_read_2(sc->apc.pci_conf_datat, probe_h, 2);	
+
+		if ((prodid == P5PB_PM2_PRODUCT_ID) && 
+		    (manid == P5PB_PM2_VENDOR_ID)) 
+			rv = true; 
+	}
+
+#ifdef P5PB_DEBUG_PROBE
+	aprint_normal("p5pb: CVPPC probe for PCI ID: %x, %x returns %d\n",
+	    manid, prodid, (int) rv);
+#endif /* P5PB_DEBUG_PROBE */
+
+	bus_space_unmap(sc->apc.pci_conf_datat, probe_h, 4);
+	return rv;	
+}
+
+#ifdef PCI_NETBSD_CONFIGURE 
+/* Reconfigure the bus. */
+bool
+p5pb_bus_reconfigure(struct p5pb_softc *sc) 
+{
+	struct extent		*ioext, *memext; 
+	pci_chipset_tag_t	pc;
+
+	pc = &sc->apc;
+
+	ioext = extent_create("p5pbio", 0, P5BUS_PCI_IO_SIZE, NULL, 0,
+	    EX_NOWAIT);
+
+	memext = extent_create("p5pbmem", sc->pci_mem_lowest, 
+	     sc->pci_mem_highest, NULL, 0, EX_NOWAIT);
+	
+	if ( (!ioext) || (!memext) ) 
+		return false;
+
+#ifdef P5PB_DEBUG 
+	aprint_normal("p5pb: reconfiguring the bus!\n");
 #endif /* P5PB_DEBUG */
-	/* Setup bus space mappings. */
+	pci_configure_bus(pc, ioext, memext, NULL, 0, CACHELINE_SIZE);
+
+	extent_destroy(ioext);
+	extent_destroy(memext);
+
+	return true; /* TODO: better error handling */
+}
+#endif /* PCI_NETBSD_CONFIGURE */
+
+/* Determine the PCI memory space (done G-REX-style). */
+void
+p5pb_membar_grex(struct p5pb_softc *sc)
+{
+	struct p5pb_autoconf_entry *membar_entry;
+	uint32_t bar_address; 
+
+	sc->pci_mem_lowest = 0xFFFFFFFF;
+	sc->pci_mem_highest = 0;
+
+	/* Iterate over membar entries to find lowest and highest address. */
+	TAILQ_FOREACH(membar_entry, &sc->auto_bars, entries) {
+
+		bar_address = (uint32_t) membar_entry->base;
+		if ((bar_address + membar_entry->size) > sc->pci_mem_highest)
+			sc->pci_mem_highest = bar_address + membar_entry->size;
+		if (bar_address < sc->pci_mem_lowest)
+			sc->pci_mem_lowest = bar_address;
+
+#ifdef P5PB_DEBUG_BAR
+		aprint_normal("p5pb: %d kB mem BAR at %p, hi = %x, lo = %x\n",
+		    membar_entry->size / 1024, membar_entry->base, 
+		    sc->pci_mem_highest, sc->pci_mem_lowest);
+#endif /* P5PB_DEBUG_BAR */
+	}
+
+	aprint_normal("p5pb: %d kB PCI memory space (%8p to %8p)\n",
+	    (sc->pci_mem_highest - sc->pci_mem_lowest) / 1024, 
+	     (void*) sc->pci_mem_lowest, (void*) sc->pci_mem_highest);
+
+}
+
+bool
+p5pb_bus_map_conf(struct p5pb_softc *sc) 
+{
 	sc->pci_conf_area.base = (bus_addr_t) zbusmap(
 	    (void *) P5BUS_PCI_CONF_BASE, P5BUS_PCI_CONF_SIZE);
 	sc->pci_conf_area.absm = &amiga_bus_stride_1;
 
-	sc->pci_io_area.base = (bus_addr_t) zbusmap(
-	    (void *) P5BUS_PCI_IO_BASE, P5BUS_PCI_IO_SIZE);
-	sc->pci_io_area.absm = &amiga_bus_stride_1swap_abs;
-
-	sc->pci_mem_area.base = (bus_addr_t) zbusmap(
-	    (void *) P5BUS_PCI_MEM_BASE, P5BUS_PCI_MEM_SIZE);
-	sc->pci_mem_area.absm = &amiga_bus_stride_1swap_abs;
-	
 	sc->apc.pci_conf_datat = &(sc->pci_conf_area);
-	sc->apc.pci_conf_addresst = &(sc->pci_conf_area);
-
-	if (bus_space_map(sc->apc.pci_conf_addresst, OFF_PCI_CONF_ADDR, 
-	    256, 0, &sc->apc.pci_conf_addressh)) 
-		return false;
 
 	if (bus_space_map(sc->apc.pci_conf_datat, OFF_PCI_CONF_DATA, 
 	    256, 0, &sc->apc.pci_conf_datah)) 
@@ -350,29 +521,99 @@ p5pb_bus_map_cvppc(struct p5pb_softc *sc)
 	return true;
 }
 
+/* Map I/O and memory space. */
 bool
-p5pb_bus_map_cv643d(struct p5pb_softc *sc) {
-#ifdef P5PB_DEBUG
-	aprint_normal("p5pb: p5pb_bus_map_cv643d called, ba = %x\n", 
-	    (bus_addr_t) sc->ba);
-#endif /* P5PB_DEBUG */
+p5pb_bus_map_memio(struct p5pb_softc *sc)
+{
+	sc->pci_io_area.base = (bus_addr_t) zbusmap(
+	    (void *) P5BUS_PCI_IO_BASE, P5BUS_PCI_IO_SIZE);
+	sc->pci_io_area.absm = &amiga_bus_stride_1swap;
 
-	sc->pci_conf_area.base = (bus_addr_t) sc->ba + CV643D_PCI_CONF_BASE;
-	sc->pci_conf_area.absm = &amiga_bus_stride_1;
+	sc->pci_mem_area.base = (bus_addr_t) zbusmap(
+	    (void *) sc->pci_mem_lowest, 
+	    sc->pci_mem_highest - sc->pci_mem_lowest);
+	sc->pci_mem_area.absm = &amiga_bus_stride_1swap_abs;
 
-	sc->pci_mem_area.base = (bus_addr_t) sc->ba + CV643D_PCI_MEM_BASE; 
-	sc->pci_mem_area.absm = &amiga_bus_stride_1;
-
-	sc->pci_io_area.base = (bus_addr_t) sc->ba + CV643D_PCI_IO_BASE;
-	sc->pci_io_area.absm = &amiga_bus_stride_1;
-
-	sc->apc.pci_conf_datat = &(sc->pci_conf_area);
-
-	if (bus_space_map(sc->apc.pci_conf_datat, 0, 
-	    CV643D_PCI_CONF_SIZE, 0, &sc->apc.pci_conf_datah)) 
-		return false;
-
-		
 	return true;
 }
+
+int
+p5pb_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, 
+    int func, pcireg_t id) 
+{	
+	/* XXX: What should we do on CVPPC/BVPPC? It breaks genfb. */
+
+	return PCI_CONF_DEFAULT;
+}
+
+#ifdef P5PB_DEBUG
+/* Check which config and I/O ranges are usable. */
+void
+p5pb_usable_ranges(struct p5pb_softc *sc) 
+{
+	p5pb_badaddr_range(sc, &(sc->pci_conf_area), 0, P5BUS_PCI_CONF_SIZE);
+	p5pb_badaddr_range(sc, &(sc->pci_io_area), 0, P5BUS_PCI_IO_SIZE);
+}
+
+void
+p5pb_badaddr_range(struct p5pb_softc *sc, bus_space_tag_t bust, bus_addr_t base,
+    size_t len)
+{
+	int i, state, prev_state;
+	bus_space_handle_t bush;
+	volatile void *data;
+
+	state = -1;
+	prev_state = -1;
+
+	bus_space_map(bust, base, len, 0, &bush);
+
+	aprint_normal("p5pb: badaddr range check from %x (%x) to %x (%x)\n", 
+	    (bus_addr_t) bush,			/* start VA */
+	    (bus_addr_t) kvtop((void*) bush),	/* start PA */
+	    (bus_addr_t) bush + len,		/* end VA */
+	    (bus_addr_t) kvtop((void*) (bush + len)));/* end PA */
+
+	data = bus_space_vaddr(bust, bush);
+
+	for(i = 0; i < len; i++) {
+		state = badaddr((void *)__UNVOLATILE(((uint32_t) data + i)));
+		if(state != prev_state) {
+			aprint_normal("p5pb: badaddr %p (%x) : %d\n", 
+			    (void*) ((uint32_t) data + i),
+			    (bus_addr_t) kvtop((void*) ((uint32_t) data + i)), 
+			    state);
+			prev_state = state;
+		}
+			
+	}
+
+	bus_space_unmap(bust, bush, len);
+}
+
+/* Search for 16-bit value in the configuration space. */
+void
+p5pb_conf_search(struct p5pb_softc *sc, uint16_t val) 
+{
+	int i, state;
+	uint16_t readv;
+	void *va;
+
+	va = bus_space_vaddr(sc->apc.pci_conf_datat, sc->apc.pci_conf_datah);
+
+	for (i = 0; i < P5BUS_PCI_CONF_SIZE; i++) {
+		state = badaddr((void *)__UNVOLATILE(((uint32_t) va + i)));
+		if(state == 0) {
+			readv = bus_space_read_2(sc->apc.pci_conf_datat, 
+			    sc->apc.pci_conf_datah, i);
+			if(readv == val)
+				aprint_normal("p5pb: found val %x @ %x (%x)\n",
+				    readv, (uint32_t) sc->apc.pci_conf_datah 
+				    + i, (bus_addr_t) kvtop((void*) 
+				    ((uint32_t) sc->apc.pci_conf_datah + i)));
+		}		
+	}
+}
+
+#endif /* P5PB_DEBUG */
 

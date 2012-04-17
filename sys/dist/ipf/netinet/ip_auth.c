@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.c,v 1.16 2010/08/11 11:57:36 pgoyette Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.16.8.1 2012/04/17 00:08:12 yamt Exp $	*/
 
 /*
  * Copyright (C) 1998-2003 by Darren Reed & Guido van Rooij.
@@ -124,7 +124,7 @@ extern struct ifqueue   ipintrq;		/* ip packet input queue */
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.16 2010/08/11 11:57:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.16.8.1 2012/04/17 00:08:12 yamt Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.73.2.34 2010/01/31 16:22:54 darrenr Exp";
 #endif
@@ -153,10 +153,14 @@ frauthent_t	*fae_list = NULL;
 frentry_t	*ipauth = NULL,
 		*fr_authlist = NULL;
 
-void fr_authderef __P((frauthent_t **));
-int fr_authgeniter __P((ipftoken_t *, ipfgeniter_t *, ipfobj_t *));
-int fr_authreply __P((char *));
-int fr_authwait __P((char *));
+void
+fr_authderef(frauthent_t **);
+int
+fr_authgeniter(ipftoken_t *, ipfgeniter_t *, ipfobj_t *);
+int
+fr_authreply(char *);
+int
+fr_authwait(char *);
 
 /* ------------------------------------------------------------------------ */
 /* Function:    fr_authinit                                                 */
@@ -166,7 +170,8 @@ int fr_authwait __P((char *));
 /* Allocate memory and initialise data structures used in handling auth     */
 /* rules.                                                                   */
 /* ------------------------------------------------------------------------ */
-int fr_authinit()
+int
+fr_authinit(void)
 {
 	KMALLOCS(fr_auth, frauth_t *, fr_authsize * sizeof(*fr_auth));
 	if (fr_auth != NULL)
@@ -205,9 +210,8 @@ int fr_authinit()
 /* authorization result and that would result in a feedback loop (i.e. it   */
 /* will end up returning FR_AUTH) then return FR_BLOCK instead.             */
 /* ------------------------------------------------------------------------ */
-frentry_t *fr_checkauth(fin, passp)
-fr_info_t *fin;
-u_32_t *passp;
+frentry_t *
+fr_checkauth(fr_info_t *fin, u_32_t *passp)
 {
 	frentry_t *fr;
 	frauth_t *fra;
@@ -321,9 +325,8 @@ u_32_t *passp;
 /* packet. If we do, store it and wake up any user programs which are       */
 /* waiting to hear about these events.                                      */
 /* ------------------------------------------------------------------------ */
-int fr_newauth(m, fin)
-mb_t *m;
-fr_info_t *fin;
+int
+fr_newauth(mb_t *m, fr_info_t *fin)
 {
 #if defined(_KERNEL) && defined(MENTAT)
 	qpktinfo_t *qpi = fin->fin_qpi;
@@ -411,11 +414,8 @@ fr_info_t *fin;
 /* This function handles all of the ioctls recognised by the auth component */
 /* in IPFilter - ie ioctls called on an open fd for /dev/ipauth             */
 /* ------------------------------------------------------------------------ */
-int fr_auth_ioctl(data, cmd, mode, uid, ctx)
-void *data;
-ioctlcmd_t cmd;
-int mode, uid;
-void *ctx;
+int
+fr_auth_ioctl(void *data, ioctlcmd_t cmd, int mode, int uid, void *ctx)
 {
 	int error = 0, i;
 	SPL_INT(s);
@@ -504,7 +504,8 @@ void *ctx;
 /*                                                                          */
 /* Free all network buffer memory used to keep saved packets.               */
 /* ------------------------------------------------------------------------ */
-void fr_authunload()
+void
+fr_authunload(void)
 {
 	register int i;
 	register frauthent_t *fae, **faep;
@@ -565,7 +566,8 @@ void fr_authunload()
 /* Slowly expire held auth records.  Timeouts are set in expectation of     */
 /* this being called twice per second.                                      */
 /* ------------------------------------------------------------------------ */
-void fr_authexpire()
+void
+fr_authexpire(void)
 {
 	frauthent_t *fae, **faep;
 	frentry_t *fr, **frp;
@@ -631,9 +633,8 @@ void fr_authexpire()
 /*              fptr(I) - pointer to caller's 'fr'                          */
 /*                                                                          */
 /* ------------------------------------------------------------------------ */
-int fr_preauthcmd(cmd, fr, frptr)
-ioctlcmd_t cmd;
-frentry_t *fr, **frptr;
+int
+fr_preauthcmd(ioctlcmd_t cmd, frentry_t *fr, frentry_t **frptr)
 {
 	frauthent_t *fae, **faep;
 	int error = 0;
@@ -702,7 +703,8 @@ frentry_t *fr, **frptr;
 /* set the priority level correctly for this to block out other code paths  */
 /* into these data structures.                                              */
 /* ------------------------------------------------------------------------ */
-int fr_authflush()
+int
+fr_authflush(void)
 {
 	register int i, num_flushed;
 	mb_t *m;
@@ -745,7 +747,8 @@ int fr_authflush()
 /* Simple truth check to see if there are any packets waiting in the auth   */
 /* queue.                                                                   */
 /* ------------------------------------------------------------------------ */
-int fr_auth_waiting()
+int
+fr_auth_waiting(void)
 {
 	return (fr_authused != 0);
 }
@@ -758,10 +761,8 @@ int fr_auth_waiting()
 /*              itp(I)   - pointer to ipfgeniter structure                  */
 /*                                                                          */
 /* ------------------------------------------------------------------------ */
-int fr_authgeniter(token, itp, obj)
-ipftoken_t *token;
-ipfgeniter_t *itp;
-ipfobj_t *obj;
+int
+fr_authgeniter(ipftoken_t *token, ipfgeniter_t *itp, ipfobj_t *obj)
 {
 	frauthent_t *fae, *next, zero;
 	int error;
@@ -839,8 +840,8 @@ ipfobj_t *obj;
 /* to make it clear that it should no longer use that pointer, and drops    */
 /* the reference count on the structure by 1.  If it reaches 0, free it up. */
 /* ------------------------------------------------------------------------ */
-void fr_authderef(faep)
-frauthent_t **faep;
+void
+fr_authderef(frauthent_t **faep)
 {
 	frauthent_t *fae;
 
@@ -865,8 +866,8 @@ frauthent_t **faep;
 /* If there are no packets present in the queue (fr_authpkts) then we go to */
 /* sleep.                                                                   */
 /* ------------------------------------------------------------------------ */
-int fr_authwait(data)
-char *data;
+int
+fr_authwait(char *data)
 {
 	frauth_t auth, *au = &auth;
 	int error, len, i;
@@ -988,8 +989,8 @@ fr_authioctlloop:
 /* received information using an SIOCAUTHW.  The decision returned in the   */
 /* form of flags, the same as those used in each rule.                      */
 /* ------------------------------------------------------------------------ */
-int fr_authreply(data)
-char *data;
+int
+fr_authreply(char *data)
 {
 	frauth_t auth, *au = &auth, *fra;
 	fr_info_t fin;

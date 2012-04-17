@@ -1,4 +1,4 @@
-/*	$NetBSD: support.s,v 1.6 2011/02/08 20:20:16 rmind Exp $	*/
+/*	$NetBSD: support.s,v 1.6.4.1 2012/04/17 00:06:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,4 +64,15 @@ ENTRY(longjmp)
 	moveml	%a0@+,#0xFCFC
 	movl	%a0@,%sp@
 	moveq	#1,%d0
+	rts
+
+/*
+ * fetch registers for debugger
+ */
+ENTRY_NOPROFILE(getsfc)
+	movc	%sfc,%d0
+	rts
+
+ENTRY_NOPROFILE(getdfc)
+	movc	%dfc,%d0
 	rts

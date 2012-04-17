@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.36 2009/08/28 15:29:16 dyoung Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.36.12.1 2012/04/17 00:07:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -908,6 +908,23 @@ struct tulip_desc {
 #define GPP_COGENT_EM1x0_PINS	0x3f	/* General Purpose Pin directions */
 #define GPP_COGENT_EM1x0_INIT	0x09	/* No loopback --- point-to-point */
 
+/*
+ * Digital EB140 21140 reference design.
+ * MC68832 + ML6671 for 100Mb/s.  LXT901 for 10Mb/s.
+ *
+ * (From document EC-QD2SA-TE, figure 1-3.)
+ */
+#define	GPP_EB140_OUTPUTS	0x1f	/* these GPP pins are driven */
+#define	GPP_EB140_MC68832_LB	0x01	/* 100Mb/s loopback disable 1 */
+#define	GPP_EB140_ML6671_LB	0x02	/* 100Mb/s loopback disable 2 */
+#define	GPP_EB140_LXT901_ILB	0x04	/* 10Mb/s internal LB enable */
+#define	GPP_EB140_LXT901_ELB	0x08	/* 10Mb/s external LB disable */
+#define	GPP_EB140_RESERVED	0x10	/* media switch relay on other boards */
+#define	GPP_EB140_MC68836_SYNC	0x20	/* synced to 100Mb/s PHY */
+#define	GPP_EB140_MC68836_LINK	0x40	/* 100Mb/s signal detect */
+#define	GPP_EB140_LXT901_LINK	0x80	/* 10Mb/s link pass */
+
+#define	GPP_EB140_INIT	(GPP_EB140_LXT901_ELB|GPP_EB140_ML6671_LB|GPP_EB140_MC68832_LB)
 
 /*
  * Digital Semiconductor 21040 registers.

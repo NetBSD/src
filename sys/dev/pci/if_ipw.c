@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.52 2010/11/15 05:57:07 uebayasi Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.52.8.1 2012/04/17 00:07:47 yamt Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.52 2010/11/15 05:57:07 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.52.8.1 2012/04/17 00:07:47 yamt Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -178,21 +178,18 @@ ipw_attach(device_t parent, device_t self, void *aux)
 	struct ifnet *ifp = &sc->sc_if;
 	struct pci_attach_args *pa = aux;
 	const char *intrstr;
-	char devinfo[256];
 	bus_space_tag_t memt;
 	bus_space_handle_t memh;
 	bus_addr_t base;
 	pci_intr_handle_t ih;
 	uint32_t data;
 	uint16_t val;
-	int i, revision, error;
+	int i, error;
 
 	sc->sc_pct = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof devinfo);
-	revision = PCI_REVISION(pa->pa_class);
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, revision);
+	pci_aprint_devinfo(pa, NULL);
 
 	/* enable bus-mastering */
 	data = pci_conf_read(sc->sc_pct, pa->pa_tag, PCI_COMMAND_STATUS_REG);

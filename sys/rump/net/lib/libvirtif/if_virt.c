@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.25 2011/10/31 13:25:21 yamt Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.25.2.1 2012/04/17 00:08:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.25 2011/10/31 13:25:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.25.2.1 2012/04/17 00:08:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.25 2011/10/31 13:25:21 yamt Exp $");
 #include <sys/poll.h>
 #include <sys/sockio.h>
 #include <sys/socketvar.h>
+#include <sys/cprng.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
@@ -102,7 +103,7 @@ rump_virtif_create(int num)
 		    num, error);
 		return error;
 	}
-	enaddr[2] = arc4random() & 0xff;
+	enaddr[2] = cprng_fast32() & 0xff;
 	enaddr[5] = num;
 
 	sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
@@ -370,8 +371,8 @@ rump_dummyif_create()
 	struct ethercom *ec;
 	uint8_t enaddr[ETHER_ADDR_LEN] = { 0xb2, 0x0a, 0x00, 0x0b, 0x0e, 0x01 };
 
-	enaddr[2] = arc4random() & 0xff;
-	enaddr[5] = arc4random() & 0xff;
+	enaddr[2] = cprng_fast32() & 0xff;
+	enaddr[5] = cprng_fast32() & 0xff;
 
 	ec = kmem_zalloc(sizeof(*ec), KM_SLEEP);
 

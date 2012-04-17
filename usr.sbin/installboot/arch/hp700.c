@@ -1,4 +1,4 @@
-/*	$NetBSD: hp700.c,v 1.4 2008/04/28 20:24:16 martin Exp $	*/
+/*	$NetBSD: hp700.c,v 1.4.4.1 2012/04/17 00:09:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: hp700.c,v 1.4 2008/04/28 20:24:16 martin Exp $");
+__RCSID("$NetBSD: hp700.c,v 1.4.4.1 2012/04/17 00:09:47 yamt Exp $");
 #endif	/* !__lint */
 
 /* We need the target disklabel.h, not the hosts one..... */
@@ -178,9 +178,10 @@ hp700_setboot(ib_params *params)
 	} else if (be32toh(label.l.d_partitions[0].p_offset) +
 	    be32toh(label.l.d_partitions[0].p_size) >
 	    ((unsigned)2*1024*1024*1024) / secsize) {
-		warnx("WARNING: Partition `a' of `%s' exceeds 2GB boundary.",
+		warnx("Partition `a' of `%s' exceeds 2GB boundary.",
 		    params->filesystem);
-		warnx("WARNING: It won't boot since hp700 PDC can handle only 2GB.");
+		warnx("It won't boot since hp700 PDC can handle only 2GB.");
+		goto done;
 	}
 
 	/* read boot loader */

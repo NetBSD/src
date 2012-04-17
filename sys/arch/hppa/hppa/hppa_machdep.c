@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_machdep.c,v 1.25 2011/02/24 08:59:22 skrll Exp $	*/
+/*	$NetBSD: hppa_machdep.c,v 1.25.4.1 2012/04/17 00:06:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,13 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.25 2011/02/24 08:59:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.25.4.1 2012/04/17 00:06:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/sa.h>
 #include <sys/lwp.h>
-#include <sys/savar.h>
 #include <sys/proc.h>
 #include <sys/ras.h>
 #include <sys/cpu.h>
@@ -55,87 +53,6 @@ char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
  * probably be moved here from hp700/hp700/machdep.c, seeing
  * that there's related code already in hppa/hppa/trap.S.
  */
-
-
-/*
- * Scheduler activations upcall frame.  Pushed onto user stack before
- * calling an SA upcall.
- */
-
-struct saframe {
-	/* first 4 arguments passed in registers on entry to upcallcode */
-	void *		sa_arg;
-	int		sa_interrupted;	/* arg3 */
-	int		sa_events;	/* arg2 */
-	struct sa_t **	sa_sas;		/* arg1 */
-	int		sa_type;	/* arg0 */
-};
-
-/*
- * cpu_upcall:
- *
- *      Send an an upcall to userland.
- */
-
-void
-cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
-	   void *sas, void *ap, void *sp, sa_upcall_t upcall)
-{
-	struct saframe *sf, frame;
-	struct proc *p = l->l_proc;
-	struct trapframe *tf;
-	uintptr_t upva;
-	vaddr_t va;
-
-	tf = (struct trapframe *)l->l_md.md_regs;
-
-	frame.sa_type = type;
-	frame.sa_sas = sas;
-	frame.sa_events = nevents;
-	frame.sa_interrupted = ninterrupted;
-	frame.sa_arg = ap;
-
-	pmap_activate(l);
-	va = HPPA_FRAME_ROUND((uintptr_t)sp + sizeof(frame) + HPPA_FRAME_SIZE);
-	sf = (void *)(va - 32 - sizeof(frame));
-	if (copyout(&frame, sf, sizeof(frame)) != 0) {
-		/* Copying onto the stack didn't work. Die. */
-		mutex_enter(p->p_lock);
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
-	}
-
-	/*
-	 * Deal with the upcall function pointer being a PLABEL.
-	 */
-
-	upva = (uintptr_t)upcall;
-	if (upva & 2) {
-		upva &= ~3;
-		if (copyin((void *)(upva + 4), &tf->tf_t4, 4)) {
-			printf("copyin t4 failed\n");
-			mutex_enter(p->p_lock);
-			sigexit(l, SIGILL);
-			/* NOTREACHED */
-		}
-		if (copyin((void *)upva, &upcall, 4)) {
-			printf("copyin upcall failed\n");
-			mutex_enter(p->p_lock);
-			sigexit(l, SIGILL);
-			/* NOTREACHED */
-		}
-	}
-
-	tf->tf_iioq_head = (uintptr_t)upcall | HPPA_PC_PRIV_USER;
-	tf->tf_iioq_tail = tf->tf_iioq_head + 4;
-
-	tf->tf_sp = va;
-	tf->tf_arg0 = type;
-	tf->tf_arg1 = (uintptr_t)sas;
-	tf->tf_arg2 = nevents;
-	tf->tf_arg3 = ninterrupted;
-	tf->tf_rp = 0;
-}
 
 void
 cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
@@ -201,7 +118,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 		gr[_REG_PCOQT] = ras_pc + 4;
 	}
 
-	*flags |= _UC_CPU;
+	*flags |= _UC_CPU | _UC_TLSBASE;
 
 	if (l->l_md.md_flags & 0) {
 		return;
@@ -303,9 +220,6 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 			tf->tf_iioq_tail |= HPPA_PC_PRIV_USER;
 		}
 
-		lwp_setprivate(l, (void *)(uintptr_t)gr[_REG_CR27]);
-		tf->tf_cr27	= gr[_REG_CR27];
-
 #if 0
 		tf->tf_sr0	= gr[_REG_SR0];
 		tf->tf_sr1	= gr[_REG_SR1];
@@ -316,6 +230,13 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 #endif
 	}
 
+	/* Restore the private thread context */
+	if (flags & _UC_TLSBASE) {
+		lwp_setprivate(l, (void *)(uintptr_t)gr[_REG_CR27]);
+		tf->tf_cr27	= gr[_REG_CR27];
+	}
+
+	/* Restore the floating point registers */
 	if ((flags & _UC_FPU) != 0) {
 		struct pcb *pcb = lwp_getpcb(l);
 

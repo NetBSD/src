@@ -161,7 +161,7 @@
 #define TLS 1
 
 /* Version string */
-/* #define VERSSTR "pcc 1.1.0.DEVEL 20110901 for i386-unknown-netbsdelf5.99.55" */
+/* #define VERSSTR "pcc 1.1.0.DEVEL 20120325 for i386-unknown-netbsdelf6.99.3" */
 
 /* Size of wide-character type in chars */
 #define WCHAR_SIZE 4

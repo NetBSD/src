@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek.c,v 1.7 2011/10/02 19:15:39 jmcneill Exp $ */
+/* $NetBSD: auvitek.c,v 1.7.2.1 2012/04/17 00:08:05 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek.c,v 1.7 2011/10/02 19:15:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek.c,v 1.7.2.1 2012/04/17 00:08:05 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -359,8 +359,11 @@ auvitek_read_1(struct auvitek_softc *sc, uint16_t reg)
 	USETW(req.wIndex, reg);
 	USETW(req.wLength, sizeof(data));
 
+	KERNEL_LOCK(1, curlwp);
 	err = usbd_do_request_flags(sc->sc_udev, &req, &data, 0,
 	    &actlen, USBD_DEFAULT_TIMEOUT);
+	KERNEL_UNLOCK_ONE(curlwp);
+
 	if (err)
 		printf("%s: read failed: %s\n", device_xname(sc->sc_dev),
 		    usbd_errstr(err));
@@ -381,8 +384,11 @@ auvitek_write_1(struct auvitek_softc *sc, uint16_t reg, uint8_t data)
 	USETW(req.wIndex, reg);
 	USETW(req.wLength, 0);
 
+	KERNEL_LOCK(1, curlwp);
 	err = usbd_do_request_flags(sc->sc_udev, &req, NULL, 0,
 	    &actlen, USBD_DEFAULT_TIMEOUT);
+	KERNEL_UNLOCK_ONE(curlwp);
+
 	if (err)
 		printf("%s: write failed: %s\n", device_xname(sc->sc_dev),
 		    usbd_errstr(err));

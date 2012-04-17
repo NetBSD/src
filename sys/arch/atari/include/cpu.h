@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.67 2011/05/16 13:22:52 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.67.4.1 2012/04/17 00:06:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,12 +41,6 @@
 #ifndef _MACHINE_CPU_H_
 #define _MACHINE_CPU_H_
 
-#if defined(_KERNEL)
-
-/*
- * Exported definitions unique to atari/68k cpu support.
- */
-
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #endif
@@ -55,6 +49,11 @@
  * Get common m68k CPU definitions.
  */
 #include <m68k/cpu.h>
+
+#if defined(_KERNEL)
+/*
+ * Exported definitions unique to atari/68k cpu support.
+ */
 #define	M68K_MMU_MOTOROLA
 
 void	cpu_proc_fork(struct proc *, struct proc *);
@@ -160,7 +159,6 @@ void	config_console(void);
  * Prototypes from fpu.c
  */
 const char *fpu_describe(int);
-int	fpu_probe(void);
 
 /*
  * Prototypes from locore.s

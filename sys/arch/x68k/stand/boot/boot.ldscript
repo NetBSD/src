@@ -1,4 +1,4 @@
-/* /boot must be a.out, OMAGIC starting from 0x8000. */
+/* /boot must be a.out, OMAGIC starting from 0x6000. */
 OUTPUT_FORMAT("a.out-m68k-netbsd", "a.out-m68k-netbsd",
 	      "a.out-m68k-netbsd")
 OUTPUT_ARCH(m68k)

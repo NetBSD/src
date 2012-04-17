@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.41.4.1 2011/11/20 10:52:33 yamt Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.41.4.2 2012/04/17 00:08:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.41.4.1 2011/11/20 10:52:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.41.4.2 2012/04/17 00:08:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,9 +60,9 @@ struct uvmexp uvmexp;	/* decl */
 struct uvm_object *uvm_kernel_object;
 
 #if defined(__uvmexp_pagesize)
-int *uvmexp_pagesize = &uvmexp.pagesize;
-int *uvmexp_pagemask = &uvmexp.pagemask;
-int *uvmexp_pageshift = &uvmexp.pageshift;
+const int * const uvmexp_pagesize = &uvmexp.pagesize;
+const int * const uvmexp_pagemask = &uvmexp.pagemask;
+const int * const uvmexp_pageshift = &uvmexp.pageshift;
 #endif
 
 kmutex_t uvm_pageqlock;
@@ -80,83 +80,72 @@ uvm_init(void)
 	vaddr_t kvm_start, kvm_end;
 
 	/*
-	 * step 0: ensure that the hardware set the page size
+	 * Ensure that the hardware set the page size, zero the UVM structure.
 	 */
 
 	if (uvmexp.pagesize == 0) {
 		panic("uvm_init: page size not set");
 	}
 
-	/*
-	 * step 1: zero the uvm structure
-	 */
-
 	memset(&uvm, 0, sizeof(uvm));
 	averunnable.fscale = FSCALE;
-	uvm_amap_init();
 
 	/*
-	 * step 2: init the page sub-system.  this includes allocating the
-	 * vm_page structures, and setting up all the page queues (and
-	 * locks).  available memory will be put in the "free" queue.
-	 * kvm_start and kvm_end will be set to the area of kernel virtual
-	 * memory which is available for general use.
+	 * Init the page sub-system.  This includes allocating the vm_page
+	 * structures, and setting up all the page queues (and locks).
+	 * Available memory will be put in the "free" queue, kvm_start and
+	 * kvm_end will be set to the area of kernel virtual memory which
+	 * is available for general use.
 	 */
 
 	uvm_page_init(&kvm_start, &kvm_end);
 
 	/*
-	 * step 3: init the map sub-system.  allocates the static pool of
-	 * vm_map_entry structures that are used for "special" kernel maps
-	 * (e.g. kernel_map, kmem_map, etc...).
+	 * Init the map sub-system.
 	 */
 
 	uvm_map_init();
 
 	/*
-	 * step 4: setup the kernel's virtual memory data structures.  this
-	 * includes setting up the kernel_map/kernel_object.
+	 * Setup the kernel's virtual memory data structures.  This includes
+	 * setting up the kernel_map/kernel_object.  Bootstrap all kernel
+	 * memory allocators.
 	 */
 
-	uvm_km_init(kvm_start, kvm_end);
+	uao_init();
+	uvm_km_bootstrap(kvm_start, kvm_end);
 
 	/*
-	 * step 5: init the pmap module.   the pmap module is free to allocate
+	 * Setup uvm_map caches and init the amap.
+	 */
+
+	uvm_map_init_caches();
+	uvm_amap_init();
+
+	/*
+	 * Init the pmap module.  The pmap module is free to allocate
 	 * memory for its private use (e.g. pvlists).
 	 */
 
 	pmap_init();
 
 	/*
-	 * step 6: init the kernel memory allocator.   after this call the
-	 * kernel memory allocator (malloc) can be used. this includes
-	 * setting up the kmem_map.
+	 * Init the kernel maps virtual address caches.  Make kernel memory
+	 * allocator ready for use.  After this call the pool/kmem memory
+	 * allocators can be used.
 	 */
 
-	kmeminit();
+	uvm_km_init();
 
 #ifdef DEBUG
 	debug_init();
 #endif
 
 	/*
-	 * step 7: init all pagers and the pager_map.
+	 * Init all pagers and the pager_map.
 	 */
 
 	uvm_pager_init();
-
-	/*
-	 * Initialize pools.  This must be done before anyone manipulates
-	 * any vm_maps because we use a pool for some map entry structures.
-	 */
-
-	pool_subsystem_init();
-
-	/*
-	 * init slab memory allocator kmem(9).
-	 */
-
-	kmem_init();
 
 	/*
 	 * Initialize lock caches.
@@ -173,13 +162,13 @@ uvm_init(void)
 	uvm_loan_init();
 
 	/*
-	 * init emap subsystem.
+	 * Init emap subsystem.
 	 */
 
 	uvm_emap_sysinit();
 
 	/*
-	 * the VM system is now up!  now that kmem is up we can resize the
+	 * The VM system is now up!  Now that kmem is up we can resize the
 	 * <obj,off> => <page> hash table for general use and enable paging
 	 * of kernel objects.
 	 */
@@ -190,7 +179,7 @@ uvm_init(void)
 	uvmpdpol_reinit();
 
 	/*
-	 * init anonymous memory systems
+	 * Init anonymous memory systems.
 	 */
 
 	uvm_anon_init();
@@ -198,7 +187,7 @@ uvm_init(void)
 	uvm_uarea_init();
 
 	/*
-	 * init readahead module
+	 * Init readahead mechanism.
 	 */
 
 	uvm_ra_init();

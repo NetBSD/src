@@ -1,4 +1,4 @@
-/*	$NetBSD: bluetooth.h,v 1.4 2009/08/03 15:59:42 plunky Exp $	*/
+/*	$NetBSD: bluetooth.h,v 1.4.6.1 2012/04/17 00:05:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001-2009 Maksim Yevmenkin <m_evmenkin@yahoo.com>
@@ -160,14 +160,14 @@ typedef struct {
 	bdaddr_t	laddr;			/* local address */
 	bdaddr_t	raddr;			/* remote address */
 	uint8_t		time;			/* validity (seconds) */
-} __attribute__ ((packed)) bthcid_pin_request_t;
+} __packed bthcid_pin_request_t;
 
 /* Client PIN Response packet */
 typedef struct {
 	bdaddr_t	laddr;			/* local address */
 	bdaddr_t	raddr;			/* remote address */
 	uint8_t		pin[HCI_PIN_SIZE];	/* PIN */
-} __attribute__ ((packed)) bthcid_pin_response_t;
+} __packed bthcid_pin_response_t;
 
 /* Default socket name */
 #define BTHCID_SOCKET_NAME	"/var/run/bthcid"

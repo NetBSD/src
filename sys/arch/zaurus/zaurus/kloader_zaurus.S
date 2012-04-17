@@ -1,7 +1,7 @@
-/*	$NetBSD: kloader_zaurus.S,v 1.1 2009/03/11 09:02:05 nonaka Exp $	*/
+/*	$NetBSD: kloader_zaurus.S,v 1.1.18.1 2012/04/17 00:07:13 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
+ * Copyright (C) 2009-2012 NONAKA Kimihiro <nonaka@netbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -13,17 +13,16 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <machine/asm.h>
@@ -56,9 +55,9 @@
  */
 	.global	_C_LABEL(kloader_zaurus_boot)
 _C_LABEL(kloader_zaurus_boot):
-	mov	r0, r12			/* r12: kbi */
-	bic	r12, r12, #0xff000000
-	orr	r12, r12, #0xa0000000
+	mov	sp, r0			/* sp: kbi */
+	bic	sp, sp, #0xff000000	/* clear upper 8 bits */
+	orr	sp, sp, #0xa0000000	/* OR in physical base address */
 
 	/* We will go ahead and disable the MMU here. */
 	adr	r8, .Lmmuoff
@@ -105,24 +104,19 @@ _C_LABEL(kloader_zaurus_boot):
 	bl	.Lputcrlf
 #endif
 
-	/* set temporary stack pointer */
+	/* Set kernel entry */
+	ldr	r0, [sp]
+
+	/* Set temporary stack pointer */
 	ldr	sp, .Lstack_addr
 
 	/* Jump to kernel entry */
-#if 0	/* XXX */
-	ldr	r0, [r12]	/* kbi->entry */
-#else
-	ldr	r0, .Lstart_addr
-#endif
 	mov	pc, r0
 
 99:	b	99b
 
 .Lstack_addr:
 	.word	0xa0004000
-
-.Lstart_addr:
-	.word	0xa0200000
 
 #ifdef PROGRESS
 .Lprogress:

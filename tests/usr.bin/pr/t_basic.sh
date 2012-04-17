@@ -1,4 +1,4 @@
-# $NetBSD: t_basic.sh,v 1.3 2011/05/11 22:08:12 njoly Exp $
+# $NetBSD: t_basic.sh,v 1.3.4.1 2012/04/17 00:09:21 yamt Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,12 +30,10 @@
 
 atf_test_case basic
 basic_head() {
-	atf_set "descr" "A basic test of pr(1)"
+	atf_set "descr" "A basic test of pr(1) (cf. PR bin/41880)"
 }
 
 basic_body() {
-
-	atf_expect_fail "PR bin/41880"
 
 	# The output file was generated with "pr (GNU coreutils) 6.10".
 	#

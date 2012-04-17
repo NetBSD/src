@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.2 2011/11/02 14:34:09 hannken Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.2.2.1 2012/04/17 00:07:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,9 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.2 2011/11/02 14:34:09 hannken Exp $");
-
-#include "rnd.h"
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.2.2.1 2012/04/17 00:07:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,9 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.2 2011/11/02 14:34:09 hannken Exp $"
 #include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/mutex.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
@@ -61,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.2 2011/11/02 14:34:09 hannken Exp $"
 #define VIRTIO_BLK_CONFIG_GEOMETRY_H	18 /* 8bit */
 #define VIRTIO_BLK_CONFIG_GEOMETRY_S	19 /* 8bit */
 #define VIRTIO_BLK_CONFIG_BLK_SIZE	20 /* 32bit */
-#define VIRTIO_BLK_CONFIG_SECTORS_MAX	24 /* 32bit */
 
 /* Feature bits */
 #define VIRTIO_BLK_F_BARRIER	(1<<0)
@@ -72,7 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.2 2011/11/02 14:34:09 hannken Exp $"
 #define VIRTIO_BLK_F_BLK_SIZE	(1<<6)
 #define VIRTIO_BLK_F_SCSI	(1<<7)
 #define VIRTIO_BLK_F_FLUSH	(1<<9)
-#define VIRTIO_BLK_F_SECTOR_MAX	(1<<10)
 
 /* Command */
 #define VIRTIO_BLK_T_IN		0
@@ -194,7 +188,7 @@ ld_virtio_alloc_reqs(struct ld_virtio_softc *sc, int qsize)
 		}
 		r = bus_dmamap_create(sc->sc_virtio->sc_dmat,
 				      ld->sc_maxxfer,
-				      (ld->sc_maxxfer / NBPG) + 1,
+				      (ld->sc_maxxfer / NBPG) + 2,
 				      ld->sc_maxxfer,
 				      0,
 				      BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
@@ -262,21 +256,27 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 					      VIRTIO_BLK_F_SEG_MAX |
 					      VIRTIO_BLK_F_GEOMETRY |
 					      VIRTIO_BLK_F_RO |
-					      VIRTIO_BLK_F_BLK_SIZE |
-					      VIRTIO_BLK_F_SECTOR_MAX));
+					      VIRTIO_BLK_F_BLK_SIZE));
 	if (features & VIRTIO_BLK_F_RO)
 		sc->sc_readonly = 1;
 	else
 		sc->sc_readonly = 0;
 
+	ld->sc_secsize = 512;
+	if (features & VIRTIO_BLK_F_BLK_SIZE) {
+		ld->sc_secsize = virtio_read_device_config_4(vsc,
+					VIRTIO_BLK_CONFIG_BLK_SIZE);
+	}
 	maxxfersize = MAXPHYS;
-	if (features & VIRTIO_BLK_F_SECTOR_MAX) {
+#if 0	/* At least genfs_io assumes maxxfer == MAXPHYS. */
+	if (features & VIRTIO_BLK_F_SEG_MAX) {
 		maxxfersize = virtio_read_device_config_4(vsc,
-					VIRTIO_BLK_CONFIG_SECTORS_MAX)
+					VIRTIO_BLK_CONFIG_SEG_MAX)
 				* ld->sc_secsize;
 		if (maxxfersize > MAXPHYS)
 			maxxfersize = MAXPHYS;
 	}
+#endif
 
 	if (virtio_alloc_vq(vsc, &sc->sc_vq[0], 0,
 			    maxxfersize, maxxfersize / NBPG + 2,
@@ -289,11 +289,6 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 	ld->sc_dv = self;
 	ld->sc_secperunit = virtio_read_device_config_8(vsc,
 				VIRTIO_BLK_CONFIG_CAPACITY);
-	ld->sc_secsize = 512;
-	if (features & VIRTIO_BLK_F_BLK_SIZE) {
-		ld->sc_secsize = virtio_read_device_config_4(vsc,
-					VIRTIO_BLK_CONFIG_BLK_SIZE);
-	}
 	ld->sc_maxxfer = maxxfersize;
 	if (features & VIRTIO_BLK_F_GEOMETRY) {
 		ld->sc_ncylinders = virtio_read_device_config_2(vsc,

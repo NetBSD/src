@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata_pci.c,v 1.6 2011/01/31 16:30:48 jakllsch Exp $	*/
+/*	$NetBSD: mvsata_pci.c,v 1.6.4.1 2012/04/17 00:07:51 yamt Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata_pci.c,v 1.6 2011/01/31 16:30:48 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata_pci.c,v 1.6.4.1 2012/04/17 00:07:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -155,7 +155,6 @@ mvsata_pci_attach(device_t parent, device_t self, void *aux)
 	bus_size_t size;
 	uint32_t reg, mask;
 	int read_pre_amps, hc, port, rv, i;
-	char devinfo[256];
 	const char *intrstr;
 
 	sc->sc_wdcdev.sc_atac.atac_dev = self;
@@ -164,9 +163,7 @@ mvsata_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_enable_intr = mvsata_pci_enable_intr;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_naive(": Marvell Serial-ATA Host Controller\n");
-	aprint_normal(": %s\n", devinfo);
+	pci_aprint_devinfo(pa, "Marvell Serial-ATA Host Controller");
 	
 	/* Map I/O register */
 	if (pci_mapreg_map(pa, PCI_MAPREG_START,

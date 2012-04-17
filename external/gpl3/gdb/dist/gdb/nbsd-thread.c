@@ -42,6 +42,12 @@
 #include "observer.h"
 
 #include <machine/reg.h>
+#ifdef __sh3__
+struct fpreg { };
+#elif defined(__vax__)
+#else
+#define HAVE_FPREGS
+#endif
 
 #ifndef HAVE_GREGSET_T
 typedef struct reg gregset_t;
@@ -79,13 +85,10 @@ static void nbsd_find_new_threads (struct target_ops *);
 
 #define GET_PID(ptid)		ptid_get_pid (ptid)
 #define GET_LWP(ptid)		ptid_get_lwp (ptid)
-#define GET_THREAD(ptid)	ptid_get_tid (ptid)
 
 #define IS_LWP(ptid)		(GET_LWP (ptid) != 0)
-#define IS_THREAD(ptid)		(GET_THREAD (ptid) != 0)
 
-#define BUILD_LWP(lwp, ptid)	ptid_build (GET_PID(ptid), lwp, 0)
-#define BUILD_THREAD(tid, ptid)	ptid_build (GET_PID(ptid), 0, tid)
+#define BUILD_LWP(lwp, ptid)	ptid_build (GET_PID(ptid), (lwp), 0)
 
 static td_proc_t *main_ta;
 
@@ -140,6 +143,7 @@ nbsd_thread_activate (void)
   nbsd_thread_active = 1;
   main_ptid = inferior_ptid;
   cached_thread = minus_one_ptid;
+  thread_change_ptid(inferior_ptid, BUILD_LWP(1, inferior_ptid));
   nbsd_find_new_threads (NULL);
   inferior_ptid = find_active_thread ();
 }
@@ -221,39 +225,6 @@ thread_resume_suspend_cb (td_thread_t *th, void *arg)
   if (td_thr_info (th, &ti) != 0)
       return -1;
 
-  if ((ti.thread_id != GET_THREAD (*pt)) &&
-      (ti.thread_type == TD_TYPE_USER) &&
-      (ti.thread_state != TD_STATE_SUSPENDED) &&
-      (ti.thread_state != TD_STATE_ZOMBIE))
-    {
-      val = td_thr_suspend(th);
-      if (val != 0)
-	error ("thread_resume_suspend_cb: td_thr_suspend(%p): %s", th,
-	       td_err_string (val));
-	
-      if (nsusp == nsuspalloc)
-	{
-	  if (nsuspalloc == 0)
-	    {
-	      nsuspalloc = 32;
-	      susp = malloc (nsuspalloc * sizeof(td_thread_t *));
-	      if (susp == NULL)
-		error ("thread_resume_suspend_cb: out of memory\n");
-	    }
-	  else
-	    {
-	      static td_thread_t **newsusp;
-	      nsuspalloc *= 2;
-	      newsusp = realloc (susp, nsuspalloc * sizeof(td_thread_t *));
-	      if (newsusp == NULL)
-		error ("thread_resume_suspend_cb: out of memory\n");
-	      susp = newsusp;
-	    }
-	}
-      susp[nsusp] = th;
-      nsusp++;
-    }
-  
   return 0;
 }
 
@@ -270,20 +241,7 @@ nbsd_thread_resume (struct target_ops *ops, ptid_t ptid, int step,
      isn't anything we can do but pass it down to the ptrace call;
      given the flexibility of the LWP-to-thread mapping, this might or
      might not accomplish what the user wanted. */
-  if (GET_PID (ptid) != -1 && IS_THREAD (ptid))
-    {
-      int val;
-
-      val = td_thr_iter (main_ta, thread_resume_suspend_cb, &ptid);
-      if (val != 0)
-	error ("nbsd_thread_resume td_thr_iter: %s", td_err_string (val));
-
-	beneath->to_resume (beneath, ptid, step, signo);
-
-      /* can't un-suspend just yet, child may not be stopped */
-    }
-  else
-    beneath->to_resume (beneath, ptid, step, signo);
+  beneath->to_resume (beneath, ptid, step, signo);
 
   cached_thread = minus_one_ptid;
 }
@@ -366,33 +324,20 @@ nbsd_thread_fetch_registers (struct target_ops *ops, struct regcache *cache,
   struct target_ops *beneath = find_target_beneath (ops);
   td_thread_t *thread;
   gregset_t gregs;
+#ifdef HAVE_FPREGS
   fpregset_t fpregs;
+#endif
   int val;
   struct cleanup *old_chain;
 
   old_chain = save_inferior_ptid ();
 
-  if (nbsd_thread_active && IS_THREAD (inferior_ptid))
+  if (!target_has_execution)
     {
-      if ((val = td_map_id2thr (main_ta, GET_THREAD (inferior_ptid), &thread)) != 0)
-	error ("nbsd_thread_fetch_registers: td_map_id2thr: %s\n",
-	       td_err_string (val));
-      if ((val = td_thr_getregs (thread, 0, &gregs)) != 0)
-	error ("nbsd_thread_fetch_registers: td_thr_getregs: %s\n",
-	       td_err_string (val));
-      supply_gregset (cache, &gregs);
-      if ((val = td_thr_getregs (thread, 1, &fpregs)) == 0)
-	      supply_fpregset (cache, &fpregs);
+      inferior_ptid = pid_to_ptid ((GET_LWP (inferior_ptid) << 16) | 
+				    GET_PID (inferior_ptid));
     }
-  else
-    {
-      if (!target_has_execution)
-	{
-	  inferior_ptid = pid_to_ptid ((GET_LWP (inferior_ptid) << 16) | 
-				        GET_PID (inferior_ptid));
-	}
-	beneath->to_fetch_registers (beneath, cache, regno);
-    }
+    beneath->to_fetch_registers (beneath, cache, regno);
   
   do_cleanups (old_chain);
 }
@@ -404,33 +349,12 @@ nbsd_thread_store_registers (struct target_ops *ops, struct regcache *cache,
   struct target_ops *beneath = find_target_beneath (ops);
   td_thread_t *thread;
   gregset_t gregs;
+#ifdef HAVE_FPREGS
   fpregset_t fpregs;
+#endif
   int val;
 
-  if (nbsd_thread_active && IS_THREAD (inferior_ptid))
-    {
-      val = td_map_id2thr (main_ta, GET_THREAD (inferior_ptid), &thread);
-      if (val != 0)
-	error ("nbsd_thread_store_registers: td_map_id2thr: %s\n",
-	      td_err_string (val));
-
-      fill_gregset (cache, &gregs, -1);
-      fill_fpregset (cache, &fpregs, -1);
-
-      val = td_thr_setregs (thread, 0, &gregs);
-      if (val != 0)
-	error ("nbsd_thread_store_registers: td_thr_setregs: %s\n",
-	      td_err_string (val));
-      val = td_thr_setregs (thread, 1, &fpregs);
-      if (val != 0)
-	error ("nbsd_thread_store_registers: td_thr_setregs: %s\n",
-	      td_err_string (val));
-    }
-  else
-    {
-	beneath->to_store_registers (beneath, cache, regno);
-    }
-
+  beneath->to_store_registers (beneath, cache, regno);
 }
 
 
@@ -487,18 +411,9 @@ nbsd_pid_to_str (struct target_ops *ops, ptid_t ptid)
   td_thread_t *th;
   char name[32];
 
-  if ((GET_THREAD(ptid) == 0) &&
-      (GET_LWP(ptid) == 0) && 
+  if ((GET_LWP(ptid) == 0) && 
       (nbsd_thread_active == 0))
     sprintf (buf, "process %d", GET_PID (ptid));
-  else if (IS_THREAD (ptid))
-    {
-      if ((td_map_id2thr (main_ta, GET_THREAD (ptid), &th) == 0) &&
-	  (td_thr_getname (th, name, 32) == 0))
-	sprintf (buf, "Thread %ld (%s)", GET_THREAD (ptid), name);
-      else
-	sprintf (buf, "Thread %ld", GET_THREAD (ptid));
-    }
   else
     sprintf (buf, "LWP %ld", GET_LWP (ptid));
 
@@ -581,19 +496,7 @@ nbsd_thread_alive (struct target_ops *ops, ptid_t ptid)
 
   if (nbsd_thread_active)
     {
-      if (IS_THREAD (ptid))
-	{
-	  val = 0;
-	  if (td_map_id2thr (main_ta, GET_THREAD (ptid), &th) == 0)
-	    {
-	      /* Thread found */
-	      if ((td_thr_info (th, &ti) == 0) &&
-		  (ti.thread_state != TD_STATE_ZOMBIE) &&
-		  (ti.thread_type != TD_TYPE_SYSTEM))
-		val = 1;
-	    }
-	}
-      else if (IS_LWP (ptid))
+      if (IS_LWP (ptid))
 	{
 	  struct ptrace_lwpinfo pl;
 	  pl.pl_lwpid = GET_LWP (ptid);
@@ -620,37 +523,11 @@ nbsd_core_thread_alive (struct target_ops *ops, ptid_t ptid)
 }
 
 
-/* Worker bee for find_new_threads
-   Callback function that gets called once per USER thread (i.e., not
-   kernel) thread. */
-
-static int
-nbsd_find_new_threads_callback (td_thread_t *th, void *ignored)
-{
-  td_thread_info_t ti;
-  ptid_t ptid;
-
-  if (td_thr_info (th, &ti) != 0)
-      return -1;
-
-  ptid = BUILD_THREAD (ti.thread_id, main_ptid);
-  if (ti.thread_type == TD_TYPE_USER &&
-      ti.thread_state != TD_STATE_BLOCKED &&
-      ti.thread_state != TD_STATE_ZOMBIE &&
-      !in_thread_list (ptid))
-    add_thread (ptid);
-
-  return 0;
-}
-
 static void
 nbsd_find_new_threads (struct target_ops *ops)
 {
   int retval;
   ptid_t ptid;
-#ifdef notyet
-  td_thread_t *thread;
-#endif
 
   if (nbsd_thread_active == 0)
 	  return;
@@ -669,19 +546,11 @@ nbsd_find_new_threads (struct target_ops *ops)
       while ((retval != -1) && pl.pl_lwpid != 0)
 	{
 	  ptid = BUILD_LWP (pl.pl_lwpid, main_ptid);
-#ifdef notyet
-	  td_map_lwp2thr (main_ta, pl.pl_lwpid, &thread);
-#endif
 	  if (!in_thread_list (ptid))
 	    add_thread (ptid);
 	  retval = ptrace (PT_LWPINFO, GET_PID(inferior_ptid), (void *)&pl, sizeof(pl));
 	}
     }
-
-  retval = td_thr_iter (main_ta, nbsd_find_new_threads_callback, (void *) 0);
-  if (retval != 0)
-    error ("nbsd_find_new_threads: td_thr_iter: %s",
-	   td_err_string (retval));
 }
 
 
@@ -704,269 +573,6 @@ nbsd_thread_create_inferior (struct target_ops *ops, char *exec_file,
 }
 
 
-static int
-waiter_cb (td_thread_t *th, void *s)
-{
-  int ret;
-  td_thread_info_t ti;
-
-  if ((ret = td_thr_info (th, &ti)) == 0)
-    {
-      wrap_here (NULL);
-      printf_filtered (" %d", ti.thread_id);
-    }
-
-  return 0;
-}
-
-/* Worker bee for thread state command.  This is a callback function that
-   gets called once for each user thread (ie. not kernel thread) in the
-   inferior.  Print anything interesting that we can think of.  */
-
-static int
-info_cb (td_thread_t *th, void *s)
-{
-  int ret;
-  td_thread_info_t ti, ti2;
-#ifdef notyet
-  td_sync_t *ts;
-  td_sync_info_t tsi;
-#endif
-  char name[32];
-
-  if ((ret = td_thr_info (th, &ti)) == 0)
-    {
-      if (ti.thread_type != TD_TYPE_USER)
-	return 0;
-      td_thr_getname(th, name, 32);
-      printf_filtered ("%p: thread %4d ", ti.thread_addr, ti.thread_id);
-      if (name[0] != '\0')
-	      printf_filtered("(%s) ", name);
-
-      switch (ti.thread_state)
-	{
-	default:
-	case TD_STATE_UNKNOWN:
-	  printf_filtered ("<unknown state> ");
-	  break;
-	case TD_STATE_RUNNING:
-	  printf_filtered ("running  ");
-	  break;
-	case TD_STATE_RUNNABLE:
-	  printf_filtered ("active   ");
-	  break;
-	case TD_STATE_BLOCKED:
-	  printf_filtered ("in kernel");
-	  break;
-	case TD_STATE_SLEEPING:
-	  printf_filtered ("sleeping ");
-	  break;
-	case TD_STATE_ZOMBIE:
-	  printf_filtered ("zombie   ");
-	  break;
-	}
-
-      if (ti.thread_state == TD_STATE_SLEEPING)
-	{
-#ifdef notyet
-	  td_thr_sleepinfo (th, &ts);
-	  td_sync_info (ts, &tsi);
-	  if (tsi.sync_type == TD_SYNC_JOIN)
-	    {
-	      td_thr_info (tsi.sync_data.join.thread, &ti2);
-	      printf ("joining thread %d ", ti2.thread_id);
-	    }
-	  else
-	    {
-	      printf_filtered ("on %s at %p ",
-			       syncnames[tsi.sync_type],
-			       (void *)tsi.sync_addr);
-	    }
-#endif
-	}
-
-#ifdef notyet
-      if (ti.thread_hasjoiners)
-	{
-	  printf_filtered ("(being joined by");
-	  td_thr_join_iter (th, waiter_cb, NULL);
-	  printf_filtered (")");
-	}
-#endif
-      printf_filtered ("\n");
-    }
-  else
-    warning ("info nbsd-thread: failed to get info for thread.");
-
-  return 0;
-}
-
-
-/* List some state about each user thread in the inferior.  */
-
-static void
-nbsd_thread_examine_all_cmd (char *args, int from_tty)
-{
-  int val;
-
-  if (nbsd_thread_active)
-    {
-      val = td_thr_iter (main_ta, info_cb, args);
-      if (val != 0)
-	error ("nbsd_thread_examine_all_cmd: td_thr_iter: %s",
-	       td_err_string (val));
-    }
-  else
-    printf_filtered ("Thread debugging not active.\n");
-}
-
-static void
-nbsd_thread_examine_cmd (char *exp, int from_tty)
-{
-  CORE_ADDR addr;
-  td_thread_t *th;
-  int ret;
-
-  if (!nbsd_thread_active)
-    {
-      warning ("Thread debugging not active.\n");
-      return;
-    }
-
-  if (exp != NULL && *exp != '\000')
-    {
-      addr = parse_and_eval_address (exp);
-      if (from_tty)
-	*exp = 0;
-    }
-  else
-    return;
-
-  if ((ret = td_map_pth2thr (main_ta, (pthread_t) addr, &th)) != 0)
-    error ("nbsd_thread_examine_command: td_map_pth2thr: %s",
-	   td_err_string (ret));
-  
-  info_cb (th, NULL);
-}
-
-
-static void
-nbsd_thread_sync_cmd (char *exp, int from_tty)
-{
-  CORE_ADDR addr;
-#ifdef notyet
-  td_sync_t *ts;
-  td_sync_info_t tsi;
-#endif
-  td_thread_info_t ti;
-  int ret;
-
-  if (!nbsd_thread_active)
-    {
-      warning ("Thread debugging not active.\n");
-      return;
-    }
-
-  if (exp != NULL && *exp != '\000')
-    {
-      addr = parse_and_eval_address (exp);
-      if (from_tty)
-	*exp = 0;
-    }
-  else
-    return;
-
-#ifdef notyet
-  if ((ret = td_map_addr2sync (main_ta, (caddr_t)addr, &ts)) != 0)
-    error ("nbsd_thread_sync_cmd: td_map_addr2sync: %s", td_err_string (ret));
-
-  if ((ret = td_sync_info (ts, &tsi)) != 0)
-    error ("nbsd_thread_sync_cmd: td_sync_info: %s", td_err_string (ret));
-
-  printf_filtered ("%p: %s", (void *)addr, syncnames[tsi.sync_type]);
-
-  if (tsi.sync_type == TD_SYNC_MUTEX)
-    {
-      if (!tsi.sync_data.mutex.locked)
-	printf_filtered (" unlocked");
-      else
-	{
-	  td_thr_info (tsi.sync_data.mutex.owner, &ti);
-	  printf_filtered (" locked by thread %d", ti.thread_id);
-	}
-    }
-  else if (tsi.sync_type == TD_SYNC_SPIN)
-    {
-      if (!tsi.sync_data.spin.locked)
-	printf_filtered (" unlocked");
-      else
-	printf_filtered (" locked (waiters not tracked)");
-    }
-  else if (tsi.sync_type == TD_SYNC_JOIN)
-    {
-      td_thr_info (tsi.sync_data.join.thread, &ti);
-      printf_filtered (" %d", ti.thread_id);
-    }
-  else if (tsi.sync_type == TD_SYNC_RWLOCK)
-    {
-      if (!tsi.sync_data.rwlock.locked)
-	printf_filtered (" unlocked");
-      else
-	{
-	  printf_filtered (" locked");
-	  if (tsi.sync_data.rwlock.readlocks > 0)
-	    printf_filtered (" by %d reader%s", 
-			     tsi.sync_data.rwlock.readlocks,
-			     (tsi.sync_data.rwlock.readlocks > 1) ? "s" : "");
-	  else
-	    {
-	      td_thr_info (tsi.sync_data.rwlock.writeowner, &ti);
-	      printf_filtered (" by writer %d", ti.thread_id);
-	    }
-	}
-    }
-  else
-    printf_filtered("Unknown sync object type %d", tsi.sync_type);
-
-  if (tsi.sync_haswaiters)
-    {
-      printf_filtered (" waiters:");
-      if ((ret = td_sync_waiters_iter (ts, waiter_cb, NULL)) != 0)
-	error ("nbsd_thread_sync_cmd: td_sync_info: %s",
-	       td_err_string (ret));
-    }
-
-  printf_filtered ("\n");
-#endif
-}
-
-int
-tsd_cb (pthread_key_t key, void (*destructor)(void *), void *ignore)
-{
-  struct minimal_symbol *ms;
-  char *name;
-
-  printf_filtered ("Key %3d   ", key);
-
-  /* XXX What does GDB use to print a function? */
-  ms = lookup_minimal_symbol_by_pc ((CORE_ADDR)destructor);
-
-  if (!ms)
-    name = "???";
-  else
-    name = SYMBOL_PRINT_NAME (ms);
-
-  printf_filtered ("Destructor %p <%s>\n", destructor, name);
-
-  return 0;
-}
-
-static void
-nbsd_thread_tsd_cmd (char *exp, int from_tty)
-{
-  td_tsd_iter (main_ta, tsd_cb, NULL);
-}
-
 /*
  * Process operation callbacks
  */
@@ -975,7 +581,7 @@ nbsd_thread_proc_read (void *arg, caddr_t addr, void *buf, size_t size)
 {
   int val;
 
-  val = target_read_memory ((CORE_ADDR)addr, buf, size);
+  val = target_read_memory ((CORE_ADDR)(uintptr_t)addr, buf, size);
 
   if (val == 0)
     return 0;
@@ -989,7 +595,7 @@ nbsd_thread_proc_write (void *arg, caddr_t addr, void *buf, size_t size)
 {
   int val;
 
-  val = target_write_memory ((CORE_ADDR)addr, buf, size);
+  val = target_write_memory ((CORE_ADDR)(uintptr_t)addr, buf, size);
 
   if (val == 0)
     return 0;
@@ -1007,7 +613,7 @@ nbsd_thread_proc_lookup (void *arg, const char *sym, caddr_t *addr)
   if (!ms)
     return TD_ERR_NOSYM;
 
-  *addr = (caddr_t) SYMBOL_VALUE_ADDRESS (ms);
+  *addr = (caddr_t)(uintptr_t)SYMBOL_VALUE_ADDRESS (ms);
 
   return 0;
 
@@ -1022,7 +628,11 @@ nbsd_thread_proc_regsize (void *arg, int regset, size_t *size)
       *size = sizeof (gregset_t);
       break;
     case 1:
+#ifdef HAVE_FPREGS
       *size = sizeof (fpregset_t);
+#else
+      *size = 0;
+#endif
       break;
     default:
       return TD_ERR_INVAL;
@@ -1066,7 +676,9 @@ nbsd_thread_proc_getregs (void *arg, int regset, int lwp, void *buf)
       fill_gregset (cache, (gregset_t *)buf, -1);
       break;
     case 1:
+#ifdef HAVE_FPREGS
       fill_fpregset (cache, (fpregset_t *)buf, -1);
+#endif
       break;
     default: /* XXX need to handle other reg sets: SSE, AltiVec, etc. */
       ret = TD_ERR_INVAL;
@@ -1096,7 +708,9 @@ nbsd_thread_proc_setregs (void *arg, int regset, int lwp, void *buf)
       supply_gregset(cache, (gregset_t *)buf);
       break;
     case 1:
+#ifdef HAVE_FPREGS
       supply_fpregset(cache, (fpregset_t *)buf);
+#endif
       break;
     default: /* XXX need to handle other reg sets: SSE, AltiVec, etc. */
       ret = TD_ERR_INVAL;
@@ -1111,13 +725,6 @@ nbsd_thread_proc_setregs (void *arg, int regset, int lwp, void *buf)
   return ret;
 }
 
-
-static int
-ignore (CORE_ADDR addr, char *contents)
-{
-  return 0;
-}
-
 static void
 init_nbsd_proc_callbacks (void)
 {
@@ -1127,18 +734,6 @@ init_nbsd_proc_callbacks (void)
   nbsd_thread_callbacks.proc_regsize = nbsd_thread_proc_regsize;
   nbsd_thread_callbacks.proc_getregs = nbsd_thread_proc_getregs;
   nbsd_thread_callbacks.proc_setregs = nbsd_thread_proc_setregs;
-}
-
-static int
-one(struct target_ops *ops)
-{
-  return 1;
-}
-
-static int
-oneptid(struct target_ops *ops, ptid_t id)
-{
-  return 1;
 }
 
 static void
@@ -1176,27 +771,10 @@ init_nbsd_thread_ops (void)
 void
 _initialize_nbsd_thread (void)
 {
-  static struct cmd_list_element *thread_examine_list = NULL;
-
   init_nbsd_thread_ops ();
   init_nbsd_proc_callbacks ();
 
   add_target (&nbsd_thread_ops);
-  add_cmd ("tsd", class_run, nbsd_thread_tsd_cmd,
-	   "Show the thread-specific data keys and destructors for the process.\n",
-	   &thread_cmd_list);
-
-  add_cmd ("sync", class_run, nbsd_thread_sync_cmd,
-	   "Show the synchronization object at the given address.\n",
-	   &thread_cmd_list);
-
-  add_prefix_cmd ("examine", class_run, nbsd_thread_examine_cmd,
-		  "Show the thread at the given address.\n",
-		  &thread_examine_list, "examine ", 1, &thread_cmd_list);
-
-  add_cmd ("all", class_run, nbsd_thread_examine_all_cmd,
-	   "Show all threads.",
-	   &thread_examine_list);
 
   /* Hook into new_objfile notification.  */ 
   observer_attach_new_objfile (nbsd_thread_new_objfile);

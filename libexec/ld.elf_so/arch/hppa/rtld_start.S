@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.11 2011/09/30 03:05:43 mrg Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.11.2.1 2012/04/17 00:05:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -181,6 +181,7 @@ ENTRY(_rtld_bind_start,HPPA_FRAME_SIZE)
 	/* 0(%r3) is filled with the saved %r3 above */
 	stw	%ret0, 4(%r3)
 	stw	%ret1, 8(%r3)
+	stw	%t1, 12(%r3)		/* %r22 */
 
 	/*
 	 * The linker PLT stub loads %r20 with (GOT - 8) for the object that
@@ -220,6 +221,7 @@ ENTRY(_rtld_bind_start,HPPA_FRAME_SIZE)
 	ldw	HPPA_FRAME_ARG(3)(%r3), %arg3
 	ldw	4(%r3), %ret0
 	ldw	8(%r3), %ret1
+	ldw	12(%r3), %t1		/* %r22 */
 
 	/* End stack calling convention. */
 	ldo	HPPA_FRAME_SIZE(%r3), %sp

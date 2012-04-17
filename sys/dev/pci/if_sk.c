@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.69 2011/05/29 13:31:30 phx Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.69.4.1 2012/04/17 00:07:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,9 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.69 2011/05/29 13:31:30 phx Exp $");
-
-#include "rnd.h"
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.69.4.1 2012/04/17 00:07:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,9 +138,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.69 2011/05/29 13:31:30 phx Exp $");
 #include <net/if_media.h>
 
 #include <net/bpf.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -1465,10 +1461,8 @@ sk_attach(device_t parent, device_t self, void *aux)
 
 	ether_ifattach(ifp, sc_if->sk_enaddr);
 
-#if NRND > 0
         rnd_attach_source(&sc->rnd_source, device_xname(sc->sk_dev),
             RND_TYPE_NET, 0);
-#endif
 
 	if (pmf_device_register(self, NULL, sk_resume))
 		pmf_class_network_register(self, ifp);
@@ -2402,10 +2396,7 @@ sk_intr(void *xsc)
 	if (ifp1 != NULL && !IFQ_IS_EMPTY(&ifp1->if_snd))
 		sk_start(ifp1);
 
-#if NRND > 0
-	if (RND_ENABLED(&sc->rnd_source))
-		rnd_add_uint32(&sc->rnd_source, status);
-#endif
+	rnd_add_uint32(&sc->rnd_source, status);
 
 	if (sc->sk_int_mod_pending)
 		sk_update_int_mod(sc);

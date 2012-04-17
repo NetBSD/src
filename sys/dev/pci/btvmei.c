@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.26 2009/11/26 15:17:08 njoly Exp $ */
+/* $NetBSD: btvmei.c,v 1.26.12.1 2012/04/17 00:07:43 yamt Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.26 2009/11/26 15:17:08 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.26.12.1 2012/04/17 00:07:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,19 +90,14 @@ b3_617_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 
-	int rev;
-
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	struct vmebus_attach_args vaa;
 
-	aprint_naive(": VME bus adapter\n");
-
 	sc->sc_pc = pc;
 	sc->sc_dmat = pa->pa_dmat;
 
-	rev = PCI_REVISION(pci_conf_read(pc, pa->pa_tag, PCI_CLASS_REG));
-	aprint_normal(": BIT3 PCI-VME 617 rev %d\n", rev);
+	pci_aprint_devinfo_fancy(pa, "VME bus adapter", "BIT3 PCI-VME 617", 1);
 
 	/*
 	 * Map CSR and mapping table spaces.
@@ -303,16 +298,16 @@ b3_617_init(struct b3_617_softc *sc)
 	 * set up scatter page allocation control
 	 */
 	sc->vmeext = extent_create("pcivme", MR_PCI_VME,
-				   MR_PCI_VME + MR_PCI_VME_SIZE - 1, M_DEVBUF,
+				   MR_PCI_VME + MR_PCI_VME_SIZE - 1,
 				   sc->vmemap, sizeof(sc->vmemap),
 				   EX_NOCOALESCE);
 #if 0
 	sc->pciext = extent_create("vmepci", MR_VME_PCI,
-				   MR_VME_PCI + MR_VME_PCI_SIZE - 1, M_DEVBUF,
+				   MR_VME_PCI + MR_VME_PCI_SIZE - 1,
 				   sc->pcimap, sizeof(sc->pcimap),
 				   EX_NOCOALESCE);
 	sc->dmaext = extent_create("dmapci", MR_DMA_PCI,
-				   MR_DMA_PCI + MR_DMA_PCI_SIZE - 1, M_DEVBUF,
+				   MR_DMA_PCI + MR_DMA_PCI_SIZE - 1,
 				   sc->dmamap, sizeof(sc->dmamap),
 				   EX_NOCOALESCE);
 #endif

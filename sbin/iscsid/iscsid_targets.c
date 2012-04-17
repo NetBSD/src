@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_targets.c,v 1.2 2011/10/29 16:54:49 christos Exp $	*/
+/*	$NetBSD: iscsid_targets.c,v 1.2.2.1 2012/04/17 00:05:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -34,10 +34,10 @@
 #include <ctype.h>
 
 /* counter for portal and target ID */
-STATIC uint32_t portarget_id = 0;
+static uint32_t portarget_id = 0;
 
 /* counter for send_targets ID */
-STATIC uint32_t send_target_id = 0;
+static uint32_t send_target_id = 0;
 
 
 /*
@@ -55,7 +55,7 @@ STATIC uint32_t send_target_id = 0;
  *    Returns:    pointer to created portal
  */
 
-STATIC portal_t *
+static portal_t *
 create_portal(target_t *target, iscsi_portal_address_t *addr,
 			  iscsi_portal_types_t dtype, uint32_t did)
 {
@@ -167,7 +167,7 @@ delete_portal(portal_t * portal, boolean_t delete_empty)
  *    Returns:    Pointer to target structure, NULL if allocation failed.
  */
 
-STATIC target_t *
+static target_t *
 create_target(uint8_t * name)
 {
 	target_t *target;
@@ -204,7 +204,7 @@ create_target(uint8_t * name)
  *       target   the pointer to the target
  */
 
-STATIC void
+static void
 delete_target(target_t * target)
 {
 	portal_group_t *cgroup;
@@ -239,7 +239,7 @@ delete_target(target_t * target)
  *    Returns:    Pointer to structure, NULL if allocation failed.
  */
 
-STATIC target_t *
+static target_t *
 create_send_target(uint8_t * name, iscsi_portal_address_t * addr)
 {
 	send_target_t *target;
@@ -271,7 +271,7 @@ create_send_target(uint8_t * name, iscsi_portal_address_t * addr)
  *       send_target   the pointer to the send_target
  */
 
-STATIC void
+static void
 delete_send_target(send_target_t * send_target)
 {
 	generic_entry_t *curr;
@@ -736,7 +736,7 @@ remove_target(iscsid_list_id_t * par)
  *    Returns:    0 on error, 1 if OK.
  */
 
-STATIC int
+static int
 cl_get_address(iscsi_portal_address_t * portal, char *str)
 {
 	char *sp, *sp2;
@@ -802,7 +802,7 @@ cl_get_address(iscsi_portal_address_t * portal, char *str)
  */
 
 
-STATIC uint32_t
+static uint32_t
 refresh_send_target(uint32_t id)
 {
 	uint8_t *response_buffer = NULL;
@@ -922,7 +922,7 @@ refresh_send_target(uint32_t id)
  */
 
 
-STATIC void
+static void
 cleanup_orphans(iscsi_portal_types_t type)
 {
 	generic_entry_t *curr;

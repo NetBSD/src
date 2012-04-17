@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2011/10/13 17:23:28 plunky Exp $	
+# $NetBSD: Makefile,v 1.7.2.1 2012/04/17 00:03:28 yamt Exp $	
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,8 @@ USE_FORT?= yes	# network protocol library
 
 CWARNFLAGS.clang+=	-Wno-format-extra-args \
 			-Wno-unneeded-internal-declaration
+
+CPPFLAGS+= -DPCAP_DONT_INCLUDE_PCAP_BPF_H
 
 .SUFFIXES: .3 .3pcap
 
@@ -86,8 +88,11 @@ SRCS=	scanner.l savefile.c pcap.c pcap-bpf.c optimize.c nametoaddr.c \
 .PATH:	${NETBSDSRCDIR}/sys/net
 SRCS+=	bpf_filter.c
 
-INCS=		pcap-namedb.h pcap.h pcap/pcap.h pcap/namedb.h pcap/bpf.h
+INCS=		pcap/pcap.h pcap/namedb.h
 INCSDIR=	/usr/include
+INCSYMLINKS+=   ../net/bpf.h ${INCSDIR}/pcap/bpf.h
+INCSYMLINKS+=	pcap/pcap.h ${INCSDIR}/pcap.h
+INCSYMLINKS+=	pcap/namedb.h ${INCSDIR}/pcap-namedb.h
 
 scanner.d scanner.o: tokdefs.h
 

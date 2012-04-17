@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.16 2011/07/17 20:54:51 joerg Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.16.2.1 2012/04/17 00:07:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.16 2011/07/17 20:54:51 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.16.2.1 2012/04/17 00:07:35 yamt Exp $");
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 
@@ -94,6 +94,13 @@ static void	mpt_scsipi_request(struct scsipi_channel *,
 		    scsipi_adapter_req_t, void *);
 static void	mpt_minphys(struct buf *);
 
+/*
+ * XXX - this assumes the device_private() of the attachement starts with
+ * a struct mpt_softc, so we can use the return value of device_private()
+ * straight without any offset.
+ */
+#define DEV_TO_MPT(DEV)	device_private(DEV)
+
 void
 mpt_scsipi_attach(mpt_softc_t *mpt)
 {
@@ -108,10 +115,10 @@ mpt_scsipi_attach(mpt_softc_t *mpt)
 
 	/* Fill in the scsipi_adapter. */
 	memset(adapt, 0, sizeof(*adapt));
-	adapt->adapt_dev = &mpt->sc_dev;
+	adapt->adapt_dev = mpt->sc_dev;
 	adapt->adapt_nchannels = 1;
-	adapt->adapt_openings = maxq;
-	adapt->adapt_max_periph = maxq;
+	adapt->adapt_openings = maxq - 2;	/* Reserve 2 for driver use*/
+	adapt->adapt_max_periph = maxq - 2;
 	adapt->adapt_request = mpt_scsipi_request;
 	adapt->adapt_minphys = mpt_minphys;
 
@@ -125,7 +132,7 @@ mpt_scsipi_attach(mpt_softc_t *mpt)
 	chan->chan_ntargets = mpt->mpt_max_devices;
 	chan->chan_id = mpt->mpt_ini_id;
 
-	(void) config_found(&mpt->sc_dev, &mpt->sc_channel, scsiprint);
+	(void) config_found(mpt->sc_dev, &mpt->sc_channel, scsiprint);
 }
 
 int
@@ -149,7 +156,7 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
 	len = sizeof(request_t) * MPT_MAX_REQUESTS(mpt);
 	mpt->request_pool = malloc(len, M_DEVBUF, M_WAITOK | M_ZERO);
 	if (mpt->request_pool == NULL) {
-		aprint_error_dev(&mpt->sc_dev, "unable to allocate request pool\n");
+		aprint_error_dev(mpt->sc_dev, "unable to allocate request pool\n");
 		return (ENOMEM);
 	}
 
@@ -159,7 +166,7 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
 	error = bus_dmamem_alloc(mpt->sc_dmat, PAGE_SIZE, PAGE_SIZE, 0,
 	    &reply_seg, 1, &reply_rseg, 0);
 	if (error) {
-		aprint_error_dev(&mpt->sc_dev, "unable to allocate reply area, error = %d\n",
+		aprint_error_dev(mpt->sc_dev, "unable to allocate reply area, error = %d\n",
 		    error);
 		goto fail_0;
 	}
@@ -167,7 +174,7 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
 	error = bus_dmamem_map(mpt->sc_dmat, &reply_seg, reply_rseg, PAGE_SIZE,
 	    (void **) &mpt->reply, BUS_DMA_COHERENT/*XXX*/);
 	if (error) {
-		aprint_error_dev(&mpt->sc_dev, "unable to map reply area, error = %d\n",
+		aprint_error_dev(mpt->sc_dev, "unable to map reply area, error = %d\n",
 		    error);
 		goto fail_1;
 	}
@@ -175,7 +182,7 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
 	error = bus_dmamap_create(mpt->sc_dmat, PAGE_SIZE, 1, PAGE_SIZE,
 	    0, 0, &mpt->reply_dmap);
 	if (error) {
-		aprint_error_dev(&mpt->sc_dev, "unable to create reply DMA map, error = %d\n",
+		aprint_error_dev(mpt->sc_dev, "unable to create reply DMA map, error = %d\n",
 		    error);
 		goto fail_2;
 	}
@@ -183,7 +190,7 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
 	error = bus_dmamap_load(mpt->sc_dmat, mpt->reply_dmap, mpt->reply,
 	    PAGE_SIZE, NULL, 0);
 	if (error) {
-		aprint_error_dev(&mpt->sc_dev, "unable to load reply DMA map, error = %d\n",
+		aprint_error_dev(mpt->sc_dev, "unable to load reply DMA map, error = %d\n",
 		    error);
 		goto fail_3;
 	}
@@ -195,7 +202,7 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
 	error = bus_dmamem_alloc(mpt->sc_dmat, MPT_REQ_MEM_SIZE(mpt),
 	    PAGE_SIZE, 0, &request_seg, 1, &request_rseg, 0);
 	if (error) {
-		aprint_error_dev(&mpt->sc_dev, "unable to allocate request area, "
+		aprint_error_dev(mpt->sc_dev, "unable to allocate request area, "
 		    "error = %d\n", error);
 		goto fail_4;
 	}
@@ -203,7 +210,7 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
 	error = bus_dmamem_map(mpt->sc_dmat, &request_seg, request_rseg,
 	    MPT_REQ_MEM_SIZE(mpt), (void **) &mpt->request, 0);
 	if (error) {
-		aprint_error_dev(&mpt->sc_dev, "unable to map request area, error = %d\n",
+		aprint_error_dev(mpt->sc_dev, "unable to map request area, error = %d\n",
 		    error);
 		goto fail_5;
 	}
@@ -211,7 +218,7 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
 	error = bus_dmamap_create(mpt->sc_dmat, MPT_REQ_MEM_SIZE(mpt), 1,
 	    MPT_REQ_MEM_SIZE(mpt), 0, 0, &mpt->request_dmap);
 	if (error) {
-		aprint_error_dev(&mpt->sc_dev, "unable to create request DMA map, "
+		aprint_error_dev(mpt->sc_dev, "unable to create request DMA map, "
 		    "error = %d\n", error);
 		goto fail_6;
 	}
@@ -219,7 +226,7 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
 	error = bus_dmamap_load(mpt->sc_dmat, mpt->request_dmap, mpt->request,
 	    MPT_REQ_MEM_SIZE(mpt), NULL, 0);
 	if (error) {
-		aprint_error_dev(&mpt->sc_dev, "unable to load request DMA map, error = %d\n",
+		aprint_error_dev(mpt->sc_dev, "unable to load request DMA map, error = %d\n",
 		    error);
 		goto fail_7;
 	}
@@ -246,7 +253,7 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
 		error = bus_dmamap_create(mpt->sc_dmat, MAXPHYS,
 		    MPT_SGL_MAX, MAXPHYS, 0, 0, &req->dmap);
 		if (error) {
-			aprint_error_dev(&mpt->sc_dev, "unable to create req %d DMA map, "
+			aprint_error_dev(mpt->sc_dev, "unable to create req %d DMA map, "
 			    "error = %d\n", i, error);
 			goto fail_8;
 		}
@@ -318,7 +325,7 @@ mpt_prt(mpt_softc_t *mpt, const char *fmt, ...)
 {
 	va_list ap;
 
-	printf("%s: ", device_xname(&mpt->sc_dev));
+	printf("%s: ", device_xname(mpt->sc_dev));
 	va_start(ap, fmt);
 	vprintf(fmt, ap);
 	va_end(ap);
@@ -346,8 +353,8 @@ mpt_timeout(void *arg)
 	request_t *req = arg;
 	struct scsipi_xfer *xs = req->xfer;
 	struct scsipi_periph *periph = xs->xs_periph;
-	mpt_softc_t *mpt =
-	    (void *) periph->periph_channel->chan_adapter->adapt_dev;
+	mpt_softc_t *mpt = DEV_TO_MPT(
+	    periph->periph_channel->chan_adapter->adapt_dev);
 	uint32_t oseq;
 	int s;
 
@@ -937,14 +944,6 @@ mpt_set_xfer_mode(mpt_softc_t *mpt, struct scsipi_xfer_mode *xm)
 {
 	fCONFIG_PAGE_SCSI_DEVICE_1 tmp;
 
-	if (!mpt->is_scsi) {
-		/*
-		 * SCSI transport settings don't make any sense for
-		 * Fibre Channel; silently ignore the request.
-		 */
-		return;
-	}
-
 	/*
 	 * Always allow disconnect; we don't have a way to disable
 	 * it right now, in any case.
@@ -956,64 +955,71 @@ mpt_set_xfer_mode(mpt_softc_t *mpt, struct scsipi_xfer_mode *xm)
 	else
 		mpt->mpt_tag_enable &= ~(1 << xm->xm_target);
 
-	tmp = mpt->mpt_dev_page1[xm->xm_target];
+	if (mpt->is_scsi) {
+		/*
+		 * SCSI transport settings only make any sense for
+		 * SCSI
+		 */
 
-	/*
-	 * Set the wide/narrow parameter for the target.
-	 */
-	if (xm->xm_mode & PERIPH_CAP_WIDE16)
-		tmp.RequestedParameters |= MPI_SCSIDEVPAGE1_RP_WIDE;
-	else
-		tmp.RequestedParameters &= ~MPI_SCSIDEVPAGE1_RP_WIDE;
+		tmp = mpt->mpt_dev_page1[xm->xm_target];
 
-	/*
-	 * Set the synchronous parameters for the target.
-	 *
-	 * XXX If we request sync transfers, we just go ahead and
-	 * XXX request the maximum available.  We need finer control
-	 * XXX in order to implement Domain Validation.
-	 */
-	tmp.RequestedParameters &= ~(MPI_SCSIDEVPAGE1_RP_MIN_SYNC_PERIOD_MASK |
-	    MPI_SCSIDEVPAGE1_RP_MAX_SYNC_OFFSET_MASK |
-	    MPI_SCSIDEVPAGE1_RP_DT | MPI_SCSIDEVPAGE1_RP_QAS |
-	    MPI_SCSIDEVPAGE1_RP_IU);
-	if (xm->xm_mode & PERIPH_CAP_SYNC) {
-		int factor, offset, np;
+		/*
+		 * Set the wide/narrow parameter for the target.
+		 */
+		if (xm->xm_mode & PERIPH_CAP_WIDE16)
+			tmp.RequestedParameters |= MPI_SCSIDEVPAGE1_RP_WIDE;
+		else
+			tmp.RequestedParameters &= ~MPI_SCSIDEVPAGE1_RP_WIDE;
 
-		factor = (mpt->mpt_port_page0.Capabilities >> 8) & 0xff;
-		offset = (mpt->mpt_port_page0.Capabilities >> 16) & 0xff;
-		np = 0;
-		if (factor < 0x9) {
-			/* Ultra320 */
-			np |= MPI_SCSIDEVPAGE1_RP_QAS | MPI_SCSIDEVPAGE1_RP_IU;
+		/*
+		 * Set the synchronous parameters for the target.
+		 *
+		 * XXX If we request sync transfers, we just go ahead and
+		 * XXX request the maximum available.  We need finer control
+		 * XXX in order to implement Domain Validation.
+		 */
+		tmp.RequestedParameters &= ~(MPI_SCSIDEVPAGE1_RP_MIN_SYNC_PERIOD_MASK |
+		    MPI_SCSIDEVPAGE1_RP_MAX_SYNC_OFFSET_MASK |
+		    MPI_SCSIDEVPAGE1_RP_DT | MPI_SCSIDEVPAGE1_RP_QAS |
+		    MPI_SCSIDEVPAGE1_RP_IU);
+		if (xm->xm_mode & PERIPH_CAP_SYNC) {
+			int factor, offset, np;
+
+			factor = (mpt->mpt_port_page0.Capabilities >> 8) & 0xff;
+			offset = (mpt->mpt_port_page0.Capabilities >> 16) & 0xff;
+			np = 0;
+			if (factor < 0x9) {
+				/* Ultra320 */
+				np |= MPI_SCSIDEVPAGE1_RP_QAS | MPI_SCSIDEVPAGE1_RP_IU;
+			}
+			if (factor < 0xa) {
+				/* at least Ultra160 */
+				np |= MPI_SCSIDEVPAGE1_RP_DT;
+			}
+			np |= (factor << 8) | (offset << 16);
+			tmp.RequestedParameters |= np;
 		}
-		if (factor < 0xa) {
-			/* at least Ultra160 */
-			np |= MPI_SCSIDEVPAGE1_RP_DT;
+
+		host2mpt_config_page_scsi_device_1(&tmp);
+		if (mpt_write_cfg_page(mpt, xm->xm_target, &tmp.Header)) {
+			mpt_prt(mpt, "unable to write Device Page 1");
+			return;
 		}
-		np |= (factor << 8) | (offset << 16);
-		tmp.RequestedParameters |= np;
-	}
 
-	host2mpt_config_page_scsi_device_1(&tmp);
-	if (mpt_write_cfg_page(mpt, xm->xm_target, &tmp.Header)) {
-		mpt_prt(mpt, "unable to write Device Page 1");
-		return;
-	}
+		if (mpt_read_cfg_page(mpt, xm->xm_target, &tmp.Header)) {
+			mpt_prt(mpt, "unable to read back Device Page 1");
+			return;
+		}
 
-	if (mpt_read_cfg_page(mpt, xm->xm_target, &tmp.Header)) {
-		mpt_prt(mpt, "unable to read back Device Page 1");
-		return;
-	}
-
-	mpt2host_config_page_scsi_device_1(&tmp);
-	mpt->mpt_dev_page1[xm->xm_target] = tmp;
-	if (mpt->verbose > 1) {
-		mpt_prt(mpt,
-		    "SPI Target %d Page 1: RequestedParameters %x Config %x",
-		    xm->xm_target,
-		    mpt->mpt_dev_page1[xm->xm_target].RequestedParameters,
-		    mpt->mpt_dev_page1[xm->xm_target].Configuration);
+		mpt2host_config_page_scsi_device_1(&tmp);
+		mpt->mpt_dev_page1[xm->xm_target] = tmp;
+		if (mpt->verbose > 1) {
+			mpt_prt(mpt,
+			    "SPI Target %d Page 1: RequestedParameters %x Config %x",
+			    xm->xm_target,
+			    mpt->mpt_dev_page1[xm->xm_target].RequestedParameters,
+			    mpt->mpt_dev_page1[xm->xm_target].Configuration);
+		}
 	}
 
 	/*
@@ -1136,7 +1142,7 @@ mpt_event_notify_reply(mpt_softc_t *mpt, MSG_EVENT_NOTIFY_REPLY *msg)
 		mpt_prt(mpt, "EvtLogData: Event Data:");
 		for (i = 0; i < msg->EventDataLength; i++) {
 			if ((i % 4) == 0)
-				printf("%s:\t", device_xname(&mpt->sc_dev));
+				printf("%s:\t", device_xname(mpt->sc_dev));
 			printf("0x%08x%c", msg->Data[i],
 			    ((i % 4) == 3) ? '\n' : ' ');
 		}
@@ -1296,6 +1302,12 @@ mpt_event_notify_reply(mpt_softc_t *mpt, MSG_EVENT_NOTIFY_REPLY *msg)
 		/* ignore these events for now */
 		break;
 
+	case MPI_EVENT_QUEUE_FULL:
+		/* This can get a little chatty */
+		if (mpt->verbose > 0)
+			mpt_prt(mpt, "Queue Full Event");
+		break;
+
 	default:
 		mpt_prt(mpt, "Unknown async event: 0x%x", msg->Event);
 		break;
@@ -1333,7 +1345,7 @@ mpt_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
     void *arg)
 {
 	struct scsipi_adapter *adapt = chan->chan_adapter;
-	mpt_softc_t *mpt = (void *) adapt->adapt_dev;
+	mpt_softc_t *mpt = DEV_TO_MPT(adapt->adapt_dev);
 
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:

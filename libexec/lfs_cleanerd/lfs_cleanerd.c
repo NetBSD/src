@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.27 2010/12/23 18:08:41 mlelstv Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.27.6.1 2012/04/17 00:05:36 yamt Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -835,7 +835,7 @@ toss_old_blocks(struct clfs *fs, BLOCK_INFO **bipp, int *bic, int *sizep)
 		if (sizep)
 			*sizep += bip[i].bi_size;
 	}
-	*bic = i; /* XXX realloc bip? */
+	*bic = i; /* XXX should we shrink bip? */
 	*bipp = bip;
 
 	return;
@@ -928,7 +928,7 @@ check_or_add(ino_t ino, int32_t lbn, BLOCK_INFO *bip, int bic, BLOCK_INFO **ebip
 	++ebic;
 	t = realloc(ebip, ebic * sizeof(BLOCK_INFO));
 	if (t == NULL)
-		return 1; /* Note *ebipc is not updated */
+		return 1; /* Note *ebicp is unchanged */
 
 	ebip = t;
 	ebip[ebic - 1].bi_inode = ino;
@@ -1149,9 +1149,18 @@ clean_fs(struct clfs *fs, CLEANERINFO *cip)
 #endif /* TEST_PATTERN */
 		dlog("sending blocks %d-%d", mc, mc + lim.blkcnt - 1);
 		if ((r = kops.ko_fcntl(fs->clfs_ifilefd, LFCNMARKV, &lim))<0) {
-			syslog(LOG_WARNING, "%s: markv returned %d (%m)",
-			       fs->lfs_fsmnt, r);
-			if (errno != EAGAIN && errno != ESHUTDOWN) {
+			int oerrno = errno;
+			syslog(LOG_WARNING, "%s: markv returned %d (errno %d, %m)",
+			       fs->lfs_fsmnt, r, errno);
+			if (oerrno != EAGAIN && oerrno != ESHUTDOWN) {
+				syslog(LOG_DEBUG, "%s: errno %d, returning",
+				       fs->lfs_fsmnt, oerrno);
+				fd_release_all(fs->clfs_devvp);
+				return r;
+			}
+			if (oerrno == ESHUTDOWN) {
+				syslog(LOG_NOTICE, "%s: filesystem unmounted",
+				       fs->lfs_fsmnt);
 				fd_release_all(fs->clfs_devvp);
 				return r;
 			}
@@ -1356,7 +1365,7 @@ lfs_cleaner_main(int argc, char **argv)
 	 */
 	atatime	 = 1;
 	segwait_timeout = 300; /* Five minutes */
-	load_threshold	= 0.2;
+	load_threshold	= 0;
 	stat_report	= 0;
 	inval_segment	= -1;
 	copylog_filename = NULL;
@@ -1558,6 +1567,8 @@ lfs_cleaner_main(int argc, char **argv)
 			cleaned_one = 0;
 			for (i = 0; i < nfss; i++) {
 				if ((error = needs_cleaning(fsp[i], &ci)) < 0) {
+					syslog(LOG_DEBUG, "%s: needs_cleaning returned %d",
+					       getprogname(), error);
 					handle_error(fsp, i);
 					continue;
 				}
@@ -1565,7 +1576,9 @@ lfs_cleaner_main(int argc, char **argv)
 					continue;
 				
 				reload_ifile(fsp[i]);
-				if (clean_fs(fsp[i], &ci) < 0) {
+				if ((error = clean_fs(fsp[i], &ci)) < 0) {
+					syslog(LOG_DEBUG, "%s: clean_fs returned %d",
+					       getprogname(), error);
 					handle_error(fsp, i);
 					continue;
 				}
@@ -1584,6 +1597,8 @@ lfs_cleaner_main(int argc, char **argv)
 		if (error) {
 			if (errno == ESHUTDOWN) {
 				for (i = 0; i < nfss; i++) {
+					syslog(LOG_INFO, "%s: shutdown",
+					       getprogname());
 					handle_error(fsp, i);
 					assert(nfss == 0);
 				}

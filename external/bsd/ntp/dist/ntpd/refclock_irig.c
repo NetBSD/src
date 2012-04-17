@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_irig.c,v 1.1.1.1 2009/12/13 16:55:50 kardel Exp $	*/
+/*	$NetBSD: refclock_irig.c,v 1.1.1.1.6.1 2012/04/17 00:03:48 yamt Exp $	*/
 
 /*
  * refclock_irig - audio IRIG-B/E demodulator/decoder
@@ -334,12 +334,8 @@ irig_start(
 	/*
 	 * Allocate and initialize unit structure
 	 */
-	if (!(up = (struct irigunit *)
-	      emalloc(sizeof(struct irigunit)))) {
-		(void) close(fd);
-		return (0);
-	}
-	memset((char *)up, 0, sizeof(struct irigunit));
+	up = emalloc(sizeof(*up));
+	memset(up, 0, sizeof(*up));
 	pp = peer->procptr;
 	pp->unitptr = (caddr_t)up;
 	pp->io.clock_recv = irig_receive;
@@ -347,8 +343,10 @@ irig_start(
 	pp->io.datalen = 0;
 	pp->io.fd = fd;
 	if (!io_addclock(&pp->io)) {
-		(void)close(fd);
+		close(fd);
+		pp->io.fd = -1;
 		free(up);
+		pp->unitptr = NULL;
 		return (0);
 	}
 
@@ -373,7 +371,7 @@ irig_start(
 	for (i = 3; i < OFFSET; i++) {
 		up->comp[i] = up->comp[i - 1] + step;
 		up->comp[OFFSET + i] = -up->comp[i];
-                if (i % 16 == 0)
+		if (i % 16 == 0)
 			step *= 2.;
 	}
 	DTOLFP(1. / SECOND, &up->tick);
@@ -395,8 +393,10 @@ irig_shutdown(
 
 	pp = peer->procptr;
 	up = (struct irigunit *)pp->unitptr;
-	io_closeclock(&pp->io);
-	free(up);
+	if (-1 != pp->io.fd)
+		io_closeclock(&pp->io);
+	if (NULL != up)
+		free(up);
 }
 
 
@@ -846,11 +846,11 @@ irig_decode(
 	 * Local variables
 	 */
 	int	syncdig;	/* sync digit (Spectracom) */
-	char	sbs[6];		/* binary seconds since 0h */
-	char	spare[2];	/* mulligan digits */
+	char	sbs[6 + 1];	/* binary seconds since 0h */
+	char	spare[2 + 1];	/* mulligan digits */
 	int	temp;
 
-        pp = peer->procptr;
+	pp = peer->procptr;
 	up = (struct irigunit *)pp->unitptr;
 
 	/*
@@ -945,7 +945,7 @@ irig_decode(
 					refclock_report(peer,
 					    CEVNT_BADTIME);
 			}
-			sprintf(pp->a_lastcode,
+			snprintf(pp->a_lastcode, sizeof(pp->a_lastcode),
 			    "%02x %02d %03d %02d:%02d:%02d %4.0f %3d %6.3f %2d %6.2f %6.1f %s",
 			    up->errflg, pp->year, pp->day,
 			    pp->hour, pp->minute, pp->second,

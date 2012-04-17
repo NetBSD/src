@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.h,v 1.1.1.1 2009/12/13 16:54:55 kardel Exp $	*/
+/*	$NetBSD: mem.h,v 1.1.1.1.6.1 2012/04/17 00:03:44 yamt Exp $	*/
 
 /*
  * libntp local override of isc/mem.h to stub it out.
@@ -44,14 +44,27 @@
 #include <ntp_stdlib.h>
 
 
-#define isc_mem_get(c, cnt)		emalloc((cnt))
-#define isc_mem_allocate(c, cnt)	emalloc((cnt))
-#define isc_mem_reallocate(c, mem, cnt)	erealloc((mem), (cnt))
-#define isc_mem_put(c, mem, cnt)	free((mem))
-#define isc_mem_free(c, mem)		free((mem))
-#define isc_mem_strdup(c, str)		estrdup((str))
+#define ISC_MEM_UNUSED_ARG(a)		((void)(a))
+
+#define isc_mem_allocate(c, cnt)	isc_mem_get(c, cnt)
+#define isc_mem_get(c, cnt)		\
+	( ISC_MEM_UNUSED_ARG(c),	emalloc(cnt) )
+
+#define isc_mem_reallocate(c, mem, cnt)	\
+	( ISC_MEM_UNUSED_ARG(c),	erealloc((mem), cnt) )
+
+#define isc_mem_put(c, mem, cnt)	\
+	( ISC_MEM_UNUSED_ARG(cnt),	isc_mem_free(c, (mem)) )
+
+#define isc_mem_free(c, mem)		\
+	( ISC_MEM_UNUSED_ARG(c),	free(mem) )
+
+#define isc_mem_strdup(c, str)		\
+	( ISC_MEM_UNUSED_ARG(c),	estrdup(str) )
+
 #define isc_mem_attach(src, ptgt)	do { *(ptgt) = (src); } while (0)
-#define isc_mem_detach(c)		((void)(c))
-#define isc_mem_printallactive(s)	fprintf(s, "isc_mem_printallactive() stubbed.\n")
+#define isc_mem_detach(c)		ISC_MEM_UNUSED_ARG(c)
+#define isc_mem_printallactive(s)	fprintf((s), \
+					"isc_mem_printallactive() stubbed.\n")
 
 #endif /* ISC_MEM_H */

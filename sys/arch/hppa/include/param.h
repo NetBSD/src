@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.15 2010/02/08 19:02:29 joerg Exp $	*/
+/*	$NetBSD: param.h,v 1.15.10.1 2012/04/17 00:06:26 yamt Exp $	*/
 
 /*	$OpenBSD: param.h,v 1.12 2001/07/06 02:07:41 provos Exp $	*/
 
@@ -36,15 +36,6 @@
 #define	_MACHINE_ARCH	hppa
 #define	MACHINE_ARCH	"hppa"
 #define	MID_MACHINE	MID_HPPA
-
-/*
- * Round p (pointer or byte index) up to a correctly-aligned value for all
- * data types (int, long, ...).   The result is u_int and must be cast to
- * any desired pointer type.
- */
-#define	ALIGNBYTES	7
-#define	ALIGN(p)	(((u_long)(p) + ALIGNBYTES) &~ ALIGNBYTES)
-#define	ALIGNED_POINTER(p,t) ((((u_long)(p)) & (sizeof(t) - 1)) == 0)
 
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
@@ -92,7 +83,7 @@
  * Size of kernel malloc arena in logical pages
  */
 #define NKMEMPAGES_MIN_DEFAULT  ((16 * 1024 * 1024) >> PAGE_SHIFT)
-#define NKMEMPAGES_MAX_DEFAULT  ((16 * 1024 * 1024) >> PAGE_SHIFT) 
+#define NKMEMPAGES_MAX_DEFAULT  ((256 * 1024 * 1024) >> PAGE_SHIFT) 
 
 /*
  * Mach derived conversion macros

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.258 2011/10/03 07:29:33 mbalmer Exp $
+#	$NetBSD: Makefile,v 1.258.2.1 2012/04/17 00:09:44 yamt Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -12,7 +12,7 @@ SUBDIR=	ac accton acpitools altq apm apmd arp \
 	gpioctl grfconfig gspa \
 	hdaudioctl \
 	i2cscan ifwatchd inetd installboot iopctl iostat ipwctl irdaattach \
-	isdn iteconfig iwictl \
+	isdn isibootd iteconfig iwictl \
 	kgmon \
 	lastlogin ldpd link lmcconfig lockstat lpr \
 	mailwrapper makefs map-mbone mdconfig memswitch mlxctl mmcformat \
@@ -21,16 +21,20 @@ SUBDIR=	ac accton acpitools altq apm apmd arp \
 	ofctl \
 	paxctl pcictl perfused pppd psrset pstat pwd_mkdb postinstall \
 	powerd puffs \
-	quot quotacheck quotactl quotaon \
+	quot quotacheck quotaon quotarestore \
 	rarpd rbootd rdate repquota rmt rpc.bootparamd rpc.lockd \
 	rpc.pcnfsd rpc.statd rpcbind rwhod \
 	sa screenblank sdpd services_mkdb sesd schedctl sliplogin spray \
 	srtconfig sti sunlabel sup syslogd \
-	tadpolectl tcpdchk tcpdmatch tcpdrop timed tpctl traceroute trpt \
+	tadpolectl tcpdchk tcpdmatch tcpdrop timed tpctl tprof traceroute trpt \
 	unlink usbdevs user \
 	videomode vipw veriexecgen vnconfig \
 	wake wiconfig wlanctl wsconscfg wsfontload wsmoused wsmuxctl \
 	zdump zic
+
+.if ${MKMAKEMANDB} != "no"
+SUBDIR+= makemandb
+.endif
 
 .if (${MKYP} != "no")
 SUBDIR+= rpc.yppasswdd ypbind yppoll ypserv ypset
@@ -57,11 +61,6 @@ SUBDIR+= racoon racoonctl
 # NPF
 .if (${MKNPF} != "no")
 SUBDIR+=npf
-.endif
-
-# IP Filter
-.if (${MKIPFILTER} != "no")
-SUBDIR+=ipf
 .endif
 
 # PF

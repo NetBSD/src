@@ -1,4 +1,4 @@
-/* $NetBSD: aupsc.c,v 1.6 2011/07/01 18:39:29 dyoung Exp $ */
+/* $NetBSD: aupsc.c,v 1.6.2.1 2012/04/17 00:06:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupsc.c,v 1.6 2011/07/01 18:39:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupsc.c,v 1.6.2.1 2012/04/17 00:06:38 yamt Exp $");
 
 #include "locators.h"
 
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: aupsc.c,v 1.6 2011/07/01 18:39:29 dyoung Exp $");
 #include <mips/alchemy/dev/ausmbus_pscreg.h>
 
 struct aupsc_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_space_tag_t		sc_bust;
 	bus_space_handle_t	sc_bush;
 	int			sc_pscsel;
@@ -71,10 +71,9 @@ const struct aupsc_proto {
 	{ NULL, AUPSC_SEL_DISABLE }
 };
 
-static int	aupsc_match(struct device *, struct cfdata *, void *);
-static void	aupsc_attach(struct device *, struct device *, void *);
-static int	aupsc_submatch(struct device *, struct cfdata *, const int *,
-				void *);
+static int	aupsc_match(device_t, struct cfdata *, void *);
+static void	aupsc_attach(device_t, device_t, void *);
+static int	aupsc_submatch(device_t, struct cfdata *, const int *, void *);
 static int	aupsc_print(void *, const char *);
 
 static void	aupsc_enable(void *, int);
@@ -82,11 +81,11 @@ static void	aupsc_disable(void *);
 static void	aupsc_suspend(void *);
 
 
-CFATTACH_DECL(aupsc, sizeof(struct aupsc_softc),
+CFATTACH_DECL_NEW(aupsc, sizeof(struct aupsc_softc),
 	aupsc_match, aupsc_attach, NULL, NULL);
 
 static int
-aupsc_match(struct device *parent, struct cfdata *cf, void *aux)
+aupsc_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct aubus_attach_args *aa = (struct aubus_attach_args *)aux;
 
@@ -97,19 +96,20 @@ aupsc_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-aupsc_attach(struct device *parent, struct device *self, void *aux)
+aupsc_attach(device_t parent, device_t self, void *aux)
 {
 	int i;
 	uint32_t rv;
-	struct aupsc_softc *sc = (struct aupsc_softc *)self;
+	struct aupsc_softc *sc = device_private(self);
 	struct aubus_attach_args *aa = (struct aubus_attach_args *)aux;
 	struct aupsc_attach_args pa;
 	struct aupsc_controller ctrl;
 
+	sc->sc_dev = self;
 	sc->sc_bust = aa->aa_st;
 	if (bus_space_map(sc->sc_bust, aa->aa_addr,
 			AUPSC_SIZE, 0, &sc->sc_bush) != 0) {
-		aprint_normal(": unable to map device registers\n");
+		aprint_error(": unable to map device registers\n");
 		return;
 	}
 
@@ -122,6 +122,7 @@ aupsc_attach(struct device *parent, struct device *self, void *aux)
 		AUPSC_CTRL, AUPSC_CTRL_ENA(AUPSC_CTRL_DISABLE));
 
 	aprint_normal(": Alchemy PSC\n");
+	aprint_naive("\n");
 
 	ctrl.psc_bust = sc->sc_bust;
 	ctrl.psc_bush = sc->sc_bush;
@@ -154,8 +155,7 @@ aupsc_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-aupsc_submatch(struct device *parent, struct cfdata *cf,
-	const int *ldesc, void *aux)
+aupsc_submatch(device_t parent, struct cfdata *cf, const int *ldesc, void *aux)
 {
 
 	return config_match(parent, cf, aux);
@@ -202,13 +202,13 @@ aupsc_enable(void *arg, int proto)
 		break;
 	default:
 		printf("%s: aupsc_enable: unsupported protocol.\n",
-			sc->sc_dev.dv_xname);
+			device_xname(sc->sc_dev));
 		return;
 	}
 
 	if (*(sc->sc_ctrl.psc_sel) != AUPSC_SEL_DISABLE) {
 		printf("%s: aupsc_enable: please disable first.\n",
-			sc->sc_dev.dv_xname);
+			device_xname(sc->sc_dev));
 		return;
 	}
 

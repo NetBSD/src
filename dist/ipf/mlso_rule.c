@@ -1,4 +1,4 @@
-/*	$NetBSD: mlso_rule.c,v 1.1.1.1 2004/03/28 08:55:48 martti Exp $	*/
+/*	$NetBSD: mlso_rule.c,v 1.1.1.1.56.1 2012/04/17 00:02:24 yamt Exp $	*/
 
 /*
  * Copyright (C) 2000 by Darren Reed.
@@ -66,7 +66,7 @@ static	struct modlinkage	modlink1 = {
 };
 
 
-int _init()
+
 {
 	int ipfruleinst;
 
@@ -94,7 +94,7 @@ int _init()
 }
 
 
-int _fini(void)
+
 {
 	int ipfruleinst;
 
@@ -115,7 +115,7 @@ int _fini(void)
 }
 
 
-int _info(modinfop)
+
 struct modinfo *modinfop;
 {
 	int ipfruleinst;

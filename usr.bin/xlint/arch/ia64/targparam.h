@@ -1,4 +1,4 @@
-/*	$NetBSD: targparam.h,v 1.1 2006/04/01 09:39:47 cherry Exp $	*/
+/*	$NetBSD: targparam.h,v 1.1.44.1 2012/04/17 00:09:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -34,7 +34,7 @@
 /*
  * Machine-dependent target parameters for lint1.
  */
-
+#include "schar.h"
 #include "lp64.h"
 
 /*    

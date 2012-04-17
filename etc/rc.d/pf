@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: pf,v 1.9 2008/11/22 20:23:33 tsutsui Exp $
+# $NetBSD: pf,v 1.9.8.1 2012/04/17 00:02:59 yamt Exp $
 #
 
 # PROVIDE: pf
@@ -35,11 +35,11 @@ pf_start()
 
 	# The pf_boot script has enabled pf already.
 	if [ "$autoboot" != yes ]; then
-		/sbin/pfctl -q -e 
+		/sbin/pfctl -q ${pf_flags} -e 
 	fi
 
 	if [ -f ${pf_rules} ]; then
-		/sbin/pfctl -q -f ${pf_rules}
+		/sbin/pfctl -q ${pf_flags} -f ${pf_rules}
 	else
 		warn "${pf_rules} not found; no pf rules loaded."
 	fi
@@ -48,14 +48,14 @@ pf_start()
 pf_stop()
 {
 	echo "Disabling pf firewall."
-	/sbin/pfctl -q -Fa -d
+	/sbin/pfctl -q ${pf_flags} -Fa -d
 }
 
 pf_reload()
 {
 	echo "Reloading pf rules."
 	if [ -f ${pf_rules} ]; then
-		/sbin/pfctl -q -f ${pf_rules}
+		/sbin/pfctl -q ${pf_flags} -f ${pf_rules}
 	else
 		warn "${pf_rules} not found; no pf rules loaded."
 	fi
@@ -63,7 +63,7 @@ pf_reload()
 
 pf_status()
 {
-	/sbin/pfctl -s info
+	/sbin/pfctl ${pf_flags} -s info
 }
 
 load_rc_config $name

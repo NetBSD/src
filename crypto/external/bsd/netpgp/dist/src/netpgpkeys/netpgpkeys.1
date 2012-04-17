@@ -1,4 +1,4 @@
-.\" $NetBSD: netpgpkeys.1,v 1.17 2010/11/04 09:30:33 wiz Exp $
+.\" $NetBSD: netpgpkeys.1,v 1.17.6.1 2012/04/17 00:01:43 yamt Exp $
 .\"
 .\" Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 4, 2010
+.Dd February 21, 2012
 .Dt NETPGPKEYS 1
 .Os
 .Sh NAME
@@ -58,6 +58,10 @@
 .Fl Fl list\-sigs
 .Op options
 .Ar file ...
+.Nm
+.Fl Fl trusted\-keys
+.Op options
+.Ar key ...
 .Nm
 .Fl Fl version
 .Nm
@@ -189,6 +193,13 @@ If no keyring is provided, the user's public keyring is used.
 List all the public keys in the current keyring, along with
 the sub-key signatures which provide the key with trust.
 If no keyring is provided, the user's public keyring is used.
+.It Fl Fl trusted\-keys
+Prints a list of keys in a more machine-readble format than is
+normally used, which can be used as input to other parsing
+engines.
+The output from this command is sent to
+.Dv stdout .
+Normal key-matching rules apply.
 .It Fl Fl version
 Print the version information from the
 .Xr libnetpgp 3

@@ -1,4 +1,4 @@
-/* $NetBSD: t_sethostname.c,v 1.2 2011/06/02 12:42:27 jruoho Exp $ */
+/* $NetBSD: t_sethostname.c,v 1.2.4.1 2012/04/17 00:09:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sethostname.c,v 1.2 2011/06/02 12:42:27 jruoho Exp $");
+__RCSID("$NetBSD: t_sethostname.c,v 1.2.4.1 2012/04/17 00:09:11 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -43,7 +43,7 @@ static char host[MAXHOSTNAMELEN];
 static const char hosts[][MAXHOSTNAMELEN] = {
 	"1234567890",
 	"abcdefghijklmnopqrst",
-	"!#¤%&/(..xasS812=!=!(I(!;X;;X.as.dasa=?;,..<>|**^¨",
+	"!#\xa4%&/(..xasS812=!=!(I(!;X;;X.as.dasa=?;,..<>|**^\xa8",
 	"--------------------------------------------------------------------"
 };
 

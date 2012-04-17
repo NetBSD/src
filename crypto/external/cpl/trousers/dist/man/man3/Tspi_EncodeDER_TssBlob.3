@@ -1,0 +1,77 @@
+.\" Copyright (C) 2007 International Business Machines Corporation
+.\" Written by Tom Lendacky based on the Trusted Computing Group Software Stack Specification Version 1.2
+.\"
+.de Sh \" Subsection
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+.de Sp \" Vertical space (when we can't use .PP)
+.if t .sp .5v
+.if n .sp
+..
+.de Ip \" List item
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH "Tspi_EncodeDER_TssBlob" 3 "2007-06-12" "TSS 1.2" "TCG Software Stack Developer's Reference"
+.SH NAME
+Tspi_EncodeDER_TssBlob \- generate a DER encoded TSS blob. 
+.SH "SYNOPSIS"
+.ad l
+.hy 0
+.nf
+.B #include <tss/tspi.h>
+.sp
+.BI "TSS_RESULT Tspi_EncodeDER_TssBlob(UINT32 " rawBlobSize ", BYTE*   " rawBlob ","
+.BI "                                  UINT32 " blobType ",    UINT32* " derBlobSize ","
+.BI "                                  BYTE*  " derBlob ");"
+.fi
+.sp
+.ad
+.hy
+
+.SH "DESCRIPTION"
+.PP
+\fBTspi_EncodeDER_TssBlob\fR  is used to generate a DER-encoded blob in accordance with the ASN.1 data definitions in the Portable Data section of the Trusted Computing Group Software Stack Specification Version 1.2.
+.SH "PARAMETERS"
+.PP
+.SS rawBlobSize
+Size of the unwrapped blob.
+.PP
+.SS rawBlob
+Pointer to the unwrapped blob.
+.PP
+.SS blobType
+Type of blob being wrapped (refer to the TSS_BLOB_TYPE_* constants).
+.PP
+.SS derBlobSize
+Pointer to the size of the derBlob buffer.  On input this parameter contains a pointer to the maximum size of the supplied derBlob buffer.  On output this parameter contains a pointer to the actual size of the DER-encoded blob.  On input, if this parameter points to a value of 0, then this function will return the size of the buffer required to hold the DER-encoded blob without writing to the derBlob buffer.
+.sp
+\fBNote:\fR If the raw data blob length is less than 2^16 bytes then the DER-encoding may add no more than 20 bytes.
+.PP
+.SS derBlob
+Pointer to a buffer to hold the DER-encoded blob.
+.SH "RETURN CODES"
+.PP
+\fBTspi_EncodeDER_TssBlob\fR returns TSS_SUCCESS on success, otherwise one of the following values are returned:
+.TP
+.SM TSS_E_BAD_PARAMETER
+.TP
+.SM TSS_E_INTERNAL_ERROR - An error occurred internal to the TSS.
+.SH "CONFORMING TO"
+
+.PP
+\fBTspi_EncodeDER_TssBlob\fR conforms to the Trusted Computing Group Software Specification Version 1.2
+.SH "SEE ALSO"
+
+.PP
+\fBTspi_DecodeBER_TssBlob\fR(3).
+
+
+

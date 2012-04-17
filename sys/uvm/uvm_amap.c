@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.104.2.1 2011/12/26 16:03:10 yamt Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.104.2.2 2012/04/17 00:08:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.104.2.1 2011/12/26 16:03:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.104.2.2 2012/04/17 00:08:58 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -805,11 +805,11 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int flags,
 			UVMHIST_LOG(maphist, "  chunk amap ==> clip 0x%x->0x%x"
 			    "to 0x%x->0x%x", entry->start, entry->end, startva,
 			    endva);
-			UVM_MAP_CLIP_START(map, entry, startva, NULL);
+			UVM_MAP_CLIP_START(map, entry, startva);
 
 			/* Watch out for endva wrap-around! */
 			if (endva >= startva) {
-				UVM_MAP_CLIP_END(map, entry, endva, NULL);
+				UVM_MAP_CLIP_END(map, entry, endva);
 			}
 		}
 
@@ -902,6 +902,7 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int flags,
 		}
 		KASSERT(anon->an_lock == srcamap->am_lock);
 		KASSERT(anon->an_ref > 0);
+		KASSERT(amap->am_nused < amap->am_maxslot);
 		amap->am_anon[lcv]->an_ref++;
 		amap->am_bckptr[lcv] = amap->am_nused;
 		amap->am_slots[amap->am_nused] = lcv;
@@ -1053,6 +1054,7 @@ ReStart:
 
 		nanon = uvm_analloc();
 		if (nanon) {
+			nanon->an_lock = amap->am_lock;
 			npg = uvm_pagealloc(NULL, 0, nanon, 0);
 		} else {
 			npg = NULL;
@@ -1060,6 +1062,7 @@ ReStart:
 		if (nanon == NULL || npg == NULL) {
 			amap_unlock(amap);
 			if (nanon) {
+				nanon->an_lock = NULL;
 				nanon->an_ref--;
 				KASSERT(nanon->an_ref == 0);
 				uvm_anon_free(nanon);
@@ -1073,7 +1076,6 @@ ReStart:
 		 * Also, setup its lock (share the with amap's lock).
 		 */
 
-		nanon->an_lock = amap->am_lock;
 		uvm_pagecopy(pg, npg);
 		anon->an_ref--;
 		KASSERT(anon->an_ref > 0);
@@ -1210,6 +1212,7 @@ amap_pp_adjref(struct vm_amap *amap, int curslot, vsize_t slotlen, int adjval,
 		}
 		ref += adjval;
 		KASSERT(ref >= 0);
+		KASSERT(ref <= amap->am_ref);
 		if (lcv == prevlcv + prevlen && ref == prevref) {
 			pp_setreflen(ppref, prevlcv, ref, prevlen + len);
 		} else {
@@ -1507,6 +1510,7 @@ amap_add(struct vm_aref *aref, vaddr_t offset, struct vm_anon *anon,
 		}
 	} else {
 		KASSERT(amap->am_anon[slot] == NULL);
+		KASSERT(amap->am_nused < amap->am_maxslot);
 		amap->am_bckptr[slot] = amap->am_nused;
 		amap->am_slots[amap->am_nused] = slot;
 		amap->am_nused++;
@@ -1551,7 +1555,7 @@ amap_unadd(struct vm_aref *aref, vaddr_t offset)
 }
 
 /*
- * amap_adjref_anons: adjust the reference count(s) on anons of the amap.
+ * amap_adjref_anons: adjust the reference count(s) on amap and its anons.
  */
 static void
 amap_adjref_anons(struct vm_amap *amap, vaddr_t offset, vsize_t len,
@@ -1562,9 +1566,19 @@ amap_adjref_anons(struct vm_amap *amap, vaddr_t offset, vsize_t len,
 #ifdef UVM_AMAP_PPREF
 	KASSERT(mutex_owned(amap->am_lock));
 
+	/*
+	 * We must establish the ppref array before changing am_ref
+	 * so that the ppref values match the current amap refcount.
+	 */
+
 	if (amap->am_ppref == NULL && !all && len != amap->am_nslot) {
 		amap_pp_establish(amap, offset);
 	}
+#endif
+
+	amap->am_ref += refv;
+
+#ifdef UVM_AMAP_PPREF
 	if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
 		if (all) {
 			amap_pp_adjref(amap, 0, amap->am_nslot, refv, &tofree);
@@ -1592,7 +1606,6 @@ amap_ref(struct vm_amap *amap, vaddr_t offset, vsize_t len, int flags)
 	if (flags & AMAP_SHARED) {
 		amap->am_flags |= AMAP_SHARED;
 	}
-	amap->am_ref++;
 	amap_adjref_anons(amap, offset, len, 1, (flags & AMAP_REFALL) != 0);
 
 	UVMHIST_LOG(maphist,"<- done!  amap=0x%x", amap, 0, 0, 0);
@@ -1616,10 +1629,12 @@ amap_unref(struct vm_amap *amap, vaddr_t offset, vsize_t len, bool all)
 	    amap, amap->am_ref, amap->am_nused, 0);
 	KASSERT(amap->am_ref > 0);
 
-	if (--amap->am_ref == 0) {
+	if (amap->am_ref == 1) {
+
 		/*
 		 * If the last reference - wipeout and destroy the amap.
 		 */
+		amap->am_ref--;
 		amap_wipeout(amap);
 		UVMHIST_LOG(maphist,"<- done (was last ref)!", 0, 0, 0, 0);
 		return;
@@ -1629,7 +1644,7 @@ amap_unref(struct vm_amap *amap, vaddr_t offset, vsize_t len, bool all)
 	 * Otherwise, drop the reference count(s) on anons.
 	 */
 
-	if (amap->am_ref == 1 && (amap->am_flags & AMAP_SHARED) != 0) {
+	if (amap->am_ref == 2 && (amap->am_flags & AMAP_SHARED) != 0) {
 		amap->am_flags &= ~AMAP_SHARED;
 	}
 	amap_adjref_anons(amap, offset, len, -1, all);

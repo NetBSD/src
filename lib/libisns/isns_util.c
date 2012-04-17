@@ -1,4 +1,4 @@
-/*	$NetBSD: isns_util.c,v 1.1.1.1 2011/01/16 01:22:50 agc Exp $	*/
+/*	$NetBSD: isns_util.c,v 1.1.1.1.6.1 2012/04/17 00:05:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004,2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: isns_util.c,v 1.1.1.1 2011/01/16 01:22:50 agc Exp $");
+__RCSID("$NetBSD: isns_util.c,v 1.1.1.1.6.1 2012/04/17 00:05:28 yamt Exp $");
 
 
 #include <sys/types.h>
@@ -82,7 +82,7 @@ isns_change_kevent_list(struct isns_config_s *cfg_p,
 
 
 struct isns_config_s *
-isns_new_config()
+isns_new_config(void)
 {
 	struct isns_config_s *cfg_p;
 	pthread_mutexattr_t mutexattr;

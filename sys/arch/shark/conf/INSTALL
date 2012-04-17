@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.47 2011/06/30 20:09:36 wiz Exp $
+#	$NetBSD: INSTALL,v 1.47.2.1 2012/04/17 00:06:53 yamt Exp $
 #
 #	Shark installation kernel
 #
@@ -61,7 +61,7 @@ file-system	KERNFS		# /kern
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 
 # Networking options
 
@@ -256,7 +256,6 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
 #pseudo-device	fss			# file system snapshot device
-pseudo-device	rnd			# /dev/random and /dev/urandom
 
 pseudo-device	md			# Ramdisk driver
 #pseudo-device	profiler 1		# fiq based profiling device

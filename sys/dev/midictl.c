@@ -1,11 +1,11 @@
-/* $NetBSD: midictl.c,v 1.6 2008/06/24 10:55:48 gmcgarry Exp $ */
+/* $NetBSD: midictl.c,v 1.6.30.1 2012/04/17 00:07:25 yamt Exp $ */
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Chapman Flack.
+ * by Chapman Flack, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,34 +29,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midictl.c,v 1.6 2008/06/24 10:55:48 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midictl.c,v 1.6.30.1 2012/04/17 00:07:25 yamt Exp $");
 
 /*
  * See midictl.h for an overview of the purpose and use of this module.
  */
 
-#if defined(_KERNEL)
-#define _MIDICTL_ASSERT(x) KASSERT(x)
-#define _MIDICTL_MALLOC(s,t) malloc((s), (t), M_WAITOK)
-#define _MIDICTL_ZMALLOC(s,t) malloc((s), (t), M_WAITOK|M_ZERO)
-#define _MIDICTL_IMZMALLOC(s,t) malloc((s), (t), M_NOWAIT|M_ZERO)
-#define _MIDICTL_PANIC(...) panic(__VA_ARGS__)
-#define _MIDICTL_FREE(s,t) free((s), (t))
 #include <sys/systm.h>
 #include <sys/types.h>
-#else
-#include <assert.h>
-#include <err.h>
-#include <inttypes.h>
-#include <stdio.h>
-#include <stdlib.h>
-#define _MIDICTL_ASSERT(x) assert(x)
-#define _MIDICTL_MALLOC(s,t) malloc((s))
-#define _MIDICTL_ZMALLOC(s,t) calloc(1,(s))
-#define _MIDICTL_IMZMALLOC(s,t) calloc(1,(s))
-#define _MIDICTL_PANIC(...) errx(1,__VA_ARGS__)
-#define _MIDICTL_FREE(s,t) free((s))
-#endif
+#include <sys/param.h>
+#include <sys/kernel.h>
+#include <sys/kthread.h>
+#include <sys/kmem.h>
 
 #include "midictl.h"
 
@@ -101,8 +85,6 @@ static uint_fast16_t read14(midictl *mc, uint_fast8_t chan, class c,
 static class classify(uint_fast16_t *key, _Bool *islsb);
 static midictl_notify notify_no_one;
 
-static midictl_store *store_init(void);
-static void store_done(midictl_store *s);
 static _Bool store_locate(midictl_store *s, class c,
                             uint_fast8_t chan, uint_fast16_t key);
 /*
@@ -123,57 +105,116 @@ static void store_update(midictl_store *s, class c,
 #define C7_SET 0x80    /* a 7-bit ctl has been set */
 #define C1_SET 2       /* a 1-bit ctl has been set */
 
-#if defined(_MIDICTL_MAIN)
-#define XS(s) [MIDICTL_##s]=#s
-char const * const evt_strings[] = {
-	XS(CTLR), XS(RPN), XS(NRPN), XS(RESET), XS(NOTES_OFF),
-	XS(SOUND_OFF), XS(LOCAL), XS(MODE)
-};
-#undef XS
+/*
+ *   I M P L E M E N T A T I O N     O F     T H E     S T O R E :
+ *
+ * MIDI defines a metric plethora of possible controllers, registered
+ * parameters, and nonregistered parameters: a bit more than 32k possible words
+ * to store. The saving grace is that only a handful are likely to appear in
+ * typical MIDI data, and only a handful are likely implemented by or
+ * interesting to a typical client. So the store implementation needs to be
+ * suited to a largish but quite sparse data set.
+ *
+ * A double-hashed, open address table is used here. Each slot is a uint64
+ * that contains the match key (control class|channel|ctl-or-PN-number) as
+ * well as the values for two or more channels. CTL14s, RPNs, and NRPNs can
+ * be packed two channels to the slot; CTL7s, six channels; and CTL1s get all
+ * 16 channels into one slot. The channel value used in the key is the lowest
+ * channel stored in the slot. Open addressing is appropriate here because the
+ * link fields in a chained approach would be at least 100% overhead, and also,
+ * we don't delete (MIDICTL_RESET is the only event that logically deletes
+ * things, and at the moment it does not remove anything from the table, but
+ * zeroes the stored value). If wanted, the deletion algorithm for open
+ * addressing could be used, with shrinking/rehashing when the load factor
+ * drops below 3/8 (1/2 is the current threshold for expansion), and the
+ * rehashing would relieve the fills-with-DELETED problem in most cases. But
+ * for now the table never shrinks while the device is open.
+ */
 
-void
-dbgnotify(void *cookie, midictl_evt e, uint_fast8_t chan, uint_fast16_t key)
-{
-	printf("NFY %p %s chan %u #%u\n", cookie, evt_strings[e], chan, key);
-}
-
-midictl mc = {
-	.accept_any_ctl_rpn = 0,
-	.accept_any_nrpn = 0,
-	.base_channel = 16,
-	.cookie = NULL,
-	.notify = dbgnotify
+struct midictl_store {
+	uint64_t *table;
+	uint64_t key;
+	uint32_t idx;
+	uint32_t lgcapacity;
+	uint32_t used;
+	kcondvar_t cv;
+	kmutex_t *lock;
+	bool destroy;
 };
+
+#define INITIALLGCAPACITY 6 /* initial capacity 1<<6 */
+#define IS_USED 1<<15
+#define IS_CTL7 1<<14
+
+#define CTL1SHIFT(chan) (23+((chan)<<1))
+#define CTL7SHIFT(chan) (16+((chan)<<3))
+#define CTLESHIFT(chan) (23+((chan)<<4))
+
+#define	NEED_REHASH(s)	((s)->used * 2 >= 1 << (s)->lgcapacity)
+
+static uint_fast8_t const packing[] = {
+	[CTL1 ] = 16, /* 16 * 2 bits ==> 32 bits, all chns in one bucket */
+	[CTL7 ] =  6, /*  6 * 8 bits ==> 48 bits, 6 chns in one bucket */
+	[CTL14] =  2, /*  2 *16 bits ==> 32 bits, 2 chns in one bucket */
+	[RPN  ] =  2,
+	[NRPN ] =  2
+};
+
+static uint32_t store_idx(uint32_t lgcapacity,
+			  uint64_t *table,
+                          uint64_t key, uint64_t mask);
+static void store_rehash(midictl_store *s);
+static void store_thread(void *);
 
 int
-main(int argc, char **argv)
-{
-	int cnt, a, b, c;
-	
-	midictl_open(&mc);
-	do {
-		cnt = scanf("%i %i %i", &a, &b, &c);
-		if ( 3 == cnt ) {
-			midictl_change(&mc, a, (uint8_t[]){b,c});
-		}
-	} while ( EOF != cnt );
-	midictl_close(&mc);
-	return 0;
-}
-#endif /* defined(_MIDICTL_MAIN) */
-
-void
 midictl_open(midictl *mc)
 {
-	if ( NULL == mc->notify )
+	midictl_store *s;
+	int error;
+
+	if (mc->lock == NULL)
+		panic("midictl_open: no lock");
+	if (NULL == mc->notify)
 		mc->notify = notify_no_one;
-	mc->store = store_init();
+	s = kmem_zalloc(sizeof(*s), KM_SLEEP);
+	if (s == NULL) {
+		return ENOMEM;
+	}
+	s->lgcapacity = INITIALLGCAPACITY;
+	s->table = kmem_zalloc(sizeof(*s->table)<<s->lgcapacity, KM_SLEEP);
+	if (s->table == NULL) {
+		kmem_free(s->table, sizeof(*s->table)<<s->lgcapacity);
+		kmem_free(s, sizeof(*s));
+		return ENOMEM;
+	}
+	s->lock = mc->lock;
+	cv_init(&s->cv, "midictlv");
+	error = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL, store_thread, 
+	    s, NULL, "midictlt");
+	if (error != 0) {
+		printf("midictl: cannot create kthread, error = %d\n", error);
+		cv_destroy(&s->cv);
+		kmem_free(s->table, sizeof(*s->table)<<s->lgcapacity);
+		kmem_free(s, sizeof(*s));
+		return error;
+	}
+	mc->store = s;
+	return 0;
 }
 
 void
 midictl_close(midictl *mc)
 {
-	store_done(mc->store);
+	midictl_store *s;
+	kmutex_t *lock;
+
+	s = mc->store;
+	lock = s->lock;
+
+	mutex_enter(lock);
+	s->destroy = true;
+	cv_broadcast(&s->cv);
+	mutex_exit(lock);
 }
 
 void
@@ -182,6 +223,9 @@ midictl_change(midictl *mc, uint_fast8_t chan, uint8_t *ctlval)
 	class c;
 	uint_fast16_t key, val;
 	_Bool islsb, present;
+
+	KASSERT(mutex_owned(mc->lock));
+	KASSERT(!mc->store->destroy);
 		
 	switch ( ctlval[0] ) {
 	/*
@@ -307,6 +351,9 @@ midictl_read(midictl *mc, uint_fast8_t chan, uint_fast8_t ctlr,
 	uint_fast16_t key, val;
 	class c;
 	_Bool islsb, present;
+
+	KASSERT(mutex_owned(mc->lock));
+	KASSERT(!mc->store->destroy);
 	
 	key = ctlr;
 	c = classify(&key, &islsb);
@@ -328,7 +375,7 @@ midictl_read(midictl *mc, uint_fast8_t chan, uint_fast8_t ctlr,
 		}
 		return val & 0x7f;
 	case CTL14:
-		_MIDICTL_ASSERT(!islsb);
+		KASSERT(!islsb);
 		return read14(mc, chan, c, key, dflt);
 	case RPN:
 	case NRPN:
@@ -341,6 +388,10 @@ uint_fast16_t
 midictl_rpn_read(midictl *mc, uint_fast8_t chan, uint_fast16_t ctlr,
                  uint_fast16_t dflt)
 {
+
+	KASSERT(mutex_owned(mc->lock));
+	KASSERT(!mc->store->destroy);
+
 	return read14(mc, chan, RPN, ctlr, dflt);
 }
 
@@ -348,6 +399,10 @@ uint_fast16_t
 midictl_nrpn_read(midictl *mc, uint_fast8_t chan, uint_fast16_t ctlr,
                   uint_fast16_t dflt)
 {
+
+	KASSERT(mutex_owned(mc->lock));
+	KASSERT(!mc->store->destroy);
+
 	return read14(mc, chan, NRPN, ctlr, dflt);
 }
 
@@ -357,6 +412,8 @@ reset_all_controllers(midictl *mc, uint_fast8_t chan)
 	uint_fast16_t ctlr, key;
 	class c;
 	_Bool islsb, present;
+
+	KASSERT(mutex_owned(mc->lock));
 	
 	for ( ctlr = 0 ; ; ++ ctlr ) {
 		switch ( ctlr ) {
@@ -401,6 +458,8 @@ enter14(midictl *mc, uint_fast8_t chan, class c, uint_fast16_t key,
 	uint16_t stval;
 	_Bool present;
 	
+	KASSERT(mutex_owned(mc->lock));
+
 	present = store_locate(mc->store, c, chan, key);
 	stval = (present) ? store_extract(mc->store, c, chan, key) : 0;
 	if ( !( stval & (C14MSET|C14LSET) ) ) {
@@ -423,7 +482,9 @@ read14(midictl *mc, uint_fast8_t chan, class c, uint_fast16_t key,
 {
 	uint16_t val;
 	_Bool present;
-	
+
+	KASSERT(mutex_owned(mc->lock));
+
 	present = store_locate(mc->store, c, chan, key);
 	if ( !present )
 		goto neitherset;
@@ -479,90 +540,38 @@ notify_no_one(void *cookie, midictl_evt evt,
 #undef C7_SET
 #undef C1_SET
 
-/*
- *   I M P L E M E N T A T I O N     O F     T H E     S T O R E :
- *
- * MIDI defines a metric plethora of possible controllers, registered
- * parameters, and nonregistered parameters: a bit more than 32k possible words
- * to store. The saving grace is that only a handful are likely to appear in
- * typical MIDI data, and only a handful are likely implemented by or
- * interesting to a typical client. So the store implementation needs to be
- * suited to a largish but quite sparse data set.
- *
- * A double-hashed, open address table is used here. Each slot is a uint64
- * that contains the match key (control class|channel|ctl-or-PN-number) as
- * well as the values for two or more channels. CTL14s, RPNs, and NRPNs can
- * be packed two channels to the slot; CTL7s, six channels; and CTL1s get all
- * 16 channels into one slot. The channel value used in the key is the lowest
- * channel stored in the slot. Open addressing is appropriate here because the
- * link fields in a chained approach would be at least 100% overhead, and also,
- * we don't delete (MIDICTL_RESET is the only event that logically deletes
- * things, and at the moment it does not remove anything from the table, but
- * zeroes the stored value). If wanted, the deletion algorithm for open
- * addressing could be used, with shrinking/rehashing when the load factor
- * drops below 3/8 (3/4 is the current threshold for expansion), and the
- * rehashing would relieve the fills-with-DELETED problem in most cases. But
- * for now the table never shrinks while the device is open.
- */
-
-#include <sys/malloc.h>
-
-#define INITIALLGCAPACITY 6 /* initial capacity 1<<6 */
-#define IS_USED 1<<15
-#define IS_CTL7 1<<14
-
-#define CTL1SHIFT(chan) (23+((chan)<<1))
-#define CTL7SHIFT(chan) (16+((chan)<<3))
-#define CTLESHIFT(chan) (23+((chan)<<4))
-
-static uint_fast8_t const packing[] = {
-	[CTL1 ] = 16, /* 16 * 2 bits ==> 32 bits, all chns in one bucket */
-	[CTL7 ] =  6, /*  6 * 8 bits ==> 48 bits, 6 chns in one bucket */
-	[CTL14] =  2, /*  2 *16 bits ==> 32 bits, 2 chns in one bucket */
-	[RPN  ] =  2,
-	[NRPN ] =  2
-};
-
-struct midictl_store {
-	uint64_t *table;
-	uint64_t key;
-	uint32_t idx;
-	uint32_t lgcapacity;
-	uint32_t used;
-};
-
-static uint32_t store_idx(uint32_t lgcapacity,
-			  uint64_t *table,
-                          uint64_t key, uint64_t mask);
-static void store_rehash(midictl_store *s);
-
-static midictl_store *
-store_init(void)
+static void
+store_thread(void *arg)
 {
 	midictl_store *s;
-	
-	s = _MIDICTL_MALLOC(sizeof *s, M_DEVBUF);
-	s->used = 0;
-	s->lgcapacity = INITIALLGCAPACITY;
-	s->table = _MIDICTL_ZMALLOC(sizeof *s->table<<s->lgcapacity, M_DEVBUF);
-	return s;
-}
 
-static void
-store_done(midictl_store *s)
-{
-	_MIDICTL_FREE(s->table, M_DEVBUF);
-	_MIDICTL_FREE(s, M_DEVBUF);
+	s = arg;
+
+	mutex_enter(s->lock);
+	for (;;) {
+		if (s->destroy) {
+			mutex_exit(s->lock);
+			cv_destroy(&s->cv);
+			kmem_free(s->table, sizeof(*s->table)<<s->lgcapacity);
+			kmem_free(s, sizeof(*s));
+			kthread_exit(0);
+		} else if (NEED_REHASH(s)) {
+			store_rehash(s);
+		} else {
+			cv_wait(&s->cv, s->lock);
+		}
+	}
 }
 
 static _Bool
 store_locate(midictl_store *s, class c, uint_fast8_t chan, uint_fast16_t key)
 {
 	uint64_t mask;
+
+	KASSERT(mutex_owned(s->lock));
 	
 	if ( s->used >= 1 << s->lgcapacity )
-		_MIDICTL_PANIC("%s: repeated attempts to expand table failed, "
-		    "plumb ran out of space", __func__);
+		panic("%s: repeated attempts to expand table failed", __func__);
 
 	chan = packing[c] * (chan/packing[c]);
 
@@ -586,6 +595,9 @@ static uint16_t
 store_extract(midictl_store *s, class c, uint_fast8_t chan,
     uint_fast16_t key)
 {
+
+	KASSERT(mutex_owned(s->lock));
+
 	chan %= packing[c];
 	switch ( c ) {
 	case CTL1:
@@ -605,6 +617,8 @@ store_update(midictl_store *s, class c, uint_fast8_t chan,
     uint_fast16_t key, uint16_t value)
 {
 	uint64_t orig;
+
+	KASSERT(mutex_owned(s->lock));
 	
 	orig = s->table[s->idx];
 	if ( !(orig & IS_USED) ) {
@@ -632,8 +646,8 @@ store_update(midictl_store *s, class c, uint_fast8_t chan,
 	}
 	
 	s->table[s->idx] = orig;
-	if ( s->used * 4 >= 3 << s->lgcapacity )
-		store_rehash(s);
+	if (NEED_REHASH(s))
+		cv_broadcast(&s->cv);
 }
 
 static uint32_t
@@ -666,99 +680,53 @@ store_idx(uint32_t lgcapacity, uint64_t *table,
 static void
 store_rehash(midictl_store *s)
 {
-	uint64_t *newtbl, mask;
-	uint32_t newlgcap, oidx, nidx;
-	
-	newlgcap = 1 + s->lgcapacity;
-	newtbl = _MIDICTL_IMZMALLOC(sizeof *newtbl << newlgcap, M_DEVBUF);
-	
-	/*
-	 * Because IMZMALLOC can't sleep, it might have returned NULL.
-	 * We rehash when there is some capacity left in the table, so
-	 * just leave it alone; we'll get another chance on the next insertion.
-	 * Nothing to panic about unless the load factor really hits 1.
-	 */
-	if ( NULL == newtbl )
-		return;
+	uint64_t *newtbl, *oldtbl, mask;
+	uint32_t oldlgcap, newlgcap, oidx, nidx;
 
-	for ( oidx = 1<<s->lgcapacity ; oidx --> 0 ; ) {
-		if ( !(s->table[oidx] & IS_USED) )
+	KASSERT(mutex_owned(s->lock));
+
+	oldlgcap = s->lgcapacity;
+	newlgcap = oldlgcap + s->lgcapacity;
+
+	mutex_exit(s->lock);
+	newtbl = kmem_zalloc(sizeof(*newtbl) << newlgcap, KM_SLEEP);
+	mutex_enter(s->lock);
+
+	if (newtbl == NULL) {
+		kpause("midictls", false, hz, s->lock);
+		return;
+	}
+	/*
+	 * If s->lgcapacity is changed from what we saved int oldlgcap
+	 * then someone else has already done this for us.
+	 * XXXMRG but only function changes s->lgcapacity from its
+	 * initial value, and it is called singled threaded from the
+	 * main store_thread(), so this code seems dead to me.
+	 */
+	if (oldlgcap != s->lgcapacity) {
+		KASSERT(FALSE);
+		mutex_exit(s->lock);
+		kmem_free(newtbl, sizeof(*newtbl) << newlgcap);
+		mutex_enter(s->lock);
+		return;
+	}
+			
+	for (oidx = 1 << s->lgcapacity ; oidx-- > 0 ; ) {
+		if (!(s->table[oidx] & IS_USED))
 			continue;
-		if ( s->table[oidx] & IS_CTL7 )
+		if (s->table[oidx] & IS_CTL7)
 			mask = 0xffff;
 		else
 			mask = 0x3fffff;
-		nidx = store_idx(newlgcap, newtbl, s->table[oidx]&mask, mask);
+		nidx = store_idx(newlgcap, newtbl,
+		    s->table[oidx] & mask, mask);
 		newtbl[nidx] = s->table[oidx];
 	}
-	
-	_MIDICTL_FREE(s->table, M_DEVBUF);
+	oldtbl = s->table;
 	s->table = newtbl;
 	s->lgcapacity = newlgcap;
+	
+	mutex_exit(s->lock);
+	kmem_free(oldtbl, sizeof(*oldtbl) << oldlgcap);
+	mutex_enter(s->lock);
 }
-
-#if defined(_MIDICTL_MAIN)
-void
-dumpstore(void)
-{
-	uint64_t val;
-	uint32_t i, remain;	
-	midictl_store *s;
-	char const *lbl;
-	uint_fast16_t key;
-	uint_fast8_t chan;
-	class c;
-	
-	s = mc.store;
-	
-	printf("store capacity %u, used %u\n", 1<<s->lgcapacity, s->used);
-	remain = s->used;
-	
-	for ( i = 1<<s->lgcapacity; i --> 0; ) {
-		if ( !(s->table[i] & IS_USED) )
-			continue;
-		-- remain;
-		if ( s->table[i] & IS_CTL7 ) {
-			c = CTL7;
-			chan = 0xf & (s->table[i]>>7);
-			key = 0x7f & s->table[i];
-		} else {
-			c = 0x7 & (s->table[i]>>20);
-			chan = 0xf & (s->table[i]>>16);
-			key = 0x3fff & s->table[i];
-		}
-		switch ( c ) {
-		case CTL1:
-			lbl = "CTL1";
-			val = s->table[i] >> CTL1SHIFT(0);
-			break;
-		case CTL7:
-			lbl = "CTL7";
-			val = s->table[i] >> CTL7SHIFT(0);
-			break;
-		case CTL14:
-			lbl = "CTL14";
-			val = s->table[i] >> CTLESHIFT(0);
-			break;
-		case RPN:
-			lbl = "RPN";
-			val = s->table[i] >> CTLESHIFT(0);
-			break;
-		case NRPN:
-			lbl = "NRPN";
-			val = s->table[i] >> CTLESHIFT(0);
-			break;
-		default:
-			lbl = "???";
-			chan = 0;
-			key = 0;
-			val = s->table[i];
-		}
-		printf("[%7u] %5s chans %x-%x key %5u: %"PRIx64"\n",
-		    i, lbl, chan, chan+packing[c]-1, key, val);
-	}
-	
-	if ( 0 != remain )
-		printf("remain == %u ??\n", remain);
-}
-#endif

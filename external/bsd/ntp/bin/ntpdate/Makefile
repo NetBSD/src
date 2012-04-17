@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/08/28 15:42:46 kardel Exp $
+#	$NetBSD: Makefile,v 1.2.6.1 2012/04/17 00:03:37 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -15,7 +15,7 @@ DPADD+=		${LIBNTP}/libntp.a ${LIBISC}/libiscntp.a ${LIBM}
 
 DIST=${IDIST}/ntpdate
 
-CPPFLAGS+=-I${IDIST}/include -I${IDIST}/libopts
+CPPFLAGS+=-I${IDIST}/include -I${IDIST}/sntp/libopts
 
 .PATH: ${DIST}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.48 2011/08/07 13:39:24 rmind Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.48.2.1 2012/04/17 00:07:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,9 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.48 2011/08/07 13:39:24 rmind Exp $");
-
-#include "rnd.h"
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.48.2.1 2012/04/17 00:07:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,9 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.48 2011/08/07 13:39:24 rmind Exp $");
 #include <sys/syslog.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <sys/intr.h>
 #include <sys/bus.h>
@@ -176,10 +172,8 @@ ed_mca_attach(device_t parent, device_t self, void *aux)
 	 */
 	disk_init(&ed->sc_dk, device_xname(&ed->sc_dev), &eddkdriver);
 	disk_attach(&ed->sc_dk);
-#if NRND > 0
 	rnd_attach_source(&ed->rnd_source, device_xname(&ed->sc_dev),
 			  RND_TYPE_DISK, 0);
-#endif
 
 	ed->sc_flags |= EDF_INIT;
 

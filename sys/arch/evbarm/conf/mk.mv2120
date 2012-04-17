@@ -1,41 +1,33 @@
-#	$NetBSD: mk.mv2120,v 1.1 2011/07/20 22:53:38 jakllsch Exp $
+#	$NetBSD: mk.mv2120,v 1.1.2.1 2012/04/17 00:06:13 yamt Exp $
 
 SYSTEM_FIRST_OBJ=	marvell_start.o
 SYSTEM_FIRST_SFILE=	${THISARM}/marvell/marvell_start.S
 
 _OSRELEASE!=		${HOST_SH} $S/conf/osrelease.sh
 
+#
+# MV2120 U-Boot is 1.1.4.
+#
+# This version cannot uncompress (or relocate?) images larger than 4Mbyte.
+# It also requires the entry point to be byte-swapped (or maybe just in
+# network byte order, this is a LE machine).
+#
+# U-Boot is already consuming the first 4MiB of memory, our image header
+# is 0x40 bytes.  Hence we load the image at 0x400000 and enter at 0x400040.
+#
+
+UIMAGE_BASE_PHYS=0x00400000
 KERNEL_BASE_PHYS=0x00400040
 KERNEL_BASE_VIRT=0xc0400040
 
 MKUBOOTIMAGEARGS=	-A arm -T kernel
-MKUBOOTIMAGEARGS+=	-a 0x00400000 -e 0x40004000 #byteswapped entry
+MKUBOOTIMAGEARGS+=	-a ${UIMAGE_BASE_PHYS} -E ${KERNEL_BASE_PHYS}
 MKUBOOTIMAGEARGS+=	-n "NetBSD/$(BOARDTYPE) ${_OSRELEASE}"
 MKUBOOTIMAGEARGS_NONE=	${MKUBOOTIMAGEARGS} -C none
-MKUBOOTIMAGEARGS_GZ=	${MKUBOOTIMAGEARGS} -C gz
 
-#
-# These not have expanding buffer over 4Mbyte. (before version 1.1.5)
-# And these cannot handle the endian of entry point. (1.1.4 and older)
-#
-# MV2120 U-Boot is 1.1.4.
-#
 SYSTEM_LD_TAIL_EXTRA+=; \
-	echo ${OBJCOPY} -S -O binary $@ $@.bin; \
 	${OBJCOPY} -S -O binary $@ $@.bin; \
-	echo gzip -c $@.bin > $@.bin.gz; \
-	gzip -c $@.bin > $@.bin.gz; \
-	echo ${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_GZ} $@.bin.gz $@.gz.ub; \
-	${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_GZ} $@.bin.gz $@.gz.ub; \
-	echo ${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_NONE} $@.bin $@.ub; \
-	${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_NONE} $@.bin $@.ub; \
-	echo ${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_NONE:C/((-a (0x)*)([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2}))/\1 -e \3\7\6\5\4/W} $@.bin $@-old.ub; \
-	${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_NONE:C/((-a (0x)*)([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2}))/\1 -e \3\7\6\5\4/W} $@.bin $@-old.ub; \
-	echo
+	${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_NONE} $@.bin $@.ub;
 
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.bin@}
-EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.bin.gz@}
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.ub@}
-EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.gz@}
-EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.gz.ub@}
-EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}-old.ub@}

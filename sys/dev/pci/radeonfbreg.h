@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfbreg.h,v 1.3 2007/01/03 19:47:17 macallan Exp $	*/
+/*	$NetBSD: radeonfbreg.h,v 1.3.80.1 2012/04/17 00:07:57 yamt Exp $	*/
 
 /* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_reg.h,v 1.31 2003/11/10 18:41:23 tsi Exp $ */
 /*
@@ -1123,6 +1123,17 @@
 #       define RADEON_RB2D_DC_FREE          (3 << 2)
 #       define RADEON_RB2D_DC_FLUSH_ALL     0xf
 #       define RADEON_RB2D_DC_BUSY          (1 << 31)
+#define RADEON_RB3D_DSTCACHE_CTLSTAT	    0x325C
+#	define RADEON_RB3D_DC_FLUSH	    (3 << 0)
+#	define RADEON_RB3D_DC_FREE	    (3 << 2)
+#	define RADEON_RB3D_DC_FLUSH_ALL	    0xf
+#	define RADEON_RB3D_DC_BUSY	    (1 << 31)
+#define R300_DSTCACHE_CTLSTAT		    0x1714
+#	define R300_DC_FLUSH_2D		    (1 << 0)
+#	define R300_DC_FREE_2D		    (1 << 2)
+#	define R300_RB2D_DC_FLUSH_ALL	    (R300_DC_FLUSH_2D | R300_DC_FREE_2D)
+#	define R300_RB2D_DC_BUSY	    (1 << 31)
+
 #define RADEON_RB2D_DSTCACHE_MODE           0x3428
 #define RADEON_REG_BASE                     0x0f18 /* PCI */
 #define RADEON_REGPROG_INF                  0x0f09 /* PCI */

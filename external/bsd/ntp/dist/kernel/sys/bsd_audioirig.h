@@ -1,7 +1,7 @@
-/*	$NetBSD: bsd_audioirig.h,v 1.1.1.1 2009/12/13 16:54:57 kardel Exp $	*/
+/*	$NetBSD: bsd_audioirig.h,v 1.1.1.1.6.1 2012/04/17 00:03:45 yamt Exp $	*/
 
 /*
- *	$Header: bsd_audioirig.h,v 1.0 93/08/02 12:42:00
+ *	Header: bsd_audioirig.h,v 1.0 93/08/02 12:42:00
  */
 
 #ifndef _BSD_AUDIOIRIG_H_

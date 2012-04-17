@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_pe.c,v 1.7.2.3 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_pe.c,v 1.6 2009/03/18 17:06:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pe.c,v 1.6.12.1 2012/04/17 00:07:20 yamt Exp $");
 #endif
 
 
@@ -426,10 +426,11 @@ pe_relocate(vm_offset_t imgbase)
  */
 
 int
-pe_get_import_descriptor(imgbase, desc, module)
-	vm_offset_t		imgbase;
-	image_import_descriptor	*desc;
-	const char		*module;
+pe_get_import_descriptor(
+	vm_offset_t		imgbase,
+	image_import_descriptor	*desc,
+	const char		*module
+)
 {	
 	vm_offset_t		offset;
 	image_import_descriptor	*imp_desc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_kbd.c,v 1.15 2011/08/18 02:18:40 christos Exp $	*/
+/*	$NetBSD: adb_kbd.c,v 1.15.2.1 2012/04/17 00:07:28 yamt Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.15 2011/08/18 02:18:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.15.2.1 2012/04/17 00:07:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -75,6 +75,7 @@ struct adbkbd_softc {
 	struct sysmon_pswitch sc_sm_pbutton;
 	int sc_leds;
 	int sc_have_led_control;
+	int sc_power_button_delay;
 	int sc_msg_len;
 	int sc_event;
 	int sc_poll;
@@ -194,6 +195,19 @@ adbkbd_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_leds = 0;	/* initially off */
 	sc->sc_have_led_control = 0;
+
+	/*
+	 * If this is != 0 then pushing the power button will not immadiately
+	 * send a shutdown event to sysmon but instead require another key
+	 * press within 5 seconds with a gap of at least two seconds. The 
+	 * reason to do this is the fact that some PowerBook keyboards,
+	 * like the 2400, 3400 and original G3 have their power buttons
+	 * right next to the backspace key and it's extremely easy to hit
+	 * it by accident.
+	 * On most other keyboards the power button is sufficiently far out
+	 * of the way so we don't need this.
+	 */
+	sc->sc_power_button_delay = 0;
 	sc->sc_msg_len = 0;
 	sc->sc_poll = 0;
 	sc->sc_capslock = 0;
@@ -244,10 +258,12 @@ adbkbd_attach(device_t parent, device_t self, void *aux)
 	case ADB_PBKBD:
 		printf("PowerBook keyboard\n");
 		sc->sc_power = 0x7e;
+		sc->sc_power_button_delay = 1;
 		break;
 	case ADB_PBISOKBD:
 		printf("PowerBook keyboard (ISO layout)\n");
 		sc->sc_power = 0x7e;
+		sc->sc_power_button_delay = 1;
 		break;
 	case ADB_ADJKPD:
 		printf("adjustable keypad\n");
@@ -263,10 +279,12 @@ adbkbd_attach(device_t parent, device_t self, void *aux)
 		break;
 	case ADB_PBEXTISOKBD:
 		printf("PowerBook extended keyboard (ISO layout)\n");
+		sc->sc_power_button_delay = 1;
 		sc->sc_power = 0x7e;
 		break;
 	case ADB_PBEXTJAPKBD:
 		printf("PowerBook extended keyboard (Japanese layout)\n");
+		sc->sc_power_button_delay = 1;
 		sc->sc_power = 0x7e;
 		break;
 	case ADB_JPKBDII:
@@ -274,6 +292,7 @@ adbkbd_attach(device_t parent, device_t self, void *aux)
 		break;
 	case ADB_PBEXTKBD:
 		printf("PowerBook extended keyboard\n");
+		sc->sc_power_button_delay = 1;
 		sc->sc_power = 0x7e;
 		break;
 	case ADB_DESIGNKBD:
@@ -282,6 +301,7 @@ adbkbd_attach(device_t parent, device_t self, void *aux)
 		break;
 	case ADB_PBJPKBD:
 		printf("PowerBook keyboard (Japanese layout)\n");
+		sc->sc_power_button_delay = 1;
 		sc->sc_power = 0x7e;
 		break;
 	case ADB_PBG3KBD:
@@ -392,7 +412,8 @@ adbkbd_keys(struct adbkbd_softc *sc, uint8_t k1, uint8_t k2)
 		uint32_t diff = now - sc->sc_timestamp;
 
 		sc->sc_timestamp = now;
-		if ((diff > 1) && (diff < 5)) {
+		if (((diff > 1) && (diff < 5)) ||
+		     (sc->sc_power_button_delay == 0)) {
 
 			/* power button, report to sysmon */
 			sc->sc_pe = k1;

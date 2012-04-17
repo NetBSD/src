@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.8 2003/12/17 05:08:43 yamt Exp $	*/
+/*	$NetBSD: config.h,v 1.8.56.1 2012/04/17 00:05:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
  * 1/DFL_MIN_FREE_SEGS gives the fraction of segments to be reserved for
  * the cleaner.
  */
-#define DFL_MIN_FREE_SEGS 20
+#define DFL_MIN_FREE_SEGS 10
 
 /*
  * MINFREE gives the minimum acceptable percentage of file system
@@ -69,3 +69,8 @@
 #define DFL_LFS_FFSHIFT		10
 #define DFL_LFS_FBMASK		0x7
 #define DFL_LFS_FBSHIFT		3
+
+#define SMALL_FSSIZE		65536 /* sectors */
+#define SMALL_LFSSEG		32768
+#define SMALL_LFSBLOCK		1024
+#define SMALL_LFSFRAG		512

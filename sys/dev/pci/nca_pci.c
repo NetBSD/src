@@ -1,4 +1,4 @@
-/*	$NetBSD: nca_pci.c,v 1.1 2010/04/01 04:04:11 jakllsch Exp $  */
+/*	$NetBSD: nca_pci.c,v 1.1.14.1 2012/04/17 00:07:51 yamt Exp $  */
 
 /*
  * Copyright (c) 2010 Jonathan A. Kollasch
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nca_pci.c,v 1.1 2010/04/01 04:04:11 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nca_pci.c,v 1.1.14.1 2012/04/17 00:07:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,14 +74,10 @@ nca_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct ncr5380_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
-	char devinfo[128];
 
 	sc->sc_dev = self;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_naive(": SCSI controller\n");
-	aprint_normal(": %s (rev 0x%02x)\n", devinfo,
-		      PCI_REVISION(pa->pa_class));
+	pci_aprint_devinfo(pa, "SCSI controller");
 
 	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_IO, 0,
             &sc->sc_regt, &sc->sc_regh, NULL, NULL)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.18 2011/10/10 11:15:24 njoly Exp $	*/
+/*	$NetBSD: bwi.c,v 1.18.2.1 2012/04/17 00:07:31 yamt Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.18 2011/10/10 11:15:24 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.18.2.1 2012/04/17 00:07:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -3595,7 +3595,7 @@ bwi_phy_config_11g(struct bwi_mac *mac)
 			bwi_tbl_write_2(mac, BWI_PHYTBL_RSSI + i, i);
 
 		/* Fill noise table */
-		for (i = 0; i < sizeof(bwi_phy_noise_11g); ++i) {
+		for (i = 0; i < __arraycount(bwi_phy_noise_11g); ++i) {
 			bwi_tbl_write_2(mac, BWI_PHYTBL_NOISE + i,
 			    bwi_phy_noise_11g[i]);
 		}
@@ -7176,7 +7176,7 @@ bwi_init_statechg(struct bwi_softc *sc, int statechg)
 
 	/* power on cardbus socket */
 	if (sc->sc_enable != NULL)
-		(sc->sc_enable)(sc);
+		(sc->sc_enable)(sc, 0);
 
 	bwi_bbp_power_on(sc, BWI_CLOCK_MODE_FAST);
 
@@ -7556,8 +7556,8 @@ bwi_stop(struct ifnet *ifp, int state_chg)
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	/* power off cardbus socket */
-	if (sc->sc_disable)
-		(sc->sc_disable)(sc);
+	if (sc->sc_disable != NULL)
+		(sc->sc_disable)(sc, 0);
 
 	return;
 }
@@ -7901,19 +7901,6 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 
 	st = malloc(sizeof(*st), M_DEVBUF, M_WAITOK | M_ZERO);
 	sc->sc_txstats = st;
-
-	/*
-	 * Create TX stats descriptor DMA stuffs
-	 */
-	dma_size = roundup(desc_sz * BWI_TXSTATS_NDESC, BWI_RING_ALIGN);
-
-	error = bus_dmamap_create(sc->sc_dmat, dma_size, 1, dma_size, 0,
-	    BUS_DMA_NOWAIT, &st->stats_ring_dmap);
-	if (error) {
-		aprint_error_dev(sc->sc_dev,
-		    "can't create txstats ring DMA mem\n");
-		return (error);
-	}
 
 	/*
 	 * Create TX stats descriptor DMA stuffs
@@ -9711,6 +9698,8 @@ bwi_suspend(device_t dv, const pmf_qual_t *qual)
 	struct bwi_softc *sc = device_private(dv);
 
 	bwi_power_off(sc, 0);
+	if (sc->sc_disable != NULL)
+		(sc->sc_disable)(sc, 1);
 
 	return true;
 }
@@ -9720,6 +9709,8 @@ bwi_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct bwi_softc *sc = device_private(dv);
 
+	if (sc->sc_enable != NULL)
+		(sc->sc_enable)(sc, 1);
 	bwi_power_on(sc, 1);
 
 	return true;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuset.c,v 1.17 2011/08/07 13:33:02 rmind Exp $	*/
+/*	$NetBSD: cpuset.c,v 1.17.2.1 2012/04/17 00:01:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #ifndef _STANDALONE
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: cpuset.c,v 1.17 2011/08/07 13:33:02 rmind Exp $");
+__RCSID("$NetBSD: cpuset.c,v 1.17.2.1 2012/04/17 00:01:40 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -93,7 +93,7 @@ _cpuset_isset(cpuid_t i, const cpuset_t *c)
 		errno = EINVAL;
 		return -1;
 	}
-	return ((1 << (i & CPUSET_MASK)) & c->bits[j]) != 0;
+	return ((1 << (unsigned int)(i & CPUSET_MASK)) & c->bits[j]) != 0;
 }
 
 int
@@ -105,7 +105,7 @@ _cpuset_set(cpuid_t i, cpuset_t *c)
 		errno = EINVAL;
 		return -1;
 	}
-	c->bits[j] |= 1 << (i & CPUSET_MASK);
+	c->bits[j] |= 1 << (unsigned int)(i & CPUSET_MASK);
 	return 0;
 }
 
@@ -118,7 +118,7 @@ _cpuset_clr(cpuid_t i, cpuset_t *c)
 		errno = EINVAL;
 		return -1;
 	}
-	c->bits[j] &= ~(1 << (i & CPUSET_MASK));
+	c->bits[j] &= ~(1 << (unsigned int)(i & CPUSET_MASK));
 	return 0;
 }
 
@@ -132,7 +132,8 @@ _cpuset_create(void)
 		u_int nc;
 
 		len = sizeof(nc);
-		if (sysctl(mib, __arraycount(mib), &nc, &len, NULL, 0) == -1)
+		if (sysctl(mib, (unsigned int)__arraycount(mib), &nc, &len,
+		    NULL, 0) == -1)
 			return NULL;
 
 		cpuset_nentries = CPUSET_NENTRIES(nc);

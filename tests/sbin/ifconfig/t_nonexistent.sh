@@ -1,4 +1,4 @@
-# $NetBSD: t_nonexistent.sh,v 1.2 2011/05/11 22:08:12 njoly Exp $
+# $NetBSD: t_nonexistent.sh,v 1.2.4.1 2012/04/17 00:09:15 yamt Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,14 +30,14 @@
 
 atf_test_case nonexistent
 nonexistent_head() {
-	atf_set "descr" "Check ifconfig(8) with nonexistent interface"
+	atf_set "descr" "Check ifconfig(8) with " \
+		"a nonexistent interface (PR bin/43141)"
 }
 
 nonexistent_body() {
 
-	atf_expect_fail "PR bin/43141"
-
-	atf_check -s not-exit:0 ifconfig nonexistent0 1.2.3.4/24
+	atf_check -s not-exit:0 -e ignore \
+		ifconfig nonexistent0 1.2.3.4/24
 }
 
 atf_init_test_cases() {

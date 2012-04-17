@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.c,v 1.1 2011/10/23 21:15:02 agc Exp $	*/
+/*	$NetBSD: iscsi_ioctl.c,v 1.1.2.1 2012/04/17 00:07:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -1166,7 +1166,7 @@ unmap_databuf(struct proc *p, void *buf, uint32_t datalen)
 	vm_map_lock(kernel_map);
 	uvm_unmap_remove(kernel_map, databuf, databuf + datalen, &dead_entries
 #if (__NetBSD_Version__ >= 399000500)
-					 , NULL, 0
+					 , 0
 #elif   (__NetBSD_Version__ >= 300000000)
 					 , NULL
 #endif

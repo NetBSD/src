@@ -1,4 +1,4 @@
-/* $NetBSD: freebsd_syscall.h,v 1.77 2011/03/06 17:08:33 bouyer Exp $ */
+/* $NetBSD: freebsd_syscall.h,v 1.77.4.1 2012/04/17 00:07:14 yamt Exp $ */
 
 /*
  * System call numbers.
@@ -746,7 +746,6 @@
 /* syscall: "uuidgen" ret: "int" args: "struct uuid *" "int" */
 #define	FREEBSD_SYS_uuidgen	392
 
-#if defined(P1003_1B_SEMAPHORE) || !defined(_KERNEL)
 /* syscall: "_ksem_close" ret: "int" args: "intptr_t" */
 #define	FREEBSD_SYS__ksem_close	400
 
@@ -768,17 +767,6 @@
 /* syscall: "_ksem_destroy" ret: "int" args: "intptr_t" */
 #define	FREEBSD_SYS__ksem_destroy	408
 
-#else
-				/* 400 is excluded ksem_close */
-				/* 401 is excluded ksem_post */
-				/* 402 is excluded ksem_wait */
-				/* 403 is excluded ksem_trywait */
-				/* 404 is excluded ksem_init */
-				/* 405 is excluded ksem_open */
-				/* 406 is excluded ksem_unlink */
-				/* 407 is excluded ksem_getvalue */
-				/* 408 is excluded ksem_destroy */
-#endif
 #define	FREEBSD_SYS_MAXSYSCALL	440
 #define	FREEBSD_SYS_NSYSENT	512
 #endif /* _FREEBSD_SYS_SYSCALL_H_ */

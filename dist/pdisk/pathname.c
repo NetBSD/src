@@ -28,6 +28,7 @@
 
 // for strncmp()
 #include <string.h>
+#include <stdint.h>
 
 #include "pathname.h"
 #include "file_media.h"

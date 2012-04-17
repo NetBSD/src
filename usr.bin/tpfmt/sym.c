@@ -1,7 +1,7 @@
-/*	$NetBSD: sym.c,v 1.2 2010/11/24 13:17:56 christos Exp $	*/
+/*	$NetBSD: sym.c,v 1.2.6.1 2012/04/17 00:09:40 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2010 YAMAMOTO Takashi,
+ * Copyright (c) 2010,2011,2012 YAMAMOTO Takashi,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sym.c,v 1.2 2010/11/24 13:17:56 christos Exp $");
+__RCSID("$NetBSD: sym.c,v 1.2.6.1 2012/04/17 00:09:40 yamt Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -63,7 +63,16 @@ compare_value(const void *p1, const void *p2)
 	} else if (s1->value < s2->value) {
 		return 1;
 	}
-	return 0;
+	/*
+	 * to produce a stable result, it's better not to return 0
+	 * even for __strong_alias.
+	 */
+	if (s1->size > s2->size) {
+		return -1;
+	} else if (s1->size < s2->size) {
+		return 1;
+	}
+	return strcmp(s1->name, s2->name);
 }
 
 void
@@ -135,12 +144,36 @@ elffail:
 const char *
 ksymlookup(uint64_t value, uint64_t *offset)
 {
+	size_t hi;
+	size_t lo;
 	size_t i;
 
-	for (i = 0; i < nsyms; i++) {
+	/*
+	 * try to find the smallest i for which syms[i]->value <= value.
+	 * syms[] is ordered by syms[]->value in the descending order.
+	 */
+
+	hi = nsyms - 1;
+	lo = 0;
+	while (lo < hi) {
+		const size_t mid = (lo + hi) / 2;
+		const struct sym *sym = syms[mid];
+
+		assert(syms[lo]->value >= sym->value);
+		assert(sym->value >= syms[hi]->value);
+		if (sym->value <= value) {
+			hi = mid;
+			continue;
+		}
+		lo = mid + 1;
+	}
+	assert(lo == nsyms - 1 || syms[lo]->value <= value);
+	assert(lo == 0 || syms[lo - 1]->value > value);
+	for (i = lo; i < nsyms; i++) {
 		const struct sym *sym = syms[i];
 
-		if (sym->value <= value) {
+		if (sym->value <= value &&
+		    (sym->size == 0 || value - sym->value <= sym->size )) {
 			*offset = value - sym->value;
 			return sym->name;
 		}

@@ -1,5 +1,5 @@
-/*	Id: local2.c,v 1.162 2011/08/06 15:11:48 ragge Exp 	*/	
-/*	$NetBSD: local2.c,v 1.1.1.4 2011/09/01 12:46:35 plunky Exp $	*/
+/*	Id: local2.c,v 1.166 2012/03/22 18:04:41 plunky Exp 	*/	
+/*	$NetBSD: local2.c,v 1.1.1.4.2.1 2012/04/17 00:04:03 yamt Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -318,12 +318,12 @@ fcomp(NODE *p)
 	static char *fpcb[] = { "jz", "jnz", "jbe", "jc", "jnc", "ja" };
 
 	if ((p->n_su & DORIGHT) == 0)
-		expand(p, 0, "  fxch\n");
-	expand(p, 0, "  fucomip %st(1),%st\n");	/* emit compare insn  */
-	expand(p, 0, "  fstp %st(0)\n");	/* pop fromstack */
+		expand(p, 0, "\tfxch\n");
+	expand(p, 0, "\tfucomip %st(1),%st\n");	/* emit compare insn  */
+	expand(p, 0, "\tfstp %st(0)\n");	/* pop fromstack */
 
 	if (p->n_op == NE || p->n_op == GT || p->n_op == GE)
-		expand(p, 0, "  jp LC\n");
+		expand(p, 0, "\tjp LC\n");
 	else if (p->n_op == EQ)
 		printf("\tjp 1f\n");
 	printf("	%s ", fpcb[p->n_op - EQ]);
@@ -338,6 +338,7 @@ fcomp(NODE *p)
 static void
 ulltofp(NODE *p)
 {
+#if defined(ELFABI) || defined(PECOFFABI)
 	static int loadlab;
 	int jmplab;
 
@@ -356,6 +357,9 @@ ulltofp(NODE *p)
 	printf("	fldt " LABFMT "%s\n", loadlab, kflag ? "@GOTOFF" : "");
 	printf("	faddp %%st,%%st(1)\n");
 	printf(LABFMT ":\n", jmplab);
+#else
+#error incomplete implementation
+#endif
 }
 
 static int
@@ -1198,7 +1202,6 @@ lastcall(NODE *p)
 	if (kflag)
 		size -= 4;
 #endif
-
 	
 #if defined(MACHOABI)
 	int newsize = (size + 15) & ~15;	/* stack alignment */
@@ -1267,7 +1270,8 @@ myxasm(struct interpass *ip, NODE *p)
 	TWORD t;
 	char *w;
 	int reg;
-	int c, cw, v;
+	int c, cw;
+	CONSZ v;
 
 	cw = xasmcode(p->n_name);
 	if (cw & (XASMASG|XASMINOUT))

@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.28 2011/08/14 13:26:23 christos Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.28.2.1 2012/04/17 00:09:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: midiplay.c,v 1.28 2011/08/14 13:26:23 christos Exp $");
+__RCSID("$NetBSD: midiplay.c,v 1.28.2.1 2012/04/17 00:09:36 yamt Exp $");
 #endif
 
 
@@ -39,6 +39,8 @@ __RCSID("$NetBSD: midiplay.c,v 1.28 2011/08/14 13:26:23 christos Exp $");
 #include <stdlib.h>
 #include <fcntl.h>
 #include <err.h>
+#include <errno.h>
+#include <limits.h>
 #include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
@@ -396,12 +398,19 @@ playdata(u_char *buf, u_int tot, const char *name)
 	int format, ntrks, divfmt, ticks, t;
 	u_int len, mlen, status, chan;
 	u_char *p, *end, byte, meta, *msg;
+	struct synth_info info;
 	struct track *tracks;
 	struct track *tp;
 
+	/* verify that the requested midi unit exists */
+	info.device = unit;
+	if (ioctl(fd, SEQUENCER_INFO, &info) < 0)
+		err(1, "ioctl(SEQUENCER_INFO) failed");
+
 	end = buf + tot;
 	if (verbose)
-		printf("Playing %s (%d bytes) ... \n", name, tot);
+		printf("Playing %s (%d bytes) on %s (unit %d)... \n",
+		    name, tot, info.name, info.device);
 
 	if (tot < MARK_LEN + 4) {
 		warnx("Not a MIDI file, too short");
@@ -679,6 +688,26 @@ playdata(u_char *buf, u_int tot, const char *name)
 	free(tracks);
 }
 
+static int
+parse_unit(const char *sunit)
+{
+	const char *osunit = sunit;
+	long n;
+	char *ep;
+
+	if (strncmp(sunit, "midi", strlen("midi")) == 0)
+		sunit += strlen("midi");
+
+	errno = 0;
+	n = strtol(sunit, &ep, 10);
+	if (n < 0 || n > INT_MAX || *ep != '\0' ||
+	    (errno == ERANGE &&
+	    (n == LONG_MAX || n == LONG_MIN)))
+		errx(1, "bad midi unit -- %s", osunit);
+
+	return (int)n;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -692,12 +721,12 @@ main(int argc, char **argv)
 	FILE *f;
 
 	if ((sunit = getenv("MIDIUNIT")))
-		unit = atoi(sunit);
+		unit = parse_unit(sunit);
 
 	while ((ch = getopt(argc, argv, "?d:f:lmp:qt:vx")) != -1) {
 		switch(ch) {
 		case 'd':
-			unit = atoi(optarg);
+			unit = parse_unit(optarg);
 			break;
 		case 'f':
 			file = optarg;

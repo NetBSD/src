@@ -1,4 +1,4 @@
-/*	$NetBSD: utility.c,v 1.31 2007/02/21 21:14:07 hubertf Exp $	*/
+/*	$NetBSD: utility.c,v 1.31.34.1 2012/04/17 00:05:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utility.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utility.c,v 1.31 2007/02/21 21:14:07 hubertf Exp $");
+__RCSID("$NetBSD: utility.c,v 1.31.34.1 2012/04/17 00:05:37 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -370,7 +370,7 @@ fatalperror(f, msg)
 char editedhost[MAXHOSTNAMELEN];
 
 void
-edithost(char *pat, char *host)
+edithost(const char *pat, const char *host)
 {
 	char *res = editedhost;
 
@@ -427,11 +427,11 @@ putchr(int cc)
  * This is split on two lines so that SCCS will not see the M
  * between two % signs and expand it...
  */
-static char fmtstr[] = { "%l:%M\
+static const char fmtstr[] = { "%l:%M\
 %p on %A, %d %B %Y" };
 
 char *
-putf(char *cp, char *where)
+putf(const char *cp, char *where)
 {
 	char *slash;
 	time_t t;
@@ -740,7 +740,7 @@ printsub(
 	    break;
 
 	case TELOPT_STATUS: {
-	    char *cp;
+	    const char *cp;
 	    int j, k;
 
 	    output_data("STATUS");
@@ -841,39 +841,40 @@ printsub(
 		output_data("INFO ");
 	    env_common:
 		{
-		    int noquote = 2;
+		    static const char NQ[] = "\" ";
+		    const char *noquote = NQ;
 		    for (i = 2; i < length; i++ ) {
 			switch (pointer[i]) {
 			case NEW_ENV_VAR:
-			    output_data("%s", "\" VAR " + noquote);
-			    noquote = 2;
+			    output_data("%sVAR ", noquote);
+			    noquote = NQ;
 			    break;
 
 			case NEW_ENV_VALUE:
-			    output_data("%s", "\" VALUE " + noquote);
-			    noquote = 2;
+			    output_data("%sVALUE ", noquote);
+			    noquote = NQ;
 			    break;
 
 			case ENV_ESC:
-			    output_data("%s", "\" ESC " + noquote);
-			    noquote = 2;
+			    output_data("%sESC ", noquote);
+			    noquote = NQ;
 			    break;
 
 			case ENV_USERVAR:
-			    output_data("%s", "\" USERVAR " + noquote);
-			    noquote = 2;
+			    output_data("%sUSERVAR ", noquote);
+			    noquote = NQ;
 			    break;
 
 			default:
 			    if (isprint(pointer[i]) && pointer[i] != '"') {
-				if (noquote) {
+				if (*noquote) {
 				    output_data("\"");
-				    noquote = 0;
+				    noquote = "";
 				}
 				output_data("%c", pointer[i]);
 			    } else {
-				output_data("\" %03o " + noquote, pointer[i]);
-				noquote = 2;
+				output_data("%s%03o ", noquote, pointer[i]);
+				noquote = NQ;
 			    }
 			    break;
 			}
@@ -1044,7 +1045,7 @@ printsub(
  * Dump a data buffer in hex and ascii to the output data stream.
  */
 void
-printdata(char *tag, char *ptr, int cnt)
+printdata(const char *tag, char *ptr, int cnt)
 {
 	int i;
 	char xbuf[30];

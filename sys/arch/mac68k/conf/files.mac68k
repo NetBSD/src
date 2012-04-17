@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.124 2011/06/12 03:35:43 rmind Exp $
+#	$NetBSD: files.mac68k,v 1.124.2.1 2012/04/17 00:06:36 yamt Exp $
 
 # mac68k-specific configuration info
 
@@ -158,7 +158,7 @@ file	arch/mac68k/mac68k/bus_space.c
 file	arch/mac68k/mac68k/clock.c
 file	arch/mac68k/mac68k/conf.c
 file	arch/mac68k/mac68k/disksubr.c		disk
-file	arch/mac68k/mac68k/fpu.c
+file	arch/mac68k/mac68k/fpu_machdep.c
 file	arch/mac68k/mac68k/intr.c
 file	arch/mac68k/mac68k/iop.c
 file	arch/mac68k/mac68k/machdep.c
@@ -174,6 +174,7 @@ file	arch/mac68k/mac68k/via.c
 file	arch/m68k/m68k/bus_dma.c
 file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/db_memrw.c		ddb | kgdb
+file	arch/m68k/m68k/fpu.c
 file	arch/m68k/m68k/kgdb_machdep.c		kgdb
 file	arch/m68k/m68k/pmap_motorola.c
 file	arch/m68k/m68k/procfs_machdep.c		procfs

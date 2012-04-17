@@ -1,4 +1,4 @@
-/*	$NetBSD: video_subr.c,v 1.12 2009/03/18 10:22:40 cegger Exp $	*/
+/*	$NetBSD: video_subr.c,v 1.12.12.1 2012/04/17 00:07:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video_subr.c,v 1.12 2009/03/18 10:22:40 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video_subr.c,v 1.12.12.1 2012/04/17 00:07:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,11 +112,8 @@ __KERNEL_RCSID(0, "$NetBSD: video_subr.c,v 1.12 2009/03/18 10:22:40 cegger Exp $
 })
 
 #define LINEFUNC(b)							\
-static void linebpp##b (struct video_chip *, int, int, int, int);	\
 static void								\
-linebpp##b(vc, x0, y0, x1, y1)						\
-	struct video_chip *vc;						\
-	int x0, y0, x1, y1;						\
+linebpp##b(struct video_chip *vc, int x0, int y0, int x1, int y1)	\
 {									\
 	u_int32_t addr;							\
 	int i, j, k, len, step, kstep;					\
@@ -132,11 +129,8 @@ linebpp##b(vc, x0, y0, x1, y1)						\
 }
 
 #define DOTFUNC(b)							\
-static void dotbpp##b (struct video_chip *, int, int);			\
 static void								\
-dotbpp##b(vc, x, y)							\
-	struct video_chip *vc;						\
-	int x, y;							\
+dotbpp##b(struct video_chip *vc, int x, int y)				\
 {									\
 	u_int32_t addr;							\
 	addr = vc->vc_fbvaddr + (((y * vc->vc_fbwidth + x) *		\

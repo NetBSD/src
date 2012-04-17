@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.36 2011/01/02 18:48:06 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.36.8.1 2012/04/17 00:06:43 yamt Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.36 2011/01/02 18:48:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.36.8.1 2012/04/17 00:06:43 yamt Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -138,7 +138,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	kptmpa = nextpa;
 	nextpa += PAGE_SIZE;
 	kptpa = nextpa;
-	nptpages = RELOC(Sysptsize, int) +
+	nptpages = RELOC(Sysptsize, int) + howmany(RELOC(physmem, int), NPTEPG) +
 		(iiomapsize + eiomapsize + NPTEPG - 1) / NPTEPG;
 	nextpa += nptpages * PAGE_SIZE;
 
@@ -162,8 +162,13 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * each mapping 256kb.  Note that there may be additional "segment
 	 * table" pages depending on how large MAXKL2SIZE is.
 	 *
-	 * Portions of the last segment of KVA space (0xFFC00000 -
-	 * 0xFFFFFFFF) are mapped for the kernel page tables.
+	 * Portions of the last segment of KVA space (0xBFC00000 -
+	 * 0xBFFFFFFF) are mapped for the kernel page tables.
+	 *
+	 * The region 0xC0000000 - 0xCFFFFFFF is mapped via the %tt1 register
+	 * for RAM accesses for PROM.
+	 * The region 0xE0000000 - 0xFFFFFFFF is mapped via the %tt0 register
+	 * for I/O accesses.
 	 *
 	 * XXX cramming two levels of mapping into the single "segment"
 	 * table on the 68040 is intended as a temporary hack to get things
@@ -213,19 +218,20 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 			protoste += (SG4_LEV2SIZE * sizeof(st_entry_t));
 		}
 		/*
-		 * Initialize the final level 1 descriptor to map the next
-		 * block of level 2 descriptors for Sysptmap.
+		 * Initialize the level 1 descriptor correspond to
+		 * SYSMAP_VA to map the last block of level 2 descriptors
+		 * for Sysptmap.
 		 */
 		ste = (st_entry_t *)kstpa;
-		ste = &ste[SG4_LEV1SIZE - 1];
+		ste = &ste[SYSMAP_VA >> SG4_SHIFT1];
 		*ste = protoste;
 		/*
-		 * Now initialize the final portion of that block of
-		 * descriptors to map Sysmap.
+		 * Now initialize the portion of that block of
+		 * descriptors to map Sysptmap.
 		 */
 		i = SG4_LEV1SIZE + (nl1desc * SG4_LEV2SIZE);
 		ste = (st_entry_t *)kstpa;
-		ste = &ste[i + SG4_LEV2SIZE - (NPTEPG / SG4_LEV3SIZE)];
+		ste = &ste[i + ((SYSMAP_VA & SG4_MASK2) >> SG4_SHIFT2)];
 		este = &ste[NPTEPG / SG4_LEV3SIZE];
 		protoste = kptmpa | SG_U | SG_RW | SG_V;
 		while (ste < este) {
@@ -269,7 +275,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 			*pte++ = PG_NV;
 		}
 		/*
-		 * Initialize the last one to point to Sysptmap.
+		 * Initialize the one corresponding to SYSMAP_VA
+		 * to point to Sysptmap.
 		 */
 		pte = (pt_entry_t *)kptmpa;
 		pte = &pte[SYSMAP_VA >> SEGSHIFT];

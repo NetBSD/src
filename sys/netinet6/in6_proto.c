@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.93 2011/09/24 17:22:14 christos Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.93.2.1 2012/04/17 00:08:43 yamt Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.93 2011/09/24 17:22:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.93.2.1 2012/04/17 00:08:43 yamt Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -107,15 +107,6 @@ __KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.93 2011/09/24 17:22:14 christos Exp 
 
 #include <netinet6/nd6.h>
 
-#ifdef IPSEC
-#include <netinet6/ipsec.h>
-#include <netinet6/ah.h>
-#ifdef IPSEC_ESP
-#include <netinet6/esp.h>
-#endif
-#include <netinet6/ipcomp.h>
-#endif /* IPSEC */
-
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec6.h>
@@ -136,10 +127,6 @@ __KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.93 2011/09/24 17:22:14 christos Exp 
 #include <netinet6/ip6protosw.h>
 
 #include <net/net_osdep.h>
-
-#ifndef offsetof		/* XXX */
-#define	offsetof(type, member)	((size_t)(&((type *)0)->member))
-#endif
 
 /*
  * TCP/IP protocol family: IP6, ICMP6, UDP, TCP.
@@ -177,13 +164,13 @@ PR_WRAP_CTLOUTPUT(icmp6_ctloutput)
 #define	udp6_ctloutput	udp6_ctloutput_wrapper
 #define	icmp6_ctloutput	icmp6_ctloutput_wrapper
 
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 PR_WRAP_CTLINPUT(ah6_ctlinput)
 
 #define	ah6_ctlinput	ah6_ctlinput_wrapper
 #endif
 
-#if (defined(IPSEC) && defined(IPSEC_ESP)) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 PR_WRAP_CTLINPUT(esp6_ctlinput)
 
 #define	esp6_ctlinput	esp6_ctlinput_wrapper
@@ -268,33 +255,6 @@ const struct ip6protosw inet6sw[] = {
 	.pr_flags = PR_ATOMIC|PR_ADDR,
 	.pr_input = frag6_input,
 },
-#ifdef IPSEC
-{	.pr_type = SOCK_RAW,
-	.pr_domain = &inet6domain,
-	.pr_protocol = IPPROTO_AH,
-	.pr_flags = PR_ATOMIC|PR_ADDR,
-	.pr_input = ah6_input,
-	.pr_ctlinput = ah6_ctlinput,
-	.pr_init = ah6_init,
-},
-#ifdef IPSEC_ESP
-{	.pr_type = SOCK_RAW,
-	.pr_domain = &inet6domain,
-	.pr_protocol = IPPROTO_ESP,
-	.pr_flags = PR_ATOMIC|PR_ADDR,
-	.pr_input = esp6_input,
-	.pr_ctlinput = esp6_ctlinput,
-	.pr_init = esp6_init,
-},
-#endif
-{	.pr_type = SOCK_RAW,
-	.pr_domain = &inet6domain,
-	.pr_protocol = IPPROTO_IPCOMP,
-	.pr_flags = PR_ATOMIC|PR_ADDR,
-	.pr_input = ipcomp6_input,
-	.pr_init = ipcomp6_init,
-},
-#endif /* IPSEC */
 #ifdef FAST_IPSEC
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inet6domain,
@@ -481,7 +441,7 @@ int	ip6_mcast_pmtu = 0;	/* enable pMTU discovery for multicast? */
 int	ip6_v6only = 1;
 
 int	ip6_keepfaith = 0;
-time_t	ip6_log_time = (time_t)0L;
+time_t	ip6_log_time = 0;
 int	ip6_rtadv_maxroutes = 100; /* (arbitrary) initial maximum number of
                                     * routes via rtadv expected to be
                                     * significantly larger than common use.

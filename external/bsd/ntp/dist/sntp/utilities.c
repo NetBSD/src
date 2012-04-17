@@ -1,6 +1,8 @@
-/*	$NetBSD: utilities.c,v 1.1.1.1 2009/12/13 16:57:12 kardel Exp $	*/
+/*	$NetBSD: utilities.c,v 1.1.1.1.6.1 2012/04/17 00:03:51 yamt Exp $	*/
 
+#include <config.h>
 #include "utilities.h"
+#include <assert.h>
 
 /* Display a NTP packet in hex with leading address offset 
  * e.g. offset: value, 0: ff 1: fe ... 255: 00
@@ -112,15 +114,15 @@ l_fp_output_dec (
  */
 char *
 addrinfo_to_str (
-		struct addrinfo *addr
-		)
+	struct addrinfo *addr
+	)
 {
-	char *buf = (char *) emalloc(sizeof(char) * INET6_ADDRSTRLEN);
+	sockaddr_u	s;
+	
+	memset(&s, 0, sizeof(s));
+	memcpy(&s, addr->ai_addr, min(sizeof(s), addr->ai_addrlen));
 
-	getnameinfo(addr->ai_addr, addr->ai_addrlen, buf, 
-			INET6_ADDRSTRLEN, NULL, 0, NI_NUMERICHOST);
-
-	return buf;
+	return ss_to_str(&s);
 }
 
 /* Convert a sockaddr_u to a string containing the address in
@@ -130,45 +132,57 @@ addrinfo_to_str (
  */
 char *
 ss_to_str (
-		sockaddr_u *saddr
-		)
+	sockaddr_u *saddr
+	)
 {
-	char *buf = (char *) emalloc(sizeof(char) * INET6_ADDRSTRLEN);
-
-	getnameinfo(&saddr->sa, SOCKLEN(saddr), buf,
-			INET6_ADDRSTRLEN, NULL, 0, NI_NUMERICHOST);
-
+	char *	buf;
+	
+	buf = emalloc(INET6_ADDRSTRLEN);
+	strncpy(buf, stoa(saddr), INET6_ADDRSTRLEN);
 
 	return buf;
 }
-
-/* Converts a struct tv to a date string
+/*
+ * Converts a struct tv to a date string
  */
 char *
-tv_to_str (
-		struct timeval *tv
-	  )
+tv_to_str(
+	const struct timeval *tv
+	)
 {
-	static const char *month_names[] = {
-		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-	};
+	const size_t bufsize = 48;
+	char *buf;
+	time_t gmt_time, local_time;
+	struct tm *p_tm_local;
+	int hh, mm, lto;
 
-	char *buf = (char *) emalloc(sizeof(char) * 48);
-	time_t cur_time = time(NULL);
-	struct tm *tm_ptr;
+	/*
+	 * convert to struct tm in UTC, then intentionally feed
+	 * that tm to mktime() which expects local time input, to
+	 * derive the offset from UTC to local time.
+	 */
+	gmt_time = tv->tv_sec;
+	local_time = mktime(gmtime(&gmt_time));
+	p_tm_local = localtime(&gmt_time);
 
-	tm_ptr = localtime(&cur_time);
+	/* Local timezone offsets should never cause an overflow.  Yeah. */
+	lto = difftime(local_time, gmt_time);
+	lto /= 60;
+	hh = lto / 60;
+	mm = abs(lto % 60);
 
-
-	snprintf(buf, 48, "%i %s %.2d %.2d:%.2d:%.2d.%.3d", 
-			tm_ptr->tm_year + 1900,
-			month_names[tm_ptr->tm_mon],
-			tm_ptr->tm_mday,
-			tm_ptr->tm_hour,
-			tm_ptr->tm_min,
-			tm_ptr->tm_sec,
-			(int)tv->tv_usec);
+	buf = emalloc(bufsize);
+	snprintf(buf, bufsize,
+		 "%d-%.2d-%.2d %.2d:%.2d:%.2d.%.6d (%+03d%02d)",
+		 p_tm_local->tm_year + 1900,
+		 p_tm_local->tm_mon + 1,
+		 p_tm_local->tm_mday,
+		 p_tm_local->tm_hour,
+		 p_tm_local->tm_min,
+		 p_tm_local->tm_sec,
+		 (int)tv->tv_usec,
+		 hh,
+		 mm);
 
 	return buf;
 }

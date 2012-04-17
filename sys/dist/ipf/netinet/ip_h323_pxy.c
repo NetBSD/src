@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_h323_pxy.c,v 1.11 2009/08/19 08:36:11 darrenr Exp $	*/
+/*	$NetBSD: ip_h323_pxy.c,v 1.11.12.1 2012/04/17 00:08:13 yamt Exp $	*/
 
 /*
  * Copyright 2001, QNX Software Systems Ltd. All Rights Reserved
@@ -22,33 +22,40 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_h323_pxy.c,v 1.11 2009/08/19 08:36:11 darrenr Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_h323_pxy.c,v 1.11.12.1 2012/04/17 00:08:13 yamt Exp $");
 
 #define IPF_H323_PROXY
 
-int  ippr_h323_init __P((void));
-void  ippr_h323_fini __P((void));
-int  ippr_h323_new __P((fr_info_t *, ap_session_t *, nat_t *));
-void ippr_h323_del __P((ap_session_t *));
-int  ippr_h323_out __P((fr_info_t *, ap_session_t *, nat_t *));
-int  ippr_h323_in __P((fr_info_t *, ap_session_t *, nat_t *));
+int 
+ippr_h323_init(void);
+void 
+ippr_h323_fini(void);
+int 
+ippr_h323_new(fr_info_t *, ap_session_t *, nat_t *);
+void
+ippr_h323_del(ap_session_t *);
+int 
+ippr_h323_out(fr_info_t *, ap_session_t *, nat_t *);
+int 
+ippr_h323_in(fr_info_t *, ap_session_t *, nat_t *);
 
-int  ippr_h245_new __P((fr_info_t *, ap_session_t *, nat_t *));
-int  ippr_h245_out __P((fr_info_t *, ap_session_t *, nat_t *));
-int  ippr_h245_in __P((fr_info_t *, ap_session_t *, nat_t *));
+int 
+ippr_h245_new(fr_info_t *, ap_session_t *, nat_t *);
+int 
+ippr_h245_out(fr_info_t *, ap_session_t *, nat_t *);
+int 
+ippr_h245_in(fr_info_t *, ap_session_t *, nat_t *);
 
 static	frentry_t	h323_fr;
 
 int	h323_proxy_init = 0;
 
-static int find_port __P((int, void *, int datlen, int *, u_short *));
+static int
+find_port(int, void *, int datlen, int *, u_short *);
 
 
-static int find_port(ipaddr, data, datlen, off, port)
-int ipaddr;
-void *data;
-int datlen, *off;
-unsigned short *port;
+static int
+find_port(int ipaddr, void *data, int datlen, int *off, unsigned short *port)
 {
 	u_32_t addr, netaddr;
 	u_char *dp;
@@ -77,7 +84,8 @@ unsigned short *port;
 /*
  * Initialize local structures.
  */
-int ippr_h323_init()
+int
+ippr_h323_init(void)
 {
 	bzero((char *)&h323_fr, sizeof(h323_fr));
 	h323_fr.fr_ref = 1;
@@ -89,7 +97,8 @@ int ippr_h323_init()
 }
 
 
-void ippr_h323_fini()
+void
+ippr_h323_fini(void)
 {
 	if (h323_proxy_init == 1) {
 		MUTEX_DESTROY(&h323_fr.fr_lock);
@@ -98,10 +107,8 @@ void ippr_h323_fini()
 }
 
 
-int ippr_h323_new(fin, aps, nat)
-fr_info_t *fin;
-ap_session_t *aps;
-nat_t *nat;
+int
+ippr_h323_new(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	fin = fin;	/* LINT */
 	nat = nat;	/* LINT */
@@ -113,8 +120,8 @@ nat_t *nat;
 }
 
 
-void ippr_h323_del(aps)
-ap_session_t *aps;
+void
+ippr_h323_del(ap_session_t *aps)
 {
 	int i;
 	ipnat_t *ipn;
@@ -145,10 +152,8 @@ ap_session_t *aps;
 }
 
 
-int ippr_h323_in(fin, aps, nat)
-fr_info_t *fin;
-ap_session_t *aps;
-nat_t *nat;
+int
+ippr_h323_in(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	int ipaddr, off, datlen;
 	unsigned short port;
@@ -211,10 +216,8 @@ nat_t *nat;
 }
 
 
-int ippr_h245_new(fin, aps, nat)
-fr_info_t *fin;
-ap_session_t *aps;
-nat_t *nat;
+int
+ippr_h245_new(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	fin = fin;	/* LINT */
 	nat = nat;	/* LINT */
@@ -225,10 +228,8 @@ nat_t *nat;
 }
 
 
-int ippr_h245_out(fin, aps, nat)
-fr_info_t *fin;
-ap_session_t *aps;
-nat_t *nat;
+int
+ippr_h245_out(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	int ipaddr, off, datlen;
 	tcphdr_t *tcp;

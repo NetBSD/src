@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_sync.h,v 1.1.1.4 2007/04/14 20:17:24 martin Exp $	*/
+/*	$NetBSD: ip_sync.h,v 1.1.1.4.34.1 2012/04/17 00:02:24 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -104,16 +104,16 @@ typedef	struct	syncupdent	{		/* 28 or 32 bytes */
 extern	synclogent_t	synclog[SYNCLOG_SZ];
 
 
-extern	int fr_sync_ioctl __P((caddr_t, ioctlcmd_t, int, int, void *));
-extern	synclist_t *ipfsync_new __P((int, fr_info_t *, void *));
-extern	void ipfsync_del __P((synclist_t *));
-extern	void ipfsync_update __P((int, fr_info_t *, synclist_t *));
-extern	int ipfsync_init __P((void));
-extern	int ipfsync_nat __P((synchdr_t *sp, void *data));
-extern	int ipfsync_state __P((synchdr_t *sp, void *data));
-extern	int ipfsync_read __P((struct uio *uio));
-extern	int ipfsync_write __P((struct uio *uio));
-extern	int ipfsync_canread __P((void));
-extern	int ipfsync_canwrite __P((void));
+extern	int fr_sync_ioctl(caddr_t, ioctlcmd_t, int, int, void *);
+extern	synclist_t *ipfsync_new(int, fr_info_t *, void *);
+extern	void ipfsync_del(synclist_t *);
+extern	void ipfsync_update(int, fr_info_t *, synclist_t *);
+extern	int ipfsync_init(void);
+extern	int ipfsync_nat(synchdr_t *sp, void *data);
+extern	int ipfsync_state(synchdr_t *sp, void *data);
+extern	int ipfsync_read(struct uio *uio);
+extern	int ipfsync_write(struct uio *uio);
+extern	int ipfsync_canread(void);
+extern	int ipfsync_canwrite(void);
 
 #endif /* IP_SYNC */

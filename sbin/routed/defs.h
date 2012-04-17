@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.26 2011/08/29 14:35:04 joerg Exp $	*/
+/*	$NetBSD: defs.h,v 1.26.2.1 2012/04/17 00:05:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -207,7 +207,7 @@ struct rt_entry {
 #	    define RS_IF	0x001	/* for network interface */
 #	    define RS_NET_INT	0x002	/* authority route */
 #	    define RS_NET_SYN	0x004	/* fake net route for subnet */
-#	    define RS_NO_NET_SYN (RS_LOCAL | RS_LOCAL | RS_IF)
+#	    define RS_NO_NET_SYN (RS_LOCAL | RS_IF)
 #	    define RS_SUBNET	0x008	/* subnet route from any source */
 #	    define RS_LOCAL	0x010	/* loopback for pt-to-pt */
 #	    define RS_MHOME	0x020	/* from -m */

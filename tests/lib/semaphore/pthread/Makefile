@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2010/06/10 22:03:43 pooka Exp $
+# $NetBSD: Makefile,v 1.1.6.1 2012/04/17 00:09:14 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ TESTS_C=	t_sem_pth
 
 CPPFLAGS+=	-I${.CURDIR}/..
 
-LDADD+=		-lrumpkern_ksem -lrump -lrumpuser -lpthread
+LDADD+=		-lrump -lrumpuser -lpthread
 
 WARNS=	4
 

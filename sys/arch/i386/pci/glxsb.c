@@ -1,4 +1,4 @@
-/*	$NetBSD: glxsb.c,v 1.9 2009/05/16 16:52:03 cegger Exp $	*/
+/*	$NetBSD: glxsb.c,v 1.9.12.1 2012/04/17 00:06:29 yamt Exp $	*/
 /* $OpenBSD: glxsb.c,v 1.7 2007/02/12 14:31:45 tom Exp $ */
 
 /*
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: glxsb.c,v 1.9 2009/05/16 16:52:03 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: glxsb.c,v 1.9.12.1 2012/04/17 00:06:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -34,8 +34,8 @@ __KERNEL_RCSID(0, "$NetBSD: glxsb.c,v 1.9 2009/05/16 16:52:03 cegger Exp $");
 #include <sys/mbuf.h>
 #include <sys/types.h>
 #include <sys/callout.h>
-#include <sys/rnd.h>
 #include <sys/bus.h>
+#include <sys/cprng.h>
 
 #include <machine/cpufunc.h>
 
@@ -165,7 +165,7 @@ struct glxsb_softc {
 	int			sc_nsessions;
 	struct glxsb_session	*sc_sessions;
 
-	rndsource_element_t	sc_rnd_source;
+	krndsource_t	sc_rnd_source;
 };
 
 int	glxsb_match(device_t, cfdata_t, void *);
@@ -343,7 +343,7 @@ glxsb_crypto_newsession(void *aux, uint32_t *sidp, struct cryptoini *cri)
 	memset(ses, 0, sizeof(*ses));
 	ses->ses_used = 1;
 
-	arc4randbytes(ses->ses_iv, sizeof(ses->ses_iv));
+	cprng_fast(ses->ses_iv, sizeof(ses->ses_iv));
 	ses->ses_klen = cri->cri_klen;
 
 	/* Copy the key (Geode LX wants the primary key only) */

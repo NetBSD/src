@@ -1,4 +1,4 @@
-/*	$NetBSD: t_io.c,v 1.8 2011/02/27 15:16:31 njoly Exp $	*/
+/*	$NetBSD: t_io.c,v 1.8.4.1 2012/04/17 00:09:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -88,10 +88,7 @@ extendbody(const atf_tc_t *tc, off_t seekcnt)
 	    O_CREAT | O_RDWR | (seekcnt ? O_APPEND : 0)));
 	RL(rump_sys_ftruncate(fd, seekcnt));
 	RL(rump_sys_fstat(fd, &sb));
-	if (FSTYPE_SYSVBFS(tc) && seekcnt)
-		atf_tc_expect_fail("PR kern/44307");
 	ATF_REQUIRE_EQ(sb.st_size, seekcnt);
-	atf_tc_expect_pass();
 
 	ATF_REQUIRE_EQ(rump_sys_write(fd, TESTSTR, TESTSZ), TESTSZ);
 	ATF_REQUIRE_EQ(rump_sys_pread(fd, buf, TESTSZ, seekcnt), TESTSZ);
@@ -174,7 +171,7 @@ shrinkfile(const atf_tc_t *tc, const char *mp)
 ATF_TC_FSAPPLY(holywrite, "create a sparse file and fill hole");
 ATF_TC_FSAPPLY(extendfile, "check that extending a file works");
 ATF_TC_FSAPPLY(extendfile_append, "check that extending a file works "
-				  "with a append-only fd");
+				  "with a append-only fd (PR kern/44307)");
 ATF_TC_FSAPPLY(overwrite512, "write a 512 byte file twice");
 ATF_TC_FSAPPLY(overwrite64k, "write a 64k byte file twice");
 ATF_TC_FSAPPLY(overwrite_trunc, "write 64k + truncate + rewrite");

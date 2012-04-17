@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.h,v 1.12 2009/03/12 10:57:26 tteras Exp $	*/
+/*	$NetBSD: ipsec_doi.h,v 1.12.8.1 2012/04/17 00:01:41 yamt Exp $	*/
 
 /* Id: ipsec_doi.h,v 1.15 2006/08/11 16:06:30 vanhu Exp */
 
@@ -223,8 +223,8 @@ extern vchar_t *get_sabysaprop __P((struct saprop *, vchar_t *));
 extern int ipsecdoi_chkcmpids( const vchar_t *, const vchar_t *, int );
 extern int ipsecdoi_checkid1 __P((struct ph1handle *));
 extern int ipsecdoi_setid1 __P((struct ph1handle *));
-extern int set_identifier __P((vchar_t **, int, vchar_t *));
-extern int set_identifier_qual __P((vchar_t **, int, vchar_t *, int));
+extern int set_identifier __P((vchar_t **, int, const vchar_t * const));
+extern int set_identifier_qual __P((vchar_t **, int, const vchar_t * const, int));
 extern int ipsecdoi_setid2 __P((struct ph2handle *));
 extern vchar_t *ipsecdoi_sockaddr2id __P((struct sockaddr *, u_int, u_int));
 extern int ipsecdoi_id2sockaddr __P((vchar_t *, struct sockaddr *,

@@ -1,3 +1,3 @@
-#	$NetBSD: Makefile.inc,v 1.6 2006/10/08 17:52:28 peter Exp $
+#	$NetBSD: Makefile.inc,v 1.6.40.1 2012/04/17 00:05:11 yamt Exp $
 
-WARNS?=		2
+WARNS?=		5

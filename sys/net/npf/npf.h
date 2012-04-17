@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.8.6.1 2011/11/10 14:31:50 yamt Exp $	*/
+/*	$NetBSD: npf.h,v 1.8.6.2 2012/04/17 00:08:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -45,11 +45,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 
-#ifdef _NPF_TESTING
-#include "testing.h"
-#endif
-
-#define	NPF_VERSION		3
+#define	NPF_VERSION		4
 
 /*
  * Public declarations and definitions.
@@ -59,18 +55,16 @@
 typedef struct in6_addr		npf_addr_t;
 typedef uint8_t			npf_netmask_t;
 
+#define	NPF_MAX_NETMASK		(128)
 #define	NPF_NO_NETMASK		((npf_netmask_t)~0)
 
-#if defined(_KERNEL) || defined(_NPF_TESTING)
+#if defined(_KERNEL)
 
 /* Network buffer. */
 typedef void			nbuf_t;
 
 struct npf_rproc;
-struct npf_hook;
-
 typedef struct npf_rproc	npf_rproc_t;
-typedef struct npf_hook		npf_hook_t;
 
 /*
  * Packet information cache.
@@ -101,7 +95,7 @@ typedef struct {
 	npf_addr_t *		npc_dstip;
 	/* Size (v4 or v6) of IP addresses. */
 	int			npc_ipsz;
-	size_t			npc_hlen;
+	u_int			npc_hlen;
 	int			npc_next_proto;
 	/* IPv4, IPv6. */
 	union {
@@ -122,7 +116,7 @@ npf_generate_mask(npf_addr_t *dst, const npf_netmask_t omask)
 	uint_fast8_t length = omask;
 
 	/* Note: maximum length is 32 for IPv4 and 128 for IPv6. */
-	KASSERT(length <= 128);
+	KASSERT(length <= NPF_MAX_NETMASK);
 
 	for (int i = 0; i < 4; i++) {
 		if (length >= 32) {
@@ -196,8 +190,8 @@ npf_cache_ipproto(const npf_cache_t *npc)
 	return npc->npc_next_proto;
 }
 
-static inline int
-npf_cache_hlen(const npf_cache_t *npc, nbuf_t *nbuf)
+static inline u_int
+npf_cache_hlen(const npf_cache_t *npc)
 {
 	KASSERT(npf_iscached(npc, NPC_IP46));
 	return npc->npc_hlen;
@@ -213,12 +207,6 @@ int		nbuf_store_datum(nbuf_t *, void *, size_t, void *);
 
 int		nbuf_add_tag(nbuf_t *, uint32_t, uint32_t);
 int		nbuf_find_tag(nbuf_t *, uint32_t, void **);
-
-#if 0
-npf_hook_t *	npf_hook_register(npf_rule_t *,
-		    void (*)(npf_cache_t *, nbuf_t *, void *), void *);
-void		npf_hook_unregister(npf_rule_t *, npf_hook_t *);
-#endif
 
 #endif	/* _KERNEL */
 
@@ -247,7 +235,7 @@ void		npf_hook_unregister(npf_rule_t *, npf_hook_t *);
 
 /* Table types. */
 #define	NPF_TABLE_HASH			1
-#define	NPF_TABLE_RBTREE		2
+#define	NPF_TABLE_TREE			2
 
 /* Layers. */
 #define	NPF_LAYER_2			2
@@ -308,11 +296,12 @@ typedef enum {
 
 #define	IOC_NPF_VERSION		_IOR('N', 100, int)
 #define	IOC_NPF_SWITCH		_IOW('N', 101, int)
-#define	IOC_NPF_RELOAD		_IOW('N', 102, struct plistref)
+#define	IOC_NPF_RELOAD		_IOWR('N', 102, struct plistref)
 #define	IOC_NPF_TABLE		_IOW('N', 103, struct npf_ioctl_table)
 #define	IOC_NPF_STATS		_IOW('N', 104, void *)
 #define	IOC_NPF_SESSIONS_SAVE	_IOR('N', 105, struct plistref)
 #define	IOC_NPF_SESSIONS_LOAD	_IOW('N', 106, struct plistref)
-#define	IOC_NPF_UPDATE_RULE	_IOW('N', 107, struct plistref)
+#define	IOC_NPF_UPDATE_RULE	_IOWR('N', 107, struct plistref)
+#define	IOC_NPF_GETCONF		_IOR('N', 108, struct plistref)
 
 #endif	/* _NPF_NET_H_ */

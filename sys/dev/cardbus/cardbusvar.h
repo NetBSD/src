@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.55 2011/08/01 11:20:27 drochner Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.55.2.1 2012/04/17 00:07:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,10 +31,6 @@
 
 #include <dev/cardbus/cardbusreg.h>
 #include <dev/cardbus/rbus.h>
-
-struct {
-	int dummy;
-} cardbus_chipset_tag;
 
 typedef struct cardbus_chipset_tag *cardbus_chipset_tag_t;
 

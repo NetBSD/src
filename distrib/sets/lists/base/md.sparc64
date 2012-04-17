@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.138.2.1 2011/11/10 14:31:11 yamt Exp $
+# $NetBSD: md.sparc64,v 1.138.2.2 2012/04/17 00:02:38 yamt Exp $
 ./libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
 ./sbin/edlabel					base-sysutil-root	obsolete
 ./usr/bin/fdformat				base-util-bin
@@ -67,7 +67,7 @@
 ./usr/lib/sparc/libbz2.so.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libbz2.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libc.so.12			base-compat-shlib	compat,pic
-./usr/lib/sparc/libc.so.12.179			base-compat-shlib	compat,pic
+./usr/lib/sparc/libc.so.12.183			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libcom_err.so.7			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/sparc/libcom_err.so.7.0		base-compat-shlib	compat,pic,kerberos
 ./usr/lib/sparc/libcrypt.so.1			base-compat-shlib	compat,pic
@@ -94,6 +94,8 @@
 ./usr/lib/sparc/libelf.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libevent.so.3			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libevent.so.3.2			base-compat-shlib	compat,pic
+./usr/lib/sparc/libexpat.so.2			base-compat-shlib	compat,pic
+./usr/lib/sparc/libexpat.so.2.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libfetch.so.3			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libfetch.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libform.so.6			base-compat-shlib	compat,pic
@@ -156,7 +158,7 @@
 ./usr/lib/sparc/liblzf.so.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/liblzf.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/liblzma.so.1			base-compat-shlib	compat,pic
-./usr/lib/sparc/liblzma.so.1.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/liblzma.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libm.so.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libm.so.0.10			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libmagic.so.3			base-compat-shlib	compat,pic
@@ -197,13 +199,13 @@
 ./usr/lib/sparc/libprop.so.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libprop.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libpthread.so.1			base-compat-shlib	compat,pic
-./usr/lib/sparc/libpthread.so.1.0		base-compat-shlib	compat,pic
+./usr/lib/sparc/libpthread.so.1.1		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libpthread_dbg.so.2		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libpthread_dbg.so.2.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libpuffs.so.2			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libpuffs.so.2.0			base-compat-shlib	compat,pic
-./usr/lib/sparc/libquota.so.0			base-compat-shlib	compat,pic
-./usr/lib/sparc/libquota.so.0.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/libquota.so.1			base-compat-shlib	compat,pic
+./usr/lib/sparc/libquota.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libradius.so.4			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libradius.so.4.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/librefuse.so.2			base-compat-shlib	compat,pic
@@ -215,7 +217,7 @@
 ./usr/lib/sparc/librpcsvc.so.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/librpcsvc.so.1.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/librt.so.1			base-compat-shlib	compat,pic
-./usr/lib/sparc/librt.so.1.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/librt.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/librump.so.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/librump.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/librumpclient.so.0		base-compat-shlib	compat,pic
@@ -239,7 +241,7 @@
 ./usr/lib/sparc/libsl.so.5			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/sparc/libsl.so.5.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/sparc/libsqlite3.so.1			base-compat-shlib	compat,pic
-./usr/lib/sparc/libsqlite3.so.1.0		base-compat-shlib	compat,pic
+./usr/lib/sparc/libsqlite3.so.1.1		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libss.so.6			base-compat-shlib	obsolete
 ./usr/lib/sparc/libss.so.6.0			base-compat-shlib	obsolete
 ./usr/lib/sparc/libssh.so.18			base-compat-shlib	compat,pic,crypto
@@ -264,7 +266,7 @@
 ./usr/lib/sparc/libusbhid.so.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libusbhid.so.1.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libutil.so.7			base-compat-shlib	compat,pic
-./usr/lib/sparc/libutil.so.7.19			base-compat-shlib	compat,pic
+./usr/lib/sparc/libutil.so.7.21			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libwind.so.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/sparc/libwind.so.0.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/sparc/libwrap.so.1			base-compat-shlib	compat,pic

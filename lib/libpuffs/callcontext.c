@@ -1,4 +1,4 @@
-/*	$NetBSD: callcontext.c,v 1.26 2011/11/02 16:43:04 yamt Exp $	*/
+/*	$NetBSD: callcontext.c,v 1.26.2.1 2012/04/17 00:05:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: callcontext.c,v 1.26 2011/11/02 16:43:04 yamt Exp $");
+__RCSID("$NetBSD: callcontext.c,v 1.26.2.1 2012/04/17 00:05:31 yamt Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -188,7 +188,7 @@ slowccalloc(struct puffs_usermount *pu)
 	struct puffs_cc *volatile pcc;
 	void *sp;
 	size_t stacksize = 1<<pu->pu_cc_stackshift;
-	long psize = sysconf(_SC_PAGESIZE);
+	const long psize = sysconf(_SC_PAGESIZE);
 
 	if (puffs_fakecc)
 		return &fakecc;
@@ -201,7 +201,11 @@ slowccalloc(struct puffs_usermount *pu)
 	pcc = sp;
 	memset(pcc, 0, sizeof(struct puffs_cc));
 
+#ifndef __MACHINE_STACK_GROWS_UP
 	mprotect((uint8_t *)sp + psize, (size_t)psize, PROT_NONE);
+#else
+	mprotect((uint8_t *)sp + stacksize - psize, (size_t)psize, PROT_NONE);
+#endif
 
 	/* initialize both ucontext's */
 	if (getcontext(&pcc->pcc_uc) == -1) {
@@ -245,6 +249,8 @@ puffs__cc_create(struct puffs_usermount *pu, puffs_ccfunc func,
 		pcc->pcc_func = func;
 		pcc->pcc_farg = pcc;
 	} else {
+		const long psize = sysconf(_SC_PAGESIZE);
+
 		/* link context */
 		pcc->pcc_uc.uc_link = &pcc->pcc_uc_ret;
 
@@ -254,8 +260,8 @@ puffs__cc_create(struct puffs_usermount *pu, puffs_ccfunc func,
 		 * swapcontext().  However, it gets lost.  So reinit it.
 		 */
 		st = &pcc->pcc_uc.uc_stack;
-		st->ss_sp = pcc;
-		st->ss_size = stacksize;
+		st->ss_sp = ((uint8_t *)(void *)pcc) + psize;
+		st->ss_size = stacksize - psize;
 		st->ss_flags = 0;
 
 		/*

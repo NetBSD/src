@@ -1,4 +1,4 @@
-/*	$NetBSD: tprintf.h,v 1.17 2005/12/03 17:10:46 christos Exp $	*/
+/*	$NetBSD: tprintf.h,v 1.17.110.1 2012/04/17 00:08:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -39,7 +39,6 @@ typedef struct session *tpr_t;
 tpr_t	tprintf_open(struct proc *);
 void	tprintf_close(tpr_t);
 
-void	tprintf(tpr_t, const char *fmt, ...)
-    __attribute__((__format__(__printf__,2,3)));
+void	tprintf(tpr_t, const char *fmt, ...) __printflike(2, 3);
 
 #endif /* _SYS_TPRINTF_H_ */

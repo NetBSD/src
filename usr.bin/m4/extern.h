@@ -1,5 +1,5 @@
 /*	$OpenBSD: extern.h,v 1.49 2009/10/14 17:19:47 sthen Exp $	*/
-/*	$NetBSD: extern.h,v 1.15 2011/09/06 18:16:01 joerg Exp $	*/
+/*	$NetBSD: extern.h,v 1.15.2.1 2012/04/17 00:09:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -101,13 +101,14 @@ extern void	pbnumbase(int, int, int);
 extern void	pbunsigned(unsigned long);
 extern void	pbstr(const char *);
 extern void	pushback(int);
-extern void	*xalloc(size_t, const char *fmt, ...);
-extern void	*xrealloc(void *, size_t, const char *fmt, ...);
+extern void	*xalloc(size_t, const char *fmt, ...) __printflike(2, 3);
+extern void	*xrealloc(void *, size_t, const char *fmt, ...)
+    __printflike(3, 4);
 extern char	*xstrdup(const char *);
 extern void	resizedivs(int);
 extern size_t	buffer_mark(void);
 extern void	dump_buffer(FILE *, size_t);
-extern void	__dead m4errx(int, const char *, ...);
+extern void	__dead m4errx(int, const char *, ...) __printflike(2, 3);
 
 extern int 	obtain_char(struct input_file *);
 extern void	set_input(struct input_file *, FILE *, const char *);

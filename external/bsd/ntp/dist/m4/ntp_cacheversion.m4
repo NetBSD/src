@@ -98,23 +98,21 @@ AC_DEFUN_ONCE([NTP_CACHEVERSION], [
 	
 	for c_varname in $c_varname_list
 	do
-	    dnl use AS_UNSET([$c_varname]) eventually
-	    eval ${c_varname}=;  $as_unset $c_varname
+	    AS_UNSET([$c_varname])
 	done
-	
-	dnl use AS_UNSET([c_varname_list c_varname]) eventually
-	c_varname_list=;  $as_unset c_varname_list c_varname
 	
 	AC_MSG_NOTICE([[$cache_file saved by another version, ignored.]])
 	AC_MSG_NOTICE([[configure script cache version: ]][$2])
 	AC_MSG_NOTICE([[$cache_file version: $c_version]])
-	$as_unset c_version
+	AS_UNSET([c_varname])
+	AS_UNSET([c_varname_list])
+	AS_UNSET([c_version])
     esac
+
+    AS_UNSET([ntp_cache_flush])
 
     # save configure version in config.cache for next time
     ntp_cv_[$1]_cache_version="[$2]"
-
-    $as_unset ntp_cache_flush
 
     # let any subdir configure.ac NTP_CACHEVERSION invocations
     # know they are not the top level.

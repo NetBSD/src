@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vconsvar.h,v 1.20 2011/05/25 06:13:30 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vconsvar.h,v 1.20.4.1 2012/04/17 00:08:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -41,7 +41,7 @@ struct vcons_screen {
 	struct vcons_data *scr_vd;
 	struct vcons_data *scr_origvd;
 	const struct wsscreen_descr *scr_type;
-	uint16_t *scr_chars;
+	uint32_t *scr_chars;
 	long *scr_attrs;
 	long scr_defattr;
 	/* static flags set by the driver */
@@ -124,7 +124,7 @@ struct vcons_data {
 #ifdef VCONS_DRAW_INTR
 	int cells;
 	long *attrs;
-	uint16_t *chars;
+	uint32_t *chars;
 	int cursor_offset;
 	callout_t intr;
 	int intr_valid;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.51 2008/08/02 19:46:30 matt Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.51.2.1 2012/04/17 00:05:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.51 2008/08/02 19:46:30 matt Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.51.2.1 2012/04/17 00:05:31 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -97,8 +97,6 @@ __strong_alias(__libc_mutex_destroy,pthread_mutex_destroy)
 __strong_alias(__libc_mutexattr_init,pthread_mutexattr_init)
 __strong_alias(__libc_mutexattr_destroy,pthread_mutexattr_destroy)
 __strong_alias(__libc_mutexattr_settype,pthread_mutexattr_settype)
-
-__strong_alias(__libc_thr_once,pthread_once)
 
 int
 pthread_mutex_init(pthread_mutex_t *ptm, const pthread_mutexattr_t *attr)
@@ -548,7 +546,6 @@ pthread_mutexattr_destroy(pthread_mutexattr_t *attr)
 	return 0;
 }
 
-
 int
 pthread_mutexattr_gettype(const pthread_mutexattr_t *attr, int *typep)
 {
@@ -559,7 +556,6 @@ pthread_mutexattr_gettype(const pthread_mutexattr_t *attr, int *typep)
 	*typep = (int)(intptr_t)attr->ptma_private;
 	return 0;
 }
-
 
 int
 pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type)
@@ -577,32 +573,6 @@ pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type)
 	default:
 		return EINVAL;
 	}
-}
-
-
-static void
-once_cleanup(void *closure)
-{
-
-       pthread_mutex_unlock((pthread_mutex_t *)closure);
-}
-
-
-int
-pthread_once(pthread_once_t *once_control, void (*routine)(void))
-{
-
-	if (once_control->pto_done == 0) {
-		pthread_mutex_lock(&once_control->pto_mutex);
-		pthread_cleanup_push(&once_cleanup, &once_control->pto_mutex);
-		if (once_control->pto_done == 0) {
-			routine();
-			once_control->pto_done = 1;
-		}
-		pthread_cleanup_pop(1);
-	}
-
-	return 0;
 }
 
 void

@@ -1,10 +1,12 @@
-#	$NetBSD: std.hades,v 1.7 2010/09/19 02:09:27 tsutsui Exp $
+#	$NetBSD: std.hades,v 1.7.8.1 2012/04/17 00:06:09 yamt Exp $
 #
 # standard Hades information
 #
 machine		atari m68k
 include		"conf/std"			# MI standard options
 include		"arch/m68k/conf/std.m68k"	# m68k standard options
+
+makeoptions	COPTS="-Os"		# XXX for wasteful gcc 4.5
 
 options 	_ATARIHW_		# Original Atari like mainboard hw.
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/05/12 14:56:23 joerg Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 2012/04/17 00:03:31 yamt Exp $
 
 LIB=	LLVMMCDisassembler
 
@@ -8,6 +8,7 @@ LIB=	LLVMMCDisassembler
 
 SRCS+=	Disassembler.cpp \
 	EDDisassembler.cpp \
+	EDMain.cpp \
 	EDOperand.cpp \
 	EDInst.cpp \
 	EDToken.cpp

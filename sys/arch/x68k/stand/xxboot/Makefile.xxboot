@@ -1,0 +1,116 @@
+#	$NetBSD: Makefile.xxboot,v 1.1.2.2 2012/04/17 00:07:03 yamt Exp $
+
+NOMAN=		# defined
+
+.include <bsd.own.mk>
+
+BOOT=	$(DEV)boot_$(FS)
+VERSIONFILE=	${.CURDIR}/../version
+VERSION!=	${TOOL_AWK} -F: '$$1 ~ /^[0-9.]*$$/ { it = $$1; } \
+			END { print it }' ${VERSIONFILE}
+NEWVERSWHAT=	"${BOOT}"
+
+# text and bss addresses in hex
+TEXT=		0f0000		# Primary (me)
+TEXTDATASIZE=	  2000		# 8KB for UFS at maximum
+		  		# 30KB (=(16-1)*2048) for ISO9660 at max.
+BOOT_TEXT=	006000		# Secondary (/boot)
+
+PROG=		$(BOOT)
+BINDIR=		/usr/mdec
+STRIPFLAG=
+BINMODE=	444
+
+S=		${.CURDIR}/../../../../..
+M=		$S/arch/x68k
+.PATH:		${.CURDIR}/..
+SRCS=	boot.S bootmain.c conf.c consio1.c $(DEVDRV).c
+
+SRCS+=		vers.c
+CLEANFILES+=	vers.c
+vers.c:	${VERSIONFILE}
+	${_MKTARGET_CREATE}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
+
+CFLAGS=	-Os -fomit-frame-pointer
+#CFLAGS+= -Wall
+CPPFLAGS+= -D_STANDALONE
+CPPFLAGS+= -DTEXTADDR="0x$(TEXT)" -DBOOT_TEXTADDR="0x$(BOOT_TEXT)"
+CPPFLAGS+= -DTDSIZE="0x$(TEXTDATASIZE)"
+CPPFLAGS+= -DPROG=\"$(PROG)\" -DBOOT_VERS=\"$(VERSION)\"
+CPPFLAGS+= -DBOOT_STAGE1 $(BOOTCPPFLAGS)
+CPPFLAGS+= -nostdinc -I${.OBJDIR} -I${S}
+CPPFLAGS+= -I$M/stand/libiocs -I$M/stand/libsa -I$M/stand/common
+AFLAGS=	   ${CFLAGS:M-[ID]*}
+.if ${OBJECT_FMT} == "ELF"
+LINKFLAGS=   -n -Bstatic -T ${.CURDIR}/../xxboot.ldscript -M
+LINKFLAGS+=  -noinhibit-exec	# XXX
+.else
+LINKFLAGS=   -n -Bstatic -Ttext ${TEXT} -M
+OBJCOPY?=  objcopy
+.endif
+LIBIOCS!= cd $M/stand/libiocs && ${PRINTOBJDIR}
+LIBSA!=	  cd $M/stand/libsa && ${PRINTOBJDIR}
+LDLIBS=	  -L${LIBSA}/lib/sa -lsa -L ${LIBSA}/lib/kern -lkern
+LDLIBS+=  -L${LIBIOCS} -liocs
+
+.PATH: $S/lib/libsa
+CPPFLAGS+= -DLIBSA_SINGLE_FILESYSTEM=$(FS)
+CPPFLAGS+= -DLIBSA_SINGLE_DEVICE=$(DEV)
+CPPFLAGS+= -DLIBSA_NO_TWIDDLE -DLIBSA_NO_FD_CHECKING -DLIBSA_NO_RAW_ACCESS -DLIBSA_NO_FS_WRITE
+SRCS+=	open.c close.c read.c lseek.c loadfile.c loadfile_aout.c alloc.c
+SRCS+=  $(FS).c
+
+.PATH: $M/stand/common
+SRCS+=	exec_image.S
+
+.include "${.CURDIR}/../../Makefile.booters"
+
+CLEANFILES+=	${PROG}.x $(PROG).map ${PROG}
+
+
+${PROG}: $(OBJS)
+	${_MKTARGET_LINK}
+	$(LD) $(LINKFLAGS) -o ${PROG} $(OBJS) $(LDLIBS) > $(PROG).map
+	@grep first_kbyte $(PROG).map
+.if ${OBJECT_FMT} == "ELF"
+	@if [ `(echo ibase=16; 						   \
+	    ${TOOL_SED} -n						   \
+		's/^.*0x\([0-9a-f]*\).* first_kbyte$$/\1-$(TEXT)-400/p'    \
+		$(PROG).map | 						   \
+	    tr a-f A-F) | bc` -gt 0 ]; 					   \
+	then echo '$(BOOT): first_kbyte exceeds the first killobyte';	   \
+	    rm $(PROG) ; exit 1; 					   \
+	fi
+	@if [ `(echo ibase=16; 						   \
+	    ${TOOL_SED} -n						   \
+		's/^.*0x\([0-9a-f]*\).* _edata *= *\.$$/\1-$(TEXT)-$(TEXTDATASIZE)/p' \
+		$(PROG).map | 						   \
+	    tr a-f A-F) | bc` -gt 0 ]; 					   \
+	then echo '$(BOOT): text+data is too large';			   \
+	    rm $(PROG) ; exit 1; 					   \
+	fi
+.else
+	mv $(PROG) $(PROG).x
+	$(OBJCOPY) -I a.out-m68k-netbsd -O binary $(PROG).x $(PROG)
+	@rm -f $(PROG).x
+	@if [ `(echo ibase=16; 						   \
+	    ${TOOL_SED} -n						   \
+		's/  first_kbyte:.*0x\(.*\),.*$$/\1-$(TEXT)-400/p'	   \
+		$(PROG).map | 						   \
+	    tr a-f A-F) | bc` -gt 0 ]; 					   \
+	then echo '$(BOOT): first_kbyte exceeds the first killobyte';	   \
+	    rm $(PROG) ; exit 1; 					   \
+	fi
+	@if [ `(echo ibase=16; 						   \
+	    ${TOOL_SED} -n						   \
+		's/  _edata:.*0x\(.*\),.*$$/\1-$(TEXT)-$(TEXTDATASIZE)/p'  \
+		$(PROG).map | 						   \
+	    tr a-f A-F) | bc` -gt 0 ]; 					   \
+	then echo '$(BOOT): text+data is too large';			   \
+	    rm $(PROG) ; exit 1; 					   \
+	fi
+.endif
+	${TOUCHPROG}
+
+.include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_tls_static.c,v 1.1 2011/03/09 23:10:07 joerg Exp $	*/
+/*	$NetBSD: t_tls_static.c,v 1.1.4.1 2012/04/17 00:09:13 yamt Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,14 +32,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_tls_static.c,v 1.1 2011/03/09 23:10:07 joerg Exp $");
+__RCSID("$NetBSD: t_tls_static.c,v 1.1.4.1 2012/04/17 00:09:13 yamt Exp $");
 
 #include <atf-c.h>
 #include <pthread.h>
 
 #include <sys/tls.h>
 
-#if !defined(__HAVE_TLS_VARIANT_I) && !defined(__HAVE_TLS_VARIANT_II)
+#ifdef __HAVE_NO___THREAD
 #define	__thread
 #endif
 
@@ -72,7 +72,7 @@ ATF_TC_BODY(t_tls_static, tc)
 {
 	pthread_t t;
 
-#if !defined(__HAVE_TLS_VARIANT_I) && !defined(__HAVE_TLS_VARIANT_II)
+#ifdef __HAVE_NO___THREAD
 	atf_tc_skip("no TLS support on this platform");
 #endif
 

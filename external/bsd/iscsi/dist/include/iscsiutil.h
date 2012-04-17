@@ -144,9 +144,12 @@ EXTERN uint32_t iscsi_debug_level;
  * Debugging Functions
  */
 void	set_debug(const char *);
-void	iscsi_trace(const int, const char *, ...);
-void	iscsi_warn(const char *, const int, const char *, ...);
-void	iscsi_err(const char *, const int, const char *, ...);
+void	iscsi_trace(const int, const char *, ...)
+    __printflike(2, 3);
+void	iscsi_warn(const char *, const int, const char *, ...)
+    __printflike(3, 4);
+void	iscsi_err(const char *, const int, const char *, ...)
+    __printflike(3, 4);
 void	iscsi_print_buffer(const char *, const size_t);
 
 
@@ -417,7 +420,7 @@ typedef struct {
 }               iscsi_worker_t;
 
 #define ISCSI_WORKER_EXIT(ME) do {					\
-	iscsi_trace(TRACE_ISCSI_DEBUG ,__FILE__, __LINE__, "exiting\n");\
+	iscsi_trace(TRACE_ISCSI_DEBUG, "%s:%d: %s", __FILE__, __LINE__, "exiting\n");\
 	(ME)->state |= ISCSI_WORKER_STATE_EXITING;			\
 	return 0;							\
 	/* NOTREACHED */						\

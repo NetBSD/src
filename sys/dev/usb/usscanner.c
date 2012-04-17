@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.30 2010/11/03 22:34:24 dyoung Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.30.8.1 2012/04/17 00:08:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,12 +47,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.30 2010/11/03 22:34:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.30.8.1 2012/04/17 00:08:10 yamt Exp $");
 
 #include "scsibus.h"
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/lwp.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/conf.h>
@@ -371,7 +372,7 @@ usscanner_detach(device_t self, int flags)
 	s = splusb();
 	if (--sc->sc_refcnt >= 0) {
 		/* Wait for processes to go away. */
-		usb_detach_wait(sc->sc_dev);
+		usb_detach_waitold(sc->sc_dev);
 	}
 	splx(s);
 
@@ -482,7 +483,9 @@ usscanner_intr_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	sc->sc_state = UAS_IDLE;
 
 	s = splbio();
+	KERNEL_LOCK(1, curlwp);
 	scsipi_done(sc->sc_xs);
+	KERNEL_UNLOCK_ONE(curlwp);
 	splx(s);
 }
 
@@ -760,7 +763,9 @@ usscanner_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, 
 
  done:
 		sc->sc_state = UAS_IDLE;
+		KERNEL_LOCK(1, curlwp);
 		scsipi_done(xs);
+		KERNEL_UNLOCK_ONE(curlwp);
 		return;
 
 	case ADAPTER_REQ_GROW_RESOURCES:

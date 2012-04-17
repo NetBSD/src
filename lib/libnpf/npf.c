@@ -1,7 +1,7 @@
-/*	$NetBSD: npf.c,v 1.2.6.1 2011/11/10 14:31:37 yamt Exp $	*/
+/*	$NetBSD: npf.c,v 1.2.6.2 2012/04/17 00:05:29 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.2.6.1 2011/11/10 14:31:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.2.6.2 2012/04/17 00:05:29 yamt Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.2.6.1 2011/11/10 14:31:37 yamt Exp $");
 
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include <errno.h>
 #include <err.h>
 
@@ -47,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.2.6.1 2011/11/10 14:31:37 yamt Exp $");
 
 struct nl_config {
 	/* Rules, translations, tables, procedures. */
+	prop_dictionary_t	ncf_dict;
 	prop_array_t		ncf_rules_list;
 	prop_array_t		ncf_rproc_list;
 	prop_array_t		ncf_table_list;
@@ -54,6 +56,11 @@ struct nl_config {
 	/* Priority counters. */
 	pri_t			ncf_rule_pri;
 	pri_t			ncf_nat_pri;
+	/* Error report. */
+	prop_dictionary_t	ncf_err;
+	/* Custom file to externalise property-list. */
+	const char *		ncf_plist;
+	bool			ncf_flush;
 };
 
 struct nl_rule {
@@ -77,7 +84,7 @@ npf_config_create(void)
 {
 	nl_config_t *ncf;
 
-	ncf = malloc(sizeof(nl_config_t));
+	ncf = calloc(1, sizeof(*ncf));
 	if (ncf == NULL) {
 		return NULL;
 	}
@@ -89,12 +96,16 @@ npf_config_create(void)
 	ncf->ncf_rule_pri = 1;
 	ncf->ncf_nat_pri = 1;
 
+	ncf->ncf_plist = NULL;
+	ncf->ncf_flush = false;
+
 	return ncf;
 }
 
 int
 npf_config_submit(nl_config_t *ncf, int fd)
 {
+	const char *plist = ncf->ncf_plist;
 	prop_dictionary_t npf_dict;
 	int error = 0;
 
@@ -106,27 +117,110 @@ npf_config_submit(nl_config_t *ncf, int fd)
 	prop_dictionary_set(npf_dict, "rprocs", ncf->ncf_rproc_list);
 	prop_dictionary_set(npf_dict, "tables", ncf->ncf_table_list);
 	prop_dictionary_set(npf_dict, "translation", ncf->ncf_nat_list);
+	prop_dictionary_set_bool(npf_dict, "flush", ncf->ncf_flush);
 
-#ifndef _NPF_TESTING
-	error = prop_dictionary_send_ioctl(npf_dict, fd, IOC_NPF_RELOAD);
-#else
-	if (!prop_dictionary_externalize_to_file(npf_dict, "./npf.plist")) {
-		error = errno;
+	if (plist) {
+		if (!prop_dictionary_externalize_to_file(npf_dict, plist)) {
+			error = errno;
+		}
+		prop_object_release(npf_dict);
+		return error;
 	}
-#endif
+
+	error = prop_dictionary_sendrecv_ioctl(npf_dict, fd,
+	    IOC_NPF_RELOAD, &ncf->ncf_err);
+	if (error) {
+		prop_object_release(npf_dict);
+		assert(ncf->ncf_err == NULL);
+		return error;
+	}
+
+	prop_dictionary_get_int32(ncf->ncf_err, "errno", &error);
 	prop_object_release(npf_dict);
 	return error;
+}
+
+nl_config_t *
+npf_config_retrieve(int fd, bool *active, bool *loaded)
+{
+	prop_dictionary_t npf_dict;
+	nl_config_t *ncf;
+	int error;
+
+	error = prop_dictionary_recv_ioctl(fd, IOC_NPF_GETCONF, &npf_dict);
+	if (error) {
+		return NULL;
+	}
+	ncf = calloc(1, sizeof(*ncf));
+	if (ncf == NULL) {
+		prop_object_release(npf_dict);
+		return NULL;
+	}
+	ncf->ncf_dict = npf_dict;
+	ncf->ncf_rules_list = prop_dictionary_get(npf_dict, "rules");
+	ncf->ncf_rproc_list = prop_dictionary_get(npf_dict, "rprocs");
+	ncf->ncf_table_list = prop_dictionary_get(npf_dict, "tables");
+	ncf->ncf_nat_list = prop_dictionary_get(npf_dict, "translation");
+
+	prop_dictionary_get_bool(npf_dict, "active", active);
+	*loaded = (ncf->ncf_rules_list != NULL);
+	return ncf;
+}
+
+int
+npf_config_flush(int fd)
+{
+	nl_config_t *ncf;
+	int error;
+
+	ncf = npf_config_create();
+	if (ncf == NULL) {
+		return ENOMEM;
+	}
+	ncf->ncf_flush = true;
+	error = npf_config_submit(ncf, fd);
+	npf_config_destroy(ncf);
+	return error;
+}
+
+void
+_npf_config_error(nl_config_t *ncf, nl_error_t *ne)
+{
+	memset(ne, 0, sizeof(*ne));
+	prop_dictionary_get_int32(ncf->ncf_err, "id", &ne->ne_id);
+	prop_dictionary_get_cstring(ncf->ncf_err,
+	    "source-file", &ne->ne_source_file);
+	prop_dictionary_get_uint32(ncf->ncf_err,
+	    "source-line", &ne->ne_source_line);
+	prop_dictionary_get_int32(ncf->ncf_err,
+	    "ncode-error", &ne->ne_ncode_error);
+	prop_dictionary_get_int32(ncf->ncf_err,
+	    "ncode-errat", &ne->ne_ncode_errat);
 }
 
 void
 npf_config_destroy(nl_config_t *ncf)
 {
 
-	prop_object_release(ncf->ncf_rules_list);
-	prop_object_release(ncf->ncf_rproc_list);
-	prop_object_release(ncf->ncf_table_list);
-	prop_object_release(ncf->ncf_nat_list);
+	if (ncf->ncf_dict == NULL) {
+		prop_object_release(ncf->ncf_rules_list);
+		prop_object_release(ncf->ncf_rproc_list);
+		prop_object_release(ncf->ncf_table_list);
+		prop_object_release(ncf->ncf_nat_list);
+	} else {
+		prop_object_release(ncf->ncf_dict);
+	}
+	if (ncf->ncf_err) {
+		prop_object_release(ncf->ncf_err);
+	}
 	free(ncf);
+}
+
+void
+_npf_config_setsubmit(nl_config_t *ncf, const char *plist_file)
+{
+
+	ncf->ncf_plist = plist_file;
 }
 
 static bool
@@ -156,7 +250,7 @@ npf_rule_create(const char *name, uint32_t attr, u_int if_idx)
 	prop_dictionary_t rldict;
 	nl_rule_t *rl;
 
-	rl = malloc(sizeof(nl_rule_t));
+	rl = malloc(sizeof(*rl));
 	if (rl == NULL) {
 		return NULL;
 	}
@@ -242,6 +336,73 @@ npf_rule_insert(nl_config_t *ncf, nl_rule_t *parent, nl_rule_t *rl, pri_t pri)
 	return 0;
 }
 
+static int
+_npf_rule_foreach1(prop_array_t rules, unsigned nlevel, nl_rule_callback_t func)
+{
+	prop_dictionary_t rldict;
+	prop_object_iterator_t it;
+
+	if (!rules || prop_object_type(rules) != PROP_TYPE_ARRAY) {
+		return ENOENT;
+	}
+	it = prop_array_iterator(rules);
+	if (it == NULL) {
+		return ENOMEM;
+	}
+	while ((rldict = prop_object_iterator_next(it)) != NULL) {
+		prop_array_t subrules;
+		nl_rule_t nrl;
+
+		nrl.nrl_dict = rldict;
+		(*func)(&nrl, nlevel);
+
+		subrules = prop_dictionary_get(rldict, "subrules");
+		(void)_npf_rule_foreach1(subrules, nlevel + 1, func);
+	}
+	prop_object_iterator_release(it);
+	return 0;
+}
+
+int
+_npf_rule_foreach(nl_config_t *ncf, nl_rule_callback_t func)
+{
+
+	return _npf_rule_foreach1(ncf->ncf_rules_list, 0, func);
+}
+
+pri_t
+_npf_rule_getinfo(nl_rule_t *nrl, const char **rname, uint32_t *attr,
+    u_int *if_idx)
+{
+	prop_dictionary_t rldict = nrl->nrl_dict;
+	pri_t prio;
+
+	prop_dictionary_get_cstring_nocopy(rldict, "name", rname);
+	prop_dictionary_get_uint32(rldict, "attributes", attr);
+	prop_dictionary_get_int32(rldict, "priority", &prio);
+	prop_dictionary_get_uint32(rldict, "interface", if_idx);
+	return prio;
+}
+
+const void *
+_npf_rule_ncode(nl_rule_t *nrl, size_t *size)
+{
+	prop_dictionary_t rldict = nrl->nrl_dict;
+	prop_object_t obj = prop_dictionary_get(rldict, "ncode");
+	*size = prop_data_size(obj);
+	return prop_data_data_nocopy(obj);
+}
+
+const char *
+_npf_rule_rproc(nl_rule_t *nrl)
+{
+	prop_dictionary_t rldict = nrl->nrl_dict;
+	const char *rpname = NULL;
+
+	prop_dictionary_get_cstring_nocopy(rldict, "rproc", &rpname);
+	return rpname;
+}
+
 void
 npf_rule_destroy(nl_rule_t *rl)
 {
@@ -282,7 +443,8 @@ npf_rproc_exists_p(nl_config_t *ncf, const char *name)
 }
 
 int
-_npf_rproc_setnorm(nl_rproc_t *rp, bool rnd, bool no_df, int minttl, int maxmss)
+_npf_rproc_setnorm(nl_rproc_t *rp, bool rnd, bool no_df, u_int minttl,
+    u_int maxmss)
 {
 	prop_dictionary_t rpdict = rp->nrp_dict;
 	uint32_t fl;
@@ -331,7 +493,7 @@ npf_rproc_insert(nl_config_t *ncf, nl_rproc_t *rp)
  */
 
 nl_nat_t *
-npf_nat_create(int type, int flags, u_int if_idx,
+npf_nat_create(int type, u_int flags, u_int if_idx,
     npf_addr_t *addr, int af, in_port_t port)
 {
 	nl_rule_t *rl;
@@ -397,13 +559,13 @@ npf_nat_insert(nl_config_t *ncf, nl_nat_t *nt, pri_t pri)
  */
 
 nl_table_t *
-npf_table_create(int id, int type)
+npf_table_create(u_int id, int type)
 {
 	prop_dictionary_t tldict;
 	prop_array_t tblents;
 	nl_table_t *tl;
 
-	tl = malloc(sizeof(nl_table_t));
+	tl = malloc(sizeof(*tl));
 	if (tl == NULL) {
 		return NULL;
 	}
@@ -497,12 +659,16 @@ npf_table_destroy(nl_table_t *tl)
  */
 
 int
-npf_update_rule(int fd, char *rname, nl_rule_t *rl)
+npf_update_rule(int fd, const char *rname __unused, nl_rule_t *rl)
 {
-	prop_dictionary_t rldict = rl->nrl_dict;
+	prop_dictionary_t rldict = rl->nrl_dict, errdict = NULL;
 	int error;
 
-	error = prop_dictionary_send_ioctl(rldict, fd, IOC_NPF_UPDATE_RULE);
+	error = prop_dictionary_sendrecv_ioctl(rldict, fd,
+	    IOC_NPF_UPDATE_RULE, &errdict);
+	if (errdict) {
+		prop_object_release(errdict);
+	}
 	return error;
 }
 

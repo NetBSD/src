@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.87 2011/05/23 15:37:36 drochner Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.87.4.1 2012/04/17 00:07:47 yamt Exp $  */
 /*	$OpenBSD: if_iwi.c,v 1.111 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.87 2011/05/23 15:37:36 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.87.4.1 2012/04/17 00:07:47 yamt Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.87 2011/05/23 15:37:36 drochner Exp $")
 #include <sys/conf.h>
 #include <sys/kauth.h>
 #include <sys/proc.h>
+#include <sys/cprng.h>
 
 #include <sys/bus.h>
 #include <machine/endian.h>
@@ -202,21 +203,18 @@ iwi_attach(device_t parent, device_t self, void *aux)
 	struct ifnet *ifp = &sc->sc_if;
 	struct pci_attach_args *pa = aux;
 	const char *intrstr;
-	char devinfo[256];
 	bus_space_tag_t memt;
 	bus_space_handle_t memh;
 	pci_intr_handle_t ih;
 	pcireg_t data;
 	uint16_t val;
-	int error, revision, i;
+	int error, i;
 
 	sc->sc_dev = self;
 	sc->sc_pct = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof devinfo);
-	revision = PCI_REVISION(pa->pa_class);
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, revision);
+	pci_aprint_devinfo(pa, NULL);
 
 	/* clear unit numbers allocated to IBSS */
 	sc->sc_unr = 0;
@@ -2156,7 +2154,7 @@ iwi_cache_firmware(struct iwi_softc *sc)
 {
 	struct iwi_firmware *kfw = &sc->fw;
 	firmware_handle_t fwh;
-	const struct iwi_firmware_hdr *hdr;
+	struct iwi_firmware_hdr *hdr;
 	off_t size;	
 	char *fw;
 	int error;
@@ -2194,8 +2192,12 @@ iwi_cache_firmware(struct iwi_softc *sc)
 	if (error != 0)
 		goto fail2;
 
+	hdr = (struct iwi_firmware_hdr *)sc->sc_blob;
+	hdr->version = le32toh(hdr->version);
+	hdr->bsize = le32toh(hdr->bsize);
+	hdr->usize = le32toh(hdr->usize);
+	hdr->fsize = le32toh(hdr->fsize);
 
-	hdr = (const struct iwi_firmware_hdr *)sc->sc_blob;
 	if (size < sizeof(struct iwi_firmware_hdr) + hdr->bsize + hdr->usize + hdr->fsize) {
 		aprint_error_dev(sc->sc_dev, "image '%s' too small\n",
 		    sc->sc_fwname);
@@ -2203,14 +2205,13 @@ iwi_cache_firmware(struct iwi_softc *sc)
 		goto fail2;
 	}
 
-	hdr = (const struct iwi_firmware_hdr *)sc->sc_blob;
-	DPRINTF(("firmware version = %d\n", le32toh(hdr->version)));
-	if ((IWI_FW_GET_MAJOR(le32toh(hdr->version)) != IWI_FW_REQ_MAJOR) ||
-	    (IWI_FW_GET_MINOR(le32toh(hdr->version)) != IWI_FW_REQ_MINOR)) {
+	DPRINTF(("firmware version = %d\n", hdr->version));
+	if ((IWI_FW_GET_MAJOR(hdr->version) != IWI_FW_REQ_MAJOR) ||
+	    (IWI_FW_GET_MINOR(hdr->version) != IWI_FW_REQ_MINOR)) {
 		aprint_error_dev(sc->sc_dev,
 		    "version for '%s' %d.%d != %d.%d\n", sc->sc_fwname,
-		    IWI_FW_GET_MAJOR(le32toh(hdr->version)),
-		    IWI_FW_GET_MINOR(le32toh(hdr->version)),
+		    IWI_FW_GET_MAJOR(hdr->version),
+		    IWI_FW_GET_MINOR(hdr->version),
 		    IWI_FW_REQ_MAJOR, IWI_FW_REQ_MINOR);
 		error = EIO;
 		goto fail2;
@@ -2386,7 +2387,8 @@ iwi_config(struct iwi_softc *sc)
 			return error;
 	}
 
-	data = htole32(arc4random());
+	cprng_fast(&data, sizeof(data));
+	data = htole32(data);
 	DPRINTF(("Setting initialization vector to %u\n", le32toh(data)));
 	error = iwi_cmd(sc, IWI_CMD_SET_IV, &data, sizeof data, 0);
 	if (error != 0)

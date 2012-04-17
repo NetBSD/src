@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.251 2011/10/17 16:22:12 mbalmer Exp $
+#	$NetBSD: build.sh,v 1.251.2.1 2012/04/17 00:01:35 yamt Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -503,6 +503,8 @@ initdefaults()
 	do_syspkgs=false
 	do_iso_image=false
 	do_iso_image_source=false
+	do_live_image=false
+	do_install_image=false
 	do_params=false
 	do_rump=false
 
@@ -864,6 +866,10 @@ Usage: ${progname} [-EhnorUuxy] [-a arch] [-B buildid] [-C cdextras]
                         RELEASEDIR/RELEASEMACHINEDIR/binary/syspkgs.
     iso-image           Create CD-ROM image in RELEASEDIR/iso.
     iso-image-source    Create CD-ROM image with source in RELEASEDIR/iso.
+    live-image          Create bootable live image in
+                        RELEASEDIR/RELEASEMACHINEDIR/installation/liveimage.
+    install-image       Create bootable installation image in
+                        RELEASEDIR/RELEASEMACHINEDIR/installation/installimage.
     params              Display various make(1) parameters.
 
  Options:
@@ -1133,6 +1139,14 @@ parseoptions()
 
 		iso-image-source)
 			op=iso_image_source   # used as part of a variable name
+			;;
+
+		live-image)
+			op=live_image	# used as part of a variable name
+			;;
+
+		install-image)
+			op=install_image # used as part of a variable name
 			;;
 
 		kernel=*|releasekernel=*)
@@ -1565,6 +1579,16 @@ validatemakeparams()
 		fi
 		;;
 	esac
+
+	# live-image and install-image targets require binary sets
+	# (actually DESTDIR/etc/mtree/set.* files) built with MKUNPRIVED.
+	# If release operation is specified with live-image or install-image,
+	# the release op should be performed with -U for later image ops.
+	#
+	if ${do_release} && ( ${do_live_image} || ${do_install_image} ) && \
+	    [ "${MKUNPRIVED}" = "no" ] ; then
+		bomb "-U must be specified on building release to create images later."
+	fi
 }
 
 
@@ -1632,7 +1656,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.251 2011/10/17 16:22:12 mbalmer Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.251.2.1 2012/04/17 00:01:35 yamt Exp $
 # with these arguments: ${_args}
 #
 
@@ -1830,7 +1854,7 @@ installworld()
 RUMP_LIBSETS='
 	-lrump,
 	-lrumpvfs -lrump,
-	-lrumpdev -lrump,
+	-lrumpvfs -lrumpdev -lrump,
 	-lrumpnet -lrump,
 	-lrumpkern_tty -lrumpvfs -lrump,
 	-lrumpfs_tmpfs -lrumpvfs -lrump,
@@ -1960,6 +1984,17 @@ main()
 			statusmsg "Successful make ${op}"
 			;;
 
+		live-image|install-image)
+			# install-image and live-image require mtree spec files
+			# built with UNPRIVED.  Assume UNPRIVED build has been
+			# performed if METALOG file is created in DESTDIR.
+			if [ ! -e "${DESTDIR}/METALOG" ] ; then
+				bomb "The release binaries must have been built with -U to create images."
+			fi
+			${runcmd} "${makewrapper}" ${parallel} ${op} ||
+			    bomb "Failed to make ${op}"
+			statusmsg "Successful make ${op}"
+			;;
 		kernel=*)
 			arg=${op#*=}
 			buildkernel "${arg}"

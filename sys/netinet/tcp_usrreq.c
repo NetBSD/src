@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.160 2011/06/06 19:15:43 dyoung Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.160.2.1 2012/04/17 00:08:41 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,13 +95,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.160 2011/06/06 19:15:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.160.2.1 2012/04/17 00:08:41 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_tcp_debug.h"
 #include "opt_mbuftrace.h"
-#include "rnd.h"
+
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,10 +152,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.160 2011/06/06 19:15:43 dyoung Exp 
 #include <netinet/tcp_vtw.h>
 
 #include "opt_tcp_space.h"
-
-#ifdef IPSEC
-#include <netinet6/ipsec.h>
-#endif /*IPSEC*/
 
 /*
  * TCP protocol interface to socket abstraction.
@@ -267,11 +263,11 @@ tcp_usrreq(struct socket *so, int req,
 	 * a (struct inpcb) pointed at by the socket, and this
 	 * structure will point at a subsidary (struct tcpcb).
 	 */
-#ifndef INET6
-	if (inp == 0 && req != PRU_ATTACH)
-#else
-	if ((inp == 0 && in6p == 0) && req != PRU_ATTACH)
+	if ((inp == 0
+#ifdef INET6
+	    && in6p == 0
 #endif
+	    ) && (req != PRU_ATTACH && req != PRU_SENSE))
 	{
 		error = EINVAL;
 		goto release;
@@ -2020,7 +2016,6 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       SYSCTL_DESCR("TCP drop connection"),
 		       sysctl_net_inet_tcp_drop, 0, NULL, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_DROP, CTL_EOL);
-#if NRND > 0
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "iss_hash",
@@ -2029,7 +2024,6 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       NULL, 0, &tcp_do_rfc1948, sizeof(tcp_do_rfc1948),
 		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE,
 		       CTL_EOL);
-#endif
 
 	/* ABC subtree */
 

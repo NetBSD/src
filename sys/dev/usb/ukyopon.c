@@ -1,4 +1,4 @@
-/*	$NetBSD: ukyopon.c,v 1.13 2011/10/14 13:12:41 njoly Exp $	*/
+/*	$NetBSD: ukyopon.c,v 1.13.2.1 2012/04/17 00:08:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.13 2011/10/14 13:12:41 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.13.2.1 2012/04/17 00:08:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,9 +188,6 @@ int
 ukyopon_detach(device_t self, int flags)
 {
 	struct ukyopon_softc *sc = device_private(self);
-#ifdef __FreeBSD__
-	int flags = 0;
-#endif
 
 	return umodem_common_detach(&sc->sc_umodem, flags);
 }

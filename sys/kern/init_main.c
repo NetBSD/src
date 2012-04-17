@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.436.2.2 2011/11/20 10:52:33 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.436.2.3 2012/04/17 00:08:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,14 +97,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.436.2.2 2011/11/20 10:52:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.436.2.3 2012/04/17 00:08:22 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
 #include "opt_modular.h"
 #include "opt_ntp.h"
 #include "opt_pipe.h"
-#include "opt_sa.h"
 #include "opt_syscall_debug.h"
 #include "opt_sysv.h"
 #include "opt_fileassoc.h"
@@ -116,7 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.436.2.2 2011/11/20 10:52:33 yamt Exp
 
 #include "drvctl.h"
 #include "ksyms.h"
-#include "rnd.h"
+
 #include "sysmon_envsys.h"
 #include "sysmon_power.h"
 #include "sysmon_taskq.h"
@@ -187,9 +186,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.436.2.2 2011/11/20 10:52:33 yamt Exp
 #endif
 #include <sys/domain.h>
 #include <sys/namei.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 #include <sys/pipe.h>
 #if NVERIEXEC > 0
 #include <sys/verified_exec.h>
@@ -198,13 +195,11 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.436.2.2 2011/11/20 10:52:33 yamt Exp
 #include <sys/ktrace.h>
 #endif
 #include <sys/kauth.h>
-#ifdef KERN_SA
-#include <sys/savar.h>
-#endif
 #include <net80211/ieee80211_netbsd.h>
 #ifdef PTRACE
 #include <sys/ptrace.h>
 #endif /* PTRACE */
+#include <sys/cprng.h>
 
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
@@ -212,6 +207,8 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.436.2.2 2011/11/20 10:52:33 yamt Exp
 #if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD) || defined(PAX_ASLR)
 #include <sys/pax.h>
 #endif /* PAX_MPROTECT || PAX_SEGVGUARD || PAX_ASLR */
+
+#include <secmodel/secmodel.h>
 
 #include <ufs/ufs/quota.h>
 
@@ -261,6 +258,8 @@ struct timespec boottime;	        /* time at system startup - will only follow s
 
 int	start_init_exec;		/* semaphore for start_init() */
 
+cprng_strong_t	*kern_cprng;
+
 static void check_console(struct lwp *l);
 static void start_init(void *);
 static void configure(void);
@@ -302,7 +301,7 @@ main(void)
 	kernel_lock_init();
 	once_init();
 
-	mutex_init(&cpu_lock, MUTEX_DEFAULT, IPL_NONE);
+	mi_cpu_init();
 	kernconfig_lock_init();
 	kthread_sysinit();
 
@@ -342,6 +341,8 @@ main(void)
 	/* Initialize the kernel authorization subsystem. */
 	kauth_init();
 
+	secmodel_init();
+
 	spec_init();
 
 	/*
@@ -372,14 +373,11 @@ main(void)
 	/*
 	 * The following things must be done before autoconfiguration.
 	 */
-#if NRND > 0
-	rnd_init();		/* initialize random number generator */
-#endif
+	rnd_init();		/* initialize entropy pool */
+
+	cprng_init();		/* initialize cryptographic PRNG */
 
 	/* Initialize process and pgrp structures. */
-#ifdef KERN_SA
-	sa_init();
-#endif
 	procinit();
 	lwpinit();
 
@@ -499,6 +497,10 @@ main(void)
 	/* Initialize the disk wedge subsystem. */
 	dkwedge_init();
 
+	/* Initialize the kernel strong PRNG. */
+	kern_cprng = cprng_strong_create("kernel", IPL_VM,
+					 CPRNG_INIT_ANY|CPRNG_REKEY_ANY);
+					 
 	/* Initialize interfaces. */
 	ifinit1();
 
@@ -506,7 +508,6 @@ main(void)
 
 	/* Initialize sockets thread(s) */
 	soinit1();
-
 
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();
@@ -987,7 +988,7 @@ start_init(void *arg)
 		/*
 		 * Move out the arg pointers.
 		 */
-		ucp = (void *)STACK_ALIGN(ucp, ALIGNBYTES);
+		ucp = (void *)STACK_ALIGN(ucp, STACK_ALIGNBYTES);
 		uap = (char **)STACK_ALLOC(ucp, sizeof(char *) * 3);
 		SCARG(&args, path) = arg0;
 		SCARG(&args, argp) = uap;

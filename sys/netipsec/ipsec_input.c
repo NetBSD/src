@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.28 2011/07/17 20:54:54 joerg Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.28.2.1 2012/04/17 00:08:46 yamt Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.28 2011/07/17 20:54:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.28.2.1 2012/04/17 00:08:46 yamt Exp $");
 
 /*
  * IPsec input processing.
@@ -63,13 +63,13 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.28 2011/07/17 20:54:54 joerg Exp $
 
 #include <net/if.h>
 #include <net/route.h>
-#include <net/netisr.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/in_var.h>
+#include <netinet/in_proto.h>
 
 #include <netinet/ip6.h>
 #ifdef INET6
@@ -316,30 +316,20 @@ ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 		return EINVAL;
 	}
 
-	if (skip != 0) {
-		/* Fix IPv4 header */
-		if (m->m_len < skip && (m = m_pullup(m, skip)) == NULL) {
-			DPRINTF(("ipsec4_common_input_cb: processing failed "
-			    "for SA %s/%08lx\n",
-			    ipsec_address(&sav->sah->saidx.dst),
-			    (u_long) ntohl(sav->spi)));
-			IPSEC_ISTAT(sproto, ESP_STAT_HDROPS, AH_STAT_HDROPS,
-			    IPCOMP_STAT_HDROPS);
-			error = ENOBUFS;
-			goto bad;
-		}
-
-		ip = mtod(m, struct ip *);
-		ip->ip_len = htons(m->m_pkthdr.len);
-#ifdef __FreeBSD__
-		/* On FreeBSD, ip_off and ip_len assumed in host endian. */
-		ip->ip_off = htons(ip->ip_off);
-#endif
-		ip->ip_sum = 0;
-		ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
-	} else {
-		ip = mtod(m, struct ip *);
+	/* Fix IPv4 header */
+	if (m->m_len < skip && (m = m_pullup(m, skip)) == NULL) {
+		DPRINTF(("ipsec4_common_input_cb: processing failed "
+		    "for SA %s/%08lx\n",
+		    ipsec_address(&sav->sah->saidx.dst),
+		    (u_long) ntohl(sav->spi)));
+		IPSEC_ISTAT(sproto, ESP_STAT_HDROPS, AH_STAT_HDROPS,
+		    IPCOMP_STAT_HDROPS);
+		error = ENOBUFS;
+		goto bad;
 	}
+
+	ip = mtod(m, struct ip *);
+	ip->ip_len = htons(m->m_pkthdr.len);
 	prot = ip->ip_p;
 
 	/* IP-in-IP encapsulation */
@@ -450,18 +440,12 @@ ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 
 	key_sa_recordxfer(sav, m);		/* record data transfer */
 
-	/*
-	 * Re-dispatch via software interrupt.
-	 */
-	if (!IF_HANDOFF(&ipintrq, m, NULL)) {
-		IPSEC_ISTAT(sproto, ESP_STAT_QFULL, AH_STAT_QFULL,
-			    IPCOMP_STAT_QFULL);
-
-		DPRINTF(("ipsec4_common_input_cb: queue full; "
-			"proto %u packet dropped\n", sproto));
-		return ENOBUFS;
+	if ((inetsw[ip_protox[prot]].pr_flags & PR_LASTHDR) != 0 &&
+				ipsec4_in_reject(m, NULL)) {
+		error = EINVAL;
+		goto bad;
 	}
-	schednetisr(NETISR_IP);
+	(*inetsw[ip_protox[prot]].pr_input)(m, skip, prot);
 	return 0;
 bad:
 	m_freem(m);

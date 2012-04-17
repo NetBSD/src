@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.133 2011/10/07 09:56:15 joerg Exp $	*/
+/*	$NetBSD: route.c,v 1.133.2.1 2012/04/17 00:05:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.133 2011/10/07 09:56:15 joerg Exp $");
+__RCSID("$NetBSD: route.c,v 1.133.2.1 2012/04/17 00:05:42 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -592,18 +592,24 @@ routename(const struct sockaddr *sa, struct sockaddr *nm, int flags)
 		{
 		union mpls_shim ms;
 		const union mpls_shim *pms;
-		int psize = sizeof(struct sockaddr_mpls);
+		size_t psize = sizeof(struct sockaddr_mpls), len;
 
 		ms.s_addr =((const struct sockaddr_mpls*)sa)->smpls_addr.s_addr;
 		ms.s_addr = ntohl(ms.s_addr);
 
-		snprintf(line, sizeof(line), "%u", ms.shim.label);
+		len = snprintf(line, sizeof(line), "%u", ms.shim.label);
+		if (len >= sizeof(line))
+			errx(1, "snprintf");
 		pms = &((const struct sockaddr_mpls*)sa)->smpls_addr;
-		while(psize < sa->sa_len) {
+		while (psize < sa->sa_len) {
+			size_t alen;
 			pms++;
 			ms.s_addr = ntohl(pms->s_addr);
-			snprintf(line, sizeof(line), "%s %u", line,
+			alen = snprintf(line + len, sizeof(line) - len, " %u",
 			    ms.shim.label);
+			if (alen >= sizeof(line) - len)
+				errx(1, "snprintf");
+			len += alen;
 			psize += sizeof(ms);
 		}
 		break;
@@ -922,6 +928,9 @@ newroute(int argc, char *const *argv)
 			case K_PROTO2:
 				flags |= RTF_PROTO2;
 				break;
+			case K_PROXY:
+				flags |= RTF_ANNOUNCE;
+				break;
 			case K_CLONING:
 				flags |= RTF_CLONING;
 				break;
@@ -1022,6 +1031,10 @@ newroute(int argc, char *const *argv)
 			}
 		}
 	}
+	if ((rtm_addrs & RTA_DST) == 0)
+		errx(EXIT_FAILURE, "missing destination specification");
+	if (*cmd == 'a' && (rtm_addrs & RTA_GATEWAY) == 0)
+		errx(EXIT_FAILURE, "missing gateway specification");
 	if (forcehost && forcenet)
 		errx(EXIT_FAILURE, "-host and -net conflict");
 	else if (forcehost)

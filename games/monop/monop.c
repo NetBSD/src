@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.c,v 1.25 2009/08/12 08:10:49 dholland Exp $	*/
+/*	$NetBSD: monop.c,v 1.25.6.1 2012/04/17 00:05:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)monop.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: monop.c,v 1.25 2009/08/12 08:10:49 dholland Exp $");
+__RCSID("$NetBSD: monop.c,v 1.25.6.1 2012/04/17 00:05:07 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -286,8 +286,7 @@ blew_it:
 			printf("Player %d's name: ", i + 1);
 			fgets(buf, sizeof(buf), stdin);
 			if (feof(stdin)) {
-				printf("End of file on stdin\n");
-				exit(0);
+				quit();
 			}
 			buf[strcspn(buf, "\n")] = '\0';
 		} while (strlen(buf) == 0);

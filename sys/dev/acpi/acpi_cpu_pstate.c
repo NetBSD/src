@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.52 2011/10/18 05:08:24 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.52.2.1 2012/04/17 00:07:27 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.52 2011/10/18 05:08:24 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.52.2.1 2012/04/17 00:07:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpufreq.h>
@@ -337,6 +337,15 @@ acpicpu_pstate_pss_add(struct acpicpu_pstate *ps, ACPI_OBJECT *obj)
 	if (ps->ps_freq == 0 || ps->ps_freq > 9999)
 		return AE_BAD_DECIMAL_CONSTANT;
 
+	/*
+	 * Sanity check also the latency levels. Some systems may
+	 * report a value zero, but we keep one microsecond as the
+	 * lower bound; see for instance AMD family 12h,
+	 *
+	 *	Advanced Micro Devices: BIOS and Kernel Developer's
+	 *	Guide (BKDG) for AMD Family 12h Processors. Section
+	 *	2.5.3.1.9.2, Revision 3.02, October, 2011.
+	 */
 	if (ps->ps_latency == 0 || ps->ps_latency > 1000)
 		ps->ps_latency = 1;
 

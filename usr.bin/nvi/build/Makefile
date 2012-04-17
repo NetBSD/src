@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2011/08/17 12:57:19 christos Exp $
+#	$NetBSD: Makefile,v 1.16.2.1 2012/04/17 00:09:38 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -55,6 +55,8 @@ options_def.h: options.awk options.c
 
 .include "../Makefile.inc"
 .include "../../Makefile.inc"
+
+WARNS=	4
 
 .PATH: ${DIST}/vi ${DIST}/ex ${DIST}/cl
 .PATH: ${DIST}/common

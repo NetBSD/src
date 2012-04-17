@@ -1,15 +1,16 @@
-/*	$NetBSD: cook.c,v 1.1.1.1 2009/12/13 16:57:18 kardel Exp $	*/
+/*	$NetBSD: cook.c,v 1.1.1.1.6.1 2012/04/17 00:03:51 yamt Exp $	*/
 
-/*
- *  Id: 3da9a5fc88c904673b3b95d0c9667b2bcbccfc80
- *  Time-stamp:      "2007-11-16 22:49:11 bkorb"
+/**
+ * \file cook.c
+ *
+ *  Time-stamp:      "2011-03-12 15:05:26 bkorb"
  *
  *  This file contains the routines that deal with processing quoted strings
  *  into an internal format.
  *
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is copyright (c) 1992-2009 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (c) 1992-2011 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -29,7 +30,8 @@
  */
 
 /* = = = START-STATIC-FORWARD = = = */
-/* static forward declarations maintained by mk-fwd */
+static ag_bool
+contiguous_quote(char ** pps, char * pq, int * lnct_p);
 /* = = = END-STATIC-FORWARD = = = */
 
 /*=export_func  ao_string_cook_escape_char
@@ -130,12 +132,85 @@ ao_string_cook_escape_char( char const* pzIn, char* pRes, u_int nl )
  *  A quoted string has been found.
  *  Find the end of it and compress any escape sequences.
  */
+static ag_bool
+contiguous_quote(char ** pps, char * pq, int * lnct_p)
+{
+    char * ps = *pps + 1;
+
+    for (;;) {
+        while (IS_WHITESPACE_CHAR(*ps))
+            if (*(ps++) == '\n')
+                (*lnct_p)++;
+
+        /*
+         *  IF the next character is a quote character,
+         *  THEN we will concatenate the strings.
+         */
+        switch (*ps) {
+        case '"':
+        case '\'':
+            *pq  = *(ps++);  /* assign new quote character and return */
+            *pps = ps;
+            return AG_TRUE;
+
+        case '/':
+            /*
+             *  Allow for a comment embedded in the concatenated string.
+             */
+            switch (ps[1]) {
+            default:
+                *pps = NULL;
+                return AG_FALSE;
+
+            case '/':
+                /*
+                 *  Skip to end of line
+                 */
+                ps = strchr(ps, '\n');
+                if (ps == NULL) {
+                    *pps = NULL;
+                    return AG_FALSE;
+                }
+                break;
+
+            case '*':
+            {
+                char* p = strstr( ps+2, "*/" );
+                /*
+                 *  Skip to terminating star slash
+                 */
+                if (p == NULL) {
+                    *pps = NULL;
+                    return AG_FALSE;
+                }
+
+                while (ps < p) {
+                    if (*(ps++) == '\n')
+                        (*lnct_p)++;
+                }
+
+                ps = p + 2;
+            }
+            }
+            continue;
+
+        default:
+            /*
+             *  The next non-whitespace character is not a quote.
+             *  The series of quoted strings has come to an end.
+             */
+            *pps = ps;
+            return AG_FALSE;
+        }
+    }
+}
+
 /*=export_func  ao_string_cook
  * private:
  *
  * what:  concatenate and escape-process strings
- * arg:   + char* + pzScan     + The *MODIFIABLE* input buffer +
- * arg:   + int*  + pLineCt    + The (possibly NULL) pointer to a line count +
+ * arg:   + char* + pzScan  + The *MODIFIABLE* input buffer +
+ * arg:   + int*  + lnct_p  + The (possibly NULL) pointer to a line count +
  *
  * ret-type: char*
  * ret-desc: The address of the text following the processed strings.
@@ -151,8 +226,8 @@ ao_string_cook_escape_char( char const* pzIn, char* pRes, u_int nl )
  *
  * err:  @code{NULL} is returned if the string(s) is/are mal-formed.
 =*/
-char*
-ao_string_cook( char* pzScan, int* pLineCt )
+char *
+ao_string_cook(char * pzScan, int * lnct_p)
 {
     int   l = 0;
     char  q = *pzScan;
@@ -164,8 +239,8 @@ ao_string_cook( char* pzScan, int* pLineCt )
     char* pzD = pzScan++;
     char* pzS = pzScan;
 
-    if (pLineCt == NULL)
-        pLineCt = &l;
+    if (lnct_p == NULL)
+        lnct_p = &l;
 
     for (;;) {
         /*
@@ -177,65 +252,8 @@ ao_string_cook( char* pzScan, int* pLineCt )
          */
         while (*pzS == q) {
             *pzD = NUL; /* This is probably the end of the line */
-            pzS++;
-
-        scan_for_quote:
-            while (IS_WHITESPACE_CHAR(*pzS))
-                if (*(pzS++) == '\n')
-                    (*pLineCt)++;
-
-            /*
-             *  IF the next character is a quote character,
-             *  THEN we will concatenate the strings.
-             */
-            switch (*pzS) {
-            case '"':
-            case '\'':
-                break;
-
-            case '/':
-                /*
-                 *  Allow for a comment embedded in the concatenated string.
-                 */
-                switch (pzS[1]) {
-                default:  return NULL;
-                case '/':
-                    /*
-                     *  Skip to end of line
-                     */
-                    pzS = strchr( pzS, '\n' );
-                    if (pzS == NULL)
-                        return NULL;
-                    (*pLineCt)++;
-                    break;
-
-                case '*':
-                {
-                    char* p = strstr( pzS+2, "*/" );
-                    /*
-                     *  Skip to terminating star slash
-                     */
-                    if (p == NULL)
-                        return NULL;
-                    while (pzS < p) {
-                        if (*(pzS++) == '\n')
-                            (*pLineCt)++;
-                    }
-
-                    pzS = p + 2;
-                }
-                }
-                goto scan_for_quote;
-
-            default:
-                /*
-                 *  The next non-whitespace character is not a quote.
-                 *  The series of quoted strings has come to an end.
-                 */
+            if (! contiguous_quote(&pzS, &q, lnct_p))
                 return pzS;
-            }
-
-            q = *(pzS++);  /* assign new quote character and advance scan */
         }
 
         /*
@@ -246,7 +264,7 @@ ao_string_cook( char* pzScan, int* pLineCt )
             return NULL;
 
         case '\n':
-            (*pLineCt)++;
+            (*lnct_p)++;
             break;
 
         case '\\':
@@ -258,7 +276,7 @@ ao_string_cook( char* pzScan, int* pLineCt )
             if (*pzS == '\n') {
                 pzS++;
                 pzD--;
-                (*pLineCt)++;
+                (*lnct_p)++;
             }
 
             /*

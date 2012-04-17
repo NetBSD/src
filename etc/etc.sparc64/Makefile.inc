@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.31 2010/03/13 08:36:06 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.31.6.1 2012/04/17 00:02:58 yamt Exp $
 #
 #	etc.sparc64/Makefile.inc -- sparc64-specific etc Makefile targets
 #
@@ -79,4 +79,4 @@ ISOBOOTFILE?=	${ISOBOOTFILEDIR}/boot.fs
 iso-image-md-post:
 	SUNLABEL=${TOOL_SUNLABEL:Q} \
 	    ${HOST_SH} ${NETBSDSRCDIR}/distrib/common/sunbootcd.sh \
-	    ${CDROM.image} - - - - ${ISOBOOTFILE}
+	    ${CDROM_IMAGE} - - - - ${ISOBOOTFILE}

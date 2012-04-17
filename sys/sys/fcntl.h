@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.41 2011/08/09 04:19:17 manu Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.41.2.1 2012/04/17 00:08:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -117,6 +117,9 @@
 #if defined(_INCOMPLETE_XOPEN_C063) || defined(_KERNEL)
 #define	O_SEARCH	0x00800000	/* skip search permission checks */
 #endif
+#if defined(_NETBSD_SOURCE)
+#define	O_NOSIGPIPE	0x01000000	/* don't deliver sigpipe */
+#endif
 
 #ifdef _KERNEL
 /* convert from open() flags to/from fflags; convert O_RD/WR to FREAD/FWRITE */
@@ -127,7 +130,7 @@
 #define	O_MASK		(O_ACCMODE|O_NONBLOCK|O_APPEND|O_SHLOCK|O_EXLOCK|\
 			 O_ASYNC|O_SYNC|O_CREAT|O_TRUNC|O_EXCL|O_DSYNC|\
 			 O_RSYNC|O_NOCTTY|O_ALT_IO|O_NOFOLLOW|O_DIRECT|\
-			 O_DIRECTORY|O_CLOEXEC)
+			 O_DIRECTORY|O_CLOEXEC|O_NOSIGPIPE)
 
 #define	FMARK		0x00001000	/* mark during gc() */
 #define	FDEFER		0x00002000	/* defer for next gc pass */
@@ -137,7 +140,7 @@
 #define	FKIOCTL		0x80000000	/* kernel originated ioctl */
 /* bits settable by fcntl(F_SETFL, ...) */
 #define	FCNTLFLAGS	(FAPPEND|FASYNC|FFSYNC|FNONBLOCK|FDSYNC|FRSYNC|FALTIO|\
-			 FDIRECT)
+			 FDIRECT|FNOSIGPIPE)
 /* bits to save after open(2) */
 #define	FMASK		(FREAD|FWRITE|FCNTLFLAGS)
 #endif /* _KERNEL */
@@ -155,6 +158,7 @@
 #define	O_NDELAY	O_NONBLOCK	/* compat */
 #endif
 #if defined(_KERNEL)
+#define	FNOSIGPIPE	O_NOSIGPIPE	/* kernel */
 #define	FNONBLOCK	O_NONBLOCK	/* kernel */
 #define	FFSYNC		O_SYNC		/* kernel */
 #define	FDSYNC		O_DSYNC		/* kernel */
@@ -185,6 +189,8 @@
 #define	F_CLOSEM	10		/* close all fds >= to the one given */
 #define	F_MAXFD		11		/* return the max open fd */
 #define	F_DUPFD_CLOEXEC	12		/* close on exec duplicated fd */
+#define	F_GETNOSIGPIPE	13		/* get SIGPIPE disposition */
+#define	F_SETNOSIGPIPE	14		/* set SIGPIPE disposition */
 #endif
 
 /* file descriptor flags (F_GETFD, F_SETFD) */

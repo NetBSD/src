@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.115 2011/04/30 00:34:03 jakllsch Exp $	*/
+/*	$NetBSD: ata.c,v 1.115.4.1 2012/04/17 00:07:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.115 2011/04/30 00:34:03 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.115.4.1 2012/04/17 00:07:28 yamt Exp $");
 
 #include "opt_ata.h"
 
@@ -1497,8 +1497,8 @@ atabusioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	}
 	case ATABUSIODETACH:
 	{
-		struct atabusioscan_args *a=
-		    (struct atabusioscan_args *)addr;
+		struct atabusiodetach_args *a=
+		    (struct atabusiodetach_args *)addr;
 		if ((chp->ch_drive[0].drive_flags & DRIVE_OLD) ||
 		    (chp->ch_drive[1].drive_flags & DRIVE_OLD))
 			return (EOPNOTSUPP);

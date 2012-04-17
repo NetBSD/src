@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 2011/06/20 12:39:21 nonaka Exp $	*/
+/*	$NetBSD: boot.c,v 1.3.2.1 2012/04/17 00:07:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -53,6 +53,7 @@ const char *default_filename;
 int default_timeout = 5;
 
 static char probed_disks[256];
+static char bootconfpath[1024];
 
 static void bootcmd_help(char *);
 static void bootcmd_ls(char *);
@@ -196,7 +197,10 @@ boot(dev_t bootdev)
 
 	diskprobe(probed_disks, sizeof(probed_disks));
 
-	parsebootconf(_PATH_BOOTCONF);
+	snprintf(bootconfpath, sizeof(bootconfpath), "%s%d%c:%s",
+	    default_devname, default_unit, 'a' + default_partition,
+	    _PATH_BOOTCONF);
+	parsebootconf(bootconfpath);
 
 #ifdef SUPPORT_CONSDEV
 	/*
@@ -296,8 +300,9 @@ bootcmd_help(char *arg)
 {
 
 	printf("commands are:\n"
-	    "boot [xdNx:][filename] [-acdqsv]\n"
-	    "     (ex. \"hd0a:netbsd.old -s\"\n"
+	    "boot [xdNx:][filename] [-1acdqsv]\n"
+	    "     (ex. \"boot hd0a:netbsd.old -s\")\n"
+	    "     (ex. \"boot path:/mnt/card/netbsd -1\")\n"
 	    "ls [path]\n"
 #ifdef SUPPORT_CONSDEV
 	    "consdev {glass|com [speed]}\n"
@@ -323,7 +328,7 @@ bootcmd_ls(char *arg)
 	const char *save = default_filename;
 
 	default_filename = "/";
-	ufs_ls(arg);
+	ls(arg);
 	default_filename = save;
 }
 

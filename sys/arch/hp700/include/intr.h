@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.19 2010/11/16 08:59:30 uebayasi Exp $	*/
+/*	$NetBSD: intr.h,v 1.19.8.1 2012/04/17 00:06:22 yamt Exp $	*/
 /*	$OpenBSD: intr.h,v 1.26 2009/12/29 13:11:40 jsing Exp $	*/
 
 /*-
@@ -34,23 +34,7 @@
 #define _HP700_INTR_H_
 
 #include <machine/psl.h>
-
-/* Interrupt priority `levels'. */
-#define	IPL_NONE	7	/* nothing */
-#define	IPL_SOFTCLOCK	6	/* timeouts */
-#define	IPL_SOFTBIO	5	/* block I/o */
-#define	IPL_SOFTNET	4	/* protocol stacks */
-#define	IPL_SOFTSERIAL	3	/* serial */
-#define	IPL_VM		2	/* memory allocation, low I/O */
-#define	IPL_SCHED	1	/* clock, medium I/O */
-#define	IPL_HIGH	0	/* everything */
-#define	NIPL		8
-
-/* Interrupt sharing types. */
-#define	IST_NONE	0	/* none */
-#define	IST_PULSE	1	/* pulsed */
-#define	IST_EDGE	2	/* edge-triggered */
-#define	IST_LEVEL	3	/* level-triggered */
+#include <machine/intrdefs.h>
 
 #ifndef _LOCORE
 
@@ -92,6 +76,16 @@ splraiseipl(ipl_cookie_t icookie)
 #endif
 
 #define	setsoftast(l)	((l)->l_md.md_astpending = 1)
+
+#ifdef MULTIPROCESSOR
+
+struct cpu_info;
+
+void	 hppa_ipi_init(struct cpu_info *);
+int	 hppa_ipi_intr(void *arg);
+int	 hppa_ipi_send(struct cpu_info *, u_long);
+int	 hppa_ipi_broadcast(u_long);
+#endif
 
 #endif /* !_LOCORE */
 

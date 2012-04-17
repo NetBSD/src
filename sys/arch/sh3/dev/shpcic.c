@@ -1,7 +1,7 @@
-/*	$NetBSD: shpcic.c,v 1.15 2011/07/01 19:17:38 dyoung Exp $	*/
+/*	$NetBSD: shpcic.c,v 1.15.2.1 2012/04/17 00:06:52 yamt Exp $	*/
 
-/*
- * Copyright (c) 2005 NONAKA Kimihiro
+/*-
+ * Copyright (C) 2005 NONAKA Kimihiro <nonaka@netbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shpcic.c,v 1.15 2011/07/01 19:17:38 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shpcic.c,v 1.15.2.1 2012/04/17 00:06:52 yamt Exp $");
 
 #include "opt_pci.h"
 
@@ -228,10 +228,10 @@ shpcic_attach(device_t parent, device_t self, void *aux)
 #ifdef PCI_NETBSD_CONFIGURE
 	ioext  = extent_create("pciio",
 	    SH4_PCIC_IO, SH4_PCIC_IO + SH4_PCIC_IO_SIZE - 1,
-	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_NOWAIT);
 	memext = extent_create("pcimem",
 	    SH4_PCIC_MEM, SH4_PCIC_MEM + SH4_PCIC_MEM_SIZE - 1,
-	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_NOWAIT);
 
 	pci_configure_bus(NULL, ioext, memext, NULL, 0, sh_cache_line_size);
 

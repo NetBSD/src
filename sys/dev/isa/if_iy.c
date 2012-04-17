@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.88 2010/04/05 07:20:24 joerg Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.88.8.1 2012/04/17 00:07:39 yamt Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -39,10 +39,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.88 2010/04/05 07:20:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.88.8.1 2012/04/17 00:07:39 yamt Exp $");
 
 #include "opt_inet.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,9 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.88 2010/04/05 07:20:24 joerg Exp $");
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/endian.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -128,9 +125,7 @@ struct iy_softc {
 	int sc_debug;
 #endif
 
-#if NRND > 0
-	rndsource_element_t rnd_source;
-#endif
+	krndsource_t rnd_source;
 };
 
 void iywatchdog(struct ifnet *);
@@ -367,10 +362,8 @@ iyattach(device_t parent, device_t self, void *aux)
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_NET, iyintr, sc);
 
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sc_dev),
 			  RND_TYPE_NET, 0);
-#endif
 
 	temp = bus_space_read_1(iot, ioh, INT_NO_REG);
 	bus_space_write_1(iot, ioh, INT_NO_REG, (temp & 0xf8) | sc->mappedirq);
@@ -982,9 +975,7 @@ iyintr(void *arg)
 		bus_space_write_1(iot, ioh, STATUS_REG, TX_INT);
 	}
 
-#if NRND > 0
 	rnd_add_uint32(&sc->rnd_source, status);
-#endif
 
 	return 1;
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.175 2011/09/14 14:58:08 christos Exp $
+#	$NetBSD: Makefile.i386,v 1.175.2.1 2012/04/17 00:06:28 yamt Exp $
 
 # Makefile for NetBSD
 #
@@ -37,7 +37,6 @@ CPPFLAGS+=	-Di386
 CFLAGS+=	-mno-sse -mno-sse2 -mno-sse3
 
 AFLAGS.mptramp.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
-CWARNFLAGS.ah_regdomain.c= ${${ACTIVE_CC} == "clang":?-Wno-error:}
 AFLAGS.spl.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.lock_stubs.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 

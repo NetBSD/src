@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_freebsd.8,v 1.13 2002/02/13 08:18:21 ross Exp $
+.\"	$NetBSD: compat_freebsd.8,v 1.13.58.1 2012/04/17 00:05:48 yamt Exp $
 .\"	from: compat_linux.8,v 1.1 1995/03/05 23:30:36 fvdl Exp
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -52,18 +52,19 @@ with the
 .Dv COMPAT_FREEBSD
 option enabled.
 .Pp
-A lot of programs are dynamically linked. This means, that you will
-also need the
+A lot of programs are dynamically linked.
+This means, that you will also need the
 .Fx
 shared libraries that the program depends on, and the runtime
-linker.  Also, you will need to create a
+linker.
+Also, you will need to create a
 .Dq shadow root
 directory for
 .Fx
 binaries on your
 .Nx
-system. This directory
-is named
+system.
+This directory is named
 .Pa /emul/freebsd .
 Any file operations done by
 .Fx
@@ -88,8 +89,8 @@ packages that include configuration files, etc under
 .Pa /emul/freebsd ,
 to avoid naming conflicts with possible
 .Nx
-counterparts. Shared
-libraries should also be installed in the shadow tree.
+counterparts.
+Shared libraries should also be installed in the shadow tree.
 .Pp
 Generally, you will need to look for the shared libraries that
 .Fx
@@ -97,7 +98,8 @@ binaries depend on only the first few times that you install a
 .Fx
 program on your
 .Nx
-system. After a while, you will have a sufficient set of
+system.
+After a while, you will have a sufficient set of
 .Fx
 shared libraries on your system to be able to run newly imported
 .Fx
@@ -128,18 +130,15 @@ Put it on the
 system you have access to, and check which shared libraries it
 needs by running
 .Sq ldd sim :
-.Pp
-.Bl -tag -width 123 -compact -offset indent
-.It me@freebsd% ldd /usr/local/lib/SimCity/res/sim
-.nf
+.Bd -literal -offset indent
+me@freebsd% ldd /usr/local/lib/SimCity/res/sim
 /usr/local/lib/SimCity/res/sim:
 	-lXext.6 =\*[Gt] /usr/X11R6/lib/libXext.so.6.0 (0x100c1000)
 	-lX11.6 =\*[Gt] /usr/X11R6/lib/libX11.so.6.0 (0x100c9000)
 	-lc.2 =\*[Gt] /usr/lib/libc.so.2.1 (0x10144000)
 	-lm.2 =\*[Gt] /usr/lib/libm.so.2.0 (0x101a7000)
 	-lgcc.261 =\*[Gt] /usr/lib/libgcc.so.261.0 (0x101bf000)
-.fi
-.El
+.Ed
 .Pp
 You would need go get all the files from the last column, and
 put them under
@@ -179,10 +178,9 @@ So, if you have these libraries on your system:
 .Pp
 and you find that the ldd output for a new binary you want to
 install is:
-.Pp
-.nf
+.Bd -literal
 \-lc.2 =\*[Gt] /usr/lib/libc.so.2.1 (0x10144000)
-.fi
+.Ed
 .Pp
 You won't need to worry about copying
 .Pa /usr/lib/libc.so.2.1
@@ -213,10 +211,11 @@ tree):
 .It
 You don't have access to a
 .Fx
-system. In that case, you
-should get the extra files you need from various ftp sites.
+system.
+In that case, you should get the extra files you need from various ftp sites.
 Information on where to look for the various files is appended
-below. For now, let's assume you know where to get the files.
+below.
+For now, let's assume you know where to get the files.
 .Pp
 Retrieve the following files (from _one_ ftp site to avoid
 any version mismatches), and install them under
@@ -241,8 +240,8 @@ and
 .Ic ldd
 don't necessarily need to be under
 .Pa /emul/freebsd ,
-you can install them elsewhere in the system too. Just make sure
-they don't conflict with their
+you can install them elsewhere in the system too.
+Just make sure they don't conflict with their
 .Nx
 counterparts.
 A good idea would be to install them in
@@ -259,12 +258,11 @@ ldconfig program with directory arguments in which the
 runtime linker should look for shared libs.
 .Pa /usr/lib
 are standard, you could run like the following:
-.Pp
-.Bl -tag -width 123 -compact -offset indent
-.It me@netbsd% mkdir -p /emul/freebsd/var/run
-.It me@netbsd% touch /emul/freebsd/var/run/ld.so.hints
-.It me@netbsd% ldconfig-freebsd /usr/X11R6/lib /usr/local/lib
-.El
+.Bd -literal -offset indent
+me@netbsd% mkdir -p /emul/freebsd/var/run
+me@netbsd% touch /emul/freebsd/var/run/ld.so.hints
+me@netbsd% ldconfig-freebsd /usr/X11R6/lib /usr/local/lib
+.Ed
 .Pp
 Note that argument directories of ldconfig are
 mapped to
@@ -295,17 +293,15 @@ binaries which only need a shared libc.
 You can test this by running the
 .Fx
 .Ic ldd
-on itself.  Suppose that you have it installed as
+on itself.
+Suppose that you have it installed as
 .Ic ldd-freebsd ,
 it should produce something like:
-.Pp
-.Bl -tag -width 123 -compact -offset indent
-.It me@netbsd% ldd-freebsd `which ldd-freebsd`
-.nf
+.Bd -literal -offset indent
+me@netbsd% ldd-freebsd `which ldd-freebsd`
 /usr/local/bin/ldd-freebsd:
 	-lc.2 =\*[Gt] /usr/lib/libc.so.2.1 (0x1001a000)
-.fi
-.El
+.Ed
 .Pp
 This being done, you are ready to install new
 .Fx
@@ -350,7 +346,8 @@ For example,
 X server software needs
 .Fx
 .Pa /dev/ttyv0
-for ioctls.  In this case, create a symbolic link from
+for ioctls.
+In this case, create a symbolic link from
 .Pa /emul/freebsd/dev/ttyv0
 to a
 .Xr wscons 4
@@ -394,10 +391,10 @@ This distribution consists of a number of tar-ed and gzipped files,
 Normally, they're controlled by an install program, but you can
 retrieve files
 .Dq by hand
-too.  The way to look something up is to retrieve all the files in the
+too.
+The way to look something up is to retrieve all the files in the
 distribution, and ``tar ztvf'' through them for the file you need.
 Here is an example of a list of files that you might need.
-.Pp
 .Bd -literal -offset indent
 Needed                 Files
 

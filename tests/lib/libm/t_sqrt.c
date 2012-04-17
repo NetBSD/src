@@ -1,4 +1,4 @@
-/* $NetBSD: t_sqrt.c,v 1.1 2011/10/16 08:25:40 jruoho Exp $ */
+/* $NetBSD: t_sqrt.c,v 1.1.2.1 2012/04/17 00:09:13 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sqrt.c,v 1.1 2011/10/16 08:25:40 jruoho Exp $");
+__RCSID("$NetBSD: t_sqrt.c,v 1.1.2.1 2012/04/17 00:09:13 yamt Exp $");
 
 #include <atf-c.h>
 #include <math.h>
@@ -75,7 +75,7 @@ ATF_TC_BODY(sqrt_pow, tc)
 
 		if (fabs(y - z) > eps)
 			atf_tc_fail_nonfatal("sqrt(%0.03f) != "
-			    "pow(%0.03f, 1/3)\n", x[i], x[i]);
+			    "pow(%0.03f, 1/2)\n", x[i], x[i]);
 	}
 #endif
 }
@@ -177,7 +177,7 @@ ATF_TC_BODY(sqrtf_powf, tc)
 #ifndef __vax__
 	const float x[] = { 0.0, 0.005, 1.0, 99.0, 123.123, 9999.9999 };
 	const float eps = 1.0e-30;
-	float y, z;
+	volatile float y, z;
 	size_t i;
 
 	for (i = 0; i < __arraycount(x); i++) {
@@ -187,7 +187,7 @@ ATF_TC_BODY(sqrtf_powf, tc)
 
 		if (fabsf(y - z) > eps)
 			atf_tc_fail_nonfatal("sqrtf(%0.03f) != "
-			    "powf(%0.03f, 1/3)\n", x[i], x[i]);
+			    "powf(%0.03f, 1/2)\n", x[i], x[i]);
 	}
 #endif
 }

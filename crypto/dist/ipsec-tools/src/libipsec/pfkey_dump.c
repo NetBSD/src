@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey_dump.c,v 1.19 2011/05/26 21:50:02 drochner Exp $	*/
+/*	$NetBSD: pfkey_dump.c,v 1.19.4.1 2012/04/17 00:01:41 yamt Exp $	*/
 
 /*	$KAME: pfkey_dump.c,v 1.45 2003/09/08 10:14:56 itojun Exp $	*/
 
@@ -260,6 +260,9 @@ pfkey_sadump1(m, withports)
 	struct sadb_x_nat_t_type *natt_type;
 	struct sadb_x_nat_t_port *natt_sport, *natt_dport;
 	struct sadb_address *natt_oa;
+#ifdef SADB_X_EXT_NAT_T_FRAG
+	struct sadb_x_nat_t_frag *esp_frag;
+#endif
 
 	int use_natt = 0;
 #endif
@@ -300,6 +303,9 @@ pfkey_sadump1(m, withports)
 	natt_sport = (void *)mhp[SADB_X_EXT_NAT_T_SPORT];
 	natt_dport = (void *)mhp[SADB_X_EXT_NAT_T_DPORT];
 	natt_oa = (void *)mhp[SADB_X_EXT_NAT_T_OA];
+#ifdef SADB_X_EXT_NAT_T_FRAG
+	esp_frag = (void *)mhp[SADB_X_EXT_NAT_T_FRAG];
+#endif
 
 	if (natt_type && natt_type->sadb_x_nat_t_type_type)
 		use_natt = 1;
@@ -371,6 +377,11 @@ pfkey_sadump1(m, withports)
 	if (use_natt && natt_oa)
 		printf("\tNAT OA=%s\n",
 		       str_ipaddr((void *)(natt_oa + 1)));
+
+#ifdef SADB_X_EXT_NAT_T_FRAG
+	if (use_natt && esp_frag && esp_frag->sadb_x_nat_t_frag_fraglen != 0)
+		printf("\tNAT-T esp_frag=%u\n", esp_frag->sadb_x_nat_t_frag_fraglen);
+#endif
 #endif
 
 	/* encryption key */

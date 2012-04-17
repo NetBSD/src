@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.19 2010/01/26 20:25:52 joerg Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.19.12.1 2012/04/17 00:08:18 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.19 2010/01/26 20:25:52 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.19.12.1 2012/04/17 00:08:18 yamt Exp $");
 
 /*
  * kernel include files.
@@ -254,11 +254,26 @@ pcbmap(struct denode *dep, u_long findcn, daddr_t *bnp, u_long *cnp, int *sp)
 		if (bn != bp_bn) {
 			if (bp)
 				brelse(bp, 0);
-			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize,
-			    NOCRED, 0, &bp);
-			if (error) {
-				brelse(bp, 0);
-				return (error);
+			bp = getblk(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize,
+			    0, 0);
+			if (bp == NULL) {
+				/*
+				 * getblk() above returns NULL only iff we are
+				 * pagedaemon.  See the implementation of getblk
+				 * for detail.
+				 */
+				return ENOMEM;
+			}
+			if (!ISSET(bp->b_oflags, (BO_DONE | BO_DELWRI))) {
+				SET(bp->b_flags, B_READ);
+				BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
+				VOP_STRATEGY(pmp->pm_devvp, bp);
+				curlwp->l_ru.ru_inblock++;
+				error = biowait(bp);
+				if (error) {
+					brelse(bp, 0);
+					return error;
+				}
 			}
 			bp_bn = bn;
 		}

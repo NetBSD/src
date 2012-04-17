@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.116 2011/04/27 09:47:25 hannken Exp $ */
+/*     $NetBSD: buf.h,v 1.116.4.1 2012/04/17 00:08:51 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -73,6 +73,7 @@
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
+#include <sys/rbtree.h>
 #if defined(_KERNEL)
 #include <sys/workqueue.h>
 #endif /* defined(_KERNEL) */
@@ -103,6 +104,7 @@ extern kmutex_t buffer_lock;
 struct buf {
 	union {
 		TAILQ_ENTRY(buf) u_actq;
+		rb_node_t u_rbnode;
 #if defined(_KERNEL) /* u_work is smaller than u_actq. XXX */
 		struct work u_work;
 #endif /* defined(_KERNEL) */
@@ -290,7 +292,8 @@ u_long	buf_memcalc(void);
 int	buf_drain(int);
 int	buf_setvalimit(vsize_t);
 #if defined(DDB) || defined(DEBUGPRINT)
-void	vfs_buf_print(buf_t *, int, void (*)(const char *, ...));
+void	vfs_buf_print(buf_t *, int, void (*)(const char *, ...)
+    __printflike(1, 2));
 #endif
 buf_t	*getiobuf(struct vnode *, bool);
 void	putiobuf(buf_t *);

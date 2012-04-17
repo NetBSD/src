@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2007/03/06 21:56:58 bouyer Exp $
-CDBASE=		evbarmcd		# gives ${CDBASE}.iso
-CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
+#	$NetBSD: Makefile,v 1.1.38.1 2012/04/17 00:02:33 yamt Exp $
+
+CDBASE=		evbarm-${MACHINE_ARCH}cd	# gives ${CDBASE}.iso
+CDRELEASE=	true				# include $RELEASEDIR/$MACHINE
 
 .include "${.CURDIR}/../../../common/Makefile.bootcd"

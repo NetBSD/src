@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.234 2011/06/12 03:35:38 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.234.2.1 2012/04/17 00:06:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,7 +48,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.234 2011/06/12 03:35:38 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.234.2.1 2012/04/17 00:06:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,6 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.234 2011/06/12 03:35:38 rmind Exp $");
 #include <amiga/amiga/cia.h>
 #include <amiga/amiga/cc.h>
 #include <amiga/amiga/memlist.h>
+#include <amiga/amiga/device.h>
 
 #include "fd.h"
 #include "ser.h"
@@ -182,6 +183,10 @@ consinit(void)
 	} else
 #endif
 		custom_chips_init();
+
+	/* preconfigure graphics cards */
+	config_console();
+
 	/*
 	 * Initialize the console before we print anything out.
 	 */
@@ -216,9 +221,6 @@ cpu_startup(void)
 #endif
 	vaddr_t minaddr, maxaddr;
 
-	if (fputype != FPU_NONE)
-		m68k_make_fpu_idle_frame();
-
 	/*
 	 * Initialize error message buffer (at end of core).
 	 */
@@ -249,6 +251,11 @@ cpu_startup(void)
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	banner();
+
+	/*
+	 * Get MMU/FPU type from bootstrap
+	 */
+	identifycpu();
 
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
@@ -447,7 +454,6 @@ cpu_dumpconf(void)
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
-	const struct bdevsw *bdev;
 	int nblks;
 	int i;
 	extern int end[];
@@ -508,12 +514,12 @@ cpu_dumpconf(void)
 		m->ram_segs[1].size  = memlist->m_seg[i].ms_size;
 		break;
 	}
-	if ((bdev = bdevsw_lookup(dumpdev)) == NULL) {
+	if (bdevsw_lookup(dumpdev) == NULL) {
 		dumpdev = NODEV;
 		return;
 	}
-	if (bdev->d_psize != NULL) {
-		nblks = (*bdev->d_psize)(dumpdev);
+	nblks = bdev_size(dumpdev);
+	if (nblks > 0) {
 		if (dumpsize > btoc(dbtob(nblks - dumplo)))
 			dumpsize = btoc(dbtob(nblks - dumplo));
 		else if (dumplo == 0)
@@ -575,7 +581,7 @@ dumpsys(void)
 	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
 	    minor(dumpdev), dumplo);
 
-	psize = (*bdev->d_psize)(dumpdev);
+	psize = bdev_size(dumpdev);
 	printf("dump ");
 	if (psize == -1) {
 		printf("area unavailable.\n");

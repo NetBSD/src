@@ -1,4 +1,4 @@
-/*	$NetBSD: longjmp.c,v 1.6 2011/04/30 23:39:08 martin Exp $	*/
+/*	$NetBSD: longjmp.c,v 1.6.4.1 2012/04/17 00:05:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -54,10 +54,12 @@ typedef struct {
  * setjmp.S uses hard coded offsets into the jump_buf,
  * make sure any changes cause a compile failure here
  */
-__CTASSERT(0x68 == offsetof(__jmp_buf_regs_t,save_mask)+
+#ifndef lint	/* XXX this is too much for lint */
+__CTASSERT(0x68 == offsetof(__jmp_buf_regs_t,save_mask) +
 	sizeof(struct sigcontext));
 __CTASSERT(sizeof(sigjmp_buf) >= sizeof(__jmp_buf_regs_t) +
 	sizeof(struct sigcontext));
+#endif
 
 void
 __longjmp14(jmp_buf env, int val)

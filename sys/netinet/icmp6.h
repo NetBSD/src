@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.42 2011/05/24 18:07:11 spz Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.42.4.1 2012/04/17 00:08:40 yamt Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 
@@ -300,11 +300,10 @@ struct nd_opt_hdr {		/* Neighbor discovery option header */
 #define ND_OPT_HOMEAGENT_INFO		8
 #define ND_OPT_SOURCE_ADDRLIST		9
 #define ND_OPT_TARGET_ADDRLIST		10
-/* RFC5380 */
-#define ND_OPT_MAP			23
-/* RFC4191 */
-#define ND_OPT_ROUTE_INFO		24
-#define ND_OPT_RDNSS			25
+#define ND_OPT_MAP			23	/* RFC 5380 */
+#define ND_OPT_ROUTE_INFO		24	/* RFC 4191 */
+#define ND_OPT_RDNSS			25	/* RFC 6016 */
+#define ND_OPT_DNSSL			31	/* RFC 6016 */
 
 struct nd_opt_route_info {	/* route info */
 	u_int8_t	nd_opt_rti_type;
@@ -344,11 +343,19 @@ struct nd_opt_mtu {		/* MTU option */
 	u_int32_t	nd_opt_mtu_mtu;
 } __packed;
 
-struct nd_opt_rdnss {		/* RDNSS option RFC 5006 */
+struct nd_opt_rdnss {		/* RDNSS option RFC 6106 */
 	u_int8_t	nd_opt_rdnss_type;
 	u_int8_t	nd_opt_rdnss_len;
 	u_int16_t	nd_opt_rdnss_reserved;
 	u_int32_t	nd_opt_rdnss_lifetime;
+	/* followed by list of IP prefixes */
+} __packed;
+
+struct nd_opt_dnssl {		/* DNSSL option RFC 6106 */
+	u_int8_t	nd_opt_dnssl_type;
+	u_int8_t	nd_opt_dnssl_len;
+	u_int16_t	nd_opt_dnssl_reserved;
+	u_int32_t	nd_opt_dnssl_lifetime;
 	/* followed by list of IP prefixes */
 } __packed;
 
@@ -640,8 +647,6 @@ struct icmp6_filter {
 	{ 0, 0 }, \
 	{ "nd6_maxqueuelen", CTLTYPE_INT }, \
 }
-
-#define RTF_PROBEMTU	RTF_PROTO1
 
 #ifdef _KERNEL
 struct	rtentry;

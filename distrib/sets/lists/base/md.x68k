@@ -1,10 +1,11 @@
-# $NetBSD: md.x68k,v 1.42 2008/12/20 13:20:58 isaki Exp $
+# $NetBSD: md.x68k,v 1.42.8.1 2012/04/17 00:02:38 yamt Exp $
+./dev/pow0					base-obsolete		obsolete
 ./dev/pow1					base-obsolete		obsolete
 ./usr/bin/bellctrl				base-util-bin
 ./usr/bin/loadfont				base-util-bin
 ./usr/bin/loadkmap				base-util-bin
 ./usr/bin/palette				base-util-bin
-./usr/bin/rtcalarm				base-util-bin
+./usr/bin/rtcalarm				base-obsolete		obsolete
 ./usr/bin/tvctrl				base-util-bin
 ./usr/mdec/boot					base-sysutil-bin
 ./usr/mdec/fdboot_ufs				base-sysutil-bin

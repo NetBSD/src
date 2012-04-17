@@ -26,6 +26,54 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+/*
+ * Reduces the resources demanded by TCP sessions in TIME_WAIT-state using
+ * methods called Vestigial Time-Wait (VTW) and Maximum Segment Lifetime
+ * Truncation (MSLT).
+ * 
+ * MSLT and VTW were contributed by Coyote Point Systems, Inc.
+ * 
+ * Even after a TCP session enters the TIME_WAIT state, its corresponding
+ * socket and protocol control blocks (PCBs) stick around until the TCP
+ * Maximum Segment Lifetime (MSL) expires.  On a host whose workload
+ * necessarily creates and closes down many TCP sockets, the sockets & PCBs
+ * for TCP sessions in TIME_WAIT state amount to many megabytes of dead
+ * weight in RAM.
+ * 
+ * Maximum Segment Lifetimes Truncation (MSLT) assigns each TCP session to
+ * a class based on the nearness of the peer.  Corresponding to each class
+ * is an MSL, and a session uses the MSL of its class.  The classes are
+ * loopback (local host equals remote host), local (local host and remote
+ * host are on the same link/subnet), and remote (local host and remote
+ * host communicate via one or more gateways).  Classes corresponding to
+ * nearer peers have lower MSLs by default: 2 seconds for loopback, 10
+ * seconds for local, 60 seconds for remote.  Loopback and local sessions
+ * expire more quickly when MSLT is used.
+ * 
+ * Vestigial Time-Wait (VTW) replaces a TIME_WAIT session's PCB/socket
+ * dead weight with a compact representation of the session, called a
+ * "vestigial PCB".  VTW data structures are designed to be very fast and
+ * memory-efficient: for fast insertion and lookup of vestigial PCBs,
+ * the PCBs are stored in a hash table that is designed to minimize the
+ * number of cacheline visits per lookup/insertion.  The memory both
+ * for vestigial PCBs and for elements of the PCB hashtable come from
+ * fixed-size pools, and linked data structures exploit this to conserve
+ * memory by representing references with a narrow index/offset from the
+ * start of a pool instead of a pointer.  When space for new vestigial PCBs
+ * runs out, VTW makes room by discarding old vestigial PCBs, oldest first.
+ * VTW cooperates with MSLT.
+ * 
+ * It may help to think of VTW as a "FIN cache" by analogy to the SYN
+ * cache.
+ * 
+ * A 2.8-GHz Pentium 4 running a test workload that creates TIME_WAIT
+ * sessions as fast as it can is approximately 17% idle when VTW is active
+ * versus 0% idle when VTW is inactive.  It has 103 megabytes more free RAM
+ * when VTW is active (approximately 64k vestigial PCBs are created) than
+ * when it is inactive.
+ */
+
 #include <sys/cdefs.h>
 
 #include "opt_ddb.h"
@@ -76,7 +124,7 @@
 
 #include <netinet/tcp_vtw.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.8 2011/07/17 20:54:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.8.2.1 2012/04/17 00:08:41 yamt Exp $");
 
 #define db_trace(__a, __b)	do { } while (/*CONSTCOND*/0)
 

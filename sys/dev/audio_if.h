@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.66 2009/09/29 15:58:54 sborrill Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.66.12.1 2012/04/17 00:07:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -36,8 +36,10 @@
 
 #ifndef _SYS_DEV_AUDIO_IF_H_
 #define _SYS_DEV_AUDIO_IF_H_
+
 #include <sys/types.h>
 #include <sys/audioio.h>
+#include <sys/mutex.h>
 
 /* check we have an audio(4) configured into kernel */
 #if defined(_KERNEL_OPT)
@@ -121,7 +123,8 @@ audio_stream_add_outp(audio_stream_t *s, const uint8_t *v, int diff)
  * an interface to fill a audio stream buffer
  */
 typedef struct stream_fetcher {
-	int (*fetch_to)(struct stream_fetcher *, audio_stream_t *, int);
+	int (*fetch_to)(struct audio_softc *, struct stream_fetcher *,
+            audio_stream_t *, int);
 } stream_fetcher_t;
 
 /**
@@ -169,7 +172,6 @@ typedef struct stream_filter_list {
 	} filters[AUDIO_MAX_FILTERS];
 } stream_filter_list_t;
 
-struct malloc_type;
 struct audio_hw_if {
 	int	(*open)(void *, int);	/* open hardware */
 	void	(*close)(void *);	/* close hardware */
@@ -226,8 +228,8 @@ struct audio_hw_if {
 	int	(*query_devinfo)(void *, mixer_devinfo_t *);
 
 	/* Allocate/free memory for the ring buffer. Usually malloc/free. */
-	void	*(*allocm)(void *, int, size_t, struct malloc_type *, int);
-	void	(*freem)(void *, void *, struct malloc_type *);
+	void	*(*allocm)(void *, int, size_t);
+	void	(*freem)(void *, void *, size_t);
 	size_t	(*round_buffersize)(void *, int, size_t);
 	paddr_t	(*mappage)(void *, void *, off_t, int);
 
@@ -238,9 +240,7 @@ struct audio_hw_if {
 	int	(*trigger_input)(void *, void *, void *, int,
 		    void (*)(void *), void *, const audio_params_t *);
 	int	(*dev_ioctl)(void *, u_long, void *, int, struct lwp *);
-	int	(*powerstate)(void *, int);
-#define	AUDIOPOWER_ON	1
-#define	AUDIOPOWER_OFF	0
+	void	(*get_locks)(void *, kmutex_t **, kmutex_t **);
 };
 
 struct audio_attach_args {

@@ -1,0 +1,12 @@
+# $NetBSD: Makefile.inst,v 1.1.4.2 2012/04/17 00:05:44 yamt Exp $
+
+.include <bsd.own.mk>
+
+.if exists(${MACHINE_ARCH}.s)
+PROG=		hello
+MAN=		# empty
+LDFLAGS=	-nostdlib
+SRCS=		${MACHINE_ARCH}.s
+.endif
+
+.include <bsd.prog.mk>

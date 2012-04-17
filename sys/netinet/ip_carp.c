@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.46 2011/10/19 01:52:22 dyoung Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.46.2.1 2012/04/17 00:08:40 yamt Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
 #include "opt_inet.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.46 2011/10/19 01:52:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.46.2.1 2012/04/17 00:08:40 yamt Exp $");
 
 /*
  * TODO:
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.46 2011/10/19 01:52:22 dyoung Exp $");
 #include <sys/ucred.h>
 #include <sys/syslog.h>
 #include <sys/acct.h>
+#include <sys/cprng.h>
 
 #include <sys/cpu.h>
 
@@ -877,9 +878,7 @@ carp_prepare_ad(struct mbuf *m, struct carp_softc *sc,
 {
 	if (sc->sc_init_counter) {
 		/* this could also be seconds since unix epoch */
-		sc->sc_counter = arc4random();
-		sc->sc_counter = sc->sc_counter << 32;
-		sc->sc_counter += arc4random();
+		sc->sc_counter = cprng_fast64();
 	} else
 		sc->sc_counter++;
 
@@ -1147,9 +1146,6 @@ carp_send_arp(struct carp_softc *sc)
 
 		in = &ifatoia(ifa)->ia_addr.sin_addr;
 		arprequest(sc->sc_carpdev, in, in, CLLADDR(sc->sc_if.if_sadl));
-
-		/* XXX: why does this need to delay? */
-		kpause("carpdel", false, MAX(1, mstohz(1)), NULL);
 	}
 	splx(s);
 }
@@ -1171,9 +1167,6 @@ carp_send_na(struct carp_softc *sc)
 		in6 = &ifatoia6(ifa)->ia_addr.sin6_addr;
 		nd6_na_output(sc->sc_carpdev, &mcast, in6,
 		    ND_NA_FLAG_OVERRIDE, 1, NULL);
-
-		/* XXX: why does this need to delay? */
-		kpause("carpdel6", false, MAX(1, mstohz(1)), NULL);
 	}
 	splx(s);
 }

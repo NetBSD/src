@@ -1,3 +1,5 @@
+/*	$NetBSD: all.c,v 1.1.1.1.6.1 2012/04/17 00:04:46 yamt Exp $	*/
+
 /*
 * all.c -- Lua core, libraries and interpreter in a single file
 */

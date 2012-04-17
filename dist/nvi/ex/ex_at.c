@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_at.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
+/*	$NetBSD: ex_at.c,v 1.2.8.1 2012/04/17 00:02:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -39,7 +39,7 @@ int
 ex_at(SCR *sp, EXCMD *cmdp)
 {
 	CB *cbp;
-	CHAR_T name;
+	ARG_CHAR_T name;
 	EXCMD *ecp;
 	RANGE *rp;
 	TEXT *tp;

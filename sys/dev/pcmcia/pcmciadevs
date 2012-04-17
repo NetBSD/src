@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.228 2009/01/21 14:13:09 jnemeth Exp $
+$NetBSD: pcmciadevs,v 1.228.14.1 2012/04/17 00:07:59 yamt Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -477,6 +477,7 @@ product AMD AM79C930		{ "AMD", "Am79C930", NULL, NULL } AMD Am79C930
 product BILLIONTON CFLT10N	{ "CF", "10Base-Ethernet", "1.0", NULL } Billionton Systems Inc. CFLT10N Ethernet
 product BILLIONTON LNT10TN	{ "PCMCIA", "LNT-10TN", NULL, NULL } Billionton Systems Inc. LNT-10TN NE2000 Compatible Card
 product CNET NE2000		{ "CNet", "CN40BC&spEthernet", NULL, NULL } CNet CN40BC NE2000 Compatible
+product COREGA ETHER_CF_TD	{ "corega&spK.K.", "corega&spEther&spCF-TD&spLAN&spCard", NULL, NULL } Corega Ether CF-TD LAN Card
 product COREGA ETHER_PCC_T	{ "corega&spK.K.", "corega&spEther&spPCC-T", NULL, NULL } Corega Ether PCC-T
 product COREGA ETHER_PCC_TD	{ "corega&spK.K.", "corega&spEther&spPCC-TD", NULL, NULL } Corega Ether PCC-TD
 product COREGA ETHER_PCC_TL	{ "corega&spK.K.", "corega&spEther&spPCC-TL", NULL, NULL } Corega Ether PCC-TL

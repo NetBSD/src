@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.32 2011/09/17 15:15:46 christos Exp $	*/
+/*	$NetBSD: tftp.c,v 1.32.2.1 2012/04/17 00:09:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftp.c,v 1.32 2011/09/17 15:15:46 christos Exp $");
+__RCSID("$NetBSD: tftp.c,v 1.32.2.1 2012/04/17 00:09:40 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -531,12 +531,8 @@ abort:						/* ok to ack, since user */
 }
 
 static int
-makerequest(request, name, tp, mode, filesize)
-	int request;
-	const char *name;
-	struct tftphdr *tp;
-	const char *mode;
-	off_t filesize;
+makerequest(int request, const char *name, struct tftphdr *tp, const char *mode,
+	off_t filesize)
 {
 	char *cp;
 
@@ -602,9 +598,7 @@ const struct errmsg {
  * offset by 100.
  */
 static void
-nak(error, peer)
-	int error;
-	struct sockaddr *peer;
+nak(int error, struct sockaddr *peer)
 {
 	const struct errmsg *pe;
 	struct tftphdr *tp;
@@ -633,10 +627,7 @@ nak(error, peer)
 }
 
 static void
-tpacket(s, tp, n)
-	const char *s;
-	struct tftphdr *tp;
-	int n;
+tpacket(const char *s, struct tftphdr *tp, int n)
 {
 	static const char *opcodes[] =
 	   { "#0", "RRQ", "WRQ", "DATA", "ACK", "ERROR", "OACK" };
@@ -723,23 +714,21 @@ struct timeval tstart;
 struct timeval tstop;
 
 static void
-startclock()
+startclock(void)
 {
 
 	(void)gettimeofday(&tstart, NULL);
 }
 
 static void
-stopclock()
+stopclock(void)
 {
 
 	(void)gettimeofday(&tstop, NULL);
 }
 
 static void
-printstats(direction, amount)
-	const char *direction;
-	unsigned long amount;
+printstats(const char *direction, unsigned long amount)
 {
 	double delta;
 
@@ -755,8 +744,7 @@ printstats(direction, amount)
 
 static void
 /*ARGSUSED*/
-timer(sig)
-	int sig;
+timer(int sig)
 {
 
 	timeout += rexmtval;
@@ -768,9 +756,7 @@ timer(sig)
 }
 
 static int
-cmpport(sa, sb)
-	struct sockaddr *sa;
-	struct sockaddr *sb;
+cmpport(struct sockaddr *sa, struct sockaddr *sb)
 {
 	char a[NI_MAXSERV], b[NI_MAXSERV];
 

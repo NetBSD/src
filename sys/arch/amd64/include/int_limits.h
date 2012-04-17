@@ -1,4 +1,4 @@
-/*	$NetBSD: int_limits.h,v 1.7 2008/10/26 00:08:15 mrg Exp $	*/
+/*	$NetBSD: int_limits.h,v 1.7.28.1 2012/04/17 00:05:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -120,8 +120,8 @@
 #define	PTRDIFF_MAX	0x7fffffffffffffffL		/* ptrdiff_t	  */
 
 /* limits of sig_atomic_t */
-#define	SIG_ATOMIC_MIN	(-0x7fffffffffffffffL-1)	/* sig_atomic_t	  */
-#define	SIG_ATOMIC_MAX	0x7fffffffffffffffL		/* sig_atomic_t	  */
+#define	SIG_ATOMIC_MIN	(-0x7fffffff-1)			/* sig_atomic_t	  */
+#define	SIG_ATOMIC_MAX	0x7fffffff			/* sig_atomic_t	  */
 
 /* limit of size_t */
 #define	SIZE_MAX	0xffffffffffffffffUL		/* size_t	  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_tls_dynamic.c,v 1.1 2011/03/09 23:10:07 joerg Exp $	*/
+/*	$NetBSD: t_tls_dynamic.c,v 1.1.4.1 2012/04/17 00:09:13 yamt Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,14 +32,15 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_tls_dynamic.c,v 1.1 2011/03/09 23:10:07 joerg Exp $");
+__RCSID("$NetBSD: t_tls_dynamic.c,v 1.1.4.1 2012/04/17 00:09:13 yamt Exp $");
 
 #include <atf-c.h>
 #include <pthread.h>
+#include <unistd.h>
 
 #include <sys/tls.h>
 
-#if !defined(__HAVE_TLS_VARIANT_I) && !defined(__HAVE_TLS_VARIANT_II)
+#ifdef __HAVE_NO___THREAD
 #define	__thread
 #endif
 
@@ -55,6 +56,11 @@ void testf_dso_helper(int, int);
 
 extern __thread int var1;
 extern __thread int var2;
+extern __thread pid_t (*dso_var1)(void);
+
+__thread int *var3 = &optind;
+int var4_helper;
+__thread int *var4 = &var4_helper;
 
 static void *
 testf(void *dummy)
@@ -67,6 +73,9 @@ testf(void *dummy)
 	testf_dso_helper(3, 3);
 	ATF_CHECK_EQ(var1, 3);
 	ATF_CHECK_EQ(var2, 3);
+	ATF_CHECK_EQ(var3, &optind);
+	ATF_CHECK_EQ(var4, &var4_helper);
+	ATF_CHECK_EQ(dso_var1, getpid);
 
 	return NULL;
 }
@@ -75,7 +84,7 @@ ATF_TC_BODY(t_tls_dynamic, tc)
 {
 	pthread_t t;
 
-#if !defined(__HAVE_TLS_VARIANT_I) && !defined(__HAVE_TLS_VARIANT_II)
+#ifdef __HAVE_NO___THREAD
 	atf_tc_skip("no TLS support on this platform");
 #endif
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.106 2011/03/06 17:08:28 bouyer Exp $
+# $NetBSD: GENERIC,v 1.106.4.1 2012/04/17 00:06:43 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/news68k/conf/std.news68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.106 $"
+#ident 		"GENERIC-$Revision: 1.106.4.1 $"
 
 maxusers	8
 
@@ -37,7 +37,6 @@ options 	KTRACE			# system call tracing support
 options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
 options 	SYSVSHM			# System V shared memory
-options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 #options 	MODULAR			# new style module(7) framework
 
@@ -105,7 +104,7 @@ options 	NFSSERVER	# nfs server support
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# ffs endian independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 
@@ -221,6 +220,9 @@ ch*	at scsibus? target ? lun ?		# SCSI changer devices
 ss*	at scsibus? target ? lun ?		# SCSI scanners
 uk*	at scsibus? target ? lun ?		# unknown SCSI devices
 
+# PROM console support
+#romcons0 at mainbus0
+
 #
 # accept filters
 pseudo-device   accf_data		# "dataready" accept filter
@@ -262,7 +264,6 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
-pseudo-device	rnd			# /dev/random and in-kernle generator
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms

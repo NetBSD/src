@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.38 2011/04/24 18:53:02 plunky Exp $ */
+/* $NetBSD: if_msk.c,v 1.38.4.1 2012/04/17 00:07:47 yamt Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,9 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.38 2011/04/24 18:53:02 plunky Exp $");
-
-#include "rnd.h"
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.38.4.1 2012/04/17 00:07:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,9 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.38 2011/04/24 18:53:02 plunky Exp $");
 #include <net/if_media.h>
 
 #include <net/bpf.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -1120,10 +1116,8 @@ msk_attach(device_t parent, device_t self, void *aux)
 	else
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sk_dev),
 		RND_TYPE_NET, 0);
-#endif
 
 	DPRINTFN(2, ("msk_attach: end\n"));
 	return;
@@ -1954,10 +1948,7 @@ msk_intr(void *xsc)
 	if (ifp1 != NULL && !IFQ_IS_EMPTY(&ifp1->if_snd))
 		msk_start(ifp1);
 
-#if NRND > 0
-	if (RND_ENABLED(&sc->rnd_source))
-		rnd_add_uint32(&sc->rnd_source, status);
-#endif
+	rnd_add_uint32(&sc->rnd_source, status);
 
 	if (sc->sk_int_mod_pending)
 		msk_update_int_mod(sc, 1);

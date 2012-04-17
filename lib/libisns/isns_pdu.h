@@ -1,4 +1,4 @@
-/*	$NetBSD: isns_pdu.h,v 1.2 2011/08/17 10:08:43 christos Exp $	*/
+/*	$NetBSD: isns_pdu.h,v 1.2.2.1 2012/04/17 00:05:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004,2009 The NetBSD Foundation, Inc.
@@ -171,12 +171,12 @@ struct isns_trans_s {
 };
 
 struct isns_pdu_hdr_s {
-	uint16_t isnsp_version	__attribute__ ((packed));
-	uint16_t func_id	__attribute__ ((packed));
-	uint16_t payload_len	__attribute__ ((packed));
-	uint16_t flags		__attribute__ ((packed));
-	uint16_t trans_id	__attribute__ ((packed));
-	uint16_t seq_id		__attribute__ ((packed));
+	uint16_t isnsp_version	__packed;
+	uint16_t func_id	__packed;
+	uint16_t payload_len	__packed;
+	uint16_t flags		__packed;
+	uint16_t trans_id	__packed;
+	uint16_t seq_id		__packed;
 };
 
 struct isns_pdu_s {

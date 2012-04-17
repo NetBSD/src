@@ -1,4 +1,4 @@
-/*	$NetBSD: bthset.c,v 1.7 2011/08/29 13:47:16 joerg Exp $	*/
+/*	$NetBSD: bthset.c,v 1.7.2.1 2012/04/17 00:09:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.  All rights reserved.");
-__RCSID("$NetBSD: bthset.c,v 1.7 2011/08/29 13:47:16 joerg Exp $");
+__RCSID("$NetBSD: bthset.c,v 1.7.2.1 2012/04/17 00:09:29 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -69,7 +69,7 @@ static void do_ring(int, short, void *);
 static void do_mixer(int, short, void *);
 static void do_rfcomm(int, short, void *);
 static void do_server(int, short, void *);
-static int send_rfcomm(const char *, ...);
+static int send_rfcomm(const char *, ...) __printflike(1, 2);
 
 static int init_mixer(struct btsco_info *, const char *);
 static int init_rfcomm(struct btsco_info *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.71 2011/08/04 00:57:33 jakllsch Exp $	*/
+/*	$NetBSD: machfb.c,v 1.71.2.1 2012/04/17 00:07:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.71 2011/08/04 00:57:33 jakllsch Exp $");
+	"$NetBSD: machfb.c,v 1.71.2.1 2012/04/17 00:07:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -505,7 +505,6 @@ mach64_attach(device_t parent, device_t self, void *aux)
 #if defined(__sparc__) || defined(__powerpc__)
 	const struct videomode *mode = NULL;
 #endif
-	char devinfo[256];
 	int bar, id, expected_id;
 	int is_gx;
 	const char **memtype_names;
@@ -529,10 +528,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	sc->sc_accessops.ioctl = mach64_ioctl;
 	sc->sc_accessops.mmap = mach64_mmap;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, 
-	    PCI_REVISION(pa->pa_class));
-	aprint_naive(": Graphics processor\n");
+	pci_aprint_devinfo(pa, "Graphics processor");
 #ifdef MACHFB_DEBUG
 	printf(prop_dictionary_externalize(device_properties(self)));
 #endif
@@ -825,8 +821,7 @@ mach64_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 		}
 	}
 	
-	rasops_init(ri, sc->sc_my_mode->vdisplay / 8,
-	    sc->sc_my_mode->hdisplay / 8);
+	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 	rasops_reconfig(ri, sc->sc_my_mode->vdisplay / ri->ri_font->fontheight,
 		    sc->sc_my_mode->hdisplay / ri->ri_font->fontwidth);
@@ -1800,8 +1795,8 @@ mach64_mmap(void *v, void *vs, off_t offset, int prot)
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
 	 */
-	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
-	    NULL) != 0) {
+	if (kauth_authorize_machdep(kauth_cred_get(), KAUTH_MACHDEP_UNMANAGEDMEM,
+	    NULL, NULL, NULL, NULL) != 0) {
 		return -1;
 	}
 

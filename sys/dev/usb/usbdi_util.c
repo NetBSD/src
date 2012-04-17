@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.55 2010/11/03 22:34:24 dyoung Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.55.8.1 2012/04/17 00:08:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.55 2010/11/03 22:34:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.55.8.1 2012/04/17 00:08:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -498,19 +498,19 @@ usbd_intr_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 }
 
 void
-usb_detach_wait(device_t dv)
+usb_detach_waitold(device_t dv)
 {
-	DPRINTF(("usb_detach_wait: waiting for %s\n", device_xname(dv)));
+	DPRINTF(("usb_detach_waitold: waiting for %s\n", device_xname(dv)));
 	if (tsleep(dv, PZERO, "usbdet", hz * 60))
-		printf("usb_detach_wait: %s didn't detach\n",
+		printf("usb_detach_waitold: %s didn't detach\n",
 		        device_xname(dv));
-	DPRINTF(("usb_detach_wait: %s done\n", device_xname(dv)));
+	DPRINTF(("usb_detach_waitold: %s done\n", device_xname(dv)));
 }
 
 void
-usb_detach_wakeup(device_t dv)
+usb_detach_wakeupold(device_t dv)
 {
-	DPRINTF(("usb_detach_wakeup: for %s\n", device_xname(dv)));
+	DPRINTF(("usb_detach_wakeupold: for %s\n", device_xname(dv)));
 	wakeup(dv);
 }
 

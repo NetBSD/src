@@ -1,4 +1,4 @@
-/*	$NetBSD: sainfo.c,v 1.14 2011/02/02 15:21:34 vanhu Exp $	*/
+/*	$NetBSD: sainfo.c,v 1.14.6.1 2012/04/17 00:01:42 yamt Exp $	*/
 
 /*	$KAME: sainfo.c,v 1.16 2003/06/27 07:32:39 sakane Exp $	*/
 
@@ -205,6 +205,9 @@ delsainfo(si)
 	struct sainfo *si;
 {
 	int i;
+
+	if (si == NULL)
+		return;
 
 	for (i = 0; i < MAXALGCLASS; i++)
 		delsainfoalg(si->algs[i]);

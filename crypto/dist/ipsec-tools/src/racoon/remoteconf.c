@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.c,v 1.26 2011/03/14 15:50:36 vanhu Exp $	*/
+/*	$NetBSD: remoteconf.c,v 1.26.6.1 2012/04/17 00:01:42 yamt Exp $	*/
 
 /* Id: remoteconf.c,v 1.38 2006/05/06 15:52:44 manubsd Exp */
 
@@ -604,6 +604,11 @@ duprmconf_shallow (rmconf)
 
 	new->proposal = NULL; /* will be filled by set_isakmp_proposal() */
 
+	/* Better to set remote to NULL to avoid that the destination
+	 * rmconf uses the same allocated memory as the source rmconf.
+	 */
+	new->remote = NULL;
+
 	return new;
 }
 
@@ -723,6 +728,9 @@ delrmconf(rmconf)
 	struct remoteconf *rmconf;
 {
 	int i;
+
+	if (rmconf == NULL)
+		return;
 
 #ifdef ENABLE_HYBRID
 	if (rmconf->xauth)
@@ -1091,7 +1099,7 @@ newidspec()
 	if (new == NULL)
 		return NULL;
 	new->idtype = IDTYPE_ADDRESS;
-
+	new->id = NULL;
 	return new;
 }
 

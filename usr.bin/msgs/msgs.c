@@ -1,4 +1,4 @@
-/*	$NetBSD: msgs.c,v 1.21 2011/08/31 16:24:57 plunky Exp $	*/
+/*	$NetBSD: msgs.c,v 1.21.2.1 2012/04/17 00:09:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: msgs.c,v 1.21 2011/08/31 16:24:57 plunky Exp $");
+__RCSID("$NetBSD: msgs.c,v 1.21.2.1 2012/04/17 00:09:37 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -139,15 +139,15 @@ int	Lpp = 0;
 time_t	t;
 time_t	keep;
 
-void	ask __P((const char *));
-void	gfrsub __P((FILE *));
-int	linecnt __P((FILE *));
-int	main __P((int, char *[]));
-int	next __P((char *));
-char	*nxtfld __P((char *));
-void	onintr __P((int));
-void	onsusp __P((int));
-void	prmesg __P((int));
+void	ask(const char *);
+void	gfrsub(FILE *);
+int	linecnt(FILE *);
+int	main(int, char *[]);
+int	next(char *);
+char	*nxtfld(char *);
+void	onintr(int);
+void	onsusp(int);
+void	prmesg(int);
 
 /* option initialization */
 bool	hdrs = NO;
@@ -161,8 +161,7 @@ bool	lastcmd = NO;
 jmp_buf	tstpbuf;
 
 int
-main(argc, argv)
-	int argc; char *argv[];
+main(int argc, char *argv[])
 {
 	bool newrc, already;
 	int rcfirst = 0;		/* first message to print (from .rc) */
@@ -627,8 +626,7 @@ cmnd:
 }
 
 void
-prmesg(length)
-	int length;
+prmesg(int length)
 {
 	FILE *outf;
 	char *env_pager;
@@ -677,8 +675,7 @@ prmesg(length)
 }
 
 void
-onintr(dummy)
-	int dummy;
+onintr(int dummy)
 {
 	signal(SIGINT, onintr);
 	if (mailing)
@@ -703,8 +700,7 @@ onintr(dummy)
  * We have just gotten a susp.  Suspend and prepare to resume.
  */
 void
-onsusp(dummy)
-	int dummy;
+onsusp(int dummy)
 {
 
 	signal(SIGTSTP, SIG_DFL);
@@ -716,8 +712,7 @@ onsusp(dummy)
 }
 
 int
-linecnt(f)
-	FILE *f;
+linecnt(FILE *f)
 {
 	off_t oldpos = ftell(f);
 	int l = 0;
@@ -731,8 +726,7 @@ linecnt(f)
 }
 
 int
-next(buf)
-	char *buf;
+next(char *buf)
 {
 	int i;
 	sscanf(buf, "%d", &i);
@@ -741,8 +735,7 @@ next(buf)
 }
 
 void
-ask(prompt)
-	const char *prompt;
+ask(const char *prompt)
 {
 	char	inch;
 	int	n, cmsg;
@@ -828,8 +821,7 @@ ask(prompt)
 }
 
 void
-gfrsub(infile)
-	FILE *infile;
+gfrsub(FILE *infile)
 {
 	off_t frompos;
 
@@ -905,8 +897,7 @@ gfrsub(infile)
 }
 
 char *
-nxtfld(s)
-	char *s;
+nxtfld(char *s)
 {
 	if (*s) while (*s && *s > ' ') s++;	/* skip over this field */
 	if (*s) while (*s && *s <= ' ') s++;	/* find start of next field */

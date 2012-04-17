@@ -1,4 +1,4 @@
-.\"	$NetBSD: systat.1,v 1.40 2009/10/21 22:18:37 wiz Exp $
+.\"	$NetBSD: systat.1,v 1.40.6.1 2012/04/17 00:09:39 yamt Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd October 22, 2009
+.Dd January 5, 2012
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -70,11 +70,11 @@ disk usage statistics (a la
 disk
 .Tn I/O
 statistics (a la
-.Xr iostat  8  ) ,
+.Xr iostat 8 ) ,
 virtual memory statistics (a la
-.Xr vmstat  1  ) ,
+.Xr vmstat 1 ) ,
 network ``mbuf'' utilization, and network connections (a la
-.Xr netstat  1  ) .
+.Xr netstat 1 ) .
 .Pp
 Input is interpreted at two different levels.
 A ``global'' command interpreter processes all keyboard input.
@@ -120,7 +120,6 @@ argument expects to be one of:
 .Ic inet.tcp ,
 .Ic inet.tcpsyn ,
 .Ic inet6.ip6 ,
-.Ic ipsec ,
 .Ic iostat ,
 .Ic mbufs ,
 .Ic netstat ,
@@ -239,8 +238,6 @@ Display statistics about the
 ``syncache''.
 .It Ic inet6.ip6
 Display IPv6 statistics.
-.It Ic ipsec
-Display IPsec statistics for both IPv4 and v6.
 .It Ic iostat
 Display, in the lower window, statistics about processor use
 and disk throughput.
@@ -520,7 +517,6 @@ with the ones specified.
 The following commands are specific to the
 .Ic inet.* ,
 .Ic inet6.* ,
-.Ic ipsec ,
 .Ic syscall
 and
 .Ic vmstat

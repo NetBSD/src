@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.99.2.2 2012/01/25 00:41:36 yamt Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.99.2.3 2012/04/17 00:08:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.99.2.2 2012/01/25 00:41:36 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.99.2.3 2012/04/17 00:08:57 yamt Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -297,6 +297,7 @@ WRITE(void *v)
 
 #ifdef LFS_READWRITE
 	async = true;
+	lfs_availwait(fs, btofsb(fs, uio->uio_resid));
 	lfs_check(vp, LFS_UNUSED_LBN, 0);
 #endif /* !LFS_READWRITE */
 	if (!usepc)
@@ -510,10 +511,26 @@ WRITE(void *v)
 	 */
 out:
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
-	if (resid > uio->uio_resid && ap->a_cred &&
-	    kauth_authorize_generic(ap->a_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
-		ip->i_mode &= ~(ISUID | ISGID);
-		DIP_ASSIGN(ip, mode, ip->i_mode);
+	if (vp->v_mount->mnt_flag & MNT_RELATIME)
+		ip->i_flag |= IN_ACCESS;
+	if (resid > uio->uio_resid && ap->a_cred) {
+		if (ip->i_mode & ISUID) {
+			error = kauth_authorize_vnode(ap->a_cred, KAUTH_VNODE_RETAIN_SUID, vp,
+			    NULL, EPERM);
+			if (error) {
+				ip->i_mode &= ~ISUID;
+				DIP_ASSIGN(ip, mode, ip->i_mode);
+			}
+		}
+
+		if (ip->i_mode & ISGID) {
+			error = kauth_authorize_vnode(ap->a_cred, KAUTH_VNODE_RETAIN_SGID, vp,
+			    NULL, EPERM);
+			if (error) {
+				ip->i_mode &= ~ISGID;
+				DIP_ASSIGN(ip, mode, ip->i_mode);
+			}
+		}
 	}
 	if (resid > uio->uio_resid)
 		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));

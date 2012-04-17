@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.13.2.1 2011/11/10 14:31:15 yamt Exp $
+# $NetBSD: md.evbppc,v 1.13.2.2 2012/04/17 00:02:44 yamt Exp $
 ./stand/powerpc-4xx							base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@						base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules					base-kernel-modules	kmod,compatmodules
@@ -14,6 +14,8 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/bpf/bpf.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/cd9660				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/cd9660/cd9660.kmod		base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/chfs				base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/chfs/chfs.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/coda				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/coda/coda.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/coda5				base-kernel-modules	kmod,compatmodules
@@ -36,10 +38,10 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/dtv_math/dtv_math.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/efs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/efs/efs.kmod			base-kernel-modules	kmod,compatmodules
-./stand/powerpc-4xx/@OSRELEASE@/modules/exec_script			base-kernel-modules	kmod,compatmodules
-./stand/powerpc-4xx/@OSRELEASE@/modules/exec_script/exec_script.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/exec_elf32			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/exec_elf32/exec_elf32.kmod	base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/exec_script			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/exec_script/exec_script.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/ext2fs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/ext2fs/ext2fs.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/fbt				base-kernel-modules	kmod,compatmodules,dtrace
@@ -68,10 +70,12 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/hfs/hfs.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/iic				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/iic/iic.kmod			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/iscsi				base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/iscsi/iscsi.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/kernfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/kernfs/kernfs.kmod		base-kernel-modules	kmod,compatmodules
-./stand/powerpc-4xx/@OSRELEASE@/modules/ksem				base-kernel-modules	kmod,compatmodules
-./stand/powerpc-4xx/@OSRELEASE@/modules/ksem/ksem.kmod			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/ksem				base-obsolete		obsolete
+./stand/powerpc-4xx/@OSRELEASE@/modules/ksem/ksem.kmod			base-obsolete		obsolete
 ./stand/powerpc-4xx/@OSRELEASE@/modules/layerfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/layerfs/layerfs.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/lfs				base-kernel-modules	kmod,compatmodules
@@ -132,6 +136,8 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/sdt/sdt.kmod			base-kernel-modules	kmod,compatmodules,dtrace
 ./stand/powerpc-4xx/@OSRELEASE@/modules/secmodel_bsd44			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/secmodel_bsd44/secmodel_bsd44.kmod	base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/secmodel_extensions		base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/secmodel_extensions/secmodel_extensions.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/secmodel_overlay			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/secmodel_overlay/secmodel_overlay.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/securelevel			base-kernel-modules	kmod,compatmodules
@@ -181,6 +187,8 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/bpf/bpf.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/cd9660				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/cd9660/cd9660.kmod		base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/chfs				base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/chfs/chfs.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/coda				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/coda/coda.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/coda5				base-kernel-modules	kmod,compatmodules
@@ -203,10 +211,10 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/dtv_math/dtv_math.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/efs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/efs/efs.kmod			base-kernel-modules	kmod,compatmodules
-./stand/powerpc-booke/@OSRELEASE@/modules/exec_script			base-kernel-modules	kmod,compatmodules
-./stand/powerpc-booke/@OSRELEASE@/modules/exec_script/exec_script.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/exec_elf32			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/exec_elf32/exec_elf32.kmod	base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/exec_script			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/exec_script/exec_script.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/ext2fs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/ext2fs/ext2fs.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/fbt				base-kernel-modules	kmod,compatmodules,dtrace
@@ -235,10 +243,12 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/hfs/hfs.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/iic				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/iic/iic.kmod			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/iscsi				base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/iscsi/iscsi.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/kernfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/kernfs/kernfs.kmod		base-kernel-modules	kmod,compatmodules
-./stand/powerpc-booke/@OSRELEASE@/modules/ksem				base-kernel-modules	kmod,compatmodules
-./stand/powerpc-booke/@OSRELEASE@/modules/ksem/ksem.kmod			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/ksem				base-obsolete		obsolete
+./stand/powerpc-booke/@OSRELEASE@/modules/ksem/ksem.kmod		base-obsolete		obsolete
 ./stand/powerpc-booke/@OSRELEASE@/modules/layerfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/layerfs/layerfs.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/lfs				base-kernel-modules	kmod,compatmodules
@@ -299,6 +309,8 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/sdt/sdt.kmod			base-kernel-modules	kmod,compatmodules,dtrace
 ./stand/powerpc-booke/@OSRELEASE@/modules/secmodel_bsd44		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/secmodel_bsd44/secmodel_bsd44.kmod	base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/secmodel_extensions		base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/secmodel_extensions/secmodel_extensions.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/secmodel_overlay		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/secmodel_overlay/secmodel_overlay.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/securelevel			base-kernel-modules	kmod,compatmodules

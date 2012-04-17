@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.9 2011/04/07 10:20:29 matt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.9.4.1 2012/04/17 00:06:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -112,9 +112,18 @@ typedef struct {
 static __inline void *
 __lwp_getprivate_fast(void)
 {
+	extern void *_lwp_getprivate(void);
 	void *rv;
 	__asm("mrc p15, 0, %0, c13, c0, 3" : "=r"(rv));
-	return rv;
+	if (__predict_true(rv))
+		return rv;
+	/*
+	 * Some ARM cores are broken and don't raise an undefined fault when an
+	 * unrecogized mrc instruction is encountered, but just return zero.
+	 * To do deal with that, if we get a zero we (re-)fetch the value using
+	 * syscall.
+	 */
+	return _lwp_getprivate();
 }
 
 #endif	/* !_ARM_MCONTEXT_H_ */

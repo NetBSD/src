@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.41 2011/10/11 19:20:13 joerg Exp $
+# $NetBSD: mi,v 1.41.2.1 2012/04/17 00:02:45 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -40,6 +40,7 @@
 ./usr/bin/troff					text-groff-bin		groff
 ./usr/bin/vgrind				text-groff-bin
 ./usr/libexec/vfontedpr				text-groff-bin
+./usr/sbin/makemandb				base-man-bin		makemandb
 ./usr/share/doc/groff				text-groff-doc
 ./usr/share/doc/groff/mom			text-groff-doc
 ./usr/share/doc/groff/mom/README.txt		text-groff-doc		share,groff

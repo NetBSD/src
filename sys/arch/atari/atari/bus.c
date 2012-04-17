@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.56 2011/07/01 20:34:05 dyoung Exp $	*/
+/*	$NetBSD: bus.c,v 1.56.2.1 2012/04/17 00:06:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.56 2011/07/01 20:34:05 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.56.2.1 2012/04/17 00:06:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ static int	bootm_free(vaddr_t va, u_long size);
 void
 bootm_init(vaddr_t va, pt_entry_t *ptep, u_long size)
 {
-	bootm_ex = extent_create("bootmem", va, va + size, M_DEVBUF,
+	bootm_ex = extent_create("bootmem", va, va + size,
 	    (void *)bootm_ex_storage, sizeof(bootm_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
 	bootm_ptep = ptep;

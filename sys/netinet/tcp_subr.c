@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.242 2011/10/31 12:56:45 yamt Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.242.2.1 2012/04/17 00:08:41 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,14 +91,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.242 2011/10/31 12:56:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.242.2.1 2012/04/17 00:08:41 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_tcp_compat_42.h"
 #include "opt_inet_csum.h"
 #include "opt_mbuftrace.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -111,10 +110,8 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.242 2011/10/31 12:56:45 yamt Exp $");
 #include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/pool.h>
-#if NRND > 0
 #include <sys/md5.h>
-#include <sys/rnd.h>
-#endif
+#include <sys/cprng.h>
 
 #include <net/route.h>
 #include <net/if.h>
@@ -149,11 +146,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.242 2011/10/31 12:56:45 yamt Exp $");
 #include <netinet/tcp_congctl.h>
 #include <netinet/tcpip.h>
 
-#ifdef IPSEC
-#include <netinet6/ipsec.h>
-#include <netkey/key.h>
-#endif /*IPSEC*/
-
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/xform.h>
@@ -174,9 +166,7 @@ int 	tcp_mssdflt = TCP_MSS;
 int	tcp_minmss = TCP_MINMSS;
 int 	tcp_rttdflt = TCPTV_SRTTDFLT / PR_SLOWHZ;
 int	tcp_do_rfc1323 = 1;	/* window scaling / timestamps (obsolete) */
-#if NRND > 0
 int	tcp_do_rfc1948 = 0;	/* ISS by cryptographic hash */
-#endif
 int	tcp_do_sack = 1;	/* selective acknowledgement */
 int	tcp_do_win_scale = 1;	/* RFC1323 window scaling */
 int	tcp_do_timestamps = 1;	/* RFC1323 timestamps */
@@ -834,7 +824,7 @@ tcp_respond(struct tcpcb *tp, struct mbuf *template, struct mbuf *m,
 		tlen += th->th_off << 2;
 	m->m_len = hlen + tlen;
 	m->m_pkthdr.len = hlen + tlen;
-	m->m_pkthdr.rcvif = (struct ifnet *) 0;
+	m->m_pkthdr.rcvif = NULL;
 	th->th_flags = flags;
 	th->th_urp = 0;
 
@@ -927,8 +917,7 @@ tcp_respond(struct tcpcb *tp, struct mbuf *template, struct mbuf *m,
 #ifdef INET
 	case AF_INET:
 		error = ip_output(m, NULL, ro,
-		    (tp && tp->t_mtudisc ? IP_MTUDISC : 0),
-		    (struct ip_moptions *)0, so);
+		    (tp && tp->t_mtudisc ? IP_MTUDISC : 0), NULL, so);
 		break;
 #endif
 #ifdef INET6
@@ -1280,7 +1269,7 @@ tcp_close(struct tcpcb *tp)
 	callout_destroy(&tp->t_delack_ch);
 	pool_put(&tcpcb_pool, tp);
 
-	return ((struct tcpcb *)0);
+	return NULL;
 }
 
 int
@@ -2179,9 +2168,7 @@ tcp_rmx_rtt(struct tcpcb *tp)
 }
 
 tcp_seq	 tcp_iss_seq = 0;	/* tcp initial seq # */
-#if NRND > 0
 u_int8_t tcp_iss_secret[16];	/* 128 bits; should be plenty */
-#endif
 
 /*
  * Get a new sequence value given a tcp control block
@@ -2219,7 +2206,6 @@ tcp_new_iss1(void *laddr, void *faddr, u_int16_t lport, u_int16_t fport,
 {
 	tcp_seq tcp_iss;
 
-#if NRND > 0
 	static bool tcp_iss_gotten_secret;
 
 	/*
@@ -2227,8 +2213,8 @@ tcp_new_iss1(void *laddr, void *faddr, u_int16_t lport, u_int16_t fport,
 	 * hash secret.
 	 */
 	if (tcp_iss_gotten_secret == false) {
-		rnd_extract_data(tcp_iss_secret, sizeof(tcp_iss_secret),
-		    RND_EXTRACT_ANY);
+		cprng_strong(kern_cprng,
+			     tcp_iss_secret, sizeof(tcp_iss_secret), 0);
 		tcp_iss_gotten_secret = true;
 	}
 
@@ -2269,17 +2255,11 @@ tcp_new_iss1(void *laddr, void *faddr, u_int16_t lport, u_int16_t fport,
 #ifdef TCPISS_DEBUG
 		printf("new ISS 0x%08x\n", tcp_iss);
 #endif
-	} else
-#endif /* NRND > 0 */
-	{
+	} else {
 		/*
 		 * Randomize.
 		 */
-#if NRND > 0
-		rnd_extract_data(&tcp_iss, sizeof(tcp_iss), RND_EXTRACT_ANY);
-#else
-		tcp_iss = arc4random();
-#endif
+		tcp_iss = cprng_fast32();
 
 		/*
 		 * If we were asked to add some amount to a known value,
@@ -2323,7 +2303,7 @@ tcp_new_iss1(void *laddr, void *faddr, u_int16_t lport, u_int16_t fport,
 	return (tcp_iss);
 }
 
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 /* compute ESP/AH header size for TCP, including outer IP header. */
 size_t
 ipsec4_hdrsiz_tcp(struct tcpcb *tp)

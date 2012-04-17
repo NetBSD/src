@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.9 2009/11/25 14:28:49 rmind Exp $	*/
+/*	$NetBSD: intr.h,v 1.9.12.1 2012/04/17 00:08:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -73,20 +73,19 @@ extern u_int	softint_timing;
 extern int	safepri;
 
 /*
- * Historical aliases.  XXX Audio devices should run at
- * IPL_SCHED, but they need to acquire kernel_lock.
+ * Historical aliases.
  */
 #define	IPL_BIO		IPL_VM
 #define	IPL_NET		IPL_VM
 #define	IPL_TTY		IPL_VM
-#define	IPL_AUDIO	IPL_VM
+#define	IPL_AUDIO	IPL_SCHED
 #define	IPL_CLOCK	IPL_SCHED
 #define	IPL_SERIAL	IPL_HIGH
 
 #define	splbio()	splvm()
 #define	splnet()	splvm()
 #define	spltty()	splvm()
-#define	splaudio()	splvm()
+#define	splaudio()	splsched()
 #define	splclock()	splsched()
 #define	splserial()	splhigh()
 

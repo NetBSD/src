@@ -1,4 +1,4 @@
-# $NetBSD: files.gpio,v 1.9 2011/10/02 10:01:25 mbalmer Exp $
+# $NetBSD: files.gpio,v 1.9.2.1 2012/04/17 00:07:30 yamt Exp $
 
 define	gpio {[offset = -1], [mask = 0], [flag = 0]}
 
@@ -24,3 +24,8 @@ file	dev/gpio/gpioow.c			gpioow
 device	gpiolock: gpiobus
 attach	gpiolock at gpio
 file	dev/gpio/gpiolock.c			gpiolock
+
+# PWM
+device	gpiopwm: gpiobus
+attach	gpiopwm at gpio
+file	dev/gpio/gpiopwm.c			gpiopwm

@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.66 2009/06/29 05:08:17 dholland Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.66.12.1 2012/04/17 00:07:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.66 2009/06/29 05:08:17 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.66.12.1 2012/04/17 00:07:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -106,7 +106,8 @@ veriexecattach(DEVPORT_DEVICE *parent, DEVPORT_DEVICE *self, void *aux)
 static int
 veriexecopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
-	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL))
+	if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_VERIEXEC,
+	    KAUTH_REQ_SYSTEM_VERIEXEC_ACCESS, NULL, NULL, NULL))
 		return (EPERM);
 
 	if (veriexec_dev_usage > 0)
@@ -173,12 +174,10 @@ veriexec_query(prop_dictionary_t dict, prop_dictionary_t rdict, struct lwp *l)
 int
 veriexecioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
-	extern int veriexec_strict;
 	struct plistref *plistref;
 	prop_dictionary_t dict;
 	int error = 0;
 
-	/* XXX This should be replaced with a kauth(9) request. */
 	switch (cmd) {
 	case VERIEXEC_TABLESIZE:
 	case VERIEXEC_LOAD:
@@ -187,12 +186,11 @@ veriexecioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 		if (!(flags & FWRITE))
 			return (EPERM);
 
-		if (veriexec_strict > VERIEXEC_LEARNING) {
-			log(LOG_WARNING, "Veriexec: Strict mode, modifying "
-			    "tables not permitted.\n");
-
-			return (EPERM);
-		}
+		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_VERIEXEC,
+		    KAUTH_REQ_SYSTEM_VERIEXEC_MODIFY, KAUTH_ARG(cmd), NULL,
+		    NULL);
+		if (error)
+			return error;
 
 		break;
 

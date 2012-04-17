@@ -1,4 +1,4 @@
-/*	$Vendor-Id: man.h,v 1.59 2011/10/06 22:29:12 kristaps Exp $ */
+/*	$Vendor-Id: man.h,v 1.60 2012/01/03 15:16:24 kristaps Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -51,6 +51,7 @@ enum	mant {
 	MAN_AT,
 	MAN_in,
 	MAN_ft,
+	MAN_OP,
 	MAN_MAX
 };
 

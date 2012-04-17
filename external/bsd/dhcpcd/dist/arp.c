@@ -204,6 +204,8 @@ send_arp_announce(void *arg)
 	struct if_state *state = iface->state;
 	struct timeval tv;
 
+	if (state->new == NULL)
+		return;
 	if (iface->arp_fd == -1) {
 		open_socket(iface, ETHERTYPE_ARP);
 		add_event(iface->arp_fd, handle_arp_packet, iface);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_netbios_pxy.c,v 1.4 2007/12/11 04:55:02 lukem Exp $	*/
+/*	$NetBSD: ip_netbios_pxy.c,v 1.4.46.1 2012/04/17 00:08:13 yamt Exp $	*/
 
 /*
  * Simple netbios-dgm transparent proxy for in-kernel use.
@@ -35,13 +35,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_netbios_pxy.c,v 1.4 2007/12/11 04:55:02 lukem Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_netbios_pxy.c,v 1.4.46.1 2012/04/17 00:08:13 yamt Exp $");
 
 #define	IPF_NETBIOS_PROXY
 
-int ippr_netbios_init __P((void));
-void ippr_netbios_fini __P((void));
-int ippr_netbios_out __P((fr_info_t *, ap_session_t *, nat_t *));
+int
+ippr_netbios_init(void);
+void
+ippr_netbios_fini(void);
+int
+ippr_netbios_out(fr_info_t *, ap_session_t *, nat_t *);
 
 static	frentry_t	netbiosfr;
 
@@ -50,7 +53,8 @@ int	netbios_proxy_init = 0;
 /*
  * Initialize local structures.
  */
-int ippr_netbios_init()
+int
+ippr_netbios_init(void)
 {
 	bzero((char *)&netbiosfr, sizeof(netbiosfr));
 	netbiosfr.fr_ref = 1;
@@ -62,7 +66,8 @@ int ippr_netbios_init()
 }
 
 
-void ippr_netbios_fini()
+void
+ippr_netbios_fini(void)
 {
 	if (netbios_proxy_init == 1) {
 		MUTEX_DESTROY(&netbiosfr.fr_lock);
@@ -71,10 +76,8 @@ void ippr_netbios_fini()
 }
 
 
-int ippr_netbios_out(fin, aps, nat)
-fr_info_t *fin;
-ap_session_t *aps;
-nat_t *nat;
+int
+ippr_netbios_out(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	char dgmbuf[6];
 	int off, dlen;

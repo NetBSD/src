@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_trak.c,v 1.1.1.1 2009/12/13 16:56:04 kardel Exp $	*/
+/*	$NetBSD: refclock_trak.c,v 1.1.1.1.6.1 2012/04/17 00:03:48 yamt Exp $	*/
 
 /*
  * refclock_trak - clock driver for the TRAK 8810 GPS Station Clock
@@ -149,7 +149,7 @@ trak_start(
 	 * timestamp following the "*" on-time character of the
 	 * timecode.
 	 */
-	(void)sprintf(device, DEVICE, unit);
+	snprintf(device, sizeof(device), DEVICE, unit);
 	if (
 #ifdef PPS
 		!(fd = refclock_open(device, SPEED232, LDISC_CLK))
@@ -162,12 +162,8 @@ trak_start(
 	/*
 	 * Allocate and initialize unit structure
 	 */
-	if (!(up = (struct trakunit *)
-	      emalloc(sizeof(struct trakunit)))) {
-		(void) close(fd);
-		return (0);
-	}
-	memset((char *)up, 0, sizeof(struct trakunit));
+	up = emalloc(sizeof(*up));
+	memset(up, 0, sizeof(*up));
 	pp = peer->procptr;
 	pp->io.clock_recv = trak_receive;
 	pp->io.srcclock = (caddr_t)peer;
@@ -175,6 +171,7 @@ trak_start(
 	pp->io.fd = fd;
 	if (!io_addclock(&pp->io)) {
 		(void) close(fd);
+		pp->io.fd = -1;
 		free(up);
 		return (0);
 	}
@@ -216,8 +213,10 @@ trak_shutdown(
 
 	pp = peer->procptr;
 	up = (struct trakunit *)pp->unitptr;
-	io_closeclock(&pp->io);
-	free(up);
+	if (-1 != pp->io.fd)
+		io_closeclock(&pp->io);
+	if (NULL != up)
+		free(up);
 }
 
 

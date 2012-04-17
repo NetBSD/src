@@ -1,4 +1,4 @@
-.\"	$Vendor-Id: mandoc.3,v 1.14 2011/10/06 22:29:12 kristaps Exp $
+.\"	$Vendor-Id: mandoc.3,v 1.17 2012/01/13 15:27:14 joerg Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd October 6, 2011
+.Dd January 13, 2012
 .Dt MANDOC 3
 .Os
 .Sh NAME
@@ -50,9 +50,9 @@
 .In mandoc.h
 .Ft "enum mandoc_esc"
 .Fo mandoc_escape
-.Fa "const char **in"
-.Fa "const char **seq"
-.Fa "int *len"
+.Fa "const char **end"
+.Fa "const char **start"
+.Fa "int *sz"
 .Fc
 .Ft "const struct man_meta *"
 .Fo man_meta
@@ -76,14 +76,14 @@
 .Fn mchars_num2uc "const char *cp" "size_t sz"
 .Ft "const char *"
 .Fo mchars_spec2str
-.Fa "struct mchars *p"
+.Fa "const struct mchars *p"
 .Fa "const char *cp"
 .Fa "size_t sz"
 .Fa "size_t *rsz"
 .Fc
 .Ft int
 .Fo mchars_spec2cp
-.Fa "struct mchars *p"
+.Fa "const struct mchars *p"
 .Fa "const char *cp"
 .Fa "size_t sz"
 .Ft "const char *"
@@ -234,7 +234,9 @@ messages emitted by the parser.
 .It Fn mandoc_escape
 Scan an escape sequence, i.e., a character string beginning with
 .Sq \e .
-Pass a pointer to this string as
+Pass a pointer to the character after the
+.Sq \e
+as
 .Va end ;
 it will be set to the supremum of the parsed escape sequence unless
 returning

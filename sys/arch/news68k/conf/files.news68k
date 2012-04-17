@@ -1,4 +1,4 @@
-#	$NetBSD: files.news68k,v 1.32 2011/06/12 03:35:44 rmind Exp $
+#	$NetBSD: files.news68k,v 1.32.2.1 2012/04/17 00:06:43 yamt Exp $
 
 #	NEWS68K-specific configuration info
 
@@ -19,6 +19,7 @@ file	arch/news68k/news68k/isr.c
 file	arch/news68k/news68k/machdep.c
 file	arch/news68k/news68k/mainbus.c
 file	arch/news68k/news68k/pmap_bootstrap.c	compile-with "${NOPROF_C}"
+file	arch/news68k/news68k/romcalls.S
 file	arch/news68k/news68k/trap.c
 file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/db_memrw.c		ddb | kgdb
@@ -98,6 +99,11 @@ attach fdc at hb
 device fd: disk
 attach fd at fdc
 file arch/news68k/dev/fd.c			fdc | fd needs-flag
+
+# PROM console support
+device romcons
+attach romcons at mainbus
+file arch/news68k/news68k/romcons.c		romcons needs-flag
 
 # Machine-independent SCSI driver
 include "dev/scsipi/files.scsipi"

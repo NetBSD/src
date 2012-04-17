@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl_init.c,v 1.2 2010/12/04 23:08:34 christos Exp $	*/
+/*	$NetBSD: ssl_init.c,v 1.2.6.1 2012/04/17 00:03:46 yamt Exp $	*/
 
 /*
  * ssl_init.c	Common OpenSSL initialization code for the various
@@ -16,7 +16,7 @@
 
 #ifdef OPENSSL
 #include "openssl/err.h"
-#include "openssl/rand.h"
+#include "openssl/evp.h"
 
 
 int ssl_init_done;
@@ -63,6 +63,7 @@ keytype_from_text(
 	size_t *pdigest_len
 	)
 {
+	const u_long	max_digest_len = MAX_MAC_LEN - sizeof(keyid_t);
 	int		key_type;
 	u_int		digest_len;
 #ifdef OPENSSL
@@ -99,13 +100,13 @@ keytype_from_text(
 		EVP_DigestFinal(&ctx, digest, &digest_len);
 		if (digest_len + sizeof(keyid_t) > MAX_MAC_LEN) {
 			fprintf(stderr,
-				"key type %s %u octet digests are too big, max %u\n",
+				"key type %s %u octet digests are too big, max %lu\n",
 				keytype_name(key_type), digest_len,
-				(unsigned)(MAX_MAC_LEN - sizeof(keyid_t)));
+				max_digest_len);
 			msyslog(LOG_ERR,
-				"key type %s %u octet digests are too big, max %u",
+				"key type %s %u octet digests are too big, max %lu\n",
 				keytype_name(key_type), digest_len,
-				(unsigned)(MAX_MAC_LEN - sizeof(keyid_t)));
+				max_digest_len);
 			return 0;
 		}
 #else
@@ -145,3 +146,28 @@ keytype_name(
 	return name;
 }
 
+
+/*
+ * Use getpassphrase() if configure.ac detected it, as Suns that
+ * have it truncate the password in getpass() to 8 characters.
+ */
+#ifdef HAVE_GETPASSPHRASE
+# define	getpass(str)	getpassphrase(str)
+#endif
+
+/*
+ * getpass_keytype() -- shared between ntpq and ntpdc, only vaguely
+ *			related to the rest of ssl_init.c.
+ */
+char *
+getpass_keytype(
+	int	keytype
+	)
+{
+	char	pass_prompt[64 + 11 + 1]; /* 11 for " Password: " */
+
+	snprintf(pass_prompt, sizeof(pass_prompt),
+		 "%.64s Password: ", keytype_name(keytype));
+
+	return getpass(pass_prompt);
+}

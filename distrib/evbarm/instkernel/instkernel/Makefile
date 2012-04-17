@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2008/10/31 02:04:04 cliff Exp $
+#	$NetBSD: Makefile,v 1.14.8.1 2012/04/17 00:02:33 yamt Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -15,6 +15,7 @@ MDSETTARGETS=		ADI_BRH_INSTALL		${RAMDISK}	-	\
 			INTEGRATOR_INSTALL	${RAMDISK}	-	\
 			IQ80310_INSTALL		${RAMDISK}	-	\
 			IQ80321_INSTALL		${RAMDISK}	-	\
+			MINI2440_INSTALL	${RAMDISK}	-	\
 			TS7200_INSTALL		${RAMDISK}	- 	\
 			TEAMASA_NPWR_INSTALL	${RAMDISK}	-
 .else

@@ -1,4 +1,4 @@
-/* $NetBSD: au_himem_space.c,v 1.13 2011/07/10 23:13:23 matt Exp $ */
+/* $NetBSD: au_himem_space.c,v 1.13.2.1 2012/04/17 00:06:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_himem_space.c,v 1.13 2011/07/10 23:13:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_himem_space.c,v 1.13.2.1 2012/04/17 00:06:38 yamt Exp $");
 
 /*
  * This provides mappings for the upper I/O regions used on some
@@ -701,7 +701,7 @@ au_himem_space_init(bus_space_tag_t bst, const char *name,
 	c->c_physoff = physoff;
 
 	/* allocate extent manager */
-	c->c_extent = extent_create(name, start, end, M_DEVBUF,
+	c->c_extent = extent_create(name, start, end,
 	    NULL, 0, EX_NOWAIT);
 	if (c->c_extent == NULL)
 		panic("au_himem_space_init: %s: cannot create extent", name);

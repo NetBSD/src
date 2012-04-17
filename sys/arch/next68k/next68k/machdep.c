@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.105 2011/06/12 03:35:45 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.105.2.1 2012/04/17 00:06:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.105 2011/06/12 03:35:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.105.2.1 2012/04/17 00:06:44 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -621,20 +621,12 @@ long	dumplo = 0;		/* blocks */
 void
 cpu_dumpconf(void)
 {
-	const struct bdevsw *bdev;
 	int chdrsize;	/* size of dump header */
 	int nblks;	/* size of dump area */
 
 	if (dumpdev == NODEV)
 		return;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL) {
-		dumpdev = NODEV;
-		return;
-	}
-	if (bdev->d_psize == NULL)
-		return;
-	nblks = (*bdev->d_psize)(dumpdev);
+	nblks = bdev_size(dumpdev);
 	chdrsize = cpu_dumpsize();
 
 	dumpsize = btoc(cpu_kcore_hdr.un._m68k.ram_segs[0].size);

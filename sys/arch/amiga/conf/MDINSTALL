@@ -1,4 +1,4 @@
-#	$NetBSD: MDINSTALL,v 1.29 2011/01/14 10:01:12 phx Exp $
+#	$NetBSD: MDINSTALL,v 1.29.8.1 2012/04/17 00:06:01 yamt Exp $
 
 #
 # INSTALL kernel for ramdisk installation
@@ -285,8 +285,6 @@ pseudo-device	pty			# pseudo-terminals
 
 pseudo-device	vnd			# vnode pseudo-disks
 
-# rnd is EXPERIMENTAL at this point.
-#pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 
 config	netbsd root on ? type ?

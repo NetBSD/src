@@ -1,4 +1,4 @@
-/*	$NetBSD: diskutil.c,v 1.4 2008/04/28 20:23:18 martin Exp $	*/
+/*	$NetBSD: diskutil.c,v 1.4.34.1 2012/04/17 00:06:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -85,14 +85,12 @@ cmd_ls(int argc, char *argp[], int interactive)
 	if (!device_attach(-1, -1, i))
 		return 1;
 	switch (fstype(i)) {
-	case FSTYPE_UFS:
-		ufs_ls("/");
-		break;
 	case FSTYPE_BFS:
 		bfs_ls();
 		break;
 	default:
-		return 1;
+		ls("/");
+		break;
 	}
 
 	return 0;

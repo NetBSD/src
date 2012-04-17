@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.7 2009/03/18 10:22:21 cegger Exp $ */
+/* $NetBSD: autoconf.c,v 1.7.12.1 2012/04/17 00:05:51 yamt Exp $ */
 /*-
  * Copyright (c) 1998, 1999 Ben Harris
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2009/03/18 10:22:21 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7.12.1 2012/04/17 00:05:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -47,8 +47,8 @@ cpu_configure(void)
 
 	irq_init();
 	config_rootfound("cpu", NULL);
-	config_rootfound("iobus", NULL);
 	config_rootfound("arcvideo", NULL);
+	config_rootfound("iobus", NULL);
 	spl0();
 	fiq_on();
 }

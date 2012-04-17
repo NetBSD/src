@@ -1,4 +1,4 @@
-/*	$NetBSD: prettydate.c,v 1.1.1.1 2009/12/13 16:55:04 kardel Exp $	*/
+/*	$NetBSD: prettydate.c,v 1.1.1.1.6.1 2012/04/17 00:03:46 yamt Exp $	*/
 
 /*
  * prettydate - convert a time stamp to something readable
@@ -172,16 +172,17 @@ common_prettydate(
 	msec = ts->l_uf / 4294967;	/* fract / (2 ** 32 / 1000) */
 
 	tm = ntp2unix_tm(sec, local);
-	if (!tm) {
-		(void) sprintf(bp, "%08lx.%08lx  --- --- -- ---- --:--:--",
-		       (u_long)ts->l_ui, (u_long)ts->l_uf);
-	}
-	else {
-		(void) sprintf(bp, "%08lx.%08lx  %s, %s %2d %4d %2d:%02d:%02d.%03lu",
-		       (u_long)ts->l_ui, (u_long)ts->l_uf, days[tm->tm_wday],
-		       months[tm->tm_mon], tm->tm_mday, 1900 + tm->tm_year,
-		       tm->tm_hour,tm->tm_min, tm->tm_sec, msec);
-	}
+	if (!tm)
+		snprintf(bp, LIB_BUFLENGTH,
+			 "%08lx.%08lx  --- --- -- ---- --:--:--",
+			 (u_long)ts->l_ui, (u_long)ts->l_uf);
+	else
+		snprintf(bp, LIB_BUFLENGTH,
+			 "%08lx.%08lx  %s, %s %2d %4d %2d:%02d:%02d.%03lu",
+			 (u_long)ts->l_ui, (u_long)ts->l_uf,
+			 days[tm->tm_wday], months[tm->tm_mon],
+			 tm->tm_mday, 1900 + tm->tm_year, tm->tm_hour,
+			 tm->tm_min, tm->tm_sec, msec);
 	
 	return bp;
 }

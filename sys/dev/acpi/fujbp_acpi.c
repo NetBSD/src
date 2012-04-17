@@ -1,4 +1,4 @@
-/*	$NetBSD: fujbp_acpi.c,v 1.1 2011/02/20 08:31:46 jruoho Exp $ */
+/*	$NetBSD: fujbp_acpi.c,v 1.1.10.1 2012/04/17 00:07:27 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fujbp_acpi.c,v 1.1 2011/02/20 08:31:46 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fujbp_acpi.c,v 1.1.10.1 2012/04/17 00:07:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -437,12 +437,12 @@ fujitsu_bp_sysctl_brightness(SYSCTLFN_ARGS)
 
 	mutex_enter(&sc->sc_mtx);
 	error = fujitsu_bp_get_brightness(sc, &level);
-	val = (int)level;
 	mutex_exit(&sc->sc_mtx);
 
 	if (error)
 		return error;
 
+	val = (int)level;
 	node.sysctl_data = &val;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)

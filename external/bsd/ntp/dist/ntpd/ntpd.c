@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.c,v 1.5 2011/08/16 05:15:21 christos Exp $	*/
+/*	$NetBSD: ntpd.c,v 1.5.2.1 2012/04/17 00:03:47 yamt Exp $	*/
 
 /*
  * ntpd.c - main program for the fixed point NTP daemon
@@ -24,6 +24,7 @@
 # include "ntpsim.h"
 #endif
 
+#include "ntp_libopts.h"
 #include "ntpd-opts.h"
 
 #ifdef HAVE_UNISTD_H
@@ -326,7 +327,7 @@ process_commandline_opts(
 {
 	int optct;
 	
-	optct = optionProcess(&ntpdOptions, *pargc, *pargv);
+	optct = ntpOptionProcess(&ntpdOptions, *pargc, *pargv);
 	*pargc -= optct;
 	*pargv += optct;
 }
@@ -558,13 +559,13 @@ ntpdmain(
 	 * --interface, listen on specified interfaces
 	 */
 	if (HAVE_OPT( INTERFACE )) {
-		int	ifacect = STACKCT_OPT( INTERFACE );
+		int		ifacect = STACKCT_OPT( INTERFACE );
 		const char**	ifaces  = STACKLST_OPT( INTERFACE );
-		isc_netaddr_t	netaddr;
+		sockaddr_u	addr;
 
 		while (ifacect-- > 0) {
 			add_nic_rule(
-				is_ip_address(*ifaces, &netaddr)
+				is_ip_address(*ifaces, &addr)
 					? MATCH_IFADDR
 					: MATCH_IFNAME,
 				*ifaces, -1, ACTION_LISTEN);

@@ -18,10 +18,15 @@ PARSE="--enable-parse-clocks"
 #PARSE=
 STD="--enable-simulator"
 
-case "$SIMUL" in
- '') PARALLEL_BUILDS=1
-     ;;
- *)  PARALLEL_BUILDS=$SIMUL
+case "$SIMUL::$FB_FIRSTONLY" in
+ ::*)
+    PARALLEL_BUILDS=1
+    ;;
+ *::0)
+    PARALLEL_BUILDS=$SIMUL
+    ;;
+ *)
+    PARALLEL_BUILDS=1
 esac
 
 case "$PARALLEL_BUILDS" in
@@ -63,19 +68,19 @@ do
     [ -f .buildkey-$i ] && SKIPTHIS=1
     case "$SKIPTHIS" in
      1)
-        echo flock-build running on $i? check LIST, skipping
-        ;;
-     0)   
-        echo $i
-        echo $SIG > .buildkey-$i
-        case "1" in
-         0)
-            ssh $i "cd $c_d ; ./build $SIG $PARSE $STD $BUILD_ARGS" &
-            ssh $i "cd $c_d ; ./build $SIG $PARSE $STD --without-crypto $BUILD_ARGS" &
-            ssh $i "cd $c_d ; ./build $SIG        $STD --disable-all-clocks $BUILD_ARGS" &
-            ;;
-         1)
-            cat > .flockbuild-$i-$SIG <<-ENDQUOT
+	echo flock-build running on $i? check LIST, skipping
+	;;
+     0)
+	echo $i
+	echo $SIG > .buildkey-$i
+	case "1" in
+	 0)
+	    ssh $i "cd $c_d ; ./build $SIG $PARSE $STD $BUILD_ARGS" &
+	    ssh $i "cd $c_d ; ./build $SIG $PARSE $STD --without-crypto $BUILD_ARGS" &
+	    ssh $i "cd $c_d ; ./build $SIG        $STD --disable-all-clocks $BUILD_ARGS" &
+	    ;;
+	 1)
+	    cat > .flockbuild-$i-$SIG <<-ENDQUOT
 		#!/bin/sh
 
 		# script uses job control and expects to be invoked
@@ -114,10 +119,10 @@ do
 		echo \`date -u '+%H:%M:%S'\` $i flock-build $c_d done.
 		rm .buildkey-$i
 ENDQUOT
-            chmod +x .flockbuild-$i-$SIG
-            ssh -tt $i "$c_d/.flockbuild-$i-$SIG ; \
-                      rm $c_d/.flockbuild-$i-$SIG" 2>/dev/null &
-        esac
+	    chmod +x .flockbuild-$i-$SIG
+	    ssh -tt $i "$c_d/.flockbuild-$i-$SIG ; \
+		rm $c_d/.flockbuild-$i-$SIG" 2>/dev/null &
+	esac
     esac
 done
 echo `date -u '+%H:%M:%S'` flock-build launched

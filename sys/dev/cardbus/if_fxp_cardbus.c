@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.49 2011/09/05 04:36:50 msaitoh Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.49.2.1 2012/04/17 00:07:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,10 +34,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.49 2011/09/05 04:36:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.49.2.1 2012/04/17 00:07:29 yamt Exp $");
 
 #include "opt_inet.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,9 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.49 2011/09/05 04:36:50 msaitoh 
 #include <sys/errno.h>
 #include <sys/device.h>
 
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>

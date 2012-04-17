@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.34 2011/06/02 00:23:28 christos Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.34.2.1 2012/04/17 00:07:30 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.34 2011/06/02 00:23:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.34.2.1 2012/04/17 00:07:30 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sparc_arch.h"
@@ -38,8 +38,9 @@ __KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.34 2011/06/02 00:23:28 christos Ex
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/cpu.h>
+#include <sys/kmem.h>
+#include <sys/malloc.h>
 
 #include <machine/autoconf.h>
 
@@ -122,7 +123,7 @@ const struct audio_hw_if audiocs_ebus_hw_if = {
 	cs4231_ebus_trigger_output,
 	cs4231_ebus_trigger_input,
 	NULL,			/* dev_ioctl */
-	NULL,			/* powerstate */
+	ad1848_get_locks,
 };
 
 #ifdef AUDIO_DEBUG
@@ -246,6 +247,8 @@ cs4231_ebus_attach(device_t parent, device_t self, void *aux)
 		printf(": unable to map capture DMA registers\n");
 		return;
 	}
+
+	ad1848_init_locks(&sc->sc_ad1848, IPL_SCHED);
 
 	/* establish interrupt channels */
 	for (i = 0; i < ea->ea_nintr; ++i)
@@ -540,6 +543,8 @@ cs4231_ebus_intr(void *arg)
 
 	ebsc = arg;
 	sc = &ebsc->sc_cs4231;
+	mutex_spin_enter(&sc->sc_ad1848.sc_intr_lock);
+
 	status = ADREAD(&sc->sc_ad1848, AD1848_STATUS);
 
 #ifdef AUDIO_DEBUG
@@ -580,6 +585,7 @@ cs4231_ebus_intr(void *arg)
 		ret = 1;
 	}
 
+	mutex_spin_exit(&sc->sc_ad1848.sc_intr_lock);
 
 	return ret;
 }
@@ -590,10 +596,10 @@ cs4231_ebus_pint(void *cookie)
 	struct cs4231_softc *sc = cookie;
 	struct cs_transfer *t = &sc->sc_playback;
 
-	KERNEL_LOCK(1, NULL);
+	mutex_spin_enter(&sc->sc_ad1848.sc_intr_lock);
 	if (t->t_intr != NULL)
 		(*t->t_intr)(t->t_arg);
-	KERNEL_UNLOCK_ONE(NULL);
+	mutex_spin_exit(&sc->sc_ad1848.sc_intr_lock);
 	return 0;
 }
 
@@ -603,9 +609,9 @@ cs4231_ebus_rint(void *cookie)
 	struct cs4231_softc *sc = cookie;
 	struct cs_transfer *t = &sc->sc_capture;
 
-	KERNEL_LOCK(1, NULL);
+	mutex_spin_enter(&sc->sc_ad1848.sc_intr_lock);
 	if (t->t_intr != NULL)
 		(*t->t_intr)(t->t_arg);
-	KERNEL_UNLOCK_ONE(NULL);
+	mutex_spin_exit(&sc->sc_ad1848.sc_intr_lock);
 	return 0;
 }

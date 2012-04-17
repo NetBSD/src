@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.h,v 1.1.1.3 2008/05/20 06:44:24 darrenr Exp $	*/
+/*	$NetBSD: ipmon.h,v 1.1.1.3.2.1 2012/04/17 00:02:24 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -90,8 +90,8 @@ typedef	struct	ipmon_action	{
 #define	LOGFAC	LOG_LOCAL0
 #endif
 
-extern	int	load_config __P((char *));
-extern	void	dumphex __P((FILE *, int, char *, int));
-extern	int	check_action __P((char *, char *, int, int));
-extern	char	*getword __P((int));
-extern	int	fac_findname __P((char *));
+extern	int	load_config(char *);
+extern	void	dumphex(FILE *, int, char *, int);
+extern	int	check_action(char *, char *, int, int);
+extern	char	*getword(int);
+extern	int	fac_findname(char *);

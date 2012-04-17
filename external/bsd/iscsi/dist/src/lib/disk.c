@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.6 2010/03/03 00:44:51 yamt Exp $ */
+/* $NetBSD: disk.c,v 1.6.6.1 2012/04/17 00:03:27 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -1397,7 +1397,7 @@ disk_write(target_session_t *sess, iscsi_scsi_cmd_args_t *args, uint8_t lun,
 		bytec, byte_offset);
 
 	if ((unsigned) bytec > MB(1)) {
-		iscsi_err(__FILE__, __LINE__, "bytec > %u\n", bytec);
+		iscsi_err(__FILE__, __LINE__, "bytec > %" PRIu64 "m\n", bytec);
 		NO_CLEANUP;
 		return -1;
 	}
@@ -1480,7 +1480,7 @@ disk_read(target_session_t *sess, iscsi_scsi_cmd_args_t *args, uint32_t lba,
 		return -1;
 	}
 	if ((unsigned) bytec > MB(1)) {
-		iscsi_err(__FILE__, __LINE__, "bytec > %u\n", bytec);
+		iscsi_err(__FILE__, __LINE__, "bytec > %" PRIu64 "\n", bytec);
 		NO_CLEANUP;
 		return -1;
 	}

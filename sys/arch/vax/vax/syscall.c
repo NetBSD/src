@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.19 2011/07/03 02:18:21 matt Exp $     */
+/*	$NetBSD: syscall.c,v 1.19.2.1 2012/04/17 00:07:01 yamt Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,18 +33,15 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.19 2011/07/03 02:18:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.19.2.1 2012/04/17 00:07:01 yamt Exp $");
 
 #include "opt_multiprocessor.h"
-#include "opt_sa.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
 #include <sys/ktrace.h>
 #include <sys/proc.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscall.h>
 #include <sys/syscallvar.h>
 
@@ -102,12 +99,6 @@ syscall(struct trapframe *tf)
 			goto bad;
 	}
 
-#ifdef KERN_SA
-	if (__predict_false((l->l_savp)
-            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
-		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
-#endif
-
 	/*
 	 * Only trace if tracing is enabled and the syscall isn't indirect
 	 * (SYS_syscall or SYS___syscall)
@@ -157,4 +148,14 @@ child_return(void *arg)
 
 	userret(l, l->l_md.md_utf, 0);
 	ktrsysret(SYS_fork, 0, 0);
+}
+
+/*
+ * Process the tail end of a posix_spawn() for the child.
+ */
+void
+cpu_spawn_return(struct lwp *l)
+{
+
+	userret(l, l->l_md.md_utf, 0);
 }

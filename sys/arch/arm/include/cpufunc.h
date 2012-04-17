@@ -213,6 +213,10 @@ void	cpufunc_domains		(u_int);
 u_int	cpufunc_faultstatus	(void);
 u_int	cpufunc_faultaddress	(void);
 
+#if defined(CPU_ARM2) || defined(CPU_ARM250) || defined(CPU_ARM3)
+void	arm3_cache_flush	(void);
+#endif	/* CPU_ARM2 || CPU_ARM250 || CPU_ARM3 */
+
 #ifdef CPU_ARM2
 u_int	arm2_id			(void);
 #endif /* CPU_ARM2 */
@@ -223,7 +227,6 @@ u_int	arm250_id		(void);
 
 #ifdef CPU_ARM3
 u_int	arm3_control		(u_int, u_int);
-void	arm3_cache_flush	(void);
 #endif	/* CPU_ARM3 */
 
 #if defined(CPU_ARM6) || defined(CPU_ARM7)
@@ -686,19 +689,6 @@ u_int	set_r15(u_int, u_int);
 u_int	get_r15(void);
 #endif /* __PROG32 */
 
-/*
- * Functions to manipulate cpu r13
- * (in arm/arm32/setstack.S)
- */
-
-void set_stackptr	(u_int, u_int);
-u_int get_stackptr	(u_int);
-
-/*
- * Miscellany
- */
-
-int get_pc_str_offset	(void);
 
 /*
  * CPU functions from locore.S
@@ -727,6 +717,24 @@ extern int	arm_dcache_align;
 extern int	arm_dcache_align_mask;
 
 #endif	/* _KERNEL */
+
+#if defined(_KERNEL) || defined(_KMEMUSER)
+/*
+ * Miscellany
+ */
+
+int get_pc_str_offset	(void);
+
+/*
+ * Functions to manipulate cpu r13
+ * (in arm/arm32/setstack.S)
+ */
+
+void set_stackptr	(u_int, u_int);
+u_int get_stackptr	(u_int);
+
+#endif /* _KERNEL || _KMEMUSER */
+
 #endif	/* _ARM32_CPUFUNC_H_ */
 
 /* End of cpufunc.h */

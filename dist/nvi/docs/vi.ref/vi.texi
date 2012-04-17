@@ -1,5 +1,5 @@
 \input texinfo
-@c $NetBSD: vi.texi,v 1.2 2008/09/01 17:51:49 christos Exp $
+@c $NetBSD: vi.texi,v 1.2.4.1 2012/04/17 00:02:25 yamt Exp $
 @setfilename vi.ref.info
 
 @setchapternewpage off
@@ -18,6 +18,12 @@
 @comment      Id: vi.texi,v 8.1 2001/08/18 20:43:50 skimo Exp (Berkeley) Date: 2001/08/18 20:43:50
 @comment 
 @comment 
+
+@dircategory Editors
+@direntry
+* vi: (vi.info).                The vi editor.
+@end direntry
+
 @node Top,(dir),(dir),(dir)
 @menu
 * Vi Commands::

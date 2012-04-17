@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.143 2010/07/21 09:06:38 hannken Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.143.8.1 2012/04/17 00:08:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,11 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.143 2010/07/21 09:06:38 hannken Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_ipsec.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.143.8.1 2012/04/17 00:08:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,14 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.143 2010/07/21 09:06:38 hannken E
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/kernfs/kernfs.h>
-
-#ifdef IPSEC
-#include <sys/mbuf.h>
-#include <net/route.h>
-#include <netinet/in.h>
-#include <netinet6/ipsec.h>
-#include <netkey/key.h>
-#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -95,10 +83,6 @@ const struct kern_target kern_targets[] = {
      					     KFSstring,      VREG, READ_MODE  },
      { DT_REG, N("hostname"),  0,            KFShostname,    VREG, WRITE_MODE },
      { DT_REG, N("hz"),        &hz,          KFSint,         VREG, READ_MODE  },
-#ifdef IPSEC
-     { DT_DIR, N("ipsecsa"),   0,	     KFSipsecsadir,  VDIR, UDIR_MODE  },
-     { DT_DIR, N("ipsecsp"),   0,	     KFSipsecspdir,  VDIR, UDIR_MODE  },
-#endif
      { DT_REG, N("loadavg"),   0,            KFSavenrun,     VREG, READ_MODE  },
      { DT_REG, N("msgbuf"),    0,	     KFSmsgbuf,      VREG, READ_MODE  },
      { DT_REG, N("pagesize"),  &uvmexp.pagesize, KFSint,     VREG, READ_MODE  },
@@ -119,36 +103,12 @@ const struct kern_target subdir_targets[] = {
      { DT_DIR, N("."),         0,            KFSsubdir,      VDIR, DIR_MODE   },
      { DT_DIR, N(".."),        0,            KFSkern,        VDIR, DIR_MODE   },
 };
-#ifdef IPSEC
-const struct kern_target ipsecsa_targets[] = {
-/* NOTE: The name must be less than UIO_MX-16 chars in length */
-     /*        name            data          tag           type  ro/rw */
-     { DT_DIR, N("."),         0,            KFSipsecsadir,  VDIR, DIR_MODE   },
-     { DT_DIR, N(".."),        0,            KFSkern,        VDIR, DIR_MODE   },
-};
-const struct kern_target ipsecsp_targets[] = {
-/* NOTE: The name must be less than UIO_MX-16 chars in length */
-     /*        name            data          tag           type  ro/rw */
-     { DT_DIR, N("."),         0,            KFSipsecspdir,  VDIR, DIR_MODE   },
-     { DT_DIR, N(".."),        0,            KFSkern,        VDIR, DIR_MODE   },
-};
-const struct kern_target ipsecsa_kt =
-     { DT_DIR, N(""),          0,            KFSipsecsa,     VREG, UREAD_MODE };
-const struct kern_target ipsecsp_kt =
-     { DT_DIR, N(""),          0,            KFSipsecsp,     VREG, UREAD_MODE };
-#endif
 #undef N
 SIMPLEQ_HEAD(,dyn_kern_target) dyn_kern_targets =
 	SIMPLEQ_HEAD_INITIALIZER(dyn_kern_targets);
 int nkern_targets = sizeof(kern_targets) / sizeof(kern_targets[0]);
 const int static_nkern_targets = sizeof(kern_targets) / sizeof(kern_targets[0]);
-#ifdef IPSEC
-int nipsecsa_targets = sizeof(ipsecsa_targets) / sizeof(ipsecsa_targets[0]);
-int nipsecsp_targets = sizeof(ipsecsp_targets) / sizeof(ipsecsp_targets[0]);
-int nkern_dirs = 4; /* 2 extra subdirs */
-#else
 int nkern_dirs = 2;
-#endif
 
 int kernfs_try_fileop(kfstype, kfsfileop, void *, int);
 int kernfs_try_xread(kfstype, const struct kernfs_node *, char **,
@@ -383,9 +343,6 @@ static int
 kernfs_xread(struct kernfs_node *kfs, int off, char **bufp, size_t len, size_t *wrlen)
 {
 	const struct kern_target *kt;
-#ifdef IPSEC
-	struct mbuf *m;
-#endif
 	int err;
 
 	kt = kfs->kfs_kt;
@@ -468,62 +425,6 @@ kernfs_xread(struct kernfs_node *kfs, int off, char **bufp, size_t len, size_t *
 		    averunnable.ldavg[2], averunnable.fscale);
 		break;
 
-#ifdef IPSEC
-	case KFSipsecsa:
-		if (key_setdumpsa_spi == NULL)
-			return 0;
-		/*
-		 * Note that SA configuration could be changed during the
-		 * read operation, resulting in garbled output.
-		 */
-		m = key_setdumpsa_spi(htonl(kfs->kfs_value));
-		if (!m)
-			return (ENOBUFS);
-		if (off >= m->m_pkthdr.len) {
-			*wrlen = 0;
-			m_freem(m);
-			return (0);
-		}
-		if (len > m->m_pkthdr.len - off)
-			len = m->m_pkthdr.len - off;
-		m_copydata(m, off, len, *bufp);
-		*wrlen = len;
-		m_freem(m);
-		return (0);
-
-	case KFSipsecsp:
-		/*
-		 * Note that SP configuration could be changed during the
-		 * read operation, resulting in garbled output.
-		 */
-		if (key_getspbyid == NULL)
-			return 0;
-		if (!kfs->kfs_v) {
-			struct secpolicy *sp;
-
-			sp = key_getspbyid(kfs->kfs_value);
-			if (sp)
-				kfs->kfs_v = sp;
-			else
-				return (ENOENT);
-		}
-		m = key_setdumpsp((struct secpolicy *)kfs->kfs_v,
-		    SADB_X_SPDGET, 0, 0);
-		if (!m)
-			return (ENOBUFS);
-		if (off >= m->m_pkthdr.len) {
-			*wrlen = 0;
-			m_freem(m);
-			return (0);
-		}
-		if (len > m->m_pkthdr.len - off)
-			len = m->m_pkthdr.len - off;
-		m_copydata(m, off, len, *bufp);
-		*wrlen = len;
-		m_freem(m);
-		return (0);
-#endif
-
 	default:
 		err = kernfs_try_xread(kfs->kfs_type, kfs, bufp, len,
 		    EOPNOTSUPP);
@@ -581,10 +482,6 @@ kernfs_lookup(void *v)
 	const struct dyn_kern_target *dkt;
 	const struct kernfs_subdir *ks;
 	int error, i;
-#ifdef IPSEC
-	char *ep;
-	u_int32_t id;
-#endif
 
 	*vpp = NULLVP;
 
@@ -641,50 +538,6 @@ kernfs_lookup(void *v)
 		}
 		break;
 
-#ifdef IPSEC
-	case KFSipsecsadir:
-		if (cnp->cn_flags & ISDOTDOT) {
-			kt = &kern_targets[0];
-			goto found;
-		}
-
-		for (i = 2; i < nipsecsa_targets; i++) {
-			kt = &ipsecsa_targets[i];
-			if (cnp->cn_namelen == kt->kt_namlen &&
-			    memcmp(kt->kt_name, pname, cnp->cn_namelen) == 0)
-				goto found;
-		}
-
-		ep = NULL;
-		id = strtoul(pname, &ep, 10);
-		if (!ep || *ep || ep == pname)
-			break;
-
-		error = kernfs_allocvp(dvp->v_mount, vpp, KFSipsecsa, &ipsecsa_kt, id);
-		return (error);
-
-	case KFSipsecspdir:
-		if (cnp->cn_flags & ISDOTDOT) {
-			kt = &kern_targets[0];
-			goto found;
-		}
-
-		for (i = 2; i < nipsecsp_targets; i++) {
-			kt = &ipsecsp_targets[i];
-			if (cnp->cn_namelen == kt->kt_namlen &&
-			    memcmp(kt->kt_name, pname, cnp->cn_namelen) == 0)
-				goto found;
-		}
-
-		ep = NULL;
-		id = strtoul(pname, &ep, 10);
-		if (!ep || *ep || ep == pname)
-			break;
-
-		error = kernfs_allocvp(dvp->v_mount, vpp, KFSipsecsp, &ipsecsp_kt, id);
-		return (error);
-#endif
-
 	default:
 		return (ENOTDIR);
 	}
@@ -701,38 +554,8 @@ kernfs_open(void *v)
 		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
-#ifdef IPSEC
-	struct mbuf *m;
-	struct secpolicy *sp;
-#endif
 
-	switch (kfs->kfs_type) {
-#ifdef IPSEC
-	case KFSipsecsa:
-		if (key_setdumpsa_spi == NULL)
-			return 0;
-		m = key_setdumpsa_spi(htonl(kfs->kfs_value));
-		if (m) {
-			m_freem(m);
-			return (0);
-		} else
-			return (ENOENT);
-
-	case KFSipsecsp:
-		if (key_getspbyid == NULL)
-			return 0;
-		sp = key_getspbyid(kfs->kfs_value);
-		if (sp) {
-			kfs->kfs_v = sp;
-			return (0);
-		} else
-			return (ENOENT);
-#endif
-
-	default:
-		return kernfs_try_fileop(kfs->kfs_type, KERNFS_FILEOP_OPEN,
-		    v, 0);
-	}
+	return kernfs_try_fileop(kfs->kfs_type, KERNFS_FILEOP_OPEN, v, 0);
 }
 
 int
@@ -745,36 +568,7 @@ kernfs_close(void *v)
 	} */ *ap = v;
 	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
 
-	switch (kfs->kfs_type) {
-#ifdef IPSEC
-	case KFSipsecsp:
-		if (key_freesp == NULL)
-			return 0;
-		key_freesp((struct secpolicy *)kfs->kfs_v);
-		break;
-#endif
-
-	default:
-		return kernfs_try_fileop(kfs->kfs_type, KERNFS_FILEOP_CLOSE,
-		    v, 0);
-	}
-
-	return (0);
-}
-
-static int
-kernfs_check_possible(struct vnode *vp, mode_t mode)
-{
-
-	return 0;
-}
-
-static int
-kernfs_check_permitted(struct vattr *va, mode_t mode, kauth_cred_t cred)
-{
-
-	return genfs_can_access(va->va_type, va->va_mode, va->va_uid, va->va_gid,
-	    mode, cred);
+	return kernfs_try_fileop(kfs->kfs_type, KERNFS_FILEOP_CLOSE, v, 0);
 }
 
 int
@@ -791,13 +585,10 @@ kernfs_access(void *v)
 	if ((error = VOP_GETATTR(ap->a_vp, &va, ap->a_cred)) != 0)
 		return (error);
 
-	error = kernfs_check_possible(ap->a_vp, ap->a_mode);
-	if (error)
-		return error;
-
-	error = kernfs_check_permitted(&va, ap->a_mode, ap->a_cred);
-
-	return error;
+	return kauth_authorize_vnode(ap->a_cred,
+	    kauth_access_action(ap->a_mode, ap->a_vp->v_type, va.va_mode),
+	    ap->a_vp, NULL, genfs_can_access(va.va_type, va.va_mode,
+	    va.va_uid, va.va_gid, ap->a_mode, ap->a_cred));
 }
 
 static int
@@ -878,10 +669,6 @@ kernfs_getattr(void *v)
 	case KFSavenrun:
 	case KFSdevice:
 	case KFSmsgbuf:
-#ifdef IPSEC
-	case KFSipsecsa:
-	case KFSipsecsp:
-#endif
 		vap->va_nlink = 1;
 		total = 0;
 		do {
@@ -892,14 +679,6 @@ kernfs_getattr(void *v)
 		} while (error == 0 && nread != 0);
 		vap->va_bytes = vap->va_size = total;
 		break;
-
-#ifdef IPSEC
-	case KFSipsecsadir:
-	case KFSipsecspdir:
-		vap->va_nlink = 2;
-		vap->va_bytes = vap->va_size = DEV_BSIZE;
-		break;
-#endif
 
 	default:
 		error = kernfs_try_fileop(kfs->kfs_type,
@@ -941,7 +720,7 @@ kernfs_default_xread(void *v)
 	int error;
 
 	if (ap->a_vp->v_type == VDIR)
-		return (EOPNOTSUPP);
+		return EISDIR;
 
 	off = (int)uio->uio_offset;
 	/* Don't allow negative offsets */
@@ -1114,10 +893,6 @@ kernfs_readdir(void *v)
 	int error;
 	off_t *cookies = NULL;
 	int ncookies = 0, n;
-#ifdef IPSEC
-	struct secasvar *sav, *sav2;
-	struct secpolicy *sp;
-#endif
 
 	if (uio->uio_resid < UIO_MX)
 		return (EINVAL);
@@ -1268,143 +1043,6 @@ kernfs_readdir(void *v)
 		ncookies = n;
 		break;
 
-#ifdef IPSEC
-	case KFSipsecsadir:
-		/* count SA in the system */
-		n = 0;
-		if (&satailq == NULL)
-			return 0;
-		TAILQ_FOREACH(sav, &satailq, tailq) {
-			for (sav2 = TAILQ_FIRST(&satailq);
-			    sav2 != sav;
-			    sav2 = TAILQ_NEXT(sav2, tailq)) {
-				if (sav->spi == sav2->spi) {
-					/* multiple SA with same SPI */
-					break;
-				}
-			}
-			if (sav == sav2 || sav->spi != sav2->spi)
-				n++;
-		}
-
-		if (i >= nipsecsa_targets + n)
-			return (0);
-
-		if (ap->a_ncookies) {
-			ncookies = min(ncookies, (n - i));
-			cookies = malloc(ncookies * sizeof(off_t), M_TEMP,
-			    M_WAITOK);
-			*ap->a_cookies = cookies;
-		}
-
-		n = 0;
-		for (; i < nipsecsa_targets && uio->uio_resid >= UIO_MX; i++) {
-			kt = &ipsecsa_targets[i];
-			d.d_namlen = kt->kt_namlen;
-			if ((error = kernfs_setdirentfileno(&d, i, kfs,
-			    &kern_targets[0], kt, ap)) != 0)
-				break;
-			memcpy(d.d_name, kt->kt_name, kt->kt_namlen + 1);
-			d.d_type = kt->kt_type;
-			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
-				break;
-			if (cookies)
-				*cookies++ = i + 1;
-			n++;
-		}
-		if (error) {
-			ncookies = n;
-			break;
-		}
-
-		TAILQ_FOREACH(sav, &satailq, tailq) {
-			for (sav2 = TAILQ_FIRST(&satailq);
-			    sav2 != sav;
-			    sav2 = TAILQ_NEXT(sav2, tailq)) {
-				if (sav->spi == sav2->spi) {
-					/* multiple SA with same SPI */
-					break;
-				}
-			}
-			if (sav != sav2 && sav->spi == sav2->spi)
-				continue;
-			if (uio->uio_resid < UIO_MX)
-				break;
-			if ((error = kernfs_setdirentfileno_kt(&d, &ipsecsa_kt,
-			    sav->spi, ap)) != 0)
-				break;
-			d.d_namlen = snprintf(d.d_name, sizeof(d.d_name),
-			    "%u", ntohl(sav->spi));
-			d.d_type = DT_REG;
-			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
-				break;
-			if (cookies)
-				*cookies++ = i + 1;
-			n++;
-			i++;
-		}
-		ncookies = n;
-		break;
-
-	case KFSipsecspdir:
-		/* count SP in the system */
-		if (&sptailq == NULL)
-			return 0;
-
-		n = 0;
-		TAILQ_FOREACH(sp, &sptailq, tailq)
-			n++;
-
-		if (i >= nipsecsp_targets + n)
-			return (0);
-
-		if (ap->a_ncookies) {
-			ncookies = min(ncookies, (n - i));
-			cookies = malloc(ncookies * sizeof(off_t), M_TEMP,
-			    M_WAITOK);
-			*ap->a_cookies = cookies;
-		}
-
-		n = 0;
-		for (; i < nipsecsp_targets && uio->uio_resid >= UIO_MX; i++) {
-			kt = &ipsecsp_targets[i];
-			d.d_namlen = kt->kt_namlen;
-			if ((error = kernfs_setdirentfileno(&d, i, kfs,
-			    &kern_targets[0], kt, ap)) != 0)
-				break;
-			memcpy(d.d_name, kt->kt_name, kt->kt_namlen + 1);
-			d.d_type = kt->kt_type;
-			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
-				break;
-			if (cookies)
-				*cookies++ = i + 1;
-			n++;
-		}
-		if (error) {
-			ncookies = n;
-			break;
-		}
-
-		TAILQ_FOREACH(sp, &sptailq, tailq) {
-			if (uio->uio_resid < UIO_MX)
-				break;
-			if ((error = kernfs_setdirentfileno_kt(&d, &ipsecsp_kt,
-			    sp->id, ap)) != 0)
-				break;
-			d.d_namlen = snprintf(d.d_name, sizeof(d.d_name),
-			    "%u", sp->id);
-			d.d_type = DT_REG;
-			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
-				break;
-			if (cookies)
-				*cookies++ = i + 1;
-			n++;
-			i++;
-		}
-		ncookies = n;
-		break;
-#endif
-
 	default:
 		error = ENOTDIR;
 		break;
@@ -1432,38 +1070,8 @@ kernfs_inactive(void *v)
 		bool *a_recycle;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	const struct kernfs_node *kfs = VTOKERN(ap->a_vp);
-#ifdef IPSEC
-	struct mbuf *m;
-	struct secpolicy *sp;
-#endif
 
 	*ap->a_recycle = false;
-	switch (kfs->kfs_type) {
-#ifdef IPSEC
-	case KFSipsecsa:
-		if (key_setdumpsa_spi == NULL)
-			return 0;
-		m = key_setdumpsa_spi(htonl(kfs->kfs_value));
-		if (m)
-			m_freem(m);
-		else
-			*ap->a_recycle = true;
-		break;
-	case KFSipsecsp:
-		if (key_getspbyid == NULL)
-			return 0;
-		sp = key_getspbyid(kfs->kfs_value);
-		if (sp)
-			key_freesp(sp);
-		else {
-			*ap->a_recycle = true;
-		}
-		break;
-#endif
-	default:
-		break;
-	}
 	VOP_UNLOCK(vp);
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.81 2011/05/28 15:33:41 christos Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.81.4.1 2012/04/17 00:08:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -82,15 +82,6 @@ struct sigctx {
 	sigset_t	ps_sigcatch;	/* Signals being caught by user. */
 };
 
-/*
- * Storage for items that may be either per-LWP (1:1 threads) or
- * per-process (SA threads).
- */
-typedef struct sigstore {
-	stack_t		ss_stk;		/* p: sp & on stack state variable */
-	sigset_t	ss_mask;	/* p: signal mask */
-} sigstore_t;
-
 /* additional signal action values, used only temporarily/internally */
 #define	SIG_CATCH	(void (*)(int))2
 
@@ -171,16 +162,13 @@ void	kpsendsig(struct lwp *, const struct ksiginfo *, const sigset_t *);
 void	sendsig_reset(struct lwp *, int);
 void	sendsig(const struct ksiginfo *, const sigset_t *);
 
-siginfo_t *siginfo_alloc(int);
-void	siginfo_free(void *);
-
 ksiginfo_t	*ksiginfo_alloc(struct proc *, ksiginfo_t *, int);
 void	ksiginfo_free(ksiginfo_t *);
 void	ksiginfo_queue_drain0(ksiginfoq_t *);
 
 struct sys_____sigtimedwait50_args;
 int	sigtimedwait1(struct lwp *, const struct sys_____sigtimedwait50_args *,
-		      register_t *, copyout_t, copyin_t, copyout_t);
+    register_t *, copyin_t, copyout_t, copyin_t, copyout_t);
 
 void	signotify(struct lwp *);
 int	sigispending(struct lwp *, int);

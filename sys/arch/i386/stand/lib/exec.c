@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.48 2011/07/17 20:54:41 joerg Exp $	 */
+/*	$NetBSD: exec.c,v 1.48.2.1 2012/04/17 00:06:30 yamt Exp $	 */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -169,6 +169,12 @@ void
 splash_add(char *name)
 {
 	return module_add_common(name, BM_TYPE_IMAGE);
+}
+
+void
+rnd_add(char *name)
+{
+	return module_add_common(name, BM_TYPE_RND);
 }
 
 static void
@@ -579,8 +585,19 @@ module_init(const char *kernel_path)
 			strncpy(bi->path, bm->bm_path, sizeof(bi->path) - 1);
 			bi->base = image_end;
 			bi->len = len;
-			bi->type = bm->bm_type == BM_TYPE_KMOD ?
-			    BI_MODULE_ELF : BI_MODULE_IMAGE;
+			switch (bm->bm_type) {
+			    case BM_TYPE_KMOD:
+				bi->type = BI_MODULE_ELF;
+				break;
+			    case BM_TYPE_IMAGE:
+				bi->type = BI_MODULE_IMAGE;
+				break;
+			    case BM_TYPE_RND:
+			    default:
+				/* safest -- rnd checks the sha1 */
+				bi->type = BI_MODULE_RND;
+				break;
+			}
 			if ((howto & AB_SILENT) == 0)
 				printf(" \n");
 		}

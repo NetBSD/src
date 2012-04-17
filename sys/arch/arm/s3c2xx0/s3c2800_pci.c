@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.16 2011/07/01 20:31:39 dyoung Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.16.2.1 2012/04/17 00:06:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.16 2011/07/01 20:31:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.16.2.1 2012/04/17 00:06:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -293,10 +293,10 @@ sspci_attach(struct device *parent, struct device *self, void *aux)
 
 #if defined(PCI_NETBSD_CONFIGURE)
 	ioext = extent_create("pciio", 0x100, S3C2800_PCI_IOSPACE_SIZE - 0x100,
-	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_NOWAIT);
 
 	memext = extent_create("pcimem", 0, S3C2800_PCI_MEMSPACE_SIZE,
-	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+	    NULL, 0, EX_NOWAIT);
 
 	sspci_chipset.pc_conf_v = (void *) sc;
 	sspci_chipset.pc_intr_v = (void *) sc;

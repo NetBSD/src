@@ -1,4 +1,4 @@
-/*	$NetBSD: dfdiv.c,v 1.4 2007/02/22 05:46:29 thorpej Exp $	*/
+/*	$NetBSD: dfdiv.c,v 1.4.80.1 2012/04/17 00:06:26 yamt Exp $	*/
 
 /*	$OpenBSD: dfdiv.c,v 1.4 2001/03/29 03:58:17 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dfdiv.c,v 1.4 2007/02/22 05:46:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dfdiv.c,v 1.4.80.1 2012/04/17 00:06:26 yamt Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/dbl_float.h"
@@ -52,10 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: dfdiv.c,v 1.4 2007/02/22 05:46:29 thorpej Exp $");
  */
 
 int
-dbl_fdiv(srcptr1,srcptr2,dstptr,status)
-
-dbl_floating_point *srcptr1, *srcptr2, *dstptr;
-unsigned int *status;
+dbl_fdiv(dbl_floating_point *srcptr1, dbl_floating_point *srcptr2,
+    dbl_floating_point *dstptr, unsigned int *status)
 {
 	register unsigned int opnd1p1, opnd1p2, opnd2p1, opnd2p2;
 	register unsigned int opnd3p1, opnd3p2, resultp1, resultp2;

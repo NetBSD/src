@@ -1,5 +1,5 @@
-/*	Id: local.c,v 1.156 2011/07/06 08:29:54 ragge Exp 	*/	
-/*	$NetBSD: local.c,v 1.1.1.4 2011/09/01 12:46:34 plunky Exp $	*/
+/*	Id: local.c,v 1.158 2011/11/13 22:35:18 gmcgarry Exp 	*/	
+/*	$NetBSD: local.c,v 1.1.1.4.2.1 2012/04/17 00:04:03 yamt Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -101,6 +101,7 @@ picsymtab(char *p, char *s, char *s2)
 	sp->sap = NULL;
 	sp->sclass = EXTERN;
 	sp->sflags = sp->slevel = 0;
+	sp->stype = 0xdeadbeef;
 	return sp;
 }
 
@@ -177,6 +178,9 @@ picext(NODE *p)
 		sp = picsymtab("L", pspn, buf2);
 		addstub(&nlplist, pspn);
 	}
+
+	sp->stype = p->n_sp->stype;
+
 	q = tempnode(gotnr, PTR+VOID, 0, 0);
 	r = xbcon(0, sp, INT);
 	q = buildtree(PLUS, q, r);
@@ -750,6 +754,10 @@ fixnames(NODE *p, void *arg)
 		    ((c = strstr(sp->soname, "$non_lazy_ptr")) == NULL &&
 		    (c = strstr(sp->soname, "-L")) == NULL))
 				cerror("fixnames2");
+
+		if (!ISFTN(sp->stype))
+			return; /* function pointer */
+
 		if (isu) {
 			*c = 0;
 			addstub(&stublist, sp->soname+1);
@@ -1005,8 +1013,18 @@ defzero(struct symtab *sp)
 	off /= SZCHAR;
 #if defined(MACHOABI)
 	al = ispow2(al);
-#endif
-
+	if (sp->sclass == STATIC) {
+		if (sp->slevel == 0)
+			printf("\t.lcomm %s,0%o,%d\n", name, off, al);
+		else
+			printf("\t.lcomm  " LABFMT ",0%o,%d\n", sp->soffset, off, al);
+	} else {
+		if (sp->slevel == 0)
+			printf("\t.comm %s,0%o,%d\n", name, off, al);
+		else
+			printf("\t.comm  " LABFMT ",0%o,%d\n", sp->soffset, off, al);
+	}
+#else
 	if (sp->sclass == STATIC) {
 		if (sp->slevel == 0) {
 			printf("\t.local %s\n", name);
@@ -1017,6 +1035,7 @@ defzero(struct symtab *sp)
 		printf("\t.comm %s,0%o,%d\n", name, off, al);
 	else
 		printf("\t.comm  " LABFMT ",0%o,%d\n", sp->soffset, off, al);
+#endif
 }
 
 static char *
@@ -1105,8 +1124,6 @@ mypragma(char *str)
 		alias = tmpstrdup(a2);
 		return 1;
 	}
-	if (strcmp(str, "ident") == 0)
-		return 1; /* Just ignore */
 
 	return 0;
 }

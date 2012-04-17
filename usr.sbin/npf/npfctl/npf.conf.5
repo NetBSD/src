@@ -1,6 +1,6 @@
-.\"	$NetBSD: npf.conf.5,v 1.5 2011/03/22 07:31:42 jruoho Exp $
+.\"    $NetBSD: npf.conf.5,v 1.5.4.1 2012/04/17 00:09:50 yamt Exp $
 .\"
-.\" Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This material is based upon work partially supported by The
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 22, 2011
+.Dd February 5, 2012
 .Dt NPF.CONF 5
 .Os
 .Sh NAME
@@ -80,20 +80,26 @@ which are applied for all packets of a connection.
 .Pp
 Definitions (prefixed with "$") and tables (specified by an ID within
 "\*[Lt]\*[Gt]" marks) can be used in the filter options of rules.
-.Ss Rule procedures and normalization
+.Ss Rule procedures and normalisation
 Rule procedures are provided to perform packet transformations and various
 additional procedures on the packets.
 It should be noted that rule procedures are applied for the connections,
 that is, both for packets which match the rule and for further packets
 of the connection, which are passed without ruleset inspection.
 Currently, two facilities are supported:
-traffic normalization and packet logging.
-Packet normalization has the following functionality:
-IP ID randomization, IP_DF flag cleansing, TCP minimum TTL enforcement,
+traffic normalisation and packet logging.
+Packet normalisation has the following functionality:
+IP ID randomisation, IP_DF flag cleansing, TCP minimum TTL enforcement,
 and maximum MSS enforcement ("MSS clamping").
-If a matching rule is going to drop the packet, normalization functions
+If a matching rule is going to drop the packet, normalisation functions
 are not performed.
 Packet logging is performed both in packet passing and blocking cases.
+Note that the logging interface has to be created manually, using
+.Xr ifconfig 8
+routine, for example:
+.Pp
+ifconfig npflog0 create
+.Pp
 .Ss Network address translation
 Rules for address translation can be added.
 Translation is performed on the specified interface, assigning the specified
@@ -141,7 +147,7 @@ rdr		= "rdr" iface filt-opts "->" \*[Lt]addr\*[Gt] port-opts
 
 rproc		= "procedure" \*[Lt]name\*[Gt] procs
 procs		= "{" op1 \*[Lt]newline\*[Gt], op2 \*[Lt]newline\*[Gt], ... "}"
-op		= ( "log" iface | "normalize" "(" norm-opt1 "," norm-opt2 ... ")" )
+op		= ( "log" iface | "normalise" "(" norm-opt1 "," norm-opt2 ... ")" )
 norm-opt	= [ "random-id" | "min-ttl" \*[Lt]num\*[Gt] | "max-mss" \*[Lt]num\*[Gt] | "no-df" ]
 
 group		= "group" "(" ( "default" | group-opts ) ")" ruleset
@@ -150,14 +156,14 @@ group-opts	= "interface" iface "," [ "in" | "out" ]
 ruleset		= "{" rule1 \*[Lt]newline\*[Gt], rule2 \*[Lt]newline\*[Gt], ... "}"
 
 rule		= ( "block" block-opts | "pass" ) [ "in" | out" ] [ "quick" ]
-		  [ "on" iface ] [ "inet" | "inet6" ] [ "proto" \*[Lt]protocol\*[Gt] ]
-		  ( "all" | filt-opts [ "flags" \*[Lt]tcp_flags> \*[Gt] )
-		  [ "keep state" ] [ "apply" rproc }
+		  [ "on" iface ] [ "family" fam-opt ] [ "proto" \*[Lt]protocol\*[Gt] ]
+		  ( "all" | filt-opts ) [ "keep state" ] [ "apply" rproc ] }
 
+fam-opt		= [ "inet" | "inet6" ]
 block-opts	= [ "return-rst" | "return-icmp" | "return" ]
-filt-opts	= [ "from" ( iface | def | \*[Lt]addr/mask\*[Gt] | \*[Lt]tid\*[Gt] ) port-opts ]
-		  [ "to" ( iface | def | \*[Lt]addr/mask\*[Gt] | \*[Lt]tid\*[Gt] ) port-opts ]
-port-opts	= [ "port" ( \*[Lt]port-num\*[Gt] | \*[Lt]port-from\*[Gt] ":" \*[Lt]port-to\*[Gt] | def ) ]
+filt-addr	= iface | def | \*[Lt]addr/mask\*[Gt] | \*[Lt]tid\*[Gt]
+port-opts	= [ "port" ( \*[Lt]port-num\*[Gt] | \*[Lt]port-from\*[Gt] "-" \*[Lt]port-to\*[Gt] | def ) ]
+filt-opts	= [ "from" filt-addr [ port-opts ] ] [ "to" filt-addr [ port-opts ] ]
 proto-opts	= [ "flags" \*[Lt]tcp_flags\*[Gt] | "icmp-type" \*[Lt]type\*[Gt] "code" \*[Lt]code\*[Gt] ]
 .Ed
 .\" -----
@@ -171,34 +177,34 @@ default configuration file
 .\" -----
 .Sh EXAMPLES
 .Bd -literal
-ext_if = "wm0"
-int_if = "wm1"
+$ext_if = "wm0"
+$int_if = "wm1"
 
-services_tcp = "{ http, https, smtp, domain, 6000 }"
-services_udp = "{ domain, ntp, 6000 }"
+$services_tcp = { http, https, smtp, domain, 6000 }
+$services_udp = { domain, ntp, 6000 }
 
-table "1" type "hash" file "/etc/npf_blacklist"
-table "2" type "tree" dynamic
+table <1> type hash file "/etc/npf_blacklist"
+table <2> type tree dynamic
 
 nat $ext_if from 192.168.0.0/24 to any -> $ext_if
 
 procedure "log" {
-	log npflog0
+	log: npflog0
 }
 
 procedure "rid" {
-	normalize (random-id)
+	normalise: "random-id"
 }
 
 group (name "external", interface $ext_if) {
 	block in quick from \*[Lt]1\*[Gt]
 	pass out quick from $ext_if keep state apply "rid"
 
-	pass in quick inet proto tcp to $ext_if port ssh apply "log"
+	pass in quick family inet proto tcp to $ext_if port ssh apply "log"
 	pass in quick proto tcp to $ext_if port $services_tcp
 	pass in quick proto udp to $ext_if port $services_udp
-	pass in quick proto tcp to $ext_if port 49151:65535	# Passive FTP
-	pass in quick proto udp to $ext_if port 33434:33600	# Traceroute
+	pass in quick proto tcp to $ext_if port 49151-65535	# Passive FTP
+	pass in quick proto udp to $ext_if port 33434-33600	# Traceroute
 }
 
 group (name "internal", interface $int_if) {

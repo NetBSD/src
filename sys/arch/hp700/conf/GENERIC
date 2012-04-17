@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.107 2011/03/06 17:08:24 bouyer Exp $
+# $NetBSD: GENERIC,v 1.107.4.1 2012/04/17 00:06:21 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.107 $"
+#ident 		"GENERIC-$Revision: 1.107.4.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -37,9 +37,9 @@ options 	HP8000_CPU		# PCX-U  (in 32bit mode)
 options 	HP8200_CPU		# PCX-V/U+ (in 32bit mode)
 options 	HP8500_CPU		# PCX-W  (in 32bit mode)
 options 	HP8600_CPU		# PCX-W+ (in 32bit mode)
+options 	HP8700_CPU		# PCX-W2 (in 32bit mode)
 
 # CPU-related options.
-options 	FPEMUL		# floating point emulation XXX DO NOT REMOVE
 options 	USELEDS		# blink 'em
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
@@ -56,7 +56,6 @@ options 	KTRACE		# system call tracing via ktrace(1)
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 options 	USERCONF	# userconf(4) support
 
@@ -113,7 +112,7 @@ file-system	TMPFS		# Efficient memory file-system
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -229,12 +228,6 @@ pdc0	at mainbus0		# PDC/IODC wrapper for boot console
 power0	at mainbus0		# power/fail manager
 lcd0	at mainbus0		# LCD
 
-# STI graphics
-sti*	at mainbus0		# [H]CRX-{8,24,48}[Z] and Visualize graphics
-sti*	at phantomas?		# [H]CRX-{8,24,48}[Z] and Visualize graphics
-#sti*	at uturn?
-sti*	at pci?			# EG-PCI, FX*
-
 # Basic Bus Support
 lasi*	at mainbus0		# LASI host adapter ( LSI PN??? )
 asp*	at mainbus0		# this one comes w/ Viper and leds
@@ -261,7 +254,6 @@ uturn0	at mainbus0		# U2/UTurn Runway IOA
 uturn1	at mainbus0
 lasi*	at uturn?		# LASI on [CJ]*
 dino*	at uturn?		# PCI bus bridge
-#sti*	at uturn?		#
 #wax*	at uturn?		# Wax on C*
 
 #gecko*	at uturn?		# GeckoBOA
@@ -295,6 +287,12 @@ eisa*	at mongoose?
 #vme*	at vmeb?
 
 # Console Devices
+
+# STI graphics
+sti*	at mainbus0		# [H]CRX-{8,24,48}[Z] and Visualize graphics
+sti*	at phantomas?		# [H]CRX-{8,24,48}[Z] and Visualize graphics
+sti*	at uturn?
+sti*	at pci?			# EG-PCI, FX*
 
 # Human Interface Loop
 hil*		at gsc? irq 1	# Human Interface Loop, kbd and mouse
@@ -762,7 +760,6 @@ pseudo-device   accf_http		# "httpready" accept filter
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port hp700 yet.
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
 

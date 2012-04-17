@@ -1,7 +1,7 @@
-/*	$NetBSD: joy_ofisa.c,v 1.14 2008/04/28 20:23:54 martin Exp $	*/
+/*	$NetBSD: joy_ofisa.c,v 1.14.34.1 2012/04/17 00:07:42 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_ofisa.c,v 1.14 2008/04/28 20:23:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_ofisa.c,v 1.14.34.1 2012/04/17 00:07:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,10 +47,15 @@ __KERNEL_RCSID(0, "$NetBSD: joy_ofisa.c,v 1.14 2008/04/28 20:23:54 martin Exp $"
 
 #define	JOY_NPORTS	1	/* XXX should be in a header file */
 
+struct joy_ofisa_softc {
+	struct joy_softc sc_joy;
+	kmutex_t sc_lock;
+};
+
 static int	joy_ofisa_match(device_t, cfdata_t, void *);
 static void	joy_ofisa_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(joy_ofisa, sizeof(struct joy_softc),
+CFATTACH_DECL_NEW(joy_ofisa, sizeof(struct joy_ofisa_softc),
     joy_ofisa_match, joy_ofisa_attach, NULL, NULL);
 
 static int
@@ -71,7 +76,8 @@ joy_ofisa_match(device_t parent, cfdata_t match, void *aux)
 static void
 joy_ofisa_attach(device_t parent, device_t self, void *aux)
 {
-	struct joy_softc *sc = device_private(self);
+	struct joy_ofisa_softc *osc = device_private(self);
+	struct joy_softc *sc = &osc->sc_joy;
 	struct ofisa_attach_args *aa = aux;
 	struct ofisa_reg_desc reg;
 	char *model = NULL;
@@ -118,6 +124,9 @@ joy_ofisa_attach(device_t parent, device_t self, void *aux)
 	if (model != NULL)
 		aprint_normal(": %s", model);
 	aprint_normal("\n");
+
+	mutex_init(&osc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	sc->sc_lock = &osc->sc_lock;
 
 	joyattach(sc);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vfsops.c,v 1.4 2011/07/30 03:53:18 uch Exp $	*/
+/*	$NetBSD: v7fs_vfsops.c,v 1.4.2.1 2012/04/17 00:08:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.4 2011/07/30 03:53:18 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.4.2.1 2012/04/17 00:08:21 yamt Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -42,7 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.4 2011/07/30 03:53:18 uch Exp $");
 #include <sys/time.h>
 #include <sys/ucred.h>
 #include <sys/mount.h>
-#include <sys/disklabel.h>
+#include <sys/disk.h>
+#include <sys/device.h>
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/kauth.h>
@@ -157,7 +158,9 @@ v7fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		    (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
 		    (mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
-		error = genfs_can_mount(devvp, accessmode, l->l_cred);
+		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
+		    KAUTH_REQ_SYSTEM_MOUNT_DEVICE, mp, devvp,
+		    KAUTH_ARG(accessmode));
 	}
 
 	if (error) {
@@ -189,17 +192,16 @@ v7fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 static int
 is_v7fs_partition(struct vnode *devvp)
 {
-	struct partinfo dpart;
+	struct dkwedge_info dkw;
 	int error;
 
-	if ((error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED)) != 0) {
-		DPRINTF("VOP_IOCTL=%d\n", error);
+	if ((error = getdiskinfo(devvp, &dkw)) != 0) {
+		DPRINTF("getdiskinfo=%d\n", error);
 		return error;
 	}
-	DPRINTF("fstype=%d dtype=%d bsize=%d\n", dpart.part->p_fstype,
-	    dpart.disklab->d_type, dpart.disklab->d_secsize);
+	DPRINTF("ptype=%s size=%" PRIu64 "\n", dkw.dkw_ptype, dkw->dkw_size);
 
-	return (dpart.part->p_fstype == FS_V7) ? 0 : EINVAL;
+	return strcmp(dkw.dkw_ptype, DKW_PTYPE_V7) == 0 ? 0 : EINVAL;
 }
 
 static int

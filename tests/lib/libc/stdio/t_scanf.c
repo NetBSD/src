@@ -1,4 +1,4 @@
-/* $NetBSD: t_scanf.c,v 1.1 2011/07/08 06:38:04 jruoho Exp $ */
+/* $NetBSD: t_scanf.c,v 1.1.2.1 2012/04/17 00:09:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -37,9 +37,8 @@
 ATF_TC(sscanf_neghex);
 ATF_TC_HEAD(sscanf_neghex, tc)
 {
-
-	atf_tc_set_md_var(tc, "descr", \
-	    "PR lib/21691: %i and %x fail with negative hex numbers");
+	atf_tc_set_md_var(tc, "descr",
+	    "PR lib/21691: %%i and %%x fail with negative hex numbers");
 }
 
 ATF_TC_BODY(sscanf_neghex, tc)

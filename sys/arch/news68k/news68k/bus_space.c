@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.10 2008/04/28 20:23:30 martin Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.10.34.1 2012/04/17 00:06:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.10 2008/04/28 20:23:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.10.34.1 2012/04/17 00:06:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 		 * Intio space is direct-mapped in pmap_bootstrap(); just
 		 * do the translation.
 		 */
-		*bshp = (bus_space_handle_t)IIOV(bpa);
+		*bshp = (bus_space_handle_t)bpa;
 		return 0;
 	}
 

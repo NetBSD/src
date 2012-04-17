@@ -1,4 +1,4 @@
-/*	$NetBSD: fssvar.h,v 1.25 2011/02/24 09:38:57 hannken Exp $	*/
+/*	$NetBSD: fssvar.h,v 1.25.4.1 2012/04/17 00:07:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -57,9 +57,25 @@ struct fss_get {
 #define FSSIOCCLR	_IO('F', 2)			/* Unconfigure */
 #define FSSIOFSET	_IOW('F', 3, int)		/* Set flags */
 #define FSSIOFGET	_IOR('F', 4, int)		/* Get flags */
-#define FSSIOCSET50	_IOW('F', 0, struct fss_set)	/* Old configure */
-
 #ifdef _KERNEL
+#include <compat/sys/time_types.h>
+
+struct fss_set50 {
+	char		*fss_mount;	/* Mount point of file system */
+	char		*fss_bstore;	/* Path of backing store */
+	blksize_t	fss_csize;	/* Preferred cluster size */
+};
+
+struct fss_get50 {
+	char		fsg_mount[MNAMELEN]; /* Mount point of file system */
+	struct timeval50 fsg_time;	/* Time this snapshot was taken */
+	blksize_t	fsg_csize;	/* Current cluster size */
+	blkcnt_t	fsg_mount_size;	/* # clusters on file system */
+	blkcnt_t	fsg_bs_size;	/* # clusters on backing store */
+};
+
+#define FSSIOCSET50	_IOW('F', 0, struct fss_set50)	/* Old configure */
+#define FSSIOCGET50	_IOR('F', 1, struct fss_get50)	/* Old Status */
 
 #include <sys/bufq.h>
 

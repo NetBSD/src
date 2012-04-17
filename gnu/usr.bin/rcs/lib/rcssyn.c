@@ -1,4 +1,4 @@
-/*	$NetBSD: rcssyn.c,v 1.4 1996/10/15 07:00:26 veego Exp $	*/
+/*	$NetBSD: rcssyn.c,v 1.4.66.1 2012/04/17 00:05:10 yamt Exp $	*/
 
 /* RCS file syntactic analysis */
 
@@ -39,6 +39,13 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcssyn.c,v $
+ * Revision 1.4.66.1  2012/04/17 00:05:10  yamt
+ * sync with head
+ *
+ * Revision 1.5  2012/03/08 21:32:28  christos
+ * Teach rcs about the new cvs "commitid" keyword, so that we don't bitch each
+ * time we play with an RCS file maintained by CVS.
+ *
  * Revision 1.4  1996/10/15 07:00:26  veego
  * Merge rcs 5.7.
  *
@@ -176,6 +183,7 @@ char const
 	Kauthor[]   = "author",
 	Kbranch[]   = "branch",
 	Kcomment[]  = "comment",
+	Kcommitid[] = "commitid",
 	Kdate[]     = "date",
 	Kdesc[]     = "desc",
 	Kexpand[]   = "expand",
@@ -435,6 +443,17 @@ getdelta()
 	getkey(Knext);
 	Delta->next = num = getdnum();
 	getsemi(Knext);
+	if (getkeyopt(Kcommitid)) {
+	    if (nexttok == ID) {
+		Delta->commitid = NextString;
+		nextlex();
+	    } else {
+		fatserror("missing %s", Kcommitid);
+		Delta->commitid = NULL;
+	    }
+	    getsemi(Kcommitid);
+	} else
+	    Delta->commitid = NULL;
 	Delta->lockedby = 0;
 	Delta->log.string = 0;
 	Delta->selector = true;

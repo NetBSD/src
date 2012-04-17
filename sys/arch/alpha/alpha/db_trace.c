@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.27 2010/07/01 02:38:26 rmind Exp $ */
+/* $NetBSD: db_trace.c,v 1.27.8.1 2012/04/17 00:05:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.27 2010/07/01 02:38:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.27.8.1 2012/04/17 00:05:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.27 2010/07/01 02:38:26 rmind Exp $");
 
 #include <alpha/alpha/db_instruction.h>
 
-#include <ddb/db_sym.h> 
+#include <ddb/db_sym.h>
 #include <ddb/db_access.h>
 #include <ddb/db_variables.h>
 #include <ddb/db_output.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.27 2010/07/01 02:38:26 rmind Exp $");
  */
 struct prologue_info {
 	int	pi_reg_offset[32]; /* offset of registers in stack frame */
-	u_int32_t pi_regmask;	   /* which registers are in frame */
+	uint32_t pi_regmask;	   /* which registers are in frame */
 	int	pi_frame_size;	   /* frame size */
 };
 

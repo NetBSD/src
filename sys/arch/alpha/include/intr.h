@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.69 2011/06/07 00:48:31 matt Exp $ */
+/* $NetBSD: intr.h,v 1.69.2.1 2012/04/17 00:05:55 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
 
 #define	SCB_NIOVECS	SCB_VECTOIDX(SCB_SIZE - SCB_IOVECBASE)
 
-struct scbvec { 
+struct scbvec {
 	void	(*scb_func)(void *, u_long);
 	void	*scb_arg;
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.35 2010/04/05 07:22:22 joerg Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.35.8.1 2012/04/17 00:08:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.35 2010/04/05 07:22:22 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.35.8.1 2012/04/17 00:08:38 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.35 2010/04/05 07:22:22 joerg Exp $"
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #endif
+#include <netinet/if_inarp.h>
 
 struct eco_retryparms {
 	int	erp_delay;

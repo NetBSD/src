@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.36 2011/02/22 05:45:08 joerg Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.36.4.1 2012/04/17 00:05:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsdispatch.c,v 1.36 2011/02/22 05:45:08 joerg Exp $");
+__RCSID("$NetBSD: nsdispatch.c,v 1.36.4.1 2012/04/17 00:05:21 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -390,8 +390,7 @@ _nsdbtaddsrc(ns_dbt *dbt, const ns_src *src)
 	/* dbt->srclistsize already incremented */
 
 	modkey.name = src->name;
-	mod = bsearch(&modkey, _nsmod, _nsmodsize, sizeof(*_nsmod),
-	    _nsmodcmp);
+	mod = bsearch(&modkey, _nsmod, _nsmodsize, sizeof(*_nsmod), _nsmodcmp);
 	if (mod == NULL)
 		return (_nsloadmod(src->name, NULL));
 

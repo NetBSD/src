@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.25 2008/06/17 18:24:21 tsutsui Exp $	*/
+/*	$NetBSD: si.c,v 1.25.30.1 2012/04/17 00:06:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.25 2008/06/17 18:24:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.25.30.1 2012/04/17 00:06:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ si_match(device_t parent, cfdata_t cf, void *aux)
 	if (strcmp(ha->ha_name, "si"))
 		return 0;
 
-	addr = IIOV(ha->ha_address);
+	addr = (ha->ha_address);
 
 	if (badaddr((void *)addr, 1))
 		return 0;
@@ -182,7 +182,7 @@ si_attach(device_t parent, device_t self, void *aux)
 	ncr_sc->sc_channel.chan_id = 7;
 
 	/* soft reset DMAC */
-	sc->sc_regs = (void *)IIOV(DMAC_BASE);
+	sc->sc_regs = (void *)(DMAC_BASE);
 	sc->sc_regs->ctl = DC_CTL_RST;
 
 	ncr5380_attach(ncr_sc);

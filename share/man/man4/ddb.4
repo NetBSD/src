@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.147 2011/10/23 22:02:45 jym Exp $
+.\"	$NetBSD: ddb.4,v 1.147.2.1 2012/04/17 00:05:45 yamt Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd October 23, 2011
+.Dd February 12, 2012
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -120,8 +120,10 @@ from the keyboard:
 .It hp300
 \*[Lt]Shift\*[Gt]-\*[Lt]Reset\*[Gt]
 .It hp700
+\*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt] on PC style keyboards.
+.It ""
 +++++
-(five plus signs)
+(five plus signs) on PDC console
 .It ""
 \*[Lt]Break\*[Gt] on serial console.
 .It hpcarm
@@ -196,6 +198,17 @@ may be explicitly activated by the debugging code in the kernel
 if
 .Cm DDB
 is configured.
+.Pp
+Commands can be automatically run when
+.Nm
+is entered by using
+.Cd options DDB_COMMANDONENTER
+or by setting
+.Ar ddb.commandonenter
+with
+.Xr sysctl 8 .
+Multiple commands can be separated by a semi-colon.
+
 .Sh COMMAND SYNTAX
 The general command syntax is:
 .Bd -ragged -offset indent

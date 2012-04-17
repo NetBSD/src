@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.317 2011/10/31 13:01:42 yamt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.317.2.1 2012/04/17 00:08:41 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.317 2011/10/31 13:01:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.317.2.1 2012/04/17 00:08:41 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -171,6 +171,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.317 2011/10/31 13:01:42 yamt Exp $")
 #include <sys/md5.h>
 #endif
 #include <sys/lwp.h> /* for lwp0 */
+#include <sys/cprng.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -215,17 +216,12 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.317 2011/10/31 13:01:42 yamt Exp $")
 #include <netinet/tcp_congctl.h>
 #include <netinet/tcp_debug.h>
 
-#ifdef IPSEC
-#include <netinet6/ipsec.h>
-#include <netinet6/ipsec_private.h>
-#include <netkey/key.h>
-#endif /*IPSEC*/
 #ifdef INET6
 #include "faith.h"
 #if defined(NFAITH) && NFAITH > 0
 #include <net/if_faith.h>
 #endif
-#endif	/* IPSEC */
+#endif	/* INET6 */
 
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
@@ -1452,7 +1448,7 @@ findpcb:
 			tcp_fields_to_host(th);
 			goto dropwithreset_ratelim;
 		}
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 		if (inp && (inp->inp_socket->so_options & SO_ACCEPTCONN) == 0 &&
 		    ipsec4_in_reject(m, inp)) {
 			IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
@@ -1495,7 +1491,7 @@ findpcb:
 			tcp_fields_to_host(th);
 			goto dropwithreset_ratelim;
 		}
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 		if (in6p
 		    && (in6p->in6p_socket->so_options & SO_ACCEPTCONN) == 0
 		    && ipsec6_in_reject(m, in6p)) {
@@ -1804,7 +1800,7 @@ findpcb:
 				}
 #endif
 
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 				switch (af) {
 #ifdef INET
 				case AF_INET:
@@ -2260,7 +2256,7 @@ after_listen:
 				tp->rcv_scale = tp->request_r_scale;
 			}
 			TCP_REASS_LOCK(tp);
-			(void) tcp_reass(tp, NULL, (struct mbuf *)0, &tlen);
+			(void) tcp_reass(tp, NULL, NULL, &tlen);
 			/*
 			 * if we didn't have to retransmit the SYN,
 			 * use its rtt as our initial srtt & rtt var.
@@ -2584,7 +2580,7 @@ after_listen:
 			tp->rcv_scale = tp->request_r_scale;
 		}
 		TCP_REASS_LOCK(tp);
-		(void) tcp_reass(tp, NULL, (struct mbuf *)0, &tlen);
+		(void) tcp_reass(tp, NULL, NULL, &tlen);
 		tp->snd_wl1 = th->th_seq - 1;
 		/* fall into ... */
 
@@ -3175,7 +3171,7 @@ tcp_signature_getsav(struct mbuf *m, struct tcphdr *th)
 	/*
 	 * Look up an SADB entry which matches the address of the peer.
 	 */
-	sav = KEY_ALLOCSA(&dst, IPPROTO_TCP, htonl(TCP_SIG_SPI));
+	sav = KEY_ALLOCSA(&dst, IPPROTO_TCP, htonl(TCP_SIG_SPI), 0, 0);
 #else
 	if (ip)
 		sav = key_allocsa(AF_INET, (void *)&ip->ip_src,
@@ -3710,8 +3706,8 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 	 * the hash secrets.
 	 */
 	if (syn_cache_count == 0) {
-		syn_hash1 = arc4random();
-		syn_hash2 = arc4random();
+		syn_hash1 = cprng_fast32();
+		syn_hash2 = cprng_fast32();
 	}
 
 	SYN_HASHALL(sc->sc_hash, &sc->sc_src.sa, &sc->sc_dst.sa);
@@ -4064,7 +4060,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	}
 #endif
 
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(FAST_IPSEC)
 	/*
 	 * we make a copy of policy, instead of sharing the policy,
 	 * for better behavior in terms of SA lookup and dead SA removal.
@@ -4534,6 +4530,12 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	}
 	return (1);
 }
+
+/*
+ * syn_cache_respond: (re)send SYN+ACK.
+ *
+ * returns 0 on success.  otherwise returns an errno, typically ENOBUFS.
+ */
 
 int
 syn_cache_respond(struct syn_cache *sc, struct mbuf *m)

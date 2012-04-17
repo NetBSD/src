@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_passwd.c,v 1.36 2011/09/16 15:39:27 joerg Exp $	*/
+/*	$NetBSD: yp_passwd.c,v 1.36.2.1 2012/04/17 00:09:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from:  @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: yp_passwd.c,v 1.36 2011/09/16 15:39:27 joerg Exp $");
+__RCSID("$NetBSD: yp_passwd.c,v 1.36.2.1 2012/04/17 00:09:38 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -329,8 +329,7 @@ pwyp_process(const char *username, int argc, char **argv)
 static	int yflag;
 
 int
-yp_init(progname)
-	const char *progname;
+yp_init(const char *progname)
 {
 	int yppwd;
 

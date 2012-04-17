@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.10 2011/10/04 15:27:04 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.10.2.1 2012/04/17 00:05:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.10 2011/10/04 15:27:04 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.10.2.1 2012/04/17 00:05:27 yamt Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -169,7 +169,9 @@ private const struct termcapstr {
 	{ "kh", "send cursor home" },
 #define	T_at7	37
 	{ "@7", "send cursor end" },
-#define	T_str	38
+#define	T_kD	38
+	{ "kD", "send cursor delete" },
+#define	T_str	39
 	{ NULL, NULL }
 };
 
@@ -330,6 +332,7 @@ terminal_alloc(EditLine *el, const struct termcapstr *t, const char *cap)
 	char **tlist = el->el_terminal.t_str;
 	char **tmp, **str = &tlist[t - tstr];
 
+	(void) memset(termbuf, 0, sizeof(termbuf));
 	if (cap == NULL || *cap == '\0') {
 		*str = NULL;
 		return;
@@ -877,7 +880,7 @@ terminal_set(EditLine *el, const char *term)
 	if (strcmp(term, "emacs") == 0)
 		el->el_flags |= EDIT_DISABLED;
 
-	memset(el->el_terminal.t_cap, 0, TC_BUFSIZE);
+	(void) memset(el->el_terminal.t_cap, 0, TC_BUFSIZE);
 
 	i = tgetent(el->el_terminal.t_cap, term);
 
@@ -1030,6 +1033,11 @@ terminal_init_arrow(EditLine *el)
 	arrow[A_K_EN].key = T_at7;
 	arrow[A_K_EN].fun.cmd = ED_MOVE_TO_END;
 	arrow[A_K_EN].type = XK_CMD;
+
+	arrow[A_K_DE].name = STR("delete");
+	arrow[A_K_DE].key = T_kD;
+	arrow[A_K_DE].fun.cmd = ED_DELETE_NEXT_CHAR;
+	arrow[A_K_DE].type = XK_CMD;
 }
 
 
@@ -1262,6 +1270,8 @@ terminal_writec(EditLine *el, Int c)
 {
 	Char visbuf[VISUAL_WIDTH_MAX +1];
 	ssize_t vcnt = ct_visual_char(visbuf, VISUAL_WIDTH_MAX, c);
+	if (vcnt < 0)
+		vcnt = 0;
 	visbuf[vcnt] = '\0';
 	terminal_overwrite(el, visbuf, (size_t)vcnt);
 	terminal__flush(el);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.92 2011/07/02 01:26:29 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.92.2.1 2012/04/17 00:06:49 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.92 2011/07/02 01:26:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.92.2.1 2012/04/17 00:06:49 yamt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -108,24 +108,19 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	*l2->l_md.md_utf = *l1->l_md.md_utf;
 
 	/*
-	 * If specified, give the child a different stack.
+	 * If specified, give the child a different stack.  Make sure to
+	 * reserve enough at the top to store the previous LR.
 	 */
 	if (stack != NULL) {
-		l2->l_md.md_utf->tf_fixreg[1] = (register_t)stack + stacksize;
+		l2->l_md.md_utf->tf_fixreg[1] =	
+		    ((register_t)stack + stacksize - STACK_ALIGNBYTES)
+			& ~STACK_ALIGNBYTES;
 	}
 
 	/*
 	 * Now deal setting up the initial function and its argument.
 	 */
-	cpu_setfunc(l2, func, arg);
-}
-
-void
-cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
-{
-	extern void setfunc_trampoline(void);
-	struct pcb * const pcb = lwp_getpcb(l);
-	struct ktrapframe * const ktf = ktrapframe(l);
+	struct ktrapframe * const ktf = ktrapframe(l2);
 	struct callframe * const cf = ((struct callframe *)ktf) - 1;
 	struct switchframe * const sf = ((struct switchframe *)cf) - 1;
 
@@ -150,11 +145,11 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 #if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 	sf->sf_user_sr = pmap_kernel()->pm_sr[USER_SR]; /* again, just in case */
 #endif
-	pcb->pcb_sp = (register_t)sf;
-	pcb->pcb_kmapsr = 0;
-	pcb->pcb_umapsr = 0;
+	pcb2->pcb_sp = (register_t)sf;
+	pcb2->pcb_kmapsr = 0;
+	pcb2->pcb_umapsr = 0;
 #ifdef PPC_HAVE_FPU
-	pcb->pcb_flags = PSL_FE_DFLT;
+	pcb2->pcb_flags = PSL_FE_DFLT;
 #endif
 }
 
@@ -295,7 +290,7 @@ cpu_uarea_alloc(bool system)
 	 * Allocate a new physically contiguous uarea which can be
 	 * direct-mapped.
 	 */
-	error = uvm_pglistalloc(USPACE, 0, ptoa(physmem), 0, 0, &pglist, 1, 1);
+	error = uvm_pglistalloc(USPACE, 0, ~0UL, 0, 0, &pglist, 1, 1);
 	if (error) {
 		if (!system)
 			return NULL;
@@ -331,7 +326,7 @@ cpu_uarea_free(void *vva)
 		return false;
 
 	/*
-	 * Since the pages are physically contiguous, the vm_page structurs
+	 * Since the pages are physically contiguous, the vm_page structure
 	 * will be as well.
 	 */
 	struct vm_page *pg = PHYS_TO_VM_PAGE(PMAP_UNMAP_POOLPAGE(va));

@@ -1,4 +1,4 @@
-/*	$NetBSD: global.c,v 1.12 2008/02/04 01:07:01 dholland Exp $	*/
+/*	$NetBSD: global.c,v 1.12.26.1 2012/04/17 00:05:07 yamt Exp $	*/
 
 /*
  * global.c 		Larn is copyrighted 1986 by Noah Morgan.
@@ -21,7 +21,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: global.c,v 1.12 2008/02/04 01:07:01 dholland Exp $");
+__RCSID("$NetBSD: global.c,v 1.12.26.1 2012/04/17 00:05:07 yamt Exp $");
 #endif /* not lint */
 
 #include <string.h>
@@ -32,7 +32,7 @@ extern int      score[], dropflag;
 extern char     *what[], *who[];
 extern char     winner[];
 extern char     sciv[SCORESIZE + 1][26][2];
-extern char    *password;
+extern const char *password;
 
 /*
 	raiselevel()

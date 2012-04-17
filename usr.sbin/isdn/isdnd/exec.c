@@ -27,7 +27,7 @@
  *	exec.h - supplemental program/script execution
  *	----------------------------------------------
  *
- *	$Id: exec.c,v 1.10 2009/04/16 05:56:32 lukem Exp $ 
+ *	$Id: exec.c,v 1.10.6.1 2012/04/17 00:09:47 yamt Exp $ 
  *
  * $FreeBSD$
  *
@@ -316,7 +316,7 @@ upd_callstat_file(char *filename, int rotateflag)
 			return;
 		}
 
-		ret = fprintf(fp, "%ld %ld 1", (long)now, (long)now);
+		ret = fprintf(fp, "%jd %jd 1", (intmax_t)now, (intmax_t)now);
 		if (ret <= 0)
 			logit(LL_ERR, "ERROR, upd_callstat_file: fprintf failed: %s", strerror(errno));
 		
@@ -372,7 +372,7 @@ upd_callstat_file(char *filename, int rotateflag)
 				return;
 			}
 
-			ret = fprintf(nfp, "%ld %ld %d", (long)s, (long)l, n);
+			ret = fprintf(nfp, "%jd %jd %d", (intmax_t)s, (intmax_t)l, n);
 			if (ret <= 0)
 				logit(LL_ERR, "ERROR, upd_callstat_file: fprintf failed: %s", strerror(errno));
 			
@@ -382,7 +382,7 @@ upd_callstat_file(char *filename, int rotateflag)
 			n = 0;
 			s = now;
 
-			logit(LL_WRN, "upd_callstat_file: rotate %s, new s=%ld l=%ld n=%d", filename, s, l, n);
+			logit(LL_WRN, "upd_callstat_file: rotate %s, new s=%jd l=%jd n=%d", filename, (intmax_t)s, (intmax_t)l, n);
 		}				
 	}
 
@@ -393,7 +393,7 @@ upd_callstat_file(char *filename, int rotateflag)
 	 * leftovers from previous contents!
 	 */
 
-	ret = fprintf(fp, "%ld %ld %-3d", (long)s, (long)now, n);	
+	ret = fprintf(fp, "%jd %jd %-3d", (time_t)s, (time_t)now, n);	
 
 	if (ret <= 0)
 		logit(LL_ERR, "ERROR, upd_callstat_file: fprintf failed: %s", strerror(errno));

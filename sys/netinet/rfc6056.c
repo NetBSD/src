@@ -1,4 +1,4 @@
-/*	$NetBSD: rfc6056.c,v 1.3 2011/09/25 11:54:28 mrg Exp $	*/
+/*	$NetBSD: rfc6056.c,v 1.3.2.1 2012/04/17 00:08:41 yamt Exp $	*/
 
 /*
  * Copyright 2011 Vlad Balan
@@ -28,8 +28,13 @@
  *
  */
 
+/*
+ * see:
+ *	RFC 6056 Recommendations for Transport-Protocol Port Randomization
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfc6056.c,v 1.3 2011/09/25 11:54:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfc6056.c,v 1.3.2.1 2012/04/17 00:08:41 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -39,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: rfc6056.c,v 1.3 2011/09/25 11:54:28 mrg Exp $");
 #include <sys/uidinfo.h>
 #include <sys/domain.h>
 #include <sys/md5.h>
+#include <sys/cprng.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -427,7 +433,7 @@ algo_random_start(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
 
 	DPRINTF("num_ephemeral: %u\n", num_ephemeral);
 
-	*next_ephemeral = mymin + (arc4random() % num_ephemeral);
+	*next_ephemeral = mymin + (cprng_fast32() % num_ephemeral);
 
 	DPRINTF("next_ephemeral initially: %u\n", *next_ephemeral);
 
@@ -480,7 +486,7 @@ algo_random_pick(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
 	num_ephemeral = mymax - mymin + 1;
 
 	DPRINTF("num_ephemeral: %u\n", num_ephemeral);
-	*next_ephemeral = mymin + (arc4random() % num_ephemeral);
+	*next_ephemeral = mymin + (cprng_fast32() % num_ephemeral);
 
 	DPRINTF("next_ephemeral initially: %u\n", *next_ephemeral);
 
@@ -493,7 +499,7 @@ algo_random_pick(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
 			return 0;
 		}
 		*next_ephemeral = mymin +
-		    (arc4random() % num_ephemeral);
+		    (cprng_fast32() % num_ephemeral);
 
 		count--;
 
@@ -516,10 +522,7 @@ Fhash(const struct inpcb_hdr *inp_hdr)
 	uint32_t offset;
 	uint16_t soffset[2];
 
-	secret_f[0] = arc4random();
-	secret_f[1] = arc4random();
-	secret_f[2] = arc4random();
-	secret_f[3] = arc4random();
+	cprng_fast(secret_f, sizeof(secret_f));
 
 	MD5Init(&f_ctx);
 	switch (inp_hdr->inph_af) {
@@ -667,8 +670,9 @@ algo_doublehash(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
 	uint16_t count, num_ephemeral;
 	uint16_t mymin, mymax, lastport;
 	uint16_t *next_ephemeral;
-	uint16_t offset, idx, myport;
+	uint16_t offset, myport;
 	static uint16_t dhtable[8];
+	size_t idx;
 	int error;
 
 	DPRINTF("%s called\n", __func__);
@@ -690,7 +694,7 @@ algo_doublehash(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
 	/* Ephemeral port selection function */
 	num_ephemeral = mymax - mymin + 1;
 	offset = Fhash(inp_hdr);
-	idx = Fhash(inp_hdr);	/* G */
+	idx = Fhash(inp_hdr) % __arraycount(dhtable);	/* G */
 	count = num_ephemeral;
 
 	do {
@@ -732,7 +736,7 @@ algo_randinc(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
 		return error;
 
 	if (*next_ephemeral == 0)
-		*next_ephemeral = arc4random() & 0xffff;
+		*next_ephemeral = cprng_fast32() & 0xffff;
 
 	/* Ephemeral port selection function */
 	num_ephemeral = mymax - mymin + 1;
@@ -740,7 +744,7 @@ algo_randinc(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
 	count = num_ephemeral;
 	do {
 		*next_ephemeral = *next_ephemeral +
-		    (arc4random() % N) + 1;
+		    (cprng_fast32() % N) + 1;
 		myport = mymin +
 		    (*next_ephemeral % num_ephemeral);
 

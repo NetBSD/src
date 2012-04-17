@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.3 2011/04/28 17:32:48 bouyer Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.3.6.1 2012/04/17 00:07:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.3 2011/04/28 17:32:48 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.3.6.1 2012/04/17 00:07:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,10 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.3 2011/04/28 17:32:48 bouyer Exp $");
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
 
-#include "rnd.h"
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include "opt_inet.h"
 #include <net/if_ether.h>
@@ -175,12 +172,10 @@ vte_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t intrhandle;
 	const char *intrstr;
 	int error;
-	char devinfo[256];
 	const struct sysctlnode *node;
 	int vte_nodenum;
 
 	sc->vte_dev = self;
-	aprint_normal("\n");
 
 	callout_init(&sc->vte_tick_ch, 0);
 
@@ -210,8 +205,7 @@ vte_attach(device_t parent, device_t self, void *aux)
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 	    csr | PCI_COMMAND_MASTER_ENABLE);
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal_dev(self, "%s\n", devinfo);
+	pci_aprint_devinfo(pa, NULL);
 
 	/* Reset the ethernet controller. */
 	vte_reset(sc);
@@ -280,10 +274,9 @@ vte_attach(device_t parent, device_t self, void *aux)
 	else
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-#if NRND > 0
         rnd_attach_source(&sc->rnd_source, device_xname(self),
             RND_TYPE_NET, 0);
-#endif
+
 	if (sysctl_createv(&sc->vte_clog, 0, NULL, &node,
 	    0, CTLTYPE_NODE, device_xname(sc->vte_dev),
 	    SYSCTL_DESCR("vte per-controller controls"),
@@ -1180,10 +1173,7 @@ vte_rxeof(struct vte_softc *sc)
 		    (((VTE_RX_RING_CNT * 2) / 10) <<
 		    VTE_MRDCR_RX_PAUSE_THRESH_SHIFT));
 #endif
-#if NRND > 0
-        if (RND_ENABLED(&sc->rnd_source))
-		rnd_add_uint32(&sc->rnd_source, prog);
-#endif /* NRND > 0 */
+	rnd_add_uint32(&sc->rnd_source, prog);
 	}
 }
 

@@ -1,5 +1,5 @@
-/*	Id: local.c,v 1.65 2011/08/21 09:32:46 ragge Exp 	*/	
-/*	$NetBSD: local.c,v 1.1.1.3 2011/09/01 12:46:27 plunky Exp $	*/
+/*	Id: local.c,v 1.66 2012/03/23 17:03:09 ragge Exp 	*/	
+/*	$NetBSD: local.c,v 1.1.1.3.2.1 2012/04/17 00:04:02 yamt Exp $	*/
 /*
  * Copyright (c) 2008 Michael Shalayeff
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -538,8 +538,17 @@ myp2tree(NODE *p)
 	if (p->n_op != FCON)
 		return;
 
-	if (FLOAT_ISZERO(p->n_dcon))
-		return;
+#ifdef mach_amd64
+	{
+		/* Do not loose negative zeros */
+		long long *llp = (long long *)(&p->n_dcon);
+		short *ssp = (short *)&llp[1];
+		if (*llp == 0 && *ssp == 0)
+			return;
+	}
+#else
+#error fixme
+#endif
 
 	/* XXX should let float constants follow */
 	sp = IALLOC(sizeof(struct symtab));

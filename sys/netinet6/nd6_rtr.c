@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.81 2011/05/24 18:07:11 spz Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.81.4.1 2012/04/17 00:08:45 yamt Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.81 2011/05/24 18:07:11 spz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.81.4.1 2012/04/17 00:08:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.81 2011/05/24 18:07:11 spz Exp $");
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
+#include <sys/cprng.h>
 
 #include <net/if.h>
 #include <net/if_types.h>

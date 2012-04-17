@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_discovery.c,v 1.5 2011/06/20 06:22:23 matt Exp $	*/
+/*	$NetBSD: pic_discovery.c,v 1.5.2.1 2012/04/17 00:06:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -38,11 +38,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_discovery.c,v 1.5 2011/06/20 06:22:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_discovery.c,v 1.5.2.1 2012/04/17 00:06:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/intr.h>
 
 #include <powerpc/pic/picvar.h>
@@ -85,13 +85,12 @@ static void discovery_gpp_ack_irq(struct pic_ops *, int);
 
 
 struct pic_ops *
-setup_discovery_pic()
+setup_discovery_pic(void)
 {
 	struct discovery_pic_ops *discovery;
 	struct pic_ops *pic;
 
-	discovery =
-	    malloc(sizeof(struct discovery_pic_ops), M_DEVBUF, M_NOWAIT);
+	discovery = kmem_alloc(sizeof(*discovery), KM_SLEEP);
 	KASSERT(discovery != NULL);
 
 	pic = &discovery->pic;
@@ -166,8 +165,7 @@ setup_discovery_gpp_pic(void *discovery, int gpp_base)
 	struct discovery_gpp_pic_ops *discovery_gpp;
 	struct pic_ops *pic;
 
-	discovery_gpp =
-	    malloc(sizeof(struct discovery_gpp_pic_ops), M_DEVBUF, M_NOWAIT);
+	discovery_gpp = kmem_alloc(sizeof(*discovery_gpp), KM_SLEEP);
 	KASSERT(discovery_gpp != NULL);
 
 	pic = &discovery_gpp->pic;

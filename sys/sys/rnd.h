@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.21 2008/04/28 20:24:11 martin Exp $	*/
+/*	$NetBSD: rnd.h,v 1.21.34.1 2012/04/17 00:08:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,37 +38,32 @@
 #endif /* !_KERNEL */
 
 #include <sys/types.h>
+#include <sys/sha1.h>
 
 #ifdef _KERNEL
 #include <sys/queue.h>
+#endif
+
+#ifdef _KERNEL
+#include <sys/rngtest.h>
 #endif
 
 #define	RND_DEV_RANDOM	0	/* minor devices for random and kinda random */
 #define	RND_DEV_URANDOM	1
 
 /*
- * Size of entropy pool in 32-bit words.  This _MUST_ be a power of 2.  Don't
- * change this unless you really know what you are doing...
+ * Exposed "size" of entropy pool, for convenience in load/save
+ * from userspace.  Do not assume this is the same as the actual in-kernel
+ * pool size!
  */
-#ifndef RND_POOLWORDS
-#define	RND_POOLWORDS	128
-#endif
-#define	RND_POOLBITS	(RND_POOLWORDS * 32)
+#define RND_SAVEWORDS	128
+typedef struct {
+	uint32_t entropy;
+	uint8_t data[RND_SAVEWORDS * sizeof(uint32_t)];
+	uint8_t digest[SHA1_DIGEST_LENGTH];
+} rndsave_t;
 
-/*
- * Number of bytes returned per hash.  This value is used in both
- * rnd.c and rndpool.c to decide when enough entropy exists to do a
- * hash to extract it.
- */
-#define	RND_ENTROPY_THRESHOLD	10
-
-/*
- * Size of the event queue.  This _MUST_ be a power of 2.
- */
-#ifndef RND_EVENTQSIZE
-#define	RND_EVENTQSIZE	128
-#endif
-
+/* Statistics exposed by RNDGETPOOLSTAT */
 typedef struct
 {
 	uint32_t	poolsize;
@@ -82,25 +77,13 @@ typedef struct
 	uint32_t	generated;
 } rndpoolstat_t;
 
-
-typedef struct {
-	uint32_t	cursor;		/* current add point in the pool */
-	uint32_t	rotate;		/* how many bits to rotate by */
-	rndpoolstat_t	stats;		/* current statistics */
-	uint32_t	pool[RND_POOLWORDS]; /* random pool data */
-} rndpool_t;
-
+/* Sanitized random source view for userspace */
 typedef struct {
 	char		name[16];	/* device name */
-	uint32_t	last_time;	/* last time recorded */
-	uint32_t	last_delta;	/* last delta value */
-	uint32_t	last_delta2;	/* last delta2 value */
 	uint32_t	total;		/* entropy from this source */
 	uint32_t	type;		/* type */
 	uint32_t	flags;		/* flags */
-	void		*state;		/* state informaiton */
 } rndsource_t;
-
 
 /*
  * Flags to control the source.  Low byte is type, upper bits are flags.
@@ -113,28 +96,56 @@ typedef struct {
 #define	RND_TYPE_NET		2	/* source is a network device */
 #define	RND_TYPE_TAPE		3	/* source is a tape drive */
 #define	RND_TYPE_TTY		4	/* source is a tty device */
-#define	RND_TYPE_RNG		5	/* source is a random number
-					   generator */
-#define	RND_TYPE_MAX		5	/* last type id used */
+#define	RND_TYPE_RNG		5	/* source is a hardware RNG */
+#define RND_TYPE_SKEW		6	/* source is skew between clocks */
+#define RND_TYPE_ENV		7	/* source is temp or fan sensor */
+#define RND_TYPE_VM		8	/* source is VM system events */
+#define RND_TYPE_POWER		9	/* source is power events */
+#define	RND_TYPE_MAX		9	/* last type id used */
 
 #ifdef _KERNEL
-typedef struct __rndsource_element rndsource_element_t;
-
-struct __rndsource_element {
-	LIST_ENTRY(__rndsource_element) list; /* the linked list */
-	rndsource_t	data;		/* the actual data */
-};
-
 /*
- * Used by rnd_extract_data() and rndpool_extract_data() to describe how
- * "good" the data has to be.
+ * Size of entropy pool in 32-bit words.  This _MUST_ be a power of 2.  Don't
+ * change this unless you really know what you are doing...
  */
-#define	RND_EXTRACT_ANY		0  /* extract anything, even if no entropy */
-#define	RND_EXTRACT_GOOD	1  /* return as many good bytes
-				      (short read ok) */
+#ifndef RND_POOLWORDS
+#define RND_POOLWORDS	128
+#endif
+#define RND_POOLBITS	(RND_POOLWORDS * 32)
+
+typedef struct krndsource {
+	LIST_ENTRY(krndsource) list;	/* the linked list */
+        char            name[16];       /* device name */
+        uint32_t        last_time;      /* last time recorded */
+        uint32_t        last_delta;     /* last delta value */
+        uint32_t        last_delta2;    /* last delta2 value */
+        uint32_t        total;          /* entropy from this source */
+        uint32_t        type;           /* type */
+        uint32_t        flags;          /* flags */
+        void            *state;         /* state information */
+        size_t          test_cnt;       /* how much test data accumulated? */
+        rngtest_t	*test;          /* test data for RNG type sources */
+} krndsource_t;
+
+typedef struct rndsink {
+        TAILQ_ENTRY(rndsink) tailq;     /* the queue */
+	kmutex_t	mtx;		/* lock to seed or unregister */
+        void            (*cb)(void *);  /* callback function when ready */
+        void            *arg;           /* callback function argument */
+        char            name[16];       /* sink name */
+        size_t          len;            /* how many bytes wanted/supplied */
+        uint8_t         data[64];       /* random data returned here */
+} rndsink_t;
+
+typedef struct {
+        uint32_t        cursor;         /* current add point in the pool */
+        uint32_t        rotate;         /* how many bits to rotate by */
+        rndpoolstat_t   stats;          /* current statistics */
+        uint32_t        pool[RND_POOLWORDS]; /* random pool data */
+} rndpool_t;
 
 #define RND_ENABLED(rp) \
-        (((rp)->data.flags & RND_FLAG_NO_COLLECT) == 0)
+        (((rp)->flags & RND_FLAG_NO_COLLECT) == 0)
 
 void		rndpool_init(rndpool_t *);
 void		rndpool_init_global(void);
@@ -144,17 +155,29 @@ void		rndpool_increment_entropy_count(rndpool_t *, uint32_t);
 uint32_t	*rndpool_get_pool(rndpool_t *);
 uint32_t	rndpool_get_poolsize(void);
 void		rndpool_add_data(rndpool_t *, void *, uint32_t, uint32_t);
-uint32_t	rndpool_extract_data(rndpool_t *, void *, uint32_t,
-		    uint32_t);
-
+uint32_t	rndpool_extract_data(rndpool_t *, void *, uint32_t, uint32_t);
 void		rnd_init(void);
-void		rnd_add_uint32(rndsource_element_t *, uint32_t);
-void		rnd_add_data(rndsource_element_t *, void *, uint32_t,
+void		_rnd_add_uint32(krndsource_t *, uint32_t);
+void		rnd_add_data(krndsource_t *, const void *const, uint32_t,
 		    uint32_t);
-uint32_t	rnd_extract_data(void *, uint32_t, uint32_t);
-void		rnd_attach_source(rndsource_element_t *, const char *,
+void		rnd_attach_source(krndsource_t *, const char *,
 		    uint32_t, uint32_t);
-void		rnd_detach_source(rndsource_element_t *);
+void		rnd_detach_source(krndsource_t *);
+
+void		rndsink_attach(rndsink_t *);
+void		rndsink_detach(rndsink_t *);
+
+void		rnd_seed(void *, size_t);
+
+static inline void
+rnd_add_uint32(krndsource_t *kr, uint32_t val)
+{
+	if (RND_ENABLED(kr)) {
+		_rnd_add_uint32(kr, val);
+	}
+}
+
+extern int	rnd_full;
 
 #endif /* _KERNEL */
 
@@ -189,10 +212,14 @@ typedef struct {
 	uint32_t	mask;		/* mask for the flags we are setting */
 } rndctl_t;
 
+/*
+ * Add entropy to the pool.  len is the data length, in bytes.
+ * entropy is the number of bits of estimated entropy in the data.
+ */
 typedef struct {
 	uint32_t	len;
 	uint32_t	entropy;
-	u_char		data[RND_POOLWORDS * 4];
+	u_char		data[RND_SAVEWORDS * sizeof(uint32_t)];
 } rnddata_t;
 
 #define	RNDGETENTCNT	_IOR('R',  101, uint32_t) /* get entropy count */
@@ -200,6 +227,6 @@ typedef struct {
 #define	RNDGETSRCNAME	_IOWR('R', 103, rndstat_name_t) /* get src by name */
 #define	RNDCTL		_IOW('R',  104, rndctl_t)  /* set/clear source flags */
 #define	RNDADDDATA	_IOW('R',  105, rnddata_t) /* add data to the pool */
-#define	RNDGETPOOLSTAT	_IOR('R',  106, rndpoolstat_t)
+#define	RNDGETPOOLSTAT	_IOR('R',  106, rndpoolstat_t) /* get statistics */
 
 #endif /* !_SYS_RND_H_ */

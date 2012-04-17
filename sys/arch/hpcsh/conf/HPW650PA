@@ -1,4 +1,4 @@
-#	$NetBSD: HPW650PA,v 1.29 2010/05/01 11:35:41 tsutsui Exp $
+#	$NetBSD: HPW650PA,v 1.29.8.1 2012/04/17 00:06:25 yamt Exp $
 #
 #	HITACHI PERSONA HPW650PA
 #
@@ -97,6 +97,5 @@ pseudo-device	pty			# pseudo-terminals
 
 pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	loop			# network loopback
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 #pseudo-device	fss			# file system snapshot device

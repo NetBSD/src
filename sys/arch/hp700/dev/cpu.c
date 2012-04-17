@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.19 2011/02/01 18:33:24 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.19.4.1 2012/04/17 00:06:21 yamt Exp $	*/
 
 /*	$OpenBSD: cpu.c,v 1.29 2009/02/08 18:33:28 miod Exp $	*/
 
@@ -29,13 +29,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.19 2011/02/01 18:33:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.19.4.1 2012/04/17 00:06:21 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/atomic.h>
 #include <sys/reboot.h>
 
 #include <uvm/uvm.h>
@@ -45,15 +46,10 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.19 2011/02/01 18:33:24 skrll Exp $");
 #include <machine/iomod.h>
 #include <machine/autoconf.h>
 
+#include <hppa/hppa/cpuvar.h>
 #include <hp700/hp700/intr.h>
 #include <hp700/hp700/machdep.h>
 #include <hp700/dev/cpudevs.h>
-
-struct cpu_softc {
-	device_t sc_dev;
-	hppa_hpa_t sc_hpa;
-	void *sc_ih;
-};
 
 #ifdef MULTIPROCESSOR
 
@@ -133,7 +129,7 @@ cpuattach(device_t parent, device_t self, void *aux)
 	aprint_normal(" MHz clk\n%s: %s", self->dv_xname,
 	    pdc_model.sh? "shadows, ": "");
 
-	if (pdc_cache.dc_conf.cc_sh)
+	if (pdc_cache.dc_conf.cc_fsel)
 		aprint_normal("%uK cache", pdc_cache.dc_size / 1024);
 	else
 		aprint_normal("%uK/%uK D/I caches", pdc_cache.dc_size / 1024,
@@ -150,23 +146,14 @@ cpuattach(device_t parent, device_t self, void *aux)
 		aprint_normal(", %u/%u D/I BTLBs", pdc_btlb.finfo.num_i,
 		    pdc_btlb.finfo.num_d);
 	}
+	aprint_normal("\n");
 
 	/*
 	 * Describe the floating-point support.
 	 */
-#ifndef	FPEMUL
-	if (!fpu_present)
-		aprint_normal("\n%s: no floating point support",
-		    self->dv_xname);
-	else
-#endif /* !FPEMUL */
-	{
-		aprint_normal("\n%s: %s floating point, rev %d", self->dv_xname,
-		    hppa_mod_info(HPPA_TYPE_FPU, (fpu_version >> 16) & 0x1f),
-		    (fpu_version >> 11) & 0x1f);
-	}
-
-	aprint_normal("\n");
+	aprint_normal("%s: %s floating point, rev %d\n", self->dv_xname,
+	    hppa_mod_info(HPPA_TYPE_FPU, (fpu_version >> 16) & 0x1f),
+	    (fpu_version >> 11) & 0x1f);
 
 	/* sanity against luser amongst config editors */
 	if (ca->ca_irq != 31) {
@@ -174,7 +161,7 @@ cpuattach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	
-	sc->sc_ih = hp700_intr_establish(IPL_CLOCK, clock_intr,
+	sc->sc_ihclk = hp700_intr_establish(IPL_CLOCK, clock_intr,
 	    NULL /*clockframe*/, &ir_cpu, 31);
 
 #ifdef MULTIPROCESSOR

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.h,v 1.28 2009/11/30 10:59:20 pooka Exp $	*/
+/*	$NetBSD: genfs.h,v 1.28.12.1 2012/04/17 00:08:34 yamt Exp $	*/
 
 #ifndef	_MISCFS_GENFS_GENFS_H_
 #define	_MISCFS_GENFS_GENFS_H_
@@ -40,9 +40,11 @@ void	genfs_renamelock_exit(struct mount *);
 
 int	genfs_can_access(enum vtype, mode_t, uid_t, gid_t, mode_t,
 	    kauth_cred_t);
-int	genfs_can_chmod(vnode_t *, kauth_cred_t, uid_t, gid_t, mode_t);
-int	genfs_can_chown(vnode_t *, kauth_cred_t, uid_t, gid_t, uid_t, gid_t);
-int	genfs_can_mount(vnode_t *, mode_t, kauth_cred_t);
+int	genfs_can_chmod(enum vtype, kauth_cred_t, uid_t, gid_t, mode_t);
+int	genfs_can_chown(kauth_cred_t, uid_t, gid_t, uid_t, gid_t);
 int	genfs_can_chtimes(vnode_t *, u_int, uid_t, kauth_cred_t);
+int	genfs_can_chflags(kauth_cred_t, enum vtype, uid_t, bool);
+int	genfs_can_sticky(kauth_cred_t, uid_t, uid_t);
+int	genfs_can_extattr(kauth_cred_t, int, vnode_t *, const char *);
 
 #endif /* !_MISCFS_GENFS_GENFS_H_ */

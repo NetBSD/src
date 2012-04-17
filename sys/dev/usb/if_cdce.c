@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.33 2011/06/07 05:46:00 msaitoh Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.33.2.1 2012/04/17 00:08:06 yamt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,8 +41,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.33 2011/06/07 05:46:00 msaitoh Exp $");
-#ifdef	__NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.33.2.1 2012/04/17 00:08:06 yamt Exp $");
+
+#if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #endif
 
@@ -54,9 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.33 2011/06/07 05:46:00 msaitoh Exp $")
 #include <sys/socket.h>
 #include <sys/device.h>
 
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_arp.h>
@@ -100,7 +99,6 @@ Static const struct cdce_type cdce_devs[] = {
   {{ USB_VENDOR_GMATE, USB_PRODUCT_GMATE_YP3X00 }, CDCE_NO_UNION },
   {{ USB_VENDOR_MOTOROLA2, USB_PRODUCT_MOTOROLA2_USBLAN }, CDCE_ZAURUS | CDCE_NO_UNION },
   {{ USB_VENDOR_MOTOROLA2, USB_PRODUCT_MOTOROLA2_USBLAN2 }, CDCE_ZAURUS | CDCE_NO_UNION },
-  {{ USB_VENDOR_NETCHIP, USB_PRODUCT_NETCHIP_ETHERNETGADGET }, CDCE_NO_UNION },
   {{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2501 }, CDCE_NO_UNION },
   {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_SL5500 }, CDCE_ZAURUS },
   {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_A300 }, CDCE_ZAURUS | CDCE_NO_UNION },
@@ -311,8 +309,7 @@ cdce_detach(device_t self, int flags)
 	struct ifnet	*ifp = GET_IFP(sc);
 	int		 s;
 
-	if (device_pmf_is_registered(self))
-		pmf_device_deregister(self);
+	pmf_device_deregister(self);
 
 	s = splusb();
 

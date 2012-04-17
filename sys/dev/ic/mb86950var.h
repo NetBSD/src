@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950var.h,v 1.5 2009/05/12 14:25:17 cegger Exp $	*/
+/*	$NetBSD: mb86950var.h,v 1.5.12.1 2012/04/17 00:07:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -59,9 +59,7 @@ struct mb86950_softc {
 
 	u_int8_t sc_enaddr[ETHER_ADDR_LEN];
 
-#if NRND > 0
-	rndsource_element_t rnd_source;
-#endif
+	krndsource_t rnd_source;
 
 	u_int32_t sc_stat;	/* driver status */
 

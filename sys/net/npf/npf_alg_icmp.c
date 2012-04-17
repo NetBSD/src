@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg_icmp.c,v 1.6.8.1 2011/11/10 14:31:50 yamt Exp $	*/
+/*	$NetBSD: npf_alg_icmp.c,v 1.6.8.2 2012/04/17 00:08:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,10 +34,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.6.8.1 2011/11/10 14:31:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.6.8.2 2012/04/17 00:08:38 yamt Exp $");
 
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/module.h>
 #include <sys/pool.h>
 
@@ -249,7 +248,7 @@ npfa_icmp_session(npf_cache_t *npc, nbuf_t *nbuf, void *keyptr)
 
 	/* Advance to ICMP header. */
 	void *n_ptr = nbuf_dataptr(nbuf);
-	const size_t hlen = npf_cache_hlen(npc, nbuf);
+	const u_int hlen = npf_cache_hlen(npc);
 
 	if ((n_ptr = nbuf_advance(&nbuf, n_ptr, hlen)) == NULL) {
 		return false;
@@ -333,7 +332,7 @@ npfa_icmp_natin(npf_cache_t *npc, nbuf_t *nbuf, void *ntptr)
 	 * to the embedded IP header after ICMP header.
 	 */
 	void *n_ptr = nbuf_dataptr(nbuf), *cnbuf = nbuf, *cnptr = n_ptr;
-	u_int offby = npf_cache_hlen(npc, nbuf) + offsetof(struct icmp, icmp_ip);
+	u_int offby = npf_cache_hlen(npc) + offsetof(struct icmp, icmp_ip);
 
 	if ((n_ptr = nbuf_advance(&nbuf, n_ptr, offby)) == NULL) {
 		return false;
@@ -367,7 +366,7 @@ npfa_icmp_natin(npf_cache_t *npc, nbuf_t *nbuf, void *ntptr)
 	}
 	cksum = npf_fixup16_cksum(cksum, ecksum, eip->ip_sum);
 
-	offby = npf_cache_hlen(npc, nbuf) + offsetof(struct icmp, icmp_cksum);
+	offby = npf_cache_hlen(npc) + offsetof(struct icmp, icmp_cksum);
 	if (nbuf_advstore(&cnbuf, &cnptr, offby, sizeof(uint16_t), &cksum)) {
 		return false;
 	}

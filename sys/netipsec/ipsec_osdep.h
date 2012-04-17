@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_osdep.h,v 1.22 2008/01/20 18:09:12 joerg Exp $	*/
+/*	$NetBSD: ipsec_osdep.h,v 1.22.44.1 2012/04/17 00:08:46 yamt Exp $	*/
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/netipsec/ipsec_osdep.h,v 1.1 2003/09/29 22:47:45 sam Exp $	*/
 
 /*
@@ -86,13 +86,13 @@
 #endif /* __FreeBSD__ */
 
 #ifdef	__NetBSD__
-#include <sys/rnd.h>
+#include <sys/cprng.h>
 static __inline u_int read_random(void *p, u_int len);
 
 static __inline u_int
 read_random(void *bufp, u_int len)
 {
-	return rnd_extract_data(bufp, len, RND_EXTRACT_ANY /*XXX FIXME */);
+	return cprng_fast(bufp, len);
 }
 #endif	/* __NetBSD__ */
 

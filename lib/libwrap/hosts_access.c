@@ -1,4 +1,4 @@
-/*	$NetBSD: hosts_access.c,v 1.19 2008/12/18 20:16:52 christos Exp $	*/
+/*	$NetBSD: hosts_access.c,v 1.19.8.1 2012/04/17 00:05:34 yamt Exp $	*/
 
  /*
   * This module implements a simple access control language that is based on
@@ -24,7 +24,7 @@
 #if 0
 static char sccsid[] = "@(#) hosts_access.c 1.21 97/02/12 02:13:22";
 #else
-__RCSID("$NetBSD: hosts_access.c,v 1.19 2008/12/18 20:16:52 christos Exp $");
+__RCSID("$NetBSD: hosts_access.c,v 1.19.8.1 2012/04/17 00:05:34 yamt Exp $");
 #endif
 #endif
 
@@ -72,8 +72,8 @@ static char sep[] = ", \t\r\n";
   * verification mode.
   */
 
-char   *hosts_allow_table = HOSTS_ALLOW;
-char   *hosts_deny_table = HOSTS_DENY;
+const char   *hosts_allow_table = HOSTS_ALLOW;
+const char   *hosts_deny_table = HOSTS_DENY;
 int     hosts_access_verbose = 0;
 
  /*
@@ -84,19 +84,19 @@ int     resident = (-1);		/* -1, 0: unknown; +1: yes */
 
 /* Forward declarations. */
 
-static int table_match __P((char *, struct request_info *));
-static int list_match __P((char *, struct request_info *,
-    int (*)(char *, struct request_info *)));
-static int server_match __P((char *, struct request_info *));
-static int client_match __P((char *, struct request_info *));
-static int host_match __P((char *, struct host_info *));
-static int hostfile_match __P((char *, struct host_info *));
-static int rbl_match __P((char *, char *));
-static int string_match __P((char *, char *));
-static int masked_match __P((char *, char *, char *));
-static int masked_match4 __P((char *, char *, char *));
+static int table_match(const char *, struct request_info *);
+static int list_match(char *, struct request_info *,
+    int (*)(char *, struct request_info *));
+static int server_match(char *, struct request_info *);
+static int client_match(char *, struct request_info *);
+static int host_match(char *, struct host_info *);
+static int hostfile_match(char *, struct host_info *);
+static int rbl_match(char *, char *);
+static int string_match(char *, char *);
+static int masked_match(char *, char *, char *);
+static int masked_match4(char *, char *, char *);
 #ifdef INET6
-static int masked_match6 __P((char *, char *, char *));
+static int masked_match6(char *, char *, char *);
 #endif
 
 /* Size of logical line buffer. */
@@ -105,8 +105,8 @@ static int masked_match6 __P((char *, char *, char *));
 
 /* hosts_access - host access control facility */
 
-int     hosts_access(request)
-struct request_info *request;
+int
+hosts_access(struct request_info *request)
 {
     int     verdict;
 
@@ -139,9 +139,8 @@ struct request_info *request;
 
 /* table_match - match table entries with (daemon, client) pair */
 
-static int table_match(table, request)
-char   *table;
-struct request_info *request;
+static int
+table_match(const char *table, struct request_info *request)
 {
     FILE   *fp;
     char    sv_list[BUFLEN];		/* becomes list of daemons */
@@ -198,10 +197,9 @@ struct request_info *request;
 
 /* list_match - match a request against a list of patterns with exceptions */
 
-static int list_match(list, request, match_fn)
-char   *list;
-struct request_info *request;
-int   (*match_fn) __P((char *, struct request_info *));
+static int
+list_match(char *list, struct request_info *request,
+    int (*match_fn)(char *, struct request_info *))
 {
     char   *tok;
     static char *last;
@@ -234,9 +232,8 @@ int   (*match_fn) __P((char *, struct request_info *));
 
 /* server_match - match server information */
 
-static int server_match(tok, request)
-char   *tok;
-struct request_info *request;
+static int
+server_match(char *tok, struct request_info *request)
 {
     char   *host;
 
@@ -250,9 +247,8 @@ struct request_info *request;
 
 /* client_match - match client information */
 
-static int client_match(tok, request)
-char   *tok;
-struct request_info *request;
+static int
+client_match(char *tok, struct request_info *request)
 {
     char   *host;
 
@@ -266,9 +262,8 @@ struct request_info *request;
 
 /* host_match - match host name and/or address against pattern */
 
-static int host_match(tok, host)
-char   *tok;
-struct host_info *host;
+static int
+host_match(char *tok, struct host_info *host)
 {
     char   *mask;
 
@@ -311,9 +306,8 @@ struct host_info *host;
 
 /* hostfile_match - look up host patterns from file */
 
-static int hostfile_match(path, host)
-char   *path;
-struct host_info *host;
+static int
+hostfile_match(char *path, struct host_info *host)
 {
     char    tok[BUFSIZ];
     int     match = NO;
@@ -331,9 +325,10 @@ struct host_info *host;
 
 /* rbl_match() - match host by looking up in RBL domain */
 
-static int rbl_match(rbl_domain, rbl_hostaddr)
-char   *rbl_domain;				/* RBL domain */
-char   *rbl_hostaddr;				/* hostaddr */
+static int
+rbl_match(
+    char   *rbl_domain,			/* RBL domain */
+    char   *rbl_hostaddr)		/* hostaddr */
 {
     char *rbl_name;
     unsigned long host_address;
@@ -368,9 +363,8 @@ char   *rbl_hostaddr;				/* hostaddr */
 
 /* string_match - match string against pattern */
 
-static int string_match(tok, string)
-char   *tok;
-char   *string;
+static int
+string_match(char *tok, char *string)
 {
     int     n;
 
@@ -390,10 +384,8 @@ char   *string;
 
 /* masked_match - match address against netnumber/netmask */
 
-static int masked_match(net_tok, mask_tok, string)
-char   *net_tok;
-char   *mask_tok;
-char   *string;
+static int
+masked_match(char *net_tok, char *mask_tok, char *string)
 {
 #ifndef INET6
     return masked_match4(net_tok, mask_tok, string);
@@ -403,19 +395,17 @@ char   *string;
      * If we could get rid of shortened IPv4 form, we could just always use
      * masked_match6().
      */
-    if (dot_quad_addr(net_tok, NULL) != INADDR_NONE &&
-        dot_quad_addr(mask_tok, NULL) != INADDR_NONE &&
-        dot_quad_addr(string, NULL) != INADDR_NONE) {
+    if (dot_quad_addr(net_tok, NULL) != -1 &&
+        dot_quad_addr(mask_tok, NULL) != -1 &&
+        dot_quad_addr(string, NULL) != -1) {
 	return masked_match4(net_tok, mask_tok, string);
     } else
 	return masked_match6(net_tok, mask_tok, string);
 #endif
 }
 
-static int masked_match4(net_tok, mask_tok, string)
-char   *net_tok;
-char   *mask_tok;
-char   *string;
+static int
+masked_match4(char *net_tok, char *mask_tok, char *string)
 {
     unsigned long net;
     unsigned long mask;
@@ -442,10 +432,8 @@ char   *string;
 }
 
 #ifdef INET6
-static int masked_match6(net_tok, mask_tok, string)
-char   *net_tok;
-char   *mask_tok;
-char   *string;
+static int
+masked_match6(char *net_tok, char *mask_tok, char *string)
 {
     union {
 	struct sockaddr sa;
@@ -455,9 +443,9 @@ char   *string;
     struct addrinfo hints, *res;
     unsigned long masklen;
     char *ep;
-    int i;
+    size_t i;
     char *np, *mp, *ap;
-    int alen;
+    size_t alen;
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = PF_UNSPEC;

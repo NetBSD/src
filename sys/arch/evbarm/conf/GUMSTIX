@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.60 2011/09/30 04:05:07 he Exp $
+#	$NetBSD: GUMSTIX,v 1.60.2.1 2012/04/17 00:06:13 yamt Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -63,7 +63,7 @@ file-system 	TMPFS		# Efficient memory file-system
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
 # It is not recommended for general use.
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
@@ -125,12 +125,7 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
 #options 	SYSVSHM		# System V-like memory sharing
-options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 # Device options
 
@@ -165,7 +160,7 @@ options 	DDB		# in-kernel debugger
 #options 	KGDB
 #options 	DEBUG_KGDB
 makeoptions	DEBUG="-g -O2"	# compile full symbol table
-options 	SYMTAB_SPACE=770000
+options 	SYMTAB_SPACE=785000
 #options 	AUDIO_DEBUG=2
 
 config		netbsd		root on ? type ?
@@ -398,7 +393,6 @@ pseudo-device	bridge			# simple inter-network bridging
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	sequencer	1	# MIDI sequencer
-pseudo-device	rnd			# /dev/random and in-kernel generator
 options 	RND_COM
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms

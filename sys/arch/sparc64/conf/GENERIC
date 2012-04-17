@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.144 2011/08/12 06:55:45 mrg Exp $
+# $NetBSD: GENERIC,v 1.144.2.1 2012/04/17 00:06:55 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.144 $"
+#ident 		"GENERIC-$Revision: 1.144.2.1 $"
 
 maxusers	64
 
@@ -59,10 +59,6 @@ options 	KTRACE
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
-options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support 
-
-
-## Loadable kernel module support; still under development.
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -186,7 +182,7 @@ options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 ## Network protocol support.  In most environments, INET is required.
@@ -205,7 +201,7 @@ options 	PIM		# Protocol Independent Multicast
 options 	NETATALK	# AppleTalk (over Ethernet) protocol
 options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
-options 	PFIL_HOOKS	# Add pfil(9) hooks, intended for custom LKMs.
+options 	PFIL_HOOKS	# Add pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter
@@ -442,7 +438,7 @@ pseudo-device	ccd	4
 
 ## Cryptographic disk devices.  See cgd(4).
 
-#pseudo-device	cgd	4
+pseudo-device	cgd	4
 
 ## RAIDframe disk driver: software RAID driver.  See raid(4).
 
@@ -507,6 +503,7 @@ fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI UT
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gem*	at pci? dev ? function ?	# Apple GMAC and Sun ERI gigabit enet
 gem*	at sbus? slot ? offset ?
+gsip*	at pci? dev ? function ?	# National Semiconductor DP83820 GigE
 # XXX lacks bus_dmamap_sync()
 #le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 # XXX uses vtophys()
@@ -953,7 +950,6 @@ pseudo-device	pty			# pseudo-ttys (for network, etc.)
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.
 
-pseudo-device	rnd
 
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont

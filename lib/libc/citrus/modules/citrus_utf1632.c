@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_utf1632.c,v 1.11 2010/03/20 18:15:32 tnozaki Exp $	*/
+/*	$NetBSD: citrus_utf1632.c,v 1.11.6.1 2012/04/17 00:05:16 yamt Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_utf1632.c,v 1.11 2010/03/20 18:15:32 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_utf1632.c,v 1.11.6.1 2012/04/17 00:05:16 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -250,7 +250,6 @@ _citrus_UTF1632_wcrtomb_priv(_UTF1632EncodingInfo *ei, char *s, size_t n,
 			     wchar_t wc, _UTF1632State *psenc,
 			     size_t *nresult)
 {
-	int ret;
 	wchar_t wc2;
 	static const char _bom[4] = {
 #if BYTE_ORDER == BIG_ENDIAN

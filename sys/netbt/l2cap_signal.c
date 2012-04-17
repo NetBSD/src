@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_signal.c,v 1.14 2011/07/27 10:25:09 plunky Exp $	*/
+/*	$NetBSD: l2cap_signal.c,v 1.14.2.1 2012/04/17 00:08:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.14 2011/07/27 10:25:09 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.14.2.1 2012/04/17 00:08:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -59,6 +59,8 @@ static void l2cap_recv_disconnect_rsp(struct mbuf *, struct hci_link *);
 static void l2cap_recv_info_req(struct mbuf *, struct hci_link *);
 static int l2cap_send_signal(struct hci_link *, uint8_t, uint8_t, uint16_t, void *);
 static int l2cap_send_command_rej(struct hci_link *, uint8_t, uint16_t, ...);
+static void l2cap_qos_btoh(l2cap_qos_t *, void *);
+static void l2cap_qos_htob(void *, l2cap_qos_t *);
 
 /*
  * process incoming signal packets (CID 0x0001). Can contain multiple
@@ -518,6 +520,57 @@ l2cap_recv_config_req(struct mbuf *m, struct hci_link *link)
 			break;
 
 		case L2CAP_OPT_QOS:
+			if (rp.result == L2CAP_UNKNOWN_OPTION)
+				break;
+
+			if (opt.length != L2CAP_OPT_QOS_SIZE)
+				goto reject;
+
+			/*
+			 * We don't actually support QoS, but an incoming
+			 * config request is merely advising us of their
+			 * outgoing traffic flow, so be nice.
+			 */
+			m_copydata(m, 0, L2CAP_OPT_QOS_SIZE, &val);
+			switch (val.qos.service_type) {
+			case L2CAP_QOS_NO_TRAFFIC:
+				/*
+				 * "No traffic" means they don't plan to send
+				 * any data and the fields should be ignored.
+				 */
+				chan->lc_iqos = l2cap_default_qos;
+				chan->lc_iqos.service_type = L2CAP_QOS_NO_TRAFFIC;
+				break;
+
+			case L2CAP_QOS_BEST_EFFORT:
+				/*
+				 * "Best effort" is the default, and we may
+				 * choose to ignore the fields, try to satisfy
+				 * the parameters while giving no response, or
+				 * respond with the settings we will try to
+				 * meet.
+				 */
+				l2cap_qos_btoh(&chan->lc_iqos, &val.qos);
+				break;
+
+			case L2CAP_QOS_GUARANTEED:
+			default:
+				/*
+			 	 * Anything else we don't support, so make a
+				 * counter-offer with the current settings.
+				 */
+				if (len + sizeof(opt) + L2CAP_OPT_QOS_SIZE > sizeof(buf))
+					goto reject;
+
+				rp.result = L2CAP_UNACCEPTABLE_PARAMS;
+				memcpy(buf + len, &opt, sizeof(opt));
+				len += sizeof(opt);
+				l2cap_qos_htob(buf + len, &chan->lc_iqos);
+				len += L2CAP_OPT_QOS_SIZE;
+				break;
+			}
+			break;
+
 		default:
 			/* ignore hints */
 			if (opt.type & L2CAP_OPT_HINT_BIT)
@@ -688,6 +741,27 @@ l2cap_recv_config_rsp(struct mbuf *m, struct hci_link *link)
 				goto discon;
 
 			case L2CAP_OPT_QOS:
+				if (opt.length != L2CAP_OPT_QOS_SIZE)
+					goto discon;
+
+				/*
+				 * This may happen even if we haven't sent a
+				 * QoS request, where they need to state their
+				 * preferred incoming traffic flow.
+				 * We don't support anything, but copy in the
+				 * parameters if no action is good enough.
+				 */
+				m_copydata(m, 0, L2CAP_OPT_QOS_SIZE, &val);
+				switch (val.qos.service_type) {
+				case L2CAP_QOS_NO_TRAFFIC:
+				case L2CAP_QOS_BEST_EFFORT:
+					l2cap_qos_btoh(&chan->lc_oqos, &val.qos);
+					break;
+
+				case L2CAP_QOS_GUARANTEED:
+				default:
+					goto discon;
+				}
 				break;
 
 			default:
@@ -1129,4 +1203,38 @@ l2cap_send_connect_rsp(struct hci_link *link, uint8_t ident, uint16_t dcid, uint
 	cp.result = htole16(result);
 
 	return l2cap_send_signal(link, L2CAP_CONNECT_RSP, ident, sizeof(cp), &cp);
+}
+
+/*
+ * copy in QoS buffer to host
+ */
+static void
+l2cap_qos_btoh(l2cap_qos_t *qos, void *buf)
+{
+	l2cap_qos_t *src = buf;
+
+	qos->flags = src->flags;
+	qos->service_type = src->service_type;
+	qos->token_rate = le32toh(src->token_rate);
+	qos->token_bucket_size = le32toh(src->token_bucket_size);
+	qos->peak_bandwidth = le32toh(src->peak_bandwidth);
+	qos->latency = le32toh(src->latency);
+	qos->delay_variation = le32toh(src->delay_variation);
+}
+
+/*
+ * copy out host QoS to buffer
+ */
+static void
+l2cap_qos_htob(void *buf, l2cap_qos_t *qos)
+{
+	l2cap_qos_t *dst = buf;
+
+	dst->flags = qos->flags;
+	dst->service_type = qos->service_type;
+	dst->token_rate = htole32(qos->token_rate);
+	dst->token_bucket_size = htole32(qos->token_bucket_size);
+	dst->peak_bandwidth = htole32(qos->peak_bandwidth);
+	dst->latency = htole32(qos->latency);
+	dst->delay_variation = htole32(qos->delay_variation);
 }

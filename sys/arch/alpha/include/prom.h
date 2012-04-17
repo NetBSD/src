@@ -1,21 +1,21 @@
-/* $NetBSD: prom.h,v 1.13 2011/05/24 20:26:35 rmind Exp $ */
+/* $NetBSD: prom.h,v 1.13.4.1 2012/04/17 00:05:55 yamt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Keith Bostic, Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -29,21 +29,21 @@
 
 #ifndef	ASSEMBLER
 struct prom_vec {
-	u_int64_t	routine;
+	uint64_t	routine;
 	void		*routine_arg;
 };
 
 /* The return value from a prom call. */
 typedef union {
 	struct {
-		u_int64_t
+		uint64_t
 			retval	: 32,		/* return value. */
 			unit	: 8,
 			mbz	: 8,
 			error	: 13,
 			status	: 3;
 	} u;
-	u_int64_t bits;
+	uint64_t bits;
 } prom_return_t;
 
 #ifdef _STANDALONE
@@ -96,17 +96,17 @@ void	hwrpb_restart_setup(void);
 #define	prom_close(chan)						\
 	prom_dispatch(PROM_R_CLOSE, chan, 0, 0, 0)
 #define	prom_read(chan, len, buf, blkno)				\
-	prom_dispatch(PROM_R_READ, chan, len, (u_int64_t)buf, blkno)
+	prom_dispatch(PROM_R_READ, chan, len, (uint64_t)buf, blkno)
 #define	prom_write(chan, len, buf, blkno)				\
-	prom_dispatch(PROM_R_WRITE, chan, len, (u_int64_t)buf, blkno)
+	prom_dispatch(PROM_R_WRITE, chan, len, (uint64_t)buf, blkno)
 #define	prom_ioctl(chan, op, count)					\
 	prom_dispatch(PROM_R_IOCTL, chan, op, (int64_t)count, 0, 0)
 #define	prom_putstr(chan, str, len)					\
-	prom_dispatch(PROM_R_PUTS, chan, (u_int64_t)str, len, 0)
+	prom_dispatch(PROM_R_PUTS, chan, (uint64_t)str, len, 0)
 #define	prom_getc(chan)							\
 	prom_dispatch(PROM_R_GETC, chan, 0, 0, 0)
 #define prom_getenv_disp(id, buf, len)					\
-	prom_dispatch(PROM_R_GETENV, id, (u_int64_t)buf, len, 0)
+	prom_dispatch(PROM_R_GETENV, id, (uint64_t)buf, len, 0)
 #endif
 
 #ifndef ASSEMBLER
@@ -118,7 +118,7 @@ void	promcnputc(dev_t, int);
 int	promcngetc(dev_t);
 int	promcnlookc(dev_t, char *);
 
-u_int64_t	prom_dispatch(u_int64_t, u_int64_t, u_int64_t, u_int64_t,
-		    u_int64_t);
+uint64_t	prom_dispatch(uint64_t, uint64_t, uint64_t, uint64_t,
+		    uint64_t);
 #endif /* _KERNEL */
 #endif /* ASSEMBLER */

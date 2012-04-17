@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm.S,v 1.14 2008/04/27 18:58:43 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm.S,v 1.14.34.1 2012/04/17 00:06:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -41,8 +41,8 @@
  * Created      : 30/01/97
  */
  
+#include <arm/armreg.h>
 #include <machine/asm.h>
-#include <machine/cpu.h>
 
 	.text
 	.align	0

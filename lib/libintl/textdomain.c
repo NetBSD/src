@@ -1,4 +1,4 @@
-/*	$NetBSD: textdomain.c,v 1.12 2007/09/25 08:19:09 junyoung Exp $	*/
+/*	$NetBSD: textdomain.c,v 1.12.28.1 2012/04/17 00:05:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: textdomain.c,v 1.12 2007/09/25 08:19:09 junyoung Exp $");
+__RCSID("$NetBSD: textdomain.c,v 1.12.28.1 2012/04/17 00:05:28 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -39,7 +39,8 @@ __RCSID("$NetBSD: textdomain.c,v 1.12 2007/09/25 08:19:09 junyoung Exp $");
 #include "pathnames.h"
 
 static struct domainbinding __default_binding = {
-	NULL, DEFAULT_DOMAINNAME, _PATH_TEXTDOMAIN,
+	.path = { _PATH_TEXTDOMAIN },
+	.domainname = { DEFAULT_DOMAINNAME },
 };
 struct domainbinding *__bindings = &__default_binding;
 char __current_domainname[PATH_MAX] = DEFAULT_DOMAINNAME;

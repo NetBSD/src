@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.45 2009/10/05 04:20:13 elad Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.45.12.1 2012/04/17 00:08:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.45 2009/10/05 04:20:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.45.12.1 2012/04/17 00:08:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -375,11 +375,20 @@ mount_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	result = KAUTH_RESULT_DEFER;
 	req = (enum kauth_system_req)arg0;
 
-	if ((action != KAUTH_SYSTEM_MOUNT) ||
-	    (req != KAUTH_REQ_SYSTEM_MOUNT_GET))
+	if (action != KAUTH_SYSTEM_MOUNT)
 		return result;
 
-	result = KAUTH_RESULT_ALLOW;
+	if (req == KAUTH_REQ_SYSTEM_MOUNT_GET)
+		result = KAUTH_RESULT_ALLOW;
+	else if (req == KAUTH_REQ_SYSTEM_MOUNT_DEVICE) {
+		vnode_t *devvp = arg2;
+		mode_t access_mode = (mode_t)(unsigned long)arg3;
+		int error;
+
+		error = VOP_ACCESS(devvp, access_mode, cred);
+		if (!error)
+			result = KAUTH_RESULT_ALLOW;
+	}
 
 	return result;
 }

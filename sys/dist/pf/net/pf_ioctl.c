@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.45 2011/08/30 19:05:12 jmcneill Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.45.2.1 2012/04/17 00:08:14 yamt Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.182 2007/06/24 11:17:13 mcbride Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.45 2011/08/30 19:05:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.45.2.1 2012/04/17 00:08:14 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.45 2011/08/30 19:05:12 jmcneill Exp $
 #include <sys/lwp.h>
 #include <sys/kauth.h>
 #include <sys/module.h>
+#include <sys/cprng.h>
 #endif /* __NetBSD__ */
 
 #include <net/if.h>
@@ -300,7 +301,7 @@ pfattach(int num)
 	pf_status.debug = PF_DEBUG_URGENT;
 
 	/* XXX do our best to avoid a conflict */
-	pf_status.hostid = arc4random();
+	pf_status.hostid = cprng_fast32();
 
 	/* require process context to purge states, so perform in a thread */
 #ifdef __NetBSD__
@@ -3176,7 +3177,7 @@ pfioctl(dev_t dev, u_long cmd, void *addr, int flags, struct lwp *l)
 		u_int32_t	*hid = (u_int32_t *)addr;
 
 		if (*hid == 0)
-			pf_status.hostid = arc4random();
+			pf_status.hostid = cprng_fast32();
 		else
 			pf_status.hostid = *hid;
 		break;

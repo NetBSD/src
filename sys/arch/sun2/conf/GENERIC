@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.80 2011/10/26 00:57:36 mrg Exp $
+# $NetBSD: GENERIC,v 1.80.2.1 2012/04/17 00:06:57 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun2/conf/std.sun2"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.80 $"
+#ident 		"GENERIC-$Revision: 1.80.2.1 $"
 
 makeoptions	COPTS="-Os"	# optimize for size
 
@@ -40,7 +40,6 @@ options 	KTRACE		# system call tracing
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
-options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 #options 	INSECURE	# disable kernel security level
 #options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -99,7 +98,7 @@ options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -279,7 +278,6 @@ pseudo-device	loop		1	# network loopback
 #pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
-pseudo-device	rnd			# /dev/random and in-kernel generator
 
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	vnd			# paging to files

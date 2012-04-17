@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.50 2011/10/04 16:19:59 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.50.2.1 2012/04/17 00:09:44 yamt Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.50 2011/10/04 16:19:59 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.50.2.1 2012/04/17 00:09:44 yamt Exp $");
 #endif
 
 #include <stdlib.h>
@@ -107,7 +107,7 @@ static inline void RESTORE(const char *file, size_t line)
 #endif
 %}
 
-%expect 7
+%expect 5
 
 %union {
 	int	y_int;
@@ -808,7 +808,7 @@ enums_with_opt_comma:
 			error(54);
 		} else {
 			/* trailing "," prohibited in enum declaration */
-			(void)gnuism(54);
+			c99ism(54);
 		}
 		$$ = $1;
 	  }
@@ -1310,7 +1310,7 @@ labeled_stmnt:
 	;
 
 label:
-	  identifier T_COLON {
+	  T_NAME T_COLON {
 		symtyp = FLAB;
 		label(T_NAME, getsym($1), NULL);
 	  }
@@ -1873,13 +1873,13 @@ toicon(tnode_t *tn, int required)
 		i = (int)v->v_quad;
 		if (isutyp(t)) {
 			if (uq_gt((uint64_t)v->v_quad,
-				  (uint64_t)INT_MAX)) {
+				  (uint64_t)TARG_INT_MAX)) {
 				/* integral constant too large */
 				warning(56);
 			}
 		} else {
-			if (q_gt(v->v_quad, (int64_t)INT_MAX) ||
-			    q_lt(v->v_quad, (int64_t)INT_MIN)) {
+			if (q_gt(v->v_quad, (int64_t)TARG_INT_MAX) ||
+			    q_lt(v->v_quad, (int64_t)TARG_INT_MIN)) {
 				/* integral constant too large */
 				warning(56);
 			}

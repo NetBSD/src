@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.395 2011/09/27 23:04:18 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.395.2.1 2012/04/17 00:08:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -63,7 +63,7 @@
  *	2.99.9		(299000900)
  */
 
-#define	__NetBSD_Version__	599005600	/* NetBSD 5.99.56 */
+#define	__NetBSD_Version__	699000400	/* NetBSD 6.99.4 */
 
 #define __NetBSD_Prereq__(M,m,p) (((((M) * 100000000) + \
     (m) * 1000000) + (p) * 100) <= __NetBSD_Version__)
@@ -204,6 +204,11 @@
  * allocated memory.
  */
 #if defined(_KERNEL) || defined(__EXPOSE_STACK)
+
+#ifndef STACK_ALIGNBYTES
+#define STACK_ALIGNBYTES	__ALIGNBYTES
+#endif
+
 #ifdef __MACHINE_STACK_GROWS_UP
 #define	STACK_GROW(sp, _size)		(((char *)(void *)(sp)) + (_size))
 #define	STACK_SHRINK(sp, _size)		(((char *)(void *)(sp)) - (_size))
@@ -219,7 +224,28 @@
 #define	STACK_ALLOC(sp, _size)		(((char *)(void *)(sp)) - (_size))
 #define	STACK_MAX(p, _size)		((char *)(void *)(p))
 #endif
+#define	STACK_LEN_ALIGN(len, bytes)	(((len) + (bytes)) & ~(bytes))
+
 #endif /* defined(_KERNEL) || defined(__EXPOSE_STACK) */
+
+/*
+ * Round p (pointer or byte index) up to a correctly-aligned value for all
+ * data types (int, long, ...).   The result is u_int and must be cast to
+ * any desired pointer type.
+ *
+ * ALIGNED_POINTER is a boolean macro that checks whether an address
+ * is valid to fetch data elements of type t from on this architecture.
+ * This does not reflect the optimal alignment, just the possibility
+ * (within reasonable limits).
+ *
+ */
+#define ALIGNBYTES	__ALIGNBYTES
+#ifndef ALIGN
+#define	ALIGN(p)		(((uintptr_t)(p) + ALIGNBYTES) & ~ALIGNBYTES)
+#endif
+#ifndef ALIGNED_POINTER
+#define	ALIGNED_POINTER(p,t)	((((uintptr_t)(p)) & (sizeof(t) - 1)) == 0)
+#endif
 
 /*
  * Historic priority levels.  These are meaningless and remain only

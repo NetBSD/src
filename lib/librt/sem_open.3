@@ -1,4 +1,4 @@
-.\" $NetBSD: sem_open.3,v 1.4 2005/05/16 00:45:24 peter Exp $
+.\" $NetBSD: sem_open.3,v 1.4.42.1 2012/04/17 00:05:32 yamt Exp $
 .\"
 .\" Copyright (C) 2000 Jason Evans <jasone@FreeBSD.org>.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\" From: FreeBSD: src/lib/libc/gen/sem_open.3,v 1.12 2004/07/02 16:45:56 ru
 .\"
-.Dd January 21, 2005
+.Dd February 29, 2012
 .Dt SEM_OPEN 3
 .Os
 .Sh NAME
@@ -54,8 +54,9 @@ function creates or opens the named semaphore specified by
 .Fa name .
 The returned semaphore may be used in subsequent calls to
 .Xr sem_getvalue 3 ,
-.Xr sem_wait 3 ,
+.Xr sem_timedwait 3 ,
 .Xr sem_trywait 3 ,
+.Xr sem_wait 3 ,
 .Xr sem_post 3 ,
 and
 .Fn sem_close .
@@ -139,9 +140,8 @@ function will fail if:
 .It Bq Er EACCES
 The semaphore exists and the permissions specified by
 .Fa oflag
-at the time it was created deny access to this process.
-.It Bq Er EACCES
-The semaphore does not exist, but permission to create it is denied.
+at the time it was created deny access to this process;
+or the semaphore does not exist, but permission to create it is denied.
 .It Bq Er EEXIST
 .Dv O_CREAT
 and
@@ -153,9 +153,8 @@ The call was interrupted by a signal.
 The
 .Fn sem_open
 operation is not supported for the given
-.Fa name .
-.It Bq Er EINVAL
-The
+.Fa name ;
+or the
 .Fa value
 argument is greater than
 .Dv SEM_VALUE_MAX .

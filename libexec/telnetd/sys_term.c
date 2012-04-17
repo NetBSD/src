@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.44 2007/01/17 21:44:50 hubertf Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.44.34.1 2012/04/17 00:05:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.44 2007/01/17 21:44:50 hubertf Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.44.34.1 2012/04/17 00:05:37 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,7 @@ struct termios termbuf, termbuf2;	/* pty control structure */
 
 void getptyslave(void);
 int cleanopen(char *);
-char **addarg(char **, char *);
+char **addarg(char **, const char *);
 void scrub_env(void);
 int getent(char *, char *);
 char *getstr(const char *, char **);
@@ -84,7 +84,7 @@ init_termbuf(void)
 void
 copy_termbuf(char *cp, int len)
 {
-	if (len > sizeof(termbuf))
+	if ((size_t)len > sizeof(termbuf))
 		len = sizeof(termbuf);
 	memmove((char *)&termbuf, cp, len);
 	termbuf2 = termbuf;
@@ -677,7 +677,7 @@ start_login(char *host, int autologin, char *name)
 }
 
 char **
-addarg(char **argv, char *val)
+addarg(char **argv, const char *val)
 {
 	char **cpp;
 	char **nargv;
@@ -707,7 +707,7 @@ addarg(char **argv, char *val)
 		argv++;
 		cpp = &argv[(long)argv[-1] - 10];
 	}
-	*cpp++ = val;
+	*cpp++ = __UNCONST(val);
 	*cpp = 0;
 	return(argv);
 }

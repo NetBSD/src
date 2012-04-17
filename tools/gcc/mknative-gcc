@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.65 2011/10/13 19:52:33 matt Exp $
+#	$NetBSD: mknative-gcc,v 1.65.2.1 2012/04/17 00:09:28 yamt Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -688,6 +688,15 @@ libgcc)
 libgcc4)
 	get_libgcc gcc4
 	get_crtstuff crtstuff4
+	exit 0
+	;;
+
+libgcc45)
+	_OUTDIR="$_TOP/external/gpl3/gcc"
+	_OUTDIRBASE="external/gpl3/gcc"
+	get_libgcc gcc
+	get_crtstuff crtstuff
+	get_libgcov gcc
 	exit 0
 	;;
 

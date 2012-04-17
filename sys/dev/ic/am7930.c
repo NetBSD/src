@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930.c,v 1.50 2007/10/19 11:59:46 ad Exp $	*/
+/*	$NetBSD: am7930.c,v 1.50.54.1 2012/04/17 00:07:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am7930.c,v 1.50 2007/10/19 11:59:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am7930.c,v 1.50.54.1 2012/04/17 00:07:31 yamt Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -190,6 +190,8 @@ am7930_init(struct am7930_softc *sc, int flag)
 			AM7930_MCR4_INT_ENABLE);
 	}
 
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
 }
 
 int
@@ -288,7 +290,7 @@ am7930_commit_settings(void *addr)
 	struct am7930_softc *sc;
 	uint16_t ger, gr, gx, stgr;
 	uint8_t mmr2, mmr3;
-	int s, level;
+	int level;
 
 	DPRINTF(("sa_commit.\n"));
 	sc = addr;
@@ -304,7 +306,7 @@ am7930_commit_settings(void *addr)
 		gr = gx_coeff[level];
 	}
 
-	s = splaudio();
+	mutex_enter(&sc->sc_intr_lock);
 
 	mmr2 = AM7930_IREAD(sc, AM7930_IREG_MAP_MMR2);
 	if (sc->sc_out_port == AUDIOAMD_SPEAKER_VOL)
@@ -329,7 +331,7 @@ am7930_commit_settings(void *addr)
 	AM7930_IWRITE16(sc, AM7930_IREG_MAP_GR, gr);
 	AM7930_IWRITE16(sc, AM7930_IREG_MAP_GER, ger);
 
-	splx(s);
+	mutex_exit(&sc->sc_intr_lock);
 
 	return 0;
 }

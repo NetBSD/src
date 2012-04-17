@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.118 2011/06/13 03:42:15 dholland Exp $	*/
+/*	$NetBSD: print.c,v 1.118.2.1 2012/04/17 00:01:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.118 2011/06/13 03:42:15 dholland Exp $");
+__RCSID("$NetBSD: print.c,v 1.118.2.1 2012/04/17 00:01:37 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -554,13 +554,12 @@ void
 lstate(void *arg, VARENT *ve, int mode)
 {
 	struct kinfo_lwp *k;
-	int flag, is_zombie;
+	int flag;
 	char *cp;
 	VAR *v;
 	char buf[16];
 
 	k = arg;
-	is_zombie = 0;
 	v = ve->var;
 	flag = k->l_flag;
 	cp = buf;
@@ -590,7 +589,6 @@ lstate(void *arg, VARENT *ve, int mode)
 	case LSZOMB:
 	case LSDEAD:
 		*cp = 'Z';
-		is_zombie = 1;
 		break;
 
 	case LSSUSPENDED:
@@ -1069,8 +1067,7 @@ cputime(void *arg, VARENT *ve, int mode)
 }
 
 double
-getpcpu(k)
-	const struct kinfo_proc2 *k;
+getpcpu(const struct kinfo_proc2 *k)
 {
 	static int failure;
 
@@ -1103,8 +1100,7 @@ pcpu(void *arg, VARENT *ve, int mode)
 }
 
 double
-getpmem(k)
-	const struct kinfo_proc2 *k;
+getpmem(const struct kinfo_proc2 *k)
 {
 	static int failure;
 	double fracmem;
@@ -1171,10 +1167,7 @@ tsize(void *arg, VARENT *ve, int mode)
  * structures.
  */
 static void
-printval(bp, v, mode)
-	void *bp;
-	VAR *v;
-	int mode;
+printval(void *bp, VAR *v, int mode)
 {
 	static char ofmt[32] = "%";
 	int width, vok, fmtlen;

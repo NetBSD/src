@@ -3,9 +3,13 @@ AUTOMAKE_OPTIONS=
 
 BUILT_SOURCES=
 CLEANFILES=
-bindir=		${exec_prefix}/${BINSUBDIR}
-#bin_PROGRAMS=	ntpdate ntptimeset
+
+if NTP_BINSUBDIR_IS_BIN
 bin_PROGRAMS=	ntpdate
+else
+sbin_PROGRAMS=	ntpdate
+endif
+
 EXTRA_PROGRAMS=	ntptimeset
 
 ntptimeset_SOURCES=	ntptimeset.c ntptime_config.c

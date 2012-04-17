@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.88 2011/07/30 06:19:02 uebayasi Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.88.2.1 2012/04/17 00:08:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.88 2011/07/30 06:19:02 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.88.2.1 2012/04/17 00:08:30 yamt Exp $");
 
 #define SYSVSEM
 
@@ -129,6 +129,8 @@ seminit(void)
 	}
 	semu_list = NULL;
 	exithook_establish(semexit, NULL);
+
+	sysvipcinit();
 }
 
 static int

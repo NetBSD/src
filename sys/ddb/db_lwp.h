@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lwp.h,v 1.1 2009/03/07 22:02:17 ad Exp $	*/
+/*	$NetBSD: db_lwp.h,v 1.1.18.1 2012/04/17 00:07:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 
 struct lwp	*db_lwp_first(void);
 struct lwp	*db_lwp_next(struct lwp *);
-void		db_lwp_whatis(uintptr_t, void (*)(const char *, ...));
+void		db_lwp_whatis(uintptr_t,
+    void (*)(const char *, ...) __printflike(1, 2));
 
 #endif /* _DDB_DB_LWP_H_ */

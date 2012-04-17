@@ -1,0 +1,92 @@
+.\" Copyright (C) 2005 International Business Machines Corporation
+.\"
+.de Sh \" Subsection
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+.de Sp \" Vertical space (when we can't use .PP)
+.if t .sp .5v
+.if n .sp
+..
+.de Ip \" List item
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH "tpmtoken_import" 1 "2005-04-25"  "TPM Management"
+.ce 1
+TPM Management - tpmtoken_import
+.SH NAME
+tpmtoken_import \- import an X.509 certficate and/or an RSA key pair into
+the user's TPM PKCS#11 data store
+.SH "SYNOPSIS"
+.ad l
+.hy 0
+.B tpmtoken_import
+[ OPTION ] FILE
+
+.SH "DESCRIPTION"
+.PP
+\fBtpmtoken_import\fR imports a PEM formatted representation of an
+X.509 certificate and/or an RSA key contained in FILE.
+.PP
+Importing an X.509 certificate creates an X.509 Public Key Certificate
+PKCS#11 object and also an RSA Public Key PKCS#11 object using the RSA public
+key contained in the certificate.  The certificate's key must be an RSA
+key in order for the certificate to be successfully processed by this command.
+.PP
+Importing an RSA key creates an RSA Public Key and an RSA Private Key PKCS#11
+object.  In order to associate the RSA PKCS#11 objects with an
+X.509 Public Key Certificate PKCS#11 object, the RSA PKCS#11 objects must have
+a subject name and key identifier associated with them.  This can be accomplished
+by supplying the corresponding X.509 certificate as an optional command parameter.
+.PP
+The input can contain PEM formatted representations of both an
+X.509 certificate and an RSA key. If both representations are present then
+an X.509 Public Key Certificate PKCS#11 object, an RSA Public Key PKCS#11 object
+and an RSA Private Key PKCS#11 object are created.
+
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Display command usage info.
+.TP
+\fB-v\fR, \fB\-\-version\fR
+Display command version info.
+.TP
+\fB-l\fR, \fB\-\-log\fR [none|error|info|debug]
+Set logging level.
+.TP
+\fB-i\fR, \fB\-\-idfile\fR FILE
+Use FILE as the PEM formatted X.509 certificate input used
+to obtain the subject and id attributes
+.TP
+\fB-k\fR, \fB\-\-token\fR STRING
+Use STRING to identify the label of the PKCS#11 token to
+be used
+.TP
+\fB-n\fR, \fB\-\-name\fR STRING
+Use STRING as the label for the imported object(s)
+.TP
+\fB-p\fR, \fB\-\-public\fR
+Import the object(s) as a public object
+.TP
+\fB-t\fR, \fB\-\-type\fR key|cert
+Import only the specified object type
+.TP
+\fB-y\fR, \fB\-\-yes\fR
+Assume an answer of yes for any confirmation prompts that would normally be asked
+
+.SH "SEE ALSO"
+.PP
+\fBtpmtoken_init\fR(1),
+\fBtpmtoken_setpasswd\fR(1),
+\fBtpmtoken_objects\fR(1),
+\fBtpmtoken_protect\fR(1)
+
+.SH "REPORTING BUGS"
+Report bugs to <trousers-users@lists.sourceforge.net>

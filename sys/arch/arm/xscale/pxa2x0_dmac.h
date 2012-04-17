@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_dmac.h,v 1.3 2007/02/21 22:59:39 thorpej Exp $	*/
+/*	$NetBSD: pxa2x0_dmac.h,v 1.3.82.1 2012/04/17 00:06:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -147,7 +147,7 @@ struct dmac_xfer {
 #define DMAC_DESC_DST 1
 };
 
-extern struct dmac_xfer *pxa2x0_dmac_allocate_xfer(int);
+extern struct dmac_xfer *pxa2x0_dmac_allocate_xfer(void);
 extern void pxa2x0_dmac_free_xfer(struct dmac_xfer *);
 extern int pxa2x0_dmac_start_xfer(struct dmac_xfer *);
 extern void pxa2x0_dmac_abort_xfer(struct dmac_xfer *);

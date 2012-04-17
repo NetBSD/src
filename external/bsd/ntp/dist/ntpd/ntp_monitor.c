@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_monitor.c,v 1.1.1.1 2009/12/13 16:55:35 kardel Exp $	*/
+/*	$NetBSD: ntp_monitor.c,v 1.1.1.1.6.1 2012/04/17 00:03:47 yamt Exp $	*/
 
 /*
  * ntp_monitor - monitor ntpd statistics
@@ -312,9 +312,9 @@ ntp_monitor(
 		 * Preempt from the MRU list if old enough.
 		 */
 		md = mon_mru_list.mru_prev;
-		if (md->count == 1 || ntp_random() / (2. * FRAC) >
-		    (double)(current_time - md->lasttime) / mon_age)
-			return (flags & ~RES_LIMITED);
+		if (ntp_random() / (2. * FRAC) > (double)(current_time
+		    - md->lasttime) / mon_age)
+			return (flags & ~(RES_LIMITED | RES_KOD));
 
 		md->mru_prev->mru_next = &mon_mru_list;
 		mon_mru_list.mru_prev = md->mru_prev;
@@ -331,7 +331,7 @@ ntp_monitor(
 	 */
 	md->lasttime = md->firsttime = current_time;
 	md->count = 1;
-	md->flags = flags & ~RES_LIMITED;
+	md->flags = flags & ~(RES_LIMITED | RES_KOD);
 	md->leak = 0;
 	memset(&md->rmtadr, 0, sizeof(md->rmtadr));
 	memcpy(&md->rmtadr, &addr, sizeof(addr));

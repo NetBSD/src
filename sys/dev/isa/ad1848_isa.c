@@ -1,7 +1,7 @@
-/*	$NetBSD: ad1848_isa.c,v 1.37 2011/06/02 12:51:52 nonaka Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.37.2.1 2012/04/17 00:07:38 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.37 2011/06/02 12:51:52 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.37.2.1 2012/04/17 00:07:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,11 +105,10 @@ __KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.37 2011/06/02 12:51:52 nonaka Exp $
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
-
 #include <sys/cpu.h>
 #include <sys/bus.h>
-
 #include <sys/audioio.h>
+#include <sys/malloc.h>
 
 #include <dev/audio_if.h>
 #include <dev/auconv.h>
@@ -502,8 +501,10 @@ ad1848_isa_open(void *addr, int flags)
 
 #ifndef AUDIO_NO_POWER_CTL
 	/* Power-up chip */
-	if (isc->powerctl)
+	if (isc->powerctl) {
+		KASSERT(mutex_owned(&sc->sc_intr_lock));
 		isc->powerctl(isc->powerarg, flags);
+	}
 #endif
 
 	/* Init and mute wave output */
@@ -512,8 +513,10 @@ ad1848_isa_open(void *addr, int flags)
 	error = ad1848_open(sc, flags);
 	if (error) {
 #ifndef AUDIO_NO_POWER_CTL
-		if (isc->powerctl)
+		if (isc->powerctl) {
+			KASSERT(mutex_owned(&sc->sc_intr_lock));
 			isc->powerctl(isc->powerarg, 0);
+		}
 #endif
 		goto bad;
 	}
@@ -530,9 +533,6 @@ bad:
 	return error;
 }
 
-/*
- * Close function is called at splaudio().
- */
 void
 ad1848_isa_close(void *addr)
 {
@@ -546,8 +546,10 @@ ad1848_isa_close(void *addr)
 
 #ifndef AUDIO_NO_POWER_CTL
 	/* Power-down chip */
-	if (isc->powerctl)
+	if (isc->powerctl) {
+		KASSERT(mutex_owned(&sc->sc_intr_lock));
 		isc->powerctl(isc->powerarg, 0);
+	}
 #endif
 
 	if (isc->sc_playdrq != -1)
@@ -694,6 +696,9 @@ ad1848_isa_intr(void *arg)
 
 	isc = arg;
 	sc = &isc->sc_ad1848;
+
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
+
 	retval = 0;
 	/* Get intr status */
 	status = ADREAD(sc, AD1848_STATUS);
@@ -734,9 +739,7 @@ void *
 ad1848_isa_malloc(
 	void *addr,
 	int direction,
-	size_t size,
-	struct malloc_type *pool,
-	int flags)
+	size_t size)
 {
 	struct ad1848_isa_softc *isc;
 	int drq;
@@ -746,14 +749,14 @@ ad1848_isa_malloc(
 		drq = isc->sc_playdrq;
 	else
 		drq = isc->sc_recdrq;
-	return isa_malloc(isc->sc_ic, drq, size, pool, flags);
+	return isa_malloc(isc->sc_ic, drq, size, M_DEVBUF, M_WAITOK);
 }
 
 void
-ad1848_isa_free(void *addr, void *ptr, struct malloc_type *pool)
+ad1848_isa_free(void *addr, void *ptr, size_t size)
 {
 
-	isa_free(ptr, pool);
+	isa_free(ptr, M_DEVBUF);
 }
 
 size_t

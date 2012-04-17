@@ -1,4 +1,4 @@
-/*	$NetBSD: hypercalls.h,v 1.12 2011/06/07 14:53:03 bouyer Exp $	*/
+/*	$NetBSD: hypercalls.h,v 1.12.2.1 2012/04/17 00:07:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -172,6 +172,8 @@ HYPERVISOR_get_debugreg(int reg)
 
     return ret;
 }
+
+#include <xen/xen-public/arch-x86/xen-mca.h>
 
 static __inline int
 HYPERVISOR_machine_check(struct xen_mc *mc)

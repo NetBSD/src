@@ -1,11 +1,11 @@
-/*	$NetBSD: mpu_isa.c,v 1.20 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: mpu_isa.c,v 1.20.34.1 2012/04/17 00:07:39 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson.
+ * by Lennart Augustsson and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_isa.c,v 1.20 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_isa.c,v 1.20.34.1 2012/04/17 00:07:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ struct mpu_isa_softc {
 	device_t sc_dev;
 	struct mpu_softc sc_mpu;	/* generic part */
 	void	*sc_ih;			/* ISA interrupt handler */
+	kmutex_t sc_lock;
 };
 
 static int	mpu_isa_match(device_t, cfdata_t, void *);
@@ -118,5 +119,7 @@ mpu_isa_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_mpu.model = "Roland MPU-401 MIDI UART";
 	sc->sc_dev = self;
+	sc->sc_mpu.lock = &sc->sc_lock;
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_AUDIO);
 	mpu_attach(&sc->sc_mpu);
 }

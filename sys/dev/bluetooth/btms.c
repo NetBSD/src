@@ -1,4 +1,4 @@
-/*	$NetBSD: btms.c,v 1.9 2009/05/12 12:10:46 cegger Exp $	*/
+/*	$NetBSD: btms.c,v 1.9.12.1 2012/04/17 00:07:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btms.c,v 1.9 2009/05/12 12:10:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btms.c,v 1.9.12.1 2012/04/17 00:07:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -276,6 +276,8 @@ btms_attach(device_t parent, device_t self, void *aux)
 	wsma.accesscookie = sc;
 
 	sc->sc_wsmouse = config_found(self, &wsma, wsmousedevprint);
+
+	pmf_device_register(self, NULL, NULL);
 }
 
 static int
@@ -283,6 +285,8 @@ btms_detach(device_t self, int flags)
 {
 	struct btms_softc *sc = device_private(self);
 	int err = 0;
+
+	pmf_device_deregister(self);
 
 	if (sc->sc_wsmouse != NULL) {
 		err = config_detach(sc->sc_wsmouse, flags);

@@ -1,4 +1,4 @@
-/* $NetBSD: joy_acpi.c,v 1.10 2010/03/05 14:00:17 jruoho Exp $ */
+/* $NetBSD: joy_acpi.c,v 1.10.10.1 2012/04/17 00:07:28 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_acpi.c,v 1.10 2010/03/05 14:00:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_acpi.c,v 1.10.10.1 2012/04/17 00:07:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -45,6 +45,7 @@ static void	joy_acpi_attach(device_t, device_t, void *);
 
 struct joy_acpi_softc {
 	struct joy_softc sc_joy;
+	kmutex_t sc_lock;
 };
 
 CFATTACH_DECL_NEW(joy_acpi, sizeof(struct joy_acpi_softc), joy_acpi_match,
@@ -108,6 +109,9 @@ joy_acpi_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "can't map i/o space\n");
 		goto out;
 	}
+
+	mutex_init(&asc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	sc->sc_lock = &asc->sc_lock;
 
 	joyattach(sc);
 

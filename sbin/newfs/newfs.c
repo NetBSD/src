@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.109 2011/03/06 17:08:17 bouyer Exp $	*/
+/*	$NetBSD: newfs.c,v 1.109.4.1 2012/04/17 00:05:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.109 2011/03/06 17:08:17 bouyer Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.109.4.1 2012/04/17 00:05:41 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -239,7 +239,7 @@ main(int argc, char *argv[])
 	struct statvfs *mp;
 	struct stat sb;
 	int ch, fsi, fso, len, n, Fflag, Iflag, Zflag;
-	char *cp, *s1, *s2, *special;
+	char *s1, *s2, *special;
 	const char *opstring;
 	int byte_sized = 0;
 #ifdef MFS
@@ -255,7 +255,6 @@ main(int argc, char *argv[])
 	gid_t mfsgid = 0;	/* group wheel */
 	mntoptparse_t mo;
 
-	cp = NULL;
 	fsi = fso = -1;
 	Fflag = Iflag = Zflag = 0;
 	verbosity = -1;

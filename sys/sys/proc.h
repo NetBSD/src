@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.311 2011/10/21 02:07:07 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.311.2.1 2012/04/17 00:08:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -171,9 +171,6 @@ struct emul {
 	/* Emulation-specific hook for userspace page faults */
 	int		(*e_usertrap)(struct lwp *, vaddr_t, void *);
 
-	/* SA-related information */
-	const struct sa_emul *e_sa;
-
 	size_t		e_ucsize;	/* size of ucontext_t */
 	void		(*e_startlwp)(void *);
 };
@@ -260,8 +257,6 @@ struct proc {
 	u_int		p_waited;	/* l: parent has waited on child */
 	struct lwp	*p_zomblwp;	/* p: detached LWP to be reaped */
 
-	struct sadata	*p_sa;		/* p: Scheduler activation info */
-
 	/* scheduling */
 	void		*p_sched_info;	/* p: Scheduler-specific structure */
 	fixpt_t		p_estcpu;	/* p: Time avg. value of p_cpticks */
@@ -277,7 +272,6 @@ struct proc {
 	u_quad_t 	p_iticks;	/* t: Statclock hits processing intr */
 
 	int		p_traceflag;	/* k: Kernel trace points */
-	int		p_timerpend;	/* p: Pending itimer to run */
 	void		*p_tracep;	/* k: Trace private data */
 	struct vnode 	*p_textvp;	/* :: Vnode of executable */
 
@@ -360,16 +354,14 @@ struct proc {
  * process context only.
  */
 #define	PS_NOCLDSTOP	0x00000008 /* No SIGCHLD when children stop */
-#define	PS_SA		0x00000400 /* Process using scheduler activations */
+#define	PS_RUMP_LWPEXIT	0x00000400 /* LWPs in RUMP kernel should exit for GC */
 #define	PS_WCORE	0x00001000 /* Process needs to dump core */
 #define	PS_WEXIT	0x00002000 /* Working on exiting */
 #define	PS_STOPFORK	0x00800000 /* Child will be stopped on fork(2) */
 #define	PS_STOPEXEC	0x01000000 /* Will be stopped on exec(2) */
 #define	PS_STOPEXIT	0x02000000 /* Will be stopped at process exit */
 #define	PS_NOTIFYSTOP	0x10000000 /* Notify parent of successful STOP */
-#define	PS_NOSA 	0x40000000 /* Do not enable SA */
 #define	PS_STOPPING	0x80000000 /* Transitioning SACTIVE -> SSTOP */
-#define	PS_RUMP_LWPEXIT PS_SA      /* LWPs in rump kernel should exit for g/c */
 
 /*
  * These flags are kept in p_sflag and are protected by the proc_lock
@@ -466,10 +458,9 @@ void	proc_sesshold(struct session *);
 void	proc_sessrele(struct session *);
 void	fixjobc(struct proc *, struct pgrp *, int);
 
-int	ltsleep(wchan_t, pri_t, const char *, int, volatile struct simplelock *);
+int	tsleep(wchan_t, pri_t, const char *, int);
 int	mtsleep(wchan_t, pri_t, const char *, int, kmutex_t *);
 void	wakeup(wchan_t);
-void	wakeup_one(wchan_t);
 int	kpause(const char *, bool, int, kmutex_t *);
 void	exit1(struct lwp *, int) __dead;
 int	do_sys_wait(int *, int *, int, struct rusage *);
@@ -486,6 +477,7 @@ void	cpu_lwp_fork(struct lwp *, struct lwp *, void *, size_t,
 	    void (*)(void *), void *);
 void	cpu_lwp_free(struct lwp *, int);
 void	cpu_lwp_free2(struct lwp *);
+void	cpu_spawn_return(struct lwp*);
 
 #ifdef __HAVE_SYSCALL_INTERN
 void	syscall_intern(struct proc *);
@@ -531,10 +523,6 @@ _proclist_skipmarker(struct proc *p0)
 	for ((var) = LIST_FIRST(head);					\
 		((var) = _proclist_skipmarker(var)) != NULL;		\
 		(var) = LIST_NEXT(var, p_list))
-
-/* Compatibility with old, non-interlocked tsleep call */
-#define	tsleep(chan, pri, wmesg, timo)					\
-	ltsleep(chan, pri, wmesg, timo, NULL)
 
 #ifdef KSTACK_CHECK_MAGIC
 void	kstack_setup_magic(const struct lwp *);

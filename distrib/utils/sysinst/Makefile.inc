@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.57 2011/11/01 09:26:37 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.57.2.1 2012/04/17 00:02:49 yamt Exp $
 #
 # Makefile for sysinst
 
@@ -13,12 +13,14 @@ WARNS=		4
 
 SRCS+=	menu_defs.c msg_defs.c main.c install.c upgrade.c \
 	txtwalk.c run.c factor.c net.c disks.c disks_lfs.c util.c geom.c \
-	label.c target.c md.c sizemultname.c
+	label.c target.c md.c sizemultname.c configmenu.c checkrc.c
 
 SRCS+=	${MD_OPTIONS:MAOUT2ELF:S/AOUT2ELF/aout2elf.c/}
 SRCS+=	${MENUS_MD:Mmenus.mbr:S/menus.mbr/mbr.c/}
 SRCS+=	${CPPFLAGS:M-DWSKBD:S/-DWSKBD/wskbd.c/}
 SRCS+=	${NODISKLABEL:D:Ubsddisklabel.c savenewlabel.c}
+
+DPSRCS+= defs.h
 
 SYSINSTLANG?=	en
 LANGUAGES?=	de en es fr pl

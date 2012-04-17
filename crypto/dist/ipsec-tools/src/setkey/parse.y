@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.14 2010/12/03 14:32:52 tteras Exp $	*/
+/*	$NetBSD: parse.y,v 1.14.8.1 2012/04/17 00:01:42 yamt Exp $	*/
 
 /*	$KAME: parse.y,v 1.81 2003/07/01 04:01:48 itojun Exp $	*/
 
@@ -85,7 +85,7 @@ struct security_ctx {
 
 struct security_ctx sec_ctx;
 
-static u_int p_natt_type;
+static u_int p_natt_type, p_esp_frag;
 static struct addrinfo * p_natt_oa = NULL;
 
 static int p_aiflags = 0, p_aifamily = PF_UNSPEC;
@@ -125,6 +125,7 @@ static int setkeymsg_add __P((unsigned int, unsigned int,
 %token ALG_COMP
 %token F_LIFETIME_HARD F_LIFETIME_SOFT
 %token F_LIFEBYTE_HARD F_LIFEBYTE_SOFT
+%token F_ESPFRAG
 %token DECSTRING QUOTEDSTRING HEXSTRING STRING ANY
 	/* SPD management */
 %token SPDADD SPDUPDATE SPDDELETE SPDDUMP SPDFLUSH
@@ -545,6 +546,14 @@ extension
 	|	F_MODE MODE { p_mode = $2; }
 	|	F_MODE ANY { p_mode = IPSEC_MODE_ANY; }
 	|	F_REQID DECSTRING { p_reqid = $2; }
+	|	F_ESPFRAG DECSTRING
+		{
+			if (p_natt_type == 0) {
+				yyerror("esp fragment size only valid for NAT-T");
+				return -1;
+			}
+			p_esp_frag = $2;
+		}
 	|	F_REPLAY DECSTRING
 		{
 			if ((p_ext & SADB_X_EXT_OLD) != 0) {
@@ -1518,6 +1527,22 @@ setkeymsg_add(type, satype, srcs, dsts)
 				
 				memcpy(buf + l, &natt_port, len);
 				l += len;
+#ifdef SADB_X_EXT_NAT_T_FRAG
+				if (p_esp_frag) {
+					struct sadb_x_nat_t_frag esp_frag;
+
+					/* NATT_FRAG */
+					len = sizeof(struct sadb_x_nat_t_frag);
+					memset(&esp_frag, 0, len);
+					esp_frag.sadb_x_nat_t_frag_len = PFKEY_UNIT64(len);
+					esp_frag.sadb_x_nat_t_frag_exttype =
+						SADB_X_EXT_NAT_T_FRAG;
+					esp_frag.sadb_x_nat_t_frag_fraglen = p_esp_frag;
+
+					memcpy(buf + l, &esp_frag, len);
+					l += len;
+				}
+#endif
 			}
 #endif
 			msg->sadb_msg_len = PFKEY_UNIT64(l);
@@ -1657,6 +1682,7 @@ parse_init()
 		freeaddrinfo (p_natt_oa);
 	p_natt_oa = NULL;
 	p_natt_type = 0;
+	p_esp_frag = 0;
 
 	return;
 }

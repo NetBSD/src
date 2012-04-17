@@ -1,4 +1,4 @@
-/*	$NetBSD: opts.h,v 1.1.1.1 2004/03/28 08:55:47 martti Exp $	*/
+/*	$NetBSD: opts.h,v 1.1.1.1.56.1 2012/04/17 00:02:24 yamt Exp $	*/
 
 /*
  * Copyright (C) 2000 by Darren Reed.
@@ -46,14 +46,6 @@
 #define	OPT_STAT	OPT_FRSTATES
 #define	OPT_LIST	OPT_SHOWLIST
 
-
-#ifndef __P
-# ifdef	__STDC__
-#  define	__P(x)	x
-# else
-#  define	__P(x)	()
-# endif
-#endif
 
 #if defined(sun) && !SOLARIS
 # define	STRERROR(x)	sys_errlist[x]

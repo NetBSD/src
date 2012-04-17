@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.182 2011/07/03 02:18:21 matt Exp $	 */
+/* $NetBSD: machdep.c,v 1.182.2.1 2012/04/17 00:07:01 yamt Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.182 2011/07/03 02:18:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.182.2.1 2012/04/17 00:07:01 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -109,7 +109,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.182 2011/07/03 02:18:21 matt Exp $");
 #include <sys/ptrace.h>
 #include <sys/reboot.h>
 #include <sys/kauth.h>
-#include <sys/savar.h>	/* for cpu_upcall */
 #include <sys/sysctl.h>
 #include <sys/time.h>
 
@@ -148,7 +147,6 @@ char		machine[] = MACHINE;		/* from <machine/param.h> */
 char		machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char		cpu_model[100];
 void *		msgbufaddr;
-int		physmem;
 int		*symtab_start;
 int		*symtab_end;
 int		symtab_nsyms;
@@ -227,20 +225,15 @@ long	dumplo = 0;
 void
 cpu_dumpconf(void)
 {
-	const struct bdevsw *bdev;
-	int		nblks;
+	int	nblks;
 
 	/*
 	 * XXX include the final RAM page which is not included in physmem.
 	 */
 	if (dumpdev == NODEV)
 		return;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL)
-		return;
-	dumpsize = physmem + 1;
-	if (bdev->d_psize != NULL) {
-		nblks = (*bdev->d_psize)(dumpdev);
+	nblks = bdev_size(dumpdev);
+	if (nblks > 0) {
 		if (dumpsize > btoc(dbtob(nblks - dumplo)))
 			dumpsize = btoc(dbtob(nblks - dumplo));
 		else if (dumplo == 0)
@@ -314,7 +307,7 @@ consinit(void)
 	 */
 	KASSERT(iospace != 0);
 	iomap_ex = extent_create("iomap", iospace + VAX_NBPG,
-	    iospace + ((IOSPSZ * VAX_NBPG) - 1), M_DEVBUF,
+	    iospace + ((IOSPSZ * VAX_NBPG) - 1),
 	    (void *) iomap_ex_storage, sizeof(iomap_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
 #ifdef DEBUG
@@ -622,52 +615,6 @@ krnunlock(void)
 #endif
 
 void
-cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
-    void *sas, void *ap, void *sp, sa_upcall_t upcall)
-{
-	struct trapframe * const tf = l->l_md.md_utf;
-	uint32_t saframe[11], *fp = saframe;
-
-	sp = (void *)((uintptr_t)sp - sizeof(saframe));
-
-	/*
-	 * We don't bother to save the callee's register mask
-	 * since the function is never expected to return.
-	 */
-
-	/*
-	 * Fake a CALLS stack frame.
-	 */
-	*fp++ = 0;			/* condition handler */
-	*fp++ = 0x20000000;		/* saved regmask & PSW */
-	*fp++ = 0;			/* saved AP */
-	*fp++ = 0;			/* saved FP, new call stack */
-	*fp++ = 0;			/* saved PC, new call stack */
-
-	/*
-	 * Now create the argument list.
-	 */
-	*fp++ = 5;			/* argc = 5 */
-	*fp++ = type;
-	*fp++ = (uintptr_t) sas;
-	*fp++ = nevents;
-	*fp++ = ninterrupted;
-	*fp++ = (uintptr_t) ap;
-
-	if (copyout(&saframe, sp, sizeof(saframe)) != 0) {
-		/* Copying onto the stack didn't work, die. */
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
-	}
-
-	tf->tf_ap = (uintptr_t) sp + 20;
-	tf->tf_sp = (long) sp;
-	tf->tf_fp = (long) sp;
-	tf->tf_pc = (long) upcall + 2;
-	tf->tf_psl = (long) PSL_U | PSL_PREVU;
-}
-
-void
 cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 {
 	const struct trapframe * const tf = l->l_md.md_utf;
@@ -724,6 +671,18 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	tf->tf_sp = gr[_REG_SP];
 	tf->tf_pc = gr[_REG_PC];
 	tf->tf_psl = gr[_REG_PSL];
+
+	if (flags & _UC_TLSBASE) {
+		void *tlsbase;
+		int error;
+
+		error = copyin((void *)tf->tf_sp, &tlsbase, sizeof(tlsbase));
+		if (error) {
+			return error;
+		}
+		lwp_setprivate(l, tlsbase);
+		tf->tf_sp += sizeof(tlsbase);
+	}
 	return 0;
 }
 

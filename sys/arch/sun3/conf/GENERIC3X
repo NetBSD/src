@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.112 2011/06/30 20:09:37 wiz Exp $
+# $NetBSD: GENERIC3X,v 1.112.2.1 2012/04/17 00:06:58 yamt Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -7,7 +7,7 @@ include 	"arch/sun3/conf/std.sun3x"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC3X-$Revision: 1.112 $"
+#ident		"GENERIC3X-$Revision: 1.112.2.1 $"
 
 makeoptions	COPTS="-Os"	# bootloader has size limit (~2MB)
 
@@ -23,7 +23,6 @@ options 	KTRACE		# system call tracing
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
-options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 #options 	MODULAR		# new style module(7) framework
 
@@ -94,7 +93,7 @@ options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
@@ -270,7 +269,6 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
 #pseudo-device	agr			# IEEE 802.3ad link aggregation
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
-pseudo-device	rnd			# /dev/random and in-kernel generator
 
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd			# paging to files

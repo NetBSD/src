@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.53 2011/07/18 00:31:13 mrg Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.53.2.1 2012/04/17 00:06:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.53 2011/07/18 00:31:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.53.2.1 2012/04/17 00:06:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1149,8 +1149,8 @@ tctrlioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 	/* this ioctl assumes the caller knows exactly what he is doing */
 	case TCTRL_CMD_REQ:
 		reqn = (struct tctrl_req *)data;
-		if ((i = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL)) != 0 &&
+		if ((i = kauth_authorize_device_passthru(l->l_cred,
+		    dev, KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_ALL, data)) != 0 &&
 		    (reqn->cmdbuf[0] == TS102_OP_CTL_BITPORT ||
 		    (reqn->cmdbuf[0] >= TS102_OP_CTL_WATCHDOG &&
 		    reqn->cmdbuf[0] <= TS102_OP_CTL_SECURITY_KEY) ||

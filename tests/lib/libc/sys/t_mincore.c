@@ -1,4 +1,4 @@
-/* $NetBSD: t_mincore.c,v 1.3 2011/07/14 10:24:56 jruoho Exp $ */
+/* $NetBSD: t_mincore.c,v 1.3.2.1 2012/04/17 00:09:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mincore.c,v 1.3 2011/07/14 10:24:56 jruoho Exp $");
+__RCSID("$NetBSD: t_mincore.c,v 1.3.2.1 2012/04/17 00:09:12 yamt Exp $");
 
 #include <sys/mman.h>
 #include <sys/shm.h>
@@ -205,7 +205,12 @@ ATF_TC_BODY(mincore_resid, tc)
 	 * Check that the in-core pages match the locked pages.
 	 */
 	ATF_REQUIRE(check_residency(addr, npgs) == 0);
-	ATF_REQUIRE(mlockall(MCL_CURRENT|MCL_FUTURE) == 0);
+
+	errno = 0;
+
+	if (mlockall(MCL_CURRENT|MCL_FUTURE) != 0 && errno != ENOMEM)
+		atf_tc_fail("mlockall(2) failed");
+
 	ATF_REQUIRE(check_residency(addr, npgs) == npgs);
 
 	addr2 = mmap(NULL, npgs * page, PROT_READ, MAP_ANON, -1, (off_t)0);

@@ -1,16 +1,20 @@
 /* -*- Mode: Text -*- */
 
 copyright = {
-    date  = "1970-2009";
+    date  = "1970-2011";
     owner = "David L. Mills and/or others";
     eaddr = "http://bugs.ntp.org, bugs@ntp.org";
     type  = note;
-    text  = "see html/copyright.html";
+    text  = <<- _EndOfDoc_
+	see html/copyright.html
+
+	_EndOfDoc_;
 };
 
 long-opts;
 config-header  = config.h;
 environrc;
+no-misuse-usage;
 
 version         = `
 eval VERSION=\`sed -e 's/.*,\\[//' -e 's/\\].*//' < ../version.m4\`

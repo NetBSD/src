@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80321_INSTALL,v 1.1 2003/04/08 20:49:02 thorpej Exp $
+#	$NetBSD: IQ80321_INSTALL,v 1.1.142.1 2012/04/17 00:06:13 yamt Exp $
 #
 #	IQ80321_INSTALL -- IQ80321 kernel with installation-sized
 #	ramdisk
@@ -6,3 +6,12 @@
 
 include "arch/evbarm/conf/IQ80321"
 include "arch/evbarm/conf/INSTALL"
+
+#options 	UVMHIST,UVMHIST_PRINT
+options 	VERBOSE_INIT_ARM
+makeoptions	DEBUG="-g"
+#options 	PMAPDEBUG
+
+no config netbsd-sd0
+no config netbsd-wd0
+no config netbsd-wm0

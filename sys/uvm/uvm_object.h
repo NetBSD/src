@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.31.2.2 2011/11/06 22:05:00 yamt Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.31.2.3 2012/04/17 00:09:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -30,16 +30,24 @@
 #ifndef _UVM_UVM_OBJECT_H_
 #define _UVM_UVM_OBJECT_H_
 
-/*
- * uvm_object.h
- */
-
 #include <sys/queue.h>
 #include <sys/radixtree.h>
 #include <uvm/uvm_pglist.h>
 
 /*
- * uvm_object: all that is left of mach objects.
+ * The UVM memory object interface.  Notes:
+ *
+ * A UVM memory object represents a list of pages, which are managed by
+ * the object's pager operations (uvm_object::pgops).  All pages belonging
+ * to an object are owned by it and thus protected by the object lock.
+ *
+ * The lock (uvm_object::vmobjlock) may be shared amongst the UVM objects.
+ * By default, the lock is allocated dynamically using mutex_obj(9) cache.
+ * Lock sharing is normally used when there is an underlying object.  For
+ * example, vnode representing a file may have an underlying node, which
+ * is the case for tmpfs and layered file systems.  In such case, vnode's
+ * UVM object and the underlying UVM object shares the lock (note that the
+ * vnode_t::v_interlock points to uvm_object::vmobjlock).
  */
 
 struct uvm_object {

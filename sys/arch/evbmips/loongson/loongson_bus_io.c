@@ -1,4 +1,4 @@
-/*	$NetBSD: loongson_bus_io.c,v 1.1 2011/08/27 13:42:45 bouyer Exp $	*/
+/*	$NetBSD: loongson_bus_io.c,v 1.1.2.1 2012/04/17 00:06:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: loongson_bus_io.c,v 1.1 2011/08/27 13:42:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: loongson_bus_io.c,v 1.1.2.1 2012/04/17 00:06:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: loongson_bus_io.c,v 1.1 2011/08/27 13:42:45 bouyer E
 #include <sys/bus.h>
 
 #include <evbmips/loongson/loongson_bus_defs.h>
+#include <evbmips/loongson/autoconf.h>
 
 #define	CHIP			bonito
 #define CHIP_IO			/* defined */
@@ -65,3 +66,25 @@ __KERNEL_RCSID(0, "$NetBSD: loongson_bus_io.c,v 1.1 2011/08/27 13:42:45 bouyer E
 #define	CHIP_W1_SYS_END(v)	((u_long)BONITO_PCIIO_BASE + 0x000fffffUL)
 
 #include <mips/mips/bus_space_alignstride_chipdep.c>
+
+int
+bonito_bus_io_legacy_map(void *v, bus_addr_t addr, bus_size_t size, int flags,
+    bus_space_handle_t *hp, int acct)
+{
+	const struct legacy_io_range *r;
+	bus_addr_t rend;
+
+	if (addr < BONITO_PCIIO_LEGACY) {
+		r = sys_platform->legacy_io_ranges;
+		if (r == NULL)
+			return (ENXIO);
+
+		rend = addr + size - 1;
+		for (; r->start != 0; r++)
+			if (addr >= r->start && rend <= r->end)
+				break;
+		if (r->end == 0)
+			return (ENXIO);
+	}
+	return __BS(map)(v, addr, size, flags, hp, acct);
+}

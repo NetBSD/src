@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.36 2010/11/12 12:26:29 phx Exp $	*/
+/*	$NetBSD: snapper.c,v 1.36.8.1 2012/04/17 00:06:37 yamt Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.36 2010/11/12 12:26:29 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.36.8.1 2012/04/17 00:06:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -111,6 +111,9 @@ struct snapper_softc {
 	unsigned char	dbdma_cmdspace[sizeof(struct dbdma_command) * 40 + 15];
 	struct dbdma_command *sc_odmacmd;
 	struct dbdma_command *sc_idmacmd;
+
+	kmutex_t sc_lock;
+	kmutex_t sc_intr_lock;
 };
 
 static int snapper_match(device_t, struct cfdata *, void *);
@@ -134,6 +137,7 @@ static int snapper_trigger_output(void *, void *, void *, int, void (*)(void *),
     void *, const audio_params_t *);
 static int snapper_trigger_input(void *, void *, void *, int, void (*)(void *),
     void *, const audio_params_t *);
+static void snapper_get_locks(void *, kmutex_t **, kmutex_t **);
 static void snapper_set_volume(struct snapper_softc *, u_int, u_int);
 static int snapper_set_rate(struct snapper_softc *);
 static void snapper_set_treble(struct snapper_softc *, u_int);
@@ -161,7 +165,7 @@ struct snapper_codecvar {
 };
 
 static stream_filter_t *snapper_filter_factory
-	(int (*)(stream_fetcher_t *, audio_stream_t *, int));
+	(int (*)(struct audio_softc *sc, stream_fetcher_t *, audio_stream_t *, int));
 static void snapper_filter_dtor(stream_filter_t *);
 
 /* XXX We can't access the hw device softc from our audio
@@ -172,7 +176,7 @@ static u_int snapper_vol_l = 128, snapper_vol_r = 128;
 /* XXX why doesn't auconv define this? */
 #define DEFINE_FILTER(name)	\
 static int \
-name##_fetch_to(stream_fetcher_t *, audio_stream_t *, int); \
+name##_fetch_to(struct audio_softc *, stream_fetcher_t *, audio_stream_t *, int); \
 stream_filter_t * name(struct audio_softc *, \
     const audio_params_t *, const audio_params_t *); \
 stream_filter_t * \
@@ -182,7 +186,7 @@ name(struct audio_softc *sc, const audio_params_t *from, \
 	return snapper_filter_factory(name##_fetch_to); \
 } \
 static int \
-name##_fetch_to(stream_fetcher_t *self, audio_stream_t *dst, int max_used)
+name##_fetch_to(struct audio_softc *sc, stream_fetcher_t *self, audio_stream_t *dst, int max_used)
 
 DEFINE_FILTER(snapper_volume)
 {
@@ -193,7 +197,7 @@ DEFINE_FILTER(snapper_volume)
 
 	this = (stream_filter_t *)self;
 	max_used = (max_used + 1) & ~1;
-	if ((err = this->prev->fetch_to(this->prev, this->src, max_used)))
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used)))
 		return err;
 	m = (dst->end - dst->start) & ~1;
 	m = min(m, max_used);
@@ -226,7 +230,7 @@ DEFINE_FILTER(snapper_fixphase)
 		panic("snapper_fixphase");
 #endif
 	max_used = (max_used + 3) & ~2;
-	if ((err = this->prev->fetch_to(this->prev, this->src, max_used)))
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used)))
 		return err;
 
 	/* work in stereo frames (4 bytes) */
@@ -245,7 +249,7 @@ DEFINE_FILTER(snapper_fixphase)
 }
 
 static stream_filter_t *
-snapper_filter_factory(int (*fetch_to)(stream_fetcher_t *, audio_stream_t *, int))
+snapper_filter_factory(int (*fetch_to)(struct audio_softc *sc, stream_fetcher_t *, audio_stream_t *, int))
 {
 	struct snapper_codecvar *this;
 
@@ -299,7 +303,7 @@ const struct audio_hw_if snapper_hw_if = {
 	snapper_trigger_output,
 	snapper_trigger_input,
 	NULL,
-	NULL
+	snapper_get_locks,
 };
 
 struct audio_device snapper_device = {
@@ -788,6 +792,9 @@ snapper_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal(": irq %d,%d,%d\n", cirq, oirq, iirq);
 
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
+
 	/* PMF event handler */
 	pmf_device_register(sc->sc_dev, NULL, NULL);
 
@@ -847,6 +854,7 @@ snapper_intr(void *v)
 	int status;
 
 	sc = v;
+	mutex_spin_enter(&sc->sc_intr_lock);
 	cmd = sc->sc_odmacmd;
 	count = sc->sc_opages;
 	/* Fill used buffer(s). */
@@ -873,7 +881,7 @@ snapper_intr(void *v)
 		}
 		cmd++;
 	}
-	    
+	mutex_spin_exit(&sc->sc_intr_lock);
 
 	return 1;
 }
@@ -1458,6 +1466,15 @@ snapper_trigger_input(void *h, void *start, void *end, int bsize,
 	dbdma_start(sc->sc_idma, sc->sc_idmacmd);
 
 	return 0;
+}
+
+static void
+snapper_get_locks(void *opaque, kmutex_t **intr, kmutex_t **thread)
+{
+       struct snapper_softc *sc = opaque;
+
+       *intr = &sc->sc_intr_lock;
+       *thread = &sc->sc_lock;
 }
 
 static void

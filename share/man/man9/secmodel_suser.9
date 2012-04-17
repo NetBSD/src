@@ -1,4 +1,4 @@
-.\" $NetBSD: secmodel_suser.9,v 1.4 2009/10/03 07:37:01 wiz Exp $
+.\" $NetBSD: secmodel_suser.9,v 1.4.8.1 2012/04/17 00:05:49 yamt Exp $
 .\"
 .\" Copyright (c) 2009 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 2, 2009
+.Dd December 4, 2011
 .Dt SECMODEL_SUSER 9
 .Os
 .Sh NAME
@@ -40,46 +40,53 @@ The
 .Em super-user
 is the host administrator, considered to have higher privileges than other
 users.
+.Sh FUNCTIONS
+.Nm
+exposes a
+.Xr secmodel_eval 9
+evaluation routine
+to test whether a set of credentials can be assimilated to
+.Em super-user
+credentials or not.
 .Pp
-The following
-.Xr sysctl 3
-variables are exported:
-.Bl -tag -width compact
-.It security.models.suser.curtain
-If non-zero, will filter returned objects according to the user-id
-requesting information about them, preventing from users any access to
-objects they don't own.
-.Pp
-At the moment, it affects
-.Xr ps 1 ,
-.Xr netstat 1
-(for
-.Dv PF_INET ,
-.Dv PF_INET6 ,
-and
-.Dv PF_UNIX
-PCBs), and
-.Xr w 1 .
-.It security.models.suser.usermount
-Allow non-superuser mounts.
-.Pp
-If non-zero, file-systems are allowed to be mounted by an ordinary user who
-owns the point
-.Ar node
-and has at least read access to the
-.Ar special
-device
-.Xr mount 8
-arguments.
-Finally, the flags
-.Cm nosuid
-and
-.Cm nodev
-must be given for non-superuser mounts.
+The parameters to
+.Xr secmodel_eval 9
+are:
+.Bl -tag -compact -width xxxxx
+.It id
+the unique identifier of
+.Nm :
+.Qo Dv org.netbsd.secmodel.suser Qc
+.It what
+a string,
+.Qo Dv is-root Qc .
+.It arg
+the
+.Xr kauth 9
+credentials
+.Po Fa kauth_cred_t Pc
+of the caller.
+.It ret
+a boolean, set by
+.Nm
+to
+.Dv true
+when the credentials are equivalent to
+.Em super-user ,
+.Dv false
+otherwise.
 .El
+.Sh RETURN TYPES
+If successful, the evaluation returns 0 with the
+.Fa ret
+argument being either
+.Dv true
+or
+.Dv false .
 .Sh SEE ALSO
 .Xr kauth 9 ,
 .Xr secmodel 9 ,
-.Xr secmodel_bsd44 9
+.Xr secmodel_bsd44 9 ,
+.Xr secmodel_eval 9
 .Sh AUTHORS
 .An Elad Efrat Aq elad@NetBSD.org

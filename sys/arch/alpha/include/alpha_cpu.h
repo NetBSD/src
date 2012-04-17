@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.49 2010/10/07 19:55:02 hans Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.49.8.1 2012/04/17 00:05:55 yamt Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -114,7 +114,7 @@ struct alpha_pcb {
 /*
  * Interrupt Type Code Definitions [OSF/1 PALcode Specific]
  */
- 
+
 #define	ALPHA_INTR_XPROC	0	/* interprocessor interrupt */
 #define	ALPHA_INTR_CLOCK	1	/* clock interrupt */
 #define	ALPHA_INTR_ERROR	2	/* correctable error or mcheck */

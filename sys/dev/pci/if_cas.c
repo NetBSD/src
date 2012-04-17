@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.14 2011/08/29 14:47:08 jmcneill Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.14.2.1 2012/04/17 00:07:46 yamt Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.14 2011/08/29 14:47:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.14.2.1 2012/04/17 00:07:46 yamt Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.14 2011/08/29 14:47:08 jmcneill Exp $")
 
 #include <sys/bus.h>
 #include <sys/intr.h>
+#include <sys/rnd.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -321,14 +322,12 @@ cas_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct cas_softc *sc = device_private(self);
-	char devinfo[256];
 	prop_data_t data;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 
 	sc->sc_dev = self;
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
+	pci_aprint_devinfo(pa, NULL);
 	sc->sc_rev = PCI_REVISION(pa->pa_class);
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, sc->sc_rev);
 	sc->sc_dmatag = pa->pa_dmat;
 
 #define PCI_CAS_BASEADDR	0x10
@@ -612,10 +611,8 @@ cas_config(struct cas_softc *sc, const uint8_t *enaddr)
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
 
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 			  RND_TYPE_NET, 0);
-#endif
 
 	evcnt_attach_dynamic(&sc->sc_ev_intr, EVCNT_TYPE_INTR,
 	    NULL, device_xname(sc->sc_dev), "interrupts");
@@ -645,9 +642,7 @@ cas_detach(device_t self, int flags)
 		cas_stop(&sc->sc_ethercom.ec_if, 1);
 		evcnt_detach(&sc->sc_ev_intr);
 
-#if NRND > 0
 		rnd_detach_source(&sc->rnd_source);
-#endif
 
 		ether_ifdetach(ifp);
 		if_detach(ifp);
@@ -1495,9 +1490,7 @@ cas_intr(void *v)
 			    device_xname(sc->sc_dev), rxstat);
 #endif
 	}
-#if NRND > 0
 	rnd_add_uint32(&sc->rnd_source, status);
-#endif
 	return (r);
 }
 

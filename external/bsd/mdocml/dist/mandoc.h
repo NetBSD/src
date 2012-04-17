@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mandoc.h,v 1.96 2011/10/06 22:29:12 kristaps Exp $ */
+/*	$Vendor-Id: mandoc.h,v 1.99 2012/02/16 20:51:31 joerg Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -150,7 +150,6 @@ enum	mandocerr {
 	MANDOCERR_NOTMANUAL, /* manual isn't really a manual */
 	MANDOCERR_COLUMNS, /* column syntax is inconsistent */
 	MANDOCERR_BADDISP, /* NOT IMPLEMENTED: .Bd -file */
-	MANDOCERR_SYNTLINESCOPE, /* line scope broken, syntax violated */
 	MANDOCERR_SYNTARGVCOUNT, /* argument count wrong, violates syntax */
 	MANDOCERR_SYNTCHILD, /* child violates parent syntax */
 	MANDOCERR_SYNTARGCOUNT, /* argument count wrong, violates syntax */
@@ -410,15 +409,17 @@ struct mchars	 *mchars_alloc(void);
 void		  mchars_free(struct mchars *);
 char	 	  mchars_num2char(const char *, size_t);
 int		  mchars_num2uc(const char *, size_t);
-int		  mchars_spec2cp(struct mchars *, 
+int		  mchars_spec2cp(const struct mchars *, 
 			const char *, size_t);
-const char	 *mchars_spec2str(struct mchars *, 
+const char	 *mchars_spec2str(const struct mchars *, 
 			const char *, size_t, size_t *);
 struct mparse	 *mparse_alloc(enum mparset, 
 			enum mandoclevel, mandocmsg, void *);
 void		  mparse_free(struct mparse *);
 void		  mparse_keep(struct mparse *);
 enum mandoclevel  mparse_readfd(struct mparse *, int, const char *);
+enum mandoclevel  mparse_readmem(struct mparse *, const void *, size_t,
+			const char *);
 void		  mparse_reset(struct mparse *);
 void		  mparse_result(struct mparse *, 
 			struct mdoc **, struct man **);

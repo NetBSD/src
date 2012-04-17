@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.43 2011/03/06 17:08:29 bouyer Exp $
+# $NetBSD: SLAB,v 1.43.4.1 2012/04/17 00:06:44 yamt Exp $
 #
 # deberg's development machine
 #
@@ -16,7 +16,6 @@ options 	KTRACE		# system call tracing
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
-options 	P1003_1B_SEMAPHORE	# POSIX semaphore support
 
 options 	INSECURE	# disable kernel security level
 options 	USERCONF	# userconf(4) support
@@ -201,7 +200,6 @@ pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 # rnd is EXPERIMENTAL
-#pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	wsmux			# mouse & keyboard multiplexor
 
 pseudo-device	pty			# pseudo-terminals

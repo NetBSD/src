@@ -1,4 +1,4 @@
-/*	$NetBSD: t_getenv_thread.c,v 1.1 2011/07/15 13:54:31 jruoho Exp $ */
+/*	$NetBSD: t_getenv_thread.c,v 1.1.2.1 2012/04/17 00:09:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_getenv_thread.c,v 1.1 2011/07/15 13:54:31 jruoho Exp $");
+__RCSID("$NetBSD: t_getenv_thread.c,v 1.1.2.1 2012/04/17 00:09:12 yamt Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -140,13 +140,9 @@ thread_unsetenv(void *arg)
 ATF_TC(getenv_r_thread);
 ATF_TC_HEAD(getenv_r_thread, tc)
 {
-	char timeout[32];
 
 	atf_tc_set_md_var(tc, "descr", "Test getenv_r(3) with threads");
-
-	(void)snprintf(timeout, sizeof(timeout), "%d", THREADED_RUN_TIME + 5);
-
-	atf_tc_set_md_var(tc, "timeout", timeout);
+	atf_tc_set_md_var(tc, "timeout", "%d", THREADED_RUN_TIME + 5);
 }
 
 ATF_TC_BODY(getenv_r_thread, tc)
@@ -170,13 +166,8 @@ ATF_TC_BODY(getenv_r_thread, tc)
 ATF_TC(putenv_thread);
 ATF_TC_HEAD(putenv_thread, tc)
 {
-	char timeout[32];
-
 	atf_tc_set_md_var(tc, "descr", "Test concurrent access by putenv(3)");
-
-	(void)snprintf(timeout, sizeof(timeout), "%d", THREADED_RUN_TIME + 5);
-
-	atf_tc_set_md_var(tc, "timeout", timeout);
+	atf_tc_set_md_var(tc, "timeout", "%d", THREADED_RUN_TIME + 5);
 }
 
 ATF_TC_BODY(putenv_thread, tc)
@@ -200,13 +191,8 @@ ATF_TC_BODY(putenv_thread, tc)
 ATF_TC(setenv_thread);
 ATF_TC_HEAD(setenv_thread, tc)
 {
-	char timeout[32];
-
 	atf_tc_set_md_var(tc, "descr", "Test concurrent access by setenv(3)");
-
-	(void)snprintf(timeout, sizeof(timeout), "%d", THREADED_RUN_TIME + 5);
-
-	atf_tc_set_md_var(tc, "timeout", timeout);
+	atf_tc_set_md_var(tc, "timeout", "%d", THREADED_RUN_TIME + 5);
 }
 
 ATF_TC_BODY(setenv_thread, tc)
@@ -230,13 +216,8 @@ ATF_TC_BODY(setenv_thread, tc)
 ATF_TC(unsetenv_thread);
 ATF_TC_HEAD(unsetenv_thread, tc)
 {
-	char timeout[32];
-
 	atf_tc_set_md_var(tc, "descr", "Test unsetenv(3) with threads");
-
-	(void)snprintf(timeout, sizeof(timeout), "%d", THREADED_RUN_TIME + 5);
-
-	atf_tc_set_md_var(tc, "timeout", timeout);
+	atf_tc_set_md_var(tc, "timeout", "%d", THREADED_RUN_TIME + 5);
 }
 
 ATF_TC_BODY(unsetenv_thread, tc)

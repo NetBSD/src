@@ -1,4 +1,4 @@
-# $NetBSD: MRCOFFEE,v 1.33 2011/03/06 17:08:31 bouyer Exp $
+# $NetBSD: MRCOFFEE,v 1.33.4.1 2012/04/17 00:06:54 yamt Exp $
 # From: NetBSD: GENERIC,v 1.197 2006/12/04 23:43:35 elad Exp
 #
 # Mr.Coffee (JavaStation 1) machine description file
@@ -12,7 +12,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MRCOFFEE-$Revision: 1.33 $"
+#ident 		"MRCOFFEE-$Revision: 1.33.4.1 $"
 
 maxusers	32
 
@@ -70,9 +70,6 @@ options 	SYSVSEM		# System V semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V shared memory
-options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
-
-## Loadable kernel module support; still under development.
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -212,7 +209,7 @@ options 	ISO,TPIP	# OSI networking
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
-#options 	PFIL_HOOKS	# Add pfil(9) hooks, intended for custom LKMs.
+#options 	PFIL_HOOKS	# Add pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
 #options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
@@ -338,7 +335,6 @@ pseudo-device	pty			# pseudo-terminals
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.
 
-pseudo-device	rnd
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.

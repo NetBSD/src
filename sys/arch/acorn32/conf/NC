@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.54 2011/03/06 17:08:18 bouyer Exp $
+#	$NetBSD: NC,v 1.54.4.1 2012/04/17 00:05:52 yamt Exp $
 #
 #	NC - with wscons
 #
@@ -274,7 +274,6 @@ pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	md			# Ramdisk driver
-pseudo-device	rnd			# /dev/random and /dev/urandom
 pseudo-device	clockctl		# user control of clock subsystem
 
 # a pseudo device needed for SMBFS

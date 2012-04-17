@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.33 2010/11/13 13:52:05 uebayasi Exp $	 */
+/* $NetBSD: if_bce.c,v 1.33.8.1 2012/04/17 00:07:45 yamt Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,10 +35,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.33 2010/11/13 13:52:05 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.33.8.1 2012/04/17 00:07:45 yamt Exp $");
 
 #include "vlan.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,9 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.33 2010/11/13 13:52:05 uebayasi Exp $")
 #include <net/if_ether.h>
 
 #include <net/bpf.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -117,7 +114,7 @@ struct bce_chain_data {
 #define BCE_TIMEOUT		100	/* # 10us for mii read/write */
 
 struct bce_softc {
-	struct device		bce_dev;
+	device_t		bce_dev;
 	bus_space_tag_t		bce_btag;
 	bus_space_handle_t	bce_bhandle;
 	bus_dma_tag_t		bce_dmatag;
@@ -138,9 +135,7 @@ struct bce_softc {
 	int			bce_txsfree;	/* no. tx slots available */
 	int			bce_txsnext;	/* next available tx slot */
 	callout_t		bce_timeout;
-#if NRND > 0
-	rndsource_element_t	rnd_source;
-#endif
+	krndsource_t	rnd_source;
 };
 
 /* for ring descriptors */
@@ -184,7 +179,8 @@ static	void	bce_mii_write(device_t, int, int, int);
 static	void	bce_statchg(device_t);
 static	void	bce_tick(void *);
 
-CFATTACH_DECL(bce, sizeof(struct bce_softc), bce_probe, bce_attach, NULL, NULL);
+CFATTACH_DECL_NEW(bce, sizeof(struct bce_softc),
+		  bce_probe, bce_attach, NULL, NULL);
 
 static const struct bce_product {
 	pci_vendor_id_t bp_vendor;
@@ -255,6 +251,8 @@ bce_attach(device_t parent, device_t self, void *aux)
 	bus_dma_segment_t seg;
 	int             error, i, pmreg, rseg;
 	struct ifnet   *ifp;
+
+	sc->bce_dev = self;
 
 	bp = bce_lookup(pa);
 	KASSERT(bp != NULL);
@@ -424,7 +422,7 @@ bce_attach(device_t parent, device_t self, void *aux)
 	sc->ethercom.ec_mii = &sc->bce_mii;
 	ifmedia_init(&sc->bce_mii.mii_media, 0, ether_mediachange,
 	    ether_mediastatus);
-	mii_attach(&sc->bce_dev, &sc->bce_mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(sc->bce_dev, &sc->bce_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, MIIF_FORCEANEG|MIIF_DOPAUSE);
 	if (LIST_FIRST(&sc->bce_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->bce_mii.mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
@@ -438,11 +436,11 @@ bce_attach(device_t parent, device_t self, void *aux)
 	 * Enable activity led.
 	 * XXX This should be in a phy driver, but not currently.
 	 */
-	bce_mii_write(&sc->bce_dev, 1, 26,	 /* MAGIC */
-	    bce_mii_read(&sc->bce_dev, 1, 26) & 0x7fff);	 /* MAGIC */
+	bce_mii_write(sc->bce_dev, 1, 26,	 /* MAGIC */
+	    bce_mii_read(sc->bce_dev, 1, 26) & 0x7fff);	 /* MAGIC */
 	/* enable traffic meter led mode */
-	bce_mii_write(&sc->bce_dev, 1, 27,	 /* MAGIC */
-	    bce_mii_read(&sc->bce_dev, 1, 27) | (1 << 6));	 /* MAGIC */
+	bce_mii_write(sc->bce_dev, 1, 27,	 /* MAGIC */
+	    bce_mii_read(sc->bce_dev, 1, 27) | (1 << 6));	 /* MAGIC */
 
 	/* Attach the interface */
 	if_attach(ifp);
@@ -461,10 +459,8 @@ bce_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "Ethernet address %s\n",
 	    ether_sprintf(sc->enaddr));
 	ether_ifattach(ifp, sc->enaddr);
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(self),
 	    RND_TYPE_NET, 0);
-#endif
 	callout_init(&sc->bce_timeout, 0);
 
 	if (pmf_device_register(self, NULL, bce_resume))
@@ -544,7 +540,7 @@ bce_start(struct ifnet *ifp)
 		error = bus_dmamap_load_mbuf(sc->bce_dmatag, dmamap, m0,
 		    BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 		if (error == EFBIG) {
-			aprint_error_dev(&sc->bce_dev,
+			aprint_error_dev(sc->bce_dev,
 			    "Tx packet consumes too many DMA segments, "
 			    "dropping...\n");
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
@@ -553,7 +549,7 @@ bce_start(struct ifnet *ifp)
 			continue;
 		} else if (error) {
 			/* short on resources, come back later */
-			aprint_error_dev(&sc->bce_dev,
+			aprint_error_dev(sc->bce_dev,
 			    "unable to load Tx buffer, error = %d\n",
 			    error);
 			break;
@@ -644,7 +640,7 @@ bce_watchdog(struct ifnet *ifp)
 {
 	struct bce_softc *sc = ifp->if_softc;
 
-	aprint_error_dev(&sc->bce_dev, "device timeout\n");
+	aprint_error_dev(sc->bce_dev, "device timeout\n");
 	ifp->if_oerrors++;
 
 	(void) bce_init(ifp);
@@ -706,7 +702,7 @@ bce_intr(void *xsc)
 			if (intstatus & I_TO)
 				msg = "general purpose timeout";
 			if (msg != NULL)
-				aprint_error_dev(&sc->bce_dev, "%s\n", msg);
+				aprint_error_dev(sc->bce_dev, "%s\n", msg);
 			wantinit = 1;
 		}
 	}
@@ -714,10 +710,7 @@ bce_intr(void *xsc)
 	if (handled) {
 		if (wantinit)
 			bce_init(ifp);
-#if NRND > 0
-		if (RND_ENABLED(&sc->rnd_source))
-			rnd_add_uint32(&sc->rnd_source, intstatus);
-#endif
+		rnd_add_uint32(&sc->rnd_source, intstatus);
 		/* Try to get more packets going. */
 		bce_start(ifp);
 	}
@@ -964,7 +957,7 @@ bce_init(struct ifnet *ifp)
 	for (i = 0; i < BCE_NRXDESC; i++) {
 		if (sc->bce_cdata.bce_rx_chain[i] == NULL) {
 			if ((error = bce_add_rxbuf(sc, i)) != 0) {
-				aprint_error_dev(&sc->bce_dev,
+				aprint_error_dev(sc->bce_dev,
 				    "unable to allocate or map rx(%d) "
 				    "mbuf, error = %d\n", i, error);
 				bce_rxdrain(sc);
@@ -1025,7 +1018,7 @@ bce_add_mac(struct bce_softc *sc, uint8_t *mac, u_long idx)
 		delay(10);
 	}
 	if (i == 100) {
-		aprint_error_dev(&sc->bce_dev,
+		aprint_error_dev(sc->bce_dev,
 		    "timed out writing pkt filter ctl\n");
 	}
 }
@@ -1162,7 +1155,7 @@ bce_reset(struct bce_softc *sc)
 			delay(10);
 		}
 		if (i == 200) {
-			aprint_error_dev(&sc->bce_dev,
+			aprint_error_dev(sc->bce_dev,
 			    "timed out disabling ethernet mac\n");
 		}
 
@@ -1179,7 +1172,7 @@ bce_reset(struct bce_softc *sc)
 				delay(10);
 			}
 			if (i == 100) {
-				aprint_error_dev(&sc->bce_dev,
+				aprint_error_dev(sc->bce_dev,
 				    "receive dma did not go idle after"
 				    " error\n");
 			}
@@ -1198,7 +1191,7 @@ bce_reset(struct bce_softc *sc)
 			delay(10);
 		}
 		if (i == 200) {
-			aprint_error_dev(&sc->bce_dev,
+			aprint_error_dev(sc->bce_dev,
 			    "timed out resetting ethernet mac\n");
 		}
 	} else {
@@ -1244,7 +1237,7 @@ bce_reset(struct bce_softc *sc)
 			delay(1);
 		}
 		if (i == 200) {
-			aprint_error_dev(&sc->bce_dev,
+			aprint_error_dev(sc->bce_dev,
 			    "while resetting core, reject did not set\n");
 		}
 		/* wait until busy is clear */
@@ -1256,7 +1249,7 @@ bce_reset(struct bce_softc *sc)
 			delay(1);
 		}
 		if (i == 200) {
-			aprint_error_dev(&sc->bce_dev,
+			aprint_error_dev(sc->bce_dev,
 			    "while resetting core, busy did not clear\n");
 		}
 		/* set reset and reject while enabling the clocks */
@@ -1396,7 +1389,7 @@ bce_mii_read(device_t self, int phy, int reg)
 	}
 	val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_MI_COMM);
 	if (i == BCE_TIMEOUT) {
-		aprint_error_dev(&sc->bce_dev,
+		aprint_error_dev(sc->bce_dev,
 		    "PHY read timed out reading phy %d, reg %d, val = "
 		    "0x%08x\n", phy, reg, val);
 		return (0);
@@ -1432,7 +1425,7 @@ bce_mii_write(device_t self, int phy, int reg, int val)
 	}
 	rval = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_MI_COMM);
 	if (i == BCE_TIMEOUT) {
-		aprint_error_dev(&sc->bce_dev,
+		aprint_error_dev(sc->bce_dev,
 		    "PHY timed out writing phy %d, reg %d, val = 0x%08x\n", phy,
 		    reg, val);
 	}
@@ -1458,11 +1451,11 @@ bce_statchg(device_t self)
 	 * Enable activity led.
 	 * XXX This should be in a phy driver, but not currently.
 	 */
-	bce_mii_write(&sc->bce_dev, 1, 26,	/* MAGIC */
-	    bce_mii_read(&sc->bce_dev, 1, 26) & 0x7fff);	/* MAGIC */
+	bce_mii_write(sc->bce_dev, 1, 26,	/* MAGIC */
+	    bce_mii_read(sc->bce_dev, 1, 26) & 0x7fff);	/* MAGIC */
 	/* enable traffic meter led mode */
-	bce_mii_write(&sc->bce_dev, 1, 26,	/* MAGIC */
-	    bce_mii_read(&sc->bce_dev, 1, 27) | (1 << 6));	/* MAGIC */
+	bce_mii_write(sc->bce_dev, 1, 26,	/* MAGIC */
+	    bce_mii_read(sc->bce_dev, 1, 27) | (1 << 6));	/* MAGIC */
 }
 
 /* One second timer, checks link status */

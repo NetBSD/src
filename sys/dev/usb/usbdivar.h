@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.93 2011/05/27 17:19:18 drochner Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.93.4.1 2012/04/17 00:08:10 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -32,6 +32,7 @@
  */
 
 #include <sys/callout.h>
+#include <sys/bus.h>
 
 /* From usb_mem.h */
 struct usb_dma_block;
@@ -110,7 +111,6 @@ struct usbd_bus {
 	char			use_polling;
 	device_t		usbctl;
 	struct usb_device_stats	stats;
-	int 			intr_context;
 	u_int			no_intrs;
 	int			usbrev;	/* USB revision */
 #define USBREV_UNKNOWN	0
@@ -235,6 +235,7 @@ void usbd_dump_pipe(usbd_pipe_handle pipe);
 /* Routines from usb_subr.c */
 int		usbctlprint(void *, const char *);
 void		usb_delay_ms(usbd_bus_handle, u_int);
+void		usbd_delay_ms(usbd_device_handle, u_int);
 usbd_status	usbd_reset_port(usbd_device_handle, int, usb_port_status_t *);
 usbd_status	usbd_setup_pipe(usbd_device_handle dev,
 				usbd_interface_handle iface,
@@ -258,17 +259,3 @@ int		usb_disconnect_port(struct usbd_port *, device_t, int);
 void		usb_needs_explore(usbd_device_handle);
 void		usb_needs_reattach(usbd_device_handle);
 void		usb_schedsoftintr(struct usbd_bus *);
-
-/*
- * XXX This check is extremely bogus. Bad Bad Bad.
- */
-#if defined(DIAGNOSTIC) && 0
-#define SPLUSBCHECK \
-	do { int _s = splusb(), _su = splusb(); \
-             if (!cold && _s != _su) printf("SPLUSBCHECK failed 0x%x!=0x%x, %s:%d\n", \
-				   _s, _su, __FILE__, __LINE__); \
-	     splx(_s); \
-        } while (0)
-#else
-#define SPLUSBCHECK
-#endif

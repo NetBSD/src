@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.96 2011/01/23 09:44:59 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.96.4.1 2012/04/17 00:06:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96 2011/01/23 09:44:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96.4.1 2012/04/17 00:06:26 yamt Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -66,15 +66,12 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96 2011/01/23 09:44:59 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ptrace.h"
-#include "opt_sa.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/syscall.h>
 #include <sys/syscallvar.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/mutex.h>
 #include <sys/ktrace.h>
 #include <sys/proc.h>
@@ -634,21 +631,7 @@ trap(int type, struct trapframe *frame)
 #endif
 
 	case T_EMULATION | T_USER:
-#ifdef FPEMUL
 		hppa_fpu_emulate(frame, l, opcode);
-#else  /* !FPEMUL */
-		/*
-		 * We don't have FPU emulation, so signal the
-		 * process with a SIGFPE.
-		 */
-		
-		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGFPE;
-		ksi.ksi_code = SI_NOINFO;
-		ksi.ksi_trap = type;
-		ksi.ksi_addr = (void *)frame->tf_iioq_head;
-		trapsignal(l, &ksi);
-#endif /* !FPEMUL */
 		break;
 
 	case T_DATALIGN:
@@ -853,11 +836,6 @@ do_onfault:
 			map = kernel_map;
 		else {
 			map = &vm->vm_map;
-			if ((l->l_flag & LW_SA)
-			    && (~l->l_pflag & LP_SA_NOBLOCK)) {
-				l->l_savp->savp_faultaddr = va;
-				l->l_pflag |= LP_SA_PAGEFAULT;
-			}
 		}
 
 		va = trunc_page(va);
@@ -883,9 +861,6 @@ do_onfault:
 		printf("uvm_fault(%p, %x, %d)=%d\n",
 		    map, (u_int)va, vftype, ret);
 #endif
-
-		if (map != kernel_map)
-			l->l_pflag &= ~LP_SA_PAGEFAULT;
 
 		/*
 		 * If this was a stack access we keep track of the maximum
@@ -998,6 +973,40 @@ child_return(void *arg)
 
 	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
 	ktrsysret(SYS_fork, 0, 0);
+#ifdef DEBUG
+	frame_sanity_check(__func__, __LINE__, 0, l->l_md.md_regs, l);
+#endif /* DEBUG */
+}
+
+/*
+ * Process the tail end of a posix_spawn() for the child.
+ */
+void
+cpu_spawn_return(struct lwp *l)
+{
+	struct proc *p = l->l_proc;
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	pa_space_t space = pmap->pm_space;
+	struct trapframe *tf = l->l_md.md_regs;
+
+	/* Load all of the user's space registers. */
+	tf->tf_sr0 = tf->tf_sr1 = tf->tf_sr3 = tf->tf_sr2 =
+	tf->tf_sr4 = tf->tf_sr5 = tf->tf_sr6 = space;
+	tf->tf_iisq_head = tf->tf_iisq_tail = space;
+
+	/* Load the protection registers */
+	tf->tf_pidr1 = tf->tf_pidr2 = pmap->pm_pid;
+
+	/*
+	 * theoretically these could be inherited from the father,
+	 * but just in case.
+	 */
+	tf->tf_sr7 = HPPA_SID_KERNEL;
+	mfctl(CR_EIEM, tf->tf_eiem);
+	tf->tf_ipsw = PSW_C | PSW_Q | PSW_P | PSW_D | PSW_I /* | PSW_L */ |
+	    (curcpu()->ci_psw & PSW_O);
+
+	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
 #ifdef DEBUG
 	frame_sanity_check(__func__, __LINE__, 0, l->l_md.md_regs, l);
 #endif /* DEBUG */
@@ -1141,12 +1150,6 @@ syscall(struct trapframe *frame, int *args)
 	callp = p->p_emul->e_sysent;
 	code = frame->tf_t1;
 	LWP_CACHE_CREDS(l, p);
-
-#ifdef KERN_SA
-	if (__predict_false((l->l_savp)
-            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
-		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
-#endif
 
 	/*
 	 * Restarting a system call is touchy on the HPPA, because syscall
@@ -1317,14 +1320,5 @@ startlwp(void *arg)
 	KASSERT(error == 0);
 
 	kmem_free(uc, sizeof(ucontext_t));
-	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
-}
-
-/*
- * XXX This is a terrible name.
- */
-void
-upcallret(struct lwp *l)
-{
 	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
 }

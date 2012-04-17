@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.58 2011/08/13 22:24:57 christos Exp $	 */
+/*	$NetBSD: symbol.c,v 1.58.2.1 2012/04/17 00:05:36 yamt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.58 2011/08/13 22:24:57 christos Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.58.2.1 2012/04/17 00:05:36 yamt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -94,6 +94,7 @@ _rtld_is_exported(const Elf_Sym *def)
 		(fptr_t)dladdr,
 		(fptr_t)dlinfo,
 		(fptr_t)dl_iterate_phdr,
+		(fptr_t)_dlauxinfo,
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
 		(fptr_t)_rtld_tls_allocate,
 		(fptr_t)_rtld_tls_free,
@@ -258,9 +259,10 @@ _rtld_symlook_obj(const char *name, unsigned long hash,
 		rdbg(("check \"%s\" vs \"%s\" in %s", name, strp, obj->path));
 		if (name[1] != strp[1] || strcmp(name, strp))
 			continue;
-		if (symp->st_shndx != SHN_UNDEF)
-			/* Nothing to do */;
-#ifndef __mips__
+#ifdef __mips__
+		if (symp->st_shndx == SHN_UNDEF)
+			continue;
+#else
 		/*
 		 * XXX DANGER WILL ROBINSON!
 		 * If we have a function pointer in the executable's
@@ -271,13 +273,12 @@ _rtld_symlook_obj(const char *name, unsigned long hash,
 		 * in the libraries to point to PLT slots in the
 		 * executable, if they exist.
 		 */
-		else if (!(flags & SYMLOOK_IN_PLT) &&
-		    symp->st_value != 0 &&
-		    ELF_ST_TYPE(symp->st_info) == STT_FUNC)
-			/* Nothing to do */;
-#endif
-		else
+		if (symp->st_shndx == SHN_UNDEF &&
+		    ((flags & SYMLOOK_IN_PLT) ||
+		    symp->st_value == 0 ||
+		    ELF_ST_TYPE(symp->st_info) != STT_FUNC))
 			continue;
+#endif
 
 		if (ventry == NULL) {
 			if (obj->versyms != NULL) {

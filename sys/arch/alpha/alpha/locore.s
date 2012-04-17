@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.121 2011/06/07 00:48:30 matt Exp $ */
+/* $NetBSD: locore.s,v 1.121.2.1 2012/04/17 00:05:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.121 2011/06/07 00:48:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.121.2.1 2012/04/17 00:05:53 yamt Exp $");
 
 #include "assym.h"
 
@@ -743,16 +743,6 @@ LEAF_NOPROFILE(lwp_trampoline, 0)
 	mov	s2, a0
 	jmp	zero, (pv)
 	END(lwp_trampoline)
-
-/*
- * Simplified version of above: don't call lwp_startup()
- */
-LEAF_NOPROFILE(setfunc_trampoline, 0)
-	mov	s0, pv
-	mov	s1, ra
-	mov	s2, a0
-	jmp	zero, (pv)
-	END(setfunc_trampoline)
 
 /**************************************************************************/
 

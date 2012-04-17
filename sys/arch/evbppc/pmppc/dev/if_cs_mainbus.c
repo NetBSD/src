@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_mainbus.c,v 1.6 2011/06/20 05:15:59 matt Exp $	*/
+/*	$NetBSD: if_cs_mainbus.c,v 1.6.2.1 2012/04/17 00:06:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_mainbus.c,v 1.6 2011/06/20 05:15:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_mainbus.c,v 1.6.2.1 2012/04/17 00:06:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -38,10 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_cs_mainbus.c,v 1.6 2011/06/20 05:15:59 matt Exp $
 #include <sys/socket.h>
 #include <sys/bus.h>
 
-#include "rnd.h"
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_ether.h>

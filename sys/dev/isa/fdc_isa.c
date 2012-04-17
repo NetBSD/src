@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_isa.c,v 1.18 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: fdc_isa.c,v 1.18.34.1 2012/04/17 00:07:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,9 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_isa.c,v 1.18 2008/04/28 20:23:52 martin Exp $");
-
-#include "rnd.h"
+__KERNEL_RCSID(0, "$NetBSD: fdc_isa.c,v 1.18.34.1 2012/04/17 00:07:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,9 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdc_isa.c,v 1.18 2008/04/28 20:23:52 martin Exp $");
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/queue.h>
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <sys/bus.h>
 #include <sys/intr.h>

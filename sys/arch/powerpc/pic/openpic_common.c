@@ -1,4 +1,4 @@
-/*	$NetBSD: openpic_common.c,v 1.5 2011/06/20 06:21:45 matt Exp $ */
+/*	$NetBSD: openpic_common.c,v 1.5.2.1 2012/04/17 00:06:48 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,13 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openpic_common.c,v 1.5 2011/06/20 06:21:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openpic_common.c,v 1.5.2.1 2012/04/17 00:06:48 yamt Exp $");
 
 #include "opt_openpic.h"
 #include "opt_interrupt.h"
 
 #include <sys/param.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 
 #include <uvm/uvm_extern.h>

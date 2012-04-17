@@ -1,6 +1,8 @@
-# $NetBSD: XEN3_DOMU,v 1.31 2011/10/25 15:01:46 jakllsch Exp $
+# $NetBSD: XEN3_DOMU,v 1.31.2.1 2012/04/17 00:05:59 yamt Exp $
 
 include 	"arch/amd64/conf/std.xen"
+
+options		MULTIPROCESSOR
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -32,8 +34,6 @@ options 	KTRACE		# system call tracing via ktrace(1)
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
-
 
 options 	USERCONF	# userconf(4) support
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -43,14 +43,14 @@ options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# expensive kernel consistency checks
-options 	DEBUG		# expensive debugging checks/support
+#options 	DEBUG		# expensive debugging checks/support
 options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
 options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x2f8,KGDB_DEVRATE=57600
-makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPTS="-O2 -fno-omit-frame-pointer"
 options DDB_COMMANDONENTER="trace;show registers"
 
@@ -97,7 +97,7 @@ file-system 	TMPFS		# Efficient memory file-system
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -225,7 +225,6 @@ options 	PAX_ASLR=0		# PaX Address Space Layout Randomization
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 
@@ -234,3 +233,7 @@ pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
 # a pseudo device needed for SMBFS
 pseudo-device	nsmb			# experimental - SMB requester
+
+# userland interface to drivers, including autoconf and properties retrieval
+pseudo-device	drvctl
+

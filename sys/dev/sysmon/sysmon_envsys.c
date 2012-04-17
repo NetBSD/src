@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.117 2011/08/01 12:28:53 mbalmer Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.117.2.1 2012/04/17 00:08:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.117 2011/08/01 12:28:53 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.117.2.1 2012/04/17 00:08:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -85,6 +85,8 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.117 2011/08/01 12:28:53 mbalmer 
 kmutex_t sme_global_mtx;
 
 prop_dictionary_t sme_propd;
+
+struct sysmon_envsys_lh sysmon_envsys_list;
 
 static uint32_t sysmon_envsys_next_sensor_index;
 static struct sysmon_envsys *sysmon_envsys_find_40(u_int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.22 2011/06/18 21:18:46 christos Exp $	*/
+/*	$NetBSD: exec.h,v 1.22.2.1 2012/04/17 00:01:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -61,8 +61,7 @@ struct cmdentry {
 
 extern const char *pathopt;	/* set by padvance */
 
-void shellexec(char **, char **, const char *, int, int)
-    __attribute__((__noreturn__));
+void shellexec(char **, char **, const char *, int, int) __dead;
 char *padvance(const char **, const char *);
 void find_command(char *, struct cmdentry *, int, const char *);
 int (*find_builtin(char *))(int, char **);

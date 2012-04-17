@@ -1,4 +1,4 @@
-/*	$NetBSD: units.c,v 1.17 2011/09/06 18:35:41 joerg Exp $	*/
+/*	$NetBSD: units.c,v 1.17.2.1 2012/04/17 00:09:41 yamt Exp $	*/
 
 /*
  * units.c   Copyright (c) 1993 by Adrian Mariano (adrian@cam.cornell.edu)
@@ -288,7 +288,7 @@ showunit(struct unittype * theunit)
 }
 
 static void
-zeroerror()
+zeroerror(void)
 {
 	warnx("Unit reduces to zero");
 }

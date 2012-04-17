@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.115.2.1 2011/11/10 14:31:47 yamt Exp $
+#	$NetBSD: files.usb,v 1.115.2.2 2012/04/17 00:08:05 yamt Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -90,6 +90,11 @@ file	dev/usb/ukbdmap.c		ukbd | btkbd
 device	ums: hid, wsmousedev
 attach	ums at uhidbus
 file	dev/usb/ums.c			ums
+
+# Touchscreens
+device	uts: hid, wsmousedev, tpcalib
+attach	uts at uhidbus
+file	dev/usb/uts.c			uts
 
 # eGalax USB Touch Panel
 device	uep: wsmousedev, tpcalib
@@ -188,6 +193,11 @@ file	dev/usb/emdtv_ir.c		emdtv
 device	urio
 attach	urio at usbdevif
 file	dev/usb/urio.c			urio			needs-flag
+
+# Apple iPad
+device	uipad
+attach	uipad at usbdevif
+file	dev/usb/uipad.c				uipad
 
 # BlackBerries
 device	uberry
@@ -334,7 +344,7 @@ file	dev/usb/uark.c		uark
 
 # Silicon Labs CP210x serial driver
 device	uslsa: ucombus
-attach	uslsa at usbdevif
+attach	uslsa at usbifif
 file	dev/usb/uslsa.c			uslsa
 
 # WinChipHead CH341/340 serial driver
@@ -400,3 +410,8 @@ file	dev/usb/uyurex.c		uyurex
 device	urndis: arp, ether, ifnet
 attach	urndis at usbifif
 file	dev/usb/if_urndis.c		urndis
+
+# Realtek RTL8188CU/RTL8192CU
+device	urtwn: ether, ifnet, arp, wlan, firmload
+attach	urtwn at usbdevif
+file	dev/usb/if_urtwn.c              urtwn

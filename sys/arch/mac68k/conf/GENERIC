@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.202 2011/10/03 19:22:59 hauke Exp $
+# $NetBSD: GENERIC,v 1.202.2.1 2012/04/17 00:06:36 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.202 $"
+#ident 		"GENERIC-$Revision: 1.202.2.1 $"
 
 maxusers	16		# estimated number of users
 
@@ -47,8 +47,6 @@ options 	KTRACE		# system call tracing via ktrace(1)
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
-
 
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -124,7 +122,7 @@ file-system	TMPFS		# Efficient memory file-system
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -234,7 +232,8 @@ wsmouse* at ams?
 # Centronics printer port
 
 # CSI Hurdler Centronics Parallel Interface
-cpi*	at nubus?
+# CPI_CTC12_IS_TIMECOUNTER	0x01	Run counters 1+2 as timecounter	
+cpi*	at nubus? flags 0x1
 
 
 # Serial Devices
@@ -353,7 +352,6 @@ pseudo-device	putter			# for puffs and pud
 pseudo-device	swwdog			# software watchdog driver
 
 # random number generator pseudo-device
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter

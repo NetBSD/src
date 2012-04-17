@@ -1,11 +1,11 @@
-#	$NetBSD: ADM5120,v 1.9 2011/06/30 20:09:28 wiz Exp $
+#	$NetBSD: ADM5120,v 1.9.2.1 2012/04/17 00:06:16 yamt Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"GENERIC-$Revision: 1.9 $"
+#ident 		"GENERIC-$Revision: 1.9.2.1 $"
 
 maxusers	32
 
@@ -33,7 +33,7 @@ options 	DDB		# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 makeoptions 	DEBUG="-g"	# compile full symbol table
 makeoptions 	CPUFLAGS="-march=4kc"
-options 	SYMTAB_SPACE=280000	# size for embedded symbol table
+options 	SYMTAB_SPACE=290000	# size for embedded symbol table
 
 #options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
@@ -133,7 +133,6 @@ pseudo-device	loop				# network loopback
 # Miscellaneous pseudo-devices
 pseudo-device	pty				# pseudo-terminals
 #pseudo-device	sequencer	1		# MIDI sequencer
-pseudo-device	rnd				# /dev/random & kernel generator
 
 # A pseudo device needed for Coda		# also needs CODA (above)
 #pseudo-device	vcoda		4		# coda minicache <-> venus comm.

@@ -36,7 +36,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #ifndef SMALL
-#include <netinet6/ipsec.h>
+#include <netipsec/ipsec.h>
 #endif
 #include <sys/socket.h>
 #include <sys/un.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.46 2010/12/14 17:57:31 tteras Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.46.8.1 2012/04/17 00:01:41 yamt Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -3768,7 +3768,8 @@ err:
 /* it's only called by cfparse.y. */
 int
 set_identifier(vpp, type, value)
-	vchar_t **vpp, *value;
+	vchar_t **vpp;
+	const vchar_t * const value;
 	int type;
 {
 	return set_identifier_qual(vpp, type, value, IDQUAL_UNSPEC);
@@ -3776,7 +3777,8 @@ set_identifier(vpp, type, value)
 
 int
 set_identifier_qual(vpp, type, value, qual)
-	vchar_t **vpp, *value;
+	vchar_t **vpp;
+	const vchar_t * const value;
 	int type;
 	int qual;
 {

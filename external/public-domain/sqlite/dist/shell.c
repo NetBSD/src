@@ -338,7 +338,6 @@ static char *local_getline(char *zPrompt, FILE *in){
   char *zLine;
   int nLine;
   int n;
-  int eol;
 
   if( zPrompt && *zPrompt ){
     printf("%s",zPrompt);
@@ -348,8 +347,7 @@ static char *local_getline(char *zPrompt, FILE *in){
   zLine = malloc( nLine );
   if( zLine==0 ) return 0;
   n = 0;
-  eol = 0;
-  while( !eol ){
+  while( 1 ){
     if( n+100>nLine ){
       nLine = nLine*2 + 100;
       zLine = realloc(zLine, nLine);
@@ -361,7 +359,6 @@ static char *local_getline(char *zPrompt, FILE *in){
         return 0;
       }
       zLine[n] = 0;
-      eol = 1;
       break;
     }
     while( zLine[n] ){ n++; }
@@ -369,7 +366,7 @@ static char *local_getline(char *zPrompt, FILE *in){
       n--;
       if( n>0 && zLine[n-1]=='\r' ) n--;
       zLine[n] = 0;
-      eol = 1;
+      break;
     }
   }
   zLine = realloc( zLine, n+1 );
@@ -1097,6 +1094,7 @@ static int shell_exec(
 ){
   sqlite3_stmt *pStmt = NULL;     /* Statement to execute. */
   int rc = SQLITE_OK;             /* Return Code */
+  int rc2;
   const char *zLeftover;          /* Tail of unprocessed SQL */
 
   if( pzErrMsg ){
@@ -1127,6 +1125,15 @@ static int shell_exec(
       if( pArg && pArg->echoOn ){
         const char *zStmtSql = sqlite3_sql(pStmt);
         fprintf(pArg->out, "%s\n", zStmtSql ? zStmtSql : zSql);
+      }
+
+      /* Output TESTCTRL_EXPLAIN text of requested */
+      if( pArg && pArg->mode==MODE_Explain ){
+        const char *zExplain = 0;
+        sqlite3_test_control(SQLITE_TESTCTRL_EXPLAIN_STMT, pStmt, &zExplain);
+        if( zExplain && zExplain[0] ){
+          fprintf(pArg->out, "%s", zExplain);
+        }
       }
 
       /* perform the first step.  this will tell us if we
@@ -1190,7 +1197,8 @@ static int shell_exec(
       /* Finalize the statement just executed. If this fails, save a 
       ** copy of the error message. Otherwise, set zSql to point to the
       ** next statement to execute. */
-      rc = sqlite3_finalize(pStmt);
+      rc2 = sqlite3_finalize(pStmt);
+      if( rc!=SQLITE_NOMEM ) rc = rc2;
       if( rc==SQLITE_OK ){
         zSql = zLeftover;
         while( IsSpace(zSql[0]) ) zSql++;
@@ -1397,6 +1405,7 @@ static char zHelp[] =
   "                         If TABLE specified, only list tables matching\n"
   "                         LIKE pattern TABLE.\n"
   ".timeout MS            Try opening locked tables for MS milliseconds\n"
+  ".vfsname ?AUX?         Print the name of the VFS stack\n"
   ".width NUM1 NUM2 ...   Set column widths for \"column\" mode\n"
 ;
 
@@ -1762,7 +1771,6 @@ static int do_meta_command(char *zLine, struct callback_data *p){
     zCommit = "COMMIT";
     while( (zLine = local_getline(0, in))!=0 ){
       char *z;
-      i = 0;
       lineno++;
       azCol[0] = zLine;
       for(i=0, z=zLine; *z && *z!='\n' && *z!='\r'; z++){
@@ -2087,7 +2095,8 @@ static int do_meta_command(char *zLine, struct callback_data *p){
           "  (SELECT sql sql, type type, tbl_name tbl_name, name name"
           "     FROM sqlite_master UNION ALL"
           "   SELECT sql, type, tbl_name, name FROM sqlite_temp_master) "
-          "WHERE tbl_name LIKE shellstatic() AND type!='meta' AND sql NOTNULL "
+          "WHERE lower(tbl_name) LIKE shellstatic()"
+          "  AND type!='meta' AND sql NOTNULL "
           "ORDER BY substr(type,2,1), name",
           callback, &data, &zErrMsg);
         zShellStatic = 0;
@@ -2221,7 +2230,6 @@ static int do_meta_command(char *zLine, struct callback_data *p){
       { "reserve",               SQLITE_TESTCTRL_RESERVE                },
       { "optimizations",         SQLITE_TESTCTRL_OPTIMIZATIONS          },
       { "iskeyword",             SQLITE_TESTCTRL_ISKEYWORD              },
-      { "pghdrsz",               SQLITE_TESTCTRL_PGHDRSZ                },
       { "scratchmalloc",         SQLITE_TESTCTRL_SCRATCHMALLOC          },
     };
     int testctrl = -1;
@@ -2237,7 +2245,7 @@ static int do_meta_command(char *zLine, struct callback_data *p){
         if( testctrl<0 ){
           testctrl = aCtrl[i].ctrlCode;
         }else{
-          fprintf(stderr, "ambiguous option name: \"%s\"\n", azArg[i]);
+          fprintf(stderr, "ambiguous option name: \"%s\"\n", azArg[1]);
           testctrl = -1;
           break;
         }
@@ -2266,7 +2274,6 @@ static int do_meta_command(char *zLine, struct callback_data *p){
         case SQLITE_TESTCTRL_PRNG_SAVE:           
         case SQLITE_TESTCTRL_PRNG_RESTORE:        
         case SQLITE_TESTCTRL_PRNG_RESET:
-        case SQLITE_TESTCTRL_PGHDRSZ:             
           if( nArg==2 ){
             rc = sqlite3_test_control(testctrl);
             printf("%d (0x%08x)\n", rc, rc);
@@ -2338,8 +2345,20 @@ static int do_meta_command(char *zLine, struct callback_data *p){
   }else
   
   if( c=='v' && strncmp(azArg[0], "version", n)==0 ){
-    printf("SQLite %s %s\n",
+    printf("SQLite %s %s\n" /*extra-version-info*/,
         sqlite3_libversion(), sqlite3_sourceid());
+  }else
+
+  if( c=='v' && strncmp(azArg[0], "vfsname", n)==0 ){
+    const char *zDbName = nArg==2 ? azArg[1] : "main";
+    char *zVfsName = 0;
+    if( p->db ){
+      sqlite3_file_control(p->db, zDbName, SQLITE_FCNTL_VFSNAME, &zVfsName);
+      if( zVfsName ){
+        printf("%s\n", zVfsName);
+        sqlite3_free(zVfsName);
+      }
+    }
   }else
 
   if( c=='w' && strncmp(azArg[0], "width", n)==0 && nArg>1 ){
@@ -2745,6 +2764,7 @@ int main(int argc, char **argv){
     }else if( strcmp(argv[i],"-batch")==0 ){
       stdin_is_interactive = 0;
     }else if( strcmp(argv[i],"-heap")==0 ){
+#if defined(SQLITE_ENABLE_MEMSYS3) || defined(SQLITE_ENABLE_MEMSYS5)
       int j, c;
       const char *zSize;
       sqlite3_int64 szHeap;
@@ -2757,7 +2777,6 @@ int main(int argc, char **argv){
         if( c=='G' ){ szHeap *= 1000000000; break; }
       }
       if( szHeap>0x7fff0000 ) szHeap = 0x7fff0000;
-#if defined(SQLITE_ENABLE_MEMSYS3) || defined(SQLITE_ENABLE_MEMSYS5)
       sqlite3_config(SQLITE_CONFIG_HEAP, malloc((int)szHeap), (int)szHeap, 64);
 #endif
 #ifdef SQLITE_ENABLE_VFSTRACE
@@ -2935,7 +2954,7 @@ int main(int argc, char **argv){
       char *zHistory = 0;
       int nHistory;
       printf(
-        "SQLite version %s %.19s\n"
+        "SQLite version %s %.19s\n" /*extra-version-info*/
         "Enter \".help\" for instructions\n"
         "Enter SQL statements terminated with a \";\"\n",
         sqlite3_libversion(), sqlite3_sourceid()

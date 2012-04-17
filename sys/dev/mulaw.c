@@ -1,4 +1,4 @@
-/*	$NetBSD: mulaw.c,v 1.27 2008/03/04 18:23:44 cube Exp $	*/
+/*	$NetBSD: mulaw.c,v 1.27.38.1 2012/04/17 00:07:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.27 2008/03/04 18:23:44 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.27.38.1 2012/04/17 00:07:26 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -261,7 +261,7 @@ static const uint8_t lintoalaw[256] = {
 
 #define DEFINE_FILTER(name)	\
 static int \
-name##_fetch_to(stream_fetcher_t *, audio_stream_t *, int); \
+name##_fetch_to(struct audio_softc *, stream_fetcher_t *, audio_stream_t *, int); \
 stream_filter_t * \
 name(struct audio_softc *sc, const audio_params_t *from, \
      const audio_params_t *to) \
@@ -270,7 +270,8 @@ name(struct audio_softc *sc, const audio_params_t *from, \
 	return auconv_nocontext_filter_factory(name##_fetch_to); \
 } \
 static int \
-name##_fetch_to(stream_fetcher_t *self, audio_stream_t *dst, int max_used)
+name##_fetch_to(struct audio_softc *sc, stream_fetcher_t *self, \
+    audio_stream_t *dst, int max_used)
 
 DEFINE_FILTER(mulaw_to_linear8)
 {
@@ -278,7 +279,7 @@ DEFINE_FILTER(mulaw_to_linear8)
 	int m, err;
 
 	this = (stream_filter_t *)self;
-	if ((err = this->prev->fetch_to(this->prev, this->src, max_used)))
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used)))
 		return err;
 	m = dst->end - dst->start;
 	m = min(m, max_used);
@@ -301,7 +302,7 @@ DEFINE_FILTER(mulaw_to_linear16)
 
 	this = (stream_filter_t *)self;
 	max_used = (max_used + 1) & ~1; /* round up to even */
-	if ((err = this->prev->fetch_to(this->prev, this->src, max_used / 2)))
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used / 2)))
 		return err;
 	m = (dst->end - dst->start) & ~1;
 	m = min(m, max_used);
@@ -340,7 +341,7 @@ DEFINE_FILTER(linear16_to_mulaw)
 	int m, err;
 
 	this = (stream_filter_t *)self;
-	if ((err = this->prev->fetch_to(this->prev, this->src, max_used * 2)))
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used * 2)))
 		return err;
 	m = dst->end - dst->start;
 	m = min(m, max_used);
@@ -375,7 +376,7 @@ DEFINE_FILTER(linear8_to_mulaw)
 	int m, err;
 
 	this = (stream_filter_t *)self;
-	if ((err = this->prev->fetch_to(this->prev, this->src, max_used)))
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used)))
 		return err;
 	m = dst->end - dst->start;
 	m = min(m, max_used);
@@ -397,7 +398,7 @@ DEFINE_FILTER(alaw_to_linear8)
 	int m, err;
 
 	this = (stream_filter_t *)self;
-	if ((err = this->prev->fetch_to(this->prev, this->src, max_used)))
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used)))
 		return err;
 	m = dst->end - dst->start;
 	m = min(m, max_used);
@@ -420,7 +421,7 @@ DEFINE_FILTER(alaw_to_linear16)
 
 	this = (stream_filter_t *)self;
 	max_used = (max_used + 1) & ~1; /* round up to even */
-	if ((err = this->prev->fetch_to(this->prev, this->src, max_used / 2)))
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used / 2)))
 		return err;
 	m = (dst->end - dst->start) & ~1;
 	m = min(m, max_used);
@@ -459,7 +460,7 @@ DEFINE_FILTER(linear8_to_alaw)
 	int m, err;
 
 	this = (stream_filter_t *)self;
-	if ((err = this->prev->fetch_to(this->prev, this->src, max_used)))
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used)))
 		return err;
 	m = dst->end - dst->start;
 	m = min(m, max_used);
@@ -481,7 +482,7 @@ DEFINE_FILTER(linear16_to_alaw)
 	int m, err;
 
 	this = (stream_filter_t *)self;
-	if ((err = this->prev->fetch_to(this->prev, this->src, max_used * 2)))
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used * 2)))
 		return err;
 	m = dst->end - dst->start;
 	m = min(m, max_used);

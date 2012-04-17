@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc_term.c,v 1.235 2011/09/20 09:02:23 schwarze Exp $ */
+/*	$Vendor-Id: mdoc_term.c,v 1.238 2011/11/13 13:15:14 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -33,9 +33,6 @@
 #include "term.h"
 #include "mdoc.h"
 #include "main.h"
-
-#define	INDENT		  5
-#define	HALFINDENT	  3
 
 struct	termpair {
 	struct termpair	 *ppair;
@@ -194,7 +191,7 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ NULL, NULL }, /* Ec */ /* FIXME: no space */
 	{ NULL, NULL }, /* Ef */
 	{ termp_under_pre, NULL }, /* Em */ 
-	{ NULL, NULL }, /* Eo */
+	{ termp_quote_pre, termp_quote_post }, /* Eo */
 	{ termp_xx_pre, NULL }, /* Fx */
 	{ termp_bold_pre, NULL }, /* Ms */
 	{ termp_igndelim_pre, NULL }, /* No */
@@ -258,6 +255,9 @@ terminal_mdoc(void *arg, const struct mdoc *mdoc)
 	struct termp		*p;
 
 	p = (struct termp *)arg;
+
+	if (0 == p->defindent)
+		p->defindent = 5;
 
 	p->overstep = 0;
 	p->maxrmargin = p->defrmargin;
@@ -562,9 +562,9 @@ a2offs(const struct termp *p, const char *v)
 	else if (0 == strcmp(v, "left"))
 		return(0);
 	else if (0 == strcmp(v, "indent"))
-		return(term_len(p, INDENT + 1));
+		return(term_len(p, p->defindent + 1));
 	else if (0 == strcmp(v, "indent-two"))
-		return(term_len(p, (INDENT + 1) * 2));
+		return(term_len(p, (p->defindent + 1) * 2));
 	else if ( ! a2roffsu(v, &su, SCALE_MAX))
 		SCALE_HS_INIT(&su, term_strlen(p, v));
 
@@ -583,6 +583,8 @@ print_bvspace(struct termp *p,
 		const struct mdoc_node *n)
 {
 	const struct mdoc_node	*nn;
+
+	assert(n);
 
 	term_newln(p);
 
@@ -1422,7 +1424,7 @@ termp_sh_pre(DECL_ARGS)
 		term_fontpush(p, TERMFONT_BOLD);
 		break;
 	case (MDOC_BODY):
-		p->offset = term_len(p, INDENT);
+		p->offset = term_len(p, p->defindent);
 		break;
 	default:
 		break;
@@ -1490,7 +1492,7 @@ termp_d1_pre(DECL_ARGS)
 	if (MDOC_BLOCK != n->type)
 		return(1);
 	term_newln(p);
-	p->offset += term_len(p, (INDENT + 1));
+	p->offset += term_len(p, p->defindent + 1);
 	return(1);
 }
 
@@ -1795,7 +1797,7 @@ termp_ss_pre(DECL_ARGS)
 		break;
 	case (MDOC_HEAD):
 		term_fontpush(p, TERMFONT_BOLD);
-		p->offset = term_len(p, HALFINDENT);
+		p->offset = term_len(p, (p->defindent+1)/2);
 		break;
 	default:
 		break;
@@ -1923,6 +1925,8 @@ termp_quote_pre(DECL_ARGS)
 	case (MDOC_Dq):
 		term_word(p, "``");
 		break;
+	case (MDOC_Eo):
+		break;
 	case (MDOC_Po):
 		/* FALLTHROUGH */
 	case (MDOC_Pq):
@@ -1986,6 +1990,8 @@ termp_quote_post(DECL_ARGS)
 		/* FALLTHROUGH */
 	case (MDOC_Dq):
 		term_word(p, "''");
+		break;
+	case (MDOC_Eo):
 		break;
 	case (MDOC_Po):
 		/* FALLTHROUGH */

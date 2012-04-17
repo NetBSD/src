@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/03/02 20:12:29 tron Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 2012/04/17 00:04:35 yamt Exp $
 
 LIBISPRIVATE=	yes
 
@@ -14,7 +14,8 @@ SRCS=	abounce.c anvil_clnt.c been_here.c bounce.c bounce_log.c \
 	clnt_stream.c conv_time.c db_common.c debug_peer.c debug_process.c \
 	defer.c deliver_completed.c deliver_flock.c deliver_pass.c \
 	deliver_request.c dict_ldap.c dict_mysql.c dict_pgsql.c \
-	dict_proxy.c domain_list.c dot_lockfile.c dot_lockfile_as.c \
+	dict_proxy.c dict_sqlite.c \
+	domain_list.c dot_lockfile.c dot_lockfile_as.c \
 	dsb_scan.c dsn.c dsn_buf.c dsn_mask.c dsn_print.c dsn_util.c \
 	ehlo_mask.c ext_prop.c file_id.c flush_clnt.c header_opts.c \
 	header_token.c input_transp.c int_filt.c is_header.c log_adhoc.c \

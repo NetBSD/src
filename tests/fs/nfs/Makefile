@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2011/05/30 14:41:26 joerg Exp $
+#	$NetBSD: Makefile,v 1.6.4.1 2012/04/17 00:09:03 yamt Exp $
 #
 
 .include <bsd.own.mk>
@@ -11,7 +11,7 @@ TESTS_C=	t_mountd
 
 .for name in t_rquotad
 TESTS_SH+=	${name}
-TESTS_SH_SRC_${name}=	../ffs/quotas_common.sh ${name}.sh
+TESTS_SH_SRC_${name}=	../ffs/ffs_common.sh ../ffs/quotas_common.sh ${name}.sh
 .endfor
 
 VFSTESTDIR != cd ${.CURDIR}/../common && ${PRINTOBJDIR}
@@ -25,7 +25,5 @@ LDADD+=-lrumpnet_netinet -lrumpnet_net -lrumpnet
 LDADD+=-lrump -lrumpuser -lpthread                    		# base
 
 LDADD+=-lutil
-
-NOCLANGERROR=	# defined
 
 .include <bsd.test.mk>

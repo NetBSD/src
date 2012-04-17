@@ -1,4 +1,4 @@
-# $NetBSD: MMNET_GENERIC,v 1.1.2.2 2011/11/10 14:31:39 yamt Exp $
+# $NetBSD: MMNET_GENERIC,v 1.1.2.3 2012/04/17 00:06:13 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mmnet"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1.2.2 $"
+#ident 		"GENERIC-$Revision: 1.1.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -59,13 +59,7 @@ options 	KTRACE		# system call tracing via ktrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
-
 
 #options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -151,7 +145,7 @@ file-system	TMPFS		# Efficient memory file-system
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
 # It is not recommended for general use.
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
@@ -615,7 +609,6 @@ pseudo-device	pflog			# PF log if
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	sequencer	1	# MIDI sequencer
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/06/01 14:13:42 joerg Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2012/04/17 00:03:30 yamt Exp $
 
 LIB=	LLVMAsmPrinter
 
@@ -11,6 +11,7 @@ SRCS+=	ARMException.cpp \
 	AsmPrinterDwarf.cpp \
 	AsmPrinterInlineAsm.cpp \
 	DIE.cpp \
+	DwarfAccelTable.cpp \
 	DwarfCFIException.cpp \
 	DwarfCompileUnit.cpp \
 	DwarfDebug.cpp \

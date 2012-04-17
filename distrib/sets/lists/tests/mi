@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.413.2.1 2011/11/10 14:31:15 yamt Exp $
+# $NetBSD: mi,v 1.413.2.2 2012/04/17 00:02:44 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -179,6 +179,9 @@
 ./usr/libdata/debug/usr/tests/atf/units/t_text.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/atf/units/t_user.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/atf/units/t_utils.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/bin					tests-bin-debug
+./usr/libdata/debug/usr/tests/bin/df					tests-bin-debug
+./usr/libdata/debug/usr/tests/bin/df/h_df.debug				tests-bin-debug		debug
 ./usr/libdata/debug/usr/tests/crypto					tests-crypto-debug
 ./usr/libdata/debug/usr/tests/crypto/libcrypto				tests-crypto-debug
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_bftest.debug		tests-crypto-debug	debug,crypto
@@ -227,7 +230,8 @@
 ./usr/libdata/debug/usr/tests/dev/sysmon					tests-fs-debug
 ./usr/libdata/debug/usr/tests/dev/sysmon/t_swwdog.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/ffs					tests-fs-debug
-./usr/libdata/debug/usr/tests/fs/ffs/h_quota2_server.debug		tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/ffs/h_ffs_server.debug			tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/ffs/h_quota2_server.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/fs/ffs/h_quota2_tests.debug		tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/ffs/t_fifos.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/ffs/t_mount.debug			tests-fs-debug		debug,atf
@@ -235,10 +239,12 @@
 ./usr/libdata/debug/usr/tests/fs/ffs/t_quota2_remount.debug		tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/ffs/t_renamerace.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/fs/ffs/t_snapshot.debug			tests-fs-debug		debug,atf
-./usr/libdata/debug/usr/tests/fs/ffs/t_snapshot_log.debug			tests-fs-debug		debug,atf
-./usr/libdata/debug/usr/tests/fs/ffs/t_snapshot_v2.debug			tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/ffs/t_snapshot_log.debug		tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/ffs/t_snapshot_v2.debug		tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/fifofs					tests-fs-debug
+./usr/libdata/debug/usr/tests/fs/fifofs/t_fifo.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/hfs					tests-fs-debug
-./usr/libdata/debug/usr/tests/fs/hfs/t_pathconvert.debug			tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/hfs/t_pathconvert.debug		tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/kernfs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/kernfs/t_basic.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/lfs					tests-fs-debug
@@ -287,6 +293,7 @@
 ./usr/libdata/debug/usr/tests/include/sys				tests-include-tests
 ./usr/libdata/debug/usr/tests/include/sys/t_bitops.debug		tests-include-tests	debug,atf
 ./usr/libdata/debug/usr/tests/include/sys/t_bootblock.debug		tests-include-tests	debug,atf
+./usr/libdata/debug/usr/tests/include/sys/t_cdefs.debug			tests-include-tests	debug,atf
 ./usr/libdata/debug/usr/tests/include/sys/t_socket.debug		tests-include-tests	debug,atf
 ./usr/libdata/debug/usr/tests/include/sys/t_tree.debug			tests-include-tests	debug,atf
 ./usr/libdata/debug/usr/tests/include/sys/t_types.debug			tests-include-tests	debug,atf
@@ -319,11 +326,18 @@
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write/t_fifo.debug		tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write/t_pipe.debug		tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write/t_ttypty.debug	tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/posix_spawn			tests-kernel-tests	obsolete
+./usr/libdata/debug/usr/tests/kernel/posix_spawn/t_spawn.debug		tests-kernel-tests	obsolete
+./usr/libdata/debug/usr/tests/kernel/posix_spawn/t_spawnattr.debug	tests-kernel-tests	obsolete
+./usr/libdata/debug/usr/tests/kernel/posix_spawn/t_fileactions.debug	tests-kernel-tests	obsolete
+./usr/libdata/debug/usr/tests/kernel/posix_spawn/h_spawn.debug		tests-kernel-tests	obsolete
+./usr/libdata/debug/usr/tests/kernel/posix_spawn/h_fileactions.debug	tests-kernel-tests	obsolete
+./usr/libdata/debug/usr/tests/kernel/posix_spawn/h_spawnattr.debug	tests-kernel-tests	obsolete
 ./usr/libdata/debug/usr/tests/kernel/t_extattrctl.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_extent.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_filedesc.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_lock.debug			tests-kernel-tests	debug,atf
-./usr/libdata/debug/usr/tests/kernel/t_lwpctl.debug			tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/t_lwpctl.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/kernel/t_mkdir.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/kernel/t_pipe.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/kernel/t_poll3w.debug			tests-obsolete		obsolete
@@ -332,6 +346,7 @@
 ./usr/libdata/debug/usr/tests/kernel/t_pty.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_rnd.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_sigaction.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/kernel/t_subr_prf.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_time.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/kernel/t_ucontext.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/kernel/t_writev.debug			tests-obsolete		obsolete
@@ -354,6 +369,13 @@
 ./usr/libdata/debug/usr/tests/lib/libc/db				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/db/h_db.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn			tests-kernel-tests
+./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn/t_spawn.debug		tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn/t_spawnattr.debug	tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn/t_fileactions.debug	tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn/h_spawn.debug		tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn/h_fileactions.debug	tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn/h_spawnattr.debug	tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_alarm.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_assert.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_basedirname.debug		tests-lib-debug		debug,atf
@@ -361,11 +383,11 @@
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_cpuset.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_dir.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_fmtcheck.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/t_fnmatch.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpclassify.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpsetmask.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpsetround.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_ftok.debug			tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/gen/t_fmtcheck.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_getcwd.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_getgrent.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_glob.debug			tests-lib-debug		debug,atf
@@ -377,6 +399,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_pause.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_raise.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_randomid.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/t_realpath.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_rbstress.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_setdomainname.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_sethostname.debug		tests-lib-debug		debug,atf
@@ -407,6 +430,9 @@
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_mbrtowc.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_mbstowcs.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_mbtowc.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/locale/t_wcscspn.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/locale/t_wcspbrk.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/locale/t_wcsspn.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_wcstod.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_wctomb.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/inet				tests-lib-debug
@@ -460,6 +486,8 @@
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/h_atexit.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/h_getopt.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/h_getopt_long.debug	tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_abs.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_atoi.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_div.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_environment.debug	tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_environment_pth.debug	tests-obsolete		obsolete
@@ -469,6 +497,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_hsearch.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_mi_vector_hash.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_posix_memalign.debug	tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_random.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_strtod.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_strtol.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_strtox.debug		tests-obsolete		obsolete
@@ -483,11 +512,14 @@
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_strchr.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_strcmp.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_strcpy.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/string/t_strcspn.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_strerror.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_stresep.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_string.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_strlen.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/string/t_strpbrk.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_strrchr.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/string/t_strspn.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_swab.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_access.debug		tests-lib-debug		debug,atf
@@ -508,9 +540,11 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_getsid.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_gettimeofday.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_issetugid.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_kevent.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_kill.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_link.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_listen.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_lwp_ctl.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mincore.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mkdir.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mkfifo.debug		tests-lib-debug		debug,atf
@@ -562,6 +596,8 @@
 ./usr/libdata/debug/usr/tests/lib/libc/time				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/time/t_mktime.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/time/t_strptime.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libcrypt				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libcrypt/t_crypt.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libcurses				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libcurses/director.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libcurses/slave.debug			tests-lib-debug		debug,atf
@@ -756,13 +792,15 @@
 ./usr/libdata/debug/usr/tests/syscall/t_truncate.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/syscall/t_umask.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/syscall/t_unlink.debug			tests-obsolete		obsolete
-./usr/libdata/debug/usr/tests/usr.bin					tests-sbin-tests
-./usr/libdata/debug/usr/tests/usr.sbin					tests-sbin-tests
-./usr/libdata/debug/usr/tests/util					tests-util-debug
-./usr/libdata/debug/usr/tests/util/df					tests-util-debug
-./usr/libdata/debug/usr/tests/util/df/h_df.debug			tests-util-debug	debug
-./usr/libdata/debug/usr/tests/util/id					tests-util-debug
-./usr/libdata/debug/usr/tests/util/id/h_id.debug			tests-util-debug	debug
+./usr/libdata/debug/usr/tests/usr.bin					tests-usr.bin-debug
+./usr/libdata/debug/usr/tests/usr.bin/id				tests-usr.bin-debug
+./usr/libdata/debug/usr/tests/usr.bin/id/h_id.debug			tests-usr.bin-debug	debug
+./usr/libdata/debug/usr/tests/usr.sbin					tests-usr.sbin-debug
+./usr/libdata/debug/usr/tests/util					tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/util/df					tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/util/df/h_df.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/util/id					tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/util/id/h_id.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/util/systrace				tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/util/systrace/h_have_systrace.debug	tests-obsolete		obsolete
 ./usr/tests					tests-base-tests
@@ -1316,6 +1354,50 @@
 ./usr/tests/atf/units/t_text			tests-obsolete		obsolete
 ./usr/tests/atf/units/t_user			tests-obsolete		obsolete
 ./usr/tests/atf/units/t_utils			tests-obsolete		obsolete
+./usr/tests/bin					tests-bin-tests
+./usr/tests/bin/Atffile				tests-bin-tests		atf
+./usr/tests/bin/cat				tests-bin-tests
+./usr/tests/bin/cat/Atffile			tests-bin-tests		atf
+./usr/tests/bin/cat/d_align.in			tests-bin-tests		atf
+./usr/tests/bin/cat/d_align.out			tests-bin-tests		atf
+./usr/tests/bin/cat/t_cat			tests-bin-tests		atf
+./usr/tests/bin/cp				tests-bin-tests
+./usr/tests/bin/cp/Atffile			tests-bin-tests		atf
+./usr/tests/bin/cp/t_cp				tests-bin-tests		atf
+./usr/tests/bin/dd				tests-bin-tests
+./usr/tests/bin/dd/Atffile			tests-bin-tests		atf
+./usr/tests/bin/dd/t_dd				tests-bin-tests		atf
+./usr/tests/bin/df				tests-bin-tests
+./usr/tests/bin/df/Atffile			tests-bin-tests		atf
+./usr/tests/bin/df/h_df				tests-bin-tests		atf
+./usr/tests/bin/df/t_df				tests-bin-tests		atf
+./usr/tests/bin/expr				tests-bin-tests
+./usr/tests/bin/expr/Atffile			tests-bin-tests		atf
+./usr/tests/bin/expr/t_expr			tests-bin-tests		atf
+./usr/tests/bin/pax				tests-bin-tests
+./usr/tests/bin/pax/Atffile			tests-bin-tests		atf
+./usr/tests/bin/pax/t_pax			tests-bin-tests		atf
+./usr/tests/bin/ps				tests-bin-tests
+./usr/tests/bin/ps/Atffile			tests-bin-tests		atf
+./usr/tests/bin/ps/keywords			tests-bin-tests		atf
+./usr/tests/bin/ps/t_ps				tests-bin-tests		atf
+./usr/tests/bin/sleep				tests-bin-tests
+./usr/tests/bin/sleep/Atffile			tests-bin-tests		atf
+./usr/tests/bin/sleep/t_sleep			tests-bin-tests		atf
+./usr/tests/bin/sh				tests-bin-tests
+./usr/tests/bin/sh/Atffile			tests-bin-tests		atf
+./usr/tests/bin/sh/t_compexit			tests-bin-tests		atf
+./usr/tests/bin/sh/t_evaltested			tests-bin-tests		atf
+./usr/tests/bin/sh/t_exit			tests-bin-tests		atf
+./usr/tests/bin/sh/t_expand			tests-bin-tests		atf
+./usr/tests/bin/sh/t_fsplit			tests-bin-tests		atf
+./usr/tests/bin/sh/t_here			tests-bin-tests		atf
+./usr/tests/bin/sh/t_set_e			tests-bin-tests		atf
+./usr/tests/bin/sh/t_varquote			tests-bin-tests		atf
+./usr/tests/bin/sh/t_wait			tests-bin-tests		atf
+./usr/tests/bin/tar				tests-bin-tests
+./usr/tests/bin/tar/Atffile			tests-bin-tests		atf
+./usr/tests/bin/tar/t_tar			tests-bin-tests		atf
 ./usr/tests/crypto				tests-crypto-tests
 ./usr/tests/crypto/Atffile			tests-crypto-tests
 ./usr/tests/crypto/libcrypto			tests-crypto-tests
@@ -1390,30 +1472,37 @@
 ./usr/tests/dev/sysmon/Atffile			tests-fs-tests		atf
 ./usr/tests/dev/sysmon/t_swsensor		tests-fs-tests		atf
 ./usr/tests/dev/sysmon/t_swwdog			tests-fs-tests		atf
+./usr/tests/examples				tests-asm-tests
+./usr/tests/examples/Atffile			tests-asm-tests		atf
+./usr/tests/examples/t_asm			tests-asm-tests		atf
 ./usr/tests/fs					tests-fs-tests
 ./usr/tests/fs/Atffile				tests-fs-tests		atf
 ./usr/tests/fs/h_funcs.subr			tests-fs-tests		atf
 ./usr/tests/fs/ffs				tests-fs-tests
 ./usr/tests/fs/ffs/Atffile			tests-fs-tests		atf
-./usr/tests/fs/ffs/h_quota2_server		tests-fs-tests		atf
+./usr/tests/fs/ffs/h_ffs_server			tests-fs-tests		atf
+./usr/tests/fs/ffs/h_quota2_server		tests-obsolete		obsolete
 ./usr/tests/fs/ffs/h_quota2_tests		tests-fs-tests		atf
 ./usr/tests/fs/ffs/rump_edquota			tests-obsolete		obsolete
 ./usr/tests/fs/ffs/rump_quota			tests-obsolete		obsolete
 ./usr/tests/fs/ffs/rump_quotactl		tests-obsolete		obsolete
 ./usr/tests/fs/ffs/rump_repquota		tests-obsolete		obsolete
-./usr/tests/fs/ffs/t_fifos			tests-fs-tests		atf
-./usr/tests/fs/ffs/t_mount			tests-fs-tests		atf
-./usr/tests/fs/ffs/t_renamerace			tests-obsolete		obsolete
-./usr/tests/fs/ffs/t_snapshot			tests-fs-tests		atf
-./usr/tests/fs/ffs/t_snapshot_log		tests-fs-tests		atf
-./usr/tests/fs/ffs/t_snapshot_v2		tests-fs-tests		atf
 ./usr/tests/fs/ffs/t_clearquota			tests-fs-tests		atf
+./usr/tests/fs/ffs/t_fifos			tests-fs-tests		atf
 ./usr/tests/fs/ffs/t_getquota			tests-fs-tests		atf
+./usr/tests/fs/ffs/t_miscquota			tests-fs-tests		atf
+./usr/tests/fs/ffs/t_mount			tests-fs-tests		atf
 ./usr/tests/fs/ffs/t_quota2_1			tests-fs-tests		atf
 ./usr/tests/fs/ffs/t_quota2_remount		tests-fs-tests		atf
 ./usr/tests/fs/ffs/t_quotalimit			tests-fs-tests		atf
+./usr/tests/fs/ffs/t_renamerace			tests-obsolete		obsolete
 ./usr/tests/fs/ffs/t_setquota			tests-fs-tests		atf
-./usr/tests/fs/ffs/t_miscquota			tests-fs-tests		atf
+./usr/tests/fs/ffs/t_snapshot			tests-fs-tests		atf
+./usr/tests/fs/ffs/t_snapshot_log		tests-fs-tests		atf
+./usr/tests/fs/ffs/t_snapshot_v2		tests-fs-tests		atf
+./usr/tests/fs/fifofs				tests-fs-tests
+./usr/tests/fs/fifofs/Atffile			tests-fs-tests		atf
+./usr/tests/fs/fifofs/t_fifo			tests-fs-tests		atf
 ./usr/tests/fs/hfs				tests-fs-tests
 ./usr/tests/fs/hfs/Atffile			tests-fs-tests		atf
 ./usr/tests/fs/hfs/colon.hfs.bz2.uue			tests-fs-tests		atf
@@ -1531,6 +1620,7 @@
 ./usr/tests/include/sys/Atffile			tests-include-tests	atf
 ./usr/tests/include/sys/t_bitops		tests-include-tests	atf
 ./usr/tests/include/sys/t_bootblock		tests-include-tests	atf
+./usr/tests/include/sys/t_cdefs			tests-include-tests	atf
 ./usr/tests/include/sys/t_socket		tests-include-tests	atf
 ./usr/tests/include/sys/t_tree			tests-include-tests	atf
 ./usr/tests/include/sys/t_types			tests-include-tests	atf
@@ -1545,309 +1635,471 @@
 ./usr/tests/include/t_stdint			tests-include-tests	atf
 ./usr/tests/include/t_types			tests-obsolete		obsolete
 ./usr/tests/ipf					tests-ipf-tests
-./usr/tests/ipf/Atffile				tests-ipf-tests
+./usr/tests/ipf/Atffile				tests-ipf-tests		ipfilter
 ./usr/tests/ipf/expected			tests-ipf-tests
-./usr/tests/ipf/expected/bpf-f1			tests-ipf-tests
-./usr/tests/ipf/expected/bpf1			tests-ipf-tests
-./usr/tests/ipf/expected/f1			tests-ipf-tests
-./usr/tests/ipf/expected/f10			tests-ipf-tests
-./usr/tests/ipf/expected/f11			tests-ipf-tests
-./usr/tests/ipf/expected/f12			tests-ipf-tests
-./usr/tests/ipf/expected/f13			tests-ipf-tests
-./usr/tests/ipf/expected/f14			tests-ipf-tests
-./usr/tests/ipf/expected/f15			tests-ipf-tests
-./usr/tests/ipf/expected/f16			tests-ipf-tests
-./usr/tests/ipf/expected/f17			tests-ipf-tests
-./usr/tests/ipf/expected/f18			tests-ipf-tests
-./usr/tests/ipf/expected/f19			tests-ipf-tests
-./usr/tests/ipf/expected/f2			tests-ipf-tests
-./usr/tests/ipf/expected/f20			tests-ipf-tests
-./usr/tests/ipf/expected/f24			tests-ipf-tests
-./usr/tests/ipf/expected/f3			tests-ipf-tests
-./usr/tests/ipf/expected/f4			tests-ipf-tests
-./usr/tests/ipf/expected/f5			tests-ipf-tests
-./usr/tests/ipf/expected/f6			tests-ipf-tests
-./usr/tests/ipf/expected/f7			tests-ipf-tests
-./usr/tests/ipf/expected/f8			tests-ipf-tests
-./usr/tests/ipf/expected/f9			tests-ipf-tests
-./usr/tests/ipf/expected/i1			tests-ipf-tests
-./usr/tests/ipf/expected/i10			tests-ipf-tests
-./usr/tests/ipf/expected/i11			tests-ipf-tests
-./usr/tests/ipf/expected/i12			tests-ipf-tests
-./usr/tests/ipf/expected/i13			tests-ipf-tests
-./usr/tests/ipf/expected/i14			tests-ipf-tests
-./usr/tests/ipf/expected/i15			tests-ipf-tests
-./usr/tests/ipf/expected/i16			tests-ipf-tests
-./usr/tests/ipf/expected/i17			tests-ipf-tests
-./usr/tests/ipf/expected/i18			tests-ipf-tests
-./usr/tests/ipf/expected/i19.dist		tests-ipf-tests
-./usr/tests/ipf/expected/i2			tests-ipf-tests
-./usr/tests/ipf/expected/i20			tests-ipf-tests
-./usr/tests/ipf/expected/i21			tests-ipf-tests
-./usr/tests/ipf/expected/i3			tests-ipf-tests
-./usr/tests/ipf/expected/i4			tests-ipf-tests
-./usr/tests/ipf/expected/i5			tests-ipf-tests
-./usr/tests/ipf/expected/i6			tests-ipf-tests
-./usr/tests/ipf/expected/i7			tests-ipf-tests
-./usr/tests/ipf/expected/i8			tests-ipf-tests
-./usr/tests/ipf/expected/i9			tests-ipf-tests
-./usr/tests/ipf/expected/in1			tests-ipf-tests
-./usr/tests/ipf/expected/in2			tests-ipf-tests
-./usr/tests/ipf/expected/in3			tests-ipf-tests
-./usr/tests/ipf/expected/in4			tests-ipf-tests
-./usr/tests/ipf/expected/in5			tests-ipf-tests
-./usr/tests/ipf/expected/in6			tests-ipf-tests
-./usr/tests/ipf/expected/ip1			tests-ipf-tests
-./usr/tests/ipf/expected/ip2			tests-ipf-tests
-./usr/tests/ipf/expected/ipv6.1			tests-ipf-tests
-./usr/tests/ipf/expected/ipv6.2			tests-ipf-tests
-./usr/tests/ipf/expected/ipv6.3			tests-ipf-tests
-./usr/tests/ipf/expected/ipv6.5			tests-ipf-tests
-./usr/tests/ipf/expected/ipv6.6			tests-ipf-tests
-./usr/tests/ipf/expected/l1			tests-ipf-tests
-./usr/tests/ipf/expected/l1.b			tests-ipf-tests
-./usr/tests/ipf/expected/n1			tests-ipf-tests
-./usr/tests/ipf/expected/n10			tests-ipf-tests
-./usr/tests/ipf/expected/n11			tests-ipf-tests
-./usr/tests/ipf/expected/n12			tests-ipf-tests
-./usr/tests/ipf/expected/n13			tests-ipf-tests
-./usr/tests/ipf/expected/n14			tests-ipf-tests
-./usr/tests/ipf/expected/n16			tests-ipf-tests
-./usr/tests/ipf/expected/n17			tests-ipf-tests
-./usr/tests/ipf/expected/n2			tests-ipf-tests
-./usr/tests/ipf/expected/n3			tests-ipf-tests
-./usr/tests/ipf/expected/n4			tests-ipf-tests
-./usr/tests/ipf/expected/n5			tests-ipf-tests
-./usr/tests/ipf/expected/n6			tests-ipf-tests
-./usr/tests/ipf/expected/n7			tests-ipf-tests
-./usr/tests/ipf/expected/n8			tests-ipf-tests
-./usr/tests/ipf/expected/n9			tests-ipf-tests
-./usr/tests/ipf/expected/ni1			tests-ipf-tests
-./usr/tests/ipf/expected/ni10			tests-ipf-tests
-./usr/tests/ipf/expected/ni11			tests-ipf-tests
-./usr/tests/ipf/expected/ni12			tests-ipf-tests
-./usr/tests/ipf/expected/ni13			tests-ipf-tests
-./usr/tests/ipf/expected/ni14			tests-ipf-tests
-./usr/tests/ipf/expected/ni15			tests-ipf-tests
-./usr/tests/ipf/expected/ni16			tests-ipf-tests
-./usr/tests/ipf/expected/ni19			tests-ipf-tests
-./usr/tests/ipf/expected/ni2			tests-ipf-tests
-./usr/tests/ipf/expected/ni20			tests-ipf-tests
-./usr/tests/ipf/expected/ni21			tests-ipf-tests
-./usr/tests/ipf/expected/ni23			tests-ipf-tests
-./usr/tests/ipf/expected/ni3			tests-ipf-tests
-./usr/tests/ipf/expected/ni4			tests-ipf-tests
-./usr/tests/ipf/expected/ni5			tests-ipf-tests
-./usr/tests/ipf/expected/ni6			tests-ipf-tests
-./usr/tests/ipf/expected/ni7			tests-ipf-tests
-./usr/tests/ipf/expected/ni8			tests-ipf-tests
-./usr/tests/ipf/expected/ni9			tests-ipf-tests
-./usr/tests/ipf/expected/p1			tests-ipf-tests
-./usr/tests/ipf/expected/p2			tests-ipf-tests
-./usr/tests/ipf/expected/p3			tests-ipf-tests
-./usr/tests/ipf/expected/p5			tests-ipf-tests
-./usr/tests/ipf/input				tests-ipf-tests
-./usr/tests/ipf/input/f1			tests-ipf-tests
-./usr/tests/ipf/input/f10			tests-ipf-tests
-./usr/tests/ipf/input/f11			tests-ipf-tests
-./usr/tests/ipf/input/f12			tests-ipf-tests
-./usr/tests/ipf/input/f13			tests-ipf-tests
-./usr/tests/ipf/input/f14			tests-ipf-tests
-./usr/tests/ipf/input/f15			tests-ipf-tests
-./usr/tests/ipf/input/f16			tests-ipf-tests
-./usr/tests/ipf/input/f17			tests-ipf-tests
-./usr/tests/ipf/input/f18			tests-ipf-tests
-./usr/tests/ipf/input/f19			tests-ipf-tests
-./usr/tests/ipf/input/f2			tests-ipf-tests
-./usr/tests/ipf/input/f20			tests-ipf-tests
-./usr/tests/ipf/input/f24			tests-ipf-tests
-./usr/tests/ipf/input/f3			tests-ipf-tests
-./usr/tests/ipf/input/f4			tests-ipf-tests
-./usr/tests/ipf/input/f5			tests-ipf-tests
-./usr/tests/ipf/input/f6			tests-ipf-tests
-./usr/tests/ipf/input/f7			tests-ipf-tests
-./usr/tests/ipf/input/f8			tests-ipf-tests
-./usr/tests/ipf/input/f9			tests-ipf-tests
-./usr/tests/ipf/input/ip2.data			tests-ipf-tests
-./usr/tests/ipf/input/ipv6.1			tests-ipf-tests
-./usr/tests/ipf/input/ipv6.2			tests-ipf-tests
-./usr/tests/ipf/input/ipv6.3			tests-ipf-tests
-./usr/tests/ipf/input/ipv6.5			tests-ipf-tests
-./usr/tests/ipf/input/ipv6.6			tests-ipf-tests
-./usr/tests/ipf/input/l1			tests-ipf-tests
-./usr/tests/ipf/input/n1			tests-ipf-tests
-./usr/tests/ipf/input/n10			tests-ipf-tests
-./usr/tests/ipf/input/n11			tests-ipf-tests
-./usr/tests/ipf/input/n12			tests-ipf-tests
-./usr/tests/ipf/input/n13			tests-ipf-tests
-./usr/tests/ipf/input/n14			tests-ipf-tests
-./usr/tests/ipf/input/n16			tests-ipf-tests
-./usr/tests/ipf/input/n17			tests-ipf-tests
-./usr/tests/ipf/input/n2			tests-ipf-tests
-./usr/tests/ipf/input/n3			tests-ipf-tests
-./usr/tests/ipf/input/n4			tests-ipf-tests
-./usr/tests/ipf/input/n5			tests-ipf-tests
-./usr/tests/ipf/input/n6			tests-ipf-tests
-./usr/tests/ipf/input/n7			tests-ipf-tests
-./usr/tests/ipf/input/n8			tests-ipf-tests
-./usr/tests/ipf/input/n9			tests-ipf-tests
-./usr/tests/ipf/input/ni1			tests-ipf-tests
-./usr/tests/ipf/input/ni10			tests-ipf-tests
-./usr/tests/ipf/input/ni11			tests-ipf-tests
-./usr/tests/ipf/input/ni12			tests-ipf-tests
-./usr/tests/ipf/input/ni13			tests-ipf-tests
-./usr/tests/ipf/input/ni14			tests-ipf-tests
-./usr/tests/ipf/input/ni15			tests-ipf-tests
-./usr/tests/ipf/input/ni16			tests-ipf-tests
-./usr/tests/ipf/input/ni17			tests-ipf-tests
-./usr/tests/ipf/input/ni19			tests-ipf-tests
-./usr/tests/ipf/input/ni2			tests-ipf-tests
-./usr/tests/ipf/input/ni20			tests-ipf-tests
-./usr/tests/ipf/input/ni21			tests-ipf-tests
-./usr/tests/ipf/input/ni23			tests-ipf-tests
-./usr/tests/ipf/input/ni3			tests-ipf-tests
-./usr/tests/ipf/input/ni4			tests-ipf-tests
-./usr/tests/ipf/input/ni5			tests-ipf-tests
-./usr/tests/ipf/input/ni6			tests-ipf-tests
-./usr/tests/ipf/input/ni7			tests-ipf-tests
-./usr/tests/ipf/input/ni8			tests-ipf-tests
-./usr/tests/ipf/input/ni9			tests-ipf-tests
-./usr/tests/ipf/input/p1			tests-ipf-tests
-./usr/tests/ipf/input/p2			tests-ipf-tests
-./usr/tests/ipf/input/p3			tests-ipf-tests
-./usr/tests/ipf/input/p5			tests-ipf-tests
+./usr/tests/ipf/expected/bpf-f1			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/bpf1			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/f1			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/f10			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/f11			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/f12			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/f13			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/f14			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/f15			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/f16			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/f17			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/f18			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/f19			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/f2			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/f20			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/f21			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/f22			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/f24			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/f25			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/f26			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/f27			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/f28			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/f29			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/f3			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/f30			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/f4			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/f5			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/f6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/f7			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/f8			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/f9			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/i1			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/i10			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/i11			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/i12			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/i13			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/i14			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/i15			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/i16			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/i17			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/i18			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/i19.dist		tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/i2			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/i20			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/i21			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/i22			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/i23			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/i3			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/i4			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/i5			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/i6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/i7			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/i8			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/i9			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/in1			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/in100			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/in101			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/in102			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/in2			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/in3			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/in4			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/in5			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/in6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/in7			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ip1			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ip2			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ip3			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ipv6.1			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ipv6.2			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ipv6.3			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ipv6.4			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ipv6.5			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ipv6.6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/l1			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/l1.b			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n1			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n10			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n100			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n101			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n102			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n103			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n104			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n105			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n106			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n11			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n11_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n12			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n12_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n13			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n13_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n14			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n14_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n15			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n15_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n16			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n17			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n18			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n1_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n2			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n200			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n201			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n202			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n2_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n3			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n4			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n4_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n5			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n5_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n6_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n7			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n7_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n8			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n8_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n9			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/n9_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ni1			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ni10			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ni11			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ni12			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ni13			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ni14			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ni15			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ni16			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ni17			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ni18			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ni19			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ni2			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ni20			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ni21			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ni23			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ni3			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ni4			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ni5			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ni6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ni7			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ni8			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/ni9			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/p1			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/p10			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/p11			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/p12			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/p13			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/p2			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/p3			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/p4			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/p5			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/p6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/p7			tests-ipf-tests		ipfilter
+./usr/tests/ipf/expected/p9			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input				tests-ipf-tests	
+./usr/tests/ipf/input/f1			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/f10			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/f11			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/f12			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/f13			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/f14			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/f15			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/f16			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/f17			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/f18			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/f19			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/f2			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/f20			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/f21			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/f22			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/f24			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/f25			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/f26			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/f27			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/f28			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/f29			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/f3			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/f30			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/f4			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/f5			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/f6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/f7			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/f8			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/f9			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/ip2.data			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/ipv6.1			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/ipv6.2			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/ipv6.3			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/ipv6.4			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/ipv6.5			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/ipv6.6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/l1			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n1			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n10			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n100			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n101			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n102			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n103			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n104			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n105			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n106			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n10_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n11			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n11_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n12			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n12_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n13			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n13_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n14			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n14_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n15			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n15_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n16			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n17			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n17_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n18			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n1_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n2			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n200			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n201			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n202			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n2_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n3			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n4			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n4_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n5			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n5_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n6_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n7			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n7_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n8			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n8_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n9			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/n9_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/ni1			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/ni10			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/ni11			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/ni12			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/ni13			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/ni14			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/ni15			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/ni16			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/ni17			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/ni18			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/ni19			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/ni2			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/ni20			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/ni21			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/ni23			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/ni3			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/ni4			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/ni5			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/ni6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/ni7			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/ni8			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/ni9			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/p1			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/p10			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/p11			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/p12			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/p13			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/p2			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/p3			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/p4			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/p5			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/p6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/p7			tests-ipf-tests		ipfilter
+./usr/tests/ipf/input/p9			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress				tests-ipf-tests
-./usr/tests/ipf/regress/bpf-f1			tests-ipf-tests
-./usr/tests/ipf/regress/bpf1			tests-ipf-tests
-./usr/tests/ipf/regress/f1			tests-ipf-tests
-./usr/tests/ipf/regress/f10			tests-ipf-tests
-./usr/tests/ipf/regress/f11			tests-ipf-tests
-./usr/tests/ipf/regress/f12			tests-ipf-tests
-./usr/tests/ipf/regress/f13			tests-ipf-tests
-./usr/tests/ipf/regress/f14			tests-ipf-tests
-./usr/tests/ipf/regress/f15			tests-ipf-tests
-./usr/tests/ipf/regress/f16			tests-ipf-tests
-./usr/tests/ipf/regress/f17			tests-ipf-tests
-./usr/tests/ipf/regress/f18			tests-ipf-tests
-./usr/tests/ipf/regress/f19			tests-ipf-tests
-./usr/tests/ipf/regress/f2			tests-ipf-tests
-./usr/tests/ipf/regress/f20			tests-ipf-tests
-./usr/tests/ipf/regress/f24			tests-ipf-tests
-./usr/tests/ipf/regress/f3			tests-ipf-tests
-./usr/tests/ipf/regress/f4			tests-ipf-tests
-./usr/tests/ipf/regress/f5			tests-ipf-tests
-./usr/tests/ipf/regress/f6			tests-ipf-tests
-./usr/tests/ipf/regress/f7			tests-ipf-tests
-./usr/tests/ipf/regress/f8			tests-ipf-tests
-./usr/tests/ipf/regress/f9			tests-ipf-tests
-./usr/tests/ipf/regress/i1			tests-ipf-tests
-./usr/tests/ipf/regress/i10			tests-ipf-tests
-./usr/tests/ipf/regress/i11			tests-ipf-tests
-./usr/tests/ipf/regress/i12			tests-ipf-tests
-./usr/tests/ipf/regress/i13			tests-ipf-tests
-./usr/tests/ipf/regress/i14			tests-ipf-tests
-./usr/tests/ipf/regress/i15			tests-ipf-tests
-./usr/tests/ipf/regress/i16			tests-ipf-tests
-./usr/tests/ipf/regress/i17			tests-ipf-tests
-./usr/tests/ipf/regress/i18			tests-ipf-tests
-./usr/tests/ipf/regress/i19			tests-ipf-tests
-./usr/tests/ipf/regress/i2			tests-ipf-tests
-./usr/tests/ipf/regress/i20			tests-ipf-tests
-./usr/tests/ipf/regress/i21			tests-ipf-tests
-./usr/tests/ipf/regress/i3			tests-ipf-tests
-./usr/tests/ipf/regress/i4			tests-ipf-tests
-./usr/tests/ipf/regress/i5			tests-ipf-tests
-./usr/tests/ipf/regress/i6			tests-ipf-tests
-./usr/tests/ipf/regress/i7			tests-ipf-tests
-./usr/tests/ipf/regress/i8			tests-ipf-tests
-./usr/tests/ipf/regress/i9			tests-ipf-tests
-./usr/tests/ipf/regress/in1			tests-ipf-tests
-./usr/tests/ipf/regress/in2			tests-ipf-tests
-./usr/tests/ipf/regress/in3			tests-ipf-tests
-./usr/tests/ipf/regress/in4			tests-ipf-tests
-./usr/tests/ipf/regress/in5			tests-ipf-tests
-./usr/tests/ipf/regress/in6			tests-ipf-tests
-./usr/tests/ipf/regress/ip1			tests-ipf-tests
-./usr/tests/ipf/regress/ip2			tests-ipf-tests
-./usr/tests/ipf/regress/ipv6.1			tests-ipf-tests
-./usr/tests/ipf/regress/ipv6.2			tests-ipf-tests
-./usr/tests/ipf/regress/ipv6.3			tests-ipf-tests
-./usr/tests/ipf/regress/ipv6.5			tests-ipf-tests
-./usr/tests/ipf/regress/ipv6.6			tests-ipf-tests
-./usr/tests/ipf/regress/l1			tests-ipf-tests
-./usr/tests/ipf/regress/n1			tests-ipf-tests
-./usr/tests/ipf/regress/n10			tests-ipf-tests
-./usr/tests/ipf/regress/n11			tests-ipf-tests
-./usr/tests/ipf/regress/n12			tests-ipf-tests
-./usr/tests/ipf/regress/n13			tests-ipf-tests
-./usr/tests/ipf/regress/n14			tests-ipf-tests
-./usr/tests/ipf/regress/n16			tests-ipf-tests
-./usr/tests/ipf/regress/n17			tests-ipf-tests
-./usr/tests/ipf/regress/n2			tests-ipf-tests
-./usr/tests/ipf/regress/n3			tests-ipf-tests
-./usr/tests/ipf/regress/n4			tests-ipf-tests
-./usr/tests/ipf/regress/n5			tests-ipf-tests
-./usr/tests/ipf/regress/n6			tests-ipf-tests
-./usr/tests/ipf/regress/n7			tests-ipf-tests
-./usr/tests/ipf/regress/n8			tests-ipf-tests
-./usr/tests/ipf/regress/n9			tests-ipf-tests
-./usr/tests/ipf/regress/ni1.ipf			tests-ipf-tests
-./usr/tests/ipf/regress/ni1.nat			tests-ipf-tests
-./usr/tests/ipf/regress/ni10.ipf		tests-ipf-tests
-./usr/tests/ipf/regress/ni10.nat		tests-ipf-tests
-./usr/tests/ipf/regress/ni11.ipf		tests-ipf-tests
-./usr/tests/ipf/regress/ni11.nat		tests-ipf-tests
-./usr/tests/ipf/regress/ni12.ipf		tests-ipf-tests
-./usr/tests/ipf/regress/ni12.nat		tests-ipf-tests
-./usr/tests/ipf/regress/ni13.ipf		tests-ipf-tests
-./usr/tests/ipf/regress/ni13.nat		tests-ipf-tests
-./usr/tests/ipf/regress/ni14.ipf		tests-ipf-tests
-./usr/tests/ipf/regress/ni14.nat		tests-ipf-tests
-./usr/tests/ipf/regress/ni15.ipf		tests-ipf-tests
-./usr/tests/ipf/regress/ni15.nat		tests-ipf-tests
-./usr/tests/ipf/regress/ni16.ipf		tests-ipf-tests
-./usr/tests/ipf/regress/ni16.nat		tests-ipf-tests
-./usr/tests/ipf/regress/ni17.nat		tests-ipf-tests
-./usr/tests/ipf/regress/ni19.ipf		tests-ipf-tests
-./usr/tests/ipf/regress/ni19.nat		tests-ipf-tests
-./usr/tests/ipf/regress/ni2.ipf			tests-ipf-tests
-./usr/tests/ipf/regress/ni2.nat			tests-ipf-tests
-./usr/tests/ipf/regress/ni20.ipf		tests-ipf-tests
-./usr/tests/ipf/regress/ni20.nat		tests-ipf-tests
-./usr/tests/ipf/regress/ni21.ipf		tests-ipf-tests
-./usr/tests/ipf/regress/ni21.nat		tests-ipf-tests
-./usr/tests/ipf/regress/ni23.ipf		tests-ipf-tests
-./usr/tests/ipf/regress/ni23.nat		tests-ipf-tests
-./usr/tests/ipf/regress/ni3.ipf			tests-ipf-tests
-./usr/tests/ipf/regress/ni3.nat			tests-ipf-tests
-./usr/tests/ipf/regress/ni4.ipf			tests-ipf-tests
-./usr/tests/ipf/regress/ni4.nat			tests-ipf-tests
-./usr/tests/ipf/regress/ni5.ipf			tests-ipf-tests
-./usr/tests/ipf/regress/ni5.nat			tests-ipf-tests
-./usr/tests/ipf/regress/ni6.ipf			tests-ipf-tests
-./usr/tests/ipf/regress/ni6.nat			tests-ipf-tests
-./usr/tests/ipf/regress/ni7.ipf			tests-ipf-tests
-./usr/tests/ipf/regress/ni7.nat			tests-ipf-tests
-./usr/tests/ipf/regress/ni8.ipf			tests-ipf-tests
-./usr/tests/ipf/regress/ni8.nat			tests-ipf-tests
-./usr/tests/ipf/regress/ni9.ipf			tests-ipf-tests
-./usr/tests/ipf/regress/ni9.nat			tests-ipf-tests
-./usr/tests/ipf/regress/p1.ipf			tests-ipf-tests
-./usr/tests/ipf/regress/p1.pool			tests-ipf-tests
-./usr/tests/ipf/regress/p2.ipf			tests-ipf-tests
-./usr/tests/ipf/regress/p3.ipf			tests-ipf-tests
-./usr/tests/ipf/regress/p3.pool			tests-ipf-tests
-./usr/tests/ipf/regress/p5.ipf			tests-ipf-tests
-./usr/tests/ipf/regress/p5.pool			tests-ipf-tests
-./usr/tests/ipf/t_bpf				tests-ipf-tests			atf
-./usr/tests/ipf/t_filter_exec			tests-ipf-tests			atf
-./usr/tests/ipf/t_filter_parse			tests-ipf-tests			atf
-./usr/tests/ipf/t_ipf				tests-obsolete			obsolete
-./usr/tests/ipf/t_logging			tests-ipf-tests			atf
-./usr/tests/ipf/t_nat_exec			tests-ipf-tests			atf
-./usr/tests/ipf/t_nat_ipf_exec			tests-ipf-tests			atf
-./usr/tests/ipf/t_nat_parse			tests-ipf-tests			atf
-./usr/tests/ipf/t_pools				tests-ipf-tests			atf
+./usr/tests/ipf/regress/bpf-f1			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/bpf1			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f1			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f10			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f11			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f12			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f13			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f14			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f15			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f16			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f17			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f18			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f19			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f2			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f20			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f21			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f22			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f24			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f25			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f26			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f27			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f28.ipf			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f28.pool		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f29.ipf			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f29.pool		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f3			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f30			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f4			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f5			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f7			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f8			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/f9			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/i1			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/i10			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/i11			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/i12			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/i13			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/i14			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/i15			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/i16			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/i17			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/i18			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/i19			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/i2			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/i20			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/i21			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/i22			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/i23			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/i3			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/i4			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/i5			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/i6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/i7			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/i8			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/i9			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/in1			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/in100			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/in101			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/in102			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/in2			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/in3			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/in4			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/in5			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/in6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/in7			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ip1			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ip2			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ip3			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ipv6.1			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ipv6.2			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ipv6.3			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ipv6.4			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ipv6.5			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ipv6.6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/l1			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n1			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n10			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n100			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n101			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n102			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n103			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n104			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n105			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n106			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n10_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n11			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n11_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n12			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n12_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n13			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n13_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n14			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n14_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n15			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n15_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n16			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n16_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n17			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n17_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n18			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n1_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n2			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n200			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n201			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n202			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n2_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n3			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n4			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n4_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n5			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n5_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n6_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n7			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n7_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n8			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n8_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n9			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/n9_6			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni1.ipf			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni1.nat			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni10.ipf		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni10.nat		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni11.ipf		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni11.nat		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni12.ipf		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni12.nat		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni13.ipf		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni13.nat		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni14.ipf		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni14.nat		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni15.ipf		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni15.nat		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni16.ipf		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni16.nat		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni17.ipf		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni17.nat		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni18.ipf		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni18.nat		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni19.ipf		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni19.nat		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni2.ipf			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni2.nat			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni20.ipf		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni20.nat		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni21.ipf		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni21.nat		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni23.ipf		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni23.nat		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni3.ipf			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni3.nat			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni4.ipf			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni4.nat			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni5.ipf			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni5.nat			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni6.ipf			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni6.nat			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni7.ipf			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni7.nat			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni8.ipf			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni8.nat			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni9.ipf			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/ni9.nat			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/p1.ipf			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/p1.pool			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/p10.nat			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/p10.pool		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/p11.nat			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/p11.pool		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/p12.nat			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/p12.pool		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/p13.ipf			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/p13.pool		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/p2.ipf			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/p3.ipf			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/p3.pool			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/p4.nat			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/p4.pool			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/p5.ipf			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/p5.pool			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/p6.ipf			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/p6.pool			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/p6.whois		tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/p7.nat			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/p7.pool			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/p9.nat			tests-ipf-tests		ipfilter
+./usr/tests/ipf/regress/p9.pool			tests-ipf-tests		ipfilter
+./usr/tests/ipf/t_bpf				tests-ipf-tests		atf,ipfilter
+./usr/tests/ipf/t_filter_exec			tests-ipf-tests		atf,ipfilter
+./usr/tests/ipf/t_filter_parse			tests-ipf-tests		atf,ipfilter
+./usr/tests/ipf/t_ipf				tests-obsolete		obsolete
+./usr/tests/ipf/t_logging			tests-ipf-tests		atf,ipfilter
+./usr/tests/ipf/t_nat_exec			tests-ipf-tests		atf,ipfilter
+./usr/tests/ipf/t_nat_ipf_exec			tests-ipf-tests		atf,ipfilter
+./usr/tests/ipf/t_nat_parse			tests-ipf-tests		atf,ipfilter
+./usr/tests/ipf/t_pools				tests-ipf-tests		atf,ipfilter
 ./usr/tests/kernel				tests-kernel-tests
 ./usr/tests/kernel/Atffile			tests-kernel-tests		atf
 ./usr/tests/kernel/h_ps_strings1		tests-kernel-tests		atf
@@ -1870,11 +2122,21 @@
 ./usr/tests/kernel/kqueue/write/t_fifo		tests-kernel-tests		atf
 ./usr/tests/kernel/kqueue/write/t_pipe		tests-kernel-tests		atf
 ./usr/tests/kernel/kqueue/write/t_ttypty	tests-kernel-tests		atf
+./usr/tests/kernel/posix_spawn			tests-kernel-tests		obsolete
+./usr/tests/kernel/posix_spawn/Atffile		tests-kernel-tests		obsolete
+./usr/tests/kernel/posix_spawn/t_spawn		tests-kernel-tests		obsolete
+./usr/tests/kernel/posix_spawn/t_spawnattr	tests-kernel-tests		obsolete
+./usr/tests/kernel/posix_spawn/t_fileactions	tests-kernel-tests		obsolete
+./usr/tests/kernel/posix_spawn/h_spawn		tests-kernel-tests		obsolete
+./usr/tests/kernel/posix_spawn/h_spawnattr	tests-kernel-tests		obsolete
+./usr/tests/kernel/posix_spawn/h_fileactions	tests-kernel-tests		obsolete
+./usr/tests/kernel/posix_spawn/h_nonexec	tests-kernel-tests		obsolete
+./usr/tests/kernel/posix_spawn/h_zero		tests-kernel-tests		obsolete
 ./usr/tests/kernel/t_extattrctl			tests-kernel-tests		atf
 ./usr/tests/kernel/t_extent			tests-kernel-tests		atf
 ./usr/tests/kernel/t_filedesc			tests-kernel-tests		atf
 ./usr/tests/kernel/t_lock			tests-kernel-tests		atf
-./usr/tests/kernel/t_lwpctl			tests-kernel-tests		atf
+./usr/tests/kernel/t_lwpctl			tests-obsolete			obsolete
 ./usr/tests/kernel/t_mkdir			tests-obsolete			obsolete
 ./usr/tests/kernel/t_pipe			tests-obsolete			obsolete
 ./usr/tests/kernel/t_poll3w			tests-obsolete			obsolete
@@ -1884,6 +2146,7 @@
 ./usr/tests/kernel/t_pty			tests-kernel-tests		atf
 ./usr/tests/kernel/t_rnd			tests-kernel-tests		atf
 ./usr/tests/kernel/t_sigaction			tests-obsolete			obsolete
+./usr/tests/kernel/t_subr_prf			tests-kernel-tests		atf
 ./usr/tests/kernel/t_time			tests-obsolete			obsolete
 ./usr/tests/kernel/t_ucontext			tests-obsolete			obsolete
 ./usr/tests/kernel/t_umount			tests-kernel-tests		atf
@@ -1917,6 +2180,16 @@
 ./usr/tests/lib/libc/db/t_db			tests-lib-tests		atf
 ./usr/tests/lib/libc/gen			tests-lib-tests
 ./usr/tests/lib/libc/gen/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/gen/posix_spawn			tests-kernel-tests
+./usr/tests/lib/libc/gen/posix_spawn/Atffile		tests-kernel-tests	atf
+./usr/tests/lib/libc/gen/posix_spawn/t_spawn		tests-kernel-tests	atf
+./usr/tests/lib/libc/gen/posix_spawn/t_spawnattr	tests-kernel-tests	atf
+./usr/tests/lib/libc/gen/posix_spawn/t_fileactions	tests-kernel-tests	atf
+./usr/tests/lib/libc/gen/posix_spawn/h_spawn		tests-kernel-tests	atf
+./usr/tests/lib/libc/gen/posix_spawn/h_spawnattr	tests-kernel-tests	atf
+./usr/tests/lib/libc/gen/posix_spawn/h_fileactions	tests-kernel-tests	atf
+./usr/tests/lib/libc/gen/posix_spawn/h_nonexec	tests-kernel-tests		atf
+./usr/tests/lib/libc/gen/posix_spawn/h_zero	tests-kernel-tests		atf
 ./usr/tests/lib/libc/gen/t_alarm		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_assert		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_basedirname		tests-lib-tests		atf
@@ -1924,6 +2197,7 @@
 ./usr/tests/lib/libc/gen/t_cpuset		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_dir			tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_fmtcheck		tests-lib-tests		atf
+./usr/tests/lib/libc/gen/t_fnmatch		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_fpclassify		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_fpsetmask		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_fpsetround		tests-lib-tests		atf
@@ -1939,6 +2213,7 @@
 ./usr/tests/lib/libc/gen/t_pause		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_raise		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_randomid		tests-lib-tests		atf
+./usr/tests/lib/libc/gen/t_realpath		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_rbstress		tests-obsolete		obsolete
 ./usr/tests/lib/libc/gen/t_setdomainname	tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_sethostname		tests-lib-tests		atf
@@ -1993,6 +2268,9 @@
 ./usr/tests/lib/libc/locale/t_mbrtowc		tests-lib-tests		atf
 ./usr/tests/lib/libc/locale/t_mbstowcs		tests-lib-tests		atf
 ./usr/tests/lib/libc/locale/t_mbtowc		tests-lib-tests		atf
+./usr/tests/lib/libc/locale/t_wcscspn		tests-lib-tests		atf
+./usr/tests/lib/libc/locale/t_wcspbrk		tests-lib-tests		atf
+./usr/tests/lib/libc/locale/t_wcsspn		tests-lib-tests		atf
 ./usr/tests/lib/libc/locale/t_wcstod		tests-lib-tests		atf
 ./usr/tests/lib/libc/locale/t_wctomb		tests-lib-tests		atf
 ./usr/tests/lib/libc/inet			tests-lib-tests
@@ -2105,6 +2383,8 @@
 ./usr/tests/lib/libc/stdlib/h_getopt		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/h_getopt_long	tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_atexit		tests-lib-tests		atf
+./usr/tests/lib/libc/stdlib/t_abs		tests-lib-tests		atf
+./usr/tests/lib/libc/stdlib/t_atoi		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_div		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_environment	tests-obsolete		obsolete
 ./usr/tests/lib/libc/stdlib/t_environment_pth	tests-obsolete		obsolete
@@ -2115,6 +2395,7 @@
 ./usr/tests/lib/libc/stdlib/t_hsearch		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_mi_vector_hash	tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_posix_memalign	tests-lib-tests		atf
+./usr/tests/lib/libc/stdlib/t_random		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_strtod		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_strtol		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_strtox		tests-obsolete		obsolete
@@ -2130,11 +2411,14 @@
 ./usr/tests/lib/libc/string/t_strchr		tests-lib-tests		atf
 ./usr/tests/lib/libc/string/t_strcmp		tests-lib-tests		atf
 ./usr/tests/lib/libc/string/t_strcpy		tests-lib-tests		atf
+./usr/tests/lib/libc/string/t_strcspn		tests-lib-tests		atf
 ./usr/tests/lib/libc/string/t_strerror		tests-lib-tests		atf
 ./usr/tests/lib/libc/string/t_stresep		tests-lib-tests		atf
 ./usr/tests/lib/libc/string/t_string		tests-obsolete		obsolete
 ./usr/tests/lib/libc/string/t_strlen		tests-lib-tests		atf
+./usr/tests/lib/libc/string/t_strpbrk		tests-lib-tests		atf
 ./usr/tests/lib/libc/string/t_strrchr		tests-lib-tests		atf
+./usr/tests/lib/libc/string/t_strspn		tests-lib-tests		atf
 ./usr/tests/lib/libc/string/t_swab		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys			tests-lib-tests
 ./usr/tests/lib/libc/sys/Atffile		tests-lib-tests		atf
@@ -2156,9 +2440,11 @@
 ./usr/tests/lib/libc/sys/t_getsid		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_gettimeofday		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_issetugid		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_kevent		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_kill			tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_link			tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_listen		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_lwp_ctl		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_mincore		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_mkdir		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_mkfifo		tests-lib-tests		atf
@@ -2215,6 +2501,9 @@
 ./usr/tests/lib/libc/t_servent			tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_strptime			tests-obsolete		obsolete
 ./usr/tests/lib/libc/time			tests-lib-tests
+./usr/tests/lib/libcrypt			tests-lib-tests
+./usr/tests/lib/libcrypt/Atffile		tests-lib-tests
+./usr/tests/lib/libcrypt/t_crypt		tests-lib-tests
 ./usr/tests/lib/libcurses			tests-lib-tests
 ./usr/tests/lib/libcurses/.terminfo.db		tests-obsolete		obsolete
 ./usr/tests/lib/libcurses/terminfo.db		tests-lib-tests		atf
@@ -2608,6 +2897,7 @@
 ./usr/tests/sbin/sysctl				tests-sbin-tests
 ./usr/tests/sbin/sysctl/Atffile			tests-sbin-tests	atf
 ./usr/tests/sbin/sysctl/t_perm			tests-sbin-tests	atf
+./usr/tests/sbin/sysctl/t_sysctl		tests-sbin-tests	atf
 ./usr/tests/sys					tests-sys-tests
 ./usr/tests/sys/Atffile				tests-sys-tests	atf
 ./usr/tests/sys/rc				tests-sys-tests
@@ -2650,315 +2940,585 @@
 ./usr/tests/syscall/t_truncate			tests-obsolete		obsolete
 ./usr/tests/syscall/t_umask			tests-obsolete		obsolete
 ./usr/tests/syscall/t_unlink			tests-obsolete		obsolete
-./usr/tests/toolchain				tests-syscall-tests	atf
-./usr/tests/toolchain/Atffile			tests-syscall-tests	atf
-./usr/tests/toolchain/cc			tests-syscall-tests	atf
-./usr/tests/toolchain/cc/Atffile		tests-syscall-tests	atf
-./usr/tests/toolchain/cc/t_hello		tests-syscall-tests	atf
-./usr/tests/usr.bin				tests-util-tests
-./usr/tests/usr.bin/Atffile			tests-sbin-tests	atf
-./usr/tests/usr.bin/diff			tests-util-tests
-./usr/tests/usr.bin/diff/Atffile		tests-util-tests	atf
-./usr/tests/usr.bin/diff/d_mallocv1.in		tests-util-tests	atf
-./usr/tests/usr.bin/diff/d_mallocv2.in		tests-util-tests	atf
-./usr/tests/usr.bin/diff/t_diff			tests-util-tests	atf
-./usr/tests/usr.bin/mkdep			tests-util-tests
-./usr/tests/usr.bin/mkdep/Atffile		tests-util-tests	atf
-./usr/tests/usr.bin/mkdep/t_mkdep		tests-util-tests	atf
-./usr/tests/usr.bin/pr				tests-util-tests
-./usr/tests/usr.bin/pr/Atffile			tests-util-tests	atf
-./usr/tests/usr.bin/pr/d_basic.in		tests-util-tests	atf
-./usr/tests/usr.bin/pr/d_basic.out		tests-util-tests	atf
-./usr/tests/usr.bin/pr/t_basic			tests-util-tests	atf
-./usr/tests/usr.bin/rump_server			tests-util-tests
-./usr/tests/usr.bin/rump_server/Atffile		tests-util-tests	atf
-./usr/tests/usr.bin/rump_server/t_disk		tests-util-tests	atf
-./usr/tests/usr.bin				tests-util-tests
-./usr/tests/usr.bin/shmif_dumpbus			tests-util-tests
-./usr/tests/usr.bin/shmif_dumpbus/Atffile		tests-util-tests	atf
-./usr/tests/usr.bin/shmif_dumpbus/d_pcap.out		tests-obsolete	obsolete
-./usr/tests/usr.bin/shmif_dumpbus/d_pkthdrs.out		tests-obsolete	obsolete
-./usr/tests/usr.bin/shmif_dumpbus/d_pcap.out.bz2.uue		tests-util-tests	atf
-./usr/tests/usr.bin/shmif_dumpbus/d_pkthdrs.out.bz2.uue		tests-util-tests	atf
-./usr/tests/usr.bin/shmif_dumpbus/shmbus.bz2.uue		tests-util-tests	atf
-./usr/tests/usr.bin/shmif_dumpbus/t_basic		tests-util-tests	atf
-./usr/tests/usr.bin/unifdef			tests-util-tests
-./usr/tests/usr.bin/unifdef/Atffile		tests-util-tests	atf
-./usr/tests/usr.bin/unifdef/d_basic.in		tests-util-tests	atf
-./usr/tests/usr.bin/unifdef/d_basic.out		tests-util-tests	atf
-./usr/tests/usr.bin/unifdef/t_basic		tests-util-tests	atf
-./usr/tests/usr.sbin				tests-util-tests
-./usr/tests/usr.sbin/Atffile			tests-sbin-tests	atf
-./usr/tests/usr.sbin/traceroute			tests-util-tests
-./usr/tests/usr.sbin/traceroute/Atffile		tests-util-tests	atf
-./usr/tests/usr.sbin/traceroute/t_traceroute	tests-util-tests	atf
-./usr/tests/util				tests-util-tests
-./usr/tests/util/Atffile			tests-util-tests
-./usr/tests/util/awk				tests-util-tests
-./usr/tests/util/awk/Atffile			tests-util-tests
-./usr/tests/util/awk/d_big_regexp.awk		tests-util-tests
-./usr/tests/util/awk/d_big_regexp.in		tests-util-tests
-./usr/tests/util/awk/d_big_regexp.out		tests-util-tests
-./usr/tests/util/awk/d_end1.awk			tests-util-tests
-./usr/tests/util/awk/d_end1.in			tests-util-tests
-./usr/tests/util/awk/d_end1.out			tests-util-tests
-./usr/tests/util/awk/d_end2.awk			tests-util-tests
-./usr/tests/util/awk/d_end2.in			tests-util-tests
-./usr/tests/util/awk/d_end2.out			tests-util-tests
-./usr/tests/util/awk/d_period.awk		tests-util-tests
-./usr/tests/util/awk/d_period.in		tests-util-tests
-./usr/tests/util/awk/d_period.out		tests-util-tests
-./usr/tests/util/awk/d_string1.awk		tests-util-tests
-./usr/tests/util/awk/d_string1.out		tests-util-tests
-./usr/tests/util/awk/d_tolower.awk		tests-util-tests
-./usr/tests/util/awk/d_tolower.in		tests-util-tests
-./usr/tests/util/awk/d_tolower.out		tests-util-tests
-./usr/tests/util/awk/d_toupper.awk		tests-util-tests
-./usr/tests/util/awk/d_toupper.in		tests-util-tests
-./usr/tests/util/awk/d_toupper.out		tests-util-tests
-./usr/tests/util/awk/t_awk			tests-util-tests
-./usr/tests/util/bzip2				tests-util-tests
-./usr/tests/util/bzip2/Atffile			tests-util-tests
-./usr/tests/util/bzip2/d_sample1.bz2		tests-util-tests
-./usr/tests/util/bzip2/d_sample1.ref		tests-util-tests
-./usr/tests/util/bzip2/d_sample2.bz2		tests-util-tests
-./usr/tests/util/bzip2/d_sample2.ref		tests-util-tests
-./usr/tests/util/bzip2/d_sample3.bz2		tests-util-tests
-./usr/tests/util/bzip2/d_sample3.ref		tests-util-tests
-./usr/tests/util/bzip2/t_bzip2			tests-util-tests
-./usr/tests/util/config				tests-util-tests
-./usr/tests/util/config/Atffile			tests-util-tests
-./usr/tests/util/config/Makefile.regress	tests-util-tests
-./usr/tests/util/config/d_deffs_redef		tests-util-tests
-./usr/tests/util/config/d_loop			tests-util-tests
-./usr/tests/util/config/d_loop2			tests-util-tests
-./usr/tests/util/config/d_no_pseudo		tests-util-tests
-./usr/tests/util/config/d_postponed_orphan	tests-util-tests
-./usr/tests/util/config/d_pseudo_parent		tests-util-tests
-./usr/tests/util/config/d_shadow_instance	tests-util-tests
-./usr/tests/util/config/files			tests-util-tests
-./usr/tests/util/config/files.regress		tests-util-tests
-./usr/tests/util/config/std.regress		tests-util-tests
-./usr/tests/util/config/support			tests-util-tests
-./usr/tests/util/config/support/arch		tests-util-tests
-./usr/tests/util/config/support/arch/regress				tests-util-tests
-./usr/tests/util/config/support/arch/regress/conf			tests-util-tests
-./usr/tests/util/config/support/arch/regress/conf/Makefile.regress	tests-util-tests
-./usr/tests/util/config/support/arch/regress/conf/files.regress		tests-util-tests
-./usr/tests/util/config/support/arch/regress/conf/std.regress		tests-util-tests
-./usr/tests/util/config/support/conf		tests-util-tests
-./usr/tests/util/config/support/conf/files	tests-util-tests
-./usr/tests/util/config/t_config		tests-util-tests
-./usr/tests/util/cut				tests-util-tests
-./usr/tests/util/cut/Atffile			tests-util-tests
-./usr/tests/util/cut/d_basic.out		tests-util-tests
-./usr/tests/util/cut/d_cut.in			tests-util-tests
-./usr/tests/util/cut/d_dflag.out		tests-util-tests
-./usr/tests/util/cut/d_dsflag.out		tests-util-tests
-./usr/tests/util/cut/d_latin1.in		tests-util-tests
-./usr/tests/util/cut/d_sflag.out		tests-util-tests
-./usr/tests/util/cut/d_utf8.in			tests-util-tests
-./usr/tests/util/cut/t_cut			tests-util-tests
-./usr/tests/util/df				tests-util-tests
-./usr/tests/util/df/Atffile			tests-util-tests
-./usr/tests/util/df/h_df			tests-util-tests
-./usr/tests/util/df/t_df			tests-util-tests
-./usr/tests/util/grep				tests-util-tests
-./usr/tests/util/grep/Atffile			tests-util-tests
-./usr/tests/util/grep/d_basic.out		tests-util-tests
-./usr/tests/util/grep/d_begin_end_a.out		tests-util-tests
-./usr/tests/util/grep/d_begin_end_b.out		tests-util-tests
-./usr/tests/util/grep/d_binary.out		tests-util-tests
-./usr/tests/util/grep/d_context2_a.out		tests-util-tests
-./usr/tests/util/grep/d_context2_b.out		tests-util-tests
-./usr/tests/util/grep/d_context2_c.out		tests-util-tests
-./usr/tests/util/grep/d_context_a.in		tests-util-tests
-./usr/tests/util/grep/d_context_a.out		tests-util-tests
-./usr/tests/util/grep/d_context_b.in		tests-util-tests
-./usr/tests/util/grep/d_context_b.out		tests-util-tests
-./usr/tests/util/grep/d_context_c.out		tests-util-tests
-./usr/tests/util/grep/d_context_d.out		tests-util-tests
-./usr/tests/util/grep/d_egrep.out		tests-util-tests
-./usr/tests/util/grep/d_file_exp.in		tests-util-tests
-./usr/tests/util/grep/d_file_exp.out		tests-util-tests
+./usr/tests/toolchain				tests-obsolete		obsolete
+./usr/tests/toolchain/Atffile			tests-obsolete		obsolete
+./usr/tests/toolchain/cc			tests-obsolete		obsolete
+./usr/tests/toolchain/cc/Atffile		tests-obsolete		obsolete
+./usr/tests/toolchain/cc/t_hello		tests-obsolete		obsolete
+./usr/tests/usr.bin				tests-usr.bin-tests
+./usr/tests/usr.bin/Atffile			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/awk				tests-usr.bin-tests
+./usr/tests/usr.bin/awk/Atffile			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/awk/t_awk			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/awk/d_assign_NF.awk		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/awk/d_assign_NF.in		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/awk/d_assign_NF.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/awk/d_big_regexp.awk	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/awk/d_big_regexp.in		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/awk/d_big_regexp.out	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/awk/d_end1.awk		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/awk/d_end1.in		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/awk/d_end1.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/awk/d_end2.awk		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/awk/d_end2.in		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/awk/d_end2.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/awk/d_period.awk		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/awk/d_period.in		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/awk/d_period.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/awk/d_string1.awk		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/awk/d_string1.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/awk/d_tolower.awk		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/awk/d_tolower.in		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/awk/d_tolower.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/awk/d_toupper.awk		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/awk/d_toupper.in		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/awk/d_toupper.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/basename			tests-usr.bin-tests
+./usr/tests/usr.bin/basename/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/basename/t_basename		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/bzip2			tests-usr.bin-tests
+./usr/tests/usr.bin/bzip2/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/bzip2/t_bzip2		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/bzip2/d_sample1.bz2		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/bzip2/d_sample1.ref		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/bzip2/d_sample2.bz2		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/bzip2/d_sample2.ref		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/bzip2/d_sample3.bz2		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/bzip2/d_sample3.ref		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/cc				tests-usr.bin-tests
+./usr/tests/usr.bin/cc/Atffile			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/cc/t_hello			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/cmp				tests-usr.bin-tests
+./usr/tests/usr.bin/cmp/Atffile			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/cmp/t_cmp			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/config			tests-usr.bin-tests
+./usr/tests/usr.bin/config/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/config/Makefile.regress	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/config/t_config		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/config/d_deffs_redef	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/config/d_loop		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/config/d_loop2		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/config/d_no_pseudo		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/config/d_postponed_orphan	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/config/d_pseudo_parent	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/config/d_shadow_instance	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/config/files		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/config/files.regress	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/config/std.regress		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/config/support		tests-usr.bin-tests
+./usr/tests/usr.bin/config/support/arch		tests-usr.bin-tests
+./usr/tests/usr.bin/config/support/arch/regress				tests-usr.bin-tests
+./usr/tests/usr.bin/config/support/arch/regress/conf			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/config/support/arch/regress/conf/Makefile.regress	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/config/support/arch/regress/conf/files.regress		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/config/support/arch/regress/conf/std.regress		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/config/support/conf		tests-usr.bin-tests
+./usr/tests/usr.bin/config/support/conf/files	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/cut				tests-usr.bin-tests
+./usr/tests/usr.bin/cut/Atffile			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/cut/d_basic.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/cut/d_cut.in		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/cut/d_dflag.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/cut/d_dsflag.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/cut/d_latin1.in		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/cut/d_sflag.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/cut/d_utf8.in		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/cut/t_cut			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/diff			tests-usr.bin-tests
+./usr/tests/usr.bin/diff/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/diff/d_mallocv1.in		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/diff/d_mallocv2.in		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/diff/t_diff			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/dirname			tests-usr.bin-tests
+./usr/tests/usr.bin/dirname/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/dirname/t_dirname		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/find			tests-usr.bin-tests
+./usr/tests/usr.bin/find/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/find/t_find			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/grep			tests-usr.bin-tests
+./usr/tests/usr.bin/grep/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/grep/d_basic.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/grep/d_begin_end_a.out	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/grep/d_begin_end_b.out	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/grep/d_binary.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/grep/d_context2_a.out	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/grep/d_context2_b.out	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/grep/d_context2_c.out	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/grep/d_context_a.in		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/grep/d_context_a.out	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/grep/d_context_b.in		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/grep/d_context_b.out	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/grep/d_context_c.out	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/grep/d_context_d.out	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/grep/d_egrep.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/grep/d_file_exp.in		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/grep/d_file_exp.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/grep/d_ignore_case.out	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/grep/d_input		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/grep/d_invert.in		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/grep/d_invert.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/grep/d_recurse.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/grep/d_recurse_symlink.err	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/grep/d_recurse_symlink.out	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/grep/d_whole_line.out	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/grep/d_word_regexps.out	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/grep/d_zgrep.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/grep/t_grep			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/gzip			tests-usr.bin-tests
+./usr/tests/usr.bin/gzip/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/gzip/t_gzip			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/id				tests-usr.bin-tests
+./usr/tests/usr.bin/id/Atffile			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/id/h_id			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/id/t_groups			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/id/t_id			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/id/t_whoami			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/jot				tests-usr.bin-tests
+./usr/tests/usr.bin/jot/Atffile			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/jot/d_basic.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/jot/t_jot			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/m4				tests-usr.bin-tests
+./usr/tests/usr.bin/m4/Atffile			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/m4/d_ff_after_dnl.m4.uue	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/m4/d_ff_after_dnl.out	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/m4/d_m4wrap-P.m4		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/m4/d_m4wrap-P.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/m4/d_m4wrap.m4		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/m4/d_m4wrap.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/m4/t_m4			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make			tests-usr.bin-tests
+./usr/tests/usr.bin/make/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_comment.mk		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_comment.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_cond1.mk		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_cond1.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_dotwait.mk		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_dotwait.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_export.mk		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_export.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_export_all.mk	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_export_all.out	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_moderrs.mk		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_moderrs.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_modmatch.mk		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_modmatch.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_modmisc.mk		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_modmisc.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_modorder.mk		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_modorder.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_modts.mk		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_modts.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_modword.mk		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_modword.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_posix.mk		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_posix.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_qequals.mk		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_qequals.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_ternary.mk		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_ternary.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_unmatchedvarparen.mk	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_unmatchedvarparen.out	tests-usr.bin-tests
+./usr/tests/usr.bin/make/d_varcmd.mk		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/d_varcmd.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/t_make			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/mkdep			tests-usr.bin-tests
+./usr/tests/usr.bin/mkdep/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/mkdep/t_mkdep		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/pr				tests-usr.bin-tests
+./usr/tests/usr.bin/pr/Atffile			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/pr/d_basic.in		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/pr/d_basic.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/pr/t_basic			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/rump_server			tests-usr.bin-tests
+./usr/tests/usr.bin/rump_server/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/rump_server/t_disk		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sdiff			tests-usr.bin-tests
+./usr/tests/usr.bin/sdiff/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sdiff/d_dot.in		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sdiff/d_flags_l.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sdiff/d_flags_s.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sdiff/d_flags_w.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sdiff/d_iflags_a1.out	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sdiff/d_iflags_a2.out	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sdiff/d_iflags_b1.out	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sdiff/d_iflags_b2.out	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sdiff/d_iflags_c1.out	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sdiff/d_iflags_c2.out	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sdiff/d_iflags_d1.out	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sdiff/d_iflags_d2.out	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sdiff/d_input1		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sdiff/d_input2		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sdiff/d_oneline.in		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sdiff/d_oneline_a.out	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sdiff/d_oneline_b.out	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sdiff/d_same.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sdiff/d_short.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sdiff/d_tabends.in		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sdiff/d_tabends_a.out	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sdiff/d_tabends_b.out	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sdiff/d_tabends_c.out	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sdiff/d_tabs.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sdiff/d_tabs1.in		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sdiff/d_tabs2.in		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sdiff/t_sdiff		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sed				tests-usr.bin-tests
+./usr/tests/usr.bin/sed/Atffile			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sed/d_c2048.in		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sed/t_sed			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/shmif_dumpbus				tests-usr.bin-tests
+./usr/tests/usr.bin/shmif_dumpbus/Atffile			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/shmif_dumpbus/d_pcap.out.bz2.uue		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/shmif_dumpbus/d_pkthdrs.out.bz2.uue		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/shmif_dumpbus/shmbus.bz2.uue		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/shmif_dumpbus/t_basic			tests-usr.bin-tests	atf	atf
+./usr/tests/usr.bin/sort				tests-usr.bin-tests
+./usr/tests/usr.bin/sort/Atffile			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sort/d_any_char_dflag_out.txt	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sort/d_any_char_fflag_out.txt	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sort/d_any_char_iflag_out.txt	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sort/d_any_char_in.txt		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/sort/t_sort				tests-usr.bin-tests	atf
+./usr/tests/usr.bin/unifdef			tests-usr.bin-tests
+./usr/tests/usr.bin/unifdef/Atffile		tests-usr.bin-tests	atf	atf
+./usr/tests/usr.bin/unifdef/d_basic.in		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/unifdef/d_basic.out		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/unifdef/t_basic		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint			tests-usr.bin-tests
+./usr/tests/usr.bin/xlint/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1			tests-usr.bin-tests
+./usr/tests/usr.bin/xlint/lint1/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_alignof.c			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_c99_complex_num.c		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_c99_decls_after_stmt.c	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_c99_decls_after_stmt2.c	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_c99_for_loops.c		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_c99_func.c			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_c99_recursive_init.c		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_c99_struct_init.c		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_c99_union_init1.c		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_c99_union_init2.c		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_c99_union_init3.c		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_c9x_array_init.c		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_c9x_recursive_init.c		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_cast_init.c			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_cast_init2.c			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_cast_lhs.c			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_compound_literals1.c		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_compound_literals2.c		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_constant_conv1.c		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_constant_conv2.c		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_cvt_in_ternary.c		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_ellipsis_in_switch.c		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_gcc_compound_statements1.c	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_gcc_compound_statements2.c	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_gcc_compound_statements3.c	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_gcc_func.c			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_gcc_variable_array_init.c	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_incorrect_array_size.c	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_long_double_int.c		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_nested_structs.c		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_nolimit_init.c		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_packed_structs.c		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_shift_to_narrower_type.c	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_type_conv1.c			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_type_conv2.c			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_type_conv3.c			tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_typename_as_var.c		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/d_zero_sized_arrays.c		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/xlint/lint1/t_integration			tests-usr.bin-tests	atf
+./usr/tests/usr.sbin				tests-usr.sbin-tests
+./usr/tests/usr.sbin/Atffile			tests-usr.sbin-tests	atf
+./usr/tests/usr.sbin/mtree			tests-usr.sbin-tests
+./usr/tests/usr.sbin/mtree/Atffile		tests-usr.sbin-tests	atf
+./usr/tests/usr.sbin/mtree/d_convert.in		tests-usr.sbin-tests	atf
+./usr/tests/usr.sbin/mtree/d_convert_C.out	tests-usr.sbin-tests	atf
+./usr/tests/usr.sbin/mtree/d_convert_C_S.out	tests-usr.sbin-tests	atf
+./usr/tests/usr.sbin/mtree/d_convert_D.out	tests-usr.sbin-tests	atf
+./usr/tests/usr.sbin/mtree/d_convert_D_S.out	tests-usr.sbin-tests	atf
+./usr/tests/usr.sbin/mtree/d_create.out		tests-usr.sbin-tests	atf
+./usr/tests/usr.sbin/mtree/d_merge.in		tests-usr.sbin-tests	atf
+./usr/tests/usr.sbin/mtree/d_merge_C_M.out	tests-usr.sbin-tests	atf
+./usr/tests/usr.sbin/mtree/d_merge_C_M_S.out	tests-usr.sbin-tests	atf
+./usr/tests/usr.sbin/mtree/t_mtree		tests-usr.sbin-tests	atf
+./usr/tests/usr.sbin/tcpdump			tests-usr.sbin-tests
+./usr/tests/usr.sbin/tcpdump/Atffile		tests-usr.sbin-tests	atf
+./usr/tests/usr.sbin/tcpdump/t_tcpdump		tests-usr.sbin-tests	atf
+./usr/tests/usr.sbin/traceroute			tests-usr.sbin-tests
+./usr/tests/usr.sbin/traceroute/Atffile		tests-usr.sbin-tests	atf
+./usr/tests/usr.sbin/traceroute/t_traceroute	tests-usr.sbin-tests	atf
+./usr/tests/util				tests-obsolete		obsolete
+./usr/tests/util/Atffile			tests-obsolete		obsolete
+./usr/tests/util/awk				tests-obsolete		obsolete
+./usr/tests/util/awk/Atffile			tests-obsolete		obsolete
+./usr/tests/util/awk/d_assign_NF.awk		tests-obsolete		obsolete
+./usr/tests/util/awk/d_assign_NF.in		tests-obsolete		obsolete
+./usr/tests/util/awk/d_assign_NF.out		tests-obsolete		obsolete
+./usr/tests/util/awk/d_big_regexp.awk		tests-obsolete		obsolete
+./usr/tests/util/awk/d_big_regexp.in		tests-obsolete		obsolete
+./usr/tests/util/awk/d_big_regexp.out		tests-obsolete		obsolete
+./usr/tests/util/awk/d_end1.awk			tests-obsolete		obsolete
+./usr/tests/util/awk/d_end1.in			tests-obsolete		obsolete
+./usr/tests/util/awk/d_end1.out			tests-obsolete		obsolete
+./usr/tests/util/awk/d_end2.awk			tests-obsolete		obsolete
+./usr/tests/util/awk/d_end2.in			tests-obsolete		obsolete
+./usr/tests/util/awk/d_end2.out			tests-obsolete		obsolete
+./usr/tests/util/awk/d_period.awk		tests-obsolete		obsolete
+./usr/tests/util/awk/d_period.in		tests-obsolete		obsolete
+./usr/tests/util/awk/d_period.out		tests-obsolete		obsolete
+./usr/tests/util/awk/d_string1.awk		tests-obsolete		obsolete
+./usr/tests/util/awk/d_string1.out		tests-obsolete		obsolete
+./usr/tests/util/awk/d_tolower.awk		tests-obsolete		obsolete
+./usr/tests/util/awk/d_tolower.in		tests-obsolete		obsolete
+./usr/tests/util/awk/d_tolower.out		tests-obsolete		obsolete
+./usr/tests/util/awk/d_toupper.awk		tests-obsolete		obsolete
+./usr/tests/util/awk/d_toupper.in		tests-obsolete		obsolete
+./usr/tests/util/awk/d_toupper.out		tests-obsolete		obsolete
+./usr/tests/util/awk/t_awk			tests-obsolete		obsolete
+./usr/tests/util/bzip2				tests-obsolete		obsolete
+./usr/tests/util/bzip2/Atffile			tests-obsolete		obsolete
+./usr/tests/util/bzip2/d_sample1.bz2		tests-obsolete		obsolete
+./usr/tests/util/bzip2/d_sample1.ref		tests-obsolete		obsolete
+./usr/tests/util/bzip2/d_sample2.bz2		tests-obsolete		obsolete
+./usr/tests/util/bzip2/d_sample2.ref		tests-obsolete		obsolete
+./usr/tests/util/bzip2/d_sample3.bz2		tests-obsolete		obsolete
+./usr/tests/util/bzip2/d_sample3.ref		tests-obsolete		obsolete
+./usr/tests/util/bzip2/t_bzip2			tests-obsolete		obsolete
+./usr/tests/util/config				tests-obsolete		obsolete
+./usr/tests/util/config/Atffile			tests-obsolete		obsolete
+./usr/tests/util/config/Makefile.regress	tests-obsolete		obsolete
+./usr/tests/util/config/d_deffs_redef		tests-obsolete		obsolete
+./usr/tests/util/config/d_loop			tests-obsolete		obsolete
+./usr/tests/util/config/d_loop2			tests-obsolete		obsolete
+./usr/tests/util/config/d_no_pseudo		tests-obsolete		obsolete
+./usr/tests/util/config/d_postponed_orphan	tests-obsolete		obsolete
+./usr/tests/util/config/d_pseudo_parent		tests-obsolete		obsolete
+./usr/tests/util/config/d_shadow_instance	tests-obsolete		obsolete
+./usr/tests/util/config/files			tests-obsolete		obsolete
+./usr/tests/util/config/files.regress		tests-obsolete		obsolete
+./usr/tests/util/config/std.regress		tests-obsolete		obsolete
+./usr/tests/util/config/support			tests-obsolete		obsolete
+./usr/tests/util/config/support/arch		tests-obsolete		obsolete
+./usr/tests/util/config/support/arch/regress				tests-obsolete		obsolete
+./usr/tests/util/config/support/arch/regress/conf			tests-obsolete		obsolete
+./usr/tests/util/config/support/arch/regress/conf/Makefile.regress	tests-obsolete		obsolete
+./usr/tests/util/config/support/arch/regress/conf/files.regress		tests-obsolete		obsolete
+./usr/tests/util/config/support/arch/regress/conf/std.regress		tests-obsolete		obsolete
+./usr/tests/util/config/support/conf		tests-obsolete		obsolete
+./usr/tests/util/config/support/conf/files	tests-obsolete		obsolete
+./usr/tests/util/config/t_config		tests-obsolete		obsolete
+./usr/tests/util/cut				tests-obsolete		obsolete
+./usr/tests/util/cut/Atffile			tests-obsolete		obsolete
+./usr/tests/util/cut/d_basic.out		tests-obsolete		obsolete
+./usr/tests/util/cut/d_cut.in			tests-obsolete		obsolete
+./usr/tests/util/cut/d_dflag.out		tests-obsolete		obsolete
+./usr/tests/util/cut/d_dsflag.out		tests-obsolete		obsolete
+./usr/tests/util/cut/d_latin1.in		tests-obsolete		obsolete
+./usr/tests/util/cut/d_sflag.out		tests-obsolete		obsolete
+./usr/tests/util/cut/d_utf8.in			tests-obsolete		obsolete
+./usr/tests/util/cut/t_cut			tests-obsolete		obsolete
+./usr/tests/util/df				tests-obsolete		obsolete
+./usr/tests/util/df/Atffile			tests-obsolete		obsolete
+./usr/tests/util/df/h_df			tests-obsolete		obsolete
+./usr/tests/util/df/t_df			tests-obsolete		obsolete
+./usr/tests/util/grep				tests-obsolete		obsolete
+./usr/tests/util/grep/Atffile			tests-obsolete		obsolete
+./usr/tests/util/grep/d_basic.out		tests-obsolete		obsolete
+./usr/tests/util/grep/d_begin_end_a.out		tests-obsolete		obsolete
+./usr/tests/util/grep/d_begin_end_b.out		tests-obsolete		obsolete
+./usr/tests/util/grep/d_binary.out		tests-obsolete		obsolete
+./usr/tests/util/grep/d_context2_a.out		tests-obsolete		obsolete
+./usr/tests/util/grep/d_context2_b.out		tests-obsolete		obsolete
+./usr/tests/util/grep/d_context2_c.out		tests-obsolete		obsolete
+./usr/tests/util/grep/d_context_a.in		tests-obsolete		obsolete
+./usr/tests/util/grep/d_context_a.out		tests-obsolete		obsolete
+./usr/tests/util/grep/d_context_b.in		tests-obsolete		obsolete
+./usr/tests/util/grep/d_context_b.out		tests-obsolete		obsolete
+./usr/tests/util/grep/d_context_c.out		tests-obsolete		obsolete
+./usr/tests/util/grep/d_context_d.out		tests-obsolete		obsolete
+./usr/tests/util/grep/d_egrep.out		tests-obsolete		obsolete
+./usr/tests/util/grep/d_file_exp.in		tests-obsolete		obsolete
+./usr/tests/util/grep/d_file_exp.out		tests-obsolete		obsolete
 ./usr/tests/util/grep/d_file_exp.inout		tests-obsolete		obsolete
-./usr/tests/util/grep/d_ignore_case.out		tests-util-tests
-./usr/tests/util/grep/d_input			tests-util-tests
-./usr/tests/util/grep/d_invert.in		tests-util-tests
-./usr/tests/util/grep/d_invert.out		tests-util-tests
-./usr/tests/util/grep/d_recurse.out		tests-util-tests
-./usr/tests/util/grep/d_recurse_symlink.err	tests-util-tests
-./usr/tests/util/grep/d_recurse_symlink.out	tests-util-tests
-./usr/tests/util/grep/d_whole_line.out		tests-util-tests
-./usr/tests/util/grep/d_word_regexps.out	tests-util-tests
-./usr/tests/util/grep/d_zgrep.out		tests-util-tests
-./usr/tests/util/grep/t_grep			tests-util-tests
-./usr/tests/util/id				tests-util-tests
-./usr/tests/util/id/Atffile			tests-util-tests
+./usr/tests/util/grep/d_ignore_case.out		tests-obsolete		obsolete
+./usr/tests/util/grep/d_input			tests-obsolete		obsolete
+./usr/tests/util/grep/d_invert.in		tests-obsolete		obsolete
+./usr/tests/util/grep/d_invert.out		tests-obsolete		obsolete
+./usr/tests/util/grep/d_recurse.out		tests-obsolete		obsolete
+./usr/tests/util/grep/d_recurse_symlink.err	tests-obsolete		obsolete
+./usr/tests/util/grep/d_recurse_symlink.out	tests-obsolete		obsolete
+./usr/tests/util/grep/d_whole_line.out		tests-obsolete		obsolete
+./usr/tests/util/grep/d_word_regexps.out	tests-obsolete		obsolete
+./usr/tests/util/grep/d_zgrep.out		tests-obsolete		obsolete
+./usr/tests/util/grep/t_grep			tests-obsolete		obsolete
+./usr/tests/util/id				tests-obsolete		obsolete
+./usr/tests/util/id/Atffile			tests-obsolete		obsolete
 ./usr/tests/util/id/libfake_pic.a		tests-obsolete		obsolete
-./usr/tests/util/id/h_id			tests-util-tests
-./usr/tests/util/id/t_groups			tests-util-tests
-./usr/tests/util/id/t_id			tests-util-tests
-./usr/tests/util/id/t_whoami			tests-util-tests
-./usr/tests/util/m4				tests-util-tests
-./usr/tests/util/m4/Atffile			tests-util-tests
-./usr/tests/util/m4/d_ff_after_dnl.m4.uue	tests-util-tests
-./usr/tests/util/m4/d_ff_after_dnl.out		tests-util-tests
-./usr/tests/util/m4/d_m4wrap-P.m4		tests-util-tests
-./usr/tests/util/m4/d_m4wrap-P.out		tests-util-tests
-./usr/tests/util/m4/d_m4wrap.m4			tests-util-tests
-./usr/tests/util/m4/d_m4wrap.out		tests-util-tests
-./usr/tests/util/m4/t_m4			tests-util-tests
-./usr/tests/util/make				tests-util-tests
-./usr/tests/util/make/Atffile			tests-util-tests
-./usr/tests/util/make/d_comment.mk		tests-util-tests
-./usr/tests/util/make/d_comment.out		tests-util-tests
-./usr/tests/util/make/d_cond1.mk		tests-util-tests
-./usr/tests/util/make/d_cond1.out		tests-util-tests
-./usr/tests/util/make/d_dotwait.mk		tests-util-tests
-./usr/tests/util/make/d_dotwait.out		tests-util-tests
-./usr/tests/util/make/d_export.mk		tests-util-tests
-./usr/tests/util/make/d_export.out		tests-util-tests
-./usr/tests/util/make/d_export_all.mk		tests-util-tests
-./usr/tests/util/make/d_export_all.out		tests-util-tests
-./usr/tests/util/make/d_moderrs.mk		tests-util-tests
-./usr/tests/util/make/d_moderrs.out		tests-util-tests
-./usr/tests/util/make/d_modmatch.mk		tests-util-tests
-./usr/tests/util/make/d_modmatch.out		tests-util-tests
-./usr/tests/util/make/d_modmisc.mk		tests-util-tests
-./usr/tests/util/make/d_modmisc.out		tests-util-tests
-./usr/tests/util/make/d_modorder.mk		tests-util-tests
-./usr/tests/util/make/d_modorder.out		tests-util-tests
-./usr/tests/util/make/d_modts.mk		tests-util-tests
-./usr/tests/util/make/d_modts.out		tests-util-tests
-./usr/tests/util/make/d_modword.mk		tests-util-tests
-./usr/tests/util/make/d_modword.out		tests-util-tests
-./usr/tests/util/make/d_posix.mk		tests-util-tests
-./usr/tests/util/make/d_posix.out		tests-util-tests
-./usr/tests/util/make/d_qequals.mk		tests-util-tests
-./usr/tests/util/make/d_qequals.out		tests-util-tests
-./usr/tests/util/make/d_ternary.mk		tests-util-tests
-./usr/tests/util/make/d_ternary.out		tests-util-tests
-./usr/tests/util/make/d_unmatchedvarparen.mk	tests-util-tests
-./usr/tests/util/make/d_unmatchedvarparen.out	tests-util-tests
-./usr/tests/util/make/d_varcmd.mk		tests-util-tests
-./usr/tests/util/make/d_varcmd.out		tests-util-tests
-./usr/tests/util/make/t_make			tests-util-tests
-./usr/tests/util/mtree				tests-util-tests
-./usr/tests/util/mtree/Atffile			tests-util-tests
-./usr/tests/util/mtree/d_convert.in		tests-util-tests
-./usr/tests/util/mtree/d_convert_C.out		tests-util-tests
-./usr/tests/util/mtree/d_convert_C_S.out	tests-util-tests
-./usr/tests/util/mtree/d_convert_D.out		tests-util-tests
-./usr/tests/util/mtree/d_convert_D_S.out	tests-util-tests
-./usr/tests/util/mtree/d_create.out		tests-util-tests
-./usr/tests/util/mtree/d_merge.in		tests-util-tests
-./usr/tests/util/mtree/d_merge_C_M.out		tests-util-tests
-./usr/tests/util/mtree/d_merge_C_M_S.out	tests-util-tests
-./usr/tests/util/mtree/t_mtree			tests-util-tests
-./usr/tests/util/ps				tests-util-tests
-./usr/tests/util/ps/Atffile			tests-util-tests
-./usr/tests/util/ps/keywords			tests-util-tests
-./usr/tests/util/ps/t_ps			tests-util-tests
-./usr/tests/util/sdiff				tests-util-tests
-./usr/tests/util/sdiff/Atffile			tests-util-tests
-./usr/tests/util/sdiff/d_dot.in			tests-util-tests
-./usr/tests/util/sdiff/d_flags_l.out		tests-util-tests
-./usr/tests/util/sdiff/d_flags_s.out		tests-util-tests
-./usr/tests/util/sdiff/d_flags_w.out		tests-util-tests
-./usr/tests/util/sdiff/d_iflags_a1.out		tests-util-tests
-./usr/tests/util/sdiff/d_iflags_a2.out		tests-util-tests
-./usr/tests/util/sdiff/d_iflags_b1.out		tests-util-tests
-./usr/tests/util/sdiff/d_iflags_b2.out		tests-util-tests
-./usr/tests/util/sdiff/d_iflags_c1.out		tests-util-tests
-./usr/tests/util/sdiff/d_iflags_c2.out		tests-util-tests
-./usr/tests/util/sdiff/d_iflags_d1.out		tests-util-tests
-./usr/tests/util/sdiff/d_iflags_d2.out		tests-util-tests
-./usr/tests/util/sdiff/d_input1			tests-util-tests
-./usr/tests/util/sdiff/d_input2			tests-util-tests
-./usr/tests/util/sdiff/d_oneline.in		tests-util-tests
-./usr/tests/util/sdiff/d_oneline_a.out		tests-util-tests
-./usr/tests/util/sdiff/d_oneline_b.out		tests-util-tests
-./usr/tests/util/sdiff/d_same.out		tests-util-tests
-./usr/tests/util/sdiff/d_short.out		tests-util-tests
-./usr/tests/util/sdiff/d_tabends.in		tests-util-tests
-./usr/tests/util/sdiff/d_tabends_a.out		tests-util-tests
-./usr/tests/util/sdiff/d_tabends_b.out		tests-util-tests
-./usr/tests/util/sdiff/d_tabends_c.out		tests-util-tests
-./usr/tests/util/sdiff/d_tabs.out		tests-util-tests
-./usr/tests/util/sdiff/d_tabs1.in		tests-util-tests
-./usr/tests/util/sdiff/d_tabs2.in		tests-util-tests
-./usr/tests/util/sdiff/t_sdiff			tests-util-tests
-./usr/tests/util/sh				tests-util-tests
-./usr/tests/util/sh/Atffile			tests-util-tests
-./usr/tests/util/sh/t_compexit			tests-util-tests
-./usr/tests/util/sh/t_exit			tests-util-tests
-./usr/tests/util/sh/t_exitstatus		tests-obsolete	obsolete
-./usr/tests/util/sh/t_expand			tests-util-tests
-./usr/tests/util/sh/t_fsplit			tests-util-tests
-./usr/tests/util/sh/t_here			tests-util-tests
-./usr/tests/util/sh/t_set_e			tests-util-tests
-./usr/tests/util/sh/t_varquote			tests-util-tests
-./usr/tests/util/sh/t_wait			tests-util-tests
-./usr/tests/util/sort				tests-util-tests
-./usr/tests/util/sort/Atffile			tests-util-tests
-./usr/tests/util/sort/d_any_char_dflag_out.txt	tests-util-tests
-./usr/tests/util/sort/d_any_char_fflag_out.txt	tests-util-tests
-./usr/tests/util/sort/d_any_char_iflag_out.txt	tests-util-tests
-./usr/tests/util/sort/d_any_char_in.txt		tests-util-tests
-./usr/tests/util/sort/t_sort			tests-util-tests
+./usr/tests/util/id/h_id			tests-obsolete		obsolete
+./usr/tests/util/id/t_groups			tests-obsolete		obsolete
+./usr/tests/util/id/t_id			tests-obsolete		obsolete
+./usr/tests/util/id/t_whoami			tests-obsolete		obsolete
+./usr/tests/util/m4				tests-obsolete		obsolete
+./usr/tests/util/m4/Atffile			tests-obsolete		obsolete
+./usr/tests/util/m4/d_ff_after_dnl.m4.uue	tests-obsolete		obsolete
+./usr/tests/util/m4/d_ff_after_dnl.out		tests-obsolete		obsolete
+./usr/tests/util/m4/d_m4wrap-P.m4		tests-obsolete		obsolete
+./usr/tests/util/m4/d_m4wrap-P.out		tests-obsolete		obsolete
+./usr/tests/util/m4/d_m4wrap.m4			tests-obsolete		obsolete
+./usr/tests/util/m4/d_m4wrap.out		tests-obsolete		obsolete
+./usr/tests/util/m4/t_m4			tests-obsolete		obsolete
+./usr/tests/util/make				tests-obsolete		obsolete
+./usr/tests/util/make/Atffile			tests-obsolete		obsolete
+./usr/tests/util/make/d_comment.mk		tests-obsolete		obsolete
+./usr/tests/util/make/d_comment.out		tests-obsolete		obsolete
+./usr/tests/util/make/d_cond1.mk		tests-obsolete		obsolete
+./usr/tests/util/make/d_cond1.out		tests-obsolete		obsolete
+./usr/tests/util/make/d_dotwait.mk		tests-obsolete		obsolete
+./usr/tests/util/make/d_dotwait.out		tests-obsolete		obsolete
+./usr/tests/util/make/d_export.mk		tests-obsolete		obsolete
+./usr/tests/util/make/d_export.out		tests-obsolete		obsolete
+./usr/tests/util/make/d_export_all.mk		tests-obsolete		obsolete
+./usr/tests/util/make/d_export_all.out		tests-obsolete		obsolete
+./usr/tests/util/make/d_moderrs.mk		tests-obsolete		obsolete
+./usr/tests/util/make/d_moderrs.out		tests-obsolete		obsolete
+./usr/tests/util/make/d_modmatch.mk		tests-obsolete		obsolete
+./usr/tests/util/make/d_modmatch.out		tests-obsolete		obsolete
+./usr/tests/util/make/d_modmisc.mk		tests-obsolete		obsolete
+./usr/tests/util/make/d_modmisc.out		tests-obsolete		obsolete
+./usr/tests/util/make/d_modorder.mk		tests-obsolete		obsolete
+./usr/tests/util/make/d_modorder.out		tests-obsolete		obsolete
+./usr/tests/util/make/d_modts.mk		tests-obsolete		obsolete
+./usr/tests/util/make/d_modts.out		tests-obsolete		obsolete
+./usr/tests/util/make/d_modword.mk		tests-obsolete		obsolete
+./usr/tests/util/make/d_modword.out		tests-obsolete		obsolete
+./usr/tests/util/make/d_posix.mk		tests-obsolete		obsolete
+./usr/tests/util/make/d_posix.out		tests-obsolete		obsolete
+./usr/tests/util/make/d_qequals.mk		tests-obsolete		obsolete
+./usr/tests/util/make/d_qequals.out		tests-obsolete		obsolete
+./usr/tests/util/make/d_ternary.mk		tests-obsolete		obsolete
+./usr/tests/util/make/d_ternary.out		tests-obsolete		obsolete
+./usr/tests/util/make/d_unmatchedvarparen.mk	tests-obsolete		obsolete
+./usr/tests/util/make/d_unmatchedvarparen.out	tests-obsolete		obsolete
+./usr/tests/util/make/d_varcmd.mk		tests-obsolete		obsolete
+./usr/tests/util/make/d_varcmd.out		tests-obsolete		obsolete
+./usr/tests/util/make/t_make			tests-obsolete		obsolete
+./usr/tests/util/mtree				tests-obsolete		obsolete
+./usr/tests/util/mtree/Atffile			tests-obsolete		obsolete
+./usr/tests/util/mtree/d_convert.in		tests-obsolete		obsolete
+./usr/tests/util/mtree/d_convert_C.out		tests-obsolete		obsolete
+./usr/tests/util/mtree/d_convert_C_S.out	tests-obsolete		obsolete
+./usr/tests/util/mtree/d_convert_D.out		tests-obsolete		obsolete
+./usr/tests/util/mtree/d_convert_D_S.out	tests-obsolete		obsolete
+./usr/tests/util/mtree/d_create.out		tests-obsolete		obsolete
+./usr/tests/util/mtree/d_merge.in		tests-obsolete		obsolete
+./usr/tests/util/mtree/d_merge_C_M.out		tests-obsolete		obsolete
+./usr/tests/util/mtree/d_merge_C_M_S.out	tests-obsolete		obsolete
+./usr/tests/util/mtree/t_mtree			tests-obsolete		obsolete
+./usr/tests/util/ps				tests-obsolete		obsolete
+./usr/tests/util/ps/Atffile			tests-obsolete		obsolete
+./usr/tests/util/ps/keywords			tests-obsolete		obsolete
+./usr/tests/util/ps/t_ps			tests-obsolete		obsolete
+./usr/tests/util/sdiff				tests-obsolete		obsolete
+./usr/tests/util/sdiff/Atffile			tests-obsolete		obsolete
+./usr/tests/util/sdiff/d_dot.in			tests-obsolete		obsolete
+./usr/tests/util/sdiff/d_flags_l.out		tests-obsolete		obsolete
+./usr/tests/util/sdiff/d_flags_s.out		tests-obsolete		obsolete
+./usr/tests/util/sdiff/d_flags_w.out		tests-obsolete		obsolete
+./usr/tests/util/sdiff/d_iflags_a1.out		tests-obsolete		obsolete
+./usr/tests/util/sdiff/d_iflags_a2.out		tests-obsolete		obsolete
+./usr/tests/util/sdiff/d_iflags_b1.out		tests-obsolete		obsolete
+./usr/tests/util/sdiff/d_iflags_b2.out		tests-obsolete		obsolete
+./usr/tests/util/sdiff/d_iflags_c1.out		tests-obsolete		obsolete
+./usr/tests/util/sdiff/d_iflags_c2.out		tests-obsolete		obsolete
+./usr/tests/util/sdiff/d_iflags_d1.out		tests-obsolete		obsolete
+./usr/tests/util/sdiff/d_iflags_d2.out		tests-obsolete		obsolete
+./usr/tests/util/sdiff/d_input1			tests-obsolete		obsolete
+./usr/tests/util/sdiff/d_input2			tests-obsolete		obsolete
+./usr/tests/util/sdiff/d_oneline.in		tests-obsolete		obsolete
+./usr/tests/util/sdiff/d_oneline_a.out		tests-obsolete		obsolete
+./usr/tests/util/sdiff/d_oneline_b.out		tests-obsolete		obsolete
+./usr/tests/util/sdiff/d_same.out		tests-obsolete		obsolete
+./usr/tests/util/sdiff/d_short.out		tests-obsolete		obsolete
+./usr/tests/util/sdiff/d_tabends.in		tests-obsolete		obsolete
+./usr/tests/util/sdiff/d_tabends_a.out		tests-obsolete		obsolete
+./usr/tests/util/sdiff/d_tabends_b.out		tests-obsolete		obsolete
+./usr/tests/util/sdiff/d_tabends_c.out		tests-obsolete		obsolete
+./usr/tests/util/sdiff/d_tabs.out		tests-obsolete		obsolete
+./usr/tests/util/sdiff/d_tabs1.in		tests-obsolete		obsolete
+./usr/tests/util/sdiff/d_tabs2.in		tests-obsolete		obsolete
+./usr/tests/util/sdiff/t_sdiff			tests-obsolete		obsolete
+./usr/tests/util/sh				tests-obsolete		obsolete
+./usr/tests/util/sh/Atffile			tests-obsolete		obsolete
+./usr/tests/util/sh/t_compexit			tests-obsolete		obsolete
+./usr/tests/util/sh/t_exit			tests-obsolete		obsolete
+./usr/tests/util/sh/t_exitstatus		tests-obsolete		obsolete
+./usr/tests/util/sh/t_expand			tests-obsolete		obsolete
+./usr/tests/util/sh/t_evaltested		tests-obsolete		obsolete
+./usr/tests/util/sh/t_fsplit			tests-obsolete		obsolete
+./usr/tests/util/sh/t_here			tests-obsolete		obsolete
+./usr/tests/util/sh/t_set_e			tests-obsolete		obsolete
+./usr/tests/util/sh/t_varquote			tests-obsolete		obsolete
+./usr/tests/util/sh/t_wait			tests-obsolete		obsolete
+./usr/tests/util/sort				tests-obsolete		obsolete
+./usr/tests/util/sort/Atffile			tests-obsolete		obsolete
+./usr/tests/util/sort/d_any_char_dflag_out.txt	tests-obsolete		obsolete
+./usr/tests/util/sort/d_any_char_fflag_out.txt	tests-obsolete		obsolete
+./usr/tests/util/sort/d_any_char_iflag_out.txt	tests-obsolete		obsolete
+./usr/tests/util/sort/d_any_char_in.txt		tests-obsolete		obsolete
+./usr/tests/util/sort/t_sort			tests-obsolete		obsolete
 ./usr/tests/util/systrace			tests-obsolete		obsolete
 ./usr/tests/util/systrace/Atffile		tests-obsolete		obsolete
 ./usr/tests/util/systrace/id.policy		tests-obsolete		obsolete
 ./usr/tests/util/systrace/h_have_systrace	tests-obsolete		obsolete
 ./usr/tests/util/systrace/t_id			tests-obsolete		obsolete
-./usr/tests/util/t_basename			tests-util-tests
-./usr/tests/util/t_cp				tests-util-tests
-./usr/tests/util/t_dd				tests-util-tests
-./usr/tests/util/t_dirname			tests-util-tests
-./usr/tests/util/t_expr				tests-util-tests
-./usr/tests/util/t_gzip				tests-util-tests
-./usr/tests/util/t_pax				tests-util-tests
+./usr/tests/util/t_basename			tests-obsolete		obsolete
+./usr/tests/util/t_cp				tests-obsolete		obsolete
+./usr/tests/util/t_dd				tests-obsolete		obsolete
+./usr/tests/util/t_dirname			tests-obsolete		obsolete
+./usr/tests/util/t_expr				tests-obsolete		obsolete
+./usr/tests/util/t_gzip				tests-obsolete		obsolete
+./usr/tests/util/t_pax				tests-obsolete		obsolete
 ./usr/tests/util/t_sort				tests-obsolete		obsolete
-./usr/tests/util/t_tar				tests-util-tests
-./usr/tests/util/xlint				tests-util-tests
-./usr/tests/util/xlint/Atffile			tests-util-tests
-./usr/tests/util/xlint/lint1			tests-util-tests
-./usr/tests/util/xlint/lint1/Atffile		tests-util-tests
-./usr/tests/util/xlint/lint1/d_alignof.c			tests-util-tests
-./usr/tests/util/xlint/lint1/d_c99_complex_num.c		tests-util-tests
-./usr/tests/util/xlint/lint1/d_c99_decls_after_stmt.c		tests-util-tests
-./usr/tests/util/xlint/lint1/d_c99_for_loops.c			tests-util-tests
-./usr/tests/util/xlint/lint1/d_c99_func.c			tests-util-tests
-./usr/tests/util/xlint/lint1/d_c99_recursive_init.c		tests-util-tests
-./usr/tests/util/xlint/lint1/d_c99_struct_init.c		tests-util-tests
-./usr/tests/util/xlint/lint1/d_c99_union_init1.c		tests-util-tests
-./usr/tests/util/xlint/lint1/d_c99_union_init2.c		tests-util-tests
-./usr/tests/util/xlint/lint1/d_c99_union_init3.c		tests-util-tests
-./usr/tests/util/xlint/lint1/d_c9x_array_init.c			tests-util-tests
-./usr/tests/util/xlint/lint1/d_c9x_recursive_init.c		tests-util-tests
-./usr/tests/util/xlint/lint1/d_cast_init.c			tests-util-tests
-./usr/tests/util/xlint/lint1/d_cast_init2.c			tests-util-tests
-./usr/tests/util/xlint/lint1/d_cast_lhs.c			tests-util-tests
-./usr/tests/util/xlint/lint1/d_compound_literals1.c		tests-util-tests
-./usr/tests/util/xlint/lint1/d_compound_literals2.c		tests-util-tests
-./usr/tests/util/xlint/lint1/d_constant_conv1.c			tests-util-tests
-./usr/tests/util/xlint/lint1/d_constant_conv2.c			tests-util-tests
-./usr/tests/util/xlint/lint1/d_cvt_in_ternary.c			tests-util-tests
-./usr/tests/util/xlint/lint1/d_ellipsis_in_switch.c		tests-util-tests
-./usr/tests/util/xlint/lint1/d_gcc_compound_statements1.c	tests-util-tests
-./usr/tests/util/xlint/lint1/d_gcc_compound_statements2.c	tests-util-tests
-./usr/tests/util/xlint/lint1/d_gcc_compound_statements3.c	tests-util-tests
-./usr/tests/util/xlint/lint1/d_gcc_func.c			tests-util-tests
-./usr/tests/util/xlint/lint1/d_gcc_variable_array_init.c	tests-util-tests
-./usr/tests/util/xlint/lint1/d_incorrect_array_size.c		tests-util-tests
-./usr/tests/util/xlint/lint1/d_long_double_int.c		tests-util-tests
-./usr/tests/util/xlint/lint1/d_nested_structs.c			tests-util-tests
-./usr/tests/util/xlint/lint1/d_nolimit_init.c			tests-util-tests
-./usr/tests/util/xlint/lint1/d_packed_structs.c			tests-util-tests
-./usr/tests/util/xlint/lint1/d_shift_to_narrower_type.c		tests-util-tests
-./usr/tests/util/xlint/lint1/d_type_conv1.c			tests-util-tests
-./usr/tests/util/xlint/lint1/d_type_conv2.c			tests-util-tests
-./usr/tests/util/xlint/lint1/d_type_conv3.c			tests-util-tests
-./usr/tests/util/xlint/lint1/d_zero_sized_arrays.c		tests-util-tests
-./usr/tests/util/xlint/lint1/t_integration	tests-util-tests
+./usr/tests/util/t_tar				tests-obsolete		obsolete
+./usr/tests/util/xlint				tests-obsolete		obsolete
+./usr/tests/util/xlint/Atffile			tests-obsolete		obsolete
+./usr/tests/util/xlint/lint1			tests-obsolete		obsolete
+./usr/tests/util/xlint/lint1/Atffile		tests-obsolete		obsolete
+./usr/tests/util/xlint/lint1/d_alignof.c			tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_c99_complex_num.c		tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_c99_decls_after_stmt.c		tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_c99_decls_after_stmt2.c		tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_c99_for_loops.c			tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_c99_func.c			tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_c99_recursive_init.c		tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_c99_struct_init.c		tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_c99_union_init1.c		tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_c99_union_init2.c		tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_c99_union_init3.c		tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_c9x_array_init.c			tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_c9x_recursive_init.c		tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_cast_init.c			tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_cast_init2.c			tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_cast_lhs.c			tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_compound_literals1.c		tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_compound_literals2.c		tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_constant_conv1.c			tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_constant_conv2.c			tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_cvt_in_ternary.c			tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_ellipsis_in_switch.c		tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_gcc_compound_statements1.c	tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_gcc_compound_statements2.c	tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_gcc_compound_statements3.c	tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_gcc_func.c			tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_gcc_variable_array_init.c	tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_incorrect_array_size.c		tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_long_double_int.c		tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_nested_structs.c			tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_nolimit_init.c			tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_packed_structs.c			tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_shift_to_narrower_type.c		tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_type_conv1.c			tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_type_conv2.c			tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_type_conv3.c			tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_typename_as_var.c		tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/d_zero_sized_arrays.c		tests-obsolete	obsolete
+./usr/tests/util/xlint/lint1/t_integration			tests-obsolete	obsolete

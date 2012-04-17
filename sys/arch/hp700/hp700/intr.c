@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.36 2011/02/04 14:51:02 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.36.4.1 2012/04/17 00:06:22 yamt Exp $	*/
 /*	$OpenBSD: intr.c,v 1.27 2009/12/31 12:52:35 jsing Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.36 2011/02/04 14:51:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.36.4.1 2012/04/17 00:06:22 yamt Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -126,7 +126,7 @@ hp700_interrupt_register_establish(struct hp700_interrupt_register *ir)
 		if (hp700_interrupt_registers[idx] == NULL)
 			break;
 	if (idx == HP700_INTERRUPT_BITS)
-		panic("hp700_interrupt_register_establish: too many regs");
+		panic("%s: too many regs", __func__);
 	hp700_interrupt_registers[idx] = ir;
 }
 
@@ -184,7 +184,7 @@ hp700_intr_establish(int ipl, int (*handler)(void *), void *arg,
 	if (ir->ir_bits_map[31 ^ bit_pos] != IR_BIT_UNUSED &&
 	    !IR_BIT_NESTED_P(ir->ir_bits_map[31 ^ bit_pos]) &&
 	    handler == NULL)
-		panic("hp700_intr_establish: int already handled");
+		panic("%s: int already handled", __func__);
 
 	/*
 	 * If this interrupt bit leads us to another interrupt register,
@@ -195,7 +195,7 @@ hp700_intr_establish(int ipl, int (*handler)(void *), void *arg,
 			if (hp700_interrupt_registers[idx] == arg)
 				break;
 		if (idx == HP700_INTERRUPT_BITS)
-			panic("hp700_intr_establish: unknown int reg");
+			panic("%s: unknown int reg", __func__);
 		ir->ir_bits_map[31 ^ bit_pos] = IR_BIT_REG | idx;
 		
 		return NULL;
@@ -261,7 +261,7 @@ _hp700_intr_ipl_next(void)
 		if (hp700_interrupt_bits[idx].ib_reg == NULL)
 			break;
 	if (idx == HP700_INTERRUPT_BITS)
-		panic("_hp700_intr_spl_bit: too many devices");
+		panic("%s: too many devices", __func__);
 	return idx;
 }
 
@@ -391,7 +391,8 @@ hppa_intr(struct trapframe *frame)
 	 * interrupt handlers need to aquire the mutex, they could deadlock if
 	 * the owner value is left unset.
 	 */
-	if (frame->tf_iioq_head >= (u_int)mutex_enter_crit_start &&
+	if (frame->tf_iisq_head == HPPA_SID_KERNEL &&
+	    frame->tf_iioq_head >= (u_int)mutex_enter_crit_start &&
 	    frame->tf_iioq_head <= (u_int)mutex_enter_crit_end &&
 	    frame->tf_ret0 != 0)
 		((kmutex_t *)frame->tf_arg0)->mtx_owner = (uintptr_t)curlwp;

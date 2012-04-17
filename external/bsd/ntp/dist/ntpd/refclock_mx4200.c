@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_mx4200.c,v 1.1.1.1 2009/12/13 16:55:52 kardel Exp $	*/
+/*	$NetBSD: refclock_mx4200.c,v 1.1.1.1.6.1 2012/04/17 00:03:48 yamt Exp $	*/
 
 /*
  * This software was developed by the Computer Systems Engineering group
@@ -224,7 +224,7 @@ mx4200_start(
 	/*
 	 * Open serial port
 	 */
-	(void)sprintf(gpsdev, DEVICE, unit);
+	snprintf(gpsdev, sizeof(gpsdev), DEVICE, unit);
 	if (!(fd = refclock_open(gpsdev, SPEED232, LDISC_PPS))) {
 	    return (0);
 	}
@@ -232,19 +232,16 @@ mx4200_start(
 	/*
 	 * Allocate unit structure
 	 */
-	if (!(up = (struct mx4200unit *) emalloc(sizeof(struct mx4200unit)))) {
-		perror("emalloc");
-		(void) close(fd);
-		return (0);
-	}
-	memset((char *)up, 0, sizeof(struct mx4200unit));
+	up = emalloc(sizeof(*up));
+	memset(up, 0, sizeof(*up));
 	pp = peer->procptr;
 	pp->io.clock_recv = mx4200_receive;
 	pp->io.srcclock = (caddr_t)peer;
 	pp->io.datalen = 0;
 	pp->io.fd = fd;
 	if (!io_addclock(&pp->io)) {
-		(void) close(fd);
+		close(fd);
+		pp->io.fd = -1;
 		free(up);
 		return (0);
 	}
@@ -276,8 +273,10 @@ mx4200_shutdown(
 
 	pp = peer->procptr;
 	up = (struct mx4200unit *)pp->unitptr;
-	io_closeclock(&pp->io);
-	free(up);
+	if (-1 != pp->io.fd)
+		io_closeclock(&pp->io);
+	if (NULL != up)
+		free(up);
 }
 
 
@@ -578,9 +577,9 @@ mx4200_ref(
 	}
 	alt = up->avg_alt;
 	minute = (lat - (double)(int)lat) * 60.0;
-	sprintf(lats,"%02d%02.4f", (int)lat, minute);
+	snprintf(lats, sizeof(lats), "%02d%02.4f", (int)lat, minute);
 	minute = (lon - (double)(int)lon) * 60.0;
-	sprintf(lons,"%03d%02.4f", (int)lon, minute);
+	snprintf(lons, sizeof(lons), "%03d%02.4f", (int)lon, minute);
 
 	mx4200_send(peer, "%s,%03d,,,,,%s,%c,%s,%c,%.2f,%d", pmvxg,
 	    PMVXG_S_INITMODEA,

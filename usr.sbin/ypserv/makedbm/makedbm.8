@@ -1,4 +1,4 @@
-.\"	$NetBSD: makedbm.8,v 1.13 2009/10/20 00:51:14 snj Exp $
+.\"	$NetBSD: makedbm.8,v 1.13.6.1 2012/04/17 00:09:55 yamt Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -32,23 +32,13 @@
 .Nd create a NIS database
 .Sh SYNOPSIS
 .Nm
-.Bk -words
 .Fl u Ar dbfile
-.Ek
 .Nm makedbm
 .Op Fl bls
-.Bk -words
 .Op Fl d Ar yp_domain_name
-.Ek
-.Bk -words
 .Op Fl i Ar yp_input_file
-.Ek
-.Bk -words
 .Op Fl m Ar yp_master_name
-.Ek
-.Bk -words
 .Op Fl o Ar yp_output_file
-.Ek
 .Ar infile outfile
 .Sh DESCRIPTION
 .Nm

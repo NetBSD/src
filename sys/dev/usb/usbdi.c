@@ -1,13 +1,12 @@
-/*	$NetBSD: usbdi.c,v 1.133 2011/07/30 20:05:36 jmcneill Exp $	*/
-/*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.133.2.1 2012/04/17 00:08:09 yamt Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Lennart Augustsson (lennart@augustsson.net) at
- * Carlstedt Research & Technology.
+ * Carlstedt Research & Technology and Matthew R. Green (mrg@eterna.com.au).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.133 2011/07/30 20:05:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.133.2.1 2012/04/17 00:08:09 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -43,8 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.133 2011/07/30 20:05:36 jmcneill Exp $")
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
-
 #include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -260,6 +259,9 @@ usbd_transfer(usbd_xfer_handle xfer)
 
 	DPRINTFN(5,("usbd_transfer: xfer=%p, flags=%#x, pipe=%p, running=%d\n",
 		    xfer, xfer->flags, pipe, pipe->running));
+
+	KASSERT(KERNEL_LOCKED_P());
+
 #ifdef USB_DEBUG
 	if (usbdebug > 5)
 		usbd_dump_queue(pipe);
@@ -718,8 +720,6 @@ usbd_ar_pipe(usbd_pipe_handle pipe)
 {
 	usbd_xfer_handle xfer;
 
-	SPLUSBCHECK;
-
 	DPRINTFN(2,("usbd_ar_pipe: pipe=%p\n", pipe));
 #ifdef USB_DEBUG
 	if (usbdebug > 5)
@@ -749,10 +749,11 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 	    xfer->status == USBD_TIMEOUT;
 	int repeat, polling;
 
-	SPLUSBCHECK;
-
 	DPRINTFN(5, ("usb_transfer_complete: pipe=%p xfer=%p status=%d "
 		     "actlen=%d\n", pipe, xfer, xfer->status, xfer->actlen));
+
+	KASSERT(KERNEL_LOCKED_P());
+
 #ifdef DIAGNOSTIC
 	if (xfer->busy_free != XFER_ONQU) {
 		printf("usb_transfer_complete: xfer=%p not busy 0x%08x\n",
@@ -849,6 +850,9 @@ usb_insert_transfer(usbd_xfer_handle xfer)
 
 	DPRINTFN(5,("usb_insert_transfer: pipe=%p running=%d timeout=%d\n",
 		    pipe, pipe->running, xfer->timeout));
+
+	KASSERT(KERNEL_LOCKED_P());
+
 #ifdef DIAGNOSTIC
 	if (xfer->busy_free != XFER_BUSY) {
 		printf("usb_insert_transfer: xfer=%p not busy 0x%08x\n",
@@ -875,8 +879,6 @@ usbd_start_next(usbd_pipe_handle pipe)
 {
 	usbd_xfer_handle xfer;
 	usbd_status err;
-
-	SPLUSBCHECK;
 
 #ifdef DIAGNOSTIC
 	if (pipe == NULL) {
@@ -928,7 +930,7 @@ usbd_do_request_flags_pipe(usbd_device_handle dev, usbd_pipe_handle pipe,
 	usbd_status err;
 
 #ifdef DIAGNOSTIC
-	if (dev->bus->intr_context) {
+	if (cpu_intr_p() || cpu_softintr_p()) {
 		printf("usbd_do_request: not in process context\n");
 		return (USBD_INVAL);
 	}

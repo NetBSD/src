@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.42 2008/10/16 15:31:05 dholland Exp $	*/
+/*	$NetBSD: exec.c,v 1.42.18.1 2012/04/17 00:01:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.42 2008/10/16 15:31:05 dholland Exp $");
+__RCSID("$NetBSD: exec.c,v 1.42.18.1 2012/04/17 00:01:38 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -624,8 +624,7 @@ success:
  */
 
 int
-(*find_builtin(name))(int, char **)
-	char *name;
+(*find_builtin(char *name))(int, char **)
 {
 	const struct builtincmd *bp;
 
@@ -637,8 +636,7 @@ int
 }
 
 int
-(*find_splbltin(name))(int, char **)
-	char *name;
+(*find_splbltin(char *name))(int, char **)
 {
 	const struct builtincmd *bp;
 

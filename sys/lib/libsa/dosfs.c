@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfs.c,v 1.17 2011/06/16 13:27:58 joerg Exp $	*/
+/*	$NetBSD: dosfs.c,v 1.17.2.1 2012/04/17 00:08:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Robert Nordier
@@ -404,6 +404,15 @@ dosfs_stat(struct open_file *fd, struct stat *sb)
 		return EINVAL;
 	return 0;
 }
+
+#if defined(LIBSA_ENABLE_LS_OP)
+__compactcall void
+dosfs_ls(struct open_file *f, const char *pattern)
+{
+	printf("Currently ls command is unsupported by dosfs\n");
+	return;
+}
+#endif
 
 /*
  * Parse DOS boot sector

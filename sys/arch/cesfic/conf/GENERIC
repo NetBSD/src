@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.54 2011/03/06 17:08:21 bouyer Exp $
+# $NetBSD: GENERIC,v 1.54.4.1 2012/04/17 00:06:11 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -57,7 +57,6 @@ options 	COMPAT_50	# NetBSD 5.0 compatibility.
 #options 	SYSVSHM		# System V-style shared memory
 #options 	SYSVSEM		# System V-style semaphores
 #options 	SYSVMSG		# System V-style message queues
-#options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 options 	KTRACE		# system call tracing support
 #options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
 options 	COMPAT_SUNOS
@@ -147,7 +146,6 @@ pseudo-device	pty		64	# pseudo ptys
 #pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	loop			# loopback network interface
 #pseudo-device	ipfilter 		# IP Filter package
-pseudo-device	rnd
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter

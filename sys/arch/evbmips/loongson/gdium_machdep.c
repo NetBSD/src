@@ -307,7 +307,7 @@ advance:
 }
 
 void
-gdium_powerdown()
+gdium_powerdown(void)
 {
 	REGVAL(BONITO_GPIODATA) |= 0x00000002;
 	REGVAL(BONITO_GPIOIE) &= ~0x00000002;
@@ -316,7 +316,7 @@ gdium_powerdown()
 }
 
 void
-gdium_reset()
+gdium_reset(void)
 {
 	REGVAL(BONITO_GPIODATA) &= ~0x00000002;
 	REGVAL(BONITO_GPIOIE) &= ~0x00000002;

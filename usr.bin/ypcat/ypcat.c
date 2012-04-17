@@ -1,4 +1,4 @@
-/* $NetBSD: ypcat.c,v 1.16 2011/01/12 18:51:42 christos Exp $	*/
+/* $NetBSD: ypcat.c,v 1.16.6.1 2012/04/17 00:09:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypcat.c,v 1.16 2011/01/12 18:51:42 christos Exp $");
+__RCSID("$NetBSD: ypcat.c,v 1.16.6.1 2012/04/17 00:09:44 yamt Exp $");
 #endif
 
 #include <sys/param.h>
@@ -58,7 +58,7 @@ static int	compressspace;
 int
 main(int argc, char *argv[])
 {
-	char *domainname;
+	char *domainname, *b_retry_cnt;
 	struct ypall_callback ypcb;
 	const char *inmap;
 	int notrans;
@@ -68,11 +68,15 @@ main(int argc, char *argv[])
 	int key;
 
 	setprogname(*argv);
-	domainname = NULL;
+	domainname = b_retry_cnt = NULL;
 	notrans = key = 0;
 	ypaliases = ypalias_init();
-	while((c = getopt(argc, argv, "d:kstx")) != -1) {
+	while((c = getopt(argc, argv, "bd:kstx")) != -1) {
 		switch (c) {
+		case 'b':
+			b_retry_cnt = optarg;
+			break;
+
 		case 'd':
 			domainname = optarg;
 			break;
@@ -106,6 +110,15 @@ main(int argc, char *argv[])
 
 	if (argc != 1)
 		usage();
+
+	if (b_retry_cnt != NULL) {
+		char *s;
+		unsigned long l;
+
+		l = strtoul(b_retry_cnt, &s, 10);
+		if (*s != '\0' || l > 0xffff) usage();
+		yp_setbindtries((int)l);
+	}
 
 	if (domainname == NULL)
 		yp_get_default_domain(&domainname);
@@ -172,8 +185,8 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "Usage: %s [-kst] [-d domainname] mapname\n",
-	    getprogname());
+	(void)fprintf(stderr, "Usage: %s [-kst] [-b <num-retry> "
+	    "[-d <domainname>] <mapname>\n", getprogname());
 	(void)fprintf(stderr, "       %s -x\n", getprogname());
 	exit(1);
 }

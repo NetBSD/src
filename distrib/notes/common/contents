@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.168 2011/05/27 15:43:00 tsutsui Exp $
+.\"	$NetBSD: contents,v 1.168.4.1 2012/04/17 00:02:35 yamt Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -574,6 +574,10 @@ install the kernel that matches your hardware.
 .It Sy kern-IQ80310
 (see below)
 .It Sy kern-IQ80321
+(see below)
+.It Sy kern-MV2120
+(see below)
+.It Sy kern-SHEEVAPLUG
 (see below)
 .It Sy kern-TEAMASA_NPWR
 .Pp

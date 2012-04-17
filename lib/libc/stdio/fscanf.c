@@ -1,4 +1,4 @@
-/*	$NetBSD: fscanf.c,v 1.12 2003/08/07 16:43:25 agc Exp $	*/
+/*	$NetBSD: fscanf.c,v 1.12.56.1 2012/04/17 00:05:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fscanf.c,v 1.12 2003/08/07 16:43:25 agc Exp $");
+__RCSID("$NetBSD: fscanf.c,v 1.12.56.1 2012/04/17 00:05:24 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,5 +58,5 @@ fscanf(FILE *fp, char const *fmt, ...)
 	va_start(ap, fmt);
 	ret = __svfscanf(fp, fmt, ap);
 	va_end(ap);
-	return (ret);
+	return ret;
 }

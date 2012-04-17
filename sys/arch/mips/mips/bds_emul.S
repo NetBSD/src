@@ -1,4 +1,4 @@
-/*	$NetBSD: bds_emul.S,v 1.5 2011/08/16 06:55:11 matt Exp $	*/
+/*	$NetBSD: bds_emul.S,v 1.5.2.1 2012/04/17 00:06:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -441,8 +441,8 @@ bcemul_special:
 	andi	t0, a0, 0x3f			# get special code
 	sll	t1, t0, 3			# calculate index in specialop
 	sll	t0, PTR_SCALESHIFT
-	PTR_LA	t0, bcemul_special_op(t1)
 	PTR_L	t9, bcemul_specialtbl(t0)
+	PTR_LA	t0, bcemul_special_op(t1)
 	jr	t9
 
 bcemul_special_3op_prologue:

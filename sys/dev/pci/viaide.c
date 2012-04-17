@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.76 2011/07/10 20:01:37 jakllsch Exp $	*/
+/*	$NetBSD: viaide.c,v 1.76.2.1 2012/04/17 00:07:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.76 2011/07/10 20:01:37 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.76.2.1 2012/04/17 00:07:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,6 +310,16 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	  NULL,
 	  via_chip_map,
 	},
+	{ PCI_PRODUCT_VIATECH_VX900_IDE,
+	  0,
+	  NULL,
+	  via_chip_map,
+	},
+	{ PCI_PRODUCT_VIATECH_VT6410_RAID,
+	  0,
+	  NULL,
+	  via_chip_map,
+	},
 	{ PCI_PRODUCT_VIATECH_VT6421_RAID,
 	  0,
 	  "VIA Technologies VT6421 Serial ATA RAID Controller",
@@ -451,82 +461,98 @@ via_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 
 	switch (vendor) {
 	case PCI_VENDOR_VIATECH:
-		/*
-		 * get a PCI tag for the ISA bridge.
-		 */
-		if (pci_find_device(&pcib_pa, via_pcib_match) == 0)
-			goto unknown;
-		pcib_id = pcib_pa.pa_id;
-		pcib_class = pcib_pa.pa_class;
-		aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
-		    "VIA Technologies ");
-		switch (PCI_PRODUCT(pcib_id)) {
-		case PCI_PRODUCT_VIATECH_VT82C586_ISA:
-			aprint_normal("VT82C586 (Apollo VP) ");
-			if(PCI_REVISION(pcib_class) >= 0x02) {
-				aprint_normal("ATA33 controller\n");
-				sc->sc_wdcdev.sc_atac.atac_udma_cap = 2;
-			} else {
-				aprint_normal("controller\n");
-				sc->sc_wdcdev.sc_atac.atac_udma_cap = 0;
-			}
-			break;
-		case PCI_PRODUCT_VIATECH_VT82C596A:
-			aprint_normal("VT82C596A (Apollo Pro) ");
-			if (PCI_REVISION(pcib_class) >= 0x12) {
-				aprint_normal("ATA66 controller\n");
-				sc->sc_wdcdev.sc_atac.atac_udma_cap = 4;
-			} else {
-				aprint_normal("ATA33 controller\n");
-				sc->sc_wdcdev.sc_atac.atac_udma_cap = 2;
-			}
-			break;
-		case PCI_PRODUCT_VIATECH_VT82C686A_ISA:
-			aprint_normal("VT82C686A (Apollo KX133) ");
-			if (PCI_REVISION(pcib_class) >= 0x40) {
-				aprint_normal("ATA100 controller\n");
-				sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
-			} else {
-				aprint_normal("ATA66 controller\n");
-				sc->sc_wdcdev.sc_atac.atac_udma_cap = 4;
-			}
-			break;
-		case PCI_PRODUCT_VIATECH_VT8231:
-			aprint_normal("VT8231 ATA100 controller\n");
-			sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
-			break;
-		case PCI_PRODUCT_VIATECH_VT8233:
-			aprint_normal("VT8233 ATA100 controller\n");
-			sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
-			break;
-		case PCI_PRODUCT_VIATECH_VT8233A:
-			aprint_normal("VT8233A ATA133 controller\n");
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_VIATECH_VT6410_RAID:
+			aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+			    "VIA Technologies VT6410 IDE controller\n");
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
+			interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
+			    PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
 			break;
-		case PCI_PRODUCT_VIATECH_VT8235:
-			aprint_normal("VT8235 ATA133 controller\n");
-			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
-			break;
-		case PCI_PRODUCT_VIATECH_VT8237:
-			aprint_normal("VT8237 ATA133 controller\n");
-			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
-			break;
-		case PCI_PRODUCT_VIATECH_VT8237A_ISA:
-			aprint_normal("VT8237A ATA133 controller\n");
-			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
-			break;
-		case PCI_PRODUCT_VIATECH_CX700:
-			aprint_normal("CX700 ATA133 controller\n");
-			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
-			break;
-		case PCI_PRODUCT_VIATECH_VT8251:
-			aprint_normal("VT8251 ATA133 controller\n");
+		case PCI_PRODUCT_VIATECH_VX900_IDE:
+			aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+			    "VIA Technologies VX900 ATA133 controller\n");
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
 		default:
-unknown:
-			aprint_normal("unknown VIA ATA controller\n");
-			sc->sc_wdcdev.sc_atac.atac_udma_cap = 0;
+			/*
+			 * get a PCI tag for the ISA bridge.
+			 */
+			if (pci_find_device(&pcib_pa, via_pcib_match) == 0)
+				goto unknown;
+			pcib_id = pcib_pa.pa_id;
+			pcib_class = pcib_pa.pa_class;
+			aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+			    "VIA Technologies ");
+			switch (PCI_PRODUCT(pcib_id)) {
+			case PCI_PRODUCT_VIATECH_VT82C586_ISA:
+				aprint_normal("VT82C586 (Apollo VP) ");
+				if(PCI_REVISION(pcib_class) >= 0x02) {
+					aprint_normal("ATA33 controller\n");
+					sc->sc_wdcdev.sc_atac.atac_udma_cap = 2;
+				} else {
+					aprint_normal("controller\n");
+					sc->sc_wdcdev.sc_atac.atac_udma_cap = 0;
+				}
+				break;
+			case PCI_PRODUCT_VIATECH_VT82C596A:
+				aprint_normal("VT82C596A (Apollo Pro) ");
+				if (PCI_REVISION(pcib_class) >= 0x12) {
+					aprint_normal("ATA66 controller\n");
+					sc->sc_wdcdev.sc_atac.atac_udma_cap = 4;
+				} else {
+					aprint_normal("ATA33 controller\n");
+					sc->sc_wdcdev.sc_atac.atac_udma_cap = 2;
+				}
+				break;
+			case PCI_PRODUCT_VIATECH_VT82C686A_ISA:
+				aprint_normal("VT82C686A (Apollo KX133) ");
+				if (PCI_REVISION(pcib_class) >= 0x40) {
+					aprint_normal("ATA100 controller\n");
+					sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
+				} else {
+					aprint_normal("ATA66 controller\n");
+					sc->sc_wdcdev.sc_atac.atac_udma_cap = 4;
+				}
+				break;
+			case PCI_PRODUCT_VIATECH_VT8231:
+				aprint_normal("VT8231 ATA100 controller\n");
+				sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
+				break;
+			case PCI_PRODUCT_VIATECH_VT8233:
+				aprint_normal("VT8233 ATA100 controller\n");
+				sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
+				break;
+			case PCI_PRODUCT_VIATECH_VT8233A:
+				aprint_normal("VT8233A ATA133 controller\n");
+				sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
+				break;
+			case PCI_PRODUCT_VIATECH_VT8235:
+				aprint_normal("VT8235 ATA133 controller\n");
+				sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
+				break;
+			case PCI_PRODUCT_VIATECH_VT8237:
+				aprint_normal("VT8237 ATA133 controller\n");
+				sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
+				break;
+			case PCI_PRODUCT_VIATECH_VT8237A_ISA:
+				aprint_normal("VT8237A ATA133 controller\n");
+				sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
+				break;
+			case PCI_PRODUCT_VIATECH_CX700:
+				aprint_normal("CX700 ATA133 controller\n");
+				sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
+				break;
+			case PCI_PRODUCT_VIATECH_VT8251:
+				aprint_normal("VT8251 ATA133 controller\n");
+				sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
+				break;
+			default:
+		unknown:
+				aprint_normal("unknown VIA ATA controller\n");
+				sc->sc_wdcdev.sc_atac.atac_udma_cap = 0;
+			}
+			break;
 		}
 		sc->sc_apo_regbase = APO_VIA_REGBASE;
 		break;

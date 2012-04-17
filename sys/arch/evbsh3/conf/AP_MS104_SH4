@@ -1,4 +1,4 @@
-#	$NetBSD: AP_MS104_SH4,v 1.2 2010/11/23 11:13:58 hannken Exp $
+#	$NetBSD: AP_MS104_SH4,v 1.2.8.1 2012/04/17 00:06:19 yamt Exp $
 #
 #	Alpha project AP-MS104-SH4 config file
 #
@@ -69,7 +69,7 @@ file-system	TMPFS		# Efficient memory file-system
 
 # File system options
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP
@@ -122,7 +122,6 @@ pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: su_pam.c,v 1.16 2010/10/02 10:55:36 tron Exp $	*/
+/*	$NetBSD: su_pam.c,v 1.16.6.1 2012/04/17 00:09:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988\
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su_pam.c,v 1.16 2010/10/02 10:55:36 tron Exp $");
+__RCSID("$NetBSD: su_pam.c,v 1.16.6.1 2012/04/17 00:09:39 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ static const struct pam_conv pamc = { &openpam_ttyconv, NULL };
 #define ARGSTR ARGSTRX
 #endif
 
-static void logit(const char *, ...);
+static void logit(const char *, ...) __printflike(1, 2);
 
 int
 main(int argc, char **argv)

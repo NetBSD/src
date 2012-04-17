@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_linux.8,v 1.36 2007/12/02 21:45:59 wiz Exp $
+.\"	$NetBSD: compat_linux.8,v 1.36.28.1 2012/04/17 00:05:48 yamt Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -135,15 +135,12 @@ Example: you have just ftp-ed the Linux binary of Doom.
 Put it on the Linux system you have access to, and check which shared libraries it
 needs by running
 .Sq ldd linuxxdoom :
-.Pp
-.Bl -tag -width 123 -compact -offset indent
-.It (me@linux) ldd linuxxdoom
-.nf
-libXt.so.3 (DLL Jump 3.1) =\*[Gt] /usr/X11/lib/libXt.so.3.1.0
-libX11.so.3 (DLL Jump 3.1) =\*[Gt] /usr/X11/lib/libX11.so.3.1.0
-libc.so.4 (DLL Jump 4.5pl26) =\*[Gt] /lib/libc.so.4.6.29
-.fi
-.El
+.Bd -literal -offset indent
+(me@linux) ldd linuxxdoom
+     libXt.so.3 (DLL Jump 3.1) =\*[Gt] /usr/X11/lib/libXt.so.3.1.0
+     libX11.so.3 (DLL Jump 3.1) =\*[Gt] /usr/X11/lib/libX11.so.3.1.0
+     libc.so.4 (DLL Jump 4.5pl26) =\*[Gt] /lib/libc.so.4.6.29
+.Ed
 .Pp
 You would need go get all the files from the last column, and
 put them under
@@ -194,10 +191,9 @@ So, if you have these libraries on your system:
 and you find that the
 .Ic ldd
 output for a new binary you want to install is:
-.nf
-.Pp
+.Bd -literal
 libc.so.4 (DLL Jump 4.5pl26) =\*[Gt] /lib/libc.so.4.6.29
-.fi
+.Ed
 .Pp
 you won't need to worry about copying
 .Pa /lib/libc.so.4.6.29
@@ -455,7 +451,6 @@ The fastest way to look something up is to retrieve all the files in the
 contents subdirectory, and grep through them for the file you need.
 Here is an example of a list of files that you might need, and
 in which contents-file you will find it by grepping through them:
-.Pp
 .Bd -literal -offset indent
 Needed                  Package
 
@@ -477,7 +472,6 @@ it will tell you on which
 the package is,
 in our case it will tell us in which subdirectory we need to look.
 For our example, we would find the following locations:
-.Pp
 .Bd -literal -offset indent
 Package                 Location
 

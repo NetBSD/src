@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.39 2011/05/16 13:22:54 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.39.4.1 2012/04/17 00:06:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,12 +41,6 @@
 #ifndef _NEWS68K_CPU_H_
 #define _NEWS68K_CPU_H_
 
-#if defined(_KERNEL)
-
-/*
- * Exported definitions unique to news68k cpu support.
- */
-
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #include "opt_m68k_arch.h"
@@ -56,6 +50,11 @@
  * Get common m68k CPU definitions.
  */
 #include <m68k/cpu.h>
+
+#if defined(_KERNEL)
+/*
+ * Exported definitions unique to news68k cpu support.
+ */
 
 /*
  * XXX news1700 L2 cache would be corrupted with DC_BE and IC_BE...
@@ -162,6 +161,7 @@ extern u_int extiobase_phys, extiotop_phys;
 extern u_int intrcnt[];
 
 extern void (*vectab[])(void);
+extern void *romcallvec;
 
 struct frame;
 

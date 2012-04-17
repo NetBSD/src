@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/04/30 08:08:32 garbled Exp $
+#	$NetBSD: Makefile,v 1.2.20.1 2012/04/17 00:02:37 yamt Exp $
 CDBASE=		prepcd		# gives ${CDBASE}.iso
 CDRELEASE=	true		# include $RELEASEDIR/$MACHINE
 CDMAKEFSOPTIONS=bootimage=powerpc;cdrom/prep/installation/floppy/sysinst_com0.fs
@@ -8,7 +8,7 @@ CDMAKEFSOPTIONS=bootimage=powerpc;cdrom/prep/installation/floppy/sysinst_com0.fs
 # it.
 
 image_md_post:
-	${TOOL_FDISK} -F -f -b 1/255/16065 -0 -s 65/80/2799 -i ${CDBASE}.iso
-	${TOOL_FDISK} -F -f -b 1/255/16065 -0 -s 65/80/2799 -u ${CDBASE}.iso
+	${TOOL_FDISK} -F -f -b 1/255/16065 -0 -s 65/80/2799 -i ${CDIMAGE}
+	${TOOL_FDISK} -F -f -b 1/255/16065 -0 -s 65/80/2799 -u ${CDIMAGE}
 
 .include "${.CURDIR}/../../../common/Makefile.bootcd"

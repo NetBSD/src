@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.9,v 1.17 2010/05/16 05:18:35 jruoho Exp $
+.\"	$NetBSD: sysctl.9,v 1.17.6.1 2012/04/17 00:05:49 yamt Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 16, 2010
+.Dd December 4, 2011
 .Dt SYSCTL 9
 .Os
 .Sh NAME
@@ -421,6 +421,7 @@ If the
 flag is set, the
 .Fa qv
 argument will be interpreted as the initial value for the new
+.Dq bool ,
 .Dq int
 or
 .Dq quad
@@ -504,6 +505,8 @@ sysctl_helper(SYSCTLFN_ARGS)
 	struct sysctlnode node;
 	int t, error;
 
+	t = *(int *)rnode-\*[Gt]sysctl_data;
+
 	node = *rnode;
 	node.sysctl_data = \*[Am]t;
 	error = sysctl_lookup(SYSCTLFN_CALL(\*[Am]node));
@@ -513,7 +516,7 @@ sysctl_helper(SYSCTLFN_ARGS)
 	if (t \*[Lt] 0 || t \*[Gt] 20)
 		return (EINVAL);
 
-	*(int*)rnode-\*[Gt]sysctl_data = t;
+	*(int *)rnode-\*[Gt]sysctl_data = t;
 	return (0);
 }
 .Ed

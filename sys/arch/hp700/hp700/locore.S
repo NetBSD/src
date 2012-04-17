@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.55 2011/02/07 12:19:35 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.55.4.1 2012/04/17 00:06:22 yamt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -79,9 +79,6 @@
 /* Some aliases for the macros in assym.h. */
 #define	TRAPFRAME_SIZEOF	trapframe_SIZEOF
 
-#define	ccr	cr10
-#define	rctr	cr0
-
 /*
  * Very crude debugging macros that write to com1.
  */
@@ -118,30 +115,18 @@
 	_DEBUG_DUMPN(reg1, reg2, reg3, 27)	! \
 	_DEBUG_DUMPN(reg1, reg2, reg3, 31)
 
-#ifdef XXXNH
 /*
  * hv-specific instructions
  */
-#define	DR_PAGE0	diag (0x70 << 5)				/* XXXNH Different */
-#define	DR_PAGE1	diag (0x72 << 5)				/* XXXNH Different */
-#define	MTCPU_T(x,t)	diag ((t) << 21) | ((x) << 16) | (0xc0 << 5)	/* XXXNH Different */
-#define	MFCPU_T(r,x)	diag ((r) << 21) | (0xa0 << 5) | (x)
+#define	DR_PAGE0	diag (0x70 << 5)
+#define	DR_PAGE1	diag (0x72 << 5)
+
+#define	MTCPU_T(x,t)	diag ((t) << 21) | ((x) << 16) | (0xb0 << 5)
+#define	MFCPU_T(r,x)	diag ((r) << 21) | ((x) << 16) | (0xd0 << 5)
 #define	MTCPU_C(x,t)	diag ((t) << 21) | ((x) << 16) | (0x12 << 5)
 #define	MFCPU_C(r,x)	diag ((r) << 21) | ((x) << 16) | (0x30 << 5)
-#define	MFCPU_U(r,x)	.word	0x140008a0 | ((r) << 21) | ((x))
-#define	MTCPU_U(x,r)	.word	0x14001840 | ((r) << 21) | ((x) << 16)
-
-#else
-
-#define	DR_PAGE0	.word	0x14001200
-#define	DR_PAGE1	.word	0x14001240
-#define	MTCPU_T(x,t)	.word	0x14001400 | ((t) << 21) | ((x) << 16)
-#define	MFCPU_T(r,x)	.word	0x14001400 | ((r) << 21) | (x)
-#define	MTCPU_C(x,t)	.word	0x14000240 | ((t) << 21) | ((x) << 16)
-#define	MFCPU_C(r,x)	.word	0x14000600 | ((r) << 21) | ((x) << 16)
-#define	MFCPU_U(r,x)	.word	0x140008a0 | ((r) << 21) | ((x))
-#define	MTCPU_U(x,r)	.word	0x14001840 | ((r) << 21) | ((x) << 16)
-#endif
+#define	MFCPU_U(r,x)	diag ((r) << 21) | ((x))       | (0x45 << 5)
+#define	MTCPU_U(x,r)	diag ((r) << 21) | ((x) << 16) | (0xc2 << 5)
 
 	.import	$global$, data
 	.import pdc, data
@@ -256,7 +241,7 @@ L$start_zero_tf:
 	/*
 	 * disable all coprocessors
 	 */
-	mtctl	%r0, %ccr
+	mtctl	%r0, CR_CCR
 
 #ifdef MULTIPROCESSOR
 
@@ -394,7 +379,7 @@ LEAF_ENTRY_NOPROFILE(kernel_setup)
 	/*
 	 * set up the dp pointer so that we can do quick references off of it
 	 */
-	ldil	L%$global$,%dp
+	ldil	L%$global$, %dp
 	ldo	R%$global$(%dp), %dp
 
 	/*
@@ -458,7 +443,7 @@ LEAF_ENTRY_NOPROFILE(hw_cpu_spinup_trampoline)
 	/*
 	 * disable all coprocessors
 	 */
-	mtctl   %r0, %ccr
+	mtctl   %r0, CR_CCR
 
 	/*
 	 * to keep the spl() routines consistent we need to put the correct
@@ -1049,13 +1034,6 @@ switch_exited:
 	ldw	HPPA_FRAME_ARG(0)(%r3), %arg0
 
 noras:
-	/*
-	 * As an optimization, hppa_fpu_bootstrap
-	 * replaces this branch instruction with a
-	 * nop if there is a hardware FPU.
-	 */
-ALTENTRY(hppa_fpu_nop1)
-	b,n	switch_return
 
 	/*
 	 * We do have a hardware FPU.  If the LWP
@@ -1066,13 +1044,13 @@ ALTENTRY(hppa_fpu_nop1)
 	 * states.
 	 */
 	GET_CURCPU(%t1)
-	mfctl	%ccr, %r1
+	mfctl	CR_CCR, %r1
 	mfctl	CR_FPPADDR, %t2
 	ldw	CI_FPU_STATE(%t1), %t1
 	depi	0, 25, 2, %r1		; disables the FPU
 	comb,<>,n %t1, %t2, 0		; nullify if LWPs different
 	depi	3, 25, 2, %r1		; enables the FPU
-	mtctl	%r1, %ccr
+	mtctl	%r1, CR_CCR
 
 switch_return:
 	copy	%arg0, %ret0

@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.79 2011/04/04 20:37:56 dyoung Exp $	*/
+/*	$NetBSD: agp.c,v 1.79.4.1 2012/04/17 00:07:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.79 2011/04/04 20:37:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.79.4.1 2012/04/17 00:07:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -374,11 +374,8 @@ agpattach(device_t parent, device_t self, void *aux)
 	else
 		sc->as_chipc = NULL;
 
-	if (!device_pmf_is_registered(self)) {
-		if (!pmf_device_register(self, NULL, agp_resume))
-			aprint_error_dev(self, "couldn't establish power "
-			    "handler\n");
-	}
+	if (!pmf_device_register(self, NULL, agp_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 CFATTACH_DECL_NEW(agp, sizeof(struct agp_softc),

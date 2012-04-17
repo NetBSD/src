@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.3 2011/04/29 22:10:22 matt Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.3.4.1 2012/04/17 00:06:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.3 2011/04/29 22:10:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.3.4.1 2012/04/17 00:06:40 yamt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -235,10 +235,8 @@ pmap_segtab_release(union segtab *stp, u_int level)
 #endif	/* MIPS3_PLUS */
 #ifdef _LP64
 		KASSERT(MIPS_XKPHYS_P(pte));
-		pa = MIPS_XKPHYS_TO_PHYS(pte);
-#else
-		pa = MIPS_KSEG0_TO_PHYS(pte);
 #endif
+		pa = mips_pmap_unmap_poolpage((vaddr_t)pte);
 		uvm_pagefree(PHYS_TO_VM_PAGE(pa));
 
 		stp->seg_tab[i] = NULL;
@@ -292,10 +290,8 @@ pmap_segtab_alloc(void)
 
 #ifdef _LP64
 		KASSERT(mips_options.mips3_xkphys_cached);
-		stp = (union segtab *)MIPS_PHYS_TO_XKPHYS_CACHED(stp_pa);
-#else
-		stp = (union segtab *)MIPS_PHYS_TO_KSEG0(stp_pa);
 #endif
+		stp = (union segtab *)mips_pmap_map_poolpage(stp_pa);
 		const size_t n = NBPG / sizeof(union segtab);
 		if (n > 1) {
 			/*
@@ -457,10 +453,8 @@ pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 		const paddr_t pa = VM_PAGE_TO_PHYS(pg);
 #ifdef _LP64
 		KASSERT(mips_options.mips3_xkphys_cached);
-		pte = (pt_entry_t *)MIPS_PHYS_TO_XKPHYS_CACHED(pa);
-#else
-		pte = (pt_entry_t *)MIPS_PHYS_TO_KSEG0(pa);
 #endif
+		pte = (pt_entry_t *)mips_pmap_map_poolpage(pa);
 		pt_entry_t ** const pte_p =
 		    &stp->seg_tab[(va >> SEGSHIFT) & (PMAP_SEGTABSIZE - 1)];
 #ifdef MULTIPROCESSOR

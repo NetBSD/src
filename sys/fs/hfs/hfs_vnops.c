@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.24 2011/09/27 01:14:47 christos Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.24.2.1 2012/04/17 00:08:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.24 2011/09/27 01:14:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.24.2.1 2012/04/17 00:08:18 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -553,11 +553,13 @@ hfs_check_possible(struct vnode *vp, mode_t mode)
 }
 
 static int
-hfs_check_permitted(struct vattr *va, mode_t mode, kauth_cred_t cred)
+hfs_check_permitted(vnode_t *vp, struct vattr *va, mode_t mode,
+    kauth_cred_t cred)
 {
 
-	return genfs_can_access(va->va_type, va->va_mode, va->va_uid,
-	    va->va_gid, mode, cred);
+	return kauth_authorize_vnode(cred, kauth_access_action(mode,
+	    va->va_type, va->va_mode), vp, NULL,  genfs_can_access(va->va_type,
+	    va->va_mode, va->va_uid, va->va_gid, mode, cred));
 }
 
 int
@@ -580,7 +582,7 @@ hfs_vop_access(void *v)
 	if ((error = VOP_GETATTR(ap->a_vp, &va, ap->a_cred)) != 0)
 		return error;
 
-	error = hfs_check_permitted(&va, ap->a_mode, ap->a_cred);
+	error = hfs_check_permitted(ap->a_vp, &va, ap->a_mode, ap->a_cred);
 
 	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.14 2011/07/26 12:55:35 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.14.2.1 2012/04/17 00:05:59 yamt Exp $	*/
 
 #ifdef __x86_64__
 
@@ -12,19 +12,6 @@
 #define	MACHINE_ARCH	"x86_64"
 #define MID_MACHINE	MID_X86_64
 
-/*
- * Round p (pointer or byte index) up to a correctly-aligned value
- * for all data types (int, long, ...).   The result is u_int and
- * must be cast to any desired pointer type.
- *
- * ALIGNED_POINTER is a boolean macro that checks whether an address
- * is valid to fetch data elements of type t from on this architecture.
- * This does not reflect the optimal alignment, just the possibility
- * (within reasonable limits). 
- *
- */
-#define ALIGNBYTES		(sizeof(long) - 1)
-#define ALIGN(p)		(((u_long)(p) + ALIGNBYTES) &~ALIGNBYTES)
 #define ALIGNED_POINTER(p,t)	1
 
 #define ALIGNBYTES32		(sizeof(int) - 1)
@@ -94,11 +81,12 @@
 #endif
 
 /*
- * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
+ * Minimum size of the kernel kmem_arena in PAGE_SIZE-sized
  * logical pages.
+ * No enforced maximum on amd64.
  */
 #define	NKMEMPAGES_MIN_DEFAULT	((8 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT	((1 *1024 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_UNLIMITED 1
 
 /*
  * XXXfvdl the PD* stuff is different from i386.

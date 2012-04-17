@@ -1,4 +1,4 @@
-/*	$NetBSD: ifiter_ioctl.c,v 1.1.1.1 2009/12/13 16:54:38 kardel Exp $	*/
+/*	$NetBSD: ifiter_ioctl.c,v 1.1.1.1.6.1 2012/04/17 00:03:45 yamt Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -691,12 +691,8 @@ internal_current6(isc_interfaceiter_t *iter) {
 	get_addr(family, &iter->current.address,
 		 (struct sockaddr *)&lifreq.lifr_addr, lifreq.lifr_name);
 
-	/*
-	 * NTP local change
-	 * enable_multicast_if() requires scopeid for setsockopt,
-	 * so associate address with their corresponding ifindex.
-	 */
-	if (family == AF_INET6)
+	iter->current.ifindex = lifreq.lifr_index;
+	if (isc_netaddr_islinklocal(&iter->current.address))
 		isc_netaddr_setzone(&iter->current.address, 
 				    (isc_uint32_t)lifreq.lifr_index);
 

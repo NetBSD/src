@@ -1,4 +1,4 @@
-# $NetBSD: RPC44,v 1.39 2011/03/06 17:08:20 bouyer Exp $
+# $NetBSD: RPC44,v 1.39.4.1 2012/04/17 00:06:03 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.39 $"
+#ident		"GENERIC-$Revision: 1.39.4.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -293,7 +293,6 @@ pseudo-device	tun			# network tunneling over tty
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port arc yet.
-pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
 

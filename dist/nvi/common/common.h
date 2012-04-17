@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.2 2008/05/20 17:38:19 aymeric Exp $ */
+/*	$NetBSD: common.h,v 1.2.4.1 2012/04/17 00:02:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -85,6 +85,7 @@ typedef enum { LOCK_FAILED, LOCK_SUCCESS, LOCK_UNAVAIL } lockr_t;
 /* Sequence types. */
 typedef enum { SEQ_ABBREV, SEQ_COMMAND, SEQ_INPUT } seq_t;
 
+#define	ENTIRE_LINE	((size_t)-1)
 /*
  * Local includes.
  */

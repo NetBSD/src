@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.37 2011/02/10 14:46:46 pooka Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.37.4.1 2012/04/17 00:06:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.37 2011/02/10 14:46:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.37.4.1 2012/04/17 00:06:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,19 +125,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb2->pcb_regs[8] = (int)l2;		/* A4 */
 	pcb2->pcb_regs[11] = (int)sf;		/* SSP */
 	pcb2->pcb_ps = PSL_LOWIPL;		/* start kthreads at IPL 0 */
-}
-
-void
-cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
-{
-	struct pcb *pcb = lwp_getpcb(l);
-	struct trapframe *tf = (struct trapframe *)l->l_md.md_regs;
-	struct switchframe *sf = (struct switchframe *)tf - 1;
-
-	sf->sf_pc = (u_int)setfunc_trampoline;
-	pcb->pcb_regs[6] = (int)func;		/* A2 */
-	pcb->pcb_regs[7] = (int)arg;		/* A3 */
-	pcb->pcb_regs[11] = (int)sf;		/* SSP */
 }
 
 void

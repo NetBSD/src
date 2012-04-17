@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.93 2011/08/23 16:16:43 christos Exp $	*/
+/*	$NetBSD: usb.h,v 1.93.2.1 2012/04/17 00:08:09 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -50,8 +50,6 @@ MALLOC_DECLARE(M_USBHC);
 #include <sys/device.h>
 
 #endif
-
-#define USB_USE_SOFTINTR
 
 #ifdef USB_DEBUG
 #define UKBD_DEBUG 1

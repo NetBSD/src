@@ -1,4 +1,4 @@
-/*	$NetBSD: ci.c,v 1.4 1996/10/15 06:59:54 veego Exp $	*/
+/*	$NetBSD: ci.c,v 1.4.66.1 2012/04/17 00:05:10 yamt Exp $	*/
 
 /* Check in revisions of RCS files from working files.  */
 
@@ -31,6 +31,12 @@ Report problems and direct all questions to:
 
 /*
  * $Log: ci.c,v $
+ * Revision 1.4.66.1  2012/04/17 00:05:10  yamt
+ * sync with head
+ *
+ * Revision 1.5  2012/01/06 15:16:03  joerg
+ * Don't use dangling elses.
+ *
  * Revision 1.4  1996/10/15 06:59:54  veego
  * Merge rcs 5.7.
  *
@@ -1141,7 +1147,7 @@ struct hshentry * delta;
 
         num=delta->num;
 	for (trail = &Locks;  (next = *trail);  trail = &next->nextlock)
-	    if (next->delta == delta)
+	    if (next->delta == delta) {
 		if (strcmp(getcaller(), next->login) == 0) {
 		    /* We found a lock on delta by caller; delete it.  */
 		    *trail = next->nextlock;
@@ -1151,6 +1157,7 @@ struct hshentry * delta;
 		    rcserror("revision %s locked by %s", num, next->login);
 		    return -1;
                 }
+            }
 	if (!StrictLocks && myself(RCSstat.st_uid))
 	    return 0;
 	rcserror("no lock set by %s for revision %s", getcaller(), num);

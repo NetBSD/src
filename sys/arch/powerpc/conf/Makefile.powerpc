@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.48 2011/06/30 18:17:11 matt Exp $
+#	$NetBSD: Makefile.powerpc,v 1.48.2.1 2012/04/17 00:06:46 yamt Exp $
 #
 # Makefile for NetBSD
 #
@@ -42,6 +42,11 @@ CWARNFLAGS+=	-Wreturn-type
 .if ${PPCDIR} == "oea"
 CFLAGS+=	-mno-strict-align
 CFLAGS+=	-Wa,-maltivec
+.endif
+.if ${PPCDIR} == "booke"
+DEFCOPTS=	-O2
+CFLAGS+=	-fstack-protector
+CFLAGS+=	-mmultiple -misel
 .endif
 CFLAGS+=	-msdata=none
 CFLAGS+=	-msoft-float ${CCPUOPTS}
@@ -115,6 +120,10 @@ SYSTEM_LD_TAIL_EXTRA+=; \
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.bin.gz@}
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.ub@}
 .endif
+.endif
+
+.if !empty(SYSTEM_LD_TAIL_EXTRA_EXTRA)
+SYSTEM_LD_TAIL_EXTRA+= ${SYSTEM_LD_TAIL_EXTRA_EXTRA}
 .endif
 
 ##

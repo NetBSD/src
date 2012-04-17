@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.116 2011/05/03 13:16:47 manu Exp $	*/
+/*	$NetBSD: puffs.c,v 1.116.4.1 2012/04/17 00:05:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.116 2011/05/03 13:16:47 manu Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.116.4.1 2012/04/17 00:05:31 yamt Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -993,9 +993,30 @@ puffs_mainloop(struct puffs_usermount *pu)
 	if (puffs__cc_create(pu, puffs__theloop, &pcc) == -1) {
 		goto out;
 	}
+
+#if 0
 	if (puffs__cc_savemain(pu) == -1) {
 		goto out;
 	}
+#else
+	/*
+	 * XXX
+	 * puffs__cc_savemain() uses getcontext() and then returns.
+	 * the caller (this function) may overwrite the stack frame
+	 * of puffs__cc_savemain(), so when we call setcontext() later and
+	 * return from puffs__cc_savemain() again, the return address or
+	 * saved stack pointer can be garbage.
+	 * avoid this by calling getcontext() directly here.
+	 */
+	extern int puffs_fakecc;
+	if (!puffs_fakecc) {
+		PU_CLRSFLAG(pu, PU_MAINRESTORE);
+		if (getcontext(&pu->pu_mainctx) == -1) {
+			goto out;
+		}
+	}
+#endif
+
 	if ((pu->pu_state & PU_MAINRESTORE) == 0)
 		puffs_cc_continue(pcc);
 

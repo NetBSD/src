@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.11 2011/10/14 09:23:31 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.11.2.1 2012/04/17 00:08:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.11 2011/10/14 09:23:31 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.11.2.1 2012/04/17 00:08:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -642,7 +642,6 @@ mount_domount(struct lwp *l, vnode_t **vpp, struct vfsops *vfsops,
 {
 	vnode_t *vp = *vpp;
 	struct mount *mp;
-	struct vattr va;
 	struct pathbuf *pb;
 	struct nameidata nd;
 	int error;
@@ -658,24 +657,6 @@ mount_domount(struct lwp *l, vnode_t **vpp, struct vfsops *vfsops,
 	if (vp->v_type != VDIR) {
 		vfs_delref(vfsops);
 		return ENOTDIR;
-	}
-
-	/*
-	 * If the user is not root, ensure that they own the directory
-	 * onto which we are attempting to mount.
-	 */
-	vn_lock(vp, LK_SHARED | LK_RETRY);
-	error = VOP_GETATTR(vp, &va, l->l_cred);
-	VOP_UNLOCK(vp);
-	if (error != 0) {
-		vfs_delref(vfsops);
-		return error;
-	}
-	if ((va.va_uid != kauth_cred_geteuid(l->l_cred) &&
-	    (error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)) {
-		vfs_delref(vfsops);
-		return error;
 	}
 
 	if (flags & MNT_EXPORTED) {
@@ -696,11 +677,7 @@ mount_domount(struct lwp *l, vnode_t **vpp, struct vfsops *vfsops,
 	 *
 	 * Set the mount level flags.
 	 */
-	mp->mnt_flag = flags &
-	   (MNT_FORCE | MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
-	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
-	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
-	    MNT_LOG | MNT_IGNORE | MNT_RDONLY);
+	mp->mnt_flag = flags & (MNT_BASIC_FLAGS | MNT_FORCE | MNT_IGNORE);
 
 	mutex_enter(&mp->mnt_updating);
 	error = VFS_MOUNT(mp, path, data, data_len);

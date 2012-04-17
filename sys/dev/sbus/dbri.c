@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.33 2011/03/09 05:40:11 macallan Exp $	*/
+/*	$NetBSD: dbri.c,v 1.33.4.1 2012/04/17 00:08:01 yamt Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.33 2011/03/09 05:40:11 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.33.4.1 2012/04/17 00:08:01 yamt Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -43,11 +43,11 @@ __KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.33 2011/03/09 05:40:11 macallan Exp $");
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/bus.h>
 #include <sys/intr.h>
+#include <sys/kmem.h>
 
 #include <dev/sbus/sbusvar.h>
 #include <sparc/sparc/auxreg.h>
@@ -156,9 +156,10 @@ static int	dbri_trigger_output(void *, void *, void *, int,
     void (*)(void *), void *, const struct audio_params *);
 static int	dbri_trigger_input(void *, void *, void *, int,
     void (*)(void *), void *, const struct audio_params *);
+static void	dbri_get_locks(void *, kmutex_t **, kmutex_t **);
 
-static void	*dbri_malloc(void *, int, size_t, struct malloc_type *, int);
-static void	dbri_free(void *, void *, struct malloc_type *);
+static void	*dbri_malloc(void *, int, size_t);
+static void	dbri_free(void *, void *, size_t);
 static paddr_t	dbri_mappage(void *, void *, off_t, int);
 static void	dbri_set_power(struct dbri_softc *, int);
 static void	dbri_bring_up(struct dbri_softc *);
@@ -175,32 +176,25 @@ struct audio_device dbri_device = {
 };
 
 struct audio_hw_if dbri_hw_if = {
-	dbri_open,
-	dbri_close,
-	NULL,	/* drain */
-	dbri_query_encoding,
-	dbri_set_params,
-	dbri_round_blocksize,
-	NULL,	/* commit_settings */
-	NULL,	/* init_output */
-	NULL,	/* init_input */
-	NULL,	/* start_output */
-	NULL,	/* start_input */
-	dbri_halt_output,
-	dbri_halt_input,
-	NULL,	/* speaker_ctl */
-	dbri_getdev,
-	NULL,	/* setfd */
-	dbri_set_port,
-	dbri_get_port,
-	dbri_query_devinfo,
-	dbri_malloc,
-	dbri_free,
-	dbri_round_buffersize,
-	dbri_mappage,
-	dbri_get_props,
-	dbri_trigger_output,
-	dbri_trigger_input
+	.open			= dbri_open,
+	.close			= dbri_close,
+	.query_encoding		= dbri_query_encoding,
+	.set_params		= dbri_set_params,
+	.round_blocksize	= dbri_round_blocksize,
+	.halt_output		= dbri_halt_output,
+	.halt_input		= dbri_halt_input,
+	.getdev			= dbri_getdev,
+	.set_port		= dbri_set_port,
+	.get_port		= dbri_get_port,
+	.query_devinfo		= dbri_query_devinfo,
+	.allocm			= dbri_malloc,
+	.freem			= dbri_free,
+	.round_buffersize	= dbri_round_buffersize,
+	.mappage		= dbri_mappage,
+	.get_props		= dbri_get_props,
+	.trigger_output		= dbri_trigger_output,
+	.trigger_input		= dbri_trigger_input,
+	.get_locks		= dbri_get_locks,
 };
 
 CFATTACH_DECL_NEW(dbri, sizeof(struct dbri_softc),
@@ -370,6 +364,9 @@ dbri_attach_sbus(device_t parent, device_t self, void *aux)
 	sc->sc_dmabase = sc->sc_dmamap->dm_segs[0].ds_addr;
 	sc->sc_bufsiz = size;
 
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+
 	bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_SCHED, dbri_intr,
 	    sc);
 
@@ -475,6 +472,8 @@ dbri_intr(void *hdl)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int x;
 
+	mutex_spin_enter(&sc->sc_intr_lock);
+
 	/* clear interrupt */
 	x = bus_space_read_4(iot, ioh, DBRI_REG1);
 	if (x & (DBRI_MRR | DBRI_MLE | DBRI_LBG | DBRI_MBE)) {
@@ -508,6 +507,8 @@ dbri_intr(void *hdl)
 #endif
 
 	dbri_process_interrupt_buffer(sc);
+
+	mutex_spin_exit(&sc->sc_intr_lock);
 
 	return (1);
 }
@@ -601,9 +602,8 @@ dbri_command_send(struct dbri_softc *sc, volatile uint32_t *cmd)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	bus_space_tag_t iot = sc->sc_iot;
 	int maxloops = 1000000;
-	int x;
 
-	x = splsched();
+	mutex_spin_enter(&sc->sc_intr_lock);
 
 	sc->sc_locked--;
 
@@ -641,7 +641,7 @@ dbri_command_send(struct dbri_softc *sc, volatile uint32_t *cmd)
 		}
 	}
 
-	splx(x);
+	mutex_spin_exit(&sc->sc_intr_lock);
 
 	return;
 }
@@ -1269,7 +1269,7 @@ setup_ring_xmit(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 		void (*callback)(void *), void *callback_args)
 {
 	volatile uint32_t *cmd;
-	int x, i;
+	int i;
 	int td;
 	int td_first, td_last;
 	bus_addr_t dmabuf, dmabase;
@@ -1319,7 +1319,7 @@ setup_ring_xmit(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 	dd->callback = callback;
 	dd->callback_args = callback_args;
 
-	x = splsched();
+	mutex_spin_enter(&sc->sc_intr_lock);
 
 	/* the pipe shouldn't be active */
 	if (pipe_active(sc, pipe)) {
@@ -1355,7 +1355,7 @@ setup_ring_xmit(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 		DPRINTF("%s: starting DMA\n", __func__);
 	}
 
-	splx(x);
+	mutex_spin_exit(&sc->sc_intr_lock);
 
 	return;
 }
@@ -1365,7 +1365,7 @@ setup_ring_recv(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 		void (*callback)(void *), void *callback_args)
 {
 	volatile uint32_t *cmd;
-	int x, i;
+	int i;
 	int td_first, td_last;
 	bus_addr_t dmabuf, dmabase;
 	struct dbri_desc *dd = &sc->sc_desc[which];
@@ -1410,7 +1410,7 @@ setup_ring_recv(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 	dd->callback = callback;
 	dd->callback_args = callback_args;
 
-	x = splsched();
+	mutex_spin_enter(&sc->sc_intr_lock);
 
 	/* the pipe shouldn't be active */
 	if (pipe_active(sc, pipe)) {
@@ -1446,7 +1446,7 @@ setup_ring_recv(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 		DPRINTF("%s: starting DMA\n", __func__);
 	}
 
-	splx(x);
+	mutex_spin_exit(&sc->sc_intr_lock);
 
 	return;
 }
@@ -2049,6 +2049,14 @@ dbri_trigger_input(void *hdl, void *start, void *end, int blksize,
 	return 0;
 }
 
+static void
+dbri_get_locks(void *opaque, kmutex_t **intr, kmutex_t **thread)
+{
+	struct dbri_softc *sc = opaque;
+
+	*intr = &sc->sc_intr_lock;
+	*thread = &sc->sc_lock;
+}
 
 static uint32_t
 reverse_bytes(uint32_t b, int len)
@@ -2075,7 +2083,7 @@ reverse_bytes(uint32_t b, int len)
 }
 
 static void *
-dbri_malloc(void *v, int dir, size_t s, struct malloc_type *mt, int flags)
+dbri_malloc(void *v, int dir, size_t s)
 {
 	struct dbri_softc *sc = v;
 	struct dbri_desc *dd = &sc->sc_desc[sc->sc_desc_used];
@@ -2116,7 +2124,7 @@ dbri_malloc(void *v, int dir, size_t s, struct malloc_type *mt, int flags)
 }
 
 static void
-dbri_free(void *v, void *p, struct malloc_type *mt)
+dbri_free(void *v, void *p, size_t size)
 {
 	struct dbri_softc *sc = v;
 	struct dbri_desc *dd;
@@ -2206,10 +2214,9 @@ dbri_resume(device_t self, const pmf_qual_t *qual)
 	aprint_verbose("resume: %d\n", sc->sc_refcount);
 	if (sc->sc_playing) {
 		volatile uint32_t *cmd;
-		int s;
 
 		dbri_bring_up(sc);
-		s = splsched();
+		mutex_spin_enter(&sc->sc_intr_lock);
 		cmd = dbri_command_lock(sc);
 		*(cmd++) = DBRI_CMD(DBRI_COMMAND_SDP,
 		    0, sc->sc_pipe[4].sdp |
@@ -2218,7 +2225,7 @@ dbri_resume(device_t self, const pmf_qual_t *qual)
 		*(cmd++) = sc->sc_dmabase +
 		    dbri_dma_off(xmit, 0);
 		dbri_command_send(sc, cmd);
-		splx(s);
+		mutex_spin_exit(&sc->sc_intr_lock);
 	}
 	return true;
 }

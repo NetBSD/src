@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_ibcs2.8,v 1.5 2001/09/05 23:47:15 wiz Exp $
+.\"	$NetBSD: compat_ibcs2.8,v 1.5.58.1 2012/04/17 00:05:48 yamt Exp $
 .\"
 .\" Copyright (c) 1998 Scott Bartram
 .\" Copyright (c) 1995 Frank van der Linden
@@ -56,7 +56,7 @@ iBCS2 supports COFF, ELF, and x.out (XENIX) binary formats.
 Binaries from SCO OpenServer (version 5.x) are the only ELF binaries
 that have been tested.
 Most programs should work, but not ones that use or depend on:
-.sp
+.Pp
 .Bl -item -compact -offset indent
 .It
 kernel internal data structures
@@ -67,19 +67,21 @@ local X displays (uses a STREAMS pipe)
 .It
 virtual 8086 mode
 .El
-.sp
+.Pp
 The iBCS2 compatibility feature is active for kernels compiled with
 the
 .Dv COMPAT_IBCS2
-option enabled.  If support for iBCS2 ELF executables is desired,
-the
+option enabled.
+If support for iBCS2 ELF executables is desired, the
 .Dv EXEC_ELF32
 option should be enabled in addition to
 .Dv COMPAT_IBCS2 .
 .Pp
 Many COFF-format programs and most ELF-format programs are dynamically
-linked. This means that you will also need the shared libraries that
-the program depends on.  Also, you will need to create a
+linked.
+This means that you will also need the shared libraries that
+the program depends on.
+Also, you will need to create a
 .Dq shadow root
 directory for iBCS2 binaries on your
 .Nx
@@ -98,7 +100,8 @@ will first try to open
 and if that does not exist open the
 .Sq real
 .Pa /etc/passwd
-file. It is recommended that you install iBCS2 packages
+file.
+It is recommended that you install iBCS2 packages
 that include configuration files, etc. under
 .Pa /emul/ibcs2 ,
 to avoid naming conflicts with possible
@@ -122,28 +125,26 @@ will need to be root on your
 .Nx
 system to do the necessary
 installation steps).
-.Pp
 .Bl -tag -width "COFF binaries"
 .It COFF binaries
 You can simply copy all of the available shared libraries since they
-are fairly small in size. The COFF shared libraries are typically
+are fairly small in size.
+The COFF shared libraries are typically
 found in /shlib and can be obtained from the following sources:
-.sp
-.nf
+.Bd -literal
 SCO UNIX version 3.x (aka ODT)
 SCO UNIX version 5.x (aka OpenServer)
 SCO UnixWare
 Many versions of SVR4.2/x86
-.fi
-.sp
+.Ed
+.Pp
 After copying the shared libraries, you should have at least the
 following files on your system:
-.Pp
-.nf
+.Bd -literal
 .Pa /emul/ibcs2/shlib/libc_s
 .Pa /emul/ibcs2/shlib/libnsl_s
 .Pa /emul/ibcs2/shlib/protlib_s
-.fi
+.Ed
 .It ELF binaries
 You can simply copy all of the available shared libraries from the
 source system or distribution or use
@@ -152,17 +153,17 @@ to determine the libraries required by a specific binary.
 .Pp
 After copying the shared libraries, you should have at least the
 following files on your system:
-.Pp
-.nf
+.Bd -literal
 .Pa /emul/ibcs2/usr/lib/libc.so.1
 .Pa /emul/ibcs2/usr/lib/libcrypt.so
 .Pa /emul/ibcs2/usr/lib/libndbm.so
 .Pa /emul/ibcs2/usr/lib/libsocket.so.1
-.fi
+.Ed
 .Pp
 .El
 If you don't have access to a SCO system, you will need to get the
-extra files you need from a SCO distribution. As of January 1998, SCO
+extra files you need from a SCO distribution.
+As of January 1998, SCO
 sells a copy of SCO OpenServer (iBCS2) and/or SCO UnixWare (SVR4) for
 personal/non-commercial use for only the cost of shipping (about $20US).
 The distribution comes on an ISO9660-format CDROM which can be
@@ -170,10 +171,9 @@ mounted and used to copy the necessary files.
 .Pp
 Run the following script to copy the basic set of files from a SCO
 distribution directory mounted somewhere locally:
-.Pp
-.nf
+.Bd -literal
 /usr/share/examples/emul/ibcs2/ibcs2-setup [directory]
-.fi
+.Ed
 .Pp
 You should now be set up for SCO binaries which only need standard
 shared libs.

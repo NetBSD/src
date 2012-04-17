@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_detach.c,v 1.6 2011/05/24 12:33:22 joerg Exp $	*/
+/*	$NetBSD: mime_detach.c,v 1.6.4.1 2012/04/17 00:09:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_detach.c,v 1.6 2011/05/24 12:33:22 joerg Exp $");
+__RCSID("$NetBSD: mime_detach.c,v 1.6.4.1 2012/04/17 00:09:35 yamt Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -132,7 +132,7 @@ detach_open_core(char *fname, const char *partstr)
 	if (detach_ctl.ask && fd == -1 && errno == EEXIST) {
 		char *p;
  start:
-		(void)sasprintf(&p, "%-7s overwrite: Always/Never/once/next/rename (ANonr)[n]? ",
+		(void)sasprintf(&p, "%-7s overwrite %s: Always/Never/once/next/rename (ANonr)[n]? ",
 		    partstr, fname);
 		p = my_gets(&elm.string, p, NULL);
 		if (p == NULL)

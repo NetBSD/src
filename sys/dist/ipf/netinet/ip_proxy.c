@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.19 2009/08/19 08:36:11 darrenr Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.19.12.1 2012/04/17 00:08:14 yamt Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
@@ -106,14 +106,15 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_proxy.c,v 1.19 2009/08/19 08:36:11 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_proxy.c,v 1.19.12.1 2012/04/17 00:08:14 yamt Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.62.2.23 2009/07/22 01:41:14 darrenr Exp";
 #endif
 #endif
 
 #ifdef INET
-static int appr_fixseqack __P((fr_info_t *, ip_t *, ap_session_t *, int ));
+static int
+appr_fixseqack(fr_info_t *, ip_t *, ap_session_t *, int );
 #endif
 
 #define	AP_SESS_SIZE	53
@@ -184,8 +185,8 @@ aproxy_t	ap_proxies[] = {
  * Dynamically add a new kernel proxy.  Ensure that it is unique in the
  * collection compiled in and dynamically added.
  */
-int appr_add(ap)
-aproxy_t *ap;
+int
+appr_add(aproxy_t *ap)
 {
 	aproxy_t *a;
 
@@ -221,8 +222,8 @@ aproxy_t *ap;
  * exists, and if it does and it has a control function then invoke that
  * control function.
  */
-int appr_ctl(ctl)
-ap_ctl_t *ctl;
+int
+appr_ctl(ap_ctl_t *ctl)
 {
 	aproxy_t *a;
 	int error;
@@ -253,8 +254,8 @@ ap_ctl_t *ctl;
  * If it is in use, return 1 (do not destroy NOW), not in use 0 or -1
  * if it cannot be matched.
  */
-int appr_del(ap)
-aproxy_t *ap;
+int
+appr_del(aproxy_t *ap)
 {
 	aproxy_t *a, **app;
 
@@ -279,10 +280,8 @@ aproxy_t *ap;
 /*
  * Return 1 if the packet is a good match against a proxy, else 0.
  */
-int appr_ok(fin, tcp, nat)
-fr_info_t *fin;
-tcphdr_t *tcp;
-ipnat_t *nat;
+int
+appr_ok(fr_info_t *fin, tcphdr_t *tcp, ipnat_t *nat)
 {
 	aproxy_t *apr = nat->in_apr;
 	u_short dport = nat->in_dport;
@@ -296,11 +295,8 @@ ipnat_t *nat;
 }
 
 
-int appr_ioctl(data, cmd, mode, ctx)
-void * data;
-ioctlcmd_t cmd;
-int mode;
-void *ctx;
+int
+appr_ioctl(void * data, ioctlcmd_t cmd, int mode, void *ctx)
 {
 	ap_ctl_t ctl;
 	void *ptr;
@@ -350,9 +346,8 @@ void *ctx;
  * If a proxy has a match function, call that to do extended packet
  * matching.
  */
-int appr_match(fin, nat)
-fr_info_t *fin;
-nat_t *nat;
+int
+appr_match(fr_info_t *fin, nat_t *nat)
 {
 	aproxy_t *apr;
 	ipnat_t *ipn;
@@ -396,9 +391,8 @@ nat_t *nat;
  * relevant details.  call the init function once complete, prior to
  * returning.
  */
-int appr_new(fin, nat)
-fr_info_t *fin;
-nat_t *nat;
+int
+appr_new(fr_info_t *fin, nat_t *nat)
 {
 	register ap_session_t *aps;
 	aproxy_t *apr;
@@ -462,9 +456,8 @@ nat_t *nat;
  * IPFILTER_CKSUM is defined because if it is, a failed check causes FI_BAD
  * to be set.
  */
-int appr_check(fin, nat)
-fr_info_t *fin;
-nat_t *nat;
+int
+appr_check(fr_info_t *fin, nat_t *nat)
 {
 #if SOLARIS && defined(_KERNEL) && (SOLARIS2 >= 6)
 # if defined(ICK_VALID)
@@ -626,9 +619,8 @@ nat_t *nat;
 /*
  * Search for an proxy by the protocol it is being used with and its name.
  */
-aproxy_t *appr_lookup(pr, name)
-u_int pr;
-char *name;
+aproxy_t *
+appr_lookup(u_int pr, char *name)
 {
 	aproxy_t *ap;
 
@@ -654,15 +646,15 @@ char *name;
 }
 
 
-void appr_free(ap)
-aproxy_t *ap;
+void
+appr_free(aproxy_t *ap)
 {
 	ap->apr_ref--;
 }
 
 
-void aps_free(aps)
-ap_session_t *aps;
+void
+aps_free(ap_session_t *aps)
 {
 	ap_session_t *a, **ap;
 	aproxy_t *apr;
@@ -690,11 +682,8 @@ ap_session_t *aps;
 /*
  * returns 2 if ack or seq number in TCP header is changed, returns 0 otherwise
  */
-static int appr_fixseqack(fin, ip, aps, inc)
-fr_info_t *fin;
-ip_t *ip;
-ap_session_t *aps;
-int inc;
+static int
+appr_fixseqack(fr_info_t *fin, ip_t *ip, ap_session_t *aps, int inc)
 {
 	int sel, ch = 0, out, nlen;
 	u_32_t seq1, seq2;
@@ -837,7 +826,8 @@ int inc;
  * Initialise hook for kernel application proxies.
  * Call the initialise routine for all the compiled in kernel proxies.
  */
-int appr_init()
+int
+appr_init(void)
 {
 	aproxy_t *ap;
 	int err = 0;
@@ -857,7 +847,8 @@ int appr_init()
  * Unload hook for kernel application proxies.
  * Call the finialise routine for all the compiled in kernel proxies.
  */
-void appr_unload()
+void
+appr_unload(void)
 {
 	aproxy_t *ap;
 

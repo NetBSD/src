@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.24 2011/05/18 01:59:39 christos Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.24.4.1 2012/04/17 00:05:25 yamt Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.24 2011/05/18 01:59:39 christos Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.24.4.1 2012/04/17 00:05:25 yamt Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -816,7 +816,7 @@ static void	wrtmessage(const char *p1, const char *p2, const char *p3,
 #ifdef MALLOC_STATS
 static void	malloc_printf(const char *format, ...);
 #endif
-static char	*umax2s(uintmax_t x, char *s);
+static char	*size_t2s(size_t x, char *s);
 static bool	base_pages_alloc(size_t minsize);
 static void	*base_alloc(size_t size);
 static chunk_node_t *base_chunk_node_alloc(void);
@@ -978,19 +978,19 @@ malloc_printf(const char *format, ...)
 
 /*
  * We don't want to depend on vsnprintf() for production builds, since that can
- * cause unnecessary bloat for static binaries.  umax2s() provides minimal
+ * cause unnecessary bloat for static binaries.  size_t2s() provides minimal
  * integer printing functionality, so that malloc_printf() use can be limited to
  * MALLOC_STATS code.
  */
 #define UMAX2S_BUFSIZE	21
 static char *
-umax2s(uintmax_t x, char *s)
+size_t2s(size_t x, char *s)
 {
 	unsigned i;
 
 	/* Make sure UMAX2S_BUFSIZE is large enough. */
 	/* LINTED */
-	assert(sizeof(uintmax_t) <= 8);
+	assert(sizeof(size_t) <= 8);
 
 	i = UMAX2S_BUFSIZE - 1;
 	s[i] = '\0';
@@ -3218,16 +3218,17 @@ malloc_print_stats(void)
 		    opt_xmalloc ? "X" : "x",
 		    opt_zero ? "Z\n" : "z\n");
 
-		_malloc_message("CPUs: ", umax2s(ncpus, s), "\n", "");
-		_malloc_message("Max arenas: ", umax2s(narenas, s), "\n", "");
-		_malloc_message("Pointer size: ", umax2s(sizeof(void *), s),
+		_malloc_message("CPUs: ", size_t2s(ncpus, s), "\n", "");
+		_malloc_message("Max arenas: ", size_t2s(narenas, s), "\n", "");
+		_malloc_message("Pointer size: ", size_t2s(sizeof(void *), s),
 		    "\n", "");
-		_malloc_message("Quantum size: ", umax2s(quantum, s), "\n", "");
-		_malloc_message("Max small size: ", umax2s(small_max, s), "\n",
+		_malloc_message("Quantum size: ", size_t2s(quantum, s), "\n", "");
+		_malloc_message("Max small size: ", size_t2s(small_max, s), "\n",
 		    "");
 
-		_malloc_message("Chunk size: ", umax2s(chunksize, s), "", "");
-		_malloc_message(" (2^", umax2s(opt_chunk_2pow, s), ")\n", "");
+		_malloc_message("Chunk size: ", size_t2s(chunksize, s), "", "");
+		_malloc_message(" (2^", size_t2s((size_t)opt_chunk_2pow, s),
+		    ")\n", "");
 
 #ifdef MALLOC_STATS
 		{

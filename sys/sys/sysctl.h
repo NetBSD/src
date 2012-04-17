@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.197 2011/10/21 02:07:07 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.197.2.1 2012/04/17 00:08:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,6 +45,7 @@
 #include <sys/ucred.h>
 #include <sys/ucontext.h>
 #include <sys/proc.h>
+#include <sys/mallocvar.h>
 #include <uvm/uvm_extern.h>
 
 
@@ -54,6 +55,10 @@
 #else
 #include <stddef.h>
 #include <stdbool.h>
+#endif
+
+#ifdef _KERNEL
+#include <sys/cprng.h>
 #endif
 
 /*
@@ -1207,6 +1212,8 @@ MALLOC_DECLARE(M_SYSCTLNODE);
 MALLOC_DECLARE(M_SYSCTLDATA);
 
 extern const u_int sysctl_lwpflagmap[];
+
+extern cprng_strong_t *sysctl_prng;
 
 #else	/* !_KERNEL */
 #include <sys/cdefs.h>

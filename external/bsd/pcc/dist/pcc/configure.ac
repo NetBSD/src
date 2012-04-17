@@ -70,6 +70,7 @@ case "$target_os" in
 	abi=elf
 	stabs=yes
 	case "$target_os" in
+	    *10.*) targosver=10 ;;
 	    *9.*) targosver=9 ;;
 	    *8.*) targosver=8 ;;
 	    *7.*) targosver=7 ;;
@@ -500,6 +501,7 @@ AC_CONFIG_FILES([Makefile
 		cc/cc/Makefile
 		cc/cpp/Makefile
 		cc/ccom/Makefile
+		cc/cxxcom/Makefile
 		cc/driver/Makefile
 		f77/Makefile
 		f77/f77/Makefile

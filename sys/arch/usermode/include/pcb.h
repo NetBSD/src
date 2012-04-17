@@ -1,4 +1,4 @@
-/* $NetBSD: pcb.h,v 1.12 2011/09/08 19:37:01 reinoud Exp $ */
+/* $NetBSD: pcb.h,v 1.12.2.1 2012/04/17 00:06:59 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,23 +31,20 @@
 
 #include <sys/cdefs.h>
 #include <sys/ucontext.h>
+#include <sys/queue.h>
 
-/*
- * Trap frame.  Pushed onto the kernel stack on a trap (synchronous exception).
- * XXX move to frame.h?
- */
 
-//typedef ucontext_t trapframe;
-
+#define TRAPSTACKSIZE (USPACE -2*sizeof(ucontext_t) - 3*sizeof(register_t))
 struct pcb {
-	ucontext_t	 pcb_ucp;		/* lwp switchframe */
-	ucontext_t	 pcb_userland_ucp;	/* userland switchframe */
-	ucontext_t	 pcb_syscall_ucp;	/* to switch to for syscall */
+	ucontext_t pcb_ucp;		/* switchframe */
+	ucontext_t pcb_userret_ucp;
 
-	bool		 pcb_needfree;
-	void *		 pcb_onfault;		/* on fault handler */
+	uint8_t *sys_stack_top;		/* points at free point in sys_stack */
+	uint8_t	 sys_stack[TRAPSTACKSIZE];
 
-	int		 pcb_errno;		/* save/restore place */
+	void	*pcb_onfault;		/* on fault handler */
+
+	int	 pcb_errno;		/* save/restore place */
 };
 
 #endif /* !_ARCH_USERMODE_INCLUDE_PCB_H */

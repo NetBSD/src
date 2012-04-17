@@ -1,4 +1,4 @@
-/* $NetBSD: bus_funcs.h,v 1.1 2011/07/01 17:09:58 dyoung Exp $ */
+/* $NetBSD: bus_funcs.h,v 1.1.2.1 2012/04/17 00:05:55 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -150,110 +150,110 @@ do {									\
 /*
  * Bus read (single) operations.
  */
-#define	bus_space_read_1(t, h, o)	__abs_rs(1,u_int8_t,(t),(h),(o))
-#define	bus_space_read_2(t, h, o)	__abs_rs(2,u_int16_t,(t),(h),(o))
-#define	bus_space_read_4(t, h, o)	__abs_rs(4,u_int32_t,(t),(h),(o))
-#define	bus_space_read_8(t, h, o)	__abs_rs(8,u_int64_t,(t),(h),(o))
+#define	bus_space_read_1(t, h, o)	__abs_rs(1,uint8_t,(t),(h),(o))
+#define	bus_space_read_2(t, h, o)	__abs_rs(2,uint16_t,(t),(h),(o))
+#define	bus_space_read_4(t, h, o)	__abs_rs(4,uint32_t,(t),(h),(o))
+#define	bus_space_read_8(t, h, o)	__abs_rs(8,uint64_t,(t),(h),(o))
 
 
 /*
  * Bus read multiple operations.
  */
 #define	bus_space_read_multi_1(t, h, o, a, c)				\
-	__abs_nonsingle(rm,1,u_int8_t,(t),(h),(o),(a),(c))
+	__abs_nonsingle(rm,1,uint8_t,(t),(h),(o),(a),(c))
 #define	bus_space_read_multi_2(t, h, o, a, c)				\
-	__abs_nonsingle(rm,2,u_int16_t,(t),(h),(o),(a),(c))
+	__abs_nonsingle(rm,2,uint16_t,(t),(h),(o),(a),(c))
 #define	bus_space_read_multi_4(t, h, o, a, c)				\
-	__abs_nonsingle(rm,4,u_int32_t,(t),(h),(o),(a),(c))
+	__abs_nonsingle(rm,4,uint32_t,(t),(h),(o),(a),(c))
 #define	bus_space_read_multi_8(t, h, o, a, c)				\
-	__abs_nonsingle(rm,8,u_int64_t,(t),(h),(o),(a),(c))
+	__abs_nonsingle(rm,8,uint64_t,(t),(h),(o),(a),(c))
 
 
 /*
  * Bus read region operations.
  */
 #define	bus_space_read_region_1(t, h, o, a, c)				\
-	__abs_nonsingle(rr,1,u_int8_t,(t),(h),(o),(a),(c))
+	__abs_nonsingle(rr,1,uint8_t,(t),(h),(o),(a),(c))
 #define	bus_space_read_region_2(t, h, o, a, c)				\
-	__abs_nonsingle(rr,2,u_int16_t,(t),(h),(o),(a),(c))
+	__abs_nonsingle(rr,2,uint16_t,(t),(h),(o),(a),(c))
 #define	bus_space_read_region_4(t, h, o, a, c)				\
-	__abs_nonsingle(rr,4,u_int32_t,(t),(h),(o),(a),(c))
+	__abs_nonsingle(rr,4,uint32_t,(t),(h),(o),(a),(c))
 #define	bus_space_read_region_8(t, h, o, a, c)				\
-	__abs_nonsingle(rr,8,u_int64_t,(t),(h),(o),(a),(c))
+	__abs_nonsingle(rr,8,uint64_t,(t),(h),(o),(a),(c))
 
 
 /*
  * Bus write (single) operations.
  */
-#define	bus_space_write_1(t, h, o, v)	__abs_ws(1,u_int8_t,(t),(h),(o),(v))
-#define	bus_space_write_2(t, h, o, v)	__abs_ws(2,u_int16_t,(t),(h),(o),(v))
-#define	bus_space_write_4(t, h, o, v)	__abs_ws(4,u_int32_t,(t),(h),(o),(v))
-#define	bus_space_write_8(t, h, o, v)	__abs_ws(8,u_int64_t,(t),(h),(o),(v))
+#define	bus_space_write_1(t, h, o, v)	__abs_ws(1,uint8_t,(t),(h),(o),(v))
+#define	bus_space_write_2(t, h, o, v)	__abs_ws(2,uint16_t,(t),(h),(o),(v))
+#define	bus_space_write_4(t, h, o, v)	__abs_ws(4,uint32_t,(t),(h),(o),(v))
+#define	bus_space_write_8(t, h, o, v)	__abs_ws(8,uint64_t,(t),(h),(o),(v))
 
 
 /*
  * Bus write multiple operations.
  */
 #define	bus_space_write_multi_1(t, h, o, a, c)				\
-	__abs_nonsingle(wm,1,u_int8_t,(t),(h),(o),(a),(c))
+	__abs_nonsingle(wm,1,uint8_t,(t),(h),(o),(a),(c))
 #define	bus_space_write_multi_2(t, h, o, a, c)				\
-	__abs_nonsingle(wm,2,u_int16_t,(t),(h),(o),(a),(c))
+	__abs_nonsingle(wm,2,uint16_t,(t),(h),(o),(a),(c))
 #define	bus_space_write_multi_4(t, h, o, a, c)				\
-	__abs_nonsingle(wm,4,u_int32_t,(t),(h),(o),(a),(c))
+	__abs_nonsingle(wm,4,uint32_t,(t),(h),(o),(a),(c))
 #define	bus_space_write_multi_8(t, h, o, a, c)				\
-	__abs_nonsingle(wm,8,u_int64_t,(t),(h),(o),(a),(c))
+	__abs_nonsingle(wm,8,uint64_t,(t),(h),(o),(a),(c))
 
 
 /*
  * Bus write region operations.
  */
 #define	bus_space_write_region_1(t, h, o, a, c)				\
-	__abs_nonsingle(wr,1,u_int8_t,(t),(h),(o),(a),(c))
+	__abs_nonsingle(wr,1,uint8_t,(t),(h),(o),(a),(c))
 #define	bus_space_write_region_2(t, h, o, a, c)				\
-	__abs_nonsingle(wr,2,u_int16_t,(t),(h),(o),(a),(c))
+	__abs_nonsingle(wr,2,uint16_t,(t),(h),(o),(a),(c))
 #define	bus_space_write_region_4(t, h, o, a, c)				\
-	__abs_nonsingle(wr,4,u_int32_t,(t),(h),(o),(a),(c))
+	__abs_nonsingle(wr,4,uint32_t,(t),(h),(o),(a),(c))
 #define	bus_space_write_region_8(t, h, o, a, c)				\
-	__abs_nonsingle(wr,8,u_int64_t,(t),(h),(o),(a),(c))
+	__abs_nonsingle(wr,8,uint64_t,(t),(h),(o),(a),(c))
 
 
 /*
  * Set multiple operations.
  */
 #define	bus_space_set_multi_1(t, h, o, v, c)				\
-	__abs_set(sm,1,u_int8_t,(t),(h),(o),(v),(c))
+	__abs_set(sm,1,uint8_t,(t),(h),(o),(v),(c))
 #define	bus_space_set_multi_2(t, h, o, v, c)				\
-	__abs_set(sm,2,u_int16_t,(t),(h),(o),(v),(c))
+	__abs_set(sm,2,uint16_t,(t),(h),(o),(v),(c))
 #define	bus_space_set_multi_4(t, h, o, v, c)				\
-	__abs_set(sm,4,u_int32_t,(t),(h),(o),(v),(c))
+	__abs_set(sm,4,uint32_t,(t),(h),(o),(v),(c))
 #define	bus_space_set_multi_8(t, h, o, v, c)				\
-	__abs_set(sm,8,u_int64_t,(t),(h),(o),(v),(c))
+	__abs_set(sm,8,uint64_t,(t),(h),(o),(v),(c))
 
 
 /*
  * Set region operations.
  */
 #define	bus_space_set_region_1(t, h, o, v, c)				\
-	__abs_set(sr,1,u_int8_t,(t),(h),(o),(v),(c))
+	__abs_set(sr,1,uint8_t,(t),(h),(o),(v),(c))
 #define	bus_space_set_region_2(t, h, o, v, c)				\
-	__abs_set(sr,2,u_int16_t,(t),(h),(o),(v),(c))
+	__abs_set(sr,2,uint16_t,(t),(h),(o),(v),(c))
 #define	bus_space_set_region_4(t, h, o, v, c)				\
-	__abs_set(sr,4,u_int32_t,(t),(h),(o),(v),(c))
+	__abs_set(sr,4,uint32_t,(t),(h),(o),(v),(c))
 #define	bus_space_set_region_8(t, h, o, v, c)				\
-	__abs_set(sr,8,u_int64_t,(t),(h),(o),(v),(c))
+	__abs_set(sr,8,uint64_t,(t),(h),(o),(v),(c))
 
 
 /*
  * Copy region operations.
  */
 #define	bus_space_copy_region_1(t, h1, o1, h2, o2, c)			\
-	__abs_copy(1, u_int8_t, (t), (h1), (o1), (h2), (o2), (c))
+	__abs_copy(1, uint8_t, (t), (h1), (o1), (h2), (o2), (c))
 #define	bus_space_copy_region_2(t, h1, o1, h2, o2, c)			\
-	__abs_copy(2, u_int16_t, (t), (h1), (o1), (h2), (o2), (c))
+	__abs_copy(2, uint16_t, (t), (h1), (o1), (h2), (o2), (c))
 #define	bus_space_copy_region_4(t, h1, o1, h2, o2, c)			\
-	__abs_copy(4, u_int32_t, (t), (h1), (o1), (h2), (o2), (c))
+	__abs_copy(4, uint32_t, (t), (h1), (o1), (h2), (o2), (c))
 #define	bus_space_copy_region_8(t, h1, o1, h2, o2, c)			\
-	__abs_copy(8, u_int64_t, (t), (h1), (o1), (h2), (o2), (c))
+	__abs_copy(8, uint64_t, (t), (h1), (o1), (h2), (o2), (c))
 
 /*
  * Bus stream operations--defined in terms of non-stream counterparts

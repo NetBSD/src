@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sem.c,v 1.8 2008/11/14 15:49:20 ad Exp $	*/
+/*	$NetBSD: netbsd32_sem.c,v 1.8.18.1 2012/04/17 00:07:21 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2006 The NetBSD Foundation.
@@ -27,11 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sem.c,v 1.8 2008/11/14 15:49:20 ad Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_posix.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sem.c,v 1.8.18.1 2012/04/17 00:07:21 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -130,10 +126,8 @@ netbsd32__ksem_wait(struct lwp *l, const struct netbsd32__ksem_wait_args *uap, r
 	/* {
 		syscallarg(netbsd32_intptr_t) id;
 	} */
-	struct sys__ksem_wait_args ua;
 
-	NETBSD32TOX_UAP(id, intptr_t);
-	return sys__ksem_wait(l, &ua, retval);
+	return do_ksem_wait(l, SCARG(uap, id), false, NULL);
 }
 
 int
@@ -142,10 +136,37 @@ netbsd32__ksem_trywait(struct lwp *l, const struct netbsd32__ksem_trywait_args *
 	/* {
 		syscallarg(netbsd32_intptr_t) id;
 	} */
-	struct sys__ksem_trywait_args ua;
 
-	NETBSD32TOX_UAP(id, intptr_t);
-	return sys__ksem_trywait(l, &ua, retval);
+	return do_ksem_wait(l, SCARG(uap, id), true, NULL);
+}
+
+int
+netbsd32__ksem_timedwait(struct lwp *l, const struct netbsd32__ksem_timedwait_args *uap,
+    register_t *retval)
+{
+	/* {
+		intptr_t id;
+		const netbsd32_timespecp_t abstime;
+	} */
+	struct netbsd32_timespec ts32;
+	struct timespec ts;
+	intptr_t id;
+	int error;
+
+	id = SCARG(uap, id);
+
+	error = copyin(SCARG_P32(uap, abstime), &ts32, sizeof(ts32));
+	if (error != 0)
+		return error;
+	netbsd32_to_timespec(&ts32, &ts);
+
+	if (ts.tv_sec < 0 || ts.tv_nsec < 0 || ts.tv_nsec >= 1000000000)
+		return EINVAL;
+
+	error = do_ksem_wait(l, id, false, &ts);
+	if (error == EWOULDBLOCK)
+		error = ETIMEDOUT;
+	return error;
 }
 
 int

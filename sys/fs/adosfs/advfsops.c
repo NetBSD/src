@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.62 2011/06/12 03:35:52 rmind Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.62.2.1 2012/04/17 00:08:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.62 2011/06/12 03:35:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.62.2.1 2012/04/17 00:08:17 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -137,7 +137,8 @@ adosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	if ((mp->mnt_flag & MNT_RDONLY) == 0)
 		accessmode |= VWRITE;
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = genfs_can_mount(devvp, accessmode, l->l_cred);
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
+	    KAUTH_REQ_SYSTEM_MOUNT_DEVICE, mp, devvp, KAUTH_ARG(accessmode));
 	VOP_UNLOCK(devvp);
 	if (error) {
 		vrele(devvp);
@@ -176,9 +177,13 @@ adosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	/*
 	 * open blkdev and read root block
 	 */
-	if ((error = VOP_OPEN(devvp, FREAD, NOCRED)) != 0)
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+	if ((error = VOP_OPEN(devvp, FREAD, NOCRED)) != 0) {
+		VOP_UNLOCK(devvp);
 		return (error);
+	}
 	error = VOP_IOCTL(devvp, DIOCGDINFO, &dl, FREAD, NOCRED);
+	VOP_UNLOCK(devvp);
 	if (error)
 		goto fail;
 

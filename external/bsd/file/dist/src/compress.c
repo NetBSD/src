@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.4 2011/09/16 21:06:26 christos Exp $	*/
+/*	$NetBSD: compress.c,v 1.4.2.1 2012/04/17 00:03:09 yamt Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -38,9 +38,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: compress.c,v 1.67 2011/09/01 12:12:37 christos Exp $")
+FILE_RCSID("@(#)$File: compress.c,v 1.68 2011/12/08 12:38:24 rrt Exp $")
 #else
-__RCSID("$NetBSD: compress.c,v 1.4 2011/09/16 21:06:26 christos Exp $");
+__RCSID("$NetBSD: compress.c,v 1.4.2.1 2012/04/17 00:03:09 yamt Exp $");
 #endif
 #endif
 
@@ -140,8 +140,7 @@ file_zmagic(struct magic_set *ms, int fd, const char *name,
 		}
 	}
 error:
-	if (newbuf)
-		free(newbuf);
+	free(newbuf);
 	ms->flags |= MAGIC_COMPRESS;
 	return rv;
 }

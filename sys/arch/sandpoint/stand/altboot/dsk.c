@@ -1,4 +1,4 @@
-/* $NetBSD: dsk.c,v 1.10 2011/11/01 16:32:57 phx Exp $ */
+/* $NetBSD: dsk.c,v 1.10.2.1 2012/04/17 00:06:50 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@ static void drive_ident(struct disk *, char *);
 static char *mkident(char *, int);
 static void set_xfermode(struct dkdev_ata *, int);
 static void decode_dlabel(struct disk *, char *);
+static struct disklabel *search_dmagic(char *);
 static int lba_read(struct disk *, int64_t, int, void *);
 static void issue48(struct dvata_chan *, int64_t, int);
 static void issue28(struct dvata_chan *, int64_t, int);
@@ -186,27 +187,34 @@ perform_atareset(struct dkdev_ata *l, int n)
 	delay(10);
 	CSR_WRITE_1(chan->ctl, ATA_DREQ);
 
-	return spinwait_unbusy(l, n, 150, NULL);
+	return spinwait_unbusy(l, n, 1000, NULL);
+}
+
+/* clear idle and standby timers to spin up the drive */
+void
+wakeup_drive(struct dkdev_ata *l, int n)
+{
+	struct dvata_chan *chan = &l->chan[n];
+
+	CSR_WRITE_1(chan->cmd + _NSECT, 0);
+	CSR_WRITE_1(chan->cmd + _CMD, ATA_CMD_IDLE);
+	(void)CSR_READ_1(chan->alt);
+	delay(10 * 1000);
+	CSR_WRITE_1(chan->cmd + _NSECT, 0);
+	CSR_WRITE_1(chan->cmd + _CMD, ATA_CMD_STANDBY);
+	(void)CSR_READ_1(chan->alt);
+	delay(10 * 1000);
 }
 
 int
-satapresense(struct dkdev_ata *l, int n)
+atachkpwr(struct dkdev_ata *l, int n)
 {
-#define VND_CH(n) (((n&02)<<8)+((n&01)<<7))
-#define VND_SC(n) (0x100+VND_CH(n))
-#define VND_SS(n) (0x104+VND_CH(n))
+	struct dvata_chan *chan = &l->chan[n];
 
-	uint32_t sc = l->bar[5] + VND_SC(n);
-	uint32_t ss = l->bar[5] + VND_SS(n);
-	unsigned val;
-
-	val = (00 << 4) | (03 << 8);	/* any speed, no pwrmgt */
-	CSR_WRITE_4(sc, val | 01);	/* perform init */
-	delay(50 * 1000);
-	CSR_WRITE_4(sc, val);
-	delay(50 * 1000);	
-	val = CSR_READ_4(ss);		/* has completed */
-	return ((val & 03) == 03);	/* active drive found */
+	CSR_WRITE_1(chan->cmd + _CMD, ATA_CMD_CHKPWR);
+	(void)CSR_READ_1(chan->alt);
+	delay(10 * 1000);
+	return CSR_READ_1(chan->cmd + _NSECT);
 }
 
 static int
@@ -299,7 +307,6 @@ decode_dlabel(struct disk *d, char *iobuf)
         struct mbr_partition *mp, *bsdp;
 	struct disklabel *dlp;
 	struct partition *pp;
-	char *dp;
 	int i, first, rf_offset;
 
 	bsdp = NULL;
@@ -317,39 +324,26 @@ decode_dlabel(struct disk *d, char *iobuf)
 	rf_offset = 0;
 	first = (bsdp) ? bswap32(bsdp->mbrp_start) : 0;
 	(*d->lba_read)(d, first + LABELSECTOR, 1, iobuf);
-	dp = iobuf /* + LABELOFFSET */;
-	for (i = 0; i < 512 - sizeof(struct disklabel); i++, dp += 4) {
-		dlp = (struct disklabel *)dp;
-		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC) {
-			if (dlp->d_partitions[0].p_fstype == FS_RAID) {
-				printf("%s%c: raid\n", d->xname, i + 'a');
-				snprintf(d->xname, sizeof(d->xname), "raid.");
-				rf_offset = dlp->d_partitions[0].p_offset +
-				    RF_PROTECTED_SECTORS;
-				(*d->lba_read)(d, rf_offset + LABELSECTOR, 1,
-				    iobuf);
-				dp = iobuf /* + LABELOFFSET */;
-				for (i = 0; i < 512 - sizeof(struct disklabel); i++, dp += 4) {
-					dlp = (struct disklabel *)dp;
-					if (dlp->d_magic == DISKMAGIC &&
-					    dlp->d_magic2 == DISKMAGIC)
-						goto found;
-				}
-			} else	/* Not RAID */
-				goto found;
-		}
+	dlp = search_dmagic(iobuf);
+	if (dlp == NULL)
+		goto notfound;
+	if (dlp->d_partitions[0].p_fstype == FS_RAID) {
+		printf("%s%c: raid\n", d->xname, 0 + 'a');
+		snprintf(d->xname, sizeof(d->xname), "raid.");
+		rf_offset
+		    = dlp->d_partitions[0].p_offset + RF_PROTECTED_SECTORS;
+		(*d->lba_read)(d, rf_offset + LABELSECTOR, 1, iobuf);
+		dlp = search_dmagic(iobuf);
+		if (dlp == NULL)
+			goto notfound;
 	}
-	d->dlabel = NULL;
-	printf("%s: no disklabel\n", d->xname);
-	return;
-  found:
 	for (i = 0; i < dlp->d_npartitions; i += 1) {
 		const char *type;
 		pp = &dlp->d_partitions[i];
 		pp->p_offset += rf_offset;
 		type = NULL;
 		switch (pp->p_fstype) {
-		case FS_SWAP: /* swap */
+		case FS_SWAP:
 			type = "swap";
 			break;
 		case FS_BSDFFS:
@@ -365,6 +359,25 @@ decode_dlabel(struct disk *d, char *iobuf)
 	}
 	d->dlabel = allocaligned(sizeof(struct disklabel), 4);
 	memcpy(d->dlabel, dlp, sizeof(struct disklabel));
+	return;
+  notfound:
+	d->dlabel = NULL;
+	printf("%s: no disklabel\n", d->xname);
+	return;
+}
+
+struct disklabel *
+search_dmagic(char *dp)
+{
+	int i;
+	struct disklabel *dlp;
+
+	for (i = 0; i < 512 - sizeof(struct disklabel); i += 4, dp += 4) {
+		dlp = (struct disklabel *)dp;
+		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC)
+			return dlp;
+	}
+	return NULL;
 }
 
 static void
@@ -498,7 +511,7 @@ dsk_open(struct open_file *f, ...)
 
 	/* build btinfo to identify disk device */
 	snprintf(bi_rdev.devname, sizeof(bi_rdev.devname), "wd");
-	bi_rdev.cookie = d->unittag; /* disk unit number */
+	bi_rdev.cookie = (d->unittag << 8) | d->part;
 	return 0;
 }
 

@@ -1,4 +1,389 @@
 ---
+(4.2.6p5) 2011/12/24 Released by Harlan Stenn <stenn@ntp.org>
+(4.2.6p5) 2011/12/24 Released by Harlan Stenn <stenn@ntp.org>
+
+---
+(4.2.6p5-RC3) 2011/12/08 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 2082] 3-char refid sent by ntpd 4.2.6p5-RC2 ends with extra dot.
+* [Bug 2085] clock_update() sys_rootdisp calculation omits root delay.
+* [Bug 2086] get_systime() should not offset by sys_residual.
+* [Bug 2087] sys_jitter calculation overweights sys.peer jitter.
+* Ensure NULL peer->dstadr is not accessed in orphan parent selection.
+
+---
+(4.2.6p5-RC2) 2011/11/30 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 2050] Orphan mode stratum counting to infinity.
+* [Bug 2059] optional billboard column "server" does not honor -n.
+* [Bug 2066] ntpq lopeers ipv6 "local" column overrun.
+* [Bug 2068] ntpd sends nonprintable stratum 16 refid to ntpq.
+* [Bug 2069] broadcastclient, multicastclient spin up duplicate
+  ephemeral associations without broadcastdelay.
+* [Bug 2072] Orphan parent selection metric needs ntohl().
+* Exclude not-yet-determined sys_refid from use in loopback TEST12
+  (from David Mills).
+* Never send KoD rate limiting response to MODE_SERVER response.
+
+---
+(4.2.6p5-RC1) 2011/10/18 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 2034] Listening address configuration with prefix misapplied.
+
+---
+(4.2.6p4) 2011/09/22 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1984] ntp/libisc fails to compile on OS X 10.7 (Lion).
+* [Bug 1985] "logconfig =allall" rejected.
+* [Bug 2001] ntpdc timerstats reports overruns as handled.
+* [Bug 2003] libntpq ntpq_read_assoc_peervars() broken.
+* [Backward Incompatible] sntp: -l/--filelog -> -l/--logfile, to be
+  consistent with ntpd.
+* libopts/file.c fix from Bruce Korb (arg-type=file).
+
+---
+(4.2.6p4-RC2) 2011/08/04 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1608] Parse Refclock driver should honor trusttime.
+* [Bug 1961] html2man update: distribute ntp-wait.html.
+* [Bug 1970] UNLINK_EXPR_SLIST() causes crash if list is empty.
+* [Bug 1972] checking for struct rtattr fails.
+* [Bug 1975] libntp/mktime.c won't work with 64-bit time_t
+* [Bug 1978] [Bug 1134] fix in 4.2.6p4-RC1 doesn't build on older Linux.
+* Backport several fixes for Coverity warnings from ntp-dev.
+* Backport if_nametoindex() check for hpux.
+
+---
+(4.2.6p4-RC1) 2011/07/10 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1134] ntpd fails binding to tentative IPv6 addresses.
+* [Bug 1790] Update config.guess and config.sub to detect AIX6.
+* [Bug 1961] html2man needs an update.
+* Update the NEWS file.
+
+---
+(4.2.6p4-beta2) 2011/05/25 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1695] ntpdate takes longer than necessary.
+* [Bug 1832] ntpdate doesn't allow timeout > 2s.
+* [Bug 1933] WWVB/Spectracom driver timestamps LFs, not CRs.
+* Backport utility routines from ntp-dev: mprintf(), emalloc_zero().
+
+---
+(4.2.6p4-beta1) 2011/05/16 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1554] peer may stay selected as system peer after becoming
+  unreachable.
+* [Bug 1921] LOCAL, ACTS drivers with "prefer" excluded from initial
+  candidate list.
+* [Bug 1923] orphan parent favored over LOCAL, ACTS drivers.
+* [Bug 1924] Billboard tally codes sometimes do not match operation,
+  variables.
+* Enable tickadj-like taming of wildly off-spec Windows clock using
+  NTPD_TICKADJ_PPM env. var. specifying baseline slew.
+* Upgrade to AutoGen 5.11.9 (and require it).
+* Upgrade to libopts 35.0.10 from AutoGen 5.11.9pre8.
+
+---
+(4.2.6p3) 2011/01/03 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1764] Palisade driver doesn't build on Linux
+* Create and use scripts/check--help when generating .texi files.
+* Update bk triggers for the bk-5 release.
+* Update genCommitLog for the bk-5 release.
+* Update the copyright year.
+
+---
+(4.2.6p3-RC12) 2010/12/25 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1458] Can not compile NTP on FreeBSD 4.7.
+* [Bug 1510] Add modes 20/21 for driver 8 to support RAWDCF @ 75 baud.
+* [Bug 1618] Unreachable code in jjy_start(). (backport from ntp-dev)
+* [Bug 1719] ntp-keygen -V crash. (backport)
+* [Bug 1740] ntpdc treats many counters as signed. (backport)
+* [Bug 1741] Enable multicast reception on each address (Windows).
+* [Bug 1742] Fix a typo in an error message in the "build" script.
+* [Bug 1743] Display timezone offset when showing time for sntp in the
+  local timezone.
+* [Bug 1751] Support for Atari FreeMiNT OS.
+* [Bug 1754] --version output should be more verbose.
+* [Bug 1757] oncore snprintf("%m") doesn't expand %m.
+* [Bug 1758] setsockopt IPV6_MULTICAST_IF with wrong ifindex.
+* [Bug 1760] ntpd Windows interpolation cannot be disabled.
+* [Bug 1762] manycastclient solicitation responses interfere.
+* Upgrade to libopts 34.0.9 from AutoGen 5.11.6pre7.
+* Relax minimum Automake version to 1.10 with updated libopts.m4.
+* Suppress ntp-keygen OpenSSL version display for --help, --version,
+  display both build and runtime OpenSSL versions when they differ.
+* Clean up m4 quoting in configure.ac, *.m4 files, resolving
+  intermittent AC_LANG_PROGRAM possibly undefined errors.
+* Clean up the SNTP documentation.
+* Other manycastclient repairs:
+  Separate handling of scope ID embedded in many in6_addr from ifindex
+  used for IPv6 multicasting ioctls.
+  Add INT_PRIVACY endpt bit flag for IPv6 RFC 4941 privacy addresses.
+  Enable outbound multicast from only one address per interface in the
+  same subnet, and in that case prefer embedded MAC address modified
+  EUI-64 IPv6 addresses first, then static, and last RFC 4941 privacy
+  addresses.
+  Use setsockopt(IP[V6]_MULTICAST_IF) before each send to multicast to
+  select the local source address, using the correct socket is not
+  enough.
+
+---
+(4.2.6p3-RC11) 2010/11/28 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1725] ntpd sends multicast from only one address.
+* [Bug 1728] In ntp_openssl.m4, don't add -I/usr/include or -L/usr/lib
+  to CPPFLAGS or LDFLAGS.
+* [Bug 1733] IRIX doesn't have 'head' (affects scripts/checkChangeLog).
+* Remove log_msg() and debug_msg() from sntp in favor of msyslog().
+* Use a single copy of libopts/, in sntp/.
+* Upgrade libopts to 33.3.8.
+* Bump minimum Automake version to 1.11, required for AM_COND_IF
+  use in LIBOPTS_CHECK.
+* Improvements to the 'build' script.
+
+---
+(4.2.6p3-RC10) 2010/11/14 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1681] More sntp logging cleanup.
+* [Bug 1683] Non-localhost on loopback exempted from nic rules.
+
+---
+(4.2.6p3-RC9) 2010/11/10 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1574] sntp:set_time doesn't set tv_usec correctly.
+* [Bug 1681] sntp logging cleanup.
+* [Bug 1683] Interface binding does not seem to work as intended.
+* [Bug 1691] Use first NMEA sentence each second.
+* [Bug 1692] packageinfo.sh needs to be "sourced" using ./ .
+* [Bug 1709] ntpdate ignores replies with equal receive and transmit
+  timestamps.
+* Backport sntp from -dev
+
+---
+(4.2.6p3-RC8) 2010/10/29 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1685] NMEA driver mode byte confusion.
+* First cut at using scripts/checkChangeLog.
+
+---
+(4.2.6p3-RC7) 2010/10/25 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1676] NMEA: $GPGLL did not work after fix for Bug 1571.
+* Added scripts/checkChangeLog.
+
+---
+(4.2.6p3-RC6) 2010/10/24 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1571] NMEA does not relate data to PPS edge.
+* [Bug 1572] NMEA time adjustment for GPZDG buggy.
+* [Bug 1675] Prohibit includefile remote config.
+
+---
+(4.2.6p3-RC5) 2010/10/22 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1649] Require NMEA checksum if $GPRMC or previously seen.
+* [Bug 1669] NTP 4.2.6p2 fails to compile on IBM AIX 5.3.
+
+---
+(4.2.6p3-RC4) 2010/10/16 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1584] wrong SNMP type for precision, resolution.
+* [Bug 1659] Need CLOCK_TRUETIME not CLOCK_TRUE.
+* [Bug 1665] is_anycast() u_int32_t should be u_int32.
+* ntpsnmpd, libntpq warning cleanup.
+
+---
+(4.2.6p3-RC3) 2010/10/14 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 750] Non-existing device causes coredump with RIPE-NCC driver.
+* [Bug 1080] ntpd on ipv6 routers very chatty.
+* [Bug 1567] Support Arbiter 1093C Satellite Clock on Windows.
+* [Bug 1581] printf format string mismatch leftover.
+* [Bug 1584] ntpsnmpd OID must be mib-2.197.
+* [Bug 1643] Range-check the decoding of the RIPE-NCC status codes.
+* [Bug 1644] cvo.sh should use lsb_release to identify linux distros.
+* [Bug 1659] Support Truetime Satellite Clocks on Windows.
+* [Bug 1660] On some systems, test is in /usr/bin, not /bin.
+* [Bug 1661] Re-indent refclock_ripencc.c.
+
+---
+(4.2.6p3-RC2) 2010/09/25 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1635] "filegen ... enable" is not default.
+* [Bug 1636] yyparse() segfault after denied filegen remote config.
+
+---
+(4.2.6p3-RC1) 2010/09/18 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1344] ntpd on Windows exits without logging cause.
+
+---
+(4.2.6p3-beta1) 2010/09/11 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1573] Miscalculation of offset in sntp.
+* [Bug 1595] empty last line in key file causes duplicate key to be added
+* [Bug 1597] packet processing ignores RATE KoD packets, because of
+  a bug in string comparison.
+* [Bug 1581] ntp_intres.c size_t printf format string mismatch.
+
+---
+(4.2.6p2) 2010/07/09 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1581] size_t printf format string mismatches, IRIG string buffers
+  undersized.  Mostly backported from earlier ntp-dev fixes by Juergen
+  Perlinger.
+
+---
+(4.2.6p2-RC7) 2010/06/19 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1570] serial clock drivers get outdated input from kernel tty
+  line buffer after startup
+* [Bug 1575] use 'snprintf' with LIB_BUFLENGTH in inttoa.c, tvtoa.c and
+  utvtoa.c
+* [Bug 1576] sys/sysctl.h depends on sys/param.h on OpenBSD.
+
+---
+(4.2.6p2-RC6) 2010/06/12 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 715] libisc Linux IPv6 interface iteration drops multicast flags.
+
+---
+(4.2.6p2-RC5) 2010/06/03 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1561] ntpq, ntpdc "passwd" prompts for MD5 password w/SHA1.
+* [Bug 1565] sntp/crypto.c compile fails on MacOS over vsnprintf().
+* Windows port: do not exit in ntp_timestamp_from_counter() without
+  first logging the reason.
+* Support "passwd blah" syntax in ntpq.
+
+---
+(4.2.6p2-RC4) 2010/05/19 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1555] 4.2.6p2-RC3 sntp illegal C (mixed code and declarations).
+
+---
+(4.2.6p2-RC3) 2010/05/11 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1325] unreachable code in sntp recv_bcst_data().
+* [Bug 1459] sntp MD5 authentication does not work with ntpd.
+* [Bug 1512] ntpsnmpd should connect to net-snmpd via a unix-domain
+  socket by default.  Provide a command-line 'socket name' option.
+* [Bug 1538] update refclock_nmea.c's call to getprotobyname().
+* [Bug 1541] Fix wrong keyword for "maxclock".
+* [Bug 1552] update and complete broadcast and crypto features in sntp.
+* [Bug 1553] sntp/configure.ac OpenSSL support.
+* Escape unprintable characters in a refid in ntpq -p billboard.
+* Simplify hash client code by providing OpenSSL EVP_*() API when built
+  without OpenSSL.  (from ntp-dev)
+* Do not depend on ASCII values for ('A' - '0'), ('a' - '0') in sntp.
+* Windows compiling hints/winnt.html update from G. Sunil Tej.
+
+---
+(4.2.6p2-RC2) 2010/04/27 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1465] Make sure time from TS2100 is not invalid (backport from
+  ntp-dev).
+* [Bug 1528] Fix EDITLINE_LIBS link order for ntpq and ntpdc.
+* [Bug 1534] win32/include/isc/net.h conflicts with VC++ 2010 errno.h.
+* [Bug 1535] "restrict -4 default" and "restrict -6 default" ignored.
+* Remove --with-arlib from br-flock.
+
+---
+(4.2.6p2-RC1) 2010/04/18 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1503] Auto-enabling of monitor for "restrict ... limited" wrong.
+* [Bug 1504] ntpdate tickles ntpd "discard minimum 1" rate limit if
+  "restrict ... limited" is used.
+* [Bug 1518] Windows ntpd should lock to one processor more
+  conservatively.
+* [Bug 1522] Enable range syntax "trustedkey (301 ... 399)".
+* Update html/authopt.html controlkey, requestkey, and trustedkey docs.
+
+---
+(4.2.6p1) 2010/04/09 Released by Harlan Stenn <stenn@ntp.org>
+(4.2.6p1-RC6) 2010/03/31 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1514] Typo in ntp_proto.c: fabs(foo < .4) should be fabs(foo) < .4.
+* [Bug 1464] synchronization source wrong for refclocks ARCRON_MSF (27)
+  and SHM (28).
+* Correct Windows port's refclock_open() to return 0 on failure not -1.
+* Correct CHU, dumbclock, and WWVB drivers to check for 0 returned from
+  refclock_open() on failure.
+* Correct "SIMUL=4 ./flock-build -1" to prioritize -1/--one.
+
+---
+(4.2.6p1-RC5) 2010/02/09 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1140] Clean up debug.html, decode.html, and ntpq.html.
+* [Bug 1438] Remove dead code from sntp/networking.c.
+* [Bug 1477] 1st non-gmake make in clone w/VPATH can't make COPYRIGHT.
+* [Bug 1478] linking fails with undefined reference EVP_MD_pkey_type.
+* [Bug 1479] Compilation fails because of not finding readline headers.
+* [Bug 1480] snprintf() cleanup caused unterminated refclock IDs.
+* [Bug 1484] ushort is not defined in QNX6.
+
+---
+(4.2.6p1-RC4) 2010/02/04 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1455] ntpd does not try /etc/ntp.audio as documented.
+* [Bug 1467] Fix bogus rebuild of sntp/sntp.html
+* [Bug 1470] "make distdir" in $srcdir builds keyword-gen, libntp.a.
+* [Bug 1473] "make distcheck" before build can't make sntp/version.m4.
+* [Bug 1474] ntp_keygen needs LCRYPTO after libntp.a.
+* Convert many sprintf() calls to snprintf(), also strcpy(), strcat().
+* Fix widely cut-n-pasted bug in refclock shutdown after failed start.
+* Remove some dead code checking for emalloc() returning NULL.
+* Remove arlib.
+
+---
+(4.2.6p1-RC3) 2010/01/24 Released by Harlan Stenn <stenn@ntp.org>
+
+* Use TZ=UTC instead of TZ= when calling date in scripts/mkver.in .
+* [Bug 1448] Some macros not correctly conditionally or absolutely defined
+  on Windows.
+* [Bug 1449] ntpsim.h in ntp_config.c should be used conditionally.
+* [Bug 1450] Option to exclude warnings not unconditionally defined on Windows.
+* [Bug 1127] Properly check the return of X590_verify() - missed one.
+* [Bug 1439] .texi generation must wait until after binary is linked.
+* [Bug 1440] Update configure.ac to support kfreebsd.
+* [Bug 1445] IRIX does not have -lcap or support linux capabilities.
+* [Bug 1451] CID 115: sntp leaks KoD entry when updating existing.
+* [Bug 1453] Use $CC in config.cache filename in ./build script.
+
+---
+(4.2.6p1-RC2) 2009/12/25 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1411] Fix status messages in refclock_oncore.c.
+* [Bug 1416] MAXDNAME undefined on Solaris 2.6.
+* [Bug 1419] ntpdate, ntpdc, sntp, ntpd ignore configure --bindir.
+* [Bug 1424] Fix check for rtattr (rtnetlink.h).
+* [Bug 1425] unpeer by association ID sets up for duplicate free().
+* [Bug 1426] scripts/VersionName needs . on the search path.
+* [Bug 1427] quote missing in ./build - shows up on NetBSD.
+* [Bug 1428] Use AC_HEADER_RESOLV to fix breaks from resolv.h
+* [Bug 1429] ntpd -4 option does not reliably force IPv4 resolution.
+* [Bug 1431] System headers must come before ntp headers in ntp_intres.c .
+* [Bug 1434] HP-UX 11 ip_mreq undeclared, _HPUX_SOURCE helps some.
+* [Bug 1435] sntp: Test for -lresolv using the same tests as in ntp.
+
+---
+(4.2.6p1-RC1) 2009/12/20 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Bug 1409] Put refclock_neoclock4x.c under the NTP COPYRIGHT notice.
+  This should allow debian and other distros to add this refclock driver
+  in further distro releases.
+  Detect R2 hardware releases.
+* [Bug 1412] m4/os_cflags.m4 caches results that depend on $CC.
+* [Bug 1413] test OpenSSL headers regarding -Wno-strict-prototypes.
+* [Bug 1414] Enable "make distcheck" success with BSD make.
+* [Bug 1415] Fix Mac OS X link problem.
+* [Bug 1418] building ntpd/ntpdc/ntpq statically with ssl fails.
+* Build infrastructure updates to enable beta releases of ntp-stable.
+
+---
 (4.2.6) 2009/12/09 Released by Harlan Stenn <stenn@ntp.org>
 * Include (4.2.4p8) - [Sec 1331] DoS with mode 7 packets - CVE-2009-3563.
 * [Bug 508] Fixed leap second handling for Windows.

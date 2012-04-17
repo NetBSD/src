@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.9 2006/03/05 23:47:08 rpaulo Exp $	*/
+/*	$NetBSD: timer.c,v 1.9.42.1 2012/04/17 00:09:53 yamt Exp $	*/
 /*	$KAME: timer.c,v 1.11 2005/04/14 06:22:35 suz Exp $	*/
 
 /*
@@ -30,6 +30,7 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/queue.h>
 #include <sys/time.h>
 
 #include <unistd.h>
@@ -39,26 +40,26 @@
 #include <search.h>
 #include "timer.h"
 
-static struct rtadvd_timer timer_head;
+struct rtadvd_timer_head_t ra_timer = TAILQ_HEAD_INITIALIZER(ra_timer);
 
 #define MILLION 1000000
 #define TIMEVAL_EQUAL(t1,t2) ((t1)->tv_sec == (t2)->tv_sec &&\
  (t1)->tv_usec == (t2)->tv_usec)
 
-static struct timeval tm_max = {0x7fffffff, 0x7fffffff};
+static struct timeval tm_limit = {0x7fffffff, 0x7fffffff};
+static struct timeval tm_max;
 
 void
-rtadvd_timer_init()
+rtadvd_timer_init(void)
 {
-	memset(&timer_head, 0, sizeof(timer_head));
 
-	timer_head.next = timer_head.prev = &timer_head;
-	timer_head.tm = tm_max;
+	TAILQ_INIT(&ra_timer);
+	tm_max = tm_limit;
 }
 
 struct rtadvd_timer *
-rtadvd_add_timer(struct rtadvd_timer *(*timeout) __P((void *)),
-    void (*update) __P((void *, struct timeval *)),
+rtadvd_add_timer(struct rtadvd_timer *(*timeout) (void *),
+    void (*update) (void *, struct timeval *),
     void *timeodata, void *updatedata)
 {
 	struct rtadvd_timer *newtimer;
@@ -83,7 +84,7 @@ rtadvd_add_timer(struct rtadvd_timer *(*timeout) __P((void *)),
 	newtimer->tm = tm_max;
 
 	/* link into chain */
-	insque(newtimer, &timer_head);
+	TAILQ_INSERT_TAIL(&ra_timer, newtimer, next);
 
 	return(newtimer);
 }
@@ -91,7 +92,8 @@ rtadvd_add_timer(struct rtadvd_timer *(*timeout) __P((void *)),
 void
 rtadvd_remove_timer(struct rtadvd_timer **timer)
 {
-	remque(*timer);
+
+	TAILQ_REMOVE(&ra_timer, *timer, next);
 	free(*timer);
 	*timer = NULL;
 }
@@ -107,8 +109,8 @@ rtadvd_set_timer(struct timeval *tm, struct rtadvd_timer *timer)
 	TIMEVAL_ADD(&now, tm, &timer->tm);
 
 	/* update the next expiration time */
-	if (TIMEVAL_LT(timer->tm, timer_head.tm))
-		timer_head.tm = timer->tm;
+	if (TIMEVAL_LT(timer->tm, tm_max))
+		tm_max = timer->tm;
 
 	return;
 }
@@ -119,19 +121,16 @@ rtadvd_set_timer(struct timeval *tm, struct rtadvd_timer *timer)
  * Return the next interval for select() call.
  */
 struct timeval *
-rtadvd_check_timer()
+rtadvd_check_timer(void)
 {
 	static struct timeval returnval;
 	struct timeval now;
-	struct rtadvd_timer *tm = timer_head.next, *tm_next;
+	struct rtadvd_timer *tm;
 
 	gettimeofday(&now, NULL);
+	tm_max = tm_limit;
 
-	timer_head.tm = tm_max;
-
-	for (tm = timer_head.next; tm != &timer_head; tm = tm_next) {
-		tm_next = tm->next;
-
+	TAILQ_FOREACH(tm, &ra_timer, next) {
 		if (TIMEVAL_LEQ(tm->tm, now)) {
 			if ((*tm->expire)(tm->expire_data) == NULL)
 				continue; /* the timer was removed */
@@ -140,18 +139,18 @@ rtadvd_check_timer()
 			TIMEVAL_ADD(&tm->tm, &now, &tm->tm);
 		}
 
-		if (TIMEVAL_LT(tm->tm, timer_head.tm))
-			timer_head.tm = tm->tm;
+		if (TIMEVAL_LT(tm->tm, tm_max))
+			tm_max = tm->tm;
 	}
 
-	if (TIMEVAL_EQUAL(&tm_max, &timer_head.tm)) {
+	if (TIMEVAL_EQUAL(&tm_max, &tm_limit)) {
 		/* no need to timeout */
 		return(NULL);
-	} else if (TIMEVAL_LT(timer_head.tm, now)) {
+	} else if (TIMEVAL_LT(tm_max, now)) {
 		/* this may occur when the interval is too small */
 		returnval.tv_sec = returnval.tv_usec = 0;
 	} else
-		TIMEVAL_SUB(&timer_head.tm, &now, &returnval);
+		TIMEVAL_SUB(&tm_max, &now, &returnval);
 	return(&returnval);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.6 2011/09/11 18:55:27 christos Exp $	*/
+/*	$NetBSD: query.c,v 1.6.2.1 2012/04/17 00:03:04 yamt Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -1395,11 +1395,9 @@ query_addadditional(void *arg, dns_name_t *name, dns_rdatatype_t qtype) {
 			goto addname;
 		if (result == DNS_R_NCACHENXRRSET) {
 			dns_rdataset_disassociate(rdataset);
-			/*
-			 * Negative cache entries don't have sigrdatasets.
-			 */
-			INSIST(sigrdataset == NULL ||
-			       ! dns_rdataset_isassociated(sigrdataset));
+			if (sigrdataset != NULL &&
+			    dns_rdataset_isassociated(sigrdataset))
+				dns_rdataset_disassociate(sigrdataset);
 		}
 		if (result == ISC_R_SUCCESS) {
 			mname = NULL;
@@ -1440,8 +1438,9 @@ query_addadditional(void *arg, dns_name_t *name, dns_rdatatype_t qtype) {
 			goto addname;
 		if (result == DNS_R_NCACHENXRRSET) {
 			dns_rdataset_disassociate(rdataset);
-			INSIST(sigrdataset == NULL ||
-			       ! dns_rdataset_isassociated(sigrdataset));
+			if (sigrdataset != NULL &&
+			    dns_rdataset_isassociated(sigrdataset))
+				dns_rdataset_disassociate(sigrdataset);
 		}
 		if (result == ISC_R_SUCCESS) {
 			mname = NULL;
@@ -1891,10 +1890,8 @@ query_addadditional2(void *arg, dns_name_t *name, dns_rdatatype_t qtype) {
 		goto setcache;
 	if (result == DNS_R_NCACHENXRRSET) {
 		dns_rdataset_disassociate(rdataset);
-		/*
-		 * Negative cache entries don't have sigrdatasets.
-		 */
-		INSIST(! dns_rdataset_isassociated(sigrdataset));
+		if (dns_rdataset_isassociated(sigrdataset))
+			dns_rdataset_disassociate(sigrdataset);
 	}
 	if (result == ISC_R_SUCCESS) {
 		/* Remember the result as a cache */

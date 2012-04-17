@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.49 2011/05/19 03:11:57 rmind Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.49.4.1 2012/04/17 00:08:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.49 2011/05/19 03:11:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.49.4.1 2012/04/17 00:08:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -424,8 +424,9 @@ ntfs_check_permitted(struct vnode *vp, struct ntnode *ip, mode_t mode,
 
 	file_mode = ip->i_mp->ntm_mode | (S_IXUSR|S_IXGRP|S_IXOTH);
 
-	return genfs_can_access(vp->v_type, file_mode, ip->i_mp->ntm_uid,
-	    ip->i_mp->ntm_gid, mode, cred);
+	return kauth_authorize_vnode(cred, kauth_access_action(mode, vp->v_type,
+	    file_mode), vp, NULL, genfs_can_access(vp->v_type, file_mode,
+	    ip->i_mp->ntm_uid, ip->i_mp->ntm_gid, mode, cred));
 }
 
 int

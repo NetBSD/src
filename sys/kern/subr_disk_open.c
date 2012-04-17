@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_open.c,v 1.3 2011/07/30 12:08:36 jmcneill Exp $	*/
+/*	$NetBSD: subr_disk_open.c,v 1.3.2.1 2012/04/17 00:08:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.3 2011/07/30 12:08:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.3.2.1 2012/04/17 00:08:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.3 2011/07/30 12:08:36 jmcneill 
 #include <sys/fcntl.h>
 #include <sys/kauth.h>
 #include <sys/vnode.h>
+#include <miscfs/specfs/specdev.h>
 
 struct vnode *
 opendisk(struct device *dv)
@@ -65,15 +66,20 @@ opendisk(struct device *dv)
 		    device_xname(dv));
 	error = VOP_OPEN(tmpvn, FREAD | FSILENT, NOCRED);
 	if (error) {
-#ifndef DEBUG
 		/*
 		 * Ignore errors caused by missing device, partition,
-		 * or medium.
+		 * medium, or busy [presumably because of a wedge covering it]
 		 */
-		if (error != ENXIO && error != ENODEV)
-#endif
+		switch (error) {
+		case ENXIO:
+		case ENODEV:
+		case EBUSY:
+			break;
+		default:
 			printf("%s: can't open dev %s (%d)\n",
 			    __func__, device_xname(dv), error);
+			break;
+		}
 		vput(tmpvn);
 		return NULL;
 	}
@@ -107,4 +113,34 @@ getdisksize(struct vnode *vp, uint64_t *numsecp, unsigned *secsizep)
 	}
 
 	return error;
+}
+
+int
+getdiskinfo(struct vnode *vp, struct dkwedge_info *dkw)
+{
+	struct partinfo dpart;
+	int error;
+	dev_t dev = vp->v_specnode->sn_rdev;
+
+	if (VOP_IOCTL(vp, DIOCGWEDGEINFO, dkw, FREAD, NOCRED) == 0)
+		return 0;
+	
+	if ((error = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, NOCRED)) != 0)
+		return error;
+
+	snprintf(dkw->dkw_devname, sizeof(dkw->dkw_devname), "%s%" PRId32 "%c",
+	    devsw_blk2name(major(dev)), DISKUNIT(dev), (char)DISKPART(dev) +
+	    'a');
+
+	dkw->dkw_wname[0] = '\0';
+
+	strlcpy(dkw->dkw_parent, dkw->dkw_devname, sizeof(dkw->dkw_parent));
+
+	dkw->dkw_size = dpart.part->p_size;
+	dkw->dkw_offset = dpart.part->p_offset;
+
+	strlcpy(dkw->dkw_ptype, getfstypename(dpart.part->p_fstype),
+	    sizeof(dkw->dkw_ptype));
+
+	return 0;
 }

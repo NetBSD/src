@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgc.1,v 1.22 2010/05/14 17:24:38 joerg Exp $
+.\"	$NetBSD: msgc.1,v 1.22.6.1 2012/04/17 00:09:36 yamt Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -13,11 +13,7 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"      This product includes software developed for the NetBSD Project by
-.\"      Piermont Information Systems Inc.
-.\" 4. The name of Piermont Information Systems Inc. may not be used to endorse
+.\" 3. The name of Piermont Information Systems Inc. may not be used to endorse
 .\"    or promote products derived from this software without specific prior
 .\"    written permission.
 .\"
@@ -33,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 25, 2003
+.Dd March 3, 2012
 .Dt MSGC 1
 .Os
 .Sh NAME
@@ -45,6 +41,7 @@
 .Nm msg_standend ,
 .Nm msg_display ,
 .Nm msg_display_add ,
+.Nm msg_printf ,
 .Nm msg_prompt ,
 .Nm msg_prompt_add ,
 .Nm msg_prompt_win ,
@@ -72,6 +69,8 @@ msgc
 .Fn msg_display "msg msg_no" ...
 .Ft void
 .Fn msg_display_add "msg msg_no" ...
+.Ft void
+.Fn msg_printf "fmt" ...
 .Ft void
 .Fn msg_prompt  "msg msg_no" "const char *def" "char *val" "int max_chars" ...
 .Ft void
@@ -132,7 +131,7 @@ The messages may have
 .Xr sprintf 3
 conversions in them and the corresponding parameters should match.
 Messages are identified by name using the notation
-.Sq MENU_name
+.Sq MSG_name
 where
 .Dq name
 is the name in the message source file.
@@ -165,6 +164,10 @@ The
 function behaves like
 .Fn msg_display_add
 but does not fill text.
+.Pp
+The function
+.Fn msg_printf
+allows to display a raw message without going through the message catalog.
 .Pp
 The remaining functions deal with a prompt facility.
 A prompt message is either taken from the message directory or from a

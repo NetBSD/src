@@ -1,4 +1,4 @@
-# $NetBSD: t_clearquota.sh,v 1.3 2011/03/09 19:04:58 bouyer Exp $ 
+# $NetBSD: t_clearquota.sh,v 1.3.4.1 2012/04/17 00:09:03 yamt Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -40,7 +40,7 @@ done
 
 clear_quota()
 {
-	create_with_quotas_server $*
+	create_ffs_server $*
 	local q=$4
 	local expect
 	local fail
@@ -87,5 +87,5 @@ clear_quota()
 		    -o "match:Disk quotas for .*: none$" \
 		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt quota -${q} -v ${id}
 	done
-	rump_shutdown
+	rump_quota_shutdown
 }

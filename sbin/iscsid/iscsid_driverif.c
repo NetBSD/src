@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_driverif.c,v 1.2 2011/10/29 16:54:49 christos Exp $	*/
+/*	$NetBSD: iscsid_driverif.c,v 1.2.2.1 2012/04/17 00:05:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ set_node_name(iscsid_set_node_name_req_t * par)
  *       TRUE on success, FALSE on error.
  */
 
-STATIC int
+static int
 bind_socket(int sock, uint8_t * addr)
 {
 	struct sockaddr_in serverAddress;
@@ -134,7 +134,7 @@ bind_socket(int sock, uint8_t * addr)
  *    Returns:    The pointer to the first free portal (or NULL if none found)
  */
 
-STATIC portal_t *
+static portal_t *
 find_free_portal(portal_group_t * group)
 {
 	portal_t *curr, *m;
@@ -176,7 +176,7 @@ find_free_portal(portal_group_t * group)
  *    NOTE: Session list must be locked on entry.
  */
 
-STATIC connection_t *
+static connection_t *
 make_connection(session_t * sess, iscsid_login_req_t * req,
 				iscsid_response_t * res, uint32_t * stid)
 {
@@ -501,7 +501,7 @@ make_connection(session_t * sess, iscsid_login_req_t * req,
  *          cid         Connection ID
  */
 
-STATIC void
+static void
 event_recover_connection(uint32_t sid, uint32_t cid)
 {
 	int sock, ret;

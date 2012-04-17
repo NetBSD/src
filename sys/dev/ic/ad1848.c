@@ -1,7 +1,7 @@
-/*	$NetBSD: ad1848.c,v 1.30 2011/04/27 07:47:33 plunky Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.30.4.1 2012/04/17 00:07:31 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -91,11 +91,11 @@
  * Portions of this code are from the VOXware support for the ad1848
  * by Hannu Savolainen <hannu@voxware.pp.fi>
  *
- * Portions also supplied from the SoundBlaster driver for NetBSD.
+ * Portions also ripped from the SoundBlaster driver for NetBSD.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.30 2011/04/27 07:47:33 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.30.4.1 2012/04/17 00:07:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1051,9 +1051,6 @@ ad1848_open(void *addr, int flags)
 	return 0;
 }
 
-/*
- * Close function is called at splaudio().
- */
 void
 ad1848_close(void *addr)
 {
@@ -1085,13 +1082,12 @@ ad1848_commit_settings(void *addr)
 	struct ad1848_softc *sc;
 	int timeout;
 	u_char fs;
-	int s;
 
 	sc = addr;
 	if (!sc->need_commit)
 		return 0;
 
-	s = splaudio();
+	mutex_spin_enter(&sc->sc_intr_lock);
 
 	ad1848_mute_wave_output(sc, WAVE_MUTE0, 1);
 
@@ -1155,9 +1151,10 @@ ad1848_commit_settings(void *addr)
 
 	ad1848_mute_wave_output(sc, WAVE_MUTE0, 0);
 
-	splx(s);
+	mutex_spin_exit(&sc->sc_intr_lock);
 
 	sc->need_commit = 0;
+
 	return 0;
 }
 
@@ -1287,4 +1284,30 @@ ad1848_halt_input(void *addr)
 	ad_write(sc, SP_INTERFACE_CONFIG, reg & ~CAPTURE_ENABLE);
 
 	return 0;
+}
+
+void
+ad1848_get_locks(void *addr, kmutex_t **intr, kmutex_t **thread)
+{
+	struct ad1848_softc *sc;
+
+	sc = addr;
+	*intr = &sc->sc_intr_lock;
+	*thread = &sc->sc_lock;
+}
+
+void
+ad1848_init_locks(struct ad1848_softc *sc, int ipl)
+{
+
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, ipl);
+}
+
+void
+ad1848_destroy_locks(struct ad1848_softc *sc)
+{
+
+	mutex_destroy(&sc->sc_lock);
+	mutex_destroy(&sc->sc_intr_lock);
 }

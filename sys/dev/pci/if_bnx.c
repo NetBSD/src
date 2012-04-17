@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.45 2011/09/22 08:42:53 jym Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.45.2.1 2012/04/17 00:07:46 yamt Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.45 2011/09/22 08:42:53 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.45.2.1 2012/04/17 00:07:46 yamt Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -707,7 +707,7 @@ bnx_attach(device_t parent, device_t self, void *aux)
 
 	/* create workqueue to handle packet allocations */
 	if (workqueue_create(&sc->bnx_wq, device_xname(self),
-	    bnx_alloc_pkts, sc, PRI_NONE, IPL_NET, WQ_MPSAFE) != 0) {
+	    bnx_alloc_pkts, sc, PRI_NONE, IPL_NET, 0) != 0) {
 		aprint_error_dev(self, "failed to create workqueue\n");
 		goto bnx_attach_fail;
 	}

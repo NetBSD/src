@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.88 2011/10/17 16:35:22 mbalmer Exp $ */
+/*	$NetBSD: mbr.c,v 1.88.2.1 2012/04/17 00:02:49 yamt Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -113,6 +113,10 @@ static int get_mapping(struct mbr_partition *, int, int *, int *, int *,
 			    daddr_t *);
 static void convert_mbr_chs(int, int, int, uint8_t *, uint8_t *,
 				 uint8_t *, uint32_t);
+static void get_ptn_alignment(struct mbr_partition *);
+
+static unsigned int ptn_alignment;
+static unsigned int ptn_0_offset;
 
 /*
  * Notes on the extended partition editor.
@@ -462,8 +466,9 @@ set_mbr_type(menudesc *m, void *arg)
 			return 0;
 		mbri->extended = ext;
 		ext->sector = mbrp->mbrp_start;
-		ext->mbr.mbr_parts[0].mbrp_start = bsec;
-		ext->mbr.mbr_parts[0].mbrp_size = mbrp->mbrp_size - bsec;
+		ext->mbr.mbr_parts[0].mbrp_start = ptn_0_offset;
+		ext->mbr.mbr_parts[0].mbrp_size =
+		    mbrp->mbrp_size - ptn_0_offset;
 	}
 	mbrp->mbrp_type = type;
 
@@ -742,14 +747,14 @@ edit_mbr_size(menudesc *m, void *arg)
 			/* If unchanged, don't re-round size */
 			new = dflt;
 		else {
-			/* Round end to cylinder boundary */
+			/* Round end to the partition alignment */
 			if (sizemult != 1) {
 				new *= sizemult;
-				new += rounddown(start, current_cylsize);
-				new = roundup(new, current_cylsize);
+				new += rounddown(start, ptn_alignment);
+				new = roundup(new, ptn_alignment);
 				new -= start;
 				while (new <= 0)
-					new += current_cylsize;
+					new += ptn_alignment;
 			}
 		}
 		if (new > max)
@@ -1237,12 +1242,12 @@ mbr_use_wholedisk(mbr_info_t *mbri)
 	memset(&mbri->mbrb, 0, sizeof mbri->mbrb);
 #endif
 	part[0].mbrp_type = MBR_PTYPE_NETBSD;
-	part[0].mbrp_size = dlsize - bsec;
-	part[0].mbrp_start = bsec;
+	part[0].mbrp_size = dlsize - ptn_0_offset;
+	part[0].mbrp_start = ptn_0_offset;
 	part[0].mbrp_flag = MBR_PFLAG_ACTIVE;
 
-	ptstart = bsec;
-	ptsize = dlsize - bsec;
+	ptstart = ptn_0_offset;
+	ptsize = dlsize - ptn_0_offset;
 	return 1;
 }
 
@@ -1287,7 +1292,7 @@ edit_mbr(mbr_info_t *mbri)
 			msg_display(MSG_ovrwrite);
 			process_menu(MENU_noyes, NULL);
 			if (!yesno) {
-				if (logging)
+				if (logfp)
 					(void)fprintf(logfp, "User answered no to destroy other data, aborting.\n");
 				return 0;
 			}
@@ -1450,6 +1455,10 @@ read_mbr(const char *disk, mbr_info_t *mbri)
 	 */
 	if (bsec == 0)
 		bsec = dlsec;
+	ptn_0_offset = bsec;
+	/* use 1MB default offset on large disks as fdisk(8) */
+	if (dlsize > 2048 * 1024 * 128)
+		ptn_0_offset = 2048;
 
 	memset(mbri, 0, sizeof *mbri);
 
@@ -1467,7 +1476,9 @@ read_mbr(const char *disk, mbr_info_t *mbri)
 			break;
 
 		mbrp = &mbrs->mbr_parts[0];
-		if (ext_base != 0) {
+		if (ext_base == 0) {
+			get_ptn_alignment(mbrp);
+		} else {
 			/* sanity check extended chain */
 			if (MBR_IS_EXTENDED(mbrp[0].mbrp_type))
 				break;
@@ -1547,9 +1558,9 @@ read_mbr(const char *disk, mbr_info_t *mbri)
 				ext->sector = base;
 				ext->mbr.mbr_magic = htole16(MBR_MAGIC);
 				ext->mbr.mbr_parts[1] = mbrp[1];
-				ext->mbr.mbr_parts[0].mbrp_start = bsec;
+				ext->mbr.mbr_parts[0].mbrp_start = ptn_0_offset;
 				ext->mbr.mbr_parts[0].mbrp_size =
-				    ext_base + limit - base - bsec;
+				    ext_base + limit - base - ptn_0_offset;
 				mbrp[1].mbrp_type = MBR_PTYPE_EXT;
 				mbrp[1].mbrp_start = base - ext_base;
 				mbrp[1].mbrp_size = limit - mbrp[1].mbrp_start;
@@ -1849,4 +1860,37 @@ get_mapping(struct mbr_partition *parts, int i,
 		return -1;
 
 	return 0;
+}
+
+/*
+ * Determine partition boundary alignment as fdisk(8) does.
+ */
+static void
+get_ptn_alignment(struct mbr_partition *mbrp0)
+{
+	uint32_t ptn_0_base, ptn_0_limit;
+
+	/* Default to using 'traditional' cylinder alignment */
+	ptn_alignment = bhead * bsec;
+	ptn_0_offset = bsec;
+
+	if (mbrp0->mbrp_type != 0) {
+		/* Try to copy offset of first partition */
+		ptn_0_base = le32toh(mbrp0->mbrp_start);
+		ptn_0_limit = ptn_0_base + le32toh(mbrp0->mbrp_size);
+		if (!(ptn_0_limit & 2047)) {
+			/* Partition ends on a 1MB boundary, align to 1MB */
+			ptn_alignment = 2048;
+			if (ptn_0_base <= 2048
+			    && !(ptn_0_base & (ptn_0_base - 1))) {
+				/* ptn_base is a power of 2, use it */
+				ptn_0_offset = ptn_0_base;
+			}
+		}
+	} else {
+		/* Use 1MB offset for large (>128GB) disks */
+		if (dlsize > 2048 * 1024 * 128)
+			ptn_alignment = 2048;
+			ptn_0_offset = 2048;
+	}
 }

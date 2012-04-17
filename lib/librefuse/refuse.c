@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.94 2011/07/09 17:16:46 tron Exp $	*/
+/*	$NetBSD: refuse.c,v 1.94.2.1 2012/04/17 00:05:32 yamt Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.94 2011/07/09 17:16:46 tron Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.94.2.1 2012/04/17 00:05:32 yamt Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -1138,6 +1138,9 @@ puffs_fuse_node_readdir(struct puffs_usermount *pu, void *opc,
 		if (ret)
 			return -ret;
 	}
+
+        /* Both op.readdir and op.getdir read full directory */
+        *eofflag = 1;
 
 	/* now, stuff results into the kernel buffers */
 	while (*readoff < (off_t)(dirh->bufsize - dirh->reslen)) {

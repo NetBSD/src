@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_script.c,v 1.4 2009/01/18 03:45:50 lukem Exp $ */
+/*	$NetBSD: ex_script.c,v 1.4.8.1 2012/04/17 00:02:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -210,7 +210,7 @@ sscr_getprompt(SCR *sp)
 	fd_set fdset;
 	db_recno_t lline;
 	size_t llen, len;
-	u_int value;
+	e_key_t value;
 	int nr;
 
 	FD_ZERO(&fdset);
@@ -472,7 +472,7 @@ sscr_insert(SCR *sp)
 	fd_set rdfd;
 	db_recno_t lno;
 	size_t blen, len = 0, tlen;
-	u_int value;
+	e_key_t value;
 	int nr, rval;
 	CHAR_T *bp;
 

@@ -84,6 +84,7 @@ struct rt {
 	struct in_addr net;
 	struct in_addr gate;
 	const struct interface *iface;
+	int metric;
 	struct in_addr src;
 	struct rt *next;
 };
@@ -123,16 +124,11 @@ int if_address(const struct interface *,
 #define get_address(iface, addr, net, dst)				      \
 	do_address(iface, addr, net, dst, 1)
 
-int if_route(const struct interface *, const struct in_addr *,
-    const struct in_addr *, const struct in_addr *, int, int);
-#define add_route(iface, dest, mask, gate, metric)			      \
-	if_route(iface, dest, mask, gate, metric, 1)
-#define change_route(iface, dest, mask, gate, metric)			      \
-	if_route(iface, dest, mask, gate, metric, 0)
-#define del_route(iface, dest, mask, gate, metric)			      \
-	if_route(iface, dest, mask, gate, metric, -1)
-#define del_src_route(iface, dest, mask, gate, metric)			      \
-	if_route(iface, dest, mask, gate, metric, -2)
+int if_route(const struct rt *rt, int);
+#define add_route(rt) if_route(rt, 1)
+#define change_route(rt) if_route(rt, 0)
+#define del_route(rt) if_route(rt, -1)
+#define del_src_route(rt) if_route(rt, -2);
 void free_routes(struct rt *);
 
 int open_udp_socket(struct interface *);

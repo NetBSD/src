@@ -1,0 +1,18 @@
+# $NetBSD: spec.inst,v 1.1.4.2 2012/04/17 00:02:31 yamt Exp $
+./mnt2			type=dir mode=0755 uname=root gname=wheel
+./targetroot		type=dir mode=0755 uname=root gname=wheel
+
+./libexec/dhcpcd-hooks/10-resolv.conf	type=file mode=0444 uname=root gname=wheel
+./libexec/dhcpcd-hooks/99-print-sysinst	type=file mode=0444 uname=root gname=wheel
+
+./install.sh		type=file mode=0755 uname=root gname=wheel
+./sysinst		type=file mode=0755 uname=root gname=wheel
+./sysinstmsgs.de	type=file mode=0444 uname=root gname=wheel
+./sysinstmsgs.es	type=file mode=0444 uname=root gname=wheel
+./sysinstmsgs.fr	type=file mode=0444 uname=root gname=wheel
+./sysinstmsgs.pl	type=file mode=0444 uname=root gname=wheel
+
+# for sysinst "install from local directory" default
+./release		type=link mode=0755 uname=root gname=wheel link=.
+
+# XXX what to do for files in ${RELEASEMACHINEDIR}?

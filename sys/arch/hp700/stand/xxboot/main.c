@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 2009/03/18 16:00:11 cegger Exp $	*/
+/*	$NetBSD: main.c,v 1.9.12.1 2012/04/17 00:06:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 ITOH Yasufumi.
@@ -386,23 +386,23 @@ xi_load(struct loadinfo *inf, void *buf)
 {
 	Elf32_Ehdr *e32hdr = buf;
 	Elf64_Ehdr *e64hdr = buf;
-	u_int16_t class_data;
+	uint16_t class_data;
 
 	/*
 	 * check ELF header
 	 * (optimized assuming big endian byte order)
 	 */
 	/* ELF magic */
-	if (*(u_int32_t *)&e32hdr->e_ident[EI_MAG0] !=
+	if (*(uint32_t *)&e32hdr->e_ident[EI_MAG0] !=
 		(ELFMAG0 << 24 | ELFMAG1 << 16 | ELFMAG2 << 8 | ELFMAG3) ||
 	    e32hdr->e_ident[EI_VERSION] != EV_CURRENT)
 		return 1;	/* Not an ELF */
 
 	/* file and machine type */
-	if (*(u_int32_t *)&e32hdr->e_type != (ET_EXEC << 16 | EM_PARISC))
+	if (*(uint32_t *)&e32hdr->e_type != (ET_EXEC << 16 | EM_PARISC))
 		return 1;	/* Not an executable / Wrong architecture */
 
-	if ((class_data = *(u_int16_t *)&e32hdr->e_ident[EI_CLASS]) ==
+	if ((class_data = *(uint16_t *)&e32hdr->e_ident[EI_CLASS]) ==
 	    (ELFCLASS32 << 8 | ELFDATA2MSB)) {
 
 		/* support one section executable (ld -N) only */

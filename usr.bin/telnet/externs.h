@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.34 2006/02/02 19:33:12 he Exp $	*/
+/*	$NetBSD: externs.h,v 1.34.44.1 2012/04/17 00:09:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -41,7 +41,7 @@
 #include <string.h>
 
 #if defined(IPSEC)
-#include <netinet6/ipsec.h>
+#include <netipsec/ipsec.h>
 #if defined(IPSEC_POLICY_IPSEC)
 extern char *ipsec_policy_in;
 extern char *ipsec_policy_out;
@@ -201,7 +201,7 @@ char *telnet_getenv(char *);
 char *telnet_gets(char *, char *, int, int);
 
 /* commands.c */
-int send_tncmd(void (*)(int, int), char *, char *);
+int send_tncmd(void (*)(int, int), const char *, char *);
 void _setlist_init(void);
 void set_escape_char(char *);
 int set_mode(int);
@@ -212,29 +212,29 @@ int shell(int, char *[]);
 int quit(int, char *[]);
 int logout(int, char *[]);
 int env_cmd(int, char *[]);
-struct env_lst *env_find(unsigned char *);
+struct env_lst *env_find(const unsigned char *);
 void env_init(void);
-struct env_lst *env_define(unsigned char *, unsigned char *);
-struct env_lst *env_undefine(unsigned char *, unsigned char *);
-struct env_lst *env_export(unsigned char *, unsigned char *);
-struct env_lst *env_unexport(unsigned char *, unsigned char *);
-struct env_lst *env_send(unsigned char *, unsigned char *);
-struct env_lst *env_list(unsigned char *, unsigned char *);
+struct env_lst *env_define(const unsigned char *, unsigned char *);
+struct env_lst *env_undefine(const unsigned char *, unsigned char *);
+struct env_lst *env_export(const unsigned char *, unsigned char *);
+struct env_lst *env_unexport(const unsigned char *, unsigned char *);
+struct env_lst *env_send(const unsigned char *, unsigned char *);
+struct env_lst *env_list(const unsigned char *, unsigned char *);
 unsigned char *env_default(int, int );
-unsigned char *env_getvalue(unsigned char *);
-void env_varval(unsigned char *);
+unsigned char *env_getvalue(const unsigned char *);
+void env_varval(const unsigned char *);
 int auth_cmd(int, char *[]);
 int ayt_status(void);
 int encrypt_cmd(int, char *[]);
 int tn(int, char *[]);
-void command(int, char *, int);
+void command(int, const char *, int);
 void cmdrc(const char *, const char *);
 struct addrinfo;
 int sourceroute(struct addrinfo *, char *, char **, int *, int*);
 
 /* main.c */
 void tninit(void);
-void usage(void);
+void usage(void) __dead;
 
 /* network.c */
 void init_network(void);
@@ -296,7 +296,7 @@ void env_opt(unsigned char *, int);
 void env_opt_start(void);
 void env_opt_start_info(void);
 void env_opt_add(unsigned char *);
-int opt_welldefined(char *);
+int opt_welldefined(const char *);
 void env_opt_end(int);
 int telrcv(void);
 int rlogin_susp(void);
@@ -329,13 +329,13 @@ void upcase(char *);
 int SetSockOpt(int, int, int, int);
 void SetNetTrace(char *);
 void Dump(int, unsigned char *, int);
-void printoption(char *, int, int );
+void printoption(const char *, int, int );
 void optionstatus(void);
 void printsub(int, unsigned char *, int);
 void EmptyTerminal(void);
 void SetForExit(void);
 void Exit(int) __attribute__((__noreturn__));
-void ExitString(char *, int) __attribute__((__noreturn__));
+void ExitString(const char *, int) __attribute__((__noreturn__));
 
 
 extern struct	termios new_tc;

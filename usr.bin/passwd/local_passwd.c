@@ -1,4 +1,4 @@
-/*	$NetBSD: local_passwd.c,v 1.35 2011/08/31 16:24:58 plunky Exp $	*/
+/*	$NetBSD: local_passwd.c,v 1.35.2.1 2012/04/17 00:09:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: local_passwd.c,v 1.35 2011/08/31 16:24:58 plunky Exp $");
+__RCSID("$NetBSD: local_passwd.c,v 1.35.2.1 2012/04/17 00:09:38 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -230,8 +230,7 @@ pwlocal_process(const char *username, int argc, char **argv)
 static int force_local;
 
 int
-local_init(progname)
-	const char *progname;
+local_init(const char *progname)
 {
 	force_local = 0;
 	return (0);
@@ -251,7 +250,7 @@ local_arg(char ch, const char *arg)
 }
 
 int
-local_arg_end()
+local_arg_end(void)
 {
 	if (force_local)
 		return(PW_USE_FORCE);
@@ -259,14 +258,13 @@ local_arg_end()
 }
 
 void
-local_end()
+local_end(void)
 {
 	/* NOOP */
 }
 
 int
-local_chpw(uname)
-	const char *uname;
+local_chpw(const char *uname)
 {
 	struct passwd *pw;
 	struct passwd old_pw;

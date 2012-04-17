@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.190.2.4 2011/12/28 13:22:47 yamt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.190.2.5 2012/04/17 00:08:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.190.2.4 2011/12/28 13:22:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.190.2.5 2012/04/17 00:08:58 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -167,6 +167,12 @@ static const struct uvm_advice uvmadvice[] = {
 /*
  * private prototypes
  */
+
+/*
+ * externs from other modules
+ */
+
+extern int start_init_exec;	/* Is init_main() done / init running? */
 
 /*
  * inline functions
@@ -603,25 +609,8 @@ uvmfault_promote(struct uvm_faultinfo *ufi,
 	if (*spare != NULL) {
 		anon = *spare;
 		*spare = NULL;
-	} else if (ufi->map != kernel_map) {
-		anon = uvm_analloc();
 	} else {
-		UVMHIST_LOG(maphist, "kernel_map, unlock and retry", 0,0,0,0);
-
-		/*
-		 * we can't allocate anons with kernel_map locked.
-		 */
-
-		uvm_page_unbusy(&uobjpage, 1);
-		uvmfault_unlockall(ufi, amap, uobj);
-
-		*spare = uvm_analloc();
-		if (*spare == NULL) {
-			goto nomem;
-		}
-		KASSERT((*spare)->an_lock == NULL);
-		error = ERESTART;
-		goto done;
+		anon = uvm_analloc();
 	}
 	if (anon) {
 
@@ -656,7 +645,6 @@ uvmfault_promote(struct uvm_faultinfo *ufi,
 		/* unlock and fail ... */
 		uvm_page_unbusy(&uobjpage, 1);
 		uvmfault_unlockall(ufi, amap, uobj);
-nomem:
 		if (!uvm_reclaimable()) {
 			UVMHIST_LOG(maphist, "out of VM", 0,0,0,0);
 			uvmexp.fltnoanon++;
@@ -711,16 +699,47 @@ done:
 #define UVM_FAULT_MAXPROT	(1 << 1)
 
 struct uvm_faultctx {
+
+	/*
+	 * the following members are set up by uvm_fault_check() and
+	 * read-only after that.
+	 *
+	 * note that narrow is used by uvm_fault_check() to change
+	 * the behaviour after ERESTART.
+	 *
+	 * most of them might change after RESTART if the underlying
+	 * map entry has been changed behind us.  an exception is
+	 * wire_paging, which does never change.
+	 */
 	vm_prot_t access_type;
-	vm_prot_t enter_prot;
 	vaddr_t startva;
 	int npages;
 	int centeridx;
+	bool narrow;		/* work on a single requested page only */
+	bool wire_mapping;	/* request a PMAP_WIRED mapping
+				   (UVM_FAULT_WIRE or VM_MAPENT_ISWIRED) */
+	bool wire_paging;	/* request uvm_pagewire
+				   (true for UVM_FAULT_WIRE) */
+	bool cow_now;		/* VM_PROT_WRITE is actually requested
+				   (ie. should break COW and page loaning) */
+
+	/*
+	 * enter_prot is set up by uvm_fault_check() and clamped
+	 * (ie. drop the VM_PROT_WRITE bit) in various places in case
+	 * of !cow_now.
+	 */
+	vm_prot_t enter_prot;	/* prot at which we want to enter pages in */
+
+	/*
+	 * the following member is for uvmfault_promote() and ERESTART.
+	 */
 	struct vm_anon *anon_spare;
-	bool wire_mapping;
-	bool narrow;
-	bool wire_paging;
-	bool cow_now;
+
+	/*
+	 * the folloing is actually a uvm_fault_lower() internal.
+	 * it's here merely for debugging.
+	 * (or due to the mechanical separation of the function?)
+	 */
 	bool promote;
 };
 
@@ -788,6 +807,8 @@ int
 uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
     vm_prot_t access_type, int fault_flag)
 {
+	struct cpu_data *cd;
+	struct uvm_cpu *ucpu;
 	struct uvm_faultinfo ufi;
 	struct uvm_faultctx flt = {
 		.access_type = access_type,
@@ -803,13 +824,64 @@ uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
 	struct vm_anon *anons_store[UVM_MAXRANGE], **anons;
 	struct vm_page *pages_store[UVM_MAXRANGE], **pages;
 	int error;
+#if 0
+	uintptr_t delta, delta2, delta3;
+#endif
 	UVMHIST_FUNC("uvm_fault"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, "(map=0x%x, vaddr=0x%x, at=%d, ff=%d)",
 	      orig_map, vaddr, access_type, fault_flag);
 
-	curcpu()->ci_data.cpu_nfault++;
+	cd = &(curcpu()->ci_data);
+	cd->cpu_nfault++;
+	ucpu = cd->cpu_uvm;
 
+	/* Don't flood RNG subsystem with samples. */
+	if (cd->cpu_nfault % 503)
+		goto norng;
+#if 0
+	/*
+	 * Avoid trying to count "entropy" for accesses of regular
+	 * stride, by checking the 1st, 2nd, 3rd order differentials
+	 * of vaddr, like the rnd code does internally with sample times.
+	 *
+	 * XXX If the selection of only every 503rd fault above is
+	 * XXX removed, this code should exclude most samples, but
+	 * XXX does not, and is therefore disabled.
+	 */
+	if (ucpu->last_fltaddr > (uintptr_t)trunc_page(vaddr))
+		delta = ucpu->last_fltaddr - (uintptr_t)trunc_page(vaddr);
+	else
+		delta = (uintptr_t)trunc_page(vaddr) - ucpu->last_fltaddr;
+
+	if (ucpu->last_delta > delta) 
+		delta2 = ucpu->last_delta - delta;
+	else
+		delta2 = delta - ucpu->last_delta;
+
+	if (ucpu->last_delta2 > delta2)
+		delta3 = ucpu->last_delta2 - delta2;
+	else
+		delta3 = delta2 - ucpu->last_delta2;
+
+	ucpu->last_fltaddr = (uintptr_t)vaddr;
+	ucpu->last_delta = delta;
+	ucpu->last_delta2 = delta2;
+
+	if (delta != 0 && delta2 != 0 && delta3 != 0)
+#endif
+	/* Don't count anything until user interaction is possible */
+	if (__predict_true(start_init_exec)) {
+		kpreempt_disable();
+		rnd_add_uint32(&ucpu->rs,
+			       sizeof(vaddr_t) == sizeof(uint32_t) ?
+			       (uint32_t)vaddr : sizeof(vaddr_t) ==
+			       sizeof(uint64_t) ?
+			       (uint32_t)(vaddr & 0x00000000ffffffff) :
+			       (uint32_t)(cd->cpu_nfault & 0x00000000ffffffff));
+		kpreempt_enable();
+	}
+norng:
 	/*
 	 * init the IN parameters in the ufi
 	 */
@@ -2360,8 +2432,6 @@ uvm_fault_unwire_locked(struct vm_map *map, vaddr_t start, vaddr_t end)
 	vaddr_t va;
 	paddr_t pa;
 	struct vm_page *pg;
-
-	KASSERT((map->flags & VM_MAP_INTRSAFE) == 0);
 
 	/*
 	 * we assume that the area we are unwiring has actually been wired

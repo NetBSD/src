@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.7 2011/04/04 08:30:24 mbalmer Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.7.4.1 2012/04/17 00:02:51 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -80,6 +80,8 @@ message set_kernel_3
 message set_kernel_4
 {Núcleo (IQ80321)}
 message set_kernel_5
-{Núcleo (TEAMASA_NPWR)}
+{Núcleo (MINI2440)}
 message set_kernel_6
+{Núcleo (TEAMASA_NPWR)}
+message set_kernel_7
 {Núcleo (TS7200)}

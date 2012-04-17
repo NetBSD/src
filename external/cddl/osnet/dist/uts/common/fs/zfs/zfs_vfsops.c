@@ -195,12 +195,12 @@ loop:
 		 * Skip the vnode/inode if inaccessible, or if the
 		 * atime is clean.
 		 */
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		zp = VTOZ(vp);
 		if (zp == NULL || vp->v_type == VNON ||
 		   (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) != 0 ||
 		   zp->z_atime_dirty == 0 || zp->z_unlinked) {
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			continue;
 		}
 		vmark(mvp, vp);
@@ -1624,14 +1624,14 @@ zfs_mount(vfs_t *vfsp, const char *path, void *data, size_t *data_len)
 	if (mvp->v_type != VDIR)
 		return (ENOTDIR);
 
-	mutex_enter(&mvp->v_interlock);
+	mutex_enter(mvp->v_interlock);
 	if ((uap->flags & MS_REMOUNT) == 0 &&
 	    (uap->flags & MS_OVERLAY) == 0 &&
 	    (mvp->v_count != 1 || (mvp->v_flag & VROOT))) {
-		mutex_exit(&mvp->v_interlock);
+		mutex_exit(mvp->v_interlock);
 		return (EBUSY);
 	}
-	mutex_exit(&mvp->v_interlock);
+	mutex_exit(mvp->v_interlock);
 
 	/*
 	 * ZFS does not support passing unparsed data in via MS_DATA.

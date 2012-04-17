@@ -1,4 +1,4 @@
-/*	$NetBSD: voyager.c,v 1.6 2011/10/20 22:04:10 macallan Exp $	*/
+/*	$NetBSD: voyager.c,v 1.6.2.1 2012/04/17 00:07:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -26,7 +26,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.6 2011/10/20 22:04:10 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.6.2.1 2012/04/17 00:07:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.6 2011/10/20 22:04:10 macallan Exp $")
 #include <dev/pci/voyagervar.h>
 
 #include "opt_voyager.h"
+#include "voyagerfb.h"
+#include "pwmclock.h"
 
 #ifdef VOYAGER_DEBUG
 #define DPRINTF aprint_normal
@@ -147,7 +149,6 @@ voyager_attach(device_t parent, device_t self, void *aux)
 	struct voyager_softc	*sc = device_private(self);
 	struct pci_attach_args	*pa = aux;
 	pci_intr_handle_t ih;
-	char devinfo[256];
 	struct voyager_attach_args vaa;
 	struct i2cbus_attach_args iba;
 	uint32_t reg;
@@ -160,8 +161,7 @@ voyager_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iot = pa->pa_iot;
 	sc->sc_dev = self;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s\n", devinfo);
+	pci_aprint_devinfo(pa, NULL);
 
 	if (pci_mapreg_map(pa, 0x14, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_memt, &sc->sc_regh, &sc->sc_reg, &sc->sc_regsize)) {
@@ -218,17 +218,29 @@ voyager_attach(device_t parent, device_t self, void *aux)
 	vaa.vaa_tag = sc->sc_memt;
 	vaa.vaa_pc = sc->sc_pc;
 	vaa.vaa_pcitag = sc->sc_pcitag;
+#if NVOYAGERFB > 0
 	strcpy(vaa.vaa_name, "voyagerfb");
 	config_found_ia(sc->sc_dev, "voyagerbus", &vaa, voyager_print);
+#endif
+#if NPWMCLOCK > 0
 	strcpy(vaa.vaa_name, "pwmclock");
 	config_found_ia(sc->sc_dev, "voyagerbus", &vaa, voyager_print);
+#endif
+#ifdef notyet
+	strcpy(vaa.vaa_name, "vac");
+	config_found_ia(sc->sc_dev, "voyagerbus", &vaa, voyager_print);
+#endif
+	/* we use this mutex wether there's an i2c bus or not */
+	mutex_init(&sc->sc_i2c_lock, MUTEX_DEFAULT, IPL_NONE);
 
+	/*
+	 * see if the i2c pins are configured as gpio and if so, use them
+	 * should probably be a compile time option
+	 */
 	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_GPIO0_CONTROL);
 	if ((reg & GPIO_I2C_BITS) == 0) {
 		/* both bits as outputs */
-		reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_GPIO_DIR0);
-		reg |= GPIO_I2C_BITS;
-		bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_GPIO_DIR0, reg);
+		voyager_gpio_dir(sc, 0xffffffff, GPIO_I2C_BITS);
 		
 		/* Fill in the i2c tag */
 		sc->sc_i2c.ic_cookie = sc;
@@ -240,10 +252,12 @@ voyager_attach(device_t parent, device_t self, void *aux)
 		sc->sc_i2c.ic_read_byte = voyager_i2c_read_byte;
 		sc->sc_i2c.ic_write_byte = voyager_i2c_write_byte;
 		sc->sc_i2c.ic_exec = NULL;
-		mutex_init(&sc->sc_i2c_lock, MUTEX_DEFAULT, IPL_NONE);
 		iba.iba_tag = &sc->sc_i2c;
 		config_found_ia(self, "i2cbus", &iba, iicbus_print);
 	}
+	voyager_control_gpio(sc, ~(1 << 16), 0);
+	voyager_gpio_dir(sc, 0xffffffff, 1 << 16);
+	voyager_write_gpio(sc, 0xffffffff, 1 << 16);
 }
 
 static int
@@ -354,34 +368,18 @@ voyager_i2c_write_byte(void *cookie, uint8_t val, int flags)
 	return ret;
 }
 
-/* gpio stuff */
 void
-voyager_write_gpio(void *cookie, uint32_t mask, uint32_t bits)
+voyager_twiddle_bits(void *cookie, int regnum, uint32_t mask, uint32_t bits)
 {
 	struct voyager_softc *sc = cookie;
 	uint32_t reg;
 
 	/* don't interfere with i2c ops */
 	mutex_enter(&sc->sc_i2c_lock);
-	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_GPIO_DATA0);
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, regnum);
 	reg &= mask;
 	reg |= bits;
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_GPIO_DATA0, reg);
-	mutex_exit(&sc->sc_i2c_lock);
-}
-
-void
-voyager_control_gpio(void *cookie, uint32_t mask, uint32_t bits)
-{
-	struct voyager_softc *sc = cookie;
-	uint32_t reg;
-
-	/* don't interfere with i2c ops */
-	mutex_enter(&sc->sc_i2c_lock);
-	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_GPIO0_CONTROL);
-	reg &= mask;
-	reg |= bits;
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_GPIO0_CONTROL, reg);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, regnum, reg);
 	mutex_exit(&sc->sc_i2c_lock);
 }
 

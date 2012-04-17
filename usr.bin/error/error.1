@@ -1,4 +1,4 @@
-.\"	$NetBSD: error.1,v 1.17 2011/05/20 07:08:24 wiz Exp $
+.\"	$NetBSD: error.1,v 1.17.4.1 2012/04/17 00:09:31 yamt Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)error.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd May 19, 2011
+.Dd January 22, 2012
 .Dt ERROR 1
 .Os
 .Sh NAME
@@ -134,12 +134,20 @@ Some language processors put error messages on their standard error file;
 others put their messages on the standard output.
 Hence, both error sources should be piped together into
 .Nm .
+.Pp
 For example, when using the
+.Xr sh 1
+syntax
+.Pp
+.Dl make \-s lint 2\*[Gt]\*[Am]1 \&| error \-q \-v
+.Pp
+or the
 .Xr csh 1
-syntax,
+syntax
 .Pp
-.Dl make \-s lint \&| error \-q \-v
+.Dl make \-s lint \&|\*[Am] error \-q \-v
 .Pp
+.Nm
 will analyze all the error messages produced
 by whatever programs
 .Xr make 1

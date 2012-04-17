@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.138 2011/05/27 09:28:42 plunky Exp $
+#	$NetBSD: special,v 1.138.4.1 2012/04/17 00:02:59 yamt Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -217,6 +217,7 @@
 ./etc/rc.d/irdaattach		type=file mode=0555
 ./etc/rc.d/iscsi_target		type=file mode=0555
 ./etc/rc.d/isdnd		type=file mode=0555
+./etc/rc.d/isibootd		type=file mode=0555
 ./etc/rc.d/kdc			type=file mode=0555
 ./etc/rc.d/ldconfig		type=file mode=0555
 ./etc/rc.d/local		type=file mode=0555
@@ -252,6 +253,7 @@
 ./etc/rc.d/racoon		type=file mode=0555
 ./etc/rc.d/raidframe		type=file mode=0555
 ./etc/rc.d/raidframeparity	type=file mode=0555
+./etc/rc.d/random_seed		type=file mode=0555
 ./etc/rc.d/rarpd		type=file mode=0555
 ./etc/rc.d/rbootd		type=file mode=0555
 ./etc/rc.d/rndctl		type=file mode=0555
@@ -405,7 +407,7 @@
 ./var/mail			type=dir  mode=1777 ignore
 ./var/preserve			type=dir  mode=0755 ignore
 ./var/run			type=dir  mode=0755
-./var/run/mdnsd			type=dir  mode=0755 optional
+./var/run/mdnsd			type=dir  mode=0755 gname=_mdnsd uname=_mdnsd optional
 ./var/run/utmp			type=file mode=0664 gname=utmp tags=exclude
 ./var/run/utmpx			type=file mode=0664 gname=utmp tags=exclude
 ./var/spool			type=dir  mode=0755

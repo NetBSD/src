@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.34 2011/08/23 19:57:24 christos Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.34.2.1 2012/04/17 00:09:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.34 2011/08/23 19:57:24 christos Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.34.2.1 2012/04/17 00:09:49 yamt Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -479,8 +479,6 @@ cd9660_makefs(const char *image, const char *dir, fsnode *root,
 		 */
 		return;
 	}
-
-	diskStructure.rootFilesystemPath = dir;
 
 	if (diskStructure.verbose_level > 0)
 		printf("cd9660_makefs: image %s directory %s root %p\n",
@@ -1592,24 +1590,15 @@ cd9660_generate_path_table(void)
 }
 
 void
-cd9660_compute_full_filename(cd9660node *node, char *buf, int level)
+cd9660_compute_full_filename(cd9660node *node, char *buf)
 {
-	cd9660node *parent;
+	int len;
 
-	parent = (node->rr_real_parent == NULL ?
-		  node->parent : node->rr_real_parent);
-	if (parent != NULL) {
-		cd9660_compute_full_filename(parent, buf, level + 1);
-		strcat(buf, node->node->name);
-	} else {
-		/* We are at the root */
-		strcat(buf, diskStructure.rootFilesystemPath);
-		if (buf[strlen(buf) - 1] == '/')
-			buf[strlen(buf) - 1] = '\0';
-	}
-
-	if (level != 0)
-		strcat(buf, "/");
+	len = CD9660MAXPATH + 1;
+	len = snprintf(buf, len, "%s/%s/%s", node->node->root,
+	    node->node->path, node->node->name);
+	if (len > CD9660MAXPATH)
+		errx(1, "Pathname too long.");
 }
 
 /* NEW filename conversion method */

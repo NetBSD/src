@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.49 2011/08/16 16:25:15 christos Exp $
+#	$NetBSD: Makefile,v 1.49.2.1 2012/04/17 00:05:27 yamt Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
 
 WIDECHAR ?= yes
-WARNS=	4
+WARNS?=	5
 LIB=	edit
 
 LIBDPLIBS+=     terminfo ${.CURDIR}/../libterminfo

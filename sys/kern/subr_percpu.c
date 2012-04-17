@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_percpu.c,v 1.15 2011/09/02 22:25:08 dyoung Exp $	*/
+/*	$NetBSD: subr_percpu.c,v 1.15.2.1 2012/04/17 00:08:28 yamt Exp $	*/
 
 /*-
  * Copyright (c)2007,2008 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.15 2011/09/02 22:25:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.15.2.1 2012/04/17 00:08:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -161,7 +161,7 @@ percpu_cpu_enlarge(size_t size)
  */
 
 static int
-percpu_backend_alloc(void *dummy, vmem_size_t size, vmem_size_t *resultsize,
+percpu_backend_alloc(vmem_t *dummy, vmem_size_t size, vmem_size_t *resultsize,
     vm_flag_t vmflags, vmem_addr_t *addrp)
 {
 	unsigned int offset;
@@ -218,7 +218,7 @@ percpu_init(void)
 	mutex_init(&percpu_allocation_lock, MUTEX_DEFAULT, IPL_NONE);
 	percpu_nextoff = PERCPU_QUANTUM_SIZE;
 
-	percpu_offset_arena = vmem_create("percpu", 0, 0, PERCPU_QUANTUM_SIZE,
+	percpu_offset_arena = vmem_xcreate("percpu", 0, 0, PERCPU_QUANTUM_SIZE,
 	    percpu_backend_alloc, NULL, NULL, PERCPU_QCACHE_MAX, VM_SLEEP,
 	    IPL_NONE);
 }

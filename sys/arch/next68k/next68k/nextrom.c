@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.c,v 1.22 2011/10/01 15:59:01 chs Exp $	*/
+/*	$NetBSD: nextrom.c,v 1.22.2.1 2012/04/17 00:06:44 yamt Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.22 2011/10/01 15:59:01 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.22.2.1 2012/04/17 00:06:44 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_serial.h"
@@ -56,12 +56,12 @@ char *ssym, *esym;
 volatile struct mon_global *mg;
 
 
-#define	MON(type, off) (*(type *)((u_int) (mg) + off))
+#define	MON(type, off)	(*(type *)((u_int) (mg) + off))
 
 #define RELOC(v, t)	(*((t *)((u_int)&(v) + NEXT_RAMBASE)))
 
 #define	MONRELOC(type, off) \
-     (*(volatile type *)((u_int) RELOC(mg,volatile struct mon_global *) + off))
+    (*(volatile type *)((u_int)RELOC(mg, volatile struct mon_global *) + off))
 
 
 typedef int (*getcptr)(void);
@@ -80,47 +80,49 @@ typedef int (*putcptr)(int);
 #else
 
 #define ROM_PUTC(c) \
-	(*MONRELOC(putcptr,MG_putc))(c)
+	(*MONRELOC(putcptr, MG_putc))(c)
 #define ROM_PUTS(xs) \
-  do { volatile const char *_s = xs + NEXT_RAMBASE; \
-     while(_s && *_s) (*MONRELOC(putcptr,MG_putc))(*_s++); \
-	} while(0)
+	do {								\
+		volatile const char *_s = xs + NEXT_RAMBASE;		\
+		while (_s && *_s)					\
+			(*MONRELOC(putcptr, MG_putc))(*_s++);		\
+	} while (/* CONSTCOND */0)
 
 /* Print a hex byte on the rom console */
 
 #if 1
 static char romprint_hextable[] = "0123456789abcdef@";
-#define ROM_PUTX(v) \
-  do { \
-    (*MONRELOC(putcptr,MG_putc)) \
-	(RELOC(romprint_hextable, const char *)[((v)>>4)&0xf]); \
-    (*MONRELOC(putcptr,MG_putc)) \
-	(RELOC(romprint_hextable, const char *)[(v)&0xf]); \
-	} while(0);
+#define ROM_PUTX(v)							\
+	do {								\
+		(*MONRELOC(putcptr, MG_putc))				\
+		    (RELOC(romprint_hextable[((v)>>4)&0xf], char));	\
+		(*MONRELOC(putcptr, MG_putc))				\
+		    (RELOC(romprint_hextable[(v)&0xf], char));		\
+	} while (/* CONSTCOND */0);
 #else
-#define lookup_hex(v)  ((v)>9?('a'+(v)-0xa):('0'+(v)))
+#define lookup_hex(v)  ((v) >9 ? ('a' + (v) - 0xa) : ('0' + (v)))
 #define ROM_PUTX(v) \
-  do { \
-    (*MONRELOC(putcptr,MG_putc)) \
-			 (lookup_hex(((v)>>4)&0xf)); \
-    (*MONRELOC(putcptr,MG_putc)) \
-			 (lookup_hex((v)&0xf)); \
-	} while(0);
+	do {								\
+		(*MONRELOC(putcptr, MG_putc))				\
+		    (lookup_hex(((v) >> 4) & 0xf));			\
+		(*MONRELOC(putcptr, MG_putc))				\
+		    (lookup_hex((v) & 0xf));				\
+	} while (/* CONSTCOND */0);
 #endif
 #endif
 
-u_char rom_enetaddr[6];
-u_char rom_boot_dev[20];
-u_char rom_boot_arg[20];
-u_char rom_boot_info[20];
-u_char rom_boot_file[20];
-u_char rom_bootfile[MG_boot_how-MG_bootfile];
+uint8_t rom_enetaddr[6];
+uint8_t rom_boot_dev[20];
+uint8_t rom_boot_arg[20];
+uint8_t rom_boot_info[20];
+uint8_t rom_boot_file[20];
+uint8_t rom_bootfile[MG_boot_how - MG_bootfile];
 char rom_machine_type;
 
-u_char *rom_return_sp;
+uint8_t *rom_return_sp;
 u_int rom_mon_stack;
-u_char rom_image[0x2000];
-vm_offset_t rom_image_base;
+uint8_t rom_image[0x2000];
+paddr_t rom_image_base;
 u_int rom_vbr;
 u_int rom_intrmask;
 u_int rom_intrstat;
@@ -141,8 +143,8 @@ next68k_bootargs(unsigned char **args)
 	const char *reloc_elfmag;
 #endif
 
-	RELOC(rom_return_sp,u_char *) = args[0];
-	RELOC(mg,char *) = args[1];
+	RELOC(rom_return_sp, uint8_t *) = args[0];
+	RELOC(mg, char *) = args[1];
 
 	ROM_PUTS("Welcome to NetBSD/next68k\r\n");
 
@@ -201,24 +203,24 @@ next68k_bootargs(unsigned char **args)
 	ROM_PUTS("Constructing the segment list...\r\n");
 
 	ROM_PUTS("machine type = 0x");
-	ROM_PUTX(MONRELOC(char,MG_machine_type));
+	ROM_PUTX(MONRELOC(char, MG_machine_type));
 	ROM_PUTS("\r\nboard rev = 0x");
-	ROM_PUTX(MONRELOC(char,MG_board_rev));
+	ROM_PUTX(MONRELOC(char, MG_board_rev));
 	ROM_PUTS("\r\ndmachip = 0x");
-	ROM_PUTX(MONRELOC(int,MG_dmachip)>>24&0xff);
-	ROM_PUTX(MONRELOC(int,MG_dmachip)>>16&0xff);
-	ROM_PUTX(MONRELOC(int,MG_dmachip)>>8&0xff);
-	ROM_PUTX(MONRELOC(int,MG_dmachip)>>0&0xff);
+	ROM_PUTX(MONRELOC(int, MG_dmachip) >> 24 & 0xff);
+	ROM_PUTX(MONRELOC(int, MG_dmachip) >> 16 & 0xff);
+	ROM_PUTX(MONRELOC(int, MG_dmachip) >>  8 & 0xff);
+	ROM_PUTX(MONRELOC(int, MG_dmachip) >>  0 & 0xff);
 	ROM_PUTS("\r\ndiskchip = 0x");
-	ROM_PUTX(MONRELOC(int,MG_diskchip)>>24&0xff);
-	ROM_PUTX(MONRELOC(int,MG_diskchip)>>16&0xff);
-	ROM_PUTX(MONRELOC(int,MG_diskchip)>>8&0xff);
-	ROM_PUTX(MONRELOC(int,MG_diskchip)>>0&0xff);
+	ROM_PUTX(MONRELOC(int, MG_diskchip) >> 24 & 0xff);
+	ROM_PUTX(MONRELOC(int, MG_diskchip) >> 16 & 0xff);
+	ROM_PUTX(MONRELOC(int, MG_diskchip) >>  8 & 0xff);
+	ROM_PUTX(MONRELOC(int, MG_diskchip) >>  0 & 0xff);
 	ROM_PUTS("\r\n");
 
 
 	/* Construct the segment list */
-	{        
+	{
 		u_int msize16;
 		u_int msize4;
 		u_int msize1;
@@ -226,30 +228,31 @@ next68k_bootargs(unsigned char **args)
 		int j = 0;
 		char mach;
 
-		if (MONRELOC(char,MG_machine_type) == NeXT_X15) {
+		if (MONRELOC(char, MG_machine_type) == NeXT_X15) {
 			msize16 = 0x1000000;
-			msize4  = 0x400000;
-			msize1  = 0x100000;
+			msize4  =  0x400000;
+			msize1  =  0x100000;
 			ROM_PUTS("Looks like a NeXT_X15\r\n");
-		} else if (MONRELOC(char,MG_machine_type) == NeXT_WARP9C) {
+		} else if (MONRELOC(char, MG_machine_type) == NeXT_WARP9C) {
 			msize16 = 0x800000;
 			msize4  = 0x200000;
-			msize1  = 0x80000;				/* ? */
+			msize1  =  0x80000;				/* ? */
 			ROM_PUTS("Looks like a NeXT_WARP9C\r\n");
-		} else if (MONRELOC(char,MG_machine_type) == NeXT_WARP9) {
+		} else if (MONRELOC(char, MG_machine_type) == NeXT_WARP9) {
 			msize16 = 0x1000000;
-			msize4  = 0x400000;
-			msize1  = 0x100000;
+			msize4  =  0x400000;
+			msize1  =  0x100000;
 			ROM_PUTS("Looks like a NeXT_WARP9\r\n");
-		} else if (MONRELOC(char,MG_machine_type) == NeXT_TURBO_COLOR) {
+		} else if (MONRELOC(char, MG_machine_type) == NeXT_TURBO_COLOR)
+		    {
 			msize16 = 0x2000000;
-			msize4  = 0x800000;
-			msize1  = 0x200000;
+			msize4  =  0x800000;
+			msize1  =  0x200000;
 			ROM_PUTS("Looks like a NeXT_TURBO_COLOR\r\n");
-		} else if (MONRELOC(char,MG_machine_type) == NeXT_TURBO_MONO) {
+		} else if (MONRELOC(char, MG_machine_type) == NeXT_TURBO_MONO) {
 			msize16 = 0x2000000;
-			msize4  = 0x800000;
-			msize1  = 0x200000;
+			msize4  =  0x800000;
+			msize1  =  0x200000;
 			ROM_PUTS("Looks like a NeXT_TURBO_MONO\r\n");
 		} else {
 			msize16 = 0x100000;
@@ -265,148 +268,179 @@ next68k_bootargs(unsigned char **args)
 		else
 			RELOC(turbo, int) = 0;
 
-		for (ix=0;ix<N_SIMM;ix++) {
-			
+		for (ix = 0; ix < N_SIMM; ix++) {
+
 			ROM_PUTS("Memory bank 0x");
 			ROM_PUTX(ix);
 			ROM_PUTS(" has value 0x");
-			ROM_PUTX(MONRELOC(char,MG_simm+ix))
-				ROM_PUTS("\r\n");
-			
-			if ((MONRELOC(char,MG_simm+ix) & SIMM_SIZE) != SIMM_SIZE_EMPTY) {
-				RELOC(phys_seg_list[j].ps_start, vm_offset_t) 
-					= NEXT_RAMBASE+(ix*msize16);
+			ROM_PUTX(MONRELOC(char, MG_simm + ix))
+			ROM_PUTS("\r\n");
+
+			if ((MONRELOC(char, MG_simm+ix) & SIMM_SIZE) !=
+			    SIMM_SIZE_EMPTY) {
+				RELOC(phys_seg_list[j].ps_start, paddr_t) =
+				    NEXT_RAMBASE + (ix * msize16);
 			}
-			if ((MONRELOC(char,MG_simm+ix) & SIMM_SIZE) == SIMM_SIZE_16MB) {
-				RELOC(phys_seg_list[j].ps_end, vm_offset_t) = 
-					RELOC(phys_seg_list[j].ps_start, vm_offset_t) +
-					msize16;
-				j++;
-			} 
-			if ((MONRELOC(char,MG_simm+ix) & SIMM_SIZE) == SIMM_SIZE_4MB) {
-				RELOC(phys_seg_list[j].ps_end, vm_offset_t) = 
-					RELOC(phys_seg_list[j].ps_start, vm_offset_t) +
-					msize4;
+			if ((MONRELOC(char, MG_simm + ix) & SIMM_SIZE) ==
+			    SIMM_SIZE_16MB) {
+				RELOC(phys_seg_list[j].ps_end, paddr_t) =
+				    RELOC(phys_seg_list[j].ps_start, paddr_t) +
+				    msize16;
 				j++;
 			}
-			if ((MONRELOC(char,MG_simm+ix) & SIMM_SIZE) == SIMM_SIZE_1MB) {
-				RELOC(phys_seg_list[j].ps_end, vm_offset_t) = 
-					RELOC(phys_seg_list[j].ps_start, vm_offset_t) +
-					msize1;
+			if ((MONRELOC(char, MG_simm + ix) & SIMM_SIZE) ==
+			    SIMM_SIZE_4MB) {
+				RELOC(phys_seg_list[j].ps_end, paddr_t) =
+				    RELOC(phys_seg_list[j].ps_start, paddr_t) +
+				    msize4;
+				j++;
+			}
+			if ((MONRELOC(char, MG_simm+ix) & SIMM_SIZE) ==
+			    SIMM_SIZE_1MB) {
+				RELOC(phys_seg_list[j].ps_end, paddr_t) =
+				    RELOC(phys_seg_list[j].ps_start, paddr_t) +
+				    msize1;
 				j++;
 			}
 		}
 
-		/* The NeXT ROM or something appears to reserve the very
+		/*
+		 * The NeXT ROM or something appears to reserve the very
 		 * top of memory
 		 */
-		RELOC(phys_seg_list[j-1].ps_end, vm_offset_t) -= 0x2000;
-		RELOC(rom_image_base, vm_offset_t) = RELOC(phys_seg_list[j-1].ps_end, vm_offset_t);
+		RELOC(phys_seg_list[j - 1].ps_end, paddr_t) -= 0x2000;
+		RELOC(rom_image_base, paddr_t) =
+		    RELOC(phys_seg_list[j - 1].ps_end, paddr_t);
 
 		/* pmap is unhappy if it is not null terminated */
-		for(;j<MAX_PHYS_SEGS;j++) {
-			RELOC(phys_seg_list[j].ps_start, vm_offset_t) = 0;
-			RELOC(phys_seg_list[j].ps_end, vm_offset_t) = 0;
+		for (; j < MAX_PHYS_SEGS; j++) {
+			RELOC(phys_seg_list[j].ps_start, paddr_t) = 0;
+			RELOC(phys_seg_list[j].ps_end, paddr_t) = 0;
 		}
 	}
 
 	{
 		int j;
 		ROM_PUTS("Memory segments found:\r\n");
-		for (j=0;RELOC(phys_seg_list[j].ps_start, vm_offset_t);j++) {
+		for (j = 0; RELOC(phys_seg_list[j].ps_start, paddr_t); j++) {
 			ROM_PUTS("\t0x");
-			ROM_PUTX((RELOC(phys_seg_list[j].ps_start, vm_offset_t)>>24)&0xff);
-			ROM_PUTX((RELOC(phys_seg_list[j].ps_start, vm_offset_t)>>16)&0xff);
-			ROM_PUTX((RELOC(phys_seg_list[j].ps_start, vm_offset_t)>>8)&0xff);
-			ROM_PUTX((RELOC(phys_seg_list[j].ps_start, vm_offset_t)>>0)&0xff);
+			ROM_PUTX((RELOC(phys_seg_list[j].ps_start, paddr_t)
+			    >> 24 ) & 0xff);
+			ROM_PUTX((RELOC(phys_seg_list[j].ps_start, paddr_t)
+			    >> 16) & 0xff);
+			ROM_PUTX((RELOC(phys_seg_list[j].ps_start, paddr_t)
+			    >>  8) & 0xff);
+			ROM_PUTX((RELOC(phys_seg_list[j].ps_start, paddr_t)
+			    >>  0) & 0xff);
 			ROM_PUTS(" - 0x");
-			ROM_PUTX((RELOC(phys_seg_list[j].ps_end, vm_offset_t)>>24)&0xff);
-			ROM_PUTX((RELOC(phys_seg_list[j].ps_end, vm_offset_t)>>16)&0xff);
-			ROM_PUTX((RELOC(phys_seg_list[j].ps_end, vm_offset_t)>>8)&0xff);
-			ROM_PUTX((RELOC(phys_seg_list[j].ps_end, vm_offset_t)>>0)&0xff);
+			ROM_PUTX((RELOC(phys_seg_list[j].ps_end, paddr_t)
+			    >> 24) & 0xff);
+			ROM_PUTX((RELOC(phys_seg_list[j].ps_end, paddr_t)
+			    >> 16) & 0xff);
+			ROM_PUTX((RELOC(phys_seg_list[j].ps_end, paddr_t)
+			    >>  8) & 0xff);
+			ROM_PUTX((RELOC(phys_seg_list[j].ps_end, paddr_t)
+			    >>  0) & 0xff);
 			ROM_PUTS("\r\n");
 		}
 	}
 
-	/* Read the ethernet address from rom, this should be done later
+	/*
+	 * Read the ethernet address from rom, this should be done later
 	 * in device driver somehow.
 	 */
 	{
 		int j;
 		ROM_PUTS("Ethernet address: ");
-		for(j=0;j<6;j++) {
-			RELOC(rom_enetaddr[j], u_char) = MONRELOC(u_char *, MG_clientetheraddr)[j];
-			ROM_PUTX(RELOC(rom_enetaddr[j],u_char));
-			if (j < 5) ROM_PUTS(":");
+		for (j = 0; j < 6; j++) {
+			RELOC(rom_enetaddr[j], uint8_t) =
+			    MONRELOC(uint8_t *, MG_clientetheraddr)[j];
+			ROM_PUTX(RELOC(rom_enetaddr[j], uint8_t));
+			if (j < 5)
+				ROM_PUTS(":");
 		}
 		ROM_PUTS("\r\n");
 	}
 
-	/* Read the boot args
+	/*
+	 * Read the boot args
 	 */
 	{
 		int j;
-		for(j=0;j<sizeof(rom_bootfile);j++) {
-			RELOC(rom_bootfile[j], u_char) = MONRELOC(u_char, MG_bootfile+j);
+		for (j = 0; j < sizeof(rom_bootfile); j++) {
+			RELOC(rom_bootfile[j], uint8_t) =
+			    MONRELOC(uint8_t, MG_bootfile + j);
 		}
 
 		ROM_PUTS("rom bootdev: ");
-		for(j=0;j<sizeof(rom_boot_dev);j++) {
-			RELOC(rom_boot_dev[j], u_char) = MONRELOC(u_char *, MG_boot_dev)[j];
-			ROM_PUTC(RELOC(rom_boot_dev[j], u_char));
-			if (MONRELOC(u_char *, MG_boot_dev)[j] == '\0') break;
+		for (j = 0; j < sizeof(rom_boot_dev); j++) {
+			RELOC(rom_boot_dev[j], uint8_t) =
+			    MONRELOC(uint8_t *, MG_boot_dev)[j];
+			ROM_PUTC(RELOC(rom_boot_dev[j], uint8_t));
+			if (MONRELOC(uint8_t *, MG_boot_dev)[j] == '\0')
+				break;
 		}
-		RELOC(rom_boot_dev[sizeof(rom_boot_dev)-1], u_char) = 0;
+		RELOC(rom_boot_dev[sizeof(rom_boot_dev) - 1], uint8_t) = 0;
 
 		ROM_PUTS("\r\nrom bootarg: ");
-		for(j=0;j<sizeof(rom_boot_arg);j++) {
-			RELOC(rom_boot_arg[j], u_char) = MONRELOC(u_char *, MG_boot_arg)[j];
-			ROM_PUTC(RELOC(rom_boot_arg[j], u_char));
-			if (MONRELOC(u_char *, MG_boot_arg)[j] == '\0') break;
+		for (j = 0; j < sizeof(rom_boot_arg); j++) {
+			RELOC(rom_boot_arg[j], uint8_t) =
+			    MONRELOC(uint8_t *, MG_boot_arg)[j];
+			ROM_PUTC(RELOC(rom_boot_arg[j], uint8_t));
+			if (MONRELOC(uint8_t *, MG_boot_arg)[j] == '\0')
+				break;
 		}
-		RELOC(rom_boot_arg[sizeof(rom_boot_arg)-1], u_char) = 0;
+		RELOC(rom_boot_arg[sizeof(rom_boot_arg) - 1], uint8_t) = 0;
 
 		ROM_PUTS("\r\nrom bootinfo: ");
-		for(j=0;j<sizeof(rom_boot_info);j++) {
-			RELOC(rom_boot_info[j], u_char) = MONRELOC(u_char *, MG_boot_info)[j];
-			ROM_PUTC(RELOC(rom_boot_info[j], u_char));
-			if (MONRELOC(u_char *, MG_boot_info)[j] == '\0') break;
+		for (j = 0; j < sizeof(rom_boot_info); j++) {
+			RELOC(rom_boot_info[j], uint8_t) =
+			    MONRELOC(uint8_t *, MG_boot_info)[j];
+			ROM_PUTC(RELOC(rom_boot_info[j], uint8_t));
+			if (MONRELOC(uint8_t *, MG_boot_info)[j] == '\0')
+				break;
 		}
-		RELOC(rom_boot_info[sizeof(rom_boot_info)-1], u_char) = 0;
+		RELOC(rom_boot_info[sizeof(rom_boot_info) - 1], uint8_t) = 0;
 
 		ROM_PUTS("\r\nrom bootfile: ");
-		for(j=0;j<sizeof(rom_boot_file);j++) {
-			RELOC(rom_boot_file[j], u_char) = MONRELOC(u_char *, MG_boot_file)[j];
-			ROM_PUTC(RELOC(rom_boot_file[j], u_char));
-			if (MONRELOC(u_char *, MG_boot_file)[j] == '\0') break;
+		for (j = 0; j < sizeof(rom_boot_file); j++) {
+			RELOC(rom_boot_file[j], uint8_t) =
+			    MONRELOC(uint8_t *, MG_boot_file)[j];
+			ROM_PUTC(RELOC(rom_boot_file[j], uint8_t));
+			if (MONRELOC(uint8_t *, MG_boot_file)[j] == '\0')
+				break;
 		}
-		RELOC(rom_boot_file[sizeof(rom_boot_file)-1], u_char) = 0;
+		RELOC(rom_boot_file[sizeof(rom_boot_file) - 1], uint8_t) = 0;
 		ROM_PUTS("\r\n");
 
 		RELOC(rom_mon_stack, u_int) = MONRELOC(u_int, MG_mon_stack);
 		RELOC(rom_vbr, u_int) = MONRELOC(u_int, MG_vbr);
-		RELOC(rom_reboot_vect, paddr_t) = MONRELOC(paddr_t *, MG_vbr)[45]; /* trap #13 */
+		RELOC(rom_reboot_vect, paddr_t) =
+		    MONRELOC(paddr_t *, MG_vbr)[45]; /* trap #13 */
 
-		for(j=0;j<sizeof(rom_image);j++) {
-			RELOC(rom_image[j], u_char) = *(u_char *)(RELOC(rom_image_base, vm_offset_t) + j);
+		for (j = 0; j < sizeof(rom_image); j++) {
+			RELOC(rom_image[j], uint8_t) =
+			    *(uint8_t *)(RELOC(rom_image_base, paddr_t) + j);
 		}
 	}
 
 	RELOC(rom_intrmask, u_int) = MONRELOC(u_int, MG_intrmask);
 	RELOC(rom_intrstat, u_int) = MONRELOC(u_int, MG_intrstat);
 	ROM_PUTS("intrmask: ");
-	ROM_PUTX((RELOC(rom_intrmask, u_int)>>24)&0xff);
-	ROM_PUTX((RELOC(rom_intrmask, u_int)>>16)&0xff);
-	ROM_PUTX((RELOC(rom_intrmask, u_int)>>8)&0xff);
-	ROM_PUTX((RELOC(rom_intrmask, u_int)>>0)&0xff);
+	ROM_PUTX((RELOC(rom_intrmask, u_int) >> 24) & 0xff);
+	ROM_PUTX((RELOC(rom_intrmask, u_int) >> 16) & 0xff);
+	ROM_PUTX((RELOC(rom_intrmask, u_int) >>  8) & 0xff);
+	ROM_PUTX((RELOC(rom_intrmask, u_int) >>  0) & 0xff);
 	ROM_PUTS("\r\nintrstat: ");
-	ROM_PUTX((RELOC(rom_intrstat, u_int)>>24)&0xff);
-	ROM_PUTX((RELOC(rom_intrstat, u_int)>>16)&0xff);
-	ROM_PUTX((RELOC(rom_intrstat, u_int)>>8)&0xff);
-	ROM_PUTX((RELOC(rom_intrstat, u_int)>>0)&0xff);
+	ROM_PUTX((RELOC(rom_intrstat, u_int) >> 24) & 0xff);
+	ROM_PUTX((RELOC(rom_intrstat, u_int) >> 16) & 0xff);
+	ROM_PUTX((RELOC(rom_intrstat, u_int) >>  8) & 0xff);
+	ROM_PUTX((RELOC(rom_intrstat, u_int) >>  0) & 0xff);
 	ROM_PUTS("\r\n");
- /*	RELOC(rom_intrmask, u_int) = 0x02007800; */
- /*	RELOC(rom_intrstat, u_int) = 0x02007000; */
+#if 0
+	RELOC(rom_intrmask, u_int) = 0x02007800;
+	RELOC(rom_intrstat, u_int) = 0x02007000;
+#endif
 
 #ifdef SERCONSOLE
 	ROM_PUTS("Check serial port A for console.\r\n");

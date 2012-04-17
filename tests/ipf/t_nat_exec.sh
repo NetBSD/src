@@ -1,4 +1,4 @@
-# $NetBSD: t_nat_exec.sh,v 1.3 2010/12/18 13:06:51 pooka Exp $
+# $NetBSD: t_nat_exec.sh,v 1.3.6.1 2012/04/17 00:09:04 yamt Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -54,18 +54,18 @@ nattest()
 
 #broken_test_case n1 nattest text text
 #broken_test_case n2 nattest text text
-test_case n3 nattest text text
+broken_test_case n3 nattest text text
 #broken_test_case n4 nattest text text
 #broken_test_case n5 nattest text text
 #broken_test_case n6 nattest text text
-test_case n7 nattest text text
-test_case n8 nattest hex hex -T fr_update_ipid=0
-test_case n9 nattest hex hex -T fr_update_ipid=0
-test_case n10 nattest hex hex -T fr_update_ipid=0
+broken_test_case n7 nattest text text
+broken_test_case n8 nattest hex hex -T fr_update_ipid=0
+broken_test_case n9 nattest hex hex -T fr_update_ipid=0
+broken_test_case n10 nattest hex hex -T fr_update_ipid=0
 #broken_test_case n11 nattest text text
-test_case n12 nattest hex hex -T fr_update_ipid=0
-test_case n13 nattest text text
-test_case n14 nattest text text
+broken_test_case n12 nattest hex hex -T fr_update_ipid=0
+broken_test_case n13 nattest text text
+broken_test_case n14 nattest text text
 test_case n16 nattest hex hex -D
 test_case n17 nattest hex hex -D
 

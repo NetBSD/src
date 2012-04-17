@@ -1,4 +1,4 @@
-/* $NetBSD: setlocale.c,v 1.58 2010/06/07 13:52:30 tnozaki Exp $ */
+/* $NetBSD: setlocale.c,v 1.58.6.1 2012/04/17 00:05:20 yamt Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: setlocale.c,v 1.58 2010/06/07 13:52:30 tnozaki Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.58.6.1 2012/04/17 00:05:20 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -43,49 +43,21 @@ __RCSID("$NetBSD: setlocale.c,v 1.58 2010/06/07 13:52:30 tnozaki Exp $");
 
 const char *_PathLocale = NULL;
 
-__link_set_decl(all_categories, _locale_category_t);
+static _locale_set_t all_categories[_LC_LAST] = {
+	[LC_ALL     ] = &_generic_LC_ALL_setlocale,
+	[LC_COLLATE ] = &_dummy_LC_COLLATE_setlocale,
+	[LC_CTYPE   ] = &_citrus_LC_CTYPE_setlocale,
+	[LC_MONETARY] = &_citrus_LC_MONETARY_setlocale,
+	[LC_NUMERIC ] = &_citrus_LC_NUMERIC_setlocale,
+	[LC_TIME    ] = &_citrus_LC_TIME_setlocale,
+	[LC_MESSAGES] = &_citrus_LC_MESSAGES_setlocale,
+};
 
-extern const _locale_category_t _generic_LC_ALL_desc;
-extern const _locale_category_t _dummy_LC_COLLATE_desc;
-#ifdef WITH_RUNE
-extern const _locale_category_t _citrus_LC_CTYPE_desc;
-extern const _locale_category_t _citrus_LC_MONETARY_desc;
-extern const _locale_category_t _citrus_LC_NUMERIC_desc;
-extern const _locale_category_t _citrus_LC_TIME_desc;
-extern const _locale_category_t _citrus_LC_MESSAGES_desc;
-#else
-extern const _locale_category_t _localeio_LC_CTYPE_desc;
-extern const _locale_category_t _localeio_LC_MONETARY_desc;
-extern const _locale_category_t _localeio_LC_NUMERIC_desc;
-extern const _locale_category_t _localeio_LC_TIME_desc;
-extern const _locale_category_t _localeio_LC_MESSAGES_desc;
-#endif
-
-__link_set_add_data(all_categories, _generic_LC_ALL_desc);
-__link_set_add_data(all_categories, _dummy_LC_COLLATE_desc);
-#ifdef WITH_RUNE
-__link_set_add_data(all_categories, _citrus_LC_CTYPE_desc);
-__link_set_add_data(all_categories, _citrus_LC_MONETARY_desc);
-__link_set_add_data(all_categories, _citrus_LC_NUMERIC_desc);
-__link_set_add_data(all_categories, _citrus_LC_TIME_desc);
-__link_set_add_data(all_categories, _citrus_LC_MESSAGES_desc);
-#else
-__link_set_add_data(all_categories, _localeio_LC_CTYPE_desc);
-__link_set_add_data(all_categories, _localeio_LC_MONETARY_desc);
-__link_set_add_data(all_categories, _localeio_LC_NUMERIC_desc);
-__link_set_add_data(all_categories, _localeio_LC_TIME_desc);
-__link_set_add_data(all_categories, _localeio_LC_MESSAGES_desc);
-#endif
-
-_locale_category_t *
+_locale_set_t
 _find_category(int category)
 {
-	_locale_category_t * const *p;
-
-	__link_set_foreach(p, all_categories) {
-		if ((*p)->category == category)
-			return *p;
-	}
+	if (category >= LC_ALL && category < _LC_LAST)
+		return all_categories[category];
 	return NULL;
 }
 
@@ -113,21 +85,18 @@ _get_locale_env(const char *category)
 char *
 __setlocale(int category, const char *name)
 {
-	_locale_category_t *l;
+	_locale_set_t sl;
 	struct _locale_impl_t *impl;
 
-	if (category >= LC_ALL && category < _LC_LAST) {
-		l = _find_category(category);
-		if (l != NULL) {
-			if (issetugid() || ((_PathLocale == NULL &&
-			    (_PathLocale = getenv("PATH_LOCALE")) == NULL) ||
-			    *_PathLocale == '\0'))
-				_PathLocale = _PATH_LOCALE;
-			impl = *_current_locale();
-			return __UNCONST((*l->setlocale)(name, impl));
-		}
-	}
-	return NULL;
+	sl = _find_category(category);
+	if (sl == NULL)
+		return NULL;
+	if (issetugid() || ((_PathLocale == NULL &&
+	    (_PathLocale = getenv("PATH_LOCALE")) == NULL) ||
+	    *_PathLocale == '\0'))
+		_PathLocale = _PATH_LOCALE;
+	impl = *_current_locale();
+	return __UNCONST((*sl)(name, impl));
 }
 
 char *

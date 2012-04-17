@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.10 2011/02/28 21:24:25 skrll Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.10.4.1 2012/04/17 00:06:26 yamt Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.10 2011/02/28 21:24:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.10.4.1 2012/04/17 00:06:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.10 2011/02/28 21:24:25 skrll Exp $");
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_interface.h>
+#include <ddb/db_proc.h>
 
 void
 db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
@@ -75,46 +76,62 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		rp = ddb_regs.tf_rp;
 	} else {
 		if (trace_thread) {
-			struct proc *p;
-			struct lwp *l;
+			proc_t p;
+			lwp_t l;
+			pid_t pid;
 
 			if (lwpaddr) {
-				l = (struct lwp *)addr;
-				p = l->l_proc;
-				(*pr)("trace: pid %d ", p->p_pid);
+				db_read_bytes(addr, sizeof(l), (char *)&l);
+				db_read_bytes((db_addr_t)l.l_proc, sizeof(p),
+				    (char *)&p);
+				(*pr)("trace: pid %d ", p.p_pid);
 			} else {
-				(*pr)("trace: pid %d ", (int)addr);
-				p = proc_find_raw(addr);
-				if (p == NULL) {
+				proc_t *pp;
+
+				pid = (pid_t)addr;
+				(*pr)("trace: pid %d ", pid);
+				pp = db_proc_find(pid);
+				if (pp == NULL) {
 					(*pr)("not found\n");
 					return;
 				}
-				l = LIST_FIRST(&p->p_lwps);
-				KASSERT(l != NULL);
+				db_read_bytes((db_addr_t)pp, sizeof(p),
+				    (char *)&p);
+				addr = (db_addr_t)p.p_lwps.lh_first;
+				db_read_bytes(addr, sizeof(l), (char *)&l);
 			}
-			(*pr)("lid %d ", l->l_lid);
-			if (p == curproc && l == curlwp) {
+			(*pr)("lid %d ", l.l_lid);
+#ifdef _KERNEL
+			if (l.l_proc == curproc && (lwp_t *)addr == curlwp) {
 				fp = (int *)ddb_regs.tf_r3;
 				pc = ddb_regs.tf_iioq_head;
 				rp = ddb_regs.tf_rp;
-			} else {
-				struct pcb *pcb = lwp_getpcb(l);
+			} else
+#endif
+			{
+				struct pcb *pcb = lwp_getpcb(&l);
+				register_t sp;
 				/* cpu_switchto fp, and return point */
-				fp = (int *)(pcb->pcb_ksp -
+				db_read_bytes((db_addr_t)&pcb->pcb_ksp,
+				    sizeof(sp), (char *)&sp);
+				fp = (register_t *)(sp -
 				    (HPPA_FRAME_SIZE + 16*4));
 				pc = 0;
-				rp = fp[-5];
+
+				db_read_bytes((db_addr_t)&fp[-5], sizeof(rp),
+				    (char *)&rp);
 			}
 			(*pr)("at %p\n", fp);
 		} else {
 			pc = 0;
 			fp = (register_t *)addr;
-			rp = fp[-5];
+			db_read_bytes((db_addr_t)&fp[-5], sizeof(rp),
+			    (char *)&rp);
 		}
 	}
 
 	while (fp && count--) {
-
+		register_t *newfp;
 #ifdef DDB_DEBUG
 		pr(">> %08x %08x %08x\t", fp, pc, rp);
 #endif
@@ -122,58 +139,59 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		if (USERMODE(pc))
 			return;
 
-		sym = db_search_symbol(pc, DB_STGY_ANY, &off);
-		db_symbol_values (sym, &name, NULL);
+		if (pc) {
+			sym = db_search_symbol(pc, DB_STGY_ANY, &off);
+			db_symbol_values (sym, &name, NULL);
 
-		pr("%s() at ", name);
-		db_printsym(pc, DB_STGY_PROC, pr);
-		pr("\n");
+			pr("%s() at ", name);
+			db_printsym(pc, DB_STGY_PROC, pr);
+			pr("\n");
+		}
 
-		/* XXX NH - unwind info here */
-		/* aue = ue_find(pc); */
-
-		/*
-		 * get rp?
-		 * fp -= ue_total_frame_size(aue)
-		 */
+		db_read_bytes((db_addr_t)&fp[0], sizeof(newfp), (char *)&newfp);
 
 		/*
 		 * if a terminal frame then report the trapframe and continue
 		 * after it (if not the last one).
 		 */
-		if (!fp[0]) {
-			register_t *scargs;
-			struct trapframe *tf;
+		if (!newfp) {
+			register_t scargs[5];
+			struct trapframe tf, *ktf;
 			int scoff;
 
 			/* Stack space for syscall args */
-			scoff = HPPA_FRAME_ROUND(HPPA_FRAME_SIZE + HPPA_FRAME_MAXARGS);
+			scoff = HPPA_FRAME_ROUND(HPPA_FRAME_SIZE +
+			    HPPA_FRAME_MAXARGS);
+			ktf = (struct trapframe *)((char *)fp - scoff -
+			    sizeof(tf));
 
-			scargs = (register_t *)((char *)fp - scoff);
-			tf = (struct trapframe *)((char *)scargs - sizeof(*tf));
+			db_read_bytes((db_addr_t)((char *)fp - scoff),
+			     sizeof(scargs), (char *)&scargs);
+			db_read_bytes((db_addr_t)ktf, sizeof(tf), (char *)&tf);
 
-			if (tf->tf_flags & TFF_SYS)
+			if (tf.tf_flags & TFF_SYS)
 				pr("-- syscall #%d(%x, %x, %x, %x, ...) (%p)\n",
-				    tf->tf_t1, scargs[1], scargs[2],
-				    scargs[3], scargs[4], tf);
+				    tf.tf_t1, scargs[1], scargs[2],
+				    scargs[3], scargs[4], ktf);
 			else
-				pr("-- trap #%d (%p) %s\n", tf->tf_flags & 0x3f,
-				    tf, (tf->tf_flags & T_USER)? " from user" :
+				pr("-- trap #%d (%p) %s\n", tf.tf_flags & 0x3f,
+				    ktf, (tf.tf_flags & T_USER)? " from user" :
 				    "");
 
-			if (!(tf->tf_flags & TFF_LAST)) {
-				fp = (register_t *)tf->tf_r3;
-				pc = tf->tf_iioq_head;
-				rp = tf->tf_rp;
+			if (!(tf.tf_flags & TFF_LAST)) {
+				fp = (register_t *)tf.tf_r3;
+				pc = tf.tf_iioq_head;
+				rp = tf.tf_rp;
 			} else {
 				pc = 0;
 				fp = 0;
 			}
 		} else {
 			/* next frame */
-			fp = (register_t *)fp[0];
+			fp = newfp;
 			pc = rp;
-			rp = fp[-5];
+			db_read_bytes((db_addr_t)&fp[-5], sizeof(rp),
+			    (char *)&rp);
 		}
 	}
 

@@ -1,5 +1,5 @@
 /*	Id: cpp.h,v 1.53 2011/08/30 20:12:21 plunky Exp 	*/	
-/*	$NetBSD: cpp.h,v 1.1.1.4 2011/09/01 12:46:54 plunky Exp $	*/
+/*	$NetBSD: cpp.h,v 1.1.1.4.2.1 2012/04/17 00:04:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004,2010 Anders Magnusson (ragge@ludd.luth.se).
@@ -51,10 +51,10 @@ extern	int	ofd;
 
 /* buffer used internally */
 #ifndef CPPBUF
-#if defined(__pdp11__)
+#if defined(mach_pdp11)
 #define CPPBUF  BUFSIZ
 #define	BUF_STACK
-#elif defined(WIN32)
+#elif defined(os_win32)
 /* winxp seems to fail > 26608 bytes */
 #define CPPBUF	16384
 #else

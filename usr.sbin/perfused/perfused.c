@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.c,v 1.16 2011/10/23 05:03:37 manu Exp $ */
+/*  $NetBSD: perfused.c,v 1.16.2.1 2012/04/17 00:09:51 yamt Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -47,13 +47,21 @@
 #include <sys/un.h>
 #include <machine/vmparam.h>
 
-#include "../../lib/libperfuse/perfuse_if.h"
 #include "perfused.h"
+
+/*
+ * This is used for trace file. of course it will not work if
+ * we ever mount multiple filesystems in a single perfused, 
+ * but it is not sure we will ever want to do that.
+ */
+static struct puffs_usermount *perfused_mount = NULL;
+static FILE *perfused_trace = NULL;
 
 static int access_mount(const char *, uid_t, int);
 static void new_mount(int, int);
 static int parse_debug(char *);
 static void siginfo_handler(int);
+static void sigusr1_handler(int);
 static int parse_options(int, char **);
 static void get_mount_info(int, struct perfuse_mount_info *, int);
 
@@ -105,7 +113,7 @@ get_mount_info(int fd, struct perfuse_mount_info *pmi, int sock_type)
 	char *sock = NULL;
 
 	pmo = (struct perfuse_mount_out *)
-		perfuse_recv_early(fd, &cred, sizeof(cred));
+		perfused_recv_early(fd, &cred, sizeof(cred));
 
 	if (pmo == NULL) {
 		if (shutdown(fd, SHUT_RDWR) != 0)
@@ -201,6 +209,10 @@ new_mount(int fd, int pmnt_flags)
 	pid_t pid;
 	int flags;
 	int sock_type;
+	char trace_file[MAXPATHLEN + 1];
+	char trace_name[MAXPATHLEN + 1];
+	ssize_t trace_namelen;
+	int i;
 
 	pid = (perfuse_diagflags & PDF_FOREGROUND) ? 0 : fork();
 	switch(pid) {
@@ -233,24 +245,24 @@ new_mount(int fd, int pmnt_flags)
 	/*
 	 * Initialize libperfuse, which will initialize libpuffs
 	 */
-	pc.pc_new_msg = perfuse_new_pb;
-	pc.pc_xchg_msg = perfuse_xchg_pb;
+	pc.pc_new_msg = perfused_new_pb;
+	pc.pc_xchg_msg = perfused_xchg_pb;
 	pc.pc_destroy_msg = (perfuse_destroy_msg_fn)puffs_framebuf_destroy;
-	pc.pc_get_inhdr = perfuse_get_inhdr;
-	pc.pc_get_inpayload = perfuse_get_inpayload;
-	pc.pc_get_outhdr = perfuse_get_outhdr;
-	pc.pc_get_outpayload = perfuse_get_outpayload;
-	pc.pc_umount = perfuse_umount;
+	pc.pc_get_inhdr = perfused_get_inhdr;
+	pc.pc_get_inpayload = perfused_get_inpayload;
+	pc.pc_get_outhdr = perfused_get_outhdr;
+	pc.pc_get_outpayload = perfused_get_outpayload;
+	pc.pc_umount = perfused_umount;
 
 	pu = perfuse_init(&pc, &pmi);
 	
-	puffs_framev_init(pu, perfuse_readframe, perfuse_writeframe, 
-			  perfuse_cmpframe, perfuse_gotframe, perfuse_fdnotify);
+	puffs_framev_init(pu, perfused_readframe, perfused_writeframe, 
+			  perfused_cmpframe, perfused_gotframe, perfused_fdnotify);
 
 	if (puffs_framev_addfd(pu, fd, PUFFS_FBIO_READ|PUFFS_FBIO_WRITE) == -1)
 		DERR(EX_SOFTWARE, "puffs_framev_addfd failed");
 
-	perfuse_setspecific(pu, (void *)(long)fd);
+	perfuse_setspecific(pu, (void *)(intptr_t)fd);
 
 	setproctitle("perfused %s", pmi.pmi_target);
 	(void)kill(getpid(), SIGINFO);		/* This is for -s option */
@@ -259,7 +271,7 @@ new_mount(int fd, int pmnt_flags)
 
 	/*
 	 * Non blocking I/O on /dev/fuse
-	 * This must be done after perfuse_fs_init
+	 * This must be done after perfused_fs_init
 	 */
 	if ((flags = fcntl(fd, F_GETFL, 0)) == -1)
 		DERR(EX_OSERR, "fcntl failed");
@@ -267,10 +279,31 @@ new_mount(int fd, int pmnt_flags)
 		DERR(EX_OSERR, "fcntl failed");
 
 	/*
+	 * Setup trace file facility
+	 */
+	perfused_mount = pu;
+
+	trace_namelen = strlcpy(trace_name, pmi.pmi_target, MAXPATHLEN);
+	for (i = 0; i < trace_namelen; i++)
+		if (trace_name[i] == '/')
+			trace_name[i] = '-';
+
+	(void)snprintf(trace_file, MAXPATHLEN, _PATH_VAR_RUN_PERFUSE_TRACE,
+		       trace_name);
+
+	if ((perfused_trace = fopen(trace_file, "w")) == NULL)
+		DERR(EX_OSFILE, 
+		     "could not open \"%s\"",
+		     _PATH_VAR_RUN_PERFUSE_TRACE);
+
+	if (signal(SIGUSR1, sigusr1_handler) != 0)
+		DERR(EX_OSERR, "signal failed");
+
+	/*
 	 * Hand over control to puffs main loop.
 	 */
 	if (perfuse_mainloop(pu) != 0)
-		DERRX(EX_SOFTWARE, "perfuse_mainloop exit");
+		DERRX(EX_SOFTWARE, "perfused_mainloop exit");
 
 	/*	
 	 * Normal return after unmount
@@ -329,6 +362,22 @@ siginfo_handler(int sig)
 	old_flags = swap;
 
 	DWARNX("debug %sabled", old_flags == 0 ? "en" : "dis");
+
+	return;
+}
+
+/* ARGSUSED0 */
+static void
+sigusr1_handler(int sig)
+{
+	if (perfuse_diagflags & PDF_TRACE) {
+		perfuse_trace_dump(perfused_mount, perfused_trace);
+		perfuse_diagflags &= ~PDF_TRACE;
+		DPRINTF("trace dumped, trace disabled");
+	} else {
+		perfuse_diagflags |= PDF_TRACE;
+		DPRINTF("trace enabled");
+	}
 
 	return;
 }
@@ -392,7 +441,7 @@ main(int argc, char **argv)
 		exit(0);
 	}
 
-	s = perfuse_open_sock();
+	s = perfused_open_sock();
 	
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_MISC)
@@ -406,12 +455,11 @@ main(int argc, char **argv)
 	case SOCK_DGRAM:
 		new_mount(s, PMNT_DEVFUSE|PMNT_DGRAM);
 		exit(0);
-		break;
 	case SOCK_SEQPACKET:
 		if (listen(s, 0) != 0)
 			DERR(EX_OSERR, "listen failed");
 
-		do {
+		for (;;) {
 			int fd;
 			struct sockaddr_un sun;
 			struct sockaddr *sa;
@@ -422,8 +470,7 @@ main(int argc, char **argv)
 				DERR(EX_OSERR, "accept failed");
 
 			new_mount(fd, PMNT_DEVFUSE);
-		} while (1 /* CONSTCOND */);
-		break;
+		}
 	default:
 		DERRX(EX_SOFTWARE, "unexpected so_type %d", sock_type);
 		break;
@@ -431,4 +478,11 @@ main(int argc, char **argv)
 		
 	/* NOTREACHED */
 	return 0;
+}
+
+void
+perfused_panic(void)
+{
+	DWARNX("filesystem crashed");
+	exit(EX_OK);
 }

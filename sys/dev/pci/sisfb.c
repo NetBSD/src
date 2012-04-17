@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sisfb.c,v 1.1 2011/08/27 13:28:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sisfb.c,v 1.1.2.1 2012/04/17 00:07:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,7 +222,6 @@ sisfb_attach(device_t parent, device_t self, void *aux)
 	struct wsemuldisplaydev_attach_args waa;
 	bus_size_t fbsize, mmiosize, iosize;
 	struct sisfb *fb;
-	char devinfo[256];
 	int console;
 	unsigned long defattr;
 
@@ -238,8 +237,7 @@ sisfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_fb = fb;
 	fb->sc = sc;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s\n", devinfo);
+	pci_aprint_devinfo(pa, NULL);
 
 	if (!console) {
 		fb->fbt = pa->pa_memt;

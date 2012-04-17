@@ -1,5 +1,6 @@
-/*	$NetBSD: kod_management.c,v 1.2 2010/08/28 15:38:55 kardel Exp $	*/
+/*	$NetBSD: kod_management.c,v 1.2.6.1 2012/04/17 00:03:50 yamt Exp $	*/
 
+#include <config.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -8,6 +9,7 @@
 #include "log.h"
 #include "sntp-opts.h"
 #include "ntp_stdlib.h"
+/* #define DEBUG */
 
 int kod_init = 0, kod_db_cnt = 0;
 const char *kod_db_file;
@@ -74,6 +76,7 @@ add_entry(
 	if (n < kod_db_cnt &&
 	    0 == strcmp(kod_db[n]->hostname, pke->hostname)) {
 		kod_db[n]->timestamp = pke->timestamp;
+		free(pke);
 		return;
 	}
 
@@ -140,15 +143,8 @@ write_kod_db(void)
 	}
 
 	if (NULL == db_s) {
-		char msg[80];
-
-		snprintf(msg, sizeof(msg),
-			 "Can't open KOD db file %s for writing!",
-			 kod_db_file);
-#ifdef DEBUG
-		debug_msg(msg);
-#endif
-		log_msg(msg, 2);
+		msyslog(LOG_WARNING, "Can't open KOD db file %s for writing!",
+			kod_db_file);
 
 		return;
 	}
@@ -192,14 +188,8 @@ kod_init_kod_db(
 	db_s = fopen(db_file, "r");
 
 	if (NULL == db_s) {
-		char msg[80];
-
-		snprintf(msg, sizeof(msg), "kod_init_kod_db(): Cannot open KoD db file %s", db_file);
-#ifdef DEBUG
-		debug_msg(msg);
-		printf("%s\n", msg);
-#endif
-		log_msg(msg, 2);
+		msyslog(LOG_WARNING, "kod_init_kod_db(): Cannot open KoD db file %s",
+			db_file);
 
 		return;
 	}
@@ -222,17 +212,11 @@ kod_init_kod_db(
 
 			if ('\n' == fbuf[a]) {
 				if (sepc != 2) {
-					if (strcmp(db_file, "/dev/null")) {
-						char msg[80];
-						snprintf(msg, sizeof(msg),
-							 "Syntax error in KoD db file %s in line %i (missing space)",
-							 db_file, kod_db_cnt + 1);
-	#ifdef DEBUG
-						debug_msg(msg);
-						printf("%s\n", msg);
-	#endif
-						log_msg(msg, 1);
-					}
+					if (strcmp(db_file, "/dev/null"))
+						msyslog(LOG_DEBUG,
+							"Syntax error in KoD db file %s in line %i (missing space)",
+							db_file,
+							kod_db_cnt + 1);
 					fclose(db_s);
 					return;
 				}
@@ -290,14 +274,9 @@ kod_init_kod_db(
 	}
 
 	if (ferror(db_s) || error) {
-		char msg[80];
-
 		kod_db_cnt = b;
-		snprintf(msg, sizeof(msg), "An error occured while parsing the KoD db file %s", db_file);
-#ifdef DEBUG
-		debug_msg(msg);
-#endif
-		log_msg(msg, 2);
+		msyslog(LOG_WARNING, "An error occured while parsing the KoD db file %s",
+			db_file);
 		fclose(db_s);
 
 		return;

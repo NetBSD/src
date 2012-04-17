@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.78 2010/12/20 00:25:27 matt Exp $	*/
+/*	$NetBSD: fault.c,v 1.78.8.1 2012/04/17 00:06:04 yamt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -79,18 +79,15 @@
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_sa.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.78 2010/12/20 00:25:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.78.8.1 2012/04/17 00:06:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/kauth.h>
-
-#include <sys/savar.h>
 #include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
@@ -193,7 +190,7 @@ data_abort_fixup(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l)
 	/*
 	 * Oops, couldn't fix up the instruction
 	 */
-	printf("data_abort_fixup: fixup for %s mode data abort failed.\n",
+	printf("%s: fixup for %s mode data abort failed.\n", __func__,
 	    TRAP_USERMODE(tf) ? "user" : "kernel");
 #ifdef THUMB_CODE
 	if (tf->tf_spsr & PSR_T_bit) {
@@ -263,6 +260,10 @@ data_abort_handler(trapframe_t *tf)
 
 	/* Invoke the appropriate handler, if necessary */
 	if (__predict_false(data_aborts[fsr & FAULT_TYPE_MASK].func != NULL)) {
+#ifdef DIAGNOSTIC
+		printf("%s: data_aborts fsr=0x%x far=0x%x\n",
+		    __func__, fsr, far);
+#endif
 		if ((data_aborts[fsr & FAULT_TYPE_MASK].func)(tf, fsr, far,
 		    l, &ksi))
 			goto do_trapsignal;
@@ -306,8 +307,8 @@ data_abort_handler(trapframe_t *tf)
 	 * at some point.
 	 */
 	if (__predict_false(!user && (tf->tf_pc & 3) != 0)) {
-		printf("\ndata_abort_fault: Misaligned Kernel-mode "
-		    "Program Counter\n");
+		printf("\n%s: Misaligned Kernel-mode Program Counter\n",
+		    __func__);
 		dab_fatal(tf, fsr, far, l, NULL);
 	}
 #else
@@ -328,8 +329,8 @@ data_abort_handler(trapframe_t *tf)
 		/*
 		 * The kernel never executes Thumb code.
 		 */
-		printf("\ndata_abort_fault: Misaligned Kernel-mode "
-		    "Program Counter\n");
+		printf("\n%s: Misaligned Kernel-mode Program Counter\n",
+		    __func__);
 		dab_fatal(tf, fsr, far, l, NULL);
 	}
 #endif
@@ -383,12 +384,6 @@ data_abort_handler(trapframe_t *tf)
 		}
 	} else {
 		map = &l->l_proc->p_vmspace->vm_map;
-#ifdef KERN_SA
-		if ((l->l_flag & LW_SA) && (~l->l_pflag & LP_SA_NOBLOCK)) {
-			l->l_savp->savp_faultaddr = (vaddr_t)far;
-			l->l_pflag |= LP_SA_PAGEFAULT;
-		}
-#endif
 	}
 
 	/*
@@ -449,10 +444,6 @@ data_abort_handler(trapframe_t *tf)
 	last_fault_code = fsr;
 #endif
 	if (pmap_fault_fixup(map->pmap, va, ftype, user)) {
-#ifdef KERN_SA
-		if (map != kernel_map)
-			l->l_pflag &= ~LP_SA_PAGEFAULT;
-#endif
 		UVMHIST_LOG(maphist, " <- ref/mod emul", 0, 0, 0, 0);
 		goto out;
 	}
@@ -471,11 +462,6 @@ data_abort_handler(trapframe_t *tf)
 	pcb->pcb_onfault = NULL;
 	error = uvm_fault(map, va, ftype);
 	pcb->pcb_onfault = onfault;
-
-#ifdef KERN_SA
-	if (map != kernel_map)
-		l->l_pflag &= ~LP_SA_PAGEFAULT;
-#endif
 
 	if (__predict_true(error == 0)) {
 		if (user)
@@ -736,8 +722,7 @@ prefetch_abort_fixup(trapframe_t *tf)
 	/*
 	 * Oops, couldn't fix up the instruction
 	 */
-	printf(
-	    "prefetch_abort_fixup: fixup for %s mode prefetch abort failed.\n",
+	printf("%s: fixup for %s mode prefetch abort failed.\n", __func__,
 	    TRAP_USERMODE(tf) ? "user" : "kernel");
 #ifdef THUMB_CODE
 	if (tf->tf_spsr & PSR_T_bit) {
@@ -863,20 +848,8 @@ prefetch_abort_handler(trapframe_t *tf)
 	}
 #endif
 
-#ifdef KERN_SA
-	if (map != kernel_map && (l->l_flag & LW_SA)) {
-		l->l_savp->savp_faultaddr = fault_pc;
-		l->l_pflag |= LP_SA_PAGEFAULT;
-	}
-#endif
-
 	KASSERT(pcb->pcb_onfault == NULL);
 	error = uvm_fault(map, va, VM_PROT_READ);
-
-#ifdef KERN_SA
-	if (map != kernel_map)
-		l->l_pflag &= ~LP_SA_PAGEFAULT;
-#endif
 
 	if (__predict_true(error == 0)) {
 		UVMHIST_LOG (maphist, " <- uvm", 0, 0, 0, 0);
@@ -957,7 +930,7 @@ badaddr_read(void *addr, size_t size, void *rptr)
 
 	default:
 		curpcb = curpcb_save;
-		panic("badaddr: invalid size (%lu)", (u_long) size);
+		panic("%s: invalid size (%lu)", __func__, (u_long)size);
 	}
 
 	/* Restore curpcb */

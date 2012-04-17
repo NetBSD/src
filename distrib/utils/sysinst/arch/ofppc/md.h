@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.6 2011/08/21 15:21:46 phx Exp $	*/
+/*	$NetBSD: md.h,v 1.6.2.1 2012/04/17 00:02:52 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -100,4 +100,5 @@
  *
  * On ofppc, do what the 1.2 install scripts did.
  */
-#define DISKLABEL_CMD "disklabel -w -r"
+const char *md_disklabel_cmd(void);
+#define DISKLABEL_CMD md_disklabel_cmd()

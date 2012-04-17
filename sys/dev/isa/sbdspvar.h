@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.60 2009/05/12 09:10:15 cegger Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.60.12.1 2012/04/17 00:07:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -97,6 +97,8 @@ struct sbdsp_softc {
 	bus_space_tag_t sc_iot;		/* tag */
 	bus_space_handle_t sc_ioh;	/* handle */
 	void	*sc_ih;			/* interrupt vectoring */
+	kmutex_t sc_lock;
+	kmutex_t sc_intr_lock;
 
 	/* XXX These are only for setting chip configuration registers. */
 	int	sc_iobase;		/* I/O port base address */
@@ -246,13 +248,13 @@ int	sbdsp_mixer_set_port(void *, mixer_ctrl_t *);
 int	sbdsp_mixer_get_port(void *, mixer_ctrl_t *);
 int	sbdsp_mixer_query_devinfo(void *, mixer_devinfo_t *);
 
-void	*sb_malloc(void *, int, size_t, struct malloc_type *, int);
-void	sb_free(void *, void *, struct malloc_type *);
+void	*sb_malloc(void *, int, size_t);
+void	sb_free(void *, void *, size_t);
 size_t	sb_round_buffersize(void *, int, size_t);
 paddr_t	sb_mappage(void *, void *, off_t, int);
 
 int	sbdsp_get_props(void *);
-
+void	sbdsp_get_locks(void *, kmutex_t **, kmutex_t **);
 
 int	sbdsp_midi_open(void *, int, void (*iintr)(void *, int),
 	    void (*ointr)(void *), void *);

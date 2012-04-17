@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_x86_64.c,v 1.8 2010/09/20 23:23:16 jym Exp $	*/
+/*	$NetBSD: kvm_x86_64.c,v 1.8.6.1 2012/04/17 00:05:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_x86_64.c,v 1.8 2010/09/20 23:23:16 jym Exp $");
+__RCSID("$NetBSD: kvm_x86_64.c,v 1.8.6.1 2012/04/17 00:05:28 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -105,7 +105,6 @@ _kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 	}
 
 	cpu_kh = kd->cpu_data;
-	page_off = va & PGOFSET;
 
 	/*
 	 * Find and read all entries to get to the pa.
@@ -138,6 +137,11 @@ _kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 		_kvm_err(kd, 0, "invalid translation (invalid level 3 PDE)");
 		goto lose;
 	}
+	if (pde & PG_PS) {
+		page_off = va & (NBPD_L3 - 1);
+		*pa = (pde & PG_1GFRAME) + page_off;
+		return (int)(NBPD_L3 - page_off);
+	}
 
 	/*
 	 * Level 2.
@@ -152,7 +156,11 @@ _kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 		_kvm_err(kd, 0, "invalid translation (invalid level 2 PDE)");
 		goto lose;
 	}
-
+	if (pde & PG_PS) {
+		page_off = va & (NBPD_L2 - 1);
+		*pa = (pde & PG_2MFRAME) + page_off;
+		return (int)(NBPD_L2 - page_off);
+	}
 
 	/*
 	 * Level 1.
@@ -170,6 +178,7 @@ _kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 		_kvm_err(kd, 0, "invalid translation (invalid PTE)");
 		goto lose;
 	}
+	page_off = va & PGOFSET;
 	*pa = (pte & PG_FRAME) + page_off;
 	return (int)(NBPG - page_off);
 

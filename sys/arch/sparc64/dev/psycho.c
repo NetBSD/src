@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.111 2011/09/04 12:17:14 nakayama Exp $	*/
+/*	$NetBSD: psycho.c,v 1.111.2.1 2012/04/17 00:06:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.111 2011/09/04 12:17:14 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.111.2.1 2012/04/17 00:06:55 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -796,8 +796,7 @@ psycho_alloc_extent(struct psycho_pbm *pp, int node, int ss, const char *name)
 	}
 
 	/* create extent */
-	ex = extent_create(name, baddr, bsize - baddr - 1, M_DEVBUF, 0, 0,
-			   EX_NOWAIT);
+	ex = extent_create(name, baddr, bsize - baddr - 1, 0, 0, EX_NOWAIT);
 	if (ex == NULL) {
 		printf("psycho_alloc_extent: extent_create failed\n");
 		goto ret;

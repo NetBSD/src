@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.209 2011/08/17 07:22:33 manu Exp $
+#	$NetBSD: Makefile.inc,v 1.209.2.1 2012/04/17 00:05:25 yamt Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -98,8 +98,8 @@ ASM=	access.S acct.S \
 	ioctl.S \
 	kqueue.S kqueue1.S ktrace.S \
 		_ksem_close.S _ksem_destroy.S _ksem_getvalue.S _ksem_init.S \
-		_ksem_post.S _ksem_trywait.S _ksem_unlink.S _ksem_wait.S \
-		_ksem_open.S \
+		_ksem_post.S _ksem_timedwait.S _ksem_trywait.S _ksem_unlink.S \
+		_ksem_wait.S _ksem_open.S \
 	lchflags.S lchmod.S lchown.S lfs_bmapv.S lfs_markv.S lfs_segclean.S \
 		__lfs_segwait50.S link.S linkat.S listen.S __lstat50.S \
 		__lutimes50.S _lwp_create.S _lwp_exit.S _lwp_kill.S \
@@ -116,11 +116,10 @@ ASM=	access.S acct.S \
 	paccept.S pathconf.S pipe2.S pmc_get_info.S pmc_control.S \
 		__posix_chown.S __posix_fchown.S __posix_lchown.S \
 		__posix_rename.S profil.S \
-	__quotactl50.S \
+	__quotactl.S \
 	rasctl.S readlinkat.S reboot.S recvfrom.S recvmsg.S rename.S \
 		renameat.S revoke.S rmdir.S \
-	sa_register.S sa_stacks.S sa_enable.S sa_setconcurrency.S sa_yield.S \
-		sa_preempt.S semconfig.S semget.S semop.S \
+	semconfig.S semget.S semop.S \
 		sendmsg.S sendto.S setegid.S setcontext.S seteuid.S setgid.S \
 		setgroups.S __setitimer50.S __setlogin.S setpgid.S \
 		setpriority.S \
@@ -134,6 +133,10 @@ ASM=	access.S acct.S \
 		____semctl50.S __timer_settime50.S \
 	umask.S undelete.S unlink.S unlinkat.S unmount.S __utimes50.S \
 		utimensat.S utrace.S uuidgen.S vadvise.S
+
+# sa compat syscalls
+SAASM+=	sa_register.S sa_stacks.S sa_enable.S sa_setconcurrency.S sa_yield.S \
+		sa_preempt.S
 
 # modules with potentially non default implementations
 ASM_MD=	_lwp_getprivate.S mremap.S 
@@ -157,7 +160,7 @@ WEAKASM= accept.S __aio_suspend50.S close.S connect.S execve.S \
 	__wait450.S write.S writev.S
 
 NOERR=	getegid.S geteuid.S getgid.S getpid.S getppid.S getuid.S \
-	issetugid.S sync.S __posix_fadvise50.S
+	issetugid.S posix_spawn.S sync.S __posix_fadvise50.S
 
 PSEUDONOERR=	_exit.S
 
@@ -180,6 +183,10 @@ ${ASM_GLUE}: ${ASMDEPS}
 ${WEAKASM}: ${ASMDEPS}
 	${_MKTARGET_CREATE}
 	printf '#include "SYS.h"\nWSYSCALL(${.PREFIX},_sys_${.PREFIX})\nWEAK_ALIAS(_${.PREFIX},_sys_${.PREFIX})\n' >${.TARGET}
+
+${SAASM}: ${ASMDEPS}
+	${_MKTARGET_CREATE}
+	printf '#include "SYS.h"\n_SYSCALL(${.PREFIX:S/tmp_//},${.PREFIX:S/tmp_//:S/sa_/compat_60_sa_/})\n' >${.TARGET}
 
 ${NOERR}: ${ASMDEPS}
 	${_MKTARGET_CREATE}
@@ -231,7 +238,7 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	mount.2 \
 	mprotect.2 mremap.2 msgctl.2 msgget.2 msgrcv.2 msgsnd.2 msync.2 \
 	munmap.2 nanosleep.2 nfssvc.2 ntp_adjtime.2 open.2 pathconf.2 pipe.2 \
-	pmc_control.2 poll.2 posix_fadvise.2 profil.2 ptrace.2 quotactl.2 \
+	pmc_control.2 poll.2 posix_fadvise.2 profil.2 ptrace.2 __quotactl.2 \
 	rasctl.2 read.2 readlink.2 \
 	reboot.2 recv.2 rename.2 revoke.2 rmdir.2 \
 	select.2 semctl.2 \

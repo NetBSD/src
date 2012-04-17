@@ -1,9 +1,9 @@
-#       $NetBSD: Makefile,v 1.357 2011/11/01 13:36:15 yamt Exp $
+#       $NetBSD: Makefile,v 1.357.2.1 2012/04/17 00:05:49 yamt Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
 MAN=	accept_filter.9 accf_data.9 accf_http.9 \
-	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
+	altq.9 arp.9 audio.9 autoconf.9 \
 	bcdtobin.9 bcmp.9 bcopy.9 bintime_add.9 bluetooth.9 boothowto.9 bpf.9 \
 	buffercache.9 bufq.9 bus_dma.9 bus_space.9 byteorder.9 bzero.9 \
 	callback.9 callout.9 cardbus.9 cnmagic.9 condvar.9 config.9 \
@@ -19,7 +19,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	dopowerhooks.9 do_setresuid.9 doshutdownhooks.9 driver.9 \
 	edid.9 errno.9 ethersubr.9 evcnt.9 extattr.9 extent.9 \
 	fetch.9 file.9 fileassoc.9 filedesc.9 firmload.9 flash.9 \
-	fork1.9 fsetown.9 fstrans.9 getiobuf.9 \
+	fork1.9 fsetown.9 fstrans.9 getiobuf.9 genfs.9 \
 	hash.9 hashinit.9 hardclock.9 humanize_number.9 hz.9 \
 	ieee80211.9 ieee80211_crypto.9 ieee80211_input.9 ieee80211_ioctl.9 \
 	ieee80211_node.9 ieee80211_output.9 ieee80211_proto.9 \
@@ -45,8 +45,9 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	rssadapt.9 rt_timer.9 rwlock.9 RUN_ONCE.9 STACK.9 \
 	scanc.9 \
 	sched_4bsd.9 sched_m2.9 scsipi.9 \
-	secmodel.9 secmodel_bsd44.9 secmodel_overlay.9 secmodel_securelevel.9 \
-	secmodel_suser.9 SET.9 setbit.9 setjmp.9 shutdownhook_establish.9 \
+	secmodel_bsd44.9 secmodel_extensions.9 \
+	secmodel_overlay.9 secmodel_securelevel.9 secmodel_suser.9 \
+	SET.9 setbit.9 setjmp.9 shutdownhook_establish.9 \
 	signal.9 skpc.9 sockopt.9 softintr.9 spl.9 splraiseipl.9 \
 	store.9 suspendsched.9 \
 	sysctl.9 sysmon_envsys.9 sysmon_pswitch.9 sysmon_taskq.9 tc.9 \
@@ -63,6 +64,21 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 MAN+=	boothowto.9
 MLINKS+=boothowto.9 BOOT_FLAG.9
 
+MAN+=	cprng.9
+MLINKS+=cprng.9	cprng_strong.9 \
+	cprng.9 cprng_strong_create.9 \
+	cprng.9	cprng_strong_destroy.9 \
+	cprng.9 cprng_strong_getflags.9 \
+	cprng.9 cprng_strong_setflags.9 \
+	cprng.9 cprng_strong32.9 \
+	cprng.9 cprng_strong64.9 \
+	cprng.9 cprng_fast.9 \
+	cprng.9 cprng_fast32.9 \
+	cprng.9 cprng_fast64.9 \
+	cprng.9 arc4random.9 \
+	cprng.9 arc4randbytes.9 \
+	cprng.9 rnd_extract_data.9
+	
 MAN+=	deviter.9
 MLINKS+=deviter.9 deviter_first.9 \
 	deviter.9 deviter_init.9 \
@@ -101,6 +117,7 @@ MLINKS+=autoconf.9 config_search_loc.9 \
 	autoconf.9 config_attach.9 \
 	autoconf.9 config_attach_pseudo.9 \
 	autoconf.9 config_detach.9 \
+	autoconf.9 config_detach_children.9 \
 	autoconf.9 config_deactivate.9 \
 	autoconf.9 config_defer.9 \
 	autoconf.9 config_interrupts.9 \
@@ -627,7 +644,8 @@ MLINKS+=pmf.9 pmf_device_register.9 pmf.9 pmf_device_register1.9 \
 	pmf.9 pmf_set_platform.9 pmf.9 pmf_get_platform.9
 MLINKS+=pool.9 pool_create.9 pool.9 pool_destroy.9 pool.9 pool_get.9 \
 	pool.9 pool_init.9 pool.9 pool_put.9 pool.9 pool_prime.9 \
-	pool.9 pool_sethiwat.9 pool.9 pool_setlowat.9
+	pool.9 pool_sethiwat.9 pool.9 pool_setlowat.9 \
+	pool.9 pool_sethardlimit.9
 MLINKS+=pool_cache.9 pool_cache_init.9 \
 	pool_cache.9 pool_cache_destroy.9 \
 	pool_cache.9 pool_cache_get_paddr.9 \
@@ -635,7 +653,10 @@ MLINKS+=pool_cache.9 pool_cache_init.9 \
 	pool_cache.9 pool_cache_put_paddr.9 \
 	pool_cache.9 pool_cache_put.9 \
 	pool_cache.9 pool_cache_destruct_object.9 \
-	pool_cache.9 pool_cache_invalidate.9
+	pool_cache.9 pool_cache_invalidate.9 \
+	pool_cache.9 pool_cache_sethiwat.9 \
+	pool_cache.9 pool_cache_setlowat.9 \
+	pool_cache.9 pool_cache_sethardlimit.9
 MLINKS+=powerhook_establish.9 powerhook_disestablish.9
 MLINKS+=preempt.9 yield.9
 MLINKS+=pserialize.9 pserialize_create.9 \
@@ -672,6 +693,10 @@ MLINKS+=STACK.9 STACK_ALLOC.9 \
 	STACK.9 STACK_ALIGN.9 \
 	STACK.9 STACK_GROW.9 \
 	STACK.9 STACK_SHRINK.9
+MAN+=	secmodel.9
+MLINKS+=secmodel.9 secmodel_register.9 \
+	secmodel.9 secmodel_eval.9 \
+	secmodel.9 secmodel_deregister.9
 MAN+=	select.9
 MLINKS+=select.9 selinit.9 \
 	select.9 seldestroy.9 \

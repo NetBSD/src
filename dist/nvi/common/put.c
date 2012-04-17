@@ -1,4 +1,4 @@
-/*	$NetBSD: put.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
+/*	$NetBSD: put.c,v 1.2.8.1 2012/04/17 00:02:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -34,9 +34,9 @@ static const char sccsid[] = "Id: put.c,v 10.18 2001/06/25 15:19:11 skimo Exp (B
  * PUBLIC: int put __P((SCR *, CB *, CHAR_T *, MARK *, MARK *, int));
  */
 int
-put(SCR *sp, CB *cbp, CHAR_T *namep, MARK *cp, MARK *rp, int append)
+put(SCR *sp, CB *cbp, ARG_CHAR_T *namep, MARK *cp, MARK *rp, int append)
 {
-	CHAR_T name;
+	ARG_CHAR_T name;
 	TEXT *ltp, *tp;
 	db_recno_t lno;
 	size_t blen, clen, len;

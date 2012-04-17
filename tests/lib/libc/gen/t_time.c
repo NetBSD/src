@@ -1,4 +1,4 @@
-/*	$NetBSD: t_time.c,v 1.1.2.2 2011/11/10 14:31:52 yamt Exp $ */
+/*	$NetBSD: t_time.c,v 1.1.2.3 2012/04/17 00:09:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_time.c,v 1.1.2.2 2011/11/10 14:31:52 yamt Exp $");
+__RCSID("$NetBSD: t_time.c,v 1.1.2.3 2012/04/17 00:09:11 yamt Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -96,7 +96,7 @@ ATF_TC_BODY(time_timeofday, tc)
 	t = time(NULL);
 	ATF_REQUIRE(gettimeofday(&tv, NULL) == 0);
 
-	(void)fprintf(stderr, "%"PRIu64" vs. %"PRIu64"\n",
+	(void)fprintf(stderr, "%"PRId64" vs. %"PRId64"\n",
 	    (int64_t)t, (int64_t)tv.tv_sec);
 
 	if (t != tv.tv_sec)

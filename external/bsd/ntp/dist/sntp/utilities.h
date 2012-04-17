@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.h,v 1.1.1.1 2009/12/13 16:57:12 kardel Exp $	*/
+/*	$NetBSD: utilities.h,v 1.1.1.1.6.1 2012/04/17 00:03:51 yamt Exp $	*/
 
 #ifndef UTILITIES_H
 #define UTILITIES_H
@@ -22,6 +22,6 @@ void l_fp_output_dec (l_fp *ts, FILE *output);
 
 char *addrinfo_to_str (struct addrinfo *addr);
 char *ss_to_str (sockaddr_u *saddr);
-char *tv_to_str (struct timeval *tv);
+char *tv_to_str (const struct timeval *tv);
 
 #endif

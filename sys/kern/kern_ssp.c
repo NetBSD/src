@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ssp.c,v 1.5 2010/02/01 16:14:58 njoly Exp $	*/
+/*	$NetBSD: kern_ssp.c,v 1.5.12.1 2012/04/17 00:08:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ssp.c,v 1.5 2010/02/01 16:14:58 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ssp.c,v 1.5.12.1 2012/04/17 00:08:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/intr.h>
+#include <sys/cprng.h>
 
 #if defined(__SSP__) || defined(__SSP_ALL__)
 long __stack_chk_guard[8] = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -57,7 +58,7 @@ ssp_init(void)
 	size_t i;
 	long guard[__arraycount(__stack_chk_guard)];
 
-	arc4randbytes(guard, sizeof(guard));
+	cprng_fast(guard, sizeof(guard));
 	s = splhigh();
 	for (i = 0; i < __arraycount(guard); i++)
 		__stack_chk_guard[i] = guard[i];

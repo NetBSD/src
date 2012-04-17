@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.112 2011/10/07 16:58:11 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.112.2.1 2012/04/17 00:07:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.112 2011/10/07 16:58:11 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.112.2.1 2012/04/17 00:07:31 yamt Exp $");
 #endif
 
 /*
@@ -740,7 +740,7 @@ ath_intr(void *arg)
 	struct ath_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_if;
 	struct ath_hal *ah = sc->sc_ah;
-	HAL_INT status;
+	HAL_INT status = 0;
 
 	if (!device_activation(sc->sc_dev, DEVACT_LEVEL_DRIVER)) {
 		/*

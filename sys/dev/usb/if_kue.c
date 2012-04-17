@@ -1,4 +1,5 @@
-/*	$NetBSD: if_kue.c,v 1.74 2010/11/03 22:28:31 dyoung Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.74.8.1 2012/04/17 00:08:06 yamt Exp $	*/
+
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -70,10 +71,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.74 2010/11/03 22:28:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.74.8.1 2012/04/17 00:08:06 yamt Exp $");
 
 #include "opt_inet.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,27 +84,23 @@ __KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.74 2010/11/03 22:28:31 dyoung Exp $");
 #include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-
-#if NRND > 0
 #include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <net/if_dl.h>
-
 #include <net/bpf.h>
-
 #include <net/if_ether.h>
+
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #endif
 
-
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
+#include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdevs.h>
 
 #include <dev/usb/if_kuereg.h>
@@ -507,10 +503,8 @@ kue_attach(device_t parent, device_t self, void *aux)
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->kue_desc.kue_macaddr);
-#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->kue_dev),
 	    RND_TYPE_NET, 0);
-#endif
 
 	sc->kue_attached = true;
 	splx(s);
@@ -544,9 +538,7 @@ kue_detach(device_t self, int flags)
 	if (ifp->if_flags & IFF_RUNNING)
 		kue_stop(sc);
 
-#if NRND > 0
 	rnd_detach_source(&sc->rnd_source);
-#endif
 	ether_ifdetach(ifp);
 
 	if_detach(ifp);
@@ -992,13 +984,6 @@ kue_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	if (sc->kue_dying)
 		return (EIO);
-
-#ifdef DIAGNOSTIC
-	if (!curproc) {
-		printf("%s: no proc!!\n", device_xname(sc->kue_dev));
-		return EIO;
-	}
-#endif
 
 	s = splnet();
 

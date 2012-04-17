@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.17 2011/07/01 19:22:35 dyoung Exp $ */
+/* $NetBSD: mcclock.c,v 1.17.2.1 2012/04/17 00:05:54 yamt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.17 2011/07/01 19:22:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.17.2.1 2012/04/17 00:05:54 yamt Exp $");
 
 #include "opt_clock_compat_osf1.h"
 
@@ -102,10 +102,11 @@ mcclock_set_pcc_freq(struct mc146818_softc *sc)
 	/* set interval 16Hz to measure pcc */
 	(*sc->sc_mcwrite)(sc, MC_REGA, MC_BASE_32_KHz | MC_RATE_16_Hz);
 
+	/* clear interrupt flags */
+	(void)(*sc->sc_mcread)(sc, MC_REGC);
+
 	/* Run the loop an extra time to prime the cache. */
 	for (i = 0; i < NLOOP; i++) {
-		/* clear interrupt flags */
-		(void)(*sc->sc_mcread)(sc, MC_REGC);
 
 		/* wait till the periodic interrupt flag is set */
 		while (((*sc->sc_mcread)(sc, MC_REGC) & MC_REGC_PF) == 0)
@@ -120,7 +121,7 @@ mcclock_set_pcc_freq(struct mc146818_softc *sc)
 		ctrdiff[i] = pcc_end - pcc_start;
 	}
 
-	freq = ((ctrdiff[NLOOP - 2] + ctrdiff[NLOOP - 1]) / 2) * 16 /* Hz */;
+	freq = ((ctrdiff[NLOOP - 2] + ctrdiff[NLOOP - 1]) * 16 /* Hz */) / 2;
 
 	/* restore REG_A */
 	(*sc->sc_mcwrite)(sc, MC_REGA, reg_a);

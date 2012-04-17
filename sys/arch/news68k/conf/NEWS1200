@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.50 2011/03/06 17:08:28 bouyer Exp $
+# 	$NetBSD: NEWS1200,v 1.50.4.1 2012/04/17 00:06:43 yamt Exp $
 
 #	news1200 config file
 #
@@ -74,7 +74,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# ffs endian independent support
-options 	WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
@@ -150,6 +150,5 @@ pseudo-device	ipfilter		# ip filter
 #pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
-pseudo-device	rnd			# /dev/random and in-kernle generator
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 pseudo-device	clockctl		# user control of clock subsystem

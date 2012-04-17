@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_siginfo.h,v 1.14 2008/11/23 23:48:48 njoly Exp $	*/
+/* 	$NetBSD: linux_siginfo.h,v 1.14.16.1 2012/04/17 00:07:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,17 +46,19 @@
 #include <compat/linux/arch/arm/linux_siginfo.h>
 #elif defined(__amd64__)
 #include <compat/linux/arch/amd64/linux_siginfo.h>
+#else
+#define linux_siginfo_t siginfo_t
 #endif
 
 /* si_code values for non signal */
 #define	LINUX_SI_USER		0
 #define	LINUX_SI_KERNEL		0x80
 #define	LINUX_SI_QUEUE		-1
-#ifndef LINUX_SI_CODE_ARCH /* all except mips */
+#ifndef LINUX_SI_TIMER /* all except mips */
 #define	LINUX_SI_TIMER		-2
 #define	LINUX_SI_MESGQ		-3
 #define	LINUX_SI_ASYNCIO	-4
-#endif /* LINUX_SI_CODE_ARCH */
+#endif /* LINUX_SI_TIMER */
 #define	LINUX_SI_SIGIO		-5
 #define	LINUX_SI_TKILL		-6
 #define	LINUX_SI_DETHREAD	-7
@@ -112,5 +114,19 @@
 
 #define	LINUX_SI_FROMUSER(sp)	((sp)->si_code <= 0)
 #define	LINUX_SI_FROMKERNEL(sp)	((sp)->si_code > 0)
+
+#define lsi_pid		_sidata._kill._pid
+#define lsi_uid		_sidata._kill._uid
+#define lsi_status      _sidata._sigchld._status
+#define lsi_utime       _sidata._sigchld._utime
+#define lsi_stime       _sidata._sigchld._stime
+#define lsi_value       _sidata._rt._sigval
+#define lsi_sival_int   _sidata._rt._sigval.sival_int
+#define lsi_sival_ptr   _sidata._rt._sigval.sival_ptr
+#define lsi_addr        _sidata._sigfault._addr
+#define lsi_band        _sidata._sigpoll._band
+#define lsi_fd          _sidata._sigpoll._fd
+
+void native_to_linux_siginfo(linux_siginfo_t *, const struct _ksiginfo *);
 
 #endif /* !_LINUX_SIGINFO_H */

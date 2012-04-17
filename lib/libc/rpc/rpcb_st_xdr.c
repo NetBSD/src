@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_st_xdr.c,v 1.7 2006/05/11 17:11:57 mrg Exp $	*/
+/*	$NetBSD: rpcb_st_xdr.c,v 1.7.44.1 2012/04/17 00:05:23 yamt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: rpcb_st_xdr.c,v 1.7 2006/05/11 17:11:57 mrg Exp $");
+__RCSID("$NetBSD: rpcb_st_xdr.c,v 1.7.44.1 2012/04/17 00:05:23 yamt Exp $");
 #endif
 
 #include "namespace.h"
@@ -85,7 +85,7 @@ xdr_rpcbs_addrlist(xdrs, objp)
 	    }
 
 	    if (!xdr_pointer(xdrs, (char **)(void *)&objp->next,
-			sizeof (rpcbs_addrlist),
+			(u_int)sizeof (rpcbs_addrlist),
 			(xdrproc_t)xdr_rpcbs_addrlist)) {
 		return (FALSE);
 	    }
@@ -138,7 +138,7 @@ xdr_rpcbs_rmtcalllist(xdrs, objp)
 		return (FALSE);
 	}
 	if (!xdr_pointer(xdrs, (char **)(void *)&objp->next,
-			sizeof (rpcbs_rmtcalllist),
+			(u_int)sizeof (rpcbs_rmtcalllist),
 			(xdrproc_t)xdr_rpcbs_rmtcalllist)) {
 		return (FALSE);
 	}
@@ -176,7 +176,7 @@ xdr_rpcbs_rmtcalllist(xdrs, objp)
 		return (FALSE);
 	}
 	if (!xdr_pointer(xdrs, (char **)(void *)&objp->next,
-			sizeof (rpcbs_rmtcalllist),
+			(u_int)sizeof (rpcbs_rmtcalllist),
 			(xdrproc_t)xdr_rpcbs_rmtcalllist)) {
 		return (FALSE);
 	}
@@ -204,7 +204,7 @@ xdr_rpcbs_rmtcalllist(xdrs, objp)
 		return (FALSE);
 	}
 	if (!xdr_pointer(xdrs, (char **)(void *)&objp->next,
-			sizeof (rpcbs_rmtcalllist),
+			(u_int)sizeof (rpcbs_rmtcalllist),
 			(xdrproc_t)xdr_rpcbs_rmtcalllist)) {
 		return (FALSE);
 	}
@@ -217,7 +217,7 @@ xdr_rpcbs_proc(xdrs, objp)
 	rpcbs_proc objp;
 {
 	if (!xdr_vector(xdrs, (char *)(void *)objp, RPCBSTAT_HIGHPROC,
-	    sizeof (int), (xdrproc_t)xdr_int)) {
+	    (u_int)sizeof (int), (xdrproc_t)xdr_int)) {
 		return (FALSE);
 	}
 	return (TRUE);
@@ -228,7 +228,7 @@ xdr_rpcbs_addrlist_ptr(xdrs, objp)
 	XDR *xdrs;
 	rpcbs_addrlist_ptr *objp;
 {
-	if (!xdr_pointer(xdrs, (char **)objp, sizeof (rpcbs_addrlist),
+	if (!xdr_pointer(xdrs, (char **)objp, (u_int)sizeof (rpcbs_addrlist),
 			(xdrproc_t)xdr_rpcbs_addrlist)) {
 		return (FALSE);
 	}
@@ -240,7 +240,7 @@ xdr_rpcbs_rmtcalllist_ptr(xdrs, objp)
 	XDR *xdrs;
 	rpcbs_rmtcalllist_ptr *objp;
 {
-	if (!xdr_pointer(xdrs, (char **)objp, sizeof (rpcbs_rmtcalllist),
+	if (!xdr_pointer(xdrs, (char **)objp, (u_int)sizeof (rpcbs_rmtcalllist),
 			(xdrproc_t)xdr_rpcbs_rmtcalllist)) {
 		return (FALSE);
 	}
@@ -280,7 +280,7 @@ xdr_rpcb_stat_byvers(xdrs, objp)
 	rpcb_stat_byvers objp;
 {
 	if (!xdr_vector(xdrs, (char *)(void *)objp, RPCBVERS_STAT,
-	    sizeof (rpcb_stat), (xdrproc_t)xdr_rpcb_stat)) {
+	    (u_int)sizeof (rpcb_stat), (xdrproc_t)xdr_rpcb_stat)) {
 		return (FALSE);
 	}
 	return (TRUE);

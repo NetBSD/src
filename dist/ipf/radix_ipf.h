@@ -1,4 +1,4 @@
-/*	$NetBSD: radix_ipf.h,v 1.1.1.4 2008/05/20 06:44:27 darrenr Exp $	*/
+/*	$NetBSD: radix_ipf.h,v 1.1.1.4.2.1 2012/04/17 00:02:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -33,14 +33,6 @@
 #ifndef _RADIX_H_
 #define	_RADIX_H_
 #endif /* _RADIX_H_ */
-
-#ifndef __P
-# ifdef __STDC__
-#  define	__P(x)  x
-# else
-#  define	__P(x)  ()
-# endif
-#endif
 
 #if defined(__sgi) || defined(__osf__) || defined(sun)
 # define	radix_mask	ipf_radix_mask
@@ -124,24 +116,24 @@ struct radix_node_head {
 	int	rnh_addrsize;		/* permit, but not require fixed keys */
 	int	rnh_pktsize;		/* permit, but not require fixed keys */
 	struct	radix_node *(*rnh_addaddr)	/* add based on sockaddr */
-		__P((void *v, void *mask,
-		     struct radix_node_head *head, struct radix_node nodes[]));
+		(void *v, void *mask,
+		     struct radix_node_head *head, struct radix_node nodes[]);
 	struct	radix_node *(*rnh_addpkt)	/* add based on packet hdr */
-		__P((void *v, void *mask,
-		     struct radix_node_head *head, struct radix_node nodes[]));
+		(void *v, void *mask,
+		     struct radix_node_head *head, struct radix_node nodes[]);
 	struct	radix_node *(*rnh_deladdr)	/* remove based on sockaddr */
-		__P((void *v, void *mask, struct radix_node_head *head));
+		(void *v, void *mask, struct radix_node_head *head);
 	struct	radix_node *(*rnh_delpkt)	/* remove based on packet hdr */
-		__P((void *v, void *mask, struct radix_node_head *head));
+		(void *v, void *mask, struct radix_node_head *head);
 	struct	radix_node *(*rnh_matchaddr)	/* locate based on sockaddr */
-		__P((void *v, struct radix_node_head *head));
+		(void *v, struct radix_node_head *head);
 	struct	radix_node *(*rnh_lookup)	/* locate based on sockaddr */
-		__P((void *v, void *mask, struct radix_node_head *head));
+		(void *v, void *mask, struct radix_node_head *head);
 	struct	radix_node *(*rnh_matchpkt)	/* locate based on packet hdr */
-		__P((void *v, struct radix_node_head *head));
+		(void *v, struct radix_node_head *head);
 	int	(*rnh_walktree)			/* traverse tree */
-		__P((struct radix_node_head *,
-		     int (*)(struct radix_node *, void *), void *));
+		(struct radix_node_head *,
+		     int (*)(struct radix_node *, void *), void *);
 	struct	radix_node rnh_nodes[3];	/* empty tree for common case */
 };
 
@@ -191,25 +183,25 @@ struct radix_node_head {
 # define	rn_freenode	ipf_rn_freenode
 #endif
 
-void	 rn_init __P((void));
-void	 rn_fini __P((void));
-int	 rn_inithead __P((void **, int));
-void	 rn_freehead __P((struct radix_node_head *));
-int	 rn_inithead0 __P((struct radix_node_head *, int));
-int	 rn_refines __P((void *, void *));
-int	 rn_walktree __P((struct radix_node_head *,
-			  int (*)(struct radix_node *, void *), void *));
+void	 rn_init(void);
+void	 rn_fini(void);
+int	 rn_inithead(void **, int);
+void	 rn_freehead(struct radix_node_head *);
+int	 rn_inithead0(struct radix_node_head *, int);
+int	 rn_refines(void *, void *);
+int	 rn_walktree(struct radix_node_head *,
+			  int (*)(struct radix_node *, void *), void *);
 struct radix_node
-	 *rn_addmask __P((void *, int, int)),
-	 *rn_addroute __P((void *, void *, struct radix_node_head *,
-			struct radix_node [2])),
-	 *rn_delete __P((void *, void *, struct radix_node_head *)),
-	 *rn_insert __P((void *, struct radix_node_head *, int *,
-			struct radix_node [2])),
-	 *rn_lookup __P((void *, void *, struct radix_node_head *)),
-	 *rn_match __P((void *, struct radix_node_head *)),
-	 *rn_newpair __P((void *, int, struct radix_node[2])),
-	 *rn_search __P((void *, struct radix_node *)),
-	 *rn_search_m __P((void *, struct radix_node *, void *));
+	 *rn_addmask(void *, int, int),
+	 *rn_addroute(void *, void *, struct radix_node_head *,
+			struct radix_node [2]),
+	 *rn_delete(void *, void *, struct radix_node_head *),
+	 *rn_insert(void *, struct radix_node_head *, int *,
+			struct radix_node [2]),
+	 *rn_lookup(void *, void *, struct radix_node_head *),
+	 *rn_match(void *, struct radix_node_head *),
+	 *rn_newpair(void *, int, struct radix_node[2]),
+	 *rn_search(void *, struct radix_node *),
+	 *rn_search_m(void *, struct radix_node *, void *);
 
 #endif /* _NET_RADIX_H_ */

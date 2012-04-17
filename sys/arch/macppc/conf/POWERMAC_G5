@@ -23,8 +23,6 @@ options 	SYSVSEM		# System V semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V shared memory
-options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
-
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -177,7 +175,6 @@ pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	md			# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	openfirm		# /dev/openfirm
 pseudo-device	wsmux			# mouse and keyboard multiplexor
 pseudo-device	clockctl		# user control of clock subsystem

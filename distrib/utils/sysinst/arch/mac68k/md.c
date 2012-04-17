@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.59.4.1 2011/11/10 14:31:18 yamt Exp $ */
+/*	$NetBSD: md.c,v 1.59.4.2 2012/04/17 00:02:52 yamt Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -336,7 +336,7 @@ md_make_bsd_partitions(void)
 		    (void)fprintf (f, "\t:p%c#%d:o%c#%d:t%c=%s:",
 			       'a'+i, bsdlabel[i].pi_size,
 			       'a'+i, bsdlabel[i].pi_offset,
-			       'a'+i, fstypenames[bsdlabel[i].pi_fstype]);
+			       'a'+i, getfslabelname(bsdlabel[i].pi_fstype));
 		if (bsdlabel[i].pi_fstype == FS_BSDFFS)
 			(void)fprintf (f, "b%c#%d:f%c#%d",
 			   'a'+i, bsdlabel[i].pi_fsize * bsdlabel[i].pi_frag,

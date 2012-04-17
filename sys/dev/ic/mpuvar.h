@@ -1,4 +1,4 @@
-/*	$NetBSD: mpuvar.h,v 1.10 2008/04/28 20:23:50 martin Exp $	*/
+/*	$NetBSD: mpuvar.h,v 1.10.34.1 2012/04/17 00:07:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@ struct mpu_softc {
 	device_t sc_dev;		/* base device */
 	bus_space_tag_t iot;		/* tag */
 	bus_space_handle_t ioh;		/* handle */
+	kmutex_t *lock;
 	const char *model;
 	int	open;
 	void	(*intr)(void *, int);	/* midi input intr handler */

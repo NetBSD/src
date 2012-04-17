@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.86 2011/06/12 03:35:53 rmind Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.86.2.1 2012/04/17 00:08:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.86 2011/06/12 03:35:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.86.2.1 2012/04/17 00:08:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,7 +270,9 @@ ntfs_mount (
 			flags = FREAD;
 		else
 			flags = FREAD|FWRITE;
+		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		err = VOP_OPEN(devvp, flags, FSCRED);
+		VOP_UNLOCK(devvp);
 		if (err)
 			goto fail;
 		err = ntfs_mountfs(devvp, mp, args, l);

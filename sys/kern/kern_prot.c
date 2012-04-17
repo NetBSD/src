@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.113 2011/04/27 06:22:11 martin Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.113.4.1 2012/04/17 00:08:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.113 2011/04/27 06:22:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.113.4.1 2012/04/17 00:08:25 yamt Exp $");
 
 #include "opt_compat_43.h"
 
@@ -609,7 +609,7 @@ sys___setlogin(struct lwp *l, const struct sys___setlogin_args *uap, register_t 
 	if ((error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SETID,
 	    p, NULL, NULL, NULL)) != 0)
 		return (error);
-	error = copyinstr(SCARG(uap, namebuf), &newname, sizeof newname, NULL);
+	error = copyinstr(SCARG(uap, namebuf), newname, sizeof newname, NULL);
 	if (error != 0)
 		return (error == ENAMETOOLONG ? EINVAL : error);
 

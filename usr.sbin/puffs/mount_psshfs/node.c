@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.63 2011/08/12 04:14:00 riastradh Exp $	*/
+/*	$NetBSD: node.c,v 1.63.2.1 2012/04/17 00:09:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.63 2011/08/12 04:14:00 riastradh Exp $");
+__RCSID("$NetBSD: node.c,v 1.63.2.1 2012/04/17 00:09:52 yamt Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -525,6 +525,7 @@ psshfs_node_read(struct puffs_usermount *pu, puffs_cookie_t opc, uint8_t *buf,
 		goto farout;
 	}
 
+again:
 	readlen = *resid;
 	psbuf_req_data(pb, SSH_FXP_READ, reqid, psn->fhand_r, psn->fhand_r_len);
 	psbuf_put_8(pb, offset);
@@ -546,8 +547,11 @@ psshfs_node_read(struct puffs_usermount *pu, puffs_cookie_t opc, uint8_t *buf,
 	GETRESPONSE(pb, pctx->sshfd_data);
 
 	rv = psbuf_do_data(pb, buf, &readlen);
-	if (rv == 0)
+	if (rv == 0) {
 		*resid -= readlen;
+		buf += readlen;
+		offset += readlen;
+	}
 
  out:
 	if (max_reads && --psn->readcount >= max_reads) {
@@ -557,6 +561,12 @@ psshfs_node_read(struct puffs_usermount *pu, puffs_cookie_t opc, uint8_t *buf,
 		assert(pwp != NULL);
 		puffs_cc_schedule(pwp->pw_cc);
 		TAILQ_REMOVE(&psn->pw, pwp, pw_entries);
+	}
+
+	if (rv == 0 && *resid > 0) {
+		reqid = NEXTREQ(pctx);
+		psbuf_recycleout(pb);
+		goto again;
 	}
 
  farout:
