@@ -1,6 +1,6 @@
-#	$NetBSD: NETWALKER,v 1.8 2012/04/07 03:25:00 tsutsui Exp $
+#	$NetBSD: NETWALKER,v 1.9 2012/04/17 07:43:21 bsh Exp $
 #
-#	NETWALKER -- Sharp
+#	NETWALKER -- http://www.sharp.co.jp/netwalker/
 #
 
 include	"arch/evbarm/conf/std.netwalker"
@@ -17,7 +17,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
 
 # CPU options
-options 	CPU_CORTEXA8	# Support the ARM11 core
+options 	CPU_CORTEXA8	# Support the ARM-v7a core
 options 	IMX51
 options 	PMAPCOUNTERS
 
