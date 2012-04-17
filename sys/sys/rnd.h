@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.30 2012/04/10 14:02:28 tls Exp $	*/
+/*	$NetBSD: rnd.h,v 1.31 2012/04/17 02:50:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -127,9 +127,16 @@ typedef struct krndsource {
         rngtest_t	*test;          /* test data for RNG type sources */
 } krndsource_t;
 
+enum rsink_st {
+	RSTATE_IDLE = 0,
+	RSTATE_PENDING,
+	RSTATE_HASBITS
+};
+
 typedef struct rndsink {
         TAILQ_ENTRY(rndsink) tailq;     /* the queue */
 	kmutex_t	mtx;		/* lock to seed or unregister */
+	enum rsink_st	state;		/* in-use?  filled? */
         void            (*cb)(void *);  /* callback function when ready */
         void            *arg;           /* callback function argument */
         char            name[16];       /* sink name */
@@ -178,6 +185,7 @@ rnd_add_uint32(krndsource_t *kr, uint32_t val)
 }
 
 extern int	rnd_full;
+extern int	rnd_filled;
 
 #endif /* _KERNEL */
 
