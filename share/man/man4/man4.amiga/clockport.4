@@ -1,4 +1,4 @@
-.\" $NetBSD: clockport.4,v 1.1 2012/04/17 10:12:35 rkujawa Exp $
+.\" $NetBSD: clockport.4,v 1.2 2012/04/17 10:16:57 wiz Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,21 +31,19 @@
 .Dt CLOCKPORT 4 amiga
 .Os
 .Sh NAME
-.Nm clockport 
-.Nd introduction to clockport bus support and drivers 
+.Nm clockport
+.Nd introduction to clockport bus support and drivers
 .Sh SYNOPSIS
 .Cd "clockport* at a1k2cp0"
 .Sh DESCRIPTION
-Clockport is a general purpose non-autoconfiguring expansion bus, originally 
-present on the Amiga 1200, as a part of P9 memory connector. 
-.Sh SUPPORTED DEVICES 
+Clockport is a general purpose non-autoconfiguring expansion bus, originally
+present on the Amiga 1200, as a part of P9 memory connector.
+.Sh SUPPORTED DEVICES
 The
 .Nx
-includes following clockport drivers:
-
+includes the following clockport drivers:
 .Bl -tag -offset indent
-.It 
-.Xr com 4
+.It Xr com 4
 Individual Computers SilverSurfer 16C550-based serial port.
 .El
 .Sh SEE ALSO
