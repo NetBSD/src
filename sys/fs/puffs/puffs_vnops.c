@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.165 2012/04/08 15:04:41 manu Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.166 2012/04/18 00:42:50 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.165 2012/04/08 15:04:41 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.166 2012/04/18 00:42:50 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -299,6 +299,11 @@ const struct vnodeopv_entry_desc puffs_msgop_entries[] = {
 const struct vnodeopv_desc puffs_msgop_opv_desc =
 	{ &puffs_msgop_p, puffs_msgop_entries };
 
+/*
+ * for dosetattr / update_va 
+ */
+#define SETATTR_CHSIZE	0x01
+#define SETATTR_ASYNC	0x02
 
 #define ERROUT(err)							\
 do {									\
@@ -412,7 +417,7 @@ static void callinactive(struct puffs_mount *, puffs_cookie_t, int);
 static void callreclaim(struct puffs_mount *, puffs_cookie_t);
 static int  flushvncache(struct vnode *, off_t, off_t, bool);
 static void update_va(struct vnode *, struct vattr *, struct vattr *,
-		      struct timespec *, struct timespec *);
+		      struct timespec *, struct timespec *, int);
 
 
 #define PUFFS_ABORT_LOOKUP	1
@@ -460,6 +465,10 @@ puffs_abortbutton(struct puffs_mount *pmp, int what,
 
 #define TTL_TO_TIMEOUT(ts) \
     (hardclock_ticks + (ts->tv_sec * hz) + (ts->tv_nsec * hz / 1000000000))
+#define TTL_VALID(ts) \
+    ((ts != NULL) && !((ts->tv_sec == 0) && (ts->tv_nsec == 0)))
+#define TIMED_OUT(expire) \
+    ((int)((unsigned int)hardclock_ticks - (unsigned int)expire) > 0)
 int
 puffs_vnop_lookup(void *v)
 {
@@ -505,7 +514,7 @@ puffs_vnop_lookup(void *v)
 
 			cvp = *ap->a_vpp;
 			cpn = VPTOPP(cvp);
-			if (hardclock_ticks > cpn->pn_cn_timeout) {
+			if (TIMED_OUT(cpn->pn_cn_timeout)) {
 				cache_purge1(cvp, NULL, PURGE_CHILDREN);
 
 				/*
@@ -636,7 +645,8 @@ puffs_vnop_lookup(void *v)
 	if (PUFFS_USE_FS_TTL(pmp)) {
 		struct timespec *va_ttl = &lookup_msg->pvnr_va_ttl;
 		struct timespec *cn_ttl = &lookup_msg->pvnr_cn_ttl;
-		update_va(vp, NULL, &lookup_msg->pvnr_va, va_ttl, cn_ttl);
+		update_va(vp, NULL, &lookup_msg->pvnr_va, 
+			  va_ttl, cn_ttl, SETATTR_CHSIZE);
 	}
 
 	*ap->a_vpp = vp;
@@ -737,7 +747,8 @@ puffs_vnop_create(void *v)
 		struct timespec *cn_ttl = &create_msg->pvnr_cn_ttl;
 		struct vattr *rvap = &create_msg->pvnr_va;
 
-		update_va(*ap->a_vpp, NULL, rvap, va_ttl, cn_ttl);
+		update_va(*ap->a_vpp, NULL, rvap, 
+			  va_ttl, cn_ttl, SETATTR_CHSIZE);
 	}
 
  out:
@@ -793,7 +804,8 @@ puffs_vnop_mknod(void *v)
 		struct timespec *cn_ttl = &mknod_msg->pvnr_cn_ttl;
 		struct vattr *rvap = &mknod_msg->pvnr_va;
 
-		update_va(*ap->a_vpp, NULL, rvap, va_ttl, cn_ttl);
+		update_va(*ap->a_vpp, NULL, rvap, 
+			   va_ttl, cn_ttl, SETATTR_CHSIZE);
 	}
 
  out:
@@ -912,11 +924,11 @@ puffs_vnop_access(void *v)
 
 static void
 update_va(struct vnode *vp, struct vattr *vap, struct vattr *rvap,
-	  struct timespec *va_ttl, struct timespec *cn_ttl)
+	  struct timespec *va_ttl, struct timespec *cn_ttl, int flags)
 {
 	struct puffs_node *pn = VPTOPP(vp);
 
-	if (cn_ttl != NULL)
+	if (TTL_VALID(cn_ttl))
 		pn->pn_cn_timeout = TTL_TO_TIMEOUT(cn_ttl);
 
 	/*
@@ -946,7 +958,7 @@ update_va(struct vnode *vp, struct vattr *vap, struct vattr *rvap,
 			vap->va_size = pn->pn_mc_size;
 	}
 
-	if (!(pn->pn_stat & PNODE_METACACHE_SIZE)) {
+	if (!(pn->pn_stat & PNODE_METACACHE_SIZE) && (flags & SETATTR_CHSIZE)) {
 		if (rvap->va_size != VNOVAL
 		    && vp->v_type != VBLK && vp->v_type != VCHR) {
 			uvm_vnp_setsize(vp, rvap->va_size);
@@ -954,7 +966,7 @@ update_va(struct vnode *vp, struct vattr *vap, struct vattr *rvap,
 		}
 	}
 
-	if (va_ttl != NULL) {
+	if ((va_ttl != NULL) && TTL_VALID(va_ttl)) {
 		if (pn->pn_va_cache == NULL)
 			pn->pn_va_cache = pool_get(&puffs_vapool, PR_WAITOK);
 
@@ -1001,8 +1013,9 @@ puffs_vnop_getattr(void *v)
 	vap = ap->a_vap;
 
 	if (PUFFS_USE_FS_TTL(pmp)) {
-		if (hardclock_ticks < pn->pn_va_timeout) {
-			update_va(vp, vap, pn->pn_va_cache, NULL, NULL);
+		if (!TIMED_OUT(pn->pn_va_timeout)) {
+			update_va(vp, vap, pn->pn_va_cache, 
+				  NULL, NULL, SETATTR_CHSIZE);
 			goto out2;
 		}
 	}
@@ -1023,7 +1036,7 @@ puffs_vnop_getattr(void *v)
 	if (PUFFS_USE_FS_TTL(pmp))
 		va_ttl = &getattr_msg->pvnr_va_ttl;
 
-	update_va(vp, vap, rvap, va_ttl, NULL);
+	update_va(vp, vap, rvap, va_ttl, NULL, SETATTR_CHSIZE);
 
  out:
 	PUFFS_MSG_RELEASE(getattr);
@@ -1036,8 +1049,6 @@ puffs_vnop_getattr(void *v)
 	return error;
 }
 
-#define SETATTR_CHSIZE	0x01
-#define SETATTR_ASYNC	0x02
 static int
 dosetattr(struct vnode *vp, struct vattr *vap, kauth_cred_t cred, int flags)
 {
@@ -1103,7 +1114,7 @@ dosetattr(struct vnode *vp, struct vattr *vap, kauth_cred_t cred, int flags)
 		struct timespec *va_ttl = &setattr_msg->pvnr_va_ttl;
 		struct vattr *rvap = &setattr_msg->pvnr_va;
 
-		update_va(vp, NULL, rvap, va_ttl, NULL);
+		update_va(vp, NULL, rvap, va_ttl, NULL, flags);
 	}
 
 	PUFFS_MSG_RELEASE(setattr);
@@ -1703,7 +1714,8 @@ puffs_vnop_mkdir(void *v)
 		struct timespec *cn_ttl = &mkdir_msg->pvnr_cn_ttl;
 		struct vattr *rvap = &mkdir_msg->pvnr_va;
 
-		update_va(*ap->a_vpp, NULL, rvap, va_ttl, cn_ttl);
+		update_va(*ap->a_vpp, NULL, rvap, 
+			  va_ttl, cn_ttl, SETATTR_CHSIZE);
 	}
 
  out:
@@ -1866,7 +1878,8 @@ puffs_vnop_symlink(void *v)
 		struct timespec *cn_ttl = &symlink_msg->pvnr_cn_ttl;
 		struct vattr *rvap = &symlink_msg->pvnr_va;
 
-		update_va(*ap->a_vpp, NULL, rvap, va_ttl, cn_ttl);
+		update_va(*ap->a_vpp, NULL, rvap, 
+			  va_ttl, cn_ttl, SETATTR_CHSIZE);
 	}
 
  out:
