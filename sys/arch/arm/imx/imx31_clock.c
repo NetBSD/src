@@ -1,4 +1,4 @@
-/*	$NetBSD: imx31_clock.c,v 1.3 2011/07/01 20:27:50 dyoung Exp $ */
+/*	$NetBSD: imx31_clock.c,v 1.4 2012/04/18 05:54:07 bsh Exp $ */
 /*
  * Copyright (c) 2009,2010  Genetec corp.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec corp.
@@ -106,6 +106,8 @@ imxclock_attach(device_t parent, device_t self, void *aux)
 		aipsa->aipsa_size, 0, &sc->sc_ioh)) {
 		panic("%s: Cannot map registers", device_xname(self));
 	}
+
+	sc->sc_clksrc = EPITCR_CLKSRC_HIGH;
 }
 
 int
