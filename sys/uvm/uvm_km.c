@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.111.2.2 2012/04/17 00:08:58 yamt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.111.2.3 2012/04/18 13:40:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.111.2.2 2012/04/17 00:08:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.111.2.3 2012/04/18 13:40:06 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -526,8 +526,7 @@ uvm_km_check_empty(struct vm_map *map, vaddr_t start, vaddr_t end)
 		 * - we can recurse when allocating radix_node for
 		 *   kernel_object.
 		 */
-		if ((map->flags & VM_MAP_INTRSAFE) == 0 &&
-		    mutex_tryenter(uvm_kernel_object->vmobjlock)) {
+		if (mutex_tryenter(uvm_kernel_object->vmobjlock)) {
 			struct vm_page *pg;
 
 			pg = uvm_pagelookup(uvm_kernel_object,
