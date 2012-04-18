@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.156 2012/02/20 20:09:08 mrg Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.157 2012/04/18 20:37:49 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.156 2012/02/20 20:09:08 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.157 2012/04/18 20:37:49 bouyer Exp $");
 
 #include "opt_scsi.h"
 
@@ -218,7 +218,7 @@ scsipi_lookup_periph(struct scsipi_channel *chan, int target, int lun)
 	uint32_t hash;
 	int s;
 
-	KASSERT(KERNEL_LOCKED_P());
+	KASSERT(cold || KERNEL_LOCKED_P());
 
 	if (target >= chan->chan_ntargets ||
 	    lun >= chan->chan_nluns)
@@ -1263,7 +1263,7 @@ scsipi_done(struct scsipi_xfer *xs)
 	struct scsipi_channel *chan = periph->periph_channel;
 	int s, freezecnt;
 
-	KASSERT(KERNEL_LOCKED_P());
+	KASSERT(cold || KERNEL_LOCKED_P());
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("scsipi_done\n"));
 #ifdef SCSIPI_DEBUG
