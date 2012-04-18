@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.217 2012/04/07 16:48:25 christos Exp $
+# $NetBSD: shl.mi,v 1.218 2012/04/18 19:29:03 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -90,6 +90,12 @@
 ./usr/lib/libmpfr.so.4				comp-c-shlib		obsolete
 ./usr/lib/libmpfr.so.4.1			comp-c-shlib		obsolete
 ./usr/lib/libmpfr_pic.a				comp-c-piclib		obsolete
+./usr/lib/libmudflap.so				comp-c-shlib		gcc=45
+./usr/lib/libmudflap.so.0			comp-c-shlib		gcc=45
+./usr/lib/libmudflap.so.0.0			comp-c-shlib		gcc=45
+./usr/lib/libmudflapth.so			comp-c-shlib		gcc=45
+./usr/lib/libmudflapth.so.0			comp-c-shlib		gcc=45
+./usr/lib/libmudflapth.so.0.0			comp-c-shlib		gcc=45
 ./usr/lib/libnetpgp_pic.a			comp-c-piclib		crypto
 ./usr/lib/libnpf_pic.a				comp-npf-piclib		npf
 ./usr/lib/libnvpair_pic.a			comp-zfs-piclib		zfs
