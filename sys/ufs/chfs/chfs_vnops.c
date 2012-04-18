@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.5 2012/04/17 19:15:16 christos Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.6 2012/04/18 13:31:10 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -1360,7 +1360,7 @@ chfs_readdir(void *v)
 	offset = uio->uio_offset;
 
 	if (offset == CHFS_OFFSET_DOT) {
-		error = chfs_filldir(uio, ip->ino, ".", 1, VDIR);
+		error = chfs_filldir(uio, ip->ino, ".", 1, CHT_DIR);
 		if (error == -1) {
 			error = 0;
 			goto outok;
@@ -1377,7 +1377,7 @@ chfs_readdir(void *v)
 		chvc = chfs_vnode_cache_get(chmp, ip->ino);
 		mutex_exit(&chmp->chm_lock_vnocache);
 
-		error = chfs_filldir(uio, chvc->pvno, "..", 2, VDIR);
+		error = chfs_filldir(uio, chvc->pvno, "..", 2, CHT_DIR);
 		if (error == -1) {
 			error = 0;
 			goto outok;
