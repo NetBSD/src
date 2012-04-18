@@ -1,4 +1,4 @@
-/*	$NetBSD: amdnb_misc.c,v 1.2.2.2 2012/04/17 00:07:05 yamt Exp $ */
+/*	$NetBSD: amdnb_misc.c,v 1.2.2.3 2012/04/18 13:38:27 yamt Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdnb_misc.c,v 1.2.2.2 2012/04/17 00:07:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdnb_misc.c,v 1.2.2.3 2012/04/18 13:38:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -41,9 +41,16 @@ __KERNEL_RCSID(0, "$NetBSD: amdnb_misc.c,v 1.2.2.2 2012/04/17 00:07:05 yamt Exp 
 static int amdnb_misc_match(device_t, cfdata_t match, void *);
 static void amdnb_misc_attach(device_t, device_t, void *);
 static int amdnb_misc_detach(device_t, int);
+static int amdnb_misc_rescan(device_t, const char *, const int *);
+static void amdnb_misc_childdet(device_t, device_t);
 
-CFATTACH_DECL_NEW(amdnb_misc, 0,
-    amdnb_misc_match, amdnb_misc_attach, amdnb_misc_detach, NULL);
+struct amdnb_misc_softc {
+	struct pci_attach_args sc_pa;
+};
+
+CFATTACH_DECL3_NEW(amdnb_misc, sizeof(struct amdnb_misc_softc),
+    amdnb_misc_match, amdnb_misc_attach, amdnb_misc_detach, NULL,
+    amdnb_misc_rescan, amdnb_misc_childdet, DVF_DETACH_SHUTDOWN);
 
 
 static int
@@ -71,8 +78,41 @@ amdnb_misc_match(device_t parent, cfdata_t match, void *aux)
 static int
 amdnb_misc_search(device_t parent, cfdata_t cf, const int *locs, void *aux)
 {
-	if (config_match(parent, cf, aux))
-		config_attach_loc(parent, cf, locs, aux, NULL);
+	device_t dev;
+	deviter_t di;
+	bool attach;
+
+	if (!config_match(parent, cf, aux))
+		return 0;
+
+	attach = true;
+
+	/* Figure out if found child 'cf' is already attached.
+	 * No need to attach it twice.
+	 */
+
+	/* XXX: I only want to iterate over the children of *this* device.
+	 * Can we introduce a
+	 * deviter_first_child(&di, parent, DEVITER_F_LEAVES_ONLY)
+	 * or even better, can we introduce a query function that returns
+	 * if a child is already attached?
+	 */
+	for (dev = deviter_first(&di, DEVITER_F_LEAVES_FIRST); dev != NULL;
+	    dev = deviter_next(&di))
+	{
+		if (device_parent(dev) != parent)
+			continue;
+		if (device_is_a(dev, cf->cf_name)) {
+			attach = false;
+			break;
+		}
+	}
+	deviter_release(&di);
+
+	if (!attach)
+		return 0;
+
+	config_attach_loc(parent, cf, locs, aux, NULL);
 
 	return 0;
 }
@@ -80,13 +120,20 @@ amdnb_misc_search(device_t parent, cfdata_t cf, const int *locs, void *aux)
 static void
 amdnb_misc_attach(device_t parent, device_t self, void *aux)
 {
+	struct amdnb_misc_softc *sc = device_private(self);
+	struct pci_attach_args *pa = aux;
+
+	sc->sc_pa = *pa;
+
 	aprint_naive("\n");
 	aprint_normal(": AMD NB Misc Configuration\n");
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	config_search_loc(amdnb_misc_search, self, "amdnb_miscbus", NULL, aux);
+	config_search_loc(amdnb_misc_search, self, "amdnb_miscbus",
+	    NULL, &sc->sc_pa);
+
 	return;
 }
 
@@ -101,4 +148,24 @@ amdnb_misc_detach(device_t self, int flags)
 
 	pmf_device_deregister(self);
 	return rv;
+}
+
+static int
+amdnb_misc_rescan(device_t self, const char *ifattr, const int *locators)
+{
+	struct amdnb_misc_softc *sc = device_private(self);
+
+	if (!ifattr_match(ifattr, "amdnb_miscbus"))
+		return 0;
+
+	config_search_loc(amdnb_misc_search, self, ifattr,
+	    locators, &sc->sc_pa);
+
+	return 0;
+}
+
+static void
+amdnb_misc_childdet(device_t self, device_t child)
+{
+	return;
 }
