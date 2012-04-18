@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.60.2.1 2012/02/22 18:48:45 riz Exp $ */
+/* $NetBSD: hypervisor.c,v 1.60.2.2 2012/04/18 19:53:28 snj Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.60.2.1 2012/02/22 18:48:45 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.60.2.2 2012/04/18 19:53:28 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,12 +210,15 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 #endif
 #endif /* NPCI */
 	union hypervisor_attach_cookie hac;
+	char xen_extra_version[XEN_EXTRAVERSION_LEN];
 
 	xenkernfs_init();
 
 	xen_version = HYPERVISOR_xen_version(XENVER_version, NULL);
-	aprint_normal(": Xen version %d.%d\n", XEN_MAJOR(xen_version),
-	       XEN_MINOR(xen_version));
+	memset(xen_extra_version, 0, sizeof(xen_extra_version));
+	HYPERVISOR_xen_version(XENVER_extraversion, xen_extra_version);
+	aprint_normal(": Xen version %d.%d%s\n", XEN_MAJOR(xen_version),
+		XEN_MINOR(xen_version), xen_extra_version);
 
 	xengnt_init();
 	events_init();
