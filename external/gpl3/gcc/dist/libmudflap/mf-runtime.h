@@ -81,11 +81,11 @@ extern "C" {
 #endif
 
 extern void __mf_check (void *ptr, __mf_size_t sz, int type, const char *location)
-       __attribute((nothrow));
+       __attribute__((nothrow));
 extern void __mf_register (void *ptr, __mf_size_t sz, int type, const char *name)
-       __attribute((nothrow));
+       __attribute__((nothrow));
 extern void __mf_unregister (void *ptr, __mf_size_t sz, int type)
-       __attribute((nothrow));
+       __attribute__((nothrow));
 extern unsigned __mf_watch (void *ptr, __mf_size_t sz);
 extern unsigned __mf_unwatch (void *ptr, __mf_size_t sz);
 extern void __mf_report ();
