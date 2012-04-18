@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_array.h,v 1.1.2.4 2011/11/26 15:19:06 yamt Exp $	*/
+/*	$NetBSD: uvm_page_array.h,v 1.1.2.5 2012/04/18 13:39:28 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -38,16 +38,16 @@
  *
  * typical usage:
  *
- *	struct uvm_page_array ar;
+ *	struct uvm_page_array a;
  *
- *	uvm_page_array_init(&ar);
- *	while ((pg = uvm_page_array_fill_and_peek(&ar, uobj, off, ....))
+ *	uvm_page_array_init(&a);
+ *	while ((pg = uvm_page_array_fill_and_peek(&a, uobj, off, ....))
  *	    != NULL) {
  *		off = pg->offset + PAGE_SIZE;
  *		do_something(pg);
- *		uvm_page_array_advance(&ar);
+ *		uvm_page_array_advance(&a);
  *	}
- *	uvm_page_array_fini(&it);
+ *	uvm_page_array_fini(&a);
  */
 
 struct vm_page;
