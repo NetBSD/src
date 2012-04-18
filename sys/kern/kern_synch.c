@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.299 2012/03/03 00:22:24 matt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.300 2012/04/18 13:44:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.299 2012/03/03 00:22:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.300 2012/04/18 13:44:19 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -755,6 +755,10 @@ mi_switch(lwp_t *l)
 
 		KASSERT(l->l_cpu == ci);
 		splx(oldspl);
+		/*
+		 * note that, unless the caller disabled preemption,
+		 * we can be preempted at any time after the above splx() call.
+		 */
 		retval = 1;
 	} else {
 		/* Nothing to do - just unlock and return. */

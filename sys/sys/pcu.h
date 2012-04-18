@@ -1,4 +1,4 @@
-/*	$NetBSD: pcu.h,v 1.8 2011/06/06 22:04:34 matt Exp $	*/
+/*	$NetBSD: pcu.h,v 1.9 2012/04/18 13:42:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -48,6 +48,20 @@
 #endif
 
 #if PCU_UNIT_COUNT > 0
+
+/*
+ * pcu_state_save(lwp)
+ *	save the current CPU's state into the given LWP's MD storage.
+ *
+ * pcu_state_load(lwp, used)
+ *	load PCU state from the given LWP's MD storage to the current CPU.
+ *	the 'used' argument is true if it isn't the first time the LWP uses
+ *	the PCU.
+ *
+ * pcu_state_release(lwp)
+ *	tell MD code detect the next use of the PCU on the LWP, and call
+ *	pcu_load().
+ */
 
 typedef struct {
 	u_int	pcu_id;
