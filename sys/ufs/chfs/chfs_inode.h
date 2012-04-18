@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_inode.h,v 1.4 2012/04/13 14:50:35 ttoth Exp $	*/
+/*	$NetBSD: chfs_inode.h,v 1.5 2012/04/18 13:31:10 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -58,8 +58,8 @@ enum chtype {
 };
 
 /* these macros are needed because the compatibility */
-#define CHTTOVT(ch_type)	ch_type
-#define VTTOCHT(v_type)		v_type
+#define CHTTOVT(ch_type)	(enum vtype)(ch_type)
+#define VTTOCHT(v_type)		(enum chtype)(v_type)
 
 /* vtype replaced with chtype, these are only for compatibility */
 static const enum chtype iftocht_tab[16] = {
