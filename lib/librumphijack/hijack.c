@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.91 2012/02/01 05:34:41 dholland Exp $	*/
+/*      $NetBSD: hijack.c,v 1.92 2012/04/18 10:37:37 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
 #undef _FORTIFY_SOURCE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.91 2012/02/01 05:34:41 dholland Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.92 2012/04/18 10:37:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1654,7 +1654,7 @@ hostpoll(void *arg)
 		parg->errnum = errno;
 	rump_sys_write(parg->pipefd, &rv, sizeof(rv));
 
-	return (void *)(intptr_t)rv;
+	return (void *)rv;
 }
 
 int
@@ -1676,8 +1676,8 @@ REALPOLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 		struct pollfd *pfd_host = NULL, *pfd_rump = NULL;
 		int rpipe[2] = {-1,-1}, hpipe[2] = {-1,-1};
 		struct pollarg parg;
-		uintptr_t lrv;
-		int sverrno = 0, trv;
+		void *trv_val;
+		int sverrno = 0, lrv, trv;
 
 		/*
 		 * ok, this is where it gets tricky.  We must support
@@ -1770,7 +1770,8 @@ REALPOLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 		lrv = op_pollts(pfd_rump, nfds+1, ts, NULL);
 		sverrno = errno;
 		write(hpipe[1], &rv, sizeof(rv));
-		pthread_join(pt, (void *)&trv);
+		pthread_join(pt, &trv_val);
+		trv = (int)(intptr_t)trv_val;
 
 		/* check who "won" and merge results */
 		if (lrv != 0 && pfd_host[nfds].revents & POLLIN) {
