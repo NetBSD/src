@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.70 2012/04/16 15:37:49 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.71 2012/04/18 19:56:34 snj Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1833,4 +1833,9 @@ sys/fs/msdosfs/msdosfs_fat.c			1.20
 	Fix a crash: msdosfs_bmap -> pcbmap -> bread -> bio_doread
 	PR#46282.
 	[hannken, ticket #183]
+
+sys/arch/xen/xen/hypervisor.c			1.62
+
+	Retrive and print the hypervisor "extra" (teeny) version.
+	[riz, ticket #184]
 
