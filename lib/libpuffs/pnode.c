@@ -1,4 +1,4 @@
-/*	$NetBSD: pnode.c,v 1.11 2012/04/08 15:07:45 manu Exp $	*/
+/*	$NetBSD: pnode.c,v 1.12 2012/04/18 00:57:22 manu Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: pnode.c,v 1.11 2012/04/08 15:07:45 manu Exp $");
+__RCSID("$NetBSD: pnode.c,v 1.12 2012/04/18 00:57:22 manu Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -136,19 +136,6 @@ puffs_pn_getmnt(struct puffs_node *pn)
 	return pn->pn_mnt;
 }
 
-struct timespec *
-puffs_pn_getvattl(struct puffs_node *pn)
-{
-	return &pn->pn_va_ttl;
-}
-
-struct timespec *
-puffs_pn_getcnttl(struct puffs_node *pn)
-{
-	return &pn->pn_cn_ttl;
-}
-
-
 /* convenience / shortcut */
 void *
 puffs_pn_getmntspecific(struct puffs_node *pn)
@@ -187,3 +174,27 @@ puffs_newinfo_setrdev(struct puffs_newinfo *pni, dev_t rdev)
 
 	*pni->pni_rdev = rdev;
 }
+
+void
+puffs_newinfo_setva(struct puffs_newinfo *pni, struct vattr *va)
+{
+
+	(void)memcpy(pni->pni_va, va, sizeof(struct vattr));
+}
+
+void
+puffs_newinfo_setvattl(struct puffs_newinfo *pni, struct timespec *va_ttl)
+{
+
+	pni->pni_va_ttl->tv_sec = va_ttl->tv_sec;
+	pni->pni_va_ttl->tv_nsec = va_ttl->tv_nsec;
+}
+
+void
+puffs_newinfo_setcnttl(struct puffs_newinfo *pni, struct timespec *cn_ttl)
+{
+
+	pni->pni_cn_ttl->tv_sec = cn_ttl->tv_sec;
+	pni->pni_cn_ttl->tv_nsec = cn_ttl->tv_nsec;
+}
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.44 2011/06/20 09:11:17 mrg Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.45 2012/04/18 00:57:22 manu Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -199,6 +199,9 @@ struct puffs_newinfo {
 	enum vtype	*pni_vtype;
 	voff_t		*pni_size;
 	dev_t		*pni_rdev;
+	struct vattr	*pni_va;
+	struct timespec	*pni_va_ttl;
+	struct timespec	*pni_cn_ttl;
 };
 
 #define PUFFS_MAKEKCRED(to, from)					\

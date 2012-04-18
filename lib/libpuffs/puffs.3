@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.51 2012/04/08 16:09:55 wiz Exp $
+.\"	$NetBSD: puffs.3,v 1.52 2012/04/18 00:57:22 manu Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -237,15 +237,22 @@ Especially if the file system uses the abovementioned function, it
 is a good idea to define this flag.
 .It Dv PUFFS_KFLAG_CACHE_FS_TTL
 Enforce name and attribute caches based on file system-supplied TTL.
-In lookup, create, mknod, mkdir, symlink, getattr, and setattr,
-the file system must update the attributes and their TTL through
-.Fn puffs_pn_getvap
+In lookup, create, mknod, mkdir, and symlink, the file system must 
+update the node attributes, their TTL, and the node name TTL  through
+.Fn puffs_newinfo_setva ,
+.Fn puffs_newinfo_setvattl
 and
-.Fn puffs_pn_getvattl .
+.Fn puffs_newinfo_setcnttl .
 .Pp
-In lookup, create, mknod, mkdir, and symlink,
-the name TTL must be updated through
-.Fn puffs_pn_getcnttl .
+Additionally, 
+.Fn puffs_node_getattr_ttl
+and
+.Fn puffs_node_setattr_ttl
+will be called instead of 
+.Fn puffs_node_getattr
+and
+.Fn puffs_node_setattr .
+
 .It Dv PUFFS_FLAG_OPDUMP
 This option makes the framework dump a textual representation of
 each operation before executing it.
