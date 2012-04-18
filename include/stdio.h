@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.81 2012/03/27 15:06:01 christos Exp $	*/
+/*	$NetBSD: stdio.h,v 1.82 2012/04/18 19:30:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -146,7 +146,7 @@ typedef	struct __sFILE {
 } FILE;
 
 __BEGIN_DECLS
-extern FILE __sF[];
+extern FILE __sF[3];
 __END_DECLS
 
 #define	__SLBF	0x0001		/* line buffered */
