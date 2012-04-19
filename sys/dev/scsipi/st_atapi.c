@@ -1,4 +1,4 @@
-/*	$NetBSD: st_atapi.c,v 1.28 2012/02/28 10:58:11 mbalmer Exp $ */
+/*	$NetBSD: st_atapi.c,v 1.29 2012/04/19 17:45:21 bouyer Exp $ */
 
 /*
  * Copyright (c) 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_atapi.c,v 1.28 2012/02/28 10:58:11 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_atapi.c,v 1.29 2012/04/19 17:45:21 bouyer Exp $");
 
 #include "opt_scsi.h"
 
@@ -65,7 +65,8 @@ st_atapibus_match(device_t parent, cfdata_t match,  void *aux)
 	struct scsipibus_attach_args *sa = aux;
 	int priority;
 
-	if (scsipi_periph_bustype(sa->sa_periph) != SCSIPI_BUSTYPE_ATAPI)
+	if (SCSIPI_BUSTYPE_TYPE(scsipi_periph_bustype(sa->sa_periph)) !=
+	    SCSIPI_BUSTYPE_ATAPI)
 		return 0;
 
 	(void)scsipi_inqmatch(&sa->sa_inqbuf,
