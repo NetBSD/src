@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.32 2012/04/19 15:36:06 ttoth Exp $	*/
+/*	$NetBSD: makefs.c,v 1.33 2012/04/19 17:09:53 christos Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.32 2012/04/19 15:36:06 ttoth Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.33 2012/04/19 17:09:53 christos Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -296,7 +296,7 @@ main(int argc, char *argv[])
 
 
 int
-set_option(option_t *options, const char *var, const char *val)
+set_option(const option_t *options, const char *var, const char *val)
 {
 	int	i;
 

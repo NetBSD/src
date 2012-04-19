@@ -109,39 +109,49 @@ pad_block_if_less_than(fsinfo_t *fsopts, int req)
 void
 write_eb_header(fsinfo_t *fsopts)
 {
-	chfs_opt_t *chfs_opts;
+	chfs_opt_t *opts;
 	struct chfs_eb_hdr ebhdr;
+	char *buf;
 
-	chfs_opts = fsopts->fs_specific;
+	opts = fsopts->fs_specific;
 
-	char buf[chfs_opts->pagesize];
+#define MINSIZE MAX(MAX(CHFS_EB_EC_HDR_SIZE, CHFS_EB_HDR_NOR_SIZE), \
+    CHFS_EB_HDR_NAND_SIZE)
+	if (opts->pagesize < MINSIZE)
+		errx(EXIT_FAILURE, "pagesize cannot be less than %zu", MINSIZE);
+	if ((buf = malloc(opts->pagesize)) == NULL)
+		err(EXIT_FAILURE, "Memory allocation failed");
 
-	memset(buf, 0xFF, sizeof(buf));
+	memset(buf, 0xFF, opts->pagesize);
 
 	ebhdr.ec_hdr.magic = htole32(CHFS_MAGIC_BITMASK);
 	ebhdr.ec_hdr.erase_cnt = htole32(1);
-	ebhdr.ec_hdr.crc_ec = htole32(crc32(0, (uint8_t *)&ebhdr.ec_hdr + 8, 4));
+	ebhdr.ec_hdr.crc_ec = htole32(crc32(0,
+	    (uint8_t *)&ebhdr.ec_hdr + 8, 4));
 
-	memcpy(&buf, &ebhdr.ec_hdr, CHFS_EB_EC_HDR_SIZE);
+	memcpy(buf, &ebhdr.ec_hdr, CHFS_EB_EC_HDR_SIZE);
 
-	buf_write(fsopts, &buf, chfs_opts->pagesize);
+	buf_write(fsopts, buf, opts->pagesize);
 
-	memset(buf, 0xFF, chfs_opts->pagesize);
+	memset(buf, 0xFF, opts->pagesize);
 
-	if (chfs_opts->mediatype == TYPE_NAND) {
+	if (opts->mediatype == TYPE_NAND) {
 		ebhdr.u.nand_hdr.lid = htole32(lebnumber++);
 		ebhdr.u.nand_hdr.serial = htole64(++(max_serial));
 		ebhdr.u.nand_hdr.crc = htole32(crc32(0,
-		    (uint8_t *)&ebhdr.u.nand_hdr + 4, CHFS_EB_HDR_NAND_SIZE - 4));
-		memcpy(&buf, &ebhdr.u.nand_hdr, CHFS_EB_HDR_NAND_SIZE);
+		    (uint8_t *)&ebhdr.u.nand_hdr + 4,
+		    CHFS_EB_HDR_NAND_SIZE - 4));
+		memcpy(buf, &ebhdr.u.nand_hdr, CHFS_EB_HDR_NAND_SIZE);
 	} else {
 		ebhdr.u.nor_hdr.lid = htole32(lebnumber++);
-		ebhdr.u.nor_hdr.crc = htole32(crc32(0, (uint8_t *)&ebhdr.u.nor_hdr + 4,
+		ebhdr.u.nor_hdr.crc = htole32(crc32(0,
+		    (uint8_t *)&ebhdr.u.nor_hdr + 4,
 		    CHFS_EB_HDR_NOR_SIZE - 4));
-		memcpy(&buf, &ebhdr.u.nor_hdr, CHFS_EB_HDR_NOR_SIZE);
+		memcpy(buf, &ebhdr.u.nor_hdr, CHFS_EB_HDR_NOR_SIZE);
 	}
 	
-	buf_write(fsopts, &buf, chfs_opts->pagesize);
+	buf_write(fsopts, buf, opts->pagesize);
+	free(buf);
 }
 
 void
@@ -217,26 +227,29 @@ write_file(fsinfo_t *fsopts, fsnode *node, const char *dir)
 	int fd;
 	ssize_t len;
 	char *name = node->name;
-	chfs_opt_t *chfs_opts;
+	chfs_opt_t *opts;
 	unsigned char *buf;
 	uint32_t fileofs = 0;
 
-	chfs_opts = fsopts->fs_specific;
-	buf = malloc(chfs_opts->pagesize);
+	opts = fsopts->fs_specific;
+	buf = malloc(opts->pagesize);
 
-	if (buf == NULL) {
-		err(EXIT_FAILURE, "ERROR memory allocation failed");
-	}
+	if (buf == NULL)
+		goto out;
 	
 	if (node->type == S_IFREG || node->type == S_IFSOCK) {
 		char *longname;
-		asprintf(&longname, "%s/%s", dir, name);
+		if (asprintf(&longname, "%s/%s", dir, name) == 1)
+			goto out;
 
 		fd = open(longname, O_RDONLY, 0444);
+		if (fd == -1)
+			err(EXIT_FAILURE, "Cannot open `%s'", longname);
 
-		while ((len = read(fd, buf, chfs_opts->pagesize))) {
+		while ((len = read(fd, buf, opts->pagesize))) {
 			if (len < 0) {
 				warn("ERROR while reading %s", longname);
+				free(longname);
 				free(buf);
 				close(fd);
 				return;
@@ -245,6 +258,7 @@ write_file(fsinfo_t *fsopts, fsnode *node, const char *dir)
 			write_data(fsopts, node, buf, len, fileofs);
 			fileofs += len;
 		}
+		free(longname);
 		close(fd);	
 	} else if (node->type == S_IFLNK) {
 		len = strlen(node->symlink);
@@ -258,6 +272,9 @@ write_file(fsinfo_t *fsopts, fsnode *node, const char *dir)
 	}
 
 	free(buf);
+	return;
+out:
+	err(EXIT_FAILURE, "Memory allocation failed");
 }
 
 void
@@ -265,8 +282,8 @@ write_data(fsinfo_t *fsopts, fsnode *node, unsigned char *buf, size_t len,
     uint32_t ofs)
 {
 	struct chfs_flash_data_node fdata;
-	memset(&fdata, 0, sizeof(fdata));
 
+	memset(&fdata, 0, sizeof(fdata));
 	if (len == 0) {
 		return;
 	}
@@ -282,7 +299,8 @@ write_data(fsinfo_t *fsopts, fsnode *node, unsigned char *buf, size_t len,
 	fdata.data_length = htole32(len);
 	fdata.offset = htole32(ofs);
 	fdata.data_crc = htole32(crc32(0, (uint8_t *)buf, len));
-	fdata.node_crc = htole32(crc32(0, (uint8_t *)&fdata, sizeof(fdata) - 4));
+	fdata.node_crc = htole32(crc32(0,
+	    (uint8_t *)&fdata, sizeof(fdata) - 4));
 
 	buf_write(fsopts, &fdata, sizeof(fdata));
 	buf_write(fsopts, buf, len);

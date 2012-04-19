@@ -98,6 +98,7 @@ chfs_parse_opts(const char *option, fsinfo_t *fsopts)
 	}
 	*val++ = '\0';
 
+/*###101 [cc] error: passing argument 1 of 'set_option' discards qualifiers from pointer target type%%%*/
 	retval = set_option(chfs_options, var, val);
 	
 leave_chfs_parse_opts:
