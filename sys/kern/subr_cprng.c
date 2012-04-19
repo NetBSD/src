@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.5 2011/12/17 20:05:39 tls Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.5.2.1 2012/04/19 19:59:10 riz Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <sys/cprng.h>
 
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.5 2011/12/17 20:05:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.5.2.1 2012/04/19 19:59:10 riz Exp $");
 
 void
 cprng_init(void)
@@ -75,10 +75,11 @@ static void
 cprng_strong_sched_reseed(cprng_strong_t *const c)
 {
 	KASSERT(mutex_owned(&c->mtx));
-	if (!(c->reseed_pending)) {
+	if (!(c->reseed_pending) && mutex_tryenter(&c->reseed.mtx)) {
 		c->reseed_pending = 1;
 		c->reseed.len = NIST_BLOCK_KEYLEN_BYTES;
 		rndsink_attach(&c->reseed);
+		mutex_spin_exit(&c->reseed.mtx);
 	}
 }
 
@@ -89,7 +90,10 @@ cprng_strong_reseed(void *const arg)
 	uint8_t key[NIST_BLOCK_KEYLEN_BYTES];
 	uint32_t cc = cprng_counter();
 
-	mutex_enter(&c->mtx);
+	if (!mutex_tryenter(&c->mtx)) {
+	    return;
+	}
+
 	if (c->reseed.len != sizeof(key)) {
 		panic("cprng_strong_reseed: bad entropy length %d "
 		      " (expected %d)", (int)c->reseed.len, (int)sizeof(key));
@@ -123,6 +127,7 @@ cprng_strong_create(const char *const name, int ipl, int flags)
 	c->reseed_pending = 0;
 	c->reseed.cb = cprng_strong_reseed;
 	c->reseed.arg = c;
+	mutex_init(&c->reseed.mtx, MUTEX_DEFAULT, IPL_VM);
 	strlcpy(c->reseed.name, name, sizeof(c->reseed.name));
 
 	mutex_init(&c->mtx, MUTEX_DEFAULT, ipl);
@@ -267,6 +272,7 @@ void
 cprng_strong_destroy(cprng_strong_t *c)
 {
 	mutex_enter(&c->mtx);
+	mutex_spin_enter(&c->reseed.mtx);
 
 	if (c->flags & CPRNG_USE_CV) {
 		KASSERT(!cv_has_waiters(&c->cv));
@@ -277,6 +283,9 @@ cprng_strong_destroy(cprng_strong_t *c)
 	if (c->reseed_pending) {
 		rndsink_detach(&c->reseed);
 	}
+	mutex_spin_exit(&c->reseed.mtx);
+	mutex_destroy(&c->reseed.mtx);
+
 	nist_ctr_drbg_destroy(&c->drbg);
 
 	mutex_exit(&c->mtx);
