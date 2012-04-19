@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.30 2012/01/11 15:52:32 macallan Exp $ */
+/* 	$NetBSD: rasops.h,v 1.31 2012/04/19 06:57:39 macallan Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -176,6 +176,8 @@ void	rasops_unpack_attr(long, int *, int *, int *);
 void	rasops_eraserows(void *, int, int, long);
 void	rasops_erasecols(void *, int, int, int, long);
 void	rasops_copycols(void *, int, int, int, int);
+int	rasops_get_cmap(struct rasops_info *, uint8_t *, size_t);
+
 
 extern const u_char	rasops_isgray[16];
 extern const u_char	rasops_cmap[256*3];
