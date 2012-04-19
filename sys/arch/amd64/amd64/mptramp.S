@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.12 2010/04/20 15:42:21 jym Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.13 2012/04/19 18:00:34 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -173,7 +173,7 @@ _TRMP_LABEL(mp_startup)
         movl    %ecx,%cr3               # load ptd addr into mmu
 
         movl    %cr0,%eax               # get control word
-        orl     $(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_MP|CR0_WP),%eax
+        orl     $(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_MP|CR0_WP|CR0_AM),%eax
         movl    %eax,%cr0
 	jmp	mptramp_compat
 mptramp_compat:
