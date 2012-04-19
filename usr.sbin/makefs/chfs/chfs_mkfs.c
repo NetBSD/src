@@ -100,7 +100,8 @@ padword(fsinfo_t *fsopts)
 static void
 pad_block_if_less_than(fsinfo_t *fsopts, int req)
 {
-	if ((img_ofs % chfs_opts.eraseblock) + req > chfs_opts.eraseblock) {
+	if ((img_ofs % chfs_opts.eraseblock) + req >
+	    (uint32_t)chfs_opts.eraseblock) {
 		padblock(fsopts);
 		write_eb_header(fsopts);
 	}
@@ -117,7 +118,7 @@ write_eb_header(fsinfo_t *fsopts)
 
 #define MINSIZE MAX(MAX(CHFS_EB_EC_HDR_SIZE, CHFS_EB_HDR_NOR_SIZE), \
     CHFS_EB_HDR_NAND_SIZE)
-	if (opts->pagesize < MINSIZE)
+	if ((uint32_t)opts->pagesize < MINSIZE)
 		errx(EXIT_FAILURE, "pagesize cannot be less than %zu", MINSIZE);
 	if ((buf = malloc(opts->pagesize)) == NULL)
 		err(EXIT_FAILURE, "Memory allocation failed");
