@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.h,v 1.25 2012/04/19 15:36:06 ttoth Exp $	*/
+/*	$NetBSD: makefs.h,v 1.26 2012/04/19 17:09:53 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -158,7 +158,7 @@ typedef struct {
 void		apply_specfile(const char *, const char *, fsnode *, int);
 void		dump_fsnodes(fsnode *);
 const char *	inode_type(mode_t);
-int		set_option(option_t *, const char *, const char *);
+int		set_option(const option_t *, const char *, const char *);
 fsnode *	walk_dir(const char *, const char *, fsnode *, fsnode *);
 void		free_fsnodes(fsnode *);
 
