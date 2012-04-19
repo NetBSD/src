@@ -1,4 +1,4 @@
-.\"	$NetBSD: mpii.4,v 1.1 2012/04/19 17:50:50 bouyer Exp $
+.\"	$NetBSD: mpii.4,v 1.2 2012/04/19 20:13:48 wiz Exp $
 .\"	OpenBSD: mpii.4,v 1.8 2010/10/01 12:27:36 mikeb Exp
 .\"
 .\" Copyright (c) 2010 Marco Peereboom <marco@openbsd.org>
@@ -50,7 +50,7 @@ Some models of these controllers have varying degrees of support for RAID 0
 and RAID 1.
 .Pp
 .Nm
-supports monitoring of the logical disks in the controller through the  
+supports monitoring of the logical disks in the controller through the
 .Xr bioctl 8
 and
 .Xr envstat 8
@@ -58,14 +58,14 @@ commands.
 .Sh EVENTS
 The
 .Nm
-driver is able to send events to      
+driver is able to send events to
 .Xr powerd 8
 if a logical drive in the controller is not online.
 The
 .Em state-changed
 event will be sent to the
-.Pa /etc/powerd/scripts/sensor_drive  
-script when such condition happens.   
+.Pa /etc/powerd/scripts/sensor_drive
+script when such condition happens.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr pci 4 ,
