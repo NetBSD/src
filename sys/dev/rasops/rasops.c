@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.70 2012/01/11 15:52:32 macallan Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.71 2012/04/19 06:57:39 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.70 2012/01/11 15:52:32 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.71 2012/04/19 06:57:39 macallan Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -1758,4 +1758,48 @@ rasops_make_box_chars_alpha(struct rasops_info *ri)
 			}
 		}
 	}
+}
+
+/*
+ * Return a colour map appropriate for the given struct rasops_info in the
+ * same form used by rasops_cmap[]
+ * For now this is either a copy of rasops_cmap[] or an R3G3B2 map, it should
+ * probably be a linear ( or gamma corrected? ) ramp for higher depths.
+ */
+ 
+int
+rasops_get_cmap(struct rasops_info *ri, uint8_t *palette, size_t bytes)
+{
+	if ((ri->ri_depth == 8 ) && ((ri->ri_flg & RI_8BIT_IS_RGB) > 0)) {
+		/* generate an R3G3B2 palette */
+		int i, idx = 0;
+		uint8_t tmp;
+
+		if (bytes < 768)
+			return EINVAL;
+		for (i = 0; i < 256; i++) {
+			tmp = i & 0xe0;
+			/*
+			 * replicate bits so 0xe0 maps to a red value of 0xff
+			 * in order to make white look actually white
+			 */
+			tmp |= (tmp >> 3) | (tmp >> 6);
+			palette[idx] = tmp;
+			idx++;
+
+			tmp = (i & 0x1c) << 3;
+			tmp |= (tmp >> 3) | (tmp >> 6);
+			palette[idx] = tmp;
+			idx++;
+
+			tmp = (i & 0x03) << 6;
+			tmp |= tmp >> 2;
+			tmp |= tmp >> 4;
+			palette[idx] = tmp;
+			idx++;
+		}
+	} else {
+		memcpy(palette, rasops_cmap, MIN(bytes, sizeof(rasops_cmap)));
+	}
+	return 0;
 }
