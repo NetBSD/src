@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.31 2012/01/28 02:35:46 christos Exp $	*/
+/*	$NetBSD: makefs.c,v 1.32 2012/04/19 15:36:06 ttoth Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.31 2012/01/28 02:35:46 christos Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.32 2012/04/19 15:36:06 ttoth Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -73,6 +73,8 @@ static fstype_t fstypes[] = {
 	{ "ffs", ffs_prep_opts,	ffs_parse_opts,	ffs_cleanup_opts, ffs_makefs },
 	{ "cd9660", cd9660_prep_opts, cd9660_parse_opts, cd9660_cleanup_opts,
 	  cd9660_makefs},
+	{ "chfs", chfs_prep_opts, chfs_parse_opts, chfs_cleanup_opts,
+	  chfs_makefs },
 	{ "v7fs", v7fs_prep_opts, v7fs_parse_opts, v7fs_cleanup_opts,
 	  v7fs_makefs },
 	{ .type = NULL	},

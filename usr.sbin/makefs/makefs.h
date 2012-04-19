@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.h,v 1.24 2012/01/28 02:35:46 christos Exp $	*/
+/*	$NetBSD: makefs.h,v 1.25 2012/04/19 15:36:06 ttoth Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -171,6 +171,11 @@ void		cd9660_prep_opts(fsinfo_t *);
 int		cd9660_parse_opts(const char *, fsinfo_t *);
 void		cd9660_cleanup_opts(fsinfo_t *);
 void		cd9660_makefs(const char *, const char *, fsnode *, fsinfo_t *);
+
+void		chfs_prep_opts(fsinfo_t *);
+int		chfs_parse_opts(const char *, fsinfo_t *);
+void		chfs_cleanup_opts(fsinfo_t *);
+void		chfs_makefs(const char *, const char *, fsnode *, fsinfo_t *);
 
 void		v7fs_prep_opts(fsinfo_t *);
 int		v7fs_parse_opts(const char *, fsinfo_t *);
