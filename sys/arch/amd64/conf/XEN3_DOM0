@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.82 2012/04/13 13:11:16 cegger Exp $
+# $NetBSD: XEN3_DOM0,v 1.83 2012/04/19 17:50:50 bouyer Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -487,7 +487,8 @@ iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 mfi*	at pci? dev ? function ?	# LSI MegaRAID SAS
 mly*	at pci? dev ? function ?	# Mylex AcceleRAID and eXtremeRAID
-mpt*	at pci? dev ? function ?	# LSI Fusion SCSI/FC
+mpt*	at pci? dev ? function ?	# LSILogic 9x9 and 53c1030 (Fusion-MPT)
+mpii*	at pci? dev ? function ?	# LSI Logic Fusion-MPT II
 njs*	at pci? dev ? function ?	# Workbit NinjaSCSI-32
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
