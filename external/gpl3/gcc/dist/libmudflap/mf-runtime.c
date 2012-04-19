@@ -166,7 +166,7 @@ begin_recursion_protect1 (const char *pf)
 #define LOOKUP_CACHE_SHIFT_DFL 2
 
 struct __mf_cache __mf_lookup_cache [LOOKUP_CACHE_SIZE_MAX];
-uintptr_t __mf_lc_mask = LOOKUP_CACHE_MASK_DFL;
+__mf_uintptr_t __mf_lc_mask = LOOKUP_CACHE_MASK_DFL;
 unsigned char __mf_lc_shift = LOOKUP_CACHE_SHIFT_DFL;
 #define LOOKUP_CACHE_SIZE (__mf_lc_mask + 1)
 
