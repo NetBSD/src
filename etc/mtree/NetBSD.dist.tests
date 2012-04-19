@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.74 2012/04/14 12:21:46 jruoho Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.75 2012/04/19 18:51:36 jruoho Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -300,3 +300,4 @@
 ./usr/tests/usr.sbin/mtree
 ./usr/tests/usr.sbin/tcpdump
 ./usr/tests/usr.sbin/traceroute
+./usr/tests/usr.sbin/useradd

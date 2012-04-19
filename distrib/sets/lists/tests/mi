@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.464 2012/04/14 12:21:45 jruoho Exp $
+# $NetBSD: mi,v 1.465 2012/04/19 18:51:36 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3246,6 +3246,9 @@
 ./usr/tests/usr.sbin/traceroute			tests-usr.sbin-tests
 ./usr/tests/usr.sbin/traceroute/Atffile		tests-usr.sbin-tests	atf
 ./usr/tests/usr.sbin/traceroute/t_traceroute	tests-usr.sbin-tests	atf
+./usr/tests/usr.sbin/useradd			tests-usr.sbin-tests
+./usr/tests/usr.sbin/useradd/Atffile		tests-usr.sbin-tests	atf
+./usr/tests/usr.sbin/useradd/t_useradd		tests-usr.sbin-tests	atf
 ./usr/tests/util				tests-obsolete		obsolete
 ./usr/tests/util/Atffile			tests-obsolete		obsolete
 ./usr/tests/util/awk				tests-obsolete		obsolete
