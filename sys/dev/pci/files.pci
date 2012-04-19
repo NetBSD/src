@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.356 2012/03/02 13:20:57 nonaka Exp $
+#	$NetBSD: files.pci,v 1.357 2012/04/19 17:50:51 bouyer Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -151,6 +151,11 @@ file	dev/pci/mfi_pci.c		mfi_pci
 # device declaration in sys/conf/files
 attach	mpt at pci with mpt_pci
 file	dev/pci/mpt_pci.c		mpt_pci
+
+# LSI Logic Fusion-MPT Message Passing Interface 2.0
+device	mpii: scsi
+attach	mpii at pci
+file	dev/pci/mpii.c			mpii
 
 # Ethernet driver for DC21040-based boards
 device	de: ether, ifnet, arp
