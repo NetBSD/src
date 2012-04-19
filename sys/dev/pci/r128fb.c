@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.33 2012/04/19 06:58:55 macallan Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.34 2012/04/19 08:59:42 macallan Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.33 2012/04/19 06:58:55 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.34 2012/04/19 08:59:42 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,6 +224,12 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 		aprint_error("%s: no height property\n", device_xname(self));
 		return;
 	}
+
+#ifdef GLYPHCACHE_DEBUG
+	/* leave some visible VRAM unused so we can see the glyph cache */
+	sc->sc_height -= 100;
+#endif
+
 	if (!prop_dictionary_get_uint32(dict, "depth", &sc->sc_depth)) {
 		aprint_error("%s: no depth property\n", device_xname(self));
 		return;
@@ -288,8 +294,8 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 		sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
 		sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
 		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
-				sc->sc_width,
 				(0x800000 / sc->sc_stride) - sc->sc_height - 5,
+				sc->sc_width,
 				ri->ri_font->fontwidth,
 				ri->ri_font->fontheight,
 				defattr);
@@ -302,9 +308,9 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 		 * until someone actually allocates a screen for us
 		 */
 		(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
-		glyphcache_init(&sc->sc_gc, sc->sc_height,
+		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
+				(0x800000 / sc->sc_stride) - sc->sc_height - 5,
 				sc->sc_width,
-				(0x800000 / sc->sc_stride) - sc->sc_height,
 				ri->ri_font->fontwidth,
 				ri->ri_font->fontheight,
 				defattr);
