@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx51,v 1.4 2012/04/17 10:19:57 bsh Exp $
+#	$NetBSD: files.imx51,v 1.5 2012/04/19 09:53:53 bsh Exp $
 #
 # Configuration info for the Freescale i.MX51
 #
@@ -87,8 +87,8 @@ file   arch/arm/imx/imxusb.c			imxehci
 # file	arch/arm/imx/wdc_axi.c			wdc_axi
 
 # SD host controller for SD/MMC
-# device	imxmci: sdmmcbus
-# file	arch/arm/imx/imx51_mci.c		imxmci
+attach	sdhc at axi with sdhc_axi
+file	arch/arm/imx/imx51_esdhc.c		sdhc_axi
 
 # iic Controler
 # device	imxi2c: i2cbus
