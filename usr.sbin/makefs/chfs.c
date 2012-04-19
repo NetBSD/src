@@ -98,7 +98,6 @@ chfs_parse_opts(const char *option, fsinfo_t *fsopts)
 	}
 	*val++ = '\0';
 
-/*###101 [cc] error: passing argument 1 of 'set_option' discards qualifiers from pointer target type%%%*/
 	retval = set_option(chfs_options, var, val);
 	
 leave_chfs_parse_opts:
@@ -217,8 +216,8 @@ chfs_populate_dir(const char *dir, fsnode *root, fsnode *parent,
 		if (cur->child == NULL) {
 			continue;
 		}
-		if (snprintf(path, sizeof(path), "%s/%s", dir, cur->name)
-		    >= sizeof(path)) {
+		if ((size_t)snprintf(path, sizeof(path), "%s/%s", dir,
+		    cur->name) >= sizeof(path)) {
 			errx(EXIT_FAILURE, "Pathname too long");
 		}
 		if (!chfs_populate_dir(path, cur->child, cur, fsopts)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.18 2011/03/06 17:08:42 bouyer Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.19 2012/04/19 17:28:26 christos Exp $	*/
 /* From: NetBSD: ffs_alloc.c,v 1.50 2001/09/06 02:16:01 lukem Exp */
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs_alloc.c,v 1.18 2011/03/06 17:08:42 bouyer Exp $");
+__RCSID("$NetBSD: ffs_alloc.c,v 1.19 2012/04/19 17:28:26 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -106,7 +106,7 @@ ffs_alloc(struct inode *ip, daddr_t lbn __unused, daddr_t bpref, int size,
 	int cg;
 	
 	*bnp = 0;
-	if ((u_int)size > fs->fs_bsize || fragoff(fs, size) != 0) {
+	if (size > fs->fs_bsize || fragoff(fs, size) != 0) {
 		errx(1, "ffs_alloc: bad size: bsize %d size %d",
 		    fs->fs_bsize, size);
 	}
@@ -195,11 +195,7 @@ ffs_blkpref_ufs1(struct inode *ip, daddr_t lbn, int indx, int32_t *bap)
 }
 
 daddr_t
-ffs_blkpref_ufs2(ip, lbn, indx, bap)
-	struct inode *ip;
-	daddr_t lbn;
-	int indx;
-	int64_t *bap;
+ffs_blkpref_ufs2(struct inode *ip, daddr_t lbn, int indx, int64_t *bap)
 {
 	struct fs *fs;
 	int cg;
@@ -444,7 +440,7 @@ ffs_blkfree(struct inode *ip, daddr_t bno, long size)
 	struct fs *fs = ip->i_fs;
 	const int needswap = UFS_FSNEEDSWAP(fs);
 
-	if ((u_int)size > fs->fs_bsize || fragoff(fs, size) != 0 ||
+	if (size > fs->fs_bsize || fragoff(fs, size) != 0 ||
 	    fragnum(fs, bno) + numfrags(fs, size) > fs->fs_frag) {
 		errx(1, "blkfree: bad size: bno %lld bsize %d size %ld",
 		    (long long)bno, fs->fs_bsize, size);
