@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.157 2012/04/18 20:37:49 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.158 2012/04/19 17:45:20 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.157 2012/04/18 20:37:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.158 2012/04/19 17:45:20 bouyer Exp $");
 
 #include "opt_scsi.h"
 
@@ -2181,42 +2181,63 @@ scsipi_print_xfer_mode(struct scsipi_periph *periph)
 	if ((periph->periph_flags & PERIPH_MODE_VALID) == 0)
 		return;
 
-	aprint_normal_dev(periph->periph_dev, "");
-	if (periph->periph_mode & (PERIPH_CAP_SYNC | PERIPH_CAP_DT)) {
-		period = scsipi_sync_factor_to_period(periph->periph_period);
-		aprint_normal("sync (%d.%02dns offset %d)",
-		    period / 100, period % 100, periph->periph_offset);
-	} else
-		aprint_normal("async");
+	switch(scsipi_periph_bustype(periph)) {
+	case SCSIPI_BUSTYPE_BUSTYPE(
+	    SCSIPI_BUSTYPE_SCSI, SCSIPI_BUSTYPE_SCSI_PSCSI):
+		aprint_normal_dev(periph->periph_dev, "");
+		if (periph->periph_mode & (PERIPH_CAP_SYNC | PERIPH_CAP_DT)) {
+			period =
+			    scsipi_sync_factor_to_period(periph->periph_period);
+			aprint_normal("sync (%d.%02dns offset %d)",
+			    period / 100, period % 100, periph->periph_offset);
+		} else
+			aprint_normal("async");
 
-	if (periph->periph_mode & PERIPH_CAP_WIDE32)
-		aprint_normal(", 32-bit");
-	else if (periph->periph_mode & (PERIPH_CAP_WIDE16 | PERIPH_CAP_DT))
-		aprint_normal(", 16-bit");
-	else
-		aprint_normal(", 8-bit");
-
-	if (periph->periph_mode & (PERIPH_CAP_SYNC | PERIPH_CAP_DT)) {
-		freq = scsipi_sync_factor_to_freq(periph->periph_period);
-		speed = freq;
 		if (periph->periph_mode & PERIPH_CAP_WIDE32)
-			speed *= 4;
-		else if (periph->periph_mode &
-		    (PERIPH_CAP_WIDE16 | PERIPH_CAP_DT))
-			speed *= 2;
-		mbs = speed / 1000;
-		if (mbs > 0)
-			aprint_normal(" (%d.%03dMB/s)", mbs, speed % 1000);
+			aprint_normal(", 32-bit");
+		else if (
+		    periph->periph_mode & (PERIPH_CAP_WIDE16 | PERIPH_CAP_DT))
+			aprint_normal(", 16-bit");
 		else
-			aprint_normal(" (%dKB/s)", speed % 1000);
+			aprint_normal(", 8-bit");
+
+		if (periph->periph_mode & (PERIPH_CAP_SYNC | PERIPH_CAP_DT)) {
+			freq =
+			    scsipi_sync_factor_to_freq(periph->periph_period);
+			speed = freq;
+			if (periph->periph_mode & PERIPH_CAP_WIDE32)
+				speed *= 4;
+			else if (periph->periph_mode &
+			    (PERIPH_CAP_WIDE16 | PERIPH_CAP_DT))
+				speed *= 2;
+			mbs = speed / 1000;
+			if (mbs > 0) {
+				aprint_normal(" (%d.%03dMB/s)", mbs,
+				    speed % 1000);
+			} else
+				aprint_normal(" (%dKB/s)", speed % 1000);
+		}
+
+		aprint_normal(" transfers");
+
+		if (periph->periph_mode & PERIPH_CAP_TQING)
+			aprint_normal(", tagged queueing");
+
+		aprint_normal("\n");
+		break;
+	case SCSIPI_BUSTYPE_BUSTYPE(
+	    SCSIPI_BUSTYPE_SCSI, SCSIPI_BUSTYPE_SCSI_FC):
+	case SCSIPI_BUSTYPE_BUSTYPE(
+	    SCSIPI_BUSTYPE_SCSI, SCSIPI_BUSTYPE_SCSI_SAS):
+		if (periph->periph_mode & PERIPH_CAP_TQING) {
+			aprint_normal_dev(periph->periph_dev,
+			    "tagged queueing\n");
+		}
+		break;
+	default:
+		/* nothing */
+		break;
 	}
-
-	aprint_normal(" transfers");
-
-	if (periph->periph_mode & PERIPH_CAP_TQING)
-		aprint_normal(", tagged queueing");
-
-	aprint_normal("\n");
 }
 
 /*

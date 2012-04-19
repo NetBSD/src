@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.220 2012/02/28 10:58:10 mbalmer Exp $ */
+/*	$NetBSD: st.c,v 1.221 2012/04/19 17:45:20 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.220 2012/02/28 10:58:10 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.221 2012/04/19 17:45:20 bouyer Exp $");
 
 #include "opt_scsi.h"
 
@@ -1735,7 +1735,8 @@ st_write_filemarks(struct st_softc *st, int number, int flags)
 
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = WRITE_FILEMARKS;
-	if (scsipi_periph_bustype(st->sc_periph) == SCSIPI_BUSTYPE_ATAPI)
+	if (SCSIPI_BUSTYPE_TYPE(scsipi_periph_bustype(st->sc_periph)) ==
+	    SCSIPI_BUSTYPE_ATAPI)
 		cmd.byte2 = SR_IMMED;
 	/*
 	 * The ATAPI Onstream DI-30 doesn't support writing filemarks, but
@@ -1811,7 +1812,8 @@ st_load(struct st_softc *st, u_int type, int flags)
 
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = LOAD;
-	if (scsipi_periph_bustype(st->sc_periph) == SCSIPI_BUSTYPE_ATAPI)
+	if (SCSIPI_BUSTYPE_TYPE(scsipi_periph_bustype(st->sc_periph)) ==
+	    SCSIPI_BUSTYPE_ATAPI)
 		cmd.byte2 = SR_IMMED;
 	cmd.how = type;
 
