@@ -1,4 +1,4 @@
-#	$NetBSD: NETWALKER,v 1.11 2012/04/17 10:19:57 bsh Exp $
+#	$NetBSD: NETWALKER,v 1.12 2012/04/19 09:53:53 bsh Exp $
 #
 #	NETWALKER -- http://www.sharp.co.jp/netwalker/
 #
@@ -193,6 +193,14 @@ imxgpio0	at axi? addr 0x73f84000
 imxgpio1	at axi? addr 0x73f88000
 imxgpio2	at axi? addr 0x73f8c000
 imxgpio3	at axi? addr 0x73f90000
+
+# SD/MMC
+sdhc0    	at axi? addr 0x70004000 irq 1	     # eSDHC1
+#sdhc1   	at axi? addr 0x70008000 irq 2	     # eSDHC2
+sdmmc*		at sdhc?
+ld*		at sdmmc?			# MMC/SD card
+#options 	SDHC_DEBUG
+#options 	SDMMC_DEBUG
 
 # USB
 imxusbc0  at axi?  addr 0x73f80000
