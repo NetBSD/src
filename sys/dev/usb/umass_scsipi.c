@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.43 2012/03/11 01:06:07 mrg Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.44 2012/04/19 17:45:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.43 2012/03/11 01:06:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.44 2012/04/19 17:45:21 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_umass.h"
@@ -245,7 +245,8 @@ umass_scsipi_request(struct scsipi_channel *chan,
 		}
 
 #ifdef UMASS_DEBUG
-		if (chan->chan_bustype->bustype_type == SCSIPI_BUSTYPE_ATAPI ?
+		if (SCSIPI_BUSTYPE_TYPE(chan->chan_bustype->bustype_type) ==
+		    SCSIPI_BUSTYPE_ATAPI ?
 		    periph->periph_target != UMASS_ATAPI_DRIVE :
 		    periph->periph_target == chan->chan_id) {
 			DPRINTF(UDMASS_SCSI, ("%s: wrong SCSI ID %d\n",
