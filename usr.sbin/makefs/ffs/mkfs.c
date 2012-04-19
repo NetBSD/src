@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.23 2012/04/19 17:28:26 christos Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.24 2012/04/19 19:48:14 dholland Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -48,7 +48,7 @@
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
 #ifdef __RCSID
-__RCSID("$NetBSD: mkfs.c,v 1.23 2012/04/19 17:28:26 christos Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.24 2012/04/19 19:48:14 dholland Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -666,11 +666,14 @@ initcg(int cylno, time_t utime, const fsinfo_t *fsopts)
 		exit(37);
 	}
 	acg.cg_cs.cs_nifree += sblock.fs_ipg;
-	if (cylno == 0)
-		for (size_t r = 0; r < ROOTINO; r++) {
+	if (cylno == 0) {
+		size_t r;
+
+		for (r = 0; r < ROOTINO; r++) {
 			setbit(cg_inosused(&acg, 0), r);
 			acg.cg_cs.cs_nifree--;
 		}
+	}
 	if (cylno > 0) {
 		/*
 		 * In cylno 0, beginning space is reserved
