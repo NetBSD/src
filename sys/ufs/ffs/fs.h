@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.56 2011/03/06 17:08:38 bouyer Exp $	*/
+/*	$NetBSD: fs.h,v 1.57 2012/04/19 17:25:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -672,7 +672,7 @@ struct ocg {
 #define	lfragtosize(fs, frag)	/* calculates ((off_t)frag * fs->fs_fsize) */ \
 	(((off_t)(frag)) << (fs)->fs_fshift)
 #define	lblktosize(fs, blk)	/* calculates ((off_t)blk * fs->fs_bsize) */ \
-	(((off_t)(blk)) << (fs)->fs_bshift)
+	((uint64_t)(((off_t)(blk)) << (fs)->fs_bshift))
 #define	lblkno(fs, loc)		/* calculates (loc / fs->fs_bsize) */ \
 	((loc) >> (fs)->fs_bshift)
 #define	numfrags(fs, loc)	/* calculates (loc / fs->fs_fsize) */ \
@@ -704,12 +704,12 @@ struct ocg {
  */
 #define	blksize(fs, ip, lbn) \
 	(((lbn) >= NDADDR || (ip)->i_size >= lblktosize(fs, (lbn) + 1)) \
-	    ? (fs)->fs_bsize \
+	    ? (uint64_t)(fs)->fs_bsize \
 	    : (fragroundup(fs, blkoff(fs, (ip)->i_size))))
 
 #define	sblksize(fs, size, lbn) \
 	(((lbn) >= NDADDR || (size) >= ((lbn) + 1) << (fs)->fs_bshift) \
-	  ? (fs)->fs_bsize \
+	  ? (uint64_t)(fs)->fs_bsize \
 	  : (fragroundup(fs, blkoff(fs, (size)))))
 
 
