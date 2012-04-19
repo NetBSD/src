@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.4.2.1 2012/02/18 18:03:26 riz Exp $	*/
+/*	$NetBSD: apropos.c,v 1.4.2.2 2012/04/19 20:03:00 riz Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos.c,v 1.4.2.1 2012/02/18 18:03:26 riz Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.4.2.2 2012/04/19 20:03:00 riz Exp $");
 
 #include <err.h>
 #include <search.h>
@@ -216,7 +216,7 @@ query_callback(void *data, const char *section, const char *name,
 	callback_data *cbdata = (callback_data *) data;
 	FILE *out = cbdata->out;
 	cbdata->count++;
-	fprintf(out, "%s(%s)\t%s\n", name, section, name_desc);
+	fprintf(out, "%s (%s)\t%s\n", name, section, name_desc);
 
 	if (cbdata->aflags->no_context == 0)
 		fprintf(out, "%s\n\n", snippet);
