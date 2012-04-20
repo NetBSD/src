@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.266 2012/04/19 17:45:20 bouyer Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.267 2012/04/20 20:23:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.266 2012/04/19 17:45:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.267 2012/04/20 20:23:21 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,6 +119,7 @@ const struct scsipi_bustype scsi_bustype = {
 	scsipi_interpret_sense,
 	scsi_print_addr,
 	scsi_kill_pending,
+	scsi_async_event_xfer_mode,
 };
 
 const struct scsipi_bustype scsi_fc_bustype = {
@@ -127,6 +128,7 @@ const struct scsipi_bustype scsi_fc_bustype = {
 	scsipi_interpret_sense,
 	scsi_print_addr,
 	scsi_kill_pending,
+	scsi_fc_sas_async_event_xfer_mode,
 };
 
 const struct scsipi_bustype scsi_sas_bustype = {
@@ -135,6 +137,7 @@ const struct scsipi_bustype scsi_sas_bustype = {
 	scsipi_interpret_sense,
 	scsi_print_addr,
 	scsi_kill_pending,
+	scsi_fc_sas_async_event_xfer_mode,
 };
 
 const struct scsipi_bustype scsi_usb_bustype = {
@@ -143,6 +146,7 @@ const struct scsipi_bustype scsi_usb_bustype = {
 	scsipi_interpret_sense,
 	scsi_print_addr,
 	scsi_kill_pending,
+	NULL,
 };
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.120 2012/04/19 17:45:20 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.121 2012/04/20 20:23:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -236,6 +236,8 @@ struct scsipi_bustype {
 	int	(*bustype_interpret_sense)(struct scsipi_xfer *);
 	void	(*bustype_printaddr)(struct scsipi_periph *);
 	void	(*bustype_kill_pending)(struct scsipi_periph *);
+	void	(*bustype_async_event_xfer_mode)(struct scsipi_channel *,
+		    void *);
 };
 
 /* bustype_type */
@@ -252,12 +254,6 @@ struct scsipi_bustype {
 #define SCSIPI_BUSTYPE_BUSTYPE(t, s) \
     ((t) << SCSIPI_BUSTYPE_TYPE_SHIFT | (s) << SCSIPI_BUSTYPE_SUBTYPE_SHIFT)
 /* subtypes are defined in each bus type headers */
-/* XXX this should be in scsiconf.h but is used in scsipi_base.c */
-/* SCSI subtypes */
-#define SCSIPI_BUSTYPE_SCSI_PSCSI       0 /* parallel SCSI */
-#define SCSIPI_BUSTYPE_SCSI_FC          1 /* Fiber channel */
-#define SCSIPI_BUSTYPE_SCSI_SAS         2 /* SAS */
-#define SCSIPI_BUSTYPE_SCSI_USB         3 /* USB */
 
 /*
  * scsipi_channel:
@@ -686,7 +682,6 @@ void	scsipi_async_event(struct scsipi_channel *,
 int	scsipi_do_ioctl(struct scsipi_periph *, dev_t, u_long, void *,
 	    int, struct lwp *);
 
-void	scsipi_print_xfer_mode(struct scsipi_periph *);
 void	scsipi_set_xfer_mode(struct scsipi_channel *, int, int);
 
 int	scsipi_channel_init(struct scsipi_channel *);
