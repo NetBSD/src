@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.44 2011/10/04 16:19:59 christos Exp $	*/
+/*	$NetBSD: err.c,v 1.45 2012/04/20 18:35:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.44 2011/10/04 16:19:59 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.45 2012/04/20 18:35:28 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -375,7 +375,7 @@ const	char *msgs[] = {
 	"struct or union member name in initializer is a C9X feature",/* 313 */
 	"%s is not a structure or a union",			      /* 314 */
 	"GCC style struct or union member name in initializer",	      /* 315 */
-	"__FUNCTION__ is a GCC extension",			      /* 316 */
+	"__FUNCTION__/__PRETTY_FUNCTION__ is a GCC extension",	      /* 316 */
 	"__func__ is a C9X feature",				      /* 317 */
 	"variable array dimension is a C99/GCC extension",	      /* 318 */
 	"compound literals are a C9X/GCC extension",		      /* 319 */
@@ -481,7 +481,7 @@ lerror(const char *file, int line, const char *msg, ...)
 	(void)vfprintf(stderr, msg, ap);
 	(void)fprintf(stderr, "\n");
 	va_end(ap);
-	exit(1);
+	abort();
 }
 
 void

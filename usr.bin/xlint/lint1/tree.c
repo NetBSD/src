@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.70 2012/03/27 19:24:03 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.71 2012/04/20 18:35:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.70 2012/03/27 19:24:03 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.71 2012/04/20 18:35:28 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -182,7 +182,9 @@ getnnode(sym_t *sym, int ntok)
 				error(99, sym->s_name);
 			} else {
 				int fixtype;
-				if (strcmp(sym->s_name, "__FUNCTION__") == 0) {
+				if (strcmp(sym->s_name, "__FUNCTION__") == 0 ||
+				    strcmp(sym->s_name, "__PRETTY_FUNCTION__")
+				    == 0) {
 					gnuism(316);
 					fixtype = 1;
 				} else if (strcmp(sym->s_name, "__func__") == 0) {
