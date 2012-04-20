@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.5.2.1 2012/04/19 19:59:10 riz Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.5.2.2 2012/04/20 23:35:20 riz Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <sys/cprng.h>
 
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.5.2.1 2012/04/19 19:59:10 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.5.2.2 2012/04/20 23:35:20 riz Exp $");
 
 void
 cprng_init(void)
@@ -72,41 +72,82 @@ cprng_counter(void)
 }
 
 static void
+cprng_strong_doreseed(cprng_strong_t *const c)
+{
+	uint32_t cc = cprng_counter();
+
+	KASSERT(mutex_owned(&c->mtx));
+	KASSERT(mutex_owned(&c->reseed.mtx));
+	KASSERT(c->reseed.len == NIST_BLOCK_KEYLEN_BYTES);
+
+	if (nist_ctr_drbg_reseed(&c->drbg, c->reseed.data, c->reseed.len,
+				 &cc, sizeof(cc))) {
+		panic("cprng %s: nist_ctr_drbg_reseed failed.", c->name);
+	}
+#ifdef RND_VERBOSE
+	printf("cprng %s: reseeded with rnd_filled = %d\n", c->name,
+							    rnd_filled);
+#endif
+	c->entropy_serial = rnd_filled;
+	c->reseed.state = RSTATE_IDLE;
+	if (c->flags & CPRNG_USE_CV) {
+		cv_broadcast(&c->cv);
+	}
+	selnotify(&c->selq, 0, 0);
+}
+
+static void
 cprng_strong_sched_reseed(cprng_strong_t *const c)
 {
 	KASSERT(mutex_owned(&c->mtx));
-	if (!(c->reseed_pending) && mutex_tryenter(&c->reseed.mtx)) {
-		c->reseed_pending = 1;
-		c->reseed.len = NIST_BLOCK_KEYLEN_BYTES;
-		rndsink_attach(&c->reseed);
+	if (mutex_tryenter(&c->reseed.mtx)) {
+		switch (c->reseed.state) {
+		    case RSTATE_IDLE:
+			c->reseed.state = RSTATE_PENDING;
+			c->reseed.len = NIST_BLOCK_KEYLEN_BYTES;
+			rndsink_attach(&c->reseed);
+			break;
+		    case RSTATE_HASBITS:
+			/* Just rekey the underlying generator now. */
+			cprng_strong_doreseed(c);
+			break;
+		    case RSTATE_PENDING:
+			if (c->entropy_serial != rnd_filled) {
+				rndsink_detach(&c->reseed);
+				rndsink_attach(&c->reseed);
+			}
+			break;
+		    default:
+			panic("cprng %s: bad reseed state %d",
+			      c->name, c->reseed.state);
+			break;
+		}
 		mutex_spin_exit(&c->reseed.mtx);
 	}
+#ifdef RND_VERBOSE
+	else {
+		printf("cprng %s: skipping sched_reseed, sink busy\n",
+		       c->name);
+	}
+#endif
 }
 
 static void
 cprng_strong_reseed(void *const arg)
 {
 	cprng_strong_t *c = arg;
-	uint8_t key[NIST_BLOCK_KEYLEN_BYTES];
-	uint32_t cc = cprng_counter();
+
+	KASSERT(mutex_owned(&c->reseed.mtx));
+	KASSERT(RSTATE_HASBITS == c->reseed.state);
 
 	if (!mutex_tryenter(&c->mtx)) {
+#ifdef RND_VERBOSE
+	    printf("cprng: sink %s cprng busy, no reseed\n", c->reseed.name);
+#endif
 	    return;
 	}
 
-	if (c->reseed.len != sizeof(key)) {
-		panic("cprng_strong_reseed: bad entropy length %d "
-		      " (expected %d)", (int)c->reseed.len, (int)sizeof(key));
-	}
-	if (nist_ctr_drbg_reseed(&c->drbg, c->reseed.data, c->reseed.len,
-				 &cc, sizeof(cc))) {
-		panic("cprng %s: nist_ctr_drbg_reseed failed.", c->name);
-	}
-	c->reseed_pending = 0;
-	if (c->flags & CPRNG_USE_CV) {
-		cv_broadcast(&c->cv);
-	}
-	selnotify(&c->selq, 0, 0);
+	cprng_strong_doreseed(c);
 	mutex_exit(&c->mtx);
 }
 
@@ -124,9 +165,10 @@ cprng_strong_create(const char *const name, int ipl, int flags)
 	}
 	c->flags = flags;
 	strlcpy(c->name, name, sizeof(c->name));
-	c->reseed_pending = 0;
+	c->reseed.state = RSTATE_IDLE;
 	c->reseed.cb = cprng_strong_reseed;
 	c->reseed.arg = c;
+	c->entropy_serial = rnd_filled;
 	mutex_init(&c->reseed.mtx, MUTEX_DEFAULT, IPL_VM);
 	strlcpy(c->reseed.name, name, sizeof(c->reseed.name));
 
@@ -253,15 +295,15 @@ cprng_strong(cprng_strong_t *const c, void *const p, size_t len, int flags)
 	if (__predict_false(c->drbg.reseed_counter >
 			     (NIST_CTR_DRBG_RESEED_INTERVAL / 2))) {
 		cprng_strong_sched_reseed(c);
-	}
-
-	if (rnd_full) {
-		if (!c->rekeyed_on_full) {
-			c->rekeyed_on_full++;
+	} else if (rnd_full) {
+		if (c->entropy_serial != rnd_filled) {
+#ifdef RND_VERBOSE
+			printf("cprng %s: reseeding from full pool "
+			       "(serial %d vs pool %d)\n", c->name,
+			       c->entropy_serial, rnd_filled);
+#endif
 			cprng_strong_sched_reseed(c);
 		}
-	} else {
-		c->rekeyed_on_full = 0;
 	}
 
 	mutex_exit(&c->mtx);
@@ -280,7 +322,7 @@ cprng_strong_destroy(cprng_strong_t *c)
 	}
 	seldestroy(&c->selq);
 
-	if (c->reseed_pending) {
+	if (RSTATE_PENDING == c->reseed.state) {
 		rndsink_detach(&c->reseed);
 	}
 	mutex_spin_exit(&c->reseed.mtx);

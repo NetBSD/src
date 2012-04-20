@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.29.2.1 2012/04/19 19:59:11 riz Exp $	*/
+/*	$NetBSD: rnd.h,v 1.29.2.2 2012/04/20 23:35:20 riz Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 #include <sys/sha1.h>
 
 #ifdef _KERNEL
+#include <sys/mutex.h>
 #include <sys/queue.h>
 #endif
 
@@ -127,9 +128,16 @@ typedef struct krndsource {
         rngtest_t	*test;          /* test data for RNG type sources */
 } krndsource_t;
 
+enum rsink_st {
+	RSTATE_IDLE = 0,
+	RSTATE_PENDING,
+	RSTATE_HASBITS
+};
+
 typedef struct rndsink {
         TAILQ_ENTRY(rndsink) tailq;     /* the queue */
 	kmutex_t	mtx;		/* lock to seed or unregister */
+	enum rsink_st	state;		/* in-use?  filled? */
         void            (*cb)(void *);  /* callback function when ready */
         void            *arg;           /* callback function argument */
         char            name[16];       /* sink name */
@@ -178,6 +186,7 @@ rnd_add_uint32(krndsource_t *kr, uint32_t val)
 }
 
 extern int	rnd_full;
+extern int	rnd_filled;
 
 #endif /* _KERNEL */
 
