@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.8 2012/04/17 02:50:38 tls Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.9 2012/04/20 21:57:33 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.8 2012/04/17 02:50:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.9 2012/04/20 21:57:33 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -298,8 +298,6 @@ rnd_read(struct file * fp, off_t *offp, struct uio *uio,
 		return EIO;
         }
 
-	KASSERT(!mutex_owned(&cprng->reseed.mtx));
-
 	strength = cprng_strong_strength(cprng);
 	ret = 0;
 	bf = pool_cache_get(rp_pc, PR_WAITOK);
@@ -326,7 +324,7 @@ rnd_read(struct file * fp, off_t *offp, struct uio *uio,
 			}
 			goto out;
 		}
-		/* KASSERT(!mutex_owned(&cprng->reseed.mtx)); */
+
 		ret = uiomove((void *)bf, nread, uio);
 		if (ret != 0 || n < want) {
 			goto out;
