@@ -1,4 +1,4 @@
-/*	$NetBSD: h_client.c,v 1.7 2012/04/17 09:23:21 jruoho Exp $	*/
+/*	$NetBSD: h_client.c,v 1.8 2012/04/20 05:15:11 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -115,12 +115,15 @@ main(int argc, char *argv[])
 
 		return EXIT_SUCCESS;
 	} else if (strcmp(argv[1], "fdoff8") == 0) {
+
+		(void)closefrom(0);
+
 		int fd;
 
-		do
+		do {
 			if ((fd = open("/dev/null", O_RDWR)) == -1)
 				err(EXIT_FAILURE, "open1");
-		while (fd < 7);
+		} while (fd < 7);
 		fd = open("/dev/null", O_RDWR);
 		if (fd != -1 || errno != ENFILE)
 			errx(EXIT_FAILURE, "unexpected fd8 %d %d", fd, errno);
