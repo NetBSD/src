@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.465 2012/04/19 18:51:36 jruoho Exp $
+# $NetBSD: mi,v 1.466 2012/04/20 12:11:30 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -549,6 +549,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mkdir.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mkfifo.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mknod.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_mlock.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mmap.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mprotect.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_msgctl.debug		tests-lib-debug		debug,atf
@@ -2449,6 +2450,7 @@
 ./usr/tests/lib/libc/sys/t_mkdir		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_mkfifo		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_mknod		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_mlock		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_mmap			tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_mprotect		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_msgctl		tests-lib-tests		atf
