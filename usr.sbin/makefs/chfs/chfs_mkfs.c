@@ -209,7 +209,11 @@ write_dirent(fsinfo_t *fsopts, fsnode *node)
 	}
 
 	fdirent.version = htole64(version++);
+#ifdef HAVE_STRUCT_STAT_ST_MTIMENSEC
 	fdirent.mctime = htole32(node->inode->st.st_mtimensec);
+#else
+	fdirent.mctime = htole32(node->inode->st.st_mtimespec.tv_nsec);
+#endif
 	fdirent.nsize = htole32(strlen(name));
 	fdirent.dtype = htole32(IFTOCHT(node->type & S_IFMT));
 	fdirent.name_crc = htole32(crc32(0, (uint8_t *)name, fdirent.nsize));
