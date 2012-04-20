@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.32 2011/08/27 16:34:57 christos Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.33 2012/04/20 13:20:39 christos Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resize_ffs.c,v 1.32 2011/08/27 16:34:57 christos Exp $");
+__RCSID("$NetBSD: resize_ffs.c,v 1.33 2012/04/20 13:20:39 christos Exp $");
 
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -138,7 +138,7 @@ static unsigned char *iflags;
 
 /* resize_ffs works directly on dinodes, adapt blksize() */
 #define dblksize(fs, dip, lbn, filesize) \
-	(((lbn) >= NDADDR || (filesize) >= lblktosize(fs, (lbn) + 1)) \
+	(((lbn) >= NDADDR || (uint64_t)(filesize) >= lblktosize(fs, (lbn) + 1)) \
 	    ? (fs)->fs_bsize						       \
 	    : (fragroundup(fs, blkoff(fs, (filesize)))))
 
