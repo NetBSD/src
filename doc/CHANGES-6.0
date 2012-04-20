@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.72 2012/04/19 20:07:17 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.73 2012/04/20 23:35:54 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1864,4 +1864,28 @@ lib/librumphijack/hijack.c			1.92
 
 	Fix hijacking of pollts/select on 64bit big endian hosts.
 	[martin, ticket #188]
+
+sys/arch/amd64/acpi/acpi_wakecode.S		1.11
+sys/arch/amd64/amd64/locore.S			1.68
+sys/arch/amd64/amd64/mptramp.S			1.13
+sys/arch/i386/acpi/acpi_wakecode.S		1.15
+sys/arch/i386/i386/locore.S			1.98
+sys/arch/i386/i386/mptramp.S			1.23
+sys/arch/x86/include/psl.h			1.7
+
+	Set the CR0_AM bit so processes can enable alignment check errors under
+	x86 through PSL_AC bit.
+	[jym, ticket #189]
+
+share/man/man4/rnd.4				1.19
+sys/dev/rndpseudo.c				1.8-1.9
+sys/kern/kern_rndpool.c				1.2
+sys/kern/kern_rndq.c				1.3
+sys/kern/subr_cprng.c				1.8
+sys/sys/cprng.h					1.5
+sys/sys/rnd.h					1.31-1.32
+
+	Address multiple problems with rnd(4)/cprng(9): per-CPU CPRNG,
+	Locking fixes, compilation problems.
+	[tls, ticket #190]
 
