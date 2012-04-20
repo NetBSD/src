@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.44 2012/04/19 17:45:21 bouyer Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.45 2012/04/20 20:23:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.44 2012/04/19 17:45:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.45 2012/04/20 20:23:21 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_umass.h"
@@ -115,6 +115,7 @@ const struct scsipi_bustype umass_atapi_bustype = {
 	atapi_interpret_sense,
 	atapi_print_addr,
 	scsi_kill_pending,
+	NULL,
 };
 #endif
 
