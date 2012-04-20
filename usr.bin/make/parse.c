@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.182 2012/03/31 00:12:24 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.183 2012/04/20 05:33:42 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.182 2012/03/31 00:12:24 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.183 2012/04/20 05:33:42 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.182 2012/03/31 00:12:24 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.183 2012/04/20 05:33:42 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2239,36 +2239,6 @@ ParseSetParseFile(const char *filename)
     free(dirname);
 }
 
-/*
- * Track the makefiles we read - so makefiles can
- * set dependencies on them.
- * Avoid adding anything more than once.
- */
-
-static void
-ParseTrackInput(const char *name)
-{
-    char *old;
-    char *fp = NULL;
-    size_t name_len = strlen(name);
-    
-    old = Var_Value(MAKE_MAKEFILES, VAR_GLOBAL, &fp);
-    if (old) {
-	/* does it contain name? */
-	for (; old != NULL; old = strchr(old, ' ')) {
-	    if (*old == ' ')
-		old++;
-	    if (memcmp(old, name, name_len) == 0
-		    && (old[name_len] == 0 || old[name_len] == ' '))
-		goto cleanup;
-	}
-    }
-    Var_Append (MAKE_MAKEFILES, name, VAR_GLOBAL);
- cleanup:
-    if (fp) {
-	free(fp);
-    }
-}
 
 
 /*-
@@ -2294,7 +2264,7 @@ Parse_SetInput(const char *name, int line, int fd,
     if (name == NULL)
 	name = curFile->fname;
     else
-	ParseTrackInput(name);
+	Var_Append(MAKE_MAKEFILES, name, VAR_GLOBAL);
 
     if (DEBUG(PARSE))
 	fprintf(debug_file, "Parse_SetInput: file %s, line %d, fd %d, nextbuf %p, arg %p\n",
@@ -2405,7 +2375,7 @@ ParseTraditionalInclude(char *line)
 }
 #endif
 
-#ifdef SYSVINCLUDE
+#ifdef GMAKEEXPORT
 /*-
  *---------------------------------------------------------------------
  * ParseGmakeExport  --
@@ -2427,7 +2397,7 @@ ParseGmakeExport(char *line)
     char	  *value;
 
     if (DEBUG(PARSE)) {
-	    fprintf(debug_file, "ParseTraditionalInclude: %s\n", variable);
+	    fprintf(debug_file, "ParseGmakeExport: %s\n", variable);
     }
 
     /*
@@ -2441,13 +2411,12 @@ ParseGmakeExport(char *line)
 
     if (*value != '=') {
 	Parse_Error(PARSE_FATAL,
-		     "Variable/Value missing from \"include\"");
+		     "Variable/Value missing from \"export\"");
 	return;
     }
 
     /*
-     * Substitute for any variables in the file name before trying to
-     * find the thing.
+     * Expand the value before putting it in the environment.
      */
     value = Var_Subst(NULL, value, VAR_CMD, FALSE);
     setenv(variable, value, 1);
@@ -2908,7 +2877,7 @@ Parse_File(const char *name, int fd)
 		isspace((unsigned char) line[6]) &&
 		strchr(line, ':') == NULL) {
 		/*
-		 * It's an Gmake"export".
+		 * It's a Gmake "export".
 		 */
 		ParseGmakeExport(line);
 		continue;
