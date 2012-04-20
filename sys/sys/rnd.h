@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.31 2012/04/17 02:50:39 tls Exp $	*/
+/*	$NetBSD: rnd.h,v 1.32 2012/04/20 21:57:34 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 #include <sys/sha1.h>
 
 #ifdef _KERNEL
+#include <sys/mutex.h>
 #include <sys/queue.h>
 #endif
 
