@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.6 2008/09/18 21:09:18 dsl Exp $	*/
+/*	$NetBSD: psl.h,v 1.7 2012/04/20 18:28:43 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -71,7 +71,7 @@
 #define	PSL_USERSTATIC	(PSL_MBO | PSL_MBZ | PSL_I | PSL_IOPL | PSL_NT | PSL_VM | PSL_VIF | PSL_VIP)
 #endif
 #define PSL_USER	(PSL_C | PSL_PF | PSL_AF | PSL_Z | PSL_N | \
-    PSL_T | PSL_V | PSL_D)
+    PSL_T | PSL_V | PSL_D | PSL_AC)
 #define	PSL_CLEARSIG	(PSL_T | PSL_VM | PSL_AC | PSL_D)
 
 
