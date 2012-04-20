@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kcpuset.c,v 1.4 2012/01/29 19:08:26 rmind Exp $	*/
+/*	$NetBSD: subr_kcpuset.c,v 1.5 2012/04/20 22:23:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kcpuset.c,v 1.4 2012/01/29 19:08:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kcpuset.c,v 1.5 2012/04/20 22:23:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -169,8 +169,9 @@ kcpuset_early_ptr(kcpuset_t **kcptr)
 		 * Save the pointer, return pointer to static early field.
 		 * Need to zero it out.
 		 */
-		kc_noted_early[kc_last_idx++] = kcptr;
+		kc_noted_early[kc_last_idx] = kcptr;
 		kcp = (kcpuset_t *)&kc_bits_early[kc_last_idx];
+		kc_last_idx++;
 		memset(kcp, 0, KC_BITSIZE_EARLY);
 		KASSERT(kc_bitsize == KC_BITSIZE_EARLY);
 	} else {
@@ -208,7 +209,6 @@ kcpuset_create_raw(bool zero)
 void
 kcpuset_create(kcpuset_t **retkcp, bool zero)
 {
-
 	if (__predict_false(!kc_initialised)) {
 		/* Early boot use - special case. */
 		*retkcp = kcpuset_early_ptr(retkcp);
@@ -274,33 +274,31 @@ kcpuset_unuse(kcpuset_t *kcp, kcpuset_t **lst)
 int
 kcpuset_copyin(const cpuset_t *ucp, kcpuset_t *kcp, size_t len)
 {
-	kcpuset_impl_t *kc = KC_GETSTRUCT(kcp);
+	kcpuset_impl_t *kc __unused = KC_GETSTRUCT(kcp);
 
 	KASSERT(kc_initialised);
 	KASSERT(kc->kc_refcnt > 0);
 	KASSERT(kc->kc_next == NULL);
-	(void)kc;
 
-	if (len != kc_bitsize) { /* XXX */
+	if (len > kc_bitsize) { /* XXX */
 		return EINVAL;
 	}
-	return copyin(ucp, kcp, kc_bitsize);
+	return copyin(ucp, kcp, len);
 }
 
 int
 kcpuset_copyout(kcpuset_t *kcp, cpuset_t *ucp, size_t len)
 {
-	kcpuset_impl_t *kc = KC_GETSTRUCT(kcp);
+	kcpuset_impl_t *kc __unused = KC_GETSTRUCT(kcp);
 
 	KASSERT(kc_initialised);
 	KASSERT(kc->kc_refcnt > 0);
 	KASSERT(kc->kc_next == NULL);
-	(void)kc;
 
-	if (len != kc_bitsize) { /* XXX */
+	if (len > kc_bitsize) { /* XXX */
 		return EINVAL;
 	}
-	return copyout(kcp, ucp, kc_bitsize);
+	return copyout(kcp, ucp, len);
 }
 
 /*
@@ -409,6 +407,15 @@ kcpuset_merge(kcpuset_t *kcp1, kcpuset_t *kcp2)
 
 	for (size_t j = 0; j < kc_nfields; j++) {
 		kcp1->bits[j] |= kcp2->bits[j];
+	}
+}
+
+void
+kcpuset_intersect(kcpuset_t *kcp1, kcpuset_t *kcp2)
+{
+
+	for (size_t j = 0; j < kc_nfields; j++) {
+		kcp1->bits[j] &= kcp2->bits[j];
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.41 2012/04/13 15:27:13 yamt Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.42 2012/04/20 22:23:25 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008, 2011 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.41 2012/04/13 15:27:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.42 2012/04/20 22:23:25 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -314,7 +314,7 @@ genkcpuset(kcpuset_t **dset, const cpuset_t *sset, size_t size)
 	kcpuset_t *kset;
 	int error;
 
-	kcpuset_create(&kset, false);
+	kcpuset_create(&kset, true);
 	error = kcpuset_copyin(sset, kset, size);
 	if (error) {
 		kcpuset_unuse(kset, NULL);
