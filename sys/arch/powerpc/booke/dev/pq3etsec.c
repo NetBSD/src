@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.11 2012/04/19 21:32:01 matt Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.12 2012/04/20 13:51:48 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.11 2012/04/19 21:32:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.12 2012/04/20 13:51:48 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -501,6 +501,8 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	sc->sc_macstnaddr2 = etsec_read(sc, MACSTNADDR2);
 	sc->sc_macstnaddr1 = etsec_read(sc, MACSTNADDR1);
 	sc->sc_rctrl = RCTRL_DEFAULT;
+	sc->sc_ecntrl = etsec_read(sc, ECNTRL);
+	sc->sc_maccfg1 = etsec_read(sc, MACCFG1);
 	sc->sc_maccfg2 = MACCFG2_DEFAULT;
 
 	if (sc->sc_macstnaddr1 == 0 && sc->sc_macstnaddr2 == 0) {
@@ -592,9 +594,6 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 
 	etsec_write(sc, ATTR, ATTR_DEFAULT);
 	etsec_write(sc, ATTRELI, ATTRELI_DEFAULT);
-	sc->sc_maccfg1 = etsec_read(sc, MACCFG1);
-	sc->sc_maccfg2 = etsec_read(sc, MACCFG2);
-	sc->sc_ecntrl = etsec_read(sc, ECNTRL);
 
 	sc->sc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SOFTNET);
 
