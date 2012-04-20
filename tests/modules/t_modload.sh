@@ -1,4 +1,4 @@
-# $NetBSD: t_modload.sh,v 1.12 2012/04/14 02:46:17 pgoyette Exp $
+# $NetBSD: t_modload.sh,v 1.13 2012/04/20 05:41:25 jruoho Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,7 +42,7 @@ plain_body() {
 	$(atf_get_srcdir)/k_helper3 \
 		"%s/k_helper/k_helper.kmod" $(atf_get_srcdir)
 
-	if [ $? -eq 78 ]; then
+	if [ $? -eq 1 ] || [ $? -eq 78 ]; then
 		atf_skip "host does not support modules"
 	fi
 
@@ -115,7 +115,7 @@ iflag_body() {
 	$(atf_get_srcdir)/k_helper3 \
 		"%s/k_helper/k_helper.kmod" $(atf_get_srcdir)
 
-	if [ $? -eq 78 ]; then
+	if [ $? -eq 1 ] || [ $? -eq 78 ]; then
 		atf_skip "host does not support modules"
 	fi
 
@@ -169,7 +169,7 @@ sflag_body() {
 	$(atf_get_srcdir)/k_helper3 \
 		"%s/k_helper/k_helper.kmod" $(atf_get_srcdir)
 
-	if [ $? -eq 78 ]; then
+	if [ $? -eq 1 ] || [ $? -eq 78 ]; then
 		atf_skip "host does not support modules"
 	fi
 
