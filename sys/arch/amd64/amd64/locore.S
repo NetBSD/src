@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.66 2011/12/04 16:24:13 chs Exp $	*/
+/*	$NetBSD: locore.S,v 1.66.2.1 2012/04/20 23:32:14 riz Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -626,7 +626,7 @@ start:	movw	$0x1234,0x472			# warm boot
 	 * 4. Enable paging and the rest of it.
 	 */
 	movl	%cr0,%eax
-	orl	$(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_MP|CR0_WP),%eax
+	orl	$(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_MP|CR0_WP|CR0_AM),%eax
 	movl	%eax,%cr0
 	jmp	compat
 compat:
