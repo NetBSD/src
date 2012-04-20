@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21 2012/03/17 17:23:34 jruoho Exp $
+# $NetBSD: Makefile,v 1.22 2012/04/20 12:11:29 jruoho Exp $
 
 MKMAN=	no
 
@@ -33,6 +33,7 @@ TESTS_C+=		t_mincore
 TESTS_C+=		t_mkdir
 TESTS_C+=		t_mkfifo
 TESTS_C+=		t_mknod
+TESTS_C+=		t_mlock
 TESTS_C+=		t_mmap
 TESTS_C+=		t_mprotect
 TESTS_C+=		t_msgctl
