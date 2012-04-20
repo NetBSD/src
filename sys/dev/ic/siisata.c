@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.15 2011/09/27 01:02:38 jym Exp $ */
+/* $NetBSD: siisata.c,v 1.16 2012/04/20 20:23:20 bouyer Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.15 2011/09/27 01:02:38 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.16 2012/04/20 20:23:20 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -172,7 +172,8 @@ static const struct scsipi_bustype siisata_atapi_bustype = {
 	atapi_scsipi_cmd,
 	atapi_interpret_sense,
 	atapi_print_addr,
-	siisata_atapi_kill_pending
+	siisata_atapi_kill_pending,
+	NULL,
 };
 #endif /* NATAPIBUS */
 
