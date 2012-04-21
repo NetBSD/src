@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.69 2012/03/21 21:31:03 jdc Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.70 2012/04/21 15:54:27 riz Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -3004,3 +3004,11 @@ sys/dev/wscons/wsksymdef.h			1.62
 
 	s/portugese/portuguese/, spotted by Ari Constancio in PR misc/40202.
 	[bouyer, ticket #1727]
+crypto/dist/openssl/crypto/mem.c		patch
+crypto/dist/openssl/crypto/asn1/a_d2i_fp.c	patch
+crypto/dist/openssl/crypto/buffer/buffer.c	patch
+sys/miscfs/genfs/genfs_io.c			patch
+
+	Address CVE-2012-2110.
+	[spz, ticket #1750]
+
