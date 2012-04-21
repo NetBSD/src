@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.103 2011/10/04 11:01:13 roy Exp $	*/
+/*	$NetBSD: curses.h,v 1.104 2012/04/21 12:27:27 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -642,7 +642,6 @@ int	 flushok(WINDOW *, bool);
 char	*fullname(const char *, char *);
 chtype	 getattrs(WINDOW *);
 chtype	 getbkgd(WINDOW *);
-char	*getcap(char *);
 int	 getcury(WINDOW *);
 int	 getcurx(WINDOW *);
 int	 getbegy(WINDOW *);
