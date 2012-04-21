@@ -1,4 +1,4 @@
-.\"	$NetBSD: tset.1,v 1.18 2010/11/02 12:10:13 njoly Exp $
+.\"	$NetBSD: tset.1,v 1.19 2012/04/21 12:27:30 roy Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)tset.1	8.1 (Berkeley) 6/9/93
 .\"
-.Dd September 29, 2009
+.Dd April 5, 2012
 .Dt TSET 1
 .Os
 .Sh NAME
@@ -86,7 +86,7 @@ Then, if the terminal type begins with a question mark (``?''), the user is
 prompted for confirmation of the terminal type.
 An empty response confirms the type, or, another type can be entered to
 specify a new type.
-Once the terminal type has been determined, the termcap entry for the terminal
+Once the terminal type has been determined, the terminfo entry for the terminal
 is retrieved.
 If no terminfo entry is found for the type, the user is prompted for another
 terminal type.

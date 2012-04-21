@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1754 2012/04/18 19:29:01 christos Exp $
+#	$NetBSD: mi,v 1.1755 2012/04/21 12:27:24 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6676,7 +6676,7 @@
 ./usr/share/man/cat3/getbsize.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getc_unlocked.0		comp-c-catman		.cat
-./usr/share/man/cat3/getcap.0			comp-c-catman		.cat
+./usr/share/man/cat3/getcap.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/getch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getchar.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getchar_unlocked.0		comp-c-catman		.cat
@@ -12986,7 +12986,7 @@
 ./usr/share/man/html3/getbsize.html		comp-c-htmlman		html
 ./usr/share/man/html3/getc.html			comp-c-htmlman		html
 ./usr/share/man/html3/getc_unlocked.html	comp-c-htmlman		html
-./usr/share/man/html3/getcap.html		comp-c-htmlman		html
+./usr/share/man/html3/getcap.html		comp-obsolete		obsolete
 ./usr/share/man/html3/getch.html		comp-c-htmlman		html
 ./usr/share/man/html3/getchar.html		comp-c-htmlman		html
 ./usr/share/man/html3/getchar_unlocked.html	comp-c-htmlman		html
@@ -19210,7 +19210,7 @@
 ./usr/share/man/man3/getbsize.3			comp-c-man		.man
 ./usr/share/man/man3/getc.3			comp-c-man		.man
 ./usr/share/man/man3/getc_unlocked.3		comp-c-man		.man
-./usr/share/man/man3/getcap.3			comp-c-man		.man
+./usr/share/man/man3/getcap.3			comp-obsolete		obsolete
 ./usr/share/man/man3/getch.3			comp-c-man		.man
 ./usr/share/man/man3/getchar.3			comp-c-man		.man
 ./usr/share/man/man3/getchar_unlocked.3		comp-c-man		.man

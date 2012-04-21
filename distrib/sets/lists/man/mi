@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1387 2012/04/19 17:50:49 bouyer Exp $
+# $NetBSD: mi,v 1.1388 2012/04/21 12:27:26 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1899,6 +1899,7 @@
 ./usr/share/man/cat5/bootptab.0			man-bootserver-catman	.cat
 ./usr/share/man/cat5/bounce.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/canonical.0		man-postfix-catman	postfix,.cat
+./usr/share/man/cat5/capfile.0			man-sys-catman		.cat
 ./usr/share/man/cat5/ccd.conf.0			man-sysutil-catman	.cat
 ./usr/share/man/cat5/cdb.0			man-sys-catman		.cat
 ./usr/share/man/cat5/cidr_table.0		man-postfix-catman	postfix,.cat
@@ -2052,7 +2053,7 @@
 ./usr/share/man/cat5/sysctl.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/syslog.conf.0		man-sysutil-catman	.cat
 ./usr/share/man/cat5/targets.0			man-iscsi-catman	iscsi,.cat
-./usr/share/man/cat5/termcap.0			man-obsolete		obsolete
+./usr/share/man/cat5/termcap.0			man-sys-catman		.cat
 ./usr/share/man/cat5/terminfo.0			man-sys-catman		.cat
 ./usr/share/man/cat5/texinfo.0			man-texinfo-catman	.cat
 ./usr/share/man/cat5/transport.0		man-postfix-catman	postfix,.cat
@@ -4690,6 +4691,7 @@
 ./usr/share/man/html5/bootptab.html		man-bootserver-htmlman	html
 ./usr/share/man/html5/bounce.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/canonical.html		man-postfix-htmlman	postfix,html
+./usr/share/man/html5/capfile.html		man-sys-htmlman		html
 ./usr/share/man/html5/ccd.conf.html		man-sysutil-htmlman	html
 ./usr/share/man/html5/cdb.html			man-sys-htmlman		html
 ./usr/share/man/html5/cidr_table.html		man-postfix-htmlman	postfix,html
@@ -4828,7 +4830,7 @@
 ./usr/share/man/html5/sysctl.conf.html		man-sys-htmlman		html
 ./usr/share/man/html5/syslog.conf.html		man-sysutil-htmlman	html
 ./usr/share/man/html5/targets.html		man-iscsi-htmlman	iscsi,html
-./usr/share/man/html5/termcap.html		man-obsolete		obsolete
+./usr/share/man/html5/termcap.html		man-sys-htmlman		html
 ./usr/share/man/html5/terminfo.html		man-sys-htmlman		html
 ./usr/share/man/html5/texinfo.html		man-texinfo-htmlman	html
 ./usr/share/man/html5/transport.html		man-postfix-htmlman	postfix,html
@@ -7418,6 +7420,7 @@
 ./usr/share/man/man5/bootptab.5			man-bootserver-man	.man
 ./usr/share/man/man5/bounce.5			man-postfix-man		postfix,.man
 ./usr/share/man/man5/canonical.5		man-postfix-man		postfix,.man
+./usr/share/man/man5/capfile.5			man-sys-man		.man
 ./usr/share/man/man5/ccd.conf.5			man-sysutil-man		.man
 ./usr/share/man/man5/cdb.5			man-sys-man		.man
 ./usr/share/man/man5/cidr_table.5		man-postfix-man		postfix,.man
@@ -7571,7 +7574,7 @@
 ./usr/share/man/man5/sysctl.conf.5		man-sys-man		.man
 ./usr/share/man/man5/syslog.conf.5		man-sysutil-man		.man
 ./usr/share/man/man5/targets.5			man-iscsi-man		iscsi,.man
-./usr/share/man/man5/termcap.5			man-obsolete		obsolete
+./usr/share/man/man5/termcap.5			man-sys-man		.man
 ./usr/share/man/man5/terminfo.5			man-sys-man		.man
 ./usr/share/man/man5/texinfo.5			man-texinfo-man		.man
 ./usr/share/man/man5/transport.5		man-postfix-man		postfix,.man

@@ -1,4 +1,4 @@
-/*	$NetBSD: set.c,v 1.16 2011/10/03 12:36:32 roy Exp $	*/
+/*	$NetBSD: set.c,v 1.17 2012/04/21 12:27:30 roy Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: set.c,v 1.16 2011/10/03 12:36:32 roy Exp $");
+__RCSID("$NetBSD: set.c,v 1.17 2012/04/21 12:27:30 roy Exp $");
 
 #include <err.h>
 #include <stdio.h>
@@ -145,7 +145,7 @@ reset_mode(void)
 }
 
 /*
- * Determine the erase, interrupt, and kill characters from the termcap
+ * Determine the erase, interrupt, and kill characters from the terminfo
  * entry and command line and update their values in 'mode'.
  */
 void
@@ -173,7 +173,7 @@ set_control_chars(int erasechar, int intrchar, int killchar)
 
 /*
  * Set up various conversions in 'mode', including parity, tabs, returns,
- * echo, and case, according to the termcap entry.  If the program we're
+ * echo, and case, according to the terminfo entry.  If the program we're
  * running was named with a leading upper-case character, map external
  * uppercase to internal lowercase.
  */

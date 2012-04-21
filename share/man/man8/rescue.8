@@ -1,4 +1,4 @@
-.\"	$NetBSD: rescue.8,v 1.6 2009/03/09 19:24:31 joerg Exp $
+.\"	$NetBSD: rescue.8,v 1.7 2012/04/21 12:27:29 roy Exp $
 .\"
 .\" Copyright (c) 2003 Tim Kientzle <kientzle@acm.org>
 .\" Copyright (c) 2003 Simon L. Nielsen <simon@FreeBSD.org>
@@ -27,7 +27,7 @@
 .\"
 .\"  FreeBSD: src/share/man/man8/rescue.8,v 1.3 2005/11/10 15:42:51 kientzle Exp
 .\"
-.Dd January 20, 2009
+.Dd April 5, 2012
 .Dt RESCUE 8
 .Os
 .Sh NAME
@@ -134,33 +134,3 @@ This manual page was written by
 .An Simon L. Nielsen Aq simon@FreeBSD.org ,
 based on text by
 .An Tim Kientzle Aq kientzle@FreeBSD.org .
-.Sh BUGS
-Most of the
-.Nm
-tools work even in a fairly crippled system.
-The most egregious exception is the
-.Nm
-version of
-.Xr vi 1 ,
-which currently requires that
-.Pa /usr
-be mounted so that it can access the
-.Xr termcap 5
-files.
-Hopefully, a failsafe
-.Xr termcap 3
-entry will eventually be added into the
-.Xr curses 3
-library, so that
-.Pa /rescue/vi
-can be used even in a system where
-.Pa /usr
-cannot immediately be mounted.
-In the meantime, the
-.Nm
-version of the
-.Xr ed 1
-editor can be used from
-.Pa /rescue/ed
-if you need to edit files, but cannot mount
-.Pa /usr .

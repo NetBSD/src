@@ -1,4 +1,4 @@
-.\"	$NetBSD: disktab.5,v 1.11 2003/08/07 10:31:16 agc Exp $
+.\"	$NetBSD: disktab.5,v 1.12 2012/04/21 12:27:28 roy Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)disktab.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd June 5, 1993
+.Dd April 5, 2012
 .Dt DISKTAB 5
 .Os
 .Sh NAME
@@ -46,10 +46,9 @@ It is used
 .\"IR.Xr format 8 )
 .\"to determine how to format the disk, and
 to initialize the disk label on the disk.
-The format is patterned
-after the
-.Xr termcap 5
-terminal data base.  Entries in
+The format is described in
+.Xr capfile 5 .
+Entries in
 .Nm
 consist of a number of `:' separated fields.  The
 first entry for each disk gives the names which are
@@ -129,6 +128,7 @@ filesystem, swap, etc)
 .It Pa /etc/disktab
 .El
 .Sh SEE ALSO
+.Xr capfile 5 ,
 .Xr getdiskbyname 3 ,
 .Xr disklabel 5 ,
 .Xr disklabel 8 ,

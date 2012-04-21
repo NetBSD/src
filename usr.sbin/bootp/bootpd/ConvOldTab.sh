@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-#	$NetBSD: ConvOldTab.sh,v 1.2 1998/01/09 08:09:01 perry Exp $
+#	$NetBSD: ConvOldTab.sh,v 1.3 2012/04/21 12:27:30 roy Exp $
 #
 #   convert_bootptab	Jeroen.Scheerder@let.ruu.nl 02/25/94
 #	This script can be used to convert bootptab files in old format
-#	to new (termcap-like) bootptab files
+#	to new (capfile-like) bootptab files
 #
 # The old format - real entries are commented out by '###'
 #

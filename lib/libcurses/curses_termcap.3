@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_termcap.3,v 1.5 2011/10/04 11:01:14 roy Exp $
+.\"	$NetBSD: curses_termcap.3,v 1.6 2012/04/21 12:27:28 roy Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -35,8 +35,7 @@
 .Os
 .Sh NAME
 .Nm curses_termcap ,
-.Nm fullname ,
-.Nm getcap
+.Nm fullname
 .Nd curses termcap querying routines
 .Sh LIBRARY
 .Lb libcurses
@@ -44,8 +43,6 @@
 .In curses.h
 .Ft char *
 .Fn fullname "char *termbuf" "char *name"
-.Ft char *
-.Fn getcap "char *name"
 .Sh DESCRIPTION
 The
 .Fn fullname
@@ -59,12 +56,6 @@ termcap entry name.
 It is assumed that the
 .Fa name
 variable has sufficient storage to hold the full name of the terminal.
-.Pp
-A termcap entry can be retrieved by calling the
-.Fn getcap
-function with the name of the capability in
-.Fa name .
-The matching capability string for the terminal is returned.
 .Sh RETURN VALUES
 Functions returning pointers will return
 .Dv NULL
@@ -79,7 +70,7 @@ The function completed successfully.
 An error occurred in the function.
 .El
 .Sh SEE ALSO
-.Xr termcap 5
+.Xr terminfo 5
 .Sh STANDARDS
 The
 .Lb libcurses
