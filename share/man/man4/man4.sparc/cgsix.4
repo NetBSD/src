@@ -1,4 +1,4 @@
-.\"	$NetBSD: cgsix.4,v 1.13 2007/01/23 20:33:38 wiz Exp $
+.\"	$NetBSD: cgsix.4,v 1.14 2012/04/21 12:27:28 roy Exp $
 .\"
 .\" Copyright 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	from: @(#)cgsix.4	8.1 (Berkeley) 2/16/94
 .\"
-.Dd January 17, 2007
+.Dd April 5, 2012
 .Dt CGSIX 4 sparc
 .Os
 .Sh NAME
@@ -184,10 +184,10 @@ Several firmware revisions on
 boards have a terminal emulation bug that shows up when using the
 screen control sequences for inserting blank lines
 near the bottom end of the screen
-(i.e., the control sequences produced by the
+(i.e., the control sequences produced by the termcap
 .So al Sc and So AL Sc
 capabilities found in the
-.Xr termcap 5
+.Xr terminfo 5
 database).
 The most likely occasion for triggering
 this bug is to use a full-screen editor such as
