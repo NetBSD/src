@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.27.12.1 2011/06/30 09:31:15 sborrill Exp $	*/
+/*	$NetBSD: aarp.c,v 1.27.12.2 2012/04/21 16:03:27 riz Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.27.12.1 2011/06/30 09:31:15 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.27.12.2 2012/04/21 16:03:27 riz Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -226,11 +226,19 @@ aarpwhohas(ifp, sat)
 		ea->aarp_tpa = sat->sat_addr.s_node;
 	}
 
+	/* If we are talking to ourselves, use the loopback interface. */
+	if (AA_SAT(aa)->sat_addr.s_net == sat->sat_addr.s_net &&
+	    AA_SAT(aa)->sat_addr.s_node == sat->sat_addr.s_node)
+		ifp = lo0ifp;
+
 #ifdef NETATALKDEBUG
-	printf("aarp: sending request via %u.%u seaking %u.%u\n",
-	    ntohs(AA_SAT(aa)->sat_addr.s_net), AA_SAT(aa)->sat_addr.s_node,
-	    ntohs(sat->sat_addr.s_net), sat->sat_addr.s_node);
-#endif	/* NETATALKDEBUG */
+	printf("aarp: sending request via %u.%u through %s seeking %u.%u\n",
+	    ntohs(AA_SAT(aa)->sat_addr.s_net),
+	    AA_SAT(aa)->sat_addr.s_node,
+	    ifp->if_xname,
+	    ntohs(sat->sat_addr.s_net),
+	    sat->sat_addr.s_node);
+#endif /* NETATALKDEBUG */
 
 	sa.sa_len = sizeof(struct sockaddr);
 	sa.sa_family = AF_UNSPEC;
