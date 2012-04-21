@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.97 2012/02/22 20:59:26 reinoud Exp $
+#	$NetBSD: RESPONSIBLE,v 1.98 2012/04/21 12:27:27 roy Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -80,7 +80,7 @@ Userland Misc:
 iscsi target	agc
 root.cache	[no one]
 syspkgs		agc, apb
-termcap		blymn, jdc
+terminfo	roy
 [uw]tmp{,x}	christos
 
 

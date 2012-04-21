@@ -1,4 +1,4 @@
-.\"	$NetBSD: cap_mkdb.1,v 1.17 2010/05/14 01:54:03 joerg Exp $
+.\"	$NetBSD: cap_mkdb.1,v 1.18 2012/04/21 12:27:29 roy Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)cap_mkdb.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd June 6, 1993
+.Dd April 5, 2012
 .Dt CAP_MKDB 1
 .Os
 .Sh NAME
@@ -82,7 +82,7 @@ The default byte ordering is the current host order.
 The following is a description of the hashed database created by
 .Nm .
 For a description of the format of the input files see
-.Xr termcap 5 .
+.Xr capfile 5 .
 .Pp
 Each record is stored in the database using two different types of keys.
 .Pp
@@ -110,4 +110,4 @@ utility exits 0 on success and \*[Gt]0 if an error occurs.
 .Sh SEE ALSO
 .Xr dbopen 3 ,
 .Xr getcap 3 ,
-.Xr termcap 5
+.Xr capfile 5

@@ -30,9 +30,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ite.4	5.2 (Berkeley) 3/27/91
-.\"	$NetBSD: ite.4,v 1.9 2003/08/07 10:31:05 agc Exp $
+.\"	$NetBSD: ite.4,v 1.10 2012/04/21 12:27:28 roy Exp $
 .\"
-.Dd August 30, 1994
+.Dd April 5, 2012
 .Dt ITE 4 amiga
 .Os
 .Sh NAME
@@ -73,7 +73,7 @@ one of each type can be used.
 devices use the
 .Tn HP-UX
 .Sq Li 300h
-.Xr termcap 5
+.Xr terminfo 5
 entry.
 However, as currently implemented,
 the
@@ -89,7 +89,7 @@ keys as meta keys, in that it will set the eighth bit of the character code.
 .Nm
 devices also do a good job at emulating the
 .Sq Li vt100
-.Xr termcap 5
+.Xr terminfo 5
 entry.
 .Pp
 Upon booting, the kernel will first look for an
