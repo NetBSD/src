@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.156 2012/04/21 15:53:38 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.157 2012/04/21 16:06:07 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -6314,4 +6314,20 @@ sys/miscfs/genfs/genfs_io.c			patch
 
 	Address CVE-2012-2110.
 	[spz, ticket #1750]
+
+sys/dev/usb/uaudio.c				1.120
+
+	Allow Logitech C260 uaudio(4) portion to work. PR#44279.
+	[jakllsch, ticket #1746]
+
+sys/arch/x86/x86/ioapic.c			1.46-1.47
+
+	Mask all i8259 interrupts in ioapic_enable().  PR#45160.
+	[jakllsch, ticket #1747]
+
+sys/netatalk/aarp.c				1.36
+sys/netatalk/ddp_output.c			1.16
+
+	Fix AppleTalk name registration. PR#44412.
+	[hauke, ticket #1749]
 
