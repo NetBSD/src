@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.38 2011/06/12 03:35:38 rmind Exp $	*/
+/*	$NetBSD: vector.S,v 1.39 2012/04/21 18:52:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -228,7 +228,7 @@ IDTVEC(trap10)
   	STI(si)
 	jmp	calltrap
 IDTVEC(trap11)
-	ZTRAP(T_ALIGNFLT)
+	TRAP(T_ALIGNFLT)
 IDTVEC(trap12)
 	ZTRAP(T_MCA)
 IDTVEC(trap13)
