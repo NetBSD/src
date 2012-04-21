@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.300 2012/04/18 13:44:19 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.301 2012/04/21 22:38:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.300 2012/04/18 13:44:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.301 2012/04/21 22:38:25 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -684,7 +684,8 @@ mi_switch(lwp_t *l)
 		 * the context switch.
 		 */
 		KASSERTMSG(ci->ci_mtx_count == -1,
-		    "%s: cpu%u: ci_mtx_count (%d) != -1",
+		    "%s: cpu%u: ci_mtx_count (%d) != -1 "
+		    "(block with spin-mutex held)",
 		     __func__, cpu_index(ci), ci->ci_mtx_count);
 		oldspl = MUTEX_SPIN_OLDSPL(ci);
 		ci->ci_mtx_count--;
