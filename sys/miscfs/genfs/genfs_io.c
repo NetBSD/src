@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.13.4.2.2.1 2010/09/07 19:33:44 bouyer Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.13.4.2.2.2 2012/04/21 15:54:03 riz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.13.4.2.2.1 2010/09/07 19:33:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.13.4.2.2.2 2012/04/21 15:54:03 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -802,7 +802,19 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 
 	KASSERT(origflags & (PGO_CLEANIT|PGO_FREE|PGO_DEACTIVATE));
 	KASSERT((startoff & PAGE_MASK) == 0 && (endoff & PAGE_MASK) == 0);
-	KASSERT(startoff < endoff || endoff == 0);
+//	KASSERT(startoff < endoff || endoff == 0);
+
+// replacement for the previous KASSERT to get debug output, by rmind
+	if (!(startoff < endoff || endoff == 0)) {
+		proc_t *p = curproc;
+		mutex_exit(slock);
+		printf("genfs_do_putpages: startoff 0x%lx, endoff 0x%lx vm_map %p\n", (uint64_t) startoff, (uint64_t) endoff, &p->p_vmspace->vm_map);
+		void uvm_map_printit(struct vm_map *, bool, void (*)(const char *, ...));
+		uvm_map_printit(&p->p_vmspace->vm_map, true, printf);
+		KASSERT(p == l->l_proc);
+		Debugger();	/* Bang ! */
+		return EIO;
+	}
 
 	UVMHIST_LOG(ubchist, "vp %p pages %d off 0x%x len 0x%x",
 	    vp, uobj->uo_npages, startoff, endoff - startoff);
