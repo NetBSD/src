@@ -1,4 +1,4 @@
-/* $NetBSD: t_mlock.c,v 1.1 2012/04/20 12:11:29 jruoho Exp $ */
+/* $NetBSD: t_mlock.c,v 1.2 2012/04/21 01:15:13 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mlock.c,v 1.1 2012/04/20 12:11:29 jruoho Exp $");
+__RCSID("$NetBSD: t_mlock.c,v 1.2 2012/04/21 01:15:13 jruoho Exp $");
 
 #include <sys/mman.h>
 #include <sys/resource.h>
@@ -61,7 +61,6 @@ ATF_TC_BODY(mlock_clip, tc)
 		atf_tc_skip("page size too small");
 
 	for (size_t i = page; i >= 1; i = i - 1024) {
-		(void)fprintf(stderr, "trying to lock %zu bytes\n", page - i);
 		(void)mlock(buf, page - i);
 		(void)munlock(buf, page - i);
 	}
