@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.5 2012/04/20 22:23:24 rmind Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.6 2012/04/21 22:22:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008-2012 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.5 2012/04/20 22:23:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.6 2012/04/21 22:22:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -77,17 +77,13 @@ typedef struct {
 /* No more than N seperate invlpg. */
 #define	TP_MAXVA		6
 
-typedef struct {
-	volatile u_int		tm_pendcount;
-	volatile u_int		tm_gen;
-} pmap_tlb_mailbox_t;
-
 /*
  * TLB shootdown state.
  */
-static struct evcnt		pmap_tlb_evcnt		__cacheline_aligned;
 static pmap_tlb_packet_t	pmap_tlb_packet		__cacheline_aligned;
-static pmap_tlb_mailbox_t	pmap_tlb_mailbox	__cacheline_aligned;
+static volatile u_int		pmap_tlb_pendcount	__cacheline_aligned;
+static volatile u_int		pmap_tlb_gen		__cacheline_aligned;
+static struct evcnt		pmap_tlb_evcnt		__cacheline_aligned;
 
 /*
  * TLB shootdown statistics.
@@ -121,7 +117,8 @@ pmap_tlb_init(void)
 {
 
 	memset(&pmap_tlb_packet, 0, sizeof(pmap_tlb_packet_t));
-	memset(&pmap_tlb_mailbox, 0, sizeof(pmap_tlb_mailbox_t));
+	pmap_tlb_pendcount = 0;
+	pmap_tlb_gen = 0;
 
 	evcnt_attach_dynamic(&pmap_tlb_evcnt, EVCNT_TYPE_INTR,
 	    NULL, "TLB", "shootdown");
@@ -189,7 +186,7 @@ pmap_tlbstat_count(struct pmap *pm, vaddr_t va, tlbwhy_t why)
 }
 
 static inline void
-pmap_tlb_invalidate(pmap_tlb_packet_t *tp)
+pmap_tlb_invalidate(const pmap_tlb_packet_t *tp)
 {
 	int i;
 
@@ -261,15 +258,13 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t va, pt_entry_t pte, tlbwhy_t why)
 	}
 
 	if (pm != pmap_kernel()) {
-		kcpuset_copy(tp->tp_cpumask, pm->pm_cpus);
+		kcpuset_merge(tp->tp_cpumask, pm->pm_cpus);
 		if (va >= VM_MAXUSER_ADDRESS) {
 			kcpuset_merge(tp->tp_cpumask, pm->pm_kernel_cpus);
 		}
-		kcpuset_intersect(tp->tp_cpumask, kcpuset_running);
 		tp->tp_userpmap = 1;
 	} else {
 		kcpuset_copy(tp->tp_cpumask, kcpuset_running);
-		tp->tp_userpmap = 0;
 	}
 	pmap_tlbstat_count(pm, va, why);
 	splx(s);
@@ -281,7 +276,6 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t va, pt_entry_t pte, tlbwhy_t why)
 static inline void
 pmap_tlb_processpacket(pmap_tlb_packet_t *tp, kcpuset_t *target)
 {
-	pmap_tlb_mailbox_t *tm = &pmap_tlb_mailbox;
 
 	if (tp->tp_count != (uint16_t)-1) {
 		/* Invalidating a single page or a range of pages. */
@@ -293,7 +287,7 @@ pmap_tlb_processpacket(pmap_tlb_packet_t *tp, kcpuset_t *target)
 	}
 
 	/* Remote CPUs have been synchronously flushed. */
-	tm->tm_pendcount = 0;
+	pmap_tlb_pendcount = 0;
 }
 
 #else
@@ -337,7 +331,6 @@ void
 pmap_tlb_shootnow(void)
 {
 	pmap_tlb_packet_t *tp;
-	pmap_tlb_mailbox_t *tm;
 	struct cpu_info *ci;
 	kcpuset_t *target;
 	u_int local, gen, rcpucount;
@@ -359,7 +352,6 @@ pmap_tlb_shootnow(void)
 		splx(s);
 		return;
 	}
-	tm = &pmap_tlb_mailbox;
 	cid = cpu_index(ci);
 
 	target = tp->tp_cpumask;
@@ -378,11 +370,11 @@ pmap_tlb_shootnow(void)
 		 */
 		KASSERT(rcpucount < ncpu);
 
-		while (atomic_cas_uint(&tm->tm_pendcount, 0, rcpucount) != 0) {
+		while (atomic_cas_uint(&pmap_tlb_pendcount, 0, rcpucount)) {
 			splx(s);
 			count = SPINLOCK_BACKOFF_MIN;
-			while (tm->tm_pendcount != 0) {
-				KASSERT(tm->tm_pendcount < ncpu);
+			while (pmap_tlb_pendcount) {
+				KASSERT(pmap_tlb_pendcount < ncpu);
 				SPINLOCK_BACKOFF(count);
 			}
 			s = splvm();
@@ -395,9 +387,10 @@ pmap_tlb_shootnow(void)
 
 		/*
 		 * Start a new generation of updates.  Copy our shootdown
-		 * requests into the global buffer.
+		 * requests into the global buffer.  Note that tp_cpumask
+		 * will not be used by remote CPUs (it would be unsafe).
 		 */
-		gen = ++tm->tm_gen;
+		gen = ++pmap_tlb_gen;
 		memcpy(&pmap_tlb_packet, tp, sizeof(*tp));
 		pmap_tlb_evcnt.ev_count++;
 
@@ -434,11 +427,11 @@ pmap_tlb_shootnow(void)
 	 * Now wait for the current generation of updates to be
 	 * processed by remote CPUs.
 	 */
-	if (rcpucount && tm->tm_pendcount) {
+	if (rcpucount && pmap_tlb_pendcount) {
 		int count = SPINLOCK_BACKOFF_MIN;
 
-		while (tm->tm_pendcount && tm->tm_gen == gen) {
-			KASSERT(tm->tm_pendcount < ncpu);
+		while (pmap_tlb_pendcount && pmap_tlb_gen == gen) {
+			KASSERT(pmap_tlb_pendcount < ncpu);
 			SPINLOCK_BACKOFF(count);
 		}
 	}
@@ -452,12 +445,10 @@ pmap_tlb_shootnow(void)
 void
 pmap_tlb_intr(void)
 {
-	pmap_tlb_packet_t *tp = &pmap_tlb_packet;
-	pmap_tlb_mailbox_t *tm = &pmap_tlb_mailbox;
+	const pmap_tlb_packet_t *tp = &pmap_tlb_packet;
 	struct cpu_info *ci = curcpu();
-	cpuid_t cid = cpu_index(ci);
 
-	KASSERT(tm->tm_pendcount > 0);
+	KASSERT(pmap_tlb_pendcount > 0);
 
 	/* First, TLB flush. */
 	pmap_tlb_invalidate(tp);
@@ -469,11 +460,12 @@ pmap_tlb_intr(void)
 	 */
 	if (ci->ci_tlbstate == TLBSTATE_LAZY && tp->tp_userpmap) {
 		struct pmap *pm = ci->ci_pmap;
+		cpuid_t cid = cpu_index(ci);
 
 		kcpuset_atomic_clear(pm->pm_cpus, cid);
 		ci->ci_tlbstate = TLBSTATE_STALE;
 	}
 
 	/* Finally, ack the request. */
-	atomic_dec_uint(&tm->tm_pendcount);
+	atomic_dec_uint(&pmap_tlb_pendcount);
 }
