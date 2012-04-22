@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_i686.c,v 1.26 2012/04/20 22:23:24 rmind Exp $ */
+/*	$NetBSD: mtrr_i686.c,v 1.27 2012/04/22 18:59:41 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.26 2012/04/20 22:23:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.27 2012/04/22 18:59:41 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -336,9 +336,11 @@ i686_mtrr_init_first(void)
 	    kmem_zalloc(MTRR_I686_NFIXED_SOFT * sizeof(struct mtrr), KM_SLEEP);
 	KASSERT(mtrr_fixed != NULL);
 
-	mtrr_var =
-	    kmem_zalloc(i686_mtrr_vcnt * sizeof(struct mtrr), KM_SLEEP);
-	KASSERT(mtrr_var != NULL);
+	if (i686_mtrr_vcnt) {
+		mtrr_var =
+		    kmem_zalloc(i686_mtrr_vcnt * sizeof(struct mtrr), KM_SLEEP);
+		KASSERT(mtrr_var != NULL);
+	}
 
 	mtrr_var_raw = &mtrr_raw[0];
 	mtrr_fixed_raw = &mtrr_raw[MTRR_I686_NVAR_MAX * 2];
