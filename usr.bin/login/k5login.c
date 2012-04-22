@@ -1,4 +1,4 @@
-/*	$NetBSD: k5login.c,v 1.27 2006/03/23 23:33:28 wiz Exp $	*/
+/*	$NetBSD: k5login.c,v 1.28 2012/04/22 23:26:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -51,7 +51,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	5.11 (Berkeley) 7/12/92";
 #endif
-__RCSID("$NetBSD: k5login.c,v 1.27 2006/03/23 23:33:28 wiz Exp $");
+__RCSID("$NetBSD: k5login.c,v 1.28 2012/04/22 23:26:19 christos Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS5
@@ -88,13 +88,6 @@ int k5_write_creds(void);
 int k5_verify_creds(krb5_context, krb5_ccache);
 int k5login(struct passwd *, char *, char *, char *);
 void k5destroy(void);
-
-#ifndef krb5_realm_length
-#define krb5_realm_length(r)	((r).length)
-#endif
-#ifndef krb5_realm_data
-#define krb5_realm_data(r)	((r).data)
-#endif
 
 /*
  * Verify the Kerberos ticket-granting ticket just retrieved for the
@@ -163,8 +156,9 @@ k5_verify_creds(krb5_context c, krb5_ccache ccache)
 	else if (kerror) {
 		krb5_warn(kcontext, kerror,
 			  "Unable to verify Kerberos V5 TGT: %s", phost);
-		syslog(LOG_NOTICE, "Kerberos V5 TGT bad: %s",
-		       krb5_get_err_text(kcontext, kerror));
+		const char *msg = krb5_get_error_message(kcontext, kerror);
+		syslog(LOG_NOTICE, "Kerberos V5 TGT bad: %s", msg);
+		krb5_free_error_message(kcontext, msg);
 		retval = -1;
 		goto EGRESS;
 	}
@@ -192,11 +186,11 @@ k5_verify_creds(krb5_context c, krb5_ccache ccache)
 			retval = -1;
 		}
 		krb5_warn(kcontext, kerror, "Unable to verify host ticket");
+		const char *msg = krb5_get_error_message(kcontext, kerror);
 		syslog(LOG_NOTICE, "can't verify v5 ticket: %s; %s\n",
-		       krb5_get_err_text(kcontext, kerror),
-		       retval
-		         ? "keytab found, assuming failure"
-		         : "no keytab found, assuming success");
+		    msg, retval ? "keytab found, assuming failure"
+		    : "no keytab found, assuming success");
+		krb5_free_error_message(kcontext, msg);
 		goto EGRESS;
 	}
 	/*
@@ -243,13 +237,13 @@ k5_read_creds(char *username)
 	}
 
 	mcreds.client = me;
+	const char *realm = krb5_principal_get_realm(kcontext, me);
+	size_t rlen = strlen(realm);
 	kerror = krb5_build_principal_ext(kcontext, &mcreds.server,
-			krb5_realm_length(*krb5_princ_realm(kcontext, me)),
-			krb5_realm_data(*krb5_princ_realm(kcontext, me)),
+			rlen, realm,
 			KRB5_TGS_NAME_SIZE,
 			KRB5_TGS_NAME,
-			krb5_realm_length(*krb5_princ_realm(kcontext, me)),
-			krb5_realm_data(*krb5_princ_realm(kcontext, me)),
+			rlen, realm,
 			0);
 	if (kerror) {
 		krb5_warn(kcontext, kerror, "while building server name");
@@ -372,27 +366,35 @@ k5login(struct passwd *pw, char *instance, char *localhost, char *password)
 	}
 
 	if ((kerror = krb5_cc_resolve(kcontext, tkt_location, &ccache)) != 0) {
+		const char *msg = krb5_get_error_message(kcontext, kerror);
 		syslog(LOG_NOTICE, "warning: %s while getting default ccache",
-			krb5_get_err_text(kcontext, kerror));
+		    msg);
+		krb5_free_error_message(kcontext, msg);
 		return (1);
 	}
 
 	if ((kerror = krb5_parse_name(kcontext, principal, &me)) != 0) {
-		syslog(LOG_NOTICE, "warning: %s when parsing name %s",
-			krb5_get_err_text(kcontext, kerror), principal);
+		const char *msg = krb5_get_error_message(kcontext, kerror);
+		syslog(LOG_NOTICE, "warning: %s when parsing name %s", msg,
+		    principal);
+		krb5_free_error_message(kcontext, msg);
 		return (1);
 	}
 
 	if ((kerror = krb5_unparse_name(kcontext, me, &client_name)) != 0) {
+		const char *msg = krb5_get_error_message(kcontext, kerror);
 		syslog(LOG_NOTICE, "warning: %s when unparsing name %s",
-			krb5_get_err_text(kcontext, kerror), principal);
+		    msg, principal);
+		krb5_free_error_message(kcontext, msg);
 		return (1);
 	}
 
 	kerror = krb5_cc_initialize(kcontext, ccache, me);
 	if (kerror != 0) {
+		const char *msg = krb5_get_error_message(kcontext, kerror);
 		syslog(LOG_NOTICE, "%s when initializing cache %s",
-			krb5_get_err_text(kcontext, kerror), tkt_location);
+		    msg, tkt_location);
+		krb5_free_error_message(kcontext, msg);
 		return (1);
 	}
 
@@ -400,25 +402,27 @@ k5login(struct passwd *pw, char *instance, char *localhost, char *password)
 
 	my_creds.client = me;
 
+	const char *xrealm = krb5_principal_get_realm(kcontext, me);
+	size_t rlen = strlen(xrealm);
 	if ((kerror = krb5_build_principal_ext(kcontext,
 			&server,
-			krb5_realm_length(*krb5_princ_realm(kcontext, me)),
-			krb5_realm_data(*krb5_princ_realm(kcontext, me)),
+			rlen, xrealm,
 			KRB5_TGS_NAME_SIZE,
 			KRB5_TGS_NAME,
-			krb5_realm_length(*krb5_princ_realm(kcontext, me)),
-			krb5_realm_data(*krb5_princ_realm(kcontext, me)),
+			rlen, xrealm,
 			0)) != 0) {
-		syslog(LOG_NOTICE, "%s while building server name",
-			krb5_get_err_text(kcontext, kerror));
+		const char *msg = krb5_get_error_message(kcontext, kerror);
+		syslog(LOG_NOTICE, "%s while building server name", msg);
+		krb5_free_error_message(kcontext, msg);
 		return (1);
 	}
 
 	my_creds.server = server;
 
 	if ((kerror = krb5_timeofday(kcontext, &now)) != 0) {
-		syslog(LOG_NOTICE, "%s while getting time of day",
-			krb5_get_err_text(kcontext, kerror));
+		const char *msg = krb5_get_error_message(kcontext, kerror);
+		syslog(LOG_NOTICE, "%s while getting time of day", msg);
+		krb5_free_error_message(kcontext, msg);
 		return (1);
 	}
 
@@ -428,12 +432,7 @@ k5login(struct passwd *pw, char *instance, char *localhost, char *password)
 	my_creds.times.renew_till = 0;
 
 	kerror = krb5_get_in_tkt_with_password(kcontext, options,
-					       NULL,
-					       NULL,
-					       NULL,
-					       password,
-					       ccache,
-					       &my_creds, 0);
+	    NULL, NULL, NULL, password, ccache, &my_creds, 0);
 
 	if (my_creds.server != NULL)
 		krb5_free_principal(kcontext, my_creds.server);
