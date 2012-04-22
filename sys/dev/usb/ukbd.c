@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.120 2012/04/22 14:19:24 khorben Exp $        */
+/*      $NetBSD: ukbd.c,v 1.121 2012/04/22 14:25:14 khorben Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.120 2012/04/22 14:19:24 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.121 2012/04/22 14:25:14 khorben Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,6 +269,7 @@ struct ukbd_softc {
 	struct hid_location sc_numloc;
 	struct hid_location sc_capsloc;
 	struct hid_location sc_scroloc;
+	struct hid_location sc_compose;
 	int sc_leds;
 	device_t sc_wskbddev;
 
@@ -474,7 +475,8 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->sc_delay, 0);
 
 	/* Flash the leds; no real purpose, just shows we're alive. */
-	ukbd_set_leds(sc, WSKBD_LED_SCROLL | WSKBD_LED_NUM | WSKBD_LED_CAPS);
+	ukbd_set_leds(sc, WSKBD_LED_SCROLL | WSKBD_LED_NUM | WSKBD_LED_CAPS
+			| WSKBD_LED_COMPOSE);
 	usbd_delay_ms(uha->parent->sc_udev, 400);
 	ukbd_set_leds(sc, 0);
 
@@ -891,6 +893,8 @@ ukbd_set_leds(void *v, int leds)
 	sc->sc_leds = leds;
 	res = 0;
 	/* XXX not really right */
+	if ((leds & WSKBD_LED_COMPOSE) && sc->sc_compose.size == 1)
+		res |= 1 << sc->sc_compose.pos;
 	if ((leds & WSKBD_LED_SCROLL) && sc->sc_scroloc.size == 1)
 		res |= 1 << sc->sc_scroloc.pos;
 	if ((leds & WSKBD_LED_NUM) && sc->sc_numloc.size == 1)
@@ -1084,6 +1088,8 @@ ukbd_parse_desc(struct ukbd_softc *sc)
 		   sc->sc_hdev.sc_report_id, hid_output, &sc->sc_capsloc, NULL);
 	hid_locate(desc, size, HID_USAGE2(HUP_LEDS, HUD_LED_SCROLL_LOCK),
 		   sc->sc_hdev.sc_report_id, hid_output, &sc->sc_scroloc, NULL);
+	hid_locate(desc, size, HID_USAGE2(HUP_LEDS, HUD_LED_COMPOSE),
+		   sc->sc_hdev.sc_report_id, hid_output, &sc->sc_compose, NULL);
 
 	return (NULL);
 }
