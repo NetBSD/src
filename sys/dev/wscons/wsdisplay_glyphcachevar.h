@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_glyphcachevar.h,v 1.2 2012/04/19 08:46:17 macallan Exp $	*/
+/*	$NetBSD: wsdisplay_glyphcachevar.h,v 1.3 2012/04/22 03:47:53 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
