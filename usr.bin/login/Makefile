@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.52 2011/04/24 21:42:06 elric Exp $
+#	$NetBSD: Makefile,v 1.53 2012/04/22 23:26:19 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/19/93
 
-WARNS?=	2	# XXX -Wcast-qual issues
+WARNS?=	5	# XXX -Wcast-qual issues
 
 .include <bsd.own.mk>
 
@@ -25,6 +25,8 @@ CPPFLAGS+=-DLOGIN_CAP -DSUPPORT_UTMP -DSUPPORT_UTMPX
 .if (${USE_KERBEROS} != "no")
 SRCS+= k5login.c
 CPPFLAGS+=-DKERBEROS5
+# XXX: for krb5_get_in_tkt_with_password
+CPPFLAGS+=-DKRB5_DEPRECATED=
 DPADD+=	${LIBKRB5} ${LIBASN1}
 LDADD+= -lkrb5 -lasn1
 
