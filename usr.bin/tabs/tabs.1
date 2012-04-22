@@ -1,4 +1,4 @@
-.\" $NetBSD: tabs.1,v 1.3 2012/04/21 12:27:29 roy Exp $
+.\" $NetBSD: tabs.1,v 1.4 2012/04/22 10:22:08 wiz Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@ Ns | Ns Fl c3 Ns | Ns Fl f Ns | Ns Fl p Ns | Ns Fl s Ns | Ns Fl u
 .Nm
 .Op Fl T Ar type
 .Op + Ns Op n
-.Ar n1 Ns Op , Ns Ar n2 Ns , Ns Ar ...
+.Ar n1 Ns Op , Ns Ar n2 , Ns Ar ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -122,8 +122,6 @@ Equivalent to
 .Nm
 1,12,20,44
 .El
-.Sh EXIT STATUS
-.Ex -std
 .Sh ENVIRONMENT
 The
 .Ev COLUMNS
@@ -145,6 +143,8 @@ nor the
 option are present,
 .Nm
 will fail.
+.Sh EXIT STATUS
+.Ex -std
 .Sh SEE ALSO
 .Xr expand 1 ,
 .Xr stty 1 ,
