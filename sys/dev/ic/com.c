@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.304 2012/02/02 19:43:02 tls Exp $ */
+/* $NetBSD: com.c,v 1.305 2012/04/22 16:00:45 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.304 2012/02/02 19:43:02 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.305 2012/04/22 16:00:45 christos Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -76,9 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.304 2012/02/02 19:43:02 tls Exp $");
 #include "opt_ntp.h"
 
 #include "rnd.h"
-#ifdef RND_COM
-#include <sys/rnd.h>
-#endif
 
 /* The COM16650 option was renamed to COM_16650. */
 #ifdef COM16650
@@ -115,6 +112,10 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.304 2012/02/02 19:43:02 tls Exp $");
 #include <sys/vnode.h>
 #include <sys/kauth.h>
 #include <sys/intr.h>
+#ifdef RND_COM
+#include <sys/rnd.h>
+#endif
+
 
 #include <sys/bus.h>
 
