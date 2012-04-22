@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.15 2012/04/20 00:40:31 jym Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.16 2012/04/22 08:52:26 martin Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -418,13 +418,26 @@ sigbus_action(int signo, siginfo_t *info, void *ptr)
 	ATF_REQUIRE_EQ(info->si_errno, 0);
 	ATF_REQUIRE_EQ(info->si_code, BUS_ADRALN);
 
+#if 0
 	if (strcmp(atf_config_get("atf_arch"), "i386") == 0 ||
 	    strcmp(atf_config_get("atf_arch"), "x86_64") == 0) {
 		atf_tc_expect_fail("x86 architecture does not correctly "
 		    "report the address where the unaligned access occured");
 	}
 
+	/*
+	 * XXX: This is bogus: si_addr is documented as the text address
+	 * where the fault occurs, addr is the faulting data address,
+	 * see TOG about siginfo_t:
+	 *
+	 *	void *	si_addr	Address of faulting instruction.
+	 *
+	 * Is there a portable way to get the accessed data address from
+	 * the handler?
+	 */
 	ATF_REQUIRE_EQ(info->si_addr, (void *)addr);
+#endif
+
 	atf_tc_pass();
 	/* NOTREACHED */
 }
