@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.130 2012/03/15 18:40:32 bouyer Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.131 2012/04/22 01:31:48 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.130 2012/03/15 18:40:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.131 2012/04/22 01:31:48 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2685,6 +2685,7 @@ Static usbd_status
 uaudio_chan_open(struct uaudio_softc *sc, struct chan *ch)
 {
 	struct as_info *as;
+	usb_device_descriptor_t *ddesc;
 	int endpt;
 	usbd_status err;
 
@@ -2701,8 +2702,9 @@ uaudio_chan_open(struct uaudio_softc *sc, struct chan *ch)
 	/*
 	 * Roland SD-90 freezes by a SAMPLING_FREQ_CONTROL request.
 	 */
-	if ((UGETW(sc->sc_udev->ddesc.idVendor) != USB_VENDOR_ROLAND) &&
-	    (UGETW(sc->sc_udev->ddesc.idProduct) != USB_PRODUCT_ROLAND_SD90)) {
+	ddesc = usbd_get_device_descriptor(sc->sc_udev);
+	if ((UGETW(ddesc->idVendor) != USB_VENDOR_ROLAND) &&
+	    (UGETW(ddesc->idProduct) != USB_PRODUCT_ROLAND_SD90)) {
 		err = uaudio_set_speed(sc, endpt, ch->sample_rate);
 		if (err) {
 			DPRINTF("set_speed failed err=%s\n", usbd_errstr(err));
