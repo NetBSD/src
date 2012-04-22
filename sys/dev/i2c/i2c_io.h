@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_io.h,v 1.2 2005/12/11 12:21:22 christos Exp $	*/
+/*	$NetBSD: i2c_io.h,v 1.3 2012/04/22 14:10:36 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -44,16 +44,24 @@
 typedef uint16_t i2c_addr_t;
 
 /* High-level I2C operations. */
-typedef enum {
-	I2C_OP_READ		= 0,
-	I2C_OP_READ_WITH_STOP	= 1,
-	I2C_OP_WRITE		= 2,
-	I2C_OP_WRITE_WITH_STOP	= 3,
-} i2c_op_t;
+#define	I2C_OPMASK_STOP		1
+#define	I2C_OPMASK_WRITE	2
+#define	I2C_OPMASK_BLKMODE	4
 
-#define	I2C_OP_READ_P(x)	(((int)(x) & 2) == 0)
-#define	I2C_OP_WRITE_P(x)	(! I2C_OP_READ_P(x))
-#define	I2C_OP_STOP_P(x)	(((int)(x) & 1) != 0)
+#define	I2C_OP_STOP_P(x)	(((int)(x) & I2C_OPMASK_STOP) != 0)
+#define	I2C_OP_WRITE_P(x)	(((int)(x) & I2C_OPMASK_WRITE) != 0)
+#define	I2C_OP_READ_P(x)	(!I2C_OP_WRITE_P(x))
+#define	I2C_OP_BLKMODE_P(x)	(((int)(x) & I2C_OPMASK_BLKMODE) != 0)
+
+typedef enum {
+        I2C_OP_READ		= 0,
+        I2C_OP_READ_WITH_STOP	= I2C_OPMASK_STOP,
+        I2C_OP_WRITE		= I2C_OPMASK_WRITE,
+        I2C_OP_WRITE_WITH_STOP	= I2C_OPMASK_WRITE   | I2C_OPMASK_STOP,
+        I2C_OP_READ_BLOCK	= I2C_OPMASK_BLKMODE | I2C_OPMASK_STOP,
+        I2C_OP_WRITE_BLOCK	= I2C_OPMASK_BLKMODE | I2C_OPMASK_WRITE |
+					I2C_OPMASK_STOP,
+} i2c_op_t;
 
 /*
  * This structure describes a single I2C control script fragment.
