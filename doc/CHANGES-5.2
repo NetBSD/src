@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.158 2012/04/21 23:10:41 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.159 2012/04/22 03:16:43 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -6329,4 +6329,11 @@ sys/netatalk/ddp_output.c			1.16
 
 	Fix AppleTalk name registration. PR#44412.
 	[hauke, ticket #1749]
+
+sys/dev/usb/uaudio.c				1.131
+
+	Use usbd_get_device_descriptor() instead of groping for it directly
+	in the usbd_device struct.  Fixes build breakage introduced in
+	ticket #1746.
+	[jakllsch, ticket #1751]
 
