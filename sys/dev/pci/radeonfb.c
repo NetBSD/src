@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.61 2012/04/12 18:55:26 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.62 2012/04/22 03:57:00 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.61 2012/04/12 18:55:26 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.62 2012/04/22 03:57:00 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ static void radeonfb_cursor_position(struct radeonfb_display *);
 static void radeonfb_cursor_visible(struct radeonfb_display *);
 static void radeonfb_cursor_update(struct radeonfb_display *, unsigned);
 
-static void radeonfb_wait_fifo(struct radeonfb_softc *, int);
+static inline void radeonfb_wait_fifo(struct radeonfb_softc *, int);
 static void radeonfb_engine_idle(struct radeonfb_softc *);
 static void radeonfb_engine_flush(struct radeonfb_softc *);
 static void radeonfb_engine_reset(struct radeonfb_softc *);
