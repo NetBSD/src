@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.118 2012/04/22 14:04:45 khorben Exp $        */
+/*      $NetBSD: ukbd.c,v 1.119 2012/04/22 14:13:32 khorben Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.118 2012/04/22 14:04:45 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.119 2012/04/22 14:13:32 khorben Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,28 +150,28 @@ Static const struct ukbd_keycodetrans trtab_apple_iso[] = {
 #ifdef GDIUM_KEYBOARD_HACK
 Static const struct ukbd_keycodetrans trtab_gdium_fn[] = {	
 #ifdef notyet
-		{ 58, 0 },	/* F1 -> toggle camera */
-		{ 59, 0 },	/* F2 -> toggle wireless */
+	{ 58, 0 },	/* F1 -> toggle camera */
+	{ 59, 0 },	/* F2 -> toggle wireless */
 #endif
-		{ 60, IS_PMF | PMFE_AUDIO_VOLUME_TOGGLE },
-		{ 61, IS_PMF | PMFE_AUDIO_VOLUME_UP },
-		{ 62, IS_PMF | PMFE_AUDIO_VOLUME_DOWN },
+	{ 60, IS_PMF | PMFE_AUDIO_VOLUME_TOGGLE },
+	{ 61, IS_PMF | PMFE_AUDIO_VOLUME_UP },
+	{ 62, IS_PMF | PMFE_AUDIO_VOLUME_DOWN },
 #ifdef notyet
-		{ 63, 0 },	/* F6 -> toggle ext. video */
-		{ 64, 0 },	/* F7 -> toggle mouse */
+	{ 63, 0 },	/* F6 -> toggle ext. video */
+	{ 64, 0 },	/* F7 -> toggle mouse */
 #endif
-		{ 65, IS_PMF | PMFE_DISPLAY_BRIGHTNESS_UP },
-		{ 66, IS_PMF | PMFE_DISPLAY_BRIGHTNESS_DOWN },
+	{ 65, IS_PMF | PMFE_DISPLAY_BRIGHTNESS_UP },
+	{ 66, IS_PMF | PMFE_DISPLAY_BRIGHTNESS_DOWN },
 #ifdef notyet
-		{ 67, 0 },	/* F10 -> suspend */
-		{ 68, 0 },	/* F11 -> user1 */
-		{ 69, 0 },	/* F12 -> user2 */
-		{ 70, 0 },	/* print screen -> sysrq */
+	{ 67, 0 },	/* F10 -> suspend */
+	{ 68, 0 },	/* F11 -> user1 */
+	{ 69, 0 },	/* F12 -> user2 */
+	{ 70, 0 },	/* print screen -> sysrq */
 #endif
-		{ 76, 71 },	/* delete -> scroll lock */
-		{ 81, 78 },	/* down -> page down */
-		{ 82, 75 },	/* up -> page up */
-		{  0, 0 }
+	{ 76, 71 },	/* delete -> scroll lock */
+	{ 81, 78 },	/* down -> page down */
+	{ 82, 75 },	/* up -> page up */
+	{  0, 0 }
 };
 #endif
 
