@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.4 2012/04/09 19:22:49 riz Exp $
+#	$NetBSD: Makefile.bootimage,v 1.5 2012/04/22 05:24:39 tsutsui Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -40,6 +40,13 @@
 #	USE_MBR
 #		set yes if target disk image requires MBR partition
 #		(defautl: no)
+#	MBR_BOOTCODE
+#		optional MBR bootcode which should be installed by fdisk(8)
+#		(default: empty)
+#		- specified MBR_BOOTCODE must exist in ${DESTDIR}/usr/mdec
+#		- if MBR_BOOTCODE is not specified,
+#		  MBR_DEFAULT_BOOTCODE (default: mbr) will be used
+#		  if the target ${MACHINE} has the one in /usr/mdec
 #	USE_SUNLABEL
 #		set yes if target disk image requires Sun's label
 #		(default: no)
@@ -92,6 +99,9 @@
 #	IMGMAKEFSOPTIONS
 #		options passed to makefs(8) to create root file system
 #		(default: -o bsize=16384,fsize=2048,density=8192)
+#	INSTALLBOOTOPTIONS
+#		options passed to installboot(8), e.g., -o console=com0
+#		(default: empty)
 #	PRIMARY_BOOT
 #		primary boot loader that should be installed into
 #		the target image via installboot(8)
@@ -286,7 +296,7 @@ ${TARGETFS}: prepare_md_post
 	    ${IMGMAKEFSOPTIONS}						\
 	    ${WORKFS} ${WORKDIR}
 .if !empty(PRIMARY_BOOT) && ${INSTALLBOOT_AFTER_DISKLABEL} == "no"
-	${TOOL_INSTALLBOOT} -vm ${MACHINE} ${WORKFS} \
+	${TOOL_INSTALLBOOT} -v -m ${MACHINE} ${INSTALLBOOTOPTIONS} ${WORKFS} \
 	    ${WORKDIR}/usr/mdec/${PRIMARY_BOOT} ${SECONDARY_BOOT_ARG}
 .endif
 	@echo done.
@@ -300,6 +310,8 @@ DISKPROTO_IN?=	${DISTRIBDIR}/common/bootimage/diskproto.mbr.in
 .else
 DISKPROTO_IN?=	${DISTRIBDIR}/common/bootimage/diskproto.in
 .endif
+
+MBR_DEFAULT_BOOTCODE?=	mbr
 
 OMIT_SWAPIMG?=	no
 
@@ -328,14 +340,30 @@ ${WORKLABEL}:
 	mv ${WORKLABEL}.tmp ${WORKLABEL}
 
 ${IMGBASE}.img:	${TARGETFS} ${WORKLABEL}
-.if ${LABELSECTORS} != "0"
+.if ${USE_MBR} != "no"
 	@echo creating MBR labels...
 	${DD} if=/dev/zero of=${WORKMBR} seek=$$((${IMAGESECTORS} - 1)) count=1
-	${TOOL_FDISK} -f -u \
+	${TOOL_FDISK} -f -i -u \
 	    -b ${MBRCYLINDERS}/${MBRHEADS}/${MBRSECTORS}		\
 	    -0 -a -s ${MBRNETBSD}/${FSOFFSET}/${BSDPARTSECTORS}		\
-	    -i -c ${WORKDIR}/usr/mdec/mbr				\
 	    -F ${WORKMBR}
+.if empty(MBR_BOOTCODE)
+	@if [ -f ${WORKDIR}/usr/mdec/${MBR_DEFAULT_BOOTCODE} ]; then 	\
+		echo ${TOOL_FDISK} -f					\
+		    -i -c ${WORKDIR}/usr/mdec/${MBR_DEFAULT_BOOTCODE}	\
+		    -F ${WORKMBR};					\
+		${TOOL_FDISK} -f					\
+		    -i -c ${WORKDIR}/usr/mdec/${MBR_DEFAULT_BOOTCODE}	\
+		    -F ${WORKMBR};					\
+	fi
+.else
+	@if [ ! -f ${WORKDIR}/usr/mdec/${MBR_BOOTCODE} ]; then 		\
+		echo "${MBR_BOOTCODE} is not found in DESTDIR/usr/mdec, aborting"; \
+		false; 							\
+	fi
+	${TOOL_FDISK} -f -i -c ${WORKDIR}/usr/mdec/${MBR_BOOTCODE}	\
+	    -F ${WORKMBR}
+.endif
 	${DD} if=${WORKMBR} count=${LABELSECTORS} |			\
 	    ${CAT} - ${TARGETFS} > ${WORKIMG}
 .else
@@ -354,7 +382,7 @@ ${IMGBASE}.img:	${TARGETFS} ${WORKLABEL}
 .endif
 	${TOOL_DISKLABEL} -R -F ${WORKIMG} ${WORKLABEL}
 .if !empty(PRIMARY_BOOT) && ${INSTALLBOOT_AFTER_DISKLABEL} != "no"
-	${TOOL_INSTALLBOOT}  -vm ${MACHINE} ${WORKIMG}			\
+	${TOOL_INSTALLBOOT} -v -m ${MACHINE} ${INSTALLBOOTOPTOINS} ${WORKIMG} \
 	    ${WORKDIR}/usr/mdec/${PRIMARY_BOOT}
 .endif
 	mv ${WORKIMG} ${.TARGET}
