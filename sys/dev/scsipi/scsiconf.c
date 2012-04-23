@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.262.10.1 2012/03/19 23:13:59 riz Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.262.10.2 2012/04/23 16:28:30 riz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.262.10.1 2012/03/19 23:13:59 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.262.10.2 2012/04/23 16:28:30 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,31 @@ static int	scsibusprint(void *, const char *);
 static void	scsibus_config(struct scsipi_channel *, void *);
 
 const struct scsipi_bustype scsi_bustype = {
-	SCSIPI_BUSTYPE_SCSI,
+	SCSIPI_BUSTYPE_BUSTYPE(SCSIPI_BUSTYPE_SCSI, SCSIPI_BUSTYPE_SCSI_PSCSI),
+	scsi_scsipi_cmd,
+	scsipi_interpret_sense,
+	scsi_print_addr,
+	scsi_kill_pending,
+};
+
+const struct scsipi_bustype scsi_fc_bustype = {
+	SCSIPI_BUSTYPE_BUSTYPE(SCSIPI_BUSTYPE_SCSI, SCSIPI_BUSTYPE_SCSI_FC),
+	scsi_scsipi_cmd,
+	scsipi_interpret_sense,
+	scsi_print_addr,
+	scsi_kill_pending,
+};
+
+const struct scsipi_bustype scsi_sas_bustype = {
+	SCSIPI_BUSTYPE_BUSTYPE(SCSIPI_BUSTYPE_SCSI, SCSIPI_BUSTYPE_SCSI_SAS),
+	scsi_scsipi_cmd,
+	scsipi_interpret_sense,
+	scsi_print_addr,
+	scsi_kill_pending,
+};
+
+const struct scsipi_bustype scsi_usb_bustype = {
+	SCSIPI_BUSTYPE_BUSTYPE(SCSIPI_BUSTYPE_SCSI, SCSIPI_BUSTYPE_SCSI_USB),
 	scsi_scsipi_cmd,
 	scsipi_interpret_sense,
 	scsi_print_addr,
@@ -153,7 +177,8 @@ scsibusmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct scsipi_channel *chan = aux;
 
-	if (chan->chan_bustype->bustype_type != SCSIPI_BUSTYPE_SCSI)
+	if (SCSIPI_BUSTYPE_TYPE(chan->chan_bustype->bustype_type) !=
+	    SCSIPI_BUSTYPE_SCSI)
 		return 0;
 
 	if (cf->cf_loc[SCSICF_CHANNEL] != chan->chan_channel &&
