@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.40 2012/03/15 03:12:51 macallan Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.41 2012/04/23 11:51:56 macallan Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2012 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.40 2012/03/15 03:12:51 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.41 2012/04/23 11:51:56 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1726,7 +1726,7 @@ voodoofb_setup_i2c(struct voodoofb_softc *sc)
 			 * best one we can support
 			 */
 			if (sc->sc_videomode == NULL) {
-				int n;
+				int n = 0;
 				struct videomode *m =
 				     sc->sc_edid_info.edid_modes;
 
