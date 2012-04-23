@@ -1,4 +1,4 @@
-/*	$NetBSD: k5login.c,v 1.28 2012/04/22 23:26:19 christos Exp $	*/
+/*	$NetBSD: k5login.c,v 1.29 2012/04/23 15:07:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -51,7 +51,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	5.11 (Berkeley) 7/12/92";
 #endif
-__RCSID("$NetBSD: k5login.c,v 1.28 2012/04/22 23:26:19 christos Exp $");
+__RCSID("$NetBSD: k5login.c,v 1.29 2012/04/23 15:07:02 christos Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS5
@@ -88,6 +88,27 @@ int k5_write_creds(void);
 int k5_verify_creds(krb5_context, krb5_ccache);
 int k5login(struct passwd *, char *, char *, char *);
 void k5destroy(void);
+
+static void __printflike(3, 4)
+k5_log(krb5_context context, krb5_error_code kerror, const char *fmt, ...)
+{
+	const char *msg = krb5_get_error_message(context, kerror);
+	char *str;
+	va_list ap;
+
+	va_start(ap, fmt);
+	if (vasprintf(&str, fmt, ap) == -1) {
+		va_end(ap);
+		syslog(LOG_NOTICE, "Cannot allocate memory for error %s: %s",
+		    fmt, msg);
+		return;
+	}
+	va_end(ap);
+
+	syslog(LOG_NOTICE, "warning: %s: %s", str, msg);
+	krb5_free_error_message(kcontext, msg);
+	free(str);
+}
 
 /*
  * Verify the Kerberos ticket-granting ticket just retrieved for the
@@ -156,9 +177,7 @@ k5_verify_creds(krb5_context c, krb5_ccache ccache)
 	else if (kerror) {
 		krb5_warn(kcontext, kerror,
 			  "Unable to verify Kerberos V5 TGT: %s", phost);
-		const char *msg = krb5_get_error_message(kcontext, kerror);
-		syslog(LOG_NOTICE, "Kerberos V5 TGT bad: %s", msg);
-		krb5_free_error_message(kcontext, msg);
+		k5_log(kcontext, kerror, "Kerberos V5 TGT bad");
 		retval = -1;
 		goto EGRESS;
 	}
@@ -186,11 +205,9 @@ k5_verify_creds(krb5_context c, krb5_ccache ccache)
 			retval = -1;
 		}
 		krb5_warn(kcontext, kerror, "Unable to verify host ticket");
-		const char *msg = krb5_get_error_message(kcontext, kerror);
-		syslog(LOG_NOTICE, "can't verify v5 ticket: %s; %s\n",
-		    msg, retval ? "keytab found, assuming failure"
-		    : "no keytab found, assuming success");
-		krb5_free_error_message(kcontext, msg);
+		k5_log(kcontext, kerror, "can't verify v5 ticket (%s)",
+		    retval ? "keytab found, assuming failure" :
+		    "no keytab found, assuming success");
 		goto EGRESS;
 	}
 	/*
@@ -366,35 +383,24 @@ k5login(struct passwd *pw, char *instance, char *localhost, char *password)
 	}
 
 	if ((kerror = krb5_cc_resolve(kcontext, tkt_location, &ccache)) != 0) {
-		const char *msg = krb5_get_error_message(kcontext, kerror);
-		syslog(LOG_NOTICE, "warning: %s while getting default ccache",
-		    msg);
-		krb5_free_error_message(kcontext, msg);
+		k5_log(kcontext, kerror, "while getting default ccache");
 		return (1);
 	}
 
 	if ((kerror = krb5_parse_name(kcontext, principal, &me)) != 0) {
-		const char *msg = krb5_get_error_message(kcontext, kerror);
-		syslog(LOG_NOTICE, "warning: %s when parsing name %s", msg,
-		    principal);
-		krb5_free_error_message(kcontext, msg);
+		k5_log(kcontext, kerror, "when parsing name %s", principal);
 		return (1);
 	}
 
 	if ((kerror = krb5_unparse_name(kcontext, me, &client_name)) != 0) {
-		const char *msg = krb5_get_error_message(kcontext, kerror);
-		syslog(LOG_NOTICE, "warning: %s when unparsing name %s",
-		    msg, principal);
-		krb5_free_error_message(kcontext, msg);
+		k5_log(kcontext, kerror, "when unparsing name %s", principal);
 		return (1);
 	}
 
 	kerror = krb5_cc_initialize(kcontext, ccache, me);
 	if (kerror != 0) {
-		const char *msg = krb5_get_error_message(kcontext, kerror);
-		syslog(LOG_NOTICE, "%s when initializing cache %s",
-		    msg, tkt_location);
-		krb5_free_error_message(kcontext, msg);
+		k5_log(kcontext, kerror, "when initializing cache %s",
+		    tkt_location);
 		return (1);
 	}
 
@@ -411,18 +417,14 @@ k5login(struct passwd *pw, char *instance, char *localhost, char *password)
 			KRB5_TGS_NAME,
 			rlen, xrealm,
 			0)) != 0) {
-		const char *msg = krb5_get_error_message(kcontext, kerror);
-		syslog(LOG_NOTICE, "%s while building server name", msg);
-		krb5_free_error_message(kcontext, msg);
+		k5_log(kcontext, kerror, "while building server name");
 		return (1);
 	}
 
 	my_creds.server = server;
 
 	if ((kerror = krb5_timeofday(kcontext, &now)) != 0) {
-		const char *msg = krb5_get_error_message(kcontext, kerror);
-		syslog(LOG_NOTICE, "%s while getting time of day", msg);
-		krb5_free_error_message(kcontext, msg);
+		k5_log(kcontext, kerror, "while getting time of day");
 		return (1);
 	}
 
