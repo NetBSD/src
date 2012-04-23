@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.74 2012/04/22 17:03:05 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.75 2012/04/23 16:55:34 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1889,4 +1889,108 @@ sys/dev/ic/com.c				1.305
 	Address multiple problems with rnd(4)/cprng(9): per-CPU CPRNG,
 	Locking fixes, compilation problems.
 	[tls, ticket #190]
+
+sys/dev/pci/pcidevs				1.1116
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add various newer LSI RAID/SAS controllers, from OpenBSD.
+	[bouyer, ticket #191]
+
+sys/dev/scsipi/atapiconf.c			1.85
+sys/dev/scsipi/cd.c				1.307
+sys/dev/scsipi/scsiconf.c			1.266
+sys/dev/scsipi/scsiconf.h			1.57
+sys/dev/scsipi/scsipi_base.c			1.158
+sys/dev/scsipi/scsipi_ioctl.c			1.67
+sys/dev/scsipi/scsipiconf.h			1.120
+sys/dev/scsipi/sd.c				1.298
+sys/dev/scsipi/st.c				1.221
+sys/dev/scsipi/st_atapi.c			1.29
+sys/dev/scsipi/st_scsi.c			1.35
+sys/dev/usb/umass_scsipi.c			1.44
+
+	Allow enabling tagged queuing for FC and SAS drivers without
+	printing inaccurate information to users.
+	[bouyer, ticket #192]
+
+distrib/sets/lists/man/mi			1.1387
+share/man/man4/Makefile				1.584
+share/man/man4/mpii.4				1.1
+sys/arch/amd64/conf/GENERIC			1.354
+sys/arch/amd64/conf/XEN3_DOM0			1.83
+sys/arch/i386/conf/ALL				1.337
+sys/arch/i386/conf/GENERIC			1.1072
+sys/arch/i386/conf/XEN3_DOM0			1.66
+sys/dev/pci/files.pci				1.357
+sys/dev/pci/mpii.c				1.1
+
+	Add mpii(4), a driver for LSI Logic Fusion-MPT Message Passing
+	Interface II SAS controllers. Ported from OpenBSD.
+	[bouyer, ticket #193]
+
+sys/arch/amd64/amd64/vector.S			1.39
+
+	Fix alignment fault handling, which should address some mysterious
+	failures on amd64.
+	[jym, ticket #194]
+
+lib/libc/stdlib/jemalloc.c			1.27 via patch
+lib/libintl/gettext.c				1.27
+lib/libintl/textdomain.c			1.13
+lib/libkvm/kvm_getloadavg.c			1.11
+lib/libperfuse/debug.c				1.11
+lib/libperfuse/ops.c				1.52-1.54
+lib/libperfuse/perfuse.c			1.26-1.28
+lib/libperfuse/perfuse_priv.h			1.27-1.29
+lib/libperfuse/subr.c				1.17-1.18
+lib/libpuffs/dispatcher.c			1.39-1.40
+lib/libpuffs/pnode.c				1.11-1.12
+lib/libpuffs/puffs.3				1.50-1.53
+lib/libpuffs/puffs.h				1.120-1.121
+lib/libpuffs/puffs_ops.3			1.30
+lib/libpuffs/puffs_priv.h			1.45
+lib/librmt/rmtlib.c				1.26
+lib/librumpclient/rumpclient.c			1.48
+lib/libskey/skeysubr.c				1.27
+lib/libwrap/clean_exit.c			1.5
+lib/libwrap/diag.c				1.9
+lib/libwrap/eval.c				1.7
+lib/libwrap/fix_options.c			1.11
+lib/libwrap/hosts_access.c			1.20
+lib/libwrap/hosts_ctl.c				1.5
+lib/libwrap/misc.c				1.10
+lib/libwrap/options.c				1.15
+lib/libwrap/percent_x.c				1.5
+lib/libwrap/refuse.c				1.5
+lib/libwrap/rfc931.c				1.9
+lib/libwrap/shell_cmd.c				1.6
+lib/libwrap/socket.c				1.19
+lib/libwrap/tcpd.h				1.13
+lib/libwrap/update.c				1.9
+lib/liby/yyerror.c				1.9
+sys/fs/puffs/puffs_msgif.h			1.78
+sys/fs/puffs/puffs_node.c			1.24
+sys/fs/puffs/puffs_sys.h			1.79
+sys/fs/puffs/puffs_vfsops.c			1.101
+sys/fs/puffs/puffs_vnops.c			1.165-1.166
+tests/fs/puffs/t_fuzz.c				1.5
+
+	Allow PUFFS filesystem to fetch node attributes with operations
+	creating a new node, and to specify attribute and name cache TTL.
+	Make use of the two new features for our perfused-based FUSE
+	emulation, and win a huge performance improvement.
+	[manu, ticket #195]
+
+sys/arch/hppa/hppa/trap.c			1.101
+
+	Fix SIGTRAP on hppa, for improved GDB support.
+	[skrll, ticket #196]
+
+crypto/external/bsd/openssl/dist/crypto/asn1/a_d2i_fp.c 1.2
+crypto/external/bsd/openssl/dist/crypto/buffer/buffer.c 1.2
+crypto/external/bsd/openssl/dist/crypto/mem.c	1.2
+
+	Address CVE-2012-2110.
+	[drochner, ticket #197]
 
