@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.305 2012/02/02 19:43:06 tls Exp $	*/
+/*	$NetBSD: cd.c,v 1.305.2.1 2012/04/23 16:28:30 riz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.305 2012/02/02 19:43:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.305.2.1 2012/04/23 16:28:30 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,8 +251,8 @@ cdattach(device_t parent, device_t self, void *aux)
 
 	mutex_init(&cd->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
-	if (scsipi_periph_bustype(sa->sa_periph) == SCSIPI_BUSTYPE_SCSI &&
-	    periph->periph_version == 0)
+	if (SCSIPI_BUSTYPE_TYPE(scsipi_periph_bustype(sa->sa_periph)) ==
+	    SCSIPI_BUSTYPE_SCSI && periph->periph_version == 0)
 		cd->flags |= CDF_ANCIENT;
 
 	bufq_alloc(&cd->buf_queue, "disksort", BUFQ_SORT_RAWBLOCK);
@@ -1682,7 +1682,7 @@ cdgetdefaultlabel(struct cd_softc *cd, struct cd_formatted_toc *toc,
 	lp->d_ncylinders = (cd->params.disksize / 100) + 1;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
-	switch (scsipi_periph_bustype(cd->sc_periph)) {
+	switch (SCSIPI_BUSTYPE_TYPE(scsipi_periph_bustype(cd->sc_periph))) {
 	case SCSIPI_BUSTYPE_SCSI:
 		lp->d_type = DTYPE_SCSI;
 		break;

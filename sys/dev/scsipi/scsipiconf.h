@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.118 2010/06/07 01:41:39 pgoyette Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.118.14.1 2012/04/23 16:28:30 riz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -239,10 +239,25 @@ struct scsipi_bustype {
 };
 
 /* bustype_type */
-#define	SCSIPI_BUSTYPE_SCSI	0
+/* type is stored in the first byte */
+#define SCSIPI_BUSTYPE_TYPE_SHIFT 0
+#define SCSIPI_BUSTYPE_TYPE(x) (((x) >> SCSIPI_BUSTYPE_TYPE_SHIFT) & 0xff)
+#define	SCSIPI_BUSTYPE_SCSI	0 /* parallel SCSI */
 #define	SCSIPI_BUSTYPE_ATAPI	1
 /* #define SCSIPI_BUSTYPE_ATA	2 */
+/* subtype is stored in the second byte */
+#define SCSIPI_BUSTYPE_SUBTYPE_SHIFT 8
+#define SCSIPI_BUSTYPE_SUBTYPE(x) (((x) >> SCSIPI_BUSTYPE_SUBTYPE_SHIFT) & 0xff)
 
+#define SCSIPI_BUSTYPE_BUSTYPE(t, s) \
+    ((t) << SCSIPI_BUSTYPE_TYPE_SHIFT | (s) << SCSIPI_BUSTYPE_SUBTYPE_SHIFT)
+/* subtypes are defined in each bus type headers */
+/* XXX this should be in scsiconf.h but is used in scsipi_base.c */
+/* SCSI subtypes */
+#define SCSIPI_BUSTYPE_SCSI_PSCSI       0 /* parallel SCSI */
+#define SCSIPI_BUSTYPE_SCSI_FC          1 /* Fiber channel */
+#define SCSIPI_BUSTYPE_SCSI_SAS         2 /* SAS */
+#define SCSIPI_BUSTYPE_SCSI_USB         3 /* USB */
 
 /*
  * scsipi_channel:
