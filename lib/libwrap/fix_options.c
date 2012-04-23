@@ -1,4 +1,4 @@
-/*	$NetBSD: fix_options.c,v 1.10.44.1 2012/04/23 16:48:54 riz Exp $	*/
+/*	$NetBSD: fix_options.c,v 1.10.44.2 2012/04/23 23:40:41 riz Exp $	*/
 
  /*
   * Routine to disable IP-level socket options. This code was taken from 4.4BSD
@@ -12,7 +12,7 @@
 #if 0
 static char sccsid[] = "@(#) fix_options.c 1.6 97/04/08 02:29:19";
 #else
-__RCSID("$NetBSD: fix_options.c,v 1.10.44.1 2012/04/23 16:48:54 riz Exp $");
+__RCSID("$NetBSD: fix_options.c,v 1.10.44.2 2012/04/23 23:40:41 riz Exp $");
 #endif
 #endif
 
@@ -40,7 +40,8 @@ __RCSID("$NetBSD: fix_options.c,v 1.10.44.1 2012/04/23 16:48:54 riz Exp $");
 /* fix_options - get rid of IP-level socket options */
 
 void
-fix_options(struct request_info *request)
+fix_options(request)
+struct request_info *request;
 {
 #ifdef IP_OPTIONS
     unsigned char optbuf[BUFFER_SIZE / 3], *cp;

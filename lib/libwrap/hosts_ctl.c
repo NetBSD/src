@@ -1,4 +1,4 @@
-/*	$NetBSD: hosts_ctl.c,v 1.4.66.1 2012/04/23 16:48:54 riz Exp $	*/
+/*	$NetBSD: hosts_ctl.c,v 1.4.66.2 2012/04/23 23:40:41 riz Exp $	*/
 
  /*
   * hosts_ctl() combines common applications of the host access control
@@ -18,7 +18,7 @@
 #if 0
 static char sccsid[] = "@(#) hosts_ctl.c 1.4 94/12/28 17:42:27";
 #else
-__RCSID("$NetBSD: hosts_ctl.c,v 1.4.66.1 2012/04/23 16:48:54 riz Exp $");
+__RCSID("$NetBSD: hosts_ctl.c,v 1.4.66.2 2012/04/23 23:40:41 riz Exp $");
 #endif
 #endif
 
@@ -28,8 +28,11 @@ __RCSID("$NetBSD: hosts_ctl.c,v 1.4.66.1 2012/04/23 16:48:54 riz Exp $");
 
 /* hosts_ctl - limited interface to the hosts_access() routine */
 
-int
-hosts_ctl(char *daemon, char *name, char *addr, char *user)
+int     hosts_ctl(daemon, name, addr, user)
+char   *daemon;
+char   *name;
+char   *addr;
+char   *user;
 {
     struct request_info request;
 
