@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.97.2.1 2012/03/17 17:33:08 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.97.2.2 2012/04/23 16:51:51 riz Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.97.2.1 2012/03/17 17:33:08 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.97.2.2 2012/04/23 16:51:51 riz Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -702,7 +702,7 @@ do_onfault:
 		ksi.ksi_signo = SIGTRAP;
 		ksi.ksi_code = TRAP_TRACE;
 		ksi.ksi_trap = trapnum;
-		ksi.ksi_addr = (void *)frame->tf_iioq_head;
+		ksi.ksi_addr = (void *)(frame->tf_iioq_head & ~HPPA_PC_PRIV_MASK);
 #ifdef PTRACE
 		ss_clear_breakpoints(l);
 		if (opcode == SSBREAKPOINT)
@@ -710,7 +710,6 @@ do_onfault:
 #endif
 		/* pass to user debugger */
 		trapsignal(l, &ksi);
- 
 		break;
 
 #ifdef PTRACE
@@ -721,7 +720,7 @@ do_onfault:
 		ksi.ksi_signo = SIGTRAP;
 		ksi.ksi_code = TRAP_TRACE;
 		ksi.ksi_trap = trapnum;
-		ksi.ksi_addr = (void *)frame->tf_iioq_head;
+		ksi.ksi_addr = (void *)(frame->tf_iioq_head & ~HPPA_PC_PRIV_MASK);
 
                 /* pass to user debugger */
 		trapsignal(l, &ksi);
