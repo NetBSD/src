@@ -1,4 +1,4 @@
-/*	$NetBSD: k5login.c,v 1.29 2012/04/23 15:07:02 christos Exp $	*/
+/*	$NetBSD: k5login.c,v 1.30 2012/04/23 20:57:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -51,7 +51,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	5.11 (Berkeley) 7/12/92";
 #endif
-__RCSID("$NetBSD: k5login.c,v 1.29 2012/04/23 15:07:02 christos Exp $");
+__RCSID("$NetBSD: k5login.c,v 1.30 2012/04/23 20:57:04 christos Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS5
@@ -71,7 +71,7 @@ __RCSID("$NetBSD: k5login.c,v 1.29 2012/04/23 15:07:02 christos Exp $");
 
 krb5_context kcontext;
 
-int notickets;
+extern int notickets;
 int krb5_configured;
 char *krb5tkfile_env;
 extern char *tty;
@@ -335,14 +335,11 @@ k5login(struct passwd *pw, char *instance, char *localhost, char *password)
 	krb5_timestamp now;
 	krb5_ccache ccache = NULL;
 	long lifetime = KRB5_DEFAULT_LIFE;
-	int options = KRB5_DEFAULT_OPTIONS;
 	char *realm, *client_name;
 	char *principal;
 
 	krb5_configured = 1;
 
-	if (login_krb5_forwardable_tgt)
-		options |= KDC_OPT_FORWARDABLE;
 
 	/*
 	 * Root logins don't use Kerberos.
@@ -366,10 +363,10 @@ k5login(struct passwd *pw, char *instance, char *localhost, char *password)
 
 	if (strcmp(instance, "root") != 0)
 		(void)snprintf(tkt_location, sizeof tkt_location,
-				"FILE:/tmp/krb5cc_%d.%s", pw->pw_uid, tty);
+				"FILE:/tmp/krb5cc_%d", pw->pw_uid);
 	else
 		(void)snprintf(tkt_location, sizeof tkt_location,
-				"FILE:/tmp/krb5cc_root_%d.%s", pw->pw_uid, tty);
+				"FILE:/tmp/krb5cc_root_%d", pw->pw_uid);
 	krb5tkfile_env = tkt_location;
 	has_ccache = 1;
 
@@ -433,8 +430,30 @@ k5login(struct passwd *pw, char *instance, char *localhost, char *password)
 	my_creds.times.endtime = now + lifetime;
 	my_creds.times.renew_till = 0;
 
+#if 1
+	int options = KRB5_DEFAULT_OPTIONS;
+
+	if (login_krb5_forwardable_tgt)
+		options |= KDC_OPT_FORWARDABLE;
+
 	kerror = krb5_get_in_tkt_with_password(kcontext, options,
 	    NULL, NULL, NULL, password, ccache, &my_creds, 0);
+#else
+	/* This does not work yet */
+	krb5_get_init_creds_opt *opt;
+
+	if ((kerror = krb5_get_init_creds_opt_alloc(kcontext, &opt)) != 0) {
+		k5_log(kcontext, kerror, "while getting options");
+		return (1);
+	}
+	if (login_krb5_forwardable_tgt)
+	    krb5_get_init_creds_opt_set_forwardable(opt, 1);
+
+        kerror = krb5_get_init_creds_password(kcontext, &my_creds, me, password,
+	    NULL, NULL, 0, NULL, opt);
+
+	krb5_get_init_creds_opt_free(kcontext, opt);
+#endif
 
 	if (my_creds.server != NULL)
 		krb5_free_principal(kcontext, my_creds.server);
