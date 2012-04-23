@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.58 2012/04/20 02:07:43 christos Exp $	*/
+/*	$NetBSD: fs.h,v 1.59 2012/04/23 17:19:00 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -704,13 +704,13 @@ struct ocg {
  */
 #define	blksize(fs, ip, lbn) \
 	(((lbn) >= NDADDR || (ip)->i_size >= lblktosize(fs, (lbn) + 1)) \
-	    ? (uint64_t)(fs)->fs_bsize \
-	    : (fragroundup(fs, blkoff(fs, (ip)->i_size))))
+	    ? (fs)->fs_bsize \
+	    : ((int32_t)fragroundup(fs, blkoff(fs, (ip)->i_size))))
 
 #define	sblksize(fs, size, lbn) \
 	(((lbn) >= NDADDR || (size) >= ((lbn) + 1) << (fs)->fs_bshift) \
-	  ? (uint64_t)(fs)->fs_bsize \
-	  : (fragroundup(fs, blkoff(fs, (uint64_t)(size)))))
+	  ? (fs)->fs_bsize \
+	  : ((int32_t)fragroundup(fs, blkoff(fs, (uint64_t)(size)))))
 
 
 /*
