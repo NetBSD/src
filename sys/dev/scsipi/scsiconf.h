@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.56 2008/07/16 18:50:58 drochner Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.56.34.1 2012/04/23 16:28:30 riz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -64,6 +64,9 @@ struct scsibus_softc {
 #define	SCSIBUSF_OPEN	0x00000001	/* bus is open */
 
 extern const struct scsipi_bustype scsi_bustype;
+extern const struct scsipi_bustype scsi_fc_bustype;
+extern const struct scsipi_bustype scsi_sas_bustype;
+extern const struct scsipi_bustype scsi_usb_bustype;
 
 int	scsi_change_def(struct scsipi_periph *, int);
 void	scsi_kill_pending(struct scsipi_periph *);
