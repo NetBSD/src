@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.75 2012/04/23 16:55:34 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.76 2012/04/23 23:41:47 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1935,10 +1935,6 @@ sys/arch/amd64/amd64/vector.S			1.39
 	failures on amd64.
 	[jym, ticket #194]
 
-lib/libc/stdlib/jemalloc.c			1.27 via patch
-lib/libintl/gettext.c				1.27
-lib/libintl/textdomain.c			1.13
-lib/libkvm/kvm_getloadavg.c			1.11
 lib/libperfuse/debug.c				1.11
 lib/libperfuse/ops.c				1.52-1.54
 lib/libperfuse/perfuse.c			1.26-1.28
@@ -1950,25 +1946,6 @@ lib/libpuffs/puffs.3				1.50-1.53
 lib/libpuffs/puffs.h				1.120-1.121
 lib/libpuffs/puffs_ops.3			1.30
 lib/libpuffs/puffs_priv.h			1.45
-lib/librmt/rmtlib.c				1.26
-lib/librumpclient/rumpclient.c			1.48
-lib/libskey/skeysubr.c				1.27
-lib/libwrap/clean_exit.c			1.5
-lib/libwrap/diag.c				1.9
-lib/libwrap/eval.c				1.7
-lib/libwrap/fix_options.c			1.11
-lib/libwrap/hosts_access.c			1.20
-lib/libwrap/hosts_ctl.c				1.5
-lib/libwrap/misc.c				1.10
-lib/libwrap/options.c				1.15
-lib/libwrap/percent_x.c				1.5
-lib/libwrap/refuse.c				1.5
-lib/libwrap/rfc931.c				1.9
-lib/libwrap/shell_cmd.c				1.6
-lib/libwrap/socket.c				1.19
-lib/libwrap/tcpd.h				1.13
-lib/libwrap/update.c				1.9
-lib/liby/yyerror.c				1.9
 sys/fs/puffs/puffs_msgif.h			1.78
 sys/fs/puffs/puffs_node.c			1.24
 sys/fs/puffs/puffs_sys.h			1.79
