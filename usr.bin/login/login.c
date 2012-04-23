@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.100 2012/04/23 18:27:15 christos Exp $	*/
+/*	$NetBSD: login.c,v 1.101 2012/04/23 20:57:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.100 2012/04/23 18:27:15 christos Exp $");
+__RCSID("$NetBSD: login.c,v 1.101 2012/04/23 20:57:04 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -118,7 +118,7 @@ static void	 usage(void);
 
 #if defined(KERBEROS5)
 int	has_ccache = 0;
-static int	notickets = 1;
+int	notickets = 1;
 extern krb5_context kcontext;
 extern int	have_forward;
 extern char	*krb5tkfile_env;
