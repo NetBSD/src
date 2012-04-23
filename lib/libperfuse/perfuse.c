@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.25 2012/02/03 15:54:15 manu Exp $ */
+/*  $NetBSD: perfuse.c,v 1.25.2.1 2012/04/23 16:48:59 riz Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -105,8 +105,7 @@ init_state(void)
 
 
 static int
-get_fd(data)
-	const char *data;
+get_fd(const char *data)
 {
 	char *string;
 	const char fdopt[] = "fd=";
@@ -138,10 +137,7 @@ get_fd(data)
 }
 
 int
-perfuse_open(path, flags, mode)
-	const char *path;
-	int flags;
-	mode_t mode;
+perfuse_open(const char *path, int flags, mode_t mode)
 {
 	int sv[2];
 	struct sockaddr_un sun;
@@ -259,12 +255,8 @@ perfuse_open(path, flags, mode)
 }
 
 int
-perfuse_mount(source, target, filesystemtype, mountflags, data)
-	const char *source;
-	const char *target;
-	const char *filesystemtype;
-	long mountflags;
-	const void *data;
+perfuse_mount(const char *source, const char *target,
+	const char *filesystemtype, long mountflags, const void *data)
 {
 	int s;
 	size_t len;
@@ -380,8 +372,7 @@ perfuse_mount(source, target, filesystemtype, mountflags, data)
 
 
 uint64_t
-perfuse_next_unique(pu)
-	struct puffs_usermount *pu;
+perfuse_next_unique(struct puffs_usermount *pu)
 {
 	struct perfuse_state *ps;
 
@@ -391,9 +382,7 @@ perfuse_next_unique(pu)
 } 
 
 struct puffs_usermount *
-perfuse_init(pc, pmi)
-	struct perfuse_callbacks *pc;
-	struct perfuse_mount_info *pmi;
+perfuse_init(struct perfuse_callbacks *pc, struct perfuse_mount_info *pmi)
 {
 	struct perfuse_state *ps;
 	struct puffs_usermount *pu;
@@ -408,17 +397,18 @@ perfuse_init(pc, pmi)
 	/*
 	 * perfused can grow quite large, let assume there's enough ram ...
 	 */
-	if (getrlimit(RLIMIT_DATA, &rl) < 0) {
-		DERR(EX_OSERR, "%s: getrlimit failed: %s", __func__,
+	rl.rlim_cur = RLIM_INFINITY;
+	rl.rlim_max = RLIM_INFINITY;
+
+	if (setrlimit(RLIMIT_DATA, &rl) < 0) {
+		DERR(EX_OSERR, "%s: setrlimit failed: %s", __func__,
 		    strerror(errno));
-	} else {
-		rl.rlim_cur = rl.rlim_max;
-		if (setrlimit(RLIMIT_DATA, &rl) < 0) {
-			DERR(EX_OSERR, "%s: setrlimit failed: %s", __func__,
-			    strerror(errno));
-		}
 	}
-		
+
+	if (setrlimit(RLIMIT_AS, &rl) < 0) {
+		DERR(EX_OSERR, "%s: setrlimit failed: %s", __func__,
+		    strerror(errno));
+	}
 
 	ps = init_state();
 	ps->ps_owner_uid = pmi->pmi_uid;
@@ -496,29 +486,34 @@ perfuse_init(pc, pmi)
 	PUFFSOP_SET(pops, perfuse, node, listextattr);
 	PUFFSOP_SET(pops, perfuse, node, deleteextattr);
 #endif /* PUFFS_EXTNAMELEN */
+#ifdef PUFFS_KFLAG_CACHE_FS_TTL
+	PUFFSOP_SET(pops, perfuse, node, getattr_ttl);
+	PUFFSOP_SET(pops, perfuse, node, setattr_ttl);
+#endif /* PUFFS_KFLAG_CACHE_FS_TTL */
 
 	/*
-	 * We used to have PUFFS_KFLAG_WTCACHE here, which uses the
-	 * page cache (highly desirable to get mmap(2)), but still sends
-	 * all writes to the filesystem. In fact it does not send the
-	 * data written, but the pages that contain it. 
-	 *
-	 * There is a nasty bug hidden somewhere, possibly in libpuffs'
-	 * VOP_FSYNC, which sends an asynchronous PUFFS_SETATTR that
-	 * update file size. When writes are in progress, it will cause
-	 * the file to be truncated and we get a zero-filled chunk at the
-	 * beginning of a page. Removing PUFFS_KFLAG_WTCACHE fixes that
-	 * problem. 
-	 * 
-	 * The other consequences are that changes will not be propagated
-	 * immediatly to the filesystem, and we get a huge performance gain
-	 * because much less requests are sent. A test case for the above
-	 * mentioned bug got its execution time slashed by factor 50.
-	 *
 	 * PUFFS_KFLAG_NOCACHE_NAME is required so that we can see changes
-	 * done by other machines in networked filesystems.
+	 * done by other machines in networked filesystems. In later
+	 * NetBSD releases we use the alternative PUFFS_KFLAG_CACHE_FS_TTL, 
+	 * which implement name cache with a filesystem-provided TTL.
 	 */
+#ifdef PUFFS_KFLAG_CACHE_FS_TTL
+	puffs_flags = PUFFS_KFLAG_CACHE_FS_TTL;
+#else
 	puffs_flags = PUFFS_KFLAG_NOCACHE_NAME;
+#endif
+	
+	/* 
+	 * It would be nice to avoid useless inactive, and only
+	 * get them on file open for writing (PUFFS does 
+	 * CLOSE/WRITE/INACTIVE, therefore actual close must be
+	 * done at INACTIVE time). Unfortunatley, puffs_setback
+	 * crashes when called on OPEN, therefore leave it for 
+	 * another day.
+	 */
+#ifdef notyet
+	puffs_flags |= PUFFS_FLAG_IAONDEMAND;
+#endif
 
 	if (perfuse_diagflags & PDF_PUFFS)
 		puffs_flags |= PUFFS_FLAG_OPDUMP;
@@ -567,9 +562,7 @@ perfuse_init(pc, pmi)
 } 
 
 void
-perfuse_setspecific(pu, priv)
-	struct puffs_usermount *pu;
-	void *priv;
+perfuse_setspecific(struct puffs_usermount *pu, void *priv)
 {
 	struct perfuse_state *ps;
 
@@ -580,8 +573,7 @@ perfuse_setspecific(pu, priv)
 }
 
 void *
-perfuse_getspecific(pu)
-	struct puffs_usermount *pu;
+perfuse_getspecific(struct puffs_usermount *pu)
 {
 	struct perfuse_state *ps;
 
@@ -591,8 +583,7 @@ perfuse_getspecific(pu)
 }
 
 int
-perfuse_inloop(pu)
-	struct puffs_usermount *pu;
+perfuse_inloop(struct puffs_usermount *pu)
 {
 	struct perfuse_state *ps;
 
@@ -602,8 +593,7 @@ perfuse_inloop(pu)
 }
 
 int
-perfuse_mainloop(pu)
-	struct puffs_usermount *pu;
+perfuse_mainloop(struct puffs_usermount *pu)
 {
 	struct perfuse_state *ps;
 
@@ -623,16 +613,13 @@ perfuse_mainloop(pu)
 
 /* ARGSUSED0 */
 uint64_t
-perfuse_get_nodeid(pu, opc)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
+perfuse_get_nodeid(struct puffs_usermount *pu, puffs_cookie_t opc)
 {
 	return PERFUSE_NODE_DATA(opc)->pnd_nodeid;
 }
 
 int
-perfuse_unmount(pu)
-	struct puffs_usermount *pu;
+perfuse_unmount(struct puffs_usermount *pu)
 {
 	struct perfuse_state *ps;
 

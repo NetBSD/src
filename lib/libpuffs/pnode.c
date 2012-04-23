@@ -1,4 +1,4 @@
-/*	$NetBSD: pnode.c,v 1.10 2008/08/12 19:44:39 pooka Exp $	*/
+/*	$NetBSD: pnode.c,v 1.10.20.1 2012/04/23 16:48:57 riz Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: pnode.c,v 1.10 2008/08/12 19:44:39 pooka Exp $");
+__RCSID("$NetBSD: pnode.c,v 1.10.20.1 2012/04/23 16:48:57 riz Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -174,3 +174,27 @@ puffs_newinfo_setrdev(struct puffs_newinfo *pni, dev_t rdev)
 
 	*pni->pni_rdev = rdev;
 }
+
+void
+puffs_newinfo_setva(struct puffs_newinfo *pni, struct vattr *va)
+{
+
+	(void)memcpy(pni->pni_va, va, sizeof(struct vattr));
+}
+
+void
+puffs_newinfo_setvattl(struct puffs_newinfo *pni, struct timespec *va_ttl)
+{
+
+	pni->pni_va_ttl->tv_sec = va_ttl->tv_sec;
+	pni->pni_va_ttl->tv_nsec = va_ttl->tv_nsec;
+}
+
+void
+puffs_newinfo_setcnttl(struct puffs_newinfo *pni, struct timespec *cn_ttl)
+{
+
+	pni->pni_cn_ttl->tv_sec = cn_ttl->tv_sec;
+	pni->pni_cn_ttl->tv_nsec = cn_ttl->tv_nsec;
+}
+

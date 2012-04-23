@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpd.h,v 1.12 2002/05/24 05:38:20 itojun Exp $	*/
+/*	$NetBSD: tcpd.h,v 1.12.56.1 2012/04/23 16:48:56 riz Exp $	*/
  /*
   * @(#) tcpd.h 1.5 96/03/19 16:22:24
   * 
@@ -29,14 +29,10 @@ struct request_info {
     char    pid[10];			/* access via eval_pid(request) */
     struct host_info client[1];		/* client endpoint info */
     struct host_info server[1];		/* server endpoint info */
-    void  (*sink)			/* datagram sink function or 0 */
-		__P((int));
-    void  (*hostname)			/* address to printable hostname */
-		__P((struct host_info *));
-    void  (*hostaddr)			/* address to printable address */
-		__P((struct host_info *));
-    void  (*cleanup)			/* cleanup function or 0 */
-		__P((void));
+    void (*sink)(int);			/* datagram sink function or 0 */
+    void (*hostname)(struct host_info *); /* address to printable hostname */
+    void (*hostaddr)(struct host_info *); /* address to printable address */
+    void (*cleanup)(void);		/* cleanup function or 0 */
     struct netconfig *config;		/* netdir handle */
 };
 
@@ -74,32 +70,32 @@ __BEGIN_DECLS
 #define fromhost sock_host		/* no TLI support needed */
 
 extern int hosts_access			/* access control */
-		__P((struct request_info *));
+		(struct request_info *);
 extern int hosts_ctl			/* limited interface to hosts_access */
-		__P((char *, char *, char *, char *));
+		(char *, char *, char *, char *);
 extern void shell_cmd			/* execute shell command */
-		__P((char *));
+		(char *);
 extern char *percent_x			/* do %<char> expansion */
-		__P((char *, int, char *, struct request_info *));
+		(char *, int, char *, struct request_info *);
 extern void rfc931			/* client name from RFC 931 daemon */
-		__P((struct sockaddr *, struct sockaddr *, char *));
+		(struct sockaddr *, struct sockaddr *, char *);
 extern void clean_exit			/* clean up and exit */
-		__P((struct request_info *));
+		(struct request_info *);
 extern void refuse			/* clean up and exit */
-		__P((struct request_info *));
+		(struct request_info *);
 extern char *xgets			/* fgets() on steroids */
-		__P((char *, int, FILE *));
+		(char *, int, FILE *);
 extern char *split_at			/* strchr() and split */
-		__P((char *, int));
+		(char *, int);
 extern int dot_quad_addr	/* restricted inet_aton() */
-		__P((char *, unsigned long *));
+		(char *, unsigned long *);
 
 /* Global variables. */
 
 extern int allow_severity;		/* for connection logging */
 extern int deny_severity;		/* for connection logging */
-extern char *hosts_allow_table;		/* for verification mode redirection */
-extern char *hosts_deny_table;		/* for verification mode redirection */
+extern const char *hosts_allow_table;	/* for verification mode redirection */
+extern const char *hosts_deny_table;	/* for verification mode redirection */
 extern int hosts_access_verbose;	/* for verbose matching mode */
 extern int rfc931_timeout;		/* user lookup timeout */
 extern int resident;			/* > 0 if resident process */
@@ -110,9 +106,9 @@ extern int resident;			/* > 0 if resident process */
   */
 
 extern struct request_info *request_init	/* initialize request */
-		__P((struct request_info *,...));
+		(struct request_info *,...);
 extern struct request_info *request_set		/* update request structure */
-		__P((struct request_info *,...));
+		(struct request_info *,...);
 
 #define RQ_FILE		1		/* file descriptor */
 #define RQ_DAEMON	2		/* server process (argv[0]) */
@@ -133,28 +129,28 @@ extern struct request_info *request_set		/* update request structure */
   */
 
 extern char *eval_user			/* client user */
-		__P((struct request_info *));
+		(struct request_info *);
 extern char *eval_hostname		/* printable hostname */
-		__P((struct host_info *));
+		(struct host_info *);
 extern char *eval_hostaddr		/* printable host address */
-		__P((struct host_info *));
+		(struct host_info *);
 extern char *eval_hostinfo		/* host name or address */
-		__P((struct host_info *));
+		(struct host_info *);
 extern char *eval_client		/* whatever is available */
-		__P((struct request_info *));
+		(struct request_info *);
 extern char *eval_server		/* whatever is available */
-		__P((struct request_info *));
+		(struct request_info *);
 #define eval_daemon(r)	((r)->daemon)	/* daemon process name */
 #define eval_pid(r)	((r)->pid)	/* process id */
 
 /* Socket-specific methods, including DNS hostname lookups. */
 
 extern void sock_host			/* look up endpoint addresses */
-		__P((struct request_info *));
+		(struct request_info *);
 extern void sock_hostname		/* translate address to hostname */
-		__P((struct host_info *));
+		(struct host_info *);
 extern void sock_hostaddr		/* address to printable address */
-		__P((struct host_info *));
+		(struct host_info *);
 #define sock_methods(r) \
 	{ (r)->hostname = sock_hostname; (r)->hostaddr = sock_hostaddr; }
 
@@ -162,7 +158,7 @@ extern void sock_hostaddr		/* address to printable address */
 
 #if defined(TLI) || defined(PTX) || defined(TLI_SEQUENT)
 extern void tli_host			/* look up endpoint addresses etc. */
-		__P((struct request_info *));
+		(struct request_info *);
 #endif
 
  /*
@@ -172,15 +168,15 @@ extern void tli_host			/* look up endpoint addresses etc. */
   */
 
 extern void tcpd_warn			/* report problem and proceed */
-		__P((char *, ...))
+		(const char *, ...)
 	__attribute__((__format__(__printf__, 1, 2)));
 extern void tcpd_jump			/* report problem and jump */
-		__P((char *, ...))
+		(const char *, ...)
 	__attribute__((__format__(__printf__, 1, 2)));
 __END_DECLS
 
 struct tcpd_context {
-    char   *file;			/* current file */
+    const char *file;			/* current file */
     int     line;			/* current line */
 };
 __BEGIN_DECLS
@@ -207,8 +203,8 @@ __END_DECLS
 
 __BEGIN_DECLS
 extern void process_options		/* execute options */
-		__P((char *, struct request_info *));
+		(char *, struct request_info *);
 extern int dry_run;			/* verification flag */
 extern void fix_options			/* get rid of IP-level socket options */
-		__P((struct request_info *));
+		(struct request_info *);
 __END_DECLS

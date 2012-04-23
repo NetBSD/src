@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fuzz.c,v 1.4 2010/08/27 12:42:21 pooka Exp $	*/
+/*	$NetBSD: t_fuzz.c,v 1.4.8.1 2012/04/23 16:49:03 riz Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -72,6 +72,12 @@ fixkflag(struct puffs_kargs *kargs)
 {
 
 	kargs->pa_flags &= PUFFS_KFLAG_MASK;
+
+	/*
+	 * PUFFS_KFLAG_CACHE_FS_TTL require extended behavior
+	 * from the filesystem for which we have no test right now.
+	 */
+	kargs->pa_flags &= ~PUFFS_KFLAG_CACHE_FS_TTL;
 }
 
 static void

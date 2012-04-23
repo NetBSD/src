@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.6 2002/06/06 21:42:42 itojun Exp $	*/
+/*	$NetBSD: eval.c,v 1.6.56.1 2012/04/23 16:48:56 riz Exp $	*/
 
  /*
   * Routines for controlled evaluation of host names, user names, and so on.
@@ -25,7 +25,7 @@
 #if 0
 static char sccsid[] = "@(#) eval.c 1.3 95/01/30 19:51:45";
 #else
-__RCSID("$NetBSD: eval.c,v 1.6 2002/06/06 21:42:42 itojun Exp $");
+__RCSID("$NetBSD: eval.c,v 1.6.56.1 2012/04/23 16:48:56 riz Exp $");
 #endif
 #endif
 
@@ -49,8 +49,8 @@ char    paranoid[] = STRING_PARANOID;
 
 /* eval_user - look up user name */
 
-char   *eval_user(request)
-struct request_info *request;
+char   *
+eval_user(struct request_info *request)
 {
     if (request->user[0] == 0) {
 	(void)strlcpy(request->user, unknown, sizeof(request->user));
@@ -62,8 +62,8 @@ struct request_info *request;
 
 /* eval_hostaddr - look up printable address */
 
-char   *eval_hostaddr(host)
-struct host_info *host;
+char   *
+eval_hostaddr(struct host_info *host)
 {
     if (host->addr[0] == 0) {
 	(void)strlcpy(host->addr, unknown, sizeof(host->addr));
@@ -75,8 +75,8 @@ struct host_info *host;
 
 /* eval_hostname - look up host name */
 
-char   *eval_hostname(host)
-struct host_info *host;
+char   *
+eval_hostname(struct host_info *host)
 {
     if (host->name[0] == 0) {
 	(void)strlcpy(host->name, unknown, sizeof(host->name));
@@ -88,8 +88,8 @@ struct host_info *host;
 
 /* eval_hostinfo - return string with host name (preferred) or address */
 
-char   *eval_hostinfo(host)
-struct host_info *host;
+char   *
+eval_hostinfo(struct host_info *host)
 {
     char   *hostname;
 
@@ -107,8 +107,8 @@ struct host_info *host;
 
 /* eval_client - return string with as much about the client as we know */
 
-char   *eval_client(request)
-struct request_info *request;
+char   *
+eval_client(struct request_info *request)
 {
     static char both[2 * STRING_LENGTH];
     char   *hostinfo = eval_hostinfo(request->client);
@@ -127,8 +127,8 @@ struct request_info *request;
 
 /* eval_server - return string with as much about the server as we know */
 
-char   *eval_server(request)
-struct request_info *request;
+char   *
+eval_server(struct request_info *request)
 {
     static char both[2 * STRING_LENGTH];
     char   *host = eval_hostinfo(request->server);

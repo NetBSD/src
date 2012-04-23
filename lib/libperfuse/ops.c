@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.50.2.1 2012/03/10 16:42:30 riz Exp $ */
+/*  $NetBSD: ops.c,v 1.50.2.2 2012/04/23 16:48:59 riz Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -34,7 +34,7 @@
 #include <sysexits.h>
 #include <syslog.h>
 #include <puffs.h>
-#include <sys/socket.h>
+#include <sys/cdefs.h>
 #include <sys/socket.h>
 #include <sys/extattr.h>
 #include <sys/time.h>
@@ -48,10 +48,15 @@ extern int perfuse_diagflags;
 #if 0
 static void print_node(const char *, puffs_cookie_t);
 #endif
+#ifdef PUFFS_KFLAG_CACHE_FS_TTL
+static void perfuse_newinfo_setttl(struct puffs_newinfo *, 
+    struct fuse_entry_out *, struct fuse_attr_out *);
+#else /* PUFFS_KFLAG_CACHE_FS_TTL */
 static void set_expire(puffs_cookie_t, struct fuse_entry_out *, 
-   struct fuse_attr_out *);
+    struct fuse_attr_out *);
 static int attr_expired(puffs_cookie_t);
 static int entry_expired(puffs_cookie_t);
+#endif /* PUFFS_KFLAG_CACHE_FS_TTL */
 static int xchg_msg(struct puffs_usermount *, puffs_cookie_t, 
     perfuse_msg_t *, size_t, enum perfuse_xchg_pb_reply); 
 static int mode_access(puffs_cookie_t, const struct puffs_cred *, mode_t);
@@ -61,11 +66,10 @@ static void fuse_attr_to_vap(struct perfuse_state *,
 static int node_lookup_dir_nodot(struct puffs_usermount *,
     puffs_cookie_t, char *, size_t, struct puffs_node **);
 static int node_lookup_common(struct puffs_usermount *, puffs_cookie_t, 
-    const char *, const struct puffs_cred *, struct puffs_node **);
+    struct puffs_newinfo *, const char *, const struct puffs_cred *, 
+    struct puffs_node **);
 static int node_mk_common(struct puffs_usermount *, puffs_cookie_t,
     struct puffs_newinfo *, const struct puffs_cn *pcn, perfuse_msg_t *);
-static int node_mk_common_final(struct puffs_usermount *, puffs_cookie_t,
-    struct puffs_node *, const struct puffs_cn *pcn);
 static uint64_t readdir_last_cookie(struct fuse_dirent *, size_t); 
 static ssize_t fuse_to_dirent(struct puffs_usermount *, puffs_cookie_t,
     struct fuse_dirent *, size_t);
@@ -108,9 +112,7 @@ const int vttoif_tab[9] = {
 
 #if 0
 static void 
-print_node(func, opc)
-	const char *func;
-	puffs_cookie_t opc;
+print_node(const char *func, puffs_cookie_t opc)
 {
 	struct puffs_node *pn;
 	struct perfuse_node_data *pnd;
@@ -128,10 +130,8 @@ print_node(func, opc)
 #endif /* PERFUSE_DEBUG */
 	
 int
-perfuse_node_close_common(pu, opc, mode)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	int mode;
+perfuse_node_close_common(struct puffs_usermount *pu, puffs_cookie_t opc,
+	int mode)
 {
 	struct perfuse_state *ps;
 	perfuse_msg_t *pm;
@@ -197,12 +197,8 @@ perfuse_node_close_common(pu, opc, mode)
 }
 
 static int
-xchg_msg(pu, opc, pm, len, wait)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	perfuse_msg_t *pm;
-	size_t len;
-     	enum perfuse_xchg_pb_reply wait;
+xchg_msg(struct puffs_usermount *pu, puffs_cookie_t opc, perfuse_msg_t *pm,
+	size_t len, enum perfuse_xchg_pb_reply wait)
 {
 	struct perfuse_state *ps;
 	struct perfuse_node_data *pnd;
@@ -251,10 +247,7 @@ xchg_msg(pu, opc, pm, len, wait)
 }
 
 static int
-mode_access(opc, pcr, mode)
-	puffs_cookie_t opc;
-	const struct puffs_cred *pcr;
-	mode_t mode;
+mode_access(puffs_cookie_t opc, const struct puffs_cred *pcr, mode_t mode)
 {
 	struct puffs_node *pn;
 	struct vattr *va;
@@ -275,9 +268,7 @@ mode_access(opc, pcr, mode)
 }
 
 static int 
-sticky_access(targ, pcr)
-	struct puffs_node *targ;
-	const struct puffs_cred *pcr;
+sticky_access(struct puffs_node *targ, const struct puffs_cred *pcr)
 {
 	uid_t uid;
 	struct puffs_node *tdir;
@@ -311,10 +302,8 @@ sticky_access(targ, pcr)
 
 
 static void
-fuse_attr_to_vap(ps, vap, fa)
-	struct perfuse_state *ps;
-	struct vattr *vap;
-	struct fuse_attr *fa;
+fuse_attr_to_vap(struct perfuse_state *ps, struct vattr *vap,
+	struct fuse_attr *fa)
 {
 	vap->va_type = IFTOVT(fa->mode);
 	vap->va_mode = fa->mode & ALLPERMS;
@@ -349,25 +338,61 @@ fuse_attr_to_vap(ps, vap, fa)
 	return;
 }
 
-static void 
-set_expire(opc, feo, fao)
-	puffs_cookie_t opc;
-	struct fuse_entry_out *feo;
-	struct fuse_attr_out *fao;
+#ifdef PUFFS_KFLAG_CACHE_FS_TTL
+static void perfuse_newinfo_setttl(struct puffs_newinfo *pni, 
+	struct fuse_entry_out *feo, struct fuse_attr_out *fao)
 {
+#ifdef PERFUSE_DEBUG
+	if ((feo == NULL) && (fao == NULL))
+		DERRX(EX_SOFTWARE, "%s: feo and fao NULL", __func__);
+
+	if ((feo != NULL) && (fao != NULL))
+		DERRX(EX_SOFTWARE, "%s: feo and fao != NULL", __func__);
+#endif /* PERFUSE_DEBUG */
+
+	if (fao != NULL) {
+		struct timespec va_ttl;
+
+		va_ttl.tv_sec = fao->attr_valid;
+		va_ttl.tv_nsec = fao->attr_valid_nsec;
+
+		puffs_newinfo_setvattl(pni, &va_ttl);
+	}
+
+	if (feo != NULL) {
+		struct timespec va_ttl;
+		struct timespec cn_ttl;
+
+		va_ttl.tv_sec = feo->attr_valid;
+		va_ttl.tv_nsec = feo->attr_valid_nsec;
+		cn_ttl.tv_sec = feo->entry_valid;
+		cn_ttl.tv_nsec = feo->entry_valid_nsec;
+
+		puffs_newinfo_setvattl(pni, &va_ttl);
+		puffs_newinfo_setcnttl(pni, &cn_ttl);
+	}
+
+	return;	
+}
+#else /* PUFFS_KFLAG_CACHE_FS_TTL */
+static void 
+set_expire(puffs_cookie_t opc, struct fuse_entry_out *feo,
+	   struct fuse_attr_out *fao)
+{
+ 	struct puffs_node *pn = (struct puffs_node *)opc;
 	struct perfuse_node_data *pnd = PERFUSE_NODE_DATA(opc);
 	struct timespec entry_ts;
 	struct timespec attr_ts;
 	struct timespec now;
+
+	if (clock_gettime(CLOCK_REALTIME, &now) != 0)
+		DERR(EX_OSERR, "clock_gettime failed");
 
 	if ((feo == NULL) && (fao == NULL))
 		DERRX(EX_SOFTWARE, "%s: feo and fao NULL", __func__);
 
 	if ((feo != NULL) && (fao != NULL))
 		DERRX(EX_SOFTWARE, "%s: feo and fao != NULL", __func__);
-
-	if (clock_gettime(CLOCK_REALTIME, &now) != 0)
-		DERR(EX_OSERR, "clock_gettime failed");
 
 	if (feo != NULL) {
 		entry_ts.tv_sec = (time_t)feo->entry_valid;
@@ -392,8 +417,7 @@ set_expire(opc, feo, fao)
 }
 
 static int
-attr_expired(opc)
-	puffs_cookie_t opc;
+attr_expired(puffs_cookie_t opc)
 {
 	struct perfuse_node_data *pnd;
 	struct timespec expire;
@@ -409,8 +433,7 @@ attr_expired(opc)
 }
 
 static int
-entry_expired(opc)
-	puffs_cookie_t opc;
+entry_expired(puffs_cookie_t opc)
 {
 	struct perfuse_node_data *pnd;
 	struct timespec expire;
@@ -424,6 +447,7 @@ entry_expired(opc)
 
 	return timespeccmp(&expire, &now, <);
 }
+#endif /* PUFFS_KFLAG_CACHE_FS_TTL */
 
 
 /* 
@@ -432,12 +456,8 @@ entry_expired(opc)
  * These are returned by readdir and deserve tweaks.
  */
 static int
-node_lookup_dir_nodot(pu, opc, name, namelen, pnp)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	char *name;
-	size_t namelen;
-	struct puffs_node **pnp;
+node_lookup_dir_nodot(struct puffs_usermount *pu, puffs_cookie_t opc,
+	char *name, size_t namelen, struct puffs_node **pnp)
 {
 	/*
 	 * "dot" is easy as we already know it
@@ -455,16 +475,13 @@ node_lookup_dir_nodot(pu, opc, name, namelen, pnp)
 		return 0;
 	}
 
-	return node_lookup_common(pu, opc, name, NULL, pnp);
+	return node_lookup_common(pu, opc, NULL, name, NULL, pnp);
 }
 
 static int
-node_lookup_common(pu, opc, path, pcr, pnp)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	const char *path;
-	const struct puffs_cred *pcr;
-	struct puffs_node **pnp;
+node_lookup_common(struct puffs_usermount *pu, puffs_cookie_t opc,
+	struct puffs_newinfo *pni, const char *path, 
+	const struct puffs_cred *pcr, struct puffs_node **pnp)
 {
 	struct perfuse_state *ps;
 	struct perfuse_node_data *oldpnd;
@@ -510,6 +527,7 @@ node_lookup_common(pu, opc, path, pcr, pnp)
 		break;
 	}
 
+#ifndef PUFFS_KFLAG_CACHE_FS_TTL
 	/*
 	 * Check for cached name
 	 */
@@ -518,6 +536,7 @@ node_lookup_common(pu, opc, path, pcr, pnp)
 		*pnp = oldpnd->pnd_pn;
 		return 0;
 	}
+#endif /* PUFFS_KFLAG_CACHE_FS_TTL */
 
 	len = strlen(path) + 1;
 
@@ -549,14 +568,12 @@ node_lookup_common(pu, opc, path, pcr, pnp)
 
 	feo = GET_OUTPAYLOAD(ps, pm, fuse_entry_out);
 
+	pn = NULL;
 	if (oldpnd != NULL) {
 		if (oldpnd->pnd_nodeid == feo->nodeid) {
 			oldpnd->pnd_fuse_nlookup++;
 			oldpnd->pnd_puffs_nlookup++;
-			*pnp = oldpnd->pnd_pn;
-
-			ps->ps_destroy_msg(pm);
-			return 0;
+			pn = oldpnd->pnd_pn;
 		} else {
 			oldpnd->pnd_flags |= PND_REMOVED;
 #ifdef PERFUSE_DEBUG
@@ -569,12 +586,16 @@ node_lookup_common(pu, opc, path, pcr, pnp)
 		}
 	}
 
-	pn = perfuse_new_pn(pu, path, opc);
-	PERFUSE_NODE_DATA(pn)->pnd_nodeid = feo->nodeid;
+	if (pn == NULL) {
+		pn = perfuse_new_pn(pu, path, opc);
+		PERFUSE_NODE_DATA(pn)->pnd_nodeid = feo->nodeid;
+	}
 
 	fuse_attr_to_vap(ps, &pn->pn_va, &feo->attr);
 	pn->pn_va.va_gen = (u_long)(feo->generation);
+#ifndef PUFFS_KFLAG_CACHE_FS_TTL
 	set_expire((puffs_cookie_t)pn, feo, NULL);
+#endif /* PUFFS_KFLAG_CACHE_FS_TTL */
 
 	*pnp = pn;
 
@@ -585,6 +606,17 @@ node_lookup_common(pu, opc, path, pcr, pnp)
 			(void *)opc, pn, feo->nodeid, path);
 #endif
 	
+	if (pni != NULL) {
+#ifdef PUFFS_KFLAG_CACHE_FS_TTL
+		puffs_newinfo_setva(pni, &pn->pn_va);
+		perfuse_newinfo_setttl(pni, feo, NULL);
+#endif /* PUFFS_KFLAG_CACHE_FS_TTL */
+		puffs_newinfo_setcookie(pni, pn);
+		puffs_newinfo_setvtype(pni, pn->pn_va.va_type); 
+		puffs_newinfo_setsize(pni, (voff_t)pn->pn_va.va_size);
+		puffs_newinfo_setrdev(pni, pn->pn_va.va_rdev);
+	}
+
 	ps->ps_destroy_msg(pm);
 
 	return 0;
@@ -598,12 +630,9 @@ node_lookup_common(pu, opc, path, pcr, pnp)
  * perfuse_node_symlink
  */
 static int
-node_mk_common(pu, opc, pni, pcn, pm)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	struct puffs_newinfo *pni;
-	const struct puffs_cn *pcn;
-	perfuse_msg_t *pm;
+node_mk_common(struct puffs_usermount *pu, puffs_cookie_t opc,
+	struct puffs_newinfo *pni, const struct puffs_cn *pcn,
+	perfuse_msg_t *pm)
 {
 	struct perfuse_state *ps;
 	struct puffs_node *pn;
@@ -624,9 +653,15 @@ node_mk_common(pu, opc, pni, pcn, pm)
 
 	fuse_attr_to_vap(ps, &pn->pn_va, &feo->attr);
 	pn->pn_va.va_gen = (u_long)(feo->generation);
-	set_expire((puffs_cookie_t)pn, feo, NULL);
 
 	puffs_newinfo_setcookie(pni, pn);
+#ifdef PUFFS_KFLAG_CACHE_FS_TTL
+	puffs_newinfo_setva(pni, &pn->pn_va);
+	perfuse_newinfo_setttl(pni, feo, NULL);
+#else
+	set_expire((puffs_cookie_t)pn, feo, NULL);
+#endif
+
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FILENAME)
@@ -636,70 +671,15 @@ node_mk_common(pu, opc, pni, pcn, pm)
 			PERFUSE_NODE_DATA(pn)->pnd_flags, feo->nodeid);
 #endif
 	ps->ps_destroy_msg(pm);
-
-	return node_mk_common_final(pu, opc, pn, pcn);
-}
-
-/*
- * Common final code for methods that create objects:
- * perfuse_node_mkdir via node_mk_common
- * perfuse_node_mknod via node_mk_common
- * perfuse_node_symlink via node_mk_common
- * perfuse_node_create
- */
-static int
-node_mk_common_final(pu, opc, pn, pcn)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	struct puffs_node *pn;
-	const struct puffs_cn *pcn;
-{
-	struct perfuse_state *ps;
-	perfuse_msg_t *pm;
-	struct fuse_setattr_in *fsi;
-	struct fuse_attr_out *fao;
-	int error;
-
-	ps =  puffs_getspecific(pu);
-
-	/* 
-	 * Set owner and group. The kernel cannot create a file
-	 * on its own (puffs_cred_getuid would return -1), right?
-	 */
-	if (puffs_cred_getuid(pcn->pcn_cred, &pn->pn_va.va_uid) != 0)
-		DERRX(EX_SOFTWARE, "puffs_cred_getuid fails in %s", __func__);
-	if (puffs_cred_getgid(pcn->pcn_cred, &pn->pn_va.va_gid) != 0)
-		DERRX(EX_SOFTWARE, "puffs_cred_getgid fails in %s", __func__);
-
-	pm = ps->ps_new_msg(pu, (puffs_cookie_t)pn, 
-			    FUSE_SETATTR, sizeof(*fsi), pcn->pcn_cred);
-	fsi = GET_INPAYLOAD(ps, pm, fuse_setattr_in);
-	fsi->uid = pn->pn_va.va_uid;
-	fsi->gid = pn->pn_va.va_gid;
-	fsi->valid = FUSE_FATTR_UID|FUSE_FATTR_GID;
-
-	if ((error = xchg_msg(pu, (puffs_cookie_t)pn, pm, 
-			      sizeof(*fao), wait_reply)) != 0)
-		return error;
-
-	fao = GET_OUTPAYLOAD(ps, pm, fuse_attr_out);
-	fuse_attr_to_vap(ps, &pn->pn_va, &fao->attr);
-	set_expire((puffs_cookie_t)pn, NULL, fao);
-
-	/*
-	 * The parent directory needs a sync
-	 */
+	
+	/* Parents is now dirty */
 	PERFUSE_NODE_DATA(opc)->pnd_flags |= PND_DIRTY;
 
-	ps->ps_destroy_msg(pm);
-
-	return 0;
+	return 0; 
 }
 
 static uint64_t
-readdir_last_cookie(fd, fd_len)
-	struct fuse_dirent *fd;
-	size_t fd_len;
+readdir_last_cookie(struct fuse_dirent *fd, size_t fd_len)
 {
 	size_t len;
 	size_t seen = 0;
@@ -720,11 +700,8 @@ readdir_last_cookie(fd, fd_len)
 }
 
 static ssize_t
-fuse_to_dirent(pu, opc, fd, fd_len)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	struct fuse_dirent *fd;
-	size_t fd_len;
+fuse_to_dirent(struct puffs_usermount *pu, puffs_cookie_t opc,
+	struct fuse_dirent *fd, size_t fd_len)
 {
 	struct dirent *dents;
 	size_t dents_len;
@@ -849,11 +826,8 @@ fuse_to_dirent(pu, opc, fd, fd_len)
 }
 
 static int 
-readdir_buffered(opc, dent, readoff, reslen)
-	puffs_cookie_t opc;
-	struct dirent *dent;
-	off_t *readoff;
-	size_t *reslen;
+readdir_buffered(puffs_cookie_t opc, struct dirent *dent, off_t *readoff,
+	size_t *reslen)
 {
 	struct dirent *fromdent;
 	struct perfuse_node_data *pnd;
@@ -894,10 +868,8 @@ readdir_buffered(opc, dent, readoff, reslen)
 }
 
 static void
-requeue_request(pu, opc, type)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	enum perfuse_qtype type;
+requeue_request(struct puffs_usermount *pu, puffs_cookie_t opc,
+	enum perfuse_qtype type)
 {
 	struct perfuse_cc_queue pcq;
 	struct perfuse_node_data *pnd;
@@ -934,11 +906,8 @@ requeue_request(pu, opc, type)
 
 /* ARGSUSED0 */
 static int
-dequeue_requests(ps, opc, type, max)
-	struct perfuse_state *ps;
-	puffs_cookie_t opc;
-	enum perfuse_qtype type;
-	int max;
+dequeue_requests(struct perfuse_state *ps, puffs_cookie_t opc,
+	enum perfuse_qtype type, int max)
 {
 	struct perfuse_cc_queue *pcq;
 	struct perfuse_node_data *pnd;
@@ -971,8 +940,7 @@ dequeue_requests(ps, opc, type, max)
 }
 	
 void
-perfuse_fs_init(pu)
-	struct puffs_usermount *pu;
+perfuse_fs_init(struct puffs_usermount *pu)
 {
 	struct perfuse_state *ps;
 	perfuse_msg_t *pm;
@@ -1015,9 +983,7 @@ perfuse_fs_init(pu)
 }
 
 int
-perfuse_fs_unmount(pu, flags)
-	struct puffs_usermount *pu;
-	int flags;
+perfuse_fs_unmount(struct puffs_usermount *pu, int flags)
 {
 	perfuse_msg_t *pm;
 	struct perfuse_state *ps;
@@ -1052,9 +1018,7 @@ perfuse_fs_unmount(pu, flags)
 }
 
 int
-perfuse_fs_statvfs(pu, svfsb)
-	struct puffs_usermount *pu;
-	struct statvfs *svfsb;
+perfuse_fs_statvfs(struct puffs_usermount *pu, struct statvfs *svfsb)
 {
 	struct perfuse_state *ps;
 	perfuse_msg_t *pm;
@@ -1118,10 +1082,8 @@ perfuse_fs_statvfs(pu, svfsb)
 }
 
 int
-perfuse_fs_sync(pu, waitfor, pcr)
-	struct puffs_usermount *pu;
-	int waitfor;
-	const struct puffs_cred *pcr;
+perfuse_fs_sync(struct puffs_usermount *pu, int waitfor,
+	const struct puffs_cred *pcr)
 {
 	/* 
 	 * FUSE does not seem to have a FS sync callback.
@@ -1132,11 +1094,8 @@ perfuse_fs_sync(pu, waitfor, pcr)
 
 /* ARGSUSED0 */
 int
-perfuse_fs_fhtonode(pu, fid, fidsize, pni)
-	struct puffs_usermount *pu;
-	void *fid;
-	size_t fidsize;
-	struct puffs_newinfo *pni;
+perfuse_fs_fhtonode(struct puffs_usermount *pu, void *fid, size_t fidsize,
+	struct puffs_newinfo *pni)
 {
 	DERRX(EX_SOFTWARE, "%s: UNIMPLEMENTED (FATAL)", __func__);
 	return 0;
@@ -1144,11 +1103,8 @@ perfuse_fs_fhtonode(pu, fid, fidsize, pni)
 
 /* ARGSUSED0 */
 int 
-perfuse_fs_nodetofh(pu, cookie, fid, fidsize)
-	struct puffs_usermount *pu;
-	puffs_cookie_t cookie;
-	void *fid;
-	size_t *fidsize;
+perfuse_fs_nodetofh(struct puffs_usermount *pu, puffs_cookie_t cookie,
+	void *fid, size_t *fidsize)
 {
 	DERRX(EX_SOFTWARE, "%s: UNIMPLEMENTED (FATAL)", __func__);
 	return 0;
@@ -1157,13 +1113,8 @@ perfuse_fs_nodetofh(pu, cookie, fid, fidsize)
 #if 0
 /* ARGSUSED0 */
 void 
-perfuse_fs_extattrctl(pu, cmd, cookie, flags, namespace, attrname)
-	struct puffs_usermount *pu;
-	int cmd,
-	puffs_cookie_t *cookie;
-	int flags;
-	int namespace;
-	const char *attrname;
+perfuse_fs_extattrctl(struct puffs_usermount *pu, int cmd,
+	puffs_cookie_t *cookie, int flags, int namespace, const char *attrname)
 {
 	DERRX(EX_SOFTWARE, "%s: UNIMPLEMENTED (FATAL)", __func__);
 	return 0;
@@ -1172,9 +1123,7 @@ perfuse_fs_extattrctl(pu, cmd, cookie, flags, namespace, attrname)
 
 /* ARGSUSED0 */
 void
-perfuse_fs_suspend(pu, status)
-	struct puffs_usermount *pu;
-	int status;
+perfuse_fs_suspend(struct puffs_usermount *pu, int status)
 {
 	return;
 }
@@ -1182,11 +1131,8 @@ perfuse_fs_suspend(pu, status)
 
 
 int
-perfuse_node_lookup(pu, opc, pni, pcn)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	struct puffs_newinfo *pni;
-	const struct puffs_cn *pcn;
+perfuse_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
+	struct puffs_newinfo *pni, const struct puffs_cn *pcn)
 {
 	struct puffs_node *pn;
 	mode_t mode;
@@ -1216,11 +1162,20 @@ perfuse_node_lookup(pu, opc, pni, pcn)
 	/*
 	 * Special case for ..
 	 */
-	if (strcmp(pcn->pcn_name, "..") == 0) 
+	if (strcmp(pcn->pcn_name, "..") == 0) {
 		pn = PERFUSE_NODE_DATA(opc)->pnd_parent;
-	else
-		error = node_lookup_common(pu, (puffs_cookie_t)opc,
+#ifdef PUFFS_KFLAG_CACHE_FS_TTL
+		puffs_newinfo_setva(pni, &pn->pn_va);
+		/* XXX cannot call perfuse_newinfo_setttl */
+#endif /* PUFFS_KFLAG_CACHE_FS_TTL */
+		puffs_newinfo_setcookie(pni, pn);
+		puffs_newinfo_setvtype(pni, pn->pn_va.va_type); 
+		puffs_newinfo_setsize(pni, (voff_t)pn->pn_va.va_size);
+		puffs_newinfo_setrdev(pni, pn->pn_va.va_rdev);
+	} else {
+		error = node_lookup_common(pu, (puffs_cookie_t)opc, pni,
 					   pcn->pcn_name, pcn->pcn_cred, &pn);
+	}
 	if (error != 0)
 		return error;
 
@@ -1229,7 +1184,9 @@ perfuse_node_lookup(pu, opc, pni, pcn)
 	 * itself. If we want to live, hide that!
 	 */
 	if ((opc == (puffs_cookie_t)pn) && (strcmp(pcn->pcn_name, ".") != 0)) {
-		DWARNX("lookup returned parent");
+		DERRX(EX_SOFTWARE, "lookup \"%s\" in \"%s\" returned parent",
+		      pcn->pcn_name, perfuse_node_path(opc));
+		/* NOTREACHED */
 		return ESTALE;
 	}
 
@@ -1268,21 +1225,13 @@ perfuse_node_lookup(pu, opc, pni, pcn)
 	 */
 	PERFUSE_NODE_DATA(pn)->pnd_flags &= ~PND_RECLAIMED;
 
-	puffs_newinfo_setcookie(pni, pn);
-	puffs_newinfo_setvtype(pni, pn->pn_va.va_type); 
-	puffs_newinfo_setsize(pni, (voff_t)pn->pn_va.va_size);
-	puffs_newinfo_setrdev(pni, pn->pn_va.va_rdev);
-
 	return error;
 }
 
 int
-perfuse_node_create(pu, opc, pni, pcn, vap)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	struct puffs_newinfo *pni;
-	const struct puffs_cn *pcn;
-	const struct vattr *vap;
+perfuse_node_create(struct puffs_usermount *pu, puffs_cookie_t opc,
+	struct puffs_newinfo *pni, const struct puffs_cn *pcn,
+	const struct vattr *vap)
 {
 	perfuse_msg_t *pm;
 	struct perfuse_state *ps;
@@ -1304,7 +1253,7 @@ perfuse_node_create(pu, opc, pni, pcn, vap)
 	 */
 	ps = puffs_getspecific(pu);
 	if (ps->ps_flags & PS_NO_CREAT) {
-		error = node_lookup_common(pu, opc, pcn->pcn_name, 
+		error = node_lookup_common(pu, opc, NULL, pcn->pcn_name,
 					   pcn->pcn_cred, &pn);
 		if (error == 0)	
 			return EEXIST;
@@ -1313,7 +1262,7 @@ perfuse_node_create(pu, opc, pni, pcn, vap)
 		if (error != 0)
 			return error;
 
-		error = node_lookup_common(pu, opc, pcn->pcn_name,
+		error = node_lookup_common(pu, opc, NULL, pcn->pcn_name,
 					   pcn->pcn_cred, &pn);
 		if (error != 0)	
 			return error;
@@ -1380,9 +1329,14 @@ perfuse_node_create(pu, opc, pni, pcn, vap)
 
 	fuse_attr_to_vap(ps, &pn->pn_va, &feo->attr);
 	pn->pn_va.va_gen = (u_long)(feo->generation);
-	set_expire((puffs_cookie_t)pn, feo, NULL);
-		
+
 	puffs_newinfo_setcookie(pni, pn);
+#ifdef PUFFS_KFLAG_CACHE_FS_TTL
+	puffs_newinfo_setva(pni, &pn->pn_va);
+	perfuse_newinfo_setttl(pni, feo, NULL);
+#else /* PUFFS_KFLAG_CACHE_FS_TTL */
+	set_expire((puffs_cookie_t)pn, feo, NULL);
+#endif /* PUFFS_KFLAG_CACHE_FS_TTL */
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & (PDF_FH|PDF_FILENAME))
@@ -1395,17 +1349,14 @@ perfuse_node_create(pu, opc, pni, pcn, vap)
 
 	ps->ps_destroy_msg(pm);
 
-	return node_mk_common_final(pu, opc, pn, pcn);
+	return 0;
 }
 
 
 int
-perfuse_node_mknod(pu, opc, pni, pcn, vap)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	struct puffs_newinfo *pni;
-	const struct puffs_cn *pcn;
-	const struct vattr *vap;
+perfuse_node_mknod(struct puffs_usermount *pu, puffs_cookie_t opc,
+	struct puffs_newinfo *pni, const struct puffs_cn *pcn,
+	const struct vattr *vap)
 {
 	struct perfuse_state *ps;
 	perfuse_msg_t *pm;
@@ -1454,11 +1405,8 @@ perfuse_node_mknod(pu, opc, pni, pcn, vap)
 
 
 int
-perfuse_node_open(pu, opc, mode, pcr)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	int mode;
-	const struct puffs_cred *pcr;
+perfuse_node_open(struct puffs_usermount *pu, puffs_cookie_t opc, int mode,
+	const struct puffs_cred *pcr)
 {
 	struct perfuse_state *ps;
 	struct perfuse_node_data *pnd;
@@ -1535,7 +1483,7 @@ perfuse_node_open(pu, opc, mode, pcr)
 	 * so that we can reuse it later
 	 */
 	perfuse_new_fh(opc, foo->fh, mode);
-	 
+
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & (PDF_FH|PDF_FILENAME))
 		DPRINTF("%s: opc = %p, file = \"%s\", "
@@ -1556,11 +1504,8 @@ out:
 
 /* ARGSUSED0 */
 int
-perfuse_node_close(pu, opc, flags, pcr)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	int flags;
-	const struct puffs_cred *pcr;
+perfuse_node_close(struct puffs_usermount *pu, puffs_cookie_t opc, int flags,
+	const struct puffs_cred *pcr)
 {
 	struct perfuse_node_data *pnd;
 
@@ -1576,11 +1521,8 @@ perfuse_node_close(pu, opc, flags, pcr)
 }
 
 int
-perfuse_node_access(pu, opc, mode, pcr)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	int mode;
-	const struct puffs_cred *pcr;
+perfuse_node_access(struct puffs_usermount *pu, puffs_cookie_t opc, int mode,
+	const struct puffs_cred *pcr)
 {
 	perfuse_msg_t *pm;
 	struct perfuse_state *ps;
@@ -1634,11 +1576,16 @@ perfuse_node_access(pu, opc, mode, pcr)
 }
 
 int
-perfuse_node_getattr(pu, opc, vap, pcr)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	struct vattr *vap;
-	const struct puffs_cred *pcr;
+perfuse_node_getattr(struct puffs_usermount *pu, puffs_cookie_t opc,
+	struct vattr *vap, const struct puffs_cred *pcr)
+{
+	return perfuse_node_getattr_ttl(pu, opc, vap, pcr, NULL);
+}
+
+int
+perfuse_node_getattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
+	struct vattr *vap, const struct puffs_cred *pcr,
+	struct timespec *va_ttl)
 {
 	perfuse_msg_t *pm = NULL;
 	struct perfuse_state *ps;
@@ -1659,6 +1606,7 @@ perfuse_node_getattr(pu, opc, vap, pcr)
 
 	ps = puffs_getspecific(pu);
 		
+#ifndef PUFFS_KFLAG_CACHE_FS_TTL
 	/*
 	 * Check for cached attributes
 	 * This still require serialized access to size.
@@ -1668,6 +1616,7 @@ perfuse_node_getattr(pu, opc, vap, pcr)
 			     sizeof(*vap));
 		goto out;
 	}
+#endif /* PUFFS_KFLAG_CACHE_FS_TTL */
 
 	/*
 	 * FUSE_GETATTR_FH must be set in fgi->flags 
@@ -1707,7 +1656,15 @@ perfuse_node_getattr(pu, opc, vap, pcr)
 	 * not available from filesystem.
 	 */
 	fuse_attr_to_vap(ps, vap, &fao->attr);
+
+#ifdef PUFFS_KFLAG_CACHE_FS_TTL
+	if (va_ttl != NULL) {
+		va_ttl->tv_sec = fao->attr_valid;
+		va_ttl->tv_nsec = fao->attr_valid_nsec;
+	}
+#else /* PUFFS_KFLAG_CACHE_FS_TTL */
 	set_expire(opc, NULL, fao);
+#endif /* PUFFS_KFLAG_CACHE_FS_TTL */
 
 	ps->ps_destroy_msg(pm);
 out:
@@ -1719,11 +1676,17 @@ out:
 }
 
 int
-perfuse_node_setattr(pu, opc, vap, pcr)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	const struct vattr *vap;
-	const struct puffs_cred *pcr;
+perfuse_node_setattr(struct puffs_usermount *pu, puffs_cookie_t opc,
+	const struct vattr *vap, const struct puffs_cred *pcr)
+{
+	return perfuse_node_setattr_ttl(pu, opc, 
+					__UNCONST(vap), pcr, NULL);
+}
+
+int
+perfuse_node_setattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
+	struct vattr *vap, const struct puffs_cred *pcr,
+	struct timespec *va_ttl)
 {
 	perfuse_msg_t *pm;
 	uint64_t fh;
@@ -1812,6 +1775,7 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 		 * to avoid reordered GETATTR and SETATTR.
 		 * Out of order SETATTR can report stale size,
 		 * which will cause the kernel to truncate the file.
+		 * XXX Probably useless now we have a lock on GETATTR
 		 */
 		while (pnd->pnd_flags & PND_INRESIZE)
 			requeue_request(pu, opc, PCQ_RESIZE);
@@ -1924,7 +1888,16 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 #endif
 
 	fuse_attr_to_vap(ps, old_va, &fao->attr);
+
+#ifdef PUFFS_KFLAG_CACHE_FS_TTL
+	if (va_ttl != NULL) {
+		va_ttl->tv_sec = fao->attr_valid;
+		va_ttl->tv_nsec = fao->attr_valid_nsec;
+		(void)memcpy(vap, old_va, sizeof(*vap));
+	}
+#else /* PUFFS_KFLAG_CACHE_FS_TTL */
 	set_expire(opc, NULL, fao);
+#endif /* PUFFS_KFLAG_CACHE_FS_TTL */
 
 	ps->ps_destroy_msg(pm);
 
@@ -1938,10 +1911,7 @@ out:
 }
 
 int
-perfuse_node_poll(pu, opc, events)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	int *events;
+perfuse_node_poll(struct puffs_usermount *pu, puffs_cookie_t opc, int *events)
 {
 	struct perfuse_state *ps;
 	perfuse_msg_t *pm;
@@ -1986,11 +1956,8 @@ perfuse_node_poll(pu, opc, events)
 
 /* ARGSUSED0 */
 int
-perfuse_node_mmap(pu, opc, flags, pcr)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	int flags;
-	const struct puffs_cred *pcr;
+perfuse_node_mmap(struct puffs_usermount *pu, puffs_cookie_t opc, int flags,
+	const struct puffs_cred *pcr)
 {
 	/* 
 	 * Not implemented anymore in libfuse
@@ -2000,13 +1967,8 @@ perfuse_node_mmap(pu, opc, flags, pcr)
 
 /* ARGSUSED2 */
 int
-perfuse_node_fsync(pu, opc, pcr, flags, offlo, offhi)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	const struct puffs_cred *pcr;
-	int flags;
-	off_t offlo;
-	off_t offhi;
+perfuse_node_fsync(struct puffs_usermount *pu, puffs_cookie_t opc,
+	const struct puffs_cred *pcr, int flags, off_t offlo, off_t offhi)
 {
 	int op;
 	perfuse_msg_t *pm;
@@ -2115,22 +2077,15 @@ out:
 
 /* ARGSUSED0 */
 int
-perfuse_node_seek(pu, opc, oldoff, newoff,  pcr)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	off_t oldoff;
-	off_t newoff;
-	const struct puffs_cred *pcr;
+perfuse_node_seek(struct puffs_usermount *pu, puffs_cookie_t opc,
+	off_t oldoff, off_t newoff, const struct puffs_cred *pcr)
 {
 	return 0;
 }
 
 int
-perfuse_node_remove(pu, opc, targ, pcn)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	puffs_cookie_t targ;
-	const struct puffs_cn *pcn;
+perfuse_node_remove(struct puffs_usermount *pu, puffs_cookie_t opc,
+	puffs_cookie_t targ, const struct puffs_cn *pcn)
 {
 	struct perfuse_state *ps;
 	struct perfuse_node_data *pnd;
@@ -2195,11 +2150,8 @@ perfuse_node_remove(pu, opc, targ, pcn)
 }
 
 int
-perfuse_node_link(pu, opc, targ, pcn)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	puffs_cookie_t targ;
-	const struct puffs_cn *pcn;
+perfuse_node_link(struct puffs_usermount *pu, puffs_cookie_t opc,
+	puffs_cookie_t targ, const struct puffs_cn *pcn)
 {
 	struct perfuse_state *ps;
 	perfuse_msg_t *pm;
@@ -2231,14 +2183,10 @@ perfuse_node_link(pu, opc, targ, pcn)
 }
 
 int
-perfuse_node_rename(pu, opc, src, pcn_src, targ_dir, targ, pcn_targ)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	puffs_cookie_t src;
-	const struct puffs_cn *pcn_src;
-	puffs_cookie_t targ_dir;
-	puffs_cookie_t targ;
-	const struct puffs_cn *pcn_targ;
+perfuse_node_rename(struct puffs_usermount *pu, puffs_cookie_t opc,
+	puffs_cookie_t src, const struct puffs_cn *pcn_src,
+	puffs_cookie_t targ_dir, puffs_cookie_t targ,
+	const struct puffs_cn *pcn_targ)
 {
 	struct perfuse_state *ps;
 	perfuse_msg_t *pm;
@@ -2331,12 +2279,9 @@ perfuse_node_rename(pu, opc, src, pcn_src, targ_dir, targ, pcn_targ)
 }
 
 int
-perfuse_node_mkdir(pu, opc, pni, pcn, vap)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	struct puffs_newinfo *pni;
-	const struct puffs_cn *pcn;
-	const struct vattr *vap;
+perfuse_node_mkdir(struct puffs_usermount *pu, puffs_cookie_t opc,
+	struct puffs_newinfo *pni, const struct puffs_cn *pcn,
+	const struct vattr *vap)
 {
 	struct perfuse_state *ps;
 	perfuse_msg_t *pm;
@@ -2362,11 +2307,8 @@ perfuse_node_mkdir(pu, opc, pni, pcn, vap)
 
 
 int
-perfuse_node_rmdir(pu, opc, targ, pcn)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	puffs_cookie_t targ;
-	const struct puffs_cn *pcn;
+perfuse_node_rmdir(struct puffs_usermount *pu, puffs_cookie_t opc,
+	puffs_cookie_t targ, const struct puffs_cn *pcn)
 {
 	struct perfuse_state *ps;
 	struct perfuse_node_data *pnd;
@@ -2424,13 +2366,9 @@ perfuse_node_rmdir(pu, opc, targ, pcn)
 /* vap is unused */
 /* ARGSUSED4 */
 int
-perfuse_node_symlink(pu, opc, pni, pcn_src, vap, link_target)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	struct puffs_newinfo *pni;
-	const struct puffs_cn *pcn_src;
-	const struct vattr *vap;
-	const char *link_target;
+perfuse_node_symlink(struct puffs_usermount *pu, puffs_cookie_t opc,
+	struct puffs_newinfo *pni, const struct puffs_cn *pcn_src,
+	const struct vattr *vap, const char *link_target)
 {
 	struct perfuse_state *ps;
 	perfuse_msg_t *pm;
@@ -2460,17 +2398,10 @@ perfuse_node_symlink(pu, opc, pni, pcn_src, vap, link_target)
 
 /* ARGSUSED4 */
 int 
-perfuse_node_readdir(pu, opc, dent, readoff, 
-		     reslen, pcr, eofflag, cookies, ncookies)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	struct dirent *dent;
-	off_t *readoff;
-	size_t *reslen;
-	const struct puffs_cred *pcr;
-	int *eofflag;
-	off_t *cookies;
-	size_t *ncookies;
+perfuse_node_readdir(struct puffs_usermount *pu, puffs_cookie_t opc,
+	struct dirent *dent, off_t *readoff, size_t *reslen,
+	const struct puffs_cred *pcr, int *eofflag, off_t *cookies,
+	size_t *ncookies)
 {
 	perfuse_msg_t *pm;
 	uint64_t fh;
@@ -2640,12 +2571,8 @@ out:
 }
 
 int
-perfuse_node_readlink(pu, opc, pcr, linkname, linklen)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	const struct puffs_cred *pcr;
-	char *linkname;
-	size_t *linklen;
+perfuse_node_readlink(struct puffs_usermount *pu, puffs_cookie_t opc,
+	const struct puffs_cred *pcr, char *linkname, size_t *linklen)
 {
 	struct perfuse_state *ps;
 	perfuse_msg_t *pm;
@@ -2683,9 +2610,7 @@ perfuse_node_readlink(pu, opc, pcr, linkname, linklen)
 }
 
 int 
-perfuse_node_reclaim(pu, opc)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
+perfuse_node_reclaim(struct puffs_usermount *pu, puffs_cookie_t opc)
 {
 	struct perfuse_state *ps;
 	perfuse_msg_t *pm;
@@ -2694,6 +2619,9 @@ perfuse_node_reclaim(pu, opc)
 	struct puffs_node *pn;
 	struct puffs_node *pn_root;
 	
+	if (opc == 0)
+		return 0;
+
 	ps = puffs_getspecific(pu);
 	pnd = PERFUSE_NODE_DATA(opc);
 
@@ -2735,9 +2663,24 @@ perfuse_node_reclaim(pu, opc)
 			pnd->pnd_flags & PND_INOPEN ? " open" : "");
 #endif
 		if (!(pnd->pnd_flags & PND_RECLAIMED) ||
-		    (pnd->pnd_puffs_nlookup != 0) ||
 		    (pnd->pnd_childcount != 0))
 			return 0;
+
+		/*
+		 * lookup/reclaim activity differs whether name cache
+		 * is used or not. 
+		 * - With namecache off, we get as many reclaims as lookups,
+		 *   we therefore must keep track of pnd_puffs_nlookup
+		 * - With namecache on we have a single 
+		 *   reclaim for any amount of lookups. We therfore 
+		 *   ignore pnd_puffs_nlookup. On netbsd-5 there is a
+		 *   bug and this behavior occurs whatever cache setting
+		 *   we have.
+		 */
+#if !defined(PUFFS_KFLAG_CACHE_FS_TTL) && __NetBSD_Prereq__(5,99,0)
+		if (pnd->pnd_puffs_nlookup != 0)
+			return 0;
+#endif /* !PUFFS_KFLAG_CACHE_FS_TTL && NetBSD > 5.99.0 */
 
 #ifdef PERFUSE_DEBUG
 		if ((pnd->pnd_flags & PND_OPEN) ||
@@ -2780,12 +2723,14 @@ perfuse_node_reclaim(pu, opc)
 }
 
 int 
-perfuse_node_inactive(pu, opc)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
+perfuse_node_inactive(struct puffs_usermount *pu, puffs_cookie_t opc)
 {
 	struct perfuse_state *ps;
 	struct perfuse_node_data *pnd;
+	int error;
+
+	if (opc == 0)
+		return 0;
 
 	ps = puffs_getspecific(pu);
 	pnd = PERFUSE_NODE_DATA(opc);
@@ -2803,11 +2748,11 @@ perfuse_node_inactive(pu, opc)
 		requeue_request(pu, opc, PCQ_AFTERWRITE);
 
 	/*
-	 * The inactive operation may be cancelled.
+	 * The inactive operation may be cancelled,	
 	 * If no open is in progress, set PND_INOPEN
 	 * so that a new open will be queued.
 	 */
-	if (pnd->pnd_flags & PND_INOPEN)
+	if (pnd->pnd_flags & PND_INOPEN) 
 		return 0;
 
 	pnd->pnd_flags |= PND_INOPEN;
@@ -2815,17 +2760,27 @@ perfuse_node_inactive(pu, opc)
 	/*
 	 * Sync data
 	 */
-	if (pnd->pnd_flags & PND_DIRTY)
-		(void)perfuse_node_fsync(pu, opc, NULL, 0, 0, 0);
+	if (pnd->pnd_flags & PND_DIRTY) {
+		if ((error = perfuse_node_fsync(pu, opc, NULL, 0, 0, 0)) != 0)
+			DWARN("%s: perfuse_node_fsync failed error = %d",
+			      __func__, error);
+	}
+
 	
 	/*
 	 * Close handles
 	 */
-	if (pnd->pnd_flags & PND_WFH)
-		(void)perfuse_node_close_common(pu, opc, FWRITE);
+	if (pnd->pnd_flags & PND_WFH) {
+		if ((error = perfuse_node_close_common(pu, opc, FWRITE)) != 0)
+			DWARN("%s: close write FH failed error = %d",
+			      __func__, error);
+	}
 
-	if (pnd->pnd_flags & PND_RFH)
-		(void)perfuse_node_close_common(pu, opc, FREAD);
+	if (pnd->pnd_flags & PND_RFH) {
+		if ((error = perfuse_node_close_common(pu, opc, FREAD)) != 0)
+			DWARN("%s: close read FH failed error = %d",
+			      __func__, error);
+	}
 
 	/*
 	 * This will cause a reclaim to be sent
@@ -2845,9 +2800,7 @@ perfuse_node_inactive(pu, opc)
 
 /* ARGSUSED0 */
 int 
-perfuse_node_print(pu, opc)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
+perfuse_node_print(struct puffs_usermount *pu, puffs_cookie_t opc)
 {
 	DERRX(EX_SOFTWARE, "%s: UNIMPLEMENTED (FATAL)", __func__);
 	return 0;
@@ -2855,24 +2808,16 @@ perfuse_node_print(pu, opc)
 
 /* ARGSUSED0 */
 int
-perfuse_node_pathconf(pu, opc, name, retval)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	int name;
-	int *retval;
+perfuse_node_pathconf(struct puffs_usermount *pu, puffs_cookie_t opc,
+	int name, int *retval)
 {
 	DERRX(EX_SOFTWARE, "%s: UNIMPLEMENTED (FATAL)", __func__);
 	return 0;
 }
 
 int
-perfuse_node_advlock(pu, opc, id, op, fl, flags)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	void *id;
-	int op;
-	struct flock *fl;
-	int flags;
+perfuse_node_advlock(struct puffs_usermount *pu, puffs_cookie_t opc,
+	void *id, int op, struct flock *fl, int flags)
 {
 	struct perfuse_state *ps;
 	int fop;
@@ -2983,14 +2928,8 @@ perfuse_node_advlock(pu, opc, id, op, fl, flags)
 }
 
 int
-perfuse_node_read(pu, opc, buf, offset, resid, pcr, ioflag)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	uint8_t *buf;
-	off_t offset;
-	size_t *resid;
-	const struct puffs_cred *pcr;
-	int ioflag;
+perfuse_node_read(struct puffs_usermount *pu, puffs_cookie_t opc, uint8_t *buf,
+	off_t offset, size_t *resid, const struct puffs_cred *pcr, int ioflag)
 {
 	struct perfuse_state *ps;
 	struct perfuse_node_data *pnd;
@@ -3071,14 +3010,8 @@ perfuse_node_read(pu, opc, buf, offset, resid, pcr, ioflag)
 }
 
 int
-perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	uint8_t *buf;
-	off_t offset;
-	size_t *resid;
-	const struct puffs_cred *pcr;
-	int ioflag;
+perfuse_node_write(struct puffs_usermount *pu, puffs_cookie_t opc, uint8_t *buf,
+	off_t offset, size_t *resid, const struct puffs_cred *pcr, int ioflag)
 {
 	struct perfuse_state *ps;
 	struct perfuse_node_data *pnd;
@@ -3263,26 +3196,17 @@ out:
 
 /* ARGSUSED0 */
 void
-perfuse_cache_write(pu, opc, size, runs)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	size_t size;
-	struct puffs_cacherun *runs;
+perfuse_cache_write(struct puffs_usermount *pu, puffs_cookie_t opc, size_t size,
+	struct puffs_cacherun *runs)
 {
 	return;
 }
 
 /* ARGSUSED4 */
 int
-perfuse_node_getextattr(pu, opc, attrns, attrname, attrsize, attr, resid, pcr)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	int attrns;
-	const char *attrname;
-	size_t *attrsize;
-	uint8_t *attr;
-	size_t *resid;
-	const struct puffs_cred *pcr;
+perfuse_node_getextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
+	int attrns, const char *attrname, size_t *attrsize, uint8_t *attr,
+	size_t *resid, const struct puffs_cred *pcr)
 {
 	struct perfuse_state *ps;
 	char fuse_attrname[LINUX_XATTR_NAME_MAX + 1];
@@ -3342,14 +3266,9 @@ perfuse_node_getextattr(pu, opc, attrns, attrname, attrsize, attr, resid, pcr)
 }
 
 int
-perfuse_node_setextattr(pu, opc, attrns, attrname, attr, resid, pcr)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	int attrns;
-	const char *attrname;
-	uint8_t *attr;
-	size_t *resid;
-	const struct puffs_cred *pcr;
+perfuse_node_setextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
+	int attrns, const char *attrname, uint8_t *attr, size_t *resid,
+	const struct puffs_cred *pcr)
 {
 	struct perfuse_state *ps;
 	char fuse_attrname[LINUX_XATTR_NAME_MAX + 1];
@@ -3386,15 +3305,9 @@ perfuse_node_setextattr(pu, opc, attrns, attrname, attr, resid, pcr)
 
 /* ARGSUSED2 */
 int
-perfuse_node_listextattr(pu, opc, attrns, attrsize, attrs, resid, flag, pcr)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	int attrns;
-	size_t *attrsize;
-	uint8_t *attrs;
-	size_t *resid;
-	int flag;
-	const struct puffs_cred *pcr;
+perfuse_node_listextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
+	int attrns, size_t *attrsize, uint8_t *attrs, size_t *resid, int flag,
+	const struct puffs_cred *pcr)
 {
 	struct perfuse_state *ps;
 	perfuse_msg_t *pm;
@@ -3470,12 +3383,8 @@ perfuse_node_listextattr(pu, opc, attrns, attrsize, attrs, resid, flag, pcr)
 }
 
 int
-perfuse_node_deleteextattr(pu, opc, attrns, attrname, pcr)
-	struct puffs_usermount *pu;
-	puffs_cookie_t opc;
-	int attrns;
-	const char *attrname;
-	const struct puffs_cred *pcr;
+perfuse_node_deleteextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
+	int attrns, const char *attrname, const struct puffs_cred *pcr)
 {
 	struct perfuse_state *ps;
 	char fuse_attrname[LINUX_XATTR_NAME_MAX + 1];

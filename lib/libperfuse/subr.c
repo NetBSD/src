@@ -1,4 +1,4 @@
-/*  $NetBSD: subr.c,v 1.15.2.1 2012/03/10 16:42:30 riz Exp $ */
+/*  $NetBSD: subr.c,v 1.15.2.2 2012/04/23 16:48:58 riz Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -49,10 +49,8 @@ struct perfuse_ns_map {
 static size_t node_path(puffs_cookie_t, char *, size_t);
 
 struct puffs_node *
-perfuse_new_pn(pu, name, parent)
-	struct puffs_usermount *pu;
-	const char *name;
-	struct puffs_node *parent;
+perfuse_new_pn(struct puffs_usermount *pu, const char *name,
+	struct puffs_node *parent)
 {
 	struct puffs_node *pn;
 	struct perfuse_node_data *pnd;
@@ -88,23 +86,19 @@ perfuse_new_pn(pu, name, parent)
 }
 
 void
-perfuse_destroy_pn(pn)
-	struct puffs_node *pn;
+perfuse_destroy_pn(struct puffs_node *pn)
 {
 	struct perfuse_node_data *pnd;
 
-	pnd = PERFUSE_NODE_DATA(pn);
-
-	if (pnd->pnd_parent != NULL) {
-		struct perfuse_node_data *parent_pnd;
-
-		parent_pnd = PERFUSE_NODE_DATA(pnd->pnd_parent);
-		TAILQ_REMOVE(&parent_pnd->pnd_children, pnd, pnd_next);
-	}
-
 	if ((pnd = puffs_pn_getpriv(pn)) != NULL) {
-		if (pnd->pnd_parent != NULL)
+		if (pnd->pnd_parent != NULL) {
+			struct perfuse_node_data *parent_pnd;
+
+			parent_pnd = PERFUSE_NODE_DATA(pnd->pnd_parent);
+			TAILQ_REMOVE(&parent_pnd->pnd_children, pnd, pnd_next);
+
 			PERFUSE_NODE_DATA(pnd->pnd_parent)->pnd_childcount--;
+		}
 
 		if (pnd->pnd_dirent != NULL)
 			free(pnd->pnd_dirent);
@@ -117,9 +111,6 @@ perfuse_destroy_pn(pn)
 
 		if (!TAILQ_EMPTY(&pnd->pnd_pcq))
 			DERRX(EX_SOFTWARE, "%s: non empty pnd_pcq", __func__);
-
-		if (pnd == NULL)
-			DERRX(EX_SOFTWARE, "%s: pnd == NULL ???", __func__);
 #endif /* PERFUSE_DEBUG */
 
 		free(pnd);
@@ -132,10 +123,7 @@ perfuse_destroy_pn(pn)
 
 
 void
-perfuse_new_fh(opc, fh, mode)
-	puffs_cookie_t opc;
-	uint64_t fh;
-	int mode;
+perfuse_new_fh(puffs_cookie_t opc, uint64_t fh, int mode)
 {
 	struct perfuse_node_data *pnd;
 
@@ -161,9 +149,7 @@ perfuse_new_fh(opc, fh, mode)
 }
 
 void
-perfuse_destroy_fh(opc, fh)
-	puffs_cookie_t opc;
-	uint64_t fh; 
+perfuse_destroy_fh(puffs_cookie_t opc, uint64_t fh)
 {
 	struct perfuse_node_data *pnd;
 
@@ -191,9 +177,7 @@ perfuse_destroy_fh(opc, fh)
 }
 
 uint64_t
-perfuse_get_fh(opc, mode)
-	puffs_cookie_t opc;
-	int mode;
+perfuse_get_fh(puffs_cookie_t opc, int mode)
 {
 	struct perfuse_node_data *pnd;
 
@@ -217,10 +201,7 @@ perfuse_get_fh(opc, mode)
 }
 
 static size_t
-node_path(opc, buf, buflen)
-	puffs_cookie_t opc;
-	char *buf;
-	size_t buflen;
+node_path(puffs_cookie_t opc, char *buf, size_t buflen)
 {
 	struct perfuse_node_data *pnd;
 	size_t written;
@@ -237,8 +218,7 @@ node_path(opc, buf, buflen)
 }
 
 char *
-perfuse_node_path(opc)
-	puffs_cookie_t opc;
+perfuse_node_path(puffs_cookie_t opc)
 {
 	static char buf[MAXPATHLEN + 1];
 
@@ -249,10 +229,8 @@ perfuse_node_path(opc)
 }
 
 const char *
-perfuse_native_ns(attrnamespace, attrname, fuse_attrname)
-	const int attrnamespace;
-	const char *attrname;
-	char *fuse_attrname;
+perfuse_native_ns(const int attrnamespace, const char *attrname,
+	char *fuse_attrname)
 {
 	const struct perfuse_ns_map *pnm;
 	const struct perfuse_ns_map perfuse_ns_map[] = {
