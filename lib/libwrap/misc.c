@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.9 2002/12/02 22:08:44 jdolecek Exp $	*/
+/*	$NetBSD: misc.c,v 1.9.56.1 2012/04/23 16:48:53 riz Exp $	*/
 
  /*
   * Misc routines that are used by tcpd and by tcpdchk.
@@ -11,7 +11,7 @@
 #if 0
 static char sccsic[] = "@(#) misc.c 1.2 96/02/11 17:01:29";
 #else
-__RCSID("$NetBSD: misc.c,v 1.9 2002/12/02 22:08:44 jdolecek Exp $");
+__RCSID("$NetBSD: misc.c,v 1.9.56.1 2012/04/23 16:48:53 riz Exp $");
 #endif
 #endif
 
@@ -26,10 +26,8 @@ __RCSID("$NetBSD: misc.c,v 1.9 2002/12/02 22:08:44 jdolecek Exp $");
 
 /* xgets - fgets() with backslash-newline stripping */
 
-char   *xgets(ptr, len, fp)
-char   *ptr;
-int     len;
-FILE   *fp;
+char *
+xgets(char *ptr, int len, FILE   *fp)
 {
     int     got;
     char   *start = ptr;
@@ -53,9 +51,8 @@ FILE   *fp;
 
 /* split_at - break string at delimiter or return NULL */
 
-char   *split_at(string, delimiter)
-char   *string;
-int     delimiter;
+char *
+split_at(char *string, int delimiter)
 {
     char *cp;
     int bracket;
@@ -82,9 +79,8 @@ int     delimiter;
 
 /* dot_quad_addr - convert dotted quad to internal form */
 
-int dot_quad_addr(str, addr)
-char   *str;
-unsigned long *addr;
+int
+dot_quad_addr(char *str, unsigned long *addr)
 {
     struct in_addr a;
 
