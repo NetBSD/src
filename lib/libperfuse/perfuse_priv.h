@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_priv.h,v 1.25.2.1 2012/03/10 16:42:30 riz Exp $ */
+/*  $NetBSD: perfuse_priv.h,v 1.25.2.2 2012/04/23 16:48:59 riz Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -28,10 +28,12 @@
 #ifndef _PERFUSE_PRIV_H_
 #define _PERFUSE_PRIV_H_
 
+#include <unistd.h>
 #include <syslog.h>
 #include <paths.h>
 #include <err.h>
 #include <sysexits.h>
+#include <signal.h>
 #include <puffs.h>
 
 #include "perfuse_if.h"
@@ -95,7 +97,7 @@ enum perfuse_qtype {
 };
 
 #ifdef PERFUSE_DEBUG
-extern const char *perfuse_qtypestr[];
+extern const char * const perfuse_qtypestr[];
 #endif
 
 struct perfuse_cc_queue {
@@ -137,8 +139,8 @@ struct perfuse_node_data {
 	puffs_cookie_t pnd_pn;
 	char pnd_name[MAXPATHLEN];	/* node name */
 	TAILQ_HEAD(,perfuse_node_data) pnd_children;
-	struct timespec pnd_entry_expire;
-	struct timespec pnd_attr_expire;
+	struct timespec *pnd_entry_expire;
+	struct timespec *pnd_attr_expire;
 };
 
 #define PERFUSE_NODE_DATA(opc)	\
@@ -252,6 +254,12 @@ int perfuse_node_listextattr(struct puffs_usermount *, puffs_cookie_t,
     int, size_t *, uint8_t *, size_t *, int, const struct puffs_cred *);
 int perfuse_node_deleteextattr(struct puffs_usermount *, puffs_cookie_t,
     int, const char *, const struct puffs_cred *);
+int perfuse_node_getattr_ttl(struct puffs_usermount *,
+    puffs_cookie_t, struct vattr *, const struct puffs_cred *,
+    struct timespec *);
+int perfuse_node_setattr_ttl(struct puffs_usermount *,
+    puffs_cookie_t, struct vattr *, const struct puffs_cred *,
+    struct timespec *);
 
 struct perfuse_trace *perfuse_trace_begin(struct perfuse_state *, 
     puffs_cookie_t, perfuse_msg_t *);

@@ -32,18 +32,17 @@
 #if 0
 static char sccsid[] = "@(#)yyerror.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: yyerror.c,v 1.8 2003/08/07 16:45:01 agc Exp $");
+__RCSID("$NetBSD: yyerror.c,v 1.8.56.1 2012/04/23 16:48:57 riz Exp $");
 #endif
 #endif /* not lint */
 
 #include <assert.h>
 #include <stdio.h>
 
-int yyerror __P((char *));
+int yyerror(char *);
 
 int
-yyerror(msg)
-	char *msg;
+yyerror(char *msg)
 {
 
 	_DIAGASSERT(msg != NULL);
