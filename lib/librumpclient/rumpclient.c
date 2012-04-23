@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.47.2.1 2012/04/23 16:49:03 riz Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.47.2.2 2012/04/23 23:40:41 riz Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpclient.c,v 1.47.2.1 2012/04/23 16:49:03 riz Exp $");
+__RCSID("$NetBSD: rumpclient.c,v 1.47.2.2 2012/04/23 23:40:41 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/event.h>
@@ -588,8 +588,8 @@ static int
 dupgood(int myfd, int mustchange)
 {
 	int ofds[4];
+	int i;
 	int sverrno;
-	unsigned int i;
 
 	for (i = 0; (myfd <= 2 || mustchange) && myfd != -1; i++) {
 		assert(i < __arraycount(ofds));
@@ -605,7 +605,7 @@ dupgood(int myfd, int mustchange)
 	if (myfd == -1 && i > 0)
 		sverrno = errno;
 
-	while (i-- > 0) {
+	for (i--; i >= 0; i--) {
 		host_close(ofds[i]);
 	}
 
@@ -740,7 +740,7 @@ rumpclient__dlsym(void *handle, const char *symbol)
 
 	return dlsym(handle, symbol);
 }
-__weak_alias(rumphijack_dlsym,rumpclient__dlsym)
+__weak_alias(rumphijack_dlsym,rumpclient__dlsym);
 
 static pid_t init_done = 0;
 

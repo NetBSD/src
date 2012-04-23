@@ -1,4 +1,4 @@
-/*	$NetBSD: diag.c,v 1.8.50.1 2012/04/23 16:48:57 riz Exp $	*/
+/*	$NetBSD: diag.c,v 1.8.50.2 2012/04/23 23:40:41 riz Exp $	*/
 
  /*
   * Routines to report various classes of problems. Each report is decorated
@@ -16,14 +16,13 @@
 #if 0
 static char sccsid[] = "@(#) diag.c 1.1 94/12/28 17:42:20";
 #else
-__RCSID("$NetBSD: diag.c,v 1.8.50.1 2012/04/23 16:48:57 riz Exp $");
+__RCSID("$NetBSD: diag.c,v 1.8.50.2 2012/04/23 23:40:41 riz Exp $");
 #endif
 #endif
 
 /* System libraries */
 
 #include <syslog.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <setjmp.h>
 #include <string.h>
@@ -32,22 +31,25 @@ __RCSID("$NetBSD: diag.c,v 1.8.50.1 2012/04/23 16:48:57 riz Exp $");
 /* Local stuff */
 
 #include "tcpd.h"
+#include "mystdarg.h"
 
 struct tcpd_context tcpd_context;
 jmp_buf tcpd_buf;
 
-static void tcpd_diag(int, const char *, const char *, va_list)
+static void tcpd_diag __P((int, char *, char *, va_list))
 	__attribute__((__format__(__printf__, 3, 0)));
 
 /* tcpd_diag - centralize error reporter */
 
-static void
-tcpd_diag(int severity, const char *tag, const char *format, va_list ap)
+static void tcpd_diag(severity, tag, format, ap)
+int     severity;
+char   *tag;
+char   *format;
+va_list ap;
 {
     char    fmt[BUFSIZ];
     char    buf[BUFSIZ];
-    size_t  i, o;
-    int     oerrno;
+    int     i, o, oerrno;
 
     /* save errno in case we need it */
     oerrno = errno;
@@ -81,25 +83,23 @@ tcpd_diag(int severity, const char *tag, const char *format, va_list ap)
 
 /* tcpd_warn - report problem of some sort and proceed */
 
-void
-tcpd_warn(const char *format, ...)
+void    VARARGS(tcpd_warn, char *, format)
 {
     va_list ap;
 
-    va_start(ap, format);
+    VASTART(ap, char *, format);
     tcpd_diag(LOG_ERR, "warning", format, ap);
-    va_end(ap);
+    VAEND(ap);
 }
 
 /* tcpd_jump - report serious problem and jump */
 
-void
-tcpd_jump(const char *format, ...)
+void    VARARGS(tcpd_jump, char *, format)
 {
     va_list ap;
 
-    va_start(ap, format);
+    VASTART(ap, char *, format);
     tcpd_diag(LOG_ERR, "error", format, ap);
-    va_end(ap);
+    VAEND(ap);
     longjmp(tcpd_buf, AC_ERROR);
 }

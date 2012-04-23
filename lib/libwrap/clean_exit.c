@@ -1,4 +1,4 @@
-/*	$NetBSD: clean_exit.c,v 1.4.66.1 2012/04/23 16:48:57 riz Exp $	*/
+/*	$NetBSD: clean_exit.c,v 1.4.66.2 2012/04/23 23:40:41 riz Exp $	*/
 
  /*
   * clean_exit() cleans up and terminates the program. It should be called
@@ -15,7 +15,7 @@
 #if 0
 static char sccsid[] = "@(#) clean_exit.c 1.4 94/12/28 17:42:19";
 #else
-__RCSID("$NetBSD: clean_exit.c,v 1.4.66.1 2012/04/23 16:48:57 riz Exp $");
+__RCSID("$NetBSD: clean_exit.c,v 1.4.66.2 2012/04/23 23:40:41 riz Exp $");
 #endif
 #endif
 
@@ -27,8 +27,8 @@ __RCSID("$NetBSD: clean_exit.c,v 1.4.66.1 2012/04/23 16:48:57 riz Exp $");
 
 /* clean_exit - clean up and exit */
 
-void
-clean_exit(struct request_info *request)
+void    clean_exit(request)
+struct request_info *request;
 {
 
     /*

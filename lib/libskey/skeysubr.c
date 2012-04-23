@@ -1,4 +1,4 @@
-/*	$NetBSD: skeysubr.c,v 1.26.42.1 2012/04/23 16:48:52 riz Exp $	*/
+/*	$NetBSD: skeysubr.c,v 1.26.42.2 2012/04/23 23:40:41 riz Exp $	*/
 
 /* S/KEY v1.1b (skeysubr.c)
  *
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: skeysubr.c,v 1.26.42.1 2012/04/23 16:48:52 riz Exp $");
+__RCSID("$NetBSD: skeysubr.c,v 1.26.42.2 2012/04/23 23:40:41 riz Exp $");
 
 #include <ctype.h>
 #include <stdio.h>
@@ -69,7 +69,7 @@ static struct skey_algorithm_table skey_algorithm_table[] = {
 #if 0
 	{ "rmd160", keycrunch_rmd160, f_rmd160 },
 #endif
-	{ NULL, NULL, NULL }
+	{ NULL }
 };
 
 /*
@@ -479,7 +479,7 @@ const char *skey_set_algorithm(const char *new)
 }
 
 /* Get current hash type */
-const char *skey_get_algorithm(void)
+const char *skey_get_algorithm()
 {
 	return(skey_algorithm_table[skey_hash_type].name);
 }
