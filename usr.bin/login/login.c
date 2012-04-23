@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.101 2012/04/23 20:57:04 christos Exp $	*/
+/*	$NetBSD: login.c,v 1.102 2012/04/23 21:09:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.101 2012/04/23 20:57:04 christos Exp $");
+__RCSID("$NetBSD: login.c,v 1.102 2012/04/23 21:09:27 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -121,11 +121,10 @@ int	has_ccache = 0;
 int	notickets = 1;
 extern krb5_context kcontext;
 extern int	have_forward;
+static char	*instance;
 extern char	*krb5tkfile_env;
 extern int	krb5_configured;
 #endif
-
-static char	*instance;
 
 #if defined(KERBEROS5)
 #define	KERBEROS_CONFIGURED	krb5_configured
@@ -151,6 +150,7 @@ main(int argc, char *argv[])
 	int login_retries = DEFAULT_RETRIES, 
 	    login_backoff = DEFAULT_BACKOFF;
 	time_t pw_warntime = _PASSWORD_WARNDAYS * SECSPERDAY;
+	char *loginname = NULL;
 #ifdef KERBEROS5
 	krb5_error_code kerror;
 #endif
@@ -243,7 +243,7 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (*argv) {
-		username = instance = *argv;
+		username = loginname = *argv;
 		ask = 0;
 	} else
 		ask = 1;
@@ -309,24 +309,22 @@ main(int argc, char *argv[])
 #endif /* KERBEROS5 */
 
 	for (cnt = 0;; ask = 1) {
-		char *ptr;
 #if defined(KERBEROS5)
 		if (login_krb5_get_tickets)
 			k5destroy();
 #endif
 		if (ask) {
 			fflag = 0;
-			instance = getloginname();
+			loginname = getloginname();
 		}
 		rootlogin = 0;
-		ptr = instance;
 #ifdef KERBEROS5
-		if ((instance = strchr(instance, '/')) != NULL)
+		if ((instance = strchr(loginname, '/')) != NULL)
 			*instance++ = '\0';
 		else
 			instance = __UNCONST("");
 #endif
-		username = trimloginname(ptr);
+		username = trimloginname(loginname);
 		/*
 		 * Note if trying multiple user names; log failures for
 		 * previous user name, but don't bother logging one failure
