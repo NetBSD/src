@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.65 2009/11/05 18:13:07 dyoung Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.66 2012/04/23 05:31:31 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.65 2009/11/05 18:13:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.66 2012/04/23 05:31:31 isaki Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "scsibus.h"
@@ -68,6 +68,7 @@ cpu_configure(void)
 		panic("no mainbus found");
 
 	/* Turn on interrupts */
+	printf("enabling interrupts\n");
 	(void) spl0();
 }
 
