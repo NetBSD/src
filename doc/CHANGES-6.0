@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.76 2012/04/23 23:41:47 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.77 2012/04/24 19:45:06 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1970,4 +1970,16 @@ crypto/external/bsd/openssl/dist/crypto/mem.c	1.2
 
 	Address CVE-2012-2110.
 	[drochner, ticket #197]
+
+external/gpl3/gdb/dist/gdb/nbsd-thread.c	1.10-1.16
+external/gpl3/gdb/dist/gdb/inf-ptrace.c	 	1.5
+
+	Fix gdb debugging of threaded programs.
+	[skrll, ticket #198]
+
+sys/arch/sparc64/sparc64/trap.c			1.175
+
+	Report faulting data address with SIGBUS (instead of the faulting
+	instruction).
+	[martin, ticket #199]
 
