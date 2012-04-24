@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.91 2012/03/21 10:14:19 matt Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.92 2012/04/24 09:53:41 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.91 2012/03/21 10:14:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.92 2012/04/24 09:53:41 drochner Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -810,6 +810,7 @@ static void
 pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 {
 	bool check_slot = false;
+	static const char * const linkspeeds[] = {"2.5", "5.0", "8.0"};
 
 	printf("\n  PCI Express Capabilities Register\n");
 	printf("    Capability version: %x\n",
@@ -850,11 +851,12 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	printf("    Link Capabilities Register: 0x%08x\n",
 	    regs[o2i(capoff + 0x0c)]);
 	printf("      Maximum Link Speed: ");
-	if ((regs[o2i(capoff + 0x0c)] & 0x000f) != 1) {
+	if ((regs[o2i(capoff + 0x0c)] & 0x000f) < 1 ||
+	    (regs[o2i(capoff + 0x0c)] & 0x000f) > 3) {
 		printf("unknown %u value\n", 
 		    (regs[o2i(capoff + 0x0c)] & 0x000f));
 	} else {
-		printf("2.5Gb/s\n");
+		printf("%sGb/s\n", linkspeeds[(regs[o2i(capoff + 0x0c)] & 0x000f) - 1]);
 	}
 	printf("      Maximum Link Width: x%u lanes\n",
 	    (regs[o2i(capoff + 0x0c)] & 0x03f0) >> 4);
@@ -862,11 +864,12 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	printf("    Link Status Register: 0x%04x\n",
 	    regs[o2i(capoff + 0x10)] >> 16);
 	printf("      Negotiated Link Speed: ");
-	if (((regs[o2i(capoff + 0x10)] >> 16) & 0x000f) != 1) {
+	if (((regs[o2i(capoff + 0x10)] >> 16) & 0x000f) < 1 ||
+	    ((regs[o2i(capoff + 0x10)] >> 16) & 0x000f) > 3) {
 		printf("unknown %u value\n", 
 		    (regs[o2i(capoff + 0x10)] >> 16) & 0x000f);
 	} else {
-		printf("2.5Gb/s\n");
+		printf("%sGb/s\n", linkspeeds[((regs[o2i(capoff + 0x10)] >> 16) & 0x000f) - 1]);
 	}
 	printf("      Negotiated Link Width: x%u lanes\n",
 	    (regs[o2i(capoff + 0x10)] >> 20) & 0x003f);
