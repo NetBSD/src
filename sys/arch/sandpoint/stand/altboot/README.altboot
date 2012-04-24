@@ -1,6 +1,6 @@
 /// notes about altboot ///
 
-$NetBSD: README.altboot,v 1.9 2012/01/14 22:36:54 phx Exp $
+$NetBSD: README.altboot,v 1.10 2012/04/24 14:56:07 nisimura Exp $
 
 Altboot is a functional bridge to fill the gap between a NAS product
 custom bootloader and the NetBSD kernel startup environment.  Altboot
@@ -47,6 +47,10 @@ Altboot is known working on at least these models:
 - Allnet 6250 and compatible with restricted vendor custom PPCboot
 
    PPCBoot 2.0.0-A9 (Feb 13 2006 - 14:56:11)
+
+- KURO-BOX/T4 vendor custom U-Boot
+
+   U-Boot 2009.06-BUFFALO-svn1376 (Jul 11 2009 - 04:11:01) KURO-NAS/T4
 
 The standard use of altboot is to invoke it with a short script from
 U-Boot/PPCboot, where the altboot.bin image is stored in an unoccupied 128KB
