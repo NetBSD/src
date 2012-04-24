@@ -1,4 +1,4 @@
-/*	$NetBSD: k5login.c,v 1.31 2012/04/24 16:12:44 christos Exp $	*/
+/*	$NetBSD: k5login.c,v 1.32 2012/04/24 16:51:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -51,7 +51,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	5.11 (Berkeley) 7/12/92";
 #endif
-__RCSID("$NetBSD: k5login.c,v 1.31 2012/04/24 16:12:44 christos Exp $");
+__RCSID("$NetBSD: k5login.c,v 1.32 2012/04/24 16:51:19 christos Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS5
@@ -399,11 +399,11 @@ k5login(struct passwd *pw, char *instance, char *localhost, char *password)
 		return (1);
 	}
 
-#if 1
+	memset(&my_creds, 0, sizeof(my_creds));
+#if 0
 	krb5_principal server;
 	krb5_timestamp now;
 	long lifetime = KRB5_DEFAULT_LIFE;
-	memset(&my_creds, 0, sizeof(my_creds));
 
 	my_creds.client = me;
 
@@ -457,6 +457,8 @@ k5login(struct passwd *pw, char *instance, char *localhost, char *password)
 	    NULL, NULL, 0, NULL, opt);
 
 	krb5_get_init_creds_opt_free(kcontext, opt);
+	if (kerror == 0)
+		kerror = krb5_cc_store_cred(kcontext, ccache, &my_creds);
 #endif
 
 	if (chown(&tkt_location[5], pw->pw_uid, pw->pw_gid) < 0)
