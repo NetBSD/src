@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.19 2012/04/16 14:30:42 nisimura Exp $ */
+/* $NetBSD: satmgr.c,v 1.20 2012/04/24 10:09:06 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -997,7 +997,9 @@ msattalk(struct satmgr_softc *sc, const char *cmd, char *rep, int n)
 	CSR_WRITE(sc, IER, 0);
 	send_sat_len(sc, cmd, len);
 	send_sat_len(sc, &pa, 1);
+	 DELAY(2000); /* XXX */
 	recv_sat_len(sc, rep, n);
+	 DELAY(2000); /* XXX */
 	CSR_WRITE(sc, IER, 0x7f);
 }
 
@@ -1042,10 +1044,10 @@ mbtnintr(void *arg)
 {
 	/* notified after 3 seconds guard time */
 	struct satmgr_softc *sc = arg;
-	char report[2];
+	char report[4];
 
-	msattalk(sc, "\x80\x36", report, 2);
-	if ((report[0] & 01) == 0) /* power button depressed */
+	msattalk(sc, "\x80\x36", report, 4);
+	if ((report[2] & 01) == 0) /* power button depressed */
 		sysmon_task_queue_sched(0, sched_sysmon_pbutton, sc);
 	return 1;
 }
