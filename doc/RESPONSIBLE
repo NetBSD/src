@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.98 2012/04/21 12:27:27 roy Exp $
+#	$NetBSD: RESPONSIBLE,v 1.99 2012/04/24 14:23:23 rkujawa Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -274,6 +274,7 @@ MD Misc:
 
 hpcboot		uwe
 i386 bootblocks	dsl, drochner, fvdl, christos
+amiga pci	rkujawa
 
 
 Misc:
