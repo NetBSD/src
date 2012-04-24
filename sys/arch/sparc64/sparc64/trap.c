@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.168.8.1 2012/03/21 16:10:21 riz Exp $ */
+/*	$NetBSD: trap.c,v 1.168.8.2 2012/04/24 19:44:16 riz Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.168.8.1 2012/03/21 16:10:21 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.168.8.2 2012/04/24 19:44:16 riz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -732,7 +732,6 @@ badtrap:
 		       l->l_proc->p_pid, l->l_lid, l->l_proc->p_comm, fmt64(dsfsr), fmt64(dsfar),
 		       fmt64(isfsr), pc);
 #endif
-		}
 		
 #if defined(DDB) && defined(DEBUG)
 		if (trapdebug & TDB_STOPSIG) {
@@ -749,7 +748,8 @@ badtrap:
 		sig = SIGBUS;
 		ksi.ksi_trap = type;
 		ksi.ksi_code = BUS_ADRALN;
-		ksi.ksi_addr = (void *)pc;
+		ksi.ksi_addr = (void*)dsfar;
+		}
 		break;
 
 	case T_FP_IEEE_754:
@@ -1573,7 +1573,7 @@ text_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 		ksi.ksi_signo = SIGBUS;
 		ksi.ksi_code = BUS_OBJERR;
 		ksi.ksi_trap = type;
-		ksi.ksi_addr = (void *)pc;
+		ksi.ksi_addr = (void *)afva;
 		trapsignal(l, &ksi);
 	}
 
