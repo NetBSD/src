@@ -1,4 +1,4 @@
-/*	$NetBSD: k5login.c,v 1.32 2012/04/24 16:51:19 christos Exp $	*/
+/*	$NetBSD: k5login.c,v 1.33 2012/04/24 16:52:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -51,7 +51,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	5.11 (Berkeley) 7/12/92";
 #endif
-__RCSID("$NetBSD: k5login.c,v 1.32 2012/04/24 16:51:19 christos Exp $");
+__RCSID("$NetBSD: k5login.c,v 1.33 2012/04/24 16:52:26 christos Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS5
@@ -400,50 +400,6 @@ k5login(struct passwd *pw, char *instance, char *localhost, char *password)
 	}
 
 	memset(&my_creds, 0, sizeof(my_creds));
-#if 0
-	krb5_principal server;
-	krb5_timestamp now;
-	long lifetime = KRB5_DEFAULT_LIFE;
-
-	my_creds.client = me;
-
-	const char *xrealm = krb5_principal_get_realm(kcontext, me);
-	size_t rlen = strlen(xrealm);
-	if ((kerror = krb5_build_principal_ext(kcontext,
-			&server,
-			rlen, xrealm,
-			KRB5_TGS_NAME_SIZE,
-			KRB5_TGS_NAME,
-			rlen, xrealm,
-			0)) != 0) {
-		k5_log(kcontext, kerror, "while building server name");
-		return (1);
-	}
-
-	my_creds.server = server;
-
-	if ((kerror = krb5_timeofday(kcontext, &now)) != 0) {
-		k5_log(kcontext, kerror, "while getting time of day");
-		return (1);
-	}
-
-	my_creds.times.starttime = 0;	/* start timer when request
-					   gets to KDC */
-	my_creds.times.endtime = now + lifetime;
-	my_creds.times.renew_till = 0;
-
-	int options = KRB5_DEFAULT_OPTIONS;
-
-	if (login_krb5_forwardable_tgt)
-		options |= KDC_OPT_FORWARDABLE;
-
-	kerror = krb5_get_in_tkt_with_password(kcontext, options,
-	    NULL, NULL, NULL, password, ccache, &my_creds, 0);
-
-	if (my_creds.server != NULL)
-		krb5_free_principal(kcontext, my_creds.server);
-#else
-	/* This does not work yet */
 	krb5_get_init_creds_opt *opt;
 
 	if ((kerror = krb5_get_init_creds_opt_alloc(kcontext, &opt)) != 0) {
@@ -459,7 +415,6 @@ k5login(struct passwd *pw, char *instance, char *localhost, char *password)
 	krb5_get_init_creds_opt_free(kcontext, opt);
 	if (kerror == 0)
 		kerror = krb5_cc_store_cred(kcontext, ccache, &my_creds);
-#endif
 
 	if (chown(&tkt_location[5], pw->pw_uid, pw->pw_gid) < 0)
 		syslog(LOG_ERR, "chown tkfile (%s): %m", &tkt_location[5]);
