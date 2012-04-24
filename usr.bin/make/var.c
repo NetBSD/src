@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.167 2011/06/03 21:10:42 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.168 2012/04/24 20:26:58 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.167 2011/06/03 21:10:42 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.168 2012/04/24 20:26:58 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.167 2011/06/03 21:10:42 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.168 2012/04/24 20:26:58 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -4075,7 +4075,7 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, Boolean undefErr)
 	}
     }
 
-    return Buf_Destroy(&buf, FALSE);
+    return Buf_DestroyCompact(&buf);
 }
 
 /*-
