@@ -1,5 +1,5 @@
 /*	$OpenBSD: main.c,v 1.77 2009/10/14 17:19:47 sthen Exp $	*/
-/*	$NetBSD: main.c,v 1.41 2011/09/06 18:16:01 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.42 2012/04/25 18:23:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.41 2011/09/06 18:16:01 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.42 2012/04/25 18:23:58 christos Exp $");
 #include <assert.h>
 #include <signal.h>
 #include <err.h>
@@ -494,7 +494,7 @@ macro(void)
 		default:
 			if (LOOK_AHEAD(t, scommt)) {
 				char *q;
-				for (q = scommt; *q; p++)
+				for (q = scommt; *q; q++)
 					chrsave(*q);
 				for(;;) {
 					t = gpbc();
