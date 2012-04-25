@@ -1,4 +1,4 @@
-/*	$NetBSD: supscan.c,v 1.21 2012/04/25 18:07:45 christos Exp $	*/
+/*	$NetBSD: supscan.c,v 1.22 2012/04/25 22:35:00 martin Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -171,7 +171,7 @@ int
 main(int argc, char **argv)
 {
 	SCAN_COLLECTION * volatile c;	/* Avoid longjmp clobbering */
-	int errs;
+	volatile int errs;
 #ifdef RLIMIT_DATA
 	struct rlimit dlim;
 
