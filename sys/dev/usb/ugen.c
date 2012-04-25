@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.118 2012/03/06 03:35:29 mrg Exp $	*/
+/*	$NetBSD: ugen.c,v 1.119 2012/04/25 07:57:15 dholland Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.118 2012/03/06 03:35:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.119 2012/04/25 07:57:15 dholland Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -2010,7 +2010,6 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 			break;
 		case UE_BULK:
 			kn->kn_fop = &ugenread_bulk_filtops;
-			break;
 			break;
 		default:
 			return (EINVAL);
