@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.933 2012/04/06 10:55:19 spz Exp $
+#	$NetBSD: 3RDPARTY,v 1.934 2012/04/25 12:22:48 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -832,7 +832,7 @@ Patch applied after OpenSSH import.
 
 Package:	OpenSSH
 Version:	5.9
-Current Vers:	5.9 / portable 5.9p1
+Current Vers:	6.0 / portable 6.0p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
 Home Page:	http://www.openssh.com/portable.html
@@ -971,9 +971,9 @@ We use err() and friends. We have changes for snprintf, extra
 formatting in man pages, disallowing flood pinging, alignment fixes,
 and more.
 
-Package:	postfix
+Package:	Postfix
 Version:	2.8.8
-Current Vers:	2.8.8/2.9.0
+Current Vers:	2.8.8/2.9.1
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://postfix.cloud9.net/official/
 Home Page:	http://www.postfix.org/
