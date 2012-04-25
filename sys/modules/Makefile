@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.103 2012/04/25 03:44:16 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.104 2012/04/25 04:49:46 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,7 @@ SUBDIR+=	compat
 SUBDIR+=	compat_ossaudio
 SUBDIR+=	coredump
 SUBDIR+=	chfs
+SUBDIR+=	dbcool
 SUBDIR+=	efs
 SUBDIR+=	ext2fs
 SUBDIR+=	exec_script
