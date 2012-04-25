@@ -1,4 +1,4 @@
-.\"	$NetBSD: cardbus.4,v 1.34 2012/04/25 03:48:55 nakayama Exp $
+.\"	$NetBSD: cardbus.4,v 1.35 2012/04/25 04:14:03 nakayama Exp $
 .\"
 .\" Copyright (c) 1999-2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -70,6 +70,8 @@ drivers, sorted by function and driver name:
 Atheros 5210/5211/5212 802.11
 .It atw
 ADMtek ADM8211 (802.11)
+.It bwi
+Broadcom BCM430x/4318 (802.11)
 .It ex
 3Com 3c575TX and 3c575BTX
 .It fxp
@@ -153,6 +155,7 @@ in the kernel configuration might be of use.
 .Xr ahc 4 ,
 .Xr ath 4 ,
 .Xr atw 4 ,
+.Xr bwi 4 ,
 .Xr com 4 ,
 .Xr ehci 4 ,
 .Xr ex 4 ,
