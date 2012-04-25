@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.41 2012/04/25 03:44:16 pgoyette Exp $
+# $NetBSD: mi,v 1.42 2012/04/25 04:49:46 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -35,6 +35,8 @@
 ./@MODULEDIR@/compat_ossaudio/compat_ossaudio.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/coredump				base-kernel-modules	kmod
 ./@MODULEDIR@/coredump/coredump.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/dbcool				base-kernel-modules	kmod
+./@MODULEDIR@/dbcool/dbcool.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/dirhash				base-obsolete	obsolete
 ./@MODULEDIR@/dirhash/dirhash.kmod		base-obsolete	obsolete
 ./@MODULEDIR@/dm				base-kernel-modules	lvm,kmod
