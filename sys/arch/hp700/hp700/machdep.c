@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.110 2012/04/05 20:12:09 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.111 2012/04/25 07:58:43 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110 2012/04/05 20:12:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.111 2012/04/25 07:58:43 dholland Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1059,7 +1059,7 @@ ibtlb_g(int i, pa_space_t sp, vaddr_t va, paddr_t pa, vsize_t sz, u_int prot)
 	error = pdcproc_btlb_insert(sp, va, pa, sz, prot, i);
 	if (error < 0) {
 #ifdef BTLBDEBUG
-		DPRINTF(("WARNING: BTLB insert failed (%d)\n", error);
+		DPRINTF(("WARNING: BTLB insert failed (%d)\n", error));
 #endif
 	}
 	return error;
