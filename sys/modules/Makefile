@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.102 2012/03/11 01:30:56 joerg Exp $
+#	$NetBSD: Makefile,v 1.103 2012/04/25 03:44:16 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -59,6 +59,7 @@ SUBDIR+=	ptyfs
 SUBDIR+=	puffs
 SUBDIR+=	putter
 SUBDIR+=	scsiverbose
+SUBDIR+=	sdtemp
 SUBDIR+=	secmodel_bsd44
 SUBDIR+=	secmodel_extensions
 SUBDIR+=	secmodel_overlay
