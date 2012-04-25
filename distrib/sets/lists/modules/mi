@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.40 2012/03/10 21:52:02 joerg Exp $
+# $NetBSD: mi,v 1.41 2012/04/25 03:44:16 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -141,6 +141,8 @@
 ./@MODULEDIR@/scsiverbose/scsiverbose.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/sdt				base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/sdt/sdt.kmod			base-kernel-modules	kmod,dtrace
+./@MODULEDIR@/sdtemp				base-kernel-modules	kmod
+./@MODULEDIR@/sdtemp/sdtemp.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/secmodel_bsd44			base-kernel-modules	kmod
 ./@MODULEDIR@/secmodel_bsd44/secmodel_bsd44.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/secmodel_extensions		base-kernel-modules	kmod
