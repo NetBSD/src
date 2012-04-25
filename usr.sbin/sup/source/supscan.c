@@ -1,4 +1,4 @@
-/*	$NetBSD: supscan.c,v 1.20 2012/04/25 17:33:49 christos Exp $	*/
+/*	$NetBSD: supscan.c,v 1.21 2012/04/25 18:07:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -388,7 +388,7 @@ getscancoll(char *filename, char *collname, char *basedir)
 			prefix = estrdup(p);
 			if (chdir(prefix) < 0) {
 				fprintf(stderr, "supscan: can't chdir to %s "
-				    " from base directory %s for %s\n",
+				    " from base directory %s for %s (%s)\n",
 				    prefix, basedir, collname, strerror(errno));
 				fclose(f);
 				free(prefix);
