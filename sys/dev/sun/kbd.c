@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.63 2009/05/12 14:46:39 cegger Exp $	*/
+/*	$NetBSD: kbd.c,v 1.64 2012/04/26 00:50:10 macallan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.63 2009/05/12 14:46:39 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.64 2012/04/26 00:50:10 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.63 2009/05/12 14:46:39 cegger Exp $");
 #include <sys/poll.h>
 #include <sys/file.h>
 
+#include <dev/sysmon/sysmon_taskq.h>
+
 #include <dev/wscons/wsksymdef.h>
 
 #include <dev/sun/kbd_reg.h>
@@ -76,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.63 2009/05/12 14:46:39 cegger Exp $");
 
 #include "ioconf.h"
 #include "locators.h"
+#include "opt_sunkbd.h"
 
 dev_type_open(kbdopen);
 dev_type_close(kbdclose);
@@ -150,7 +153,7 @@ static void	kbd_input_wskbd(struct kbd_softc *, int);
 /* firm events input */
 static void	kbd_input_event(struct kbd_softc *, int);
 
-
+static void	kbd_powerbutton(void *);
 
 /****************************************************************
  *  Entry points for /dev/kbd
@@ -899,7 +902,7 @@ static void
 kbd_input_wskbd(struct kbd_softc *k, int code)
 {
 	int type, key;
-
+	
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	if (k->k_wsraw) {
 		u_char buf;
@@ -912,6 +915,27 @@ kbd_input_wskbd(struct kbd_softc *k, int code)
 
 	type = KEY_UP(code) ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
 	key = KEY_CODE(code);
+
+	if (type == WSCONS_EVENT_KEY_DOWN) {
+		switch (key) {
+#ifdef KBD_HIJACK_VOLUME_BUTTONS
+			case 0x02:
+				pmf_event_inject(NULL, PMFE_AUDIO_VOLUME_DOWN);
+				return;
+			case 0x04:
+				pmf_event_inject(NULL, PMFE_AUDIO_VOLUME_UP);
+				return;
+#endif
+			case 0x30:
+				if (k->k_isconsole)
+					k->k_ev = KEY_UP(code) ?
+					    PSWITCH_EVENT_RELEASED :
+					    PSWITCH_EVENT_PRESSED;
+					sysmon_task_queue_sched(0, kbd_powerbutton, k);
+				return;
+		}
+	}
+
 	wskbd_input(k->k_wskbd, type, key);
 }
 
@@ -919,6 +943,7 @@ int
 wssunkbd_enable(void *v, int on)
 {
 	struct kbd_softc *k = v;
+
 	if (k->k_wsenabled != on) {
 		k->k_wsenabled = on;
 		if (on) {
@@ -1048,7 +1073,24 @@ void
 kbd_wskbd_attach(struct kbd_softc *k, int isconsole)
 {
 	k->k_isconsole = isconsole;
-	
+	if (isconsole) {
+		sysmon_task_queue_init();
+		memset(&k->k_sm_pbutton, 0, sizeof(struct sysmon_pswitch));
+		k->k_sm_pbutton.smpsw_name = device_xname(k->k_dev);
+		k->k_sm_pbutton.smpsw_type = PSWITCH_TYPE_POWER;
+		if (sysmon_pswitch_register(&k->k_sm_pbutton) != 0)
+			aprint_error_dev(k->k_dev,
+			    "unable to register power button with sysmon\n");
+	}
 	config_interrupts(k->k_dev, kbd_enable);
 }
+
+static void
+kbd_powerbutton(void *cookie)
+{
+	struct kbd_softc *k = cookie;
+
+	sysmon_pswitch_event(&k->k_sm_pbutton, k->k_ev);
+}
+
 #endif
