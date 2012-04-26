@@ -1,4 +1,4 @@
-.\"	$NetBSD: logger.1,v 1.13 2012/03/22 07:58:19 wiz Exp $
+.\"	$NetBSD: logger.1,v 1.14 2012/04/26 21:11:24 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)logger.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd May 14, 2010
+.Dd April 26, 2012
 .Dt LOGGER 1
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd make entries in the system log
 .Sh SYNOPSIS
 .Nm
-.Op Fl is
+.Op Fl cins
 .Op Fl d Ar SD
 .Op Fl f Ar file
 .Op Fl m Ar msgid
@@ -53,6 +53,9 @@ system log module.
 Options:
 .Pp
 .Bl -tag -width "messageXX"
+.It Fl c
+Log to console
+.Dv ( LOG_CONS ) .
 .It Fl d Ar sd
 Log this in the structured data (SD) field.
 .Po
@@ -64,9 +67,13 @@ the shell.
 Log the specified file.
 .It Fl i
 Log the process id of the logger process
-with each line.
+with each line
+.Dv ( LOG_PID ) .
 .It Fl m Ar msgid
 The MSGID used for the message.
+.it Fl n
+Open log file immediately
+.Dv ( LOG_NDELAY ) .
 .It Fl p Ar pri
 Enter the message with the specified priority.
 The priority may be specified numerically or as a
@@ -82,7 +89,8 @@ facility.
 The default is
 .Dq user.notice .
 .It Fl s
-Log the message to standard error, as well as the system log.
+Log the message to standard error, as well as the system log
+.Dv ( LOG_PERROR ) .
 .It Fl t Ar tag
 Mark every line in the log with the specified
 .Ar tag  .
