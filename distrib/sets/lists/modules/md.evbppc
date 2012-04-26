@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.20 2012/04/26 03:00:21 christos Exp $
+# $NetBSD: md.evbppc,v 1.21 2012/04/26 22:09:53 he Exp $
 ./stand/powerpc-4xx							base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@						base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules					base-kernel-modules	kmod,compatmodules
@@ -26,6 +26,8 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/compat_ossaudio/compat_ossaudio.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/coredump			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/coredump/coredump.kmod		base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/dbcool				base-kernel-modules     kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/dbcool/dbcool.kmod		base-kernel-modules     kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/dirhash				base-obsolete		obsolete
 ./stand/powerpc-4xx/@OSRELEASE@/modules/dirhash/dirhash.kmod		base-obsolete		obsolete
 ./stand/powerpc-4xx/@OSRELEASE@/modules/dm				base-kernel-modules	kmod,compatmodules,lvm
@@ -134,6 +136,8 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/scsiverbose/scsiverbose.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/sdt				base-kernel-modules	kmod,compatmodules,dtrace
 ./stand/powerpc-4xx/@OSRELEASE@/modules/sdt/sdt.kmod			base-kernel-modules	kmod,compatmodules,dtrace
+./stand/powerpc-4xx/@OSRELEASE@/modules/sdtemp			base-kernel-modules     kmod
+./stand/powerpc-4xx/@OSRELEASE@/modules/sdtemp/sdtemp.kmod		base-kernel-modules     kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/secmodel_bsd44			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/secmodel_bsd44/secmodel_bsd44.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/secmodel_extensions		base-kernel-modules	kmod,compatmodules
@@ -199,6 +203,8 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/compat_ossaudio/compat_ossaudio.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/coredump				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/coredump/coredump.kmod		base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/dbcool			base-kernel-modules     kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/dbcool/dbcool.kmod		base-kernel-modules     kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/dirhash				base-obsolete	obsolete
 ./stand/powerpc-booke/@OSRELEASE@/modules/dirhash/dirhash.kmod		base-obsolete	obsolete
 ./stand/powerpc-booke/@OSRELEASE@/modules/dm				base-kernel-modules	kmod,compatmodules,lvm
@@ -307,6 +313,8 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/scsiverbose/scsiverbose.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/sdt				base-kernel-modules	kmod,compatmodules,dtrace
 ./stand/powerpc-booke/@OSRELEASE@/modules/sdt/sdt.kmod			base-kernel-modules	kmod,compatmodules,dtrace
+./stand/powerpc-booke/@OSRELEASE@/modules/sdtemp			base-kernel-modules     kmod
+./stand/powerpc-booke/@OSRELEASE@/modules/sdtemp/sdtemp.kmod		base-kernel-modules     kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/secmodel_bsd44		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/secmodel_bsd44/secmodel_bsd44.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/secmodel_extensions		base-kernel-modules	kmod,compatmodules
