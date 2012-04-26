@@ -1,4 +1,4 @@
-/*	$NetBSD: logger.c,v 1.15 2011/09/04 20:28:59 joerg Exp $	*/
+/*	$NetBSD: logger.c,v 1.16 2012/04/26 21:11:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)logger.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: logger.c,v 1.15 2011/09/04 20:28:59 joerg Exp $");
+__RCSID("$NetBSD: logger.c,v 1.16 2012/04/26 21:11:24 christos Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -75,8 +75,11 @@ main(int argc, char *argv[])
 	tag = NULL;
 	pri = LOG_NOTICE;
 	logflags = 0;
-	while ((ch = getopt(argc, argv, "d:f:im:p:st:")) != -1)
+	while ((ch = getopt(argc, argv, "cd:f:im:np:st:")) != -1)
 		switch((char)ch) {
+		case 'c':	/* log to console */
+			logflags |= LOG_CONS;
+			break;
 		case 'd':		/* structured data field */
 			sd = optarg;
 			break;
@@ -89,6 +92,9 @@ main(int argc, char *argv[])
 			break;
 		case 'm':		/* msgid field */
 			msgid = optarg;
+			break;
+		case 'n':		/* open log file immediately */
+			logflags |= LOG_NDELAY;
 			break;
 		case 'p':		/* priority */
 			pri = pencode(optarg);
@@ -190,7 +196,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "%s: [-is] [-f file] [-p pri] [-t tag] "
+	    "Usage: %s [-cins] [-f file] [-p pri] [-t tag] "
 	    "[-m msgid] [-d SD] [ message ... ]\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
