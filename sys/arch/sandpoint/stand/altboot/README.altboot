@@ -1,6 +1,6 @@
 /// notes about altboot ///
 
-$NetBSD: README.altboot,v 1.10 2012/04/24 14:56:07 nisimura Exp $
+$NetBSD: README.altboot,v 1.11 2012/04/26 19:59:36 phx Exp $
 
 Altboot is a functional bridge to fill the gap between a NAS product
 custom bootloader and the NetBSD kernel startup environment.  Altboot
@@ -61,11 +61,11 @@ that the original U-Boot/PPCboot still remains useful and altboot works
 as a functional extension for them.
 
 In case the firmware was crippled by the vendor so that it only boots
-Linux U-Boot images (D-Link), you can still use altboot by uploading
-altboot.img instead of the Linux kernel.
+Linux U-Boot images (D-Link, Synology 2007), you can still use altboot by
+overwriting the Linux kernel with altboot.img.
 
 Altboot passes the following bootinfo records to the NetBSD/sandpoint
-kernel.
+kernel:
 - processor clock tick value driving MPC8241/8245.
 - serial console selection.
 - booted kernel filename and which device it was fetched from.
@@ -104,7 +104,12 @@ restarts itself. Mainly useful for altboot testing.
 Multiple arguments may be specified at once, although not all combinations
 make sense. The format of an altboot command line is:
 
-  [[<bootargs> ...] <devicename>:[<bootfile>]]
+  [[<bootargs> ...] <devicename>:[<bootfile>] ...]
+
+Multiple boot devices and/or paths may be specified, which are booted one
+after another until success. When no boot device is specified altboot tries
+to boot from all disk devices with a valid NetBSD disklabel, starting with
+unit 0.
 
 The following device names are supported:
 - tftp			boot from TFTP (address retrieved by DHCP)

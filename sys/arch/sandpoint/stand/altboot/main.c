@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.18 2012/04/16 16:55:29 phx Exp $ */
+/* $NetBSD: main.c,v 1.19 2012/04/26 19:59:37 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -119,15 +119,14 @@ static void sat_test(void);
 void
 main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 {
-	struct brdprop *brdprop;
 	unsigned long marks[MARK_MAX];
+	struct brdprop *brdprop;
 	char *new_argv[MAX_ARGS];
-	ssize_t len;
-	int n, i, fd, howto;
 	char *bname;
+	ssize_t len;
+	int err, fd, howto, i, n;
 
-	printf("\n");
-	printf(">> %s altboot, revision %s\n", bootprog_name, bootprog_rev);
+	printf("\n>> %s altboot, revision %s\n", bootprog_name, bootprog_rev);
 
 	brdprop = brd_lookup(brdtype);
 	printf(">> %s, cpu %u MHz, bus %u MHz, %dMB SDRAM\n", brdprop->verbose,
@@ -233,7 +232,7 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 	/* wait 2s for user to enter interactive mode */
 	for (n = 200; n >= 0; n--) {
 		if (n % 100 == 0)
-			printf("Hit any key to enter interactive mode: %d\r",
+			printf("\rHit any key to enter interactive mode: %d",
 			    n / 100);
 		if (tstchar()) {
 #ifdef DEBUG
@@ -272,85 +271,112 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 		if (i >= sizeof(bootargs) / sizeof(bootargs[0]))
 			break;	/* break on first unknown string */
 	}
-	if (n >= argc)
-		bname = BNAME_DEFAULT;
-	else {
-		bname = argv[n];
-		if (check_bootname(bname) == 0) {
-			printf("%s not a valid bootname\n", bname);
-			goto loadfail;
+
+	if (n >= argc) {
+		/*
+		 * If no device name is given we construct a list of drives
+		 * which have valid disklabels.
+		 */
+		n = 0;
+		argc = 0;
+		argv = alloc(MAX_UNITS * (sizeof(char *) + sizeof("wdN:")));
+		bname = (char *)(argv + MAX_UNITS);
+		for (i = 0; i < MAX_UNITS; i++) {
+			if (!dlabel_valid(i))
+				continue;
+			sprintf(bname, "wd%d:", i);
+			argv[argc++] = bname;
+			bname += sizeof("wdN:");
+		}
+		/* use default drive if no valid disklabel is found */
+		if (argc == 0) {
+			argc = 1;
+			argv[0] = BNAME_DEFAULT;
 		}
 	}
 
-	if ((fd = open(bname, 0)) < 0) {
-		if (errno == ENOENT)
-			printf("\"%s\" not found\n", bi_path.bootpath);
-		goto loadfail;
-	}
-	printf("loading \"%s\" ", bi_path.bootpath);
-	marks[MARK_START] = 0;
+	while (n < argc) {
+		bname = argv[n++];
 
-	if (howto == -1) {
-		/* load another altboot binary and replace ourselves */
-		len = read(fd, (void *)0x100000, 0x1000000 - 0x100000);
-		if (len == -1)
-			goto loadfail;
+		if (check_bootname(bname) == 0) {
+			printf("%s not a valid bootname\n", bname);
+			continue;
+		}
+
+		if ((fd = open(bname, 0)) < 0) {
+			if (errno == ENOENT)
+				printf("\"%s\" not found\n", bi_path.bootpath);
+			continue;
+		}
+		printf("loading \"%s\" ", bi_path.bootpath);
+		marks[MARK_START] = 0;
+
+		if (howto == -1) {
+			/* load another altboot binary and replace ourselves */
+			len = read(fd, (void *)0x100000, 0x1000000 - 0x100000);
+			if (len == -1)
+				goto loadfail;
+			close(fd);
+			netif_shutdown_all();
+
+			memcpy((void *)0xf0000, newaltboot,
+			    newaltboot_end - newaltboot);
+			__syncicache((void *)0xf0000,
+			    newaltboot_end - newaltboot);
+			printf("Restarting...\n");
+			run((void *)1, argv, (void *)0x100000, (void *)len,
+			    (void *)0xf0000);
+		}
+
+		err = fdloadfile(fd, marks, LOAD_KERNEL);
 		close(fd);
+		if (err < 0)
+			continue;
+
+		printf("entry=%p, ssym=%p, esym=%p\n",
+		    (void *)marks[MARK_ENTRY],
+		    (void *)marks[MARK_SYM],
+		    (void *)marks[MARK_END]);
+
+		bootinfo = (void *)0x4000;
+		bi_init(bootinfo);
+		bi_add(&bi_cons, BTINFO_CONSOLE, sizeof(bi_cons));
+		bi_add(&bi_mem, BTINFO_MEMORY, sizeof(bi_mem));
+		bi_add(&bi_clk, BTINFO_CLOCK, sizeof(bi_clk));
+		bi_add(&bi_path, BTINFO_BOOTPATH, sizeof(bi_path));
+		bi_add(&bi_rdev, BTINFO_ROOTDEVICE, sizeof(bi_rdev));
+		bi_add(&bi_fam, BTINFO_PRODFAMILY, sizeof(bi_fam));
+		if (brdtype == BRD_SYNOLOGY || brdtype == BRD_DLINKDSM) {
+			/* need to pass this MAC address to kernel */
+			bi_add(&bi_net, BTINFO_NET, sizeof(bi_net));
+		}
+
+		if (modules_enabled) {
+			module_add(fsmod);
+			if (fsmod2 != NULL && strcmp(fsmod, fsmod2) != 0)
+				module_add(fsmod2);
+			kmodloadp = marks[MARK_END];
+			btinfo_modulelist = NULL;
+			module_load(bname);
+			if (btinfo_modulelist != NULL &&
+			    btinfo_modulelist->num > 0)
+				bi_add(btinfo_modulelist, BTINFO_MODULELIST,
+				    btinfo_modulelist_size);
+		}
+
+		launchfixup();
 		netif_shutdown_all();
 
-		memcpy((void *)0xf0000, newaltboot,
-		    newaltboot_end - newaltboot);
-		__syncicache((void *)0xf0000, newaltboot_end - newaltboot);
-		printf("Restarting...\n");
-		run((void *)1, argv, (void *)0x100000, (void *)len,
-		    (void *)0xf0000);
-	} else if (fdloadfile(fd, marks, LOAD_KERNEL) < 0)
-		goto loadfail;
-	close(fd);
+		__syncicache((void *)marks[MARK_ENTRY],
+		    (u_int)marks[MARK_SYM] - (u_int)marks[MARK_ENTRY]);
 
-	printf("entry=%p, ssym=%p, esym=%p\n",
-	    (void *)marks[MARK_ENTRY],
-	    (void *)marks[MARK_SYM],
-	    (void *)marks[MARK_END]);
+		run((void *)marks[MARK_SYM], (void *)marks[MARK_END],
+		    (void *)howto, bootinfo, (void *)marks[MARK_ENTRY]);
 
-	bootinfo = (void *)0x4000;
-	bi_init(bootinfo);
-	bi_add(&bi_cons, BTINFO_CONSOLE, sizeof(bi_cons));
-	bi_add(&bi_mem, BTINFO_MEMORY, sizeof(bi_mem));
-	bi_add(&bi_clk, BTINFO_CLOCK, sizeof(bi_clk));
-	bi_add(&bi_path, BTINFO_BOOTPATH, sizeof(bi_path));
-	bi_add(&bi_rdev, BTINFO_ROOTDEVICE, sizeof(bi_rdev));
-	bi_add(&bi_fam, BTINFO_PRODFAMILY, sizeof(bi_fam));
-	if (brdtype == BRD_SYNOLOGY || brdtype == BRD_DLINKDSM) {
-		/* need to set this MAC address in kernel driver later */
-		bi_add(&bi_net, BTINFO_NET, sizeof(bi_net));
+		/* should never come here */
+		printf("exec returned. Restarting...\n");
+		_rtt();
 	}
-
-	if (modules_enabled) {
-		module_add(fsmod);
-		if (fsmod2 != NULL && strcmp(fsmod, fsmod2) != 0)
-			module_add(fsmod2);
-		kmodloadp = marks[MARK_END];
-		btinfo_modulelist = NULL;
-		module_load(bname);
-		if (btinfo_modulelist != NULL && btinfo_modulelist->num > 0)
-			bi_add(btinfo_modulelist, BTINFO_MODULELIST,
-			    btinfo_modulelist_size);
-	}
-
-	launchfixup();
-	netif_shutdown_all();
-
-	__syncicache((void *)marks[MARK_ENTRY],
-	    (u_int)marks[MARK_SYM] - (u_int)marks[MARK_ENTRY]);
-
-	run((void *)marks[MARK_SYM], (void *)marks[MARK_END],
-	    (void *)howto, bootinfo, (void *)marks[MARK_ENTRY]);
-
-	/* should never come here */
-	printf("exec returned. Restarting...\n");
-	_rtt();
-
   loadfail:
 	printf("load failed. Restarting...\n");
 	_rtt();

@@ -1,4 +1,4 @@
-/* $NetBSD: globals.h,v 1.18 2012/04/16 16:55:29 phx Exp $ */
+/* $NetBSD: globals.h,v 1.19 2012/04/26 19:59:37 phx Exp $ */
 
 #ifdef DEBUG
 #define	DPRINTF(x)	printf x
@@ -167,8 +167,23 @@ NIF_DECL(skg);
 NIF_DECL(stg);
 
 /* DSK support */
-int dskdv_init(void *);
+#define MAX_UNITS 4
 
+struct disk {
+	char xname[8];
+	void *dvops;
+	unsigned unittag;
+	uint16_t ident[128];
+	uint64_t nsect;
+	uint64_t first;
+	void *dlabel;
+	int part;
+	void *fsops;
+	int (*lba_read)(struct disk *, int64_t, int, void *);
+};
+
+int dskdv_init(void *);
+int dlabel_valid(int);
 int dsk_open(struct open_file *, ...);
 int dsk_close(struct open_file *);
 int dsk_strategy(void *, int, daddr_t, size_t, void *, size_t *);
@@ -228,19 +243,6 @@ struct dkdev_ata {
 	struct dvata_chan chan[4];
 	int presense[4];
 	char *iobuf;
-};
-
-struct disk {
-	char xname[8];
-	void *dvops;
-	unsigned unittag;
-	uint16_t ident[128];
-	uint64_t nsect;
-	uint64_t first;
-	void *dlabel;
-	int part;
-	void *fsops;
-	int (*lba_read)(struct disk *, int64_t, int, void *);
 };
 
 int spinwait_unbusy(struct dkdev_ata *, int, int, const char **);
