@@ -1,4 +1,4 @@
-# $NetBSD: files.sun,v 1.16 2008/12/05 11:52:42 jdc Exp $
+# $NetBSD: files.sun,v 1.17 2012/04/26 00:50:10 macallan Exp $
 #
 # Configuration file for devices found on Sun machines.
 #
@@ -19,7 +19,7 @@ device kbd: firm_events, wskbddev
 file	dev/sun/kbd.c			kbd needs-flag
 file	dev/sun/kbd_tables.c 		kbd
 
-defflag	opt_sunkbd.h	SPARCBOOK_CMD
+defflag	opt_sunkbd.h	SPARCBOOK_CMD KBD_HIJACK_VOLUME_BUTTONS
 file	dev/sun/wskbdmap_sun.c		kbd & wskbd
 
 # e.g. - lower layer: sun keyboard at zs
