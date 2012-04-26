@@ -220,8 +220,8 @@ struct bnx_softc
 	bus_addr_t		tx_bd_chain_paddr[TX_PAGES];
 
 	/* H/W maintained RX buffer descriptor chain structure. */
-	bus_dma_segment_t	rx_bd_chain_seg[TX_PAGES];
-	int			rx_bd_chain_rseg[TX_PAGES];
+	bus_dma_segment_t	rx_bd_chain_seg[RX_PAGES];
+	int			rx_bd_chain_rseg[RX_PAGES];
 	bus_dmamap_t		rx_bd_chain_map[RX_PAGES];
 	struct rx_bd		*rx_bd_chain[RX_PAGES];
 	bus_addr_t		rx_bd_chain_paddr[RX_PAGES];
