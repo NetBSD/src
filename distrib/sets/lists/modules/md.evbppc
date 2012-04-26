@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.19 2012/03/10 21:52:02 joerg Exp $
+# $NetBSD: md.evbppc,v 1.20 2012/04/26 03:00:21 christos Exp $
 ./stand/powerpc-4xx							base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@						base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules					base-kernel-modules	kmod,compatmodules
@@ -339,6 +339,8 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/union/union.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/usbverbose			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/usbverbose/usbverbose.kmod	base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/vcoda 			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/vcoda/vcoda.kmod	        base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/v7fs 				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/v7fs/v7fs.kmod	        base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/vnd 				base-kernel-modules	kmod,compatmodules
