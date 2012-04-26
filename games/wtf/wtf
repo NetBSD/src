@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: wtf,v 1.15 2007/08/06 21:14:36 hubertf Exp $
+#	$NetBSD: wtf,v 1.16 2012/04/26 01:55:14 jschauma Exp $
 #
 # Public domain
 #
@@ -12,13 +12,6 @@ usage() {
 	exit 1
 }
 
-acronyms=${ACRONYMDB:-`ls /usr/share/misc/acronyms* 2>/dev/null`}
-
-if [ "$acronyms" = "" ]; then
-	echo "$PROGNAME: acronyms database not found!" >&2
-	exit 1
-fi
-
 args=`getopt f: $*`
 if [ $? -ne 0 ]; then
 	usage
@@ -27,7 +20,7 @@ set -- $args
 while [ $# -gt 0 ]; do
 	case "$1" in
 		-f)
-			acronyms=$2; shift
+			acronyms="$2 $acronyms"; shift
 			;;
 		--)
 			shift; break
@@ -44,8 +37,17 @@ if [ $# -lt 1 ] ; then
 	usage
 fi
 
-for f in $acronyms
-do
+if [ "$acronyms" = "" ]; then
+	acronyms=${ACRONYMDB:-`ls /usr/share/misc/acronyms* 2>/dev/null`}
+fi
+
+if [ "$acronyms" = "" ]; then
+	echo "$PROGNAME: acronyms database not found!" >&2
+	exit 1
+fi
+
+
+for f in $acronyms ; do
 	if [ ! -f $f ]; then
 		echo "$PROGNAME: cannot open acronyms database file \`$f'" >&2
 		exit 1
