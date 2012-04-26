@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/06/28 16:11:35 rumble Exp $
+#	$NetBSD: Makefile,v 1.2 2012/04/26 03:03:53 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -6,7 +6,6 @@
 
 KMOD=	coda
 
-SRCS=	coda_namecache.c coda_psdev.c coda_subr.c coda_venus.c \
-	coda_vfsops.c coda_vnops.c
+SRCS=	coda_venus.c coda_vfsops.c coda_vnops.c
 
 .include <bsd.kmodule.mk>

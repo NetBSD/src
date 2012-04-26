@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.105 2012/04/25 13:55:17 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.106 2012/04/26 03:03:53 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -76,6 +76,7 @@ SUBDIR+=	udf
 SUBDIR+=	umap
 SUBDIR+=	union
 SUBDIR+=	usbverbose
+SUBDIR+=	vcoda
 SUBDIR+=	v7fs
 SUBDIR+=	vnd
 SUBDIR+=	tprof
