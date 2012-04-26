@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.81 2011/09/13 19:34:27 gdt Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.82 2012/04/26 03:04:54 christos Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.81 2011/09/13 19:34:27 gdt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.82 2012/04/26 03:04:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,8 +91,6 @@ struct coda_op_stats coda_vnodeopstats[CODA_VNODEOPS_SIZE];
 #define MARK_INT_GEN(op) (coda_vnodeopstats[op].gen_intrn++)
 
 /* What we are delaying for in printf */
-int coda_printf_delay = 0;  /* in microseconds */
-int coda_vnop_print_entry = 0;
 static int coda_lockdebug = 0;
 
 #define ENTRY if(coda_vnop_print_entry) myprintf(("Entered %s\n",__func__))

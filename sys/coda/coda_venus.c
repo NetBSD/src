@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_venus.c,v 1.28 2010/07/20 17:26:03 christos Exp $	*/
+/*	$NetBSD: coda_venus.c,v 1.29 2012/04/26 03:04:54 christos Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.28 2010/07/20 17:26:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.29 2012/04/26 03:04:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,8 +200,6 @@ __KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.28 2010/07/20 17:26:03 christos Exp
 		(top)->va_filerev = (fromp)->va_filerev; \
 	} while (/*CONSTCOND*/ 0)
 
-
-int coda_kernel_version = CODA_KERNEL_VERSION;
 
 int
 venus_root(void *mdp,
