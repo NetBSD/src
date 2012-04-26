@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.168.8.2 2012/04/24 19:44:16 riz Exp $ */
+/*	$NetBSD: trap.c,v 1.168.8.3 2012/04/26 02:57:48 riz Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.168.8.2 2012/04/24 19:44:16 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.168.8.3 2012/04/26 02:57:48 riz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -748,7 +748,7 @@ badtrap:
 		sig = SIGBUS;
 		ksi.ksi_trap = type;
 		ksi.ksi_code = BUS_ADRALN;
-		ksi.ksi_addr = (void*)dsfar;
+		ksi.ksi_addr = (void*)(intptr_t)dsfar;
 		}
 		break;
 
