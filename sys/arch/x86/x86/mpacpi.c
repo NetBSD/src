@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.92 2011/07/01 18:21:31 dyoung Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.93 2012/04/26 10:15:42 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.92 2011/07/01 18:21:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.93 2012/04/26 10:15:42 jruoho Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
@@ -1133,7 +1133,7 @@ mpacpi_find_interrupts(void *self)
 		 *   0 = PIC mode, 1 = APIC mode, 2 = SAPIC mode.
 		 */
 		rv = acpi_eval_set_integer(NULL, "\\_PIC", 1);
-		if (ACPI_FAILURE(rv) && rv != AE_NOT_FOUND) {
+		if (ACPI_FAILURE(rv)) {
 			if (mp_verbose)
 				printf("mpacpi: switch to APIC mode failed\n");
 			return 0;
