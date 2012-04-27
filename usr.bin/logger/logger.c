@@ -1,4 +1,4 @@
-/*	$NetBSD: logger.c,v 1.16 2012/04/26 21:11:24 christos Exp $	*/
+/*	$NetBSD: logger.c,v 1.17 2012/04/27 06:30:48 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)logger.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: logger.c,v 1.16 2012/04/26 21:11:24 christos Exp $");
+__RCSID("$NetBSD: logger.c,v 1.17 2012/04/27 06:30:48 wiz Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -196,8 +196,8 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "Usage: %s [-cins] [-f file] [-p pri] [-t tag] "
-	    "[-m msgid] [-d SD] [ message ... ]\n",
+	    "Usage: %s [-cins] [-d SD] [-f file] [-m msgid] "
+	    "[-p pri] [-t tag] [message ...]\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 }
