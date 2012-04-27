@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.7 2012/04/17 00:12:21 matt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.8 2012/04/27 20:41:09 matt Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
@@ -74,7 +74,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.7 2012/04/17 00:12:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.8 2012/04/27 20:41:09 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -434,7 +434,6 @@ uvmpdpol_pagedequeue(struct vm_page *pg)
 		pg->pqflags &= ~PQ_RADIOACTIVE;
 		KASSERT(gs->gs_radioactive > 0);
 		gs->gs_radioactive--;
-		grp->pgrp_active--;
 	}
 
 	//KDASSERT(gs->gs_radioactive == clock_pglist_count(&gs->gs_radioactiveq));
