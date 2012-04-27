@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.19 2012/04/26 19:59:37 phx Exp $ */
+/* $NetBSD: main.c,v 1.20 2012/04/27 00:35:43 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -272,11 +272,11 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 			break;	/* break on first unknown string */
 	}
 
+	/*
+	 * If no device name is given, we construct a list of drives
+	 * which have valid disklabels.
+	 */
 	if (n >= argc) {
-		/*
-		 * If no device name is given we construct a list of drives
-		 * which have valid disklabels.
-		 */
 		n = 0;
 		argc = 0;
 		argv = alloc(MAX_UNITS * (sizeof(char *) + sizeof("wdN:")));
@@ -295,6 +295,7 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 		}
 	}
 
+	/* try to boot off kernel from the drive list */
 	while (n < argc) {
 		bname = argv[n++];
 
