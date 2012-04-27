@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.h,v 1.6 2011/09/07 17:49:19 christos Exp $	*/
+/*	$NetBSD: readconf.h,v 1.7 2012/04/27 15:45:37 tls Exp $	*/
 /* $OpenBSD: readconf.h,v 1.90 2011/05/24 07:15:47 djm Exp $ */
 
 /*
@@ -151,6 +151,7 @@ typedef struct {
 	int	use_roaming;
 
 	int	request_tty;
+	int	send_version_first;
 }       Options;
 
 #define SSHCTL_MASTER_NO	0
