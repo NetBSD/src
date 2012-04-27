@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.13 2012/04/17 00:19:30 matt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.14 2012/04/27 20:41:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.13 2012/04/17 00:19:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.14 2012/04/27 20:41:09 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -405,7 +405,6 @@ uvm_pageout(void *arg)
 			UVMHIST_LOG(pdhist,"  <<WOKE UP>>",0,0,0,0);
 			want_tune = pdinfo->pd_stalled;
 			pdinfo->pd_stalled = false;
-			progress = false;
 		} else if (TAILQ_FIRST(&pdinfo->pd_pendingq) == NULL) {
 			/*
 			 * Someone is waiting but no group are pending.
@@ -440,6 +439,7 @@ uvm_pageout(void *arg)
 		 * system only when entire pool page is empty.
 		 */
 		bool need_wakeup = false;
+		progress = false;
 		while ((grp = TAILQ_FIRST(&pdinfo->pd_pendingq)) != NULL) {
 			KASSERT(grp->pgrp_npages > 0);
 
