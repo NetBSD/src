@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.64 2012/04/26 00:50:10 macallan Exp $	*/
+/*	$NetBSD: kbd.c,v 1.65 2012/04/27 09:30:13 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.64 2012/04/26 00:50:10 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.65 2012/04/27 09:30:13 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.64 2012/04/26 00:50:10 macallan Exp $");
 #include "ioconf.h"
 #include "locators.h"
 #include "opt_sunkbd.h"
+#include "sysmon_envsys.h"
 
 dev_type_open(kbdopen);
 dev_type_close(kbdclose);
@@ -153,7 +154,9 @@ static void	kbd_input_wskbd(struct kbd_softc *, int);
 /* firm events input */
 static void	kbd_input_event(struct kbd_softc *, int);
 
+#if NSYSMON_ENVSYS
 static void	kbd_powerbutton(void *);
+#endif
 
 /****************************************************************
  *  Entry points for /dev/kbd
@@ -927,11 +930,13 @@ kbd_input_wskbd(struct kbd_softc *k, int code)
 				return;
 #endif
 			case 0x30:
+#if NSYSMON_ENVSYS
 				if (k->k_isconsole)
 					k->k_ev = KEY_UP(code) ?
 					    PSWITCH_EVENT_RELEASED :
 					    PSWITCH_EVENT_PRESSED;
 					sysmon_task_queue_sched(0, kbd_powerbutton, k);
+#endif
 				return;
 		}
 	}
@@ -1074,6 +1079,7 @@ kbd_wskbd_attach(struct kbd_softc *k, int isconsole)
 {
 	k->k_isconsole = isconsole;
 	if (isconsole) {
+#if NSYSMON_ENVSYS
 		sysmon_task_queue_init();
 		memset(&k->k_sm_pbutton, 0, sizeof(struct sysmon_pswitch));
 		k->k_sm_pbutton.smpsw_name = device_xname(k->k_dev);
@@ -1081,10 +1087,12 @@ kbd_wskbd_attach(struct kbd_softc *k, int isconsole)
 		if (sysmon_pswitch_register(&k->k_sm_pbutton) != 0)
 			aprint_error_dev(k->k_dev,
 			    "unable to register power button with sysmon\n");
+#endif
 	}
 	config_interrupts(k->k_dev, kbd_enable);
 }
 
+#if NSYSMON_ENVSYS
 static void
 kbd_powerbutton(void *cookie)
 {
@@ -1092,5 +1100,6 @@ kbd_powerbutton(void *cookie)
 
 	sysmon_pswitch_event(&k->k_sm_pbutton, k->k_ev);
 }
+#endif
 
 #endif
