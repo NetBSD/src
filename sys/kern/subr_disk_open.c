@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_open.c,v 1.7 2012/04/07 05:38:07 christos Exp $	*/
+/*	$NetBSD: subr_disk_open.c,v 1.8 2012/04/27 18:15:55 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.7 2012/04/07 05:38:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.8 2012/04/27 18:15:55 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -42,7 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.7 2012/04/07 05:38:07 christos 
 struct vnode *
 opendisk(struct device *dv)
 {
-	int bmajor, bminor;
+	devmajor_t bmajor;
+	int unit;
 	struct vnode *tmpvn;
 	int error;
 	dev_t dev;
@@ -54,13 +55,13 @@ opendisk(struct device *dv)
 	if (bmajor == -1)
 		return NULL;
 	
-	bminor = minor(device_unit(dv));
+	unit = device_unit(dv);
 	/*
 	 * Fake a temporary vnode for the disk, open it, and read
 	 * and hash the sectors.
 	 */
-	dev = device_is_a(dv, "dk") ? makedev(bmajor, bminor) :
-	    MAKEDISKDEV(bmajor, bminor, RAW_PART);
+	dev = device_is_a(dv, "dk") ? makedev(bmajor, unit) :
+	    MAKEDISKDEV(bmajor, unit, RAW_PART);
 	if (bdevvp(dev, &tmpvn))
 		panic("%s: can't alloc vnode for %s", __func__,
 		    device_xname(dv));
