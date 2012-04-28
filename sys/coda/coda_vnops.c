@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.82 2012/04/26 03:04:54 christos Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.83 2012/04/28 20:01:09 christos Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.82 2012/04/26 03:04:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.83 2012/04/28 20:01:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,7 +250,7 @@ coda_open(void *v)
      * Obtain locked and referenced container vnode from container
      * device/inode.
      */
-    error = coda_grab_vnode(dev, inode, &container_vp);
+    error = coda_grab_vnode(vp, dev, inode, &container_vp);
     if (error)
 	return (error);
 
@@ -425,7 +425,7 @@ coda_rdwr(struct vnode *vp, struct uio *uiop, enum uio_rw rw, int ioflag,
 	if (cp->c_inode != 0 && !(p && (p->p_acflag & ACORE))) {
 	    printf("coda_rdwr: grabbing container vnode, losing reference\n");
 	    /* Get locked and refed vnode. */
-	    error = coda_grab_vnode(cp->c_device, cp->c_inode, &cfvp);
+	    error = coda_grab_vnode(vp, cp->c_device, cp->c_inode, &cfvp);
 	    if (error) {
 		MARK_INT_FAIL(CODA_RDWR_STATS);
 		return(error);
@@ -1791,7 +1791,7 @@ coda_islocked(void *v)
  * obtained and passed back to the caller.
  */
 int
-coda_grab_vnode(dev_t dev, ino_t ino, struct vnode **vpp)
+coda_grab_vnode(struct vnode *uvp, dev_t dev, ino_t ino, struct vnode **vpp)
 {
     int           error;
     struct mount *mp;
@@ -1814,6 +1814,10 @@ coda_grab_vnode(dev_t dev, ino_t ino, struct vnode **vpp)
 	    (unsigned long long)dev, (unsigned long long)ino, *vpp, error));
 	return(ENOENT);
     }
+    /* share the lock with the underlying vnode */
+    mutex_obj_hold(uvp->v_interlock);
+    uvm_obj_setlock(&(*vpp)->v_uobj, uvp->v_interlock);
+
     return(0);
 }
 
@@ -1934,8 +1938,6 @@ make_coda_node(CodaFid *fid, struct mount *vfsp, short type)
  * e.g. to fault in pages to execute a program.  In that case, we must
  * open the file to get the container.  The vnode may or may not be
  * locked, and we must leave it in the same state.
- * XXX The protocol requires v_uobj.vmobjlock to be
- * held by caller, but this isn't documented in vnodeops(9) or vnode_if.src.
  */
 int
 coda_getpages(void *v)
@@ -1950,13 +1952,15 @@ coda_getpages(void *v)
 		int a_advice;
 		int a_flags;
 	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
+	struct vnode *vp = ap->a_vp, *cvp;
 	struct cnode *cp = VTOC(vp);
 	struct lwp *l = curlwp;
 	kauth_cred_t cred = l->l_cred;
 	int error, cerror;
 	int waslocked;	       /* 1 if vnode lock was held on entry */
 	int didopen = 0;	/* 1 if we opened container file */
+
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	/*
 	 * Handle a case that uvm_fault doesn't quite use yet.
@@ -1969,7 +1973,6 @@ coda_getpages(void *v)
 	/* Check for control object. */
 	if (IS_CTL_VP(vp)) {
 		printf("coda_getpages: control object %p\n", vp);
-		mutex_exit(vp->v_uobj.vmobjlock);
 		return(EINVAL);
 	}
 
@@ -1984,11 +1987,9 @@ coda_getpages(void *v)
 	/* XXX VOP_ISLOCKED() may not be used for lock decisions. */
 	waslocked = VOP_ISLOCKED(vp);
 
-	/* Drop the vmobject lock. */
-	mutex_exit(vp->v_uobj.vmobjlock);
-
 	/* Get container file if not already present. */
-	if (cp->c_ovp == NULL) {
+	cvp = cp->c_ovp;
+	if (cvp == NULL) {
 		/*
 		 * VOP_OPEN requires a locked vnode.  We must avoid
 		 * locking the vnode if it is already locked, and
@@ -2025,15 +2026,16 @@ coda_getpages(void *v)
 #if 0
 		printf("coda_getpages: opened vnode %p\n", vp);
 #endif
+		cvp = cp->c_ovp;
 		didopen = 1;
 	}
-	KASSERT(cp->c_ovp != NULL);
+	KASSERT(cvp != NULL);
 
 	/* Munge the arg structure to refer to the container vnode. */
+	KASSERT(cvp->v_interlock == vp->v_interlock);
 	ap->a_vp = cp->c_ovp;
 
-	/* Get the lock on the container vnode, and call getpages on it. */
-	mutex_enter(ap->a_vp->v_uobj.vmobjlock);
+	/* Finally, call getpages on it. */
 	error = VCALL(ap->a_vp, VOFFSET(vop_getpages), ap);
 
 	/* If we opened the vnode, we must close it. */
@@ -2057,8 +2059,7 @@ coda_getpages(void *v)
 }
 
 /*
- * The protocol requires v_uobj.vmobjlock to be held by the caller, as
- * documented in vnodeops(9).  XXX vnode_if.src doesn't say this.
+ * The protocol requires v_interlock to be held by the caller.
  */
 int
 coda_putpages(void *v)
@@ -2069,15 +2070,15 @@ coda_putpages(void *v)
 		voff_t a_offhi;
 		int a_flags;
 	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
+	struct vnode *vp = ap->a_vp, *cvp;
 	struct cnode *cp = VTOC(vp);
 	int error;
 
-	/* Drop the vmobject lock. */
-	mutex_exit(vp->v_uobj.vmobjlock);
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	/* Check for control object. */
 	if (IS_CTL_VP(vp)) {
+		mutex_exit(vp->v_interlock);
 		printf("coda_putpages: control object %p\n", vp);
 		return(EINVAL);
 	}
@@ -2088,14 +2089,17 @@ coda_putpages(void *v)
 	 * time, apparently during discard of a closed vnode (which
 	 * trivially can't have dirty pages).
 	 */
-	if (cp->c_ovp == NULL)
+	cvp = cp->c_ovp;
+	if (cvp == NULL) {
+		mutex_exit(vp->v_interlock);
 		return 0;
+	}
 
 	/* Munge the arg structure to refer to the container vnode. */
-	ap->a_vp = cp->c_ovp;
+	KASSERT(cvp->v_interlock == vp->v_interlock);
+	ap->a_vp = cvp;
 
-	/* Get the lock on the container vnode, and call putpages on it. */
-	mutex_enter(ap->a_vp->v_uobj.vmobjlock);
+	/* Finally, call putpages on it. */
 	error = VCALL(ap->a_vp, VOFFSET(vop_putpages), ap);
 
 	return error;
