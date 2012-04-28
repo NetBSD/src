@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.138 2012/02/06 12:13:44 drochner Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.139 2012/04/28 23:03:40 rmind Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -65,47 +65,45 @@
  *	@(#)kern_malloc.c	8.4 (Berkeley) 5/20/95
  */
 
+/*
+ * Wrapper interface for obsolete malloc(9).
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.138 2012/02/06 12:13:44 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.139 2012/04/28 23:03:40 rmind Exp $");
 
 #include <sys/param.h>
-#include <sys/proc.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/kmem.h>
-#include <sys/systm.h>
-#include <sys/debug.h>
-#include <sys/mutex.h>
-#include <sys/lockdebug.h>
 
 #include <uvm/uvm_extern.h>
 
-#include "opt_kmemstats.h"
-#include "opt_malloclog.h"
-#include "opt_malloc_debug.h"
-
-struct kmembuckets kmembuckets[MINBUCKET + 16];
-struct kmemusage *kmemusage;
-struct malloc_type *kmemstatistics;
-
-kmutex_t malloc_lock;
-
-struct malloc_header {
-	/* Total size, include the header. */
-	size_t		mh_size;
-} __aligned(ALIGNBYTES+1);
+/*
+ * Built-in malloc types.  Note: ought to be removed.
+ */
+MALLOC_DEFINE(M_DEVBUF, "devbuf", "device driver memory");
+MALLOC_DEFINE(M_DMAMAP, "DMA map", "bus_dma(9) structures");
+MALLOC_DEFINE(M_FREE, "free", "should be on free list");
+MALLOC_DEFINE(M_PCB, "pcb", "protocol control block");
+MALLOC_DEFINE(M_TEMP, "temp", "misc. temporary data buffers");
+MALLOC_DEFINE(M_RTABLE, "routetbl", "routing tables");
+MALLOC_DEFINE(M_FTABLE, "fragtbl", "fragment reassembly header");
+MALLOC_DEFINE(M_UFSMNT, "UFS mount", "UFS mount structure");
+MALLOC_DEFINE(M_NETADDR, "Export Host", "Export host address structure");
+MALLOC_DEFINE(M_IPMOPTS, "ip_moptions", "internet multicast options");
+MALLOC_DEFINE(M_IPMADDR, "in_multi", "internet multicast address");
+MALLOC_DEFINE(M_MRTABLE, "mrt", "multicast routing tables");
+MALLOC_DEFINE(M_BWMETER, "bwmeter", "multicast upcall bw meters");
 
 /*
- * Allocate a block of memory
+ * Header contains total size, including the header itself.
  */
-#ifdef MALLOCLOG
-void *
-_kern_malloc(unsigned long size, struct malloc_type *ksp, int flags,
-    const char *file, long line)
-#else
+struct malloc_header {
+	size_t		mh_size;
+} __aligned(ALIGNBYTES + 1);
+
 void *
 kern_malloc(unsigned long size, struct malloc_type *ksp, int flags)
-#endif /* MALLOCLOG */
 {
 	const int kmflags = (flags & M_NOWAIT) ? KM_NOSLEEP : KM_SLEEP;
 	size_t allocsize, hdroffset;
@@ -133,16 +131,8 @@ kern_malloc(unsigned long size, struct malloc_type *ksp, int flags)
 	return mh + 1;
 }
 
-/*
- * Free a block of memory allocated by malloc.
- */
-#ifdef MALLOCLOG
-void
-_kern_free(void *addr, struct malloc_type *ksp, const char *file, long line)
-#else
 void
 kern_free(void *addr, struct malloc_type *ksp)
-#endif /* MALLOCLOG */
 {
 	struct malloc_header *mh;
 
@@ -156,9 +146,6 @@ kern_free(void *addr, struct malloc_type *ksp)
 		kmem_intr_free(mh, mh->mh_size);
 }
 
-/*
- * Change the size of a block of memory.
- */
 void *
 kern_realloc(void *curaddr, unsigned long newsize, struct malloc_type *ksp,
     int flags)
@@ -171,21 +158,19 @@ kern_realloc(void *curaddr, unsigned long newsize, struct malloc_type *ksp,
 	 * realloc() with a NULL pointer is the same as malloc().
 	 */
 	if (curaddr == NULL)
-		return (malloc(newsize, ksp, flags));
+		return malloc(newsize, ksp, flags);
 
 	/*
 	 * realloc() with zero size is the same as free().
 	 */
 	if (newsize == 0) {
 		free(curaddr, ksp);
-		return (NULL);
+		return NULL;
 	}
 
-#ifdef LOCKDEBUG
 	if ((flags & M_NOWAIT) == 0) {
 		ASSERT_SLEEPABLE();
 	}
-#endif
 
 	mh = curaddr;
 	mh--;
@@ -196,7 +181,7 @@ kern_realloc(void *curaddr, unsigned long newsize, struct malloc_type *ksp,
 	 * If we already actually have as much as they want, we're done.
 	 */
 	if (newsize <= cursize)
-		return (curaddr);
+		return curaddr;
 
 	/*
 	 * Can't satisfy the allocation with the existing block.
@@ -209,7 +194,7 @@ kern_realloc(void *curaddr, unsigned long newsize, struct malloc_type *ksp,
 		 * Return NULL to indicate that failure.  The old
 		 * pointer is still valid.
 		 */
-		return (NULL);
+		return NULL;
 	}
 	memcpy(newaddr, curaddr, cursize);
 
@@ -218,81 +203,19 @@ kern_realloc(void *curaddr, unsigned long newsize, struct malloc_type *ksp,
 	 * the new one.
 	 */
 	free(curaddr, ksp);
-	return (newaddr);
+	return newaddr;
 }
 
-/*
- * Add a malloc type to the system.
- */
 void
 malloc_type_attach(struct malloc_type *type)
 {
-
-	if (type->ks_magic != M_MAGIC)
-		panic("malloc_type_attach: bad magic");
-
-#ifdef DIAGNOSTIC
-	{
-		struct malloc_type *ksp;
-		for (ksp = kmemstatistics; ksp != NULL; ksp = ksp->ks_next) {
-			if (ksp == type)
-				panic("%s: `%s' already on list", __func__,
-				    type->ks_shortdesc);
-		}
-	}
-#endif
-
-#ifdef KMEMSTATS
-#else
-	type->ks_limit = 0;
-#endif
-
-	type->ks_next = kmemstatistics;
-	kmemstatistics = type;
+	KASSERT(type->ks_magic == M_MAGIC);
 }
 
-/*
- * Remove a malloc type from the system..
- */
 void
 malloc_type_detach(struct malloc_type *type)
 {
-	struct malloc_type *ksp;
-
-#ifdef DIAGNOSTIC
-	if (type->ks_magic != M_MAGIC)
-		panic("malloc_type_detach: bad magic");
-#endif
-
-	if (type == kmemstatistics)
-		kmemstatistics = type->ks_next;
-	else {
-		for (ksp = kmemstatistics; ksp->ks_next != NULL;
-		     ksp = ksp->ks_next) {
-			if (ksp->ks_next == type) {
-				ksp->ks_next = type->ks_next;
-				break;
-			}
-		}
-#ifdef DIAGNOSTIC
-		if (ksp->ks_next == NULL)
-			panic("malloc_type_detach: not on list");
-#endif
-	}
-	type->ks_next = NULL;
-}
-
-/*
- * Set the limit on a malloc type.
- */
-void
-malloc_type_setlimit(struct malloc_type *type, u_long limit)
-{
-#ifdef KMEMSTATS
-	mutex_spin_enter(&malloc_lock);
-	type->ks_limit = limit;
-	mutex_spin_exit(&malloc_lock);
-#endif
+	KASSERT(type->ks_magic == M_MAGIC);
 }
 
 /*
@@ -303,100 +226,8 @@ kmeminit(void)
 {
 	__link_set_decl(malloc_types, struct malloc_type);
 	struct malloc_type * const *ksp;
-#ifdef KMEMSTATS
-	long indx;
-#endif
-
-	mutex_init(&malloc_lock, MUTEX_DEFAULT, IPL_VM);
-
-#ifdef KMEMSTATS
-	for (indx = 0; indx < MINBUCKET + 16; indx++) {
-		if (1 << indx >= PAGE_SIZE)
-			kmembuckets[indx].kb_elmpercl = 1;
-		else
-			kmembuckets[indx].kb_elmpercl = PAGE_SIZE / (1 << indx);
-		kmembuckets[indx].kb_highwat =
-			5 * kmembuckets[indx].kb_elmpercl;
-	}
-#endif
 
 	/* Attach all of the statically-linked malloc types. */
 	__link_set_foreach(ksp, malloc_types)
 		malloc_type_attach(*ksp);
-
-#ifdef MALLOC_DEBUG
-	debug_malloc_init();
-#endif
 }
-
-#ifdef DDB
-#include <ddb/db_output.h>
-
-/*
- * Dump kmem statistics from ddb.
- *
- * usage: call dump_kmemstats
- */
-void	dump_kmemstats(void);
-
-void
-dump_kmemstats(void)
-{
-#ifdef KMEMSTATS
-	struct malloc_type *ksp;
-
-	for (ksp = kmemstatistics; ksp != NULL; ksp = ksp->ks_next) {
-		if (ksp->ks_memuse == 0)
-			continue;
-		db_printf("%s%.*s %ld\n", ksp->ks_shortdesc,
-		    (int)(20 - strlen(ksp->ks_shortdesc)),
-		    "                    ",
-		    ksp->ks_memuse);
-	}
-#else
-	db_printf("Kmem stats are not being collected.\n");
-#endif /* KMEMSTATS */
-}
-#endif /* DDB */
-
-
-#if 0
-/*
- * Diagnostic messages about "Data modified on
- * freelist" indicate a memory corruption, but
- * they do not help tracking it down.
- * This function can be called at various places
- * to sanity check malloc's freelist and discover
- * where does the corruption take place.
- */
-int
-freelist_sanitycheck(void) {
-	int i,j;
-	struct kmembuckets *kbp;
-	struct freelist *freep;
-	int rv = 0;
-
-	for (i = MINBUCKET; i <= MINBUCKET + 15; i++) {
-		kbp = &kmembuckets[i];
-		freep = (struct freelist *)kbp->kb_next;
-		j = 0;
-		while(freep) {
-			vm_map_lock(kmem_map);
-			rv = uvm_map_checkprot(kmem_map, (vaddr_t)freep,
-			    (vaddr_t)freep + sizeof(struct freelist),
-			    VM_PROT_WRITE);
-			vm_map_unlock(kmem_map);
-
-			if ((rv == 0) || (*(int *)freep != WEIRD_ADDR)) {
-				printf("bucket %i, chunck %d at %p modified\n",
-				    i, j, freep);
-				return 1;
-			}
-			freep = (struct freelist *)freep->next;
-			j++;
-		}
-	}
-
-	return 0;
-}
-#endif
