@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.35 2011/10/02 19:03:56 jmcneill Exp $ */
+/*	$NetBSD: dbcool.c,v 1.36 2012/04/28 17:27:08 wiz Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.35 2011/10/02 19:03:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.36 2012/04/28 17:27:08 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -818,10 +818,10 @@ bool dbcool_pmf_suspend(device_t dev, const pmf_qual_t *qual)
 	struct dbcool_softc *sc = device_private(dev);
 	uint8_t reg, bit, cfg;
 
-	if ((sc->sc_dc.dc_chip->flags && DBCFLAG_HAS_SHDN) == 0)
+	if ((sc->sc_dc.dc_chip->flags & DBCFLAG_HAS_SHDN) == 0)
 		return true;
  
-	if (sc->sc_dc.dc_chip->flags && DBCFLAG_ADT7466) {
+	if (sc->sc_dc.dc_chip->flags & DBCFLAG_ADT7466) {
 		reg = DBCOOL_ADT7466_CONFIG2;
 		bit = DBCOOL_ADT7466_CFG2_SHDN;
 	} else {
@@ -842,10 +842,10 @@ bool dbcool_pmf_resume(device_t dev, const pmf_qual_t *qual)
 	struct dbcool_softc *sc = device_private(dev);
 	uint8_t reg, bit, cfg;
 
-	if ((sc->sc_dc.dc_chip->flags && DBCFLAG_HAS_SHDN) == 0)
+	if ((sc->sc_dc.dc_chip->flags & DBCFLAG_HAS_SHDN) == 0)
 		return true;
  
-	if (sc->sc_dc.dc_chip->flags && DBCFLAG_ADT7466) {
+	if (sc->sc_dc.dc_chip->flags & DBCFLAG_ADT7466) {
 		reg = DBCOOL_ADT7466_CONFIG2;
 		bit = DBCOOL_ADT7466_CFG2_SHDN;
 	} else {
@@ -1056,7 +1056,7 @@ dbcool_read_volt(struct dbcool_softc *sc, uint8_t reg, int nom_idx, bool extres)
 	if (!extres)
 		val = sc->sc_dc.dc_readreg(&sc->sc_dc, reg);
 	else if (reg == DBCOOL_12VIN) {
-		ext = sc->sc_dc.dc_readreg(&sc->sc_dc, DBCOOL_EXTRES2_REG) && 0x03;
+		ext = sc->sc_dc.dc_readreg(&sc->sc_dc, DBCOOL_EXTRES2_REG) & 0x03;
 		val = sc->sc_dc.dc_readreg(&sc->sc_dc, reg);
 		(void)dbcool_read_temp(sc, DBCOOL_LOCAL_TEMP, true);
 	} else if (reg == DBCOOL_VTT || reg == DBCOOL_IMON) {
