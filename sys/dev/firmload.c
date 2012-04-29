@@ -1,4 +1,4 @@
-/*	$NetBSD: firmload.c,v 1.16 2010/11/24 16:31:12 dholland Exp $	*/
+/*	$NetBSD: firmload.c,v 1.17 2012/04/29 20:27:31 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firmload.c,v 1.16 2010/11/24 16:31:12 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firmload.c,v 1.17 2012/04/29 20:27:31 dsl Exp $");
 
 /*
  * The firmload API provides an interface for device drivers to access
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: firmload.c,v 1.16 2010/11/24 16:31:12 dholland Exp $
 
 #include <dev/firmload.h>
 
-static MALLOC_DEFINE(M_DEVFIRM, "devfirm", "device firmware buffers");
+MALLOC_DEFINE(M_DEVFIRM, "devfirm", "device firmware buffers");
 
 struct firmware_handle {
 	struct vnode	*fh_vp;
