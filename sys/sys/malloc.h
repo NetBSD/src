@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.111 2012/04/28 23:03:40 rmind Exp $	*/
+/*	$NetBSD: malloc.h,v 1.112 2012/04/29 16:36:54 dsl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -63,13 +63,13 @@ MALLOC_DECLARE(M_IPMADDR);
 MALLOC_DECLARE(M_MRTABLE);
 MALLOC_DECLARE(M_BWMETER);
 
-void	*kern_malloc(unsigned long, struct malloc_type *, int);
-void	*kern_realloc(void *, unsigned long, struct malloc_type *, int);
-void	kern_free(void *, struct malloc_type *);
+void	*kern_malloc(unsigned long, int);
+void	*kern_realloc(void *, unsigned long, int);
+void	kern_free(void *);
 
-#define	malloc(size, type, flags)	kern_malloc(size, type, flags)
-#define	free(addr, type)		kern_free(addr, type)
-#define	realloc(ptr, size, type, flags)	kern_realloc(ptr, size, type, flags)
+#define	malloc(size, type, flags)	kern_malloc(size, flags)
+#define	free(addr, type)		kern_free(addr)
+#define	realloc(ptr, size, type, flags)	kern_realloc(ptr, size, flags)
 
 #endif /* _KERNEL */
 

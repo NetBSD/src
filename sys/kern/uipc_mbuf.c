@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.145 2012/02/10 17:35:47 para Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.146 2012/04/29 16:36:53 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.145 2012/02/10 17:35:47 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.146 2012/04/29 16:36:53 dsl Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_nmbclusters.h"
@@ -73,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.145 2012/02/10 17:35:47 para Exp $")
 #include <sys/atomic.h>
 #include <sys/cpu.h>
 #include <sys/proc.h>
-#define MBTYPES
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
