@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.181 2012/04/15 00:34:09 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.182 2012/04/29 21:54:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.181 2012/04/15 00:34:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.182 2012/04/29 21:54:51 christos Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1229,17 +1229,18 @@ dodumpsys(void)
 	 */
 	if (dumpsize == 0)
 		cpu_dumpconf();
-	if (dumplo <= 0 || dumpsize == 0) {
-		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
-		    minor(dumpdev));
+
+	printf("\ndumping to dev %llu,%llu (offset=%ld, size=%d):",
+	    (unsigned long long)major(dumpdev),
+	    (unsigned long long)minor(dumpdev), dumplo, dumpsize);
+
+	if (dumplo <= 0 || dumpsize <= 0) {
+		printf(" not possible\n");
 		return;
 	}
-	printf("\ndumping to dev %llu,%llu offset %ld\n",
-	    (unsigned long long)major(dumpdev),
-	    (unsigned long long)minor(dumpdev), dumplo);
 
 	psize = bdev_size(dumpdev);
-	printf("dump ");
+	printf("\ndump ");
 	if (psize == -1) {
 		printf("area unavailable\n");
 		return;
@@ -1346,7 +1347,11 @@ cpu_dumpconf(void)
 	dumpblks = cpu_dumpsize();
 	if (dumpblks < 0)
 		goto bad;
-	dumpblks += ctod(cpu_dump_mempagecnt());
+
+	/* dumpsize is in page units, and doesn't include headers. */
+	dumpsize = cpu_dump_mempagecnt();
+
+	dumpblks += ctod(dumpsize);
 
 	/* If dump won't fit (incl. room for possible label), punt. */
 	if (dumpblks > (nblks - ctod(1))) {
@@ -1362,8 +1367,6 @@ cpu_dumpconf(void)
 		dumplo = nblks - dumpblks;
 	}
 
-	/* dumpsize is in page units, and doesn't include headers. */
-	dumpsize = cpu_dump_mempagecnt();
 
 	/* Now that we've decided this will work, init ancillary stuff. */
 	dump_misc_init();
