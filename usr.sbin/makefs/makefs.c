@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.33 2012/04/19 17:09:53 christos Exp $	*/
+/*	$NetBSD: makefs.c,v 1.34 2012/04/29 13:32:21 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.33 2012/04/19 17:09:53 christos Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.34 2012/04/29 13:32:21 joerg Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -84,8 +84,7 @@ u_int		debug;
 struct timespec	start_time;
 
 static	fstype_t *get_fstype(const char *);
-static	void	usage(void);
-int		main(int, char *[]);
+static	void	usage(void) __dead;
 
 int
 main(int argc, char *argv[])
