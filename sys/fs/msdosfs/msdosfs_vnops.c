@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.82 2012/04/03 14:58:55 njoly Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.83 2012/04/29 22:53:59 chs Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.82 2012/04/03 14:58:55 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.83 2012/04/29 22:53:59 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -656,7 +656,8 @@ msdosfs_write(void *v)
 		if (!async && oldoff >> 16 != uio->uio_offset >> 16) {
 			mutex_enter(vp->v_interlock);
 			error = VOP_PUTPAGES(vp, (oldoff >> 16) << 16,
-			    (uio->uio_offset >> 16) << 16, PGO_CLEANIT);
+			    (uio->uio_offset >> 16) << 16,
+			    PGO_CLEANIT | PGO_LAZY);
 		}
 	} while (error == 0 && uio->uio_resid > 0);
 
@@ -1808,7 +1809,7 @@ msdosfs_fsync(void *v)
 
 	fstrans_start(vp->v_mount, FSTRANS_LAZY);
 	wait = (ap->a_flags & FSYNC_WAIT) != 0;
-	error = vflushbuf(vp, wait);
+	error = vflushbuf(vp, ap->a_flags);
 	if (error == 0 && (ap->a_flags & FSYNC_DATAONLY) == 0)
 		error = msdosfs_update(vp, NULL, NULL, wait ? UPDATE_WAIT : 0);
 
