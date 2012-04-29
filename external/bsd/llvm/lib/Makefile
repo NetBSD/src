@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21 2012/04/14 15:11:18 joerg Exp $
+# $NetBSD: Makefile,v 1.22 2012/04/29 19:19:05 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -90,7 +90,6 @@ SUBDIR+= \
 	libclangEdit \
 	libclangFrontend \
 	libclangFrontendTool \
-	libclangIndex \
 	libclangLex \
 	libclangParse \
 	libclangRewrite \
