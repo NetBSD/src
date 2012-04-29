@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.102 2012/03/13 18:41:04 elad Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.103 2012/04/29 22:54:00 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.102 2012/03/13 18:41:04 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.103 2012/04/29 22:54:00 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1387,7 +1387,7 @@ ext2fs_fsync(void *v)
 	if (vp->v_type == VBLK)
 		error = spec_fsync(v);
 	else
-		error = vflushbuf(vp, wait);
+		error = vflushbuf(vp, ap->a_flags);
 	if (error == 0 && (ap->a_flags & FSYNC_DATAONLY) == 0)
 		error = ext2fs_update(vp, NULL, NULL, wait ? UPDATE_WAIT : 0);
 
