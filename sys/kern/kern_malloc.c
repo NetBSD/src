@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.139 2012/04/28 23:03:40 rmind Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.140 2012/04/29 16:36:53 dsl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.139 2012/04/28 23:03:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.140 2012/04/29 16:36:53 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -103,7 +103,7 @@ struct malloc_header {
 } __aligned(ALIGNBYTES + 1);
 
 void *
-kern_malloc(unsigned long size, struct malloc_type *ksp, int flags)
+kern_malloc(unsigned long size, int flags)
 {
 	const int kmflags = (flags & M_NOWAIT) ? KM_NOSLEEP : KM_SLEEP;
 	size_t allocsize, hdroffset;
@@ -132,7 +132,7 @@ kern_malloc(unsigned long size, struct malloc_type *ksp, int flags)
 }
 
 void
-kern_free(void *addr, struct malloc_type *ksp)
+kern_free(void *addr)
 {
 	struct malloc_header *mh;
 
@@ -147,8 +147,7 @@ kern_free(void *addr, struct malloc_type *ksp)
 }
 
 void *
-kern_realloc(void *curaddr, unsigned long newsize, struct malloc_type *ksp,
-    int flags)
+kern_realloc(void *curaddr, unsigned long newsize, int flags)
 {
 	struct malloc_header *mh;
 	unsigned long cursize;
