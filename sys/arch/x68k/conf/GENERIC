@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.160 2012/03/10 21:51:57 joerg Exp $
+# $NetBSD: GENERIC,v 1.161 2012/04/29 07:17:11 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.160 $"
+#ident 		"GENERIC-$Revision: 1.161 $"
 
 maxusers	8
 
@@ -290,8 +290,8 @@ pseudo-device	bell			# OPM bell
 powsw0	at mfp0				# Front switch
 #powsw1	at mfp0				# External power switch
 
-xcom0	at mainbus0			# NS16550 fast serial
-xcom1	at mainbus0
+com0	at intio0 addr 0xefff00 intr 240	# PSX16550, port1
+com1	at intio0 addr 0xefff10 intr 241	# PSX16550, port2
 
 ## Audio device
 vs0 at intio0 addr 0xe92000 dma 3 dmaintr 106
