@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.39 2010/12/17 14:27:34 pooka Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.40 2012/04/29 20:27:31 dsl Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.39 2010/12/17 14:27:34 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.40 2012/04/29 20:27:31 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -73,7 +73,7 @@ static struct smb_dev **smb_devtbl; /* indexed by minor */
 #define NSMB_DEFNUM	4
 
 
-static MALLOC_DEFINE(M_NSMBDEV, "NETSMBDEV", "NET/SMB device");
+MALLOC_DEFINE(M_NSMBDEV, "NETSMBDEV", "NET/SMB device");
 
 
 /*

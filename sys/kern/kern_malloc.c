@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.140 2012/04/29 16:36:53 dsl Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.141 2012/04/29 20:27:31 dsl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.140 2012/04/29 16:36:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.141 2012/04/29 20:27:31 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -205,28 +205,10 @@ kern_realloc(void *curaddr, unsigned long newsize, int flags)
 	return newaddr;
 }
 
-void
-malloc_type_attach(struct malloc_type *type)
-{
-	KASSERT(type->ks_magic == M_MAGIC);
-}
-
-void
-malloc_type_detach(struct malloc_type *type)
-{
-	KASSERT(type->ks_magic == M_MAGIC);
-}
-
 /*
  * Initialize the kernel memory allocator
  */
 void
 kmeminit(void)
 {
-	__link_set_decl(malloc_types, struct malloc_type);
-	struct malloc_type * const *ksp;
-
-	/* Attach all of the statically-linked malloc types. */
-	__link_set_foreach(ksp, malloc_types)
-		malloc_type_attach(*ksp);
 }
