@@ -1,4 +1,4 @@
-.\"	$NetBSD: com.4,v 1.20 2012/04/17 11:00:43 wiz Exp $
+.\"	$NetBSD: com.4,v 1.21 2012/04/29 07:27:19 tsutsui Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
 .\"
-.Dd April 17, 2012
+.Dd April 29, 2012
 .Dt COM 4
 .Os
 .Sh NAME
@@ -74,6 +74,9 @@
 .Ss SPARC
 .Cd "com* at ebus?"
 .Cd "com* at obio0"
+.Ss x68k
+.Cd "com0 at intio0 addr 0xefff00 intr 240"
+.Cd "com1 at intio0 addr 0xefff10 intr 241"
 .Sh DESCRIPTION
 The
 .Nm
