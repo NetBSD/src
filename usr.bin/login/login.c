@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.102 2012/04/23 21:09:27 christos Exp $	*/
+/*	$NetBSD: login.c,v 1.103 2012/04/29 01:26:56 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.102 2012/04/23 21:09:27 christos Exp $");
+__RCSID("$NetBSD: login.c,v 1.103 2012/04/29 01:26:56 wiz Exp $");
 #endif /* not lint */
 
 /*
@@ -109,7 +109,7 @@ int	 k5_write_creds(void);
 #if defined(KERBEROS5)
 static void	 dofork(void);
 #endif
-static void	 usage(void);
+static void	 usage(void) __attribute__((__noreturn__));
 
 #define	TTYGRPNAME	"tty"		/* name of group to own ttys */
 
