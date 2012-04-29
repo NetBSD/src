@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.26 2010/01/12 14:43:31 christos Exp $	*/
+/*	$NetBSD: popen.c,v 1.27 2012/04/29 23:50:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: popen.c,v 1.26 2010/01/12 14:43:31 christos Exp $");
+__RCSID("$NetBSD: popen.c,v 1.27 2012/04/29 23:50:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -126,10 +126,8 @@ Fopen(const char *fn, const char *mode)
 {
 	FILE *fp;
 
-	if ((fp = fopen(fn, mode)) != NULL) {
+	if ((fp = fopen(fn, mode)) != NULL)
 		register_file(fp, 0, 0);
-		(void)fcntl(fileno(fp), F_SETFD, FD_CLOEXEC);
-	}
 	return fp;
 }
 
@@ -138,10 +136,8 @@ Fdopen(int fd, const char *mode)
 {
 	FILE *fp;
 
-	if ((fp = fdopen(fd, mode)) != NULL) {
+	if ((fp = fdopen(fd, mode)) != NULL)
 		register_file(fp, 0, 0);
-		(void)fcntl(fileno(fp), F_SETFD, FD_CLOEXEC);
-	}
 	return fp;
 }
 
@@ -247,10 +243,8 @@ Popen(const char *cmd, const char *mode)
 	FILE *fp;
 	char *shellcmd;
 
-	if (pipe(p) < 0)
+	if (pipe2(p, O_CLOEXEC) < 0)
 		return NULL;
-	(void)fcntl(p[READ], F_SETFD, FD_CLOEXEC);
-	(void)fcntl(p[WRITE], F_SETFD, FD_CLOEXEC);
 	if (*mode == 'r') {
 		myside = p[READ];
 		hisside = fd0 = fd1 = p[WRITE];
