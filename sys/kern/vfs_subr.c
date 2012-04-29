@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.433 2012/03/13 18:40:55 elad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.434 2012/04/29 22:54:00 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.433 2012/03/13 18:40:55 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.434 2012/04/29 22:54:00 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -277,14 +277,21 @@ restart:
  * buffers from being queued.
  */
 int
-vflushbuf(struct vnode *vp, int sync)
+vflushbuf(struct vnode *vp, int flags)
 {
 	struct buf *bp, *nbp;
-	int error, flags = PGO_CLEANIT | PGO_ALLPAGES | (sync ? PGO_SYNCIO : 0);
-	bool dirty;
+	int error, pflags;
+	bool dirty, sync;
 
+	sync = (flags & FSYNC_WAIT) != 0;
+	pflags = PGO_CLEANIT | PGO_ALLPAGES |
+		(sync ? PGO_SYNCIO : 0) |
+		((flags & FSYNC_LAZY) ? PGO_LAZY : 0);
 	mutex_enter(vp->v_interlock);
-	(void) VOP_PUTPAGES(vp, 0, 0, flags);
+	(void) VOP_PUTPAGES(vp, 0, 0, pflags);
+
+	if (LIST_EMPTY(&vp->v_dirtyblkhd) || (flags & FSYNC_DATAONLY))
+		return 0;
 
 loop:
 	mutex_enter(&bufcache_lock);
@@ -301,7 +308,7 @@ loop:
 		 * Wait for I/O associated with indirect blocks to complete,
 		 * since there is no way to quickly wait for them below.
 		 */
-		if (bp->b_vp == vp || sync == 0)
+		if (bp->b_vp == vp || !sync)
 			(void) bawrite(bp);
 		else {
 			error = bwrite(bp);
@@ -312,7 +319,7 @@ loop:
 	}
 	mutex_exit(&bufcache_lock);
 
-	if (sync == 0)
+	if (!sync)
 		return 0;
 
 	mutex_enter(vp->v_interlock);
