@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.38.6.2 2012/02/24 09:11:48 mrg Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.38.6.3 2012/04/29 23:05:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 2008, 2011 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.38.6.2 2012/02/24 09:11:48 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.38.6.3 2012/04/29 23:05:05 mrg Exp $");
 
 #include <sys/param.h>
 
@@ -92,6 +92,11 @@ convert_pri(lwp_t *l, int policy, pri_t pri)
 	/* Real-time -> time-sharing */
 	if (policy == SCHED_OTHER) {
 		KASSERT(l->l_class == SCHED_FIFO || l->l_class == SCHED_RR);
+		/*
+		 * this is a bit arbitrary because the priority is dynamic
+		 * for SCHED_OTHER threads and will likely be changed by
+		 * the scheduler soon anyway.
+		 */
 		return l->l_priority - PRI_USER_RT;
 	}
 
@@ -214,6 +219,11 @@ out:
 	return error;
 }
 
+/*
+ * do_sched_getparam:
+ *
+ * if lid=0, returns the parameter of the first LWP in the process.
+ */
 int
 do_sched_getparam(pid_t pid, lwpid_t lid, int *policy,
     struct sched_param *params)
@@ -222,8 +232,7 @@ do_sched_getparam(pid_t pid, lwpid_t lid, int *policy,
 	struct lwp *t;
 	int error, lpolicy;
 
-	/* Locks the LWP */
-	t = lwp_find2(pid, lid);
+	t = lwp_find2(pid, lid); /* acquire p_lock */
 	if (t == NULL)
 		return ESRCH;
 
@@ -238,7 +247,17 @@ do_sched_getparam(pid_t pid, lwpid_t lid, int *policy,
 	lwp_lock(t);
 	lparams.sched_priority = t->l_priority;
 	lpolicy = t->l_class;
+	lwp_unlock(t);
+	mutex_exit(t->l_proc->p_lock);
 
+	/*
+	 * convert to the user-visible priority value.
+	 * it's an inversion of convert_pri().
+	 *
+	 * the SCHED_OTHER case is a bit arbitrary given that
+	 *	- we don't allow setting the priority.
+	 *	- the priority is dynamic.
+	 */
 	switch (lpolicy) {
 	case SCHED_OTHER:
 		lparams.sched_priority -= PRI_USER;
@@ -255,8 +274,6 @@ do_sched_getparam(pid_t pid, lwpid_t lid, int *policy,
 	if (params != NULL)
 		*params = lparams;
 
-	lwp_unlock(t);
-	mutex_exit(t->l_proc->p_lock);
 	return error;
 }
 
@@ -297,7 +314,7 @@ genkcpuset(kcpuset_t **dset, const cpuset_t *sset, size_t size)
 	kcpuset_t *kset;
 	int error;
 
-	kcpuset_create(&kset, false);
+	kcpuset_create(&kset, true);
 	error = kcpuset_copyin(sset, kset, size);
 	if (error) {
 		kcpuset_unuse(kset, NULL);

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1058.2.3 2012/04/05 21:33:15 mrg Exp $
+# $NetBSD: GENERIC,v 1.1058.2.4 2012/04/29 23:04:40 mrg Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1058.2.3 $"
+#ident 		"GENERIC-$Revision: 1.1058.2.4 $"
 
 maxusers	64		# estimated number of users
 
@@ -151,9 +151,10 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 # Wedge support
 options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
 options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
-# The following two options can break /etc/fstab, so handle with care
+# The following three options can break /etc/fstab, so handle with care
 #options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
 #options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
+#options	DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
 
 file-system	FFS		# UFS
 file-system	NFS		# Network File System client
@@ -445,7 +446,8 @@ pci*	at elansc? bus ?
 elansc* at mainbus? bus ?		# AMD Elan SC520 System Controller
 
 # Temperatures
-amdtemp* at pchb?			# AMD CPU Temperature sensors
+amdnb_misc* at pci?			# AMD NB Misc Configuration
+amdtemp* at amdnb_misc?			# AMD CPU Temperature sensors
 
 # PCI bridges
 #amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
@@ -740,7 +742,8 @@ iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 mfi*	at pci? dev ? function ?	# LSI MegaRAID SAS
 mly*	at pci? dev ? function ?	# Mylex AcceleRAID and eXtremeRAID
-mpt*	at pci? dev ? function ?	# LSI Fusion SCSI/FC
+mpt*	at pci? dev ? function ?	# LSILogic 9x9 and 53c1030 (Fusion-MPT)
+mpii*	at pci? dev ? function ?	# LSI Logic Fusion-MPT II
 njs*	at pci? dev ? function ?	# Workbit NinjaSCSI-32
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
@@ -1060,6 +1063,7 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 # CardBus network cards
 ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11)
+bwi*	at cardbus? function ?	# Broadcom BCM43xx wireless
 ex*	at cardbus? function ?	# 3Com 3c575TX
 fxp*	at cardbus? function ?	# Intel i8255x
 ral*	at cardbus? function ?	# Ralink Technology RT25x0 802.11a/b/g

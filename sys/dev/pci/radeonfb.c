@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.46.6.5 2012/04/05 21:33:32 mrg Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.46.6.6 2012/04/29 23:04:58 mrg Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.46.6.5 2012/04/05 21:33:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.46.6.6 2012/04/29 23:04:58 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ static void radeonfb_cursor_position(struct radeonfb_display *);
 static void radeonfb_cursor_visible(struct radeonfb_display *);
 static void radeonfb_cursor_update(struct radeonfb_display *, unsigned);
 
-static void radeonfb_wait_fifo(struct radeonfb_softc *, int);
+static inline void radeonfb_wait_fifo(struct radeonfb_softc *, int);
 static void radeonfb_engine_idle(struct radeonfb_softc *);
 static void radeonfb_engine_flush(struct radeonfb_softc *);
 static void radeonfb_engine_reset(struct radeonfb_softc *);
@@ -2221,22 +2221,26 @@ radeonfb_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	if (ri->ri_depth == 32) {
 		ri->ri_flg |= RI_ENABLE_ALPHA;
 	}
-	if (ri->ri_depth == 8) {
-		ri->ri_flg |= RI_ENABLE_ALPHA | RI_8BIT_IS_RGB;
+	switch (ri->ri_depth) {
+		case 8:
+			ri->ri_flg |= RI_ENABLE_ALPHA | RI_8BIT_IS_RGB;
+			break;
+		case 32:
+			/* we run radeons in RGB even on SPARC hardware */
+			ri->ri_rnum = 8;
+			ri->ri_gnum = 8;
+			ri->ri_bnum = 8;
+			ri->ri_rpos = 16;
+			ri->ri_gpos = 8;
+			ri->ri_bpos = 0;
+			break;
 	}
+
 	ri->ri_bits = (void *)dp->rd_fbptr;
 
 #ifdef VCONS_DRAW_INTR
 	scr->scr_flags |= VCONS_DONT_READ;
 #endif
-
-	/* this is rgb in "big-endian order..." */
-	ri->ri_rnum = 8;
-	ri->ri_gnum = 8;
-	ri->ri_bnum = 8;
-	ri->ri_rpos = 16;
-	ri->ri_gpos = 8;
-	ri->ri_bpos = 0;
 
 	if (existing) {
 		ri->ri_flg |= RI_CLEAR;

@@ -1,4 +1,4 @@
-/*	$NetBSD: errata.c,v 1.19 2010/07/23 22:31:35 cegger Exp $	*/
+/*	$NetBSD: errata.c,v 1.19.12.1 2012/04/29 23:04:44 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.19 2010/07/23 22:31:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.19.12.1 2012/04/29 23:04:44 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -69,7 +69,8 @@ typedef struct errata {
 typedef enum cpurev {
 	BH_E4, CH_CG, CH_D0, DH_CG, DH_D0, DH_E3, DH_E6, JH_E1,
 	JH_E6, SH_B0, SH_B3, SH_C0, SH_CG, SH_D0, SH_E4, SH_E5,
-	DR_BA, DR_B2, DR_B3,
+	DR_BA, DR_B2, DR_B3, RB_C2, RB_C3, BL_C2, BL_C3, DA_C2,
+	DA_C3, HY_D0, HY_D1, HY_D1_G34R1,  PH_E0, LN_B0,
 	OINK
 } cpurev_t;
 
@@ -85,6 +86,10 @@ static const u_int cpurevs[] = {
 	SH_D0, 0x0010f40, SH_D0, 0x0010f50, SH_D0, 0x0010f70,
 	SH_E4, 0x0020f51, SH_E4, 0x0020f71, SH_E5, 0x0020f42,
 	DR_BA, 0x0100f2a, DR_B2, 0x0100f22, DR_B3, 0x0100f23,
+	RB_C2, 0x0100f42, RB_C3, 0x0100f43, BL_C2, 0x0100f52,
+	BL_C3, 0x0100f53, DA_C2, 0x0100f62, DA_C3, 0x0100f63,
+	HY_D0, 0x0100f80, HY_D1, 0x0100f81, HY_D1_G34R1, 0x0100f91,
+	PH_E0, 0x0100fa0, LN_B0, 0x0300f10,
 	OINK
 };
 
@@ -130,6 +135,11 @@ static const uint8_t x86_errata_set9[] = {
 
 static const uint8_t x86_errata_set10[] = {
 	DR_BA, DR_B2, DR_B3, OINK
+};
+
+static const uint8_t x86_errata_set11[] = {
+	DR_BA, DR_B2, DR_B3, RB_C2, RB_C3, BL_C2, BL_C3, DA_C2,
+	DA_C3, HY_D0, HY_D1, HY_D1_G34R1,  PH_E0, LN_B0, OINK
 };
 
 static bool x86_errata_setmsr(struct cpu_info *, errata_t *);
@@ -267,6 +277,13 @@ static errata_t errata[] = {
 	{
 		309, FALSE, MSR_BU_CFG, x86_errata_set9,
 		x86_errata_testmsr, BU_CFG_ERRATA_309
+	},
+	/*
+	 * 721: Processor May Incorrectly Update Stack Pointer
+	 */
+	{
+		721, FALSE, MSR_DE_CFG, x86_errata_set11,
+		x86_errata_setmsr, DE_CFG_ERRATA_721
 	},
 };
 

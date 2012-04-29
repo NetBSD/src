@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.442.2.2 2012/04/05 21:33:41 mrg Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.442.2.3 2012/04/29 23:05:05 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.442.2.2 2012/04/05 21:33:41 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.442.2.3 2012/04/29 23:05:05 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -273,20 +273,20 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 
 	if ((error == 0) && !(saved_flags & MNT_EXTATTR) && 
 	    (flags & MNT_EXTATTR)) {
-		if (VFS_EXTATTRCTL(vp->v_mount, EXTATTR_CMD_START, 
+		if (VFS_EXTATTRCTL(mp, EXTATTR_CMD_START, 
 				   NULL, 0, NULL) != 0) {
 			printf("%s: failed to start extattr, error = %d",
-			       vp->v_mount->mnt_stat.f_mntonname, error);
+			       mp->mnt_stat.f_mntonname, error);
 			mp->mnt_flag &= ~MNT_EXTATTR;
 		}
 	}
 
 	if ((error == 0) && (saved_flags & MNT_EXTATTR) && 
 	    !(flags & MNT_EXTATTR)) {
-		if (VFS_EXTATTRCTL(vp->v_mount, EXTATTR_CMD_STOP, 
+		if (VFS_EXTATTRCTL(mp, EXTATTR_CMD_STOP, 
 				   NULL, 0, NULL) != 0) {
 			printf("%s: failed to stop extattr, error = %d",
-			       vp->v_mount->mnt_stat.f_mntonname, error);
+			       mp->mnt_stat.f_mntonname, error);
 			mp->mnt_flag |= MNT_RDONLY;
 		}
 	}
@@ -458,6 +458,8 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 	} else if (flags & MNT_UPDATE) {
 		error = mount_update(l, vp, path, flags, data_buf, &data_len);
 	} else {
+		struct mount *mp = vp->v_mount;
+
 		/* Locking is handled internally in mount_domount(). */
 		KASSERT(vfsopsrele == true);
 		error = mount_domount(l, &vp, vfsops, path, flags, data_buf,
@@ -465,10 +467,10 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 		vfsopsrele = false;
 
 		if ((error == 0) && (flags & MNT_EXTATTR)) {
-			if (VFS_EXTATTRCTL(vp->v_mount, EXTATTR_CMD_START, 
+			if (VFS_EXTATTRCTL(mp, EXTATTR_CMD_START, 
 					   NULL, 0, NULL) != 0)
 				printf("%s: failed to start extattr",
-				       vp->v_mount->mnt_stat.f_mntonname);
+				       mp->mnt_stat.f_mntonname);
 				/* XXX remove flag */
 		}
 	}
@@ -3360,15 +3362,13 @@ change_owner(struct vnode *vp, uid_t uid, gid_t gid, struct lwp *l,
 		 * group-id settings intact in that case.
 		 */
 		if (vattr.va_mode & S_ISUID) {
-			error = kauth_authorize_vnode(l->l_cred,
-			    KAUTH_VNODE_RETAIN_SUID, vp, NULL, EPERM);
-			if (error)
+			if (kauth_authorize_vnode(l->l_cred,
+			    KAUTH_VNODE_RETAIN_SUID, vp, NULL, EPERM) != 0)
 				newmode &= ~S_ISUID;
 		}
 		if (vattr.va_mode & S_ISGID) {
-			error = kauth_authorize_vnode(l->l_cred,
-			    KAUTH_VNODE_RETAIN_SGID, vp, NULL, EPERM);
-			if (error)
+			if (kauth_authorize_vnode(l->l_cred,
+			    KAUTH_VNODE_RETAIN_SGID, vp, NULL, EPERM) != 0)
 				newmode &= ~S_ISGID;
 		}
 	} else {

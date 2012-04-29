@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.99.2.2 2012/04/05 21:33:43 mrg Exp $
+#	$NetBSD: Makefile,v 1.99.2.3 2012/04/29 23:05:06 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,7 @@ SUBDIR+=	compat
 SUBDIR+=	compat_ossaudio
 SUBDIR+=	coredump
 SUBDIR+=	chfs
+SUBDIR+=	dbcool
 SUBDIR+=	efs
 SUBDIR+=	ext2fs
 SUBDIR+=	exec_script
@@ -30,6 +31,7 @@ SUBDIR+=	gpioiic
 SUBDIR+=	gpioow
 SUBDIR+=	gpiosim
 SUBDIR+=	hfs
+SUBDIR+=	if_axe
 SUBDIR+=	iic
 SUBDIR+=	kernfs
 SUBDIR+=	layerfs
@@ -59,6 +61,7 @@ SUBDIR+=	ptyfs
 SUBDIR+=	puffs
 SUBDIR+=	putter
 SUBDIR+=	scsiverbose
+SUBDIR+=	sdtemp
 SUBDIR+=	secmodel_bsd44
 SUBDIR+=	secmodel_extensions
 SUBDIR+=	secmodel_overlay
@@ -73,6 +76,7 @@ SUBDIR+=	udf
 SUBDIR+=	umap
 SUBDIR+=	union
 SUBDIR+=	usbverbose
+SUBDIR+=	vcoda
 SUBDIR+=	v7fs
 SUBDIR+=	vnd
 SUBDIR+=	tprof

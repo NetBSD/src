@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1032.2.4 2012/04/05 21:33:23 mrg Exp $
+#	$NetBSD: files,v 1.1032.2.5 2012/04/29 23:04:46 mrg Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -69,9 +69,6 @@ defflag	opt_ntp.h		PPS_SYNC NTP
 defflag	opt_ptm.h		NO_DEV_PTM COMPAT_BSDPTY
 
 defparam opt_kmempages.h	NKMEMPAGES NKMEMPAGES_MIN NKMEMPAGES_MAX
-defflag	opt_malloclog.h		MALLOCLOG
-defparam opt_malloclog.h	MALLOCLOGSIZE
-defflag	opt_malloc_debug.h	MALLOC_DEBUG
 defflag	opt_pool.h		POOL_DIAGNOSTIC
 defparam opt_poollog.h		POOL_LOGSIZE
 
@@ -87,6 +84,7 @@ defflag	opt_dkwedge.h		DKWEDGE_AUTODISCOVER
 				DKWEDGE_METHOD_BSDLABEL
 				DKWEDGE_METHOD_GPT
 				DKWEDGE_METHOD_MBR
+				DKWEDGE_METHOD_APPLE
 
 defflag	opt_veriexec.h		VERIFIED_EXEC_FP_SHA1
 				VERIFIED_EXEC_FP_SHA256
@@ -1430,6 +1428,7 @@ file	dev/clock_subr.c
 file	dev/clockctl.c			clockctl		needs-flag
 file	dev/dksubr.c			cgd | xbd | ccd | raid | dm
 file	dev/dkwedge/dk.c
+file	dev/dkwedge/dkwedge_apple.c	dkwedge_method_apple
 file	dev/dkwedge/dkwedge_bsdlabel.c	dkwedge_method_bsdlabel
 file	dev/dkwedge/dkwedge_gpt.c	dkwedge_method_gpt
 file	dev/dkwedge/dkwedge_mbr.c	dkwedge_method_mbr
@@ -1488,8 +1487,6 @@ file	kern/kern_ksyms.c		ksyms | ddb | modular needs-flag
 file	kern/kern_lock.c
 file	kern/kern_lwp.c
 file	kern/kern_malloc.c
-file	kern/kern_malloc_stdtype.c
-file	kern/kern_malloc_debug.c	malloc_debug
 file	kern/kern_module.c
 file	kern/kern_module_vfs.c
 file	kern/kern_mutex.c

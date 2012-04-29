@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.96.8.3 2012/03/11 01:52:21 mrg Exp $	*/
+/*	$NetBSD: trap.c,v 1.96.8.4 2012/04/29 23:04:40 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96.8.3 2012/03/11 01:52:21 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96.8.4 2012/04/29 23:04:40 mrg Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -631,21 +631,7 @@ trap(int type, struct trapframe *frame)
 #endif
 
 	case T_EMULATION | T_USER:
-#ifdef FPEMUL
 		hppa_fpu_emulate(frame, l, opcode);
-#else  /* !FPEMUL */
-		/*
-		 * We don't have FPU emulation, so signal the
-		 * process with a SIGFPE.
-		 */
-		
-		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGFPE;
-		ksi.ksi_code = SI_NOINFO;
-		ksi.ksi_trap = type;
-		ksi.ksi_addr = (void *)frame->tf_iioq_head;
-		trapsignal(l, &ksi);
-#endif /* !FPEMUL */
 		break;
 
 	case T_DATALIGN:
@@ -699,7 +685,7 @@ do_onfault:
 		ksi.ksi_signo = SIGTRAP;
 		ksi.ksi_code = TRAP_TRACE;
 		ksi.ksi_trap = trapnum;
-		ksi.ksi_addr = (void *)frame->tf_iioq_head;
+		ksi.ksi_addr = (void *)(frame->tf_iioq_head & ~HPPA_PC_PRIV_MASK);
 #ifdef PTRACE
 		ss_clear_breakpoints(l);
 		if (opcode == SSBREAKPOINT)
@@ -707,7 +693,6 @@ do_onfault:
 #endif
 		/* pass to user debugger */
 		trapsignal(l, &ksi);
- 
 		break;
 
 #ifdef PTRACE
@@ -718,7 +703,7 @@ do_onfault:
 		ksi.ksi_signo = SIGTRAP;
 		ksi.ksi_code = TRAP_TRACE;
 		ksi.ksi_trap = trapnum;
-		ksi.ksi_addr = (void *)frame->tf_iioq_head;
+		ksi.ksi_addr = (void *)(frame->tf_iioq_head & ~HPPA_PC_PRIV_MASK);
 
                 /* pass to user debugger */
 		trapsignal(l, &ksi);

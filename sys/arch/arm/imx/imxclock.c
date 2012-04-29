@@ -1,4 +1,4 @@
-/*	$NetBSD: imxclock.c,v 1.4 2011/07/01 20:27:50 dyoung Exp $ */
+/*	$NetBSD: imxclock.c,v 1.4.6.1 2012/04/29 23:04:38 mrg Exp $ */
 /*
  * Copyright (c) 2009, 2010  Genetec corp.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec corp.
@@ -70,7 +70,7 @@ void
 cpu_initclocks(void)
 {
 	uint32_t reg;
-	int freq;
+	u_int freq;
 
 	if (!epit1_sc) {
 		panic("%s: driver has not been initialized!", __FUNCTION__);
@@ -79,6 +79,9 @@ cpu_initclocks(void)
 	freq = imxclock_get_timerfreq(epit1_sc);
 	imx_epit_timecounter.tc_frequency = freq;
 	tc_init(&imx_epit_timecounter);
+
+	aprint_verbose_dev(epit1_sc->sc_dev,
+			   "timer clock frequency %d\n", freq);
 
 	epit1_sc->sc_reload_value = freq / hz - 1;
 
@@ -92,11 +95,13 @@ cpu_initclocks(void)
 			  epit1_sc->sc_reload_value);
 	bus_space_write_4(epit1_sc->sc_iot, epit1_sc->sc_ioh, EPIT_EPITCMPR, 0);
 
-	reg = EPITCR_ENMOD | EPITCR_IOVW | EPITCR_RLD;
-	bus_space_write_4(epit1_sc->sc_iot, epit1_sc->sc_ioh, EPIT_EPITCR, reg);
-	reg |= EPITCR_EN | EPITCR_OCIEN | EPITCR_CLKSRC_HIGH |
-		EPITCR_WAITEN | EPITCR_DOZEN | EPITCR_STOPEN;
-	bus_space_write_4(epit1_sc->sc_iot, epit1_sc->sc_ioh, EPIT_EPITCR, reg);
+	reg = EPITCR_ENMOD | EPITCR_IOVW | EPITCR_RLD | epit1_sc->sc_clksrc;
+	bus_space_write_4(epit1_sc->sc_iot, epit1_sc->sc_ioh,
+	    EPIT_EPITCR, reg);
+	reg |= EPITCR_EN | EPITCR_OCIEN | EPITCR_WAITEN | EPITCR_DOZEN |
+		EPITCR_STOPEN;
+	bus_space_write_4(epit1_sc->sc_iot, epit1_sc->sc_ioh,
+	    EPIT_EPITCR, reg);
 
 	epit1_sc->sc_ih = intr_establish(epit1_sc->sc_intr, IPL_CLOCK,
 	    IST_LEVEL, imxclock_intr, epit1_sc);

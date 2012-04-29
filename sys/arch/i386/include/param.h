@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.72.14.1 2012/02/18 07:32:22 mrg Exp $	*/
+/*	$NetBSD: param.h,v 1.72.14.2 2012/04/29 23:04:41 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,6 +40,13 @@
 /*
  * Machine dependent constants for Intel 386.
  */
+
+/*
+ * MAXCPUS must be defined before cpu.h inclusion.  Note: i386 might
+ * support more CPUs, but due to the limited KVA space available on
+ * i386, such support would be inefficient.  Use amd64 instead.
+ */
+#define	MAXCPUS		32
 
 #ifdef _KERNEL
 #include <machine/cpu.h>

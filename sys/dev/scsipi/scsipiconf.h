@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.118 2010/06/07 01:41:39 pgoyette Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.118.12.1 2012/04/29 23:05:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -236,13 +236,24 @@ struct scsipi_bustype {
 	int	(*bustype_interpret_sense)(struct scsipi_xfer *);
 	void	(*bustype_printaddr)(struct scsipi_periph *);
 	void	(*bustype_kill_pending)(struct scsipi_periph *);
+	void	(*bustype_async_event_xfer_mode)(struct scsipi_channel *,
+		    void *);
 };
 
 /* bustype_type */
-#define	SCSIPI_BUSTYPE_SCSI	0
+/* type is stored in the first byte */
+#define SCSIPI_BUSTYPE_TYPE_SHIFT 0
+#define SCSIPI_BUSTYPE_TYPE(x) (((x) >> SCSIPI_BUSTYPE_TYPE_SHIFT) & 0xff)
+#define	SCSIPI_BUSTYPE_SCSI	0 /* parallel SCSI */
 #define	SCSIPI_BUSTYPE_ATAPI	1
 /* #define SCSIPI_BUSTYPE_ATA	2 */
+/* subtype is stored in the second byte */
+#define SCSIPI_BUSTYPE_SUBTYPE_SHIFT 8
+#define SCSIPI_BUSTYPE_SUBTYPE(x) (((x) >> SCSIPI_BUSTYPE_SUBTYPE_SHIFT) & 0xff)
 
+#define SCSIPI_BUSTYPE_BUSTYPE(t, s) \
+    ((t) << SCSIPI_BUSTYPE_TYPE_SHIFT | (s) << SCSIPI_BUSTYPE_SUBTYPE_SHIFT)
+/* subtypes are defined in each bus type headers */
 
 /*
  * scsipi_channel:
@@ -452,6 +463,7 @@ struct scsipi_periph {
 #define PQUIRK_CAP_SYNC		0x00080000	/* SCSI device with ST sync op*/
 #define PQUIRK_CAP_WIDE16	0x00100000	/* SCSI device with ST wide op*/
 #define PQUIRK_CAP_NODT		0x00200000	/* signals DT, but can't. */
+#define PQUIRK_START		0x00400000	/* needs start before tur */
 
 
 /*
@@ -670,7 +682,6 @@ void	scsipi_async_event(struct scsipi_channel *,
 int	scsipi_do_ioctl(struct scsipi_periph *, dev_t, u_long, void *,
 	    int, struct lwp *);
 
-void	scsipi_print_xfer_mode(struct scsipi_periph *);
 void	scsipi_set_xfer_mode(struct scsipi_channel *, int, int);
 
 int	scsipi_channel_init(struct scsipi_channel *);

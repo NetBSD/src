@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.100.4.2 2012/04/05 21:33:52 mrg Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.100.4.3 2012/04/29 23:05:08 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.100.4.2 2012/04/05 21:33:52 mrg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.100.4.3 2012/04/29 23:05:08 mrg Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -512,18 +512,16 @@ out:
 		ip->i_flag |= IN_ACCESS;
 	if (resid > uio->uio_resid && ap->a_cred) {
 		if (ip->i_mode & ISUID) {
-			error = kauth_authorize_vnode(ap->a_cred, KAUTH_VNODE_RETAIN_SUID, vp,
-			    NULL, EPERM);
-			if (error) {
+			if (kauth_authorize_vnode(ap->a_cred,
+			    KAUTH_VNODE_RETAIN_SUID, vp, NULL, EPERM) != 0) {
 				ip->i_mode &= ~ISUID;
 				DIP_ASSIGN(ip, mode, ip->i_mode);
 			}
 		}
 
 		if (ip->i_mode & ISGID) {
-			error = kauth_authorize_vnode(ap->a_cred, KAUTH_VNODE_RETAIN_SGID, vp,
-			    NULL, EPERM);
-			if (error) {
+			if (kauth_authorize_vnode(ap->a_cred,
+			    KAUTH_VNODE_RETAIN_SGID, vp, NULL, EPERM) != 0) {
 				ip->i_mode &= ~ISGID;
 				DIP_ASSIGN(ip, mode, ip->i_mode);
 			}

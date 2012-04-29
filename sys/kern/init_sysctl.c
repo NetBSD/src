@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.185.2.3 2012/03/11 01:52:29 mrg Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.185.2.4 2012/04/29 23:05:04 mrg Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.185.2.3 2012/03/11 01:52:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.185.2.4 2012/04/29 23:05:04 mrg Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -1639,9 +1639,6 @@ sysctl_kern_drivers(SYSCTLFN_ARGS)
 	int i;
 	extern struct devsw_conv *devsw_conv;
 	extern int max_devsw_convs;
-
-	if (newp != NULL || namelen != 0)
-		return (EINVAL);
 
 	start = where = oldp;
 	buflen = *oldlenp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: st_scsi.c,v 1.32.16.4 2012/03/06 18:26:46 mrg Exp $ */
+/*	$NetBSD: st_scsi.c,v 1.32.16.5 2012/04/29 23:05:00 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.32.16.4 2012/03/06 18:26:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.32.16.5 2012/04/29 23:05:00 mrg Exp $");
 
 #include "opt_scsi.h"
 
@@ -93,7 +93,8 @@ st_scsibus_match(device_t parent, cfdata_t match, void *aux)
 	struct scsipibus_attach_args *sa = aux;
 	int priority;
 
-	if (scsipi_periph_bustype(sa->sa_periph) != SCSIPI_BUSTYPE_SCSI)
+	if (SCSIPI_BUSTYPE_TYPE(scsipi_periph_bustype(sa->sa_periph)) !=
+	    SCSIPI_BUSTYPE_SCSI)
 		return 0;
 
 	(void)scsipi_inqmatch(&sa->sa_inqbuf,

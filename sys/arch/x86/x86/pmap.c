@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.142.2.3 2012/03/04 00:46:17 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.142.2.4 2012/04/29 23:04:44 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.142.2.3 2012/03/04 00:46:17 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.142.2.4 2012/04/29 23:04:44 mrg Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -723,7 +723,6 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 {
 	struct pmap *curpmap;
 	struct cpu_info *ci;
-	uint32_t cpumask;
 	lwp_t *l;
 
 	/* The kernel's pmap is always accessible. */
@@ -765,13 +764,14 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 		 * The reference will be dropped by pmap_unmap_ptes().
 		 * Can happen if we block during exit().
 		 */
-		cpumask = ci->ci_cpumask;
-		atomic_and_32(&curpmap->pm_cpus, ~cpumask);
-		atomic_and_32(&curpmap->pm_kernel_cpus, ~cpumask);
+		const cpuid_t cid = cpu_index(ci);
+
+		kcpuset_atomic_clear(curpmap->pm_cpus, cid);
+		kcpuset_atomic_clear(curpmap->pm_kernel_cpus, cid);
 		ci->ci_pmap = pmap;
 		ci->ci_tlbstate = TLBSTATE_VALID;
-		atomic_or_32(&pmap->pm_cpus, cpumask);
-		atomic_or_32(&pmap->pm_kernel_cpus, cpumask);
+		kcpuset_atomic_set(pmap->pm_cpus, cid);
+		kcpuset_atomic_set(pmap->pm_kernel_cpus, cid);
 		cpu_load_pmap(pmap, curpmap);
 	}
 	pmap->pm_ncsw = l->l_ncsw;
@@ -1048,8 +1048,7 @@ pmap_emap_sync(bool canload)
 		 */
 		pmap = vm_map_pmap(&curlwp->l_proc->p_vmspace->vm_map);
 		if (__predict_false(pmap == ci->ci_pmap)) {
-			const uint32_t cpumask = ci->ci_cpumask;
-			atomic_and_32(&pmap->pm_cpus, ~cpumask);
+			kcpuset_atomic_clear(pmap->pm_cpus, cpu_index(ci));
 		}
 		pmap_load();
 		KASSERT(ci->ci_want_pmapload == 0);
@@ -1233,6 +1232,9 @@ pmap_bootstrap(vaddr_t kva_start)
 
 	kpm->pm_stats.wired_count = kpm->pm_stats.resident_count =
 		x86_btop(kva_start - VM_MIN_KERNEL_ADDRESS);
+
+	kcpuset_create(&kpm->pm_cpus, true);
+	kcpuset_create(&kpm->pm_kernel_cpus, true);
 
 	/*
 	 * the above is just a rough estimate and not critical to the proper
@@ -1651,6 +1653,9 @@ pmap_init(void)
 
 	pmap_tlb_init();
 
+	/* XXX: Since cpu_hatch() is only for secondary CPUs. */
+	pmap_tlb_cpu_init(curcpu());
+
 	evcnt_attach_dynamic(&pmap_iobmp_evcnt, EVCNT_TYPE_MISC,
 	    NULL, "x86", "io bitmap copy");
 	evcnt_attach_dynamic(&pmap_ldt_evcnt, EVCNT_TYPE_MISC,
@@ -1896,9 +1901,8 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 			/*
 			 * Update the per-cpu PD on all cpus the current
 			 * pmap is active on 
-			 */ 
+			 */
 			xen_kpm_sync(pmap, index);
-
 		}
 #  endif /*__x86_64__ */
 		invaladdr = level == 1 ? (vaddr_t)ptes :
@@ -1988,10 +1992,10 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes)
 			/*
 			 * Update the per-cpu PD on all cpus the current
 			 * pmap is active on 
-			 */ 
+			 */
 			xen_kpm_sync(pmap, index);
 		}
-#endif /* XEN && __x86_64__ */
+#endif
 		pmap_pte_flush();
 		pmap_stats_update(pmap, 1, 0);
 		/*
@@ -1999,33 +2003,26 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes)
 		 * wire count of the parent page.
 		 */
 		if (i < PTP_LEVELS) {
-			if (pptp == NULL)
+			if (pptp == NULL) {
 				pptp = pmap_find_ptp(pmap, va, ppa, i);
-#ifdef DIAGNOSTIC
-			if (pptp == NULL)
-				panic("pde page disappeared");
-#endif
+				KASSERT(pptp != NULL);
+			}
 			pptp->wire_count++;
 		}
 	}
 
 	/*
-	 * ptp is not NULL if we just allocated a new ptp. If it's
+	 * PTP is not NULL if we just allocated a new PTP.  If it is
 	 * still NULL, we must look up the existing one.
 	 */
 	if (ptp == NULL) {
 		ptp = pmap_find_ptp(pmap, va, ppa, 1);
-#ifdef DIAGNOSTIC
-		if (ptp == NULL) {
-			printf("va %" PRIxVADDR " ppa %" PRIxPADDR "\n",
-			    va, ppa);
-			panic("pmap_get_ptp: unmanaged user PTP");
-		}
-#endif
+		KASSERTMSG(ptp != NULL, "pmap_get_ptp: va %" PRIxVADDR
+		    "ppa %" PRIxPADDR "\n", va, ppa);
 	}
 
 	pmap->pm_ptphint[0] = ptp;
-	return(ptp);
+	return ptp;
 }
 
 /*
@@ -2200,12 +2197,8 @@ pmap_pdp_free(struct pool *pp, void *v)
 #endif /* PAE */
 
 /*
- * pmap_create: create a pmap
- *
- * => note: old pmap interface took a "size" args which allowed for
- *	the creation of "software only" pmaps (not in bsd).
+ * pmap_create: create a pmap object.
  */
-
 struct pmap *
 pmap_create(void)
 {
@@ -2228,11 +2221,13 @@ pmap_create(void)
 	pmap->pm_hiexec = 0;
 #endif /* !defined(__x86_64__) */
 	pmap->pm_flags = 0;
-	pmap->pm_cpus = 0;
-	pmap->pm_kernel_cpus = 0;
-	pmap->pm_xen_ptp_cpus = 0;
 	pmap->pm_gc_ptp = NULL;
 
+	kcpuset_create(&pmap->pm_cpus, true);
+	kcpuset_create(&pmap->pm_kernel_cpus, true);
+#ifdef XEN
+	kcpuset_create(&pmap->pm_xen_ptp_cpus, true);
+#endif
 	/* init the LDT */
 	pmap->pm_ldt = NULL;
 	pmap->pm_ldt_len = 0;
@@ -2287,12 +2282,8 @@ pmap_free_ptps(struct vm_page *empty_ptps)
 void
 pmap_destroy(struct pmap *pmap)
 {
-	int i;
-#ifdef DIAGNOSTIC
-	struct cpu_info *ci;
-	CPU_INFO_ITERATOR cii;
-#endif /* DIAGNOSTIC */
 	lwp_t *l;
+	int i;
 
 	/*
 	 * If we have torn down this pmap, process deferred frees and
@@ -2321,6 +2312,9 @@ pmap_destroy(struct pmap *pmap)
 	}
 
 #ifdef DIAGNOSTIC
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (ci->ci_pmap == pmap)
 			panic("destroying pmap being used");
@@ -2344,11 +2338,8 @@ pmap_destroy(struct pmap *pmap)
 #endif /* DIAGNOSTIC */
 
 	/*
-	 * reference count is zero, free pmap resources and then free pmap.
-	 */
-
-	/*
-	 * remove it from global list of pmaps
+	 * Reference count is zero, free pmap resources and then free pmap.
+	 * First, remove it from global list of pmaps.
 	 */
 
 	mutex_enter(&pmaps_lock);
@@ -2394,6 +2385,11 @@ pmap_destroy(struct pmap *pmap)
 		uvm_obj_destroy(&pmap->pm_obj[i], false);
 		mutex_destroy(&pmap->pm_obj_lock[i]);
 	}
+	kcpuset_destroy(pmap->pm_cpus);
+	kcpuset_destroy(pmap->pm_kernel_cpus);
+#ifdef XEN
+	kcpuset_destroy(pmap->pm_xen_ptp_cpus);
+#endif
 	pool_cache_put(&pmap_cache, pmap);
 }
 
@@ -2596,19 +2592,15 @@ pmap_activate(struct lwp *l)
 /*
  * pmap_reactivate: try to regain reference to the pmap.
  *
- * => must be called with kernel preemption disabled
+ * => Must be called with kernel preemption disabled.
  */
 
 static bool
 pmap_reactivate(struct pmap *pmap)
 {
-	struct cpu_info *ci;
-	uint32_t cpumask;
-	bool result;	
-	uint32_t oldcpus;
-
-	ci = curcpu();
-	cpumask = ci->ci_cpumask;
+	struct cpu_info * const ci = curcpu();
+	const cpuid_t cid = cpu_index(ci);
+	bool result;
 
 	KASSERT(kpreempt_disabled());
 #if defined(XEN) && defined(__x86_64__)
@@ -2620,53 +2612,48 @@ pmap_reactivate(struct pmap *pmap)
 #endif
 
 	/*
-	 * if we still have a lazy reference to this pmap,
-	 * we can assume that there was no tlb shootdown
-	 * for this pmap in the meantime.
+	 * If we still have a lazy reference to this pmap, we can assume
+	 * that there was no TLB shootdown for this pmap in the meantime.
 	 *
-	 * the order of events here is important as we must
-	 * synchronize with TLB shootdown interrupts.  declare
-	 * interest in invalidations (TLBSTATE_VALID) and then
-	 * check the cpumask, which the IPIs can change only
-	 * when the state is TLBSTATE_LAZY.
+	 * The order of events here is important as we must synchronize
+	 * with TLB shootdown interrupts.  Declare interest in invalidations
+	 * (TLBSTATE_VALID) and then check the CPU set, which the IPIs can
+	 * change only when the state is TLBSTATE_LAZY.
 	 */
 
 	ci->ci_tlbstate = TLBSTATE_VALID;
-	oldcpus = pmap->pm_cpus;
-	KASSERT((pmap->pm_kernel_cpus & cpumask) != 0);
-	if (oldcpus & cpumask) {
-		/* got it */
+	KASSERT(kcpuset_isset(pmap->pm_kernel_cpus, cid));
+
+	if (kcpuset_isset(pmap->pm_cpus, cid)) {
+		/* We have the reference, state is valid. */
 		result = true;
 	} else {
-		/* must reload */
-		atomic_or_32(&pmap->pm_cpus, cpumask);
+		/* Must reload the TLB. */
+		kcpuset_atomic_set(pmap->pm_cpus, cid);
 		result = false;
 	}
-
 	return result;
 }
 
 /*
- * pmap_load: actually switch pmap.  (fill in %cr3 and LDT info)
+ * pmap_load: perform the actual pmap switch, i.e. fill in %cr3 register
+ * and relevant LDT info.
  *
- * ensures that the current process' pmap is loaded on the current cpu's MMU
- * and there's no stale TLB entries.
+ * Ensures that the current process' pmap is loaded on the current CPU's
+ * MMU and that there are no stale TLB entries.
  *
- * the caller should disable preemption or do check-and-retry to prevent
- * a preemption from undoing our efforts.
- *
- * this function can block.
+ * => The caller should disable kernel preemption or do check-and-retry
+ *    to prevent a preemption from undoing our efforts.
+ * => This function may block.
  */
-
 void
 pmap_load(void)
 {
 	struct cpu_info *ci;
-	uint32_t cpumask;
-	struct pmap *pmap;
-	struct pmap *oldpmap;
+	struct pmap *pmap, *oldpmap;
 	struct lwp *l;
 	struct pcb *pcb;
+	cpuid_t cid;
 	uint64_t ncsw;
 
 	kpreempt_disable();
@@ -2676,7 +2663,6 @@ pmap_load(void)
 		kpreempt_enable();
 		return;
 	}
-	cpumask = ci->ci_cpumask;
 	l = ci->ci_curlwp;
 	ncsw = l->l_ncsw;
 
@@ -2714,17 +2700,14 @@ pmap_load(void)
 	}
 
 	/*
-	 * grab a reference to the new pmap.
+	 * Acquire a reference to the new pmap and perform the switch.
 	 */
 
 	pmap_reference(pmap);
 
-	/*
-	 * actually switch pmap.
-	 */
-
-	atomic_and_32(&oldpmap->pm_cpus, ~cpumask);
-	atomic_and_32(&oldpmap->pm_kernel_cpus, ~cpumask);
+	cid = cpu_index(ci);
+	kcpuset_atomic_clear(oldpmap->pm_cpus, cid);
+	kcpuset_atomic_clear(oldpmap->pm_kernel_cpus, cid);
 
 #if defined(XEN) && defined(__x86_64__)
 	KASSERT(pmap_pdirpa(oldpmap, 0) == ci->ci_xen_current_user_pgd ||
@@ -2734,19 +2717,17 @@ pmap_load(void)
 #elif !defined(XEN)
 	KASSERT(pmap_pdirpa(oldpmap, 0) == pmap_pte2pa(rcr3()));
 #endif
-	KASSERT((pmap->pm_cpus & cpumask) == 0);
-	KASSERT((pmap->pm_kernel_cpus & cpumask) == 0);
+	KASSERT(!kcpuset_isset(pmap->pm_cpus, cid));
+	KASSERT(!kcpuset_isset(pmap->pm_kernel_cpus, cid));
 
 	/*
-	 * mark the pmap in use by this processor.  again we must
-	 * synchronize with TLB shootdown interrupts, so set the
-	 * state VALID first, then register us for shootdown events
-	 * on this pmap.
+	 * Mark the pmap in use by this CPU.  Again, we must synchronize
+	 * with TLB shootdown interrupts, so set the state VALID first,
+	 * then register us for shootdown events on this pmap.
 	 */
-
 	ci->ci_tlbstate = TLBSTATE_VALID;
-	atomic_or_32(&pmap->pm_cpus, cpumask);
-	atomic_or_32(&pmap->pm_kernel_cpus, cpumask);
+	kcpuset_atomic_set(pmap->pm_cpus, cid);
+	kcpuset_atomic_set(pmap->pm_kernel_cpus, cid);
 	ci->ci_pmap = pmap;
 
 	/*

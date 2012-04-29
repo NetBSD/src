@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.13.6.1 2012/02/18 07:33:35 mrg Exp $	*/
+/*	$NetBSD: pcib.c,v 1.13.6.2 2012/04/29 23:04:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.13.6.1 2012/02/18 07:33:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.13.6.2 2012/04/29 23:04:43 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -195,13 +195,8 @@ pcibattach(device_t parent, device_t self, void *aux)
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
 
-	/* If a more specific pcib implementation has already registered a
-	 * power handler, don't overwrite it.
-	 */
- 	if (!device_pmf_is_registered(self)) {
- 		if (!pmf_device_register(self, NULL, NULL))
- 	    		aprint_error_dev(self, "couldn't establish power handler\n");
-	}
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	config_defer(self, pcib_callback);
 }

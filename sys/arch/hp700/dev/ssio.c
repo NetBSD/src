@@ -1,4 +1,4 @@
-/*	$NetBSD: ssio.c,v 1.2 2011/07/01 18:33:09 dyoung Exp $	*/
+/*	$NetBSD: ssio.c,v 1.2.6.1 2012/04/29 23:04:39 mrg Exp $	*/
 
 /*	$OpenBSD: ssio.c,v 1.7 2009/03/08 22:19:04 miod Exp $	*/
 
@@ -160,8 +160,8 @@ ssio_match(device_t parent, cfdata_t match, void *aux)
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_NS)
 		return 0;
 
-        if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NS_PC87560)
-                return 1;
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NS_PC87560)
+		return 1;
 
 	return 0;
 }
@@ -204,10 +204,10 @@ ssio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_TTY, ssio_intr,
 	    sc);
 	if (sc->sc_ih == NULL) {
-                aprint_error_dev(self, "could not establish interrupt");
-                if (intrstr != NULL)
-                        aprint_error(" at %s", intrstr);
-                aprint_error("\n");
+		aprint_error_dev(self, "could not establish interrupt");
+		if (intrstr != NULL)
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		goto unmap_ic2;
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
@@ -324,7 +324,7 @@ ssio_intr(void *v)
 	irq = bus_space_read_1(sc->sc_iot, sc->sc_ic1h, 0);
 	irq &= 0x07;
 
-	if (irq  == 7) {
+	if (irq == 7) {
 		bus_space_write_1(sc->sc_iot, sc->sc_ic1h, 0, 0x0b);
 		isr = bus_space_read_1(sc->sc_iot, sc->sc_ic1h, 0);
 		if ((isr & 0x80) == 0)

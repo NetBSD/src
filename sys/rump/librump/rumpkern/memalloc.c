@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.11.12.1 2012/02/18 07:35:46 mrg Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.11.12.2 2012/04/29 23:05:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.11.12.1 2012/02/18 07:35:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.11.12.2 2012/04/29 23:05:07 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -69,7 +69,7 @@ malloc_type_detach(struct malloc_type *type)
 }
 
 void *
-kern_malloc(unsigned long size, struct malloc_type *type, int flags)
+kern_malloc(unsigned long size, int flags)
 {
 	void *rv;
 
@@ -85,14 +85,14 @@ kern_malloc(unsigned long size, struct malloc_type *type, int flags)
 }
 
 void *
-kern_realloc(void *ptr, unsigned long size, struct malloc_type *type, int flags)
+kern_realloc(void *ptr, unsigned long size, int flags)
 {
 
 	return rumpuser_realloc(ptr, size);
 }
 
 void
-kern_free(void *ptr, struct malloc_type *type)
+kern_free(void *ptr)
 {
 
 	rumpuser_free(ptr);

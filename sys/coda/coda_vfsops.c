@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.70 2011/09/27 00:54:47 christos Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.70.6.1 2012/04/29 23:04:45 mrg Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.70 2011/09/27 00:54:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.70.6.1 2012/04/29 23:04:45 mrg Exp $");
 
 #ifndef _KERNEL_OPT
 #define	NVCODA 4
@@ -78,15 +78,10 @@ __KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.70 2011/09/27 00:54:47 christos Ex
  
 MODULE(MODULE_CLASS_VFS, coda, NULL);
 
-MALLOC_DEFINE(M_CODA, "coda", "Coda file system structures and tables");
-
-int codadebug = 0;
-
-int coda_vfsop_print_entry = 0;
 #define ENTRY if(coda_vfsop_print_entry) myprintf(("Entered %s\n",__func__))
 
 struct vnode *coda_ctlvp;
-struct coda_mntinfo coda_mnttbl[NVCODA]; /* indexed by minor device number */
+extern struct coda_mntinfo coda_mnttbl[NVCODA]; /* indexed by minor device number */
 
 /* structure to keep statistics of internally generated/satisfied calls */
 

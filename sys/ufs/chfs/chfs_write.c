@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_write.c,v 1.2 2011/11/24 21:09:37 agc Exp $	*/
+/*	$NetBSD: chfs_write.c,v 1.2.2.1 2012/04/29 23:05:08 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -404,7 +404,7 @@ out:
  * This function writes the dirent of the new node to the media.
  */
 int
-chfs_do_link(struct chfs_inode *ip, struct chfs_inode *parent, const char *name, int namelen, enum vtype type)
+chfs_do_link(struct chfs_inode *ip, struct chfs_inode *parent, const char *name, int namelen, enum chtype type)
 {
 	int error = 0;
 	struct vnode *vp = ITOV(ip);
@@ -488,12 +488,12 @@ chfs_do_unlink(struct chfs_inode *ip,
 		if (fd->vno == ip->ino &&
 		    fd->nsize == namelen &&
 		    !memcmp(fd->name, name, fd->nsize)) {
-			if (fd->type == VDIR && ip->chvc->nlink == 2)
+			if (fd->type == CHT_DIR && ip->chvc->nlink == 2)
 				ip->chvc->nlink = 0;
 			else
 				ip->chvc->nlink--;
 
-			fd->type = VNON;
+			fd->type = CHT_BLANK;
 
 			TAILQ_REMOVE(&parent->dents, fd, fds);
 

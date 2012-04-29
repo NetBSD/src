@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.13.4.2 2012/02/24 09:11:33 mrg Exp $ */
+/* $NetBSD: satmgr.c,v 1.13.4.3 2012/04/29 23:04:41 mrg Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -120,25 +120,30 @@ static void rxintr(struct satmgr_softc *);
 static void txintr(struct satmgr_softc *);
 static void startoutput(struct satmgr_softc *);
 static void swintr(void *);
+static void minit(struct satmgr_softc *);
 static void sinit(struct satmgr_softc *);
 static void qinit(struct satmgr_softc *);
 static void iinit(struct satmgr_softc *);
 static void kreboot(struct satmgr_softc *);
+static void mreboot(struct satmgr_softc *);
 static void sreboot(struct satmgr_softc *);
 static void qreboot(struct satmgr_softc *);
 static void ireboot(struct satmgr_softc *);
 static void kpwroff(struct satmgr_softc *);
+static void mpwroff(struct satmgr_softc *);
 static void spwroff(struct satmgr_softc *);
 static void qpwroff(struct satmgr_softc *);
 static void dpwroff(struct satmgr_softc *);
 static void ipwroff(struct satmgr_softc *);
 static void kbutton(struct satmgr_softc *, int);
+static void mbutton(struct satmgr_softc *, int);
 static void sbutton(struct satmgr_softc *, int);
 static void qbutton(struct satmgr_softc *, int);
 static void dbutton(struct satmgr_softc *, int);
 static void ibutton(struct satmgr_softc *, int);
 static void idosync(void *);
 static void iprepcmd(struct satmgr_softc *, int, int, int, int, int, int);
+static int  mbtnintr(void *);
 static void guarded_pbutton(void *);
 static void sched_sysmon_pbutton(void *);
 
@@ -154,6 +159,7 @@ static struct satops satmodel[] = {
     { "dlink",    NULL,  NULL,    dpwroff, dbutton },
     { "iomega",   iinit, ireboot, ipwroff, ibutton },
     { "kurobox",  NULL,  kreboot, kpwroff, kbutton },
+    { "kurot4",   minit, mreboot, mpwroff, mbutton },
     { "qnap",     qinit, qreboot, qpwroff, qbutton },
     { "synology", sinit, sreboot, spwroff, sbutton }
 };
@@ -300,6 +306,10 @@ satmgr_attach(device_t parent, device_t self, void *aux)
 			satmgr_sysctl_fanhigh, 0, NULL, 0,
 			CTL_CREATE, CTL_EOL);
 	}
+	else if (strcmp(ops->family, "kurot4") == 0) {
+		intr_establish(2 + I8259_ICU,
+			IST_LEVEL, IPL_SERIAL, mbtnintr, sc);
+	}
 
 	md_reboot = satmgr_reboot;	/* cpu_reboot() hook */
 	if (ops->init != NULL)
@@ -434,6 +444,24 @@ send_sat_len(struct satmgr_softc *sc, const char *msg, int len)
 		CSR_WRITE(sc, THR, *msg++);
 	if (len > 0)
 		goto again;
+}
+
+static void
+recv_sat_len(struct satmgr_softc *sc, char *buf, int len)
+{
+	int lsr;
+
+	lsr = CSR_READ(sc, LSR);
+	while (len > 0 && (lsr & LSR_RXRDY)) {
+		if (lsr & (LSR_BI | LSR_FE | LSR_PE)) {
+			(void) CSR_READ(sc, RBR);
+			lsr = CSR_READ(sc, LSR);
+			continue;
+		}
+		*buf++ = CSR_READ(sc, RBR);
+		len -= 1;
+		lsr = CSR_READ(sc, LSR);
+	}
 }
 
 static int
@@ -719,14 +747,14 @@ static void
 kreboot(struct satmgr_softc *sc)
 {
 
-	send_sat(sc, "CCGG");
+	send_sat(sc, "CCGG"); /* perform reboot */
 }
 
 static void
 kpwroff(struct satmgr_softc *sc)
 {
 
-	send_sat(sc, "EEGG");
+	send_sat(sc, "EEGG"); /* force power off */
 }
 
 static void
@@ -949,6 +977,81 @@ iprepcmd(struct satmgr_softc *sc, int pow, int led, int rat, int fan,
 	 */
 }
 
+static void msattalk(struct satmgr_softc *, const char *, char *, int);
+
+static void
+msattalk(struct satmgr_softc *sc, const char *cmd, char *rep, int n)
+{
+	int len, i;
+	uint8_t pa;
+
+	if (cmd[0] != 0x80)
+		len = 2 + cmd[0]; /* cmd[0] is data portion length */
+	else
+		len = 2; /* read report */
+
+	for (i = 0, pa = 0; i < len; i++)
+		pa += cmd[i];
+	pa = 0 - pa; /* parity formula */
+
+	CSR_WRITE(sc, IER, 0);
+	send_sat_len(sc, cmd, len);
+	send_sat_len(sc, &pa, 1);
+	 DELAY(2000); /* XXX */
+	recv_sat_len(sc, rep, n);
+	 DELAY(2000); /* XXX */
+	CSR_WRITE(sc, IER, 0x7f);
+}
+
+static void
+minit(struct satmgr_softc *sc)
+{
+	char report[4];
+
+	msattalk(sc, "\x00\x03", report, 4);	/* boot has completed */
+}
+
+static void
+mreboot(struct satmgr_softc *sc)
+{
+	char report[4];
+
+	msattalk(sc, "\x01\x35\x00", report, 4); /* stop watchdog timer */
+	msattalk(sc, "\x00\x0c", report, 4);	 /* shutdown in progress */
+	msattalk(sc, "\x00\x03", report, 4);	 /* boot has completed */
+	msattalk(sc, "\x00\x0e", report, 4);	 /* perform reboot */
+}
+
+static void
+mpwroff(struct satmgr_softc *sc)
+{
+	char report[4];
+
+	msattalk(sc, "\x01\x35\x00", report, 4); /* stop watchdog timer */
+	msattalk(sc, "\x00\x0c", report, 4);	 /* shutdown in progress */
+	msattalk(sc, "\x00\x03", report, 4);	 /* boot has completed */
+	msattalk(sc, "\x00\x06", report, 4);	 /* force power off */
+}
+
+static void
+mbutton(struct satmgr_softc *sc, int ch)
+{
+	/* can do nothing */
+}
+
+static int
+mbtnintr(void *arg)
+{
+	/* notified after 3 seconds guard time */
+	struct satmgr_softc *sc = arg;
+	char report[4];
+
+	msattalk(sc, "\x80\x36", report, 4);
+	if ((report[2] & 01) == 0) /* power button depressed */
+		sysmon_task_queue_sched(0, sched_sysmon_pbutton, sc);
+	return 1;
+}
+
 static void
 guarded_pbutton(void *arg)
 {
@@ -956,7 +1059,7 @@ guarded_pbutton(void *arg)
 
 	/* we're now in callout(9) context */
 	sysmon_task_queue_sched(0, sched_sysmon_pbutton, sc);
-	send_sat(sc, "UU");
+	send_sat(sc, "UU"); /* make front panel LED flashing */
 }
 
 static void

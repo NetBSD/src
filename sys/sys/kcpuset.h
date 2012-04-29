@@ -1,4 +1,4 @@
-/*	$NetBSD: kcpuset.h,v 1.3.6.1 2012/02/18 07:35:49 mrg Exp $	*/
+/*	$NetBSD: kcpuset.h,v 1.3.6.2 2012/04/29 23:05:07 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2011 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@ bool		kcpuset_isotherset(kcpuset_t *, cpuid_t);
 bool		kcpuset_iszero(kcpuset_t *);
 bool		kcpuset_match(const kcpuset_t *, const kcpuset_t *);
 void		kcpuset_merge(kcpuset_t *, kcpuset_t *);
+void		kcpuset_intersect(kcpuset_t *, kcpuset_t *);
 int		kcpuset_countset(kcpuset_t *);
 
 void		kcpuset_atomic_set(kcpuset_t *, cpuid_t);

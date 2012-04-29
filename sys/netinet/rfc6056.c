@@ -1,4 +1,4 @@
-/*	$NetBSD: rfc6056.c,v 1.4.2.1 2012/04/05 21:33:44 mrg Exp $	*/
+/*	$NetBSD: rfc6056.c,v 1.4.2.2 2012/04/29 23:05:06 mrg Exp $	*/
 
 /*
  * Copyright 2011 Vlad Balan
@@ -28,8 +28,13 @@
  *
  */
 
+/*
+ * see:
+ *	RFC 6056 Recommendations for Transport-Protocol Port Randomization
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfc6056.c,v 1.4.2.1 2012/04/05 21:33:44 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfc6056.c,v 1.4.2.2 2012/04/29 23:05:06 mrg Exp $");
 
 #include "opt_inet.h"
 

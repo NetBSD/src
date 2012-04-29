@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.42.6.1 2012/02/18 07:35:15 mrg Exp $ */
+/*	$NetBSD: genfb.c,v 1.42.6.2 2012/04/29 23:05:02 mrg Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.42.6.1 2012/02/18 07:35:15 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.42.6.2 2012/04/29 23:05:02 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -507,8 +507,30 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 		ri->ri_flg |= RI_CLEAR;
 	}
 
-	if (ri->ri_depth == 32)
+	if (ri->ri_depth == 32) {
+		bool is_bgr = false;
+
 		ri->ri_flg |= RI_ENABLE_ALPHA;
+		prop_dictionary_get_bool(device_properties(sc->sc_dev),
+		    "is_bgr", &is_bgr);
+		if (is_bgr) {
+			/* someone requested BGR */
+			ri->ri_rnum = 8;
+			ri->ri_gnum = 8;
+			ri->ri_bnum = 8;
+			ri->ri_rpos = 0;
+			ri->ri_gpos = 8;
+			ri->ri_bpos = 16;
+		} else {
+			/* assume RGB */
+			ri->ri_rnum = 8;
+			ri->ri_gnum = 8;
+			ri->ri_bnum = 8;
+			ri->ri_rpos = 16;
+			ri->ri_gpos = 8;
+			ri->ri_bpos = 0;
+		}
+	}	
 
 	if (ri->ri_depth == 8 && sc->sc_cmcb != NULL)
 		ri->ri_flg |= RI_ENABLE_ALPHA | RI_8BIT_IS_RGB;

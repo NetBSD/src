@@ -1,6 +1,6 @@
-#	$NetBSD: NETWALKER,v 1.6.2.1 2012/02/18 07:31:49 mrg Exp $
+#	$NetBSD: NETWALKER,v 1.6.2.2 2012/04/29 23:04:38 mrg Exp $
 #
-#	NETWALKER -- Sharp
+#	NETWALKER -- http://www.sharp.co.jp/netwalker/
 #
 
 include	"arch/evbarm/conf/std.netwalker"
@@ -17,7 +17,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
 
 # CPU options
-options 	CPU_CORTEXA8	# Support the ARM11 core
+options 	CPU_CORTEXA8	# Support the ARM-v7a core
 options 	IMX51
 options 	PMAPCOUNTERS
 
@@ -103,10 +103,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 
 # Device options
@@ -181,6 +177,10 @@ imxuart0	at axi? addr 0x73fbc000 irq 31		# UART1
 #imxuart2	at axi? addr 0x7000c000 irq 33
 options		IMXUARTCONSOLE
 
+# Clock Control
+imxccm0		at axi? addr 0x73fd4000
+options		IMX51_CKIL_FREQ=32768
+
 # Enhanced Periodic Interrupt Timer
 imxclock0	at axi? addr 0x73fac000 size 0x4000 irq 40
 imxclock1	at axi? addr 0x73fb0000 size 0x4000 irq 41
@@ -193,6 +193,14 @@ imxgpio0	at axi? addr 0x73f84000
 imxgpio1	at axi? addr 0x73f88000
 imxgpio2	at axi? addr 0x73f8c000
 imxgpio3	at axi? addr 0x73f90000
+
+# SD/MMC
+sdhc0    	at axi? addr 0x70004000 irq 1	     # eSDHC1
+#sdhc1   	at axi? addr 0x70008000 irq 2	     # eSDHC2
+sdmmc*		at sdhc?
+ld*		at sdmmc?			# MMC/SD card
+#options 	SDHC_DEBUG
+#options 	SDMMC_DEBUG
 
 # USB
 imxusbc0  at axi?  addr 0x73f80000
@@ -247,6 +255,26 @@ ucom*	at uvscom? portno ?
 ugensa* at uhub? port ?
 ucom*	at ugensa?
 
+# IPUv3 LCD Controller
+ipu0		at axi?
+wsdisplay0	at wsemuldisplaydev? console ?
+wsdisplay*	at wsemuldisplaydev?
+#options	IPUV3_DEBUG=1
+#options	LCD_DEBUG
+options 	IMXIPUCONSOLE
+
+# various options for wscons - we try to look as much like a standard
+# sun console as possible
+options 	WSEMUL_VT100		# sun terminal emulation
+options 	WS_DEFAULT_FG=WSCOL_WHITE
+options 	WS_DEFAULT_BG=WSCOL_BLACK
+options		WS_KERNEL_FG=WSCOL_GREEN
+options		WS_KERNEL_BG=WSCOL_BLACK
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+options 	WSDISPLAY_DEFAULTSCREENS=4
+
 # SCSI bus support
 scsibus* at scsi?
 
@@ -275,3 +303,4 @@ pseudo-device	clockctl		# NTP clockctl
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont

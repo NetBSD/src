@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.108 2011/11/25 23:29:28 jakllsch Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.108.2.1 2012/04/29 23:04:51 mrg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.105 2011/11/25 23:28:14 jakllsch Exp
+ *	NetBSD: miidevs,v 1.107 2012/04/06 18:49:17 matt Exp
  */
 
 /*-
@@ -47,7 +47,7 @@
  * mapping; the bit positions are defined in IEEE 802-1990, figure 5.2.
  * (There is a formal 802.3 interpretation, number 1-07/98 of July 09 1998,
  * about this.)
- * The MII_OUI() macro in "mii.h" reflects this.
+ * The MII_OUI() macro in "miivar.h" reflects this.
  * If a vendor uses a different mapping, an "xx" prefixed OUI is defined here
  * which is mangled accordingly to compensate.
  */
@@ -252,6 +252,8 @@
 #define	MII_STR_CICADA_CS8201A	"Cicada CS8201 10/100/1000TX PHY"
 #define	MII_MODEL_CICADA_CS8201B	0x0021
 #define	MII_STR_CICADA_CS8201B	"Cicada CS8201 10/100/1000TX PHY"
+#define	MII_MODEL_xxCICADA_VSC8221	0x0015
+#define	MII_STR_xxCICADA_VSC8221	"Vitesse VSC8221 10/100/1000BASE-T PHY"
 #define	MII_MODEL_xxCICADA_VSC8244	0x002c
 #define	MII_STR_xxCICADA_VSC8244	"Vitesse VSC8244 Quad 10/100/1000BASE-T PHY"
 #define	MII_MODEL_xxCICADA_CS8201B	0x0021

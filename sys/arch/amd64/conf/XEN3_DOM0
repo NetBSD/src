@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.75.2.3 2012/03/11 01:52:18 mrg Exp $
+# $NetBSD: XEN3_DOM0,v 1.75.2.4 2012/04/29 23:04:37 mrg Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -296,7 +296,8 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 
 # Hardware monitors
 
-amdtemp* at pchb?			# AMD CPU Temperature sensors
+amdnb_misc* at pci?			# AMD NB Misc Configuration
+amdtemp* at amdnb_misc?			# AMD CPU Temperature sensors
 
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
@@ -486,7 +487,8 @@ iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 mfi*	at pci? dev ? function ?	# LSI MegaRAID SAS
 mly*	at pci? dev ? function ?	# Mylex AcceleRAID and eXtremeRAID
-mpt*	at pci? dev ? function ?	# LSI Fusion SCSI/FC
+mpt*	at pci? dev ? function ?	# LSILogic 9x9 and 53c1030 (Fusion-MPT)
+mpii*	at pci? dev ? function ?	# LSI Logic Fusion-MPT II
 njs*	at pci? dev ? function ?	# Workbit NinjaSCSI-32
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI

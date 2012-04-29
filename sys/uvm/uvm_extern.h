@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.176.6.2 2012/04/05 21:33:52 mrg Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.176.6.3 2012/04/29 23:05:09 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -647,6 +647,7 @@ struct vmspace		*uvmspace_alloc(vaddr_t, vaddr_t);
 void			uvmspace_init(struct vmspace *, struct pmap *,
 			    vaddr_t, vaddr_t);
 void			uvmspace_exec(struct lwp *, vaddr_t, vaddr_t);
+void			uvmspace_spawn(struct lwp *, vaddr_t, vaddr_t);
 struct vmspace		*uvmspace_fork(struct vmspace *);
 void			uvmspace_addref(struct vmspace *);
 void			uvmspace_free(struct vmspace *);

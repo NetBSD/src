@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.48.6.1 2012/02/18 07:33:15 mrg Exp $	*/
+/*	$NetBSD: ffb.c,v 1.48.6.2 2012/04/29 23:04:42 mrg Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.48.6.1 2012/02/18 07:33:15 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.48.6.2 2012/04/29 23:04:42 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1187,6 +1187,14 @@ ffb_init_screen(void *cookie, struct vcons_screen *scr,
         scr->scr_flags |= VCONS_DONT_READ;
 #endif
 	DPRINTF(("ffb_init_screen: addr: %08lx\n",(ulong)ri->ri_bits));
+
+	/* explicitly request BGR in case the default changes */
+	ri->ri_rnum = 8;
+	ri->ri_gnum = 8;
+	ri->ri_bnum = 8;
+	ri->ri_rpos = 0;
+	ri->ri_gpos = 8;
+	ri->ri_bpos = 16;
 
 	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;

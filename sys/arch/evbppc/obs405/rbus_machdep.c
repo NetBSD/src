@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.8 2011/06/22 18:06:32 matt Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.8.6.1 2012/04/29 23:04:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -80,8 +80,8 @@ rbus_tag_t
 rbus_pccbb_parent_mem(struct pci_attach_args *pa)
 {
 	bus_space_tag_t bst = pa->pa_memt;
-	
-	return rbus_new_root_share(bst, bst->pbs_extent, bst->pbs_base,
+
+	return rbus_new_root_delegate(bst, bst->pbs_base,
 	    bst->pbs_limit - bst->pbs_base, 0);
 }
 
@@ -89,7 +89,7 @@ rbus_tag_t
 rbus_pccbb_parent_io(struct pci_attach_args *pa)
 {
 	bus_space_tag_t bst = pa->pa_iot;
-	
-	return rbus_new_root_share(bst, bst->pbs_extent, bst->pbs_base,
+
+	return rbus_new_root_delegate(bst, bst->pbs_base,
 	    bst->pbs_limit - bst->pbs_base, 0);
 }

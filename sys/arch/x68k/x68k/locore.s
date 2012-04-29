@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.107.2.1 2012/02/18 07:33:32 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.107.2.2 2012/04/29 23:04:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -503,35 +503,6 @@ ENTRY_NOPROFILE(spurintr)	/* level 0 */
 
 ENTRY_NOPROFILE(kbdtimer)
 	rte
-
-ENTRY_NOPROFILE(com0trap)
-#include "com.h"
-	INTERRUPT_SAVEREG
-#if NXCOM > 0
-	addql	#1,_C_LABEL(idepth)
-	movel	#0,%sp@-
-	jbsr	_C_LABEL(comintr)
-	addql	#4,%sp
-	subql	#1,_C_LABEL(idepth)
-#endif
-	CPUINFO_INCREMENT(CI_NINTR)
-	INTERRUPT_RESTOREREG
-	addql	#1,_C_LABEL(intrcnt)+36
-	jra	rei
-
-ENTRY_NOPROFILE(com1trap)
-	INTERRUPT_SAVEREG
-#if NXCOM > 1
-	addql	#1,_C_LABEL(idepth)
-	movel	#1,%sp@-
-	jbsr	_C_LABEL(comintr)
-	addql	#4,%sp
-	subql	#1,_C_LABEL(idepth)
-#endif
-	CPUINFO_INCREMENT(CI_NINTR)
-	INTERRUPT_RESTOREREG
-	addql	#1,_C_LABEL(intrcnt)+36
-	jra	rei
 
 ENTRY_NOPROFILE(intiotrap)
 	addql	#1,_C_LABEL(idepth)

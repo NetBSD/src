@@ -25,7 +25,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_usb.c,v 1.1 2010/12/09 04:40:22 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_usb.c,v 1.1.14.1 2012/04/29 23:04:39 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,7 @@ init_h1(struct imxehci_softc *sc)
 	uint32_t reg;
 
 	/* output HIGH to USBH1_STP */
-	gpio_data_write(GPIO_NO(1,27), 1);
+	gpio_data_write(GPIO_NO(1, 27), 1);
 	gpio_set_direction(GPIO_NO(1, 27), GPIO_DIR_OUT);
 
 	iomux_mux_config(iomux_usb1_config);
@@ -173,13 +173,12 @@ init_h1(struct imxehci_softc *sc)
 	bus_space_write_4(usbc->sc_iot, usbc->sc_ioh,
 			  USBOH3_USBCTRL, reg);
 
-	iomux_set_function(MUX_PIN_USBH1_STP, IOMUX_CONFIG_ALT0);
+	iomux_set_function(MUX_PIN(USBH1_STP), IOMUX_CONFIG_ALT0);
 
 
 	/* HUB RESET release */
 	gpio_data_write(GPIO_NO(1, 7), 1);
 	gpio_set_direction(GPIO_NO(1, 7), GPIO_DIR_OUT);
-
 
 	/* Drive 26M_OSC_EN line high 3_1 */
 	gpio_data_write(GPIO_NO(3, 1), 1);
@@ -193,7 +192,7 @@ init_h1(struct imxehci_softc *sc)
 	delay(10 * 1000);
 	gpio_data_write(GPIO_NO(2, 5), 1);
 	gpio_set_direction(GPIO_NO(2, 5), GPIO_DIR_OUT);
-	iomux_set_function(MUX_PIN_EIM_D21, IOMUX_CONFIG_ALT1);
+	iomux_set_function(MUX_PIN(EIM_D21), IOMUX_CONFIG_ALT1);
 	delay(5 * 1000);
 }
 
@@ -206,7 +205,7 @@ const struct iomux_conf iomux_usb1_config[] = {
 	{
 		/* Initially setup this pin for GPIO, and change to
 		 * USBH1_STP later */
-		.pin = MUX_PIN_USBH1_STP,
+		.pin = MUX_PIN(USBH1_STP),
 		.mux = IOMUX_CONFIG_ALT2,
 		.pad = (PAD_CTL_SRE | PAD_CTL_DSE_HIGH |
 		    PAD_CTL_KEEPER | PAD_CTL_HYS)
@@ -214,14 +213,14 @@ const struct iomux_conf iomux_usb1_config[] = {
 
 	{
 		/* Clock */
-		.pin = MUX_PIN_USBH1_CLK,
+		.pin = MUX_PIN(USBH1_CLK),
 		.mux = IOMUX_CONFIG_ALT0,
-		.pad = (PAD_CTL_SRE | PAD_CTL_DSE_HIGH | 
+		.pad = (PAD_CTL_SRE | PAD_CTL_DSE_HIGH |
 		    PAD_CTL_KEEPER | PAD_CTL_HYS)
 	},
 	{
 		/* DIR */
-		.pin = MUX_PIN_USBH1_DIR,
+		.pin = MUX_PIN(USBH1_DIR),
 		.mux = IOMUX_CONFIG_ALT0,
 		.pad = (PAD_CTL_SRE | PAD_CTL_DSE_HIGH |
 		    PAD_CTL_KEEPER | PAD_CTL_HYS)
@@ -229,7 +228,7 @@ const struct iomux_conf iomux_usb1_config[] = {
 
 	{
 		/* NXT */
-		.pin = MUX_PIN_USBH1_NXT,
+		.pin = MUX_PIN(USBH1_NXT),
 		.mux = IOMUX_CONFIG_ALT0,
 		.pad = (PAD_CTL_SRE | PAD_CTL_DSE_HIGH |
 		    PAD_CTL_KEEPER | PAD_CTL_HYS)
@@ -238,7 +237,7 @@ const struct iomux_conf iomux_usb1_config[] = {
 #define	USBH1_DATA_CONFIG(n)					\
 	{							\
 		/* DATA n */					\
-		.pin = __CONCAT(MUX_PIN_USBH1_DATA,n),		\
+		.pin = MUX_PIN(USBH1_DATA##n),			\
 		.mux = IOMUX_CONFIG_ALT0,			\
 		.pad = (PAD_CTL_SRE | PAD_CTL_DSE_HIGH |	\
 		    PAD_CTL_KEEPER | PAD_CTL_PUS_100K_PU |	\
@@ -257,23 +256,30 @@ const struct iomux_conf iomux_usb1_config[] = {
 
 	{
 		/* USB_CLK_EN_B  GPIO2[1]*/
-		.pin = MUX_PIN_EIM_D17,
+		.pin = MUX_PIN(EIM_D17),
 		.mux = IOMUX_CONFIG_ALT1,
 		.pad = (PAD_CTL_DSE_HIGH | PAD_CTL_PKE | PAD_CTL_SRE),
 	},
 
 	{
 		/* USB PHY RESETB */
-		.pin = MUX_PIN_EIM_D21,
+		.pin = MUX_PIN(EIM_D21),
 		.mux = IOMUX_CONFIG_ALT1,
 		.pad = (PAD_CTL_DSE_HIGH | PAD_CTL_KEEPER |
 		    PAD_CTL_PUS_100K_PU | PAD_CTL_SRE)
 	},
 	{
 		/* USB HUB RESET */
-		.pin = MUX_PIN_GPIO1_7,
+		.pin = MUX_PIN(GPIO1_7),
 		.mux = IOMUX_CONFIG_ALT0,
 		.pad = (PAD_CTL_DSE_HIGH | PAD_CTL_SRE),
+	},
+	{
+		/* 26M_OSC pin settings */
+		.pin = MUX_PIN(DI1_PIN12),
+		.mux = IOMUX_CONFIG_ALT4,
+		.pad = (PAD_CTL_DSE_HIGH | PAD_CTL_KEEPER |
+		    PAD_CTL_SRE),
 	},
 
 	/* end of table */

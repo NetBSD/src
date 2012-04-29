@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_subr.c,v 1.2.2.1 2012/04/05 21:33:50 mrg Exp $	*/
+/*	$NetBSD: chfs_subr.c,v 1.2.2.2 2012/04/29 23:05:08 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -150,7 +150,7 @@ chfs_dir_lookup(struct chfs_inode *ip, struct componentname *cnp)
 
 int
 chfs_filldir(struct uio* uio, ino_t ino, const char *name,
-    int namelen, enum vtype type)
+    int namelen, enum chtype type)
 {
 	struct dirent dent;
 	int error;
@@ -159,31 +159,31 @@ chfs_filldir(struct uio* uio, ino_t ino, const char *name,
 
 	dent.d_fileno = ino;
 	switch (type) {
-	case VBLK:
+	case CHT_BLK:
 		dent.d_type = DT_BLK;
 		break;
 
-	case VCHR:
+	case CHT_CHR:
 		dent.d_type = DT_CHR;
 		break;
 
-	case VDIR:
+	case CHT_DIR:
 		dent.d_type = DT_DIR;
 		break;
 
-	case VFIFO:
+	case CHT_FIFO:
 		dent.d_type = DT_FIFO;
 		break;
 
-	case VLNK:
+	case CHT_LNK:
 		dent.d_type = DT_LNK;
 		break;
 
-	case VREG:
+	case CHT_REG:
 		dent.d_type = DT_REG;
 		break;
 
-	case VSOCK:
+	case CHT_SOCK:
 		dent.d_type = DT_SOCK;
 		break;
 
@@ -227,17 +227,17 @@ chfs_chsize(struct vnode *vp, u_quad_t size, kauth_cred_t cred)
 
 	dbg("chfs_chsize\n");
 
-	switch (vp->v_type) {
-	case VDIR:
+	switch (ip->ch_type) {
+	case CHT_DIR:
 		return EISDIR;
-	case VLNK:
-	case VREG:
+	case CHT_LNK:
+	case CHT_REG:
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return EROFS;
 		break;
-	case VBLK:
-	case VCHR:
-	case VFIFO:
+	case CHT_BLK:
+	case CHT_CHR:
+	case CHT_FIFO:
 		return 0;
 	default:
 		return EOPNOTSUPP; /* XXX why not ENODEV? */
@@ -422,7 +422,7 @@ chfs_chflags(struct vnode *vp, int flags, kauth_cred_t cred)
 	}
 
 	error = kauth_authorize_vnode(cred, action, vp, NULL,
-	    genfs_can_chflags(cred, vp->v_type, ip->uid, changing_sysflags));
+	    genfs_can_chflags(cred, CHTTOVT(ip->ch_type), ip->uid, changing_sysflags));
 	if (error)
 		return error;
 

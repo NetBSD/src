@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_subr.c,v 1.25 2011/08/31 18:31:02 plunky Exp $	*/
+/*	$NetBSD: coda_subr.c,v 1.25.6.1 2012/04/29 23:04:44 mrg Exp $	*/
 
 /*
  *
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.25 2011/08/31 18:31:02 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.25.6.1 2012/04/29 23:04:44 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,6 +79,12 @@ int coda_new = 0;
 
 struct cnode *coda_freelist = NULL;
 struct cnode *coda_cache[CODA_CACHESIZE];
+MALLOC_DEFINE(M_CODA, "coda", "Coda file system structures and tables");
+
+int codadebug = 0;
+int coda_printf_delay = 0;  /* in microseconds */
+int coda_vnop_print_entry = 0;
+int coda_vfsop_print_entry = 0;
 
 #define	CNODE_NEXT(cp)	((cp)->c_next)
 

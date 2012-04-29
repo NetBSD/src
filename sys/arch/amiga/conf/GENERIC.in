@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.87.2.2 2012/03/11 01:52:18 mrg Exp $
+# $NetBSD: GENERIC.in,v 1.87.2.3 2012/04/29 23:04:37 mrg Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.87.2.2 $"
+#ident 		"GENERIC-$Revision: 1.87.2.3 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -415,6 +415,11 @@ a2kbbc0 	at mainbus0		# A2000 battery backed clock
 m4_ifdef(`INSTALL_CONFIGURATION', `', `m4_dnl
 aucc*		at mainbus0		# Amiga CC audio
 audio*		at aucc?
+
+#a1k2cp0         at mainbus0             # A1200 on-board clockport
+#clockport*      at a1k2cp0
+
+#com*            at clockport?           # Individual Computers SilverSurfer
 ')m4_dnl
 ')m4_dnl
 

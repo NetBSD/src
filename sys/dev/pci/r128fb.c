@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.22.6.3 2012/04/05 21:33:32 mrg Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.22.6.4 2012/04/29 23:04:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.22.6.3 2012/04/05 21:33:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.22.6.4 2012/04/29 23:04:58 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,8 +102,6 @@ static void	r128fb_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(r128fb, sizeof(struct r128fb_softc),
     r128fb_match, r128fb_attach, NULL, NULL);
-
-extern const u_char rasops_cmap[768];
 
 static int	r128fb_ioctl(void *, void *, u_long, void *, int,
 			     struct lwp *);
@@ -206,7 +204,7 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 	bool			is_console;
 	int			i, j;
 	uint32_t		reg, flags;
-	uint8_t			tmp;
+	uint8_t			cmap[768];
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
@@ -226,6 +224,12 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 		aprint_error("%s: no height property\n", device_xname(self));
 		return;
 	}
+
+#ifdef GLYPHCACHE_DEBUG
+	/* leave some visible VRAM unused so we can see the glyph cache */
+	sc->sc_height -= 100;
+#endif
+
 	if (!prop_dictionary_get_uint32(dict, "depth", &sc->sc_depth)) {
 		aprint_error("%s: no depth property\n", device_xname(self));
 		return;
@@ -275,42 +279,6 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 
 	ri = &sc->sc_console_screen.scr_ri;
 
-	j = 0;
-	if (sc->sc_depth == 8) {
-		/* generate an r3g3b2 colour map */
-		for (i = 0; i < 256; i++) {
-			tmp = i & 0xe0;
-			/*
-			 * replicate bits so 0xe0 maps to a red value of 0xff
-			 * in order to make white look actually white
-			 */
-			tmp |= (tmp >> 3) | (tmp >> 6);
-			sc->sc_cmap_red[i] = tmp;
-
-			tmp = (i & 0x1c) << 3;
-			tmp |= (tmp >> 3) | (tmp >> 6);
-			sc->sc_cmap_green[i] = tmp;
-
-			tmp = (i & 0x03) << 6;
-			tmp |= tmp >> 2;
-			tmp |= tmp >> 4;
-			sc->sc_cmap_blue[i] = tmp;
-
-			r128fb_putpalreg(sc, i, sc->sc_cmap_red[i],
-				       sc->sc_cmap_green[i],
-				       sc->sc_cmap_blue[i]);
-		}
-	} else {
-		/* steal rasops' ANSI cmap */
-		for (i = 0; i < 256; i++) {
-			sc->sc_cmap_red[i] = i;
-			sc->sc_cmap_green[i] = i;
-			sc->sc_cmap_blue[i] = i;
-			r128fb_putpalreg(sc, i, i, i, i);
-			j += 3;
-		}
-	}
-
 	sc->sc_gc.gc_bitblt = r128fb_bitblt;
 	sc->sc_gc.gc_blitcookie = sc;
 	sc->sc_gc.gc_rop = R128_ROP3_S;
@@ -326,8 +294,8 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 		sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
 		sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
 		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
-				sc->sc_width,
 				(0x800000 / sc->sc_stride) - sc->sc_height - 5,
+				sc->sc_width,
 				ri->ri_font->fontwidth,
 				ri->ri_font->fontheight,
 				defattr);
@@ -340,12 +308,22 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 		 * until someone actually allocates a screen for us
 		 */
 		(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
-		glyphcache_init(&sc->sc_gc, sc->sc_height,
+		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
+				(0x800000 / sc->sc_stride) - sc->sc_height - 5,
 				sc->sc_width,
-				(0x800000 / sc->sc_stride) - sc->sc_height,
 				ri->ri_font->fontwidth,
 				ri->ri_font->fontheight,
 				defattr);
+	}
+
+	j = 0;
+	rasops_get_cmap(ri, cmap, sizeof(cmap));
+	for (i = 0; i < 256; i++) {
+		sc->sc_cmap_red[i] = cmap[j];
+		sc->sc_cmap_green[i] = cmap[j + 1];
+		sc->sc_cmap_blue[i] = cmap[j + 2];
+		r128fb_putpalreg(sc, i, cmap[j], cmap[j + 1], cmap[j + 2]);
+		j += 3;
 	}
 
 	/* no suspend/resume support yet */

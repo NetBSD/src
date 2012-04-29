@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.18.6.1 2012/04/05 21:33:25 mrg Exp $	*/
+/*	$NetBSD: bwi.c,v 1.18.6.2 2012/04/29 23:04:49 mrg Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.18.6.1 2012/04/05 21:33:25 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.18.6.2 2012/04/29 23:04:49 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -361,7 +361,7 @@ static uint8_t	 bwi_ieee80211_rate2plcp(uint8_t rate, enum ieee80211_phymode);
 static uint8_t	 bwi_ieee80211_plcp2rate(uint8_t rate, enum ieee80211_phymode);
 static enum bwi_ieee80211_modtype
 		 bwi_ieee80211_rate2modtype(uint8_t rate);
-static uint8_t	 bwi_ofdm_plcp2rate(const uint32_t *);
+static uint8_t	 bwi_ofdm_plcp2rate(const void *);
 static uint8_t	 bwi_ds_plcp2rate(const struct ieee80211_ds_plcp_hdr *);
 static void	 bwi_ofdm_plcp_header(uint32_t *, int, uint8_t);
 static void	 bwi_ds_plcp_header(struct ieee80211_ds_plcp_hdr *, int,
@@ -3178,7 +3178,7 @@ bwi_phy_init_11g(struct bwi_mac *mac)
 			RF_WRITE(mac, 0x52,
 			    (tpctl->tp_ctrl1 << 4) | tpctl->tp_ctrl2);
 		} else {
-			RF_FILT_SETBITS(mac, 0x52, 0xfff0, tpctl->tp_ctrl1);
+			RF_FILT_SETBITS(mac, 0x52, 0xfff0, tpctl->tp_ctrl2);
 		}
 
 		if (phy->phy_rev >= 6) {
@@ -7176,7 +7176,7 @@ bwi_init_statechg(struct bwi_softc *sc, int statechg)
 
 	/* power on cardbus socket */
 	if (sc->sc_enable != NULL)
-		(sc->sc_enable)(sc);
+		(sc->sc_enable)(sc, 0);
 
 	bwi_bbp_power_on(sc, BWI_CLOCK_MODE_FAST);
 
@@ -7556,8 +7556,8 @@ bwi_stop(struct ifnet *ifp, int state_chg)
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	/* power off cardbus socket */
-	if (sc->sc_disable)
-		(sc->sc_disable)(sc);
+	if (sc->sc_disable != NULL)
+		(sc->sc_disable)(sc, 0);
 
 	return;
 }
@@ -7901,19 +7901,6 @@ bwi_dma_txstats_alloc(struct bwi_softc *sc, uint32_t ctrl_base,
 
 	st = malloc(sizeof(*st), M_DEVBUF, M_WAITOK | M_ZERO);
 	sc->sc_txstats = st;
-
-	/*
-	 * Create TX stats descriptor DMA stuffs
-	 */
-	dma_size = roundup(desc_sz * BWI_TXSTATS_NDESC, BWI_RING_ALIGN);
-
-	error = bus_dmamap_create(sc->sc_dmat, dma_size, 1, dma_size, 0,
-	    BUS_DMA_NOWAIT, &st->stats_ring_dmap);
-	if (error) {
-		aprint_error_dev(sc->sc_dev,
-		    "can't create txstats ring DMA mem\n");
-		return (error);
-	}
 
 	/*
 	 * Create TX stats descriptor DMA stuffs
@@ -8781,12 +8768,13 @@ bwi_ieee80211_rate2modtype(uint8_t rate)
 }
 
 static uint8_t
-bwi_ofdm_plcp2rate(const uint32_t *plcp0)
+bwi_ofdm_plcp2rate(const void *plcp0)
 {
 	uint32_t plcp;
 	uint8_t plcp_rate;
 
-	plcp = le32toh(*plcp0);
+	/* plcp0 may not be 32-bit aligned. */
+	plcp = le32dec(plcp0);
 	plcp_rate = __SHIFTOUT(plcp, IEEE80211_OFDM_PLCP_RATE_MASK);
 
 	return (bwi_ieee80211_plcp2rate(plcp_rate, IEEE80211_MODE_11G));
@@ -9118,8 +9106,9 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 		hdr->txh_fb_duration = htole16(dur);
 	}
 
-	hdr->txh_id = __SHIFTIN(BWI_TX_DATA_RING, BWI_TXH_ID_RING_MASK) |
-	    __SHIFTIN(idx, BWI_TXH_ID_IDX_MASK);
+	hdr->txh_id = htole16(
+	    __SHIFTIN(BWI_TX_DATA_RING, BWI_TXH_ID_RING_MASK) |
+	    __SHIFTIN(idx, BWI_TXH_ID_IDX_MASK));
 
 	bwi_plcp_header(hdr->txh_plcp, pkt_len, rate);
 	/* [TRC: XXX Use fallback rate.] */
@@ -9337,9 +9326,7 @@ bwi_txeof_status(struct bwi_softc *sc, int end_idx)
 	while (idx != end_idx) {
 		/* [TRC: XXX Filter this out if it is not pending; see
 		   DragonFlyBSD's revision 1.5. */
-		/* [TRC: XXX be16toh is wrong, probably due to the
-		   build environment] */
-		_bwi_txeof(sc, be16toh(st->stats[idx].txs_id));
+		_bwi_txeof(sc, le16toh(st->stats[idx].txs_id));
 		idx = (idx + 1) % BWI_TXSTATS_NDESC;
 	}
 	st->stats_idx = idx;
@@ -9355,7 +9342,7 @@ bwi_txeof(struct bwi_softc *sc)
 		uint16_t tx_id, tx_info;
 
 		tx_status0 = CSR_READ_4(sc, BWI_TXSTATUS_0);
-		if (tx_status0 == 0)
+		if ((tx_status0 & BWI_TXSTATUS_0_MORE) == 0)
 			break;
 		tx_status1 = CSR_READ_4(sc, BWI_TXSTATUS_1);
 
@@ -9365,7 +9352,7 @@ bwi_txeof(struct bwi_softc *sc)
 		if (tx_info & 0x30) /* XXX */
 			continue;
 
-		_bwi_txeof(sc, le16toh(tx_id));
+		_bwi_txeof(sc, tx_id);
 
 		ifp->if_opackets++;
 	}
@@ -9711,6 +9698,8 @@ bwi_suspend(device_t dv, const pmf_qual_t *qual)
 	struct bwi_softc *sc = device_private(dv);
 
 	bwi_power_off(sc, 0);
+	if (sc->sc_disable != NULL)
+		(sc->sc_disable)(sc, 1);
 
 	return true;
 }
@@ -9720,6 +9709,8 @@ bwi_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct bwi_softc *sc = device_private(dv);
 
+	if (sc->sc_enable != NULL)
+		(sc->sc_enable)(sc, 1);
 	bwi_power_on(sc, 1);
 
 	return true;

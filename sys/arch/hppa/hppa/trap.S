@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.60.8.3 2012/04/05 21:33:15 mrg Exp $	*/
+/*	$NetBSD: trap.S,v 1.60.8.4 2012/04/29 23:04:40 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -267,7 +267,6 @@ syscall_entry:
 	/* We can now set the frame pointer */
 	copy	%t3, %r3
 
-#if defined(DDB) || defined(KGDB) || defined(FPEMUL)
 	stw	%r4 , TF_R4 -TRAPFRAME_SIZEOF(%sr1, %t3)
 	stw	%r5 , TF_R5 -TRAPFRAME_SIZEOF(%sr1, %t3)
 	stw	%r6 , TF_R6 -TRAPFRAME_SIZEOF(%sr1, %t3)
@@ -283,7 +282,7 @@ syscall_entry:
 	stw	%r16, TF_R16-TRAPFRAME_SIZEOF(%sr1, %t3)
 	stw	%r17, TF_R17-TRAPFRAME_SIZEOF(%sr1, %t3)
 	stw	%r18, TF_R18-TRAPFRAME_SIZEOF(%sr1, %t3)
-#endif /* DDB || KGDB || FPEMUL */
+
 	stw	%r0, 0(%sr1, %t3)	/* terminate frame */
 	copy	%r0 , %r3
 	stw	%r0, HPPA_FRAME_PSP(%sr1, %sp)
@@ -445,11 +444,11 @@ syscall_return:
 	ldw	TF_R1(%t3), %r1
 	ldw	TF_R2(%t3), %r2
 	ldw	TF_R3(%t3), %r3
+
 	/*
 	 * See the comment in the trap handling code below about why we need to
 	 * save and restore all general registers under these cases.
 	 */
-#if defined(DDB) || defined(KGDB) || defined(FPEMUL)
 	ldw	TF_R4(%t3), %r4
 	ldw	TF_R5(%t3), %r5
 	ldw	TF_R6(%t3), %r6
@@ -465,7 +464,7 @@ syscall_return:
 	ldw	TF_R16(%t3), %r16
 	ldw	TF_R17(%t3), %r17
 	ldw	TF_R18(%t3), %r18
-#endif /* DDB || KGDB || FPEMUL */
+
 	ldw	TF_R19(%t3), %t4
 	/*	%r20(%t3) is used as a temporary and will be restored later */
 	/*	%r21(%t2) is used as a temporary and will be restored later */
@@ -900,7 +899,7 @@ LEAF_ENTRY_NOPROFILE(TLABEL(emu))
 	 */
 	extru	%arg0, 5, 6, %r1
 	comib,=,n 4, %r1, L$emulate_sfu
-	comib,=,n 0xe, %r1, hppa_fpu_nop0
+	comib,=,n 0xe, %r1, hppa_fpu_emulate
 
 	/*
 	 * If the uid field in the instruction is not zero or one, indicating a
@@ -912,10 +911,7 @@ LEAF_ENTRY_NOPROFILE(TLABEL(emu))
 
 	/*
 	 * If we're still here, this is a FPU coprocessor instruction.  That we
-	 * trapped to emulate it means one of three things.
-	 *
-	 * If we do not have a hardware FPU, we need to emulate this instr-
-	 * uction.
+	 * trapped to emulate it means one of two things.
 	 *
 	 * If we do have a hardware FPU but it is disabled, we trapped because
 	 * the current process' state is not loaded into the FPU.  We load that
@@ -926,14 +922,7 @@ LEAF_ENTRY_NOPROFILE(TLABEL(emu))
 	 * emulate it.
 	 */
 
-	/*
-	 * As an optimization, hppa_fpu_bootstrap replaces this branch inst-
-	 * ruction with a nop if there is a hardware FPU.
-	 *
-	 * Otherwise, this is the branch to emulate an FPU coprocessor.
-	 */
-ALTENTRY(hppa_fpu_nop0)
-	b,n	L$emulate_fpu
+hppa_fpu_emulate:
 
 	/*
 	 * We have a hardware FPU.  If it is enabled,  branch to emulate the
@@ -1096,19 +1085,6 @@ ALTENTRY(hppa_fpu_swap)
 	fstds,ma %fr30, 8(%arg0)
 	fstds    %fr31, 0(%arg0)
 
-	ldo	-248(%arg0), %arg0
-	ldil	L%dcache_stride, %r1
-	ldw	R%dcache_stride(%r1), %r1
-	fdc,m	%r1(%arg0)
-	fdc,m	%r1(%arg0)
-	fdc,m	%r1(%arg0)
-	fdc,m	%r1(%arg0)
-	fdc,m	%r1(%arg0)
-	fdc,m	%r1(%arg0)
-	fdc,m	%r1(%arg0)
-	fdc,m	%r1(%arg0)
-	sync
-
 L$fpu_swap_in:
 
 	/*
@@ -1161,18 +1137,6 @@ L$fpu_swap_in:
 	fldds,ma -8(%arg1), %fr2
 	fldds,ma -8(%arg1), %fr1
 	fldds     0(%arg1), %fr0	/* fr0 must be restored last */
-
-	ldil	L%dcache_stride, %r1
-	ldw	R%dcache_stride(%r1), %r1
-	fdc,m	%r1(%arg1)
-	fdc,m	%r1(%arg1)
-	fdc,m	%r1(%arg1)
-	fdc,m	%r1(%arg1)
-	fdc,m	%r1(%arg1)
-	fdc,m	%r1(%arg1)
-	fdc,m	%r1(%arg1)
-	fdc,m	%r1(%arg1)
-	sync
 
 L$fpu_swap_done:
 
@@ -2160,7 +2124,6 @@ trapnowvirt:
 	 *
 	 * See similar #ifdefs in the syscall entry and exit code.
 	 */
-#if defined(DDB) || defined(KGDB) || defined(FPEMUL)
 	stw	%r4, TF_R4(%t3)
 	stw	%r5, TF_R5(%t3)
 	stw	%r6, TF_R6(%t3)
@@ -2176,7 +2139,7 @@ trapnowvirt:
 	stw	%r16, TF_R16(%t3)
 	stw	%r17, TF_R17(%t3)
 	stw	%r18, TF_R18(%t3)
-#endif /* DDB || KGDB || FPEMUL */
+
 	stw	%t4, TF_R19(%t3)
 	stw	%r23,TF_R23(%t3)
 	stw	%r24,TF_R24(%t3)

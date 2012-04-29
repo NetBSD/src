@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.180.8.2 2012/02/24 09:11:46 mrg Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.180.8.3 2012/04/29 23:05:04 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.180.8.2 2012/02/24 09:11:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.180.8.3 2012/04/29 23:05:04 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -740,6 +740,11 @@ proc_alloc(void)
 	proc_alloc_pid(p);
 	return p;
 }
+
+/*
+ * proc_alloc_pid: allocate PID and record the given proc 'p' so that
+ * proc_find_raw() can find it by the PID.
+ */
 
 pid_t
 proc_alloc_pid(struct proc *p)

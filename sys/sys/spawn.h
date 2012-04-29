@@ -1,4 +1,4 @@
-/*	$NetBSD: spawn.h,v 1.1.4.2 2012/02/18 07:35:51 mrg Exp $	*/
+/*	$NetBSD: spawn.h,v 1.1.4.3 2012/04/29 23:05:08 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 Ed Schouten <ed@FreeBSD.org>
@@ -67,8 +67,8 @@ typedef struct posix_spawn_file_actions_entry {
 } posix_spawn_file_actions_entry_t;
 
 struct posix_spawn_file_actions {
-	int size;	/* size of fae array */
-	int len;	/* how many slots are used */
+	unsigned int size;	/* size of fae array */
+	unsigned int len;	/* how many slots are used */
 	posix_spawn_file_actions_entry_t *fae;	
 };
 
@@ -81,6 +81,23 @@ typedef struct posix_spawn_file_actions	posix_spawn_file_actions_t;
 #define POSIX_SPAWN_SETSCHEDULER	0x08
 #define POSIX_SPAWN_SETSIGDEF		0x10
 #define POSIX_SPAWN_SETSIGMASK		0x20
+/*
+ * THIS IS A NON-PORTABLE NetBSD-ONLY EXTENSION, DO NOT USE OUTSIDE
+ * OF UNIT TEST CODE!
+ * With this flag set, the kernel part of posix_spawn will not try to
+ * maximize parallelism, but instead the parent will wait for the child
+ * process to complete all file/scheduler actions and report back errors
+ * from that via the return value of the posix_spawn syscall. This is
+ * usefull for testing, as it can verify the generated error codes and
+ * match to the supposedly triggered failures.
+ * In general, the kernel will return from the posix_spawn syscall as
+ * early as possible, as soon as creating the new process is known to
+ * work. Errors might either be reported back via the return value in
+ * the parent, or (less explicit) by an error exit of the child
+ * process. Our test cases deal with both behaviours in the general
+ * case, but request the POSIX_SPAWN_RETURNERROR for some tests.
+ */
+#define POSIX_SPAWN_RETURNERROR		0x40
 
 #endif /* !_SYS_SPAWN_H_ */
 

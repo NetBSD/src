@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.110 2011/11/24 16:16:49 jakllsch Exp $	*/
+/*	$NetBSD: malloc.h,v 1.110.2.1 2012/04/29 23:05:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,13 +34,6 @@
 #ifndef _SYS_MALLOC_H_
 #define	_SYS_MALLOC_H_
 
-#if defined(_KERNEL_OPT)
-#include "opt_kmemstats.h"
-#include "opt_malloclog.h"
-#include "opt_malloc_debug.h"
-#endif
-
-
 #ifdef _KERNEL
 
 /*
@@ -61,8 +54,6 @@ MALLOC_DECLARE(M_DMAMAP);
 MALLOC_DECLARE(M_FREE);
 MALLOC_DECLARE(M_PCB);
 MALLOC_DECLARE(M_TEMP);
-
-/* XXX These should all be declared elsewhere. */
 MALLOC_DECLARE(M_RTABLE);
 MALLOC_DECLARE(M_FTABLE);
 MALLOC_DECLARE(M_UFSMNT);
@@ -71,6 +62,15 @@ MALLOC_DECLARE(M_IPMOPTS);
 MALLOC_DECLARE(M_IPMADDR);
 MALLOC_DECLARE(M_MRTABLE);
 MALLOC_DECLARE(M_BWMETER);
+
+void	*kern_malloc(unsigned long, int);
+void	*kern_realloc(void *, unsigned long, int);
+void	kern_free(void *);
+
+#define	malloc(size, type, flags)	kern_malloc(size, flags)
+#define	free(addr, type)		kern_free(addr)
+#define	realloc(ptr, size, type, flags)	kern_realloc(ptr, size, flags)
+
 #endif /* _KERNEL */
 
 /*
@@ -87,35 +87,4 @@ struct kmembuckets {
 	long	kb_couldfree;	/* over high water mark and could free */
 };
 
-#ifdef _KERNEL
-#ifdef MALLOCLOG
-void	*_kern_malloc(unsigned long, struct malloc_type *, int, const char *, long);
-void	_kern_free(void *, struct malloc_type *, const char *, long);
-#define	malloc(size, type, flags) \
-	    _kern_malloc((size), (type), (flags), __FILE__, __LINE__)
-#define	free(addr, type) \
-	    _kern_free((addr), (type), __FILE__, __LINE__)
-#else
-void	*kern_malloc(unsigned long, struct malloc_type *, int);
-void	kern_free(void *, struct malloc_type *);
-#define malloc(size, type, flags) kern_malloc(size, type, flags)
-#define free(addr, type) kern_free(addr, type)
-#endif /* MALLOCLOG */
-
-#ifdef MALLOC_DEBUG
-void	debug_malloc_init(void);
-int	debug_malloc(unsigned long, struct malloc_type *, int, void **);
-int	debug_free(void *, struct malloc_type *);
-
-void	debug_malloc_print(void);
-void	debug_malloc_printit(void (*)(const char *, ...)
-    __printflike(1, 2), vaddr_t);
-#endif /* MALLOC_DEBUG */
-
-void	*kern_realloc(void *, unsigned long, struct malloc_type *, int);
-#define realloc(ptr, size, type, flags) \
-	    kern_realloc(ptr, size, type, flags)
-unsigned long
-	malloc_roundup(unsigned long);
-#endif /* _KERNEL */
 #endif /* !_SYS_MALLOC_H_ */

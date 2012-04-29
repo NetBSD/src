@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_zbus.c,v 1.14 2011/07/19 15:55:27 dyoung Exp $ */
+/*	$NetBSD: if_ne_zbus.c,v 1.14.6.1 2012/04/29 23:04:37 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_zbus.c,v 1.14 2011/07/19 15:55:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_zbus.c,v 1.14.6.1 2012/04/29 23:04:37 mrg Exp $");
 
 /*
  * Thanks to Village Tronic for giving me a card.
@@ -86,6 +86,13 @@ CFATTACH_DECL_NEW(ne_zbus, sizeof(struct ne_zbus_softc),
 #define	NE_ARIADNE_II_ASICBASE	0x0310	/* 0x0620 */
 #define	NE_ARIADNE_II_ASICSIZE	0x10
 
+/*
+ * E3B Deneb firmware v11 creates fake X-Surf autoconfig entry.
+ * Do not attach ne driver to this fake card, otherwise kernel panic
+ * may occur.
+ */
+#define DENEB_XSURF_SERNO	0xC0FFEE01	/* Serial of the fake card */
+
 int
 ne_zbus_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -96,8 +103,10 @@ ne_zbus_match(device_t parent, cfdata_t cf, void *aux)
 		return (1);
 
 	/* X-surf ethernet card */
-	if (zap->manid == 4626 && zap->prodid == 23)
-		return (1);
+	if (zap->manid == 4626 && zap->prodid == 23) {
+		if (zap->serno != DENEB_XSURF_SERNO)
+			return (1);
+	}
 
 	return (0);
 }

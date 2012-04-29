@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.95.8.3 2012/03/06 18:26:37 mrg Exp $	*/
+/*	$NetBSD: locore.S,v 1.95.8.4 2012/04/29 23:04:41 mrg Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -129,7 +129,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.95.8.3 2012/03/06 18:26:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.95.8.4 2012/04/29 23:04:41 mrg Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -682,7 +682,7 @@ try586:	/* Use the `cpuid' instruction. */
  	 */
 	movl	%cr0,%eax		# get control word
 					# enable paging & NPX emulation
-	orl	$(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_EM|CR0_MP),%eax
+	orl	$(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_EM|CR0_MP|CR0_WP|CR0_AM),%eax
 	movl	%eax,%cr0		# and page NOW!
 
 	pushl	$begin			# jump to high mem

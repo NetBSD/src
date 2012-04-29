@@ -1,4 +1,4 @@
-/*	$NetBSD: locks_up.c,v 1.5 2010/12/01 17:22:51 pooka Exp $	*/
+/*	$NetBSD: locks_up.c,v 1.5.12.1 2012/04/29 23:05:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks_up.c,v 1.5 2010/12/01 17:22:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks_up.c,v 1.5.12.1 2012/04/29 23:05:07 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -160,6 +160,7 @@ mutex_owned(kmutex_t *mtx)
 struct lwp *
 mutex_owner(kmutex_t *mtx)
 {
+	UPMTX(mtx);
 
 	return upm->upm_owner;
 }

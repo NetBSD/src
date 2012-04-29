@@ -1,4 +1,4 @@
-/*	$NetBSD: slide.c,v 1.22 2011/04/04 20:37:56 dyoung Exp $	*/
+/*	$NetBSD: slide.c,v 1.22.8.1 2012/04/29 23:04:58 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slide.c,v 1.22 2011/04/04 20:37:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slide.c,v 1.22.8.1 2012/04/29 23:04:58 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,6 @@ sl82c105_bugchk(const struct pci_attach_args *pa)
 static void
 sl82c105_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
-	struct pci_attach_args pa0;
 	struct pciide_channel *cp;
 	pcireg_t interface, idecr;
 	int channel;
@@ -141,10 +140,9 @@ sl82c105_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 
 	/*
 	 * Check to see if we're part of the Winbond 83c553 Southbridge.
-	 * If so, we need to disable DMA on rev. <= 5 of that chip.
+	 * If so, we need to disable DMA on rev. <= 5 of the southbridge.
 	 */
-	if (pci_find_device(&pa0, sl82c105_bugchk)) {
-		pa = &pa0;
+	if (pci_find_device(NULL, sl82c105_bugchk)) {
 		aprint_verbose(" but disabled due to 83c553 rev. <= 0x05");
 		sc->sc_dma_ok = 0;
 	} else

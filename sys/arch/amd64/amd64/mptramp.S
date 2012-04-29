@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.12 2010/04/20 15:42:21 jym Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.12.12.1 2012/04/29 23:04:36 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,6 @@
 #define HALTT(x,y) /**/
 #endif
 
-	.globl	_C_LABEL(idle_loop)
 	.global _C_LABEL(cpu_spinup_trampoline)
 	.global _C_LABEL(cpu_spinup_trampoline_end)
 	.global _C_LABEL(cpu_hatch)
@@ -173,7 +172,7 @@ _TRMP_LABEL(mp_startup)
         movl    %ecx,%cr3               # load ptd addr into mmu
 
         movl    %cr0,%eax               # get control word
-        orl     $(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_MP|CR0_WP),%eax
+        orl     $(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_MP|CR0_WP|CR0_AM),%eax
         movl    %eax,%cr0
 	jmp	mptramp_compat
 mptramp_compat:
@@ -252,7 +251,6 @@ _C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
 	movl    PCB_CR0(%rsi),%eax
 	movq    %rax,%cr0
 	call	_C_LABEL(cpu_hatch)
-	jmp	_C_LABEL(idle_loop)
 	
 	.data
 _C_LABEL(mp_pdirpa):

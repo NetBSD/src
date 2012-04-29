@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.32.6.1 2012/02/18 07:34:14 mrg Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.32.6.2 2012/04/29 23:04:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.32.6.1 2012/02/18 07:34:14 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.32.6.2 2012/04/29 23:04:49 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -92,6 +92,7 @@ static const struct scsipi_bustype ahci_atapi_bustype = {
 	atapi_interpret_sense,
 	atapi_print_addr,
 	ahci_atapi_kill_pending,
+	NULL,
 };
 #endif /* NATAPIBUS */
 

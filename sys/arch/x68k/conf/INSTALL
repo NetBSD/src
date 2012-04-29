@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.93.2.1 2012/02/18 07:33:30 mrg Exp $
+#	$NetBSD: INSTALL,v 1.93.2.2 2012/04/29 23:04:42 mrg Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.93.2.1 $"
+#ident 		"INSTALL-$Revision: 1.93.2.2 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -258,8 +258,8 @@ zstty0	at zsc0 channel 0		# built-in RS-232C
 sram0	at intio0 addr 0xed0000		# battery-backuped static RAM
 #pseudo-device	bell			# OPM bell
 
-#xcom0	at mainbus0			# NS16550 fast serial
-#xcom1	at mainbus0
+#com0	at intio0 addr 0xefff00 intr 240	# PSX16550, port1
+#com1	at intio0 addr 0xefff10 intr 241	# PSX16550, port2
 
 ## Audio device
 #vs0 at intio0 addr 0xe92000 dma 3 dmaintr 106

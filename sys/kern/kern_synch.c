@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.296.4.5 2012/03/06 18:26:48 mrg Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.296.4.6 2012/04/29 23:05:05 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.296.4.5 2012/03/06 18:26:48 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.296.4.6 2012/04/29 23:05:05 mrg Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -684,7 +684,8 @@ mi_switch(lwp_t *l)
 		 * the context switch.
 		 */
 		KASSERTMSG(ci->ci_mtx_count == -1,
-		    "%s: cpu%u: ci_mtx_count (%d) != -1",
+		    "%s: cpu%u: ci_mtx_count (%d) != -1 "
+		    "(block with spin-mutex held)",
 		     __func__, cpu_index(ci), ci->ci_mtx_count);
 		oldspl = MUTEX_SPIN_OLDSPL(ci);
 		ci->ci_mtx_count--;
@@ -755,6 +756,10 @@ mi_switch(lwp_t *l)
 
 		KASSERT(l->l_cpu == ci);
 		splx(oldspl);
+		/*
+		 * note that, unless the caller disabled preemption,
+		 * we can be preempted at any time after the above splx() call.
+		 */
 		retval = 1;
 	} else {
 		/* Nothing to do - just unlock and return. */

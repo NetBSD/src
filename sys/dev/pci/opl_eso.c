@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_eso.c,v 1.17 2011/11/23 23:07:36 jmcneill Exp $	*/
+/*	$NetBSD: opl_eso.c,v 1.17.2.1 2012/04/29 23:04:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_eso.c,v 1.17 2011/11/23 23:07:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_eso.c,v 1.17.2.1 2012/04/29 23:04:51 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ opl_eso_attach(device_t parent, device_t self, void *aux)
 	struct eso_softc *esc = device_private(parent);
 	struct opl_softc *sc = device_private(self);
 
-	sc->mididev.dev = self;
+	sc->dev = self;
 	sc->ioh = esc->sc_sb_ioh;
 	sc->iot = esc->sc_sb_iot;
 	sc->offs = 0;
