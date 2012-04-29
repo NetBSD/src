@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_detach.c,v 1.7 2012/02/28 22:30:44 joerg Exp $	*/
+/*	$NetBSD: mime_detach.c,v 1.8 2012/04/29 23:50:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_detach.c,v 1.7 2012/02/28 22:30:44 joerg Exp $");
+__RCSID("$NetBSD: mime_detach.c,v 1.8 2012/04/29 23:50:22 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -125,8 +125,8 @@ detach_open_core(char *fname, const char *partstr)
 
 	flags = (detach_ctl.overwrite ? 0 : O_EXCL) | O_CREAT | O_TRUNC | O_WRONLY;
 
-	if ((fd = open(fname, flags, 0600)) != -1 &&
-	    Fdopen(fd, "w") != NULL)
+	if ((fd = open(fname, flags | O_CLOEXEC, 0600)) != -1 &&
+	    Fdopen(fd, "we") != NULL)
 		return DETACH_OPEN_OK;
 
 	if (detach_ctl.ask && fd == -1 && errno == EEXIST) {
@@ -147,7 +147,7 @@ detach_open_core(char *fname, const char *partstr)
 				detach_ctl.ask = 0;
 				/* FALLTHROUGH */
 		case 'o':
-			if (Fopen(fname, "w") != NULL)
+			if (Fopen(fname, "we") != NULL)
 				return DETACH_OPEN_OK;
 			break;
 
