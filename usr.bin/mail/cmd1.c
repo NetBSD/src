@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd1.c,v 1.31 2011/09/16 15:39:27 joerg Exp $	*/
+/*	$NetBSD: cmd1.c,v 1.32 2012/04/29 23:50:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd1.c,v 1.31 2011/09/16 15:39:27 joerg Exp $");
+__RCSID("$NetBSD: cmd1.c,v 1.32 2012/04/29 23:50:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -461,7 +461,7 @@ pipecmd(void *v)
 		goto close_pipe;
 
 	sig_check();
-	obuf = Popen(cmd, "w");
+	obuf = Popen(cmd, "we");
 	if (obuf == NULL) {
 		warn("pipecmd: Popen failed: %s", cmd);
 		return 1;
