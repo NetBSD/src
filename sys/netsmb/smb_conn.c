@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.c,v 1.28 2012/03/13 18:41:01 elad Exp $	*/
+/*	$NetBSD: smb_conn.c,v 1.29 2012/04/29 20:27:31 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.28 2012/03/13 18:41:01 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.29 2012/04/29 20:27:31 dsl Exp $");
 
 /*
  * Connection engine.
@@ -90,6 +90,7 @@ static int smb_vcnext = 1;	/* next unique id for VC */
 static kauth_listener_t smb_listener;
 
 MALLOC_DEFINE(M_SMBCONN, "SMB conn", "SMB connection");
+MALLOC_DECLARE(M_SMBCONN);
 
 static void smb_co_init(struct smb_connobj *cp, int level, const char *objname);
 static void smb_co_done(struct smb_connobj *cp);
