@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.276 2012/03/13 18:41:13 elad Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.277 2012/04/29 22:54:00 chs Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.276 2012/03/13 18:41:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.277 2012/04/29 22:54:00 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -2168,7 +2168,7 @@ ffs_vfs_fsync(vnode_t *vp, int flags)
 	}
 #endif /* WAPBL */
 
-	error = vflushbuf(vp, (flags & FSYNC_WAIT) != 0);
+	error = vflushbuf(vp, flags);
 	if (error == 0 && (flags & FSYNC_CACHE) != 0) {
 		i = 1;
 		(void)VOP_IOCTL(vp, DIOCCACHESYNC, &i, FWRITE,
