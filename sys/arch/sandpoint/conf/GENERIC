@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.72 2012/03/10 21:51:55 joerg Exp $
+# $NetBSD: GENERIC,v 1.73 2012/04/29 15:59:32 phx Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.72 $"
+#ident 		"GENERIC-$Revision: 1.73 $"
 
 maxusers	32
 
@@ -262,6 +262,7 @@ sd*	at scsibus? target ? lun ?	# SCSI disk drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 atapibus* at atapi?
+sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 
 #
