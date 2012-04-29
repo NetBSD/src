@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2012/04/14 15:11:18 joerg Exp $
+#	$NetBSD: Makefile,v 1.12 2012/04/29 19:19:05 joerg Exp $
 
 LIB=	LLVMSupport
 
@@ -35,7 +35,7 @@ SRCS+=	APFloat.cpp \
 	IntrusiveRefCntPtr.cpp \
 	IsInf.cpp \
 	IsNAN.cpp \
-	JSONParser.cpp \
+	Locale.cpp \
 	LockFileManager.cpp \
 	ManagedStatic.cpp \
 	MemoryBuffer.cpp \
