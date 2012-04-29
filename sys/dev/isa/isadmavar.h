@@ -1,4 +1,4 @@
-/*	$NetBSD: isadmavar.h,v 1.25 2009/08/18 16:52:42 dyoung Exp $	*/
+/*	$NetBSD: isadmavar.h,v 1.26 2012/04/29 21:13:56 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -92,7 +92,6 @@ struct isa_mem {
 
 #ifdef _KERNEL
 struct proc;
-struct malloc_type;
 
 void	   _isa_dmainit(struct isa_dma_state *, bus_space_tag_t,
 	       bus_dma_tag_t, device_t);
@@ -131,6 +130,10 @@ paddr_t	   _isa_dmamem_mmap(struct isa_dma_state *, int, bus_addr_t,
 int	   _isa_drq_alloc(struct isa_dma_state *, int);
 int	   _isa_drq_free(struct isa_dma_state *, int);
 int	   _isa_drq_isfree(struct isa_dma_state *, int);
+
+#define _isa_malloc(dma_state, c, s, p, f) \
+    _isa_malloc(dma_state, c, s, f)
+#define _isa_free(v, p) _isa_free(v)
 
 void      *_isa_malloc(struct isa_dma_state *, int, size_t,
 		struct malloc_type *, int);
