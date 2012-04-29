@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdev.c,v 1.26 2011/07/31 13:51:53 uebayasi Exp $	*/
+/*	$NetBSD: fwdev.c,v 1.27 2012/04/29 18:31:40 dsl Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.26 2011/07/31 13:51:53 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.27 2012/04/29 18:31:40 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -487,7 +487,7 @@ fw_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *td)
 		if ((tinfo->flag & FWTI_BLOCK_ASY) != 0)
 			pay_len = MAX(0, asyreq->req.len - tinfo->hdr_len);
 
-		xfer = fw_xfer_alloc_buf(M_FWXFER, pay_len, PAGE_SIZE/*XXX*/);
+		xfer = fw_xfer_alloc_buf(M_FW, pay_len, PAGE_SIZE/*XXX*/);
 		if (xfer == NULL)
 			return ENOMEM;
 
@@ -594,7 +594,7 @@ out:
 		STAILQ_INIT(&fwb->xferlist);
 		err = fw_bindadd(fc, fwb);
 		if (err == 0) {
-			fw_xferlist_add(&fwb->xferlist, M_FWXFER,
+			fw_xferlist_add(&fwb->xferlist, M_FW,
 			    /* XXX */
 			    PAGE_SIZE, PAGE_SIZE, 5, fc, (void *)fwb, fw_hand);
 			STAILQ_INSERT_TAIL(&d->binds, fwb, chlist);
@@ -857,7 +857,7 @@ fw_write_async(struct fw_drv1 *d, struct uio *uio, int ioflag)
 	    tinfo->hdr_len - sizeof(uint32_t), uio)))
 		return err;
 
-	if ((xfer = fw_xfer_alloc_buf(M_FWXFER, uio->uio_resid,
+	if ((xfer = fw_xfer_alloc_buf(M_FW, uio->uio_resid,
 	    PAGE_SIZE/*XXX*/)) == NULL)
 		return ENOMEM;
 

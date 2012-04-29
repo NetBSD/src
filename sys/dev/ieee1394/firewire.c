@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.38 2010/09/07 07:26:54 cegger Exp $	*/
+/*	$NetBSD: firewire.c,v 1.39 2012/04/29 18:31:40 dsl Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.38 2010/09/07 07:26:54 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.39 2012/04/29 18:31:40 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -128,7 +128,6 @@ err:
 }
 
 MALLOC_DEFINE(M_FW, "ieee1394", "IEEE1394");
-MALLOC_DEFINE(M_FWXFER, "fw_xfer", "XFER/IEEE1394");
 
 #define FW_MAXASYRTY 4
 
@@ -1139,7 +1138,7 @@ fw_rcv(struct fw_rcv_buf *rb)
 				    "cannot respond(bus reset)!\n");
 				return;
 			}
-			rb->xfer = fw_xfer_alloc(M_FWXFER);
+			rb->xfer = fw_xfer_alloc(M_FW);
 			if (rb->xfer == NULL)
 				return;
 			rb->xfer->send.spd = rb->spd;
@@ -1543,7 +1542,7 @@ fw_phy_config(struct firewire_comm *fc, int root_node, int gap_count)
 
 	fc->status = FWBUSPHYCONF;
 
-	xfer = fw_xfer_alloc(M_FWXFER);
+	xfer = fw_xfer_alloc(M_FW);
 	if (xfer == NULL)
 		return;
 	xfer->fc = fc;
@@ -2250,7 +2249,7 @@ fw_try_bmr(void *arg)
 	struct fw_pkt *fp;
 	int err = 0;
 
-	xfer = fw_xfer_alloc_buf(M_FWXFER, 8, 4);
+	xfer = fw_xfer_alloc_buf(M_FW, 8, 4);
 	if (xfer == NULL)
 		return;
 	xfer->send.spd = 0;
