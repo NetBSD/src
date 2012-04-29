@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnode.c,v 1.2.2.1 2012/04/05 21:33:51 mrg Exp $	*/
+/*	$NetBSD: chfs_vnode.c,v 1.2.2.2 2012/04/29 23:05:08 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -101,7 +101,8 @@ chfs_readvnode(struct mount* mp, ino_t ino, struct vnode** vpp)
 		chfvn = (struct chfs_flash_vnode*)buf;
 		chfs_set_vnode_size(vp, chfvn->dn_size);
 		ip->mode = chfvn->mode;
-		vp->v_type = IFTOVT(ip->mode);
+		ip->ch_type = IFTOCHT(ip->mode);
+		vp->v_type = CHTTOVT(ip->ch_type);
 		ip->version = chfvn->version;
 		//ip->chvc->highest_version = ip->version;
 		ip->uid = chfvn->uid;
@@ -186,7 +187,7 @@ chfs_readdirent(struct mount *mp, struct chfs_node_ref *chnr, struct chfs_inode 
  */
 int
 chfs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
-    struct componentname *cnp, int type)
+    struct componentname *cnp, enum vtype type)
 {
 	struct chfs_inode *ip, *pdir;
 	struct vnode *vp;
@@ -240,7 +241,8 @@ chfs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	ip->target = NULL;
 
 	ip->mode = mode;
-	vp->v_type = type;	/* Rest init'd in getnewvnode(). */
+	vp->v_type = type;		/* Rest init'd in getnewvnode(). */
+	ip->ch_type = VTTOCHT(vp->v_type);
 
 	/* Authorize setting SGID if needed. */
 	if (ip->mode & ISGID) {
@@ -280,7 +282,7 @@ chfs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	nfd = chfs_alloc_dirent(cnp->cn_namelen + 1);
 	nfd->vno = ip->ino;
 	nfd->version = (++pdir->chvc->highest_version);
-	nfd->type = type;
+	nfd->type = ip->ch_type;
 //	nfd->next = NULL;
 	nfd->nsize = cnp->cn_namelen;
 	memcpy(&(nfd->name), cnp->cn_nameptr, cnp->cn_namelen);

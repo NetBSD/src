@@ -1,4 +1,4 @@
-/*	$NetBSD: midisyn.c,v 1.23 2011/11/23 23:07:31 jmcneill Exp $	*/
+/*	$NetBSD: midisyn.c,v 1.23.2.1 2012/04/29 23:04:47 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.23 2011/11/23 23:07:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.23.2.1 2012/04/29 23:04:47 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -133,10 +133,7 @@ midisyn_open(void *addr, int flags, void (*iintr)(void *, int),
 	int rslt, error;
 	uint_fast8_t chan;
 
-	if (ms->lock == NULL) {
-		panic("midisyn_open: no lock");
-	}
-
+	KASSERT(ms->lock != NULL);
 	KASSERT(mutex_owned(ms->lock));
 	DPRINTF(("midisyn_open: ms=%p ms->mets=%p\n", ms, ms->mets));
 
@@ -250,12 +247,10 @@ midisyn_findvoice(midisyn *ms, int chan, int note)
 }
 
 void
-midisyn_attach(struct midi_softc *sc, midisyn *ms)
+midisyn_init(midisyn *ms)
 {
 
-	if (ms->lock == NULL) {
-		panic("midisyn_attach: no lock");
-	}
+	KASSERT(ms->lock != NULL);
 
 	/*
 	 * XXX there should be a way for this function to indicate failure
@@ -278,9 +273,7 @@ midisyn_attach(struct midi_softc *sc, midisyn *ms)
 		.notify = midisyn_notify
 	};
 	
-	sc->hw_if = &midisyn_hw_if;
-	sc->hw_hdl = ms;
-	DPRINTF(("midisyn_attach: ms=%p\n", sc->hw_hdl));
+	DPRINTF(("midisyn_init: ms=%p\n", ms));
 }
 
 static void

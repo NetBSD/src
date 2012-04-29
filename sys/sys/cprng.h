@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng.h,v 1.2.2.1 2012/02/18 07:35:47 mrg Exp $ */
+/*	$NetBSD: cprng.h,v 1.2.2.2 2012/04/29 23:05:07 mrg Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ typedef struct _cprng_strong {
 	int		flags;
 	char		name[16];
 	int		reseed_pending;
-	int		rekeyed_on_full;
+	int		entropy_serial;
 	rndsink_t	reseed;
 } cprng_strong_t;
 

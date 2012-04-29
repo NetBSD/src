@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.235.6.2 2012/02/24 09:11:45 mrg Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.235.6.3 2012/04/29 23:05:04 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.235.6.2 2012/02/24 09:11:45 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.235.6.3 2012/04/29 23:05:04 mrg Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -202,6 +202,7 @@ exit1(struct lwp *l, int rv)
 	p = l->l_proc;
 
 	KASSERT(mutex_owned(p->p_lock));
+	KASSERT(p->p_vmspace != NULL);
 
 	if (__predict_false(p == initproc)) {
 		panic("init died (signal %d, exit %d)",
@@ -567,12 +568,8 @@ exit1(struct lwp *l, int rv)
 	 * case these resources are in the PCB.
 	 */
 	cpu_lwp_free(l, 1);
-	/*
-	 * A new child of a posix_spawn operation might never have been
-	 * to userland - no pmap deactivation is needed in this case
-	 */
-	if (__predict_true(l->l_proc->p_vmspace != NULL))
-		pmap_deactivate(l);
+
+	pmap_deactivate(l);
 
 	/* This process no longer needs to hold the kernel lock. */
 #ifdef notyet

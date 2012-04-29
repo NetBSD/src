@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.40.8.3 2012/04/05 21:33:34 mrg Exp $	*/
+/*	$NetBSD: ubt.c,v 1.40.8.4 2012/04/29 23:05:01 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.40.8.3 2012/04/05 21:33:34 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.40.8.4 2012/04/29 23:05:01 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1672,10 +1672,7 @@ ubt_recv_sco_complete(usbd_xfer_handle xfer,
 			if (got + size > want)
 				size = want - got;
 
-			if (got + size > MHLEN)
-				memcpy(ptr, frame, MHLEN - got);
-			else
-				memcpy(ptr, frame, size);
+			memcpy(ptr, frame, size);
 
 			ptr += size;
 			got += size;
@@ -1687,8 +1684,18 @@ ubt_recv_sco_complete(usbd_xfer_handle xfer,
 				 * length to our want count. Send complete
 				 * packets up to protocol stack.
 				 */
-				if (want == sizeof(hci_scodata_hdr_t))
-					want += mtod(m, hci_scodata_hdr_t *)->length;
+				if (want == sizeof(hci_scodata_hdr_t)) {
+					uint32_t len =
+					    mtod(m, hci_scodata_hdr_t *)->length;
+					want += len;
+					if (len == 0 || want > MHLEN) {
+						aprint_error_dev(sc->sc_dev,
+						    "packet too large %u "
+						    "(lost sync)\n", len);
+						sc->sc_stats.err_rx++;
+						return;
+					}
+				}
 
 				if (got == want) {
 					m->m_pkthdr.len = m->m_len = got;

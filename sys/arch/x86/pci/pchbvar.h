@@ -1,4 +1,4 @@
-/*	$NetBSD: pchbvar.h,v 1.8 2011/08/20 20:01:08 jakllsch Exp $	*/
+/*	$NetBSD: pchbvar.h,v 1.8.6.1 2012/04/29 23:04:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,9 +34,9 @@
 
 struct pchb_softc {
 	device_t sc_dev;
-	device_t sc_amdtempbus;
 
-	struct pci_attach_args sc_pa;
+	pci_chipset_tag_t sc_pc;
+	pcitag_t sc_tag;
 
 	pcireg_t sc_pciconfext[48];
 };

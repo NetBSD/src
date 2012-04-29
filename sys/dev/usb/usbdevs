@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.602.2.5 2012/03/06 18:26:47 mrg Exp $
+$NetBSD: usbdevs,v 1.602.2.6 2012/04/29 23:05:01 mrg Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -184,6 +184,7 @@ vendor HAUPPAUGE	0x0573	Hauppauge Computer Works
 vendor BAFO		0x0576	BAFO/Quality Computer Accessories
 vendor YEDATA		0x057b	Y-E Data
 vendor AVM		0x057c	AVM
+vendor NINTENDO		0x057e	Nintendo
 vendor QUICKSHOT	0x057f	Quickshot
 vendor ROLAND		0x0582	Roland
 vendor ROCKFIRE		0x0583	Rockfire
@@ -692,6 +693,7 @@ product ADMTEK PEGASUSII_3	0x8515	ADM8515 USB 2.0 Ethernet
 /* ADS products */
 product ADS UBS10BT		0x0008	UBS-10BT Ethernet
 product ADS UBS10BTX		0x0009	UBS-10BT Ethernet
+product ADS RDX155		0xa155	InstantFM Music
 
 /* AEI products */
 product AEI USBTOLAN		0x1701	AEI USB to Lan adapter
@@ -2065,6 +2067,13 @@ product NIKON E990		0x0102	Digital Camera E990
 product NIKON E880		0x0103	Digital Camera E880
 product NIKON E885		0x0105	Digital Camera E885
 
+/* Nintendo products */
+product NINTENDO BCM2045A	0x0305	Broadcom BCM2045A Bluetooth Radio
+product NINTENDO RVLCNT01	0x0306	Wii Remote RVL-CNT-01 (BT-HID)
+/* product NINTENDO WIIMIC1	0x0308	Wii Party-Mic */
+/* product NINTENDO WIIMIC2	0x0309	USB Microphone for Wii */
+product NINTENDO RVLCNT01TR	0x0330	Wii Remote Plus RVL-CNT-01-TR (BT-HID)
+
 /* Nokia products */
 product NOKIA CA42		0x0802	Mobile Phone adapter
 
@@ -2496,6 +2505,7 @@ product SHARP C750		0x9031	C750
 product SHARP RUITZ1016YCZZ	0x90fd	WS003SH WLAN
 product SHARP WS007SH		0x9123	WS007SH
 product SHARP WS011SH		0x91ac	WS011SH
+product SHARP NWKBD		0x92E7	NetWalker Keyboard
 
 /* Shuttle Technology products */
 product SHUTTLE EUSB		0x0001	E-USB Bridge

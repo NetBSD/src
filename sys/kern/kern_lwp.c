@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.164.6.2 2012/02/24 09:11:46 mrg Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.164.6.3 2012/04/29 23:05:04 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.164.6.2 2012/02/24 09:11:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.164.6.3 2012/04/29 23:05:04 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1236,7 +1236,7 @@ lwp_find2(pid_t pid, lwpid_t lid)
 }
 
 /*
- * Look up a live LWP within the specified process, and return it locked.
+ * Look up a live LWP within the specified process.
  *
  * Must be called with p->p_lock held.
  */

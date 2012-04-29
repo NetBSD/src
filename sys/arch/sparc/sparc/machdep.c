@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.313.6.2 2012/02/24 09:11:34 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.313.6.3 2012/04/29 23:04:42 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.313.6.2 2012/02/24 09:11:34 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.313.6.3 2012/04/29 23:04:42 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -2523,7 +2523,7 @@ bus_space_write_4(
 	uint32_t		v)
 {
 	__insn_barrier();
-	bus_space_write_4_real(
+	bus_space_write_4_real(t, h, o, v);
 }
 
 void

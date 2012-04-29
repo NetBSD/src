@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.152.2.2 2012/02/24 09:11:52 mrg Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.152.2.3 2012/04/29 23:05:09 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.152.2.2 2012/02/24 09:11:52 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.152.2.3 2012/04/29 23:05:09 mrg Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -315,8 +315,11 @@ uarea_system_poolpage_alloc(struct pool *pp, int flags)
 static void
 uarea_system_poolpage_free(struct pool *pp, void *addr)
 {
-	if (!cpu_uarea_free(addr))
-		panic("%s: failed to free uarea %p", __func__, addr);
+	if (cpu_uarea_free(addr))
+		return;
+
+	uvm_km_free(kernel_map, (vaddr_t)addr, pp->pr_alloc->pa_pagesz,
+	    UVM_KMF_WIRED);
 }
 
 static struct pool_allocator uvm_uarea_system_allocator = {
@@ -416,19 +419,21 @@ uvm_proc_exit(struct proc *p)
 
 	KASSERT(p == l->l_proc);
 	ovm = p->p_vmspace;
+	KASSERT(ovm != NULL);
+
+	if (__predict_false(ovm == proc0.p_vmspace))
+		return;
 
 	/*
 	 * borrow proc0's address space.
 	 */
 	KPREEMPT_DISABLE(l);
-	if (__predict_true(ovm != NULL))
-		pmap_deactivate(l);
+	pmap_deactivate(l);
 	p->p_vmspace = proc0.p_vmspace;
 	pmap_activate(l);
 	KPREEMPT_ENABLE(l);
 
-	if (__predict_true(ovm!=NULL))
-		uvmspace_free(ovm);
+	uvmspace_free(ovm);
 }
 
 void

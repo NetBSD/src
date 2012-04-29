@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_inode.h,v 1.1.2.3 2012/03/06 18:26:49 mrg Exp $	*/
+/*	$NetBSD: chfs_inode.h,v 1.1.2.4 2012/04/29 23:05:08 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -35,11 +35,43 @@
 #ifndef __CHFS_INODE_H__
 #define __CHFS_INODE_H__
 
+#ifdef _KERNEL
 #include <sys/vnode.h>
 #include <sys/stat.h>
 #include <ufs/ufs/ufsmount.h>
 #include <miscfs/genfs/genfs_node.h>
+#endif /* _KERNEL */
 
+#define CHFS_ROOTINO 2
+
+/* chfs file types */
+enum chtype {
+	CHT_BLANK,	/* empty type */
+	CHT_REG,	/* regular file */
+	CHT_DIR,	/* directory */
+	CHT_BLK,	/* block device */
+	CHT_CHR,	/* character device */
+	CHT_LNK,	/* link */
+	CHT_SOCK,	/* socket */
+	CHT_FIFO,	/* fifo */
+	CHT_BAD		/* bad type */
+};
+
+/* these macros are needed because the compatibility */
+#define CHTTOVT(ch_type)	(enum vtype)(ch_type)
+#define VTTOCHT(v_type)		(enum chtype)(v_type)
+
+/* vtype replaced with chtype, these are only for compatibility */
+static const enum chtype iftocht_tab[16] = {
+	CHT_BLANK, CHT_FIFO, CHT_CHR, CHT_BLANK,
+	CHT_DIR, CHT_BLANK, CHT_BLK, CHT_BLANK,
+	CHT_REG, CHT_BLANK, CHT_LNK, CHT_BLANK,
+	CHT_SOCK, CHT_BLANK, CHT_BLANK, CHT_BAD,
+};
+
+#define	IFTOCHT(mode)	(iftocht_tab[((mode) & S_IFMT) >> 12])
+
+#ifdef _KERNEL
 struct chfs_inode
 {
 	struct genfs_node	gnode;
@@ -68,6 +100,7 @@ struct chfs_inode
 	//uint64_t highest_version;	/* highest vers. num. (used at data nodes) */
 	
 	uint32_t mode;		/* mode */
+	enum chtype ch_type;		/* chfs file type */
 	//int16_t nlink;		/* link count */
 	uint64_t size;		/* file byte count */
 	uint64_t write_size;	/* increasing while write the file out to the flash */
@@ -134,4 +167,5 @@ struct chfs_inode
 #define	IFSOCK		0140000		/* UNIX domain socket. */
 #define	IFWHT		0160000		/* Whiteout. */
 
+#endif /* _KERNEL */
 #endif /* __CHFS_INODE_H__ */

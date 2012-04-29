@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMemory.c,v 1.4 2011/02/17 10:21:43 jruoho Exp $	*/
+/*	$NetBSD: OsdMemory.c,v 1.4.8.1 2012/04/29 23:04:48 mrg Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMemory.c,v 1.4 2011/02/17 10:21:43 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMemory.c,v 1.4.8.1 2012/04/29 23:04:48 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -61,12 +61,17 @@ MALLOC_DECLARE(M_ACPI);
 void *
 AcpiOsMapMemory(ACPI_PHYSICAL_ADDRESS PhysicalAddress, ACPI_SIZE Length)
 {
-	ACPI_STATUS Status;
 	void *LogicalAddress = NULL;
+	ACPI_STATUS Status;
+
+	if (PhysicalAddress > ULONG_MAX)
+		return NULL;
 
 	Status = acpi_md_OsMapMemory(PhysicalAddress, Length, &LogicalAddress);
-	if (ACPI_FAILURE (Status))
+
+	if (ACPI_FAILURE(Status))
 		return NULL;
+
 	return LogicalAddress;
 }
 

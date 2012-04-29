@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80321,v 1.69.2.1 2012/02/18 07:31:47 mrg Exp $
+#	$NetBSD: IQ80321,v 1.69.2.2 2012/04/29 23:04:38 mrg Exp $
 #
 #	IQ80321 -- Intel IQ80321 Evaluation Board Kernel
 #
@@ -98,10 +98,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 
 # Device options

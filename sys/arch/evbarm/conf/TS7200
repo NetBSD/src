@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.46.2.1 2012/02/18 07:31:50 mrg Exp $
+#	$NetBSD: TS7200,v 1.46.2.2 2012/04/29 23:04:39 mrg Exp $
 #
 #	TS7200 - Kernel for Technologic Systems TS7200 ARM hardware
 #
@@ -103,10 +103,6 @@ options 	COMPAT_20	# NetBSD 2.0 compatibility.
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
-options 	SEMMNI=10	# number of semaphore identifiers
-options 	SEMMNS=60	# number of semaphores in system
-options 	SEMUME=10	# max number of undo entries per process
-options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 
 # Device options

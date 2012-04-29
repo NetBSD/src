@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1101.6.5 2012/04/05 21:33:27 mrg Exp $
+$NetBSD: pcidevs,v 1.1101.6.6 2012/04/29 23:04:52 mrg Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -625,6 +625,7 @@ vendor ATTANSIC		0x1969	Attansic Technologies
 vendor JMICRON		0x197b	JMicron Technology
 vendor EVE		0x1adb	EVE
 vendor QUMRANET		0x1af4	Qumranet
+vendor FRESCO		0x1b73	Fresco Logic
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor SUNIX2		0x1fd4	SUNIX Co
@@ -931,6 +932,12 @@ product AMD AMD64_F11_DRAM	0x1302	AMD64 Family11h DRAM Configuration
 product AMD AMD64_F11_MISC	0x1303	AMD64 Family11h Miscellaneous Configuration
 product AMD AMD64_F11_LINK	0x1304	AMD64 Family11h Link Configuration
 product AMD F14_RC	0x1510	Family14h Root Complex
+product AMD F15_HT	0x1600	Family15h HyperTransport Configuration
+product AMD F15_ADDR	0x1601	Family15h Address Map Configuration
+product AMD F15_DRAM	0x1602	Family15h DRAM Configuration
+product AMD F15_MISC	0x1603	Family15h Miscellaneous Configuration
+product AMD F15_LINK	0x1604	Family15h Link Configuration
+product AMD F15_NB	0x1605	Family15h North Bridge Configuration
 product AMD F14_HT	0x1700	Family12h/14h HyperTransport Configuration
 product AMD F14_ADDR	0x1701	Family12h/14h Address Map Configuration
 product AMD F14_DRAM	0x1702	Family12h/14h DRAM Configuration
@@ -1427,12 +1434,14 @@ product ATI RADEON_X1300_S	0x7166	Radeon X1300 Series (RV515) Secondary
 product ATI RADEON_X1600	0x71c5	Radeon Mobility X1600
 product ATI RADEON_RS300_7834	0x7834	Radeon 9100 PRO IGP
 product ATI RADEON_RS300_7835	0x7835	Radeon 9200 IGP
-product ATI RS690_HB		0x7911	RS690 Host Bridge
-product ATI RS690_PPB_7912	0x7912	RS690 PCI to PCI Bridge
-product ATI RS690_PPB_7913	0x7913	RS690 PCI to PCI-Express Port 0 Bridge
-product ATI RS690_PPB_7915	0x7915	RS690 PCI to PCI-Express Port 1 Bridge
-product ATI RS690_PPB_7916	0x7916	RS690 PCI to PCI-Express Port 2 Bridge
-product ATI RS690_PPB_7917	0x7917	RS690 PCI to PCI-Express Port 3 Bridge
+product ATI RS690_HB_7910	0x7910	RS690 Host Bridge
+product ATI RS690_HB_7911	0x7911	RS740 Host Bridge
+product ATI RS690_PPB_7912	0x7912	RS690 GFX Bridge 
+product ATI RS690_PPB_7913	0x7913	RS690 PCI Express Bridge GFX
+product ATI RS690_PPB_7914	0x7914	RS690 PCI Express Bridge GPP Port A
+product ATI RS690_PPB_7915	0x7915	RS690 PCI Express Bridge GPP Port B
+product ATI RS690_PPB_7916	0x7916	RS690 PCI Express Bridge GPP Port C
+product ATI RS690_PPB_7917	0x7917	RS690 PCI Express Bridge GPP Port D
 product ATI RADEON_HD4650	0x9498 	Radeon HD4650
 product ATI RADEON_HD2600_XT	0x9588 	Radeon HD2600 XT GDDR3
 product ATI RADEON_HD4250_S	0x95C5	Radeon HD4250 GPU (RV610) Secondary
@@ -1617,10 +1626,10 @@ product BROADCOM BCM5906	0x1712	BCM5906 NetLink Fast Ethernet
 product BROADCOM BCM5906M	0x1713	BCM5906M NetLink Fast Ethernet
 product BROADCOM BCM4303	0x4301	BCM4303
 product BROADCOM BCM4307	0x4307	BCM4307
-product BROADCOM BCM4311	0x4311	BCM4311
-product BROADCOM BCM4312	0x4312	BCM4312
-product BROADCOM BCM4313	0x4313	BCM4313
-product BROADCOM BCM4315	0x4315	BCM4315
+product BROADCOM BCM4311	0x4311	BCM4311 2.4GHz
+product BROADCOM BCM4312	0x4312	BCM4312 Dualband
+product BROADCOM BCM4313	0x4313	BCM4313 5GHz
+product BROADCOM BCM4315	0x4315	BCM4315 2.4GHz
 product BROADCOM BCM4318	0x4318	BCM4318 AirForce One 54g
 product BROADCOM BCM4319	0x4319	BCM4319
 product BROADCOM BCM4306	0x4320	BCM4306
@@ -1634,6 +1643,10 @@ product BROADCOM BCM432A	0x432a	BCM432A 802.11
 product BROADCOM BCM432B	0x432b	BCM432B 802.11a/b/g/n
 product BROADCOM BCM432C	0x432c	BCM432C 802.11b/g/n
 product BROADCOM BCM432D	0x432d	BCM432D 802.11
+product BROADCOM BCM43224	0x4353	BCM43224 Dualband 802.11
+product BROADCOM BCM43225	0x4357	BCM43225 2.4GHz 802.11
+product BROADCOM BCM43227	0x4358	BCM43227 2.4GHz 802.11
+product BROADCOM BCM43228	0x4359	BCM43228 Dualband 802.11
 product BROADCOM BCM4401	0x4401	BCM4401 10/100 Ethernet
 product BROADCOM 5801		0x5801	5801 Security Processor
 product BROADCOM 5802		0x5802	5802 Security Processor
@@ -2050,6 +2063,10 @@ product FORE PCA200E	0x0300	ATM PCA-200e
 product FORTEMEDIA	FM801	0x0801	801 Sound
 product FORTEMEDIA	PCIJOY	0x0802	PCI Gameport Joystick
 
+/* Fresco Logic products */
+product FRESCO FL1000	0x1000	FL1000 USB3 Host Controller
+product FRESCO FL1009	0x1009	FL1009 USB3 Host Controller
+
 /* Future Domain products */
 product FUTUREDOMAIN TMC_18C30	0x0000	TMC-18C30 (36C70)
 
@@ -2349,8 +2366,13 @@ product INTEL WIFI_LINK_6230_1	0x0090	Centrino Advanced-N 6230
 product INTEL WIFI_LINK_6230_2	0x0091	Centrino Advanced-N 6230
 product INTEL SANDYBRIDGE_HB	0x0100	Sandy Bridge Host Bridge
 product INTEL SANDYBRIDGE_IGD	0x0102	Sandy Bridge Integrated Graphics Device
+product INTEL SANDYBRIDGE_IGD_1	0x0112	Sandy Bridge Integrated Graphics Device
+product INTEL SANDYBRIDGE_IGD_2	0x0122	Sandy Bridge Integrated Graphics Device
 product INTEL SANDYBRIDGE_M_HB	0x0104	Sandy Bridge Host Bridge
 product INTEL SANDYBRIDGE_M_IGD	0x0106	Sandy Bridge Integrated Graphics Device
+product INTEL SANDYBRIDGE_M_IGD_1	0x0116	Sandy Bridge Integrated Graphics Device
+product INTEL SANDYBRIDGE_M_IGD_2	0x0126	Sandy Bridge Integrated Graphics Device
+product INTEL SANDYBRIDGE_S_IGD	0x010A	Sandy Bridge Integrated Graphics Device
 product INTEL 80312		0x030d	80312 I/O Companion Chip
 product INTEL 80321		0x0319	80321 I/O Processor
 product INTEL IOP333_A		0x0370	IOP333 PCI Express-to-PCI Bridge #0
@@ -3410,6 +3432,10 @@ product SYMBIOS SAS1064A		0x005C	SAS1064A
 product SYMBIOS SAS1066			0x005E	SAS1066
 product SYMBIOS SAS1078			0x0060	SAS1078 PCI
 product SYMBIOS SAS1078_PCIE		0x0062	SAS1078 PCI Express
+product SYMBIOS SAS2116_1		0x0064	SAS2116
+product SYMBIOS SAS2116_2		0x0065	SAS2116
+product SYMBIOS SAS2308_3		0x006e	SAS2308
+product SYMBIOS SAS2004			0x0070	SAS2004
 product SYMBIOS SAS2008			0x0072	SAS2008
 product SYMBIOS SAS2008_1		0x0073	MegaRAID SAS2008
 product SYMBIOS SAS2108_3		0x0074	SAS2108
@@ -3418,6 +3444,14 @@ product SYMBIOS SAS2108_5		0x0077	SAS2108
 product SYMBIOS SAS2108_1		0x0078	MegaRAID SAS2108 CRYPTO GEN2
 product SYMBIOS SAS2108_2		0x0079	MegaRAID SAS2108 GEN2
 product SYMBIOS SAS1078DE		0x007c	SAS1078DE
+product SYMBIOS SAS2208_1		0x0080	SAS2208
+product SYMBIOS SAS2208_2		0x0081	SAS2208
+product SYMBIOS SAS2208_3		0x0082	SAS2208
+product SYMBIOS SAS2208_4		0x0083	SAS2208
+product SYMBIOS SAS2208_5		0x0084	SAS2208
+product SYMBIOS SAS2208_6		0x0085	SAS2208
+product SYMBIOS SAS2308_1		0x0086	SAS2308
+product SYMBIOS SAS2308_2		0x0087	SAS2308
 product SYMBIOS 875J			0x008f	53c875J
 product SYMBIOS FC909			0x0620	FC909
 product SYMBIOS FC909A			0x0621	FC909A
@@ -3454,7 +3488,8 @@ product NEC VRC4173_BCU	0x00a5	VRC4173 Bus Control Unit
 product NEC VRC4173_AC97U 0x00a6 VRC4173 AC97 Unit
 product NEC PD72870	0x00cd	uPD72870 IEEE 1394 Host Controller
 product NEC PD72871	0x00ce	uPD72871 IEEE 1394 Host Controller
-product NEC PD720100A	0x00e0	USB Host Controller
+product NEC PD720100A	0x00e0	USB2 Host Controller
+product NEC PD720200	0x0194	USB3 Host Controller
 product NEC VA26D	0x803c	Versa Pro LX VA26D
 product NEC VERSALX	0x8058	Versa LX
 

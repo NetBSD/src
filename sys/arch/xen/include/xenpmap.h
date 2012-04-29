@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.32.2.1 2012/02/18 07:33:39 mrg Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.32.2.2 2012/04/29 23:04:44 mrg Exp $	*/
 
 /*
  *
@@ -34,6 +34,9 @@
 #include "opt_xen.h"
 #endif
 
+#include <sys/types.h>
+#include <sys/kcpuset.h>
+
 #define	INVALID_P2M_ENTRY	(~0UL)
 
 void xpq_queue_machphys_update(paddr_t, paddr_t);
@@ -46,11 +49,11 @@ void xpq_queue_tlb_flush(void);
 void xpq_queue_pin_table(paddr_t, int);
 void xpq_queue_unpin_table(paddr_t);
 int  xpq_update_foreign(paddr_t, pt_entry_t, int);
-void xen_vcpu_mcast_invlpg(vaddr_t, vaddr_t, uint32_t);
+void xen_vcpu_mcast_invlpg(vaddr_t, vaddr_t, kcpuset_t *);
 void xen_vcpu_bcast_invlpg(vaddr_t, vaddr_t);
-void xen_mcast_tlbflush(uint32_t);
+void xen_mcast_tlbflush(kcpuset_t *);
 void xen_bcast_tlbflush(void);
-void xen_mcast_invlpg(vaddr_t, uint32_t);
+void xen_mcast_invlpg(vaddr_t, kcpuset_t *);
 void xen_bcast_invlpg(vaddr_t);
 
 void pmap_xen_resume(void);

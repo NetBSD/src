@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_glyphcache.c,v 1.1.2.2 2012/02/18 07:35:14 mrg Exp $	*/
+/*	$NetBSD: wsdisplay_glyphcache.c,v 1.1.2.3 2012/04/29 23:05:02 mrg Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -82,10 +82,10 @@ glyphcache_add(glyphcache *gc, int c, int x, int y)
 	if (gc->gc_usedcells >= gc->gc_numcells)
 		return ENOMEM;
 	cell = atomic_add_int_nv(&gc->gc_usedcells, 1) - 1;
-	gc->gc_map[c] = cell;
 	cy = gc->gc_firstline +
 	    (cell / gc->gc_cellsperline) * gc->gc_cellheight;
 	cx = (cell % gc->gc_cellsperline) * gc->gc_cellwidth;
+	gc->gc_map[c] = (cx << 16) | cy;
 	gc->gc_bitblt(gc->gc_blitcookie, x, y, cx, cy,
 	    gc->gc_cellwidth, gc->gc_cellheight, gc->gc_rop);
 	return 0;
@@ -109,9 +109,8 @@ glyphcache_try(glyphcache *gc, int c, int x, int y, long attr)
 	cell = gc->gc_map[c];
 	if (cell == -1)
 		return GC_ADD;
-	cy = gc->gc_firstline +
-	    (cell / gc->gc_cellsperline) * gc->gc_cellheight;
-	cx = (cell % gc->gc_cellsperline) * gc->gc_cellwidth;
+	cy = cell & 0xffff;
+	cx = (cell >> 16) & 0xffff;
 	gc->gc_bitblt(gc->gc_blitcookie, cx, cy, x, y,
 	    gc->gc_cellwidth, gc->gc_cellheight, gc->gc_rop);
 	return GC_OK;

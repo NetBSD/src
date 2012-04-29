@@ -1,4 +1,4 @@
-/* $NetBSD: dsk.c,v 1.11.4.1 2012/02/18 07:33:05 mrg Exp $ */
+/* $NetBSD: dsk.c,v 1.11.4.2 2012/04/29 23:04:42 mrg Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -77,12 +77,12 @@ static void drive_ident(struct disk *, char *);
 static char *mkident(char *, int);
 static void set_xfermode(struct dkdev_ata *, int);
 static void decode_dlabel(struct disk *, char *);
+static struct disklabel *search_dmagic(char *);
 static int lba_read(struct disk *, int64_t, int, void *);
 static void issue48(struct dvata_chan *, int64_t, int);
 static void issue28(struct dvata_chan *, int64_t, int);
 static struct disk *lookup_disk(int);
 
-#define MAX_UNITS 8
 static struct disk ldisk[MAX_UNITS];
 
 int
@@ -306,7 +306,6 @@ decode_dlabel(struct disk *d, char *iobuf)
         struct mbr_partition *mp, *bsdp;
 	struct disklabel *dlp;
 	struct partition *pp;
-	char *dp;
 	int i, first, rf_offset;
 
 	bsdp = NULL;
@@ -324,39 +323,26 @@ decode_dlabel(struct disk *d, char *iobuf)
 	rf_offset = 0;
 	first = (bsdp) ? bswap32(bsdp->mbrp_start) : 0;
 	(*d->lba_read)(d, first + LABELSECTOR, 1, iobuf);
-	dp = iobuf /* + LABELOFFSET */;
-	for (i = 0; i < 512 - sizeof(struct disklabel); i++, dp += 4) {
-		dlp = (struct disklabel *)dp;
-		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC) {
-			if (dlp->d_partitions[0].p_fstype == FS_RAID) {
-				printf("%s%c: raid\n", d->xname, i + 'a');
-				snprintf(d->xname, sizeof(d->xname), "raid.");
-				rf_offset = dlp->d_partitions[0].p_offset +
-				    RF_PROTECTED_SECTORS;
-				(*d->lba_read)(d, rf_offset + LABELSECTOR, 1,
-				    iobuf);
-				dp = iobuf /* + LABELOFFSET */;
-				for (i = 0; i < 512 - sizeof(struct disklabel); i++, dp += 4) {
-					dlp = (struct disklabel *)dp;
-					if (dlp->d_magic == DISKMAGIC &&
-					    dlp->d_magic2 == DISKMAGIC)
-						goto found;
-				}
-			} else	/* Not RAID */
-				goto found;
-		}
+	dlp = search_dmagic(iobuf);
+	if (dlp == NULL)
+		goto notfound;
+	if (dlp->d_partitions[0].p_fstype == FS_RAID) {
+		printf("%s%c: raid\n", d->xname, 0 + 'a');
+		snprintf(d->xname, sizeof(d->xname), "raid.");
+		rf_offset
+		    = dlp->d_partitions[0].p_offset + RF_PROTECTED_SECTORS;
+		(*d->lba_read)(d, rf_offset + LABELSECTOR, 1, iobuf);
+		dlp = search_dmagic(iobuf);
+		if (dlp == NULL)
+			goto notfound;
 	}
-	d->dlabel = NULL;
-	printf("%s: no disklabel\n", d->xname);
-	return;
-  found:
 	for (i = 0; i < dlp->d_npartitions; i += 1) {
 		const char *type;
 		pp = &dlp->d_partitions[i];
 		pp->p_offset += rf_offset;
 		type = NULL;
 		switch (pp->p_fstype) {
-		case FS_SWAP: /* swap */
+		case FS_SWAP:
 			type = "swap";
 			break;
 		case FS_BSDFFS:
@@ -372,6 +358,25 @@ decode_dlabel(struct disk *d, char *iobuf)
 	}
 	d->dlabel = allocaligned(sizeof(struct disklabel), 4);
 	memcpy(d->dlabel, dlp, sizeof(struct disklabel));
+	return;
+  notfound:
+	d->dlabel = NULL;
+	printf("%s: no disklabel\n", d->xname);
+	return;
+}
+
+struct disklabel *
+search_dmagic(char *dp)
+{
+	int i;
+	struct disklabel *dlp;
+
+	for (i = 0; i < 512 - sizeof(struct disklabel); i += 4, dp += 4) {
+		dlp = (struct disklabel *)dp;
+		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC)
+			return dlp;
+	}
+	return NULL;
 }
 
 static void
@@ -456,7 +461,18 @@ static struct disk *
 lookup_disk(int unit)
 {
 
-	return &ldisk[unit];
+	return (unit >= 0 && unit < MAX_UNITS) ? &ldisk[unit] : NULL;
+}
+
+int
+dlabel_valid(int unit)
+{
+	struct disk *dsk;
+
+	dsk = lookup_disk(unit);
+	if (dsk == NULL)
+		return NULL;
+	return dsk->dlabel != NULL;
 }
 
 int
@@ -481,10 +497,10 @@ dsk_open(struct open_file *f, ...)
 
 	if ((d = lookup_disk(unit)) == NULL)
 		return ENXIO;
-	f->f_devdata = d;
 	if ((dlp = d->dlabel) == NULL || part >= dlp->d_npartitions)
 		return ENXIO;
 	d->part = part;
+	f->f_devdata = d;
 
 	snprintf(bi_path.bootpath, sizeof(bi_path.bootpath), name);
 	if (dlp->d_partitions[part].p_fstype == FS_BSDFFS) {

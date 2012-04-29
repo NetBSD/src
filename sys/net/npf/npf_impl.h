@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.9.2.3 2012/04/05 21:33:43 mrg Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.9.2.4 2012/04/29 23:05:06 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #ifndef _NPF_IMPL_H_
 #define _NPF_IMPL_H_
 
-#if !defined(_KERNEL) && !defined(_NPF_TESTING)
+#if !defined(_KERNEL)
 #error "Kernel-level header only"
 #endif
 
@@ -50,10 +50,6 @@
 
 #include "npf.h"
 #include "npf_ncode.h"
-
-#ifdef _NPF_TESTING
-#include "testing.h"
-#endif
 
 #ifdef _NPF_DEBUG
 #define	NPF_PRINTF(x)	printf x

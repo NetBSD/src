@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.340.2.6 2012/04/05 21:33:11 mrg Exp $
+# $NetBSD: GENERIC,v 1.340.2.7 2012/04/29 23:04:37 mrg Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.340.2.6 $"
+#ident 		"GENERIC-$Revision: 1.340.2.7 $"
 
 maxusers	64		# estimated number of users
 
@@ -127,9 +127,11 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 # Wedge support
 options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
 options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
-# The following two options can break /etc/fstab, so handle with care
+# The following three options can break /etc/fstab, so handle with care
 #options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
 #options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
+#options	DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
+
 
 file-system 	FFS		# UFS
 file-system	MFS		# memory file system
@@ -438,7 +440,8 @@ lpt1	at isa? port 0x278
 
 # Hardware monitors
 
-amdtemp* at pchb?			# AMD CPU Temperature sensors
+amdnb_misc* at pci?			# AMD NB Misc Configuration
+amdtemp* at amdnb_misc?			# AMD CPU Temperature sensors
 
 # Winbond LPC Super I/O
 #wbsio*	at isa? port 0x2e
@@ -543,7 +546,8 @@ iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 mfi*	at pci? dev ? function ?	# LSI MegaRAID SAS
 mly*	at pci? dev ? function ?	# Mylex AcceleRAID and eXtremeRAID
-mpt*	at pci? dev ? function ?	# LSILogic 9x9 and 53c1030
+mpt*	at pci? dev ? function ?	# LSILogic 9x9 and 53c1030 (Fusion-MPT)
+mpii*	at pci? dev ? function ?	# LSI Logic Fusion-MPT II
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
 esiop*	at pci? dev ? function ?	# Symbios 53c875 and newer SCSI
@@ -1197,7 +1201,7 @@ pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
-#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 
 #

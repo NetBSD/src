@@ -1,4 +1,4 @@
-/*	$NetBSD: oplvar.h,v 1.16 2011/11/23 23:07:32 jmcneill Exp $	*/
+/*	$NetBSD: oplvar.h,v 1.16.2.1 2012/04/29 23:04:50 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@ struct opl_voice {
 };
 
 struct opl_softc {
-	struct midi_softc mididev;
+	device_t dev;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	kmutex_t *lock;

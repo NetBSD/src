@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.23.4.1 2012/02/18 07:33:04 mrg Exp $ */
+/* $NetBSD: brdsetup.c,v 1.23.4.2 2012/04/29 23:04:42 mrg Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
     void xxx ## setup(struct brdprop *); \
     void xxx ## brdfix(struct brdprop *); \
     void xxx ## pcifix(struct brdprop *); \
+    void xxx ## launch(struct brdprop *); \
     void xxx ## reset(void)
 
 BRD_DECL(mot);
@@ -56,6 +57,7 @@ BRD_DECL(qnap);
 BRD_DECL(iomega);
 BRD_DECL(dlink);
 BRD_DECL(nhnas);
+BRD_DECL(kurot4);
 
 static void brdfixup(void);
 static void setup(void);
@@ -118,28 +120,28 @@ static struct brdprop brdlist[] = {
 	BRD_SANDPOINTX3,
 	0,
 	"com", 0x3f8, 115200,
-	motsetup, motbrdfix, motpcifix, NULL },
+	motsetup, motbrdfix, motpcifix, NULL, NULL },
     {
 	"encpp1",
 	"EnCore PP1",
 	BRD_ENCOREPP1,
 	0,
 	"com", 0x3f8, 115200,
-	encsetup, encbrdfix, encpcifix, NULL },
+	encsetup, encbrdfix, encpcifix, NULL, NULL },
     {
 	"kurobox",
 	"KuroBox",
 	BRD_KUROBOX,
 	0,
 	"eumb", 0x4600, 57600,
-	kurosetup, kurobrdfix, NULL, kuroreset },
+	kurosetup, kurobrdfix, NULL, NULL, kuroreset },
     {
 	"synology",
-	"Synology DS",
+	"Synology CS/DS/RS",
 	BRD_SYNOLOGY,
 	0,
 	"eumb", 0x4500, 115200,
-	synosetup, synobrdfix, NULL, synoreset },
+	synosetup, synobrdfix, synopcifix, synolaunch, synoreset },
     {
 	"qnap",
 	"QNAP TS",
@@ -147,35 +149,42 @@ static struct brdprop brdlist[] = {
 	33164691,	/* Linux source says 33000000, but the Synology  */
 			/* clock value delivers a much better precision. */
 	"eumb", 0x4500, 115200,
-	NULL, qnapbrdfix, NULL, qnapreset },
+	NULL, qnapbrdfix, NULL, NULL, qnapreset },
     {
 	"iomega",
 	"IOMEGA StorCenter G2",
 	BRD_STORCENTER,
 	0,
 	"eumb", 0x4500, 115200,
-	NULL, iomegabrdfix, NULL, iomegareset },
+	NULL, iomegabrdfix, NULL, NULL, iomegareset },
     {
 	"dlink",
 	"D-Link DSM-G600",
 	BRD_DLINKDSM,
 	33000000,
 	"eumb", 0x4500, 9600,
-	NULL, dlinkbrdfix, NULL, NULL },
+	NULL, dlinkbrdfix, NULL, NULL, NULL },
     {
 	"nhnas",
 	"Netronix NH-230/231",
 	BRD_NH230NAS,
 	33000000,
 	"eumb", 0x4500, 9600,
-	NULL, nhnasbrdfix, NULL, nhnasreset },
+	NULL, nhnasbrdfix, NULL, NULL, nhnasreset },
+    {
+	"kurot4",
+	"KuroBox/T4",
+	BRD_KUROBOXT4,
+	32768000,
+	"eumb", 0x4600, 57600,
+	NULL, kurot4brdfix, NULL, NULL, NULL },
     {
 	"unknown",
 	"Unknown board",
 	BRD_UNKNOWN,
 	0,
 	"eumb", 0x4500, 115200,
-	NULL, NULL, NULL, NULL }, /* must be the last */
+	NULL, NULL, NULL, NULL, NULL }, /* must be the last */
 };
 
 static struct brdprop *brdprop;
@@ -207,7 +216,7 @@ brdsetup(void)
 	char *consname;
 	int consport;
 	uint32_t extclk;
-	unsigned pchb, pcib, dev11, dev13, dev15, dev16, val;
+	unsigned pchb, pcib, dev11, dev12, dev13, dev15, dev16, val;
 	extern struct btinfo_memory bi_mem;
 	extern struct btinfo_console bi_cons;
 	extern struct btinfo_clock bi_clk;
@@ -229,6 +238,7 @@ brdsetup(void)
 	busclock = 0;
 
 	dev11 = pcimaketag(0, 11, 0);
+	dev12 = pcimaketag(0, 12, 0);
 	dev13 = pcimaketag(0, 13, 0);
 	dev15 = pcimaketag(0, 15, 0);
 	dev16 = pcimaketag(0, 16, 0);
@@ -243,7 +253,10 @@ brdsetup(void)
 	}
 	else if (PCI_CLASS(pcicfgread(dev11, PCI_CLASS_REG)) == PCI_CLASS_ETH) {
 		/* ADMtek AN985 (tlp) or RealTek 8169S (re) at dev 11 */
-		brdtype = BRD_KUROBOX;
+		if (PCI_VENDOR(pcicfgread(dev12, PCI_ID_REG)) != 0x1095)
+			brdtype = BRD_KUROBOX;
+		else
+			brdtype = BRD_KUROBOXT4;
 	}
 	else if (PCI_VENDOR(pcicfgread(dev15, PCI_ID_REG)) == 0x11ab) {
 		/* SKnet/Marvell (sk) at dev 15 */
@@ -350,6 +363,15 @@ pcifixup()
 	if (brdprop->pcifix == NULL)
 		return;
 	(*brdprop->pcifix)(brdprop);
+}
+
+void
+launchfixup()
+{
+
+	if (brdprop->launch == NULL)
+		return;
+	(*brdprop->launch)(brdprop);
 }
 
 void
@@ -695,6 +717,50 @@ synobrdfix(struct brdprop *brd)
 }
 
 void
+synopcifix(struct brdprop *brd)
+{
+	static const char csmodel[4][7] = {
+		"CS406e", "CS406", "RS406", "CS407e"
+	};
+	volatile uint8_t *cpld = (volatile uint8_t *)0xff000000;
+	uint8_t pwrstate;
+
+	if (nata > 1) {
+		/*
+		 * CS/RS stations power-up their disks one after another.
+		 * We have to watch over the current power state in a CPLD
+		 * register, until all disks become available.
+		 */
+		printf("CPLD V1.%d for model %s\n", cpld[2] & 3,
+		    csmodel[(cpld[2] & 0x0c) >> 2]);
+		cpld[0] = 0x00; /* all drive LEDs blinking yellow */
+		do {
+			delay(1000 * 1000);
+			pwrstate = cpld[1];
+			printf("Power state: %02x\r", pwrstate);
+		} while (pwrstate != 0xff);
+		putchar('\n');
+	}
+}
+
+void
+synolaunch(struct brdprop *brd)
+{
+	volatile uint8_t *cpld = (volatile uint8_t *)0xff000000;
+	struct dkdev_ata *sata1, *sata2;
+
+	if (nata > 1) {
+		/* enable drive LEDs for active disk drives on CS/RS models */
+		sata1 = lata[0].drv;
+		sata2 = lata[1].drv;
+		cpld[0] = (sata1->presense[0] ? 0x80 : 0xc0) |
+		    (sata1->presense[1] ? 0x20 : 0x30) |
+		    (sata2->presense[0] ? 0x08 : 0x0c) |
+		    (sata2->presense[1] ? 0x02 : 0x03);
+	}
+}
+
+void
 synoreset()
 {
 
@@ -761,6 +827,13 @@ nhnasreset()
 	NHGPIO_WRITE(0x02);
 	delay(100000);
 	/*NOTREACHED*/
+}
+
+void
+kurot4brdfix(struct brdprop *brd)
+{
+
+	init_uart(uart2base, 38400, LCR_8BITS | LCR_PEVEN);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.295.2.1 2012/02/18 07:34:59 mrg Exp $	*/
+/*	$NetBSD: sd.c,v 1.295.2.2 2012/04/29 23:05:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.295.2.1 2012/02/18 07:34:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.295.2.2 2012/04/29 23:05:00 mrg Exp $");
 
 #include "opt_scsi.h"
 
@@ -227,8 +227,8 @@ sdattach(device_t parent, device_t self, void *aux)
 	if (sd->type == T_SIMPLE_DIRECT)
 		periph->periph_quirks |= PQUIRK_ONLYBIG | PQUIRK_NOBIGMODESENSE;
 
-	if (scsipi_periph_bustype(sa->sa_periph) == SCSIPI_BUSTYPE_SCSI &&
-	    periph->periph_version == 0)
+	if (SCSIPI_BUSTYPE_TYPE(scsipi_periph_bustype(sa->sa_periph)) ==
+	    SCSIPI_BUSTYPE_SCSI && periph->periph_version == 0)
 		sd->flags |= SDF_ANCIENT;
 
 	bufq_alloc(&sd->buf_queue, BUFQ_DISK_DEFAULT_STRAT, BUFQ_SORT_RAWBLOCK);
@@ -263,6 +263,9 @@ sdattach(device_t parent, device_t self, void *aux)
 	 */
 	aprint_naive("\n");
 	aprint_normal("\n");
+
+	if (periph->periph_quirks & PQUIRK_START)
+		(void)scsipi_start(periph, SSS_START, XS_CTL_SILENT);
 
 	error = scsipi_test_unit_ready(periph,
 	    XS_CTL_DISCOVERY | XS_CTL_IGNORE_ILLEGAL_REQUEST |
@@ -1301,7 +1304,7 @@ sdgetdefaultlabel(struct sd_softc *sd, struct disklabel *lp)
 	lp->d_ncylinders = sd->params.cyls;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
-	switch (scsipi_periph_bustype(sd->sc_periph)) {
+	switch (SCSIPI_BUSTYPE_TYPE(scsipi_periph_bustype(sd->sc_periph))) {
 	case SCSIPI_BUSTYPE_SCSI:
 		lp->d_type = DTYPE_SCSI;
 		break;

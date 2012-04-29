@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.56 2008/07/16 18:50:58 drochner Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.56.32.1 2012/04/29 23:05:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -63,12 +63,23 @@ struct scsibus_softc {
 /* sc_flags */
 #define	SCSIBUSF_OPEN	0x00000001	/* bus is open */
 
+/* SCSI subtypes for struct scsipi_bustype */
+#define SCSIPI_BUSTYPE_SCSI_PSCSI       0 /* parallel SCSI */
+#define SCSIPI_BUSTYPE_SCSI_FC          1 /* Fiber channel */
+#define SCSIPI_BUSTYPE_SCSI_SAS         2 /* SAS */
+#define SCSIPI_BUSTYPE_SCSI_USB         3 /* USB */
+
 extern const struct scsipi_bustype scsi_bustype;
+extern const struct scsipi_bustype scsi_fc_bustype;
+extern const struct scsipi_bustype scsi_sas_bustype;
+extern const struct scsipi_bustype scsi_usb_bustype;
 
 int	scsi_change_def(struct scsipi_periph *, int);
 void	scsi_kill_pending(struct scsipi_periph *);
 void	scsi_print_addr(struct scsipi_periph *);
 int	scsi_probe_bus(struct scsibus_softc *, int, int);
 void	scsi_scsipi_cmd(struct scsipi_xfer *);
+void	scsi_async_event_xfer_mode(struct scsipi_channel *, void *);
+void	scsi_fc_sas_async_event_xfer_mode(struct scsipi_channel *, void *);
 
 #endif /* _DEV_SCSIPI_SCSICONF_H_ */

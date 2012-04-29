@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.23 2011/01/23 09:44:59 skrll Exp $	*/
+/*	$NetBSD: fpu.c,v 1.23.8.1 2012/04/29 23:04:40 mrg Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.23 2011/01/23 09:44:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.23.8.1 2012/04/29 23:04:40 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,8 @@ u_int fpu_csw;
 void hppa_fpu_swapout(struct pcb *);
 void hppa_fpu_swap(struct fpreg *, struct fpreg *);
 
-#ifdef FPEMUL
+static int hppa_fpu_ls(struct trapframe *, struct lwp *);
+
 /*
  * Given a trapframe and a general register number, the 
  * FRAME_REG macro returns a pointer to that general
@@ -131,7 +132,6 @@ const int _frame_reg_positions[32] = {
 	_FRAME_POSITION(tf_sp),		/* r30 */
 	_FRAME_POSITION(tf_r31),
 };
-#endif /* FPEMUL */
 
 /*
  * Bootstraps the FPU.
@@ -141,69 +141,43 @@ hppa_fpu_bootstrap(u_int ccr_enable)
 {
 	uint32_t junk[2];
 	uint32_t vers[2];
-	extern u_int hppa_fpu_nop0;
-	extern u_int hppa_fpu_nop1;
 
 	/* See if we have a present and functioning hardware FPU. */
 	fpu_present = (ccr_enable & HPPA_FPUS) == HPPA_FPUS;
 
+	KASSERT(fpu_present);
 	/* Initialize the FPU and get its version. */
-	if (fpu_present) {
 
-		/*
-		 * To somewhat optimize the emulation
-		 * assist trap handling and context
-		 * switching (to save them from having
-	 	 * to always load and check fpu_present),
-		 * there are two instructions in locore.S
-		 * that are replaced with nops when 
-		 * there is a hardware FPU.
-	 	 */
-		hppa_fpu_nop0 = OPCODE_NOP;
-		hppa_fpu_nop1 = OPCODE_NOP;
-		fcacheall();
+	/*
+	 * We track what process has the FPU,
+	 * and how many times we have to swap
+	 * in and out.
+	 */
 
-		/*
-		 * We track what process has the FPU,
-		 * and how many times we have to swap
-		 * in and out.
-		 */
+	/*
+	 * The PA-RISC 1.1 Architecture manual is 
+	 * pretty clear that the copr,0,0 must be 
+	 * wrapped in double word stores of fr0, 
+	 * otherwise its operation is undefined.
+	 */
+	__asm volatile(
+		"	ldo	%0, %%r22	\n"
+		"	fstds	%%fr0, 0(%%r22)	\n"
+		"	ldo	%1, %%r22	\n"
+		"	copr,0,0		\n"
+		"	fstds	%%fr0, 0(%%r22)	\n"
+		: "=m" (junk), "=m" (vers) : : "r22");
 
-		/*
-		 * The PA-RISC 1.1 Architecture manual is 
-		 * pretty clear that the copr,0,0 must be 
-		 * wrapped in double word stores of fr0, 
-		 * otherwise its operation is undefined.
-		 */
-		__asm volatile(
-			"	ldo	%0, %%r22	\n"
-			"	fstds	%%fr0, 0(%%r22)	\n"
-			"	ldo	%1, %%r22	\n"
-			"	copr,0,0		\n"
-			"	fstds	%%fr0, 0(%%r22)	\n"
-			: "=m" (junk), "=m" (vers) : : "r22");
+	/*
+	 * Now mark that no process has the FPU,
+	 * and disable it, so the first time it
+	 * gets used the process' state gets
+	 * swapped in.
+	 */
+	fpu_csw = 0;
+	curcpu()->ci_fpu_state = 0;
+	mtctl(ccr_enable & (CCR_MASK ^ HPPA_FPUS), CR_CCR);	
 
-		/*
-		 * Now mark that no process has the FPU,
-		 * and disable it, so the first time it
-		 * gets used the process' state gets
-		 * swapped in.
-		 */
-		fpu_csw = 0;
-		curcpu()->ci_fpu_state = 0;
-		mtctl(ccr_enable & (CCR_MASK ^ HPPA_FPUS), CR_CCR);	
-	} 
-#ifdef FPEMUL
-	else
-		/*
-		 * XXX This is a hack - to avoid
-		 * having to set up the emulator so
-		 * it can work for one instruction for
-		 * proc0, we dispatch the copr,0,0 opcode 
-		 * into the emulator directly.  
-		 */
-		decode_0c(OPCODE_COPR_0_0, 0, 0, vers);
-#endif /* FPEMUL */
 	fpu_version = vers[0];
 }
 
@@ -218,12 +192,10 @@ hppa_fpu_flush(struct lwp *l)
 	struct pcb *pcb = lwp_getpcb(l);
 	struct cpu_info *ci = curcpu();
 
-	if (!fpu_present)
-		return;
+	KASSERT(fpu_present);
 
 	/*
-	 * If we have a hardware FPU, and this process'
-	 * state is currently in it, swap it out.
+	 * If this process' state is currently in hardware, swap it out.
 	 */
 	
 	if (ci->ci_fpu_state == 0 ||
@@ -235,12 +207,9 @@ hppa_fpu_flush(struct lwp *l)
 	ci->ci_fpu_state = 0;
 }
 
-#ifdef FPEMUL
-
 /*
  * This emulates a coprocessor load/store instruction.
  */
-static int hppa_fpu_ls(struct trapframe *, struct lwp *);
 static int 
 hppa_fpu_ls(struct trapframe *frame, struct lwp *l)
 {
@@ -448,5 +417,3 @@ hppa_fpu_emulate(struct trapframe *frame, struct lwp *l, u_int inst)
 		trapsignal(l, &ksi);
 	}
 }
-
-#endif /* FPEMUL */

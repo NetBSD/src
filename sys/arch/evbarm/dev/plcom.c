@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.32.8.1 2012/02/18 07:31:50 mrg Exp $	*/
+/*	$NetBSD: plcom.c,v 1.32.8.2 2012/04/29 23:04:39 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.32.8.1 2012/02/18 07:31:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.32.8.2 2012/04/29 23:04:39 mrg Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -280,9 +280,9 @@ plcomspeed(long speed, long frequency)
 #ifdef PLCOM_DEBUG
 int	plcom_debug = 0;
 
-void plcomstatus (struct plcom_softc *, char *);
+void plcomstatus (struct plcom_softc *, const char *);
 void
-plcomstatus(struct plcom_softc *sc, char *str)
+plcomstatus(struct plcom_softc *sc, const char *str)
 {
 	struct tty *tp = sc->sc_tty;
 
@@ -304,6 +304,7 @@ plcomstatus(struct plcom_softc *sc, char *str)
 }
 #endif
 
+/* XXX this function is not used? */
 int
 plcomprobe1(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
