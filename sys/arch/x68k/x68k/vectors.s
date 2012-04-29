@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.16 2011/02/08 20:20:26 rmind Exp $
+|	$NetBSD: vectors.s,v 1.17 2012/04/29 07:17:12 tsutsui Exp $
 
 | Copyright (c) 1988 University of Utah
 | Copyright (c) 1990, 1993
@@ -198,8 +198,8 @@ GLOBAL(vectab)
 	BADTRAP16		/* 192-207: user interrupt vectors */
 	BADTRAP16		/* 208-223: user interrupt vectors */
 	BADTRAP16		/* 224-239: user interrupt vectors */
-	VECTOR(com0trap)	/* 240: unassigned, reserved */
-	VECTOR(com1trap)	/* 241: unassigned, reserved */
+	VECTOR(intiotrap)	/* 240: PSX16550, port1 */
+	VECTOR(intiotrap)	/* 241: PSX16550, port2 */
 	VECTOR(intiotrap)	/* 242: unassigned, reserved */
 	VECTOR(intiotrap)	/* 243: unassigned, reserved */
 	VECTOR(intiotrap)	/* 244: unassigned, reserved */
