@@ -1,4 +1,4 @@
-/*	$NetBSD: bwivar.h,v 1.8 2011/10/15 19:50:20 dholland Exp $	*/
+/*	$NetBSD: bwivar.h,v 1.8.6.1 2012/04/29 23:04:49 mrg Exp $	*/
 /*	$OpenBSD: bwivar.h,v 1.23 2008/02/25 20:36:54 mglocker Exp $	*/
 
 /*
@@ -620,8 +620,8 @@ struct bwi_softc {
 
 	void			 (*sc_txeof_status)(struct bwi_softc *);
 
-	int			 (*sc_enable)(struct bwi_softc *); 
-	void			 (*sc_disable)(struct bwi_softc *);
+	int			 (*sc_enable)(struct bwi_softc *, int);
+	void			 (*sc_disable)(struct bwi_softc *, int);
 
 	void			 (*sc_conf_write)(void *, uint32_t, uint32_t);
 	uint32_t		 (*sc_conf_read)(void *, uint32_t);

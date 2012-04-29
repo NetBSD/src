@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.162.4.2 2012/04/05 21:33:37 mrg Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.162.4.3 2012/04/29 23:05:03 mrg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.162.4.2 2012/04/05 21:33:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.162.4.3 2012/04/29 23:05:03 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.162.4.2 2012/04/05 21:33:37 mrg Ex
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/proc.h>
+#include <sys/kernel.h> /* For hz, hardclock_ticks */
 
 #include <uvm/uvm.h>
 
@@ -298,6 +299,11 @@ const struct vnodeopv_entry_desc puffs_msgop_entries[] = {
 const struct vnodeopv_desc puffs_msgop_opv_desc =
 	{ &puffs_msgop_p, puffs_msgop_entries };
 
+/*
+ * for dosetattr / update_va 
+ */
+#define SETATTR_CHSIZE	0x01
+#define SETATTR_ASYNC	0x02
 
 #define ERROUT(err)							\
 do {									\
@@ -410,6 +416,8 @@ static int callrmdir(struct puffs_mount *, puffs_cookie_t, puffs_cookie_t,
 static void callinactive(struct puffs_mount *, puffs_cookie_t, int);
 static void callreclaim(struct puffs_mount *, puffs_cookie_t);
 static int  flushvncache(struct vnode *, off_t, off_t, bool);
+static void update_va(struct vnode *, struct vattr *, struct vattr *,
+		      struct timespec *, struct timespec *, int);
 
 
 #define PUFFS_ABORT_LOOKUP	1
@@ -455,6 +463,12 @@ puffs_abortbutton(struct puffs_mount *pmp, int what,
  * don't want to think of the consequences for the time being.
  */
 
+#define TTL_TO_TIMEOUT(ts) \
+    (hardclock_ticks + (ts->tv_sec * hz) + (ts->tv_nsec * hz / 1000000000))
+#define TTL_VALID(ts) \
+    ((ts != NULL) && !((ts->tv_sec == 0) && (ts->tv_nsec == 0)))
+#define TIMED_OUT(expire) \
+    ((int)((unsigned int)hardclock_ticks - (unsigned int)expire) > 0)
 int
 puffs_vnop_lookup(void *v)
 {
@@ -467,14 +481,16 @@ puffs_vnop_lookup(void *v)
 	PUFFS_MSG_VARS(vn, lookup);
 	struct puffs_mount *pmp;
 	struct componentname *cnp;
-	struct vnode *vp, *dvp;
-	struct puffs_node *dpn;
+	struct vnode *vp, *dvp, *cvp;
+	struct puffs_node *dpn, *cpn;
 	int isdot;
 	int error;
 
 	pmp = MPTOPUFFSMP(ap->a_dvp->v_mount);
 	cnp = ap->a_cnp;
 	dvp = ap->a_dvp;
+	cvp = NULL;
+	cpn = NULL;
 	*ap->a_vpp = NULL;
 
 	/* r/o fs?  we check create later to handle EEXIST */
@@ -494,7 +510,31 @@ puffs_vnop_lookup(void *v)
 	if (PUFFS_USE_NAMECACHE(pmp)) {
 		error = cache_lookup(dvp, ap->a_vpp, cnp);
 
-		if (error >= 0)
+		if ((error == 0) && PUFFS_USE_FS_TTL(pmp)) {
+
+			cvp = *ap->a_vpp;
+			cpn = VPTOPP(cvp);
+			if (TIMED_OUT(cpn->pn_cn_timeout)) {
+				cache_purge1(cvp, NULL, PURGE_CHILDREN);
+
+				/*
+				 * cached vnode (cvp) is still locked
+				 * so that we can reuse it upon a new
+				 * successful lookup. 
+				 */
+				*ap->a_vpp = NULL;
+				error = -1;
+			}
+		}
+
+		/*
+		 * Do not use negative caching, since the filesystem
+		 * provides no TTL for it.
+		 */
+		if ((error == ENOENT) && PUFFS_USE_FS_TTL(pmp))
+			error = -1;
+
+		if (error >= 0) 
 			return error;
 	}
 
@@ -503,11 +543,17 @@ puffs_vnop_lookup(void *v)
 		if (cnp->cn_nameiop == RENAME && (cnp->cn_flags & ISLASTCN))
 			return EISDIR;
 
+		if (cvp != NULL) 
+			vput(cvp);
+
 		vp = ap->a_dvp;
 		vref(vp);
 		*ap->a_vpp = vp;
 		return 0;
 	}
+
+	if (cvp != NULL)
+		mutex_enter(&cpn->pn_sizemtx);
 
 	PUFFS_MSG_ALLOC(vn, lookup);
 	puffs_makecn(&lookup_msg->pvnr_cn, &lookup_msg->pvnr_cn_cred,
@@ -545,7 +591,8 @@ puffs_vnop_lookup(void *v)
 			/* save negative cache entry */
 			} else {
 				if ((cnp->cn_flags & MAKEENTRY)
-				    && PUFFS_USE_NAMECACHE(pmp))
+				    && PUFFS_USE_NAMECACHE(pmp)
+				    && !PUFFS_USE_FS_TTL(pmp))
 					cache_enter(dvp, NULL, cnp);
 			}
 		}
@@ -564,21 +611,42 @@ puffs_vnop_lookup(void *v)
 		goto out;
 	}
 
-	error = puffs_cookie2vnode(pmp, lookup_msg->pvnr_newnode, 1, 1, &vp);
-	if (error == PUFFS_NOSUCHCOOKIE) {
-		error = puffs_getvnode(dvp->v_mount,
-		    lookup_msg->pvnr_newnode, lookup_msg->pvnr_vtype,
-		    lookup_msg->pvnr_size, lookup_msg->pvnr_rdev, &vp);
-		if (error) {
+	/*
+	 * On successfull relookup, do not create a new node.
+	 */
+	if (cvp != NULL) {
+		vp = cvp;
+	} else {
+		error = puffs_cookie2vnode(pmp, lookup_msg->pvnr_newnode,
+					   1, 1, &vp);
+
+		if (error == PUFFS_NOSUCHCOOKIE) {
+			error = puffs_getvnode(dvp->v_mount,
+			    lookup_msg->pvnr_newnode, lookup_msg->pvnr_vtype,
+			    lookup_msg->pvnr_size, lookup_msg->pvnr_rdev, &vp);
+			if (error) {
+				puffs_abortbutton(pmp, PUFFS_ABORT_LOOKUP,
+				    VPTOPNC(dvp), lookup_msg->pvnr_newnode,
+				    ap->a_cnp);
+				goto out;
+			}
+
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+		} else if (error) {
 			puffs_abortbutton(pmp, PUFFS_ABORT_LOOKUP, VPTOPNC(dvp),
 			    lookup_msg->pvnr_newnode, ap->a_cnp);
 			goto out;
 		}
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	} else if (error) {
-		puffs_abortbutton(pmp, PUFFS_ABORT_LOOKUP, VPTOPNC(dvp),
-		    lookup_msg->pvnr_newnode, ap->a_cnp);
-		goto out;
+	}
+
+	/*
+	 * Update cache and TTL
+	 */
+	if (PUFFS_USE_FS_TTL(pmp)) {
+		struct timespec *va_ttl = &lookup_msg->pvnr_va_ttl;
+		struct timespec *cn_ttl = &lookup_msg->pvnr_cn_ttl;
+		update_va(vp, NULL, &lookup_msg->pvnr_va, 
+			  va_ttl, cn_ttl, SETATTR_CHSIZE);
 	}
 
 	*ap->a_vpp = vp;
@@ -594,6 +662,16 @@ puffs_vnop_lookup(void *v)
 		    strlen(cnp->cn_nameptr) - cnp->cn_namelen);
 
  out:
+	if (cvp != NULL) {
+		mutex_exit(&cpn->pn_sizemtx);
+	 	/*
+		 * We had a cached vnode but new lookup failed, 	
+		 * unlock it and let it die now.
+		 */
+		if (error != 0)
+			vput(cvp);
+	}
+
 	if (cnp->cn_flags & ISDOTDOT)
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 
@@ -658,9 +736,20 @@ puffs_vnop_create(void *v)
 
 	error = puffs_newnode(mp, dvp, ap->a_vpp,
 	    create_msg->pvnr_newnode, cnp, ap->a_vap->va_type, 0);
-	if (error)
+	if (error) {
 		puffs_abortbutton(pmp, PUFFS_ABORT_CREATE, dpn->pn_cookie,
 		    create_msg->pvnr_newnode, cnp);
+		goto out;
+	}
+
+	if (PUFFS_USE_FS_TTL(pmp)) {
+		struct timespec *va_ttl = &create_msg->pvnr_va_ttl;
+		struct timespec *cn_ttl = &create_msg->pvnr_cn_ttl;
+		struct vattr *rvap = &create_msg->pvnr_va;
+
+		update_va(*ap->a_vpp, NULL, rvap, 
+			  va_ttl, cn_ttl, SETATTR_CHSIZE);
+	}
 
  out:
 	vput(dvp);
@@ -704,9 +793,20 @@ puffs_vnop_mknod(void *v)
 	error = puffs_newnode(mp, dvp, ap->a_vpp,
 	    mknod_msg->pvnr_newnode, cnp, ap->a_vap->va_type,
 	    ap->a_vap->va_rdev);
-	if (error)
+	if (error) {
 		puffs_abortbutton(pmp, PUFFS_ABORT_MKNOD, dpn->pn_cookie,
 		    mknod_msg->pvnr_newnode, cnp);
+		goto out;
+	}
+
+	if (PUFFS_USE_FS_TTL(pmp)) {
+		struct timespec *va_ttl = &mknod_msg->pvnr_va_ttl;
+		struct timespec *cn_ttl = &mknod_msg->pvnr_cn_ttl;
+		struct vattr *rvap = &mknod_msg->pvnr_va;
+
+		update_va(*ap->a_vpp, NULL, rvap, 
+			   va_ttl, cn_ttl, SETATTR_CHSIZE);
+	}
 
  out:
 	vput(dvp);
@@ -822,6 +922,60 @@ puffs_vnop_access(void *v)
 	return error;
 }
 
+static void
+update_va(struct vnode *vp, struct vattr *vap, struct vattr *rvap,
+	  struct timespec *va_ttl, struct timespec *cn_ttl, int flags)
+{
+	struct puffs_node *pn = VPTOPP(vp);
+
+	if (TTL_VALID(cn_ttl))
+		pn->pn_cn_timeout = TTL_TO_TIMEOUT(cn_ttl);
+
+	/*
+	 * Don't listen to the file server regarding special device
+	 * size info, the file server doesn't know anything about them.
+	 */
+	if (vp->v_type == VBLK || vp->v_type == VCHR)
+		rvap->va_size = vp->v_size;
+
+	/* Ditto for blocksize (ufs comment: this doesn't belong here) */
+	if (vp->v_type == VBLK)
+		rvap->va_blocksize = BLKDEV_IOSIZE;
+	else if (vp->v_type == VCHR)
+		rvap->va_blocksize = MAXBSIZE;
+
+	if (vap != NULL) {
+		(void) memcpy(vap, rvap, sizeof(struct vattr));
+		vap->va_fsid = vp->v_mount->mnt_stat.f_fsidx.__fsid_val[0];
+
+		if (pn->pn_stat & PNODE_METACACHE_ATIME)
+			vap->va_atime = pn->pn_mc_atime;
+		if (pn->pn_stat & PNODE_METACACHE_CTIME)
+			vap->va_ctime = pn->pn_mc_ctime;
+		if (pn->pn_stat & PNODE_METACACHE_MTIME)
+			vap->va_mtime = pn->pn_mc_mtime;
+		if (pn->pn_stat & PNODE_METACACHE_SIZE)
+			vap->va_size = pn->pn_mc_size;
+	}
+
+	if (!(pn->pn_stat & PNODE_METACACHE_SIZE) && (flags & SETATTR_CHSIZE)) {
+		if (rvap->va_size != VNOVAL
+		    && vp->v_type != VBLK && vp->v_type != VCHR) {
+			uvm_vnp_setsize(vp, rvap->va_size);
+			pn->pn_serversize = rvap->va_size;
+		}
+	}
+
+	if ((va_ttl != NULL) && TTL_VALID(va_ttl)) {
+		if (pn->pn_va_cache == NULL)
+			pn->pn_va_cache = pool_get(&puffs_vapool, PR_WAITOK);
+
+		(void)memcpy(pn->pn_va_cache, rvap, sizeof(*rvap));
+
+		pn->pn_va_timeout = TTL_TO_TIMEOUT(va_ttl);
+	}
+}
+
 int
 puffs_vnop_getattr(void *v)
 {
@@ -837,6 +991,7 @@ puffs_vnop_getattr(void *v)
 	struct puffs_mount *pmp = MPTOPUFFSMP(mp);
 	struct vattr *vap, *rvap;
 	struct puffs_node *pn = VPTOPP(vp);
+	struct timespec *va_ttl = NULL;
 	int error = 0;
 
 	/*
@@ -857,6 +1012,14 @@ puffs_vnop_getattr(void *v)
 	REFPN(pn);
 	vap = ap->a_vap;
 
+	if (PUFFS_USE_FS_TTL(pmp)) {
+		if (!TIMED_OUT(pn->pn_va_timeout)) {
+			update_va(vp, vap, pn->pn_va_cache, 
+				  NULL, NULL, SETATTR_CHSIZE);
+			goto out2;
+		}
+	}
+
 	PUFFS_MSG_ALLOC(vn, getattr);
 	vattr_null(&getattr_msg->pvnr_va);
 	puffs_credcvt(&getattr_msg->pvnr_cred, ap->a_cred);
@@ -869,49 +1032,23 @@ puffs_vnop_getattr(void *v)
 		goto out;
 
 	rvap = &getattr_msg->pvnr_va;
-	/*
-	 * Don't listen to the file server regarding special device
-	 * size info, the file server doesn't know anything about them.
-	 */
-	if (vp->v_type == VBLK || vp->v_type == VCHR)
-		rvap->va_size = vp->v_size;
 
-	/* Ditto for blocksize (ufs comment: this doesn't belong here) */
-	if (vp->v_type == VBLK)
-		rvap->va_blocksize = BLKDEV_IOSIZE;
-	else if (vp->v_type == VCHR)
-		rvap->va_blocksize = MAXBSIZE;
+	if (PUFFS_USE_FS_TTL(pmp))
+		va_ttl = &getattr_msg->pvnr_va_ttl;
 
-	(void) memcpy(vap, rvap, sizeof(struct vattr));
-	vap->va_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
-
-	if (pn->pn_stat & PNODE_METACACHE_ATIME)
-		vap->va_atime = pn->pn_mc_atime;
-	if (pn->pn_stat & PNODE_METACACHE_CTIME)
-		vap->va_ctime = pn->pn_mc_ctime;
-	if (pn->pn_stat & PNODE_METACACHE_MTIME)
-		vap->va_mtime = pn->pn_mc_mtime;
-	if (pn->pn_stat & PNODE_METACACHE_SIZE) {
-		vap->va_size = pn->pn_mc_size;
-	} else {
-		if (rvap->va_size != VNOVAL
-		    && vp->v_type != VBLK && vp->v_type != VCHR) {
-			uvm_vnp_setsize(vp, rvap->va_size);
-			pn->pn_serversize = rvap->va_size;
-		}
-	}
+	update_va(vp, vap, rvap, va_ttl, NULL, SETATTR_CHSIZE);
 
  out:
-	puffs_releasenode(pn);
 	PUFFS_MSG_RELEASE(getattr);
+
+ out2:
+	puffs_releasenode(pn);
 	
 	mutex_exit(&pn->pn_sizemtx);
 
 	return error;
 }
 
-#define SETATTR_CHSIZE	0x01
-#define SETATTR_ASYNC	0x02
 static int
 dosetattr(struct vnode *vp, struct vattr *vap, kauth_cred_t cred, int flags)
 {
@@ -954,6 +1091,13 @@ dosetattr(struct vnode *vp, struct vattr *vap, kauth_cred_t cred, int flags)
 		pn->pn_stat &= ~PNODE_METACACHE_MASK;
 	}
 
+	/*
+	 * Flush attribute cache so that another thread do 
+	 * not get a stale value during the operation.
+	 */
+	if (PUFFS_USE_FS_TTL(pmp))
+		pn->pn_va_timeout = 0;
+
 	PUFFS_MSG_ALLOC(vn, setattr);
 	(void)memcpy(&setattr_msg->pvnr_va, vap, sizeof(struct vattr));
 	puffs_credcvt(&setattr_msg->pvnr_cred, cred);
@@ -965,6 +1109,14 @@ dosetattr(struct vnode *vp, struct vattr *vap, kauth_cred_t cred, int flags)
 	puffs_msg_enqueue(pmp, park_setattr);
 	if ((flags & SETATTR_ASYNC) == 0)
 		error = puffs_msg_wait2(pmp, park_setattr, vp->v_data, NULL);
+
+	if ((error == 0) && PUFFS_USE_FS_TTL(pmp)) {
+		struct timespec *va_ttl = &setattr_msg->pvnr_va_ttl;
+		struct vattr *rvap = &setattr_msg->pvnr_va;
+
+		update_va(vp, NULL, rvap, va_ttl, NULL, flags);
+	}
+
 	PUFFS_MSG_RELEASE(setattr);
 	if ((flags & SETATTR_ASYNC) == 0) {
 		error = checkerr(pmp, error, __func__);
@@ -1340,6 +1492,7 @@ flushvncache(struct vnode *vp, off_t offlo, off_t offhi, bool wait)
 	pflags = PGO_CLEANIT;
 	if (wait)
 		pflags |= PGO_SYNCIO;
+
 	mutex_enter(vp->v_interlock);
 	return VOP_PUTPAGES(vp, trunc_page(offlo), round_page(offhi), pflags);
 }
@@ -1550,9 +1703,20 @@ puffs_vnop_mkdir(void *v)
 
 	error = puffs_newnode(mp, dvp, ap->a_vpp,
 	    mkdir_msg->pvnr_newnode, cnp, VDIR, 0);
-	if (error)
+	if (error) {
 		puffs_abortbutton(pmp, PUFFS_ABORT_MKDIR, dpn->pn_cookie,
 		    mkdir_msg->pvnr_newnode, cnp);
+		goto out;
+	}
+
+	if (PUFFS_USE_FS_TTL(pmp)) {
+		struct timespec *va_ttl = &mkdir_msg->pvnr_va_ttl;
+		struct timespec *cn_ttl = &mkdir_msg->pvnr_cn_ttl;
+		struct vattr *rvap = &mkdir_msg->pvnr_va;
+
+		update_va(*ap->a_vpp, NULL, rvap, 
+			  va_ttl, cn_ttl, SETATTR_CHSIZE);
+	}
 
  out:
 	vput(dvp);
@@ -1703,9 +1867,20 @@ puffs_vnop_symlink(void *v)
 
 	error = puffs_newnode(mp, dvp, ap->a_vpp,
 	    symlink_msg->pvnr_newnode, cnp, VLNK, 0);
-	if (error)
+	if (error) {
 		puffs_abortbutton(pmp, PUFFS_ABORT_SYMLINK, dpn->pn_cookie,
 		    symlink_msg->pvnr_newnode, cnp);
+		goto out;
+	}
+
+	if (PUFFS_USE_FS_TTL(pmp)) {
+		struct timespec *va_ttl = &symlink_msg->pvnr_va_ttl;
+		struct timespec *cn_ttl = &symlink_msg->pvnr_cn_ttl;
+		struct vattr *rvap = &symlink_msg->pvnr_va;
+
+		update_va(*ap->a_vpp, NULL, rvap, 
+			  va_ttl, cn_ttl, SETATTR_CHSIZE);
+	}
 
  out:
 	vput(dvp);

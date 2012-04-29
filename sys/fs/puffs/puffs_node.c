@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_node.c,v 1.22.6.1 2012/02/18 07:35:24 mrg Exp $	*/
+/*	$NetBSD: puffs_node.c,v 1.22.6.2 2012/04/29 23:05:03 mrg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.22.6.1 2012/02/18 07:35:24 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.22.6.2 2012/04/29 23:05:03 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/hash.h>
@@ -63,6 +63,7 @@ static struct puffs_node *puffs_cookie2pnode(struct puffs_mount *,
 					     puffs_cookie_t);
 
 struct pool puffs_pnpool;
+struct pool puffs_vapool;
 
 /*
  * Grab a vnode, intialize all the puffs-dependent stuff.
@@ -483,6 +484,8 @@ puffs_releasenode(struct puffs_node *pn)
 		mutex_destroy(&pn->pn_mtx);
 		mutex_destroy(&pn->pn_sizemtx);
 		seldestroy(&pn->pn_sel);
+		if (pn->pn_va_cache != NULL)
+			pool_put(&puffs_vapool, pn->pn_va_cache);
 		pool_put(&puffs_pnpool, pn);
 	} else {
 		mutex_exit(&pn->pn_mtx);

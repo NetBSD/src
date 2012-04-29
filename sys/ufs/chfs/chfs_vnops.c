@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.2.2.1 2012/04/05 21:33:51 mrg Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.2.2.2 2012/04/29 23:05:08 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -102,7 +102,7 @@ chfs_lookup(void *v)
 	mutex_exit(&chmp->chm_lock_vnocache);
 
 	// We cannot be requesting the parent directory of the root node.
-	KASSERT(IMPLIES(dvp->v_type == VDIR && chvc->pvno == chvc->vno,
+	KASSERT(IMPLIES(ip->ch_type == CHT_DIR && chvc->pvno == chvc->vno,
 		!(cnp->cn_flags & ISDOTDOT)));
 
 	if (cnp->cn_flags & ISDOTDOT) {
@@ -140,7 +140,7 @@ chfs_lookup(void *v)
 			// found a non-directory or non-link entry (which
 			// may itself be pointing to a directory), raise
 			// an error.
-			if ((fd->type != VDIR && fd->type != VLNK) && !(cnp->cn_flags
+			if ((fd->type != CHT_DIR && fd->type != CHT_LNK) && !(cnp->cn_flags
 				& ISLASTCN)) {
 				error = ENOTDIR;
 				goto out;
@@ -411,7 +411,7 @@ chfs_getattr(void *v)
 	vattr_null(vap);
 	CHFS_ITIMES(ip, NULL, NULL, NULL);
 
-	vap->va_type = vp->v_type;
+	vap->va_type = CHTTOVT(ip->ch_type);
 	vap->va_mode = ip->mode & ALLPERMS;
 	vap->va_nlink = ip->chvc->nlink;
 	vap->va_uid = ip->uid;
@@ -969,16 +969,14 @@ out:
 	ip->iflag |= IN_CHANGE | IN_UPDATE;
 	if (resid > uio->uio_resid && ap->a_cred) {
 		if (ip->mode & ISUID) {
-			error = kauth_authorize_vnode(ap->a_cred, KAUTH_VNODE_RETAIN_SUID, vp,
-			    NULL, EPERM);
-			if (error)
+			if (kauth_authorize_vnode(ap->a_cred,
+			    KAUTH_VNODE_RETAIN_SUID, vp, NULL, EPERM) != 0)
 				ip->mode &= ~ISUID;
 		}
 
 		if (ip->mode & ISGID) {
-			error = kauth_authorize_vnode(ap->a_cred, KAUTH_VNODE_RETAIN_SGID, vp,
-			    NULL, EPERM);
-			if (error)
+			if (kauth_authorize_vnode(ap->a_cred,
+			    KAUTH_VNODE_RETAIN_SGID, vp, NULL, EPERM) != 0)
 				ip->mode &= ~ISGID;
 		}
 	}
@@ -1096,7 +1094,7 @@ chfs_link(void *v)
 	ip = VTOI(vp);
 
 	error = chfs_do_link(ip,
-	    parent, cnp->cn_nameptr, cnp->cn_namelen, vp->v_type);
+	    parent, cnp->cn_nameptr, cnp->cn_namelen, ip->ch_type);
 
 	if (dvp != vp)
 		VOP_UNLOCK(vp);
@@ -1159,7 +1157,7 @@ chfs_rename(void *v)
 //	     oldfd = oldfd->next);
 
 	error = chfs_do_link(ip,
-	    newparent, tcnp->cn_nameptr, tcnp->cn_namelen, tvp->v_type);
+	    newparent, tcnp->cn_nameptr, tcnp->cn_namelen, ip->ch_type);
 	error = chfs_do_unlink(old,
 	    oldparent, fcnp->cn_nameptr, fcnp->cn_namelen);
 
@@ -1362,7 +1360,7 @@ chfs_readdir(void *v)
 	offset = uio->uio_offset;
 
 	if (offset == CHFS_OFFSET_DOT) {
-		error = chfs_filldir(uio, ip->ino, ".", 1, VDIR);
+		error = chfs_filldir(uio, ip->ino, ".", 1, CHT_DIR);
 		if (error == -1) {
 			error = 0;
 			goto outok;
@@ -1379,7 +1377,7 @@ chfs_readdir(void *v)
 		chvc = chfs_vnode_cache_get(chmp, ip->ino);
 		mutex_exit(&chmp->chm_lock_vnocache);
 
-		error = chfs_filldir(uio, chvc->pvno, "..", 2, VDIR);
+		error = chfs_filldir(uio, chvc->pvno, "..", 2, CHT_DIR);
 		if (error == -1) {
 			error = 0;
 			goto outok;
@@ -1504,9 +1502,11 @@ chfs_reclaim(void *v)
 
 	chfs_update(vp, NULL, NULL, UPDATE_CLOSE);
 
-	if (vp->v_type == VREG || vp->v_type == VLNK || vp->v_type == VCHR ||
-	    vp->v_type == VBLK || vp->v_type == VFIFO || vp->v_type == VSOCK)
+	if (ip->ch_type == CHT_REG || ip->ch_type == CHT_LNK ||
+		ip->ch_type == CHT_CHR || ip->ch_type == CHT_BLK || 
+		ip->ch_type == CHT_FIFO || ip->ch_type == CHT_SOCK) {
 		chfs_kill_fragtree(&ip->fragtree);
+	}
 
 	fd = TAILQ_FIRST(&ip->dents);
 	while(fd) {

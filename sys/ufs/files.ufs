@@ -1,4 +1,4 @@
-#	$NetBSD: files.ufs,v 1.27 2011/11/24 15:51:31 ahoka Exp $
+#	$NetBSD: files.ufs,v 1.27.2.1 2012/04/29 23:05:08 mrg Exp $
 
 deffs					FFS
 deffs					EXT2FS
@@ -36,7 +36,6 @@ file	ufs/chfs/chfs_gc.c		chfs
 file	ufs/chfs/chfs_nodeops.c		chfs
 file	ufs/chfs/chfs_malloc.c		chfs
 file	ufs/chfs/chfs_pool.c		chfs
-file	ufs/chfs/debug.c			chfs
 file	ufs/chfs/chfs_vnode.c		chfs
 file	ufs/chfs/chfs_subr.c		chfs
 file	ufs/chfs/chfs_vfsops.c		chfs

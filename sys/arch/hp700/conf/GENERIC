@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.108.2.2 2012/03/11 01:52:21 mrg Exp $
+# $NetBSD: GENERIC,v 1.108.2.3 2012/04/29 23:04:39 mrg Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.108.2.2 $"
+#ident 		"GENERIC-$Revision: 1.108.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -40,7 +40,6 @@ options 	HP8600_CPU		# PCX-W+ (in 32bit mode)
 options 	HP8700_CPU		# PCX-W2 (in 32bit mode)
 
 # CPU-related options.
-options 	FPEMUL		# floating point emulation XXX DO NOT REMOVE
 options 	USELEDS		# blink 'em
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds

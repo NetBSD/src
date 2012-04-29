@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.332.2.4 2012/04/05 21:33:38 mrg Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.332.2.5 2012/04/29 23:05:04 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.332.2.4 2012/04/05 21:33:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.332.2.5 2012/04/29 23:05:04 mrg Exp $");
 
 #include "opt_exec.h"
 #include "opt_ktrace.h"
@@ -237,14 +237,14 @@ struct execve_data {
  */
 struct spawn_exec_data {
 	struct execve_data	sed_exec;
-	size_t 			sed_actions_len;
-	struct posix_spawn_file_actions_entry 
+	struct posix_spawn_file_actions
 				*sed_actions;
 	struct posix_spawnattr	*sed_attrs;
 	struct proc		*sed_parent;
 	kcondvar_t		sed_cv_child_ready;
 	kmutex_t		sed_mtx_child;
 	int			sed_error;
+	volatile uint32_t	sed_refcnt;
 };
 
 static void *
@@ -842,8 +842,38 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	return error;
 }
 
+static void
+execve_free_data(struct execve_data *data)
+{
+
+	/* free the vmspace-creation commands, and release their references */
+	kill_vmcmds(&data->ed_pack.ep_vmcmds);
+	/* kill any opened file descriptor, if necessary */
+	if (data->ed_pack.ep_flags & EXEC_HASFD) {
+		data->ed_pack.ep_flags &= ~EXEC_HASFD;
+		fd_close(data->ed_pack.ep_fd);
+	}
+
+	/* close and put the exec'd file */
+	vn_lock(data->ed_pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
+	VOP_CLOSE(data->ed_pack.ep_vp, FREAD, curlwp->l_cred);
+	vput(data->ed_pack.ep_vp);
+	pool_put(&exec_pool, data->ed_argp);
+
+	kmem_free(data->ed_pack.ep_hdr, data->ed_pack.ep_hdrlen);
+	if (data->ed_pack.ep_emul_root != NULL)
+		vrele(data->ed_pack.ep_emul_root);
+	if (data->ed_pack.ep_interp != NULL)
+		vrele(data->ed_pack.ep_interp);
+
+	pathbuf_stringcopy_put(data->ed_pathbuf, data->ed_pathstring);
+	pathbuf_destroy(data->ed_pathbuf);
+	PNBUF_PUT(data->ed_resolvedpathbuf);
+}
+
 static int
-execve_runproc(struct lwp *l, struct execve_data * restrict data)
+execve_runproc(struct lwp *l, struct execve_data * restrict data,
+	bool no_local_exec_lock, bool is_spawn)
 {
 	int error = 0;
 	struct proc		*p;
@@ -856,15 +886,20 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data)
 	struct vmspace		*vm;
 	ksiginfo_t		ksi;
 	ksiginfoq_t		kq;
-	bool			proc_is_new;
 
-	KASSERT(rw_lock_held(&exec_lock));
+	/*
+	 * In case of a posix_spawn operation, the child doing the exec
+	 * might not hold the reader lock on exec_lock, but the parent
+	 * will do this instead.
+	 */
+	KASSERT(no_local_exec_lock || rw_lock_held(&exec_lock));
 	KASSERT(data != NULL);
 	if (data == NULL)
 		return (EINVAL);
 
 	p = l->l_proc;
-	proc_is_new = p->p_vmspace == NULL;
+	if (no_local_exec_lock)
+		KASSERT(is_spawn);
 
 	base_vcp = NULL;
 
@@ -893,7 +928,12 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data)
 	 * for remapping.  Note that this might replace the current
 	 * vmspace with another!
 	 */
-	uvmspace_exec(l, data->ed_pack.ep_vm_minaddr, data->ed_pack.ep_vm_maxaddr);
+	if (is_spawn)
+		uvmspace_spawn(l, data->ed_pack.ep_vm_minaddr,
+		    data->ed_pack.ep_vm_maxaddr);
+	else
+		uvmspace_exec(l, data->ed_pack.ep_vm_minaddr,
+		    data->ed_pack.ep_vm_maxaddr);
 
 	/* record proc's vnode, for use by procfs and others */
         if (p->p_textvp)
@@ -1318,7 +1358,8 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data)
 
 	/* Allow new references from the debugger/procfs. */
 	rw_exit(&p->p_reflock);
-	rw_exit(&exec_lock);
+	if (!no_local_exec_lock)
+		rw_exit(&exec_lock);
 
 	mutex_enter(proc_lock);
 
@@ -1360,7 +1401,8 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data)
  exec_abort:
 	SDT_PROBE(proc,,,exec_failure, error, 0, 0, 0, 0);
 	rw_exit(&p->p_reflock);
-	rw_exit(&exec_lock);
+	if (!no_local_exec_lock)
+		rw_exit(&exec_lock);
 
 	pathbuf_stringcopy_put(data->ed_pathbuf, data->ed_pathstring);
 	pathbuf_destroy(data->ed_pathbuf);
@@ -1373,6 +1415,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data)
 	 */
 	uvm_deallocate(&vm->vm_map, VM_MIN_ADDRESS,
 		VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
+
 	exec_free_emul_arg(&data->ed_pack);
 	pool_put(&exec_pool, data->ed_argp);
 	kmem_free(data->ed_pack.ep_hdr, data->ed_pack.ep_hdrlen);
@@ -1382,13 +1425,12 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data)
 		vrele(data->ed_pack.ep_interp);
 
 	/* Acquire the sched-state mutex (exit1() will release it). */
-	if (!proc_is_new) {
+	if (!is_spawn) {
 		mutex_enter(p->p_lock);
 		exit1(l, W_EXITCODE(error, SIGABRT));
 	}
 
-	/* NOTREACHED */
-	return 0;
+	return error;
 }
 
 int
@@ -1401,7 +1443,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	error = execve_loadvm(l, path, args, envs, fetch_element, &data);
 	if (error)
 		return error;
-	error = execve_runproc(l, &data);
+	error = execve_runproc(l, &data, false, false);
 	return error;
 }
 
@@ -1729,9 +1771,38 @@ exec_sigcode_map(struct proc *p, const struct emul *e)
 }
 
 /*
+ * Release a refcount on spawn_exec_data and destroy memory, if this
+ * was the last one.
+ */
+static void
+spawn_exec_data_release(struct spawn_exec_data *data)
+{
+	if (atomic_dec_32_nv(&data->sed_refcnt) != 0)
+		return;
+
+	cv_destroy(&data->sed_cv_child_ready);
+	mutex_destroy(&data->sed_mtx_child);
+
+	if (data->sed_actions)
+		posix_spawn_fa_free(data->sed_actions,
+		    data->sed_actions->len);
+	if (data->sed_attrs)
+		kmem_free(data->sed_attrs,
+		    sizeof(*data->sed_attrs));
+	kmem_free(data, sizeof(*data));
+}
+
+/*
  * A child lwp of a posix_spawn operation starts here and ends up in
  * cpu_spawn_return, dealing with all filedescriptor and scheduler
  * manipulations in between.
+ * The parent waits for the child, as it is not clear wether the child
+ * will be able to aquire its own exec_lock. If it can, the parent can
+ * be released early and continue running in parallel. If not (or if the
+ * magic debug flag is passed in the scheduler attribute struct), the
+ * child rides on the parent's exec lock untill it is ready to return to
+ * to userland - and only then releases the parent. This method loses
+ * concurrency, but improves error reporting.
  */
 static void
 spawn_return(void *arg)
@@ -1741,19 +1812,29 @@ spawn_return(void *arg)
 	int error, newfd;
 	size_t i;
 	const struct posix_spawn_file_actions_entry *fae;
+	pid_t ppid;
 	register_t retval;
 	bool have_reflock;
-
-	/* we have been created non-preemptable */
-	KASSERT(l->l_nopreempt == 1);
+	bool parent_is_waiting = true;
 
 	/*
-	 * The following actions may block, so we need a temporary
-	 * vmspace - borrow the kernel one
+	 * Check if we can release parent early.
+	 * We either need to have no sed_attrs, or sed_attrs does not
+	 * have POSIX_SPAWN_RETURNERROR or one of the flags, that require
+	 * safe access to the parent proc (passed in sed_parent).
+	 * We then try to get the exec_lock, and only if that works, we can
+	 * release the parent here already.
 	 */
-	l->l_proc->p_vmspace = proc0.p_vmspace;
-	pmap_activate(l);
-	KPREEMPT_ENABLE(l);
+	ppid = spawn_data->sed_parent->p_pid;
+	if ((!spawn_data->sed_attrs
+	    || (spawn_data->sed_attrs->sa_flags
+	        & (POSIX_SPAWN_RETURNERROR|POSIX_SPAWN_SETPGROUP)) == 0)
+	    && rw_tryenter(&exec_lock, RW_READER)) {
+		parent_is_waiting = false;
+		mutex_enter(&spawn_data->sed_mtx_child);
+		cv_signal(&spawn_data->sed_cv_child_ready);
+		mutex_exit(&spawn_data->sed_mtx_child);
+	}
 
 	/* don't allow debugger access yet */
 	rw_enter(&l->l_proc->p_reflock, RW_WRITER);
@@ -1762,8 +1843,8 @@ spawn_return(void *arg)
 	error = 0;
 	/* handle posix_spawn_file_actions */
 	if (spawn_data->sed_actions != NULL) {
-		for (i = 0; i < spawn_data->sed_actions_len; i++) {
-			fae = &spawn_data->sed_actions[i];
+		for (i = 0; i < spawn_data->sed_actions->len; i++) {
+			fae = &spawn_data->sed_actions->fae[i];
 			switch (fae->fae_action) {
 			case FAE_OPEN:
 				if (fd_getfile(fae->fae_fildes) != NULL) {
@@ -1832,7 +1913,7 @@ spawn_return(void *arg)
 			    &spawn_data->sed_attrs->sa_schedparam);
 		else if (spawn_data->sed_attrs->sa_flags
 		    & POSIX_SPAWN_SETSCHEDPARAM) {
-			error = do_sched_setparam(spawn_data->sed_parent->p_pid, 0,
+			error = do_sched_setparam(ppid, 0,
 			    SCHED_NONE, &spawn_data->sed_attrs->sa_schedparam);
 		}
 		if (error)
@@ -1872,28 +1953,23 @@ spawn_return(void *arg)
 		}
 	}
 
-	/* stop using kernel vmspace */
-	KPREEMPT_DISABLE(l);
-	pmap_deactivate(l);
-	l->l_proc->p_vmspace = NULL;
-
 	/* now do the real exec */
-	rw_enter(&exec_lock, RW_READER);
-	error = execve_runproc(l, &spawn_data->sed_exec);
+	error = execve_runproc(l, &spawn_data->sed_exec, parent_is_waiting,
+	    true);
 	have_reflock = false;
 	if (error == EJUSTRETURN)
 		error = 0;
 	else if (error)
 		goto report_error;
 
-	/* we now have our own vmspace */
-	KPREEMPT_ENABLE(l);
-	KASSERT(l->l_nopreempt == 0);
+	if (parent_is_waiting) {
+		mutex_enter(&spawn_data->sed_mtx_child);
+		cv_signal(&spawn_data->sed_cv_child_ready);
+		mutex_exit(&spawn_data->sed_mtx_child);
+	}
 
-	/* done, signal parent */
-	mutex_enter(&spawn_data->sed_mtx_child);
-	cv_signal(&spawn_data->sed_cv_child_ready);
-	mutex_exit(&spawn_data->sed_mtx_child);
+	/* release our refcount on the data */
+	spawn_exec_data_release(spawn_data);
 
 	/* and finaly: leave to userland for the first time */
 	cpu_spawn_return(l);
@@ -1902,30 +1978,43 @@ spawn_return(void *arg)
 	return;
 
  report_error:
-	if (have_reflock)
+ 	if (have_reflock) {
+ 		/*
+		 * We have not passed through execve_runproc(),
+		 * which would have released the p_reflock and also
+		 * taken ownership of the sed_exec part of spawn_data,
+		 * so release/free both here.
+		 */
 		rw_exit(&l->l_proc->p_reflock);
-
-	/* stop using kernel vmspace (if we haven't already) */
-	if (l->l_proc->p_vmspace) {
-		KPREEMPT_DISABLE(l);
-		pmap_deactivate(l);
-		l->l_proc->p_vmspace = NULL;
-		/* do not enable preemption without vmspace */
+		execve_free_data(&spawn_data->sed_exec);
 	}
 
- 	/*
- 	 * Set error value for parent to pick up (and take over ownership
- 	 * of spawn_data again), signal parent and exit this process.
- 	 */
-	mutex_enter(&spawn_data->sed_mtx_child);
-	spawn_data->sed_error = error;
-	cv_signal(&spawn_data->sed_cv_child_ready);
-	mutex_exit(&spawn_data->sed_mtx_child);
+	if (parent_is_waiting) {
+		/* pass error to parent */
+		mutex_enter(&spawn_data->sed_mtx_child);
+		spawn_data->sed_error = error;
+		cv_signal(&spawn_data->sed_cv_child_ready);
+		mutex_exit(&spawn_data->sed_mtx_child);
+	} else {
+		rw_exit(&exec_lock);
+	}
+
+	/* release our refcount on the data */
+	spawn_exec_data_release(spawn_data);
+
+	/* done, exit */
 	mutex_enter(l->l_proc->p_lock);
-	exit1(l, W_EXITCODE(error, SIGABRT));
+	/*
+	 * Posix explicitly asks for an exit code of 127 if we report
+	 * errors from the child process - so, unfortunately, there
+	 * is no way to report a more exact error code.
+	 * A NetBSD specific workaround is POSIX_SPAWN_RETURNERROR as
+	 * flag bit in the attrp argument to posix_spawn(2), see above.
+	 */
+	exit1(l, W_EXITCODE(127, 0));
 }
 
-static void
+void
 posix_spawn_fa_free(struct posix_spawn_file_actions *fa, size_t len)
 {
 
@@ -1935,7 +2024,7 @@ posix_spawn_fa_free(struct posix_spawn_file_actions *fa, size_t len)
 			continue;
 		kmem_free(fae->fae_path, strlen(fae->fae_path) + 1);
 	}
-	if (fa->len)
+	if (fa->len > 0)
 		kmem_free(fa->fae, sizeof(*fa->fae) * fa->len);
 	kmem_free(fa, sizeof(*fa));
 }
@@ -1958,9 +2047,12 @@ posix_spawn_fa_alloc(struct posix_spawn_file_actions **fap,
 		goto out;
 	}
 
-	if (fa->len == 0)
+	if (fa->len == 0) {
+		kmem_free(fa, sizeof(*fa));
 		return 0;
+	}
 
+	fa->size = fa->len;
 	size_t fal = fa->len * sizeof(*fae);
 	fae = fa->fae;
 	fa->fae = kmem_alloc(fal, KM_SLEEP);
@@ -1980,6 +2072,7 @@ posix_spawn_fa_alloc(struct posix_spawn_file_actions **fap,
 		memcpy(fae->fae_path, pbuf, fal);
 	}
 	PNBUF_PUT(pbuf);
+
 	*fap = fa;
 	return 0;
 out:
@@ -1990,29 +2083,11 @@ out:
 }
 
 int
-sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
-    register_t *retval)
+check_posix_spawn(struct lwp *l1)
 {
-	/* {
-		syscallarg(pid_t *) pid;
-		syscallarg(const char *) path;
-		syscallarg(const struct posix_spawn_file_actions *) file_actions;
-		syscallarg(const struct posix_spawnattr *) attrp;
-		syscallarg(char *const *) argv;
-		syscallarg(char *const *) envp;
-	} */	
-
-	struct proc *p1, *p2;
-	struct plimit *p1_lim;
-	struct lwp *l2;
-	int error = 0, tnprocs, count;
-	struct posix_spawn_file_actions *fa = NULL;
-	struct posix_spawnattr *sa = NULL;
-	struct spawn_exec_data *spawn_data;
+	int error, tnprocs, count;
 	uid_t uid;
-	vaddr_t uaddr;
-	pid_t pid;
-	bool have_exec_lock = false;
+	struct proc *p1;
 
 	p1 = l1->l_proc;
 	uid = kauth_cred_getuid(l1->l_cred);
@@ -2030,8 +2105,7 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
 
 	if (error) {
 		atomic_dec_uint(&nprocs);
-		*retval = EAGAIN;
-		return 0;
+		return EAGAIN;
 	}
 
 	/*
@@ -2042,32 +2116,45 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
 	     p1, KAUTH_ARG(KAUTH_REQ_PROCESS_RLIMIT_BYPASS),
 	     &p1->p_rlimit[RLIMIT_NPROC], KAUTH_ARG(RLIMIT_NPROC)) != 0 &&
 	    __predict_false(count > p1->p_rlimit[RLIMIT_NPROC].rlim_cur)) {
-		error = EAGAIN;
-		goto error_exit;
+		(void)chgproccnt(uid, -1);
+		atomic_dec_uint(&nprocs);
+		return EAGAIN;
 	}
 
-	/* copy in file_actions struct */
-	if (SCARG(uap, file_actions) != NULL) {
-		error = posix_spawn_fa_alloc(&fa, SCARG(uap, file_actions));
-		if (error)
-			goto error_exit;
-	}
+	return 0;
+}
 
-	/* copyin posix_spawnattr struct */
-	if (SCARG(uap, attrp) != NULL) {
-		sa = kmem_alloc(sizeof(*sa), KM_SLEEP);
-		error = copyin(SCARG(uap, attrp), sa, sizeof(*sa));
-		if (error)
-			goto error_exit;
-	}
+int
+do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
+	struct posix_spawn_file_actions *fa,
+	struct posix_spawnattr *sa,
+	char *const *argv, char *const *envp,
+	execve_fetch_element_t fetch)
+{
+
+	struct proc *p1, *p2;
+	struct lwp *l2;
+	int error;
+	struct spawn_exec_data *spawn_data;
+	vaddr_t uaddr;
+	pid_t pid;
+	bool have_exec_lock = false;
+
+	p1 = l1->l_proc;
+
+	/* Allocate and init spawn_data */
+	spawn_data = kmem_zalloc(sizeof(*spawn_data), KM_SLEEP);
+	spawn_data->sed_refcnt = 1; /* only parent so far */
+	cv_init(&spawn_data->sed_cv_child_ready, "pspawn");
+	mutex_init(&spawn_data->sed_mtx_child, MUTEX_DEFAULT, IPL_NONE);
+	mutex_enter(&spawn_data->sed_mtx_child);
 
 	/*
 	 * Do the first part of the exec now, collect state
 	 * in spawn_data.
 	 */
-	spawn_data = kmem_zalloc(sizeof(*spawn_data), KM_SLEEP);
-	error = execve_loadvm(l1, SCARG(uap, path), SCARG(uap, argv),
-	    SCARG(uap, envp), execve_fetch_element, &spawn_data->sed_exec);
+	error = execve_loadvm(l1, path, argv,
+	    envp, fetch, &spawn_data->sed_exec);
 	if (error == EJUSTRETURN)
 		error = 0;
 	else if (error)
@@ -2087,7 +2174,9 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
 	}
 	
 	/*
-	 * Allocate new proc. Leave it's p_vmspace NULL for now.
+	 * Allocate new proc. Borrow proc0 vmspace for it, we will
+	 * replace it with its own before returning to userland
+	 * in the child.
 	 * This is a point of no return, we will have to go through
 	 * the child proc to properly clean it up past this point.
 	 */
@@ -2103,7 +2192,7 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
 	    (unsigned) ((char *)&p2->p_endzero - (char *)&p2->p_startzero));
 	memcpy(&p2->p_startcopy, &p1->p_startcopy,
 	    (unsigned) ((char *)&p2->p_endcopy - (char *)&p2->p_startcopy));
-	p2->p_vmspace = NULL;
+	p2->p_vmspace = proc0.p_vmspace;
 
 	CIRCLEQ_INIT(&p2->p_sigpend.sp_info);
 
@@ -2145,10 +2234,9 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
 	 * Note: p_limit (rlimit stuff) is copy-on-write, so normally
 	 * we just need increase pl_refcnt.
 	 */
-	p1_lim = p1->p_limit;
-	if (!p1_lim->pl_writeable) {
-		lim_addref(p1_lim);
-		p2->p_limit = p1_lim;
+	if (!p1->p_limit->pl_writeable) {
+		lim_addref(p1->p_limit);
+		p2->p_limit = p1->p_limit;
 	} else {
 		p2->p_limit = lim_copy(p1->p_limit);
 	}
@@ -2200,17 +2288,10 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
 	/*
 	 * Prepare remaining parts of spawn data
 	 */
-	if (fa && fa->len) {
-		spawn_data->sed_actions_len = fa->len;
-		spawn_data->sed_actions = fa->fae;
-	}
-	if (sa)
-		spawn_data->sed_attrs = sa;
+	spawn_data->sed_actions = fa;
+	spawn_data->sed_attrs = sa;
 
 	spawn_data->sed_parent = p1;
-	cv_init(&spawn_data->sed_cv_child_ready, "pspawn");
-	mutex_init(&spawn_data->sed_mtx_child, MUTEX_DEFAULT, IPL_NONE);
-	mutex_enter(&spawn_data->sed_mtx_child);
 
 	/* create LWP */
 	lwp_create(l1, p2, uaddr, 0, NULL, 0, spawn_return, spawn_data,
@@ -2241,7 +2322,11 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
 		kauth_cred_free(ocred);
 	}
 
+	*child_ok = true;
+	spawn_data->sed_refcnt = 2;	/* child gets it as well */
+#if 0
 	l2->l_nopreempt = 1; /* start it non-preemptable */
+#endif
 
 	/*
 	 * It's now safe for the scheduler and other processes to see the
@@ -2283,23 +2368,76 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
 	mutex_exit(proc_lock);
 
 	cv_wait(&spawn_data->sed_cv_child_ready, &spawn_data->sed_mtx_child);
-	mutex_exit(&spawn_data->sed_mtx_child);
 	error = spawn_data->sed_error;
+	mutex_exit(&spawn_data->sed_mtx_child);
+	spawn_exec_data_release(spawn_data);
 
 	rw_exit(&p1->p_reflock);
 	rw_exit(&exec_lock);
 	have_exec_lock = false;
 
-	if (fa)
-		posix_spawn_fa_free(fa, fa->len);
+	*pid_res = pid;
+	return error;
 
-	if (sa) 
-		kmem_free(sa, sizeof(*sa));
+ error_exit:
+ 	if (have_exec_lock) {
+		execve_free_data(&spawn_data->sed_exec);
+		rw_exit(&p1->p_reflock);
+ 		rw_exit(&exec_lock);
+	}
+	mutex_exit(&spawn_data->sed_mtx_child);
+	spawn_exec_data_release(spawn_data);
+ 
+	return error;
+}
 
-	cv_destroy(&spawn_data->sed_cv_child_ready);
-	mutex_destroy(&spawn_data->sed_mtx_child);
+int
+sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(pid_t *) pid;
+		syscallarg(const char *) path;
+		syscallarg(const struct posix_spawn_file_actions *) file_actions;
+		syscallarg(const struct posix_spawnattr *) attrp;
+		syscallarg(char *const *) argv;
+		syscallarg(char *const *) envp;
+	} */	
 
-	kmem_free(spawn_data, sizeof(*spawn_data));
+	int error;
+	struct posix_spawn_file_actions *fa = NULL;
+	struct posix_spawnattr *sa = NULL;
+	pid_t pid;
+	bool child_ok = false;
+
+	error = check_posix_spawn(l1);
+	if (error) {
+		*retval = error;
+		return 0;
+	}
+
+	/* copy in file_actions struct */
+	if (SCARG(uap, file_actions) != NULL) {
+		error = posix_spawn_fa_alloc(&fa, SCARG(uap, file_actions));
+		if (error)
+			goto error_exit;
+	}
+
+	/* copyin posix_spawnattr struct */
+	if (SCARG(uap, attrp) != NULL) {
+		sa = kmem_alloc(sizeof(*sa), KM_SLEEP);
+		error = copyin(SCARG(uap, attrp), sa, sizeof(*sa));
+		if (error)
+			goto error_exit;
+	}
+
+	/*
+	 * Do the spawn
+	 */
+	error = do_posix_spawn(l1, &pid, &child_ok, SCARG(uap, path), fa, sa,
+	    SCARG(uap, argv), SCARG(uap, envp), execve_fetch_element);
+	if (error)
+		goto error_exit;
 
 	if (error == 0 && SCARG(uap, pid) != NULL)
 		error = copyout(&pid, SCARG(uap, pid), sizeof(pid));
@@ -2308,17 +2446,15 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
 	return 0;
 
  error_exit:
- 	if (have_exec_lock)
- 		rw_exit(&exec_lock);
- 
-	if (fa)
-		posix_spawn_fa_free(fa, fa->len);
+	if (!child_ok) {
+		(void)chgproccnt(kauth_cred_getuid(l1->l_cred), -1);
+		atomic_dec_uint(&nprocs);
 
-	if (sa) 
-		kmem_free(sa, sizeof(*sa));
-
-	(void)chgproccnt(uid, -1);
-	atomic_dec_uint(&nprocs);
+		if (sa)
+			kmem_free(sa, sizeof(*sa));
+		if (fa)
+			posix_spawn_fa_free(fa, fa->len);
+	}
 
 	*retval = error;
 	return 0;

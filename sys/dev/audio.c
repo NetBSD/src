@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.255.2.3 2012/04/05 21:33:23 mrg Exp $	*/
+/*	$NetBSD: audio.c,v 1.255.2.4 2012/04/29 23:04:47 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.255.2.3 2012/04/05 21:33:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.255.2.4 2012/04/29 23:04:47 mrg Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -390,6 +390,7 @@ audioattach(device_t parent, device_t self, void *aux)
 	mixer_devinfo_t mi;
 	int iclass, mclass, oclass, rclass, props;
 	int record_master_found, record_source_found;
+	bool can_capture, can_playback;
 
 	sc = device_private(self);
 	sc->dev = self;
@@ -452,32 +453,27 @@ audioattach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	/*
-	 * XXX  Would like to not hold the sc_lock around this whole block
-	 * escpially for audio_alloc_ring(), except that the latter calls
-	 * ->round_blocksize() which demands the thread lock to be taken.
-	 *
-	 * Revisit.
-	 */
 	mutex_enter(sc->sc_lock);
-	if (audio_can_playback(sc)) {
+	can_playback = audio_can_playback(sc);
+	can_capture = audio_can_capture(sc);
+ 	mutex_exit(sc->sc_lock);
+
+	if (can_playback) {
 		error = audio_alloc_ring(sc, &sc->sc_pr,
 		    AUMODE_PLAY, AU_RING_SIZE);
 		if (error) {
 			sc->hw_if = NULL;
- 			mutex_exit(sc->sc_lock);
 			aprint_error("audio: could not allocate play buffer\n");
 			return;
 		}
 	}
-	if (audio_can_capture(sc)) {
+	if (can_capture) {
 		error = audio_alloc_ring(sc, &sc->sc_rr,
 		    AUMODE_RECORD, AU_RING_SIZE);
 		if (error) {
 			if (sc->sc_pr.s.start != 0)
 				audio_free_ring(sc, &sc->sc_pr);
 			sc->hw_if = NULL;
- 			mutex_exit(sc->sc_lock);
 			aprint_error("audio: could not allocate record buffer\n");
 			return;
 		}
@@ -485,6 +481,7 @@ audioattach(device_t parent, device_t self, void *aux)
 
 	sc->sc_lastgain = 128;
 
+	mutex_enter(sc->sc_lock);
 	error = audio_set_defaults(sc, 0);
 	mutex_exit(sc->sc_lock);
 	if (error != 0) {
@@ -885,8 +882,11 @@ audio_alloc_ring(struct audio_softc *sc, struct audio_ringbuffer *r,
 	if (bufsize < AUMINBUF)
 		bufsize = AUMINBUF;
 	ROUNDSIZE(bufsize);
-	if (hw->round_buffersize)
+	if (hw->round_buffersize) {
+		mutex_enter(sc->sc_lock);
 		bufsize = hw->round_buffersize(hdl, direction, bufsize);
+ 		mutex_exit(sc->sc_lock);
+	}
 	if (hw->allocm)
 		r->s.start = hw->allocm(hdl, direction, bufsize);
 	else

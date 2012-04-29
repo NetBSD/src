@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_isa.c,v 1.20 2011/11/23 23:07:32 jmcneill Exp $	*/
+/*	$NetBSD: opl_isa.c,v 1.20.2.1 2012/04/29 23:04:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_isa.c,v 1.20 2011/11/23 23:07:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_isa.c,v 1.20.2.1 2012/04/29 23:04:50 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ opl_isa_attach(device_t parent, device_t self, void *aux)
 	struct opl_isa_softc *isa = device_private(self);
 	struct isa_attach_args *ia = aux;
 
-	sc->mididev.dev = self;
+	sc->dev = self;
 	sc->iot = ia->ia_iot;
 
 	if (bus_space_map(sc->iot, ia->ia_io[0].ir_addr, OPL_SIZE,

@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.77 2011/11/27 09:00:32 isaki Exp $
+#	$NetBSD: files.x68k,v 1.77.2.1 2012/04/29 23:04:42 mrg Exp $
 #
 # new style config file for x68k architecture
 #
@@ -50,10 +50,6 @@ include "arch/m68k/fpe/files.fpe"
 
 # 68060 software support package
 include "arch/m68k/060sp/files.060sp"
-
-device	xcom: tty
-attach	xcom at mainbus
-file	arch/x68k/dev/com.c		xcom needs-count
 
 # graphic devices
 define	grfb { addr = -1 }
@@ -148,6 +144,9 @@ file	arch/x68k/dev/fd.c		fd needs-flag
 device	par
 attach	par at intio
 file	arch/x68k/dev/par.c		par needs-flag
+
+attach	com at intio with com_intio
+file	arch/x68k/dev/com_intio.c	com_intio
 
 #
 # SCSI drivers

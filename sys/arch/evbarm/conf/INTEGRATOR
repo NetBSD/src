@@ -1,4 +1,4 @@
-#	$NetBSD: INTEGRATOR,v 1.63.2.1 2012/02/18 07:31:47 mrg Exp $
+#	$NetBSD: INTEGRATOR,v 1.63.2.2 2012/04/29 23:04:38 mrg Exp $
 #
 #	GENERIC -- ARM Integrator board Generic kernel
 #
@@ -98,10 +98,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
 #options 	SYSVSHM		# System V-like memory sharing
 
 # Device options
@@ -155,6 +151,7 @@ ifpga0	at mainbus?
 # PL010 uart
 plcom0		at ifpga? offset 0x06000000 irq 1
 plcom1		at ifpga? offset 0x07000000 irq 2
+#options 	PLCOM_DEBUG
 
 # PL030 real time clock
 plrtc0		at ifpga? offset 0x05000000

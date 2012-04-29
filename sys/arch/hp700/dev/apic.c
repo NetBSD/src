@@ -1,6 +1,6 @@
-/*	$NetBSD: apic.c,v 1.12.8.1 2012/04/05 21:33:14 mrg Exp $	*/
+/*	$NetBSD: apic.c,v 1.12.8.2 2012/04/29 23:04:39 mrg Exp $	*/
 
-/*	$OpenBSD: apic.c,v 1.7 2007/10/06 23:50:54 krw Exp $	*/
+/*	$OpenBSD: apic.c,v 1.14 2011/05/01 21:59:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -178,53 +178,61 @@ apic_intr_establish(void *v, pci_intr_handle_t ih,
 	if (aiv == NULL)
 		return NULL;
 
+	cnt = malloc(sizeof(struct evcnt), M_DEVBUF, M_NOWAIT);
+	if (cnt == NULL) {
+		free(aiv, M_DEVBUF);
+		return NULL;
+	}
+
 	aiv->sc = sc;
 	aiv->ih = ih;
 	aiv->handler = handler;
 	aiv->arg = arg;
 	aiv->next = NULL;
-	aiv->cnt = NULL;
-	if (apic_intr_list[irq]) {
-		cnt = malloc(sizeof(struct evcnt), M_DEVBUF, M_NOWAIT);
-		if (cnt == NULL) {
+	aiv->cnt = cnt;
+
+	biv = apic_intr_list[irq];
+	if (biv == NULL) {
+		iv = hp700_intr_establish(pri, apic_intr, aiv, &ir_cpu, irq);
+		if (iv == NULL) {
 			free(aiv, M_DEVBUF);
+			free(cnt, M_DEVBUF);
+
 			return NULL;
 		}
+	}
 
-		snprintf(aiv->aiv_name, sizeof(aiv->aiv_name), "line %d irq %d",
-		    line, irq);
+	snprintf(aiv->aiv_name, sizeof(aiv->aiv_name), "line %d irq %d",
+	    line, irq);
 
-		evcnt_attach_dynamic(cnt, EVCNT_TYPE_INTR, NULL,
-		    device_xname(sc->sc_dv), aiv->aiv_name);
-		biv = apic_intr_list[irq];
+	evcnt_attach_dynamic(cnt, EVCNT_TYPE_INTR, NULL,
+	    device_xname(sc->sc_dv), aiv->aiv_name);
+
+	if (biv) {
 		while (biv->next)
 			biv = biv->next;
 		biv->next = aiv;
-		aiv->cnt = cnt;
 		return arg;
 	}
 
-	iv = hp700_intr_establish(pri, apic_intr, aiv, &ir_cpu, irq);
-	if (iv) {
-		ent0 = (31 - irq) & APIC_ENT0_VEC;
-		ent0 |= apic_get_int_ent0(sc, line);
+	ent0 = (31 - irq) & APIC_ENT0_VEC;
+	ent0 |= apic_get_int_ent0(sc, line);
 #if 0
-		if (cold) {
-			sc->sc_imr |= (1 << irq);
-			ent0 |= APIC_ENT0_MASK;
-		}
-#endif
-		apic_write(sc->sc_regs, APIC_ENT0(line), APIC_ENT0_MASK);
-		apic_write(sc->sc_regs, APIC_ENT1(line),
-		    ((hpa & 0x0ff00000) >> 4) | ((hpa & 0x000ff000) << 12));
-		apic_write(sc->sc_regs, APIC_ENT0(line), ent0);
-
-		/* Signal EOI. */
-		elroy_write32(&r->apic_eoi,
-		    htole32((31 - irq) & APIC_ENT0_VEC));
-
-		apic_intr_list[irq] = aiv;
+	if (cold) {
+		sc->sc_imr |= (1 << irq);
+		ent0 |= APIC_ENT0_MASK;
 	}
+#endif
+	apic_write(sc->sc_regs, APIC_ENT0(line), APIC_ENT0_MASK);
+	apic_write(sc->sc_regs, APIC_ENT1(line),
+	    ((hpa & 0x0ff00000) >> 4) | ((hpa & 0x000ff000) << 12));
+	apic_write(sc->sc_regs, APIC_ENT0(line), ent0);
+
+	/* Signal EOI. */
+	elroy_write32(&r->apic_eoi,
+	    htole32((31 - irq) & APIC_ENT0_VEC));
+
+	apic_intr_list[irq] = aiv;
 
 	return (arg);
 }
@@ -244,11 +252,11 @@ apic_intr(void *v)
 	int claimed = 0;
 
 	while (iv) {
-		if (iv->handler(iv->arg)) {
-			if (iv->cnt)
-				iv->cnt->ev_count++;
-			claimed = 1;
-		}
+		claimed = iv->handler(iv->arg);
+		if (claimed && iv->cnt)
+			iv->cnt->ev_count++;
+		if (claimed)
+			break;
 		iv = iv->next;
 	}
 	/* Signal EOI. */

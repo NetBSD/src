@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.30 2011/06/22 08:49:54 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.30.6.1 2012/04/29 23:04:48 mrg Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.30 2011/06/22 08:49:54 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.30.6.1 2012/04/29 23:04:48 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -240,11 +240,6 @@ acpicpu_tstate_tss(struct acpicpu_softc *sc)
 
 	if (sc->sc_tstate_count == 0) {
 		rv = AE_NOT_EXIST;
-		goto out;
-	}
-
-	if (sc->sc_tstate_count > ACPICPU_T_STATE_MAX) {
-		rv = AE_LIMIT;
 		goto out;
 	}
 
@@ -559,9 +554,6 @@ acpicpu_tstate_fadt(struct acpicpu_softc *sc)
 		return AE_AML_BAD_RESOURCE_VALUE;
 
 	count = 1 << width;
-
-	if (count > ACPICPU_T_STATE_MAX)
-		return AE_LIMIT;
 
 	if (sc->sc_tstate != NULL)
 		kmem_free(sc->sc_tstate, sc->sc_tstate_count * size);

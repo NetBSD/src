@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.1 2010/12/07 21:38:07 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.1.14.1 2012/04/29 23:05:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1 2010/12/07 21:38:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1.14.1 2012/04/29 23:05:07 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -51,5 +51,5 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 	bmaj = cmaj = NODEVMAJOR;
 	if ((error = devsw_attach("drvctl", NULL, &bmaj,
 	    &drvctl_cdevsw, &cmaj)) != 0)
-		panic("audio devsw attach failed: %d", error);
+		panic("drvctl devsw attach failed: %d", error);
 }

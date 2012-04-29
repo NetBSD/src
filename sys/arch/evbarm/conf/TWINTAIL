@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.47.2.2 2012/04/05 21:33:13 mrg Exp $
+#	$NetBSD: TWINTAIL,v 1.47.2.3 2012/04/29 23:04:39 mrg Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -106,10 +106,6 @@ options 	COMPAT_16	# NetBSD 1.6 compatibility.
 
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
 #options 	SYSVSHM		# System V-like memory sharing
 
 # Device options

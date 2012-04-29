@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_build.c,v 1.2 2011/11/24 21:22:39 agc Exp $	*/
+/*	$NetBSD: chfs_build.c,v 1.2.2.1 2012/04/29 23:05:08 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -84,7 +84,7 @@ chfs_build_set_vnodecache_nlink(struct chfs_mount *chmp,
 			chfs_mark_node_obsolete(chmp, fd->nref);
 			continue;
 		}
-		if (fd->type == VDIR) {
+		if (fd->type == CHT_DIR) {
 			if (child_vc->nlink < 1)
 				child_vc->nlink = 1;
 
@@ -372,7 +372,7 @@ chfs_build_filesystem(struct chfs_mount *chmp)
 					nref = &fd->nref;
 					*nref = fd->nref->nref_next;
 					//fd->nref->nref_next = NULL;
-				} else if (fd->type == VDIR) {
+				} else if (fd->type == CHT_DIR) {
 					//set state every non-VREG file's vc
 					mutex_enter(&chmp->chm_lock_vnocache);
 					notregvc =

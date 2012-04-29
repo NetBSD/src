@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.10 2009/08/24 22:06:50 jmcneill Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.10.16.1 2012/04/29 23:04:36 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -198,7 +198,7 @@ wakeup_32:
 
 	/* Enable paging */
 	movl	%cr0,%eax
-	orl	$(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_MP|CR0_WP),%eax
+	orl	$(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_MP|CR0_WP|CR0_AM),%eax
 	movl	%eax,%cr0
 	/* Flush prefetch queue */
 	jmp	1f

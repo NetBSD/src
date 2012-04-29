@@ -1,4 +1,4 @@
-/*	$NetBSD: mallocvar.h,v 1.10 2011/10/15 21:14:57 christos Exp $	*/
+/*	$NetBSD: mallocvar.h,v 1.10.6.1 2012/04/29 23:05:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -86,7 +86,6 @@ struct malloc_type type[1] = {						\
 void	malloc_type_attach(struct malloc_type *);
 void	malloc_type_detach(struct malloc_type *);
 
-void	malloc_type_setlimit(struct malloc_type *, u_long);
 #endif /* _KERNEL */
 
 #endif /* _SYS_MALLOCVAR_H_ */
