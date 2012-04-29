@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.13 2012/04/29 14:00:15 rmind Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.14 2012/04/29 16:36:53 dsl Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.13 2012/04/29 14:00:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.14 2012/04/29 16:36:53 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -54,20 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.13 2012/04/29 14:00:15 rmind Exp $");
  * malloc
  */
 
-MALLOC_DEFINE(M_DEVBUF, "devbuf", "device driver memory");
-MALLOC_DEFINE(M_DMAMAP, "DMA map", "bus_dma(9) structures");
-MALLOC_DEFINE(M_FREE, "free", "should be on free list");
-MALLOC_DEFINE(M_PCB, "pcb", "protocol control block");
-MALLOC_DEFINE(M_TEMP, "temp", "misc. temporary data buffers");
-MALLOC_DEFINE(M_RTABLE, "routetbl", "routing tables");
-MALLOC_DEFINE(M_FTABLE, "fragtbl", "fragment reassembly header");
-MALLOC_DEFINE(M_UFSMNT, "UFS mount", "UFS mount structure");
-MALLOC_DEFINE(M_NETADDR, "Export Host", "Export host address structure");
-MALLOC_DEFINE(M_IPMOPTS, "ip_moptions", "internet multicast options");
-MALLOC_DEFINE(M_IPMADDR, "in_multi", "internet multicast address");
-MALLOC_DEFINE(M_MRTABLE, "mrt", "multicast routing tables");
-MALLOC_DEFINE(M_BWMETER, "bwmeter", "multicast upcall bw meters");
-
 void
 malloc_type_attach(struct malloc_type *type)
 {
@@ -83,7 +69,7 @@ malloc_type_detach(struct malloc_type *type)
 }
 
 void *
-kern_malloc(unsigned long size, struct malloc_type *type, int flags)
+kern_malloc(unsigned long size, int flags)
 {
 	void *rv;
 
@@ -99,14 +85,14 @@ kern_malloc(unsigned long size, struct malloc_type *type, int flags)
 }
 
 void *
-kern_realloc(void *ptr, unsigned long size, struct malloc_type *type, int flags)
+kern_realloc(void *ptr, unsigned long size, int flags)
 {
 
 	return rumpuser_realloc(ptr, size);
 }
 
 void
-kern_free(void *ptr, struct malloc_type *type)
+kern_free(void *ptr)
 {
 
 	rumpuser_free(ptr);
