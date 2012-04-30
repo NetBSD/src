@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.56 2010/07/09 08:14:26 hannken Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.57 2012/04/30 22:51:27 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.56 2010/07/09 08:14:26 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.57 2012/04/30 22:51:27 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,9 +145,7 @@ ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	/*
 	 * First cut at fixing up upper mount point
 	 */
-	nmp = (struct overlay_mount *) malloc(sizeof(struct overlay_mount),
-				M_UFSMNT, M_WAITOK);	/* XXX */
-	memset(nmp, 0, sizeof(struct overlay_mount));
+	nmp = kmem_zalloc(sizeof(struct overlay_mount), KM_SLEEP);
 
 	mp->mnt_data = nmp;
 	nmp->ovm_vfs = lowerrootvp->v_mount;
@@ -179,8 +177,8 @@ ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	if (error) {
 		vput(lowerrootvp);
 		hashdone(nmp->ovm_node_hashtbl, HASH_LIST, nmp->ovm_node_hash);
-		free(nmp, M_UFSMNT);	/* XXX */
-		return (error);
+		kmem_free(nmp, sizeof(struct overlay_mount));
+		return error;
 	}
 	/*
 	 * Unlock the node
@@ -239,7 +237,7 @@ ov_unmount(struct mount *mp, int mntflags)
 	omp = mp->mnt_data;
 	mutex_destroy(&omp->ovm_hashlock);
 	hashdone(omp->ovm_node_hashtbl, HASH_LIST, omp->ovm_node_hash);
-	free(omp, M_UFSMNT);	/* XXX */
+	kmem_free(omp, sizeof(struct overlay_mount));
 	mp->mnt_data = NULL;
 	return 0;
 }
