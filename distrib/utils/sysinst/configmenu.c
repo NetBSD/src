@@ -1,4 +1,4 @@
-/* $NetBSD: configmenu.c,v 1.3 2012/04/30 19:05:29 riz Exp $ */
+/* $NetBSD: configmenu.c,v 1.4 2012/04/30 19:57:52 riz Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -270,7 +270,7 @@ set_binpkg(struct menudesc *menu, void *arg)
 	replace("/usr/pkg/etc/pkgin/repositories.conf", pattern);
 
 	run_program(RUN_DISPLAY | RUN_PROGRESS | RUN_CHROOT,
-		"/usr/pkg/bin/pkgin update");
+		"/usr/pkg/bin/pkgin -y update");
 
 	msg_display(MSG_binpkg_installed);
 	process_menu(MENU_ok, NULL);
