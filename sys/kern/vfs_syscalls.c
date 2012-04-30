@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.452 2012/04/28 17:30:19 manu Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.453 2012/04/30 03:51:10 manu Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.452 2012/04/28 17:30:19 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.453 2012/04/30 03:51:10 manu Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -458,8 +458,6 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 	} else if (flags & MNT_UPDATE) {
 		error = mount_update(l, vp, path, flags, data_buf, &data_len);
 	} else {
-		struct mount *mp = vp->v_mount;
-
 		/* Locking is handled internally in mount_domount(). */
 		KASSERT(vfsopsrele == true);
 		error = mount_domount(l, &vp, vfsops, path, flags, data_buf,
@@ -467,10 +465,18 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 		vfsopsrele = false;
 
 		if ((error == 0) && (flags & MNT_EXTATTR)) {
-			if (VFS_EXTATTRCTL(mp, EXTATTR_CMD_START, 
+			if ((error = namei_simple_user(path, 
+			    NSM_FOLLOW_TRYEMULROOT, &vp)) != 0)
+				goto done;
+
+			if (vp->v_mountedhere == NULL)
+				goto done;
+
+			if (VFS_EXTATTRCTL(vp->v_mountedhere,
+					   EXTATTR_CMD_START, 
 					   NULL, 0, NULL) != 0)
 				printf("%s: failed to start extattr",
-				       mp->mnt_stat.f_mntonname);
+				       vp->v_mountedhere->mnt_stat.f_mntonname);
 				/* XXX remove flag */
 		}
 	}
