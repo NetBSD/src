@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.163 2012/03/13 18:41:04 elad Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.164 2012/04/30 22:51:28 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.163 2012/03/13 18:41:04 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.164 2012/04/30 22:51:28 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -694,12 +694,10 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 	error = ext2fs_checksb(fs, ronly);
 	if (error)
 		goto out;
-	ump = malloc(sizeof(*ump), M_UFSMNT, M_WAITOK);
-	memset(ump, 0, sizeof(*ump));
+	ump = kmem_zalloc(sizeof(*ump), KM_SLEEP);
 	ump->um_fstype = UFS1;
 	ump->um_ops = &ext2fs_ufsops;
-	ump->um_e2fs = malloc(sizeof(struct m_ext2fs), M_UFSMNT, M_WAITOK);
-	memset(ump->um_e2fs, 0, sizeof(struct m_ext2fs));
+	ump->um_e2fs = kmem_zalloc(sizeof(struct m_ext2fs), KM_SLEEP);
 	e2fs_sbload((struct ext2fs *)bp->b_data, &ump->um_e2fs->e2fs);
 	brelse(bp, 0);
 	bp = NULL;
@@ -731,15 +729,15 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 	m_fs->e2fs_ipb = m_fs->e2fs_bsize / EXT2_DINODE_SIZE(m_fs);
 	m_fs->e2fs_itpg = m_fs->e2fs.e2fs_ipg / m_fs->e2fs_ipb;
 
-	m_fs->e2fs_gd = malloc(m_fs->e2fs_ngdb * m_fs->e2fs_bsize,
-	    M_UFSMNT, M_WAITOK);
+	m_fs->e2fs_gd = kmem_alloc(m_fs->e2fs_ngdb * m_fs->e2fs_bsize, KM_SLEEP);
 	for (i = 0; i < m_fs->e2fs_ngdb; i++) {
 		error = bread(devvp ,
 		    fsbtodb(m_fs, m_fs->e2fs.e2fs_first_dblock +
 		    1 /* superblock */ + i),
 		    m_fs->e2fs_bsize, NOCRED, 0, &bp);
 		if (error) {
-			free(m_fs->e2fs_gd, M_UFSMNT);
+			kmem_free(m_fs->e2fs_gd,
+			    m_fs->e2fs_ngdb * m_fs->e2fs_bsize);
 			goto out;
 		}
 		e2fs_cgload((struct ext2_gd *)bp->b_data,
@@ -777,8 +775,8 @@ out:
 	KASSERT(bp != NULL);
 	brelse(bp, 0);
 	if (ump) {
-		free(ump->um_e2fs, M_UFSMNT);
-		free(ump, M_UFSMNT);
+		kmem_free(ump->um_e2fs, sizeof(struct m_ext2fs));
+		kmem_free(ump, sizeof(*ump));
 		mp->mnt_data = NULL;
 	}
 	return (error);
@@ -813,9 +811,9 @@ ext2fs_unmount(struct mount *mp, int mntflags)
 	error = VOP_CLOSE(ump->um_devvp, fs->e2fs_ronly ? FREAD : FREAD|FWRITE,
 	    NOCRED);
 	vput(ump->um_devvp);
-	free(fs->e2fs_gd, M_UFSMNT);
-	free(fs, M_UFSMNT);
-	free(ump, M_UFSMNT);
+	kmem_free(fs->e2fs_gd, fs->e2fs_ngdb * fs->e2fs_bsize);
+	kmem_free(fs, sizeof(*fs));
+	kmem_free(ump, sizeof(*ump));
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	return (error);

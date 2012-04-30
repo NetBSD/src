@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.141 2012/04/29 20:27:31 dsl Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.142 2012/04/30 22:51:27 rmind Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.141 2012/04/29 20:27:31 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.142 2012/04/30 22:51:27 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -90,10 +90,7 @@ MALLOC_DEFINE(M_RTABLE, "routetbl", "routing tables");
 MALLOC_DEFINE(M_FTABLE, "fragtbl", "fragment reassembly header");
 MALLOC_DEFINE(M_UFSMNT, "UFS mount", "UFS mount structure");
 MALLOC_DEFINE(M_NETADDR, "Export Host", "Export host address structure");
-MALLOC_DEFINE(M_IPMOPTS, "ip_moptions", "internet multicast options");
-MALLOC_DEFINE(M_IPMADDR, "in_multi", "internet multicast address");
 MALLOC_DEFINE(M_MRTABLE, "mrt", "multicast routing tables");
-MALLOC_DEFINE(M_BWMETER, "bwmeter", "multicast upcall bw meters");
 
 /*
  * Header contains total size, including the header itself.

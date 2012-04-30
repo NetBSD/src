@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.113 2012/04/29 20:27:32 dsl Exp $	*/
+/*	$NetBSD: malloc.h,v 1.114 2012/04/30 22:51:27 rmind Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -62,10 +62,7 @@ MALLOC_DECLARE(M_RTABLE);
 MALLOC_DECLARE(M_FTABLE);
 MALLOC_DECLARE(M_UFSMNT);
 MALLOC_DECLARE(M_NETADDR);
-MALLOC_DECLARE(M_IPMOPTS);
-MALLOC_DECLARE(M_IPMADDR);
 MALLOC_DECLARE(M_MRTABLE);
-MALLOC_DECLARE(M_BWMETER);
 #endif
 
 void	*kern_malloc(unsigned long, int);
