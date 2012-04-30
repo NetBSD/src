@@ -1,4 +1,4 @@
-/* $NetBSD: configmenu.c,v 1.2 2012/04/12 16:05:48 riz Exp $ */
+/* $NetBSD: configmenu.c,v 1.3 2012/04/30 19:05:29 riz Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -247,6 +247,13 @@ set_binpkg(struct menudesc *menu, void *arg)
 	configinfo **confp = arg;
 
 	char pattern[STRSIZE];
+
+	/* binary pkg config requires network at this point, so if
+	   it's not already configured, do it. */
+	if (network_up == 0) {
+		if (config_network())
+			mnt_net_config();
+	}
 
 	process_menu(MENU_binpkg, NULL);
 	make_url(pkgpath, &pkg, pkg_dir);
