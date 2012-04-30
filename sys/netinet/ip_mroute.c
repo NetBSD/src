@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.123 2012/03/22 20:34:39 drochner Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.124 2012/04/30 22:51:28 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.123 2012/03/22 20:34:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.124 2012/04/30 22:51:28 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1571,7 +1571,7 @@ expire_upcalls(void *v)
 				struct bw_meter *x = rt->mfc_bw_meter;
 
 				rt->mfc_bw_meter = x->bm_mfc_next;
-				free(x, M_BWMETER);
+				kmem_free(x, sizeof(*x));
 			}
 
 			++mrtstat.mrts_cache_cleanups;
@@ -2511,7 +2511,7 @@ add_bw_upcall(struct bw_upcall *req)
     }
 
     /* Allocate the new bw_meter entry */
-    x = (struct bw_meter *)malloc(sizeof(*x), M_BWMETER, M_NOWAIT);
+    x = kmem_intr_alloc(sizeof(*x), KM_NOSLEEP);
     if (x == NULL) {
 	splx(s);
 	return ENOBUFS;
@@ -2547,7 +2547,7 @@ free_bw_list(struct bw_meter *list)
 
 	list = list->bm_mfc_next;
 	unschedule_bw_meter(x);
-	free(x, M_BWMETER);
+	kmem_free(x, sizeof(*x));
     }
 }
 
@@ -2606,7 +2606,7 @@ del_bw_upcall(struct bw_upcall *req)
 	    unschedule_bw_meter(x);
 	    splx(s);
 	    /* Free the bw_meter entry */
-	    free(x, M_BWMETER);
+	    kmem_free(x, sizeof(*x));
 	    return 0;
 	} else {
 	    splx(s);
