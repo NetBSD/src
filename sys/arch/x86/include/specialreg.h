@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.57 2012/04/06 17:23:39 chs Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.58 2012/04/30 00:04:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -443,6 +443,11 @@
 #define MSR_VIA_RNG_2NOISE	0x00000300
 #define MSR_VIA_ACE		0x00001107
 #define MSR_VIA_ACE_ENABLE	0x10000000
+
+/*
+ * VIA "Eden" MSRs
+ */
+#define MSR_VIA_FCR 		MSR_VIA_ACE
 
 /*
  * AMD K6/K7 MSRs.
