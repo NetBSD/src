@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.66 2012/04/30 19:43:45 martin Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.67 2012/04/30 19:49:26 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -563,34 +563,34 @@ message net_media
 message netok
 {Nachfolgend sehen Sie die aktuellen Netzwerkeinstellungen.
 
-DNS-Domain:		%s
-Hostname:		%s
-Netzwerkadapter:	%s
-IP-Adresse:		%s
-Netzmaske:		%s
-IPv4-Nameserver:	%s
-IPv4-Gateway:		%s
-Verbindungstyp:		%s
+DNS-Domain:		%s 
+Hostname:		%s 
+Netzwerkadapter:	%s 
+IP-Adresse:		%s 
+Netzmaske:		%s 
+IPv4-Nameserver:	%s 
+IPv4-Gateway:		%s 
+Verbindungstyp:		%s 
 }
 
 message netok_slip
 {Sie haben die folgenden Daten gewählt. Sind diese Daten OK?
 
-DNS-Domain:		%s
-Hostname:		%s
-Netzwerkadapter:	%s
-IP-Adresse:		%s
-IP-Adresse des Servers:	%s
-Netzmaske:		%s
-IPv4-Nameserver:	%s
-IPv4-Gateway:		%s
-Verbindungstyp:		%s
+DNS-Domain:		%s 
+Hostname:		%s 
+Netzwerkadapter:	%s 
+IP-Adresse:		%s 
+IP-Adresse des Servers:	%s 
+Netzmaske:		%s 
+IPv4-Nameserver:	%s 
+IPv4-Gateway:		%s 
+Verbindungstyp:		%s 
 }
 
 message netokv6
 {
-IPv6-Autokonfiguration:	%s
-IPv6-Nameserver:	%s
+IPv6-Autokonfiguration:	%s 
+IPv6-Nameserver:	%s 
 }
 
 message netok_ok
