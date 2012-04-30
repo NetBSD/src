@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.83 2011/12/23 00:51:48 jakllsch Exp $	*/
+/*	$NetBSD: ums.c,v 1.84 2012/04/30 17:27:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.83 2011/12/23 00:51:48 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.84 2012/04/30 17:27:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,12 +90,16 @@ struct ums_softc {
 
 	int sc_enabled;
 
-	int flags;		/* device configuration */
-#define UMS_Z		0x01	/* z direction available */
-#define UMS_SPUR_BUT_UP	0x02	/* spurious button up events */
-#define UMS_REVZ	0x04	/* Z-axis is reversed */
-#define UMS_W		0x08	/* w direction/tilt available */
-#define UMS_ABS		0x10	/* absolute position, touchpanel */
+	u_int flags;		/* device configuration */
+#define UMS_Z			0x001	/* z direction available */
+#define UMS_SPUR_BUT_UP		0x002	/* spurious button up events */
+#define UMS_REVZ		0x004	/* Z-axis is reversed */
+#define UMS_W			0x008	/* w direction/tilt available */
+#define UMS_ABS			0x010	/* absolute position, touchpanel */
+#define UMS_TIP_SWITCH  	0x020	/* digitizer tip switch */
+#define UMS_SEC_TIP_SWITCH 	0x040	/* digitizer secondary tip switch */
+#define UMS_BARREL_SWITCH 	0x080	/* digitizer barrel switch */
+#define UMS_ERASER 		0x100	/* digitizer eraser */
 
 	int nbuttons;
 
@@ -103,6 +107,16 @@ struct ums_softc {
 	device_t sc_wsmousedev;
 
 	char			sc_dying;
+};
+
+static const struct {
+	u_int feature;
+	u_int flag;
+} digbut[] = {
+	{ HUD_TIP_SWITCH, UMS_TIP_SWITCH },
+	{ HUD_SEC_TIP_SWITCH, UMS_SEC_TIP_SWITCH },
+	{ HUD_BARREL_SWITCH, UMS_BARREL_SWITCH },
+	{ HUD_ERASER, UMS_ERASER },
 };
 
 #define MOUSE_FLAGS_MASK (HIO_CONST|HIO_RELATIVE)
@@ -147,7 +161,9 @@ ums_match(device_t parent, cfdata_t match, void *aux)
 	if (!hid_is_collection(desc, size, uha->reportid,
 			       HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_MOUSE)) &&
 	    !hid_is_collection(desc, size, uha->reportid,
-			       HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_POINTER)))
+			       HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_POINTER)) &&
+	    !hid_is_collection(desc, size, uha->reportid,
+                               HID_USAGE2(HUP_DIGITIZERS, 0x0002)))
 		return (UMATCH_NONE);
 
 	return (UMATCH_IFACECLASS);
@@ -164,7 +180,7 @@ ums_attach(device_t parent, device_t self, void *aux)
 	u_int32_t flags, quirks;
 	int i, hl;
 	struct hid_location *zloc;
-	struct hid_location loc_btn;
+	bool isdigitizer;
 
 	aprint_naive("\n");
 
@@ -180,6 +196,9 @@ ums_attach(device_t parent, device_t self, void *aux)
 		sc->flags |= UMS_SPUR_BUT_UP;
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
+
+	isdigitizer = hid_is_collection(desc, size, uha->reportid,
+	    HID_USAGE2(HUP_DIGITIZERS, 0x0002));
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -298,20 +317,35 @@ ums_attach(device_t parent, device_t self, void *aux)
 	/* figure out the number of buttons */
 	for (i = 1; i <= MAX_BUTTONS; i++)
 		if (!hid_locate(desc, size, HID_USAGE2(HUP_BUTTON, i),
-			uha->reportid, hid_input, &loc_btn, 0))
+		    uha->reportid, hid_input, &sc->sc_loc_btn[i - 1], 0))
 			break;
+
+	if (isdigitizer) {
+		for (size_t j = 0; j < __arraycount(digbut); j++) {
+			if (hid_locate(desc, size, HID_USAGE2(HUP_DIGITIZERS, 
+			    digbut[j].feature), uha->reportid, hid_input,
+			    &sc->sc_loc_btn[i - 1], 0)) {
+				if (i <= MAX_BUTTONS) {
+					i++;
+					sc->flags |= digbut[j].flag;
+				} else
+					aprint_error_dev(self,
+					    "ran out of buttons\n");
+			}
+		}
+	}
 	sc->nbuttons = i - 1;
 
-	aprint_normal(": %d button%s%s%s%s\n",
+	aprint_normal(": %d button%s%s%s%s%s%s%s%s%s\n",
 	    sc->nbuttons, sc->nbuttons == 1 ? "" : "s",
 	    sc->flags & UMS_W ? ", W" : "",
 	    sc->flags & UMS_Z ? " and Z dir" : "",
-	    sc->flags & UMS_W ? "s" : "");
-
-	for (i = 1; i <= sc->nbuttons; i++)
-		hid_locate(desc, size, HID_USAGE2(HUP_BUTTON, i),
-			   uha->reportid, hid_input,
-			   &sc->sc_loc_btn[i-1], 0);
+	    sc->flags & UMS_W ? "s" : "",
+	    isdigitizer ? " digitizer"  : "",
+	    sc->flags & UMS_TIP_SWITCH ? ", tip" : "",
+	    sc->flags & UMS_SEC_TIP_SWITCH ? ", sec tip" : "",
+	    sc->flags & UMS_BARREL_SWITCH ? ", barrel" : "",
+	    sc->flags & UMS_ERASER ? ", eraser" : "");
 
 #ifdef USB_DEBUG
 	DPRINTF(("ums_attach: sc=%p\n", sc));
