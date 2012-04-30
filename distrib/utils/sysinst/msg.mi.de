@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.65 2012/04/06 23:48:53 riz Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.66 2012/04/30 19:43:45 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1068,7 +1068,7 @@ message abandoned {Abgebrochen}
 message empty {***LEER***}
 message timezone {Zeitzone}
 message change_rootpw {root-Passwort setzen}
-message enable_binpkg {Enable installation of binary packages}
+message enable_binpkg {Installation von Binärpaketen vorbereiten}
 message enable_sshd {sshd aktivieren}
 message enable_ntpd {ntpd aktivieren}
 message run_ntpdate {ntpdate beim Starten ausführen}
