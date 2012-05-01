@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_standout.3,v 1.4 2008/04/30 13:10:51 martin Exp $
+.\"	$NetBSD: curses_standout.3,v 1.5 2012/05/01 17:32:58 agc Exp $
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 13, 2002
+.Dd May 1, 2012
 .Dt CURSES_STANDOUT 3
 .Os
 .Sh NAME
@@ -44,9 +44,11 @@
 .Ft int
 .Fn standend void
 .Ft int
-.Fn wstandout void
+.Fn wstandout
+.Fa "WINDOW *win"
 .Ft int
-.Fn wstandend void
+.Fn wstandend
+.Fa "WINDOW *win"
 .Sh DESCRIPTION
 These functions manipulate the standout attribute on
 .Dv stdscr
