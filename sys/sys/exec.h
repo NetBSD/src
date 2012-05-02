@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.136 2012/04/30 21:19:58 rmind Exp $	*/
+/*	$NetBSD: exec.h,v 1.137 2012/05/02 23:33:11 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -301,7 +301,7 @@ struct posix_spawn_file_actions;
 struct posix_spawnattr;
 int	check_posix_spawn	(struct lwp *);
 void	posix_spawn_fa_free(struct posix_spawn_file_actions *, size_t);
-int	do_posix_spawn(struct lwp *, pid_t *, const char *,
+int	do_posix_spawn(struct lwp *, pid_t *, bool*, const char *,
     struct posix_spawn_file_actions *, struct posix_spawnattr *,
     char *const *argv, char *const *, execve_fetch_element_t);
 
