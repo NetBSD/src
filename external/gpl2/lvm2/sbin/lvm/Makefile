@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2011/05/26 12:56:26 joerg Exp $
+#	$NetBSD: Makefile,v 1.11 2012/05/02 13:35:04 cheusov Exp $
 
 USE_FORT?=	no
 NOLINT=		#defined
@@ -29,6 +29,9 @@ CPPFLAGS+=	-I${LVM2_DISTDIR}/lib -I${LVM2_DISTDIR}/include \
 		-I${LIBDEVMAPPER_DISTDIR}
 
 CPPFLAGS+=	-DLVM_SHARED_PATH=\"$(BINDIR)/lvm\"
+
+.include <bsd.own.mk>
+.include <bsd.sys.mk> # for USE_SSP
 
 # Some parts of the code can't be protected because if its
 # alloca() usage.
