@@ -1,4 +1,4 @@
-.\"	$NetBSD: ssh.1,v 1.8 2011/09/07 17:49:19 christos Exp $
+.\"	$NetBSD: ssh.1,v 1.9 2012/05/02 02:41:08 christos Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -35,8 +35,8 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ssh.1,v 1.320 2011/08/02 01:22:11 djm Exp $
-.Dd August 2 2011
+.\" $OpenBSD: ssh.1,v 1.323 2011/09/11 06:59:05 okan Exp $
+.Dd September 11 2011
 .Dt SSH 1
 .Os
 .Sh NAME
@@ -385,6 +385,8 @@ Valid commands are:
 (check that the master process is running),
 .Dq forward
 (request forwardings without command execution),
+.Dq cancel
+(cancel forwardings),
 .Dq exit
 (request the master to exit), and
 .Dq stop
@@ -411,11 +413,13 @@ For full details of the options listed below, and their possible values, see
 .It ConnectTimeout
 .It ControlMaster
 .It ControlPath
+.It ControlPersist
 .It DynamicForward
 .It EscapeChar
 .It ExitOnForwardFailure
 .It ForwardAgent
 .It ForwardX11
+.It ForwardX11Timeout
 .It ForwardX11Trusted
 .It GatewayPorts
 .It GlobalKnownHostsFile
@@ -430,6 +434,7 @@ For full details of the options listed below, and their possible values, see
 .It IdentityFile
 .It IdentitiesOnly
 .It IPQoS
+.It KbdInteractiveAuthentication
 .It KbdInteractiveDevices
 .It KexAlgorithms
 .It LocalCommand
@@ -881,11 +886,20 @@ Currently this allows the addition of port forwardings using the
 and
 .Fl D
 options (see above).
-It also allows the cancellation of existing remote port-forwardings
-using
+It also allows the cancellation of existing port-forwardings
+with
 .Sm off
-.Fl KR Oo Ar bind_address : Oc Ar port .
+.Fl KL Oo Ar bind_address : Oc Ar port
 .Sm on
+for local,
+.Sm off
+.Fl KR Oo Ar bind_address : Oc Ar port
+.Sm on
+for remote and
+.Sm off
+.Fl KD Oo Ar bind_address : Oc Ar port
+.Sm on
+for dynamic port-forwardings.
 .Ic !\& Ns Ar command
 allows the user to execute a local command if the
 .Ic PermitLocalCommand
