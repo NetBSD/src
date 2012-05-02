@@ -1,5 +1,5 @@
-/*	$NetBSD: readconf.c,v 1.7 2012/04/27 15:45:37 tls Exp $	*/
-/* $OpenBSD: readconf.c,v 1.193 2011/05/24 07:15:47 djm Exp $ */
+/*	$NetBSD: readconf.c,v 1.8 2012/05/02 02:41:08 christos Exp $	*/
+/* $OpenBSD: readconf.c,v 1.194 2011/09/23 07:45:05 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: readconf.c,v 1.7 2012/04/27 15:45:37 tls Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.8 2012/05/02 02:41:08 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -321,6 +321,7 @@ add_remote_forward(Options *options, const Forward *newfwd)
 	fwd->listen_port = newfwd->listen_port;
 	fwd->connect_host = newfwd->connect_host;
 	fwd->connect_port = newfwd->connect_port;
+	fwd->handle = newfwd->handle;
 	fwd->allocated_port = 0;
 }
 

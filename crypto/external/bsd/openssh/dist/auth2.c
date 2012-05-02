@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2.c,v 1.5 2011/09/07 17:49:19 christos Exp $	*/
-/* $OpenBSD: auth2.c,v 1.123 2011/03/10 02:52:57 djm Exp $ */
+/*	$NetBSD: auth2.c,v 1.6 2012/05/02 02:41:08 christos Exp $	*/
+/* $OpenBSD: auth2.c,v 1.124 2011/12/07 05:44:38 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2.c,v 1.5 2011/09/07 17:49:19 christos Exp $");
+__RCSID("$NetBSD: auth2.c,v 1.6 2012/05/02 02:41:08 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
@@ -124,7 +124,7 @@ auth2_read_banner(void)
 		close(fd);
 		return (NULL);
 	}
-	if (st.st_size > 1*1024*1024) {
+	if (st.st_size <= 0 || st.st_size > 1*1024*1024) {
 		close(fd);
 		return (NULL);
 	}

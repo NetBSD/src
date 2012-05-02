@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd.8,v 1.7 2011/09/07 17:49:19 christos Exp $
+.\"	$NetBSD: sshd.8,v 1.8 2012/05/02 02:41:08 christos Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -35,8 +35,8 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sshd.8,v 1.263 2011/08/02 01:22:11 djm Exp $
-.Dd August 2 2011
+.\" $OpenBSD: sshd.8,v 1.264 2011/09/23 00:22:04 dtucker Exp $
+.Dd September 23 2011
 .Dt SSHD 8
 .Os
 .Sh NAME
@@ -583,6 +583,9 @@ Multiple
 options may be applied separated by commas.
 No pattern matching is performed on the specified hostnames,
 they must be literal domains or addresses.
+A port specification of
+.Cm *
+matches any port.
 .It Cm principals="principals"
 On a
 .Cm cert-authority

@@ -1,5 +1,5 @@
-/*	$NetBSD: servconf.c,v 1.9 2011/09/07 17:49:19 christos Exp $	*/
-/* $OpenBSD: servconf.c,v 1.222 2011/06/22 21:57:01 djm Exp $ */
+/*	$NetBSD: servconf.c,v 1.10 2012/05/02 02:41:08 christos Exp $	*/
+/* $OpenBSD: servconf.c,v 1.223 2011/09/23 00:22:04 dtucker Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: servconf.c,v 1.9 2011/09/07 17:49:19 christos Exp $");
+__RCSID("$NetBSD: servconf.c,v 1.10 2012/05/02 02:41:08 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
@@ -1508,7 +1508,7 @@ process_server_config_line(ServerOptions *options, char *line,
 				fatal("%s line %d: missing host in PermitOpen",
 				    filename, linenum);
 			p = cleanhostname(p);
-			if (arg == NULL || (port = a2port(arg)) <= 0)
+			if (arg == NULL || ((port = permitopen_port(arg)) < 0))
 				fatal("%s line %d: bad port number in "
 				    "PermitOpen", filename, linenum);
 			if (*activep && n == -1)
