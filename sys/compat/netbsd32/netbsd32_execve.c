@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.35 2012/04/30 21:19:58 rmind Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.36 2012/05/02 23:33:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.35 2012/04/30 21:19:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.36 2012/05/02 23:33:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,6 +178,7 @@ netbsd32_posix_spawn(struct lwp *l,
 	struct posix_spawn_file_actions *fa = NULL;
 	struct posix_spawnattr *sa = NULL;
 	pid_t pid;
+	bool child_ok = false;
 
 	error = check_posix_spawn(l);
 	if (error) {
@@ -190,7 +191,7 @@ netbsd32_posix_spawn(struct lwp *l,
 		error = netbsd32_posix_spawn_fa_alloc(&fa,
 		    SCARG_P32(uap, file_actions));
 		if (error)
-			goto fail;
+			goto error_exit;
 	}
 
 	/* copyin posix_spawnattr struct */
@@ -198,17 +199,17 @@ netbsd32_posix_spawn(struct lwp *l,
 		sa = kmem_alloc(sizeof(*sa), KM_SLEEP);
 		error = copyin(SCARG_P32(uap, attrp), sa, sizeof(*sa));
 		if (error)
-			goto fail;
+			goto error_exit;
 	}
 
 	/*
 	 * Do the spawn
 	 */
-	error = do_posix_spawn(l, &pid, SCARG_P32(uap, path), fa,
+	error = do_posix_spawn(l, &pid, &child_ok, SCARG_P32(uap, path), fa,
 	    sa, SCARG_P32(uap, argv), SCARG_P32(uap, envp),
 	    netbsd32_execve_fetch_element);
 	if (error)
-		goto fail;
+		goto error_exit;
 
 	if (error == 0 && SCARG_P32(uap, pid) != NULL)
 		error = copyout(&pid, SCARG_P32(uap, pid), sizeof(pid));
@@ -216,14 +217,17 @@ netbsd32_posix_spawn(struct lwp *l,
 	*retval = error;
 	return 0;
 
-fail:
-	(void)chgproccnt(kauth_cred_getuid(l->l_cred), -1);
-	atomic_dec_uint(&nprocs);
+ error_exit:
+ 	if (!child_ok) {
+		(void)chgproccnt(kauth_cred_getuid(l->l_cred), -1);
+		atomic_dec_uint(&nprocs);
 
-	if (sa)
-		kmem_free(sa, sizeof(*sa));
-	if (fa)
-		posix_spawn_fa_free(fa, fa->len);
+		if (sa)
+			kmem_free(sa, sizeof(*sa));
+		if (fa)
+			posix_spawn_fa_free(fa, fa->len);
+	}
+
 	*retval = error;
 	return 0;
 }
