@@ -1,4 +1,4 @@
-.\"        $NetBSD: route.conf.5,v 1.4 2012/05/02 15:57:15 gendalia Exp $
+.\"        $NetBSD: route.conf.5,v 1.5 2012/05/02 22:38:31 wiz Exp $
 .\"
 .\" Copyright (c) 2004 Thomas Klausner
 .\" All rights reserved.
@@ -72,7 +72,7 @@ script that parses
 In this example, the interface for the desired routing changes is set,
 the IP address on that interface is determined, and a route is added
 during startup, or deleted during system shutdown.
-.Bd -literal -offset indent 
+.Bd -literal -offset indent
 # Set interface and determine current IP address for added route.
 !ifname=bnx0
 !ipaddr=$(/sbin/ifconfig ${ifname} | awk '$1 == "inet" {print $2}')
