@@ -1,4 +1,4 @@
-/* $OpenBSD: packet.c,v 1.173 2011/05/06 21:14:05 djm Exp $ */
+/* $OpenBSD: packet.c,v 1.176 2012/01/25 19:40:09 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -238,7 +238,7 @@ packet_set_connection(int fd_in, int fd_out)
 void
 packet_set_timeout(int timeout, int count)
 {
-	if (timeout == 0 || count == 0) {
+	if (timeout <= 0 || count <= 0) {
 		active_state->packet_timeout_ms = -1;
 		return;
 	}
@@ -959,8 +959,10 @@ packet_send2(void)
 
 	/* during rekeying we can only send key exchange messages */
 	if (active_state->rekeying) {
-		if (!((type >= SSH2_MSG_TRANSPORT_MIN) &&
-		    (type <= SSH2_MSG_TRANSPORT_MAX))) {
+		if ((type < SSH2_MSG_TRANSPORT_MIN) ||
+		    (type > SSH2_MSG_TRANSPORT_MAX) ||
+		    (type == SSH2_MSG_SERVICE_REQUEST) ||
+		    (type == SSH2_MSG_SERVICE_ACCEPT)) {
 			debug("enqueue packet: %u", type);
 			p = xmalloc(sizeof(*p));
 			p->type = type;
@@ -1432,12 +1434,6 @@ packet_read_poll_seqnr(u_int32_t *seqnr_p)
 			}
 		}
 	}
-}
-
-int
-packet_read_poll(void)
-{
-	return packet_read_poll_seqnr(NULL);
 }
 
 /*
