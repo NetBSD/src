@@ -1,5 +1,5 @@
-/*	$NetBSD: authfile.c,v 1.5 2011/09/07 17:49:19 christos Exp $	*/
-/* $OpenBSD: authfile.c,v 1.92 2011/06/14 22:49:18 markus Exp $ */
+/*	$NetBSD: authfile.c,v 1.6 2012/05/02 02:41:08 christos Exp $	*/
+/* $OpenBSD: authfile.c,v 1.93 2012/01/25 19:36:31 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: authfile.c,v 1.5 2011/09/07 17:49:19 christos Exp $");
+__RCSID("$NetBSD: authfile.c,v 1.6 2012/05/02 02:41:08 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -331,7 +331,7 @@ key_load_file(int fd, const char *filename, Buffer *blob)
 		    filename == NULL ? "" : " ");
 		return 0;
 	}
-	buffer_init(blob);
+	buffer_clear(blob);
 	for (;;) {
 		if ((len = atomicio(read, fd, buf, sizeof(buf))) == 0) {
 			if (errno == EPIPE)
