@@ -1,4 +1,4 @@
-.\"        $NetBSD: route.conf.5,v 1.3 2008/05/08 15:34:39 wiz Exp $
+.\"        $NetBSD: route.conf.5,v 1.4 2012/05/02 15:57:15 gendalia Exp $
 .\"
 .\" Copyright (c) 2004 Thomas Klausner
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 24, 2004
+.Dd May 1, 2012
 .Dt ROUTE.CONF 5
 .Os
 .Sh NAME
@@ -46,6 +46,9 @@ are run during start-up,
 while lines starting with a minus sign
 .Pq Sq \-
 are run during system shutdown.
+If a line starts with a
+.Sq \&! ,
+the rest of the line will get evaluated as a shell script fragment.
 All other lines are passed to
 .Xr route 8 .
 During start-up, they are passed behind a
@@ -66,10 +69,17 @@ script that parses
 .Nm .
 .El
 .Sh EXAMPLES
-In this example, if the
-.Pa staticroute
-script is enabled in
-.Xr rc.conf 5 ,
+In this example, the interface for the desired routing changes is set,
+the IP address on that interface is determined, and a route is added
+during startup, or deleted during system shutdown.
+.Bd -literal -offset indent 
+# Set interface and determine current IP address for added route.
+!ifname=bnx0
+!ipaddr=$(/sbin/ifconfig ${ifname} | awk '$1 == "inet" {print $2}')
+net 10.10.1 -interface ${ipaddr}
+.Ed
+.Pp
+In this example,
 IP forwarding is turned on during
 start-up, and a static route added for 192.168.2.0.
 During system shutdown, the route is removed
