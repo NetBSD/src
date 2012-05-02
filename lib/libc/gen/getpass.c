@@ -1,4 +1,4 @@
-/*	$NetBSD: getpass.c,v 1.25 2012/04/14 01:33:43 christos Exp $	*/
+/*	$NetBSD: getpass.c,v 1.26 2012/05/02 14:36:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getpass.c,v 1.25 2012/04/14 01:33:43 christos Exp $");
+__RCSID("$NetBSD: getpass.c,v 1.26 2012/05/02 14:36:07 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -172,8 +172,14 @@ getpassfd(const char *prompt, char *buf, size_t len, int *fd, int flags,
 			(void)write(fd[2], "\a", 1); \
 	while (/*CONSTCOND*/ 0)
 #define erase() (void)write(fd[1], "\b \b", 3)
-#define C(a, b) (gt.c_cc[(a)] == _POSIX_VDISABLE ? (b) : gt.c_cc[(a)])
-
+/*
+ * We test for both _POSIX_VDISABLE and NUL here because _POSIX_VDISABLE
+ * propagation does not seem to be very consistent on multiple daemon hops
+ * between different OS's. Perhaps we should not even bother with
+ * _POSIX_VDISABLE and use ~0 and 0 directly.
+ */
+#define C(a, b) ((gt.c_cc[(a)] == _POSIX_VDISABLE || gt.c_cc[(a)] == '\0') ? \
+    (b) : gt.c_cc[(a)])
 		if (lnext) {
 			lnext = false;
 			goto add;
