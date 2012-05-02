@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.454 2012/04/30 10:05:12 manu Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.455 2012/05/02 20:48:29 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.454 2012/04/30 10:05:12 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.455 2012/05/02 20:48:29 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1496,9 +1496,9 @@ do_open(lwp_t *l, struct pathbuf *pb, int open_flags, int open_mode, int *fd)
 		return EINVAL;
 
 	if ((error = fd_allocfile(&fp, &indx)) != 0) {
-		pathbuf_destroy(pb);
 		return error;
 	}
+
 	/* We're going to read cwdi->cwdi_cmask unlocked here. */
 	cmode = ((open_mode &~ cwdi->cwdi_cmask) & ALLPERMS) &~ S_ISTXT;
 	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, pb);
@@ -1510,18 +1510,15 @@ do_open(lwp_t *l, struct pathbuf *pb, int open_flags, int open_mode, int *fd)
 		    (error =
 			fd_dupopen(l->l_dupfd, &indx, flags, error)) == 0) {
 			*fd = indx;
-			pathbuf_destroy(pb);
-			return (0);
+			return 0;
 		}
 		if (error == ERESTART)
 			error = EINTR;
-		pathbuf_destroy(pb);
 		return error;
 	}
 
 	l->l_dupfd = 0;
 	vp = nd.ni_vp;
-	pathbuf_destroy(pb);
 
 	if ((error = open_setfp(l, fp, vp, indx, flags)))
 		return error;
@@ -1536,7 +1533,7 @@ int
 fd_open(const char *path, int open_flags, int open_mode, int *fd)
 {
 	struct pathbuf *pb;
-	int oflags;
+	int error, oflags;
 
 	oflags = FFLAGS(open_flags);
 	if ((oflags & (FREAD | FWRITE)) == 0)
@@ -1546,7 +1543,10 @@ fd_open(const char *path, int open_flags, int open_mode, int *fd)
 	if (pb == NULL)
 		return ENOMEM;
 
-	return do_open(curlwp, pb, open_flags, open_mode, fd);
+	error = do_open(curlwp, pb, open_flags, open_mode, fd);
+	pathbuf_destroy(pb);
+
+	return error;
 }
 
 /*
@@ -1566,18 +1566,17 @@ sys_open(struct lwp *l, const struct sys_open_args *uap, register_t *retval)
 
 	flags = FFLAGS(SCARG(uap, flags));
 	if ((flags & (FREAD | FWRITE)) == 0)
-		return (EINVAL);
+		return EINVAL;
 
 	error = pathbuf_copyin(SCARG(uap, path), &pb);
 	if (error)
 		return error;
 
 	error = do_open(l, pb, SCARG(uap, flags), SCARG(uap, mode), &result);
-	if (error)
-		return error;
+	pathbuf_destroy(pb);
 
 	*retval = result;
-	return 0;
+	return error;
 }
 
 int
