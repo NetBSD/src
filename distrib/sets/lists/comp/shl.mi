@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.220 2012/04/29 13:59:06 skrll Exp $
+# $NetBSD: shl.mi,v 1.221 2012/05/02 02:43:01 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -417,7 +417,7 @@
 ./usr/libdata/debug/usr/lib/libskey.so.2.0.debug	comp-sys-debug	skey,debug
 ./usr/libdata/debug/usr/lib/libsl.so.5.0.debug		comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libsqlite3.so.1.1.debug	comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libssh.so.18.0.debug	comp-secsh-debug	crypto,debug
+./usr/libdata/debug/usr/lib/libssh.so.19.0.debug	comp-secsh-debug	crypto,debug
 ./usr/libdata/debug/usr/lib/libssl.so.9.0.debug		comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/lib/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug
 ./usr/libdata/debug/usr/lib/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug

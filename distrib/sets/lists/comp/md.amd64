@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.162 2012/04/07 16:48:24 christos Exp $
+# $NetBSD: md.amd64,v 1.163 2012/05/02 02:43:01 christos Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -1152,7 +1152,7 @@
 ./usr/libdata/debug/usr/lib/i386/libsl.so.5.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/libsqlite3.so.1.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libss.so.6.0.debug	comp-compat-shlib	obsolete
-./usr/libdata/debug/usr/lib/i386/libssh.so.18.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libssh.so.19.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libssl.so.9.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.0.debug	comp-compat-shlib	gcc=4,compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.1.debug	comp-compat-shlib	gcc=45,compat,pic,debug
