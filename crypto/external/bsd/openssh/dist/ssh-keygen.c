@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-keygen.c,v 1.8 2011/09/16 15:36:18 joerg Exp $	*/
-/* $OpenBSD: ssh-keygen.c,v 1.210 2011/04/18 00:46:05 djm Exp $ */
+/*	$NetBSD: ssh-keygen.c,v 1.9 2012/05/02 02:41:08 christos Exp $	*/
+/* $OpenBSD: ssh-keygen.c,v 1.212 2011/10/16 15:02:41 jmc Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keygen.c,v 1.8 2011/09/16 15:36:18 joerg Exp $");
+__RCSID("$NetBSD: ssh-keygen.c,v 1.9 2012/05/02 02:41:08 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -152,7 +152,7 @@ char hostname[MAXHOSTNAMELEN];
 
 /* moduli.c */
 int gen_candidates(FILE *, u_int32_t, u_int32_t, BIGNUM *);
-int prime_test(FILE *, FILE *, u_int32_t, u_int32_t);
+int prime_test(FILE *, FILE *, u_int32_t, u_int32_t, char *);
 
 static void
 type_bits_valid(int type, u_int32_t *bitsp)
@@ -1876,6 +1876,7 @@ usage(void)
 	fprintf(stderr, "  -h          Generate host certificate instead of a user certificate.\n");
 	fprintf(stderr, "  -I key_id   Key identifier to include in certificate.\n");
 	fprintf(stderr, "  -i          Import foreign format to OpenSSH key file.\n");
+	fprintf(stderr, "  -K checkpt  Write checkpoints to this file.\n");
 	fprintf(stderr, "  -L          Print the contents of a certificate.\n");
 	fprintf(stderr, "  -l          Show fingerprint of key file.\n");
 	fprintf(stderr, "  -M memory   Amount of memory (MB) to use for generating DH-GEX moduli.\n");
@@ -1908,6 +1909,7 @@ int
 main(int argc, char **argv)
 {
 	char dotsshdir[MAXPATHLEN], comment[1024], *passphrase1, *passphrase2;
+	char *checkpoint = NULL;
 	char out_file[MAXPATHLEN], *rr_hostname = NULL;
 	Key *private, *public;
 	struct passwd *pw;
@@ -1940,7 +1942,7 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	while ((opt = getopt(argc, argv, "AegiqpclBHLhvxXyF:b:f:t:D:I:P:m:N:n:"
+	while ((opt = getopt(argc, argv, "AegiqpclBHLhvxXyF:b:f:t:D:I:K:P:m:N:n:"
 	    "O:C:r:g:R:T:G:M:S:s:a:V:W:z:")) != -1) {
 		switch (opt) {
 		case 'A':
@@ -2091,6 +2093,11 @@ main(int argc, char **argv)
 			    sizeof(out_file))
 				fatal("Output filename too long");
 			break;
+		case 'K':
+			if (strlen(optarg) >= MAXPATHLEN)
+				fatal("Checkpoint filename too long");
+			checkpoint = xstrdup(optarg);
+			break;
 		case 'S':
 			/* XXX - also compare length against bits */
 			if (BN_hex2bn(&start, optarg) == 0)
@@ -2213,7 +2220,8 @@ main(int argc, char **argv)
 			fatal("Couldn't open moduli file \"%s\": %s",
 			    out_file, strerror(errno));
 		}
-		if (prime_test(in, out, trials, generator_wanted) != 0)
+		if (prime_test(in, out, trials, generator_wanted, checkpoint)
+		    != 0)
 			fatal("modulus screening failed");
 		return (0);
 	}
