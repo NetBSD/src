@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1699 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1700 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -54,4 +54,4 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	kernel: add mpii(4), a driver for LSI Logic Fusion-MPT Message Passing
 		Interface II SAS controllers.  [bouyer 20120419]
 	kernel: Add support for 256 CPUs on amd64. [rmind 20120420]
-	OpenSSH): Import 6.0 [christos 20120501]
+	OpenSSH: Import 6.0 [christos 20120501]
