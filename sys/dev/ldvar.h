@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.20 2012/02/02 19:43:01 tls Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.21 2012/05/03 21:21:08 bsh Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@ struct ld_softc {
 	int	sc_ncylinders;		/* # cylinders */
 	int	sc_nheads;		/* # heads */
 	int	sc_nsectors;		/* # sectors per track */
-	int	sc_disksize512;
+	uint64_t	sc_disksize512;
 
 	/*
 	 * The following are filled by hardware specific attachment code.
