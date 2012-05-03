@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.85 2012/05/02 16:51:01 christos Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.86 2012/05/03 14:26:42 christos Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.85 2012/05/02 16:51:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.86 2012/05/03 14:26:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1953,8 +1953,6 @@ coda_getpages(void *v)
 	int waslocked;	       /* 1 if vnode lock was held on entry */
 	int didopen = 0;	/* 1 if we opened container file */
 
-	KASSERT(mutex_owned(vp->v_interlock));
-
 	/*
 	 * Handle a case that uvm_fault doesn't quite use yet.
 	 * See layer_vnops.c. for inspiration.
@@ -1962,6 +1960,8 @@ coda_getpages(void *v)
 	if (ap->a_flags & PGO_LOCKED) {
 		return EBUSY;
 	}
+
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	/* Check for control object. */
 	if (IS_CTL_VP(vp)) {
