@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.86 2012/05/03 14:26:42 christos Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.87 2012/05/04 01:40:13 christos Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.86 2012/05/03 14:26:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.87 2012/05/04 01:40:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1898,10 +1898,10 @@ print_cred(kauth_cred_t cred)
  * table when coda_inactive calls coda_unsave.
  */
 struct cnode *
-make_coda_node(CodaFid *fid, struct mount *vfsp, short type)
+make_coda_node(CodaFid *fid, struct mount *fvsp, short type)
 {
     struct cnode *cp;
-    int          err;
+    int          error;
 
     if ((cp = coda_find(fid)) == NULL) {
 	vnode_t *vp;
@@ -1909,9 +1909,9 @@ make_coda_node(CodaFid *fid, struct mount *vfsp, short type)
 	cp = coda_alloc();
 	cp->c_fid = *fid;
 
-	err = getnewvnode(VT_CODA, vfsp, coda_vnodeop_p, NULL, &vp);
-	if (err) {
-	    panic("%s: getnewvnode returned error %d", __func__, err);
+	error = getnewvnode(VT_CODA, fvsp, coda_vnodeop_p, NULL, &vp);
+	if (error) {
+	    panic("%s: getnewvnode returned error %d", __func__, error);
 	}
 	vp->v_data = cp;
 	vp->v_type = type;
@@ -1989,6 +1989,7 @@ coda_getpages(void *v)
 		 * leave it in the same state on exit.
 		 */
 		if (waslocked == 0) {
+			mutex_exit(vp->v_interlock);
 			cerror = vn_lock(vp, LK_EXCLUSIVE);
 			if (cerror) {
 				printf("%s: can't lock vnode %p\n",
@@ -2021,6 +2022,8 @@ coda_getpages(void *v)
 #endif
 		cvp = cp->c_ovp;
 		didopen = 1;
+		if (waslocked == 0)
+			mutex_enter(vp->v_interlock);
 	}
 	KASSERT(cvp != NULL);
 
