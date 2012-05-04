@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.7 2012/03/02 15:09:58 joerg Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.8 2012/05/04 23:50:26 wiz Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.7 2012/03/02 15:09:58 joerg Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.8 2012/05/04 23:50:26 wiz Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -1269,8 +1269,8 @@ pman_sh(const struct man_node *n, mandb_rec *rec)
 		 */
 		int has_alias = 0;	// Any more aliases left?
 		while (*name_desc) {
-			/* Remove any leading spaces. */
-			if (name_desc[0] == ' ') {
+			/* Remove any leading spaces or hyphens. */
+			if (name_desc[0] == ' ' || name_desc[0] =='-') {
 				name_desc++;
 				continue;
 			}
