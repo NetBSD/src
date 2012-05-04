@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.134 2012/04/26 00:21:44 enami Exp $	*/
+/*	$NetBSD: pthread.c,v 1.135 2012/05/04 12:26:33 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.134 2012/04/26 00:21:44 enami Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.135 2012/05/04 12:26:33 joerg Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -1301,14 +1301,12 @@ pthread__initmain(pthread_t *newt)
 		    4 * pthread__pagesize / 1024);
 
 	*newt = &pthread__main;
-#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
-#  ifdef __HAVE___LWP_GETTCB_FAST
+#ifdef __HAVE___LWP_GETTCB_FAST
 	pthread__main.pt_tls = __lwp_gettcb_fast();
-#  else
+#else
 	pthread__main.pt_tls = _lwp_getprivate();
-#  endif
-	pthread__main.pt_tls->tcb_pthread = &pthread__main;
 #endif
+	pthread__main.pt_tls->tcb_pthread = &pthread__main;
 }
 
 #ifndef lint
