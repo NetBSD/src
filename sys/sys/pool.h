@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.73 2012/01/27 19:48:41 para Exp $	*/
+/*	$NetBSD: pool.h,v 1.74 2012/05/05 19:15:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -37,10 +37,6 @@
 #define	__POOL_EXPOSE
 #endif
 
-#if defined(_KERNEL_OPT)
-#include "opt_pool.h"
-#endif
-
 #ifdef __POOL_EXPOSE
 #include <sys/param.h>
 #include <sys/mutex.h>
@@ -49,11 +45,9 @@
 #include <sys/time.h>
 #include <sys/tree.h>
 #include <sys/callback.h>
-#endif
 
 #define	POOL_PADDR_INVALID	((paddr_t) -1)
 
-#ifdef __POOL_EXPOSE
 struct pool;
 
 struct pool_allocator {
@@ -159,14 +153,6 @@ struct pool {
 	/*
 	 * Diagnostic aides.
 	 */
-	struct pool_log	*pr_log;
-	int		pr_curlogentry;
-	int		pr_logsize;
-
-	const char	*pr_entered_file; /* reentrancy check */
-	long		pr_entered_line;
-
-	struct callback_entry pr_reclaimerentry;
 	void		*pr_freecheck;
 	void		*pr_qcache;
 };
@@ -273,18 +259,6 @@ void		*pool_get(struct pool *, int);
 void		pool_put(struct pool *, void *);
 int		pool_reclaim(struct pool *);
 
-#ifdef POOL_DIAGNOSTIC
-/*
- * These versions do reentrancy checking.
- */
-void		*_pool_get(struct pool *, int, const char *, long);
-void		_pool_put(struct pool *, void *, const char *, long);
-int		_pool_reclaim(struct pool *, const char *, long);
-#define		pool_get(h, f)	_pool_get((h), (f), __FILE__, __LINE__)
-#define		pool_put(h, v)	_pool_put((h), (v), __FILE__, __LINE__)
-#define		pool_reclaim(h)	_pool_reclaim((h), __FILE__, __LINE__)
-#endif /* POOL_DIAGNOSTIC */
-
 int		pool_prime(struct pool *, int);
 void		pool_setlowat(struct pool *, int);
 void		pool_sethiwat(struct pool *, int);
@@ -295,7 +269,6 @@ bool		pool_drain_end(struct pool *, uint64_t);
 /*
  * Debugging and diagnostic aides.
  */
-void		pool_print(struct pool *, const char *);
 void		pool_printit(struct pool *, const char *,
     void (*)(const char *, ...) __printflike(1, 2));
 void		pool_printall(const char *, void (*)(const char *, ...)
