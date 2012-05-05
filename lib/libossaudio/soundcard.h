@@ -1,4 +1,4 @@
-/*	$NetBSD: soundcard.h,v 1.21 2012/05/05 15:04:57 christos Exp $	*/
+/*	$NetBSD: soundcard.h,v 1.22 2012/05/05 15:57:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -297,7 +297,7 @@ typedef struct buffmem_desc {
  * else we depend on <sys/ioctl.h> to do it for us. We do it this way, so
  * that we don't define the prototype twice.
  */
-#ifndef _SYS_IOCTL_H
+#ifndef _SYS_IOCTL_H_
 #include <sys/ioctl.h>
 #else
 __BEGIN_DECLS
