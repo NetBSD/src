@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.59 2012/01/02 22:10:45 perseant Exp $	*/
+/*	$NetBSD: inode.h,v 1.60 2012/05/05 04:08:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -50,6 +50,9 @@
  * Lookup result state (other than the result inode). This is
  * currently stashed in the vnode between VOP_LOOKUP and directory
  * operation VOPs, which is gross.
+ *
+ * XXX ulr_diroff is a lookup hint from the previos call of VOP_LOOKUP.
+ * probably it should not be here.
  */
 struct ufs_lookup_results {
 	int32_t	  ulr_count;	/* Size of free slot in directory. */
