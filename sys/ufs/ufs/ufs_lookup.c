@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.113 2012/03/16 08:39:54 hannken Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.114 2012/05/05 04:08:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.113 2012/03/16 08:39:54 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.114 2012/05/05 04:08:53 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -124,19 +124,27 @@ ufs_lookup(void *v)
 	struct buf *bp;			/* a buffer of directory entries */
 	struct direct *ep;		/* the current directory entry */
 	int entryoffsetinblock;		/* offset of ep in bp's buffer */
-	enum {NONE, COMPACT, FOUND} slotstatus;
-	doff_t slotoffset;		/* offset of area with free space */
+	enum {
+		NONE,		/* need to search a slot for our new entry */
+		COMPACT,	/* a compaction can make a slot in the current
+				   DIRBLKSIZ block */
+		FOUND,		/* found a slot (or no need to search) */
+	} slotstatus;
+	doff_t slotoffset;		/* offset of area with free space.
+					   a special value -1 for invalid */
 	int slotsize;			/* size of area at slotoffset */
-	int slotfreespace;		/* amount of space free in slot */
+	int slotfreespace;		/* accumulated amount of space free in
+					   the current DIRBLKSIZ block */
 	int slotneeded;			/* size of the entry we're seeking */
 	int numdirpasses;		/* strategy for directory search */
 	doff_t endsearch;		/* offset to end directory search */
-	doff_t prevoff;			/* prev entry dp->i_offset */
+	doff_t prevoff;			/* previous value of ulr_offset */
 	struct vnode *pdp;		/* saved dp during symlink work */
 	struct vnode *tdp;		/* returned by VFS_VGET */
-	doff_t enduseful;		/* pointer past last used dir slot */
+	doff_t enduseful;		/* pointer past last used dir slot.
+					   used for directory truncation. */
 	u_long bmask;			/* block offset mask */
-	int namlen, error;
+	int error;
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
 	kauth_cred_t cred = cnp->cn_cred;
@@ -194,8 +202,7 @@ ufs_lookup(void *v)
 	 */
 	slotstatus = FOUND;
 	slotfreespace = slotsize = slotneeded = 0;
-	if ((nameiop == CREATE || nameiop == RENAME) &&
-	    (flags & ISLASTCN)) {
+	if ((nameiop == CREATE || nameiop == RENAME) && (flags & ISLASTCN)) {
 		slotstatus = NONE;
 		slotneeded = DIRECTSIZ(cnp->cn_namelen);
 	}
@@ -280,8 +287,8 @@ searchloop:
 		if ((results->ulr_offset & bmask) == 0) {
 			if (bp != NULL)
 				brelse(bp, 0);
-			error = ufs_blkatoff(vdp, (off_t)results->ulr_offset, NULL,
-			    &bp, false);
+			error = ufs_blkatoff(vdp, (off_t)results->ulr_offset,
+			    NULL, &bp, false);
 			if (error)
 				goto out;
 			entryoffsetinblock = 0;
@@ -351,6 +358,8 @@ searchloop:
 		 * Check for a name match.
 		 */
 		if (ep->d_ino) {
+			int namlen;
+
 #if (BYTE_ORDER == LITTLE_ENDIAN)
 			if (FSFMT(vdp) && needswap == 0)
 				namlen = ep->d_type;
@@ -370,8 +379,7 @@ foundentry:
 #endif
 				/*
 				 * Save directory entry's inode number and
-				 * reclen in ndp->ni_ufs area, and release
-				 * directory buffer.
+				 * reclen, and release directory buffer.
 				 */
 				if (!FSFMT(vdp) && ep->d_type == DT_WHT) {
 					slotstatus = FOUND;
@@ -380,8 +388,9 @@ foundentry:
 					    needswap);
 					results->ulr_reclen = slotsize;
 					/*
-					 * This is used to set results->ulr_endoff,
-					 * which may be used by ufs_direnter2()
+					 * This is used to set
+					 * results->ulr_endoff,
+					 * which may be used by ufs_direnter()
 					 * as a length to truncate the
 					 * directory to.  Therefore, it must
 					 * point past the end of the last
@@ -396,12 +405,13 @@ foundentry:
 					 * an existing entry anyway.
 					 */
 					enduseful = endsearch;
-					ap->a_cnp->cn_flags |= ISWHITEOUT;
+					cnp->cn_flags |= ISWHITEOUT;
 					numdirpasses--;
 					goto notfound;
 				}
 				foundino = ufs_rw32(ep->d_ino, needswap);
-				results->ulr_reclen = ufs_rw16(ep->d_reclen, needswap);
+				results->ulr_reclen =
+				    ufs_rw16(ep->d_reclen, needswap);
 				goto found;
 			}
 		}
@@ -431,8 +441,8 @@ notfound:
 	 */
 	if ((nameiop == CREATE || nameiop == RENAME ||
 	     (nameiop == DELETE &&
-	      (ap->a_cnp->cn_flags & DOWHITEOUT) &&
-	      (ap->a_cnp->cn_flags & ISWHITEOUT))) &&
+	      (cnp->cn_flags & DOWHITEOUT) &&
+	      (cnp->cn_flags & ISWHITEOUT))) &&
 	    (flags & ISLASTCN) && dp->i_nlink != 0) {
 		/*
 		 * Access for write is interpreted as allowing
@@ -459,7 +469,8 @@ notfound:
 			if ((results->ulr_offset & (dirblksiz - 1)) == 0)
 				results->ulr_count = 0;
 			else
-				results->ulr_count = results->ulr_offset - prevoff;
+				results->ulr_count =
+				    results->ulr_offset - prevoff;
 		} else {
 			results->ulr_offset = slotoffset;
 			results->ulr_count = slotsize;
@@ -501,7 +512,8 @@ found:
 	 */
 	if (results->ulr_offset + DIRSIZ(FSFMT(vdp), ep, needswap) > dp->i_size) {
 		ufs_dirbad(dp, results->ulr_offset, "i_size too small");
-		dp->i_size = results->ulr_offset + DIRSIZ(FSFMT(vdp), ep, needswap);
+		dp->i_size =
+		    results->ulr_offset + DIRSIZ(FSFMT(vdp), ep, needswap);
 		DIP_ASSIGN(dp, size, dp->i_size);
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
 		UFS_WAPBL_UPDATE(vdp, NULL, NULL, UPDATE_DIROP);
@@ -901,7 +913,7 @@ ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	 * dp->i_offset + dp->i_count would yield the space.
 	 */
 	ep = (struct direct *)dirbuf;
-	dsize = (ep->d_ino != 0) ?  DIRSIZ(FSFMT(dvp), ep, needswap) : 0;
+	dsize = (ep->d_ino != 0) ? DIRSIZ(FSFMT(dvp), ep, needswap) : 0;
 	spacefree = ufs_rw16(ep->d_reclen, needswap) - dsize;
 	for (loc = ufs_rw16(ep->d_reclen, needswap); loc < ulr->ulr_count; ) {
 		uint16_t reclen;
@@ -1446,7 +1458,7 @@ int ufs_dirrablks = UFS_DIRRABLKS;
 
 /*
  * ufs_blkatoff: Return buffer with the contents of block "offset" from
- * the beginning of directory "vp".  If "res" is non-zero, fill it in with
+ * the beginning of directory "vp".  If "res" is non-NULL, fill it in with
  * a pointer to the remaining space in the directory.  If the caller intends
  * to modify the buffer returned, "modify" must be true.
  */
