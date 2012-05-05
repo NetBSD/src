@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.27 2012/05/04 11:48:12 christos Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.28 2012/05/05 15:57:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.27 2012/05/04 11:48:12 christos Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.28 2012/05/05 15:57:45 christos Exp $");
 
 /*
  * This is an OSS (Linux) sound API emulator.
@@ -549,7 +549,7 @@ getdevinfo(int fd)
 	mixer_devinfo_t mi;
 	int i, j, e;
 	static struct {
-		char *name;
+		const char *name;
 		int code;
 	} *dp, devs[] = {
 		{ AudioNmicrophone,	SOUND_MIXER_MIC },
@@ -574,7 +574,7 @@ getdevinfo(int fd)
 /*		{ AudioNmixerout,	?? },*/
 		{ 0, -1 }
 	};
-	static struct audiodevinfo devcache = { 0 };
+	static struct audiodevinfo devcache = { .done = 0 };
 	struct audiodevinfo *di = &devcache;
 	struct stat sb;
 	size_t mlen, dlen;
@@ -826,7 +826,7 @@ static void
 setblocksize(int fd, struct audio_info *info)
 {
 	struct audio_info set;
-	int s;
+	size_t s;
 
 	if (info->blocksize & (info->blocksize-1)) {
 		for(s = 32; s < info->blocksize; s <<= 1)
