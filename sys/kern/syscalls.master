@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.258 2012/03/08 21:55:45 joerg Exp $
+	$NetBSD: syscalls.master,v 1.259 2012/05/05 19:37:37 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -26,6 +26,7 @@
 ;	INDIR	included, but don't define the syscall args structure,
 ;		and allow it to be "really" varargs.
 ;	NOERR	included, syscall does not set errno
+;	EXTERN	implemented, but as 3rd party module
 ;
 ; arguments:
 ;	PAD	argument not part of the C interface, used only for padding
@@ -403,7 +404,8 @@
 ;
 ; Syscalls 210-219 are reserved for dynamically loaded syscalls
 ;
-210	UNIMPL
+210	EXTERN	MODULAR { int|sys||afssys(long id, long a1, long a2, \
+			  long a3, long a4, long a5, long a6); }
 211	UNIMPL
 212	UNIMPL
 213	UNIMPL
