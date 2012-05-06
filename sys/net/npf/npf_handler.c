@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.15 2012/03/11 18:27:59 rmind Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.16 2012/05/06 02:45:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.15 2012/03/11 18:27:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.16 2012/05/06 02:45:25 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -236,17 +236,20 @@ out:
 	 * Depending on the flags and protocol, return TCP reset (RST) or
 	 * ICMP destination unreachable.
 	 */
-	if (retfl) {
-		npf_return_block(&npc, nbuf, retfl);
+	if (retfl && npf_return_block(&npc, nbuf, retfl)) {
+		*mp = NULL;
 	}
+
 	if (error) {
 		npf_stats_inc(NPF_STAT_ERROR);
 	} else {
 		error = ENETUNREACH;
 	}
-	m_freem(*mp);
-	*mp = NULL;
 
+	if (*mp) {
+		m_freem(*mp);
+		*mp = NULL;
+	}
 	return error;
 }
 
@@ -271,7 +274,7 @@ npf_pfil_register(void)
 	npf_ph_if = pfil_head_get(PFIL_TYPE_IFNET, 0);
 	npf_ph_inet = pfil_head_get(PFIL_TYPE_AF, AF_INET);
 	npf_ph_inet6 = pfil_head_get(PFIL_TYPE_AF, AF_INET6);
-	if (npf_ph_if == NULL || npf_ph_inet == NULL || npf_ph_inet6 == NULL) {
+	if (!npf_ph_if || (!npf_ph_inet && !npf_ph_inet6)) {
 		npf_ph_if = NULL;
 		error = ENOENT;
 		goto fail;
@@ -283,13 +286,16 @@ npf_pfil_register(void)
 	KASSERT(error == 0);
 
 	/* Packet IN/OUT handler on all interfaces and IP layer. */
-	error = pfil_add_hook(npf_packet_handler, NULL,
-	    PFIL_WAITOK | PFIL_ALL, npf_ph_inet);
-	KASSERT(error == 0);
-
-	error = pfil_add_hook(npf_packet_handler, NULL,
-	    PFIL_WAITOK | PFIL_ALL, npf_ph_inet6);
-	KASSERT(error == 0);
+	if (npf_ph_inet) {
+		error = pfil_add_hook(npf_packet_handler, NULL,
+		    PFIL_WAITOK | PFIL_ALL, npf_ph_inet);
+		KASSERT(error == 0);
+	}
+	if (npf_ph_inet6) {
+		error = pfil_add_hook(npf_packet_handler, NULL,
+		    PFIL_WAITOK | PFIL_ALL, npf_ph_inet6);
+		KASSERT(error == 0);
+	}
 fail:
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
@@ -308,15 +314,19 @@ npf_pfil_unregister(void)
 	KERNEL_LOCK(1, NULL);
 
 	if (npf_ph_if) {
-		(void)pfil_remove_hook(npf_packet_handler, NULL,
-		    PFIL_ALL, npf_ph_inet6);
-		(void)pfil_remove_hook(npf_packet_handler, NULL,
-		    PFIL_ALL, npf_ph_inet);
 		(void)pfil_remove_hook(npf_ifhook, NULL,
 		    PFIL_IFADDR | PFIL_IFNET, npf_ph_if);
-
-		npf_ph_if = NULL;
 	}
+	if (npf_ph_inet) {
+		(void)pfil_remove_hook(npf_packet_handler, NULL,
+		    PFIL_ALL, npf_ph_inet);
+	}
+	if (npf_ph_inet6) {
+		(void)pfil_remove_hook(npf_packet_handler, NULL,
+		    PFIL_ALL, npf_ph_inet6);
+	}
+
+	npf_ph_if = NULL;
 
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
