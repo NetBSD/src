@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_sendpkt.c,v 1.9 2012/02/20 00:18:20 rmind Exp $	*/
+/*	$NetBSD: npf_sendpkt.c,v 1.10 2012/05/06 02:45:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.9 2012/02/20 00:18:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.10 2012/05/06 02:45:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -53,6 +53,12 @@ __KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.9 2012/02/20 00:18:20 rmind Exp $"
 #include "npf_impl.h"
 
 #define	DEFAULT_IP_TTL		(ip_defttl)
+
+#ifndef INET6
+#define	in6_cksum(...)		0
+#define	ip6_output(...)		0
+#define	icmp6_error(m, ...)	m_freem(m)
+#endif
 
 /*
  * npf_return_tcp: return a TCP reset (RST) packet.
@@ -81,9 +87,10 @@ npf_return_tcp(npf_cache_t *npc)
 	/* Create and setup a network buffer. */
 	if (npf_iscached(npc, NPC_IP4)) {
 		len = sizeof(struct ip) + sizeof(struct tcphdr);
-	} else {
-		KASSERT(npf_iscached(npc, NPC_IP6));
+	} else if (npf_iscached(npc, NPC_IP6)) {
 		len = sizeof(struct ip6_hdr) + sizeof(struct tcphdr);
+	} else {
+		return EINVAL;
 	}
 
 	m = m_gethdr(M_DONTWAIT, MT_HEADER);
@@ -149,24 +156,15 @@ npf_return_tcp(npf_cache_t *npc)
 		ip->ip_ttl = DEFAULT_IP_TTL;
 	} else {
 		KASSERT(npf_iscached(npc, NPC_IP6));
-#ifdef INET6
 		th->th_sum = in6_cksum(m, IPPROTO_TCP, sizeof(struct ip6_hdr),
 		    sizeof(struct tcphdr));
-#else
-		KASSERT(false);
-#endif
 	}
 
 	/* Pass to IP layer. */
 	if (npf_iscached(npc, NPC_IP4)) {
 		return ip_output(m, NULL, NULL, IP_FORWARDING, NULL, NULL);
-	} else {
-#ifdef INET6
-		return ip6_output(m, NULL, NULL, IPV6_FORWARDING, NULL, NULL, NULL);
-#else
-		return 0;
-#endif
 	}
+	return ip6_output(m, NULL, NULL, IPV6_FORWARDING, NULL, NULL, NULL);
 }
 
 /*
@@ -179,40 +177,41 @@ npf_return_icmp(npf_cache_t *npc, nbuf_t *nbuf)
 
 	if (npf_iscached(npc, NPC_IP4)) {
 		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_ADMIN_PROHIBIT, 0, 0);
-	} else {
-		KASSERT(npf_iscached(npc, NPC_IP6));
-#ifdef INET6
+		return 0;
+	} else if (npf_iscached(npc, NPC_IP6)) {
 		icmp6_error(m, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN, 0);
-#endif
+		return 0;
 	}
-	return 0;
+	return EINVAL;
 }
 
 /*
  * npf_return_block: return TCP reset or ICMP host unreachable packet.
- * TODO: user should be able to specify exact ICMP error codes in config
+ *
+ * => Returns true if the buffer was consumed (freed) and false otherwise.
  */
-void
+bool
 npf_return_block(npf_cache_t *npc, nbuf_t *nbuf, const int retfl)
 {
 	void *n_ptr = nbuf_dataptr(nbuf);
 
 	if (!npf_iscached(npc, NPC_IP46) && !npf_fetch_ip(npc, nbuf, n_ptr)) {
-		return;
+		return false;
 	}
 	switch (npf_cache_ipproto(npc)) {
 	case IPPROTO_TCP:
 		if (retfl & NPF_RULE_RETRST) {
 			if (!npf_fetch_tcp(npc, nbuf, n_ptr)) {
-				return;
+				return false;
 			}
 			(void)npf_return_tcp(npc);
 		}
 		break;
 	case IPPROTO_UDP:
-		if (retfl & NPF_RULE_RETICMP) {
-			(void)npf_return_icmp(npc, nbuf);
-		}
+		if (retfl & NPF_RULE_RETICMP)
+			if (npf_return_icmp(npc, nbuf) == 0)
+				return true;
 		break;
 	}
+	return false;
 }
