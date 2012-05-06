@@ -1,0 +1,72 @@
+.\" $NetBSD: libnetpgpverify.3,v 1.1.2.1 2012/05/06 17:49:30 agc Exp $
+.\"
+.\" Copyright (c) 2012 Alistair Crooks <agc@NetBSD.org>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd April 13, 2012
+.Dt LIBNETPGPVERIFY 3
+.Os
+.Sh NAME
+.Nm libnetpgpverify
+.Nd BIGNUM library of multi-precision integers
+.Sh LIBRARY
+.Lb libnetpgpverify
+.Sh SYNOPSIS
+.In netpgp/verify.h
+.Ft int
+.Fo RSA_public_decrypt
+.Fa "int siglen" "const uint8_t *signature" "uint8_t *to" "RSA *rsa" "int padding"
+.Fc
+.Sh DESCRIPTION
+.Nm
+is a very small library which isolates out the code
+to verify an
+.Dv RSA
+signature.
+It has been kept deliberately small and with few prerequisites to allow
+this library to be embedded easily in other applications and libraries.
+.Pp
+The
+.Fo RSA_public_decrypt
+function reads the message digest from
+.Dv siglen
+bytes of the
+.Dv signature
+using the signer's public key in
+.Dv rsa
+and places the resulting digest in
+.Dv to
+which must be long enough to hold the digest.
+.Dv padding
+was the padding with which the digest was originally calculated.
+.Sh SEE ALSO
+.Xr bn 3
+.Xr libnetpgpbn 3
+.Xr libnetpgprsa 3
+.Sh HISTORY
+The
+.Nm
+library first appeared in
+.Nx 7.0 .
+.Sh AUTHORS
+.An Alistair Crooks Aq agc@NetBSD.org
