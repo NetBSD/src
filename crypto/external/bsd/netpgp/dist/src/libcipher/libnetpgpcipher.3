@@ -1,0 +1,113 @@
+.\" $NetBSD: libnetpgpcipher.3,v 1.1.2.1 2012/05/06 17:40:08 agc Exp $
+.\"
+.\" Copyright (c) 2012 Alistair Crooks <agc@NetBSD.org>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd April 13, 2012
+.Dt LIBNETPGPCIPHER 3
+.Os
+.Sh NAME
+.Nm libnetpgpcipher
+.Nd BIGNUM library of multi-precision integers
+.Sh LIBRARY
+.Lb libnetpgpcipher
+.Sh SYNOPSIS
+.In netpgp/aes.h
+.In netpgp/cast.h
+.Ft void
+.Fo CAST_set_key
+.Fa "CAST_KEY *key" "int len" "const uint8_t *data"
+.Fc
+.Ft void
+.Fo CAST_cfb64_encrypt
+.Fa "const uint8_t *in" "uint8_t *out" "long length" "const CAST_KEY *key"
+.Fa "uint8_t *iv" "int *num" "int encode"
+.Fc
+.Ft void
+.Fo CAST_ecb_encrypt
+.Fa "const uint8_t *in" "uint8_t *out" "const CAST_KEY *key" "int encode"
+.Fc
+.Ft void
+.Fo CAST_encrypt
+.Fa "CAST_LONG *data" "const CAST_KEY *key"
+.Fc
+.Ft void
+.Fo CAST_decrypt
+.Fa "CAST_LONG *data" "const CAST_KEY *key"
+.Fc
+.Ft void
+.Fo CAST_cbc_encrypt
+.Fa "const uint8_t *in" "uint8_t *out" "long length" "const CAST_KEY *key"
+.Fa "uint8_t *iv" "int encode"
+.Fc
+.Ft void
+.Fo CAST_ofb64_encrypt
+.Fa "const uint8_t *in" "uint8_t *out" "long length" "const CAST_KEY *key"
+.Fa "uint8_t *iv" "int encode"
+.Fc
+.Sh DESCRIPTION
+.Nm
+is a small library which implements CAST5 encryption and decryption.
+.Pp
+The
+.Fo CAST_set_key
+converts the
+.Dv len
+bytes of data in
+.Dv data
+into the key provided in
+.Dv key
+The length of the
+.Dv data
+is capped at 16 bytes, and will be truncated to 16 if it is more than 16.
+64-bit cipher feedback mode is provided by the
+.Fo CAST_cfb64_encrypt
+function.
+The
+.Dq direction
+of encoding is provided by the
+.Dv encode
+parameter.
+Electronic code book
+mode is provided in the
+.Fo CAST_ecb_encrypt
+function.
+Cipher block chaining is provided b ythe
+.Fo CAST_cbc_encrypt
+function.
+64-bit output feedback mode is provided by the
+.Fo CAST_cfb64_encrypt
+function.
+.Pp
+The AES or Rijndael functions
+are the same as those provided in the
+.Nx
+kernel.
+.Sh SEE ALSO
+.Sh HISTORY
+The
+.Nm
+library first appeared in
+.Nx 7.0 .
+.Sh AUTHORS
+.An Alistair Crooks Aq agc@NetBSD.org
