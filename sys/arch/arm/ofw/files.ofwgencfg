@@ -1,6 +1,0 @@
-#	$NetBSD: files.ofwgencfg,v 1.1 2002/02/06 21:30:26 thorpej Exp $
-
-file	arch/arm/ofw/ofw_irq.S
-file	arch/arm/ofw/ofw_irqhandler.c
-file	arch/arm/ofw/ofwgencfg_clock.c
-file	arch/arm/ofw/ofwgencfg_machdep.c
