@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.307 2012/04/19 17:45:20 bouyer Exp $	*/
+/*	$NetBSD: cd.c,v 1.308 2012/05/06 16:42:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.307 2012/04/19 17:45:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.308 2012/05/06 16:42:19 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -382,17 +382,10 @@ cdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 			goto bad3;
 		}
 	} else {
-		int silent;
-
-		if (rawpart)
-			silent = XS_CTL_SILENT;
-		else
-			silent = 0;
-
 		/* Check that it is still responding and ok. */
 		error = scsipi_test_unit_ready(periph,
 		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE |
-		    silent);
+		    XS_CTL_SILENT);
 
 		/*
 		 * Start the pack spinning if necessary. Always allow the
@@ -401,6 +394,12 @@ cdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 		 */
 		if (error == EIO) {
 			int error2;
+			int silent;
+
+			if (rawpart)
+				silent = XS_CTL_SILENT;
+			else
+				silent = 0;
 
 			error2 = scsipi_start(periph, SSS_START, silent);
 			switch (error2) {
