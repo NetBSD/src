@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.14 2012/05/06 21:56:08 joerg Exp $	*/
+/*	$NetBSD: util.c,v 1.15 2012/05/06 22:27:01 joerg Exp $	*/
 /*	$FreeBSD: head/usr.bin/grep/util.c 211496 2010-08-19 09:28:59Z des $	*/
 /*	$OpenBSD: util.c,v 1.39 2010/07/02 22:18:03 tedu Exp $	*/
 
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: util.c,v 1.14 2012/05/06 21:56:08 joerg Exp $");
+__RCSID("$NetBSD: util.c,v 1.15 2012/05/06 22:27:01 joerg Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -227,12 +227,8 @@ procfile(const char *fn)
 
 	for (first = true, c = 0;  c == 0 || !(lflag || qflag); ) {
 		ln.off += ln.len + 1;
-		if ((ln.dat = grep_fgetln(f, &ln.len)) == NULL || ln.len == 0) {
-			if (ln.line_no == 0 && matchall)
-				exit(0);
-			else
-				break;
-		}
+		if ((ln.dat = grep_fgetln(f, &ln.len)) == NULL || ln.len == 0)
+			break;
 		if (ln.len > 0 && ln.dat[ln.len - 1] == line_sep)
 			--ln.len;
 		ln.line_no++;
@@ -294,17 +290,6 @@ procline(struct str *l, int nottext)
 	size_t st = 0;
 	unsigned int i;
 	int c = 0, m = 0, r = 0;
-
-	if (matchall) {
-		/* Short cut the case of (not) matching wild card pattern */
-		if (vflag)
-			return (0);
-		if ((binbehave == BINFILE_BIN && nottext) || cflag || qflag ||
-		    lflag || Lflag)
-			return (1);
-		printline(l, ':', matches, m);
-		return (1);
-	}
 
 	/* Loop to process the whole line */
 	while (st <= l->len) {
