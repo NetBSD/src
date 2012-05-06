@@ -1,4 +1,0 @@
-#	$NetBSD: P6032,v 1.1 2011/07/09 16:03:01 matt Exp $
-
-include "arch/evbmips/conf/std.algor"
-include "arch/algor/conf/P6032"

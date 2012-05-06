@@ -1,7 +1,0 @@
-#verbose on
-open test-queue-file15c.tmp
-
-header_checks regexp:cleanup_milter.reg15c
-add_header X-SPAM-FLAG YES
-
-close

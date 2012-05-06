@@ -1,5 +1,0 @@
-#!/bin/sh
-chat -t 100 -v ''	'ATZ' \
-      'OK' 		'ATDT#777' \
-      TIMEOUT		120 \
-      'CONNECT'   	'\c'

@@ -1,8 +1,0 @@
-#	$NetBSD: INTEGRATOR_INSTALL,v 1.1 2003/04/08 20:49:02 thorpej Exp $
-#
-#	INTEGRATOR_INSTALL -- INTEGRATOR kernel with installation-sized
-#	ramdisk
-#
-
-include "arch/evbarm/conf/INTEGRATOR"
-include "arch/evbarm/conf/INSTALL"

@@ -1,9 +1,0 @@
-#	$NetBSD: mach64drm.ioconf,v 1.1 2011/08/28 16:19:07 jmcneill Exp $
-
-ioconf mach64drm
-
-include "conf/files"
-
-pseudo-root drm*
-
-mach64drm* at drm?
