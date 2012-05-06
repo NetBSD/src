@@ -1,4 +1,4 @@
-/*	$NetBSD: scsitest.c,v 1.2 2012/05/06 16:33:02 martin Exp $	*/
+/*	$NetBSD: scsitest.c,v 1.3 2012/05/06 16:58:31 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsitest.c,v 1.2 2012/05/06 16:33:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsitest.c,v 1.3 2012/05/06 16:58:31 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -221,7 +221,10 @@ scsitest_match(struct device *parent, struct cfdata *match, void *aux)
 	if ((isofd = rumpuser_open(MYCDISO, O_RDWR, &error)) == -1)
 		return 0;
 #else
-	isofd = -1;
+	/*
+	 * We pretend to have a medium present initially, so != -1.
+	 */
+	isofd = -2;
 #endif
 
 	return 1;
