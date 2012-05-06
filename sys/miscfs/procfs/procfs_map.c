@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.41 2011/10/16 12:26:16 hannken Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.42 2012/05/06 03:13:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.41 2011/10/16 12:26:16 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.42 2012/05/06 03:13:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +120,8 @@ procfs_domap(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 	dev_t dev;
 	long fileid;
 	size_t pos;
+	int width = (int)((curl->l_proc->p_flag & PK_32) ? sizeof(int32_t) : 
+	    sizeof(void *)) * 2;
 
 	if (uio->uio_rw != UIO_READ)
 		return EOPNOTSUPP;
@@ -173,18 +175,17 @@ again:
 				}
 			}
 			pos += snprintf(buffer + pos, bufsize - pos,
-			    "%#0*"PRIxVADDR"-%#0*"PRIxVADDR" %c%c%c%c "
-			    "%0*lx %llx:%llx %ld     %s\n",
-			    (int)sizeof(void *) * 2,entry->start,
-			    (int)sizeof(void *) * 2,entry->end,
+			    "%.*"PRIxVADDR"-%.*"PRIxVADDR" %c%c%c%c "
+			    "%.*lx %.2llx:%.2llx %-8ld %25.s %s\n",
+			    width, entry->start,
+			    width, entry->end,
 			    (entry->protection & VM_PROT_READ) ? 'r' : '-',
 			    (entry->protection & VM_PROT_WRITE) ? 'w' : '-',
 			    (entry->protection & VM_PROT_EXECUTE) ? 'x' : '-',
 			    (entry->etype & UVM_ET_COPYONWRITE) ? 'p' : 's',
-			    (int)sizeof(void *) * 2,
-			    (unsigned long)entry->offset,
+			    width, (unsigned long)entry->offset,
 			    (unsigned long long)major(dev),
-			    (unsigned long long)minor(dev), fileid, path);
+			    (unsigned long long)minor(dev), fileid, "", path);
 		} else {
 			pos += snprintf(buffer + pos, bufsize - pos,
 			    "%#"PRIxVADDR" %#"PRIxVADDR" "
