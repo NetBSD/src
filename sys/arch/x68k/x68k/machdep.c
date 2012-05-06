@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.181 2012/01/29 12:43:00 isaki Exp $	*/
+/*	$NetBSD: machdep.c,v 1.182 2012/05/06 19:46:18 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.181 2012/01/29 12:43:00 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.182 2012/05/06 19:46:18 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -174,6 +174,7 @@ void
 x68k_init(void)
 {
 	u_int i;
+	paddr_t msgbuf_pa;
 
 	/*
 	 * Tell the VM system about available physical memory.
@@ -181,17 +182,25 @@ x68k_init(void)
 	uvm_page_physload(atop(avail_start), atop(avail_end),
 	    atop(avail_start), atop(avail_end),
 	    VM_FREELIST_MAINMEM);
+
+	/*
+	 * avail_end was pre-decremented in pmap_bootstrap to compensate
+	 * for msgbuf pages, but avail_end is also used to check DMA'able
+	 * memory range for intio devices and it would be updated per
+	 * probed extended memories, so explicitly save msgbuf address here.
+	 */
+	msgbuf_pa = avail_end;
+
 #ifdef EXTENDED_MEMORY
 	setmemrange();
 #endif
 
 	/*
 	 * Initialize error message buffer (at end of core).
-	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
 	 */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_kenter_pa((vaddr_t)msgbufaddr + i * PAGE_SIZE,
-		    avail_end + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, 0);
+		    msgbuf_pa + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 }
@@ -1146,6 +1155,8 @@ setmemrange(void)
 			    atop(mlist[i].base), atop(h),
 			    VM_FREELIST_HIGHMEM);
 			mem_size += h - (u_long) mlist[i].base;
+			if (avail_end < h)
+				avail_end = h;
 		}
 	}
 
