@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.15 2012/05/06 22:27:01 joerg Exp $	*/
+/*	$NetBSD: util.c,v 1.16 2012/05/06 22:32:05 joerg Exp $	*/
 /*	$FreeBSD: head/usr.bin/grep/util.c 211496 2010-08-19 09:28:59Z des $	*/
 /*	$OpenBSD: util.c,v 1.39 2010/07/02 22:18:03 tedu Exp $	*/
 
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: util.c,v 1.15 2012/05/06 22:27:01 joerg Exp $");
+__RCSID("$NetBSD: util.c,v 1.16 2012/05/06 22:32:05 joerg Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -317,36 +317,32 @@ procline(struct str *l, int nottext)
 			if (r == REG_NOMATCH)
 				continue;
 			/* Check for full match */
-			if (r == 0 && xflag)
-				if (pmatch.rm_so != 0 ||
-				    (size_t)pmatch.rm_eo != l->len)
-					r = REG_NOMATCH;
+			if (xflag &&
+			    (pmatch.rm_so != 0 ||
+			     (size_t)pmatch.rm_eo != l->len))
+				continue;
 			/* Check for whole word match */
-			if (r == 0 && fg_pattern[i].word &&
-			    pmatch.rm_so != 0) {
+			if (fg_pattern[i].word && pmatch.rm_so != 0) {
 				wint_t wbegin, wend;
 
 				wbegin = wend = L' ';
 				if (pmatch.rm_so != 0 &&
 				    sscanf(&l->dat[pmatch.rm_so - 1],
 				    "%lc", &wbegin) != 1)
-					r = REG_NOMATCH;
-				else if ((size_t)pmatch.rm_eo != l->len &&
+					continue;
+				if ((size_t)pmatch.rm_eo != l->len &&
 				    sscanf(&l->dat[pmatch.rm_eo],
 				    "%lc", &wend) != 1)
-					r = REG_NOMATCH;
-				else if (iswword(wbegin) || iswword(wend))
-					r = REG_NOMATCH;
+					continue;
+				if (iswword(wbegin) || iswword(wend))
+					continue;
 			}
-			if (r == 0) {
-				if (m == 0)
-					c++;
-				if (m < MAX_LINE_MATCHES)
-					matches[m++] = pmatch;
-				/* matches - skip further patterns */
-				if ((color != NULL && !oflag) || qflag || lflag)
-					break;
-			}
+			c = 1;
+			if (m < MAX_LINE_MATCHES)
+				matches[m++] = pmatch;
+			/* matches - skip further patterns */
+			if ((color != NULL && !oflag) || qflag || lflag)
+				break;
 		}
 
 		if (vflag) {
