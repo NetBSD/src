@@ -1,8 +1,0 @@
-#       $NetBSD: shlib_version,v 1.3 2010/04/15 20:56:32 sborrill Exp $
-#       Remember to update distrib/sets/lists/base/shl.* when changing
-#
-#	Also update dist/src/lib/Makefile.am with the correct version number
-#	and regenerate dist/src/lib/Makefile.in
-
-major=2
-minor=0

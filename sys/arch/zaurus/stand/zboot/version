@@ -1,9 +1,0 @@
-$NetBSD: version,v 1.3 2012/01/18 23:12:21 nonaka Exp $
-
-NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
-file is important - make sure the entries are appended on end, last item
-is taken as the current.
-
-1.0:	Initial version.
-1.1:	Support SL-C1000.
-1.2:	Support to read the kernel from local file system.

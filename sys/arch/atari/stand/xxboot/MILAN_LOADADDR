@@ -1,5 +1,0 @@
-#	$NetBSD: MILAN_LOADADDR,v 1.1 2003/05/23 21:56:37 leo Exp $
-
-LOADADDR=	0x120000		# Load address of 2nd level boot
-LOADADDR3=	0x128000		# Load address of 3rd level boot
-CPPFLAGS+=	-DLOADADDR="${LOADADDR}" -DLOADADDR3="${LOADADDR3}"

@@ -1,9 +1,0 @@
-#       $NetBSD: mk.ap_ms104_sh4,v 1.1 2010/04/06 15:54:30 nonaka Exp $
-
-TEXTADDR="0x8c100000"
-
-SYSTEM_LD_TAIL_EXTRA+=; \
-	echo ${OBJCOPY} -S -O binary $@ $@.bin; \
-	${OBJCOPY} -S -O binary $@ $@.bin
-
-EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.bin@}

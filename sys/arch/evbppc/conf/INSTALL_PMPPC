@@ -1,7 +1,0 @@
-# 	$NetBSD: INSTALL_PMPPC,v 1.4 2011/06/08 05:03:43 matt Exp $
-
-include "arch/evbppc/conf/PMPPC"
-
-#ident 		"INSTALL_PMPPC-$Revision: 1.4 $"
-
-include "arch/evbppc/conf/INSTALL.inc"

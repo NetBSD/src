@@ -1,7 +1,0 @@
-#	$NetBSD: files.ptyfs,v 1.3 2010/03/02 16:43:48 pooka Exp $
-
-deffs	PTYFS
-
-file	fs/ptyfs/ptyfs_subr.c	ptyfs
-file	fs/ptyfs/ptyfs_vfsops.c	ptyfs
-file	fs/ptyfs/ptyfs_vnops.c	ptyfs

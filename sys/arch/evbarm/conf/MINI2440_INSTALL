@@ -1,7 +1,0 @@
-#	$NetBSD: MINI2440_INSTALL,v 1.1 2012/01/30 03:28:33 nisimura Exp $
-#
-
-include "arch/evbarm/conf/MINI2440"
-include "arch/evbarm/conf/INSTALL"
-
-options BOOTHOWTO=RB_SINGLE

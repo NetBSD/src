@@ -1,6 +1,0 @@
-
-[^:]*:     file format elf32-(little|big)arm
-
-Contents of section .text:
- 80.. 80ff0080 ffff                        ......          
-#...

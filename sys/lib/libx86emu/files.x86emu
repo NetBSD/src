@@ -1,7 +1,0 @@
-defflag	X86EMU
-
-file	../common/lib/libx86emu/x86emu.c	x86emu
-file	../common/lib/libx86emu/x86emu_i8254.c	x86emu
-file	../common/lib/libx86emu/x86emu_util.c	x86emu
-
-makeoptions	x86emu	CPPFLAGS+="-I$S/../common/include"

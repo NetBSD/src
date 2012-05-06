@@ -1,7 +1,0 @@
-#	$NetBSD: files.union,v 1.2 2010/03/02 16:43:48 pooka Exp $
-
-deffs	UNION
-
-file	fs/union/union_subr.c		union
-file	fs/union/union_vfsops.c		union
-file	fs/union/union_vnops.c		union
