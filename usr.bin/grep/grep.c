@@ -1,4 +1,4 @@
-/*	$NetBSD: grep.c,v 1.10 2011/09/16 15:39:26 joerg Exp $	*/
+/*	$NetBSD: grep.c,v 1.11 2012/05/06 22:27:00 joerg Exp $	*/
 /* 	$FreeBSD: head/usr.bin/grep/grep.c 211519 2010-08-19 22:55:17Z delphij $	*/
 /*	$OpenBSD: grep.c,v 1.42 2010/07/02 22:18:03 tedu Exp $	*/
 
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: grep.c,v 1.10 2011/09/16 15:39:26 joerg Exp $");
+__RCSID("$NetBSD: grep.c,v 1.11 2012/05/06 22:27:00 joerg Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -79,9 +79,6 @@ const char	*errstr[] = {
 /* Flags passed to regcomp() and regexec() */
 int		 cflags = 0;
 int		 eflags = REG_STARTEND;
-
-/* Shortcut for matching all cases like empty regex */
-bool		 matchall;
 
 /* Searching patterns */
 unsigned int	 patterns, pattern_sz;
@@ -229,11 +226,8 @@ static void
 add_pattern(char *pat, size_t len)
 {
 
-	/* Check if we can do a shortcut */
-	if (len == 0 || matchall) {
-		matchall = true;
-		return;
-	}
+	/* TODO: Check for empty patterns and shortcut */
+
 	/* Increase size if necessary */
 	if (patterns == pattern_sz) {
 		pattern_sz *= 2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: grep.h,v 1.7 2011/04/18 22:46:48 joerg Exp $	*/
+/*	$NetBSD: grep.h,v 1.8 2012/05/06 22:27:00 joerg Exp $	*/
 /*	$OpenBSD: grep.h,v 1.15 2010/04/05 03:03:55 tedu Exp $	*/
 /*	$FreeBSD: head/usr.bin/grep/grep.h 211496 2010-08-19 09:28:59Z des $	*/
 
@@ -120,7 +120,7 @@ extern char	*label;
 extern const char *color;
 extern int	 binbehave, devbehave, dirbehave, filebehave, grepbehave, linkbehave;
 
-extern bool	 matchall, notfound;
+extern bool	 notfound;
 extern int	 tail;
 extern unsigned int dpatterns, fpatterns, patterns;
 extern char    **pattern;
