@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.308 2012/05/06 16:42:19 martin Exp $	*/
+/*	$NetBSD: cd.c,v 1.309 2012/05/06 17:23:10 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.308 2012/05/06 16:42:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.309 2012/05/06 17:23:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1570,7 +1570,24 @@ cdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		/* FALLTHROUGH */
 	case CDIOCEJECT: /* FALLTHROUGH */
 	case ODIOCEJECT:
-		return (scsipi_start(periph, SSS_STOP|SSS_LOEJ, 0));
+		error = scsipi_start(periph, SSS_STOP|SSS_LOEJ, 0);
+		if (error == 0) {
+			int i;
+
+			/*
+			 * We have just successfully ejected the medium,
+			 * all partitions cached are meaningless now.
+			 * Make sure cdclose() will do silent operations
+			 * now by marking all partitions unused.
+			 * Before any real access, a new (default-)disk-
+			 * label will be generated anyway.
+			 */
+			for (i = 0; i < cd->sc_dk.dk_label->d_npartitions;
+			    i++)
+				cd->sc_dk.dk_label->d_partitions[i].p_fstype =
+					FS_UNUSED;
+		}
+		return error;
 	case DIOCCACHESYNC:
 		/* SYNCHRONISE CACHES command */
 		return (cdcachesync(periph, 0));
