@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.8 2008/04/28 20:23:30 martin Exp $	*/
+/*	$NetBSD: bus.h,v 1.9 2012/05/07 18:16:38 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -590,5 +590,10 @@ __NEWS68K_copy_region_N(4)
 #define	BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
 
 #define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
+
+/*
+ * There is no bus_dma(9)'fied bus drivers on this port.
+ */
+#define __HAVE_NO_BUS_DMA
 
 #endif /* _NEWS68K_BUS_H_ */
