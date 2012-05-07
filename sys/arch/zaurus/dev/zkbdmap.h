@@ -1,4 +1,4 @@
-/*	$NetBSD: zkbdmap.h,v 1.6 2012/01/29 10:12:42 tsutsui Exp $	*/
+/*	$NetBSD: zkbdmap.h,v 1.7 2012/05/07 18:36:16 tsutsui Exp $	*/
 /* $OpenBSD: zaurus_kbdmap.h,v 1.19 2005/05/10 08:26:12 espie Exp $ */
 
 /*
@@ -327,7 +327,7 @@ static const char xt_keymap_c860[] = {
     /* KC(72), */	0x00, /* NC */
     /* KC(73), */	0x00, /* NC */
     /* KC(74), */	0x00, /* NC */
-    /* KC(75), */	0x00, /* NC */
+    /* KC(75), */	0x36, /* KS_Shift_R, */
     /* KC(76), */	0x00, /* NC */
     /* KC(77), */	0x00, /* NC */
     /* KC(78), */	0x00, /* NC */
@@ -335,7 +335,7 @@ static const char xt_keymap_c860[] = {
     /* KC(80), */	0x00, /* NC */
     /* KC(81), */	0x00, /* NC */
     /* KC(82), */	0x00, /* NC */
-    /* KC(83), */	0x36, /* KS_Shift_R, */
+    /* KC(83), */	0x00, /* NC */
     /* KC(84), */	0x2a, /* KS_Shift_L, */
     /* KC(85), */	0x00, /* NC */
     /* KC(86), */	0x00, /* NC */
