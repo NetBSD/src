@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.77 2012/04/15 18:10:13 wiz Exp $	*/
+/*	$NetBSD: ps.c,v 1.78 2012/05/07 13:14:31 joerg Exp $	*/
 
 /*
  * Copyright (c) 2000-2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.77 2012/04/15 18:10:13 wiz Exp $");
+__RCSID("$NetBSD: ps.c,v 1.78 2012/05/07 13:14:31 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -145,6 +145,52 @@ const char *default_fmt = dfmt;
 struct varent *Opos = NULL; /* -O flag inserts after this point */
 
 kvm_t *kd;
+
+static long long
+ttyname2dev(const char *ttname, int *xflg, int *what)
+{
+	struct stat sb;
+	const char *ttypath;
+	char pathbuf[MAXPATHLEN];
+
+	ttypath = NULL;
+	if (strcmp(ttname, "?") == 0) {
+		*xflg = 1;
+		return KERN_PROC_TTY_NODEV;
+	}
+	if (strcmp(ttname, "-") == 0)
+		return KERN_PROC_TTY_REVOKE;
+
+	if (strcmp(ttname, "co") == 0)
+		ttypath = _PATH_CONSOLE;
+	else if (strncmp(ttname, "pts/", 4) == 0 ||
+		strncmp(ttname, "tty", 3) == 0) {
+		(void)snprintf(pathbuf,
+		    sizeof(pathbuf), "%s%s", _PATH_DEV, ttname);
+		ttypath = pathbuf;
+	} else if (*ttname != '/') {
+		(void)snprintf(pathbuf,
+		    sizeof(pathbuf), "%s%s", _PATH_TTY, ttname);
+		ttypath = pathbuf;
+	} else
+		ttypath = ttname;
+	*what = KERN_PROC_TTY;
+	if (stat(ttypath, &sb) == -1) {
+		devmajor_t pts = getdevmajor("pts", S_IFCHR);
+
+		if (pts != NODEVMAJOR && strncmp(ttname, "pts/", 4) == 0) {
+			int ptsminor = atoi(ttname + 4);
+
+			snprintf(pathbuf, sizeof(pathbuf), "pts/%d", ptsminor);
+			if (strcmp(pathbuf, ttname) == 0 && ptsminor >= 0)
+				return makedev(pts, ptsminor);
+		}
+		err(1, "%s", ttypath);
+	}
+	if (!S_ISCHR(sb.st_mode))
+		errx(1, "%s: not a terminal", ttypath);
+	return sb.st_rdev;
+}
 
 int
 main(int argc, char *argv[])
@@ -272,44 +318,11 @@ main(int argc, char *argv[])
 		case 'T':
 			if ((ttname = ttyname(STDIN_FILENO)) == NULL)
 				errx(1, "stdin: not a terminal");
-			goto tty;
-		case 't':
-			ttname = optarg;
-		tty: {
-			struct stat sb;
-			const char *ttypath;
-			char pathbuf[MAXPATHLEN];
-
-			flag = 0;
-			ttypath = NULL;
-			if (strcmp(ttname, "?") == 0) {
-				flag = KERN_PROC_TTY_NODEV;
-				xflg = 1;
-			} else if (strcmp(ttname, "-") == 0)
-				flag = KERN_PROC_TTY_REVOKE;
-			else if (strcmp(ttname, "co") == 0)
-				ttypath = _PATH_CONSOLE;
-			else if (strncmp(ttname, "pts/", 4) == 0 ||
-				strncmp(ttname, "tty", 3) == 0) {
-				(void)snprintf(pathbuf,
-				    sizeof(pathbuf), "%s%s", _PATH_DEV, ttname);
-				ttypath = pathbuf;
-			} else if (*ttname != '/') {
-				(void)snprintf(pathbuf,
-				    sizeof(pathbuf), "%s%s", _PATH_TTY, ttname);
-				ttypath = pathbuf;
-			} else
-				ttypath = ttname;
-			what = KERN_PROC_TTY;
-			if (flag == 0) {
-				if (stat(ttypath, &sb) == -1)
-					err(1, "%s", ttypath);
-				if (!S_ISCHR(sb.st_mode))
-					errx(1, "%s: not a terminal", ttypath);
-				flag = sb.st_rdev;
-			}
+			flag = ttyname2dev(ttname, &xflg, &what);
 			break;
-		}
+		case 't':
+			flag = ttyname2dev(optarg, &xflg, &what);
+			break;
 		case 'U':
 			if (*optarg != '\0') {
 				struct passwd *pw;
