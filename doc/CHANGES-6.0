@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.80 2012/05/07 16:31:11 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.81 2012/05/07 17:03:23 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -2104,4 +2104,51 @@ external/gpl3/gcc/dist/gcc/config/m68k/constraints.md 1.2
 
 	Prevent PIC code on m68k from violating compiler constraints.
 	[christos, ticket #219]
+
+sys/arch/x86/include/specialreg.h		1.58
+sys/arch/x86/x86/identcpu.c			1.31
+
+	Fix cmpxch8b on VIA Eden.  PR#41267.
+	[christos, ticket #220]
+
+sys/arch/i386/i386/compat_16_machdep.c		1.22
+
+	Preserve the floating point state in signals on i386.
+	[christos, ticket #221]
+
+include/stdlib.h				1.98
+lib/libc/compat/include/stdlib.h		1.5
+lib/libc/compat/stdlib/Makefile.inc		1.3
+lib/libc/compat/stdlib/compat_putenv.c		1.1
+lib/libc/compat/stdlib/compat_putenv.c		1.2
+
+	Restore binary compatibility with NetBSD-5 for putenv(3).
+	PR#46360.
+	[christos, ticket #222]
+
+lib/libc/gen/makecontext.3			1.10
+
+	Drop obsolete pthread restriction from the documentation.
+	[joerg, ticket #223]
+
+usr.bin/calendar/calendars/calendar.christian	1.4
+usr.bin/calendar/calendars/calendar.holiday	1.20
+usr.bin/calendar/calendars/calendar.judaic	1.4
+usr.bin/calendar/calendars/calendar.netbsd	1.21
+usr.bin/calendar/calendars/calendar.usholiday	1.4
+
+	Various calendar updates.
+	[jnemeth, ticket #224]
+
+lib/libossaudio/Makefile			patch
+lib/libossaudio/ossaudio.c			patch
+lib/libossaudio/soundcard.h			patch
+
+	Fix compilation of ioctls without the 3rd argument in ossaudio.
+	[christos, ticket #225]
+
+usr.sbin/makemandb/makemandb.c			1.8
+
+	Fix inconsistent handling of hyphens in apropos(1). PR#46408.
+	[wiz, ticket #228]
 
