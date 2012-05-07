@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.263.4.3.4.8 2012/02/29 18:03:39 matt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.263.4.3.4.9 2012/05/07 18:30:56 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.263.4.3.4.8 2012/02/29 18:03:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.263.4.3.4.9 2012/05/07 18:30:56 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -4782,7 +4782,7 @@ uvm_kmapent_free(struct vm_map_entry *entry)
 	pmap_update(vm_map_pmap(map));
 	vm_map_unlock(map);
 	pg = PHYS_TO_VM_PAGE(pa);
-	uvm_pagefree(pg);
+	uvm_km_pagefree(pg);
 	UVMMAP_EVCNT_INCR(ukh_free);
 }
 
