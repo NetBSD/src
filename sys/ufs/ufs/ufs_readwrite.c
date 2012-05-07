@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.101 2012/01/02 22:10:45 perseant Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.101.2.1 2012/05/07 03:01:14 riz Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.101 2012/01/02 22:10:45 perseant Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.101.2.1 2012/05/07 03:01:14 riz Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -418,7 +418,7 @@ WRITE(void *v)
 			mutex_enter(vp->v_interlock);
 			error = VOP_PUTPAGES(vp, (oldoff >> 16) << 16,
 			    (uio->uio_offset >> 16) << 16,
-			    PGO_CLEANIT | PGO_JOURNALLOCKED);
+			    PGO_CLEANIT | PGO_JOURNALLOCKED | PGO_LAZY);
 			if (error)
 				break;
 		}
