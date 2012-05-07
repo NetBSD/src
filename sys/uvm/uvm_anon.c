@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.51.28.2 2012/02/16 04:20:45 matt Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.51.28.3 2012/05/07 21:07:34 matt Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.51.28.2 2012/02/16 04:20:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.51.28.3 2012/05/07 21:07:34 matt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -207,13 +207,13 @@ uvm_anfree(struct vm_anon *anon)
 		uvmexp.swpgonly--;
 		mutex_exit(&uvm_swap_data_lock);
 	}
-#endif /* defined(VMSWAP) */
 
 	/*
 	 * free any swap resources.
 	 */
 
 	uvm_anon_dropswap(anon);
+#endif /* defined(VMSWAP) */
 
 	/*
 	 * give a page replacement hint.
