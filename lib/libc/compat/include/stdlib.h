@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.4 2009/01/26 15:05:56 drochner Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.4.10.1 2012/05/07 16:47:22 riz Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,6 +38,8 @@ __BEGIN_DECLS
 
 void	 unsetenv(const char *);
 int	 __unsetenv13(const char *);
+int	 putenv(char *);
+int	 __putenv50(char *);
 __aconst char *devname(int32_t, mode_t);
 __aconst char *__devname50(dev_t, mode_t);
 
