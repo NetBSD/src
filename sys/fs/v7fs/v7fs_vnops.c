@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.7 2012/01/27 12:22:02 njoly Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.7.2.1 2012/05/07 03:01:12 riz Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.7 2012/01/27 12:22:02 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.7.2.1 2012/05/07 03:01:12 riz Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -646,7 +646,7 @@ v7fs_fsync(void *v)
 	}
 
 	wait = (a->a_flags & FSYNC_WAIT);
-	error = vflushbuf(vp, wait);
+	error = vflushbuf(vp, a->a_flags);
 
 	if (error == 0 && (a->a_flags & FSYNC_DATAONLY) == 0)
 		error = v7fs_update(vp, NULL, NULL, wait ? UPDATE_WAIT : 0);
@@ -1314,4 +1314,3 @@ v7fs_readlink(void *v)
 error_exit:
 	return error;
 }
-
