@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.17 2012/05/07 20:51:20 dsl Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.18 2012/05/07 21:04:09 dsl Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -109,7 +109,7 @@
 	movl	%cs,%r11d		; \
 	pushq	%r11			; \
 /* XEN: We must fixup CS, as even kernel mode runs at CPL 3 */ \
- 	XEN_ONLY2(andb	$0xfc,(%rsp))	  \
+ 	XEN_ONLY2(andb	$0xfc,(%rsp);)	  \
 	pushq	%r13			;
 
 #define	DO_DEFERRED_SWITCH \
