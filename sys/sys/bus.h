@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.10 2011/09/01 15:10:32 christos Exp $	*/
+/*	$NetBSD: bus.h,v 1.11 2012/05/07 18:16:38 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -223,5 +223,26 @@ bool	bus_space_handle_is_equal(bus_space_tag_t, bus_space_handle_t,
     bus_space_handle_t);
 
 #endif /* __HAVE_NEW_STYLE_BUS_H */
+
+#ifdef __HAVE_NO_BUS_DMA
+/*
+ * XXX
+ * Dummy bus_dma(9) stuff for ports which don't bother to have
+ * unnecessary bus_dma(9) implementation to appease MI driver modules etc.
+ */
+typedef void *bus_dma_tag_t;
+
+typedef struct bus_dma_segment {
+	bus_addr_t ds_addr;
+	bus_size_t ds_len;
+} bus_dma_segment_t;
+
+typedef struct bus_dmamap {
+	bus_size_t dm_maxsegsz;
+	bus_size_t dm_mapsize;
+	int dm_nsegs;
+	bus_dma_segment_t *dm_segs;
+} *bus_dmamap_t;
+#endif /* __HAVE_NO_BUS_DMA */
 
 #endif	/* _SYS_BUS_H_ */
