@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.9 2011/11/11 13:26:45 wiz Exp $
+.\" $NetBSD: gpt.8,v 1.9.2.1 2012/05/07 03:15:12 riz Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd November 11, 2011
+.Dd March 9, 2012
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -145,7 +145,7 @@ option allows the user to specify the filename that
 .Nm
 should read the bootcode from.
 The default is to read from
-.Pa /usr/mdec/mbr_gpt .
+.Pa /usr/mdec/gptmbr.bin .
 .Pp
 The
 .Fl i
