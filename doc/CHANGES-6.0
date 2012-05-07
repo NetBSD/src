@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.81 2012/05/07 17:03:23 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.82 2012/05/07 17:07:00 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -2151,4 +2151,9 @@ usr.sbin/makemandb/makemandb.c			1.8
 
 	Fix inconsistent handling of hyphens in apropos(1). PR#46408.
 	[wiz, ticket #228]
+
+usr.bin/passwd/krb5_passwd.c			1.20
+
+	Fix non-PAM build of Kerberos 5 passwd.
+	[christos, ticket #231]
 
