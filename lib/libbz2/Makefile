@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2012/05/07 00:35:26 wiz Exp $
+#	$NetBSD: Makefile,v 1.17 2012/05/07 08:51:47 wiz Exp $
 
 USE_FORT?= yes	# data driven bugs?
 
@@ -7,7 +7,7 @@ NOMAN=		# defined
 .include <bsd.own.mk>
 
 LIB=		bz2
-DIST=		${NETBSDSRCDIR}/external/bsd/bzip2
+DIST=		${NETBSDSRCDIR}/external/bsd/bzip2/dist
 .PATH:		${DIST}
 
 SRCS=		blocksort.c huffman.c crctable.c randtable.c compress.c \

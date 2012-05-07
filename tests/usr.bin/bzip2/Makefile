@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2012/05/07 00:35:26 wiz Exp $
+# $NetBSD: Makefile,v 1.3 2012/05/07 08:51:47 wiz Exp $
 
 NOMAN=		# defined
 
@@ -8,7 +8,7 @@ TESTSDIR=	${TESTSBASE}/usr.bin/bzip2
 
 TESTS_SH=	t_bzip2
 
-DIST=           ${NETBSDSRCDIR}/external/bsd/bzip2
+DIST=           ${NETBSDSRCDIR}/external/bsd/bzip2/dist
 .PATH:		${DIST}
 
 FILESDIR=	${TESTSDIR}
