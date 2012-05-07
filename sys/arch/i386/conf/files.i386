@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.362 2011/11/18 22:18:07 jmcneill Exp $
+#	$NetBSD: files.i386,v 1.363 2012/05/07 17:45:28 jym Exp $
 #
 # new style config file for i386 architecture
 #
@@ -68,7 +68,6 @@ file	arch/i386/i386/db_dbgreg.S	ddb | kstack_check_dr0
 file	arch/i386/i386/db_disasm.c	ddb
 file	arch/i386/i386/db_interface.c	ddb
 file	arch/i386/i386/db_machdep.c	ddb
-file	arch/i386/i386/db_memrw.c	ddb | kgdb
 file	arch/i386/i386/dumpsys.c
 file	kern/subr_disk_mbr.c		disk
 file	kern/subr_spldebug.c		spldebug
