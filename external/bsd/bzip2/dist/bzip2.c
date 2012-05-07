@@ -1,4 +1,4 @@
-/*	$NetBSD: bzip2.c,v 1.2 2012/05/07 00:30:05 wiz Exp $	*/
+/*	$NetBSD: bzip2.c,v 1.3 2012/05/07 00:45:47 wiz Exp $	*/
 
 
 /*-----------------------------------------------------------*/
@@ -9,8 +9,8 @@
    This file is part of bzip2/libbzip2, a program and library for
    lossless, block-sorting data compression.
 
-   bzip2/libbzip2 version 1.0.5 of 10 December 2007
-   Copyright (C) 1996-2007 Julian Seward <jseward@bzip.org>
+   bzip2/libbzip2 version 1.0.6 of 6 September 2010
+   Copyright (C) 1996-2010 Julian Seward <jseward@bzip.org>
 
    Please read the WARNING, DISCLAIMER and PATENTS sections in the 
    README file.
@@ -1610,11 +1610,11 @@ void license ( void )
     "bzip2, a block-sorting file compressor.  "
     "Version %s.\n"
     "   \n"
-    "   Copyright (C) 1996-2007 by Julian Seward.\n"
+    "   Copyright (C) 1996-2010 by Julian Seward.\n"
     "   \n"
     "   This program is free software; you can redistribute it and/or modify\n"
     "   it under the terms set out in the LICENSE file, which is included\n"
-    "   in the bzip2-1.0.5 source distribution.\n"
+    "   in the bzip2-1.0.6 source distribution.\n"
     "   \n"
     "   This program is distributed in the hope that it will be useful,\n"
     "   but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
