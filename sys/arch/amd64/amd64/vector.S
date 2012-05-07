@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.39 2012/04/21 18:52:36 christos Exp $	*/
+/*	$NetBSD: vector.S,v 1.40 2012/05/07 21:09:29 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -100,40 +100,25 @@
 
 /*****************************************************************************/
 
-#ifndef	XEN
-#define PRE_TRAP
-#define	TRAP(a)		pushq $(a) ; jmp _C_LABEL(alltraps)
-#define	ZTRAP(a)	pushq $0 ; TRAP(a)
-#else
+#ifdef	XEN
 #define	PRE_TRAP	movq (%rsp),%rcx ; movq 8(%rsp),%r11 ; addq $0x10,%rsp 
-#define	POST_TRAP(a)	pushq $(a) ; jmp _C_LABEL(alltraps)
-#define	TRAP(a)		PRE_TRAP ; POST_TRAP(a)
-#define ZTRAP(a)	PRE_TRAP ; pushq $0 ; POST_TRAP(a)
+#else
+#define	PRE_TRAP
 #endif
 
-#define	BPTTRAP(a)	ZTRAP(a)
+#define	TRAP_NJ(a)	PRE_TRAP ; pushq $(a)
+#define	ZTRAP_NJ(a)	PRE_TRAP ; pushq $0 ; pushq $(a)
+#define	TRAP(a)		TRAP_NJ(a) ; jmp _C_LABEL(alltraps)
+#define	ZTRAP(a)	ZTRAP_NJ(a) ; jmp _C_LABEL(alltraps)
 
-#ifdef KDTRACE_HOOKS
-	.bss
-	.globl	dtrace_invop_jump_addr
-	.align	8
-	.type	dtrace_invop_jump_addr, @object
-	.size	dtrace_invop_jump_addr, 8
-dtrace_invop_jump_addr:
-	.zero	8
-	.globl	dtrace_invop_calltrap_addr
-	.align	8
-	.type	dtrace_invop_calltrap_addr, @object
-	.size	dtrace_invop_calltrap_addr, 8
-dtrace_invop_calltrap_addr:
-	.zero	8
-#endif
 	.text
 
 IDTVEC(trap00)
 	ZTRAP(T_DIVIDE)
+
 IDTVEC(trap01)
-	BPTTRAP(T_TRCTRAP)
+	ZTRAP(T_TRCTRAP)
+
 IDTVEC(trap02)
 #if defined(XEN)
 	ZTRAP(T_NMI)
@@ -167,18 +152,61 @@ IDTVEC(trap02)
 	addq	$TF_REGSIZE+16,%rsp
 	iretq
 #endif /* defined(XEN) */
+
 IDTVEC(trap03)
-	BPTTRAP(T_BPTFLT)
+#ifndef KDTRACE_HOOKS
+	ZTRAP(T_BPTFLT)
+#else
+	ZTRAP_NJ(T_BPTFLT)
+	INTRENTRY
+  	STI(si)
+	/*
+	 * DTrace Function Boundary Trace (fbt) probes are triggered
+	 * by int3 (0xcc).
+	 */
+	/* Check if there is no DTrace hook registered. */
+	cmpq	$0,dtrace_invop_jump_addr
+	je	calltrap
+
+	/*
+	 * Set our jump address for the jump back in the event that
+	 * the exception wasn't caused by DTrace at all.
+	 */
+	/* XXX: This doesn't look right for SMP - unless it is a
+	 * constant - so why set it everytime. (dsl) */
+	movq	$calltrap, dtrace_invop_calltrap_addr(%rip)
+
+	/* Jump to the code hooked in by DTrace. */
+	movq	dtrace_invop_jump_addr, %rax
+	jmpq	*dtrace_invop_jump_addr
+
+	.bss
+	.globl	dtrace_invop_jump_addr
+	.align	8
+	.type	dtrace_invop_jump_addr, @object
+	.size	dtrace_invop_jump_addr, 8
+dtrace_invop_jump_addr:
+	.zero	8
+	.globl	dtrace_invop_calltrap_addr
+	.align	8
+	.type	dtrace_invop_calltrap_addr, @object
+	.size	dtrace_invop_calltrap_addr, 8
+dtrace_invop_calltrap_addr:
+	.zero	8
+	.text
+#endif
+
 IDTVEC(trap04)
 	ZTRAP(T_OFLOW)
+
 IDTVEC(trap05)
 	ZTRAP(T_BOUND)
+
 IDTVEC(trap06)
 	ZTRAP(T_PRIVINFLT)
+
 IDTVEC(trap07)
-	PRE_TRAP;
-	pushq	$0			# dummy error code
-	pushq	$T_ASTFLT
+	ZTRAP_NJ(T_ASTFLT)
 	INTRENTRY
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
@@ -186,34 +214,39 @@ IDTVEC(trap07)
 	movq	CPUVAR(SELF),%rdi
 	call	_C_LABEL(fpudna)
 	jmp	.Lalltraps_checkusr
+
 IDTVEC(trap08)
 	TRAP(T_DOUBLEFLT)
+
 IDTVEC(trap09)
 	ZTRAP(T_FPOPFLT)
+
 IDTVEC(trap0a)
 	TRAP(T_TSSFLT)
+
 IDTVEC(trap0b)
 	TRAP(T_SEGNPFLT)
+
 IDTVEC(trap0c)
 	TRAP(T_STKFLT)
+
 IDTVEC(trap0d)
 	TRAP(T_PROTFLT)
+
 IDTVEC(trap0e)
 	TRAP(T_PAGEFLT)
+
 IDTVEC(intrspurious)
 IDTVEC(trap0f)
-	PRE_TRAP;
-	pushq	$0			# dummy error code
-	pushq	$T_ASTFLT
+	ZTRAP_NJ(T_ASTFLT)
 	INTRENTRY
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 #endif /* DIAGNOSTIC */
 	jmp	.Lalltraps_checkusr
+
 IDTVEC(trap10)
-	PRE_TRAP;
-	pushq	$0			# dummy error code
-	pushq	$T_ARITHTRAP
+	ZTRAP_NJ(T_ARITHTRAP)
 .Ldo_fputrap:
 	INTRENTRY
 #ifdef DIAGNOSTIC
@@ -227,15 +260,17 @@ IDTVEC(trap10)
 1:
   	STI(si)
 	jmp	calltrap
+
 IDTVEC(trap11)
 	TRAP(T_ALIGNFLT)
+
 IDTVEC(trap12)
 	ZTRAP(T_MCA)
+
 IDTVEC(trap13)
-	PRE_TRAP;
-	pushq	$0			# dummy error code
-	pushq	$T_XMM
+	ZTRAP_NJ(T_XMM)
 	jmp	.Ldo_fputrap
+
 IDTVEC(trap14)
 IDTVEC(trap15)
 IDTVEC(trap16)
@@ -297,30 +332,7 @@ NENTRY(resume_pop_es)
 NENTRY(alltraps)
 	INTRENTRY
   	STI(si)
-#ifdef KDTRACE_HOOKS
-	/*
-	 * DTrace Function Boundary Trace (fbt) probes are triggered
-	 * by int3 (0xcc) which causes the #BP (T_BPTFLT) breakpoint
-	 * interrupt. For all other trap types, just handle them in
-	 * the usual way.
-	 */
-	cmpl    $T_BPTFLT,TF_TRAPNO(%rsp)
-	jne     calltrap
 
-	/* Check if there is no DTrace hook registered. */
-	cmpq	$0,dtrace_invop_jump_addr
-	je	calltrap
-
-	/*
-	 * Set our jump address for the jump back in the event that
-	 * the exception wasn't caused by DTrace at all.
-	 */
-	movq	$calltrap, dtrace_invop_calltrap_addr(%rip)
-
-	/* Jump to the code hooked in by DTrace. */
-	movq	dtrace_invop_jump_addr, %rax
-	jmpq	*dtrace_invop_jump_addr
-#endif
 calltrap:
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
@@ -405,6 +417,7 @@ IDTVEC(recurse_lapic_ipi)
 	pushq	$T_ASTFLT
 	INTRENTRY		
 	jmp	1f
+
 IDTVEC(intr_lapic_ipi)
 	pushq	$0		
 	pushq	$T_ASTFLT
@@ -451,6 +464,7 @@ IDTVEC(recurse_lapic_ltimer)
 	pushq	$T_ASTFLT
 	INTRENTRY		
 	jmp	1f
+
 IDTVEC(intr_lapic_ltimer)
 	pushq	$0		
 	pushq	$T_ASTFLT
@@ -513,8 +527,8 @@ IDTVEC(intr_ ## name ## num)						;\
 	pushq	$0			/* dummy error code */		;\
 	pushq	$T_ASTFLT		/* trap # for doing ASTs */	;\
 	INTRENTRY							;\
-	movq	CPUVAR(ISOURCES) + (num) * 8, %r14		;\
-	mask(num)		/* mask it in hardware */	;\
+	movq	CPUVAR(ISOURCES) + (num) * 8, %r14			;\
+	mask(num)			/* mask it in hardware */	;\
 	early_ack(num)			/* and allow other intrs */	;\
 	testq	%r14,%r14						;\
 	jz	9f			/* stray */			;\
