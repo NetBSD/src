@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.14 2012/04/27 20:41:09 matt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.15 2012/05/07 18:31:55 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.14 2012/04/27 20:41:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93.4.2.4.15 2012/05/07 18:31:55 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -510,7 +510,7 @@ uvm_pageout(void *arg)
 			}
 
 		}
-		if (need_wakeup) {
+		if (need_wakeup || (!need_free && pdinfo->pd_waiters)) {
 			wakeup(&uvmexp.free);
 		}
 		KASSERT(!need_free || need_wakeup || !progress);
