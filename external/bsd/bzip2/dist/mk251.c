@@ -1,4 +1,4 @@
-/*	$NetBSD: mk251.c,v 1.1.1.1 2012/05/07 00:21:46 wiz Exp $	*/
+/*	$NetBSD: mk251.c,v 1.1.1.2 2012/05/07 00:41:46 wiz Exp $	*/
 
 
 /* Spew out a long sequence of the byte 251.  When fed to bzip2
@@ -11,8 +11,8 @@
    This file is part of bzip2/libbzip2, a program and library for
    lossless, block-sorting data compression.
 
-   bzip2/libbzip2 version 1.0.5 of 10 December 2007
-   Copyright (C) 1996-2007 Julian Seward <jseward@bzip.org>
+   bzip2/libbzip2 version 1.0.6 of 6 September 2010
+   Copyright (C) 1996-2010 Julian Seward <jseward@bzip.org>
 
    Please read the WARNING, DISCLAIMER and PATENTS sections in the 
    README file.
