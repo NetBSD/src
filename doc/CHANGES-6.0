@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.78 2012/04/26 03:04:34 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.79 2012/05/07 03:17:51 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -1992,4 +1992,76 @@ sys/arch/sparc64/sparc64/trap.c			1.176
 
 	32-bit build fix for ticket #199.
 	[martin, ticket #201]
+
+crypto/external/bsd/openssl/dist/crypto/buffer/buffer.c 1.3
+
+	Minor fix for ticket #197.
+	[drochner, ticket #203]
+
+sys/fs/msdosfs/msdosfs_vnops.c			1.83 via patch
+sys/fs/ntfs/ntfs_vnops.c			1.51 via patch
+sys/fs/sysvbfs/sysvbfs_vnops.c			1.44 via patch
+sys/fs/udf/udf_subr.c				1.119 via patch
+sys/fs/udf/udf_vnops.c				1.71 via patch
+sys/fs/v7fs/v7fs_vnops.c			1.11 via patch
+sys/kern/vfs_subr.c				1.434 via patch
+sys/kern/vfs_wapbl.c				1.52 via patch
+sys/miscfs/genfs/genfs_io.c			1.54 via patch
+sys/miscfs/specfs/spec_vnops.c			1.135 via patch
+sys/ufs/chfs/chfs_vnops.c			1.7 via patch
+sys/ufs/ext2fs/ext2fs_readwrite.c		1.61 via patch
+sys/ufs/ext2fs/ext2fs_vnops.c			1.103 via patch
+sys/ufs/ffs/ffs_vfsops.c			1.277 via patch
+sys/ufs/ffs/ffs_vnops.c				1.121 via patch
+sys/ufs/ufs/ufs_readwrite.c			1.104 via patch
+sys/uvm/uvm_pager.h				1.43 via patch
+
+	Address WAPBL-related system freezes.  PR#46325.
+	[chs, ticket #204]
+
+sys/dev/audio.c					1.260
+
+	Don't hold the thread lock while calling allocm() or freem(). PR#46121.
+	[mrg, ticket #205]
+
+sys/arch/sparc/sparc/intr.c			1.116
+
+	Sparc SMP fix: don't bother whining about bogus intr on zs.
+	[mrg, ticket #206]
+
+tools/binutils/Makefile				1.22
+tools/file/Makefile				1.7
+tools/gmp/Makefile				1.2
+tools/mpc/Makefile				1.2
+tools/mpfr/Makefile				1.2
+
+	Fix source sets creation such that the extracted source
+	works properly for builds.
+	[mrg, ticket #207]
+
+sys/dev/pci/if_bnxvar.h				1.3
+
+	Use correct constant in bnx(4).
+	[gdt, ticket #208]
+
+lib/libpthread/pthread.c			1.134
+
+	Store allocated lwpctl state in the thread actually forked,
+	which is the only thread lives in the child process.
+	The problem originally reported here:
+	https://bugs.ruby-lang.org/issues/6341
+	[enami, ticket #209]
+
+sbin/gpt/gpt.8					1.10-1.11
+
+	Fix the documented pathname of /usr/mdec/gptmbr.bin .
+	[jakllsch, ticket #210]
+
+etc/rc.d/staticroute				1.6
+share/man/man5/route.conf.5			1.4
+
+	Add the ability for staticroute to evaluate lines from /etc/route.conf
+	as shell script fragments, add example to the route.conf man page of
+	evaluating variables.
+	[gendalia, ticket #211]
 
