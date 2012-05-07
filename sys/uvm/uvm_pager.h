@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.42 2011/09/28 22:52:15 matt Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.42.8.1 2012/05/07 03:01:13 riz Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -154,6 +154,7 @@ struct uvm_pagerops {
 #define PGO_NOTIMESTAMP 0x1000	/* don't mark object accessed/modified */
 #define PGO_RECLAIM	0x2000	/* object is being reclaimed */
 #define PGO_GLOCKHELD	0x4000	/* genfs_node's lock is already held */
+#define PGO_LAZY	0x8000	/* equivalent of MNT_LAZY / FSYNC_LAZY */
 
 /* page we are not interested in getting */
 #define PGO_DONTCARE ((struct vm_page *) -1L)	/* [get only] */

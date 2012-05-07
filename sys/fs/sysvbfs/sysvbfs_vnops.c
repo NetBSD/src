@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.40 2012/01/27 21:46:42 njoly Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.40.2.1 2012/05/07 03:01:12 riz Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.40 2012/01/27 21:46:42 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.40.2.1 2012/05/07 03:01:12 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -835,7 +835,7 @@ sysvbfs_fsync(void *v)
 	}
 
 	wait = (ap->a_flags & FSYNC_WAIT) != 0;
-	error = vflushbuf(vp, wait);
+	error = vflushbuf(vp, ap->a_flags);
 	if (error == 0 && (ap->a_flags & FSYNC_DATAONLY) == 0)
 		error = sysvbfs_update(vp, NULL, NULL, wait ? UPDATE_WAIT : 0);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.53 2011/10/31 12:49:32 yamt Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.53.8.1 2012/05/07 03:01:12 riz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53 2011/10/31 12:49:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.8.1 2012/05/07 03:01:12 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1330,6 +1330,7 @@ genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
 	size_t bytes, iobytes, skipbytes;
 	struct buf *mbp, *bp;
 	const bool async = (flags & PGO_SYNCIO) == 0;
+	const bool lazy = (flags & PGO_LAZY) == 0;
 	const bool iowrite = rw == UIO_WRITE;
 	const int brw = iowrite ? B_WRITE : B_READ;
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(ubchist);
@@ -1373,7 +1374,7 @@ genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
 	}
 	if (curlwp == uvm.pagedaemon_lwp)
 		BIO_SETPRIO(mbp, BPRIO_TIMELIMITED);
-	else if (async)
+	else if (async || lazy)
 		BIO_SETPRIO(mbp, BPRIO_TIMENONCRITICAL);
 	else
 		BIO_SETPRIO(mbp, BPRIO_TIMECRITICAL);
