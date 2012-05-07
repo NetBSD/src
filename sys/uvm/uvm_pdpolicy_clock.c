@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.8 2012/04/27 20:41:09 matt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.9 2012/05/07 18:31:25 matt Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
@@ -74,7 +74,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.8 2012/04/27 20:41:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.12.16.9 2012/05/07 18:31:25 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -490,7 +490,7 @@ uvmpdpol_estimatepageable(const struct uvm_pggroup *grp,
 			*activep += gs->gs_active + gs->gs_radioactive;
 		}
 		if (inactivep) {
-			*inactivep = gs->gs_inactive;
+			*inactivep += gs->gs_inactive;
 		}
 		return;
 	}
