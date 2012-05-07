@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile.inc,v 1.2 2006/03/11 21:07:18 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.2.46.1 2012/05/07 16:47:22 riz Exp $
 
 .PATH: ${COMPATDIR}/stdlib
 CPPFLAGS+=-I${COMPATDIR}/stdlib -I${COMPATDIR}/../stdlib
-SRCS+=compat_unsetenv.c 
+SRCS+=compat_putenv.c compat_unsetenv.c
