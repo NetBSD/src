@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.10 2012/05/07 12:12:04 jym Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.11 2012/05/07 12:20:27 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.10 2012/05/07 12:12:04 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.11 2012/05/07 12:20:27 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -123,7 +123,7 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 		 * Get the VA for the page.
 		 */
 		if (pte & PG_PS)
-			pgva = (vaddr_t)dst & PG_LGFRAME;
+			pgva = VA_SIGN_NEG((vaddr_t)dst & PG_LGFRAME);
 		else
 			pgva = x86_trunc_page(dst);
 
