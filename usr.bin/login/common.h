@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.1 2009/12/29 19:26:13 christos Exp $	*/
+/*	$NetBSD: common.h,v 1.1.8.1 2012/05/07 16:24:07 riz Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -33,8 +33,9 @@ __BEGIN_DECLS
 
 void	 badlogin(const char *);
 void	 update_db(int, int, int);
-void	 getloginname(void);
-void	 motd(char *);
+char	*trimloginname(char *);
+char	*getloginname(void);
+void	 motd(const char *);
 int	 rootterm(char *);
 void	 sigint(int);
 void	 sleepexit(int);
@@ -45,7 +46,8 @@ void	 decode_ss(const char *);
 extern u_int	timeout;
 extern struct	passwd *pwd;
 extern int	failures, have_ss;
-extern char	term[64], *envinit[1], *hostname, *username, *tty, *nested;
+extern char	term[64], *envinit[1], *hostname, *tty, *nested;
+extern const char *username;
 extern struct timeval now;
 extern struct sockaddr_storage ss;
 extern const char copyrightstr[];
