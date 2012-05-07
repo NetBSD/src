@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2012/05/07 00:35:26 wiz Exp $
+#	$NetBSD: Makefile,v 1.10 2012/05/07 08:51:48 wiz Exp $
 
 USE_FORT?= yes	# data-driven bugs?
 NOMAN=	   # defined
@@ -11,7 +11,7 @@ PROG=       bzip2recover
 LDSTATIC?= -static
 .endif
 
-DIST=	   ${NETBSDSRCDIR}/external/bsd/bzip2
+DIST=	   ${NETBSDSRCDIR}/external/bsd/bzip2/dist
 .PATH:	   ${DIST}
 
 .include <bsd.prog.mk>
