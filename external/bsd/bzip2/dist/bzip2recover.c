@@ -1,4 +1,5 @@
-/*	$NetBSD: bzip2recover.c,v 1.1.1.1 2012/05/07 00:21:46 wiz Exp $	*/
+/*	$NetBSD: bzip2recover.c,v 1.2 2012/05/07 00:30:05 wiz Exp $	*/
+
 
 /*-----------------------------------------------------------*/
 /*--- Block recoverer program for bzip2                   ---*/
@@ -22,6 +23,7 @@
 /* This program is a complete hack and should be rewritten properly.
 	 It isn't very complicated. */
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -37,9 +39,9 @@
    This change occurred in version 1.0.2; all prior versions have
    the 512MB limitation.
 */
-#ifdef __GNUC__
-   typedef  unsigned long long int  MaybeUInt64;
-#  define MaybeUInt64_FMT "%Lu"
+#if 1
+   typedef uint64_t  MaybeUInt64;
+#  define MaybeUInt64_FMT "%" PRIu64
 #else
 #ifdef _MSC_VER
    typedef  unsigned __int64  MaybeUInt64;
@@ -68,6 +70,32 @@ Char progName[BZ_MAX_FILENAME];
 MaybeUInt64 bytesOut = 0;
 MaybeUInt64 bytesIn  = 0;
 
+/*---------------------------------------------------*/
+/*--- Bit stream I/O                              ---*/
+/*---------------------------------------------------*/
+
+typedef
+   struct {
+      FILE*  handle;
+      Int32  buffer;
+      Int32  buffLive;
+      Char   mode;
+   }
+   BitStream;
+
+static void readError ( void );
+static void writeError ( void );
+static void mallocFail ( Int32 n );
+static BitStream* bsOpenReadStream ( FILE* stream );
+static BitStream* bsOpenWriteStream ( FILE* stream );
+static void bsPutBit ( BitStream* bs, Int32 bit );
+static Int32 bsGetBit ( BitStream* bs );
+static void bsClose ( BitStream* bs );
+static void bsPutUChar ( BitStream* bs, UChar c );
+static void bsPutUInt32 ( BitStream* bs, UInt32 c );
+static Bool endsInBz2 ( Char* name );
+static void tooManyBlocks ( Int32 max_handled_blocks );
+
 
 /*---------------------------------------------------*/
 /*--- Header bytes                                ---*/
@@ -84,7 +112,7 @@ MaybeUInt64 bytesIn  = 0;
 /*---------------------------------------------------*/
 
 /*---------------------------------------------*/
-static void readError ( void )
+__dead static void readError ( void )
 {
    fprintf ( stderr,
              "%s: I/O error reading `%s', possible reason follows.\n",
@@ -97,7 +125,7 @@ static void readError ( void )
 
 
 /*---------------------------------------------*/
-static void writeError ( void )
+__dead static void writeError ( void )
 {
    fprintf ( stderr,
              "%s: I/O error reading `%s', possible reason follows.\n",
@@ -110,7 +138,7 @@ static void writeError ( void )
 
 
 /*---------------------------------------------*/
-static void mallocFail ( Int32 n )
+__dead static void mallocFail ( Int32 n )
 {
    fprintf ( stderr,
              "%s: malloc failed on request for %d bytes.\n",
@@ -122,7 +150,7 @@ static void mallocFail ( Int32 n )
 
 
 /*---------------------------------------------*/
-static void tooManyBlocks ( Int32 max_handled_blocks )
+__dead static void tooManyBlocks ( Int32 max_handled_blocks )
 {
    fprintf ( stderr,
              "%s: `%s' appears to contain more than %d blocks\n",
@@ -136,20 +164,6 @@ static void tooManyBlocks ( Int32 max_handled_blocks )
    exit ( 1 );
 }
 
-
-
-/*---------------------------------------------------*/
-/*--- Bit stream I/O                              ---*/
-/*---------------------------------------------------*/
-
-typedef
-   struct {
-      FILE*  handle;
-      Int32  buffer;
-      Int32  buffLive;
-      Char   mode;
-   }
-   BitStream;
 
 
 /*---------------------------------------------*/
