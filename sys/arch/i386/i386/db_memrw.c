@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.26 2012/05/07 02:12:35 jym Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.27 2012/05/07 02:15:34 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.26 2012/05/07 02:12:35 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.27 2012/05/07 02:15:34 jym Exp $");
 
 #include "opt_xen.h"
 
@@ -161,22 +161,13 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 		 */
 		pmap_pte_set(pte, oldpte);
 		pmap_pte_flush();
-#if 0 
-		/*
-		 * XXXSMP Not clear if this is needed for 100% correctness.
-		 */
-		{
-			int cpumask = 0;
-			/*
-			 * shoot down in case other CPU mistakenly caches page.
-			 */
-			pmap_tlb_shootdown(pmap_kernel(), pgva, 0, PG_G);
-			pmap_tlb_shootwait();
-		}
-#else
 		pmap_update_pg(pgva);
-#endif
-		
+		/*
+		 * MULTIPROCESSOR: no shootdown required as all other CPUs
+		 * should be in CPUF_PAUSE state and will not cache the PTE
+		 * with the write access set.
+		 */
+
 	} while (size != 0);
 }
 
