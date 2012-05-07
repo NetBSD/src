@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2007/05/28 12:06:24 tls Exp $
+#	$NetBSD: Makefile,v 1.11 2012/05/07 00:35:26 wiz Exp $
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT definition
 
@@ -17,7 +17,7 @@ LDSTATIC?= -static
 CPPFLAGS+=	-DSMALL
 .endif
 
-DIST=	   ${NETBSDSRCDIR}/dist/bzip2
+DIST=	   ${NETBSDSRCDIR}/external/bsd/bzip2
 .PATH:	   ${DIST}
 
 MLINKS+=   bzip2.1 bunzip2.1\
