@@ -1,4 +1,4 @@
-/*	$NetBSD: decompress.c,v 1.1.1.1 2012/05/07 00:21:46 wiz Exp $	*/
+/*	$NetBSD: decompress.c,v 1.2 2012/05/07 00:30:05 wiz Exp $	*/
 
 
 /*-------------------------------------------------------------*/
@@ -383,6 +383,13 @@ Int32 BZ2_decompress ( DState* s )
             es = -1;
             N = 1;
             do {
+               /* Check that N doesn't get too big, so that es doesn't
+                  go negative.  The maximum value that can be
+                  RUNA/RUNB encoded is equal to the block size (post
+                  the initial RLE), viz, 900k, so bounding N at 2
+                  million should guard against overflow without
+                  rejecting any legitimate inputs. */
+               if (N >= 2*1024*1024) RETURN(BZ_DATA_ERROR);
                if (nextSym == BZ_RUNA) es = es + (0+1) * N; else
                if (nextSym == BZ_RUNB) es = es + (1+1) * N;
                N = N * 2;
