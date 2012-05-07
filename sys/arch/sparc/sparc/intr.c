@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.115 2011/05/23 18:40:30 rmind Exp $ */
+/*	$NetBSD: intr.c,v 1.115.10.1 2012/05/07 03:06:16 riz Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.115 2011/05/23 18:40:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.115.10.1 2012/05/07 03:06:16 riz Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -130,6 +130,14 @@ void
 bogusintr(struct clockframe *fp)
 {
 	char bits[64];
+
+#if defined(MULTIPROCESSOR)
+	/*
+	 * XXX as above.
+	 */
+	if (fp->ipl == ZS_INTR_IPL)
+		return;
+#endif
 
 	snprintb(bits, sizeof(bits), PSR_BITS, fp->psr);
 	printf("cpu%d: bogus interrupt ipl 0x%x pc=0x%x npc=0x%x psr=%s\n",
