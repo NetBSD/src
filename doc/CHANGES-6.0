@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.79 2012/05/07 03:17:51 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.80 2012/05/07 16:31:11 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -2064,4 +2064,44 @@ share/man/man5/route.conf.5			1.4
 	as shell script fragments, add example to the route.conf man page of
 	evaluating variables.
 	[gendalia, ticket #211]
+
+sys/arch/amd64/amd64/machdep.c			1.181
+
+	Fix gdb for i386 binaries on amd64.
+	[christos, ticket #212]
+
+usr.bin/su/su.c					1.70
+
+	Fix su for Kerberos without PAM.
+	[christos, ticket #213]
+
+usr.bin/login/Makefile				1.53-1.55
+usr.bin/login/common.c				1.4
+usr.bin/login/common.h				1.2
+usr.bin/login/k5login.c				1.28-1.33
+usr.bin/login/login.c				1.99-1.102
+usr.bin/login/login_pam.c			1.21
+
+	Make login work for non-PAM build with Kerberos 5.
+	[christos, ticket #215]
+
+sys/dev/usb/ubt.c				1.47
+
+	Prevent ubt synchronization loss from overwriting memory. PR#46338.
+	[christos, ticket #216]
+
+usr.bin/m4/main.c				1.42
+
+	Prevent infinite loop in m4.
+	[christos, ticket #217]
+
+sys/dev/usb/ums.c				1.84
+
+	Add digitizer support to ums(4). PR#46391.
+	[christos, ticket #218]
+
+external/gpl3/gcc/dist/gcc/config/m68k/constraints.md 1.2
+
+	Prevent PIC code on m68k from violating compiler constraints.
+	[christos, ticket #219]
 
