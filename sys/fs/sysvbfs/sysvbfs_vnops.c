@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.44 2012/04/29 22:53:59 chs Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.45 2012/05/08 14:28:55 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.44 2012/04/29 22:53:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.45 2012/05/08 14:28:55 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -59,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.44 2012/04/29 22:53:59 chs Exp $
 
 MALLOC_JUSTDEFINE(M_SYSVBFS_VNODE, "sysvbfs vnode", "sysvbfs vnode structures");
 MALLOC_DECLARE(M_BFS);
+
+static void sysvbfs_file_setsize(struct vnode *, size_t);
 
 int
 sysvbfs_lookup(void *arg)
@@ -373,7 +375,7 @@ sysvbfs_setattr(void *arg)
 		case VREG:
 			if (vp->v_mount->mnt_flag & MNT_RDONLY)
 				return EROFS;
-			bfs_file_setsize(vp, vap->va_size);
+			sysvbfs_file_setsize(vp, vap->va_size);
 			break;
 		default:
 			return EOPNOTSUPP;
@@ -479,7 +481,7 @@ sysvbfs_write(void *arg)
 		return 0;
 
 	if (bnode->size < uio->uio_offset + uio->uio_resid) {
-		bfs_file_setsize(v, uio->uio_offset + uio->uio_resid);
+		sysvbfs_file_setsize(v, uio->uio_offset + uio->uio_resid);
 		extended = true;
 	}
 
@@ -492,7 +494,7 @@ sysvbfs_write(void *arg)
 		DPRINTF("%s: write %ldbyte\n", __func__, sz);
 	}
 	if (err)
-		bfs_file_setsize(v, bnode->size - uio->uio_resid);
+		sysvbfs_file_setsize(v, bnode->size - uio->uio_resid);
 
 	VN_KNOTE(v, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 
@@ -892,4 +894,19 @@ sysvbfs_update(struct vnode *vp, const struct timespec *acc,
 	bfs_inode_set_attr(bnode->bmp->bfs, bnode->inode, &attr);
 
 	return 0;
+}
+
+static void
+sysvbfs_file_setsize(struct vnode *v, size_t size)
+{
+	struct sysvbfs_node *bnode = v->v_data;
+	struct bfs_inode *inode = bnode->inode;
+
+	bnode->size = size;
+	uvm_vnp_setsize(v, bnode->size);
+	inode->end_sector = bnode->data_block +
+	    (ROUND_SECTOR(bnode->size) >> DEV_BSHIFT) - 1;
+	inode->eof_offset_byte = bnode->data_block * DEV_BSIZE +
+	    bnode->size - 1;
+	bnode->update_mtime = true;
 }
