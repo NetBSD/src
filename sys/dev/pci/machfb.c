@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.74 2012/03/13 18:40:32 elad Exp $	*/
+/*	$NetBSD: machfb.c,v 1.75 2012/05/08 02:25:25 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.74 2012/03/13 18:40:32 elad Exp $");
+	"$NetBSD: machfb.c,v 1.75 2012/05/08 02:25:25 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -513,7 +513,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	int setmode, width, height;
 	pcireg_t screg;
 	uint32_t reg;
-	const pcireg_t enables = PCI_COMMAND_MEM_ENABLE|PCI_COMMAND_IO_ENABLE;
+	const pcireg_t enables = PCI_COMMAND_MEM_ENABLE;
 
 	sc->sc_dev = self;
 	sc->sc_pc = pa->pa_pc;
