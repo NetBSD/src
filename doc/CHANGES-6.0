@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.82 2012/05/07 17:07:00 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.83 2012/05/08 13:38:58 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -2080,7 +2080,7 @@ usr.bin/login/common.c				1.4
 usr.bin/login/common.h				1.2
 usr.bin/login/k5login.c				1.28-1.33
 usr.bin/login/login.c				1.99-1.102
-usr.bin/login/login_pam.c			1.21
+usr.bin/login/login_pam.c			1.21-1.22
 
 	Make login work for non-PAM build with Kerberos 5.
 	[christos, ticket #215]
