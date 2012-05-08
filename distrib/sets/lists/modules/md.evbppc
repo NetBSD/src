@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.21 2012/04/26 22:09:53 he Exp $
+# $NetBSD: md.evbppc,v 1.22 2012/05/08 13:22:36 martin Exp $
 ./stand/powerpc-4xx							base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@						base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules					base-kernel-modules	kmod,compatmodules
@@ -70,6 +70,8 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/gpiosim/gpiosim.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/hfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/hfs/hfs.kmod			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/if_axe					base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/if_axe/if_axe.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/iic				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/iic/iic.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/iscsi				base-kernel-modules	kmod,compatmodules
@@ -170,6 +172,8 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/union/union.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/usbverbose			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/usbverbose/usbverbose.kmod	base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/vcoda					base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/vcoda/vcoda.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/v7fs 				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/v7fs/v7fs.kmod		        base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/vnd 				base-kernel-modules	kmod,compatmodules
@@ -247,6 +251,8 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/gpiosim/gpiosim.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/hfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/hfs/hfs.kmod			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/if_axe				base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/if_axe/if_axe.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/iic				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/iic/iic.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/iscsi				base-kernel-modules	kmod,compatmodules
