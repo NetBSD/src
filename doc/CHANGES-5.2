@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.159 2012/04/22 03:16:43 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.160 2012/05/08 12:12:19 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -6336,4 +6336,8 @@ sys/dev/usb/uaudio.c				1.131
 	in the usbd_device struct.  Fixes build breakage introduced in
 	ticket #1746.
 	[jakllsch, ticket #1751]
+
+sys/arch/xen/xen/hypervisor.c			1.62 via patch
+	Retrieve and print the hypervisor "extra" (teeny) version.
+	[riz, ticket #1748]
 
