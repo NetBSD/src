@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.12.14.1 2012/04/20 23:32:14 riz Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.12.14.2 2012/05/09 03:22:54 riz Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,6 @@
 #define HALTT(x,y) /**/
 #endif
 
-	.globl	_C_LABEL(idle_loop)
 	.global _C_LABEL(cpu_spinup_trampoline)
 	.global _C_LABEL(cpu_spinup_trampoline_end)
 	.global _C_LABEL(cpu_hatch)
@@ -252,7 +251,6 @@ _C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
 	movl    PCB_CR0(%rsi),%eax
 	movq    %rax,%cr0
 	call	_C_LABEL(cpu_hatch)
-	jmp	_C_LABEL(idle_loop)
 	
 	.data
 _C_LABEL(mp_pdirpa):
