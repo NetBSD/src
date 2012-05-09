@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2009/04/12 03:46:04 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2012/05/09 21:59:10 christos Exp $
 
-.include "../Makefile.inc"
+.include "${.PARSEDIR}/../Makefile.inc"
 WARNS?=		2
