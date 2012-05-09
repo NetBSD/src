@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $NetBSD: math_private.h,v 1.16 2010/09/16 20:39:50 drochner Exp $
+ * $NetBSD: math_private.h,v 1.16.8.1 2012/05/09 18:22:36 riz Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
@@ -274,5 +274,34 @@ extern float __kernel_sinf __P((float,float,int));
 extern float __kernel_cosf __P((float,float));
 extern float __kernel_tanf __P((float,float,int));
 extern int   __kernel_rem_pio2f __P((float*,float*,int,int,int,const int*));
+
+/*
+ * TRUNC() is a macro that sets the trailing 27 bits in the mantissa of an
+ * IEEE double variable to zero.  It must be expression-like for syntactic
+ * reasons, and we implement this expression using an inline function
+ * instead of a pure macro to avoid depending on the gcc feature of
+ * statement-expressions.
+ */
+#define	TRUNC(d)	(_b_trunc(&(d)))
+
+static __inline void
+_b_trunc(volatile double *_dp)
+{
+	uint32_t _lw;
+
+	GET_LOW_WORD(_lw, *_dp);
+	SET_LOW_WORD(*_dp, _lw & 0xf8000000);
+}
+
+struct Double {
+	double	a;
+	double	b;
+};
+
+/*
+ * Functions internal to the math package, yet not static.
+ */
+double	__exp__D(double, double);
+struct Double __log__D(double);
 
 #endif /* _MATH_PRIVATE_H_ */

@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.120 2011/09/17 10:51:52 jruoho Exp $
+#  $NetBSD: Makefile,v 1.120.4.1 2012/05/09 18:22:36 riz Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -125,7 +125,8 @@ COPTS+=	-fno-strict-aliasing
 CPPFLAGS+=-DLIBM_SCCS
 
 LIB=	m
-COMMON_SRCS+= e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \
+COMMON_SRCS+= b_exp.c b_log.c b_tgamma.c \
+	e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \
 	e_atan2.c e_atan2f.c e_atanh.c e_atanhf.c e_cosh.c e_coshf.c e_exp.c \
 	e_expf.c e_fmod.c e_fmodf.c e_hypot.c e_hypotf.c e_j0.c e_j0f.c \
 	e_j1.c e_j1f.c e_jn.c e_jnf.c e_lgamma_r.c e_lgammaf_r.c e_log.c \
@@ -144,7 +145,7 @@ COMMON_SRCS+= e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \
 	s_matherr.c s_modff.c s_nextafter.c \
 	s_nextafterf.c s_remquo.c s_remquof.c s_rint.c s_rintf.c s_round.c s_roundf.c s_scalbn.c \
 	s_scalbnf.c s_scalbnl.c s_signgam.c s_significand.c s_significandf.c s_sin.c \
-	s_sinf.c s_tan.c s_tanf.c s_tanh.c s_tanhf.c s_trunc.c s_truncf.c \
+	s_sinf.c s_tan.c s_tanf.c s_tanh.c s_tanhf.c s_tgammaf.c s_trunc.c s_truncf.c \
 	w_acos.c w_acosf.c w_acosh.c w_acoshf.c w_asin.c w_asinf.c w_atan2.c \
 	w_atan2f.c w_atanh.c w_atanhf.c w_cosh.c w_coshf.c \
 	w_drem.c w_dremf.c w_exp.c w_expf.c w_fmod.c w_fmodf.c w_gamma.c \
@@ -267,7 +268,7 @@ MLINKS+=j0.3 j0f.3 j0.3 j1.3 j0.3 j1f.3 j0.3 jn.3 j0.3 jnf.3 \
 	j0.3 y0.3 j0.3 y0f.3 j0.3 y1.3 j0.3 y1f.3 j0.3 yn.3 j0.3 ynf.3
 MLINKS+=lgamma.3 lgammaf.3 lgamma.3 lgamma_r.3 lgamma.3 lgammaf_r.3 \
 	lgamma.3 gamma.3 lgamma.3 gammaf.3 lgamma.3 gamma_r.3 \
-	lgamma.3 gammaf_r.3
+	lgamma.3 gammaf_r.3 lgamma.3 tgamma.3 lgamma.3 tgammaf.3
 MLINKS+=nextafter.3 nextafterf.3 \
 	nextafter.3 nextafterl.3 \
 	nextafter.3 nexttoward.3
