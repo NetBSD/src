@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.96 2012/02/02 19:43:01 tls Exp $	*/
+/*	$NetBSD: fd.c,v 1.96.2.1 2012/05/09 20:01:51 riz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.96 2012/02/02 19:43:01 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.96.2.1 2012/05/09 20:01:51 riz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m68k_arch.h"
@@ -148,6 +148,7 @@ struct fdc_softc {
 	u_int8_t *sc_addr;			/* physical address */
 	struct dmac_channel_stat *sc_dmachan; /* intio DMA channel */
 	struct dmac_dma_xfer *sc_xfer;	/* DMA transfer */
+	int sc_read;
 
 	struct fd_softc *sc_fd[4];	/* pointers to children */
 	TAILQ_HEAD(drivehead, fd_softc) sc_drives;
@@ -324,6 +325,7 @@ fdc_dmastart(struct fdc_softc *fdc, int read, void *addr, vsize_t count)
 					 (u_int8_t*) (fdc->sc_addr +
 						      fddata));	/* XXX */
 
+	fdc->sc_read = read;
 	dmac_start_xfer(fdc->sc_dmachan->ch_softc, fdc->sc_xfer);
 }
 
@@ -332,6 +334,10 @@ fdcdmaintr(void *arg)
 {
 	struct fdc_softc *fdc = arg;
 
+	bus_dmamap_sync(fdc->sc_dmat, fdc->sc_dmamap,
+	    0, fdc->sc_dmamap->dm_mapsize,
+	    fdc->sc_read ?
+	    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(fdc->sc_dmat, fdc->sc_dmamap);
 
 	return 0;
