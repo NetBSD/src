@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1388 2012/04/21 12:27:26 roy Exp $
+# $NetBSD: mi,v 1.1389 2012/05/09 22:04:07 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2240,6 +2240,7 @@
 ./usr/share/man/cat8/crash.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/cron.0			man-cron-catman		.cat
 ./usr/share/man/cat8/dbsym.0			man-sysutil-catman	binutils,.cat
+./usr/share/man/cat8/ddns-confgen.0		man-bind-catman		.cat
 ./usr/share/man/cat8/defer.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/dev_mkdb.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/devpubd.0			man-sysutil-catman	.cat
@@ -2742,7 +2743,7 @@
 ./usr/share/man/cat8/rlogind.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/rmail.0			man-obsolete		obsolete
 ./usr/share/man/cat8/rmt.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/rndc-confgen.0		man-obsolete		obsolete
+./usr/share/man/cat8/rndc-confgen.0		man-bind-catman		.cat
 ./usr/share/man/cat8/rndc.0			man-bind-catman		.cat
 ./usr/share/man/cat8/rndctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/route.0			man-netutil-catman	.cat
@@ -4972,6 +4973,7 @@
 ./usr/share/man/html8/crash.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/cron.html			man-cron-htmlman	html
 ./usr/share/man/html8/dbsym.html		man-sysutil-htmlman	binutils,html
+./usr/share/man/html8/ddns-confgen.html		man-bind-htmlman	html
 ./usr/share/man/html8/defer.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/dev_mkdb.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/devpubd.html		man-sysutil-htmlman	html
@@ -5362,7 +5364,7 @@
 ./usr/share/man/html8/rip6query.html		man-netutil-htmlman	inet6,html
 ./usr/share/man/html8/rlogind.html		man-netutil-htmlman	html
 ./usr/share/man/html8/rmt.html			man-sysutil-htmlman	html
-./usr/share/man/html8/rndc-confgen.html		man-obsolete		obsolete
+./usr/share/man/html8/rndc-confgen.html		man-bind-htmlman	html
 ./usr/share/man/html8/rndc.html			man-bind-htmlman	html
 ./usr/share/man/html8/rndctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/route.html		man-netutil-htmlman	html
@@ -7760,6 +7762,7 @@
 ./usr/share/man/man8/crash.8			man-crash-man		.man
 ./usr/share/man/man8/cron.8			man-cron-man		.man
 ./usr/share/man/man8/dbsym.8			man-sysutil-man		binutils,.man
+./usr/share/man/man8/ddns-confgen.8		man-bind-man		.man
 ./usr/share/man/man8/defer.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/dev_mkdb.8			man-sysutil-man		.man
 ./usr/share/man/man8/devpubd.8			man-sysutil-man		.man
@@ -8263,7 +8266,7 @@
 ./usr/share/man/man8/rlogind.8			man-netutil-man		.man
 ./usr/share/man/man8/rmail.8			man-obsolete		obsolete
 ./usr/share/man/man8/rmt.8			man-sysutil-man		.man
-./usr/share/man/man8/rndc-confgen.8		man-obsolete		obsolete
+./usr/share/man/man8/rndc-confgen.8		man-bind-man		.man
 ./usr/share/man/man8/rndc.8			man-bind-man		.man
 ./usr/share/man/man8/rndctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/route.8			man-netutil-man		.man
