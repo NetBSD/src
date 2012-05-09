@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.85 2012/05/09 03:42:54 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.86 2012/05/09 15:57:59 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -2191,4 +2191,34 @@ usr.sbin/makemandb/makemandb.c			1.9
 
 	Clean up after removing man page aliases. PR#46419.
 	[wiz, ticket #229]
+
+bin/rcp/rcp.c					1.49
+
+	Don't reuse buffers across recursive calls.
+	[chs, ticket #230]
+
+distrib/sets/lists/comp/mi			1.1756
+include/math.h					1.58
+lib/libm/Makefile				1.124
+lib/libm/man/lgamma.3				1.22
+lib/libm/src/b_exp.c				1.1
+lib/libm/src/b_log.c				1.1
+lib/libm/src/b_tgamma.c				1.1
+lib/libm/src/math_private.h			1.17
+lib/libm/src/s_tgammaf.c			1.1
+
+	Add tgamma{,f} from FreeBSD.
+	[christos, ticket #232]
+
+sys/arch/amd64/amd64/db_memrw.c			1.10-1.11 via patch
+sys/arch/i386/i386/db_memrw.c			1.29
+
+	Fix a bug in db_write_text() function that prohibits its use
+	for code that spans multiple pages.
+	[jym, ticket #233]
+
+tools/Makefile.gnuhost				1.38
+
+	Avoid tools build error on Cygwin hosts.
+	[tsutsui, ticket #234]
 
