@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.83 2012/05/08 13:38:58 sborrill Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.84 2012/05/09 03:23:32 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -2156,4 +2156,31 @@ usr.bin/passwd/krb5_passwd.c			1.20
 
 	Fix non-PAM build of Kerberos 5 passwd.
 	[christos, ticket #231]
+
+sys/arch/amd64/amd64/genassym.cf		1.50
+sys/arch/amd64/amd64/mptramp.S			1.14
+sys/arch/amd64/include/param.h			1.18
+sys/arch/i386/i386/genassym.cf			1.92
+sys/arch/i386/i386/mptramp.S			1.24
+sys/arch/i386/include/param.h			1.77
+sys/arch/x86/acpi/acpi_wakeup.c			1.31
+sys/arch/x86/include/cpu.h			1.50
+sys/arch/x86/include/cpuvar.h			1.46
+sys/arch/x86/include/pmap.h			1.52
+sys/arch/x86/x86/cpu.c				1.98
+sys/arch/x86/x86/mtrr_i686.c			1.26
+sys/arch/x86/x86/mtrr_i686.c			1.27
+sys/arch/x86/x86/pmap.c				1.177
+sys/arch/x86/x86/pmap_tlb.c			1.5
+sys/arch/x86/x86/pmap_tlb.c			1.6
+sys/arch/xen/include/xenpmap.h			1.34
+sys/arch/xen/x86/cpu.c				1.91
+sys/arch/xen/x86/x86_xpmap.c			1.43 via patch
+sys/arch/xen/x86/xen_pmap.c			1.21
+sys/kern/subr_kcpuset.c				1.5
+sys/kern/sys_sched.c				1.42
+sys/sys/kcpuset.h				1.5
+
+	Add support for up to 256 CPUs on amd64 by default.
+	[rmind, ticket #202]
 
