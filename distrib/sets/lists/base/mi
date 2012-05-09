@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.990 2012/04/06 22:46:15 christos Exp $
+# $NetBSD: mi,v 1.991 2012/05/09 22:04:05 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1187,6 +1187,7 @@
 ./usr/sbin/cron					base-cron-bin
 ./usr/sbin/daicctl				base-isdn-bin
 ./usr/sbin/dbsym				base-sysutil-bin	binutils
+./usr/sbin/ddns-confgen				base-bind-bin
 ./usr/sbin/dev_mkdb				base-sysutil-bin
 ./usr/sbin/dhcpd				base-dhcpd-bin
 ./usr/sbin/dhcrelay				base-dhcpd-bin
@@ -1408,7 +1409,7 @@
 ./usr/sbin/rip6query				base-netutil-bin	inet6
 ./usr/sbin/rmt					base-sysutil-bin
 ./usr/sbin/rndc					base-bind-bin
-./usr/sbin/rndc-confgen				base-obsolete		obsolete
+./usr/sbin/rndc-confgen				base-bind-bin
 ./usr/sbin/route6d				base-router-bin		use_inet6
 ./usr/sbin/rpc.bootparamd			base-bootserver-bin
 ./usr/sbin/rpc.lockd				base-nfsserver-bin
