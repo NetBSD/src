@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 2011/09/11 18:55:24 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2012/05/09 21:59:10 christos Exp $
 
-SUBDIR= html dig host named nslookup nsupdate rndc dnssec check tools
+SUBDIR= html dig host named nslookup nsupdate rndc dnssec check tools confgen
 
 .include "Makefile.inc"
 
