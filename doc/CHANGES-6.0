@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.87 2012/05/09 20:11:55 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.88 2012/05/09 22:50:52 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -2257,4 +2257,25 @@ sys/dev/ic/ld_cac.c				1.27
 	Stop the annoying "cac0: unable to alloc CCB" messages by reserving
 	a CCB.
 	[macallan, ticket #240]
+
+sys/arch/evbppc/mpc85xx/machdep.c		1.23
+sys/arch/powerpc/booke/booke_pmap.c		1.13
+sys/arch/powerpc/booke/e500_tlb.c		1.8
+sys/arch/powerpc/conf/files.powerpc		1.83
+sys/arch/powerpc/conf/kern-mb.ldscript		1.1
+sys/arch/powerpc/include/booke/e500var.h	1.5
+sys/arch/powerpc/include/booke/pmap.h		1.9
+
+	Add minimal TLB support for PPC BookE.
+	[matt, ticket #241]
+
+sys/arch/powerpc/include/cpu.h			1.91
+
+	clang fix for PPC.
+	[matt, ticket #242]
+
+sys/arch/powerpc/booke/dev/pq3gpio.c		1.5
+
+	Fix P2020 GPIO support.
+	[matt, ticket #243]
 
