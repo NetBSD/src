@@ -1,4 +1,4 @@
-/*	$NetBSD: e500var.h,v 1.4 2011/06/29 06:01:33 matt Exp $	*/
+/*	$NetBSD: e500var.h,v 1.4.8.1 2012/05/09 22:42:31 riz Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -55,6 +55,7 @@ void	e500_device_register(device_t, void *);
 int	e500_clock_intr(void *);
 void	e500_cpu_start(void);
 void	e500_tlb_init(vaddr_t, psize_t);
+void	e500_tlb_minimize(vaddr_t);
 bool	e500_device_disabled_p(uint32_t);
 
 struct e500_truthtab {
