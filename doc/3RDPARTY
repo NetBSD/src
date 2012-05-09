@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.936 2012/05/07 00:35:25 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.937 2012/05/09 12:04:27 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -187,7 +187,7 @@ Notes:
 See /usr/src/external/bsd/byacc/byacc2netbsd for update instructions.
 
 Package:	bzip2
-Version:	1.0.5
+Version:	1.0.6
 Current Vers:	1.0.6
 Maintainer:	Julian Seward <jseward@acm.org>
 Archive Site:	http://sources.redhat.com/bzip2/
@@ -1220,7 +1220,7 @@ Notes:
 
 Package:	zlib
 Version:	1.2.3
-Current Vers:	1.2.6
+Current Vers:	1.2.7
 Maintainer:	Jean-loup Gailly and Mark Adler <zlib@gzip.org>
 Archive Site:	http://www.zlib.net/
 Home Page:	http://www.zlib.net/
