@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.46 2012/02/02 19:43:03 tls Exp $ */
+/* $NetBSD: seeq8005.c,v 1.47 2012/05/09 07:52:52 martin Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.46 2012/02/02 19:43:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.47 2012/05/09 07:52:52 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,7 @@ static void ea_mc_reset_8005(struct seeq8005_softc *);
 static int ea_mediachange(struct ifnet *);
 static void ea_mediastatus(struct ifnet *, struct ifmediareq *);
 
-static char* padbuf = NULL;
+static u_char* padbuf = NULL;
 
 
 /*
