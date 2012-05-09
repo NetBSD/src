@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 2012/01/27 18:52:54 para Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22.2.1 2012/05/09 22:42:32 riz Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1126,44 +1126,20 @@ initppc(vaddr_t startkernel, vaddr_t endkernel,
 	/*
 	 * Initialize the pmap.
 	 */
-	pmap_bootstrap(startkernel, endkernel, availmemr, nmemr);
+	endkernel = pmap_bootstrap(startkernel, endkernel, availmemr, nmemr);
 
 	/*
 	 * Let's take all the indirect calls via our stubs and patch 
 	 * them to be direct calls.
 	 */
 	cpu_fixup_stubs();
-#if 0
+
 	/*
 	 * As a debug measure we can change the TLB entry that maps all of
 	 * memory to one that encompasses the 64KB with the kernel vectors.
 	 * All other pages will be soft faulted into the TLB as needed.
 	 */
-	const uint32_t saved_mas0 = mfspr(SPR_MAS0);
-	mtspr(SPR_MAS6, 0);
-	__asm volatile("tlbsx\t0, %0" :: "b"(startkernel));
-	uint32_t mas0 = mfspr(SPR_MAS0);
-	uint32_t mas1 = mfspr(SPR_MAS1);
-	uint32_t mas2 = mfspr(SPR_MAS2);
-	uint32_t mas3 = mfspr(SPR_MAS3);
-	KASSERT(mas3 & MAS3_SW);
-	KASSERT(mas3 & MAS3_SR);
-	KASSERT(mas3 & MAS3_SX);
-	mas1 = (mas1 & ~MAS1_TSIZE) | MASX_TSIZE_64KB;
-	pt_entry_t xpn_mask = ~0 << (10 + 2 * MASX_TSIZE_GET(mas1));
-	mas2 = (mas2 & ~(MAS2_EPN        )) | (startkernel & xpn_mask);
-	mas3 = (mas3 & ~(MAS3_RPN|MAS3_SW)) | (startkernel & xpn_mask);
-	printf(" %#lx=<%#x,%#x,%#x,%#x>", startkernel, mas0, mas1, mas2, mas3);
-#if 1
-	mtspr(SPR_MAS1, mas1);
-	mtspr(SPR_MAS2, mas2);
-	mtspr(SPR_MAS3, mas3);
-	extern void tlbwe(void);
-	tlbwe();
-	mtspr(SPR_MAS0, saved_mas0);
-	printf("(ok)");
-#endif
-#endif
+	e500_tlb_minimize(endkernel);
 
 	/*
 	 * Set some more MD helpers

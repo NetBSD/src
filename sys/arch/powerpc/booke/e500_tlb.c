@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_tlb.c,v 1.7 2011/06/30 00:52:58 matt Exp $	*/
+/*	$NetBSD: e500_tlb.c,v 1.7.8.1 2012/05/09 22:42:32 riz Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,9 +34,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define	__PMAP_PRIVATE
+
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.7 2011/06/30 00:52:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.7.8.1 2012/05/09 22:42:32 riz Exp $");
 
 #include <sys/param.h>
 
@@ -45,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.7 2011/06/30 00:52:58 matt Exp $");
 #include <powerpc/spr.h>
 #include <powerpc/booke/spr.h>
 #include <powerpc/booke/cpuvar.h>
+#include <powerpc/booke/e500reg.h>
 #include <powerpc/booke/e500var.h>
 #include <powerpc/booke/pmap.h>
 
@@ -257,7 +260,7 @@ tlb_to_hwtlb(const struct e500_tlb tlb)
 		KASSERT(cntlz <= 19);
 		hwtlb.hwtlb_mas0 = MAS0_TLBSEL_TLB1;
 		/*
-		 * TSIZE is defined (4^TSIZE) Kbytes except a TSIZE of is not
+		 * TSIZE is defined (4^TSIZE) Kbytes except a TSIZE of 0 is not
 		 * allowed.  So 1K would be 0x00000400 giving 21 leading zero
 		 * bits.  Subtracting the leading number of zero bits from 21
 		 * and dividing by 2 gives us the number that the MMU wants.
@@ -316,7 +319,7 @@ e500_alloc_tlb1_entry(void)
 	KASSERT((tlb1->tlb1_entries[slot].e_hwtlb.hwtlb_mas1 & MAS1_V) == 0);
 	tlb1->tlb1_entries[slot].e_hwtlb.hwtlb_mas0 = 
 	    MAS0_TLBSEL_TLB1 | __SHIFTOUT(slot, MAS0_ESEL);
-	return slot;
+	return (int)slot;
 }
 
 static void
@@ -1017,4 +1020,88 @@ e500_tlb_init(vaddr_t endkernel, psize_t memsize)
 	 * Invalidate all the TLB0 entries.
 	 */
 	e500_tlb_invalidate_all();
+}
+
+void
+e500_tlb_minimize(vaddr_t endkernel)
+{
+#ifdef PMAP_MINIMALTLB
+	struct e500_tlb1 * const tlb1 = &e500_tlb1;
+	extern uint32_t _fdata[];
+
+	u_int slot;
+
+	paddr_t boot_page = cpu_read_4(GUR_BPTR);
+	if (boot_page & BPTR_EN) {
+		/*
+		 * shift it to an address
+		 */
+		boot_page = (boot_page & BPTR_BOOT_PAGE) << PAGE_SHIFT;
+		pmap_kvptefill(boot_page, boot_page + NBPG,
+		    PTE_M | PTE_xR | PTE_xW | PTE_xX);
+	}
+
+
+	KASSERT(endkernel - (uintptr_t)_fdata < 0x400000);
+	KASSERT((uintptr_t)_fdata == 0x400000);
+
+	struct e500_xtlb *xtlb = e500_tlb_lookup_xtlb(endkernel, &slot);
+
+	KASSERT(xtlb == e500_tlb_lookup_xtlb2(0, endkernel));
+	const u_int tmp_slot = e500_alloc_tlb1_entry();
+	KASSERT(tmp_slot != (u_int) -1);
+
+	struct e500_xtlb * const tmp_xtlb = &tlb1->tlb1_entries[tmp_slot];
+	tmp_xtlb->e_tlb = xtlb->e_tlb;
+	tmp_xtlb->e_hwtlb = tlb_to_hwtlb(tmp_xtlb->e_tlb);
+	tmp_xtlb->e_hwtlb.hwtlb_mas1 |= MAS1_TS;
+	KASSERT((tmp_xtlb->e_hwtlb.hwtlb_mas0 & MAS0_TLBSEL) == MAS0_TLBSEL_TLB1);
+	tmp_xtlb->e_hwtlb.hwtlb_mas0 |= __SHIFTIN(tmp_slot, MAS0_ESEL);
+	hwtlb_write(tmp_xtlb->e_hwtlb, true);
+
+	const u_int text_slot = e500_alloc_tlb1_entry();
+	KASSERT(text_slot != (u_int)-1);
+	struct e500_xtlb * const text_xtlb = &tlb1->tlb1_entries[text_slot];
+	text_xtlb->e_tlb.tlb_va = 0;
+	text_xtlb->e_tlb.tlb_size = 0x400000;
+	text_xtlb->e_tlb.tlb_pte = PTE_M | PTE_xR | PTE_xX | text_xtlb->e_tlb.tlb_va;
+	text_xtlb->e_tlb.tlb_asid = 0;
+	text_xtlb->e_hwtlb = tlb_to_hwtlb(text_xtlb->e_tlb);
+	KASSERT((text_xtlb->e_hwtlb.hwtlb_mas0 & MAS0_TLBSEL) == MAS0_TLBSEL_TLB1);
+	text_xtlb->e_hwtlb.hwtlb_mas0 |= __SHIFTIN(text_slot, MAS0_ESEL);
+
+	const u_int data_slot = e500_alloc_tlb1_entry();
+	KASSERT(data_slot != (u_int)-1);
+	struct e500_xtlb * const data_xtlb = &tlb1->tlb1_entries[data_slot];
+	data_xtlb->e_tlb.tlb_va = 0x400000;
+	data_xtlb->e_tlb.tlb_size = 0x400000;
+	data_xtlb->e_tlb.tlb_pte = PTE_M | PTE_xR | PTE_xW | data_xtlb->e_tlb.tlb_va;
+	data_xtlb->e_tlb.tlb_asid = 0;
+	data_xtlb->e_hwtlb = tlb_to_hwtlb(data_xtlb->e_tlb);
+	KASSERT((data_xtlb->e_hwtlb.hwtlb_mas0 & MAS0_TLBSEL) == MAS0_TLBSEL_TLB1);
+	data_xtlb->e_hwtlb.hwtlb_mas0 |= __SHIFTIN(data_slot, MAS0_ESEL);
+
+	const register_t msr = mfmsr();
+	const register_t ts_msr = (msr | PSL_DS | PSL_IS) & ~PSL_EE;
+
+	__asm __volatile(
+		"mtmsr	%[ts_msr]"	"\n\t"
+		"sync"			"\n\t"
+		"isync"
+	    ::	[ts_msr] "r" (ts_msr));
+
+#if 0
+	hwtlb_write(text_xtlb->e_hwtlb, false);
+	hwtlb_write(data_xtlb->e_hwtlb, false);
+	e500_free_tlb1_entry(xtlb, slot, true);
+#endif
+
+	__asm __volatile(
+		"mtmsr	%[msr]"		"\n\t"
+		"sync"			"\n\t"
+		"isync"
+	    ::	[msr] "r" (msr));
+
+	e500_free_tlb1_entry(tmp_xtlb, tmp_slot, true);
+#endif	/* PMAP_MINIMALTLB */
 }
