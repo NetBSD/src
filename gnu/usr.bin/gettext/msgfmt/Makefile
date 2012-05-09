@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2005/04/29 15:05:01 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2012/05/09 07:59:23 joerg Exp $
 
 PROG=	msgfmt
 
@@ -6,3 +6,5 @@ PROG=	msgfmt
 .include "${.CURDIR}/../Makefile.inc.prog"
 
 CPPFLAGS+=-I${DIST}/gettext/gettext-runtime/intl
+
+CWARNFLAGS.clang+=	-Wno-format-extra-args
