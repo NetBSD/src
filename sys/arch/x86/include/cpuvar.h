@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.45 2011/08/13 12:37:30 cherry Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.45.8.1 2012/05/09 03:22:52 riz Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -95,12 +95,10 @@ struct cpufeature_attach_args {
 };
 
 #ifdef _KERNEL
-
+#include <sys/kcpuset.h>
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #endif /* defined(_KERNEL_OPT) */
-
-extern uint32_t cpus_running;
 
 int x86_ipi(int, int, int);
 void x86_self_ipi(int);

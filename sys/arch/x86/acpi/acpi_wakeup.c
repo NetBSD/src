@@ -1,7 +1,7 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.29 2011/07/01 18:22:39 dyoung Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.29.8.1 2012/05/09 03:22:54 riz Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.29 2011/07/01 18:22:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.29.8.1 2012/05/09 03:22:54 riz Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -61,11 +61,15 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.29 2011/07/01 18:22:39 dyoung Exp 
  *      FreeBSD: src/sys/i386/acpica/acpi_wakeup.c,v 1.9 2002/01/10 03:26:46 wes Exp
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.29.8.1 2012/05/09 03:22:54 riz Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/bus.h>
-#include <sys/proc.h>
+#include <sys/cpu.h>
+#include <sys/kcpuset.h>
 #include <sys/sysctl.h>
 
 #include <uvm/uvm_extern.h>
@@ -209,7 +213,7 @@ acpi_md_sleep_enter(int state)
 #ifdef MULTIPROCESSOR
 	if (!CPU_IS_PRIMARY(ci)) {
 		atomic_and_32(&ci->ci_flags, ~CPUF_RUNNING);
-		atomic_and_32(&cpus_running, ~ci->ci_cpumask);
+		kcpuset_atomic_clear(kcpuset_running, cpu_index(ci));
 
 		ACPI_FLUSH_CPU_CACHE();
 
@@ -277,7 +281,7 @@ acpi_cpu_sleep(struct cpu_info *ci)
 #endif
 
 	atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
-	atomic_or_32(&cpus_running, ci->ci_cpumask);
+	kcpuset_atomic_set(kcpuset_running, cpu_index(ci));
 	tsc_sync_ap(ci);
 
 	x86_enable_intr();
@@ -291,6 +295,7 @@ acpi_md_sleep(int state)
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
+	cpuid_t cid;
 #endif
 
 	KASSERT(acpi_wakeup_paddr != 0);
@@ -312,10 +317,12 @@ acpi_md_sleep(int state)
 	x86_disable_intr();
 
 #ifdef MULTIPROCESSOR
-	/* Save and suspend Application Processors */
+	/* Save and suspend Application Processors. */
 	x86_broadcast_ipi(X86_IPI_ACPI_CPU_SLEEP);
-	while (cpus_running != curcpu()->ci_cpumask)
+	cid = cpu_index(curcpu());
+	while (!kcpuset_isotherset(kcpuset_running, cid)) {
 		delay(1);
+	}
 #endif
 
 	if (acpi_md_sleep_prepare(state))

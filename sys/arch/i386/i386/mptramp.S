@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.22.14.1 2012/04/20 23:32:14 riz Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.22.14.2 2012/05/09 03:22:53 riz Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.22.14.1 2012/04/20 23:32:14 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.22.14.2 2012/05/09 03:22:53 riz Exp $");
 	
 #include "opt_mpbios.h"		/* for MPDEBUG */
 		
@@ -271,8 +271,6 @@ mp_cont:
 	HALTT(0x30,%ecx)	
 	pushl	%ecx
 	call	_C_LABEL(cpu_hatch)
-	HALT(0x33)
-	jmp	_C_LABEL(idle_loop)
 	
 	.data
 _C_LABEL(mp_pdirpa):
