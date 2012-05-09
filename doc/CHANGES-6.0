@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.84 2012/05/09 03:23:32 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.85 2012/05/09 03:42:54 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -2183,4 +2183,12 @@ sys/sys/kcpuset.h				1.5
 
 	Add support for up to 256 CPUs on amd64 by default.
 	[rmind, ticket #202]
+
+usr.sbin/makemandb/DBSCHEMA			1.2
+usr.sbin/makemandb/apropos-utils.c		1.5
+usr.sbin/makemandb/apropos-utils.h		1.3
+usr.sbin/makemandb/makemandb.c			1.9
+
+	Clean up after removing man page aliases. PR#46419.
+	[wiz, ticket #229]
 
