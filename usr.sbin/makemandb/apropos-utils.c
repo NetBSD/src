@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.2.2.1 2012/04/19 20:03:00 riz Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.2.2.2 2012/05/09 03:41:00 riz Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.2.2.1 2012/04/19 20:03:00 riz Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.2.2.2 2012/05/09 03:41:00 riz Exp $");
 
 #include <sys/stat.h>
 
@@ -172,7 +172,7 @@ create_db(sqlite3 *db)
 			    "file UNIQUE, md5_hash UNIQUE, id  INTEGER PRIMARY KEY); "
 				//mandb_meta
 			"CREATE TABLE IF NOT EXISTS mandb_links(link, target, section, "
-			    "machine); ";	//mandb_links
+			    "machine, md5_hash); ";	//mandb_links
 
 	sqlite3_exec(db, sqlstr, NULL, NULL, &errmsg);
 	if (errmsg != NULL)
@@ -181,7 +181,9 @@ create_db(sqlite3 *db)
 	sqlstr = "CREATE INDEX IF NOT EXISTS index_mandb_links ON mandb_links "
 			"(link); "
 			"CREATE INDEX IF NOT EXISTS index_mandb_meta_dev ON mandb_meta "
-			"(device, inode)";
+			"(device, inode); "
+			"CREATE INDEX IF NOT EXISTS index_mandb_links_md5 ON mandb_links "
+			"(md5_hash);";
 	sqlite3_exec(db, sqlstr, NULL, NULL, &errmsg);
 	if (errmsg != NULL)
 		goto out;
