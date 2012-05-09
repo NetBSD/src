@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode_amd.c,v 1.1 2012/01/13 16:05:15 cegger Exp $ */
+/* $NetBSD: cpu_ucode_amd.c,v 1.2 2012/05/09 13:58:09 cegger Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_amd.c,v 1.1 2012/01/13 16:05:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_amd.c,v 1.2 2012/05/09 13:58:09 cegger Exp $");
 
 #include "opt_xen.h"
 #include "opt_cpu_ucode.h"
@@ -168,7 +168,7 @@ cpu_apply_cb(void *arg0, void *arg1)
 
 		hdr = (struct microcode_amd_header *)mc_amd.mpb;
 		if (hdr->ah_processor_rev_id != mc.mc_equiv_cpuid) {
-			aprint_debug_dev(dev, "ucode: patch does not"
+			aprint_debug_dev(dev, "ucode: patch does not "
 			    "match this cpu "
 			    "(patch is for cpu id %x, cpu id is %x)\n",
 			    hdr->ah_processor_rev_id, mc.mc_equiv_cpuid);
@@ -196,6 +196,8 @@ cpu_apply_cb(void *arg0, void *arg1)
 		}
 
 next:
+		if (mc.mc_mpbuf == NULL)
+			break;
 		mc.mc_buf += mc.mc_mpbuf->mpb_len +
 		    sizeof(mc.mc_mpbuf->mpb_type) +
 		    sizeof(mc.mc_mpbuf->mpb_len);
