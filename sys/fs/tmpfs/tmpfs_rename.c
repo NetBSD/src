@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_rename.c,v 1.1 2012/05/09 00:16:07 riastradh Exp $	*/
+/*	$NetBSD: tmpfs_rename.c,v 1.2 2012/05/09 22:46:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_rename.c,v 1.1 2012/05/09 00:16:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_rename.c,v 1.2 2012/05/09 22:46:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -372,6 +372,8 @@ tmpfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 		VP_TO_TMPFS_NODE(fvp)->tn_status |= TMPFS_NODE_CHANGED;
 		VP_TO_TMPFS_NODE(tdvp)->tn_status |= TMPFS_NODE_MODIFIED;
 	}
+
+	VN_KNOTE(fvp, NOTE_RENAME);
 
 #if 0				/* XXX */
 	genfs_rename_cache_purge(fdvp, fvp, tdvp, tvp);
