@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.49.2.1 2012/02/22 18:56:47 riz Exp $	*/
+/*	$NetBSD: pmap.h,v 1.49.2.2 2012/05/09 03:22:52 riz Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -108,6 +108,8 @@
 
 
 #if defined(_KERNEL)
+#include <sys/kcpuset.h>
+
 /*
  * pmap data structures: see pmap.c for details of locking.
  */
@@ -162,10 +164,10 @@ struct pmap {
 	union descriptor *pm_ldt;	/* user-set LDT */
 	size_t pm_ldt_len;		/* size of LDT in bytes */
 	int pm_ldt_sel;			/* LDT selector */
-	uint32_t pm_cpus;		/* mask of CPUs using pmap */
-	uint32_t pm_kernel_cpus;	/* mask of CPUs using kernel part
+	kcpuset_t *pm_cpus;		/* mask of CPUs using pmap */
+	kcpuset_t *pm_kernel_cpus;	/* mask of CPUs using kernel part
 					 of pmap */
-	uint32_t pm_xen_ptp_cpus;	/* mask of CPUs which have this pmap's
+	kcpuset_t *pm_xen_ptp_cpus;	/* mask of CPUs which have this pmap's
 					 ptp mapped */
 	uint64_t pm_ncsw;		/* for assertions */
 	struct vm_page *pm_gc_ptp;	/* pages from pmap g/c */
@@ -289,6 +291,7 @@ typedef enum tlbwhy {
 } tlbwhy_t;
 
 void		pmap_tlb_init(void);
+void		pmap_tlb_cpu_init(struct cpu_info *);
 void		pmap_tlb_shootdown(pmap_t, vaddr_t, pt_entry_t, tlbwhy_t);
 void		pmap_tlb_shootnow(void);
 void		pmap_tlb_intr(void);

@@ -1,6 +1,11 @@
-/*	$NetBSD: param.h,v 1.17 2012/02/04 17:56:16 para Exp $	*/
+/*	$NetBSD: param.h,v 1.17.2.1 2012/05/09 03:22:54 riz Exp $	*/
 
 #ifdef __x86_64__
+
+#ifndef XEN
+/* Must be defined before cpu.h */
+#define	MAXCPUS		256
+#endif
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
