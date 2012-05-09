@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.57 2012/02/05 17:57:17 matt Exp $	*/
+/*	$NetBSD: math.h,v 1.57.2.1 2012/05/09 18:22:36 riz Exp $	*/
 
 /*
  * ====================================================
@@ -321,6 +321,8 @@ float	sqrtf(float);
 float	erff(float);
 float	erfcf(float);
 float	lgammaf(float);
+float	tgammaf(float);
+double	tgamma(double);
 
 /* 7.12.9 nearest integer */
 
