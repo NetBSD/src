@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.86 2012/05/09 15:57:59 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.87 2012/05/09 20:11:55 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -2221,4 +2221,40 @@ tools/Makefile.gnuhost				1.38
 
 	Avoid tools build error on Cygwin hosts.
 	[tsutsui, ticket #234]
+
+distrib/common/bootimage/Makefile.bootimage	1.5
+
+	Add two optinal variables MBR_BOOTCODE and INSTALLBOOTOPTIONS for
+	liveimage/installimage builds.
+	[tsutsui, ticket #235]
+
+sys/arch/x68k/dev/fd.c				1.97
+sys/arch/x68k/x68k/machdep.c			1.182
+
+	Make x68k's floppy driver actually work on machines with extended
+	high memories.
+	[tsutsui, ticket #236]
+
+sys/arch/zaurus/dev/zkbdmap.h			1.7
+
+	Fix wrong keycode in raw keycode map so that right shift key properly
+	works on Xserver on C7x0/860.
+	[tsutsui, ticket #237]
+
+Makefile					1.292
+
+	Stop doing 'make includes' in usr.bin since it is no longer
+	necessary.
+	[veego, ticket #238]
+
+sys/arch/powerpc/powerpc/vm_machdep.c		1.96
+
+	PowerPC stack fix, atf test t_clone:clone_basic now passes.
+	[matt, ticket #239]
+
+sys/dev/ic/ld_cac.c				1.27
+
+	Stop the annoying "cac0: unable to alloc CCB" messages by reserving
+	a CCB.
+	[macallan, ticket #240]
 
