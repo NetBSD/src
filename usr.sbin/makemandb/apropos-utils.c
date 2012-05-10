@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.5 2012/05/07 11:18:16 wiz Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.6 2012/05/10 15:36:09 joerg Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.5 2012/05/07 11:18:16 wiz Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.6 2012/05/10 15:36:09 joerg Exp $");
 
 #include <sys/stat.h>
 
@@ -756,7 +756,8 @@ callback_pager(void *data, const char *section, const char *name,
  *  For this purpose it first calls it's own callback function callback_pager
  *  which then delegates the call to the user supplied callback.
  */
-int run_query_pager(sqlite3 *db, query_args *args)
+int
+run_query_pager(sqlite3 *db, query_args *args)
 {
 	struct orig_callback_data orig_data;
 	orig_data.callback = args->callback;
