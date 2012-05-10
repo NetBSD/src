@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_rename.c,v 1.1 2012/05/09 00:21:18 riastradh Exp $	*/
+/*	$NetBSD: ufs_rename.c,v 1.2 2012/05/10 07:57:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.1 2012/05/09 00:21:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.2 2012/05/10 07:57:02 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -691,7 +691,7 @@ ufs_rename_recalculate_fulr(struct vnode *dvp,
 		 * If we are at an I/O block boundary, fetch the next block.
 		 */
 		if ((offset & io_block_mask) == 0) {
-#ifdef DIAGNOSTIC		/* XXX */
+#if 0				/* XXX */
 			printf("%s: directory block of inode 0x%llx"
 			    " extends across I/O block boundary,"
 			    " which shouldn't happen!\n",
