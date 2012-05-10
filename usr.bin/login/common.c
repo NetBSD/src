@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.4 2012/04/22 23:26:19 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.5 2012/05/10 01:25:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: common.c,v 1.4 2012/04/22 23:26:19 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.5 2012/05/10 01:25:24 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -147,7 +147,7 @@ motd(const char *fname)
 }
 
 /* ARGSUSED */
-void
+void __dead
 sigint(int signo)
 {
 
