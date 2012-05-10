@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_rename.c,v 1.1 2012/05/09 00:21:18 riastradh Exp $	*/
+/*	$NetBSD: ext2fs_rename.c,v 1.2 2012/05/10 19:08:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_rename.c,v 1.1 2012/05/09 00:21:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_rename.c,v 1.2 2012/05/10 19:08:34 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -658,12 +658,12 @@ ext2fs_rename_recalculate_fulr(struct vnode *dvp,
 		KASSERT(dirbuf_offset <= offset);
 		ep = (struct ext2fs_direct *)
 		    (dirbuf + (offset - dirbuf_offset));
-		reclen = ep->e2d_reclen;
+		reclen = fs2h16(ep->e2d_reclen);
 
 		if (ep->e2d_ino == 0)
 			goto next;	/* Entry is unused.  */
 
-		if (ep->e2d_ino == WINO)
+		if (fs2h32(ep->e2d_ino) == WINO)
 			goto next;	/* Entry is whiteout.  */
 
 		if (fcnp->cn_namelen != ep->e2d_namlen)
