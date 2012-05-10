@@ -1,4 +1,4 @@
-/*	$NetBSD: qms.c,v 1.16 2011/07/01 20:26:35 dyoung Exp $	*/
+/*	$NetBSD: qms.c,v 1.17 2012/05/10 09:56:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Reinoud Zandijk
@@ -41,7 +41,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: qms.c,v 1.16 2011/07/01 20:26:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qms.c,v 1.17 2012/05/10 09:56:27 skrll Exp $");
 
 #include <sys/callout.h>
 #include <sys/device.h>
@@ -74,8 +74,8 @@ struct qms_softc {
 
 	struct callout sc_callout;
 
-	u_int16_t lastx;
-	u_int16_t lasty;
+	uint16_t lastx;
+	uint16_t lasty;
 	int lastb;
 };
 
@@ -184,7 +184,7 @@ qms_intr(void *arg)
 {
 	struct qms_softc *sc = arg;
 	int b;
-	u_int16_t x, y;
+	uint16_t x, y;
 	int16_t dx, dy;
 
 	x = bus_space_read_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEX);
