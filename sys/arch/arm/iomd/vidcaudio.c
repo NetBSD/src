@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.48 2011/11/24 03:35:56 mrg Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.49 2012/05/10 07:39:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.48 2011/11/24 03:35:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.49 2012/05/10 07:39:48 skrll Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -478,7 +478,8 @@ vidcaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 	if (sc->sc_ppages != NULL)
 		free(sc->sc_ppages, M_DEVBUF);
 	sc->sc_ppages = malloc(npages * sizeof(paddr_t), M_DEVBUF, M_WAITOK);
-	if (sc->sc_ppages == NULL) return ENOMEM;
+	if (sc->sc_ppages == NULL)
+		return ENOMEM;
 	for (i = 0; i < npages; i++)
 		if (!pmap_extract(pmap_kernel(),
 		    (vaddr_t)start + i * PAGE_SIZE, &sc->sc_ppages[i]))
