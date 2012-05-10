@@ -1,4 +1,4 @@
-/* $NetBSD: nbfs.c,v 1.8 2012/05/10 11:01:35 skrll Exp $ */
+/* $NetBSD: nbfs.c,v 1.9 2012/05/10 11:03:22 skrll Exp $ */
 
 /*-
  * Copyright (c) 2006 Ben Harris
@@ -258,7 +258,8 @@ nbfs_close(struct nbfs_reg *r)
 	int err;
 
 	err = nbfs_fclose(&nof->f);
-	if (err != 0) return maperr(err);
+	if (err != 0)
+		return maperr(err);
 	LIST_REMOVE(nof, link);
 	dealloc(nof, sizeof(*nof));
 	return NULL;
