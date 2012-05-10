@@ -1,4 +1,4 @@
-/*	$NetBSD: netslot.c,v 1.9 2011/06/03 07:35:37 matt Exp $	*/
+/*	$NetBSD: netslot.c,v 1.10 2012/05/10 10:27:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -35,7 +35,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(1, "$NetBSD: netslot.c,v 1.9 2011/06/03 07:35:37 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: netslot.c,v 1.10 2012/05/10 10:27:10 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -143,7 +143,7 @@ netslotscan(device_t dev)
 }
 
 void
-netslot_ea(u_int8_t *buffer)
+netslot_ea(uint8_t *buffer)
 {
 	/* Build station address from machine ID */
 	buffer[0] = 0x00;

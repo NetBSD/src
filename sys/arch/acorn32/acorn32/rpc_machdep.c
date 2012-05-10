@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.82 2011/07/19 15:59:52 dyoung Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.83 2012/05/10 10:27:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.82 2011/07/19 15:59:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.83 2012/05/10 10:27:09 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -134,7 +134,7 @@ char *boot_args = NULL;		/* holds the pre-processed boot arguments */
 extern char *booted_kernel;	/* used for ioctl to retrieve booted kernel */
 
 extern int       *vidc_base;
-extern u_int32_t  iomd_base;
+extern uint32_t  iomd_base;
 extern struct bus_space iomd_bs_tag;
 
 paddr_t physical_start;

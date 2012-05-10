@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus_machdep.h,v 1.4 2011/07/19 15:59:53 dyoung Exp $ */
+/* $NetBSD: podulebus_machdep.h,v 1.5 2012/05/10 10:27:10 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -153,7 +153,7 @@ extern podule_t podules[MAX_PODULES + MAX_NETSLOTS];
 int matchpodule(struct podule_attach_args *pa,
     int manufacturer, int product, int required_slot);
 
-void netslot_ea(u_int8_t *buffer);
+void netslot_ea(uint8_t *buffer);
 
 extern void *podulebus_irq_establish(podulebus_intr_handle_t, int,
     int (*)(void *), void *, struct evcnt *);
