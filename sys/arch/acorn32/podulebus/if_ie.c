@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.30 2011/06/03 07:35:37 matt Exp $ */
+/* $NetBSD: if_ie.c,v 1.31 2012/05/10 10:27:10 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.30 2011/06/03 07:35:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.31 2012/05/10 10:27:10 skrll Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -312,7 +312,7 @@ void ieattach ( device_t parent, device_t self, void *aux )
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int i;
 	char idrom[32];
-	u_int8_t hwaddr[ETHER_ADDR_LEN];
+	uint8_t hwaddr[ETHER_ADDR_LEN];
 
 	/* Check a few things about the attach args */
 
