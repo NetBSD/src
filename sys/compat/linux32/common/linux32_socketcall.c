@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socketcall.c,v 1.7 2008/11/19 18:36:04 ad Exp $ */
+/*	$NetBSD: linux32_socketcall.c,v 1.8 2012/05/10 19:38:23 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_socketcall.c,v 1.7 2008/11/19 18:36:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socketcall.c,v 1.8 2012/05/10 19:38:23 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_socketcall.c,v 1.7 2008/11/19 18:36:04 ad Ex
 #include <compat/linux32/common/linux32_socketcall.h>
 #include <compat/linux32/linux32_syscallargs.h>
 
-#define sc(emul, fn) { #fn, sizeof (struct emul##_##fn##_args), \
+#define sc(emul, fn) { "linux32/" #fn, sizeof (struct emul##_##fn##_args), \
 	(int (*)(struct lwp *, const void *, register_t *))emul##_##fn }
 
 static const struct {
