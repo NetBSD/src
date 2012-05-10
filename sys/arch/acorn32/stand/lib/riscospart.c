@@ -1,4 +1,4 @@
-/*	$NetBSD: riscospart.c,v 1.3 2010/11/25 13:45:17 skrll Exp $	*/
+/*	$NetBSD: riscospart.c,v 1.4 2012/05/10 10:48:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 Ben Harris
@@ -156,7 +156,8 @@ getdisklabel_acorn(struct open_file *f, struct disklabel *lp)
 	buf = alloc(DEV_BSIZE);
 	err = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ,
 	    FILECORE_BOOT_SECTOR, DEV_BSIZE, buf, &rsize);
-	if (err != 0) goto out;
+	if (err != 0)
+		goto out;
 	bb = (struct filecore_bootblock *) buf;
 	if (bb->checksum == filecore_checksum((u_char *)bb)) {
 		if (bb->partition_type == PARTITION_FORMAT_RISCBSD)
@@ -168,9 +169,11 @@ getdisklabel_acorn(struct open_file *f, struct disklabel *lp)
 		}
 	} else
 		labelsect = LABELSECTOR;
+printf("%s: labelsect %d\n", __func__, labelsect);
 	err = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ,
 	    labelsect, DEV_BSIZE, buf, &rsize);
-	if (err != 0) goto out;
+	if (err != 0)
+		goto out;
 	msg = getdisklabel(buf, lp);
 	if (msg) {
 		printf("%s\n", msg);
