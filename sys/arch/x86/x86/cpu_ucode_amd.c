@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode_amd.c,v 1.2 2012/05/09 13:58:09 cegger Exp $ */
+/* $NetBSD: cpu_ucode_amd.c,v 1.3 2012/05/10 12:35:53 cegger Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_amd.c,v 1.2 2012/05/09 13:58:09 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_amd.c,v 1.3 2012/05/10 12:35:53 cegger Exp $");
 
 #include "opt_xen.h"
 #include "opt_cpu_ucode.h"
@@ -150,12 +150,14 @@ cpu_apply_cb(void *arg0, void *arg1)
 	struct microcode_amd mc_amd;
 	struct mc_buf mc;
 	device_t dev;
+	int s;
 
 	memcpy(&mc, arg1, sizeof(mc));
 	mc_amd.mpb = mc.mc_amd->mpb;
 	mc_amd.mpb_size = mc.mc_amd->mpb_size;
 
 	dev = curcpu()->ci_dev;
+	s = splhigh();
 
 	do {
 		uint64_t patchlevel;
@@ -196,8 +198,16 @@ cpu_apply_cb(void *arg0, void *arg1)
 		}
 
 next:
-		if (mc.mc_mpbuf == NULL)
+		/* Check for race:
+		 * When we booted with -x a cpu might already finished
+		 * (why doesn't xc_wait() wait for *all* cpus?)
+		 * and sc->sc_blob is already freed.
+		 * In this case the calculation below touches
+		 * non-allocated memory and results in a crash.
+		 */
+		if (sc->sc_blob == NULL)
 			break;
+
 		mc.mc_buf += mc.mc_mpbuf->mpb_len +
 		    sizeof(mc.mc_mpbuf->mpb_type) +
 		    sizeof(mc.mc_mpbuf->mpb_len);
@@ -213,6 +223,7 @@ next:
 out:
 	if (error)
 		((struct mc_buf *)(arg1))->mc_error = error;
+	splx(s);
 }
 
 int
@@ -279,7 +290,7 @@ cpu_ucode_amd_apply(struct cpu_ucode_softc *sc)
 
 	/* Apply it on all cpus */
 	mc.mc_error = 0;
-	where = xc_broadcast(XC_HIGHPRI, cpu_apply_cb, sc, &mc);
+	where = xc_broadcast(0, cpu_apply_cb, sc, &mc);
 
 	/* Wait for completion */
 	xc_wait(where);
