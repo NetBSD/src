@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.41 2012/02/14 14:33:53 skrll Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.42 2012/05/10 09:56:27 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.41 2012/02/14 14:33:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.42 2012/05/10 09:56:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -607,7 +607,7 @@ vidcvideo_colourmap_and_cursor_init(struct fb_devconfig *dc)
 	struct rasops_info *ri = &dc->dc_console.scr_ri;
 	const u_char *rgbdat;
 	struct hwcmap256 *cm;
-	const u_int8_t *p;
+	const uint8_t *p;
 	int index;
 
 	/* Whatever we do later... just make sure we have a
@@ -718,7 +718,7 @@ set_cursor(struct vidcvideo_softc *sc, struct wsdisplay_cursor *p)
 		if (p->size.x > CURSOR_MAX_WIDTH ||
 		    p->size.y > CURSOR_MAX_HEIGHT)
 			return EINVAL;
-		icount = sizeof(u_int32_t) * p->size.y;
+		icount = sizeof(uint32_t) * p->size.y;
 		error = copyin(p->image, &image, icount);
 		if (error)
 			return error;

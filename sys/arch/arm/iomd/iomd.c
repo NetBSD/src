@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd.c,v 1.17 2011/07/01 20:26:35 dyoung Exp $	*/
+/*	$NetBSD: iomd.c,v 1.18 2012/05/10 09:56:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iomd.c,v 1.17 2011/07/01 20:26:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd.c,v 1.18 2012/05/10 09:56:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,10 +92,10 @@ CFATTACH_DECL(iomd, sizeof(struct iomd_softc),
 extern struct bus_space iomd_bs_tag;
 
 int       iomd_found;
-u_int32_t iomd_base = IOMD_BASE;
+uint32_t iomd_base = IOMD_BASE;
 
 /* following flag is used in iomd_irq.s ... has to be cleaned up one day ! */
-u_int32_t arm7500_ioc_found = 0;
+uint32_t arm7500_ioc_found = 0;
 
 
 /* Declare prototypes */
