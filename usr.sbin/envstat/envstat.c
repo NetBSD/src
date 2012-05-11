@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.90 2012/02/09 18:10:26 riz Exp $ */
+/* $NetBSD: envstat.c,v 1.91 2012/05/11 18:41:12 njoly Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.90 2012/02/09 18:10:26 riz Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.91 2012/05/11 18:41:12 njoly Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -854,7 +854,7 @@ do {								\
 				PRINTTEMP(sensor->warnmin_value);
 				PRINTTEMP(sensor->critmin_value);
 			}
-			(void)printf("%*s", (int)ilen - 4, stype);
+			(void)printf("%*s", (int)ilen - 3, stype);
 #undef PRINTTEMP
 
 		/* fans */
@@ -900,7 +900,7 @@ do {								\
 
 			}
 
-			(void)printf("%*s", (int)ilen - 4, stype);
+			(void)printf("%*s", (int)ilen - 3, stype);
 
 		/* integers */
 		} else if (strcmp(sensor->type, "Integer") == 0) {
@@ -954,7 +954,7 @@ do {									\
 				ilen += 2;
 			}
 
-			(void)printf("%*s", (int)ilen - 4, stype);
+			(void)printf("%*s", (int)ilen - 3, stype);
 
 #undef PRINTINT
 #undef PRINTPCT
