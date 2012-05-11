@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eca.c,v 1.12 2011/07/19 16:05:10 dyoung Exp $	*/
+/*	$NetBSD: if_eca.c,v 1.13 2012/05/11 15:39:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.12 2011/07/19 16:05:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.13 2012/05/11 15:39:18 skrll Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -95,7 +95,7 @@ eca_attach(device_t parent, device_t self, void *aux)
 	struct eca_softc *sc = device_private(self);
 	struct ioc_attach_args *ioc = aux;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
-	u_int8_t myaddr[ECO_ADDR_LEN];
+	uint8_t myaddr[ECO_ADDR_LEN];
 
 	sc->sc_dev = self;
 	sc->sc_iot = ioc->ioc_sync_t;
