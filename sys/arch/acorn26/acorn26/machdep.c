@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.35 2011/06/15 15:03:51 tsutsui Exp $ */
+/* $NetBSD: machdep.c,v 1.36 2012/05/11 15:39:17 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35 2011/06/15 15:03:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2012/05/11 15:39:17 skrll Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -124,9 +124,9 @@ haltsys:
 		 * anyone can tell me how to fake a control-reset in
 		 * software, I'd be most grateful.
 		 */
-		*(volatile u_int8_t *)0x9c2 = 2; /* Zero page magic */
-		*(volatile u_int32_t *)0
-			= *(volatile u_int32_t *)MEMC_ROM_LOW_BASE;
+		*(volatile uint8_t *)0x9c2 = 2; /* Zero page magic */
+		*(volatile uint32_t *)0
+			= *(volatile uint32_t *)MEMC_ROM_LOW_BASE;
 		/* reboot in SVC mode, IRQs and FIQs disabled */
 		__asm volatile("movs pc, %0" : :
 		    "r" (R15_MODE_SVC | R15_FIQ_DISABLE | R15_IRQ_DISABLE));
