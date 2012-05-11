@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.41 2011/09/28 01:46:39 macallan Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.42 2012/05/11 19:00:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -463,3 +463,36 @@ struct netbsd32_wdog_conf {
 	int		wc_count;
 };
 #define WDOGIOC_GWDOGS32	_IOWR('w', 5, struct netbsd32_wdog_conf)
+
+
+struct netbsd32_clockctl_settimeofday {
+	netbsd32_timevalp_t tv;
+	netbsd32_voidp tzp;
+};
+
+#define CLOCKCTL_SETTIMEOFDAY32 _IOW('C', 0x5, \
+    struct netbsd32_clockctl_settimeofday)
+
+struct netbsd32_clockctl_adjtime {
+	netbsd32_timevalp_t delta;
+	netbsd32_timevalp_t olddelta;
+};
+
+#define CLOCKCTL_ADJTIME32 _IOWR('C', 0x6, struct netbsd32_clockctl_adjtime)
+
+struct netbsd32_clockctl_clock_settime {
+	netbsd32_clockid_t clock_id;
+	netbsd32_timespecp_t tp;
+};
+
+#define CLOCKCTL_CLOCK_SETTIME32 _IOW('C', 0x7, \
+    struct netbsd32_clockctl_clock_settime)
+
+struct netbsd32_clockctl_ntp_adjtime {
+	netbsd32_timexp_t tp;
+	/* register_t */ int32_t retval;
+};
+
+#define CLOCKCTL_NTP_ADJTIME32 _IOWR('C', 0x8, \
+    struct netbsd32_clockctl_ntp_adjtime)
+
