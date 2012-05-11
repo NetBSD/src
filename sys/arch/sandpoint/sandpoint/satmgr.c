@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.21 2012/05/11 21:12:34 nisimura Exp $ */
+/* $NetBSD: satmgr.c,v 1.22 2012/05/11 21:40:49 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -695,9 +695,6 @@ startoutput(struct satmgr_softc *sc)
 	int n;
 
 	mutex_enter(&sc->sc_replk);
-		mutex_exit(&sc->sc_replk);
-		return;
-	}
 	n = min(sc->sc_wr_cnt, 16);
 	while (n-- > 0) {
 		CSR_WRITE(sc, THR, *sc->sc_wr_ptr);
@@ -1039,7 +1036,7 @@ mbtnintr(void *arg)
 	send_sat(sc, "\x80\x36"); /* query button state */
 	mutex_enter(&sc->sc_replk);
 	sc->sc_btn_cnt = 0;
-	mutex_exit(sc->sc_replk);
+	mutex_exit(&sc->sc_replk);
 	return 1;
 }
 
