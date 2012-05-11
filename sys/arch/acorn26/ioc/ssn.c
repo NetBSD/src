@@ -1,4 +1,4 @@
-/*	$NetBSD: ssn.c,v 1.10 2011/07/19 16:05:11 dyoung Exp $	*/
+/*	$NetBSD: ssn.c,v 1.11 2012/05/11 15:39:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssn.c,v 1.10 2011/07/19 16:05:11 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssn.c,v 1.11 2012/05/11 15:39:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -57,7 +57,7 @@ static int ds_ioc_read_bit(void *);
 static void ds_ioc_write_bit(void *, int);
 static void ds_ioc_reset(void *);
 
-static int ds_crc(const u_int8_t *data, size_t len);
+static int ds_crc(const uint8_t *data, size_t len);
 
 static int
 ssn_match(device_t parent, cfdata_t cf, void *aux)
@@ -71,7 +71,7 @@ ssn_attach(device_t parent, device_t self, void *aux)
 {
 	struct ssn_softc *sc = device_private(self);
 	int i;
-	u_int8_t rombuf[8];
+	uint8_t rombuf[8];
 
 	sc->sc_ioc = parent;
 	sc->sc_dsh.ds_read_bit = ds_ioc_read_bit;
@@ -161,9 +161,9 @@ ds_ioc_reset(void *cookie)
 #define DS_CRC_POLY 0x8c
 
 static int
-ds_crc(const u_int8_t *buf, size_t len)
+ds_crc(const uint8_t *buf, size_t len)
 {
-	u_int8_t c, crc, carry;
+	uint8_t c, crc, carry;
 	size_t i, j;
 
 	crc = 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: latches.c,v 1.7 2011/07/19 16:05:11 dyoung Exp $ */
+/* $NetBSD: latches.c,v 1.8 2012/05/11 15:39:18 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: latches.c,v 1.7 2011/07/19 16:05:11 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: latches.c,v 1.8 2012/05/11 15:39:18 skrll Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -46,8 +46,8 @@ struct latches_softc {
 	device_t	sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
-	u_int8_t	sc_latcha;
-	u_int8_t	sc_latchb;
+	uint8_t		sc_latcha;
+	uint8_t		sc_latchb;
 };
 
 static int latches_match(device_t, cfdata_t, void *);
@@ -98,7 +98,7 @@ latches_attach(device_t parent, device_t self, void *aux)
 }
 
 void
-latcha_update(u_int8_t mask, u_int8_t value)
+latcha_update(uint8_t mask, uint8_t value)
 {
 	struct latches_softc *sc = device_private(the_latches);
 
@@ -107,7 +107,7 @@ latcha_update(u_int8_t mask, u_int8_t value)
 }	
 
 void
-latchb_update(u_int8_t mask, u_int8_t value)
+latchb_update(uint8_t mask, uint8_t value)
 {
 	struct latches_softc *sc = device_private(the_latches);
 

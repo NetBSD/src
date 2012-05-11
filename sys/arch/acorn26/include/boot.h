@@ -1,4 +1,4 @@
-/* $NetBSD: boot.h,v 1.3 2009/01/14 23:14:48 bjh21 Exp $ */
+/* $NetBSD: boot.h,v 1.4 2012/05/11 15:39:17 skrll Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -50,31 +50,31 @@
 #define BOOT_MAGIC 0x942B7DFE
 
 struct bootconfig {
-	u_int32_t magic;	/* BOOT_MAGIC */
-	u_int32_t version;	/* minor version of structure */
+	uint32_t magic;		/* BOOT_MAGIC */
+	uint32_t version;	/* minor version of structure */
 	/* Standard NetBSD boot parameters */
-	u_int32_t boothowto;	/* Reboot flags (single-user etc) */
-	u_int32_t bootdev;	/* Boot device */
-	u_int32_t ssym;		/* Start of debugging symbols */
-	u_int32_t esym;		/* End of debugging symbols */
+	uint32_t boothowto;	/* Reboot flags (single-user etc) */
+	uint32_t bootdev;	/* Boot device */
+	uint32_t ssym;		/* Start of debugging symbols */
+	uint32_t esym;		/* End of debugging symbols */
 	/* Parameters gathered by OS_ReadMemMapInfo */
-	u_int32_t nbpp;		/* Machine page size in bytes */
-	u_int32_t npages;	/* Number of pages */
+	uint32_t nbpp;		/* Machine page size in bytes */
+	uint32_t npages;	/* Number of pages */
 	/* Layout of physical memory. */
-	u_int32_t txtbase;	/* Kernel text base */
-	u_int32_t txtsize;	/* ... and size */
-	u_int32_t database;	/* Ditto for data */
-	u_int32_t datasize;	/* and bss */
-	u_int32_t bssbase;	/* Note that base addresses are */
-	u_int32_t bsssize;	/* "physical" ie bytes above 0x02000000 */
-	u_int32_t freebase;	/* Start of free space */
+	uint32_t txtbase;	/* Kernel text base */
+	uint32_t txtsize;	/* ... and size */
+	uint32_t database;	/* Ditto for data */
+	uint32_t datasize;	/* and bss */
+	uint32_t bssbase;	/* Note that base addresses are */
+	uint32_t bsssize;	/* "physical" ie bytes above 0x02000000 */
+	uint32_t freebase;	/* Start of free space */
 	/* Framebuffer state -- used to initialise raster console */
-	u_int32_t xpixels;	/* Pixels across screen (XWindLimit + 1) */
-	u_int32_t ypixels;	/* Pixels down screen (YWindLimit + 1) */
-	u_int32_t bpp;		/* Bits per pixel (1 << Log2BPP) */
-	u_int32_t screenbase;	/* Physical base of screen */
-	u_int32_t screensize;	/* Size of framebuffer (TotalScreenSize) */
-	u_int32_t cpixelrow;	/* first free pixel row on screen */
+	uint32_t xpixels;	/* Pixels across screen (XWindLimit + 1) */
+	uint32_t ypixels;	/* Pixels down screen (YWindLimit + 1) */
+	uint32_t bpp;		/* Bits per pixel (1 << Log2BPP) */
+	uint32_t screenbase;	/* Physical base of screen */
+	uint32_t screensize;	/* Size of framebuffer (TotalScreenSize) */
+	uint32_t cpixelrow;	/* first free pixel row on screen */
 	/* Version 0 ends here */
 };
 

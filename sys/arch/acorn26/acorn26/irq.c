@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.16 2010/12/20 00:25:23 matt Exp $ */
+/* $NetBSD: irq.c,v 1.17 2012/05/11 15:39:17 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.16 2010/12/20 00:25:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.17 2012/05/11 15:39:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -87,7 +87,7 @@ int fiq_want_downgrade;
  * be represented eventually.
  */
 
-static u_int32_t irqmask[NIPL];
+static uint32_t irqmask[NIPL];
 
 LIST_HEAD(irq_handler_head, irq_handler) irq_list_head =
     LIST_HEAD_INITIALIZER(irq_list_head);
@@ -96,7 +96,7 @@ struct irq_handler {
 	LIST_ENTRY(irq_handler)	link;
 	int	(*func)(void *);
 	void	*arg;
-	u_int32_t	mask;
+	uint32_t	mask;
 	int	irqnum;
 	int	ipl;
 	int	enabled;
@@ -355,7 +355,7 @@ inline int
 hardsplx(int s)
 {
 	int was;
-	u_int32_t mask;
+	uint32_t mask;
 
 	KASSERT(s < IPL_HIGH);
 	int_off();
@@ -426,7 +426,7 @@ irq_stat(void (*pr)(const char *, ...))
 {
 	struct irq_handler *h;
 	int i;
-	u_int32_t last;
+	uint32_t last;
 
 	for (h = irq_list_head.lh_first; h != NULL; h = h->link.le_next)
 		(*pr)("%12s: ipl %2d, IRQ %2d, mask 0x%05x, count %llu\n",
