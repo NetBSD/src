@@ -1,4 +1,4 @@
-/* $NetBSD: iic_eumb.c,v 1.17 2012/01/07 21:03:05 phx Exp $ */
+/* $NetBSD: iic_eumb.c,v 1.18 2012/05/11 21:12:34 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2010,2011 Frank Wille.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iic_eumb.c,v 1.17 2012/01/07 21:03:05 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iic_eumb.c,v 1.18 2012/05/11 21:12:34 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -62,6 +62,7 @@ static struct i2cdev rtcmodel[] = {
     { "dlink",    "strtc",      0x68 },
     { "iomega",   "dsrtc",      0x68 },
     { "kurobox",  "rs5c372rtc", 0x32 },
+    { "kurot4",   "rs5c372rtc", 0x32 },
     { "qnap",     "s390rtc",    0x30 },
     { "synology", "rs5c372rtc", 0x32 },
     { "nhnas",    "pcf8563rtc", 0x51 }
