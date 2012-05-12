@@ -1,4 +1,4 @@
-/*	$NetBSD: repquota.c,v 1.43 2012/02/13 01:35:09 dholland Exp $	*/
+/*	$NetBSD: repquota.c,v 1.44 2012/05/12 19:47:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.43 2012/02/13 01:35:09 dholland Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.44 2012/05/12 19:47:26 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,6 @@ static struct quotaval defaultqv[REPQUOTA_NUMIDTYPES][REPQUOTA_NUMOBJTYPES];
 
 static int	vflag = 0;		/* verbose */
 static int	aflag = 0;		/* all file systems */
-static int	Dflag = 0;		/* debug */
 static int	hflag = 0;		/* humanize */
 static int	xflag = 0;		/* export */
 
@@ -133,7 +132,7 @@ main(int argc, char **argv)
 		xflag = 1;
 	}
 
-	while ((ch = getopt(argc, argv, "Daguhvx")) != -1) {
+	while ((ch = getopt(argc, argv, "aguhvx")) != -1) {
 		switch(ch) {
 		case 'a':
 			aflag++;
@@ -149,9 +148,6 @@ main(int argc, char **argv)
 			break;
 		case 'v':
 			vflag++;
-			break;
-		case 'D':
-			Dflag++;
 			break;
 		case 'x':
 			xflag++;
