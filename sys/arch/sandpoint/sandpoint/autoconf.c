@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.24 2012/01/19 07:38:06 nisimura Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25 2012/05/12 13:13:24 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24 2012/01/19 07:38:06 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25 2012/05/12 13:13:24 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,25 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24 2012/01/19 07:38:06 nisimura Exp $
 static struct btinfo_rootdevice *bi_rdev;
 static struct btinfo_bootpath *bi_path;
 static struct btinfo_net *bi_net;
+static struct btinfo_prodfamily *bi_pfam;
+
+struct i2cdev {
+	const char *family;
+	const char *name;
+	int addr;
+};
+
+static struct i2cdev rtcmodel[] = {
+    { "dlink",    "strtc",      0x68 },
+    { "iomega",   "dsrtc",      0x68 },
+    { "kurobox",  "rs5c372rtc", 0x32 },
+    { "kurot4",   "rs5c372rtc", 0x32 },
+    { "nhnas",    "pcf8563rtc", 0x51 },
+    { "qnap",     "s390rtc",    0x30 },
+    { "synology", "rs5c372rtc", 0x32 },
+};
+
+static void add_i2c_child_devices(device_t, const char *);
 
 /*
  * Determine i/o configuration for a machine.
@@ -65,6 +84,7 @@ cpu_configure(void)
 	bi_rdev = lookup_bootinfo(BTINFO_ROOTDEVICE);
 	bi_path = lookup_bootinfo(BTINFO_BOOTPATH);
 	bi_net = lookup_bootinfo(BTINFO_NET);
+	bi_pfam = lookup_bootinfo(BTINFO_PRODFAMILY);
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
@@ -105,8 +125,7 @@ device_register(device_t dev, void *aux)
 			net_tag = pa->pa_tag;
 		}
 	}
-
-	if (device_class(dev) == DV_IFNET) {
+	else if (device_class(dev) == DV_IFNET) {
 		if (device_is_a(device_parent(dev), "pci")) {
 			pa = aux;
 			tag = pa->pa_tag;
@@ -136,10 +155,41 @@ device_register(device_t dev, void *aux)
 			bi_net = NULL;	/* do it just once */
 		}
 	}
-	if (bi_rdev != NULL && device_class(dev) == DV_DISK
+	else if (bi_rdev != NULL && device_class(dev) == DV_DISK
 	    && device_is_a(dev, bi_rdev->devname)
 	    && device_unit(dev) == (bi_rdev->cookie >> 8)) {
 		booted_device = dev;
 		booted_partition = bi_rdev->cookie & 0xff;
 	}
+	else if (device_is_a(dev, "ociic") && bi_pfam != NULL) {
+		add_i2c_child_devices(dev, bi_pfam->name);
+	}
+}
+
+static void
+add_i2c_child_devices(device_t self, const char *family)
+{
+	struct i2cdev *rtc;
+	prop_dictionary_t pd;
+	prop_array_t pa;
+	int i;
+
+	rtc = NULL;
+	for (i = 0; i < (int)(sizeof(rtcmodel)/sizeof(rtcmodel[0])); i++) {
+		if (strcmp(family, rtcmodel[i].family) == 0) {
+			rtc = &rtcmodel[i];
+			goto found;
+		}
+	}
+	return;
+
+ found:
+	pd = prop_dictionary_create();
+	pa = prop_array_create();
+	prop_dictionary_set_cstring_nocopy(pd, "name", rtc->name);
+	prop_dictionary_set_uint32(pd, "addr", rtc->addr);
+	prop_array_add(pa, pd);
+	prop_dictionary_set(device_properties(self), "i2c-child-devices", pa);
+	prop_object_release(pd);
+	prop_object_release(pa);
 }
