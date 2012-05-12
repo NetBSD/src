@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_mchain.c,v 1.21 2012/05/11 14:51:39 nakayama Exp $	*/
+/*	$NetBSD: subr_mchain.c,v 1.22 2012/05/12 01:40:37 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.21 2012/05/11 14:51:39 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.22 2012/05/12 01:40:37 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,51 +53,51 @@ __KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.21 2012/05/11 14:51:39 nakayama Ex
 static struct mbuf *
 m_getm(struct mbuf *m, size_t len, int how, int type)
 {
-        struct mbuf *top, *tail, *mp, *mtail = NULL;
+	struct mbuf *top, *tail, *mp, *mtail = NULL;
 
-        mp = m_get(how, type);
-        if (mp == NULL)
-                return (NULL);
-        else if (len > MINCLSIZE) {
-                m_clget(mp, how);
-                if ((mp->m_flags & M_EXT) == 0) {
-                        m_free(mp);
-                        return (NULL);
-                }
-        }
-        mp->m_len = 0;
-        len -= min(len, M_TRAILINGSPACE(mp));
+	mp = m_get(how, type);
+	if (mp == NULL)
+		return (NULL);
+	else if (len > MINCLSIZE) {
+		m_clget(mp, how);
+		if ((mp->m_flags & M_EXT) == 0) {
+			m_free(mp);
+			return (NULL);
+		}
+	}
+	mp->m_len = 0;
+	len -= min(len, M_TRAILINGSPACE(mp));
 
-        if (m != NULL)
-                for (mtail = m; mtail->m_next != NULL; mtail = mtail->m_next);
-        else
-                m = mp;
+	if (m != NULL)
+		for (mtail = m; mtail->m_next != NULL; mtail = mtail->m_next);
+	else
+		m = mp;
 
-        top = tail = mp;
-        while (len > 0) {
-                mp = m_get(how, type);
-                if (mp == NULL)
-                        goto failed;
+	top = tail = mp;
+	while (len > 0) {
+		mp = m_get(how, type);
+		if (mp == NULL)
+			goto failed;
 
-                tail->m_next = mp;
-                tail = mp;
-                if (len > MINCLSIZE) {
-                        m_clget(mp, how);
-                        if ((mp->m_flags & M_EXT) == 0)
-                                goto failed;
-                }
+		tail->m_next = mp;
+		tail = mp;
+		if (len > MINCLSIZE) {
+			m_clget(mp, how);
+			if ((mp->m_flags & M_EXT) == 0)
+				goto failed;
+		}
 
-                mp->m_len = 0;
-                len -= min(len, M_TRAILINGSPACE(mp));
-        }
+		mp->m_len = 0;
+		len -= min(len, M_TRAILINGSPACE(mp));
+	}
 
-        if (mtail != NULL)
-                mtail->m_next = top;
-        return (m);
+	if (mtail != NULL)
+		mtail->m_next = top;
+	return (m);
 
 failed:
-        m_freem(top);
-        return (NULL);
+	m_freem(top);
+	return (NULL);
 }
 
 
@@ -344,7 +344,7 @@ mb_put_uio(struct mbchain *mbp, struct uio *uiop, size_t size)
 		uiop->uio_offset += left;
 		uiop->uio_resid -= left;
 		uiop->uio_iov->iov_base =
-                        (char *)uiop->uio_iov->iov_base + left;
+			(char *)uiop->uio_iov->iov_base + left;
 		uiop->uio_iov->iov_len -= left;
 		size -= left;
 	}
@@ -597,8 +597,8 @@ md_get_uio(struct mdchain *mdp, struct uio *uiop, size_t size)
 			return error;
 		uiop->uio_offset += left;
 		uiop->uio_resid -= left;
-                uiop->uio_iov->iov_base =
-                                (char *)uiop->uio_iov->iov_base + left;
+		uiop->uio_iov->iov_base =
+				(char *)uiop->uio_iov->iov_base + left;
 		uiop->uio_iov->iov_len -= left;
 		size -= left;
 	}
