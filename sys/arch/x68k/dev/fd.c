@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.97 2012/05/06 19:46:18 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.98 2012/05/12 15:29:22 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.97 2012/05/06 19:46:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.98 2012/05/12 15:29:22 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m68k_arch.h"
@@ -316,6 +316,18 @@ fdc_dmastart(struct fdc_softc *fdc, int read, void *addr, vsize_t count)
 	bus_dmamap_sync(fdc->sc_dmat, fdc->sc_dmamap, 0, count,
 			read?BUS_DMASYNC_PREREAD:BUS_DMASYNC_PREWRITE);
 
+	/*
+	 * Note 1:
+	 *  uPD72065 ignores A0 input (connected to x68k bus A1)
+	 *  during DMA xfer access, but it's better to explicitly
+	 *  specify FDC data register address for clarification.
+	 * Note 2:
+	 *  FDC is connected to LSB 8 bits of X68000 16 bit bus
+	 *  (as BUS_SPACE_MAP_SHIFTED_ODD defined in bus.h)
+	 *  so each FDC regsiter is mapped at sparse odd address.
+	 *
+	 * XXX: No proper API to get DMA address of FDC register for DMAC.
+	 */
 	fdc->sc_xfer = dmac_prepare_xfer(fdc->sc_dmachan, fdc->sc_dmat,
 					 fdc->sc_dmamap,
 					 (read?
@@ -323,7 +335,7 @@ fdc_dmastart(struct fdc_softc *fdc, int read, void *addr, vsize_t count)
 					 (DMAC_SCR_MAC_COUNT_UP|
 					  DMAC_SCR_DAC_NO_COUNT),
 					 (u_int8_t*) (fdc->sc_addr +
-						      fddata));	/* XXX */
+						      fddata * 2 + 1));
 
 	fdc->sc_read = read;
 	dmac_start_xfer(fdc->sc_dmachan->ch_softc, fdc->sc_xfer);
