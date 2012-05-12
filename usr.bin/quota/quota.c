@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.48 2012/02/05 14:14:44 dholland Exp $	*/
+/*	$NetBSD: quota.c,v 1.49 2012/05/12 19:53:22 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.48 2012/02/05 14:14:44 dholland Exp $");
+__RCSID("$NetBSD: quota.c,v 1.49 2012/05/12 19:53:22 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,6 @@ static int	qflag = 0;
 static int	vflag = 0;
 static int	hflag = 0;
 static int	dflag = 0;
-static int	Dflag = 0;
 static uid_t	myuid;
 static int needheading;
 
@@ -117,7 +116,7 @@ main(int argc, char *argv[])
 	int ch;
 
 	myuid = getuid();
-	while ((ch = getopt(argc, argv, "Ddhugvq")) != -1) {
+	while ((ch = getopt(argc, argv, "dhugvq")) != -1) {
 		switch(ch) {
 		case 'g':
 			gflag++;
@@ -136,9 +135,6 @@ main(int argc, char *argv[])
 			break;
 		case 'd':
 			dflag++;
-			break;
-		case 'D':
-			Dflag++;
 			break;
 		default:
 			usage();
@@ -525,7 +521,7 @@ getprivs(id_t id, int idtype)
 				err(1, "Out of memory");
 			}
 			if (getvfsquota(fst[i].f_mntonname, qup->qvs, &version,
-			    id, idtype, dflag, Dflag) != 1)
+			    id, idtype, dflag, 0) != 1)
 				continue;
 		} else
 			continue;
