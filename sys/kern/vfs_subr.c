@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.434 2012/04/29 22:54:00 chs Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.435 2012/05/12 18:42:08 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.434 2012/04/29 22:54:00 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.435 2012/05/12 18:42:08 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -289,9 +289,6 @@ vflushbuf(struct vnode *vp, int flags)
 		((flags & FSYNC_LAZY) ? PGO_LAZY : 0);
 	mutex_enter(vp->v_interlock);
 	(void) VOP_PUTPAGES(vp, 0, 0, pflags);
-
-	if (LIST_EMPTY(&vp->v_dirtyblkhd) || (flags & FSYNC_DATAONLY))
-		return 0;
 
 loop:
 	mutex_enter(&bufcache_lock);
