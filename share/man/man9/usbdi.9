@@ -1,4 +1,31 @@
-.\"	$NetBSD: usbdi.9,v 1.8 2011/10/20 12:14:12 njoly Exp $
+.\"	$NetBSD: usbdi.9,v 1.9 2012/05/13 09:00:52 mrg Exp $
+.\"
+.\" Copyright (c) 2012 Matthew R. Green
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+.\" BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+.\" AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +54,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 3, 1999
+.Dd May 12, 2012
 .Dt USBDI 9
 .Os
 .Sh NAME
@@ -36,31 +63,69 @@
 .Sh SYNOPSIS
 .In dev/usb/usb.h
 .In dev/usb/usbdi.h
+.In dev/usb/usbdi_util.h
 .Sh DESCRIPTION
 Device driver access to the USB bus centers around transfers.
 A transfer describes a communication with a USB device.
 A transfer is an abstract concept that can result in several
 physical packets being transferred to or from a device.
+.Pp
 A transfer is described by a
-.Va usbd_xfer_handle .
-It is allocated by
-.Va usbd_alloc_xfer
-and the data describing the transfer is filled by
-.Va usbd_setup_default_xfer
+.Va usbd_xfer_handle ,
+a largely opaque cookie.
+Allocated and deallocate are performed with
+.Fn usbd_alloc_xfer
+and
+.Fn usbd_free_xfer .
+The data describing the transfer is filled by either
+.Fn usbd_setup_default_xfer
 for control pipe transfers, by
-.Va usbd_setup_xfer
+.Fn usbd_setup_xfer
 for bulk and interrupt transfers, and by
-.Va usbd_setup_isoc_xfer
+.Fn usbd_setup_isoc_xfer
 for isochronous transfers.
 .Pp
-describe
-.Va usbd_do_request
+A pipe is a logical connection to a USB device.
+Pipes are created and destroyed by using the
+.Fn usbd_open_pipe ,
+.Fn usbd_open_pipe_intr 
+and
+.Fn usbd_close_pipe
+functions.
+It is common to have more than one pipe per device.
+Pipes are used to allocate 
+.Va usbd_xfer_handle
+is required to 
+Transfers are aborted via their parent pipe with
+.Fn usbd_abort_pipe .
+The
+.Fn usbd_clear_endpoint_stall
+and
+.Fn usbd_clear_endpoint_stall_async
+functions are used to clear endpoint halt in either a synchronous
+or asynchronous fashion.
+The
+.Fn usbd_bulk_transfer
+and
+.Fn usbd_intr_transfer
+functions are used to transfer data in either an interrupt or
+bulk fashion.
 .Pp
-describe pipes
+A request is described by a
+.Va usb_device_request_t
+which must be initialised as necessary before calling either
+.Fn usbd_do_request
+or
+.Fn usbd_do_request_flags
+to submit the request.
+See the
+.Sx INITIALISING USB REQUESTS
+section for more details.
 .Pp
-describe
-usbd_status
-.Ss Functions offered by usbdi
+Error handling and other return values are described in
+.Xr usbd_status 9 .
+.Sh FUNCTIONS
+.Ss Functions offered by usbdi.h
 .Bl -tag -width indent
 .It Dv usbd_status usbd_open_pipe(usbd_interface_handle iface, uint8_t address,
     uint8_t flags,
@@ -102,7 +167,6 @@ usbd_status
      usbd_private_handle priv, void *buffer,
      uint32_t length, usbd_callback)
 .It Dv usbd_status usbd_do_request(usbd_device_handle pipe, usb_device_request_t *req, void *data)
-.It Dv usbd_status usbd_do_request_async(usbd_device_handle pipe, usb_device_request_t *req, void *data)
 .It Dv usbd_status usbd_do_request_flags(usbd_device_handle pipe, usb_device_request_t *req,
      void *data, uint16_t flags, int *)
 .It Dv usb_interface_descriptor_t *usbd_get_interface_descriptor(usbd_interface_handle iface)
@@ -171,11 +235,207 @@ through
 .It Dv usbd_status usbd_bulk_transfer
 (usbd_xfer_handle xfer, usbd_pipe_handle pipe, uint16_t flags,
 	     uint32_t timeout, void *buf, uint32_t *size, char *lbl)
-.It Dv void usb_detach_wait(device_ptr_t)
-.It Dv void usb_detach_wakeup(device_ptr_t)
+.It Dv usbd_status usbd_intr_transfer
+(usbd_xfer_handle xfer, usbd_pipe_handle pipe, uint16_t flags,
+	     uint32_t timeout, void *buf, uint32_t *size, char *lbl)
+.\" these are very different in usbmp
+.It Dv void usb_detach_waitold(device_t)
+.It Dv void usb_detach_wakeupold(device_t)
+.\" .It Dv void usb_detach_wait(device_t dv, kcondvar_t *cv, kmutex_t *lk)
+.\" .It Dv void usb_detach_broadcast(device_t dv, kcondvar_t *cv)
 .El
+.Sh INITIALISING USB REQUESTS
+There are 5 members of a 
+.Va usb_device_request_t
+that must be initialised:
+.Pp
+.Bl -item -offset offset -compact
+.It
+.Vt uByte bmRequestType ;
+.It
+.Vt uByte bRequest ;
+.It
+.Vt uWord wValue ;
+.It
+.Vt uWord wIndex ;
+.It
+.Vt uWord wLength ;
+.El
+.Pp
+The first two are normal byte values that may be simply assigned,
+but the last three must be initialised with the
+.Dv USETW()
+macro.
+.Pp
+The
+.Fa bmRequestType
+holds the request type of this USB request, which describes the
+indended recipient of the request.
+.Pp
+This may be one of:
+.Bl -tag -offset offset -compact
+.It Dv UT_WRITE
+.It Dv UT_READ
+.El
+.Pp
+with one of:
+.Bl -tag -offset offset -compact
+.It Dv UT_STANDARD
+.It Dv UT_CLASS
+.It Dv UT_VENDOR
+.El
+.Pp
+and with one of:
+.Bl -tag -offset offset -compact
+.It Dv UT_DEVICE
+.It Dv UT_INTERFACE
+.It Dv UT_ENDPOINT
+.It Dv UT_OTHER
+.El
+.Pp
+These are also in combinations as:
+.Bl -tag -offset offset -compact
+.It Dv UT_READ_DEVICE
+.It Dv UT_READ_INTERFACE
+.It Dv UT_READ_ENDPOINT
+.It Dv UT_WRITE_DEVICE
+.It Dv UT_WRITE_INTERFACE
+.It Dv UT_WRITE_ENDPOINT
+.It Dv UT_READ_CLASS_DEVICE
+.It Dv UT_READ_CLASS_INTERFACE
+.It Dv UT_READ_CLASS_OTHER
+.It Dv UT_READ_CLASS_ENDPOINT
+.It Dv UT_WRITE_CLASS_DEVICE
+.It Dv UT_WRITE_CLASS_INTERFACE
+.It Dv UT_WRITE_CLASS_OTHER
+.It Dv UT_WRITE_CLASS_ENDPOINT
+.It Dv UT_READ_VENDOR_DEVICE
+.It Dv UT_READ_VENDOR_INTERFACE
+.It Dv UT_READ_VENDOR_OTHER
+.It Dv UT_READ_VENDOR_ENDPOINT
+.It Dv UT_WRITE_VENDOR_DEVICE
+.It Dv UT_WRITE_VENDOR_INTERFACE
+.It Dv UT_WRITE_VENDOR_OTHER
+.It Dv UT_WRITE_VENDOR_ENDPOINT
+.El
+.Pp
+The
+.Fa bRequest
+describes which request is being made.  The available values are:
+.Bl -tag -offset offset -compact
+.It Dv UR_GET_STATUS
+.It Dv UR_CLEAR_FEATURE
+.It Dv UR_SET_FEATURE
+.It Dv UR_SET_ADDRESS
+.It Dv UR_GET_DESCRIPTOR
+.It Dv UR_SET_DESCRIPTOR
+.It Dv UR_GET_CONFIG
+.It Dv UR_SET_CONFIG
+.It Dv UR_GET_INTERFACE
+.It Dv UR_SET_INTERFACE
+.It Dv UR_SYNCH_FRAME
+.El
+.Pp
+The
+.Fa wValue ,
+.Fa wIndex
+and
+.Fa wLength
+are device-specific values and must be initialised with the
+.Dv USETW()
+macro.
+.Pp
+.Sh USB REQUEST TYPES AND STRUCTURES
+The
+.Dv UR_GET_STATUS
+request operates on a
+.Va usb_status_t
+structure, which has this member:
+.Bl -item -offset offset -compact
+.It
+.Vt uWord wStatus ;
+.El
+.Pp
+For device status requests, the
+.Fa wStatus
+member may have either of these bit flags set:
+.Bl -tag -offset offset -compact
+.It Dv UDS_SELF_POWERED
+.It Dv UDS_REMOTE_WAKEUP
+.El
+.Pp
+For endpoint status requests, the
+.Fa wStatus
+member may have this bit flag set:
+.Bl -tag -offset offset -compact
+.It Dv UES_HALT
+.El
+.Pp
+The
+.Dv UR_CLEAR_FEATURE
+and
+.Dv UR_SET_FEATURE
+requests clear or set special features on USB devices.
+The values for
+.Va wValue ,
+.Va wIndex
+and
+.Va wLength
+depend upon the device and device type.
+.Pp
+The
+.Dv UR_SET_ADDRESS
+request sets the virtual USB address of a port using the
+.Va wValue .
+.Pp
+The
+.Dv UR_GET_DESCRIPTOR
+and
+.Dv UR_SET_DESCRIPTOR
+requests operate on a
+.Va usb_descriptor_t
+structure, which has these members:
+.Bl -item -offset offset -compact
+.It
+.Vt uByte bLength ;
+.It
+.Vt uByte bDescriptorType ;
+.El
+.Pp
+The
+.Fa bDescriptorType
+member may be one of the following values:
+.Bl -tag -offset offset -compact
+.It Dv UDESC_DEVICE
+.It Dv UDESC_CONFIG
+.It Dv UDESC_STRING
+.It Dv UDESC_INTERFACE
+.It Dv UDESC_ENDPOINT
+.It Dv UDESC_DEVICE_QUALIFIER
+.It Dv UDESC_OTHER_SPEED_CONFIGURATION
+.It Dv UDESC_INTERFACE_POWER
+.It Dv UDESC_OTG
+.It Dv UDESC_DEBUG
+.It Dv UDESC_INTERFACE_ASSOC
+.It Dv UDESC_CS_DEVICE
+.It Dv UDESC_CS_CONFIG
+.It Dv UDESC_CS_STRING
+.It Dv UDESC_CS_INTERFACE
+.It Dv UDESC_CS_ENDPOINT
+.It Dv UDESC_HUB 
+.El
+.Pp
+.\" these have API front ends
+.\" .It Dv UR_GET_CONFIG
+.\" .It Dv UR_SET_CONFIG
+.\" .It Dv UR_GET_INTERFACE
+.\" .It Dv UR_SET_INTERFACE
+.\" this isn't supported
+.\" .It Dv UR_SYNCH_FRAME
+.\"
 .Sh SEE ALSO
-.Xr usb 4
+.Xr usb 4 ,
+.Xr usbd_status 9
 .Sh HISTORY
 This
 .Nm
@@ -187,5 +447,7 @@ Right after this definition the OpenUSBDI development got closed for open
 source developers, so this interface has not followed the further changes.
 The OpenUSBDI specification is now available again, but looks different.
 .Sh BUGS
-This man page is under development, so its biggest shortcoming is
+This manual is under development, so its biggest shortcoming is
 incompleteness.
+.Pp
+This manual is also out of date.

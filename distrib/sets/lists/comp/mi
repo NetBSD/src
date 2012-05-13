@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1757 2012/05/09 22:04:05 christos Exp $
+#	$NetBSD: mi,v 1.1758 2012/05/13 09:00:51 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -10783,6 +10783,7 @@
 ./usr/share/man/cat9/ungetnewvnode.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/untimeout.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uprintf.0			comp-sys-catman		.cat
+./usr/share/man/cat9/usbd_status.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/usbdi.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/useracc.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/userret.0			comp-sys-catman		.cat
@@ -16943,6 +16944,7 @@
 ./usr/share/man/html9/ungetnewvnode.html	comp-sys-htmlman	html
 ./usr/share/man/html9/untimeout.html		comp-sys-htmlman	html
 ./usr/share/man/html9/uprintf.html		comp-sys-htmlman	html
+./usr/share/man/html9/usbd_status.html		comp-sys-htmlman	html
 ./usr/share/man/html9/usbdi.html		comp-sys-htmlman	html
 ./usr/share/man/html9/userret.html		comp-sys-htmlman	html
 ./usr/share/man/html9/uvm.html			comp-sys-htmlman	html
@@ -23316,6 +23318,7 @@
 ./usr/share/man/man9/ungetnewvnode.9		comp-sys-man		.man
 ./usr/share/man/man9/untimeout.9		comp-sys-man		.man
 ./usr/share/man/man9/uprintf.9			comp-sys-man		.man
+./usr/share/man/man9/usbd_status.9		comp-sys-man		.man
 ./usr/share/man/man9/usbdi.9			comp-sys-man		.man
 ./usr/share/man/man9/useracc.9			comp-obsolete		obsolete
 ./usr/share/man/man9/userret.9			comp-sys-man		.man
