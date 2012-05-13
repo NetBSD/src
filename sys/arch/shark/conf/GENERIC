@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.99 2012/03/10 21:51:56 joerg Exp $
+#	$NetBSD: GENERIC,v 1.100 2012/05/13 07:34:02 mrg Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.99 $"
+#ident		"GENERIC-$Revision: 1.100 $"
 
 # estimated number of users
 maxusers	32
@@ -53,6 +53,7 @@ file-system	KERNFS		# /kern
 file-system	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay filesystem
 file-system	PROCFS		# /proc
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
 #file-system	CODA		# Coda file system (needs vcoda below)
@@ -315,6 +316,7 @@ pseudo-device	wsfont
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+pseudo-device	putter			# for puffs and pud
 
 # Veriexec
 #
