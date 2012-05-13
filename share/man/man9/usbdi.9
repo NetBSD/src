@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbdi.9,v 1.11 2012/05/13 11:57:39 wiz Exp $
+.\"	$NetBSD: usbdi.9,v 1.12 2012/05/13 12:10:18 mlelstv Exp $
 .\"
 .\" Copyright (c) 2012 Matthew R. Green
 .\" All rights reserved.
@@ -120,7 +120,8 @@
 .Fn usbd_alloc_buffer "usbd_xfer_handle req" "uint32_t size"
 .Ft void
 .Fn usbd_free_buffer "usbd_xfer_handle req"
-.Ft void *usbd_get_buffer "usbd_xfer_handle xfer"
+.Ft void *
+.Fn usbd_get_buffer "usbd_xfer_handle xfer"
 .Ft usbd_status
 .Fn usbd_sync_transfer "usbd_xfer_handle req"
 .Ft usbd_status
