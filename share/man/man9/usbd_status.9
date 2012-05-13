@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbd_status.9,v 1.1 2012/05/13 09:00:52 mrg Exp $
+.\"	$NetBSD: usbd_status.9,v 1.2 2012/05/13 11:57:05 wiz Exp $
 .\"
 .\" Copyright (c) 2012 Matthew R. Green
 .\" All rights reserved.
@@ -37,7 +37,6 @@
 .Sh DESCRIPTION
 This documents the full list of return values used by the generic USB code.
 Interface-specific definitions will be given with interface.
-.Pp
 .Sh RETURN VALUES
 Return values are split into two main groups: expected values
 and error values.
@@ -76,7 +75,7 @@ for more details about USB pipes.
 The requested operation could not be performed due to the device
 having active connections, such as USB audio device currently playing.
 .It Dv USBD_NO_ADDR
-USB bus has reached it maximum limit of devices.
+USB bus has reached its maximum limit of devices.
 .It Dv USBD_SET_ADDR_FAILED
 Call to
 .Fn usbd_set_address
