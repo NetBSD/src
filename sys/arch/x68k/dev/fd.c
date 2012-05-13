@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.98 2012/05/12 15:29:22 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.99 2012/05/13 00:47:16 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,13 +64,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.98 2012/05/12 15:29:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.99 2012/05/13 00:47:16 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m68k_arch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/bus.h>
 #include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
@@ -89,11 +90,8 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.98 2012/05/12 15:29:22 tsutsui Exp $");
 #include <sys/fdio.h>
 #include <sys/rnd.h>
 
-#include <uvm/uvm_extern.h>
-
 #include <dev/cons.h>
 
-#include <machine/bus.h>
 #include <machine/cpu.h>
 
 #include <arch/x68k/dev/intiovar.h>
@@ -102,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.98 2012/05/12 15:29:22 tsutsui Exp $");
 #include <arch/x68k/dev/opmvar.h> /* for CT1 access */
 
 #include "locators.h"
+#include "ioconf.h"
 
 #ifdef FDDEBUG
 #define DPRINTF(x)      if (fddebug) printf x
@@ -167,8 +166,6 @@ int fdprint(void *, const char *);
 
 CFATTACH_DECL_NEW(fdc, sizeof(struct fdc_softc),
     fdcprobe, fdcattach, NULL, NULL);
-
-extern struct cfdriver fdc_cd;
 
 /*
  * Floppies come in various flavors, e.g., 1.2MB vs 1.44MB; here is how
@@ -251,8 +248,6 @@ void fdattach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(fd, sizeof(struct fd_softc),
     fdprobe, fdattach, NULL, NULL);
-
-extern struct cfdriver fd_cd;
 
 dev_type_open(fdopen);
 dev_type_close(fdclose);
