@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbdi.9,v 1.12 2012/05/13 12:10:18 mlelstv Exp $
+.\"	$NetBSD: usbdi.9,v 1.13 2012/05/13 19:29:59 mrg Exp $
 .\"
 .\" Copyright (c) 2012 Matthew R. Green
 .\" All rights reserved.
@@ -54,7 +54,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 12, 2012
+.Dd May 13, 2012
 .Dt USBDI 9
 .Os
 .Sh NAME
@@ -306,10 +306,8 @@ and
 .Fn usbd_close_pipe
 functions.
 It is common to have more than one pipe per device.
-Pipes are used to allocate
-.Va usbd_xfer_handle
-is required to
-Transfers are aborted via their parent pipe with
+Transfers are associated with a pipe at their creation time.
+Transfers are aborted via this pipe with
 .Fn usbd_abort_pipe .
 The
 .Fn usbd_clear_endpoint_stall
