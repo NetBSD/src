@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.61 2012/04/04 01:23:27 bsh Exp $
+#	$NetBSD: Makefile,v 1.62 2012/05/14 08:42:04 abs Exp $
 
 # xf86-input drivers
 
@@ -262,6 +262,11 @@ SUBDIR+= \
 	xf86-video-suntcx
 .endif	# ${MACHINE} == "sparc"
 .endif	# ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
+
+.if ${MACHINE} == "vax"
+SUBDIR+= \
+	xf86-video-wsfb
+.endif	# ${MACHINE} == "vax"
 
 .if ${MACHINE} == "zaurus"
 SUBDIR+= \
