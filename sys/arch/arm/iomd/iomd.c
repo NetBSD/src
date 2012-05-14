@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd.c,v 1.19 2012/05/14 10:38:08 skrll Exp $	*/
+/*	$NetBSD: iomd.c,v 1.20 2012/05/14 11:05:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iomd.c,v 1.19 2012/05/14 10:38:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd.c,v 1.20 2012/05/14 11:05:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: iomd.c,v 1.19 2012/05/14 10:38:08 skrll Exp $");
  */
 
 struct iomd_softc {
-	device_t	 		sc_dev;	/* device node */
+	device_t 		sc_dev;	/* device node */
 	bus_space_tag_t		sc_iot;	/* bus tag */
 	bus_space_handle_t	sc_ioh;	/* bus handle */
 	int			sc_id;	/* IOMD id */
