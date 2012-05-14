@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.26 2012/02/18 23:51:27 rmind Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.27 2012/05/14 10:38:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -47,7 +47,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: iomd_clock.c,v 1.26 2012/02/18 23:51:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd_clock.c,v 1.27 2012/05/14 10:38:08 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: iomd_clock.c,v 1.26 2012/02/18 23:51:27 rmind Exp $"
 #include <arm/iomd/iomdreg.h>
 
 struct clock_softc {
-	struct device 		sc_dev;
+	device_t 		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 };
@@ -78,8 +78,8 @@ static void *statclockirq;
 static struct clock_softc *clock_sc;
 static int timer0_count;
 
-static int clockmatch(struct device *parent, struct cfdata *cf, void *aux);
-static void clockattach(struct device *parent, struct device *self, void *aux);
+static int clockmatch(device_t parent, cfdata_t cf, void *aux);
+static void clockattach(device_t parent, device_t self, void *aux);
 #ifdef DIAGNOSTIC
 static void checkdelay(void);
 #endif
@@ -106,17 +106,17 @@ static struct timecounter iomd_timecounter = {
 int clockhandler(void *);
 int statclockhandler(void *);
 
-CFATTACH_DECL(clock, sizeof(struct clock_softc),
+CFATTACH_DECL_NEW(clock, sizeof(struct clock_softc),
     clockmatch, clockattach, NULL, NULL);
 
 /*
- * int clockmatch(struct device *parent, void *match, void *aux)
+ * int clockmatch(device_t parent, void *match, void *aux)
  *
  * Just return ok for this if it is device 0
  */ 
  
 static int
-clockmatch(struct device *parent, struct cfdata *cf, void *aux)
+clockmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct clk_attach_args *ca = aux;
 
@@ -127,18 +127,19 @@ clockmatch(struct device *parent, struct cfdata *cf, void *aux)
 
 
 /*
- * void clockattach(struct device *parent, struct device *dev, void *aux)
+ * void clockattach(device_t parent, device_t dev, void *aux)
  *
  * Map the IOMD and identify it.
  * Then configure the child devices based on the IOMD ID.
  */
   
 static void
-clockattach(struct device *parent, struct device *self,	void *aux)
+clockattach(device_t parent, device_t self, void *aux)
 {
-	struct clock_softc *sc = (struct clock_softc *)self;
+	struct clock_softc *sc = device_private(self);
 	struct clk_attach_args *ca = aux;
 
+	sc->sc_dev = self;
 	sc->sc_iot = ca->ca_iot;
 	sc->sc_ioh = ca->ca_ioh; /* This is a handle for the whole IOMD */
 
@@ -146,7 +147,7 @@ clockattach(struct device *parent, struct device *self,	void *aux)
 
 	/* Cannot do anything until cpu_initclocks() has been called */
 	
-	printf("\n");
+	aprint_normal("\n");
 }
 
 
@@ -218,7 +219,7 @@ setstatclockrate(int newhz)
     
 	count = TIMER_FREQUENCY / newhz;
 
-	printf("Setting statclock to %dHz (%d ticks)\n", newhz, count);
+	aprint_normal("Setting statclock to %dHz (%d ticks)\n", newhz, count);
 
 	bus_space_write_1(clock_sc->sc_iot, clock_sc->sc_ioh,
 	    IOMD_T1LOW, (count >> 0) & 0xff);
@@ -246,7 +247,7 @@ checkdelay(void)
 		return;
 	if (diff.tv_usec > 10000)
 		return;
-	printf("WARNING: delay(10000) took %d us\n", diff.tv_usec);
+	aprint_normal("WARNING: delay(10000) took %d us\n", diff.tv_usec);
 }
 #endif
 
@@ -267,7 +268,7 @@ cpu_initclocks(void)
 	 * This timer generates 100Hz interrupts for the system clock
 	 */
 
-	printf("clock: hz=%d stathz = %d profhz = %d\n", hz, stathz, profhz);
+	aprint_normal("clock: hz=%d stathz = %d profhz = %d\n", hz, stathz, profhz);
 
 	timer0_count = TIMER_FREQUENCY / hz;
 
@@ -286,7 +287,7 @@ cpu_initclocks(void)
 
 	if (clockirq == NULL)
 		panic("%s: Cannot installer timer 0 IRQ handler",
-		    clock_sc->sc_dev.dv_xname);
+		    device_xname(clock_sc->sc_dev));
 
 	if (stathz) {
 		setstatclockrate(stathz);
@@ -294,7 +295,7 @@ cpu_initclocks(void)
        		    "tmr1 stat clk", statclockhandler, 0);
 		if (statclockirq == NULL)
 			panic("%s: Cannot installer timer 1 IRQ handler",
-			    clock_sc->sc_dev.dv_xname);
+			    device_xname(clock_sc->sc_dev));
 	}
 #ifdef DIAGNOSTIC
 	checkdelay();
