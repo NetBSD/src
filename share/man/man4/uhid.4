@@ -1,4 +1,4 @@
-.\" $NetBSD: uhid.4,v 1.20 2008/04/30 13:10:54 martin Exp $
+.\" $NetBSD: uhid.4,v 1.21 2012/05/14 04:28:27 erh Exp $
 .\"
 .\" Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -115,6 +115,8 @@ It should be
 or
 .Dv UHID_FEATURE_REPORT .
 This call may fail if the device does not support this feature.
+.It Dv USB_GET_DEVICE_DESC (usb_device_descriptor_t)
+Return the device descriptor.
 .It Dv USB_GET_DEVICEINFO (struct usb_device_info)
 Get an information summary for the device.
 This call will not issue any USB transactions.
