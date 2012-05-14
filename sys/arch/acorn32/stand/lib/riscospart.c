@@ -1,4 +1,4 @@
-/*	$NetBSD: riscospart.c,v 1.4 2012/05/10 10:48:23 skrll Exp $	*/
+/*	$NetBSD: riscospart.c,v 1.5 2012/05/14 11:45:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 Ben Harris
@@ -169,7 +169,6 @@ getdisklabel_acorn(struct open_file *f, struct disklabel *lp)
 		}
 	} else
 		labelsect = LABELSECTOR;
-printf("%s: labelsect %d\n", __func__, labelsect);
 	err = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ,
 	    labelsect, DEV_BSIZE, buf, &rsize);
 	if (err != 0)
