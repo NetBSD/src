@@ -1,4 +1,4 @@
-/*	$NetBSD: qms.c,v 1.17 2012/05/10 09:56:27 skrll Exp $	*/
+/*	$NetBSD: qms.c,v 1.18 2012/05/14 10:38:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Reinoud Zandijk
@@ -41,7 +41,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: qms.c,v 1.17 2012/05/10 09:56:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qms.c,v 1.18 2012/05/14 10:38:08 skrll Exp $");
 
 #include <sys/callout.h>
 #include <sys/device.h>
@@ -65,8 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: qms.c,v 1.17 2012/05/10 09:56:27 skrll Exp $");
 #include <dev/wscons/wsmousevar.h>
 
 struct qms_softc {
-	struct device  sc_dev;
-	struct device *sc_wsmousedev;
+	device_t sc_dev;
+	device_t sc_wsmousedev;
 
 	bus_space_tag_t sc_iot;		/* bus tag */
 	bus_space_handle_t sc_ioh;	/* bus handle for XY */
@@ -84,15 +84,15 @@ struct qms_softc {
 #define QMS_MOUSEY	1		/* 16 bits Y register */
 #define QMS_BUTTONS	0 		/* mouse buttons in bits 4,5,6 */
 
-static int  qms_match(struct device *, struct cfdata *, void *);
-static void qms_attach(struct device *, struct device *, void *);
+static int  qms_match(device_t , cfdata_t , void *);
+static void qms_attach(device_t , device_t , void *);
 
 static int qms_enable(void *);
 static int qms_ioctl(void *, u_long, void *, int, struct lwp *);
 static void qms_disable(void *cookie);
 static void qms_intr(void *arg);
 
-CFATTACH_DECL(qms, sizeof(struct qms_softc),
+CFATTACH_DECL_NEW(qms, sizeof(struct qms_softc),
     qms_match, qms_attach, NULL, NULL);
 
 static struct wsmouse_accessops qms_accessops = {
@@ -101,7 +101,7 @@ static struct wsmouse_accessops qms_accessops = {
 
 
 static int
-qms_match(struct device *parent, struct cfdata *cf, void *aux)
+qms_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct qms_attach_args *qa = aux;
 
@@ -113,12 +113,13 @@ qms_match(struct device *parent, struct cfdata *cf, void *aux)
 
 
 static void
-qms_attach(struct device *parent, struct device *self, void *aux)
+qms_attach(device_t parent, device_t self, void *aux)
 {
-	struct qms_softc *sc = (void *)self;
+	struct qms_softc *sc = device_private(self);
 	struct qms_attach_args *qa = aux;
 	struct wsmousedev_attach_args wsmouseargs;
 
+	sc->sc_dev = self;
 	sc->sc_iot = qa->qa_iot;
 	sc->sc_ioh = qa->qa_ioh;
 	sc->sc_butioh = qa->qa_ioh_but;
@@ -127,10 +128,10 @@ qms_attach(struct device *parent, struct device *self, void *aux)
 	wsmouseargs.accessops = &qms_accessops;
 	wsmouseargs.accesscookie = sc;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	sc->sc_wsmousedev =
-	    config_found(&sc->sc_dev, &wsmouseargs, wsmousedevprint);
+	    config_found(sc->sc_dev, &wsmouseargs, wsmousedevprint);
 
 	callout_init(&sc->sc_callout, 0);
 }

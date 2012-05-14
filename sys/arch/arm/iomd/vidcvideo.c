@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.42 2012/05/10 09:56:27 skrll Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.43 2012/05/14 10:38:08 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.42 2012/05/10 09:56:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.43 2012/05/14 10:38:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,18 +119,18 @@ struct fb_devconfig {
 
 
 struct vidcvideo_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct fb_devconfig *sc_dc;	/* device configuration		*/
 };
 
 
 /* Function prototypes for glue */
-static int  vidcvideo_match(struct device *, struct cfdata *, void *);
-static void vidcvideo_attach(struct device *, struct device *, void *);
+static int  vidcvideo_match(device_t , cfdata_t , void *);
+static void vidcvideo_attach(device_t , device_t , void *);
 
 
 /* config glue */
-CFATTACH_DECL(vidcvideo, sizeof(struct vidcvideo_softc),
+CFATTACH_DECL_NEW(vidcvideo, sizeof(struct vidcvideo_softc),
     vidcvideo_match, vidcvideo_attach, NULL, NULL);
 
 static struct fb_devconfig vidcvideo_console_dc;
@@ -194,7 +194,7 @@ static void vv_putchar(void *c, int row, int col, u_int uc, long attr);
 
 
 static int
-vidcvideo_match(struct device *parent, struct cfdata *match, void *aux)
+vidcvideo_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	/* Can't probe AFAIK ; how ? */
@@ -306,12 +306,14 @@ vidcvideoinit_screen(void *cookie, struct vcons_screen *scr,
 }
 
 static void
-vidcvideo_attach(struct device *parent, struct device *self, void *aux)
+vidcvideo_attach(device_t parent, device_t self, void *aux)
 {
-	struct vidcvideo_softc *sc = (struct vidcvideo_softc *)self;
+	struct vidcvideo_softc *sc = device_private(self);
 	struct fb_devconfig *dc;
 	struct wsemuldisplaydev_attach_args waa;
 	long defattr;
+	
+	sc->sc_dev = self;
 
 	dc = sc->sc_dc = &vidcvideo_console_dc;
 
@@ -334,7 +336,7 @@ vidcvideo_attach(struct device *parent, struct device *self, void *aux)
 	dc->dc_console.scr_flags |= VCONS_SCREEN_IS_STATIC;
 
 	vidcvideo_printdetails();
-	printf(": mode %s, %dbpp\n", dc->mode_info.timings.name,
+	aprint_normal(": mode %s, %dbpp\n", dc->mode_info.timings.name,
 	    dc->dc_depth);
 
 	/* set up interrupt flags */
