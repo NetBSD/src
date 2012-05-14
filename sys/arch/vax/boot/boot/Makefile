@@ -1,8 +1,11 @@
-#	$NetBSD: Makefile,v 1.38 2011/01/22 19:19:24 joerg Exp $
+#	$NetBSD: Makefile,v 1.39 2012/05/14 08:44:13 abs Exp $
 
 S=	${.CURDIR}/../../../..
 
 .include <bsd.own.mk>
+
+COPTS.boot.c = -O2 -fno-reorder-blocks
+COPTS.devopen.c = -O2 -fno-reorder-blocks
 
 PROG=	boot
 DEVS=	hp.c ctu.c ra.c mfm.c if_qe.c if_le.c if_ze.c if_de.c if_ni.c
