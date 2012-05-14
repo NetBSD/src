@@ -1,4 +1,4 @@
-/*      $NetBSD: plcom_ifpga.c,v 1.11 2011/07/01 20:39:34 dyoung Exp $ */
+/*      $NetBSD: plcom_ifpga.c,v 1.12 2012/05/14 19:40:06 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -32,7 +32,7 @@
 /* Interface to plcom (PL010) serial driver. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom_ifpga.c,v 1.11 2011/07/01 20:39:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom_ifpga.c,v 1.12 2012/05/14 19:40:06 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -106,20 +106,20 @@ static void plcom_ifpga_set_mcr(void *aux, int unit, u_int mcr)
 
 	switch (unit) {
 	case 0:
-		if (mcr & MCR_RTS)
+		if (mcr & PL01X_MCR_RTS)
 			set |= IFPGA_SC_CTRL_UART0RTS;
 		else
 			clr |= IFPGA_SC_CTRL_UART0RTS;
-		if (mcr & MCR_DTR)
+		if (mcr & PL01X_MCR_DTR)
 			set |= IFPGA_SC_CTRL_UART0DTR;
 		else
 			clr |= IFPGA_SC_CTRL_UART0DTR;
 	case 1:
-		if (mcr & MCR_RTS)
+		if (mcr & PL01X_MCR_RTS)
 			set |= IFPGA_SC_CTRL_UART1RTS;
 		else
 			clr |= IFPGA_SC_CTRL_UART1RTS;
-		if (mcr & MCR_DTR)
+		if (mcr & PL01X_MCR_DTR)
 			set |= IFPGA_SC_CTRL_UART1DTR;
 		else
 			clr |= IFPGA_SC_CTRL_UART1DTR;
