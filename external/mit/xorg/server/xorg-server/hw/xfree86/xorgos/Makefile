@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2012/04/04 01:23:27 bsh Exp $
+#	$NetBSD: Makefile,v 1.33 2012/05/14 08:42:04 abs Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -93,6 +93,13 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 
 .if ${MACHINE} == "hp300" || \
     ${MACHINE} == "luna68k"
+SRCS.bsd+=	ppc_video.c pm_noop.c agp_noop.c
+.for _FN in ${SRCS.bsd}
+CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
+.endfor
+.endif
+
+.if ${MACHINE} == "vax"
 SRCS.bsd+=	ppc_video.c pm_noop.c agp_noop.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
