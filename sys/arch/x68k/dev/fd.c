@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.100 2012/05/13 03:00:40 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.101 2012/05/15 12:17:33 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.100 2012/05/13 03:00:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.101 2012/05/15 12:17:33 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m68k_arch.h"
@@ -377,7 +377,7 @@ fdcprobe(device_t parent, cfdata_t cf, void *aux)
 	if ((ia->ia_intr & 0x03) != 0)
 		return 0;
 
-	ia->ia_size = 0x2000;
+	ia->ia_size = FDC_MAPSIZE;
 	if (intio_map_allocate_region(parent, ia, INTIO_MAP_TESTONLY))
 		return 0;
 
@@ -423,11 +423,15 @@ fdcattach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
+	/* Re-map the I/O space. */
+	if (bus_space_map(iot, ia->ia_addr, ia->ia_size,
+	    BUS_SPACE_MAP_SHIFTED_ODD, &ioh) != 0) {
+		aprint_error_dev(self, "unable to map I/O space\n");
+		return;
+	}
+
 	callout_init(&fdc->sc_timo_ch, 0);
 	callout_init(&fdc->sc_intr_ch, 0);
-
-	/* Re-map the I/O space. */
-	bus_space_map(iot, ia->ia_addr, 0x2000, BUS_SPACE_MAP_SHIFTED, &ioh);
 
 	fdc->sc_iot = iot;
 	fdc->sc_ioh = ioh;
