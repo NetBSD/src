@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.22 2012/03/03 02:41:25 tsutsui Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.23 2012/05/15 08:47:53 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -55,22 +55,22 @@ message getboottype
 
 Normale Bootblöcke benutzen die BIOS Konsolenschnittstelle als Konsole
 (meistens der Monitor und die Tastatur). Serielle Bootblöcke benutzen den
-ersten seriellen Anschluss als Konsole.
+gewählten seriellen Anschluss als Konsole.
 
 Selektierter Bootblock: }
 
 message console_PC {BIOS Konsole}
-message console_com {Serieller Anschluss com%d mit %d baud}
+message console_com {Serielle Konsole an com%d mit %d baud}
 message console_unchanged {Unverändert}
 
 message Bootblocks_selection
 {Auswahl der Bootblöcke}
-message Use_normal_bootblocks	{BIOS Konsole benutzen}
-message Use_serial_com0		{Serieller Anschluss com0 benutzen}
-message Use_serial_com1		{Serieller Anschluss com1 benutzen}
-message Use_serial_com2		{Serieller Anschluss com2 benutzen}
-message Use_serial_com3		{Serieller Anschluss com3 benutzen}
-message serial_baud_rate	{Serielle baud Rate}
+message Use_normal_bootblocks	{BIOS Konsole}
+message Use_serial_com0		{Serielle Konsole an com0}
+message Use_serial_com1		{Serielle Konsole an com1}
+message Use_serial_com2		{Serielle Konsole an com2}
+message Use_serial_com3		{Serielle Konsole an com3}
+message serial_baud_rate	{Serielle Geschwindigkeit wählen...}
 message Use_existing_bootblocks	{Vorhandene Bootblöcke benutzen}
 
 message dobootblks
