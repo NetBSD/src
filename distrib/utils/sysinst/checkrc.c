@@ -1,4 +1,4 @@
-/* $NetBSD: checkrc.c,v 1.1 2012/04/06 23:48:53 riz Exp $ */
+/* $NetBSD: checkrc.c,v 1.2 2012/05/15 15:50:58 jdf Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -84,8 +84,12 @@ check(const char *varname, int filetocheck)
 
 	create_script(varname, filetocheck);
 
-	collect(T_OUTPUT, &buf, "chroot %s /bin/sh %s 2>&1", target_prefix(),
-	    RC_CHECK_SCRIPT);
+	if (target_already_root())
+		collect(T_OUTPUT, &buf, "/bin/sh %s 2>&1", RC_CHECK_SCRIPT);
+	else
+		collect(T_OUTPUT, &buf, "chroot %s /bin/sh %s 2>&1",
+				target_prefix(), RC_CHECK_SCRIPT);
+
 
 	unlink(target_expand(RC_CHECK_SCRIPT));
 
