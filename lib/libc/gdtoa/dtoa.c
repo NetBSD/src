@@ -1,4 +1,4 @@
-/* $NetBSD: dtoa.c,v 1.7 2011/03/21 19:46:41 christos Exp $ */
+/* $NetBSD: dtoa.c,v 1.8 2012/05/15 18:10:02 alnsn Exp $ */
 
 /****************************************************************
 
@@ -536,15 +536,17 @@ dtoa
 				Bfree(b);
 				b = b1;
 				}
-			if (( j = b5 - m5 )!=0)
+			if (( j = b5 - m5 )!=0) {
 				b = pow5mult(b, j);
 				if (b == NULL)
 					return NULL;
+				}
 			}
-		else
+		else {
 			b = pow5mult(b, b5);
 			if (b == NULL)
 				return NULL;
+		}
 		}
 	S = i2b(1);
 	if (S == NULL)
