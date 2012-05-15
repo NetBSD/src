@@ -1,4 +1,4 @@
-/* $NetBSD: dtoa.c,v 1.8 2012/05/15 18:10:02 alnsn Exp $ */
+/* $NetBSD: dtoa.c,v 1.9 2012/05/15 18:13:21 alnsn Exp $ */
 
 /****************************************************************
 
@@ -546,7 +546,7 @@ dtoa
 			b = pow5mult(b, b5);
 			if (b == NULL)
 				return NULL;
-		}
+			}
 		}
 	S = i2b(1);
 	if (S == NULL)
