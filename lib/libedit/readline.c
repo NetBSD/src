@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.102 2012/05/15 17:30:04 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.103 2012/05/15 19:07:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.102 2012/05/15 17:30:04 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.103 2012/05/15 19:07:25 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -100,6 +100,7 @@ char *rl_basic_word_break_characters = break_chars;
 char *rl_completer_word_break_characters = NULL;
 char *rl_completer_quote_characters = NULL;
 Function *rl_completion_entry_function = NULL;
+char *(*rl_completion_word_break_hook)(void) = NULL;
 CPPFunction *rl_attempted_completion_function = NULL;
 Function *rl_pre_input_hook = NULL;
 Function *rl_startup1_hook = NULL;
