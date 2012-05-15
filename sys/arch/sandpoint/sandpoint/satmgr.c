@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.22 2012/05/11 21:40:49 nisimura Exp $ */
+/* $NetBSD: satmgr.c,v 1.23 2012/05/15 02:14:13 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -1033,7 +1033,7 @@ mbtnintr(void *arg)
 	/* notified after 3 seconds guard time */
 	struct satmgr_softc *sc = arg;
 
-	send_sat(sc, "\x80\x36"); /* query button state */
+	send_sat(sc, "\x80\x36\x4a"); /* query button state with parity */
 	mutex_enter(&sc->sc_replk);
 	sc->sc_btn_cnt = 0;
 	mutex_exit(&sc->sc_replk);
