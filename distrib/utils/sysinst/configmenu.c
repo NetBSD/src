@@ -1,4 +1,4 @@
-/* $NetBSD: configmenu.c,v 1.4 2012/04/30 19:57:52 riz Exp $ */
+/* $NetBSD: configmenu.c,v 1.5 2012/05/15 15:50:58 jdf Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -133,9 +133,14 @@ get_rootsh(void)
 	if (buf != NULL)
 		free(buf);
 
-	collect(T_OUTPUT, &buf,
-	    "chroot %s /usr/bin/awk -F: '$1==\"root\" { print $NF; exit }'"
-	    " /etc/passwd",target_prefix());
+	if (target_already_root())
+		collect(T_OUTPUT, &buf,
+		    "/usr/bin/awk -F: '$1==\"root\" { print $NF; exit }'"
+		    " /etc/passwd");
+	else
+		collect(T_OUTPUT, &buf,
+		    "chroot %s /usr/bin/awk -F: '$1==\"root\" { print $NF; exit }'"
+		    " /etc/passwd",target_prefix());
 
 	config_list[CONFIGOPT_ROOTSH].setting = (const char *)buf;
 }
@@ -213,8 +218,12 @@ check_root_password(void)
 	char *buf;
 	int rval;
 
-	collect(T_OUTPUT, &buf, "chroot %s getent passwd root | chroot %s cut -d: -f2",
-	    target_prefix(), target_prefix());
+	if (target_already_root())
+		collect(T_OUTPUT, &buf, "getent passwd root | cut -d: -f2");
+	else
+		collect(T_OUTPUT, &buf, "chroot %s getent passwd root | "
+		    "chroot %s cut -d: -f2",
+		    target_prefix(), target_prefix());
 
 	if (logfp)
 		fprintf(logfp,"buf %s strlen(buf) %zu\n", buf, strlen(buf));
