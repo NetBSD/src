@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.937 2012/05/09 12:04:27 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.938 2012/05/15 08:49:34 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1081,7 +1081,7 @@ original.
 
 Package:	sqlite
 Version:	pre-3.6.9 snapshot
-Current Vers:	3.7.10
+Current Vers:	3.7.12
 Maintainer:	Richard Hipp <drh@sqlite.org>
 Home Page:	http://www.sqlite.org
 Responsible:	joerg
