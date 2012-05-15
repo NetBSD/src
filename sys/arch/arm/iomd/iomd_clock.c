@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.27 2012/05/14 10:38:08 skrll Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.28 2012/05/15 05:45:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -47,7 +47,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: iomd_clock.c,v 1.27 2012/05/14 10:38:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd_clock.c,v 1.28 2012/05/15 05:45:37 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -312,7 +312,7 @@ static u_int iomd_timecounter0_get(struct timecounter *tc)
 
 	/*
 	 * Latch the current value of the timer and then read it.
-	 * This garentees an atmoic reading of the time.
+	 * This guarantees an atomic reading of the time.
 	 */
 	s = splhigh();
 	bus_space_write_1(clock_sc->sc_iot, clock_sc->sc_ioh,
