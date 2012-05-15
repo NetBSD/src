@@ -1,4 +1,4 @@
-/*      $NetBSD: clockportvar.h,v 1.2 2012/05/15 17:35:43 rkujawa Exp $ */
+/*      $NetBSD: gencp.c,v 1.1 2012/05/15 17:35:43 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,39 +29,33 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* Totally generic clockport, not much to do here... */
+
+#include <sys/cdefs.h>
+
+#include <sys/systm.h>
 #include <sys/types.h>
+#include <sys/device.h>
+#include <sys/bus.h>
+#include <sys/conf.h>
+#include <sys/kmem.h>
 
-struct gencp_softc {
-	device_t	sc_dev;
+#include <machine/cpu.h>
 
-	struct clockportbus_attach_args *cpb_aa;
-};
+#include <amiga/amiga/device.h>
 
-struct clockportbus_softc {
+#include <amiga/dev/zbusvar.h>
 
-	struct clockportbus_attach_args *cpb_aa;
-};
+#include <amiga/clockport/clockportvar.h>
 
-/* Struct passed down to clockportbus. */
-struct clockportbus_attach_args {
+void
+gencp_attach(struct gencp_softc *gsc)
+{
+	aprint_normal(": generic clockport pa 0x%x\n",
+	    (bus_addr_t) kvtop((void*) gsc->cpb_aa->cp_iot->base));
 
-	bus_space_tag_t cp_iot;
+	gsc->cpb_aa->cp_intr_establish = clockport_generic_intr_establish;
 
-	void *(*cp_intr_establish)(int (*)(void *), void *);
-};
-
-/*
- * Struct passed down to devices attached to clockportbus, currently
- * has the same data as above. 
- */
-struct clockport_attach_args {
-
-	bus_space_tag_t cp_iot;
-
-	void *(*cp_intr_establish)(int (*)(void *), void *);
-};
-
-void *clockport_generic_intr_establish(int (*)(void *), void *);
-
-void gencp_attach(struct gencp_softc *gsc);
+	config_found(gsc->sc_dev, gsc->cpb_aa, 0);
+}
 

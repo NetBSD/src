@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_zbus.c,v 1.16 2012/05/15 17:35:44 rkujawa Exp $ */
+/*	$NetBSD: if_ne_xsurf.c,v 1.1 2012/05/15 17:35:44 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,11 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_zbus.c,v 1.16 2012/05/15 17:35:44 rkujawa Exp $");
 
 /*
- * Thanks to Village Tronic for giving me a card.
- * Bernd Ernesti
+ * X-Surf driver, ne(4) attachment. 
  */
 
 #include <sys/param.h>
@@ -62,52 +60,69 @@ __KERNEL_RCSID(0, "$NetBSD: if_ne_zbus.c,v 1.16 2012/05/15 17:35:44 rkujawa Exp 
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/isr.h>
 
+#include <amiga/dev/xsurfvar.h>
 #include <amiga/dev/zbusvar.h>
 
-int	ne_zbus_match(device_t, cfdata_t , void *);
-void	ne_zbus_attach(device_t, device_t, void *);
+int	ne_xsurf_match(device_t, cfdata_t , void *);
+void	ne_xsurf_attach(device_t, device_t, void *);
 
-struct ne_zbus_softc {
+struct ne_xsurf_softc {
 	struct ne2000_softc	sc_ne2000;
 	struct bus_space_tag	sc_bst;
 	struct isr		sc_isr;
 };
 
-CFATTACH_DECL_NEW(ne_zbus, sizeof(struct ne_zbus_softc),
-    ne_zbus_match, ne_zbus_attach, NULL, NULL);
+CFATTACH_DECL_NEW(ne_xsurf, sizeof(struct ne_xsurf_softc),
+    ne_xsurf_match, ne_xsurf_attach, NULL, NULL);
 
 /*
  * The Amiga address are shifted by one bit to the ISA-Bus, but
  * this is handled by the bus_space functions.
  */
-#define	NE_ARIADNE_II_NPORTS	0x20
-#define	NE_ARIADNE_II_NICBASE	0x0300	/* 0x0600 */
-#define	NE_ARIADNE_II_NICSIZE	0x10
-#define	NE_ARIADNE_II_ASICBASE	0x0310	/* 0x0620 */
-#define	NE_ARIADNE_II_ASICSIZE	0x10
+#define	NE_XSURF_NPORTS		0x20
+#define	NE_XSURF_NICBASE	0x0300	/* 0x0600 */
+#define	NE_XSURF_NICSIZE	0x10
+#define	NE_XSURF_ASICBASE	0x0310	/* 0x0620 */
+#define	NE_XSURF_ASICSIZE	0x10
+
+#define XSURF_NE_OFFSET		0x8000
+
+/*
+ * Clockport offsets.
+ */
+#define XSURF_CP1_BASE		0xA001
+#define XSURF_CP2_BASE		0xC000
+
+/*
+ * E3B Deneb firmware v11 creates fake X-Surf autoconfig entry.
+ * Do not attach ne driver to this fake card, otherwise kernel panic
+ * may occur.
+ */
+#define DENEB_XSURF_SERNO	0xC0FFEE01	/* Serial of the fake card */
 
 int
-ne_zbus_match(device_t parent, cfdata_t cf, void *aux)
+ne_xsurf_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct zbus_args *zap = aux;
+	struct xsurfbus_attach_args *xap = aux;
 
-	/* Ariadne II ethernet card */
-	if (zap->manid == 2167 && zap->prodid == 202)
-		return (1);
+	if (strcmp(xap->xaa_name, "ne_xsurf") != 0)
+		return 0;
 
-	return (0);
+	return 1;
 }
 
 /*
- * Install interface into kernel networking data structures
+ * Install interface into kernel networking data structures.
  */
 void
-ne_zbus_attach(device_t parent, device_t self, void *aux)
+ne_xsurf_attach(device_t parent, device_t self, void *aux)
 {
-	struct ne_zbus_softc *zsc = device_private(self);
+	struct ne_xsurf_softc *zsc = device_private(self);
 	struct ne2000_softc *nsc = &zsc->sc_ne2000;
 	struct dp8390_softc *dsc = &nsc->sc_dp8390;
-	struct zbus_args *zap = aux;
+
+	struct xsurfbus_attach_args *xap = aux;
+
 	bus_space_tag_t nict = &zsc->sc_bst;
 	bus_space_handle_t nich;
 	bus_space_tag_t asict = nict;
@@ -119,20 +134,21 @@ ne_zbus_attach(device_t parent, device_t self, void *aux)
 	dsc->init_card = rtl80x9_init_card;
 	dsc->sc_media_init = rtl80x9_media_init;
 
-	zsc->sc_bst.base = (u_long)zap->va + 0;
+	zsc->sc_bst.base = xap->xaa_base;
 
 	zsc->sc_bst.absm = &amiga_bus_stride_2;
 
 	aprint_normal("\n");
 
 	/* Map i/o space. */
-	if (bus_space_map(nict, NE_ARIADNE_II_NICBASE, NE_ARIADNE_II_NPORTS, 0, &nich)) {
+	if (bus_space_map(nict, NE_XSURF_NICBASE, 
+	    NE_XSURF_NPORTS, 0, &nich)) {
 		aprint_error_dev(self, "can't map nic i/o space\n");
 		return;
 	}
 
-	if (bus_space_subregion(nict, nich, NE2000_ASIC_OFFSET, NE_ARIADNE_II_ASICSIZE,
-	    &asich)) {
+	if (bus_space_subregion(nict, nich, NE2000_ASIC_OFFSET, 
+	    NE_XSURF_ASICSIZE, &asich)) {
 		aprint_error_dev(self, "can't map asic i/o space\n");
 		return;
 	}
