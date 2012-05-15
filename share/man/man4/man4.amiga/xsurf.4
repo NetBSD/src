@@ -1,4 +1,4 @@
-.\" $NetBSD: clockport.4,v 1.3 2012/05/15 17:46:26 rkujawa Exp $
+.\" $NetBSD: xsurf.4,v 1.1 2012/05/15 17:46:26 rkujawa Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,40 +28,46 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd May 15, 2012
-.Dt CLOCKPORT 4 amiga
+.Dt XSURF 4 amiga
 .Os
 .Sh NAME
-.Nm clockport
-.Nd introduction to clockport bus support and drivers
+.Nm xsurf 
+.Nd Individual Computers X-Surf driver
 .Sh SYNOPSIS
-.Cd "clockport* at a1k2cp0"
-.Cd "clockport* at gencp?"
+.Cd "xsurf* at zbus0"
+.Cd "ne* at xsurfbus?"
+.Cd "gencp* at xsurfbus?"
 .Sh DESCRIPTION
-Clockport is a general purpose non-autoconfiguring expansion bus, originally
-present on the Amiga 1200, as a part of P9 memory connector.
-.Sh SUPPORTED DEVICES
 The
-.Nx
-includes the following clockport drivers:
+.Nm
+driver provides support for the Individual Computers X-Surf ethernet card.
+.Sh HARDWARE
+The
+.Nm
+driver supports the following hardware:
 .Bl -tag -offset indent
-.It Xr com 4
-Individual Computers SilverSurfer 16C550-based serial port.
+.It Individual Computers X-Surf
+.It E3B Deneb (fake X-Surf board, firmware v11, clockport only)
 .El
 .Sh SEE ALSO
-.Xr a1k2cp 4 ,
-.\" .Xr gencp 4
+.Xr clockport 4 ,
+.\" .Xr gencp 4 ,
+.Xr ne 4
 .Sh HISTORY
 The
 .Nm
-subsystem appeared in
+device first appeared in
 .Nx 7.0 .
 .Sh AUTHORS
 .An -nosplit
 The
 .Nm
-subsystem was written by
-.An Radoslaw Kujawa Aq radoslaw.kujawa@gmail.com .
+driver was written by
+.An Radoslaw Kujawa 
+.Aq radoslaw.kujawa@gmail.com .
+The
+.Xr ne 4
+attachment code was split from Ariadne II driver, written by Bernd Ernesti and
+extended by Ignatios Souvatzis.
 .Sh CAVEATS
-Clockport performance is very low, even by Amiga standards.
-.Pp
-Probing the hardware on clockport might be unreliable.
+Support for clockports remains largely untested.
