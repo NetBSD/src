@@ -1,4 +1,4 @@
-/* $NetBSD: t_pipe2.c,v 1.6 2012/05/16 11:45:08 wiz Exp $ */
+/* $NetBSD: t_pipe2.c,v 1.7 2012/05/16 13:48:35 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_pipe2.c,v 1.6 2012/05/16 11:45:08 wiz Exp $");
+__RCSID("$NetBSD: t_pipe2.c,v 1.7 2012/05/16 13:48:35 martin Exp $");
 
 #include <atf-c.h>
 #include <fcntl.h>
@@ -109,26 +109,27 @@ ATF_TC_HEAD(pipe2_consume, tc)
 ATF_TC_BODY(pipe2_consume, tc)
 {
 	struct rlimit rl;
-	size_t i, n;
+	int err, filedes[2];
 
-	getrlimit(RLIMIT_NOFILE, &rl);
+	err = fcntl(4, F_CLOSEM);
+	ATF_REQUIRE(err == 0);
+
+	err = getrlimit(RLIMIT_NOFILE, &rl);
+	ATF_REQUIRE(err == 0);
 	/*
-	 * Each pipe2 call will allocate two filedescriptors, make sure we
-	 * run into the limit...
+	 * The heart of this test is to run against the number of open
+	 * file descriptor limit in the middle of a pipe2() call - i.e.
+	 * before the call only a single descriptor may be openend.
 	 */
-	n = rl.rlim_cur/2+1;
+	rl.rlim_cur = 4;
+	err = setrlimit(RLIMIT_NOFILE, &rl);
+	ATF_REQUIRE(err == 0);
 
 	/*
 	 * atf_tc_skip("The test case causes a panic (PR kern/46457)");
 	 */
-
-	for (i = 0; i < n; i++) {
-
-		int fildes[2];
-
-		if (pipe2(fildes, O_CLOEXEC) == -1)
-			return;
-	}
+	err = pipe2(filedes, O_CLOEXEC);
+	ATF_REQUIRE(err == -1);
 }
 
 ATF_TC(pipe2_nonblock);
