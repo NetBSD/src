@@ -1,4 +1,4 @@
-/* $NetBSD: t_pipe2.c,v 1.4 2012/05/16 09:06:35 jruoho Exp $ */
+/* $NetBSD: t_pipe2.c,v 1.5 2012/05/16 09:51:58 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -36,13 +36,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_pipe2.c,v 1.4 2012/05/16 09:06:35 jruoho Exp $");
+__RCSID("$NetBSD: t_pipe2.c,v 1.5 2012/05/16 09:51:58 martin Exp $");
 
 #include <atf-c.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <sys/resource.h>
 
 static void
 run(int flags)
@@ -107,10 +108,19 @@ ATF_TC_HEAD(pipe2_consume, tc)
 
 ATF_TC_BODY(pipe2_consume, tc)
 {
-	const size_t n = 200;
-	size_t i;
+	struct rlimit rl;
+	size_t i, n;
 
-	atf_tc_skip("The test case causes a panic (PR PR kern/46457)");
+	getrlimit(RLIMIT_NOFILE, &rl);
+	/*
+	 * Each pipe2 call will allocate two filedescriptors, make sure we
+	 * run into the limit...
+	 */
+	n = rl.rlim_cur/2+1;
+
+	/*
+	 * atf_tc_skip("The test case causes a panic (PR PR kern/46457)");
+	 */
 
 	for (i = 0; i < n; i++) {
 
