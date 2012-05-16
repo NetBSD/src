@@ -1,4 +1,4 @@
-/* $NetBSD: t_pipe2.c,v 1.5 2012/05/16 09:51:58 martin Exp $ */
+/* $NetBSD: t_pipe2.c,v 1.6 2012/05/16 11:45:08 wiz Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_pipe2.c,v 1.5 2012/05/16 09:51:58 martin Exp $");
+__RCSID("$NetBSD: t_pipe2.c,v 1.6 2012/05/16 11:45:08 wiz Exp $");
 
 #include <atf-c.h>
 #include <fcntl.h>
@@ -119,7 +119,7 @@ ATF_TC_BODY(pipe2_consume, tc)
 	n = rl.rlim_cur/2+1;
 
 	/*
-	 * atf_tc_skip("The test case causes a panic (PR PR kern/46457)");
+	 * atf_tc_skip("The test case causes a panic (PR kern/46457)");
 	 */
 
 	for (i = 0; i < n; i++) {
