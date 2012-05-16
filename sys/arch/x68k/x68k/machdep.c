@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.182 2012/05/06 19:46:18 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.183 2012/05/16 07:32:30 isaki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.182 2012/05/06 19:46:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.183 2012/05/16 07:32:30 isaki Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -107,9 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.182 2012/05/06 19:46:18 tsutsui Exp $"
 #include <machine/autoconf.h>
 #include <arch/x68k/dev/intiovar.h>
 
-void initcpu(void);
-void identifycpu(void);
-void doboot(void) __attribute__((__noreturn__));
+extern void doboot(void) __attribute__((__noreturn__));
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
