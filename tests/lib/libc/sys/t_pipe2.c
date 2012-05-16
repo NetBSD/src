@@ -1,4 +1,4 @@
-/* $NetBSD: t_pipe2.c,v 1.3 2012/01/28 02:47:09 christos Exp $ */
+/* $NetBSD: t_pipe2.c,v 1.4 2012/05/16 09:06:35 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_pipe2.c,v 1.3 2012/01/28 02:47:09 christos Exp $");
+__RCSID("$NetBSD: t_pipe2.c,v 1.4 2012/05/16 09:06:35 jruoho Exp $");
 
 #include <atf-c.h>
 #include <fcntl.h>
@@ -98,6 +98,29 @@ ATF_TC_BODY(pipe2_basic, tc)
 	run(0);
 }
 
+ATF_TC(pipe2_consume);
+ATF_TC_HEAD(pipe2_consume, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test that consuming file descriptors "
+	    "with pipe2(2) does not crash the system (PR kern/46457)");
+}
+
+ATF_TC_BODY(pipe2_consume, tc)
+{
+	const size_t n = 200;
+	size_t i;
+
+	atf_tc_skip("The test case causes a panic (PR PR kern/46457)");
+
+	for (i = 0; i < n; i++) {
+
+		int fildes[2];
+
+		if (pipe2(fildes, O_CLOEXEC) == -1)
+			return;
+	}
+}
+
 ATF_TC(pipe2_nonblock);
 ATF_TC_HEAD(pipe2_nonblock, tc)
 {
@@ -147,6 +170,7 @@ ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, pipe2_basic);
+	ATF_TP_ADD_TC(tp, pipe2_consume);
 	ATF_TP_ADD_TC(tp, pipe2_nonblock);
 	ATF_TP_ADD_TC(tp, pipe2_cloexec);
 	ATF_TP_ADD_TC(tp, pipe2_nosigpipe);
