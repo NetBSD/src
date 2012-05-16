@@ -1,4 +1,4 @@
-/* $NetBSD: t_mmap.c,v 1.4 2012/03/13 06:37:03 jruoho Exp $ */
+/* $NetBSD: t_mmap.c,v 1.5 2012/05/16 19:12:59 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mmap.c,v 1.4 2012/03/13 06:37:03 jruoho Exp $");
+__RCSID("$NetBSD: t_mmap.c,v 1.5 2012/05/16 19:12:59 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -71,6 +71,8 @@ __RCSID("$NetBSD: t_mmap.c,v 1.4 2012/03/13 06:37:03 jruoho Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <paths.h>
+#include <machine/disklabel.h>
 
 static long	page = 0;
 static char	path[] = "mmap";
@@ -157,26 +159,35 @@ ATF_TC(mmap_block);
 ATF_TC_HEAD(mmap_block, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test mmap(2) with a block device");
+	atf_tc_set_md_var(tc, "require.user", "root");
 }
 
 ATF_TC_BODY(mmap_block, tc)
 {
-	static const char *dev[] = { "/dev/wd0c", "/dev/wd0d", "/dev/wd0g" };
-	char *map;
-	size_t i;
-	int fd;
+	static const int mib[] = { CTL_HW, HW_DISKNAMES };
+	static const unsigned int miblen = __arraycount(mib);
+	char *map, *dk, *drives, dev[PATH_MAX];
+	size_t len;
+	int fd = -1;
 
 	atf_tc_skip("The test case causes a panic (PR kern/38889)");
 
-	for (i = 0; i < __arraycount(dev); i++) {
+	ATF_REQUIRE(sysctl(mib, miblen, NULL, &len, NULL, 0) == 0);
+	drives = malloc(len);
+	ATF_REQUIRE(drives != NULL);
+	ATF_REQUIRE(sysctl(mib, miblen, drives, &len, NULL, 0) == 0);
+	for (dk = strtok(drives, " "); dk != NULL; dk = strtok(NULL, " ")) {
+		sprintf(dev, _PATH_DEV "%s%c", dk, 'a'+RAW_PART);
+		fprintf(stderr, "trying: %s\n", dev);
 
-		if ((fd = open(dev[i], O_RDONLY)) >= 0) {
-			(void)fprintf(stderr, "using %s\n", dev[i]);
+		if ((fd = open(dev, O_RDONLY)) >= 0) {
+			(void)fprintf(stderr, "using %s\n", dev);
 			break;
 		}
 	}
+	free(drives);
 
-	if (i == __arraycount(dev))
+	if (fd < 0)
 		atf_tc_skip("failed to find suitable block device");
 
 	map = mmap(NULL, 4096, PROT_READ, MAP_FILE, fd, 0);
