@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.90 2012/05/17 18:02:49 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.91 2012/05/17 18:10:20 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -2291,4 +2291,10 @@ external/gpl3/binutils/lib/libbfd/Makefile	patch
 
 	Switch the vax port back to GCC 4.1.
 	[martin, ticket #153]
+
+sys/arch/powerpc/booke/dev/pq3etsec.c		1.11-1.13
+sys/arch/powerpc/include/booke/etsecreg.h	1.4
+
+	Apply some PowerPC tsec fixes.
+	[matt, ticket #245]
 
