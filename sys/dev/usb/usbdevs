@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.613 2012/04/25 02:41:51 ichiro Exp $
+$NetBSD: usbdevs,v 1.614 2012/05/17 21:48:22 cyber Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2557,6 +2557,7 @@ product SIERRA AC880E		0x6852	Sierra Wireless AirCard 880E
 product SIERRA AC881E		0x6853	Sierra Wireless AirCard 881E
 product SIERRA AC880U		0x6855	Sierra Wireless AirCard 880U
 product SIERRA AC881U		0x6856	Sierra Wireless AirCard 881U
+product SIERRA AC885U		0x6880	Sierra Wireless AirCard 885U
 product SIERRA USB305		0x68a3	Sierra Wireless AirCard USB 305
 
 /* Sigmatel products */
