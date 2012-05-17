@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.78 2012/01/10 21:02:47 gson Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.78.2.1 2012/05/17 18:57:11 sborrill Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -162,11 +162,11 @@ message megname
 message layout
 {NetBSD uzywa BSD disklabel aby pociac czesc dysku NetBSD na kilka
 partycji BSD.  Musisz teraz skonfigurowac BSD disklabel.
-Masz kilka mozliwosci. Sa one opisane ponizej.
--- Standard: partycje BSD disklabel sa ustawiane przez ten program.
+Masz kilka mozliwosci. Sa one opisane ponizej. 
+-- Standard: partycje BSD disklabel sa ustawiane przez ten program. 
 -- Uzyj istniejacych: Uzywa aktualnych partycji. Musisz je zamontowac.
 
-Dysk NetBSD to %d Megabajtow.
+Dysk NetBSD to %d Megabajtow. 
 Standard wymaga przynajmniej %d Megabajtow.
 Standard z X Window System wymaga przynajmniej %d Megabajtow.
 }
@@ -259,7 +259,7 @@ message partition_sizes_ok
 {Rozmiary partycji w porzadku}
 
 message edfspart
-{Powinienes najpierw ustawic rodzaj systemu plikow (SP).
+{Powinienes najpierw ustawic rodzaj systemu plikow (SP). 
 Pozniej inne wartosci.
 
 Aktualne wartosci dla partycji %c:
@@ -401,7 +401,7 @@ zostac utworzone dla tej wersji), jesli uzywales lokalnych plikow hasel.
 
 
 message unpackcomplete
-{Rozpakowywanie dodatkowych pakietow NetBSD-@@VERSION@@ zostalo zakonczone.
+{Rozpakowywanie dodatkowych pakietow NetBSD-@@VERSION@@ zostalo zakonczone. 
 Musisz teraz wykonac
 polecenia zawarte w pliku INSTALL aby przekonfigurowac system do swoich
 potrzeb.
@@ -440,7 +440,7 @@ message dev
 {urzadzenie}
 
 message nfssource
-{Wprowadz hosta NFS oraz katalog gdzie znajduje sie dystrybucja.
+{Wprowadz hosta NFS oraz katalog gdzie znajduje sie dystrybucja. 
 Pamietaj, ze katalog musi zawierac pliki .tgz oraz, ze musi byc
 dostepny przez NFS.
 
@@ -455,7 +455,7 @@ znajdowac sie w glownym katalogu dyskietki.
 
 message cdromsource
 {Podaj urzadzenie CDROM oraz katalog na CDROMie, w ktorym znajduje sie
-dystrybucja.
+dystrybucja. 
 Pamietaj, ze katalog musi zawierac pliki .tgz.
 
 }
@@ -472,13 +472,13 @@ CD. Prosze sprawdzic urzadzenie i sciezke.}
 
 message localfssource
 {Podaj niezamountowane lokalne urzadzenie oraz katalog na nim, gdzie
-znajduje sie dystrybucja.
+znajduje sie dystrybucja. 
 Pamietaj, ze katalog musi zawierac pliki .tgz.
 
 }
 
 message localdir
-{Podaj aktualnie zamountowany lokalny katalog, gdzie znajduje sie dystrybucja.
+{Podaj aktualnie zamountowany lokalny katalog, gdzie znajduje sie dystrybucja. 
 Pamietaj, ze katalog musi zawierac pliki .tgz.
 
 }
@@ -539,33 +539,33 @@ message net_media
 message netok
 {Ponizej sa wartosci, ktore wprowadziles.
 
-Domena DNS:		%s
-Nazwa hosta:		%s
-Podstawowy interfejs:	%s
-Twoj adres IP:		%s
-Maska podsieci:		%s
-Serwer nazw IPv4:	%s
-Bramka IPv4:		%s
+Domena DNS:		%s 
+Nazwa hosta:		%s 
+Podstawowy interfejs:	%s 
+Twoj adres IP:		%s 
+Maska podsieci:		%s 
+Serwer nazw IPv4:	%s 
+Bramka IPv4:		%s 
 Medium sieciowe:	%s
 }
 
 message netok_slip
 {Ponizej sa wartosci, ktore wprowadziles. Czy sa poprawne?
 
-Domena DNS:		%s
-Nazwa hosta:		%s
-Podstawowy interfejs:	%s
-Twoj adres IP:		%s
+Domena DNS:		%s 
+Nazwa hosta:		%s 
+Podstawowy interfejs:	%s 
+Twoj adres IP:		%s 
 Adres IP serwera:	%s
-Maska podsieci:		%s
-Serwer nazw IPv4:	%s
-Bramka IPv4:		%s
+Maska podsieci:		%s 
+Serwer nazw IPv4:	%s 
+Bramka IPv4:		%s 
 Medium sieciowe:	%s
 }
 
 message netokv6
-{Autkonfiguracja IPv6:	%s
-Serwer nazw IPv6:	%s
+{Autkonfiguracja IPv6:	%s 
+Serwer nazw IPv6:	%s 
 }
 
 message netok_ok
@@ -640,7 +640,7 @@ message createfstab
 
 
 message noetcfstab
-{Pomocy! Na dysku docelowym %s nie ma /etc/fstab. Przerywamy aktualizacje.
+{Pomocy! Na dysku docelowym %s nie ma /etc/fstab. Przerywamy aktualizacje. 
 }
 
 message badetcfstab
@@ -686,7 +686,7 @@ message rootmissing
 
 message badroot
 {Kompletny nowy system plikow nie przeszedl podstawowych testow.
- Jestes pewien, ze zainstalowales wszystkie wymagane pakiety?
+ Jestes pewien, ze zainstalowales wszystkie wymagane pakiety? 
 }
 
 message fd_type
@@ -829,13 +829,13 @@ message config_open_error
 {Nie moglem otworzyc pliku konfiguracyjnego %s\n}
 
 message choose_timezone
-{Wybierz strefe czasowa, ktora najlepiej ci odpowiada z ponizszej listy.
-Nacisnij ENTER aby wybrac.
+{Wybierz strefe czasowa, ktora najlepiej ci odpowiada z ponizszej listy. 
+Nacisnij ENTER aby wybrac. 
 Nacisnij 'x' a potem ENTER aby wyjsc.
 
- Domyslna:	%s
- Wybrana:	%s
- Lokalny czas:	%s %s
+ Domyslna:	%s 
+ Wybrana:	%s 
+ Lokalny czas:	%s %s 
 }
 
 message tz_back
@@ -967,3 +967,59 @@ message license
 zawarta w pliku %s.
 Aby obejrzec ten plik, mozesz wpisac ^Z, przejrzec jego zawartosc,
 a nastepnie wpisac "fg".}
+
+message binpkg
+{To configure the binary package system, please choose the network location
+to fetch packages from.  Once your system comes up, you can use 'pkgin'
+to install additional packages, or remove packages.}
+
+message pkgpath
+{The following are the protocol, host, directory, user, and password that
+will be used.  If "user" is "ftp", then the password is not needed.
+
+}
+message rcconf_backup_failed {Making backup of rc.conf failed. Continue?}
+message rcconf_backup_succeeded {rc.conf backup saved to %s.}
+message rcconf_restore_failed {Restoring backup rc.conf failed.}
+message rcconf_delete_failed {Deleting old %s entry failed.}
+message Pkg_dir {Package directory}
+message configure_prior {configure a prior installation of}
+message configure {configure}
+message change {change}
+message password_set {password set}
+message YES {YES}
+message NO {NO}
+message DONE {DONE}
+message abandoned {Abandoned}
+message empty {***EMPTY***}
+message timezone {Timezone}
+message change_rootpw {Change root password}
+message enable_binpkg {Enable installation of binary packages}
+message enable_sshd {Enable sshd}
+message enable_ntpd {Enable ntpd}
+message run_ntpdate {Run ntpdate at boot}
+message enable_mdnsd {Enable mdnsd}
+message configmenu {Configure the additional items as needed.}
+message doneconfig {Finished configuring}
+message Install_pkgin {Install pkgin and update package summary}
+message binpkg_installed 
+{You are now configured to use pkgin to install binary packages.  To
+install a package, run:
+
+pkgin install <packagename>
+
+from a root shell.  Read the pkgin(1) manual page for further information.}
+message Install_pkgsrc {Fetch and unpack pkgsrc}
+message pkgsrc
+{Installing pkgsrc requires unpacking an archive retrieved over the network.
+The following are the host, directory, user, and password that
+will be used.  If "user" is "ftp", then the password is not needed.
+
+}
+message Pkgsrc_dir {pkgsrc directory}
+message get_pkgsrc {Fetch and unpack pkgsrc for building from source}
+message retry_pkgsrc_network {Network configuration failed.  Retry?}
+message quit_pkgsrc {Quit without installing pkgsrc}
+message pkgin_failed 
+{Installation of pkgin failed, possibly because no binary packages  exist.  Please check the package path and try again.}
+message failed {Failed}

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.13 2011/04/04 08:30:32 mbalmer Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.13.6.1 2012/05/17 18:57:14 sborrill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -51,7 +51,7 @@ message dobad144
 
 message getboottype
 {¿Le gustaria instalar el set normal de bootblocks o bootblocks por serie?
-
+ 
 Bootblocks normal usa el dispositivo de consola de BIOS como consola
 (normalmente el monitor y teclado). Bootblocks por serie usa el primer
 puerto serie como consola.

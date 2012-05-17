@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.69 2012/01/05 21:29:24 christos Exp $	*/
+/*	$NetBSD: run.c,v 1.69.2.1 2012/05/17 18:57:11 sborrill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -138,7 +138,8 @@ script_flip(menudesc *m, void *arg)
 
 	(void)time(&tloc);
 	if (script) {
-		scripting_fprintf(NULL, "# Script ended at: %s\n", asctime(localtime(&tloc)));
+		scripting_fprintf(NULL, "# Script ended at: %s\n",
+		    asctime(localtime(&tloc)));
 		fflush(script);
 		fclose(script);
 		script = NULL;
@@ -150,7 +151,8 @@ script_flip(menudesc *m, void *arg)
 			    asctime(localtime(&tloc)));
 			fflush(script);
 		} else {
-			msg_display(MSG_openfail, "script file", strerror(errno));
+			msg_display(MSG_openfail, "script file",
+			    strerror(errno));
 		}
 	}
 	return(0);
@@ -366,7 +368,7 @@ show_cmd(const char *scmd, struct winsize *win)
  */
 static int
 launch_subwin(WINDOW **actionwin, char **args, struct winsize *win, int flags,
-	const char *scmd, const char **errstr)
+    const char *scmd, const char **errstr)
 {
 	int n, i;
 	int selectfailed;
@@ -376,11 +378,9 @@ launch_subwin(WINDOW **actionwin, char **args, struct winsize *win, int flags,
 	char ibuf[MAXBUF];
 	char pktdata;
 	char *cp, *ncp;
-	struct termios rtt;
-	struct termios tt;
+	struct termios rtt, tt;
 	struct timeval tmo;
 	static int do_tioccons = 2;
-
 
 	(void)tcgetattr(STDIN_FILENO, &tt);
 	if (openpty(&master, &slave, NULL, &tt, win) == -1) {
@@ -483,7 +483,8 @@ launch_subwin(WINDOW **actionwin, char **args, struct winsize *win, int flags,
 
 	for (selectfailed = 0;;) {
 		if (selectfailed) {
-			const char mmsg[] = "select(2) failed but no child died?";
+			const char mmsg[] =
+			    "select(2) failed but no child died?";
 			if (logfp)
 				(void)fprintf(logfp, mmsg);
 			errx(1, mmsg);

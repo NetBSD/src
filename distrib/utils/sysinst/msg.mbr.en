@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.en,v 1.15 2011/04/04 08:30:12 mbalmer Exp $	*/
+/*	$NetBSD: msg.mbr.en,v 1.15.6.1 2012/05/17 18:57:09 sborrill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -45,12 +45,12 @@ NetBSD can also access file systems in other MBR partitions.
 
 If you select 'Use the entire disk' then the previous contents of the
 disk will be overwritten and a single MBR partition used to cover the
-entire disk.
+entire disk. 
 If you want to install more than one operating system then edit the
 MBR partition table and create a partition for NetBSD.
 
 A few hundred MB is enough for a basic installation, but you should allow
-extra for additional software and user files.
+extra for additional software and user files. 
 Allow at least 5GB if you want to build NetBSD itself.
 }
 
@@ -85,13 +85,13 @@ message setbiosgeom
 {
 You will be prompted for the geometry.
 Please enter the number of sectors per track (maximum 63)
-and number of heads (maximum 256) that the BIOS uses to access the disk.
+and number of heads (maximum 256) that the BIOS uses to access the disk. 
 The number of cylinders will be calculated from the disk size.
 
 }
 
 message nobiosgeom
-{Sysinst could not automatically determine the BIOS geometry of the disk.
+{Sysinst could not automatically determine the BIOS geometry of the disk. 
 The physical geometry is %d cylinders %d sectors %d heads\n}
 
 message biosguess
@@ -142,12 +142,12 @@ message No_free_space {No free space}
 message Only_one_extended_ptn {There can only be one extended partition}
 
 message editparttable
-{The Current MBR partition table is shown below.
+{The Current MBR partition table is shown below. 
 Flgs: a => Active partition,
 .if BOOTSEL
 d => bootselect default,
 .endif
-I => Install here.
+I => Install here. 
 Select the partition you wish to change:
 
 }

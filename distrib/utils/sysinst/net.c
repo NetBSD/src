@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.130 2012/01/10 21:02:47 gson Exp $	*/
+/*	$NetBSD: net.c,v 1.130.2.1 2012/05/17 18:57:11 sborrill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -939,61 +939,91 @@ done:
 	return network_up;
 }
 
-static int
-ftp_fetch(const char *set_name)
+void
+make_url(char *urlbuffer, struct ftpinfo *f, const char *dir)
 {
-	const char *ftp_opt;
 	char ftp_user_encoded[STRSIZE];
 	char ftp_dir_encoded[STRSIZE];
 	char *cp;
-	const char *set_dir2;
-	int rval;
+	const char *dir2;
 
 	/*
-	 * Invoke ftp to fetch the file.
-	 *
-	 * ftp.pass is quite likely to contain unsafe characters
+	 * f->pass is quite likely to contain unsafe characters
 	 * that need to be encoded in the URL (for example,
 	 * "@", ":" and "/" need quoting).  Let's be
-	 * paranoid and also encode ftp.user and ftp.dir.  (For
-	 * example, ftp.dir could easily contain '~', which is
+	 * paranoid and also encode f->user and f->dir.  (For
+	 * example, f->dir could easily contain '~', which is
 	 * unsafe by a strict reading of RFC 1738).
 	 */
-	if (strcmp("ftp", ftp.user) == 0 && ftp.pass[0] == 0) {
-		/* do anon ftp */
-		ftp_opt = "-a ";
+	if (strcmp("ftp", f->user) == 0 && f->pass[0] == 0) {
 		ftp_user_encoded[0] = 0;
 	} else {
-		ftp_opt = "";
-		cp = url_encode(ftp_user_encoded, ftp.user,
+		cp = url_encode(ftp_user_encoded, f->user,
 			ftp_user_encoded + sizeof ftp_user_encoded - 1,
 			RFC1738_SAFE_LESS_SHELL, 0);
 		*cp++ = ':';
-		cp = url_encode(cp, ftp.pass,
+		cp = url_encode(cp, f->pass,
 			ftp_user_encoded + sizeof ftp_user_encoded - 1,
 			NULL, 0);
 		*cp++ = '@';
 		*cp = 0;
 	}
-
-	cp = url_encode(ftp_dir_encoded, ftp.dir,
+	cp = url_encode(ftp_dir_encoded, f->dir,
 			ftp_dir_encoded + sizeof ftp_dir_encoded - 1,
 			RFC1738_SAFE_LESS_SHELL_PLUS_SLASH, 1);
 	if (cp != ftp_dir_encoded && cp[-1] != '/')
 		*cp++ = '/';
 
-	set_dir2 = set_dir_for_set(set_name);
-	while (*set_dir2 == '/')
-		++set_dir2;
+	dir2 = dir;
+	while (*dir2 == '/')
+		++dir2;
 
-	url_encode(cp, set_dir2,
+	url_encode(cp, dir2,
 			ftp_dir_encoded + sizeof ftp_dir_encoded,
 			RFC1738_SAFE_LESS_SHELL_PLUS_SLASH, 0);
 
+	snprintf(urlbuffer, STRSIZE, "%s://%s%s/%s", f->xfer_type,
+	    ftp_user_encoded, f->host, ftp_dir_encoded);
+}
+
+
+/* ftp_fetch() and pkgsrc_fetch() are essentially the same, with a different
+ * ftpinfo var. */
+static int do_ftp_fetch(const char *, struct ftpinfo *);
+
+static int
+ftp_fetch(const char *set_name)
+{
+	return do_ftp_fetch(set_name, &ftp);
+}
+
+static int
+pkgsrc_fetch(const char *set_name)
+{
+	return do_ftp_fetch(set_name, &pkgsrc);
+}
+
+static int
+do_ftp_fetch(const char *set_name, struct ftpinfo *f)
+{
+	const char *ftp_opt;
+	char url[STRSIZE];
+	int rval;
+
+	/*
+	 * Invoke ftp to fetch the file.
+	 */
+	if (strcmp("ftp", f->user) == 0 && f->pass[0] == 0) {
+		/* do anon ftp */
+		ftp_opt = "-a ";
+	} else {
+		ftp_opt = "";
+	}
+
+	make_url(url, f, set_dir_for_set(set_name));
 	rval = run_program(RUN_DISPLAY | RUN_PROGRESS | RUN_XFER_DIR,
-		    "/usr/bin/ftp %s%s://%s%s/%s/%s%s",
-		    ftp_opt, ftp.xfer_type, ftp_user_encoded, ftp.host,
-		    ftp_dir_encoded, set_name, dist_postfix);
+		    "/usr/bin/ftp %s%s/%s%s",
+		    ftp_opt, url, set_name, dist_postfix);
 
 	return rval ? SET_RETRY : SET_OK;
 }
@@ -1018,6 +1048,25 @@ do_config_network(void)
 		}
 	}
 	return 0;
+}
+
+int
+get_pkgsrc(void)
+{
+	if (!network_up)
+		if (do_config_network() != 0)
+			return SET_RETRY;
+
+	yesno = 1;
+	process_menu(MENU_pkgsrc, NULL);
+	
+	if (yesno == 0)
+		return SET_SKIP;
+	fetch_fn = pkgsrc_fetch;
+	snprintf(ext_dir_pkgsrc, sizeof ext_dir_pkgsrc, "%s/%s",
+	    target_prefix(), xfer_dir + (*xfer_dir == '/'));
+
+	return SET_OK;
 }
 
 int
@@ -1102,6 +1151,7 @@ void
 mnt_net_config(void)
 {
 	char ifconfig_fn[STRSIZE];
+	char ifconfig_str[STRSIZE];
 	FILE *ifconf = NULL;
 
 	if (!network_up)
@@ -1111,8 +1161,9 @@ mnt_net_config(void)
 		return;
 
 	/* Write hostname to /etc/rc.conf */
-	if ((net_dhcpconf & DHCPCONF_HOST) == 0)
-		add_rc_conf("hostname=%s\n", recombine_host_domain());
+	if ((net_dhcpconf & DHCPCONF_HOST) == 0) 
+		if (del_rc_conf("hostname") == 0)
+			add_rc_conf("hostname=%s\n", recombine_host_domain());
 
 	/* Copy resolv.conf to target.  If DHCP was used to create it,
 	 * it will be replaced on next boot anyway. */
@@ -1176,14 +1227,20 @@ mnt_net_config(void)
 			fclose(hosts);
 		}
 
-		add_rc_conf("defaultroute=\"%s\"\n", net_defroute);
+		if (del_rc_conf("defaultroute") == 0)
+			add_rc_conf("defaultroute=\"%s\"\n", net_defroute);
 	} else {
-		add_rc_conf("ifconfig_%s=dhcp\n", net_dev);
+		if (snprintf(ifconfig_str, sizeof ifconfig_str,
+		    "ifconfig_%s", net_dev) > 0 &&
+		    del_rc_conf(ifconfig_str) == 0) {
+			add_rc_conf("ifconfig_%s=dhcp\n", net_dev);
+		}
         }
 
 #ifdef INET6
 	if ((net_ip6conf & IP6CONF_AUTOHOST) != 0) {
-		add_rc_conf("ip6mode=autohost\n");
+		if (del_rc_conf("ip6mode") == 0)
+			add_rc_conf("ip6mode=autohost\n");
 		if (ifconf != NULL) {
 			scripting_fprintf(NULL, "cat <<EOF >>%s%s\n",
 			    target_prefix(), ifconfig_fn);

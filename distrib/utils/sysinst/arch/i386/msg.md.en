@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.61 2011/04/04 08:30:32 mbalmer Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.61.6.1 2012/05/17 18:57:14 sborrill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -115,7 +115,7 @@ message biosgeom_advise
 Note: since sysinst was able to uniquely match the disk you chose with a disk
 known to the BIOS, the values displayed above are very likely correct, and
 should not be changed (the values for cylinders, heads and sectors are
-probably 1023, 255 and 63 - this is correct).
+probably 1023, 255 and 63 - this is correct). 
 You should only change the geometry if you know the BIOS reports incorrect
 values.
 }
@@ -126,7 +126,7 @@ message pickdisk
 message partabovechs
 {The NetBSD part of the disk lies outside of the range that the BIOS on
 your machine can address.
-Booting from it may not be possible.
+Booting from it may not be possible. 
 Are you sure you that you want to do this?
 
 (Answering 'no' will take you back to the partition edit menu.)}
@@ -141,7 +141,7 @@ Do you want to re-edit the partition to add a bootmenu entry?}
 message no_extended_bootmenu
 {You have requested that an extended partition be included in the bootmenu.
 However your system BIOS doesn't appear to support the read command used
-by that version of the bootmenu code.
+by that version of the bootmenu code. 
 Are you sure you that you want to do this?
 
 (Answering 'no' will take you back to the partition edit menu.)}
