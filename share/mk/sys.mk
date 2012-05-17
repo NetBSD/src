@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.108 2012/02/10 05:57:42 matt Exp $
+#	$NetBSD: sys.mk,v 1.108.2.1 2012/05/17 18:02:30 riz Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -26,8 +26,8 @@ DBG?=	-Os -freorder-blocks
 .elif ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "m68000"
 # see src/doc/HACKS for details
 DBG?=	-Os
-#.elif ${MACHINE_ARCH} == "vax"
-#DBG?=	-O1 -fgcse -fstrength-reduce -fgcse-after-reload
+.elif ${MACHINE_ARCH} == "vax"
+DBG?=	-O1 -fgcse -fstrength-reduce -fgcse-after-reload
 .else
 DBG?=	-O2
 .endif
