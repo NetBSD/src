@@ -1,4 +1,4 @@
-/*	$NetBSD: copyin.c,v 1.4 2011/06/20 05:20:37 matt Exp $	*/
+/*	$NetBSD: copyin.c,v 1.4.8.1 2012/05/17 18:29:25 riz Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copyin.c,v 1.4 2011/06/20 05:20:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copyin.c,v 1.4.8.1 2012/05/17 18:29:25 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
@@ -314,5 +314,8 @@ copyinstr(const void *usaddr, void *kdaddr, size_t len, size_t *done)
 	pcb->pcb_onfault = NULL;
 	if (done)
 		*done = copylen;
-	return 0;
+	/*
+	 * If the last byte is not NUL (0), then the name is too long.
+	 */
+	return (uint8_t)data ? ENAMETOOLONG : 0;
 }
