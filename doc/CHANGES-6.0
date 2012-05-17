@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.93 2012/05/17 18:18:16 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.94 2012/05/17 18:21:07 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -2307,4 +2307,9 @@ sys/arch/x86/x86/cpu_ucode_amd.c		1.2 via patch
 
 	Fix crash when booting with -x.
 	[cegger, ticket #248]
+
+lib/libusbhid/usb_hid_usages			1.6
+
+	Expand the usb_hid_usages, with help from FreeBSD.
+	[khorben, ticket #249]
 
