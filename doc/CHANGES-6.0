@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.89 2012/05/17 17:53:01 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.90 2012/05/17 18:02:49 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -2283,4 +2283,12 @@ sys/arch/powerpc/powerpc/db_disasm.c		1.27
 
 	Decode isel{lt,gt,eq} when disassembling PPC code.
 	[matt, ticket #244]
+
+share/mk/bsd.own.mk				patch
+share/mk/sys.mk					patch
+external/gpl3/gdb/Makefile.inc			patch
+external/gpl3/binutils/lib/libbfd/Makefile	patch
+
+	Switch the vax port back to GCC 4.1.
+	[martin, ticket #153]
 
