@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.88 2012/05/09 22:50:52 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.89 2012/05/17 17:53:01 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -2278,4 +2278,9 @@ sys/arch/powerpc/booke/dev/pq3gpio.c		1.5
 
 	Fix P2020 GPIO support.
 	[matt, ticket #243]
+
+sys/arch/powerpc/powerpc/db_disasm.c		1.27
+
+	Decode isel{lt,gt,eq} when disassembling PPC code.
+	[matt, ticket #244]
 
