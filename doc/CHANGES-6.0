@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.100 2012/05/17 18:58:12 sborrill Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.101 2012/05/17 19:04:13 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -2378,4 +2378,14 @@ distrib/utils/sysinst/arch/i386/msg.md.de	1.23
 	Add new post-install configuration menu for sysinst, and apply
 	numerous bug fixes.
 	[riz, ticket #247]
+
+distrib/sets/lists/tests/module.mi		1.6
+tests/modules/Makefile				1.9
+tests/modules/k_uvm/Makefile			1.1
+tests/modules/k_uvm/k_uvm.c			1.1
+tests/modules/t_abi_uvm.sh			1.1
+
+	Add a test to ensure that PAGE_SIZE is available in kernel modules.
+	PR #46041.
+	[jmmv, ticket #8]
 
