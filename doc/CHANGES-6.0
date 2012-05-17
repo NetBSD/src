@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.98 2012/05/17 18:32:13 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.99 2012/05/17 18:39:37 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -2335,4 +2335,9 @@ sys/arch/powerpc/booke/copyin.c			1.5
 
 	Fix for BookE copyinstr.
 	[matt, ticket #253]
+
+sys/arch/powerpc/include/vmparam.h		1.17
+
+	Export MIN_PAGE_SIZE and MAX_PAGE_SIZE for modular PowerPC kernels.
+	[matt, ticket #255]
 
