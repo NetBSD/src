@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2010/08/27 09:56:40 pooka Exp $
+# $NetBSD: Makefile,v 1.8.8.1 2012/05/17 19:03:23 riz Exp $
 
 .include <bsd.own.mk>
 
@@ -14,9 +14,11 @@ TESTS_C+=	t_builtin
 LDADD=		-lprop
 LDADD+=		-lrumpfs_kernfs -lrumpvfs -lrump -lrumpuser -lpthread
 
-TESTS_SH=	t_modload
+TESTS_SH=	t_abi_uvm
+TESTS_SH+=	t_modload
 
 SUBDIR=		k_helper
 SUBDIR+=	k_helper2
+SUBDIR+=	k_uvm
 
 .include <bsd.test.mk>
