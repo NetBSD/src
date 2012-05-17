@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.61 2012/01/10 21:02:47 gson Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.61.2.1 2012/05/17 18:57:09 sborrill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -76,7 +76,7 @@ oder aber eine bereits bestehende Installation von NetBSD zu aktualisieren.
 In den folgenden Menüs können Sie mit den Buchstaben (a, b, c, ...)
 die verschiedenen Menüeinträge wählen oder durch Drücken von Strg-N/Strg-P
 die Markierung auf- oder abbewegen. Die Cursor- und Bildlauftasten
-(Seite vor/zurück) sollten ebenfalls funktionieren.
+(Seite vor/zurück) sollten ebenfalls funktionieren. 
 Durch Betätigen der Eingabetaste aktivieren Sie die gegenwärtige Auswahl.
 }
 
@@ -103,7 +103,7 @@ Wollen Sie fortfahren?
 
 message upgradeusure
 {Sie möchten das auf der Festplatte befindliche NetBSD-System aktualisieren.
-Zu diesem Zeitpunkt sollten Sie bereits eine vollständige
+Zu diesem Zeitpunkt sollten Sie bereits eine vollständige 
 Datensicherung durchgeführt haben! Wollen Sie NetBSD wirklich aktualisieren?
 (Dies ist die letzte Warnung, bevor Ihre Festplatte(n) modifiziert werden.)
 }
@@ -132,7 +132,7 @@ Zurück zum Hauptmenü...
 
 message onedisk
 {Ich habe nur eine Festplatte, %s, gefunden. Ich gehe somit davon aus, dass
-Sie NetBSD darauf %s möchten.
+Sie NetBSD darauf %s möchten. 
 }
 
 message ask_disk
@@ -191,7 +191,7 @@ Wählen Sie Ihre Einheit.}
 
 message ptnsizes
 {Sie können jetzt die Größen der Systempartitionen verändern. Standardmäßig
-wird der gesamte Speicherplatz der Rootpartition zugeordnet. Wenn Sie
+wird der gesamte Speicherplatz der Rootpartition zugeordnet. Wenn Sie 
 wollen, können Sie separate Partitionen definieren, z.B. /usr (zusätzliche
 Systemdateien), /var (Log- bzw. Protokolldateien und anderes) oder /home
 (Verzeichnis für die persönlichen Dateien der Anwender).
@@ -234,12 +234,12 @@ message fssizesbad
 
 message startoutsidedisk
 {Der Startwert, den Sie angegeben haben, liegt jenseits des Endes der
-Festplatte.
+Festplatte. 
 }
 
 message endoutsidedisk
 {Mit diesem Wert liegt das Ende der Partition jenseits des Endes der
-Festplatte.
+Festplatte. 
 Die Größe Ihrer Partition wurde auf %d %s verringert.
 
 Drücken Sie die Eingabetaste um fortzufahren.
@@ -273,7 +273,7 @@ message partition_sizes_ok
 
 message edfspart
 {Die gegenwärtigen Werte für die Partition '%c' werden unten angezeigt.
-Wählen Sie das Feld, das Sie ändern möchten:
+Wählen Sie das Feld, das Sie ändern möchten: 
 
                           MB  Zylinder  Sektoren
 	             ------- --------- ---------
@@ -364,14 +364,14 @@ Möchten Sie fortfahren?
 }
 
 message disksetupdone
-{Der erste Teil der Installation ist nun abgeschlossen.
+{Der erste Teil der Installation ist nun abgeschlossen. 
 Sysinst hat das von Ihnen gewählte Ziellaufwerk partitioniert und
 auf allen von Ihnen gewählten Partitionen ein Dateisystem initialisiert
 und geprüft.
 }
 
 message disksetupdoneupdate
-{Der erste Teil der Prozedur ist nun abgeschlossen.
+{Der erste Teil der Prozedur ist nun abgeschlossen. 
 Sysinst hat das von Ihnen gewählte Ziellaufwerk partitioniert und
 und alle gewählten Dateisysteme auf Fehler überprüft.
 }
@@ -423,15 +423,15 @@ beendet.
 Sie sollten nun die Anweisungen im INSTALL Dokument beachten, um
 Ihr System Ihrer Konfiguration entsprechend einzurichten. Die afterboot(8)
 Manpage kann ebenfalls nützlich sein.
-
+ 
 Zumindest müssen Sie die Datei rc.conf editieren, so daß die gewünschten
 Dienste gestartet werden. Vergessen Sie nicht, rc_configured=NO auf
-rc_configured=YES umzustellen.
+rc_configured=YES umzustellen. 
 }
 
 message distmedium
 {Ihre Festplatte ist nun bereit für die Installation der Kernel- und
-Distributionspakete. Wie im INSTALL-Dokument beschrieben, haben Sie nun
+Distributionspakete. Wie im INSTALL-Dokument beschrieben, haben Sie nun 
 mehrere Optionen.
 Für FTP oder NFS müssen Sie mit einem Netzwerk verbunden sein und
 Zugriff auf die entsprechenden Server haben.
@@ -515,7 +515,7 @@ Zurück zum vorigen Menü.
 }
 
 message netup
-{Die folgenden Netzwerkadapter sind verfügbar: %s
+{Die folgenden Netzwerkadapter sind verfügbar: %s 
 Hat einer davon Zugriff auf die benötigten Server?}
 
 message asknetdev
@@ -524,7 +524,7 @@ message asknetdev
 
 message badnet
 {Sie haben keinen der angezeigten Netzwerkadapter ausgewählt. Bitte versuchen
-Sie es erneut.
+Sie es erneut. 
 NetBSD hat folgende Netzwerkadapter gefunden: %s
 \nWelchen möchten Sie benutzen?}
 
@@ -563,34 +563,34 @@ message net_media
 message netok
 {Nachfolgend sehen Sie die aktuellen Netzwerkeinstellungen.
 
-DNS-Domain:		%s
-Hostname:		%s
-Netzwerkadapter:	%s
-IP-Adresse:		%s
-Netzmaske:		%s
-IPv4-Nameserver:	%s
-IPv4-Gateway:		%s
-Verbindungstyp:		%s
+DNS-Domain:		%s 
+Hostname:		%s 
+Netzwerkadapter:	%s 
+IP-Adresse:		%s 
+Netzmaske:		%s 
+IPv4-Nameserver:	%s 
+IPv4-Gateway:		%s 
+Verbindungstyp:		%s 
 }
 
 message netok_slip
 {Sie haben die folgenden Daten gewählt. Sind diese Daten OK?
 
-DNS-Domain:		%s
-Hostname:		%s
-Netzwerkadapter:	%s
-IP-Adresse:		%s
-IP-Adresse des Servers:	%s
-Netzmaske:		%s
-IPv4-Nameserver:	%s
-IPv4-Gateway:		%s
-Verbindungstyp:		%s
+DNS-Domain:		%s 
+Hostname:		%s 
+Netzwerkadapter:	%s 
+IP-Adresse:		%s 
+IP-Adresse des Servers:	%s 
+Netzmaske:		%s 
+IPv4-Nameserver:	%s 
+IPv4-Gateway:		%s 
+Verbindungstyp:		%s 
 }
 
 message netokv6
 {
-IPv6-Autokonfiguration:	%s
-IPv6-Nameserver:	%s
+IPv6-Autokonfiguration:	%s 
+IPv6-Nameserver:	%s 
 }
 
 message netok_ok
@@ -722,7 +722,7 @@ message rootmissing
 
 message badroot
 {Das neu installierte root Dateisystem scheint unvollständig zu sein.
-Sind Sie sicher, dass Sie alle benötigten Sets installiert haben?
+Sind Sie sicher, dass Sie alle benötigten Sets installiert haben? 
 }
 
 message fd_type
@@ -750,7 +750,7 @@ message fdmount
 {Bitte legen Sie die Diskette ein, auf der sich die Datei "%s.%s" befindet. }
 
 message fdnotfound
-{Ich konnte die Datei "%s.%s" nicht finden. Bitte legen Sie die entsprechende
+{Ich konnte die Datei "%s.%s" nicht finden. Bitte legen Sie die entsprechende 
 Diskette ein.
 Wenn dies die letzte Diskette des Paketes war, wählen Sie "Paket fertig",
 um zum nächsten Paket überzugehen - falls ein weiteres Paket folgt.}
@@ -758,7 +758,7 @@ um zum nächsten Paket überzugehen - falls ein weiteres Paket folgt.}
 message fdremount
 {Die Diskette konnte nicht gemountet werden.
 
-Sie sollten:
+Sie sollten: 
 
 Erneut probieren, die Diskette mit der Datei "%s.%s" einzulegen.
 
@@ -896,8 +896,8 @@ message choose_timezone
 Drücken Sie die Eingabetaste, um einen Eintrag anzuwählen. Betätigen Sie danach
 die Taste 'x' gefolgt von der Eingabetaste, um das Menü zu verlassen.
 
- Vorgabe:	%s
- Ausgewählt:	%s
+ Vorgabe:	%s 
+ Ausgewählt:	%s 
  Lokale Zeit:	%s %s
 }
 
@@ -1027,7 +1027,7 @@ message oldsendmail
 {Sendmail ist nicht länger integrierter Bestandteil von NetBSD.
 Der Standard MTA ist nun Postfix. Ihr System benutzt derzeit
 eine Konfiguration in /etc/mailer.conf, die auf das nicht mehr
-vorhandene Sendmail-Programm verweist.
+vorhandene Sendmail-Programm verweist. 
 Möchten Sie /etc/mailer.conf automatisch auf eine Version für
 Postfix umstellen? Falls Sie "Nein" wählen, müssen Sie anschließend
 manuell /etc/mailer.conf korrigieren, um funktionierende Mailauslieferung
@@ -1039,3 +1039,64 @@ der Datei %s zustimmen.
 Um den Lizenztext zu lesen, geben Sie ^Z ein, schauen den Inhalt
 der Datei an und kehren mit dem Befehl "fg" zu sysinst zurück.}
 
+message binpkg
+{Um Binärpakete zu installieren, muss erst eine Netzwerkverbindung konfiguriert 
+werden, über die die Pakete heruntergeladen werden. Nach einem ersten Start in
+das installierte System können mit dem Kommando 'pkgin' zusätzliche Pakete 
+installiert oder entfernt werden.}
+
+message pkgpath
+{Zur Konfiguration von pkgin muss zuerst das Repository konfiguriert werden. 
+Welches Protokoll, welcher Host, welches Verzeichnis und welcher User/Passwort 
+sollen zum Herunterladen verwendet werden? Wenn der User auf "ftp" gesetzt wird, 
+dann wird kein Passwort benötigt. 
+
+}
+message rcconf_backup_failed {rc.conf-Backup fehlgeschlagen. Trotzdem fortfahren?}
+message rcconf_backup_succeeded {rc.conf-Backup nach %s gespeichert.}
+message rcconf_restore_failed {rc.conf-Restore ist fehlgeschlagen.}
+message rcconf_delete_failed {Löschen des alten %s-Eintrages ist fehlgeschlagen.}
+message Pkg_dir {Paketverzeichnis}
+message configure_prior {Existierende Installation konfigurieren}
+message configure {Konfigurieren}
+message change {Ändern}
+message password_set {Passwort gesetzt}
+message YES {JA}
+message NO {NEIN}
+message DONE {ERLEDIGT}
+message abandoned {Abgebrochen}
+message empty {***LEER***}
+message timezone {Zeitzone}
+message change_rootpw {root-Passwort setzen}
+message enable_binpkg {Installation von Binärpaketen vorbereiten}
+message enable_sshd {sshd aktivieren}
+message enable_ntpd {ntpd aktivieren}
+message run_ntpdate {ntpdate beim Starten ausführen}
+message enable_mdnsd {mdnsd aktivieren}
+message configmenu {Zusätzliche Einstellungen konfigurieren.}
+message doneconfig {Konfiguration abgeschlossen.}
+message Install_pkgin {pkgin installieren und Datenbank initialisieren}
+message binpkg_installed 
+{Das System kann nun Binärpakete mittels pkgin installieren. Um ein Paket zu 
+installieren, muss man folenden Befehl von einer root-Shell ausführen:
+
+pkgin install <packagename>
+
+Weitere Informationen finden sich in der pkgin(1)-Manpage.}
+message Install_pkgsrc {pkgsrc herunterladen und entpacken}
+message pkgsrc
+{Welches Protokoll, welcher Host, welches Verzeichnis und welcher User/Passwort 
+sollen zum Herunterladen von pkgsrc verwendet werden? Wenn der User auf "ftp" 
+gesetzt wird, dann wird kein Passwort benötigt. 
+
+}
+message Pkgsrc_dir {pkgsrc-Verzeichnis}
+message get_pkgsrc {pkgsrc zur Installation von Quellpaketen herunterladen und 
+installieren}
+message retry_pkgsrc_network {Netzwerkkonfiguration fehlgeschlagen. Noch einmal 
+versuchen?}
+message quit_pkgsrc {Ohne Installation von pkgsrc beenden.}
+message pkgin_failed 
+{Die Installation von pkgin ist fehlgeschlagen, evtl. weil keine Binärpakete 
+vorhanden sind. Bitte den Pfad der Pakete überprüfen und noch einmal versuchen.}
+message failed {Fehlgeschlagen}
