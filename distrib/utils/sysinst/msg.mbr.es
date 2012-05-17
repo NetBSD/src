@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.es,v 1.6 2011/04/04 08:30:12 mbalmer Exp $	*/
+/*	$NetBSD: msg.mbr.es,v 1.6.6.1 2012/05/17 18:57:09 sborrill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,12 +44,12 @@ que es subsiguientemente dividida por el disklabel de NetBSD.
 NetBSD también puede acceder a sistemas de ficheros de otras particiones MBR.
 
 Si selecciona 'Usar todo el disco', se sobreescribirá el contenido anterior
-del disco, y se usará una sola partición MBR para cubrir todo el disco.
+del disco, y se usará una sola partición MBR para cubrir todo el disco. 
 Si desea instalar más de un sistema operativo, edite la tabla de particiones
 MBR y cree una partición para NetBSD.
 
 Para una instalación básica bastan unos pocos cientos de MB, pero deberá
-dejar espacio extra para programas adicionales y los ficheros de usuario.
+dejar espacio extra para programas adicionales y los ficheros de usuario. 
 Proporcione al menos 5 GB si quiere construir el propio NetBSD.
 }
 
@@ -86,13 +86,13 @@ message setbiosgeom
 {
 Se le va a preguntar por la geometría.
 Por favor, introduzca el número de sectores por pista (máximo 63)
-y el número de cabezas (máximo 256) que usa el BIOS para acceder al disco.
+y el número de cabezas (máximo 256) que usa el BIOS para acceder al disco. 
 El número de cilindros se calculará a partir del tamaño del disco.
 
 }
 
 message nobiosgeom
-{sysinst no ha podido determinar automáticamente la geometría BIOS del disco.
+{sysinst no ha podido determinar automáticamente la geometría BIOS del disco. 
 La geometría física es de %d cilindros %d sectores %d cabezas\n}
 
 message biosguess
@@ -143,12 +143,12 @@ message No_free_space {Sin espacio libre}
 message Only_one_extended_ptn {Solamente puede haber una partición extendida}
 
 message editparttable
-{Se muestra a continuación la tabla de particiones MBR actual.
+{Se muestra a continuación la tabla de particiones MBR actual. 
 Opcn: a => Partición activa,
 .if BOOTSEL
 d => bootselect predefinido,
 .endif
-I => Instalar aquí.
+I => Instalar aquí. 
 Seleccione la partición que desee editar:
 
 }
