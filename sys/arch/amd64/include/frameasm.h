@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.18 2012/05/07 21:04:09 dsl Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.19 2012/05/17 19:38:53 dsl Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -73,11 +73,12 @@
 	movq	TF_RBX(%rsp),%rbx	; \
 	movq	TF_RAX(%rsp),%rax
 
-#define	INTRENTRY_L(kernel_trap) \
+#define	INTRENTRY_L(kernel_trap, usertrap) \
 	subq	$TF_REGSIZE,%rsp	; \
 	INTR_SAVE_GPRS			; \
 	testb	$SEL_UPL,TF_CS(%rsp)	; \
 	je	kernel_trap		; \
+usertrap				; \
 	swapgs				; \
 	movw	%gs,TF_GS(%rsp)		; \
 	movw	%fs,TF_FS(%rsp)		; \
@@ -85,7 +86,7 @@
 	movw	%ds,TF_DS(%rsp)	
 
 #define	INTRENTRY \
-	INTRENTRY_L(98f)		; \
+	INTRENTRY_L(98f,)		; \
 98:
 
 #define INTRFASTEXIT \
