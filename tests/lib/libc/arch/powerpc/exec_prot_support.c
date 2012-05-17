@@ -1,11 +1,11 @@
-/*      $NetBSD: exec_prot_support.c,v 1.1 2011/07/18 23:16:10 jym Exp $ */
+/*      $NetBSD: exec_prot_support.c,v 1.1.4.1 2012/05/17 18:26:32 riz Exp $ */
 
 /*-
- * Copyright (c) 2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jean-Yves Migeon.
+ * by Matt Thomas of 3am Software Foundry.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,23 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: exec_prot_support.c,v 1.1 2011/07/18 23:16:10 jym Exp $");
+__RCSID("$NetBSD: exec_prot_support.c,v 1.1.4.1 2012/05/17 18:26:32 riz Exp $");
 
 #include "../../common/exec_prot.h"
+
+#include <sys/sysctl.h>
 
 int
 exec_prot_support(void)
 {
-	return NOTIMPL;
+	int execprot = 0;
+	size_t len = sizeof(execprot);
+
+	if (sysctlbyname("machdep.execprot", &execprot, &len, NULL, 0) < 0)
+		return NOTIMPL;
+
+	if (execprot)
+		return PERPAGE_XP;
+
+	return NO_XP;
 }
