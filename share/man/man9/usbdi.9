@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbdi.9,v 1.14 2012/05/17 02:58:14 mrg Exp $
+.\"	$NetBSD: usbdi.9,v 1.15 2012/05/17 07:28:29 wiz Exp $
 .\"
 .\" Copyright (c) 2012 Matthew R. Green
 .\" All rights reserved.
@@ -317,13 +317,13 @@ functions are used to transfer data in either an interrupt or
 bulk fashion, and are front-ends to the
 .Fn usbd_setup_xfer ,
 .Fn usbd_transfer
-and 
+and
 .Fn usbd_get_xfer_status ,
 as well as associated error handling.
 .\" XXX describe args to usbd_get_xfer_status
 Transfers are associated with a pipe at their creation time.
 Transfers are aborted via this pipe with
-.Fn usbd_abort_pipe 
+.Fn usbd_abort_pipe
 and
 .Fn usbd_abort_default_pipe .
 The
@@ -405,14 +405,14 @@ macro can be used to match any USB product by a particular vendor.
 .\"  "uint8_t flags" "usbd_pipe_handle *pipe" \
 .\"  "usbd_private_handle priv" "void *buffer" \
 .\"  "uint32_t length" "usbd_callback"
-.\" 
+.\"
 .\" .Fn usbd_interface2endpoint_descriptor "usbd_interface_handle iface" \
 .\"  "uint8_t address"
 .\" .Fn usbd_endpoint_count "usbd_interface_handle dev" "uint8_t *count"
 .\" .Fn usbd_interface_count "usbd_device_handle dev" "uint8_t *count"
 .\" .Fn usbd_interface2device_handle "usbd_interface_handle iface" "usbd_device_handle *dev"
 .\" .Fn usbd_device2interface_handle "usbd_device_handle dev" "uint8_t ifaceno" "usbd_interface_handle *iface"
-.\" 
+.\"
 .\" .Fn usbd_alloc_buffer "usbd_xfer_handle req" "uint32_t size"
 .\" .Fn usbd_free_buffer "usbd_xfer_handle req"
 .\" .Fn usbd_get_buffer "usbd_xfer_handle xfer"
@@ -435,13 +435,13 @@ macro can be used to match any USB product by a particular vendor.
 .\"  "int endptidx"
 .\" .Fn usbd_dopoll "usbd_interface_handle iface"
 .\" .Fn usbd_set_polling" usbd_device_handle iface" "int val"
-.\" 
+.\"
 .\" .Fn usbd_add_dev_event "int type" "usbd_device_handle iface"
 .\" .Fn usbd_add_drv_event "int type" "usbd_device_handle iface" "device_t dv"
-.\" 
+.\"
 .\" .Fn usbd_devinfo_alloc "usbd_device_handle iface" "int showclass"
 .\" .Fn usbd_devinfo_free "char *str"
-.\" 
+.\"
 .\" .Fn usbd_get_quirks "usbd_device_handle iface"
 .\" .Fn usbd_get_endpoint_descriptor "usbd_interface_handle dev" \
 .\"  "u_int8_t address"
