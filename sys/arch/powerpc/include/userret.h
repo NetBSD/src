@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.22 2011/09/27 01:02:36 jym Exp $	*/
+/*	$NetBSD: userret.h,v 1.23 2012/05/17 16:21:45 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -56,6 +56,10 @@ userret(struct lwp *l, struct trapframe *tf)
 
 	/* Invoke MI userret code */
 	mi_userret(l);
+
+	KASSERTMSG((tf->tf_srr1 & PSL_PR) != 0,
+	    "tf=%p: srr1 (%#lx): PSL_PR isn't set!",
+	    tf, tf->tf_srr1);
 
 	tf->tf_srr1 &= PSL_USERSRR1;	/* clear SRR1 status bits */
 
