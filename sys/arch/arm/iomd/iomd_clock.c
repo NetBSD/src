@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.28 2012/05/15 05:45:37 skrll Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.29 2012/05/18 21:09:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -47,7 +47,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: iomd_clock.c,v 1.28 2012/05/15 05:45:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd_clock.c,v 1.29 2012/05/18 21:09:50 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -86,13 +86,12 @@ static void checkdelay(void);
 
 static u_int iomd_timecounter0_get(struct timecounter *tc);
 
-
 static volatile uint32_t timer0_lastcount;
 static volatile uint32_t timer0_offset;
 static volatile int timer0_ticked;
 /* TODO: Get IRQ status */
 
-static __cpu_simple_lock_t tmr_lock = __SIMPLELOCK_UNLOCKED;
+static kmutex_t tmr_lock;
 
 static struct timecounter iomd_timecounter = {
 	iomd_timecounter0_get,
@@ -144,9 +143,10 @@ clockattach(device_t parent, device_t self, void *aux)
 	sc->sc_ioh = ca->ca_ioh; /* This is a handle for the whole IOMD */
 
 	clock_sc = sc;
+	mutex_init(&tmr_lock, MUTEX_DEFAULT, IPL_CLOCK);
 
 	/* Cannot do anything until cpu_initclocks() has been called */
-	
+
 	aprint_normal("\n");
 }
 
@@ -156,14 +156,14 @@ tickle_tc(void)
 {
 	if (timer0_count && 
 	    timecounter->tc_get_timecount == iomd_timecounter0_get) {
-		__cpu_simple_lock(&tmr_lock);
+		mutex_spin_enter(&tmr_lock);
 		if (timer0_ticked)
 			timer0_ticked    = 0;
 		else {
 			timer0_offset   += timer0_count;
 			timer0_lastcount = 0;
 		}
-		__cpu_simple_unlock(&tmr_lock);
+		mutex_spin_exit(&tmr_lock);
 	}
 
 }
@@ -323,10 +323,9 @@ static u_int iomd_timecounter0_get(struct timecounter *tc)
 	tm += (bus_space_read_1(clock_sc->sc_iot, clock_sc->sc_ioh,
 	    IOMD_T0HIGH) << 8);
 	splx(s);
-	simple_lock(&tmr_lock);
 
+	mutex_spin_enter(&tmr_lock);
 	tm = timer0_count - tm;
-	
 
 	if (timer0_count &&
 	    (tm < timer0_lastcount || (!timer0_ticked && false/* XXX: clkintr_pending */))) {
@@ -336,8 +335,8 @@ static u_int iomd_timecounter0_get(struct timecounter *tc)
 
 	timer0_lastcount = tm;
 	tm += timer0_offset;
+	mutex_spin_exit(&tmr_lock);
 
-	simple_unlock(&tmr_lock);
 	return tm;
 }
 
