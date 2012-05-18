@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.61 2012/03/11 01:06:07 mrg Exp $	*/
+/*	$NetBSD: umidi.c,v 1.62 2012/05/18 07:52:54 jdc Exp $	*/
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.61 2012/03/11 01:06:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.62 2012/05/18 07:52:54 jdc Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.61 2012/03/11 01:06:07 mrg Exp $");
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 
+#include <dev/auconv.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/uaudioreg.h>
 #include <dev/usb/umidireg.h>
