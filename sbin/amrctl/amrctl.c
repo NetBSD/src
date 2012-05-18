@@ -90,7 +90,7 @@ static void describe_drive(int, int, int, int, int);
 #define FIRMWARE_40LD	1
 #define FIRMWARE_8LD	2
 
-static struct {
+static const struct {
 	const char	*product;
 	const uint32_t	signature;
 } prodtable[] = {
@@ -104,7 +104,7 @@ static struct {
 	{	"Series 490",			AMR_SIG_490	}
 };
 
-static struct {
+static const struct {
 	const int	code;
 	const char	*ifyes, *ifno;
 } proptable[] = {
@@ -116,7 +116,7 @@ static struct {
 		"adaptative-io",	"no-adaptative-io"	}
 };
 
-static struct {
+static const struct {
 	const int	code;
 	const char	*status;
 } statetable[] = {
@@ -129,7 +129,7 @@ static struct {
 	{	AMR_DRV_HOTSPARE,	"hotspare"	}
 };
 
-static struct {
+static const struct {
 	const u_int8_t	code;
 	const char		*status;
 } battable[] = {
@@ -140,7 +140,7 @@ static struct {
 	{	AMR_BATT_CYCLES_EXCEEDED,	"cycle exceeded"	}
 };
 
-static struct {
+static const struct {
 	const u_int8_t	code;
 	const char		*status;
 } bcstatble[] = {
