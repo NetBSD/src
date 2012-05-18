@@ -56,7 +56,7 @@ static char	enq_buffer[AMR_BUFSIZE];
 #define AMR_MAX_NCTRLS	16
 #define AMR_MAX_NSDEVS	16
 
-static u_int8_t	nschan = 0;
+static uint8_t	nschan = 0;
 
 /*
  * Include lookup tables, and a function to match a code to a string.
@@ -68,14 +68,14 @@ static u_int8_t	nschan = 0;
 /* #define AMR_DEFINE_TABLES */
 /* #include "amr_tables.h" */
 
-static int amr_ioctl_enquiry(int, u_int8_t, u_int8_t, u_int8_t);
+static int amr_ioctl_enquiry(int, uint8_t, uint8_t, uint8_t);
 __dead static void usage(const char *);
 static int describe_card(int, int, int);
-static char * describe_property(u_int8_t, char *);
-static const char * describe_state(int, u_int8_t);
+static char * describe_property(uint8_t, char *);
+static const char * describe_state(int, uint8_t);
 static void describe_battery(int, int, int, int, int);
-static void describe_one_volume(int, int, u_int32_t, u_int8_t, u_int8_t);
-static void describe_one_drive(int, int, u_int8_t);
+static void describe_one_volume(int, int, uint32_t, uint8_t, uint8_t);
+static void describe_one_drive(int, int, uint8_t);
 static void describe_drive(int, int, int, int, int);
 
 /*
@@ -131,7 +131,7 @@ static const struct {
 };
 
 static const struct {
-	const u_int8_t	code;
+	const uint8_t	code;
 	const char		*status;
 } battable[] = {
 	{	AMR_BATT_MODULE_MISSING,	"not present"		},
@@ -142,7 +142,7 @@ static const struct {
 };
 
 static const struct {
-	const u_int8_t	code;
+	const uint8_t	code;
 	const char		*status;
 } bcstatble[] = {
 	{	AMR_BATT_CHARGE_DONE,		"charge done"		},
@@ -151,7 +151,7 @@ static const struct {
 };
 
 static int
-amr_ioctl_enquiry(int fd, u_int8_t cmd, u_int8_t cmdsub, u_int8_t cmdqual)
+amr_ioctl_enquiry(int fd, uint8_t cmd, uint8_t cmdsub, uint8_t cmdqual)
 {
 	struct amr_user_ioctl am;
 	int	r, i;
@@ -344,7 +344,7 @@ describe_card(int fd, int verbosity, int globalparam)
 }
 
 static char *
-describe_property(u_int8_t prop, char *buffer)
+describe_property(uint8_t prop, char *buffer)
 {
 	size_t	i;
 
@@ -363,7 +363,7 @@ describe_property(u_int8_t prop, char *buffer)
 }
 
 static const char *
-describe_state(int verbosity, u_int8_t state)
+describe_state(int verbosity, uint8_t state)
 {
 	size_t	i;
 
@@ -384,7 +384,7 @@ describe_state(int verbosity, u_int8_t state)
 static void
 describe_battery(int fd, int verbosity, int fwint, int bflags, int globalparam)
 {
-	u_int8_t batt_status;
+	uint8_t batt_status;
 	size_t i;
 
 	if (fwint == FIRMWARE_40LD) {
@@ -432,7 +432,7 @@ describe_battery(int fd, int verbosity, int fwint, int bflags, int globalparam)
 
 static void
 describe_one_volume(int ldrv, int verbosity,
-		    u_int32_t size, u_int8_t state, u_int8_t prop)
+		    uint32_t size, uint8_t state, uint8_t prop)
 {
 	float	szgb;
 	int	raid_level;
@@ -459,7 +459,7 @@ describe_one_volume(int ldrv, int verbosity,
  */
 
 static void
-describe_one_drive(int pdrv, int verbosity, u_int8_t state)
+describe_one_drive(int pdrv, int verbosity, uint8_t state)
 {
 	const char *statestr;
 
