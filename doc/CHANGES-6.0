@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.101 2012/05/17 19:04:13 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.102 2012/05/18 17:05:16 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -2388,4 +2388,20 @@ tests/modules/t_abi_uvm.sh			1.1
 	Add a test to ensure that PAGE_SIZE is available in kernel modules.
 	PR #46041.
 	[jmmv, ticket #8]
+
+external/gpl2/lvm2/lib/liblvm/Makefile		1.6
+external/gpl2/lvm2/sbin/lvm/Makefile		1.11
+
+	Fix build failure if USE_FORT=YES.
+	[cheusov, ticket #256]
+
+usr.bin/login/common.c				1.5
+
+	Fix clang build issue in login.
+	[christos, ticket #257]
+
+sys/net/if_ethersubr.c				1.189
+
+	Fix crash when detaching some network interfaces.  PR#42982.
+	[chs, ticket #258]
 
