@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
+#include <err.h>
 #include <errno.h>
 #include <unistd.h>
 
@@ -172,8 +173,7 @@ amr_ioctl_enquiry(int fd, u_int8_t cmd, u_int8_t cmdsub, u_int8_t cmdqual)
 		r = ioctl(fd, AMR_IO_COMMAND, &am);
 		if (r == -1) {
 			if (errno != EBUSY) {
-				perror("ioctl enquiry");
-				exit(1);
+				err(EXIT_FAILURE, "ioctl enquiry");
 			} else
 				usleep(sleeptime);
 		}
@@ -643,12 +643,10 @@ main(int argc, char *argv[])
 		
 	fd = open(filename, O_RDONLY);
 	if (fd == -1) {
-		perror("open");
-		exit(1);
+		err(EXIT_FAILURE, "open");
 	}
 	if (ioctl(fd, AMR_IO_VERSION, &i) == -1) {
-		perror("ioctl version");
-		exit(1);
+		err(EXIT_FAILURE, "ioctl version");
 	}
 
 	if (sflags) {
