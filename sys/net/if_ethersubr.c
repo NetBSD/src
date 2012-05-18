@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.188 2011/06/16 19:47:30 kefren Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.188.8.1 2012/05/18 17:04:28 riz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.188 2011/06/16 19:47:30 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.188.8.1 2012/05/18 17:04:28 riz Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1168,6 +1168,7 @@ ether_ifdetach(struct ifnet *ifp)
 	if_free_sadl(ifp);
 #endif
 
+	ifp->if_mowner = NULL;
 	MOWNER_DETACH(&ec->ec_rx_mowner);
 	MOWNER_DETACH(&ec->ec_tx_mowner);
 }
