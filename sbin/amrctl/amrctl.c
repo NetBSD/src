@@ -1,3 +1,5 @@
+/*	$NetBSD: amrctl.c,v 1.8 2012/05/18 13:59:23 jakllsch Exp $	*/
+
 /*-
  * Copyright (c) 2002, Pierre David <Pierre.David@crc.u-strasbg.fr>
  * Copyright (c) 2006, Jung-uk Kim <jkim@FreeBSD.org>
@@ -26,6 +28,9 @@
  */
 
 #include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: amrctl.c,v 1.8 2012/05/18 13:59:23 jakllsch Exp $");
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
