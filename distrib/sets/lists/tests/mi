@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.467 2012/04/30 13:47:51 njoly Exp $
+# $NetBSD: mi,v 1.468 2012/05/18 15:25:25 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3178,6 +3178,9 @@
 ./usr/tests/usr.bin/sort/d_any_char_iflag_out.txt	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/sort/d_any_char_in.txt		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/sort/t_sort				tests-usr.bin-tests	atf
+./usr/tests/usr.bin/tmux			tests-usr.bin-tests
+./usr/tests/usr.bin/tmux/Atffile		tests-usr.bin-tests	atf	atf
+./usr/tests/usr.bin/tmux/t_tmux			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/unifdef			tests-usr.bin-tests
 ./usr/tests/usr.bin/unifdef/Atffile		tests-usr.bin-tests	atf	atf
 ./usr/tests/usr.bin/unifdef/d_basic.in		tests-usr.bin-tests	atf
