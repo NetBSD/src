@@ -1,4 +1,4 @@
-/*	$NetBSD: amrctl.c,v 1.8 2012/05/18 13:59:23 jakllsch Exp $	*/
+/*	$NetBSD: amrctl.c,v 1.9 2012/05/18 14:01:34 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2002, Pierre David <Pierre.David@crc.u-strasbg.fr>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: amrctl.c,v 1.8 2012/05/18 13:59:23 jakllsch Exp $");
+__RCSID("$NetBSD: amrctl.c,v 1.9 2012/05/18 14:01:34 jakllsch Exp $");
 #endif
 
 #include <stdio.h>
@@ -178,7 +178,8 @@ amr_ioctl_enquiry(int fd, uint8_t cmd, uint8_t cmdsub, uint8_t cmdqual)
 		r = ioctl(fd, AMR_IO_COMMAND, &am);
 		if (r == -1) {
 			if (errno != EBUSY) {
-				err(EXIT_FAILURE, "ioctl enquiry");
+				warn("ioctl enquiry");
+				return -1;
 			} else
 				usleep(sleeptime);
 		}
