@@ -149,8 +149,6 @@ static const struct {
 	{	AMR_BATT_CHARGE_FAIL,		"charge failed"		}
 };
 
-#define NTAB(tab)	(sizeof tab / sizeof tab [0])
-
 static int
 amr_ioctl_enquiry(int fd, u_int8_t cmd, u_int8_t cmdsub, u_int8_t cmdqual)
 {
@@ -269,7 +267,7 @@ describe_card(int fd, int verbosity, int globalparam)
 			char	bios[100], firmware[100];
 			size_t	i;
 
-			for (i = 0; i < NTAB(prodtable); i++) {
+			for (i = 0; i < __arraycount(prodtable); i++) {
 				if (cardtype == prodtable[i].signature) {
 					product = prodtable[i].product;
 					break;
@@ -351,7 +349,7 @@ describe_property(u_int8_t prop, char *buffer)
 	size_t	i;
 
 	strcpy(buffer, "<");
-	for (i = 0; i < NTAB(proptable); i++) {
+	for (i = 0; i < __arraycount(proptable); i++) {
 		if (i > 0)
 			strcat(buffer, ",");
 		if (prop & proptable[i].code)
@@ -373,7 +371,7 @@ describe_state(int verbosity, u_int8_t state)
 	    (AMR_DRV_CURSTATE(state) == AMR_DRV_OFFLINE) && verbosity == 0)
 		return NULL;
 
-	for (i = 0; i < NTAB(statetable); i++)
+	for (i = 0; i < __arraycount(statetable); i++)
 		if (AMR_DRV_CURSTATE(state) == statetable[i].code)
 			return (statetable[i].status);
 
@@ -399,13 +397,14 @@ describe_battery(int fd, int verbosity, int fwint, int bflags, int globalparam)
 			if (bflags || globalparam) {
 				batt_status = ae3->ae_batterystatus;
 				printf("Battery status\t\t");
-				for (i = 0; i < NTAB(battable); i++) {
+				for (i = 0; i < __arraycount(battable); i++) {
 					if (batt_status & battable[i].code)
 						printf("%s, ", battable[i].status);
 				}
 				if (!(batt_status &
 				    (AMR_BATT_MODULE_MISSING|AMR_BATT_PACK_MISSING))) {
-					for (i = 0; i < NTAB(bcstatble); i++)
+					for (i = 0;
+					     i < __arraycount(bcstatble); i++)
 						if (bcstatble[i].code ==
 						    (batt_status & AMR_BATT_CHARGE_MASK))
 							printf("%s", bcstatble[i].status);
