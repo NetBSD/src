@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.1.8.1 2012/05/07 16:24:07 riz Exp $	*/
+/*	$NetBSD: common.h,v 1.1.8.2 2012/05/19 17:32:46 riz Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -37,10 +37,10 @@ char	*trimloginname(char *);
 char	*getloginname(void);
 void	 motd(const char *);
 int	 rootterm(char *);
-void	 sigint(int);
-void	 sleepexit(int);
+void	 __dead sigint(int);
+void	 __dead sleepexit(int);
 const	 char *stypeof(const char *);
-void	 timedout(int);
+void	 __dead timedout(int);
 void	 decode_ss(const char *);
 
 extern u_int	timeout;
