@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.60 2008/05/31 21:37:08 ad Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.60.8.1 2012/05/19 17:28:29 riz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -124,12 +124,14 @@ void	ufs_dirbad(struct inode *, doff_t, const char *);
 int	ufs_dirbadentry(struct vnode *, struct direct *, int);
 void	ufs_makedirentry(struct inode *, struct componentname *,
 			 struct direct *);
-int	ufs_direnter(struct vnode *, struct vnode *, struct direct *,
+int	ufs_direnter(struct vnode *, const struct ufs_lookup_results *, struct vnode *, struct direct *,
 		     struct componentname *, struct buf *);
-int	ufs_dirremove(struct vnode *, struct inode *, int, int);
-int	ufs_dirrewrite(struct inode *, struct inode *, ino_t, int, int, int);
+int	ufs_dirremove(struct vnode *, const struct ufs_lookup_results *, struct inode *, int, int);
+int	ufs_dirrewrite(struct inode *, off_t, struct inode *, ino_t, int, int, int);
 int	ufs_dirempty(struct inode *, ino_t, kauth_cred_t);
 int	ufs_checkpath(struct inode *, struct inode *, kauth_cred_t);
+int	ufs_parentcheck(struct vnode *, struct vnode *, kauth_cred_t,
+			int *, struct vnode **);
 int	ufs_blkatoff(struct vnode *, off_t, char **, struct buf **, bool);
 
 /* ufs_quota.c */
@@ -161,7 +163,7 @@ int	ufs_fhtovp(struct mount *, struct ufid *, struct vnode **);
 /* ufs_vnops.c */
 void	ufs_vinit(struct mount *, int (**)(void *),
 		  int (**)(void *), struct vnode **);
-int	ufs_makeinode(int, struct vnode *, struct vnode **,
+int	ufs_makeinode(int, struct vnode *, const struct ufs_lookup_results *, struct vnode **,
 		      struct componentname *);
 int	ufs_gop_alloc(struct vnode *, off_t, off_t, int, kauth_cred_t);
 void	ufs_gop_markupdate(struct vnode *, int);
