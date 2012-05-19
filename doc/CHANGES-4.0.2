@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.98 2012/05/11 19:11:07 riz Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.99 2012/05/19 17:08:10 riz Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -1363,4 +1363,10 @@ crypto/dist/openssl/crypto/buffer/buffer.c	patch
 
 	Address CVE-2012-2110.
 	[drochner, ticket #1444]
+
+sys/netsmb/subr_mchain.c			1.21
+
+	Fix an smbfs regression introduced in ticket #1398.
+	PR#44092.
+	[nakayama, ticket #1445]
 
