@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.24.10.1 2009/09/30 00:08:03 snj Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.24.10.2 2012/05/19 16:37:14 riz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.24.10.1 2009/09/30 00:08:03 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.24.10.2 2012/05/19 16:37:14 riz Exp $");
 
 #include "opt_xen.h"
 
@@ -111,7 +111,7 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 		/*
 		 * Get the PTE for the page.
 		 */
-		pte = kvtopte(addr);
+		pte = kvtopte((vaddr_t)dst);
 		oldpte = *pte;
 
 		if ((oldpte & PG_V) == 0) {
