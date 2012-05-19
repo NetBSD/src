@@ -1,4 +1,4 @@
-# $NetBSD: t_tmux.sh,v 1.1 2012/05/18 15:25:25 jruoho Exp $
+# $NetBSD: t_tmux.sh,v 1.2 2012/05/19 07:30:37 jruoho Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,7 +30,7 @@
 
 stdincrash() {
 	atf_check -s ignore -o ignore -e ignore -x \
-		"tmux list-sessions 0<&-" & sleep 2; kill $! >/dev/null 2>&1
+	"\"tmux list-sessions 0<&-\" & sleep 2; kill $! >/dev/null 2>&1"
 }
 
 atf_test_case stdin
