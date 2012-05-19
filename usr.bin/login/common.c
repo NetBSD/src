@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.3.8.2 2012/05/18 17:02:31 riz Exp $	*/
+/*	$NetBSD: common.c,v 1.3.8.3 2012/05/19 17:32:46 riz Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: common.c,v 1.3.8.2 2012/05/18 17:02:31 riz Exp $");
+__RCSID("$NetBSD: common.c,v 1.3.8.3 2012/05/19 17:32:46 riz Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -155,7 +155,7 @@ sigint(int signo)
 }
 
 /* ARGSUSED */
-void
+void __dead
 timedout(int signo)
 {
 
@@ -372,7 +372,7 @@ stypeof(const char *ttyid)
 	return (ttyid && (t = getttynam(ttyid)) ? t->ty_type : NULL);
 }
 
-void
+void __dead
 sleepexit(int eval)
 {
 
