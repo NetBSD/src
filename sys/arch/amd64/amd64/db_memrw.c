@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.6 2008/04/28 20:23:12 martin Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.6.10.1 2012/05/19 16:37:14 riz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.6 2008/04/28 20:23:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.6.10.1 2012/05/19 16:37:14 riz Exp $");
 
 #include "opt_xen.h"
 
@@ -115,7 +115,7 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 		/*
 		 * Get the PTE for the page.
 		 */
-		pte = kvtopte(addr);
+		pte = kvtopte((vaddr_t)dst);
 		oldpte = *pte;
 
 		if ((oldpte & PG_V) == 0) {
@@ -127,7 +127,7 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 		 * Get the VA for the page.
 		 */
 		if (oldpte & PG_PS)
-			pgva = (vaddr_t)dst & PG_LGFRAME;
+			pgva = VA_SIGN_NEG((vaddr_t)dst & PG_LGFRAME);
 		else
 			pgva = x86_trunc_page(dst);
 
