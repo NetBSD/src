@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.102 2012/05/18 17:05:16 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.103 2012/05/19 15:42:03 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -2404,4 +2404,89 @@ sys/net/if_ethersubr.c				1.189
 
 	Fix crash when detaching some network interfaces.  PR#42982.
 	[chs, ticket #258]
+
+sys/kern/vfs_mount.c				1.14
+sys/kern/vfs_syscalls.c				1.452-1.454,1.456
+sys/kern/vfs_syscalls.c				1.453
+sys/kern/vfs_syscalls.c				1.454
+sys/kern/vfs_syscalls.c				1.456
+
+	Fix mounting with extended attributes; fix a leak.
+	[manu, ticket #259]
+
+sys/kern/vfs_xattr.c				1.31
+sys/ufs/ufs/ufs_extattr.c			1.39
+
+	Return ENODATA for missing extended attributes.
+	[manu, ticket #260]
+
+share/man/man4/mfi.4				1.11
+sys/dev/pci/mfi_pci.c				1.14
+
+	Add IBM ServeRAID M5014 as subtype, update man page for M1015 
+	and M5014.
+	[sborrill, ticket #261]
+
+sys/compat/linux32/arch/amd64/linux32_syscall.h	1.66
+sys/compat/linux32/arch/amd64/linux32_syscallargs.h 1.66
+sys/compat/linux32/arch/amd64/linux32_syscalls.c 1.66
+sys/compat/linux32/arch/amd64/linux32_sysent.c	1.66
+sys/compat/linux32/arch/amd64/syscalls.master	1.61
+sys/compat/linux32/common/linux32_signal.c	1.16
+
+	Fix broken sigwaitinfo linux emulation.
+	[christos, ticket #263]
+
+distrib/sets/lists/base/mi			1.991
+distrib/sets/lists/comp/mi			1.1757
+distrib/sets/lists/man/mi			1.1389
+external/bsd/bind/Makefile.inc			1.13
+external/bsd/bind/bin/Makefile			1.4
+external/bsd/bind/bin/Makefile.inc		1.2
+external/bsd/bind/bin/confgen/Makefile		1.1
+external/bsd/bind/bin/confgen/Makefile.inc	1.1
+external/bsd/bind/bin/confgen/ddns-confgen/Makefile 1.1
+external/bsd/bind/bin/confgen/rndc-confgen/Makefile 1.1
+
+	Add BIND confgen programs.
+	[christos, ticket #264]
+
+sys/netsmb/subr_mchain.c			1.21
+
+	Fix problem copying files to SMB-mounted partitions.  PR#44092.
+	[nakayama, ticket #265]
+
+sys/dev/pci/if_wpi.c				1.51
+
+	Do not advertise IBSS mode, because it isn't supported. PR#46101.
+	[khorben, ticket #266]
+
+sys/kern/vfs_subr.c				1.435
+
+	Fix hangs in the rump/rumpvfs/t_etfs test.
+	[chs, ticket #267]
+
+usr.bin/quota/quota.1				1.18-1.19
+usr.bin/quota/quota.c				1.49
+usr.sbin/repquota/repquota.8			1.16-1.17
+usr.sbin/repquota/repquota.c			1.44
+
+	Clean up some quota-related leftovers.
+	[dholland, ticket #268]
+
+external/bsd/wpa/dist/src/drivers/driver_bsd.c	1.5
+
+	Make WPA work on big-endian machines.
+	[nakayama, ticket #269]
+
+sys/kern/sys_pipe.c				1.136
+tests/lib/libc/sys/t_pipe2.c			1.4-1.7
+
+	Address local user KASSERT.  PR#46457.
+	[martin, ticket #270]
+
+xsrc/external/mit/libXfont/dist/src/bitmap/pcfread.c	1.2
+
+	Fix segfault in libXfont.
+	[cheusov, ticket #272]
 
