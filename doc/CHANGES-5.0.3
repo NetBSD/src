@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.72 2012/05/19 16:30:23 riz Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.73 2012/05/19 17:04:02 riz Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -3016,4 +3016,10 @@ crypto/dist/openssl/crypto/buffer/buffer.c	patch
 
 	Minor error code fix for ticket #1750.
 	[drochner, ticket #1752]
+
+sys/netsmb/subr_mchain.c			1.21
+
+	Fix a regression introduced in netsmb by ticket #1426.
+	PR#44092.
+	[nakayama, ticket #1758]
 
