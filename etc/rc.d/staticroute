@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: staticroute,v 1.3 2008/01/31 15:21:32 reed Exp $
+# $NetBSD: staticroute,v 1.3.12.1 2012/05/19 16:48:36 riz Exp $
 #
 
 # PROVIDE: staticroute
@@ -16,25 +16,36 @@ start_cmd="staticroute_doit Adding add"
 stop_cmd="staticroute_doit Deleting delete"
 
 staticroute_doit() {
+	retval=0
+
 	if [ -s /etc/route.conf ]; then
 		echo "$1 static routes."
-		while read args; do
+		( while read args; do
 			[ -z "$args" ] && continue
 			case "$args" in
 			"#"*)
 				;;
 			"+"*)
-				[ $2 = "add" ] && eval ${args#*+}
+				if [ $2 = "add" ]; then
+					eval "${args#*+}" || retval=1
+				fi
 				;;
 			"-"*)
-				[ $2 = "delete" ] && eval ${args#*-}
+				if [ $2 = "delete" ]; then
+					eval "${args#*-}" || retval=1
+				fi
+				;;
+			"!"*)
+				eval "${args#*!}" || retval=1
 				;;
 			*)
-				route -q $2 -$args
+				eval "route -q $2 -$args" || retval=1
 				;;
 			esac
-		done < /etc/route.conf
+		done < /etc/route.conf )
 	fi
+
+	return $retval
 }
 
 load_rc_config $name
