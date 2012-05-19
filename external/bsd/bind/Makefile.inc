@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 2011/06/20 07:43:57 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.12.4.1 2012/05/19 15:23:41 riz Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -108,7 +108,7 @@ CPPFLAGS+=-DISC_PLATFORM_USETHREADS -I${IDIST}/lib/isc/pthreads/include
 CPPFLAGS+=-I${IDIST}/lib/isc/nothreads/include
 .endif
 
-.if exists(${.CURDIR}/../../Makefile.inc)
-.include "${.CURDIR}/../../Makefile.inc"
+.if exists(${.PARSEDIR}/../Makefile.inc)
+.include "${.PARSEDIR}/../Makefile.inc"
 .endif
 .endif

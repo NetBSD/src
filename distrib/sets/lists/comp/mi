@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1738.2.2 2012/05/09 18:22:32 riz Exp $
+#	$NetBSD: mi,v 1.1738.2.3 2012/05/19 15:23:39 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4077,6 +4077,7 @@
 ./usr/libdata/debug/usr/sbin/cron.debug		comp-cron-debug		debug
 ./usr/libdata/debug/usr/sbin/daicctl.debug	comp-isdn-debug		debug
 ./usr/libdata/debug/usr/sbin/dbsym.debug	comp-sysutil-debug	binutils,debug
+./usr/libdata/debug/usr/sbin/ddns-confgen.debug	comp-bind-bin		debug
 ./usr/libdata/debug/usr/sbin/dev_mkdb.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/dhcpd.debug	comp-dhcpd-debug	debug
 ./usr/libdata/debug/usr/sbin/dhcrelay.debug	comp-dhcpd-debug	debug
@@ -4246,7 +4247,7 @@
 ./usr/libdata/debug/usr/sbin/revnetgroup.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/sbin/rip6query.debug	comp-netutil-debug	inet6,debug
 ./usr/libdata/debug/usr/sbin/rmt.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/rndc-confgen.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/sbin/rndc-confgen.debug	comp-bind-bin		debug
 ./usr/libdata/debug/usr/sbin/rndc.debug		comp-bind-bin		debug
 ./usr/libdata/debug/usr/sbin/route6d.debug	comp-router-debug	use_inet6,debug
 ./usr/libdata/debug/usr/sbin/rpc.bootparamd.debug	comp-bootserver-debug	debug
