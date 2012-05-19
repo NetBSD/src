@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.106.2.3 2010/05/20 05:02:07 snj Exp $	*/
+/*	$NetBSD: pthread.c,v 1.106.2.4 2012/05/19 16:34:15 riz Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.106.2.3 2010/05/20 05:02:07 snj Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.106.2.4 2012/05/19 16:34:15 riz Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -82,7 +82,6 @@ pthread_queue_t pthread__allqueue;
 
 static pthread_attr_t pthread_default_attr;
 static lwpctl_t pthread__dummy_lwpctl = { .lc_curcpu = LWPCTL_CPU_NONE };
-static pthread_t pthread__first;
 
 enum {
 	DIAGASSERT_ABORT =	1<<0,
@@ -232,7 +231,6 @@ pthread__init(void)
 	}
 
 	/* Tell libc that we're here and it should role-play accordingly. */
-	pthread__first = first;
 	pthread_atfork(NULL, NULL, pthread__fork_callback);
 	__isthreaded = 1;
 }
@@ -240,13 +238,12 @@ pthread__init(void)
 static void
 pthread__fork_callback(void)
 {
-	struct __pthread_st *self;
+	struct __pthread_st *self = pthread__self();
 
 	/* lwpctl state is not copied across fork. */
-	if (_lwp_ctl(LWPCTL_FEATURE_CURCPU, &pthread__first->pt_lwpctl)) {
+	if (_lwp_ctl(LWPCTL_FEATURE_CURCPU, &self->pt_lwpctl)) {
 		err(1, "_lwp_ctl");
 	}
-	self = pthread__self();
 	self->pt_lid = _lwp_self();
 }
 
