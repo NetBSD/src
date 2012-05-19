@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3gpio.c,v 1.6 2012/05/17 16:24:09 matt Exp $	*/
+/*	$NetBSD: pq3gpio.c,v 1.7 2012/05/19 00:11:46 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3gpio.c,v 1.6 2012/05/17 16:24:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3gpio.c,v 1.7 2012/05/19 00:11:46 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -163,7 +163,7 @@ pq3gpio_group_create(device_t self, bus_space_tag_t bst, bus_space_handle_t bsh,
 #endif
 	gc->gc_tag.gp_pin_read = pq3gpio_pin_read;
 	gc->gc_tag.gp_pin_write = pq3gpio_pin_write;
-	gc->gc_tag.gp_pin_ctl = pq3gpio_pin_ctl;
+	gc->gc_tag.gp_pin_ctl = pin_ctl;
 
 	u_int data = bus_space_read_4(gc->gc_bst, gc->gc_bsh, reg);
 	u_int mask = __BIT(31);
@@ -227,7 +227,7 @@ pq3gpio_mpc8536_attach(device_t self, bus_space_tag_t bst,
 	 * Create GPIO pin groups
 	 */
 	aprint_normal_dev(self, "%zu input/output/opendrain pins\n",
-	    pincnt, pincnt);
+	    pincnt);
 	pq3gpio_group_create(self, bst, bsh, GPDAT, pinmask,
 	    GPIO_PIN_INPUT | GPIO_PIN_OUTPUT | GPIO_PIN_OPENDRAIN,
 	    pq3gpio_pin_ctl);
