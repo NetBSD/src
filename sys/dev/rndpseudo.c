@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.9 2012/04/20 21:57:33 tls Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.10 2012/05/19 16:00:41 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.9 2012/04/20 21:57:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.10 2012/05/19 16:00:41 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -309,14 +309,23 @@ rnd_read(struct file * fp, off_t *offp, struct uio *uio,
 		/* XXX is this _really_ what's wanted? */
 		if (ctx->hard) {
 			n = MIN(want, strength - ctx->bytesonkey);
-			ctx->bytesonkey += n;
+			if (n < 1) {
+			    cprng_strong_deplete(cprng);
+			    n = MIN(want, strength);
+			    ctx->bytesonkey = 0;
+			    membar_producer();
+			}
 		} else {
 			n = want;
 		}
 
 		nread = cprng_strong(cprng, bf, n,
 				     (fp->f_flag & FNONBLOCK) ? FNONBLOCK : 0);
-		if (nread != n) {
+
+		if (ctx->hard && nread > 0) {
+			atomic_add_int(&ctx->bytesonkey, nread);
+		}
+		if (nread < 1) {
 			if (fp->f_flag & FNONBLOCK) {
 				ret = EWOULDBLOCK;
 			} else {
@@ -331,12 +340,6 @@ rnd_read(struct file * fp, off_t *offp, struct uio *uio,
 		}
 	}
 out:
-	if (ctx->bytesonkey >= strength) {
-		/* Force reseed of underlying DRBG (prediction resistance) */
-		cprng_strong_deplete(cprng);
-		ctx->bytesonkey = 0;
-	}
-
 	pool_cache_put(rp_pc, bf);
 	return (ret);
 }
