@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.218 2008/06/24 10:47:32 gmcgarry Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.218.6.1 2012/05/19 17:28:28 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.218 2008/06/24 10:47:32 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.218.6.1 2012/05/19 17:28:28 riz Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -602,13 +602,18 @@ lfs_mknod(void *v)
 	int error;
 	struct mount	*mp;
 	ino_t		ino;
+	struct ufs_lookup_results *ulr;
+
+	/* XXX should handle this material another way */
+	ulr = &VTOI(ap->a_dvp)->i_crap;
+	UFS_CHECK_CRAPCOUNTER(VTOI(ap->a_dvp));
 
 	if ((error = SET_DIROP_CREATE(ap->a_dvp, ap->a_vpp)) != 0) {
 		vput(ap->a_dvp);
 		return error;
 	}
 	error = ufs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
-			      ap->a_dvp, vpp, ap->a_cnp);
+			      ap->a_dvp, ulr, vpp, ap->a_cnp);
 
 	/* Either way we're done with the dirop at this point */
 	SET_ENDOP_CREATE_AP(ap, "mknod");
