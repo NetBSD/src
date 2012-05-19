@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.14 2011/01/26 21:35:14 joerg Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.15 2012/05/19 14:47:37 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -299,8 +299,11 @@ prep_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 	Elf32_External_Phdr phdr;
 
 	elf_fd = open_file("bootloader", boot, &hdr, &elf_stat);
-	kern_fd = open_file("kernel", kernel, &khdr, &kern_stat);
-	kern_len = kern_stat.st_size + PREP_MAGICSIZE + KERNLENSIZE;
+	if (inkernflag) {
+		kern_fd = open_file("kernel", kernel, &khdr, &kern_stat);
+		kern_len = kern_stat.st_size + PREP_MAGICSIZE + KERNLENSIZE;
+	} else
+		kern_len = PREP_MAGICSIZE + KERNLENSIZE;
 
 	for (i = 0; i < ELFGET16(hdr.e_phnum); i++) {
 		lseek(elf_fd, ELFGET32(hdr.e_phoff) + sizeof(phdr) * i,
@@ -342,17 +345,20 @@ prep_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 	write(prep_fd, elf_img, elf_img_len);
 	free(elf_img);
 
-	/* Copy kernel */
-	kern_img = (unsigned char *)malloc(kern_stat.st_size);
+	if (inkernflag) {
+		/* Copy kernel */
+		kern_img = (unsigned char *)malloc(kern_stat.st_size);
 
-	if (kern_img == NULL)
-		errx(3, "Can't malloc: %s", strerror(errno));
+		if (kern_img == NULL)
+			errx(3, "Can't malloc: %s", strerror(errno));
 
-	/* we need to jump back after having read the headers */
-	lseek(kern_fd, 0, SEEK_SET);
-	if (read(kern_fd, (void *)kern_img, kern_stat.st_size) !=
-	    kern_stat.st_size)
-		errx(3, "Can't read kernel '%s' : %s", kernel, strerror(errno));
+		/* we need to jump back after having read the headers */
+		lseek(kern_fd, 0, SEEK_SET);
+		if (read(kern_fd, (void *)kern_img, kern_stat.st_size) !=
+		    kern_stat.st_size)
+			errx(3, "Can't read kernel '%s' : %s",
+			    kernel, strerror(errno));
+	}
 
 	gzf = gzdopen(dup(prep_fd), "a");
 	if (gzf == NULL)
@@ -368,8 +374,10 @@ prep_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 
 	/* write in the compressed kernel */
 	kstart = lseek(prep_fd, 0, SEEK_CUR);
-	kgzlen = gzwrite(gzf, kern_img, kern_stat.st_size);
-	gzclose(gzf);
+	if (inkernflag) {
+		kgzlen = gzwrite(gzf, kern_img, kern_stat.st_size);
+		gzclose(gzf);
+	}
 	kend = lseek(prep_fd, 0, SEEK_CUR);
 
 	/* jump back to the length position now that we know the length */
@@ -392,8 +400,10 @@ prep_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 		    " floppy. Can only be used for netboot.\n", getprogname(),
 		    outname, flength);
 
-	free(kern_img);
-	close(kern_fd);
+	if (inkernflag) {
+		free(kern_img);
+		close(kern_fd);
+	}
 	close(prep_fd);
 	close(elf_fd);
 
