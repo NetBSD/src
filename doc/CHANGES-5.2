@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.164 2012/05/19 17:03:32 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.165 2012/05/19 17:29:01 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -6381,4 +6381,14 @@ sys/netsmb/subr_mchain.c			1.21
 	Fix a regression introduced in netsmb by ticket #1426.
 	PR#44092.
 	[nakayama, ticket #1758]
+
+sys/ufs/lfs/lfs_vnops.c				patch
+sys/ufs/ufs/inode.h 				patch
+sys/ufs/ufs/ufs_extern.h			patch
+sys/ufs/ufs/ufs_lookup.c			patch
+sys/ufs/ufs/ufs_vnops.c				patch
+sys/ufs/ufs/ufs_wapbl.c				patch
+
+	Port dholland's ufs_rename locking changes to netbsd-5.
+	[buhrow, ticket #1759]
 
