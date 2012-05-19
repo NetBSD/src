@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.162 2012/05/19 16:28:46 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.163 2012/05/19 16:51:18 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -6346,4 +6346,33 @@ crypto/dist/openssl/crypto/buffer/buffer.c	patch
 
 	Minor error code fix for ticket #1750.
 	[drochner, ticket #1752]
+
+lib/libpthread/pthread.c			1.134
+
+	Store allocated lwpctl state in the thread actually forked,
+	which is the only thread lives in the child process.
+	The problem originally reported here:
+	https://bugs.ruby-lang.org/issues/6341
+	[enami, ticket #1753]
+
+sys/arch/amd64/amd64/db_memrw.c			1.10-1.11 via patch
+sys/arch/i386/i386/db_memrw.c			1.29 via patch
+
+	Fix a bug in db_write_text() function that prohibits its use
+	for code that spans multiple pages. 
+	[jym, ticket #1754]
+
+sys/arch/x86/pci/pci_machdep.c			1.36
+
+	Add SIS 740 to the list of chipsets known to implement PCI
+	configuration mode 1 incorrectly.
+	[gendalia, ticket #1755]
+
+etc/rc.d/staticroute				1.4-1.6
+share/man/man5/route.conf.5			1.4
+
+	Add the ability for staticroute to evaluate lines from /etc/route.conf
+	as shell script fragments, add example to the route.conf man page of
+	evaluating variables.
+	[gendalia, ticket #1757]
 
