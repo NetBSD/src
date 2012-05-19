@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.161 2012/05/19 16:25:55 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.162 2012/05/19 16:28:46 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -6341,4 +6341,9 @@ sys/dev/usb/uaudio.c				1.131
 sys/arch/xen/xen/hypervisor.c			1.62 via patch
 	Retrieve and print the hypervisor "extra" (teeny) version.
 	[riz, ticket #1748]
+
+crypto/dist/openssl/crypto/buffer/buffer.c	patch
+
+	Minor error code fix for ticket #1750.
+	[drochner, ticket #1752]
 
