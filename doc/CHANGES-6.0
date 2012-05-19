@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.103 2012/05/19 15:42:03 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.104 2012/05/19 17:33:09 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -2489,4 +2489,10 @@ xsrc/external/mit/libXfont/dist/src/bitmap/pcfread.c	1.2
 
 	Fix segfault in libXfont.
 	[cheusov, ticket #272]
+
+usr.bin/login/common.c				1.6
+usr.bin/login/common.h				1.4 via patch
+
+	Fix clang build.
+	[christos, ticket #271]
 
