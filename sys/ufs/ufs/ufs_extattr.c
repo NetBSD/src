@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.36 2012/01/27 19:22:49 para Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.36.2.1 2012/05/19 15:03:31 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.36 2012/01/27 19:22:49 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.36.2.1 2012/05/19 15:03:31 riz Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -834,7 +834,7 @@ ufs_extattr_disable(struct ufsmount *ump, int attrnamespace,
 
 	uele = ufs_extattr_find_attr(ump, attrnamespace, attrname);
 	if (!uele)
-		return (ENOATTR);
+		return (ENODATA);
 
 	LIST_REMOVE(uele, uele_entries);
 
@@ -981,7 +981,7 @@ ufs_extattr_get_header(struct vnode *vp, struct ufs_extattr_list_entry *uele,
 
 	/* Defined? */
 	if ((ueh->ueh_flags & UFS_EXTATTR_ATTR_FLAG_INUSE) == 0)
-		return ENOATTR;
+		return ENODATA;
 
 	/* Valid for the current inode generation? */
 	if (ueh->ueh_i_gen != ip->i_gen) {
@@ -994,7 +994,7 @@ ufs_extattr_get_header(struct vnode *vp, struct ufs_extattr_list_entry *uele,
 		printf("%s (%s): inode gen inconsistency (%u, %jd)\n",
 		       __func__,  mp->mnt_stat.f_mntonname, ueh->ueh_i_gen,
 		       (intmax_t)ip->i_gen);
-		return ENOATTR;
+		return ENODATA;
 	}
 
 	/* Local size consistency check. */
@@ -1066,7 +1066,7 @@ ufs_extattr_get(struct vnode *vp, int attrnamespace, const char *name,
 
 	attribute = ufs_extattr_find_attr(ump, attrnamespace, name);
 	if (!attribute)
-		return (ENOATTR);
+		return (ENODATA);
 
 	/*
 	 * Allow only offsets of zero to encourage the read/replace
@@ -1185,7 +1185,7 @@ ufs_extattr_list(struct vnode *vp, int attrnamespace,
 			continue;
 
 		error = ufs_extattr_get_header(vp, uele, &ueh, NULL);
-		if (error == ENOATTR)
+		if (error == ENODATA)
 			continue;	
 		if (error != 0)
 			return error;
@@ -1348,7 +1348,7 @@ ufs_extattr_set(struct vnode *vp, int attrnamespace, const char *name,
 		attribute =  ufs_extattr_autocreate_attr(vp, attrnamespace, 
 							 name, l);
 		if  (!attribute)
-			return (ENOATTR);
+			return (ENODATA);
 	}
 
 	/*
@@ -1457,7 +1457,7 @@ ufs_extattr_rm(struct vnode *vp, int attrnamespace, const char *name,
 
 	attribute = ufs_extattr_find_attr(ump, attrnamespace, name);
 	if (!attribute)
-		return (ENOATTR);
+		return (ENODATA);
 
 	/*
 	 * Don't need to get a lock on the backing file if the getattr is
