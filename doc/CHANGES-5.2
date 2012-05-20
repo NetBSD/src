@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.165 2012/05/19 17:29:01 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.166 2012/05/20 17:32:55 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -6391,4 +6391,9 @@ sys/ufs/ufs/ufs_wapbl.c				patch
 
 	Port dholland's ufs_rename locking changes to netbsd-5.
 	[buhrow, ticket #1759]
+
+usr.bin/pmap/pmap.h				patch
+
+	Fix build problem introduced by ticket #1759.
+	[jdc, ticket #1760]
 
