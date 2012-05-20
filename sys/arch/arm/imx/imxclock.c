@@ -1,4 +1,4 @@
-/*	$NetBSD: imxclock.c,v 1.5 2012/04/17 09:33:31 bsh Exp $ */
+/*	$NetBSD: imxclock.c,v 1.6 2012/05/20 14:08:18 matt Exp $ */
 /*
  * Copyright (c) 2009, 2010  Genetec corp.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec corp.
@@ -104,7 +104,7 @@ cpu_initclocks(void)
 	    EPIT_EPITCR, reg);
 
 	epit1_sc->sc_ih = intr_establish(epit1_sc->sc_intr, IPL_CLOCK,
-	    IST_LEVEL, imxclock_intr, epit1_sc);
+	    IST_LEVEL, imxclock_intr, NULL);
 }
 
 #if 0
@@ -122,7 +122,7 @@ setstatclockrate(int schz)
 static int
 imxclock_intr(void *arg)
 {
-	struct imxclock_softc *sc = arg;
+	struct imxclock_softc *sc = epit1_sc;
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, EPIT_EPITSR, 1);
 	atomic_add_32(&imxclock_base, sc->sc_reload_value);
