@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.7 2008/04/28 20:24:14 martin Exp $ */
+/*	$NetBSD: pmap.h,v 1.7.6.1 2012/05/20 17:32:24 riz Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -55,6 +55,9 @@
 #include <uvm/uvm_device.h>
 
 #include <ufs/ufs/inode.h>
+#undef i_endoff
+#undef i_diroff
+#undef i_offset
 #undef doff_t
 #undef IN_ACCESS
 #include <isofs/cd9660/iso.h>
