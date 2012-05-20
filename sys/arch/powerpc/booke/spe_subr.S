@@ -30,7 +30,7 @@
 #include <machine/asm.h>
 #include "assym.h"
 
-RCSID("$NetBSD: spe_subr.S,v 1.2 2011/01/18 01:02:52 matt Exp $")
+RCSID("$NetBSD: spe_subr.S,v 1.3 2012/05/20 06:17:28 matt Exp $")
 
 	.text
 	.machine	e500x2
@@ -90,11 +90,11 @@ ENTRY(vec_load_from_vreg)
 	evldw %r10,(10 << 2)(%r3)
 		evmergelo %r11,%r10,%r11
 	evldw %r8,(8 << 2)(%r3)
-		evmergelo %r19,%r8,%r19
+		evmergelo %r9,%r8,%r9
 	evldw %r6,(6 << 2)(%r3)
-		evmergelo %r17,%r6,%r17
+		evmergelo %r7,%r6,%r7
 	evldw %r4,(4 << 2)(%r3)
-		evmergelo %r15,%r4,%r15
+		evmergelo %r5,%r4,%r5
 
 	/*
 	 * R2 isn't a callee-saved, so load into r0 because we still need r3
