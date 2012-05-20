@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.36 2012/05/20 07:54:40 skrll Exp $	*/
+/*	$NetBSD: plcom.c,v 1.37 2012/05/20 07:57:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.36 2012/05/20 07:54:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.37 2012/05/20 07:57:34 skrll Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -1569,6 +1569,7 @@ plcom_rxsoft(struct plcom_softc *sc, struct tty *tp)
 			if (ISSET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED)) {
 				CLR(sc->sc_rx_flags, RX_IBUF_OVERFLOWED);
 				SET(sc->sc_cr, PL010_CR_RIE | PL010_CR_RTIE);
+				bus_space_write_1(sc->sc_iot, sc->sc_ioh, plcom_cr, sc->sc_cr);
 			}
 			if (ISSET(sc->sc_rx_flags, RX_IBUF_BLOCKED)) {
 				CLR(sc->sc_rx_flags, RX_IBUF_BLOCKED);
