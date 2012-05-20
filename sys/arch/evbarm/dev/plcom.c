@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.37 2012/05/20 07:57:34 skrll Exp $	*/
+/*	$NetBSD: plcom.c,v 1.38 2012/05/20 10:28:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.37 2012/05/20 07:57:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.38 2012/05/20 10:28:44 skrll Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -242,7 +242,7 @@ void	plcom_kgdb_putc (void *, int);
 #define	PLCOMDIALOUT(x)	(minor(x) & PLCOMDIALOUT_MASK)
 
 #define	PLCOM_ISALIVE(sc)	((sc)->enabled != 0 && \
-				 device_is_active(&(sc)->sc_dev))
+				 device_is_active((sc)->sc_dev))
 
 #define	BR	BUS_SPACE_BARRIER_READ
 #define	BW	BUS_SPACE_BARRIER_WRITE
@@ -284,7 +284,7 @@ plcomstatus(struct plcom_softc *sc, const char *str)
 	struct tty *tp = sc->sc_tty;
 
 	printf("%s: %s %sclocal  %sdcd %sts_carr_on %sdtr %stx_stopped\n",
-	    sc->sc_dev.dv_xname, str,
+	    device_xname(sc->sc_dev), str,
 	    ISSET(tp->t_cflag, CLOCAL) ? "+" : "-",
 	    ISSET(sc->sc_msr, PL01X_MSR_DCD) ? "+" : "-",
 	    ISSET(tp->t_state, TS_CARR_ON) ? "+" : "-",
@@ -292,7 +292,7 @@ plcomstatus(struct plcom_softc *sc, const char *str)
 	    sc->sc_tx_stopped ? "+" : "-");
 
 	printf("%s: %s %scrtscts %scts %sts_ttstop  %srts %xrx_flags\n",
-	    sc->sc_dev.dv_xname, str,
+	    device_xname(sc->sc_dev), str,
 	    ISSET(tp->t_cflag, CRTSCTS) ? "+" : "-",
 	    ISSET(sc->sc_msr, PL01X_MSR_CTS) ? "+" : "-",
 	    ISSET(tp->t_state, TS_TTSTOP) ? "+" : "-",
@@ -341,7 +341,7 @@ plcom_enable_debugport(struct plcom_softc *sc)
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, plcom_cr, sc->sc_cr);
 	SET(sc->sc_mcr, PL01X_MCR_DTR | PL01X_MCR_RTS);
 	/* XXX device_unit() abuse */
-	sc->sc_set_mcr(sc->sc_set_mcr_arg, device_unit(&sc->sc_dev),
+	sc->sc_set_mcr(sc->sc_set_mcr_arg, device_unit(sc->sc_dev),
 	    sc->sc_mcr);
 }
 
@@ -383,7 +383,7 @@ plcom_attach_subr(struct plcom_softc *sc)
 
 	if (ISSET(sc->sc_hwflags, PLCOM_HW_TXFIFO_DISABLE)) {
 		sc->sc_fifolen = 1;
-		printf("%s: txfifo disabled\n", sc->sc_dev.dv_xname);
+		printf("%s: txfifo disabled\n", device_xname(sc->sc_dev));
 	}
 
 	if (sc->sc_fifolen > 1)
@@ -400,7 +400,7 @@ plcom_attach_subr(struct plcom_softc *sc)
 	sc->sc_rbavail = plcom_rbuf_size;
 	if (sc->sc_rbuf == NULL) {
 		printf("%s: unable to allocate ring buffer\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 		return;
 	}
 	sc->sc_ebuf = sc->sc_rbuf + (plcom_rbuf_size << 1);
@@ -413,9 +413,9 @@ plcom_attach_subr(struct plcom_softc *sc)
 		/* locate the major number */
 		maj = cdevsw_lookup_major(&plcom_cdevsw);
 
-		cn_tab->cn_dev = makedev(maj, device_unit(&sc->sc_dev));
+		cn_tab->cn_dev = makedev(maj, device_unit(sc->sc_dev));
 
-		printf("%s: console\n", sc->sc_dev.dv_xname);
+		printf("%s: console\n", device_xname(sc->sc_dev));
 	}
 
 #ifdef KGDB
@@ -427,14 +427,14 @@ plcom_attach_subr(struct plcom_softc *sc)
 		plcom_kgdb_attached = 1;
 
 		SET(sc->sc_hwflags, PLCOM_HW_KGDB);
-		printf("%s: kgdb\n", sc->sc_dev.dv_xname);
+		printf("%s: kgdb\n", device_xname(sc->sc_dev));
 	}
 #endif
 
 	sc->sc_si = softint_establish(SOFTINT_SERIAL, plcomsoft, sc);
 
 #ifdef RND_COM
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev)),
 			  RND_TYPE_TTY, 0);
 #endif
 
@@ -463,9 +463,9 @@ plcom_config(struct plcom_softc *sc)
 }
 
 int
-plcom_detach(struct device *self, int flags)
+plcom_detach(device_t self, int flags)
 {
-	struct plcom_softc *sc = (struct plcom_softc *)self;
+	struct plcom_softc *sc = device_private(self);
 	int maj, mn;
 
 	if (sc->sc_hwflags & (PLCOM_HW_CONSOLE|PLCOM_HW_KGDB))
@@ -585,7 +585,7 @@ plcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		sc->sc_rbuf == NULL)
 		return ENXIO;
 
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		return ENXIO;
 
 #ifdef KGDB
@@ -615,7 +615,7 @@ plcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 			if ((*sc->enable)(sc)) {
 				splx(s);
 				printf("%s: device enable failed\n",
-				       sc->sc_dev.dv_xname);
+				       device_xname(sc->sc_dev));
 				return EIO;
 			}
 			mutex_spin_enter(&sc->sc_lock);
@@ -1307,7 +1307,7 @@ plcom_iflush(struct plcom_softc *sc)
 		    bus_space_read_1(iot, ioh, plcom_dr);
 #ifdef DIAGNOSTIC
 	if (!timo)
-		printf("%s: plcom_iflush timeout %02x\n", sc->sc_dev.dv_xname,
+		printf("%s: plcom_iflush timeout %02x\n", device_xname(sc->sc_dev),
 		       reg);
 #endif
 }
@@ -1327,7 +1327,7 @@ plcom_loadchannelregs(struct plcom_softc *sc)
 	bus_space_write_1(iot, ioh, plcom_dlbh, sc->sc_dlbh);
 	bus_space_write_1(iot, ioh, plcom_lcr, sc->sc_lcr);
 	/* XXX device_unit() abuse */
-	sc->sc_set_mcr(sc->sc_set_mcr_arg, device_unit(&sc->sc_dev),
+	sc->sc_set_mcr(sc->sc_set_mcr_arg, device_unit(sc->sc_dev),
 	    sc->sc_mcr_active = sc->sc_mcr);
 
 	bus_space_write_1(iot, ioh, plcom_cr, sc->sc_cr);
@@ -1384,7 +1384,7 @@ plcom_hwiflow(struct plcom_softc *sc)
 		SET(sc->sc_mcr_active, sc->sc_mcr_rts);
 	}
 	/* XXX device_unit() abuse */
-	sc->sc_set_mcr(sc->sc_set_mcr_arg, device_unit(&sc->sc_dev),
+	sc->sc_set_mcr(sc->sc_set_mcr_arg, device_unit(sc->sc_dev),
 	    sc->sc_mcr_active);
 }
 
@@ -1485,7 +1485,7 @@ plcomdiag(void *arg)
 	mutex_spin_exit(&sc->sc_lock);
 
 	log(LOG_WARNING, "%s: %d silo overflow%s, %d ibuf flood%s\n",
-	    sc->sc_dev.dv_xname,
+	    device_xname(sc->sc_dev),
 	    overflows, overflows == 1 ? "" : "s",
 	    floods, floods == 1 ? "" : "s");
 }
