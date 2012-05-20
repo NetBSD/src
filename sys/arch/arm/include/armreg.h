@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.50 2012/05/20 17:58:32 skrll Exp $	*/
+/*	$NetBSD: armreg.h,v 1.51 2012/05/20 18:08:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -199,7 +199,7 @@
 #define CPU_ID_ARM11MPCORE	0x410fb020
 #define CPU_ID_ARM1136JS	0x4107b360
 #define CPU_ID_ARM1136JSR1	0x4117b360
-#define CPU_ID_ARM1156T2S	0x4107b560
+#define CPU_ID_ARM1156T2S	0x4107b560 /* MPU only */
 #define CPU_ID_ARM1176JZS	0x410fb760
 #define CPU_ID_CORTEXA8R1	0x411fc080
 #define CPU_ID_CORTEXA8R2	0x412fc080
