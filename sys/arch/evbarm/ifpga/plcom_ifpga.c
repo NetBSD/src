@@ -1,4 +1,4 @@
-/*      $NetBSD: plcom_ifpga.c,v 1.12 2012/05/14 19:40:06 skrll Exp $ */
+/*      $NetBSD: plcom_ifpga.c,v 1.13 2012/05/20 10:28:44 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -32,7 +32,7 @@
 /* Interface to plcom (PL010) serial driver. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom_ifpga.c,v 1.12 2012/05/14 19:40:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom_ifpga.c,v 1.13 2012/05/20 10:28:44 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -53,29 +53,30 @@ __KERNEL_RCSID(0, "$NetBSD: plcom_ifpga.c,v 1.12 2012/05/14 19:40:06 skrll Exp $
 #include <evbarm/ifpga/ifpgareg.h>
 #include <evbarm/ifpga/ifpgavar.h>
 
-static int  plcom_ifpga_match(struct device *, struct cfdata *, void *);
-static void plcom_ifpga_attach(struct device *, struct device *, void *);
+static int  plcom_ifpga_match(device_t, cfdata_t, void *);
+static void plcom_ifpga_attach(device_t, device_t, void *);
 static void plcom_ifpga_set_mcr(void *, int, u_int);
 
-CFATTACH_DECL(plcom_ifpga, sizeof(struct plcom_softc),
+CFATTACH_DECL_NEW(plcom_ifpga, sizeof(struct plcom_ifpga_softc),
     plcom_ifpga_match, plcom_ifpga_attach, NULL, NULL);
 
 static int
-plcom_ifpga_match(struct device *parent, struct cfdata *cf, void *aux)
+plcom_ifpga_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return 1;
 }
 
 static void
-plcom_ifpga_attach(struct device *parent, struct device *self, void *aux)
+plcom_ifpga_attach(device_t parent, device_t self, void *aux)
 {
-	struct plcom_ifpga_softc *isc = (struct plcom_ifpga_softc *)self;
+	struct plcom_ifpga_softc *isc = device_private(self);
 	struct plcom_softc *sc = &isc->sc_plcom;
 	struct ifpga_attach_args *ifa = aux;
 
 	isc->sc_iot = ifa->ifa_iot;
 	isc->sc_ioh = ifa->ifa_sc_ioh;
-	sc->sc_iounit = device_unit(&sc->sc_dev);
+	sc->sc_dev = self;
+	sc->sc_iounit = device_unit(sc->sc_dev);
 	sc->sc_frequency = IFPGA_UART_CLK;
 	sc->sc_iot = ifa->ifa_iot;
 	sc->sc_hwflags = 0;
@@ -85,7 +86,7 @@ plcom_ifpga_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(ifa->ifa_iot, ifa->ifa_addr, PLCOM_UART_SIZE, 0,
 	    &sc->sc_ioh)) {
-		printf("%s: unable to map device\n", sc->sc_dev.dv_xname);
+		printf("%s: unable to map device\n", device_xname(sc->sc_dev));
 		return;
 	}
 
@@ -94,7 +95,7 @@ plcom_ifpga_attach(struct device *parent, struct device *self, void *aux)
 	    sc);
 	if (isc->sc_ih == NULL)
 		panic("%s: cannot install interrupt handler",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 }
 
 static void plcom_ifpga_set_mcr(void *aux, int unit, u_int mcr)
