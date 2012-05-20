@@ -1,4 +1,4 @@
-/*	$NetBSD: plcomvar.h,v 1.8 2012/02/02 19:42:59 tls Exp $	*/
+/*	$NetBSD: plcomvar.h,v 1.9 2012/05/20 07:54:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -136,7 +136,7 @@ struct plcom_softc {
 #ifdef RND_COM
 	krndsource_t  rnd_source;
 #endif
-	struct simplelock	sc_lock;
+	kmutex_t		sc_lock;
 };
 
 int  plcomprobe1	(bus_space_tag_t, bus_space_handle_t);
