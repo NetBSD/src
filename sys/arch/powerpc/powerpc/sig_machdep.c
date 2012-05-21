@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.41 2011/06/20 05:50:39 matt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.42 2012/05/21 14:15:18 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.41 2011/06/20 05:50:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.42 2012/05/21 14:15:18 martin Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -187,13 +187,24 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flagp)
 }
 
 int
+cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
+{
+	return 0;
+}
+
+int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe * const tf = l->l_md.md_utf;
 	const __greg_t * const gr = mcp->__gregs;
+	int error;
 
 	/* Restore GPR context, if any. */
 	if (flags & _UC_CPU) {
+		error = cpu_mcontext_validate(l, mcp);
+		if (error)
+			return error;
+
 #ifdef PPC_HAVE_FPU
 		/*
 		 * Always save the FP exception mode in the PCB.

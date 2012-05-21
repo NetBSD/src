@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.338 2012/02/21 17:39:17 para Exp $ */
+/* $NetBSD: machdep.c,v 1.339 2012/05/21 14:15:16 martin Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.338 2012/02/21 17:39:17 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.339 2012/05/21 14:15:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1803,6 +1803,17 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	}
 }
 
+int
+cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
+{
+	const __greg_t *gr = mcp->__gregs;
+
+	if ((gr[_REG_PS] & ALPHA_PSL_USERSET) != ALPHA_PSL_USERSET ||
+	    (gr[_REG_PS] & ALPHA_PSL_USERCLR) != 0)
+		return EINVAL;
+
+	return 0;
+}
 
 int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
@@ -1810,13 +1821,14 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	struct trapframe *frame = l->l_md.md_tf;
 	struct pcb *pcb = lwp_getpcb(l);
 	const __greg_t *gr = mcp->__gregs;
+	int error;
 
 	/* Restore register context, if any. */
 	if (flags & _UC_CPU) {
 		/* Check for security violations first. */
-		if ((gr[_REG_PS] & ALPHA_PSL_USERSET) != ALPHA_PSL_USERSET ||
-		    (gr[_REG_PS] & ALPHA_PSL_USERCLR) != 0)
-			return (EINVAL);
+		error = cpu_mcontext_validate(l, mcp);
+		if (error)
+			return error;
 
 		regtoframe((const struct reg *)gr, l->l_md.md_tf);
 		if (l == curlwp)
