@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.104 2012/05/19 17:33:09 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.105 2012/05/21 15:26:33 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -2495,4 +2495,35 @@ usr.bin/login/common.h				1.4 via patch
 
 	Fix clang build.
 	[christos, ticket #271]
+
+distrib/sets/lists/tests/mi			1.469 via patch
+lib/libc/sys/_lwp_create.2			1.5
+sys/arch/alpha/alpha/machdep.c			1.339
+sys/arch/amd64/amd64/machdep.c			1.183
+sys/arch/amd64/amd64/netbsd32_machdep.c		1.76
+sys/arch/amd64/amd64/process_machdep.c		1.20
+sys/arch/amd64/include/mcontext.h		1.15
+sys/arch/arm/arm/sig_machdep.c			1.42
+sys/arch/hppa/hppa/hppa_machdep.c		1.28
+sys/arch/i386/i386/machdep.c			1.727
+sys/arch/m68k/m68k/sig_machdep.c		1.49
+sys/arch/mips/mips/cpu_subr.c			1.16
+sys/arch/mips/mips/netbsd32_machdep.c		1.9
+sys/arch/powerpc/powerpc/sig_machdep.c		1.42
+sys/arch/sh3/sh3/sh3_machdep.c			1.99
+sys/arch/sparc/sparc/machdep.c			1.319
+sys/arch/sparc64/sparc64/machdep.c		1.267
+sys/arch/sparc64/sparc64/netbsd32_machdep.c	1.98
+sys/arch/vax/vax/machdep.c			1.188
+sys/compat/netbsd32/netbsd32_lwp.c		1.13
+sys/compat/sys/ucontext.h			1.6
+sys/kern/sys_lwp.c				1.54 via patch
+sys/sys/lwp.h					1.161
+sys/sys/ucontext.h				1.16
+tests/lib/libc/sys/Makefile			1.23 via patch
+tests/lib/libc/sys/t_lwp_create.c		1.1
+
+	Avoid KASSERT when calling _lwp_create() with bogus context.
+	PR#43903.
+	[martin, ticket #274]
 
