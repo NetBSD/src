@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.7 2011/05/02 00:29:54 rmind Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.7.10.1 2012/05/21 15:25:56 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.7 2011/05/02 00:29:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.7.10.1 2012/05/21 15:25:56 riz Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sa.h"
@@ -267,11 +267,23 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mc32, unsigned int *flagsp)
 }
 
 int
+cpu_mcontext32_validate(struct lwp *l, const mcontext32_t *mc32)
+{
+	return 0;
+}
+
+int
 cpu_setmcontext32(struct lwp *l, const mcontext32_t *mc32, unsigned int flags)
 {
 	const mcontext_o32_t * const mco32 = (const mcontext_o32_t *)mc32;
 	mcontext_t mc;
-	size_t i;
+	size_t i, error;
+
+	if (flags & _UC_CPU) {
+		error = cpu_mcontext32_validate(l, mc32);
+		if (error)
+			return error;
+	}
 
 	if (l->l_proc->p_md.md_abi == _MIPS_BSD_API_N32)
 		return cpu_setmcontext(l, (const mcontext_t *)mc32, flags);

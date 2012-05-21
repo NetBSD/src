@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.159 2012/01/22 09:11:58 plunky Exp $	*/
+/*	$NetBSD: lwp.h,v 1.159.2.1 2012/05/21 15:25:56 riz Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -339,6 +339,7 @@ void	lwp_need_userret(lwp_t *);
 void	lwp_free(lwp_t *, bool, bool);
 uint64_t lwp_pctr(void);
 int	lwp_setprivate(lwp_t *, void *);
+int	do_lwp_create(lwp_t *, void *, u_long, lwpid_t *);
 
 void	lwpinit_specificdata(void);
 int	lwp_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
