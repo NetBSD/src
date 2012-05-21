@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.305 2012/04/22 16:00:45 christos Exp $ */
+/* $NetBSD: com.c,v 1.306 2012/05/21 20:51:46 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.305 2012/04/22 16:00:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.306 2012/05/21 20:51:46 skrll Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -787,7 +787,6 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 		struct termios t;
 
 		tp->t_dev = dev;
-
 
 		if (sc->enable) {
 			if ((*sc->enable)(sc)) {
