@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.62 2011/03/29 17:19:22 sjg Exp $	*/
+/*	$NetBSD: cond.c,v 1.63 2012/05/21 06:30:02 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.62 2011/03/29 17:19:22 sjg Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.63 2012/05/21 06:30:02 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.62 2011/03/29 17:19:22 sjg Exp $");
+__RCSID("$NetBSD: cond.c,v 1.63 2012/05/21 06:30:02 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1227,7 +1227,7 @@ do_Cond_EvalExpression(Boolean *value)
 int
 Cond_Eval(char *line)
 {
-    #define	    MAXIF	64	/* maximum depth of .if'ing */
+    #define	    MAXIF      128	/* maximum depth of .if'ing */
     enum if_states {
 	IF_ACTIVE,		/* .if or .elif part active */
 	ELSE_ACTIVE,		/* .else part active */
