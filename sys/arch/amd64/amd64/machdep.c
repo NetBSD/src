@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.182 2012/04/29 21:54:51 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.183 2012/05/21 14:15:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.182 2012/04/29 21:54:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.183 2012/05/21 14:15:17 martin Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -2011,7 +2011,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	int64_t rflags;
 
 	if ((flags & _UC_CPU) != 0) {
-		error = check_mcontext(l, mcp, tf);
+		error = cpu_mcontext_validate(l, mcp);
 		if (error != 0)
 			return error;
 		/*
@@ -2068,13 +2068,14 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 }
 
 int
-check_mcontext(struct lwp *l, const mcontext_t *mcp, struct trapframe *tf)
+cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
 {
 	const __greg_t *gr;
 	uint16_t sel;
 	int error;
 	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
 	struct proc *p = l->l_proc;
+	struct trapframe *tf = l->l_md.md_regs;
 
 	gr = mcp->__gregs;
 

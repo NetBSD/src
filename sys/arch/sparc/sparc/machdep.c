@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.318 2012/04/25 08:19:33 dholland Exp $ */
+/*	$NetBSD: machdep.c,v 1.319 2012/05/21 14:15:18 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.318 2012/04/25 08:19:33 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.319 2012/05/21 14:15:18 martin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -674,6 +674,23 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	return;
 }
 
+int
+cpu_mcontext_validate(struct lwp *l, const mcontext_t *mc)
+{
+	const __greg_t *gr = mc->__gregs;
+
+	/*
+ 	 * Only the icc bits in the psr are used, so it need not be
+ 	 * verified.  pc and npc must be multiples of 4.  This is all
+ 	 * that is required; if it holds, just do it.
+	 */
+	if (((gr[_REG_PC] | gr[_REG_nPC]) & 3) != 0 ||
+	    gr[_REG_PC] == 0 || gr[_REG_nPC] == 0)
+		return EINVAL;
+
+	return 0;
+}
+
 /*
  * Set to mcontext specified.
  * Return to previous pc and psl as specified by
@@ -689,6 +706,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	struct trapframe *tf;
 	const __greg_t *r = mcp->__gregs;
 	struct proc *p = l->l_proc;
+	int error;
 #ifdef FPU_CONTEXT
 	__fpregset_t *f = &mcp->__fpregs;
 	struct fpstate *fps = l->l_md.md_fpstate;
@@ -707,18 +725,13 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 #endif
 
 	if (flags & _UC_CPU) {
+		/* Validate */
+		error = cpu_mcontext_validate(l, mcp);
+		if (error)
+			return error;
+
 		/* Restore register context. */
 		tf = (struct trapframe *)l->l_md.md_tf;
-
-		/*
-		 * Only the icc bits in the psr are used, so it need not be
-		 * verified.  pc and npc must be multiples of 4.  This is all
-		 * that is required; if it holds, just do it.
-		 */
-		if (((r[_REG_PC] | r[_REG_nPC]) & 3) != 0) {
-			printf("pc or npc are not multiples of 4!\n");
-			return (EINVAL);
-		}
 
 		/* take only psr ICC field */
 		tf->tf_psr = (tf->tf_psr & ~PSR_ICC) |

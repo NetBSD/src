@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.98 2012/02/19 21:06:27 rmind Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.99 2012/05/21 14:15:18 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.98 2012/02/19 21:06:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.99 2012/05/21 14:15:18 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -439,17 +439,31 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 }
 
 int
+cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
+{
+	struct trapframe *tf = l->l_md.md_regs;
+	const __greg_t *gr = mcp->__gregs;
+
+	if (((tf->tf_ssr ^ gr[_REG_SR]) & PSL_USERSTATIC) != 0)
+		return EINVAL;
+
+	return 0;
+}
+
+int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	const __greg_t *gr = mcp->__gregs;
 	struct proc *p = l->l_proc;
+	int error;
 
 	/* Restore register context, if any. */
 	if ((flags & _UC_CPU) != 0) {
 		/* Check for security violations. */
-		if (((tf->tf_ssr ^ gr[_REG_SR]) & PSL_USERSTATIC) != 0)
-			return (EINVAL);
+		error = cpu_mcontext_validate(l, mcp);
+		if (error)
+			return error;
 
 		tf->tf_gbr    = gr[_REG_GBR];
 		tf->tf_spc    = gr[_REG_PC];

@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.41 2012/01/25 17:38:09 tsutsui Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.42 2012/05/21 14:15:17 martin Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.41 2012/01/25 17:38:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.42 2012/05/21 14:15:17 martin Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -205,17 +205,29 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 }
 
 int
+cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
+{
+	const __greg_t *gr = mcp->__gregs;
+
+	/* Make sure the processor mode has not been tampered with. */
+	if (!VALID_R15_PSR(gr[_REG_PC], gr[_REG_CPSR]))
+		return EINVAL;
+	return 0;
+}
+
+int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = process_frame(l);
 	const __greg_t *gr = mcp->__gregs;
 	struct proc *p = l->l_proc;
+	int error;
 
 	if ((flags & _UC_CPU) != 0) {
 		/* Restore General Register context. */
-		/* Make sure the processor mode has not been tampered with. */
-		if (!VALID_R15_PSR(gr[_REG_PC], gr[_REG_CPSR]))
-			return EINVAL;
+		error = cpu_mcontext_validate(l, mcp);
+		if (error)
+			return error;
 
 		tf->tf_r0     = gr[_REG_R0];
 		tf->tf_r1     = gr[_REG_R1];
