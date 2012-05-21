@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.43 2012/04/06 23:48:53 riz Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.44 2012/05/21 22:38:25 jdf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -124,6 +124,9 @@ ninguna información de configuración.  (Salga y escoja `instalar' o
 sus discos.)
 }
 
+message mount_failed
+{Mounting %s failed. Continue?
+}
 
 message nodisk
 {No se ha podido encontrar ningún disco duro para ser usado por NetBSD.
@@ -701,7 +704,7 @@ message makedev
 
 message badfs
 {Parece que /dev/%s%c no es un sistema de archivos BSD o el fsck no ha sido
-correcto.  La actualización ha sido interrumpida.  (Error número %d.)
+correcto.  ¿Continuar?  (Error número %d.)
 }
 
 message rootmissing
