@@ -1,4 +1,4 @@
-.\"	$NetBSD: quotas.ms,v 1.5 2012/05/21 05:53:28 dholland Exp $
+.\"	$NetBSD: quotas.ms,v 1.6 2012/05/21 06:30:18 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -271,7 +271,7 @@ quotas, in the following sections.
 .PP
 The first step in all cases, however, is to decide what file systems
 need to have quotas.
-Typically, only filesystems that house users' home directories,
+Typically, only file systems that house users' home directories,
 or other user files, will need quotas.
 Do not forget the mail spool.
 It may also prove useful to also include
@@ -544,8 +544,8 @@ configured individually; instead, one grace period is configured for
 all users.
 .PP
 In the historic quota system the default values and the global grace
-period are stored in the quota entry for uid 
-(or gid)
+period are stored in the quota entry for UID 
+(or GID)
 0.
 This scheme partly shows through to the quota tools.
 It is also possible to attempt to establish quota configurations that
@@ -569,7 +569,7 @@ arise.
 It is possible to temporarily disable quota enforcement by using
 \fIquotaoff\fP\|(8).
 However, this also disables usage tracking.
-Consequentely, if this is done while the system is live, it is in
+Consequently, if this is done while the system is live, it is in
 general necessary to run
 \fIquotacheck\fP\|(8)
 to correct the usage information before running
@@ -699,7 +699,7 @@ Some implementation details for the historic quotas
 The data in the quota files is an array of
 dquot
 structures, indexed by id
-(uid or gid).
+(UID or GID).
 There is an entry for every id on the system, whether or not
 a quota is configured for that id.
 If the id space is sparse, then the file may have holes in it.
@@ -732,7 +732,7 @@ currently active, and then the quota entries needed for any files open
 owned by users
 (or groups)
 who are not currently active.
-Each subsequent open of a file on the filesystem will
+Each subsequent open of a file on the file system will
 be accompanied by a pairing with its quota information.
 In most cases this information will be retained in core,
 either because the user who owns the file is running some
@@ -740,7 +740,7 @@ process, because other files are open owned by the same
 user, or because some file (perhaps this one) was recently
 accessed.
 In memory, the quota information is kept hashed by id
-and filesystem, and retained in an LRU chain so recently
+and file system, and retained in an LRU chain so recently
 released data can be easily reclaimed.
 Information about those users whose last process has
 recently terminated is also retained in this way.
@@ -760,7 +760,7 @@ The historic quota system was loosely based upon a very
 early scheme implemented at the University of New South
 Wales, and Sydney University in the mid 70's. That system
 implemented a single combined limit for both files and blocks
-on all filesystems.
+on all file systems.
 .PP
 A later system was implemented at the University of Melbourne
 by Robert Elz, but was not kept highly accurately.
@@ -771,7 +771,7 @@ The historic quota system was put into place
 in January 1982 at Melbourne.
 .\" It is actually just a small part of a much broader resource
 .\" control scheme, which is capable of controlling almost
-.\" anything that is usually uncontrolled in unix. The rest
+.\" anything that is usually uncontrolled in UNIX. The rest
 .\" of this is, as yet, still in a state where it is far too
 .\" subject to change to be considered for distribution.
 .PP
