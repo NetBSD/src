@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.74 2011/03/04 22:25:24 joerg Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.74.10.1 2012/05/21 15:25:56 riz Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.74 2011/03/04 22:25:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.74.10.1 2012/05/21 15:25:56 riz Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -96,7 +96,6 @@ static int x86_64_set_mtrr32(struct lwp *, void *, register_t *);
 #endif
 
 static int check_sigcontext32(struct lwp *, const struct netbsd32_sigcontext *);
-static int check_mcontext32(struct lwp *, const mcontext32_t *);
 
 #ifdef EXEC_AOUT
 /*
@@ -836,7 +835,7 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 		/*
 		 * Check for security violations.
 		 */
-		error = check_mcontext32(l, mcp);
+		error = cpu_mcontext32_validate(l, mcp);
 		if (error != 0)
 			return error;
 
@@ -986,8 +985,8 @@ check_sigcontext32(struct lwp *l, const struct netbsd32_sigcontext *scp)
 	return 0;
 }
 
-static int
-check_mcontext32(struct lwp *l, const mcontext32_t *mcp)
+int
+cpu_mcontext32_validate(struct lwp *l, const mcontext32_t *mcp)
 {
 	const __greg32_t *gr;
 	struct trapframe *tf;

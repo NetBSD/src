@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_lwp.c,v 1.12 2011/02/05 13:46:44 yamt Exp $	*/
+/*	$NetBSD: netbsd32_lwp.c,v 1.12.10.1 2012/05/21 15:25:59 riz Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2006, 2007 The NetBSD Foundation.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.12 2011/02/05 13:46:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.12.10.1 2012/05/21 15:25:59 riz Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,14 +53,40 @@ netbsd32__lwp_create(struct lwp *l, const struct netbsd32__lwp_create_args *uap,
 		syscallarg(netbsd32_u_long) flags;
 		syscallarg(netbsd32_lwpidp) new_lwp;
 	} */
-	struct sys__lwp_create_args ua;
+	struct proc *p = l->l_proc;
+	ucontext32_t *newuc = NULL;
+	lwpid_t lid;
+	int error;
 
-	CTASSERT(sizeof(ucontext32_t) <= sizeof(ucontext_t));
-	NETBSD32TOP_UAP(ucp, const ucontext_t); /* see startlwp32() */
-	NETBSD32TO64_UAP(flags);
-	NETBSD32TOP_UAP(new_lwp, lwpid_t);
+	KASSERT(p->p_emul->e_ucsize == sizeof(*newuc));
 
-	return sys__lwp_create(l, &ua, retval);
+	newuc = kmem_alloc(sizeof(ucontext32_t), KM_SLEEP);
+	error = copyin(SCARG_P32(uap, ucp), newuc, p->p_emul->e_ucsize);
+	if (error)
+		goto fail;
+
+	/* validate the ucontext */
+	if ((newuc->uc_flags & _UC_CPU) == 0) {
+		error = EINVAL;
+		goto fail;
+	}
+	error = cpu_mcontext32_validate(l, &newuc->uc_mcontext);
+	if (error)
+		goto fail;
+
+	error = do_lwp_create(l, newuc, SCARG(uap, flags), &lid);
+	if (error)
+		goto fail;
+
+	/*
+	 * do not free ucontext in case of an error here,
+	 * the lwp will actually run and access it
+	 */
+	return copyout(&lid, SCARG_P32(uap, new_lwp), sizeof(lid));
+
+fail:
+	kmem_free(newuc, sizeof(*newuc));
+	return error;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucontext.h,v 1.4 2011/02/23 02:58:39 joerg Exp $	*/
+/*	$NetBSD: ucontext.h,v 1.4.10.1 2012/05/21 15:25:57 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2003 The NetBSD Foundation, Inc.
@@ -64,6 +64,7 @@ __CTASSERT(sizeof(ucontext32_t) == __UCONTEXT32_SIZE)
 struct lwp;
 void	getucontext32(struct lwp *, ucontext32_t *);
 int	setucontext32(struct lwp *, const ucontext32_t *);
+int	cpu_mcontext32_validate(struct lwp *, const mcontext32_t *);
 void	cpu_getmcontext32(struct lwp *, mcontext32_t *, unsigned int *);
 int	cpu_setmcontext32(struct lwp *, const mcontext32_t *, unsigned int);
 #endif /* COMPAT_NETBSD32 */
