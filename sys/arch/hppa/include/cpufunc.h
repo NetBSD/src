@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.16 2012/04/03 12:07:26 skrll Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.17 2012/05/21 07:42:51 skrll Exp $	*/
 
 /*	$OpenBSD: cpufunc.h,v 1.17 2000/05/15 17:22:40 mickey Exp $	*/
 
@@ -170,6 +170,18 @@ pdtlbe(pa_space_t sp, vaddr_t va)
 {
 	mtsp(sp, 1);
 	__asm volatile("pdtlbe %%r0(%%sr1, %0)":: "r" (va));
+}
+
+static __inline void
+hppa_disable_irq(void)
+{
+        __asm volatile("rsm %0, %%r0" :: "i" (PSW_I) : "memory");
+}
+
+static __inline void
+hppa_enable_irq(void)
+{
+        __asm volatile("ssm %0, %%r0" :: "i" (PSW_I) : "memory");
 }
 
 #ifdef _KERNEL
