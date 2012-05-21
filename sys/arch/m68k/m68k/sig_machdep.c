@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.48 2012/02/19 21:06:14 rmind Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.49 2012/05/21 14:15:18 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,7 +40,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.48 2012/02/19 21:06:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.49 2012/05/21 14:15:18 martin Exp $");
 
 #define __M68K_SIGNAL_PRIVATE
 
@@ -270,17 +270,29 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, u_int *flags)
 }
 
 int
+cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
+{
+	const __greg_t *gr = mcp->__gregs;
+
+	if ((gr[_REG_PS] & (PSL_MBZ|PSL_IPL|PSL_S)) != 0)
+		return EINVAL;
+	return 0;
+}
+
+int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, u_int flags)
 {
 	const __greg_t *gr = mcp->__gregs;
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
 	unsigned int format = mcp->__mc_pad.__mc_frame.__mcf_format;
-	int sz;
+	int sz, error;
 
 	/* Validate the supplied context */
-	if (((flags & _UC_CPU) != 0 &&
-	     (gr[_REG_PS] & (PSL_MBZ|PSL_IPL|PSL_S)) != 0))
-		return (EINVAL);
+	if ((flags & _UC_CPU) != 0) {
+		error = cpu_mcontext_validate(l, mcp);
+		if (error)
+			return error;
+	}
 
 	/* Restore exception frame information if necessary. */
 	if ((flags & _UC_M68K_UC_USER) == 0 && format >= FMT4) {
