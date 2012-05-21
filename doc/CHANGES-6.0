@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.105 2012/05/21 15:26:33 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.106 2012/05/21 16:50:28 jdc Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -2527,3 +2527,9 @@ tests/lib/libc/sys/t_lwp_create.c		1.1
 	PR#43903.
 	[martin, ticket #274]
 
+sys/dev/rndpseudo.c				1.10
+sys/kern/subr_cprng.c				1.9
+
+	Fix two problems that could cause /dev/random to not wake up readers
+	when entropy became available.
+	[tls, ticket #273]
