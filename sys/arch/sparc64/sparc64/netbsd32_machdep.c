@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.96 2012/02/12 16:34:10 matt Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.96.2.1 2012/05/21 15:25:56 riz Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.96 2012/02/12 16:34:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.96.2.1 2012/05/21 15:25:56 riz Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -853,7 +853,6 @@ netbsd32_cpu_getmcontext(
 #endif
 }
 
-
 int netbsd32_cpu_setmcontext(struct lwp *, mcontext_t *, unsigned int);
 
 int
@@ -1178,6 +1177,22 @@ netbsd32_sysarch(struct lwp *l, const struct netbsd32_sysarch_args *uap, registe
 	}
 }
 
+int
+cpu_mcontext32_validate(struct lwp *l, const mcontext32_t *mc)
+{
+	const __greg32_t *gr = mc->__gregs;
+
+	/*
+ 	 * Only the icc bits in the psr are used, so it need not be
+ 	 * verified.  pc and npc must be multiples of 4.  This is all
+ 	 * that is required; if it holds, just do it.
+	 */
+	if (((gr[_REG32_PC] | gr[_REG32_nPC]) & 3) != 0 ||
+	    gr[_REG32_PC] == 0 || gr[_REG32_nPC] == 0)
+		return EINVAL;
+
+	return 0;
+}
 
 int
 cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
@@ -1185,6 +1200,7 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 	struct trapframe *tf = l->l_md.md_tf;
 	const __greg32_t *gr = mcp->__gregs;
 	struct proc *p = l->l_proc;
+	int error;
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
@@ -1195,14 +1211,9 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 
 	/* Restore register context, if any. */
 	if ((flags & _UC_CPU) != 0) {
-		/*
-	 	 * Only the icc bits in the psr are used, so it need not be
-	 	 * verified.  pc and npc must be multiples of 4.  This is all
-	 	 * that is required; if it holds, just do it.
-		 */
-		if (((gr[_REG32_PC] | gr[_REG32_nPC]) & 3) != 0 ||
-		    gr[_REG32_PC] == 0 || gr[_REG32_nPC] == 0)
-			return (EINVAL);
+		error = cpu_mcontext32_validate(l, mcp);
+		if (error)
+			return error;
 
 		/* Restore general register context. */
 		/* take only tstate CCR (and ASI) fields */
@@ -1356,8 +1367,7 @@ startlwp32(void *arg)
 	error = cpu_setmcontext32(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);
 
-	/* Note: we are freeing ucontext_t, not ucontext32_t. */
-	kmem_free(uc, sizeof(ucontext_t));
+	kmem_free(uc, sizeof(ucontext32_t));
 	userret(l, 0, 0);
 }
 

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.439 2012/02/15 17:55:17 riz Exp $
+# $NetBSD: mi,v 1.439.2.1 2012/05/21 15:25:57 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -535,6 +535,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_kill.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_link.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_listen.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_lwp_create.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mincore.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mkdir.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mkfifo.debug		tests-lib-debug		debug,atf
@@ -2220,6 +2221,7 @@
 ./usr/tests/lib/libc/sys/t_kill			tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_link			tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_listen		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_lwp_create		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_mincore		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_mkdir		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_mkfifo		tests-lib-tests		atf
