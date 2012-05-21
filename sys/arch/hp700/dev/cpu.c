@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.23 2012/04/06 12:21:58 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.24 2012/05/21 21:15:39 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.c,v 1.29 2009/02/08 18:33:28 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.23 2012/04/06 12:21:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.24 2012/05/21 21:15:39 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -168,8 +168,7 @@ cpuattach(device_t parent, device_t self, void *aux)
 
 	/* Allocate stack for spin up and FPU emulation. */
 	TAILQ_INIT(&mlist);
-	error = uvm_pglistalloc(PAGE_SIZE, 0, -1L, PAGE_SIZE, 0, &mlist, 1,
-	    0);
+	error = uvm_pglistalloc(PAGE_SIZE, 0, -1L, PAGE_SIZE, 0, &mlist, 1, 0);
 
 	if (error) {
 		aprint_error(": unable to allocate CPU stack!\n");
