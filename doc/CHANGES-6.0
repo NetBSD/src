@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.108 2012/05/22 18:48:04 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.109 2012/05/22 20:26:58 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -2549,4 +2549,8 @@ sys/dev/scsipi/scsiconf.c			1.268
 
 	Fix locking issue triggered by drvctl -r of a scsibus(4).
 	[jakllsch, ticket #277]
+
+sys/sys/param.h					patch
+
+	Welcome to 6.0_BETA2!
 
