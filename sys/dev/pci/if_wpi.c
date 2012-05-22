@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.50.2.1 2012/05/19 15:28:00 riz Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.50.2.2 2012/05/22 18:36:33 riz Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.50.2.1 2012/05/19 15:28:00 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.50.2.2 2012/05/22 18:36:33 riz Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -310,7 +310,7 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 
 	/* set device capabilities */
 	ic->ic_caps =
-#ifdef netyet
+#ifdef notyet
 		IEEE80211_C_IBSS |       /* IBSS mode support */
 #endif
 		IEEE80211_C_WPA |        /* 802.11i */
