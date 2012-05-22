@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.169.4.2 2012/05/19 17:28:29 riz Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.169.4.3 2012/05/22 21:44:38 riz Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.169.4.2 2012/05/19 17:28:29 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.169.4.3 2012/05/22 21:44:38 riz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1387,6 +1387,7 @@ ufs_rename(void *v)
 	 */
  	if (fdvp->v_mount != tdvp->v_mount) {
 		error = EXDEV;
+		goto abort;
 	}
 
 	/*
