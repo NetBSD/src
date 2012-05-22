@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.54 2012/04/29 22:54:00 chs Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.55 2012/05/22 14:20:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.54 2012/04/29 22:54:00 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.55 2012/05/22 14:20:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,21 +58,22 @@ static void genfs_dio_iodone(struct buf *);
 
 static int genfs_do_io(struct vnode *, off_t, vaddr_t, size_t, int, enum uio_rw,
     void (*)(struct buf *));
-static void genfs_rel_pages(struct vm_page **, int);
+static void genfs_rel_pages(struct vm_page **, unsigned int);
 static void genfs_markdirty(struct vnode *);
 
 int genfs_maxdio = MAXPHYS;
 
 static void
-genfs_rel_pages(struct vm_page **pgs, int npages)
+genfs_rel_pages(struct vm_page **pgs, unsigned int npages)
 {
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < npages; i++) {
 		struct vm_page *pg = pgs[i];
 
 		if (pg == NULL || pg == PGO_DONTCARE)
 			continue;
+		KASSERT(uvm_page_locked_p(pg));
 		if (pg->flags & PG_FAKE) {
 			pg->flags |= PG_RELEASED;
 		}
@@ -437,7 +438,11 @@ startover:
 	skipbytes = 0;
 
 	kva = uvm_pagermapin(pgs, npages,
-	    UVMPAGER_MAPIN_READ | UVMPAGER_MAPIN_WAITOK);
+	    UVMPAGER_MAPIN_READ | (async ? 0 : UVMPAGER_MAPIN_WAITOK));
+	if (kva == 0) {
+		error = EBUSY;
+		goto mapin_fail;
+	}
 
 	mbp = getiobuf(vp, true);
 	mbp->b_bufsize = totalbytes;
@@ -651,13 +656,14 @@ loopdone:
 			mutex_exit(uobj->vmobjlock);
 		}
 	}
-	if (!glocked) {
-		genfs_node_unlock(vp);
-	}
 
 	putiobuf(mbp);
     }
 
+mapin_fail:
+	if (!glocked) {
+		genfs_node_unlock(vp);
+	}
 	mutex_enter(uobj->vmobjlock);
 
 	/*
@@ -668,21 +674,7 @@ loopdone:
 	 */
 
 	if (error) {
-		for (i = 0; i < npages; i++) {
-			struct vm_page *pg = pgs[i];
-
-			if (pg == NULL) {
-				continue;
-			}
-			UVMHIST_LOG(ubchist, "examining pg %p flags 0x%x",
-			    pg, pg->flags, 0,0);
-			if (pg->flags & PG_FAKE) {
-				pg->flags |= PG_RELEASED;
-			}
-		}
-		mutex_enter(&uvm_pageqlock);
-		uvm_page_unbusy(pgs, npages);
-		mutex_exit(&uvm_pageqlock);
+		genfs_rel_pages(pgs, npages);
 		mutex_exit(uobj->vmobjlock);
 		UVMHIST_LOG(ubchist, "returning error %d", error,0,0,0);
 		goto out_err_free;
