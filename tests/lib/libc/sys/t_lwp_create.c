@@ -1,4 +1,4 @@
-/* $NetBSD: t_lwp_create.c,v 1.1 2012/05/21 14:15:19 martin Exp $ */
+/* $NetBSD: t_lwp_create.c,v 1.2 2012/05/22 09:23:39 martin Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ static void lwp_main_func(void* arg)
 }
 
 /*
- * Hard to docment - see usage examples below
+ * Hard to document - see usage examples below.
  */
 #define INVALID_UCONTEXT(ARCH,NAME,DESC)	\
 static void ARCH##_##NAME(ucontext_t *);	\
