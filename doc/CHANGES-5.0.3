@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.73 2012/05/19 17:04:02 riz Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.74 2012/05/22 18:53:10 riz Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -3022,4 +3022,9 @@ sys/netsmb/subr_mchain.c			1.21
 	Fix a regression introduced in netsmb by ticket #1426.
 	PR#44092.
 	[nakayama, ticket #1758]
+
+crypto/dist/openssl/ssl/d1_enc.c		patch
+
+	Address CVE-2012-2333.
+	[drochner, ticket #1762]
 
