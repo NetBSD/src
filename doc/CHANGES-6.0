@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.107 2012/05/22 18:37:13 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.108 2012/05/22 18:48:04 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -2533,3 +2533,20 @@ sys/kern/subr_cprng.c				1.9
 	Fix two problems that could cause /dev/random to not wake up readers
 	when entropy became available.
 	[tls, ticket #273]
+
+tests/lib/libc/sys/t_lwp_create.c		1.2
+
+	Fix a typo in a comment.
+	[martin, ticket #275]
+
+crypto/external/bsd/openssl/dist/ssl/d1_enc.c	1.2
+crypto/external/bsd/openssl/dist/ssl/t1_enc.c	1.4
+
+	Address CVE-2012-2333.
+	[drochner, ticket #276]
+
+sys/dev/scsipi/scsiconf.c			1.268
+
+	Fix locking issue triggered by drvctl -r of a scsibus(4).
+	[jakllsch, ticket #277]
+
