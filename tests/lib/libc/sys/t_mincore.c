@@ -1,4 +1,4 @@
-/* $NetBSD: t_mincore.c,v 1.4 2012/03/14 11:50:52 jruoho Exp $ */
+/* $NetBSD: t_mincore.c,v 1.5 2012/05/23 16:08:32 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mincore.c,v 1.4 2012/03/14 11:50:52 jruoho Exp $");
+__RCSID("$NetBSD: t_mincore.c,v 1.5 2012/05/23 16:08:32 martin Exp $");
 
 #include <sys/mman.h>
 #include <sys/shm.h>
@@ -141,7 +141,6 @@ ATF_TC_BODY(mincore_resid, tc)
 	void *addr, *addr2, *addr3, *buf;
 	size_t npgs = 0;
 	struct stat st;
-	ssize_t tot;
 	int fd, rv;
 
 	(void)memset(&st, 0, sizeof(struct stat));
@@ -152,15 +151,8 @@ ATF_TC_BODY(mincore_resid, tc)
 	ATF_REQUIRE(fd >= 0);
 	ATF_REQUIRE(buf != NULL);
 
-	tot = 0;
-
-	while (tot < page) {
-
-		rv = write(fd, buf, sizeof(buf));
-		ATF_REQUIRE(rv >= 0);
-
-		tot += rv;
-	}
+	rv = write(fd, buf, page * 5);
+	ATF_REQUIRE(rv >= 0);
 
 	ATF_REQUIRE(fd >= 0);
 	ATF_REQUIRE(fstat(fd, &st) == 0);
