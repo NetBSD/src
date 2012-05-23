@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.23.2.1 2012/04/17 00:05:30 yamt Exp $ */
+/*  $NetBSD: perfuse.c,v 1.23.2.2 2012/05/23 10:07:32 yamt Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -397,17 +397,18 @@ perfuse_init(struct perfuse_callbacks *pc, struct perfuse_mount_info *pmi)
 	/*
 	 * perfused can grow quite large, let assume there's enough ram ...
 	 */
-	if (getrlimit(RLIMIT_DATA, &rl) < 0) {
-		DERR(EX_OSERR, "%s: getrlimit failed: %s", __func__,
+	rl.rlim_cur = RLIM_INFINITY;
+	rl.rlim_max = RLIM_INFINITY;
+
+	if (setrlimit(RLIMIT_DATA, &rl) < 0) {
+		DERR(EX_OSERR, "%s: setrlimit failed: %s", __func__,
 		    strerror(errno));
-	} else {
-		rl.rlim_cur = rl.rlim_max;
-		if (setrlimit(RLIMIT_DATA, &rl) < 0) {
-			DERR(EX_OSERR, "%s: setrlimit failed: %s", __func__,
-			    strerror(errno));
-		}
 	}
-		
+
+	if (setrlimit(RLIMIT_AS, &rl) < 0) {
+		DERR(EX_OSERR, "%s: setrlimit failed: %s", __func__,
+		    strerror(errno));
+	}
 
 	ps = init_state();
 	ps->ps_owner_uid = pmi->pmi_uid;
@@ -485,25 +486,12 @@ perfuse_init(struct perfuse_callbacks *pc, struct perfuse_mount_info *pmi)
 	PUFFSOP_SET(pops, perfuse, node, listextattr);
 	PUFFSOP_SET(pops, perfuse, node, deleteextattr);
 #endif /* PUFFS_EXTNAMELEN */
+#ifdef PUFFS_KFLAG_CACHE_FS_TTL
+	PUFFSOP_SET(pops, perfuse, node, getattr_ttl);
+	PUFFSOP_SET(pops, perfuse, node, setattr_ttl);
+#endif /* PUFFS_KFLAG_CACHE_FS_TTL */
 
 	/*
-	 * We used to have PUFFS_KFLAG_WTCACHE here, which uses the
-	 * page cache (highly desirable to get mmap(2)), but still sends
-	 * all writes to the filesystem. In fact it does not send the
-	 * data written, but the pages that contain it. 
-	 *
-	 * There is a nasty bug hidden somewhere, possibly in libpuffs'
-	 * VOP_FSYNC, which sends an asynchronous PUFFS_SETATTR that
-	 * update file size. When writes are in progress, it will cause
-	 * the file to be truncated and we get a zero-filled chunk at the
-	 * beginning of a page. Removing PUFFS_KFLAG_WTCACHE fixes that
-	 * problem. 
-	 * 
-	 * The other consequences are that changes will not be propagated
-	 * immediatly to the filesystem, and we get a huge performance gain
-	 * because much less requests are sent. A test case for the above
-	 * mentioned bug got its execution time slashed by factor 50.
-	 *
 	 * PUFFS_KFLAG_NOCACHE_NAME is required so that we can see changes
 	 * done by other machines in networked filesystems. In later
 	 * NetBSD releases we use the alternative PUFFS_KFLAG_CACHE_FS_TTL, 

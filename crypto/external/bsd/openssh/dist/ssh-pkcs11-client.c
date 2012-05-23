@@ -1,5 +1,4 @@
-/*	$NetBSD: ssh-pkcs11-client.c,v 1.2 2010/11/21 18:59:04 adam Exp $	*/
-/* $OpenBSD: ssh-pkcs11-client.c,v 1.2 2010/02/24 06:12:53 djm Exp $ */
+/*	$NetBSD: ssh-pkcs11-client.c,v 1.2.6.1 2012/05/23 10:07:05 yamt Exp $	*/
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  *
@@ -16,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-pkcs11-client.c,v 1.2 2010/11/21 18:59:04 adam Exp $");
+__RCSID("$NetBSD: ssh-pkcs11-client.c,v 1.2.6.1 2012/05/23 10:07:05 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -120,6 +119,7 @@ pkcs11_rsa_private_encrypt(int flen, const u_char *from, u_char *to, RSA *rsa,
 	buffer_put_int(&msg, 0);
 	xfree(blob);
 	send_msg(&msg);
+	buffer_clear(&msg);
 
 	if (recv_msg(&msg) == SSH2_AGENT_SIGN_RESPONSE) {
 		signature = buffer_get_string(&msg, &slen);
@@ -129,6 +129,7 @@ pkcs11_rsa_private_encrypt(int flen, const u_char *from, u_char *to, RSA *rsa,
 		}
 		xfree(signature);
 	}
+	buffer_free(&msg);
 	return (ret);
 }
 

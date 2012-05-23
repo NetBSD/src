@@ -1,5 +1,5 @@
-/*	$NetBSD: key.c,v 1.9 2011/09/07 17:49:19 christos Exp $	*/
-/* $OpenBSD: key.c,v 1.97 2011/05/17 07:13:31 djm Exp $ */
+/*	$NetBSD: key.c,v 1.9.2.1 2012/05/23 10:07:04 yamt Exp $	*/
+/* $OpenBSD: key.c,v 1.98 2011/10/18 04:58:26 djm Exp $ */
 /*
  * read_bignum():
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: key.c,v 1.9 2011/09/07 17:49:19 christos Exp $");
+__RCSID("$NetBSD: key.c,v 1.9.2.1 2012/05/23 10:07:04 yamt Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 
@@ -1310,11 +1310,6 @@ cert_parse(Buffer *b, Key *key, const u_char *blob, u_int blen)
 	    buffer_get_string_ptr_ret(b, NULL) == NULL || /* reserved */
 	    (sig_key = buffer_get_string_ret(b, &sklen)) == NULL) {
 		error("%s: parse error", __func__);
-		goto out;
-	}
-
-	if (kidlen != strlen(key->cert->key_id)) {
-		error("%s: key ID contains \\0 character", __func__);
 		goto out;
 	}
 

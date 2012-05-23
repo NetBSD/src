@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.599.2.2 2012/04/17 00:08:09 yamt Exp $
+$NetBSD: usbdevs,v 1.599.2.3 2012/05/23 10:08:07 yamt Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -184,6 +184,7 @@ vendor HAUPPAUGE	0x0573	Hauppauge Computer Works
 vendor BAFO		0x0576	BAFO/Quality Computer Accessories
 vendor YEDATA		0x057b	Y-E Data
 vendor AVM		0x057c	AVM
+vendor NINTENDO		0x057e	Nintendo
 vendor QUICKSHOT	0x057f	Quickshot
 vendor ROLAND		0x0582	Roland
 vendor ROCKFIRE		0x0583	Rockfire
@@ -2066,6 +2067,13 @@ product NIKON E990		0x0102	Digital Camera E990
 product NIKON E880		0x0103	Digital Camera E880
 product NIKON E885		0x0105	Digital Camera E885
 
+/* Nintendo products */
+product NINTENDO BCM2045A	0x0305	Broadcom BCM2045A Bluetooth Radio
+product NINTENDO RVLCNT01	0x0306	Wii Remote RVL-CNT-01 (BT-HID)
+/* product NINTENDO WIIMIC1	0x0308	Wii Party-Mic */
+/* product NINTENDO WIIMIC2	0x0309	USB Microphone for Wii */
+product NINTENDO RVLCNT01TR	0x0330	Wii Remote Plus RVL-CNT-01-TR (BT-HID)
+
 /* Nokia products */
 product NOKIA CA42		0x0802	Mobile Phone adapter
 
@@ -2549,6 +2557,7 @@ product SIERRA AC880E		0x6852	Sierra Wireless AirCard 880E
 product SIERRA AC881E		0x6853	Sierra Wireless AirCard 881E
 product SIERRA AC880U		0x6855	Sierra Wireless AirCard 880U
 product SIERRA AC881U		0x6856	Sierra Wireless AirCard 881U
+product SIERRA AC885U		0x6880	Sierra Wireless AirCard 885U
 product SIERRA USB305		0x68a3	Sierra Wireless AirCard USB 305
 
 /* Sigmatel products */

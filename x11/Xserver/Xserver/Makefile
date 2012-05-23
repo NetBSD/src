@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2006/07/30 03:25:43 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.18.40.1 2012/05/23 10:08:30 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -78,6 +78,10 @@ SUBDIR+=	Xsun24
 
 .if ${XSERVER_XVFB} != "no"
 SUBDIR+=	Xvfb
+.endif
+
+.if ${XSERVER_XVAX} != "no"
+SUBDIR+=	Xvax
 .endif
 
 .include "Makefile.Xserver"

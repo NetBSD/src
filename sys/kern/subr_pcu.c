@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcu.c,v 1.10 2011/09/27 01:02:39 jym Exp $	*/
+/*	$NetBSD: subr_pcu.c,v 1.10.2.1 2012/05/23 10:08:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.10 2011/09/27 01:02:39 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.10.2.1 2012/05/23 10:08:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -75,6 +75,13 @@ static void pcu_lwp_op(const pcu_ops_t *, lwp_t *, int);
 /* XXX */
 extern const pcu_ops_t * const	pcu_ops_md_defs[];
 
+/*
+ * pcu_switchpoint: release PCU state if the LWP is being run on another CPU.
+ *
+ * On each context switches, called by mi_switch() with IPL_SCHED.
+ * 'l' is an LWP which is just we switched to.  (the new curlwp)
+ */
+
 void
 pcu_switchpoint(lwp_t *l)
 {
@@ -88,6 +95,7 @@ pcu_switchpoint(lwp_t *l)
 		/* PCUs are not in use. */
 		return;
 	}
+	/* commented out as we know we are already at IPL_SCHED */
 	/* s = splsoftclock(); */
 	for (id = 0; id < PCU_UNIT_COUNT; id++) {
 		if ((pcu_inuse & (1 << id)) == 0) {
@@ -102,6 +110,12 @@ pcu_switchpoint(lwp_t *l)
 	}
 	/* splx(s); */
 }
+
+/*
+ * pcu_discard_all: discard PCU state of the given LWP.
+ *
+ * Used by exec and LWP exit.
+ */
 
 void
 pcu_discard_all(lwp_t *l)
@@ -133,10 +147,19 @@ pcu_discard_all(lwp_t *l)
 	splx(s);
 }
 
+/*
+ * pcu_save_all: save PCU state of the given LWP so that eg. coredump can
+ * examine it.
+ */
+
 void
 pcu_save_all(lwp_t *l)
 {
 	const uint32_t pcu_inuse = l->l_pcu_used;
+	/*
+	 * Unless LW_WCORE, we aren't releasing since this LWP isn't giving
+	 * up PCU, just saving it.
+	 */
 	const int flags = PCU_SAVE | (l->l_flag & LW_WCORE ? PCU_RELEASE : 0);
 
 	/*
@@ -162,10 +185,6 @@ pcu_save_all(lwp_t *l)
 			continue;
 		}
 		const pcu_ops_t * const pcu = pcu_ops_md_defs[id];
-		/*
-		 * We aren't releasing since this LWP isn't giving up PCU,
-		 * just saving it.
-		 */
 		pcu_lwp_op(pcu, l, flags);
 	}
 	splx(s);

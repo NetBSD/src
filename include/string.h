@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.39 2009/07/22 19:48:27 kleink Exp $	*/
+/*	$NetBSD: string.h,v 1.39.8.1 2012/05/23 10:07:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -96,9 +96,11 @@ __aconst char *strsignal(int);
  * strxfrm_l
  */
 #endif
+__END_DECLS
 
 #if defined(_NETBSD_SOURCE)
 #include <strings.h>		/* for backwards-compatibilty */
+__BEGIN_DECLS
 void	*memmem(const void *, size_t, const void *, size_t);
 char	*strcasestr(const char *, const char *);
 size_t	 strlcat(char *, const char *, size_t);
@@ -107,8 +109,8 @@ char	*strsep(char **, const char *);
 char	*stresep(char **, const char *, int);
 char	*strndup(const char *, size_t);
 void	*memrchr(const void *, int, size_t);
-#endif
 __END_DECLS
+#endif
 
 #if _FORTIFY_SOURCE > 0
 #include <ssp/string.h>

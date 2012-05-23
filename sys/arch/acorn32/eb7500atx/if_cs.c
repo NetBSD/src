@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs.c,v 1.7.2.1 2012/04/17 00:05:52 yamt Exp $	*/
+/*	$NetBSD: if_cs.c,v 1.7.2.2 2012/05/23 10:07:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.7.2.1 2012/04/17 00:05:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.7.2.2 2012/05/23 10:07:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ static struct bus_space cs_rsbus_bs_tag;
 int	cs_rsbus_probe(device_t, cfdata_t, void *);
 void	cs_rsbus_attach(device_t, device_t, void *);
 
-static u_int8_t cs_rbus_read_1(struct cs_softc *, bus_size_t);
+static uint8_t cs_rbus_read_1(struct cs_softc *, bus_size_t);
 
 CFATTACH_DECL_NEW(cs_rsbus, sizeof(struct cs_softc),
 	cs_rsbus_probe, cs_rsbus_attach, NULL, NULL);
@@ -211,7 +211,7 @@ cs_rsbus_attach(device_t parent, device_t self, void *aux)
  * Provide a function to correctly do reading from oddly numbered registers
  * as you can't simply shift the register number
  */
-static u_int8_t
+static uint8_t
 cs_rbus_read_1(struct cs_softc *sc, bus_size_t a)
 {
 	bus_size_t offset;

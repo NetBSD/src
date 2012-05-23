@@ -1,4 +1,4 @@
-/*	$NetBSD: fdreg.h,v 1.4 2005/12/11 12:19:37 christos Exp $	*/
+/*	$NetBSD: fdreg.h,v 1.4.112.1 2012/05/23 10:07:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -56,6 +56,7 @@
 
 /* default attach args */
 #define FDC_ADDR 0xe94000	/* builtin fdc is here */
+#define FDC_MAPSIZE 0x2000	/* builtin fdc I/O range */
 #define FDC_INTR 96		/* interrupt vector */
 #define FDC_DMA 0		/* DMA ch# */
 #define FDC_DMAINTR 100		/* DMA interrupt vector */

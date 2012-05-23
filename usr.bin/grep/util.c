@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.13 2011/04/18 23:22:42 joerg Exp $	*/
+/*	$NetBSD: util.c,v 1.13.4.1 2012/05/23 10:08:24 yamt Exp $	*/
 /*	$FreeBSD: head/usr.bin/grep/util.c 211496 2010-08-19 09:28:59Z des $	*/
 /*	$OpenBSD: util.c,v 1.39 2010/07/02 22:18:03 tedu Exp $	*/
 
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: util.c,v 1.13 2011/04/18 23:22:42 joerg Exp $");
+__RCSID("$NetBSD: util.c,v 1.13.4.1 2012/05/23 10:08:24 yamt Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -227,12 +227,8 @@ procfile(const char *fn)
 
 	for (first = true, c = 0;  c == 0 || !(lflag || qflag); ) {
 		ln.off += ln.len + 1;
-		if ((ln.dat = grep_fgetln(f, &ln.len)) == NULL || ln.len == 0) {
-			if (ln.line_no == 0 && matchall)
-				exit(0);
-			else
-				break;
-		}
+		if ((ln.dat = grep_fgetln(f, &ln.len)) == NULL || ln.len == 0)
+			break;
 		if (ln.len > 0 && ln.dat[ln.len - 1] == line_sep)
 			--ln.len;
 		ln.line_no++;
@@ -295,78 +291,71 @@ procline(struct str *l, int nottext)
 	unsigned int i;
 	int c = 0, m = 0, r = 0;
 
-	if (!matchall) {
-		/* Loop to process the whole line */
-		while (st <= l->len) {
-			pmatch.rm_so = st;
-			pmatch.rm_eo = l->len;
+	/* Loop to process the whole line */
+	while (st <= l->len) {
+		pmatch.rm_so = st;
+		pmatch.rm_eo = l->len;
 
-			/* Loop to compare with all the patterns */
-			for (i = 0; i < patterns; i++) {
+		/* Loop to compare with all the patterns */
+		for (i = 0; i < patterns; i++) {
 /*
  * XXX: grep_search() is a workaround for speed up and should be
  * removed in the future.  See fastgrep.c.
  */
-				if (fg_pattern[i].pattern) {
-					r = grep_search(&fg_pattern[i],
-					    (unsigned char *)l->dat,
-					    l->len, &pmatch);
-					r = (r == 0) ? 0 : REG_NOMATCH;
-					st = pmatch.rm_eo;
-				} else {
-					r = regexec(&r_pattern[i], l->dat, 1,
-					    &pmatch, eflags);
-					r = (r == 0) ? 0 : REG_NOMATCH;
-					st = pmatch.rm_eo;
-				}
-				if (r == REG_NOMATCH)
+			if (fg_pattern[i].pattern) {
+				r = grep_search(&fg_pattern[i],
+				    (unsigned char *)l->dat,
+				    l->len, &pmatch);
+				r = (r == 0) ? 0 : REG_NOMATCH;
+				st = pmatch.rm_eo;
+			} else {
+				r = regexec(&r_pattern[i], l->dat, 1,
+				    &pmatch, eflags);
+				r = (r == 0) ? 0 : REG_NOMATCH;
+				st = pmatch.rm_eo;
+			}
+			if (r == REG_NOMATCH)
+				continue;
+			/* Check for full match */
+			if (xflag &&
+			    (pmatch.rm_so != 0 ||
+			     (size_t)pmatch.rm_eo != l->len))
+				continue;
+			/* Check for whole word match */
+			if (fg_pattern[i].word && pmatch.rm_so != 0) {
+				wint_t wbegin, wend;
+
+				wbegin = wend = L' ';
+				if (pmatch.rm_so != 0 &&
+				    sscanf(&l->dat[pmatch.rm_so - 1],
+				    "%lc", &wbegin) != 1)
 					continue;
-				/* Check for full match */
-				if (r == 0 && xflag)
-					if (pmatch.rm_so != 0 ||
-					    (size_t)pmatch.rm_eo != l->len)
-						r = REG_NOMATCH;
-				/* Check for whole word match */
-				if (r == 0 && fg_pattern[i].word &&
-				    pmatch.rm_so != 0) {
-					wint_t wbegin, wend;
-
-					wbegin = wend = L' ';
-					if (pmatch.rm_so != 0 &&
-					    sscanf(&l->dat[pmatch.rm_so - 1],
-					    "%lc", &wbegin) != 1)
-						r = REG_NOMATCH;
-					else if ((size_t)pmatch.rm_eo != l->len &&
-					    sscanf(&l->dat[pmatch.rm_eo],
-					    "%lc", &wend) != 1)
-						r = REG_NOMATCH;
-					else if (iswword(wbegin) || iswword(wend))
-						r = REG_NOMATCH;
-				}
-				if (r == 0) {
-					if (m == 0)
-						c++;
-					if (m < MAX_LINE_MATCHES)
-						matches[m++] = pmatch;
-					/* matches - skip further patterns */
-					if ((color != NULL && !oflag) || qflag || lflag)
-						break;
-				}
+				if ((size_t)pmatch.rm_eo != l->len &&
+				    sscanf(&l->dat[pmatch.rm_eo],
+				    "%lc", &wend) != 1)
+					continue;
+				if (iswword(wbegin) || iswword(wend))
+					continue;
 			}
-
-			if (vflag) {
-				c = !c;
-				break;
-			}
-			/* One pass if we are not recording matches */
+			c = 1;
+			if (m < MAX_LINE_MATCHES)
+				matches[m++] = pmatch;
+			/* matches - skip further patterns */
 			if ((color != NULL && !oflag) || qflag || lflag)
 				break;
-
-			if (st == (size_t)pmatch.rm_so)
-				break; 	/* No matches */
 		}
-	} else
-		c = !vflag;
+
+		if (vflag) {
+			c = !c;
+			break;
+		}
+		/* One pass if we are not recording matches */
+		if ((color != NULL && !oflag) || qflag || lflag)
+			break;
+
+		if (st == (size_t)pmatch.rm_so)
+			break; 	/* No matches */
+	}
 
 	if (c && binbehave == BINFILE_BIN && nottext)
 		return (c); /* Binary file */

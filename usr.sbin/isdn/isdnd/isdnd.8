@@ -1,4 +1,4 @@
-.\" $NetBSD: isdnd.8,v 1.11 2005/12/26 19:11:17 elad Exp $
+.\" $NetBSD: isdnd.8,v 1.11.42.1 2012/05/23 10:08:28 yamt Exp $
 .\"
 .\" Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,13 +23,13 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: isdnd.8,v 1.11 2005/12/26 19:11:17 elad Exp $
+.\"	$Id: isdnd.8,v 1.11.42.1 2012/05/23 10:08:28 yamt Exp $
 .\"
 .\" $FreeBSD$
 .\"
 .\"	last edit-date: [Tue May  2 13:45:12 2000]
 .\"
-.Dd December 26, 2005
+.Dd April 5, 2012
 .Dt ISDND 8
 .Os
 .Sh NAME
@@ -178,7 +178,7 @@ and
 .Fl r
 options,
 .Ar terminaltype
-specifies a terminal type or termcap entry name (such as vt220) for the device
+specifies a terminal type or terminfo entry name (such as vt220) for the device
 used for
 .Nm
 full-screen output. This is useful if an unused (no getty running) tty line is
@@ -388,7 +388,7 @@ isdnd -d0xf9 -f -r /dev/ttyv3 -t vt100
 will start
 .Nm
 with reasonable debugging messages enabled, full-screen mode of operation,
-full-screen display redirected to /dev/ttyv03 and using a termcap entry
+full-screen display redirected to /dev/ttyv03 and using a terminfo entry
 for vt100 on this display.
 .Sh DIAGNOSTICS
 Exit status is 0 on success, 1 on error.

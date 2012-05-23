@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.c,v 1.6 2011/09/07 17:49:19 christos Exp $	*/
-/* $OpenBSD: misc.c,v 1.85 2011/03/29 18:54:17 stevesk Exp $ */
+/*	$NetBSD: misc.c,v 1.6.2.1 2012/05/23 10:07:04 yamt Exp $	*/
+/* $OpenBSD: misc.c,v 1.86 2011/09/05 05:59:08 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2005,2006 Damien Miller.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: misc.c,v 1.6 2011/09/07 17:49:19 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.6.2.1 2012/05/23 10:07:04 yamt Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -944,7 +944,7 @@ static const struct {
 	{ "af11", IPTOS_DSCP_AF11 },
 	{ "af12", IPTOS_DSCP_AF12 },
 	{ "af13", IPTOS_DSCP_AF13 },
-	{ "af14", IPTOS_DSCP_AF21 },
+	{ "af21", IPTOS_DSCP_AF21 },
 	{ "af22", IPTOS_DSCP_AF22 },
 	{ "af23", IPTOS_DSCP_AF23 },
 	{ "af31", IPTOS_DSCP_AF31 },

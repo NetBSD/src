@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.34 2010/01/12 14:45:31 christos Exp $	*/
+/*	$NetBSD: fio.c,v 1.34.6.1 2012/05/23 10:08:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: fio.c,v 1.34 2010/01/12 14:45:31 christos Exp $");
+__RCSID("$NetBSD: fio.c,v 1.34.6.1 2012/05/23 10:08:25 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,7 +189,7 @@ setptr(FILE *ibuf, off_t offset)
 	/* Get temporary file. */
 	(void)snprintf(linebuf, LINESIZE, "%s/mail.XXXXXX", tmpdir);
 	if ((c = mkstemp(linebuf)) == -1 ||
-	    (mestmp = Fdopen(c, "r+")) == NULL) {
+	    (mestmp = Fdopen(c, "re+")) == NULL) {
 		(void)fprintf(stderr, "mail: can't open %s\n", linebuf);
 		exit(1);
 	}

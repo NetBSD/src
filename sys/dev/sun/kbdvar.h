@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdvar.h,v 1.20 2009/05/12 14:46:39 cegger Exp $	*/
+/*	$NetBSD: kbdvar.h,v 1.20.12.1 2012/05/23 10:08:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,7 @@
 #include "wskbd.h"	/* for NWSKBD */
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
+#include <dev/sysmon/sysmonvar.h>
 
 #if NWSKBD > 0
 #include "opt_wsdisplay_compat.h"
@@ -50,6 +51,9 @@
 
 struct kbd_softc {
 	device_t k_dev;		/* required first: base device */
+
+	struct sysmon_pswitch k_sm_pbutton;
+	int k_ev;
 
 	/* middle layer methods */
 	const struct kbd_ops *k_ops;

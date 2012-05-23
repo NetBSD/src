@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.155.8.1 2012/04/17 00:08:02 yamt Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.155.8.2 2012/05/23 10:08:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.155.8.1 2012/04/17 00:08:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.155.8.2 2012/05/23 10:08:05 yamt Exp $");
 
 #include "opt_scsi.h"
 
@@ -74,8 +74,6 @@ static void	scsipi_put_resource(struct scsipi_channel *);
 
 static void	scsipi_async_event_max_openings(struct scsipi_channel *,
 		    struct scsipi_max_openings *);
-static void	scsipi_async_event_xfer_mode(struct scsipi_channel *,
-		    struct scsipi_xfer_mode *);
 static void	scsipi_async_event_channel_reset(struct scsipi_channel *);
 
 static struct pool scsipi_xfer_pool;
@@ -218,7 +216,7 @@ scsipi_lookup_periph(struct scsipi_channel *chan, int target, int lun)
 	uint32_t hash;
 	int s;
 
-	KASSERT(KERNEL_LOCKED_P());
+	KASSERT(cold || KERNEL_LOCKED_P());
 
 	if (target >= chan->chan_ntargets ||
 	    lun >= chan->chan_nluns)
@@ -1263,7 +1261,7 @@ scsipi_done(struct scsipi_xfer *xs)
 	struct scsipi_channel *chan = periph->periph_channel;
 	int s, freezecnt;
 
-	KASSERT(KERNEL_LOCKED_P());
+	KASSERT(cold || KERNEL_LOCKED_P());
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("scsipi_done\n"));
 #ifdef SCSIPI_DEBUG
@@ -2158,65 +2156,16 @@ scsipi_async_event(struct scsipi_channel *chan, scsipi_async_event_t event,
 		break;
 
 	case ASYNC_EVENT_XFER_MODE:
-		scsipi_async_event_xfer_mode(chan,
-		    (struct scsipi_xfer_mode *)arg);
+		if (chan->chan_bustype->bustype_async_event_xfer_mode) {
+			chan->chan_bustype->bustype_async_event_xfer_mode(
+			    chan, arg);
+		}
 		break;
 	case ASYNC_EVENT_RESET:
 		scsipi_async_event_channel_reset(chan);
 		break;
 	}
 	splx(s);
-}
-
-/*
- * scsipi_print_xfer_mode:
- *
- *	Print a periph's capabilities.
- */
-void
-scsipi_print_xfer_mode(struct scsipi_periph *periph)
-{
-	int period, freq, speed, mbs;
-
-	if ((periph->periph_flags & PERIPH_MODE_VALID) == 0)
-		return;
-
-	aprint_normal_dev(periph->periph_dev, "");
-	if (periph->periph_mode & (PERIPH_CAP_SYNC | PERIPH_CAP_DT)) {
-		period = scsipi_sync_factor_to_period(periph->periph_period);
-		aprint_normal("sync (%d.%02dns offset %d)",
-		    period / 100, period % 100, periph->periph_offset);
-	} else
-		aprint_normal("async");
-
-	if (periph->periph_mode & PERIPH_CAP_WIDE32)
-		aprint_normal(", 32-bit");
-	else if (periph->periph_mode & (PERIPH_CAP_WIDE16 | PERIPH_CAP_DT))
-		aprint_normal(", 16-bit");
-	else
-		aprint_normal(", 8-bit");
-
-	if (periph->periph_mode & (PERIPH_CAP_SYNC | PERIPH_CAP_DT)) {
-		freq = scsipi_sync_factor_to_freq(periph->periph_period);
-		speed = freq;
-		if (periph->periph_mode & PERIPH_CAP_WIDE32)
-			speed *= 4;
-		else if (periph->periph_mode &
-		    (PERIPH_CAP_WIDE16 | PERIPH_CAP_DT))
-			speed *= 2;
-		mbs = speed / 1000;
-		if (mbs > 0)
-			aprint_normal(" (%d.%03dMB/s)", mbs, speed % 1000);
-		else
-			aprint_normal(" (%dKB/s)", speed % 1000);
-	}
-
-	aprint_normal(" transfers");
-
-	if (periph->periph_mode & PERIPH_CAP_TQING)
-		aprint_normal(", tagged queueing");
-
-	aprint_normal("\n");
 }
 
 /*
@@ -2252,57 +2201,6 @@ scsipi_async_event_max_openings(struct scsipi_channel *chan,
 		else if (mo->mo_openings > periph->periph_openings &&
 		    (periph->periph_flags & PERIPH_GROW_OPENINGS) != 0)
 			periph->periph_openings = mo->mo_openings;
-	}
-}
-
-/*
- * scsipi_async_event_xfer_mode:
- *
- *	Update the xfer mode for all periphs sharing the
- *	specified I_T Nexus.
- */
-static void
-scsipi_async_event_xfer_mode(struct scsipi_channel *chan,
-    struct scsipi_xfer_mode *xm)
-{
-	struct scsipi_periph *periph;
-	int lun, announce, mode, period, offset;
-
-	for (lun = 0; lun < chan->chan_nluns; lun++) {
-		periph = scsipi_lookup_periph(chan, xm->xm_target, lun);
-		if (periph == NULL)
-			continue;
-		announce = 0;
-
-		/*
-		 * Clamp the xfer mode down to this periph's capabilities.
-		 */
-		mode = xm->xm_mode & periph->periph_cap;
-		if (mode & PERIPH_CAP_SYNC) {
-			period = xm->xm_period;
-			offset = xm->xm_offset;
-		} else {
-			period = 0;
-			offset = 0;
-		}
-
-		/*
-		 * If we do not have a valid xfer mode yet, or the parameters
-		 * are different, announce them.
-		 */
-		if ((periph->periph_flags & PERIPH_MODE_VALID) == 0 ||
-		    periph->periph_mode != mode ||
-		    periph->periph_period != period ||
-		    periph->periph_offset != offset)
-			announce = 1;
-
-		periph->periph_mode = mode;
-		periph->periph_period = period;
-		periph->periph_offset = offset;
-		periph->periph_flags |= PERIPH_MODE_VALID;
-
-		if (announce)
-			scsipi_print_xfer_mode(periph);
 	}
 }
 

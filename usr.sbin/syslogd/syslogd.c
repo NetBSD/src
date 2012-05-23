@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.105.2.1 2012/04/17 00:09:53 yamt Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.105.2.2 2012/05/23 10:08:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.105.2.1 2012/04/17 00:09:53 yamt Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.105.2.2 2012/05/23 10:08:30 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -471,7 +471,7 @@ getgroup:
 	if (funixsize == 0)
 		logpath_add(&LogPaths, &funixsize,
 		    &funixmaxsize, _PATH_LOG);
-	funix = (int *)malloc(sizeof(int) * funixsize);
+	funix = malloc(sizeof(*funix) * funixsize);
 	if (funix == NULL) {
 		logerror("Couldn't allocate funix descriptors");
 		die(0, 0, NULL);
@@ -505,9 +505,10 @@ getgroup:
 	(void) SSL_library_init();
 	OpenSSL_add_all_digests();
 	/* OpenSSL PRNG needs /dev/urandom, thus initialize before chroot() */
-	if (!RAND_status())
+	if (!RAND_status()) {
+		errno = 0;
 		logerror("Unable to initialize OpenSSL PRNG");
-	else {
+	} else {
 		DPRINTF(D_TLS, "Initializing PRNG\n");
 	}
 #endif /* (!defined(DISABLE_TLS) && !defined(DISABLE_SIGN)) */
@@ -526,7 +527,7 @@ getgroup:
 	 * All files are open, we can drop privileges and chroot
 	 */
 	DPRINTF(D_MISC, "Attempt to chroot to `%s'\n", root);
-	if (chroot(root)) {
+	if (chroot(root) == -1) {
 		logerror("Failed to chroot to `%s'", root);
 		die(0, 0, NULL);
 	}
@@ -2194,7 +2195,9 @@ fprintlog(struct filed *f, struct buf_msg *passedbuffer, struct buf_queue *qentr
 	    && (f->f_type != F_TLS)
 	    && (f->f_type != F_PIPE)
 	    && (f->f_type != F_FILE)) {
-		logerror("Warning: unexpected message in buffer");
+		errno = 0;
+		logerror("Warning: unexpected message type %d in buffer",
+		    f->f_type);
 		DELREF(buffer);
 		return;
 	}
@@ -2332,8 +2335,8 @@ fprintlog(struct filed *f, struct buf_msg *passedbuffer, struct buf_queue *qentr
 			if ((f->f_file = p_open(f->f_un.f_pipe.f_pname,
 			    &f->f_un.f_pipe.f_pid)) < 0) {
 				f->f_type = F_UNUSED;
-				message_queue_freeall(f);
 				logerror("%s", f->f_un.f_pipe.f_pname);
+				message_queue_freeall(f);
 				break;
 			} else if (!qentry) /* prevent recursion */
 				SEND_QUEUE(f);
@@ -2362,8 +2365,8 @@ fprintlog(struct filed *f, struct buf_msg *passedbuffer, struct buf_queue *qentr
 				if ((f->f_file = p_open(f->f_un.f_pipe.f_pname,
 				     &f->f_un.f_pipe.f_pid)) < 0) {
 					f->f_type = F_UNUSED;
-					message_queue_freeall(f);
 					logerror("%s", f->f_un.f_pipe.f_pname);
+					message_queue_freeall(f);
 					break;
 				}
 				if (writev(f->f_file, iov, v - iov) < 0) {
@@ -3801,6 +3804,7 @@ cfline(size_t linenum, const char *line, struct filed *f, const char *prog,
 		error = getaddrinfo(f->f_un.f_forw.f_hname, "syslog", &hints,
 		    &res);
 		if (error) {
+			errno = 0;
 			logerror("%s", gai_strerror(error));
 			break;
 		}
@@ -3954,8 +3958,8 @@ socksetup(int af, const char *hostname)
 	hints.ai_socktype = SOCK_DGRAM;
 	error = getaddrinfo(hostname, "syslog", &hints, &res);
 	if (error) {
-		logerror("%s", gai_strerror(error));
 		errno = 0;
+		logerror("%s", gai_strerror(error));
 		die(0, 0, NULL);
 	}
 
@@ -4029,7 +4033,6 @@ p_open(char *prog, pid_t *rpid)
 	int pfd[2], nulldesc, i;
 	pid_t pid;
 	char *argv[4];	/* sh -c cmd NULL */
-	char errmsg[200];
 
 	if (pipe(pfd) == -1)
 		return -1;
@@ -4084,10 +4087,8 @@ p_open(char *prog, pid_t *rpid)
 	 */
 	if (fcntl(pfd[1], F_SETFL, O_NONBLOCK) == -1) {
 		/* This is bad. */
-		(void) snprintf(errmsg, sizeof(errmsg),
-		    "Warning: cannot change pipe to pid %d to "
+		logerror("Warning: cannot change pipe to pid %d to "
 		    "non-blocking.", (int) pid);
-		logerror("%s", errmsg);
 	}
 	*rpid = pid;
 	return pfd[1];
@@ -4112,7 +4113,6 @@ deadq_enter(pid_t pid, const char *name)
 
 	p = malloc(sizeof(*p));
 	if (p == NULL) {
-		errno = 0;
 		logerror("panic: out of memory!");
 		exit(1);
 	}
@@ -4641,6 +4641,7 @@ copy_config_value_quoted(const char *keyword, char **mem, const char **p)
 		return false;
 	q = *p += strlen(keyword);
 	if (!(q = strchr(*p, '"'))) {
+		errno = 0;
 		logerror("unterminated \"\n");
 		return false;
 	}
@@ -4665,6 +4666,7 @@ copy_config_value(const char *keyword, char **mem,
 	while (isspace((unsigned char)**p))
 		*p += 1;
 	if (**p != '=') {
+		errno = 0;
 		logerror("expected \"=\" in file %s, line %d", file, line);
 		return false;
 	}

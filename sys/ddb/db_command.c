@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.136.4.1 2012/04/17 00:07:24 yamt Exp $	*/
+/*	$NetBSD: db_command.c,v 1.136.4.2 2012/05/23 10:07:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.136.4.1 2012/04/17 00:07:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.136.4.2 2012/05/23 10:07:54 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.136.4.1 2012/04/17 00:07:24 yamt Ex
 #include <sys/reboot.h>
 #include <sys/device.h>
 #include <sys/lwp.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/namei.h>
 #include <sys/pool.h>
@@ -192,7 +191,6 @@ static void     db_help_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_lock_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_mount_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_mbuf_print_cmd(db_expr_t, bool, db_expr_t, const char *);
-static void	db_malloc_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_map_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_namecache_print_cmd(db_expr_t, bool, db_expr_t,
 		    const char *);
@@ -248,7 +246,6 @@ static const struct db_command db_show_cmds[] = {
 	    "Print the files open by process at address",
 	    "[/f] address", NULL) },
 	{ DDB_ADD_CMD("lock",	db_lock_print_cmd,	0,NULL,NULL,NULL) },
-	{ DDB_ADD_CMD("malloc",	db_malloc_print_cmd,0,NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("map",	db_map_print_cmd,	0,
 	    "Print the vm_map at address.", "[/f] address",NULL) },
 	{ DDB_ADD_CMD("module", db_show_module_cmd,	0,
@@ -981,22 +978,6 @@ db_map_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 #ifdef _KERNEL
 	uvm_map_printit((struct vm_map *)(uintptr_t) addr, full, db_printf);
 #endif	/* XXX CRASH(8) */
-}
-
-/*ARGSUSED*/
-static void
-db_malloc_print_cmd(db_expr_t addr, bool have_addr,
-    db_expr_t count, const char *modif)
-{
-
-#ifdef MALLOC_DEBUG
-	if (!have_addr)
-		addr = 0;
-
-	debug_malloc_printit(db_printf, (vaddr_t) addr);
-#else
-	db_printf("The kernel is not built with the MALLOC_DEBUG option.\n");
-#endif /* MALLOC_DEBUG */
 }
 
 /*ARGSUSED*/

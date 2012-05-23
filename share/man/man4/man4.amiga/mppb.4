@@ -1,4 +1,4 @@
-.\" $NetBSD: mppb.4,v 1.2.2.1 2012/04/17 00:05:46 yamt Exp $
+.\" $NetBSD: mppb.4,v 1.2.2.2 2012/05/23 10:07:35 yamt Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -70,7 +70,7 @@ driver was written by
 .Sh BUGS
 The hardware does not support DMA to host memory.
 .Pp
-The Prometheus does not support repeating of PCI transations, instead if the
+The Prometheus does not support repeating of PCI transactions, instead if the
 PCI card demands a retry of transaction, it returns value 0xFFFFFFFF.
 This is currently not handled by the
 .Nm

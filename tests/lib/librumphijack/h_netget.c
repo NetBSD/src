@@ -1,4 +1,4 @@
-/*      $NetBSD: h_netget.c,v 1.1 2011/02/06 18:44:29 pooka Exp $	*/
+/*      $NetBSD: h_netget.c,v 1.1.6.1 2012/05/23 10:08:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_netget.c,v 1.1 2011/02/06 18:44:29 pooka Exp $");
+__RCSID("$NetBSD: h_netget.c,v 1.1.6.1 2012/05/23 10:08:22 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -61,12 +61,12 @@ main(int argc, char *argv[])
 	if (argc != 4) {
 		fprintf(stderr, "usage: %s address port savefile\n",
 		    getprogname());
-		exit(1);
+		return EXIT_FAILURE;
 	}
 
 	s = socket(PF_INET, SOCK_STREAM, 0);
 	if (s == -1)
-		err(1, "socket");
+		err(EXIT_FAILURE, "socket");
 
 	memset(&sin, 0, sizeof(sin));
 	sin.sin_len = sizeof(sin);
@@ -76,26 +76,26 @@ main(int argc, char *argv[])
 
 	fd = open(argv[3], O_CREAT | O_RDWR, 0644);
 	if (fd == -1)
-		err(1, "open");
+		err(EXIT_FAILURE, "open");
 	if (ftruncate(fd, 0) == -1)
-		err(1, "ftruncate savefile");
+		err(EXIT_FAILURE, "ftruncate savefile");
 
 	if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) == -1)
-		err(1, "connect");
+		err(EXIT_FAILURE, "connect");
 
 	if (write(s, GETSTR, strlen(GETSTR)) != strlen(GETSTR))
-		err(1, "socket write");
+		err(EXIT_FAILURE, "socket write");
 
 	for (;;) {
 		n = read(s, buf, sizeof(buf));
 		if (n == 0)
 			break;
 		if (n == -1)
-			err(1, "socket read");
+			err(EXIT_FAILURE, "socket read");
 
 		if (write(fd, buf, n) != n)
-			err(1, "write file");
+			err(EXIT_FAILURE, "write file");
 	}
 
-	exit(0);
+	return EXIT_SUCCESS;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.23 2011/05/24 12:33:22 joerg Exp $	*/
+/*	$NetBSD: support.c,v 1.23.4.1 2012/05/23 10:08:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: support.c,v 1.23 2011/05/24 12:33:22 joerg Exp $");
+__RCSID("$NetBSD: support.c,v 1.23.4.1 2012/05/23 10:08:25 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -336,7 +336,7 @@ source(void *v)
 
 	if ((cp = expand(*arglist)) == NULL)
 		return 1;
-	if ((fi = Fopen(cp, "r")) == NULL) {
+	if ((fi = Fopen(cp, "re")) == NULL) {
 		warn("%s", cp);
 		return 1;
 	}
@@ -732,7 +732,7 @@ cathelp(const char *fname)
 	FILE *f;
 	size_t len;
 
-	if ((f = Fopen(fname, "r")) == NULL) {
+	if ((f = Fopen(fname, "re")) == NULL) {
 		warn("%s", fname);
 		return;
 	}

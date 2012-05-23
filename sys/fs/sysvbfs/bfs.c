@@ -1,4 +1,4 @@
-/*	$NetBSD: bfs.c,v 1.13.8.1 2012/04/17 00:08:20 yamt Exp $	*/
+/*	$NetBSD: bfs.c,v 1.13.8.2 2012/05/23 10:08:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bfs.c,v 1.13.8.1 2012/04/17 00:08:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bfs.c,v 1.13.8.2 2012/05/23 10:08:09 yamt Exp $");
 #define	BFS_DEBUG
 
 #include <sys/param.h>
@@ -57,7 +57,6 @@ MALLOC_JUSTDEFINE(M_BFS, "sysvbfs core", "sysvbfs internal structures");
 #define	__FREE(a, s, t)		free(a)
 #endif
 #include <fs/sysvbfs/bfs.h>
-#include <fs/sysvbfs/sysvbfs.h>
 
 #ifdef BFS_DEBUG
 #define	DPRINTF(on, fmt, args...)	if (on) printf(fmt, ##args)
@@ -505,21 +504,6 @@ bfs_file_lookup(const struct bfs *bfs, const char *fname, int *start, int *end,
 	    inode->end_sector, *size);
 
 	return true;
-}
-
-void
-bfs_file_setsize(struct vnode *v, size_t size)
-{
-	struct sysvbfs_node *bnode = v->v_data;
-	struct bfs_inode *inode = bnode->inode;
-
-	bnode->size = size;
-	uvm_vnp_setsize(v, bnode->size);
-	inode->end_sector = bnode->data_block +
-	    (ROUND_SECTOR(bnode->size) >> DEV_BSHIFT) - 1;
-	inode->eof_offset_byte = bnode->data_block * DEV_BSIZE +
-	    bnode->size - 1;
-	bnode->update_mtime = true;
 }
 
 bool

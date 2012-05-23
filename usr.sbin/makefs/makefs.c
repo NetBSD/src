@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.30.2.1 2012/04/17 00:09:49 yamt Exp $	*/
+/*	$NetBSD: makefs.c,v 1.30.2.2 2012/05/23 10:08:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.30.2.1 2012/04/17 00:09:49 yamt Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.30.2.2 2012/05/23 10:08:28 yamt Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -73,6 +73,8 @@ static fstype_t fstypes[] = {
 	{ "ffs", ffs_prep_opts,	ffs_parse_opts,	ffs_cleanup_opts, ffs_makefs },
 	{ "cd9660", cd9660_prep_opts, cd9660_parse_opts, cd9660_cleanup_opts,
 	  cd9660_makefs},
+	{ "chfs", chfs_prep_opts, chfs_parse_opts, chfs_cleanup_opts,
+	  chfs_makefs },
 	{ "v7fs", v7fs_prep_opts, v7fs_parse_opts, v7fs_cleanup_opts,
 	  v7fs_makefs },
 	{ .type = NULL	},
@@ -82,8 +84,7 @@ u_int		debug;
 struct timespec	start_time;
 
 static	fstype_t *get_fstype(const char *);
-static	void	usage(void);
-int		main(int, char *[]);
+static	void	usage(void) __dead;
 
 int
 main(int argc, char *argv[])
@@ -294,7 +295,7 @@ main(int argc, char *argv[])
 
 
 int
-set_option(option_t *options, const char *var, const char *val)
+set_option(const option_t *options, const char *var, const char *val)
 {
 	int	i;
 

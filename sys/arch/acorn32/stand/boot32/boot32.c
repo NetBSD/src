@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.38 2011/01/22 19:19:15 joerg Exp $	*/
+/*	$NetBSD: boot32.c,v 1.38.4.1 2012/05/23 10:07:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -657,7 +657,7 @@ vsync_rate(void)
 	time0 = os_read_monotonic_time();
 	while (os_read_monotonic_time() - time0 < 100)
 		continue;
-	return (u_int8_t)(count0 - osbyte_read(osbyte_VAR_VSYNC_TIMER));
+	return (uint8_t)(count0 - osbyte_read(osbyte_VAR_VSYNC_TIMER));
 }
 
 void

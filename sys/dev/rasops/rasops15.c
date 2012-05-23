@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops15.c,v 1.19 2010/05/04 04:57:34 macallan Exp $	*/
+/* 	$NetBSD: rasops15.c,v 1.19.8.1 2012/05/23 10:08:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.19 2010/05/04 04:57:34 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.19.8.1 2012/05/23 10:08:05 yamt Exp $");
 
 #include "opt_rasops.h"
 
@@ -99,11 +99,11 @@ rasops15_init(struct rasops_info *ri)
 
 	if (ri->ri_rnum == 0) {
 		ri->ri_rnum = 5;
-		ri->ri_rpos = 0;
+		ri->ri_rpos = 10 + (ri->ri_depth == 16);
 		ri->ri_gnum = 5 + (ri->ri_depth == 16);
 		ri->ri_gpos = 5;
 		ri->ri_bnum = 5;
-		ri->ri_bpos = 10 + (ri->ri_depth == 16);
+		ri->ri_bpos = 0;
 	}
 }
 

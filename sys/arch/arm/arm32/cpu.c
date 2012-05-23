@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.78 2011/03/10 08:07:08 bsh Exp $	*/
+/*	$NetBSD: cpu.c,v 1.78.4.1 2012/05/23 10:07:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.78 2011/03/10 08:07:08 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.78.4.1 2012/05/23 10:07:41 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -409,7 +409,12 @@ const struct cpuidtab cpuids[] = {
 	  pN_steppings },
 	{ CPU_ID_ARM1136JSR1,	CPU_CLASS_ARM11J,	"ARM1136J-S r1",
 	  pN_steppings },
-	{ CPU_ID_ARM1176JS,	CPU_CLASS_ARM11J,	"ARM1176J-S r0",
+#if 0
+	/* The ARM1156T2-S only has a memory protection unit */
+	{ CPU_ID_ARM1156T2S,	CPU_CLASS_ARM11J,	"ARM1156T2-S r0",
+	  pN_steppings },
+#endif
+	{ CPU_ID_ARM1176JZS,	CPU_CLASS_ARM11J,	"ARM1176JZ-S r0",
 	  pN_steppings },
 
 	{ CPU_ID_ARM11MPCORE,	CPU_CLASS_ARM11J, 	"ARM11 MPCore",

@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.84.2.1 2012/04/17 00:09:35 yamt Exp $	*/
+/*	$NetBSD: make.c,v 1.84.2.2 2012/05/23 10:08:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.84.2.1 2012/04/17 00:09:35 yamt Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.84.2.2 2012/05/23 10:08:26 yamt Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.84.2.1 2012/04/17 00:09:35 yamt Exp $");
+__RCSID("$NetBSD: make.c,v 1.84.2.2 2012/05/23 10:08:26 yamt Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -221,7 +221,7 @@ Make_OODate(GNode *gn)
      * doesn't depend on their modification time...
      */
     if ((gn->type & (OP_JOIN|OP_USE|OP_USEBEFORE|OP_EXEC)) == 0) {
-	(void)Dir_MTime(gn, 0);
+	(void)Dir_MTime(gn, 1);
 	if (DEBUG(MAKE)) {
 	    if (gn->mtime != 0) {
 		fprintf(debug_file, "modified %s...", Targ_FmtTime(gn->mtime));

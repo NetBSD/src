@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.120 2011/06/27 16:34:47 manu Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.120.2.1 2012/05/23 10:08:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.120 2011/06/27 16:34:47 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.120.2.1 2012/05/23 10:08:18 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -455,35 +455,35 @@ int
 ffs_full_fsync(struct vnode *vp, int flags)
 {
 	int error, i, uflags;
-	struct mount *mp;
 
 	KASSERT(vp->v_tag == VT_UFS);
 	KASSERT(VTOI(vp) != NULL);
 	KASSERT(vp->v_type != VCHR && vp->v_type != VBLK);
 
-	error = 0;
 	uflags = UPDATE_CLOSE | ((flags & FSYNC_WAIT) ? UPDATE_WAIT : 0);
 
-	mp = vp->v_mount;
-
-	/*
-	 * Flush all dirty data associated with the vnode.
-	 */
-	if (vp->v_type == VREG) {
-		int pflags = PGO_ALLPAGES | PGO_CLEANIT;
-
-		if ((flags & FSYNC_WAIT))
-			pflags |= PGO_SYNCIO;
-		if (fstrans_getstate(mp) == FSTRANS_SUSPENDING)
-			pflags |= PGO_FREE;
-		mutex_enter(vp->v_interlock);
-		error = VOP_PUTPAGES(vp, 0, 0, pflags);
-		if (error)
-			return error;
-	}
-
 #ifdef WAPBL
+	struct mount *mp = vp->v_mount;
 	if (mp && mp->mnt_wapbl) {
+
+		/*
+		 * Flush all dirty data associated with the vnode.
+		 */
+		if (vp->v_type == VREG) {
+			int pflags = PGO_ALLPAGES | PGO_CLEANIT;
+
+			if ((flags & FSYNC_LAZY))
+				pflags |= PGO_LAZY;
+			if ((flags & FSYNC_WAIT))
+				pflags |= PGO_SYNCIO;
+			if (fstrans_getstate(mp) == FSTRANS_SUSPENDING)
+				pflags |= PGO_FREE;
+			mutex_enter(vp->v_interlock);
+			error = VOP_PUTPAGES(vp, 0, 0, pflags);
+			if (error)
+				return error;
+		}
+
 		/*
 		 * Don't bother writing out metadata if the syncer is
 		 * making the request.  We will let the sync vnode
@@ -500,6 +500,8 @@ ffs_full_fsync(struct vnode *vp, int flags)
 				return error;
 			error = ffs_update(vp, NULL, NULL, uflags);
 			UFS_WAPBL_END(mp);
+		} else {
+			error = 0;
 		}
 		if (error || (flags & FSYNC_NOLOG) != 0)
 			return error;
@@ -525,7 +527,7 @@ ffs_full_fsync(struct vnode *vp, int flags)
 	}
 #endif /* WAPBL */
 
-	error = vflushbuf(vp, (flags & FSYNC_WAIT) != 0);
+	error = vflushbuf(vp, flags);
 	if (error == 0)
 		error = ffs_update(vp, NULL, NULL, uflags);
 	if (error == 0 && (flags & FSYNC_CACHE) != 0) {

@@ -1,4 +1,4 @@
-.\"	$NetBSD: login.conf.5,v 1.25 2011/06/04 05:30:45 dholland Exp $
+.\"	$NetBSD: login.conf.5,v 1.25.2.1 2012/05/23 10:07:35 yamt Exp $
 .\"
 .\" Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
 .\" All rights reserved.
@@ -66,7 +66,7 @@ A special class called
 will be used (if it exists) if the field in the password file is empty.
 .Sh CAPABILITIES
 Refer to
-.Xr getcap 3
+.Xr capfile 5
 for a description of the file layout.
 An example entry is:
 .Bd -literal -offset indent
@@ -396,8 +396,8 @@ hashed database built with
 .Sh SEE ALSO
 .Xr cap_mkdb 1 ,
 .Xr login 1 ,
-.Xr getcap 3 ,
 .Xr login_cap 3 ,
+.Xr capfile 5 ,
 .Xr ttys 5 ,
 .Xr ftpd 8 ,
 .Xr sshd 8

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.18.8.1 2012/04/17 00:05:58 yamt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.18.8.2 2012/05/23 10:07:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.18.8.1 2012/04/17 00:05:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.18.8.2 2012/05/23 10:07:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ process_write_regs(struct lwp *l, const struct reg *regp)
 	 * Note that struct regs is compatible with
 	 * the __gregs array in mcontext_t.
 	 */
-	error = check_mcontext(l, (const mcontext_t *)regs, tf);
+	error = cpu_mcontext_validate(l, (const mcontext_t *)regs);
 	if (error != 0)
 		return error;
 

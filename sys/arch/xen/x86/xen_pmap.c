@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_pmap.c,v 1.6.2.2 2012/04/17 00:07:11 yamt Exp $	*/
+/*	$NetBSD: xen_pmap.c,v 1.6.2.3 2012/05/23 10:07:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.6.2.2 2012/04/17 00:07:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.6.2.3 2012/05/23 10:07:52 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -360,7 +360,7 @@ xen_kpm_sync(struct pmap *pmap, int index)
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
-	
+
 	KASSERT(pmap != NULL);
 	KASSERT(kpreempt_disabled());
 
@@ -370,19 +370,19 @@ xen_kpm_sync(struct pmap *pmap, int index)
 		if (ci == NULL) {
 			continue;
 		}
+		cpuid_t cid = cpu_index(ci);
 		if (pmap != pmap_kernel() &&
-		    (ci->ci_cpumask & pmap->pm_xen_ptp_cpus) == 0)
+		    !kcpuset_isset(pmap->pm_xen_ptp_cpus, cid))
 			continue;
 
 		/* take the lock and check again */
 		mutex_enter(&ci->ci_kpm_mtx);
 		if (pmap == pmap_kernel() ||
-		    (ci->ci_cpumask & pmap->pm_xen_ptp_cpus) != 0) {
+		    kcpuset_isset(pmap->pm_xen_ptp_cpus, cid)) {
 			pmap_kpm_setpte(ci, pmap, index);
 		}
 		mutex_exit(&ci->ci_kpm_mtx);
 	}
-	return;
 }
 
 #endif /* PAE || __x86_64__ */

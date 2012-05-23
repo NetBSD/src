@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.108.2.1 2012/04/17 00:06:00 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.108.2.2 2012/05/23 10:07:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.108.2.1 2012/04/17 00:06:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.108.2.2 2012/05/23 10:07:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,6 +295,8 @@ mbattach(device_t pdp, device_t dp, void *auxp)
 		config_found(dp, __UNCONST("ahsc"), simple_devprint);
 	if (is_a600() || is_a1200())
 		config_found(dp, __UNCONST("pccard"), simple_devprint);
+	if (is_a1200())
+		config_found(dp, __UNCONST("a1k2cp"), simple_devprint);
 #ifdef DRACO
 	if (!is_draco())
 #endif

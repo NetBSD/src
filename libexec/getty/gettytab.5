@@ -1,4 +1,4 @@
-.\"	$NetBSD: gettytab.5,v 1.35 2006/10/13 20:28:06 wiz Exp $
+.\"	$NetBSD: gettytab.5,v 1.35.40.1 2012/05/23 10:07:33 yamt Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)gettytab.5	8.4 (Berkeley) 4/19/94
 .\"
-.Dd October 7, 2006
+.Dd April 5, 2012
 .Dt GETTYTAB 5
 .Os
 .Sh NAME
@@ -42,7 +42,7 @@ The
 .Nm
 file
 is a simplified version of the
-.Xr termcap 5
+.Xr capfile 5
 data base
 used to describe terminal lines.
 The initial terminal login process
@@ -80,7 +80,7 @@ and
 capabilities.
 .Sh CAPABILITIES
 Refer to
-.Xr termcap 5
+.Xr capfile 5
 for a description of the file layout.
 The
 .Em default
@@ -394,7 +394,7 @@ calls.
 .Xr login 1 ,
 .Xr gethostname 3 ,
 .Xr uname 3 ,
-.Xr termcap 5 ,
+.Xr capfile 5 ,
 .Xr ttys 5 ,
 .Xr getty 8 ,
 .Xr pppd 8 ,
@@ -421,8 +421,3 @@ The terminal driver should support sane delay settings.
 The
 .Em \&he
 capability is stupid.
-.Pp
-The
-.Xr termcap 5
-format is horrid, something more rational should
-have been chosen.

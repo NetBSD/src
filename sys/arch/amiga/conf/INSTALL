@@ -1,9 +1,9 @@
-# $NetBSD: INSTALL,v 1.96.2.1 2012/04/17 00:06:01 yamt Exp $
+# $NetBSD: INSTALL,v 1.96.2.2 2012/05/23 10:07:40 yamt Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.95 2012/01/19 22:43:11 rkujawa Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.99 2012/05/15 17:35:44 rkujawa Exp $
 #
 ##
 # GENERIC machine description file
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.96.2.1 $"
+#ident 		"GENERIC-$Revision: 1.96.2.2 $"
 
 makeoptions	COPTS="-Os"
 
@@ -318,10 +318,15 @@ lpt0		at drsupio? port ?	# DraCo parallel
 
 # Ethernet cards:
 le*		at zbus0		# A2065, Ameristar, Ariadne
-ne*		at zbus0		# AriadneII, X-surf
+ne*		at zbus0		# AriadneII
 ed*		at zbus0		# Hydra, ASDG LanRover
 es*		at zbus0		# CEI A4066 EthernetPLUS
 qn*		at zbus0		# Quicknet
+
+xsurf*		at zbus0		# X-Surf
+ne*		at xsurfbus?		# NE2000 chip on X-Surf
+gencp*		at xsurfbus?		# clockports on X-Surf
+clockport*	at gencp?
 
 # Arcnet
 bah*		at zbus0		# C=/Ameristar A2060 / 560

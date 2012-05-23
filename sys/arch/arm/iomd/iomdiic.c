@@ -1,4 +1,4 @@
-/*	$NetBSD: iomdiic.c,v 1.6 2007/12/06 17:00:31 ad Exp $	*/
+/*	$NetBSD: iomdiic.c,v 1.6.50.1 2012/05/23 10:07:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -52,7 +52,7 @@
 #include <arm/iomd/iomdiicvar.h>
 
 struct iomdiic_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_st;
 	bus_space_handle_t sc_sh;
 
@@ -118,7 +118,7 @@ static const struct i2c_bitbang_ops iomdiic_bbops = {
 };
 
 static int
-iomdiic_match(struct device *parent, struct cfdata *cf, void *aux)
+iomdiic_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct iic_attach_args *ia = aux;
 
@@ -127,12 +127,14 @@ iomdiic_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-iomdiic_attach(struct device *parent, struct device *self, void *aux)
+iomdiic_attach(device_t parent, device_t self, void *aux)
 {
-	struct iomdiic_softc *sc = (void *) self;
+	struct iomdiic_softc *sc = device_private(self);
 	struct i2cbus_attach_args iba;
 
-	printf("\n");
+	aprint_normal("\n");
+
+	sc->sc_dev = self;
 
 	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_NONE);
 
@@ -146,20 +148,22 @@ iomdiic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_i2c.ic_write_byte = iomdiic_write_byte;
 
 	iba.iba_tag = &sc->sc_i2c;
-	(void) config_found_ia(&sc->sc_dev, "i2cbus", &iba, iicbus_print);
+	(void) config_found_ia(sc->sc_dev, "i2cbus", &iba, iicbus_print);
 }
 
-CFATTACH_DECL(iomdiic, sizeof(struct iomdiic_softc),
+CFATTACH_DECL_NEW(iomdiic, sizeof(struct iomdiic_softc),
     iomdiic_match, iomdiic_attach, NULL, NULL);
 
 i2c_tag_t
 iomdiic_bootstrap_cookie(void)
 {
 	static struct iomdiic_softc sc;
+	static struct device dev;
 
 	/* XXX Yuck. */
-	strcpy(sc.sc_dev.dv_xname, "iomdiicboot");
+	strcpy(dev.dv_xname, "iomdiicboot");
 
+	sc.sc_dev = &dev;
 	sc.sc_i2c.ic_cookie = &sc;
 	sc.sc_i2c.ic_acquire_bus = iomdiic_acquire_bus;
 	sc.sc_i2c.ic_release_bus = iomdiic_release_bus;

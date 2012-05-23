@@ -1,4 +1,4 @@
-.\" $NetBSD: makemandb.8,v 1.2.2.2 2012/04/17 00:09:49 yamt Exp $
+.\" $NetBSD: makemandb.8,v 1.2.2.3 2012/05/23 10:08:29 yamt Exp $
 .\"
 .\" Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 20, 2012
+.Dd April 21, 2012
 .Dt MAKEMANDB 8
 .Os
 .Sh NAME
@@ -94,7 +94,11 @@ The name of the FTS table is mandb and its schema is as follows:
 .It Li env Ta The ENVIRONMENT section.
 .It Li files Ta The FILES section.
 .It Li exit_status Ta The EXIT STATUS section.
+.It Li diagnostics Ta The DIAGNOSTICS section.
 .It Li errors Ta The ERRORS section.
+.It Li md5_hash Ta  MD5 checksum of the man page.
+.It Li machine Ta The machine architecture (if any) for which the man
+page is relevant.
 .El
 .Sh FILES
 .Bl -hang -width /var/db/man.db -compact

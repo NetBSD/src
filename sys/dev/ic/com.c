@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.301.4.1 2012/04/17 00:07:32 yamt Exp $ */
+/* $NetBSD: com.c,v 1.301.4.2 2012/05/23 10:07:56 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.301.4.1 2012/04/17 00:07:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.301.4.2 2012/05/23 10:07:56 yamt Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -76,9 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.301.4.1 2012/04/17 00:07:32 yamt Exp $");
 #include "opt_ntp.h"
 
 #include "rnd.h"
-#ifdef RND_COM
-#include <sys/rnd.h>
-#endif
 
 /* The COM16650 option was renamed to COM_16650. */
 #ifdef COM16650
@@ -115,6 +112,10 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.301.4.1 2012/04/17 00:07:32 yamt Exp $");
 #include <sys/vnode.h>
 #include <sys/kauth.h>
 #include <sys/intr.h>
+#ifdef RND_COM
+#include <sys/rnd.h>
+#endif
+
 
 #include <sys/bus.h>
 
@@ -786,7 +787,6 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 		struct termios t;
 
 		tp->t_dev = dev;
-
 
 		if (sc->enable) {
 			if ((*sc->enable)(sc)) {

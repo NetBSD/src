@@ -1,7 +1,7 @@
-/*	$NetBSD: pmap_tlb.c,v 1.3.6.1 2012/04/17 00:07:06 yamt Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.3.6.2 2012/05/23 10:07:51 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2008-2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -32,15 +32,15 @@
 /*
  * x86 pmap(9) module: TLB shootdowns.
  *
- * TLB shootdowns are hard interrupts that operate outside the SPL framework:
+ * TLB shootdowns are hard interrupts that operate outside the SPL framework.
  * They do not need to be blocked, provided that the pmap module gets the
  * order of events correct.  The calls are made by poking the LAPIC directly.
- * The interrupt handler is short and does one of the following:  invalidate
+ * The interrupt handler is short and does one of the following: invalidate
  * a set of pages, all user TLB entries or the entire TLB.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.3.6.1 2012/04/17 00:07:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.3.6.2 2012/05/23 10:07:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -70,27 +70,20 @@ typedef struct {
 #endif
 	uint16_t		tp_count;
 	uint16_t		tp_pte;
-	uint32_t		tp_cpumask;
-	uint32_t		tp_usermask;
+	int			tp_userpmap;
+	kcpuset_t *		tp_cpumask;
 } pmap_tlb_packet_t;
 
 /* No more than N seperate invlpg. */
 #define	TP_MAXVA		6
 
-typedef struct {
-	volatile uint32_t	tm_pending;
-	volatile uint32_t	tm_gen;
-	uint32_t		tm_usergen;
-	uint32_t		tm_globalgen;
-	char			tm_pad[64 - sizeof(uintptr_t) * 4];
-} pmap_tlb_mailbox_t;
-
 /*
  * TLB shootdown state.
  */
-static struct evcnt		pmap_tlb_evcnt		__cacheline_aligned;
 static pmap_tlb_packet_t	pmap_tlb_packet		__cacheline_aligned;
-static pmap_tlb_mailbox_t	pmap_tlb_mailbox	__cacheline_aligned;
+static volatile u_int		pmap_tlb_pendcount	__cacheline_aligned;
+static volatile u_int		pmap_tlb_gen		__cacheline_aligned;
+static struct evcnt		pmap_tlb_evcnt		__cacheline_aligned;
 
 /*
  * TLB shootdown statistics.
@@ -124,7 +117,8 @@ pmap_tlb_init(void)
 {
 
 	memset(&pmap_tlb_packet, 0, sizeof(pmap_tlb_packet_t));
-	memset(&pmap_tlb_mailbox, 0, sizeof(pmap_tlb_mailbox_t));
+	pmap_tlb_pendcount = 0;
+	pmap_tlb_gen = 0;
 
 	evcnt_attach_dynamic(&pmap_tlb_evcnt, EVCNT_TYPE_INTR,
 	    NULL, "TLB", "shootdown");
@@ -151,11 +145,21 @@ pmap_tlb_init(void)
 #endif
 }
 
+void
+pmap_tlb_cpu_init(struct cpu_info *ci)
+{
+	pmap_tlb_packet_t *tp = (pmap_tlb_packet_t *)ci->ci_pmap_data;
+
+	memset(tp, 0, sizeof(pmap_tlb_packet_t));
+	kcpuset_create(&tp->tp_cpumask, true);
+}
+
 static inline void
 pmap_tlbstat_count(struct pmap *pm, vaddr_t va, tlbwhy_t why)
 {
 #ifdef TLBSTATS
-	uint32_t mask;
+	const cpuid_t cid = cpu_index(curcpu());
+	bool local = false, remote = false;
 
 	if (va != (vaddr_t)-1LL) {
 		atomic_inc_64(&tlbstat_single_req.ev_count);
@@ -164,22 +168,25 @@ pmap_tlbstat_count(struct pmap *pm, vaddr_t va, tlbwhy_t why)
 		atomic_inc_64(&tlbstat_kernel[why].ev_count);
 		return;
 	}
+
 	if (va >= VM_MAXUSER_ADDRESS) {
-		mask = pm->pm_cpus | pm->pm_kernel_cpus;
-	} else {
-		mask = pm->pm_cpus;
+		remote = kcpuset_isotherset(pm->pm_kernel_cpus, cid);
+		local = kcpuset_isset(pm->pm_kernel_cpus, cid);
 	}
-	if ((mask & curcpu()->ci_cpumask) != 0) {
+	remote |= kcpuset_isotherset(pm->pm_cpus, cid);
+	local |= kcpuset_isset(pm->pm_cpus, cid);
+
+	if (local) {
 		atomic_inc_64(&tlbstat_local[why].ev_count);
 	}
-	if ((mask & ~curcpu()->ci_cpumask) != 0) {
+	if (remote) {
 		atomic_inc_64(&tlbstat_remote[why].ev_count);
 	}
 #endif
 }
 
 static inline void
-pmap_tlb_invalidate(pmap_tlb_packet_t *tp)
+pmap_tlb_invalidate(const pmap_tlb_packet_t *tp)
 {
 	int i;
 
@@ -203,7 +210,7 @@ pmap_tlb_invalidate(pmap_tlb_packet_t *tp)
 }
 
 /*
- * pmap_tlb_shootdown: invalidate a page on all CPUs using pmap 'pm'
+ * pmap_tlb_shootdown: invalidate a page on all CPUs using pmap 'pm'.
  */
 void
 pmap_tlb_shootdown(struct pmap *pm, vaddr_t va, pt_entry_t pte, tlbwhy_t why)
@@ -229,7 +236,7 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t va, pt_entry_t pte, tlbwhy_t why)
 
 	/*
 	 * Add the shootdown operation to our pending set.
-	 */ 
+	 */
 	s = splvm();
 	tp = (pmap_tlb_packet_t *)curcpu()->ci_pmap_data;
 
@@ -250,14 +257,14 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t va, pt_entry_t pte, tlbwhy_t why)
 		tp->tp_count = (uint16_t)-1;
 	}
 
-	if (pm == pmap_kernel()) {
-		tp->tp_cpumask = cpus_running;
-	} else if (va >= VM_MAXUSER_ADDRESS) {
-		tp->tp_cpumask |= (pm->pm_cpus | pm->pm_kernel_cpus);
-		tp->tp_usermask |= (pm->pm_cpus | pm->pm_kernel_cpus);
+	if (pm != pmap_kernel()) {
+		kcpuset_merge(tp->tp_cpumask, pm->pm_cpus);
+		if (va >= VM_MAXUSER_ADDRESS) {
+			kcpuset_merge(tp->tp_cpumask, pm->pm_kernel_cpus);
+		}
+		tp->tp_userpmap = 1;
 	} else {
-		tp->tp_cpumask |= pm->pm_cpus;
-		tp->tp_usermask |= pm->pm_cpus;
+		kcpuset_copy(tp->tp_cpumask, kcpuset_running);
 	}
 	pmap_tlbstat_count(pm, va, why);
 	splx(s);
@@ -265,59 +272,53 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t va, pt_entry_t pte, tlbwhy_t why)
 
 #ifdef MULTIPROCESSOR
 #ifdef XEN
-static inline
-void pmap_tlb_processpacket(pmap_tlb_packet_t *tp)
+
+static inline void
+pmap_tlb_processpacket(pmap_tlb_packet_t *tp, kcpuset_t *target)
 {
-	struct cpu_info *self = curcpu();
-	if (tp->tp_count == (uint16_t)-1) {
-		xen_mcast_tlbflush(tp->tp_cpumask &
-				   cpus_running &
-				   ~self->ci_cpumask);
-	} else {
+
+	if (tp->tp_count != (uint16_t)-1) {
 		/* Invalidating a single page or a range of pages. */
-		int i;
-		for (i = tp->tp_count - 1; i >= 0; i--) {
-			xen_mcast_invlpg(tp->tp_va[i],
-					 tp->tp_cpumask & 
-					 cpus_running &
-					 ~self->ci_cpumask);
+		for (int i = tp->tp_count - 1; i >= 0; i--) {
+			xen_mcast_invlpg(tp->tp_va[i], target);
 		}
+	} else {
+		xen_mcast_tlbflush(target);
 	}
 
-	/* Ack the request */
-	atomic_and_32(&pmap_tlb_mailbox.tm_pending, ~tp->tp_cpumask);
+	/* Remote CPUs have been synchronously flushed. */
+	pmap_tlb_pendcount = 0;
 }
-#else /* XEN */
-static inline 
-void pmap_tlb_processpacket(pmap_tlb_packet_t *tp)
+
+#else
+
+static inline void
+pmap_tlb_processpacket(pmap_tlb_packet_t *tp, kcpuset_t *target)
 {
 	int err = 0;
-	CPU_INFO_ITERATOR cii;
-	struct cpu_info *lci;
 
-	if (tp->tp_cpumask == cpus_running) {
+	if (!kcpuset_match(target, kcpuset_running)) {
+		const struct cpu_info * const self = curcpu();
+		CPU_INFO_ITERATOR cii;
+		struct cpu_info *lci;
+
+		for (CPU_INFO_FOREACH(cii, lci)) {
+			const cpuid_t lcid = cpu_index(lci);
+
+			if (__predict_false(lci == self) ||
+			    !kcpuset_isset(target, lcid)) {
+				continue;
+			}
+			err |= x86_ipi(LAPIC_TLB_VECTOR,
+			    lci->ci_cpuid, LAPIC_DLMODE_FIXED);
+		}
+	} else {
 		err = x86_ipi(LAPIC_TLB_VECTOR, LAPIC_DEST_ALLEXCL,
 		    LAPIC_DLMODE_FIXED);
-	} else {
-		struct cpu_info *self = curcpu();
-		for (CPU_INFO_FOREACH(cii, lci)) {
-			if (__predict_false(lci == self)) {
-				continue;
-			}
-			if ((lci->ci_cpumask & pmap_tlb_mailbox.tm_pending) == 0) {
-				continue;
-			}
-			KASSERT(lci->ci_flags & CPUF_RUNNING);
-
-			err |= x86_ipi(LAPIC_TLB_VECTOR,
-				       lci->ci_cpuid, LAPIC_DLMODE_FIXED);
-		}
 	}
-
-	if (__predict_false(err != 0)) {
-		panic("pmap_tlb_shootdown: IPI failed");
-	}
+	KASSERT(err == 0);
 }
+
 #endif /* XEN */
 #endif /* MULTIPROCESSOR */
 
@@ -330,10 +331,10 @@ void
 pmap_tlb_shootnow(void)
 {
 	pmap_tlb_packet_t *tp;
-	pmap_tlb_mailbox_t *tm;
 	struct cpu_info *ci;
-	uint32_t remote;
-	uintptr_t gen;
+	kcpuset_t *target;
+	u_int local, gen, rcpucount;
+	cpuid_t cid;
 	int s;
 
 	KASSERT(kpreempt_disabled());
@@ -351,22 +352,29 @@ pmap_tlb_shootnow(void)
 		splx(s);
 		return;
 	}
-	gen = 0; /* XXXgcc */
-	tm = &pmap_tlb_mailbox;
-	remote = tp->tp_cpumask & ~ci->ci_cpumask;
+	cid = cpu_index(ci);
+
+	target = tp->tp_cpumask;
+	local = kcpuset_isset(target, cid) ? 1 : 0;
+	rcpucount = kcpuset_countset(target) - local;
+	gen = 0;
 
 #ifdef MULTIPROCESSOR
-	if (remote != 0) {
+	if (rcpucount) {
 		int count;
+
 		/*
 		 * Gain ownership of the shootdown mailbox.  We must stay
 		 * at IPL_VM once we own it or could deadlock against an
 		 * interrupt on this CPU trying to do the same.
 		 */
-		while (atomic_cas_32(&tm->tm_pending, 0, remote) != 0) {
+		KASSERT(rcpucount < ncpu);
+
+		while (atomic_cas_uint(&pmap_tlb_pendcount, 0, rcpucount)) {
 			splx(s);
 			count = SPINLOCK_BACKOFF_MIN;
-			while (tm->tm_pending != 0) {
+			while (pmap_tlb_pendcount) {
+				KASSERT(pmap_tlb_pendcount < ncpu);
 				SPINLOCK_BACKOFF(count);
 			}
 			s = splvm();
@@ -379,33 +387,25 @@ pmap_tlb_shootnow(void)
 
 		/*
 		 * Start a new generation of updates.  Copy our shootdown
-		 * requests into the global buffer.
+		 * requests into the global buffer.  Note that tp_cpumask
+		 * will not be used by remote CPUs (it would be unsafe).
 		 */
-		gen = ++tm->tm_gen;
+		gen = ++pmap_tlb_gen;
 		memcpy(&pmap_tlb_packet, tp, sizeof(*tp));
 		pmap_tlb_evcnt.ev_count++;
 
 		/*
 		 * Initiate shootdowns on remote CPUs.
 		 */
-		/* Trim mailbox wait to only for CPUF_RUNNING cpus */
-		atomic_and_32(&tm->tm_pending, cpus_running);
-
-		pmap_tlb_processpacket(tp);
-#ifdef XEN
-		/* 
-		 * remote CPUs have been synchronously flushed
-		 */
-		remote = 0; 
-#endif /* XEN */
+		pmap_tlb_processpacket(tp, target);
 	}
-#endif /* MULTIPROCESSOR */
+#endif
 
 	/*
 	 * Shootdowns on remote CPUs are now in flight.  In the meantime,
-	 * perform local shootdowns and do not forget to update emap gen.
+	 * perform local shootdown if needed.
 	 */
-	if ((tp->tp_cpumask & ci->ci_cpumask) != 0) {
+	if (local) {
 		pmap_tlb_invalidate(tp);
 	}
 
@@ -417,37 +417,40 @@ pmap_tlb_shootnow(void)
 		atomic_add_64(&tlbstat_single_issue.ev_count, tp->tp_count);
 	}
 #endif
+	kcpuset_zero(tp->tp_cpumask);
+	tp->tp_userpmap = 0;
 	tp->tp_count = 0;
 	tp->tp_pte = 0;
-	tp->tp_cpumask = 0;
-	tp->tp_usermask = 0;
 	splx(s);
 
 	/*
 	 * Now wait for the current generation of updates to be
 	 * processed by remote CPUs.
 	 */
-	if (remote != 0 && tm->tm_pending != 0) {
+	if (rcpucount && pmap_tlb_pendcount) {
 		int count = SPINLOCK_BACKOFF_MIN;
-		while (tm->tm_pending != 0 && tm->tm_gen == gen) {
+
+		while (pmap_tlb_pendcount && pmap_tlb_gen == gen) {
+			KASSERT(pmap_tlb_pendcount < ncpu);
 			SPINLOCK_BACKOFF(count);
 		}
 	}
 }
 
 /*
- * pmap_tlb_ipi: pmap shootdown interrupt handler to invalidate TLB entries.
+ * pmap_tlb_intr: pmap shootdown interrupt handler to invalidate TLB entries.
  *
  * => Called from IPI only.
  */
 void
 pmap_tlb_intr(void)
 {
-	pmap_tlb_packet_t *tp = &pmap_tlb_packet;
-	pmap_tlb_mailbox_t *tm;
-	struct cpu_info *ci;
-	uint32_t cm;
+	const pmap_tlb_packet_t *tp = &pmap_tlb_packet;
+	struct cpu_info *ci = curcpu();
 
+	KASSERT(pmap_tlb_pendcount > 0);
+
+	/* First, TLB flush. */
 	pmap_tlb_invalidate(tp);
 
 	/*
@@ -455,16 +458,14 @@ pmap_tlb_intr(void)
 	 * invalidations for this pmap, then take the CPU out of
 	 * the pmap's bitmask.
 	 */
-	ci = curcpu();
-	cm = ci->ci_cpumask;
-	if (ci->ci_tlbstate == TLBSTATE_LAZY && (tp->tp_usermask & cm) != 0) {
+	if (ci->ci_tlbstate == TLBSTATE_LAZY && tp->tp_userpmap) {
 		struct pmap *pm = ci->ci_pmap;
+		cpuid_t cid = cpu_index(ci);
 
-		atomic_and_32(&pm->pm_cpus, ~cm);
+		kcpuset_atomic_clear(pm->pm_cpus, cid);
 		ci->ci_tlbstate = TLBSTATE_STALE;
 	}
 
-	/* Ack the request. */
-	tm = &pmap_tlb_mailbox;
-	atomic_and_32(&tm->tm_pending, ~cm);
+	/* Finally, ack the request. */
+	atomic_dec_uint(&pmap_tlb_pendcount);
 }

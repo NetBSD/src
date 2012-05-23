@@ -1,4 +1,4 @@
-/* $NetBSD: configmenu.c,v 1.2.2.2 2012/04/17 00:02:49 yamt Exp $ */
+/* $NetBSD: configmenu.c,v 1.2.2.3 2012/05/23 10:07:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -133,9 +133,14 @@ get_rootsh(void)
 	if (buf != NULL)
 		free(buf);
 
-	collect(T_OUTPUT, &buf,
-	    "chroot %s /usr/bin/awk -F: '$1==\"root\" { print $NF; exit }'"
-	    " /etc/passwd",target_prefix());
+	if (target_already_root())
+		collect(T_OUTPUT, &buf,
+		    "/usr/bin/awk -F: '$1==\"root\" { print $NF; exit }'"
+		    " /etc/passwd");
+	else
+		collect(T_OUTPUT, &buf,
+		    "chroot %s /usr/bin/awk -F: '$1==\"root\" { print $NF; exit }'"
+		    " /etc/passwd",target_prefix());
 
 	config_list[CONFIGOPT_ROOTSH].setting = (const char *)buf;
 }
@@ -213,8 +218,12 @@ check_root_password(void)
 	char *buf;
 	int rval;
 
-	collect(T_OUTPUT, &buf, "chroot %s getent passwd root | chroot %s cut -d: -f2",
-	    target_prefix(), target_prefix());
+	if (target_already_root())
+		collect(T_OUTPUT, &buf, "getent passwd root | cut -d: -f2");
+	else
+		collect(T_OUTPUT, &buf, "chroot %s getent passwd root | "
+		    "chroot %s cut -d: -f2",
+		    target_prefix(), target_prefix());
 
 	if (logfp)
 		fprintf(logfp,"buf %s strlen(buf) %zu\n", buf, strlen(buf));
@@ -248,6 +257,13 @@ set_binpkg(struct menudesc *menu, void *arg)
 
 	char pattern[STRSIZE];
 
+	/* binary pkg config requires network at this point, so if
+	   it's not already configured, do it. */
+	if (network_up == 0) {
+		if (config_network())
+			mnt_net_config();
+	}
+
 	process_menu(MENU_binpkg, NULL);
 	make_url(pkgpath, &pkg, pkg_dir);
 	if ( run_program(RUN_DISPLAY | RUN_PROGRESS | RUN_CHROOT,
@@ -263,7 +279,7 @@ set_binpkg(struct menudesc *menu, void *arg)
 	replace("/usr/pkg/etc/pkgin/repositories.conf", pattern);
 
 	run_program(RUN_DISPLAY | RUN_PROGRESS | RUN_CHROOT,
-		"/usr/pkg/bin/pkgin update");
+		"/usr/pkg/bin/pkgin -y update");
 
 	msg_display(MSG_binpkg_installed);
 	process_menu(MENU_ok, NULL);

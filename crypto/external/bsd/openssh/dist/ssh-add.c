@@ -1,5 +1,4 @@
-/*	$NetBSD: ssh-add.c,v 1.5 2011/09/07 17:49:19 christos Exp $	*/
-/* $OpenBSD: ssh-add.c,v 1.101 2011/05/04 21:15:29 djm Exp $ */
+/*	$NetBSD: ssh-add.c,v 1.5.2.1 2012/05/23 10:07:05 yamt Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-add.c,v 1.5 2011/09/07 17:49:19 christos Exp $");
+__RCSID("$NetBSD: ssh-add.c,v 1.5.2.1 2012/05/23 10:07:05 yamt Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -136,11 +135,11 @@ delete_all(AuthenticationConnection *ac)
 }
 
 static int
-add_file(AuthenticationConnection *ac, const char *filename)
+add_file(AuthenticationConnection *ac, const char *filename, int key_only)
 {
 	Key *private, *cert;
 	char *comment = NULL;
-	char msg[1024], *certpath;
+	char msg[1024], *certpath = NULL;
 	int fd, perms_ok, ret = -1;
 	Buffer keyblob;
 
@@ -216,6 +215,9 @@ add_file(AuthenticationConnection *ac, const char *filename)
 		fprintf(stderr, "Could not add identity: %s\n", filename);
 	}
 
+	/* Skip trying to load the cert if requested */
+	if (key_only)
+		goto out;
 
 	/* Now try to add the certificate flavour too */
 	xasprintf(&certpath, "%s-cert.pub", filename);
@@ -250,7 +252,8 @@ add_file(AuthenticationConnection *ac, const char *filename)
 	if (confirm != 0)
 		fprintf(stderr, "The user must confirm each use of the key\n");
  out:
-	xfree(certpath);
+	if (certpath != NULL)
+		xfree(certpath);
 	xfree(comment);
 	key_free(private);
 
@@ -344,13 +347,13 @@ lock_agent(AuthenticationConnection *ac, int lock)
 }
 
 static int
-do_file(AuthenticationConnection *ac, int deleting, char *file)
+do_file(AuthenticationConnection *ac, int deleting, int key_only, char *file)
 {
 	if (deleting) {
 		if (delete_file(ac, file) == -1)
 			return -1;
 	} else {
-		if (add_file(ac, file) == -1)
+		if (add_file(ac, file, key_only) == -1)
 			return -1;
 	}
 	return 0;
@@ -363,12 +366,13 @@ usage(void)
 	fprintf(stderr, "Options:\n");
 	fprintf(stderr, "  -l          List fingerprints of all identities.\n");
 	fprintf(stderr, "  -L          List public key parameters of all identities.\n");
+	fprintf(stderr, "  -k          Load only keys and not certificates.\n");
+	fprintf(stderr, "  -c          Require confirmation to sign using identities\n");
+	fprintf(stderr, "  -t life     Set lifetime (in seconds) when adding identities.\n");
 	fprintf(stderr, "  -d          Delete identity.\n");
 	fprintf(stderr, "  -D          Delete all identities.\n");
 	fprintf(stderr, "  -x          Lock agent.\n");
 	fprintf(stderr, "  -X          Unlock agent.\n");
-	fprintf(stderr, "  -t life     Set lifetime (in seconds) when adding identities.\n");
-	fprintf(stderr, "  -c          Require confirmation to sign using identities\n");
 	fprintf(stderr, "  -s pkcs11   Add keys from PKCS#11 provider.\n");
 	fprintf(stderr, "  -e pkcs11   Remove keys provided by PKCS#11 provider.\n");
 }
@@ -380,7 +384,7 @@ main(int argc, char **argv)
 	extern int optind;
 	AuthenticationConnection *ac = NULL;
 	char *pkcs11provider = NULL;
-	int i, ch, deleting = 0, ret = 0;
+	int i, ch, deleting = 0, ret = 0, key_only = 0;
 
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
 	sanitise_stdfd();
@@ -394,8 +398,11 @@ main(int argc, char **argv)
 		    "Could not open a connection to your authentication agent.\n");
 		exit(2);
 	}
-	while ((ch = getopt(argc, argv, "lLcdDxXe:s:t:")) != -1) {
+	while ((ch = getopt(argc, argv, "klLcdDxXe:s:t:")) != -1) {
 		switch (ch) {
+		case 'k':
+			key_only = 1;
+			break;
 		case 'l':
 		case 'L':
 			if (list_identities(ac, ch == 'l' ? 1 : 0) == -1)
@@ -461,7 +468,7 @@ main(int argc, char **argv)
 			    default_files[i]);
 			if (stat(buf, &st) < 0)
 				continue;
-			if (do_file(ac, deleting, buf) == -1)
+			if (do_file(ac, deleting, key_only, buf) == -1)
 				ret = 1;
 			else
 				count++;
@@ -470,7 +477,7 @@ main(int argc, char **argv)
 			ret = 1;
 	} else {
 		for (i = 0; i < argc; i++) {
-			if (do_file(ac, deleting, argv[i]) == -1)
+			if (do_file(ac, deleting, key_only, argv[i]) == -1)
 				ret = 1;
 		}
 	}

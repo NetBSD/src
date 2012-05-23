@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1030.2.1 2012/04/17 00:07:23 yamt Exp $
+#	$NetBSD: files,v 1.1030.2.2 2012/05/23 10:07:54 yamt Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -69,11 +69,6 @@ defflag	opt_ntp.h		PPS_SYNC NTP
 defflag	opt_ptm.h		NO_DEV_PTM COMPAT_BSDPTY
 
 defparam opt_kmempages.h	NKMEMPAGES NKMEMPAGES_MIN NKMEMPAGES_MAX
-defflag	opt_malloclog.h		MALLOCLOG
-defparam opt_malloclog.h	MALLOCLOGSIZE
-defflag	opt_malloc_debug.h	MALLOC_DEBUG
-defflag	opt_pool.h		POOL_DIAGNOSTIC
-defparam opt_poollog.h		POOL_LOGSIZE
 
 defflag	opt_revcache.h		NAMECACHE_ENTER_REVERSE
 
@@ -1490,8 +1485,6 @@ file	kern/kern_ksyms.c		ksyms | ddb | modular needs-flag
 file	kern/kern_lock.c
 file	kern/kern_lwp.c
 file	kern/kern_malloc.c
-file	kern/kern_malloc_stdtype.c
-file	kern/kern_malloc_debug.c	malloc_debug
 file	kern/kern_module.c
 file	kern/kern_module_vfs.c
 file	kern/kern_mutex.c
@@ -1632,6 +1625,7 @@ file	kern/vnode_if.c
 file	miscfs/deadfs/dead_vnops.c
 file	miscfs/fifofs/fifo_vnops.c
 file	miscfs/genfs/genfs_io.c
+file	miscfs/genfs/genfs_rename.c
 file	miscfs/genfs/genfs_vfsops.c
 file	miscfs/genfs/genfs_vnops.c
 file	miscfs/genfs/layer_subr.c	nullfs | overlay | umapfs

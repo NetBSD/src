@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj.c,v 1.2 2011/01/21 12:24:24 pooka Exp $	*/
+/*	$NetBSD: kobj.c,v 1.2.4.1 2012/05/23 10:07:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/compat/opensolaris/kern/opensolaris_kobj.c,v 1.4 2007/05/31 11:51:49 kib Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kobj.c,v 1.2 2011/01/21 12:24:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj.c,v 1.2.4.1 2012/05/23 10:07:27 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ kobj_open_file_vnode(const char *file)
 {
 	vnode_t *vp;
 
-	if (vn_open(file, UIO_SYSSPACE, FCREAT, 0, &vp, CRCREAT, 0) != 0) {
+	if (vn_open(file, UIO_SYSSPACE, FREAD|FCREAT, 0, &vp, CRCREAT, 0) != 0) {
 		return NULL;
 	}
 	return vp;

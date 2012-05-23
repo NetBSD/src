@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.20 2011/07/19 16:05:10 dyoung Exp $ */
+/* $NetBSD: ioc.c,v 1.20.2.1 2012/05/23 10:07:36 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.20 2011/07/19 16:05:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.20.2.1 2012/05/23 10:07:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -191,7 +191,7 @@ ioc_irq_status(int irq)
 			IOC_IRQB_BIT(irq)) != 0;
 }
 
-u_int32_t
+uint32_t
 ioc_irq_status_full(void)
 {
 	struct ioc_softc *sc = device_private(the_ioc);
@@ -208,7 +208,7 @@ ioc_irq_status_full(void)
 }
 
 void
-ioc_irq_setmask(u_int32_t mask)
+ioc_irq_setmask(uint32_t mask)
 {
 	struct ioc_softc *sc = device_private(the_ioc);
 	bus_space_tag_t bst = sc->sc_bst;
@@ -268,7 +268,7 @@ int ioc_get_irq_level(device_t self, int irq)
  */
 
 void
-ioc_fiq_setmask(u_int32_t mask)
+ioc_fiq_setmask(uint32_t mask)
 {
 	struct ioc_softc *sc = device_private(the_ioc);
 	bus_space_tag_t bst = sc->sc_bst;

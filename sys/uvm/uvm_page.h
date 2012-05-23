@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.73.2.10 2012/04/17 00:09:00 yamt Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.73.2.11 2012/05/23 10:08:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -142,22 +142,65 @@ struct vm_page {
 };
 
 /*
- * These are the flags defined for vm_page.
+ * Overview of UVM page flags.
+ *
+ * Locking notes:
+ *
+ * PG_, struct vm_page::flags	=> locked by the owner
+ * PQ_, struct vm_page::pqflags	=> locked by the page-queue lock
+ * PQ_FREE			=> additionally locked by free-queue lock
+ *
+ * Flag descriptions:
+ *
+ * PG_CLEAN:
+ *	Page is known clean.
+ *	The contents of the page is consistent with its backing store.
+ *
+ * PG_DIRTY:
+ *	Page is known dirty.
+ *	To avoid losing data, the contents of the page should be written
+ *	back to the backing store before freeing the page.
+ *
+ * PG_BUSY:
+ *	Page is long-term locked, usually because of I/O (transfer from the
+ *	page memory to the backing store) is in progress.  LWP attempting
+ *	to access the page shall set PG_WANTED and wait.
+ *
+ * PG_WANTED:
+ *	Indicates that the page, which is currently PG_BUSY, is wanted by
+ *	some other LWP.  The page owner (i.e. LWP which set PG_BUSY) is
+ *	responsible to clear both flags and wake up any waiters once it has
+ *	released the long-term lock (PG_BUSY).
+ *
+ * PG_PAGEOUT:
+ *	Indicates that the page is being paged-out in preparation for
+ *	being freed.
+ *
+ * PG_RELEASED:
+ *	Indicates that the page, which is currently PG_BUSY, should be freed
+ *	after the release of long-term lock.  It is responsibility of the
+ *	owning LWP (i.e. which set PG_BUSY) to do it.
+ *
+ * PG_FAKE:
+ *	Page has been allocated, but not yet initialised.  The flag is used
+ *	to avoid overwriting of valid data, e.g. to prevent read from the
+ *	backing store when in-core data is newer.
+ *
+ * PG_RDONLY:
+ *	Indicates that the page must be mapped read-only.
+ *
+ * PG_ZERO:
+ *	Indicates that the page has been pre-zeroed.  This flag is only
+ *	set when the page is not in the queues and is cleared when the
+ *	page is placed on the free list.
+ *
+ * PG_TABLED:
+ *	Indicates that the page is currently in the object's offset queue,
+ *	and that it should be removed from it once the page is freed.  Used
+ *	diagnostic purposes.
  */
 
 /*
- * locking rules:
- *   PG_ ==> locked by object lock
- *   PQ_ ==> lock by page queue lock
- *   PQ_FREE is locked by free queue lock and is mutex with all other PQs
- *
- * PG_ZERO is used to indicate that a page has been pre-zero'd.  This flag
- * is only set when the page is on no queues, and is cleared when the page
- * is placed on the free list.
- *
- * PG_RDONLY is used to indicate that the page should not be mapped writably.
- * typically they are set by pgo_get to inform the fault handler.
- *
  * if you want to renumber PG_CLEAN and PG_DIRTY, check __CTASSERTs in
  * uvm_page_status.c first.
  */

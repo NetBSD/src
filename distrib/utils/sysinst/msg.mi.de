@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.57.4.1 2012/04/17 00:02:50 yamt Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.57.4.2 2012/05/23 10:07:19 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -124,6 +124,9 @@ Wollen Sie die NetBSD Distributionssets wirklich erneut installieren?
 überschrieben werden!)
 }
 
+message mount_failed
+{Versuch, %s zu mounten ist fehlgeschlagen. Fortfahren?
+}
 
 message nodisk
 {Ich kann keine für NetBSD nutzbaren Festplatten finden.
@@ -563,34 +566,34 @@ message net_media
 message netok
 {Nachfolgend sehen Sie die aktuellen Netzwerkeinstellungen.
 
-DNS-Domain:		%s
-Hostname:		%s
-Netzwerkadapter:	%s
-IP-Adresse:		%s
-Netzmaske:		%s
-IPv4-Nameserver:	%s
-IPv4-Gateway:		%s
-Verbindungstyp:		%s
+DNS-Domain:		%s 
+Hostname:		%s 
+Netzwerkadapter:	%s 
+IP-Adresse:		%s 
+Netzmaske:		%s 
+IPv4-Nameserver:	%s 
+IPv4-Gateway:		%s 
+Verbindungstyp:		%s 
 }
 
 message netok_slip
 {Sie haben die folgenden Daten gewählt. Sind diese Daten OK?
 
-DNS-Domain:		%s
-Hostname:		%s
-Netzwerkadapter:	%s
-IP-Adresse:		%s
-IP-Adresse des Servers:	%s
-Netzmaske:		%s
-IPv4-Nameserver:	%s
-IPv4-Gateway:		%s
-Verbindungstyp:		%s
+DNS-Domain:		%s 
+Hostname:		%s 
+Netzwerkadapter:	%s 
+IP-Adresse:		%s 
+IP-Adresse des Servers:	%s 
+Netzmaske:		%s 
+IPv4-Nameserver:	%s 
+IPv4-Gateway:		%s 
+Verbindungstyp:		%s 
 }
 
 message netokv6
 {
-IPv6-Autokonfiguration:	%s
-IPv6-Nameserver:	%s
+IPv6-Autokonfiguration:	%s 
+IPv6-Nameserver:	%s 
 }
 
 message netok_ok
@@ -711,9 +714,9 @@ message makedev
 
 message badfs
 {Das Dateisystem auf /dev/%s%c scheint kein BSD-Dateisystem zu sein,
-die Prüfung des Dateisystems (fsck) ist fehlgeschlagen.
+die Prüfung des Dateisystems (fsck) ist fehlgeschlagen (Fehler %d).
 
-Die Aktualisierung wird abgebrochen. (Fehlernummer %d.)
+Die Aktualisierung trotzdem fortsetzen?
 }
 
 message rootmissing
@@ -1068,7 +1071,7 @@ message abandoned {Abgebrochen}
 message empty {***LEER***}
 message timezone {Zeitzone}
 message change_rootpw {root-Passwort setzen}
-message enable_binpkg {Enable installation of binary packages}
+message enable_binpkg {Installation von Binärpaketen vorbereiten}
 message enable_sshd {sshd aktivieren}
 message enable_ntpd {ntpd aktivieren}
 message run_ntpdate {ntpdate beim Starten ausführen}

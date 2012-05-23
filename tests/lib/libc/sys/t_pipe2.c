@@ -1,4 +1,4 @@
-/* $NetBSD: t_pipe2.c,v 1.2.2.1 2012/04/17 00:09:12 yamt Exp $ */
+/* $NetBSD: t_pipe2.c,v 1.2.2.2 2012/05/23 10:08:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -36,13 +36,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_pipe2.c,v 1.2.2.1 2012/04/17 00:09:12 yamt Exp $");
+__RCSID("$NetBSD: t_pipe2.c,v 1.2.2.2 2012/05/23 10:08:21 yamt Exp $");
 
 #include <atf-c.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <sys/resource.h>
 
 static void
 run(int flags)
@@ -98,6 +99,36 @@ ATF_TC_BODY(pipe2_basic, tc)
 	run(0);
 }
 
+ATF_TC(pipe2_consume);
+ATF_TC_HEAD(pipe2_consume, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test that consuming file descriptors "
+	    "with pipe2(2) does not crash the system (PR kern/46457)");
+}
+
+ATF_TC_BODY(pipe2_consume, tc)
+{
+	struct rlimit rl;
+	int err, filedes[2];
+
+	err = fcntl(4, F_CLOSEM);
+	ATF_REQUIRE(err == 0);
+
+	err = getrlimit(RLIMIT_NOFILE, &rl);
+	ATF_REQUIRE(err == 0);
+	/*
+	 * The heart of this test is to run against the number of open
+	 * file descriptor limit in the middle of a pipe2() call - i.e.
+	 * before the call only a single descriptor may be openend.
+	 */
+	rl.rlim_cur = 4;
+	err = setrlimit(RLIMIT_NOFILE, &rl);
+	ATF_REQUIRE(err == 0);
+
+	err = pipe2(filedes, O_CLOEXEC);
+	ATF_REQUIRE(err == -1);
+}
+
 ATF_TC(pipe2_nonblock);
 ATF_TC_HEAD(pipe2_nonblock, tc)
 {
@@ -147,6 +178,7 @@ ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, pipe2_basic);
+	ATF_TP_ADD_TC(tp, pipe2_consume);
 	ATF_TP_ADD_TC(tp, pipe2_nonblock);
 	ATF_TP_ADD_TC(tp, pipe2_cloexec);
 	ATF_TP_ADD_TC(tp, pipe2_nosigpipe);

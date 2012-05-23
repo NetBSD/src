@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_glyphcachevar.h,v 1.1.4.2 2012/04/17 00:08:11 yamt Exp $	*/
+/*	$NetBSD: wsdisplay_glyphcachevar.h,v 1.1.4.3 2012/05/23 10:08:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -34,7 +34,7 @@ typedef struct _glyphcache {
 	/* mapping char codes to cache cells */
 	volatile unsigned int gc_usedcells;
 	int gc_numcells;
-	int gc_map[256];
+	uint32_t gc_map[256];
 	/* geometry */
 	int gc_cellwidth;
 	int gc_cellheight;

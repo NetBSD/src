@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.294.2.1 2012/04/17 00:08:02 yamt Exp $	*/
+/*	$NetBSD: sd.c,v 1.294.2.2 2012/05/23 10:08:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.294.2.1 2012/04/17 00:08:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.294.2.2 2012/05/23 10:08:05 yamt Exp $");
 
 #include "opt_scsi.h"
 
@@ -227,8 +227,8 @@ sdattach(device_t parent, device_t self, void *aux)
 	if (sd->type == T_SIMPLE_DIRECT)
 		periph->periph_quirks |= PQUIRK_ONLYBIG | PQUIRK_NOBIGMODESENSE;
 
-	if (scsipi_periph_bustype(sa->sa_periph) == SCSIPI_BUSTYPE_SCSI &&
-	    periph->periph_version == 0)
+	if (SCSIPI_BUSTYPE_TYPE(scsipi_periph_bustype(sa->sa_periph)) ==
+	    SCSIPI_BUSTYPE_SCSI && periph->periph_version == 0)
 		sd->flags |= SDF_ANCIENT;
 
 	bufq_alloc(&sd->buf_queue, BUFQ_DISK_DEFAULT_STRAT, BUFQ_SORT_RAWBLOCK);
@@ -1304,7 +1304,7 @@ sdgetdefaultlabel(struct sd_softc *sd, struct disklabel *lp)
 	lp->d_ncylinders = sd->params.cyls;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
-	switch (scsipi_periph_bustype(sd->sc_periph)) {
+	switch (SCSIPI_BUSTYPE_TYPE(scsipi_periph_bustype(sd->sc_periph))) {
 	case SCSIPI_BUSTYPE_SCSI:
 		lp->d_type = DTYPE_SCSI;
 		break;
