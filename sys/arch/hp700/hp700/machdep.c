@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112 2012/05/23 08:59:36 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.113 2012/05/23 16:11:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112 2012/05/23 08:59:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.113 2012/05/23 16:11:37 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -121,7 +121,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112 2012/05/23 08:59:36 skrll Exp $");
 #include <ddb/db_extern.h>
 #endif
 
-#include <hp700/hp700/intr.h>
 #include <hp700/hp700/machdep.h>
 #include <hp700/hp700/pim.h>
 #include <hp700/dev/cpudevs.h>
@@ -588,7 +587,7 @@ do {									\
 
 	DPRINTF(("%s: intr bootstrap\n", __func__));
 	/* Bootstrap interrupt masking and dispatching. */
-	hp700_intr_bootstrap();
+	hp700_intr_initialise(ci);
 
 	/*
 	 * Initialize any debugger.

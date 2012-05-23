@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.26 2012/05/23 09:49:56 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.27 2012/05/23 16:11:37 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.c,v 1.29 2009/02/08 18:33:28 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.26 2012/05/23 09:49:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.27 2012/05/23 16:11:37 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.26 2012/05/23 09:49:56 skrll Exp $");
 #include <machine/autoconf.h>
 
 #include <hppa/hppa/cpuvar.h>
-#include <hp700/hp700/intr.h>
 #include <hp700/hp700/machdep.h>
 #include <hp700/dev/cpudevs.h>
 
@@ -92,8 +91,9 @@ cpuattach(device_t parent, device_t self, void *aux)
 
 	struct cpu_softc *sc = device_private(self);
 	struct confargs *ca = aux;
-	struct cpu_info *ci;
 	static const char lvls[4][4] = { "0", "1", "1.5", "2" };
+	struct hp700_interrupt_register *ir;
+	struct cpu_info *ci;
 	u_int mhz = 100 * cpu_ticksnum / cpu_ticksdenom;
 	int cpuno = device_unit(self);
 
@@ -114,6 +114,12 @@ cpuattach(device_t parent, device_t self, void *aux)
 	if (hppa_cpu_info->hci_chip_nickname != NULL)
 		aprint_normal(" (%s)", hppa_cpu_info->hci_chip_nickname);
 	aprint_normal(" rev %d", cpu_revision);
+
+	/* sanity against luser amongst config editors */
+	if (ca->ca_irq != 31) {
+		aprint_error_dev(self, "bad irq number %d\n", ca->ca_irq);
+		return;
+	}
 
 	/* Print the CPU type, spec, level, category, and speed. */
 	aprint_normal("\n%s: %s, PA-RISC %s", self->dv_xname,
@@ -156,17 +162,25 @@ cpuattach(device_t parent, device_t self, void *aux)
 	    hppa_mod_info(HPPA_TYPE_FPU, (fpu_version >> 16) & 0x1f),
 	    (fpu_version >> 11) & 0x1f);
 
-	/* sanity against luser amongst config editors */
-	if (ca->ca_irq != 31) {
-		aprint_error_dev(self, "bad irq number %d\n", ca->ca_irq);
-		return;
-	}
-	
+	hp700_intr_initialise(ci);
+
+	ir = &ci->ci_ir;
+	hp700_interrupt_register_establish(ci, ir);
+	ir->ir_iscpu = true;
+	ir->ir_ci = ci;
+	ir->ir_name = device_xname(self);
+
 	sc->sc_ihclk = hp700_intr_establish(IPL_CLOCK, clock_intr,
-	    NULL /*clockframe*/, &ir_cpu, 31);
+	    NULL /*clockframe*/, &ci->ci_ir, 31);
+
+	/*
+	 * Reserve some bits for chips that don't like to be moved
+	 * around, e.g. lasi and asp.
+	 */
+	ir->ir_rbits = ((1 << 28) | (1 << 27));
+	ir->ir_bits &= ~ir->ir_rbits;
 
 #ifdef MULTIPROCESSOR
-
 	/* Allocate stack for spin up and FPU emulation. */
 	TAILQ_INIT(&mlist);
 	error = uvm_pglistalloc(PAGE_SIZE, 0, -1L, PAGE_SIZE, 0, &mlist, 1, 0);
@@ -191,20 +205,9 @@ cpuattach(device_t parent, device_t self, void *aux)
 		}
 	}
 	hppa_ncpu++;
-
 #endif
-
-	/*
-	 * Set the allocatable bits in the CPU interrupt registers.
-	 * These should only be used by major chipsets, like ASP and
-	 * LASI, and the bits used appear to be important - the
-	 * ASP doesn't seem to like to use interrupt bits above 28
-	 * or below 27.
-	 */
-	ir_cpu.ir_bits =
-		(1 << 28) | (1 << 27) | (1 << 26);
+	KASSERT(ci->ci_cpl == -1);
 }
-
 
 #ifdef MULTIPROCESSOR
 void

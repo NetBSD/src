@@ -1,4 +1,4 @@
-/*	$NetBSD: gscbusvar.h,v 1.10 2011/02/01 18:33:24 skrll Exp $	*/
+/*	$NetBSD: gscbusvar.h,v 1.11 2012/05/23 16:11:37 skrll Exp $	*/
 
 /*	$OpenBSD: gscbusvar.h,v 1.3 1999/08/16 02:48:39 mickey Exp $	*/
 
@@ -28,7 +28,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <hp700/hp700/intr.h>
+#include <machine/intr.h>
 
 struct gsc_attach_args {
 	struct confargs ga_ca;

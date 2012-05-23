@@ -1,4 +1,4 @@
-/*	$NetBSD: wax.c,v 1.19 2012/05/23 10:31:59 skrll Exp $	*/
+/*	$NetBSD: wax.c,v 1.20 2012/05/23 16:11:37 skrll Exp $	*/
 
 /*	$OpenBSD: wax.c,v 1.1 1998/11/23 03:04:10 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.19 2012/05/23 10:31:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.20 2012/05/23 16:11:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,11 +101,6 @@ waxmatch(device_t parent, cfdata_t cf, void *aux)
 	    ca->ca_type.iodc_sv_model != HPPA_BHA_WAX)
 		return 0;
 
-	/* Make sure we have an IRQ. */
-	if (ca->ca_irq == HP700CF_IRQ_UNDEF) {
-		ca->ca_irq = hp700_intr_allocate_bit(&ir_cpu);
-	}
-
 	return 1;
 }
 
@@ -119,6 +114,7 @@ waxattach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t ioh;
 	int s, in;
 
+	ca->ca_irq = hp700_intr_allocate_bit(&ci->ci_ir, ca->ca_irq);
 	if (ca->ca_irq == HP700CF_IRQ_UNDEF) {
 		aprint_error(": can't allocate interrupt\n");
 		return;
@@ -149,7 +145,7 @@ waxattach(device_t parent, device_t self, void *aux)
 	splx(s);
 
 	/* Establish the interrupt register. */
-	hp700_interrupt_register_establish(&sc->sc_ir);
+	hp700_interrupt_register_establish(ci, &sc->sc_ir);
 	sc->sc_ir.ir_name = device_xname(self);
 	sc->sc_ir.ir_mask = &sc->sc_regs->wax_imr;
 	sc->sc_ir.ir_req = &sc->sc_regs->wax_irr;
