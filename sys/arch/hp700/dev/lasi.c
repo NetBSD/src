@@ -1,4 +1,4 @@
-/*	$NetBSD: lasi.c,v 1.22 2012/04/03 12:07:26 skrll Exp $	*/
+/*	$NetBSD: lasi.c,v 1.23 2012/05/23 16:11:37 skrll Exp $	*/
 
 /*	$OpenBSD: lasi.c,v 1.4 2001/06/09 03:57:19 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.22 2012/04/03 12:07:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.23 2012/05/23 16:11:37 skrll Exp $");
 
 #undef LASIDEBUG
 
@@ -132,10 +132,6 @@ lasimatch(device_t parent, cfdata_t cf, void *aux)
 	    ca->ca_type.iodc_sv_model != HPPA_BHA_LASI)
 		return 0;
 
-	/* Make sure we have an IRQ. */
-	if (ca->ca_irq == HP700CF_IRQ_UNDEF)
-		ca->ca_irq = hp700_intr_allocate_bit(&ir_cpu);
-
 	/*
 	 * Forcibly mask the HPA down to the start of the LASI
 	 * chip address space.
@@ -181,6 +177,12 @@ lasiattach(device_t parent, device_t self, void *aux)
 	aprint_normal(": rev %d.%d\n", (sc->sc_hw->lasi_version & 0xf0) >> 4,
 		sc->sc_hw->lasi_version & 0xf);
 
+	ca->ca_irq = hp700_intr_allocate_bit(&ci->ci_ir, ca->ca_irq);
+	if (ca->ca_irq == HP700CF_IRQ_UNDEF) {
+		aprint_error(": can't allocate interrupt\n");
+		return;
+	}
+
 	/* interrupts guts */
 	s = splhigh();
 	sc->sc_trs->lasi_iar = ci->ci_hpa | (31 - ca->ca_irq);
@@ -188,13 +190,13 @@ lasiattach(device_t parent, device_t self, void *aux)
 	sc->sc_trs->lasi_imr = ~0U;
 	in = sc->sc_trs->lasi_irr;
 	sc->sc_trs->lasi_imr = 0;
-	splx(s);
 
 	/* Establish the interrupt register. */
-	hp700_interrupt_register_establish(&sc->sc_ir);
+	hp700_interrupt_register_establish(ci, &sc->sc_ir);
 	sc->sc_ir.ir_name = device_xname(self);
 	sc->sc_ir.ir_mask = &sc->sc_trs->lasi_imr;
 	sc->sc_ir.ir_req = &sc->sc_trs->lasi_irr;
+	splx(s);
 
 	/* Attach the GSC bus. */
 	ga.ga_ca = *ca;	/* clone from us */

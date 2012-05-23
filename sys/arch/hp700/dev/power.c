@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.6 2011/01/04 10:42:33 skrll Exp $	*/
+/*	$NetBSD: power.c,v 1.7 2012/05/23 16:11:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Jochen Kunz.
@@ -70,7 +70,6 @@
 #include <machine/autoconf.h>
 
 #include <hp700/dev/cpudevs.h>
-#include <hp700/hp700/intr.h>
 
 #include <dev/sysmon/sysmon_taskq.h>
 #include <dev/sysmon/sysmonvar.h>
