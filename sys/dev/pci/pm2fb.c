@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.13 2012/03/13 18:40:33 elad Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.14 2012/05/23 18:39:30 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.13 2012/03/13 18:40:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.14 2012/05/23 18:39:30 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,11 +326,11 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 		    defattr);
 		vcons_replay_msgbuf(&sc->sc_console_screen);
 	} else {
-		/*
-		 * since we're not the console we can postpone the rest
-		 * until someone actually allocates a screen for us
-		 */
-		(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
+		if (sc->sc_console_screen.scr_ri.ri_rows == 0) {
+			/* do some minimal setup to avoid weirdnesses later */
+			vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
+			    &defattr);
+		}
 	}
 
 	aa.console = is_console;
