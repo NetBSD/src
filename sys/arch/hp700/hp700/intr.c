@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.39 2012/05/23 07:31:31 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.40 2012/05/23 11:04:54 skrll Exp $	*/
 /*	$OpenBSD: intr.c,v 1.27 2009/12/31 12:52:35 jsing Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.39 2012/05/23 07:31:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.40 2012/05/23 11:04:54 skrll Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -178,8 +178,9 @@ hp700_intr_establish(int ipl, int (*handler)(void *), void *arg,
 		panic("%s: bad interrupt bit %d", __func__, bit_pos);
 
 	/*
-	 * Panic if this interrupt bit is already handled, but allow shared
-	 * interrupts for PCI.
+	 * Panic if this interrupt bit is already handled, but allow
+	 * shared interrupts for cascaded registers, e.g. dino and gsc
+	 * XXX This could be improved.
 	 */
 	if (ir->ir_bits_map[31 ^ bit_pos] != IR_BIT_UNUSED &&
 	    !IR_BIT_NESTED_P(ir->ir_bits_map[31 ^ bit_pos]) &&
