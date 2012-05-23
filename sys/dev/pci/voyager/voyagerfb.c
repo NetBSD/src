@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.20 2012/04/19 09:03:01 macallan Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.21 2012/05/23 18:39:30 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.20 2012/04/19 09:03:01 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.21 2012/05/23 18:39:30 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,11 +290,10 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 		sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
 		sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
 	} else {
-		/*
-		 * since we're not the console we can postpone the rest
-		 * until someone actually allocates a screen for us
-		 */
-		(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
+		if (sc->sc_console_screen.scr_ri.ri_rows == 0) {
+			/* do some minimal setup to avoid weirdnesses later */
+			vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1, &defattr);
+		}
 	}
 	glyphcache_init(&sc->sc_gc, sc->sc_height,
 			(sc->sc_fbsize / sc->sc_stride) - sc->sc_height,
