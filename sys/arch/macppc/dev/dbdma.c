@@ -1,4 +1,4 @@
-/*	$NetBSD: dbdma.c,v 1.10 2010/11/14 03:57:17 uebayasi Exp $	*/
+/*	$NetBSD: dbdma.c,v 1.11 2012/05/23 21:47:23 macallan Exp $	*/
 
 /*
  * Copyright 1991-1998 by Open Software Foundation, Inc. 
@@ -23,10 +23,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbdma.c,v 1.10 2010/11/14 03:57:17 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbdma.c,v 1.11 2012/05/23 21:47:23 macallan Exp $");
 
 #include <sys/param.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 
 #include <prop/proplib.h>
@@ -45,7 +45,7 @@ dbdma_start(dbdma_regmap_t *dmap, dbdma_command_t *commands)
 	unsigned long addr = vtophys((vaddr_t)commands);
 
 	if (addr & 0xf)
-		panic("dbdma_start command structure not 16-byte aligned");
+		panic("dbdma_start command structure not 16-byte aligned %08x %08x", (uint32_t)commands, (uint32_t)addr);
 
 	dmap->d_intselect = 0xff;  /* Endian magic - clear out interrupts */
 	DBDMA_ST4_ENDIAN(&dmap->d_control, 
@@ -119,7 +119,7 @@ dbdma_alloc(int size)
 {
 	u_int buf;
 
-	buf = (u_int)malloc(size + 0x0f, M_DEVBUF, M_WAITOK);
+	buf = (u_int)kmem_alloc(size + 0x0f, KM_SLEEP);
 	buf = (buf + 0x0f) & ~0x0f;
 
 	return (dbdma_command_t *)buf;
