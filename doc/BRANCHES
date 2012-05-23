@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.323 2012/05/06 07:28:48 agc Exp $
+#	$NetBSD: BRANCHES,v 1.324 2012/05/23 13:34:14 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -617,7 +617,7 @@ Description:	page cache related changes
 Status:		Active
 Start Date:	Wed Nov 2 2011
 End Date:	
-Base Tag:	yamt-pagecache-base3
+Base Tag:	yamt-pagecache-base5
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src
 Notes:		- maintain object pages in radix tree rather than rb tree.
@@ -629,12 +629,14 @@ Notes:		- maintain object pages in radix tree rather than rb tree.
 		  dirtiness more precisely in uvm layer.
 		- fix nfs commit range tracking.
 		- fix nfs write clustering.  XXX hack
+		- fix A->O loaning
 
 		TODO:
 			- benchmark
 			- test
 			- make the write clustering fix less kludgy
 			- fix or disable the ad-hoc per-cpu statistic
+			- disable A->O loan as its benefit is unclear at best
 
 		tested: i386, amd64, nfs, ffs
 
