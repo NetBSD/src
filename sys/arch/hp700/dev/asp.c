@@ -1,4 +1,4 @@
-/*	$NetBSD: asp.c,v 1.19 2011/07/01 18:33:09 dyoung Exp $	*/
+/*	$NetBSD: asp.c,v 1.20 2012/05/23 10:37:01 skrll Exp $	*/
 
 /*	$OpenBSD: asp.c,v 1.5 2000/02/09 05:04:22 mickey Exp $	*/
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.19 2011/07/01 18:33:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.20 2012/05/23 10:37:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,7 +201,7 @@ aspattach(device_t parent, device_t self, void *aux)
 	 * Map the ASP interrupt registers.
 	 */
 	if (bus_space_map(ca->ca_iot, ca->ca_hpa + ASP_REG_INT,
-			  sizeof(struct asp_trs), 0, &ioh)) {
+	    sizeof(struct asp_trs), 0, &ioh)) {
 		aprint_error(": can't map interrupt registers.\n");
 		return;
 	}
