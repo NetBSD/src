@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.38 2012/03/29 09:26:24 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.39 2012/05/23 07:31:31 skrll Exp $	*/
 /*	$OpenBSD: intr.c,v 1.27 2009/12/31 12:52:35 jsing Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.38 2012/03/29 09:26:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.39 2012/05/23 07:31:31 skrll Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -375,6 +375,7 @@ hppa_intr(struct trapframe *frame)
 	extern char mutex_enter_crit_start[];
 	extern char mutex_enter_crit_end[];
 
+#ifndef	MULTIPROCESSOR
 	extern char _lock_cas_ras_start[];
 	extern char _lock_cas_ras_end[];
 
@@ -384,6 +385,7 @@ hppa_intr(struct trapframe *frame)
 		frame->tf_iioq_head = (u_int)_lock_cas_ras_start;
 		frame->tf_iioq_tail = (u_int)_lock_cas_ras_start + 4;
 	}
+#endif
 
 	/*
 	 * If we interrupted in the middle of mutex_enter(), we must patch up
