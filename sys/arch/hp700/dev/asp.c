@@ -1,4 +1,4 @@
-/*	$NetBSD: asp.c,v 1.20 2012/05/23 10:37:01 skrll Exp $	*/
+/*	$NetBSD: asp.c,v 1.21 2012/05/23 16:11:37 skrll Exp $	*/
 
 /*	$OpenBSD: asp.c,v 1.5 2000/02/09 05:04:22 mickey Exp $	*/
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.20 2012/05/23 10:37:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.21 2012/05/23 16:11:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,10 +172,6 @@ aspmatch(device_t parent, cfdata_t cf, void *aux)
 	    ca->ca_type.iodc_sv_model != HPPA_BHA_ASP)
 		return 0;
 
-	/* Make sure we have an IRQ. */
-	if (ca->ca_irq == HP700CF_IRQ_UNDEF)
-		ca->ca_irq = hp700_intr_allocate_bit(&ir_cpu);
-
 	/*
 	 * Forcibly mask the HPA down to the start of the ASP
 	 * chip address space.
@@ -191,11 +187,18 @@ aspattach(device_t parent, device_t self, void *aux)
 	struct confargs *ca = aux;
 	struct asp_softc *sc = device_private(self);
 	struct gsc_attach_args ga;
+	struct cpu_info *ci = &cpus[0];
 	bus_space_handle_t ioh;
 	uint32_t irr;
 	int s;
 
 	sc->sc_dev = self;
+
+	ca->ca_irq = hp700_intr_allocate_bit(&ci->ci_ir, ca->ca_irq);
+	if (ca->ca_irq == HP700CF_IRQ_UNDEF) {
+		aprint_error_dev(self, ": can't allocate interrupt");
+		return;
+	}
 
 	/*
 	 * Map the ASP interrupt registers.
@@ -244,17 +247,18 @@ aspattach(device_t parent, device_t self, void *aux)
 	sc->sc_trs->asp_imr = ~0;
 	irr = sc->sc_trs->asp_irr;
 	sc->sc_trs->asp_imr = 0;
+
+	/* Establish the interrupt register. */
+	hp700_interrupt_register_establish(ci, &sc->sc_ir);
+	sc->sc_ir.ir_name = device_xname(self);
+	sc->sc_ir.ir_mask = &sc->sc_trs->asp_imr;
+	sc->sc_ir.ir_req = &sc->sc_trs->asp_irr;
+
 	splx(s);
 
 	aprint_normal(": %s rev %d, lan %d scsi %d\n",
 	    asp_spus[sc->sc_trs->asp_spu].name, sc->sc_hw->asp_version,
 	    sc->sc_trs->asp_lan, sc->sc_trs->asp_scsi);
-
-	/* Establish the interrupt register. */
-	hp700_interrupt_register_establish(&sc->sc_ir);
-	sc->sc_ir.ir_name = device_xname(self);
-	sc->sc_ir.ir_mask = &sc->sc_trs->asp_imr;
-	sc->sc_ir.ir_req = &sc->sc_trs->asp_irr;
 
 	/* Attach the GSC bus. */
 	ga.ga_ca = *ca;	/* clone from us */

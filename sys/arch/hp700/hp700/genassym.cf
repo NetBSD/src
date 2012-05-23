@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.33 2012/05/23 11:18:46 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.34 2012/05/23 16:11:37 skrll Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -64,8 +64,7 @@ include <machine/frame.h>
 include <machine/pmap.h>
 include <machine/iomod.h>
 include <machine/lock.h>
-
-include <hp700/hp700/intr.h>
+include <machine/intr.h>
 
 include <hppa/hppa/hpt.h>
 
@@ -88,7 +87,6 @@ export	HPPA_BREAK_SET_PSW
 struct	hp700_interrupt_register
 member	IR_REQ			ir_req
 member	IR_BITS_MAP		ir_bits_map
-export	IR_BIT_REG
 
 # struct cpu_info fields
 define	CI_TRAPSAVE		offsetof(struct cpu_info, ci_trapsave)
@@ -96,6 +94,7 @@ define	CI_MTX_COUNT		offsetof(struct cpu_info, ci_mtx_count)
 define	CI_CPL			offsetof(struct cpu_info, ci_cpl)
 define	CI_IPENDING		offsetof(struct cpu_info, ci_ipending)
 #define	CI_INTR_DEPTH		offsetof(struct cpu_info, ci_intr_depth)
+define	CI_IMASK		offsetof(struct cpu_info, ci_imask)
 #define	CI_SOFTLWPS		offsetof(struct cpu_info, ci_softlwps)
 define	CI_PSW			offsetof(struct cpu_info, ci_psw)
 define	CI_FPU_STATE		offsetof(struct cpu_info, ci_fpu_state)
