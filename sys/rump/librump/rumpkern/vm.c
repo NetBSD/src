@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.125 2012/03/17 17:58:38 hannken Exp $	*/
+/*	$NetBSD: vm.c,v 1.126 2012/05/23 14:59:21 martin Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.125 2012/03/17 17:58:38 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.126 2012/05/23 14:59:21 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -352,6 +352,16 @@ uvmspace_init(struct vmspace *vm, struct pmap *pmap, vaddr_t vmin, vaddr_t vmax)
 
 	vm->vm_map.pmap = pmap_kernel();
 	vm->vm_refcnt = 1;
+}
+
+bool
+uvm_page_locked_p(struct vm_page *pg)
+{
+
+	if (pg->uobject != NULL) {
+		return mutex_owned(pg->uobject->vmobjlock);
+	}
+	return true;
 }
 
 void
