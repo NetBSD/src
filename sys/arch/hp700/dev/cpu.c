@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.27 2012/05/23 16:11:37 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.28 2012/05/23 21:11:34 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.c,v 1.29 2009/02/08 18:33:28 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.27 2012/05/23 16:11:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.28 2012/05/23 21:11:34 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -172,6 +172,10 @@ cpuattach(device_t parent, device_t self, void *aux)
 
 	sc->sc_ihclk = hp700_intr_establish(IPL_CLOCK, clock_intr,
 	    NULL /*clockframe*/, &ci->ci_ir, 31);
+#ifdef MULTIPROCESSOR
+	sc->sc_ihipi = hp700_intr_establish(IPL_HIGH, hppa_ipi_intr,
+	    NULL /*clockframe*/, &ci->ci_ir, 30);
+#endif
 
 	/*
 	 * Reserve some bits for chips that don't like to be moved
@@ -191,6 +195,7 @@ cpuattach(device_t parent, device_t self, void *aux)
 	}
 	m = TAILQ_FIRST(&mlist);
 	ci->ci_stack = VM_PAGE_TO_PHYS(m);
+	ci->ci_softc = sc;
 
 	if (ci->ci_hpa == hppa_mcpuhpa) {
 		ci->ci_flags |= CPUF_PRIMARY|CPUF_RUNNING;
@@ -205,6 +210,7 @@ cpuattach(device_t parent, device_t self, void *aux)
 		}
 	}
 	hppa_ncpu++;
+	hppa_ipi_init(ci);
 #endif
 	KASSERT(ci->ci_cpl == -1);
 }
