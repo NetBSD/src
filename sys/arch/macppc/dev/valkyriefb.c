@@ -1,4 +1,4 @@
-/*	$NetBSD: valkyriefb.c,v 1.1 2012/01/24 04:33:11 macallan Exp $	*/
+/*	$NetBSD: valkyriefb.c,v 1.2 2012/05/23 21:46:17 macallan Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: valkyriefb.c,v 1.1 2012/01/24 04:33:11 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: valkyriefb.c,v 1.2 2012/05/23 21:46:17 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,7 @@ struct valkyriefb_softc {
 	device_t sc_dev;
 	int sc_node;
 	uint8_t *sc_base;
+	uint8_t *sc_fbaddr;
 
 	int sc_depth;
 	int sc_width, sc_height, sc_linebytes;
@@ -194,8 +195,6 @@ valkyriefb_attach(device_t parent, device_t self, void *aux)
 {
 	struct valkyriefb_softc *sc = device_private(self);
 	struct confargs *ca = aux;
-	int i;
-	volatile uint32_t *fb;
 
 	sc->sc_dev = self;
 	sc->sc_node = ca->ca_node;
@@ -209,11 +208,7 @@ valkyriefb_attach(device_t parent, device_t self, void *aux)
 	}
 #endif
 	config_finalize_register(sc->sc_dev, valkyriefb_init);
-	fb = (volatile uint32_t *)(sc->sc_base + 0x1000);
-	for (i = 0; i < 256; i++)
-		fb[i] = 0xffffffff;
-	for (i = 256; i < 0x10000; i++)
-		fb[i] = 0x80808080;
+	sc->sc_fbaddr = (uint8_t *)(sc->sc_base + 0x1000);
 }
 
 static int
@@ -241,6 +236,8 @@ valkyriefb_init(device_t self)
 
 	ri = &valkyriefb_console_screen.scr_ri;
 	vcons_init_screen(&sc->vd, &valkyriefb_console_screen, 1, &defattr);
+	memset(sc->sc_base + 0x1000, ri->ri_devcmap[(defattr >> 16) & 0xf],
+	    sc->sc_width * sc->sc_linebytes);
 	valkyriefb_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 
 	valkyriefb_defaultscreen.textops = &ri->ri_ops;
@@ -249,14 +246,8 @@ valkyriefb_init(device_t self)
 	valkyriefb_defaultscreen.ncols = ri->ri_cols;
 	if (console) {
 		wsdisplay_cnattach(&valkyriefb_defaultscreen, ri, 0, 0, defattr);
-	}
-
-	memset(sc->sc_base + 0x1000, ri->ri_devcmap[(defattr >> 16) & 0xf],
-	    sc->sc_width * sc->sc_linebytes);
-
-	if (console)
 		vcons_replay_msgbuf(&valkyriefb_console_screen);
-
+	}
 	aa.console = console;
 	aa.scrdata = &valkyriefb_screenlist;
 	aa.accessops = &valkyriefb_accessops;
@@ -416,12 +407,14 @@ valkyriefb_init_screen(void *cookie, struct vcons_screen *scr,
 	struct valkyriefb_softc *sc = cookie;
 	struct rasops_info *ri = &scr->scr_ri;
 	
+	memset(ri, 0, sizeof(struct rasops_info));
 	ri->ri_depth = sc->sc_depth;
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_linebytes;
 	ri->ri_flg = RI_CENTER | RI_8BIT_IS_RGB | RI_ENABLE_ALPHA;
-	ri->ri_bits = sc->sc_base + 0x1000;
+	ri->ri_bits = sc->sc_fbaddr;
+
 	/*
 	 * We probably shouldn't set this flag together with RI_ENABLE_ALPHA
 	 * since the CPU is likely slow enough to make scrolling using
