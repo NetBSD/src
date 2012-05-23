@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.324 2012/05/23 13:34:14 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.325 2012/05/23 13:54:37 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -630,6 +630,7 @@ Notes:		- maintain object pages in radix tree rather than rb tree.
 		- fix nfs commit range tracking.
 		- fix nfs write clustering.  XXX hack
 		- fix A->O loaning
+		- write radixtree(9) man page
 
 		TODO:
 			- benchmark
