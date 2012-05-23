@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.25 2012/05/23 07:06:02 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.26 2012/05/23 09:49:56 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.c,v 1.29 2009/02/08 18:33:28 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.25 2012/05/23 07:06:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.26 2012/05/23 09:49:56 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -151,6 +151,7 @@ cpuattach(device_t parent, device_t self, void *aux)
 	/*
 	 * Describe the floating-point support.
 	 */
+	KASSERT(fpu_present);
 	aprint_normal("%s: %s floating point, rev %d\n", self->dv_xname,
 	    hppa_mod_info(HPPA_TYPE_FPU, (fpu_version >> 16) & 0x1f),
 	    (fpu_version >> 11) & 0x1f);
