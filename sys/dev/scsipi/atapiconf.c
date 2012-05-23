@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.83.8.1 2012/04/17 00:08:02 yamt Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.83.8.2 2012/05/23 10:08:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.83.8.1 2012/04/17 00:08:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.83.8.2 2012/05/23 10:08:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,8 @@ atapibusmatch(device_t parent, cfdata_t cf, void *aux)
 	if (chan == NULL)
 		return (0);
 
-	if (chan->chan_bustype->bustype_type != SCSIPI_BUSTYPE_ATAPI)
+	if (SCSIPI_BUSTYPE_TYPE(chan->chan_bustype->bustype_type) !=
+	    SCSIPI_BUSTYPE_ATAPI)
 		return (0);
 
 	return (1);

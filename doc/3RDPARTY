@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.884.2.2 2012/04/17 00:02:55 yamt Exp $
+#	$NetBSD: 3RDPARTY,v 1.884.2.3 2012/05/23 10:07:21 yamt Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -187,17 +187,17 @@ Notes:
 See /usr/src/external/bsd/byacc/byacc2netbsd for update instructions.
 
 Package:	bzip2
-Version:	1.0.5
-Current Vers:	1.0.5
+Version:	1.0.6
+Current Vers:	1.0.6
 Maintainer:	Julian Seward <jseward@acm.org>
 Archive Site:	http://sources.redhat.com/bzip2/
 Home Page:	http://www.bzip.org/
 Mailing List:
 Responsible:
 License:	BSD (4-clause)
-Location:	dist/bzip2
+Location:	external/bsd/bzip2
 Notes:
-See /usr/src/dist/bzip2/bzip2netbsd for update instructions.
+See /usr/src/external/bsd/bzip2/bzip2netbsd for update instructions.
 
 Package:	Citrus XPG4DL
 Version:	
@@ -818,10 +818,10 @@ Notes:
 Please submit all changes to the author.
 
 Package:	HPN-SSH
-Version:	5.6p1 13 v10
-Current Vers:	5.6p1 13 v10
+Version:	5.6p1 13 v11
+Current Vers:	5.6p1 13 v11
 Maintainer:	www.psc.edu
-Archive Site:	http://www.psc.edu/networking/projects/hpn-ssh/openssh-5.6p1-hpn13v10.diff.gz
+Archive Site:	http://www.psc.edu/networking/projects/hpn-ssh/openssh-5.6p1-hpn13v11.diff.gz
 Home Page:	http://www.psc.edu/networking/projects/hpn-ssh/
 Mailing List:
 Responsible:	christos
@@ -831,8 +831,8 @@ Notes:
 Patch applied after OpenSSH import.
 
 Package:	OpenSSH
-Version:	5.9
-Current Vers:	5.9 / portable 5.9p1
+Version:	6.0
+Current Vers:	6.0 / portable 6.0p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
 Home Page:	http://www.openssh.com/portable.html
@@ -971,9 +971,9 @@ We use err() and friends. We have changes for snprintf, extra
 formatting in man pages, disallowing flood pinging, alignment fixes,
 and more.
 
-Package:	postfix
+Package:	Postfix
 Version:	2.8.8
-Current Vers:	2.8.8/2.9.0
+Current Vers:	2.8.8/2.9.1
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://postfix.cloud9.net/official/
 Home Page:	http://www.postfix.org/
@@ -1081,7 +1081,7 @@ original.
 
 Package:	sqlite
 Version:	pre-3.6.9 snapshot
-Current Vers:	3.7.10
+Current Vers:	3.7.12
 Maintainer:	Richard Hipp <drh@sqlite.org>
 Home Page:	http://www.sqlite.org
 Responsible:	joerg
@@ -1220,7 +1220,7 @@ Notes:
 
 Package:	zlib
 Version:	1.2.3
-Current Vers:	1.2.6
+Current Vers:	1.2.7
 Maintainer:	Jean-loup Gailly and Mark Adler <zlib@gzip.org>
 Archive Site:	http://www.zlib.net/
 Home Page:	http://www.zlib.net/

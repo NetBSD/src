@@ -1,4 +1,4 @@
-.\"	$NetBSD: tset.1,v 1.18 2010/11/02 12:10:13 njoly Exp $
+.\"	$NetBSD: tset.1,v 1.18.6.1 2012/05/23 10:08:27 yamt Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)tset.1	8.1 (Berkeley) 6/9/93
 .\"
-.Dd September 29, 2009
+.Dd April 5, 2012
 .Dt TSET 1
 .Os
 .Sh NAME
@@ -86,7 +86,7 @@ Then, if the terminal type begins with a question mark (``?''), the user is
 prompted for confirmation of the terminal type.
 An empty response confirms the type, or, another type can be entered to
 specify a new type.
-Once the terminal type has been determined, the termcap entry for the terminal
+Once the terminal type has been determined, the terminfo entry for the terminal
 is retrieved.
 If no terminfo entry is found for the type, the user is prompted for another
 terminal type.
@@ -158,7 +158,6 @@ the terminal's capabilities into the shell's environment.
 This is done using the
 .Fl s
 option.
-.Pp
 .Pp
 When the
 .Fl s
@@ -321,19 +320,6 @@ system port name to terminal type mapping database
 .It Pa /usr/share/misc/terminfo
 terminal capability database
 .El
-.Sh SEE ALSO
-.Xr csh 1 ,
-.Xr sh 1 ,
-.Xr stty 1 ,
-.Xr tty 4 ,
-.Xr terminfo 5 ,
-.Xr ttys 5 ,
-.Xr environ 7
-.Sh HISTORY
-The
-.Nm
-command appeared in
-.Bx 3.0 .
 .Sh COMPATIBILITY
 The
 .Fl A ,
@@ -387,7 +373,7 @@ argument in some historic implementations of
 has been removed.
 .Pp
 The
-.Fl E 
+.Fl E
 and
 .Fl S
 options have been removed as they only make sense for termcap and
@@ -405,3 +391,18 @@ system of a
 .St -p1003.1-88
 compliant terminal interface) and will no longer compile on systems with
 older terminal interfaces.
+.Sh SEE ALSO
+.Xr csh 1 ,
+.Xr sh 1 ,
+.Xr stty 1 ,
+.Xr tty 4 ,
+.Xr terminfo 5 ,
+.Xr ttys 5 ,
+.Xr environ 7
+.Sh HISTORY
+The
+.Nm reset
+and
+.Nm tset
+commands appeared in
+.Bx 1 .

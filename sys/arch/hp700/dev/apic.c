@@ -1,4 +1,4 @@
-/*	$NetBSD: apic.c,v 1.12.4.1 2012/04/17 00:06:21 yamt Exp $	*/
+/*	$NetBSD: apic.c,v 1.12.4.2 2012/05/23 10:07:43 yamt Exp $	*/
 
 /*	$OpenBSD: apic.c,v 1.14 2011/05/01 21:59:39 kettenis Exp $	*/
 
@@ -141,7 +141,8 @@ apic_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	if (sc->sc_irq[line] == 0)
 		sc->sc_irq[line] = hp700_intr_allocate_bit(&ir_cpu);
 	*ihp = (line << APIC_INT_LINE_SHIFT) | sc->sc_irq[line];
-	return (APIC_INT_IRQ(*ihp) == 0);
+
+	return APIC_INT_IRQ(*ihp) == 0;
 }
 
 const char *
@@ -152,7 +153,7 @@ apic_intr_string(void *v, pci_intr_handle_t ih)
 	snprintf(buf, sizeof(buf), "line %ld irq %ld",
 	    APIC_INT_LINE(ih), APIC_INT_IRQ(ih));
 
-	return (buf);
+	return buf;
 }
 
 void *
@@ -172,7 +173,7 @@ apic_intr_establish(void *v, pci_intr_handle_t ih,
 
 	/* no mapping or bogus */
 	if (irq <= 0 || irq > 31)
-		return (NULL);
+		return NULL;
 
 	aiv = malloc(sizeof(struct apic_iv), M_DEVBUF, M_NOWAIT);
 	if (aiv == NULL)
@@ -234,7 +235,7 @@ apic_intr_establish(void *v, pci_intr_handle_t ih,
 
 	apic_intr_list[irq] = aiv;
 
-	return (arg);
+	return arg;
 }
 
 void
@@ -262,7 +263,7 @@ apic_intr(void *v)
 	/* Signal EOI. */
 	elroy_write32(&r->apic_eoi, htole32((31 - irq) & APIC_ENT0_VEC));
 
-	return (claimed);
+	return claimed;
 }
 
 void

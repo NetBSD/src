@@ -50,3 +50,4 @@ There are three tables in the database at present:
   3. section        The section number  
   4. machine        The machine architecture (if any) for which 
                     the page is relevant
+  5. md5_hash       MD5 Hash of the target man page.

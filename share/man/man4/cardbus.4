@@ -1,4 +1,4 @@
-.\"	$NetBSD: cardbus.4,v 1.33 2009/07/19 07:02:21 wiz Exp $
+.\"	$NetBSD: cardbus.4,v 1.33.8.1 2012/05/23 10:07:35 yamt Exp $
 .\"
 .\" Copyright (c) 1999-2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 19, 2009
+.Dd April 25, 2012
 .Dt CARDBUS 4
 .Os
 .Sh NAME
@@ -70,12 +70,16 @@ drivers, sorted by function and driver name:
 Atheros 5210/5211/5212 802.11
 .It atw
 ADMtek ADM8211 (802.11)
+.It bwi
+Broadcom BCM430x/4318 (802.11)
 .It ex
 3Com 3c575TX and 3c575BTX
 .It fxp
 Intel i8255x
 .It ral
 Ralink Technology RT25x0 (802.11)
+.It re
+RealTek 8139C+/8169/8169S/8110S
 .It rtk
 Realtek 8129/8139
 .It rtw
@@ -111,10 +115,17 @@ Universal Host Controller
 .It fwohci
 OHCI controller
 .El
+.Ss SD/MMC/SDIO controllers
+.Bl -tag -width speaker -offset indent -compact
+.It sdhc
+SD Host Controller
+.El
 .Ss Disk and tape controllers
 .Bl -tag -width speaker -offset indent -compact
+.It njata
+Workbit NinjaATA-32
 .It siisata
-Silicon Image SATA-II controllers.
+Silicon Image SATA-II controllers
 .El
 .Sh DIAGNOSTICS
 .Nm cbb
@@ -144,18 +155,23 @@ in the kernel configuration might be of use.
 .Xr ahc 4 ,
 .Xr ath 4 ,
 .Xr atw 4 ,
+.Xr bwi 4 ,
 .Xr com 4 ,
 .Xr ehci 4 ,
 .Xr ex 4 ,
+.Xr fwohci 4 ,
 .Xr fxp 4 ,
+.Xr njata 4 ,
 .Xr njs 4 ,
 .Xr ohci 4 ,
 .Xr options 4 ,
 .Xr pci 4 ,
 .Xr pcmcia 4 ,
 .Xr ral 4 ,
+.Xr re 4 ,
 .Xr rtk 4 ,
 .Xr rtw 4 ,
+.Xr sdhc 4 ,
 .Xr siisata 4 ,
 .Xr tlp 4 ,
 .Xr uhci 4

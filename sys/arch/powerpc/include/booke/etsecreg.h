@@ -1,4 +1,4 @@
-/*	$NetBSD: etsecreg.h,v 1.3 2011/06/09 19:11:06 matt Exp $	*/
+/*	$NetBSD: etsecreg.h,v 1.3.2.1 2012/05/23 10:07:47 yamt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -371,7 +371,7 @@ struct rxfcb {
 #define	MACCFG2_PADCRC	__PPCBIT(29)
 #define	MACCFG2_CRCEN	__PPCBIT(30)
 #define	MACCFG2_FD	__PPCBIT(31)
-#define	MACCFG2_DEFAULT	(MACCFG2_FD|MACCFG2_PADCRC|MACCFG2_IFMODE_GMII|MACCFG2_PRELEN_DEFAULT)
+#define	MACCFG2_DEFAULT	(MACCFG2_FD|MACCFG2_PADCRC|MACCFG2_PRELEN_DEFAULT)
 #define IPGIFG		0x508 /* Inter-packet/inter-frame gap register */
 #define HAFDUP		0x50C /* Half-duplex control */
 #define MAXFRM		0x510 /* Maximum frame length */

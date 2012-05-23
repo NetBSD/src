@@ -1,4 +1,4 @@
-/*	$NetBSD: trmreg.h,v 1.1 2001/11/03 17:01:18 tsutsui Exp $	*/
+/*	$NetBSD: trmreg.h,v 1.1.160.1 2012/05/23 10:08:04 yamt Exp $	*/
 /*
  * Device Driver for Tekram DC395U/UW/F, DC315/U
  * PCI SCSI Bus Master Host Adapter
@@ -39,6 +39,10 @@
  * Provided by
  *   (C)Copyright 1995-1999 Tekram Technology Co., Ltd. All rights reserved.
  */
+
+#define TRM_BAR_PIO	0x10
+/* DC-315 has an MMIO BAR */
+#define TRM_BAR_MMIO	0x14
 
 /*
  **********************************************************************

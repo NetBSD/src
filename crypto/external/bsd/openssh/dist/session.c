@@ -1,5 +1,5 @@
-/*	$NetBSD: session.c,v 1.8 2011/09/16 15:36:18 joerg Exp $	*/
-/* $OpenBSD: session.c,v 1.258 2010/11/25 04:10:09 djm Exp $ */
+/*	$NetBSD: session.c,v 1.8.2.1 2012/05/23 10:07:05 yamt Exp $	*/
+/* $OpenBSD: session.c,v 1.259 2011/10/24 02:13:13 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: session.c,v 1.8 2011/09/16 15:36:18 joerg Exp $");
+__RCSID("$NetBSD: session.c,v 1.8.2.1 2012/05/23 10:07:05 yamt Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>
@@ -2075,7 +2075,7 @@ session_break_req(Session *s)
 	packet_get_int();	/* ignored */
 	packet_check_eom();
 
-	if (s->ttyfd == -1 || tcsendbreak(s->ttyfd, 0) < 0)
+	if (s->ptymaster == -1 || tcsendbreak(s->ptymaster, 0) < 0)
 		return 0;
 	return 1;
 }

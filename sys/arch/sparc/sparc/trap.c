@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.188.2.1 2012/04/17 00:06:55 yamt Exp $ */
+/*	$NetBSD: trap.c,v 1.188.2.2 2012/05/23 10:07:49 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.188.2.1 2012/04/17 00:06:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.188.2.2 2012/05/23 10:07:49 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_svr4.h"
@@ -565,7 +565,7 @@ badtrap:
 
 	case T_ALIGN:
 		if ((p->p_md.md_flags & MDP_FIXALIGN) != 0) {
-			n = fixalign(l, tf);
+			n = fixalign(l, tf, NULL);
 			if (n == 0) {
 				ADVANCE;
 				break;
@@ -575,7 +575,7 @@ badtrap:
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_trap = type;
 		ksi.ksi_code = BUS_ADRALN;
-		ksi.ksi_addr = (void *)pc;
+		fixalign(l, tf, &ksi.ksi_addr);
 		break;
 
 	case T_FPE:

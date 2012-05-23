@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.127.4.1 2012/04/17 00:02:50 yamt Exp $	*/
+/*	$NetBSD: net.c,v 1.127.4.2 2012/05/23 10:07:20 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1161,8 +1161,8 @@ mnt_net_config(void)
 		return;
 
 	/* Write hostname to /etc/rc.conf */
-	if ((net_dhcpconf & DHCPCONF_HOST) == 0)
-		if (del_rc_conf("hostname"))
+	if ((net_dhcpconf & DHCPCONF_HOST) == 0) 
+		if (del_rc_conf("hostname") == 0)
 			add_rc_conf("hostname=%s\n", recombine_host_domain());
 
 	/* Copy resolv.conf to target.  If DHCP was used to create it,
@@ -1227,17 +1227,19 @@ mnt_net_config(void)
 			fclose(hosts);
 		}
 
-		if (!del_rc_conf("defaultroute"))
+		if (del_rc_conf("defaultroute") == 0)
 			add_rc_conf("defaultroute=\"%s\"\n", net_defroute);
 	} else {
-		if (snprintf(ifconfig_str, sizeof ifconfig_str, "ifconfig_%s", net_dev) > 0
-				&& del_rc_conf(ifconfig_str))
+		if (snprintf(ifconfig_str, sizeof ifconfig_str,
+		    "ifconfig_%s", net_dev) > 0 &&
+		    del_rc_conf(ifconfig_str) == 0) {
 			add_rc_conf("ifconfig_%s=dhcp\n", net_dev);
+		}
         }
 
 #ifdef INET6
 	if ((net_ip6conf & IP6CONF_AUTOHOST) != 0) {
-		if (!del_rc_conf("ip6mode"))
+		if (del_rc_conf("ip6mode") == 0)
 			add_rc_conf("ip6mode=autohost\n");
 		if (ifconf != NULL) {
 			scripting_fprintf(NULL, "cat <<EOF >>%s%s\n",

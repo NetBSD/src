@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.262.2.1 2012/04/17 00:06:56 yamt Exp $ */
+/*	$NetBSD: machdep.c,v 1.262.2.2 2012/05/23 10:07:49 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.262.2.1 2012/04/17 00:06:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.262.2.2 2012/05/23 10:07:49 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -2534,11 +2534,29 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 }
 
 int
+cpu_mcontext_validate(struct lwp *l, const mcontext_t *mc)
+{
+	const __greg_t *gr = mc->__gregs;
+
+	/*
+ 	 * Only the icc bits in the psr are used, so it need not be
+ 	 * verified.  pc and npc must be multiples of 4.  This is all
+ 	 * that is required; if it holds, just do it.
+	 */
+	if (((gr[_REG_PC] | gr[_REG_nPC]) & 3) != 0 ||
+	    gr[_REG_PC] == 0 || gr[_REG_nPC] == 0)
+		return EINVAL;
+
+	return 0;
+}
+
+int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	const __greg_t *gr = mcp->__gregs;
 	struct trapframe64 *tf = l->l_md.md_tf;
 	struct proc *p = l->l_proc;
+	int error;
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
@@ -2548,14 +2566,9 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	}
 
 	if ((flags & _UC_CPU) != 0) {
-		/*
-	 	 * Only the icc bits in the psr are used, so it need not be
-	 	 * verified.  pc and npc must be multiples of 4.  This is all
-	 	 * that is required; if it holds, just do it.
-		 */
-		if (((gr[_REG_PC] | gr[_REG_nPC]) & 3) != 0 ||
-		    gr[_REG_PC] == 0 || gr[_REG_nPC] == 0)
-			return (EINVAL);
+		error = cpu_mcontext_validate(l, mcp);
+		if (error)
+			return error;
 
 		/* Restore general register context. */
 		/* take only tstate CCR (and ASI) fields */
@@ -2630,7 +2643,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	mutex_exit(p->p_lock);
 
-	return (0);
+	return 0;
 }
 
 /*

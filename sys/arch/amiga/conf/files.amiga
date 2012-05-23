@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.149.2.1 2012/04/17 00:06:01 yamt Exp $
+#	$NetBSD: files.amiga,v 1.149.2.2 2012/05/23 10:07:40 yamt Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -219,6 +219,16 @@ file	arch/amiga/dev/if_le.c		le_zbus needs-flag
 # device defined in sys/conf/files
 attach	ne at zbus with ne_zbus: rtl80x9
 file	arch/amiga/dev/if_ne_zbus.c	ne_zbus needs-flag
+
+# X-Surf
+define	xsurfbus {}
+
+device	xsurf: xsurfbus 
+attach	xsurf at zbus
+file	arch/amiga/dev/xsurf.c		xsurf needs-flag
+
+attach	ne at xsurfbus with ne_xsurf: rtl80x9
+file	arch/amiga/dev/if_ne_xsurf.c	ne_xsurf needs-flag
 
 # Hydra ethernet card
 device	ed: ifnet, ether, arp
@@ -527,5 +537,6 @@ attach	cv3dpb at zbus
 include	"dev/i2o/files.i2o"
 include	"dev/pci/files.pci"
 
-include	"arch/amiga/conf/majors.amiga"
+include "arch/amiga/clockport/files.clockport"
 
+include	"arch/amiga/conf/majors.amiga"

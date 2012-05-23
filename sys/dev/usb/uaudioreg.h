@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudioreg.h,v 1.15 2008/04/28 20:23:59 martin Exp $	*/
+/*	$NetBSD: uaudioreg.h,v 1.15.34.1 2012/05/23 10:08:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ struct usb_audio_streaming_type1_descriptor {
 	uByte		bBitResolution;
 	uByte		bSamFreqType;
 #define UA_SAMP_CONTNUOUS 0
-	uByte		tSamFreq[3*2]; /* room for low and high */
+	uByte		tSamFreq[3*AUFMT_MAX_FREQUENCIES];
 #define UA_GETSAMP(p, n) ((p)->tSamFreq[(n)*3+0] | ((p)->tSamFreq[(n)*3+1] << 8) | ((p)->tSamFreq[(n)*3+2] << 16))
 #define UA_SAMP_LO(p) UA_GETSAMP(p, 0)
 #define UA_SAMP_HI(p) UA_GETSAMP(p, 1)

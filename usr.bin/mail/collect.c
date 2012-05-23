@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.44 2011/09/16 15:39:27 joerg Exp $	*/
+/*	$NetBSD: collect.c,v 1.44.2.1 2012/05/23 10:08:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: collect.c,v 1.44 2011/09/16 15:39:27 joerg Exp $");
+__RCSID("$NetBSD: collect.c,v 1.44.2.1 2012/05/23 10:08:25 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,7 @@ exwrite(const char name[], FILE *fp, int f)
 		(void)fprintf(stderr, "File exists\n");
 		return -1;
 	}
-	if ((of = Fopen(name, "w")) == NULL) {
+	if ((of = Fopen(name, "we")) == NULL) {
 		warn("%s", name);
 		return -1;
 	}
@@ -165,7 +165,7 @@ mespipe(FILE *fp, char cmd[])
 	(void)snprintf(tempname, sizeof(tempname),
 	    "%s/mail.ReXXXXXXXXXX", tmpdir);
 	if ((fd = mkstemp(tempname)) == -1 ||
-	    (nf = Fdopen(fd, "w+")) == NULL) {
+	    (nf = Fdopen(fd, "we+")) == NULL) {
 		if (fd != -1)
 			(void)close(fd);
 		warn("%s", tempname);
@@ -286,7 +286,7 @@ savedeadletter(FILE *fp)
 		return;
 	cp = getdeadletter();
 	m = umask(077);
-	dbuf = Fopen(cp, "a");
+	dbuf = Fopen(cp, "ae");
 	(void)umask(m);
 	if (dbuf == NULL)
 		return;
@@ -397,7 +397,7 @@ collect(struct header *hp, int printheaders)
 	(void)snprintf(mailtempname, sizeof(mailtempname),
 	    "%s/mail.RsXXXXXXXXXX", tmpdir);
 	if ((fd = mkstemp(mailtempname)) == -1 ||
-	    (collf = Fdopen(fd, "w+")) == NULL) {
+	    (collf = Fdopen(fd, "we+")) == NULL) {
 		if (fd != -1)
 			(void)close(fd);
 		warn("%s", mailtempname);
@@ -628,7 +628,7 @@ collect(struct header *hp, int printheaders)
 				(void)snprintf(tempname, sizeof(tempname),
 				    "%s/mail.ReXXXXXXXXXX", tmpdir);
 				if ((fd = mkstemp(tempname)) == -1 ||
-				    (fbuf = Fdopen(fd, "w+")) == NULL) {
+				    (fbuf = Fdopen(fd, "we+")) == NULL) {
 					if (fd != -1)
 						(void)close(fd);
 					warn("%s", tempname);
@@ -660,7 +660,7 @@ collect(struct header *hp, int printheaders)
 				(void)printf("%s: Directory\n", cp);
 				break;
 			}
-			else if ((fbuf = Fopen(cp, "r")) == NULL) {
+			else if ((fbuf = Fopen(cp, "re")) == NULL) {
 				warn("%s", cp);
 				break;
 			}

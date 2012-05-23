@@ -1,9 +1,10 @@
-#	$NetBSD: files.tmpfs,v 1.4 2010/06/22 18:32:07 rmind Exp $
+#	$NetBSD: files.tmpfs,v 1.4.8.1 2012/05/23 10:08:09 yamt Exp $
 
 deffs	TMPFS
 
 file	fs/tmpfs/tmpfs_fifoops.c	tmpfs
 file	fs/tmpfs/tmpfs_mem.c		tmpfs
+file	fs/tmpfs/tmpfs_rename.c	tmpfs
 file	fs/tmpfs/tmpfs_specops.c	tmpfs
 file	fs/tmpfs/tmpfs_subr.c		tmpfs
 file	fs/tmpfs/tmpfs_vfsops.c		tmpfs

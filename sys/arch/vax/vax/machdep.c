@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.182.2.1 2012/04/17 00:07:01 yamt Exp $	 */
+/* $NetBSD: machdep.c,v 1.182.2.2 2012/05/23 10:07:49 yamt Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.182.2.1 2012/04/17 00:07:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.182.2.2 2012/05/23 10:07:49 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -641,18 +641,31 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 }
 
 int
-cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
+cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
 {
-	struct trapframe * const tf = l->l_md.md_utf;
 	const __greg_t *gr = mcp->__gregs;
-
-	if ((flags & _UC_CPU) == 0)
-		return 0;
 
 	if ((gr[_REG_PSL] & (PSL_IPL | PSL_IS)) ||
 	    ((gr[_REG_PSL] & (PSL_U | PSL_PREVU)) != (PSL_U | PSL_PREVU)) ||
 	    (gr[_REG_PSL] & PSL_CM))
-		return (EINVAL);
+		return EINVAL;
+
+	return 0;
+}
+
+int
+cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
+{
+	struct trapframe * const tf = l->l_md.md_utf;
+	const __greg_t *gr = mcp->__gregs;
+	int error;
+
+	if ((flags & _UC_CPU) == 0)
+		return 0;
+
+	error = cpu_mcontext_validate(l, mcp);
+	if (error)
+		return error;
 
 	tf->tf_r0 = gr[_REG_R0];
 	tf->tf_r1 = gr[_REG_R1];
@@ -674,7 +687,6 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 
 	if (flags & _UC_TLSBASE) {
 		void *tlsbase;
-		int error;
 
 		error = copyin((void *)tf->tf_sp, &tlsbase, sizeof(tlsbase));
 		if (error) {

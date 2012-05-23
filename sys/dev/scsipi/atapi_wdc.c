@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.112 2011/05/24 16:35:26 joerg Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.112.4.1 2012/05/23 10:08:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.112 2011/05/24 16:35:26 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.112.4.1 2012/05/23 10:08:05 yamt Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -102,6 +102,7 @@ static const struct scsipi_bustype wdc_atapi_bustype = {
 	atapi_interpret_sense,
 	atapi_print_addr,
 	wdc_atapi_kill_pending,
+	NULL,
 };
 
 void

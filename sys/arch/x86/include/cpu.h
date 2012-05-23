@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.40.2.2 2012/04/17 00:07:05 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.40.2.3 2012/05/23 10:07:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -105,7 +105,7 @@ struct cpu_info {
 	int	ci_fpsaving;		/* save in progress */
 	int	ci_fpused;		/* XEN: FPU was used by curlwp */
 	cpuid_t ci_cpuid;		/* our CPU ID */
-	int	ci_cpumask;		/* (1 << CPU ID) */
+	int	_unused;
 	uint32_t ci_acpiid;		/* our ACPI/MADT ID */
 	uint32_t ci_initapicid;		/* our intitial APIC ID */
 
@@ -322,8 +322,6 @@ void cpu_init_msrs(struct cpu_info *, bool);
 void cpu_load_pmap(struct pmap *, struct pmap *);
 void cpu_broadcast_halt(void);
 void cpu_kick(struct cpu_info *);
-
-extern uint32_t cpus_attached;
 
 #define	curcpu()		x86_curcpu()
 #define	curlwp			x86_curlwp()

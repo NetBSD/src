@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_axi.c,v 1.2 2010/11/30 13:05:27 bsh Exp $	*/
+/*	$NetBSD: imx51_axi.c,v 1.2.10.1 2012/05/23 10:07:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 SHIMIZU Ryo <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_axi.c,v 1.2 2010/11/30 13:05:27 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_axi.c,v 1.2.10.1 2012/05/23 10:07:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: imx51_axi.c,v 1.2 2010/11/30 13:05:27 bsh Exp $");
 #include <arm/imx/imx51reg.h>
 #include <arm/imx/imx51var.h>
 
+#include "bus_dma_generic.h"
 #include "locators.h"
 
 struct axi_softc {
@@ -102,6 +103,7 @@ axi_critical_search(device_t parent, struct cfdata *cf,
 
 	if ((strcmp(cf->cf_name, "tzic") != 0) &&
 	    (strcmp(cf->cf_name, "imxuart") != 0) &&
+	    (strcmp(cf->cf_name, "imxccm") != 0) &&
 	    (strcmp(cf->cf_name, "imxgpio") != 0))
 		return 0;
 

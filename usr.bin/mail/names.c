@@ -1,4 +1,4 @@
-/*	$NetBSD: names.c,v 1.28 2010/01/12 14:45:31 christos Exp $	*/
+/*	$NetBSD: names.c,v 1.28.6.1 2012/05/23 10:08:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: names.c,v 1.28 2010/01/12 14:45:31 christos Exp $");
+__RCSID("$NetBSD: names.c,v 1.28.6.1 2012/05/23 10:08:25 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -278,14 +278,14 @@ outof(struct name *names, FILE *fo, struct header *hp)
 			(void)snprintf(tempname, sizeof(tempname),
 			    "%s/mail.ReXXXXXXXXXXXX", tmpdir);
 			if ((fd = mkstemp(tempname)) == -1 ||
-			    (fout = Fdopen(fd, "a")) == NULL) {
+			    (fout = Fdopen(fd, "ae")) == NULL) {
 				if (fd != -1)
 					(void)close(fd);
 				warn("%s", tempname);
 				senderr++;
 				goto cant;
 			}
-			image = open(tempname, O_RDWR);
+			image = open(tempname, O_RDWR | O_CLOEXEC);
 			(void)unlink(tempname);
 			if (image < 0) {
 				warn("%s", tempname);
@@ -293,7 +293,6 @@ outof(struct name *names, FILE *fo, struct header *hp)
 				(void)Fclose(fout);
 				goto cant;
 			}
-			(void)fcntl(image, F_SETFD, FD_CLOEXEC);
 			(void)fprintf(fout, "From %s %s", myname, date);
 #ifdef MIME_SUPPORT
 			(void)puthead(hp, fout, GTO|GSUBJECT|GCC|GMISC|GMIME|GNL);
@@ -347,7 +346,7 @@ outof(struct name *names, FILE *fo, struct header *hp)
 			free_child(pid);
 		} else {
 			int f;
-			if ((fout = Fopen(fname, "a")) == NULL) {
+			if ((fout = Fopen(fname, "ae")) == NULL) {
 				warn("%s", fname);
 				senderr++;
 				goto cant;
@@ -356,7 +355,7 @@ outof(struct name *names, FILE *fo, struct header *hp)
 				warn("dup");
 				fin = NULL;
 			} else
-				fin = Fdopen(f, "r");
+				fin = Fdopen(f, "re");
 			if (fin == NULL) {
 				(void)fprintf(stderr, "Can't reopen image\n");
 				(void)Fclose(fout);

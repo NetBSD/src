@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.73.2.1 2011/11/10 14:31:38 yamt Exp $
+#	$NetBSD: files.amd64,v 1.73.2.2 2012/05/23 10:07:39 yamt Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -36,7 +36,6 @@ file	arch/amd64/amd64/cpufunc.S
 file	arch/amd64/amd64/db_disasm.c		ddb
 file	arch/amd64/amd64/db_interface.c		ddb
 file	arch/amd64/amd64/db_machdep.c		ddb
-file	arch/amd64/amd64/db_memrw.c		ddb | kgdb
 file	arch/amd64/amd64/kobj_machdep.c		modular
 file	arch/amd64/amd64/kgdb_machdep.c		kgdb
 file	kern/subr_disk_mbr.c			disk

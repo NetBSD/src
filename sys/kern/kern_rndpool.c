@@ -1,4 +1,4 @@
-/*      $NetBSD: kern_rndpool.c,v 1.1.6.2 2012/04/17 00:08:25 yamt Exp $        */
+/*      $NetBSD: kern_rndpool.c,v 1.1.6.3 2012/05/23 10:08:11 yamt Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndpool.c,v 1.1.6.2 2012/04/17 00:08:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndpool.c,v 1.1.6.3 2012/05/23 10:08:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rndpool.c,v 1.1.6.2 2012/04/17 00:08:25 yamt Ex
 /*
  * Let others know: the pool is full.
  */
-int rnd_full;
+int rnd_full = 0;			/* Flag: is the pool full? */
+int rnd_filled = 0;			/* Count: how many times filled? */
 
 static inline void rndpool_add_one_word(rndpool_t *, u_int32_t);
 
@@ -216,6 +217,7 @@ rndpool_add_data(rndpool_t *rp, void *p, u_int32_t len, u_int32_t entropy)
 	if (rp->stats.curentropy > RND_POOLBITS) {
 		rp->stats.discarded += (rp->stats.curentropy - RND_POOLBITS);
 		rp->stats.curentropy = RND_POOLBITS;
+		rnd_filled++;
 		rnd_full = 1;
 	}
 }
@@ -246,7 +248,9 @@ rndpool_extract_data(rndpool_t *rp, void *p, u_int32_t len, u_int32_t mode)
 	buf = p;
 	remain = len;
 
-	rnd_full = 0;
+	if (rp->stats.curentropy < RND_POOLBITS / 2) {
+		rnd_full = 0;
+	}
 
 	if (mode == RND_EXTRACT_ANY)
 		good = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.43 2011/07/12 16:59:48 dholland Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.43.2.1 2012/05/23 10:08:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -77,6 +77,7 @@ struct uio;
 struct vnode;
 struct mbuf;
 struct componentname;
+struct ufs_lookup_results;
 
 extern struct pool ext2fs_inode_pool;		/* memory pool for inodes */
 extern struct pool ext2fs_dinode_pool;		/* memory pool for dinodes */

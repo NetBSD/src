@@ -1,4 +1,4 @@
-/* $NetBSD: iocvar.h,v 1.6 2009/01/18 20:31:08 bjh21 Exp $ */
+/* $NetBSD: iocvar.h,v 1.6.14.1 2012/05/23 10:07:36 yamt Exp $ */
 /*-
  * Copyright (c) 1998, 1999 Ben Harris
  * All rights reserved.
@@ -61,7 +61,7 @@ struct ioc_softc {
 	struct evcnt		sc_sclkev;
 	struct timecounter	sc_tc;
 	u_int			sc_tcbase;
-	u_int8_t		sc_ctl;
+	uint8_t			sc_ctl;
 };
 
 extern device_t the_ioc;
@@ -71,10 +71,10 @@ extern device_t the_ioc;
 extern int ioc_irq_status(int);
 extern void ioc_irq_waitfor(int);
 extern void ioc_irq_clear(int);
-extern u_int32_t ioc_irq_status_full(void);
-extern void ioc_irq_setmask(u_int32_t);
+extern uint32_t ioc_irq_status_full(void);
+extern void ioc_irq_setmask(uint32_t);
 
-extern void ioc_fiq_setmask(u_int32_t);
+extern void ioc_fiq_setmask(uint32_t);
 
 extern void ioc_counter_start(device_t, int, int);
 

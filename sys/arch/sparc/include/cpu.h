@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.92.2.1 2012/04/17 00:06:54 yamt Exp $ */
+/*	$NetBSD: cpu.h,v 1.92.2.2 2012/05/23 10:07:49 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -236,7 +236,7 @@ void kgdb_panic(void);
 
 /* emul.c */
 struct trapframe;
-int fixalign(struct lwp *, struct trapframe *);
+int fixalign(struct lwp *, struct trapframe *, void **);
 int emulinstr(int, struct trapframe *);
 
 /* cpu.c */

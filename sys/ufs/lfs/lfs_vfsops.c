@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.290.2.2 2012/04/17 00:08:56 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.290.2.3 2012/05/23 10:08:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.290.2.2 2012/04/17 00:08:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.290.2.3 2012/05/23 10:08:19 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -927,7 +927,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	}
 
 	/* Allocate the mount structure, copy the superblock into it. */
-	fs = malloc(sizeof(struct lfs), M_UFSMNT, M_WAITOK | M_ZERO);
+	fs = kmem_zalloc(sizeof(struct lfs), KM_SLEEP);
 	memcpy(&fs->lfs_dlfs, tdfs, sizeof(struct dlfs));
 
 	/* Compatibility */
@@ -952,7 +952,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		      (long long)((bufmem_hiwater / bufmem_lowater) *
 				  LFS_INVERSE_MAX_BYTES(
 					  fsbtob(fs, LFS_NRESERVE(fs))) >> PAGE_SHIFT)));
-		free(fs, M_UFSMNT);
+		kmem_free(fs, sizeof(struct lfs));
 		error = EFBIG; /* XXX needs translation */
 		goto out;
 	}
@@ -963,7 +963,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		fs->lfs_rfpid = l->l_proc->p_pid;
 	}
 
-	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK | M_ZERO);
+	ump = kmem_zalloc(sizeof(*ump), KM_SLEEP);
 	ump->um_lfs = fs;
 	ump->um_ops = &lfs_ufsops;
 	ump->um_fstype = UFS1;
@@ -1151,8 +1151,8 @@ out:
 	if (abp)
 		brelse(abp, 0);
 	if (ump) {
-		free(ump->um_lfs, M_UFSMNT);
-		free(ump, M_UFSMNT);
+		kmem_free(ump->um_lfs, sizeof(struct lfs));
+		kmem_free(ump, sizeof(*ump));
 		mp->mnt_data = NULL;
 	}
 
@@ -1239,8 +1239,9 @@ lfs_unmount(struct mount *mp, int mntflags)
 	cv_destroy(&fs->lfs_stopcv);
 	rw_destroy(&fs->lfs_fraglock);
 	rw_destroy(&fs->lfs_iflock);
-	free(fs, M_UFSMNT);
-	free(ump, M_UFSMNT);
+
+	kmem_free(fs, sizeof(struct lfs));
+	kmem_free(ump, sizeof(*ump));
 
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;

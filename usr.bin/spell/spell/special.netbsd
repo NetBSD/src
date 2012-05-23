@@ -1255,6 +1255,7 @@ telldir
 telnet
 telnetd
 termcap
+terminfo
 test
 texi2dvi
 texindex

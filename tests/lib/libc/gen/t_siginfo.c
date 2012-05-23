@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.12.2.1 2012/04/17 00:09:11 yamt Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.12.2.2 2012/05/23 10:08:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -47,6 +47,9 @@
 #ifdef _FLOAT_IEEE754
 #include <ieeefp.h>
 #endif
+
+/* for sigbus */
+volatile char *addr;
 
 /* for sigchild */
 pid_t child;
@@ -405,6 +408,72 @@ ATF_TC_BODY(sigsegv, tc)
 	atf_tc_fail("Test did not fault as expected");
 }
 
+static void
+sigbus_action(int signo, siginfo_t *info, void *ptr)
+{
+
+	printf("si_addr = %p\n", info->si_addr);
+	sig_debug(signo, info, (ucontext_t *)ptr);
+
+	ATF_REQUIRE_EQ(info->si_signo, SIGBUS);
+	ATF_REQUIRE_EQ(info->si_errno, 0);
+	ATF_REQUIRE_EQ(info->si_code, BUS_ADRALN);
+
+	if (strcmp(atf_config_get("atf_arch"), "i386") == 0 ||
+	    strcmp(atf_config_get("atf_arch"), "x86_64") == 0) {
+		atf_tc_expect_fail("x86 architecture does not correctly "
+		    "report the address where the unaligned access occured");
+	}
+	ATF_REQUIRE_EQ(info->si_addr, (volatile void *)addr);
+
+	atf_tc_pass();
+	/* NOTREACHED */
+}
+
+ATF_TC(sigbus_adraln);
+ATF_TC_HEAD(sigbus_adraln, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks that signal trampoline correctly calls SIGBUS handler "
+	    "for invalid address alignment");
+}
+
+ATF_TC_BODY(sigbus_adraln, tc)
+{
+	struct sigaction sa;
+
+	sa.sa_flags = SA_SIGINFO;
+	sa.sa_sigaction = sigbus_action;
+	sigemptyset(&sa.sa_mask);
+	sigaction(SIGBUS, &sa, NULL);
+
+	/* Enable alignement checks for x86. 0x40000 is PSL_AC. */
+#if defined(__i386__)
+	__asm__("pushf; orl $0x40000, (%esp); popf");
+#elif defined(__amd64__)
+	__asm__("pushf; orl $0x40000, (%rsp); popf");
+#endif
+
+	addr = calloc(2, sizeof(int));
+	ATF_REQUIRE(addr != NULL);
+
+	if (strcmp(atf_config_get("atf_arch"), "i386") == 0 ||
+	    strcmp(atf_config_get("atf_arch"), "x86_64") == 0) {
+		if (system("cpuctl identify 0 | grep -q QEMU") == 0) {
+			atf_tc_expect_fail("QEMU fails to trap unaligned "
+			    "accesses");
+		}
+	}
+
+	/* Force an unaligned access */
+	addr++;
+	printf("now trying to access unaligned address %p\n", addr);
+	ATF_REQUIRE_EQ(*(volatile int *)addr, 0);
+
+	atf_tc_fail("Test did not fault as expected");
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -415,6 +484,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, sigfpe_flt);
 	ATF_TP_ADD_TC(tp, sigfpe_int);
 	ATF_TP_ADD_TC(tp, sigsegv);
+	ATF_TP_ADD_TC(tp, sigbus_adraln);
 
 	return atf_no_error();
 }

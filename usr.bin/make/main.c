@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.198 2011/09/16 15:38:04 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.198.2.1 2012/05/23 10:08:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.198 2011/09/16 15:38:04 joerg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.198.2.1 2012/05/23 10:08:25 yamt Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.198 2011/09/16 15:38:04 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.198.2.1 2012/05/23 10:08:25 yamt Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -269,9 +269,10 @@ parse_debug_options(const char *argvalue)
 		case 'F':
 			if (debug_file != stdout && debug_file != stderr)
 				fclose(debug_file);
-			if (*++modules == '+')
+			if (*++modules == '+') {
+				modules++;
 				mode = "a";
-			else
+			} else
 				mode = "w";
 			if (strcmp(modules, "stdout") == 0) {
 				debug_file = stdout;

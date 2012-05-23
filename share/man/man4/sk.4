@@ -1,4 +1,4 @@
-.\"	$NetBSD: sk.4,v 1.14 2010/01/15 19:24:49 joerg Exp $
+.\"	$NetBSD: sk.4,v 1.14.8.1 2012/05/23 10:07:35 yamt Exp $
 .\"
 .\" Copyright (c) 2003, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,7 +63,9 @@
 .Os
 .Sh NAME
 .Nm sk ,
-.Nm skc
+.Nm skc ,
+.Nm msk ,
+.Nm mskc
 .Nd SysKonnect XMAC II and Marvell GMAC based gigabit ethernet
 .Sh SYNOPSIS
 .Cd "skc* at pci? dev ? function ?"
@@ -194,7 +196,8 @@ utility configures the adapter to receive and transmit jumbo frames.
 Using jumbo frames can greatly improve performance for certain tasks,
 such as file transfers and data streaming.
 .Pp
-Hardware TCP/IP checksum offloading for IPv4 is supported.
+Hardware TCP/IP checksum offloading for IPv4 is available but not
+supported by the driver.
 .Pp
 The following media types and options (as given to
 .Xr ifconfig 8 )

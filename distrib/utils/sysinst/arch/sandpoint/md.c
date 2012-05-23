@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.36.4.2 2012/04/17 00:02:53 yamt Exp $ */
+/*	$NetBSD: md.c,v 1.36.4.3 2012/05/23 10:07:20 yamt Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -77,7 +77,7 @@ md_init_set_status(int flags)
 	prodname = malloc(len);
 	sysctlbyname(mib_name, prodname, &len, NULL, 0);
 
-	if (strcmp(prodname, "kurobox") == 0)
+	if (strcmp(prodname, "kurobox")==0 || strcmp(prodname, "kurot4")==0)
 		/*
 		 * Running on a KuroBox family product, so enable KUROBOX
 		 */
@@ -175,7 +175,7 @@ md_cleanup_install(void)
 	 * Set the console speed in /etc/ttys depending on the board.
 	 * The default speed is 115200, which is patched when needed.
 	 */
-	if (strcmp(prodname, "kurobox") == 0)
+	if (strcmp(prodname, "kurobox")==0 || strcmp(prodname, "kurot4")==0)
 		new_speed = 57600;			/* KuroBox */
 
 	else if (strcmp(prodname, "dlink") == 0 ||	/* D-Link DSM-G600 */

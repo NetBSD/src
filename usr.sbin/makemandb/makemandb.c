@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.7.2.2 2012/04/17 00:09:49 yamt Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.7.2.3 2012/05/23 10:08:29 yamt Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.7.2.2 2012/04/17 00:09:49 yamt Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.7.2.3 2012/05/23 10:08:29 yamt Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -780,6 +780,8 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 
 	sqlstr = "DELETE FROM mandb_meta WHERE file NOT IN"
 		 " (SELECT file FROM metadb.file_cache);"
+		 "DELETE FROM mandb_links WHERE md5_hash NOT IN"
+		 " (SELECT md5_hash from mandb_meta);"
 		 "DROP TABLE metadb.file_cache;"
 		 "DELETE FROM mandb WHERE rowid NOT IN"
 		 " (SELECT id FROM mandb_meta);";
@@ -1269,8 +1271,8 @@ pman_sh(const struct man_node *n, mandb_rec *rec)
 		 */
 		int has_alias = 0;	// Any more aliases left?
 		while (*name_desc) {
-			/* Remove any leading spaces. */
-			if (name_desc[0] == ' ') {
+			/* Remove any leading spaces or hyphens. */
+			if (name_desc[0] == ' ' || name_desc[0] =='-') {
 				name_desc++;
 				continue;
 			}
@@ -1726,9 +1728,9 @@ insert_into_db(sqlite3 *db, mandb_rec *rec)
 				ln[strlen(ln) - 1] = 0;
 			
 			str = sqlite3_mprintf("INSERT INTO mandb_links"
-					      " VALUES (%Q, %Q, %Q, %Q)",
+					      " VALUES (%Q, %Q, %Q, %Q, %Q)",
 					      ln, rec->name, rec->section,
-					      rec->machine);
+					      rec->machine, rec->md5_hash);
 			sqlite3_exec(db, str, NULL, NULL, &errmsg);
 			sqlite3_free(str);
 			if (errmsg != NULL) {

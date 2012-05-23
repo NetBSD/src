@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.66.2.1 2012/04/17 00:08:57 yamt Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.66.2.2 2012/05/23 10:08:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -138,6 +138,29 @@ int	ufs_checkpath(struct inode *, struct inode *, kauth_cred_t);
 int	ufs_parentcheck(struct vnode *, struct vnode *, kauth_cred_t,
 			int *, struct vnode **);
 int	ufs_blkatoff(struct vnode *, off_t, char **, struct buf **, bool);
+
+/* ufs_rename.c -- for lfs */
+bool	ufs_gro_directory_empty_p(struct mount *, kauth_cred_t,
+	    struct vnode *, struct vnode *);
+int	ufs_gro_rename_check_possible(struct mount *,
+	    struct vnode *, struct vnode *, struct vnode *, struct vnode *);
+int	ufs_gro_rename_check_permitted(struct mount *, kauth_cred_t,
+	    struct vnode *, struct vnode *, struct vnode *, struct vnode *);
+int	ufs_gro_remove_check_possible(struct mount *,
+	    struct vnode *, struct vnode *);
+int	ufs_gro_remove_check_permitted(struct mount *, kauth_cred_t,
+	    struct vnode *, struct vnode *);
+int	ufs_gro_rename(struct mount *, kauth_cred_t,
+	    struct vnode *, struct componentname *, void *, struct vnode *,
+	    struct vnode *, struct componentname *, void *, struct vnode *);
+int	ufs_gro_remove(struct mount *, kauth_cred_t,
+	    struct vnode *, struct componentname *, void *, struct vnode *);
+int	ufs_gro_lookup(struct mount *, struct vnode *,
+	    struct componentname *, void *, struct vnode **);
+int	ufs_gro_genealogy(struct mount *, kauth_cred_t,
+	    struct vnode *, struct vnode *, struct vnode **);
+int	ufs_gro_lock_directory(struct mount *, struct vnode *);
+
 
 /* ufs_quota.c */
 /*

@@ -1,4 +1,4 @@
-/*      $NetBSD: plcom_ifpgavar.h,v 1.1 2001/10/27 16:19:10 rearnsha Exp $ */
+/*      $NetBSD: plcom_ifpgavar.h,v 1.1.160.1 2012/05/23 10:07:42 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -32,7 +32,8 @@
 /* Interface to plcom (PL010) serial driver. */
 
 struct plcom_ifpga_softc {
-	struct plcom_softc  sc_plcom;
+	struct plcom_softc	sc_plcom;
+
 	bus_space_tag_t	    sc_iot;
 	bus_space_handle_t  sc_ioh;
 	void		   *sc_ih;

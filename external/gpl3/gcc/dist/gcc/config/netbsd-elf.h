@@ -97,3 +97,8 @@ along with GCC; see the file COPYING3.  If not see
 #ifdef HAVE_LD_AS_NEEDED
 #define USE_LD_AS_NEEDED 1
 #endif
+
+#define MFLIB_SPEC " %{fmudflap: -export-dynamic -lmudflap \
+ %{static:%(link_gcc_c_sequence) -lmudflap}} \
+ %{fmudflapth: -export-dynamic -lmudflapth -lpthread \
+ %{static:%(link_gcc_c_sequence) -lmudflapth}} "

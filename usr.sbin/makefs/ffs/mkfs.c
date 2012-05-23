@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.22 2011/10/09 21:33:43 christos Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.22.2.1 2012/05/23 10:08:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -48,7 +48,7 @@
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
 #ifdef __RCSID
-__RCSID("$NetBSD: mkfs.c,v 1.22 2011/10/09 21:33:43 christos Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.22.2.1 2012/05/23 10:08:29 yamt Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -599,7 +599,7 @@ static void
 initcg(int cylno, time_t utime, const fsinfo_t *fsopts)
 {
 	daddr_t cbase, dmax;
-	int32_t i, j, d, dlower, dupper, blkno;
+	int i, j, d, dlower, dupper, blkno;
 	struct ufs1_dinode *dp1;
 	struct ufs2_dinode *dp2;
 	int start;
@@ -666,11 +666,14 @@ initcg(int cylno, time_t utime, const fsinfo_t *fsopts)
 		exit(37);
 	}
 	acg.cg_cs.cs_nifree += sblock.fs_ipg;
-	if (cylno == 0)
-		for (i = 0; i < ROOTINO; i++) {
-			setbit(cg_inosused(&acg, 0), i);
+	if (cylno == 0) {
+		size_t r;
+
+		for (r = 0; r < ROOTINO; r++) {
+			setbit(cg_inosused(&acg, 0), r);
 			acg.cg_cs.cs_nifree--;
 		}
+	}
 	if (cylno > 0) {
 		/*
 		 * In cylno 0, beginning space is reserved

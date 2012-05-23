@@ -1,4 +1,4 @@
-# $NetBSD: t_abi_uvm.sh,v 1.2.2.2 2012/04/17 00:09:14 yamt Exp $
+# $NetBSD: t_abi_uvm.sh,v 1.2.2.3 2012/05/23 10:08:22 yamt Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -32,11 +32,12 @@ PAGE_SIZE_head() {
 }
 PAGE_SIZE_body() {
 
-	# XXX: There should be a reliable way to detect MODULAR.
+	# XXX: Adjust when modctl(8) fails consistently.
 	#
-	sysctl machdep.xen > /dev/null 2>&1
+	$(atf_get_srcdir)/k_helper3 \
+		"%s/k_helper/k_helper.kmod" $(atf_get_srcdir)
 
-	if [ $? -eq 0 ]; then
+	if [ $? -eq 1 ] || [ $? -eq 78 ]; then
 		atf_skip "host does not support modules"
 	fi
 

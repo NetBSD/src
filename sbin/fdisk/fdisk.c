@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.134.2.1 2012/04/17 00:05:39 yamt Exp $ */
+/*	$NetBSD: fdisk.c,v 1.134.2.2 2012/05/23 10:07:34 yamt Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.134.2.1 2012/04/17 00:05:39 yamt Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.134.2.2 2012/05/23 10:07:34 yamt Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -90,13 +90,6 @@ __RCSID("$NetBSD: fdisk.c,v 1.134.2.1 2012/04/17 00:05:39 yamt Exp $");
 
 #define	LE_MBR_MAGIC		htole16(MBR_MAGIC)
 #define	LE_MBR_BS_MAGIC		htole16(MBR_BS_MAGIC)
-
-#if defined(__i386__) || defined(__x86_64__)
-#if !HAVE_NBTOOL_CONFIG_H
-#include <machine/cpu.h>
-#endif /* !HAVE_NBTOOL_CONFIG_H */
-#define BOOTSEL
-#endif
 
 #ifdef BOOTSEL
 
@@ -250,8 +243,8 @@ static char *iobuf;		/* buffer for non 512 sector I/O */
 static int bootsize;		/* actual size of bootcode */
 static int boot_installed;	/* 1 if we've copied code into the mbr */
 
-#if (defined(__i386__) || defined(__x86_64__)) && !HAVE_NBTOOL_CONFIG_H
-#define USE_DISKLIST
+#if defined(USE_DISKLIST)
+#include <machine/cpu.h>
 static struct disklist *dl;
 #endif
 

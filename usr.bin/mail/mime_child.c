@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_child.c,v 1.7 2008/04/28 20:24:14 martin Exp $	*/
+/*	$NetBSD: mime_child.c,v 1.7.4.1 2012/05/23 10:08:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_child.c,v 1.7 2008/04/28 20:24:14 martin Exp $");
+__RCSID("$NetBSD: mime_child.c,v 1.7.4.1 2012/05/23 10:08:25 yamt Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -95,11 +95,9 @@ get_cmd_flags(const char *cmd, const char **cmd_start)
 static int
 prepare_pipe(sigset_t *nset, int p[2])
 {
-	if (pipe(p) == -1)
+	if (pipe2(p, O_CLOEXEC) == -1)
 		return -1;
 
-	(void)fcntl(p[READ],  F_SETFD, FD_CLOEXEC);
-	(void)fcntl(p[WRITE], F_SETFD, FD_CLOEXEC);
 	/*
 	 * We _must_ ignore SIGINT and SIGPIPE or the child
 	 * will end up in our earlier handlers.

@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.58 2011/04/21 08:10:49 blymn Exp $	*/
+/*	$NetBSD: getch.c,v 1.58.4.1 2012/05/23 10:07:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.58 2011/04/21 08:10:49 blymn Exp $");
+__RCSID("$NetBSD: getch.c,v 1.58.4.1 2012/05/23 10:07:31 yamt Exp $");
 #endif
 #endif					/* not lint */
 
@@ -395,8 +395,8 @@ add_key_sequence(SCREEN *screen, char *sequence, int key_type)
 
 	/*
 	 * OK - we really should never get a zero length string here, either
-	 * the termcap entry is there and it has a value or we are not called
-	 * at all.  Unfortunately, if someone assigns a termcap string to the
+	 * the terminfo entry is there and it has a value or we are not called
+	 * at all.  Unfortunately, if someone assigns a terminfo string to the
 	 * ^@ value we get passed a null string which messes up our length.
 	 * So, if we get a null string then just insert a leaf value in
 	 * the 0th char position of the root keymap.  Note that we are
@@ -471,7 +471,7 @@ __init_getch(SCREEN *screen)
 		limit -= l;
 #ifdef DEBUG
 			__CTRACE(__CTRACE_INIT,
-			    "Processing termcap entry %d, sequence ",
+			    "Processing terminfo entry %d, sequence ",
 			    tc[i].code);
 			length = (int) strlen(entry);
 			for (k = 0; k <= length -1; k++)

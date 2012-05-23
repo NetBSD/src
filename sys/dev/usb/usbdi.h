@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.79.12.1 2012/04/17 00:08:09 yamt Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.79.12.2 2012/05/23 10:08:08 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ typedef struct usbd_pipe	*usbd_pipe_handle;
 typedef struct usbd_xfer	*usbd_xfer_handle;
 typedef void			*usbd_private_handle;
 
-typedef enum {		/* keep in sync with usbd_status_msgs */
+typedef enum {		/* keep in sync with usbd_error_strs */
 	USBD_NORMAL_COMPLETION = 0, /* must be 0 */
 	USBD_IN_PROGRESS,	/* 1 */
 	/* errors */

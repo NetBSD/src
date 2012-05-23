@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.99.2.3 2012/04/17 00:08:57 yamt Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.99.2.4 2012/05/23 10:08:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.99.2.3 2012/04/17 00:08:57 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.99.2.4 2012/05/23 10:08:19 yamt Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -421,7 +421,7 @@ WRITE(void *v)
 			mutex_enter(vp->v_interlock);
 			error = VOP_PUTPAGES(vp, (oldoff >> 16) << 16,
 			    (uio->uio_offset >> 16) << 16,
-			    PGO_CLEANIT | PGO_JOURNALLOCKED);
+			    PGO_CLEANIT | PGO_JOURNALLOCKED | PGO_LAZY);
 			if (error)
 				break;
 		}
@@ -515,18 +515,16 @@ out:
 		ip->i_flag |= IN_ACCESS;
 	if (resid > uio->uio_resid && ap->a_cred) {
 		if (ip->i_mode & ISUID) {
-			error = kauth_authorize_vnode(ap->a_cred, KAUTH_VNODE_RETAIN_SUID, vp,
-			    NULL, EPERM);
-			if (error) {
+			if (kauth_authorize_vnode(ap->a_cred,
+			    KAUTH_VNODE_RETAIN_SUID, vp, NULL, EPERM) != 0) {
 				ip->i_mode &= ~ISUID;
 				DIP_ASSIGN(ip, mode, ip->i_mode);
 			}
 		}
 
 		if (ip->i_mode & ISGID) {
-			error = kauth_authorize_vnode(ap->a_cred, KAUTH_VNODE_RETAIN_SGID, vp,
-			    NULL, EPERM);
-			if (error) {
+			if (kauth_authorize_vnode(ap->a_cred,
+			    KAUTH_VNODE_RETAIN_SGID, vp, NULL, EPERM) != 0) {
 				ip->i_mode &= ~ISGID;
 				DIP_ASSIGN(ip, mode, ip->i_mode);
 			}

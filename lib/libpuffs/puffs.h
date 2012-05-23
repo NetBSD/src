@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.119.2.1 2012/04/17 00:05:31 yamt Exp $	*/
+/*	$NetBSD: puffs.h,v 1.119.2.2 2012/05/23 10:07:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -89,9 +89,6 @@ struct puffs_node {
 	LIST_ENTRY(puffs_node)	pn_entries;
 
 	LIST_HEAD(,puffs_kcache)pn_cacheinfo;	/* PUFFS_KFLAG_CACHE	*/
-
-	struct timespec		pn_cn_ttl;	/* PUFFS_FLAG_CACHE_FS_TTL */
-	struct timespec		pn_va_ttl;	/* PUFFS_FLAG_CACHE_FS_TTL */
 };
 #define PUFFS_NODE_REMOVED	0x01		/* not on entry list	*/
 
@@ -236,8 +233,14 @@ struct puffs_ops {
 	    int, size_t *, uint8_t *, size_t *, int, const struct puffs_cred *);
 	int (*puffs_node_deleteextattr)(struct puffs_usermount *,
 	    puffs_cookie_t, int, const char *, const struct puffs_cred *);
+	int (*puffs_node_getattr_ttl)(struct puffs_usermount *,
+	    puffs_cookie_t, struct vattr *, const struct puffs_cred *,
+	    struct timespec *);
+	int (*puffs_node_setattr_ttl)(struct puffs_usermount *,
+	    puffs_cookie_t, struct vattr *, const struct puffs_cred *,
+	    struct timespec *);
 
-	void *puffs_ops_spare[32];
+	void *puffs_ops_spare[30];
 };
 
 typedef	int (*pu_pathbuild_fn)(struct puffs_usermount *,
@@ -384,7 +387,14 @@ enum {
 	    int, const struct puffs_cred *);				\
 	int fsname##_node_deleteextattr(struct puffs_usermount *,	\
 	    puffs_cookie_t, int, const char *,				\
-	    const struct puffs_cred *);
+	    const struct puffs_cred *);					\
+	int fsname##_node_getattr_ttl(struct puffs_usermount *,		\
+	    puffs_cookie_t, struct vattr *, const struct puffs_cred *,	\
+	    struct timespec *);						\
+	int fsname##_node_setattr_ttl(struct puffs_usermount *,		\
+	    puffs_cookie_t, struct vattr *, const struct puffs_cred *,	\
+	    struct timespec *);
+
 
 #define PUFFSOP_INIT(ops)						\
     ops = malloc(sizeof(struct puffs_ops));				\
@@ -494,6 +504,9 @@ void	puffs_newinfo_setcookie(struct puffs_newinfo *, puffs_cookie_t);
 void	puffs_newinfo_setvtype(struct puffs_newinfo *, enum vtype);
 void	puffs_newinfo_setsize(struct puffs_newinfo *, voff_t);
 void	puffs_newinfo_setrdev(struct puffs_newinfo *, dev_t);
+void	puffs_newinfo_setva(struct puffs_newinfo *, struct vattr *);
+void	puffs_newinfo_setvattl(struct puffs_newinfo *, struct timespec *);
+void	puffs_newinfo_setcnttl(struct puffs_newinfo *, struct timespec *);
 
 void			*puffs_pn_getmntspecific(struct puffs_node *);
 

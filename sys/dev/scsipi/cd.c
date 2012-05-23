@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.303.4.1 2012/04/17 00:08:02 yamt Exp $	*/
+/*	$NetBSD: cd.c,v 1.303.4.2 2012/05/23 10:08:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.303.4.1 2012/04/17 00:08:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.303.4.2 2012/05/23 10:08:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,8 +251,8 @@ cdattach(device_t parent, device_t self, void *aux)
 
 	mutex_init(&cd->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
-	if (scsipi_periph_bustype(sa->sa_periph) == SCSIPI_BUSTYPE_SCSI &&
-	    periph->periph_version == 0)
+	if (SCSIPI_BUSTYPE_TYPE(scsipi_periph_bustype(sa->sa_periph)) ==
+	    SCSIPI_BUSTYPE_SCSI && periph->periph_version == 0)
 		cd->flags |= CDF_ANCIENT;
 
 	bufq_alloc(&cd->buf_queue, "disksort", BUFQ_SORT_RAWBLOCK);
@@ -382,17 +382,10 @@ cdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 			goto bad3;
 		}
 	} else {
-		int silent;
-
-		if (rawpart)
-			silent = XS_CTL_SILENT;
-		else
-			silent = 0;
-
 		/* Check that it is still responding and ok. */
 		error = scsipi_test_unit_ready(periph,
 		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE |
-		    silent);
+		    XS_CTL_SILENT);
 
 		/*
 		 * Start the pack spinning if necessary. Always allow the
@@ -401,6 +394,12 @@ cdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 		 */
 		if (error == EIO) {
 			int error2;
+			int silent;
+
+			if (rawpart)
+				silent = XS_CTL_SILENT;
+			else
+				silent = 0;
 
 			error2 = scsipi_start(periph, SSS_START, silent);
 			switch (error2) {
@@ -1571,7 +1570,24 @@ cdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		/* FALLTHROUGH */
 	case CDIOCEJECT: /* FALLTHROUGH */
 	case ODIOCEJECT:
-		return (scsipi_start(periph, SSS_STOP|SSS_LOEJ, 0));
+		error = scsipi_start(periph, SSS_STOP|SSS_LOEJ, 0);
+		if (error == 0) {
+			int i;
+
+			/*
+			 * We have just successfully ejected the medium,
+			 * all partitions cached are meaningless now.
+			 * Make sure cdclose() will do silent operations
+			 * now by marking all partitions unused.
+			 * Before any real access, a new (default-)disk-
+			 * label will be generated anyway.
+			 */
+			for (i = 0; i < cd->sc_dk.dk_label->d_npartitions;
+			    i++)
+				cd->sc_dk.dk_label->d_partitions[i].p_fstype =
+					FS_UNUSED;
+		}
+		return error;
 	case DIOCCACHESYNC:
 		/* SYNCHRONISE CACHES command */
 		return (cdcachesync(periph, 0));
@@ -1682,7 +1698,7 @@ cdgetdefaultlabel(struct cd_softc *cd, struct cd_formatted_toc *toc,
 	lp->d_ncylinders = (cd->params.disksize / 100) + 1;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
-	switch (scsipi_periph_bustype(cd->sc_periph)) {
+	switch (SCSIPI_BUSTYPE_TYPE(scsipi_periph_bustype(cd->sc_periph))) {
 	case SCSIPI_BUSTYPE_SCSI:
 		lp->d_type = DTYPE_SCSI;
 		break;

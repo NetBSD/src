@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_exec.c,v 1.7 2009/02/03 16:17:54 pgoyette Exp $	*/
+/*	$NetBSD: i2c_exec.c,v 1.7.14.1 2012/05/23 10:07:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c_exec.c,v 1.7 2009/02/03 16:17:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c_exec.c,v 1.7.14.1 2012/05/23 10:07:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,7 +284,7 @@ iic_smbus_block_read(i2c_tag_t tag, i2c_addr_t addr, uint8_t cmd,
     uint8_t *vbuf, size_t buflen, int flags)
 {
 
-	return (iic_exec(tag, I2C_OP_READ_WITH_STOP, addr, &cmd, 1,
+	return (iic_exec(tag, I2C_OP_READ_BLOCK, addr, &cmd, 1,
 			 vbuf, buflen, flags));
 }
 
@@ -298,7 +298,7 @@ iic_smbus_block_write(i2c_tag_t tag, i2c_addr_t addr, uint8_t cmd,
     uint8_t *vbuf, size_t buflen, int flags)
 {
 
-	return (iic_exec(tag, I2C_OP_WRITE_WITH_STOP, addr, &cmd, 1,
+	return (iic_exec(tag, I2C_OP_WRITE_BLOCK, addr, &cmd, 1,
 			 vbuf, buflen, flags));
 }
 
