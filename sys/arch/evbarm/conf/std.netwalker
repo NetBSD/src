@@ -1,4 +1,4 @@
-#	$NetBSD: std.netwalker,v 1.1.12.1 2012/04/17 00:06:13 yamt Exp $
+#	$NetBSD: std.netwalker,v 1.1.12.2 2012/05/23 10:07:42 yamt Exp $
 #
 # standard NetBSD/evbarm options for Sharp NetWalker
 
@@ -19,7 +19,7 @@ makeoptions	CPUFLAGS="-mcpu=cortex-a8"
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
 options 	CORTEX_PMC
-options 	CORTEX_CCNT_HZ=720000000
+options 	CORTEX_PMC_CCNT_HZ=800000000
 
 makeoptions	LOADADDRESS="0x90100000"
 makeoptions	BOARDTYPE="netwalker"

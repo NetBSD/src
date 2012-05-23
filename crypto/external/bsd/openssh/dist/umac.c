@@ -1,5 +1,5 @@
-/*	$NetBSD: umac.c,v 1.2 2009/06/07 22:38:48 christos Exp $	*/
-/* $OpenBSD: umac.c,v 1.3 2008/05/12 20:52:20 pvalchev Exp $ */
+/*	$NetBSD: umac.c,v 1.2.6.1 2012/05/23 10:07:05 yamt Exp $	*/
+/* $OpenBSD: umac.c,v 1.4 2011/10/19 10:39:48 djm Exp $ */
 /* -----------------------------------------------------------------------
  * 
  * umac.c -- C Implementation UMAC Message Authentication
@@ -65,7 +65,7 @@
 /* ---------------------------------------------------------------------- */
 
 #include "includes.h"
-__RCSID("$NetBSD: umac.c,v 1.2 2009/06/07 22:38:48 christos Exp $");
+__RCSID("$NetBSD: umac.c,v 1.2.6.1 2012/05/23 10:07:05 yamt Exp $");
 #include <sys/types.h>
 #include <sys/endian.h>
 
@@ -329,7 +329,7 @@ static void pdf_gen_xor(pdf_ctx *pc, UINT8 nonce[8], UINT8 buf[8])
 
 typedef struct {
     UINT8  nh_key [L1_KEY_LEN + L1_KEY_SHIFT * (STREAMS - 1)]; /* NH Key */
-    UINT8  data   [HASH_BUF_BYTES];    /* Incomming data buffer           */
+    UINT8  data   [HASH_BUF_BYTES];    /* Incoming data buffer           */
     int next_data_empty;    /* Bookeeping variable for data buffer.       */
     int bytes_hashed;        /* Bytes (out of L1_KEY_LEN) incorperated.   */
     UINT64 state[STREAMS];               /* on-line state     */

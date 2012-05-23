@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_eltorito.c,v 1.17.2.1 2012/04/17 00:09:49 yamt Exp $	*/
+/*	$NetBSD: cd9660_eltorito.c,v 1.17.2.2 2012/05/23 10:08:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_eltorito.c,v 1.17.2.1 2012/04/17 00:09:49 yamt Exp $");
+__RCSID("$NetBSD: cd9660_eltorito.c,v 1.17.2.2 2012/05/23 10:08:29 yamt Exp $");
 #endif  /* !__lint */
 
 #ifdef DEBUG
@@ -244,7 +244,7 @@ cd9660_boot_setup_validation_entry(char sys)
 	boot_catalog_validation_entry *ve;
 	int16_t checksum;
 	unsigned char *csptr;
-	int i;
+	size_t i;
 	entry = cd9660_init_boot_catalog_entry();
 
 	if (entry == NULL) {

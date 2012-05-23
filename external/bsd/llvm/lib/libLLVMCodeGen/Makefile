@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.2.2 2012/04/17 00:03:31 yamt Exp $
+#	$NetBSD: Makefile,v 1.8.2.3 2012/05/23 10:07:26 yamt Exp $
 
 LIB=	LLVMCodeGen
 
@@ -85,6 +85,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	RegAllocPBQP.cpp \
 	RegisterClassInfo.cpp \
 	RegisterCoalescer.cpp \
+	RegisterPressure.cpp \
 	RegisterScavenging.cpp \
 	RenderMachineFunction.cpp \
 	ScheduleDAG.cpp \

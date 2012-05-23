@@ -1,6 +1,6 @@
 .\" Copyright (c) 1988, 1989, 1991 Carnegie Mellon University
 .\"
-.\"	$NetBSD: bootptab.5,v 1.6 2001/04/11 19:32:25 wiz Exp $
+.\"	$NetBSD: bootptab.5,v 1.6.56.1 2012/05/23 10:08:28 yamt Exp $
 .\"
 .TH BOOTPTAB 5 "October 31, 1991" "Carnegie Mellon University"
 .UC 6
@@ -14,7 +14,7 @@ file is the configuration database file for
 .IR bootpd ,
 the Internet Bootstrap Protocol server.
 Its format is similar to that of
-.IR termcap (5)
+.IR capfile (5)
 in which two-character case-sensitive tag symbols are used to
 represent host parameters.  These parameter declarations are separated by
 colons (:), with a general format of:
@@ -321,13 +321,13 @@ Often, the template entry is a dummy host which doesn't actually exist and
 never sends bootp requests.  This feature is similar to the
 .B tc
 feature of
-.IR termcap (5)
-for similar terminals.  Note that
+.IR capfile (5) .
+Note that
 .I bootpd
 allows the
 .B tc
 tag symbol to appear anywhere in the host entry, unlike
-.I termcap
+.I capfile
 which requires it to be the last tag.  Information explicitly specified for a
 host always overrides information implied by a
 .B tc
@@ -345,7 +345,7 @@ This can be done using the construction
 which removes the effect of
 .I tag
 as in
-.IR termcap (5).
+.IR capfile (5).
 For example, to completely undo an IEN-116 name server specification, use
 ":ns@:" at an appropriate place in the configuration entry.  After removal
 with

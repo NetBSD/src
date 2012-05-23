@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2007/05/28 12:06:25 tls Exp $
+#	$NetBSD: Makefile,v 1.8.34.1 2012/05/23 10:08:23 yamt Exp $
 
 USE_FORT?= yes	# data-driven bugs?
 NOMAN=	   # defined
@@ -11,7 +11,7 @@ PROG=       bzip2recover
 LDSTATIC?= -static
 .endif
 
-DIST=	   ${NETBSDSRCDIR}/dist/bzip2
+DIST=	   ${NETBSDSRCDIR}/external/bsd/bzip2/dist
 .PATH:	   ${DIST}
 
 .include <bsd.prog.mk>

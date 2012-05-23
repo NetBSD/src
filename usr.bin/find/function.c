@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.67.2.1 2012/04/17 00:09:31 yamt Exp $	*/
+/*	$NetBSD: function.c,v 1.67.2.2 2012/05/23 10:08:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.67.2.1 2012/04/17 00:09:31 yamt Exp $");
+__RCSID("$NetBSD: function.c,v 1.67.2.2 2012/05/23 10:08:24 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -637,8 +637,8 @@ c_exec(char ***argvp, int isok)
 		new->flags |= F_NEEDOK;
 
 	/*
-	 * Terminate if we encounter an arg exacty equal to ";", or an
-	 * arg exacty equal to "+" following an arg exacty equal to
+	 * Terminate if we encounter an arg exactly equal to ";", or an
+	 * arg exactly equal to "+" following an arg exactly equal to
 	 * "{}".
 	 */
 	for (ap = argv = *argvp, brace = 0;; ++ap) {

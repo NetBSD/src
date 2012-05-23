@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.11.2.1 2012/04/17 00:07:35 yamt Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.11.2.2 2012/05/23 10:07:56 yamt Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.11.2.1 2012/04/17 00:07:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.11.2.2 2012/05/23 10:07:56 yamt Exp $");
 
 #include "opt_mvsata.h"
 
@@ -220,6 +220,7 @@ static const struct scsipi_bustype mvsata_atapi_bustype = {
 	atapi_interpret_sense,
 	atapi_print_addr,
 	mvsata_atapi_kill_pending,
+	NULL,
 };
 #endif /* NATAPIBUS */
 #endif

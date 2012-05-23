@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.28.4.1 2012/04/17 00:07:06 yamt Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.28.4.2 2012/05/23 10:07:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.28.4.1 2012/04/17 00:07:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.28.4.2 2012/05/23 10:07:51 yamt Exp $");
 
 #include "opt_xen.h"
 
@@ -380,13 +380,31 @@ static void
 cpu_probe_winchip(struct cpu_info *ci)
 {
 
-	if (cpu_vendor != CPUVENDOR_IDT ||
-	    CPUID2FAMILY(ci->ci_signature) != 5)
+	if (cpu_vendor != CPUVENDOR_IDT)
 	    	return;
 
-	if (CPUID2MODEL(ci->ci_signature) == 4) {
+	switch (CPUID2FAMILY(ci->ci_signature)) {
+	case 5:
 		/* WinChip C6 */
-		ci->ci_feat_val[0] &= ~CPUID_TSC;
+		if (CPUID2MODEL(ci->ci_signature) == 4)
+			ci->ci_feat_val[0] &= ~CPUID_TSC;
+		break;
+	case 6:
+		/*
+		 * VIA Eden ESP 
+		 *
+		 * Quoting from page 3-4 of: "VIA Eden ESP Processor Datasheet"
+		 * http://www.via.com.tw/download/mainboards/6/14/Eden20v115.pdf
+		 * 
+		 * 1. The CMPXCHG8B instruction is provided and always enabled,
+		 *    however, it appears disabled in the corresponding CPUID
+		 *    function bit 0 to avoid a bug in an early version of
+		 *    Windows NT. However, this default can be changed via a
+		 *    bit in the FCR MSR.
+		 */
+		ci->ci_feat_val[0] |= CPUID_CX8;
+		wrmsr(MSR_VIA_FCR, rdmsr(MSR_VIA_FCR) | 0x00000001);
+		break;
 	}
 }
 

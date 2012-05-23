@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cd.c,v 1.3 2011/03/27 08:53:56 mlelstv Exp $	*/
+/*	$NetBSD: t_cd.c,v 1.3.4.1 2012/05/23 10:08:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -60,7 +60,7 @@ ATF_TC_BODY(noisyeject, tc)
 
 	ATF_REQUIRE_EQ(rump_scsitest_err[RUMP_SCSITEST_NOISYSYNC], 0);
 	RL(rump_sys_close(fd));
-	atf_tc_expect_fail("PR kern/43785");
+	// atf_tc_expect_fail("PR kern/43785");
 	ATF_REQUIRE_EQ(rump_scsitest_err[RUMP_SCSITEST_NOISYSYNC], 0);
 }
 

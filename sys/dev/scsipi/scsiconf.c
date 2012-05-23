@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.262.4.1 2012/04/17 00:08:02 yamt Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.262.4.2 2012/05/23 10:08:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.262.4.1 2012/04/17 00:08:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.262.4.2 2012/05/23 10:08:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,11 +114,39 @@ static int	scsibusprint(void *, const char *);
 static void	scsibus_config(struct scsipi_channel *, void *);
 
 const struct scsipi_bustype scsi_bustype = {
-	SCSIPI_BUSTYPE_SCSI,
+	SCSIPI_BUSTYPE_BUSTYPE(SCSIPI_BUSTYPE_SCSI, SCSIPI_BUSTYPE_SCSI_PSCSI),
 	scsi_scsipi_cmd,
 	scsipi_interpret_sense,
 	scsi_print_addr,
 	scsi_kill_pending,
+	scsi_async_event_xfer_mode,
+};
+
+const struct scsipi_bustype scsi_fc_bustype = {
+	SCSIPI_BUSTYPE_BUSTYPE(SCSIPI_BUSTYPE_SCSI, SCSIPI_BUSTYPE_SCSI_FC),
+	scsi_scsipi_cmd,
+	scsipi_interpret_sense,
+	scsi_print_addr,
+	scsi_kill_pending,
+	scsi_fc_sas_async_event_xfer_mode,
+};
+
+const struct scsipi_bustype scsi_sas_bustype = {
+	SCSIPI_BUSTYPE_BUSTYPE(SCSIPI_BUSTYPE_SCSI, SCSIPI_BUSTYPE_SCSI_SAS),
+	scsi_scsipi_cmd,
+	scsipi_interpret_sense,
+	scsi_print_addr,
+	scsi_kill_pending,
+	scsi_fc_sas_async_event_xfer_mode,
+};
+
+const struct scsipi_bustype scsi_usb_bustype = {
+	SCSIPI_BUSTYPE_BUSTYPE(SCSIPI_BUSTYPE_SCSI, SCSIPI_BUSTYPE_SCSI_USB),
+	scsi_scsipi_cmd,
+	scsipi_interpret_sense,
+	scsi_print_addr,
+	scsi_kill_pending,
+	NULL,
 };
 
 static int
@@ -153,7 +181,8 @@ scsibusmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct scsipi_channel *chan = aux;
 
-	if (chan->chan_bustype->bustype_type != SCSIPI_BUSTYPE_SCSI)
+	if (SCSIPI_BUSTYPE_TYPE(chan->chan_bustype->bustype_type) !=
+	    SCSIPI_BUSTYPE_SCSI)
 		return 0;
 
 	if (cf->cf_loc[SCSICF_CHANNEL] != chan->chan_channel &&
@@ -315,6 +344,9 @@ scsi_probe_bus(struct scsibus_softc *sc, int target, int lun)
 	int maxtarget, mintarget, maxlun, minlun;
 	int error;
 
+	/* XXXSMP scsipi */
+	KERNEL_LOCK(1, curlwp);
+
 	if (target == -1) {
 		maxtarget = chan->chan_ntargets - 1;
 		mintarget = 0;
@@ -342,7 +374,7 @@ scsi_probe_bus(struct scsibus_softc *sc, int target, int lun)
 		    0, curproc);
 
 	if ((error = scsipi_adapter_addref(chan->chan_adapter)) != 0)
-		return (error);
+		goto ret;
 	for (target = mintarget; target <= maxtarget; target++) {
 		if (target == chan->chan_id)
 			continue;
@@ -363,7 +395,9 @@ scsi_probe_bus(struct scsibus_softc *sc, int target, int lun)
 		scsipi_set_xfer_mode(chan, target, 1);
 	}
 	scsipi_adapter_delref(chan->chan_adapter);
-	return (0);
+ret:
+	KERNEL_UNLOCK_ONE(curlwp);
+	return (error);
 }
 
 static int

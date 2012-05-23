@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcivar.h,v 1.32 2010/05/23 18:56:59 christos Exp $	*/
+/*	$NetBSD: fwohcivar.h,v 1.32.8.1 2012/05/23 10:07:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi SHimokawa
@@ -38,8 +38,6 @@
  */
 #ifndef _FWOHCIVAR_H_
 #define _FWOHCIVAR_H_
-
-MALLOC_DECLARE(M_FW);
 
 struct fwohci_softc {
 	struct firewire_comm fc;

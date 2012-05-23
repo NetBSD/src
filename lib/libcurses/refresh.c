@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.75 2011/10/03 12:32:15 roy Exp $	*/
+/*	$NetBSD: refresh.c,v 1.75.2.1 2012/05/23 10:07:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.75 2011/10/03 12:32:15 roy Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.75.2.1 2012/05/23 10:07:31 yamt Exp $");
 #endif
 #endif				/* not lint */
 
@@ -849,8 +849,19 @@ makech(int wy)
 #ifdef DEBUG
 				__CTRACE(__CTRACE_REFRESH,
 				    "makech: have attr %08x, need attr %08x\n",
-				    curscr->wattr & WA_ATTRIBUTES,
-				    nsp->attr & WA_ATTRIBUTES);
+				    curscr->wattr
+#ifndef HAVE_WCHAR
+				 & __ATTRIBUTES
+#else
+				 & WA_ATTRIBUTES
+#endif
+					 ,  nsp->attr
+#ifndef HAVE_WCHAR
+				 & __ATTRIBUTES
+#else
+				 & WA_ATTRIBUTES
+#endif
+					);
 #endif
 
 			off = (~nsp->attr & curscr->wattr)

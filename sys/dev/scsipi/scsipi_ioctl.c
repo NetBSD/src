@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.66 2008/07/14 12:36:44 drochner Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.66.28.1 2012/05/23 10:08:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.66 2008/07/14 12:36:44 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.66.28.1 2012/05/23 10:08:05 yamt Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -379,7 +379,7 @@ scsipi_do_ioctl(struct scsipi_periph *periph, dev_t dev, u_long cmd,
 	case SCIOCIDENTIFY: {
 		struct scsi_addr *sca = (struct scsi_addr *)addr;
 
-		switch (scsipi_periph_bustype(periph)) {
+		switch (SCSIPI_BUSTYPE_TYPE(scsipi_periph_bustype(periph))) {
 		case SCSIPI_BUSTYPE_SCSI:
 			sca->type = TYPE_SCSI;
 			sca->addr.scsi.scbus =
@@ -401,7 +401,7 @@ scsipi_do_ioctl(struct scsipi_periph *periph, dev_t dev, u_long cmd,
 	case OSCIOCIDENTIFY: {
 		struct oscsi_addr *sca = (struct oscsi_addr *)addr;
 
-		switch (scsipi_periph_bustype(periph)) {
+		switch (SCSIPI_BUSTYPE_TYPE(scsipi_periph_bustype(periph))) {
 		case SCSIPI_BUSTYPE_SCSI:
 			sca->scbus =
 			    device_unit(device_parent(periph->periph_dev));

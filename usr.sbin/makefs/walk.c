@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.24.8.1 2012/04/17 00:09:49 yamt Exp $	*/
+/*	$NetBSD: walk.c,v 1.24.8.2 2012/05/23 10:08:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: walk.c,v 1.24.8.1 2012/04/17 00:09:49 yamt Exp $");
+__RCSID("$NetBSD: walk.c,v 1.24.8.2 2012/05/23 10:08:28 yamt Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -387,7 +387,7 @@ apply_specdir(const char *dir, NODE *specnode, fsnode *dirnode, int speconly)
 			if (strcmp(curnode->name, curfsnode->name) == 0)
 				break;
 		}
-		if (snprintf(path, sizeof(path), "%s/%s",
+		if ((size_t)snprintf(path, sizeof(path), "%s/%s",
 		    dir, curnode->name) >= sizeof(path))
 			errx(1, "Pathname too long.");
 		if (curfsnode == NULL) {	/* need new entry */

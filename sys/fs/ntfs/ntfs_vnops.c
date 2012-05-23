@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.49.4.1 2012/04/17 00:08:19 yamt Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.49.4.2 2012/05/23 10:08:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.49.4.1 2012/04/17 00:08:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.49.4.2 2012/05/23 10:08:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -748,14 +748,12 @@ ntfs_fsync(void *v)
 		off_t offhi;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	int wait;
 
 	if (ap->a_flags & FSYNC_CACHE) {
 		return EOPNOTSUPP;
 	}
 
-	wait = (ap->a_flags & FSYNC_WAIT) != 0;
-	return vflushbuf(vp, wait);
+	return vflushbuf(vp, ap->a_flags);
 }
 
 /*

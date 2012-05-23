@@ -1,4 +1,4 @@
-/* $NetBSD: nbfs.c,v 1.7 2006/07/13 16:11:41 bjh21 Exp $ */
+/* $NetBSD: nbfs.c,v 1.7.100.1 2012/05/23 10:07:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Ben Harris
@@ -108,9 +108,11 @@ nbfs_devopen(struct open_file *f, char const *special, char const *fname,
 	if (*fname != '.' && *fname != '\0')
 		return EINVAL;
 	err = rodisk_open(f, special, drive, part);
-	if (err != 0) return err;
+	if (err != 0)
+		return err;
 	*rest = fname;
-	if (**rest == '.') (*rest)++;
+	if (**rest == '.')
+		(*rest)++;
 	return 0;
 }
 
@@ -126,8 +128,10 @@ nbfs_fileopen(struct open_file *f, char const *tail)
 	strcpy(file, "/");
 	strcat(file, tail);
 	for (p = file + 1; *p != '\0'; p++) {
-		if (*p == '.') *p = '/';
-		else if (*p == '/') *p = '.';
+		if (*p == '.')
+			*p = '/';
+		else if (*p == '/')
+			*p = '.';
 	}
 	if (strcmp(tail, "$") == 0)
 		strcpy(file, "/");
@@ -150,7 +154,8 @@ nbfs_fopen(struct open_file *f, char const *special, char const *path)
 	int err;
 
 	err = nbfs_devopen(f, special, path, &tail);
-	if (err != 0) return err;
+	if (err != 0)
+		return err;
 	err = nbfs_fileopen(f, tail);
 	if (err != 0)
 		DEV_CLOSE(f->f_dev)(f);
@@ -185,13 +190,16 @@ nbfs_open(struct nbfs_reg *r)
 		nof = alloc(sizeof(*nof));
 		memset(nof, 0, sizeof(*nof));
 		err = nbfs_fopen(&nof->f, special, fname);
-		if (err != 0) goto fail;
+		if (err != 0)
+			goto fail;
 		err = FS_STAT(nof->f.f_ops)(&nof->f, &st);
-		if (err != 0) goto fail;
+		if (err != 0)
+			goto fail;
 		nof->fileswitch_handle = fh;
 		LIST_INSERT_HEAD(&nbfs_open_files, nof, link);
 		r->r0 = 0x40000000;
-		if (S_ISDIR(st.st_mode)) r->r0 |= 0x20000000;
+		if (S_ISDIR(st.st_mode))
+			r->r0 |= 0x20000000;
 		r->r1 = (uint32_t)nof;
 		r->r2 = DEV_BSIZE;
 		r->r3 = st.st_size;
@@ -217,9 +225,11 @@ nbfs_getbytes(struct nbfs_reg *r)
 	int err;
 
 	err = FS_SEEK(nof->f.f_ops)(&nof->f, off, SEEK_SET);
-	if (err == -1) return maperr(err);
+	if (err == -1)
+		return maperr(err);
 	err = FS_READ(nof->f.f_ops)(&nof->f, buf, size, NULL);
-	if (err != 0) return maperr(err);
+	if (err != 0)
+		return maperr(err);
 	return NULL;
 }
 
@@ -248,7 +258,8 @@ nbfs_close(struct nbfs_reg *r)
 	int err;
 
 	err = nbfs_fclose(&nof->f);
-	if (err != 0) return maperr(err);
+	if (err != 0)
+		return maperr(err);
 	LIST_REMOVE(nof, link);
 	dealloc(nof, sizeof(*nof));
 	return NULL;
@@ -287,7 +298,8 @@ nbfs_file(struct nbfs_reg *r)
 			r->r0 = r->r2 = r->r3 = r->r4 = r->r5 = 0;
 		else {
 			err = FS_STAT(f.f_ops)(&f, &st);
-			if (err != 0) goto fail;
+			if (err != 0)
+				goto fail;
 			r->r0 = S_ISDIR(st.st_mode) ?
 			    fileswitch_IS_DIR : fileswitch_IS_FILE;
 			r->r2 = r->r3 = 0;
@@ -297,7 +309,8 @@ nbfs_file(struct nbfs_reg *r)
 			if (reason == 255) {
 				err = FS_READ(f.f_ops)
 				    (&f, buf, st.st_size, NULL);
-				if (err != 0) goto fail;
+				if (err != 0)
+					goto fail;
 				/* R6 should really be the leaf name */
 				r->r6 = r->r1;
 			}
@@ -381,14 +394,16 @@ nbfs_func_dirents(struct nbfs_reg *r)
 			switch (reason) {
 			case 14:
 				entsiz = strlen(dp->d_name) + 1;
-				if (buflen < entsiz) goto out;
+				if (buflen < entsiz)
+					goto out;
 				strcpy(outp, dp->d_name);
 				break;
 			case 15:
 				entsiz = ALIGN(offsetof(
 					  struct fileswitch_dirent, name)
 				    + strlen(dp->d_name) + 1);
-				if (buflen < entsiz) goto out;
+				if (buflen < entsiz)
+					goto out;
 
 				fdp = (struct fileswitch_dirent *)outp;
 				fdp->loadaddr = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.65 2011/07/22 18:17:12 christos Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.65.2.1 2012/05/23 10:08:08 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -544,6 +544,7 @@
 #define KS_Open                 0xf393
 #define KS_Paste                0xf394
 #define KS_Cut                  0xf395
+#define KS_Stop                 0xf396
 
 #define KS_Menu			0xf3c0
 #define KS_Pause		0xf3c1

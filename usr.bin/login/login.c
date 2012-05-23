@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.98 2011/08/31 16:24:57 plunky Exp $	*/
+/*	$NetBSD: login.c,v 1.98.2.1 2012/05/23 10:08:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.98 2011/08/31 16:24:57 plunky Exp $");
+__RCSID("$NetBSD: login.c,v 1.98.2.1 2012/05/23 10:08:25 yamt Exp $");
 #endif /* not lint */
 
 /*
@@ -83,7 +83,7 @@ __RCSID("$NetBSD: login.c,v 1.98 2011/08/31 16:24:57 plunky Exp $");
 #endif
 #ifdef KERBEROS5
 #include <krb5/krb5.h>
-#include <com_err.h>
+#include <krb5/com_err.h>
 #endif
 #ifdef LOGIN_CAP
 #include <login_cap.h>
@@ -103,13 +103,13 @@ static void	 checknologin(char *);
 #ifdef KERBEROS5
 int	 k5login(struct passwd *, char *, char *, char *);
 void	 k5destroy(void);
-int	 k5_read_creds(char*);
+int	 k5_read_creds(const char *);
 int	 k5_write_creds(void);
 #endif
 #if defined(KERBEROS5)
 static void	 dofork(void);
 #endif
-static void	 usage(void);
+static void	 usage(void) __attribute__((__noreturn__));
 
 #define	TTYGRPNAME	"tty"		/* name of group to own ttys */
 
@@ -118,10 +118,10 @@ static void	 usage(void);
 
 #if defined(KERBEROS5)
 int	has_ccache = 0;
-static int	notickets = 1;
-static char	*instance;
+int	notickets = 1;
 extern krb5_context kcontext;
 extern int	have_forward;
+static char	*instance;
 extern char	*krb5tkfile_env;
 extern int	krb5_configured;
 #endif
@@ -142,13 +142,15 @@ main(int argc, char *argv[])
 	uid_t uid, saved_uid;
 	gid_t saved_gid, saved_gids[NGROUPS_MAX];
 	int nsaved_gids;
-	char *domain, *p, *ttyn, *pwprompt;
+	char *domain, *p, *ttyn;
+	const char *pwprompt;
 	char tbuf[MAXPATHLEN + 2], tname[sizeof(_PATH_TTY) + 10];
 	char localhost[MAXHOSTNAMELEN + 1];
 	int need_chpass, require_chpass;
 	int login_retries = DEFAULT_RETRIES, 
 	    login_backoff = DEFAULT_BACKOFF;
 	time_t pw_warntime = _PASSWORD_WARNDAYS * SECSPERDAY;
+	char *loginname = NULL;
 #ifdef KERBEROS5
 	krb5_error_code kerror;
 #endif
@@ -241,7 +243,7 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (*argv) {
-		username = *argv;
+		username = loginname = *argv;
 		ask = 0;
 	} else
 		ask = 1;
@@ -313,18 +315,16 @@ main(int argc, char *argv[])
 #endif
 		if (ask) {
 			fflag = 0;
-			getloginname();
+			loginname = getloginname();
 		}
 		rootlogin = 0;
 #ifdef KERBEROS5
-		if ((instance = strchr(username, '/')) != NULL)
+		if ((instance = strchr(loginname, '/')) != NULL)
 			*instance++ = '\0';
 		else
-			instance = "";
+			instance = __UNCONST("");
 #endif
-		if (strlen(username) > MAXLOGNAME)
-			username[MAXLOGNAME] = '\0';
-
+		username = trimloginname(loginname);
 		/*
 		 * Note if trying multiple user names; log failures for
 		 * previous user name, but don't bother logging one failure
@@ -506,7 +506,7 @@ main(int argc, char *argv[])
 		(void)printf("No home directory %s!\n", pwd->pw_dir);
 		if (chdir("/") == -1)
 			exit(EXIT_FAILURE);
-		pwd->pw_dir = "/";
+		pwd->pw_dir = __UNCONST("/");
 		(void)printf("Logging in with home = \"/\".\n");
 	}
 
@@ -592,7 +592,7 @@ main(int argc, char *argv[])
 #endif
 
 	if (*pwd->pw_shell == '\0')
-		pwd->pw_shell = _PATH_BSHELL;
+		pwd->pw_shell = __UNCONST(_PATH_BSHELL);
 #ifdef LOGIN_CAP
 	if ((shell = login_getcapstr(lc, "shell", NULL, NULL)) != NULL) {
 		if ((shell = strdup(shell)) == NULL) {
@@ -606,7 +606,7 @@ main(int argc, char *argv[])
 	(void)setenv("HOME", pwd->pw_dir, 1);
 	(void)setenv("SHELL", pwd->pw_shell, 1);
 	if (term[0] == '\0') {
-		char *tt = (char *)stypeof(tty);
+		const char *tt = stypeof(tty);
 #ifdef LOGIN_CAP
 		if (tt == NULL)
 			tt = login_getcapstr(lc, "term", NULL, NULL);
@@ -648,7 +648,7 @@ main(int argc, char *argv[])
 #endif
 
 	if (!quietlog) {
-		char *fname;
+		const char *fname;
 #ifdef LOGIN_CAP
 		fname = login_getcapstr(lc, "copyright", NULL, NULL);
 		if (fname != NULL && access(fname, F_OK) == 0)

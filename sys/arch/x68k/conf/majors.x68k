@@ -1,4 +1,4 @@
-#	$NetBSD: majors.x68k,v 1.24.2.1 2012/04/17 00:07:02 yamt Exp $
+#	$NetBSD: majors.x68k,v 1.24.2.2 2012/05/23 10:07:50 yamt Exp $
 #
 # Device majors for x68k
 #
@@ -19,7 +19,7 @@ device-major	zstty		char 12			zstty
 device-major	ite		char 13			ite
 device-major	kbd		char 14			kbd
 device-major	ms		char 15			ms
-device-major	xcom		char 16			xcom
+device-major	com		char 16			com
 device-major	audio		char 17			audio
 device-major	fd		char 18  block 2	fd
 device-major	vnd		char 19  block 6	vnd

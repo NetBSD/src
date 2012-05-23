@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.49 2011/10/27 22:30:11 rkujawa Exp $
+.\"	$NetBSD: hardware,v 1.49.2.1 2012/05/23 10:07:09 yamt Exp $
 .
 .Nx \*V
 runs on any Amiga that has a 68020 or better CPU with
@@ -67,6 +67,11 @@ PCI bridges
 Prometheus PCI bridge
 .It
 Phase5 PCI bridge: CyberVision PPC, BlizzardVision PPC
+.bullet)
+.It
+Clockports
+.(bullet -compact
+Amiga 1200 on-board clockport
 .bullet)
 .It
 Video controllers
@@ -139,6 +144,8 @@ HyperCom 3Z, HyperCom 4, HyperCom 3+ and 4+
 MultiFaceCard II and III
 .It
 A2232 (normal and clockdoubled)
+.It
+SilverSurfer clockport-based serial port
 .It
 IOBlix Zorro-Bus
 .bullet)

@@ -241,6 +241,8 @@ nbsd_thread_resume (struct target_ops *ops, ptid_t ptid, int step,
      isn't anything we can do but pass it down to the ptrace call;
      given the flexibility of the LWP-to-thread mapping, this might or
      might not accomplish what the user wanted. */
+  if (ptid_get_pid(ptid) == -1)
+    ptid = inferior_ptid;
   beneath->to_resume (beneath, ptid, step, signo);
 
   cached_thread = minus_one_ptid;

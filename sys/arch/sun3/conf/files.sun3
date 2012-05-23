@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.79.2.1 2012/04/17 00:06:58 yamt Exp $
+#	$NetBSD: files.sun3,v 1.79.2.2 2012/05/23 10:07:49 yamt Exp $
 
 #
 # sun3-specific configuration info
@@ -235,6 +235,7 @@ file dev/sun/kbdsun.c			kbd_zs
 file dev/sun/kbd.c			kbd needs-flag
 file dev/sun/kbd_tables.c 		kbd
 file arch/sun3/dev/kd.c 		kbd
+defflag opt_sunkbd.h			KBD_HIJACK_VOLUME_BUTTONS
 
 device ms: zsevent
 attach ms at zsc with ms_zs

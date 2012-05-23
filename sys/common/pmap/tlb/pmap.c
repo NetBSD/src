@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.10.2.1 2012/04/17 00:07:14 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.10.2.2 2012/05/23 10:07:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.10.2.1 2012/04/17 00:07:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.10.2.2 2012/05/23 10:07:53 yamt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -220,15 +220,6 @@ struct pmap * const kernel_pmap_ptr = &kernel_pmap_store.kernel_pmap;
 
 struct pmap_limits pmap_limits;
 
-#ifdef PMAP_POOLPAGE_DEBUG
-struct poolpage_info {
-	vaddr_t base;
-	vaddr_t size;
-	vaddr_t hint;
-	pt_entry_t *sysmap;
-} poolpage;
-#endif
-
 #ifdef UVMHIST
 static struct kern_history_ent pmapexechistbuf[10000];
 static struct kern_history_ent pmaphistbuf[10000];
@@ -348,8 +339,34 @@ void
 pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
 {
 
-	*vstartp = VM_MIN_KERNEL_ADDRESS;	/* kernel is in K0SEG */
-	*vendp = trunc_page(pmap_limits.virtual_end);	/* XXX need pmap_growkernel() */
+	*vstartp = VM_MIN_KERNEL_ADDRESS;
+	*vendp = VM_MAX_KERNEL_ADDRESS;
+}
+
+vaddr_t
+pmap_growkernel(vaddr_t maxkvaddr)
+{
+	vaddr_t virtual_end = pmap_limits.virtual_end; 
+	maxkvaddr = pmap_round_seg(maxkvaddr) - 1;
+
+	/*
+	 * Reserve PTEs for the new KVA space.
+	 */
+	for (; virtual_end < maxkvaddr; virtual_end += NBSEG) {
+		pmap_pte_reserve(pmap_kernel(), virtual_end, 0);
+	}
+
+	/*
+	 * Don't exceed VM_MAX_KERNEL_ADDRESS!
+	 */
+	if (virtual_end == 0 || virtual_end > VM_MAX_KERNEL_ADDRESS)
+		virtual_end = VM_MAX_KERNEL_ADDRESS;
+
+	/*
+	 * Update new end.
+	 */
+	pmap_limits.virtual_end = virtual_end;
+	return virtual_end;
 }
 
 /*
@@ -414,7 +431,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 				    sizeof(*seg) * (vm_nphysseg - bank));
 		}
 
-		va = pmap_md_direct_map_paddr(pa);
+		va = pmap_md_map_poolpage(pa, size);
 		memset((void *)va, 0, size);
 		return va;
 	}
@@ -1828,7 +1845,7 @@ pmap_map_poolpage(paddr_t pa)
 	struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
 	pmap_page_set_attributes(mdpg, VM_PAGEMD_POOLPAGE);
 
-	const vaddr_t va = pmap_md_direct_map_paddr(pa);
+	const vaddr_t va = pmap_md_map_poolpage(pa, NBPG);
 	pmap_md_vca_add(pg, va, NULL);
 	return va;
 }
@@ -1844,6 +1861,7 @@ pmap_unmap_poolpage(vaddr_t va)
 	KASSERT(pg);
 	struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
 	pmap_page_clear_attributes(mdpg, VM_PAGEMD_POOLPAGE);
+	pmap_md_unmap_poolpage(va, NBPG);
 	pmap_md_vca_remove(pg, va);
 
 	return pa;

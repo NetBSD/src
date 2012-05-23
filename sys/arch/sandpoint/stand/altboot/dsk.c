@@ -1,4 +1,4 @@
-/* $NetBSD: dsk.c,v 1.10.2.1 2012/04/17 00:06:50 yamt Exp $ */
+/* $NetBSD: dsk.c,v 1.10.2.2 2012/05/23 10:07:48 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -83,7 +83,6 @@ static void issue48(struct dvata_chan *, int64_t, int);
 static void issue28(struct dvata_chan *, int64_t, int);
 static struct disk *lookup_disk(int);
 
-#define MAX_UNITS 8
 static struct disk ldisk[MAX_UNITS];
 
 int
@@ -462,7 +461,18 @@ static struct disk *
 lookup_disk(int unit)
 {
 
-	return &ldisk[unit];
+	return (unit >= 0 && unit < MAX_UNITS) ? &ldisk[unit] : NULL;
+}
+
+int
+dlabel_valid(int unit)
+{
+	struct disk *dsk;
+
+	dsk = lookup_disk(unit);
+	if (dsk == NULL)
+		return NULL;
+	return dsk->dlabel != NULL;
 }
 
 int
@@ -487,10 +497,10 @@ dsk_open(struct open_file *f, ...)
 
 	if ((d = lookup_disk(unit)) == NULL)
 		return ENXIO;
-	f->f_devdata = d;
 	if ((dlp = d->dlabel) == NULL || part >= dlp->d_npartitions)
 		return ENXIO;
 	d->part = part;
+	f->f_devdata = d;
 
 	snprintf(bi_path.bootpath, sizeof(bi_path.bootpath), name);
 	if (dlp->d_partitions[part].p_fstype == FS_BSDFFS) {

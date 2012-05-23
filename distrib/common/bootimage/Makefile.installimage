@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.installimage,v 1.2.4.2 2012/04/17 00:02:32 yamt Exp $
+#	$NetBSD: Makefile.installimage,v 1.2.4.3 2012/05/23 10:07:08 yamt Exp $
 #
 # Common Makefile to create a bootable installation image for USB flash etc.
 #
@@ -35,7 +35,7 @@ DISKPROTO_IN?=	${NETBSDSRCDIR}/distrib/common/bootimage/diskproto.noswap.mbr.in
 DISKPROTO_IN?=	${NETBSDSRCDIR}/distrib/common/bootimage/diskproto.noswap.in
 .endif
 
-# XXX: no permittion info for makefs(8)
+# XXX: no permission info for makefs(8)
 IMGDIR_EXTRA=	${RELEASEDIR}/${RELEASEMACHINEDIR}	${RELEASEMACHINEDIR}
 IMGDIR_EXCLUDE= 	-s ',./installation/cdrom.*,,gp'
 IMGDIR_EXCLUDE+=	-s ',./installation/liveimage.*,,gp'

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.11.2.1 2012/04/17 00:06:35 yamt Exp $	*/
+/*	$NetBSD: bus.h,v 1.11.2.2 2012/05/23 10:07:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -591,4 +591,9 @@ __MACHINE_copy_region_N(4)
 
 #define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 
+/*
+ * There is no bus_dma(9)'fied bus drivers on this port.
+ */
+#define __HAVE_NO_BUS_DMA
+ 
 #endif /* _MACHINE_BUS_H_ */

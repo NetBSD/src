@@ -1,4 +1,4 @@
-/*	$NetBSD: fwmem.c,v 1.16 2011/07/31 13:51:53 uebayasi Exp $	*/
+/*	$NetBSD: fwmem.c,v 1.16.2.1 2012/05/23 10:07:56 yamt Exp $	*/
 /*-
  * Copyright (c) 2002-2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwmem.c,v 1.16 2011/07/31 13:51:53 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwmem.c,v 1.16.2.1 2012/05/23 10:07:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -155,8 +155,6 @@ sysctl_fwmem_verify_speed(SYSCTLFN_ARGS)
 	return sysctl_fwmem_verify(SYSCTLFN_CALL(rnode), 0, FWSPD_S400);
 }
 
-MALLOC_DEFINE(M_FWMEM, "fwmem", "fwmem/IEEE1394");
-
 #define MAXLEN (512 << fwmem_speed)
 
 struct fwmem_softc {
@@ -187,7 +185,7 @@ fwmem_open(dev_t dev, int flags, int fmt, struct lwp *td)
 	} else {
 		sc->si_drv1 = (void *)-1;
 		sc->si_drv1 = malloc(sizeof(struct fwmem_softc),
-		    M_FWMEM, M_WAITOK);
+		    M_FW, M_WAITOK);
 		if (sc->si_drv1 == NULL)
 			return ENOMEM;
 		fms = (struct fwmem_softc *)sc->si_drv1;
@@ -195,7 +193,7 @@ fwmem_open(dev_t dev, int flags, int fmt, struct lwp *td)
 		fms->sc = sc;
 		fms->refcount = 1;
 		STAILQ_INIT(&fms->xferlist);
-		xfer = fw_xfer_alloc(M_FWMEM);
+		xfer = fw_xfer_alloc(M_FW);
 		STAILQ_INSERT_TAIL(&fms->xferlist, xfer, link);
 	}
 	if (fwmem_debug)
@@ -457,7 +455,7 @@ fwmem_xfer_req(struct fw_device *fwdev, void *sc, int spd, int slen, int rlen,
 {
 	struct fw_xfer *xfer;
 
-	xfer = fw_xfer_alloc(M_FWMEM);
+	xfer = fw_xfer_alloc(M_FW);
 	if (xfer == NULL)
 		return NULL;
 

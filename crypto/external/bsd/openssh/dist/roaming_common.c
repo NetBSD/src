@@ -1,5 +1,5 @@
-/*	$NetBSD: roaming_common.c,v 1.5 2010/11/22 22:19:54 christos Exp $	*/
-/* $OpenBSD: roaming_common.c,v 1.8 2010/01/12 00:59:29 djm Exp $ */
+/*	$NetBSD: roaming_common.c,v 1.5.6.1 2012/05/23 10:07:05 yamt Exp $	*/
+/* $OpenBSD: roaming_common.c,v 1.9 2011/12/07 05:44:38 djm Exp $ */
 /*
  * Copyright (c) 2004-2009 AppGate Network Security AB
  *
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: roaming_common.c,v 1.5 2010/11/22 22:19:54 christos Exp $");
+__RCSID("$NetBSD: roaming_common.c,v 1.5.6.1 2012/05/23 10:07:05 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -74,6 +74,8 @@ get_recv_buf_size()
 void
 set_out_buffer_size(size_t size)
 {
+	if (size == 0 || size > MAX_ROAMBUF)
+		fatal("%s: bad buffer size %lu", __func__, (u_long)size);
 	/*
 	 * The buffer size can only be set once and the buffer will live
 	 * as long as the session lives.

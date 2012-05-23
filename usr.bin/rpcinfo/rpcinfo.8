@@ -1,7 +1,7 @@
 .\" @(#)rpcinfo.1m 1.23 93/03/29 SMI; from SVr4
 .\" Copyright 1989 AT&T
 .\" Copyright 1991 Sun Microsystems, Inc.
-.\" $NetBSD: rpcinfo.8,v 1.14 2009/04/08 13:28:16 joerg Exp $
+.\" $NetBSD: rpcinfo.8,v 1.14.6.1 2012/05/23 10:08:27 yamt Exp $
 .Dd August 18, 1992
 .Dt RPCINFO 8
 .Os
@@ -112,8 +112,7 @@ if it does exist,
 attempts to obtain this information by calling
 an extremely high version number instead,
 and attempts to call each registered version.
-Note:
-the version number is required for
+Note: the version number is required for the
 .Fl b
 and
 .Fl d
@@ -211,10 +210,11 @@ operations on the given
 .Ar host .
 The table shows statistics for each version of
 .Nm rpcbind
-(versions 2, 3 and 4), giving the number of times each procedure was
+(versions 2, 3, and 4), giving the number of times each procedure was
 requested and successfully serviced, the number and type of remote call
 requests that were made, and information about RPC address lookups that were
-handled. This is useful for monitoring RPC activities on
+handled.
+This is useful for monitoring RPC activities on
 .Ar host .
 .Pp
 .It Fl n Ar portnum
@@ -228,8 +228,8 @@ options instead of the port number given by
 .Nm rpcbind .
 Use of this option avoids a call to the remote
 .Nm rpcbind
-to find out the address of the service. This option is made
-obsolete by the
+to find out the address of the service.
+This option is made obsolete by the
 .Fl a
 option.
 .Pp
@@ -245,7 +245,7 @@ and display a list of all registered RPC programs.
 If
 .Ar host
 is not specified, it defaults to the local host.
-Note: Version 2 of the
+Note: version 2 of the
 .Nm rpcbind
 protocol was previously known as the portmapper protocol.
 .Pp
@@ -262,8 +262,8 @@ Make an RPC call to procedure 0 of
 on the specified
 .Ar host
 using TCP,
-and report whether a response was received. This option is made
-obsolete by the
+and report whether a response was received.
+This option is made obsolete by the
 .Fl T
 option as shown in the third synopsis.
 .Pp
@@ -273,8 +273,8 @@ Make an RPC call to procedure 0 of
 on the specified
 .Ar host
 using UDP,
-and report whether a response was received. This option is made
-obsolete by the
+and report whether a response was received.
+This option is made obsolete by the
 .Fl T
 option as shown in the third synopsis.
 .El
@@ -302,7 +302,7 @@ Use the
 option to display a more concise list:
 .Pp
 .Bd -literal
-	example$ rpcinfo -s klaxon
+	example% rpcinfo -s klaxon
 .Ed
 .Bl -column "program" "version(s)" "local,tcp,udp,tcp6,udp6" "nlockmgr" "super-user"
 .It program Ta version(s) Ta netid(s) Ta service Ta owner
@@ -339,7 +339,7 @@ protocol on the local machine use:
 To delete the registration for version
 1 of the
 .Nm walld
-(program number 100008 )
+(program number 100008)
 service for all transports use:
 .Bd -literal
 	example# rpcinfo -d 100008 1

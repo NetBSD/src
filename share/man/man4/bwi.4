@@ -1,4 +1,4 @@
-.\" $NetBSD: bwi.4,v 1.8.2.1 2012/04/17 00:05:45 yamt Exp $
+.\" $NetBSD: bwi.4,v 1.8.2.2 2012/05/23 10:07:35 yamt Exp $
 .\"
 .\" Copyright (c) 2007 The DragonFly Project.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\" $DragonFly: src/share/man/man4/bwi.4,v 1.10 2008/07/26 16:25:40 swildner Exp $
 .\"
-.Dd March 24, 2009
+.Dd April 25, 2012
 .Dt BWI 4
 .Os
 .Sh NAME
@@ -39,6 +39,7 @@
 .Nd Broadcom BCM430x/4318 IEEE 802.11b/g wireless network driver
 .Sh SYNOPSIS
 .Cd "bwi* at pci? dev ? function ?"
+.Cd "bwi* at cardbus? function ?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -72,6 +73,8 @@ driver:
 .Pp
 .Bl -column -offset 6n -compact "Apple AirPort Extreme" "BCM4318" "Mini PCI" "b/g"
 .It Em "Card	Chip	Bus	Standard"
+.It Buffalo WLI-CB-G54	BCM4306	CardBus	b/g
+.It Buffalo WLI3-CB-G54L	BCM4318	CardBus	b/g
 .It Buffalo WLI-PCI-G54S	BCM4306	PCI	b/g
 .It Dell Wireless 1370	BCM4318	Mini PCI	b/g
 .It Dell Wireless 1470	BCM4318	Mini PCI	b/g
@@ -100,6 +103,7 @@ The full list of paths checked for firmware can be found in the
 node.
 .Sh SEE ALSO
 .Xr arp 4 ,
+.Xr cardbus 4 ,
 .Xr ifmedia 4 ,
 .Xr pci 4 ,
 .Xr ifconfig 8 ,
@@ -128,7 +132,3 @@ The hardware specification was reverse engineered by the people at
 Thanks go also to johill and mb on the #bcm-specs channel.
 .Sh BUGS
 BCM4306 and BCM4309 chips do not work properly on channel 1, 2, and 3.
-.Pp
-The
-.Nx
-driver does not yet support cardbus devices.

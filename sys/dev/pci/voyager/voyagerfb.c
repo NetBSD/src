@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.7.2.2 2012/04/17 00:07:59 yamt Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.7.2.3 2012/05/23 10:08:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.7.2.2 2012/04/17 00:07:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.7.2.3 2012/05/23 10:08:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,8 +297,8 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 		(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 	}
 	glyphcache_init(&sc->sc_gc, sc->sc_height,
-			sc->sc_width,
 			(sc->sc_fbsize / sc->sc_stride) - sc->sc_height,
+			sc->sc_width,
 			ri->ri_font->fontwidth,
 			ri->ri_font->fontheight,
 			defattr);
@@ -548,10 +548,19 @@ voyagerfb_init_screen(void *cookie, struct vcons_screen *scr,
 	if (existing) {
 		ri->ri_flg |= RI_CLEAR;
 	}
+
+	if (sc->sc_depth == 32) {
 #ifdef VOYAGERFB_ANTIALIAS
-	if (sc->sc_depth == 32)
 		ri->ri_flg |= RI_ENABLE_ALPHA;
 #endif
+		/* we always run in RGB */
+		ri->ri_rnum = 8;
+		ri->ri_gnum = 8;
+		ri->ri_bnum = 8;
+		ri->ri_rpos = 16;
+		ri->ri_gpos = 8;
+		ri->ri_bpos = 0;
+	}
 
 	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;

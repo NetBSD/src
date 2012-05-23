@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtadvd.conf.5,v 1.14.6.1 2012/04/17 00:09:53 yamt Exp $
+.\"	$NetBSD: rtadvd.conf.5,v 1.14.6.2 2012/05/23 10:08:29 yamt Exp $
 .\"	$KAME: rtadvd.conf.5,v 1.50 2005/01/14 05:30:59 jinmei Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 7, 2012
+.Dd April 5, 2012
 .Dt RTADVD.CONF 5
 .Os
 .Sh NAME
@@ -49,7 +49,7 @@ daemon will automatically configure itself using default values
 specified in the specification.
 .Pp
 It obeys the famous
-.Xr termcap 5
+.Xr capfile 5
 file format.
 Each line in the file describes a network interface.
 Fields are separated by a colon
@@ -219,7 +219,7 @@ The default value is "la" or 0xc0, i.e., both bits are set.
 Since
 .Dq \&:
 is used for
-.Xr termcap 5
+.Xr capfile 5
 file format as well as IPv6 numeric address, the field MUST be quoted by
 doublequote character.
 .It Cm \&vltime
@@ -288,7 +288,7 @@ to specify multiple routes.
 Since
 .Dq \&:
 is used for
-.Xr termcap 5
+.Xr capfile 5
 file format as well as IPv6 numeric address, the field MUST be quoted by
 doublequote character.
 .It Cm \&rtplen
@@ -395,7 +395,7 @@ You can also refer one line from another by using
 .Cm tc
 capability.
 See
-.Xr termcap 5
+.Xr capfile 5
 for details on the capability.
 .Sh EXAMPLES
 As presented above, all of the advertised parameters have default values
@@ -449,7 +449,7 @@ ef0:\\
 	:addr="2001:db8:ffff:1000::":prefixlen#64:tc=default:
 .Ed
 .Sh SEE ALSO
-.Xr termcap 5 ,
+.Xr capfile 5 ,
 .Xr rtadvd 8 ,
 .Xr rtsol 8
 .Pp

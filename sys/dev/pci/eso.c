@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.57.12.1 2012/04/17 00:07:45 yamt Exp $	*/
+/*	$NetBSD: eso.c,v 1.57.12.2 2012/05/23 10:07:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.57.12.1 2012/04/17 00:07:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.57.12.2 2012/05/23 10:07:57 yamt Exp $");
 
 #include "mpu.h"
 
@@ -669,8 +669,6 @@ static int
 eso_reset(struct eso_softc *sc)
 {
 	int i;
-
-	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 	bus_space_write_1(sc->sc_sb_iot, sc->sc_sb_ioh, ESO_SB_RESET,
 	    ESO_SB_RESET_SW | ESO_SB_RESET_FIFO);

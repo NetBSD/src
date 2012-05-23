@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.57.2.1 2012/04/17 00:08:55 yamt Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.57.2.2 2012/05/23 10:08:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.57.2.1 2012/04/17 00:08:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.57.2.2 2012/05/23 10:08:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -313,7 +313,8 @@ ext2fs_write(void *v)
 			if (!async && oldoff >> 16 != uio->uio_offset >> 16) {
 				mutex_enter(vp->v_interlock);
 				error = VOP_PUTPAGES(vp, (oldoff >> 16) << 16,
-				    (uio->uio_offset >> 16) << 16, PGO_CLEANIT);
+				    (uio->uio_offset >> 16) << 16,
+				    PGO_CLEANIT | PGO_LAZY);
 			}
 		}
 		if (error == 0 && ioflag & IO_SYNC) {
@@ -378,16 +379,14 @@ out:
 		ip->i_flag |= IN_ACCESS;
 	if (resid > uio->uio_resid && ap->a_cred) {
 		if (ip->i_e2fs_mode & ISUID) {
-			error = kauth_authorize_vnode(ap->a_cred, KAUTH_VNODE_RETAIN_SUID, vp,
-			    NULL, EPERM);
-			if (error)
+			if (kauth_authorize_vnode(ap->a_cred,
+			    KAUTH_VNODE_RETAIN_SUID, vp, NULL, EPERM) != 0)
 				ip->i_e2fs_mode &= ISUID;
 		}
 
 		if (ip->i_e2fs_mode & ISGID) {
-			error = kauth_authorize_vnode(ap->a_cred, KAUTH_VNODE_RETAIN_SGID, vp,
-			    NULL, EPERM);
-			if (error)
+			if (kauth_authorize_vnode(ap->a_cred,
+			    KAUTH_VNODE_RETAIN_SGID, vp, NULL, EPERM) != 0)
 				ip->i_e2fs_mode &= ~ISGID;
 		}
 	}

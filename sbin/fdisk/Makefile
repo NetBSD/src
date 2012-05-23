@@ -1,9 +1,16 @@
-#	$NetBSD: Makefile,v 1.41 2009/11/27 15:37:32 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.41.6.1 2012/05/23 10:07:34 yamt Exp $
 
 PROG=	fdisk 
 SRCS=	fdisk.c
 
 MAN=	fdisk.8
+
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+CPPFLAGS+= -DBOOTSEL
+.if (${HOSTPROG:U} == "")
+CPPFLAGS+= -DUSE_DISKLIST
+.endif
+.endif
 
 .if ${MACHINE} == "arc"
 CPPFLAGS+= -D_PATH_DEFDISK='"/dev/rsd0d"'

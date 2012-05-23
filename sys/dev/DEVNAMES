@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.270.2.1 2012/04/17 00:07:24 yamt Exp $
+#	$NetBSD: DEVNAMES,v 1.270.2.2 2012/05/23 10:07:55 yamt Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -258,6 +258,8 @@ clock			sun2
 clock			sun3
 clock			x68k
 clockctl		MI
+clockport		amiga
+clockportbus		amiga
 cmdide			MI
 cmi			vax
 cmpci			MI
@@ -375,6 +377,7 @@ eeprom			sparc
 eeprom			sparc64
 eeprom			sun3
 ef			MI
+efa			amiga
 eg			MI
 ega			MI
 eh			acorn26
@@ -874,6 +877,8 @@ mms			dreamcast
 mms			i386
 motoi2c			MI		Attribute
 moxa			MI
+mppb			amiga
+mppb			amigappc
 mpt			MI
 mpu			MI
 mr			MI
@@ -985,6 +990,12 @@ optiide			MI
 osiop			MI
 otgsc			amiga
 otgsc			amigappc
+p5bus			amiga
+p5bus			amigappc
+p5membar		amiga
+p5membar		amigappc
+p5pb			amiga
+p5pb			amigappc
 panel			cobalt
 pad			MI
 par			amiga
@@ -1473,7 +1484,6 @@ xb			alpha
 xbd			xen
 xbox			MI
 xcfb			pmax
-xcom			x68k
 xd			MI
 xd			sun3
 xdc			MI

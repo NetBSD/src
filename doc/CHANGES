@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1621.2.2 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1621.2.3 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -49,3 +49,12 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		[christos 20120306]
 	pdisk(8): Make it work for 64 bit hosts, and make it MI.
 		[christos 20120306]
+	amiga: Add clockport(4) layer and a driver for A1200 on-board clockport
+		a1k2cp(4). [rkujawa 20120417]
+	kernel: add mpii(4), a driver for LSI Logic Fusion-MPT Message Passing
+		Interface II SAS controllers.  [bouyer 20120419]
+	kernel: Add support for 256 CPUs on amd64. [rmind 20120420]
+	OpenSSH: Imported 6.0 [christos 20120501]
+	bzip2: Imported 1.0.6 [wiz 20120507]
+	amiga: Rework X-Surf driver as xsurf(4). Add support for clockport(4)
+		on top of xsurf(4). [rkujawa 20120515]

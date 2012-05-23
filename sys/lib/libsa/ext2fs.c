@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.10.2.1 2012/04/17 00:08:33 yamt Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.10.2.2 2012/05/23 10:08:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -713,10 +713,8 @@ ext2fs_open(const char *path, struct open_file *f)
 out:
 	if (rc)
 		ext2fs_close(f);
-	else {
+	else
 		fsmod = "ext2fs";
-		fsmod2 = "ffs";
-	}
 	return rc;
 }
 

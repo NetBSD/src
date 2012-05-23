@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.9.2.1 2012/04/17 00:06:46 yamt Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.9.2.2 2012/05/23 10:07:46 yamt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.9.2.1 2012/04/17 00:06:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.9.2.2 2012/05/23 10:07:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -501,7 +501,9 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	sc->sc_macstnaddr2 = etsec_read(sc, MACSTNADDR2);
 	sc->sc_macstnaddr1 = etsec_read(sc, MACSTNADDR1);
 	sc->sc_rctrl = RCTRL_DEFAULT;
-	sc->sc_maccfg2 = MACCFG2_DEFAULT;
+	sc->sc_ecntrl = etsec_read(sc, ECNTRL);
+	sc->sc_maccfg1 = etsec_read(sc, MACCFG1);
+	sc->sc_maccfg2 = etsec_read(sc, MACCFG2) | MACCFG2_DEFAULT;
 
 	if (sc->sc_macstnaddr1 == 0 && sc->sc_macstnaddr2 == 0) {
 		size_t len;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.81.2.1 2012/04/17 00:05:31 yamt Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.81.2.2 2012/05/23 10:07:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -256,7 +256,10 @@ int	pthread__find(pthread_t) PTHREAD_HIDE;
 	} while (/*CONSTCOND*/0)
 
 
-#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+#if !defined(__HAVE_TLS_VARIANT_I) && !defined(__HAVE_TLS_VARIANT_II)
+#error Either __HAVE_TLS_VARIANT_I or __HAVE_TLS_VARIANT_II must be defined
+#endif
+
 static inline pthread_t __constfunc
 pthread__self(void)
 {
@@ -267,9 +270,6 @@ pthread__self(void)
 #endif
 	return (pthread_t)tcb->tcb_pthread;
 }
-#else
-#error Either __HAVE_TLS_VARIANT_I or __HAVE_TLS_VARIANT_II must be defined
-#endif
 
 #define pthread__abort()						\
 	pthread__assertfunc(__FILE__, __LINE__, __func__, "unreachable")

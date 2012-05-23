@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.167 2011/06/03 21:10:42 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.167.2.1 2012/05/23 10:08:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.167 2011/06/03 21:10:42 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.167.2.1 2012/05/23 10:08:26 yamt Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.167 2011/06/03 21:10:42 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.167.2.1 2012/05/23 10:08:26 yamt Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -742,6 +742,8 @@ Var_Export(char *str, int isExport)
 /*
  * This is called when .unexport[-env] is seen.
  */
+extern char **environ;
+
 void
 Var_UnExport(char *str)
 {
@@ -760,7 +762,6 @@ Var_UnExport(char *str)
     str += 8;
     unexport_env = (strncmp(str, "-env", 4) == 0);
     if (unexport_env) {
-	extern char **environ;
 	static char **savenv;
 	char **newenv;
 
@@ -4075,7 +4076,7 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, Boolean undefErr)
 	}
     }
 
-    return Buf_Destroy(&buf, FALSE);
+    return Buf_DestroyCompact(&buf);
 }
 
 /*-

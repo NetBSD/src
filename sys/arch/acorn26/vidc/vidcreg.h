@@ -1,4 +1,4 @@
-/* $NetBSD: vidcreg.h,v 1.2 2002/03/24 23:37:45 bjh21 Exp $ */
+/* $NetBSD: vidcreg.h,v 1.2.154.1 2012/05/23 10:07:37 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 Ben Harris
@@ -126,7 +126,7 @@
 #define VIDC_CTL_TEST_MODE2	0x0000c000
 #define VIDC_CTL_TEST_MODE3	0x00000100
 
-#define VIDC_WRITE(value)	*(volatile u_int32_t *)MEMC_VIDC_BASE = value
+#define VIDC_WRITE(value)	*(volatile uint32_t *)MEMC_VIDC_BASE = value
 
 /*
  * VIDC audio format is mu-law, but with the bits in a strange order.

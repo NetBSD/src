@@ -1,5 +1,5 @@
-/*	$NetBSD: packet.h,v 1.6 2011/09/07 17:49:19 christos Exp $	*/
-/* $OpenBSD: packet.h,v 1.56 2011/05/06 21:14:05 djm Exp $ */
+/*	$NetBSD: packet.h,v 1.6.2.1 2012/05/23 10:07:05 yamt Exp $	*/
+/* $OpenBSD: packet.h,v 1.57 2012/01/25 19:40:09 markus Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -54,7 +54,6 @@ int      packet_send(void);
 
 int      packet_read(void);
 void     packet_read_expect(int type);
-int      packet_read_poll(void);
 void     packet_process_incoming(const char *buf, u_int len);
 int      packet_read_seqnr(u_int32_t *seqnr_p);
 int      packet_read_poll_seqnr(u_int32_t *seqnr_p);

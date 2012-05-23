@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_heathrow.c,v 1.7.2.1 2012/04/17 00:06:38 yamt Exp $ */
+/*	$NetBSD: pic_heathrow.c,v 1.7.2.2 2012/05/23 10:07:45 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_heathrow.c,v 1.7.2.1 2012/04/17 00:06:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_heathrow.c,v 1.7.2.2 2012/05/23 10:07:45 yamt Exp $");
 
 #include "opt_interrupt.h"
 
@@ -70,7 +70,6 @@ static inline void heathrow_read_events(struct heathrow_ops *);
 #define INT_ENABLE_REG_L	((uint32_t)pic->pic_cookie + 0x24)
 #define INT_CLEAR_REG_L		((uint32_t)pic->pic_cookie + 0x28)
 #define INT_LEVEL_REG_L		((uint32_t)pic->pic_cookie + 0x2c)
-#define INT_LEVEL_MASK_HEATHROW	0x1ff00000
 
 static const char *compat[] = {
 	"heathrow",
@@ -201,10 +200,10 @@ heathrow_read_events(struct heathrow_ops *heathrow)
 
 	/* first the low 32 IRQs */
 	irqs = in32rb(INT_STATE_REG_L);
-	events = irqs & ~heathrow->level_mask_l/*INT_LEVEL_MASK_HEATHROW*/;
+	events = irqs & ~heathrow->level_mask_l;
 
 	levels = in32rb(INT_LEVEL_REG_L) & heathrow->enable_mask_l;
-	events |= levels & heathrow->level_mask_l/*INT_LEVEL_MASK_HEATHROW*/;
+	events |= levels & heathrow->level_mask_l;
 	out32rb(INT_CLEAR_REG_L, events | irqs);
 	heathrow->pending_events_l |= events;
 

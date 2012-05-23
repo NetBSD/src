@@ -1,7 +1,7 @@
-/*	$NetBSD: cpu.c,v 1.96.2.1 2012/04/17 00:07:06 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.96.2.2 2012/05/23 10:07:51 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.96.2.1 2012/04/17 00:07:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.96.2.2 2012/05/23 10:07:51 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.96.2.1 2012/04/17 00:07:06 yamt Exp $");
 #include <sys/kmem.h>
 #include <sys/cpu.h>
 #include <sys/cpufreq.h>
+#include <sys/idle.h>
 #include <sys/atomic.h>
 #include <sys/reboot.h>
 
@@ -113,10 +114,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.96.2.1 2012/04/17 00:07:06 yamt Exp $");
 #include <dev/isa/isareg.h>
 
 #include "tsc.h"
-
-#if MAXCPUS > 32
-#error cpu_info contains 32bit bitmasks
-#endif
 
 static int	cpu_match(device_t, cfdata_t, void *);
 static void	cpu_attach(device_t, device_t, void *);
@@ -157,7 +154,6 @@ struct cpu_info cpu_info_primary __aligned(CACHE_LINE_SIZE) = {
 	.ci_idepth = -1,
 	.ci_curlwp = &lwp0,
 	.ci_curldt = -1,
-	.ci_cpumask = 1,
 #ifdef TRAPLOG
 	.ci_tlog_base = &tlog_primary,
 #endif /* !TRAPLOG */
@@ -172,9 +168,6 @@ static void	tss_init(struct i386tss *, void *, void *);
 #endif
 
 static void	cpu_init_idle_lwp(struct cpu_info *);
-
-uint32_t cpus_attached = 0;
-uint32_t cpus_running = 1;
 
 uint32_t cpu_feature[5]; /* X86 CPUID feature bits
 			  *	[0] basic features %edx
@@ -271,8 +264,9 @@ cpu_vm_init(struct cpu_info *ci)
 	 */
 	aprint_debug_dev(ci->ci_dev, "%d page colors\n", ncolors);
 	uvm_page_recolor(ncolors);
-}
 
+	pmap_tlb_cpu_init(ci);
+}
 
 static void
 cpu_attach(device_t parent, device_t self, void *aux)
@@ -286,8 +280,12 @@ cpu_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	if (cpus_attached == ~0) {
-		aprint_error(": increase MAXCPUS\n");
+	if (ncpu == maxcpus) {
+#ifndef _LP64
+		aprint_error(": too many CPUs, please use NetBSD/amd64\n");
+#else
+		aprint_error(": too many CPUs\n");
+#endif
 		return;
 	}
 
@@ -356,7 +354,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		KASSERT(ci->ci_data.cpu_idlelwp != NULL);
 	}
 
-	ci->ci_cpumask = (1 << cpu_index(ci));
 	pmap_reference(pmap_kernel());
 	ci->ci_pmap = pmap_kernel();
 	ci->ci_tlbstate = TLBSTATE_STALE;
@@ -428,7 +425,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	}
 
 	pat_init(ci);
-	atomic_or_32(&cpus_attached, ci->ci_cpumask);
 
 	if (!pmf_device_register1(self, cpu_suspend, cpu_resume, cpu_shutdown))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -578,8 +574,6 @@ cpu_init(struct cpu_info *ci)
 	}
 #endif	/* i386 */
 #endif /* MTRR */
-
-	atomic_or_32(&cpus_running, ci->ci_cpumask);
 
 	if (ci != &cpu_info_primary) {
 		/* Synchronize TSC again, and check for drift. */
@@ -839,6 +833,9 @@ cpu_hatch(void *v)
 	x86_errata();
 
 	aprint_debug_dev(ci->ci_dev, "running\n");
+
+	idle_loop(NULL);
+	KASSERT(false);
 }
 
 #if defined(DDB)

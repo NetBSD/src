@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.33.8.1 2012/04/17 00:05:51 yamt Exp $ */
+/* $NetBSD: pmap.c,v 1.33.8.2 2012/05/23 10:07:36 yamt Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33.8.1 2012/04/17 00:05:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33.8.2 2012/05/23 10:07:36 yamt Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/kmem.h>
@@ -136,15 +136,15 @@ struct pv_entry {
 	pmap_t	pv_pmap;
 	int	pv_ppn;
 	int	pv_lpn;
-	u_int32_t	pv_activate;  /* MEMC command to activate mapping */
-	u_int32_t	pv_deactivate;/* MEMC command to deactivate mapping */
+	uint32_t	pv_activate;  /* MEMC command to activate mapping */
+	uint32_t	pv_deactivate;/* MEMC command to deactivate mapping */
 	vm_prot_t	pv_prot; /* requested protection */
-	u_int8_t	pv_ppl;  /* Actual PPL */
-	u_int8_t	pv_vflags; /* Per-mapping flags */
+	uint8_t	pv_ppl;  /* Actual PPL */
+	uint8_t	pv_vflags; /* Per-mapping flags */
 #define PV_WIRED	0x01 /* This is a wired mapping */
 #define PV_UNMANAGED	0x02 /* Mapping was entered by pmap_kenter_*() */
 	/* From pv_pflags onwards is per-physical-page state. */
-	u_int8_t	pv_pflags; /* Per-physical-page flags */
+	uint8_t	pv_pflags; /* Per-physical-page flags */
 #define PV_REFERENCED	0x01
 #define PV_MODIFIED	0x02
 #ifdef PMAP_DEBUG_MODIFIED

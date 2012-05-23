@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.46 2010/02/26 02:11:40 christos Exp $	*/
+/*	$NetBSD: dump.h,v 1.46.6.1 2012/05/23 10:07:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -281,18 +281,6 @@ void	putdumptime(void);
 		for (ddp = ddatev[i = 0]; i < nddates; ddp = ddatev[++i])
 
 void	sig(int signo);
-
-/*
- * Compatibility with old systems.
- */
-#ifdef COMPAT
-#include <sys/file.h>
-#define	strchr(a,b)	index(a,b)
-#define	strrchr(a,b)	rindex(a,b)
-extern char *strdup(), *ctime();
-extern int read(), write();
-extern int errno;
-#endif
 
 #ifndef	_PATH_FSTAB
 #define	_PATH_FSTAB	"/etc/fstab"

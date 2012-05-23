@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.289.2.1 2012/04/17 00:01:35 yamt Exp $
+#	$NetBSD: Makefile,v 1.289.2.2 2012/05/23 10:07:03 yamt Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -563,7 +563,7 @@ do-obsolete: .PHONY .MAKE
 # (Tells <bsd.subdir.mk> not to recurse for them.)
 #
 
-.for dir in bin etc distrib games libexec regress sbin usr.sbin tools
+.for dir in bin etc distrib games libexec regress sbin usr.bin usr.sbin tools
 includes-${dir}: .PHONY
 	@true
 .endfor

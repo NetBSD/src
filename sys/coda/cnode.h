@@ -1,4 +1,4 @@
-/*	$NetBSD: cnode.h,v 1.17 2008/03/21 17:59:57 plunky Exp $	*/
+/*	$NetBSD: cnode.h,v 1.17.38.1 2012/05/23 10:07:52 yamt Exp $	*/
 
 /*
  *
@@ -187,20 +187,20 @@ enum dc_status {
 };
 
 /* cfs_psdev.h */
-extern int coda_call(struct coda_mntinfo *mntinfo, int inSize, int *outSize, void *buffer);
+extern int coda_call(struct coda_mntinfo *, int, int *, void *);
 extern int coda_kernel_version;
 
 /* cfs_subr.h */
-extern int  handleDownCall(int opcode, union outputArgs *out);
-extern void coda_unmounting(struct mount *whoIam);
-extern int  coda_vmflush(struct cnode *cp);
+extern int  handleDownCall(int, union outputArgs *);
+extern void coda_unmounting(struct mount *);
+extern int  coda_vmflush(struct cnode *);
 
 /* cfs_vnodeops.h */
-extern struct cnode *make_coda_node(CodaFid *fid, struct mount *vfsp, short type);
+extern struct cnode *make_coda_node(CodaFid *, struct mount *, short);
 extern int coda_vnodeopstats_init(void);
 
 /* coda_vfsops.h */
-extern struct mount *devtomp(dev_t dev);
+extern struct mount *devtomp(dev_t);
 
 /* sigh */
 #define CODA_RDWR ((u_long) 31)

@@ -1,0 +1,41 @@
+#	$NetBSD: files.clockport,v 1.2.2.2 2012/05/23 10:07:40 yamt Exp $
+
+define	clockportbus {}
+
+define	clockport_common {}
+file	arch/amiga/clockport/clockport_common.c clockport_common
+
+# Generic clockport (can be attached on top of Zorro boards)
+device	gencp: clockportbus, clockport_common
+file	arch/amiga/clockport/gencp.c		gencp needs-flag
+
+# A1200 clockport
+device	a1k2cp: clockportbus, clockport_common
+attach	a1k2cp at mainbus
+file	arch/amiga/clockport/a1k2cp.c		a1k2cp
+
+# X-Surf clockports
+attach	gencp at xsurfbus with gencp_xsurf
+file	arch/amiga/clockport/gencp_xsurf.c	gencp_xsurf needs-flag
+
+# more zbus clockports should be added, like:
+# Highway clockport
+# attach gencp at highwaybus with gencp_highway
+# file	arch/amiga/clockport/gencp_highway.c
+# 
+# also for clockports like the second one on A604:
+# device obio at mainbus {[address = -1]}
+# attach gencp at obio  with gencp_obio
+# file	arch/amiga/clockport/gencp_obio.c
+#
+# etc.
+
+device	clockport {}
+attach	clockport at clockportbus
+file	arch/amiga/clockport/clockport.c	clockport
+
+# Individual Computers SilverSurfer serial
+attach	com at clockport with com_ss
+file	arch/amiga/clockport/com_ss.c
+
+

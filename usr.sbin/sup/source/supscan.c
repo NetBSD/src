@@ -1,4 +1,4 @@
-/*	$NetBSD: supscan.c,v 1.19 2011/08/31 16:25:00 plunky Exp $	*/
+/*	$NetBSD: supscan.c,v 1.19.2.1 2012/05/23 10:08:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -158,7 +158,7 @@ TREE *refuseT = NULL;		/* list of all files specified by <coll>.list */
 
 
 void usage(void);
-void init(int, char **);
+int init(int, char **);
 static SCAN_COLLECTION *getscancoll(char *, char *, char *);
 int localhost(char *);
 int main(int, char **);
@@ -171,6 +171,7 @@ int
 main(int argc, char **argv)
 {
 	SCAN_COLLECTION * volatile c;	/* Avoid longjmp clobbering */
+	volatile int errs;
 #ifdef RLIMIT_DATA
 	struct rlimit dlim;
 
@@ -185,7 +186,11 @@ main(int argc, char **argv)
 	}
 #endif
 
-	init(argc, argv);	/* process arguments */
+	errs = init(argc, argv);	/* process arguments */
+	if (errs) {
+		fprintf(stderr, "supscan: %d collections had errors", errs);
+		return 1;
+	}
 	for (c = firstC; c; c = c->Cnext) {
 		collname = c->Cname;
 		basedir = c->Cbase;
@@ -202,10 +207,12 @@ main(int argc, char **argv)
 			if (!quiet)
 				printf("SUP Scan for %s completed at %s",
 				    collname, ctime(&scantime));
-		} else
+		} else {
 			fprintf(stderr,
 			    "SUP: Scan for %s aborted at %s", collname,
 			    ctime(&scantime));
+			errs++;
+		}
 		if (!quiet)
 			(void) fflush(stdout);
 	}
@@ -217,7 +224,7 @@ main(int argc, char **argv)
 			free(c->Cprefix);
 		free(c);
 	}
-	exit(0);
+	return errs ? 1 : 0;
 }
 /*****************************************
  ***    I N I T I A L I Z A T I O N    ***
@@ -232,7 +239,7 @@ usage(void)
 	exit(1);
 }
 
-void
+int
 init(int argc, char **argv)
 {
 	char buf[STRINGLENGTH], fbuf[STRINGLENGTH], *p, *q;
@@ -240,6 +247,7 @@ init(int argc, char **argv)
 	SCAN_COLLECTION **c;
 	int fflag, sflag;
 	char *filename = NULL;
+	int errs = 0;
 
 	quiet = FALSE;
 	trace = FALSE;
@@ -297,9 +305,11 @@ init(int argc, char **argv)
 			*c = getscancoll(filename, estrdup(collname), NULL);
 			if (*c)
 				c = &((*c)->Cnext);
+			else
+				errs++;
 		}
 		(void) fclose(f);
-		return;
+		return errs;
 	}
 	if (argc < 2 && fflag) {
 		firstC = NULL;
@@ -317,14 +327,19 @@ init(int argc, char **argv)
 			*c = getscancoll(filename, estrdup(q), estrdup(p));
 			if (*c)
 				c = &((*c)->Cnext);
+			else
+				errs++;
 		}
 		(void) fclose(f);
-		return;
+		return errs;
 	}
 	if (argc < 2 || argc > 3)
 		usage();
 	firstC = getscancoll(filename, estrdup(argv[1]),
 	    argc > 2 ? estrdup(argv[2]) : NULL);
+	if (firstC == NULL)
+		errs++;
+	return errs;
 }
 
 static SCAN_COLLECTION *
@@ -357,8 +372,8 @@ getscancoll(char *filename, char *collname, char *basedir)
 		}
 	}
 	if (chdir(basedir) < 0) {
-		fprintf(stderr, "supscan:  Can't chdir to base directory %s for %s\n",
-		    basedir, collname);
+		fprintf(stderr, "supscan: Can't chdir to base directory %s "
+		    "for %s (%s)\n", basedir, collname, strerror(errno));
 		return (NULL);
 	}
 	prefix = NULL;
@@ -372,8 +387,9 @@ getscancoll(char *filename, char *collname, char *basedir)
 				continue;
 			prefix = estrdup(p);
 			if (chdir(prefix) < 0) {
-				fprintf(stderr, "supscan: can't chdir to %s from base directory %s for %s\n",
-				    prefix, basedir, collname);
+				fprintf(stderr, "supscan: can't chdir to %s "
+				    " from base directory %s for %s (%s)\n",
+				    prefix, basedir, collname, strerror(errno));
 				fclose(f);
 				free(prefix);
 				return (NULL);
@@ -382,7 +398,7 @@ getscancoll(char *filename, char *collname, char *basedir)
 		}
 		(void) fclose(f);
 	}
-	if ((c = (SCAN_COLLECTION *) malloc(sizeof(SCAN_COLLECTION))) == NULL)
+	if ((c = malloc(sizeof(*c))) == NULL)
 		quit(1, "supscan: can't malloc collection structure\n");
 	c->Cname = collname;
 	c->Cbase = basedir;

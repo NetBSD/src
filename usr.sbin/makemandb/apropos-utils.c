@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.4.2.2 2012/04/17 00:09:49 yamt Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.4.2.3 2012/05/23 10:08:29 yamt Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.4.2.2 2012/04/17 00:09:49 yamt Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.4.2.3 2012/05/23 10:08:29 yamt Exp $");
 
 #include <sys/stat.h>
 
@@ -172,7 +172,7 @@ create_db(sqlite3 *db)
 			    "file UNIQUE, md5_hash UNIQUE, id  INTEGER PRIMARY KEY); "
 				//mandb_meta
 			"CREATE TABLE IF NOT EXISTS mandb_links(link, target, section, "
-			    "machine); ";	//mandb_links
+			    "machine, md5_hash); ";	//mandb_links
 
 	sqlite3_exec(db, sqlstr, NULL, NULL, &errmsg);
 	if (errmsg != NULL)
@@ -181,7 +181,9 @@ create_db(sqlite3 *db)
 	sqlstr = "CREATE INDEX IF NOT EXISTS index_mandb_links ON mandb_links "
 			"(link); "
 			"CREATE INDEX IF NOT EXISTS index_mandb_meta_dev ON mandb_meta "
-			"(device, inode)";
+			"(device, inode); "
+			"CREATE INDEX IF NOT EXISTS index_mandb_links_md5 ON mandb_links "
+			"(md5_hash);";
 	sqlite3_exec(db, sqlstr, NULL, NULL, &errmsg);
 	if (errmsg != NULL)
 		goto out;
@@ -754,7 +756,8 @@ callback_pager(void *data, const char *section, const char *name,
  *  For this purpose it first calls it's own callback function callback_pager
  *  which then delegates the call to the user supplied callback.
  */
-int run_query_pager(sqlite3 *db, query_args *args)
+int
+run_query_pager(sqlite3 *db, query_args *args)
 {
 	struct orig_callback_data orig_data;
 	orig_data.callback = args->callback;

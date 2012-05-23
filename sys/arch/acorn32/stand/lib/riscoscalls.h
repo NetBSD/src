@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.h,v 1.11 2009/08/02 11:20:37 gavan Exp $	*/
+/*	$NetBSD: riscoscalls.h,v 1.11.12.1 2012/05/23 10:07:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -99,7 +99,7 @@
 
 #ifndef __ASSEMBLER__
 typedef struct os_error {
-	u_int32_t errnum;
+	uint32_t errnum;
 	char errmess[252];
 } os_error;
 
@@ -387,26 +387,26 @@ extern os_error xcache_control(u_int, u_int, u_int *);
 #ifndef __ASSEMBLER__
 
 struct filecore_disc {
-	u_int8_t	log2secsize;
-	u_int8_t	secspertrack;
-	u_int8_t	heads;
-	u_int8_t	density;
-	u_int8_t	idlen;
-	u_int8_t	log2bpmp;
-	u_int8_t	skew;
-	u_int8_t	bootoption;
-	u_int8_t	lowsector;
-	u_int8_t	nzones;
-	u_int16_t	zone_spare;
-	u_int32_t	root;
-	u_int32_t	disc_size;
-	u_int16_t	disc_id;
+	uint8_t		log2secsize;
+	uint8_t		secspertrack;
+	uint8_t		heads;
+	uint8_t		density;
+	uint8_t		idlen;
+	uint8_t		log2bpmp;
+	uint8_t		skew;
+	uint8_t		bootoption;
+	uint8_t		lowsector;
+	uint8_t		nzones;
+	uint16_t	zone_spare;
+	uint32_t	root;
+	uint32_t	disc_size;
+	uint16_t	disc_id;
 	char		disc_name[10];
-	u_int32_t	disc_type;
-	u_int32_t	disc_size_hi;
-	u_int8_t	share_size;
-	u_int8_t	big_flag;
-	u_int8_t	reserved[22];
+	uint32_t	disc_type;
+	uint32_t	disc_size_hi;
+	uint8_t		share_size;
+	uint8_t		big_flag;
+	uint8_t		reserved[22];
 };
 
 struct filecore_daddr64 {

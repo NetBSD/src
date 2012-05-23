@@ -1,5 +1,5 @@
-/*	$NetBSD: mac.c,v 1.4 2011/09/07 17:49:19 christos Exp $	*/
-/* $OpenBSD: mac.c,v 1.16 2011/08/02 01:22:11 djm Exp $ */
+/*	$NetBSD: mac.c,v 1.4.2.1 2012/05/23 10:07:04 yamt Exp $	*/
+/* $OpenBSD: mac.c,v 1.17 2011/12/02 00:43:57 djm Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: mac.c,v 1.4 2011/09/07 17:49:19 christos Exp $");
+__RCSID("$NetBSD: mac.c,v 1.4.2.1 2012/05/23 10:07:04 yamt Exp $");
 #include <sys/types.h>
 
 #include <openssl/hmac.h>
@@ -118,6 +118,7 @@ mac_init(Mac *mac)
 	case SSH_EVP:
 		if (mac->evp_md == NULL)
 			return -1;
+		HMAC_CTX_init(&mac->evp_ctx);
 		HMAC_Init(&mac->evp_ctx, mac->key, mac->key_len, mac->evp_md);
 		return 0;
 #ifdef UMAC_HAS_BEEN_UNBROKEN

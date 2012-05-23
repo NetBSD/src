@@ -13,8 +13,8 @@
 /* Directories clang will search for headers */
 #define C_INCLUDE_DIRS "/usr/include/clang-3.0:/usr/include"
 
-/* Define if CBE is enabled for printf %a output */
-#define ENABLE_CBE_PRINTF_A 1
+/* Default <path> to all compiler invocations for --sysroot=<path>. */
+#define DEFAULT_SYSROOT ""
 
 /* Define if position independent code is enabled */
 #define ENABLE_PIC 1

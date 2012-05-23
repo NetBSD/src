@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1351.2.2 2012/04/17 00:02:43 yamt Exp $
+# $NetBSD: mi,v 1.1351.2.3 2012/05/23 10:07:17 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -723,6 +723,7 @@
 ./usr/share/man/cat4/amdpm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/amdtemp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/amhphy.0			man-sys-catman		.cat
+./usr/share/man/cat4/amiga/a1k2cp.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/afsc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/ahsc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/amidisplaycc.0	man-sys-catman		.cat
@@ -730,6 +731,7 @@
 ./usr/share/man/cat4/amiga/autoconf.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/bah.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/bppcsc.0		man-sys-catman		.cat
+./usr/share/man/cat4/amiga/clockport.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/console.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/cv3dpb.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/ed.0			man-sys-catman		.cat
@@ -758,6 +760,7 @@
 ./usr/share/man/cat4/amiga/qn.0			man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/ser.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/wesc.0		man-sys-catman		.cat
+./usr/share/man/cat4/amiga/xsurf.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/zssc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amr.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ams.0			man-sys-catman		.cat
@@ -1304,6 +1307,7 @@
 ./usr/share/man/cat4/mly.0			man-sys-catman		.cat
 ./usr/share/man/cat4/module.0			man-obsolete		obsolete
 ./usr/share/man/cat4/mpls.0			man-sys-catman		.cat
+./usr/share/man/cat4/mpii.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mpt.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mpu.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mr.0			man-obsolete		obsolete
@@ -1896,6 +1900,7 @@
 ./usr/share/man/cat5/bootptab.0			man-bootserver-catman	.cat
 ./usr/share/man/cat5/bounce.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/canonical.0		man-postfix-catman	postfix,.cat
+./usr/share/man/cat5/capfile.0			man-sys-catman		.cat
 ./usr/share/man/cat5/ccd.conf.0			man-sysutil-catman	.cat
 ./usr/share/man/cat5/cdb.0			man-sys-catman		.cat
 ./usr/share/man/cat5/cidr_table.0		man-postfix-catman	postfix,.cat
@@ -2049,7 +2054,7 @@
 ./usr/share/man/cat5/sysctl.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/syslog.conf.0		man-sysutil-catman	.cat
 ./usr/share/man/cat5/targets.0			man-iscsi-catman	iscsi,.cat
-./usr/share/man/cat5/termcap.0			man-obsolete		obsolete
+./usr/share/man/cat5/termcap.0			man-sys-catman		.cat
 ./usr/share/man/cat5/terminfo.0			man-sys-catman		.cat
 ./usr/share/man/cat5/texinfo.0			man-texinfo-catman	.cat
 ./usr/share/man/cat5/transport.0		man-postfix-catman	postfix,.cat
@@ -2236,6 +2241,7 @@
 ./usr/share/man/cat8/crash.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/cron.0			man-cron-catman		.cat
 ./usr/share/man/cat8/dbsym.0			man-sysutil-catman	binutils,.cat
+./usr/share/man/cat8/ddns-confgen.0		man-bind-catman		.cat
 ./usr/share/man/cat8/defer.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/dev_mkdb.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/devpubd.0			man-sysutil-catman	.cat
@@ -2738,7 +2744,7 @@
 ./usr/share/man/cat8/rlogind.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/rmail.0			man-obsolete		obsolete
 ./usr/share/man/cat8/rmt.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/rndc-confgen.0		man-obsolete		obsolete
+./usr/share/man/cat8/rndc-confgen.0		man-bind-catman		.cat
 ./usr/share/man/cat8/rndc.0			man-bind-catman		.cat
 ./usr/share/man/cat8/rndctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/route.0			man-netutil-catman	.cat
@@ -3631,6 +3637,7 @@
 ./usr/share/man/html4/amdpm.html		man-sys-htmlman		html
 ./usr/share/man/html4/amdtemp.html		man-sys-htmlman		html
 ./usr/share/man/html4/amhphy.html		man-sys-htmlman		html
+./usr/share/man/html4/amiga/a1k2cp.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/afsc.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/ahsc.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/amidisplaycc.html	man-sys-htmlman		html
@@ -3638,6 +3645,7 @@
 ./usr/share/man/html4/amiga/autoconf.html	man-sys-htmlman		html
 ./usr/share/man/html4/amiga/bah.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/bppcsc.html		man-sys-htmlman		html
+./usr/share/man/html4/amiga/clockport.html	man-sys-htmlman		html
 ./usr/share/man/html4/amiga/console.html	man-sys-htmlman		html
 ./usr/share/man/html4/amiga/cv3dpb.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/ed.html		man-sys-htmlman		html
@@ -3665,6 +3673,7 @@
 ./usr/share/man/html4/amiga/qn.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/ser.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/wesc.html		man-sys-htmlman		html
+./usr/share/man/html4/amiga/xsurf.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/zssc.html		man-sys-htmlman		html
 ./usr/share/man/html4/amr.html			man-sys-htmlman		html
 ./usr/share/man/html4/ams.html			man-sys-htmlman		html
@@ -4134,6 +4143,7 @@
 ./usr/share/man/html4/mly.html			man-sys-htmlman		html
 ./usr/share/man/html4/module.html		man-obsolete		obsolete
 ./usr/share/man/html4/mpls.html			man-sys-htmlman		html
+./usr/share/man/html4/mpii.html			man-sys-htmlman		html
 ./usr/share/man/html4/mpt.html			man-sys-htmlman		html
 ./usr/share/man/html4/mpu.html			man-sys-htmlman		html
 ./usr/share/man/html4/mr.html			man-obsolete		obsolete
@@ -4684,6 +4694,7 @@
 ./usr/share/man/html5/bootptab.html		man-bootserver-htmlman	html
 ./usr/share/man/html5/bounce.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/canonical.html		man-postfix-htmlman	postfix,html
+./usr/share/man/html5/capfile.html		man-sys-htmlman		html
 ./usr/share/man/html5/ccd.conf.html		man-sysutil-htmlman	html
 ./usr/share/man/html5/cdb.html			man-sys-htmlman		html
 ./usr/share/man/html5/cidr_table.html		man-postfix-htmlman	postfix,html
@@ -4822,7 +4833,7 @@
 ./usr/share/man/html5/sysctl.conf.html		man-sys-htmlman		html
 ./usr/share/man/html5/syslog.conf.html		man-sysutil-htmlman	html
 ./usr/share/man/html5/targets.html		man-iscsi-htmlman	iscsi,html
-./usr/share/man/html5/termcap.html		man-obsolete		obsolete
+./usr/share/man/html5/termcap.html		man-sys-htmlman		html
 ./usr/share/man/html5/terminfo.html		man-sys-htmlman		html
 ./usr/share/man/html5/texinfo.html		man-texinfo-htmlman	html
 ./usr/share/man/html5/transport.html		man-postfix-htmlman	postfix,html
@@ -4964,6 +4975,7 @@
 ./usr/share/man/html8/crash.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/cron.html			man-cron-htmlman	html
 ./usr/share/man/html8/dbsym.html		man-sysutil-htmlman	binutils,html
+./usr/share/man/html8/ddns-confgen.html		man-bind-htmlman	html
 ./usr/share/man/html8/defer.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/dev_mkdb.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/devpubd.html		man-sysutil-htmlman	html
@@ -5354,7 +5366,7 @@
 ./usr/share/man/html8/rip6query.html		man-netutil-htmlman	inet6,html
 ./usr/share/man/html8/rlogind.html		man-netutil-htmlman	html
 ./usr/share/man/html8/rmt.html			man-sysutil-htmlman	html
-./usr/share/man/html8/rndc-confgen.html		man-obsolete		obsolete
+./usr/share/man/html8/rndc-confgen.html		man-bind-htmlman	html
 ./usr/share/man/html8/rndc.html			man-bind-htmlman	html
 ./usr/share/man/html8/rndctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/route.html		man-netutil-htmlman	html
@@ -6236,6 +6248,7 @@
 ./usr/share/man/man4/amdpm.4			man-sys-man		.man
 ./usr/share/man/man4/amdtemp.4			man-sys-man		.man
 ./usr/share/man/man4/amhphy.4			man-sys-man		.man
+./usr/share/man/man4/amiga/a1k2cp.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/afsc.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/ahsc.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/amidisplaycc.4	man-sys-man		.man
@@ -6244,6 +6257,7 @@
 ./usr/share/man/man4/amiga/bah.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/bppcsc.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/console.4		man-sys-man		.man
+./usr/share/man/man4/amiga/clockport.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/cv3dpb.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/ed.4			man-sys-man		.man
 ./usr/share/man/man4/amiga/efa.4		man-sys-man		.man
@@ -6271,6 +6285,7 @@
 ./usr/share/man/man4/amiga/qn.4			man-sys-man		.man
 ./usr/share/man/man4/amiga/ser.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/wesc.4		man-sys-man		.man
+./usr/share/man/man4/amiga/xsurf.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/zssc.4		man-sys-man		.man
 ./usr/share/man/man4/amr.4			man-sys-man		.man
 ./usr/share/man/man4/ams.4			man-sys-man		.man
@@ -6817,6 +6832,7 @@
 ./usr/share/man/man4/mly.4			man-sys-man		.man
 ./usr/share/man/man4/module.4			man-obsolete		obsolete
 ./usr/share/man/man4/mpls.4			man-sys-man		.man
+./usr/share/man/man4/mpii.4			man-sys-man		.man
 ./usr/share/man/man4/mpt.4			man-sys-man		.man
 ./usr/share/man/man4/mpu.4			man-sys-man		.man
 ./usr/share/man/man4/mr.4			man-obsolete		obsolete
@@ -7409,6 +7425,7 @@
 ./usr/share/man/man5/bootptab.5			man-bootserver-man	.man
 ./usr/share/man/man5/bounce.5			man-postfix-man		postfix,.man
 ./usr/share/man/man5/canonical.5		man-postfix-man		postfix,.man
+./usr/share/man/man5/capfile.5			man-sys-man		.man
 ./usr/share/man/man5/ccd.conf.5			man-sysutil-man		.man
 ./usr/share/man/man5/cdb.5			man-sys-man		.man
 ./usr/share/man/man5/cidr_table.5		man-postfix-man		postfix,.man
@@ -7562,7 +7579,7 @@
 ./usr/share/man/man5/sysctl.conf.5		man-sys-man		.man
 ./usr/share/man/man5/syslog.conf.5		man-sysutil-man		.man
 ./usr/share/man/man5/targets.5			man-iscsi-man		iscsi,.man
-./usr/share/man/man5/termcap.5			man-obsolete		obsolete
+./usr/share/man/man5/termcap.5			man-sys-man		.man
 ./usr/share/man/man5/terminfo.5			man-sys-man		.man
 ./usr/share/man/man5/texinfo.5			man-texinfo-man		.man
 ./usr/share/man/man5/transport.5		man-postfix-man		postfix,.man
@@ -7748,6 +7765,7 @@
 ./usr/share/man/man8/crash.8			man-crash-man		.man
 ./usr/share/man/man8/cron.8			man-cron-man		.man
 ./usr/share/man/man8/dbsym.8			man-sysutil-man		binutils,.man
+./usr/share/man/man8/ddns-confgen.8		man-bind-man		.man
 ./usr/share/man/man8/defer.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/dev_mkdb.8			man-sysutil-man		.man
 ./usr/share/man/man8/devpubd.8			man-sysutil-man		.man
@@ -8251,7 +8269,7 @@
 ./usr/share/man/man8/rlogind.8			man-netutil-man		.man
 ./usr/share/man/man8/rmail.8			man-obsolete		obsolete
 ./usr/share/man/man8/rmt.8			man-sysutil-man		.man
-./usr/share/man/man8/rndc-confgen.8		man-obsolete		obsolete
+./usr/share/man/man8/rndc-confgen.8		man-bind-man		.man
 ./usr/share/man/man8/rndc.8			man-bind-man		.man
 ./usr/share/man/man8/rndctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/route.8			man-netutil-man		.man

@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.310.2.2 2012/04/17 00:02:55 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.310.2.3 2012/05/23 10:07:21 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -283,6 +283,19 @@ Base Tag:	ad-audiomp2-base
 Maintainer:	Andrew Doran <ad@NetBSD.org>
 Scope:		kernel
 Notes:		Ressurect ad-audiomp, make the audio drivers MP safe.
+
+Branch:		agc-netpgp-standalone
+Description:	Remove dependency on openssl libraries in netpgp
+Status:		Active
+Start Date:	5 May 2012
+End Date:
+Base Tag:	agc-netpgp-standalone-base
+Maintainer:	Alistair Crooks <agc@NetBSD.org>
+Scope:		src/crypto/external/bsd/netpgp
+Notes:		This branch is used to develop the version of netpgp
+		which has its own version of bignum, ciphers, and signatures
+		libraries, so that it is able to operate without openssl
+		being in place.
 
 Branch:		bjh21-hydra
 Description:	Simtec Hydra support and ARM SMP in general

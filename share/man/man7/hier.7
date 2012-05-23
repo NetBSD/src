@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.99 2011/04/26 16:57:39 joerg Exp $
+.\"	$NetBSD: hier.7,v 1.99.4.1 2012/05/23 10:07:35 yamt Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)hier.7	8.5 (Berkeley) 6/1/94
 .\"
-.Dd April 1, 2011
+.Dd April 5, 2012
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -321,9 +321,6 @@ database form of master.passwd file; see
 .Xr syslogd 8
 configuration file; see
 .Xr syslog.conf 5
-.It Sy termcap
-terminal type database; see
-.Xr termcap 3
 .It Sy ttys
 terminal initialization information; see
 .Xr ttys 5
@@ -572,11 +569,14 @@ macro package
 .It Sy misc/
 miscellaneous system-wide text files
 .Pp
-.Bl -tag -width "termcap" -compact
-.It Sy termcap
+.Bl -tag -width "terminfo.db" -compact
+.It Sy terminfo
 terminal characteristics database;
 see
-.Xr termcap 5
+.Xr terminfo 5
+.It Sy terminfo.db
+database form of terminfo file; see
+.Xr tic 1
 .El
 .Pp
 .It Sy mk/
@@ -591,11 +591,6 @@ message catalogs; see
 .Xr catgets 3
 .It Sy skel/
 sample initialization files for new user accounts
-.It Sy tabset/
-tab description files for a variety of terminals, used in
-the termcap file;
-see
-.Xr termcap 5
 .It Sy tmac/
 text processing macros;
 see

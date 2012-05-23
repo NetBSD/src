@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.170.2.1 2012/04/17 00:02:51 yamt Exp $	*/
+/*	$NetBSD: util.c,v 1.170.2.2 2012/05/23 10:07:20 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -431,7 +431,8 @@ get_available_cds(void)
 		if (error == 0) {
 			for (part = 0; part < label.d_npartitions; part++) {
 				if (label.d_partitions[part].p_fstype
-				    != FS_ISO9660)
+					== FS_UNUSED
+				    || label.d_partitions[part].p_size == 0)
 					continue;
 				if (label.d_partitions[part].p_fstype
 				    == FS_ISO9660) {

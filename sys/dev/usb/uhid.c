@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.84.8.1 2012/04/17 00:08:08 yamt Exp $	*/
+/*	$NetBSD: uhid.c,v 1.84.8.2 2012/05/23 10:08:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.84.8.1 2012/04/17 00:08:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.84.8.2 2012/05/23 10:08:06 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -568,6 +568,11 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, void *addr,
 
 	case USB_GET_REPORT_ID:
 		*(int *)addr = sc->sc_hdev.sc_report_id;
+		break;
+
+	case USB_GET_DEVICE_DESC:
+		*(usb_device_descriptor_t *)addr =
+			*usbd_get_device_descriptor(sc->sc_hdev.sc_parent->sc_udev);
 		break;
 
 	case USB_GET_DEVICEINFO:

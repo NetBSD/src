@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.19 2011/07/19 16:05:11 dyoung Exp $ */
+/* $NetBSD: podulebus.c,v 1.19.2.1 2012/05/23 10:07:37 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.19 2011/07/19 16:05:11 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.19.2.1 2012/05/23 10:07:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -61,10 +61,10 @@ static void podulebus_probe_podule(device_t, int);
 static int podulebus_print(void *, char const *);
 static int podulebus_submatch(device_t, cfdata_t, const int *, void *);
 static void podulebus_read_chunks(struct podulebus_attach_args *, int);
-static u_int8_t *podulebus_get_chunk(struct podulebus_attach_args *, int);
+static uint8_t *podulebus_get_chunk(struct podulebus_attach_args *, int);
 #if NPODLOADER > 0
 void podloader_read_region(struct podulebus_attach_args *pa, u_int src,
-    u_int8_t *dest, size_t length);
+    uint8_t *dest, size_t length);
 extern register_t _podloader_call(register_t, register_t, register_t,
     void *, int);
 #endif
@@ -109,7 +109,7 @@ podulebus_probe_podule(device_t self, int slotnum)
 	bus_space_tag_t id_bst;
 	bus_space_handle_t id_bsh;
 	int ecid, w;
-	u_int8_t extecid[EXTECID_SIZE];
+	uint8_t extecid[EXTECID_SIZE];
 	struct podulebus_attach_args pa;
 
 	memset(&pa, 0, sizeof(pa));
@@ -188,7 +188,7 @@ podulebus_probe_podule(device_t self, int slotnum)
 static void
 podulebus_read_chunks(struct podulebus_attach_args *pa, int useloader)
 {
-	u_int8_t chunk[8];
+	uint8_t chunk[8];
 	u_int ptr, nchunks, type, length, offset;
 
 	nchunks = pa->pa_nchunks;
@@ -225,12 +225,12 @@ podulebus_read_chunks(struct podulebus_attach_args *pa, int useloader)
 	pa->pa_nchunks = nchunks;
 }
 
-static u_int8_t *
+static uint8_t *
 podulebus_get_chunk(struct podulebus_attach_args *pa, int type)
 {
 	int i;
 	struct podulebus_chunk *pc;
-	u_int8_t *chunk;
+	uint8_t *chunk;
 
 	for (i = 0; i < pa->pa_nchunks; i++) {
 		pc = &pa->pa_chunks[i];
@@ -312,7 +312,7 @@ podloader_callloader(struct podulebus_attach_args *pa, u_int r0, u_int r1)
 
 void
 podloader_read_region(struct podulebus_attach_args *pa, u_int src,
-    u_int8_t *dest, size_t length)
+    uint8_t *dest, size_t length)
 {
 
 	while (length--)
@@ -370,7 +370,7 @@ podulebus_irq_establish(podulebus_intr_handle_t slot, int ipl,
 }
 
 void
-podulebus_readcmos(struct podulebus_attach_args *pa, u_int8_t *c)
+podulebus_readcmos(struct podulebus_attach_args *pa, uint8_t *c)
 {
 	int i;
 

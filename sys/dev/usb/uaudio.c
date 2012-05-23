@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.120.8.1 2012/04/17 00:08:07 yamt Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.120.8.2 2012/05/23 10:08:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.120.8.1 2012/04/17 00:08:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.120.8.2 2012/05/23 10:08:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1847,12 +1847,8 @@ uaudio_identify_as(struct uaudio_softc *sc,
 					aprint_error("%s: please increase "
 					       "AUFMT_MAX_FREQUENCIES to %d\n",
 					       __func__, t1desc->bSamFreqType);
-					break;
-				}
-				if (j >= 2) {
-					aprint_error("%s: too much tSamFreq: "
-					       "%d\n",
-					       __func__, t1desc->bSamFreqType);
+					auf->frequency_type =
+					    AUFMT_MAX_FREQUENCIES;
 					break;
 				}
 				auf->frequency[j] = UA_GETSAMP(t1desc, j);
@@ -2685,6 +2681,7 @@ Static usbd_status
 uaudio_chan_open(struct uaudio_softc *sc, struct chan *ch)
 {
 	struct as_info *as;
+	usb_device_descriptor_t *ddesc;
 	int endpt;
 	usbd_status err;
 
@@ -2701,8 +2698,9 @@ uaudio_chan_open(struct uaudio_softc *sc, struct chan *ch)
 	/*
 	 * Roland SD-90 freezes by a SAMPLING_FREQ_CONTROL request.
 	 */
-	if ((UGETW(sc->sc_udev->ddesc.idVendor) != USB_VENDOR_ROLAND) &&
-	    (UGETW(sc->sc_udev->ddesc.idProduct) != USB_PRODUCT_ROLAND_SD90)) {
+	ddesc = usbd_get_device_descriptor(sc->sc_udev);
+	if ((UGETW(ddesc->idVendor) != USB_VENDOR_ROLAND) &&
+	    (UGETW(ddesc->idProduct) != USB_PRODUCT_ROLAND_SD90)) {
 		err = uaudio_set_speed(sc, endpt, ch->sample_rate);
 		if (err) {
 			DPRINTF("set_speed failed err=%s\n", usbd_errstr(err));

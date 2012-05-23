@@ -1,4 +1,4 @@
-/*      $NetBSD: h_cwd.c,v 1.2 2011/02/19 19:57:28 pooka Exp $	*/
+/*      $NetBSD: h_cwd.c,v 1.2.6.1 2012/05/23 10:08:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -58,7 +59,7 @@ dochdir(const char *path, const char *errmsg)
 {
 
 	if (chdir(path) == -1)
-		err(1, "%s", errmsg);
+		err(EXIT_FAILURE, "%s", errmsg);
 }
 
 static void
@@ -68,9 +69,9 @@ dofchdir(const char *path, const char *errmsg)
 
 	fd = open(path, O_RDONLY);
 	if (fd == -1)
-		err(1, "open %s", errmsg);
+		err(EXIT_FAILURE, "open %s", errmsg);
 	if (fchdir(fd) == -1)
-		err(1, "fchdir %s", errmsg);
+		err(EXIT_FAILURE, "fchdir %s", errmsg);
 	close(fd);
 }
 static void (*thechdir)(const char *, const char *);
@@ -81,44 +82,44 @@ simple(void)
 
 	thechdir(prefix, "chdir1");
 	if (getcwd(pwd, sizeof(pwd)) == NULL)
-		err(1, "getcwd1");
+		err(EXIT_FAILURE, "getcwd1");
 	if (strcmp(pwd, prefix) != 0)
-		errx(1, "strcmp1");
+		errx(EXIT_FAILURE, "strcmp1");
 
 	if (mkdir("dir", 0777) == -1)
-		err(1, "mkdir2");
+		err(EXIT_FAILURE, "mkdir2");
 	thechdir("dir", "chdir2");
 	if (getcwd(pwd, sizeof(pwd)) == NULL)
-		err(1, "getcwd2");
+		err(EXIT_FAILURE, "getcwd2");
 	if (strcmp(pwd, makepath("dir")) != 0)
-		errx(1, "strcmp2");
+		errx(EXIT_FAILURE, "strcmp2");
 
 	if (mkdir("dir", 0777) == -1)
-		err(1, "mkdir3");
+		err(EXIT_FAILURE, "mkdir3");
 	thechdir("dir", "chdir3");
 	if (getcwd(pwd, sizeof(pwd)) == NULL)
-		err(1, "getcwd3");
+		err(EXIT_FAILURE, "getcwd3");
 	if (strcmp(pwd, makepath("dir/dir")) != 0)
-		errx(1, "strcmp3");
+		errx(EXIT_FAILURE, "strcmp3");
 
 	thechdir("..", "chdir4");
 	if (getcwd(pwd, sizeof(pwd)) == NULL)
-		err(1, "getcwd4");
+		err(EXIT_FAILURE, "getcwd4");
 	if (strcmp(pwd, makepath("dir")) != 0)
-		errx(1, "strcmp4");
+		errx(EXIT_FAILURE, "strcmp4");
 
 
 	thechdir("../../../../../../..", "chdir5");
 	if (getcwd(pwd, sizeof(pwd)) == NULL)
-		err(1, "getcwd5");
+		err(EXIT_FAILURE, "getcwd5");
 	if (strcmp(pwd, prefix) != 0)
-		errx(1, "strcmp5");
+		errx(EXIT_FAILURE, "strcmp5");
 
 	thechdir("/", "chdir6");
 	if (getcwd(pwd, sizeof(pwd)) == NULL)
-		err(1, "getcwd6");
+		err(EXIT_FAILURE, "getcwd6");
 	if (strcmp(pwd, "/") != 0)
-		errx(1, "strcmp6");
+		errx(EXIT_FAILURE, "strcmp6");
 }
 
 static void
@@ -127,18 +128,18 @@ symlinktest(void)
 
 	thechdir(prefix, "chdir1");
 	if (mkdir("adir", 0777) == -1)
-		err(1, "mkdir1");
+		err(EXIT_FAILURE, "mkdir1");
 	if (mkdir("anotherdir", 0777) == -1)
-		err(1, "mkdir2");
+		err(EXIT_FAILURE, "mkdir2");
 
 	if (symlink("/adir", "anotherdir/lincthesink") == -1)
-		err(1, "symlink");
+		err(EXIT_FAILURE, "symlink");
 
 	thechdir("anotherdir/lincthesink", "chdir2");
 	if (getcwd(pwd, sizeof(pwd)) == NULL)
-		err(1, "getcwd");
+		err(EXIT_FAILURE, "getcwd");
 	if (strcmp(pwd, makepath("adir")) != 0)
-		errx(1, "strcmp");
+		errx(EXIT_FAILURE, "strcmp");
 }
 
 int
@@ -156,12 +157,12 @@ main(int argc, char *argv[])
 	else if (strcmp(argv[3], "fchdir") == 0)
 		thechdir = dofchdir;
 	else
-		errx(1, "invalid chdir type");
+		errx(EXIT_FAILURE, "invalid chdir type");
 
 	if (strcmp(argv[2], "simple") == 0)
 		simple();
 	if (strcmp(argv[2], "symlink") == 0)
 		symlinktest();
 
-	return 0;
+	return EXIT_SUCCESS;
 }

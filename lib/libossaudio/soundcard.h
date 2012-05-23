@@ -1,4 +1,4 @@
-/*	$NetBSD: soundcard.h,v 1.19 2011/09/06 01:20:18 jmcneill Exp $	*/
+/*	$NetBSD: soundcard.h,v 1.19.2.1 2012/05/23 10:07:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -291,24 +291,18 @@ typedef struct buffmem_desc {
 	int size;
 } buffmem_desc;
 
-#if 0
-/* This is what we'd like to have, but it causes prototype conflicts. */
 #define ioctl _oss_ioctl
-#else
 /*
- * XXX force inclusion of <sys/ioctl.h> before we redefine
- * ioctl() to avoid a prototype conflict.
- * Its multiple inclusion protection will keep this from
- * happening if it is pulled in later.
+ * If we already included <sys/ioctl.h>, then we define our own prototype,
+ * else we depend on <sys/ioctl.h> to do it for us. We do it this way, so
+ * that we don't define the prototype twice.
  */
+#ifndef _SYS_IOCTL_H_
 #include <sys/ioctl.h>
-#define ioctl(x,y,z) _oss_ioctl(x,y,z)
-#endif
-
-#include <sys/cdefs.h>
-
+#else
 __BEGIN_DECLS
-int _oss_ioctl(int fd, unsigned long com, void *argp);
+int _oss_ioctl(int, unsigned long, ...);
 __END_DECLS
+#endif
 
 #endif /* !_SOUNDCARD_H_ */

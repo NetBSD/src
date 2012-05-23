@@ -1,9 +1,13 @@
-/*	$NetBSD: genfs.h,v 1.28.12.1 2012/04/17 00:08:34 yamt Exp $	*/
+/*	$NetBSD: genfs.h,v 1.28.12.2 2012/05/23 10:08:14 yamt Exp $	*/
 
 #ifndef	_MISCFS_GENFS_GENFS_H_
 #define	_MISCFS_GENFS_GENFS_H_
 
 #include <sys/vnode.h>
+#include <sys/types.h>
+
+struct componentname;
+struct mount;
 
 int	genfs_badop(void *);
 int	genfs_nullop(void *);
@@ -46,5 +50,69 @@ int	genfs_can_chtimes(vnode_t *, u_int, uid_t, kauth_cred_t);
 int	genfs_can_chflags(kauth_cred_t, enum vtype, uid_t, bool);
 int	genfs_can_sticky(kauth_cred_t, uid_t, uid_t);
 int	genfs_can_extattr(kauth_cred_t, int, vnode_t *, const char *);
+
+/*
+ * Rename is complicated.  Sorry.
+ */
+
+struct genfs_rename_ops;
+
+
+int	genfs_insane_rename(void *,
+	    int (*)(struct vnode *, struct componentname *,
+		struct vnode *, struct componentname *,
+		kauth_cred_t, bool));
+int	genfs_sane_rename(const struct genfs_rename_ops *,
+	    struct vnode *, struct componentname *, void *,
+	    struct vnode *, struct componentname *, void *,
+	    kauth_cred_t, bool);
+
+void	genfs_rename_knote(struct vnode *, struct vnode *, struct vnode *,
+	    struct vnode *, bool);
+void	genfs_rename_cache_purge(struct vnode *, struct vnode *, struct vnode *,
+	    struct vnode *);
+
+int	genfs_ufslike_rename_check_possible(unsigned long, unsigned long,
+	    unsigned long, unsigned long, bool,
+	    unsigned long, unsigned long);
+int	genfs_ufslike_rename_check_permitted(kauth_cred_t,
+	    struct vnode *, mode_t, uid_t,
+	    struct vnode *, uid_t,
+	    struct vnode *, mode_t, uid_t,
+	    struct vnode *, uid_t);
+int	genfs_ufslike_remove_check_possible(unsigned long, unsigned long,
+	    unsigned long, unsigned long);
+int	genfs_ufslike_remove_check_permitted(kauth_cred_t,
+	    struct vnode *, mode_t, uid_t,
+	    struct vnode *, uid_t);
+
+struct genfs_rename_ops {
+	bool (*gro_directory_empty_p)(struct mount *mp, kauth_cred_t cred,
+	    struct vnode *vp, struct vnode *dvp);
+	int (*gro_rename_check_possible)(struct mount *mp,
+	    struct vnode *fdvp, struct vnode *fvp,
+	    struct vnode *tdvp, struct vnode *tvp);
+	int (*gro_rename_check_permitted)(struct mount *mp, kauth_cred_t cred,
+	    struct vnode *fdvp, struct vnode *fvp,
+	    struct vnode *tdvp, struct vnode *tvp);
+	int (*gro_remove_check_possible)(struct mount *mp,
+	    struct vnode *dvp, struct vnode *vp);
+	int (*gro_remove_check_permitted)(struct mount *mp, kauth_cred_t cred,
+	    struct vnode *dvp, struct vnode *vp);
+	int (*gro_rename)(struct mount *mp, kauth_cred_t cred,
+	    struct vnode *fdvp, struct componentname *fcnp,
+	    void *fde, struct vnode *fvp,
+	    struct vnode *tdvp, struct componentname *tcnp,
+	    void *tde, struct vnode *tvp);
+	int (*gro_remove)(struct mount *mp, kauth_cred_t cred,
+	    struct vnode *dvp, struct componentname *cnp, void *de,
+	    struct vnode *vp);
+	int (*gro_lookup)(struct mount *mp, struct vnode *dvp,
+	    struct componentname *cnp, void *fde_ret, struct vnode **vp_ret);
+	int (*gro_genealogy)(struct mount *mp, kauth_cred_t cred,
+	    struct vnode *fdvp, struct vnode *tdvp,
+	    struct vnode **intermediate_node_ret);
+	int (*gro_lock_directory)(struct mount *mp, struct vnode *vp);
+};
 
 #endif /* !_MISCFS_GENFS_GENFS_H_ */

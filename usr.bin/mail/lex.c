@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.40 2011/09/16 15:39:27 joerg Exp $	*/
+/*	$NetBSD: lex.c,v 1.40.2.1 2012/05/23 10:08:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.40 2011/09/16 15:39:27 joerg Exp $");
+__RCSID("$NetBSD: lex.c,v 1.40.2.1 2012/05/23 10:08:25 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -173,7 +173,7 @@ setfile(const char *name)
 	if ((name = expand(name)) == NULL)
 		return -1;
 
-	if ((ibuf = Fopen(name, "r")) == NULL) {
+	if ((ibuf = Fopen(name, "re")) == NULL) {
 		if (!isedit && errno == ENOENT)
 			goto nomail;
 		warn("Can't open `%s'", name);
@@ -238,12 +238,10 @@ setfile(const char *name)
 	(void)snprintf(tempname, sizeof(tempname),
 	    "%s/mail.RxXXXXXXXXXX", tmpdir);
 	if ((fd = mkstemp(tempname)) == -1 ||
-	    (otf = fdopen(fd, "w")) == NULL)
+	    (otf = fdopen(fd, "we")) == NULL)
 		err(EXIT_FAILURE, "Can't create tmp file `%s'", tempname);
-	(void)fcntl(fileno(otf), F_SETFD, FD_CLOEXEC);
-	if ((itf = fopen(tempname, "r")) == NULL)
+	if ((itf = fopen(tempname, "re")) == NULL)
 		err(EXIT_FAILURE, "Can't create tmp file `%s'", tempname);
-	(void)fcntl(fileno(itf), F_SETFD, FD_CLOEXEC);
 	(void)rm(tempname);
 	setptr(ibuf, (off_t)0);
 	setmsize(get_abs_msgCount());
@@ -279,7 +277,7 @@ incfile(void)
 
 	omsgCount = get_abs_msgCount();
 
-	ibuf = Fopen(mailname, "r");
+	ibuf = Fopen(mailname, "re");
 	if (ibuf == NULL)
 		return -1;
 	sig_check();
@@ -449,7 +447,7 @@ setup_piping(const char *cmd, char *cmdline, int c_pipe)
 		cp++;
 
 		if (c == '|') {
-			if ((fout = Popen(cp, "w")) == NULL) {
+			if ((fout = Popen(cp, "we")) == NULL) {
 				warn("Popen: %s", cp);
 				return -1;
 			}
@@ -457,7 +455,7 @@ setup_piping(const char *cmd, char *cmdline, int c_pipe)
 		else {
 			const char *mode;
 			assert(c == '>');
-			mode = *cp == '>' ? "a" : "w";
+			mode = *cp == '>' ? "ae" : "we";
 			if (*cp == '>')
 				cp++;
 
@@ -475,7 +473,7 @@ setup_piping(const char *cmd, char *cmdline, int c_pipe)
 		if (pager == NULL || *pager == '\0')
 			pager = _PATH_MORE;
 
-		if ((fout = Popen(pager, "w")) == NULL) {
+		if ((fout = Popen(pager, "we")) == NULL) {
 			warn("Popen: %s", pager);
 			return -1;
 		}
@@ -1097,7 +1095,7 @@ load(const char *name)
 {
 	FILE *in, *oldin;
 
-	if ((in = Fopen(name, "r")) == NULL)
+	if ((in = Fopen(name, "re")) == NULL)
 		return;
 	oldin = input;
 	input = in;

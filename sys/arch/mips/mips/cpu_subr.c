@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.14.2.1 2012/04/17 00:06:39 yamt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.14.2.2 2012/05/23 10:07:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.14.2.1 2012/04/17 00:06:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.14.2.2 2012/05/23 10:07:45 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -363,16 +363,28 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 }
 
 int
+cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
+{
+	/* XXX:  Do we validate the addresses?? */
+	return 0;
+}
+
+int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_utf;
 	struct proc *p = l->l_proc;
 	const __greg_t *gr = mcp->__gregs;
+	int error;
 
 	/* Restore register context, if any. */
 	if (flags & _UC_CPU) {
+		error = cpu_mcontext_validate(l, mcp);
+		if (error)
+			return error;
+
 		/* Save register context. */
-		/* XXX:  Do we validate the addresses?? */
+
 #ifdef __mips_n32
 		CTASSERT(_R_AST == _REG_AT);
 		if (__predict_false(p->p_md.md_abi == _MIPS_BSD_API_O32)) {

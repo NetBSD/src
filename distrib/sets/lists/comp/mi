@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1702.2.3 2012/04/17 00:02:40 yamt Exp $
+#	$NetBSD: mi,v 1.1702.2.4 2012/05/23 10:07:14 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1605,6 +1605,7 @@
 ./usr/include/g++/vector			comp-cxx-include	cxx
 ./usr/include/g++/vector.h			comp-obsolete		obsolete
 ./usr/include/gcc-4.5/omp.h			comp-gcc-include	gcc=45
+./usr/include/gcc-4.5/mf-runtime.h		comp-gcc-include	gcc=45
 ./usr/include/gelf.h				comp-c-include
 ./usr/include/getopt.h				comp-c-include
 ./usr/include/glob.h				comp-c-include
@@ -2958,6 +2959,12 @@
 ./usr/lib/libnetpgp.a				comp-c-lib		crypto
 ./usr/lib/libnetpgp_g.a				-unknown-		debuglib
 ./usr/lib/libnetpgp_p.a				comp-c-proflib		profile,crypto
+./usr/lib/libmudflap.a				comp-c-lib		gcc=45
+./usr/lib/libmudflap_g.a			-unknown-		gcc=45,debuglib
+./usr/lib/libmudflap_p.a			comp-c-proflib		gcc=45,profile
+./usr/lib/libmudflapth.a			comp-c-lib		gcc=45
+./usr/lib/libmudflapth_g.a			-unknown-		gcc=45,debuglib
+./usr/lib/libmudflapth_p.a			comp-c-proflib		gcc=45,profile
 ./usr/lib/libnpf.a				comp-npf-lib		npf
 ./usr/lib/libnpf_g.a				-unknown-		debuglib
 ./usr/lib/libnpf_p.a				comp-npf-proflib	profile,npf
@@ -4080,6 +4087,7 @@
 ./usr/libdata/debug/usr/sbin/cron.debug		comp-cron-debug		debug
 ./usr/libdata/debug/usr/sbin/daicctl.debug	comp-isdn-debug		debug
 ./usr/libdata/debug/usr/sbin/dbsym.debug	comp-sysutil-debug	binutils,debug
+./usr/libdata/debug/usr/sbin/ddns-confgen.debug	comp-bind-bin		debug
 ./usr/libdata/debug/usr/sbin/dev_mkdb.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/dhcpd.debug	comp-dhcpd-debug	debug
 ./usr/libdata/debug/usr/sbin/dhcrelay.debug	comp-dhcpd-debug	debug
@@ -4249,7 +4257,7 @@
 ./usr/libdata/debug/usr/sbin/revnetgroup.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/sbin/rip6query.debug	comp-netutil-debug	inet6,debug
 ./usr/libdata/debug/usr/sbin/rmt.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/rndc-confgen.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/sbin/rndc-confgen.debug	comp-bind-bin		debug
 ./usr/libdata/debug/usr/sbin/rndc.debug		comp-bind-bin		debug
 ./usr/libdata/debug/usr/sbin/route6d.debug	comp-router-debug	use_inet6,debug
 ./usr/libdata/debug/usr/sbin/rpc.bootparamd.debug	comp-bootserver-debug	debug
@@ -6670,7 +6678,7 @@
 ./usr/share/man/cat3/getbsize.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getc_unlocked.0		comp-c-catman		.cat
-./usr/share/man/cat3/getcap.0			comp-c-catman		.cat
+./usr/share/man/cat3/getcap.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/getch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getchar.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getchar_unlocked.0		comp-c-catman		.cat
@@ -9157,6 +9165,8 @@
 ./usr/share/man/cat3/termname.0			comp-c-catman		.cat
 ./usr/share/man/cat3/textdomain.0		comp-c-catman		.cat
 ./usr/share/man/cat3/tfind.0			comp-c-catman		.cat
+./usr/share/man/cat3/tgamma.0			comp-c-catman		.cat
+./usr/share/man/cat3/tgammaf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tgetent.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tgetflag.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tgetnum.0			comp-c-catman		.cat
@@ -10774,6 +10784,7 @@
 ./usr/share/man/cat9/ungetnewvnode.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/untimeout.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uprintf.0			comp-sys-catman		.cat
+./usr/share/man/cat9/usbd_status.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/usbdi.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/useracc.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/userret.0			comp-sys-catman		.cat
@@ -12980,7 +12991,7 @@
 ./usr/share/man/html3/getbsize.html		comp-c-htmlman		html
 ./usr/share/man/html3/getc.html			comp-c-htmlman		html
 ./usr/share/man/html3/getc_unlocked.html	comp-c-htmlman		html
-./usr/share/man/html3/getcap.html		comp-c-htmlman		html
+./usr/share/man/html3/getcap.html		comp-obsolete		obsolete
 ./usr/share/man/html3/getch.html		comp-c-htmlman		html
 ./usr/share/man/html3/getchar.html		comp-c-htmlman		html
 ./usr/share/man/html3/getchar_unlocked.html	comp-c-htmlman		html
@@ -15389,6 +15400,8 @@
 ./usr/share/man/html3/termname.html		comp-c-htmlman		html
 ./usr/share/man/html3/textdomain.html		comp-c-htmlman		html
 ./usr/share/man/html3/tfind.html		comp-c-htmlman		html
+./usr/share/man/html3/tgamma.html		comp-c-htmlman		html
+./usr/share/man/html3/tgammaf.html		comp-c-htmlman		html
 ./usr/share/man/html3/tgetent.html		comp-c-htmlman		html
 ./usr/share/man/html3/tgetflag.html		comp-c-htmlman		html
 ./usr/share/man/html3/tgetnum.html		comp-c-htmlman		html
@@ -16932,6 +16945,7 @@
 ./usr/share/man/html9/ungetnewvnode.html	comp-sys-htmlman	html
 ./usr/share/man/html9/untimeout.html		comp-sys-htmlman	html
 ./usr/share/man/html9/uprintf.html		comp-sys-htmlman	html
+./usr/share/man/html9/usbd_status.html		comp-sys-htmlman	html
 ./usr/share/man/html9/usbdi.html		comp-sys-htmlman	html
 ./usr/share/man/html9/userret.html		comp-sys-htmlman	html
 ./usr/share/man/html9/uvm.html			comp-sys-htmlman	html
@@ -19204,7 +19218,7 @@
 ./usr/share/man/man3/getbsize.3			comp-c-man		.man
 ./usr/share/man/man3/getc.3			comp-c-man		.man
 ./usr/share/man/man3/getc_unlocked.3		comp-c-man		.man
-./usr/share/man/man3/getcap.3			comp-c-man		.man
+./usr/share/man/man3/getcap.3			comp-obsolete		obsolete
 ./usr/share/man/man3/getch.3			comp-c-man		.man
 ./usr/share/man/man3/getchar.3			comp-c-man		.man
 ./usr/share/man/man3/getchar_unlocked.3		comp-c-man		.man
@@ -21687,6 +21701,8 @@
 ./usr/share/man/man3/termname.3			comp-c-man		.man
 ./usr/share/man/man3/textdomain.3		comp-c-man		.man
 ./usr/share/man/man3/tfind.3			comp-c-man		.man
+./usr/share/man/man3/tgamma.3			comp-c-man		.man
+./usr/share/man/man3/tgammaf.3			comp-c-man		.man
 ./usr/share/man/man3/tgetent.3			comp-c-man		.man
 ./usr/share/man/man3/tgetflag.3			comp-c-man		.man
 ./usr/share/man/man3/tgetnum.3			comp-c-man		.man
@@ -23303,6 +23319,7 @@
 ./usr/share/man/man9/ungetnewvnode.9		comp-sys-man		.man
 ./usr/share/man/man9/untimeout.9		comp-sys-man		.man
 ./usr/share/man/man9/uprintf.9			comp-sys-man		.man
+./usr/share/man/man9/usbd_status.9		comp-sys-man		.man
 ./usr/share/man/man9/usbdi.9			comp-sys-man		.man
 ./usr/share/man/man9/useracc.9			comp-obsolete		obsolete
 ./usr/share/man/man9/userret.9			comp-sys-man		.man

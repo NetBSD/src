@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.24.2.1 2012/04/17 00:09:04 yamt Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.24.2.2 2012/05/23 10:08:21 yamt Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -129,12 +129,8 @@ renamerace_dirs(const atf_tc_t *tc, const char *mp)
 		atf_tc_skip("rename not supported by file system");
 
 	/* XXX: msdosfs also sometimes hangs */
-	if (FSTYPE_EXT2FS(tc) || FSTYPE_MSDOS(tc))
+	if (FSTYPE_MSDOS(tc))
 		atf_tc_expect_signal(-1, "PR kern/43626");
-
-	/* XXX: unracy execution not caught */
-	if (FSTYPE_P2K_FFS(tc))
-		atf_tc_expect_fail("PR kern/44336"); /* child dies */
 
 	RZ(rump_pub_lwproc_rfork(RUMP_RFCFDG));
 	RL(wrkpid = rump_sys_getpid());
@@ -154,14 +150,8 @@ renamerace_dirs(const atf_tc_t *tc, const char *mp)
 	 * Doesn't always trigger when run on a slow backend
 	 * (i.e. not on tmpfs/mfs).  So do the usual kludge.
 	 */
-	if (FSTYPE_EXT2FS(tc) || FSTYPE_MSDOS(tc))
+	if (FSTYPE_MSDOS(tc))
 		abort();
-
-	if (FSTYPE_P2K_FFS(tc)) {
-		/* XXX: some races may hang test run if we don't unmount */
-		puffs_fstest_unmount(tc, mp, MNT_FORCE);
-		atf_tc_fail("problem did not trigger");
-	}
 }
 
 ATF_TC_FSAPPLY(renamerace, "rename(2) race with file unlinked mid-operation");

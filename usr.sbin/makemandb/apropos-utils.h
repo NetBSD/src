@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.h,v 1.2.4.2 2012/04/17 00:09:49 yamt Exp $	*/
+/*	$NetBSD: apropos-utils.h,v 1.2.4.3 2012/05/23 10:08:29 yamt Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -43,7 +43,7 @@
 #define MANDB_WRITE SQLITE_OPEN_READWRITE
 #define MANDB_CREATE SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE
 
-#define APROPOS_SCHEMA_VERSION 20120130
+#define APROPOS_SCHEMA_VERSION 20120507
 
 /*
  * Used to identify the section of a man(7) page.

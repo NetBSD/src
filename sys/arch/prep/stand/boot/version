@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.12 2007/04/29 20:23:35 msaitoh Exp $
+$NetBSD: version,v 1.12.70.1 2012/05/23 10:07:48 yamt Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -16,3 +16,5 @@ is taken as the current.
 		cd9660 and ufs, replace with nullfs because we don't need one.
 1.8:		Do not always run vreset.  When resetting, only do the pci
 		stuff when we find an actual pci card.
+1.9:		Support load kernel from SCSI HDD with siop.
+		It copy from bebox.  (EXPERIMENTAL)

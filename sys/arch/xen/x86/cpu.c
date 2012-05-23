@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.68.2.2 2012/04/17 00:07:11 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.68.2.3 2012/05/23 10:07:52 yamt Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.68.2.2 2012/04/17 00:07:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.68.2.3 2012/05/23 10:07:52 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -121,10 +121,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.68.2.2 2012/04/17 00:07:11 yamt Exp $");
 #include <dev/ic/mc146818reg.h>
 #include <dev/isa/isareg.h>
 
-#if MAXCPUS > 32
-#error cpu_info contains 32bit bitmasks
-#endif
-
 static int	cpu_match(device_t, cfdata_t, void *);
 static void	cpu_attach(device_t, device_t, void *);
 static void	cpu_defer(device_t);
@@ -167,7 +163,6 @@ struct cpu_info cpu_info_primary __aligned(CACHE_LINE_SIZE) = {
 	.ci_idepth = -1,
 	.ci_curlwp = &lwp0,
 	.ci_curldt = -1,
-	.ci_cpumask = 1,
 #ifdef TRAPLOG
 	.ci_tlog = &tlog_primary,
 #endif
@@ -180,9 +175,6 @@ struct cpu_info phycpu_info_primary __aligned(CACHE_LINE_SIZE) = {
 
 struct cpu_info *cpu_info_list = &cpu_info_primary;
 struct cpu_info *phycpu_info_list = &phycpu_info_primary;
-
-uint32_t cpus_attached = 1;
-uint32_t cpus_running = 1;
 
 uint32_t cpu_feature[5]; /* X86 CPUID feature bits
 			  *	[0] basic features %edx
@@ -370,6 +362,7 @@ cpu_vm_init(struct cpu_info *ci)
 	 */
 	aprint_debug_dev(ci->ci_dev, "%d page colors\n", ncolors);
 	uvm_page_recolor(ncolors);
+	pmap_tlb_cpu_init(ci);
 }
 
 static void
@@ -436,7 +429,6 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 	}
 
 	KASSERT(ci->ci_cpuid == ci->ci_index);
-	ci->ci_cpumask = (1 << cpu_index(ci));
 	pmap_reference(pmap_kernel());
 	ci->ci_pmap = pmap_kernel();
 	ci->ci_tlbstate = TLBSTATE_STALE;
@@ -515,8 +507,6 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		panic("unknown processor type??\n");
 	}
 
-	atomic_or_32(&cpus_attached, ci->ci_cpumask);
-
 #ifdef MPVERBOSE
 	if (mp_verbose) {
 		struct lwp *l = ci->ci_data.cpu_idlelwp;
@@ -565,7 +555,6 @@ cpu_init(struct cpu_info *ci)
 	mutex_init(&ci->ci_kpm_mtx, MUTEX_DEFAULT, IPL_VM);
 #endif
 
-	atomic_or_32(&cpus_running, ci->ci_cpumask);
 	atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
 }
 
@@ -728,8 +717,8 @@ cpu_hatch(void *v)
 
 	cpu_switchto(NULL, ci->ci_data.cpu_idlelwp, true);
 
-	panic("switch to idle_loop context returned!\n");
-	/* NOTREACHED */
+	idle_loop(NULL);
+	KASSERT(false);
 }
 
 #if defined(DDB)
@@ -1118,14 +1107,13 @@ void
 cpu_load_pmap(struct pmap *pmap, struct pmap *oldpmap)
 {
 	KASSERT(pmap != pmap_kernel());
-	
+
 #if defined(__x86_64__) || defined(PAE)
 	struct cpu_info *ci = curcpu();
-	uint32_t cpumask = ci->ci_cpumask;
 
 	mutex_enter(&ci->ci_kpm_mtx);
 	/* make new pmap visible to pmap_kpm_sync_xcall() */
-	atomic_or_32(&pmap->pm_xen_ptp_cpus, cpumask);
+	kcpuset_set(pmap->pm_xen_ptp_cpus, cpu_index(ci));
 #endif
 #ifdef i386
 #ifdef PAE
@@ -1178,7 +1166,9 @@ cpu_load_pmap(struct pmap *pmap, struct pmap *oldpmap)
 #endif /* __x86_64__ */
 #if defined(__x86_64__) || defined(PAE)
 	/* old pmap no longer visible to pmap_kpm_sync_xcall() */
-	atomic_and_32(&oldpmap->pm_xen_ptp_cpus, ~cpumask);
+	if (oldpmap != pmap_kernel())
+		kcpuset_clear(oldpmap->pm_xen_ptp_cpus, cpu_index(ci));
+
 	mutex_exit(&ci->ci_kpm_mtx);
 #endif
 }

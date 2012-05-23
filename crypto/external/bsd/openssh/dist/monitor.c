@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor.c,v 1.7 2011/09/07 17:49:19 christos Exp $	*/
-/* $OpenBSD: monitor.c,v 1.115 2011/06/23 23:35:42 djm Exp $ */
+/*	$NetBSD: monitor.c,v 1.7.2.1 2012/05/23 10:07:05 yamt Exp $	*/
+/* $OpenBSD: monitor.c,v 1.116 2012/01/05 00:16:56 djm Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor.c,v 1.7 2011/09/07 17:49:19 christos Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.7.2.1 2012/05/23 10:07:05 yamt Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -490,6 +490,7 @@ monitor_read_log(struct monitor *pmonitor)
 	if (atomicio(read, pmonitor->m_log_recvfd,
 	    buffer_ptr(&logmsg), buffer_len(&logmsg)) != buffer_len(&logmsg)) {
 		if (errno == EPIPE) {
+			buffer_free(&logmsg);
 			debug("%s: child log fd closed", __func__);
 			close(pmonitor->m_log_recvfd);
 			pmonitor->m_log_recvfd = -1;

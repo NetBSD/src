@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.48 2009/08/31 07:11:16 dholland Exp $	*/
+/*	$NetBSD: rcp.c,v 1.48.6.1 2012/05/23 10:07:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.48 2009/08/31 07:11:16 dholland Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.48.6.1 2012/05/23 10:07:04 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -485,6 +485,8 @@ sink(int argc, char *argv[])
 	char ch, *cp, *np, *targ, *vect[1], buf[BUFSIZ];
 	const char *why;
 	off_t size;
+	char *namebuf = NULL;
+	size_t cursize = 0;
 
 #define	atime	tv[0]
 #define	mtime	tv[1]
@@ -507,7 +509,7 @@ sink(int argc, char *argv[])
 	for (first = 1;; first = 0) {
 		cp = buf;
 		if (read(rem, cp, 1) <= 0)
-			return;
+			goto out;
 		if (*cp++ == '\n')
 			SCREWUP("unexpected <newline>");
 		do {
@@ -528,7 +530,7 @@ sink(int argc, char *argv[])
 		}
 		if (buf[0] == 'E') {
 			(void)write(rem, "", 1);
-			return;
+			goto out;
 		}
 
 		if (ch == '\n')
@@ -582,20 +584,19 @@ sink(int argc, char *argv[])
 		if (*cp++ != ' ')
 			SCREWUP("size not delimited");
 		if (targisdir) {
-			static char *namebuf;
-			static size_t cursize;
 			char *newnamebuf;
 			size_t need;
 
-			need = strlen(targ) + strlen(cp) + 250;
+			need = strlen(targ) + strlen(cp) + 2;
 			if (need > cursize) {
+				need += 256;
 				newnamebuf = realloc(namebuf, need);
 				if (newnamebuf != NULL) {
 					namebuf = newnamebuf;
 					cursize = need;
 				} else {
-					/* note: run_err is not fatal */
 					run_err("%s", strerror(errno));
+					exit(1);
 				}
 			}
 			(void)snprintf(namebuf, cursize, "%s%s%s", targ,
@@ -726,6 +727,13 @@ bad:			run_err("%s: %s", np, strerror(errno));
 			break;
 		}
 	}
+
+out:
+	if (namebuf) {
+		free(namebuf);
+	}
+	return;
+
 screwup:
 	run_err("protocol error: %s", why);
 	exit(1);

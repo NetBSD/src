@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.81 2011/09/13 19:34:27 gdt Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.81.2.1 2012/05/23 10:07:52 yamt Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.81 2011/09/13 19:34:27 gdt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.81.2.1 2012/05/23 10:07:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,8 +91,6 @@ struct coda_op_stats coda_vnodeopstats[CODA_VNODEOPS_SIZE];
 #define MARK_INT_GEN(op) (coda_vnodeopstats[op].gen_intrn++)
 
 /* What we are delaying for in printf */
-int coda_printf_delay = 0;  /* in microseconds */
-int coda_vnop_print_entry = 0;
 static int coda_lockdebug = 0;
 
 #define ENTRY if(coda_vnop_print_entry) myprintf(("Entered %s\n",__func__))
@@ -155,8 +153,8 @@ coda_vop_error(void *anon) {
     struct vnodeop_desc **desc = (struct vnodeop_desc **)anon;
 
     if (codadebug) {
-	myprintf(("coda_vop_error: Vnode operation %s called (error).\n",
-		  (*desc)->vdesc_name));
+	myprintf(("%s: Vnode operation %s called (error).\n",
+	    __func__, (*desc)->vdesc_name));
     }
 
     return EIO;
@@ -216,7 +214,7 @@ coda_open(void *v)
      */
 /* true args */
     struct vop_open_args *ap = v;
-    struct vnode *vp = ap->a_vp;
+    vnode_t *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
     int flag = ap->a_mode & (~O_EXCL);
     kauth_cred_t cred = ap->a_cred;
@@ -224,7 +222,7 @@ coda_open(void *v)
     int error;
     dev_t dev;			/* container file device, inode, vnode */
     ino_t inode;
-    struct vnode *container_vp;
+    vnode_t *container_vp;
 
     MARK_ENTRY(CODA_OPEN_STATS);
 
@@ -243,16 +241,16 @@ coda_open(void *v)
     if (error)
 	return (error);
     if (!error) {
-	    CODADEBUG(CODA_OPEN,
-		myprintf(("open: dev 0x%llx inode %llu result %d\n",
-	        (unsigned long long)dev, (unsigned long long)inode, error));)
+	    CODADEBUG(CODA_OPEN, myprintf((
+		"%s: dev 0x%llx inode %llu result %d\n", __func__,
+		(unsigned long long)dev, (unsigned long long)inode, error));)
     }
 
     /* 
      * Obtain locked and referenced container vnode from container
      * device/inode.
      */
-    error = coda_grab_vnode(dev, inode, &container_vp);
+    error = coda_grab_vnode(vp, dev, inode, &container_vp);
     if (error)
 	return (error);
 
@@ -265,7 +263,7 @@ coda_open(void *v)
 	     * Perhaps venus returned a different container, or
 	     * something else went wrong.
 	     */
-	    panic("coda_open: cp->c_ovp != container_vp");
+	    panic("%s: cp->c_ovp != container_vp", __func__);
     }
     cp->c_ocount++;
 
@@ -302,7 +300,7 @@ coda_close(void *v)
 {
 /* true args */
     struct vop_close_args *ap = v;
-    struct vnode *vp = ap->a_vp;
+    vnode_t *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
     int flag = ap->a_fflag;
     kauth_cred_t cred = ap->a_cred;
@@ -323,8 +321,8 @@ coda_close(void *v)
     if (IS_UNMOUNTING(cp)) {
 	if (cp->c_ovp) {
 #ifdef	CODA_VERBOSE
-	    printf("coda_close: destroying container ref %d, ufs vp %p of vp %p/cp %p\n",
-		    vp->v_usecount, cp->c_ovp, vp, cp);
+	    printf("%s: destroying container %d, ufs vp %p of vp %p/cp %p\n",
+		__func__, vp->v_usecount, cp->c_ovp, vp, cp);
 #endif
 #ifdef	hmm
 	    vgone(cp->c_ovp);
@@ -335,7 +333,7 @@ coda_close(void *v)
 #endif
 	} else {
 #ifdef	CODA_VERBOSE
-	    printf("coda_close: NO container vp %p/cp %p\n", vp, cp);
+	    printf("%s: NO container vp %p/cp %p\n", __func__, vp, cp);
 #endif
 	}
 	return ENODEV;
@@ -357,7 +355,7 @@ coda_close(void *v)
 
     error = venus_close(vtomi(vp), &cp->c_fid, flag, cred, curlwp);
 
-    CODADEBUG(CODA_CLOSE, myprintf(("close: result %d\n",error)); )
+    CODADEBUG(CODA_CLOSE, myprintf(("%s: result %d\n", __func__, error)); )
     return(error);
 }
 
@@ -382,14 +380,14 @@ coda_write(void *v)
 }
 
 int
-coda_rdwr(struct vnode *vp, struct uio *uiop, enum uio_rw rw, int ioflag,
+coda_rdwr(vnode_t *vp, struct uio *uiop, enum uio_rw rw, int ioflag,
 	kauth_cred_t cred, struct lwp *l)
 {
 /* upcall decl */
   /* NOTE: container file operation!!! */
 /* locals */
     struct cnode *cp = VTOC(vp);
-    struct vnode *cfvp = cp->c_ovp;
+    vnode_t *cfvp = cp->c_ovp;
     struct proc *p = l->l_proc;
     int opened_internally = 0;
     int error = 0;
@@ -397,9 +395,8 @@ coda_rdwr(struct vnode *vp, struct uio *uiop, enum uio_rw rw, int ioflag,
     MARK_ENTRY(CODA_RDWR_STATS);
 
     CODADEBUG(CODA_RDWR, myprintf(("coda_rdwr(%d, %p, %lu, %lld)\n", rw,
-			      uiop->uio_iov->iov_base,
-			      (unsigned long) uiop->uio_resid,
-			      (long long) uiop->uio_offset)); )
+	uiop->uio_iov->iov_base, (unsigned long) uiop->uio_resid,
+	(long long) uiop->uio_offset)); )
 
     /* Check for rdwr of control object. */
     if (IS_CTL_VP(vp)) {
@@ -425,9 +422,12 @@ coda_rdwr(struct vnode *vp, struct uio *uiop, enum uio_rw rw, int ioflag,
 	 * it's completely written.
 	 */
 	if (cp->c_inode != 0 && !(p && (p->p_acflag & ACORE))) {
-	    printf("coda_rdwr: grabbing container vnode, losing reference\n");
+#ifdef CODA_VERBOSE
+	    printf("%s: grabbing container vnode, losing reference\n",
+		__func__);
+#endif
 	    /* Get locked and refed vnode. */
-	    error = coda_grab_vnode(cp->c_device, cp->c_inode, &cfvp);
+	    error = coda_grab_vnode(vp, cp->c_device, cp->c_inode, &cfvp);
 	    if (error) {
 		MARK_INT_FAIL(CODA_RDWR_STATS);
 		return(error);
@@ -439,12 +439,14 @@ coda_rdwr(struct vnode *vp, struct uio *uiop, enum uio_rw rw, int ioflag,
 	    VOP_UNLOCK(cfvp);
 	}
 	else {
-	    printf("coda_rdwr: internal VOP_OPEN\n");
+#ifdef CODA_VERBOSE
+	    printf("%s: internal VOP_OPEN\n", __func__);
+#endif
 	    opened_internally = 1;
 	    MARK_INT_GEN(CODA_OPEN_STATS);
 	    error = VOP_OPEN(vp, (rw == UIO_READ ? FREAD : FWRITE), cred);
 #ifdef	CODA_VERBOSE
-printf("coda_rdwr: Internally Opening %p\n", vp);
+	    printf("%s: Internally Opening %p\n", __func__, vp);
 #endif
 	    if (error) {
 		MARK_INT_FAIL(CODA_RDWR_STATS);
@@ -455,8 +457,8 @@ printf("coda_rdwr: Internally Opening %p\n", vp);
     }
 
     /* Have UFS handle the call. */
-    CODADEBUG(CODA_RDWR, myprintf(("indirect rdwr: fid = %s, refcnt = %d\n",
-			coda_f2s(&cp->c_fid), CTOV(cp)->v_usecount)); )
+    CODADEBUG(CODA_RDWR, myprintf(("%s: fid = %s, refcnt = %d\n", __func__,
+	coda_f2s(&cp->c_fid), CTOV(cp)->v_usecount)); )
 
     if (rw == UIO_READ) {
 	error = VOP_READ(cfvp, uiop, ioflag, cred);
@@ -486,14 +488,14 @@ coda_ioctl(void *v)
 {
 /* true args */
     struct vop_ioctl_args *ap = v;
-    struct vnode *vp = ap->a_vp;
+    vnode_t *vp = ap->a_vp;
     int com = ap->a_command;
     void *data = ap->a_data;
     int flag = ap->a_fflag;
     kauth_cred_t cred = ap->a_cred;
 /* locals */
     int error;
-    struct vnode *tvp;
+    vnode_t *tvp;
     struct PioctlData *iap = (struct PioctlData *)data;
     namei_simple_flags_t sflags;
 
@@ -507,8 +509,8 @@ coda_ioctl(void *v)
     /* Must be control object to succeed. */
     if (!IS_CTL_VP(vp)) {
 	MARK_INT_FAIL(CODA_IOCTL_STATS);
-	CODADEBUG(CODA_IOCTL, myprintf(("coda_ioctl error: vp != ctlvp"));)
-	    return (EOPNOTSUPP);
+	CODADEBUG(CODA_IOCTL, myprintf(("%s error: vp != ctlvp", __func__));)
+	return (EOPNOTSUPP);
     }
     /* Look up the pathname. */
 
@@ -520,8 +522,8 @@ coda_ioctl(void *v)
 
     if (error) {
 	MARK_INT_FAIL(CODA_IOCTL_STATS);
-	CODADEBUG(CODA_IOCTL, myprintf(("coda_ioctl error: lookup returns %d\n",
-				   error));)
+	CODADEBUG(CODA_IOCTL, myprintf(("%s error: lookup returns %d\n",
+	    __func__, error));)
 	return(error);
     }
 
@@ -533,9 +535,8 @@ coda_ioctl(void *v)
     if (tvp->v_tag != VT_CODA) {
 	vrele(tvp);
 	MARK_INT_FAIL(CODA_IOCTL_STATS);
-	CODADEBUG(CODA_IOCTL,
-		 myprintf(("coda_ioctl error: %s not a coda object\n",
-			iap->path));)
+	CODADEBUG(CODA_IOCTL, myprintf(("%s error: %s not a coda object\n",
+	    __func__, iap->path));)
 	return(EINVAL);
     }
 
@@ -569,7 +570,7 @@ coda_getattr(void *v)
 {
 /* true args */
     struct vop_getattr_args *ap = v;
-    struct vnode *vp = ap->a_vp;
+    vnode_t *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
     struct vattr *vap = ap->a_vap;
     kauth_cred_t cred = ap->a_cred;
@@ -586,10 +587,10 @@ coda_getattr(void *v)
 
     /* Check to see if the attributes have already been cached */
     if (VALID_VATTR(cp)) {
-	CODADEBUG(CODA_GETATTR, { myprintf(("attr cache hit: %s\n",
-					coda_f2s(&cp->c_fid)));});
+	CODADEBUG(CODA_GETATTR, { myprintf(("%s: attr cache hit: %s\n",
+	    __func__, coda_f2s(&cp->c_fid)));})
 	CODADEBUG(CODA_GETATTR, if (!(codadebug & ~CODA_GETATTR))
-		 print_vattr(&cp->c_vattr); );
+	    print_vattr(&cp->c_vattr); )
 
 	*vap = cp->c_vattr;
 	MARK_INT_SAT(CODA_GETATTR_STATS);
@@ -599,11 +600,11 @@ coda_getattr(void *v)
     error = venus_getattr(vtomi(vp), &cp->c_fid, cred, curlwp, vap);
 
     if (!error) {
-	CODADEBUG(CODA_GETATTR, myprintf(("getattr miss %s: result %d\n",
-				     coda_f2s(&cp->c_fid), error)); )
+	CODADEBUG(CODA_GETATTR, myprintf(("%s miss %s: result %d\n",
+	    __func__, coda_f2s(&cp->c_fid), error)); )
 
 	CODADEBUG(CODA_GETATTR, if (!(codadebug & ~CODA_GETATTR))
-		 print_vattr(vap);	);
+	    print_vattr(vap);	)
 
 	/* If not open for write, store attributes in cnode */
 	if ((cp->c_owrite == 0) && (coda_attr_cache)) {
@@ -620,7 +621,7 @@ coda_setattr(void *v)
 {
 /* true args */
     struct vop_setattr_args *ap = v;
-    struct vnode *vp = ap->a_vp;
+    vnode_t *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
     struct vattr *vap = ap->a_vap;
     kauth_cred_t cred = ap->a_cred;
@@ -652,7 +653,7 @@ coda_access(void *v)
 {
 /* true args */
     struct vop_access_args *ap = v;
-    struct vnode *vp = ap->a_vp;
+    vnode_t *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
     int mode = ap->a_mode;
     kauth_cred_t cred = ap->a_cred;
@@ -700,7 +701,7 @@ coda_abortop(void *v)
 {
 /* true args */
     struct vop_abortop_args /* {
-	struct vnode *a_dvp;
+	vnode_t *a_dvp;
 	struct componentname *a_cnp;
     } */ *ap = v;
 
@@ -716,7 +717,7 @@ coda_readlink(void *v)
 {
 /* true args */
     struct vop_readlink_args *ap = v;
-    struct vnode *vp = ap->a_vp;
+    vnode_t *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
     struct uio *uiop = ap->a_uio;
     kauth_cred_t cred = ap->a_cred;
@@ -767,11 +768,11 @@ coda_fsync(void *v)
 {
 /* true args */
     struct vop_fsync_args *ap = v;
-    struct vnode *vp = ap->a_vp;
+    vnode_t *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
     kauth_cred_t cred = ap->a_cred;
 /* locals */
-    struct vnode *convp = cp->c_ovp;
+    vnode_t *convp = cp->c_ovp;
     int error;
 
     MARK_ENTRY(CODA_FSYNC_STATS);
@@ -807,7 +808,7 @@ coda_fsync(void *v)
 
     error = venus_fsync(vtomi(vp), &cp->c_fid, cred, curlwp);
 
-    CODADEBUG(CODA_FSYNC, myprintf(("in fsync result %d\n",error)); );
+    CODADEBUG(CODA_FSYNC, myprintf(("in fsync result %d\n",error)); )
     return(error);
 }
 
@@ -820,7 +821,7 @@ coda_inactive(void *v)
 {
 /* true args */
     struct vop_inactive_args *ap = v;
-    struct vnode *vp = ap->a_vp;
+    vnode_t *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
     kauth_cred_t cred __unused = NULL;
 
@@ -838,7 +839,7 @@ coda_inactive(void *v)
     /* If an array has been allocated to hold the symlink, deallocate it */
     if ((coda_symlink_cache) && (VALID_SYMLINK(cp))) {
 	if (cp->c_symlink == NULL)
-	    panic("coda_inactive: null symlink pointer in cnode");
+	    panic("%s: null symlink pointer in cnode", __func__);
 
 	CODA_FREE(cp->c_symlink, cp->c_symlen);
 	cp->c_flags &= ~C_SYMLINK;
@@ -852,25 +853,17 @@ coda_inactive(void *v)
 	panic("badness in coda_inactive");
     }
 
-    if (IS_UNMOUNTING(cp)) {
-	/* XXX Do we need to VOP_CLOSE container vnodes? */
-	if (vp->v_usecount > 1)
-	    printf("coda_inactive: IS_UNMOUNTING %p usecount %d\n",
-		   vp, vp->v_usecount);
-	if (cp->c_ovp != NULL)
-	    printf("coda_inactive: %p ovp != NULL\n", vp);
-	VOP_UNLOCK(vp);
-    } else {
-        /* Sanity checks that perhaps should be panic. */
-	if (vp->v_usecount > 1) {
-	    printf("coda_inactive: %p usecount %d\n", vp, vp->v_usecount);
-	}
-	if (cp->c_ovp != NULL) {
-	    printf("coda_inactive: %p ovp != NULL\n", vp);
-	}
-	VOP_UNLOCK(vp);
+#ifdef CODA_VERBOSE
+    /* Sanity checks that perhaps should be panic. */
+    if (vp->v_usecount > 1)
+	printf("%s: %p usecount %d\n", __func__, vp, vp->v_usecount);
+    if (cp->c_ovp != NULL)
+	printf("%s: %p ovp != NULL\n", __func__, vp);
+#endif
+    /* XXX Do we need to VOP_CLOSE container vnodes? */
+    VOP_UNLOCK(vp);
+    if (!IS_UNMOUNTING(cp))
 	*ap->a_recycle = true;
-    }
 
     MARK_INT_SAT(CODA_INACTIVE_STATS);
     return(0);
@@ -886,10 +879,10 @@ coda_lookup(void *v)
 /* true args */
     struct vop_lookup_args *ap = v;
     /* (locked) vnode of dir in which to do lookup */
-    struct vnode *dvp = ap->a_dvp;
+    vnode_t *dvp = ap->a_dvp;
     struct cnode *dcp = VTOC(dvp);
     /* output variable for result */
-    struct vnode **vpp = ap->a_vpp;
+    vnode_t **vpp = ap->a_vpp;
     /* name to lookup */
     struct componentname *cnp = ap->a_cnp;
     kauth_cred_t cred = cnp->cn_cred;
@@ -906,8 +899,8 @@ coda_lookup(void *v)
 
     MARK_ENTRY(CODA_LOOKUP_STATS);
 
-    CODADEBUG(CODA_LOOKUP, myprintf(("lookup: %s in %s\n",
-				   nm, coda_f2s(&dcp->c_fid))););
+    CODADEBUG(CODA_LOOKUP, myprintf(("%s: %s in %s\n", __func__,
+	nm, coda_f2s(&dcp->c_fid)));)
 
     /*
      * XXX componentname flags in MODMASK are not handled at all
@@ -931,9 +924,9 @@ coda_lookup(void *v)
     /* Avoid trying to hand venus an unreasonably long name. */
     if (len+1 > CODA_MAXNAMLEN) {
 	MARK_INT_FAIL(CODA_LOOKUP_STATS);
-	CODADEBUG(CODA_LOOKUP, myprintf(("name too long: lookup, %s (%s)\n",
-				    coda_f2s(&dcp->c_fid), nm)););
-	*vpp = (struct vnode *)0;
+	CODADEBUG(CODA_LOOKUP, myprintf(("%s: name too long:, %s (%s)\n",
+	    __func__, coda_f2s(&dcp->c_fid), nm));)
+	*vpp = (vnode_t *)0;
 	error = EINVAL;
 	goto exit;
     }
@@ -958,18 +951,18 @@ coda_lookup(void *v)
 		 myprintf(("lookup result %d vpp %p\n",error,*vpp));)
     } else {
 	/* The name wasn't cached, so ask Venus. */
-	error = venus_lookup(vtomi(dvp), &dcp->c_fid, nm, len, cred, l, &VFid, &vtype);
+	error = venus_lookup(vtomi(dvp), &dcp->c_fid, nm, len, cred, l, &VFid,
+	    &vtype);
 
 	if (error) {
 	    MARK_INT_FAIL(CODA_LOOKUP_STATS);
-	    CODADEBUG(CODA_LOOKUP, myprintf(("lookup error on %s (%s)%d\n",
-					coda_f2s(&dcp->c_fid), nm, error));)
-	    *vpp = (struct vnode *)0;
+	    CODADEBUG(CODA_LOOKUP, myprintf(("%s: lookup error on %s (%s)%d\n",
+		__func__, coda_f2s(&dcp->c_fid), nm, error));)
+	    *vpp = (vnode_t *)0;
 	} else {
 	    MARK_INT_SAT(CODA_LOOKUP_STATS);
-	    CODADEBUG(CODA_LOOKUP,
-		     myprintf(("lookup: %s type %o result %d\n",
-			    coda_f2s(&VFid), vtype, error)); )
+	    CODADEBUG(CODA_LOOKUP, myprintf(("%s: %s type %o result %d\n",
+		__func__, coda_f2s(&VFid), vtype, error)); )
 
 	    cp = make_coda_node(&VFid, dvp->v_mount, vtype);
 	    *vpp = CTOV(cp);
@@ -1035,12 +1028,12 @@ coda_create(void *v)
 {
 /* true args */
     struct vop_create_args *ap = v;
-    struct vnode *dvp = ap->a_dvp;
+    vnode_t *dvp = ap->a_dvp;
     struct cnode *dcp = VTOC(dvp);
     struct vattr *va = ap->a_vap;
     int exclusive = 1;
     int mode = ap->a_vap->va_mode;
-    struct vnode **vpp = ap->a_vpp;
+    vnode_t **vpp = ap->a_vpp;
     struct componentname  *cnp = ap->a_cnp;
     kauth_cred_t cred = cnp->cn_cred;
     struct lwp *l = curlwp;
@@ -1059,7 +1052,7 @@ coda_create(void *v)
 
     /* Check for create of control object. */
     if (IS_CTL_NAME(dvp, nm, len)) {
-	*vpp = (struct vnode *)0;
+	*vpp = (vnode_t *)0;
 	MARK_INT_FAIL(CODA_CREATE_STATS);
 	return(EACCES);
     }
@@ -1098,12 +1091,12 @@ coda_create(void *v)
 	/* enter the new vnode in the Name Cache */
 	coda_nc_enter(VTOC(dvp), nm, len, cred, VTOC(*vpp));
 
-	CODADEBUG(CODA_CREATE,
-		 myprintf(("create: %s, result %d\n",
-			coda_f2s(&VFid), error)); )
+	CODADEBUG(CODA_CREATE, myprintf(("%s: %s, result %d\n", __func__,
+	    coda_f2s(&VFid), error)); )
     } else {
-	*vpp = (struct vnode *)0;
-	CODADEBUG(CODA_CREATE, myprintf(("create error %d\n", error));)
+	*vpp = (vnode_t *)0;
+	CODADEBUG(CODA_CREATE, myprintf(("%s: create error %d\n", __func__,
+	    error));)
     }
 
     /*
@@ -1112,15 +1105,15 @@ coda_create(void *v)
      */
     vput(dvp);
     if (!error) {
-	if ((cnp->cn_flags & LOCKLEAF) == 0) {
+#ifdef CODA_VERBOSE
+	if ((cnp->cn_flags & LOCKLEAF) == 0)
 	    /* This should not happen; flags are for lookup only. */
-	    printf("coda_create: LOCKLEAF not set!\n");
-	}
+	    printf("%s: LOCKLEAF not set!\n", __func__);
 
-	if ((error = vn_lock(*ap->a_vpp, LK_EXCLUSIVE))) {
+	if ((error = vn_lock(*ap->a_vpp, LK_EXCLUSIVE)))
 	    /* XXX Perhaps avoid this panic. */
-	    panic("coda_create: couldn't lock child");
-	}
+	    panic("%s: couldn't lock child", __func__);
+#endif
     }
 
     return(error);
@@ -1131,9 +1124,9 @@ coda_remove(void *v)
 {
 /* true args */
     struct vop_remove_args *ap = v;
-    struct vnode *dvp = ap->a_dvp;
+    vnode_t *dvp = ap->a_dvp;
     struct cnode *cp = VTOC(dvp);
-    struct vnode *vp = ap->a_vp;
+    vnode_t *vp = ap->a_vp;
     struct componentname  *cnp = ap->a_cnp;
     kauth_cred_t cred = cnp->cn_cred;
     struct lwp *l = curlwp;
@@ -1145,8 +1138,8 @@ coda_remove(void *v)
 
     MARK_ENTRY(CODA_REMOVE_STATS);
 
-    CODADEBUG(CODA_REMOVE, myprintf(("remove: %s in %s\n",
-				   nm, coda_f2s(&cp->c_fid))););
+    CODADEBUG(CODA_REMOVE, myprintf(("%s: %s in %s\n", __func__,
+	nm, coda_f2s(&cp->c_fid)));)
 
     /* Remove the file's entry from the CODA Name Cache */
     /* We're being conservative here, it might be that this person
@@ -1205,9 +1198,9 @@ coda_link(void *v)
 {
 /* true args */
     struct vop_link_args *ap = v;
-    struct vnode *vp = ap->a_vp;
+    vnode_t *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
-    struct vnode *dvp = ap->a_dvp;
+    vnode_t *dvp = ap->a_dvp;
     struct cnode *dcp = VTOC(dvp);
     struct componentname *cnp = ap->a_cnp;
     kauth_cred_t cred = cnp->cn_cred;
@@ -1221,17 +1214,13 @@ coda_link(void *v)
 
     if (codadebug & CODADBGMSK(CODA_LINK)) {
 
-	myprintf(("nb_link:   vp fid: %s\n",
-		  coda_f2s(&cp->c_fid)));
-	myprintf(("nb_link: dvp fid: %s)\n",
-		  coda_f2s(&dcp->c_fid)));
+	myprintf(("%s: vp fid: %s\n", __func__, coda_f2s(&cp->c_fid)));
+	myprintf(("%s: dvp fid: %s)\n", __func__, coda_f2s(&dcp->c_fid)));
 
     }
     if (codadebug & CODADBGMSK(CODA_LINK)) {
-	myprintf(("link:   vp fid: %s\n",
-		  coda_f2s(&cp->c_fid)));
-	myprintf(("link: dvp fid: %s\n",
-		  coda_f2s(&dcp->c_fid)));
+	myprintf(("%s: vp fid: %s\n", __func__, coda_f2s(&cp->c_fid)));
+	myprintf(("%s: dvp fid: %s\n", __func__, coda_f2s(&dcp->c_fid)));
 
     }
 
@@ -1243,14 +1232,18 @@ coda_link(void *v)
 
     /* If linking . to a name, error out earlier. */
     if (vp == dvp) {
-        printf("coda_link vp==dvp\n");
+#ifdef CODA_VERBOSE
+        printf("%s coda_link vp==dvp\n", __func__);
+#endif
 	error = EISDIR;
 	goto exit;
     }
 
     /* XXX Why does venus_link need the vnode to be locked?*/
     if ((error = vn_lock(vp, LK_EXCLUSIVE)) != 0) {
-	printf("coda_link: couldn't lock vnode %p\n", vp);
+#ifdef CODA_VERBOSE
+	printf("%s: couldn't lock vnode %p\n", __func__, vp);
+#endif
 	error = EFAULT;		/* XXX better value */
 	goto exit;
     }
@@ -1274,10 +1267,10 @@ coda_rename(void *v)
 {
 /* true args */
     struct vop_rename_args *ap = v;
-    struct vnode *odvp = ap->a_fdvp;
+    vnode_t *odvp = ap->a_fdvp;
     struct cnode *odcp = VTOC(odvp);
     struct componentname  *fcnp = ap->a_fcnp;
-    struct vnode *ndvp = ap->a_tdvp;
+    vnode_t *ndvp = ap->a_tdvp;
     struct cnode *ndcp = VTOC(ndvp);
     struct componentname  *tcnp = ap->a_tcnp;
     kauth_cred_t cred = fcnp->cn_cred;
@@ -1297,7 +1290,7 @@ coda_rename(void *v)
     if ((fcnp->cn_cred != tcnp->cn_cred)
 	|| (fcnp->cn_lwp != tcnp->cn_lwp))
     {
-	panic("coda_rename: component names don't agree");
+	panic("%s: component names don't agree", __func__);
     }
 #endif
 
@@ -1311,7 +1304,7 @@ coda_rename(void *v)
     if (odvp != ndvp) {
 	struct cnode *ovcp = coda_nc_lookup(VTOC(odvp), fnm, flen, cred);
 	if (ovcp) {
-	    struct vnode *ovp = CTOV(ovcp);
+	    vnode_t *ovp = CTOV(ovcp);
 	    if ((ovp) &&
 		(ovp->v_type == VDIR)) /* If it's a directory */
 		coda_nc_zapfile(VTOC(ovp),"..", 2);
@@ -1368,11 +1361,11 @@ coda_mkdir(void *v)
 {
 /* true args */
     struct vop_mkdir_args *ap = v;
-    struct vnode *dvp = ap->a_dvp;
+    vnode_t *dvp = ap->a_dvp;
     struct cnode *dcp = VTOC(dvp);
     struct componentname  *cnp = ap->a_cnp;
     struct vattr *va = ap->a_vap;
-    struct vnode **vpp = ap->a_vpp;
+    vnode_t **vpp = ap->a_vpp;
     kauth_cred_t cred = cnp->cn_cred;
     struct lwp *l = curlwp;
 /* locals */
@@ -1387,13 +1380,13 @@ coda_mkdir(void *v)
 
     /* Check for mkdir of target object. */
     if (IS_CTL_NAME(dvp, nm, len)) {
-	*vpp = (struct vnode *)0;
+	*vpp = (vnode_t *)0;
 	MARK_INT_FAIL(CODA_MKDIR_STATS);
 	return(EACCES);
     }
 
     if (len+1 > CODA_MAXNAMLEN) {
-	*vpp = (struct vnode *)0;
+	*vpp = (vnode_t *)0;
 	MARK_INT_FAIL(CODA_MKDIR_STATS);
 	return(EACCES);
     }
@@ -1423,11 +1416,11 @@ coda_mkdir(void *v)
 	/* Invalidate the parent's attr cache, the modification time has changed */
 	VTOC(dvp)->c_flags &= ~C_VATTR;
 
-	CODADEBUG( CODA_MKDIR, myprintf(("mkdir: %s result %d\n",
-				    coda_f2s(&VFid), error)); )
+	CODADEBUG( CODA_MKDIR, myprintf(("%s: %s result %d\n", __func__,
+	    coda_f2s(&VFid), error)); )
     } else {
-	*vpp = (struct vnode *)0;
-	CODADEBUG(CODA_MKDIR, myprintf(("mkdir error %d\n",error));)
+	*vpp = (vnode_t *)0;
+	CODADEBUG(CODA_MKDIR, myprintf(("%s error %d\n", __func__, error));)
     }
 
     /*
@@ -1439,7 +1432,7 @@ coda_mkdir(void *v)
     vput(dvp);
     if (!error) {
 	if ((error = vn_lock(*ap->a_vpp, LK_EXCLUSIVE))) {
-	    panic("coda_mkdir: couldn't lock child");
+	    panic("%s: couldn't lock child", __func__);
 	}
     }
 
@@ -1451,9 +1444,9 @@ coda_rmdir(void *v)
 {
 /* true args */
     struct vop_rmdir_args *ap = v;
-    struct vnode *dvp = ap->a_dvp;
+    vnode_t *dvp = ap->a_dvp;
     struct cnode *dcp = VTOC(dvp);
-    struct vnode *vp = ap->a_vp;
+    vnode_t *vp = ap->a_vp;
     struct componentname  *cnp = ap->a_cnp;
     kauth_cred_t cred = cnp->cn_cred;
     struct lwp *l = curlwp;
@@ -1473,7 +1466,9 @@ coda_rmdir(void *v)
 
     /* Can't remove . in self. */
     if (dvp == vp) {
-	printf("coda_rmdir: dvp == vp\n");
+#ifdef CODA_VERBOSE
+	printf("%s: dvp == vp\n", __func__);
+#endif
 	error = EINVAL;
 	goto exit;
     }
@@ -1516,7 +1511,7 @@ coda_symlink(void *v)
 {
 /* true args */
     struct vop_symlink_args *ap = v;
-    struct vnode *dvp = ap->a_dvp;
+    vnode_t *dvp = ap->a_dvp;
     struct cnode *dcp = VTOC(dvp);
     /* a_vpp is used in place below */
     struct componentname *cnp = ap->a_cnp;
@@ -1604,7 +1599,7 @@ coda_readdir(void *v)
 {
 /* true args */
     struct vop_readdir_args *ap = v;
-    struct vnode *vp = ap->a_vp;
+    vnode_t *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
     struct uio *uiop = ap->a_uio;
     kauth_cred_t cred = ap->a_cred;
@@ -1617,7 +1612,9 @@ coda_readdir(void *v)
 
     MARK_ENTRY(CODA_READDIR_STATS);
 
-    CODADEBUG(CODA_READDIR, myprintf(("coda_readdir(%p, %lu, %lld)\n", uiop->uio_iov->iov_base, (unsigned long) uiop->uio_resid, (long long) uiop->uio_offset)); )
+    CODADEBUG(CODA_READDIR, myprintf(("%s: (%p, %lu, %lld)\n", __func__,
+	uiop->uio_iov->iov_base, (unsigned long) uiop->uio_resid,
+	(long long) uiop->uio_offset)); )
 
     /* Check for readdir of control object. */
     if (IS_CTL_VP(vp)) {
@@ -1635,16 +1632,15 @@ coda_readdir(void *v)
 	    MARK_INT_GEN(CODA_OPEN_STATS);
 	    error = VOP_OPEN(vp, FREAD, cred);
 #ifdef	CODA_VERBOSE
-printf("coda_readdir: Internally Opening %p\n", vp);
+	    printf("%s: Internally Opening %p\n", __func__, vp);
 #endif
 	    if (error) return(error);
 	} else
 	    vp = cp->c_ovp;
 
 	/* Have UFS handle the call. */
-	CODADEBUG(CODA_READDIR, myprintf((
-				"indirect readdir: fid = %s, refcnt = %d\n",
-				coda_f2s(&cp->c_fid), vp->v_usecount)); )
+	CODADEBUG(CODA_READDIR, myprintf(("%s: fid = %s, refcnt = %d\n",
+	    __func__, coda_f2s(&cp->c_fid), vp->v_usecount)); )
 	error = VOP_READDIR(vp, uiop, cred, eofflag, cookies, ncookies);
 	if (error)
 	    MARK_INT_FAIL(CODA_READDIR_STATS);
@@ -1670,15 +1666,15 @@ coda_bmap(void *v)
     /* XXX on the global proc */
 /* true args */
     struct vop_bmap_args *ap = v;
-    struct vnode *vp __unused = ap->a_vp;	/* file's vnode */
+    vnode_t *vp __unused = ap->a_vp;	/* file's vnode */
     daddr_t bn __unused = ap->a_bn;	/* fs block number */
-    struct vnode **vpp = ap->a_vpp;			/* RETURN vp of device */
+    vnode_t **vpp = ap->a_vpp;			/* RETURN vp of device */
     daddr_t *bnp __unused = ap->a_bnp;	/* RETURN device block number */
     struct lwp *l __unused = curlwp;
 /* upcall decl */
 /* locals */
 
-	*vpp = (struct vnode *)0;
+	*vpp = (vnode_t *)0;
 	myprintf(("coda_bmap called!\n"));
 	return(EINVAL);
 }
@@ -1709,7 +1705,7 @@ coda_reclaim(void *v)
 {
 /* true args */
     struct vop_reclaim_args *ap = v;
-    struct vnode *vp = ap->a_vp;
+    vnode_t *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
 /* upcall decl */
 /* locals */
@@ -1723,15 +1719,15 @@ coda_reclaim(void *v)
 #ifdef	DEBUG
 	if (VTOC(vp)->c_ovp) {
 	    if (IS_UNMOUNTING(cp))
-		printf("coda_reclaim: c_ovp not void: vp %p, cp %p\n", vp, cp);
+		printf("%s: c_ovp not void: vp %p, cp %p\n", __func__, vp, cp);
 	}
 #endif
     } else {
 #ifdef OLD_DIAGNOSTIC
 	if (vp->v_usecount != 0)
-	    print("coda_reclaim: pushing active %p\n", vp);
+	    print("%s: pushing active %p\n", __func__, vp);
 	if (VTOC(vp)->c_ovp) {
-	    panic("coda_reclaim: c_ovp not void");
+	    panic("%s: c_ovp not void", __func__);
 	}
 #endif
     }
@@ -1745,7 +1741,7 @@ coda_lock(void *v)
 {
 /* true args */
     struct vop_lock_args *ap = v;
-    struct vnode *vp = ap->a_vp;
+    vnode_t *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
 /* upcall decl */
 /* locals */
@@ -1765,7 +1761,7 @@ coda_unlock(void *v)
 {
 /* true args */
     struct vop_unlock_args *ap = v;
-    struct vnode *vp = ap->a_vp;
+    vnode_t *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
 /* upcall decl */
 /* locals */
@@ -1793,14 +1789,14 @@ coda_islocked(void *v)
  * obtained and passed back to the caller.
  */
 int
-coda_grab_vnode(dev_t dev, ino_t ino, struct vnode **vpp)
+coda_grab_vnode(vnode_t *uvp, dev_t dev, ino_t ino, vnode_t **vpp)
 {
     int           error;
     struct mount *mp;
 
     /* Obtain mount point structure from device. */
     if (!(mp = devtomp(dev))) {
-	myprintf(("coda_grab_vnode: devtomp(0x%llx) returns NULL\n",
+	myprintf(("%s: devtomp(0x%llx) returns NULL\n", __func__,
 	    (unsigned long long)dev));
 	return(ENXIO);
     }
@@ -1812,10 +1808,13 @@ coda_grab_vnode(dev_t dev, ino_t ino, struct vnode **vpp)
      */
     error = VFS_VGET(mp, ino, vpp);
     if (error) {
-	myprintf(("coda_grab_vnode: iget/vget(0x%llx, %llu) returns %p, err %d\n",
+	myprintf(("%s: iget/vget(0x%llx, %llu) returns %p, err %d\n", __func__,
 	    (unsigned long long)dev, (unsigned long long)ino, *vpp, error));
 	return(ENOENT);
     }
+    /* share the underlying vnode lock with the coda vnode */
+    mutex_obj_hold((*vpp)->v_interlock);
+    uvm_obj_setlock(&uvp->v_uobj, (*vpp)->v_interlock);
     return(0);
 }
 
@@ -1903,20 +1902,20 @@ print_cred(kauth_cred_t cred)
  * table when coda_inactive calls coda_unsave.
  */
 struct cnode *
-make_coda_node(CodaFid *fid, struct mount *vfsp, short type)
+make_coda_node(CodaFid *fid, struct mount *fvsp, short type)
 {
     struct cnode *cp;
-    int          err;
+    int          error;
 
     if ((cp = coda_find(fid)) == NULL) {
-	struct vnode *vp;
+	vnode_t *vp;
 
 	cp = coda_alloc();
 	cp->c_fid = *fid;
 
-	err = getnewvnode(VT_CODA, vfsp, coda_vnodeop_p, NULL, &vp);
-	if (err) {
-	    panic("coda: getnewvnode returned error %d", err);
+	error = getnewvnode(VT_CODA, fvsp, coda_vnodeop_p, NULL, &vp);
+	if (error) {
+	    panic("%s: getnewvnode returned error %d", __func__, error);
 	}
 	vp->v_data = cp;
 	vp->v_type = type;
@@ -1936,14 +1935,12 @@ make_coda_node(CodaFid *fid, struct mount *vfsp, short type)
  * e.g. to fault in pages to execute a program.  In that case, we must
  * open the file to get the container.  The vnode may or may not be
  * locked, and we must leave it in the same state.
- * XXX The protocol requires v_uobj.vmobjlock to be
- * held by caller, but this isn't documented in vnodeops(9) or vnode_if.src.
  */
 int
 coda_getpages(void *v)
 {
 	struct vop_getpages_args /* {
-		struct vnode *a_vp;
+		vnode_t *a_vp;
 		voff_t a_offset;
 		struct vm_page **a_m;
 		int *a_count;
@@ -1952,7 +1949,7 @@ coda_getpages(void *v)
 		int a_advice;
 		int a_flags;
 	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
+	vnode_t *vp = ap->a_vp, *cvp;
 	struct cnode *cp = VTOC(vp);
 	struct lwp *l = curlwp;
 	kauth_cred_t cred = l->l_cred;
@@ -1968,10 +1965,13 @@ coda_getpages(void *v)
 		return EBUSY;
 	}
 
+	KASSERT(mutex_owned(vp->v_interlock));
+
 	/* Check for control object. */
 	if (IS_CTL_VP(vp)) {
-		printf("coda_getpages: control object %p\n", vp);
-		mutex_exit(vp->v_uobj.vmobjlock);
+#ifdef CODA_VERBOSE
+		printf("%s: control object %p\n", __func__, vp);
+#endif
 		return(EINVAL);
 	}
 
@@ -1986,25 +1986,26 @@ coda_getpages(void *v)
 	/* XXX VOP_ISLOCKED() may not be used for lock decisions. */
 	waslocked = VOP_ISLOCKED(vp);
 
-	/* Drop the vmobject lock. */
-	mutex_exit(vp->v_uobj.vmobjlock);
-
 	/* Get container file if not already present. */
-	if (cp->c_ovp == NULL) {
+	cvp = cp->c_ovp;
+	if (cvp == NULL) {
 		/*
 		 * VOP_OPEN requires a locked vnode.  We must avoid
 		 * locking the vnode if it is already locked, and
 		 * leave it in the same state on exit.
 		 */
 		if (waslocked == 0) {
+			mutex_exit(vp->v_interlock);
 			cerror = vn_lock(vp, LK_EXCLUSIVE);
 			if (cerror) {
-				printf("coda_getpages: can't lock vnode %p\n",
-				       vp);
+#ifdef CODA_VERBOSE
+				printf("%s: can't lock vnode %p\n",
+				    __func__, vp);
+#endif
 				return cerror;
 			}
-#if 0
-			printf("coda_getpages: locked vnode %p\n", vp);
+#ifdef CODA_VERBOSE
+			printf("%s: locked vnode %p\n", __func__, vp);
 #endif
 		}
 
@@ -2017,25 +2018,30 @@ coda_getpages(void *v)
 		cerror = VOP_OPEN(vp, FREAD, cred);
 
 		if (cerror) {
-			printf("coda_getpages: cannot open vnode %p => %d\n",
-			       vp, cerror);
+#ifdef CODA_VERBOSE
+			printf("%s: cannot open vnode %p => %d\n", __func__,
+			    vp, cerror);
+#endif
 			if (waslocked == 0)
 				VOP_UNLOCK(vp);
 			return cerror;
 		}
 
-#if 0
-		printf("coda_getpages: opened vnode %p\n", vp);
+#ifdef CODA_VERBOSE
+		printf("%s: opened vnode %p\n", __func__, vp);
 #endif
+		cvp = cp->c_ovp;
 		didopen = 1;
+		if (waslocked == 0)
+			mutex_enter(vp->v_interlock);
 	}
-	KASSERT(cp->c_ovp != NULL);
+	KASSERT(cvp != NULL);
 
 	/* Munge the arg structure to refer to the container vnode. */
+	KASSERT(cvp->v_interlock == vp->v_interlock);
 	ap->a_vp = cp->c_ovp;
 
-	/* Get the lock on the container vnode, and call getpages on it. */
-	mutex_enter(ap->a_vp->v_uobj.vmobjlock);
+	/* Finally, call getpages on it. */
 	error = VCALL(ap->a_vp, VOFFSET(vop_getpages), ap);
 
 	/* If we opened the vnode, we must close it. */
@@ -2045,10 +2051,12 @@ coda_getpages(void *v)
 		 * holding the lock (or riding a caller's lock).
 		 */
 		cerror = VOP_CLOSE(vp, FREAD, cred);
+#ifdef CODA_VERBOSE
 		if (cerror != 0)
 			/* XXX How should we handle this? */
-			printf("coda_getpages: closed vnode %p -> %d\n",
-			       vp, cerror);
+			printf("%s: closed vnode %p -> %d\n", __func__,
+			    vp, cerror);
+#endif
 
 		/* If we obtained a lock, drop it. */
 		if (waslocked == 0)
@@ -2059,28 +2067,29 @@ coda_getpages(void *v)
 }
 
 /*
- * The protocol requires v_uobj.vmobjlock to be held by the caller, as
- * documented in vnodeops(9).  XXX vnode_if.src doesn't say this.
+ * The protocol requires v_interlock to be held by the caller.
  */
 int
 coda_putpages(void *v)
 {
 	struct vop_putpages_args /* {
-		struct vnode *a_vp;
+		vnode_t *a_vp;
 		voff_t a_offlo;
 		voff_t a_offhi;
 		int a_flags;
 	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
+	vnode_t *vp = ap->a_vp, *cvp;
 	struct cnode *cp = VTOC(vp);
 	int error;
 
-	/* Drop the vmobject lock. */
-	mutex_exit(vp->v_uobj.vmobjlock);
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	/* Check for control object. */
 	if (IS_CTL_VP(vp)) {
-		printf("coda_putpages: control object %p\n", vp);
+		mutex_exit(vp->v_interlock);
+#ifdef CODA_VERBOSE
+		printf("%s: control object %p\n", __func__, vp);
+#endif
 		return(EINVAL);
 	}
 
@@ -2090,14 +2099,17 @@ coda_putpages(void *v)
 	 * time, apparently during discard of a closed vnode (which
 	 * trivially can't have dirty pages).
 	 */
-	if (cp->c_ovp == NULL)
+	cvp = cp->c_ovp;
+	if (cvp == NULL) {
+		mutex_exit(vp->v_interlock);
 		return 0;
+	}
 
 	/* Munge the arg structure to refer to the container vnode. */
-	ap->a_vp = cp->c_ovp;
+	KASSERT(cvp->v_interlock == vp->v_interlock);
+	ap->a_vp = cvp;
 
-	/* Get the lock on the container vnode, and call putpages on it. */
-	mutex_enter(ap->a_vp->v_uobj.vmobjlock);
+	/* Finally, call putpages on it. */
 	error = VCALL(ap->a_vp, VOFFSET(vop_putpages), ap);
 
 	return error;

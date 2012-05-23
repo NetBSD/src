@@ -1,4 +1,4 @@
-/* $NetBSD: ffsv1.c,v 1.4.16.1 2012/04/17 00:08:33 yamt Exp $ */
+/* $NetBSD: ffsv1.c,v 1.4.16.2 2012/05/23 10:08:13 yamt Exp $ */
 
 #define LIBSA_FFSv1
 
@@ -14,7 +14,5 @@
 
 #define ufs_dinode	ufs1_dinode
 #define indp_t		int32_t
-
-#define	FSMOD		"ffs"
 
 #include "ufs.c"

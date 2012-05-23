@@ -1,4 +1,4 @@
-/* $NetBSD: memcreg.h,v 1.3 2007/03/04 05:59:04 christos Exp $ */
+/* $NetBSD: memcreg.h,v 1.3.78.1 2012/05/23 10:07:36 yamt Exp $ */
 /*-
  * Copyright (c) 1997, 1998 Ben Harris
  * All rights reserved.
@@ -40,7 +40,7 @@
  * new value, and write any word to the resultant address.
  */
 
-#define MEMC_WRITE(value) *(volatile u_int32_t *)value = 0
+#define MEMC_WRITE(value) *(volatile uint32_t *)value = 0
 
 /*
  * This information is mostly derived from:

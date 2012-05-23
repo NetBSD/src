@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vfsops.c,v 1.3.2.2 2012/04/17 00:08:54 yamt Exp $	*/
+/*	$NetBSD: chfs_vfsops.c,v 1.3.2.3 2012/05/23 10:08:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -255,20 +255,15 @@ chfs_mountfs(struct vnode *devvp, struct mount *mp)
 		return (err);
 	}
 
-	ump = malloc(sizeof(*ump), M_UFSMNT, M_WAITOK);
-	memset(ump, 0, sizeof(*ump));
+	ump = kmem_zalloc(sizeof(struct ufsmount), KM_SLEEP);
+
 	ump->um_fstype = UFS1;
 	//ump->um_ops = &chfs_ufsops;
-	ump->um_chfs = malloc(sizeof(struct chfs_mount),
-	    M_UFSMNT, M_WAITOK);
-	memset(ump->um_chfs, 0, sizeof(struct chfs_mount));
-
+	ump->um_chfs = kmem_zalloc(sizeof(struct chfs_mount), KM_SLEEP);
 	mutex_init(&ump->um_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/* Get superblock and set flash device number */
 	chmp = ump->um_chfs;
-	if (!chmp)
-		return ENOMEM;
 
 	chmp->chm_ebh = kmem_alloc(sizeof(struct chfs_ebh), KM_SLEEP);
 
@@ -276,9 +271,7 @@ chfs_mountfs(struct vnode *devvp, struct mount *mp)
 	err = ebh_open(chmp->chm_ebh, devvp->v_rdev);
 	if (err) {
 		dbg("error while opening flash\n");
-		kmem_free(chmp->chm_ebh, sizeof(struct chfs_ebh));
-		free(chmp, M_UFSMNT);
-		return err;
+		goto fail;
 	}
 
 	//TODO check flash sizes
@@ -288,14 +281,6 @@ chfs_mountfs(struct vnode *devvp, struct mount *mp)
 
 	chmp->chm_blocks = kmem_zalloc(chmp->chm_ebh->peb_nr *
 	    sizeof(struct chfs_eraseblock), KM_SLEEP);
-
-	if (!chmp->chm_blocks) {
-		kmem_free(chmp->chm_ebh, chmp->chm_ebh->peb_nr *
-		    sizeof(struct chfs_eraseblock));
-		ebh_close(chmp->chm_ebh);
-		free(chmp, M_UFSMNT);
-		return ENOMEM;
-	}
 
 	mutex_init(&chmp->chm_lock_mountfields, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&chmp->chm_lock_sizes, MUTEX_DEFAULT, IPL_NONE);
@@ -337,11 +322,9 @@ chfs_mountfs(struct vnode *devvp, struct mount *mp)
 
 	if (err) {
 		chfs_vnocache_hash_destroy(chmp->chm_vnocache_hash);
-		kmem_free(chmp->chm_ebh, chmp->chm_ebh->peb_nr *
-		    sizeof(struct chfs_eraseblock));
 		ebh_close(chmp->chm_ebh);
-		free(chmp, M_UFSMNT);
-		return EIO;
+		err = EIO;
+		goto fail;
 	}
 
 	mp->mnt_data = ump;
@@ -385,6 +368,11 @@ chfs_mountfs(struct vnode *devvp, struct mount *mp)
 
 	devvp->v_specmountpoint = mp;
 	return 0;
+fail:
+	kmem_free(chmp->chm_ebh, sizeof(struct chfs_ebh));
+	kmem_free(chmp, sizeof(struct chfs_mount));
+	kmem_free(ump, sizeof(struct ufsmount));
+	return err;
 }
 
 /* --------------------------------------------------------------------- */
@@ -438,8 +426,8 @@ chfs_unmount(struct mount *mp, int mntflags)
 
 	mutex_destroy(&ump->um_lock);
 
-	//free(ump->um_chfs, M_UFSMNT);
-	free(ump, M_UFSMNT);
+	//kmem_free(ump->um_chfs, sizeof(struct chfs_mount));
+	kmem_free(ump, sizeof(struct ufsmount));
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	dbg("[END]\n");

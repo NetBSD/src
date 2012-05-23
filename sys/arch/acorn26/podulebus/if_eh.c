@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.16 2011/07/19 16:05:11 dyoung Exp $ */
+/* $NetBSD: if_eh.c,v 1.16.2.1 2012/05/23 10:07:37 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.16 2011/07/19 16:05:11 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.16.2.1 2012/05/23 10:07:37 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -98,7 +98,7 @@ struct eh_softc {
 #define EHF_MAU		0x02
 	int			sc_type;
 	int			sc_mediaset;
-	u_int8_t		sc_ctrl; /* Current control reg state */
+	uint8_t			sc_ctrl; /* Current control reg state */
 };
 
 int	eh_write_mbuf(struct dp8390_softc *, struct mbuf *, int);
@@ -106,8 +106,8 @@ int	eh_ring_copy(struct dp8390_softc *, int, void *, u_short);
 void	eh_read_hdr(struct dp8390_softc *, int, struct dp8390_ring *);
 int	eh_test_mem(struct dp8390_softc *);
 
-void	eh_writemem(struct eh_softc *, u_int8_t *, int, size_t);
-void	eh_readmem(struct eh_softc *, int, u_int8_t *, size_t);
+void	eh_writemem(struct eh_softc *, uint8_t *, int, size_t);
+void	eh_readmem(struct eh_softc *, int, uint8_t *, size_t);
 static void eh_init_card(struct dp8390_softc *);
 static int eh_availmedia(struct eh_softc *);
 /*static*/ int eh_identifymau(struct eh_softc *);
@@ -165,7 +165,7 @@ eh_attach(device_t parent, device_t self, void *aux)
 	int mediaset, mautype;
 	int i;
 	char *ptr;
-	u_int8_t *myaddr;
+	uint8_t *myaddr;
 
 	dsc->sc_dev = self;
 
@@ -405,17 +405,17 @@ eh_write_mbuf(struct dp8390_softc *dsc, struct mbuf *m, int buf)
 		for (; m != 0; m = m->m_next)
 			if (m->m_len)
 				bus_space_write_multi_1(datat, datah, 0,
-				    mtod(m, u_int8_t *), m->m_len);
+				    mtod(m, uint8_t *), m->m_len);
 		if (padlen) {
 			for(; padlen > 0; padlen--)
 				bus_space_write_1(datat, datah, 0, 0);
 		}
 	} else {
 		/* NE2000s are a bit trickier. */
-		u_int8_t *data, savebyte[2];
+		uint8_t *data, savebyte[2];
 		int l, leftover;
 #ifdef DIAGNOSTIC
-		u_int8_t *lim;
+		uint8_t *lim;
 #endif
 		/* Start out with no leftover data. */
 		leftover = 0;
@@ -425,7 +425,7 @@ eh_write_mbuf(struct dp8390_softc *dsc, struct mbuf *m, int buf)
 			l = m->m_len;
 			if (l == 0)
 				continue;
-			data = mtod(m, u_int8_t *);
+			data = mtod(m, uint8_t *);
 #ifdef DIAGNOSTIC
 			lim = data + l;
 #endif
@@ -441,10 +441,10 @@ eh_write_mbuf(struct dp8390_softc *dsc, struct mbuf *m, int buf)
 					l--;
 					bus_space_write_stream_2(datat, datah,
 					    0,
-					    *(u_int16_t *)savebyte);
+					    *(uint16_t *)savebyte);
 					leftover = 0;
 				} else if (BUS_SPACE_ALIGNED_POINTER(data,
-					   u_int16_t) == 0) {
+					   uint16_t) == 0) {
 					/*
 					 * Unaligned data; buffer the next
 					 * byte.
@@ -462,7 +462,7 @@ eh_write_mbuf(struct dp8390_softc *dsc, struct mbuf *m, int buf)
 					l &= ~1;
 					bus_space_write_multi_stream_2(datat,
 					    datah, 0,
-					    (u_int16_t *)data, l >> 1);
+					    (uint16_t *)data, l >> 1);
 					data += l;
 					if (leftover)
 						savebyte[0] = *data++;
@@ -479,7 +479,7 @@ eh_write_mbuf(struct dp8390_softc *dsc, struct mbuf *m, int buf)
 		if (leftover) {
 			savebyte[1] = 0;
 			bus_space_write_stream_2(datat, datah, 0,
-			    *(u_int16_t *)savebyte);
+			    *(uint16_t *)savebyte);
 		}
 		if (padlen) {
 			for(; padlen > 0; padlen -= 2)
@@ -526,7 +526,7 @@ eh_ring_copy(struct dp8390_softc *dsc, int src, void *dst_arg, u_short amount)
 {
 	struct eh_softc *sc = (struct eh_softc *)dsc;
 	u_short tmp_amount;
-	u_int8_t *dst = dst_arg;
+	uint8_t *dst = dst_arg;
 
 	/* Does copy wrap to lower addr in ring buffer? */
 	if (src + amount > dsc->mem_end) {
@@ -550,7 +550,7 @@ eh_read_hdr(struct dp8390_softc *dsc, int buf, struct dp8390_ring *hdr)
 {
 	struct eh_softc *sc = (struct eh_softc *)dsc;
 
-	eh_readmem(sc, buf, (u_int8_t *)hdr, sizeof(struct dp8390_ring));
+	eh_readmem(sc, buf, (uint8_t *)hdr, sizeof(struct dp8390_ring));
 #if BYTE_ORDER == BIG_ENDIAN
 	hdr->count = bswap16(hdr->count);
 #endif
@@ -560,7 +560,7 @@ int
 eh_test_mem(struct dp8390_softc *dsc)
 {
 	struct eh_softc *sc = (struct eh_softc *)dsc;
-	u_int8_t block[256];
+	uint8_t block[256];
 	int ptr, mem_end;
 
 	mem_end = dsc->mem_start + dsc->mem_size;
@@ -576,7 +576,7 @@ eh_test_mem(struct dp8390_softc *dsc)
  * rounded up to a word - ok as long as mbufs are word sized.
  */
 void
-eh_readmem(struct eh_softc *sc, int src, u_int8_t *dst, size_t amount)
+eh_readmem(struct eh_softc *sc, int src, uint8_t *dst, size_t amount)
 {
 	bus_space_tag_t nict = sc->sc_dp.sc_regt;
 	bus_space_handle_t nich = sc->sc_dp.sc_regh;
@@ -608,17 +608,17 @@ eh_readmem(struct eh_softc *sc, int src, u_int8_t *dst, size_t amount)
 
 	if (sc->sc_flags & EHF_16BIT) {
 #ifdef DIAGNOSTIC
-		if (!ALIGNED_POINTER(dst, u_int16_t))
+		if (!ALIGNED_POINTER(dst, uint16_t))
 			panic("eh_readmem");
 #endif
 		bus_space_read_multi_stream_2(datat, datah, 0,
-		    (u_int16_t *)dst, amount >> 1);
+		    (uint16_t *)dst, amount >> 1);
 	} else
 		bus_space_read_multi_1(datat, datah, 0, dst, amount);
 }
 
 void
-eh_writemem(struct eh_softc *sc, u_int8_t *src, int dst, size_t len)
+eh_writemem(struct eh_softc *sc, uint8_t *src, int dst, size_t len)
 {
 	bus_space_tag_t nict = sc->sc_dp.sc_regt;
 	bus_space_handle_t nich = sc->sc_dp.sc_regh;
@@ -676,11 +676,11 @@ eh_writemem(struct eh_softc *sc, u_int8_t *src, int dst, size_t len)
 
 	if (sc->sc_flags & EHF_16BIT) {
 #ifdef DIAGNOSTIC
-		if (!ALIGNED_POINTER(dst, u_int16_t))
+		if (!ALIGNED_POINTER(dst, uint16_t))
 			panic("eh_writemem");
 #endif
 		bus_space_write_multi_stream_2(datat, datah, 0,
-		    (u_int16_t *)src, len >> 1);
+		    (uint16_t *)src, len >> 1);
 	} else
 		bus_space_write_multi_1(datat, datah, 0, src, len);
 

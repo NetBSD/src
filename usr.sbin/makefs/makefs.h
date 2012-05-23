@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.h,v 1.23.2.1 2012/04/17 00:09:49 yamt Exp $	*/
+/*	$NetBSD: makefs.h,v 1.23.2.2 2012/05/23 10:08:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -158,7 +158,7 @@ typedef struct {
 void		apply_specfile(const char *, const char *, fsnode *, int);
 void		dump_fsnodes(fsnode *);
 const char *	inode_type(mode_t);
-int		set_option(option_t *, const char *, const char *);
+int		set_option(const option_t *, const char *, const char *);
 fsnode *	walk_dir(const char *, const char *, fsnode *, fsnode *);
 void		free_fsnodes(fsnode *);
 
@@ -171,6 +171,11 @@ void		cd9660_prep_opts(fsinfo_t *);
 int		cd9660_parse_opts(const char *, fsinfo_t *);
 void		cd9660_cleanup_opts(fsinfo_t *);
 void		cd9660_makefs(const char *, const char *, fsnode *, fsinfo_t *);
+
+void		chfs_prep_opts(fsinfo_t *);
+int		chfs_parse_opts(const char *, fsinfo_t *);
+void		chfs_cleanup_opts(fsinfo_t *);
+void		chfs_makefs(const char *, const char *, fsnode *, fsinfo_t *);
 
 void		v7fs_prep_opts(fsinfo_t *);
 int		v7fs_parse_opts(const char *, fsinfo_t *);

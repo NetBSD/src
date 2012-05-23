@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.25.6.1 2012/04/17 00:09:35 yamt Exp $	*/
+/*	$NetBSD: edit.c,v 1.25.6.2 2012/05/23 10:08:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: edit.c,v 1.25.6.1 2012/04/17 00:09:35 yamt Exp $");
+__RCSID("$NetBSD: edit.c,v 1.25.6.2 2012/05/23 10:08:25 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ run_editor(FILE *fp, off_t size, int editortype, int readonlyflag)
 		(void)unlink(tempname);
 		goto out;
 	}
-	if ((nf = Fdopen(t, "w")) == NULL) {
+	if ((nf = Fdopen(t, "we")) == NULL) {
 		(void)close(t);
 		warn("%s", tempname);
 		(void)unlink(tempname);
@@ -134,7 +134,7 @@ run_editor(FILE *fp, off_t size, int editortype, int readonlyflag)
 	/*
 	 * Now switch to new file.
 	 */
-	if ((nf = Fopen(tempname, "a+")) == NULL) {
+	if ((nf = Fopen(tempname, "ae+")) == NULL) {
 		warn("%s", tempname);
 		(void)unlink(tempname);
 		goto out;

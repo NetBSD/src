@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.35 2009/02/08 00:50:07 abs Exp $
+#	$NetBSD: Makefile.common,v 1.35.8.1 2012/05/23 10:08:30 yamt Exp $
 
 # These define parts of the Xserver tree that are to be
 # conditionally compiled for different platforms.  See
@@ -79,6 +79,10 @@ XSERVER_XSUNMONO=	yes
 XSERVER_XSUN24=		yes
 .endif
 
+.if ${MACHINE} == "vax"
+XSERVER_XVAX=	yes
+.endif
+
 
 # Does this server need Xfont/fontbase libraries?
 XSERVER_NEEDS_XFONT?=	no
@@ -127,3 +131,5 @@ XSERVER_XSUNMONO?=	no
 XSERVER_XSUN24?=	no
 # Does this platform build Xvfb X server?
 XSERVER_XVFB?=	yes
+# Does this platform build Xvax X server?
+XSERVER_XVAX?=	no

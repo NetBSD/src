@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.292.2.1 2012/04/17 00:08:47 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.292.2.2 2012/05/23 10:08:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.292.2.1 2012/04/17 00:08:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.292.2.2 2012/05/23 10:08:16 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -3373,8 +3373,9 @@ nfsspec_access(void *v)
 		}
 	}
 
-	return (genfs_can_access(va.va_type, va.va_mode,
-	    va.va_uid, va.va_gid, ap->a_mode, ap->a_cred));
+	return kauth_authorize_vnode(ap->a_cred, kauth_access_action(ap->a_mode,
+	    va.va_type, va.va_mode), vp, NULL, genfs_can_access(va.va_type,
+	    va.va_mode, va.va_uid, va.va_gid, ap->a_mode, ap->a_cred));
 }
 
 /*

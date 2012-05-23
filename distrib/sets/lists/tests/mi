@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.413.2.2 2012/04/17 00:02:44 yamt Exp $
+# $NetBSD: mi,v 1.413.2.3 2012/05/23 10:07:19 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -545,10 +545,12 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_link.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_listen.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_lwp_ctl.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_lwp_create.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mincore.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mkdir.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mkfifo.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mknod.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_mlock.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mmap.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_mprotect.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_msgctl.debug		tests-lib-debug		debug,atf
@@ -707,8 +709,6 @@
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_dlinfo.debug		tests-libexec-debug	debug,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_dlvsym.debug		tests-libexec-debug	debug,atf
 ./usr/libdata/debug/usr/tests/modules					tests-sys-debug
-./usr/libdata/debug/usr/tests/modules/t_builtin.debug			tests-sys-debug		debug,atf
-./usr/libdata/debug/usr/tests/modules/t_modctl.debug			tests-sys-debug		debug,atf
 ./usr/libdata/debug/usr/tests/net					tests-net-debug
 ./usr/libdata/debug/usr/tests/net/bpf					tests-net-debug
 ./usr/libdata/debug/usr/tests/net/bpf/t_bpf.debug		tests-net-debug		debug,atf
@@ -2445,10 +2445,12 @@
 ./usr/tests/lib/libc/sys/t_link			tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_listen		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_lwp_ctl		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_lwp_create		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_mincore		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_mkdir		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_mkfifo		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_mknod		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_mlock		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_mmap			tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_mprotect		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_msgctl		tests-lib-tests		atf
@@ -3178,6 +3180,9 @@
 ./usr/tests/usr.bin/sort/d_any_char_iflag_out.txt	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/sort/d_any_char_in.txt		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/sort/t_sort				tests-usr.bin-tests	atf
+./usr/tests/usr.bin/tmux			tests-usr.bin-tests
+./usr/tests/usr.bin/tmux/Atffile		tests-usr.bin-tests	atf	atf
+./usr/tests/usr.bin/tmux/t_tmux			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/unifdef			tests-usr.bin-tests
 ./usr/tests/usr.bin/unifdef/Atffile		tests-usr.bin-tests	atf	atf
 ./usr/tests/usr.bin/unifdef/d_basic.in		tests-usr.bin-tests	atf
@@ -3246,6 +3251,9 @@
 ./usr/tests/usr.sbin/traceroute			tests-usr.sbin-tests
 ./usr/tests/usr.sbin/traceroute/Atffile		tests-usr.sbin-tests	atf
 ./usr/tests/usr.sbin/traceroute/t_traceroute	tests-usr.sbin-tests	atf
+./usr/tests/usr.sbin/useradd			tests-usr.sbin-tests
+./usr/tests/usr.sbin/useradd/Atffile		tests-usr.sbin-tests	atf
+./usr/tests/usr.sbin/useradd/t_useradd		tests-usr.sbin-tests	atf
 ./usr/tests/util				tests-obsolete		obsolete
 ./usr/tests/util/Atffile			tests-obsolete		obsolete
 ./usr/tests/util/awk				tests-obsolete		obsolete

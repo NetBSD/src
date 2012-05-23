@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.7.6.2 2012/04/17 00:08:39 yamt Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.7.6.3 2012/05/23 10:08:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -173,7 +173,7 @@ int		npf_tcpsaw(npf_cache_t *, tcp_seq *, tcp_seq *, uint32_t *);
 bool		npf_fetch_tcpopts(const npf_cache_t *, nbuf_t *,
 		    uint16_t *, int *);
 bool		npf_normalize(npf_cache_t *, nbuf_t *, bool, bool, u_int, u_int);
-void		npf_return_block(npf_cache_t *, nbuf_t *, const int);
+bool		npf_return_block(npf_cache_t *, nbuf_t *, const int);
 
 /* Complex instructions. */
 int		npf_match_ether(nbuf_t *, int, int, uint16_t, uint32_t *);

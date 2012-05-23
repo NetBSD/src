@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.86.2.1 2012/04/17 00:06:00 yamt Exp $
+# $NetBSD: GENERIC.in,v 1.86.2.2 2012/05/23 10:07:40 yamt Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.86.2.1 $"
+#ident 		"GENERIC-$Revision: 1.86.2.2 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -415,6 +415,11 @@ a2kbbc0 	at mainbus0		# A2000 battery backed clock
 m4_ifdef(`INSTALL_CONFIGURATION', `', `m4_dnl
 aucc*		at mainbus0		# Amiga CC audio
 audio*		at aucc?
+
+a1k2cp0         at mainbus0             # A1200 on-board clockport
+clockport*      at a1k2cp0
+
+#com*            at clockport?           # Individual Computers SilverSurfer
 ')m4_dnl
 ')m4_dnl
 
@@ -451,10 +456,15 @@ audio*		at toccata?
 
 # Ethernet cards:
 le*		at zbus0		# A2065, Ameristar, Ariadne
-ne*		at zbus0		# AriadneII, X-surf
+ne*		at zbus0		# AriadneII
 ed*		at zbus0		# Hydra, ASDG LanRover
 es*		at zbus0		# CEI A4066 EthernetPLUS
 qn*		at zbus0		# Quicknet
+
+xsurf*		at zbus0		# X-Surf
+ne*		at xsurfbus?		# NE2000 chip on X-Surf
+gencp*		at xsurfbus?		# clockports on X-Surf
+clockport*	at gencp?
 
 # Arcnet
 bah*		at zbus0		# C=/Ameristar A2060 / 560

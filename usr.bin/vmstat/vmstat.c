@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.186.2.4 2012/04/17 00:09:41 yamt Exp $ */
+/* $NetBSD: vmstat.c,v 1.186.2.5 2012/05/23 10:08:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.186.2.4 2012/04/17 00:09:41 yamt Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.186.2.5 2012/05/23 10:08:28 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -161,23 +161,19 @@ struct nlist namelist[] =
 	{ .n_name = "_stathz" },
 #define	X_NCHSTATS	3
 	{ .n_name = "_nchstats" },
-#define	X_KMEMSTAT	4
-	{ .n_name = "_kmemstatistics" },
-#define	X_KMEMBUCKETS	5
-	{ .n_name = "_kmembuckets" },
-#define	X_ALLEVENTS	6
+#define	X_ALLEVENTS	4
 	{ .n_name = "_allevents" },
-#define	X_POOLHEAD	7
+#define	X_POOLHEAD	5
 	{ .n_name = "_pool_head" },
-#define	X_UVMEXP	8
+#define	X_UVMEXP	6
 	{ .n_name = "_uvmexp" },
-#define	X_TIME_SECOND	9
+#define	X_TIME_SECOND	7
 	{ .n_name = "_time_second" },
-#define X_TIME		10
+#define X_TIME		8
 	{ .n_name = "_time" },
-#define X_CPU_QUEUE	11
+#define X_CPU_QUEUE	9
 	{ .n_name = "_cpu_queue" },
-#define	X_NL_SIZE	12
+#define	X_NL_SIZE	10
 	{ .n_name = NULL },
 };
 
@@ -302,7 +298,6 @@ void	drvstats(int *);
 void	doevcnt(int verbose, int type);
 void	dohashstat(int, int, const char *);
 void	dointr(int verbose);
-void	domem(void);
 void	dopool(int, int);
 void	dopoolcache(int);
 void	dosum(void);
@@ -494,7 +489,6 @@ main(int argc, char *argv[])
 				(void)putchar('\n');
 			}
 			if (todo & MEMSTAT) {
-				domem();
 				dopool(verbose, wide);
 				(void)putchar('\n');
 			}
@@ -1287,119 +1281,6 @@ doevcnt(int verbose, int type)
 	if (type != EVCNT_TYPE_ANY)
 		(void)printf("%-34s %16"PRIu64" %8"PRIu64"\n",
 		    "Total", counttotal, counttotal / uptime);
-}
-
-static char memname[64];
-
-void
-domem(void)
-{
-	struct kmembuckets *kp;
-	struct malloc_type ks, *ksp;
-	int i, j;
-	int len, size, first;
-	long totuse = 0, totfree = 0, totreq = 0;
-	struct kmembuckets buckets[MINBUCKET + 16];
-
-	kread(namelist, X_KMEMBUCKETS, buckets, sizeof(buckets));
-	for (first = 1, i = MINBUCKET, kp = &buckets[i]; i < MINBUCKET + 16;
-	    i++, kp++) {
-		if (kp->kb_calls == 0)
-			continue;
-		if (first) {
-			(void)printf("Memory statistics by bucket size\n");
-			(void)printf(
-		 "    Size   In Use   Free   Requests  HighWater  Couldfree\n");
-			first = 0;
-		}
-		size = 1 << i;
-		(void)printf("%8d %8ld %6ld %10ld %7ld %10ld\n", size,
-		    kp->kb_total - kp->kb_totalfree,
-		    kp->kb_totalfree, kp->kb_calls,
-		    kp->kb_highwat, kp->kb_couldfree);
-		totfree += size * kp->kb_totalfree;
-	}
-
-	/*
-	 * If kmem statistics are not being gathered by the kernel,
-	 * first will still be 1.
-	 */
-	if (first) {
-		warnx("Kmem statistics are not being gathered by the kernel.");
-		return;
-	}
-
-	(void)printf("\nMemory usage type by bucket size\n");
-	(void)printf("    Size  Type(s)\n");
-	kp = &buckets[MINBUCKET];
-	for (j =  1 << MINBUCKET; j < 1 << (MINBUCKET + 16); j <<= 1, kp++) {
-		if (kp->kb_calls == 0)
-			continue;
-		first = 1;
-		len = 8;
-		for (kread(namelist, X_KMEMSTAT, &ksp, sizeof(ksp));
-		     ksp != NULL; ksp = ks.ks_next) {
-			deref_kptr(ksp, &ks, sizeof(ks), "malloc type");
-			if (ks.ks_calls == 0)
-				continue;
-			if ((ks.ks_size & j) == 0)
-				continue;
-			deref_kptr(ks.ks_shortdesc, memname,
-			    sizeof(memname), "malloc type name");
-			len += 2 + strlen(memname);
-			if (first)
-				(void)printf("%8d  %s", j, memname);
-			else
-				(void)printf(",");
-			if (len >= 80) {
-				(void)printf("\n\t ");
-				len = 10 + strlen(memname);
-			}
-			if (!first)
-				(void)printf(" %s", memname);
-			first = 0;
-		}
-		(void)putchar('\n');
-	}
-
-	(void)printf(
-	    "\nMemory statistics by type                                Type  Kern\n");
-	(void)printf(
-"           Type InUse  MemUse HighUse   Limit   Requests Limit Limit Size(s)\n");
-	for (kread(namelist, X_KMEMSTAT, &ksp, sizeof(ksp));
-	     ksp != NULL; ksp = ks.ks_next) {
-		deref_kptr(ksp, &ks, sizeof(ks), "malloc type");
-		if (ks.ks_calls == 0)
-			continue;
-		deref_kptr(ks.ks_shortdesc, memname,
-		    sizeof(memname), "malloc type name");
-		(void)printf("%15s %5ld %6ldK %6ldK %6ldK %10ld %5u %5u",
-		    memname,
-		    ks.ks_inuse, howmany(ks.ks_memuse, KILO),
-		    howmany(ks.ks_maxused, KILO),
-		    howmany(ks.ks_limit, KILO), ks.ks_calls,
-		    ks.ks_limblocks, ks.ks_mapblocks);
-		first = 1;
-		for (j = 1 << MINBUCKET, i = MINBUCKET;
-		     j < 1 << (MINBUCKET + 16);
-		     j <<= 1, i++)
-		{
-			if ((ks.ks_size & j) == 0)
-				continue;
-			if (first)
-				(void)printf(" %d", j);
-			else
-				(void)printf(",%d", j);
-			first = 0;
-			(void)printf(":%u", ks.ks_active[i - MINBUCKET]);
-		}
-		(void)printf("\n");
-		totuse += ks.ks_memuse;
-		totreq += ks.ks_calls;
-	}
-	(void)printf("\nMemory totals:  In Use    Free    Requests\n");
-	(void)printf("              %7ldK %6ldK    %8ld\n\n",
-	    howmany(totuse, KILO), howmany(totfree, KILO), totreq);
 }
 
 void

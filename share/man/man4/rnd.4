@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.4,v 1.16.8.1 2012/04/17 00:05:46 yamt Exp $
+.\"	$NetBSD: rnd.4,v 1.16.8.2 2012/05/23 10:07:35 yamt Exp $
 .\"
 .\" Copyright (c) 1997 Michael Graff
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 17, 2011
+.Dd April 17, 2012
 .Dt RND 4
 .Os
 .Sh NAME
@@ -52,13 +52,34 @@ SP 800-90) which is used to generate values returned to userspace when
 the pseudo-device is read.
 .Pp
 The pseudodevice is cloning, which means that each time it is opened,
-a new instance of the stream generator is created.
+a new instance of the stream generator may be created.
 Interposing a stream
 generator between the entropy pool and readers in this manner protects
 readers from each other (each reader's random stream is generated from a
 unique key) and protects all users of the entropy pool from any attack
 which might correlate its successive outputs to each other, such as
 iterative guessing attacks.
+.Pp
+Certain programs make very short reads from
+.Pa /dev/urandom
+each time they begin execution.
+One program with this behavior is
+.Xr perl 1 .
+If such a program is run repeatedly (for example from a network
+service or shell script), the resulting repeated keying of the stream
+generator can quickly drain the entropy pool dry.
+As an optimization for such cases, a separate per-CPU instance of
+the stream generator is used to handle reads from
+.Pa /dev/urandom
+which are smaller than the key length of the underlying cipher.
+Any read of a larger size causes an immediate allocation of a
+private instance of the stream generator for the reader.
+Since all stream
+generators are automatically rekeyed upon use when sufficient entropy
+is available, the shared short-request generators do still offer
+some protection against other consumers of
+.Pa /dev/urandom ,
+though less than is provided for consumers making larger requests.
 .Sh USER ACCESS
 User code can obtain random values from the kernel in two ways.
 .Pp
@@ -128,7 +149,7 @@ Excessive use of
 can deplete the entropy pool (or, at least, its estimate of how many
 bits of entropy it "contains") and reduce security for other consumers
 of randomness both in userspace
-.Em and within the kernel.
+.Em and within the kernel .
 Some system administrators may wish therefore to remove the
 .Pa /dev/random
 device node and replace it with a second copy of the node for the nonblocking
@@ -180,25 +201,39 @@ Currently, these types are defined:
 .Bl -tag -width RND_TYPE_DISK
 .It Dv RND_TYPE_DISK
 The device is a physical hard drive.
+.It Dv RND_TYPE_ENV
+The device is an environmental sensor such as a temperature sensor or
+a fan speed sensor.
 .It Dv RND_TYPE_NET
 The device is a network interface.
 By default, timing information is
 collected from this source type, but entropy is not estimated.
+.It Dv RND_TYPE_POWER
+The device is a sensor returning changes in the power state of the
+system, such as battery charge state or A/C adapter state.
+.It Dv RND_TYPE_RNG
+The device is a random number generator.
+.It Dv RND_TYPE_SKEW
+The "device" is a measurement of the skew between two clocks, such as a
+periodic device interrupt and the system timecounter, a timecounter and
+an audio codec, or some other source of pairs of events where each
+member of each pair is derived from a different instance of some
+recurring physical process.
 .It Dv RND_TYPE_TAPE
 The device is a tape device.
 .It Dv RND_TYPE_TTY
 The device is a terminal, mouse, or other user input device.
-.It Dv RND_TYPE_RNG
-The device is a random number generator.
+.It Dv RND_TYPE_VM
+The "device" consists of timings of virtual memory system events.
 .El
 .Pp
 .Va flags
 is a bitfield.
 .Bl -tag -width RND_FLAG_NO_ESTIMATE
-.It Dv RND_FLAG_NO_ESTIMATE
-Do not assume any entropy is in the timing information.
 .It Dv RND_FLAG_NO_COLLECT
 Do not even add timing information to the pool.
+.It Dv RND_FLAG_NO_ESTIMATE
+Do not assume any entropy is in the timing information.
 .El
 .Pp
 .Bl -tag -width RNDADDTOENTCNT

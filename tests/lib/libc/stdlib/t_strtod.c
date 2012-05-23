@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtod.c,v 1.27.2.1 2012/04/17 00:09:12 yamt Exp $ */
+/*	$NetBSD: t_strtod.c,v 1.27.2.2 2012/05/23 10:08:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Public domain, Otto Moerbeek <otto@drijf.net>, 2006. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtod.c,v 1.27.2.1 2012/04/17 00:09:12 yamt Exp $");
+__RCSID("$NetBSD: t_strtod.c,v 1.27.2.2 2012/05/23 10:08:21 yamt Exp $");
 
 #include <errno.h>
 #include <math.h>
@@ -298,6 +298,29 @@ ATF_TC_BODY(strtod_underflow, tc)
 		atf_tc_fail("strtod(3) did not detect underflow");
 }
 
+/*
+ * Bug found by Geza Herman.
+ * See
+ * http://www.exploringbinary.com/a-bug-in-the-bigcomp-function-of-david-gays-strtod/
+ */
+ATF_TC(strtod_gherman_bug);
+ATF_TC_HEAD(strtod_gherman_bug, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test a bug found by Geza Herman");
+}
+
+ATF_TC_BODY(strtod_gherman_bug, tc)
+{
+
+	const char *str =
+	    "1.8254370818746402660437411213933955878019332885742187";
+
+	errno = 0;
+	volatile double d = strtod(str, NULL);
+
+	ATF_CHECK(d == 0x1.d34fd8378ea83p+0);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -311,6 +334,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, strtold_nan);
 	ATF_TP_ADD_TC(tp, strtod_round);
 	ATF_TP_ADD_TC(tp, strtod_underflow);
+	ATF_TP_ADD_TC(tp, strtod_gherman_bug);
 
 	return atf_no_error();
 }

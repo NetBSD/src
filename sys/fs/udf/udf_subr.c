@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.117.2.1 2012/04/17 00:08:20 yamt Exp $ */
+/* $NetBSD: udf_subr.c,v 1.117.2.2 2012/05/23 10:08:10 yamt Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.117.2.1 2012/04/17 00:08:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.117.2.2 2012/05/23 10:08:10 yamt Exp $");
 #endif /* not lint */
 
 
@@ -1830,7 +1830,7 @@ udf_write_metadata_partition_spacetable(struct udf_mount *ump, int waitfor)
 			NULL, NULL);
 
 	bitmap_node->i_flags |= IN_MODIFIED;
-	error = vflushbuf(bitmap_node->vnode, 1 /* sync */);
+	error = vflushbuf(bitmap_node->vnode, FSYNC_WAIT);
 	if (error == 0)
 		error = VOP_FSYNC(bitmap_node->vnode,
 				FSCRED, FSYNC_WAIT, 0, 0);
@@ -2834,7 +2834,7 @@ udf_writeout_vat(struct udf_mount *ump)
 
 //	mutex_exit(&ump->allocate_mutex);
 
-	error = vflushbuf(ump->vat_node->vnode, 1 /* sync */);
+	error = vflushbuf(ump->vat_node->vnode, FSYNC_WAIT);
 	if (error)
 		goto out;
 	error = VOP_FSYNC(ump->vat_node->vnode,
@@ -3781,7 +3781,7 @@ udf_close_logvol(struct udf_mount *ump, int mntflags)
 		/* write out the VAT data and all its descriptors */
 		DPRINTF(VOLUMES, ("writeout vat_node\n"));
 		udf_writeout_vat(ump);
-		(void) vflushbuf(ump->vat_node->vnode, 1 /* sync */);
+		(void) vflushbuf(ump->vat_node->vnode, FSYNC_WAIT);
 
 		(void) VOP_FSYNC(ump->vat_node->vnode,
 				FSCRED, FSYNC_WAIT, 0, 0);
@@ -6843,5 +6843,3 @@ out:
 }
 
 /* --------------------------------------------------------------------- */
-
-

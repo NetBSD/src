@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.3.2.1 2012/04/17 00:06:02 yamt Exp $ */
+/*	$NetBSD: pci_machdep.h,v 1.3.2.2 2012/05/23 10:07:40 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -35,8 +35,6 @@
 #include <sys/bus.h>
 
 #include <machine/intr.h>
-
-#include <m68k/bus_dma.h>
 
 /* #define __HAVE_PCI_CONF_HOOK */
 
