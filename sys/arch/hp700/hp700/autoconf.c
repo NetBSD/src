@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.45 2012/05/21 08:14:58 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.46 2012/05/23 11:08:33 skrll Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.45 2012/05/21 08:14:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.46 2012/05/23 11:08:33 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -164,6 +164,7 @@ static void hppa_pdc_system_map_scan(void);
 void
 cpu_configure(void)
 {
+	struct cpu_info *ci = curcpu();
 
 	/*
 	 * Consider stopping for a debugger before
@@ -186,7 +187,7 @@ cpu_configure(void)
 	/* in spl*() we trust */
 	hp700_intr_init();
 	hppa_enable_irq();
-	curcpu()->ci_psw |= PSW_I;
+	ci->ci_psw |= PSW_I;
 	spl0();
 
 	if (cold_hook)
