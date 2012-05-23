@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.24 2012/05/21 21:15:39 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.25 2012/05/23 07:06:02 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.c,v 1.29 2009/02/08 18:33:28 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.24 2012/05/21 21:15:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.25 2012/05/23 07:06:02 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -179,7 +179,6 @@ cpuattach(device_t parent, device_t self, void *aux)
 
 	if (ci->ci_hpa == hppa_mcpuhpa) {
 		ci->ci_flags |= CPUF_PRIMARY|CPUF_RUNNING;
-		hppa_ncpu++;
 	} else {
 		int err;
 
@@ -190,6 +189,7 @@ cpuattach(device_t parent, device_t self, void *aux)
 			return;
 		}
 	}
+	hppa_ncpu++;
 
 #endif
 
@@ -266,9 +266,6 @@ cpu_hatch(void)
 	struct cpu_info *ci = curcpu();
 
 	ci->ci_flags |= CPUF_RUNNING;
-#if 0
-	hppa_ncpu++;
-#endif
 
 	/* Wait for additional CPUs to spinup. */
 	while (!start_secondary_cpu)
