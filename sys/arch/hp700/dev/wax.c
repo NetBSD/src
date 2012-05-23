@@ -1,4 +1,4 @@
-/*	$NetBSD: wax.c,v 1.18 2012/04/03 12:07:26 skrll Exp $	*/
+/*	$NetBSD: wax.c,v 1.19 2012/05/23 10:31:59 skrll Exp $	*/
 
 /*	$OpenBSD: wax.c,v 1.1 1998/11/23 03:04:10 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.18 2012/04/03 12:07:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.19 2012/05/23 10:31:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ waxattach(device_t parent, device_t self, void *aux)
 	int s, in;
 
 	if (ca->ca_irq == HP700CF_IRQ_UNDEF) {
-		aprint_error(": can't allocate IRQ\n");
+		aprint_error(": can't allocate interrupt\n");
 		return;
 	}
 

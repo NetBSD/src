@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.34 2012/04/03 12:07:26 skrll Exp $ */
+/*	$NetBSD: dino.c,v 1.35 2012/05/23 10:31:59 skrll Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.34 2012/04/03 12:07:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.35 2012/05/23 10:31:59 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -1618,7 +1618,7 @@ dinoattach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = ca->ca_dmatag;
 
 	if (ca->ca_irq == HP700CF_IRQ_UNDEF) {
-		aprint_error_dev(self, ": can't allocate IRQ");
+		aprint_error_dev(self, ": can't allocate interrupt");
 		return;
 	}
 
