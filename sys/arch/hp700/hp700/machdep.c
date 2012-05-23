@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.111 2012/04/25 07:58:43 dholland Exp $	*/
+/*	$NetBSD: machdep.c,v 1.112 2012/05/23 08:59:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.111 2012/04/25 07:58:43 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112 2012/05/23 08:59:36 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -476,8 +476,7 @@ hppa_init(paddr_t start, void *bi)
 	delay_init();
 
 	/* fetch the monarch/"default" cpu hpa */
-	
-	error =  pdcproc_hpa_processor(&hppa_mcpuhpa);
+	error = pdcproc_hpa_processor(&hppa_mcpuhpa);
 	if (error < 0)
 		panic("%s: PDC_HPA failed", __func__);
 	
