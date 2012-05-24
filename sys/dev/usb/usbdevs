@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.615 2012/05/24 21:22:24 buhrow Exp $
+$NetBSD: usbdevs,v 1.616 2012/05/24 21:32:35 buhrow Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -551,6 +551,7 @@ vendor SWEEX		0x5173	Sweex
 vendor ONSPEC2		0x55aa	OnSpec Electronic Inc.
 vendor ZINWELL		0x5a57	Zinwell
 vendor SITECOM		0x6189	Sitecom
+vendor SPRINGERDESIGN	0x6400	Springer Design, Inc.
 vendor ARKMICROCHIPS	0x6547	ArkMicroChips
 vendor 3COM2		0x6891	3Com
 vendor EDIMAX		0x7392	EDIMAX
@@ -2705,6 +2706,9 @@ product SOURCENEXT KEIKAI8	0x039f	KeikaiDenwa 8
 product SPARKLAN RT2573		0x0004	RT2573
 product SPARKLAN RT2870_1	0x0006	RT2870
 product SPARKLAN RT3070		0x0010	RT3070
+
+/*Springer Design Systems Inc.*/
+product	SPRINGERDESIGN	TTSMP3PLAYER	0x1111	Springer Design TTSMP3Player
 
 /* Sphairon Access Systems GmbH products */
 product SPHAIRON UB801R		0x0110	UB801R
