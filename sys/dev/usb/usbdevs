@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.614 2012/05/17 21:48:22 cyber Exp $
+$NetBSD: usbdevs,v 1.615 2012/05/24 21:22:24 buhrow Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -802,8 +802,10 @@ product APPLE MAGICMOUSE	0x030d	Magic Mouse
 product APPLE BLUETOOTH_HIDMODE	0x1000	Bluetooth HCI (HID-proxy mode)
 product APPLE EXT_KBD_HUB	0x1003	Hub in Apple Extended USB Keyboard
 product APPLE SPEAKERS		0x1101	Speakers
+product APPLE SHUFFLE2	0x1301	iPod Shuffle (2nd generation)
 product APPLE IPHONE		0x1290	iPhone
 product APPLE IPOD_TOUCH	0x1291	iPod Touch
+product APPLE IPOD_TOUCH_4G	0x129e	iPod Touch 4G
 product APPLE IPHONE_3G		0x1292	iPhone 3G
 product APPLE IPHONE_3GS	0x1294	iPhone 3GS
 product APPLE IPAD		0x129a	Apple iPad
