@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.76 2011/11/13 23:03:24 christos Exp $ */
+/* $NetBSD: cgd.c,v 1.77 2012/05/25 10:53:46 elric Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.76 2011/11/13 23:03:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.77 2012/05/25 10:53:46 elric Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -185,9 +185,9 @@ cgd_attach(device_t parent, device_t self, void *aux)
 {
 	struct cgd_softc *sc = device_private(self);
 
-	sc->sc_dev = self;
 	simple_lock_init(&sc->sc_slock);
-	dk_sc_init(&sc->sc_dksc, sc, device_xname(sc->sc_dev));
+	dk_sc_init(&sc->sc_dksc, device_xname(self));
+	sc->sc_dksc.sc_dev = self;
 	disk_init(&sc->sc_dksc.sc_dkdev, sc->sc_dksc.sc_xname, &cgddkdriver);
 
 	 if (!pmf_device_register(self, NULL, NULL))
@@ -278,8 +278,8 @@ cgdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 		return error;
 
 	if ((dksc->sc_flags & DKF_INITED) == 0) {
-		if ((error = cgd_destroy(cs->sc_dev)) != 0) {
-			aprint_error_dev(cs->sc_dev,
+		if ((error = cgd_destroy(cs->sc_dksc.sc_dev)) != 0) {
+			aprint_error_dev(dksc->sc_dev,
 			    "unable to detach instance\n");
 			return error;
 		}
@@ -336,7 +336,7 @@ cgdsize(dev_t dev)
 static void *
 cgd_getdata(struct dk_softc *dksc, unsigned long size)
 {
-	struct	cgd_softc *cs =dksc->sc_osc;
+	struct	cgd_softc *cs = (struct cgd_softc *)dksc;
 	void *	data = NULL;
 
 	simple_lock(&cs->sc_slock);
@@ -355,7 +355,7 @@ cgd_getdata(struct dk_softc *dksc, unsigned long size)
 static void
 cgd_putdata(struct dk_softc *dksc, void *data)
 {
-	struct	cgd_softc *cs =dksc->sc_osc;
+	struct	cgd_softc *cs = (struct cgd_softc *)dksc;
 
 	if (data == cs->sc_data) {
 		simple_lock(&cs->sc_slock);
@@ -369,7 +369,7 @@ cgd_putdata(struct dk_softc *dksc, void *data)
 static int
 cgdstart(struct dk_softc *dksc, struct buf *bp)
 {
-	struct	cgd_softc *cs = dksc->sc_osc;
+	struct	cgd_softc *cs = (struct cgd_softc *)dksc;
 	struct	buf *nbp;
 	void *	addr;
 	void *	newaddr;
@@ -680,6 +680,8 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 	cs->sc_data_used = 0;
 
 	cs->sc_dksc.sc_flags |= DKF_INITED;
+
+	dk_set_properties(di, &cs->sc_dksc);
 
 	/* Attach the disk. */
 	disk_attach(&cs->sc_dksc.sc_dkdev);
