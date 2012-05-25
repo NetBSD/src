@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.415 2012/03/22 20:34:38 drochner Exp $
+.\"	$NetBSD: options.4,v 1.416 2012/05/25 15:54:02 tsutsui Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd March 21, 2012
+.Dd May 25, 2012
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -1018,6 +1018,15 @@ information if NFS is used to mount the root file system.
 See
 .Xr diskless 8
 for details.
+.It Cd options NFS_BOOT_BOOTSTATIC
+Enable use of static values defined as
+.Dq NFS_BOOTSTATIC_MYIP ,
+.Dq NFS_BOOTSTATIC_GWIP ,
+.Dq NFS_BOOTSTATIC_SERVADDR ,
+and
+.Dq NFS_BOOTSTATIC_SERVER
+in kernel options to get configuration information
+if NFS is used to mount the root file system.
 .It Cd options NFS_BOOT_DHCP
 Same as
 .Dq NFS_BOOT_BOOTP ,
