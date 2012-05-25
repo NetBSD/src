@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.42 2011/07/03 22:05:01 tron Exp $
+#	$NetBSD: list,v 1.43 2012/05/25 21:46:13 jnemeth Exp $
 
 SRCDIRS	bin
 
@@ -60,6 +60,7 @@ PROG	fsck_lfs
 PROG	fsck_msdos
 PROG	fsdb
 PROG	fsirand
+PROG	gpt
 PROG	ifconfig
 PROG	init		init.bak
 PROG	lmcconfig
