@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.42 2010/11/19 06:44:39 dholland Exp $ */
+/* $NetBSD: dksubr.c,v 1.43 2012/05/25 10:53:46 elric Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.42 2010/11/19 06:44:39 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.43 2012/05/25 10:53:46 elric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.42 2010/11/19 06:44:39 dholland Exp $")
 
 #include <dev/dkvar.h>
 
-int	dkdebug = 0;
+int	dkdebug = 0xff;
+
+#define DEBUG 1
 
 #ifdef DEBUG
 #define DKDB_FOLLOW	0x1
@@ -70,11 +72,10 @@ int	dkdebug = 0;
 static void	dk_makedisklabel(struct dk_intf *, struct dk_softc *);
 
 void
-dk_sc_init(struct dk_softc *dksc, void *osc, const char *xname)
+dk_sc_init(struct dk_softc *dksc, const char *xname)
 {
 
 	memset(dksc, 0x0, sizeof(*dksc));
-	dksc->sc_osc = osc;
 	strncpy(dksc->sc_xname, xname, DK_XNAME_SIZE);
 	dksc->sc_dkdev.dk_name = dksc->sc_xname;
 }
@@ -306,18 +307,28 @@ dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 	case ODIOCWDINFO:
 #endif
 	case DIOCWLABEL:
+	case DIOCAWEDGE:
+	case DIOCDWEDGE:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 	}
 
 	/* ensure that the pseudo-disk is initialized for these */
 	switch (cmd) {
+#ifdef DIOCGSECTORSIZE
+	case DIOCGSECTORSIZE:
+	case DIOCGMEDIASIZE:
+#endif
 	case DIOCGDINFO:
 	case DIOCSDINFO:
 	case DIOCWDINFO:
 	case DIOCGPART:
 	case DIOCWLABEL:
 	case DIOCGDEFLABEL:
+	case DIOCAWEDGE:
+	case DIOCDWEDGE:
+	case DIOCLWEDGES:
+	case DIOCCACHESYNC:
 #ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCGDINFO:
 	case ODIOCSDINFO:
@@ -329,6 +340,17 @@ dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 	}
 
 	switch (cmd) {
+#ifdef DIOCGSECTORSIZE
+	case DIOCGSECTORSIZE:
+		*(u_int *)data = dksc->sc_geom.pdg_secsize;
+		return 0;
+	case DIOCGMEDIASIZE:
+		*(off_t *)data =
+		    (off_t)dksc->sc_geom.pdg_secsize *
+		    dksc->sc_geom.pdg_nsectors;
+		return 0;
+#endif
+
 	case DIOCGDINFO:
 		*(struct disklabel *)data = *(dksc->sc_dkdev.dk_label);
 		break;
@@ -604,6 +626,48 @@ dk_makedisklabel(struct dk_intf *di, struct dk_softc *dksc)
 	lp->d_partitions[RAW_PART].p_fstype = FS_BSDFFS;
 	strncpy(lp->d_packname, "default label", sizeof(lp->d_packname));
 	lp->d_checksum = dkcksum(lp);
+}
+
+void
+dk_set_properties(struct dk_intf *di, struct dk_softc *dksc)
+{
+	prop_dictionary_t disk_info, odisk_info, geom;
+
+	disk_info = prop_dictionary_create();
+
+	geom = prop_dictionary_create();
+
+	prop_dictionary_set_uint64(geom, "sectors-per-unit",
+	    dksc->sc_geom.pdg_nsectors * dksc->sc_geom.pdg_ntracks *
+	    dksc->sc_geom.pdg_ncylinders);
+
+	prop_dictionary_set_uint32(geom, "sector-size",
+	    dksc->sc_geom.pdg_secsize);
+
+	prop_dictionary_set_uint16(geom, "sectors-per-track",
+	    dksc->sc_geom.pdg_nsectors);
+
+	prop_dictionary_set_uint16(geom, "tracks-per-cylinder",
+	    dksc->sc_geom.pdg_ntracks);
+
+	prop_dictionary_set_uint64(geom, "cylinders-per-unit",
+	    dksc->sc_geom.pdg_ncylinders);
+
+	prop_dictionary_set(disk_info, "geometry", geom);
+	prop_object_release(geom);
+
+	prop_dictionary_set(device_properties(dksc->sc_dev),
+	    "disk-info", disk_info);
+
+	/*
+	 * Don't release disk_info here; we keep a reference to it.
+	 * disk_detach() will release it when we go away.
+	 */
+
+	odisk_info = dksc->sc_dkdev.dk_info;
+	dksc->sc_dkdev.dk_info = disk_info;
+	if (odisk_info)
+		prop_object_release(odisk_info);
 }
 
 /* This function is taken from ccd.c:1.76  --rcd */
