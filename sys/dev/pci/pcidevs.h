@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1110 2012/04/18 21:22:26 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1111 2012/05/25 18:19:41 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1116 2012/04/18 21:21:59 bouyer Exp
+ *	NetBSD: pcidevs,v 1.1117 2012/05/25 18:18:32 msaitoh Exp
  */
 
 /*
@@ -2578,6 +2578,10 @@
 #define	PCI_PRODUCT_INTEL_82576_NS_SERDES	0x1518		/* 82576 gigabit Ethernet (SERDES) */
 #define	PCI_PRODUCT_INTEL_82580_ER	0x151d		/* 82580 1000BaseT Ethernet */
 #define	PCI_PRODUCT_INTEL_82580_ER_DUAL	0x151e		/* 82580 dual-1000BaseT Ethernet */
+#define	PCI_PRODUCT_INTEL_I350_COPPER	0x1521		/* I350 Gigabit Network Connection */
+#define	PCI_PRODUCT_INTEL_I350_FIBER	0x1522		/* I350 Gigabit Fiber Network Connection */
+#define	PCI_PRODUCT_INTEL_I350_SERDES	0x1523		/* I350 Gigabit Backplane Connection */
+#define	PCI_PRODUCT_INTEL_I350_SGMII	0x1524		/* I350 Gigabit Connection */
 #define	PCI_PRODUCT_INTEL_82801J_D_BM_V	0x1525		/* 82567V LAN Controller */
 #define	PCI_PRODUCT_INTEL_82580_QUAD_FIBER	0x1527		/* 82580 quad-1000BaseX Ethernet */
 #define	PCI_PRODUCT_INTEL_80960_RP	0x1960		/* ROB-in i960RP Microprocessor */
