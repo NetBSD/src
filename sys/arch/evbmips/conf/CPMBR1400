@@ -156,7 +156,7 @@ options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	MEMORY_RBFLAGS=0		# keep the kernel from forcing single user mode
 
 # Options for NFS root boot
-options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM,NFS_BOOT_STATIC
+options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTSTATIC
 #options 	NFS_BOOTSTATIC_MYIP="\"192.168.0.1\""
 #options 	NFS_BOOTSTATIC_GWIP="\"192.168.0.1\""
 #options 	NFS_BOOTSTATIC_MASK="\"255.255.255.0\""
