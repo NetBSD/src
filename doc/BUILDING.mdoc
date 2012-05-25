@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.88 2012/02/23 13:34:16 tsutsui Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.89 2012/05/25 10:47:25 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd September 9, 2011
+.Dd May 25, 2012
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -554,6 +554,13 @@ will be built and installed during a build.
 however, some platforms turn off
 .Sy MKPROFILE
 by default at times due to toolchain problems with profiled code.
+.
+.It Sy MKREPRO
+.YorN
+Create reproducable builds.
+This enables different switches to make two builds from the same
+source tree result in the same build results.
+.DFLTn
 .
 .It Sy MKSHARE
 .YorN
