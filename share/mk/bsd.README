@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.294 2012/02/29 20:07:57 tron Exp $
+#	$NetBSD: bsd.README,v 1.295 2012/05/25 10:48:48 wiz Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -312,6 +312,11 @@ MKPOSTFIX	If "no", don't build or install postfix(1).
 
 MKPROFILE	If "no", don't build or install the profiling (*_p.a) libraries.
 		Default: yes
+
+MKREPRO         If "yes", create reproducable builds. This enables
+		different switches to make two builds from the same source tree
+		result in the same build results.
+		Default: no
 
 MKSHARE		If "no", act as "MKCATPAGES=no MKDOC=no MKHTML=no MKINFO=no
 		MKMAN=no MKNLS=no".
