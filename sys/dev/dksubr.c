@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.43 2012/05/25 10:53:46 elric Exp $ */
+/* $NetBSD: dksubr.c,v 1.44 2012/05/25 14:25:39 elric Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.43 2012/05/25 10:53:46 elric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.44 2012/05/25 14:25:39 elric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,9 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.43 2012/05/25 10:53:46 elric Exp $");
 
 #include <dev/dkvar.h>
 
-int	dkdebug = 0xff;
-
-#define DEBUG 1
+int	dkdebug = 0;
 
 #ifdef DEBUG
 #define DKDB_FOLLOW	0x1
