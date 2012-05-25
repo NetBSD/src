@@ -1,191 +1,193 @@
-BUILDING(8)             NetBSD System Manager's Manual             BUILDING(8)
+BUILDING(8)                 System Manager's Manual                BUILDING(8)
 
-NAME
-     BUILDING -- Procedure for building NetBSD from source code.
+NNAAMMEE
+     BBUUIILLDDIINNGG -- Procedure for building NetBSD from source code.
 
-REQUIREMENTS
+RREEQQUUIIRREEMMEENNTTSS
      NetBSD is designed to be buildable on most POSIX-compliant host systems.
-     The basic build procedure is the same whether compiling natively (on the
-     same NetBSD architecture) or cross compiling (on another architecture or
+     The basic build procedure is the same whether compiling _n_a_t_i_v_e_l_y (on the
+     same NetBSD architecture) or _c_r_o_s_s _c_o_m_p_i_l_i_n_g (on another architecture or
      OS).
 
      This source tree contains a special subtree, ``tools'', which uses the
      host system to create a build toolchain for the target architecture.  The
      host system must have at least C and C++ compilers in order to create the
-     toolchain (make is not required); all other tools are created as part of
+     toolchain (mmaakkee is not required); all other tools are created as part of
      the NetBSD build process.  (See the environment variables section below
      if you need to override or manually select your compilers.)
 
-FILES
-   Source tree layout
-     doc/BUILDING.mdoc
+FFIILLEESS
+   SSoouurrccee ttrreeee llaayyoouutt
+     ddoocc//BBUUIILLDDIINNGG..mmddoocc
                     This document (in -mdoc troff format; the original copy).
 
-     BUILDING       This document (in plaintext).
+     BBUUIILLDDIINNGG       This document (in plaintext).
 
-     tools/compat/README
+     ttoooollss//ccoommppaatt//RREEAADDMMEE
                     Special notes for cross-hosting a NetBSD build on non-
                     NetBSD platforms.
 
-     Makefile       The main Makefile for NetBSD; should only be run for
+     MMaakkeeffiillee       The main Makefile for NetBSD; should only be run for
                     native builds with an appropriately up-to-date version of
                     NetBSD make(1).  (For building from out-of-date systems or
-                    on a non-native host, see the build.sh shell script.)
+                    on a non-native host, see the bbuuiilldd..sshh shell script.)
 
-     UPDATING       Special notes for updating from an earlier revision of
+     UUPPDDAATTIINNGG       Special notes for updating from an earlier revision of
                     NetBSD.  It is important to read this file before every
                     build of an updated source tree.
 
-     build.sh       Bourne-compatible shell script used for building the host
+     bbuuiilldd..sshh       Bourne-compatible shell script used for building the host
                     build tools and the NetBSD system from scratch.  Can be
                     used for both native and cross builds, and should be used
                     instead of make(1) for any source tree that is updated and
                     recompiled regularly.
 
-     crypto/dist/, dist/, gnu/dist/
-                    Sources imported verbatim from third parties, without man-
-                    gling the existing build structure.  Other source trees in
-                    bin through usr.sbin use the NetBSD make(1) ``reachover''
-                    Makefile semantics when building these programs for a
-                    native host.
+     ccrryyppttoo//ddiisstt//, ddiisstt//, ggnnuu//ddiisstt//
+                    Sources imported verbatim from third parties, without
+                    mangling the existing build structure.  Other source trees
+                    in bbiinn through uussrr..ssbbiinn use the NetBSD make(1)
+                    ``reachover'' Makefile semantics when building these
+                    programs for a native host.
 
-     distrib/, etc/
-                    Sources for items used when making a full release snap-
-                    shot, such as files installed in DESTDIR/etc on the desti-
-                    nation system, boot media, and release notes.
+     ddiissttrriibb//, eettcc//
+                    Sources for items used when making a full release
+                    snapshot, such as files installed in DDEESSTTDDIIRR_/_e_t_c on the
+                    destination system, boot media, and release notes.
 
-     tests/, regress/
+     tteessttss//, rreeggrreessss//
                     Regression test harness.  Can be cross-compiled, but only
-                    run natively.  tests/ uses the atf(7) test framework;
-                    regress/ contains older tests that have not yet been
+                    run natively.  _t_e_s_t_s_/ uses the atf(7) test framework;
+                    _r_e_g_r_e_s_s_/ contains older tests that have not yet been
                     migrated to atf(7).
 
-     sys/           NetBSD kernel sources.
+     ssyyss//           NetBSD kernel sources.
 
-     tools/         ``Reachover'' build structure for the host build tools.
-                    This has a special method of determining out-of-date sta-
-                    tus.
+     ttoooollss//         ``Reachover'' build structure for the host build tools.
+                    This has a special method of determining out-of-date
+                    status.
 
-     bin/ ... usr.sbin/
+     bbiinn// ...... uussrr..ssbbiinn//
                     Sources to the NetBSD userland (non-kernel) programs.  If
                     any of these directories are missing, they will be skipped
                     during the build.
 
-     x11/           ``Reachover'' build structure for X11R6; the source is in
-                    X11SRCDIR.
+     xx1111//           ``Reachover'' build structure for X11R6; the source is in
+                    XX1111SSRRCCDDIIRR.
 
-   Build tree layout
+   BBuuiilldd ttrreeee llaayyoouutt
      The NetBSD build tree is described in hier(7), and the release layout is
      described in release(7).
 
-CONFIGURATION
-   Environment variables
+CCOONNFFIIGGUURRAATTIIOONN
+   EEnnvviirroonnmmeenntt vvaarriiaabblleess
      Several environment variables control the behaviour of NetBSD builds.
 
-     HOST_SH           Path name to a shell available on the host system and
+     HHOOSSTT__SSHH           Path name to a shell available on the host system and
                        suitable for use during the build.  The NetBSD build
                        system requires a modern Bourne-like shell with POSIX-
                        compliant features, and also requires support for the
                        ``local'' keyword to declare local variables in shell
-                       functions (which is a widely-implemented but non-stan-
-                       dardised feature).
+                       functions (which is a widely-implemented but non-
+                       standardised feature).
 
                        Depending on the host system, a suitable shell may be
-                       /bin/sh, /usr/xpg4/bin/sh, /bin/ksh (provided it is a
+                       _/_b_i_n_/_s_h, _/_u_s_r_/_x_p_g_4_/_b_i_n_/_s_h, _/_b_i_n_/_k_s_h (provided it is a
                        variant of ksh that supports the ``local'' keyword,
-                       such as ksh88, but not ksh93), or /usr/local/bin/bash.
+                       such as ksh88, but not ksh93), or _/_u_s_r_/_l_o_c_a_l_/_b_i_n_/_b_a_s_h.
 
-                       Most parts of the build require HOST_SH to be an abso-
-                       lute path; however, build.sh allows it to be a simple
-                       command name, which will be converted to an absolute
-                       path by searching the PATH.
+                       Most parts of the build require HHOOSSTT__SSHH to be an
+                       absolute path; however, bbuuiilldd..sshh allows it to be a
+                       simple command name, which will be converted to an
+                       absolute path by searching the PPAATTHH.
 
-     HOST_CC           Path name to C compiler used to create the toolchain.
+     HHOOSSTT__CCCC           Path name to C compiler used to create the toolchain.
 
-     HOST_CXX          Path name to C++ compiler used to create the toolchain.
+     HHOOSSTT__CCXXXX          Path name to C++ compiler used to create the toolchain.
 
-     MACHINE           Machine type, e.g., ``macppc''.
+     MMAACCHHIINNEE           Machine type, e.g., ``macppc''.
 
-     MACHINE_ARCH      Machine architecture, e.g., ``powerpc''.
+     MMAACCHHIINNEE__AARRCCHH      Machine architecture, e.g., ``powerpc''.
 
-     MAKE              Path name to invoke make(1) as.
+     MMAAKKEE              Path name to invoke make(1) as.
 
-     MAKEFLAGS         Flags to invoke make(1) with.  Note that build.sh
-                       ignores the value of MAKEFLAGS passed in the environ-
-                       ment, but allows MAKEFLAGS to be set via the -V option.
+     MMAAKKEEFFLLAAGGSS         Flags to invoke make(1) with.  Note that bbuuiilldd..sshh
+                       ignores the value of MMAAKKEEFFLLAAGGSS passed in the
+                       environment, but allows MMAAKKEEFFLLAAGGSS to be set via the --VV
+                       option.
 
-     MAKEOBJDIR        Directory to use as the .OBJDIR for the current direc-
-                       tory.  The value is subjected to variable expansion by
-                       make(1).  Typical usage is to set this variable to a
-                       value involving the use of `${.CURDIR:S...}' or
-                       `${.CURDIR:C...}', to derive the value of .OBJDIR from
-                       the value of .CURDIR.  Used only if MAKEOBJDIRPREFIX is
-                       not defined.  MAKEOBJDIR can be provided only in the
-                       environment or via the -O flag of build.sh; it cannot
-                       usefully be set inside a Makefile, including mk.conf or
-                       ${MAKECONF}.
+     MMAAKKEEOOBBJJDDIIRR        Directory to use as the ..OOBBJJDDIIRR for the current
+                       directory.  The value is subjected to variable
+                       expansion by make(1).  Typical usage is to set this
+                       variable to a value involving the use of
+                       `${.CURDIR:S...}' or `${.CURDIR:C...}', to derive the
+                       value of ..OOBBJJDDIIRR from the value of ..CCUURRDDIIRR.  Used only
+                       if MMAAKKEEOOBBJJDDIIRRPPRREEFFIIXX is not defined.  MMAAKKEEOOBBJJDDIIRR can be
+                       provided only in the environment or via the --OO flag of
+                       bbuuiilldd..sshh; it cannot usefully be set inside a Makefile,
+                       including _m_k_._c_o_n_f or $${{MMAAKKEECCOONNFF}}.
 
-     MAKEOBJDIRPREFIX  Top level directory of the object directory tree.  The
+     MMAAKKEEOOBBJJDDIIRRPPRREEFFIIXX  Top level directory of the object directory tree.  The
                        value is subjected to variable expansion by make(1).
-                       build.sh will create the ${MAKEOBJDIRPREFIX} directory
-                       if necessary, but if make(1) is used without build.sh,
+                       bbuuiilldd..sshh will create the ${MAKEOBJDIRPREFIX} directory
+                       if necessary, but if make(1) is used without bbuuiilldd..sshh,
                        then rules in <bsd.obj.mk> will abort the build if the
                        ${MAKEOBJDIRPREFIX} directory does not exist.  If the
-                       value is defined and valid, then ${MAKEOBJDIRPRE-
-                       FIX}/${.CURDIR} is used as the .OBJDIR for the current
-                       directory.  The current directory may be read only.
-                       MAKEOBJDIRPREFIX can be provided only in the environ-
-                       ment or via the -M flag of build.sh; it cannot usefully
-                       be set inside a Makefile, including mk.conf or
-                       ${MAKECONF}.
+                       value is defined and valid, then
+                       ${MAKEOBJDIRPREFIX}/${.CURDIR} is used as the ..OOBBJJDDIIRR
+                       for the current directory.  The current directory may
+                       be read only.  MMAAKKEEOOBBJJDDIIRRPPRREEFFIIXX can be provided only in
+                       the environment or via the --MM flag of bbuuiilldd..sshh; it
+                       cannot usefully be set inside a Makefile, including
+                       _m_k_._c_o_n_f or $${{MMAAKKEECCOONNFF}}.
 
-   "make" variables
-     Several variables control the behavior of NetBSD builds.  Unless other-
-     wise specified, these variables may be set in either the process environ-
-     ment or the make(1) configuration file specified by MAKECONF.
+   ""mmaakkee"" vvaarriiaabblleess
+     Several variables control the behavior of NetBSD builds.  Unless
+     otherwise specified, these variables may be set in either the process
+     environment or the make(1) configuration file specified by MMAAKKEECCOONNFF.
 
-     BUILDID     Identifier for the build.  The identifier will be appended to
+     BBUUIILLDDIIDD     Identifier for the build.  The identifier will be appended to
                  object directory names, and can be consulted in the make(1)
-                 configuration file in order to set additional build parame-
-                 ters, such as compiler flags.
+                 configuration file in order to set additional build
+                 parameters, such as compiler flags.
 
-     BUILDSEED   GCC uses random numbers when compiling C++ code.  This vari-
-                 able seeds the gcc random number generator using the -fran-
-                 dom-seed flag with this value.  By default, it is set to
-                 NetBSD-(majorversion).  Using a fixed value causes C++ bina-
-                 ries to be the same when built from the same sources, result-
-                 ing in identical (reproducible) builds.  Additional informa-
-                 tion is available in the GCC documentation of -frandom-seed.
+     BBUUIILLDDSSEEEEDD   GCC uses random numbers when compiling C++ code.  This
+                 variable seeds the gcc random number generator using the
+                 -frandom-seed flag with this value.  By default, it is set to
+                 NetBSD-(majorversion).  Using a fixed value causes C++
+                 binaries to be the same when built from the same sources,
+                 resulting in identical (reproducible) builds.  Additional
+                 information is available in the GCC documentation of
+                 -frandom-seed.
 
-     DESTDIR     Directory to contain the built NetBSD system.  If set, spe-
-                 cial options are passed to the compilation tools to prevent
-                 their default use of the host system's /usr/include,
-                 /usr/lib, and so forth.  This pathname must be an absolute
-                 path, and should not end with a slash (/) character.  (For
-                 installation into the system's root directory, set DESTDIR to
+     DDEESSTTDDIIRR     Directory to contain the built NetBSD system.  If set,
+                 special options are passed to the compilation tools to
+                 prevent their default use of the host system's //uussrr//iinncclluuddee,
+                 //uussrr//lliibb, and so forth.  This pathname must be an absolute
+                 path, and should _n_o_t end with a slash (/) character.  (For
+                 installation into the system's root directory, set DDEESSTTDDIIRR to
                  an empty string, not to ``/'').  The directory must reside on
                  a file system which supports long file names and hard links.
 
-                 Default: Empty string if USETOOLS is ``yes''; unset other-
-                 wise.
+                 _D_e_f_a_u_l_t: Empty string if UUSSEETTOOOOLLSS is ``yes''; unset
+                 otherwise.
 
-                 Note: build.sh will provide a default of destdir.MACHINE (in
-                 the top-level .OBJDIR) unless run in `expert' mode.
+                 _N_o_t_e: bbuuiilldd..sshh will provide a default of _d_e_s_t_d_i_r_.MMAACCHHIINNEE (in
+                 the top-level ..OOBBJJDDIIRR) unless run in `expert' mode.
 
-     MAKECONF    The name of the make(1) configuration file.  Only settable in
-                 the process environment.
+     MMAAKKEECCOONNFF    The name of the make(1) configuration file.  _O_n_l_y _s_e_t_t_a_b_l_e _i_n
+                 _t_h_e _p_r_o_c_e_s_s _e_n_v_i_r_o_n_m_e_n_t_.
 
-                 Default: ``/etc/mk.conf''
+                 _D_e_f_a_u_l_t: ``/etc/mk.conf''
 
-     MAKEVERBOSE
+     MMAAKKEEVVEERRBBOOSSEE
                  Level of verbosity of status messages.  Supported values:
 
                  0    No descriptive messages or commands executed by make(1)
                       are shown.
 
                  1    Brief messages are shown describing what is being done,
-                      but the actual commands executed by make(1) are not dis-
-                      played.
+                      but the actual commands executed by make(1) are not
+                      displayed.
 
                  2    Descriptive messages are shown as above (prefixed with a
                       `#'), and ordinary commands performed by make(1) are
@@ -197,35 +199,36 @@ CONFIGURATION
                       relevant makefile.
 
                  4    In addition to the above, commands executed by make(1)
-                      are traced through use of the sh(1) ``-x'' flag.
+                      are traced through use of the sh(1) ``--xx'' flag.
 
-                 Default: 2
+                 _D_e_f_a_u_l_t: 2
 
-     MKCATPAGES  Can be set to ``yes'' or ``no''.  Indicates whether prefor-
-                 matted plaintext manual pages will be created during a build.
+     MMKKCCAATTPPAAGGEESS  Can be set to ``yes'' or ``no''.  Indicates whether
+                 preformatted plaintext manual pages will be created during a
+                 build.
 
-                 Default: ``yes''
+                 _D_e_f_a_u_l_t: ``yes''
 
-     MKCRYPTO    Can be set to ``yes'' or ``no''.  Indicates whether crypto-
-                 graphic code will be included in a build; provided for the
-                 benefit of countries that do not allow strong cryptography.
-                 Will not affect use of the standard low-security password
-                 encryption system, crypt(3).
+     MMKKCCRRYYPPTTOO    Can be set to ``yes'' or ``no''.  Indicates whether
+                 cryptographic code will be included in a build; provided for
+                 the benefit of countries that do not allow strong
+                 cryptography.  Will not affect use of the standard low-
+                 security password encryption system, crypt(3).
 
-                 Default: ``yes''
+                 _D_e_f_a_u_l_t: ``yes''
 
-     MKDOC       Can be set to ``yes'' or ``no''.  Indicates whether system
-                 documentation destined for DESTDIR/usr/share/doc will be
+     MMKKDDOOCC       Can be set to ``yes'' or ``no''.  Indicates whether system
+                 documentation destined for DDEESSTTDDIIRR_/_u_s_r_/_s_h_a_r_e_/_d_o_c will be
                  installed during a build.
 
-                 Default: ``yes''
+                 _D_e_f_a_u_l_t: ``yes''
 
-     MKHTML      Can be set to ``yes'' or ``no''.  Indicates whether prefor-
-                 matted HTML manual pages will be built and installed
+     MMKKHHTTMMLL      Can be set to ``yes'' or ``no''.  Indicates whether
+                 preformatted HTML manual pages will be built and installed
 
-                 Default: ``yes''
+                 _D_e_f_a_u_l_t: ``yes''
 
-     MKHOSTOBJ   Can be set to ``yes'' or ``no''.  If set to ``yes'', then for
+     MMKKHHOOSSTTOOBBJJ   Can be set to ``yes'' or ``no''.  If set to ``yes'', then for
                  programs intended to be run on the compile host, the name,
                  release, and architecture of the host operating system will
                  be suffixed to the name of the object directory created by
@@ -234,402 +237,410 @@ CONFIGURATION
                  built to be run on the compile host will use the same object
                  directory names as programs built to be run on the target.
 
-                 Default: ``no''
+                 _D_e_f_a_u_l_t: ``no''
 
-     MKINFO      Can be set to ``yes'' or ``no''.  Indicates whether GNU Info
+     MMKKIINNFFOO      Can be set to ``yes'' or ``no''.  Indicates whether GNU Info
                  files, used for the documentation for most of the compilation
                  tools, will be created and installed during a build.
 
-                 Default: ``yes''
+                 _D_e_f_a_u_l_t: ``yes''
 
-     MKKMOD      Can be set to ``yes'' or ``no''.  Indicates whether kernel
+     MMKKKKMMOODD      Can be set to ``yes'' or ``no''.  Indicates whether kernel
                  modules are built and installed.
 
-                 Default: ``yes''
+                 _D_e_f_a_u_l_t: ``yes''
 
-     MKLINT      Can be set to ``yes'' or ``no''.  Indicates whether lint(1)
+     MMKKLLIINNTT      Can be set to ``yes'' or ``no''.  Indicates whether lint(1)
                  will be run against portions of the NetBSD source code during
                  the build, and whether lint libraries will be installed into
-                 DESTDIR/usr/libdata/lint.
+                 DDEESSTTDDIIRR_/_u_s_r_/_l_i_b_d_a_t_a_/_l_i_n_t.
 
-                 Default: ``yes''
+                 _D_e_f_a_u_l_t: ``yes''
 
-     MKMAN       Can be set to ``yes'' or ``no''.  Indicates whether manual
+     MMKKMMAANN       Can be set to ``yes'' or ``no''.  Indicates whether manual
                  pages will be installed during a build.
 
-                 Default: ``yes''
+                 _D_e_f_a_u_l_t: ``yes''
 
-     MKNLS       Can be set to ``yes'' or ``no''.  Indicates whether Native
+     MMKKNNLLSS       Can be set to ``yes'' or ``no''.  Indicates whether Native
                  Language System locale zone files will be compiled and
                  installed during a build.
 
-                 Default: ``yes''
+                 _D_e_f_a_u_l_t: ``yes''
 
-     MKOBJ       Can be set to ``yes'' or ``no''.  Indicates whether object
+     MMKKOOBBJJ       Can be set to ``yes'' or ``no''.  Indicates whether object
                  directories will be created when running ``make obj''.  If
                  set to ``no'', then all built files will be located inside
                  the regular source tree.
 
-                 Default: ``yes''
+                 _D_e_f_a_u_l_t: ``yes''
 
-                 Note that setting MKOBJ to ``no'' is not recommended and may
+                 Note that setting MMKKOOBBJJ to ``no'' is not recommended and may
                  cause problems when updating the tree with cvs(1).
 
-     MKPIC       Can be set to ``yes'' or ``no''.  Indicates whether shared
+     MMKKPPIICC       Can be set to ``yes'' or ``no''.  Indicates whether shared
                  objects and libraries will be created and installed during a
                  build.  If set to ``no'', the entire built system will be
                  statically linked.
 
-                 Default: Platform dependent.  As of this writing, all plat-
-                 forms except sh3 default to ``yes''.
+                 _D_e_f_a_u_l_t: Platform dependent.  As of this writing, all
+                 platforms except sshh33 default to ``yes''.
 
-     MKPICINSTALL
+     MMKKPPIICCIINNSSTTAALLLL
                  Can be set to ``yes'' or ``no''.  Indicates whether the ar(1)
-                 format libraries (lib*_pic.a), used to generate shared
+                 format libraries (lliibb**__ppiicc..aa), used to generate shared
                  libraries, are installed during a build.
 
-                 Default: ``yes''
+                 _D_e_f_a_u_l_t: ``yes''
 
-     MKPROFILE   Can be set to ``yes'' or ``no''.  Indicates whether profiled
-                 libraries (lib*_p.a) will be built and installed during a
+     MMKKPPRROOFFIILLEE   Can be set to ``yes'' or ``no''.  Indicates whether profiled
+                 libraries (lliibb**__pp..aa) will be built and installed during a
                  build.
 
-                 Default: ``yes''; however, some platforms turn off MKPROFILE
+                 _D_e_f_a_u_l_t: ``yes''; however, some platforms turn off MMKKPPRROOFFIILLEE
                  by default at times due to toolchain problems with profiled
                  code.
 
-     MKSHARE     Can be set to ``yes'' or ``no''.  Indicates whether files
-                 destined to reside in DESTDIR/usr/share will be built and
+     MMKKRREEPPRROO     Can be set to ``yes'' or ``no''.  Create reproducable builds.
+                 This enables different switches to make two builds from the
+                 same source tree result in the same build results.
+
+                 _D_e_f_a_u_l_t: ``no''
+
+     MMKKSSHHAARREE     Can be set to ``yes'' or ``no''.  Indicates whether files
+                 destined to reside in DDEESSTTDDIIRR_/_u_s_r_/_s_h_a_r_e will be built and
                  installed during a build.  If set to ``no'', then all of
-                 MKCATPAGES, MKDOC, MKINFO, MKMAN, and MKNLS will be set to
+                 MMKKCCAATTPPAAGGEESS, MMKKDDOOCC, MMKKIINNFFOO, MMKKMMAANN, and MMKKNNLLSS will be set to
                  ``no'' unconditionally.
 
-                 Default: ``yes''
+                 _D_e_f_a_u_l_t: ``yes''
 
-     MKSTRIPIDENT
+     MMKKSSTTRRIIPPIIDDEENNTT
                  Can be set to ``yes'' or ``no''.  Indicates whether program
                  binaries and shared libraries should be built to include RCS
                  IDs for use with ident(1).
 
-                 Default: ``no''
+                 _D_e_f_a_u_l_t: ``no''
 
-     MKUNPRIVED  Can be set to ``yes'' or ``no''.  Indicates whether an
-                 unprivileged install will occur.  The user, group, permis-
-                 sions, and file flags, will not be set on the installed
+     MMKKUUNNPPRRIIVVEEDD  Can be set to ``yes'' or ``no''.  Indicates whether an
+                 unprivileged install will occur.  The user, group,
+                 permissions, and file flags, will not be set on the installed
                  items; instead the information will be appended to a file
-                 called METALOG in DESTDIR.  The contents of METALOG are used
+                 called _M_E_T_A_L_O_G in DDEESSTTDDIIRR.  The contents of _M_E_T_A_L_O_G are used
                  during the generation of the distribution tar files to ensure
                  that the appropriate file ownership is stored.
 
-                 Default: ``no''
+                 _D_e_f_a_u_l_t: ``no''
 
-     MKUPDATE    Can be set to ``yes'' or ``no''.  Indicates whether all
-                 install operations intended to write to DESTDIR will compare
+     MMKKUUPPDDAATTEE    Can be set to ``yes'' or ``no''.  Indicates whether all
+                 install operations intended to write to DDEESSTTDDIIRR will compare
                  file timestamps before installing, and skip the install phase
                  if the destination files are up-to-date.  This also has
                  implications on full builds (see next subsection).
 
-                 Default: ``no''
+                 _D_e_f_a_u_l_t: ``no''
 
-     MKX11       Can be set to ``yes'' or ``no''.  Indicates whether X11 is
-                 built from X11SRCDIR.
+     MMKKXX1111       Can be set to ``yes'' or ``no''.  Indicates whether X11 is
+                 built from XX1111SSRRCCDDIIRR.
 
-                 Default: ``no''
+                 _D_e_f_a_u_l_t: ``no''
 
-     TOOLDIR     Directory to hold the host tools, once built.  If specified,
+     TTOOOOLLDDIIRR     Directory to hold the host tools, once built.  If specified,
                  must be an absolute path.  This directory should be unique to
-                 a given host system and NetBSD source tree.  (However, multi-
-                 ple targets may share the same TOOLDIR; the target-dependent
-                 files have unique names.)  If unset, a default based on the
-                 uname(1) information of the host platform will be created in
-                 the .OBJDIR of src.
+                 a given host system and NetBSD source tree.  (However,
+                 multiple targets may share the same TTOOOOLLDDIIRR; the target-
+                 dependent files have unique names.)  If unset, a default
+                 based on the uname(1) information of the host platform will
+                 be created in the ..OOBBJJDDIIRR of _s_r_c.
 
-                 Default: Unset.
+                 _D_e_f_a_u_l_t: Unset.
 
-     USETOOLS    Indicates whether the tools specified by TOOLDIR should be
+     UUSSEETTOOOOLLSS    Indicates whether the tools specified by TTOOOOLLDDIIRR should be
                  used as part of a build in progress.  Must be set to ``yes''
                  if cross-compiling.
 
-                 yes    Use the tools from TOOLDIR.
+                 yyeess    Use the tools from TTOOOOLLDDIIRR.
 
-                 no     Do not use the tools from TOOLDIR, but refuse to build
+                 nnoo     Do not use the tools from TTOOOOLLDDIIRR, but refuse to build
                         native compilation tool components that are version-
                         specific for that tool.
 
-                 never  Do not use the tools from TOOLDIR, even when building
-                        native tool components.  This is similar to the tradi-
-                        tional NetBSD build method, but does not verify that
-                        the compilation tools in use are up-to-date enough in
-                        order to build the tree successfully.  This may cause
-                        build or runtime problems when building the whole
-                        NetBSD source tree.
+                 nneevveerr  Do not use the tools from TTOOOOLLDDIIRR, even when building
+                        native tool components.  This is similar to the
+                        traditional NetBSD build method, but does _n_o_t verify
+                        that the compilation tools in use are up-to-date
+                        enough in order to build the tree successfully.  This
+                        may cause build or runtime problems when building the
+                        whole NetBSD source tree.
 
-                 Default: ``yes'', unless TOOLCHAIN_MISSING is set to ``yes''.
+                 _D_e_f_a_u_l_t: ``yes'', unless TTOOOOLLCCHHAAIINN__MMIISSSSIINNGG is set to ``yes''.
 
-                 USETOOLS is also set to ``no'' when using <bsd.*.mk> outside
+                 UUSSEETTOOOOLLSS is also set to ``no'' when using <bsd.*.mk> outside
                  the NetBSD source tree.
 
-     X11SRCDIR   Directory containing the X11R6 source.  If specified, must be
+     XX1111SSRRCCDDIIRR   Directory containing the X11R6 source.  If specified, must be
                  an absolute path.  The main X11R6 source is found in
-                 X11SRCDIR/xfree/xc.
+                 XX1111SSRRCCDDIIRR_/_x_f_r_e_e_/_x_c.
 
-                 Default: NETBSDRCDIR/../xsrc, if that exists; otherwise
-                 /usr/xsrc.
+                 _D_e_f_a_u_l_t: NNEETTBBSSDDRRCCDDIIRR_/_._._/_x_s_r_c, if that exists; otherwise
+                 _/_u_s_r_/_x_s_r_c.
 
-     X11FLAVOUR  The style of X11 cross-built, set to either ``Xorg'' or
+     XX1111FFLLAAVVOOUURR  The style of X11 cross-built, set to either ``Xorg'' or
                  ``XFree86''.
 
-                 Default: ``Xorg'' on amd64, i386, macppc, shark and sparc64
+                 _D_e_f_a_u_l_t: ``Xorg'' on amd64, i386, macppc, shark and sparc64
                  platforms, ``XFree86'' on everything else.
 
-   "make" variables for full builds
+   ""mmaakkee"" vvaarriiaabblleess ffoorr ffuullll bbuuiillddss
      These variables only affect the top level ``Makefile'' and do not affect
      manually building subtrees of the NetBSD source code.
 
-     INSTALLWORLDDIR  Location for the ``make installworld'' target to install
+     IINNSSTTAALLLLWWOORRLLDDDDIIRR  Location for the ``make installworld'' target to install
                       to.  If specified, must be an absolute path.
 
-                      Default: ``/''
+                      _D_e_f_a_u_l_t: ``/''
 
-     MKOBJDIRS        Can be set to ``yes'' or ``no''.  Indicates whether
+     MMKKOOBBJJDDIIRRSS        Can be set to ``yes'' or ``no''.  Indicates whether
                       object directories will be created automatically (via a
                       ``make obj'' pass) at the start of a build.
 
-                      Default: ``no''
+                      _D_e_f_a_u_l_t: ``no''
 
-                      If using build.sh, the default is ``yes''.  This may be
-                      set back to ``no'' by giving build.sh the -o option.
+                      If using bbuuiilldd..sshh, the default is ``yes''.  This may be
+                      set back to ``no'' by giving bbuuiilldd..sshh the --oo option.
 
-     MKUPDATE         Can be set to ``yes'' or ``no''.  If set, then in addi-
-                      tion to the effects described for MKUPDATE=yes above,
-                      this implies the effects of NOCLEANDIR (i.e., ``make
-                      cleandir'' is avoided).
+     MMKKUUPPDDAATTEE         Can be set to ``yes'' or ``no''.  If set, then in
+                      addition to the effects described for MMKKUUPPDDAATTEE==yyeess
+                      above, this implies the effects of NNOOCCLLEEAANNDDIIRR (i.e.,
+                      ``make cleandir'' is avoided).
 
-                      Default: ``no''
+                      _D_e_f_a_u_l_t: ``no''
 
-                      If using build.sh, this may be set by giving the -u
+                      If using bbuuiilldd..sshh, this may be set by giving the --uu
                       option.
 
-     NBUILDJOBS       Now obsolete.  Use the make(1) option -j, instead.  See
+     NNBBUUIILLDDJJOOBBSS       Now obsolete.  Use the make(1) option --jj, instead.  See
                       below.
 
-                      Default: Unset.
+                      _D_e_f_a_u_l_t: Unset.
 
-     NOCLEANDIR       If set, avoids the ``make cleandir'' phase of a full
+     NNOOCCLLEEAANNDDIIRR       If set, avoids the ``make cleandir'' phase of a full
                       build.  This has the effect of allowing only changed
                       files in a source tree to be recompiled.  This can speed
                       up builds when updating only a few files in the tree.
 
-                      Default: Unset.
+                      _D_e_f_a_u_l_t: Unset.
 
-                      See also MKUPDATE.
+                      See also MMKKUUPPDDAATTEE.
 
-     NODISTRIBDIRS    If set, avoids the ``make distrib-dirs'' phase of a full
-                      build.  This skips running mtree(8) on DESTDIR, useful
+     NNOODDIISSTTRRIIBBDDIIRRSS    If set, avoids the ``make distrib-dirs'' phase of a full
+                      build.  This skips running mtree(8) on DDEESSTTDDIIRR, useful
                       on systems where building as an unprivileged user, or
                       where it is known that the system-wide mtree files have
                       not changed.
 
-                      Default: Unset.
+                      _D_e_f_a_u_l_t: Unset.
 
-     NOINCLUDES       If set, avoids the ``make includes'' phase of a full
+     NNOOIINNCCLLUUDDEESS       If set, avoids the ``make includes'' phase of a full
                       build.  This has the effect of preventing make(1) from
                       thinking that some programs are out-of-date simply
                       because the system include files have changed.  However,
                       this option should not be used when updating the entire
                       NetBSD source tree arbitrarily; it is suggested to use
-                      MKUPDATE=yes instead in that case.
+                      MMKKUUPPDDAATTEE==yyeess instead in that case.
 
-                      Default: Unset.
+                      _D_e_f_a_u_l_t: Unset.
 
-     RELEASEDIR       If set, specifies the directory to which a release(7)
+     RREELLEEAASSEEDDIIRR       If set, specifies the directory to which a release(7)
                       layout will be written at the end of a ``make release''.
                       If specified, must be an absolute path.
 
-                      Default: Unset.
+                      _D_e_f_a_u_l_t: Unset.
 
-                      Note: build.sh will provide a default of releasedir (in
-                      the top-level .OBJDIR) unless run in `expert' mode.
+                      _N_o_t_e: bbuuiilldd..sshh will provide a default of _r_e_l_e_a_s_e_d_i_r (in
+                      the top-level ..OOBBJJDDIIRR) unless run in `expert' mode.
 
-BUILDING
-   "make" command line options
+BBUUIILLDDIINNGG
+   ""mmaakkee"" ccoommmmaanndd lliinnee ooppttiioonnss
      This is not a summary of all the options available to make(1); only the
      options used most frequently with NetBSD builds are listed here.
 
-     -j njob    Run up to njob make(1) subjobs in parallel.  Makefiles should
+     --jj _n_j_o_b    Run up to _n_j_o_b make(1) subjobs in parallel.  Makefiles should
                 use .WAIT or have explicit dependencies as necessary to
                 enforce build ordering.
 
-     -m dir     Specify the default directory for searching for system Make-
-                file segments, mainly the <bsd.*.mk> files.  When building any
-                full NetBSD source tree, this should be set to the
-                ``share/mk'' directory in the source tree.  This is set auto-
-                matically when building from the top level, or when using
-                build.sh.
+     --mm _d_i_r     Specify the default directory for searching for system
+                Makefile segments, mainly the <bsd.*.mk> files.  When building
+                any full NetBSD source tree, this should be set to the
+                ``share/mk'' directory in the source tree.  This is set
+                automatically when building from the top level, or when using
+                bbuuiilldd..sshh.
 
-     -n         Display the commands that would have been executed, but do not
+     --nn         Display the commands that would have been executed, but do not
                 actually execute them.  This will still cause recursion to
                 take place.
 
-     -V var     Print make(1)'s idea of the value of var.  Does not build any
+     --VV _v_a_r     Print make(1)'s idea of the value of _v_a_r.  Does not build any
                 targets.
 
-     var=value  Set the variable var to value, overriding any setting speci-
-                fied by the process environment, the MAKECONF configuration
-                file, or the system Makefile segments.
+     _v_a_r_=_v_a_l_u_e  Set the variable _v_a_r to _v_a_l_u_e, overriding any setting
+                specified by the process environment, the MMAAKKEECCOONNFF
+                configuration file, or the system Makefile segments.
 
-   "make" targets
+   ""mmaakkee"" ttaarrggeettss
      These default targets may be built by running make(1) in any subtree of
      the NetBSD source code.  It is recommended that none of these be used
      from the top level Makefile; as a specific exception, ``make obj'' and
      ``make cleandir'' are useful in that context.
 
-     all        Build programs, libraries, and preformatted documentation.
+     aallll        Build programs, libraries, and preformatted documentation.
 
-     clean      Remove program and library object code files.
+     cclleeaann      Remove program and library object code files.
 
-     cleandir   Same as clean, but also remove preformatted documentation,
+     cclleeaannddiirr   Same as cclleeaann, but also remove preformatted documentation,
                 dependency files generated by ``make depend'', and any other
                 files known to be created at build time.
 
-     depend     Create dependency files (.depend) containing more detailed
+     ddeeppeenndd     Create dependency files (..ddeeppeenndd) containing more detailed
                 information about the dependencies of source code on header
                 files.  Allows programs to be recompiled automatically when a
                 dependency changes.
 
-     dependall  Does a ``make depend'' immediately followed by a ``make all''.
+     ddeeppeennddaallll  Does a ``make depend'' immediately followed by a ``make all''.
                 This improves cache locality of the build since both passes
                 read the source files in their entirety.
 
-     distclean  Synonym for cleandir.
+     ddiissttcclleeaann  Synonym for cclleeaannddiirr.
 
-     includes   Build and install system header files.  Typically needed
+     iinncclluuddeess   Build and install system header files.  Typically needed
                 before any system libraries or programs can be built.
 
-     install    Install programs, libraries, and documentation into DESTDIR.
-                Few files will be installed to DESTDIR/dev, DESTDIR/etc,
-                DESTDIR/root or DESTDIR/var in order to prevent user supplied
+     iinnssttaallll    Install programs, libraries, and documentation into DDEESSTTDDIIRR.
+                Few files will be installed to DDEESSTTDDIIRR_/_d_e_v, DDEESSTTDDIIRR_/_e_t_c,
+                DDEESSTTDDIIRR_/_r_o_o_t or DDEESSTTDDIIRR_/_v_a_r in order to prevent user supplied
                 configuration data from being overwritten.
 
-     lint       Run lint(1) against the C source code, where appropriate, and
+     lliinntt       Run lint(1) against the C source code, where appropriate, and
                 generate system-installed lint libraries.
 
-     obj        Create object directories to be used for built files, instead
+     oobbjj        Create object directories to be used for built files, instead
                 of building directly in the source tree.
 
-     tags       Create ctags(1) searchable function lists usable by the ex(1)
+     ttaaggss       Create ctags(1) searchable function lists usable by the ex(1)
                 and vi(1) text editors.
 
-   "make" targets for the top level
+   ""mmaakkee"" ttaarrggeettss ffoorr tthhee ttoopp lleevveell
      Additional make(1) targets are usable specifically from the top source
      level to facilitate building the entire NetBSD source tree.
 
-     build         Build the entire NetBSD system (except the kernel).  This
+     bbuuiilldd         Build the entire NetBSD system (except the kernel).  This
                    orders portions of the source tree such that prerequisites
                    will be built in the proper order.
 
-     distribution  Do a ``make build'', and then install a full distribution
-                   (which does not include a kernel) into DESTDIR, including
-                   files in DESTDIR/dev, DESTDIR/etc, DESTDIR/root and
-                   DESTDIR/var.
+     ddiissttrriibbuuttiioonn  Do a ``make build'', and then install a full distribution
+                   (which does not include a kernel) into DDEESSTTDDIIRR, including
+                   files in DDEESSTTDDIIRR_/_d_e_v, DDEESSTTDDIIRR_/_e_t_c, DDEESSTTDDIIRR_/_r_o_o_t and
+                   DDEESSTTDDIIRR_/_v_a_r.
 
-     buildworld    As per ``make distribution'', except that it ensures that
-                   DESTDIR is not the root directory.
+     bbuuiillddwwoorrlldd    As per ``make distribution'', except that it ensures that
+                   DDEESSTTDDIIRR is not the root directory.
 
-     installworld  Install the distribution from DESTDIR to INSTALLWORLDDIR,
+     iinnssttaallllwwoorrlldd  Install the distribution from DDEESSTTDDIIRR to IINNSSTTAALLLLWWOORRLLDDDDIIRR,
                    which defaults to the root directory.  Ensures that
-                   INSTALLWORLDDIR is not the root directory if cross compil-
-                   ing.
+                   IINNSSTTAALLLLWWOORRLLDDDDIIRR is not the root directory if cross
+                   compiling.
 
-                   The INSTALLSETS environment variable may be set to a space-
+                   The IINNSSTTAALLLLSSEETTSS environment variable may be set to a space-
                    separated list of distribution sets to be installed.  By
                    default, all sets except ``etc'' and ``xetc'' are
-                   installed, so most files in INSTALLWORLDDIR/etc will not be
+                   installed, so most files in IINNSSTTAALLLLWWOORRLLDDDDIIRR_/_e_t_c will not be
                    installed or modified.
 
-                   Note: Before performing this operation with
-                   INSTALLWORLDDIR=/, it is highly recommended that you
+                   _N_o_t_e: Before performing this operation with
+                   IINNSSTTAALLLLWWOORRLLDDDDIIRR=_/, it is highly recommended that you
                    upgrade your kernel and reboot.  After performing this
                    operation, it is recommended that you use etcupdate(8) to
-                   update files in INSTALLWORLDDIR/etc and that you use
+                   update files in IINNSSTTAALLLLWWOORRLLDDDDIIRR_/_e_t_c and that you use
                    postinstall(8) to check for inconsistencies (and possibly
                    to fix them).
 
-     sets          Create distribution sets from DESTDIR into
-                   RELEASEDIR/RELEASEMACHINEDIR/binary/sets.  Should be run
+     sseettss          Create distribution sets from DDEESSTTDDIIRR into
+                   RREELLEEAASSEEDDIIRR//RREELLEEAASSEEMMAACCHHIINNEEDDIIRR_/_b_i_n_a_r_y_/_s_e_t_s.  Should be run
                    after ``make distribution'', as ``make build'' alone does
                    not install all of the required files.
 
-     sourcesets    Create source sets of the source tree into
-                   RELEASEDIR/source/sets.
+     ssoouurrcceesseettss    Create source sets of the source tree into
+                   RREELLEEAASSEEDDIIRR_/_s_o_u_r_c_e_/_s_e_t_s.
 
-     syspkgs       Create syspkgs from DESTDIR into
-                   RELEASEDIR/RELEASEMACHINEDIR/binary/syspkgs.  Should be run
+     ssyyssppkkggss       Create syspkgs from DDEESSTTDDIIRR into
+                   RREELLEEAASSEEDDIIRR//RREELLEEAASSEEMMAACCHHIINNEEDDIIRR_/_b_i_n_a_r_y_/_s_y_s_p_k_g_s.  Should be run
                    after ``make distribution'', as ``make build'' alone does
                    not install all of the required files.
 
-     release       Do a ``make distribution'', build kernels, distribution
+     rreelleeaassee       Do a ``make distribution'', build kernels, distribution
                    media, and install sets (this as per ``make sets''), and
                    then package the system into a standard release layout as
-                   described by release(7).  This requires that RELEASEDIR be
+                   described by release(7).  This requires that RREELLEEAASSEEDDIIRR be
                    set (see above).
 
-     iso-image     Create a NetBSD installation CD-ROM image in the
-                   RELEASEDIR/iso directory.  The CD-ROM file system will have
+     iissoo--iimmaaggee     Create a NetBSD installation CD-ROM image in the
+                   RREELLEEAASSEEDDIIRR_/_i_s_o directory.  The CD-ROM file system will have
                    a layout as described in release(7).
 
                    For most machine types, the CD-ROM will be bootable, and
-                   will automatically run the sysinst(8) menu-based installa-
-                   tion program, which can be used to install or upgrade a
-                   NetBSD system.  Bootable CD-ROMs also contain tools that
-                   may be useful in repairing a damaged NetBSD installation.
+                   will automatically run the sysinst(8) menu-based
+                   installation program, which can be used to install or
+                   upgrade a NetBSD system.  Bootable CD-ROMs also contain
+                   tools that may be useful in repairing a damaged NetBSD
+                   installation.
 
                    Before ``make iso-image'' is attempted, RELEASEDIR must be
                    populated by ``make release'' or equivalent.
 
                    Note that other, smaller, CD-ROM images may be created in
-                   the RELEASEDIR/RELEASEMACHINEDIR/installation/cdrom direc-
-                   tory by ``make release''.  These smaller images usually
-                   contain the same tools as the larger images in
-                   RELEASEDIR/iso, but do not contain additional content such
+                   the RREELLEEAASSEEDDIIRR//RREELLEEAASSEEMMAACCHHIINNEEDDIIRR_/_i_n_s_t_a_l_l_a_t_i_o_n_/_c_d_r_o_m
+                   directory by ``make release''.  These smaller images
+                   usually contain the same tools as the larger images in
+                   RREELLEEAASSEEDDIIRR_/_i_s_o, but do not contain additional content such
                    as the distribution sets.
 
                    Note that the mac68k port still uses an older method of
-                   creating CD-ROM images.  This requires the mkisofs(1) util-
-                   ity, which is not part of NetBSD, but which can be
-                   installed from pkgsrc/sysutils/cdrtools.
+                   creating CD-ROM images.  This requires the mkisofs(1)
+                   utility, which is not part of NetBSD, but which can be
+                   installed from _p_k_g_s_r_c_/_s_y_s_u_t_i_l_s_/_c_d_r_t_o_o_l_s.
 
-     iso-image-source
+     iissoo--iimmaaggee--ssoouurrccee
                    Create a NetBSD installation CD-ROM image in the
-                   RELEASEDIR/iso directory.  The CD-ROM file system will have
+                   RREELLEEAASSEEDDIIRR_/_i_s_o directory.  The CD-ROM file system will have
                    a layout as described in release(7).  It will have top
                    level directories for the machine type and source.
 
                    For most machine types, the CD-ROM will be bootable, and
-                   will automatically run the sysinst(8) menu-based installa-
-                   tion program, which can be used to install or upgrade a
-                   NetBSD system.  Bootable CD-ROMs also contain tools that
-                   may be useful in repairing a damaged NetBSD installation.
+                   will automatically run the sysinst(8) menu-based
+                   installation program, which can be used to install or
+                   upgrade a NetBSD system.  Bootable CD-ROMs also contain
+                   tools that may be useful in repairing a damaged NetBSD
+                   installation.
 
                    Before ``make iso-image-source'' is attempted, RELEASEDIR
-                   must be populated by ``make sourcesets release'' or equiva-
-                   lent.
+                   must be populated by ``make sourcesets release'' or
+                   equivalent.
 
                    Note that other, smaller, CD-ROM images may be created in
-                   the RELEASEDIR/RELEASEMACHINEDIR/installation/cdrom direc-
-                   tory by ``make release''.  These smaller images usually
-                   contain the same tools as the larger images in
-                   RELEASEDIR/iso, but do not contain additional content such
+                   the RREELLEEAASSEEDDIIRR//RREELLEEAASSEEMMAACCHHIINNEEDDIIRR_/_i_n_s_t_a_l_l_a_t_i_o_n_/_c_d_r_o_m
+                   directory by ``make release''.  These smaller images
+                   usually contain the same tools as the larger images in
+                   RREELLEEAASSEEDDIIRR_/_i_s_o, but do not contain additional content such
                    as the distribution sets.
 
                    Note that the mac68k port still uses an older method of
-                   creating CD-ROM images.  This requires the mkisofs(1) util-
-                   ity, which is not part of NetBSD, but which can be
-                   installed from pkgsrc/sysutils/cdrtools.
+                   creating CD-ROM images.  This requires the mkisofs(1)
+                   utility, which is not part of NetBSD, but which can be
+                   installed from _p_k_g_s_r_c_/_s_y_s_u_t_i_l_s_/_c_d_r_t_o_o_l_s.
 
-     install-image
+     iinnssttaallll--iimmaaggee
                    Create a bootable NetBSD installation disk image in the
-                   RELEASEDIR/RELEASEMACHINEDIR/installation/installimage
+                   RREELLEEAASSEEDDIIRR//RREELLEEAASSEEMMAACCHHIINNEEDDIIRR_/_i_n_s_t_a_l_l_a_t_i_o_n_/_i_n_s_t_a_l_l_i_m_a_g_e
                    directory.  The installation disk image is suitable for
                    copying to bootable USB flash memory sticks, etc., for
                    machines which are able to boot from such devices.  The
@@ -642,217 +653,218 @@ BUILDING
                    image also contains tools that may be useful in repairing a
                    damaged NetBSD installation.
 
-                   Before ``make install-image'' is attempted, RELEASEDIR must
+                   Before ``make install-image'' is attempted, RREELLEEAASSEEDDIIRR must
                    be populated by ``make release'' or equivalent.  The build
-                   must have been performed with MKUNPRIVED=yes because ``make
-                   install-image'' relies on information in DESTDIR/METALOG.
+                   must have been performed with MMKKUUNNPPRRIIVVEEDD==yyeess because ``make
+                   install-image'' relies on information in DDEESSTTDDIIRR_/_M_E_T_A_L_O_G.
 
      live-image    Create NetBSD live images in the
-                   RELEASEDIR/RELEASEMACHINEDIR/installation/liveimage direc-
-                   tory.  The live image contains all necessary files to boot
-                   NetBSD up to multi-user mode, including all files which
-                   should be extracted during installation, NetBSD disklabel,
-                   bootloaders, etc.
+                   RREELLEEAASSEEDDIIRR//RREELLEEAASSEEMMAACCHHIINNEEDDIIRR_/_i_n_s_t_a_l_l_a_t_i_o_n_/_l_i_v_e_i_m_a_g_e
+                   directory.  The live image contains all necessary files to
+                   boot NetBSD up to multi-user mode, including all files
+                   which should be extracted during installation, NetBSD
+                   disklabel, bootloaders, etc.
 
-                   The live image is suitable for use as a disk image in vir-
-                   tual machine environments such as QEMU, and also useful to
-                   boot NetBSD from a USB flash memory stick on a real
+                   The live image is suitable for use as a disk image in
+                   virtual machine environments such as QEMU, and also useful
+                   to boot NetBSD from a USB flash memory stick on a real
                    machine, without the need for installation.
 
                    Before ``make live-image'' is attempted, RELEASEDIR must be
                    populated by ``make release'' or equivalent.  The build
-                   must have been performed with MKUNPRIVED=yes because ``make
-                   install-image'' relies on information in DESTDIR/METALOG.
+                   must have been performed with MMKKUUNNPPRRIIVVEEDD==yyeess because ``make
+                   install-image'' relies on information in DDEESSTTDDIIRR_/_M_E_T_A_L_O_G.
 
-     regression-tests
+     rreeggrreessssiioonn--tteessttss
                    Can only be run after building the regression tests in the
                    directory ``regress''.  Runs those compiled regression
-                   tests on the local host.  Note that most tests are now man-
-                   aged instead using atf(7); this target should probably run
-                   those as well but currently does not.
+                   tests on the local host.  Note that most tests are now
+                   managed instead using atf(7); this target should probably
+                   run those as well but currently does not.
 
-   The "build.sh" script
+   TThhee ""bbuuiilldd..sshh"" ssccrriipptt
      This script file is a shell script designed to build the entire NetBSD
-     system on any host with a suitable modern shell and some common utili-
-     ties.  The required shell features are described under the HOST_SH vari-
-     able.
+     system on any host with a suitable modern shell and some common
+     utilities.  The required shell features are described under the HHOOSSTT__SSHH
+     variable.
 
      If a host system's default shell does support the required features, then
      we suggest that you explicitly specify a suitable shell using a command
      like
 
-           /path/to/suitable/shell build.sh [options]
+           /path/to/suitable/shell build.sh [_o_p_t_i_o_n_s]
 
-     The above command will usually enable build.sh to automatically set
-     HOST_SH=/path/to/suitable/shell, but if that fails, then the following
+     The above command will usually enable bbuuiilldd..sshh to automatically set
+     HHOOSSTT__SSHH==_/_p_a_t_h_/_t_o_/_s_u_i_t_a_b_l_e_/_s_h_e_l_l, but if that fails, then the following
      set of commands may be used instead:
 
-           HOST_SH=/path/to/suitable/shell
+           HOST_SH=_/_p_a_t_h_/_t_o_/_s_u_i_t_a_b_l_e_/_s_h_e_l_l
            export HOST_SH
-           ${HOST_SH} build.sh [options]
+           ${HOST_SH} build.sh [_o_p_t_i_o_n_s]
 
-     If build.sh detects that it is being executed under an unsuitable shell,
+     If bbuuiilldd..sshh detects that it is being executed under an unsuitable shell,
      it attempts to exec a suitable shell instead, or prints an error message.
-     If HOST_SH is not set explicitly, then build.sh sets a default using
+     If HHOOSSTT__SSHH is not set explicitly, then bbuuiilldd..sshh sets a default using
      heuristics dependent on the host platform, or from the shell under which
-     build.sh is executed (if that can be determined), or using the first copy
-     of sh found in PATH.
+     bbuuiilldd..sshh is executed (if that can be determined), or using the first copy
+     of _s_h found in PPAATTHH.
 
      All cross-compile builds, and most native builds, of the entire system
-     should make use of build.sh rather than just running ``make''.  This way,
-     the make(1) program will be bootstrapped properly, in case the host sys-
-     tem has an older or incompatible ``make'' program.
+     should make use of bbuuiilldd..sshh rather than just running ``make''.  This way,
+     the make(1) program will be bootstrapped properly, in case the host
+     system has an older or incompatible ``make'' program.
 
-     When compiling the entire system via build.sh, many make(1) variables are
+     When compiling the entire system via bbuuiilldd..sshh, many make(1) variables are
      set for you in order to help encapsulate the build process.  In the list
-     of options below, variables that are automatically set by build.sh are
+     of options below, variables that are automatically set by bbuuiilldd..sshh are
      noted where applicable.
 
-     The following operations are supported by build.sh:
+     The following operations are supported by bbuuiilldd..sshh:
 
-     build         Build the system as per ``make build''.  Before the main
-                   part of the build commences, this command runs the obj
-                   operation (unless the -o option is given), ``make
-                   cleandir'' (unless the -u option is given), and the tools
+     bbuuiilldd         Build the system as per ``make build''.  Before the main
+                   part of the build commences, this command runs the oobbjj
+                   operation (unless the --oo option is given), ``make
+                   cleandir'' (unless the --uu option is given), and the ttoooollss
                    operation.
 
-     distribution  Build a full distribution as per ``make distribution''.
-                   This command first runs the build operation.
+     ddiissttrriibbuuttiioonn  Build a full distribution as per ``make distribution''.
+                   This command first runs the bbuuiilldd operation.
 
-     release       Build a full release as per ``make release''.  This command
-                   first runs the distribution operation.
+     rreelleeaassee       Build a full release as per ``make release''.  This command
+                   first runs the ddiissttrriibbuuttiioonn operation.
 
-     makewrapper   Create the nbmake-MACHINE wrapper.  This operation is auto-
-                   matically performed for any of the other operations.
+     mmaakkeewwrraappppeerr   Create the nnbbmmaakkee--MMAACCHHIINNEE wrapper.  This operation is
+                   automatically performed for any of the other operations.
 
-     cleandir      Perform ``make cleandir''.
+     cclleeaannddiirr      Perform ``make cleandir''.
 
-     obj           Perform ``make obj''.
+     oobbjj           Perform ``make obj''.
 
-     tools         Build and install the host tools from src/tools.  This com-
-                   mand will first run ``make obj'' and ``make cleandir'' in
-                   the tools subdirectory unless the -o or -u options (respec-
-                   tively) are given.
+     ttoooollss         Build and install the host tools from _s_r_c_/_t_o_o_l_s.  This
+                   command will first run ``make obj'' and ``make cleandir''
+                   in the _t_o_o_l_s subdirectory unless the --oo or --uu options
+                   (respectively) are given.
 
-     install=idir  Install the contents of DESTDIR to idir, using ``make
+     iinnssttaallll=_i_d_i_r  Install the contents of DDEESSTTDDIIRR to _i_d_i_r, using ``make
                    installworld''.  Note that files that are part of the
                    ``etc'' or ``xetc'' sets will not be installed, unless
                    overridden by the INSTALLSETS environment variable.
 
-     kernel=kconf  Build a new kernel.  The kconf argument is the name of a
-                   configuration file suitable for use by config(1).  If kconf
+     kkeerrnneell=_k_c_o_n_f  Build a new kernel.  The _k_c_o_n_f argument is the name of a
+                   configuration file suitable for use by config(1).  If _k_c_o_n_f
                    does not contain any `/' characters, the configuration file
-                   is expected to be found in the KERNCONFDIR directory, which
-                   is typically sys/arch/MACHINE/conf.  The new kernel will be
-                   built in a subdirectory of KERNOBJDIR, which is typically
-                   sys/arch/MACHINE/compile or an associated object directory.
+                   is expected to be found in the KKEERRNNCCOONNFFDDIIRR directory, which
+                   is typically ssyyss//aarrcchh//MMAACCHHIINNEE//ccoonnff.  The new kernel will be
+                   built in a subdirectory of KKEERRNNOOBBJJDDIIRR, which is typically
+                   ssyyss//aarrcchh//MMAACCHHIINNEE//ccoommppiillee or an associated object directory.
 
-                   This command does not imply the tools command; run the
-                   tools command first unless it is certain that the tools
+                   This command does _n_o_t imply the ttoooollss command; run the
+                   ttoooollss command first unless it is _c_e_r_t_a_i_n that the tools
                    already exist and are up to date.
 
                    This command will run ``make cleandir'' on the kernel in
-                   question first unless the -u option is given.
+                   question first unless the --uu option is given.
 
-     modules       This command will build kernel modules and install them
-                   into DESTDIR.
+     mmoodduulleess       This command will build kernel modules and install them
+                   into DDEESSTTDDIIRR.
 
-     releasekernel=kconf
+     rreelleeaasseekkeerrnneell=_k_c_o_n_f
                    Install a gzip(1)ed copy of the kernel previously built by
-                   kernel=kconf into
-                   RELEASEDIR/RELEASEMACHINEDIR/binary/kernel, usually as
-                   netbsd-kconf.gz, although the ``netbsd'' prefix is deter-
-                   mined from the ``config'' directives in kconf.
+                   kkeerrnneell=_k_c_o_n_f into
+                   RREELLEEAASSEEDDIIRR//RREELLEEAASSEEMMAACCHHIINNEEDDIIRR_/_b_i_n_a_r_y_/_k_e_r_n_e_l, usually as
+                   _n_e_t_b_s_d_-_k_c_o_n_f_._g_z, although the ``_n_e_t_b_s_d'' prefix is
+                   determined from the ``ccoonnffiigg'' directives in _k_c_o_n_f.
 
-     sets          Perform ``make sets''.
+     sseettss          Perform ``make sets''.
 
-     sourcesets    Perform ``make sourcesets''.
+     ssoouurrcceesseettss    Perform ``make sourcesets''.
 
-     syspkgs       Perform ``make syspkgs''.
+     ssyyssppkkggss       Perform ``make syspkgs''.
 
-     iso-image     Perform ``make iso-image''.
+     iissoo--iimmaaggee     Perform ``make iso-image''.
 
-     iso-image-source
+     iissoo--iimmaaggee--ssoouurrccee
                    Perform ``make iso-image-source''.
 
-     install-image
+     iinnssttaallll--iimmaaggee
                    Perform ``make install-image''.
 
-     live-image    Perform ``make live-image''.
+     lliivvee--iimmaaggee    Perform ``make live-image''.
 
-     The following command line options alter the behaviour of the build.sh
+     The following command line options alter the behaviour of the bbuuiilldd..sshh
      operations described above:
 
-     -a arch   Set the value of MACHINE_ARCH to arch.
+     --aa _a_r_c_h   Set the value of MMAACCHHIINNEE__AARRCCHH to _a_r_c_h.
 
-     -B buildid
-               Set the value of BUILDID to buildid.  This will also append the
+     --BB _b_u_i_l_d_i_d
+               Set the value of BBUUIILLDDIIDD to _b_u_i_l_d_i_d.  This will also append the
                build identifier to the name of the ``make'' wrapper script so
                that the resulting name is of the form
-               ``nbmake-MACHINE-BUILDID''.
+               ``nnbbmmaakkee--MMAACCHHIINNEE--BBUUIILLDDIIDD''.
 
-     -C cdextras
-               Append cdextras to the CDEXTRA variable, which is a space-sepa-
-               rated list of files or directories that will be added to the
-               CD-ROM image that may be create by the ``iso-image'' or
+     --CC _c_d_e_x_t_r_a_s
+               Append _c_d_e_x_t_r_a_s to the CCDDEEXXTTRRAA variable, which is a space-
+               separated list of files or directories that will be added to
+               the CD-ROM image that may be create by the ``iso-image'' or
                ``iso-image-source'' operations.  Files will be added to the
                root of the CD-ROM image, whereas directories will be copied
                recursively.  If relative paths are specified, they will be
                converted to absolute paths before being used.  Multiple paths
-               may be specified via multiple -C options, or via a single
+               may be specified via multiple --CC options, or via a single
                option whose argument contains multiple space-separated paths.
 
-     -D dest   Set the value of DESTDIR to dest.  If a relative path is speci-
-               fied, it will be converted to an absolute path before being
-               used.
+     --DD _d_e_s_t   Set the value of DDEESSTTDDIIRR to _d_e_s_t.  If a relative path is
+               specified, it will be converted to an absolute path before
+               being used.
 
-     -E        Set `expert' mode.  This overrides various sanity checks, and
-               allows: DESTDIR does not have to be set to a non-root path for
-               builds, and MKUNPRIVED=yes does not have to be set when build-
-               ing as a non-root user.
+     --EE        Set `expert' mode.  This overrides various sanity checks, and
+               allows: DDEESSTTDDIIRR does not have to be set to a non-root path for
+               builds, and MMKKUUNNPPRRIIVVEEDD==yyeess does not have to be set when
+               building as a non-root user.
 
-               Note: It is highly recommended that you know what you are doing
+               _N_o_t_e: It is highly recommended that you know what you are doing
                when you use this option.
 
-     -h        Print a help message.
+     --hh        Print a help message.
 
-     -j njob   Run up to njob make(1) subjobs in parallel; passed through to
+     --jj _n_j_o_b   Run up to _n_j_o_b make(1) subjobs in parallel; passed through to
                make(1).  If you see failures for reasons other than running
-               out of memory while using build.sh with -j, please save com-
-               plete build logs so the failures can be analyzed.
+               out of memory while using bbuuiilldd..sshh with --jj, please save
+               complete build logs so the failures can be analyzed.
 
-               To achieve the fastest builds, -j values between (1 + the num-
-               ber of CPUs) and (2 * the number of CPUs) are recommended.  Use
-               lower values on machines with limited memory or I/O bandwidth.
+               To achieve the fastest builds, --jj values between (1 + the
+               number of CPUs) and (2 * the number of CPUs) are recommended.
+               Use lower values on machines with limited memory or I/O
+               bandwidth.
 
-     -M obj    Set MAKEOBJDIRPREFIX to obj.  Unsets MAKEOBJDIR.  See ``-O
-               -obj'' for more information.
+     --MM _o_b_j    Set MMAAKKEEOOBBJJDDIIRRPPRREEFFIIXX to _o_b_j.  Unsets MMAAKKEEOOBBJJDDIIRR.  See ``--OO
+               --oobbjj'' for more information.
 
-               For instance, if the source directory is /usr/src, a setting of
-               ``-M /usr/obj'' will place build-time files under
-               /usr/obj/usr/src/bin, /usr/obj/usr/src/lib,
-               /usr/obj/usr/src/usr.bin, and so forth.
+               For instance, if the source directory is _/_u_s_r_/_s_r_c, a setting of
+               ``--MM _/_u_s_r_/_o_b_j'' will place build-time files under
+               _/_u_s_r_/_o_b_j_/_u_s_r_/_s_r_c_/_b_i_n, _/_u_s_r_/_o_b_j_/_u_s_r_/_s_r_c_/_l_i_b,
+               _/_u_s_r_/_o_b_j_/_u_s_r_/_s_r_c_/_u_s_r_._b_i_n, and so forth.
 
                If a relative path is specified, it will be converted to an
-               absolute path before being used.  build.sh imposes the restric-
-               tion that the argument to the -M option must not begin with a
-               ``$'' (dollar sign) character; otherwise it would be too diffi-
-               cult to determine whether the value is an absolute or a rela-
-               tive path.  If the directory does not already exist, build.sh
-               will create it.
+               absolute path before being used.  bbuuiilldd..sshh imposes the
+               restriction that the argument to the --MM option must not begin
+               with a ``$'' (dollar sign) character; otherwise it would be too
+               difficult to determine whether the value is an absolute or a
+               relative path.  If the directory does not already exist,
+               bbuuiilldd..sshh will create it.
 
-     -m mach   Set the value of MACHINE to mach, except in some special cases
+     --mm _m_a_c_h   Set the value of MMAACCHHIINNEE to _m_a_c_h, except in some special cases
                listed below.  This will also override any value of
-               MACHINE_ARCH in the process environment with a value deduced
-               from mach, unless -a is specified.  All cross builds require
-               -m, but if unset on a NetBSD host, the host's value of MACHINE
+               MMAACCHHIINNEE__AARRCCHH in the process environment with a value deduced
+               from _m_a_c_h, unless --aa is specified.  All cross builds require
+               --mm, but if unset on a NetBSD host, the host's value of MACHINE
                will be detected and used automatically.
 
-               Some machines support multiple values for MACHINE_ARCH.  The
-               following special cases for the mach argument are defined to
-               set the listed values of MACHINE and MACHINE_ARCH:
+               Some machines support multiple values for MMAACCHHIINNEE__AARRCCHH.  The
+               following special cases for the _m_a_c_h argument are defined to
+               set the listed values of MMAACCHHIINNEE and MMAACCHHIINNEE__AARRCCHH:
 
-                     mach          MACHINE    MACHINE_ARCH
+                     mmaacchh          MMAACCHHIINNEE    MMAACCHHIINNEE__AARRCCHH
                      evbarm        evbarm     (not set)
                      evbarm-eb     evbarm     armeb
                      evbarm-el     evbarm     arm
@@ -866,97 +878,97 @@ BUILDING
                      sbmips-eb     sbmips     mipseb
                      sbmips-el     sbmips     mipsel
 
-     -N noiselevel
+     --NN _n_o_i_s_e_l_e_v_e_l
                Set the ``noisyness'' level of the build, by setting
-               MAKEVERBOSE to noiselevel.
+               MMAAKKEEVVEERRBBOOSSEE to _n_o_i_s_e_l_e_v_e_l.
 
-     -n        Show the commands that would be executed by build.sh, but do
+     --nn        Show the commands that would be executed by bbuuiilldd..sshh, but do
                not make any changes.  This is similar in concept to ``make
                -n''.
 
-     -O obj    Create an appropriate transform macro for MAKEOBJDIR that will
-               place the built object files under obj.  Unsets
-               MAKEOBJDIRPREFIX.
+     --OO _o_b_j    Create an appropriate transform macro for MMAAKKEEOOBBJJDDIIRR that will
+               place the built object files under _o_b_j.  Unsets
+               MMAAKKEEOOBBJJDDIIRRPPRREEFFIIXX.
 
-               For instance, a setting of ``-O /usr/obj'' will place build-
-               time files under /usr/obj/bin, /usr/obj/lib, /usr/obj/usr.bin,
+               For instance, a setting of ``--OO _/_u_s_r_/_o_b_j'' will place build-
+               time files under _/_u_s_r_/_o_b_j_/_b_i_n, _/_u_s_r_/_o_b_j_/_l_i_b, _/_u_s_r_/_o_b_j_/_u_s_r_._b_i_n,
                and so forth.
 
                If a relative path is specified, it will be converted to an
-               absolute path before being used.  build.sh imposes the restric-
-               tion that the argument to the -O option must not contain a
-               ``$'' (dollar sign) character.  If the directory does not
-               already exist, build.sh will create it.
+               absolute path before being used.  bbuuiilldd..sshh imposes the
+               restriction that the argument to the --OO option must not contain
+               a ``$'' (dollar sign) character.  If the directory does not
+               already exist, bbuuiilldd..sshh will create it.
 
-               In normal use, exactly one of the -M or -O options should be
-               specified.  If neither -M nor -O is specified, then a default
+               In normal use, exactly one of the --MM or --OO options should be
+               specified.  If neither --MM nor --OO is specified, then a default
                object directory will be chosen according to rules in
                <bsd.obj.mk>.  Relying on this default is not recommended
                because it is determined by complex rules that are influenced
                by the values of several variables and by the location of the
                source directory.
 
-     -o        Set the value of MKOBJDIRS to ``no''.  Otherwise, it will be
+     --oo        Set the value of MMKKOOBBJJDDIIRRSS to ``no''.  Otherwise, it will be
                automatically set to ``yes''.  This default is opposite to the
-               behaviour when not using build.sh.
+               behaviour when not using bbuuiilldd..sshh.
 
-     -R rel    Set the value of RELEASEDIR to rel.  If a relative path is
+     --RR _r_e_l    Set the value of RREELLEEAASSEEDDIIRR to _r_e_l.  If a relative path is
                specified, it will be converted to an absolute path before
                being used.
 
-     -r        Remove the contents of DESTDIR and TOOLDIR before building
+     --rr        Remove the contents of DDEESSTTDDIIRR and TTOOOOLLDDIIRR before building
                (provides a clean starting point).  This will skip deleting
-               DESTDIR if building on a native system to the root directory.
+               DDEESSTTDDIIRR if building on a native system to the root directory.
 
-     -S seed   Change the value of BUILDSEED to seed.  This should rarely be
+     --SS _s_e_e_d   Change the value of BBUUIILLDDSSEEEEDD to _s_e_e_d.  This should rarely be
                necessary.
 
-     -T tools  Set the value of TOOLDIR to tools.  If a relative path is spec-
-               ified, it will be converted to an absolute path before being
-               used.  If set, the bootstrap ``make'' will only be rebuilt if
-               the source files for make(1) have changed.
+     --TT _t_o_o_l_s  Set the value of TTOOOOLLDDIIRR to _t_o_o_l_s.  If a relative path is
+               specified, it will be converted to an absolute path before
+               being used.  If set, the bootstrap ``make'' will only be
+               rebuilt if the source files for make(1) have changed.
 
-     -U        Set MKUNPRIVED=yes.
+     --UU        Set MMKKUUNNPPRRIIVVEEDD==yyeess.
 
-     -u        Set MKUPDATE=yes.
+     --uu        Set MMKKUUPPDDAATTEE==yyeess.
 
-     -V var=[value]
-               Set the environment variable var to an optional value.  This is
-               propagated to the nbmake wrapper.
+     --VV _v_a_r=[_v_a_l_u_e]
+               Set the environment variable _v_a_r to an optional _v_a_l_u_e.  This is
+               propagated to the nnbbmmaakkee wrapper.
 
-     -w wrapper
-               Create the nbmake wrapper script (see below) in a custom loca-
-               tion, specified by wrapper.  This allows, for instance, to
-               place the wrapper in PATH automatically.  Note that wrapper is
+     --ww _w_r_a_p_p_e_r
+               Create the nnbbmmaakkee wrapper script (see below) in a custom
+               location, specified by _w_r_a_p_p_e_r.  This allows, for instance, to
+               place the wrapper in PPAATTHH automatically.  Note that _w_r_a_p_p_e_r is
                the full name of the file, not just a directory name.  If a
                relative path is specified, it will be converted to an absolute
                path before being used.
 
-     -X x11src
-               Set the value of X11SRCDIR to x11src.  If a relative path is
+     --XX _x_1_1_s_r_c
+               Set the value of XX1111SSRRCCDDIIRR to _x_1_1_s_r_c.  If a relative path is
                specified, it will be converted to an absolute path before
                being used.
 
-     -x        Set MKX11=yes.
+     --xx        Set MMKKXX1111==yyeess.
 
-     -Z var    Unset ("zap") the environment variable var.  This is propagated
-               to the nbmake wrapper.
+     --ZZ _v_a_r    Unset ("zap") the environment variable _v_a_r.  This is propagated
+               to the nnbbmmaakkee wrapper.
 
-   The "nbmake-MACHINE" wrapper script
-     If using the build.sh script to build NetBSD, a nbmake-MACHINE script
-     will be created in TOOLDIR/bin upon the first build to assist in building
+   TThhee ""nnbbmmaakkee--MMAACCHHIINNEE"" wwrraappppeerr ssccrriipptt
+     If using the bbuuiilldd..sshh script to build NetBSD, a nnbbmmaakkee--MMAACCHHIINNEE script
+     will be created in TTOOOOLLDDIIRR//bbiinn upon the first build to assist in building
      subtrees on a cross-compile host.
 
-     nbmake-MACHINE can be invoked in lieu of make(1), and will instead call
-     the up-to-date version of ``nbmake'' installed into TOOLDIR/bin with sev-
-     eral key variables pre-set, including MACHINE, MACHINE_ARCH, and TOOLDIR.
-     nbmake-MACHINE will also set variables specified with -V, and unset vari-
-     ables specified with -Z.
+     nnbbmmaakkee--MMAACCHHIINNEE can be invoked in lieu of make(1), and will instead call
+     the up-to-date version of ``nbmake'' installed into TTOOOOLLDDIIRR//bbiinn with
+     several key variables pre-set, including MMAACCHHIINNEE, MMAACCHHIINNEE__AARRCCHH, and
+     TTOOOOLLDDIIRR.  nnbbmmaakkee--MMAACCHHIINNEE will also set variables specified with --VV, and
+     unset variables specified with --ZZ.
 
-     This script can be symlinked into a directory listed in PATH, or called
+     This script can be symlinked into a directory listed in PPAATTHH, or called
      with an absolute path.
 
-EXAMPLES
+EEXXAAMMPPLLEESS
      1.   % ./build.sh [options] tools kernel=GENERIC
 
           Build a new toolchain, and use the new toolchain to configure and
@@ -964,37 +976,37 @@ EXAMPLES
 
      2.   % ./build.sh [options] -U distribution
 
-          Using unprivileged mode, build a complete distribution to a DESTDIR
-          directory that build.sh selects (and will display).
+          Using unprivileged mode, build a complete distribution to a DDEESSTTDDIIRR
+          directory that bbuuiilldd..sshh selects (and will display).
 
      3.   # ./build.sh [options] -U install=/
 
-          As root, install to / the distribution that was built by example 2.
-          Even though this is run as root, -U is required so that the permis-
-          sions stored in DESTDIR/METALOG are correctly applied to the files
-          as they're copied to /.
+          As root, install to _/ the distribution that was built by example 2.
+          Even though this is run as root, --UU is required so that the
+          permissions stored in DDEESSTTDDIIRR_/_M_E_T_A_L_O_G are correctly applied to the
+          files as they're copied to _/.
 
      4.   % ./build.sh [options] -U -u release
 
-          Using unprivileged mode, build a complete release to DESTDIR and
-          RELEASEDIR directories that build.sh selects (and will display).
-          MKUPDATE=yes (-u) is set to prevent the ``make cleandir'', so that
+          Using unprivileged mode, build a complete release to DDEESSTTDDIIRR and
+          RREELLEEAASSEEDDIIRR directories that bbuuiilldd..sshh selects (and will display).
+          MMKKUUPPDDAATTEE==yyeess (--uu) is set to prevent the ``make cleandir'', so that
           if this is run after example 2, it doesn't need to redo that portion
           of the release build.
 
-OBSOLETE VARIABLES
-     NBUILDJOBS  Use the make(1) option -j instead.
+OOBBSSOOLLEETTEE VVAARRIIAABBLLEESS
+     NNBBUUIILLDDJJOOBBSS  Use the make(1) option --jj instead.
 
-     USE_NEW_TOOLCHAIN
+     UUSSEE__NNEEWW__TTOOOOLLCCHHAAIINN
                  The new toolchain is now the default.  To disable, use
-                 TOOLCHAIN_MISSING=yes.
+                 TTOOOOLLCCHHAAIINN__MMIISSSSIINNGG==yyeess.
 
-SEE ALSO
+SSEEEE AALLSSOO
      make(1), hier(7), release(7), etcupdate(8), postinstall(8), sysinst(8),
-     pkgsrc/sysutils/cdrtools
+     _p_k_g_s_r_c_/_s_y_s_u_t_i_l_s_/_c_d_r_t_o_o_l_s
 
-HISTORY
-     The build.sh based build scheme was introduced for NetBSD 1.6 as
-     USE_NEW_TOOLCHAIN, and re-worked to TOOLCHAIN_MISSING after that.
+HHIISSTTOORRYY
+     The bbuuiilldd..sshh based build scheme was introduced for NetBSD 1.6 as
+     UUSSEE__NNEEWW__TTOOOOLLCCHHAAIINN, and re-worked to TTOOOOLLCCHHAAIINN__MMIISSSSIINNGG after that.
 
-NetBSD                         September 9, 2011                        NetBSD
+NetBSD                           May 25, 2012                           NetBSD
