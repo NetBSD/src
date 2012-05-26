@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.23 2012/05/17 16:21:45 matt Exp $	*/
+/*	$NetBSD: userret.h,v 1.24 2012/05/26 00:31:07 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,6 +35,7 @@
 #include "opt_altivec.h"
 
 #include <sys/userret.h>
+#include <sys/ras.h>
 
 #include <powerpc/fpu.h>
 #include <powerpc/psl.h>
@@ -81,6 +82,18 @@ userret(struct lwp *l, struct trapframe *tf)
 	if (__predict_false(tf->tf_srr1 & PSL_SE)) {
 		extern void booke_sstep(struct trapframe *); /* ugly */
 		booke_sstep(tf);
+	}
+#endif
+
+#ifdef __HAVE_RAS
+	/*
+	 * Check to see if a RAS was interrupted and restart it if it was.      
+	 */
+	struct proc * const p = l->l_proc;
+	if (__predict_false(p->p_raslist != NULL)) {
+		void * const ras_pc = ras_lookup(p, (void *) tf->tf_srr0);
+		if (ras_pc != (void *) -1)
+			tf->tf_srr0 = (vaddr_t) ras_pc;
 	}
 #endif
 }
