@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.46 2011/07/17 23:23:54 dyoung Exp $	*/
+/*	$NetBSD: types.h,v 1.47 2012/05/26 00:31:07 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -95,5 +95,8 @@ typedef volatile __uint32_t __cpuset_t;
 
 #define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 #define	__HAVE_MM_MD_KERNACC
+#if defined(_KERNEL)
+#define	__HAVE_RAS
+#endif
 
 #endif	/* _MACHTYPES_H_ */
