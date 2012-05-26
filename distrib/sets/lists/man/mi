@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1390 2012/05/15 17:47:48 rkujawa Exp $
+# $NetBSD: mi,v 1.1391 2012/05/26 01:58:20 uebayasi Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2950,7 +2950,8 @@
 ./usr/share/man/cat8/virtual.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/vmstat.0			man-obsolete		obsolete
 ./usr/share/man/cat8/vnconfig.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/wake.0			man-netutil-catman	.cat
+./usr/share/man/cat8/wake.0			man-obsolete		obsolete
+./usr/share/man/cat8/wakeonlan.0		man-netutil-catman	.cat
 ./usr/share/man/cat8/walnut/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/walnut/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/wdogctl.0			man-sysutil-catman	.cat
@@ -5527,7 +5528,8 @@
 ./usr/share/man/html8/virecover.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/virtual.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/vnconfig.html		man-sysutil-htmlman	html
-./usr/share/man/html8/wake.html			man-netutil-htmlman	html
+./usr/share/man/html8/wake.html			man-obsolete		obsolete
+./usr/share/man/html8/wakeonlan.html		man-netutil-htmlman	html
 ./usr/share/man/html8/wdogctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/wiconfig.html		man-netutil-htmlman	html
 ./usr/share/man/html8/wire-test.html		man-netutil-htmlman	html
@@ -8475,7 +8477,8 @@
 ./usr/share/man/man8/virtual.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/vmstat.8			man-obsolete		obsolete
 ./usr/share/man/man8/vnconfig.8			man-sysutil-man		.man
-./usr/share/man/man8/wake.8			man-netutil-man		.man
+./usr/share/man/man8/wake.8			man-obsolete		obsolete
+./usr/share/man/man8/wakeonlan.8		man-netutil-man		.man
 ./usr/share/man/man8/walnut/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/walnut/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/wdogctl.8			man-sysutil-man		.man
