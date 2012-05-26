@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1758 2012/05/13 09:00:51 mrg Exp $
+#	$NetBSD: mi,v 1.1759 2012/05/26 01:58:18 uebayasi Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4326,7 +4326,8 @@
 ./usr/libdata/debug/usr/sbin/veriexecgen.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/vipw.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/vnconfig.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/wake.debug		comp-netutil-debug	debug
+./usr/libdata/debug/usr/sbin/wake.debug		comp-obsolete		obsolete
+./usr/libdata/debug/usr/sbin/wakeonlan.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/wiconfig.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/wire-test.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/wlanctl.debug	comp-sysutil-debug	debug
