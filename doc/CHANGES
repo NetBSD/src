@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1702 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1703 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -58,3 +58,5 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	bzip2: Imported 1.0.6 [wiz 20120507]
 	amiga: Rework X-Surf driver as xsurf(4). Add support for clockport(4)
 		on top of xsurf(4). [rkujawa 20120515]
+	backtrace(3): Add <execinfo.h> and the backtrace family of functions
+		[christos 20120526]
