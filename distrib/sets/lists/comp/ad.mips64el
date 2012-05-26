@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.78 2012/05/02 02:43:01 christos Exp $
+# $NetBSD: ad.mips64el,v 1.79 2012/05/26 22:15:03 christos Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/gcc-4.5/loongson.h		comp-c-include		gcccmds,gcc=45
@@ -263,6 +263,10 @@
 ./usr/lib/64/libevent.so			base-sys-shlib		compat,pic
 ./usr/lib/64/libevent_p.a			comp-c-proflib		compat,profile
 ./usr/lib/64/libevent_pic.a			comp-c-piclib		compat,pic
+./usr/lib/64/libexecinfo.a				comp-c-lib		compat
+./usr/lib/64/libexecinfo.so			base-sys-shlib		compat,pic
+./usr/lib/64/libexecinfo_p.a			comp-c-proflib		compat,profile
+./usr/lib/64/libexecinfo_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/64/libexpat.a				comp-c-lib		compat
 ./usr/lib/64/libexpat.so			base-sys-shlib		compat,pic
 ./usr/lib/64/libexpat_p.a			comp-c-proflib		compat,profile
@@ -852,6 +856,10 @@
 ./usr/lib/o32/libevent.so			base-sys-shlib		compat,pic
 ./usr/lib/o32/libevent_p.a			comp-c-proflib		compat,profile
 ./usr/lib/o32/libevent_pic.a			comp-c-piclib		compat,pic
+./usr/lib/o32/libexecinfo.a			comp-c-lib		compat
+./usr/lib/o32/libexecinfo.so			base-sys-shlib		compat,pic
+./usr/lib/o32/libexecinfo_p.a			comp-c-proflib		compat,profile
+./usr/lib/o32/libexecinfo_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/o32/libexpat.a			comp-c-lib		compat
 ./usr/lib/o32/libexpat.so			base-sys-shlib		compat,pic
 ./usr/lib/o32/libexpat_p.a			comp-c-proflib		compat,profile
@@ -1291,6 +1299,7 @@
 ./usr/libdata/debug/usr/lib/64/libedit.so.3.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libelf.so.0.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libevent.so.3.2.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/64/libexecinfo.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libexpat.so.2.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libfetch.so.3.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libform.so.6.0.debug	comp-sys-debug	debug,compat
@@ -1444,6 +1453,7 @@
 ./usr/libdata/debug/usr/lib/o32/libedit.so.3.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libelf.so.0.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libevent.so.3.2.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/libexecinfo.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libexpat.so.2.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libfetch.so.3.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libform.so.6.0.debug	comp-sys-debug	debug,compat
