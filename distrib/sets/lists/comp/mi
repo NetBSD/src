@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1759 2012/05/26 01:58:18 uebayasi Exp $
+#	$NetBSD: mi,v 1.1760 2012/05/26 22:15:04 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -650,6 +650,7 @@
 ./usr/include/evhttp.h				comp-c-include
 ./usr/include/evrpc.h				comp-c-include
 ./usr/include/evutil.h				comp-c-include
+./usr/include/execinfo.h			comp-c-include
 ./usr/include/expat.h				comp-c-include
 ./usr/include/expat_external.h			comp-c-include
 ./usr/include/fcntl.h				comp-c-include
@@ -2810,9 +2811,9 @@
 ./usr/lib/libevent.a				comp-c-lib
 ./usr/lib/libevent_g.a				-unknown-		debuglib
 ./usr/lib/libevent_p.a				comp-c-proflib		profile
-./usr/lib/libexpat.a				comp-c-lib
-./usr/lib/libexpat_g.a				-unknown-		debuglib
-./usr/lib/libexpat_p.a				comp-c-proflib		profile
+./usr/lib/libexecinfo.a				comp-c-lib
+./usr/lib/libexecinfo_g.a			-unknown-		debuglib
+./usr/lib/libexecinfo_p.a			comp-c-proflib		profile
 ./usr/lib/libfetch.a				comp-c-lib
 ./usr/lib/libfetch_g.a				-unknown-		debuglib
 ./usr/lib/libfetch_p.a				comp-c-proflib		profile
@@ -5780,6 +5781,11 @@
 ./usr/share/man/cat3/authunix_create.0		comp-c-catman		.cat
 ./usr/share/man/cat3/authunix_create_default.0	comp-c-catman		.cat
 ./usr/share/man/cat3/basename.0			comp-c-catman		.cat
+./usr/share/man/cat3/backtrace.0		comp-c-catman		.cat
+./usr/share/man/cat3/backtrace_symbols.0	comp-c-catman		.cat
+./usr/share/man/cat3/backtrace_symbols_fmt.0	comp-c-catman		.cat
+./usr/share/man/cat3/backtrace_symbols_fd.0	comp-c-catman		.cat
+./usr/share/man/cat3/backtrace_symbols_fd_fmt.0	comp-c-catman		.cat
 ./usr/share/man/cat3/bcmp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bcopy.0			comp-c-catman		.cat
 ./usr/share/man/cat3/beep.0			comp-c-catman		.cat
@@ -12149,6 +12155,11 @@
 ./usr/share/man/html3/authunix_create.html	comp-c-htmlman		html
 ./usr/share/man/html3/authunix_create_default.html	comp-c-htmlman		html
 ./usr/share/man/html3/basename.html		comp-c-htmlman		html
+./usr/share/man/html3/backtrace.html		comp-c-htmlman		.html
+./usr/share/man/html3/backtrace_symbols.html	comp-c-htmlman		.html
+./usr/share/man/html3/backtrace_symbols_fmt.html	comp-c-htmlman		.html
+./usr/share/man/html3/backtrace_symbols_fd.html	comp-c-htmlman		.html
+./usr/share/man/html3/backtrace_symbols_fd_fmt.html	comp-c-htmlman		.html
 ./usr/share/man/html3/bcmp.html			comp-c-htmlman		html
 ./usr/share/man/html3/bcopy.html		comp-c-htmlman		html
 ./usr/share/man/html3/beep.html			comp-c-htmlman		html
@@ -18320,6 +18331,11 @@
 ./usr/share/man/man3/authunix_create.3		comp-c-man		.man
 ./usr/share/man/man3/authunix_create_default.3	comp-c-man		.man
 ./usr/share/man/man3/basename.3			comp-c-man		.man
+./usr/share/man/man3/backtrace.3		comp-c-man		.man
+./usr/share/man/man3/backtrace_symbols.3	comp-c-man		.man
+./usr/share/man/man3/backtrace_symbols_fmt.3	comp-c-man		.man
+./usr/share/man/man3/backtrace_symbols_fd.3	comp-c-man		.man
+./usr/share/man/man3/backtrace_symbols_fd_fmt.3	comp-c-man		.man
 ./usr/share/man/man3/bcmp.3			comp-c-man		.man
 ./usr/share/man/man3/bcopy.3			comp-c-man		.man
 ./usr/share/man/man3/beep.3			comp-c-man		.man
