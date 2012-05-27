@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.469 2012/05/21 14:15:16 martin Exp $
+# $NetBSD: mi,v 1.470 2012/05/27 19:18:13 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -610,6 +610,8 @@
 ./usr/libdata/debug/usr/tests/lib/semaphore/pthread/t_sem_pth.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libevent				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libevent/h_event.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libexecinfo				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libevent/t_backtrace.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libm/t_acos.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_asin.debug			tests-lib-debug		debug,atf
@@ -2621,6 +2623,9 @@
 ./usr/tests/lib/libevent/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libevent/h_event		tests-lib-tests		atf
 ./usr/tests/lib/libevent/t_event		tests-lib-tests		atf
+./usr/tests/lib/libexecinfo			tests-lib-tests
+./usr/tests/lib/libexecinfo/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libexecinfo/t_backtrace		tests-lib-tests		atf
 ./usr/tests/lib/libm				tests-lib-tests		atf
 ./usr/tests/lib/libm/Atffile			tests-lib-tests		atf
 ./usr/tests/lib/libm/t_acos			tests-lib-tests		atf
