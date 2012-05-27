@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_driverif.c,v 1.4 2012/05/27 16:50:32 riz Exp $	*/
+/*	$NetBSD: iscsid_driverif.c,v 1.5 2012/05/27 20:05:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -923,11 +923,10 @@ event_handler(void *par)
 	evtp.event_id = event_reg.event_id;
 
 	do {
-#ifndef ISCSI_NOTHREAD
-		rc = ioctl(driver, ISCSI_WAIT_EVENT, &evtp);
-#else
-		rc = ioctl(driver, ISCSI_POLL_EVENT, &evtp);
-#endif
+		if (nothreads)
+			rc = ioctl(driver, ISCSI_POLL_EVENT, &evtp);
+		else
+			rc = ioctl(driver, ISCSI_WAIT_EVENT, &evtp);
 		if (rc || evtp.status)
 			break;
 
@@ -953,9 +952,7 @@ event_handler(void *par)
 		}
 	} while (evtp.event_kind != ISCSI_DRIVER_TERMINATING);
 
-#ifdef ISCSI_NOTHREAD
-	if (evtp.event_kind == ISCSI_DRIVER_TERMINATING)
-#endif
+	if (nothreads && evtp.event_kind == ISCSI_DRIVER_TERMINATING)
 		exit_daemon();
 
 	return NULL;
