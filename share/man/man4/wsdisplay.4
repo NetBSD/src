@@ -1,4 +1,4 @@
-.\" $NetBSD: wsdisplay.4,v 1.38 2011/06/30 22:13:02 wiz Exp $
+.\" $NetBSD: wsdisplay.4,v 1.39 2012/05/27 10:45:49 abs Exp $
 .\"
 .\" Copyright (c) 1999 Matthias Drochner.
 .\" Copyright (c) 2002 Ben Harris.
@@ -561,6 +561,18 @@ and the driver will set data_size to the required buffer size.
 Otherwise the EDID block will be written into the buffer pointed
 at by edid_data and data_size will be set to the number of bytes
 written.
+.It Dv WSDISPLAYIO_SETVERSION Pq Li "int"
+Set the wscons_event protocol version.
+The default is 0 for binary compatibility. The latest version is
+always available as WSDISPLAYIO_EVENT_VERSION, and is currently 1.
+All new code should use a call similar to the below to ensure the
+correct version is returned.
+.Bd -literal -offset indent
+int ver = WSDISPLAY_EVENT_VERSION;
+if (ioctl(fd, WSDISPLAYIO_SETVERSION, &ver) == -1)
+    err(EXIT_FAILURE, "cannot set version");
+.Ed
+.El
 .El
 .Sh FILES
 .Bl -item
