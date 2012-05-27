@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.1 2012/05/27 18:47:18 christos Exp $
+# $NetBSD: Makefile,v 1.2 2012/05/27 22:57:24 martin Exp $
 
 .include <bsd.own.mk>
 
-TESTSDIR=	${TESTSBASE}/lib/libm
+TESTSDIR=	${TESTSBASE}/lib/libexecinfo
 
 TESTS_C+=	t_backtrace
 
