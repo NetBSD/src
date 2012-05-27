@@ -1,4 +1,4 @@
-# $NetBSD: md.hp700,v 1.8 2011/07/17 23:37:32 dyoung Exp $
+# $NetBSD: md.hp700,v 1.9 2012/05/27 11:26:38 skrll Exp $
 ./usr/include/hp700				comp-c-include
 ./usr/include/hp700/ansi.h			comp-c-include
 ./usr/include/hp700/aout_machdep.h		comp-c-include
@@ -27,6 +27,7 @@
 ./usr/include/hp700/int_mwgwtypes.h		comp-c-include
 ./usr/include/hp700/int_types.h			comp-c-include
 ./usr/include/hp700/intr.h			comp-c-include
+./usr/include/hp700/intrdefs.h			comp-c-include
 ./usr/include/hp700/iomod.h			comp-c-include
 ./usr/include/hp700/isa_machdep.h		comp-c-include
 ./usr/include/hp700/kcore.h			comp-c-include
