@@ -1,4 +1,4 @@
-.\" $NetBSD: iscsictl.8,v 1.2 2012/05/26 20:03:34 riz Exp $
+.\" $NetBSD: iscsictl.8,v 1.3 2012/05/27 11:59:12 wiz Exp $
 .\"
 .\" Copyright (c) 2011 Alistair Crooks <agc@NetBSD.org>
 .\" All rights reserved.
@@ -74,7 +74,6 @@ command is used; this creates a session between the initiator and target.
 The sessions can be listed by using the
 .Dv list_sessions
 command.
-.Pp
 .Ss Global Options
 .Bl -tag width xdxsockdirx
 .It Fl d Ar sockdir
@@ -98,7 +97,8 @@ Specify the target address by IP or FQDN.
 .It Fl n Ar target-name
 Specify the target by name.
 .It Fl p Ar port-num
-The TCP port to connect to the target on.  (Default port is 3260)
+The TCP port to connect to the target on.
+(Default port is 3260)
 .It Fl g Ar group-tag
 The group tag, a 16-bit integer.
 .El
@@ -111,7 +111,8 @@ portal options.
 .It Fl a Ar target-address
 Specify the target address by IP or FQDN.
 .It Fl p Ar port-num
-The TCP port to connect to the target on.  (Default port is 3260)
+The TCP port to connect to the target on.
+(Default port is 3260)
 .It Fl g Ar group-tag
 The group tag, a 16-bit integer.
 .It Fl h
@@ -256,7 +257,9 @@ can be specified as well as an
 is intended to be used as follows:
 .Pp
 The initiator itself can be loaded as a kernel module, and works successfully
-on 2.0 (the host called "burner"), running against the NetBSD target on a 5.99 host.
+on 2.0 (the host called "burner"), running against the
+.Nx
+target on a 5.99 host.
 .Pp
 .Bd -literal
 burner# modload -v -s -p /usr/lkm/iscsi_post.sh /usr/lkm/iscsidrv.o
