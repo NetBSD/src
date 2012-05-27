@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1760 2012/05/26 22:15:04 christos Exp $
+#	$NetBSD: mi,v 1.1761 2012/05/27 02:27:29 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4373,6 +4373,7 @@
 ./usr/libdata/lint/llib-ledit.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lelf.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-levent.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lexecinfo.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lexpat.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lfetch.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lform.ln		comp-c-lintlib		lint
@@ -12155,11 +12156,11 @@
 ./usr/share/man/html3/authunix_create.html	comp-c-htmlman		html
 ./usr/share/man/html3/authunix_create_default.html	comp-c-htmlman		html
 ./usr/share/man/html3/basename.html		comp-c-htmlman		html
-./usr/share/man/html3/backtrace.html		comp-c-htmlman		.html
-./usr/share/man/html3/backtrace_symbols.html	comp-c-htmlman		.html
-./usr/share/man/html3/backtrace_symbols_fmt.html	comp-c-htmlman		.html
-./usr/share/man/html3/backtrace_symbols_fd.html	comp-c-htmlman		.html
-./usr/share/man/html3/backtrace_symbols_fd_fmt.html	comp-c-htmlman		.html
+./usr/share/man/html3/backtrace.html		comp-c-htmlman		html
+./usr/share/man/html3/backtrace_symbols.html	comp-c-htmlman		html
+./usr/share/man/html3/backtrace_symbols_fmt.html	comp-c-htmlman		html
+./usr/share/man/html3/backtrace_symbols_fd.html	comp-c-htmlman		html
+./usr/share/man/html3/backtrace_symbols_fd_fmt.html	comp-c-htmlman		html
 ./usr/share/man/html3/bcmp.html			comp-c-htmlman		html
 ./usr/share/man/html3/bcopy.html		comp-c-htmlman		html
 ./usr/share/man/html3/beep.html			comp-c-htmlman		html
