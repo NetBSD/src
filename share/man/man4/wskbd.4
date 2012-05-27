@@ -1,4 +1,4 @@
-.\" $NetBSD: wskbd.4,v 1.14 2011/03/06 17:39:05 wiz Exp $
+.\" $NetBSD: wskbd.4,v 1.15 2012/05/27 10:45:49 abs Exp $
 .\"
 .\" Copyright (c) 1999
 .\" 	Matthias Drochner.  All rights reserved.
@@ -114,6 +114,41 @@ match if the device is in use as system console.
 (The console device selection in early system startup is not influenced.)
 This way, the console device can be connected to a known
 wskbd device instance.
+.Ss Ioctls
+The following
+.Xr ioctl 2
+calls are provided by the
+.Nm
+driver or by devices which use it.
+Their definitions are found in
+.Pa dev/wscons/wsconsio.h .
+.Bl -tag -width Dv
+.It Dv WSKBDIO_GTYPE
+Get the keyboard type.
+.It Dv WSKBDIO_COMPLEXBELL, WSKBDIO_SETBELL, WSKBDIO_GETBELL, WSKBDIO_SETDEFAULTBELL, WSKBDIO_GETDEFAULTBELL Pq Li "struct wsmouse_repeat"
+Get and set keyboard bell settings.
+.It Dv WSKBDIO_SETKEYREPEAT, WSKBDIO_GETKEYREPEAT, WSKBDIO_SETDEFAULTKEYREPEAT, WSKBDIO_GETDEFAULTKEYREPEAT Pq Li "struct wskbd_keyrepeat_data"
+Get and set keyboard autorepeat settings.
+.It Dv WSKBDIO_SETLEDS, WSKBDIO_GETLEDS Pq Li "int"
+Get and set keyboard LED settings.
+.It Dv WSKBDIO_GETMAP, WSKBDIO_SETMAP Pq Li "struct wskbd_map_data"
+Get and set keyboard keymapping settings.
+.It Dv WSKBDIO_GETENCODING, WSKBDIO_SETENCODING Pq Li "kbd_t"
+Get and set keyboard encoding settings.
+.It Dv WSKBDIO_GETKEYCLICK, WSKBDIO_SETKEYCLICK Pq Li "int"
+Get and set keyboard keyclick settings.
+.It Dv WSKBDIO_SETVERSION Pq Li "int"
+Set the wscons_event protocol version.
+The default is 0 for binary compatibility. The latest version is
+always available as WSKBD_EVENT_VERSION, and is currently 1.
+All new code should use a call similar to the below to ensure the
+correct version is returned.
+.Bd -literal -offset indent
+int ver = WSKBD_EVENT_VERSION;
+if (ioctl(fd, WSKBDIO_SETVERSION, &ver) == -1)
+    err(EXIT_FAILURE, "cannot set version");
+.Ed
+.El
 .Sh FILES
 .Bl -item
 .It
