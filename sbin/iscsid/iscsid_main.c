@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_main.c,v 1.5 2012/05/27 20:05:04 christos Exp $	*/
+/*	$NetBSD: iscsid_main.c,v 1.6 2012/05/27 22:03:16 riz Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -477,15 +477,14 @@ process_message(iscsid_request_t *req, iscsid_response_t **prsp, int *prsp_temp)
 void
 exit_daemon(void)
 {
-	if (nothreads) {
-		LOCK_SESSIONS;
-	}
+	LOCK_SESSIONS;
 	deregister_event_handler();
 
 #ifndef ISCSI_MINIMAL
 	dereg_all_isns_servers();
 #endif
 
+	close(client_sock);
 	printf("iSCSI Daemon Exits\n");
 	exit(0);
 }
@@ -559,9 +558,13 @@ main(int argc, char **argv)
 		len = sizeof(iscsid_request_t);
 
 		if (nothreads) {
-			ret = recvfrom(client_sock, req, len, MSG_PEEK |
-			    MSG_WAITALL, (struct sockaddr *)(void *)&from,
-			    &fromlen);
+			do {
+				ret = recvfrom(client_sock, req, len, MSG_PEEK |
+				MSG_WAITALL, (struct sockaddr *)(void *)&from,
+			    	&fromlen);
+				if (ret == -1)
+					event_handler(NULL);
+			} while (ret == -1 && errno == EAGAIN);
 		} else {
 			do {
 				ret = recvfrom(client_sock, req, len, MSG_PEEK |
