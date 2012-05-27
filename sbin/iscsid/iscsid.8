@@ -1,4 +1,4 @@
-.\" $NetBSD: iscsid.8,v 1.2 2011/11/21 08:23:20 njoly Exp $
+.\" $NetBSD: iscsid.8,v 1.3 2012/05/27 19:52:51 christos Exp $
 .\"
 .\" Copyright (c) 2011 Alistair Crooks <agc@NetBSD.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 8, 2011
+.Dd May 27, 2012
 .Dt ISCSID 8
 .Os
 .Sh NAME
@@ -31,6 +31,7 @@
 .Nd interface to kernel iSCSI driver
 .Sh SYNOPSIS
 .Nm
+.Op Ar d
 .Sh DESCRIPTION
 The iSCSI initiator runs as a kernel driver, and provides access
 to iSCSI targets running across a network using the iSCSI protocol,
@@ -56,7 +57,9 @@ exits on receiving a terminate message,
 (no response to one that is sent to the kernel),
 or when an error occurs reading from or writing to the socket.
 .Pp
-There are no command line arguments to
+The only command line argument
+.Ar d
+increases the debug level.
 .Nm .
 .Pp
 It is envisaged that user-level communication take place with
