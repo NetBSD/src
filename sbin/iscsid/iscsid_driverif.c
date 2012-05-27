@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_driverif.c,v 1.3 2011/11/20 01:23:57 agc Exp $	*/
+/*	$NetBSD: iscsid_driverif.c,v 1.4 2012/05/27 16:50:32 riz Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -192,8 +192,8 @@ make_connection(session_t * sess, iscsid_login_req_t * req,
 	struct hostent *host;
 	initiator_t *init;
 
-	DEB(9, ("Make Connection sess=%x, req=%x, res=%x, stid=%x\n",
-			 (int) sess, (int) req, (int) res, (int) stid));
+	DEB(9, ("Make Connection sess=%p, req=%p, res=%p, stid=%p\n",
+			 sess, req, res, stid));
 	(void) memset(&loginp, 0x0, sizeof(loginp));
 	(void) memset(&serverAddress, 0x0, sizeof(serverAddress));
 
