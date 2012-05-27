@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.165 2012/05/02 02:43:00 christos Exp $
+# $NetBSD: md.amd64,v 1.166 2012/05/27 02:27:28 matt Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -102,6 +102,8 @@
 ./usr/lib/i386/libelf.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libevent.so.3			base-compat-shlib	compat,pic
 ./usr/lib/i386/libevent.so.3.2			base-compat-shlib	compat,pic
+./usr/lib/i386/libexecinfo.so.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libexecinfo.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/i386/libexpat.so.2			base-compat-shlib	compat,pic
 ./usr/lib/i386/libexpat.so.2.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libfetch.so.3			base-compat-shlib	compat,pic
