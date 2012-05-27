@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_globals.h,v 1.4 2011/11/20 01:23:57 agc Exp $	*/
+/*	$NetBSD: iscsid_globals.h,v 1.5 2012/05/27 17:27:33 riz Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -401,7 +401,7 @@ int debug_level;				/* How much info to display */
 #endif
 #ifdef ISCSI_NOTHREAD
 #define LOCK_SESSIONS   event_handler(NULL)
-#define UNLOCK_SESSIONS
+#define UNLOCK_SESSIONS do {} while(0)
 #else
 #define LOCK_SESSIONS   pthread_mutex_lock(&sesslist_lock)
 #define UNLOCK_SESSIONS pthread_mutex_unlock(&sesslist_lock)
