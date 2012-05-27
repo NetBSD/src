@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1761 2012/05/27 02:27:29 matt Exp $
+#	$NetBSD: mi,v 1.1762 2012/05/27 02:35:43 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2814,6 +2814,9 @@
 ./usr/lib/libexecinfo.a				comp-c-lib
 ./usr/lib/libexecinfo_g.a			-unknown-		debuglib
 ./usr/lib/libexecinfo_p.a			comp-c-proflib		profile
+./usr/lib/libexpat.a				comp-c-lib
+./usr/lib/libexpat_g.a				-unknown-		debuglib
+./usr/lib/libexpat_p.a				comp-c-proflib		profile
 ./usr/lib/libfetch.a				comp-c-lib
 ./usr/lib/libfetch_g.a				-unknown-		debuglib
 ./usr/lib/libfetch_p.a				comp-c-proflib		profile
