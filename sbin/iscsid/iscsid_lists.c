@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_lists.c,v 1.4 2012/05/27 16:50:32 riz Exp $	*/
+/*	$NetBSD: iscsid_lists.c,v 1.5 2012/05/27 20:05:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@ static uint32_t initiator_id = 0;
 
 /* -------------------------------------------------------------------------- */
 
-/*#ifdef ISCSI_NOTHREAD */
 #if 0
 
 /*
