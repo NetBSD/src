@@ -1,4 +1,4 @@
-.\" $NetBSD: wskbd.4,v 1.15 2012/05/27 10:45:49 abs Exp $
+.\" $NetBSD: wskbd.4,v 1.16 2012/05/27 12:05:40 wiz Exp $
 .\"
 .\" Copyright (c) 1999
 .\" 	Matthias Drochner.  All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 31, 2006
+.Dd May 27, 2012
 .Dt WSKBD 4
 .Os
 .Sh NAME
@@ -139,8 +139,11 @@ Get and set keyboard encoding settings.
 Get and set keyboard keyclick settings.
 .It Dv WSKBDIO_SETVERSION Pq Li "int"
 Set the wscons_event protocol version.
-The default is 0 for binary compatibility. The latest version is
-always available as WSKBD_EVENT_VERSION, and is currently 1.
+The default is 0 for binary compatibility.
+The latest version is
+always available as
+.Dv WSKBD_EVENT_VERSION ,
+and is currently 1.
 All new code should use a call similar to the below to ensure the
 correct version is returned.
 .Bd -literal -offset indent
