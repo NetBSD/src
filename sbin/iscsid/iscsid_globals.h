@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_globals.h,v 1.5 2012/05/27 17:27:33 riz Exp $	*/
+/*	$NetBSD: iscsid_globals.h,v 1.6 2012/05/27 22:03:16 riz Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -399,13 +399,8 @@ int debug_level;				/* How much info to display */
 #define LOCK_SESSIONS   verify_sessions()
 #define UNLOCK_SESSIONS
 #endif
-#ifdef ISCSI_NOTHREAD
-#define LOCK_SESSIONS   event_handler(NULL)
-#define UNLOCK_SESSIONS do {} while(0)
-#else
-#define LOCK_SESSIONS   pthread_mutex_lock(&sesslist_lock)
-#define UNLOCK_SESSIONS pthread_mutex_unlock(&sesslist_lock)
-#endif
+#define LOCK_SESSIONS   if (nothreads) event_handler(NULL); else pthread_mutex_lock(&sesslist_lock) 
+#define UNLOCK_SESSIONS if (!nothreads) pthread_mutex_unlock(&sesslist_lock)
 
 /* Check whether ID is present */
 
