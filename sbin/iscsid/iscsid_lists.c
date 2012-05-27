@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_lists.c,v 1.5 2012/05/27 20:05:04 christos Exp $	*/
+/*	$NetBSD: iscsid_lists.c,v 1.6 2012/05/27 23:54:45 riz Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -232,9 +232,9 @@ find_TargetName(iscsid_list_kind_t lst, uint8_t * name)
 			break;
 	}
 
-	DEB(10, ("Find_TagetName returns %p\n", curr));
+	DEB(10, ("Find_TargetName returns %p\n", curr));
 
-	return t;
+	return (target_t *)curr;
 }
 
 
