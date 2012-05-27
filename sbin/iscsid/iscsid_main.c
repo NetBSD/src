@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_main.c,v 1.3 2011/11/20 01:23:57 agc Exp $	*/
+/*	$NetBSD: iscsid_main.c,v 1.4 2012/05/27 19:52:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -53,9 +53,10 @@ pthread_t event_thread;			/* event thread handle */
 int driver = -1;				/* the driver's file desc */
 int client_sock;				/* the client communication socket */
 
-#ifdef ISCSI_DEBUG
-int debug_level = ISCSI_DEBUG;	/* How much info to display */
+#ifndef ISCSI_DEBUG
+#define ISCSI_DEBUG 0
 #endif
+int debug_level = ISCSI_DEBUG;	/* How much info to display */
 
 /*
    To avoid memory fragmentation (and speed things up a bit), we use the
@@ -67,6 +68,13 @@ static uint8_t req_buf[REQ_BUFFER_SIZE];	/* default buffer for requests */
 static uint8_t rsp_buf[RSP_BUFFER_SIZE];	/* default buffer for responses */
 
 /* -------------------------------------------------------------------------- */
+
+static void __dead
+usage(void) 
+{
+	fprintf(stderr, "Usage: %s [-d]\n", getprogname());
+	exit(EXIT_FAILURE);
+}
 
 
 /*
@@ -501,7 +509,7 @@ int
 /*ARGSUSED*/
 main(int argc, char **argv)
 {
-	int req_temp, rsp_temp;
+	int req_temp, rsp_temp, c;
 	ssize_t ret;
 	size_t len;
 	struct sockaddr_un from;
@@ -518,7 +526,17 @@ main(int argc, char **argv)
 
 	printf("iSCSI Daemon loaded\n");
 
-	daemon(0, 1);
+	while ((c = getopt(argc, argv, "d")) != -1)
+		switch (c) {
+		case 'd':
+			debug_level++;
+			break;
+		default:
+			usage();
+		}
+
+	if (!debug_level)
+		daemon(0, 1);
 
 #ifndef ISCSI_NOTHREAD
 	ret = pthread_create(&event_thread, NULL, event_handler, NULL);
