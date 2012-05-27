@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.183 2012/05/26 22:03:04 christos Exp $
+#	$NetBSD: Makefile,v 1.184 2012/05/27 02:19:50 matt Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -32,7 +32,7 @@ SUBDIR+=	i18n_module
 
 SUBDIR+=	libarch \
 		libbluetooth libbsdmalloc libbz2 \
-		libcompat libcrypt libexecinfo \
+		libcompat libcrypt \
 		libintl libipsec libisns libkvm libm \
 		libossaudio libpci libpmc libposix libprop libpthread \
 		libpthread_dbg libpuffs libresolv librmt librpcsvc librt \
@@ -99,6 +99,7 @@ SUBDIR+=	.WAIT
 SUBDIR+=	libcurses	# depends on libterminfo
 SUBDIR+=	libdm		# depends on libprop
 SUBDIR+=	libedit		# depends on libterminfo
+SUBDIR+=	libexecinfo 	# depends on libelf
 SUBDIR+=	libppath	# depends on libprop
 SUBDIR+=	libperfuse	# depends on libpuffs
 SUBDIR+=	libquota	# depends on libprop and librpcsvc
