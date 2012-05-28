@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_main.c,v 1.6 2012/05/27 22:03:16 riz Exp $	*/
+/*	$NetBSD: iscsid_main.c,v 1.7 2012/05/28 00:13:19 riz Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 #include <sys/sysctl.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <fcntl.h>
 
 #define DEVICE    "/dev/iscsi0"
@@ -71,7 +72,7 @@ static uint8_t rsp_buf[RSP_BUFFER_SIZE];	/* default buffer for responses */
 static void __dead
 usage(void) 
 {
-	fprintf(stderr, "Usage: %s [-d]\n", getprogname());
+	fprintf(stderr, "Usage: %s [-d <lvl>] [-n]\n", getprogname());
 	exit(EXIT_FAILURE);
 }
 
@@ -484,7 +485,6 @@ exit_daemon(void)
 	dereg_all_isns_servers();
 #endif
 
-	close(client_sock);
 	printf("iSCSI Daemon Exits\n");
 	exit(0);
 }
@@ -512,24 +512,28 @@ main(int argc, char **argv)
 	iscsid_request_t *req;
 	iscsid_response_t *rsp;
 	struct timeval seltout = { 2, 0 };	/* 2 second poll interval */
+	char *p;
+
+	while ((c = getopt(argc, argv, "d:n")) != -1)
+		switch (c) {
+		case 'n':
+			nothreads++;
+			break;
+		case 'd':
+			debug_level=(int)strtol(optarg, &p, 10);
+			if (*p)
+				errx(EXIT_FAILURE, "illegal debug level -- %s",
+				    optarg);
+			break;
+		default:
+			usage();
+		}
 
 	client_sock = init_daemon();
 	if (client_sock < 0)
 		exit(1);
 
 	printf("iSCSI Daemon loaded\n");
-
-	while ((c = getopt(argc, argv, "dn")) != -1)
-		switch (c) {
-		case 'n':
-			nothreads++;
-			break;
-		case 'd':
-			debug_level++;
-			break;
-		default:
-			usage();
-		}
 
 	if (!debug_level)
 		daemon(0, 1);
@@ -579,7 +583,7 @@ main(int argc, char **argv)
 			perror("Receiving from socket");
 			break;
 		}
-		DEB(99, ("Request %d, parlen %d\n",
+		DEB(98, ("Request %d, parlen %d\n",
 				req->request, req->parameter_length));
 
 		len += req->parameter_length;
@@ -625,7 +629,7 @@ main(int argc, char **argv)
 		if (rsp == NULL)
 			break;
 
-		DEB(99, ("Sending reply: status %d, len %d\n",
+		DEB(98, ("Sending reply: status %d, len %d\n",
 				rsp->status, rsp->parameter_length));
 
 		/* send the response */
