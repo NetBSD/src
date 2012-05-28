@@ -1,4 +1,4 @@
-/*       $NetBSD: bootinfo.h,v 1.6 2012/05/28 19:24:30 martin Exp $        */
+/*       $NetBSD: bootinfo.h,v 1.7 2012/05/28 21:09:52 martin Exp $        */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -98,7 +98,6 @@
 #define BTINFO_ITLB			103
 #define BTINFO_KERNEND			104
 #define BTINFO_BOOTDEV			105
-#define BTINFO_BOOTHOWTO		106
 
 #define LOOKUP_BOOTINFO(btp, info) \
 do { \
@@ -130,11 +129,6 @@ struct btinfo_kernend {
 struct btinfo_bootdev {
 	struct btinfo_common common;
 	char name[1];
-};
-
-struct btinfo_boothowto {
-	struct btinfo_common common;
-	int boothowto;
 };
 
 #endif /* _BOOTINFO_H_ */
