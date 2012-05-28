@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.183 2012/03/13 18:40:58 elad Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.184 2012/05/28 13:16:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.183 2012/03/13 18:40:58 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.184 2012/05/28 13:16:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,6 +175,7 @@ static const struct proc_target {
 	{ DT_LNK, N("root"),	PFSchroot,	NULL },
 	{ DT_LNK, N("emul"),	PFSemul,	NULL },
 	{ DT_REG, N("statm"),	PFSstatm,	procfs_validfile_linux },
+	{ DT_DIR, N("task"),	PFStask,	procfs_validfile_linux },
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODETYPE_DEFNS
 #endif
@@ -641,6 +642,12 @@ procfs_getattr(void *v)
 	}
 
 	switch (pfs->pfs_type) {
+	case PFStask:
+		if (pfs->pfs_fd == -1) {
+			path = NULL;
+			break;
+		}
+		/*FALLTHROUGH*/
 	case PFScwd:
 	case PFSchroot:
 	case PFSexe:
@@ -777,7 +784,17 @@ procfs_getattr(void *v)
 		    snprintf(bf, sizeof(bf), "%ld", (long)curproc->p_pid);
 		break;
 	}
-
+	case PFStask:
+		if (pfs->pfs_fd != -1) {
+			char bf[4];		/* should be enough */
+			vap->va_nlink = 1;
+			vap->va_uid = 0;
+			vap->va_gid = 0;
+			vap->va_bytes = vap->va_size =
+			    snprintf(bf, sizeof(bf), "..");
+			break;
+		}
+		/*FALLTHROUGH*/
 	case PFSfd:
 		if (pfs->pfs_fd != -1) {
 			file_t *fp;
@@ -1151,6 +1168,36 @@ procfs_lookup(void *v)
 		procfs_proc_unlock(p);
 		return error;
 	}
+	case PFStask: {
+		int xpid;
+
+		if ((error = procfs_proc_lock(pfs->pfs_pid, &p, ENOENT)) != 0)
+			return error;
+
+		/*
+		 * do the .. dance. We unlock the directory, and then
+		 * get the proc dir. That will automatically return ..
+		 * locked. Then re-lock the directory.
+		 */
+		if (cnp->cn_flags & ISDOTDOT) {
+			VOP_UNLOCK(dvp);
+			error = procfs_allocvp(dvp->v_mount, vpp, pfs->pfs_pid,
+			    PFSproc, -1, p);
+			procfs_proc_unlock(p);
+			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
+			return (error);
+		}
+		xpid = atoi(pname, cnp->cn_namelen);
+
+		if (xpid != pfs->pfs_pid) {
+			procfs_proc_unlock(p);
+			return ENOENT;
+		}
+		error = procfs_allocvp(dvp->v_mount, vpp, pfs->pfs_pid,
+		    PFStask, 0, p);
+		procfs_proc_unlock(p);
+		return error;
+	}
 	default:
 		return (ENOTDIR);
 	}
@@ -1396,6 +1443,56 @@ procfs_readdir(void *v)
 		procfs_proc_unlock(p);
 		break;
 	}
+	case PFStask: {
+		struct proc *p;
+		int nc = 0;
+
+		if ((error = procfs_proc_lock(pfs->pfs_pid, &p, ESRCH)) != 0)
+			return error;
+
+		nfd = 3;	/* ., .., pid */
+
+		if (ap->a_ncookies) {
+			ncookies = min(ncookies, (nfd + 2 - i));
+			cookies = malloc(ncookies * sizeof (off_t),
+			    M_TEMP, M_WAITOK);
+			*ap->a_cookies = cookies;
+		}
+
+		for (; i < 2 && uio->uio_resid >= UIO_MX; i++) {
+			pt = &proc_targets[i];
+			d.d_namlen = pt->pt_namlen;
+			d.d_fileno = PROCFS_FILENO(pfs->pfs_pid,
+			    pt->pt_pfstype, -1);
+			(void)memcpy(d.d_name, pt->pt_name, pt->pt_namlen + 1);
+			d.d_type = pt->pt_type;
+			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
+				break;
+			if (cookies)
+				*cookies++ = i + 1;
+			nc++;
+		}
+		if (error) {
+			ncookies = nc;
+			break;
+		}
+		for (; uio->uio_resid >= UIO_MX && i < nfd; i++) {
+			/* check the descriptor exists */
+			d.d_fileno = PROCFS_FILENO(pfs->pfs_pid, PFStask,
+			    i - 2);
+			d.d_namlen = snprintf(d.d_name, sizeof(d.d_name),
+			    "%ld", (long)pfs->pfs_pid);
+			d.d_type = DT_LNK;
+			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
+				break;
+			if (cookies)
+				*cookies++ = i + 1;
+			nc++;
+		}
+		ncookies = nc;
+		procfs_proc_unlock(p);
+		break;
+	}
 
 	/*
 	 * this is for the root of the procfs filesystem
@@ -1530,6 +1627,8 @@ procfs_readlink(void *v)
 		len = snprintf(bf, sizeof(bf), "%ld", (long)curproc->p_pid);
 	else if (pfs->pfs_fileno == PROCFS_FILENO(0, PFSself, -1))
 		len = snprintf(bf, sizeof(bf), "%s", "curproc");
+	else if (pfs->pfs_fileno == PROCFS_FILENO(pfs->pfs_pid, PFStask, 0))
+		len = snprintf(bf, sizeof(bf), "..");
 	else if (pfs->pfs_fileno == PROCFS_FILENO(pfs->pfs_pid, PFScwd, -1) ||
 	    pfs->pfs_fileno == PROCFS_FILENO(pfs->pfs_pid, PFSchroot, -1) ||
 	    pfs->pfs_fileno == PROCFS_FILENO(pfs->pfs_pid, PFSexe, -1)) {
@@ -1581,7 +1680,8 @@ procfs_readlink(void *v)
 			if (vxp->v_tag == VT_PROCFS) {
 				*--bp = '/';
 			} else {
-				rw_enter(&curproc->p_cwdi->cwdi_lock, RW_READER);
+				rw_enter(&curproc->p_cwdi->cwdi_lock,
+				    RW_READER);
 				vp = curproc->p_cwdi->cwdi_rdir;
 				if (vp == NULL)
 					vp = rootvnode;
