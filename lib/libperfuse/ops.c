@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.54 2012/04/18 00:57:21 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.55 2012/05/28 02:13:32 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -1843,6 +1843,19 @@ perfuse_node_setattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 	    ((vap->va_mode == (mode_t)PUFFS_VNOVAL) &&
 	     (vap->va_uid == (uid_t)PUFFS_VNOVAL) &&
 	     (vap->va_gid == (gid_t)PUFFS_VNOVAL))) {
+		fsi->atime = 0;
+		fsi->atimensec = 0;
+		fsi->mtime = 0;
+		fsi->mtimensec = 0;
+		fsi->valid &= ~(FUSE_FATTR_ATIME|FUSE_FATTR_MTIME);
+	}
+
+	/*
+	 * There is the same mess with fchmod()
+	 */
+	if ((vap->va_mode != (mode_t)PUFFS_VNOVAL) &&
+	    (vap->va_uid == (uid_t)PUFFS_VNOVAL) &&
+	    (vap->va_gid == (gid_t)PUFFS_VNOVAL)) {
 		fsi->atime = 0;
 		fsi->atimensec = 0;
 		fsi->mtime = 0;
