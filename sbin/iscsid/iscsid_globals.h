@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_globals.h,v 1.6 2012/05/27 22:03:16 riz Exp $	*/
+/*	$NetBSD: iscsid_globals.h,v 1.7 2012/05/28 00:13:19 riz Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -379,19 +379,11 @@ iscsid_set_node_name_req_t node_name;
 
 /* Debugging stuff */
 
-#ifdef ISCSI_DEBUG
 
-int debug_level;				/* How much info to display */
+extern int debug_level;				/* How much info to display */
 
 #define DEBOUT(x) printf x
 #define DEB(lev,x) {if (debug_level >= lev) printf x ;}
-
-#else
-
-#define DEBOUT(x)
-#define DEB(lev,x)
-
-#endif
 
 /* Session list protection shortcuts */
 
