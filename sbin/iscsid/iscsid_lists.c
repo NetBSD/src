@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_lists.c,v 1.6 2012/05/27 23:54:45 riz Exp $	*/
+/*	$NetBSD: iscsid_lists.c,v 1.7 2012/05/28 00:37:55 riz Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -232,8 +232,8 @@ find_TargetName(iscsid_list_kind_t lst, uint8_t * name)
 			break;
 	}
 
+	/* return curr instead of t because curr==NULL if name not found */
 	DEB(10, ("Find_TargetName returns %p\n", curr));
-
 	return (target_t *)curr;
 }
 
@@ -266,8 +266,9 @@ find_portal_by_addr(target_t * target, iscsi_portal_address_t * addr)
 			break;
 	}
 
+	/* return curr instead of p because curr==NULL if not found */
 	DEB(10, ("Find_portal_by_addr returns %p\n", curr));
-	return p;
+	return (portal_t *)curr;
 }
 
 
@@ -293,8 +294,9 @@ find_send_target_by_addr(iscsi_portal_address_t * addr)
 			break;
 	}
 
+	/* return curr instead of p because curr==NULL if not found */
 	DEB(10, ("Find_send_target_by_addr returns %p\n", curr));
-	return t;
+	return (send_target_t *)curr;
 }
 
 
@@ -694,8 +696,9 @@ find_initiator_by_addr(uint8_t * addr)
 			break;
 	}
 
+	/* return curr instead of i because if not found, curr==NULL */
 	DEB(9, ("Find_initiator_by_addr returns %p\n", curr));
-	return i;
+	return (initiator_t *)curr;
 }
 
 
