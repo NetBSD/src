@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.100 2011/09/04 17:32:10 jmcneill Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.101 2012/05/28 13:16:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.100 2011/09/04 17:32:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.101 2012/05/28 13:16:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,6 +202,14 @@ procfs_allocvp(struct mount *mp, struct vnode **vpp, pid_t pid,
 		vp->v_type = VDIR;
 		break;
 
+	case PFStask:	/* /proc/N/task = dr-xr-xr-x */
+		if (fd == -1) {
+			pfs->pfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|
+			    S_IROTH|S_IXOTH;
+			vp->v_type = VDIR;
+			break;
+		}
+		/*FALLTHROUGH*/
 	case PFScurproc:	/* /proc/curproc = lr-xr-xr-x */
 	case PFSself:	/* /proc/self    = lr-xr-xr-x */
 	case PFScwd:	/* /proc/N/cwd = lr-xr-xr-x */
@@ -212,7 +220,7 @@ procfs_allocvp(struct mount *mp, struct vnode **vpp, pid_t pid,
 		break;
 
 	case PFSfd:
-		if (fd == -1) {	/* /proc/N/fd = dr-xr-xr-x */
+		if (fd == -1) {	/* /proc/N/fd = dr-x------ */
 			pfs->pfs_mode = S_IRUSR|S_IXUSR;
 			vp->v_type = VDIR;
 		} else {	/* /proc/N/fd/M = [ps-]rw------- */
