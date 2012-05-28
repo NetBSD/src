@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.67 2011/09/27 01:23:59 christos Exp $	*/
+/*	$NetBSD: procfs.h,v 1.68 2012/05/28 13:16:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -109,6 +109,7 @@ typedef enum {
 	PFSloadavg,	/* load average (if -o linux) */
 	PFSstatm,	/* process memory info (if -o linux) */
 	PFSversion,	/* kernel version (if -o linux) */
+	PFStask,	/* task subdirector (if -o linux) */
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODE_TYPES
 #endif
