@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.242 2011/07/17 23:18:23 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.243 2012/05/28 19:24:29 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.242 2011/07/17 23:18:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.243 2012/05/28 19:24:29 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.242 2011/07/17 23:18:23 mrg Exp $");
 #include <sys/msgbuf.h>
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
+#include <sys/userconf.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -270,6 +271,7 @@ bootstrap(void)
 #else
 	extern int end[];
 #endif
+	struct btinfo_boothowto *bi_howto;
 
 	prom_init();
 
@@ -352,6 +354,11 @@ bootstrap(void)
 		    (void*)bi_sym->esym);
 	}
 #endif
+
+	if ((bi_howto = lookup_bootinfo(BTINFO_BOOTHOWTO)) != NULL) {
+		boothowto = bi_howto->boothowto;
+printf("initialized boothowt from bootloader: %x\n", boothowto);
+	}
 }
 
 #if defined(SUN4M) && !defined(MSIIEP)
@@ -915,12 +922,21 @@ void
 cpu_configure(void)
 {
 	struct pcb *pcb0;
+	bool userconf = (boothowto & RB_USERCONF) != 0;
 
 	/* initialise the softintr system */
 	sparc_softintr_init();
 
 	/* build the bootpath */
 	bootpath_build();
+	if (((boothowto & RB_USERCONF) != 0) && !userconf)
+		/*
+		 * Old bootloaders do not pass boothowto, and MI code
+		 * has already handled userconfig before we get here
+		 * and finally fetch the right options. So if we missed
+		 * it, just do it here.
+ 		 */
+		userconf_prompt();
 
 #if defined(SUN4)
 	if (CPU_ISSUN4) {
