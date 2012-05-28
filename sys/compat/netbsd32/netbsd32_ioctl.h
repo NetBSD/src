@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.42 2012/05/11 19:00:36 christos Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.43 2012/05/28 14:19:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -113,6 +113,17 @@ struct netbsd32_wsdisplay_addscreendata {
 	netbsd32_charp emul;
 };
 #define	WSDISPLAYIO_ADDSCREEN32	_IOW('W', 78, struct netbsd32_wsdisplay_addscreendata)
+
+/* the first member must be matched with struct ifreq */
+struct netbsd32_ieee80211req {
+	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
+	uint16_t	i_type;			/* req type */
+	int16_t		i_val;			/* Index or simple value */
+	uint16_t	i_len;			/* Index or simple value */
+	netbsd32_voidp	i_data;			/* Extra data */
+};
+#define SIOCS8021132			_IOW('i', 244, struct netbsd32_ieee80211req)
+#define SIOCG8021132			_IOWR('i', 245, struct netbsd32_ieee80211req)
 
 /* the first member must be matched with struct ifreq */
 struct netbsd32_ieee80211_nwkey {
