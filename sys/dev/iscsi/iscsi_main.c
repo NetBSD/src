@@ -572,6 +572,10 @@ iscsi_modcmd(modcmd_t cmd, void *arg)
 		return 0;
 		break;
 
+	case MODULE_CMD_AUTOUNLOAD:
+		return EBUSY;
+		break;
+
 	default:
 		return ENOTTY;
 		break;
