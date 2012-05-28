@@ -1,4 +1,4 @@
-/*	$NetBSD: t_backtrace.c,v 1.1 2012/05/27 18:47:18 christos Exp $	*/
+/*	$NetBSD: t_backtrace.c,v 1.2 2012/05/28 09:51:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_backtrace.c,v 1.1 2012/05/27 18:47:18 christos Exp $");
+__RCSID("$NetBSD: t_backtrace.c,v 1.2 2012/05/28 09:51:34 martin Exp $");
 
 #include <atf-c.h>
 #include <string.h>
@@ -50,7 +50,7 @@ myfunc3(size_t ncalls)
 	char **strings;
 
 	nptrs = backtrace(buffer, __arraycount(buffer));
-	ATF_CHECK_EQ(nptrs, ncalls + 8);
+	ATF_REQUIRE_EQ(nptrs, ncalls + 8);
 
 	strings = backtrace_symbols_fmt(buffer, nptrs, "%n");
 
