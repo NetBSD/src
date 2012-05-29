@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.24 2011/07/28 22:54:02 matt Exp $ */
+/*	$NetBSD: asm.h,v 1.25 2012/05/29 17:25:38 matt Exp $ */
 /*
  * Copyright (c) 1982, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -115,7 +115,7 @@
 1:
 	mulf2	%r1, %r0		/* result *= arg */
 2:
-	addf2	*(%r3)+, %r0		/* result += c[n] */
+	addf2	(%r3)+, %r0		/* result += c[n] */
 	sobgtr	%r2, 1b
 	clrf	%r1			/* r1 is 0 on finish */
 .endm
@@ -130,7 +130,7 @@
 1:
 	muld2	%r4, %r0		/* result *= arg */
 2:
-	addd2	*(%r3)+, %r0		/* result += c[n] */
+	addd2	(%r3)+, %r0		/* result += c[n] */
 	sobgtr	%r2, 1b
 	clrq	%r4			/* r4, r5 are 0 on finish */
 .endm
