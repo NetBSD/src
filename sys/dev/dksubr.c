@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.44 2012/05/25 14:25:39 elric Exp $ */
+/* $NetBSD: dksubr.c,v 1.45 2012/05/29 10:20:33 elric Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.44 2012/05/25 14:25:39 elric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.45 2012/05/29 10:20:33 elric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -635,9 +635,7 @@ dk_set_properties(struct dk_intf *di, struct dk_softc *dksc)
 
 	geom = prop_dictionary_create();
 
-	prop_dictionary_set_uint64(geom, "sectors-per-unit",
-	    dksc->sc_geom.pdg_nsectors * dksc->sc_geom.pdg_ntracks *
-	    dksc->sc_geom.pdg_ncylinders);
+	prop_dictionary_set_uint64(geom, "sectors-per-unit", dksc->sc_size);
 
 	prop_dictionary_set_uint32(geom, "sector-size",
 	    dksc->sc_geom.pdg_secsize);
