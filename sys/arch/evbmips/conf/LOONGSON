@@ -1,4 +1,4 @@
-# $NetBSD: LOONGSON,v 1.10 2012/05/29 14:12:28 christos Exp $
+# $NetBSD: LOONGSON,v 1.11 2012/05/29 20:02:42 nonaka Exp $
 #
 # LOONGSON machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.loongson"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"LOONGSON-$Revision: 1.10 $"
+#ident 		"LOONGSON-$Revision: 1.11 $"
 
 maxusers	16
 
@@ -57,6 +57,11 @@ options 	MSGBUFSIZE=8192		# dmesg buffer size
 options 	NTP			# network time protocol
 
 #options 	WINCE_DEFAULT_SETTING	# Debugging use
+
+# Note: SysV IPC parameters can be changed dynamically; see sysctl(8).
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+options 	SYSVSHM		# System V-like memory sharing
 
 #options 	SYSCALL_DEBUG		# for debug
 #options 	HPCMIPS_L1CACHE_DISABLE	# disable L1 cache for debug
