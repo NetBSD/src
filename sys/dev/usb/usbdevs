@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.618 2012/05/29 19:47:56 nonaka Exp $
+$NetBSD: usbdevs,v 1.619 2012/05/29 21:10:40 nonaka Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1926,6 +1926,7 @@ product MELCO WLIUCGNHP		0x0158	WLI-UC-GNHP
 product MELCO WLIUCGN		0x015d	WLI-UC-GN
 product MELCO WLIUCG301N	0x016f	WLI-UC-G301N
 product MELCO WLIUCGNM		0x01a2	WLI-UC-GNM
+product MELCO WLIUCGNM2T	0x01ee	WLI-UC-GNM2T
 
 /* Merlin products */
 product MERLIN V620             0x1110  Merlin V620
