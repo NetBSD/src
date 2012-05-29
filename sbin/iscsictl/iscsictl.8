@@ -1,4 +1,4 @@
-.\" $NetBSD: iscsictl.8,v 1.3 2012/05/27 11:59:12 wiz Exp $
+.\" $NetBSD: iscsictl.8,v 1.4 2012/05/29 00:33:04 riz Exp $
 .\"
 .\" Copyright (c) 2011 Alistair Crooks <agc@NetBSD.org>
 .\" All rights reserved.
@@ -237,10 +237,13 @@ command, please see the example below.
 .It Cm add_initiator Fl a Ar interface-address Op Fl N Ar symbolic-name
 .It Cm remove_initiator Fl I Ar portal-id
 .It Cm list_initiators
-.It Cm list_sessions
+.It Cm list_sessions Op Fl c
 Once login to the target has taken place, a session will have been created.
 To list the session information, this command is used.
 The session number and target information for each of the targets are displayed.
+If the
+.Fl c
+flag is used, connection information is displayed as well.
 For more context on the exact usage of this
 command, please see the example below.
 .It Cm set_node_name Fl n Ar initiator-name Oo Fl A alias Oc Oo Fl i Ar isid Oc
