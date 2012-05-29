@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.89 2012/05/02 02:43:00 christos Exp $
+# $NetBSD: ad.mips64el,v 1.90 2012/05/29 15:42:42 martin Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -270,6 +270,8 @@
 ./usr/lib/64/libwind.so.0.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/64/libwrap.so.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libwrap.so.1.0			base-compat-shlib	compat,pic
+./usr/lib/64/libexecinfo.so.0			base-compat-shlib	compat,pic
+./usr/lib/64/libexecinfo.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libz.so.1				base-compat-shlib	compat,pic
 ./usr/lib/64/libz.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/64/lua				base-compat-shlib	compat
@@ -568,6 +570,8 @@
 ./usr/lib/o32/libwind.so.0.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/o32/libwrap.so.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libwrap.so.1.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libexecinfo.so.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libexecinfo.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/o32/libz.so.1				base-compat-shlib	compat,pic
 ./usr/lib/o32/libz.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/lua				base-compat-shlib	compat
