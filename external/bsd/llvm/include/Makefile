@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2012/04/04 10:42:01 joerg Exp $
+#	$NetBSD: Makefile,v 1.9 2012/05/29 19:31:52 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -91,10 +91,6 @@ CLANG_TABLEGEN_OUTPUT.arm_neon.td= \
 CLANG_TABLEGEN_INCLUDES.Options.td=	-I${CLANG_SRCDIR}/include/clang/Driver
 CLANG_TABLEGEN_OUTPUT.Options.td= \
 	clang/Driver/Options.inc|-gen-opt-parser-defs
-
-CLANG_TABLEGEN_INCLUDES.CC1Options.td=	-I${CLANG_SRCDIR}/include/clang/Driver
-CLANG_TABLEGEN_OUTPUT.CC1Options.td= \
-	clang/Driver/CC1Options.inc|-gen-opt-parser-defs
 
 CLANG_TABLEGEN_INCLUDES.CC1AsOptions.td=	-I${CLANG_SRCDIR}/include/clang/Driver
 CLANG_TABLEGEN_OUTPUT.CC1AsOptions.td= \

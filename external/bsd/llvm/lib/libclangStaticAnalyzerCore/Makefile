@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2012/04/04 10:42:05 joerg Exp $
+#	$NetBSD: Makefile,v 1.10 2012/05/29 19:31:53 joerg Exp $
 
 LIB=	clangStaticAnalyzerCore
 
@@ -6,7 +6,8 @@ LIB=	clangStaticAnalyzerCore
 
 .PATH: ${CLANG_SRCDIR}/lib/StaticAnalyzer/Core
 
-SRCS+=	AnalysisManager.cpp \
+SRCS+=	APSIntType.cpp \
+	AnalysisManager.cpp \
 	BasicConstraintManager.cpp \
 	BasicValueFactory.cpp \
 	BlockCounter.cpp \
