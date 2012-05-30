@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.16 2012/05/06 02:45:25 rmind Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.17 2012/05/30 21:38:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.16 2012/05/06 02:45:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.17 2012/05/30 21:38:03 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -60,8 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.16 2012/05/06 02:45:25 rmind Exp $
 static struct pfil_head *	npf_ph_if = NULL;
 static struct pfil_head *	npf_ph_inet = NULL;
 static struct pfil_head *	npf_ph_inet6 = NULL;
-
-int	npf_packet_handler(void *, struct mbuf **, ifnet_t *, int);
 
 /*
  * npf_ifhook: hook handling interface changes.

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2012/04/14 19:01:22 rmind Exp $
+#	$NetBSD: Makefile,v 1.3 2012/05/30 21:38:03 rmind Exp $
 #
 # Public Domain.
 #
@@ -16,6 +16,7 @@ SRCS+=	component.c
 
 WARNS=	4
 
+CPPFLAGS+=	-D_NPF_TESTING
 CPPFLAGS+=	-I${.CURDIR}/../../../librump/rumpvfs
 
 .include <bsd.lib.mk>

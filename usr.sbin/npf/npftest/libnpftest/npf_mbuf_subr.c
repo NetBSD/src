@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_mbuf_subr.c,v 1.1 2012/04/14 21:57:29 rmind Exp $	*/
+/*	$NetBSD: npf_mbuf_subr.c,v 1.2 2012/05/30 21:38:04 rmind Exp $	*/
 
 /*
  * NPF testing - helper routines.
@@ -13,13 +13,15 @@
 #include "npf_test.h"
 
 struct mbuf *
-mbuf_getwithdata(void *data, size_t len)
+mbuf_getwithdata(const void *data, size_t len)
 {
 	struct mbuf *m;
+	void *dst;
 
-	m = kmem_zalloc(sizeof(struct mbuf), KM_SLEEP);
+	m = m_gethdr(M_WAITOK, MT_HEADER);
 	assert(m != NULL);
-	m->m_data = data;
+	dst = mtod(m, void *);
+	memcpy(dst, data, len);
 	m->m_len = len;
 	return m;
 }

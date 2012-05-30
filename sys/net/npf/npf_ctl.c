@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.14 2012/03/11 18:27:59 rmind Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.15 2012/05/30 21:38:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.14 2012/03/11 18:27:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.15 2012/05/30 21:38:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -434,15 +434,14 @@ npfctl_reload(u_long cmd, void *data)
 	int error;
 
 	/* Retrieve the dictionary. */
-#ifdef _KERNEL
+#ifndef _NPF_TESTING
 	error = prop_dictionary_copyin_ioctl(pref, cmd, &npf_dict);
 	if (error)
 		return error;
 #else
-	npf_dict = prop_dictionary_internalize_from_file(data);
-	if (npf_dict == NULL)
-		return EINVAL;
+	npf_dict = (prop_dictionary_t)pref;
 #endif
+
 	/* Dictionary for error reporting. */
 	errdict = prop_dictionary_create();
 
@@ -507,7 +506,7 @@ fail:
 
 	/* Error report. */
 	prop_dictionary_set_int32(errdict, "errno", error);
-#ifdef _KERNEL
+#ifndef _NPF_TESTING
 	prop_dictionary_copyout_ioctl(pref, cmd, errdict);
 #endif
 	prop_object_release(errdict);
@@ -544,17 +543,11 @@ npfctl_update_rule(u_long cmd, void *data)
 	const char *name;
 	int error;
 
-#ifdef _KERNEL
 	/* Retrieve and construct the rule. */
 	error = prop_dictionary_copyin_ioctl(pref, cmd, &dict);
 	if (error) {
 		return error;
 	}
-#else
-	dict = prop_dictionary_internalize_from_file(data);
-	if (dict == NULL)
-		return EINVAL;
-#endif
 
 	/* Dictionary for error reporting. */
 	errdict = prop_dictionary_create();
@@ -580,9 +573,7 @@ out:		/* Error path. */
 
 	/* Error report. */
 	prop_dictionary_set_int32(errdict, "errno", error);
-#ifdef _KERNEL
 	prop_dictionary_copyout_ioctl(pref, cmd, errdict);
-#endif
 	prop_object_release(errdict);
 	return error;
 }
@@ -612,11 +603,7 @@ npfctl_sessions_save(u_long cmd, void *data)
 	/* Set the session list, NAT policy list and export the dictionary. */
 	prop_dictionary_set(sesdict, "session-list", selist);
 	prop_dictionary_set(sesdict, "nat-policy-list", nplist);
-#ifdef _KERNEL
 	error = prop_dictionary_copyout_ioctl(pref, cmd, sesdict);
-#else
-	error = prop_dictionary_externalize_to_file(sesdict, data) ? 0 : errno;
-#endif
 fail:
 	prop_object_release(sesdict);
 	return error;
@@ -636,15 +623,10 @@ npfctl_sessions_load(u_long cmd, void *data)
 	int error;
 
 	/* Retrieve the dictionary containing session and NAT policy lists. */
-#ifdef _KERNEL
 	error = prop_dictionary_copyin_ioctl(pref, cmd, &sesdict);
 	if (error)
 		return error;
-#else
-	sesdict = prop_dictionary_internalize_from_file(data);
-	if (sesdict == NULL)
-		return EINVAL;
-#endif
+
 	/*
 	 * Note: session objects contain the references to the NAT policy
 	 * entries.  Therefore, no need to directly access it.

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_test.h,v 1.1 2012/04/14 21:57:29 rmind Exp $	*/
+/*	$NetBSD: npf_test.h,v 1.2 2012/05/30 21:38:04 rmind Exp $	*/
 
 /*
  * Public Domain.
@@ -24,7 +24,11 @@
 #include <net/if_ether.h>
 #include <net/ethertypes.h>
 
-struct mbuf *	mbuf_getwithdata(void *, size_t);
+int		npf_test_load(const void *);
+int		npf_test_handlepkt(const void *, size_t, unsigned,
+		    bool, int64_t *);
+
+struct mbuf *	mbuf_getwithdata(const void *, size_t);
 struct mbuf *	mbuf_construct_ether(int);
 struct mbuf *	mbuf_construct(int);
 void *		mbuf_return_hdrs(struct mbuf *, bool, struct ip **);
