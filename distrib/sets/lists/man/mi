@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1392 2012/05/30 14:30:33 nonaka Exp $
+# $NetBSD: mi,v 1.1393 2012/05/30 18:35:13 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1720,6 +1720,7 @@
 ./usr/share/man/cat4/url.0			man-sys-catman		.cat
 ./usr/share/man/cat4/urlphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/urndis.0			man-sys-catman		.cat
+./usr/share/man/cat4/urtw.0			man-sys-catman		.cat
 ./usr/share/man/cat4/urtwn.0			man-sys-catman		.cat
 ./usr/share/man/cat4/usb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/usbtask.0			man-sys-catman		.cat
@@ -4521,6 +4522,7 @@
 ./usr/share/man/html4/url.html			man-sys-htmlman		html
 ./usr/share/man/html4/urlphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/urndis.html		man-sys-htmlman		html
+./usr/share/man/html4/urtw.html			man-sys-htmlman		html
 ./usr/share/man/html4/urtwn.html		man-sys-htmlman		html
 ./usr/share/man/html4/usb.html			man-sys-htmlman		html
 ./usr/share/man/html4/usbtask.html		man-sys-htmlman		html
@@ -7249,6 +7251,7 @@
 ./usr/share/man/man4/url.4			man-sys-man		.man
 ./usr/share/man/man4/urlphy.4			man-sys-man		.man
 ./usr/share/man/man4/urndis.4			man-sys-man		.man
+./usr/share/man/man4/urtw.4			man-sys-man		.man
 ./usr/share/man/man4/urtwn.4			man-sys-man		.man
 ./usr/share/man/man4/usb.4			man-sys-man		.man
 ./usr/share/man/man4/usbtask.4			man-sys-man		.man
