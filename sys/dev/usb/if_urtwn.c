@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.1 2012/03/25 00:11:16 nonaka Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.2 2012/05/30 11:41:08 skrll Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.1 2012/03/25 00:11:16 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.2 2012/05/30 11:41:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -594,6 +594,7 @@ urtwn_alloc_tx_list(struct urtwn_softc *sc)
 
  fail:
 	urtwn_free_tx_list(sc);
+	mutex_exit(&sc->sc_tx_mtx);
 	return (error);
 }
 
