@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_var.c,v 1.4 2012/02/26 21:50:05 christos Exp $	*/
+/*	$NetBSD: npf_var.c,v 1.5 2012/05/30 21:30:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_var.c,v 1.4 2012/02/26 21:50:05 christos Exp $");
+__RCSID("$NetBSD: npf_var.c,v 1.5 2012/05/30 21:30:07 rmind Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -62,6 +62,7 @@ npfvar_create(const char *name)
 {
 	npfvar_t *vp = zalloc(sizeof(*vp));
 	vp->v_key = xstrdup(name);
+	var_num++;
 	return vp;
 }
 
@@ -88,7 +89,6 @@ npfvar_add(npfvar_t *vp)
 {
 	vp->v_next = var_list;
 	var_list = vp;
-	var_num++;
 }
 
 npfvar_t *
@@ -169,6 +169,7 @@ npfvar_destroy(npfvar_t *vp)
 	npfvar_free_elements(vp->v_elements);
 	free(vp->v_key);
 	free(vp);
+	var_num--;
 }
 
 char *
