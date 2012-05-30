@@ -1,0 +1,10 @@
+# $NetBSD: if_run.ioconf,v 1.1 2012/05/30 14:30:35 nonaka Exp $
+
+ioconf run
+
+include "conf/files"
+include "dev/usb/files.usb"
+
+pseudo-root usbdevif*
+
+run* at usbdevif?
