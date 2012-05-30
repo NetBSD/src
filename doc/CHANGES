@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1703 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1704 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -34,8 +34,8 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	dhcpcd(8): Import dhcpcd-5.5.5 [roy 20120323]
 	ipf: upgrade to 5.1.1 with new build framework, no module and
 		test support yet [christos 20120323]
-	urtwn(4): Add a driver for Realtek RTL8188CU/RTL8192CU USB IEEE
-		802.11b/g/n wireless network device, ported from OpenBSD.
+	kernel: Add urtwn(4), a driver for Realtek RTL8188CU/RTL8192CU USB IEEE
+		802.11b/g/n wireless network devices, ported from OpenBSD.
 		[nonaka 20120325]
 	pcc: upgrade to 1.1.0.DEVEL 20120325 [plunky 20120325]
 	openresolv(8): Import openresolv-3.5.1 [roy 20120327]
@@ -60,3 +60,6 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		on top of xsurf(4). [rkujawa 20120515]
 	backtrace(3): Add <execinfo.h> and the backtrace family of functions
 		[christos 20120526]
+	kernel: Add run(4), a driver for Ralink Technology
+		RT2700U/RT2800U/RT3000U USB IEEE 802.11a/b/g/n wireless
+		network devices, ported from OpenBSD. [nonaka 20120530]
