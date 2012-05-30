@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_main.c,v 1.3 2011/11/20 01:23:57 agc Exp $	*/
+/*	$NetBSD: iscsid_main.c,v 1.3.2.1 2012/05/30 08:06:26 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 #include <sys/sysctl.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <fcntl.h>
 
 #define DEVICE    "/dev/iscsi0"
@@ -45,17 +46,17 @@
 
 list_head_t list[NUM_DAEMON_LISTS];	/* the lists this daemon keeps */
 
-#ifndef ISCSI_NOTHREAD
 pthread_mutex_t sesslist_lock;	/* session list lock */
 pthread_t event_thread;			/* event thread handle */
-#endif
 
 int driver = -1;				/* the driver's file desc */
 int client_sock;				/* the client communication socket */
 
-#ifdef ISCSI_DEBUG
-int debug_level = ISCSI_DEBUG;	/* How much info to display */
+#ifndef ISCSI_DEBUG
+#define ISCSI_DEBUG 0
 #endif
+int debug_level = ISCSI_DEBUG;	/* How much info to display */
+int nothreads;
 
 /*
    To avoid memory fragmentation (and speed things up a bit), we use the
@@ -67,6 +68,13 @@ static uint8_t req_buf[REQ_BUFFER_SIZE];	/* default buffer for requests */
 static uint8_t rsp_buf[RSP_BUFFER_SIZE];	/* default buffer for responses */
 
 /* -------------------------------------------------------------------------- */
+
+static void __dead
+usage(void) 
+{
+	fprintf(stderr, "Usage: %s [-d <lvl>] [-n]\n", getprogname());
+	exit(EXIT_FAILURE);
+}
 
 
 /*
@@ -162,21 +170,18 @@ init_daemon(void)
 		list[i].num_entries = 0;
 	}
 
-#ifndef ISCSI_NOTHREAD
-	if ((i = pthread_mutex_init(&sesslist_lock, NULL)) != 0) {
+	if (!nothreads && (i = pthread_mutex_init(&sesslist_lock, NULL)) != 0) {
 		printf("Mutex init failed (%d)\n", i);
 		close(sock);
 		return -1;
 	}
-#endif
 
 	if (!register_event_handler()) {
 		printf("Couldn't register event handler\n");
 		close(sock);
 		unlink(ISCSID_SOCK_NAME);
-#ifndef ISCSI_NOTHREAD
-		pthread_mutex_destroy(&sesslist_lock);
-#endif
+		if (!nothreads)
+			pthread_mutex_destroy(&sesslist_lock);
 		return -1;
 	}
 
@@ -473,9 +478,7 @@ process_message(iscsid_request_t *req, iscsid_response_t **prsp, int *prsp_temp)
 void
 exit_daemon(void)
 {
-#ifndef ISCSI_NOTHREAD
 	LOCK_SESSIONS;
-#endif
 	deregister_event_handler();
 
 #ifndef ISCSI_MINIMAL
@@ -501,16 +504,30 @@ int
 /*ARGSUSED*/
 main(int argc, char **argv)
 {
-	int req_temp, rsp_temp;
+	int req_temp, rsp_temp, c;
 	ssize_t ret;
 	size_t len;
 	struct sockaddr_un from;
 	socklen_t fromlen;
 	iscsid_request_t *req;
 	iscsid_response_t *rsp;
-#ifdef ISCSI_NOTHREAD
 	struct timeval seltout = { 2, 0 };	/* 2 second poll interval */
-#endif
+	char *p;
+
+	while ((c = getopt(argc, argv, "d:n")) != -1)
+		switch (c) {
+		case 'n':
+			nothreads++;
+			break;
+		case 'd':
+			debug_level=(int)strtol(optarg, &p, 10);
+			if (*p)
+				errx(EXIT_FAILURE, "illegal debug level -- %s",
+				    optarg);
+			break;
+		default:
+			usage();
+		}
 
 	client_sock = init_daemon();
 	if (client_sock < 0)
@@ -518,21 +535,23 @@ main(int argc, char **argv)
 
 	printf("iSCSI Daemon loaded\n");
 
-	daemon(0, 1);
+	if (!debug_level)
+		daemon(0, 1);
 
-#ifndef ISCSI_NOTHREAD
-	ret = pthread_create(&event_thread, NULL, event_handler, NULL);
-	if (ret) {
-		printf("Thread creation failed (%zd)\n", ret);
-		close(client_sock);
-		unlink(ISCSID_SOCK_NAME);
-		deregister_event_handler();
-		pthread_mutex_destroy(&sesslist_lock);
-		return -1;
+	if (nothreads)
+		setsockopt(client_sock, SOL_SOCKET, SO_RCVTIMEO, &seltout,
+		    sizeof(seltout));
+	else {
+		ret = pthread_create(&event_thread, NULL, event_handler, NULL);
+		if (ret) {
+			printf("Thread creation failed (%zd)\n", ret);
+			close(client_sock);
+			unlink(ISCSID_SOCK_NAME);
+			deregister_event_handler();
+			pthread_mutex_destroy(&sesslist_lock);
+			return -1;
+		}
 	}
-#else
-	setsockopt(client_sock, SOL_SOCKET, SO_RCVTIMEO, &seltout, sizeof(seltout));
-#endif
 
     /* ---------------------------------------------------------------------- */
 
@@ -542,23 +561,29 @@ main(int argc, char **argv)
 		fromlen = sizeof(from);
 		len = sizeof(iscsid_request_t);
 
-#ifdef ISCSI_NOTHREAD
-		do {
-			ret = recvfrom(client_sock, req, len, MSG_PEEK | MSG_WAITALL,
-							(struct sockaddr *) &from, &fromlen);
-			if (ret == -1)
-				event_handler(NULL);
-		} while (ret == -1 && errno == EAGAIN);
-#else
-		ret = recvfrom(client_sock, req, len, MSG_PEEK | MSG_WAITALL,
-					 (struct sockaddr *)(void *)&from, &fromlen);
-#endif
+		if (nothreads) {
+			do {
+				ret = recvfrom(client_sock, req, len, MSG_PEEK |
+				MSG_WAITALL, (struct sockaddr *)(void *)&from,
+			    	&fromlen);
+				if (ret == -1)
+					event_handler(NULL);
+			} while (ret == -1 && errno == EAGAIN);
+		} else {
+			do {
+				ret = recvfrom(client_sock, req, len, MSG_PEEK |
+				    MSG_WAITALL, (struct sockaddr *) &from,
+				    &fromlen);
+				if (ret == -1)
+					event_handler(NULL);
+			} while (ret == -1 && errno == EAGAIN);
+		}
 
 		if ((size_t)ret != len) {
 			perror("Receiving from socket");
 			break;
 		}
-		DEB(99, ("Request %d, parlen %d\n",
+		DEB(98, ("Request %d, parlen %d\n",
 				req->request, req->parameter_length));
 
 		len += req->parameter_length;
@@ -604,7 +629,7 @@ main(int argc, char **argv)
 		if (rsp == NULL)
 			break;
 
-		DEB(99, ("Sending reply: status %d, len %d\n",
+		DEB(98, ("Sending reply: status %d, len %d\n",
 				rsp->status, rsp->parameter_length));
 
 		/* send the response */
