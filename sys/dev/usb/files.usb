@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.122 2012/05/29 14:06:23 christos Exp $
+#	$NetBSD: files.usb,v 1.123 2012/05/30 14:30:35 nonaka Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -420,3 +420,8 @@ file	dev/usb/if_urtwn.c              urtwn
 device	urtw: ether, ifnet, arp, wlan
 attach	urtw at usbdevif
 file	dev/usb/if_urtw.c		urtw
+
+# Ralink Technology RT2700U/RT2800U/RT3000U
+device	run: ether, ifnet, arp, wlan, firmload
+attach	run at usbdevif
+file	dev/usb/if_run.c		run
