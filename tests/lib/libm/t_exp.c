@@ -1,4 +1,4 @@
-/* $NetBSD: t_exp.c,v 1.1 2011/09/18 05:19:18 jruoho Exp $ */
+/* $NetBSD: t_exp.c,v 1.2 2012/05/30 15:14:10 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,6 +31,22 @@
 
 #include <atf-c.h>
 #include <math.h>
+
+/* y = exp(x) */
+static const struct {
+	double x;
+	double y;
+} exp_values[] = {
+	{  -10, 0.4539992976248485e-4, },
+	{   -5, 0.6737946999085467e-2, },
+	{   -1, 0.3678794411714423, },
+	{ -0.1, 0.9048374180359595, },
+	{    0, 1.0000000000000000, },
+	{  0.1, 1.1051709180756477, },
+	{    1, 2.7182818284590452, },
+	{    5, 148.41315910257660, },
+	{   10, 22026.465794806718, },
+};
 
 /*
  * exp2(3)
@@ -305,22 +321,23 @@ ATF_TC_BODY(exp_inf_pos, tc)
 ATF_TC(exp_product);
 ATF_TC_HEAD(exp_product, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test exp(x + y) == exp(x) * exp(y)");
+	atf_tc_set_md_var(tc, "descr", "Test some selected exp(x)");
 }
 
 ATF_TC_BODY(exp_product, tc)
 {
 #ifndef __vax__
-	const double x[] = { 0.0, 1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8 };
-	const double y[] = { 8.8, 7.7, 6.6, 5.5, 4.4, 3.3, 2.2, 1.1, 0.0 };
+	double x;
+	double y;
 	const double eps = 1.0e-11;
 	size_t i;
 
-	for (i = 0; i < __arraycount(x); i++) {
+	for (i = 0; i < __arraycount(exp_values); i++) {
+		x = exp_values[i].x;
+		y = exp_values[i].y;
 
-		if (fabs(exp(x[i] + y[i]) - (exp(x[i]) * exp(y[i]))) > eps)
-			atf_tc_fail_nonfatal("exp(%0.01f + %0.01f) != exp("
-			    "%0.01f) * exp(%0.01f)", x[i], y[i], x[i], y[i]);
+		if (fabs(exp(x) - y) > eps)
+			atf_tc_fail_nonfatal("exp(%0.01f) != %18.18e", x, y);
 	}
 #endif
 }
@@ -413,22 +430,23 @@ ATF_TC_BODY(expf_inf_pos, tc)
 ATF_TC(expf_product);
 ATF_TC_HEAD(expf_product, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test expf(x+y) == expf(x) * expf(y)");
+	atf_tc_set_md_var(tc, "descr", "Test some selected expf(x)");
 }
 
 ATF_TC_BODY(expf_product, tc)
 {
 #ifndef __vax__
-	const float x[] = { 0.0, 1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8 };
-	const float y[] = { 8.8, 7.7, 6.6, 5.5, 4.4, 3.3, 2.2, 1.1, 0.0 };
+	float x;
+	float y;
 	const float eps = 1.0e-2;
 	size_t i;
 
-	for (i = 0; i < __arraycount(x); i++) {
+	for (i = 0; i < __arraycount(exp_values); i++) {
+		x = exp_values[i].x;
+		y = exp_values[i].y;
 
-		if (fabsf(expf(x[i] + y[i]) - (expf(x[i]) * expf(y[i]))) > eps)
-			atf_tc_fail_nonfatal("expf(%0.01f + %0.01f) != expf("
-			    "%0.01f) * expf(%0.01f)", x[i], y[i], x[i], y[i]);
+		if (fabsf(expf(x) - y) > eps)
+			atf_tc_fail_nonfatal("expf(%0.01f) != %18.18e", x, y);
 	}
 #endif
 }
