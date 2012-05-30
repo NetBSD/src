@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.10 2012/02/05 00:37:13 rmind Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.11 2012/05/30 21:30:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.10 2012/02/05 00:37:13 rmind Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.11 2012/05/30 21:30:07 rmind Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -50,14 +50,17 @@ extern const char *	yyfilename;
 extern int		yyparse(void);
 extern void		yyrestart(FILE *);
 
-#define	NPFCTL_START		1
-#define	NPFCTL_STOP		2
-#define	NPFCTL_RELOAD		3
-#define	NPFCTL_FLUSH		4
-#define	NPFCTL_TABLE		5
-#define	NPFCTL_STATS		6
-#define	NPFCTL_SESSIONS_SAVE	7
-#define	NPFCTL_SESSIONS_LOAD	8
+enum {
+	NPFCTL_START,
+	NPFCTL_STOP,
+	NPFCTL_RELOAD,
+	NPFCTL_SHOWCONF,
+	NPFCTL_FLUSH,
+	NPFCTL_TABLE,
+	NPFCTL_STATS,
+	NPFCTL_SESSIONS_SAVE,
+	NPFCTL_SESSIONS_LOAD,
+};
 
 static struct operations_s {
 	const char *		cmd;
@@ -67,6 +70,7 @@ static struct operations_s {
 	{	"start",		NPFCTL_START		},
 	{	"stop",			NPFCTL_STOP		},
 	{	"reload",		NPFCTL_RELOAD		},
+	{	"show",			NPFCTL_SHOWCONF,	},
 	{	"flush",		NPFCTL_FLUSH		},
 	/* Table */
 	{	"table",		NPFCTL_TABLE		},
@@ -262,6 +266,9 @@ npfctl(int action, int argc, char **argv)
 		npfctl_config_init(false);
 		npfctl_parsecfg(argc < 3 ? NPF_CONF_PATH : argv[2]);
 		ret = npfctl_config_send(fd);
+		break;
+	case NPFCTL_SHOWCONF:
+		ret = npfctl_config_show(fd);
 		break;
 	case NPFCTL_FLUSH:
 		ret = npf_config_flush(fd);

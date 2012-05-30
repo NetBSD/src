@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.6 2012/02/26 22:04:42 christos Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.7 2012/05/30 21:30:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -95,7 +95,6 @@ yyerror(const char *fmt, ...)
 %token			INET
 %token			INET6
 %token			INTERFACE
-%token			KEEP
 %token			MINUS
 %token			NAT
 %token			NAME
@@ -108,14 +107,14 @@ yyerror(const char *fmt, ...)
 %token			PROCEDURE
 %token			PROTO
 %token			FAMILY
-%token			QUICK
+%token			FINAL
 %token			RDR
 %token			RETURN
 %token			RETURNICMP
 %token			RETURNRST
 %token			SEPLINE
 %token			SLASH
-%token			STATE
+%token			STATEFUL
 %token			TABLE
 %token			TCP
 %token			TO
@@ -135,9 +134,9 @@ yyerror(const char *fmt, ...)
 
 %type	<str>		addr, iface_name, moduleargname, list_elem, table_store
 %type	<str>		opt_apply
-%type	<num>		ifindex, port, opt_quick, on_iface
+%type	<num>		ifindex, port, opt_final, on_iface
 %type	<num>		block_or_pass, rule_dir, block_opts, family, opt_family
-%type	<num>		opt_keep_state, icmp_type, table_type
+%type	<num>		opt_stateful, icmp_type, table_type
 %type	<var>		addr_or_iface, port_range, icmp_type_and_code
 %type	<var>		filt_addr, addr_and_mask, tcp_flags, tcp_flags_and_mask
 %type	<var>		modulearg_opts, procs, proc_op, modulearg, moduleargs
@@ -421,15 +420,15 @@ rules
 	;
 
 rule
-	: block_or_pass rule_dir opt_quick on_iface opt_family
-	  opt_proto all_or_filt_opts opt_keep_state opt_apply
+	: block_or_pass opt_stateful rule_dir opt_final on_iface opt_family
+	  opt_proto all_or_filt_opts opt_apply
 	{
 		/*
 		 * Arguments: attributes, interface index, address
 		 * family, protocol options, filter options.
 		 */
-		npfctl_build_rule($1 | $2 | $3 | $8, $4,
-		    $5, &$6, &$7, $9);
+		npfctl_build_rule($1 | $2 | $3 | $4, $5,
+		    $6, &$7, &$8, $9);
 	}
 	|
 	;
@@ -445,8 +444,8 @@ rule_dir
 	|			{ $$ = NPF_RULE_IN | NPF_RULE_OUT; }
 	;
 
-opt_quick
-	: QUICK			{ $$ = NPF_RULE_FINAL; }
+opt_final
+	: FINAL			{ $$ = NPF_RULE_FINAL; }
 	|			{ $$ = 0; }
 	;
 
@@ -499,8 +498,8 @@ all_or_filt_opts
 	| filt_opts	{ $$ = $1; }
 	;
 
-opt_keep_state
-	: KEEP STATE	{ $$ = NPF_RULE_KEEPSTATE; }
+opt_stateful
+	: STATEFUL	{ $$ = NPF_RULE_KEEPSTATE; }
 	|		{ $$ = 0; }
 	;
 
@@ -621,7 +620,7 @@ port_range
 	;
 
 port
-	: NUM		{ $$ = htons($1); }
+	: NUM		{ $$ = $1; }
 	| IDENTIFIER	{ $$ = npfctl_portno($1); }
 	;
 

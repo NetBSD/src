@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.13 2012/03/10 22:21:50 christos Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.14 2012/05/30 21:30:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ typedef struct opt_proto {
 
 typedef struct rule_group {
 	const char *	rg_name;
-	int		rg_attr;
+	uint32_t	rg_attr;
 	u_int		rg_ifnum;
 } rule_group_t;
 
@@ -146,6 +146,7 @@ void		npfctl_gennc_tcpfl(nc_ctx_t *, uint8_t, uint8_t);
 
 void		npfctl_config_init(bool);
 int		npfctl_config_send(int);
+int		npfctl_config_show(int);
 
 void		npfctl_build_rproc(const char *, npfvar_t *);
 void		npfctl_build_group(const char *, int, u_int);
@@ -154,6 +155,13 @@ void		npfctl_build_rule(int, u_int, sa_family_t,
 void		npfctl_build_nat(int, u_int, const filt_opts_t *,
 		    npfvar_t *, npfvar_t *);
 void		npfctl_build_table(const char *, u_int, const char *);
-int		npfctl_ncode_disassemble(FILE *, const void *, size_t);
+
+/*
+ * N-code disassembler.
+ */
+typedef struct nc_inf nc_inf_t;
+
+int		npfctl_ncode_disassemble(FILE *, const void *, size_t,
+		    nc_inf_t *);
 
 #endif
