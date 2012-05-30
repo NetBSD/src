@@ -1,4 +1,4 @@
-.\"	$NetBSD: urtw.4,v 1.1 2012/05/30 18:34:24 christos Exp $
+.\"	$NetBSD: urtw.4,v 1.2 2012/05/30 20:15:56 wiz Exp $
 .\" Copyright (c) 2008 Weongyo Jeong
 .\" All rights reserved.
 .\"
@@ -25,18 +25,14 @@
 .\"
 .\" $FreeBSD$
 .\"
-.Dd October 17, 2009
+.Dd May 30, 2012
 .Dt URTW 4
 .Os
 .Sh NAME
 .Nm urtw
 .Nd Realtek RTL8187B/L USB IEEE 802.11b/g wireless network device
 .Sh SYNOPSIS
-To compile this driver into the kernel,
-place the following lines in your kernel configuration file:
-.Bd -ragged -offset indent
 .Cd "urtw* at uhub? port ?"
-.Ed
 .Sh DESCRIPTION
 The
 .Nm
@@ -102,15 +98,14 @@ Join an existing BSS network,
 .Xr wpa_supplicant.conf 5 ,
 .Xr ifconfig 8 ,
 .Xr wpa_supplicant 8
-.Rs
-.%T Realtek
-.%U http://www.realtek.com.tw
-.Re
+.Lk http://www.realtek.com.tw Realtek
 .Sh HISTORY
 The
 .Nm
 device driver first appeared in
-.Fx 8.0 .
+.Fx 8.0
+and
+.Nx 7.0 .
 .Sh AUTHORS
 .An -nosplit
 The
