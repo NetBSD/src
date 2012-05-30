@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.109 2012/05/22 20:26:58 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.110 2012/05/30 08:06:48 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -2553,4 +2553,20 @@ sys/dev/scsipi/scsiconf.c			1.268
 sys/sys/param.h					patch
 
 	Welcome to 6.0_BETA2!
+
+etc/MAKEDEV.tmpl				1.155
+sbin/iscsictl/iscsictl.8			1.2-1.4
+sbin/iscsid/iscsid_driverif.c			1.4-1.5
+sbin/iscsid/iscsid_lists.c			1.4-1.7
+sbin/iscsid/iscsid_targets.c			1.4
+sbin/iscsid/iscsid_globals.h			1.5-1.7
+sbin/iscsid/iscsid_main.c			1.4-1.7
+sbin/iscsid/Makefile				1.2-1.4
+sbin/iscsid/iscsid.8				1.3-1.8
+sbin/iscsid/iscsid.h				1.3
+sys/dev/iscsi/iscsi_main.c			1.2-1.3
+
+	Fix bugs in iscsid target list handling, and improve
+	documentation somewhat for the in-kernel iSCSI initiator.
+	[riz, ticket #291]
 
