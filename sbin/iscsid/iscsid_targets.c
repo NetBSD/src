@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_targets.c,v 1.3 2011/11/20 01:23:57 agc Exp $	*/
+/*	$NetBSD: iscsid_targets.c,v 1.3.2.1 2012/05/30 08:06:26 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@ create_portal(target_t *target, iscsi_portal_address_t *addr,
 	TAILQ_INSERT_TAIL(&list[PORTAL_LIST].list, &portal->entry, link);
 	list[PORTAL_LIST].num_entries++;
 
-	DEB(9, ("create_portal returns %x\n", (int) portal));
+	DEB(9, ("create_portal returns %p\n", portal));
 	return portal;
 }
 

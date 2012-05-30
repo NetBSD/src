@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.151.2.1 2012/02/25 14:48:12 sborrill Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.151.2.2 2012/05/30 08:06:26 sborrill Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -810,6 +810,7 @@ all)
 	makedev md0 md1
 	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
 	makedev vnd0 vnd1 vnd2 vnd3
+	makedev iscsi0
 	makedev bpf npf
 	makedev tun0 tun1 tun2 tun3
 	makedev ipl pf crypto random

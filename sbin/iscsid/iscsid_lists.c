@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_lists.c,v 1.3 2011/11/20 01:23:57 agc Exp $	*/
+/*	$NetBSD: iscsid_lists.c,v 1.3.2.1 2012/05/30 08:06:26 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@ static uint32_t initiator_id = 0;
 
 /* -------------------------------------------------------------------------- */
 
-/*#ifdef ISCSI_NOTHREAD */
 #if 0
 
 /*
@@ -233,9 +232,9 @@ find_TargetName(iscsid_list_kind_t lst, uint8_t * name)
 			break;
 	}
 
-	DEB(10, ("Find_TagetName returns %p\n", curr));
-
-	return t;
+	/* return curr instead of t because curr==NULL if name not found */
+	DEB(10, ("Find_TargetName returns %p\n", curr));
+	return (target_t *)curr;
 }
 
 
@@ -256,10 +255,10 @@ find_portal_by_addr(target_t * target, iscsi_portal_address_t * addr)
 
 	TAILQ_FOREACH(curr, &list[PORTAL_LIST].list, link) {
 		p = (void *)curr;
-		DEB(10, ("Find_portal_by_addr - addr %s port %d target %x\n",
+		DEB(10, ("Find_portal_by_addr - addr %s port %d target %p\n",
 				 p->addr.address,
 				 p->addr.port,
-				 (int) p->target));
+				 p->target));
 
 		if (strcmp((char *)p->addr.address, (char *)addr->address) == 0 &&
 			(!addr->port || p->addr.port == addr->port) &&
@@ -267,8 +266,9 @@ find_portal_by_addr(target_t * target, iscsi_portal_address_t * addr)
 			break;
 	}
 
+	/* return curr instead of p because curr==NULL if not found */
 	DEB(10, ("Find_portal_by_addr returns %p\n", curr));
-	return p;
+	return (portal_t *)curr;
 }
 
 
@@ -294,8 +294,9 @@ find_send_target_by_addr(iscsi_portal_address_t * addr)
 			break;
 	}
 
+	/* return curr instead of p because curr==NULL if not found */
 	DEB(10, ("Find_send_target_by_addr returns %p\n", curr));
-	return t;
+	return (send_target_t *)curr;
 }
 
 
@@ -695,8 +696,9 @@ find_initiator_by_addr(uint8_t * addr)
 			break;
 	}
 
+	/* return curr instead of i because if not found, curr==NULL */
 	DEB(9, ("Find_initiator_by_addr returns %p\n", curr));
-	return i;
+	return (initiator_t *)curr;
 }
 
 
