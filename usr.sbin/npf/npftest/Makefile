@@ -5,15 +5,16 @@
 
 PROG=		npftest
 
-SRCS=		npftest.c
+SRCS=		npftest.c npfstream.c
 CPPFLAGS+=	-I${.CURDIR}
 
 LIBNPFTEST!=	cd ${.CURDIR}/libnpftest && ${MAKE} -V .OBJDIR
 DPADD+=		${LIBNPFTEST}/libnpftest.a
 LDADD+=		-L${LIBNPFTEST} -lnpftest
 
-LDADD+=		-lrump -lrumpvfs -lrumpnet -lrump -lrumpnet_net
-LDADD+=		-lrumpnet_virtif -lrumpdev_npf -lpthread
+LDADD+=		-lrump -lrumpvfs -lrumpnet -lrumpnet_net -lrumpdev_npf
+
+LDADD+=		-lpcap -lprop -lpthread
 
 WARNS=		4
 NOMAN=		# no man page

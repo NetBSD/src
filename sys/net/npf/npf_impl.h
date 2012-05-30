@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.14 2012/05/06 02:45:25 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.15 2012/05/30 21:38:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -115,6 +115,13 @@ typedef struct {
 	npf_tcpstate_t	nst_tcpst[2];
 } npf_state_t;
 
+#if defined(_NPF_TESTING)
+void		npf_state_sample(npf_state_t *, bool);
+#define	NPF_TCP_STATE_SAMPLE(n, r)	npf_state_sample(n, r)
+#else
+#define	NPF_TCP_STATE_SAMPLE(n, r)
+#endif
+
 /*
  * INTERFACES.
  */
@@ -149,6 +156,7 @@ void		npf_stats_dec(npf_stats_t);
 int		npf_pfil_register(void);
 void		npf_pfil_unregister(void);
 bool		npf_pfil_registered_p(void);
+int		npf_packet_handler(void *, struct mbuf **, ifnet_t *, int);
 void		npf_log_packet(npf_cache_t *, nbuf_t *, int);
 
 /* Protocol helpers. */
