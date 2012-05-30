@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.21 2012/05/23 18:39:30 macallan Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.22 2012/05/30 08:05:12 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.21 2012/05/23 18:39:30 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.22 2012/05/30 08:05:12 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.21 2012/05/23 18:39:30 macallan Exp 
 #define DPRINTF while (0) printf
 #endif
 
-/* there are probably gdium-specific */
+/* XXX these are gdium-specific */
 #define GPIO_BACKLIGHT	0x20000000
 
 struct voyagerfb_softc {
@@ -291,7 +291,7 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 		sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
 	} else {
 		if (sc->sc_console_screen.scr_ri.ri_rows == 0) {
-			/* do some minimal setup to avoid weirdnesses later */
+			/* do some minimal setup to avoid weirdness later */
 			vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1, &defattr);
 		}
 	}
@@ -347,7 +347,7 @@ voyagerfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;
 		return 0;
 
-	/* PCI config read/write passthrough. */
+	/* PCI config read/write pass through. */
 	case PCI_IOC_CFGREAD:
 	case PCI_IOC_CFGWRITE:
 		return pci_devioctl(sc->sc_pc, sc->sc_pcitag,
@@ -504,8 +504,7 @@ voyagerfb_mmap(void *v, void *vs, off_t offset, int prot)
 	}
 
 	/*
-	 * restrict all other mappings to processes with superuser privileges
-	 * or the kernel itself
+	 * restrict all other mappings to processes with privileges
 	 */
 	if (kauth_authorize_machdep(kauth_cred_get(), KAUTH_MACHDEP_UNMANAGEDMEM,
 	    NULL, NULL, NULL, NULL) != 0) {
