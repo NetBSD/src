@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_scan.l,v 1.1 2012/01/08 21:34:21 rmind Exp $	*/
+/*	$NetBSD: npf_scan.l,v 1.2 2012/05/30 21:30:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -72,10 +72,10 @@ interface		return INTERFACE;
 all			return ALL;
 block			return BLOCK;
 pass			return PASS;
-keep			return KEEP;
-state			return STATE;
+stateful		return STATEFUL;
 apply			return APPLY;
-quick			return QUICK;
+final			return FINAL;
+quick			return FINAL;
 on			return ON;
 inet6			return INET6;
 inet4			return INET;
