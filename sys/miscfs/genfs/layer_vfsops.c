@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.40 2012/05/31 15:07:29 pgoyette Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.41 2012/05/31 16:08:14 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.40 2012/05/31 15:07:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.41 2012/05/31 16:08:14 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -275,12 +275,20 @@ SYSCTL_SETUP(sysctl_vfs_layerfs_setup, "sysctl vfs.layerfs subtree setup")
 	const struct sysctlnode *layerfs_node = NULL;
 
 	sysctl_createv(clog, 0, NULL, NULL,
+#ifdef _MODULE
+		       0,
+#else
 		       CTLFLAG_PERMANENT,
+#endif
 		       CTLTYPE_NODE, "vfs", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, &layerfs_node,
+#ifdef _MODULE
+		       0,
+#else
 		       CTLFLAG_PERMANENT,
+#endif
 		       CTLTYPE_NODE, "layerfs",
 		       SYSCTL_DESCR("Generic layered file system"),
 		       NULL, 0, NULL, 0,
@@ -288,7 +296,10 @@ SYSCTL_SETUP(sysctl_vfs_layerfs_setup, "sysctl vfs.layerfs subtree setup")
 
 #ifdef LAYERFS_DIAGNOSTIC
 	sysctl_createv(clog, 0, &layerfs_node, NULL,
-	               CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+#ifndef _MODULE
+	               CTLFLAG_PERMANENT |
+#endif
+		       CTLFLAG_READWRITE,
 	               CTLTYPE_INT,
 	               "debug",
 	               SYSCTL_DESCR("Verbose debugging messages"),
