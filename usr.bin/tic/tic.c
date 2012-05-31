@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.13 2012/05/31 19:00:41 joerg Exp $ */
+/* $NetBSD: tic.c,v 1.14 2012/05/31 19:56:32 joerg Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -32,9 +32,10 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.13 2012/05/31 19:00:41 joerg Exp $");
+__RCSID("$NetBSD: tic.c,v 1.14 2012/05/31 19:56:32 joerg Exp $");
 
 #include <sys/types.h>
+#include <sys/queue.h>
 
 #if !HAVE_NBTOOL_CONFIG_H || HAVE_SYS_ENDIAN_H
 #include <sys/endian.h>
@@ -58,12 +59,12 @@ __RCSID("$NetBSD: tic.c,v 1.13 2012/05/31 19:00:41 joerg Exp $");
    through the database as the sequential iterator doesn't work
    the the data size stored changes N amount which ours will. */
 typedef struct term {
-	struct term *next;
+	SLIST_ENTRY(term) next;
 	char *name;
 	char type;
 	TIC *tic;
 } TERM;
-static TERM *terms;
+static SLIST_HEAD(, term) terms = SLIST_HEAD_INITIALIZER(terms);
 
 static int error_exit;
 static int Sflag;
@@ -124,10 +125,11 @@ static TERM *
 find_term(const char *name)
 {
 	TERM *term;
-	
-	for (term = terms; term != NULL; term = term->next)
+
+	SLIST_FOREACH(term, &terms, next) {
 		if (strcmp(term->name, name) == 0)
 			return term;
+	}
 	return NULL;
 }
 
@@ -143,8 +145,7 @@ store_term(const char *name, char type)
 	term->type = type;
 	if (term->name == NULL)
 		errx(1, "malloc");
-	term->next = terms;
-	terms = term;
+	SLIST_INSERT_HEAD(&terms, term, next);
 	return term;
 }
 
@@ -311,7 +312,7 @@ merge_use(int flags)
 	TERM *term, *uterm;;
 
 	skipped = merged = 0;
-	for (term = terms; term != NULL; term = term->next) {
+	SLIST_FOREACH(term, &terms, next) {
 		if (term->type == 'a')
 			continue;
 		rtic = term->tic;
@@ -549,7 +550,7 @@ main(int argc, char **argv)
 	
 	/* Save the terms */
 	nterm = nalias = 0;
-	for (term = terms; term != NULL; term = term->next) {
+	SLIST_FOREACH(term, &terms, next) {
 		save_term(db, term);
 		if (term->type == 'a')
 			nalias++;
