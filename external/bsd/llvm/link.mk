@@ -1,4 +1,4 @@
-#	$NetBSD: link.mk,v 1.1 2011/02/06 01:13:43 joerg Exp $
+#	$NetBSD: link.mk,v 1.2 2012/05/31 18:53:33 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -21,7 +21,7 @@ DPADD+=	${LLVM_OBJDIR.${l}}/libLLVM${l}.a
 .endfor
 
 .if defined(HOSTPROG)
-LDADD_NEED_DL=	cat ${LLVM_TOOLCONF_OBJDIR}/need-dl
+LDADD_NEED_DL=	cat ${LLVM_TOOLCONF_OBJDIR}/need-dl 2> /dev/null
 LDADD+=	${LDADD_NEED_DL:sh}
 .endif
 
