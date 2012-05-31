@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.14 2012/05/31 19:56:32 joerg Exp $ */
+/* $NetBSD: tic.c,v 1.15 2012/05/31 20:10:06 joerg Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.14 2012/05/31 19:56:32 joerg Exp $");
+__RCSID("$NetBSD: tic.c,v 1.15 2012/05/31 20:10:06 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -48,12 +48,16 @@ __RCSID("$NetBSD: tic.c,v 1.14 2012/05/31 19:56:32 joerg Exp $");
 #include <limits.h>
 #include <fcntl.h>
 #include <ndbm.h>
+#include <search.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <term_private.h>
 #include <term.h>
+#include <util.h>
+
+#define	HASH_SIZE	16384	/* 2012-06-01: 3600 entries */
 
 /* We store the full list of terminals we have instead of iterating
    through the database as the sequential iterator doesn't work
@@ -124,19 +128,19 @@ save_term(DBM *db, TERM *term)
 static TERM *
 find_term(const char *name)
 {
-	TERM *term;
+	ENTRY elem, *elemp;
 
-	SLIST_FOREACH(term, &terms, next) {
-		if (strcmp(term->name, name) == 0)
-			return term;
-	}
-	return NULL;
+	elem.key = __UNCONST(name);
+	elem.data = NULL;
+	elemp = hsearch(elem, FIND);
+	return elemp ? (TERM *)elemp->data : NULL;
 }
 
 static TERM *
 store_term(const char *name, char type)
 {
 	TERM *term;
+	ENTRY elem;
 
 	term = calloc(1, sizeof(*term));
 	if (term == NULL)
@@ -146,6 +150,9 @@ store_term(const char *name, char type)
 	if (term->name == NULL)
 		errx(1, "malloc");
 	SLIST_INSERT_HEAD(&terms, term, next);
+	elem.key = estrdup(name);
+	elem.data = term;
+	hsearch(elem, ENTER);
 	return term;
 }
 
@@ -508,6 +515,8 @@ main(int argc, char **argv)
 	} else
 		db = NULL; /* satisfy gcc warning */
 
+	hcreate(HASH_SIZE);
+
 	buf = NULL;
 	buflen = tbuf.buflen = tbuf.bufpos = 0;	
 	while ((len = getline(&buf, &buflen, f)) != -1) {
@@ -575,6 +584,8 @@ main(int argc, char **argv)
 	if (sflag != 0)
 		fprintf(stderr, "%zu entries and %zu aliases written to %s\n",
 		    nterm, nalias, p);
+
+	hdestroy();
 
 	return EXIT_SUCCESS;
 }
