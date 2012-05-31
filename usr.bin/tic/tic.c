@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.17 2012/05/31 20:40:05 joerg Exp $ */
+/* $NetBSD: tic.c,v 1.18 2012/05/31 21:01:06 joerg Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.17 2012/05/31 20:40:05 joerg Exp $");
+__RCSID("$NetBSD: tic.c,v 1.18 2012/05/31 21:01:06 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -73,6 +73,7 @@ static SLIST_HEAD(, term) terms = SLIST_HEAD_INITIALIZER(terms);
 static int error_exit;
 static int Sflag;
 static char *dbname;
+static size_t nterm, nalias;
 
 static void
 do_unlink(void)
@@ -149,6 +150,12 @@ store_term(const char *name, char type)
 	elem.key = estrdup(name);
 	elem.data = term;
 	hsearch(elem, ENTER);
+
+	if (type == 'a')
+		nalias++;
+	else
+		nterm++;
+
 	return term;
 }
 
@@ -443,7 +450,7 @@ main(int argc, char **argv)
 	char *source, *p, *buf, *ofile;
 	FILE *f;
 	DBM *db;
-	size_t buflen, nterm, nalias;
+	size_t buflen;
 	ssize_t len;
 	TBUF tbuf;
 	TERM *term;
@@ -546,17 +553,11 @@ main(int argc, char **argv)
 
 	if (cflag)
 		return error_exit;
-	
+
 	/* Save the terms */
-	nterm = nalias = 0;
-	SLIST_FOREACH(term, &terms, next) {
+	SLIST_FOREACH(term, &terms, next)
 		save_term(db, term);
-		if (term->type == 'a')
-			nalias++;
-		else
-			nterm++;
-	}
-	
+
 	/* done! */
 	dbm_close(db);
 
