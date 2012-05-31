@@ -1,4 +1,4 @@
-/*	$NetBSD: t_kevent.c,v 1.2 2012/03/18 07:00:52 jruoho Exp $ */
+/*	$NetBSD: t_kevent.c,v 1.3 2012/05/31 20:31:07 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_kevent.c,v 1.2 2012/03/18 07:00:52 jruoho Exp $");
+__RCSID("$NetBSD: t_kevent.c,v 1.3 2012/05/31 20:31:07 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/event.h>
@@ -37,6 +37,14 @@ __RCSID("$NetBSD: t_kevent.c,v 1.2 2012/03/18 07:00:52 jruoho Exp $");
 #include <atf-c.h>
 #include <time.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <err.h>
+#include <sys/event.h>
+#include <sys/time.h>
+#include <sys/socket.h>
+#include <sys/wait.h>
 
 ATF_TC(kevent_zerotimer);
 ATF_TC_HEAD(kevent_zerotimer, tc)
@@ -56,10 +64,80 @@ ATF_TC_BODY(kevent_zerotimer, tc)
 	ATF_REQUIRE(kevent(kq, NULL, 0, &ev, 1, NULL) == 1);
 }
 
+ATF_TC(kqueue_desc_passing);
+ATF_TC_HEAD(kqueue_desc_passing, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Checks that passing a kqueue to "
+		"another process does not crash the kernel (PR 46463)");
+}
+
+ATF_TC_BODY(kqueue_desc_passing, tc)
+{
+	pid_t child;
+	int s[2], storage, status, kq;
+	struct cmsghdr *msg;
+	struct iovec iov;
+	struct msghdr m;
+	struct kevent ev;
+
+	ATF_REQUIRE((kq = kqueue()) != -1);
+
+	atf_tc_skip("crashes kernel (PR 46463)");
+
+	ATF_REQUIRE(socketpair(AF_LOCAL, SOCK_STREAM, 0, s) != -1);
+	msg = malloc(CMSG_SPACE(sizeof(int)));
+	m.msg_iov = &iov;
+	m.msg_iovlen = 1;
+	m.msg_name = NULL;
+	m.msg_namelen = 0;
+	m.msg_control = msg;
+	m.msg_controllen = CMSG_SPACE(sizeof(int));
+
+	child = fork();
+	if (child == 0) {
+		close(s[0]);
+
+		iov.iov_base = &storage;
+		iov.iov_len = sizeof(int);
+		m.msg_iov = &iov;
+		m.msg_iovlen = 1;
+
+		if (recvmsg(s[1], &m, 0) == -1)
+			err(1, "child: could not recvmsg");
+
+		kq = *(int *)CMSG_DATA(msg);
+		printf("child (pid %d): received kq fd %d\n", getpid(), kq);
+		exit(0);
+	}
+
+	close(s[1]);
+
+	iov.iov_base = &storage;
+	iov.iov_len = sizeof(int);
+
+	msg->cmsg_level = SOL_SOCKET;
+	msg->cmsg_type = SCM_RIGHTS;
+	msg->cmsg_len = CMSG_LEN(sizeof(int));
+
+	*(int *)CMSG_DATA(msg) = kq;
+
+	EV_SET(&ev, 1, EVFILT_TIMER, EV_ADD|EV_ENABLE, 0, 1, 0);
+	ATF_CHECK(kevent(kq, &ev, 1, NULL, 0, NULL) != -1);
+
+	printf("parent (pid %d): sending kq fd %d\n", getpid(), kq);
+	ATF_REQUIRE(sendmsg(s[0], &m, 0) != -1);
+
+	close(kq);
+
+	waitpid(child, &status, 0);
+	ATF_CHECK(WIFEXITED(status) && WEXITSTATUS(status)==0);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, kevent_zerotimer);
+	ATF_TP_ADD_TC(tp, kqueue_desc_passing);
 
 	return atf_no_error();
 }
