@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.12 2011/11/09 07:40:27 roy Exp $ */
+/* $NetBSD: tic.c,v 1.13 2012/05/31 19:00:41 joerg Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.12 2011/11/09 07:40:27 roy Exp $");
+__RCSID("$NetBSD: tic.c,v 1.13 2012/05/31 19:00:41 joerg Exp $");
 
 #include <sys/types.h>
 
@@ -77,7 +77,7 @@ do_unlink(void)
 		unlink(dbname);
 }
 
-static void __attribute__((__format__(__printf__, 1, 2)))
+static void __printflike(1, 2)
 dowarn(const char *fmt, ...)
 {
 	va_list va;
