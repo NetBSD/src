@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.16 2012/05/31 20:38:19 joerg Exp $ */
+/* $NetBSD: tic.c,v 1.17 2012/05/31 20:40:05 joerg Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.16 2012/05/31 20:38:19 joerg Exp $");
+__RCSID("$NetBSD: tic.c,v 1.17 2012/05/31 20:40:05 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -183,7 +183,7 @@ process_entry(TBUF *buf, int flags)
 
 	/* Create aliased terms */
 	if (tic->alias != NULL) {
-		alias = p = strdup(tic->alias);
+		alias = p = estrdup(tic->alias);
 		while (p != NULL && *p != '\0') {
 			e = strchr(p, '|');
 			if (e != NULL)
