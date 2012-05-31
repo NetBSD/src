@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2012/01/10 12:27:54 skrll Exp $
+#	$NetBSD: Makefile,v 1.51 2012/05/31 21:02:02 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -38,6 +38,7 @@ COMMON_CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} \
 			--enable-threads \
 			--with-bugurl=http://www.NetBSD.org/Misc/send-pr.html \
 			--with-pkgversion="NetBSD nb2 20111202" \
+			--with-system-zlib \
 			${VAX_CONFIGURE_ARGS} \
 			--enable-__cxa_atexit
 .if defined(GCC_CONFIG_ARCH.${MACHINE_ARCH})
