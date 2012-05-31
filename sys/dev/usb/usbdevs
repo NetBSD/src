@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.621 2012/05/30 14:52:58 nonaka Exp $
+$NetBSD: usbdevs,v 1.622 2012/05/31 12:29:15 nonaka Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -485,8 +485,7 @@ vendor WISTRONNEWEB	0x1435	Wistron NeWeb
 vendor HUAWEI3COM	0x1472	Huawei-3Com
 vendor ABOCOM2		0x1482	AboCom Systems
 vendor SILICOM		0x1485	Silicom
-vendor RALINK		0x1485	Ralink Technology
-vendor RALINK_2		0x148f	Ralink Technology
+vendor RALINK		0x148f	Ralink Technology
 vendor CONCEPTRONIC	0x14b2	Conceptronic
 vendor SUPERTOP		0x14cd  SuperTop
 vendor PLANEX3		0x14ea	Planex Communications
@@ -2502,8 +2501,6 @@ product RALINK RT3370		0x3370	RT3370
 product RALINK RT3572		0x3572	RT3572
 product RALINK RT8070		0x8070	RT8070
 product RALINK RT2570_3		0x9020	RT2570
-product RALINK_2 RT2570		0x2570	RT2570
-product RALINK_2 RT2573		0x2573	RT2573
 
 /* RATOC Systems products */
 product RATOC REXUSB60		0xb000	USB serial adapter REX-USB60
