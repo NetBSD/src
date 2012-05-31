@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.15 2012/05/31 20:10:06 joerg Exp $ */
+/* $NetBSD: tic.c,v 1.16 2012/05/31 20:38:19 joerg Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.15 2012/05/31 20:10:06 joerg Exp $");
+__RCSID("$NetBSD: tic.c,v 1.16 2012/05/31 20:38:19 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -142,13 +142,9 @@ store_term(const char *name, char type)
 	TERM *term;
 	ENTRY elem;
 
-	term = calloc(1, sizeof(*term));
-	if (term == NULL)
-		errx(1, "malloc");
-	term->name = strdup(name);
+	term = ecalloc(1, sizeof(*term));
+	term->name = estrdup(name);
 	term->type = type;
-	if (term->name == NULL)
-		errx(1, "malloc");
 	SLIST_INSERT_HEAD(&terms, term, next);
 	elem.key = estrdup(name);
 	elem.data = term;
@@ -197,12 +193,8 @@ process_entry(TBUF *buf, int flags)
 				    " term %s", tic->name, p);
 			} else {
 				term = store_term(p, 'a');
-				term->tic = calloc(sizeof(*term->tic), 1);
-				if (term->tic == NULL)
-					err(1, "malloc");
-				term->tic->name = strdup(tic->name);
-				if (term->tic->name == NULL)
-					err(1, "malloc");
+				term->tic = ecalloc(sizeof(*term->tic), 1);
+				term->tic->name = estrdup(tic->name);
 			}
 			p = e;
 		}
@@ -499,9 +491,7 @@ main(int argc, char **argv)
 		if (ofile == NULL)
 			ofile = source;
 		len = strlen(ofile) + 9;
-		dbname = malloc(len + 4); /* For adding .db after open */
-		if (dbname == NULL)
-			err(1, "malloc");
+		dbname = emalloc(len + 4); /* For adding .db after open */
 		snprintf(dbname, len, "%s.tmp", ofile);
 		db = dbm_open(dbname, O_CREAT | O_RDWR | O_TRUNC, DEFFILEMODE);
 		if (db == NULL)
@@ -571,11 +561,7 @@ main(int argc, char **argv)
 	dbm_close(db);
 
 	/* Rename the tmp db to the real one now */
-	len = strlen(ofile) + 4;
-	p = malloc(len);
-	if (p == NULL)
-		err(1, "malloc");
-	snprintf(p, len, "%s.db", ofile);
+	easprintf(&p, "%s.db", ofile);
 	if (rename(dbname, p) == -1)
 		err(1, "rename");
 	free(dbname);
@@ -584,6 +570,7 @@ main(int argc, char **argv)
 	if (sflag != 0)
 		fprintf(stderr, "%zu entries and %zu aliases written to %s\n",
 		    nterm, nalias, p);
+	free(p);
 
 	hdestroy();
 
