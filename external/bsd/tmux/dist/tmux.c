@@ -1,4 +1,4 @@
-/* $Id: tmux.c,v 1.1.1.2 2011/08/17 18:40:05 jmmv Exp $ */
+/* $Id: tmux.c,v 1.2 2012/05/31 19:14:56 martin Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -213,6 +213,22 @@ shell_exec(const char *shell, const char *shellcmd)
 	fatal("execl failed");
 }
 
+static void
+init_std_fds(void)
+{
+	int fd;
+
+	/*
+	 * Make sure the standard file descriptors are populated, so we
+	 * don't end up forwarding (for example) the event descriptor
+	 * instead of stdin to the server.
+	 */
+
+	while ((fd = open("/dev/null", O_RDWR)) <= 2)
+		;
+	close(fd);	 
+}
+
 int
 main(int argc, char **argv)
 {
@@ -283,6 +299,7 @@ main(int argc, char **argv)
 	if (shell_cmd != NULL && argc != 0)
 		usage();
 
+	init_std_fds();
 	log_open_tty(debug_level);
 
 	if (!(flags & IDENTIFY_UTF8)) {
