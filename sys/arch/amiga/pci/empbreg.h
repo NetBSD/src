@@ -1,4 +1,4 @@
-/*	$NetBSD: empbreg.h,v 1.1 2012/05/30 18:01:51 rkujawa Exp $ */
+/*	$NetBSD: empbreg.h,v 1.2 2012/05/31 21:29:02 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -77,6 +77,10 @@
 
 #define	EMPB_CONF_DEV_STRIDE	0x800	/* offset between PCI devices */
 #define EMPB_CONF_FUNC_STRIDE	0x100 	/* XXX: offset between PCI funcs */ 
+
+#define EMPB_WINDOW_SHIFT	0x10	
+#define EMPB_WINDOW_MASK_8M	0xFF80
+#define EMPB_WINDOW_MASK_4M	0xFFC0
 
 /* All PCI interrupt lines are wired to INT2? */
 #define EMPB_INT		2	// XXX: wild guess

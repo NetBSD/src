@@ -1,4 +1,4 @@
-/*	$NetBSD: empb.c,v 1.1 2012/05/30 18:01:51 rkujawa Exp $ */
+/*	$NetBSD: empb.c,v 1.2 2012/05/31 21:29:02 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -58,10 +58,13 @@
 
 #include "opt_pci.h"
 
-/* #define EMPB_DEBUG 1 */
+#define EMPB_DEBUG 1 
 
 #define	PCI_CONF_LOCK(s)	(s) = splhigh()
 #define	PCI_CONF_UNLOCK(s)	splx((s))
+
+#define WINDOW_LOCK(s)		(s) = splhigh()
+#define WINDOW_UNLOCK(s)	splx((s)) 
 
 struct empb_softc {
 	device_t			sc_dev;
@@ -75,8 +78,10 @@ struct empb_softc {
 	bus_space_handle_t		pci_confio_h;
 	uint8_t				pci_confio_mode;
 
-	struct bus_space_tag		pci_mem_window;
-	uint32_t			pci_mem_window_size;
+	struct bus_space_tag		pci_mem_win;
+	uint32_t			pci_mem_win_size;
+	bus_addr_t			pci_mem_win_pos;
+	uint16_t			pci_mem_win_mask;
 
 	struct amiga_pci_chipset	apc;
 
@@ -84,10 +89,12 @@ struct empb_softc {
 
 static int	empb_match(struct device *, struct cfdata *, void *);
 static void	empb_attach(struct device *, struct device *, void *);
+
 static void	empb_callback(device_t self);
 
-/*static bool	empb_find_mem(struct empb_softc *sc);*/
-void		empb_switch_bridge(struct empb_softc *sc, uint8_t mode);
+static void	empb_find_mem(struct empb_softc *sc);
+static void	empb_switch_bridge(struct empb_softc *sc, uint8_t mode);
+static void	empb_switch_window(struct empb_softc *sc, bus_addr_t address);
 
 pcireg_t	empb_pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void		empb_pci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
@@ -211,6 +218,16 @@ empb_callback(device_t self) {
 		aprint_error_dev(self,
 		    "couldn't map Mediator setup space\n");
 
+	empb_find_mem(sc);
+	if (sc->pci_mem_win_size == 0)
+		aprint_error_dev(self,
+		    "couldn't find memory space, check your WINDOW jumper\n");
+
+	/* just a test */
+	empb_switch_window(sc, 0x80000000);
+	empb_switch_window(sc, 0x82F00000);
+	empb_switch_window(sc, 0x82000000);
+
 	/* Initialize the PCI chipset tag. */
 	sc->apc.pc_conf_v = (void*) pc;
 	sc->apc.pc_bus_maxdevs = empb_pci_bus_maxdevs;
@@ -236,10 +253,10 @@ empb_callback(device_t self) {
 	pba.pba_pc = pc;
 	pba.pba_flags = PCI_FLAGS_IO_OKAY;
 
-	/*if(sc->pci_mem_window_size > 0) {
-		pba.pba_memt = &(sc->pci_mem_window);
+	if(sc->pci_mem_win_size > 0) {
+		pba.pba_memt = &(sc->pci_mem_win);
 		pba.pba_flags |= PCI_FLAGS_MEM_OKAY;
-	} else */
+	} else 
 		pba.pba_memt = NULL; 
 
 	pba.pba_bus = 0;
@@ -251,7 +268,7 @@ empb_callback(device_t self) {
 /*
  * Switch between configuration space and I/O space.
  */
-void
+static void
 empb_switch_bridge(struct empb_softc *sc, uint8_t mode)
 {
 	bus_space_write_1(sc->setup_area_t, sc->setup_area_h,
@@ -262,24 +279,75 @@ empb_switch_bridge(struct empb_softc *sc, uint8_t mode)
 /*
  * Try to find a (optional) memory window board.
  */
-/*bool
+static void
 empb_find_mem(struct empb_softc *sc)
 {
 	device_t memdev;
 	struct emmem_softc *mem_sc;
 
 	memdev = device_find_by_xname("emmem0");
+	sc->pci_mem_win_size = 0;
 
-	if(memdev == NULL)
-		return false;
+	if(memdev == NULL) {
+		return;
+	}
 
 	mem_sc = device_private(memdev);
 
-	sc->pci_mem_window.base = (bus_addr_t) mem_sc->sc_base;
-	sc->pci_mem_window.absm = &amiga_bus_stride_1;
+	sc->pci_mem_win.base = (bus_addr_t) mem_sc->sc_base;
+	sc->pci_mem_win.absm = &amiga_bus_stride_1;
 
-	sc->pci_mem_window_size = mem_sc->sc_size;
-}*/
+	sc->pci_mem_win_size = mem_sc->sc_size;
+
+	if(sc->pci_mem_win_size == 8*1024*1024)
+		sc->pci_mem_win_mask = EMPB_WINDOW_MASK_8M;
+	else if(sc->pci_mem_win_size == 4*1024*1024)
+		sc->pci_mem_win_mask = EMPB_WINDOW_MASK_4M;
+	else /* disable anyway */
+		sc->pci_mem_win_size = 0;
+
+#ifdef EMPB_DEBUG
+	aprint_normal("empb: found %x b window at %p, switch mask %x\n", 
+	    sc->pci_mem_win_size, (void*) sc->pci_mem_win.base, 
+	    sc->pci_mem_win_mask);
+#endif /* EMPB_DEBUG */
+
+}
+
+/*
+ * Switch memory window position.
+ */
+static void
+empb_switch_window(struct empb_softc *sc, bus_addr_t address) 
+{
+	int s;
+	uint16_t win_reg;
+
+	WINDOW_LOCK(s);
+
+	win_reg = bswap16((address >> EMPB_WINDOW_SHIFT) 
+	    & sc->pci_mem_win_mask);
+
+#ifdef EMPB_DEBUG
+	aprint_normal("empb: access to %p window switch to %x (@%p)\n", 
+	    (void*) address, win_reg, (void*) sc->setup_area_h);
+#endif /* EMPB_DEBUG */
+
+	bus_space_write_2(sc->setup_area_t, sc->setup_area_h,
+	    EMPB_SETUP_WINDOW_OFF, win_reg);
+
+	/* store window pos, like: sc->pci_mem_win_pos = win_reg ? */
+
+	win_reg = bus_space_read_2(sc->setup_area_t, sc->setup_area_h,
+	    EMPB_SETUP_WINDOW_OFF);
+
+	WINDOW_UNLOCK(s);	
+
+#ifdef EMPB_DEBUG
+	aprint_normal("empb: window reg now %x\n", win_reg);
+#endif /* EMPB_DEBUG */
+}
+
 
 pcireg_t
 empb_pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)

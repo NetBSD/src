@@ -1,4 +1,4 @@
-/*	$NetBSD: emmem.c,v 1.1 2012/05/30 18:01:51 rkujawa Exp $ */
+/*	$NetBSD: emmem.c,v 1.2 2012/05/31 21:29:02 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ emmem_attach(device_t parent, device_t self, void *aux)
 	zap = aux;
 
 	sc->sc_dev = self;
-	sc->sc_base = zap->pa;
+	sc->sc_base = zap->va;
 	sc->sc_size = zap->size;
 
 	aprint_normal(": ELBOX Mediator PCI memory window, %d kB\n",
