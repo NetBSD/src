@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.3 2012/05/30 14:54:16 nonaka Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.4 2012/06/01 12:38:25 nonaka Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.3 2012/05/30 14:54:16 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.4 2012/06/01 12:38:25 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -3860,7 +3860,7 @@ urtwn_chip_stop(struct urtwn_softc *sc)
 	urtwn_write_1(sc, R92C_RSV_CTRL, 0x0E);
 }
 
-MODULE(MODULE_CLASS_DRIVER, if_urtwn, NULL);
+MODULE(MODULE_CLASS_DRIVER, if_urtwn, "bpf");
 
 #ifdef _MODULE
 #include "ioconf.c"
