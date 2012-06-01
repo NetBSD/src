@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.18 2012/05/31 21:01:06 joerg Exp $ */
+/* $NetBSD: tic.c,v 1.19 2012/06/01 12:08:40 joerg Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.18 2012/05/31 21:01:06 joerg Exp $");
+__RCSID("$NetBSD: tic.c,v 1.19 2012/06/01 12:08:40 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -205,6 +205,7 @@ process_entry(TBUF *buf, int flags)
 			}
 			p = e;
 		}
+		free(alias);
 	}
 	
 	return 0;
@@ -514,7 +515,7 @@ main(int argc, char **argv)
 
 	hcreate(HASH_SIZE);
 
-	buf = NULL;
+	buf = tbuf.buf = NULL;
 	buflen = tbuf.buflen = tbuf.bufpos = 0;	
 	while ((len = getline(&buf, &buflen, f)) != -1) {
 		/* Skip comments */
@@ -539,8 +540,10 @@ main(int argc, char **argv)
 		memcpy(tbuf.buf + tbuf.bufpos, buf, len);
 		tbuf.bufpos += len;
 	}
+	free(buf);
 	/* Process the last entry if not done already */
 	process_entry(&tbuf, flags);
+	free(tbuf.buf);
 
 	/* Merge use entries until we have merged all we can */
 	while (merge_use(flags) != 0)
@@ -571,9 +574,18 @@ main(int argc, char **argv)
 	if (sflag != 0)
 		fprintf(stderr, "%zu entries and %zu aliases written to %s\n",
 		    nterm, nalias, p);
-	free(p);
 
+#ifdef __VALGRIND__
+	free(p);
+	while ((term = SLIST_FIRST(&terms)) != NULL) {
+		SLIST_REMOVE_HEAD(&terms, next);
+		_ti_freetic(term->tic);
+		free(term->name);
+		free(term);
+	}
 	hdestroy();
+#endif
+
 
 	return EXIT_SUCCESS;
 }
