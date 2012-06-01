@@ -1,4 +1,4 @@
-/* $NetBSD: compile.c,v 1.6 2011/11/28 12:44:19 joerg Exp $ */
+/* $NetBSD: compile.c,v 1.7 2012/06/01 12:08:40 joerg Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: compile.c,v 1.6 2011/11/28 12:44:19 joerg Exp $");
+__RCSID("$NetBSD: compile.c,v 1.7 2012/06/01 12:08:40 joerg Exp $");
 
 #if !HAVE_NBTOOL_CONFIG_H || HAVE_SYS_ENDIAN_H
 #include <sys/endian.h>
@@ -74,7 +74,7 @@ _ti_grow_tbuf(TBUF *tbuf, size_t len)
 
 	l = tbuf->bufpos + len;
 	if (l > tbuf->buflen) {
-		if (tbuf->bufpos == 0)
+		if (tbuf->buflen == 0)
 			buf = malloc(l);
 		else
 			buf = realloc(tbuf->buf, l);
@@ -659,6 +659,7 @@ _ti_freetic(TIC *tic)
 		free(tic->name);
 		free(tic->alias);
 		free(tic->desc);
+		free(tic->extras.buf);
 		free(tic->flags.buf);
 		free(tic->nums.buf);
 		free(tic->strs.buf);
