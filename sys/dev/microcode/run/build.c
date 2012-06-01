@@ -1,5 +1,5 @@
-/*	$NetBSD: build.c,v 1.3 2012/06/01 13:19:39 nonaka Exp $	*/
-/*	$OpenBSD: build.c,v 1.1 2006/01/09 20:03:40 damien Exp $	*/
+/*	$NetBSD: build.c,v 1.1 2012/06/01 13:19:39 nonaka Exp $	*/
+/*	$OpenBSD: build.c,v 1.3 2009/05/15 15:53:55 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -51,7 +51,9 @@ output(const char *name, const uint8_t *ucode, int size)
 int
 main(void)
 {
-	output("rum-rt2573",  rt2573,  sizeof rt2573);
+
+	output("run-rt2870", rt2870, sizeof rt2870);
+	output("run-rt3071", rt3071, sizeof rt3071);
 
 	return 0;
 }

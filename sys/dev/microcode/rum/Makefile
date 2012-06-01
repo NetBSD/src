@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2012/05/30 14:30:35 nonaka Exp $
+#	$NetBSD: Makefile,v 1.3 2012/06/01 13:19:39 nonaka Exp $
 
 NOMAN=	# defined
 
-FILES=	rum-rt2573 run-rt2870 run-rt3071 rum-license
+FILES=	rum-rt2573 rum-license
 
 # XXX
 includes:
