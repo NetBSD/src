@@ -1,4 +1,4 @@
-/*	$NetBSD: empb.c,v 1.3 2012/06/01 09:41:35 rkujawa Exp $ */
+/*	$NetBSD: empb.c,v 1.4 2012/06/01 17:41:16 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -166,6 +166,9 @@ empb_callback(device_t self) {
 	struct empb_softc *sc;
 	pci_chipset_tag_t pc;
 	struct pcibus_attach_args pba;  
+#ifdef PCI_NETBSD_CONFIGURE
+	struct extent *ioext, *memext;
+#endif /* PCI_NETBSD_CONFIGURE */
 
 	sc = device_private(self);
 	pc = &sc->apc;
@@ -221,6 +224,20 @@ empb_callback(device_t self) {
 	sc->apc.pc_conf_interrupt = amiga_pci_conf_interrupt;
 
 	sc->apc.cookie = sc;
+
+#ifdef PCI_NETBSD_CONFIGURE
+	ioext = extent_create("empbio", 0, EMPB_BRIDGE_SIZE, 
+	    NULL, 0, EX_NOWAIT);
+
+	memext = extent_create("empbmem", EMPB_MEM_BASE, EMPB_MEM_END,
+	    NULL, 0, EX_NOWAIT);
+
+	pci_configure_bus(pc, ioext, memext, NULL, 0, CACHELINE_SIZE);
+
+	extent_destroy(ioext);
+	extent_destroy(memext);
+
+#endif /* PCI_NETBSD_CONFIGURE */
 
 	pba.pba_iot = &(sc->pci_confio_area);
 	pba.pba_dmat = NULL; 

@@ -1,4 +1,4 @@
-/*	$NetBSD: empb_bsm.c,v 1.1 2012/06/01 09:41:35 rkujawa Exp $ */
+/*	$NetBSD: empb_bsm.c,v 1.2 2012/06/01 17:41:16 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -43,11 +43,25 @@
 #include <amiga/pci/empbvar.h>
 #include <amiga/pci/emmemvar.h>
 
+/*
+int
+empb_bsm(bus_space_tag_t space, bus_addr_t address, bus_size_t size,
+    int flags, bus_space_handle_t *handlep);
+int
+empb_bsms(bus_space_tag_t space, bus_space_handle_t handle,
+    bus_size_t offset, bus_size_t size, bus_space_handle_t *nhandlep);
+void
+empb_bsu(bus_space_tag_t space, bus_space_handle_t handle,
+    bus_size_t size);
+uint8_t
+empb_bsr1(bus_space_tag_t space, bus_space_handle_t handle,
+    bus_size_t offset);
 
 
 
 const struct amiga_bus_space_methods empb_bus_swap = {
-	/*.bsm =		empb_bsm,
+
+	.bsm =		empb_bsm,
 	.bsms =		empb_bsms,
 	.bsu =		empb_bsu,
  	.bsa =		NULL,
@@ -62,34 +76,35 @@ const struct amiga_bus_space_methods empb_bus_swap = {
 	.bssr1 =	empb_bssr1,
 	.bscr1 =	empb_bscr1,
 
-	.bsr2 =		oabs(bsr2_),		// XXX swap? 
-	.bsw2 =		oabs(bsw2_),		// XXX swap? 
-	.bsrs2 =	oabs(bsr2_),
-	.bsws2 =	oabs(bsw2_),
-	.bsrm2 =	oabs(bsrm2_swap_),
-	.bswm2 =	oabs(bswm2_swap_),
-	.bsrms2 =	oabs(bsrm2_),
-	.bswms2 =	oabs(bswm2_),
-	.bsrr2 =	oabs(bsrr2_),		// XXX swap?
-	.bswr2 =	oabs(bswr2_),		// XXX swap? 
-	.bsrrs2 =	oabs(bsrr2_),
-	.bswrs2 =	oabs(bswr2_),
-	.bssr2 =	oabs(bssr2_),		// XXX swap?
-	.bscr2 =	oabs(bscr2_),		// XXX swap? 
+	.bsr2 =		empb_bsr2_swap,	
+	.bsw2 =		empb_bsw2_swap,	
+	.bsrs2 =	empb_bsr2,
+	.bsws2 =	empb_bsw2,
+	.bsrm2 =	empb_bsrm2_swap,
+	.bswm2 =	empb_bswm2_swap,
+	.bsrms2 =	empb_bsrm2,
+	.bswms2 =	empb_bswm2,
+	.bsrr2 =	empb_bsrr2_swap,
+	.bswr2 =	empb_bswr2_swap,
+	.bsrrs2 =	empb_bsrr2,
+	.bswrs2 =	empb_bswr2,
+	.bssr2 =	empb_bssr2_swap,
+	.bscr2 =	empb_bscr2_swap, 
 
-	.bsr4 =		oabs(bsr4_swap_),
-	.bsw4 =		oabs(bsw4_swap_),
-	.bsrs4 =	oabs(bsr4_),
-	.bsws4 =	oabs(bsw4_),
-	.bsrm4 =	oabs(bsrm4_),		// XXX swap?
-	.bswm4 =	oabs(bswm4_),		// XXX swap?
-	.bsrms4 =	oabs(bsrm4_),
-	.bswms4 =	oabs(bswm4_),
-	.bsrr4 =	oabs(bsrr4_),		// XXX swap? 
-	.bswr4 =	oabs(bswr4_),		// XXX swap?
-	.bsrrs4 =	oabs(bsrr4_),
-	.bswrs4 =	oabs(bswr4_),
-	.bssr4 = 	oabs(bssr4_),		// XXX swap?
-	.bscr4 =	oabs(bscr4_)		// XXX swap? */
+	.bsr4 =		empb_bsr4_swap,
+	.bsw4 =		empb_bsw4_swap,
+	.bsrs4 =	empb_bsr4,
+	.bsws4 =	empb_bsw4,
+	.bsrm4 =	empb_bsrm4_swap,
+	.bswm4 =	empb_bswm4_swap,
+	.bsrms4 =	empb_bsrm4,
+	.bswms4 =	empb_bswm4,
+	.bsrr4 =	empb_bsrr4_swap, 
+	.bswr4 =	empb_bswr4_swap,
+	.bsrrs4 =	empb_bsrr4,
+	.bswrs4 =	empb_bswr4,
+	.bssr4 = 	empb_bssr4_swap,
+	.bscr4 =	empb_bscr4_swap 
 };
+*/
 
