@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.2 2012/06/01 12:38:25 nonaka Exp $	*/
+/*	$NetBSD: if_run.c,v 1.3 2012/06/01 13:19:39 nonaka Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.2 2012/06/01 12:38:25 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.3 2012/06/01 13:19:39 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -838,7 +838,7 @@ run_load_microcode(struct run_softc *sc)
 	else
 		fwname = "run-rt2870";
 
-	if ((error = firmware_load("rum", fwname, &ucode, &size)) != 0) {
+	if ((error = firmware_load("run", fwname, &ucode, &size)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "error %d, could not read firmware %s\n", error, fwname);
 		return (error);
