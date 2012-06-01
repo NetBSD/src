@@ -1,4 +1,4 @@
-/* $NetBSD: term.c,v 1.13 2011/10/03 19:18:55 roy Exp $ */
+/* $NetBSD: term.c,v 1.14 2012/06/01 12:02:36 joerg Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: term.c,v 1.13 2011/10/03 19:18:55 roy Exp $");
+__RCSID("$NetBSD: term.c,v 1.14 2012/06/01 12:02:36 joerg Exp $");
 
 #include <sys/stat.h>
 
@@ -297,7 +297,7 @@ ticcmp(const TIC *tic, const char *name)
 			l = strlen(alias);
 		else
 			l = s - alias;
-		if (len == l && strncmp(alias, name, l) == 0)
+		if (len == l && memcmp(alias, name, l) == 0)
 			return 0;
 		if (s == NULL)
 			break;
