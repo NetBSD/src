@@ -1,4 +1,4 @@
-/*	$NetBSD: empbreg.h,v 1.2 2012/05/31 21:29:02 rkujawa Exp $ */
+/*	$NetBSD: empbreg.h,v 1.3 2012/06/01 17:41:17 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -81,6 +81,9 @@
 #define EMPB_WINDOW_SHIFT	0x10	
 #define EMPB_WINDOW_MASK_8M	0xFF80
 #define EMPB_WINDOW_MASK_4M	0xFFC0
+
+#define EMPB_MEM_BASE		0x80000000
+#define EMPB_MEM_END		0xA0000000
 
 /* All PCI interrupt lines are wired to INT2? */
 #define EMPB_INT		2	// XXX: wild guess
