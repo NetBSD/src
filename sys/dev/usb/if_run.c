@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.1 2012/05/30 14:30:35 nonaka Exp $	*/
+/*	$NetBSD: if_run.c,v 1.2 2012/06/01 12:38:25 nonaka Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.1 2012/05/30 14:30:35 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.2 2012/06/01 12:38:25 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -3732,7 +3732,7 @@ run_setup_beacon(struct run_softc *sc)
 }
 #endif
 
-MODULE(MODULE_CLASS_DRIVER, if_run, NULL);
+MODULE(MODULE_CLASS_DRIVER, if_run, "bpf");
 
 #ifdef _MODULE
 #include "ioconf.c"
