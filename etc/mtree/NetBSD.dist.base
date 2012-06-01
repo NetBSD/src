@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.99 2012/03/25 00:11:18 nonaka Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.100 2012/06/01 13:19:38 nonaka Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -70,6 +70,7 @@
 ./libdata/firmware/if_wpi
 ./libdata/firmware/ral
 ./libdata/firmware/rum
+./libdata/firmware/run
 ./libdata/firmware/upgt
 ./libdata/firmware/urtwn
 ./libdata/firmware/zyd
