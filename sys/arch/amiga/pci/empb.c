@@ -1,4 +1,4 @@
-/*	$NetBSD: empb.c,v 1.2 2012/05/31 21:29:02 rkujawa Exp $ */
+/*	$NetBSD: empb.c,v 1.3 2012/06/01 09:41:35 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -46,14 +46,11 @@
 #include <machine/bus.h>
 #include <machine/cpu.h>
 
-#include <m68k/bus_dma.h>
 #include <amiga/dev/zbusvar.h>
 #include <amiga/pci/empbreg.h>
+#include <amiga/pci/empbvar.h>
 #include <amiga/pci/emmemvar.h>
 
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcidevs.h>
 #include <dev/pci/pciconf.h>
 
 #include "opt_pci.h"
@@ -66,27 +63,6 @@
 #define WINDOW_LOCK(s)		(s) = splhigh()
 #define WINDOW_UNLOCK(s)	splx((s)) 
 
-struct empb_softc {
-	device_t			sc_dev;
-
-	struct bus_space_tag		setup_area;
-	bus_space_tag_t			setup_area_t;
-	bus_space_handle_t		setup_area_h;
-
-	struct bus_space_tag		pci_confio_area;
-	bus_space_tag_t			pci_confio_t;
-	bus_space_handle_t		pci_confio_h;
-	uint8_t				pci_confio_mode;
-
-	struct bus_space_tag		pci_mem_win;
-	uint32_t			pci_mem_win_size;
-	bus_addr_t			pci_mem_win_pos;
-	uint16_t			pci_mem_win_mask;
-
-	struct amiga_pci_chipset	apc;
-
-};
-
 static int	empb_match(struct device *, struct cfdata *, void *);
 static void	empb_attach(struct device *, struct device *, void *);
 
@@ -94,7 +70,6 @@ static void	empb_callback(device_t self);
 
 static void	empb_find_mem(struct empb_softc *sc);
 static void	empb_switch_bridge(struct empb_softc *sc, uint8_t mode);
-static void	empb_switch_window(struct empb_softc *sc, bus_addr_t address);
 
 pcireg_t	empb_pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void		empb_pci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
@@ -317,7 +292,7 @@ empb_find_mem(struct empb_softc *sc)
 /*
  * Switch memory window position.
  */
-static void
+void
 empb_switch_window(struct empb_softc *sc, bus_addr_t address) 
 {
 	int s;
