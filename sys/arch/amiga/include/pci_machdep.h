@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.5 2012/05/07 18:16:38 tsutsui Exp $ */
+/*	$NetBSD: pci_machdep.h,v 1.6 2012/06/01 09:41:35 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -86,6 +86,8 @@ struct amiga_pci_chipset {
 	/* PCI configuration data register */
 	bus_space_tag_t pci_conf_datat;
 	bus_space_handle_t pci_conf_datah;
+
+	void		*cookie; /* used in some implementations */
 };
 
 
