@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.41 2012/05/31 12:32:35 nonaka Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.42 2012/06/01 12:38:25 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.41 2012/05/31 12:32:35 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.42 2012/06/01 12:38:25 nonaka Exp $");
 
 
 #include <sys/param.h>
@@ -2299,7 +2299,7 @@ rum_activate(device_t self, enum devact act)
 	}
 }
 
-MODULE(MODULE_CLASS_DRIVER, if_rum, NULL);
+MODULE(MODULE_CLASS_DRIVER, if_rum, "bpf");
 
 #ifdef _MODULE
 #include "ioconf.c"
