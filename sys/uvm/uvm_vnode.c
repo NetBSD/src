@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.97 2011/09/06 16:41:55 matt Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.98 2012/06/01 14:52:48 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.97 2011/09/06 16:41:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.98 2012/06/01 14:52:48 martin Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -170,7 +170,8 @@ uvn_get(struct uvm_object *uobj, voff_t offset,
 
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x", vp, (int)offset, 0,0);
 
-	if ((access_type & VM_PROT_WRITE) == 0 && (flags & PGO_LOCKED) == 0) {
+	if (vp->v_type == VREG && (access_type & VM_PROT_WRITE) == 0
+	    && (flags & PGO_LOCKED) == 0) {
 		vn_ra_allocctx(vp);
 		uvm_ra_request(vp->v_ractx, advice, uobj, offset,
 		    *npagesp << PAGE_SHIFT);
