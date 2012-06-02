@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.39 2012/05/22 02:40:05 christos Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.40 2012/06/02 16:48:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.39 2012/05/22 02:40:05 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.40 2012/06/02 16:48:13 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -908,13 +908,6 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 				break;
 			}
 			/*
-			 * Ignore GNU tags
-			 */
-			if (np->n_namesz == ELF_NOTE_GNU_NAMESZ &&
-			    memcmp(ndata, ELF_NOTE_GNU_NAME,
-			    ELF_NOTE_GNU_NAMESZ) == 0)
-				break;
-			/*
 			 * Ignore SuSE tags
 			 */
 			if (np->n_namesz == ELF_NOTE_SUSE_NAMESZ &&
@@ -934,6 +927,12 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 bad:
 #ifdef DIAGNOSTIC
 			{
+				/*
+				 * Ignore GNU tags
+				 */
+				if (np->n_namesz == ELF_NOTE_GNU_NAMESZ &&
+				    memcmp(ndata, ELF_NOTE_GNU_NAME,
+				    ELF_NOTE_GNU_NAMESZ) == 0)
 				int ns = MIN(np->n_namesz, maxlen);
 				printf("%s: Unknown elf note type %d: "
 				    "[namesz=%d, descsz=%d name=%*.*s]\n",
