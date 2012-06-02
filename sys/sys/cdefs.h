@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.98 2012/04/30 20:41:33 pgoyette Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.99 2012/06/02 21:27:51 dsl Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -230,6 +230,12 @@
 #define	__noinline	__attribute__((__noinline__))
 #else
 #define	__noinline	/* nothing */
+#endif
+
+#if __GNUC_PREREQ__(3, 0)
+#define	__always_inline	__attribute__((__always_inline__))
+#else
+#define	__always_inline	/* nothing */
 #endif
 
 #if __GNUC_PREREQ__(4, 1)
