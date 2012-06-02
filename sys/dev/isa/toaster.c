@@ -1,4 +1,4 @@
-/* $NetBSD: toaster.c,v 1.11 2012/02/12 16:34:11 matt Exp $ */
+/* $NetBSD: toaster.c,v 1.12 2012/06/02 21:36:44 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toaster.c,v 1.11 2012/02/12 16:34:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toaster.c,v 1.12 2012/06/02 21:36:44 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -287,7 +287,7 @@ toaster_attach(device_t parent, device_t self, void *aux)
 				"led" #x "_width",			\
         			SYSCTL_DESCR(				\
 				"LED cycle width in HZ tick units"),	\
-        			led_sysctl, 0, &sc->led_width[(x)], 0,	\
+        			led_sysctl, 0, (void *)&sc->led_width[(x)], 0,	\
 				CTL_HW, node->sysctl_num,		\
 				CTL_CREATE, CTL_EOL))			\
 				!= 0) {					\
@@ -307,7 +307,7 @@ toaster_attach(device_t parent, device_t self, void *aux)
 				"magnetic_latch",
         			SYSCTL_DESCR(
 				"magnetic latch that holds the toast down"),
-        			latch_sysctl, 0, &sc->latch, 0,
+        			latch_sysctl, 0, (void *)&sc->latch, 0,
 				CTL_HW, node->sysctl_num,
 				CTL_CREATE, CTL_EOL))
 				!= 0) {
@@ -320,7 +320,7 @@ toaster_attach(device_t parent, device_t self, void *aux)
 				"burner_element",
         			SYSCTL_DESCR(
 				"800-watt burner element control for toasting"),
-        			burner_sysctl, 0, &sc->burner, 0,
+        			burner_sysctl, 0, (void *)&sc->burner, 0,
 				CTL_HW, node->sysctl_num,
 				CTL_CREATE, CTL_EOL))
 				!= 0) {

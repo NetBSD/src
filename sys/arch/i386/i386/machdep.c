@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.727 2012/05/21 14:15:17 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.728 2012/06/02 21:36:41 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.727 2012/05/21 14:15:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.728 2012/06/02 21:36:41 dsl Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -696,7 +696,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 	sysctl_createv(clog, 0, NULL, NULL, 
 	    	       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "cpu_brand", NULL,
-		       NULL, 0, &cpu_brand_string, 0,
+		       NULL, 0, cpu_brand_string, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
