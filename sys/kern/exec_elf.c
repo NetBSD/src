@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.40 2012/06/02 16:48:13 christos Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.41 2012/06/02 18:32:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.40 2012/06/02 16:48:13 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.41 2012/06/02 18:32:27 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -933,6 +933,7 @@ bad:
 				if (np->n_namesz == ELF_NOTE_GNU_NAMESZ &&
 				    memcmp(ndata, ELF_NOTE_GNU_NAME,
 				    ELF_NOTE_GNU_NAMESZ) == 0)
+				    break;
 				int ns = MIN(np->n_namesz, maxlen);
 				printf("%s: Unknown elf note type %d: "
 				    "[namesz=%d, descsz=%d name=%*.*s]\n",
