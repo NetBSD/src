@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.20 2010/10/02 18:06:47 gsutre Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.21 2012/06/02 21:36:43 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.20 2010/10/02 18:06:47 gsutre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.21 2012/06/02 21:36:43 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -191,7 +191,7 @@ sony_walk_cb(ACPI_HANDLE hnd, uint32_t v, void *context, void **status)
 
 	if ((rv = sysctl_createv(&sc->sc_log, 0, &snode, &node,
 	    CTLFLAG_READWRITE, CTLTYPE_INT, buf + 1, NULL,
-	    sony_sysctl_helper, 0, sc, 0, CTL_CREATE, CTL_EOL)) != 0)
+	    sony_sysctl_helper, 0, (void *)sc, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto out;
 
 out:

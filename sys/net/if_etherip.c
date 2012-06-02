@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.31 2011/10/28 16:10:12 dyoung Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.32 2012/06/02 21:36:47 dsl Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.31 2011/10/28 16:10:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.32 2012/06/02 21:36:47 dsl Exp $");
 
 #include "opt_inet.h"
 
@@ -275,7 +275,7 @@ etherip_attach(device_t parent, device_t self, void *aux)
 	 */
 	error = sysctl_createv(NULL, 0, NULL, &node, CTLFLAG_READWRITE, 
 			       CTLTYPE_STRING, device_xname(self), NULL,
-			       etherip_sysctl_handler, 0, sc, 18, CTL_NET,
+			       etherip_sysctl_handler, 0, (void *)sc, 18, CTL_NET,
 			       AF_LINK, etherip_node, device_unit(self),
 			       CTL_EOL);
 	if (error)

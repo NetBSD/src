@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.23 2011/11/09 05:47:54 macallan Exp $	*/
+/*	$NetBSD: lm75.c,v 1.24 2012/06/02 21:36:44 dsl Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.23 2011/11/09 05:47:54 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.24 2012/06/02 21:36:44 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,7 +363,7 @@ lmtemp_setup_sysctl(struct lmtemp_softc *sc)
 	sysctl_createv(NULL, 0, NULL, &node,
 	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
 	    CTLTYPE_INT, "temp", "Threshold temperature",
-	    sysctl_lm75_temp, 1, sc, 0,
+	    sysctl_lm75_temp, 1, (void *)sc, 0,
 	    CTL_MACHDEP, me->sysctl_num, CTL_CREATE, CTL_EOL);
 }
 

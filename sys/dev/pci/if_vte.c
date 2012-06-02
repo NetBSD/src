@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.5 2012/02/02 19:43:05 tls Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.6 2012/06/02 21:36:45 dsl Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.5 2012/02/02 19:43:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.6 2012/06/02 21:36:45 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,7 +290,7 @@ vte_attach(device_t parent, device_t self, void *aux)
 	    CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "int_rxct",
 	    SYSCTL_DESCR("vte RX interrupt moderation packet counter"),
-	    vte_sysctl_intrxct, 0, sc,
+	    vte_sysctl_intrxct, 0, (void *)sc,
 	    0, CTL_HW, vte_root_num, vte_nodenum, CTL_CREATE,
 	    CTL_EOL) != 0) {
 		aprint_normal_dev(sc->vte_dev,
@@ -300,7 +300,7 @@ vte_attach(device_t parent, device_t self, void *aux)
 	    CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "int_txct",
 	    SYSCTL_DESCR("vte TX interrupt moderation packet counter"),
-	    vte_sysctl_inttxct, 0, sc,
+	    vte_sysctl_inttxct, 0, (void *)sc,
 	    0, CTL_HW, vte_root_num, vte_nodenum, CTL_CREATE,
 	    CTL_EOL) != 0) {
 		aprint_normal_dev(sc->vte_dev,

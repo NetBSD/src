@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.42 2009/03/11 23:22:57 martin Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.43 2012/06/02 21:36:42 dsl Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.42 2009/03/11 23:22:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.43 2012/06/02 21:36:42 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddbparam.h"
@@ -165,7 +165,7 @@ SYSCTL_SETUP(sysctl_ddb_setup, "sysctl ddb subtree setup")
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRING, "commandonenter",
 		       SYSCTL_DESCR("Command to be executed on each ddb enter"),
-		       NULL, 0, &db_cmd_on_enter, DB_LINE_MAXLEN,
+		       NULL, 0, db_cmd_on_enter, DB_LINE_MAXLEN,
 		       CTL_DDB, CTL_CREATE, CTL_EOL);
 }
 #endif	/* _KERNEL */
