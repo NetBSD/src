@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.125 2012/04/13 15:34:42 yamt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.126 2012/06/02 08:42:37 para Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -83,10 +83,14 @@
  * up the locking and protection of the kernel address space into smaller
  * chunks.
  *
- * the vm system has several standard kernel submaps, including:
+ * the vm system has several standard kernel submaps/arenas, including:
+ *   kmem_arena => used for kmem/pool (memoryallocators(9))
  *   pager_map => used to map "buf" structures into kernel space
  *   exec_map => used during exec to handle exec args
  *   etc...
+ *
+ * the kmem_arena is a "special submap", as it lives a fixed map entry
+ * within the kernel_map and controlled by vmem(9).
  *
  * the kernel allocates its private memory out of special uvm_objects whose
  * reference count is set to UVM_OBJ_KERN (thus indicating that the objects
@@ -117,10 +121,30 @@
  * freed right away.   this is done with the uvm_km_pgremove() function.
  * this has to be done because there is no backing store for kernel pages
  * and no need to save them after they are no longer referenced.
+ *
+ * kmem_arena: main arena controlling the kernel kva used by other arenas.
+ * kmem_va_arena: it utilizes quantum caching for fast allocations and to
+ *   lower fragmentation. the pool and kmem allocate from this arena
+ *   except for some pool meta-data.
+ *
+ * arenas for metadata allocations used by vmem(9) and pool(9)
+ * note: these arenas can't use quantum caching, the kmem_va_meta_arena
+ *   compensates for this by importing larger chunks from kmem_arena.
+ *
+ * kmem_va_meta_arena: space for metadata is allocated from this arena.
+ * kmem_meta_arena: imports from kmem_va_meta_arena.
+ *   allocations from this arena are backed with vm_pages.
+ *
+ * arena stacking:
+ * kmem_arena
+ *   kmem_va_arena
+ *   kmem_va_meta_arena
+ *     kmem_meta_arena
+ *
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.125 2012/04/13 15:34:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.126 2012/06/02 08:42:37 para Exp $");
 
 #include "opt_uvmhist.h"
 
