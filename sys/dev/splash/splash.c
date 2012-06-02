@@ -1,4 +1,4 @@
-/* $NetBSD: splash.c,v 1.11 2011/02/08 23:28:24 jmcneill Exp $ */
+/* $NetBSD: splash.c,v 1.12 2012/06/02 14:24:00 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: splash.c,v 1.11 2011/02/08 23:28:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: splash.c,v 1.12 2012/06/02 14:24:00 martin Exp $");
 
 #include "opt_splash.h"
 
@@ -271,7 +271,7 @@ splash_render8(struct splash_info *si, const char *data, int xoff, int yoff,
 			fb[x] = SPLASH_INDEX(pix[0], pix[1], pix[2]) +
 				    SPLASH_CMAP_OFFSET;
 		}
-		fb += si->si_width;
+		fb += si->si_stride;
 	}
 
 	/* If we've just written to the shadow fb, copy it to the display */
