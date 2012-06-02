@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: weekly,v 1.26 2012/02/15 23:30:11 joerg Exp $
+#	$NetBSD: weekly,v 1.27 2012/06/02 15:52:24 christos Exp $
 #	from: @(#)weekly	8.2 (Berkeley) 1/2/94
 #
 
@@ -81,7 +81,7 @@ fi
 
 if checkyesno rebuild_whatisdb; then
 	echo ""
-	if [ -x /usr/libexec/makewhatis -a \( -f /etc/man.conf -o \
+	if [ -x /usr/libexec/makewhatis -a \( -f /etc/man.conf \
 	     -o -d /usr/share/man \) ]; then
 		echo "Rebuilding whatis databases:"
 		nice -n 5 /usr/libexec/makewhatis -f
