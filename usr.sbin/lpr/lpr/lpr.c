@@ -1,4 +1,4 @@
-/*	$NetBSD: lpr.c,v 1.45 2011/08/30 19:27:37 joerg Exp $	*/
+/*	$NetBSD: lpr.c,v 1.46 2012/06/02 03:32:53 jnemeth Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpr.c,v 1.45 2011/08/30 19:27:37 joerg Exp $");
+__RCSID("$NetBSD: lpr.c,v 1.46 2012/06/02 03:32:53 jnemeth Exp $");
 #endif
 #endif /* not lint */
 
@@ -698,7 +698,7 @@ mktemps(void)
 
 	(void)snprintf(buf, sizeof(buf), "%s/.seq", SD);
 	seteuid(euid);
-	if ((fd = open(buf, O_RDWR|O_CREAT, 0661)) < 0)
+	if ((fd = open(buf, O_RDWR|O_CREAT, 0664)) < 0)
 		err(1, "cannot create %s", buf);
 	if (flock(fd, LOCK_EX))
 		err(1, "cannot lock %s", buf);
