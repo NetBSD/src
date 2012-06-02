@@ -1,4 +1,4 @@
-/* $NetBSD: tparm.c,v 1.7 2011/10/03 20:13:48 roy Exp $ */
+/* $NetBSD: tparm.c,v 1.8 2012/06/02 19:10:33 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,8 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tparm.c,v 1.7 2011/10/03 20:13:48 roy Exp $");
+__RCSID("$NetBSD: tparm.c,v 1.8 2012/06/02 19:10:33 roy Exp $");
+#include <sys/param.h>
 
 #include <assert.h>
 #include <ctype.h>
@@ -91,10 +92,10 @@ checkbuf(TERMINAL *term, size_t len)
 	char *buf;
 	
 	if (term->_bufpos + len >= term->_buflen) {
-		len = term->_buflen + BUFSIZ;
+		len = term->_buflen + MAX(len, BUFSIZ);
 		buf = realloc(term->_buf, len);
 		if (buf == NULL)
-			return 0;
+			return NULL;
 		term->_buf = buf;
 		term->_buflen = len;
 	}
