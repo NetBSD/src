@@ -1,4 +1,4 @@
-/*	$NetBSD: spx.c,v 1.4.12.1 2012/02/18 07:33:30 mrg Exp $ */
+/*	$NetBSD: spx.c,v 1.4.12.2 2012/06/02 11:09:10 mrg Exp $ */
 /*
  * SPX/LCSPX/SPXg/SPXgt accelerated framebuffer driver for NetBSD/VAX
  * Copyright (c) 2005 Blaz Antonic
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spx.c,v 1.4.12.1 2012/02/18 07:33:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spx.c,v 1.4.12.2 2012/06/02 11:09:10 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1021,6 +1021,10 @@ spx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 	case WSDISPLAYIO_GVIDEO:
 		*(u_int *)data = spx_off == 0 ?
 		WSDISPLAYIO_VIDEO_ON : WSDISPLAYIO_VIDEO_OFF;
+		break;
+
+	case WSDISPLAYIO_LINEBYTES:
+		*(u_int *)data = spx_xsize;
 		break;
 
 	default:

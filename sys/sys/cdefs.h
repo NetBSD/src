@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.89.4.2 2012/04/05 21:33:50 mrg Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.89.4.3 2012/06/02 11:09:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -491,7 +491,7 @@
 #define	__link_set_foreach(pvar, set)					\
 	for (pvar = __link_set_start(set); pvar < __link_set_end(set); pvar++)
 
-#define	__link_set_entry(set, idx)	(__link_set_begin(set)[idx])
+#define	__link_set_entry(set, idx)	(__link_set_start(set)[idx])
 
 /*
  * Return the number of elements in a statically-allocated array,

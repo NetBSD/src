@@ -1,4 +1,4 @@
-/*	$NetBSD: sata_subr.c,v 1.14 2010/12/12 00:38:07 jakllsch Exp $	*/
+/*	$NetBSD: sata_subr.c,v 1.14.12.1 2012/06/02 11:09:16 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * Common functions for Serial ATA.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sata_subr.c,v 1.14 2010/12/12 00:38:07 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sata_subr.c,v 1.14.12.1 2012/06/02 11:09:16 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -104,6 +104,18 @@ sata_reset_interface(struct ata_channel *chp, bus_space_tag_t sata_t,
 		if ((sstatus & SStatus_DET_mask) == SStatus_DET_DEV)
 			break;
 		tsleep(chp, PRIBIO, "sataup", mstohz(10));
+	}
+	/*
+	 * if we have a link up without device, wait a few more seconds
+	 * for connection to establish
+	 */
+	if ((sstatus & SStatus_DET_mask) == SStatus_DET_DEV_NE) {
+		for (i = 0; i < 500; i++) {
+			tsleep(chp, PRIBIO, "sataup", mstohz(10));
+			sstatus = bus_space_read_4(sata_t, sstatus_r, 0);
+			if ((sstatus & SStatus_DET_mask) == SStatus_DET_DEV)
+				break;
+		}
 	}
 
 	switch (sstatus & SStatus_DET_mask) {

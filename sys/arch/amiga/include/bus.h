@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.25 2011/09/21 13:05:32 rkujawa Exp $	*/
+/*	$NetBSD: bus.h,v 1.25.6.1 2012/06/02 11:08:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -279,6 +279,13 @@ extern const struct amiga_bus_space_methods amiga_bus_stride_2;
 extern const struct amiga_bus_space_methods amiga_bus_stride_4;
 extern const struct amiga_bus_space_methods amiga_bus_stride_4swap;
 extern const struct amiga_bus_space_methods amiga_bus_stride_16;
+extern const struct amiga_bus_space_methods empb_bus_swap;
+
+/*
+ * XXX
+ * amiga doesn't have actual bus_dma(9) implementation for PCI devices yet.
+ */
+#include <m68k/bus_dma.h>
 
 #endif /* _AMIGA_BUS_H_ */
 

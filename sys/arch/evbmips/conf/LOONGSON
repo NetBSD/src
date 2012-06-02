@@ -1,4 +1,4 @@
-# $NetBSD: LOONGSON,v 1.7.2.4 2012/03/06 18:26:35 mrg Exp $
+# $NetBSD: LOONGSON,v 1.7.2.5 2012/06/02 11:08:55 mrg Exp $
 #
 # LOONGSON machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.loongson"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"LOONGSON-$Revision: 1.7.2.4 $"
+#ident 		"LOONGSON-$Revision: 1.7.2.5 $"
 
 maxusers	16
 
@@ -57,6 +57,11 @@ options 	MSGBUFSIZE=8192		# dmesg buffer size
 options 	NTP			# network time protocol
 
 #options 	WINCE_DEFAULT_SETTING	# Debugging use
+
+# Note: SysV IPC parameters can be changed dynamically; see sysctl(8).
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+options 	SYSVSHM		# System V-like memory sharing
 
 #options 	SYSCALL_DEBUG		# for debug
 #options 	HPCMIPS_L1CACHE_DISABLE	# disable L1 cache for debug
@@ -284,6 +289,9 @@ ucom*	at uplcom? portno ?
 
 umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
 ucom*	at umct? portno ?
+
+# Realtek RTL8187/RTL8187B 802.11b/g USB wireless adapter
+urtw*	at uhub? port ?
 
 # USB Generic driver
 ugen*	at uhub? port ?

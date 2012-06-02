@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.39.8.1 2012/02/18 07:32:06 mrg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.39.8.2 2012/06/02 11:08:58 mrg Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.39.8.1 2012/02/18 07:32:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.39.8.2 2012/06/02 11:08:58 mrg Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -164,7 +164,6 @@ static void hppa_pdc_system_map_scan(void);
 void
 cpu_configure(void)
 {
-
 	/*
 	 * Consider stopping for a debugger before
 	 * autoconfiguration.
@@ -183,10 +182,8 @@ cpu_configure(void)
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
 
-	/* in spl*() we trust */
-	hp700_intr_init();
-	__asm volatile("ssm %0, %%r0" :: "i" (PSW_I));
-	curcpu()->ci_psw |= PSW_I;
+	/* Allow interrupts - we're trusting spl* here */
+	hp700_intr_enable();
 	spl0();
 
 	if (cold_hook)

@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.123.6.1 2012/02/18 07:33:38 mrg Exp $
+#	$NetBSD: files.xen,v 1.123.6.2 2012/06/02 11:09:12 mrg Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -43,7 +43,6 @@ file	arch/i386/i386/db_dbgreg.S	ddb | kstack_check_dr0
 file	arch/i386/i386/db_disasm.c	ddb
 file	arch/i386/i386/db_interface.c	ddb
 file	arch/i386/i386/db_machdep.c	ddb
-file	arch/i386/i386/db_memrw.c	ddb | kgdb
 file	arch/i386/i386/dumpsys.c
 file	arch/i386/i386/gdt.c
 file	arch/i386/i386/ipkdb_glue.c	ipkdb
@@ -72,7 +71,6 @@ file	arch/amd64/amd64/cpu_in_cksum.S		(inet | inet6) & cpu_in_cksum
 file	arch/amd64/amd64/db_disasm.c		ddb
 file	arch/amd64/amd64/db_interface.c		ddb
 file	arch/amd64/amd64/db_machdep.c		ddb
-file	arch/amd64/amd64/db_memrw.c		ddb | kgdb
 file	arch/amd64/amd64/kgdb_machdep.c	 kgdb
 file	arch/amd64/amd64/kobj_machdep.c	 	modular
 file	arch/amd64/amd64/gdt.c
@@ -84,6 +82,7 @@ file	arch/amd64/amd64/lock_stubs.S
 endif
 
 file	kern/subr_disk_mbr.c		disk
+file	arch/x86/x86/db_memrw.c		ddb | kgdb
 file	arch/x86/x86/db_trace.c		ddb
 file	arch/xen/x86/hypervisor_machdep.c
 # file 	arch/x86/x86/mtrr_i686.c	mtrr

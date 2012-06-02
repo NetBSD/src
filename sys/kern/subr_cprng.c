@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.4.2.2 2012/04/29 23:05:05 mrg Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.4.2.3 2012/06/02 11:09:33 mrg Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <sys/cprng.h>
 
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.4.2.2 2012/04/29 23:05:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.4.2.3 2012/06/02 11:09:33 mrg Exp $");
 
 void
 cprng_init(void)
@@ -144,6 +144,9 @@ cprng_strong_reseed(void *const arg)
 #ifdef RND_VERBOSE
 	    printf("cprng: sink %s cprng busy, no reseed\n", c->reseed.name);
 #endif
+	    if (c->flags & CPRNG_USE_CV) {	/* XXX if flags change? */
+        	cv_broadcast(&c->cv);
+	    }
 	    return;
 	}
 
@@ -240,23 +243,32 @@ cprng_strong(cprng_strong_t *const c, void *const p, size_t len, int flags)
 				      "failed.", c->name);
 			}
 		} else {
-			if (!(flags & FNONBLOCK) && 
-			     (c->flags & CPRNG_USE_CV)) {
-				int wr;
+			int wr;
 
+			do {
 				cprng_strong_sched_reseed(c);
-				do {
-					wr = cv_wait_sig(&c->cv, &c->mtx);
-					if (wr == ERESTART) {
-						mutex_exit(&c->mtx);
-						return 0;
-					}
-				} while (nist_ctr_drbg_generate(&c->drbg, p,
-								len, &cc,
-								sizeof(cc)));
-			} else {
-				len = 0;
-			}
+				if ((flags & FNONBLOCK) ||
+				    !(c->flags & CPRNG_USE_CV)) {
+					len = 0;
+					break;
+				}
+			/*
+			 * XXX There's a race with the cv_broadcast
+			 * XXX in cprng_strong_sched_reseed, because
+			 * XXX of the use of tryenter in that function.
+			 * XXX This "timedwait" hack works around it,
+			 * XXX at the expense of occasionaly polling
+			 * XXX for success on a /dev/random rekey.
+			 */
+				wr = cv_timedwait_sig(&c->cv, &c->mtx,
+						      mstohz(100));
+				if (wr == ERESTART) {
+					mutex_exit(&c->mtx);
+					return 0;
+				}
+			} while (nist_ctr_drbg_generate(&c->drbg, p,
+							len, &cc,
+							sizeof(cc)));
 		}
 	}
 

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.69.4.1 2012/04/05 21:33:38 mrg Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.69.4.2 2012/06/02 11:09:32 mrg Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.69.4.1 2012/04/05 21:33:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.69.4.2 2012/06/02 11:09:32 mrg Exp $");
 #endif /* not lint */
 
 
@@ -368,7 +368,8 @@ udf_write(void *v)
 		  (old_offset >> 16 != uio->uio_offset >> 16)) {
 			mutex_enter(vp->v_interlock);
 			error = VOP_PUTPAGES(vp, (old_offset >> 16) << 16,
-			    (uio->uio_offset >> 16) << 16, PGO_CLEANIT);
+			    (uio->uio_offset >> 16) << 16,
+			    PGO_CLEANIT | PGO_LAZY);
 			old_offset = uio->uio_offset;
 		}
 	}
@@ -2227,7 +2228,7 @@ udf_fsync(void *v)
 
 	/* flush data and wait for it when requested */
 	wait = (ap->a_flags & FSYNC_WAIT) ? UPDATE_WAIT : 0;
-	error = vflushbuf(vp, wait);
+	error = vflushbuf(vp, ap->a_flags);
 	if (error)
 		return error;
 
@@ -2382,4 +2383,3 @@ const struct vnodeopv_entry_desc udf_vnodeop_entries[] = {
 const struct vnodeopv_desc udf_vnodeop_opv_desc = {
 	&udf_vnodeop_p, udf_vnodeop_entries
 };
-

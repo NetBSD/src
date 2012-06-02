@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.34.8.1 2012/02/18 07:35:36 mrg Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.34.8.2 2012/06/02 11:09:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.34.8.1 2012/02/18 07:35:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.34.8.2 2012/06/02 11:09:36 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -89,16 +89,27 @@ __KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.34.8.1 2012/02/18 07:35:36 mrg Ex
 #include <miscfs/genfs/layer.h>
 #include <miscfs/genfs/layer_extern.h>
 
+SYSCTL_SETUP_PROTO(sysctl_vfs_layerfs_setup);
+
 MODULE(MODULE_CLASS_MISC, layerfs, NULL);
 
 static int
 layerfs_modcmd(modcmd_t cmd, void *arg)
 {
+#ifdef _MODULE
+	static struct sysctllog *layerfs_clog = NULL;
+#endif
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		sysctl_vfs_layerfs_setup(&layerfs_clog);
+#endif
 		return 0;
 	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		sysctl_teardown(&layerfs_clog);
+#endif
 		return 0;
 	default:
 		return ENOTTY;
@@ -264,12 +275,20 @@ SYSCTL_SETUP(sysctl_vfs_layerfs_setup, "sysctl vfs.layerfs subtree setup")
 	const struct sysctlnode *layerfs_node = NULL;
 
 	sysctl_createv(clog, 0, NULL, NULL,
+#ifdef _MODULE
+		       0,
+#else
 		       CTLFLAG_PERMANENT,
+#endif
 		       CTLTYPE_NODE, "vfs", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, &layerfs_node,
+#ifdef _MODULE
+		       0,
+#else
 		       CTLFLAG_PERMANENT,
+#endif
 		       CTLTYPE_NODE, "layerfs",
 		       SYSCTL_DESCR("Generic layered file system"),
 		       NULL, 0, NULL, 0,
@@ -277,7 +296,10 @@ SYSCTL_SETUP(sysctl_vfs_layerfs_setup, "sysctl vfs.layerfs subtree setup")
 
 #ifdef LAYERFS_DIAGNOSTIC
 	sysctl_createv(clog, 0, &layerfs_node, NULL,
-	               CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+#ifndef _MODULE
+	               CTLFLAG_PERMANENT |
+#endif
+		       CTLFLAG_READWRITE,
 	               CTLTYPE_INT,
 	               "debug",
 	               SYSCTL_DESCR("Verbose debugging messages"),

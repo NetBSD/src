@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_machdep.c,v 1.25.8.2 2012/02/24 09:11:29 mrg Exp $	*/
+/*	$NetBSD: hppa_machdep.c,v 1.25.8.3 2012/06/02 11:09:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.25.8.2 2012/02/24 09:11:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.25.8.3 2012/06/02 11:09:00 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,44 +130,56 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 }
 
 int
+cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
+{
+	const __greg_t *gr = mcp->__gregs;
+
+	if ((gr[_REG_PSW] & (PSW_MBS|PSW_MBZ)) != PSW_MBS) {
+		return EINVAL;
+	}
+
+#if 0
+	/*
+	 * XXX
+	 * Force the space regs and priviledge bits to
+	 * the right values in the trapframe for now.
+	 */
+
+	if (gr[_REG_PCSQH] != pmap_sid(pmap, gr[_REG_PCOQH])) {
+		return EINVAL;
+	}
+
+	if (gr[_REG_PCSQT] != pmap_sid(pmap, gr[_REG_PCOQT])) {
+		return EINVAL;
+	}
+
+	if (gr[_REG_PCOQH] < 0xc0000020 &&
+	    (gr[_REG_PCOQH] & HPPA_PC_PRIV_MASK) != HPPA_PC_PRIV_USER) {
+		return EINVAL;
+	}
+
+	if (gr[_REG_PCOQT] < 0xc0000020 &&
+	    (gr[_REG_PCOQT] & HPPA_PC_PRIV_MASK) != HPPA_PC_PRIV_USER) {
+		return EINVAL;
+	}
+#endif
+
+	return 0;
+}
+
+int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	struct proc *p = l->l_proc;
 	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
 	const __greg_t *gr = mcp->__gregs;
+	int error;
 
 	if ((flags & _UC_CPU) != 0) {
-
-		if ((gr[_REG_PSW] & (PSW_MBS|PSW_MBZ)) != PSW_MBS) {
-			return EINVAL;
-		}
-
-#if 0
-		/*
-		 * XXX
-		 * Force the space regs and priviledge bits to
-		 * the right values in the trapframe for now.
-		 */
-
-		if (gr[_REG_PCSQH] != pmap_sid(pmap, gr[_REG_PCOQH])) {
-			return EINVAL;
-		}
-
-		if (gr[_REG_PCSQT] != pmap_sid(pmap, gr[_REG_PCOQT])) {
-			return EINVAL;
-		}
-
-		if (gr[_REG_PCOQH] < 0xc0000020 &&
-		    (gr[_REG_PCOQH] & HPPA_PC_PRIV_MASK) != HPPA_PC_PRIV_USER) {
-			return EINVAL;
-		}
-
-		if (gr[_REG_PCOQT] < 0xc0000020 &&
-		    (gr[_REG_PCOQT] & HPPA_PC_PRIV_MASK) != HPPA_PC_PRIV_USER) {
-			return EINVAL;
-		}
-#endif
+		error = cpu_mcontext_validate(l, mcp);
+		if (error)
+			return error;
 
 		tf->tf_ipsw	= gr[0] |
 		    (hppa_cpu_ispa20_p() ? PSW_O : 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.33 2010/08/14 10:39:33 cegger Exp $	*/
+/*	$NetBSD: sbp.c,v 1.33.12.1 2012/06/02 11:09:17 mrg Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.33 2010/08/14 10:39:33 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.33.12.1 2012/06/02 11:09:17 mrg Exp $");
 
 
 #include <sys/param.h>
@@ -344,6 +344,7 @@ struct sbp_softc {
 };
 
 MALLOC_DEFINE(M_SBP, "sbp", "SBP-II/IEEE1394");
+MALLOC_DECLARE(M_SBP);
 
 
 static int sbpmatch(device_t, cfdata_t, void *);

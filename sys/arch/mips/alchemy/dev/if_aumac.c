@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.32.2.1 2012/02/18 07:32:38 mrg Exp $ */
+/* $NetBSD: if_aumac.c,v 1.32.2.2 2012/06/02 11:09:05 mrg Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.32.2.1 2012/02/18 07:32:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.32.2.2 2012/06/02 11:09:05 mrg Exp $");
 
 
 
@@ -123,6 +123,7 @@ struct aumac_softc {
 	struct ethercom sc_ethercom;	/* Ethernet common data */
 	void *sc_sdhook;		/* shutdown hook */
 
+	int sc_irq;
 	void *sc_ih;			/* interrupt cookie */
 
 	struct mii_data sc_mii;		/* MII/media information */
@@ -272,6 +273,8 @@ aumac_attach(device_t parent, device_t self, void *aux)
 		    "unable to register interrupt handler\n");
 		return;
 	}
+	sc->sc_irq = aa->aa_irq[0];
+	au_intr_disable(sc->sc_irq);
 
 	/*
 	 * Allocate space for the transmit and receive buffers.
@@ -808,6 +811,7 @@ aumac_init(struct ifnet *ifp)
 	ifp->if_flags |= IFF_RUNNING; 
 	ifp->if_flags &= ~IFF_OACTIVE;
 
+	au_intr_enable(sc->sc_irq);
 out:
 	if (error)
 		printf("%s: interface not running\n", device_xname(sc->sc_dev));
@@ -835,6 +839,8 @@ aumac_stop(struct ifnet *ifp, int disable)
 
 	/* Power down/reset the MAC. */
 	aumac_powerdown(sc);
+
+	au_intr_disable(sc->sc_irq);
 
 	/* Mark the interface as down and cancel the watchdog timer. */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);

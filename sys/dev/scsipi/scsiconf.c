@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.262.8.2 2012/04/29 23:05:00 mrg Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.262.8.3 2012/06/02 11:09:28 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.262.8.2 2012/04/29 23:05:00 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.262.8.3 2012/06/02 11:09:28 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -344,6 +344,9 @@ scsi_probe_bus(struct scsibus_softc *sc, int target, int lun)
 	int maxtarget, mintarget, maxlun, minlun;
 	int error;
 
+	/* XXXSMP scsipi */
+	KERNEL_LOCK(1, curlwp);
+
 	if (target == -1) {
 		maxtarget = chan->chan_ntargets - 1;
 		mintarget = 0;
@@ -371,7 +374,7 @@ scsi_probe_bus(struct scsibus_softc *sc, int target, int lun)
 		    0, curproc);
 
 	if ((error = scsipi_adapter_addref(chan->chan_adapter)) != 0)
-		return (error);
+		goto ret;
 	for (target = mintarget; target <= maxtarget; target++) {
 		if (target == chan->chan_id)
 			continue;
@@ -392,7 +395,9 @@ scsi_probe_bus(struct scsibus_softc *sc, int target, int lun)
 		scsipi_set_xfer_mode(chan, target, 1);
 	}
 	scsipi_adapter_delref(chan->chan_adapter);
-	return (0);
+ret:
+	KERNEL_UNLOCK_ONE(curlwp);
+	return (error);
 }
 
 static int

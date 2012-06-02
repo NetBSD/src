@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.41 2011/09/28 01:46:39 macallan Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.41.6.1 2012/06/02 11:09:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -113,6 +113,17 @@ struct netbsd32_wsdisplay_addscreendata {
 	netbsd32_charp emul;
 };
 #define	WSDISPLAYIO_ADDSCREEN32	_IOW('W', 78, struct netbsd32_wsdisplay_addscreendata)
+
+/* the first member must be matched with struct ifreq */
+struct netbsd32_ieee80211req {
+	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
+	uint16_t	i_type;			/* req type */
+	int16_t		i_val;			/* Index or simple value */
+	uint16_t	i_len;			/* Index or simple value */
+	netbsd32_voidp	i_data;			/* Extra data */
+};
+#define SIOCS8021132			_IOW('i', 244, struct netbsd32_ieee80211req)
+#define SIOCG8021132			_IOWR('i', 245, struct netbsd32_ieee80211req)
 
 /* the first member must be matched with struct ifreq */
 struct netbsd32_ieee80211_nwkey {
@@ -463,3 +474,36 @@ struct netbsd32_wdog_conf {
 	int		wc_count;
 };
 #define WDOGIOC_GWDOGS32	_IOWR('w', 5, struct netbsd32_wdog_conf)
+
+
+struct netbsd32_clockctl_settimeofday {
+	netbsd32_timevalp_t tv;
+	netbsd32_voidp tzp;
+};
+
+#define CLOCKCTL_SETTIMEOFDAY32 _IOW('C', 0x5, \
+    struct netbsd32_clockctl_settimeofday)
+
+struct netbsd32_clockctl_adjtime {
+	netbsd32_timevalp_t delta;
+	netbsd32_timevalp_t olddelta;
+};
+
+#define CLOCKCTL_ADJTIME32 _IOWR('C', 0x6, struct netbsd32_clockctl_adjtime)
+
+struct netbsd32_clockctl_clock_settime {
+	netbsd32_clockid_t clock_id;
+	netbsd32_timespecp_t tp;
+};
+
+#define CLOCKCTL_CLOCK_SETTIME32 _IOW('C', 0x7, \
+    struct netbsd32_clockctl_clock_settime)
+
+struct netbsd32_clockctl_ntp_adjtime {
+	netbsd32_timexp_t tp;
+	/* register_t */ int32_t retval;
+};
+
+#define CLOCKCTL_NTP_ADJTIME32 _IOWR('C', 0x8, \
+    struct netbsd32_clockctl_ntp_adjtime)
+

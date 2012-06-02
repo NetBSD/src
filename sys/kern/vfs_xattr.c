@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.29.4.1 2012/04/05 21:33:42 mrg Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.29.4.2 2012/06/02 11:09:35 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.29.4.1 2012/04/05 21:33:42 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.29.4.2 2012/06/02 11:09:35 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,7 +219,7 @@ extattr_set_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 				       &attrlen, l->l_cred);
 
 		switch (error) {
-		case ENOATTR:
+		case ENODATA:
 			if (flag & XATTR_REPLACE)
 				goto done;
 			break;

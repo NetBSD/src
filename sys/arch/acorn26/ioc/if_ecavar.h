@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecavar.h,v 1.3 2011/07/19 16:05:10 dyoung Exp $	*/
+/*	$NetBSD: if_ecavar.h,v 1.3.6.1 2012/06/02 11:08:42 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -46,18 +46,18 @@ struct eca_fiqstate {
 	void		*efs_fiqhandler;
 	struct mbuf	*efs_rx_curmbuf;
 	struct fiqregs	efs_rx_fiqregs;
-	u_int32_t	efs_rx_flags;
-	u_int8_t	efs_rx_myaddr;
+	uint32_t	efs_rx_flags;
+	uint8_t		efs_rx_myaddr;
 	struct mbuf	*efs_tx_curmbuf;
 };
 
 struct eca_softc {
 	device_t	sc_dev;
 	struct ecocom 	sc_ec;
-	u_int8_t	sc_cr1;
-	u_int8_t	sc_cr2;
-	u_int8_t	sc_cr3;
-	u_int8_t	sc_cr4;
+	uint8_t		sc_cr1;
+	uint8_t		sc_cr2;
+	uint8_t		sc_cr3;
+	uint8_t		sc_cr4;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	void		*sc_rx_soft;
@@ -65,7 +65,7 @@ struct eca_softc {
 	struct eca_fiqstate sc_fiqstate;
 	struct mbuf	*sc_rcvmbuf;
 	struct mbuf	*sc_txmbuf;
-	u_int8_t	sc_sr2;
+	uint8_t		sc_sr2;
 	void		*sc_tx_soft;
 	int		sc_transmitting;
 };

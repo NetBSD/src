@@ -1,4 +1,4 @@
-/*	$NetBSD: plcomvar.h,v 1.7.2.1 2012/02/18 07:31:51 mrg Exp $	*/
+/*	$NetBSD: plcomvar.h,v 1.7.2.2 2012/06/02 11:08:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -67,7 +67,7 @@ int  plcom_is_console	(bus_space_tag_t, int, bus_space_handle_t *);
 #define	PLCOM_RING_SIZE		2048
 
 struct plcom_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	void *sc_si;
 	struct tty *sc_tty;
 
@@ -136,12 +136,12 @@ struct plcom_softc {
 #ifdef RND_COM
 	krndsource_t  rnd_source;
 #endif
-	struct simplelock	sc_lock;
+	kmutex_t		sc_lock;
 };
 
 int  plcomprobe1	(bus_space_tag_t, bus_space_handle_t);
 int  plcomintr		(void *);
 void plcom_attach_subr	(struct plcom_softc *);
-int  plcom_detach	(struct device *, int);
-int  plcom_activate	(struct device *, enum devact);
+int  plcom_detach	(device_t, int);
+int  plcom_activate	(device_t, enum devact);
 
