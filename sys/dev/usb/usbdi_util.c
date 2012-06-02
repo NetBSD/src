@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.55.12.7 2012/03/06 18:26:48 mrg Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.55.12.8 2012/06/02 08:07:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.55.12.7 2012/03/06 18:26:48 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.55.12.8 2012/06/02 08:07:25 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -434,28 +434,13 @@ usbd_bulk_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 		   u_int32_t *size, const char *lbl)
 {
 	usbd_status err;
-	int s, error;
 
 	usbd_setup_xfer(xfer, pipe, 0, buf, *size,
 			flags, timeout, usbd_bulk_transfer_cb);
 	DPRINTFN(1, ("usbd_bulk_transfer: start transfer %d bytes\n", *size));
-	usbd_lock_pipe(pipe);	/* don't want callback until block */
-	err = usbd_transfer(xfer);
-	if (err != USBD_IN_PROGRESS) {
-		usbd_unlock_pipe(pipe);
-		return (err);
-	}
-	if (pipe->device->bus->lock)
-		error = cv_wait_sig(&xfer->cv, pipe->device->bus->lock);
-	else
-		error = tsleep(xfer, PZERO | PCATCH, lbl, 0); /* XXXSMP ok */
-	usbd_unlock_pipe(pipe);
-	if (error) {
-		DPRINTF(("usbd_bulk_transfer: wait=%d\n", error));
-		usbd_abort_pipe(pipe);
-		return (USBD_INTERRUPTED);
-	}
-	usbd_get_xfer_status(xfer, NULL, NULL, size, &err);
+
+	err = usbd_sync_transfer_sig(xfer);
+	usbd_get_xfer_status(xfer, NULL, NULL, size, NULL);
 	DPRINTFN(1,("usbd_bulk_transfer: transferred %d\n", *size));
 	if (err) {
 		DPRINTF(("usbd_bulk_transfer: error=%d\n", err));
@@ -483,28 +468,12 @@ usbd_intr_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 		   u_int32_t *size, const char *lbl)
 {
 	usbd_status err;
-	int s, error;
 
 	usbd_setup_xfer(xfer, pipe, 0, buf, *size,
 			flags, timeout, usbd_intr_transfer_cb);
 	DPRINTFN(1, ("usbd_intr_transfer: start transfer %d bytes\n", *size));
-	usbd_lock_pipe(pipe);	/* don't want callback until block */
-	err = usbd_transfer(xfer);
-	if (err != USBD_IN_PROGRESS) {
-		usbd_unlock_pipe(pipe);
-		return (err);
-	}
-	if (pipe->device->bus->lock)
-		error = cv_wait_sig(&xfer->cv, pipe->device->bus->lock);
-	else
-		error = tsleep(xfer, PZERO | PCATCH, lbl, 0); /* XXXSMP ok */
-	usbd_unlock_pipe(pipe);
-	if (error) {
-		DPRINTF(("usbd_intr_transfer: wait=%d\n", error));
-		usbd_abort_pipe(pipe);
-		return (USBD_INTERRUPTED);
-	}
-	usbd_get_xfer_status(xfer, NULL, NULL, size, &err);
+	err = usbd_sync_transfer_sig(xfer);
+	usbd_get_xfer_status(xfer, NULL, NULL, size, NULL);
 	DPRINTFN(1,("usbd_intr_transfer: transferred %d\n", *size));
 	if (err) {
 		DPRINTF(("usbd_intr_transfer: error=%d\n", err));

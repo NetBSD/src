@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.80.2.2 2012/04/29 23:05:02 mrg Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.80.2.3 2012/06/02 08:07:25 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -80,6 +80,8 @@ typedef void (*usbd_callback)(usbd_xfer_handle, usbd_private_handle,
 #define USBD_SYNCHRONOUS	0x02	/* wait for completion */
 /* in usb.h #define USBD_SHORT_XFER_OK	0x04*/	/* allow short reads */
 #define USBD_FORCE_SHORT_XFER	0x08	/* force last short packet on write */
+#define USBD_SYNCHRONOUS_SIG	0x10	/* if waiting for completion,
+					 * also take signals */
 
 #define USBD_NO_TIMEOUT 0
 #define USBD_DEFAULT_TIMEOUT 5000 /* ms = 5 s */
@@ -125,6 +127,7 @@ void *usbd_alloc_buffer(usbd_xfer_handle, u_int32_t);
 void usbd_free_buffer(usbd_xfer_handle);
 void *usbd_get_buffer(usbd_xfer_handle);
 usbd_status usbd_sync_transfer(usbd_xfer_handle);
+usbd_status usbd_sync_transfer_sig(usbd_xfer_handle);
 usbd_status usbd_open_pipe_intr(usbd_interface_handle, u_int8_t,
 				u_int8_t, usbd_pipe_handle *,
 				usbd_private_handle, void *,

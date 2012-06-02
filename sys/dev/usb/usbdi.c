@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.134.2.15 2012/03/06 18:26:48 mrg Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.134.2.16 2012/06/02 08:07:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134.2.15 2012/03/06 18:26:48 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.134.2.16 2012/06/02 08:07:25 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -322,10 +322,17 @@ usbd_transfer(usbd_xfer_handle xfer)
 		if (pipe->device->bus->use_polling)
 			panic("usbd_transfer: not done");
 
-		if (pipe->device->bus->lock)
-			cv_wait(&xfer->cv, pipe->device->bus->lock);
-		else
-			tsleep(xfer, PRIBIO, "usbsyn", 0);
+		if ((flags & USBD_SYNCHRONOUS_SIG) != 0) {
+			if (pipe->device->bus->lock)
+				cv_wait_sig(&xfer->cv, pipe->device->bus->lock);
+			else
+				tsleep(xfer, PZERO|PCATCH, "usbsyn", 0);
+		} else {
+			if (pipe->device->bus->lock)
+				cv_wait(&xfer->cv, pipe->device->bus->lock);
+			else
+				tsleep(xfer, PRIBIO, "usbsyn", 0);
+		}
 	}
 	usbd_unlock_pipe(pipe);
 	return (xfer->status);
@@ -336,6 +343,14 @@ usbd_status
 usbd_sync_transfer(usbd_xfer_handle xfer)
 {
 	xfer->flags |= USBD_SYNCHRONOUS;
+	return (usbd_transfer(xfer));
+}
+
+/* Like usbd_transfer(), but waits for completion and listens for signals. */
+usbd_status
+usbd_sync_transfer_sig(usbd_xfer_handle xfer)
+{
+	xfer->flags |= USBD_SYNCHRONOUS | USBD_SYNCHRONOUS_SIG;
 	return (usbd_transfer(xfer));
 }
 
@@ -780,7 +795,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 
 #ifdef DIAGNOSTIC
 	if (pipe == NULL) {
-		printf("usbd_transfer_cb: pipe==0, xfer=%p\n", xfer);
+		printf("usb_transfer_complete: pipe==0, xfer=%p\n", xfer);
 		return;
 	}
 #endif
@@ -831,7 +846,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 	xfer->done = 1;
 	if (!xfer->status && xfer->actlen < xfer->length &&
 	    !(xfer->flags & USBD_SHORT_XFER_OK)) {
-		DPRINTFN(-1,("usbd_transfer_cb: short transfer %d<%d\n",
+		DPRINTFN(-1,("usb_transfer_complete: short transfer %d<%d\n",
 			     xfer->actlen, xfer->length));
 		xfer->status = USBD_SHORT_XFER;
 	}
