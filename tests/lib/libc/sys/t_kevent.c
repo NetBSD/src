@@ -1,4 +1,4 @@
-/*	$NetBSD: t_kevent.c,v 1.3 2012/05/31 20:31:07 martin Exp $ */
+/*	$NetBSD: t_kevent.c,v 1.4 2012/06/02 16:52:18 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,12 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_kevent.c,v 1.3 2012/05/31 20:31:07 martin Exp $");
+__RCSID("$NetBSD: t_kevent.c,v 1.4 2012/06/02 16:52:18 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/event.h>
 
 #include <atf-c.h>
+#include <errno.h>
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -82,7 +83,7 @@ ATF_TC_BODY(kqueue_desc_passing, tc)
 
 	ATF_REQUIRE((kq = kqueue()) != -1);
 
-	atf_tc_skip("crashes kernel (PR 46463)");
+	// atf_tc_skip("crashes kernel (PR 46463)");
 
 	ATF_REQUIRE(socketpair(AF_LOCAL, SOCK_STREAM, 0, s) != -1);
 	msg = malloc(CMSG_SPACE(sizeof(int)));
@@ -125,7 +126,10 @@ ATF_TC_BODY(kqueue_desc_passing, tc)
 	ATF_CHECK(kevent(kq, &ev, 1, NULL, 0, NULL) != -1);
 
 	printf("parent (pid %d): sending kq fd %d\n", getpid(), kq);
-	ATF_REQUIRE(sendmsg(s[0], &m, 0) != -1);
+	if (sendmsg(s[0], &m, 0) == -1) {
+		ATF_REQUIRE_EQ_MSG(errno, EBADF, "errno is %d", errno);
+		atf_tc_skip("PR kern/46523");
+	}
 
 	close(kq);
 
