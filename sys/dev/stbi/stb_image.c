@@ -430,7 +430,7 @@ extern int      stbi_gif_info_from_file   (FILE *f,                  int *x, int
 #endif
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stb_image.c,v 1.3 2012/06/02 14:30:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stb_image.c,v 1.4 2012/06/02 14:37:38 christos Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -3051,7 +3051,6 @@ static unsigned char *do_png(png *p, int *x, int *y, int *n, int req_comp)
       *y = p->s.img_y;
       if (n) *n = p->s.img_n;
    }
-   FREE(p->out);      p->out      = NULL;
    FREE(p->expanded); p->expanded = NULL;
    FREE(p->idata);    p->idata    = NULL;
 
