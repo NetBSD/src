@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.53.2.6 2012/06/02 11:09:30 mrg Exp $	*/
+/*	$NetBSD: umidi.c,v 1.53.2.7 2012/06/02 21:19:02 mrg Exp $	*/
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.53.2.6 2012/06/02 11:09:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.53.2.7 2012/06/02 21:19:02 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -374,7 +374,6 @@ umidi_close(void *addr)
 	if ((mididev->flags & FREAD) && mididev->in_jack)
 		close_in_jack(mididev->in_jack);
 
-	/* XXX SMP */
 	mutex_spin_enter(&mididev->sc->sc_lock);
 
 	mididev->opened = 0;
