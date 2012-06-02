@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.189 2012/04/07 05:38:49 christos Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.190 2012/06/02 21:36:46 dsl Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.189 2012/04/07 05:38:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.190 2012/06/02 21:36:46 dsl Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -249,7 +249,7 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRING, "hostname",
 		       SYSCTL_DESCR("System hostname"),
-		       sysctl_setlen, 0, &hostname, MAXHOSTNAMELEN,
+		       sysctl_setlen, 0, hostname, MAXHOSTNAMELEN,
 		       CTL_KERN, KERN_HOSTNAME, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE|CTLFLAG_HEX,
@@ -342,7 +342,7 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRING, "domainname",
 		       SYSCTL_DESCR("YP domain name"),
-		       sysctl_setlen, 0, &domainname, MAXHOSTNAMELEN,
+		       sysctl_setlen, 0, domainname, MAXHOSTNAMELEN,
 		       CTL_KERN, KERN_DOMAINNAME, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
@@ -703,7 +703,7 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       CTLTYPE_STRING, "path",
 		       SYSCTL_DESCR("Path pattern for set-id coredumps."),
 		       sysctl_security_setidcorename, 0,
-		       &security_setidcore_path,
+		       security_setidcore_path,
 		       sizeof(security_setidcore_path),
 		       CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &rnode, NULL,

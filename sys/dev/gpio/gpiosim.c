@@ -1,4 +1,4 @@
-/* $NetBSD: gpiosim.c,v 1.13 2011/08/30 07:22:12 mbalmer Exp $ */
+/* $NetBSD: gpiosim.c,v 1.14 2012/06/02 21:36:44 dsl Exp $ */
 /*      $OpenBSD: gpiosim.c,v 1.1 2008/11/23 18:46:49 mbalmer Exp $	*/
 
 /*
@@ -142,7 +142,7 @@ gpiosim_attach(device_t parent, device_t self, void *aux)
             CTLFLAG_READWRITE,
             CTLTYPE_INT, "value",
             SYSCTL_DESCR("Current GPIO simulator value"),
-            gpiosim_sysctl, 0, sc, 0,
+            gpiosim_sysctl, 0, (void *)sc, 0,
 	    CTL_CREATE, CTL_EOL);
 
 	printf(": simulating %d pins\n", GPIOSIM_NPINS);

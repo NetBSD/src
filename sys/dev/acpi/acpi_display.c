@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_display.c,v 1.9 2011/02/16 09:05:12 jruoho Exp $	*/
+/*	$NetBSD: acpi_display.c,v 1.10 2012/06/02 21:36:43 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.9 2011/02/16 09:05:12 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.10 2012/06/02 21:36:43 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1133,14 +1133,14 @@ acpidisp_vga_sysctl_setup(struct acpidisp_vga_softc *asc)
 		(void)sysctl_createv(&asc->sc_log, 0, &rnode, NULL,
 		    CTLFLAG_READWRITE | CTLFLAG_HEX, CTLTYPE_INT, "bios_policy",
 		    SYSCTL_DESCR("Current BIOS switch policies (debug)"),
-		    acpidisp_vga_sysctl_policy, 0, asc, 0,
+		    acpidisp_vga_sysctl_policy, 0, (void *)asc, 0,
 		    CTL_CREATE, CTL_EOL);
 #endif
 
 		(void)sysctl_createv(&asc->sc_log, 0, &rnode, NULL,
 		    CTLFLAG_READWRITE, CTLTYPE_BOOL, "bios_switch",
 		    SYSCTL_DESCR("Current BIOS output switching policy"),
-		    acpidisp_vga_sysctl_policy_output, 0, asc, 0,
+		    acpidisp_vga_sysctl_policy_output, 0, (void *)asc, 0,
 		    CTL_CREATE, CTL_EOL);
 	}
 
@@ -1186,7 +1186,7 @@ acpidisp_out_sysctl_setup(struct acpidisp_out_softc *osc)
 		(void)sysctl_createv(&osc->sc_log, 0, &rnode, NULL,
 		    CTLFLAG_READWRITE, CTLTYPE_INT, "brightness",
 		    SYSCTL_DESCR("Current brightness level"),
-		    acpidisp_out_sysctl_brightness, 0, osc, 0,
+		    acpidisp_out_sysctl_brightness, 0, (void *)osc, 0,
 		    CTL_CREATE, CTL_EOL);
 	}
 
@@ -1195,7 +1195,7 @@ acpidisp_out_sysctl_setup(struct acpidisp_out_softc *osc)
 		(void)sysctl_createv(&osc->sc_log, 0, &rnode, NULL,
 		    CTLFLAG_READONLY | CTLFLAG_HEX, CTLTYPE_INT, "status",
 		    SYSCTL_DESCR("Current status"),
-		    acpidisp_out_sysctl_status, 0, osc, 0,
+		    acpidisp_out_sysctl_status, 0, (void *)osc, 0,
 		    CTL_CREATE, CTL_EOL);
 	}
 
@@ -1210,7 +1210,7 @@ acpidisp_out_sysctl_setup(struct acpidisp_out_softc *osc)
 		(void)sysctl_createv(&osc->sc_log, 0, &rnode, NULL,
 		    access | CTLFLAG_HEX, CTLTYPE_INT, "state",
 		    SYSCTL_DESCR("Next state (active or inactive)"),
-		    acpidisp_out_sysctl_state, 0, osc, 0,
+		    acpidisp_out_sysctl_state, 0, (void *)osc, 0,
 		    CTL_CREATE, CTL_EOL);
 	}
 #endif

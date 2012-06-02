@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.93 2011/11/27 15:08:04 mbalmer Exp $ */
+/*      $NetBSD: ac97.c,v 1.94 2012/06/02 21:36:44 dsl Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.93 2011/11/27 15:08:04 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.94 2012/06/02 21:36:44 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1522,7 +1522,7 @@ setup_modem:
 					     CTLFLAG_READWRITE, CTLTYPE_INT,
 					     "line1",
 					     SYSCTL_DESCR("off-hook line1"),
-					     ac97_sysctl_verify, 0, as, 0,
+					     ac97_sysctl_verify, 0, (void *)as, 0,
 					     CTL_HW, node->sysctl_num,
 					     CTL_CREATE, CTL_EOL);
 			mutex_enter(as->lock);
@@ -1544,7 +1544,7 @@ setup_modem:
 					     CTLFLAG_READWRITE, CTLTYPE_INT,
 					     "line2",
 					     SYSCTL_DESCR("off-hook line2"),
-					     ac97_sysctl_verify, 0, as, 0,
+					     ac97_sysctl_verify, 0, (void *)as, 0,
 					     CTL_HW, node->sysctl_num,
 					     CTL_CREATE, CTL_EOL);
 			mutex_enter(as->lock);

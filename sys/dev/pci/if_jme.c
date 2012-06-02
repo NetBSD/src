@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.19 2012/02/02 19:43:05 tls Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.20 2012/06/02 21:36:44 dsl Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.19 2012/02/02 19:43:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.20 2012/06/02 21:36:44 dsl Exp $");
 
 
 #include <sys/param.h>
@@ -530,7 +530,7 @@ jme_pci_attach(device_t parent, device_t self, void *aux)
 	    CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "int_rxto",
 	    SYSCTL_DESCR("jme RX interrupt moderation timer"),
-	    jme_sysctl_intrxto, 0, sc,
+	    jme_sysctl_intrxto, 0, (void *)sc,
 	    0, CTL_HW, jme_root_num, jme_nodenum, CTL_CREATE,
 	    CTL_EOL) != 0) {
 		aprint_normal_dev(sc->jme_dev,
@@ -540,7 +540,7 @@ jme_pci_attach(device_t parent, device_t self, void *aux)
 	    CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "int_rxct",
 	    SYSCTL_DESCR("jme RX interrupt moderation packet counter"),
-	    jme_sysctl_intrxct, 0, sc,
+	    jme_sysctl_intrxct, 0, (void *)sc,
 	    0, CTL_HW, jme_root_num, jme_nodenum, CTL_CREATE,
 	    CTL_EOL) != 0) {
 		aprint_normal_dev(sc->jme_dev,
@@ -550,7 +550,7 @@ jme_pci_attach(device_t parent, device_t self, void *aux)
 	    CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "int_txto",
 	    SYSCTL_DESCR("jme TX interrupt moderation timer"),
-	    jme_sysctl_inttxto, 0, sc,
+	    jme_sysctl_inttxto, 0, (void *)sc,
 	    0, CTL_HW, jme_root_num, jme_nodenum, CTL_CREATE,
 	    CTL_EOL) != 0) {
 		aprint_normal_dev(sc->jme_dev,
@@ -560,7 +560,7 @@ jme_pci_attach(device_t parent, device_t self, void *aux)
 	    CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "int_txct",
 	    SYSCTL_DESCR("jme TX interrupt moderation packet counter"),
-	    jme_sysctl_inttxct, 0, sc,
+	    jme_sysctl_inttxct, 0, (void *)sc,
 	    0, CTL_HW, jme_root_num, jme_nodenum, CTL_CREATE,
 	    CTL_EOL) != 0) {
 		aprint_normal_dev(sc->jme_dev,

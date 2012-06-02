@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.70 2012/02/02 19:43:05 tls Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.71 2012/06/02 21:36:45 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.70 2012/02/02 19:43:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.71 2012/06/02 21:36:45 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1829,7 +1829,7 @@ skc_attach(device_t parent, device_t self, void *aux)
 	    CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "int_mod",
 	    SYSCTL_DESCR("sk interrupt moderation timer"),
-	    sk_sysctl_handler, 0, sc,
+	    sk_sysctl_handler, 0, (void *)sc,
 	    0, CTL_HW, sk_root_num, sk_nodenum, CTL_CREATE,
 	    CTL_EOL)) != 0) {
 		aprint_normal_dev(sc->sk_dev, "couldn't create int_mod sysctl node\n");

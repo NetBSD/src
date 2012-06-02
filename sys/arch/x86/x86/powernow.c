@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow.c,v 1.4 2011/10/29 09:58:23 jnemeth Exp $ */
+/*	$NetBSD: powernow.c,v 1.5 2012/06/02 21:36:42 dsl Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow.c,v 1.4 2011/10/29 09:58:23 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow.c,v 1.5 2012/06/02 21:36:42 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -279,7 +279,7 @@ powernow_sysctl(device_t self)
 
 	rv = sysctl_createv(&sc->sc_log, 0, &freqnode, &node,
 	    CTLFLAG_READWRITE, CTLTYPE_INT, "target", NULL,
-	    powernow_sysctl_helper, 0, sc, 0, CTL_CREATE, CTL_EOL);
+	    powernow_sysctl_helper, 0, (void *)sc, 0, CTL_CREATE, CTL_EOL);
 
 	if (rv != 0)
 		goto fail;
@@ -288,7 +288,7 @@ powernow_sysctl(device_t self)
 
 	rv = sysctl_createv(&sc->sc_log, 0, &freqnode, &node,
 	    0, CTLTYPE_INT, "current", NULL,
-	    powernow_sysctl_helper, 0, sc, 0, CTL_CREATE, CTL_EOL);
+	    powernow_sysctl_helper, 0, (void *)sc, 0, CTL_CREATE, CTL_EOL);
 
 	if (rv != 0)
 		goto fail;

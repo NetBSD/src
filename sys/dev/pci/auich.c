@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.140 2011/11/24 03:35:58 mrg Exp $	*/
+/*	$NetBSD: auich.c,v 1.141 2012/06/02 21:36:44 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.140 2011/11/24 03:35:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.141 2012/06/02 21:36:44 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -676,7 +676,7 @@ map_done:
 				     CTLFLAG_READWRITE,
 				     CTLTYPE_INT, "ac97rate",
 				     SYSCTL_DESCR("AC'97 codec link rate"),
-				     auich_sysctl_verify, 0, sc, 0,
+				     auich_sysctl_verify, 0, (void *)sc, 0,
 				     CTL_HW, node_mib, CTL_CREATE, CTL_EOL);
 		if (err != 0)
 			goto sysctl_err;

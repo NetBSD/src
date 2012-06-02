@@ -1,4 +1,4 @@
-/*	$NetBSD: pwmclock.c,v 1.5 2012/02/23 07:49:42 macallan Exp $	*/
+/*	$NetBSD: pwmclock.c,v 1.6 2012/06/02 21:36:45 dsl Exp $	*/
 
 /*
  * Copyright (c) 2011 Michael Lorenz
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pwmclock.c,v 1.5 2012/02/23 07:49:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pwmclock.c,v 1.6 2012/06/02 21:36:45 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,7 +199,7 @@ pwmclock_attach(device_t parent, device_t self, void *aux)
 	    &sysctl_node, 
 	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
 	    CTLTYPE_INT, "target", "CPU speed", pwmclock_cpuspeed_temp, 
-	    0, sc, 0, CTL_MACHDEP, me->sysctl_num, freq->sysctl_num, 
+	    0, (void *)sc, 0, CTL_MACHDEP, me->sysctl_num, freq->sysctl_num, 
 	    CTL_CREATE, CTL_EOL) == 0) {
 	} else
 		aprint_error_dev(sc->sc_dev,
@@ -209,7 +209,7 @@ pwmclock_attach(device_t parent, device_t self, void *aux)
 	    &sysctl_node, 
 	    CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "current", NULL, pwmclock_cpuspeed_cur, 
-	    1, sc, 0, CTL_MACHDEP, me->sysctl_num, freq->sysctl_num, 
+	    1, (void *)sc, 0, CTL_MACHDEP, me->sysctl_num, freq->sysctl_num, 
 	    CTL_CREATE, CTL_EOL) == 0) {
 	} else
 		aprint_error_dev(sc->sc_dev,
@@ -219,7 +219,7 @@ pwmclock_attach(device_t parent, device_t self, void *aux)
 	    &sysctl_node, 
 	    CTLFLAG_READWRITE,
 	    CTLTYPE_STRING, "available", NULL, pwmclock_cpuspeed_available, 
-	    2, sc, 0, CTL_MACHDEP, me->sysctl_num, freq->sysctl_num, 
+	    2, (void *)sc, 0, CTL_MACHDEP, me->sysctl_num, freq->sysctl_num, 
 	    CTL_CREATE, CTL_EOL) == 0) {
 	} else
 		aprint_error_dev(sc->sc_dev,

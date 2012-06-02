@@ -1,4 +1,4 @@
-/*	$NetBSD: ath_netbsd.h,v 1.12 2011/10/07 16:58:11 dyoung Exp $ */
+/*	$NetBSD: ath_netbsd.h,v 1.13 2012/06/02 21:36:44 dsl Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young
@@ -71,7 +71,7 @@ typedef kmutex_t ath_txbuf_lock_t;
 #define	SYSCTL_INT_SUBR(__rw, __name, __descr)				     \
 	sysctl_createv(log, 0, &rnode, &cnode, CTLFLAG_PERMANENT|(__rw),     \
 	    CTLTYPE_INT, #__name, SYSCTL_DESCR(__descr), ath_sysctl_##__name,\
-	    0, sc, 0, CTL_CREATE, CTL_EOL)
+	    0, (void *)sc, 0, CTL_CREATE, CTL_EOL)
 
 #define	__PFX(__pfx, __name)	__pfx##__name
 

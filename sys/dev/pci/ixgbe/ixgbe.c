@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe.c,v 1.51 2011/04/25 23:34:21 jfv Exp $*/
-/*$NetBSD: ixgbe.c,v 1.2 2011/11/19 22:51:24 tls Exp $*/
+/*$NetBSD: ixgbe.c,v 1.3 2012/06/02 21:36:45 dsl Exp $*/
 
 #include "opt_inet.h"
 
@@ -426,13 +426,13 @@ ixgbe_sysctl_attach(struct adapter *adapter)
 	if (sysctl_createv(log, 0, &rnode, &cnode,
 	    CTLFLAG_READWRITE, CTLTYPE_INT,
 	    "flow_control", SYSCTL_DESCR("Flow Control"),
-	    ixgbe_set_flowcntl, 0, adapter, 0, CTL_CREATE, CTL_EOL) != 0)
+	    ixgbe_set_flowcntl, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
 	if (sysctl_createv(log, 0, &rnode, &cnode,
 	    CTLFLAG_READWRITE, CTLTYPE_INT,
 	    "advertise_gig", SYSCTL_DESCR("1G Link"),
-	    ixgbe_set_advertise, 0, adapter, 0, CTL_CREATE, CTL_EOL) != 0)
+	    ixgbe_set_advertise, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
 	/* XXX This is an *instance* sysctl controlling a *global* variable.

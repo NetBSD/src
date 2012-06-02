@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.90 2012/03/21 00:29:39 nisimura Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.91 2012/06/02 21:36:44 dsl Exp $  */
 /*	$OpenBSD: if_iwi.c,v 1.111 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.90 2012/03/21 00:29:39 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.91 2012/06/02 21:36:44 dsl Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -2830,7 +2830,7 @@ iwi_sysctlattach(struct iwi_softc *sc)
 	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
 	    CTLFLAG_PERMANENT, CTLTYPE_INT, "radio",
 	    SYSCTL_DESCR("radio transmitter switch state (0=off, 1=on)"),
-	    iwi_sysctl_radio, 0, sc, 0, CTL_CREATE, CTL_EOL)) != 0)
+	    iwi_sysctl_radio, 0, (void *)sc, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
 	sc->dwelltime = 100;

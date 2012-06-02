@@ -1,4 +1,4 @@
-/*	$NetBSD: in_selsrc.c,v 1.8 2009/10/19 23:19:39 rmind Exp $	*/
+/*	$NetBSD: in_selsrc.c,v 1.9 2012/06/02 21:36:47 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_selsrc.c,v 1.8 2009/10/19 23:19:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_selsrc.c,v 1.9 2012/06/02 21:36:47 dsl Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -525,7 +525,7 @@ in_domifattach_sysctl(struct in_ifsysctl *isc)
 				 "selectsrc",
 				 SYSCTL_DESCR("source selection policy"),
 				 in_sysctl_selectsrc, 0,
-				 isc->isc_selsrc, IN_SELECTSRC_LEN,
+				 (void *)isc->isc_selsrc, IN_SELECTSRC_LEN,
 				 CTL_CREATE, CTL_EOL)) != 0) {
 		printf(
 		    "%s: could not create net.inet.ip.%s.selectsrc, rc = %d\n",

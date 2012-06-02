@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.47 2012/04/24 20:04:49 christos Exp $	*/
+/*	$NetBSD: ubt.c,v 1.48 2012/06/02 21:36:45 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.47 2012/04/24 20:04:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.48 2012/06/02 21:36:45 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -500,7 +500,7 @@ ubt_attach(device_t parent, device_t self, void *aux)
 			CTLTYPE_INT, "config",
 			SYSCTL_DESCR("configuration number"),
 			ubt_sysctl_config, 0,
-			sc, 0,
+			(void *)sc, 0,
 			CTL_HW, node->sysctl_num,
 			CTL_CREATE, CTL_EOL);
 
