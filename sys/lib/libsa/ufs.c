@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.55.6.1 2012/02/18 07:35:35 mrg Exp $	*/
+/*	$NetBSD: ufs.c,v 1.55.6.2 2012/06/02 11:09:36 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -770,14 +770,10 @@ ufs_open(const char *path, struct open_file *f)
 out:
 	if (rc)
 		ufs_close(f);
-	else {
-#ifdef FSMOD
+#ifdef FSMOD		/* Only defined for lfs */
+	else
 		fsmod = FSMOD;
 #endif
-#ifdef FSMOD2
-		fsmod2 = FSMOD2;
-#endif
-	}
 	return rc;
 }
 

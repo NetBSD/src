@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.183.6.1 2012/02/18 07:33:16 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.183.6.2 2012/06/02 11:09:09 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.183.6.1 2012/02/18 07:33:16 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.183.6.2 2012/06/02 11:09:09 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.183.6.1 2012/02/18 07:33:16 mrg Exp $
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
 #include <sys/kauth.h>
+#include <sys/userconf.h>
 #include <prop/proplib.h>
 
 #include <net/if.h>
@@ -273,6 +274,7 @@ bootstrap(void *o0, void *bootargs, void *bootsize, void *o3, void *ofw)
 	struct btinfo_count *bi_count;
 	struct btinfo_kernend *bi_kend;
 	struct btinfo_tlb *bi_tlb;
+	struct btinfo_boothowto *bi_howto;
 
 	extern void *romtba;
 	extern void* get_romtba(void);
@@ -347,6 +349,10 @@ die_old_boot_loader:
 		else if (strcmp(buf, "sun4v") == 0)
 			cputyp = CPU_SUN4V;
 	}
+
+	bi_howto = lookup_bootinfo(BTINFO_BOOTHOWTO);
+	if (bi_howto)
+		boothowto = bi_howto->boothowto;
 
 	LOOKUP_BOOTINFO(bi_count, BTINFO_DTLB_SLOTS);
 	kernel_tlb_slots = bi_count->count;
@@ -465,9 +471,18 @@ get_bootpath_from_prom(void)
 void
 cpu_configure(void)
 {
+	bool userconf = (boothowto & RB_USERCONF) != 0;
 
 	/* fetch boot device settings */
 	get_bootpath_from_prom();
+	if (((boothowto & RB_USERCONF) != 0) && !userconf)
+		/*
+		 * Old bootloaders do not pass boothowto, and MI code
+		 * has already handled userconfig before we get here
+		 * and finally fetch the right options. So if we missed
+		 * it, just do it here.
+ 		 */
+		userconf_prompt();
 
 	/* block clock interrupts and anything below */
 	splclock();

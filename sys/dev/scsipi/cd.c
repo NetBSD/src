@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.304.2.3 2012/04/29 23:04:59 mrg Exp $	*/
+/*	$NetBSD: cd.c,v 1.304.2.4 2012/06/02 11:09:28 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.304.2.3 2012/04/29 23:04:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.304.2.4 2012/06/02 11:09:28 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -382,17 +382,10 @@ cdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 			goto bad3;
 		}
 	} else {
-		int silent;
-
-		if (rawpart)
-			silent = XS_CTL_SILENT;
-		else
-			silent = 0;
-
 		/* Check that it is still responding and ok. */
 		error = scsipi_test_unit_ready(periph,
 		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE |
-		    silent);
+		    XS_CTL_SILENT);
 
 		/*
 		 * Start the pack spinning if necessary. Always allow the
@@ -401,6 +394,12 @@ cdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 		 */
 		if (error == EIO) {
 			int error2;
+			int silent;
+
+			if (rawpart)
+				silent = XS_CTL_SILENT;
+			else
+				silent = 0;
 
 			error2 = scsipi_start(periph, SSS_START, silent);
 			switch (error2) {
@@ -1571,7 +1570,24 @@ cdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		/* FALLTHROUGH */
 	case CDIOCEJECT: /* FALLTHROUGH */
 	case ODIOCEJECT:
-		return (scsipi_start(periph, SSS_STOP|SSS_LOEJ, 0));
+		error = scsipi_start(periph, SSS_STOP|SSS_LOEJ, 0);
+		if (error == 0) {
+			int i;
+
+			/*
+			 * We have just successfully ejected the medium,
+			 * all partitions cached are meaningless now.
+			 * Make sure cdclose() will do silent operations
+			 * now by marking all partitions unused.
+			 * Before any real access, a new (default-)disk-
+			 * label will be generated anyway.
+			 */
+			for (i = 0; i < cd->sc_dk.dk_label->d_npartitions;
+			    i++)
+				cd->sc_dk.dk_label->d_partitions[i].p_fstype =
+					FS_UNUSED;
+		}
+		return error;
 	case DIOCCACHESYNC:
 		/* SYNCHRONISE CACHES command */
 		return (cdcachesync(periph, 0));

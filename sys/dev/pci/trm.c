@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.32 2010/11/13 13:52:08 uebayasi Exp $	*/
+/*	$NetBSD: trm.c,v 1.32.12.1 2012/06/02 11:09:28 mrg Exp $	*/
 /*-
  * Copyright (c) 2002 Izumi Tsutsui.  All rights reserved.
  *
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.32 2010/11/13 13:52:08 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.32.12.1 2012/06/02 11:09:28 mrg Exp $");
 
 /* #define TRM_DEBUG */
 #ifdef TRM_DEBUG
@@ -412,11 +412,12 @@ trm_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t command;
 	const char *intrstr;
+	int fl = 0;
 
 	sc->sc_dev = self;
 
 	/*
-	 * These cards do not allow memory mapped accesses
+	 * Some cards do not allow memory mapped accesses
 	 * pa_pc:  chipset tag
 	 * pa_tag: pci tag
 	 */
@@ -430,10 +431,17 @@ trm_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * mask for get correct base address of pci IO port
 	 */
-	if (pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_IO, 0,
-	    &iot, &ioh, NULL, NULL)) {
-		aprint_error(": unable to map registers\n");
-		return;
+	if (command & PCI_COMMAND_MEM_ENABLE) {
+		fl = pci_mapreg_map(pa, TRM_BAR_MMIO, PCI_MAPREG_TYPE_MEM, 0, &iot,
+		    &ioh, NULL, NULL);
+	}
+	if (fl != 0) {
+		aprint_verbose_dev(self, "couldn't map MMIO registers, tryion PIO\n");
+		if ((fl = pci_mapreg_map(pa, TRM_BAR_PIO, PCI_MAPREG_TYPE_IO, 0,
+		    &iot, &ioh, NULL, NULL)) != 0) {
+			aprint_error(": unable to map registers (%d)\n", fl);
+			return;
+		}
 	}
 	/*
 	 * test checksum of eeprom.. & initialize softc...

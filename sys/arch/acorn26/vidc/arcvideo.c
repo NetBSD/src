@@ -1,4 +1,4 @@
-/* $NetBSD: arcvideo.c,v 1.15.6.1 2012/02/18 07:30:43 mrg Exp $ */
+/* $NetBSD: arcvideo.c,v 1.15.6.2 2012/06/02 11:08:43 mrg Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcvideo.c,v 1.15.6.1 2012/02/18 07:30:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcvideo.c,v 1.15.6.2 2012/06/02 11:08:43 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -85,7 +85,7 @@ static void arccons_8bpp_hack(struct rasops_info *ri);
 
 struct arcvideo_softc {
 	device_t		sc_dev;
-	u_int32_t		sc_vidc_ctl;
+	uint32_t		sc_vidc_ctl;
 	int			sc_flags;
 #define AV_VIDEO_ON	0x01
 };
@@ -175,9 +175,9 @@ static int
 arcvideo_setmode(device_t self, struct arcvideo_mode *mode)
 {
 	struct arcvideo_softc *sc = device_private(self);
-	u_int32_t newctl, ctlmask;
-	u_int32_t newhswr, newhbsr, newhdsr, newhder, newhber, newhcr, newhir;
-	u_int32_t newvswr, newvbsr, newvdsr, newvder, newvber, newvcr;
+	uint32_t newctl, ctlmask;
+	uint32_t newhswr, newhbsr, newhdsr, newhder, newhber, newhcr, newhir;
+	uint32_t newvswr, newvbsr, newvdsr, newvder, newvber, newvcr;
 
 	newctl = 0;
 	/* Dot clock */
@@ -291,7 +291,7 @@ arcvideo_await_vsync(device_t self)
  * at the top of rasops.c.
  */
 
-static u_int8_t rasops_cmap_8bpp[] = {
+static uint8_t rasops_cmap_8bpp[] = {
 	0x00, 0x10, 0x40, 0x50, 0x80, 0x90, 0xc0, 0xfc,
 	0xd0, 0x17, 0x63, 0x77, 0x8b, 0x9f, 0xeb, 0xff,
 };

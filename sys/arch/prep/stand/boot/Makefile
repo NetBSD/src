@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2011/01/22 19:19:22 joerg Exp $
+#	$NetBSD: Makefile,v 1.25.8.1 2012/06/02 11:09:07 mrg Exp $
 
 NOMAN= # defined
 
@@ -22,6 +22,7 @@ SRCS= srt0.s
 SRCS+= boot.c clock.c com.c conf.c cons.c devopen.c
 SRCS+= filesystem.c inkernel.c io.c tgets.c prf.c monitor.c
 SRCS+= kbd.c ns16550.c vers.c vreset.c vga.c 
+SRCS+= pci.c sd.c siop.c
 
 CFLAGS= -Os -mmultiple -ffreestanding
 CFLAGS+= -Werror -Wall -Wstrict-prototypes -Wmissing-prototypes

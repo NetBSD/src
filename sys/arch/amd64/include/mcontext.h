@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.14 2011/02/25 14:07:12 joerg Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.14.8.1 2012/06/02 11:08:48 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -155,10 +155,6 @@ typedef struct {
 
 #define	_UC_MACHINE32_PAD	4
 #define	__UCONTEXT32_SIZE	776
-
-struct trapframe;
-struct lwp;
-int check_mcontext(struct lwp *, const mcontext_t *, struct trapframe *);
 
 #endif /* _KERNEL */
 

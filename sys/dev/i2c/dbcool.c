@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.35.6.1 2012/04/29 23:04:49 mrg Exp $ */
+/*	$NetBSD: dbcool.c,v 1.35.6.2 2012/06/02 11:09:16 mrg Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.35.6.1 2012/04/29 23:04:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.35.6.2 2012/06/02 11:09:16 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1115,7 +1115,11 @@ dbcool_read_volt(struct dbcool_softc *sc, uint8_t reg, int nom_idx, bool extres)
 SYSCTL_SETUP(sysctl_dbcoolsetup, "sysctl dBCool subtree setup")
 {
 	sysctl_createv(clog, 0, NULL, NULL,
+#ifdef _MODULE
+		       0,
+#else
 		       CTLFLAG_PERMANENT,
+#endif
 		       CTLTYPE_NODE, "hw", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_HW, CTL_EOL);
@@ -2178,18 +2182,23 @@ static int
 dbcool_modcmd(modcmd_t cmd, void *opaque)
 {
 	int error = 0;
+#ifdef _MODULE
+	static struct sysctllog *dbcool_sysctl_clog;
+#endif
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
 		error = config_init_component(cfdriver_ioconf_dbcool,
 		    cfattach_ioconf_dbcool, cfdata_ioconf_dbcool);
+		sysctl_dbcoolsetup(&dbcool_sysctl_clog);
 #endif
 		return error;
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
 		error = config_fini_component(cfdriver_ioconf_dbcool,
 		    cfattach_ioconf_dbcool, cfdata_ioconf_dbcool);
+		sysctl_teardown(&dbcool_sysctl_clog);
 #endif
 		return error;
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.53.6.5 2012/04/29 23:04:43 mrg Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.53.6.6 2012/06/02 11:09:11 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -68,20 +68,26 @@
 /* the remaining 7 bits of this register are reserved */
 
 /*
- * bits in the pentiums %cr4 register:
+ * bits in the %cr4 control register:
  */
+#define CR4_VME		0x00000001 /* virtual 8086 mode extension enable */
+#define CR4_PVI		0x00000002 /* protected mode virtual interrupt enable */
+#define CR4_TSD		0x00000004 /* restrict RDTSC instruction to cpl 0 */
+#define CR4_DE		0x00000008 /* debugging extension */
+#define CR4_PSE		0x00000010 /* large (4MB) page size enable */
+#define CR4_PAE		0x00000020 /* physical address extension enable */
+#define CR4_MCE		0x00000040 /* machine check enable */
+#define CR4_PGE		0x00000080 /* page global enable */
+#define CR4_PCE		0x00000100 /* enable RDPMC instruction for all cpls */
+#define CR4_OSFXSR	0x00000200 /* enable fxsave/fxrestor and SSE */
+#define CR4_OSXMMEXCPT	0x00000400 /* enable unmasked SSE exceptions */
+#define CR4_VMXE	0x00002000 /* enable VMX operations */
+#define CR4_SMXE	0x00004000 /* enable SMX operations */
+#define CR4_FSGSBASE	0x00010000 /* enable *FSBASE and *GSBASE instructions */
+#define CR4_PCIDE	0x00020000 /* enable Process Context IDentifiers */
+#define CR4_OSXSAVE	0x00040000 /* enable xsave and xrestore */
+#define CR4_SMEP	0x00100000 /* enable SMEP support */
 
-#define CR4_VME	0x00000001	/* virtual 8086 mode extension enable */
-#define CR4_PVI 0x00000002	/* protected mode virtual interrupt enable */
-#define CR4_TSD 0x00000004	/* restrict RDTSC instruction to cpl 0 only */
-#define CR4_DE	0x00000008	/* debugging extension */
-#define CR4_PSE	0x00000010	/* large (4MB) page size enable */
-#define CR4_PAE 0x00000020	/* physical address extension enable */
-#define CR4_MCE	0x00000040	/* machine check enable */
-#define CR4_PGE	0x00000080	/* page global enable */
-#define CR4_PCE	0x00000100	/* enable RDPMC instruction for all cpls */
-#define CR4_OSFXSR	0x00000200	/* enable fxsave/fxrestor and SSE */
-#define CR4_OSXMMEXCPT	0x00000400	/* enable unmasked SSE exceptions */
 
 /*
  * CPUID "features" bits
@@ -443,6 +449,11 @@
 #define MSR_VIA_RNG_2NOISE	0x00000300
 #define MSR_VIA_ACE		0x00001107
 #define MSR_VIA_ACE_ENABLE	0x10000000
+
+/*
+ * VIA "Eden" MSRs
+ */
+#define MSR_VIA_FCR 		MSR_VIA_ACE
 
 /*
  * AMD K6/K7 MSRs.

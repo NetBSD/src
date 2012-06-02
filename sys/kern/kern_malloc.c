@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.133.6.2 2012/04/29 23:05:04 mrg Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.133.6.3 2012/06/02 11:09:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.133.6.2 2012/04/29 23:05:04 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.133.6.3 2012/06/02 11:09:33 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -90,10 +90,7 @@ MALLOC_DEFINE(M_RTABLE, "routetbl", "routing tables");
 MALLOC_DEFINE(M_FTABLE, "fragtbl", "fragment reassembly header");
 MALLOC_DEFINE(M_UFSMNT, "UFS mount", "UFS mount structure");
 MALLOC_DEFINE(M_NETADDR, "Export Host", "Export host address structure");
-MALLOC_DEFINE(M_IPMOPTS, "ip_moptions", "internet multicast options");
-MALLOC_DEFINE(M_IPMADDR, "in_multi", "internet multicast address");
 MALLOC_DEFINE(M_MRTABLE, "mrt", "multicast routing tables");
-MALLOC_DEFINE(M_BWMETER, "bwmeter", "multicast upcall bw meters");
 
 /*
  * Header contains total size, including the header itself.
@@ -205,28 +202,10 @@ kern_realloc(void *curaddr, unsigned long newsize, int flags)
 	return newaddr;
 }
 
-void
-malloc_type_attach(struct malloc_type *type)
-{
-	KASSERT(type->ks_magic == M_MAGIC);
-}
-
-void
-malloc_type_detach(struct malloc_type *type)
-{
-	KASSERT(type->ks_magic == M_MAGIC);
-}
-
 /*
  * Initialize the kernel memory allocator
  */
 void
 kmeminit(void)
 {
-	__link_set_decl(malloc_types, struct malloc_type);
-	struct malloc_type * const *ksp;
-
-	/* Attach all of the statically-linked malloc types. */
-	__link_set_foreach(ksp, malloc_types)
-		malloc_type_attach(*ksp);
 }

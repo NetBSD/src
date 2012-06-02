@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2011/07/17 23:32:21 dyoung Exp $
+#	$NetBSD: Makefile,v 1.12.6.1 2012/06/02 11:08:59 mrg Exp $
 
 INCSDIR= /usr/include/hp700
 
@@ -8,7 +8,7 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	disklabel.h \
 	eisa_machdep.h elf_machdep.h endian.h endian_machdep.h exec.h \
 	float.h frame.h \
-	ieee.h ieeefp.h intr.h iomod.h isa_machdep.h \
+	ieee.h ieeefp.h intr.h intrdefs.h iomod.h isa_machdep.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	kcore.h \
 	limits.h loadfile_machdep.h lock.h \

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1032.2.5 2012/04/29 23:04:46 mrg Exp $
+#	$NetBSD: files,v 1.1032.2.6 2012/06/02 11:09:15 mrg Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -69,8 +69,6 @@ defflag	opt_ntp.h		PPS_SYNC NTP
 defflag	opt_ptm.h		NO_DEV_PTM COMPAT_BSDPTY
 
 defparam opt_kmempages.h	NKMEMPAGES NKMEMPAGES_MIN NKMEMPAGES_MAX
-defflag	opt_pool.h		POOL_DIAGNOSTIC
-defparam opt_poollog.h		POOL_LOGSIZE
 
 defflag	opt_revcache.h		NAMECACHE_ENTER_REVERSE
 
@@ -1627,6 +1625,7 @@ file	kern/vnode_if.c
 file	miscfs/deadfs/dead_vnops.c
 file	miscfs/fifofs/fifo_vnops.c
 file	miscfs/genfs/genfs_io.c
+file	miscfs/genfs/genfs_rename.c
 file	miscfs/genfs/genfs_vfsops.c
 file	miscfs/genfs/genfs_vnops.c
 file	miscfs/genfs/layer_subr.c	nullfs | overlay | umapfs

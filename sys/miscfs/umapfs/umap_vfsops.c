@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.86.12.1 2012/04/05 21:33:42 mrg Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.86.12.2 2012/06/02 11:09:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.86.12.1 2012/04/05 21:33:42 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.86.12.2 2012/06/02 11:09:37 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,10 +142,7 @@ umapfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	printf("mp = %p\n", mp);
 #endif
 
-	amp = (struct umap_mount *) malloc(sizeof(struct umap_mount),
-				M_UFSMNT, M_WAITOK);	/* XXX */
-	memset(amp, 0, sizeof(struct umap_mount));
-
+	amp = kmem_zalloc(sizeof(struct umap_mount), KM_SLEEP);
 	mp->mnt_data = amp;
 	amp->umapm_vfs = lowerrootvp->v_mount;
 	if (amp->umapm_vfs->mnt_flag & MNT_LOCAL)
@@ -216,8 +213,8 @@ umapfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		vput(lowerrootvp);
 		hashdone(amp->umapm_node_hashtbl, HASH_LIST,
 		    amp->umapm_node_hash);
-		free(amp, M_UFSMNT);	/* XXX */
-		return (error);
+		kmem_free(amp, sizeof(struct umap_mount));
+		return error;
 	}
 	/*
 	 * Unlock the node (either the lower or the alias)
@@ -275,9 +272,9 @@ umapfs_unmount(struct mount *mp, int mntflags)
 	 */
 	mutex_destroy(&amp->umapm_hashlock);
 	hashdone(amp->umapm_node_hashtbl, HASH_LIST, amp->umapm_node_hash);
-	free(amp, M_UFSMNT);	/* XXX */
+	kmem_free(amp, sizeof(struct umap_mount));
 	mp->mnt_data = NULL;
-	return (0);
+	return 0;
 }
 
 extern const struct vnodeopv_desc umapfs_vnodeop_opv_desc;

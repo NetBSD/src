@@ -1,4 +1,4 @@
-/*	$NetBSD: bfs.h,v 1.5.38.1 2012/04/05 21:33:37 mrg Exp $	*/
+/*	$NetBSD: bfs.h,v 1.5.38.2 2012/06/02 11:09:32 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -155,7 +155,6 @@ int bfs_file_rename(struct bfs *, const char *, const char *);
 bool bfs_file_lookup(const struct bfs *, const char *, int *, int *,
     size_t *);
 size_t bfs_file_size(const struct bfs_inode *);
-void bfs_file_setsize(struct vnode *, size_t);
 
 bool bfs_dump(const struct bfs *);
 

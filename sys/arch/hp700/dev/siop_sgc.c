@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_sgc.c,v 1.8.6.1 2012/04/05 21:33:14 mrg Exp $	*/
+/*	$NetBSD: siop_sgc.c,v 1.8.6.2 2012/06/02 11:08:58 mrg Exp $	*/
 
 /*	$OpenBSD: siop_sgc.c,v 1.1 2007/08/05 19:09:52 kettenis Exp $	*/
 
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_sgc.c,v 1.8.6.1 2012/04/05 21:33:14 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_sgc.c,v 1.8.6.2 2012/06/02 11:08:58 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: siop_sgc.c,v 1.8.6.1 2012/04/05 21:33:14 mrg Exp $")
 #include <dev/ic/siopvar.h>
 
 #include <hp700/dev/cpudevs.h>
-#include <hp700/hp700/intr.h>
 
 #define IO_II_INTEN		0x20000000
 #define IO_II_PACKEN		0x10000000
@@ -75,10 +74,6 @@ siop_sgc_match(device_t parent, cfdata_t match, void *aux)
 	    ca->ca_type.iodc_sv_model != HPPA_ADMA_FWSCSI)
 		return 0;
 
-	/* Make sure we have an IRQ. */
-	if (ca->ca_irq == HP700CF_IRQ_UNDEF)
-		ca->ca_irq = hp700_intr_allocate_bit(&ir_cpu);
-
 	return 1;
 }
 
@@ -96,6 +91,12 @@ siop_sgc_attach(device_t parent, device_t self, void *aux)
 	if (bus_space_map(sgc->sc_iot, ca->ca_hpa,
 	    IOMOD_HPASIZE, 0, &sgc->sc_ioh)) {
 		aprint_error(": can't map io space\n");
+		return;
+	}
+
+	ca->ca_irq = hp700_intr_allocate_bit(&ci->ci_ir, ca->ca_irq);
+	if (ca->ca_irq == HP700CF_IRQ_UNDEF) {
+		aprint_error(": can't allocate interrupt\n");
 		return;
 	}
 
@@ -135,7 +136,7 @@ siop_sgc_attach(device_t parent, device_t self, void *aux)
 
 	siop_attach(&sgc->sc_siop);
 
-	(void)hp700_intr_establish(IPL_BIO, siop_intr, sc, &ir_cpu,
+	(void)hp700_intr_establish(IPL_BIO, siop_intr, sc, &ci->ci_ir,
 	    ca->ca_irq);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.63.16.1 2012/04/29 23:05:00 mrg Exp $	*/
+/*	$NetBSD: kbd.c,v 1.63.16.2 2012/06/02 11:09:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.63.16.1 2012/04/29 23:05:00 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.63.16.2 2012/06/02 11:09:29 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,10 +153,6 @@ static void	kbd_input_wskbd(struct kbd_softc *, int);
 
 /* firm events input */
 static void	kbd_input_event(struct kbd_softc *, int);
-
-#if NSYSMON_ENVSYS
-static void	kbd_powerbutton(void *);
-#endif
 
 /****************************************************************
  *  Entry points for /dev/kbd
@@ -901,6 +897,17 @@ kbd_bell(int on)
 }
 
 #if NWSKBD > 0
+
+#if NSYSMON_ENVSYS
+static void
+kbd_powerbutton(void *cookie)
+{
+	struct kbd_softc *k = cookie;
+
+	sysmon_pswitch_event(&k->k_sm_pbutton, k->k_ev);
+}
+#endif
+
 static void
 kbd_input_wskbd(struct kbd_softc *k, int code)
 {
@@ -935,7 +942,8 @@ kbd_input_wskbd(struct kbd_softc *k, int code)
 					k->k_ev = KEY_UP(code) ?
 					    PSWITCH_EVENT_RELEASED :
 					    PSWITCH_EVENT_PRESSED;
-					sysmon_task_queue_sched(0, kbd_powerbutton, k);
+					sysmon_task_queue_sched(0,
+					    kbd_powerbutton, k);
 #endif
 				return;
 		}
@@ -1091,15 +1099,4 @@ kbd_wskbd_attach(struct kbd_softc *k, int isconsole)
 	}
 	config_interrupts(k->k_dev, kbd_enable);
 }
-
-#if NSYSMON_ENVSYS
-static void
-kbd_powerbutton(void *cookie)
-{
-	struct kbd_softc *k = cookie;
-
-	sysmon_pswitch_event(&k->k_sm_pbutton, k->k_ev);
-}
-#endif
-
 #endif

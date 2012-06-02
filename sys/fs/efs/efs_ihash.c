@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_ihash.c,v 1.7.6.1 2012/02/18 07:35:23 mrg Exp $	*/
+/*	$NetBSD: efs_ihash.c,v 1.7.6.2 2012/06/02 11:09:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_ihash.c,v 1.7.6.1 2012/02/18 07:35:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_ihash.c,v 1.7.6.2 2012/06/02 11:09:31 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,8 +69,6 @@ static u_long	ihash;		/* size of hash table - 1 */
 
 static kmutex_t	efs_ihash_lock;
 static kmutex_t	efs_hashlock;
-
-MALLOC_DECLARE(M_EFSINO);
 
 /*
  * Initialize inode hash table.

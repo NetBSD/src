@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.73.6.1 2012/02/18 07:35:35 mrg Exp $	*/
+/*	$NetBSD: stand.h,v 1.73.6.2 2012/06/02 11:09:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -111,7 +111,6 @@ struct open_file;
  * independent way.
  */
 extern char *fsmod;
-extern char *fsmod2;
 
 #if !defined(LIBSA_SINGLE_FILESYSTEM)
 struct fs_ops {

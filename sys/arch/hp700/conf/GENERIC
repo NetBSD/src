@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.108.2.3 2012/04/29 23:04:39 mrg Exp $
+# $NetBSD: GENERIC,v 1.108.2.4 2012/06/02 11:08:56 mrg Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.108.2.3 $"
+#ident 		"GENERIC-$Revision: 1.108.2.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -229,10 +229,13 @@ power0	at mainbus0		# power/fail manager
 lcd0	at mainbus0		# LCD
 
 # Basic Bus Support
-lasi*	at mainbus0		# LASI host adapter ( LSI PN??? )
-asp*	at mainbus0		# this one comes w/ Viper and leds
+lasi0	at mainbus0 irq 28	# LASI host adapter
+lasi0	at phantomas0 irq 28	# LASI on [AB]*
+lasi0	at uturn? irq 28	# LASI on [CJ]*
+lasi1	at mainbus0 irq 27	# 712 GIO card
+asp*	at mainbus0 irq 28	# this one comes w/ Viper and LEDs
 wax*	at mainbus0		# Wax GSC to GSC Bus Adapter
-mongoose* at mainbus0 irq 17	# EISA Bus Adapter ( i82350 or TI??? )
+mongoose* at mainbus0		# EISA Bus Adapter ( i82350 or TI??? )
 #vmeb*	at mainbus0 irq ?	# VME bus adapter
 phantomas*	at mainbus0	# Phantom PseudoBC GSC+ Port
 
@@ -341,10 +344,10 @@ lpt*	at puc? port ?			# || ports on "universal" comm boards
 # GSC SCSI controllers
 oosiop*	at gsc?				# NCR 53c700
 osiop*	at gsc? flags 0x00000		# NCR 53c710
-siop*	at gsc? irq 3			# NCR 53c720 (Fast/Wide)
-siop*	at mainbus0 irq 3		# NCR 53c720 (Fast/Wide)
-siop*	at phantomas? irq 3		# NCR 53c720 (Fast/Wide)
-siop*	at uturn? irq 3			# NCR 53c720 (Fast/Wide)
+siop*	at gsc?				# NCR 53c720 (Fast/Wide)
+siop*	at mainbus0			# NCR 53c720 (Fast/Wide)
+siop*	at phantomas?			# NCR 53c720 (Fast/Wide)
+siop*	at uturn? 			# NCR 53c720 (Fast/Wide)
 
 # PCI SCSI controllers
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI

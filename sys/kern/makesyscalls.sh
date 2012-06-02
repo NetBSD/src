@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.119 2011/06/26 16:42:42 christos Exp $
+#	$NetBSD: makesyscalls.sh,v 1.119.6.1 2012/06/02 11:09:33 mrg Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -725,7 +725,7 @@ function putent(type, compatwrap) {
 		# output a prototype, to be used to generate lint stubs in
 		# libc.
 		printproto("")
-	} else if (type == "COMPAT") {
+	} else if (type == "COMPAT" || type == "EXTERN") {
 		# Just define the syscall number with a comment.  These
 		# may be used by compatibility stubs in libc.
 		printproto(compatwrap_)
@@ -877,6 +877,12 @@ $2 == "OBSOL" || $2 == "UNIMPL" || $2 == "EXCL" || $2 == "IGNORED" {
 	    > sysnamesbottom
 	if ($2 != "UNIMPL")
 		printf("\t\t\t\t/* %d is %s */\n", syscall, comment) > sysnumhdr
+	syscall++
+	next
+}
+$2 == "EXTERN" {
+	parseline()
+	putent("EXTERN", "")
 	syscall++
 	next
 }

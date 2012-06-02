@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.48.2.1 2012/02/18 07:35:35 mrg Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.48.2.2 2012/06/02 11:09:35 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.48.2.1 2012/02/18 07:35:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.48.2.2 2012/06/02 11:09:35 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -752,6 +752,7 @@ wapbl_doio(void *data, size_t len, struct vnode *devvp, daddr_t pbn, int flags)
 	bp->b_data = data;
 	bp->b_bufsize = bp->b_resid = bp->b_bcount = len;
 	bp->b_blkno = pbn;
+	BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
 
 	WAPBL_PRINTF(WAPBL_PRINT_IO,
 	    ("wapbl_doio: %s %d bytes at block %"PRId64" on dev 0x%"PRIx64"\n",

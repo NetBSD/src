@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.2.2.2 2012/04/29 23:05:08 mrg Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.2.2.3 2012/06/02 11:09:40 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -1022,13 +1022,11 @@ chfs_fsync(void *v)
 				 off_t offhi;
 				 } */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	int wait;
 
 	if (ap->a_flags & FSYNC_CACHE) {
 		return ENODEV;
 	}
-	wait = (ap->a_flags & FSYNC_WAIT) != 0;
- 	vflushbuf(vp, wait);
+ 	vflushbuf(vp, ap->a_flags);
 	//struct chfs_inode *ip = VTOI(vp);
 	//chfs_set_vnode_size(vp, ip->write_size);
 

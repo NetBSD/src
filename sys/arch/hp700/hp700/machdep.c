@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.100.6.5 2012/04/29 23:04:40 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.100.6.6 2012/06/02 11:08:59 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100.6.5 2012/04/29 23:04:40 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100.6.6 2012/06/02 11:08:59 mrg Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -121,7 +121,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100.6.5 2012/04/29 23:04:40 mrg Exp $"
 #include <ddb/db_extern.h>
 #endif
 
-#include <hp700/hp700/intr.h>
 #include <hp700/hp700/machdep.h>
 #include <hp700/hp700/pim.h>
 #include <hp700/dev/cpudevs.h>
@@ -476,8 +475,7 @@ hppa_init(paddr_t start, void *bi)
 	delay_init();
 
 	/* fetch the monarch/"default" cpu hpa */
-	
-	error =  pdcproc_hpa_processor(&hppa_mcpuhpa);
+	error = pdcproc_hpa_processor(&hppa_mcpuhpa);
 	if (error < 0)
 		panic("%s: PDC_HPA failed", __func__);
 	
@@ -589,7 +587,7 @@ do {									\
 
 	DPRINTF(("%s: intr bootstrap\n", __func__));
 	/* Bootstrap interrupt masking and dispatching. */
-	hp700_intr_bootstrap();
+	hp700_intr_initialise(ci);
 
 	/*
 	 * Initialize any debugger.

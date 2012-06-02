@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.72.12.1 2012/02/24 09:11:30 mrg Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.72.12.2 2012/06/02 11:09:02 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -63,7 +63,7 @@
 /*
  * Virtual memory related constants, all in bytes
  */
-#define	MAXTSIZ		(64*1024*1024)		/* max text size */
+#define	MAXTSIZ		(256*1024*1024)		/* max text size */
 #ifndef DFLDSIZ
 #define	DFLDSIZ		(256*1024*1024)		/* initial data size limit */
 #endif

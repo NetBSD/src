@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.107.2.2 2012/04/29 23:04:43 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.107.2.3 2012/06/02 11:09:10 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -789,13 +789,7 @@ Lstart2:
 
 /*
  * Prepare to enable MMU.
- * Since the kernel is not mapped logical == physical we must insure
- * that when the MMU is turned on, all prefetched addresses (including
- * the PC) are valid.  In order guarantee that, we use the last physical
- * page (which is conveniently mapped == VA) and load it up with enough
- * code to defeat the prefetch, then we execute the jump back to here.
- *
- * Is this all really necessary, or am I paranoid??
+ * Since the kernel is mapped logical == physical, we just turn it on.
  */
 	RELOC(Sysseg_pa, %a0)		| system segment table addr
 	movl	%a0@,%d1		| read value (a PA)

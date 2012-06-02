@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.64 2011/10/06 03:19:32 macallan Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.64.6.1 2012/06/02 11:09:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.64 2011/10/06 03:19:32 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.64.6.1 2012/06/02 11:09:15 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.64 2011/10/06 03:19:32 macallan
 #include <sys/kmem.h>
 #include <sys/envsys.h>
 #include <sys/wdog.h>
+#include <sys/clockctl.h>
 
 #ifdef __sparc__
 #include <dev/sun/fbio.h>
@@ -75,63 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.64 2011/10/06 03:19:32 macallan
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 #include <dev/vndvar.h>
-
-/* prototypes for the converters */
-static inline void netbsd32_to_partinfo(struct netbsd32_partinfo *,
-					  struct partinfo *, u_long);
-#if 0
-static inline void netbsd32_to_format_op(struct netbsd32_format_op *,
-					   struct format_op *, u_long);
-#endif
-static inline void netbsd32_to_oifreq(struct netbsd32_oifreq *, struct oifreq *,
-				       u_long cmd);
-static inline void netbsd32_to_ifreq(struct netbsd32_ifreq *, struct ifreq *,
-				       u_long cmd);
-static inline void netbsd32_to_if_addrprefreq(
-    const struct netbsd32_if_addrprefreq *, struct if_addrprefreq *, u_long);
-static inline void netbsd32_to_ifconf(struct netbsd32_ifconf *,
-					struct ifconf *, u_long);
-static inline void netbsd32_to_ifmediareq(struct netbsd32_ifmediareq *,
-					    struct ifmediareq *, u_long);
-static inline void netbsd32_to_ifdrv(struct netbsd32_ifdrv *, struct ifdrv *,
-				       u_long);
-static inline void netbsd32_to_sioc_vif_req(struct netbsd32_sioc_vif_req *,
-					      struct sioc_vif_req *, u_long);
-static inline void netbsd32_to_sioc_sg_req(struct netbsd32_sioc_sg_req *,
-					     struct sioc_sg_req *, u_long);
-static inline void netbsd32_from_partinfo(struct partinfo *,
-					    struct netbsd32_partinfo *, u_long);
-#if 0
-static inline void netbsd32_from_format_op(struct format_op *,
-					     struct netbsd32_format_op *,
-					     u_long);
-#endif
-static inline void netbsd32_from_if_addrprefreq(const struct if_addrprefreq *,
-					struct netbsd32_if_addrprefreq *,
-					u_long);
-static inline void netbsd32_from_ifreq(struct ifreq *,
-                                         struct netbsd32_ifreq *, u_long);
-static inline void netbsd32_from_oifreq(struct oifreq *,
-                                         struct netbsd32_oifreq *, u_long);
-static inline void netbsd32_from_ifconf(struct ifconf *,
-					  struct netbsd32_ifconf *, u_long);
-static inline void netbsd32_from_ifmediareq(struct ifmediareq *,
-					      struct netbsd32_ifmediareq *,
-					      u_long);
-static inline void netbsd32_from_ifdrv(struct ifdrv *,
-					 struct netbsd32_ifdrv *, u_long);
-static inline void netbsd32_from_sioc_vif_req(struct sioc_vif_req *,
-						struct netbsd32_sioc_vif_req *,
-						u_long);
-static inline void netbsd32_from_sioc_sg_req(struct sioc_sg_req *,
-					       struct netbsd32_sioc_sg_req *,
-					       u_long);
-
-/* wsdisplay stuff */
-static inline void netbsd32_to_wsdisplay_addscreendata(
- 			struct netbsd32_wsdisplay_addscreendata *,
-			struct wsdisplay_addscreendata *,
-			u_long);
 
 /* convert to/from different structures */
 
@@ -323,6 +267,17 @@ netbsd32_to_wsdisplay_addscreendata(struct netbsd32_wsdisplay_addscreendata *asd
 }
 
 static inline void
+netbsd32_to_ieee80211req(struct netbsd32_ieee80211req *ireq32,
+			 struct ieee80211req *ireq, u_long cmd)
+{
+	strncpy(ireq->i_name, ireq32->i_name, IFNAMSIZ);
+	ireq->i_type = ireq32->i_type;
+	ireq->i_val = ireq32->i_val;
+	ireq->i_len = ireq32->i_len;
+	ireq->i_data = NETBSD32PTR64(ireq32->i_data);
+}
+
+static inline void
 netbsd32_to_ieee80211_nwkey(struct netbsd32_ieee80211_nwkey *nwk32,
 					       struct ieee80211_nwkey *nwk,
 					       u_long cmd)
@@ -359,6 +314,50 @@ netbsd32_to_wsdisplay_cursor(struct netbsd32_wsdisplay_cursor *c32,
 	c->cmap.blue = NETBSD32PTR64(c32->cmap.blue);
 	c->image = NETBSD32PTR64(c32->image);
 	c->mask = NETBSD32PTR64(c32->mask);
+}
+
+static inline void
+netbsd32_to_clockctl_settimeofday(
+    const struct netbsd32_clockctl_settimeofday *s32p,
+    struct clockctl_settimeofday *p,
+    u_long cmd)
+{
+
+	p->tv = NETBSD32PTR64(s32p->tv);
+	p->tzp = NETBSD32PTR64(s32p->tzp);
+}
+
+static inline void
+netbsd32_to_clockctl_adjtime(
+    const struct netbsd32_clockctl_adjtime *s32p,
+    struct clockctl_adjtime *p,
+    u_long cmd)
+{
+
+	p->delta = NETBSD32PTR64(s32p->delta);
+	p->olddelta = NETBSD32PTR64(s32p->olddelta);
+}
+
+static inline void
+netbsd32_to_clockctl_clock_settime(
+    const struct netbsd32_clockctl_clock_settime *s32p,
+    struct clockctl_clock_settime *p,
+    u_long cmd)
+{
+
+	p->clock_id = s32p->clock_id;
+	p->tp = NETBSD32PTR64(s32p->tp);
+}
+
+static inline void
+netbsd32_to_clockctl_ntp_adjtime(
+    const struct netbsd32_clockctl_ntp_adjtime *s32p,
+    struct clockctl_ntp_adjtime *p,
+    u_long cmd)
+{
+
+	p->tp = NETBSD32PTR64(s32p->tp);
+	p->retval = s32p->retval;
 }
 
 /*
@@ -559,6 +558,17 @@ netbsd32_from_wsdisplay_cursor(struct wsdisplay_cursor *c,
 }
 
 static inline void
+netbsd32_from_ieee80211req(struct ieee80211req *ireq,
+			   struct netbsd32_ieee80211req *ireq32, u_long cmd)
+{
+	strncpy(ireq32->i_name, ireq->i_name, IFNAMSIZ);
+	ireq32->i_type = ireq->i_type;
+	ireq32->i_val = ireq->i_val;
+	ireq32->i_len = ireq->i_len;
+	NETBSD32PTR32(ireq32->i_data, ireq->i_data);
+}
+
+static inline void
 netbsd32_from_ieee80211_nwkey(struct ieee80211_nwkey *nwk,
 				struct netbsd32_ieee80211_nwkey *nwk32,
 				u_long cmd)
@@ -596,6 +606,50 @@ netbsd32_from_u_long(u_long *p, netbsd32_u_long *s32p, u_long cmd)
 {
 
 	*s32p = (netbsd32_u_long)*p;
+}
+
+static inline void
+netbsd32_from_clockctl_settimeofday(
+    const struct clockctl_settimeofday *p,
+    struct netbsd32_clockctl_settimeofday *s32p,
+    u_long cmd)
+{
+
+	NETBSD32PTR32(s32p->tv, p->tv);
+	NETBSD32PTR32(s32p->tzp, p->tzp);
+}
+
+static inline void
+netbsd32_from_clockctl_adjtime(
+    const struct clockctl_adjtime *p,
+    struct netbsd32_clockctl_adjtime *s32p,
+    u_long cmd)
+{
+
+	NETBSD32PTR32(s32p->delta, p->delta);
+	NETBSD32PTR32(s32p->olddelta, p->olddelta);
+}
+
+static inline void
+netbsd32_from_clockctl_clock_settime(
+    const struct clockctl_clock_settime *p,
+    struct netbsd32_clockctl_clock_settime *s32p,
+    u_long cmd)
+{
+
+	s32p->clock_id = p->clock_id;
+	NETBSD32PTR32(s32p->tp, p->tp);
+}
+
+static inline void
+netbsd32_from_clockctl_ntp_adjtime(
+    const struct clockctl_ntp_adjtime *p,
+    struct netbsd32_clockctl_ntp_adjtime *s32p,
+    u_long cmd)
+{
+
+	NETBSD32PTR32(s32p->tp, p->tp);
+	s32p->retval = p->retval;
 }
 
 /*
@@ -919,6 +973,10 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 	case WSDISPLAYIO_SCURSOR32:
 		IOCTL_STRUCT_CONV_TO(WSDISPLAYIO_SCURSOR, wsdisplay_cursor);
 
+	case SIOCS8021132:
+		IOCTL_STRUCT_CONV_TO(SIOCS80211, ieee80211req);
+	case SIOCG8021132:
+		IOCTL_STRUCT_CONV_TO(SIOCG80211, ieee80211req);
 	case SIOCS80211NWKEY32:
 		IOCTL_STRUCT_CONV_TO(SIOCS80211NWKEY, ieee80211_nwkey);
 	case SIOCG80211NWKEY32:
@@ -926,6 +984,18 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 
 	case POWER_EVENT_RECVDICT32:
 		IOCTL_STRUCT_CONV_TO(POWER_EVENT_RECVDICT, plistref);
+
+	case CLOCKCTL_SETTIMEOFDAY32:
+		IOCTL_STRUCT_CONV_TO(CLOCKCTL_SETTIMEOFDAY,
+		    clockctl_settimeofday);
+	case CLOCKCTL_ADJTIME32:
+		IOCTL_STRUCT_CONV_TO(CLOCKCTL_ADJTIME, clockctl_adjtime);
+	case CLOCKCTL_CLOCK_SETTIME32:
+		IOCTL_STRUCT_CONV_TO(CLOCKCTL_CLOCK_SETTIME,
+		    clockctl_clock_settime);
+	case CLOCKCTL_NTP_ADJTIME32:
+		IOCTL_STRUCT_CONV_TO(CLOCKCTL_NTP_ADJTIME,
+		    clockctl_ntp_adjtime);
 
 	default:
 #ifdef NETBSD32_MD_IOCTL

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.73.6.1 2012/02/18 07:36:01 mrg Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.73.6.2 2012/06/02 11:09:42 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -145,30 +145,74 @@ struct vm_page {
 };
 
 /*
- * These are the flags defined for vm_page.
- */
-
-/*
- * locking rules:
- *   PG_ ==> locked by object lock
- *   PQ_ ==> lock by page queue lock
- *   PQ_FREE is locked by free queue lock and is mutex with all other PQs
+ * Overview of UVM page flags.
  *
- * PG_ZERO is used to indicate that a page has been pre-zero'd.  This flag
- * is only set when the page is on no queues, and is cleared when the page
- * is placed on the free list.
+ * Locking notes:
+ *
+ * PG_, struct vm_page::flags	=> locked by the owner
+ * PQ_, struct vm_page::pqflags	=> locked by the page-queue lock
+ * PQ_FREE			=> additionally locked by free-queue lock
+ *
+ * Flag descriptions:
+ *
+ * PG_BUSY:
+ *	Page is long-term locked, usually because of I/O (transfer from the
+ *	page memory to the backing store) is in progress.  LWP attempting
+ *	to access the page shall set PG_WANTED and wait.
+ *
+ * PG_WANTED:
+ *	Indicates that the page, which is currently PG_BUSY, is wanted by
+ *	some other LWP.  The page owner (i.e. LWP which set PG_BUSY) is
+ *	responsible to clear both flags and wake up any waiters once it has
+ *	released the long-term lock (PG_BUSY).
+ *
+ * PG_RELEASED:
+ *	Indicates that the page, which is currently PG_BUSY, should be freed
+ *	after the release of long-term lock.  It is responsibility of the
+ *	owning LWP (i.e. which set PG_BUSY) to do it.
+ *
+ * PG_CLEAN:
+ *	Page has not been modified since it was loaded from the backing
+ *	store.  If this flag is not set, page is considered "dirty".
+ *	XXX: Currently it means that the page *might* be clean; will be
+ *	fixed with yamt-pagecache merge.
+ *
+ * PG_FAKE:
+ *	Page has been allocated, but not yet initialised.  The flag is used
+ *	to avoid overwriting of valid data, e.g. to prevent read from the
+ *	backing store when in-core data is newer.
+ *
+ * PG_TABLED:
+ *	Indicates that the page is currently in the object's offset queue,
+ *	and that it should be removed from it once the page is freed.  Used
+ *	diagnostic purposes.
+ *
+ * PG_PAGEOUT:
+ *	Indicates that the page is being paged-out in preparation for
+ *	being freed.
+ *
+ * PG_RDONLY:
+ *	Indicates that the page must be mapped read-only.
+ *
+ * PG_ZERO:
+ *	Indicates that the page has been pre-zeroed.  This flag is only
+ *	set when the page is not in the queues and is cleared when the
+ *	page is placed on the free list.
+ *
+ * PG_MARKER:
+ *	Dummy marker page.
  */
 
-#define	PG_BUSY		0x0001		/* page is locked */
-#define	PG_WANTED	0x0002		/* someone is waiting for page */
-#define	PG_TABLED	0x0004		/* page is in VP table  */
-#define	PG_CLEAN	0x0008		/* page has not been modified */
-#define	PG_PAGEOUT	0x0010		/* page to be freed for pagedaemon */
-#define PG_RELEASED	0x0020		/* page to be freed when unbusied */
-#define	PG_FAKE		0x0040		/* page is not yet initialized */
-#define	PG_RDONLY	0x0080		/* page must be mapped read-only */
-#define	PG_ZERO		0x0100		/* page is pre-zero'd */
-#define	PG_MARKER	0x0200		/* dummy marker page */
+#define	PG_BUSY		0x0001
+#define	PG_WANTED	0x0002
+#define	PG_TABLED	0x0004
+#define	PG_CLEAN	0x0008
+#define	PG_PAGEOUT	0x0010
+#define	PG_RELEASED	0x0020
+#define	PG_FAKE		0x0040
+#define	PG_RDONLY	0x0080
+#define	PG_ZERO		0x0100
+#define	PG_MARKER	0x0200
 
 #define PG_PAGER1	0x1000		/* pager-specific flag */
 

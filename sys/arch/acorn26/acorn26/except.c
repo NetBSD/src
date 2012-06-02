@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.27 2010/12/20 00:25:23 matt Exp $ */
+/* $NetBSD: except.c,v 1.27.12.1 2012/06/02 11:08:41 mrg Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.27 2010/12/20 00:25:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.27.12.1 2012/06/02 11:08:41 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -81,10 +81,10 @@ int want_resched;
 void
 checkvectors(void)
 {
-	u_int32_t *ptr;
+	uint32_t *ptr;
 
 	/* Check that the vectors are valid */
-	for (ptr = (u_int32_t *)0; ptr < (u_int32_t *)0x1c; ptr++)
+	for (ptr = (uint32_t *)0; ptr < (uint32_t *)0x1c; ptr++)
 		if (*ptr != 0xe59ff114)
 			panic("CPU vectors mangled");
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: iomdkbc.c,v 1.4 2011/07/01 20:26:35 dyoung Exp $ */
+/* $NetBSD: iomdkbc.c,v 1.4.6.1 2012/06/02 11:08:54 mrg Exp $ */
 
 /*-
  * Copyright (c) 2004 Ben Harris
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iomdkbc.c,v 1.4 2011/07/01 20:26:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomdkbc.c,v 1.4.6.1 2012/06/02 11:08:54 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: iomdkbc.c,v 1.4 2011/07/01 20:26:35 dyoung Exp $");
 #define KBC_DEVCMD_RESEND 0xfe
 
 struct iomdkbc_softc {
-	struct device	sc_dev;
+	device_t		sc_dev;
 	struct iomdkbc_internal *sc_id;
 };
 
@@ -77,8 +77,8 @@ struct iomdkbc_internal {
 	int	t_rxirq[PCKBPORT_NSLOTS];
 };
 
-static int iomdkbc_match(struct device *, struct cfdata *, void *);
-static void iomdkbc_attach(struct device *, struct device *, void *);
+static int iomdkbc_match(device_t , cfdata_t , void *);
+static void iomdkbc_attach(device_t , device_t , void *);
 
 static int iomdkbc_xt_translation(void *, pckbport_slot_t, int);
 static int iomdkbc_send_devcmd(void *, pckbport_slot_t, u_char);
@@ -89,7 +89,7 @@ static void iomdkbc_set_poll(void *, pckbport_slot_t, int);
 
 static int iomdkbc_intr(void *);
 
-CFATTACH_DECL(iomdkbc, sizeof(struct iomdkbc_softc),
+CFATTACH_DECL_NEW(iomdkbc, sizeof(struct iomdkbc_softc),
     iomdkbc_match, iomdkbc_attach, NULL, NULL);
 
 static struct pckbport_accessops const iomdkbc_ops = {
@@ -104,7 +104,7 @@ static struct pckbport_accessops const iomdkbc_ops = {
 static struct iomdkbc_internal iomdkbc_cntag;
 
 static int
-iomdkbc_match(struct device *parent, struct cfdata *cf, void *aux)
+iomdkbc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct kbd_attach_args *ka = aux;
 	struct opms_attach_args *pa = aux;
@@ -116,14 +116,15 @@ iomdkbc_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-iomdkbc_attach(struct device *parent, struct device *self, void *aux)
+iomdkbc_attach(device_t parent, device_t self, void *aux)
 {
 	struct kbd_attach_args *ka = aux;
 	struct opms_attach_args *pa = aux;
-	struct iomdkbc_softc *sc = (struct iomdkbc_softc *)self;
+	struct iomdkbc_softc *sc = device_private(self);
 	struct iomdkbc_internal *t;
 
-	printf("\n");
+	sc->sc_dev = self;
+	aprint_normal("\n");
 
 	t = NULL;
 	if (strcmp(ka->ka_name, "kbd") == 0) {
@@ -143,13 +144,13 @@ iomdkbc_attach(struct device *parent, struct device *self, void *aux)
 			t->t_ioh[PCKBPORT_KBD_SLOT] = ka->ka_ioh;
 		}
 		t->t_rxih[PCKBPORT_KBD_SLOT] = intr_claim(ka->ka_rxirq,
-		    IPL_TTY, sc->sc_dev.dv_xname, iomdkbc_intr, t);
+		    IPL_TTY, device_xname(sc->sc_dev), iomdkbc_intr, t);
 		t->t_rxirq[PCKBPORT_KBD_SLOT] = ka->ka_rxirq;
 		disable_irq(t->t_rxirq[PCKBPORT_KBD_SLOT]);
 		sc->sc_id = t;
 		t->t_sc = sc;
 		t->t_pt = pckbport_attach(t, &iomdkbc_ops);
-		pckbport_attach_slot(&sc->sc_dev, t->t_pt, PCKBPORT_KBD_SLOT);
+		pckbport_attach_slot(sc->sc_dev, t->t_pt, PCKBPORT_KBD_SLOT);
 	}
 
 	if (strcmp(pa->pa_name, "opms") == 0) {
@@ -165,14 +166,14 @@ iomdkbc_attach(struct device *parent, struct device *self, void *aux)
 		t->t_iot = pa->pa_iot;
 		t->t_ioh[PCKBPORT_AUX_SLOT] = pa->pa_ioh;
 		t->t_rxih[PCKBPORT_AUX_SLOT] = intr_claim(pa->pa_irq,
-		    IPL_TTY, sc->sc_dev.dv_xname, iomdkbc_intr, t);
+		    IPL_TTY, device_xname(sc->sc_dev), iomdkbc_intr, t);
 		t->t_rxirq[PCKBPORT_AUX_SLOT] = pa->pa_irq;
 		disable_irq(t->t_rxirq[PCKBPORT_AUX_SLOT]);
 		sc->sc_id = t;
 		t->t_sc = sc;
 		if (t->t_pt == NULL)
 			t->t_pt = pckbport_attach(t, &iomdkbc_ops);
-		pckbport_attach_slot(&sc->sc_dev, t->t_pt, PCKBPORT_AUX_SLOT);
+		pckbport_attach_slot(sc->sc_dev, t->t_pt, PCKBPORT_AUX_SLOT);
 	}
 }
 

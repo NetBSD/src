@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.26.6.1 2012/02/18 07:32:57 mrg Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.26.6.2 2012/06/02 11:09:06 mrg Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.26.6.1 2012/02/18 07:32:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.26.6.2 2012/06/02 11:09:06 mrg Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -419,6 +419,7 @@ ofwoea_batinit(void)
 	oea_batinit(0x80000000, BAT_BL_1G,
 		    0xf0000000, BAT_BL_128M,
 		    0xf8000000, BAT_BL_64M,
+		    0xfe000000, BAT_BL_8M,	/* Grackle IO */
 		    0);
 #else
 	uint16_t bitmap;

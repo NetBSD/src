@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.37.8.1 2012/02/18 07:35:06 mrg Exp $ */
+/*	$NetBSD: if_ural.c,v 1.37.8.2 2012/06/02 11:09:29 mrg Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.37.8.1 2012/02/18 07:35:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.37.8.2 2012/06/02 11:09:29 mrg Exp $");
 
 
 #include <sys/param.h>
@@ -104,7 +104,6 @@ static const struct usb_devno ural_devs[] = {
 	{ USB_VENDOR_RALINK,		USB_PRODUCT_RALINK_RT2570 },
 	{ USB_VENDOR_RALINK,		USB_PRODUCT_RALINK_RT2570_2 },
 	{ USB_VENDOR_RALINK,		USB_PRODUCT_RALINK_RT2570_3 },
-	{ USB_VENDOR_RALINK_2,		USB_PRODUCT_RALINK_2_RT2570 },
 	{ USB_VENDOR_SMC,		USB_PRODUCT_SMC_2862WG },
 	{ USB_VENDOR_SPHAIRON,		USB_PRODUCT_SPHAIRON_UB801R },
 	{ USB_VENDOR_SURECOM,		USB_PRODUCT_SURECOM_EP9001G },

@@ -1,4 +1,4 @@
-/*	$NetBSD: apic.c,v 1.12.8.2 2012/04/29 23:04:39 mrg Exp $	*/
+/*	$NetBSD: apic.c,v 1.12.8.3 2012/06/02 11:08:56 mrg Exp $	*/
 
 /*	$OpenBSD: apic.c,v 1.14 2011/05/01 21:59:39 kettenis Exp $	*/
 
@@ -27,8 +27,6 @@
 #include <machine/autoconf.h>
 #include <machine/pdc.h>
 #include <machine/intr.h>
-
-#include <hp700/hp700/intr.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -127,6 +125,7 @@ int
 apic_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	struct elroy_softc *sc = pa->pa_pc->_cookie;
+	struct cpu_info *ci = &cpus[0];
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t tag = pa->pa_tag;
 	pcireg_t reg;
@@ -139,9 +138,11 @@ apic_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 #endif
 	line = PCI_INTERRUPT_LINE(reg);
 	if (sc->sc_irq[line] == 0)
-		sc->sc_irq[line] = hp700_intr_allocate_bit(&ir_cpu);
+		sc->sc_irq[line] = hp700_intr_allocate_bit(&ci->ci_ir, -1);
+	KASSERT(sc->sc_irq[line] != -1);
 	*ihp = (line << APIC_INT_LINE_SHIFT) | sc->sc_irq[line];
-	return (APIC_INT_IRQ(*ihp) == 0);
+
+	return APIC_INT_IRQ(*ihp) == 0;
 }
 
 const char *
@@ -152,7 +153,7 @@ apic_intr_string(void *v, pci_intr_handle_t ih)
 	snprintf(buf, sizeof(buf), "line %ld irq %ld",
 	    APIC_INT_LINE(ih), APIC_INT_IRQ(ih));
 
-	return (buf);
+	return buf;
 }
 
 void *
@@ -172,7 +173,7 @@ apic_intr_establish(void *v, pci_intr_handle_t ih,
 
 	/* no mapping or bogus */
 	if (irq <= 0 || irq > 31)
-		return (NULL);
+		return NULL;
 
 	aiv = malloc(sizeof(struct apic_iv), M_DEVBUF, M_NOWAIT);
 	if (aiv == NULL)
@@ -193,7 +194,7 @@ apic_intr_establish(void *v, pci_intr_handle_t ih,
 
 	biv = apic_intr_list[irq];
 	if (biv == NULL) {
-		iv = hp700_intr_establish(pri, apic_intr, aiv, &ir_cpu, irq);
+		iv = hp700_intr_establish(pri, apic_intr, aiv, &ci->ci_ir, irq);
 		if (iv == NULL) {
 			free(aiv, M_DEVBUF);
 			free(cnt, M_DEVBUF);
@@ -234,7 +235,7 @@ apic_intr_establish(void *v, pci_intr_handle_t ih,
 
 	apic_intr_list[irq] = aiv;
 
-	return (arg);
+	return arg;
 }
 
 void
@@ -262,7 +263,7 @@ apic_intr(void *v)
 	/* Signal EOI. */
 	elroy_write32(&r->apic_eoi, htole32((31 - irq) & APIC_ENT0_VEC));
 
-	return (claimed);
+	return claimed;
 }
 
 void

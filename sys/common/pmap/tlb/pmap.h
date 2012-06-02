@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11 2011/10/13 19:50:39 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11.6.1 2012/06/02 11:09:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -253,6 +253,7 @@ void	pmap_tlb_asid_check(void);
 uint16_t pmap_pvlist_lock(struct vm_page_md *, bool);
 
 #define	PMAP_STEAL_MEMORY	/* enable pmap_steal_memory() */
+#define	PMAP_GROWKERNEL		/* enable pmap_growkernel() */
 
 /*
  * Alternate mapping hooks for pool pages.  Avoids thrashing the TLB.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.37 2011/11/24 15:51:32 ahoka Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.37.2.1 2012/06/02 11:09:41 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -190,6 +190,12 @@ struct ufs_ops {
  */
 #define MNINDIR(ump)			((ump)->um_nindir)
 #define	blkptrtodb(ump, b)		((b) << (ump)->um_bptrtodb)
+
+/*
+ * Predicate for byte-swapping support.
+ */
+#define	FSFMT(vp)	(((vp)->v_mount->mnt_iflag & IMNT_DTYPE) == 0)
+
 #endif /* _KERNEL */
 
 #endif /* !_UFS_UFS_UFSMOUNT_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.13.4.3 2012/04/29 23:04:41 mrg Exp $ */
+/* $NetBSD: satmgr.c,v 1.13.4.4 2012/06/02 11:09:07 mrg Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>	
+#include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/conf.h>
@@ -81,6 +81,8 @@ struct satmgr_softc {
 	char			sc_btn_buf[8];
 	int			sc_btn_cnt;
 	char			sc_cmd_buf[8];
+	kmutex_t		sc_replk;
+	kcondvar_t		sc_repcv;
 	int			sc_sysctl_wdog;
 	int			sc_sysctl_fanlow;
 	int			sc_sysctl_fanhigh;
@@ -120,10 +122,10 @@ static void rxintr(struct satmgr_softc *);
 static void txintr(struct satmgr_softc *);
 static void startoutput(struct satmgr_softc *);
 static void swintr(void *);
-static void minit(struct satmgr_softc *);
-static void sinit(struct satmgr_softc *);
-static void qinit(struct satmgr_softc *);
-static void iinit(struct satmgr_softc *);
+static void minit(device_t);
+static void sinit(device_t);
+static void qinit(device_t);
+static void iinit(device_t);
 static void kreboot(struct satmgr_softc *);
 static void mreboot(struct satmgr_softc *);
 static void sreboot(struct satmgr_softc *);
@@ -141,15 +143,15 @@ static void sbutton(struct satmgr_softc *, int);
 static void qbutton(struct satmgr_softc *, int);
 static void dbutton(struct satmgr_softc *, int);
 static void ibutton(struct satmgr_softc *, int);
-static void idosync(void *);
-static void iprepcmd(struct satmgr_softc *, int, int, int, int, int, int);
+static void msattalk(struct satmgr_softc *, const char *);
+static void isattalk(struct satmgr_softc *, int, int, int, int, int, int);
 static int  mbtnintr(void *);
 static void guarded_pbutton(void *);
 static void sched_sysmon_pbutton(void *);
 
 struct satops {
 	const char *family;
-	void (*init)(struct satmgr_softc *);
+	void (*init)(device_t);
 	void (*reboot)(struct satmgr_softc *);
 	void (*pwroff)(struct satmgr_softc *);
 	void (*dispatch)(struct satmgr_softc *, int);
@@ -199,7 +201,7 @@ satmgr_attach(device_t parent, device_t self, void *aux)
 	int i, sataddr, epicirq;
 
 	found = 1;
-	
+
 	if ((pfam = lookup_bootinfo(BTINFO_PRODFAMILY)) == NULL)
 		goto notavail;
 	ops = NULL;
@@ -235,6 +237,8 @@ satmgr_attach(device_t parent, device_t self, void *aux)
 	cv_init(&sc->sc_rdcv, "satrd");
 	cv_init(&sc->sc_wrcv, "satwr");
 	sc->sc_btn_cnt = 0;
+	mutex_init(&sc->sc_replk, MUTEX_DEFAULT, IPL_SERIAL);
+	cv_init(&sc->sc_repcv, "stalk");
 
 	epicirq = (eaa->eumb_unit == 0) ? 24 : 25;
 	intr_establish(epicirq + I8259_ICU, IST_LEVEL, IPL_SERIAL, hwintr, sc);
@@ -312,8 +316,8 @@ satmgr_attach(device_t parent, device_t self, void *aux)
 	}
 
 	md_reboot = satmgr_reboot;	/* cpu_reboot() hook */
-	if (ops->init != NULL)
-		(*ops->init)(sc);	/* init sat.cpu, LEDs, etc. */
+	if (ops->init != NULL)		/* init sat.cpu, LEDs, etc. */
+		config_interrupts(self, ops->init);
 	return;
 
   notavail:
@@ -394,7 +398,7 @@ satmgr_sysctl_fanlow(SYSCTLFN_ARGS)
 	if (t < 0 || t > 99)
 		return EINVAL;
 	sc->sc_sysctl_fanlow = t;
-	iprepcmd(sc, 'b', 'b', 10, 'a',
+	isattalk(sc, 'b', 'b', 10, 'a',
 	    sc->sc_sysctl_fanhigh, sc->sc_sysctl_fanlow);
 	return 0;
 }
@@ -416,7 +420,7 @@ satmgr_sysctl_fanhigh(SYSCTLFN_ARGS)
 	if (t < 0 || t > 99)
 		return EINVAL;
 	sc->sc_sysctl_fanhigh = t;
-	iprepcmd(sc, 'b', 'b', 10, 'a',
+	isattalk(sc, 'b', 'b', 10, 'a',
 	    sc->sc_sysctl_fanhigh, sc->sc_sysctl_fanlow);
 	return 0;
 }
@@ -444,24 +448,6 @@ send_sat_len(struct satmgr_softc *sc, const char *msg, int len)
 		CSR_WRITE(sc, THR, *msg++);
 	if (len > 0)
 		goto again;
-}
-
-static void
-recv_sat_len(struct satmgr_softc *sc, char *buf, int len)
-{
-	int lsr;
-
-	lsr = CSR_READ(sc, LSR);
-	while (len > 0 && (lsr & LSR_RXRDY)) {
-		if (lsr & (LSR_BI | LSR_FE | LSR_PE)) {
-			(void) CSR_READ(sc, RBR);
-			lsr = CSR_READ(sc, LSR);
-			continue;
-		}
-		*buf++ = CSR_READ(sc, RBR);
-		len -= 1;
-		lsr = CSR_READ(sc, LSR);
-	}
 }
 
 static int
@@ -573,7 +559,7 @@ satpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct satmgr_softc *sc;
 	int revents = 0;
-		
+
 	sc = device_lookup_private(&satmgr_cd, 0);
 	mutex_enter(&sc->sc_lock);
 	if (events & (POLLIN | POLLRDNORM)) {
@@ -608,7 +594,7 @@ filt_read(struct knote *kn, long hint)
 
 static const struct filterops read_filtops = {
 	1, NULL, filt_rdetach, filt_read
-};			
+};
 
 static int
 satkqfilter(dev_t dev, struct knote *kn)
@@ -708,6 +694,7 @@ startoutput(struct satmgr_softc *sc)
 {
 	int n;
 
+	mutex_enter(&sc->sc_replk);
 	n = min(sc->sc_wr_cnt, 16);
 	while (n-- > 0) {
 		CSR_WRITE(sc, THR, *sc->sc_wr_ptr);
@@ -715,6 +702,7 @@ startoutput(struct satmgr_softc *sc)
 			sc->sc_wr_ptr = &sc->sc_wr_buf[0];
 		sc->sc_wr_cnt -= 1;
 	}
+	mutex_exit(&sc->sc_replk);
 }
 
 static void
@@ -782,8 +770,9 @@ kbutton(struct satmgr_softc *sc, int ch)
 }
 
 static void
-sinit(struct satmgr_softc *sc)
+sinit(device_t self)
 {
+	struct satmgr_softc *sc = device_private(self);
 
 	send_sat(sc, "8");	/* status LED green */
 }
@@ -818,8 +807,9 @@ sbutton(struct satmgr_softc *sc, int ch)
 }
 
 static void
-qinit(struct satmgr_softc *sc)
+qinit(device_t self)
 {
+	struct satmgr_softc *sc = device_private(self);
 
 	send_sat(sc, "V");	/* status LED green */
 }
@@ -870,29 +860,26 @@ static void
 dbutton(struct satmgr_softc *sc, int ch)
 {
 
+	if (sc->sc_btn_cnt < sizeof(sc->sc_btn_buf))
+		sc->sc_btn_buf[sc->sc_btn_cnt++] = ch;
 	if (ch == '\n' || ch == '\r') {
-		if (sc->sc_btn_cnt == 3) {
-			if (strncmp(sc->sc_btn_buf, "PKO", 3) == 0) {
-				/* notified after 5 seconds guard time */
-				sysmon_task_queue_sched(0,
-				    sched_sysmon_pbutton, sc);
-			} else if (strncmp(sc->sc_btn_buf, "RKO", 3) == 0) {
-				/* notified after 5 seconds guard time */
-			}
+		if (memcmp(sc->sc_btn_buf, "PKO", 3) == 0) {
+			/* notified after 5 seconds guard time */
+			sysmon_task_queue_sched(0, sched_sysmon_pbutton, sc);
 		}
 		sc->sc_btn_cnt = 0;
-	} else if (sc->sc_btn_cnt < 7)
-		sc->sc_btn_buf[sc->sc_btn_cnt++] = ch;
+	}
 }
 
 static void
-iinit(struct satmgr_softc *sc)
+iinit(device_t self)
 {
+	struct satmgr_softc *sc = device_private(self);
 
 	/* LED blue, auto-fan, turn on at 50C, turn off at 45C */
 	sc->sc_sysctl_fanhigh = 50;
 	sc->sc_sysctl_fanlow = 45;
-	iprepcmd(sc, 'b', 'b', 10, 'a',
+	isattalk(sc, 'b', 'b', 10, 'a',
 	    sc->sc_sysctl_fanhigh, sc->sc_sysctl_fanlow);
 }
 
@@ -900,62 +887,34 @@ static void
 ireboot(struct satmgr_softc *sc)
 {
 
-	iprepcmd(sc, 'g', 0, 0, 0, 0, 0);
+	isattalk(sc, 'g', 0, 0, 0, 0, 0);
 }
 
 static void
 ipwroff(struct satmgr_softc *sc)
 {
 
-	iprepcmd(sc, 'c', 0, 0, 0, 0, 0);
+	isattalk(sc, 'c', 0, 0, 0, 0, 0);
 }
 
 static void
 ibutton(struct satmgr_softc *sc, int ch)
 {
-	int i;
-	char cksum;
 
-	sc->sc_btn_buf[sc->sc_btn_cnt++] = ch;
-
-	if (sc->sc_btn_cnt >= 8) {
+	mutex_enter(&sc->sc_replk);
+	if (++sc->sc_btn_cnt >= 8) {
+		cv_signal(&sc->sc_repcv);
 		sc->sc_btn_cnt = 0;
-
-		if (callout_active(&sc->sc_ch_sync) == true) {
-			/* now we can send a pending command packet */
-			callout_stop(&sc->sc_ch_sync);
-			for (i = 0, cksum = 0; i < 7; i++)
-				cksum += sc->sc_cmd_buf[i];
-			sc->sc_cmd_buf[7] = cksum & 0x7f;
-			send_sat_len(sc, sc->sc_cmd_buf, 8);
-		}
 	}
+	mutex_exit(&sc->sc_replk);
 }
 
 static void
-idosync(void *arg)
-{
-	/*
-	 * Send 0-bytes until the 68HC908 sends a reply packet.
-	 * This means we are synchronized again, and the pending command,
-	 * constructed by iprepcmd(), is transmitted automatically.
-	 */
-	struct satmgr_softc *sc = arg;
-	unsigned lsr;
-
-	/* we're now in callout(9) context */
-	do {
-		lsr = CSR_READ(sc, LSR);
-	} while ((lsr & LSR_TXRDY) == 0);
-	callout_schedule(&sc->sc_ch_sync, hz / 5);
-	CSR_WRITE(sc, THR, 0);
-}
-
-static void
-iprepcmd(struct satmgr_softc *sc, int pow, int led, int rat, int fan,
+isattalk(struct satmgr_softc *sc, int pow, int led, int rat, int fan,
     int fhi, int flo)
 {
 	char *p = sc->sc_cmd_buf;
+	int i, cksum;
 
 	/*
 	 * Construct the command packet. Values of -1 (0xff) will be
@@ -968,19 +927,62 @@ iprepcmd(struct satmgr_softc *sc, int pow, int led, int rat, int fan,
 	p[4] = fhi;
 	p[5] = flo;
 	p[6] = 7; /* host id */
+	for (i = 0, cksum = 0; i < 7; i++)
+		cksum += p[i];
+	p[7] = cksum & 0x7f;
+	send_sat_len(sc, p, 8);
 
-	/* synchronize transmitter, before packet can be sent */
-	callout_reset(&sc->sc_ch_sync, hz / 5, idosync, sc);
-	/*
-	 * XXX We should protect ourselves against other writers, while
-	 * XXX synchronization is active!
-	 */
+	mutex_enter(&sc->sc_replk);
+	sc->sc_btn_cnt = 0;
+	cv_wait(&sc->sc_repcv, &sc->sc_replk);
+	mutex_exit(&sc->sc_replk);
 }
 
-static void msattalk(struct satmgr_softc *, const char *, char *, int);
 
 static void
-msattalk(struct satmgr_softc *sc, const char *cmd, char *rep, int n)
+minit(device_t self)
+{
+	struct satmgr_softc *sc = device_private(self);
+#if 0
+	static char msg[35] = "\x20\x92NetBSD/sandpoint";
+	int m, n;
+
+	m = strlen(osrelease);
+	n = (16 - m) / 2;
+	memset(&msg[18], ' ', 16);
+	memcpy(&msg[18 + n], osrelease, m);
+
+	msattalk(sc, "\x00\x03");	/* boot has completed */
+	msattalk(sc, msg);		/* NB banner at disp2 */
+	msattalk(sc, "\x01\x32\x80");	/* select disp2 */
+	msattalk(sc, "\x00\x27");	/* show disp2 */
+#else
+	msattalk(sc, "\x00\x03");	/* boot has completed */
+#endif
+}
+
+static void
+mreboot(struct satmgr_softc *sc)
+{
+
+	msattalk(sc, "\x01\x35\x00");	/* stop watchdog timer */
+	msattalk(sc, "\x00\x0c");	/* shutdown in progress */
+	msattalk(sc, "\x00\x03");	/* boot has completed */
+	msattalk(sc, "\x00\x0e");	/* perform reboot */
+}
+
+static void
+mpwroff(struct satmgr_softc *sc)
+{
+
+	msattalk(sc, "\x01\x35\x00");	/* stop watchdog timer */
+	msattalk(sc, "\x00\x0c");	/* shutdown in progress */
+	msattalk(sc, "\x00\x03");	/* boot has completed */
+	msattalk(sc, "\x00\x06");	/* force power off */
+}
+
+static void
+msattalk(struct satmgr_softc *sc, const char *cmd)
 {
 	int len, i;
 	uint8_t pa;
@@ -994,49 +996,35 @@ msattalk(struct satmgr_softc *sc, const char *cmd, char *rep, int n)
 		pa += cmd[i];
 	pa = 0 - pa; /* parity formula */
 
-	CSR_WRITE(sc, IER, 0);
 	send_sat_len(sc, cmd, len);
 	send_sat_len(sc, &pa, 1);
-	 DELAY(2000); /* XXX */
-	recv_sat_len(sc, rep, n);
-	 DELAY(2000); /* XXX */
-	CSR_WRITE(sc, IER, 0x7f);
-}
 
-static void
-minit(struct satmgr_softc *sc)
-{
-	char report[4];
-
-	msattalk(sc, "\x00\x03", report, 4);	/* boot has completed */
-}
-
-static void
-mreboot(struct satmgr_softc *sc)
-{
-	char report[4];
-
-	msattalk(sc, "\x01\x35\x00", report, 4); /* stop watchdog timer */
-	msattalk(sc, "\x00\x0c", report, 4);	 /* shutdown in progress */
-	msattalk(sc, "\x00\x03", report, 4);	 /* boot has completed */
-	msattalk(sc, "\x00\x0e", report, 4);	 /* perform reboot */
-}
-
-static void
-mpwroff(struct satmgr_softc *sc)
-{
-	char report[4];
-
-	msattalk(sc, "\x01\x35\x00", report, 4); /* stop watchdog timer */
-	msattalk(sc, "\x00\x0c", report, 4);	 /* shutdown in progress */
-	msattalk(sc, "\x00\x03", report, 4);	 /* boot has completed */
-	msattalk(sc, "\x00\x06", report, 4);	 /* force power off */
+	mutex_enter(&sc->sc_replk);
+	sc->sc_btn_cnt = 0;
+	cv_wait(&sc->sc_repcv, &sc->sc_replk);
+	mutex_exit(&sc->sc_replk);
 }
 
 static void
 mbutton(struct satmgr_softc *sc, int ch)
 {
-	/* can do nothing */
+
+	mutex_enter(&sc->sc_replk);
+	if (sc->sc_btn_cnt < 4) /* record the first four */
+		sc->sc_btn_buf[sc->sc_btn_cnt] = ch;
+	sc->sc_btn_cnt++;
+	if (sc->sc_btn_cnt == sc->sc_btn_buf[0] + 3) {
+		if (sc->sc_btn_buf[1] == 0x36 && (sc->sc_btn_buf[2]&01) == 0) {
+			/* power button pressed */
+			sysmon_task_queue_sched(0, sched_sysmon_pbutton, sc);
+		}
+		else {
+			/* unblock the talker */
+			cv_signal(&sc->sc_repcv);
+		}
+		sc->sc_btn_cnt = 0;
+	}
+	mutex_exit(&sc->sc_replk);
 }
 
 static int
@@ -1044,11 +1032,11 @@ mbtnintr(void *arg)
 {
 	/* notified after 3 seconds guard time */
 	struct satmgr_softc *sc = arg;
-	char report[4];
 
-	msattalk(sc, "\x80\x36", report, 4);
-	if ((report[2] & 01) == 0) /* power button depressed */
-		sysmon_task_queue_sched(0, sched_sysmon_pbutton, sc);
+	send_sat(sc, "\x80\x36\x4a"); /* query button state with parity */
+	mutex_enter(&sc->sc_replk);
+	sc->sc_btn_cnt = 0;
+	mutex_exit(&sc->sc_replk);
 	return 1;
 }
 

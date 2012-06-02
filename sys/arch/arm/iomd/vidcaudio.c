@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.48 2011/11/24 03:35:56 mrg Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.48.2.1 2012/06/02 11:08:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.48 2011/11/24 03:35:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.48.2.1 2012/06/02 11:08:54 mrg Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -106,7 +106,7 @@ extern int *vidc_base;
 #endif
 
 struct vidcaudio_softc {
-	struct	device sc_dev;
+	device_t	sc_dev;
 
 	irqhandler_t	sc_ih;
 	int	sc_dma_intr;
@@ -125,8 +125,8 @@ struct vidcaudio_softc {
 	kmutex_t	sc_intr_lock;
 };
 
-static int  vidcaudio_probe(struct device *, struct cfdata *, void *);
-static void vidcaudio_attach(struct device *, struct device *, void *);
+static int  vidcaudio_probe(device_t , cfdata_t , void *);
+static void vidcaudio_attach(device_t , device_t , void *);
 static void vidcaudio_close(void *);
 
 static int vidcaudio_intr(void *);
@@ -140,7 +140,7 @@ static int mulaw_to_vidc_fetch_to(struct audio_softc *, stream_fetcher_t *,
 static int mulaw_to_vidc_stereo_fetch_to(struct audio_softc *, stream_fetcher_t *,
     audio_stream_t *, int);
 
-CFATTACH_DECL(vidcaudio, sizeof(struct vidcaudio_softc),
+CFATTACH_DECL_NEW(vidcaudio, sizeof(struct vidcaudio_softc),
     vidcaudio_probe, vidcaudio_attach, NULL, NULL);
 
 static int    vidcaudio_query_encoding(void *, struct audio_encoding *);
@@ -198,7 +198,7 @@ static const struct audio_hw_if vidcaudio_hw_if = {
 };
 
 static int
-vidcaudio_probe(struct device *parent, struct cfdata *cf, void *aux)
+vidcaudio_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	int id;
 
@@ -218,12 +218,12 @@ vidcaudio_probe(struct device *parent, struct cfdata *cf, void *aux)
 
 
 static void
-vidcaudio_attach(struct device *parent, struct device *self, void *aux)
+vidcaudio_attach(device_t parent, device_t self, void *aux)
 {
-	struct vidcaudio_softc *sc;
-	struct device *beepdev;
+	struct vidcaudio_softc *sc = device_private(self);
+	device_t beepdev;
 
-	sc  = (void *)self;
+	sc->sc_dev = self;
 	switch (IOMD_ID) {
 #ifndef EB7500ATX
 	case RPC600_IOMD_ID:
@@ -478,7 +478,8 @@ vidcaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 	if (sc->sc_ppages != NULL)
 		free(sc->sc_ppages, M_DEVBUF);
 	sc->sc_ppages = malloc(npages * sizeof(paddr_t), M_DEVBUF, M_WAITOK);
-	if (sc->sc_ppages == NULL) return ENOMEM;
+	if (sc->sc_ppages == NULL)
+		return ENOMEM;
 	for (i = 0; i < npages; i++)
 		if (!pmap_extract(pmap_kernel(),
 		    (vaddr_t)start + i * PAGE_SIZE, &sc->sc_ppages[i]))

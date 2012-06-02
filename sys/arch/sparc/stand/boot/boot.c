@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.27 2011/01/22 19:19:23 joerg Exp $ */
+/*	$NetBSD: boot.c,v 1.27.8.1 2012/06/02 11:09:09 mrg Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -244,6 +244,7 @@ main(void)
 	const char *k;
 	u_long	marks[MARK_MAX], bootinfo;
 	struct btinfo_symtab bi_sym;
+	struct btinfo_boothowto bi_howto;
 	void	*arg;
 
 #ifdef HEAP_VARIABLE
@@ -336,6 +337,10 @@ main(void)
 	bi_sym.ssym = marks[MARK_SYM] & loadaddrmask;
 	bi_sym.esym = marks[MARK_END] & loadaddrmask;
 	bi_add(&bi_sym, BTINFO_SYMTAB, sizeof(bi_sym));
+
+	/* Add boothowto */
+	bi_howto.boothowto = boothowto;
+	bi_add(&bi_howto, BTINFO_BOOTHOWTO, sizeof(bi_howto));
 
 	/* Add kernel path to bootinfo */
 	i = sizeof(struct btinfo_common) + strlen(kernel) + 1;

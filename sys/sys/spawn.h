@@ -1,4 +1,4 @@
-/*	$NetBSD: spawn.h,v 1.1.4.3 2012/04/29 23:05:08 mrg Exp $	*/
+/*	$NetBSD: spawn.h,v 1.1.4.4 2012/06/02 11:09:39 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 Ed Schouten <ed@FreeBSD.org>
@@ -69,7 +69,7 @@ typedef struct posix_spawn_file_actions_entry {
 struct posix_spawn_file_actions {
 	unsigned int size;	/* size of fae array */
 	unsigned int len;	/* how many slots are used */
-	posix_spawn_file_actions_entry_t *fae;	
+	posix_spawn_file_actions_entry_t *fae;
 };
 
 typedef struct posix_spawnattr		posix_spawnattr_t;
@@ -81,9 +81,9 @@ typedef struct posix_spawn_file_actions	posix_spawn_file_actions_t;
 #define POSIX_SPAWN_SETSCHEDULER	0x08
 #define POSIX_SPAWN_SETSIGDEF		0x10
 #define POSIX_SPAWN_SETSIGMASK		0x20
+
+#ifdef _NETBSD_SOURCE
 /*
- * THIS IS A NON-PORTABLE NetBSD-ONLY EXTENSION, DO NOT USE OUTSIDE
- * OF UNIT TEST CODE!
  * With this flag set, the kernel part of posix_spawn will not try to
  * maximize parallelism, but instead the parent will wait for the child
  * process to complete all file/scheduler actions and report back errors
@@ -98,6 +98,6 @@ typedef struct posix_spawn_file_actions	posix_spawn_file_actions_t;
  * case, but request the POSIX_SPAWN_RETURNERROR for some tests.
  */
 #define POSIX_SPAWN_RETURNERROR		0x40
+#endif
 
 #endif /* !_SYS_SPAWN_H_ */
-

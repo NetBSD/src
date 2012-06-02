@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.442.2.3 2012/04/29 23:05:05 mrg Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.442.2.4 2012/06/02 11:09:35 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.442.2.3 2012/04/29 23:05:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.442.2.4 2012/06/02 11:09:35 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -458,21 +458,11 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 	} else if (flags & MNT_UPDATE) {
 		error = mount_update(l, vp, path, flags, data_buf, &data_len);
 	} else {
-		struct mount *mp = vp->v_mount;
-
 		/* Locking is handled internally in mount_domount(). */
 		KASSERT(vfsopsrele == true);
 		error = mount_domount(l, &vp, vfsops, path, flags, data_buf,
 		    &data_len);
 		vfsopsrele = false;
-
-		if ((error == 0) && (flags & MNT_EXTATTR)) {
-			if (VFS_EXTATTRCTL(mp, EXTATTR_CMD_START, 
-					   NULL, 0, NULL) != 0)
-				printf("%s: failed to start extattr",
-				       mp->mnt_stat.f_mntonname);
-				/* XXX remove flag */
-		}
 	}
 
     done:
@@ -1487,9 +1477,9 @@ do_open(lwp_t *l, struct pathbuf *pb, int open_flags, int open_mode, int *fd)
 		return EINVAL;
 
 	if ((error = fd_allocfile(&fp, &indx)) != 0) {
-		pathbuf_destroy(pb);
 		return error;
 	}
+
 	/* We're going to read cwdi->cwdi_cmask unlocked here. */
 	cmode = ((open_mode &~ cwdi->cwdi_cmask) & ALLPERMS) &~ S_ISTXT;
 	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, pb);
@@ -1501,18 +1491,15 @@ do_open(lwp_t *l, struct pathbuf *pb, int open_flags, int open_mode, int *fd)
 		    (error =
 			fd_dupopen(l->l_dupfd, &indx, flags, error)) == 0) {
 			*fd = indx;
-			pathbuf_destroy(pb);
-			return (0);
+			return 0;
 		}
 		if (error == ERESTART)
 			error = EINTR;
-		pathbuf_destroy(pb);
 		return error;
 	}
 
 	l->l_dupfd = 0;
 	vp = nd.ni_vp;
-	pathbuf_destroy(pb);
 
 	if ((error = open_setfp(l, fp, vp, indx, flags)))
 		return error;
@@ -1527,7 +1514,7 @@ int
 fd_open(const char *path, int open_flags, int open_mode, int *fd)
 {
 	struct pathbuf *pb;
-	int oflags;
+	int error, oflags;
 
 	oflags = FFLAGS(open_flags);
 	if ((oflags & (FREAD | FWRITE)) == 0)
@@ -1537,7 +1524,10 @@ fd_open(const char *path, int open_flags, int open_mode, int *fd)
 	if (pb == NULL)
 		return ENOMEM;
 
-	return do_open(curlwp, pb, open_flags, open_mode, fd);
+	error = do_open(curlwp, pb, open_flags, open_mode, fd);
+	pathbuf_destroy(pb);
+
+	return error;
 }
 
 /*
@@ -1557,18 +1547,17 @@ sys_open(struct lwp *l, const struct sys_open_args *uap, register_t *retval)
 
 	flags = FFLAGS(SCARG(uap, flags));
 	if ((flags & (FREAD | FWRITE)) == 0)
-		return (EINVAL);
+		return EINVAL;
 
 	error = pathbuf_copyin(SCARG(uap, path), &pb);
 	if (error)
 		return error;
 
 	error = do_open(l, pb, SCARG(uap, flags), SCARG(uap, mode), &result);
-	if (error)
-		return error;
+	pathbuf_destroy(pb);
 
 	*retval = result;
-	return 0;
+	return error;
 }
 
 int

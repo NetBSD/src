@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.12.4.1 2012/04/05 21:33:41 mrg Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.12.4.2 2012/06/02 11:09:34 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.12.4.1 2012/04/05 21:33:41 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.12.4.2 2012/06/02 11:09:34 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.12.4.1 2012/04/05 21:33:41 mrg Exp $
 #include <sys/module.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
+#include <sys/extattr.h>
 #include <sys/syscallargs.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
@@ -739,8 +740,15 @@ mount_domount(struct lwp *l, vnode_t **vpp, struct vfsops *vfsops,
 	vfs_unbusy(mp, true, NULL);
 	(void) VFS_STATVFS(mp, &mp->mnt_stat);
 	error = VFS_START(mp, 0);
-	if (error)
+       if (error) {
 		vrele(vp);
+       } else if (flags & MNT_EXTATTR) {
+	       error = VFS_EXTATTRCTL(vp->v_mountedhere, 
+		   EXTATTR_CMD_START, NULL, 0, NULL);
+	       if (error) 
+		       printf("%s: failed to start extattr: error = %d\n",
+			   vp->v_mountedhere->mnt_stat.f_mntonname, error);
+       }
 	/* Drop reference held for VFS_START(). */
 	vfs_destroy(mp);
 	*vpp = NULL;

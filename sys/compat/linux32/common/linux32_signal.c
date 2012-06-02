@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_signal.c,v 1.15 2011/11/18 15:46:29 christos Exp $ */
+/*	$NetBSD: linux32_signal.c,v 1.15.4.1 2012/06/02 11:09:14 mrg Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.15 2011/11/18 15:46:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.15.4.1 2012/06/02 11:09:14 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -484,8 +484,13 @@ linux32_sys_rt_sigtimedwait(struct lwp *l,
 		syscallarg(linux32_siginfo_t *) info);
 		syscallarg(const struct linux32_timespec *) timeout;
 	} */
+	struct sys_____sigtimedwait50_args ap;
 
-	return sigtimedwait1(l, (const struct sys_____sigtimedwait50_args *)uap,
+	SCARG(&ap, set) = SCARG_P32(uap, set);
+	SCARG(&ap, info) = SCARG_P32(uap, info);
+	SCARG(&ap, timeout) = SCARG_P32(uap, timeout);
+
+	return sigtimedwait1(l, &ap,
 	    retval, fetchss, storeinfo, fetchts, fakestorets);
 }
 

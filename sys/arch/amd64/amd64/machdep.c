@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.171.2.6 2012/04/29 23:04:36 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.171.2.7 2012/06/02 11:08:46 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.171.2.6 2012/04/29 23:04:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.171.2.7 2012/06/02 11:08:46 mrg Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1229,17 +1229,18 @@ dodumpsys(void)
 	 */
 	if (dumpsize == 0)
 		cpu_dumpconf();
-	if (dumplo <= 0 || dumpsize == 0) {
-		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
-		    minor(dumpdev));
+
+	printf("\ndumping to dev %llu,%llu (offset=%ld, size=%d):",
+	    (unsigned long long)major(dumpdev),
+	    (unsigned long long)minor(dumpdev), dumplo, dumpsize);
+
+	if (dumplo <= 0 || dumpsize <= 0) {
+		printf(" not possible\n");
 		return;
 	}
-	printf("\ndumping to dev %llu,%llu offset %ld\n",
-	    (unsigned long long)major(dumpdev),
-	    (unsigned long long)minor(dumpdev), dumplo);
 
 	psize = bdev_size(dumpdev);
-	printf("dump ");
+	printf("\ndump ");
 	if (psize == -1) {
 		printf("area unavailable\n");
 		return;
@@ -1346,7 +1347,11 @@ cpu_dumpconf(void)
 	dumpblks = cpu_dumpsize();
 	if (dumpblks < 0)
 		goto bad;
-	dumpblks += ctod(cpu_dump_mempagecnt());
+
+	/* dumpsize is in page units, and doesn't include headers. */
+	dumpsize = cpu_dump_mempagecnt();
+
+	dumpblks += ctod(dumpsize);
 
 	/* If dump won't fit (incl. room for possible label), punt. */
 	if (dumpblks > (nblks - ctod(1))) {
@@ -1362,8 +1367,6 @@ cpu_dumpconf(void)
 		dumplo = nblks - dumpblks;
 	}
 
-	/* dumpsize is in page units, and doesn't include headers. */
-	dumpsize = cpu_dump_mempagecnt();
 
 	/* Now that we've decided this will work, init ancillary stuff. */
 	dump_misc_init();
@@ -2008,7 +2011,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	int64_t rflags;
 
 	if ((flags & _UC_CPU) != 0) {
-		error = check_mcontext(l, mcp, tf);
+		error = cpu_mcontext_validate(l, mcp);
 		if (error != 0)
 			return error;
 		/*
@@ -2065,13 +2068,14 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 }
 
 int
-check_mcontext(struct lwp *l, const mcontext_t *mcp, struct trapframe *tf)
+cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
 {
 	const __greg_t *gr;
 	uint16_t sel;
 	int error;
 	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
 	struct proc *p = l->l_proc;
+	struct trapframe *tf = l->l_md.md_regs;
 
 	gr = mcp->__gregs;
 

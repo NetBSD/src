@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.34 2009/02/18 13:20:02 yamt Exp $ */
+/* $NetBSD: wsevent.c,v 1.34.16.1 2012/06/02 11:09:31 mrg Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.34 2009/02/18 13:20:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.34.16.1 2012/06/02 11:09:31 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_modular.h"
@@ -158,6 +158,7 @@ wsevent_init(struct wseventvar *ev, struct proc *p)
 #endif
 		return;
 	}
+	/* For binary compat. New code must call WSxxxIO_SETVERSION */
 	ev->version = 0;
 	ev->get = ev->put = 0;
 	ev->q = kmem_alloc(WSEVENT_QSIZE * sizeof(*ev->q), KM_SLEEP);

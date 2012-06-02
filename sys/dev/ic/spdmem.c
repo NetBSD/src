@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.5 2011/08/19 09:46:10 wiz Exp $ */
+/* $NetBSD: spdmem.c,v 1.5.6.1 2012/06/02 11:09:17 mrg Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.5 2011/08/19 09:46:10 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.5.6.1 2012/06/02 11:09:17 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -276,9 +276,6 @@ spdmem_common_attach(struct spdmem_softc *sc, device_t self)
 	 * Setup our sysctl subtree, hw.spdmemN
 	 */
 	sc->sc_sysctl_log = NULL;
-#ifdef _MODULE
-	sysctl_spdmem_setup(&sc->sc_sysctl_log);
-#endif
 	if (hw_node != CTL_EOL)
 		sysctl_createv(&sc->sc_sysctl_log, 0, NULL, &node,
 		    0, CTLTYPE_NODE,
@@ -401,7 +398,12 @@ SYSCTL_SETUP(sysctl_spdmem_setup, "sysctl hw.spdmem subtree setup")
 {
 	const struct sysctlnode *node;
 
-	if (sysctl_createv(clog, 0, NULL, &node, CTLFLAG_PERMANENT,
+	if (sysctl_createv(clog, 0, NULL, &node,
+#ifdef _MODULE
+			       0,
+#else
+			       CTLFLAG_PERMANENT,
+#endif
 			       CTLTYPE_NODE, "hw", NULL, NULL, 0, NULL, 0,
 			       CTL_HW, CTL_EOL) != 0)
 		return;
