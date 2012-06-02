@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.39 2012/02/02 19:43:05 tls Exp $ */
+/* $NetBSD: if_msk.c,v 1.40 2012/06/02 21:36:44 dsl Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.39 2012/02/02 19:43:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.40 2012/06/02 21:36:44 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1440,7 +1440,7 @@ mskc_attach(device_t parent, device_t self, void *aux)
 	    CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "int_mod",
 	    SYSCTL_DESCR("msk interrupt moderation timer"),
-	    msk_sysctl_handler, 0, sc,
+	    msk_sysctl_handler, 0, (void *)sc,
 	    0, CTL_HW, msk_root_num, sk_nodenum, CTL_CREATE,
 	    CTL_EOL)) != 0) {
 		aprint_normal_dev(sc->sk_dev, "couldn't create int_mod sysctl node\n");

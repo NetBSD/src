@@ -1,4 +1,4 @@
-/*	$NetBSD: obsled.c,v 1.8 2011/06/18 06:44:27 matt Exp $	*/
+/*	$NetBSD: obsled.c,v 1.9 2012/06/02 21:36:41 dsl Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obsled.c,v 1.8 2011/06/18 06:44:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obsled.c,v 1.9 2012/06/02 21:36:41 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -122,7 +122,7 @@ obsled_attach(device_t parent, device_t self, void *aux)
 			CTLFLAG_READWRITE, CTLTYPE_INT,
 			led_name,
 			SYSCTL_DESCR("OpenBlockS LED state (0=off, 1=on)"),
-			obsled_sysctl_verify, 0, sc, 0,
+			obsled_sysctl_verify, 0, (void *)sc, 0,
 			CTL_HW, node_mib, CTL_CREATE, CTL_EOL);
 	if (err  != 0)
 		return;

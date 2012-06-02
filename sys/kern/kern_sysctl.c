@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.234 2012/03/21 14:51:36 martin Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.235 2012/06/02 21:36:46 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.234 2012/03/21 14:51:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.235 2012/06/02 21:36:46 dsl Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -1918,6 +1918,7 @@ out:
  * own nodes without orphaning the others when they are done.
  * ********************************************************************
  */
+#undef sysctl_createv
 int
 sysctl_createv(struct sysctllog **log, int cflags,
 	       const struct sysctlnode **rnode, const struct sysctlnode **cnode,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.199 2012/01/27 19:48:41 para Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.200 2012/06/02 21:36:48 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -94,6 +94,12 @@ struct ctlname {
 #define	CTLTYPE_STRUCT	5	/* name describes a structure */
 #define	CTLTYPE_BOOL	6	/* name describes a bool */
 
+#ifdef _LP64
+#define	CTLTYPE_LONG	CTLTYPE_QUAD
+#else
+#define	CTLTYPE_LONG	CTLTYPE_INT
+#endif
+
 /*
  * Flags that apply to each node, governing access and other features
  */
@@ -114,6 +120,7 @@ struct ctlname {
 #define CTLFLAG_ALIAS		0x00010000
 #define CTLFLAG_MMAP		0x00020000
 #define CTLFLAG_OWNDESC		0x00040000
+#define CTLFLAG_UNSIGNED	0x00080000
 
 /*
  * sysctl API version
@@ -1163,6 +1170,26 @@ int	sysctl_createv(struct sysctllog **, int,
 		       int, int, const char *, const char *,
 		       sysctlfn, u_quad_t, void *, size_t, ...);
 int	sysctl_destroyv(struct sysctlnode *, ...);
+
+#define VERIFY_FN(ctl_type, c_type) \
+__always_inline static __inline void * \
+__sysctl_verify_##ctl_type##_arg(c_type *arg) \
+{ \
+    return arg; \
+}
+
+VERIFY_FN(CTLTYPE_NODE, struct sysctlnode);
+VERIFY_FN(CTLTYPE_INT, int);
+VERIFY_FN(CTLTYPE_STRING, char);
+VERIFY_FN(CTLTYPE_QUAD, int64_t);
+VERIFY_FN(CTLTYPE_STRUCT, void);
+VERIFY_FN(CTLTYPE_BOOL, bool);
+VERIFY_FN(CTLTYPE_LONG, long);
+#undef VERIFY_FN
+
+#define sysctl_createv(lg, cfl, rn, cn, fl, type, nm, desc, fn, qv, newp, ...) \
+    sysctl_createv(lg, cfl, rn, cn, fl, type, nm, desc, fn, qv, \
+	    __sysctl_verify_##type##_arg(newp), __VA_ARGS__)
 
 /*
  * miscellany
