@@ -1,4 +1,4 @@
-.\" $NetBSD: wsdisplay.4,v 1.40 2012/05/27 12:05:40 wiz Exp $
+.\" $NetBSD: wsdisplay.4,v 1.41 2012/06/02 10:25:07 njoly Exp $
 .\"
 .\" Copyright (c) 1999 Matthias Drochner.
 .\" Copyright (c) 2002 Ben Harris.
@@ -575,7 +575,6 @@ int ver = WSDISPLAY_EVENT_VERSION;
 if (ioctl(fd, WSDISPLAYIO_SETVERSION, &ver) == -1)
     err(EXIT_FAILURE, "cannot set version");
 .Ed
-.El
 .El
 .Sh FILES
 .Bl -item
