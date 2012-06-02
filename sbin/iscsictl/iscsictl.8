@@ -1,4 +1,4 @@
-.\" $NetBSD: iscsictl.8,v 1.4 2012/05/29 00:33:04 riz Exp $
+.\" $NetBSD: iscsictl.8,v 1.5 2012/06/02 11:54:07 njoly Exp $
 .\"
 .\" Copyright (c) 2011 Alistair Crooks <agc@NetBSD.org>
 .\" All rights reserved.
@@ -75,7 +75,7 @@ The sessions can be listed by using the
 .Dv list_sessions
 command.
 .Ss Global Options
-.Bl -tag width xdxsockdirx
+.Bl -tag -width xdxsockdirx
 .It Fl d Ar sockdir
 Specify the directory where the socket for
 .Xr iscsid 8
@@ -140,7 +140,7 @@ Specify the max received data segment length.
 .El
 .Ss Authentication Options
 Authentication options are as follows:
-.Bl -tag width 5n
+.Bl -tag -width xsxsecretx
 .It Fl t Ar type
 Specify authentication type.
 .Ar n
