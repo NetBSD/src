@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_globals.h,v 1.2 2011/11/29 03:50:31 tls Exp $	*/
+/*	$NetBSD: iscsi_globals.h,v 1.3 2012/06/02 16:52:11 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -564,12 +564,13 @@ login_isid_t InitiatorISID;
 
 #if defined(ISCSI_PERFTEST)
 
-int perf_level;				/* How much info to display */
+int iscsi_perf_level;				/* How much info to display */
 
 #define PDEBOUT(x) printf x
-#define PDEB(lev,x) { if (perf_level >= lev) printf x ;}
-#define PDEBC(conn,lev,x) { { if (perf_level >= lev) printf("S%dC%d: ", \
-				conn->session->id, conn->id); printf x ;}}
+#define PDEB(lev,x) { if (iscsi_perf_level >= lev) printf x ;}
+#define PDEBC(conn,lev,x) { if (iscsi_perf_level >= lev) { printf("S%dC%d: ", \
+				conn ? conn->session->id : -1, \
+				conn ? conn->id : -1); printf x ;}}
 #else
 #define PDEBOUT(x)
 #define PDEB(lev,x)
@@ -578,12 +579,13 @@ int perf_level;				/* How much info to display */
 
 #ifdef ISCSI_DEBUG
 
-int debug_level;	/* How much debug info to display */
+int iscsi_debug_level;	/* How much debug info to display */
 
 #define DEBOUT(x) printf x
-#define DEB(lev,x) { if (debug_level >= lev) printf x ;}
-#define DEBC(conn,lev,x) { if (debug_level >= lev) { printf("S%dC%d: ", \
-				conn->session->id, conn->id); printf x ;}}
+#define DEB(lev,x) { if (iscsi_debug_level >= lev) printf x ;}
+#define DEBC(conn,lev,x) { if (iscsi_debug_level >= lev) { printf("S%dC%d: ", \
+				conn ? conn->session->id : -1, \
+				conn ? conn->id : -1); printf x ;}}
 void dump(void *buf, int len);
 
 #define STATIC static
