@@ -1,4 +1,4 @@
-$NetBSD: TODO.usbmp,v 1.1.2.13 2012/05/12 21:30:07 mrg Exp $
+$NetBSD: TODO.usbmp,v 1.1.2.14 2012/06/02 08:07:25 mrg Exp $
 
 
 the majority of the USB MP device interface is documented in usbdivar.h.
@@ -155,7 +155,7 @@ driver testing:		STATUS
   - uyap
   - udsbr
   - ugen		mostly done, testing is a MERGE ISSUE
-  - pseye
+  - pseye		working
   - uvideo
   - auvitek		? (must take kernel lock for scsipi)
   - emdtv		? (must take kernel lock for scsipi)
