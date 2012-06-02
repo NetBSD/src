@@ -1,4 +1,4 @@
-/*	$NetBSD: ct65550.c,v 1.2.10.2 2012/04/05 21:33:25 mrg Exp $	*/
+/*	$NetBSD: ct65550.c,v 1.2.10.3 2012/06/02 11:09:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct65550.c,v 1.2.10.2 2012/04/05 21:33:25 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct65550.c,v 1.2.10.3 2012/06/02 11:09:17 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,10 +254,11 @@ chipsfb_do_attach(struct chipsfb_softc *sc)
 		chipsfb_defaultscreen.ncols = ri->ri_cols;
 		wsdisplay_cnattach(&chipsfb_defaultscreen, ri, 0, 0, defattr);
 	} else {
-		/*
-		 * since we're not the console we can postpone the rest
-		 * until someone actually allocates a screen for us
-		 */
+		if (chipsfb_console_screen.scr_ri.ri_rows == 0) {
+			/* do some minimal setup to avoid weirdnesses later */
+			vcons_init_screen(&sc->vd, &chipsfb_console_screen, 1,
+			    &defattr);
+		}
 	}
 
 	rasops_unpack_attr(defattr, &fg, &bg, &ul);

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.9 2011/11/23 01:15:02 jym Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.1.4.2 2012/06/02 11:09:11 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -48,10 +48,12 @@
  * Jason R. Thorpe <thorpej@zembu.com>.
  *
  * Basic copy to amd64 by fvdl.
+ * 
+ * i386 and amd64 merge by jym.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.9 2011/11/23 01:15:02 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.1.4.2 2012/06/02 11:09:11 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -98,7 +100,6 @@ static void
 db_write_text(vaddr_t addr, size_t size, const char *data)
 {
 	pt_entry_t *ppte, pte;
-	vaddr_t pgva;
 	size_t limit;
 	char *dst;
 
@@ -108,6 +109,7 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 	dst = (char *)addr;
 
 	do {
+		addr = (vaddr_t)dst;
 		/*
 		 * Get the PTE for the page.
 		 */
@@ -120,22 +122,14 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 		}
 
 		/*
-		 * Get the VA for the page.
-		 */
-		if (pte & PG_PS)
-			pgva = (vaddr_t)dst & PG_LGFRAME;
-		else
-			pgva = x86_trunc_page(dst);
-
-		/*
 		 * Compute number of bytes that can be written
 		 * with this mapping and subtract it from the
 		 * total size.
 		 */
 		if (pte & PG_PS)
-			limit = NBPD_L2 - ((vaddr_t)dst & (NBPD_L2 - 1));
+			limit = NBPD_L2 - (addr & (NBPD_L2 - 1));
 		else
-			limit = PAGE_SIZE - ((vaddr_t)dst & PGOFSET);
+			limit = PAGE_SIZE - (addr & PGOFSET);
 		if (limit > size)
 			limit = size;
 		size -= limit;
@@ -145,7 +139,12 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 		 */
 		pmap_pte_clearbits(ppte, PG_KR);
 		pmap_pte_setbits(ppte, PG_KW);
-		pmap_update_pg(pgva);
+		pmap_update_pg(addr);
+
+		/*
+		 * MULTIPROCESSOR: no shootdown required as the PTE continues to
+		 * map the same page and other CPUs do not need write access.
+		 */
 
 		/*
 		 * Page is now writable.  Do as much access as we
@@ -159,8 +158,13 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 		 */
 		pmap_pte_clearbits(ppte, PG_KW);
 		pmap_pte_setbits(ppte, PG_KR);
-		pmap_update_pg(pgva);
-		
+		pmap_update_pg(addr);
+
+		/*
+		 * MULTIPROCESSOR: no shootdown required as all other CPUs
+		 * should be in CPUF_PAUSE state and will not cache the PTE
+		 * with the write access set.
+		 */
 	} while (size != 0);
 }
 

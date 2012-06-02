@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.54.2.1 2012/02/18 07:33:47 mrg Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.54.2.2 2012/06/02 11:09:12 mrg Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.54.2.1 2012/02/18 07:33:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.54.2.2 2012/06/02 11:09:12 mrg Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -513,6 +513,8 @@ xbdback_xenbus_destroy(void *arg)
 		vn_close(xbdi->xbdi_vp, FREAD, NOCRED);
 	}
 	SLIST_REMOVE(&xbdback_instances, xbdi, xbdback_instance, next);
+	mutex_destroy(&xbdi->xbdi_lock);
+	cv_destroy(&xbdi->xbdi_cv);
 	kmem_free(xbdi, sizeof(*xbdi));
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.13.6.1 2012/02/24 09:11:32 mrg Exp $	*/
+/*	$NetBSD: trap.c,v 1.13.6.2 2012/06/02 11:09:05 mrg Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.13.6.1 2012/02/24 09:11:32 mrg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.13.6.2 2012/06/02 11:09:05 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -699,7 +699,8 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 	}
 #endif
 
-	if (usertrap && (tf->tf_fixreg[1] & 0x80000000)) {
+	if ((VM_MAX_ADDRESS & 0x80000000) == 0
+	    && usertrap && (tf->tf_fixreg[1] & 0x80000000)) {
 		printf("%s(entry): pid %d.%d (%s): %s invalid sp %#lx (sprg1=%#lx)\n",
 		    __func__, p->p_pid, l->l_lid, p->p_comm,
 		    trap_names[trap_code], tf->tf_fixreg[1], mfspr(SPR_SPRG1));
@@ -778,7 +779,8 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 	case T_AST:
 		KASSERT(usertrap);
 		cpu_ast(l, ci);
-		if (tf->tf_fixreg[1] & 0x80000000) {
+		if ((VM_MAX_ADDRESS & 0x80000000) == 0
+		   && (tf->tf_fixreg[1] & 0x80000000)) {
 			printf("%s(ast-exit): pid %d.%d (%s): invalid sp %#lx\n",
 			    __func__, p->p_pid, l->l_lid, p->p_comm,
 			    tf->tf_fixreg[1]);

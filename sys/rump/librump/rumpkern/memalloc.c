@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.11.12.2 2012/04/29 23:05:07 mrg Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.11.12.3 2012/06/02 11:09:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.11.12.2 2012/04/29 23:05:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.11.12.3 2012/06/02 11:09:39 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -53,20 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.11.12.2 2012/04/29 23:05:07 mrg Exp $
 /*
  * malloc
  */
-
-void
-malloc_type_attach(struct malloc_type *type)
-{
-
-	return;
-}
-
-void
-malloc_type_detach(struct malloc_type *type)
-{
-
-	return;
-}
 
 void *
 kern_malloc(unsigned long size, int flags)

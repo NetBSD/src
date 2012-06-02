@@ -1,4 +1,4 @@
-/*	$NetBSD: podulebus_io.c,v 1.7 2011/07/19 15:59:54 dyoung Exp $	*/
+/*	$NetBSD: podulebus_io.c,v 1.7.6.1 2012/06/02 11:08:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: podulebus_io.c,v 1.7 2011/07/19 15:59:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus_io.c,v 1.7.6.1 2012/06/02 11:08:45 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,7 @@ podulebus_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset, bus_siz
 
 void
 podulebus_bs_rr_1(void *cookie, bus_space_handle_t bsh,
-			bus_size_t offset, u_int8_t *datap, bus_size_t count)
+			bus_size_t offset, uint8_t *datap, bus_size_t count)
 {
 	int i;
 
@@ -194,7 +194,7 @@ podulebus_bs_rr_1(void *cookie, bus_space_handle_t bsh,
 
 void
 podulebus_bs_rr_2(void *cookie, bus_space_handle_t bsh,
-			bus_size_t offset, u_int16_t *datap, bus_size_t count)
+			bus_size_t offset, uint16_t *datap, bus_size_t count)
 {
 	int i;
 
@@ -204,7 +204,7 @@ podulebus_bs_rr_2(void *cookie, bus_space_handle_t bsh,
 
 void
 podulebus_bs_wr_1(void *cookie, bus_space_handle_t bsh,
-			 bus_size_t offset, u_int8_t const *datap,
+			 bus_size_t offset, uint8_t const *datap,
 			 bus_size_t count)
 {
 	int i;
@@ -215,7 +215,7 @@ podulebus_bs_wr_1(void *cookie, bus_space_handle_t bsh,
 
 void
 podulebus_bs_wr_2(void *cookie, bus_space_handle_t bsh,
-			 bus_size_t offset, u_int16_t const *datap,
+			 bus_size_t offset, uint16_t const *datap,
 			 bus_size_t count)
 {
 	int i;
@@ -226,7 +226,7 @@ podulebus_bs_wr_2(void *cookie, bus_space_handle_t bsh,
 
 void
 podulebus_bs_sr_1(void *cookie, bus_space_handle_t bsh,
-		       bus_size_t offset, u_int8_t value, bus_size_t count)
+		       bus_size_t offset, uint8_t value, bus_size_t count)
 {
 	int i;
 
@@ -236,7 +236,7 @@ podulebus_bs_sr_1(void *cookie, bus_space_handle_t bsh,
 
 void
 podulebus_bs_sr_2(void *cookie, bus_space_handle_t bsh,
-		       bus_size_t offset, u_int16_t value, bus_size_t count)
+		       bus_size_t offset, uint16_t value, bus_size_t count)
 {
 	int i;
 

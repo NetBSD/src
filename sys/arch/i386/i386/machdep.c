@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.714.2.5 2012/03/06 18:26:37 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.714.2.6 2012/06/02 11:09:01 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.714.2.5 2012/03/06 18:26:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.714.2.6 2012/06/02 11:09:01 mrg Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1764,12 +1764,33 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 }
 
 int
+cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
+{
+	const __greg_t *gr = mcp->__gregs;
+	struct trapframe *tf = l->l_md.md_regs;
+
+	/*
+	 * Check for security violations.  If we're returning
+	 * to protected mode, the CPU will validate the segment
+	 * registers automatically and generate a trap on
+	 * violations.  We handle the trap, rather than doing
+	 * all of the checking here.
+	 */
+	if (((gr[_REG_EFL] ^ tf->tf_eflags) & PSL_USERSTATIC) ||
+	    !USERMODE(gr[_REG_CS], gr[_REG_EFL]))
+		return EINVAL;
+
+	return 0;
+}
+
+int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	const __greg_t *gr = mcp->__gregs;
 	struct pcb *pcb = lwp_getpcb(l);
 	struct proc *p = l->l_proc;
+	int error;
 
 	/* Restore register context, if any. */
 	if ((flags & _UC_CPU) != 0) {
@@ -1787,20 +1808,10 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		} else
 #endif
 		{
-			/*
-			 * Check for security violations.  If we're returning
-			 * to protected mode, the CPU will validate the segment
-			 * registers automatically and generate a trap on
-			 * violations.  We handle the trap, rather than doing
-			 * all of the checking here.
-			 */
-			if (((gr[_REG_EFL] ^ tf->tf_eflags) & PSL_USERSTATIC) ||
-			    !USERMODE(gr[_REG_CS], gr[_REG_EFL])) {
-				printf("cpu_setmcontext error: uc EFL: 0x%08x"
-				    " tf EFL: 0x%08x uc CS: 0x%x\n",
-				    gr[_REG_EFL], tf->tf_eflags, gr[_REG_CS]);
-				return (EINVAL);
-			}
+			error = cpu_mcontext_validate(l, mcp);
+			if (error)
+				return error;
+
 			tf->tf_gs = gr[_REG_GS];
 			tf->tf_fs = gr[_REG_FS];
 			tf->tf_es = gr[_REG_ES];

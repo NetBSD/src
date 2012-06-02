@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbus.c,v 1.16 2011/07/19 15:59:54 dyoung Exp $	*/
+/*	$NetBSD: if_ne_pbus.c,v 1.16.6.1 2012/06/02 11:08:44 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pbus.c,v 1.16 2011/07/19 15:59:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pbus.c,v 1.16.6.1 2012/06/02 11:08:44 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -105,11 +105,11 @@ CFATTACH_DECL_NEW(ne_pbus, sizeof(struct ne_pbus_softc),
 /*
  * Prototypes for interface specific routines
  */
-static u_int8_t *em_ea		(struct ne_pbus_softc *sc, u_int8_t *buffer);
+static uint8_t *em_ea		(struct ne_pbus_softc *sc, uint8_t *buffer);
 static void em_postattach	(struct ne_pbus_softc *sc);
 static void eh600_postattach	(struct ne_pbus_softc *sc);
 static void eh600_preattach	(struct ne_pbus_softc *sc);
-static u_int8_t *eh600_ea	(struct ne_pbus_softc *sc, u_int8_t *buffer);
+static uint8_t *eh600_ea	(struct ne_pbus_softc *sc, uint8_t *buffer);
 
 void	eh600_init_media        (struct dp8390_softc *);
 
@@ -139,8 +139,8 @@ struct ne_clone {
 #define NE_SPACE_EASI           2
 	unsigned char	reserved0;	/* not used (padding) */
 	const char	*name;		/* name */
-	u_int8_t *	(*getea)	/* do this to get the MAC */
-			    (struct ne_pbus_softc *sc, u_int8_t *buffer);
+	uint8_t *	(*getea)	/* do this to get the MAC */
+			    (struct ne_pbus_softc *sc, uint8_t *buffer);
 	void		(*preattach)	/* do this before attach */
 			    (struct ne_pbus_softc *sc);
 	void		(*postattach)	/* do this after attach */
@@ -236,8 +236,8 @@ ne_pbus_attach(device_t parent, device_t self, void *aux)
 
  	int *media, nmedia, defmedia;
 	struct ne_clone *ne = NULL;
-	u_int8_t buffer[6];
-	u_int8_t *myea;
+	uint8_t buffer[6];
+	uint8_t *myea;
 	int loop;
 
 	dsc->sc_dev = self;
@@ -627,7 +627,7 @@ eh600_ea(struct ne_pbus_softc *sc, uint8_t *buffer)
 			pod_addr |= (POD_READ(address + 28) << 24);
 
 			if (pod_addr < 0x800) {
-				u_int8_t tmp;
+				uint8_t tmp;
 				int addr_index = 0;
 				int found_ether = 0;
 

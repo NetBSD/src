@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.70.6.1 2012/04/29 23:04:45 mrg Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.70.6.2 2012/06/02 11:09:13 mrg Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.70.6.1 2012/04/29 23:04:45 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.70.6.2 2012/06/02 11:09:13 mrg Exp $");
 
 #ifndef _KERNEL_OPT
 #define	NVCODA 4
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.70.6.1 2012/04/29 23:04:45 mrg Exp
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/genfs/genfs.h>
  
-MODULE(MODULE_CLASS_VFS, coda, NULL);
+MODULE(MODULE_CLASS_VFS, coda, "vcoda");
 
 #define ENTRY if(coda_vfsop_print_entry) myprintf(("Entered %s\n",__func__))
 

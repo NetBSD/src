@@ -1,4 +1,4 @@
-/* $NetBSD: cgdvar.h,v 1.14 2010/01/12 21:08:09 dyoung Exp $ */
+/* $NetBSD: cgdvar.h,v 1.14.16.1 2012/06/02 11:09:16 mrg Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,6 @@ struct cryptdata {
 };
 
 struct cgd_softc {
-	device_t		sc_dev;
 	struct dk_softc		 sc_dksc;	/* generic disk interface */
 	struct cryptinfo	*sc_crypt;	/* the alg/key/etc */
 	struct vnode		*sc_tvn;	/* target device's vnode */

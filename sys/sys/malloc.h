@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.110.2.1 2012/04/29 23:05:07 mrg Exp $	*/
+/*	$NetBSD: malloc.h,v 1.110.2.2 2012/06/02 11:09:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -45,9 +45,13 @@
 #define	M_CANFAIL	0x0004	/* can fail if requested memory can't ever
 				 * be allocated */
 #include <sys/mallocvar.h>
+#if 0
 /*
  * The following are standard, built-in malloc types that are
  * not specific to any one subsystem.
+ *
+ * They are currently not defined, but are still passed to malloc()
+ * and free(). They may be re-instated as diagnostics at some point.
  */
 MALLOC_DECLARE(M_DEVBUF);
 MALLOC_DECLARE(M_DMAMAP);
@@ -58,10 +62,8 @@ MALLOC_DECLARE(M_RTABLE);
 MALLOC_DECLARE(M_FTABLE);
 MALLOC_DECLARE(M_UFSMNT);
 MALLOC_DECLARE(M_NETADDR);
-MALLOC_DECLARE(M_IPMOPTS);
-MALLOC_DECLARE(M_IPMADDR);
 MALLOC_DECLARE(M_MRTABLE);
-MALLOC_DECLARE(M_BWMETER);
+#endif
 
 void	*kern_malloc(unsigned long, int);
 void	*kern_realloc(void *, unsigned long, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_syscall.c,v 1.5.12.1 2012/03/11 01:52:30 mrg Exp $	*/
+/*	$NetBSD: kern_syscall.c,v 1.5.12.2 2012/06/02 11:09:33 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.5.12.1 2012/03/11 01:52:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.5.12.2 2012/06/02 11:09:33 mrg Exp $");
 
 #include "opt_modular.h"
 
@@ -194,6 +194,7 @@ sys_nomodule(struct lwp *l, const void *v, register_t *retval)
 	    { SYS__ksem_destroy, "ksem" },
 	    { SYS__ksem_timedwait, "ksem" },
 	    { SYS_nfssvc, "nfsserver" },
+	    { SYS_afssys, "openafs" },
 	};
 	const struct sysent *sy;
 	const struct emul *em;

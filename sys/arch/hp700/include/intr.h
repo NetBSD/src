@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.19.12.1 2012/04/05 21:33:14 mrg Exp $	*/
+/*	$NetBSD: intr.h,v 1.19.12.2 2012/06/02 11:08:59 mrg Exp $	*/
 /*	$OpenBSD: intr.h,v 1.26 2009/12/29 13:11:40 jsing Exp $	*/
 
 /*-
@@ -36,12 +36,113 @@
 #include <machine/psl.h>
 #include <machine/intrdefs.h>
 
+#include <sys/evcnt.h>
+
 #ifndef _LOCORE
 
 #ifdef _KERNEL
 
-/* The priority level masks. */
-extern int imask[NIPL];
+struct cpu_info;
+
+/*
+ * The maximum number of bits in a cpl value/spl mask, the maximum number of
+ * bits in an interrupt request register, and the maximum number of interrupt
+ * registers.
+ */
+#define	HP700_INTERRUPT_BITS	(32)
+#define	CPU_NINTS		HP700_INTERRUPT_BITS	/* Use this one */
+
+/*
+ * This describes one HP700 interrupt register.
+ */
+struct hp700_interrupt_register {
+	bool ir_iscpu;
+	const char *ir_name;		/* name for this intr reg */
+	struct cpu_info *ir_ci;		/* cpu this intr reg  */
+
+	/*
+	 * The virtual address of the mask, request and level
+	 * registers.
+	 */
+	volatile int *ir_mask;
+	volatile int *ir_req;
+	volatile int *ir_level;
+
+	/*
+	 * This array has one entry for each bit in the interrupt request
+	 * register.
+	 *
+	 * If the 24 most significant bits are set, the low 8 bits are the
+	 * index of the hp700_interrupt_register that this interrupt bit leads
+	 * to, with zero meaning that the interrupt bit is unused.
+	 *
+	 * Otherwise these bits correspond to hp700_interrupt_bits. That is,
+	 * these bits are ORed to ipending_new in hp700_intr_ipending() when
+	 * an interrupt happens.
+	 *
+	 * Note that this array is indexed by HP bit number, *not* by "normal"
+	 * bit number.  In other words, the least significant bit in the inter-
+	 * rupt register corresponds to array index 31.
+	 */
+
+	unsigned int ir_bits_map[HP700_INTERRUPT_BITS];
+
+#define	IR_BIT_MASK		0xffffff00
+#define	IR_BIT_REG(x)		(IR_BIT_MASK | (x))
+#define	IR_BIT_UNUSED		IR_BIT_REG(0)
+#define	IR_BIT_USED_P(x)	(((x) & IR_BIT_MASK) != IR_BIT_MASK)
+#define	IR_BIT_NESTED_P(x)	(((x) & IR_BIT_MASK) == IR_BIT_MASK)
+
+	int ir_bits;		/* mask of allocatable bit numbers */
+	int ir_rbits;		/* mask of reserved (for lasi/asp) bit numbers */
+};
+
+struct hp700_interrupt_bit {
+
+	/*
+	 * The interrupt register this bit is in.  Some handlers, e.g
+	 * apic_intr, don't make use of an hp700_interrupt_register, but are
+	 * nested.
+	 */
+	struct hp700_interrupt_register *ib_reg;
+
+	/*
+	 * The priority level associated with this bit, e.g, IPL_BIO, IPL_NET,
+	 * etc.
+	 */
+	int ib_ipl;
+
+	/*
+	 * The spl mask for this bit.  This starts out as the spl bit assigned
+	 * to this particular interrupt, and later gets fleshed out by the mask
+	 * calculator to be the full mask that we need to raise spl to when we
+	 * get this interrupt.
+	 */
+	int ib_spl;
+
+	/* The interrupt name. */
+	char ib_name[16];
+
+	/* The interrupt event count. */
+	struct evcnt ib_evcnt;
+
+	/*
+	 * The interrupt handler and argument for this bit.  If the argument is
+	 * NULL, the handler gets the trapframe.
+	 */
+	int (*ib_handler)(void *);
+	void *ib_arg;
+
+};
+
+void	hp700_intr_bootstrap(void);
+void	hp700_intr_initialise(struct cpu_info *);
+void	hp700_interrupt_register_establish(struct cpu_info *,
+    struct hp700_interrupt_register *);
+void *	hp700_intr_establish(int, int (*)(void *), void *,
+    struct hp700_interrupt_register *, int);
+int	hp700_intr_allocate_bit(struct hp700_interrupt_register *, int);
+void	hp700_intr_enable(void);
 
 /* splraise()/spllower() are in locore.S */
 int splraise(int);
@@ -69,7 +170,7 @@ static inline int
 splraiseipl(ipl_cookie_t icookie)
 {
 
-	return splraise(imask[icookie._ipl]);
+	return splraise(icookie._ipl);
 }
 
 #include <sys/spl.h>

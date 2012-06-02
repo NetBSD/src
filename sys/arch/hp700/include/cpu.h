@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.66.8.2 2012/04/05 21:33:14 mrg Exp $	*/
+/*	$NetBSD: cpu.h,v 1.66.8.3 2012/06/02 11:08:59 mrg Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -60,6 +60,11 @@
 #include <machine/trap.h>
 #include <machine/frame.h>
 #include <machine/reg.h>
+#include <machine/intrdefs.h>
+
+#ifndef __ASSEMBLER__
+#include <machine/intr.h>
+#endif
 
 #ifndef _LOCORE
 
@@ -243,9 +248,11 @@ int	clock_intr(void *);
 
 #endif /* _KERNEL */
 
+#ifndef __ASSEMBLER__
 #if defined(_KERNEL) || defined(_KMEMUSER)
 
 #include <sys/cpu_data.h>
+#include <sys/evcnt.h>
 
 /*
  * Note that the alignment of ci_trap_save is important since we want to keep
@@ -259,6 +266,11 @@ struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 
 #ifndef _KMEMUSER
+	hppa_hpa_t	ci_hpa;
+	register_t	ci_psw;		/* Processor Status Word. */
+	paddr_t		ci_fpu_state;	/* LWP FPU state address, or zero. */
+	u_long		ci_itmr;
+
 	int		ci_cpuid;	/* CPU index (see cpus[] array) */
 	int		ci_mtx_count;
 	int		ci_mtx_oldspl;
@@ -267,12 +279,14 @@ struct cpu_info {
 	volatile int	ci_cpl;
 	volatile int	ci_ipending;	/* The pending interrupts. */
 	u_int		ci_intr_depth;	/* Nonzero iff running an interrupt. */
+	u_int		ci_ishared;
+	u_int		ci_eiem;
 
-	hppa_hpa_t	ci_hpa;
-	register_t	ci_psw;		/* Processor Status Word. */
-	paddr_t		ci_fpu_state;	/* LWP FPU state address, or zero. */
-	u_long		ci_itmr;
+	u_int		ci_imask[NIPL];
 
+	struct hp700_interrupt_register	ci_ir;
+	struct hp700_interrupt_bit	ci_ib[HP700_INTERRUPT_BITS];
+	
 #if defined(MULTIPROCESSOR)
 	struct lwp	*ci_curlwp;	/* CPU owner */
 	paddr_t		ci_stack;	/* stack for spin up */
@@ -289,6 +303,7 @@ struct cpu_info {
 } __aligned(64);
 
 #endif /* _KERNEL || _KMEMUSER */
+#endif /* __ASSEMBLER__ */
 
 #if defined(_KERNEL)
 

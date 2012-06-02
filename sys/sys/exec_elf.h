@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.118.2.1 2012/02/18 07:35:48 mrg Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.118.2.2 2012/06/02 11:09:39 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -805,6 +805,23 @@ typedef struct {
  */
 #define ELF_NOTE_TYPE_GNU_BUILD_ID	3
 
+/* SuSE-specific note type: ABI
+ * name: SuSE\0
+ * namesz: 5
+ * desc:
+ *	half[0] = MMmm
+ *
+ *	M = product major version
+ *	m = product minor version
+ * descsz: 2
+ */
+#define ELF_NOTE_TYPE_SUSE_TAG	1
+/* SuSE-specific note name and description sizes */
+#define ELF_NOTE_SUSE_NAMESZ	5
+#define ELF_NOTE_SUSE_DESCSZ	2
+/* SuSE-specific note name */
+#define ELF_NOTE_SUSE_NAME		"SuSE\0"
+
 /* SuSE-specific note type: version
  * name: SuSE\0\0\0\0
  * namesz: 8
@@ -817,12 +834,12 @@ typedef struct {
  *	m = product minor version
  * descsz: 8
  */
-#define ELF_NOTE_TYPE_SUSE_TAG		0x45537553	/* SuSE in LE */
+#define ELF_NOTE_TYPE_SUSE_VERSION_TAG	0x45537553	/* SuSE in LE */
 /* SuSE-specific note name and description sizes */
-#define ELF_NOTE_SUSE_NAMESZ		8
-#define ELF_NOTE_SUSE_DESCSZ		8
+#define ELF_NOTE_SUSE_VERSION_NAMESZ	8
+#define ELF_NOTE_SUSE_VERSION_DESCSZ	8
 /* SuSE-specific note name */
-#define ELF_NOTE_SUSE_NAME		"SuSE\0\0\0\0"
+#define ELF_NOTE_SUSE_VERSION_NAME		"SuSE\0\0\0\0"
 
 /* NetBSD-specific note type: Emulation name.
  * name: NetBSD\0\0

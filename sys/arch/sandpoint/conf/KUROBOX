@@ -1,4 +1,4 @@
-#	$NetBSD: KUROBOX,v 1.3.16.1 2012/02/18 07:33:02 mrg Exp $
+#	$NetBSD: KUROBOX,v 1.3.16.2 2012/06/02 11:09:07 mrg Exp $
 #
 # KuroBox/LinkStation support
 #
@@ -13,3 +13,23 @@ satmgr0 at eumb? unit 0			# satmgr at 0x4500
 
 no nhpow0
 no gpio*
+
+no s390rtc*
+no pcf8563rtc*
+no dsrtc*
+no strtc*
+no options 	STRTC_NO_WATCHDOG
+no options 	STRTC_NO_USERRAM
+
+no acardide*
+no viaide* 
+
+no ral*
+no skc*
+no sk*
+no stge*
+no wm*
+
+no inphy*
+no nsphy*
+no makphy*

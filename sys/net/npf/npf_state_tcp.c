@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state_tcp.c,v 1.1.2.2 2012/04/05 21:33:43 mrg Exp $	*/
+/*	$NetBSD: npf_state_tcp.c,v 1.1.2.3 2012/06/02 11:09:38 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.1.2.2 2012/04/05 21:33:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.1.2.3 2012/06/02 11:09:38 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -49,13 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.1.2.2 2012/04/05 21:33:43 mrg Ex
 #include <netinet/tcp_seq.h>
 
 #include "npf_impl.h"
-
-#if defined(_NPF_TESTING)
-void	npf_state_sample(npf_state_t *);
-#define	NPF_TCP_STATE_SAMPLE(nst)	npf_state_sample(nst)
-#else
-#define	NPF_TCP_STATE_SAMPLE(nst)
-#endif
 
 /*
  * NPF TCP states.  Note: these states are different from the TCP FSM
@@ -389,8 +382,6 @@ npf_tcp_inwindow(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst,
 		end = fstate->nst_end;
 		seq = end;
 	}
-
-	NPF_TCP_STATE_SAMPLE(nst);
 #if 0
 	/* Strict in-order sequence for RST packets. */
 	if (((tcpfl & TH_RST) != 0) && (fstate->nst_end - seq) > 1) {
@@ -463,6 +454,7 @@ npf_state_tcp(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst, int di)
 	} else {
 		nstate = NPF_TCPS_CLOSED;
 	}
+
 	/* Determine whether TCP packet really belongs to this connection. */
 	if (!npf_tcp_inwindow(npc, nbuf, nst, di)) {
 		return false;
@@ -470,6 +462,7 @@ npf_state_tcp(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst, int di)
 	if (__predict_true(nstate == NPF_TCPS_OK)) {
 		return true;
 	}
+
 	nst->nst_state = nstate;
 	return true;
 }

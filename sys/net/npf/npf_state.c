@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state.c,v 1.6 2011/11/29 20:05:30 rmind Exp $	*/
+/*	$NetBSD: npf_state.c,v 1.6.2.1 2012/06/02 11:09:38 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.6 2011/11/29 20:05:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.6.2.1 2012/06/02 11:09:38 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,6 +134,7 @@ npf_state_inspect(const npf_cache_t *npc, nbuf_t *nbuf,
 	default:
 		ret = false;
 	}
+	NPF_TCP_STATE_SAMPLE(nst, ret);
 	mutex_exit(&nst->nst_lock);
 
 	if (__predict_false(!ret)) {
