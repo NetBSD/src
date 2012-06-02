@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.c,v 1.20 2011/07/31 13:51:53 uebayasi Exp $	*/
+/*	$NetBSD: bcsp.c,v 1.21 2012/06/02 21:36:43 dsl Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.20 2011/07/31 13:51:53 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.21 2012/06/02 21:36:43 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -300,7 +300,7 @@ bcsp_attach(device_t parent __unused, device_t self, void *aux __unused)
 	}
 	bcsp_node_num = node->sysctl_num;
 	if ((rc = sysctl_createv(&sc->sc_log, 0, NULL, &node,
-	    CTLFLAG_READWRITE, CTLTYPE_INT,
+	    CTLFLAG_READWRITE, CTLTYPE_BOOL,
 	    "muzzled", SYSCTL_DESCR("muzzled for Link-establishment Layer"),
 	    NULL, 0, &sc->sc_le_muzzled,
 	    0, CTL_HW, bcsp_node_num, CTL_CREATE, CTL_EOL)) != 0) {

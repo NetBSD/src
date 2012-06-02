@@ -1,4 +1,4 @@
-/*	$NetBSD: btmagic.c,v 1.2 2012/04/03 09:32:53 plunky Exp $	*/
+/*	$NetBSD: btmagic.c,v 1.3 2012/06/02 21:36:43 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.2 2012/04/03 09:32:53 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.3 2012/06/02 21:36:43 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -342,7 +342,7 @@ btmagic_attach(device_t parent, device_t self, void *aux)
 			CTLTYPE_INT, "soft_resolution",
 			NULL,
 			btmagic_sysctl_resolution, 0,
-			sc, 0,
+			(void *)sc, 0,
 			CTL_HW, node->sysctl_num,
 			CTL_CREATE, CTL_EOL);
 
@@ -369,7 +369,7 @@ btmagic_attach(device_t parent, device_t self, void *aux)
 			CTLTYPE_INT, "scroll_downscale_factor",
 			NULL,
 			btmagic_sysctl_scale, 0,
-			sc, 0,
+			(void *)sc, 0,
 			CTL_HW, node->sysctl_num,
 			CTL_CREATE, CTL_EOL);
 	}

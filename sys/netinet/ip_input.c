@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.299 2012/03/22 20:34:39 drochner Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.300 2012/06/02 21:36:47 dsl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.299 2012/03/22 20:34:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.300 2012/06/02 21:36:47 dsl Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -1795,7 +1795,7 @@ sysctl_net_inet_ip_setup(struct sysctllog **clog)
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "mtudisctimeout",
 		       SYSCTL_DESCR("Lifetime of a Path MTU Discovered route"),
-		       sysctl_net_inet_ip_pmtudto, 0, &ip_mtudisc_timeout, 0,
+		       sysctl_net_inet_ip_pmtudto, 0, (void *)&ip_mtudisc_timeout, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_MTUDISCTIMEOUT, CTL_EOL);
 #ifdef GATEWAY

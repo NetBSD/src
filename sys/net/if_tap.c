@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.66 2010/11/22 21:31:51 christos Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.67 2012/06/02 21:36:47 dsl Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.66 2010/11/22 21:31:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.67 2012/06/02 21:36:47 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -347,7 +347,7 @@ tap_attach(device_t parent, device_t self, void *aux)
 	if ((error = sysctl_createv(NULL, 0, NULL,
 	    &node, CTLFLAG_READWRITE,
 	    CTLTYPE_STRING, device_xname(self), NULL,
-	    tap_sysctl_handler, 0, sc, 18,
+	    tap_sysctl_handler, 0, (void *)sc, 18,
 	    CTL_NET, AF_LINK, tap_node, device_unit(sc->sc_dev),
 	    CTL_EOL)) != 0)
 		aprint_error_dev(self, "sysctl_createv returned %d, ignoring\n",
