@@ -1,4 +1,4 @@
-#	$NetBSD: std.ofppc,v 1.14 2008/02/05 19:01:23 garbled Exp $
+#	$NetBSD: std.ofppc,v 1.15 2012/06/02 21:47:46 mrg Exp $
 #
 # standard, required NetBSD/ofppc 'options'
 
@@ -15,3 +15,6 @@ options 	EXEC_SCRIPT	# exec #! scripts
 options 	INTSTK=0x2000
 
 options 	PCI_NETBSD_CONFIGURE
+
+# Atheros HAL options
+include "external/isc/atheros_hal/conf/std.ath_hal"
