@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.32 2011/06/21 03:37:21 jruoho Exp $ */
+/* $NetBSD: acpi_power.c,v 1.33 2012/06/02 21:36:43 dsl Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.32 2011/06/21 03:37:21 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.33 2012/06/02 21:36:43 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -708,7 +708,7 @@ acpi_power_add(struct acpi_devnode *ad)
 
 	err = sysctl_createv(NULL, 0, NULL, NULL,
 	    CTLFLAG_READONLY, CTLTYPE_STRING, str,
-	    NULL, acpi_power_sysctl, 0, ad, 0, CTL_HW,
+	    NULL, acpi_power_sysctl, 0, (void *)ad, 0, CTL_HW,
 	    acpi_power_acpinode, acpi_power_powernode,
 	    CTL_CREATE, CTL_EOL);
 

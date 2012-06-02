@@ -1,4 +1,4 @@
-/*	$NetBSD: odcm.c,v 1.1 2011/03/04 04:48:39 jruoho Exp $ */
+/*	$NetBSD: odcm.c,v 1.2 2012/06/02 21:36:42 dsl Exp $ */
 /*      $OpenBSD: p4tcc.c,v 1.13 2006/12/20 17:50:40 gwk Exp $ */
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odcm.c,v 1.1 2011/03/04 04:48:39 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odcm.c,v 1.2 2012/06/02 21:36:42 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -243,7 +243,7 @@ odcm_sysctl(device_t self)
 	rv = sysctl_createv(&sc->sc_log, 0, &odcmnode, &node,
 	    CTLFLAG_READWRITE, CTLTYPE_INT, "target",
 	    SYSCTL_DESCR("target duty cycle (0 = lowest, 7 highest)"),
-	    odcm_sysctl_helper, 0, sc, 0, CTL_CREATE, CTL_EOL);
+	    odcm_sysctl_helper, 0, (void *)sc, 0, CTL_CREATE, CTL_EOL);
 
 	if (rv != 0)
 		goto fail;
@@ -253,7 +253,7 @@ odcm_sysctl(device_t self)
 	rv = sysctl_createv(&sc->sc_log, 0, &odcmnode, &node,
 	    0, CTLTYPE_INT, "current",
 	    SYSCTL_DESCR("current duty cycle"),
-	    odcm_sysctl_helper, 0, sc, 0, CTL_CREATE, CTL_EOL);
+	    odcm_sysctl_helper, 0, (void *)sc, 0, CTL_CREATE, CTL_EOL);
 
 	if (rv != 0)
 		goto fail;

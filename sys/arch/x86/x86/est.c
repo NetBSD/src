@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.24 2011/03/04 04:53:28 jruoho Exp $	*/
+/*	$NetBSD: est.c,v 1.25 2012/06/02 21:36:42 dsl Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -76,7 +76,7 @@
  *   http://www.codemonkey.org.uk/projects/cpufreq/cpufreq-2.4.22-pre6-1.gz
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.24 2011/03/04 04:53:28 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.25 2012/06/02 21:36:42 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1333,7 +1333,7 @@ est_sysctl(device_t self)
 
 	rv = sysctl_createv(&sc->sc_log, 0, &freqnode, &node,
 	    CTLFLAG_READWRITE, CTLTYPE_INT, "target", NULL,
-	    est_sysctl_helper, 0, sc, 0, CTL_CREATE, CTL_EOL);
+	    est_sysctl_helper, 0, (void *)sc, 0, CTL_CREATE, CTL_EOL);
 
 	if (rv != 0)
 		goto fail;
@@ -1342,7 +1342,7 @@ est_sysctl(device_t self)
 
 	rv = sysctl_createv(&sc->sc_log, 0, &freqnode, &node,
 	    0, CTLTYPE_INT, "current", NULL,
-	    est_sysctl_helper, 0, sc, 0, CTL_CREATE, CTL_EOL);
+	    est_sysctl_helper, 0, (void *)sc, 0, CTL_CREATE, CTL_EOL);
 
 	if (rv != 0)
 		goto fail;

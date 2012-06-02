@@ -126,7 +126,7 @@ int drm_sysctl_init(struct drm_device *dev)
 		sysctl_createv(&info->log, 0, NULL, &(info->dri_rest[i]),
 				CTLFLAG_READONLY, CTLTYPE_STRING,
 				drm_sysctl_list[i].name, NULL,
-				drm_sysctl_list[i].f, 0, dev,
+				drm_sysctl_list[i].f, 0, (void *)dev,
 				sizeof(struct drm_device*),
 				CTL_HW,
 				info->dri->sysctl_num,
