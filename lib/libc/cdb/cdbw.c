@@ -1,4 +1,4 @@
-/*	$NetBSD: cdbw.c,v 1.3 2012/03/13 21:32:12 joerg Exp $	*/
+/*	$NetBSD: cdbw.c,v 1.4 2012/06/03 21:02:50 joerg Exp $	*/
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,11 +36,13 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cdbw.c,v 1.3 2012/03/13 21:32:12 joerg Exp $");
+__RCSID("$NetBSD: cdbw.c,v 1.4 2012/06/03 21:02:50 joerg Exp $");
 
 #include "namespace.h"
 
+#if !HAVE_NBTOOL_CONFIG_H || HAVE_SYS_ENDIAN_H
 #include <sys/endian.h>
+#endif
 #include <sys/queue.h>
 #include <cdbw.h>
 #include <stdlib.h>
@@ -268,6 +270,12 @@ cdbw_close(struct cdbw *cdbw)
 	free(cdbw->data_len);
 	free(cdbw->hash);
 	free(cdbw);
+}
+
+uint32_t
+cdbw_stable_seeder(void)
+{
+	return 0;
 }
 
 #define unused 0xffffffffU
@@ -556,8 +564,13 @@ cdbw_output(struct cdbw *cdbw, int fd, const char descr[16],
 		return 0;
 	}
 
+#if HAVE_NBTOOL_CONFIG_H
+	if (seedgen == NULL)
+		seedgen = cdbw_stable_seeder;
+#else
 	if (seedgen == NULL)
 		seedgen = arc4random;
+#endif
 
 	rv = 0;
 
@@ -581,8 +594,12 @@ cdbw_output(struct cdbw *cdbw, int fd, const char descr[16],
 		goto release;
 	}
 
+	state.seed = 0;
 	do {
-		state.seed = (*seedgen)();
+		if (seedgen == cdbw_stable_seeder)
+			++state.seed;
+		else
+			state.seed = (*seedgen)();
 	} while (build_graph(cdbw, &state));
 
 	assign_nodes(&state);
