@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.28 2008/06/25 08:14:59 isaki Exp $	*/
+/*	$NetBSD: clock.c,v 1.28.6.1 2012/06/03 08:46:36 jdc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.28 2008/06/25 08:14:59 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.28.6.1 2012/06/03 08:46:36 jdc Exp $");
 
 #include "clock.h"
 
@@ -182,7 +182,7 @@ cpu_initclocks(void)
 	mfp_set_tcdr(CLOCKS_PER_SEC / hz);
 	mfp_bit_set_ierb(MFP_INTR_TIMER_C);
 
-	mfp_set_tddr(0xff);	/* maximum free run -- only 8 bits wide */
+	mfp_set_tddr(0);	/* maximum free run -- only 8 bits wide */
 	mfp_set_tcdcr(mfp_get_tcdcr() | 0x07);	/* 1/200 prescaler */
 
 	tc_init(&tc);
