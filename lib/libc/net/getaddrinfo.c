@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.96 2011/10/15 23:00:02 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.96.4.1 2012/06/03 21:41:34 jdc Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.96 2011/10/15 23:00:02 christos Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.96.4.1 2012/06/03 21:41:34 jdc Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -76,6 +76,7 @@ __RCSID("$NetBSD: getaddrinfo.c,v 1.96 2011/10/15 23:00:02 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <ifaddrs.h>
 
 #include <syslog.h>
 #include <stdarg.h>
@@ -208,6 +209,7 @@ static int get_portmatch(const struct addrinfo *, const char *,
 static int get_port(const struct addrinfo *, const char *, int,
     struct servent_data *);
 static const struct afd *find_afd(int);
+static int addrconfig(uint64_t *);
 #ifdef INET6
 static int ip6_str2scopeid(char *, struct sockaddr_in6 *, u_int32_t *);
 #endif
@@ -348,6 +350,7 @@ getaddrinfo(const char *hostname, const char *servname,
 	struct addrinfo *pai;
 	const struct explore *ex;
 	struct servent_data svd;
+	uint64_t mask = (uint64_t)~0ULL;
 
 	/* hostname is allowed to be NULL */
 	/* servname is allowed to be NULL */
@@ -409,6 +412,9 @@ getaddrinfo(const char *hostname, const char *servname,
 		}
 	}
 
+	if ((pai->ai_flags & AI_ADDRCONFIG) != 0 && addrconfig(&mask) == -1)
+		ERR(EAI_FAIL);
+
 	/*
 	 * check for special cases.  (1) numeric servname is disallowed if
 	 * socktype/protocol are left unspecified. (2) servname is disallowed
@@ -441,6 +447,10 @@ getaddrinfo(const char *hostname, const char *servname,
 	for (ex = explore; ex->e_af >= 0; ex++) {
 		*pai = ai0;
 
+		/* ADDRCONFIG check */
+		if ((((uint64_t)1 << ex->e_af) & mask) == 0)
+			continue;
+
 		/* PF_UNSPEC entries are prepared for DNS queries only */
 		if (ex->e_af == PF_UNSPEC)
 			continue;
@@ -451,7 +461,6 @@ getaddrinfo(const char *hostname, const char *servname,
 			continue;
 		if (!MATCH(pai->ai_protocol, ex->e_protocol, WILD_PROTOCOL(ex)))
 			continue;
-
 		if (pai->ai_family == PF_UNSPEC)
 			pai->ai_family = ex->e_af;
 		if (pai->ai_socktype == ANY && ex->e_socktype != ANY)
@@ -493,6 +502,13 @@ getaddrinfo(const char *hostname, const char *servname,
 	 */
 	for (ex = explore; ex->e_af >= 0; ex++) {
 		*pai = ai0;
+
+
+		/* ADDRCONFIG check */
+		/* PF_UNSPEC entries are prepared for DNS queries only */
+		if (ex->e_af != PF_UNSPEC &&
+		    (((uint64_t)1 << ex->e_af) & mask) == 0)
+			continue;
 
 		/* require exact match for family field */
 		if (pai->ai_family != ex->e_af)
@@ -1004,6 +1020,30 @@ find_afd(int af)
 			return afd;
 	}
 	return NULL;
+}
+
+/*
+ * AI_ADDRCONFIG check: Build a mask containing a bit set for each address
+ * family configured in the system.
+ *
+ */
+static int
+addrconfig(uint64_t *mask)
+{
+	struct ifaddrs *ifaddrs, *ifa;
+
+	if (getifaddrs(&ifaddrs) == -1)
+		return -1;
+
+	*mask = 0;
+	for (ifa = ifaddrs; ifa != NULL; ifa = ifa->ifa_next)
+		if (ifa->ifa_addr && (ifa->ifa_flags & IFF_UP)) {
+			_DIAGASSERT(ifa->ifa_addr->sa_family < 64);
+			*mask |= (uint64_t)1 << ifa->ifa_addr->sa_family;
+		}
+
+	freeifaddrs(ifaddrs);
+	return 0;
 }
 
 #ifdef INET6
