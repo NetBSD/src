@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbdi.9,v 1.20 2012/06/03 02:23:37 mrg Exp $
+.\"	$NetBSD: usbdi.9,v 1.21 2012/06/03 02:56:36 mrg Exp $
 .\"
 .\" Copyright (c) 2012 Matthew R. Green
 .\" All rights reserved.
@@ -417,11 +417,6 @@ macro can be used to match any USB product by a particular vendor.
 .\"
 .\" .Fn usb_desc_iter_init "usbd_device_handle iface" "usbd_desc_iter_t *iter"
 .\" .Fn usb_desc_iter_next "usbd_desc_iter_t *iter"
-.\" .Fn usb_add_task "usbd_device_handle iface" "struct usb_task *task" \
-.\"  "int queue"
-.\" .Fn usb_rem_task "usbd_device_handle iface" "struct usb_task *task"
-.\" .Fn usb_init_task "struct usb_task *task" "void (*func)(void *)" \
-.\"  "void *arg"
 .\"
 .\" XXX functions missing descriptions in usbdi.h XXX
 .\"
@@ -920,6 +915,32 @@ and the
 function works like
 .Fn usb_detach_broadcast .
 .\" XXX add an actual code example.
+.Sh USB TASK MANAGEMENT
+The USB stack provides a task management framework to execute tasks
+in a thread context at the soonest opportunity.
+Typically this is used by network drivers to handle periodic updates
+or status change requests.
+The
+.Fn usb_init_task
+function takes a pointer to a
+.Ft struct usb_task
+that will be initalised, a function to call for this task
+.Fa func ,
+and the argument to pass to
+.Fa func ,
+.Fa arg .
+To schedule the task to be run the
+.Fn usb_add_task
+function should be called with the
+.Fa iface
+associated with this device, the task queue to invoke
+.Fa task ,
+and the
+.Fa queue
+to run against, either
+.Dv USB_TASKQ_HC
+or
+.Dv USB_TASKQ_DRIVER .
 .Sh SEE ALSO
 .Xr usb 4 ,
 .Xr usbd_status 9
