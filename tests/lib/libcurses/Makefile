@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2011/06/17 16:59:51 christos Exp $
+# $NetBSD: Makefile,v 1.3 2012/06/03 23:19:11 joerg Exp $
 
 NOMAN=		# defined
 
@@ -13,18 +13,18 @@ TERMINFO_DB=	terminfo
 TERMINFODIR=	${TESTSDIR}
 
 FILESDIR=	${TESTSDIR}
-FILES=		${TERMINFO_DB}.db
+FILES=		${TERMINFO_DB}.cdb
 
 TESTS_SH=	t_curses
 
 HOME=		${TESTDIR}
 
-CLEANFILES+=	${TERMINFO_DB}.db
+CLEANFILES+=	${TERMINFO_DB}.cdb
 
-realall: ${TERMINFO_DB}.db
+realall: ${TERMINFO_DB}.cdb
 
-${TERMINFO_DB}.db: ${TEST_TERMINFO}
-	${TOOL_TIC} -o ${TERMINFO_DB} ${.CURDIR}/${TEST_TERMINFO}
+${TERMINFO_DB}.cdb: ${TOOL_TIC} ${TEST_TERMINFO}
+	${TOOL_TIC} -o ${.TARGET} ${.CURDIR}/${TEST_TERMINFO}
 
 .include <bsd.test.mk>
 #.include <bsd.subdir.mk>

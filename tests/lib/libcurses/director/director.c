@@ -1,4 +1,4 @@
-/*	$NetBSD: director.c,v 1.9 2011/10/07 13:39:33 joerg Exp $	*/
+/*	$NetBSD: director.c,v 1.10 2012/06/03 23:19:11 joerg Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -103,7 +103,7 @@ usage(void)
 	    "commandfile\n", getprogname());
 	fprintf(stderr, " where:\n");
 	fprintf(stderr, "    -v enables verbose test output\n");
-	fprintf(stderr, "    -T is a directory containing the terminfo.db "
+	fprintf(stderr, "    -T is a directory containing the terminfo.cdb "
 	    "file, or a file holding the terminfo description n");
 	fprintf(stderr, "    -s is the path to the slave executable\n");
 	fprintf(stderr, "    -t is value to set TERM to for the test\n");
@@ -200,11 +200,11 @@ main(int argc, char *argv[])
 	if (S_ISDIR(st.st_mode)) {
 		char tinfo[MAXPATHLEN];
 		int l = snprintf(tinfo, sizeof(tinfo), "%s/%s", termpath,
-		    "terminfo.db");
+		    "terminfo.cdb");
 		if (stat(tinfo, &st) == -1)
 			err(1, "Cannot stat `%s'", tinfo);
-		if (l >= 3)
-			tinfo[l - 3] = '\0';
+		if (l >= 4)
+			tinfo[l - 4] = '\0';
 		if (setenv("TERMINFO", tinfo, 1) != 0)
 			err(1, "Failed to set TERMINFO variable");
 	} else {
