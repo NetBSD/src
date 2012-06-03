@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.168 2012/05/22 21:46:56 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.169 2012/06/03 08:16:32 jdc Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -6401,6 +6401,11 @@ libexec/ld.elf_so/arch/hppa/hppa_reloc.c	patch
 
 	Fix hppa problem introduced by ticket #1724.
 	[skrll, ticket #1761]
+
+crypto/dist/openssl/ssl/d1_enc.c		patch
+
+	Address CVE-2012-2333.
+	[drochner, ticket #1762]
 
 sys/ufs/ufs/ufs_vnops.c				patch
 
