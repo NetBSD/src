@@ -1,4 +1,4 @@
-/* $NetBSD: compile.c,v 1.7 2012/06/01 12:08:40 joerg Exp $ */
+/* $NetBSD: compile.c,v 1.8 2012/06/03 23:19:10 joerg Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: compile.c,v 1.7 2012/06/01 12:08:40 joerg Exp $");
+__RCSID("$NetBSD: compile.c,v 1.8 2012/06/03 23:19:10 joerg Exp $");
 
 #if !HAVE_NBTOOL_CONFIG_H || HAVE_SYS_ENDIAN_H
 #include <sys/endian.h>
@@ -239,12 +239,7 @@ _ti_flatten(uint8_t **buf, const TIC *tic)
 		return -1;
 	
 	cap = *buf;
-	if (alen == 0 && dlen == 0 && tic->flags.bufpos == 0 &&
-	    tic->nums.bufpos == 0 && tic->strs.bufpos == 0 &&
-	    tic->extras.bufpos == 0)
-		*cap++ = 0; /* alias */
-	else
-		*cap++ = 2; /* version */
+	*cap++ = 1;
 	le16enc(cap, len);
 	cap += sizeof(uint16_t);
 	memcpy(cap, tic->name, len);
