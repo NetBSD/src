@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_mkdb.c,v 1.28 2011/08/30 10:04:50 joerg Exp $	*/
+/*	$NetBSD: dev_mkdb.c,v 1.29 2012/06/03 21:42:47 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -30,186 +30,231 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1990, 1993\
- The Regents of the University of California.  All rights reserved.");
-#endif /* not lint */
+__RCSID("$NetBSD: dev_mkdb.c,v 1.29 2012/06/03 21:42:47 joerg Exp $");
 
-#ifndef lint
-#if 0
-static char sccsid[] = "from: @(#)dev_mkdb.c	8.1 (Berkeley) 6/6/93";
-#else
-__RCSID("$NetBSD: dev_mkdb.c,v 1.28 2011/08/30 10:04:50 joerg Exp $");
-#endif
-#endif /* not lint */
-
-#include <sys/param.h>
+#include <sys/queue.h>
 #include <sys/stat.h>
 
+#include <cdbw.h>
 #include <db.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <fts.h>
-#include <kvm.h>
-#include <nlist.h>
 #include <paths.h>
+#include <search.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
+
+#define	HASH_SIZE	65536
+#define	FILE_PERMISSION	S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH
+
+static struct cdbw *db;
+static DB *db_compat;
+static const char *db_name;
+static char *db_name_tmp;
 
 static void	usage(void) __dead;
 
-static HASHINFO openinfo = {
-	4096,		/* bsize */
-	128,		/* ffactor */
-	1024,		/* nelem */
-	2048 * 1024,	/* cachesize */
-	NULL,		/* hash() */
-	0		/* lorder */
-};
-
-int
-main(int argc, char **argv)
+static void
+cdb_open(void)
 {
-	struct stat *st;
-	struct {
-		mode_t type;
-		dev_t dev;
-	} bkey;
-	DB *db;
-	DBT data, key;
-	FTS *ftsp;
-	FTSENT *p;
-	int ch;
-	char buf[MAXPATHLEN + 1];
-	char dbtmp[MAXPATHLEN + 1];
-	char dbname[MAXPATHLEN + 1];
-	char *dbname_arg = NULL;
-	char *pathv[2];
-	char path_dev[MAXPATHLEN + 1] = _PATH_DEV;
-	char cur_dir[MAXPATHLEN + 1];
-	struct timeval tv;
-	char *q;
-	size_t dlen;
-
-	setprogname(argv[0]);
-
-	while ((ch = getopt(argc, argv, "o:")) != -1)
-		switch (ch) {
-		case 'o':
-			dbname_arg = optarg;
-			break;
-		case '?':
-		default:
-			usage();
-		}
-	argc -= optind;
-	argv += optind;
-
-	if (argc == 1)
-		if (strlcpy(path_dev, argv[0], sizeof(path_dev)) >=
-		    sizeof(path_dev))
-			errx(1, "device path too long");
-
-	if (argc > 1)
-		usage();
-
-	if (getcwd(cur_dir, sizeof(cur_dir)) == NULL)
-		err(1, "%s", cur_dir);
-
-	if (chdir(path_dev) == -1)
-		err(1, "%s", path_dev);
-
-	pathv[0] = path_dev;
-	pathv[1] = NULL;
-	dlen = strlen(path_dev) - 1;
-	ftsp = fts_open(pathv, FTS_PHYSICAL, NULL);
-	if (ftsp == NULL)
-		err(1, "fts_open: %s", path_dev);
-
-	if (chdir(cur_dir) == -1)
-		err(1, "%s", cur_dir);
-
-	if (dbname_arg) {
-		if (strlcpy(dbname, dbname_arg, sizeof(dbname)) >=
-		    sizeof(dbname))
-			errx(1, "dbname too long");
-	} else {
-		if (snprintf(dbname, sizeof(dbname), "%sdev.db",
-		    _PATH_VARRUN) >= (int)sizeof(dbname))
-			errx(1, "dbname too long");
-	}
-	/* 
-	 * We use rename() to produce the dev.db file from a temporary file,
-	 * and rename() is not able to move files across filesystems. Hence we 
-	 * need the temporary file to be in the same directory as dev.db.
-	 *
-	 * Additionally, we might be working in a world writable directory, 
-	 * we must ensure that we are not opening an existing file, therefore
-	 * the loop on dbopen. 
-	 */
-	(void)strlcpy(dbtmp, dbname, sizeof(dbtmp));
-	q = dbtmp + strlen(dbtmp);
-	do {
-		(void)gettimeofday(&tv, NULL);
-		(void)snprintf(q, sizeof(dbtmp) - (q - dbtmp), 
-		    "%ld.tmp", (long)tv.tv_usec);
-		db = dbopen(dbtmp, O_CREAT|O_EXCL|O_EXLOCK|O_RDWR|O_TRUNC,
-		    S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH, DB_HASH, &openinfo);
-	} while (!db && (errno == EEXIST));
+	db = cdbw_open();
 	if (db == NULL)
-		err(1, "%s", dbtmp);
+		err(1, "opening cdb writer failed");
+}
 
+static void
+cdb_close(void)
+{
+	int fd;
+
+	fd = open(db_name_tmp, O_CREAT|O_EXCL|O_WRONLY, FILE_PERMISSION);
+	if (fd == -1)
+		err(1, "opening %s failed", db_name_tmp);
+	if (cdbw_output(db, fd, "NetBSD6 devdb", NULL))
+		err(1, "failed to write temporary database %s", db_name_tmp);
+	cdbw_close(db);
+	db = NULL;
+	if (close(fd))
+		err(1, "failed to write temporary database %s", db_name_tmp);
+}
+
+static void
+cdb_add_entry(dev_t dev, mode_t type, const char *relpath)
+{
+	uint8_t *buf;
+	size_t len;
+
+	len = strlen(relpath) + 1;
+	buf = malloc(len + 10);
+	le64enc(buf, dev);
+	le16enc(buf + 8, type);
+	memcpy(buf + 10, relpath, len);
+	cdbw_put(db, buf, 10, buf, len + 10);
+	free(buf);
+}
+
+static void
+compat_open(void)
+{
+	static HASHINFO openinfo = {
+		4096,		/* bsize */
+		128,		/* ffactor */
+		1024,		/* nelem */
+		2048 * 1024,	/* cachesize */
+		NULL,		/* hash() */
+		0		/* lorder */
+	};
+
+	db_compat = dbopen(db_name_tmp, O_CREAT|O_EXCL|O_EXLOCK|O_RDWR|O_TRUNC,
+	    FILE_PERMISSION, DB_HASH, &openinfo);
+
+	if (db_compat == NULL)
+		err(1, "failed to create temporary database %s",
+		    db_name_tmp);
+}
+
+static void
+compat_close(void)
+{
+	if ((*db_compat->close)(db_compat))
+		err(1, "failed to write temporary database %s", db_name_tmp);
+}
+
+static void
+compat_add_entry(dev_t dev, mode_t type, const char *relpath)
+{
 	/*
 	 * Keys are a mode_t followed by a dev_t.  The former is the type of
 	 * the file (mode & S_IFMT), the latter is the st_rdev field.  Note
 	 * that the structure may contain padding, so we have to clear it
 	 * out here.
 	 */
+	struct {
+		mode_t type;
+		dev_t dev;
+	} bkey;
+	struct {
+		mode_t type;
+		int32_t dev;
+	} obkey;
+	DBT data, key;
+
 	(void)memset(&bkey, 0, sizeof(bkey));
 	key.data = &bkey;
 	key.size = sizeof(bkey);
-	data.data = (u_char *)(void *)buf;
-	while ((p = fts_read(ftsp)) != NULL) {
-		switch (p->fts_info) {
-		case FTS_DEFAULT:
-			st = p->fts_statp;
+	data.data = __UNCONST(relpath);
+	data.size = strlen(relpath) + 1;
+	bkey.type = type;
+	bkey.dev = dev;
+	if ((*db_compat->put)(db_compat, &key, &data, 0))
+		err(1, "failed to write temporary database %s", db_name_tmp);
+
+	/*
+	 * If the device fits into the old 32bit format, add compat entry
+	 * for pre-NetBSD6 libc.
+	 */
+
+	if ((dev_t)(int32_t)dev != dev)
+		return;
+
+	(void)memset(&obkey, 0, sizeof(obkey));
+	key.data = &obkey;
+	key.size = sizeof(obkey);
+	data.data = __UNCONST(relpath);
+	data.size = strlen(relpath) + 1;
+	obkey.type = type;
+	obkey.dev = (int32_t)dev;
+	if ((*db_compat->put)(db_compat, &key, &data, 0))
+		err(1, "failed to write temporary database %s", db_name_tmp);
+}
+
+int
+main(int argc, char **argv)
+{
+	struct stat *st;
+	FTS *ftsp;
+	FTSENT *p;
+	int ch;
+	char *pathv[2];
+	size_t dlen;
+	int compat_mode;
+
+	setprogname(argv[0]);
+	compat_mode = 0;
+
+	while ((ch = getopt(argc, argv, "co:")) != -1)
+		switch (ch) {
+		case 'c':
+			compat_mode = 1;
+			break;
+		case 'o':
+			db_name = optarg;
 			break;
 		default:
-			continue;
+			usage();
 		}
+	argc -= optind;
+	argv += optind;
 
-		/* Create the key. */
-		if (S_ISCHR(st->st_mode))
-			bkey.type = S_IFCHR;
-		else if (S_ISBLK(st->st_mode))
-			bkey.type = S_IFBLK;
+	if (argc > 1)
+		usage();
+
+	pathv[1] = NULL;
+	if (argc == 1)
+		pathv[0] = argv[0];
+	else
+		pathv[0] = __UNCONST(_PATH_DEV);
+	
+	ftsp = fts_open(pathv, FTS_NOCHDIR | FTS_PHYSICAL, NULL);
+	if (ftsp == NULL)
+		err(1, "fts_open: %s", pathv[0]);
+
+	if (db_name == NULL) {
+		if (compat_mode)
+			db_name = _PATH_DEVDB;
 		else
-			continue;
-		bkey.dev = st->st_rdev;
-
-		/*
-		 * Create the data; nul terminate the name so caller doesn't
-		 * have to.  Skip path_dev and slash. Handle old versions
-		 * of fts(3), that added multiple slashes, if the pathname
-		 * ended with a slash.
-		 */
-		while (p->fts_path[dlen] == '/')
-			dlen++;
-		(void)strlcpy(buf, p->fts_path + dlen, sizeof(buf));
-		data.size = p->fts_pathlen - dlen + 1;
-		if ((*db->put)(db, &key, &data, 0))
-			err(1, "dbput %s", dbtmp);
+			db_name = _PATH_DEVCDB;
 	}
-	(void)(*db->close)(db);
+	easprintf(&db_name_tmp, "%s.XXXXXXX", db_name);
+	mktemp(db_name_tmp);
+
+	if (compat_mode)
+		compat_open();
+	else
+		cdb_open();
+
+	while ((p = fts_read(ftsp)) != NULL) {
+		if (p->fts_info != FTS_DEFAULT)
+			continue;
+
+		st = p->fts_statp;
+		if (!S_ISCHR(st->st_mode) && !S_ISBLK(st->st_mode))
+			continue;
+		dlen = strlen(pathv[0]);
+		while (pathv[0][dlen] == '/')
+			++dlen;
+		if (compat_mode)
+			compat_add_entry(st->st_rdev, st->st_mode & S_IFMT,
+			    p->fts_path + dlen);
+		else
+			cdb_add_entry(st->st_rdev, st->st_mode & S_IFMT,
+			    p->fts_path + dlen);
+	}
 	(void)fts_close(ftsp);
 
-	if (chdir(cur_dir) == -1)
-		err(1, "%s", cur_dir);
-	if (rename(dbtmp, dbname) == -1)
-		err(1, "rename %s to %s", dbtmp, dbname);
+	if (compat_mode)
+		compat_close();
+	else
+		cdb_close();
+
+	if (rename(db_name_tmp, db_name) == -1)
+		err(1, "rename %s to %s", db_name_tmp, db_name);
 	return 0;
 }
 
@@ -217,7 +262,7 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "Usage: %s [-o database] [directory]\n",
+	(void)fprintf(stderr, "Usage: %s [-c] [-o database] [directory]\n",
 	    getprogname());
 	exit(1);
 }
