@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.24 2011/07/03 23:11:34 tron Exp $
+#	$NetBSD: list,v 1.25 2012/06/03 23:19:10 joerg Exp $
 
 SRCDIRS	bin sbin libexec external/bsd/less/bin usr.bin usr.sbin
 
@@ -85,7 +85,7 @@ COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
 COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
 COPY	${DISTRIBDIR}/common/protocols		etc/protocols
 COPY	${DISTRIBDIR}/common/services		etc/services
-COPY	${DESTDIR}/usr/share/misc/terminfo.db	usr/share/misc/terminfo.db
+COPY	${DESTDIR}/usr/share/misc/terminfo.cdb	usr/share/misc/terminfo.cdb
 
 # we need the boot block in /usr/mdec + the arch specific extras
 COPY	${DESTDIR}/usr/mdec/binstall		usr/mdec/binstall	555
