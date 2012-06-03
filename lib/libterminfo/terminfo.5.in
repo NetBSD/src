@@ -1,4 +1,4 @@
-.\"	$NetBSD: terminfo.5.in,v 1.15 2011/03/10 10:17:19 roy Exp $
+.\"	$NetBSD: terminfo.5.in,v 1.16 2012/06/03 23:19:10 joerg Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -195,10 +195,10 @@ hts=\eEH, ht=^I,
 .Ed
 .Ss Fetching Compiled Descriptions
 This implementation uses hashed databases managed by
-.Xr ndbm 3
+.Xr cdb 5
 instead of directories.
 To maintain compatability with other implementations,
-.Pa .db
+.Pa .cdb
 is appended to each file checked.
 .Pp
 If the environment variable
@@ -237,12 +237,12 @@ If a matching description is not found then a small embedded database is
 searched, which currently holds descriptions for ansi, dumb, vt100, vt220,
 wsvt25, and xterm.
 .Sh FILES
-.Bl -tag -width /usr/share/misc/terminfo.db -compact
-.It Pa $HOME/.terminfo.db
+.Bl -tag -width /usr/share/misc/terminfo.cdb -compact
+.It Pa $HOME/.terminfo.cdb
 Database of terminal descriptions for personal use.
 .It Pa /usr/share/misc/terminfo
 File containing terminal descriptions.
-.It Pa /usr/share/misc/terminfo.db
+.It Pa /usr/share/misc/terminfo.cdb
 Database of terminal descriptions.
 .El
 .Sh SEE ALSO
@@ -250,7 +250,7 @@ Database of terminal descriptions.
 .Xr tic 1 ,
 .Xr tput 1 ,
 .Xr curses 3 ,
-.Xr ndbm 3
+.Xr cdb 5
 .Sh STANDARDS
 .Nm
 complies with the

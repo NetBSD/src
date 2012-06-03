@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.cdrom,v 1.26 2011/06/21 21:49:23 joerg Exp $
+# $NetBSD: Makefile.cdrom,v 1.27 2012/06/03 23:19:09 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -53,7 +53,7 @@ CDRUNTIME+=	./usr/mdec
 CDRUNTIME+=	./usr/sbin/chroot
 CDRUNTIME+=	./usr/sbin/installboot
 CDRUNTIME+=	./usr/sbin/wiconfig
-CDRUNTIME+=	./usr/share/misc/terminfo.db
+CDRUNTIME+=	./usr/share/misc/terminfo.cdb
 CDRUNTIME+=	./usr/share/locale
 
 image_md_pre:
