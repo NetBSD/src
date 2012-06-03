@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.110 2012/05/30 08:06:48 sborrill Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.111 2012/06/03 21:45:49 jdc Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -2569,4 +2569,38 @@ sys/dev/iscsi/iscsi_main.c			1.2-1.3
 	Fix bugs in iscsid target list handling, and improve
 	documentation somewhat for the in-kernel iSCSI initiator.
 	[riz, ticket #291]
+
+lib/libc/net/getaddrinfo.c			1.98 - 1.100
+include/netdb.h					1.65
+	Add AI_ADDRCONFIG, which makes getaddrinfo() return only address with
+	families that are already configured in the system.
+	[khorben, ticket #278]
+
+sys/arch/i386/stand/lib/exec.c			1.50
+sys/arch/sandpoint/stand/altboot/main.c		1.21 via patch
+sys/lib/libsa/ext2fs.c				1.13
+sys/lib/libsa/ffsv1.c				1.6
+sys/lib/libsa/ffsv2.c				1.6
+sys/lib/libsa/globals.c				1.9
+sys/lib/libsa/lfsv1.c				1.5
+sys/lib/libsa/lfsv2.c				1.5
+sys/lib/libsa/stand.h				1.76
+sys/lib/libsa/ufs.c				1.58
+	Remove the code that tries to load the "ffs" kernel module during boot.
+	This is in line with the core decision than even modular kernels should
+	contain the ffs code.
+	I've left in the code that tries to load "nfs" and "ext2fs", but it
+	isn't clear that is necessary.
+	Removes a warning message that (usually) flashes past to fast to read.
+	AFAICT all the relevant kernels contain ffs (and nfs for that matter).
+	[dsl, ticket #279]
+
+sys/arch/amd64/include/frameasm.h		1.17-1.19
+sys/arch/amd64/amd64/vector.S			1.40-1.41
+sys/arch/amd64/amd64/trap.c			1.71
+	Fix issues when amd64 manages to trap during 'return to user'.  ie on
+	the 'iret' or while loading segment registers.
+	Also detects any fault loading %gs and re-instates the kernel gs_base
+	value before entering the trap handler.
+	[dsl, ticket #280]
 
