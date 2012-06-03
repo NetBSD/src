@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.237 2012/06/02 21:36:46 dsl Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.238 2012/06/03 11:37:44 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.237 2012/06/02 21:36:46 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.238 2012/06/03 11:37:44 dsl Exp $");
 
 #include "opt_bufcache.h"
 
@@ -1730,39 +1730,41 @@ sysctl_dobuf(SYSCTLFN_ARGS)
 static int
 sysctl_bufvm_update(SYSCTLFN_ARGS)
 {
-	int t, error, rv;
+	int error, rv;
 	struct sysctlnode node;
+	union u_int_long { unsigned int i; unsigned long l; } t;
 
+	/* Take a copy of the supplied node and its data */
 	node = *rnode;
 	node.sysctl_data = &t;
-	t = *(int *)rnode->sysctl_data;
+	t = *(union u_int_long *)rnode->sysctl_data;
+
+	/* Update the copy */
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return (error);
 
-	if (t < 0)
-		return EINVAL;
 	if (rnode->sysctl_data == &bufcache) {
-		if (t > 100)
+		if (t.i > 100)
 			return (EINVAL);
-		bufcache = t;
+		bufcache = t.i;
 		buf_setwm();
 	} else if (rnode->sysctl_data == &bufmem_lowater) {
-		if (bufmem_hiwater - t < 16)
+		if (bufmem_hiwater - t.l < 16)
 			return (EINVAL);
-		bufmem_lowater = t;
+		bufmem_lowater = t.l;
 	} else if (rnode->sysctl_data == &bufmem_hiwater) {
-		if (t - bufmem_lowater < 16)
+		if (t.l - bufmem_lowater < 16)
 			return (EINVAL);
-		bufmem_hiwater = t;
+		bufmem_hiwater = t.l;
 	} else
 		return (EINVAL);
 
 	/* Drain until below new high water mark */
 	sysctl_unlock();
 	mutex_enter(&bufcache_lock);
-	while ((t = bufmem - bufmem_hiwater) >= 0) {
-		rv = buf_drain(t / (2 * 1024));
+	while (bufmem > bufmem_hiwater) {
+		rv = buf_drain((bufmem - bufmem_hiwater) / (2 * 1024));
 		if (rv <= 0)
 			break;
 	}
