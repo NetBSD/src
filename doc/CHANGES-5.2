@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.169 2012/06/03 08:16:32 jdc Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.170 2012/06/03 08:48:20 jdc Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -6411,4 +6411,21 @@ sys/ufs/ufs/ufs_vnops.c				patch
 
 	Fix error from ticket #1759 and avoid a panic.
 	[buhrow, ticket #1763]
+
+distrib/sets/lists/base/rescue.mi		1.34
+rescue/list					1.43
+	PR/46393 - Nat Sloss -- add gpt(8) to /rescue
+	[jnemeth, ticket #1764]
+
+sys/arch/x68k/x68k/clock.c			1.34
+	With the freerunnnig mode, set 0 (=256count) not 0xff (=255count)
+	in Timer-D.  It fixes the clock ticked faster when timecounter uses
+	"mfp" (as default choice).  It was introduced in rev 1.24 in 2006.
+	Thanks tsutsui@ for many comments.
+	[isaki, ticket #1765]
+
+sys/kern/uipc_usrreq.c        1.137
+	Stopgap fix for PR kern/46463: disallow passing of kqueue descriptors
+	via SCM_RIGHT anxiliary socket messages.
+	[martin, ticket #1766]
 
