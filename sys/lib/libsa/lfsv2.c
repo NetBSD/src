@@ -1,4 +1,4 @@
-/* $NetBSD: lfsv2.c,v 1.4 2011/12/25 06:09:08 tsutsui Exp $ */
+/* $NetBSD: lfsv2.c,v 1.4.2.1 2012/06/03 21:42:52 jdc Exp $ */
 
 #define	LIBSA_LFS
 #define	REQUIRED_LFS_VERSION	2
@@ -23,6 +23,5 @@
 #endif
 
 #define	FSMOD			"lfs"
-#define	FSMOD2			"ffs"
 
 #include "lib/libsa/ufs.c"
