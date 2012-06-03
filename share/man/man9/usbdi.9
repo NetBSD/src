@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbdi.9,v 1.19 2012/06/02 23:39:03 mrg Exp $
+.\"	$NetBSD: usbdi.9,v 1.20 2012/06/03 02:23:37 mrg Exp $
 .\"
 .\" Copyright (c) 2012 Matthew R. Green
 .\" All rights reserved.
@@ -124,9 +124,8 @@
 .Fn usbd_get_buffer "usbd_xfer_handle xfer"
 .Ft usbd_status
 .Fn usbd_sync_transfer "usbd_xfer_handle req"
-.\" only in usbmp
-.\" .Ft usbd_status
-.\" .Fn usbd_sync_transfer_sig "usbd_xfer_handle req"
+.Ft usbd_status
+.Fn usbd_sync_transfer_sig "usbd_xfer_handle req"
 .Ft usbd_status
 .Fn usbd_open_pipe_intr "usbd_interface_handle iface" "uint8_t address" \
  "uint8_t flags" "usbd_pipe_handle *pipe" \
@@ -156,6 +155,9 @@
 .Fn usbd_fill_deviceinfo "usbd_device_handle dev" "struct usb_device_info *di"
 .Ft int
 .Fn usbd_get_interface_altindex "usbd_interface_handle iface"
+.Ft usb_endpoint_descriptor_t *
+.Fn usbd_get_endpoint_descriptor "usbd_interface_handle dev" \
+ "u_int8_t address"
 .Ft usb_interface_descriptor_t *
 .Fn usbd_find_idesc "usb_config_descriptor_t *cd" "int iindex" "int ano"
 .Ft usb_endpoint_descriptor_t *
@@ -177,9 +179,6 @@
 .Fn usbd_devinfo_free "char *str"
 .Ft const struct usbd_quirks *
 .Fn usbd_get_quirks "usbd_device_handle iface"
-.Ft usb_endpoint_descriptor_t *
-.Fn usbd_get_endpoint_descriptor "usbd_interface_handle dev" \
- "u_int8_t address"
 .Ft usbd_status
 .Fn usbd_reload_device_desc "usbd_device_handle iface"
 .Ft int
@@ -276,10 +275,10 @@ through
 .Fn usb_detach_waitold "device_t dv"
 .Ft void
 .Fn usb_detach_wakeupold "device_t dv"
-.\" .Ft void
-.\" .Fn usb_detach_wait "device_t dv" "kcondvar_t *cv" "kmutex_t *lk"
-.\" .Ft void
-.\" .Fn usb_detach_broadcast "device_t dv" "kcondvar_t *cv"
+.Ft void
+.Fn usb_detach_wait "device_t dv" "kcondvar_t *cv" "kmutex_t *lk"
+.Ft void
+.Fn usb_detach_broadcast "device_t dv" "kcondvar_t *cv"
 .Sh DESCRIPTION
 Device driver access to the USB bus centers around transfers.
 A transfer describes a communication with a USB device.
@@ -297,7 +296,6 @@ See the
 and
 .Sx PIPES
 sections for more details.
-
 .Pp
 There are a number of functions to obtain a handle, descriptor
 of resource count:
@@ -388,16 +386,6 @@ macro can be used to match any USB product by a particular vendor.
 .\"
 .\" XXX functions missing descriptions in usbdi.h XXX
 .\"
-.\" .Fn usbd_alloc_buffer "usbd_xfer_handle req" "uint32_t size"
-.\" .Fn usbd_free_buffer "usbd_xfer_handle req"
-.\" .Fn usbd_get_buffer "usbd_xfer_handle xfer"
-.\" only in usbmp
-.\" .Fn usbd_sync_transfer_sig "usbd_xfer_handle req"
-.\" .Fn usbd_do_request "usbd_device_handle dev" "usb_device_request_t *req" \
-.\"  "void *data"
-.\" .Fn usbd_do_request_flags "usbd_device_handle dev" \
-.\"  "usb_device_request_t *req" "void *data" "uint16_t flags" "int *actlen" \
-.\"  "u_int32_t timo"
 .\" .Fn usbd_get_interface_descriptor "usbd_interface_handle iface"
 .\" .Fn usbd_get_config_descriptor "usbd_device_handle dev"
 .\" .Fn usbd_get_device_descriptor "usbd_device_handle dev"
@@ -406,6 +394,8 @@ macro can be used to match any USB product by a particular vendor.
 .\" .Fn usbd_get_interface "usbd_interface_handle iface" "uint8_t *aiface"
 .\" .Fn usbd_fill_deviceinfo "usbd_device_handle dev" "struct usb_device_info *di"
 .\" .Fn usbd_get_interface_altindex "usbd_interface_handle iface"
+.\" .Fn usbd_get_endpoint_descriptor "usbd_interface_handle dev" \
+.\"  "u_int8_t address"
 .\" .Fn usbd_find_idesc "usb_config_descriptor_t *cd" "int iindex" "int ano"
 .\" .Fn usbd_find_edesc "usb_config_descriptor_t *cd" "int ifaceidx" "int altidx" \
 .\"  "int endptidx"
@@ -419,8 +409,6 @@ macro can be used to match any USB product by a particular vendor.
 .\" .Fn usbd_devinfo_free "char *str"
 .\"
 .\" .Fn usbd_get_quirks "usbd_device_handle iface"
-.\" .Fn usbd_get_endpoint_descriptor "usbd_interface_handle dev" \
-.\"  "u_int8_t address"
 .\" .Fn usbd_reload_device_desc "usbd_device_handle iface"
 .\" .Fn usbd_ratecheck "struct timeval *tv"
 .\" .Fn usbd_get_string "usbd_device_handle iface" "int si" "char *buf"
@@ -494,15 +482,6 @@ macro can be used to match any USB product by a particular vendor.
 .\" .Ft usbd_status
 .\" .Fn usbd_set_config_index "usbd_device_handle dev" "int index" "int msg"
 .\" .Ft usbd_status
-.\" .\" these are very different in usbmp
-.\" .Ft void
-.\" .Fn usb_detach_waitold "device_t dv"
-.\" .Ft void
-.\" .Fn usb_detach_wakeupold "device_t dv"
-.\" .Ft void
-.\" .Fn usb_detach_wait "device_t dv" "kcondvar_t *cv" "kmutex_t *lk"
-.\" .Ft void
-.\" .Fn usb_detach_broadcast "device_t dv" "kcondvar_t *cv"
 .\"
 .Pp
 .Sh PIPES
@@ -601,6 +580,22 @@ Short reads are not an error
 Force last short packet on write
 .El
 .Pp
+To allocate buffers suitable for USB tranfers (i.e., DMA capable), the
+.Fn usbd_alloc_buffer
+function should be used on the specified
+.Fa xfer
+for
+.Fa size
+bytes of space.
+The
+.Fn usbd_free_buffer
+function can be used to free the buffer after use.
+The
+.Fn usbd_get_buffer
+function returns the current kernel address for the DMA-capable buffer
+in
+.Fa xfer .
+.Pp
 Upon completion the
 .Fa callback
 function is called, which takes the completed
@@ -655,6 +650,7 @@ with the
 and
 .Dv USBD_SYNCHRONOUS_SIG
 flags set.
+This function is only available with the USB SMP code.
 .Pp
 Transfers are aborted via this pipe with
 .Fn usbd_abort_pipe
@@ -678,6 +674,27 @@ which must be initialised as necessary before calling either
 or
 .Fn usbd_do_request_flags
 to submit the request.
+For both these functions
+.Fa dev
+is the handle of the USB device the request is for,
+.Fa req
+is the USB request, as described in the
+.Sx INITIALISING USB REQUESTS
+section, and then
+.Fa data
+is a buffer containing the data
+.\" (if any)????
+for the request.  For the
+.Fn usbd_do_request_flags
+function there are additional
+.Fa flags
+passed to the
+.Fa usbd_setup
+function,
+.Fa actlen
+a pointer to fill in with the actual length of this request, and
+.Fa timo ,
+the number of milliseconds to wait before timing out this request.
 .Sh INITIALISING USB REQUESTS
 There are 5 members of a
 .Va usb_device_request_t
@@ -866,6 +883,43 @@ member may be one of the following values:
 .\" .It Dv UR_SET_INTERFACE
 .\" this isn't supported
 .\" .It Dv UR_SYNCH_FRAME
+.Sh USB DEVICE DETACHMENT
+There are two functions available to ease the detach of active devices.
+Typically a reference count is maintained on syscall activity.
+When a USB device is to be detached, the reference count should be
+decremented and if it is greater or equal to zero, 
+.Fn usb_detach_wait
+should be called on the 
+.Ft dv
+associated with this USB device and, typically, a device-specific
+condition variable
+.Fa cv .
+and mutex
+.Fa lk
+protecting this reference count state.
+At the end of each syscall function, if the reference count is decremented
+to less than zero, then
+.Fn usb_detach_broadcast
+must be called on the
+.Ft dv
+and
+.Fa cv
+that is being waited on with 
+.Fn usb_detach_wait .
+.Pp
+These functions are only available with the USB SMP code.
+.Pp
+The are another pair of functions with similar functionality that do not
+use a condition variable or mutex and should be avoided in new code.
+The 
+.Fn usb_detach_waitold
+function works like 
+.Fn usb_detach_wait ,
+and the
+.Fn usb_detach_wakeupold
+function works like
+.Fn usb_detach_broadcast .
+.\" XXX add an actual code example.
 .Sh SEE ALSO
 .Xr usb 4 ,
 .Xr usbd_status 9
