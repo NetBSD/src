@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.126 2012/06/02 08:42:37 para Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.127 2012/06/03 17:12:49 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -89,8 +89,8 @@
  *   exec_map => used during exec to handle exec args
  *   etc...
  *
- * the kmem_arena is a "special submap", as it lives a fixed map entry
- * within the kernel_map and controlled by vmem(9).
+ * The kmem_arena is a "special submap", as it lives in a fixed map entry
+ * within the kernel_map and is controlled by vmem(9).
  *
  * the kernel allocates its private memory out of special uvm_objects whose
  * reference count is set to UVM_OBJ_KERN (thus indicating that the objects
@@ -122,29 +122,37 @@
  * this has to be done because there is no backing store for kernel pages
  * and no need to save them after they are no longer referenced.
  *
- * kmem_arena: main arena controlling the kernel kva used by other arenas.
- * kmem_va_arena: it utilizes quantum caching for fast allocations and to
- *   lower fragmentation. the pool and kmem allocate from this arena
- *   except for some pool meta-data.
+ * Generic arenas:
  *
- * arenas for metadata allocations used by vmem(9) and pool(9)
- * note: these arenas can't use quantum caching, the kmem_va_meta_arena
- *   compensates for this by importing larger chunks from kmem_arena.
+ * kmem_arena:
+ *	Main arena controlling the kernel KVA used by other arenas.
  *
- * kmem_va_meta_arena: space for metadata is allocated from this arena.
- * kmem_meta_arena: imports from kmem_va_meta_arena.
- *   allocations from this arena are backed with vm_pages.
+ * kmem_va_arena:
+ *	Implements quantum caching in order to speedup allocations and
+ *	reduce fragmentation.  The pool(9), unless created with a custom
+ *	meta-data allocator, and kmem(9) subsystems use this arena.
  *
- * arena stacking:
- * kmem_arena
- *   kmem_va_arena
- *   kmem_va_meta_arena
- *     kmem_meta_arena
+ * Arenas for meta-data allocations are used by vmem(9) and pool(9).
+ * These arenas cannot use quantum cache.  However, kmem_va_meta_arena
+ * compensates this by importing larger chunks from kmem_arena.
  *
+ * kmem_va_meta_arena:
+ *	Space for meta-data.
+ *
+ * kmem_meta_arena:
+ *	Imports from kmem_va_meta_arena.  Allocations from this arena are
+ *	backed with the pages.
+ *
+ * Arena stacking:
+ *
+ *	kmem_arena
+ *		kmem_va_arena
+ *		kmem_va_meta_arena
+ *			kmem_meta_arena
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.126 2012/06/02 08:42:37 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.127 2012/06/03 17:12:49 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
