@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.29 2012/06/02 21:36:45 dsl Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.30 2012/06/03 13:52:46 dsl Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.29 2012/06/02 21:36:45 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.30 2012/06/03 13:52:46 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -493,7 +493,7 @@ pms_sysctl_synaptics(struct sysctllog **clog)
 	    CTLTYPE_INT, "scale_x",
 	    SYSCTL_DESCR("Horizontal movement scale factor"),
 	    pms_sysctl_synaptics_verify, 0,
-	    (void *)&synaptics_scale_x,
+	    &synaptics_scale_x,
 	    0, CTL_HW, root_num, CTL_CREATE,
 	    CTL_EOL)) != 0)
 		goto err;
@@ -505,7 +505,7 @@ pms_sysctl_synaptics(struct sysctllog **clog)
 	    CTLTYPE_INT, "scale_y",
 	    SYSCTL_DESCR("Vertical movement scale factor"),
 	    pms_sysctl_synaptics_verify, 0,
-	    (void *)&synaptics_scale_y,
+	    &synaptics_scale_y,
 	    0, CTL_HW, root_num, CTL_CREATE,
 	    CTL_EOL)) != 0)
 		goto err;
