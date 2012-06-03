@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.6 2011/04/17 12:18:20 martin Exp $
+# $NetBSD: dot.profile,v 1.7 2012/06/03 21:42:45 joerg Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -38,7 +38,7 @@ export PATH
 
 # Check if we are on a framebuffer or on serial console and default
 # the terminal type accordingly.
-# There is no /var/db/dev.db, so sysctl might not map the devicename properly;
+# There is no /var/db/dev.cdb, so sysctl might not map the devicename properly;
 # ttyE0 is 90,0 -> 0x5a00
 case $(sysctl -nx kern.consdev) in
  0000000000005a0*)
