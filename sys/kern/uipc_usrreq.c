@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.119.4.4 2011/06/18 16:42:04 bouyer Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.119.4.5 2012/06/03 08:47:28 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.119.4.4 2011/06/18 16:42:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.119.4.5 2012/06/03 08:47:28 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1356,7 +1356,10 @@ unp_internalize(struct mbuf **controlp)
 			error = EAGAIN;
 			goto out;
 		}
-		if ((fp = fd_getfile(fd)) == NULL) {
+		if ((fp = fd_getfile(fd)) == NULL
+		    || fp->f_type == DTYPE_KQUEUE) {
+		    	if (fp)
+		    		fd_putfile(fd);
 			atomic_dec_uint(&unp_rights);
 			nfds = i;
 			error = EBADF;
