@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.240 2012/02/04 10:02:25 njoly Exp $	*/
+/*	$NetBSD: rump.c,v 1.241 2012/06/03 10:45:10 dsl Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.240 2012/02/04 10:02:25 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.241 2012/06/03 10:45:10 dsl Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -180,7 +180,7 @@ mksysctls(void)
 	sysctl_createv(NULL, 0, NULL, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_STRING, "hostname",
 	    SYSCTL_DESCR("System hostname"), NULL, 0,
-	    &hostname, MAXHOSTNAMELEN, CTL_KERN, KERN_HOSTNAME, CTL_EOL);
+	    hostname, MAXHOSTNAMELEN, CTL_KERN, KERN_HOSTNAME, CTL_EOL);
 }
 
 /* there's no convenient kernel entry point for this, so just craft out own */
