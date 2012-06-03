@@ -1,4 +1,4 @@
-/*	$NetBSD: k_helper.c,v 1.5 2010/11/03 16:10:23 christos Exp $	*/
+/*	$NetBSD: k_helper.c,v 1.6 2012/06/03 10:59:44 dsl Exp $	*/
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: k_helper.c,v 1.5 2010/11/03 16:10:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: k_helper.c,v 1.6 2012/06/03 10:59:44 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -88,7 +88,7 @@ SYSCTL_SETUP(sysctl_k_helper_setup, "sysctl k_helper subtree setup")
 	               CTLFLAG_PERMANENT,
 	               CTLTYPE_STRING, "prop_str_val",
 		       SYSCTL_DESCR("String property's value"),
-		       NULL, 0, &prop_str_val, 0,
+		       NULL, 0, prop_str_val, 0,
 	               CTL_VENDOR, K_HELPER, K_HELPER_PROP_STR_VAL, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
