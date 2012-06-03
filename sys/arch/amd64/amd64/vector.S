@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.38.8.1 2012/04/23 16:34:16 riz Exp $	*/
+/*	$NetBSD: vector.S,v 1.38.8.2 2012/06/03 21:45:10 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -100,40 +100,25 @@
 
 /*****************************************************************************/
 
-#ifndef	XEN
-#define PRE_TRAP
-#define	TRAP(a)		pushq $(a) ; jmp _C_LABEL(alltraps)
-#define	ZTRAP(a)	pushq $0 ; TRAP(a)
-#else
+#ifdef	XEN
 #define	PRE_TRAP	movq (%rsp),%rcx ; movq 8(%rsp),%r11 ; addq $0x10,%rsp 
-#define	POST_TRAP(a)	pushq $(a) ; jmp _C_LABEL(alltraps)
-#define	TRAP(a)		PRE_TRAP ; POST_TRAP(a)
-#define ZTRAP(a)	PRE_TRAP ; pushq $0 ; POST_TRAP(a)
+#else
+#define	PRE_TRAP
 #endif
 
-#define	BPTTRAP(a)	ZTRAP(a)
+#define	TRAP_NJ(a)	PRE_TRAP ; pushq $(a)
+#define	ZTRAP_NJ(a)	PRE_TRAP ; pushq $0 ; pushq $(a)
+#define	TRAP(a)		TRAP_NJ(a) ; jmp _C_LABEL(alltraps)
+#define	ZTRAP(a)	ZTRAP_NJ(a) ; jmp _C_LABEL(alltraps)
 
-#ifdef KDTRACE_HOOKS
-	.bss
-	.globl	dtrace_invop_jump_addr
-	.align	8
-	.type	dtrace_invop_jump_addr, @object
-	.size	dtrace_invop_jump_addr, 8
-dtrace_invop_jump_addr:
-	.zero	8
-	.globl	dtrace_invop_calltrap_addr
-	.align	8
-	.type	dtrace_invop_calltrap_addr, @object
-	.size	dtrace_invop_calltrap_addr, 8
-dtrace_invop_calltrap_addr:
-	.zero	8
-#endif
 	.text
 
 IDTVEC(trap00)
 	ZTRAP(T_DIVIDE)
+
 IDTVEC(trap01)
-	BPTTRAP(T_TRCTRAP)
+	ZTRAP(T_TRCTRAP)
+
 IDTVEC(trap02)
 #if defined(XEN)
 	ZTRAP(T_NMI)
@@ -167,18 +152,61 @@ IDTVEC(trap02)
 	addq	$TF_REGSIZE+16,%rsp
 	iretq
 #endif /* defined(XEN) */
+
 IDTVEC(trap03)
-	BPTTRAP(T_BPTFLT)
+#ifndef KDTRACE_HOOKS
+	ZTRAP(T_BPTFLT)
+#else
+	ZTRAP_NJ(T_BPTFLT)
+	INTRENTRY
+  	STI(si)
+	/*
+	 * DTrace Function Boundary Trace (fbt) probes are triggered
+	 * by int3 (0xcc).
+	 */
+	/* Check if there is no DTrace hook registered. */
+	cmpq	$0,dtrace_invop_jump_addr
+	je	calltrap
+
+	/*
+	 * Set our jump address for the jump back in the event that
+	 * the exception wasn't caused by DTrace at all.
+	 */
+	/* XXX: This doesn't look right for SMP - unless it is a
+	 * constant - so why set it everytime. (dsl) */
+	movq	$calltrap, dtrace_invop_calltrap_addr(%rip)
+
+	/* Jump to the code hooked in by DTrace. */
+	movq	dtrace_invop_jump_addr, %rax
+	jmpq	*dtrace_invop_jump_addr
+
+	.bss
+	.globl	dtrace_invop_jump_addr
+	.align	8
+	.type	dtrace_invop_jump_addr, @object
+	.size	dtrace_invop_jump_addr, 8
+dtrace_invop_jump_addr:
+	.zero	8
+	.globl	dtrace_invop_calltrap_addr
+	.align	8
+	.type	dtrace_invop_calltrap_addr, @object
+	.size	dtrace_invop_calltrap_addr, 8
+dtrace_invop_calltrap_addr:
+	.zero	8
+	.text
+#endif
+
 IDTVEC(trap04)
 	ZTRAP(T_OFLOW)
+
 IDTVEC(trap05)
 	ZTRAP(T_BOUND)
+
 IDTVEC(trap06)
 	ZTRAP(T_PRIVINFLT)
+
 IDTVEC(trap07)
-	PRE_TRAP;
-	pushq	$0			# dummy error code
-	pushq	$T_ASTFLT
+	ZTRAP_NJ(T_ASTFLT)
 	INTRENTRY
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
@@ -186,34 +214,78 @@ IDTVEC(trap07)
 	movq	CPUVAR(SELF),%rdi
 	call	_C_LABEL(fpudna)
 	jmp	.Lalltraps_checkusr
+
 IDTVEC(trap08)
 	TRAP(T_DOUBLEFLT)
+
 IDTVEC(trap09)
 	ZTRAP(T_FPOPFLT)
+
 IDTVEC(trap0a)
 	TRAP(T_TSSFLT)
-IDTVEC(trap0b)
-	TRAP(T_SEGNPFLT)
-IDTVEC(trap0c)
-	TRAP(T_STKFLT)
-IDTVEC(trap0d)
-	TRAP(T_PROTFLT)
+
+#ifdef XEN
+/*
+ * I don't believe XEN generates in-kernel traps for the
+ * equivalent of iret, if it does this code would be needed
+ * in order to copy the user segment registers into the fault frame.
+ */
+#define check_swapgs alltraps
+#endif
+
+IDTVEC(trap0b)		/* #NP() Segment not present */
+	TRAP_NJ(T_SEGNPFLT)
+	jmp	check_swapgs
+
+IDTVEC(trap0c)		/* #SS() Stack exception */
+	TRAP_NJ(T_STKFLT)
+	jmp	check_swapgs
+
+IDTVEC(trap0d)		/* #GP() General protection */
+	TRAP_NJ(T_PROTFLT)
+#ifdef check_swapgs
+	jmp	check_swapgs
+#else
+/* We need to worry about traps while the kernel %gs_base isn't loaded.
+ * These are either loads to %gs (only 32bit) or faults on iret during
+ * return to user. */
+check_swapgs:
+	INTRENTRY_L(3f,1:)
+2:	sti
+	jmp	calltrap
+3:
+	/* Trap in kernel mode. */
+	/* If faulting instruction is 'iret' we may need to do a 'swapgs'. */
+	movq	TF_RIP(%rsp),%rax
+	cmpw	$0xcf48,(%rax)		/* Faulting instruction is iretq ? */
+	jne	5f			/* Jump if not */
+	movq	TF_RSP(%rsp),%rax	/* Must read %rsp, may be a pad word */
+	testb	$SEL_UPL,8(%rax)	/* Check %cs of outer iret frame */
+	je	2b			/* jump if iret was to kernel  */
+	jmp	1b			/* to user - must restore %gs */
+5:
+	/* Not 'iret', all moves to %gs also need a swapgs */
+	movw	(%rax),%ax
+	andb	$070,%ah		/* mask mod/rm from mod/reg/rm */
+	cmpw	$0x8e+050*256,%ax	/* Any move to %gs (reg 5) */
+	jne	2b			/* No - normal kernel fault */
+	jmp	1b			/* Yes - restore %gs */
+#endif
+
 IDTVEC(trap0e)
 	TRAP(T_PAGEFLT)
+
 IDTVEC(intrspurious)
 IDTVEC(trap0f)
-	PRE_TRAP;
-	pushq	$0			# dummy error code
-	pushq	$T_ASTFLT
+	ZTRAP_NJ(T_ASTFLT)
 	INTRENTRY
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 #endif /* DIAGNOSTIC */
 	jmp	.Lalltraps_checkusr
+
 IDTVEC(trap10)
-	PRE_TRAP;
-	pushq	$0			# dummy error code
-	pushq	$T_ARITHTRAP
+	ZTRAP_NJ(T_ARITHTRAP)
 .Ldo_fputrap:
 	INTRENTRY
 #ifdef DIAGNOSTIC
@@ -227,15 +299,17 @@ IDTVEC(trap10)
 1:
   	STI(si)
 	jmp	calltrap
+
 IDTVEC(trap11)
 	TRAP(T_ALIGNFLT)
+
 IDTVEC(trap12)
 	ZTRAP(T_MCA)
+
 IDTVEC(trap13)
-	PRE_TRAP;
-	pushq	$0			# dummy error code
-	pushq	$T_XMM
+	ZTRAP_NJ(T_XMM)
 	jmp	.Ldo_fputrap
+
 IDTVEC(trap14)
 IDTVEC(trap15)
 IDTVEC(trap16)
@@ -270,25 +344,20 @@ IDTVEC(exceptions)
 	.quad	_C_LABEL(Xtrap1e), _C_LABEL(Xtrap1f)
 
 /*
- * If an error is detected during trap, syscall, or interrupt exit, trap() will
- * change %eip to point to one of these labels.  We clean up the stack, if
- * necessary, and resume as if we were handling a general protection fault.
- * This will cause the process to get a SIGBUS.
- *
- * XXXfvdl currently unused, as pop %ds and pop %es are illegal in long
- * mode. However, if the x86-64 port is going to support USER_LDT, we
- * may need something like this after all.
+ * trap() calls here when it detects a fault in INTRFASTEXIT (loading the
+ * segment registers or during the iret itself).
+ * The address of the (possibly reconstructed) user trap frame is
+ * passed as an argument.
+ * Typically the code will have raised a SIGSEGV which will be actioned
+ * by the code below.
  */
-NENTRY(resume_iret)
-	ZTRAP(T_PROTFLT)
-#if 0
-NENTRY(resume_pop_ds)
-	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
-	movl	%eax,%es
-NENTRY(resume_pop_es)
-	movl	$T_PROTFLT,TF_TRAPNO(%rsp)
-	jmp	calltrap
-#endif
+_C_LABEL(trap_return_fault_return):	.globl	trap_return_fault_return
+	mov	%rdi,%rsp		/* frame for user return */
+#ifdef DIAGNOSTIC
+	/* We can't recover the saved %rbx, so suppress warning */
+	movl	CPUVAR(ILEVEL),%ebx
+#endif /* DIAGNOSTIC */
+	jmp	.Lalltraps_checkusr
 
 /*
  * All traps go through here. Call the generic trap handler, and
@@ -297,30 +366,7 @@ NENTRY(resume_pop_es)
 NENTRY(alltraps)
 	INTRENTRY
   	STI(si)
-#ifdef KDTRACE_HOOKS
-	/*
-	 * DTrace Function Boundary Trace (fbt) probes are triggered
-	 * by int3 (0xcc) which causes the #BP (T_BPTFLT) breakpoint
-	 * interrupt. For all other trap types, just handle them in
-	 * the usual way.
-	 */
-	cmpl    $T_BPTFLT,TF_TRAPNO(%rsp)
-	jne     calltrap
 
-	/* Check if there is no DTrace hook registered. */
-	cmpq	$0,dtrace_invop_jump_addr
-	je	calltrap
-
-	/*
-	 * Set our jump address for the jump back in the event that
-	 * the exception wasn't caused by DTrace at all.
-	 */
-	movq	$calltrap, dtrace_invop_calltrap_addr(%rip)
-
-	/* Jump to the code hooked in by DTrace. */
-	movq	dtrace_invop_jump_addr, %rax
-	jmpq	*dtrace_invop_jump_addr
-#endif
 calltrap:
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
@@ -405,6 +451,7 @@ IDTVEC(recurse_lapic_ipi)
 	pushq	$T_ASTFLT
 	INTRENTRY		
 	jmp	1f
+
 IDTVEC(intr_lapic_ipi)
 	pushq	$0		
 	pushq	$T_ASTFLT
@@ -451,6 +498,7 @@ IDTVEC(recurse_lapic_ltimer)
 	pushq	$T_ASTFLT
 	INTRENTRY		
 	jmp	1f
+
 IDTVEC(intr_lapic_ltimer)
 	pushq	$0		
 	pushq	$T_ASTFLT
@@ -513,8 +561,8 @@ IDTVEC(intr_ ## name ## num)						;\
 	pushq	$0			/* dummy error code */		;\
 	pushq	$T_ASTFLT		/* trap # for doing ASTs */	;\
 	INTRENTRY							;\
-	movq	CPUVAR(ISOURCES) + (num) * 8, %r14		;\
-	mask(num)		/* mask it in hardware */	;\
+	movq	CPUVAR(ISOURCES) + (num) * 8, %r14			;\
+	mask(num)			/* mask it in hardware */	;\
 	early_ack(num)			/* and allow other intrs */	;\
 	testq	%r14,%r14						;\
 	jz	9f			/* stray */			;\
