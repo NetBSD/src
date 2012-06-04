@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_rename.c,v 1.3 2012/06/04 19:37:36 riastradh Exp $	*/
+/*	$NetBSD: ufs_rename.c,v 1.4 2012/06/04 19:58:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.3 2012/06/04 19:37:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.4 2012/06/04 19:58:57 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -680,7 +680,7 @@ ufs_rename_recalculate_fulr(struct vnode *dvp,
 	/*
 	 * Guarantee we sha'n't go past the end of the buffer we got.
 	 * dirbuf is bp->b_data + (search_start & (iosize - 1)), and
-	 * the valid range is [bp->b_data, bp->b_data + bp->b_count).
+	 * the valid range is [bp->b_data, bp->b_data + bp->b_bcount).
 	 */
 	KASSERT((search_end - search_start) <=
 	    (bp->b_bcount - (search_start & (mp->mnt_stat.f_iosize - 1))));
