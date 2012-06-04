@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.218 2008/10/23 20:41:14 christos Exp $	*/
+/*	kern_sysctl.c,v 1.218 2008/10/23 20:41:14 christos Exp	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.218 2008/10/23 20:41:14 christos Exp $");
+__KERNEL_RCSID(0, "kern_sysctl.c,v 1.218 2008/10/23 20:41:14 christos Exp");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -1935,19 +1935,26 @@ sysctl_createv(struct sysctllog **log, int cflags,
 	 */
 	va_start(ap, newlen);
 	namelen = 0;
+	error = 0;
 	ni = -1;
 	do {
-		if (++ni == CTL_MAXNAME)
-			return (ENAMETOOLONG);
+		if (++ni == CTL_MAXNAME) {
+			error = ENAMETOOLONG;
+			break;
+		}
 		name[ni] = va_arg(ap, int);
 		/*
 		 * sorry, this is not supported from here
 		 */
-		if (name[ni] == CTL_CREATESYM)
-			return (EINVAL);
+		if (name[ni] == CTL_CREATESYM) {
+			error = EINVAL;
+			break;
+		}
 	} while (name[ni] != CTL_EOL && name[ni] != CTL_CREATE);
-	namelen = ni + (name[ni] == CTL_CREATE ? 1 : 0);
 	va_end(ap);
+	if (error)
+		return error;
+	namelen = ni + (name[ni] == CTL_CREATE ? 1 : 0);
 
 	/*
 	 * what's it called
