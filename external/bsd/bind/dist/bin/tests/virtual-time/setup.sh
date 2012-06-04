@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: setup.sh,v 1.2 2010-06-17 05:38:05 marka Exp
+# Id: setup.sh,v 1.2 2010/06/17 05:38:05 marka Exp 
 
 #
 # Run a system test.

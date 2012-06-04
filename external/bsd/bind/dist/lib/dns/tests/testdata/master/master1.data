@@ -5,7 +5,7 @@ $TTL 1000
 				1800		;retry
 				604800		;expiration
 				3600 )		;minimum
-a		in	ns	ns.vix.com.
-a		in	ns	ns2vix.com.
-a		in	ns	ns3vix.com.
+		in	ns	ns.vix.com.
+		in	ns	ns2.vix.com.
+		in	ns	ns3.vix.com.
 b		in	a	1.2.3.4

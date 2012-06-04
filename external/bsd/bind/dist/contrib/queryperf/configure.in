@@ -54,6 +54,7 @@ AC_DEFUN(AC_SA_LEN,
 AC_CONFIG_HEADERS(config.h)
 AC_SEARCH_LIBS(res_mkquery, resolv bind)
 AC_SEARCH_LIBS(__res_mkquery, resolv bind)
+AC_SEARCH_LIBS(res_9_mkquery, resolv bind)
 AC_CHECK_LIB(socket, socket)
 AC_CHECK_LIB(nsl, inet_ntoa)
 AC_CHECK_FUNCS(gethostbyname2)

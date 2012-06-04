@@ -12,7 +12,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: root.db.in,v 1.2 2010-12-23 04:08:00 marka Exp
+; Id: root.db.in,v 1.2 2010/12/23 04:08:00 marka Exp 
 
 $TTL 300
 . 			IN SOA	marka.isc.org. a.root.servers.nil. (
