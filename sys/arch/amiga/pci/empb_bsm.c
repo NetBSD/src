@@ -1,4 +1,4 @@
-/*	$NetBSD: empb_bsm.c,v 1.3 2012/06/04 12:56:48 rkujawa Exp $ */
+/*	$NetBSD: empb_bsm.c,v 1.4 2012/06/04 19:45:50 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ static bswm(empb_bswr2, u_int16_t);
 static bssr(empb_bssr2_swap, u_int16_t);
 static bscr(empb_bscr2, u_int16_t);
 
-/*static bsr(empb_bsr4_swap, u_int32_t);
+static bsr(empb_bsr4_swap, u_int32_t);
 static bsw(empb_bsw4_swap, u_int32_t);
 static bsr(empb_bsr4, u_int32_t);
 static bsw(empb_bsw4, u_int32_t);
@@ -98,7 +98,7 @@ static bswm(empb_bswr4_swap, u_int32_t);
 static bsrm(empb_bsrr4, u_int32_t);
 static bswm(empb_bswr4, u_int32_t);
 static bssr(empb_bssr4_swap, u_int32_t);
-static bscr(empb_bscr4, u_int32_t);*/
+static bscr(empb_bscr4, u_int32_t);
 /* 
  * Hold pointer to bridge driver here. We need to access it to switch 
  * window position. Perhaps it should be stored in bus_space_tag instead...
@@ -189,7 +189,7 @@ empb_bsr1(bus_space_handle_t handle, bus_size_t offset)
 	return x;
 }
 
-void
+static void
 empb_bsw1(bus_space_handle_t handle, bus_size_t offset, unsigned value) 
 {
 	uint8_t *p;
@@ -200,7 +200,7 @@ empb_bsw1(bus_space_handle_t handle, bus_size_t offset, unsigned value)
 	*p = value;
 }
 
-void
+static void
 empb_bsrm1(bus_space_handle_t handle, bus_size_t offset, u_int8_t *pointer,
     bus_size_t count)
 {
@@ -217,7 +217,7 @@ empb_bsrm1(bus_space_handle_t handle, bus_size_t offset, u_int8_t *pointer,
 	}
 }
 
-void
+static void
 empb_bswm1(bus_space_handle_t handle, bus_size_t offset, 
     const u_int8_t *pointer, bus_size_t count)
 {
@@ -234,7 +234,7 @@ empb_bswm1(bus_space_handle_t handle, bus_size_t offset,
 	}
 }
 
-void
+static void
 empb_bsrr1(bus_space_handle_t handle, bus_size_t offset, u_int8_t *pointer,
     bus_size_t count)
 {
@@ -252,7 +252,7 @@ empb_bsrr1(bus_space_handle_t handle, bus_size_t offset, u_int8_t *pointer,
 	}
 }
 
-void
+static void
 empb_bswr1(bus_space_handle_t handle, bus_size_t offset, 
     const u_int8_t *pointer, bus_size_t count)
 {
@@ -270,7 +270,7 @@ empb_bswr1(bus_space_handle_t handle, bus_size_t offset,
 	}
 }
 
-void
+static void
 empb_bssr1(bus_space_handle_t handle, bus_size_t offset, unsigned value,
     bus_size_t count)
 {
@@ -289,7 +289,7 @@ empb_bssr1(bus_space_handle_t handle, bus_size_t offset, unsigned value,
 }
 
 /* XXX: this is broken, rewrite */
-void
+static void
 empb_bscr1(bus_space_handle_t handlefrom, bus_size_t from, 
     bus_space_handle_t handleto, bus_size_t to, bus_size_t count)
 {
@@ -344,7 +344,7 @@ empb_bsr2_swap(bus_space_handle_t handle, bus_size_t offset)
 }
 
 
-void
+static void
 empb_bsw2(bus_space_handle_t handle, bus_size_t offset, unsigned value) 
 {
 	uint16_t *p;
@@ -355,7 +355,7 @@ empb_bsw2(bus_space_handle_t handle, bus_size_t offset, unsigned value)
 	*p = value;
 }
 
-void
+static void
 empb_bsw2_swap(bus_space_handle_t handle, bus_size_t offset, unsigned value) 
 {
 	uint16_t *p;
@@ -366,7 +366,7 @@ empb_bsw2_swap(bus_space_handle_t handle, bus_size_t offset, unsigned value)
 	*p = bswap16(value);
 }
 
-void
+static void
 empb_bsrm2(bus_space_handle_t handle, bus_size_t offset, u_int16_t *pointer,
     bus_size_t count)
 {
@@ -374,7 +374,7 @@ empb_bsrm2(bus_space_handle_t handle, bus_size_t offset, u_int16_t *pointer,
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-  	p = (volatile u_int16_t *) ((empb_sc->pci_mem_win_t->base) + 
+  	p = (volatile uint16_t *) ((empb_sc->pci_mem_win_t->base) + 
 	    (handle - wp));
 
 	while (count > 0) {
@@ -384,7 +384,7 @@ empb_bsrm2(bus_space_handle_t handle, bus_size_t offset, u_int16_t *pointer,
 	}
 }
 
-void
+static void
 empb_bsrm2_swap(bus_space_handle_t handle, bus_size_t offset, 
     u_int16_t *pointer, bus_size_t count)
 {
@@ -392,7 +392,7 @@ empb_bsrm2_swap(bus_space_handle_t handle, bus_size_t offset,
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-  	p = (volatile u_int16_t *) ((empb_sc->pci_mem_win_t->base) + 
+  	p = (volatile uint16_t *) ((empb_sc->pci_mem_win_t->base) + 
 	    (handle - wp));
 
 	while (count > 0) {
@@ -402,7 +402,7 @@ empb_bsrm2_swap(bus_space_handle_t handle, bus_size_t offset,
 	}
 }
 
-void
+static void
 empb_bswm2(bus_space_handle_t handle, bus_size_t offset, 
     const u_int16_t *pointer, bus_size_t count)
 {
@@ -410,7 +410,7 @@ empb_bswm2(bus_space_handle_t handle, bus_size_t offset,
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-	p = (volatile u_int16_t *) ((empb_sc->pci_mem_win_t->base) + 
+	p = (volatile uint16_t *) ((empb_sc->pci_mem_win_t->base) + 
 	    (handle - wp));
 
 	while (count > 0) {
@@ -420,7 +420,7 @@ empb_bswm2(bus_space_handle_t handle, bus_size_t offset,
 	}
 }
 
-void
+static void
 empb_bswm2_swap(bus_space_handle_t handle, bus_size_t offset, 
     const u_int16_t *pointer, bus_size_t count)
 {
@@ -428,7 +428,7 @@ empb_bswm2_swap(bus_space_handle_t handle, bus_size_t offset,
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-	p = (volatile u_int16_t *) ((empb_sc->pci_mem_win_t->base) + 
+	p = (volatile uint16_t *) ((empb_sc->pci_mem_win_t->base) + 
 	    (handle - wp));
 
 	while (count > 0) {
@@ -438,7 +438,7 @@ empb_bswm2_swap(bus_space_handle_t handle, bus_size_t offset,
 	}
 }
 
-void
+static void
 empb_bsrr2(bus_space_handle_t handle, bus_size_t offset, u_int16_t *pointer,
     bus_size_t count)
 {
@@ -456,7 +456,7 @@ empb_bsrr2(bus_space_handle_t handle, bus_size_t offset, u_int16_t *pointer,
 	}
 }
 
-void
+static void
 empb_bsrr2_swap(bus_space_handle_t handle, bus_size_t offset, 
     u_int16_t *pointer, bus_size_t count)
 {
@@ -474,7 +474,7 @@ empb_bsrr2_swap(bus_space_handle_t handle, bus_size_t offset,
 	}
 }
 
-void
+static void
 empb_bssr2_swap(bus_space_handle_t handle, bus_size_t offset, unsigned value,
     bus_size_t count)
 {
@@ -493,7 +493,7 @@ empb_bssr2_swap(bus_space_handle_t handle, bus_size_t offset, unsigned value,
 	}
 }
 
-void
+static void
 empb_bswr2(bus_space_handle_t handle, bus_size_t offset, 
     const u_int16_t *pointer, bus_size_t count)
 {
@@ -511,7 +511,7 @@ empb_bswr2(bus_space_handle_t handle, bus_size_t offset,
 	}
 }
 
-void
+static void
 empb_bswr2_swap(bus_space_handle_t handle, bus_size_t offset, 
     const u_int16_t *pointer, bus_size_t count)
 {
@@ -530,7 +530,7 @@ empb_bswr2_swap(bus_space_handle_t handle, bus_size_t offset,
 }
 
 /* XXX: this is broken, rewrite, XXX 2: should we swap here? */
-void
+static void
 empb_bscr2(bus_space_handle_t handlefrom, bus_size_t from, 
     bus_space_handle_t handleto, bus_size_t to, bus_size_t count)
 {
@@ -553,7 +553,7 @@ empb_bscr2(bus_space_handle_t handlefrom, bus_size_t from,
 }
 
 /* === 32-bit methods === */
-/*
+
 static uint32_t
 empb_bsr4(bus_space_handle_t handle, bus_size_t offset)
 {
@@ -585,37 +585,37 @@ empb_bsr4_swap(bus_space_handle_t handle, bus_size_t offset)
 }
 
 
-void
+static void
 empb_bsw4(bus_space_handle_t handle, bus_size_t offset, unsigned value) 
 {
 	uint32_t *p;
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-	p = (uint16_t*)((empb_sc->pci_mem_win_t->base) + (handle - wp));
+	p = (uint32_t*)((empb_sc->pci_mem_win_t->base) + (handle - wp));
 	*p = value;
 }
 
-void
-empb_bsw2_swap(bus_space_handle_t handle, bus_size_t offset, unsigned value) 
+static void
+empb_bsw4_swap(bus_space_handle_t handle, bus_size_t offset, unsigned value) 
 {
-	uint16_t *p;
+	uint32_t *p;
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-	p = (uint16_t*)((empb_sc->pci_mem_win_t->base) + (handle - wp));
-	*p = bswap16(value);
+	p = (uint32_t*)((empb_sc->pci_mem_win_t->base) + (handle - wp));
+	*p = bswap32(value);
 }
 
-void
-empb_bsrm2(bus_space_handle_t handle, bus_size_t offset, u_int16_t *pointer,
+static void
+empb_bsrm4(bus_space_handle_t handle, bus_size_t offset, u_int32_t *pointer,
     bus_size_t count)
 {
-	volatile uint16_t *p;
+	volatile uint32_t *p;
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-  	p = (volatile u_int16_t *) ((empb_sc->pci_mem_win_t->base) + 
+  	p = (volatile uint32_t *) ((empb_sc->pci_mem_win_t->base) + 
 	    (handle - wp));
 
 	while (count > 0) {
@@ -625,33 +625,33 @@ empb_bsrm2(bus_space_handle_t handle, bus_size_t offset, u_int16_t *pointer,
 	}
 }
 
-void
-empb_bsrm2_swap(bus_space_handle_t handle, bus_size_t offset, 
-    u_int16_t *pointer, bus_size_t count)
+static void
+empb_bsrm4_swap(bus_space_handle_t handle, bus_size_t offset, 
+    u_int32_t *pointer, bus_size_t count)
 {
-	volatile uint16_t *p;
+	volatile uint32_t *p;
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-  	p = (volatile u_int16_t *) ((empb_sc->pci_mem_win_t->base) + 
+  	p = (volatile uint32_t *) ((empb_sc->pci_mem_win_t->base) + 
 	    (handle - wp));
 
 	while (count > 0) {
-		*pointer++ = bswap16(*p);
+		*pointer++ = bswap32(*p);
 		amiga_bus_reorder_protect();
  		--count;
 	}
 }
 
-void
-empb_bswm2(bus_space_handle_t handle, bus_size_t offset, 
-    const u_int16_t *pointer, bus_size_t count)
+static void
+empb_bswm4(bus_space_handle_t handle, bus_size_t offset, 
+    const u_int32_t *pointer, bus_size_t count)
 {
-	volatile uint16_t *p;
+	volatile uint32_t *p;
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-	p = (volatile u_int16_t *) ((empb_sc->pci_mem_win_t->base) + 
+	p = (volatile uint32_t *) ((empb_sc->pci_mem_win_t->base) + 
 	    (handle - wp));
 
 	while (count > 0) {
@@ -661,33 +661,33 @@ empb_bswm2(bus_space_handle_t handle, bus_size_t offset,
 	}
 }
 
-void
-empb_bswm2_swap(bus_space_handle_t handle, bus_size_t offset, 
-    const u_int16_t *pointer, bus_size_t count)
+static void
+empb_bswm4_swap(bus_space_handle_t handle, bus_size_t offset, 
+    const u_int32_t *pointer, bus_size_t count)
 {
-	volatile uint16_t *p;
+	volatile uint32_t *p;
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-	p = (volatile u_int16_t *) ((empb_sc->pci_mem_win_t->base) + 
+	p = (volatile uint32_t *) ((empb_sc->pci_mem_win_t->base) + 
 	    (handle - wp));
 
 	while (count > 0) {
-		*p = bswap16(*pointer++);
+		*p = bswap32(*pointer++);
  		amiga_bus_reorder_protect();
 		--count;
 	}
 }
 
-void
-empb_bsrr2(bus_space_handle_t handle, bus_size_t offset, u_int16_t *pointer,
+static void
+empb_bsrr4(bus_space_handle_t handle, bus_size_t offset, u_int32_t *pointer,
     bus_size_t count)
 {
-	volatile uint16_t *p;
+	volatile uint32_t *p;
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-	p = (volatile uint16_t *)((empb_sc->pci_mem_win_t->base)+(handle - wp));
+	p = (volatile uint32_t *)((empb_sc->pci_mem_win_t->base)+(handle - wp));
 
 	while (count > 0) {
 		*pointer++ = *p;
@@ -697,52 +697,52 @@ empb_bsrr2(bus_space_handle_t handle, bus_size_t offset, u_int16_t *pointer,
 	}
 }
 
-void
-empb_bsrr2_swap(bus_space_handle_t handle, bus_size_t offset, 
-    u_int16_t *pointer, bus_size_t count)
+static void
+empb_bsrr4_swap(bus_space_handle_t handle, bus_size_t offset, 
+    u_int32_t *pointer, bus_size_t count)
 {
-	volatile uint16_t *p;
+	volatile uint32_t *p;
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-	p = (volatile uint16_t *)((empb_sc->pci_mem_win_t->base)+(handle - wp));
+	p = (volatile uint32_t *)((empb_sc->pci_mem_win_t->base)+(handle - wp));
 
 	while (count > 0) {
-		*pointer++ = bswap16(*p);
+		*pointer++ = bswap32(*p);
 		amiga_bus_reorder_protect();
 		p++;
 		--count;
 	}
 }
 
-void
-empb_bssr2_swap(bus_space_handle_t handle, bus_size_t offset, unsigned value,
+static void
+empb_bssr4_swap(bus_space_handle_t handle, bus_size_t offset, unsigned value,
     bus_size_t count)
 {
-	volatile uint16_t *p;
+	volatile uint32_t *p;
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-	p = (volatile uint16_t *) ((empb_sc->pci_mem_win_t->base) + 
+	p = (volatile uint32_t *) ((empb_sc->pci_mem_win_t->base) + 
 	    (handle - wp));
 
  	while (count > 0) {
- 		*p = bswap16(value);
+ 		*p = bswap32(value);
 		amiga_bus_reorder_protect();
 		p++;
 		--count;
 	}
 }
 
-void
-empb_bswr2(bus_space_handle_t handle, bus_size_t offset, 
-    const u_int16_t *pointer, bus_size_t count)
+static void
+empb_bswr4(bus_space_handle_t handle, bus_size_t offset, 
+    const u_int32_t *pointer, bus_size_t count)
 {
-	volatile uint16_t *p;
+	volatile uint32_t *p;
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-	p = (volatile u_int16_t *)((empb_sc->pci_mem_win_t->base)+(handle - wp));
+	p = (volatile uint32_t *)((empb_sc->pci_mem_win_t->base)+(handle - wp));
 
  	while (count > 0) {
 		*p = *pointer++;
@@ -752,37 +752,37 @@ empb_bswr2(bus_space_handle_t handle, bus_size_t offset,
 	}
 }
 
-void
-empb_bswr2_swap(bus_space_handle_t handle, bus_size_t offset, 
-    const u_int16_t *pointer, bus_size_t count)
+static void
+empb_bswr4_swap(bus_space_handle_t handle, bus_size_t offset, 
+    const u_int32_t *pointer, bus_size_t count)
 {
-	volatile uint16_t *p;
+	volatile uint32_t *p;
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-	p = (volatile u_int16_t *)((empb_sc->pci_mem_win_t->base)+(handle - wp));
+	p = (volatile uint32_t *)((empb_sc->pci_mem_win_t->base)+(handle - wp));
 
  	while (count > 0) {
-		*p = bswap16(*pointer++);
+		*p = bswap32(*pointer++);
 		amiga_bus_reorder_protect();
 		p++;
 		--count;
 	}
 }
 
-// XXX: this is broken, rewrite, XXX 2: should we swap here? 
+/* XXX: this is broken, rewrite, XXX 2: should we swap here? */
 void
-empb_bscr2(bus_space_handle_t handlefrom, bus_size_t from, 
+empb_bscr4(bus_space_handle_t handlefrom, bus_size_t from, 
     bus_space_handle_t handleto, bus_size_t to, bus_size_t count)
 {
-	volatile uint16_t *p, *q;
+	volatile uint32_t *p, *q;
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handlefrom);
 
-	p = (volatile uint16_t *)
+	p = (volatile uint32_t *)
 	    ( ((empb_sc->pci_mem_win_t->base)+(handlefrom - wp)) + from );
-	q = (volatile uint16_t *)
+	q = (volatile uint32_t *)
 	    ( ((empb_sc->pci_mem_win_t->base)+(handleto - wp)) + to );
 
 	while (count > 0) {
@@ -791,7 +791,7 @@ empb_bscr2(bus_space_handle_t handlefrom, bus_size_t from,
 		p++; q++;
 		--count;
 	}
-} */
+} 
 /* === end of implementation === */
 
 const struct amiga_bus_space_methods empb_bus_swap = {
@@ -826,9 +826,9 @@ const struct amiga_bus_space_methods empb_bus_swap = {
 	.bsrrs2 =	empb_bsrr2,
 	.bswrs2 =	empb_bswr2,
 	.bssr2 =	empb_bssr2_swap,
-	.bscr2 =	empb_bscr2 /*
+	.bscr2 =	empb_bscr2, 	/* swap? */
 
-	//32-bit methods 
+	/* 32-bit methods */
 	.bsr4 =		empb_bsr4_swap,
 	.bsw4 =		empb_bsw4_swap,
 	.bsrs4 =	empb_bsr4,
@@ -842,7 +842,7 @@ const struct amiga_bus_space_methods empb_bus_swap = {
 	.bsrrs4 =	empb_bsrr4,
 	.bswrs4 =	empb_bswr4,
 	.bssr4 = 	empb_bssr4_swap,
-	.bscr4 =	empb_bscr4_swap  */
+	.bscr4 =	empb_bscr4	/* swap? */
 };
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: empb.c,v 1.5 2012/06/04 12:56:48 rkujawa Exp $ */
+/*	$NetBSD: empb.c,v 1.6 2012/06/04 19:45:50 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 
 #include "opt_pci.h"
 
-/* #define EMPB_DEBUG 1  */
+/* #define EMPB_DEBUG 1 */
 
 #define	PCI_CONF_LOCK(s)	(s) = splhigh()
 #define	PCI_CONF_UNLOCK(s)	splx((s))
@@ -208,11 +208,6 @@ empb_callback(device_t self) {
 	if (sc->pci_mem_win_size == 0)
 		aprint_error_dev(self,
 		    "couldn't find memory space, check your WINDOW jumper\n");
-
-	/* just a test */
-	empb_switch_window(sc, 0x80000000);
-	empb_switch_window(sc, 0x82F00000);
-	empb_switch_window(sc, 0x82000000);
 
 	/* Initialize the PCI chipset tag. */
 	sc->apc.pc_conf_v = (void*) pc;
