@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_rename.c,v 1.3 2012/06/04 19:45:59 riastradh Exp $	*/
+/*	$NetBSD: ext2fs_rename.c,v 1.4 2012/06/04 20:13:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_rename.c,v 1.3 2012/06/04 19:45:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_rename.c,v 1.4 2012/06/04 20:13:47 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -309,24 +309,11 @@ ext2fs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	if ((nlink_t)VTOI(fvp)->i_e2fs_nlink >= LINK_MAX)
 		return EMLINK;
 
-	/*
-	 * XXX There is a pile of logic here to handle a voodoo flag
-	 * IN_RENAME.  I think this is a vestige of days when the file
-	 * system hackers didn't understand concurrency or race
-	 * conditions; I believe it serves no useful function
-	 * whatsoever.
-	 */
-
 	directory_p = (fvp->v_type == VDIR);
 	KASSERT(directory_p == ((VTOI(fvp)->i_e2fs_mode & IFMT) == IFDIR));
 	KASSERT((tvp == NULL) || (directory_p == (tvp->v_type == VDIR)));
 	KASSERT((tvp == NULL) || (directory_p ==
 		((VTOI(tvp)->i_e2fs_mode & IFMT) == IFDIR)));
-	if (directory_p) {
-		if (VTOI(fvp)->i_flag & IN_RENAME)
-			return EINVAL;
-		VTOI(fvp)->i_flag |= IN_RENAME;
-	}
 
 	reparent_p = (fdvp != tdvp);
 	KASSERT(reparent_p == (VTOI(fdvp)->i_number != VTOI(tdvp)->i_number));
@@ -516,8 +503,6 @@ whymustithurtsomuch:
 	KASSERT(0 < VTOI(fvp)->i_e2fs_nlink);
 	VTOI(fvp)->i_e2fs_nlink--;
 	VTOI(fvp)->i_flag |= IN_CHANGE;
-	if (directory_p)
-		VTOI(fvp)->i_flag &=~ IN_RENAME;
 	return error;
 }
 
