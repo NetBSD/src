@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.58 2012/06/04 18:53:02 joerg Exp $
+#	$NetBSD: Makefile,v 1.59 2012/06/04 19:06:45 joerg Exp $
 
 HOSTLIB=	nbcompat
 
-SRCS=		atoll.c basename.c cdbw.c dirname.c \
+SRCS=		atoll.c basename.c cdbr.c cdbw.c dirname.c \
 		fgetln.c flock.c fparseln.c fpurge.c \
 		getcap.c getline.c getmode.c getopt_long.c gettemp.c \
 		heapsort.c \
