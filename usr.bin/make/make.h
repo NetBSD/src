@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.87 2011/09/16 15:38:04 joerg Exp $	*/
+/*	$NetBSD: make.h,v 1.88 2012/06/04 20:34:20 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -401,6 +401,7 @@ extern Lst	defIncPath;	/* The default include path. */
 extern char	curdir[];	/* Startup directory */
 extern char	*progname;	/* The program name */
 extern char	*makeDependfile; /* .depend */
+extern char	**savedEnv;	 /* if we replaced environ this will be non-NULL */
 
 /*
  * We cannot vfork() in a child of vfork().
