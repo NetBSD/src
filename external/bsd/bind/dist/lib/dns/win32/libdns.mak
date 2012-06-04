@@ -126,6 +126,7 @@ CLEAN :
 	-@erase "$(INTDIR)\byaddr.obj"
 	-@erase "$(INTDIR)\cache.obj"
 	-@erase "$(INTDIR)\callbacks.obj"
+	-@erase "$(INTDIR)\clientinfo.obj"
 	-@erase "$(INTDIR)\compress.obj"
 	-@erase "$(INTDIR)\db.obj"
 	-@erase "$(INTDIR)\dbiterator.obj"
@@ -263,6 +264,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\byaddr.obj" \
 	"$(INTDIR)\cache.obj" \
 	"$(INTDIR)\callbacks.obj" \
+	"$(INTDIR)\clientinfo.obj" \
 	"$(INTDIR)\compress.obj" \
 	"$(INTDIR)\db.obj" \
 	"$(INTDIR)\dbiterator.obj" \
@@ -385,6 +387,8 @@ CLEAN :
 	-@erase "$(INTDIR)\cache.sbr"
 	-@erase "$(INTDIR)\callbacks.obj"
 	-@erase "$(INTDIR)\callbacks.sbr"
+	-@erase "$(INTDIR)\clientinfo.obj"
+	-@erase "$(INTDIR)\clientinfo.sbr"
 	-@erase "$(INTDIR)\compress.obj"
 	-@erase "$(INTDIR)\compress.sbr"
 	-@erase "$(INTDIR)\db.obj"
@@ -602,6 +606,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\byaddr.sbr" \
 	"$(INTDIR)\cache.sbr" \
 	"$(INTDIR)\callbacks.sbr" \
+	"$(INTDIR)\clientinfo.sbr" \
 	"$(INTDIR)\compress.sbr" \
 	"$(INTDIR)\db.sbr" \
 	"$(INTDIR)\dbiterator.sbr" \
@@ -698,6 +703,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\byaddr.obj" \
 	"$(INTDIR)\cache.obj" \
 	"$(INTDIR)\callbacks.obj" \
+	"$(INTDIR)\clientinfo.obj" \
 	"$(INTDIR)\compress.obj" \
 	"$(INTDIR)\db.obj" \
 	"$(INTDIR)\dbiterator.obj" \
@@ -901,6 +907,24 @@ SOURCE=..\callbacks.c
 
 
 "$(INTDIR)\callbacks.obj"	"$(INTDIR)\callbacks.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\clientinfo.c
+
+!IF  "$(CFG)" == "libdns - Win32 Release"
+
+
+"$(INTDIR)\clientinfo.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libdns - Win32 Debug"
+
+
+"$(INTDIR)\clientinfo.obj"	"$(INTDIR)\clientinfo.sbr" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 

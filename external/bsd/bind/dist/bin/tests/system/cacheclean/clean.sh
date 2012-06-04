@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: clean.sh,v 1.8 2011-08-03 23:47:48 tbox Exp
+# Id: clean.sh,v 1.8 2011/08/03 23:47:48 tbox Exp 
 
 #
 # Clean up after cache cleaner tests.

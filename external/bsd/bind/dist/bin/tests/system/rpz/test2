@@ -12,24 +12,51 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: test2,v 1.4 2011-01-13 19:30:41 each Exp
+; Id: test2,v 1.6 2011/11/18 19:32:13 each Exp 
 
+
+; Use comment lines instead of blank lines to combine update requests into
+;	single requests
+; Separate update requests for distinct TLDs with blank lines or 'send'
+; End the file with a blank line or 'send'
+
+; IP tests
 
 server 10.53.0.3 5300
 
 ; NODATA a3-1.tld2
 update add  32.1.3.168.192.rpz-ip.bl	300 CNAME *.
-
-; NXDOMAIN for network of a4-1.tld2
+;
+; NXDOMAIN for 192.168.4.0/24, the network of a4-1.tld2
 update add  24.0.4.168.192.rpz-ip.bl	300 CNAME .
-
+;
 ; poke hole in NXDOMAIN CIDR block to leave a4-1.tld2 unchanged
 update add  32.1.4.168.192.rpz-ip.bl	300 CNAME 32.1.4.168.192
-
-; NODATA a4-3.tld2
+;
+; NODATA for a4-3.tld2
 update add  32.3.4.168.192.rpz-ip.bl	300 CNAME *.
-
+;
 ; NXDOMAIN for IPv6 a3-1.tld2
 update add  128.1.zz.3.2.2001.rpz-ip.bl	300 CNAME .
+;
+; apply the policy with the lexically smallest address of 192.168.5.1
+; to an RRset of more than one A RR
+update add  32.1.5.168.192.rpz-ip.bl	300 A	127.0.0.1
+update add  32.2.5.168.192.rpz-ip.bl	300 A	127.0.0.2
+;
+; prefer first conflicting IP zone for a5-3.tld2
+update add 32.3.5.168.192.rpz-ip.bl	300 A	127.0.0.1
+send
+update add 32.3.5.168.192.rpz-ip.bl-2	300 A	127.0.0.2
+send
 
+; prefer QNAME to IP for a5-4.tld2
+update add 32.4.5.168.192.rpz-ip.bl	300 CNAME a12.tld2.
+update add a5-4.tld2.bl			300 CNAME a14.tld4.
+;
+; assert in rbtdb.c
+;	16
+update add 32.16.1.16.172.rpz-ip.bl	300 CNAME .
+send
+update add c2.crash2.tld3.bl-2		300 A	127.0.0.16
 send

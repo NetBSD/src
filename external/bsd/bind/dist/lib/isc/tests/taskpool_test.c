@@ -1,7 +1,7 @@
-/*	$NetBSD: taskpool_test.c,v 1.1.1.1 2011/09/11 17:19:36 christos Exp $	*/
+/*	$NetBSD: taskpool_test.c,v 1.1.1.2 2012/06/04 17:56:53 christos Exp $	*/
 
 /*
- * Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: taskpool_test.c,v 1.3 2011-07-28 04:04:37 each Exp */
+/* Id */
 
 /*! \file */
 
@@ -150,6 +150,55 @@ ATF_TC_BODY(get_tasks, tc) {
 	isc_test_end();
 }
 
+/* Get tasks */
+ATF_TC(set_privilege);
+ATF_TC_HEAD(set_privilege, tc) {
+	atf_tc_set_md_var(tc, "descr", "create a taskpool");
+}
+ATF_TC_BODY(set_privilege, tc) {
+	isc_result_t result;
+	isc_taskpool_t *pool = NULL;
+	isc_task_t *task1 = NULL, *task2 = NULL, *task3 = NULL;
+
+	UNUSED(tc);
+
+	result = isc_test_begin(NULL, ISC_TRUE);
+	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+
+	result = isc_taskpool_create(taskmgr, mctx, 2, 2, &pool);
+	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	ATF_REQUIRE_EQ(isc_taskpool_size(pool), 2);
+
+	isc_taskpool_setprivilege(pool, ISC_TRUE);
+
+	isc_taskpool_gettask(pool, &task1);
+	isc_taskpool_gettask(pool, &task2);
+	isc_taskpool_gettask(pool, &task3);
+
+	ATF_CHECK(ISCAPI_TASK_VALID(task1));
+	ATF_CHECK(ISCAPI_TASK_VALID(task2));
+	ATF_CHECK(ISCAPI_TASK_VALID(task3));
+
+	ATF_CHECK(isc_task_privilege(task1));
+	ATF_CHECK(isc_task_privilege(task2));
+	ATF_CHECK(isc_task_privilege(task3));
+
+	isc_taskpool_setprivilege(pool, ISC_FALSE);
+
+	ATF_CHECK(!isc_task_privilege(task1));
+	ATF_CHECK(!isc_task_privilege(task2));
+	ATF_CHECK(!isc_task_privilege(task3));
+
+	isc_task_destroy(&task1);
+	isc_task_destroy(&task2);
+	isc_task_destroy(&task3);
+
+	isc_taskpool_destroy(&pool);
+	ATF_REQUIRE_EQ(pool, NULL);
+
+	isc_test_end();
+}
+
 /*
  * Main
  */
@@ -157,6 +206,7 @@ ATF_TP_ADD_TCS(tp) {
 	ATF_TP_ADD_TC(tp, create_pool);
 	ATF_TP_ADD_TC(tp, expand_pool);
 	ATF_TP_ADD_TC(tp, get_tasks);
+	ATF_TP_ADD_TC(tp, set_privilege);
 
 	return (atf_no_error());
 }
