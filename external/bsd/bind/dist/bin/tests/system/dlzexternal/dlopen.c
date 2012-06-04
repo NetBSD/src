@@ -1,4 +1,4 @@
-/*	$NetBSD: dlopen.c,v 1.1.1.1 2011/09/11 17:13:06 christos Exp $	*/
+/*	$NetBSD: dlopen.c,v 1.1.1.2 2012/06/04 17:54:23 christos Exp $	*/
 
 /*
  * Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dlopen.c,v 1.2 2011-03-10 04:36:15 each Exp */
+/* Id: dlopen.c,v 1.2 2011/03/10 04:36:15 each Exp  */
 
 #include <config.h>
 

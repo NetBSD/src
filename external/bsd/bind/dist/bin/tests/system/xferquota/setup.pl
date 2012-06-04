@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: setup.pl,v 1.14 2007-06-19 23:47:07 tbox Exp
+# Id: setup.pl,v 1.16 2011/10/26 23:46:15 tbox Exp 
 
 #
 # Set up test data for zone transfer quota tests.
@@ -28,7 +28,7 @@ my $slaveconf  = new FileHandle("ns2/zones.conf", "w") or die;
 for ($z = 0; $z < 300; $z++) {
     my $zn = sprintf("zone%06d.example", $z);
     print $masterconf "zone \"$zn\" { type master; file \"$zn.db\"; };\n";
-    print $slaveconf  "zone \"$zn\" { type slave; file \"$zn.bk\"; masters { 10.53.0.1; }; };\n";
+    print $slaveconf  "zone \"$zn\" { type slave; file \"$zn.bk\"; masterfile-format text; masters { 10.53.0.1; }; };\n";
     my $fn = "ns1/$zn.db";
     my $f = new FileHandle($fn, "w") or die "open: $fn: $!";
     print $f "\$TTL 300

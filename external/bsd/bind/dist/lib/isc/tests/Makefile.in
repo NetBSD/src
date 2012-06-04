@@ -1,4 +1,4 @@
-# Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.6 2011-08-23 01:29:38 each Exp
+# Id
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -35,16 +35,22 @@ ISCDEPLIBS =	../libisc.@A@
 LIBS =		@LIBS@ @ATFLIBS@
 
 OBJS =		isctest.@O@
-SRCS =		isctest.c taskpool_test.c socket_test.c hash_test.c
+SRCS =		isctest.c taskpool_test.c socket_test.c hash_test.c \
+		symtab_test.c task_test.c queue_test.c
 
 SUBDIRS =
-TARGETS =	taskpool_test@EXEEXT@ socket_test@EXEEXT@ hash_test@EXEEXT@
+TARGETS =	taskpool_test@EXEEXT@ socket_test@EXEEXT@ hash_test@EXEEXT@ \
+		symtab_test@EXEEXT@ task_test@EXEEXT@ queue_test@EXEEXT@
 
 @BIND9_MAKE_RULES@
 
 taskpool_test@EXEEXT@: taskpool_test.@O@ isctest.@O@ ${ISCDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
 			taskpool_test.@O@ isctest.@O@ ${ISCLIBS} ${LIBS}
+
+task_test@EXEEXT@: task_test.@O@ isctest.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			task_test.@O@ isctest.@O@ ${ISCLIBS} ${LIBS}
 
 socket_test@EXEEXT@: socket_test.@O@ isctest.@O@ ${ISCDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
@@ -53,6 +59,14 @@ socket_test@EXEEXT@: socket_test.@O@ isctest.@O@ ${ISCDEPLIBS}
 hash_test@EXEEXT@: hash_test.@O@ ${ISCDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
 			hash_test.@O@ ${ISCLIBS} ${LIBS}
+
+queue_test@EXEEXT@: queue_test.@O@ isctest.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			queue_test.@O@ isctest.@O@ ${ISCLIBS} ${LIBS}
+
+symtab_test@EXEEXT@: symtab_test.@O@ isctest.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			symtab_test.@O@ isctest.@O@ ${ISCLIBS} ${LIBS}
 
 unit::
 	sh ${top_srcdir}/unit/unittest.sh

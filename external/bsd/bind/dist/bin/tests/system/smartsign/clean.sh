@@ -14,6 +14,6 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: clean.sh,v 1.3 2010-01-18 23:48:40 tbox Exp
+# Id: clean.sh,v 1.3 2010/01/18 23:48:40 tbox Exp 
 
 rm -f K* dsset-* *.signed random.data dnskey.sigs other.sigs dsset.out

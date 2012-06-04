@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: clean.sh,v 1.2 2010-11-16 01:37:36 sar Exp
+# Id: clean.sh,v 1.2 2010/11/16 01:37:36 sar Exp 
 
 #
 # Clean up after allow query tests.

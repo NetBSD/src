@@ -14,12 +14,29 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: setup.sh,v 1.3 2011-07-07 23:47:49 tbox Exp
+# Id: setup.sh,v 1.4 2011/09/02 21:15:35 each Exp 
 
-if [ "$#" -ne 1 ]; then
-    echo "Usage: $0 <number of zones>"
+usage () {
+    echo "Usage: $0 [-s] <number of zones> [<records per zone>]"
+    echo "       -s: use the same zone file all zones"
     exit 1
+}
+
+if [ "$#" -lt 1 -o "$#" -gt 3 ]; then
+    usage
 fi
+
+single_file=""
+if [ $1 = "-s" ]; then
+    single_file=yes
+    shift
+fi
+
+nzones=$1
+shift
+
+nrecords=5
+[ "$#" -eq 1 ] && nrecords=$1
 
 . ../system/conf.sh
 
@@ -59,6 +76,12 @@ logging {
 
 EOF
 
-$PERL makenames.pl $1 | while read zonename; do
+$PERL makenames.pl $nzones | while read zonename; do
+    if [ $single_file ]; then
         echo "zone $zonename { type master; file \"smallzone.db\"; };"
+    else
+        [ -d zones ] || mkdir zones
+        $PERL mkzonefile.pl $zonename $nrecords > zones/$zonename.db
+        echo "zone $zonename { type master; file \"zones/$zonename.db\"; };"
+    fi
 done
