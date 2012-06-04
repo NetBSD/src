@@ -1,4 +1,4 @@
-/*	$NetBSD: cdbr.c,v 1.2 2010/06/03 12:40:52 veego Exp $	*/
+/*	$NetBSD: cdbr.c,v 1.3 2012/06/04 19:06:45 joerg Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,12 +36,17 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cdbr.c,v 1.2 2010/06/03 12:40:52 veego Exp $");
+__RCSID("$NetBSD: cdbr.c,v 1.3 2012/06/04 19:06:45 joerg Exp $");
 
 #include "namespace.h"
 
+#if !HAVE_NBTOOL_CONFIG_H
 #include <sys/bitops.h>
+#endif
+#if !HAVE_NBTOOL_CONFIG_H || HAVE_SYS_ENDIAN_H
 #include <sys/endian.h>
+#endif
+
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <cdbr.h>
@@ -57,6 +62,11 @@ __weak_alias(cdbr_close,_cdbr_close)
 __weak_alias(cdbr_find,_cdbr_find)
 __weak_alias(cdbr_get,_cdbr_get)
 __weak_alias(cdbr_open,_cdbr_open)
+#endif
+
+#if HAVE_NBTOOL_CONFIG_H
+#define	fast_divide32_prepare(d,m,s1,s2)	(void)0
+#define	fast_remainder32(v,d,m,s1,s2)		(v%d)
 #endif
 
 struct cdbr {
