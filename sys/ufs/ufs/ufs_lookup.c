@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.115 2012/05/09 00:21:18 riastradh Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.116 2012/06/04 16:46:45 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.115 2012/05/09 00:21:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.116 2012/06/04 16:46:45 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -816,13 +816,6 @@ ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	dp = VTOI(dvp);
 	newentrysize = DIRSIZ(0, dirp, 0);
 
-#if 0
-	struct ufs_lookup_results *ulr;
-	/* XXX should handle this material another way */
-	ulr = &dp->i_crap;
-	UFS_CHECK_CRAPCOUNTER(dp);
-#endif
-
 	if (ulr->ulr_count == 0) {
 		/*
 		 * If ulr_count is 0, then namei could find no
@@ -873,7 +866,7 @@ ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 
 	/*
 	 * If ulr_count is non-zero, then namei found space for the new
-	 * entry in the range ulr_offset to url_offset + url_count
+	 * entry in the range ulr_offset to ulr_offset + ulr_count
 	 * in the directory. To use this space, we may have to compact
 	 * the entries located there, by copying them together towards the
 	 * beginning of the block, leaving the free space in one usable
@@ -907,8 +900,8 @@ ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	/*
 	 * Find space for the new entry. In the simple case, the entry at
 	 * offset base will have the space. If it does not, then namei
-	 * arranged that compacting the region dp->i_offset to
-	 * dp->i_offset + dp->i_count would yield the space.
+	 * arranged that compacting the region ulr_offset to
+	 * ulr_offset + ulr_count would yield the space.
 	 */
 	ep = (struct direct *)dirbuf;
 	dsize = (ep->d_ino != 0) ? DIRSIZ(FSFMT(dvp), ep, needswap) : 0;
@@ -1084,7 +1077,7 @@ ufs_dirremove(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 #ifdef UFS_DIRHASH
 	/*
 	 * Remove the dirhash entry. This is complicated by the fact
-	 * that `ep' is the previous entry when dp->i_count != 0.
+	 * that `ep' is the previous entry when ulr_count != 0.
 	 */
 	if (dp->i_dirhash != NULL)
 		ufsdirhash_remove(dp, (ulr->ulr_count == 0) ? ep :
