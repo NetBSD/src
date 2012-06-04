@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_rename.c,v 1.2 2012/05/10 07:57:02 riastradh Exp $	*/
+/*	$NetBSD: ufs_rename.c,v 1.3 2012/06/04 19:37:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.2 2012/05/10 07:57:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.3 2012/06/04 19:37:36 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -519,10 +519,9 @@ ufs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	 * inserting a new entry.  That may invalidate fulr, which we
 	 * need in order to remove the old entry.  In that case, we
 	 * need to recalculate what fulr should be.
-	 *
-	 * XXX I believe this is necessary only if tvp == NULL as well.
 	 */
-	if (!reparent_p && ufs_rename_ulr_overlap_p(fulr, tulr)) {
+	if (!reparent_p && (tvp == NULL) &&
+	    ufs_rename_ulr_overlap_p(fulr, tulr)) {
 		error = ufs_rename_recalculate_fulr(fdvp, fulr, tulr, fcnp);
 #if 0				/* XXX */
 		if (error)	/* XXX Try to back out changes?  */
@@ -627,13 +626,11 @@ ufs_rename_recalculate_fulr(struct vnode *dvp,
 	struct ufsmount *ump;
 	int needswap;
 	/* XXX int is a silly type for this; blame ufsmount::um_dirblksiz.  */
-	int directory_block_mask;
-	unsigned long io_block_mask;
+	int dirblksiz;
+	doff_t search_start, search_end;
 	doff_t offset;		/* Offset of entry we're examining.  */
-	doff_t search_end;	/* Limit to our search.  */
 	struct buf *bp;		/* I/O block we're examining.  */
-	char *dirbuf;		/* Pointer into bp's data.  */
-	doff_t dirbuf_offset;	/* Offset of dirbuf from directory start.  */
+	char *dirbuf;		/* Pointer into directory at search_start.  */
 	struct direct *ep;	/* Pointer to the entry we're examining.  */
 	/* XXX direct::d_reclen is 16-bit;
 	 * ufs_lookup_results::ulr_reclen is 32-bit.  Blah.  */
@@ -656,65 +653,54 @@ ufs_rename_recalculate_fulr(struct vnode *dvp,
 
 	needswap = UFS_MPNEEDSWAP(ump);
 
-	KASSERT(0 < ump->um_dirblksiz);
-	KASSERT((ump->um_dirblksiz & (ump->um_dirblksiz - 1)) == 0);
-	directory_block_mask = (ump->um_dirblksiz - 1);
+	dirblksiz = ump->um_dirblksiz;
+	KASSERT(0 < dirblksiz);
+	KASSERT((dirblksiz & (dirblksiz - 1)) == 0);
 
-	KASSERT(0 < mp->mnt_stat.f_iosize);
-	KASSERT((mp->mnt_stat.f_iosize & (mp->mnt_stat.f_iosize - 1)) == 0);
-	io_block_mask = (mp->mnt_stat.f_iosize - 1);
+	/* A directory block may not span across multiple I/O blocks.  */
+	KASSERT(dirblksiz <= mp->mnt_stat.f_iosize);
 
-	offset = tulr->ulr_offset;
+	/* Find the bounds of the search.  */
+	search_start = tulr->ulr_offset;
 	KASSERT(fulr->ulr_reclen < (MAXDIRSIZE - fulr->ulr_offset));
 	search_end = (fulr->ulr_offset + fulr->ulr_reclen);
 
+	/* Compaction must happen only within a directory block. (*)  */
+	KASSERT(search_start <= search_end);
+	KASSERT((search_end - (search_start &~ (dirblksiz - 1))) <= dirblksiz);
+
 	dirbuf = NULL;
 	bp = NULL;
-	dirbuf_offset = offset;
-	error = ufs_blkatoff(dvp, (off_t)dirbuf_offset, &dirbuf, &bp, false);
+	error = ufs_blkatoff(dvp, (off_t)search_start, &dirbuf, &bp, false);
 	if (error)
 		return error;
 	KASSERT(dirbuf != NULL);
 	KASSERT(bp != NULL);
 
+	/*
+	 * Guarantee we sha'n't go past the end of the buffer we got.
+	 * dirbuf is bp->b_data + (search_start & (iosize - 1)), and
+	 * the valid range is [bp->b_data, bp->b_data + bp->b_count).
+	 */
+	KASSERT((search_end - search_start) <=
+	    (bp->b_bcount - (search_start & (mp->mnt_stat.f_iosize - 1))));
+
 	prev_reclen = fulr->ulr_count;
+	offset = search_start;
 
 	/*
-	 * Search from offset to search_end for the entry matching
+	 * Search from search_start to search_end for the entry matching
 	 * fcnp, which must be there because we found it before and it
 	 * should only at most have moved earlier.
 	 */
 	for (;;) {
+		KASSERT(search_start <= offset);
 		KASSERT(offset < search_end);
-
-		/*
-		 * If we are at an I/O block boundary, fetch the next block.
-		 */
-		if ((offset & io_block_mask) == 0) {
-#if 0				/* XXX */
-			printf("%s: directory block of inode 0x%llx"
-			    " extends across I/O block boundary,"
-			    " which shouldn't happen!\n",
-			    mp->mnt_stat.f_mntonname,
-			    (unsigned long long)VTOI(dvp)->i_number);
-#endif
-			brelse(bp, 0);
-			dirbuf = NULL;
-			bp = NULL;
-			dirbuf_offset = offset;
-			error = ufs_blkatoff(dvp, (off_t)dirbuf_offset,
-			    &dirbuf, &bp, false);
-			if (error)
-				return error;
-			KASSERT(dirbuf != NULL);
-			KASSERT(bp != NULL);
-		}
 
 		/*
 		 * Examine the directory entry at offset.
 		 */
-		KASSERT(dirbuf_offset <= offset);
-		ep = (struct direct *)(dirbuf + (offset - dirbuf_offset));
+		ep = (struct direct *)(dirbuf + (offset - search_start));
 		reclen = ufs_rw16(ep->d_reclen, needswap);
 
 		if (ep->d_ino == 0)
@@ -739,8 +725,17 @@ next:
 			return EIO;	/* XXX Panic?  What?  */
 		}
 
+		/* We may not move past the search end.  */
 		KASSERT(reclen < search_end);
 		KASSERT(offset < (search_end - reclen));
+
+		/*
+		 * We may not move across a directory block boundary;
+		 * see (*) above.
+		 */
+		KASSERT((offset &~ (dirblksiz - 1)) ==
+		    ((offset + reclen) &~ (dirblksiz - 1)));
+
 		prev_reclen = reclen;
 		offset += reclen;
 	}
@@ -755,7 +750,7 @@ next:
 	 * Record the preceding record length, but not if we're at the
 	 * start of a directory block.
 	 */
-	fulr->ulr_count = ((offset & directory_block_mask)? prev_reclen : 0);
+	fulr->ulr_count = ((offset & (dirblksiz - 1))? prev_reclen : 0);
 
 	brelse(bp, 0);
 	return 0;
