@@ -1,4 +1,4 @@
-.\"	$NetBSD: cdbw.3,v 1.4 2012/06/03 21:02:50 joerg Exp $
+.\"	$NetBSD: cdbw.3,v 1.5 2012/06/04 00:26:29 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -118,10 +118,10 @@ The
 .Fn seedgen
 parameter can be used to override the default PRNG.
 The bitwise layout of the output depends on the chosen seed.
-The function should return a different value for each invokation.
+The function should return a different value for each invocation.
 The
 .Fn cdbw_stable_seeder
-can be used to create reproducable output.
+can be used to create reproducible output.
 It may be slower than the default.
 .Sh SEE ALSO
 .Xr cdbr 3 ,
