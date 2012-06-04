@@ -1,4 +1,4 @@
-/*	$NetBSD: empbreg.h,v 1.3 2012/06/01 17:41:17 rkujawa Exp $ */
+/*	$NetBSD: empbreg.h,v 1.4 2012/06/04 12:56:49 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@
 
 #define EMPB_SETUP_WINDOW_OFF	0x2	/* set memory window position */
 #define EMPB_SETUP_BRIDGE_OFF	0x7	/* select between conf or I/O */
+#define EMPB_SETUP_INTR_OFF	0xB	/* interrupt setup */
 
 #define BRIDGE_CONF		0xA0	/* switch into configuration space */
 #define BRIDGE_IO		0x20	/* switch into I/O space */
@@ -77,6 +78,8 @@
 
 #define	EMPB_CONF_DEV_STRIDE	0x800	/* offset between PCI devices */
 #define EMPB_CONF_FUNC_STRIDE	0x100 	/* XXX: offset between PCI funcs */ 
+
+#define EMPB_INTR_ENABLE	0xFF	/* enable all interrupts */
 
 #define EMPB_WINDOW_SHIFT	0x10	
 #define EMPB_WINDOW_MASK_8M	0xFF80
