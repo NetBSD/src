@@ -1,4 +1,4 @@
-/*	$NetBSD: ncache.h,v 1.1.1.3 2011/02/15 19:37:42 christos Exp $	*/
+/*	$NetBSD: ncache.h,v 1.1.1.4 2012/06/04 17:56:31 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ncache.h,v 1.29 2010-05-14 23:50:40 tbox Exp */
+/* Id: ncache.h,v 1.29 2010/05/14 23:50:40 tbox Exp  */
 
 #ifndef DNS_NCACHE_H
 #define DNS_NCACHE_H 1

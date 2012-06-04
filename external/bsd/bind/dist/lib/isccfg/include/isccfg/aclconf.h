@@ -1,7 +1,7 @@
-/*	$NetBSD: aclconf.h,v 1.1.1.4 2011/09/11 17:19:49 christos Exp $	*/
+/*	$NetBSD: aclconf.h,v 1.1.1.5 2012/06/04 17:57:01 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2010, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2010-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: aclconf.h,v 1.14 2011-06-17 23:47:49 tbox Exp */
+/* Id */
 
 #ifndef ISCCFG_ACLCONF_H
 #define ISCCFG_ACLCONF_H 1

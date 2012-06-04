@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_openssl.h,v 1.1.1.4 2011/09/11 17:17:56 christos Exp $	*/
+/*	$NetBSD: dst_openssl.h,v 1.1.1.5 2012/06/04 17:56:07 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dst_openssl.h,v 1.11 2011-03-12 04:59:48 tbox Exp */
+/* Id: dst_openssl.h,v 1.11 2011/03/12 04:59:48 tbox Exp  */
 
 #ifndef DST_OPENSSL_H
 #define DST_OPENSSL_H 1

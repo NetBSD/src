@@ -1,4 +1,4 @@
-/*	$NetBSD: msgs.h,v 1.1.1.3 2011/02/15 19:38:21 christos Exp $	*/
+/*	$NetBSD: msgs.h,v 1.1.1.4 2012/06/04 17:56:50 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: msgs.h,v 1.19 2009-10-01 23:48:08 tbox Exp */
+/* Id: msgs.h,v 1.19 2009/10/01 23:48:08 tbox Exp  */
 
 #ifndef ISC_MSGS_H
 #define ISC_MSGS_H 1

@@ -103,6 +103,9 @@ BUILD_SH_TP = \
 # Custom targets.
 #
 
+.PHONY:	depend
+depend:
+
 .PHONY: clean-all
 clean-all:
 	MTN="$(MTN)" $(SH) $(srcdir)/admin/clean-all.sh

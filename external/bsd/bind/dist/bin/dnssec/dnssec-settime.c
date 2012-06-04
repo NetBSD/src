@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-settime.c,v 1.1.1.6 2011/09/11 17:11:57 christos Exp $	*/
+/*	$NetBSD: dnssec-settime.c,v 1.1.1.7 2012/06/04 17:53:33 christos Exp $	*/
 
 /*
  * Copyright (C) 2009-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssec-settime.c,v 1.32 2011-06-02 20:24:45 each Exp */
+/* Id: dnssec-settime.c,v 1.32 2011/06/02 20:24:45 each Exp  */
 
 /*! \file */
 

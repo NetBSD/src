@@ -1,7 +1,7 @@
-/*	$NetBSD: message.c,v 1.1.1.7 2011/09/11 17:18:08 christos Exp $	*/
+/*	$NetBSD: message.c,v 1.1.1.8 2012/06/04 17:56:11 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: message.c,v 1.257 2011-06-08 22:13:50 each Exp */
+/* Id */
 
 /*! \file */
 

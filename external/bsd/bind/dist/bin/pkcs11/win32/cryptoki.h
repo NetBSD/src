@@ -1,7 +1,7 @@
-/*	$NetBSD: cryptoki.h,v 1.1.1.1 2009/10/25 00:01:35 christos Exp $	*/
+/*	$NetBSD: cryptoki.h,v 1.1.1.2 2012/06/04 17:53:59 christos Exp $	*/
 
 /* cryptoki.h include file for PKCS #11. */
-/* Revision: 1.2 */
+/* Revision: 1.2  */
 
 /* License to copy and use this software is granted provided that it is
  * identified as "RSA Security Inc. PKCS #11 Cryptographic Token Interface

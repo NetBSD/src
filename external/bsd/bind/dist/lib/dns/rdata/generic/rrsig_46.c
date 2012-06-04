@@ -1,7 +1,7 @@
-/*	$NetBSD: rrsig_46.c,v 1.1.1.4 2011/09/11 17:18:59 christos Exp $	*/
+/*	$NetBSD: rrsig_46.c,v 1.1.1.5 2012/06/04 17:56:37 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rrsig_46.c,v 1.15 2011-03-05 19:39:07 each Exp */
+/* Id */
 
 /* Reviewed: Fri Mar 17 09:05:02 PST 2000 by gson */
 

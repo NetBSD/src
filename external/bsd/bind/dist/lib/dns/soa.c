@@ -1,4 +1,4 @@
-/*	$NetBSD: soa.c,v 1.1.1.3 2011/02/15 19:37:19 christos Exp $	*/
+/*	$NetBSD: soa.c,v 1.1.1.4 2012/06/04 17:56:20 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: soa.c,v 1.12 2009-09-10 02:18:40 each Exp */
+/* Id: soa.c,v 1.12 2009/09/10 02:18:40 each Exp  */
 
 /*! \file */
 

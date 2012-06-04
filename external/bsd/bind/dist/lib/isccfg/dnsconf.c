@@ -1,4 +1,4 @@
-/*	$NetBSD: dnsconf.c,v 1.1.1.2 2011/02/15 19:38:43 christos Exp $	*/
+/*	$NetBSD: dnsconf.c,v 1.1.1.3 2012/06/04 17:57:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnsconf.c,v 1.4 2009-09-02 23:48:03 tbox Exp */
+/* Id: dnsconf.c,v 1.4 2009/09/02 23:48:03 tbox Exp  */
 
 /*! \file */
 

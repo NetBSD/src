@@ -1,4 +1,4 @@
-/*	$NetBSD: t_resolver.c,v 1.1.1.3 2011/09/11 17:12:57 christos Exp $	*/
+/*	$NetBSD: t_resolver.c,v 1.1.1.4 2012/06/04 17:54:17 christos Exp $	*/
 
 /*
  * Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_resolver.c,v 1.3 2011-02-03 12:18:11 tbox Exp */
+/* Id: t_resolver.c,v 1.3 2011/02/03 12:18:11 tbox Exp  */
 
 #include <config.h>
 

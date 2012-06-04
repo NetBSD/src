@@ -1,4 +1,4 @@
-/*	$NetBSD: named-checkconf.c,v 1.1.1.6 2011/09/11 17:11:41 christos Exp $	*/
+/*	$NetBSD: named-checkconf.c,v 1.1.1.7 2012/06/04 17:53:25 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: named-checkconf.c,v 1.56 2011-03-12 04:59:46 tbox Exp */
+/* Id: named-checkconf.c,v 1.56 2011/03/12 04:59:46 tbox Exp  */
 
 /*! \file */
 

@@ -1,6 +1,6 @@
-/*	$NetBSD: mapselector.h,v 1.1.1.2 2011/02/15 19:32:18 christos Exp $	*/
+/*	$NetBSD: mapselector.h,v 1.1.1.3 2012/06/04 17:54:54 christos Exp $	*/
 
-/* Id: mapselector.h,v 1.1.1.1 2003-06-04 00:25:39 marka Exp */
+/* Id: mapselector.h,v 1.1 2003/06/04 00:25:39 marka Exp  */
 /*
  * Copyright (c) 2001 Japan Network Information Center.  All rights reserved.
  *  

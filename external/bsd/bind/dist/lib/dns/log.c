@@ -1,7 +1,7 @@
-/*	$NetBSD: log.c,v 1.1.1.3 2011/02/15 19:36:53 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.1.1.4 2012/06/04 17:56:09 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: log.c,v 1.47 2009-12-18 23:49:03 tbox Exp */
+/* Id: log.c,v 1.49 2011/10/13 22:48:24 tbox Exp  */
 
 /*! \file */
 
@@ -46,6 +46,7 @@ LIBDNS_EXTERNAL_DATA isc_logcategory_t dns_categories[] = {
 	{ "lame-servers", 0 },
 	{ "delegation-only", 0 },
 	{ "edns-disabled", 0 },
+	{ "rpz",	0 },
 	{ NULL, 	0 }
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ds.c,v 1.1.1.2 2011/02/15 19:36:47 christos Exp $	*/
+/*	$NetBSD: ds.c,v 1.1.1.3 2012/06/04 17:56:06 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ds.c,v 1.13 2010-12-23 23:47:08 tbox Exp */
+/* Id: ds.c,v 1.13 2010/12/23 23:47:08 tbox Exp  */
 
 /*! \file */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: version.h,v 1.1.1.2 2011/02/15 19:38:46 christos Exp $	*/
+/*	$NetBSD: version.h,v 1.1.1.3 2012/06/04 17:57:01 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: version.h,v 1.9 2007-06-19 23:47:22 tbox Exp */
+/* Id: version.h,v 1.9 2007/06/19 23:47:22 tbox Exp  */
 
 /*! \file isccfg/version.h */
 

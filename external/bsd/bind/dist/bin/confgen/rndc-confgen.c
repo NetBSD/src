@@ -1,4 +1,4 @@
-/*	$NetBSD: rndc-confgen.c,v 1.1.1.3 2011/09/11 17:11:43 christos Exp $	*/
+/*	$NetBSD: rndc-confgen.c,v 1.1.1.4 2012/06/04 17:53:30 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rndc-confgen.c,v 1.7 2011-03-12 04:59:46 tbox Exp */
+/* Id: rndc-confgen.c,v 1.7 2011/03/12 04:59:46 tbox Exp  */
 
 /*! \file */
 

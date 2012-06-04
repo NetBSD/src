@@ -1,7 +1,7 @@
-/*	$NetBSD: file.c,v 1.1.1.4 2011/09/11 17:19:38 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.5 2012/06/04 17:56:53 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -50,7 +50,7 @@
  * SUCH DAMAGE.
  */
 
-/* Id: file.c,v 1.58 2011-03-04 14:07:03 smann Exp */
+/* Id */
 
 /*! \file */
 

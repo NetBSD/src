@@ -1,4 +1,4 @@
-/*	$NetBSD: logconf.c,v 1.1.1.3 2011/09/11 17:12:07 christos Exp $	*/
+/*	$NetBSD: logconf.c,v 1.1.1.4 2012/06/04 17:53:38 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: logconf.c,v 1.45 2011-03-05 23:52:29 tbox Exp */
+/* Id: logconf.c,v 1.45 2011/03/05 23:52:29 tbox Exp  */
 
 /*! \file */
 

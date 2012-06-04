@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata.h,v 1.1.1.5 2011/09/11 17:18:47 christos Exp $	*/
+/*	$NetBSD: rdata.h,v 1.1.1.6 2012/06/04 17:56:31 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdata.h,v 1.80 2011-03-20 02:31:53 marka Exp */
+/* Id: rdata.h,v 1.80 2011/03/20 02:31:53 marka Exp  */
 
 #ifndef DNS_RDATA_H
 #define DNS_RDATA_H 1

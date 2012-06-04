@@ -1,4 +1,4 @@
-/*	$NetBSD: acconfig.h,v 1.1.1.3 2011/02/15 19:29:01 christos Exp $	*/
+/*	$NetBSD: acconfig.h,v 1.1.1.4 2012/06/04 17:53:12 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: acconfig.h,v 1.53 2008-12-01 23:47:44 tbox Exp */
+/* Id: acconfig.h,v 1.53 2008/12/01 23:47:44 tbox Exp  */
 
 /*! \file */
 

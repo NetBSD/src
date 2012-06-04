@@ -1,7 +1,7 @@
-/*	$NetBSD: sha2.c,v 1.1.1.5 2011/09/11 17:19:17 christos Exp $	*/
+/*	$NetBSD: sha2.c,v 1.1.1.6 2012/06/04 17:56:47 christos Exp $	*/
 
 /*
- * Copyright (C) 2005-2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2005-2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sha2.c,v 1.20 2011-03-12 04:59:49 tbox Exp */
+/* Id */
 
 /*	$FreeBSD: src/sys/crypto/sha2/sha2.c,v 1.2.2.2 2002/03/05 08:36:47 ume Exp $	*/
 /*	$KAME: sha2.c,v 1.8 2001/11/08 01:07:52 itojun Exp $	*/
@@ -907,7 +907,7 @@ isc_sha256_final(isc_uint8_t digest[], isc_sha256_t *context) {
 	}
 
 	/* Clean up state data: */
-	memset(context, 0, sizeof(context));
+	memset(context, 0, sizeof(*context));
 	usedspace = 0;
 	POST(usedspace);
 }
@@ -1231,7 +1231,7 @@ void isc_sha512_final(isc_uint8_t digest[], isc_sha512_t *context) {
 	}
 
 	/* Zero out state data */
-	memset(context, 0, sizeof(context));
+	memset(context, 0, sizeof(*context));
 }
 
 
@@ -1284,7 +1284,7 @@ isc_sha384_final(isc_uint8_t digest[], isc_sha384_t *context) {
 	}
 
 	/* Zero out state data */
-	memset(context, 0, sizeof(context));
+	memset(context, 0, sizeof(*context));
 }
 #endif /* !ISC_PLATFORM_OPENSSLHASH */
 
@@ -1315,7 +1315,7 @@ isc_sha224_end(isc_sha224_t *context, char buffer[]) {
 #ifdef ISC_PLATFORM_OPENSSLHASH
 		EVP_MD_CTX_cleanup(context);
 #else
-		memset(context, 0, sizeof(context));
+		memset(context, 0, sizeof(*context));
 #endif
 	}
 	memset(digest, 0, ISC_SHA224_DIGESTLENGTH);
@@ -1354,7 +1354,7 @@ isc_sha256_end(isc_sha256_t *context, char buffer[]) {
 #ifdef ISC_PLATFORM_OPENSSLHASH
 		EVP_MD_CTX_cleanup(context);
 #else
-		memset(context, 0, sizeof(context));
+		memset(context, 0, sizeof(*context));
 #endif
 	}
 	memset(digest, 0, ISC_SHA256_DIGESTLENGTH);
@@ -1393,7 +1393,7 @@ isc_sha512_end(isc_sha512_t *context, char buffer[]) {
 #ifdef ISC_PLATFORM_OPENSSLHASH
 		EVP_MD_CTX_cleanup(context);
 #else
-		memset(context, 0, sizeof(context));
+		memset(context, 0, sizeof(*context));
 #endif
 	}
 	memset(digest, 0, ISC_SHA512_DIGESTLENGTH);
@@ -1432,7 +1432,7 @@ isc_sha384_end(isc_sha384_t *context, char buffer[]) {
 #ifdef ISC_PLATFORM_OPENSSLHASH
 		EVP_MD_CTX_cleanup(context);
 #else
-		memset(context, 0, sizeof(context));
+		memset(context, 0, sizeof(*context));
 #endif
 	}
 	memset(digest, 0, ISC_SHA384_DIGESTLENGTH);

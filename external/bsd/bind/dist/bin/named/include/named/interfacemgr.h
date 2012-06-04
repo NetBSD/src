@@ -1,4 +1,4 @@
-/*	$NetBSD: interfacemgr.h,v 1.1.1.3 2011/09/11 17:12:23 christos Exp $	*/
+/*	$NetBSD: interfacemgr.h,v 1.1.1.4 2012/06/04 17:53:46 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: interfacemgr.h,v 1.35 2011-07-28 23:47:58 tbox Exp */
+/* Id: interfacemgr.h,v 1.35 2011/07/28 23:47:58 tbox Exp  */
 
 #ifndef NAMED_INTERFACEMGR_H
 #define NAMED_INTERFACEMGR_H 1

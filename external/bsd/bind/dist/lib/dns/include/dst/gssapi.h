@@ -1,4 +1,4 @@
-/*	$NetBSD: gssapi.h,v 1.1.1.3 2011/02/15 19:37:48 christos Exp $	*/
+/*	$NetBSD: gssapi.h,v 1.1.1.4 2012/06/04 17:56:34 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: gssapi.h,v 1.16 2011-01-08 23:47:01 tbox Exp */
+/* Id: gssapi.h,v 1.16 2011/01/08 23:47:01 tbox Exp  */
 
 #ifndef DST_GSSAPI_H
 #define DST_GSSAPI_H 1

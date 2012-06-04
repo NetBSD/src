@@ -1,7 +1,7 @@
-/*	$NetBSD: ssu_external.c,v 1.1.1.2 2011/09/11 17:18:34 christos Exp $	*/
+/*	$NetBSD: ssu_external.c,v 1.1.1.3 2012/06/04 17:56:21 christos Exp $	*/
 
 /*
- * Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ssu_external.c,v 1.8 2011-03-21 19:54:03 each Exp */
+/* Id */
 
 /*
  * This implements external update-policy rules.  This allows permission

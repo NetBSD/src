@@ -1,6 +1,6 @@
-/*	$NetBSD: codeset.h,v 1.1.1.2 2011/02/15 19:32:38 christos Exp $	*/
+/*	$NetBSD: codeset.h,v 1.1.1.3 2012/06/04 17:55:05 christos Exp $	*/
 
-/* Id: codeset.h,v 1.1.1.1 2003-06-04 00:26:51 marka Exp */
+/* Id: codeset.h,v 1.1 2003/06/04 00:26:51 marka Exp  */
 /*
  * Copyright (c) 2002 Japan Network Information Center.
  * All rights reserved.

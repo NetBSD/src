@@ -1,7 +1,7 @@
-/*	$NetBSD: nsec.c,v 1.1.1.4 2011/09/11 17:18:09 christos Exp $	*/
+/*	$NetBSD: nsec.c,v 1.1.1.5 2012/06/04 17:56:07 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsec.c,v 1.16 2011-06-10 01:51:09 each Exp */
+/* Id */
 
 /*! \file */
 

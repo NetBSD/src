@@ -1,7 +1,7 @@
-/*	$NetBSD: file.h,v 1.1.1.4 2011/09/11 17:19:27 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.1.1.5 2012/06/04 17:56:49 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: file.h,v 1.41 2011-03-04 23:47:47 tbox Exp */
+/* Id */
 
 #ifndef ISC_FILE_H
 #define ISC_FILE_H 1

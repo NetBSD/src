@@ -1,4 +1,4 @@
-/*	$NetBSD: afsdb_18.h,v 1.1.1.2 2011/02/15 19:37:51 christos Exp $	*/
+/*	$NetBSD: afsdb_18.h,v 1.1.1.3 2012/06/04 17:56:35 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 #ifndef GENERIC_AFSDB_18_H
 #define GENERIC_AFSDB_18_H 1
 
-/* Id: afsdb_18.h,v 1.20 2007-06-19 23:47:17 tbox Exp */
+/* Id: afsdb_18.h,v 1.20 2007/06/19 23:47:17 tbox Exp  */
 
 /*!
  *  \brief Per RFC1183 */

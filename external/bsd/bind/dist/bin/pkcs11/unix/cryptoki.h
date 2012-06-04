@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptoki.h,v 1.1.1.2 2009/12/26 22:19:40 christos Exp $	*/
+/*	$NetBSD: cryptoki.h,v 1.1.1.3 2012/06/04 17:53:59 christos Exp $	*/
 
 /* cryptoki.h include file for PKCS #11. */
 /*
@@ -16,7 +16,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/* Revision: 1.3 */
+/* Revision: 1.3  */
 
 /*
  * Portions Copyright RSA Security Inc.

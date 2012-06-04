@@ -1,4 +1,4 @@
-/*	$NetBSD: zone2sqlite.c,v 1.1.1.4 2011/02/15 19:33:11 christos Exp $	*/
+/*	$NetBSD: zone2sqlite.c,v 1.1.1.5 2012/06/04 17:55:20 christos Exp $	*/
 
 /*
  * Copyright (C) 2007  Internet Software Consortium.
@@ -17,7 +17,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zone2sqlite.c,v 1.4 2010-08-16 05:32:44 marka Exp */
+/* Id: zone2sqlite.c,v 1.4 2010/08/16 05:32:44 marka Exp  */
 
 #include <stdlib.h>
 #include <string.h>

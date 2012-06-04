@@ -1,4 +1,4 @@
-/*	$NetBSD: name.h,v 1.1.1.4 2011/02/15 19:37:42 christos Exp $	*/
+/*	$NetBSD: name.h,v 1.1.1.5 2012/06/04 17:56:31 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: name.h,v 1.137 2011-01-13 04:59:26 tbox Exp */
+/* Id: name.h,v 1.137 2011/01/13 04:59:26 tbox Exp  */
 
 #ifndef DNS_NAME_H
 #define DNS_NAME_H 1

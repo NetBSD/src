@@ -1,4 +1,4 @@
-/*	$NetBSD: sortlist.h,v 1.1.1.2 2011/02/15 19:30:25 christos Exp $	*/
+/*	$NetBSD: sortlist.h,v 1.1.1.3 2012/06/04 17:53:47 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sortlist.h,v 1.11 2007-06-19 23:46:59 tbox Exp */
+/* Id: sortlist.h,v 1.11 2007/06/19 23:46:59 tbox Exp  */
 
 #ifndef NAMED_SORTLIST_H
 #define NAMED_SORTLIST_H 1

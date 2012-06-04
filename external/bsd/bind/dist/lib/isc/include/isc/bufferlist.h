@@ -1,4 +1,4 @@
-/*	$NetBSD: bufferlist.h,v 1.1.1.2 2011/02/15 19:38:18 christos Exp $	*/
+/*	$NetBSD: bufferlist.h,v 1.1.1.3 2012/06/04 17:56:48 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: bufferlist.h,v 1.17 2007-06-19 23:47:18 tbox Exp */
+/* Id: bufferlist.h,v 1.17 2007/06/19 23:47:18 tbox Exp  */
 
 #ifndef ISC_BUFFERLIST_H
 #define ISC_BUFFERLIST_H 1

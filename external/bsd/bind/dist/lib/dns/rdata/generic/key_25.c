@@ -1,7 +1,7 @@
-/*	$NetBSD: key_25.c,v 1.1.1.4 2011/09/11 17:18:56 christos Exp $	*/
+/*	$NetBSD: key_25.c,v 1.1.1.5 2012/06/04 17:56:35 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: key_25.c,v 1.55 2011-03-05 23:52:31 tbox Exp */
+/* Id */
 
 /*
  * Reviewed: Wed Mar 15 16:47:10 PST 2000 by halley.

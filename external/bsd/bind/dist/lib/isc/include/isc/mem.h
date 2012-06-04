@@ -1,7 +1,7 @@
-/*	$NetBSD: mem.h,v 1.1.1.6 2011/09/11 17:19:32 christos Exp $	*/
+/*	$NetBSD: mem.h,v 1.1.1.7 2012/06/04 17:56:50 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1997-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: mem.h,v 1.91 2011-08-09 23:46:39 tbox Exp */
+/* Id */
 
 #ifndef ISC_MEM_H
 #define ISC_MEM_H 1

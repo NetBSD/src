@@ -1,4 +1,4 @@
-/*	$NetBSD: nsap-ptr_23.c,v 1.1.1.3 2011/02/15 19:37:58 christos Exp $	*/
+/*	$NetBSD: nsap-ptr_23.c,v 1.1.1.4 2012/06/04 17:56:38 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsap-ptr_23.c,v 1.40 2009-12-04 22:06:37 tbox Exp */
+/* Id: nsap-ptr_23.c,v 1.40 2009/12/04 22:06:37 tbox Exp  */
 
 /* Reviewed: Fri Mar 17 10:16:02 PST 2000 by gson */
 

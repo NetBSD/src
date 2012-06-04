@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig.h,v 1.1.1.4 2011/02/15 19:37:46 christos Exp $	*/
+/*	$NetBSD: tsig.h,v 1.1.1.5 2012/06/04 17:56:33 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tsig.h,v 1.59 2011-01-11 23:47:13 tbox Exp */
+/* Id: tsig.h,v 1.59 2011/01/11 23:47:13 tbox Exp  */
 
 #ifndef DNS_TSIG_H
 #define DNS_TSIG_H 1

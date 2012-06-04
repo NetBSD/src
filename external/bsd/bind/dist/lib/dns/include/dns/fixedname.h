@@ -1,4 +1,4 @@
-/*	$NetBSD: fixedname.h,v 1.1.1.2 2011/02/15 19:37:38 christos Exp $	*/
+/*	$NetBSD: fixedname.h,v 1.1.1.3 2012/06/04 17:56:30 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: fixedname.h,v 1.19 2007-06-19 23:47:16 tbox Exp */
+/* Id: fixedname.h,v 1.19 2007/06/19 23:47:16 tbox Exp  */
 
 #ifndef DNS_FIXEDNAME_H
 #define DNS_FIXEDNAME_H 1

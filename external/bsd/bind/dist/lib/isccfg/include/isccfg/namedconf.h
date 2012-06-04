@@ -1,4 +1,4 @@
-/*	$NetBSD: namedconf.h,v 1.1.1.5 2011/02/15 19:38:46 christos Exp $	*/
+/*	$NetBSD: namedconf.h,v 1.1.1.6 2012/06/04 17:57:01 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: namedconf.h,v 1.18 2010-08-11 18:14:20 each Exp */
+/* Id: namedconf.h,v 1.18 2010/08/11 18:14:20 each Exp  */
 
 #ifndef ISCCFG_NAMEDCONF_H
 #define ISCCFG_NAMEDCONF_H 1

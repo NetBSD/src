@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.1.1.5 2011/09/11 17:17:55 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.1.1.6 2012/06/04 17:56:04 christos Exp $	*/
 
 /*
  * Copyright (C) 2009-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: client.c,v 1.14 2011-03-12 04:59:47 tbox Exp */
+/* Id: client.c,v 1.14 2011/03/12 04:59:47 tbox Exp  */
 
 #include <config.h>
 

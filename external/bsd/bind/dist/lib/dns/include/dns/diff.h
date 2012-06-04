@@ -1,4 +1,4 @@
-/*	$NetBSD: diff.h,v 1.1.1.4 2011/02/15 19:37:37 christos Exp $	*/
+/*	$NetBSD: diff.h,v 1.1.1.5 2012/06/04 17:56:29 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: diff.h,v 1.19 2010-06-04 23:51:14 tbox Exp */
+/* Id: diff.h,v 1.19 2010/06/04 23:51:14 tbox Exp  */
 
 #ifndef DNS_DIFF_H
 #define DNS_DIFF_H 1

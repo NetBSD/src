@@ -1,4 +1,4 @@
-/*	$NetBSD: opensslgost_link.c,v 1.1.1.1 2011/02/15 19:37:02 christos Exp $	*/
+/*	$NetBSD: opensslgost_link.c,v 1.1.1.2 2012/06/04 17:56:12 christos Exp $	*/
 
 /*
  * Copyright (C) 2010, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: opensslgost_link.c,v 1.5 2011-01-19 23:47:12 tbox Exp */
+/* Id: opensslgost_link.c,v 1.5 2011/01/19 23:47:12 tbox Exp  */
 
 #include <config.h>
 

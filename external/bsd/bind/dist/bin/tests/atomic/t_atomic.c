@@ -1,4 +1,4 @@
-/*	$NetBSD: t_atomic.c,v 1.1.1.1 2011/02/15 19:30:52 christos Exp $	*/
+/*	$NetBSD: t_atomic.c,v 1.1.1.2 2012/06/04 17:54:12 christos Exp $	*/
 
 /*
  * Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_atomic.c,v 1.2 2011-01-11 23:47:12 tbox Exp */
+/* Id: t_atomic.c,v 1.2 2011/01/11 23:47:12 tbox Exp  */
 
 #include <config.h>
 

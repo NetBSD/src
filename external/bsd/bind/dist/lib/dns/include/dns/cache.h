@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.1.1.4 2011/09/11 17:18:41 christos Exp $	*/
+/*	$NetBSD: cache.h,v 1.1.1.5 2012/06/04 17:56:28 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: cache.h,v 1.32 2011-08-02 23:47:52 tbox Exp */
+/* Id: cache.h,v 1.32 2011/08/02 23:47:52 tbox Exp  */
 
 #ifndef DNS_CACHE_H
 #define DNS_CACHE_H 1

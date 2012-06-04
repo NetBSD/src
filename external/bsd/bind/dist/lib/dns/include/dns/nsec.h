@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec.h,v 1.1.1.3 2011/09/11 17:18:46 christos Exp $	*/
+/*	$NetBSD: nsec.h,v 1.1.1.4 2012/06/04 17:56:31 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2008, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsec.h,v 1.14 2011-06-10 23:47:32 tbox Exp */
+/* Id: nsec.h,v 1.14 2011/06/10 23:47:32 tbox Exp  */
 
 #ifndef DNS_NSEC_H
 #define DNS_NSEC_H 1
