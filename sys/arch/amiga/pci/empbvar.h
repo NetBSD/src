@@ -1,4 +1,4 @@
-/*	$NetBSD: empbvar.h,v 1.1 2012/06/01 09:41:35 rkujawa Exp $ */
+/*	$NetBSD: empbvar.h,v 1.2 2012/06/04 12:56:49 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -39,6 +39,21 @@
 
 #include <machine/pci_machdep.h>
 
+/*
+ * Structure used to describe PCI devices with memory that can be used as
+ * bounce buffers. XXX: not used yet.
+ */
+struct empb_dmamemdev_entry {
+	/* location of the device on bus */
+	int	bus;
+	int	dev;
+	int	function;
+	/* how to find memory on device */
+	uint8_t	bar;	/* which BAR will be used to access the mem */
+	uint32_t off;	/* offset from BAR address */
+	uint32_t size;	/* how much memory will we steal */
+};
+
 struct empb_softc {
 	device_t			sc_dev;
 
@@ -52,6 +67,7 @@ struct empb_softc {
 	uint8_t				pci_confio_mode;
 
 	struct bus_space_tag		pci_mem_win;
+	bus_space_tag_t			pci_mem_win_t;
 	uint32_t			pci_mem_win_size;
 	bus_addr_t			pci_mem_win_pos;
 	uint16_t			pci_mem_win_mask;
@@ -61,4 +77,5 @@ struct empb_softc {
 };
 
 
-void	empb_switch_window(struct empb_softc *sc, bus_addr_t address);
+bus_addr_t	empb_switch_window(struct empb_softc *sc, bus_addr_t address);
+
