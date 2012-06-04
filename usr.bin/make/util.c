@@ -1,15 +1,15 @@
-/*	$NetBSD: util.c,v 1.52 2012/06/04 20:34:20 sjg Exp $	*/
+/*	$NetBSD: util.c,v 1.53 2012/06/04 22:45:05 sjg Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: util.c,v 1.52 2012/06/04 20:34:20 sjg Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.53 2012/06/04 22:45:05 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.52 2012/06/04 20:34:20 sjg Exp $");
+__RCSID("$NetBSD: util.c,v 1.53 2012/06/04 22:45:05 sjg Exp $");
 #endif
 #endif
 
@@ -48,11 +48,12 @@ findenv(const char *name, int *offset)
 	size_t i, len;
 	char *p, *q;
 
+	len = strlen(name);
 	for (i = 0; (q = environ[i]); i++) {
 		p = strchr(q, '=');
-		if (p == NULL)
+		if (p == NULL || p - q != len)
 			continue;
-		if (strncmp(name, q, len = p - q) == 0) {
+		if (strncmp(name, q, len) == 0) {
 			*offset = i;
 			return q + len + 1;
 		}
