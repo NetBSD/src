@@ -1,4 +1,4 @@
-/*	$NetBSD: empb.c,v 1.4 2012/06/01 17:41:16 rkujawa Exp $ */
+/*	$NetBSD: empb.c,v 1.5 2012/06/04 12:56:48 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 
 #include "opt_pci.h"
 
-#define EMPB_DEBUG 1 
+/* #define EMPB_DEBUG 1  */
 
 #define	PCI_CONF_LOCK(s)	(s) = splhigh()
 #define	PCI_CONF_UNLOCK(s)	splx((s))
@@ -70,6 +70,7 @@ static void	empb_callback(device_t self);
 
 static void	empb_find_mem(struct empb_softc *sc);
 static void	empb_switch_bridge(struct empb_softc *sc, uint8_t mode);
+static void	empb_intr_enable(struct empb_softc *sc);
 
 pcireg_t	empb_pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void		empb_pci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
@@ -84,6 +85,8 @@ int		empb_pci_intr_map(const struct pci_attach_args *pa,
 		    pci_intr_handle_t *ihp);
 const struct evcnt * empb_pci_intr_evcnt(pci_chipset_tag_t pc, 
 		    pci_intr_handle_t ih);
+int		empb_pci_conf_hook(pci_chipset_tag_t pct, int bus, 
+		    int dev, int func, pcireg_t id);
 
 CFATTACH_DECL_NEW(empb, sizeof(struct empb_softc),
     empb_match, empb_attach, NULL, NULL);
@@ -181,6 +184,11 @@ empb_callback(device_t self) {
 
 	sc->pci_confio_t = &(sc->pci_confio_area);
 
+	/*
+	 * We should not map I/O space here, however we have no choice 
+	 * since these addresses are shared between configuration space and
+	 * I/O space. Not really a problem on m68k, however on PPC... 
+	 */
 	if (bus_space_map(sc->pci_confio_t, 0, EMPB_BRIDGE_SIZE, 0, 
 	    &sc->pci_confio_h)) 
 		aprint_error_dev(self,
@@ -220,7 +228,7 @@ empb_callback(device_t self) {
 	sc->apc.pc_intr_establish = amiga_pci_intr_establish;
 	sc->apc.pc_intr_disestablish = amiga_pci_intr_disestablish;
 
-	sc->apc.pc_conf_hook = amiga_pci_conf_hook;
+	sc->apc.pc_conf_hook = empb_pci_conf_hook;
 	sc->apc.pc_conf_interrupt = amiga_pci_conf_interrupt;
 
 	sc->apc.cookie = sc;
@@ -254,7 +262,16 @@ empb_callback(device_t self) {
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 
+	empb_intr_enable(sc);
+
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
+}
+
+static void 
+empb_intr_enable(struct empb_softc *sc) 
+{
+	bus_space_write_1(sc->setup_area_t, sc->setup_area_h,
+	    EMPB_SETUP_INTR_OFF, EMPB_INTR_ENABLE);
 }
 
 /*
@@ -287,9 +304,9 @@ empb_find_mem(struct empb_softc *sc)
 	mem_sc = device_private(memdev);
 
 	sc->pci_mem_win.base = (bus_addr_t) mem_sc->sc_base;
-	sc->pci_mem_win.absm = &amiga_bus_stride_1;
-
+	sc->pci_mem_win.absm = &empb_bus_swap;
 	sc->pci_mem_win_size = mem_sc->sc_size;
+	sc->pci_mem_win_t = &sc->pci_mem_win;
 
 	if(sc->pci_mem_win_size == 8*1024*1024)
 		sc->pci_mem_win_mask = EMPB_WINDOW_MASK_8M;
@@ -307,37 +324,39 @@ empb_find_mem(struct empb_softc *sc)
 }
 
 /*
- * Switch memory window position.
+ * Switch memory window position. Return PCI mem address seen at the beginning
+ * of window.
  */
-void
+bus_addr_t
 empb_switch_window(struct empb_softc *sc, bus_addr_t address) 
 {
 	int s;
 	uint16_t win_reg;
+#ifdef EMPB_DEBUG
+	uint16_t rwin_reg;
+#endif /* EMPB_DEBUG */
 
 	WINDOW_LOCK(s);
 
 	win_reg = bswap16((address >> EMPB_WINDOW_SHIFT) 
 	    & sc->pci_mem_win_mask);
 
-#ifdef EMPB_DEBUG
-	aprint_normal("empb: access to %p window switch to %x (@%p)\n", 
-	    (void*) address, win_reg, (void*) sc->setup_area_h);
-#endif /* EMPB_DEBUG */
-
 	bus_space_write_2(sc->setup_area_t, sc->setup_area_h,
 	    EMPB_SETUP_WINDOW_OFF, win_reg);
 
 	/* store window pos, like: sc->pci_mem_win_pos = win_reg ? */
 
-	win_reg = bus_space_read_2(sc->setup_area_t, sc->setup_area_h,
+#ifdef EMPB_DEBUG
+	rwin_reg = bus_space_read_2(sc->setup_area_t, sc->setup_area_h,
 	    EMPB_SETUP_WINDOW_OFF);
+
+	aprint_normal("empb: access to %p window switch to %x => reg now %x\n",
+	    (void*) address, win_reg, rwin_reg);
+#endif /* EMPB_DEBUG */
 
 	WINDOW_UNLOCK(s);	
 
-#ifdef EMPB_DEBUG
-	aprint_normal("empb: window reg now %x\n", win_reg);
-#endif /* EMPB_DEBUG */
+	return (bus_addr_t)((bswap16(win_reg)) << EMPB_WINDOW_SHIFT);
 }
 
 
@@ -427,3 +446,18 @@ empb_pci_intr_evcnt(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 	return NULL;
 }
 
+int
+empb_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, int func,
+    pcireg_t id)
+{
+
+	/* 
+	 * Register information about some known PCI devices with
+	 * DMA-able memory.
+	 */
+	/*if ((PCI_VENDOR(id) == PCI_VENDOR_3DFX) &&
+		(PCI_PRODUCT(id) >= PCI_PRODUCT_3DFX_VOODOO3))*/
+
+
+        return PCI_CONF_DEFAULT;
+}
