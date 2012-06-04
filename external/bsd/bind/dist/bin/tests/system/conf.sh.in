@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: conf.sh.in,v 1.68 2011-08-09 02:24:28 marka Exp
+# Id: conf.sh.in,v 1.71 2011/12/05 17:10:50 each Exp 
 
 #
 # Common configuration data for system tests, to be sourced into
@@ -54,7 +54,7 @@ JOURNALPRINT=$TOP/bin/tools/named-journalprint
 # v6synth
 SUBDIRS="acl allow_query addzone autosign builtin cacheclean checkconf
 	 checknames checkzone database dlv dlvauto dlz dlzexternal
-         dname dns64 dnssec forward glue gost ixfr limits
+         dname dns64 dnssec forward glue gost ixfr inline limits
 	 logfileconfig lwresd masterfile masterformat metadata notify
 	 nsupdate pending pkcs11 redirect resolver rndc rpz rrsetorder
 	 sortlist smartsign staticstub stub tkey tsig tsiggss unknown

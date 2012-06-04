@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: ans.pl,v 1.4 2011-03-18 04:41:15 each Exp
+# Id
 
 #
 # This is the name server from hell.  It provides canned
@@ -80,7 +80,7 @@ local $| = 1;
 # XXX: we should also be able to specify IPv6
 my $server_addr = "10.53.0.2";
 if (@ARGV > 0) {
-        $server_addr = @ARGV[0];
+	$server_addr = @ARGV[0];
 }
 
 # XXX: we should also be able to set the port numbers to listen on.
@@ -106,108 +106,144 @@ $SIG{TERM} = \&rmpid;
 #my @answers = ();
 my @rules;
 sub handleUDP {
-        my ($buf) = @_;
+	my ($buf) = @_;
 
-        my ($packet, $err) = new Net::DNS::Packet(\$buf, 0);
-        $err and die $err;
+	my ($request, $err) = new Net::DNS::Packet(\$buf, 0);
+	$err and die $err;
 
-        $packet->header->qr(1);
-        $packet->header->aa(1);
+	my @questions = $request->question;
+	my $qname = $questions[0]->qname;
+	my $qtype = $questions[0]->qtype;
+	my $qclass = $questions[0]->qclass;
+	my $id = $request->header->id;
 
-        my @questions = $packet->question;
-        my $qname = $questions[0]->qname;
-        my $qtype = $questions[0]->qtype;
+	my $packet = new Net::DNS::Packet($qname, $qtype, $qclass);
+	$packet->header->qr(1);
+	$packet->header->aa(1);
+	$packet->header->id($id);
 
-        # get the existing signature if any, and clear the additional section
-        my $prev_tsig;
-        while (my $rr = $packet->pop("additional")) {
-                if ($rr->type eq "TSIG") {
-                        $prev_tsig = $rr;
-                }
-        }
+	# get the existing signature if any, and clear the additional section
+	my $prev_tsig;
+	while (my $rr = $request->pop("additional")) {
+		if ($rr->type eq "TSIG") {
+			$prev_tsig = $rr;
+		}
+	}
 
-        my $r;
-        foreach $r (@rules) {
-                my $pattern = $r->{pattern};
+	my $r;
+	foreach $r (@rules) {
+		my $pattern = $r->{pattern};
 		my($dbtype, $key_name, $key_data) = split(/ /,$pattern);
 		print "[handleUDP] $dbtype, $key_name, $key_data \n";
-                if ("$qname $qtype" =~ /$dbtype/) {
-                        my $a;
-                        foreach $a (@{$r->{answer}}) {
-                                $packet->push("answer", $a);
-                        }
+		if ("$qname $qtype" =~ /$dbtype/) {
+			my $a;
+			foreach $a (@{$r->{answer}}) {
+				$packet->push("answer", $a);
+			}
 			if(defined($key_name) && defined($key_data)) {
 				# Sign the packet
 				print "  Signing the response with " .
-                                      "$key_name/$key_data\n";
-                                my $tsig = Net::DNS::RR->
-                                        new("$key_name TSIG $key_data");
+				      "$key_name/$key_data\n";
+				my $tsig = Net::DNS::RR->
+					new("$key_name TSIG $key_data");
 
-                                # These kluges are necessary because Net::DNS
-                                # doesn't know how to sign responses.  We
-                                # clear compnames so that the TSIG key and
-                                # algorithm name won't be compressed, and
-                                # add one to arcount because the signing
-                                # function will attempt to decrement it,
-                                # which is incorrect in a response. Finally
-                                # we set request_mac to the previous digest.
-                                $packet->{"compnames"} = {};
-                                $packet->{"header"}{"arcount"} += 1;
-                                if (defined($prev_tsig)) {
-                                        my $rmac = pack('n H*',
-                                                $prev_tsig->mac_size,
-                                                $prev_tsig->mac);
-                                        $tsig->{"request_mac"} =
-                                                unpack("H*", $rmac);
-                                }
-                                
+				# These kluges are necessary because Net::DNS
+				# doesn't know how to sign responses.  We
+				# clear compnames so that the TSIG key and
+				# algorithm name won't be compressed, and
+				# add one to arcount because the signing
+				# function will attempt to decrement it,
+				# which is incorrect in a response. Finally
+				# we set request_mac to the previous digest.
+				$packet->{"compnames"} = {};
+				$packet->{"header"}{"arcount"} += 1;
+				if (defined($prev_tsig)) {
+					my $rmac = pack('n H*',
+						$prev_tsig->mac_size,
+						$prev_tsig->mac);
+					$tsig->{"request_mac"} =
+						unpack("H*", $rmac);
+				}
+				
 				$packet->sign_tsig($tsig);
 			}
-                        last;
-                }
-        }
-        #$packet->print;
+			last;
+		}
+	}
+	#$packet->print;
 
-        return $packet->data;
+	return $packet->data;
 }
 
 # namelen:
 # given a stream of data, reads a DNS-formatted name and returns its
 # total length, thus making it possible to skip past it.
 sub namelen {
-        my ($data) = @_;
-        my $len = 0;
-        my $label_len = 0;
-        do {
-                $label_len = unpack("c", $data);
-                $data = substr($data, $label_len + 1);
-                $len += $label_len + 1;
-        } while ($label_len != 0);
-        return ($len);
+	my ($data) = @_;
+	my $len = 0;
+	my $label_len = 0;
+	do {
+		$label_len = unpack("c", $data);
+		$data = substr($data, $label_len + 1);
+		$len += $label_len + 1;
+	} while ($label_len != 0);
+	return ($len);
 }
 
 # packetlen:
 # given a stream of data, reads a DNS wire-format packet and returns
 # its total length, making it possible to skip past it.
 sub packetlen {
-        my ($data) = @_;
-        my $q;
-        my $rr;
+	my ($data) = @_;
+	my $q;
+	my $rr;
+	my $header;
+	my $offset;
 
-        my ($header, $offset) = Net::DNS::Header->parse(\$data);
-        for (1 .. $header->qdcount) {
-                ($q, $offset) = Net::DNS::Question->parse(\$data, $offset);
-        }
-        for (1 .. $header->ancount) {
-                ($rr, $offset) = Net::DNS::RR->parse(\$data, $offset);
-        }
-        for (1 .. $header->nscount) {
-                ($rr, $offset) = Net::DNS::RR->parse(\$data, $offset);
-        }
-        for (1 .. $header->arcount) {
-                ($rr, $offset) = Net::DNS::RR->parse(\$data, $offset);
-        }
-        return $offset;
+	#
+	# decode/encode were introduced in Net::DNS 0.68
+	# parse is no longer a method and calling it here makes perl croak.
+	#
+	my $decode = 0;
+	$decode = 1 if ($Net::DNS::VERSION >= 0.68);
+
+	if ($decode) {
+		($header, $offset) = Net::DNS::Header->decode(\$data);
+	} else {
+		($header, $offset) = Net::DNS::Header->parse(\$data);
+	}
+		
+	for (1 .. $header->qdcount) {
+		if ($decode) {
+			($q, $offset) =
+				 Net::DNS::Question->decode(\$data, $offset);
+		} else {
+			($q, $offset) =
+				 Net::DNS::Question->parse(\$data, $offset);
+		}
+	}
+	for (1 .. $header->ancount) {
+		if ($decode) {
+			($q, $offset) = Net::DNS::RR->decode(\$data, $offset);
+		} else {
+			($q, $offset) = Net::DNS::RR->parse(\$data, $offset);
+		}
+	}
+	for (1 .. $header->nscount) {
+		if ($decode) {
+			($q, $offset) = Net::DNS::RR->decode(\$data, $offset);
+		} else {
+			($q, $offset) = Net::DNS::RR->parse(\$data, $offset);
+		}
+	}
+	for (1 .. $header->arcount) {
+		if ($decode) {
+			($q, $offset) = Net::DNS::RR->decode(\$data, $offset);
+		} else {
+			($q, $offset) = Net::DNS::RR->parse(\$data, $offset);
+		}
+	}
+	return $offset;
 }
 
 # sign_tcp_continuation:
@@ -222,55 +258,59 @@ sub packetlen {
 # the unwanted data from the digest before calling the default sign_hmac
 # function.
 sub sign_tcp_continuation {
-        my ($key, $data) = @_;
+	my ($key, $data) = @_;
 
-        # copy out first two bytes: size of the previous MAC
-        my $rmacsize = unpack("n", $data);
-        $data = substr($data, 2);
+	# copy out first two bytes: size of the previous MAC
+	my $rmacsize = unpack("n", $data);
+	$data = substr($data, 2);
 
-        # copy out previous MAC
-        my $rmac = substr($data, 0, $rmacsize);
-        $data = substr($data, $rmacsize);
+	# copy out previous MAC
+	my $rmac = substr($data, 0, $rmacsize);
+	$data = substr($data, $rmacsize);
 
-        # try parsing out the packet information
-        my $plen = packetlen($data);
-        my $pdata = substr($data, 0, $plen);
-        $data = substr($data, $plen);
+	# try parsing out the packet information
+	my $plen = packetlen($data);
+	my $pdata = substr($data, 0, $plen);
+	$data = substr($data, $plen);
 
-        # remove the keyname, ttl, class, and algorithm name
-        $data = substr($data, namelen($data));
-        $data = substr($data, 6);
-        $data = substr($data, namelen($data));
+	# remove the keyname, ttl, class, and algorithm name
+	$data = substr($data, namelen($data));
+	$data = substr($data, 6);
+	$data = substr($data, namelen($data));
 
-        # preserve the TSIG data
-        my $tdata = substr($data, 0, 8);
+	# preserve the TSIG data
+	my $tdata = substr($data, 0, 8);
 
-        # prepare a new digest and sign with it
-        $data = pack("n", $rmacsize) . $rmac . $pdata . $tdata;
-        return Net::DNS::RR::TSIG::sign_hmac($key, $data);
+	# prepare a new digest and sign with it
+	$data = pack("n", $rmacsize) . $rmac . $pdata . $tdata;
+	return Net::DNS::RR::TSIG::sign_hmac($key, $data);
 }
 
 sub handleTCP {
 	my ($buf) = @_;
 
-	my ($packet, $err) = new Net::DNS::Packet(\$buf, 0);
+	my ($request, $err) = new Net::DNS::Packet(\$buf, 0);
 	$err and die $err;
 	
-	$packet->header->qr(1);
-	$packet->header->aa(1);
-	
-	my @questions = $packet->question;
+	my @questions = $request->question;
 	my $qname = $questions[0]->qname;
 	my $qtype = $questions[0]->qtype;
+	my $qclass = $questions[0]->qclass;
+	my $id = $request->header->id;
 
-        # get the existing signature if any, and clear the additional section
-        my $prev_tsig;
-        my $signer;
-        while (my $rr = $packet->pop("additional")) {
-                if ($rr->type eq "TSIG") {
-                        $prev_tsig = $rr;
-                }
-        }
+	my $packet = new Net::DNS::Packet($qname, $qtype, $qclass);
+	$packet->header->qr(1);
+	$packet->header->aa(1);
+	$packet->header->id($id);
+
+	# get the existing signature if any, and clear the additional section
+	my $prev_tsig;
+	my $signer;
+	while (my $rr = $request->pop("additional")) {
+		if ($rr->type eq "TSIG") {
+			$prev_tsig = $rr;
+		}
+	}
 
 	my @results = ();
 	my $count_these = 0;
@@ -289,42 +329,43 @@ sub handleTCP {
 			if(defined($key_name) && defined($key_data)) {
 				# sign the packet
 				print "  Signing the data with " . 
-                                      "$key_name/$key_data\n";
+				      "$key_name/$key_data\n";
 
-                                my $tsig = Net::DNS::RR->
-                                        new("$key_name TSIG $key_data");
+				my $tsig = Net::DNS::RR->
+					new("$key_name TSIG $key_data");
 
-                                # These kluges are necessary because Net::DNS
-                                # doesn't know how to sign responses.  We
-                                # clear compnames so that the TSIG key and
-                                # algorithm name won't be compressed, and
-                                # add one to arcount because the signing
-                                # function will attempt to decrement it,
-                                # which is incorrect in a response. Finally
-                                # we set request_mac to the previous digest.
-                                $packet->{"compnames"} = {};
-                                $packet->{"header"}{"arcount"} += 1;
-                                if (defined($prev_tsig)) {
-                                        my $rmac = pack('n H*',
-                                                $prev_tsig->mac_size,
-                                                $prev_tsig->mac);
-                                        $tsig->{"request_mac"} =
-                                                unpack("H*", $rmac);
-                                }
-                                
-                                $tsig->sign_func($signer) if defined($signer);
+				# These kluges are necessary because Net::DNS
+				# doesn't know how to sign responses.  We
+				# clear compnames so that the TSIG key and
+				# algorithm name won't be compressed, and
+				# add one to arcount because the signing
+				# function will attempt to decrement it,
+				# which is incorrect in a response. Finally
+				# we set request_mac to the previous digest.
+				$packet->{"compnames"} = {};
+				$packet->{"header"}{"arcount"} += 1;
+				if (defined($prev_tsig)) {
+					my $rmac = pack('n H*',
+						$prev_tsig->mac_size,
+						$prev_tsig->mac);
+					$tsig->{"request_mac"} =
+						unpack("H*", $rmac);
+				}
+				
+				$tsig->sign_func($signer) if defined($signer);
 				$packet->sign_tsig($tsig);
-                                $signer = \&sign_tcp_continuation;
+				$signer = \&sign_tcp_continuation;
 
-                                my $copy =
-                                        Net::DNS::Packet->new(\($packet->data));
-                                $prev_tsig = $copy->pop("additional");
+				my $copy =
+					Net::DNS::Packet->new(\($packet->data));
+				$prev_tsig = $copy->pop("additional");
 			}
 			#$packet->print;
 			push(@results,$packet->data);
-			$packet = new Net::DNS::Packet(\$buf, 0);
+			$packet = new Net::DNS::Packet($qname, $qtype, $qclass);
 			$packet->header->qr(1);
 			$packet->header->aa(1);
+			$packet->header->id($id);
 		}
 	}
 	print " A total of $count_these patterns matched\n";
@@ -358,10 +399,10 @@ for (;;) {
 			}
 		}
 		$conn->close;
-                #print Dumper(@rules);
-                #print "+=+=+ $rules[0]->{'pattern'}\n";
-                #print "+=+=+ $rules[0]->{'answer'}->[0]->{'rname'}\n";
-                #print "+=+=+ $rules[0]->{'answer'}->[0]\n";
+		#print Dumper(@rules);
+		#print "+=+=+ $rules[0]->{'pattern'}\n";
+		#print "+=+=+ $rules[0]->{'answer'}->[0]->{'rname'}\n";
+		#print "+=+=+ $rules[0]->{'answer'}->[0]\n";
 	} elsif (vec($rout, fileno($udpsock), 1)) {
 		printf "UDP request\n";
 		my $buf;

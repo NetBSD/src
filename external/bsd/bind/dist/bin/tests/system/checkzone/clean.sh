@@ -12,6 +12,6 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: clean.sh,v 1.2 2011-03-02 04:20:33 marka Exp
+# Id: clean.sh,v 1.2 2011/03/02 04:20:33 marka Exp 
 
 rm -f test.out.*

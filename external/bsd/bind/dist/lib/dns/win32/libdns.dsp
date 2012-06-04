@@ -130,6 +130,10 @@ SOURCE=..\include\dns\cert.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\include\dns\clientinfo.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\code.h
 # End Source File
 # Begin Source File
@@ -463,6 +467,10 @@ SOURCE=..\cache.c
 # Begin Source File
 
 SOURCE=..\callbacks.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\clientinfo.c
 # End Source File
 # Begin Source File
 

@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: latex-fixup.pl,v 1.5 2007-06-19 23:47:13 tbox Exp
+# Id: latex-fixup.pl,v 1.5 2007/06/19 23:47:13 tbox Exp 
 
 # Sadly, the final stages of generating a presentable PDF file always
 # seem to require some manual tweaking.  Doesn't seem to matter what

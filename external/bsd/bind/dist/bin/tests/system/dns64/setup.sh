@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: setup.sh,v 1.4 2010-12-18 11:45:01 marka Exp
+# Id: setup.sh,v 1.4 2010/12/18 11:45:01 marka Exp 
 
 sh clean.sh
 

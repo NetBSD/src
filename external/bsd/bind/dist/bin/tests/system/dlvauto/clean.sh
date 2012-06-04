@@ -12,7 +12,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: clean.sh,v 1.3 2011-03-03 16:16:43 each Exp
+# Id: clean.sh,v 1.3 2011/03/03 16:16:43 each Exp 
 
 rm -f random.data
 rm -f ns1/K*

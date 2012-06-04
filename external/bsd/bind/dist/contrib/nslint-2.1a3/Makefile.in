@@ -17,7 +17,7 @@
 #  WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 #  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
-# @(#) Id: Makefile.in,v 1.2 2004-07-20 07:13:40 marka Exp (LBL)
+# @(#) Id: Makefile.in,v 1.2 2004/07/20 07:13:40 marka Exp  (LBL)
 
 #
 # Various configurable paths (remember to edit Makefile.in, not Makefile)

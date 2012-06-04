@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: ifconfig.sh,v 1.59 2010-06-11 23:46:49 tbox Exp
+# Id: ifconfig.sh,v 1.59 2010/06/11 23:46:49 tbox Exp 
 
 #
 # Set up interface aliases for bind9 system tests.

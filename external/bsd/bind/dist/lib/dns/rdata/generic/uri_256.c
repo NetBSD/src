@@ -1,7 +1,7 @@
-/*	$NetBSD: uri_256.c,v 1.1.1.1 2011/09/11 17:19:00 christos Exp $	*/
+/*	$NetBSD: uri_256.c,v 1.1.1.2 2012/06/04 17:56:38 christos Exp $	*/
 
 /*
- * Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: uri_256.c,v 1.2 2011-03-03 14:10:27 fdupont Exp */
+/* Id */
 
 #ifndef GENERIC_URI_256_C
 #define GENERIC_URI_256_C 1

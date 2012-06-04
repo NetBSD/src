@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: DirBrowse.cpp,v 1.6 2007-06-19 23:47:07 tbox Exp */
+/* Id: DirBrowse.cpp,v 1.6 2007/06/19 23:47:07 tbox Exp  */
 
 /*
  * Copyright (c) 1999-2000 by Nortel Networks Corporation

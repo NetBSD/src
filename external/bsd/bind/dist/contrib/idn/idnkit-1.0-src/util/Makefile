@@ -1,4 +1,4 @@
-# Id: Makefile,v 1.1.1.1 2003-06-04 00:27:52 marka Exp
+# Id: Makefile,v 1.1 2003/06/04 00:27:52 marka Exp 
 
 PERL = /usr/local/bin/perl -w
 

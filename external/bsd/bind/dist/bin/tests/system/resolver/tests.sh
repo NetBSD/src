@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009-2012  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.20 2011-07-28 03:18:17 each Exp
+# Id
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -262,6 +262,35 @@ grep 'flags: qr aa rd ra;' dig.ns4.out.18.${n} > /dev/null || ret=1
 # but this one should NOT be authoritative
 $DIG @10.53.0.7 -p 5300 -x 172.20.1.1 > dig.ns4.out.19.${n} || ret=1
 grep 'flags: qr rd ra;' dig.ns4.out.19.${n} > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; status=1; fi
+
+n=`expr $n + 1`
+echo "I:checking that removal of a delegation is honoured ($n)"
+ret=0
+$DIG -p 5300 @10.53.0.5 www.to-be-removed.tld A > dig.ns5.prime.${n}
+grep "status: NOERROR" dig.ns5.prime.${n} > /dev/null || { ret=1; echo "I: priming failed"; }
+cp ns4/tld2.db ns4/tld.db
+($RNDC -c ../common/rndc.conf -s 10.53.0.4 -p 9953 reload tld 2>&1 ) | 
+sed -e '/reload queued/d' -e 's/^/I:ns4 /'
+old=
+for i in 0 1 2 3 4 5 6 7 8 9
+do
+	foo=0
+	$DIG -p 5300 @10.53.0.5 ns$i.to-be-removed.tld A > /dev/null
+	$DIG -p 5300 @10.53.0.5 www.to-be-removed.tld A > dig.ns5.out.${n}
+	grep "status: NXDOMAIN" dig.ns5.out.${n} > /dev/null || foo=1
+	[ $foo = 0 ] && break
+	$NSUPDATE << EOF
+server 10.53.0.6 5300
+zone to-be-removed.tld
+update add to-be-removed.tld 100 NS ns${i}.to-be-removed.tld
+update delete to-be-removed.tld NS ns${old}.to-be-removed.tld
+send
+EOF
+	old=$i
+	sleep 1
+done
+[ $ret = 0 ] && ret=$foo; 
 if [ $ret != 0 ]; then echo "I:failed"; status=1; fi
 
 echo "I:exit status: $status"
