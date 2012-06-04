@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: check-secure-delegation.pl.in,v 1.2 2010-12-21 02:32:21 marka Exp
+# Id: check-secure-delegation.pl.in,v 1.2 2010/12/21 02:32:21 marka Exp 
 
 use warnings;
 use FileHandle;

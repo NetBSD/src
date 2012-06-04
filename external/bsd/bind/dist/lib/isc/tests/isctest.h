@@ -1,7 +1,7 @@
-/*	$NetBSD: isctest.h,v 1.1.1.1 2011/09/11 17:19:37 christos Exp $	*/
+/*	$NetBSD: isctest.h,v 1.1.1.2 2012/06/04 17:56:52 christos Exp $	*/
 
 /*
- * Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: isctest.h,v 1.3 2011-07-28 04:04:37 each Exp */
+/* Id */
 
 /*! \file */
 
@@ -27,6 +27,7 @@
 #include <isc/hash.h>
 #include <isc/log.h>
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/string.h>
 #include <isc/task.h>
@@ -54,3 +55,5 @@ isc_test_begin(FILE *logfile, isc_boolean_t start_managers);
 void
 isc_test_end(void);
 
+void
+isc_test_nap(isc_uint32_t usec);

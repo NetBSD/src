@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007-2011  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007-2012  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: clean.sh,v 1.42 2011-05-23 20:10:02 each Exp
+# Id
 
 rm -f */K* */keyset-* */dsset-* */dlvset-* */signedkey-* */*.signed
 rm -f */trusted.conf */managed.conf */tmp* */*.jnl */*.bk
@@ -28,6 +28,7 @@ rm -f ns3/expiring.example.db ns3/nosign.example.db
 rm -f ns2/private.secure.example.db
 rm -f ns2/badparam.db ns2/badparam.db.bad
 rm -f ns2/single-nsec3.db
+rm -f ns2/nsec3chain-test.db
 rm -f */example.bk
 rm -f dig.out.*
 rm -f random.data
@@ -46,9 +47,11 @@ rm -f ns3/secure.optout.example.db
 rm -f */named.secroots
 rm -f ns1/managed.key.id
 rm -f signer/example.db
+rm -f signer/signer.out.*
 rm -f ns2/algroll.db
 rm -f ns3/kskonly.example.db
 rm -f ns4/named.conf
+rm -f ns4/managed-keys.bind*
 rm -f ns3/auto-nsec.example.db ns3/auto-nsec3.example.db
 rm -f ns3/secure.below-cname.example.db
 rm -f signer/example.db.after signer/example.db.before
@@ -58,3 +61,4 @@ rm -f ns3/ttlpatch.example.db ns3/ttlpatch.example.db.signed
 rm -f ns3/ttlpatch.example.db.patched
 rm -f ns3/split-smart.example.db
 rm -f nosign.before
+rm -f signing.out*

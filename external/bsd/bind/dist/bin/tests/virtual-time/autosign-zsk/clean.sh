@@ -12,7 +12,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: clean.sh,v 1.2 2010-06-21 02:31:45 marka Exp
+# Id: clean.sh,v 1.2 2010/06/21 02:31:45 marka Exp 
 
 #
 # Clean up after virtual time tests.

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,13 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.7 2011-03-05 23:52:29 tbox Exp
+# Id
+
+
+# WARNING: The test labelled "testing request-ixfr option in view vs zone"
+#          is fragile because it depends upon counting instances of records
+#          in the log file - need a better approach <sdm> - until then,
+#          if you add any tests above that point, you will break the test.
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -59,7 +65,12 @@ EOF
 
 $RNDCCMD reload
 
-sleep 2
+for i in 0 1 2 3 4 5 6 7 8 9
+do
+	$DIGCMD nil. SOA > dig.out
+	grep "SOA" dig.out > /dev/null && break
+	sleep 1
+done
 
 $DIGCMD nil. TXT | grep 'initial AXFR' >/dev/null || {
     echo "I:failed"
@@ -131,6 +142,86 @@ $DIGCMD nil. TXT | grep 'fallback AXFR' >/dev/null || {
     echo "I:failed"
     status=1
 }
+
+echo "I:testing ixfr-from-differences option"
+# ns3 is master; ns4 is slave 
+$CHECKZONE test. ns3/mytest.db > /dev/null 2>&1
+if [ $? -ne 0 ]
+then
+    echo "I:named-checkzone returned failure on ns3/mytest.db"
+fi
+# modify the master
+#echo "I: digging against master: "
+#$DIG $DIGOPTS @10.53.0.3 -p 5300 a host1.test.
+#echo "I: digging against slave: "
+#$DIG $DIGOPTS @10.53.0.4 -p 5300 a host1.test.
+
+cp ns3/mytest1.db ns3/mytest.db
+$RNDC -s 10.53.0.3 -p 9953 -c ../common/rndc.conf reload
+
+for i in 0 1 2 3 4 5 6 7 8 9
+do
+	$DIG +tcp -p 5300 @10.53.0.4 SOA test > dig.out
+	grep -i "hostmaster\.test\..2" dig.out > /dev/null && break
+	sleep 1
+done
+
+# slave should have gotten notify and updated
+
+INCR=`grep "test/IN/primary" ns4/named.run|grep "got incremental"|wc -l`
+if [ $INCR -ne 1 ]
+then
+    echo "I:failed to get incremental response"
+    status=1
+fi
+
+echo "I:testing request-ixfr option in view vs zone"
+# There's a view with 2 zones. In the view, "request-ixfr yes"
+# but in the zone "sub.test", request-ixfr no"
+# we want to make sure that a change to sub.test results in AXFR, while
+# changes to test. result in IXFR
+
+echo "I: this result should be AXFR"
+cp ns3/subtest1.db ns3/subtest.db # change to sub.test zone, should be AXFR
+$RNDC -s 10.53.0.3 -p 9953 -c ../common/rndc.conf reload
+
+for i in 0 1 2 3 4 5 6 7 8 9
+do
+	$DIG +tcp -p 5300 @10.53.0.4 SOA sub.test > dig.out
+	grep -i "hostmaster\.test\..3" dig.out > /dev/null && break
+	sleep 1
+done
+
+echo "I: this result should be AXFR"
+NONINCR=`grep 'sub\.test/IN/primary' ns4/named.run|grep "got nonincremental" | wc -l`
+if [ $NONINCR -ne 2 ]
+then
+    echo "I:failed to get nonincremental response in 2nd AXFR test"
+    status=1
+else
+    echo "I:  success: AXFR it was"
+fi
+
+echo "I: this result should be IXFR"
+cp ns3/mytest2.db ns3/mytest.db # change to test zone, should be IXFR
+$RNDC -s 10.53.0.3 -p 9953 -c ../common/rndc.conf reload
+
+for i in 0 1 2 3 4 5 6 7 8 9
+do
+	$DIG +tcp -p 5300 @10.53.0.4 SOA test > dig.out
+	grep -i "hostmaster\.test\..4" dig.out > /dev/null && break
+	sleep 1
+done
+
+INCR=`grep "test/IN/primary" ns4/named.run|grep "got incremental"|wc -l`
+if [ $INCR -ne 2 ]
+then
+    echo "I:failed to get incremental response in 2nd IXFR test"
+    status=1
+else
+    echo "I:  success: IXFR it was"
+fi
+
 
 echo "I:exit status: $status"
 exit $status
