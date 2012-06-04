@@ -1,4 +1,4 @@
-/*	$NetBSD: npftest.c,v 1.2 2012/05/30 21:38:04 rmind Exp $	*/
+/*	$NetBSD: npftest.c,v 1.3 2012/06/04 00:28:34 rmind Exp $	*/
 
 /*
  * NPF testing framework.
@@ -179,6 +179,9 @@ main(int argc, char **argv)
 
 		ok = rumpns_npf_table_test(verbose);
 		result("table", ok);
+
+		ok = rumpns_npf_state_test(verbose);
+		result("state", ok);
 	}
 
 	if (stream) {

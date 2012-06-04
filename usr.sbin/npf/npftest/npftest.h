@@ -1,4 +1,4 @@
-/*	$NetBSD: npftest.h,v 1.2 2012/05/30 21:38:04 rmind Exp $	*/
+/*	$NetBSD: npftest.h,v 1.3 2012/06/04 00:28:34 rmind Exp $	*/
 
 /*
  * Public Domain.
@@ -17,6 +17,7 @@ int		rumpns_npf_test_handlepkt(const void *, size_t,
 bool		rumpns_npf_nbuf_test(bool);
 bool		rumpns_npf_processor_test(bool);
 bool		rumpns_npf_table_test(bool);
+bool		rumpns_npf_state_test(bool);
 
 int		process_stream(const char *, const char *, unsigned);
 
