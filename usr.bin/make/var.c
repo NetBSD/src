@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.169 2012/05/18 02:28:16 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.170 2012/06/04 20:34:20 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.169 2012/05/18 02:28:16 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.170 2012/06/04 20:34:20 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.169 2012/05/18 02:28:16 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.170 2012/06/04 20:34:20 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -138,6 +138,12 @@ __RCSID("$NetBSD: var.c,v 1.169 2012/05/18 02:28:16 sjg Exp $");
 #include    "buf.h"
 #include    "dir.h"
 #include    "job.h"
+
+/*
+ * This lets us tell if we have replaced the original environ
+ * (which we cannot free).
+ */
+char **savedEnv = NULL;
 
 /*
  * This is a harmless return value for Var_Parse that can be used by Var_Subst
@@ -762,24 +768,23 @@ Var_UnExport(char *str)
     str += 8;
     unexport_env = (strncmp(str, "-env", 4) == 0);
     if (unexport_env) {
-	static char **savenv;
 	char **newenv;
 
 	cp = getenv(MAKE_LEVEL);	/* we should preserve this */
-	if (environ == savenv) {
+	if (environ == savedEnv) {
 	    /* we have been here before! */
 	    newenv = bmake_realloc(environ, 2 * sizeof(char *));
 	} else {
-	    if (savenv) {
-		free(savenv);
-		savenv = NULL;
+	    if (savedEnv) {
+		free(savedEnv);
+		savedEnv = NULL;
 	    }
 	    newenv = bmake_malloc(2 * sizeof(char *));
 	}
 	if (!newenv)
 	    return;
 	/* Note: we cannot safely free() the original environ. */
-	environ = savenv = newenv;
+	environ = savedEnv = newenv;
 	newenv[0] = NULL;
 	newenv[1] = NULL;
 	setenv(MAKE_LEVEL, cp, 1);
