@@ -19,3 +19,6 @@
 
 rm -f dig.out
 rm -f */named.memstats
+rm -f */*.bk
+rm -f */*.bk.*
+rm -f ns3/Kexample.*
