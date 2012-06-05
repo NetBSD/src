@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.107 2012/05/15 01:22:50 christos Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.108 2012/06/05 19:33:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.107 2012/05/15 01:22:50 christos Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.108 2012/06/05 19:33:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,6 +70,7 @@ __RCSID("$NetBSD: syslogd.c,v 1.107 2012/05/15 01:22:50 christos Exp $");
  * TLS, syslog-protocol, and syslog-sign code by Martin Schuette.
  */
 #define SYSLOG_NAMES
+#include <poll.h>
 #include "syslogd.h"
 #include "extern.h"
 
@@ -266,6 +267,7 @@ void		free_cred_SLIST(struct peer_cred_head *);
 static inline void
 		free_incoming_tls_sockets(void);
 #endif /* !DISABLE_TLS */
+static int writev1(int, struct iovec *, size_t);
 
 /* for make_timestamp() */
 #define TIMESTAMPBUFSIZE 35
@@ -1835,7 +1837,7 @@ logmsg(struct buf_msg *buffer)
 	/* log the message to the particular outputs */
 	if (!Initialized) {
 		f = &consfile;
-		f->f_file = open(ctty, O_WRONLY, 0);
+		f->f_file = open(ctty, O_WRONLY | O_NDELAY, 0);
 
 		if (f->f_file >= 0) {
 			DELREF(f->f_prevmsg);
@@ -2404,7 +2406,8 @@ fprintlog(struct filed *f, struct buf_msg *passedbuffer, struct buf_queue *qentr
 		DPRINTF(D_MISC, "Logging to %s %s\n",
 			TypeInfo[f->f_type].name, f->f_un.f_fname);
 	again:
-		if (writev(f->f_file, iov, v - iov) < 0) {
+		if ((f->f_type == F_FILE ? writev(f->f_file, iov, v - iov) :
+		    writev1(f->f_file, iov, v - iov)) < 0) {
 			e = errno;
 			if (f->f_type == F_FILE && e == ENOSPC) {
 				int lasterror = f->f_lasterror;
@@ -2419,7 +2422,7 @@ fprintlog(struct filed *f, struct buf_msg *passedbuffer, struct buf_queue *qentr
 			 */
 			if ((e == EIO || e == EBADF) && f->f_type != F_FILE) {
 				f->f_file = open(f->f_un.f_fname,
-				    O_WRONLY|O_APPEND, 0);
+				    O_WRONLY|O_APPEND|O_NDELAY, 0);
 				if (f->f_file < 0) {
 					f->f_type = F_UNUSED;
 					logerror("%s", f->f_un.f_fname);
@@ -3605,7 +3608,7 @@ cfline(size_t linenum, const char *line, struct filed *f, const char *prog,
     const char *host)
 {
 	struct addrinfo hints, *res;
-	int    error, i, pri, syncfile;
+	int    error, i, pri, syncfile, flags;
 	const char   *p, *q;
 	char *bp;
 	char   buf[MAXLINE];
@@ -3819,19 +3822,22 @@ cfline(size_t linenum, const char *line, struct filed *f, const char *prog,
 			f->f_flags |= FFLAG_SIGN;
 #endif /* !DISABLE_SIGN */
 		(void)strlcpy(f->f_un.f_fname, p, sizeof(f->f_un.f_fname));
-		if ((f->f_file = open(p, O_WRONLY|O_APPEND, 0)) < 0) {
+		if (isatty(f->f_file)) {
+			f->f_type = F_TTY;
+			if (strcmp(p, ctty) == 0)
+				f->f_type = F_CONSOLE;
+			flags = O_NDELAY;
+		} else {
+			f->f_type = F_FILE;
+			flags = 0;
+		}
+		if ((f->f_file = open(p, O_WRONLY|O_APPEND|flags, 0)) < 0) {
 			f->f_type = F_UNUSED;
 			logerror("%s", p);
 			break;
 		}
 		if (syncfile)
 			f->f_flags |= FFLAG_SYNC;
-		if (isatty(f->f_file))
-			f->f_type = F_TTY;
-		else
-			f->f_type = F_FILE;
-		if (strcmp(p, ctty) == 0)
-			f->f_type = F_CONSOLE;
 		break;
 
 	case '|':
@@ -4694,4 +4700,43 @@ copy_config_value_word(char **mem, const char **p)
 
 	*p = ++q;
 	return true;
+}
+
+static int
+writev1(int fd, struct iovec *iov, size_t count)
+{
+	ssize_t nw = 0, tot = 0;
+	size_t ntries = 5;
+
+	while (ntries--) {
+		switch ((nw = writev(fd, iov, count))) {
+		case -1:
+			if (errno == EAGAIN || errno == EWOULDBLOCK) {
+				struct pollfd pfd;
+				pfd.fd = fd;
+				pfd.events = POLLOUT;
+				pfd.revents = 0;
+				(void)poll(&pfd, 1, 500);
+				continue;
+			} else
+				return -1;
+		case 0:
+			return 0;
+		default:
+			tot += nw;
+			while (nw > 0) {
+				if (iov->iov_len > nw) {
+					iov->iov_len -= nw;
+					iov->iov_base += nw;
+					break;
+				} else {
+					if (count-- == 0)
+						return tot;
+					nw -= iov->iov_len;
+					iov++;
+				}
+			}
+		}
+	}
+	return tot == 0 ? nw : tot;
 }
