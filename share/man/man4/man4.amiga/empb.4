@@ -1,4 +1,4 @@
-.\" $NetBSD: empb.4,v 1.1 2012/06/04 20:16:57 rkujawa Exp $
+.\" $NetBSD: empb.4,v 1.2 2012/06/05 14:17:43 wiz Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .Os
 .Sh NAME
 .Nm empb
-.Nd ELBOX Mediator 1200 PCI bridge driver 
+.Nd ELBOX Mediator 1200 PCI bridge driver
 .Sh SYNOPSIS
 .Cd "empb0 at zbus0"
 .Cd "emmem0 at zbus0"
@@ -48,11 +48,11 @@ The
 .Nm
 driver supports the following hardware:
 .Bl -tag -offset indent
-.It ELBOX Mediator 1200 
-.It ELBOX Mediator 1200 LT2 
-.It ELBOX Mediator 1200 LT4 
-.It ELBOX Mediator 1200 SX 
-.It ELBOX Mediator 1200 TX 
+.It ELBOX Mediator 1200
+.It ELBOX Mediator 1200 LT2
+.It ELBOX Mediator 1200 LT4
+.It ELBOX Mediator 1200 SX
+.It ELBOX Mediator 1200 TX
 .El
 .Sh SEE ALSO
 .Xr mppb 4 ,
@@ -70,7 +70,11 @@ The
 driver was written by
 .An Radoslaw Kujawa Aq radoslaw.kujawa@gmail.com .
 It was developed using information obtained through reverse engineering
-by Frank Wille and Radoslaw Kujawa. The authors have no access to official
+by
+.An Frank Wille
+and
+.An Radoslaw Kujawa .
+The authors have no access to official
 documentation (which is only available under NDA).
 .Sh CAVEATS
 Mediator 4000 and ZIV models are not supported, but support could easily be
