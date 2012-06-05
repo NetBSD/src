@@ -1,4 +1,4 @@
-$NetBSD: TODO.usbmp,v 1.1.2.15 2012/06/03 09:34:04 skrll Exp $
+$NetBSD: TODO.usbmp,v 1.1.2.16 2012/06/05 19:42:02 skrll Exp $
 
 
 the majority of the USB MP device interface is documented in usbdivar.h.
@@ -119,7 +119,7 @@ driver testing:		STATUS
   - ums			working
   - uts
   - ukbd		working
-  - ucycom
+  - ucycom		working
   - uep
   - udl
   - ulpt		attaches ok, MERGE ISSUE
