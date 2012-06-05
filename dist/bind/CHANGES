@@ -1,3 +1,8 @@
+	--- 9.4-ESV-R4-P2 released ---
+
+3331.	[security]	dns_rdataslab_fromrdataset could produce bad
+			rdataslabs. [RT #29644]
+
 3218.   [security]      Cache lookup could return RRSIG data associated with
                         nonexistent records, leading to an assertion
                         failure. [RT #26590]

@@ -1,4 +1,4 @@
-# $Id: version,v 1.1.1.4.4.3.2.5 2011/06/18 10:38:27 bouyer Exp $
+# $Id: version,v 1.1.1.4.4.3.2.6 2012/06/05 20:01:32 bouyer Exp $
 #
 # This file must follow /bin/sh rules.  It is imported directly via
 # configure.
@@ -7,4 +7,4 @@ MAJORVER=9
 MINORVER=4
 PATCHVER=
 RELEASETYPE=-ESV
-RELEASEVER=-R4-P1
+RELEASEVER=-R4-P2
