@@ -1,4 +1,4 @@
-/*	$NetBSD: md_3.h,v 1.2 2011/02/16 03:47:08 christos Exp $	*/
+/*	$NetBSD: md_3.h,v 1.2.6.1 2012/06/05 21:15:11 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,7 @@
 #ifndef GENERIC_MD_3_H
 #define GENERIC_MD_3_H 1
 
-/* Id: md_3.h,v 1.28 2007-06-19 23:47:17 tbox Exp */
+/* Id: md_3.h,v 1.28 2007/06/19 23:47:17 tbox Exp  */
 
 typedef struct dns_rdata_md {
 	dns_rdatacommon_t	common;

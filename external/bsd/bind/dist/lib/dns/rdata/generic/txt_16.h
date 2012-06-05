@@ -1,4 +1,4 @@
-/*	$NetBSD: txt_16.h,v 1.2 2011/02/16 03:47:09 christos Exp $	*/
+/*	$NetBSD: txt_16.h,v 1.2.6.1 2012/06/05 21:15:11 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,7 @@
 #ifndef GENERIC_TXT_16_H
 #define GENERIC_TXT_16_H 1
 
-/* Id: txt_16.h,v 1.28 2007-06-19 23:47:17 tbox Exp */
+/* Id: txt_16.h,v 1.28 2007/06/19 23:47:17 tbox Exp  */
 
 typedef struct dns_rdata_txt_string {
                 isc_uint8_t    length;

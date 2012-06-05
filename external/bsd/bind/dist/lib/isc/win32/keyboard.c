@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.c,v 1.2 2011/02/16 03:47:15 christos Exp $	*/
+/*	$NetBSD: keyboard.c,v 1.2.6.1 2012/06/05 21:15:31 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: keyboard.c,v 1.7 2007-06-19 23:47:19 tbox Exp */
+/* Id: keyboard.c,v 1.7 2007/06/19 23:47:19 tbox Exp  */
 
 #include <config.h>
 

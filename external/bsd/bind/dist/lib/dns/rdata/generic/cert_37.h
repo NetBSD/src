@@ -1,4 +1,4 @@
-/*	$NetBSD: cert_37.h,v 1.2 2011/02/16 03:47:08 christos Exp $	*/
+/*	$NetBSD: cert_37.h,v 1.2.6.1 2012/06/05 21:15:13 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: cert_37.h,v 1.20 2007-06-19 23:47:17 tbox Exp */
+/* Id: cert_37.h,v 1.20 2007/06/19 23:47:17 tbox Exp  */
 
 #ifndef GENERIC_CERT_37_H
 #define GENERIC_CERT_37_H 1

@@ -1,7 +1,7 @@
-/*	$NetBSD: zone.h,v 1.8 2011/09/11 18:55:39 christos Exp $	*/
+/*	$NetBSD: zone.h,v 1.8.4.1 2012/06/05 21:14:55 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zone.h,v 1.191 2011-07-06 01:36:32 each Exp */
+/* Id */
 
 #ifndef DNS_ZONE_H
 #define DNS_ZONE_H 1
@@ -34,9 +34,11 @@
 #include <isc/lang.h>
 #include <isc/rwlock.h>
 
+#include <dns/master.h>
 #include <dns/masterdump.h>
 #include <dns/rdatastruct.h>
 #include <dns/types.h>
+#include <dns/zt.h>
 
 typedef enum {
 	dns_zone_none,
@@ -46,7 +48,7 @@ typedef enum {
 	dns_zone_staticstub,
 	dns_zone_key,
 	dns_zone_dlz,
-	dns_zone_redirect,
+	dns_zone_redirect
 } dns_zonetype_t;
 
 #define DNS_ZONEOPT_SERVERS	  0x00000001U	/*%< perform server checks */
@@ -289,6 +291,7 @@ dns_zone_loadnew(dns_zone_t *zone);
 
 isc_result_t
 dns_zone_loadandthaw(dns_zone_t *zone);
+
 /*%<
  *	Cause the database to be loaded from its backing store.
  *	Confirm that the minimum requirements for the zone type are
@@ -311,6 +314,25 @@ dns_zone_loadandthaw(dns_zone_t *zone);
  *			  file system timestamps.
  *\li	DNS_R_BADZONE
  *\li	Any result value from dns_db_load().
+ */
+
+isc_result_t
+dns_zone_asyncload(dns_zone_t *zone, dns_zt_zoneloaded_t done, void *arg);
+/*%<
+ * Cause the database to be loaded from its backing store asynchronously.
+ * Other zone maintenance functions are suspended until this is complete.
+ * When finished, 'done' is called to inform the caller, with 'arg' as
+ * its first argument and 'zone' as its second.  (Normally, 'arg' is
+ * expected to point to the zone table but is left undefined for testing
+ * purposes.)
+ */
+
+isc_boolean_t
+dns__zone_loadpending(dns_zone_t *zone);
+/*%<
+ * Indicates whether the zone is waiting to be loaded asynchronously.
+ * (Not currently intended for use outside of this module and associated
+ * tests.)
  */
 
 void
@@ -491,6 +513,10 @@ dns_zone_dumptostream(dns_zone_t *zone, FILE *fd);
 isc_result_t
 dns_zone_dumptostream2(dns_zone_t *zone, FILE *fd, dns_masterformat_t format,
 		       const dns_master_style_t *style);
+isc_result_t
+dns_zone_dumptostream3(dns_zone_t *zone, FILE *fd, dns_masterformat_t format,
+		       const dns_master_style_t *style,
+		       const isc_uint32_t rawversion);
 /*%<
  *    Write the zone to stream 'fd' in the specified 'format'.
  *    If the 'format' is dns_masterformat_text (RFC1035), 'style' also
@@ -500,7 +526,11 @@ dns_zone_dumptostream2(dns_zone_t *zone, FILE *fd, dns_masterformat_t format,
  *    dns_zone_dumptostream2(), which always uses the dns_masterformat_text
  *    format and the dns_master_style_default style.
  *
- *    Note that dns_zone_dumptostream2() is the most flexible form.  It
+ *    dns_zone_dumptostream2() is a backward-compatible form of
+ *    dns_zone_dumptostream3(), which always uses the current
+ *    default raw file format version.
+ *
+ *    Note that dns_zone_dumptostream3() is the most flexible form.  It
  *    can also provide the functionality of dns_zone_fulldumptostream().
  *
  * Require:
@@ -1430,6 +1460,14 @@ dns_zonemgr_forcemaint(dns_zonemgr_t *zmgr);
  */
 
 void
+dns__zonemgr_run(isc_task_t *task, isc_event_t *event);
+/*%<
+ * Event handler to call dns_zonemgr_forcemaint(); used to start
+ * zone operations from a unit test.  Not intended for use outside
+ * libdns or related tests.
+ */
+
+void
 dns_zonemgr_resumexfrs(dns_zonemgr_t *zmgr);
 /*%<
  * Attempt to start any stalled zone transfers.
@@ -1573,6 +1611,32 @@ dns_zonemgr_unreachableadd(dns_zonemgr_t *zmgr, isc_sockaddr_t *remote,
 			   isc_sockaddr_t *local, isc_time_t *now);
 /*%<
  *	Add the pair of addresses to the unreachable cache.
+ *
+ * Requires:
+ *\li	'zmgr' to be a valid zone manager.
+ *\li	'remote' to be a valid sockaddr.
+ *\li	'local' to be a valid sockaddr.
+ */
+
+isc_boolean_t
+dns_zonemgr_unreachable(dns_zonemgr_t *zmgr, isc_sockaddr_t *remote,
+			isc_sockaddr_t *local, isc_time_t *now);
+/*%<
+ *	Returns ISC_TRUE if the given local/remote address pair
+ *	is found in the zone maanger's unreachable cache.
+ *
+ * Requires:
+ *\li	'zmgr' to be a valid zone manager.
+ *\li	'remote' to be a valid sockaddr.
+ *\li	'local' to be a valid sockaddr.
+ *\li	'now' != NULL
+ */
+
+void
+dns_zonemgr_unreachabledel(dns_zonemgr_t *zmgr, isc_sockaddr_t *remote,
+			   isc_sockaddr_t *local);
+/*%<
+ *	Remove the pair of addresses from the unreachable cache.
  *
  * Requires:
  *\li	'zmgr' to be a valid zone manager.
@@ -1905,6 +1969,25 @@ dns_zone_setrefreshkeyinterval(dns_zone_t *zone, isc_uint32_t interval);
  * \li	'zone' to be valid.
  */
 
+isc_boolean_t
+dns_zone_getrequestixfr(dns_zone_t *zone);
+/*%
+ * Returns the true/false value of the request-ixfr option in the zone.
+ *
+ * Requires:
+ * \li	'zone' to be valid.
+ */
+
+void
+dns_zone_setrequestixfr(dns_zone_t *zone, isc_boolean_t flag);
+/*%
+ * Sets the request-ixfr option for the zone. Either true or false. The
+ * default value is determined by the setting of this option in the view.
+ *
+ * Requires:
+ * \li	'zone' to be valid.
+ */
+
 void
 dns_zone_setserialupdatemethod(dns_zone_t *zone, dns_updatemethod_t method);
 /*%
@@ -1925,6 +2008,45 @@ dns_zone_getserialupdatemethod(dns_zone_t *zone);
  * Requires:
  * \li	'zone' to be valid.
  */
+
+isc_result_t
+dns_zone_link(dns_zone_t *zone, dns_zone_t *raw);
+
+void
+dns_zone_getraw(dns_zone_t *zone, dns_zone_t **raw);
+
+isc_result_t
+dns_zone_keydone(dns_zone_t *zone, const char *data);
+
+isc_result_t
+dns_zone_setnsec3param(dns_zone_t *zone, isc_uint8_t hash, isc_uint8_t flags,
+		       isc_uint8_t iter, isc_uint8_t saltlen,
+		       unsigned char *salt, isc_boolean_t replace);
+/*%
+ * Set the NSEC3 parameters for the zone.
+ *
+ * If 'replace' is ISC_TRUE, then the existing NSEC3 chain, if any, will
+ * be replaced with the new one.  If 'hash' is zero, then the replacement
+ * chain will be NSEC rather than NSEC3.
+ *
+ * Requires:
+ * \li	'zone' to be valid.
+ */
+
+void
+dns_zone_setrawdata(dns_zone_t *zone, dns_masterrawheader_t *header);
+/*%
+ * Set the data to be included in the header when the zone is dumped in
+ * binary format.
+ */
+
+isc_result_t
+dns_zone_synckeyzone(dns_zone_t *zone);
+/*%
+ * Force the managed key zone to synchronize, and start the key
+ * maintenance timer.
+ */
+
 ISC_LANG_ENDDECLS
 
 #endif /* DNS_ZONE_H */

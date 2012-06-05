@@ -1,7 +1,7 @@
-/*	$NetBSD: control.c,v 1.3 2011/09/11 18:55:27 christos Exp $	*/
+/*	$NetBSD: control.c,v 1.3.4.1 2012/06/05 21:15:21 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: control.c,v 1.44 2011-08-02 20:36:11 each Exp */
+/* Id */
 
 /*! \file */
 
@@ -156,7 +156,7 @@ ns_control_docommand(isccc_sexpr_t *message, isc_buffer_t *text) {
 	} else if (command_compare(command, NS_COMMAND_DUMPSTATS)) {
 		result = ns_server_dumpstats(ns_g_server);
 	} else if (command_compare(command, NS_COMMAND_QUERYLOG)) {
-		result = ns_server_togglequerylog(ns_g_server);
+		result = ns_server_togglequerylog(ns_g_server, command);
 	} else if (command_compare(command, NS_COMMAND_DUMPDB)) {
 		ns_server_dumpdb(ns_g_server, command);
 		result = ISC_R_SUCCESS;
@@ -207,6 +207,8 @@ ns_control_docommand(isccc_sexpr_t *message, isc_buffer_t *text) {
 		result = ns_server_add_zone(ns_g_server, command);
 	} else if (command_compare(command, NS_COMMAND_DELZONE)) {
 		result = ns_server_del_zone(ns_g_server, command);
+	} else if (command_compare(command, NS_COMMAND_SIGNING)) {
+		result = ns_server_signing(ns_g_server, command, text);
 	} else {
 		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
 			      NS_LOGMODULE_CONTROL, ISC_LOG_WARNING,

@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec.h,v 1.3 2011/09/11 18:55:38 christos Exp $	*/
+/*	$NetBSD: dnssec.h,v 1.3.4.1 2012/06/05 21:14:55 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssec.h,v 1.46 2011-05-06 23:47:29 tbox Exp */
+/* Id */
 
 #ifndef DNS_DNSSEC_H
 #define DNS_DNSSEC_H 1
@@ -33,6 +33,9 @@
 #include <dst/dst.h>
 
 ISC_LANG_BEGINDECLS
+
+/*%< Maximum number of keys supported in a zone. */
+#define DNS_MAXZONEKEYS 32
 
 /*
  * Indicates how the signer found this key: in the key repository, at the

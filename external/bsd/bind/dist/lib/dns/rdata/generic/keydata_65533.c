@@ -1,7 +1,7 @@
-/*	$NetBSD: keydata_65533.c,v 1.3 2011/09/11 18:55:39 christos Exp $	*/
+/*	$NetBSD: keydata_65533.c,v 1.3.4.1 2012/06/05 21:15:11 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: keydata_65533.c,v 1.5 2011-03-05 23:52:31 tbox Exp */
+/* Id */
 
 #ifndef GENERIC_KEYDATA_65533_C
 #define GENERIC_KEYDATA_65533_C 1

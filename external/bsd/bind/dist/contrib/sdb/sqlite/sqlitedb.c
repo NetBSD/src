@@ -1,4 +1,4 @@
-/*	$NetBSD: sqlitedb.c,v 1.2 2011/02/16 03:47:01 christos Exp $	*/
+/*	$NetBSD: sqlitedb.c,v 1.2.6.1 2012/06/05 21:15:39 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2007  Internet Software Consortium.
@@ -17,7 +17,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sqlitedb.c,v 1.1 2007-03-05 05:30:22 marka Exp */
+/* Id: sqlitedb.c,v 1.2 2011/10/11 00:09:02 each Exp  */
 
 #include <config.h>
 
@@ -110,10 +110,16 @@ sqlitedb_lookup_cb(void *p, int cc, char **cv, char **cn)
 }
 
 
+#ifdef DNS_CLIENTINFO_VERSION
 static isc_result_t
-sqlitedb_lookup(const char *zone,
-		const char *name, void *dbdata,
+sqlitedb_lookup(const char *zone, const char *name, void *dbdata,
+		dns_sdblookup_t *lookup, dns_clientinfomethods_t *methods,
+		dns_clientinfo_t *clientinfo)
+#else
+static isc_result_t
+sqlitedb_lookup(const char *zone, const char *name, void *dbdata,
 		dns_sdblookup_t *lookup)
+#endif /* DNS_CLIENTINFO_VERSION */
 /*
  * synchronous absolute name lookup
  */
@@ -125,6 +131,10 @@ sqlitedb_lookup(const char *zone,
     int result;
 
     UNUSED(zone);
+#ifdef DNS_CLIENTINFO_VERSION
+    UNUSED(methods);
+    UNUSED(clientinfo);
+#endif /* DNS_CLIENTINFO_VERSION */
 
     sql = sqlite3_mprintf(
 	"SELECT TTL,RDTYPE,RDATA FROM \"%q\" WHERE "

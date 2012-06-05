@@ -1,4 +1,4 @@
-/*	$NetBSD: hip_55.c,v 1.2 2011/02/16 03:47:08 christos Exp $	*/
+/*	$NetBSD: hip_55.c,v 1.2.6.1 2012/06/05 21:15:10 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: hip_55.c,v 1.8 2011-01-13 04:59:26 tbox Exp */
+/* Id: hip_55.c,v 1.8 2011/01/13 04:59:26 tbox Exp  */
 
 /* reviewed: TBC */
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: main.c,v 1.8 2011/09/11 18:55:27 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.8.4.1 2012/06/05 21:15:21 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: main.c,v 1.183 2011-03-11 06:11:21 marka Exp */
+/* Id */
 
 /*! \file */
 
@@ -420,7 +420,7 @@ parse_command_line(int argc, char *argv[]) {
 	isc_commandline_errprint = ISC_FALSE;
 	while ((ch = isc_commandline_parse(argc, argv,
 					   "46c:C:d:E:fFgi:lm:n:N:p:P:"
-					   "sS:t:T:u:vVx:")) != -1) {
+					   "sS:t:T:U:u:vVx:")) != -1) {
 		switch (ch) {
 		case '4':
 			if (disable4)
@@ -529,6 +529,11 @@ parse_command_line(int argc, char *argv[]) {
 				fprintf(stderr, "unknown -T flag '%s\n",
 					isc_commandline_argument);
 			break;
+		case 'U':
+			ns_g_udpdisp = parse_int(isc_commandline_argument,
+						 "number of UDP listeners "
+						 "per interface");
+			break;
 		case 'u':
 			ns_g_username = isc_commandline_argument;
 			break;
@@ -587,6 +592,16 @@ create_managers(void) {
 #else
 	ns_g_cpus = 1;
 #endif
+#ifdef WIN32
+	ns_g_udpdisp = 1;
+#else
+	if (ns_g_udpdisp == 0 || ns_g_udpdisp > ns_g_cpus)
+		ns_g_udpdisp = ns_g_cpus;
+#endif
+	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_SERVER,
+		      ISC_LOG_INFO, "using %u UDP listener%s per interface",
+		      ns_g_udpdisp, ns_g_udpdisp == 1 ? "" : "s");
+
 	result = isc_taskmgr_create(ns_g_mctx, ns_g_cpus, 0, &ns_g_taskmgr);
 	if (result != ISC_R_SUCCESS) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
@@ -794,6 +809,25 @@ setup(void) {
 
 	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
 		      ISC_LOG_NOTICE, "built with %s", ns_g_configargs);
+
+	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
+		      ISC_LOG_NOTICE,
+		      "----------------------------------------------------");
+	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
+		      ISC_LOG_NOTICE,
+		      "BIND 9 is maintained by Internet Systems Consortium,");
+	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
+		      ISC_LOG_NOTICE,
+		      "Inc. (ISC), a non-profit 501(c)(3) public-benefit ");
+	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
+		      ISC_LOG_NOTICE,
+		      "corporation.  Support and training for BIND 9 are ");
+	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
+		      ISC_LOG_NOTICE,
+		      "available at https://www.isc.org/support");
+	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
+		      ISC_LOG_NOTICE,
+		      "----------------------------------------------------");
 
 	dump_symboltable();
 

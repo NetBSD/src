@@ -1,7 +1,7 @@
-/*	$NetBSD: time.c,v 1.4 2011/09/11 18:55:42 christos Exp $	*/
+/*	$NetBSD: time.c,v 1.4.4.1 2012/06/05 21:15:24 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2008, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: time.c,v 1.58 2011-03-12 04:59:49 tbox Exp */
+/* Id */
 
 /*! \file */
 
@@ -336,8 +336,7 @@ isc_time_seconds(const isc_time_t *t) {
 
 isc_result_t
 isc_time_secondsastimet(const isc_time_t *t, time_t *secondsp) {
-	isc_uint64_t i;
-	time_t seconds;
+	time_t seconds, i;
 
 	REQUIRE(t != NULL);
 	INSIST(t->nanoseconds < NS_PER_S);
@@ -356,13 +355,8 @@ isc_time_secondsastimet(const isc_time_t *t, time_t *secondsp) {
 	 * pretty much only true if time_t is a signed integer of the same
 	 * size as the return value of isc_time_seconds.
 	 *
-	 * The use of the 64 bit integer ``i'' takes advantage of C's
-	 * conversion rules to either zero fill or sign extend the widened
-	 * type.
-	 *
-	 * Solaris 5.6 gives this warning about the left shift:
-	 *	warning: integer overflow detected: op "<<"
-	 * if the U(nsigned) qualifier is not on the 1.
+	 * If the paradox in the if clause below is true, t->seconds is out
+	 * of range for time_t.
 	 */
 	seconds = (time_t)t->seconds;
 

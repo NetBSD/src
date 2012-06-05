@@ -1,4 +1,4 @@
-/*	$NetBSD: ipseckey_45.h,v 1.2 2011/02/16 03:47:08 christos Exp $	*/
+/*	$NetBSD: ipseckey_45.h,v 1.2.6.1 2012/06/05 21:15:11 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ipseckey_45.h,v 1.4 2007-06-19 23:47:17 tbox Exp */
+/* Id: ipseckey_45.h,v 1.4 2007/06/19 23:47:17 tbox Exp  */
 
 #ifndef GENERIC_IPSECKEY_45_H
 #define GENERIC_IPSECKEY_45_H 1

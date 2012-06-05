@@ -1,7 +1,7 @@
-/*	$NetBSD: private.c,v 1.3 2011/09/11 18:55:35 christos Exp $	*/
+/*	$NetBSD: private.c,v 1.3.4.1 2012/06/05 21:15:02 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: private.c,v 1.6 2011-06-10 01:51:09 each Exp */
+/* Id */
 
 #include "config.h"
 
@@ -294,5 +294,76 @@ dns_private_chains(dns_db_t *db, dns_dbversion_t *ver,
 		dns_rdataset_disassociate(&privateset);
 	if (node != NULL)
 		dns_db_detachnode(db, &node);
+	return (result);
+}
+
+isc_result_t
+dns_private_totext(dns_rdata_t *private, isc_buffer_t *buf) {
+	isc_result_t result;
+
+	if (private->data[0] == 0) {
+		unsigned char nsec3buf[DNS_NSEC3PARAM_BUFFERSIZE];
+		unsigned char newbuf[DNS_NSEC3PARAM_BUFFERSIZE];
+		dns_rdata_t rdata = DNS_RDATA_INIT;
+		dns_rdata_nsec3param_t nsec3param;
+		isc_boolean_t remove, init, nonsec;
+		isc_buffer_t b;
+
+		if (!dns_nsec3param_fromprivate(private, &rdata, nsec3buf,
+						sizeof(nsec3buf)))
+			CHECK(ISC_R_FAILURE);
+
+		CHECK(dns_rdata_tostruct(&rdata, &nsec3param, NULL));
+
+		remove = ISC_TF((nsec3param.flags & DNS_NSEC3FLAG_REMOVE) != 0);
+		init = ISC_TF((nsec3param.flags & DNS_NSEC3FLAG_INITIAL) != 0);
+		nonsec = ISC_TF((nsec3param.flags & DNS_NSEC3FLAG_NONSEC) != 0);
+
+		nsec3param.flags &= ~(DNS_NSEC3FLAG_CREATE|
+				      DNS_NSEC3FLAG_REMOVE|
+				      DNS_NSEC3FLAG_INITIAL|
+				      DNS_NSEC3FLAG_NONSEC);
+
+		if (init)
+			isc_buffer_putstr(buf, "Pending NSEC3 chain ");
+		else if (remove)
+			isc_buffer_putstr(buf, "Removing NSEC3 chain ");
+		else
+			isc_buffer_putstr(buf, "Creating NSEC3 chain ");
+
+		dns_rdata_reset(&rdata);
+		isc_buffer_init(&b, newbuf, sizeof(newbuf));
+		CHECK(dns_rdata_fromstruct(&rdata, dns_rdataclass_in,
+					   dns_rdatatype_nsec3param,
+					   &nsec3param, &b));
+
+		CHECK(dns_rdata_totext(&rdata, NULL, buf));
+
+		if (remove && !nonsec)
+			isc_buffer_putstr(buf, " / creating NSEC chain");
+	} else {
+		unsigned char alg = private->data[0];
+		dns_keytag_t keyid = (private->data[2] | private->data[1] << 8);
+		char keybuf[BUFSIZ], algbuf[DNS_SECALG_FORMATSIZE];
+		isc_boolean_t remove = ISC_TF(private->data[3] != 0);
+		isc_boolean_t complete = ISC_TF(private->data[4] != 0);
+
+		if (remove && complete)
+			isc_buffer_putstr(buf, "Done removing signatures for ");
+		else if (remove)
+			isc_buffer_putstr(buf, "Removing signatures for ");
+		else if (complete)
+			isc_buffer_putstr(buf, "Done signing with ");
+		else
+			isc_buffer_putstr(buf, "Signing with ");
+
+		dns_secalg_format(alg, algbuf, sizeof(algbuf));
+		sprintf(keybuf, "key %d/%s", keyid, algbuf);
+		isc_buffer_putstr(buf, keybuf);
+	}
+
+	isc_buffer_putuint8(buf, 0);
+	result = ISC_R_SUCCESS;
+ failure:
 	return (result);
 }

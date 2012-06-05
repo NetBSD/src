@@ -1,4 +1,4 @@
-/*	$NetBSD: context.c,v 1.2 2011/02/16 03:47:10 christos Exp $	*/
+/*	$NetBSD: context.c,v 1.2.6.1 2012/06/05 21:15:41 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: context.c,v 1.3 2009-09-02 23:48:02 tbox Exp */
+/* Id: context.c,v 1.3 2009/09/02 23:48:02 tbox Exp  */
 
 #include <config.h>
 

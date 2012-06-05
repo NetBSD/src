@@ -1,4 +1,4 @@
-/*	$NetBSD: aaaa_28.h,v 1.2 2011/02/16 03:47:09 christos Exp $	*/
+/*	$NetBSD: aaaa_28.h,v 1.2.6.1 2012/06/05 21:15:05 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 #ifndef IN_1_AAAA_28_H
 #define IN_1_AAAA_28_H 1
 
-/* Id: aaaa_28.h,v 1.21 2007-06-19 23:47:17 tbox Exp */
+/* Id: aaaa_28.h,v 1.21 2007/06/19 23:47:17 tbox Exp  */
 
 /*! 
  *  \brief Per RFC1886 */

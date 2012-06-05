@@ -1,7 +1,7 @@
-/*	$NetBSD: server.h,v 1.3 2011/09/11 18:55:29 christos Exp $	*/
+/*	$NetBSD: server.h,v 1.3.4.1 2012/06/05 21:15:09 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: server.h,v 1.113 2011-08-02 20:36:12 each Exp */
+/* Id */
 
 #ifndef NAMED_SERVER_H
 #define NAMED_SERVER_H 1
@@ -230,9 +230,10 @@ ns_server_retransfercommand(ns_server_t *server, char *args);
  */
 
 isc_result_t
-ns_server_togglequerylog(ns_server_t *server);
+ns_server_togglequerylog(ns_server_t *server, char *args);
 /*%<
- * Toggle logging of queries, as in BIND 8.
+ * Enable/disable logging of queries.  (Takes "yes" or "no" argument,
+ * but can also be used as a toggle for backward comptibility.)
  */
 
 /*%
@@ -344,4 +345,9 @@ ns_server_add_zone(ns_server_t *server, char *args);
 isc_result_t
 ns_server_del_zone(ns_server_t *server, char *args);
 
+/*%
+ * Lists the status of the signing records for a given zone.
+ */
+isc_result_t
+ns_server_signing(ns_server_t *server, char *args, isc_buffer_t *text);
 #endif /* NAMED_SERVER_H */

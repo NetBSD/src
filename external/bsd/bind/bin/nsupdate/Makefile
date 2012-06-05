@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/04/12 03:46:06 christos Exp $
+#	$NetBSD: Makefile,v 1.1.10.1 2012/06/05 21:15:10 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -11,5 +11,7 @@ BINDIR=	/usr/bin
 DIST=${IDIST}/bin/nsupdate
 
 .PATH: ${DIST}
+DPADD+=${LIBEDIT} ${LIBTERMINFO}
+LDADD+=-ledit -lterminfo
 
 .include <bsd.prog.mk>

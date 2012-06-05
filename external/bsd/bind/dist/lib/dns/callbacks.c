@@ -1,7 +1,7 @@
-/*	$NetBSD: callbacks.c,v 1.2 2011/02/16 03:47:03 christos Exp $	*/
+/*	$NetBSD: callbacks.c,v 1.2.6.1 2012/06/05 21:14:59 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: callbacks.c,v 1.17 2007-06-19 23:47:16 tbox Exp */
+/* Id: callbacks.c,v 1.19 2011/12/09 23:47:05 tbox Exp  */
 
 /*! \file */
 
@@ -90,6 +90,8 @@ dns_rdatacallbacks_initcommon(dns_rdatacallbacks_t *callbacks) {
 	REQUIRE(callbacks != NULL);
 
 	callbacks->add = NULL;
+	callbacks->rawdata = NULL;
+	callbacks->zone = NULL;
 	callbacks->add_private = NULL;
 	callbacks->error_private = NULL;
 	callbacks->warn_private = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dns64.c,v 1.3 2011/09/11 18:55:34 christos Exp $	*/
+/*	$NetBSD: dns64.c,v 1.3.4.1 2012/06/05 21:15:01 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2010, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dns64.c,v 1.8 2011-03-12 04:59:47 tbox Exp */
+/* Id: dns64.c,v 1.8 2011/03/12 04:59:47 tbox Exp  */
 
 #include <config.h>
 

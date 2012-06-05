@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mem.c,v 1.2 2011/02/16 03:46:50 christos Exp $	*/
+/*	$NetBSD: t_mem.c,v 1.2.6.1 2012/06/05 21:15:39 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_mem.c,v 1.15 2009-01-22 23:47:54 tbox Exp */
+/* Id: t_mem.c,v 1.15 2009/01/22 23:47:54 tbox Exp  */
 
 #include <config.h>
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: assert_p.h,v 1.3 2011/09/11 18:55:43 christos Exp $	*/
+/*	$NetBSD: assert_p.h,v 1.3.4.1 2012/06/05 21:14:54 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: assert_p.h,v 1.16 2011-03-12 04:59:49 tbox Exp */
+/* Id */
 
 #ifndef LWRES_ASSERT_P_H
 #define LWRES_ASSERT_P_H 1
