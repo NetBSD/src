@@ -1,3 +1,8 @@
+	--- 9.7.3-P4 released ---
+
+3331.	[security]	dns_rdataslab_fromrdataset could produce bad
+			rdataslabs. [RT #29644]
+
 	--- 9.7.3-P3 released ---
 
 3124.	[bug]		Use an rdataset attribute flag to indicate
