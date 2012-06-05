@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.33 2011/02/08 20:20:26 rmind Exp $	*/
+/*	$NetBSD: clock.c,v 1.33.10.1 2012/06/05 15:35:41 jdc Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.33 2011/02/08 20:20:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.33.10.1 2012/06/05 15:35:41 jdc Exp $");
 
 #include "clock.h"
 
@@ -143,7 +143,7 @@ cpu_initclocks(void)
 	mfp_set_tcdr(CLOCKS_PER_SEC / hz);
 	mfp_bit_set_ierb(MFP_INTR_TIMER_C);
 
-	mfp_set_tddr(0xff);	/* maximum free run -- only 8 bits wide */
+	mfp_set_tddr(0);	/* maximum free run -- only 8 bits wide */
 	mfp_set_tcdcr(mfp_get_tcdcr() | 0x07);	/* 1/200 prescaler */
 
 	tc_init(&tc);
