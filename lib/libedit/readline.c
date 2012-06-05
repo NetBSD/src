@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.103 2012/05/15 19:07:25 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.104 2012/06/05 00:30:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.103 2012/05/15 19:07:25 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.104 2012/06/05 00:30:22 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1371,6 +1371,9 @@ int
 add_history(const char *line)
 {
 	HistEvent ev;
+
+	if (line == NULL)
+		return 0;
 
 	if (h == NULL || e == NULL)
 		rl_initialize();
