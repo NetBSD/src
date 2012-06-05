@@ -1,4 +1,4 @@
-/*	$NetBSD: rrsig_46.h,v 1.2 2011/02/16 03:47:09 christos Exp $	*/
+/*	$NetBSD: rrsig_46.h,v 1.2.6.1 2012/06/05 21:15:11 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 #ifndef GENERIC_DNSSIG_46_H
 #define GENERIC_DNSSIG_46_H 1
 
-/* Id: rrsig_46.h,v 1.7 2007-06-19 23:47:17 tbox Exp */
+/* Id: rrsig_46.h,v 1.7 2007/06/19 23:47:17 tbox Exp  */
 
 /*!
  *  \brief Per RFC2535 */

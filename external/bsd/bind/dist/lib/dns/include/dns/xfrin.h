@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrin.h,v 1.2 2011/02/16 03:47:06 christos Exp $	*/
+/*	$NetBSD: xfrin.h,v 1.2.6.1 2012/06/05 21:14:57 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: xfrin.h,v 1.30 2009-01-17 23:47:43 tbox Exp */
+/* Id: xfrin.h,v 1.30 2009/01/17 23:47:43 tbox Exp  */
 
 #ifndef DNS_XFRIN_H
 #define DNS_XFRIN_H 1

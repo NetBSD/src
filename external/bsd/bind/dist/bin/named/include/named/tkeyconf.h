@@ -1,4 +1,4 @@
-/*	$NetBSD: tkeyconf.h,v 1.2 2011/02/16 03:46:47 christos Exp $	*/
+/*	$NetBSD: tkeyconf.h,v 1.2.6.1 2012/06/05 21:15:10 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tkeyconf.h,v 1.16 2007-06-19 23:46:59 tbox Exp */
+/* Id: tkeyconf.h,v 1.16 2007/06/19 23:46:59 tbox Exp  */
 
 #ifndef NS_TKEYCONF_H
 #define NS_TKEYCONF_H 1

@@ -1,6 +1,6 @@
-.\"	$NetBSD: nsupdate.1,v 1.2 2011/02/16 03:46:47 christos Exp $
+.\"	$NetBSD: nsupdate.1,v 1.2.6.1 2012/06/05 21:15:47 bouyer Exp $
 .\"
-.\" Copyright (C) 2004-2010 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004-2012 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000-2003 Internet Software Consortium.
 .\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" Id: nsupdate.1,v 1.13 2010-07-10 01:14:19 tbox Exp
+.\" Id
 .\"
 .hy 0
 .ad l
@@ -265,20 +265,20 @@ rather than the default realm in
 \fIkrb5.conf\fR. If no realm is specified the saved realm is cleared.
 .RE
 .PP
-\fBprereq nxdomain\fR {domain\-name}
+\fB[prereq]\fR\fB nxdomain\fR {domain\-name}
 .RS 4
 Requires that no resource record of any type exists with name
 \fIdomain\-name\fR.
 .RE
 .PP
-\fBprereq yxdomain\fR {domain\-name}
+\fB[prereq]\fR\fB yxdomain\fR {domain\-name}
 .RS 4
 Requires that
 \fIdomain\-name\fR
 exists (has as at least one resource record, of any type).
 .RE
 .PP
-\fBprereq nxrrset\fR {domain\-name} [class] {type}
+\fB[prereq]\fR\fB nxrrset\fR {domain\-name} [class] {type}
 .RS 4
 Requires that no resource record exists of the specified
 \fItype\fR,
@@ -289,7 +289,7 @@ and
 is omitted, IN (internet) is assumed.
 .RE
 .PP
-\fBprereq yxrrset\fR {domain\-name} [class] {type}
+\fB[prereq]\fR\fB yxrrset\fR {domain\-name} [class] {type}
 .RS 4
 This requires that a resource record of the specified
 \fItype\fR,
@@ -301,7 +301,7 @@ must exist. If
 is omitted, IN (internet) is assumed.
 .RE
 .PP
-\fBprereq yxrrset\fR {domain\-name} [class] {type} {data...}
+\fB[prereq]\fR\fB yxrrset\fR {domain\-name} [class] {type} {data...}
 .RS 4
 The
 \fIdata\fR
@@ -317,7 +317,7 @@ are combined to form a set of RRs. This set of RRs must exactly match the set of
 are written in the standard text representation of the resource record's RDATA.
 .RE
 .PP
-\fBupdate delete\fR {domain\-name} [ttl] [class] [type\ [data...]]
+\fB[update]\fR\fB del\fR\fB[ete]\fR {domain\-name} [ttl] [class] [type\ [data...]]
 .RS 4
 Deletes any resource records named
 \fIdomain\-name\fR. If
@@ -331,7 +331,7 @@ is not supplied. The
 is ignored, and is only allowed for compatibility.
 .RE
 .PP
-\fBupdate add\fR {domain\-name} {ttl} [class] {type} {data...}
+\fB[update]\fR\fB add\fR {domain\-name} {ttl} [class] {type} {data...}
 .RS 4
 Adds a new resource record with the specified
 \fIttl\fR,
@@ -437,7 +437,7 @@ RFC 2931,
 .PP
 The TSIG key is redundantly stored in two separate files. This is a consequence of nsupdate using the DST library for its cryptographic operations, and may change in future releases.
 .SH "COPYRIGHT"
-Copyright \(co 2004\-2010 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2004\-2012 Internet Systems Consortium, Inc. ("ISC")
 .br
 Copyright \(co 2000\-2003 Internet Software Consortium.
 .br

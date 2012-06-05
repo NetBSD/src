@@ -1,7 +1,7 @@
-/*	$NetBSD: aclconf.c,v 1.3 2011/09/11 18:55:43 christos Exp $	*/
+/*	$NetBSD: aclconf.c,v 1.3.4.1 2012/06/05 21:15:37 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: aclconf.c,v 1.31 2011-06-17 23:47:49 tbox Exp */
+/* Id */
 
 #include <config.h>
 
@@ -76,13 +76,11 @@ void
 cfg_aclconfctx_detach(cfg_aclconfctx_t **actxp) {
 	cfg_aclconfctx_t *actx;
 	dns_acl_t *dacl, *next;
-	isc_mem_t *mctx;
 	unsigned int refs;
 
 	REQUIRE(actxp != NULL && *actxp != NULL);
 
 	actx = *actxp;
-	mctx = actx->mctx;
 
 	isc_refcount_decrement(&actx->references, &refs);
 	if (refs == 0) {

@@ -1,7 +1,7 @@
-/*	$NetBSD: sdb.c,v 1.4 2011/09/11 18:55:36 christos Exp $	*/
+/*	$NetBSD: sdb.c,v 1.4.4.1 2012/06/05 21:14:59 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sdb.c,v 1.78 2011-03-14 13:40:52 fdupont Exp */
+/* Id */
 
 /*! \file */
 
@@ -218,12 +218,13 @@ dns_sdb_register(const char *drivername, const dns_sdbmethods_t *methods,
 
 	REQUIRE(drivername != NULL);
 	REQUIRE(methods != NULL);
-	REQUIRE(methods->lookup != NULL);
+	REQUIRE(methods->lookup != NULL || methods->lookup2 != NULL);
 	REQUIRE(mctx != NULL);
 	REQUIRE(sdbimp != NULL && *sdbimp == NULL);
 	REQUIRE((flags & ~(DNS_SDBFLAG_RELATIVEOWNER |
 			   DNS_SDBFLAG_RELATIVERDATA |
-			   DNS_SDBFLAG_THREADSAFE)) == 0);
+			   DNS_SDBFLAG_THREADSAFE|
+			   DNS_SDBFLAG_DNS64)) == 0);
 
 	imp = isc_mem_get(mctx, sizeof(dns_sdbimplementation_t));
 	if (imp == NULL)
@@ -282,8 +283,9 @@ initial_size(unsigned int len) {
 }
 
 isc_result_t
-dns_sdb_putrdata(dns_sdblookup_t *lookup, dns_rdatatype_t typeval, dns_ttl_t ttl,
-		 const unsigned char *rdatap, unsigned int rdlen)
+dns_sdb_putrdata(dns_sdblookup_t *lookup, dns_rdatatype_t typeval,
+		 dns_ttl_t ttl, const unsigned char *rdatap,
+		 unsigned int rdlen)
 {
 	dns_rdatalist_t *rdatalist;
 	dns_rdata_t *rdata;
@@ -339,7 +341,6 @@ dns_sdb_putrdata(dns_sdblookup_t *lookup, dns_rdatatype_t typeval, dns_ttl_t ttl
 		isc_mem_put(mctx, rdata, sizeof(dns_rdata_t));
 	return (result);
 }
-
 
 isc_result_t
 dns_sdb_putrr(dns_sdblookup_t *lookup, const char *type, dns_ttl_t ttl,
@@ -729,8 +730,9 @@ destroynode(dns_sdbnode_t *node) {
 }
 
 static isc_result_t
-findnode(dns_db_t *db, dns_name_t *name, isc_boolean_t create,
-	 dns_dbnode_t **nodep)
+findnodeext(dns_db_t *db, dns_name_t *name, isc_boolean_t create,
+	    dns_clientinfomethods_t *methods, dns_clientinfo_t *clientinfo,
+	    dns_dbnode_t **nodep)
 {
 	dns_sdb_t *sdb = (dns_sdb_t *)db;
 	dns_sdbnode_t *node = NULL;
@@ -739,6 +741,8 @@ findnode(dns_db_t *db, dns_name_t *name, isc_boolean_t create,
 	char namestr[DNS_NAME_MAXTEXT + 1];
 	isc_boolean_t isorigin;
 	dns_sdbimplementation_t *imp;
+	dns_name_t relname;
+	unsigned int labels;
 
 	REQUIRE(VALID_SDB(sdb));
 	REQUIRE(create == ISC_FALSE);
@@ -749,33 +753,47 @@ findnode(dns_db_t *db, dns_name_t *name, isc_boolean_t create,
 
 	imp = sdb->implementation;
 
-	isc_buffer_init(&b, namestr, sizeof(namestr));
-	if ((imp->flags & DNS_SDBFLAG_RELATIVEOWNER) != 0) {
-		dns_name_t relname;
-		unsigned int labels;
+	isorigin = dns_name_equal(name, &sdb->common.origin);
 
-		labels = dns_name_countlabels(name) -
-			 dns_name_countlabels(&db->origin);
-		dns_name_init(&relname, NULL);
-		dns_name_getlabelsequence(name, 0, labels, &relname);
-		result = dns_name_totext(&relname, ISC_TRUE, &b);
-		if (result != ISC_R_SUCCESS)
-			return (result);
+	if (imp->methods->lookup2 != NULL) {
+		if ((imp->flags & DNS_SDBFLAG_RELATIVEOWNER) != 0) {
+			labels = dns_name_countlabels(name) -
+				 dns_name_countlabels(&db->origin);
+			dns_name_init(&relname, NULL);
+			dns_name_getlabelsequence(name, 0, labels, &relname);
+			name = &relname;
+		}
 	} else {
-		result = dns_name_totext(name, ISC_TRUE, &b);
-		if (result != ISC_R_SUCCESS)
-			return (result);
+		isc_buffer_init(&b, namestr, sizeof(namestr));
+		if ((imp->flags & DNS_SDBFLAG_RELATIVEOWNER) != 0) {
+
+			labels = dns_name_countlabels(name) -
+				 dns_name_countlabels(&db->origin);
+			dns_name_init(&relname, NULL);
+			dns_name_getlabelsequence(name, 0, labels, &relname);
+			result = dns_name_totext(&relname, ISC_TRUE, &b);
+			if (result != ISC_R_SUCCESS)
+				return (result);
+		} else {
+			result = dns_name_totext(name, ISC_TRUE, &b);
+			if (result != ISC_R_SUCCESS)
+				return (result);
+		}
+		isc_buffer_putuint8(&b, 0);
 	}
-	isc_buffer_putuint8(&b, 0);
 
 	result = createnode(sdb, &node);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
-	isorigin = dns_name_equal(name, &sdb->common.origin);
-
 	MAYBE_LOCK(sdb);
-	result = imp->methods->lookup(sdb->zone, namestr, sdb->dbdata, node);
+	if (imp->methods->lookup2 != NULL)
+		result = imp->methods->lookup2(&sdb->common.origin, name,
+					       sdb->dbdata, node, methods,
+					       clientinfo);
+	else
+		result = imp->methods->lookup(sdb->zone, namestr, sdb->dbdata,
+					      node, methods, clientinfo);
 	MAYBE_UNLOCK(sdb);
 	if (result != ISC_R_SUCCESS &&
 	    !(result == ISC_R_NOTFOUND &&
@@ -800,10 +818,11 @@ findnode(dns_db_t *db, dns_name_t *name, isc_boolean_t create,
 }
 
 static isc_result_t
-find(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
-     dns_rdatatype_t type, unsigned int options, isc_stdtime_t now,
-     dns_dbnode_t **nodep, dns_name_t *foundname,
-     dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset)
+findext(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
+	dns_rdatatype_t type, unsigned int options, isc_stdtime_t now,
+	dns_dbnode_t **nodep, dns_name_t *foundname,
+	dns_clientinfomethods_t *methods, dns_clientinfo_t *clientinfo,
+	dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset)
 {
 	dns_sdb_t *sdb = (dns_sdb_t *)db;
 	dns_dbnode_t *node = NULL;
@@ -813,13 +832,13 @@ find(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
 	unsigned int nlabels, olabels;
 	isc_result_t result;
 	unsigned int i;
+	unsigned int flags;
 
 	REQUIRE(VALID_SDB(sdb));
 	REQUIRE(nodep == NULL || *nodep == NULL);
 	REQUIRE(version == NULL || version == (void *) &dummy);
 
 	UNUSED(options);
-	UNUSED(sdb);
 
 	if (!dns_name_issubdomain(name, &db->origin))
 		return (DNS_R_NXDOMAIN);
@@ -836,17 +855,38 @@ find(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
 	}
 
 	result = DNS_R_NXDOMAIN;
-
-	for (i = olabels; i <= nlabels; i++) {
+	flags = sdb->implementation->flags;
+	i = (flags & DNS_SDBFLAG_DNS64) != 0 ? nlabels : olabels;
+	for (; i <= nlabels; i++) {
 		/*
 		 * Look up the next label.
 		 */
 		dns_name_getlabelsequence(name, nlabels - i, i, xname);
-		result = findnode(db, xname, ISC_FALSE, &node);
-		if (result != ISC_R_SUCCESS) {
+		result = findnodeext(db, xname, ISC_FALSE, methods,
+				     clientinfo, &node);
+		if (result == ISC_R_NOTFOUND) {
+			/*
+			 * No data at zone apex?
+			 */
+			if (i == olabels)
+				return (DNS_R_BADDB);
 			result = DNS_R_NXDOMAIN;
 			continue;
 		}
+		if (result != ISC_R_SUCCESS)
+			return (result);
+
+		/*
+		 * DNS64 zone's don't have DNAME or NS records.
+		 */
+		if ((flags & DNS_SDBFLAG_DNS64) != 0)
+			goto skip;
+
+		/*
+		 * DNS64 zone's don't have DNAME or NS records.
+		 */
+		if ((flags & DNS_SDBFLAG_DNS64) != 0)
+			goto skip;
 
 		/*
 		 * Look for a DNAME at the current label, unless this is
@@ -897,6 +937,7 @@ find(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
 			continue;
 		}
 
+ skip:
 		/*
 		 * If we're looking for ANY, we're done.
 		 */
@@ -1229,8 +1270,8 @@ static dns_dbmethods_t sdb_methods = {
 	newversion,
 	attachversion,
 	closeversion,
-	findnode,
-	find,
+	NULL,
+	NULL,
 	findzonecut,
 	attachnode,
 	detachnode,
@@ -1247,17 +1288,19 @@ static dns_dbmethods_t sdb_methods = {
 	ispersistent,
 	overmem,
 	settask,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	NULL,			/* getoriginnode */
+	NULL,			/* transfernode */
+	NULL,			/* getnsec3parameters */
+	NULL,			/* findnsec3node */
+	NULL,			/* setsigningtime */
+	NULL,			/* getsigningtime */
+	NULL,			/* resigned */
+	NULL,			/* isdnssec */
+	NULL,			/* getrrsetstats */
+	NULL,			/* rpz_enabled */
+	NULL,			/* rpz_findips */
+	findnodeext,
+	findext
 };
 
 static isc_result_t

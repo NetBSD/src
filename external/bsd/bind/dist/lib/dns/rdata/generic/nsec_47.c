@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec_47.c,v 1.2 2011/02/16 03:47:09 christos Exp $	*/
+/*	$NetBSD: nsec_47.c,v 1.2.6.1 2012/06/05 21:15:10 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsec_47.c,v 1.15 2011-01-13 04:59:26 tbox Exp */
+/* Id: nsec_47.c,v 1.15 2011/01/13 04:59:26 tbox Exp  */
 
 /* reviewed: Wed Mar 15 18:21:15 PST 2000 by brister */
 

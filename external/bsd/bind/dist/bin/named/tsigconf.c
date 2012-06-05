@@ -1,4 +1,4 @@
-/*	$NetBSD: tsigconf.c,v 1.2 2011/02/16 03:46:46 christos Exp $	*/
+/*	$NetBSD: tsigconf.c,v 1.2.6.1 2012/06/05 21:15:22 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tsigconf.c,v 1.35 2011-01-11 23:47:12 tbox Exp */
+/* Id: tsigconf.c,v 1.35 2011/01/11 23:47:12 tbox Exp  */
 
 /*! \file */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.2 2011/02/16 03:47:11 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.2.6.1 2012/06/05 21:15:06 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2008, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: print.c,v 1.37 2010-10-18 23:47:08 tbox Exp */
+/* Id: print.c,v 1.37 2010/10/18 23:47:08 tbox Exp  */
 
 /*! \file */
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: namespace.h,v 1.3 2011/09/11 18:55:41 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.3.4.1 2012/06/05 21:15:28 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2009-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009-2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: namespace.h,v 1.12 2011-08-23 17:02:53 each Exp */
+/* Id */
 
 #ifndef ISCAPI_NAMESPACE_H
 #define ISCAPI_NAMESPACE_H 1
@@ -33,6 +33,7 @@
 #define isc_app_run isc__app_run
 #define isc_app_ctxrun isc__app_ctxrun
 #define isc_app_shutdown isc__app_shutdown
+#define isc_app_ctxfinish isc__app_ctxfinish
 #define isc_app_ctxshutdown isc__app_ctxshutdown
 #define isc_app_ctxsuspend isc__app_ctxsuspend
 #define isc_app_reload isc__app_reload
@@ -149,9 +150,13 @@
 #define isc_task_gettag isc__task_gettag
 #define isc_task_getcurrenttime isc__task_getcurrenttime
 #define isc_taskmgr_create isc__taskmgr_create
+#define isc_taskmgr_setmode isc__taskmgr_setmode
+#define isc_taskmgr_mode isc__taskmgr_mode
 #define isc_taskmgr_destroy isc__taskmgr_destroy
 #define isc_task_beginexclusive isc__task_beginexclusive
 #define isc_task_endexclusive isc__task_endexclusive
+#define isc_task_setprivilege isc__task_setprivilege
+#define isc_task_privilege isc__task_privilege
 
 #define isc_timer_create isc__timer_create
 #define isc_timer_reset isc__timer_reset

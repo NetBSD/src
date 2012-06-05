@@ -1,4 +1,4 @@
-/*	$NetBSD: secalg.h,v 1.2 2011/02/16 03:47:06 christos Exp $	*/
+/*	$NetBSD: secalg.h,v 1.2.6.1 2012/06/05 21:14:55 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: secalg.h,v 1.21 2009-10-12 23:48:02 tbox Exp */
+/* Id: secalg.h,v 1.21 2009/10/12 23:48:02 tbox Exp  */
 
 #ifndef DNS_SECALG_H
 #define DNS_SECALG_H 1

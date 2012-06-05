@@ -1,7 +1,7 @@
-/*	$NetBSD: opensslrsa_link.c,v 1.3 2011/09/11 18:55:35 christos Exp $	*/
+/*	$NetBSD: opensslrsa_link.c,v 1.3.4.1 2012/06/05 21:15:02 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -19,7 +19,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * Id: opensslrsa_link.c,v 1.41 2011-03-11 02:59:37 marka Exp
+ * Id
  */
 #ifdef OPENSSL
 #include <config.h>

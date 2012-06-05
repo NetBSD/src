@@ -1,4 +1,4 @@
-/*	$NetBSD: dig.c,v 1.3 2011/09/11 18:55:25 christos Exp $	*/
+/*	$NetBSD: dig.c,v 1.3.4.1 2012/06/05 21:15:40 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dig.c,v 1.242 2011-03-11 06:11:20 marka Exp */
+/* Id: dig.c,v 1.245 2011/12/07 17:23:28 each Exp  */
 
 /*! \file */
 
@@ -189,7 +189,7 @@ help(void) {
 "                 +domain=###         (Set default domainname)\n"
 "                 +bufsize=###        (Set EDNS0 Max UDP packet size)\n"
 "                 +ndots=###          (Set NDOTS value)\n"
-"                 +edns=###           (Set EDNS version)\n"
+"                 +edns=###           (Set EDNS version) [0]\n"
 "                 +[no]search         (Set whether to use searchlist)\n"
 "                 +[no]showsearch     (Search with intermediate results)\n"
 "                 +[no]defname        (Ditto)\n"
@@ -218,7 +218,7 @@ help(void) {
 "                 +[no]qr             (Print question before sending)\n"
 "                 +[no]nssearch       (Search all authoritative nameservers)\n"
 "                 +[no]identify       (ID responders in short answers)\n"
-"                 +[no]trace          (Trace delegation down from root)\n"
+"                 +[no]trace          (Trace delegation down from root [+dnssec])\n"
 "                 +[no]dnssec         (Request DNSSEC records)\n"
 "                 +[no]nsid           (Request Name Server ID)\n"
 #ifdef DIG_SIGCHASE
@@ -1126,6 +1126,7 @@ plus_option(char *option, isc_boolean_t is_batchfile,
 					lookup->section_additional = ISC_FALSE;
 					lookup->section_authority = ISC_TRUE;
 					lookup->section_question = ISC_FALSE;
+					lookup->dnssec = ISC_TRUE;
 					usesearch = ISC_FALSE;
 				}
 				break;
@@ -1529,6 +1530,8 @@ parse_args(isc_boolean_t is_batchfile, isc_boolean_t config_only,
 	if (!is_batchfile) {
 		debug("making new lookup");
 		default_lookup = make_empty_lookup();
+		default_lookup->adflag = ISC_TRUE;
+		default_lookup->edns = 0;
 
 #ifndef NOPOSIX
 		/*
@@ -1585,7 +1588,7 @@ parse_args(isc_boolean_t is_batchfile, isc_boolean_t config_only,
 		if (strncmp(rv[0], "%", 1) == 0)
 			break;
 		if (strncmp(rv[0], "@", 1) == 0) {
-			addresscount = getaddresses(lookup, &rv[0][1]);
+			addresscount = getaddresses(lookup, &rv[0][1], NULL);
 		} else if (rv[0][0] == '+') {
 			plus_option(&rv[0][1], is_batchfile,
 				    lookup);

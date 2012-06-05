@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/04/12 03:46:06 christos Exp $
+#	$NetBSD: Makefile,v 1.1.10.1 2012/06/05 21:15:46 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -13,5 +13,7 @@ DIST=${IDIST}/bin/dig
 CPPFLAGS+= -I${DIST}/include
 
 .PATH: ${DIST}
+DPADD+=${LIBEDIT} ${LIBTERMINFO}
+LDADD+=-ledit -lterminfo
 
 .include <bsd.prog.mk>

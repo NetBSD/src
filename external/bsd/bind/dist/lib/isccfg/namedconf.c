@@ -1,7 +1,7 @@
-/*	$NetBSD: namedconf.c,v 1.3 2011/09/11 18:55:43 christos Exp $	*/
+/*	$NetBSD: namedconf.c,v 1.3.4.1 2012/06/05 21:15:37 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: namedconf.c,v 1.139 2011-07-01 02:25:48 marka Exp */
+/* Id */
 
 /*! \file */
 
@@ -1029,7 +1029,8 @@ static cfg_type_t cfg_type_masterformat = {
 
 /*
  *  response-policy {
- *	zone <string> [ policy (given|no-op|nxdomain|nodata|cname <domain> ) ];
+ *	zone <string> [ policy (given|disabled|passthru|
+ *					nxdomain|nodata|cname <domain> ) ];
  *  };
  *
  * this is a chimera of doc_optional_keyvalue() and cfg_doc_enum()
@@ -1097,7 +1098,8 @@ cleanup:
 }
 
 static const char *rpz_policies[] = {
-	"given", "no-op", "nxdomain", "nodata", "cname", NULL
+	"given", "disabled", "passthru", "no-op", "nxdomain", "nodata",
+	"cname", NULL
 };
 static cfg_type_t cfg_type_rpz_policylist = {
 	"policies", cfg_parse_enum, cfg_print_ustring, cfg_doc_enum,
@@ -1158,7 +1160,7 @@ print_lookaside(cfg_printer_t *pctx, const cfg_obj_t *obj)
 static void
 doc_lookaside(cfg_printer_t *pctx, const cfg_type_t *type) {
 	UNUSED(type);
-	cfg_print_cstr(pctx, "( <string> trust-anchor <string> | auto )");
+	cfg_print_cstr(pctx, "( <string> trust-anchor <string> | auto | no )");
 }
 
 static keyword_type_t trustanchor_kw = { "trust-anchor", &cfg_type_astring };
@@ -1362,6 +1364,7 @@ zone_clauses[] = {
 	{ "also-notify", &cfg_type_namesockaddrkeylist, 0 },
 	{ "alt-transfer-source", &cfg_type_sockaddr4wild, 0 },
 	{ "alt-transfer-source-v6", &cfg_type_sockaddr6wild, 0 },
+	{ "auto-dnssec", &cfg_type_autodnssec, 0 },
 	{ "check-dup-records", &cfg_type_checkmode, 0 },
 	{ "check-integrity", &cfg_type_boolean, 0 },
 	{ "check-mx", &cfg_type_checkmode, 0 },
@@ -1397,10 +1400,12 @@ zone_clauses[] = {
 	{ "notify-to-soa", &cfg_type_boolean, 0 },
 	{ "nsec3-test-zone", &cfg_type_boolean, CFG_CLAUSEFLAG_TESTONLY },
 	{ "serial-update-method", &cfg_type_updatemethod, 0 },
+	{ "request-ixfr", &cfg_type_boolean, 0 },
 	{ "sig-signing-nodes", &cfg_type_uint32, 0 },
 	{ "sig-signing-signatures", &cfg_type_uint32, 0 },
 	{ "sig-signing-type", &cfg_type_uint32, 0 },
 	{ "sig-validity-interval", &cfg_type_validityinterval, 0 },
+	{ "inline-signing", &cfg_type_boolean, 0 },
 	{ "transfer-source", &cfg_type_sockaddr4wild, 0 },
 	{ "transfer-source-v6", &cfg_type_sockaddr6wild, 0 },
 	{ "try-tcp-refresh", &cfg_type_boolean, 0 },
@@ -1434,7 +1439,6 @@ zone_only_clauses[] = {
 	 */
 	{ "check-names", &cfg_type_checkmode, 0 },
 	{ "ixfr-from-differences", &cfg_type_boolean, 0 },
-	{ "auto-dnssec", &cfg_type_autodnssec, 0 },
 	{ "server-addresses", &cfg_type_bracketed_sockaddrlist, 0 },
 	{ "server-names", &cfg_type_namelist, 0 },
 	{ NULL, NULL, 0 }

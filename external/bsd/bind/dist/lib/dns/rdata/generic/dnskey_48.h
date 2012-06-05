@@ -1,4 +1,4 @@
-/*	$NetBSD: dnskey_48.h,v 1.2 2011/02/16 03:47:08 christos Exp $	*/
+/*	$NetBSD: dnskey_48.h,v 1.2.6.1 2012/06/05 21:15:12 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 #ifndef GENERIC_DNSKEY_48_H
 #define GENERIC_DNSKEY_48_H 1
 
-/* Id: dnskey_48.h,v 1.7 2007-06-19 23:47:17 tbox Exp */
+/* Id: dnskey_48.h,v 1.7 2007/06/19 23:47:17 tbox Exp  */
 
 /*!
  *  \brief per RFC2535 */

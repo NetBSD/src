@@ -1,4 +1,4 @@
-/*	$NetBSD: assertions.c,v 1.4 2011/02/16 03:47:11 christos Exp $	*/
+/*	$NetBSD: assertions.c,v 1.4.6.1 2012/06/05 21:15:07 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: assertions.c,v 1.26 2009-09-29 15:06:07 fdupont Exp */
+/* Id: assertions.c,v 1.26 2009/09/29 15:06:07 fdupont Exp  */
 
 /*! \file */
 

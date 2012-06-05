@@ -1,7 +1,7 @@
-/*	$NetBSD: tsec.h,v 1.2 2011/02/16 03:47:06 christos Exp $	*/
+/*	$NetBSD: tsec.h,v 1.2.6.1 2012/06/05 21:14:58 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2010, 2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tsec.h,v 1.6 2010-12-09 00:54:34 marka Exp */
+/* Id: tsec.h,v 1.6 2010/12/09 00:54:34 marka Exp  */
 
 #ifndef DNS_TSEC_H
 #define DNS_TSEC_H 1
@@ -133,5 +133,7 @@ dns_tsec_getkey(dns_tsec_t *tsec, void *keyp);
  *
  *\li	*tsecp points to a valid key structure depending on the TSEC type.
  */
+
+ISC_LANG_ENDDECLS
 
 #endif /* DNS_TSEC_H */

@@ -1,7 +1,7 @@
-/*	$NetBSD: tsig_250.c,v 1.3 2011/09/11 18:55:39 christos Exp $	*/
+/*	$NetBSD: tsig_250.c,v 1.3.4.1 2012/06/05 21:15:45 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tsig_250.c,v 1.67 2011-03-05 23:52:30 tbox Exp */
+/* Id */
 
 /* Reviewed: Thu Mar 16 13:39:43 PST 2000 by gson */
 

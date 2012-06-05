@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt.h,v 1.5 2011/02/16 03:47:06 christos Exp $	*/
+/*	$NetBSD: rbt.h,v 1.5.6.1 2012/06/05 21:14:55 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rbt.h,v 1.77 2009-11-04 01:18:19 marka Exp */
+/* Id: rbt.h,v 1.77 2009/11/04 01:18:19 marka Exp  */
 
 #ifndef DNS_RBT_H
 #define DNS_RBT_H 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_tasks.c,v 1.3 2011/09/11 18:55:32 christos Exp $	*/
+/*	$NetBSD: t_tasks.c,v 1.3.4.1 2012/06/05 21:15:49 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_tasks.c,v 1.49 2011-07-27 07:45:55 marka Exp */
+/* Id: t_tasks.c,v 1.49 2011/07/27 07:45:55 marka Exp  */
 
 #include <config.h>
 

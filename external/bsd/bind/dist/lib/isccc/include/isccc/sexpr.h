@@ -1,4 +1,4 @@
-/*	$NetBSD: sexpr.h,v 1.2 2011/02/16 03:47:17 christos Exp $	*/
+/*	$NetBSD: sexpr.h,v 1.2.6.1 2012/06/05 21:15:30 bouyer Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -31,7 +31,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sexpr.h,v 1.11 2007-08-28 07:20:43 tbox Exp */
+/* Id: sexpr.h,v 1.11 2007/08/28 07:20:43 tbox Exp  */
 
 #ifndef ISCCC_SEXPR_H
 #define ISCCC_SEXPR_H 1

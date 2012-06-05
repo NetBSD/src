@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_bdbhpt_driver.c,v 1.2 2011/02/16 03:46:55 christos Exp $	*/
+/*	$NetBSD: dlz_bdbhpt_driver.c,v 1.2.6.1 2012/06/05 21:15:35 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -535,7 +535,8 @@ bdbhpt_findzone(void *driverarg, void *dbdata, const char *name)
 
 static isc_result_t
 bdbhpt_lookup(const char *zone, const char *name, void *driverarg,
-	      void *dbdata, dns_sdlzlookup_t *lookup)
+	      void *dbdata, dns_sdlzlookup_t *lookup,
+	      dns_clientinfomethods_t *methods, dns_clientinfo_t *clientinfo)
 {
 
 	isc_result_t result = ISC_R_NOTFOUND;
@@ -550,6 +551,8 @@ bdbhpt_lookup(const char *zone, const char *name, void *driverarg,
 	char *keyStr = NULL;
 
 	UNUSED(driverarg);
+	UNUSED(methods);
+	UNUSED(clientinfo);
 
 	memset(&key, 0, sizeof(DBT));
 	memset(&data, 0, sizeof(DBT));

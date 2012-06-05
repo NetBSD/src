@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.2 2011/02/16 03:47:16 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.2.6.1 2012/06/05 21:15:31 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: unistd.h,v 1.10 2009-07-17 23:47:41 tbox Exp */
+/* Id: unistd.h,v 1.10 2009/07/17 23:47:41 tbox Exp  */
 
 /* None of these are defined in NT, so define them for our use */
 #define O_NONBLOCK 1

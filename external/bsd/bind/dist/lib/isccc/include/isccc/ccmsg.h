@@ -1,4 +1,4 @@
-/*	$NetBSD: ccmsg.h,v 1.2 2011/02/16 03:47:17 christos Exp $	*/
+/*	$NetBSD: ccmsg.h,v 1.2.6.1 2012/06/05 21:15:30 bouyer Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -31,7 +31,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ccmsg.h,v 1.11 2007-08-28 07:20:43 tbox Exp */
+/* Id: ccmsg.h,v 1.11 2007/08/28 07:20:43 tbox Exp  */
 
 #ifndef ISCCC_CCMSG_H
 #define ISCCC_CCMSG_H 1

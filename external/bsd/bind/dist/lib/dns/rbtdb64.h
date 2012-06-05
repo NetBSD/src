@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtdb64.h,v 1.2 2011/02/16 03:47:04 christos Exp $	*/
+/*	$NetBSD: rbtdb64.h,v 1.2.6.1 2012/06/05 21:15:03 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rbtdb64.h,v 1.17 2007-06-19 23:47:16 tbox Exp */
+/* Id: rbtdb64.h,v 1.17 2007/06/19 23:47:16 tbox Exp  */
 
 #ifndef DNS_RBTDB64_H
 #define DNS_RBTDB64_H 1

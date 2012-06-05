@@ -1,4 +1,4 @@
-/*	$NetBSD: sdlz_helper.c,v 1.2 2011/02/16 03:46:55 christos Exp $	*/
+/*	$NetBSD: sdlz_helper.c,v 1.2.6.1 2012/06/05 21:15:35 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -51,8 +51,6 @@
  * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#ifdef DLZ
 
 #include <config.h>
 
@@ -529,5 +527,3 @@ sdlzh_get_parameter_value(isc_mem_t *mctx, const char *input, const char* key)
 
 	return isc_mem_strdup(mctx, value);
 }
-
-#endif

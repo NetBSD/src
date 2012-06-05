@@ -1,4 +1,4 @@
-/*	$NetBSD: bdb.c,v 1.2 2011/02/16 03:47:00 christos Exp $	*/
+/*	$NetBSD: bdb.c,v 1.2.6.1 2012/06/05 21:15:40 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2002  Nuno M. Rodrigues.
@@ -17,7 +17,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: bdb.c,v 1.1 2002-05-16 04:25:22 marka Exp */
+/* Id: bdb.c,v 1.2 2011/10/11 00:09:02 each Exp  */
 
 /*
  * BIND 9.1.x simple database driver
@@ -100,8 +100,14 @@ bdb_create(const char *zone, int argc, char **argv,
 }
 
 static isc_result_t
+#ifdef DNS_CLIENTINFO_VERSION
+bdb_lookup(const char *zone, const char *name, void *dbdata,
+	   dns_sdblookup_t *l, dns_clientinfomethods_t *methods,
+	   dns_clientinfo_t *clientinfo)
+#else
 bdb_lookup(const char *zone, const char *name, void *dbdata,
 	   dns_sdblookup_t *l)
+#endif /* DNS_CLIENTINFO_VERSION */
 {
 	int ret;
 	char *type, *rdata;
@@ -111,6 +117,10 @@ bdb_lookup(const char *zone, const char *name, void *dbdata,
 	DBT key, data;
 
 	UNUSED(zone);
+#ifdef DNS_CLIENTINFO_VERSION
+	UNUSED(methods);
+	UNUSED(clientinfo);
+#endif /* DNS_CLIENTINFO_VERSION */
 
 	if ((ret = ((DB *)dbdata)->cursor((DB *)dbdata, NULL, &c, 0)) != 0) {
 		isc_log_iwrite(dns_lctx, DNS_LOGCATEGORY_DATABASE,

@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_ldap_driver.c,v 1.3 2011/09/11 18:55:32 christos Exp $	*/
+/*	$NetBSD: dlz_ldap_driver.c,v 1.3.4.1 2012/06/05 21:15:35 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -915,10 +915,14 @@ dlz_ldap_findzone(void *driverarg, void *dbdata, const char *name) {
 
 static isc_result_t
 dlz_ldap_lookup(const char *zone, const char *name, void *driverarg,
-		void *dbdata, dns_sdlzlookup_t *lookup)
+		void *dbdata, dns_sdlzlookup_t *lookup,
+		dns_clientinfomethods_t *methods, dns_clientinfo_t *clientinfo)
 {
 	isc_result_t result;
+
 	UNUSED(driverarg);
+	UNUSED(methods);
+	UNUSED(clientinfo);
 
 	if (strcmp(name, "*") == 0)
 		result = ldap_get_results(zone, "~", NULL, LOOKUP,

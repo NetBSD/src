@@ -1,4 +1,4 @@
-/*	$NetBSD: a_1.h,v 1.2 2011/02/16 03:47:09 christos Exp $	*/
+/*	$NetBSD: a_1.h,v 1.2.6.1 2012/06/05 21:15:05 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,7 @@
 #ifndef IN_1_A_1_H
 #define IN_1_A_1_H 1
 
-/* Id: a_1.h,v 1.28 2007-06-19 23:47:17 tbox Exp */
+/* Id: a_1.h,v 1.28 2007/06/19 23:47:17 tbox Exp  */
 
 typedef struct dns_rdata_in_a {
 	dns_rdatacommon_t	common;

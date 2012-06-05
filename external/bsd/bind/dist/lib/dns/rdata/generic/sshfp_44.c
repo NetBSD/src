@@ -1,7 +1,7 @@
-/*	$NetBSD: sshfp_44.c,v 1.3 2011/09/11 18:55:40 christos Exp $	*/
+/*	$NetBSD: sshfp_44.c,v 1.3.4.1 2012/06/05 21:15:13 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2006, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sshfp_44.c,v 1.11 2011-03-05 23:52:31 tbox Exp */
+/* Id */
 
 /* RFC 4255 */
 

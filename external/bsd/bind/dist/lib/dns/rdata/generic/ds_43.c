@@ -1,7 +1,7 @@
-/*	$NetBSD: ds_43.c,v 1.3 2011/09/11 18:55:39 christos Exp $	*/
+/*	$NetBSD: ds_43.c,v 1.3.4.1 2012/06/05 21:15:13 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ds_43.c,v 1.18 2011-03-05 23:52:31 tbox Exp */
+/* Id */
 
 /* draft-ietf-dnsext-delegation-signer-05.txt */
 

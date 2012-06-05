@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_2.h,v 1.2 2011/02/16 03:47:09 christos Exp $	*/
+/*	$NetBSD: ns_2.h,v 1.2.6.1 2012/06/05 21:15:13 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,7 @@
 #ifndef GENERIC_NS_2_H
 #define GENERIC_NS_2_H 1
 
-/* Id: ns_2.h,v 1.27 2007-06-19 23:47:17 tbox Exp */
+/* Id: ns_2.h,v 1.27 2007/06/19 23:47:17 tbox Exp  */
 
 typedef struct dns_rdata_ns {
 	dns_rdatacommon_t	common;

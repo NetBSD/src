@@ -1,4 +1,4 @@
-/*	$NetBSD: bdb.h,v 1.2 2011/02/16 03:47:00 christos Exp $	*/
+/*	$NetBSD: bdb.h,v 1.2.6.1 2012/06/05 21:15:40 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2002  Nuno M. Rodrigues.
@@ -17,7 +17,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: bdb.h,v 1.1 2002-05-16 04:25:22 marka Exp */
+/* Id: bdb.h,v 1.1 2002/05/16 04:25:22 marka Exp  */
 
 #ifndef BDB_H
 #define BDB_H	1

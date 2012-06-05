@@ -1,7 +1,7 @@
-/*	$NetBSD: rcode.c,v 1.3 2011/09/11 18:55:36 christos Exp $	*/
+/*	$NetBSD: rcode.c,v 1.3.4.1 2012/06/05 21:15:02 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rcode.c,v 1.18 2011-02-21 23:47:45 tbox Exp */
+/* Id */
 
 #include <config.h>
 #include <ctype.h>

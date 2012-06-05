@@ -1,7 +1,7 @@
-/*	$NetBSD: config.c,v 1.4 2011/09/11 18:55:27 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.4.4.1 2012/06/05 21:15:22 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.c,v 1.119 2011-07-01 02:25:47 marka Exp */
+/* Id: config.c,v 1.123 2012/01/06 23:46:41 tbox Exp  */
 
 /*! \file */
 
@@ -92,7 +92,7 @@ options {\n\
 "\
 	recursive-clients 1000;\n\
 	resolver-query-timeout 30;\n\
-	rrset-order {type NS order random; order cyclic; };\n\
+	rrset-order { order random; };\n\
 	serial-queries 20;\n\
 	serial-query-rate 20;\n\
 	server-id none;\n\
@@ -201,6 +201,7 @@ options {\n\
 	sig-signing-nodes 100;\n\
 	sig-signing-signatures 10;\n\
 	sig-signing-type 65534;\n\
+	inline-signing no;\n\
 	zone-statistics false;\n\
 	max-journal-size unlimited;\n\
 	ixfr-from-differences false;\n\
@@ -296,7 +297,8 @@ ns_checknames_get(const cfg_obj_t **maps, const char *which,
 		if (maps[i] == NULL)
 			return (ISC_R_NOTFOUND);
 		checknames = NULL;
-		if (cfg_map_get(maps[i], "check-names", &checknames) == ISC_R_SUCCESS) {
+		if (cfg_map_get(maps[i], "check-names",
+				&checknames) == ISC_R_SUCCESS) {
 			/*
 			 * Zone map entry is not a list.
 			 */
@@ -309,7 +311,8 @@ ns_checknames_get(const cfg_obj_t **maps, const char *which,
 			     element = cfg_list_next(element)) {
 				value = cfg_listelt_value(element);
 				type = cfg_tuple_get(value, "type");
-				if (strcasecmp(cfg_obj_asstring(type), which) == 0) {
+				if (strcasecmp(cfg_obj_asstring(type),
+					       which) == 0) {
 					*obj = cfg_tuple_get(value, "mode");
 					return (ISC_R_SUCCESS);
 				}

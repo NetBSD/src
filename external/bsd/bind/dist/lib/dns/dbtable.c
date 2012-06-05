@@ -1,4 +1,4 @@
-/*	$NetBSD: dbtable.c,v 1.2 2011/02/16 03:47:03 christos Exp $	*/
+/*	$NetBSD: dbtable.c,v 1.2.6.1 2012/06/05 21:15:04 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: dbtable.c,v 1.33 2007-06-19 23:47:16 tbox Exp
+ * Id: dbtable.c,v 1.33 2007/06/19 23:47:16 tbox Exp 
  */
 
 /*! \file

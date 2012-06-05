@@ -1,7 +1,7 @@
-/*	$NetBSD: taskpool.c,v 1.3 2011/09/11 18:55:41 christos Exp $	*/
+/*	$NetBSD: taskpool.c,v 1.3.4.1 2012/06/05 21:15:07 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: taskpool.c,v 1.20 2011-07-07 23:47:49 tbox Exp */
+/* Id */
 
 /*! \file */
 
@@ -165,9 +165,8 @@ isc_taskpool_destroy(isc_taskpool_t **poolp) {
 	unsigned int i;
 	isc_taskpool_t *pool = *poolp;
 	for (i = 0; i < pool->ntasks; i++) {
-		if (pool->tasks[i] != NULL) {
+		if (pool->tasks[i] != NULL)
 			isc_task_detach(&pool->tasks[i]);
-		}
 	}
 	isc_mem_put(pool->mctx, pool->tasks,
 		    pool->ntasks * sizeof(isc_task_t *));
@@ -175,4 +174,14 @@ isc_taskpool_destroy(isc_taskpool_t **poolp) {
 	*poolp = NULL;
 }
 
+void
+isc_taskpool_setprivilege(isc_taskpool_t *pool, isc_boolean_t priv) {
+	unsigned int i;
 
+	REQUIRE(pool != NULL);
+
+	for (i = 0; i < pool->ntasks; i++) {
+		if (pool->tasks[i] != NULL)
+			isc_task_setprivilege(pool->tasks[i], priv);
+	}
+}

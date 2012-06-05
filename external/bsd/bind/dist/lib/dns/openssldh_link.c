@@ -1,4 +1,4 @@
-/*	$NetBSD: openssldh_link.c,v 1.2 2011/02/16 03:47:04 christos Exp $	*/
+/*	$NetBSD: openssldh_link.c,v 1.2.6.1 2012/06/05 21:15:03 bouyer Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * Id: openssldh_link.c,v 1.20 2011-01-11 23:47:13 tbox Exp
+ * Id: openssldh_link.c,v 1.20 2011/01/11 23:47:13 tbox Exp 
  */
 
 #ifdef OPENSSL

@@ -1,7 +1,7 @@
-/*	$NetBSD: list.h,v 1.3 2011/02/16 03:47:12 christos Exp $	*/
+/*	$NetBSD: list.h,v 1.3.6.1 2012/06/05 21:15:28 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1997-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: list.h,v 1.24 2007-06-19 23:47:18 tbox Exp */
+/* Id */
 
 #ifndef ISC_LIST_H
 #define ISC_LIST_H 1
@@ -170,6 +170,19 @@
 		(list2).head = NULL; \
 		(list2).tail = NULL; \
 	} while (/*CONSTCOND*/0)
+
+#define ISC_LIST_PREPENDLIST(list1, list2, link) \
+	do { \
+		if (ISC_LIST_EMPTY(list1)) \
+			(list1) = (list2); \
+		else if (!ISC_LIST_EMPTY(list2)) { \
+			(list2).tail->link.next = (list1).head; \
+			(list1).head->link.prev = (list2).tail; \
+			(list1).head = (list2).head; \
+		} \
+		(list2).head = NULL; \
+		(list2).tail = NULL; \
+	} while (0)
 
 #define ISC_LIST_ENQUEUE(list, elt, link) ISC_LIST_APPEND(list, elt, link)
 #define __ISC_LIST_ENQUEUEUNSAFE(list, elt, link) \
