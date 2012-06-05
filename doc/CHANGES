@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1704 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1705 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -63,3 +63,5 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	kernel: Add run(4), a driver for Ralink Technology
 		RT2700U/RT2800U/RT3000U USB IEEE 802.11a/b/g/n wireless
 		network devices, ported from OpenBSD. [nonaka 20120530]
+	bind: update to 9.9.1-P1 to fix the recent rdata exploit.
+		[christos 20120604]
