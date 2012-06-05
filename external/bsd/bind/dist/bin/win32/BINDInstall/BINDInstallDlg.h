@@ -1,4 +1,4 @@
-/*	$NetBSD: BINDInstallDlg.h,v 1.2 2011/02/16 03:46:54 christos Exp $	*/
+/*	$NetBSD: BINDInstallDlg.h,v 1.2.6.1 2012/06/05 21:15:34 bouyer Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: BINDInstallDlg.h,v 1.11 2009-09-01 06:51:47 marka Exp */
+/* Id: BINDInstallDlg.h,v 1.11 2009/09/01 06:51:47 marka Exp  */
 
 /*
  * Copyright (c) 1999-2000 by Nortel Networks Corporation

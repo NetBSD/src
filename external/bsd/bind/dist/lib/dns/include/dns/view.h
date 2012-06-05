@@ -1,7 +1,7 @@
-/*	$NetBSD: view.h,v 1.3 2011/09/11 18:55:39 christos Exp $	*/
+/*	$NetBSD: view.h,v 1.3.4.1 2012/06/05 21:14:55 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: view.h,v 1.134 2011-08-02 20:36:13 each Exp */
+/* Id */
 
 #ifndef DNS_VIEW_H
 #define DNS_VIEW_H 1
@@ -78,6 +78,7 @@
 #include <dns/rdatastruct.h>
 #include <dns/rpz.h>
 #include <dns/types.h>
+#include <dns/zt.h>
 
 ISC_LANG_BEGINDECLS
 
@@ -143,7 +144,6 @@ struct dns_view {
 	dns_rbt_t *			answeracl_exclude;
 	dns_rbt_t *			denyanswernames;
 	dns_rbt_t *			answernames_exclude;
-	isc_boolean_t			requestixfr;
 	isc_boolean_t			provideixfr;
 	isc_boolean_t			requestnsid;
 	dns_ttl_t			maxcachettl;
@@ -730,14 +730,21 @@ dns_view_load(dns_view_t *view, isc_boolean_t stop);
 
 isc_result_t
 dns_view_loadnew(dns_view_t *view, isc_boolean_t stop);
+
+isc_result_t
+dns_view_asyncload(dns_view_t *view, dns_zt_allloaded_t callback, void *arg);
 /*%<
  * Load zones attached to this view.  dns_view_load() loads
  * all zones whose master file has changed since the last
  * load; dns_view_loadnew() loads only zones that have never
  * been loaded.
  *
+ * dns_view_asyncload() loads zones asynchronously.  When all zones
+ * in the view have finished loading, 'callback' is called with argument
+ * 'arg' to inform the caller.
+ *
  * If 'stop' is ISC_TRUE, stop on the first error and return it.
- * If 'stop' is ISC_FALSE, ignore errors.
+ * If 'stop' is ISC_FALSE (or we are loading asynchronously), ignore errors.
  *
  * Requires:
  *
@@ -1098,5 +1105,7 @@ dns_view_setnewzones(dns_view_t *view, isc_boolean_t allow, void *cfgctx,
 
 void
 dns_view_restorekeyring(dns_view_t *view);
+
+ISC_LANG_ENDDECLS
 
 #endif /* DNS_VIEW_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.2 2011/02/16 03:47:15 christos Exp $	*/
+/*	$NetBSD: stat.h,v 1.2.6.1 2012/06/05 21:15:48 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: stat.h,v 1.5 2007-06-19 23:47:19 tbox Exp */
+/* Id: stat.h,v 1.5 2007/06/19 23:47:19 tbox Exp  */
 
 #ifndef ISC_STAT_H
 #define ISC_STAT_H 1

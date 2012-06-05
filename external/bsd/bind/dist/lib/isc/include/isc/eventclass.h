@@ -1,4 +1,4 @@
-/*	$NetBSD: eventclass.h,v 1.2 2011/02/16 03:47:12 christos Exp $	*/
+/*	$NetBSD: eventclass.h,v 1.2.6.1 2012/06/05 21:15:27 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: eventclass.h,v 1.18 2007-06-19 23:47:18 tbox Exp */
+/* Id: eventclass.h,v 1.18 2007/06/19 23:47:18 tbox Exp  */
 
 #ifndef ISC_EVENTCLASS_H
 #define ISC_EVENTCLASS_H 1

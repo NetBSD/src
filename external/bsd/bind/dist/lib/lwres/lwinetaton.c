@@ -1,4 +1,4 @@
-/*	$NetBSD: lwinetaton.c,v 1.2 2011/02/16 03:47:18 christos Exp $	*/
+/*	$NetBSD: lwinetaton.c,v 1.2.6.1 2012/06/05 21:14:54 bouyer Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -74,7 +74,7 @@
  */
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)inet_addr.c	8.1 (Berkeley) 6/17/93";
-static char rcsid[] = "Id: lwinetaton.c,v 1.16 2007-06-19 23:47:22 tbox Exp";
+static char rcsid[] = "Id: lwinetaton.c,v 1.16 2007/06/19 23:47:22 tbox Exp ";
 #endif /* LIBC_SCCS and not lint */
 
 #include <config.h>

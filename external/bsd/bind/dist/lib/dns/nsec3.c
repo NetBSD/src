@@ -1,7 +1,7 @@
-/*	$NetBSD: nsec3.c,v 1.4 2011/09/11 18:55:35 christos Exp $	*/
+/*	$NetBSD: nsec3.c,v 1.4.4.1 2012/06/05 21:15:00 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2006, 2008-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2006, 2008-2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsec3.c,v 1.23 2011-06-10 01:51:09 each Exp */
+/* Id */
 
 #include <config.h>
 
@@ -1056,7 +1056,8 @@ rr_exists(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *name,
 #ifdef BIND9
 isc_result_t
 dns_nsec3param_deletechains(dns_db_t *db, dns_dbversion_t *ver,
-			    dns_zone_t *zone, dns_diff_t *diff)
+			    dns_zone_t *zone, isc_boolean_t nonsec,
+			    dns_diff_t *diff)
 {
 	dns_dbnode_t *node = NULL;
 	dns_difftuple_t *tuple = NULL;
@@ -1100,7 +1101,9 @@ dns_nsec3param_deletechains(dns_db_t *db, dns_dbversion_t *ver,
 
 		dns_nsec3param_toprivate(&rdata, &private, privatetype,
 					 buf, sizeof(buf));
-		buf[2] = DNS_NSEC3FLAG_REMOVE | DNS_NSEC3FLAG_NONSEC;
+		buf[2] = DNS_NSEC3FLAG_REMOVE;
+		if (nonsec)
+			buf[2] |= DNS_NSEC3FLAG_NONSEC;
 
 		CHECK(rr_exists(db, ver, origin, &private, &flag));
 
@@ -1131,15 +1134,14 @@ dns_nsec3param_deletechains(dns_db_t *db, dns_dbversion_t *ver,
 	for (result = dns_rdataset_first(&rdataset);
 	     result == ISC_R_SUCCESS;
 	     result = dns_rdataset_next(&rdataset)) {
+		dns_rdata_reset(&rdata);
 		dns_rdataset_current(&rdataset, &rdata);
 		INSIST(rdata.length <= sizeof(buf));
 		memcpy(buf, rdata.data, rdata.length);
 
-		if (buf[0] != 0 ||
-		    buf[2] == (DNS_NSEC3FLAG_REMOVE | DNS_NSEC3FLAG_NONSEC)) {
-			dns_rdata_reset(&rdata);
+		if (buf[0] != 0 || (buf[2] & DNS_NSEC3FLAG_REMOVE) != 0 ||
+		    (nonsec && (buf[2] & DNS_NSEC3FLAG_NONSEC) != 0))
 			continue;
-		}
 
 		CHECK(dns_difftuple_create(diff->mctx, DNS_DIFFOP_DEL, origin,
 					   0, &rdata, &tuple));
@@ -1147,7 +1149,9 @@ dns_nsec3param_deletechains(dns_db_t *db, dns_dbversion_t *ver,
 		INSIST(tuple == NULL);
 
 		rdata.data = buf;
-		buf[2] = DNS_NSEC3FLAG_REMOVE | DNS_NSEC3FLAG_NONSEC;
+		buf[2] = DNS_NSEC3FLAG_REMOVE;
+		if (nonsec)
+			buf[2] |= DNS_NSEC3FLAG_NONSEC;
 
 		CHECK(rr_exists(db, ver, origin, &rdata, &flag));
 
@@ -1157,7 +1161,6 @@ dns_nsec3param_deletechains(dns_db_t *db, dns_dbversion_t *ver,
 			CHECK(do_one_tuple(&tuple, db, ver, diff));
 			INSIST(tuple == NULL);
 		}
-		dns_rdata_reset(&rdata);
 	}
 	if (result != ISC_R_NOMORE)
 		goto failure;
@@ -1787,7 +1790,7 @@ dns_nsec3_maxiterations(dns_db_t *db, dns_dbversion_t *version,
 	dst_key_t *key = NULL;
 	isc_buffer_t buffer;
 	isc_result_t result;
-	isc_uint16_t bits, minbits = 4096;
+	unsigned int bits, minbits = 4096;
 
 	result = dns_db_getoriginnode(db, &node);
 	if (result != ISC_R_SUCCESS)
@@ -1814,7 +1817,7 @@ dns_nsec3_maxiterations(dns_db_t *db, dns_dbversion_t *version,
 		isc_buffer_add(&buffer, rdata.length);
 		CHECK(dst_key_fromdns(dns_db_origin(db), rdataset.rdclass,
 				      &buffer, mctx, &key));
-		bits = dst_key_getbits(key);
+		bits = dst_key_size(key);
 		dst_key_free(&key);
 		if (minbits > bits)
 			minbits = bits;

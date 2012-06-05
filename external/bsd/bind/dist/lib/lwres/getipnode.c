@@ -1,4 +1,4 @@
-/*	$NetBSD: getipnode.c,v 1.2 2011/02/16 03:47:18 christos Exp $	*/
+/*	$NetBSD: getipnode.c,v 1.2.6.1 2012/06/05 21:14:54 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: getipnode.c,v 1.47 2009-09-01 23:47:45 tbox Exp */
+/* Id: getipnode.c,v 1.47 2009/09/01 23:47:45 tbox Exp  */
 
 /*! \file */
 

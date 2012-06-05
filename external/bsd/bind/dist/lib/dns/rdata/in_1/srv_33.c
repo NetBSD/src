@@ -1,4 +1,4 @@
-/*	$NetBSD: srv_33.c,v 1.2 2011/02/16 03:47:09 christos Exp $	*/
+/*	$NetBSD: srv_33.c,v 1.2.6.1 2012/06/05 21:15:05 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: srv_33.c,v 1.47 2009-12-04 22:06:37 tbox Exp */
+/* Id: srv_33.c,v 1.47 2009/12/04 22:06:37 tbox Exp  */
 
 /* Reviewed: Fri Mar 17 13:01:00 PST 2000 by bwelling */
 

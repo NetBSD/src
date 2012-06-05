@@ -1,4 +1,4 @@
-/*	$NetBSD: host.c,v 1.3 2011/09/11 18:55:26 christos Exp $	*/
+/*	$NetBSD: host.c,v 1.3.4.1 2012/06/05 21:15:40 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: host.c,v 1.127 2011-03-11 06:11:20 marka Exp */
+/* Id: host.c,v 1.127 2011/03/11 06:11:20 marka Exp  */
 
 /*! \file */
 

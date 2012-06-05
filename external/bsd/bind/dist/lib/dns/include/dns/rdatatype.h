@@ -1,4 +1,4 @@
-/*	$NetBSD: rdatatype.h,v 1.2 2011/02/16 03:47:06 christos Exp $	*/
+/*	$NetBSD: rdatatype.h,v 1.2.6.1 2012/06/05 21:14:58 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdatatype.h,v 1.26 2008-09-25 04:02:39 tbox Exp */
+/* Id: rdatatype.h,v 1.26 2008/09/25 04:02:39 tbox Exp  */
 
 #ifndef DNS_RDATATYPE_H
 #define DNS_RDATATYPE_H 1

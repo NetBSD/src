@@ -1,7 +1,7 @@
-/*	$NetBSD: rdataslab.c,v 1.4 2011/09/11 18:55:36 christos Exp $	*/
+/*	$NetBSD: rdataslab.c,v 1.4.4.1 2012/06/05 21:15:02 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdataslab.c,v 1.54 2011-02-03 12:18:11 tbox Exp */
+/* Id */
 
 /*! \file */
 
@@ -55,6 +55,7 @@
  *	record count	(2 bytes)
  *	data records
  *		data length	(2 bytes)
+ *		meta data	(1 byte for RRSIG's)
  *		data		(data length bytes)
  *
  * Offsets are from the end of the header.
@@ -127,6 +128,11 @@ isc_result_t
 dns_rdataslab_fromrdataset(dns_rdataset_t *rdataset, isc_mem_t *mctx,
 			   isc_region_t *region, unsigned int reservelen)
 {
+	/*
+	 * Use &removed as a sentinal pointer for duplicate
+	 * rdata as rdata.data == NULL is valid.
+	 */
+	static unsigned char removed;
 	struct xrdata  *x;
 	unsigned char  *rawbuf;
 #if DNS_RDATASET_FIXED
@@ -170,6 +176,7 @@ dns_rdataslab_fromrdataset(dns_rdataset_t *rdataset, isc_mem_t *mctx,
 		INSIST(result == ISC_R_SUCCESS);
 		dns_rdata_init(&x[i].rdata);
 		dns_rdataset_current(rdataset, &x[i].rdata);
+		INSIST(x[i].rdata.data != &removed);
 #if DNS_RDATASET_FIXED
 		x[i].order = i;
 #endif
@@ -202,8 +209,7 @@ dns_rdataslab_fromrdataset(dns_rdataset_t *rdataset, isc_mem_t *mctx,
 	 */
 	for (i = 1; i < nalloc; i++) {
 		if (compare_rdata(&x[i-1].rdata, &x[i].rdata) == 0) {
-			x[i-1].rdata.data = NULL;
-			x[i-1].rdata.length = 0;
+			x[i-1].rdata.data = &removed;
 #if DNS_RDATASET_FIXED
 			/*
 			 * Preserve the least order so A, B, A -> A, B
@@ -293,7 +299,7 @@ dns_rdataslab_fromrdataset(dns_rdataset_t *rdataset, isc_mem_t *mctx,
 #endif
 
 	for (i = 0; i < nalloc; i++) {
-		if (x[i].rdata.data == NULL)
+		if (x[i].rdata.data == &removed)
 			continue;
 #if DNS_RDATASET_FIXED
 		offsettable[x[i].order] = rawbuf - offsetbase;

@@ -1,4 +1,4 @@
-/*	$NetBSD: os-irix5.h,v 1.2 2011/02/16 03:46:59 christos Exp $	*/
+/*	$NetBSD: os-irix5.h,v 1.2.6.1 2012/06/05 21:15:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: /proj/cvs/prod/bind9/contrib/nslint-2.1a3/lbl/os-irix5.h,v 1.1 2001-12-21 04:12:05 marka Exp (LBL)
+ * @(#) Header: /u0/home/explorer/proj/ISC/git-conversion/cvsroot/bind9/contrib/nslint-2.1a3/lbl/os-irix5.h,v 1.1 2001/12/21 04:12:05 marka Exp  (LBL)
  */
 
 /* Prototypes missing in IRIX 5 */

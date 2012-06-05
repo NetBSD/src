@@ -1,7 +1,7 @@
-/*	$NetBSD: dirdb.c,v 1.2 2011/02/16 03:47:00 christos Exp $	*/
+/*	$NetBSD: dirdb.c,v 1.2.6.1 2012/06/05 21:15:49 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dirdb.c,v 1.12 2007-06-19 23:47:07 tbox Exp */
+/* Id: dirdb.c,v 1.14 2011/10/11 23:46:45 tbox Exp  */
 
 /*
  * A simple database driver that returns basic information about
@@ -62,9 +62,16 @@ static dns_sdbimplementation_t *dirdb = NULL;
  * Any name will be interpreted as a pathname offset from the directory
  * specified in the configuration file.
  */
+#ifdef DNS_CLIENTINFO_VERSION
+static isc_result_t
+dirdb_lookup(const char *zone, const char *name, void *dbdata,
+	      dns_sdblookup_t *lookup, dns_clientinfomethods_t *methods,
+	      dns_clientinfo_t *clientinfo)
+#else
 static isc_result_t
 dirdb_lookup(const char *zone, const char *name, void *dbdata,
 	      dns_sdblookup_t *lookup)
+#endif /* DNS_CLIENTINFO_VERSION */
 {
 	char filename[255];
 	char filename2[255];
@@ -75,6 +82,10 @@ dirdb_lookup(const char *zone, const char *name, void *dbdata,
 
 	UNUSED(zone);
 	UNUSED(dbdata);
+#ifdef DNS_CLIENTINFO_VERSION
+	UNUSED(methods);
+	UNUSED(clientinfo);
+#endif /* DNS_CLIENTINFO_VERSION */
 
 	if (strcmp(name, "@") == 0)
 		snprintf(filename, sizeof(filename), "%s", (char *)dbdata);
@@ -82,7 +93,7 @@ dirdb_lookup(const char *zone, const char *name, void *dbdata,
 		snprintf(filename, sizeof(filename), "%s/%s",
 			 (char *)dbdata, name);
 	CHECKN(lstat(filename, &statbuf));
-	
+
 	if (S_ISDIR(statbuf.st_mode))
 		CHECK(dns_sdb_putrr(lookup, "txt", 3600, "dir"));
 	else if (S_ISCHR(statbuf.st_mode) || S_ISBLK(statbuf.st_mode)) {
