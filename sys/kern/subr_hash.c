@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_hash.c,v 1.4 2011/12/25 02:23:09 christos Exp $	*/
+/*	$NetBSD: subr_hash.c,v 1.5 2012/06/05 20:51:36 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,81 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_hash.c,v 1.4 2011/12/25 02:23:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_hash.c,v 1.5 2012/06/05 20:51:36 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
 #include <sys/systm.h>
 
-/*
- * General routine to allocate a hash table.
- * Allocate enough memory to hold at least `elements' list-head pointers.
- * Return a pointer to the allocated space and set *hashmask to a pattern
- * suitable for masking a value to use as an index into the returned array.
- */
-void *
-hashinit(u_int elements, enum hashtype htype, bool waitok, u_long *hashmask)
-{
-	u_long hashsize, i;
-	LIST_HEAD(, generic) *hashtbl_list;
-	SLIST_HEAD(, generic) *hashtbl_slist;
-	TAILQ_HEAD(, generic) *hashtbl_tailq;
-	size_t esize;
-	void *p;
-	if (elements == 0)
-		panic("hashinit: bad cnt");
-
-#define MAXELEMENTS (1U << ((sizeof(elements) * NBBY) - 1))
-	if (elements > MAXELEMENTS)
-		elements = MAXELEMENTS;
-
-	for (hashsize = 1; hashsize < elements; hashsize <<= 1)
-		continue;
-
-	switch (htype) {
-	case HASH_LIST:
-		esize = sizeof(*hashtbl_list);
-		break;
-	case HASH_SLIST:
-		esize = sizeof(*hashtbl_slist);
-		break;
-	case HASH_TAILQ:
-		esize = sizeof(*hashtbl_tailq);
-		break;
-	default:
-		panic("hashinit: invalid table type");
-	}
-
-	p = kmem_alloc(hashsize * esize, (waitok ? KM_SLEEP : KM_NOSLEEP));
-	if (p == NULL)
-		return (NULL);
-
-	switch (htype) {
-	case HASH_LIST:
-		hashtbl_list = p;
-		for (i = 0; i < hashsize; i++)
-			LIST_INIT(&hashtbl_list[i]);
-		break;
-	case HASH_SLIST:
-		hashtbl_slist = p;
-		for (i = 0; i < hashsize; i++)
-			SLIST_INIT(&hashtbl_slist[i]);
-		break;
-	case HASH_TAILQ:
-		hashtbl_tailq = p;
-		for (i = 0; i < hashsize; i++)
-			TAILQ_INIT(&hashtbl_tailq[i]);
-		break;
-	}
-	*hashmask = hashsize - 1;
-	return (p);
-}
-
-/*
- * Free memory from hash table previosly allocated via hashinit().
- */
-void
-hashdone(void *hashtbl, enum hashtype htype, u_long hashmask)
+static size_t
+hash_list_size(enum hashtype htype)
 {
 	LIST_HEAD(, generic) *hashtbl_list;
 	SLIST_HEAD(, generic) *hashtbl_slist;
@@ -131,6 +64,66 @@ hashdone(void *hashtbl, enum hashtype htype, u_long hashmask)
 	default:
 		panic("hashdone: invalid table type");
 	}
+	return esize;
+}
 
+/*
+ * General routine to allocate a hash table.
+ * Allocate enough memory to hold at least `elements' list-head pointers.
+ * Return a pointer to the allocated space and set *hashmask to a pattern
+ * suitable for masking a value to use as an index into the returned array.
+ */
+void *
+hashinit(u_int elements, enum hashtype htype, bool waitok, u_long *hashmask)
+{
+	LIST_HEAD(, generic) *hashtbl_list;
+	SLIST_HEAD(, generic) *hashtbl_slist;
+	TAILQ_HEAD(, generic) *hashtbl_tailq;
+	u_long hashsize, i;
+	size_t esize;
+	void *p;
+
+	KASSERT(elements > 0);
+
+#define MAXELEMENTS (1U << ((sizeof(elements) * NBBY) - 1))
+	if (elements > MAXELEMENTS)
+		elements = MAXELEMENTS;
+
+	for (hashsize = 1; hashsize < elements; hashsize <<= 1)
+		continue;
+
+	esize = hash_list_size(htype);
+	p = kmem_alloc(hashsize * esize, waitok ? KM_SLEEP : KM_NOSLEEP);
+	if (p == NULL)
+		return NULL;
+
+	switch (htype) {
+	case HASH_LIST:
+		hashtbl_list = p;
+		for (i = 0; i < hashsize; i++)
+			LIST_INIT(&hashtbl_list[i]);
+		break;
+	case HASH_SLIST:
+		hashtbl_slist = p;
+		for (i = 0; i < hashsize; i++)
+			SLIST_INIT(&hashtbl_slist[i]);
+		break;
+	case HASH_TAILQ:
+		hashtbl_tailq = p;
+		for (i = 0; i < hashsize; i++)
+			TAILQ_INIT(&hashtbl_tailq[i]);
+		break;
+	}
+	*hashmask = hashsize - 1;
+	return p;
+}
+
+/*
+ * Free memory from hash table previosly allocated via hashinit().
+ */
+void
+hashdone(void *hashtbl, enum hashtype htype, u_long hashmask)
+{
+	const size_t esize = hash_list_size(htype);
 	kmem_free(hashtbl, esize * (hashmask + 1));
 }
