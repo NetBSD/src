@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.338 2012/04/19 20:20:34 wiz Exp $
+# $NetBSD: ALL,v 1.339 2012/06/05 08:44:12 abs Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.338 $"
+#ident 		"ALL-$Revision: 1.339 $"
 
 maxusers	64		# estimated number of users
 
@@ -280,7 +280,7 @@ options 	WSDISPLAY_BORDER_COLOR=WSCOL_BLUE	# default color
 # compatibility to other console drivers
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
-options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	WSKBD_EVENT_AUTOREPEAT		# auto repeat in event mode
 #options 	WSKBD_USONLY			# strip off non-US keymaps
