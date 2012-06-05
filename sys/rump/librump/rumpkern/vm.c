@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.126 2012/05/23 14:59:21 martin Exp $	*/
+/*	$NetBSD: vm.c,v 1.127 2012/06/05 22:51:47 jym Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.126 2012/05/23 14:59:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.127 2012/06/05 22:51:47 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -989,7 +989,6 @@ uvm_pageout(void *arg)
 {
 	struct vm_page *pg;
 	struct pool *pp, *pp_first;
-	uint64_t where;
 	int cleaned, skip, skipped;
 	int waspaging;
 	bool succ;
@@ -1094,19 +1093,15 @@ uvm_pageout(void *arg)
 		/*
 		 * And then drain the pools.  Wipe them out ... all of them.
 		 */
-
-		pool_drain_start(&pp_first, &where);
-		pp = pp_first;
-		for (;;) {
+		for (pp_first = NULL;;) {
 			rump_vfs_drainbufs(10 /* XXX: estimate better */);
-			succ = pool_drain_end(pp, where);
-			if (succ)
+
+			succ = pool_drain(&pp);
+			if (succ || pp == pp_first)
 				break;
-			pool_drain_start(&pp, &where);
-			if (pp == pp_first) {
-				succ = pool_drain_end(pp, where);
-				break;
-			}
+
+			if (pp_first == NULL)
+				pp_first = pp;
 		}
 
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.196 2012/06/05 22:28:11 jym Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.197 2012/06/05 22:51:47 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.196 2012/06/05 22:28:11 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.197 2012/06/05 22:51:47 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1300,7 +1300,7 @@ pool_sethardlimit(struct pool *pp, int n, const char *warnmess, int ratecap)
 /*
  * Release all complete pages that have not been used recently.
  *
- * Might be called from interrupt context.
+ * Must not be called from interrupt context.
  */
 int
 pool_reclaim(struct pool *pp)
@@ -1311,9 +1311,7 @@ pool_reclaim(struct pool *pp)
 	bool klock;
 	int rv;
 
-	if (cpu_intr_p() || cpu_softintr_p()) {
-		KASSERT(pp->pr_ipl != IPL_NONE);
-	}
+	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
 
 	if (pp->pr_drain_hook != NULL) {
 		/*
@@ -1387,17 +1385,14 @@ pool_reclaim(struct pool *pp)
 }
 
 /*
- * Drain pools, one at a time.  This is a two stage process;
- * drain_start kicks off a cross call to drain CPU-level caches
- * if the pool has an associated pool_cache.  drain_end waits
- * for those cross calls to finish, and then drains the cache
- * (if any) and pool.
+ * Drain pools, one at a time. The drained pool is returned within ppp.
  *
  * Note, must never be called from interrupt context.
  */
-void
-pool_drain_start(struct pool **ppp, uint64_t *wp)
+bool
+pool_drain(struct pool **ppp)
 {
+	bool reclaimed;
 	struct pool *pp;
 
 	KASSERT(!TAILQ_EMPTY(&pool_head));
@@ -1422,28 +1417,6 @@ pool_drain_start(struct pool **ppp, uint64_t *wp)
 	pp->pr_refcnt++;
 	mutex_exit(&pool_head_lock);
 
-	/* If there is a pool_cache, drain CPU level caches. */
-	*ppp = pp;
-	if (pp->pr_cache != NULL) {
-		*wp = xc_broadcast(0, (xcfunc_t)pool_cache_transfer,
-		    pp->pr_cache, NULL);
-	}
-}
-
-bool
-pool_drain_end(struct pool *pp, uint64_t where)
-{
-	bool reclaimed;
-
-	if (pp == NULL)
-		return false;
-
-	KASSERT(pp->pr_refcnt > 0);
-
-	/* Wait for remote draining to complete. */
-	if (pp->pr_cache != NULL)
-		xc_wait(where);
-
 	/* Drain the cache (if any) and pool.. */
 	reclaimed = pool_reclaim(pp);
 
@@ -1452,6 +1425,9 @@ pool_drain_end(struct pool *pp, uint64_t where)
 	pp->pr_refcnt--;
 	cv_broadcast(&pool_busy);
 	mutex_exit(&pool_head_lock);
+
+	if (ppp != NULL)
+		*ppp = pp;
 
 	return reclaimed;
 }
