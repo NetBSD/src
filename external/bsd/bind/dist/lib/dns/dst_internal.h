@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_internal.h,v 1.3 2011/09/11 18:55:34 christos Exp $	*/
+/*	$NetBSD: dst_internal.h,v 1.4 2012/06/05 00:41:30 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -31,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dst_internal.h,v 1.30 2011-03-17 01:40:39 each Exp */
+/* Id: dst_internal.h,v 1.31 2011/10/20 21:20:02 marka Exp  */
 
 #ifndef DST_DST_INTERNAL_H
 #define DST_DST_INTERNAL_H 1
@@ -96,6 +96,8 @@ struct dst_key {
 	unsigned int	key_alg;	/*%< algorithm of the key */
 	isc_uint32_t	key_flags;	/*%< flags of the public key */
 	isc_uint16_t	key_id;		/*%< identifier of the key */
+	isc_uint16_t	key_rid;	/*%< identifier of the key when
+					     revoked */
 	isc_uint16_t	key_bits;	/*%< hmac digest bits */
 	dns_rdataclass_t key_class;	/*%< class of the key record */
 	dns_ttl_t	key_ttl;	/*%< default/initial dnskey ttl */

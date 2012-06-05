@@ -1,4 +1,4 @@
-/*	$NetBSD: db.h,v 1.3 2011/09/11 18:55:38 christos Exp $	*/
+/*	$NetBSD: db.h,v 1.4 2012/06/05 00:41:46 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: db.h,v 1.105 2011-05-19 00:31:57 smann Exp */
+/* Id: db.h,v 1.107 2011/10/13 01:32:34 vjs Exp  */
 
 #ifndef DNS_DB_H
 #define DNS_DB_H 1
@@ -61,6 +61,7 @@
 #include <isc/ondestroy.h>
 #include <isc/stdtime.h>
 
+#include <dns/clientinfo.h>
 #include <dns/fixedname.h>
 #include <dns/name.h>
 #include <dns/rdata.h>
@@ -179,7 +180,22 @@ typedef struct dns_dbmethods {
 				       dns_zone_t *zone, dns_db_t *db,
 				       dns_dbversion_t *version,
 				       dns_rdataset_t *ardataset,
-				       dns_rpz_st_t *st);
+				       dns_rpz_st_t *st,
+				       dns_name_t *query_qname);
+	isc_result_t	(*findnodeext)(dns_db_t *db, dns_name_t *name,
+				     isc_boolean_t create,
+				     dns_clientinfomethods_t *methods,
+				     dns_clientinfo_t *clientinfo,
+				     dns_dbnode_t **nodep);
+	isc_result_t	(*findext)(dns_db_t *db, dns_name_t *name,
+				   dns_dbversion_t *version,
+				   dns_rdatatype_t type, unsigned int options,
+				   isc_stdtime_t now,
+				   dns_dbnode_t **nodep, dns_name_t *foundname,
+				   dns_clientinfomethods_t *methods,
+				   dns_clientinfo_t *clientinfo,
+				   dns_rdataset_t *rdataset,
+				   dns_rdataset_t *sigrdataset);
 } dns_dbmethods_t;
 
 typedef isc_result_t
@@ -661,8 +677,18 @@ dns_db_closeversion(dns_db_t *db, dns_dbversion_t **versionp,
 isc_result_t
 dns_db_findnode(dns_db_t *db, dns_name_t *name, isc_boolean_t create,
 		dns_dbnode_t **nodep);
+
+isc_result_t
+dns_db_findnodeext(dns_db_t *db, dns_name_t *name, isc_boolean_t create,
+		   dns_clientinfomethods_t *methods,
+		   dns_clientinfo_t *clientinfo, dns_dbnode_t **nodep);
 /*%<
  * Find the node with name 'name'.
+ *
+ * dns_db_findnodeext() (findnode extended) also accepts parameters
+ * 'methods' and 'clientinfo', which, when provided, enable the database to
+ * retreive information about the client from the caller, and modify its
+ * response on the basis of that information.
  *
  * Notes:
  * \li	If 'create' is ISC_TRUE and no node with name 'name' exists, then
@@ -700,8 +726,20 @@ dns_db_find(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
 	    dns_rdatatype_t type, unsigned int options, isc_stdtime_t now,
 	    dns_dbnode_t **nodep, dns_name_t *foundname,
 	    dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset);
+
+isc_result_t
+dns_db_findext(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
+	       dns_rdatatype_t type, unsigned int options, isc_stdtime_t now,
+	       dns_dbnode_t **nodep, dns_name_t *foundname,
+	       dns_clientinfomethods_t *methods, dns_clientinfo_t *clientinfo,
+	       dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset);
 /*%<
  * Find the best match for 'name' and 'type' in version 'version' of 'db'.
+ *
+ * dns_db_findext() (find extended) also accepts parameters 'methods'
+ * and 'clientinfo', which when provided enable the database to retreive
+ * information about the client from the caller, and modify its response
+ * on the basis of this information.
  *
  * Notes:
  *
@@ -1049,6 +1087,7 @@ dns_db_findrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 		    dns_rdatatype_t type, dns_rdatatype_t covers,
 		    isc_stdtime_t now, dns_rdataset_t *rdataset,
 		    dns_rdataset_t *sigrdataset);
+
 /*%<
  * Search for an rdataset of type 'type' at 'node' that are in version
  * 'version' of 'db'.  If found, make 'rdataset' refer to it.
@@ -1511,7 +1550,8 @@ dns_db_rpz_enabled(dns_db_t *db, dns_rpz_st_t *st);
 isc_result_t
 dns_db_rpz_findips(dns_rpz_zone_t *rpz, dns_rpz_type_t rpz_type,
 		   dns_zone_t *zone, dns_db_t *db, dns_dbversion_t *version,
-		   dns_rdataset_t *ardataset, dns_rpz_st_t *st);
+		   dns_rdataset_t *ardataset, dns_rpz_st_t *st,
+		   dns_name_t *query_qname);
 /*%<
  * Search the CDIR block tree of a response policy tree of trees for the best
  * match to any of the IP addresses in an A or AAAA rdataset.
@@ -1524,6 +1564,10 @@ dns_db_rpz_findips(dns_rpz_zone_t *rpz, dns_rpz_type_t rpz_type,
  * \li	'ardataset' is an A or AAAA rdataset of addresses to check
  * \li	'found' specifies the previous best match if any or
  *	    or NULL, an empty name, 0, DNS_RPZ_POLICY_MISS, and 0
+ *
+ * Returns:
+ * \li	#ISC_R_SUCCESS
+ * \li	#ISC_R_UNEXPECTED
  */
 
 ISC_LANG_ENDDECLS

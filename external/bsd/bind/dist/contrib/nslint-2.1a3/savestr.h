@@ -1,4 +1,4 @@
-/*	$NetBSD: savestr.h,v 1.2 2011/02/16 03:46:59 christos Exp $	*/
+/*	$NetBSD: savestr.h,v 1.3 2012/06/05 00:40:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: /proj/cvs/prod/bind9/contrib/nslint-2.1a3/savestr.h,v 1.1 2001-12-21 04:12:05 marka Exp (LBL)
+ * @(#) Header: /u0/home/explorer/proj/ISC/git-conversion/cvsroot/bind9/contrib/nslint-2.1a3/savestr.h,v 1.1 2001/12/21 04:12:05 marka Exp  (LBL)
  */
 
 extern char *savestr(const char *);

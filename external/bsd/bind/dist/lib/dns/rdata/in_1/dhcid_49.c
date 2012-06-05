@@ -1,7 +1,7 @@
-/*	$NetBSD: dhcid_49.c,v 1.3 2011/09/11 18:55:40 christos Exp $	*/
+/*	$NetBSD: dhcid_49.c,v 1.4 2012/06/05 00:42:20 christos Exp $	*/
 
 /*
- * Copyright (C) 2006, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2006, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dhcid_49.c,v 1.9 2011-03-05 23:52:31 tbox Exp */
+/* Id */
 
 /* RFC 4701 */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kx_36.h,v 1.2 2011/02/16 03:47:09 christos Exp $	*/
+/*	$NetBSD: kx_36.h,v 1.3 2012/06/05 00:42:20 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 #ifndef IN_1_KX_36_H
 #define IN_1_KX_36_H 1
 
-/* Id: kx_36.h,v 1.20 2007-06-19 23:47:17 tbox Exp */
+/* Id: kx_36.h,v 1.20 2007/06/19 23:47:17 tbox Exp  */
 
 /*! 
  *  \brief Per RFC2230 */

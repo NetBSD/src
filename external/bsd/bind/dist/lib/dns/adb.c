@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.3 2011/09/11 18:55:33 christos Exp $	*/
+/*	$NetBSD: adb.c,v 1.4 2012/06/05 00:41:27 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: adb.c,v 1.258 2011-03-13 02:49:28 marka Exp */
+/* Id: adb.c,v 1.264 2011/12/05 17:10:51 each Exp  */
 
 /*! \file
  *
@@ -256,6 +256,7 @@ struct dns_adbentry {
 
 	ISC_LIST(dns_adblameinfo_t)     lameinfo;
 	ISC_LINK(dns_adbentry_t)        plink;
+
 };
 
 /*
