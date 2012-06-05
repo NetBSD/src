@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.15 2012/04/29 20:27:32 dsl Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.16 2012/06/05 22:51:47 jym Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.15 2012/04/29 20:27:32 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.16 2012/06/05 22:51:47 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -285,15 +285,8 @@ pool_cache_set_drain_hook(pool_cache_t pc, void (*fn)(void *, int), void *arg)
 	pc->pc_pool.pr_drain_hook_arg = arg;
 }
 
-void
-pool_drain_start(struct pool **ppp, uint64_t *wp)
-{
-
-	/* nada */
-}
-
 bool
-pool_drain_end(struct pool *pp, uint64_t w)
+pool_drain(struct pool **ppp)
 {
 
 	/* can't reclaim anything in this model */
