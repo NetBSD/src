@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata.c,v 1.1.1.5.8.3 2011/06/18 11:36:56 bouyer Exp $	*/
+/*	$NetBSD: rdata.c,v 1.1.1.5.8.4 2012/06/05 19:52:26 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -327,8 +327,8 @@ dns_rdata_compare(const dns_rdata_t *rdata1, const dns_rdata_t *rdata2) {
 
 	REQUIRE(rdata1 != NULL);
 	REQUIRE(rdata2 != NULL);
-	REQUIRE(rdata1->data != NULL);
-	REQUIRE(rdata2->data != NULL);
+	REQUIRE(rdata1->length == 0 || rdata1->data != NULL);
+	REQUIRE(rdata2->length == 0 || rdata2->data != NULL);
 	REQUIRE(DNS_RDATA_VALIDFLAGS(rdata1));
 	REQUIRE(DNS_RDATA_VALIDFLAGS(rdata2));
 
@@ -358,8 +358,8 @@ dns_rdata_casecompare(const dns_rdata_t *rdata1, const dns_rdata_t *rdata2) {
 
 	REQUIRE(rdata1 != NULL);
 	REQUIRE(rdata2 != NULL);
-	REQUIRE(rdata1->data != NULL);
-	REQUIRE(rdata2->data != NULL);
+	REQUIRE(rdata1->length == 0 || rdata1->data != NULL);
+	REQUIRE(rdata2->length == 0 || rdata2->data != NULL);
 	REQUIRE(DNS_RDATA_VALIDFLAGS(rdata1));
 	REQUIRE(DNS_RDATA_VALIDFLAGS(rdata2));
 

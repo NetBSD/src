@@ -22,13 +22,13 @@ SYSTEMTESTTOP=..
 
 status=0
 
-DIGOPTS="@10.53.0.1 -p 5300"
+DIGOPTS="-p 5300"
 
 echo "I:querying for various representations of an IN A record"
 for i in 1 2 3 4 5 6 7 8 9 10 11 12
 do
 	ret=0
-	$DIG +short $DIGOPTS a$i.example a in > dig.out || ret=1
+	$DIG +short $DIGOPTS @10.53.0.1 a$i.example a in > dig.out || ret=1
 	echo 10.0.0.1 | diff - dig.out || ret=1
 	if [ $ret != 0 ]
 	then
@@ -41,7 +41,7 @@ echo "I:querying for various representations of an IN TXT record"
 for i in 1 2 3 4 5 6 7
 do
 	ret=0
-	$DIG +short $DIGOPTS txt$i.example txt in > dig.out || ret=1
+	$DIG +short $DIGOPTS @10.53.0.1 txt$i.example txt in > dig.out || ret=1
 	echo '"hello"' | diff - dig.out || ret=1
 	if [ $ret != 0 ]
 	then
@@ -54,7 +54,7 @@ echo "I:querying for various representations of an IN TYPE123 record"
 for i in 1 2 3
 do
 	ret=0
-	$DIG +short $DIGOPTS unk$i.example type123 in > dig.out || ret=1
+	$DIG +short $DIGOPTS @10.53.0.1 unk$i.example type123 in > dig.out || ret=1
 	echo '\# 1 00' | diff - dig.out || ret=1
 	if [ $ret != 0 ]
 	then
@@ -67,7 +67,7 @@ echo "I:querying for various representations of a CLASS10 TYPE1 record"
 for i in 1 2
 do
 	ret=0
-	$DIG +short $DIGOPTS a$i.example a class10 > dig.out || ret=1
+	$DIG +short $DIGOPTS @10.53.0.1 a$i.example a class10 > dig.out || ret=1
 	echo '\# 4 0A000001' | diff - dig.out || ret=1
 	if [ $ret != 0 ]
 	then
@@ -80,7 +80,7 @@ echo "I:querying for various representations of a CLASS10 TXT record"
 for i in 1 2 3 4
 do
 	ret=0
-	$DIG +short $DIGOPTS txt$i.example txt class10 > dig.out || ret=1
+	$DIG +short $DIGOPTS @10.53.0.1 txt$i.example txt class10 > dig.out || ret=1
 	echo '"hello"' | diff - dig.out || ret=1
 	if [ $ret != 0 ]
 	then
@@ -93,7 +93,7 @@ echo "I:querying for various representations of a CLASS10 TYPE123 record"
 for i in 1 2
 do
 	ret=0
-	$DIG +short $DIGOPTS unk$i.example type123 class10 > dig.out || ret=1
+	$DIG +short $DIGOPTS @10.53.0.1 unk$i.example type123 class10 > dig.out || ret=1
 	echo '\# 1 00' | diff - dig.out || ret=1
 	if [ $ret != 0 ]
 	then
@@ -102,11 +102,25 @@ do
 	status=`expr $status + $ret`
 done
 
+echo "I:querying for NULL record"
+ret=0
+$DIG +short $DIGOPTS @10.53.0.1 null.example null in > dig.out || ret=1
+echo '\# 1 00' | diff - dig.out || ret=1
+[ $ret = 0 ] || echo "I: failed"
+status=`expr $status + $ret`
+ 
+echo "I:querying for empty NULL record"
+ret=0
+$DIG +short $DIGOPTS @10.53.0.1 empty.example null in > dig.out || ret=1
+echo '\# 0' | diff - dig.out || ret=1
+[ $ret = 0 ] || echo "I: failed"
+status=`expr $status + $ret`
+
 echo "I:querying for SOAs of zone that should have failed to load"
 for i in 1 2 3 4
 do
 	ret=0
-	$DIG $DIGOPTS broken$i. soa in > dig.out || ret=1
+	$DIG $DIGOPTS @10.53.0.1 broken$i. soa in > dig.out || ret=1
 	grep "SERVFAIL" dig.out > /dev/null || ret=1
 	if [ $ret != 0 ]
 	then
@@ -114,6 +128,31 @@ do
 	fi
 	status=`expr $status + $ret`
 done
+
+echo "I:checking large unknown record loading on master"
+ret=0
+$DIG $DIGOPTS @10.53.0.1 +tcp +short large.example TYPE45234 > dig.out || { ret=1 ; echo I: dig failed ; }
+diff -s large.out dig.out > /dev/null || { ret=1 ; echo "I: diff failed"; }
+[ $ret = 0 ] || echo "I: failed"
+status=`expr $status + $ret`
+
+echo "I:checking large unknown record loading on slave"
+ret=0
+$DIG $DIGOPTS @10.53.0.2 +tcp +short large.example TYPE45234 > dig.out || { ret=1 ; echo I: dig failed ; }
+diff -s large.out dig.out > /dev/null || { ret=1 ; echo "I: diff failed"; }
+[ $ret = 0 ] || echo "I: failed"
+status=`expr $status + $ret`
+
+echo "I:stop and restart slave"
+$PERL $SYSTEMTESTTOP/stop.pl . ns2
+$PERL $SYSTEMTESTTOP/start.pl --noclean --restart . ns2
+
+echo "I:checking large unknown record loading on slave"
+ret=0
+$DIG $DIGOPTS @10.53.0.2 +tcp +short large.example TYPE45234 > dig.out || { ret=1 ; echo I: dig failed ; }
+diff -s large.out dig.out > /dev/null || { ret=1 ; echo "I: diff failed"; }
+[ $ret = 0 ] || echo "I: failed"
+status=`expr $status + $ret`
 
 echo "I:exit status: $status"
 exit $status
