@@ -1,4 +1,4 @@
-.\" $NetBSD: wsmouse.4,v 1.20 2012/01/17 08:23:40 wiz Exp $
+.\" $NetBSD: wsmouse.4,v 1.20.2.1 2012/06/05 16:14:35 jdc Exp $
 .\"
 .\" Copyright (c) 1999
 .\" 	Matthias Drochner.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 17, 2012
+.Dd May 27, 2012
 .Dt WSMOUSE 4
 .Os
 .Sh NAME
@@ -48,6 +48,8 @@
 (Apple ADB mouse)
 .Cd "wsmouse*	at btms? mux 0"
 (Bluetooth mouse)
+.Cd "wsmouse*   at lkms? mux 0"
+(DEC VSXXX serial mice)
 .Sh DESCRIPTION
 The
 .Nm
@@ -111,6 +113,20 @@ Set the automatic button repeating configuration.
 See
 .Dv WSMOUSEIO_GETREPEAT
 above for more details.
+.It Dv WSMOUSEIO_SETVERSION Pq Li "int"
+Set the wscons_event protocol version.
+The default is 0 for binary compatibility.
+The latest version is
+always available as
+.Dv WSMOUSE_EVENT_VERSION ,
+and is currently 1.
+All new code should use a call similar to the below to ensure the
+correct version is returned.
+.Bd -literal -offset indent
+int ver = WSMOUSE_EVENT_VERSION;
+if (ioctl(fd, WSMOUSEIO_SETVERSION, &ver) == -1)
+    err(EXIT_FAILURE, "cannot set version");
+.Ed
 .El
 .Sh FILES
 .Bl -item
