@@ -1,4 +1,4 @@
-/*	$NetBSD: sample-update.c,v 1.2 2011/02/16 03:47:10 christos Exp $	*/
+/*	$NetBSD: sample-update.c,v 1.3 2012/06/05 00:42:23 christos Exp $	*/
 
 /*
  * Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sample-update.c,v 1.10 2010-12-09 00:54:34 marka Exp */
+/* Id: sample-update.c,v 1.10 2010/12/09 00:54:34 marka Exp  */
 
 #include <config.h>
 

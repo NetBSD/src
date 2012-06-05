@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.3 2011/02/16 03:47:12 christos Exp $	*/
+/*	$NetBSD: event.h,v 1.4 2012/06/05 00:42:35 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: event.h,v 1.34 2007-06-19 23:47:18 tbox Exp */
+/* Id: event.h,v 1.34 2007/06/19 23:47:18 tbox Exp  */
 
 #ifndef ISC_EVENT_H
 #define ISC_EVENT_H 1

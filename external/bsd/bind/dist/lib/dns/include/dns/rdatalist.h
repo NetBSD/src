@@ -1,4 +1,4 @@
-/*	$NetBSD: rdatalist.h,v 1.2 2011/02/16 03:47:06 christos Exp $	*/
+/*	$NetBSD: rdatalist.h,v 1.3 2012/06/05 00:41:51 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdatalist.h,v 1.22 2008-04-03 06:09:05 tbox Exp */
+/* Id: rdatalist.h,v 1.22 2008/04/03 06:09:05 tbox Exp  */
 
 #ifndef DNS_RDATALIST_H
 #define DNS_RDATALIST_H 1

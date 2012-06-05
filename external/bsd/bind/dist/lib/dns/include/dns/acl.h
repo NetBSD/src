@@ -1,4 +1,4 @@
-/*	$NetBSD: acl.h,v 1.3 2011/09/11 18:55:38 christos Exp $	*/
+/*	$NetBSD: acl.h,v 1.4 2012/06/05 00:41:45 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: acl.h,v 1.35 2011-06-17 23:47:49 tbox Exp */
+/* Id: acl.h,v 1.35 2011/06/17 23:47:49 tbox Exp  */
 
 #ifndef DNS_ACL_H
 #define DNS_ACL_H 1

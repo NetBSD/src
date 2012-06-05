@@ -1,4 +1,4 @@
-/*	$NetBSD: ratelimiter.h,v 1.2 2011/02/16 03:47:12 christos Exp $	*/
+/*	$NetBSD: ratelimiter.h,v 1.3 2012/06/05 00:42:39 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ratelimiter.h,v 1.23 2009-01-18 23:48:14 tbox Exp */
+/* Id: ratelimiter.h,v 1.23 2009/01/18 23:48:14 tbox Exp  */
 
 #ifndef ISC_RATELIMITER_H
 #define ISC_RATELIMITER_H 1

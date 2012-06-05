@@ -1,7 +1,7 @@
-/*	$NetBSD: rndc.c,v 1.4 2011/09/11 18:55:29 christos Exp $	*/
+/*	$NetBSD: rndc.c,v 1.5 2012/06/05 00:39:19 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rndc.c,v 1.134 2011-03-21 15:39:05 each Exp */
+/* Id */
 
 /*! \file */
 
@@ -116,9 +116,9 @@ command is one of the following:\n\
   thaw		Enable updates to all dynamic zones and reload them.\n\
   thaw zone [class [view]]\n\
 		Enable updates to a frozen dynamic zone and reload it.\n\
-  sync [-clear]	Dump changes to all dynamic zones to disk, and optionally\n\
+  sync [-clean]	Dump changes to all dynamic zones to disk, and optionally\n\
 		remove their journal files.\n\
-  sync [-clear] zone [class [view]]\n\
+  sync [-clean] zone [class [view]]\n\
 		Dump a single zone's changes to disk, and optionally\n\
 		remove its journal file.\n\
   notify zone [class [view]]\n\
@@ -129,7 +129,8 @@ command is one of the following:\n\
   loadkeys zone [class [view]]\n\
 		Update keys without signing immediately.\n\
   stats		Write server statistics to the statistics file.\n\
-  querylog	Toggle query logging.\n\
+  querylog newstate\n\
+		Enable / disable query logging.\n\
   dumpdb [-all|-cache|-zones] [view ...]\n\
 		Dump cache(s) to the dump file (named_dump.db).\n\
   secroots [view ...]\n\
@@ -147,15 +148,35 @@ command is one of the following:\n\
   flush [view]	Flushes the server's cache for a view.\n\
   flushname name [view]\n\
 		Flush the given name from the server's cache(s)\n\
+  flushtree name [view]\n\
+		Flush all names under the given name from the server's cache(s)\n\
   status	Display status of the server.\n\
   recursing	Dump the queries that are currently recursing (named.recursing)\n\
+  tsig-list	List all currently active TSIG keys, including both statically\n\
+		configured and TKEY-negotiated keys.\n\
+  tsig-delete keyname [view]	\n\
+		Delete a TKEY-negotiated TSIG key.\n\
   validation newstate [view]\n\
 		Enable / disable DNSSEC validation.\n\
-  *restart	Restart the server.\n\
   addzone [\"file\"] zone [class [view]] { zone-options }\n\
 		Add zone to given view. Requires new-zone-file option.\n\
   delzone [\"file\"] zone [class [view]]\n\
 		Removes zone from given view. Requires new-zone-file option.\n\
+  signing -list zone [class [view]]\n\
+		List the private records showing the state of DNSSEC\n\
+		signing in the given zone.\n\
+  signing -clear <keyid>/<algorithm> zone [class [view]]\n\
+		Remove the private record that indicating the given key\n\
+		has finished signing the given zone.\n\
+  signing -clear all zone [class [view]]\n\
+		Remove the private records for all keys that have\n\
+		finished signing the given zone.\n\
+  signing -nsec3param none zone [class [view]]\n\
+		Remove NSEC3 chains from zone.\n\
+  signing -nsec3param hash flags iterations salt zone [class [view]]\n\
+		Add NSEC3 chain to zone if already signed.\n\
+		Prime zone with NSEC3 chain if not yet signed.\n\
+  *restart	Restart the server.\n\
 \n\
 * == not yet implemented\n\
 Version: %s\n",

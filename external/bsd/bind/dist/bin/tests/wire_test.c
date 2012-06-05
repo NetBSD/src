@@ -1,4 +1,4 @@
-/*	$NetBSD: wire_test.c,v 1.2 2011/02/16 03:46:49 christos Exp $	*/
+/*	$NetBSD: wire_test.c,v 1.3 2012/06/05 00:39:27 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: wire_test.c,v 1.67 2007-06-19 23:46:59 tbox Exp */
+/* Id: wire_test.c,v 1.67 2007/06/19 23:46:59 tbox Exp  */
 
 #include <config.h>
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: types.h,v 1.3 2011/09/11 18:55:39 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.4 2012/06/05 00:41:56 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: types.h,v 1.145 2011-07-01 23:47:44 tbox Exp */
+/* Id */
 
 #ifndef DNS_TYPES_H
 #define DNS_TYPES_H 1
@@ -87,6 +87,7 @@ typedef struct dns_keytable			dns_keytable_t;
 typedef isc_uint16_t				dns_keytag_t;
 typedef struct dns_loadctx			dns_loadctx_t;
 typedef struct dns_loadmgr			dns_loadmgr_t;
+typedef struct dns_masterrawheader		dns_masterrawheader_t;
 typedef struct dns_message			dns_message_t;
 typedef isc_uint16_t				dns_messageid_t;
 typedef isc_region_t				dns_label_t;
@@ -356,6 +357,9 @@ typedef void
 
 typedef void
 (*dns_loaddonefunc_t)(void *, isc_result_t);
+
+typedef void
+(*dns_rawdatafunc_t)(dns_zone_t *, dns_masterrawheader_t *);
 
 typedef isc_result_t
 (*dns_addrdatasetfunc_t)(void *, dns_name_t *, dns_rdataset_t *);

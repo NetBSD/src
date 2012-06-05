@@ -1,4 +1,4 @@
-.\"	$NetBSD: named.conf.5,v 1.7 2011/09/11 18:55:27 christos Exp $
+.\"	$NetBSD: named.conf.5,v 1.8 2012/06/05 00:39:02 christos Exp $
 .\"
 .\" Copyright (C) 2004-2011 Internet Systems Consortium, Inc. ("ISC")
 .\" 
@@ -14,7 +14,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" Id: named.conf.5,v 1.47 2011-05-09 01:14:45 tbox Exp
+.\" Id
 .\"
 .hy 0
 .ad l
@@ -256,8 +256,7 @@ options {
 	disable\-algorithms \fIstring\fR { \fIstring\fR; ... };
 	dnssec\-enable \fIboolean\fR;
 	dnssec\-validation \fIboolean\fR;
-	dnssec\-lookaside \fIstring\fR trust\-anchor \fIstring\fR;
-	dnssec\-lookaside ( \fIauto\fR | \fIdomain\fR trust\-anchor \fIdomain\fR );
+	dnssec\-lookaside ( \fIauto\fR | \fIno\fR | \fIdomain\fR trust\-anchor \fIdomain\fR );
 	dnssec\-must\-be\-secure \fIstring\fR \fIboolean\fR;
 	dnssec\-accept\-expired \fIboolean\fR;
 	dns64\-server \fIstring\fR;
@@ -427,7 +426,7 @@ view \fIstring\fR \fIoptional_class\fR {
 	disable\-algorithms \fIstring\fR { \fIstring\fR; ... };
 	dnssec\-enable \fIboolean\fR;
 	dnssec\-validation \fIboolean\fR;
-	dnssec\-lookaside \fIstring\fR trust\-anchor \fIstring\fR;
+	dnssec\-lookaside ( \fIauto\fR | \fIno\fR | \fIdomain\fR trust\-anchor \fIdomain\fR );
 	dnssec\-must\-be\-secure \fIstring\fR \fIboolean\fR;
 	dnssec\-accept\-expired \fIboolean\fR;
 	dns64\-server \fIstring\fR;
@@ -566,6 +565,7 @@ zone \fIstring\fR \fIoptional_class\fR {
 	max\-refresh\-time \fIinteger\fR;
 	min\-refresh\-time \fIinteger\fR;
 	multi\-master \fIboolean\fR;
+	request\-ixfr \fIboolean\fR;
 	sig\-validity\-interval \fIinteger\fR;
 	transfer\-source ( \fIipv4_address\fR | * )
 		[ port ( \fIinteger\fR | * ) ];

@@ -1,7 +1,7 @@
-/*	$NetBSD: events.h,v 1.2 2011/02/16 03:47:06 christos Exp $	*/
+/*	$NetBSD: events.h,v 1.3 2012/06/05 00:41:48 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: events.h,v 1.56 2010-12-21 03:11:42 marka Exp */
+/* Id: events.h,v 1.61 2011/10/28 06:20:06 each Exp  */
 
 #ifndef DNS_EVENTS_H
 #define DNS_EVENTS_H 1
@@ -76,6 +76,11 @@
 #define DNS_EVENT_CLIENTREQDONE			(ISC_EVENTCLASS_DNS + 44)
 #define DNS_EVENT_ADBGROWENTRIES		(ISC_EVENTCLASS_DNS + 45)
 #define DNS_EVENT_ADBGROWNAMES			(ISC_EVENTCLASS_DNS + 46)
+#define DNS_EVENT_ZONESECURESERIAL		(ISC_EVENTCLASS_DNS + 47)
+#define DNS_EVENT_ZONESECUREDB			(ISC_EVENTCLASS_DNS + 48)
+#define DNS_EVENT_ZONELOAD			(ISC_EVENTCLASS_DNS + 49)
+#define DNS_EVENT_KEYDONE			(ISC_EVENTCLASS_DNS + 50)
+#define DNS_EVENT_SETNSEC3PARAM			(ISC_EVENTCLASS_DNS + 51)
 
 #define DNS_EVENT_FIRSTEVENT			(ISC_EVENTCLASS_DNS + 0)
 #define DNS_EVENT_LASTEVENT			(ISC_EVENTCLASS_DNS + 65535)

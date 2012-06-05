@@ -1,7 +1,7 @@
-/*	$NetBSD: mapselector.c,v 1.2 2011/02/16 03:46:56 christos Exp $	*/
+/*	$NetBSD: mapselector.c,v 1.3 2012/06/05 00:39:50 christos Exp $	*/
 
 #ifndef lint
-static char *rcsid = "Id: mapselector.c,v 1.1.1.1 2003-06-04 00:25:56 marka Exp";
+static char *rcsid = "Id: mapselector.c,v 1.1 2003/06/04 00:25:56 marka Exp ";
 #endif
 
 /*

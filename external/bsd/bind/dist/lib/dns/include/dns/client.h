@@ -1,4 +1,4 @@
-/*	$NetBSD: client.h,v 1.2 2011/02/16 03:47:06 christos Exp $	*/
+/*	$NetBSD: client.h,v 1.3 2012/06/05 00:41:46 christos Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: client.h,v 1.3 2009-09-02 23:48:02 tbox Exp */
+/* Id: client.h,v 1.3 2009/09/02 23:48:02 tbox Exp  */
 
 #ifndef DNS_CLIENT_H
 #define DNS_CLIENT_H 1

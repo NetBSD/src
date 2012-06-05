@@ -1,7 +1,7 @@
-/*	$NetBSD: cfg_test.c,v 1.2 2011/02/16 03:46:49 christos Exp $	*/
+/*	$NetBSD: cfg_test.c,v 1.3 2012/06/05 00:39:21 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001, 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: cfg_test.c,v 1.23 2010-01-11 23:48:37 tbox Exp */
+/* Id: cfg_test.c,v 1.25 2011/09/05 23:46:54 tbox Exp  */
 
 /*! \file */
 
@@ -51,7 +51,7 @@ check_result(isc_result_t result, const char *format, ...) {
 static void
 output(void *closure, const char *text, int textlen) {
 	UNUSED(closure);
-	(void) isc_util_fwrite(text, 1, textlen, stdout);
+	(void) fwrite(text, 1, textlen, stdout);
 }
 
 static void

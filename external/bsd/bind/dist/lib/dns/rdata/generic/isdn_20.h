@@ -1,4 +1,4 @@
-/*	$NetBSD: isdn_20.h,v 1.2 2011/02/16 03:47:08 christos Exp $	*/
+/*	$NetBSD: isdn_20.h,v 1.3 2012/06/05 00:42:10 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 #ifndef GENERIC_ISDN_20_H
 #define GENERIC_ISDN_20_H 1
 
-/* Id: isdn_20.h,v 1.18 2007-06-19 23:47:17 tbox Exp */
+/* Id: isdn_20.h,v 1.18 2007/06/19 23:47:17 tbox Exp  */
 
 /*!
  * \brief Per RFC1183 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tsec.c,v 1.2 2011/02/16 03:47:05 christos Exp $	*/
+/*	$NetBSD: tsec.c,v 1.3 2012/06/05 00:41:42 christos Exp $	*/
 
 /*
  * Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tsec.c,v 1.7 2010-12-09 00:54:34 marka Exp */
+/* Id: tsec.c,v 1.7 2010/12/09 00:54:34 marka Exp  */
 
 #include <config.h>
 

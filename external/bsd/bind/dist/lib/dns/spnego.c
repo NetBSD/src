@@ -1,7 +1,7 @@
-/*	$NetBSD: spnego.c,v 1.3 2011/09/11 18:55:37 christos Exp $	*/
+/*	$NetBSD: spnego.c,v 1.4 2012/06/05 00:41:40 christos Exp $	*/
 
 /*
- * Copyright (C) 2006-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2006-2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: spnego.c,v 1.18 2011-04-04 11:09:11 marka Exp */
+/* Id */
 
 /*! \file
  * \brief
@@ -950,8 +950,9 @@ der_match_tag_and_length(const unsigned char *p, size_t len,
 	e = der_get_length(p, len, length_ret, &l);
 	if (e)
 		return (e);
-	p += l;
+	/* p += l; */
 	len -= l;
+	POST(len);
 	ret += l;
 	if (size)
 		*size = ret;
@@ -982,6 +983,7 @@ decode_enumerated(const unsigned char *p, size_t len, void *num, size_t *size)
 		return (e);
 	p += l;
 	len -= l;
+	POST(p); POST(len);
 	ret += l;
 	if (size)
 		*size = ret;
@@ -1018,6 +1020,7 @@ decode_octet_string(const unsigned char *p, size_t len,
 		return (e);
 	p += l;
 	len -= l;
+	POST(p); POST(len);
 	ret += l;
 	if (size)
 		*size = ret;
@@ -1054,6 +1057,7 @@ decode_oid(const unsigned char *p, size_t len,
 		return (e);
 	p += l;
 	len -= l;
+	POST(p); POST(len);
 	ret += l;
 	if (size)
 		*size = ret;
@@ -1200,6 +1204,7 @@ der_put_octet_string(unsigned char *p, size_t len,
 		return (ASN1_OVERFLOW);
 	p -= data->length;
 	len -= data->length;
+	POST(len);
 	memcpy(p + 1, data->data, data->length);
 	*size = data->length;
 	return (0);
@@ -1265,6 +1270,7 @@ der_put_length_and_tag(unsigned char *p, size_t len, size_t len_val,
 		return (e);
 	p -= l;
 	len -= l;
+	POST(p); POST(len);
 	ret += l;
 	*size = ret;
 	return (0);
@@ -1289,6 +1295,7 @@ encode_enumerated(unsigned char *p, size_t len, const void *data, size_t *size)
 		return (e);
 	p -= l;
 	len -= l;
+	POST(p); POST(len);
 	ret += l;
 	*size = ret;
 	return (0);
@@ -1313,6 +1320,7 @@ encode_octet_string(unsigned char *p, size_t len,
 		return (e);
 	p -= l;
 	len -= l;
+	POST(p); POST(len);
 	ret += l;
 	*size = ret;
 	return (0);
@@ -1337,6 +1345,7 @@ encode_oid(unsigned char *p, size_t len,
 		return (e);
 	p -= l;
 	len -= l;
+	POST(p); POST(len);
 	ret += l;
 	*size = ret;
 	return (0);

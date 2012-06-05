@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/09/11 18:55:44 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2012/06/05 00:43:13 christos Exp $
 
 LIB=dns
 
@@ -22,7 +22,8 @@ DNSSEC_SRCS=	dst_api.c dst_lib.c dst_parse.c dst_result.c \
 	gssapi_link.c gssapictx.c hmac_link.c key.c openssl_link.c \
 	openssldh_link.c openssldsa_link.c opensslrsa_link.c
 
-SRCS=	acl.c acache.c adb.c byaddr.c cache.c callbacks.c compress.c \
+SRCS=	acl.c acache.c adb.c byaddr.c cache.c callbacks.c clientinfo.c \
+	compress.c \
 	db.c dbiterator.c dbtable.c diff.c dispatch.c dlz.c dns64.c dnssec.c \
 	ds.c forward.c iptable.c journal.c keydata.c keytable.c lib.c log.c \
 	lookup.c master.c masterdump.c message.c name.c ncache.c nsec.c \

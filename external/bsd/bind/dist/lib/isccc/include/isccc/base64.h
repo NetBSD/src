@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.h,v 1.2 2011/02/16 03:47:17 christos Exp $	*/
+/*	$NetBSD: base64.h,v 1.3 2012/06/05 00:42:59 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -31,7 +31,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: base64.h,v 1.10 2007-08-28 07:20:43 tbox Exp */
+/* Id: base64.h,v 1.10 2007/08/28 07:20:43 tbox Exp  */
 
 #ifndef ISCCC_BASE64_H
 #define ISCCC_BASE64_H 1

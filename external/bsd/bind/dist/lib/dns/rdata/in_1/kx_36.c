@@ -1,4 +1,4 @@
-/*	$NetBSD: kx_36.c,v 1.2 2011/02/16 03:47:09 christos Exp $	*/
+/*	$NetBSD: kx_36.c,v 1.3 2012/06/05 00:42:20 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: kx_36.c,v 1.47 2009-12-04 22:06:37 tbox Exp */
+/* Id: kx_36.c,v 1.47 2009/12/04 22:06:37 tbox Exp  */
 
 /* Reviewed: Thu Mar 16 17:24:54 PST 2000 by explorer */
 

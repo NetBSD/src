@@ -1,4 +1,4 @@
-/*	$NetBSD: interfacemgr.c,v 1.3 2011/09/11 18:55:27 christos Exp $	*/
+/*	$NetBSD: interfacemgr.c,v 1.4 2012/06/05 00:38:59 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: interfacemgr.c,v 1.99 2011-07-28 11:16:04 marka Exp */
+/* Id: interfacemgr.c,v 1.101 2011/11/09 18:44:03 each Exp  */
 
 /*! \file */
 
@@ -270,7 +270,7 @@ ns_interface_listenudp(ns_interface_t *ifp) {
 	attrmask |= DNS_DISPATCHATTR_UDP | DNS_DISPATCHATTR_TCP;
 	attrmask |= DNS_DISPATCHATTR_IPV4 | DNS_DISPATCHATTR_IPV6;
 
-	ifp->nudpdispatch = ISC_MIN(isc_os_ncpus(), MAX_UDP_DISPATCH);
+	ifp->nudpdispatch = ISC_MIN(ns_g_udpdisp, MAX_UDP_DISPATCH);
 	for (disp = 0; disp < ifp->nudpdispatch; disp++) {
 		result = dns_dispatch_getudp_dup(ifp->mgr->dispatchmgr,
 						 ns_g_socketmgr,
@@ -290,7 +290,7 @@ ns_interface_listenudp(ns_interface_t *ifp) {
 
 	}
 
-	result = ns_clientmgr_createclients(ifp->clientmgr, ns_g_cpus,
+	result = ns_clientmgr_createclients(ifp->clientmgr, ifp->nudpdispatch,
 					    ifp, ISC_FALSE);
 	if (result != ISC_R_SUCCESS) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__,

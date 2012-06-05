@@ -1,4 +1,4 @@
-/*	$NetBSD: genrandom.c,v 1.2 2011/02/16 03:46:54 christos Exp $	*/
+/*	$NetBSD: genrandom.c,v 1.3 2012/06/05 00:39:36 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: genrandom.c,v 1.7 2010-05-17 23:51:04 tbox Exp */
+/* Id: genrandom.c,v 1.7 2010/05/17 23:51:04 tbox Exp  */
 
 /*! \file */
 #include <config.h>

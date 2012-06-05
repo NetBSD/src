@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.3 2011/09/11 18:55:33 christos Exp $	*/
+/*	$NetBSD: cache.c,v 1.4 2012/06/05 00:41:28 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: cache.c,v 1.90 2011-08-02 20:36:12 each Exp */
+/* Id: cache.c,v 1.91 2011/08/26 05:12:56 marka Exp  */
 
 /*! \file */
 
@@ -1188,7 +1188,7 @@ clearnode(dns_db_t *db, dns_dbnode_t *node) {
 
 static isc_result_t
 cleartree(dns_db_t *db, dns_name_t *name) {
-	isc_result_t result;
+	isc_result_t result, answer = ISC_R_SUCCESS;
 	dns_dbiterator_t *iter = NULL;
 	dns_dbnode_t *node = NULL;
 	dns_fixedname_t fnodename;
@@ -1207,12 +1207,22 @@ cleartree(dns_db_t *db, dns_name_t *name) {
 
 	while (result == ISC_R_SUCCESS) {
 		result = dns_dbiterator_current(iter, &node, nodename);
-		if (result != ISC_R_SUCCESS && result != DNS_R_NEWORIGIN)
+		if (result == DNS_R_NEWORIGIN)
+			result = ISC_R_SUCCESS;
+		if (result != ISC_R_SUCCESS)
 			goto cleanup;
+		/*
+		 * Are we done?
+		 */
 		if (! dns_name_issubdomain(nodename, name))
 			goto cleanup;
 
+		/*
+		 * If clearnode fails record and move onto the next node.
+		 */
 		result = clearnode(db, node);
+		if (result != ISC_R_SUCCESS && answer == ISC_R_SUCCESS)
+			answer = result;
 		dns_db_detachnode(db, &node);
 		result = dns_dbiterator_next(iter);
 	}
@@ -1220,12 +1230,14 @@ cleartree(dns_db_t *db, dns_name_t *name) {
  cleanup:
 	if (result == ISC_R_NOMORE || result == ISC_R_NOTFOUND)
 		result = ISC_R_SUCCESS;
+	if (result != ISC_R_SUCCESS && answer == ISC_R_SUCCESS)
+		answer = result;
 	if (node != NULL)
 		dns_db_detachnode(db, &node);
 	if (iter != NULL)
 		dns_dbiterator_destroy(&iter);
 
-	return (result);
+	return (answer);
 }
 
 isc_result_t

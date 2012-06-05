@@ -1,4 +1,4 @@
-/*	$NetBSD: wks_11.h,v 1.2 2011/02/16 03:47:09 christos Exp $	*/
+/*	$NetBSD: wks_11.h,v 1.3 2012/06/05 00:42:21 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 #ifndef IN_1_WKS_11_H
 #define IN_1_WKS_11_H 1
 
-/* Id: wks_11.h,v 1.22 2007-06-19 23:47:17 tbox Exp */
+/* Id: wks_11.h,v 1.22 2007/06/19 23:47:17 tbox Exp  */
 
 typedef	struct dns_rdata_in_wks {
 	dns_rdatacommon_t	common;

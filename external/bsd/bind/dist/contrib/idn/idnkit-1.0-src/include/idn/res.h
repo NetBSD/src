@@ -1,6 +1,6 @@
-/*	$NetBSD: res.h,v 1.2 2011/02/16 03:46:56 christos Exp $	*/
+/*	$NetBSD: res.h,v 1.3 2012/06/05 00:39:43 christos Exp $	*/
 
-/* Id: res.h,v 1.1.1.1 2003-06-04 00:25:41 marka Exp */
+/* Id: res.h,v 1.1 2003/06/04 00:25:41 marka Exp  */
 /*
  * Copyright (c) 2001,2002 Japan Network Information Center.
  * All rights reserved.

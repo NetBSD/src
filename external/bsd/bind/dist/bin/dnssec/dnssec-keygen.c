@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-keygen.c,v 1.7 2011/09/11 18:55:26 christos Exp $	*/
+/*	$NetBSD: dnssec-keygen.c,v 1.8 2012/06/05 00:38:56 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -31,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssec-keygen.c,v 1.118 2011-03-17 01:40:34 each Exp */
+/* Id: dnssec-keygen.c,v 1.120 2011/11/30 00:48:51 marka Exp  */
 
 /*! \file */
 
@@ -199,7 +199,8 @@ progress(int p)
 
 int
 main(int argc, char **argv) {
-	char		*algname = NULL, *nametype = NULL, *type = NULL;
+	char		*algname = NULL, *freeit = NULL;
+	char		*nametype = NULL, *type = NULL;
 	char		*classname = NULL;
 	char		*endp;
 	dst_key_t	*key = NULL;
@@ -519,6 +520,9 @@ main(int argc, char **argv) {
 				algname = strdup(DEFAULT_NSEC3_ALGORITHM);
 			else
 				algname = strdup(DEFAULT_ALGORITHM);
+			if (algname == NULL)
+				fatal("strdup failed");
+			freeit = algname;
 			if (verbose > 0)
 				fprintf(stderr, "no algorithm specified; "
 						"defaulting to %s\n", algname);
@@ -979,8 +983,7 @@ main(int argc, char **argv) {
 		 * if there is a risk of ID collision due to this key
 		 * or another key being revoked.
 		 */
-		if (key_collision(dst_key_id(key), name, directory,
-				  alg, mctx, NULL)) {
+		if (key_collision(key, name, directory, mctx, NULL)) {
 			conflict = ISC_TRUE;
 			if (null_key) {
 				dst_key_free(&key);
@@ -1033,6 +1036,9 @@ main(int argc, char **argv) {
 	if (verbose > 10)
 		isc_mem_stats(mctx, stdout);
 	isc_mem_destroy(&mctx);
+
+	if (freeit != NULL)
+		free(freeit);
 
 	return (0);
 }

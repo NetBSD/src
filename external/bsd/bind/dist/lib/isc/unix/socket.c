@@ -1,7 +1,7 @@
-/*	$NetBSD: socket.c,v 1.8 2011/09/11 18:55:42 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.9 2012/06/05 00:42:47 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: socket.c,v 1.346 2011-08-24 23:17:52 marka Exp */
+/* Id */
 
 /*! \file */
 
@@ -1597,7 +1597,7 @@ allocate_socketevent(isc__socket_t *sock, isc_eventtype_t eventtype,
 	if (ev == NULL)
 		return (NULL);
 
-	ev->result = ISC_R_UNEXPECTED;
+	ev->result = ISC_R_UNSET;
 	ISC_LINK_INIT(ev, ev_link);
 	ISC_LIST_INIT(ev->bufferlist);
 	ev->region.base = NULL;
@@ -2050,8 +2050,6 @@ allocate_socket(isc__socketmgr_t *manager, isc_sockettype_t type,
 	if (sock == NULL)
 		return (ISC_R_NOMEMORY);
 
-	result = ISC_R_UNEXPECTED;
-
 	sock->common.magic = 0;
 	sock->common.impmagic = 0;
 	sock->references = 0;
@@ -2080,8 +2078,10 @@ allocate_socket(isc__socketmgr_t *manager, isc_sockettype_t type,
 	sock->recvcmsgbuflen = cmsgbuflen;
 	if (sock->recvcmsgbuflen != 0U) {
 		sock->recvcmsgbuf = isc_mem_get(manager->mctx, cmsgbuflen);
-		if (sock->recvcmsgbuf == NULL)
+		if (sock->recvcmsgbuf == NULL) {
+			result = ISC_R_NOMEMORY;
 			goto error;
+		}
 	}
 
 	cmsgbuflen = 0;
@@ -2098,8 +2098,10 @@ allocate_socket(isc__socketmgr_t *manager, isc_sockettype_t type,
 	sock->sendcmsgbuflen = cmsgbuflen;
 	if (sock->sendcmsgbuflen != 0U) {
 		sock->sendcmsgbuf = isc_mem_get(manager->mctx, cmsgbuflen);
-		if (sock->sendcmsgbuf == NULL)
+		if (sock->sendcmsgbuf == NULL) {
+			result = ISC_R_NOMEMORY;
 			goto error;
+		}
 	}
 
 	memset(sock->name, 0, sizeof(sock->name));
@@ -2237,7 +2239,9 @@ clear_bsdcompat(void) {
 
 static isc_result_t
 opensocket(isc__socketmgr_t *manager, isc__socket_t *sock,
-	   isc__socket_t *dup_socket) {
+	   isc__socket_t *dup_socket)
+{
+	isc_result_t result;
 	char strbuf[ISC_STRERRORSIZE];
 	const char *err = "socket";
 	int tries = 0;
@@ -2272,6 +2276,7 @@ opensocket(isc__socketmgr_t *manager, isc__socket_t *sock,
 	} else {
 		sock->fd = dup(dup_socket->fd);
 		sock->dupped = 1;
+		sock->bound = dup_socket->bound;
 	}
 	if (sock->fd == -1 && errno == EINTR && tries++ < 42)
 		goto again;
@@ -2351,9 +2356,10 @@ opensocket(isc__socketmgr_t *manager, isc__socket_t *sock,
 	if (dup_socket != NULL)
 		goto setup_done;
 
-	if (make_nonblock(sock->fd) != ISC_R_SUCCESS) {
+	result = make_nonblock(sock->fd);
+	if (result != ISC_R_SUCCESS) {
 		(void)close(sock->fd);
-		return (ISC_R_UNEXPECTED);
+		return (result);
 	}
 
 #ifdef SO_BSDCOMPAT
@@ -3248,10 +3254,12 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 
 	UNLOCK(&sock->lock);
 
-	if (fd != -1 && (make_nonblock(fd) != ISC_R_SUCCESS)) {
-		(void)close(fd);
-		fd = -1;
-		result = ISC_R_UNEXPECTED;
+	if (fd != -1) {
+		result = make_nonblock(fd);
+		if (result != ISC_R_SUCCESS) {
+			(void)close(fd);
+			fd = -1;
+		}
 	}
 
 	/*
@@ -3786,7 +3794,6 @@ static isc_threadresult_t
 watcher(void *uap) {
 	isc__socketmgr_t *manager = uap;
 	isc_boolean_t done;
-	int ctlfd;
 	int cc;
 #ifdef USE_KQUEUE
 	const char *fnname = "kevent()";
@@ -3798,16 +3805,19 @@ watcher(void *uap) {
 #elif defined (USE_SELECT)
 	const char *fnname = "select()";
 	int maxfd;
+	int ctlfd;
 #endif
 	char strbuf[ISC_STRERRORSIZE];
 #ifdef ISC_SOCKET_USE_POLLWATCH
 	pollstate_t pollstate = poll_idle;
 #endif
 
+#if defined (USE_SELECT)
 	/*
 	 * Get the control fd here.  This will never change.
 	 */
 	ctlfd = manager->pipe_fds[0];
+#endif
 	done = ISC_FALSE;
 	while (!done) {
 		do {
@@ -4608,7 +4618,7 @@ isc__socket_recv2(isc_socket_t *sock0, isc_region_t *region,
 	isc__socket_t *sock = (isc__socket_t *)sock0;
 
 	event->ev_sender = sock;
-	event->result = ISC_R_UNEXPECTED;
+	event->result = ISC_R_UNSET;
 	ISC_LIST_INIT(event->bufferlist);
 	event->region = *region;
 	event->n = 0;
@@ -4822,7 +4832,7 @@ isc__socket_sendto2(isc_socket_t *sock0, isc_region_t *region,
 	if ((flags & ISC_SOCKFLAG_NORETRY) != 0)
 		REQUIRE(sock->type == isc_sockettype_udp);
 	event->ev_sender = sock;
-	event->result = ISC_R_UNEXPECTED;
+	event->result = ISC_R_UNSET;
 	ISC_LIST_INIT(event->bufferlist);
 	event->region = *region;
 	event->n = 0;
@@ -5028,54 +5038,55 @@ isc__socket_bind(isc_socket_t *sock0, isc_sockaddr_t *sockaddr,
 	LOCK(&sock->lock);
 
 	INSIST(!sock->bound);
+	INSIST(!sock->dupped);
 
 	if (sock->pf != sockaddr->type.sa.sa_family) {
 		UNLOCK(&sock->lock);
 		return (ISC_R_FAMILYMISMATCH);
 	}
-	if (!sock->dupped) {
-		/*
-		 * Only set SO_REUSEADDR when we want a specific port.
-		 */
-#ifdef AF_UNIX
-		if (sock->pf == AF_UNIX)
-			goto bind_socket;
-#endif
-		if ((options & ISC_SOCKET_REUSEADDRESS) != 0 &&
-		    isc_sockaddr_getport(sockaddr) != (in_port_t)0 &&
-		    setsockopt(sock->fd, SOL_SOCKET, SO_REUSEADDR, (void *)&on,
-			       sizeof(on)) < 0) {
-			UNEXPECTED_ERROR(__FILE__, __LINE__,
-					 "setsockopt(%d) %s", sock->fd,
-					 isc_msgcat_get(isc_msgcat, ISC_MSGSET_GENERAL,
-							ISC_MSG_FAILED, "failed"));
-			/* Press on... */
-		}
-#ifdef AF_UNIX
-	 bind_socket:
-#endif
-		if (bind(sock->fd, &sockaddr->type.sa, sockaddr->length) < 0) {
-			inc_stats(sock->manager->stats,
-				  sock->statsindex[STATID_BINDFAIL]);
 
-			UNLOCK(&sock->lock);
-			switch (errno) {
-			case EACCES:
-				return (ISC_R_NOPERM);
-			case EADDRNOTAVAIL:
-				return (ISC_R_ADDRNOTAVAIL);
-			case EADDRINUSE:
-				return (ISC_R_ADDRINUSE);
-			case EINVAL:
-				return (ISC_R_BOUND);
-			default:
-				isc__strerror(errno, strbuf, sizeof(strbuf));
-				UNEXPECTED_ERROR(__FILE__, __LINE__, "bind: %s",
-						 strbuf);
-				return (ISC_R_UNEXPECTED);
-			}
+	/*
+	 * Only set SO_REUSEADDR when we want a specific port.
+	 */
+#ifdef AF_UNIX
+	if (sock->pf == AF_UNIX)
+		goto bind_socket;
+#endif
+	if ((options & ISC_SOCKET_REUSEADDRESS) != 0 &&
+	    isc_sockaddr_getport(sockaddr) != (in_port_t)0 &&
+	    setsockopt(sock->fd, SOL_SOCKET, SO_REUSEADDR, (void *)&on,
+		       sizeof(on)) < 0) {
+		UNEXPECTED_ERROR(__FILE__, __LINE__,
+				 "setsockopt(%d) %s", sock->fd,
+				 isc_msgcat_get(isc_msgcat, ISC_MSGSET_GENERAL,
+						ISC_MSG_FAILED, "failed"));
+		/* Press on... */
+	}
+#ifdef AF_UNIX
+ bind_socket:
+#endif
+	if (bind(sock->fd, &sockaddr->type.sa, sockaddr->length) < 0) {
+		inc_stats(sock->manager->stats,
+			  sock->statsindex[STATID_BINDFAIL]);
+
+		UNLOCK(&sock->lock);
+		switch (errno) {
+		case EACCES:
+			return (ISC_R_NOPERM);
+		case EADDRNOTAVAIL:
+			return (ISC_R_ADDRNOTAVAIL);
+		case EADDRINUSE:
+			return (ISC_R_ADDRINUSE);
+		case EINVAL:
+			return (ISC_R_BOUND);
+		default:
+			isc__strerror(errno, strbuf, sizeof(strbuf));
+			UNEXPECTED_ERROR(__FILE__, __LINE__, "bind: %s",
+					 strbuf);
+			return (ISC_R_UNEXPECTED);
 		}
 	}
+
 	socket_log(sock, sockaddr, TRACE,
 		   isc_msgcat, ISC_MSGSET_SOCKET, ISC_MSG_BOUND, "bound");
 	sock->bound = 1;
@@ -5718,6 +5729,7 @@ isc__socket_ipv6only(isc_socket_t *sock0, isc_boolean_t yes) {
 #endif
 
 	REQUIRE(VALID_SOCKET(sock));
+	INSIST(!sock->dupped);
 
 #ifdef IPV6_V6ONLY
 	if (sock->pf == AF_INET6) {

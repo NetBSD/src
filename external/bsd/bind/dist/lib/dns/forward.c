@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.c,v 1.2 2011/02/16 03:47:03 christos Exp $	*/
+/*	$NetBSD: forward.c,v 1.3 2012/06/05 00:41:31 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: forward.c,v 1.14 2009-09-02 23:48:02 tbox Exp */
+/* Id: forward.c,v 1.14 2009/09/02 23:48:02 tbox Exp  */
 
 /*! \file */
 

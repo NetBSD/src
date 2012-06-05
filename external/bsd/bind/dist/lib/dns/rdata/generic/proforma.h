@@ -1,4 +1,4 @@
-/*	$NetBSD: proforma.h,v 1.2 2011/02/16 03:47:09 christos Exp $	*/
+/*	$NetBSD: proforma.h,v 1.3 2012/06/05 00:42:14 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,7 @@
 #ifndef GENERIC_PROFORMA_H
 #define GENERIC_PROFORMA_H 1
 
-/* Id: proforma.h,v 1.23 2007-06-19 23:47:17 tbox Exp */
+/* Id: proforma.h,v 1.23 2007/06/19 23:47:17 tbox Exp  */
 
 typedef struct dns_rdata_# {
 	dns_rdatacommon_t	common;

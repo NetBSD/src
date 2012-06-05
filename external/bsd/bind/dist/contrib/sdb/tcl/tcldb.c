@@ -1,7 +1,7 @@
-/*	$NetBSD: tcldb.c,v 1.2 2011/02/16 03:47:01 christos Exp $	*/
+/*	$NetBSD: tcldb.c,v 1.3 2012/06/05 00:40:05 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tcldb.c,v 1.10 2007-06-19 23:47:10 tbox Exp */
+/* Id: tcldb.c,v 1.12 2011/10/11 23:46:45 tbox Exp  */
 
 /*
  * A simple database driver that calls a Tcl procedure to define
@@ -87,7 +87,7 @@ tcldb_driver_create(isc_mem_t *mctx, tcldb_driver_t **driverp) {
  cleanup:
 	isc_mem_put(mctx, driver, sizeof(tcldb_driver_t));
 	return (result);
-	
+
 }
 
 static void
@@ -100,9 +100,16 @@ tcldb_driver_destroy(tcldb_driver_t **driverp) {
 /*
  * Perform a lookup, by invoking the Tcl procedure "lookup".
  */
+#ifdef DNS_CLIENTINFO_VERSION
+static isc_result_t
+tcldb_lookup(const char *zone, const char *name, void *dbdata,
+	      dns_sdblookup_t *lookup, dns_clientinfomethods_t *methods,
+	      dns_clientinfo_t *clientinfo)
+#else
 static isc_result_t
 tcldb_lookup(const char *zone, const char *name, void *dbdata,
 	      dns_sdblookup_t *lookup)
+#endif /* DNS_CLIENTINFO_VERSION */
 {
 	isc_result_t result = ISC_R_SUCCESS;
 	int tclres;
@@ -111,6 +118,11 @@ tcldb_lookup(const char *zone, const char *name, void *dbdata,
 	int i;
 	char *cmdv[3];
 	char *cmd;
+
+#ifdef DNS_CLIENTINFO_VERSION
+	UNUSED(methods);
+	UNUSED(clientinfo);
+#endif /* DNS_CLIENTINFO_VERSION */
 
 	tcldb_driver_t *driver = (tcldb_driver_t *) dbdata;
 
@@ -185,13 +197,13 @@ tcldb_create(const char *zone, int argc, char **argv,
 	tcldb_driver_t *driver = (tcldb_driver_t *) driverdata;
 
 	char *list = Tcl_Merge(argc, argv);
-	
+
 	Tcl_SetVar2(driver->interp, (char *) "dbargs", (char *) zone, list, 0);
 
 	Tcl_Free(list);
 
 	*dbdata = driverdata;
-	
+
 	return (ISC_R_SUCCESS);
 }
 
@@ -213,11 +225,11 @@ isc_result_t
 tcldb_init(void) {
 	isc_result_t result;
 	int flags = DNS_SDBFLAG_RELATIVEOWNER | DNS_SDBFLAG_RELATIVERDATA;
-	
+
 	result = tcldb_driver_create(ns_g_mctx, &the_driver);
 	if (result != ISC_R_SUCCESS)
 		return (result);
-	
+
 	return (dns_sdb_register("tcl", &tcldb_methods, the_driver, flags,
 				 ns_g_mctx, &tcldb));
 }

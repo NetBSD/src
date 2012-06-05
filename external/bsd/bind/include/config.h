@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.h.in,v 1.147 2011-07-28 13:33:09 tbox Exp */
+/* Id */
 
 /*! \file */
 
@@ -270,7 +270,7 @@ int sigwait(const unsigned int *set, int *sig);
 /* #undef HAVE_LIBTHR */
 
 /* Define if libxml2 was found */
-/* #undef HAVE_LIBXML2 */ 
+/* #undef HAVE_LIBXML2 */
 
 /* Define to 1 if you have the <linux/capability.h> header file. */
 /* #undef HAVE_LINUX_CAPABILITY_H */
@@ -289,6 +289,9 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define if your OpenSSL version supports GOST. */
 /* #undef HAVE_OPENSSL_GOST */
+
+/* Define to 1 if you have the `readline' function. */
+#define HAVE_READLINE 1
 
 /* Define to 1 if you have the <regex.h> header file. */
 #define HAVE_REGEX_H 1
@@ -441,11 +444,8 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */
 
-/* Define to `__inline__' or `__inline' if that's what the C compiler
-   calls it, or to nothing if 'inline' is not supported under any name.  */
-#ifndef __cplusplus
-/* #define inline */
-#endif
+/* Define to empty if your compiler does not support "static inline". */
+/* #undef inline */
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 /* #undef size_t */

@@ -1,4 +1,4 @@
-/*	$NetBSD: iptable.h,v 1.2 2011/02/16 03:47:06 christos Exp $	*/
+/*	$NetBSD: iptable.h,v 1.3 2012/06/05 00:41:48 christos Exp $	*/
 
 /*
  * Copyright (C) 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: iptable.h,v 1.4 2007-09-14 01:46:05 marka Exp */
+/* Id: iptable.h,v 1.4 2007/09/14 01:46:05 marka Exp  */
 
 #ifndef DNS_IPTABLE_H
 #define DNS_IPTABLE_H 1

@@ -1,7 +1,7 @@
-/*	$NetBSD: rbt_test.c,v 1.2 2011/02/16 03:46:49 christos Exp $	*/
+/*	$NetBSD: rbt_test.c,v 1.3 2012/06/05 00:39:25 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rbt_test.c,v 1.50 2009-09-02 23:48:01 tbox Exp */
+/* Id: rbt_test.c,v 1.52 2011/08/28 23:46:41 tbox Exp  */
 
 #include <config.h>
 
@@ -90,7 +90,7 @@ delete_name(void *data, void *arg) {
 
 	UNUSED(arg);
 	name = data;
-	isc_mem_put(mctx, data, sizeof(dns_name_t) + DNSNAMELEN);
+	isc_mem_put(mctx, name, sizeof(*name) + DNSNAMELEN);
 }
 
 static void
@@ -282,6 +282,7 @@ main(int argc, char **argv) {
 
 	argc -= isc_commandline_index;
 	argv += isc_commandline_index;
+	POST(argv);
 
 	if (argc > 1) {
 		printf("Usage: %s [-m]\n", progname);

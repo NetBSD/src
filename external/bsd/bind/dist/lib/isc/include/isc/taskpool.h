@@ -1,7 +1,7 @@
-/*	$NetBSD: taskpool.h,v 1.3 2011/09/11 18:55:42 christos Exp $	*/
+/*	$NetBSD: taskpool.h,v 1.4 2012/06/05 00:42:41 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: taskpool.h,v 1.17 2011-07-07 23:47:50 tbox Exp */
+/* Id */
 
 #ifndef ISC_TASKPOOL_H
 #define ISC_TASKPOOL_H 1
@@ -139,6 +139,19 @@ isc_taskpool_destroy(isc_taskpool_t **poolp);
  *
  * Requires:
  * \li	'*poolp' is a valid task pool.
+ */
+
+void
+isc_taskpool_setprivilege(isc_taskpool_t *pool, isc_boolean_t priv);
+/*%<
+ * Set the privilege flag on all tasks in 'pool' to 'priv'.  If 'priv' is
+ * true, then when the task manager is set into privileged mode, only
+ * tasks wihin this pool will be able to execute.  (Note:  It is important
+ * to turn the pool tasks' privilege back off before the last task finishes
+ * executing.)
+ *
+ * Requires:
+ * \li	'pool' is a valid task pool.
  */
 
 ISC_LANG_ENDDECLS

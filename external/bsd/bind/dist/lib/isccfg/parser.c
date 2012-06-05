@@ -1,7 +1,7 @@
-/*	$NetBSD: parser.c,v 1.3 2011/09/11 18:55:43 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.4 2012/06/05 00:43:01 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: parser.c,v 1.141 2011-03-11 06:11:27 marka Exp */
+/* Id */
 
 /*! \file */
 
@@ -2234,16 +2234,30 @@ cfg_parser_warning(cfg_parser_t *pctx, unsigned int flags, const char *fmt, ...)
 
 #define MAX_LOG_TOKEN 30 /* How much of a token to quote in log messages. */
 
+static isc_boolean_t
+have_current_file(cfg_parser_t *pctx) {
+	cfg_listelt_t *elt;
+	if (pctx->open_files == NULL)
+		return (ISC_FALSE);
+
+	elt = ISC_LIST_TAIL(pctx->open_files->value.list);
+	if (elt == NULL)
+	      return (ISC_FALSE);
+
+	return (ISC_TRUE);
+}
+
 static char *
 current_file(cfg_parser_t *pctx) {
 	static char none[] = "none";
 	cfg_listelt_t *elt;
 	cfg_obj_t *fileobj;
 
-	if (pctx->open_files == NULL)
+	if (!have_current_file(pctx))
 		return (none);
+
 	elt = ISC_LIST_TAIL(pctx->open_files->value.list);
-	if (elt == NULL)
+	if (elt == NULL)	/* shouldn't be possible, but... */
 	      return (none);
 
 	fileobj = elt->obj;
@@ -2266,8 +2280,10 @@ parser_complain(cfg_parser_t *pctx, isc_boolean_t is_warning,
 	if (is_warning)
 		level = ISC_LOG_WARNING;
 
-	snprintf(where, sizeof(where), "%s:%u: ",
-		 current_file(pctx), pctx->line);
+	where[0] = '\0';
+	if (have_current_file(pctx))
+		snprintf(where, sizeof(where), "%s:%u: ",
+			 current_file(pctx), pctx->line);
 
 	len = vsnprintf(message, sizeof(message), format, args);
 	if (len >= sizeof(message))
