@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.130 2012/03/10 21:51:50 joerg Exp $
+# $NetBSD: GENERIC,v 1.131 2012/06/05 08:44:07 abs Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.130 $"
+#ident 		"GENERIC-$Revision: 1.131 $"
 
 maxusers	32
 
@@ -158,7 +158,7 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WS_DEFAULT_FG=WSCOL_LIGHT_WHITE
 # compatibility to other console drivers
-options 	WSDISPLAY_COMPAT_USL	# VT handling
+options 	WSDISPLAY_COMPAT_USL	# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD	# can get raw scancodes
 
 config		netbsd	root on ? type ?

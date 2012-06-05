@@ -1,4 +1,4 @@
-#	$NetBSD: NETWALKER,v 1.12 2012/04/19 09:53:53 bsh Exp $
+#	$NetBSD: NETWALKER,v 1.13 2012/06/05 08:44:10 abs Exp $
 #
 #	NETWALKER -- http://www.sharp.co.jp/netwalker/
 #
@@ -271,7 +271,7 @@ options 	WS_DEFAULT_BG=WSCOL_BLACK
 options		WS_KERNEL_FG=WSCOL_GREEN
 options		WS_KERNEL_BG=WSCOL_BLACK
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
-options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	WSDISPLAY_DEFAULTSCREENS=4
 

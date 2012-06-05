@@ -1,4 +1,4 @@
-# 	$NetBSD: TADPOLE3GX,v 1.55 2012/03/11 06:18:46 nakayama Exp $
+# 	$NetBSD: TADPOLE3GX,v 1.56 2012/06/05 08:44:15 abs Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -35,7 +35,7 @@ options 	WS_KERNEL_BG=WSCOL_LIGHT_WHITE
 
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
-options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 
 options 	WSDISPLAY_DEFAULTSCREENS=1
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.139 2012/03/10 21:51:50 joerg Exp $
+# $NetBSD: GENERIC,v 1.140 2012/06/05 08:44:08 abs Exp $
 #
 # GENERIC machine description file
 # 
@@ -181,7 +181,7 @@ options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WS_KERNEL_FG=WSCOL_GREEN
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
-options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 # see dev/wscons/wskbdmap_mfii.h for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
