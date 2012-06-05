@@ -1,4 +1,4 @@
-# $NetBSD: MMNET_GENERIC,v 1.5 2012/04/07 03:25:00 tsutsui Exp $
+# $NetBSD: MMNET_GENERIC,v 1.6 2012/06/05 08:44:09 abs Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mmnet"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.5 $"
+#ident 		"GENERIC-$Revision: 1.6 $"
 
 maxusers	32		# estimated number of users
 
@@ -220,7 +220,7 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 # compatibility to other console drivers
 #options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 #options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
-#options 	WSDISPLAY_COMPAT_USL		# VT handling
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 #options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 #options 	WSKBD_EVENT_AUTOREPEAT		# auto repeat in event mode
 #options 	WSKBD_USONLY			# strip off non-US keymaps

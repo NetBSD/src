@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.45 2012/03/10 21:51:55 joerg Exp $
+# $NetBSD: SLAB,v 1.46 2012/06/05 08:44:14 abs Exp $
 #
 # deberg's development machine
 #
@@ -131,7 +131,7 @@ options 	RCONS_16BPP		# necessary for nextdisplay
 #options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
-options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD	# can get raw scancodes
 # see dev/wskbdmap_next.h for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
