@@ -1,4 +1,4 @@
-/*	$NetBSD: order.h,v 1.2 2011/02/16 03:47:06 christos Exp $	*/
+/*	$NetBSD: order.h,v 1.3 2012/06/05 00:41:51 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: order.h,v 1.9 2007-06-19 23:47:17 tbox Exp */
+/* Id: order.h,v 1.9 2007/06/19 23:47:17 tbox Exp  */
 
 #ifndef DNS_ORDER_H
 #define DNS_ORDER_H 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataset.h,v 1.4 2011/09/11 18:55:38 christos Exp $	*/
+/*	$NetBSD: rdataset.h,v 1.5 2012/06/05 00:41:52 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdataset.h,v 1.72 2011-06-08 22:13:51 each Exp */
+/* Id: rdataset.h,v 1.72 2011/06/08 22:13:51 each Exp  */
 
 #ifndef DNS_RDATASET_H
 #define DNS_RDATASET_H 1

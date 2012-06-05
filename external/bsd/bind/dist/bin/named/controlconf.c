@@ -1,7 +1,7 @@
-/*	$NetBSD: controlconf.c,v 1.3 2011/09/11 18:55:27 christos Exp $	*/
+/*	$NetBSD: controlconf.c,v 1.4 2012/06/05 00:38:59 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2008, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: controlconf.c,v 1.62 2011-03-12 04:59:46 tbox Exp */
+/* Id: controlconf.c,v 1.63 2011/12/22 08:07:48 marka Exp  */
 
 /*! \file */
 
@@ -375,17 +375,8 @@ control_recvmessage(isc_task_t *task, isc_event_t *event) {
 		if (result == ISC_R_SUCCESS)
 			break;
 		isc_mem_put(listener->mctx, secret.rstart, REGION_SIZE(secret));
-		if (result == ISCCC_R_BADAUTH) {
-			/*
-			 * For some reason, request is non-NULL when
-			 * isccc_cc_fromwire returns ISCCC_R_BADAUTH.
-			 */
-			if (request != NULL)
-				isccc_sexpr_free(&request);
-		} else {
-			log_invalid(&conn->ccmsg, result);
-			goto cleanup;
-		}
+		log_invalid(&conn->ccmsg, result);
+		goto cleanup;
 	}
 
 	if (key == NULL) {
@@ -1149,6 +1140,11 @@ add_listener(ns_controls_t *cp, controllistener_t **listenerp,
 					   type, &listener->sock);
 	if (result == ISC_R_SUCCESS)
 		isc_socket_setname(listener->sock, "control", NULL);
+
+#ifndef ISC_ALLOW_MAPPED
+	if (result == ISC_R_SUCCESS)
+		isc_socket_ipv6only(listener->sock, ISC_TRUE);
+#endif
 
 	if (result == ISC_R_SUCCESS)
 		result = isc_socket_bind(listener->sock, &listener->address,

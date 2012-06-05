@@ -1,4 +1,4 @@
-/*	$NetBSD: mr_9.c,v 1.2 2011/02/16 03:47:08 christos Exp $	*/
+/*	$NetBSD: mr_9.c,v 1.3 2012/06/05 00:42:11 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: mr_9.c,v 1.44 2009-12-04 22:06:37 tbox Exp */
+/* Id: mr_9.c,v 1.44 2009/12/04 22:06:37 tbox Exp  */
 
 /* Reviewed: Wed Mar 15 21:30:35 EST 2000 by tale */
 
