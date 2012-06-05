@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.195 2012/05/05 19:15:10 rmind Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.196 2012/06/05 22:28:11 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.195 2012/05/05 19:15:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.196 2012/06/05 22:28:11 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -191,7 +191,7 @@ static bool	pool_cache_get_slow(pool_cache_cpu_t *, int,
 static void	pool_cache_cpu_init1(struct cpu_info *, pool_cache_t);
 static void	pool_cache_invalidate_groups(pool_cache_t, pcg_t *);
 static void	pool_cache_invalidate_cpu(pool_cache_t, u_int);
-static void	pool_cache_xcall(pool_cache_t);
+static void	pool_cache_transfer(pool_cache_t);
 
 static int	pool_catchup(struct pool *);
 static void	pool_prime_page(struct pool *, void *,
@@ -1425,7 +1425,7 @@ pool_drain_start(struct pool **ppp, uint64_t *wp)
 	/* If there is a pool_cache, drain CPU level caches. */
 	*ppp = pp;
 	if (pp->pr_cache != NULL) {
-		*wp = xc_broadcast(0, (xcfunc_t)pool_cache_xcall,
+		*wp = xc_broadcast(0, (xcfunc_t)pool_cache_transfer,
 		    pp->pr_cache, NULL);
 	}
 }
@@ -2007,31 +2007,39 @@ pool_cache_invalidate_groups(pool_cache_t pc, pcg_t *pcg)
  *	Note: For pool caches that provide constructed objects, there
  *	is an assumption that another level of synchronization is occurring
  *	between the input to the constructor and the cache invalidation.
+ *
+ *	Invalidation is a costly process and should not be called from
+ *	interrupt context.
  */
 void
 pool_cache_invalidate(pool_cache_t pc)
 {
-	pcg_t *full, *empty, *part;
-#if 0
 	uint64_t where;
+	pcg_t *full, *empty, *part;
+
+	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
 
 	if (ncpu < 2 || !mp_online) {
 		/*
 		 * We might be called early enough in the boot process
 		 * for the CPU data structures to not be fully initialized.
-		 * In this case, simply gather the local CPU's cache now
-		 * since it will be the only one running.
+		 * In this case, transfer the content of the local CPU's
+		 * cache back into global cache as only this CPU is currently
+		 * running.
 		 */
-		pool_cache_xcall(pc);
+		pool_cache_transfer(pc);
 	} else {
 		/*
-		 * Gather all of the CPU-specific caches into the
-		 * global cache.
+		 * Signal all CPUs that they must transfer their local
+		 * cache back to the global pool then wait for the xcall to
+		 * complete.
 		 */
-		where = xc_broadcast(0, (xcfunc_t)pool_cache_xcall, pc, NULL);
+		where = xc_broadcast(0, (xcfunc_t)pool_cache_transfer,
+		    pc, NULL);
 		xc_wait(where);
 	}
-#endif
+
+	/* Empty pool caches, then invalidate objects */
 	mutex_enter(&pc->pc_lock);
 	full = pc->pc_fullgroups;
 	empty = pc->pc_emptygroups;
@@ -2415,13 +2423,13 @@ pool_cache_put_paddr(pool_cache_t pc, void *object, paddr_t pa)
 }
 
 /*
- * pool_cache_xcall:
+ * pool_cache_transfer:
  *
  *	Transfer objects from the per-CPU cache to the global cache.
  *	Run within a cross-call thread.
  */
 static void
-pool_cache_xcall(pool_cache_t pc)
+pool_cache_transfer(pool_cache_t pc)
 {
 	pool_cache_cpu_t *cc;
 	pcg_t *prev, *cur, **list;
