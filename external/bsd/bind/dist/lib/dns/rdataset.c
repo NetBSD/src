@@ -1,7 +1,7 @@
-/*	$NetBSD: rdataset.c,v 1.4 2011/09/11 18:55:36 christos Exp $	*/
+/*	$NetBSD: rdataset.c,v 1.5 2012/06/05 00:41:38 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdataset.c,v 1.90 2011-06-08 22:13:50 each Exp */
+/* Id */
 
 /*! \file */
 
@@ -444,11 +444,11 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 			j = val % count;
 			for (i = 0; i < count; i++) {
 				if (order != NULL)
-					sorted[j].key = (*order)(&shuffled[i],
+					sorted[i].key = (*order)(&shuffled[j],
 								 order_arg);
 				else
-					sorted[j].key = 0; /* Unused */
-				sorted[j].rdata = &shuffled[i];
+					sorted[i].key = 0; /* Unused */
+				sorted[i].rdata = &shuffled[j];
 				j++;
 				if (j == count)
 					j = 0; /* Wrap around. */

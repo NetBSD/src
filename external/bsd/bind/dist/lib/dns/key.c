@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.3 2011/09/11 18:55:35 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.4 2012/06/05 00:41:33 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: key.c,v 1.10 2011-03-17 23:47:30 tbox Exp */
+/* Id: key.c,v 1.11 2011/10/20 21:20:02 marka Exp  */
 
 #include <config.h>
 
@@ -49,6 +49,33 @@ dst_region_computeid(const isc_region_t *source, unsigned int alg) {
 		return ((p[size - 3] << 8) + p[size - 2]);
 
 	for (ac = 0; size > 1; size -= 2, p += 2)
+		ac += ((*p) << 8) + *(p + 1);
+
+	if (size > 0)
+		ac += ((*p) << 8);
+	ac += (ac >> 16) & 0xffff;
+
+	return ((isc_uint16_t)(ac & 0xffff));
+}
+
+isc_uint16_t
+dst_region_computerid(const isc_region_t *source, unsigned int alg) {
+	isc_uint32_t ac;
+	const unsigned char *p;
+	int size;
+
+	REQUIRE(source != NULL);
+	REQUIRE(source->length >= 4);
+
+	p = source->base;
+	size = source->length;
+
+	if (alg == DST_ALG_RSAMD5)
+		return ((p[size - 3] << 8) + p[size - 2]);
+
+	ac = ((*p) << 8) + *(p + 1);
+	ac |= DNS_KEYFLAG_REVOKE;
+	for (size -= 2, p +=2; size > 1; size -= 2, p += 2)
 		ac += ((*p) << 8) + *(p + 1);
 
 	if (size > 0)
@@ -92,6 +119,12 @@ dns_keytag_t
 dst_key_id(const dst_key_t *key) {
 	REQUIRE(VALID_KEY(key));
 	return (key->key_id);
+}
+
+dns_keytag_t
+dst_key_rid(const dst_key_t *key) {
+	REQUIRE(VALID_KEY(key));
+	return (key->key_rid);
 }
 
 dns_rdataclass_t

@@ -1,7 +1,7 @@
-/*	$NetBSD: time.c,v 1.3 2011/09/11 18:55:37 christos Exp $	*/
+/*	$NetBSD: time.c,v 1.4 2012/06/05 00:41:41 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: time.c,v 1.37 2011-03-09 23:47:17 tbox Exp */
+/* Id */
 
 /*! \file */
 
@@ -105,8 +105,8 @@ dns_time64_totext(isc_int64_t t, isc_buffer_t *target) {
 	return (ISC_R_SUCCESS);
 }
 
-isc_result_t
-dns_time32_totext(isc_uint32_t value, isc_buffer_t *target) {
+isc_int64_t
+dns_time64_from32(isc_uint32_t value) {
 	isc_stdtime_t now;
 	isc_int64_t start;
 	isc_int64_t t;
@@ -123,7 +123,13 @@ dns_time32_totext(isc_uint32_t value, isc_buffer_t *target) {
 		t = start + (value - now);
 	else
 		t = start - (now - value);
-	return (dns_time64_totext(t, target));
+
+	return (t);
+}
+
+isc_result_t
+dns_time32_totext(isc_uint32_t value, isc_buffer_t *target) {
+	return (dns_time64_totext(dns_time64_from32(value), target));
 }
 
 isc_result_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: ssu.c,v 1.2 2011/02/16 03:47:05 christos Exp $	*/
+/*	$NetBSD: ssu.c,v 1.3 2012/06/05 00:41:41 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2008, 2010, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -19,7 +19,7 @@
 
 /*! \file */
 /*
- * Id: ssu.c,v 1.38 2011-01-06 23:47:00 tbox Exp
+ * Id: ssu.c,v 1.38 2011/01/06 23:47:00 tbox Exp 
  * Principal Author: Brian Wellington
  */
 

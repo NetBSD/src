@@ -1,7 +1,7 @@
-/*	$NetBSD: rbt.c,v 1.3 2011/09/11 18:55:35 christos Exp $	*/
+/*	$NetBSD: rbt.c,v 1.4 2012/06/05 00:41:37 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rbt.c,v 1.148 2011-03-12 04:59:48 tbox Exp */
+/* Id */
 
 /*! \file */
 
@@ -1931,6 +1931,8 @@ dns_rbt_deletefromlevel(dns_rbtnode_t *delete, dns_rbtnode_t **rootp) {
 					sibling = RIGHT(parent);
 				}
 
+				INSIST(sibling != NULL);
+
 				if (IS_BLACK(LEFT(sibling)) &&
 				    IS_BLACK(RIGHT(sibling))) {
 					MAKE_RED(sibling);
@@ -1966,6 +1968,8 @@ dns_rbt_deletefromlevel(dns_rbtnode_t *delete, dns_rbtnode_t **rootp) {
 					rotate_right(parent, rootp);
 					sibling = LEFT(parent);
 				}
+
+				INSIST(sibling != NULL);
 
 				if (IS_BLACK(LEFT(sibling)) &&
 				    IS_BLACK(RIGHT(sibling))) {

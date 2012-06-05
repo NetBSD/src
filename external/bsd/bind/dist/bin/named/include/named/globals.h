@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.h,v 1.3 2011/09/11 18:55:29 christos Exp $	*/
+/*	$NetBSD: globals.h,v 1.4 2012/06/05 00:39:08 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: globals.h,v 1.91 2011-06-17 23:47:49 tbox Exp */
+/* Id: globals.h,v 1.92 2011/11/09 18:44:04 each Exp  */
 
 #ifndef NAMED_GLOBALS_H
 #define NAMED_GLOBALS_H 1
@@ -53,6 +53,7 @@
 
 EXTERN isc_mem_t *		ns_g_mctx		INIT(NULL);
 EXTERN unsigned int		ns_g_cpus		INIT(0);
+EXTERN unsigned int		ns_g_udpdisp		INIT(0);
 EXTERN isc_taskmgr_t *		ns_g_taskmgr		INIT(NULL);
 EXTERN dns_dispatchmgr_t *	ns_g_dispatchmgr	INIT(NULL);
 EXTERN isc_entropy_t *		ns_g_entropy		INIT(NULL);

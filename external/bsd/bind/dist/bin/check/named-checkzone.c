@@ -1,7 +1,7 @@
-/*	$NetBSD: named-checkzone.c,v 1.2 2011/02/16 03:46:44 christos Exp $	*/
+/*	$NetBSD: named-checkzone.c,v 1.3 2012/06/05 00:38:50 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: named-checkzone.c,v 1.61 2010-09-07 23:46:59 tbox Exp */
+/* Id: named-checkzone.c,v 1.65 2011/12/22 17:29:22 each Exp  */
 
 /*! \file */
 
@@ -41,6 +41,7 @@
 #include <dns/db.h>
 #include <dns/fixedname.h>
 #include <dns/log.h>
+#include <dns/master.h>
 #include <dns/masterdump.h>
 #include <dns/name.h>
 #include <dns/rdataclass.h>
@@ -114,7 +115,12 @@ main(int argc, char **argv) {
 	const char *outputformatstr = NULL;
 	dns_masterformat_t inputformat = dns_masterformat_text;
 	dns_masterformat_t outputformat = dns_masterformat_text;
+	dns_masterrawheader_t header;
+	isc_uint32_t rawversion = 1, serialnum = 0;
+	isc_boolean_t snset = ISC_FALSE;
+	isc_boolean_t logdump = ISC_FALSE;
 	FILE *errout = stdout;
+	char *endp;
 
 	outputstyle = &dns_master_style_full;
 
@@ -158,7 +164,7 @@ main(int argc, char **argv) {
 	isc_commandline_errprint = ISC_FALSE;
 
 	while ((c = isc_commandline_parse(argc, argv,
-				       "c:df:hi:jk:m:n:qr:s:t:o:vw:DF:M:S:W:"))
+			       "c:df:hi:jk:L:m:n:qr:s:t:o:vw:DF:M:S:W:"))
 	       != EOF) {
 		switch (c) {
 		case 'c':
@@ -232,6 +238,17 @@ main(int argc, char **argv) {
 			} else {
 				fprintf(stderr, "invalid argument to -k: %s\n",
 					isc_commandline_argument);
+				exit(1);
+			}
+			break;
+
+		case 'L':
+			snset = ISC_TRUE;
+			endp = NULL;
+			serialnum = strtol(isc_commandline_argument, &endp, 0);
+			if (*endp != '\0') {
+				fprintf(stderr, "source serial number "
+						"must be numeric");
 				exit(1);
 			}
 			break;
@@ -399,7 +416,11 @@ main(int argc, char **argv) {
 			inputformat = dns_masterformat_text;
 		else if (strcasecmp(inputformatstr, "raw") == 0)
 			inputformat = dns_masterformat_raw;
-		else {
+		else if (strncasecmp(inputformatstr, "raw=", 4) == 0) {
+			inputformat = dns_masterformat_raw;
+			fprintf(stderr,
+				"WARNING: input format raw, version ignored\n");
+		} else {
 			fprintf(stderr, "unknown file format: %s\n",
 			    inputformatstr);
 			exit(1);
@@ -407,11 +428,22 @@ main(int argc, char **argv) {
 	}
 
 	if (outputformatstr != NULL) {
-		if (strcasecmp(outputformatstr, "text") == 0)
+		if (strcasecmp(outputformatstr, "text") == 0) {
 			outputformat = dns_masterformat_text;
-		else if (strcasecmp(outputformatstr, "raw") == 0)
+		} else if (strcasecmp(outputformatstr, "raw") == 0) {
 			outputformat = dns_masterformat_raw;
-		else {
+		} else if (strncasecmp(outputformatstr, "raw=", 4) == 0) {
+			char *end;
+
+			outputformat = dns_masterformat_raw;
+			rawversion = strtol(outputformatstr + 4, &end, 10);
+			if (end == outputformatstr + 4 || *end != '\0' ||
+			    rawversion > 1U) {
+				fprintf(stderr,
+					"unknown raw format version\n");
+				exit(1);
+			}
+		} else {
 			fprintf(stderr, "unknown file format: %s\n",
 				outputformatstr);
 			exit(1);
@@ -420,6 +452,7 @@ main(int argc, char **argv) {
 
 	if (progmode == progmode_compile) {
 		dumpzone = 1;	/* always dump */
+		logdump = !quiet;
 		if (output_filename == NULL) {
 			fprintf(stderr,
 				"output file required, but not specified\n");
@@ -438,8 +471,10 @@ main(int argc, char **argv) {
 	    (output_filename == NULL ||
 	     strcmp(output_filename, "-") == 0 ||
 	     strcmp(output_filename, "/dev/fd/1") == 0 ||
-	     strcmp(output_filename, "/dev/stdout") == 0))
+	     strcmp(output_filename, "/dev/stdout") == 0)) {
 		errout = stderr;
+		logdump = ISC_FALSE;
+	}
 
 	if (isc_commandline_index + 2 != argc)
 		usage();
@@ -463,14 +498,21 @@ main(int argc, char **argv) {
 	result = load_zone(mctx, origin, filename, inputformat, classname,
 			   &zone);
 
+	if (snset) {
+		dns_master_initrawheader(&header);
+		header.flags = DNS_MASTERRAW_SOURCESERIALSET;
+		header.sourceserial = serialnum;
+		dns_zone_setrawdata(zone, &header);
+	}
+
 	if (result == ISC_R_SUCCESS && dumpzone) {
-		if (!quiet && progmode == progmode_compile) {
+		if (logdump) {
 			fprintf(errout, "dump zone to %s...", output_filename);
 			fflush(errout);
 		}
 		result = dump_zone(origin, zone, output_filename,
-				   outputformat, outputstyle);
-		if (!quiet && progmode == progmode_compile)
+				   outputformat, outputstyle, rawversion);
+		if (logdump)
 			fprintf(errout, "done\n");
 	}
 

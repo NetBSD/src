@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.h,v 1.3 2011/02/16 03:47:12 christos Exp $	*/
+/*	$NetBSD: buffer.h,v 1.4 2012/06/05 00:42:34 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2008, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: buffer.h,v 1.55 2010-12-20 23:47:21 tbox Exp */
+/* Id: buffer.h,v 1.55 2010/12/20 23:47:21 tbox Exp  */
 
 #ifndef ISC_BUFFER_H
 #define ISC_BUFFER_H 1

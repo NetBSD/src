@@ -1,4 +1,4 @@
-/*	$NetBSD: result.h,v 1.2 2011/02/16 03:47:19 christos Exp $	*/
+/*	$NetBSD: result.h,v 1.3 2012/06/05 00:43:07 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: result.h,v 1.21 2007-06-19 23:47:23 tbox Exp */
+/* Id: result.h,v 1.21 2007/06/19 23:47:23 tbox Exp  */
 
 #ifndef LWRES_RESULT_H
 #define LWRES_RESULT_H 1

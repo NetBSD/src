@@ -1,4 +1,4 @@
-.\"	$NetBSD: dnssec-signzone.8,v 1.3 2011/09/11 18:55:26 christos Exp $
+.\"	$NetBSD: dnssec-signzone.8,v 1.4 2012/06/05 00:38:57 christos Exp $
 .\"
 .\" Copyright (C) 2004-2009, 2011 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000-2003 Internet Software Consortium.
@@ -15,7 +15,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" Id: dnssec-signzone.8,v 1.63 2011-03-22 01:14:25 tbox Exp
+.\" Id
 .\"
 .hy 0
 .ad l
@@ -35,7 +35,7 @@
 dnssec\-signzone \- DNSSEC zone signing tool
 .SH "SYNOPSIS"
 .HP 16
-\fBdnssec\-signzone\fR [\fB\-a\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-d\ \fR\fB\fIdirectory\fR\fR] [\fB\-D\fR] [\fB\-E\ \fR\fB\fIengine\fR\fR] [\fB\-e\ \fR\fB\fIend\-time\fR\fR] [\fB\-f\ \fR\fB\fIoutput\-file\fR\fR] [\fB\-g\fR] [\fB\-h\fR] [\fB\-K\ \fR\fB\fIdirectory\fR\fR] [\fB\-k\ \fR\fB\fIkey\fR\fR] [\fB\-l\ \fR\fB\fIdomain\fR\fR] [\fB\-i\ \fR\fB\fIinterval\fR\fR] [\fB\-I\ \fR\fB\fIinput\-format\fR\fR] [\fB\-j\ \fR\fB\fIjitter\fR\fR] [\fB\-N\ \fR\fB\fIsoa\-serial\-format\fR\fR] [\fB\-o\ \fR\fB\fIorigin\fR\fR] [\fB\-O\ \fR\fB\fIoutput\-format\fR\fR] [\fB\-P\fR] [\fB\-p\fR] [\fB\-R\fR] [\fB\-r\ \fR\fB\fIrandomdev\fR\fR] [\fB\-S\fR] [\fB\-s\ \fR\fB\fIstart\-time\fR\fR] [\fB\-T\ \fR\fB\fIttl\fR\fR] [\fB\-t\fR] [\fB\-u\fR] [\fB\-v\ \fR\fB\fIlevel\fR\fR] [\fB\-X\ \fR\fB\fIextended\ end\-time\fR\fR] [\fB\-x\fR] [\fB\-z\fR] [\fB\-3\ \fR\fB\fIsalt\fR\fR] [\fB\-H\ \fR\fB\fIiterations\fR\fR] [\fB\-A\fR] {zonefile} [key...]
+\fBdnssec\-signzone\fR [\fB\-a\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-d\ \fR\fB\fIdirectory\fR\fR] [\fB\-D\fR] [\fB\-E\ \fR\fB\fIengine\fR\fR] [\fB\-e\ \fR\fB\fIend\-time\fR\fR] [\fB\-f\ \fR\fB\fIoutput\-file\fR\fR] [\fB\-g\fR] [\fB\-h\fR] [\fB\-K\ \fR\fB\fIdirectory\fR\fR] [\fB\-k\ \fR\fB\fIkey\fR\fR] [\fB\-L\ \fR\fB\fIserial\fR\fR] [\fB\-l\ \fR\fB\fIdomain\fR\fR] [\fB\-i\ \fR\fB\fIinterval\fR\fR] [\fB\-I\ \fR\fB\fIinput\-format\fR\fR] [\fB\-j\ \fR\fB\fIjitter\fR\fR] [\fB\-N\ \fR\fB\fIsoa\-serial\-format\fR\fR] [\fB\-o\ \fR\fB\fIorigin\fR\fR] [\fB\-O\ \fR\fB\fIoutput\-format\fR\fR] [\fB\-P\fR] [\fB\-p\fR] [\fB\-R\fR] [\fB\-r\ \fR\fB\fIrandomdev\fR\fR] [\fB\-S\fR] [\fB\-s\ \fR\fB\fIstart\-time\fR\fR] [\fB\-T\ \fR\fB\fIttl\fR\fR] [\fB\-t\fR] [\fB\-u\fR] [\fB\-v\ \fR\fB\fIlevel\fR\fR] [\fB\-X\ \fR\fB\fIextended\ end\-time\fR\fR] [\fB\-x\fR] [\fB\-z\fR] [\fB\-3\ \fR\fB\fIsalt\fR\fR] [\fB\-H\ \fR\fB\fIiterations\fR\fR] [\fB\-A\fR] {zonefile} [key...]
 .SH "DESCRIPTION"
 .PP
 \fBdnssec\-signzone\fR
@@ -149,7 +149,10 @@ must be later than
 .RS 4
 The name of the output file containing the signed zone. The default is to append
 \fI.signed\fR
-to the input filename.
+to the input filename. If
+\fBoutput\-file\fR
+is set to
+"\-", then the signed zone is written to the standard output, with a default output format of "full".
 .RE
 .PP
 \-h
@@ -188,6 +191,11 @@ When signing a zone with a fixed signature lifetime, all RRSIG records issued at
 option specifies a jitter window that will be used to randomize the signature expire time, thus spreading incremental signature regeneration over time.
 .sp
 Signature lifetime jitter also to some extent benefits validators and servers by spreading out cache expiration, i.e. if large numbers of RRSIGs don't expire at the same time from all caches there will be less congestion than if all validators need to refetch at mostly the same time.
+.RE
+.PP
+\-L \fIserial\fR
+.RS 4
+When writing a signed zone to 'raw' format, set the "source serial" value in the header to the specified serial number. (This is expected to be used primarily for testing purposes.)
 .RE
 .PP
 \-n \fIncpus\fR
@@ -231,8 +239,15 @@ The zone origin. If not specified, the name of the zone file is assumed to be th
 .RS 4
 The format of the output file containing the signed zone. Possible formats are
 \fB"text"\fR
-(default) and
-\fB"raw"\fR.
+(default)
+\fB"full"\fR, which is text output in a format suitable for processing by external scripts, and
+\fB"raw"\fR
+or
+\fB"raw=N"\fR, which store the zone in a binary format for rapid loading by
+\fBnamed\fR.
+\fB"raw=N"\fR
+specifies the format version of the raw zone file: if N is 0, the raw file can be read by any version of
+\fBnamed\fR; if N is 1, the file can be read by release 9.9.0 or higher. The default is 1.
 .RE
 .PP
 \-p
