@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_rcv.c,v 1.1 2011/10/23 21:15:02 agc Exp $	*/
+/*	$NetBSD: iscsi_rcv.c,v 1.2 2012/06/05 16:36:06 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -1138,8 +1138,8 @@ receive_pdu(connection_t *conn, pdu_t *pdu)
 		DEBC(conn, 1, ("Unthrottling - MaxCmdSN = %d\n", MaxCmdSN));
 
 		CS_BEGIN;
-		waiting = sess->ccbs_throttled;
-		TAILQ_INIT(&sess->ccbs_throttled);
+		TAILQ_INIT(&waiting);
+		TAILQ_CONCAT(&waiting, &sess->ccbs_throttled, chain);
 		CS_END;
 		while ((req_ccb = TAILQ_FIRST(&waiting)) != NULL) {
 			TAILQ_REMOVE(&waiting, req_ccb, chain);
