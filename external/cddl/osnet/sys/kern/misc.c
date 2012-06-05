@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.3 2011/03/10 19:35:24 pooka Exp $	*/
+/*	$NetBSD: misc.c,v 1.4 2012/06/05 22:51:47 jym Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -133,15 +133,8 @@ void
 kmem_reap(void)
 {
 	int bufcnt;
-	uint64_t where;
 	struct pool *pp;
 	
-	/*
-	 * start draining pool resources now that we're not
-	 * holding any locks.
-	 */
-	pool_drain_start(&pp, &where);
-
 	bufcnt = uvmexp.freetarg - uvmexp.free;
 	if (bufcnt < 0)
 		bufcnt = 0;
@@ -153,9 +146,9 @@ kmem_reap(void)
 	mutex_exit(&bufcache_lock);
 
 	/*
-	 * complete draining the pools.
+	 * drain the pools.
 	 */
-	pool_drain_end(pp, where);
+	pool_drain(&pp);
 //	printf("XXXNETBSD kmem_reap called, write me\n");
 }
 
