@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.32 2010/02/11 09:06:50 roy Exp $
+# $NetBSD: rescue.mi,v 1.32.8.1 2012/06/05 15:38:02 jdc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -46,6 +46,7 @@
 ./rescue/fsdb					base-rescue-root
 ./rescue/fsirand				base-rescue-root
 ./rescue/ftp					base-rescue-root
+./rescue/gpt					base-rescue-root
 ./rescue/grep					base-rescue-root
 ./rescue/gunzip					base-rescue-root
 ./rescue/gzcat					base-rescue-root
