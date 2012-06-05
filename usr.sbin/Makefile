@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.263 2012/02/13 01:43:22 dholland Exp $
+#	$NetBSD: Makefile,v 1.263.2.1 2012/06/05 15:37:23 jdc Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -29,7 +29,7 @@ SUBDIR=	ac accton acpitools altq apm apmd arp \
 	tadpolectl tcpdchk tcpdmatch tcpdrop timed tpctl tprof traceroute trpt \
 	unlink usbdevs user \
 	videomode vipw veriexecgen vnconfig \
-	wake wiconfig wlanctl wsconscfg wsfontload wsmoused wsmuxctl \
+	wakeonlan wiconfig wlanctl wsconscfg wsfontload wsmoused wsmuxctl \
 	zdump zic
 
 .if ${MKMAKEMANDB} != "no"
