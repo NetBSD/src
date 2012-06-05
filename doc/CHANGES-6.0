@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.112 2012/06/05 16:43:04 jdc Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.113 2012/06/05 20:28:12 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -2670,4 +2670,10 @@ lib/libperfuse/ops.c				1.55
 	to set atime and mtime at the same time. Detect that situation just
 	like we detected ftruncate(2) and wipe atime and mtime if it occurs.
 	[manu, ticket #290]
+
+lib/libedit/readline.c				1.104
+
+	don't crash if add_history is called from an empty line. Called from
+	nslookup in new bind.
+	[christos, ticket #309]
 
