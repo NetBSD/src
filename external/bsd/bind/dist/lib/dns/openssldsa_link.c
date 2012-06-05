@@ -1,7 +1,7 @@
-/*	$NetBSD: openssldsa_link.c,v 1.3 2011/09/11 18:55:35 christos Exp $	*/
+/*	$NetBSD: openssldsa_link.c,v 1.4 2012/06/05 00:41:36 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -31,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: openssldsa_link.c,v 1.21 2011-03-11 06:11:24 marka Exp */
+/* Id */
 
 #ifdef OPENSSL
 #ifndef USE_EVP

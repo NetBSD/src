@@ -1,7 +1,7 @@
-/*	$NetBSD: rbtdb.h,v 1.3 2011/09/11 18:55:36 christos Exp $	*/
+/*	$NetBSD: rbtdb.h,v 1.4 2012/06/05 00:41:37 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rbtdb.h,v 1.20 2011-03-03 23:47:32 tbox Exp */
+/* Id */
 
 #ifndef DNS_RBTDB_H
 #define DNS_RBTDB_H 1

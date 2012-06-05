@@ -1,4 +1,4 @@
-/*	$NetBSD: vtwrapper.c,v 1.2 2011/02/16 03:46:53 christos Exp $	*/
+/*	$NetBSD: vtwrapper.c,v 1.3 2012/06/05 00:39:35 christos Exp $	*/
 
 /*
  * Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: vtwrapper.c,v 1.4 2010-08-12 09:31:50 fdupont Exp */
+/* Id: vtwrapper.c,v 1.4 2010/08/12 09:31:50 fdupont Exp  */
 
 #define _GNU_SOURCE
 #include <sys/syscall.h>

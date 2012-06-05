@@ -1,4 +1,4 @@
-/*	$NetBSD: byaddr.h,v 1.2 2011/02/16 03:47:06 christos Exp $	*/
+/*	$NetBSD: byaddr.h,v 1.3 2012/06/05 00:41:45 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: byaddr.h,v 1.22 2007-06-19 23:47:16 tbox Exp */
+/* Id: byaddr.h,v 1.22 2007/06/19 23:47:16 tbox Exp  */
 
 #ifndef DNS_BYADDR_H
 #define DNS_BYADDR_H 1

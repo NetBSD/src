@@ -1,7 +1,7 @@
-/*	$NetBSD: openssl_link.c,v 1.6 2011/09/11 18:55:35 christos Exp $	*/
+/*	$NetBSD: openssl_link.c,v 1.7 2012/06/05 00:41:36 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * Id: openssl_link.c,v 1.31 2011-03-12 04:59:48 tbox Exp
+ * Id
  */
 #ifdef OPENSSL
 
