@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.86 2012/05/30 21:42:04 sjg Exp $	*/
+/*	$NetBSD: compat.c,v 1.87 2012/06/05 06:11:51 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.86 2012/05/30 21:42:04 sjg Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.87 2012/06/05 06:11:51 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.86 2012/05/30 21:42:04 sjg Exp $");
+__RCSID("$NetBSD: compat.c,v 1.87 2012/06/05 06:11:51 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -180,7 +180,10 @@ CompatInterrupt(int signo)
 	}
 
     }
-    _exit(signo);
+    if (signo == SIGQUIT)
+	_exit(signo);
+    bmake_signal(signo, SIG_DFL);
+    raise(signo);
 }
 
 /*-
