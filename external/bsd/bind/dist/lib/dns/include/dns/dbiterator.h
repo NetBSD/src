@@ -1,4 +1,4 @@
-/*	$NetBSD: dbiterator.h,v 1.2 2011/02/16 03:47:06 christos Exp $	*/
+/*	$NetBSD: dbiterator.h,v 1.3 2012/06/05 00:41:46 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dbiterator.h,v 1.25 2007-06-19 23:47:16 tbox Exp */
+/* Id: dbiterator.h,v 1.25 2007/06/19 23:47:16 tbox Exp  */
 
 #ifndef DNS_DBITERATOR_H
 #define DNS_DBITERATOR_H 1

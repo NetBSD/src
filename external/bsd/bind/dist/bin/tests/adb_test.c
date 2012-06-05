@@ -1,7 +1,7 @@
-/*	$NetBSD: adb_test.c,v 1.2 2011/02/16 03:46:49 christos Exp $	*/
+/*	$NetBSD: adb_test.c,v 1.3 2012/06/05 00:39:20 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: adb_test.c,v 1.70 2009-09-02 23:48:01 tbox Exp */
+/* Id: adb_test.c,v 1.73 2011/08/30 23:46:51 tbox Exp  */
 
 /*! \file */
 
@@ -266,9 +266,8 @@ lookup(const char *target) {
 	result = dns_adb_createfind(adb, t2, lookup_callback, client,
 				    &client->name, dns_rootname, 0, options,
 				    now, NULL, view->dstport, &client->find);
-#if 0
-	check_result(result, "dns_adb_createfind()");
-#endif
+	if (result != ISC_R_SUCCESS)
+		printf("DNS_ADB_CREATEFIND -> %s\n", dns_result_totext(result));
 	dns_adb_dumpfind(client->find, stderr);
 
 	if ((client->find->options & DNS_ADBFIND_WANTEVENT) != 0) {
@@ -416,7 +415,9 @@ main(int argc, char **argv) {
 	dns_view_detach(&view);
 	adb = NULL;
 
+	fprintf(stderr, "Destroying socket manager\n");
 	isc_socketmgr_destroy(&socketmgr);
+	fprintf(stderr, "Destroying timer manager\n");
 	isc_timermgr_destroy(&timermgr);
 
 	fprintf(stderr, "Destroying task manager\n");

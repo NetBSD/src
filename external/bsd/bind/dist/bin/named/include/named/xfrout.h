@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrout.h,v 1.2 2011/02/16 03:46:47 christos Exp $	*/
+/*	$NetBSD: xfrout.h,v 1.3 2012/06/05 00:39:13 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: xfrout.h,v 1.12 2007-06-19 23:46:59 tbox Exp */
+/* Id: xfrout.h,v 1.12 2007/06/19 23:46:59 tbox Exp  */
 
 #ifndef NAMED_XFROUT_H
 #define NAMED_XFROUT_H 1

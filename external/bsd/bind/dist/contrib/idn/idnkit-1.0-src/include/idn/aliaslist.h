@@ -1,6 +1,6 @@
-/*	$NetBSD: aliaslist.h,v 1.2 2011/02/16 03:46:56 christos Exp $	*/
+/*	$NetBSD: aliaslist.h,v 1.3 2012/06/05 00:39:41 christos Exp $	*/
 
-/* Id: aliaslist.h,v 1.1.1.1 2003-06-04 00:25:34 marka Exp */
+/* Id: aliaslist.h,v 1.1 2003/06/04 00:25:34 marka Exp  */
 /*
  * Copyright (c) 2002 Japan Network Information Center.  All rights reserved.
  *  

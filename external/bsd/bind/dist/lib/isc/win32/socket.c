@@ -1,7 +1,7 @@
-/*	$NetBSD: socket.c,v 1.3 2011/09/11 18:55:42 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.4 2012/06/05 00:42:53 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: socket.c,v 1.92 2011-08-23 18:24:33 each Exp */
+/* Id */
 
 /* This code uses functions which are only available on Server 2003 and
  * higher, and Windows XP and higher.
@@ -1651,12 +1651,17 @@ socket_create(isc_socketmgr_t *manager, int pf, isc_sockettype_t type,
 	REQUIRE(socketp != NULL && *socketp == NULL);
 	REQUIRE(type != isc_sockettype_fdwatch);
 
+	if (dup_socket != NULL)
+		return (ISC_R_NOTIMPLEMENTED);
+
 	result = allocate_socket(manager, type, &sock);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
 	sock->pf = pf;
+#if 0
 	if (dup_socket == NULL) {
+#endif
 		switch (type) {
 		case isc_sockettype_udp:
 			sock->fd = socket(pf, SOCK_DGRAM, IPPROTO_UDP);
@@ -1682,6 +1687,7 @@ socket_create(isc_socketmgr_t *manager, int pf, isc_sockettype_t type,
 			sock->fd = socket(pf, SOCK_STREAM, IPPROTO_TCP);
 			break;
 		}
+#if 0
 	} else {
 		/*
 		 * XXX: dup() is deprecated in windows, use _dup()
@@ -1690,7 +1696,9 @@ socket_create(isc_socketmgr_t *manager, int pf, isc_sockettype_t type,
 		 */
 		sock->fd = _dup(dup_socket->fd);
 		sock->dupped = 1;
+		sock->bound = dup_socket->bound;
 	}
+#endif
 
 	if (sock->fd == INVALID_SOCKET) {
 		socket_errno = WSAGetLastError();
@@ -1827,8 +1835,12 @@ isc__socket_dup(isc_socket_t *sock, isc_socket_t **socketp) {
 	REQUIRE(VALID_SOCKET(sock));
 	REQUIRE(socketp != NULL && *socketp == NULL);
 
+#if 1
+	return (ISC_R_NOTIMPLEMENTED);
+#else
 	return (socket_create(sock->manager, sock->pf, sock->type,
 			      socketp, sock));
+#endif
 }
 
 isc_result_t
@@ -3177,6 +3189,7 @@ isc__socket_bind(isc_socket_t *sock, isc_sockaddr_t *sockaddr,
 	}
 
 	INSIST(!sock->bound);
+	INSIST(!sock->dupped);
 
 	if (sock->pf != sockaddr->type.sa.sa_family) {
 		UNLOCK(&sock->lock);

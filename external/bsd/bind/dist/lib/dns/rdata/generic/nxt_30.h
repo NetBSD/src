@@ -1,4 +1,4 @@
-/*	$NetBSD: nxt_30.h,v 1.2 2011/02/16 03:47:09 christos Exp $	*/
+/*	$NetBSD: nxt_30.h,v 1.3 2012/06/05 00:42:13 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 #ifndef GENERIC_NXT_30_H
 #define GENERIC_NXT_30_H 1
 
-/* Id: nxt_30.h,v 1.25 2007-06-19 23:47:17 tbox Exp */
+/* Id: nxt_30.h,v 1.25 2007/06/19 23:47:17 tbox Exp  */
 
 /*!
  *  \brief RFC2535 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch.c,v 1.4 2011/09/11 18:55:33 christos Exp $	*/
+/*	$NetBSD: dispatch.c,v 1.5 2012/06/05 00:41:29 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dispatch.c,v 1.174 2011-07-28 23:47:58 tbox Exp */
+/* Id: dispatch.c,v 1.175 2011/11/29 01:03:47 marka Exp  */
 
 /*! \file */
 
@@ -1812,6 +1812,10 @@ open_socket(isc_socketmgr_t *mgr, isc_sockaddr_t *local,
 		result = isc_socket_dup(dup_socket, &sock);
 		if (result != ISC_R_SUCCESS)
 			return (result);
+
+		isc_socket_setname(sock, "dispatcher", NULL);
+		*sockp = sock;
+		return (ISC_R_SUCCESS);
 	} else {
 		result = isc_socket_create(mgr, isc_sockaddr_pf(local),
 					isc_sockettype_udp, &sock);

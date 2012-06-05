@@ -1,4 +1,4 @@
-/*	$NetBSD: a6_38.h,v 1.2 2011/02/16 03:47:09 christos Exp $	*/
+/*	$NetBSD: a6_38.h,v 1.3 2012/06/05 00:42:19 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 #ifndef IN_1_A6_38_H
 #define IN_1_A6_38_H 1
 
-/* Id: a6_38.h,v 1.24 2007-06-19 23:47:17 tbox Exp */
+/* Id: a6_38.h,v 1.24 2007/06/19 23:47:17 tbox Exp  */
 
 /*! 
  *  \brief Per RFC2874 */

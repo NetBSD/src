@@ -1,4 +1,4 @@
-/*	$NetBSD: mx_15.c,v 1.2 2011/02/16 03:47:08 christos Exp $	*/
+/*	$NetBSD: mx_15.c,v 1.3 2012/06/05 00:42:12 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: mx_15.c,v 1.58 2009-12-04 22:06:37 tbox Exp */
+/* Id: mx_15.c,v 1.58 2009/12/04 22:06:37 tbox Exp  */
 
 /* reviewed: Wed Mar 15 18:05:46 PST 2000 by brister */
 

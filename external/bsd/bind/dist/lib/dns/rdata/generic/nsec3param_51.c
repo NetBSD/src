@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3param_51.c,v 1.2 2011/02/16 03:47:09 christos Exp $	*/
+/*	$NetBSD: nsec3param_51.c,v 1.3 2012/06/05 00:42:12 christos Exp $	*/
 
 /*
  * Copyright (C) 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsec3param_51.c,v 1.7 2009-12-04 21:09:34 marka Exp */
+/* Id: nsec3param_51.c,v 1.7 2009/12/04 21:09:34 marka Exp  */
 
 /*
  * Copyright (C) 2004  Nominet, Ltd.

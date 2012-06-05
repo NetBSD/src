@@ -1,4 +1,4 @@
-/*	$NetBSD: cfg.h,v 1.2 2011/02/16 03:47:18 christos Exp $	*/
+/*	$NetBSD: cfg.h,v 1.3 2012/06/05 00:43:02 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: cfg.h,v 1.46 2010-08-13 23:47:04 tbox Exp */
+/* Id: cfg.h,v 1.46 2010/08/13 23:47:04 tbox Exp  */
 
 #ifndef ISCCFG_CFG_H
 #define ISCCFG_CFG_H 1
