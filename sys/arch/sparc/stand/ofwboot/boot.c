@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.28 2011/05/21 15:50:42 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.28.10.1 2012/06/05 16:22:24 jdc Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -251,7 +251,8 @@ ksyms_copyout(void **ssym, void **esym)
  * Prepare boot information and jump directly to the kernel.
  */
 static void
-jump_to_kernel(u_long *marks, char *kernel, char *args, void *ofw)
+jump_to_kernel(u_long *marks, char *kernel, char *args, void *ofw,
+	int boothowto)
 {
 	int l, machine_tag;
 	long newargs[4];
@@ -259,6 +260,7 @@ jump_to_kernel(u_long *marks, char *kernel, char *args, void *ofw)
 	vaddr_t bootinfo;
 	struct btinfo_symtab bi_sym;
 	struct btinfo_kernend bi_kend;
+	struct btinfo_boothowto bi_howto;
 	char *cp;
 	char bootline[PROM_MAX_PATH * 2];
 
@@ -279,6 +281,8 @@ jump_to_kernel(u_long *marks, char *kernel, char *args, void *ofw)
 	bi_add(&bi_sym, BTINFO_SYMTAB, sizeof(bi_sym));
 	bi_kend.addr= bootinfo + BOOTINFO_SIZE;
 	bi_add(&bi_kend, BTINFO_KERNEND, sizeof(bi_kend));
+	bi_howto.boothowto = boothowto;
+	bi_add(&bi_howto, BTINFO_BOOTHOWTO, sizeof(bi_howto));
 	if (bootinfo_pass_bootdev) {
 		struct {
 			struct btinfo_common common;
@@ -355,7 +359,8 @@ jump_to_kernel(u_long *marks, char *kernel, char *args, void *ofw)
 }
 
 static void
-start_kernel(char *kernel, char *bootline, void *ofw, int isfloppy)
+start_kernel(char *kernel, char *bootline, void *ofw, int isfloppy,
+	int boothowto)
 {
 	int fd;
 	u_long marks[MARK_MAX];
@@ -381,7 +386,7 @@ start_kernel(char *kernel, char *bootline, void *ofw, int isfloppy)
 
 		if (fdloadfile(fd, marks, flags) != -1) {
 			close(fd);
-			jump_to_kernel(marks, kernel, bootline, ofw);
+			jump_to_kernel(marks, kernel, bootline, ofw, boothowto);
 		}
 	}
 	(void)printf("Failed to load '%s'.\n", kernel);
@@ -496,7 +501,7 @@ check_boot_config(void)
 void
 main(void *ofw)
 {
-	int boothowto, i = 0, isfloppy;
+	int boothowto, i = 0, isfloppy, kboothowto;
 
 	char kernel[PROM_MAX_PATH];
 	char bootline[PROM_MAX_PATH];
@@ -509,7 +514,8 @@ main(void *ofw)
 
 	/* Figure boot arguments */
 	strncpy(bootdev, prom_getbootpath(), sizeof(bootdev) - 1);
-	boothowto = bootoptions(prom_getbootargs(), bootdev, kernel, bootline);
+	kboothowto = boothowto =
+	    bootoptions(prom_getbootargs(), bootdev, kernel, bootline);
 	isfloppy = bootdev_isfloppy(bootdev);
 
 	for (;; *kernel = '\0') {
@@ -549,7 +555,7 @@ main(void *ofw)
 		}
 
 		check_boot_config();
-		start_kernel(kernel, bootline, ofw, isfloppy);
+		start_kernel(kernel, bootline, ofw, isfloppy, kboothowto);
 
 		/*
 		 * Try next name from kernel name list if not in askname mode,
