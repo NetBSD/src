@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.984.2.4 2012/06/05 15:37:18 jdc Exp $
+# $NetBSD: mi,v 1.984.2.5 2012/06/05 15:49:12 jdc Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1493,7 +1493,7 @@
 ./usr/sbin/veriexecgen				base-sysutil-bin
 ./usr/sbin/vipw					base-sysutil-bin
 ./usr/sbin/vnconfig				base-sysutil-bin
-./usr/sbin/wake					base-obsolete
+./usr/sbin/wake					base-obsolete		obsolete
 ./usr/sbin/wakeonlan				base-netutil-bin
 ./usr/sbin/wiconfig				base-sysutil-bin
 ./usr/sbin/wire-test				base-netutil-bin
