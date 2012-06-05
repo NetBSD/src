@@ -1,4 +1,4 @@
-/* $NetBSD: t_mincore.c,v 1.5 2012/05/23 16:08:32 martin Exp $ */
+/* $NetBSD: t_mincore.c,v 1.6 2012/06/05 08:44:21 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mincore.c,v 1.5 2012/05/23 16:08:32 martin Exp $");
+__RCSID("$NetBSD: t_mincore.c,v 1.6 2012/06/05 08:44:21 martin Exp $");
 
 #include <sys/mman.h>
 #include <sys/shm.h>
@@ -67,10 +67,13 @@ __RCSID("$NetBSD: t_mincore.c,v 1.5 2012/05/23 16:08:32 martin Exp $");
 #include <atf-c.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <kvm.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/resource.h>
+#include <sys/sysctl.h>
 
 static long		page = 0;
 static const char	path[] = "mincore";
@@ -99,6 +102,28 @@ check_residency(void *addr, size_t npgs)
 	free(vec);
 
 	return resident;
+}
+
+/*
+ * Get an estimate of the current VM size
+ */
+static size_t
+vm_cur_pages(void)
+{
+	size_t res = 0;
+	kvm_t *kvm;
+	struct kinfo_proc2 *pi;
+	int cnt;
+
+	kvm = kvm_open(NULL, NULL, NULL, KVM_NO_FILES, getprogname());
+	if (kvm == NULL)
+		return 0;
+	pi = kvm_getproc2(kvm, KERN_PROC_PID, getpid(), sizeof(*pi), &cnt);
+	if (pi && cnt >= 1)
+		res = pi[0].p_vm_vsize;
+	kvm_close(kvm);
+
+	return res;
 }
 
 ATF_TC(mincore_err);
@@ -142,6 +167,25 @@ ATF_TC_BODY(mincore_resid, tc)
 	size_t npgs = 0;
 	struct stat st;
 	int fd, rv;
+	struct rlimit rlim;
+	size_t needed_pages, limit_pages;
+
+	ATF_REQUIRE(getrlimit(RLIMIT_MEMLOCK, &rlim) == 0);
+	limit_pages = rlim.rlim_cur / page;
+	/*
+	 * We can not exactly predict the number of pages resulting from
+	 * the test and the mlockall() call below.
+	 * Get a safe upper bound instead...
+	 */
+	needed_pages = vm_cur_pages();
+	/* we certainly will gow  by 128 pages */
+	needed_pages += 128;
+	/* add a bit of safety room */
+	needed_pages += 12;
+
+	if (needed_pages >= limit_pages)
+		atf_tc_skip("too low limits on locked memory (may need %zu "
+		    "pages, limit is %zu pages)", needed_pages, limit_pages);
 
 	(void)memset(&st, 0, sizeof(struct stat));
 
