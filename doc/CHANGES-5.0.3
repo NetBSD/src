@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.75 2012/06/03 08:48:22 jdc Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.76 2012/06/05 19:55:19 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -3039,4 +3039,17 @@ sys/kern/uipc_usrreq.c        1.137
 	Stopgap fix for PR kern/46463: disallow passing of kqueue descriptors
 	via SCM_RIGHT anxiliary socket messages.
 	[martin, ticket #1766]
+
+dist/bind/CHANGES					patch
+dist/bind/version					patch
+dist/bind/bin/tests/system/unknown/clean.sh		patch
+dist/bind/bin/tests/system/unknown/tests.sh		patch
+dist/bind/bin/tests/system/unknown/ns1/example-in.db	patch
+dist/bind/lib/dns/rdata.c				patch
+dist/bind/lib/dns/rdataslab.c				patch
+	
+	Update bind to 9.7.3-P4:
+	3331.  [security]      dns_rdataslab_fromrdataset could produce bad
+			       rdataslabs. [RT #29644]
+	 [christos, ticket #1767]
 
