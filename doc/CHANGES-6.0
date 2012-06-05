@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.111 2012/06/03 21:45:49 jdc Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.112 2012/06/05 16:43:04 jdc Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -2603,4 +2603,71 @@ sys/arch/amd64/amd64/trap.c			1.71
 	Also detects any fault loading %gs and re-instates the kernel gs_base
 	value before entering the trap handler.
 	[dsl, ticket #280]
+
+sys/arch/x68k/x68k/clock.c			1.34
+	With the freerunnnig mode, set 0 (=256count) not 0xff (=255count)
+	in Timer-D.  It fixes the clock ticked faster when timecounter uses
+	"mfp" (as default choice).  It was introduced in rev 1.24 in 2006.
+	Thanks tsutsui@ for many comments.
+	[isaki, ticket #281]
+
+sys/arch/xen/xen/xbdback_xenbus.c		1.56
+	destroy mutex and cv first.
+	Fixes LOCKDEBUG crash when a guest shut down.
+	[cegger, ticket #282]
+
+distrib/sets/lists/base/mi			1.992
+distrib/sets/lists/comp/mi			1.1759
+distrib/sets/lists/man/mi			1.1391
+usr.sbin/Makefile				1.265
+usr.sbin/wake/Makefile				delete
+usr.sbin/wake/wake.8				delete
+usr.sbin/wake/wake.c				delete
+usr.sbin/wakeonlan/Makefile			add
+usr.sbin/wakeonlan/wakeonlan.8			add
+usr.sbin/wakeonlan/wakeonlan.c			add
+	Rename wake(8) to wakeonlan(8). Approved by core@.
+	[uebayasi, ticket #283]
+
+distrib/sets/lists/base/rescue.mi		1.34
+rescue/list					1.43
+	PR#46393 - Nat Sloss -- add gpt(8) to /rescue
+	[jnemeth, ticket #284]
+
+distrib/sets/lists/base/mi			1.993
+	really mark wake as obsolete.
+	[uebayasi, ticket #285]
+
+external/public-domain/sqlite/lib/sqlite3.pc	1.2
+	Update version to 3.7.10, since that's what's currently in dist/
+	From Ryo ONODERA in PR 46300.
+	[ryoon, ticket #287]
+
+share/man/man4/wsdisplay.4			1.39-1.40
+share/man/man4/wskbd.4				1.15-1.16
+share/man/man4/wsmouse.4			1.21-1.22
+	Document WSDISPLAYIO_SETVERSION, WSKBDIO_SETVERSION and
+	WSMOUSEIO_SETVERSION ioctls(). Also at least enumerate the WSKBDIO_
+	ioctls().
+	[abs, ticket #288]
+
+sys/arch/sparc/include/bootinfo.h		1.6
+sys/arch/sparc/sparc/autoconf.c			1.243
+sys/arch/sparc/stand/boot/boot.c		1.28
+sys/arch/sparc/stand/ofwboot/boot.c		1.29
+sys/arch/sparc64/include/bootinfo.h		1.6-1.7
+sys/arch/sparc64/sparc64/autoconf.c		1.186
+sys/arch/sparc64/include/bootinfo.h		1.7
+	Pass the "boothowto" from the bootloader to the kernel.
+	If (an old) bootloader did not pass the flags, check explicitly if we
+	missed RB_USERCONF and invoke userconf_prompt() in MD code, as MI code
+	already missed it.
+	This fixes PR#46466.
+	[martin, ticket #289]
+
+lib/libperfuse/ops.c				1.55
+	Setting mode by fchmod(2) will break on glusterfs-3.3 is we attempt
+	to set atime and mtime at the same time. Detect that situation just
+	like we detected ftruncate(2) and wipe atime and mtime if it occurs.
+	[manu, ticket #290]
 
