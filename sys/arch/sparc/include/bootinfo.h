@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.5 2006/03/04 03:39:02 uwe Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.5.112.1 2012/06/05 16:22:23 jdc Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -42,6 +42,7 @@ struct btinfo_common {
 #define BTINFO_MAGIC		1
 #define BTINFO_SYMTAB		2
 #define BTINFO_KERNELFILE	3
+#define BTINFO_BOOTHOWTO	4
 
 struct btinfo_magic {
 	struct btinfo_common common;
@@ -58,6 +59,11 @@ struct btinfo_symtab {
 struct btinfo_kernelfile {
 	struct btinfo_common common;
 	char name[1];	/* variable length */
+};
+
+struct btinfo_boothowto {
+	struct btinfo_common common;
+	int boothowto;
 };
 
 #ifdef _KERNEL
