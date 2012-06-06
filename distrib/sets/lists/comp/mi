@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1762 2012/05/27 02:35:43 matt Exp $
+#	$NetBSD: mi,v 1.1763 2012/06/06 00:23:08 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3934,6 +3934,7 @@
 ./usr/libdata/debug/usr/games/caesar.debug	comp-utils-debug	debug
 ./usr/libdata/debug/usr/games/canfield.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/cfscores.debug	comp-games-debug	debug
+./usr/libdata/debug/usr/games/colorbars.debug	comp-utils-debug	debug
 ./usr/libdata/debug/usr/games/cribbage.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/dab.debug		comp-games-debug	debug
 ./usr/libdata/debug/usr/games/dm.debug		comp-games-debug	debug
