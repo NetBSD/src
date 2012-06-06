@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap2,v 1.8 2011/03/11 03:16:13 bsh Exp $
+#	$NetBSD: files.omap2,v 1.9 2012/06/06 20:21:45 skrll Exp $
 #
 # Configuration info for Texas Instruments OMAP2/OMAP3 CPU support
 # Based on xscale/files.pxa2x0
@@ -27,9 +27,9 @@ file	arch/arm/omap/omap2_obio.c		obio needs-count
 # OBIO files
 file	arch/arm/omap/omap_space.c		obio
 file	arch/arm/omap/omap_a2x_space.c		obio
-file	arch/arm/omap/omap_a2x_io.S		obio
+file	arch/arm/arm/bus_space_a2x.S		obio
 file	arch/arm/omap/omap_a4x_space.c		obio
-file	arch/arm/xscale/pxa2x0_a4x_io.S		obio
+file	arch/arm/arm/bus_space_a4x.S		obio
 
 # OMAP2 interrupt controller
 device	omapicu: pic, pic_splfuncs
