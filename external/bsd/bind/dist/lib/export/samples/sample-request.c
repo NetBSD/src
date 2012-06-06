@@ -1,4 +1,4 @@
-/*	$NetBSD: sample-request.c,v 1.2 2011/02/16 03:47:10 christos Exp $	*/
+/*	$NetBSD: sample-request.c,v 1.2.6.1 2012/06/06 18:18:23 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sample-request.c,v 1.5 2009-09-29 15:06:07 fdupont Exp */
+/* Id: sample-request.c,v 1.5 2009/09/29 15:06:07 fdupont Exp  */
 
 #include <config.h>
 

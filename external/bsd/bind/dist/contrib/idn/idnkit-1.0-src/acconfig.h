@@ -1,6 +1,6 @@
-/*	$NetBSD: acconfig.h,v 1.2 2011/02/16 03:46:55 christos Exp $	*/
+/*	$NetBSD: acconfig.h,v 1.2.6.1 2012/06/06 18:18:05 bouyer Exp $	*/
 
-/* Id: acconfig.h,v 1.1.1.1 2003-06-04 00:25:03 marka Exp */
+/* Id: acconfig.h,v 1.1 2003/06/04 00:25:03 marka Exp  */
 /*
  * Copyright (c) 2000 Japan Network Information Center.  All rights reserved.
  *  

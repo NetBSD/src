@@ -1,7 +1,7 @@
-/*	$NetBSD: zonemgr_test.c,v 1.1.1.1 2011/09/11 17:19:03 christos Exp $	*/
+/*	$NetBSD: zonemgr_test.c,v 1.1.1.1.4.1 2012/06/06 18:18:18 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zonemgr_test.c,v 1.2 2011-07-06 05:05:51 each Exp */
+/* Id */
 
 /*! \file */
 
@@ -35,41 +35,6 @@
 #include <dns/zone.h>
 
 #include "dnstest.h"
-
-static isc_result_t
-make_zone(const char *name, dns_zone_t **zonep) {
-	isc_result_t result;
-	dns_view_t *view = NULL;
-	dns_zone_t *zone = NULL;
-	isc_buffer_t buffer;
-	dns_fixedname_t fixorigin;
-	dns_name_t *origin;
-
-	CHECK(dns_view_create(mctx, dns_rdataclass_in, "view", &view));
-	CHECK(dns_zone_create(&zone, mctx));
-
-	isc_buffer_init(&buffer, name, strlen(name));
-	isc_buffer_add(&buffer, strlen(name));
-	dns_fixedname_init(&fixorigin);
-	origin = dns_fixedname_name(&fixorigin);
-	CHECK(dns_name_fromtext(origin, &buffer, dns_rootname, 0, NULL));
-	CHECK(dns_zone_setorigin(zone, origin));
-	dns_zone_setview(zone, view);
-	dns_zone_settype(zone, dns_zone_master);
-	dns_zone_setclass(zone, view->rdclass);
-
-	dns_view_detach(&view);
-	*zonep = zone;
-
-	return (ISC_R_SUCCESS);
-
-  cleanup:
-	if (zone != NULL)
-		dns_zone_detach(&zone);
-	if (view != NULL)
-		dns_view_detach(&view);
-	return (result);
-}
 
 /*
  * Individual unit tests
@@ -117,7 +82,7 @@ ATF_TC_BODY(zonemgr_managezone, tc) {
 				    &zonemgr);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
-	result = make_zone("foo", &zone);
+	result = dns_test_makezone("foo", &zone, NULL, ISC_FALSE);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
 	/* This should not succeed until the dns_zonemgr_setsize() is run */
@@ -147,12 +112,79 @@ ATF_TC_BODY(zonemgr_managezone, tc) {
 	dns_test_end();
 }
 
+ATF_TC(zonemgr_unreachable);
+ATF_TC_HEAD(zonemgr_unreachable, tc) {
+	atf_tc_set_md_var(tc, "descr", "manage and release a zone");
+}
+ATF_TC_BODY(zonemgr_unreachable, tc) {
+	dns_zonemgr_t *zonemgr = NULL;
+	dns_zone_t *zone = NULL;
+	isc_sockaddr_t addr1, addr2;
+	struct in_addr in;
+	isc_result_t result;
+	isc_time_t now;
+
+	UNUSED(tc);
+
+	TIME_NOW(&now);
+
+	result = dns_test_begin(NULL, ISC_TRUE);
+
+	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+
+	result = dns_zonemgr_create(mctx, taskmgr, timermgr, socketmgr,
+				    &zonemgr);
+	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+
+	result = dns_test_makezone("foo", &zone, NULL, ISC_FALSE);
+	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+
+	result = dns_zonemgr_setsize(zonemgr, 1);
+	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+
+	result = dns_zonemgr_managezone(zonemgr, zone);
+	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+
+	in.s_addr = inet_addr("10.53.0.1");
+	isc_sockaddr_fromin(&addr1, &in, 2112);
+	in.s_addr = inet_addr("10.53.0.2");
+	isc_sockaddr_fromin(&addr2, &in, 5150);
+	ATF_CHECK(! dns_zonemgr_unreachable(zonemgr, &addr1, &addr2, &now));
+	dns_zonemgr_unreachableadd(zonemgr, &addr1, &addr2, &now);
+	ATF_CHECK(dns_zonemgr_unreachable(zonemgr, &addr1, &addr2, &now));
+
+	in.s_addr = inet_addr("10.53.0.3");
+	isc_sockaddr_fromin(&addr2, &in, 5150);
+	ATF_CHECK(! dns_zonemgr_unreachable(zonemgr, &addr1, &addr2, &now));
+	dns_zonemgr_unreachableadd(zonemgr, &addr1, &addr2, &now);
+	ATF_CHECK(dns_zonemgr_unreachable(zonemgr, &addr1, &addr2, &now));
+
+	dns_zonemgr_unreachabledel(zonemgr, &addr1, &addr2);
+	ATF_CHECK(! dns_zonemgr_unreachable(zonemgr, &addr1, &addr2, &now));
+
+	in.s_addr = inet_addr("10.53.0.2");
+	isc_sockaddr_fromin(&addr2, &in, 5150);
+	ATF_CHECK(dns_zonemgr_unreachable(zonemgr, &addr1, &addr2, &now));
+	dns_zonemgr_unreachabledel(zonemgr, &addr1, &addr2);
+	ATF_CHECK(! dns_zonemgr_unreachable(zonemgr, &addr1, &addr2, &now));
+
+	dns_zonemgr_releasezone(zonemgr, zone);
+	dns_zone_detach(&zone);
+	dns_zonemgr_shutdown(zonemgr);
+	dns_zonemgr_detach(&zonemgr);
+	ATF_REQUIRE_EQ(zonemgr, NULL);
+
+	dns_test_end();
+}
+
+
 /*
  * Main
  */
 ATF_TP_ADD_TCS(tp) {
 	ATF_TP_ADD_TC(tp, zonemgr_create);
 	ATF_TP_ADD_TC(tp, zonemgr_managezone);
+	ATF_TP_ADD_TC(tp, zonemgr_unreachable);
 	return (atf_no_error());
 }
 
@@ -174,6 +206,4 @@ ATF_TP_ADD_TCS(tp) {
  * 	- dns_zonemgr_dbdestroyed
  * 	- dns_zonemgr_setserialqueryrate
  * 	- dns_zonemgr_getserialqueryrate
- * 	- dns_zonemgr_unreachable
- * 	- dns_zonemgr_unreachableadd
  */

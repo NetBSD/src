@@ -12,7 +12,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: example.db,v 1.2 2011-03-18 21:14:19 fdupont Exp
+; Id: example.db,v 1.2 2011/03/18 21:14:19 fdupont Exp 
 
 $TTL 300	; 5 minutes
 @			IN SOA	mname1. . (

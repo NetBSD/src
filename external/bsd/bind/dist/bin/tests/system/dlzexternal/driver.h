@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.h,v 1.1.1.1 2011/09/11 17:13:07 christos Exp $	*/
+/*	$NetBSD: driver.h,v 1.1.1.1.4.1 2012/06/06 18:17:28 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: driver.h,v 1.4 2011-03-17 09:25:54 fdupont Exp */
+/* Id: driver.h,v 1.4 2011/03/17 09:25:54 fdupont Exp  */
 
 /*
  * This header includes the declarations of entry points.

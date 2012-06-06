@@ -17,7 +17,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: dnssec-dsfromkey.docbook,v 1.16 2011-03-27 06:39:59 marka Exp -->
+<!-- Id: dnssec-dsfromkey.docbook,v 1.17 2011/10/25 01:54:18 marka Exp  -->
 <refentry id="man.dnssec-dsfromkey">
   <refentryinfo>
     <date>August 26, 2009</date>
@@ -52,6 +52,7 @@
       <arg><option>-2</option></arg>
       <arg><option>-a <replaceable class="parameter">alg</replaceable></option></arg>
       <arg><option>-l <replaceable class="parameter">domain</replaceable></option></arg>
+      <arg><option>-T <replaceable class="parameter">TTL</replaceable></option></arg>
       <arg choice="req">keyfile</arg>
     </cmdsynopsis>
     <cmdsynopsis>
@@ -64,6 +65,7 @@
       <arg><option>-l <replaceable class="parameter">domain</replaceable></option></arg>
       <arg><option>-s</option></arg>
       <arg><option>-c <replaceable class="parameter">class</replaceable></option></arg>
+      <arg><option>-T <replaceable class="parameter">TTL</replaceable></option></arg>
       <arg><option>-f <replaceable class="parameter">file</replaceable></option></arg>
       <arg><option>-A</option></arg>
       <arg><option>-v <replaceable class="parameter">level</replaceable></option></arg>
@@ -111,6 +113,15 @@
             SHA-256 (SHA256) or GOST. These values are case insensitive.
           </para>
         </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-T <replaceable class="parameter">TTL</replaceable></term>
+        <listitem>
+          <para>
+            Specifies the TTL of the DS records.
+          </para>
+	  </listitem>
       </varlistentry>
 
       <varlistentry>
