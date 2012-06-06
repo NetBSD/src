@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.108 2012/06/05 19:33:17 christos Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.109 2012/06/06 00:33:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.108 2012/06/05 19:33:17 christos Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.109 2012/06/06 00:33:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -4725,9 +4725,9 @@ writev1(int fd, struct iovec *iov, size_t count)
 		default:
 			tot += nw;
 			while (nw > 0) {
-				if (iov->iov_len > nw) {
+				if (iov->iov_len > (size_t)nw) {
 					iov->iov_len -= nw;
-					iov->iov_base += nw;
+					iov->iov_base = (char *)iov->iov_base + nw;
 					break;
 				} else {
 					if (count-- == 0)
