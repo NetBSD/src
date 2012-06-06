@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.43 2012/04/20 22:23:25 rmind Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.44 2012/06/06 22:22:41 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.43 2012/04/20 22:23:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.44 2012/06/06 22:22:41 rmind Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -361,31 +361,13 @@ xpq_queue_invlpg(vaddr_t va)
 		panic("xpq_queue_invlpg");
 }
 
-#if defined(_LP64) &&  MAXCPUS > 64
-#error "XEN/amd64 uses 64 bit masks"
-#elsif !defined(_LP64) && MAXCPUS > 32
-#error "XEN/i386 uses 32 bit masks"
-#else
-/* XXX: Inefficient. */
-static u_long
-xen_kcpuset2bits(kcpuset_t *kc)
-{
-	u_long bits = 0;
-
-	for (cpuid_t i = 0; i < ncpu; i++) {
-		if (kcpuset_isset(kc, i)) {
-			bits |= 1 << i;
-		}
-	}
-	return bits;
-}
-#endif
-
 void
 xen_mcast_invlpg(vaddr_t va, kcpuset_t *kc)
 {
-	u_long xcpumask = xen_kcpuset2bits(kc);
+	u_long xcpumask = 0;
 	mmuext_op_t op;
+
+	kcpuset_copybits(kc, &xcpumask, sizeof(xcpumask));
 
 	/* Flush pending page updates */
 	xpq_flush_queue();
@@ -423,8 +405,10 @@ xen_bcast_invlpg(vaddr_t va)
 void
 xen_mcast_tlbflush(kcpuset_t *kc)
 {
-	u_long xcpumask = xen_kcpuset2bits(kc);
+	u_long xcpumask = 0;
 	mmuext_op_t op;
+
+	kcpuset_copybits(kc, &xcpumask, sizeof(xcpumask));
 
 	/* Flush pending page updates */
 	xpq_flush_queue();
