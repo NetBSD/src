@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap,v 1.5 2007/12/03 15:33:19 ad Exp $
+#	$NetBSD: files.omap,v 1.6 2012/06/06 20:21:45 skrll Exp $
 #
 # Configuration info for Texas Instruments OMAP CPU support
 # Based on xscale/files.pxa2x0
@@ -96,9 +96,9 @@ file	arch/arm/omap/omap_ocp.c		ocp
 # TIPB/EMIFS/OCP common files
 file	arch/arm/omap/omap_space.c		tipb | emifs | ocp
 file	arch/arm/omap/omap_a2x_space.c		tipb | emifs | ocp
-file	arch/arm/omap/omap_a2x_io.S		tipb | emifs | ocp
+file	arch/arm/arm/bus_space_a2x.S		tipb | emifs | ocp
 file	arch/arm/omap/omap_a4x_space.c		tipb | emifs | ocp
-file	arch/arm/xscale/pxa2x0_a4x_io.S		tipb | emifs | ocp
+file	arch/arm/arm/bus_space_a4x.S		tipb | emifs | ocp
 
 # NS16550 compatible serial ports
 attach com at tipb with omapuart
