@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: testsock6.pl,v 1.5 2010-06-22 23:46:52 tbox Exp
+# Id: testsock6.pl,v 1.5 2010/06/22 23:46:52 tbox Exp 
 
 # Test whether the interfaces on 10.53.0.* are up.
 
@@ -46,7 +46,7 @@ foreach $addr ($ARGV) {
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: testsock6.pl,v 1.5 2010-06-22 23:46:52 tbox Exp
+# Id: testsock6.pl,v 1.5 2010/06/22 23:46:52 tbox Exp 
 
 # Test whether the interfaces on 10.53.0.* are up.
 

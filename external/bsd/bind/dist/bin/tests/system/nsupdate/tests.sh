@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009-2012  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.41 2011-07-01 02:25:47 marka Exp
+# Id
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -58,8 +58,8 @@ echo "I:updating zone"
 $NSUPDATE -k ns1/ddns.key <<END > /dev/null || status=1
 server 10.53.0.1 5300
 update add updated.example.nil. 600 A 10.10.10.1
-update add updated.example.nil. 600 TXT Foo
-update delete t.example.nil.
+add updated.example.nil. 600 TXT Foo
+delete t.example.nil.
 
 END
 echo "I:sleeping 5 seconds for server to incorporate changes"
@@ -303,7 +303,7 @@ $NSUPDATE -k ns1/ddns.key <<END > /dev/null || status=1
 server 10.53.0.1 5300
 update add updated3.example.nil. 600 A 10.10.10.3
 update add updated3.example.nil. 600 TXT Zap
-update delete d.example.nil.
+del d.example.nil.
 send
 END
 

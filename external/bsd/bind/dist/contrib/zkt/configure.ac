@@ -18,7 +18,7 @@ dnl AC_PREREQ(2.59)
 
 ### Package name and current version
 AC_INIT(ZKT, 1.0, Holger Zuleger hznet.de)
-dnl AC_REVISION(Revision: 1.2)
+dnl AC_REVISION(Revision: 1.2 )
 
 ### Files to test to check if src dir contains the package
 AC_CONFIG_SRCDIR([zkt-signer.c])

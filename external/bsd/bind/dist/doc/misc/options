@@ -75,6 +75,7 @@ options {
             * ) ];
         attach-cache <string>;
         auth-nxdomain <boolean>; // default changed
+        auto-dnssec ( allow | maintain | off );
         avoid-v4-udp-ports { <portrange>; ... };
         avoid-v6-udp-ports { <portrange>; ... };
         bindkeys-file <quoted_string>;
@@ -115,7 +116,7 @@ options {
         dnssec-dnskey-kskonly <boolean>;
         dnssec-enable <boolean>;
         dnssec-loadkeys-interval <integer>;
-        dnssec-lookaside ( <string> trust-anchor <string> | auto );
+        dnssec-lookaside ( <string> trust-anchor <string> | auto | no );
         dnssec-must-be-secure <string> <boolean>;
         dnssec-secure-to-insecure <boolean>;
         dnssec-update-mode ( maintain | no-resign );
@@ -142,6 +143,7 @@ options {
         host-statistics <boolean>; // not implemented
         host-statistics-max <integer>; // not implemented
         hostname ( <quoted_string> | none );
+        inline-signing <boolean>;
         interface-interval <integer>;
         ixfr-from-differences <ixfrdiff>;
         key-directory <quoted_string>;
@@ -195,12 +197,13 @@ options {
         recursion <boolean>;
         recursive-clients <integer>;
         request-ixfr <boolean>;
+        request-ixfr <boolean>;
         request-nsid <boolean>;
         reserved-sockets <integer>;
         resolver-query-timeout <integer>;
         response-policy {
-                zone <string> [ policy ( given | no-op | nxdomain | nodata
-                    | cname <domain> ) ];
+                zone <string> [ policy ( given | disabled | passthru |
+                    no-op | nxdomain | nodata | cname <domain> ) ];
         };
         rfc2308-type1 <boolean>; // not yet implemented
         root-delegation-only [ exclude { <quoted_string>; ... } ];
@@ -302,6 +305,7 @@ view <string> <optional_class> {
             * ) ];
         attach-cache <string>;
         auth-nxdomain <boolean>; // default changed
+        auto-dnssec ( allow | maintain | off );
         cache-file <quoted_string>;
         check-dup-records ( fail | warn | ignore );
         check-integrity <boolean>;
@@ -338,7 +342,7 @@ view <string> <optional_class> {
         dnssec-dnskey-kskonly <boolean>;
         dnssec-enable <boolean>;
         dnssec-loadkeys-interval <integer>;
-        dnssec-lookaside ( <string> trust-anchor <string> | auto );
+        dnssec-lookaside ( <string> trust-anchor <string> | auto | no );
         dnssec-must-be-secure <string> <boolean>;
         dnssec-secure-to-insecure <boolean>;
         dnssec-update-mode ( maintain | no-resign );
@@ -356,6 +360,7 @@ view <string> <optional_class> {
         forward ( first | only );
         forwarders [ port <integer> ] { ( <ipv4_address> | <ipv6_address> )
             [ port <integer> ]; ... };
+        inline-signing <boolean>;
         ixfr-from-differences <ixfrdiff>;
         key <string> {
                 algorithm <string>;
@@ -403,11 +408,12 @@ view <string> <optional_class> {
         queryport-pool-updateinterval <integer>; // obsolete
         recursion <boolean>;
         request-ixfr <boolean>;
+        request-ixfr <boolean>;
         request-nsid <boolean>;
         resolver-query-timeout <integer>;
         response-policy {
-                zone <string> [ policy ( given | no-op | nxdomain | nodata
-                    | cname <domain> ) ];
+                zone <string> [ policy ( given | disabled | passthru |
+                    no-op | nxdomain | nodata | cname <domain> ) ];
         };
         rfc2308-type1 <boolean>; // not yet implemented
         root-delegation-only [ exclude { <quoted_string>; ... } ];
@@ -488,6 +494,7 @@ view <string> <optional_class> {
                 forward ( first | only );
                 forwarders [ port <integer> ] { ( <ipv4_address> |
                     <ipv6_address> ) [ port <integer> ]; ... };
+                inline-signing <boolean>;
                 ixfr-base <quoted_string>; // obsolete
                 ixfr-from-differences <boolean>;
                 ixfr-tmp-file <quoted_string>; // obsolete
@@ -519,6 +526,7 @@ view <string> <optional_class> {
                 nsec3-test-zone <boolean>; // test only
                 pubkey <integer> <integer> <integer>
                     <quoted_string>; // obsolete
+                request-ixfr <boolean>;
                 serial-update-method ( increment | unixtime );
                 server-addresses { ( <ipv4_address> | <ipv6_address> ) [
                     port <integer> ]; ... };
@@ -580,6 +588,7 @@ zone <string> <optional_class> {
         forward ( first | only );
         forwarders [ port <integer> ] { ( <ipv4_address> | <ipv6_address> )
             [ port <integer> ]; ... };
+        inline-signing <boolean>;
         ixfr-base <quoted_string>; // obsolete
         ixfr-from-differences <boolean>;
         ixfr-tmp-file <quoted_string>; // obsolete
@@ -608,6 +617,7 @@ zone <string> <optional_class> {
         notify-to-soa <boolean>;
         nsec3-test-zone <boolean>; // test only
         pubkey <integer> <integer> <integer> <quoted_string>; // obsolete
+        request-ixfr <boolean>;
         serial-update-method ( increment | unixtime );
         server-addresses { ( <ipv4_address> | <ipv6_address> ) [ port
             <integer> ]; ... };

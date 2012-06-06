@@ -12,25 +12,34 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: test5,v 1.4 2011-01-13 19:30:41 each Exp
+; Id: test5,v 1.5 2011/10/13 01:32:33 vjs Exp 
 
+
+; Use comment lines instead of blank lines to combine update requests into
+;	single requests
+; Separate update requests for distinct TLDs with blank lines or 'send'
+; End the file with a blank line or 'send'
+
+; the policies or replacements specified in ns3/named.conf override these
 
 server 10.53.0.3 5300
-update add  a3-1.tld2.bl-given.	    300 CNAME .
+
+update add  a3-1.tld2.bl-given.	    300 A 127.0.0.1
 send
-
-server 10.53.0.3 5300
-update add  a3-2.tld2.bl-no-op.	    300 CNAME .
+update add  a3-2.tld2.bl-passthru.  300 A 127.0.0.2
 send
-
-server 10.53.0.3 5300
-update add  a3-3.tld2.bl-nodata.    300 CNAME .
+update add  a3-3.tld2.bl-no-op.	    300 A 127.0.0.3
 send
-
-server 10.53.0.3 5300
-update add  a3-4.tld2.bl-nxdomain.  300 CNAME *.
+update add  a3-4.tld2.bl-disabled.  300 A 127.0.0.4
 send
-
-server 10.53.0.3 5300
-update add  a3-5.tld2.bl-cname.	    300 CNAME .
+update add  a3-5.tld2.bl-nodata.    300 A 127.0.0.5
+send
+update add  a3-6.tld2.bl-nxdomain.  300 A 127.0.0.6
+send
+update add  a3-7.tld2.bl-cname.	    300 A 127.0.0.7
+send
+update add  a3-8.tld2.bl-wildcname. 300 A 127.0.0.8
+update add  *.sub9.tld2.bl-wildcname. 300 A 127.0.1.9
+send
+update add  a3-10.tld2.bl-garden.    300 A 127.0.0.10
 send

@@ -15,7 +15,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: dnssec.xml,v 1.6 2011-06-10 23:47:32 tbox Exp -->
+<!-- Id: dnssec.xml,v 1.7 2011/10/13 23:47:10 tbox Exp  -->
 
 <sect1 id="dnssec.dynamic.zones">
   <title>DNSSEC, Dynamic Zones, and Automatic Signing</title>
@@ -115,7 +115,7 @@
   that any change should be made the zone, such as adding, removing,
   or revoking a key, then that action will be carried out.  By default,
   the key directory is checked for changes every 60 minutes; this period
-  can be adjusted with the <command>dnssec-loadkeys-interval</option>, up
+  can be adjusted with the <option>dnssec-loadkeys-interval</option>, up
   to a maximum of 24 hours.  The <command>rndc loadkeys</command> forces
   <command>named</command> to check for key updates immediately.
   </para>
@@ -126,7 +126,6 @@
   command. (Those commands can still be used when there are unscheduled
   key changes, however.)
   </para>
-  <ppara>
   <para>
   If you wish the zone to be signed using NSEC3 instead of NSEC,
   submit an NSEC3PARAM record via dynamic update prior to the

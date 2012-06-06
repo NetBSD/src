@@ -12,7 +12,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: ignore.example.db.in,v 1.5 2007-06-19 23:47:01 tbox Exp
+; Id: ignore.example.db.in,v 1.5 2007/06/19 23:47:01 tbox Exp 
 
 $TTL 300
 @	SOA ns1.ignore.example. hostmaster.ignore.example. (

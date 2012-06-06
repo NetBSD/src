@@ -12,7 +12,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: split-dnssec.example.db.in,v 1.3 2011-03-05 23:52:29 tbox Exp
+; Id: split-dnssec.example.db.in,v 1.3 2011/03/05 23:52:29 tbox Exp 
 
 $TTL 300	; 5 minutes
 @			IN SOA	mname1. . (

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: named.dirconf,v 1.2 2011-03-04 14:43:57 smann Exp */
+/* Id: named.dirconf,v 1.2 2011/03/04 14:43:57 smann Exp  */
 
 options {
         query-source address 10.53.0.1;

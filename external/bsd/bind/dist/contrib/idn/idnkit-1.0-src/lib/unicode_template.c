@@ -1,6 +1,6 @@
-/*	$NetBSD: unicode_template.c,v 1.2 2011/02/16 03:46:57 christos Exp $	*/
+/*	$NetBSD: unicode_template.c,v 1.2.6.1 2012/06/06 18:18:07 bouyer Exp $	*/
 
-/* Id: unicode_template.c,v 1.1.1.1 2003-06-04 00:26:16 marka Exp */
+/* Id: unicode_template.c,v 1.1 2003/06/04 00:26:16 marka Exp  */
 
 /*
  * Copyright (c) 2000,2001 Japan Network Information Center.

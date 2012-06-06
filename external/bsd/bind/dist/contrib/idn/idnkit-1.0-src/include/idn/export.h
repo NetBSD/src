@@ -1,6 +1,6 @@
-/*	$NetBSD: export.h,v 1.2 2011/02/16 03:46:56 christos Exp $	*/
+/*	$NetBSD: export.h,v 1.2.6.1 2012/06/06 18:18:06 bouyer Exp $	*/
 
-/* Id: export.h,v 1.1.1.1 2003-06-04 00:25:37 marka Exp */
+/* Id: export.h,v 1.1 2003/06/04 00:25:37 marka Exp  */
 /*
  * Copyright (c) 2002 Japan Network Information Center.  All rights reserved.
  *  
