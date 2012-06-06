@@ -1,4 +1,4 @@
-/* $NetBSD: term.c,v 1.15 2012/06/03 23:19:10 joerg Exp $ */
+/* $NetBSD: term.c,v 1.16 2012/06/06 13:36:58 joerg Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: term.c,v 1.15 2012/06/03 23:19:10 joerg Exp $");
+__RCSID("$NetBSD: term.c,v 1.16 2012/06/06 13:36:58 joerg Exp $");
 
 #include <sys/stat.h>
 
@@ -234,7 +234,7 @@ _ti_dbgetterm(TERMINAL *term, const char *path, const char *name, int flags)
 		goto fail;
 	/* Check for alias first, fall through to processing normal entries. */
 	if (data8[0] == 2) {
-		if (klen + 7 >= len || le16dec(data8 + 5) != klen)
+		if (klen + 7 > len || le16dec(data8 + 5) != klen)
 			goto fail;
 		if (memcmp(data8 + 7, name, klen))
 			goto fail;
