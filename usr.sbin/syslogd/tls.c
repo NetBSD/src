@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.9 2012/02/13 07:40:24 spz Exp $	*/
+/*	$NetBSD: tls.c,v 1.10 2012/06/06 00:33:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.9 2012/02/13 07:40:24 spz Exp $");
+__RCSID("$NetBSD: tls.c,v 1.10 2012/06/06 00:33:45 christos Exp $");
 
 #ifndef DISABLE_TLS
 #include "syslogd.h"
@@ -143,7 +143,7 @@ getVerifySetting(const char *x509verifystring)
  * calls die() on serious error.
  */
 char*
-init_global_TLS_CTX()
+init_global_TLS_CTX(void)
 {
 	const char *keyfilename	  = tls_opt.keyfile;
 	const char *certfilename  = tls_opt.certfile;
