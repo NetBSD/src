@@ -71,6 +71,8 @@ dns_cache_setcleaninginterval
 dns_cache_setfilename
 dns_cert_fromtext
 dns_cert_totext
+dns_clientinfo_init
+dns_clientinfomethods_init
 dns_compress_add
 dns_compress_findglobal
 dns_compress_getedns
@@ -97,11 +99,14 @@ dns_db_deleterdataset
 dns_db_detach
 dns_db_detachnode
 dns_db_diff
+dns_db_diffx
 dns_db_dump
 dns_db_endload
 dns_db_expirenode
 dns_db_find
+dns_db_findext
 dns_db_findnode
+dns_db_findnodeext
 dns_db_findnsec3node
 dns_db_findrdataset
 dns_db_findzonecut
@@ -238,6 +243,7 @@ dns_journal_current_rr
 dns_journal_destroy
 dns_journal_first_rr
 dns_journal_first_serial
+dns_journal_get_sourceserial
 dns_journal_iter_init
 dns_journal_last_serial
 dns_journal_next_rr
@@ -245,6 +251,7 @@ dns_journal_open
 dns_journal_print
 dns_journal_rollforward
 dns_journal_rollforward2
+dns_journal_set_sourceserial
 dns_journal_write_transaction
 dns_journal_writediff
 dns_keydata_fromdnskey
@@ -282,11 +289,18 @@ dns_lookup_cancel
 dns_lookup_create
 dns_lookup_destroy
 dns_master_dump
+dns_master_dump2
+dns_master_dump3
+dns_master_dumpinc
+dns_master_dumpinc2
+dns_master_dumpinc3
 dns_master_dumpnode
 dns_master_dumpnodetostream
 dns_master_dumptostream
 dns_master_dumptostream2
+dns_master_dumptostream3
 dns_master_dumptostreaminc
+dns_master_initrawheader
 dns_master_loadbuffer
 dns_master_loadbufferinc
 dns_master_loadfile
@@ -464,6 +478,7 @@ dns_portlist_add
 dns_portlist_create
 dns_portlist_detach
 dns_private_chains
+dns_private_totext
 dns_rbt_addname
 dns_rbt_addnode
 dns_rbt_create
@@ -622,6 +637,7 @@ dns_rpz_decode_cname
 dns_rpz_enabled
 dns_rpz_needed
 dns_rpz_new_cidr
+dns_rpz_policy2str
 dns_rpz_set_need
 dns_rpz_str2policy
 dns_rpz_type2str
@@ -670,6 +686,7 @@ dns_tcpmsg_readmessage
 dns_tcpmsg_setmaxsize
 dns_time32_fromtext
 dns_time32_totext
+dns_time64_from32
 dns_time64_fromtext
 dns_time64_totext
 dns_timer_setidle
@@ -699,6 +716,7 @@ dns_tsigrcode_fromtext
 dns_tsigrcode_totext
 dns_ttl_fromtext
 dns_ttl_totext
+dns_update_signatures
 dns_update_soaserial
 dns_validator_cancel
 dns_validator_create
@@ -706,6 +724,7 @@ dns_validator_destroy
 dns_validator_send
 dns_view_adddelegationonly
 dns_view_addzone
+dns_view_asyncload
 dns_view_attach
 dns_view_checksig
 dns_view_create
@@ -771,6 +790,7 @@ dns_zone_dlzpostload
 dns_zone_dump
 dns_zone_dumptostream
 dns_zone_dumptostream2
+dns_zone_dumptostream3
 dns_zone_expire
 dns_zone_first
 dns_zone_flush
@@ -801,6 +821,7 @@ dns_zone_getoptions
 dns_zone_getorigin
 dns_zone_getprivatetype
 dns_zone_getqueryacl
+dns_zone_getraw
 dns_zone_getrequeststats
 dns_zone_getserial
 dns_zone_getserial2
@@ -822,6 +843,8 @@ dns_zone_iattach
 dns_zone_idetach
 dns_zone_isdynamic
 dns_zone_isforced
+dns_zone_keydone
+dns_zone_link
 dns_zone_load
 dns_zone_loadandthaw
 dns_zone_loadnew
@@ -875,12 +898,15 @@ dns_zone_setnotifydelay
 dns_zone_setnotifysrc4
 dns_zone_setnotifysrc6
 dns_zone_setnotifytype
+dns_zone_setnsec3param
 dns_zone_setoption
 dns_zone_setorigin
 dns_zone_setprivatetype
 dns_zone_setqueryacl
 dns_zone_setqueryonacl
+dns_zone_setrawdata
 dns_zone_setrefreshkeyinterval
+dns_zone_setrequestixfr
 dns_zone_setrequeststats
 dns_zone_setserialupdatemethod
 dns_zone_setsignatures
@@ -899,6 +925,7 @@ dns_zone_setxfrsource4
 dns_zone_setxfrsource6
 dns_zone_setzeronosoattl
 dns_zone_signwithkey
+dns_zone_synckeyzone
 dns_zone_unload
 dns_zonekey_iszonekey
 dns_zonemgr_attach
@@ -919,6 +946,8 @@ dns_zonemgr_setsize
 dns_zonemgr_settransfersin
 dns_zonemgr_settransfersperns
 dns_zonemgr_shutdown
+dns_zonemgr_unreachable
+dns_zonemgr_unreachabledel
 dns_zt_apply
 dns_zt_attach
 dns_zt_create
@@ -967,6 +996,7 @@ dst_key_paramcompare
 dst_key_proto
 dst_key_pubcompare
 dst_key_restore
+dst_key_rid
 dst_key_secretsize
 dst_key_setbits
 dst_key_setflags
@@ -984,6 +1014,7 @@ dst_lib_init
 dst_lib_init2
 dst_lib_initmsgcat
 dst_region_computeid
+dst_region_computerid
 dst_result_register
 dst_result_totext
 

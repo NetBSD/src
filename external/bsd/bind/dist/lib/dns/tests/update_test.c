@@ -1,7 +1,7 @@
-/*	$NetBSD: update_test.c,v 1.1.1.1 2011/09/11 17:19:03 christos Exp $	*/
+/*	$NetBSD: update_test.c,v 1.1.1.1.4.1 2012/06/06 18:18:18 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,9 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: update_test.c,v 1.5 2011-08-23 01:29:38 each Exp */
-
-/* $Id: */
+/* Id */
 
 /*! \file */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: gssapi_krb.c,v 1.1.1.1 2011/09/11 17:13:35 christos Exp $	*/
+/*	$NetBSD: gssapi_krb.c,v 1.1.1.1.4.1 2012/06/06 18:17:53 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: gssapi_krb.c,v 1.3 2011-04-05 19:16:54 smann Exp */
+/* Id: gssapi_krb.c,v 1.3 2011/04/05 19:16:54 smann Exp  */
 
 #include <config.h>
 
