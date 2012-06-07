@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.24 2012/06/05 08:44:21 martin Exp $
+# $NetBSD: Makefile,v 1.25 2012/06/07 09:59:51 martin Exp $
 
 MKMAN=	no
 
@@ -66,7 +66,6 @@ SRCS.t_mprotect=	t_mprotect.c ${SRCS_EXEC_PROT}
 
 LDADD.t_getpid+=        -lpthread
 LDADD.t_posix_fadvise+= -lrumpvfs -lrump -lrumpuser -lpthread
-LDADD.t_mincore+=	-lkvm
 
 WARNS=			4
 

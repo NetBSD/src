@@ -1,4 +1,4 @@
-/* $NetBSD: t_mincore.c,v 1.6 2012/06/05 08:44:21 martin Exp $ */
+/* $NetBSD: t_mincore.c,v 1.7 2012/06/07 09:59:51 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mincore.c,v 1.6 2012/06/05 08:44:21 martin Exp $");
+__RCSID("$NetBSD: t_mincore.c,v 1.7 2012/06/07 09:59:51 martin Exp $");
 
 #include <sys/mman.h>
 #include <sys/shm.h>
@@ -73,7 +73,6 @@ __RCSID("$NetBSD: t_mincore.c,v 1.6 2012/06/05 08:44:21 martin Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <sys/resource.h>
-#include <sys/sysctl.h>
 
 static long		page = 0;
 static const char	path[] = "mincore";
@@ -95,35 +94,15 @@ check_residency(void *addr, size_t npgs)
 		if (vec[i] != 0)
 			resident++;
 
+#if 0
 		(void)fprintf(stderr, "page 0x%p is %sresident\n",
 		    (char *)addr + (i * page), vec[i] ? "" : "not ");
+#endif
 	}
 
 	free(vec);
 
 	return resident;
-}
-
-/*
- * Get an estimate of the current VM size
- */
-static size_t
-vm_cur_pages(void)
-{
-	size_t res = 0;
-	kvm_t *kvm;
-	struct kinfo_proc2 *pi;
-	int cnt;
-
-	kvm = kvm_open(NULL, NULL, NULL, KVM_NO_FILES, getprogname());
-	if (kvm == NULL)
-		return 0;
-	pi = kvm_getproc2(kvm, KERN_PROC_PID, getpid(), sizeof(*pi), &cnt);
-	if (pi && cnt >= 1)
-		res = pi[0].p_vm_vsize;
-	kvm_close(kvm);
-
-	return res;
 }
 
 ATF_TC(mincore_err);
@@ -164,28 +143,14 @@ ATF_TC_HEAD(mincore_resid, tc)
 ATF_TC_BODY(mincore_resid, tc)
 {
 	void *addr, *addr2, *addr3, *buf;
-	size_t npgs = 0;
+	size_t npgs = 0, resident;
 	struct stat st;
 	int fd, rv;
 	struct rlimit rlim;
-	size_t needed_pages, limit_pages;
 
 	ATF_REQUIRE(getrlimit(RLIMIT_MEMLOCK, &rlim) == 0);
-	limit_pages = rlim.rlim_cur / page;
-	/*
-	 * We can not exactly predict the number of pages resulting from
-	 * the test and the mlockall() call below.
-	 * Get a safe upper bound instead...
-	 */
-	needed_pages = vm_cur_pages();
-	/* we certainly will gow  by 128 pages */
-	needed_pages += 128;
-	/* add a bit of safety room */
-	needed_pages += 12;
-
-	if (needed_pages >= limit_pages)
-		atf_tc_skip("too low limits on locked memory (may need %zu "
-		    "pages, limit is %zu pages)", needed_pages, limit_pages);
+	rlim.rlim_cur = rlim.rlim_max;
+	ATF_REQUIRE(setrlimit(RLIMIT_MEMLOCK, &rlim) == 0);
 
 	(void)memset(&st, 0, sizeof(struct stat));
 
@@ -215,7 +180,9 @@ ATF_TC_BODY(mincore_resid, tc)
 
 	(void)check_residency(addr, npgs);
 
-	ATF_REQUIRE(mlock(addr, npgs * page) == 0);
+	rv = mlock(addr, npgs * page);
+	if (rv == -1 && errno == EAGAIN)
+		atf_tc_skip("hit process resource limits");
 	ATF_REQUIRE(munmap(addr, st.st_size) == 0);
 
 	npgs = 128;
@@ -224,7 +191,8 @@ ATF_TC_BODY(mincore_resid, tc)
 	    MAP_ANON | MAP_PRIVATE | MAP_WIRED, -1, (off_t)0);
 
 	if (addr == MAP_FAILED)
-		return;
+		atf_tc_fail("could not mmap wired anonymous test area, system "
+		    "might be low on memory");
 
 	ATF_REQUIRE(check_residency(addr, npgs) == npgs);
 	ATF_REQUIRE(munmap(addr, npgs * page) == 0);
@@ -234,8 +202,7 @@ ATF_TC_BODY(mincore_resid, tc)
 	addr = mmap(NULL, npgs * page, PROT_READ | PROT_WRITE,
 	    MAP_ANON | MAP_PRIVATE, -1, (off_t)0);
 
-	if (addr == MAP_FAILED)
-		return;
+	ATF_REQUIRE(addr != MAP_FAILED);
 
 	/*
 	 * Check that the in-core pages match the locked pages.
@@ -243,17 +210,24 @@ ATF_TC_BODY(mincore_resid, tc)
 	ATF_REQUIRE(check_residency(addr, npgs) == 0);
 
 	errno = 0;
-
 	if (mlockall(MCL_CURRENT|MCL_FUTURE) != 0 && errno != ENOMEM)
 		atf_tc_fail("mlockall(2) failed");
+	if (errno == ENOMEM)
+		atf_tc_skip("mlockall() exceeded process resource limits");
 
-	ATF_REQUIRE(check_residency(addr, npgs) == npgs);
+	resident = check_residency(addr, npgs);
+	if (resident < npgs)
+		atf_tc_fail("mlockall(MCL_FUTURE) succeeded, still only "
+		    "%zu pages of the newly mapped %zu pages are resident",
+		    resident, npgs);
 
 	addr2 = mmap(NULL, npgs * page, PROT_READ, MAP_ANON, -1, (off_t)0);
 	addr3 = mmap(NULL, npgs * page, PROT_NONE, MAP_ANON, -1, (off_t)0);
 
 	if (addr2 == MAP_FAILED || addr3 == MAP_FAILED)
-		return;
+		atf_tc_fail("could not mmap more anonymous test pages with "
+		    "mlockall(MCL_FUTURE) in effect, system "
+		    "might be low on memory");
 
 	ATF_REQUIRE(check_residency(addr2, npgs) == npgs);
 	ATF_REQUIRE(check_residency(addr3, npgs) == 0);
