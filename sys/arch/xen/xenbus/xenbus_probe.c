@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.36 2012/06/05 10:58:56 sborrill Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.37 2012/06/07 14:05:13 sborrill Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.36 2012/06/05 10:58:56 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.37 2012/06/07 14:05:13 sborrill Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -354,7 +354,11 @@ xenbus_probe_device_type(const char *path, const char *type,
 
 		/* Convert string values to numeric; skip invalid */
 		for (i = 0; i < dir_n; i++) {
-			id[i] = strtoul(dir[i], &ep, 10);
+			/*
+			 * Add one to differentiate numerical zero from invalid
+			 * string. Has no effect on sort order.
+			 */
+			id[i] = strtoul(dir[i], &ep, 10) + 1;
 			if (dir[i][0] == '\0' || *ep != '\0')
 				id[i] = 0;
 		}
