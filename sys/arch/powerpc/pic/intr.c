@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.21 2012/06/07 02:39:22 macallan Exp $ */
+/*	$NetBSD: intr.c,v 1.22 2012/06/07 04:37:09 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.21 2012/06/07 02:39:22 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.22 2012/06/07 04:37:09 macallan Exp $");
 
 #include "opt_interrupt.h"
 #include "opt_multiprocessor.h"
@@ -622,7 +622,7 @@ have_pending_intr_p(struct cpu_info *ci, int ncpl)
 	if (ci->ci_ipending & ~imask[ncpl])
 		return true;
 #ifdef __HAVE_FAST_SOFTINTS
-	if ((ci->ci_data.cpu_softints << ncpl) & IPL_SOFTMASK)
+	if (ci->ci_data.cpu_softints & (IPL_SOFTMASK << ncpl))
 		return true;
 #endif
 	return false;
