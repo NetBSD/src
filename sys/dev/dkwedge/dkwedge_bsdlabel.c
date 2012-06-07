@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_bsdlabel.c,v 1.16 2009/12/05 16:29:14 pooka Exp $	*/
+/*	$NetBSD: dkwedge_bsdlabel.c,v 1.17 2012/06/07 16:15:31 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.16 2009/12/05 16:29:14 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.17 2012/06/07 16:15:31 mlelstv Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -248,11 +248,20 @@ addwedges(const mbr_args_t *a, const struct disklabel *lp)
 		dkw.dkw_size = p->p_size;
 
 		/*
-		 * These get historical disk naming style
+		 * If the label defines a name, append the partition
+		 * letter and use it as the wedge name.
+		 * Otherwise use historical disk naming style
 		 * wedge names.
 		 */
-		snprintf((char *)&dkw.dkw_wname, sizeof(dkw.dkw_wname),
-		    "%s%c", a->pdk->dk_name, 'a' + i);
+		if (lp->d_packname[0] &&
+		    strcmp(lp->d_packname,"fictitious") != 0) {
+			snprintf((char *)&dkw.dkw_wname, sizeof(dkw.dkw_wname),
+		    		"%.*s/%c", (int)sizeof(dkw.dkw_wname)-3,
+				lp->d_packname, 'a' + i);
+		} else {
+			snprintf((char *)&dkw.dkw_wname, sizeof(dkw.dkw_wname),
+			    "%s%c", a->pdk->dk_name, 'a' + i);
+		}
 
 		error = dkwedge_add(&dkw);
 		if (error == EEXIST)
