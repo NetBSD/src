@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.20 2012/02/01 09:54:03 matt Exp $ */
+/*	$NetBSD: intr.c,v 1.21 2012/06/07 02:39:22 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.20 2012/02/01 09:54:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.21 2012/06/07 02:39:22 macallan Exp $");
 
 #include "opt_interrupt.h"
 #include "opt_multiprocessor.h"
@@ -508,7 +508,11 @@ again:
 	}
 
 #ifdef __HAVE_FAST_SOFTINTS
-	const u_int softints = (ci->ci_data.cpu_softints << pcpl) & IPL_SOFTMASK;
+	const u_int softints = ci->ci_data.cpu_softints &
+				 (IPL_SOFTMASK << pcpl);
+
+	/* make sure there are no bits to screw with the line above */
+	KASSERT((ci->ci_data.cpu_softints & ~IPL_SOFTMASK) == 0);
 
 	if (__predict_false(softints != 0)) {
 		ci->ci_cpl = IPL_HIGH;
