@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC,v 1.287 2012/05/15 17:39:50 rkujawa Exp $
+# $NetBSD: GENERIC,v 1.288 2012/06/07 23:32:47 rkujawa Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.99 2012/05/15 17:35:44 rkujawa Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.101 2012/06/07 23:30:52 rkujawa Exp $
 #
 ##
 # GENERIC machine description file
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.287 $"
+#ident 		"GENERIC-$Revision: 1.288 $"
 
 
 maxusers	8
@@ -479,7 +479,7 @@ uk*	at scsibus? target ? lun ?	# scsi unknown
 # PCI bus support
 options		PCIVERBOSE              # verbose PCI device autoconfig messages
 #options	PCI_CONFIG_DUMP
-options		PCI_NETBSD_CONFIGURE	# supported by mppb(4) and p5pb(4)
+options		PCI_NETBSD_CONFIGURE	# supported by mppb(4), p5pb(4), empb(4)
 
 p5pb0		at p5bus0		# Phase5 PCI bridge (CVPPC/BVPPC/G-REX)
 p5membar*	at zbus0		# Phase5 PCI bridge autoconfiguring BARs
@@ -490,6 +490,10 @@ pci*		at p5pb0
 mppb*           at zbus0		# Matay Prometheus Zorro-PCI bridge
 pci*            at mppb?
 
+empb0		at zbus0		# ELBOX Mediator PCI 1200
+emmem0		at zbus0		# ELBOX Mediator PCI memory space
+pci*		at empb0
+
 #cv3dpb*	at zbus0		# CyberVision 64/3D PCI bridge
 
 #genfb*		at pci?			# generic fb, CVPPC/BVPPC only
@@ -497,6 +501,7 @@ pci*            at mppb?
 #radeonfb*	at pci?			# untested
 
 ne*             at pci?			# NE2000 Ethernet
+satalink* at pci? dev ? function ? flags 0x0002	# SiI SATALink 3112 
 
 # Bluetooth Controller and Device support
 # tested only with btuart on an A1200
