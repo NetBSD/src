@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.84 2012/02/13 12:49:35 wiz Exp $
+.\"     $NetBSD: vnodeops.9,v 1.85 2012/06/07 01:01:12 agc Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 13, 2012
+.Dd June 6, 2012
 .Dt VNODEOPS 9
 .Os
 .Sh NAME
@@ -239,7 +239,7 @@ The following table gives a summary of the operations.
 .It VOP_FCNTL	Perform file control
 .It VOP_POLL	Test if poll event has occurred
 .It VOP_KQFILTER	Register a knote
-.It VOP_REVOKE	Eliminate vode activity
+.It VOP_REVOKE	Eliminate vnode activity
 .It VOP_MMAP	Map file into user address space
 .It VOP_FSYNC	Flush pending data to disk
 .It VOP_SEEK	Test if file is seekable
