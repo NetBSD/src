@@ -1,4 +1,4 @@
-# $NetBSD: WSCONS,v 1.64 2012/01/24 00:19:39 rkujawa Exp $
+# $NetBSD: WSCONS,v 1.65 2012/06/07 23:30:52 rkujawa Exp $
 
 # GENERIC with wscons(4)
 #
@@ -55,7 +55,7 @@ voodoofb*	at pci?			# 3Dfx Voodoo 3 in G-REX
 
 # Console support for CyberVisionPPC, BlizzardVisionPPC and 3Dfx Voodoo 3 in 
 # G-REX.
-options		P5PB_CONSOLE
+#options		P5PB_CONSOLE
 
 wsdisplay*	at wsemuldisplaydev? console ?
 

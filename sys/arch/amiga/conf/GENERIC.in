@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.100 2012/05/30 18:01:51 rkujawa Exp $
+# $NetBSD: GENERIC.in,v 1.101 2012/06/07 23:30:52 rkujawa Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.100 $"
+#ident 		"GENERIC-$Revision: 1.101 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -566,7 +566,7 @@ m4_ifdef(`AMIGA_CONFIGURATION', `m4_dnl
 # PCI bus support
 options		PCIVERBOSE              # verbose PCI device autoconfig messages
 #options	PCI_CONFIG_DUMP
-options		PCI_NETBSD_CONFIGURE	# supported by mppb(4) and p5pb(4)
+options		PCI_NETBSD_CONFIGURE	# supported by mppb(4), p5pb(4), empb(4)
 
 p5pb0		at p5bus0		# Phase5 PCI bridge (CVPPC/BVPPC/G-REX)
 p5membar*	at zbus0		# Phase5 PCI bridge autoconfiguring BARs
@@ -588,6 +588,7 @@ pci*		at empb0
 #radeonfb*	at pci?			# untested
 
 ne*             at pci?			# NE2000 Ethernet
+satalink* at pci? dev ? function ? flags 0x0002	# SiI SATALink 3112 
 
 # Bluetooth Controller and Device support
 # tested only with btuart on an A1200
