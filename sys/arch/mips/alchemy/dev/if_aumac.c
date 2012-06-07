@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.35 2012/05/19 15:17:35 kiyohara Exp $ */
+/* $NetBSD: if_aumac.c,v 1.36 2012/06/07 00:19:29 kiyohara Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.35 2012/05/19 15:17:35 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.36 2012/06/07 00:19:29 kiyohara Exp $");
 
 
 
@@ -497,6 +497,7 @@ aumac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		 */
 		if (ifp->if_flags & IFF_RUNNING)
 			aumac_set_filter(sc);
+		error = 0;
 	}
 
 	/* Try to get more packets going. */
