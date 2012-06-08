@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.100 2012/03/20 12:04:01 kardel Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.101 2012/06/08 07:54:14 martin Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.100 2012/03/20 12:04:01 kardel Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.101 2012/06/08 07:54:14 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -436,7 +436,7 @@ getaddrinfo(const char *hostname, const char *servname,
 		}
 		error = get_portmatch(pai, servname, &svd);
 		if (error)
-			ERR(error);
+			goto bad;
 
 		*pai = ai0;
 	}
