@@ -1,4 +1,4 @@
-/* $NetBSD: t_mincore.c,v 1.7 2012/06/07 09:59:51 martin Exp $ */
+/* $NetBSD: t_mincore.c,v 1.8 2012/06/08 07:18:58 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mincore.c,v 1.7 2012/06/07 09:59:51 martin Exp $");
+__RCSID("$NetBSD: t_mincore.c,v 1.8 2012/06/08 07:18:58 martin Exp $");
 
 #include <sys/mman.h>
 #include <sys/shm.h>
@@ -191,7 +191,7 @@ ATF_TC_BODY(mincore_resid, tc)
 	    MAP_ANON | MAP_PRIVATE | MAP_WIRED, -1, (off_t)0);
 
 	if (addr == MAP_FAILED)
-		atf_tc_fail("could not mmap wired anonymous test area, system "
+		atf_tc_skip("could not mmap wired anonymous test area, system "
 		    "might be low on memory");
 
 	ATF_REQUIRE(check_residency(addr, npgs) == npgs);
@@ -225,7 +225,7 @@ ATF_TC_BODY(mincore_resid, tc)
 	addr3 = mmap(NULL, npgs * page, PROT_NONE, MAP_ANON, -1, (off_t)0);
 
 	if (addr2 == MAP_FAILED || addr3 == MAP_FAILED)
-		atf_tc_fail("could not mmap more anonymous test pages with "
+		atf_tc_skip("could not mmap more anonymous test pages with "
 		    "mlockall(MCL_FUTURE) in effect, system "
 		    "might be low on memory");
 
