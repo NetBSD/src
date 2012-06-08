@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.142 2011/12/12 00:06:39 roy Exp $	*/
+/*	$NetBSD: in.c,v 1.143 2012/06/08 15:01:51 gdt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.142 2011/12/12 00:06:39 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.143 2012/06/08 15:01:51 gdt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -729,7 +729,7 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 				continue;
 			if (cmp == 0)
 				break;
-			candidate.s_addr = ((struct sockaddr_in *)&ifa->ifa_addr)->sin_addr.s_addr;
+			candidate.s_addr = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr;
 			candidate.s_addr &= mask.s_addr;
 			if (candidate.s_addr == match.s_addr)
 				break;
