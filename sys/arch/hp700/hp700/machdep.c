@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.113 2012/05/23 16:11:37 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.114 2012/06/08 07:53:41 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.113 2012/05/23 16:11:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114 2012/06/08 07:53:41 dsl Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -228,7 +228,7 @@ int	cpu_modelno;
 int	cpu_revision;
 
 #if NLCD > 0
-int	lcd_blink_p;
+bool	lcd_blink_p;
 #endif
 
 /*
@@ -1926,7 +1926,8 @@ sysctl_machdep_boot(SYSCTLFN_ARGS)
 static int
 sysctl_machdep_heartbeat(SYSCTLFN_ARGS)
 {
-	int oldval, error;
+	int error;
+	bool oldval;
 	struct sysctlnode node = *rnode;
 	
 	oldval = lcd_blink_p;
@@ -1938,7 +1939,7 @@ sysctl_machdep_heartbeat(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return (error);
 
-	if (!oldval && lcd_blink_p > oldval)
+	if (!oldval && lcd_blink_p)
 		blink_lcd_timeout(NULL);
 
 	return 0;
