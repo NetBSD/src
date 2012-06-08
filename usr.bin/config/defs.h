@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.43 2012/03/12 03:04:56 dholland Exp $	*/
+/*	$NetBSD: defs.h,v 1.44 2012/06/08 08:56:45 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -481,7 +481,7 @@ struct	hashtab *cdevmtab;	/* character devm lookup */
 
 TAILQ_HEAD(, devbase)	allbases;	/* list of all devbase structures */
 TAILQ_HEAD(, deva)	alldevas;	/* list of all devbase attachments */
-TAILQ_HEAD(, config)	allcf;		/* list of configured kernels */
+TAILQ_HEAD(conftq, config) allcf;	/* list of configured kernels */
 TAILQ_HEAD(, devi)	alldevi,	/* list of all instances */
 			allpseudo;	/* list of all pseudo-devices */
 TAILQ_HEAD(, devm)	alldevms;	/* list of all device-majors */
