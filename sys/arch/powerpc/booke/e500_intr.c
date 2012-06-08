@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.16 2011/09/27 01:02:35 jym Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.17 2012/06/08 23:35:23 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.16 2011/09/27 01:02:35 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.17 2012/06/08 23:35:23 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -506,7 +506,7 @@ e500_splx(int ipl)
 	// const
 	register_t msr = wrtee(0);
 #ifdef __HAVE_FAST_SOFTINTS
-	const u_int softints = (ci->ci_data.cpu_softints << ipl) & IPL_SOFTMASK;
+	const u_int softints = ci->ci_data.cpu_softints & (IPL_SOFTMASK << ipl);
 	if (__predict_false(softints != 0)) {
 		e500_splset(ci, IPL_HIGH);
 		powerpc_softint(ci, ipl,
@@ -940,7 +940,7 @@ e500_extintr(struct trapframe *tf)
 	/*
 	 * Before exiting, deal with any softints that need to be dealt with.
 	 */
-	const u_int softints = (ci->ci_data.cpu_softints << old_ipl) & IPL_SOFTMASK;
+	const u_int softints = ci->ci_data.cpu_softints & (IPL_SOFTMASK << old_ipl);
 	if (__predict_false(softints != 0)) {
 		KASSERT(old_ipl < IPL_VM);
 		e500_splset(ci, IPL_HIGH);	/* pop to high */
