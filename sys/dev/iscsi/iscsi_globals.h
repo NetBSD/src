@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_globals.h,v 1.3 2012/06/02 16:52:11 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_globals.h,v 1.4 2012/06/09 06:19:58 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -387,6 +387,7 @@ struct connection_s {
 					/* if closing down: status */
 	int				recover; /* recovery count */
 		/* (reset on first successful data transfer) */
+	int				usecount; /* number of active CCBs */
 
 	bool				destroy; /* conn will be destroyed */
 	bool				in_session;
