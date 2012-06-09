@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_uidinfo.c,v 1.6 2012/06/09 02:31:15 christos Exp $	*/
+/*	$NetBSD: kern_uidinfo.c,v 1.7 2012/06/09 02:55:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uidinfo.c,v 1.6 2012/06/09 02:31:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uidinfo.c,v 1.7 2012/06/09 02:55:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,12 +214,7 @@ chglwpcnt(uid_t uid, int diff)
 
 	uip = uid_find(uid);
 	lwpcnt = atomic_add_long_nv(&uip->ui_lwpcnt, diff);
-#if 0
 	KASSERT(lwpcnt >= 0);
-#else
-	if (lwpcnt < 0)
-		printf("pid=%d lwpcnt=%ld\n", uid, lwpcnt);
-#endif
 	return lwpcnt;
 }
 
