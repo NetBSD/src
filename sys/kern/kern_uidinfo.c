@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_uidinfo.c,v 1.5 2009/03/22 00:49:13 ad Exp $	*/
+/*	$NetBSD: kern_uidinfo.c,v 1.6 2012/06/09 02:31:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uidinfo.c,v 1.5 2009/03/22 00:49:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uidinfo.c,v 1.6 2012/06/09 02:31:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,12 +43,87 @@ __KERNEL_RCSID(0, "$NetBSD: kern_uidinfo.c,v 1.5 2009/03/22 00:49:13 ad Exp $");
 #include <sys/proc.h>
 #include <sys/atomic.h>
 #include <sys/uidinfo.h>
+#include <sys/sysctl.h>
+#include <sys/kauth.h>
 #include <sys/cpu.h>
 
 static SLIST_HEAD(uihashhead, uidinfo) *uihashtbl;
 static u_long 		uihash;
 
 #define	UIHASH(uid)	(&uihashtbl[(uid) & uihash])
+
+static int
+sysctl_kern_uidinfo_cnt(SYSCTLFN_ARGS)
+{  
+	static const struct {
+		const char *name;
+		u_int value;
+	} nv[] = {
+#define _MEM(n) { # n, offsetof(struct uidinfo, ui_ ## n) }
+		_MEM(proccnt),
+		_MEM(lwpcnt),
+		_MEM(lockcnt),
+		_MEM(sbsize),
+#undef _MEM
+	};
+
+	for (size_t i = 0; i < __arraycount(nv); i++)
+		if (strcmp(nv[i].name, rnode->sysctl_name) == 0) {
+			uint64_t cnt;
+			struct sysctlnode node = *rnode;
+			struct uidinfo *uip;
+
+			node.sysctl_data = &cnt;
+			uip = uid_find(kauth_cred_geteuid(l->l_cred));
+
+			*(uint64_t *)node.sysctl_data = 
+			    *(u_long *)((char *)uip + nv[i].value);
+
+			return sysctl_lookup(SYSCTLFN_CALL(&node));
+		}
+
+	return EINVAL;
+}
+
+static void
+sysctl_kern_uidinfo_setup(void)
+{
+	const struct sysctlnode *rnode, *cnode;
+	struct sysctllog *kern_uidinfo_sysctllog;
+
+	kern_uidinfo_sysctllog = NULL;
+	sysctl_createv(&kern_uidinfo_sysctllog, 0, NULL, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "uidinfo",
+		       SYSCTL_DESCR("Resource usage per uid"),
+		       NULL, 0, NULL, 0,
+		       CTL_KERN, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(&kern_uidinfo_sysctllog, 0, &rnode, &cnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_QUAD, "proccnt",
+		       SYSCTL_DESCR("Number of processes for the current user"),
+		       sysctl_kern_uidinfo_cnt, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(&kern_uidinfo_sysctllog, 0, &rnode, &cnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_QUAD, "lwpcnt",
+		       SYSCTL_DESCR("Number of lwps for the current user"),
+		       sysctl_kern_uidinfo_cnt, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(&kern_uidinfo_sysctllog, 0, &rnode, &cnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_QUAD, "lockcnt",
+		       SYSCTL_DESCR("Number of locks for the current user"),
+		       sysctl_kern_uidinfo_cnt, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(&kern_uidinfo_sysctllog, 0, &rnode, &cnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_QUAD, "sbsize",
+		       SYSCTL_DESCR("Socket buffers used for the current user"),
+		       sysctl_kern_uidinfo_cnt, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+}
 
 void
 uid_init(void)
@@ -68,6 +143,7 @@ uid_init(void)
 	 * sbreserve() expects it available from interrupt context.
 	 */
 	(void)uid_find(0);
+	sysctl_kern_uidinfo_setup();
 }
 
 struct uidinfo *
@@ -124,6 +200,27 @@ chgproccnt(uid_t uid, int diff)
 	proccnt = atomic_add_long_nv(&uip->ui_proccnt, diff);
 	KASSERT(proccnt >= 0);
 	return proccnt;
+}
+
+/*
+ * Change the count associated with number of lwps
+ * a given user is using.
+ */
+int
+chglwpcnt(uid_t uid, int diff)
+{
+	struct uidinfo *uip;
+	long lwpcnt;
+
+	uip = uid_find(uid);
+	lwpcnt = atomic_add_long_nv(&uip->ui_lwpcnt, diff);
+#if 0
+	KASSERT(lwpcnt >= 0);
+#else
+	if (lwpcnt < 0)
+		printf("pid=%d lwpcnt=%ld\n", uid, lwpcnt);
+#endif
+	return lwpcnt;
 }
 
 int
