@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.241 2012/06/03 10:45:10 dsl Exp $	*/
+/*	$NetBSD: rump.c,v 1.242 2012/06/09 15:48:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.241 2012/06/03 10:45:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.242 2012/06/09 15:48:38 christos Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -326,6 +326,7 @@ rump__init(int rump_version)
 
 	procinit();
 	proc0_init();
+	sysctl_init();
 	uid_init();
 	chgproccnt(0, 1);
 
@@ -373,7 +374,6 @@ rump__init(int rump_version)
 		aprint_verbose("cpu%d at thinair0: rump virtual cpu\n", i);
 	}
 
-	sysctl_init();
 	mksysctls();
 	kqueue_init();
 	iostat_init();
