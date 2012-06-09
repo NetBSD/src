@@ -1,4 +1,4 @@
-/*	$NetBSD: xsasl_cyrus.h,v 1.1.1.1 2009/06/23 10:09:02 tron Exp $	*/
+/*	$NetBSD: xsasl_cyrus.h,v 1.1.1.2 2012/06/09 11:27:28 tron Exp $	*/
 
 #ifndef _XSASL_CYRUS_H_INCLUDED_
 #define _XSASL_CYRUS_H_INCLUDED_
@@ -27,6 +27,11 @@
 
 extern XSASL_SERVER_IMPL *xsasl_cyrus_server_init(const char *, const char *);
 extern XSASL_CLIENT_IMPL *xsasl_cyrus_client_init(const char *, const char *);
+
+ /*
+  * Internal definitions for client and server module.
+  */
+typedef int (*XSASL_CYRUS_CB) (void);
 
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_misc.c,v 1.1.1.3 2011/03/02 19:32:27 tron Exp $	*/
+/*	$NetBSD: tls_misc.c,v 1.1.1.4 2012/06/09 11:27:18 tron Exp $	*/
 
 /*++
 /* NAME
@@ -217,6 +217,12 @@ static const NAME_CODE protocol_table[] = {
     SSL_TXT_SSLV2, TLS_PROTOCOL_SSLv2,
     SSL_TXT_SSLV3, TLS_PROTOCOL_SSLv3,
     SSL_TXT_TLSV1, TLS_PROTOCOL_TLSv1,
+#ifdef SSL_TXT_TLSV1_1
+    SSL_TXT_TLSV1_1, TLS_PROTOCOL_TLSv1_1,
+#endif
+#ifdef SSL_TXT_TLSV1_2
+    SSL_TXT_TLSV1_2, TLS_PROTOCOL_TLSv1_2,
+#endif
     0, TLS_PROTOCOL_INVALID,
 };
 

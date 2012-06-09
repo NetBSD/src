@@ -1,4 +1,4 @@
-/*	$NetBSD: events.c,v 1.1.1.3 2011/03/02 19:32:43 tron Exp $	*/
+/*	$NetBSD: events.c,v 1.1.1.4 2012/06/09 11:27:25 tron Exp $	*/
 
 /*++
 /* NAME
@@ -182,6 +182,7 @@ typedef fd_set EVENT_MASK;
 #define EVENT_MASK_SET(fd, mask)	FD_SET((fd), (mask))
 #define EVENT_MASK_ISSET(fd, mask)	FD_ISSET((fd), (mask))
 #define EVENT_MASK_CLR(fd, mask)	FD_CLR((fd), (mask))
+#define EVENT_MASK_CMP(m1, m2) memcmp((m1), (m2), EVENT_MASK_BYTE_COUNT(m1))
 #else
 
  /*
@@ -228,6 +229,8 @@ typedef struct {
 	(EVENT_MASK_FD_BYTE((fd), (mask)) & EVENT_MASK_FD_BIT(fd))
 #define EVENT_MASK_CLR(fd, mask) \
 	(EVENT_MASK_FD_BYTE((fd), (mask)) &= ~EVENT_MASK_FD_BIT(fd))
+#define EVENT_MASK_CMP(m1, m2) \
+	memcmp((m1)->data, (m2)->data, EVENT_MASK_BYTE_COUNT(m1))
 #endif
 
  /*
@@ -666,8 +669,7 @@ void    event_drain(int time_limit)
     max_time = event_present + time_limit;
     while (event_present < max_time
 	   && (event_timer_head.pred != &event_timer_head
-	       || memcmp(&zero_mask, &event_xmask,
-			 EVENT_MASK_BYTE_COUNT(&zero_mask)) != 0)) {
+	       || EVENT_MASK_CMP(&zero_mask, &event_xmask) != 0)) {
 	event_loop(1);
 #if (EVENTS_STYLE != EVENTS_STYLE_SELECT)
 	if (EVENT_MASK_BYTE_COUNT(&zero_mask)

@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.h,v 1.1.1.2 2011/03/02 19:32:27 tron Exp $	*/
+/*	$NetBSD: tls.h,v 1.1.1.3 2012/06/09 11:27:18 tron Exp $	*/
 
 #ifndef _TLS_H_INCLUDED_
 #define _TLS_H_INCLUDED_
@@ -157,8 +157,23 @@ extern void tls_param_init(void);
 #define TLS_PROTOCOL_SSLv2	(1<<0)	/* SSLv2 */
 #define TLS_PROTOCOL_SSLv3	(1<<1)	/* SSLv3 */
 #define TLS_PROTOCOL_TLSv1	(1<<2)	/* TLSv1 */
+#ifdef SSL_TXT_TLSV1_1
+#define TLS_PROTOCOL_TLSv1_1	(1<<3)	/* TLSv1_1 */
+#else
+#define TLS_PROTOCOL_TLSv1_1	0	/* Unknown */
+#undef  SSL_OP_NO_TLSv1_1
+#define SSL_OP_NO_TLSv1_1	0L	/* Noop */
+#endif
+#ifdef SSL_TXT_TLSV1_2
+#define TLS_PROTOCOL_TLSv1_2	(1<<4)	/* TLSv1_2 */
+#else
+#define TLS_PROTOCOL_TLSv1_2	0	/* Unknown */
+#undef  SSL_OP_NO_TLSv1_2
+#define SSL_OP_NO_TLSv1_2	0L	/* Noop */
+#endif
 #define TLS_KNOWN_PROTOCOLS	\
-	( TLS_PROTOCOL_SSLv2 | TLS_PROTOCOL_SSLv3 | TLS_PROTOCOL_TLSv1 )
+	( TLS_PROTOCOL_SSLv2 | TLS_PROTOCOL_SSLv3 | TLS_PROTOCOL_TLSv1 \
+	   | TLS_PROTOCOL_TLSv1_1 | TLS_PROTOCOL_TLSv1_2 )
 
 extern int tls_protocol_mask(const char *);
 

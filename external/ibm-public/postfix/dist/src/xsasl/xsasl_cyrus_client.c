@@ -1,4 +1,4 @@
-/*	$NetBSD: xsasl_cyrus_client.c,v 1.1.1.1 2009/06/23 10:09:02 tron Exp $	*/
+/*	$NetBSD: xsasl_cyrus_client.c,v 1.1.1.2 2012/06/09 11:27:28 tron Exp $	*/
 
 /*++
 /* NAME
@@ -225,7 +225,7 @@ XSASL_CLIENT_IMPL *xsasl_cyrus_client_init(const char *unused_client_type,
      * Global callbacks. These have no per-session context.
      */
     static sasl_callback_t callbacks[] = {
-	{SASL_CB_LOG, &xsasl_cyrus_log, 0},
+	{SASL_CB_LOG, (XSASL_CYRUS_CB) &xsasl_cyrus_log, 0},
 	{SASL_CB_LIST_END, 0, 0}
     };
 
@@ -304,9 +304,9 @@ XSASL_CLIENT *xsasl_cyrus_client_create(XSASL_CLIENT_IMPL *unused_impl,
 {
     XSASL_CYRUS_CLIENT *client = 0;
     static sasl_callback_t callbacks[] = {
-	{SASL_CB_USER, &xsasl_cyrus_client_get_user, 0},
-	{SASL_CB_AUTHNAME, &xsasl_cyrus_client_get_user, 0},
-	{SASL_CB_PASS, &xsasl_cyrus_client_get_passwd, 0},
+	{SASL_CB_USER, (XSASL_CYRUS_CB) &xsasl_cyrus_client_get_user, 0},
+	{SASL_CB_AUTHNAME, (XSASL_CYRUS_CB) &xsasl_cyrus_client_get_user, 0},
+	{SASL_CB_PASS, (XSASL_CYRUS_CB) &xsasl_cyrus_client_get_passwd, 0},
 	{SASL_CB_LIST_END, 0, 0}
     };
     sasl_conn_t *sasl_conn = 0;
