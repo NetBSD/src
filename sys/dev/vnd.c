@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.220 2012/03/26 16:28:08 hannken Exp $	*/
+/*	$NetBSD: vnd.c,v 1.221 2012/06/09 06:20:45 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.220 2012/03/26 16:28:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.221 2012/06/09 06:20:45 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -332,15 +332,31 @@ vndopen(dev_t dev, int flags, int mode, struct lwp *l)
 	part = DISKPART(dev);
 	pmask = (1 << part);
 
-	/*
-	 * If we're initialized, check to see if there are any other
-	 * open partitions.  If not, then it's safe to update the
-	 * in-core disklabel.  Only read the disklabel if it is
-	 * not already valid.
-	 */
-	if ((sc->sc_flags & (VNF_INITED|VNF_VLABEL)) == VNF_INITED &&
-	    sc->sc_dkdev.dk_openmask == 0)
-		vndgetdisklabel(dev, sc);
+	if (sc->sc_dkdev.dk_nwedges != 0 && part != RAW_PART) {
+		error = EBUSY;
+		goto done;
+	}
+
+	if (sc->sc_flags & VNF_INITED) {
+		if ((sc->sc_dkdev.dk_openmask & ~(1<<RAW_PART)) != 0) {
+			/*
+			 * If any non-raw partition is open, but the disk
+			 * has been invalidated, disallow further opens.
+			 */
+			if ((sc->sc_flags & VNF_VLABEL) == 0) {
+				error = EIO;
+				goto done;
+			}
+		} else {
+			/*
+			 * Load the partition info if not already loaded.
+			 */
+			if ((sc->sc_flags & VNF_VLABEL) == 0) {
+				sc->sc_flags |= VNF_VLABEL;
+				vndgetdisklabel(dev, sc);
+			}
+		}
+	}
 
 	/* Check that the partitions exists. */
 	if (part != RAW_PART) {
@@ -968,6 +984,9 @@ vnddoclear(struct vnd_softc *vnd, int pmask, int minor, bool force)
 		return EBUSY;
 	}
 
+	/* Delete all of our wedges */
+	dkwedge_delall(&vnd->sc_dkdev);
+
 	/*
 	 * XXX vndclear() might call vndclose() implicitly;
 	 * release lock to avoid recursion
@@ -1320,12 +1339,13 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		pool_init(&vnd->sc_vxpool, sizeof(struct vndxfer), 0,
 		    0, 0, "vndxpl", NULL, IPL_BIO);
 
-		/* Try and read the disklabel. */
-		vndgetdisklabel(dev, vnd);
-
 		vndunlock(vnd);
 
 		pathbuf_destroy(pb);
+
+		/* Discover wedges on this disk */
+		dkwedge_discover(&vnd->sc_dkdev);
+
 		break;
 
 close_and_exit:
@@ -1827,9 +1847,6 @@ vndgetdisklabel(dev_t dev, struct vnd_softc *sc)
 		lp->d_npartitions = MAXPARTITIONS;
 		lp->d_checksum = dkcksum(lp);
 	}
-
-	/* In-core label now valid. */
-	sc->sc_flags |= VNF_VLABEL;
 }
 
 /*
