@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.185 2012/06/06 11:20:21 martin Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.186 2012/06/09 02:31:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.185 2012/06/06 11:20:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.186 2012/06/09 02:31:14 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -458,6 +458,9 @@ proc0_init(void)
 	rlim[RLIMIT_RSS].rlim_max = lim;
 	rlim[RLIMIT_MEMLOCK].rlim_max = lim;
 	rlim[RLIMIT_MEMLOCK].rlim_cur = lim / 3;
+
+	rlim[RLIMIT_NTHR].rlim_max = maxlwp;
+	rlim[RLIMIT_NTHR].rlim_cur = maxlwp < maxuprc ? maxlwp : maxuprc;
 
 	/* Note that default core name has zero length. */
 	limit0.pl_corename = defcorename;
