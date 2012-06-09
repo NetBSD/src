@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.161 2012/05/21 14:15:19 martin Exp $	*/
+/*	$NetBSD: lwp.h,v 1.162 2012/06/09 02:31:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -210,6 +210,13 @@ LIST_HEAD(lwplist, lwp);		/* A list of LWPs. */
 #ifdef _KERNEL
 extern struct lwplist	alllwp;		/* List of all LWPs. */
 extern lwp_t		lwp0;		/* LWP for proc0. */
+extern int		maxlwp __read_mostly;	/* max number of lwps */
+#ifndef MAXLWP
+#define	MAXLWP		2048
+#endif
+#ifndef	__HAVE_CPU_MAXLWP
+#define	cpu_maxlwp()	MAXLWP
+#endif
 #endif
 
 /* These flags are kept in l_flag. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.168 2012/04/13 15:32:43 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.169 2012/06/09 02:31:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.168 2012/04/13 15:32:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.169 2012/06/09 02:31:14 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -239,6 +239,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.168 2012/04/13 15:32:43 yamt Exp $");
 #include <sys/dtrace_bsd.h>
 #include <sys/sdt.h>
 #include <sys/xcall.h>
+#include <sys/uidinfo.h>
+#include <sys/sysctl.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>
@@ -286,6 +288,47 @@ struct lwp lwp0 __aligned(MIN_LWP_ALIGNMENT) = {
 	.l_fd = &filedesc0,
 };
 
+static int sysctl_kern_maxlwp(SYSCTLFN_PROTO);
+
+/*
+ * sysctl helper routine for kern.maxlwp. Ensures that the new
+ * values are not too low or too high.
+ */
+static int
+sysctl_kern_maxlwp(SYSCTLFN_ARGS)
+{
+	int error, nmaxlwp;
+	struct sysctlnode node;
+
+	nmaxlwp = maxlwp;
+	node = *rnode;
+	node.sysctl_data = &nmaxlwp;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	if (nmaxlwp < 0 || nmaxlwp >= 65536)
+		return EINVAL;
+	if (nmaxlwp > cpu_maxlwp())
+		return EINVAL;
+	maxlwp = nmaxlwp;
+
+	return 0;
+}
+
+static void
+sysctl_kern_lwp_setup(void)
+{
+	struct sysctllog *clog = NULL;
+
+	sysctl_createv(&clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "maxlwp",
+		       SYSCTL_DESCR("Maximum number of simultaneous threads"),
+		       sysctl_kern_maxlwp, 0, NULL, 0,
+		       CTL_KERN, CTL_CREATE, CTL_EOL);
+}
+
 void
 lwpinit(void)
 {
@@ -295,6 +338,9 @@ lwpinit(void)
 	lwp_sys_init();
 	lwp_cache = pool_cache_init(sizeof(lwp_t), MIN_LWP_ALIGNMENT, 0, 0,
 	    "lwppl", NULL, IPL_NONE, NULL, lwp_dtor, NULL);
+
+	maxlwp = cpu_maxlwp();
+	sysctl_kern_lwp_setup();
 }
 
 void
@@ -677,6 +723,28 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	KASSERT(l1 == curlwp || l1->l_proc == &proc0);
 
 	/*
+	 * Enforce limits, excluding the first lwp and kthreads.
+	 */
+	if (p2->p_nlwps != 0 && p2 != &proc0) {
+		uid_t uid = kauth_cred_getuid(l1->l_cred);
+		int count = chglwpcnt(uid, 1);
+		if (__predict_false(count >
+		    p2->p_rlimit[RLIMIT_NTHR].rlim_cur)) {
+			if (kauth_authorize_process(l1->l_cred,
+			    KAUTH_PROCESS_RLIMIT, p2,
+			    KAUTH_ARG(KAUTH_REQ_PROCESS_RLIMIT_BYPASS),
+			    &p2->p_rlimit[RLIMIT_NTHR], KAUTH_ARG(RLIMIT_NTHR))
+			    != 0) {
+				if ((count = chglwpcnt(uid, -1)) < 0)
+					printf("%s, %d: %s, %d, %d\n", __FILE__,
+					    __LINE__, l1->l_proc->p_comm,
+					    l1->l_proc->p_pid, count);
+				// return EAGAIN;
+			}
+		}
+	}
+
+	/*
 	 * First off, reap any detached LWP waiting to be collected.
 	 * We can re-use its LWP structure and turnstile.
 	 */
@@ -1041,6 +1109,10 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	KASSERT(l != curlwp);
 	KASSERT(last || mutex_owned(p->p_lock));
 
+	if (p != &proc0 && p->p_nlwps != 1)
+		if (chglwpcnt(kauth_cred_getuid(l->l_cred), -1) < 0)
+			printf("%s, %d: %d, %s\n", __FILE__, __LINE__,
+			    p->p_pid, p->p_comm);
 	/*
 	 * If this was not the last LWP in the process, then adjust
 	 * counters and unlock.

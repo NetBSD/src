@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.168 2011/12/02 12:33:12 yamt Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.169 2012/06/09 02:31:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.168 2011/12/02 12:33:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.169 2012/06/09 02:31:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -438,6 +438,13 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 			limp->rlim_cur = maxproc;
 		if (limp->rlim_max > maxproc)
 			limp->rlim_max = maxproc;
+		break;
+
+	case RLIMIT_NTHR:
+		if (limp->rlim_cur > maxlwp)
+			limp->rlim_cur = maxlwp;
+		if (limp->rlim_max > maxlwp)
+			limp->rlim_max = maxlwp;
 		break;
 	}
 
@@ -1082,6 +1089,7 @@ sysctl_proc_setup(void)
 	create_proc_plimit("descriptors",	PROC_PID_LIMIT_NOFILE);
 	create_proc_plimit("sbsize",		PROC_PID_LIMIT_SBSIZE);
 	create_proc_plimit("vmemoryuse",	PROC_PID_LIMIT_AS);
+	create_proc_plimit("maxlwp",		PROC_PID_LIMIT_NTHR);
 
 #undef create_proc_plimit
 

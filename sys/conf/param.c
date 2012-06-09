@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.63 2010/02/08 19:02:33 joerg Exp $	*/
+/*	$NetBSD: param.c,v 1.64 2012/06/09 02:31:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.63 2010/02/08 19:02:33 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.64 2012/06/09 02:31:14 christos Exp $");
 
 #include "opt_hz.h"
 #include "opt_rtc_offset.h"
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: param.c,v 1.63 2010/02/08 19:02:33 joerg Exp $");
 #include <sys/kernel.h>
 #include <sys/utsname.h>
 #include <sys/ksem.h>
+#include <sys/lwp.h>
 #ifdef SYSVSHM
 #include <machine/vmparam.h>
 #include <sys/shm.h>
@@ -117,6 +118,7 @@ int	tick = 1000000 / HZ;
 int	tickadj = (240000 / (60 * HZ)) ? (240000 / (60 * HZ)) : 1;
 int	rtc_offset = RTC_OFFSET;
 int	maxproc = NPROC;
+int	maxlwp = MAXLWP;
 int	desiredvnodes = NVNODE;
 u_int	maxfiles = MAXFILES;
 int	fscale = FSCALE;	/* kernel uses `FSCALE', user uses `fscale' */

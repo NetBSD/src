@@ -1,4 +1,4 @@
-/*	$NetBSD: uidinfo.h,v 1.2 2008/10/14 09:16:32 ad Exp $	*/
+/*	$NetBSD: uidinfo.h,v 1.3 2012/06/09 02:31:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -43,11 +43,13 @@ struct uidinfo {
 	SLIST_ENTRY(uidinfo) ui_hash;
 	uid_t	ui_uid;
 	u_long	ui_proccnt;	/* Number of processes */
+	u_long	ui_lwpcnt;	/* Number of lwps */
 	u_long	ui_lockcnt;	/* Number of locks */
 	u_long	ui_sbsize;	/* Socket buffer size */
 };
 
 int	chgproccnt(uid_t, int);
+int	chglwpcnt(uid_t, int);
 int	chgsbsize(struct uidinfo *, u_long *, u_long, rlim_t);
 struct uidinfo *uid_find(uid_t);
 void	uid_init(void);

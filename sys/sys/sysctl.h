@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.200 2012/06/02 21:36:48 dsl Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.201 2012/06/09 02:31:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -982,6 +982,7 @@ struct evcnt_sysctl {
 #define	PROC_PID_LIMIT_NOFILE	(RLIMIT_NOFILE+1)
 #define	PROC_PID_LIMIT_SBSIZE	(RLIMIT_SBSIZE+1)
 #define	PROC_PID_LIMIT_AS	(RLIMIT_AS+1)
+#define	PROC_PID_LIMIT_NTHR	(RLIMIT_NTHR+1)
 #define	PROC_PID_LIMIT_MAXID 	(RLIM_NLIMITS+1)
 
 #define	PROC_PID_LIMIT_NAMES { \
@@ -997,6 +998,7 @@ struct evcnt_sysctl {
 	{ "descriptors", CTLTYPE_NODE }, \
 	{ "sbsize", CTLTYPE_NODE }, \
 	{ "vmemoryuse", CTLTYPE_NODE }, \
+	{ "maxlwp", CTLTYPE_NODE }, \
 }
 /* for each type, either hard or soft value */
 #define	PROC_PID_LIMIT_TYPE_SOFT	1
