@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.169 2012/06/09 02:31:14 christos Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.170 2012/06/09 02:55:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.169 2012/06/09 02:31:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.170 2012/06/09 02:55:32 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -735,11 +735,8 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 			    KAUTH_ARG(KAUTH_REQ_PROCESS_RLIMIT_BYPASS),
 			    &p2->p_rlimit[RLIMIT_NTHR], KAUTH_ARG(RLIMIT_NTHR))
 			    != 0) {
-				if ((count = chglwpcnt(uid, -1)) < 0)
-					printf("%s, %d: %s, %d, %d\n", __FILE__,
-					    __LINE__, l1->l_proc->p_comm,
-					    l1->l_proc->p_pid, count);
-				// return EAGAIN;
+				(void)chglwpcnt(uid, -1);
+				return EAGAIN;
 			}
 		}
 	}
@@ -1110,9 +1107,7 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	KASSERT(last || mutex_owned(p->p_lock));
 
 	if (p != &proc0 && p->p_nlwps != 1)
-		if (chglwpcnt(kauth_cred_getuid(l->l_cred), -1) < 0)
-			printf("%s, %d: %d, %s\n", __FILE__, __LINE__,
-			    p->p_pid, p->p_comm);
+		(void)chglwpcnt(kauth_cred_getuid(l->l_cred), -1);
 	/*
 	 * If this was not the last LWP in the process, then adjust
 	 * counters and unlock.
