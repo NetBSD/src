@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.115 2012/06/09 02:31:15 christos Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.116 2012/06/09 02:55:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.115 2012/06/09 02:31:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.116 2012/06/09 02:55:32 christos Exp $");
 
 #include "opt_compat_43.h"
 
@@ -349,9 +349,7 @@ do_setresuid(struct lwp *l, uid_t r, uid_t e, uid_t sv, u_int flags)
 
 		/* The first lwp of a process is not counted */
 		int nlwps = p->p_nlwps - 1;
-		if (chglwpcnt(kauth_cred_getuid(ncred), -nlwps) < 0)
-		    printf("%s, %d: %d, %s %d\n", __FILE__, __LINE__,
-			p->p_pid, p->p_comm, nlwps);
+		(void)chglwpcnt(kauth_cred_getuid(ncred), -nlwps);
 		(void)chglwpcnt(r, nlwps);
 
 		kauth_cred_setuid(ncred, r);
