@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_utils.c,v 1.1 2011/10/23 21:15:02 agc Exp $	*/
+/*	$NetBSD: iscsi_utils.c,v 1.2 2012/06/09 06:19:58 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2008 The NetBSD Foundation, Inc.
@@ -244,6 +244,7 @@ get_ccb(connection_t *conn, bool waitok)
 	ccb->ITT = (ccb->ITT & 0xffffff) | (++sess->itt_id << 24);
 	ccb->disp = CCBDISP_NOWAIT;
 	ccb->connection = conn;
+	conn->usecount++;
 
 	return ccb;
 }
@@ -260,6 +261,9 @@ free_ccb(ccb_t *ccb)
 {
 	session_t *sess = ccb->session;
 	pdu_t *pdu;
+
+	ccb->connection->usecount--;
+	ccb->connection = NULL;
 
 	ccb->disp = CCBDISP_UNUSED;
 

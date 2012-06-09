@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.c,v 1.2 2012/01/27 19:48:39 para Exp $	*/
+/*	$NetBSD: iscsi_ioctl.c,v 1.3 2012/06/09 06:19:58 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -207,7 +207,8 @@ check_event(iscsi_wait_event_parameters_t *par, bool wait)
 			}
 			handler->waiter = par;
 			splx(s);
-			tsleep(par, PRIBIO, "iscsievtwait", 0);
+			if (tsleep(par, PRIBIO | PCATCH, "iscsievtwait", 0))
+				return;
 		}
 	} while (evt == NULL);
 
@@ -324,13 +325,32 @@ get_socket(int fdes, struct file **fpp)
 	if (fp->f_type != DTYPE_SOCKET) {
 		return ENOTSOCK;
 	}
-	/* Add the reference */
-	fp->f_count++;
 
-	/*simple_unlock (&fp->f_slock); */
+	/* Add the reference */
+	mutex_enter(&fp->f_lock);
+	fp->f_count++;
+	mutex_exit(&fp->f_lock);
 
 	*fpp = fp;
 	return 0;
+}
+
+/*
+ * release_socket:
+ *    Release the file pointer from the socket handle passed into login.
+ *
+ *    Parameter:
+ *          fp       IN: The pointer to the resulting file pointer
+ *
+ */
+
+STATIC void
+release_socket(struct file *fp)
+{
+	/* Add the reference */
+	mutex_enter(&fp->f_lock);
+	fp->f_count--;
+	mutex_exit(&fp->f_lock);
 }
 
 
@@ -635,6 +655,7 @@ create_connection(iscsi_login_parameters_t *par, session_t *session,
 				"ConnRcv")) != 0) {
 		DEBOUT(("Can't create rcv thread (rc %d)\n", rc));
 
+		release_socket(connection->sock);
 		free(connection, M_DEVBUF);
 		par->status = ISCSI_STATUS_NO_RESOURCES;
 		return rc;
@@ -653,18 +674,15 @@ create_connection(iscsi_login_parameters_t *par, session_t *session,
 		 */
 		DEBC(connection, 1,
 			("Closing Socket %p\n", connection->sock));
-#if __NetBSD_Version__ > 500000000
 		mutex_enter(&connection->sock->f_lock);
 		connection->sock->f_count += 1;
 		mutex_exit(&connection->sock->f_lock);
-#else
-		FILE_USE(connection->sock);
-#endif
 		closef(connection->sock);
 
 		/* give receive thread time to exit */
 		tsleep(connection, PWAIT, "settle", 20);
 
+		release_socket(connection->sock);
 		free(connection, M_DEVBUF);
 		par->status = ISCSI_STATUS_NO_RESOURCES;
 		return rc;
@@ -697,6 +715,9 @@ create_connection(iscsi_login_parameters_t *par, session_t *session,
 	session->active_connections++;
 	session->mru_connection = connection;
 	CS_END;
+
+	/* close the file descriptor */
+	fd_close(par->socket);
 
 	DEBC(connection, 5, ("Connection created successfully!\n"));
 	return 0;
@@ -809,6 +830,10 @@ recreate_connection(iscsi_login_parameters_t *par, session_t *session,
 
 	DEBC(connection, 5, ("Connection ReCreated successfully - status %d\n",
 						 par->status));
+
+	/* close the file descriptor */
+	fd_close(par->socket);
+
 	return 0;
 }
 
@@ -1463,9 +1488,8 @@ iscsi_cleanup_thread(void *par)
 			while (conn->sendproc || conn->rcvproc)
 				tsleep(conn, PWAIT, "termwait", 20);
 
-			/* just in case any CCB is still being processed */
-			/* that references this connection */
-			tsleep(conn, PWAIT, "finalwait", 20);
+			while (conn->usecount > 0)
+				tsleep(conn, PWAIT, "finalwait", 20);
 
 			free(conn, M_DEVBUF);
 
