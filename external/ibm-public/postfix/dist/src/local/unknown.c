@@ -1,4 +1,4 @@
-/*	$NetBSD: unknown.c,v 1.1.1.3 2012/02/17 08:36:10 tron Exp $	*/
+/*	$NetBSD: unknown.c,v 1.1.1.4 2012/06/09 11:27:14 tron Exp $	*/
 
 /*++
 /* NAME
@@ -74,6 +74,7 @@
 #include <mail_addr.h>
 #include <sent.h>
 #include <deliver_pass.h>
+#include <defer.h>
 
 /* Application-specific. */
 

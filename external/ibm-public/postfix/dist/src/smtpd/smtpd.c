@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd.c,v 1.1.1.6 2011/10/28 07:10:06 tron Exp $	*/
+/*	$NetBSD: smtpd.c,v 1.1.1.7 2012/06/09 11:27:22 tron Exp $	*/
 
 /*++
 /* NAME
@@ -359,7 +359,7 @@
 /* .IP "\fBsmtpd_tls_mandatory_exclude_ciphers (empty)\fR"
 /*	Additional list of ciphers or cipher types to exclude from the
 /*	SMTP server cipher list at mandatory TLS security levels.
-/* .IP "\fBsmtpd_tls_mandatory_protocols (SSLv3, TLSv1)\fR"
+/* .IP "\fBsmtpd_tls_mandatory_protocols (!SSLv2)\fR"
 /*	The SSL/TLS protocols accepted by the Postfix SMTP server with
 /*	mandatory TLS encryption.
 /* .IP "\fBsmtpd_tls_received_header (no)\fR"
