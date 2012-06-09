@@ -449,7 +449,6 @@ iscsi_done(ccb_t *ccb)
 
 		case ISCSI_STATUS_CHECK_CONDITION:
 			xs->error = XS_SENSE;
-			xs->error = XS_SENSE;
 #ifdef ISCSI_DEBUG
 			{
 				uint8_t *s = (uint8_t *) (&xs->sense);

@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_text.c,v 1.3 2011/12/17 20:05:39 tls Exp $	*/
+/*	$NetBSD: iscsi_text.c,v 1.4 2012/06/09 06:19:58 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -1773,11 +1773,12 @@ set_negotiated_parameters(ccb_t *ccb)
 		state->FirstBurstLength, state->InitialR2T,
 		state->ImmediateData));
 
-	conn->max_transfer = min(sess->MaxBurstLength,
-					conn->MaxRecvDataSegmentLength);
+	conn->max_transfer = min(sess->MaxBurstLength, conn->MaxRecvDataSegmentLength);
 
 	conn->max_firstimmed = (!sess->ImmediateData) ? 0 :
 				min(sess->FirstBurstLength, conn->max_transfer);
 
-	conn->max_firstdata = (sess->InitialR2T) ? 0 : sess->FirstBurstLength;
+	conn->max_firstdata = (sess->InitialR2T || sess->FirstBurstLength < conn->max_firstimmed) ? 0 :
+				min(sess->FirstBurstLength - conn->max_firstimmed, conn->max_transfer);
+
 }
