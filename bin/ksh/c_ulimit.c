@@ -1,4 +1,4 @@
-/*	$NetBSD: c_ulimit.c,v 1.9 2008/09/14 05:00:23 sjg Exp $	*/
+/*	$NetBSD: c_ulimit.c,v 1.10 2012/06/09 02:51:50 christos Exp $	*/
 
 /*
 	ulimit -- handle "ulimit" builtin
@@ -20,7 +20,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_ulimit.c,v 1.9 2008/09/14 05:00:23 sjg Exp $");
+__RCSID("$NetBSD: c_ulimit.c,v 1.10 2012/06/09 02:51:50 christos Exp $");
 #endif
 
 
@@ -99,6 +99,9 @@ c_ulimit(wp)
 #endif /* RLIMIT_NOFILE */
 #ifdef RLIMIT_NPROC
 		{ "processes", RLIMIT, RLIMIT_NPROC, RLIMIT_NPROC, 1, 'p' },
+#endif
+#ifdef RLIMIT_NTHR
+		{ "threads", RLIMIT, RLIMIT_NTHR, RLIMIT_NTHR, 1, 'r' },
 #endif
 #ifdef RLIMIT_VMEM
 		{ "vmemory(kbytes)", RLIMIT, RLIMIT_VMEM, RLIMIT_VMEM, 1024, 'v' },
