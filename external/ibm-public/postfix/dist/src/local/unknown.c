@@ -1,4 +1,4 @@
-/*	$NetBSD: unknown.c,v 1.2 2012/02/17 09:17:22 tron Exp $	*/
+/*	$NetBSD: unknown.c,v 1.3 2012/06/09 11:32:20 tron Exp $	*/
 
 /*++
 /* NAME

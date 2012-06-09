@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_params.h,v 1.7 2011/03/23 19:10:44 tron Exp $	*/
+/*	$NetBSD: mail_params.h,v 1.8 2012/06/09 11:32:20 tron Exp $	*/
 
 #ifndef _MAIL_PARAMS_H_INCLUDED_
 #define _MAIL_PARAMS_H_INCLUDED_
@@ -1251,7 +1251,7 @@ extern char *var_smtpd_tls_CApath;
 extern char *var_smtpd_tls_proto;
 
 #define VAR_SMTPD_TLS_MAND_PROTO	"smtpd_tls_mandatory_protocols"
-#define DEF_SMTPD_TLS_MAND_PROTO	"SSLv3, TLSv1"
+#define DEF_SMTPD_TLS_MAND_PROTO	"!SSLv2"
 extern char *var_smtpd_tls_mand_proto;
 
 #define VAR_SMTPD_TLS_CIPH	"smtpd_tls_ciphers"
@@ -1464,9 +1464,9 @@ extern char *var_smtp_tls_policy;
 extern char *var_smtp_tls_proto;
 
 #define VAR_SMTP_TLS_MAND_PROTO	"smtp_tls_mandatory_protocols"
-#define DEF_SMTP_TLS_MAND_PROTO	"SSLv3, TLSv1"
+#define DEF_SMTP_TLS_MAND_PROTO	"!SSLv2"
 #define VAR_LMTP_TLS_MAND_PROTO	"lmtp_tls_mandatory_protocols"
-#define DEF_LMTP_TLS_MAND_PROTO	"SSLv3, TLSv1"
+#define DEF_LMTP_TLS_MAND_PROTO	"!SSLv2"
 extern char *var_smtp_tls_mand_proto;
 
 #define VAR_SMTP_TLS_VFY_CMATCH	"smtp_tls_verify_cert_match"
