@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.69 2012/03/22 07:58:18 wiz Exp $
+.\"	$NetBSD: sysctl.7,v 1.70 2012/06/09 02:47:18 christos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd September 24, 2011
+.Dd June 8, 2012
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -306,6 +306,7 @@ privilege may change the value.
 .It kern.logsigexit	integer	yes
 .It kern.mapped_files	integer	no
 .It kern.maxfiles	integer	yes
+.It kern.maxlwp	integer	yes
 .It kern.maxpartitions	integer	no
 .It kern.maxphys	integer	no
 .It kern.maxproc	integer	yes
@@ -668,6 +669,9 @@ otherwise\ 0.
 The maximum number of open files that may be open in the system.
 .It Li kern.maxpartitions ( KERN_MAXPARTITIONS )
 The maximum number of partitions allowed per disk.
+.It Li kern.maxlwp 
+The maximum number of Lightweight Processes (threads) the system allows
+per uid.
 .It Li kern.maxphys ( KERN_MAXPHYS )
 Maximum raw I/O transfer size.
 .It Li kern.maxproc ( KERN_MAXPROC )
@@ -1067,6 +1071,26 @@ Is converted to a power of two and its range is between
 .Dv 1024
 and
 .Dv 65536 .
+.El
+.It Li kern.uidinfo
+Resource usage for the current user.
+.Bl -column "kern.uidinfo.proccnt" "integer" "Changeable" -offset indent
+.It Sy Third level name	Type	Changeable
+.It kern.uidinfo.proccnt	integer	no
+.It kern.uidinfo.lwpcnt	integer	no
+.It kern.uidinfo.lockcnt	integer	no
+.It kern.uidinfo.sbsize	integer	no
+.El
+.Bl -tag -width "123456"
+.It Li kern.uidinfo.proccnt
+Returns the number of active processes for the current user.
+.It Li kern.uidinfo.lwpcnt
+Returns the number of active threads for the current user; the first thread
+of each process is not counted.
+.It Li kern.uidinfo.lockcnt
+Number of locks held by the current user.
+.It Li kern.uidinfo.sbsize
+Number of bytes in socket buffers allocated to the current user.
 .El
 .It Li kern.urandom ( KERN_URND )
 Random integer value.
