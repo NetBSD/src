@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.212 2011/09/19 23:54:29 christos Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.213 2012/06/10 17:05:18 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.212 2011/09/19 23:54:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.213 2012/06/10 17:05:18 mlelstv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -158,12 +158,12 @@ int md_is_root = 0;
 #endif
 
 /*
- * The device and wedge that we booted from.  If booted_wedge is NULL,
- * the we might consult booted_partition.
+ * The device and partition that we booted from.
  */
 device_t booted_device;
-device_t booted_wedge;
 int booted_partition;
+daddr_t booted_startblk;
+uint64_t booted_nblks;
 
 /*
  * Use partition letters if it's a disk class but not a wedge.

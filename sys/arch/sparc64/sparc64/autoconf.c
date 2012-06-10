@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.186 2012/05/28 19:24:30 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.187 2012/06/10 17:05:18 mlelstv Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.186 2012/05/28 19:24:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.187 2012/06/10 17:05:18 mlelstv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -508,10 +508,7 @@ cpu_rootconf(void)
 		return;
 	}
 
-	if (config_handle_wedges(booted_device, booted_partition) == 0)
-		setroot(booted_wedge, 0);
-	else
-		setroot(booted_device, booted_partition);
+	setroot(booted_device, booted_partition);
 }
 
 char *

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.442 2012/02/19 21:06:47 rmind Exp $	*/
+/*	$NetBSD: init_main.c,v 1.443 2012/06/10 17:05:18 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.442 2012/02/19 21:06:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.443 2012/06/10 17:05:18 mlelstv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -259,6 +259,7 @@ int	start_init_exec;		/* semaphore for start_init() */
 
 cprng_strong_t	*kern_cprng;
 
+static void rootconf(void);
 static void check_console(struct lwp *l);
 static void start_init(void *);
 static void configure(void);
@@ -633,7 +634,7 @@ main(void)
 	 * Now that autoconfiguration has completed, we can determine
 	 * the root and dump devices.
 	 */
-	cpu_rootconf();
+	rootconf();
 	cpu_dumpconf();
 
 	/* Mount the root file system. */
@@ -817,6 +818,74 @@ configure3(void)
 
 	/* Get the threads going and into any sleeps before continuing. */
 	yield();
+}
+
+static void
+rootconf_handle_wedges(void)
+{
+	struct partinfo dpart;
+	struct partition *p;
+	struct vnode *vp;
+	daddr_t startblk;
+	uint64_t nblks;
+	device_t dev; 
+	int error;
+
+	if (booted_nblks) {
+		/*
+		 * bootloader passed geometry
+		 */
+		dev      = booted_device;
+		startblk = booted_startblk;
+		nblks    = booted_nblks;
+
+		/*
+		 * keep booted_device and booted_partition
+		 * in case the kernel doesn't identify a wedge
+		 */
+	} else {
+		/*
+		 * bootloader passed partition number
+		 *
+		 * We cannot ask the partition device directly when it is
+		 * covered by a wedge. Instead we look up the geometry in
+		 * the disklabel.
+		 */
+		vp = opendisk(booted_device);
+		error = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, NOCRED);
+		VOP_CLOSE(vp, FREAD, NOCRED);
+		vput(vp);
+		if (error)
+			return;
+
+		KASSERT(booted_partition >= 0
+			&& booted_partition < MAXPARTITIONS);
+
+		p = &dpart.disklab->d_partitions[booted_partition];
+
+		dev      = booted_device;
+		startblk = p->p_offset;
+		nblks    = p->p_size;
+	}
+
+	dev = dkwedge_find_partition(dev, startblk, nblks);
+	if (dev != NULL) {
+		booted_device = dev;
+		booted_partition = 0;
+	}
+}
+
+static void
+rootconf(void)
+{
+	cpu_rootconf();
+
+	if (booted_device == NULL)
+		return;
+
+	rootconf_handle_wedges();
+
+	setroot(booted_device, booted_partition);
 }
 
 static void

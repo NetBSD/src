@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.63 2012/04/27 18:15:55 drochner Exp $	*/
+/*	$NetBSD: dk.c,v 1.64 2012/06/10 17:05:19 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.63 2012/04/27 18:15:55 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.64 2012/06/10 17:05:19 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -748,44 +748,6 @@ dkwedge_print_wnames(void)
 }
 
 /*
- * dkwedge_set_bootwedge
- *
- *	Set the booted_wedge global based on the specified parent name
- *	and offset/length.
- */
-void
-dkwedge_set_bootwedge(device_t parent, daddr_t startblk, uint64_t nblks)
-{
-	struct dkwedge_softc *sc;
-	int i;
-
-	rw_enter(&dkwedges_lock, RW_WRITER);
-	for (i = 0; i < ndkwedges; i++) {
-		if ((sc = dkwedges[i]) == NULL)
-			continue;
-		if (strcmp(sc->sc_parent->dk_name, device_xname(parent)) == 0 &&
-		    sc->sc_offset == startblk &&
-		    sc->sc_size == nblks) {
-			if (booted_wedge) {
-				printf("WARNING: double match for boot wedge "
-				    "(%s, %s)\n",
-				    device_xname(booted_wedge),
-				    device_xname(sc->sc_dev));
-				continue;
-			}
-			booted_device = parent;
-			booted_wedge = sc->sc_dev;
-			booted_partition = 0;
-		}
-	}
-	/*
-	 * XXX What if we don't find one?  Should we create a special
-	 * XXX root wedge?
-	 */
-	rw_exit(&dkwedges_lock);
-}
-
-/*
  * We need a dummy object to stuff into the dkwedge discovery method link
  * set to ensure that there is always at least one object in the set.
  */
@@ -1466,65 +1428,38 @@ out:
  * config glue
  */
 
-int
-config_handle_wedges(struct device *dv, int par)
+/*
+ * dkwedge_find_partition
+ *
+ *	Find wedge corresponding to the specified parent name
+ *	and offset/length.
+ */
+device_t
+dkwedge_find_partition(device_t parent, daddr_t startblk, uint64_t nblks)
 {
-	struct dkwedge_list wl;
-	struct dkwedge_info *wi;
-	struct vnode *vn;
-	char diskname[16];
-	int i, error;
+	struct dkwedge_softc *sc;
+	int i;
+	device_t wedge = NULL;
 
-	if ((vn = opendisk(dv)) == NULL)
-		return -1;
-
-	wl.dkwl_bufsize = sizeof(*wi) * 16;
-	wl.dkwl_buf = wi = malloc(wl.dkwl_bufsize, M_TEMP, M_WAITOK);
-
-	error = VOP_IOCTL(vn, DIOCLWEDGES, &wl, FREAD, NOCRED);
-	VOP_CLOSE(vn, FREAD, NOCRED);
-	vput(vn);
-	if (error) {
-#ifdef DEBUG_WEDGE
-		printf("%s: List wedges returned %d\n",
-		    device_xname(dv), error);
-#endif
-		free(wi, M_TEMP);
-		return -1;
+	rw_enter(&dkwedges_lock, RW_READER);
+	for (i = 0; i < ndkwedges; i++) {
+		if ((sc = dkwedges[i]) == NULL)
+			continue;
+		if (strcmp(sc->sc_parent->dk_name, device_xname(parent)) == 0 &&
+		    sc->sc_offset == startblk &&
+		    sc->sc_size == nblks) {
+			if (wedge) {
+				printf("WARNING: double match for boot wedge "
+				    "(%s, %s)\n",
+				    device_xname(wedge),
+				    device_xname(sc->sc_dev));
+				continue;
+			}
+			wedge = sc->sc_dev;
+		}
 	}
+	rw_exit(&dkwedges_lock);
 
-#ifdef DEBUG_WEDGE
-	printf("%s: Returned %u(%u) wedges\n", device_xname(dv),
-	    wl.dkwl_nwedges, wl.dkwl_ncopied);
-#endif
-	snprintf(diskname, sizeof(diskname), "%s%c", device_xname(dv),
-	    par + 'a');
-
-	for (i = 0; i < wl.dkwl_ncopied; i++) {
-#ifdef DEBUG_WEDGE
-		printf("%s: Looking for %s in %s\n", 
-		    device_xname(dv), diskname, wi[i].dkw_wname);
-#endif
-		if (strcmp(wi[i].dkw_wname, diskname) == 0)
-			break;
-	}
-
-	if (i == wl.dkwl_ncopied) {
-#ifdef DEBUG_WEDGE
-		printf("%s: Cannot find wedge with parent %s\n",
-		    device_xname(dv), diskname);
-#endif
-		free(wi, M_TEMP);
-		return -1;
-	}
-
-#ifdef DEBUG_WEDGE
-	printf("%s: Setting boot wedge %s (%s) at %llu %llu\n", 
-		device_xname(dv), wi[i].dkw_devname, wi[i].dkw_wname,
-		(unsigned long long)wi[i].dkw_offset,
-		(unsigned long long)wi[i].dkw_size);
-#endif
-	dkwedge_set_bootwedge(dv, wi[i].dkw_offset, wi[i].dkw_size);
-	free(wi, M_TEMP);
-	return 0;
+	return wedge;
 }
+

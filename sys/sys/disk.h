@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.56 2012/01/16 18:47:58 christos Exp $	*/
+/*	$NetBSD: disk.h,v 1.57 2012/06/10 17:05:18 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -530,10 +530,10 @@ int	dkwedge_del(struct dkwedge_info *);
 void	dkwedge_delall(struct disk *);
 int	dkwedge_list(struct disk *, struct dkwedge_list *, struct lwp *);
 void	dkwedge_discover(struct disk *);
-void	dkwedge_set_bootwedge(device_t, daddr_t, uint64_t);
 int	dkwedge_read(struct disk *, struct vnode *, daddr_t, void *, size_t);
 device_t dkwedge_find_by_wname(const char *);
 void	dkwedge_print_wnames(void);
+device_t dkwedge_find_partition(device_t, daddr_t, uint64_t);
 #endif
 
 #endif /* _SYS_DISK_H_ */
