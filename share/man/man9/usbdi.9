@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbdi.9,v 1.22 2012/06/03 17:01:21 wiz Exp $
+.\"	$NetBSD: usbdi.9,v 1.23 2012/06/10 06:40:08 mrg Exp $
 .\"
 .\" Copyright (c) 2012 Matthew R. Green
 .\" All rights reserved.
@@ -270,7 +270,6 @@ through
 .Ft usbd_status
 .Fn usbd_intr_transfer "usbd_xfer_handle xfer" "usbd_pipe_handle pipe" \
  "uint16_t flags" "uint32_t timeout" "void *buf" "uint32_t *size" "char *lbl"
-.\" these are very different in usbmp
 .Ft void
 .Fn usb_detach_waitold "device_t dv"
 .Ft void
