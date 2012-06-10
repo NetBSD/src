@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.67 2012/02/15 23:06:20 riz Exp $
+.\" $NetBSD: mdoc.local,v 1.68 2012/06/10 15:04:47 christos Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -86,6 +86,7 @@
 .ds doc-str-Lb-libarchive       Reading and Writing Streaming Archives Library (libarchive, \-larchive)
 .ds doc-str-Lb-libbluetooth     Bluetooth Library (libbluetooth, \-lbluetooth)
 .ds doc-str-Lb-libdm            Device-mapper Library (libdm, \-ldm)
+.ds doc-str-Lb-libexecinfo	Backtrace Access Library (libexecinfo, \-lexecinfo)
 .ds doc-str-Lb-libfetch         File Transfer Library for URLs (libfetch, \-lfetch)
 .ds doc-str-Lb-libiscsi         iSCSI protocol library (libiscsi, \-liscsi)
 .ds doc-str-Lb-libisns          Internet Storage Name Service Library (libisns, \-lisns)
