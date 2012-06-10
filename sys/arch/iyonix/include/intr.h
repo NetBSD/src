@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.9 2008/04/27 18:58:47 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.10 2012/06/10 13:15:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -63,8 +63,6 @@
 #define IST_EDGE_FALLING IST_EDGE
 #define IST_EDGE_RISING  5
 #define IST_EDGE_BOTH    6
-
-#define	__NEWINTR	/* enables new hooks in cpu_fork()/cpu_switch() */
 
 #ifndef _LOCORE
 
