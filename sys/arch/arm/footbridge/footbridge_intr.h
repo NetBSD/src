@@ -1,4 +1,4 @@
-/* 	$NetBSD: footbridge_intr.h,v 1.14 2009/02/13 08:37:52 he Exp $	*/
+/* 	$NetBSD: footbridge_intr.h,v 1.15 2012/06/10 13:15:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -57,8 +57,6 @@
 #define	IST_PULSE	1	/* pulsed */
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
-
-#define	__NEWINTR	/* enables new hooks in cpu_fork()/cpu_switch() */
 
 #define	ARM_IRQ_HANDLER	_C_LABEL(footbridge_intr_dispatch)
 
