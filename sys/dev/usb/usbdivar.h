@@ -1,13 +1,12 @@
-/*	$NetBSD: usbdivar.h,v 1.96 2012/03/11 01:06:07 mrg Exp $	*/
-/*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.97 2012/06/10 06:15:55 mrg Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Lennart Augustsson (lennart@augustsson.net) at
- * Carlstedt Research & Technology.
+ * Carlstedt Research & Technology and Matthew R. Green (mrg@eterna.com.au).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,7 +30,47 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Discussion about locking in the USB code:
+ *
+ * The host controller presents one lock at IPL_USB.
+ *
+ * List of hardware interface methods, and which locks are held when each
+ * is called by this module:
+ *
+ *	BUS METHOD		LOCK  NOTES
+ *	----------------------- -------	-------------------------
+ *	open_pipe		-	might want to take lock?
+ *	soft_intr		x
+ *	do_poll			-	might want to take lock?
+ *	allocm			-
+ *	freem			-
+ *	allocx			-
+ *	freex			-
+ *	get_lock 		-	Called at attach time
+ *
+ *	PIPE METHOD		LOCK  NOTES
+ *	----------------------- -------	-------------------------
+ *	transfer		-
+ *	start			-	might want to take lock?
+ *	abort			x
+ *	close			x
+ *	cleartoggle		-
+ *	done			x
+ *
+ * The above semantics are likely to change.  Little performance
+ * evaluation has been done on this code and the locking strategy.
+ * 
+ * USB functions known to expect the lock taken include (this list is
+ * probably not exhaustive):
+ *    usb_transfer_complete()
+ *    usb_insert_transfer()
+ *    usb_start_next()
+ *
+ */
+
 #include <sys/callout.h>
+#include <sys/mutex.h>
 #include <sys/bus.h>
 
 /* From usb_mem.h */
@@ -59,6 +98,7 @@ struct usbd_bus_methods {
 	void		      (*freem)(struct usbd_bus *, usb_dma_t *);
 	struct usbd_xfer *    (*allocx)(struct usbd_bus *);
 	void		      (*freex)(struct usbd_bus *, struct usbd_xfer *);
+	void		      (*get_lock)(struct usbd_bus *, kmutex_t **);
 };
 
 struct usbd_pipe_methods {
@@ -105,8 +145,10 @@ struct usbd_bus {
 	const struct usbd_bus_methods *methods;
 	u_int32_t		pipe_size; /* size of a pipe struct */
 	/* Filled by usb driver */
-	struct usbd_device     *root_hub;
+	kmutex_t		*lock;
+	struct usbd_device      *root_hub;
 	usbd_device_handle	devices[USB_MAX_DEVICES];
+	kcondvar_t              needs_explore_cv;
 	char			needs_explore;/* a hub a signalled a change */
 	char			use_polling;
 	device_t		usbctl;
@@ -183,6 +225,7 @@ struct usbd_xfer {
 	struct usbd_pipe       *pipe;
 	void		       *priv;
 	void		       *buffer;
+	kcondvar_t		cv;
 	u_int32_t		length;
 	u_int32_t		actlen;
 	u_int16_t		flags;
@@ -217,6 +260,7 @@ struct usbd_xfer {
 	u_int8_t		hcflags; /* private use by the HC driver */
 #define UXFER_ABORTING	0x01	/* xfer is aborting. */
 #define UXFER_ABORTWAIT	0x02	/* abort completion is being awaited. */
+	kcondvar_t		hccv; /* private use by the HC driver */
 
         struct callout timeout_handle;
 };
@@ -234,7 +278,9 @@ void usbd_dump_pipe(usbd_pipe_handle pipe);
 
 /* Routines from usb_subr.c */
 int		usbctlprint(void *, const char *);
+void		usb_delay_ms_locked(usbd_bus_handle, u_int, kmutex_t *);
 void		usb_delay_ms(usbd_bus_handle, u_int);
+void		usbd_delay_ms_locked(usbd_device_handle, u_int, kmutex_t *);
 void		usbd_delay_ms(usbd_device_handle, u_int);
 usbd_status	usbd_reset_port(usbd_device_handle, int, usb_port_status_t *);
 usbd_status	usbd_setup_pipe(usbd_device_handle dev,
@@ -259,3 +305,25 @@ int		usb_disconnect_port(struct usbd_port *, device_t, int);
 void		usb_needs_explore(usbd_device_handle);
 void		usb_needs_reattach(usbd_device_handle);
 void		usb_schedsoftintr(struct usbd_bus *);
+
+/*
+ * These macros help while not all host controllers are ported to the MP code.
+ */
+#define usbd_mutex_enter(m)	do { \
+	if (m) { \
+		s = -1; \
+		mutex_enter(m); \
+	} else \
+		s = splusb(); \
+} while (0)
+
+#define usbd_mutex_exit(m)	do { \
+	if (m) { \
+		s = -1; \
+		mutex_exit(m); \
+	} else \
+		splx(s); \
+} while (0)
+
+#define usbd_lock_pipe(p)	usbd_mutex_enter((p)->device->bus->lock)
+#define usbd_unlock_pipe(p)	usbd_mutex_exit((p)->device->bus->lock)

@@ -1,4 +1,5 @@
-/*	$NetBSD: umassvar.h,v 1.32 2012/03/04 00:21:20 mrg Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.33 2012/06/10 06:15:54 mrg Exp $	*/
+
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -160,6 +161,9 @@ struct umass_softc {
 	usb_device_request_t	sc_req;
 
 	const struct umass_wire_methods *sc_methods;
+
+	kmutex_t		sc_lock;
+	kcondvar_t		sc_detach_cv;
 
 	u_int8_t		sc_wire;	/* wire protocol */
 #define	UMASS_WPROTO_UNSPEC	0

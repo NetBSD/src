@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.39 2012/03/06 02:49:02 mrg Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.40 2012/06/10 06:15:53 mrg Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -109,6 +109,11 @@ struct ehci_soft_islot {
 
 typedef struct ehci_softc {
 	device_t sc_dev;
+	kmutex_t sc_lock;
+	kmutex_t sc_intr_lock;
+	kcondvar_t sc_doorbell;
+	void *sc_doorbell_si;
+	void *sc_pcd_si;
 	struct usbd_bus sc_bus;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
@@ -140,7 +145,6 @@ typedef struct ehci_softc {
 	struct ehci_soft_itd **sc_softitds;
 
 	TAILQ_HEAD(, ehci_xfer) sc_intrhead;
-	kmutex_t sc_intrhead_lock;
 
 	ehci_soft_qh_t *sc_freeqhs;
 	ehci_soft_qtd_t *sc_freeqtds;
@@ -153,13 +157,12 @@ typedef struct ehci_softc {
 	usbd_xfer_handle sc_intrxfer;
 	char sc_isreset[EHCI_MAX_PORTS];
 	char sc_softwake;
+	kcondvar_t sc_softwake_cv;
 
 	u_int32_t sc_eintrs;
 	ehci_soft_qh_t *sc_async_head;
 
 	SIMPLEQ_HEAD(, usbd_xfer) sc_free_xfers; /* free xfers */
-
-	kmutex_t sc_doorbell_lock;
 
 	struct callout sc_tmo_intrlist;
 

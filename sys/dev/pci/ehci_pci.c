@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.54 2012/01/30 19:41:19 drochner Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.55 2012/06/10 06:15:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.54 2012/01/30 19:41:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.55 2012/06/10 06:15:53 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,7 +177,7 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	 * Allocate IRQ
 	 */
 	intrstr = pci_intr_string(pc, ih);
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_USB, ehci_intr, sc);
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_SCHED, ehci_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
@@ -298,6 +298,15 @@ ehci_pci_detach(device_t self, int flags)
 		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
 		sc->sc.sc_size = 0;
 	}
+
+#if 1
+	/* XXX created in ehci.c */
+	mutex_destroy(&sc->sc.sc_lock);
+	mutex_destroy(&sc->sc.sc_intr_lock);
+
+	softint_disestablish(sc->sc.sc_doorbell_si);
+	softint_disestablish(sc->sc.sc_pcd_si);
+#endif
 
 	return 0;
 }

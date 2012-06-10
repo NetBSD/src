@@ -1,12 +1,12 @@
-/*	$NetBSD: uhidev.c,v 1.55 2012/02/02 19:43:07 tls Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.56 2012/06/10 06:15:54 mrg Exp $	*/
 
 /*
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Lennart Augustsson (lennart@augustsson.net) at
- * Carlstedt Research & Technology.
+ * Carlstedt Research & Technology and Matthew R. Green (mrg@eterna.com.au).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.55 2012/02/02 19:43:07 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.56 2012/06/10 06:15:54 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,6 +128,8 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal("\n");
+
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_USB);
 
 	id = usbd_get_interface_descriptor(iface);
 
@@ -450,6 +452,7 @@ uhidev_detach(device_t self, int flags)
 			   sc->sc_dev);
 
 	pmf_device_deregister(self);
+	mutex_destroy(&sc->sc_lock);
 
 	return (rv);
 }
@@ -534,14 +537,15 @@ uhidev_open(struct uhidev *scd)
 	usbd_status err;
 	int error;
 
-	DPRINTF(("uhidev_open: open pipe, state=%d refcnt=%d\n",
-		 scd->sc_state, sc->sc_refcnt));
+	DPRINTF(("uhidev_open: open pipe, state=%d\n", scd->sc_state));
 
-	if (scd->sc_state & UHIDEV_OPEN)
+	mutex_enter(&sc->sc_lock);
+	if (scd->sc_state & UHIDEV_OPEN) {
+		mutex_exit(&sc->sc_lock);
 		return (EBUSY);
+	}
 	scd->sc_state |= UHIDEV_OPEN;
-	if (sc->sc_refcnt++)
-		return (0);
+	mutex_exit(&sc->sc_lock);
 
 	if (sc->sc_isize == 0)
 		return (0);
@@ -598,11 +602,12 @@ out2:
 out1:
 	DPRINTF(("uhidev_open: failed in someway"));
 	free(sc->sc_ibuf, M_USBDEV);
+	mutex_enter(&sc->sc_lock);
 	scd->sc_state &= ~UHIDEV_OPEN;
-	sc->sc_refcnt = 0;
 	sc->sc_ipipe = NULL;
 	sc->sc_opipe = NULL;
 	sc->sc_oxfer = NULL;
+	mutex_exit(&sc->sc_lock);
 	return error;
 }
 
@@ -611,11 +616,14 @@ uhidev_close(struct uhidev *scd)
 {
 	struct uhidev_softc *sc = scd->sc_parent;
 
-	if (!(scd->sc_state & UHIDEV_OPEN))
+	mutex_enter(&sc->sc_lock);
+	if (!(scd->sc_state & UHIDEV_OPEN)) {
+		mutex_exit(&sc->sc_lock);
 		return;
+	}
 	scd->sc_state &= ~UHIDEV_OPEN;
-	if (--sc->sc_refcnt)
-		return;
+	mutex_exit(&sc->sc_lock);
+
 	DPRINTF(("uhidev_close: close pipe\n"));
 
 	if (sc->sc_oxfer != NULL)
