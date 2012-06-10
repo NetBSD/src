@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.19 2012/03/11 01:06:07 mrg Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.20 2012/06/10 06:15:55 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.19 2012/03/11 01:06:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.20 2012/06/10 06:15:55 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -521,7 +521,10 @@ utoppy_bulk_transfer_cb(usbd_xfer_handle xfer,
     usbd_status status)
 {
 
-	wakeup(xfer);
+	if (xfer->pipe->device->bus->lock)
+		cv_broadcast(&xfer->cv);
+	else
+		wakeup(xfer);
 }
 
 static usbd_status
@@ -534,14 +537,17 @@ utoppy_bulk_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 
 	usbd_setup_xfer(xfer, pipe, 0, buf, *size, flags, timeout,
 	    utoppy_bulk_transfer_cb);
-	s = splusb();
+	usbd_lock_pipe(pipe);	/* don't want callback until tsleep() */
 	err = usbd_transfer(xfer);
 	if (err != USBD_IN_PROGRESS) {
-		splx(s);
+		usbd_unlock_pipe(pipe);
 		return (err);
 	}
-	error = tsleep((void *)xfer, PZERO, lbl, 0);
-	splx(s);
+	if (pipe->device->bus->lock)
+		error = cv_wait_sig(&xfer->cv, pipe->device->bus->lock);
+	else
+		error = tsleep((void *)xfer, PZERO, lbl, 0);
+	usbd_unlock_pipe(pipe);
 	if (error) {
 		usbd_abort_pipe(pipe);
 		return (USBD_INTERRUPTED);
