@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.22 2010/11/13 14:07:06 uebayasi Exp $	*/
+/*	$NetBSD: intr.h,v 1.23 2012/06/10 13:15:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -81,8 +81,6 @@
 #include <arm/arm32/psl.h>
 
 #else /* ! __OLD_INTERRUPT_CODE */
-
-#define	__NEWINTR	/* enables new hooks in cpu_fork()/cpu_switch() */
 
 #ifndef _LOCORE
 
