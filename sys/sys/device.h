@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.140 2011/11/13 22:05:58 christos Exp $ */
+/* $NetBSD: device.h,v 1.141 2012/06/10 17:05:18 mlelstv Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -423,14 +423,14 @@ struct pdevinit {
 extern struct cfdriverlist allcfdrivers;/* list of all cfdrivers */
 extern struct cftablelist allcftables;	/* list of all cfdata tables */
 extern device_t booted_device;		/* the device we booted from */
-extern device_t booted_wedge;		/* the wedge on that device */
-extern int booted_partition;		/* or the partition on that device */
+extern int booted_partition;		/* the partition on that device */
+extern daddr_t booted_startblk;		/* or the start of a wedge */
+extern uint64_t booted_nblks;		/* and the size of that wedge */
 
 struct vnode *opendisk(struct device *);
 int getdisksize(struct vnode *, uint64_t *, unsigned *);
 struct dkwedge_info;
 int getdiskinfo(struct vnode *, struct dkwedge_info *);
-int config_handle_wedges(struct device *, int);
 
 void	config_init(void);
 int	config_init_component(struct cfdriver *const*,
