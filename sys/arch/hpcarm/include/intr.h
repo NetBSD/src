@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.15 2010/11/13 14:07:07 uebayasi Exp $	*/
+/* 	$NetBSD: intr.h,v 1.16 2012/06/10 13:15:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -67,8 +67,6 @@
 #include <arm/arm32/psl.h>
 
 #else	/* !__OLD_INTERRUPT_CODE */
-
-#define	__NEWINTR	/* enables new hooks in cpu_fork()/cpu_switch() */
 
 #ifndef _LOCORE
 
