@@ -1,4 +1,4 @@
-.\"	$NetBSD: nbperf.1,v 1.3 2011/10/21 23:47:11 joerg Exp $
+.\"	$NetBSD: nbperf.1,v 1.3.4.1 2012/06/11 17:53:20 riz Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 20, 2011
+.Dd May 31, 2012
 .Dt NBPERF 1
 .Os
 .Sh NAME
@@ -48,9 +48,10 @@
 .Nm
 reads a number of keys one per line from standard input or
 .Ar input .
-It computes an order-preserving minimal perfect hash function and writes
-it to stdout or
+It computes a minimal perfect hash function and writes it to stdout or
 .Ar output .
+The default algorithm is
+.Qq Sy chm .
 .Pp
 The
 .Fl m
