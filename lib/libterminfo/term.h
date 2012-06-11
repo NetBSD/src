@@ -1,4 +1,4 @@
-/* $NetBSD: term.h,v 1.10.4.1 2012/02/24 16:29:33 riz Exp $ */
+/* $NetBSD: term.h,v 1.10.4.2 2012/06/11 17:48:37 riz Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -1459,6 +1459,8 @@ typedef struct {
 	const char **strs;
 } TERMINAL;
 #endif
+
+#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 
