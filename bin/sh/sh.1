@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.106 2011/10/05 13:15:30 christos Exp $
+.\"	$NetBSD: sh.1,v 1.107 2012/06/11 18:28:10 njoly Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd October 4, 2011
+.Dd June 11, 2012
 .Dt SH 1
 .Os
 .Sh NAME
@@ -1731,7 +1731,7 @@ command, tracked alias and not found.
 For aliases the alias expansion is
 printed; for commands and tracked aliases the complete pathname of the
 command is printed.
-.It ulimit Oo Fl H \*(Ba Fl S Oc Oo Fl a \*(Ba Fl tfdscmlpnv Oo Ar value Oc Oc
+.It ulimit Oo Fl H \*(Ba Fl S Oc Oo Fl a \*(Ba Fl btfdscmlrpnv Oo Ar value Oc Oc
 Inquire about or set the hard or soft limits on processes or set new
 limits.
 The choice between hard limit (which no process is allowed to
@@ -1777,6 +1777,9 @@ in use by a process (in kilobytes)
 show or set the limit on how much memory a process can lock with
 .Xr mlock 2
 (in kilobytes)
+.It Fl r
+show or set the limit on the number of threads this user can
+have at one time
 .It Fl p
 show or set the limit on the number of processes this user can
 have at one time
