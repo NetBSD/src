@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.41 2012/06/09 02:49:48 christos Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.42 2012/06/11 18:28:10 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: miscbltin.c,v 1.41 2012/06/09 02:49:48 christos Exp $");
+__RCSID("$NetBSD: miscbltin.c,v 1.42 2012/06/11 18:28:10 njoly Exp $");
 #endif
 #endif /* not lint */
 
@@ -364,7 +364,7 @@ ulimitcmd(int argc, char **argv)
 	struct rlimit	limit;
 
 	what = 'f';
-	while ((optc = nextopt("HSabtfdsmcnplv")) != '\0')
+	while ((optc = nextopt("HSabtfdscmlrpnv")) != '\0')
 		switch (optc) {
 		case 'H':
 			how = HARD;
