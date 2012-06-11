@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.119 2012/06/11 21:30:08 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.120 2012/06/11 23:22:42 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -5344,4 +5344,20 @@ tests/lib/libc/sys/t_mmap.c			1.3-1.6
 
 	Prevent a crash when mmap()ing a block device. PR#38889.
 	[martin, ticket #301]
+
+usr.sbin/postinstall/postinstall		1.137
+
+	Add _tss to postinstall uid and gid checks.
+	[jnemeth, ticket #302]
+
+external/public-domain/sqlite/Makefile.inc	1.5
+
+	Enable usleep(3) in sqlite.
+	[wiz, ticket #303]
+
+sys/kern/uipc_usrreq.c				1.137
+
+	Disallow passing kqueue descriptors via SCM_RIGHT auxiliary
+	socket messages. PR#46463.
+	[martin, ticket #304]
 
