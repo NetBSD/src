@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.473 2012/06/06 21:23:10 martin Exp $
+# $NetBSD: mi,v 1.474 2012/06/11 18:32:59 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1395,6 +1395,7 @@
 ./usr/tests/bin/sh/t_fsplit			tests-bin-tests		atf
 ./usr/tests/bin/sh/t_here			tests-bin-tests		atf
 ./usr/tests/bin/sh/t_set_e			tests-bin-tests		atf
+./usr/tests/bin/sh/t_ulimit			tests-bin-tests		atf
 ./usr/tests/bin/sh/t_varquote			tests-bin-tests		atf
 ./usr/tests/bin/sh/t_wait			tests-bin-tests		atf
 ./usr/tests/bin/tar				tests-bin-tests
