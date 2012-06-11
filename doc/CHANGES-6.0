@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.116 2012/06/11 17:56:14 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.117 2012/06/11 18:04:56 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -5317,4 +5317,9 @@ tools/gcc/Makefile				1.51
 	Always use system zlib, to avoid the need for 32bit build
 	environment when bootstrapping on some Linux distros.
 	[joerg, ticket #296]
+
+sys/arch/vax/include/asm.h			1.26
+
+	Really fix polyf/polyd macros. Now returns expected results.
+	[abs, ticket #298]
 
