@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.50 2012/04/20 22:23:24 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.51 2012/06/11 15:18:05 chs Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -372,3 +372,5 @@ define	PGSHIFT			PGSHIFT
 define	VM_MIN_KERNEL_ADDRESS_HIGH32	(VM_MIN_KERNEL_ADDRESS >> 32)
 
 define	RESCHED_KPREEMPT	RESCHED_KPREEMPT
+
+define	SEL_RPL_MASK		SEL_RPL
