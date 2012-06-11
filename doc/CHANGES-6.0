@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.115 2012/06/06 18:20:51 bouyer Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.116 2012/06/11 17:56:14 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -5284,4 +5284,37 @@ external/bsd/bind/dist/win32utils/win32-build.txt	1.1.1.6
 	may cause various issues for the servers handling them.
 	CVE: CVE-2012-1667
 	[christos, ticket #308]
+
+sys/arch/powerpc/booke/dev/pq3sdhc.c		1.4
+sys/dev/sdmmc/sdhc.c				1.11,1.13 via patch
+
+	Support 32-bit only access to SDHC registers.
+	[matt, ticket #254]
+
+lib/libterminfo/term.h				1.12
+
+	Add cdefs.h, so term.h is buildable on its own. PR#46492.
+	[dholland, ticket #292]
+
+sys/arch/vax/include/asm.h			1.25
+
+	Remove an unneeded indirect access from polyd/polyf macros for VAX.
+	[martin, ticket #293]
+
+external/public-domain/sqlite/Makefile.inc	1.4
+
+	Build SQLite with SQLITE_ENABLE_COLUMN_METADATA. PR#46322.
+	[khorben, ticket #294]
+
+usr.bin/nbperf/nbperf.1				1.4
+
+	Correct nbperf(1) documentation regarding the output function,
+	and mention what the default algorithm is.
+	[joerg, ticket #295]
+
+tools/gcc/Makefile				1.51
+
+	Always use system zlib, to avoid the need for 32bit build
+	environment when bootstrapping on some Linux distros.
+	[joerg, ticket #296]
 
