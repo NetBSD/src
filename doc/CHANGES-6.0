@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.117 2012/06/11 18:04:56 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.118 2012/06/11 20:57:52 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -5322,4 +5322,20 @@ sys/arch/vax/include/asm.h			1.26
 
 	Really fix polyf/polyd macros. Now returns expected results.
 	[abs, ticket #298]
+
+sys/arch/vax/vsa/spx.c				1.6
+
+	Implement WSDISPLAYIO_LINEBYTES so xwsfb works.
+	[abs, ticket #299]
+
+distrib/sets/lists/xserver/md.vax				1.8
+external/mit/xorg/server/drivers/Makefile			1.62
+external/mit/xorg/server/xorg-server/Makefile.common 		1.25
+external/mit/xorg/server/xorg-server/hw/xfree86/xorgos/Makefile 1.33
+x11/Xserver/Makefile.common					1.36
+x11/Xserver/Xserver/Makefile					1.19
+xsrc/external/mit/xorg-server/dist/hw/xfree86/common/compiler.h 1.9
+
+	Enable wsfb X server on vax.
+	[abs, ticket #300]
 
