@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.75 2010/12/20 00:25:34 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.76 2012/06/11 16:41:26 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.75 2010/12/20 00:25:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76 2012/06/11 16:41:26 tsutsui Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.75 2010/12/20 00:25:34 matt Exp $");
 #endif
 #define	ELFSIZE		DB_ELFSIZE
 #include <sys/exec_elf.h>
-#endif /* DDB || KGDB */
+#endif /* NKSYMS || MODULAR || DDB || KGDB */
 
 #include <dev/cons.h> /* consdev */
 #include <dev/md.h>
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.75 2010/12/20 00:25:34 matt Exp $");
 #endif
 #include <machine/autoconf.h>		/* makebootdev() */
 #include <machine/intr.h>
+#include <machine/pcb.h>
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
@@ -194,6 +195,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 
 	/* Symbol table size */
 	symbolsize = 0;
+#if NKSYMS || defined(MODULAR) || defined(DDB) || defined(KGDB)
 	if (memcmp(&end, ELFMAG, SELFMAG) == 0) {
 		Elf_Ehdr *eh = (void *)end;
 		Elf_Shdr *sh = (void *)(end + eh->e_shoff);
@@ -202,6 +204,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 			    (sh->sh_offset + sh->sh_size) > symbolsize)
 				symbolsize = sh->sh_offset + sh->sh_size;
 	}
+#endif
 
 	/* Clear BSS */
 	memset(edata, 0, end - edata);
@@ -287,7 +290,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	/* Initialize pmap and start to address translation */
 	pmap_bootstrap();
 
-#if NKSYMS || defined(DDB) || defined(MODULAR)
+#if NKSYMS || defined(MODULAR) || defined(DDB) || defined(KGDB)
 	if (symbolsize) {
 		ksyms_addsyms_elf(symbolsize, &end, end + symbolsize);
 		_DPRINTF("symbol size = %d byte\n", symbolsize);
