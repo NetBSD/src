@@ -1,4 +1,4 @@
-/* $NetBSD: t_mmap.c,v 1.2 2011/07/14 11:08:45 jruoho Exp $ */
+/* $NetBSD: t_mmap.c,v 1.2.4.1 2012/06/11 21:25:02 riz Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mmap.c,v 1.2 2011/07/14 11:08:45 jruoho Exp $");
+__RCSID("$NetBSD: t_mmap.c,v 1.2.4.1 2012/06/11 21:25:02 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -67,9 +67,12 @@ __RCSID("$NetBSD: t_mmap.c,v 1.2 2011/07/14 11:08:45 jruoho Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <paths.h>
+#include <machine/disklabel.h>
 
 static long	page = 0;
 static char	path[] = "mmap";
@@ -150,6 +153,52 @@ static void
 map_sighandler(int signo)
 {
 	_exit(signo);
+}
+
+ATF_TC(mmap_block);
+ATF_TC_HEAD(mmap_block, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test mmap(2) with a block device");
+	atf_tc_set_md_var(tc, "require.user", "root");
+}
+
+ATF_TC_BODY(mmap_block, tc)
+{
+	static const int mib[] = { CTL_HW, HW_DISKNAMES };
+	static const unsigned int miblen = __arraycount(mib);
+	char *map, *dk, *drives, dev[PATH_MAX];
+	size_t len;
+	int fd = -1;
+
+	atf_tc_expect_signal(SIGSEGV, "mmap of block devices does not work "
+	    "(PR kern/38889)");
+
+	ATF_REQUIRE(sysctl(mib, miblen, NULL, &len, NULL, 0) == 0);
+	drives = malloc(len);
+	ATF_REQUIRE(drives != NULL);
+	ATF_REQUIRE(sysctl(mib, miblen, drives, &len, NULL, 0) == 0);
+	for (dk = strtok(drives, " "); dk != NULL; dk = strtok(NULL, " ")) {
+		sprintf(dev, _PATH_DEV "%s%c", dk, 'a'+RAW_PART);
+		fprintf(stderr, "trying: %s\n", dev);
+
+		if ((fd = open(dev, O_RDONLY)) >= 0) {
+			(void)fprintf(stderr, "using %s\n", dev);
+			break;
+		}
+	}
+	free(drives);
+
+	if (fd < 0)
+		atf_tc_skip("failed to find suitable block device");
+
+	map = mmap(NULL, 4096, PROT_READ, MAP_FILE, fd, 0);
+	ATF_REQUIRE(map != MAP_FAILED);
+
+	(void)fprintf(stderr, "first byte %x\n", *map);
+	ATF_REQUIRE(close(fd) == 0);
+	(void)fprintf(stderr, "first byte %x\n", *map);
+
+	ATF_REQUIRE(munmap(map, 4096) == 0);
 }
 
 ATF_TC(mmap_err);
@@ -444,6 +493,7 @@ ATF_TP_ADD_TCS(tp)
 	page = sysconf(_SC_PAGESIZE);
 	ATF_REQUIRE(page >= 0);
 
+	ATF_TP_ADD_TC(tp, mmap_block);
 	ATF_TP_ADD_TC(tp, mmap_err);
 	ATF_TP_ADD_TC(tp, mmap_loan);
 	ATF_TP_ADD_TC(tp, mmap_prot_1);
