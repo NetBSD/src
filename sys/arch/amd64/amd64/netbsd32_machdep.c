@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.55.4.3 2010/09/07 19:38:20 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.55.4.3.2.1 2012/06/12 23:18:07 riz Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.55.4.3 2010/09/07 19:38:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.55.4.3.2.1 2012/06/12 23:18:07 riz Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -278,6 +278,16 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
+
+	if ((vaddr_t)catcher >= VM_MAXUSER_ADDRESS32) {
+		/*
+		 * process has given an invalid address for the
+		 * handler. Stop it, but do not do it before so
+		 * we can return the right info to userland (or in core dump)
+		 */
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
 }
 #endif
 
@@ -366,6 +376,16 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
+
+	if ((vaddr_t)catcher >= VM_MAXUSER_ADDRESS32) {
+		/*
+		 * process has given an invalid address for the
+		 * handler. Stop it, but do not do it before so
+		 * we can return the right info to userland (or in core dump)
+		 */
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
 }
 
 void
