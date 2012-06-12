@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.47 2011/12/18 05:49:26 dholland Exp $
+#	$NetBSD: TS7200,v 1.47.2.1 2012/06/12 17:47:57 riz Exp $
 #
 #	TS7200 - Kernel for Technologic Systems TS7200 ARM hardware
 #
@@ -484,7 +484,7 @@ pseudo-device	ksyms			# /dev/ksyms
 # compatibility to other console drivers
 #options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 #options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
-#options 	WSDISPLAY_COMPAT_USL		# VT handling
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 #options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 # see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"

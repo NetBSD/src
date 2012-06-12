@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.134 2011/11/22 21:25:21 tls Exp $
+#	$NetBSD: INSTALL_TINY,v 1.134.4.1 2012/06/12 17:47:53 riz Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -169,7 +169,7 @@ options 	WS_KERNEL_FG=WSCOL_GREEN
 # compatibility to other console drivers
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
-options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 # see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)" # for pckbd driver

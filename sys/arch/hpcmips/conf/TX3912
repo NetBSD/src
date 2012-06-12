@@ -2,7 +2,7 @@
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.78 2011/12/18 05:49:28 dholland Exp $
+#	$NetBSD: TX3912,v 1.78.2.1 2012/06/12 17:47:55 riz Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -203,7 +203,7 @@ options 	FONT_VT220L8x10
 # compatibility to other console drivers
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
-options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 
 # PCMCIA bus support

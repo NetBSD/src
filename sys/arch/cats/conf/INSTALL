@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.81 2011/12/18 05:49:25 dholland Exp $
+#	$NetBSD: INSTALL,v 1.81.2.1 2012/06/12 17:48:04 riz Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -132,7 +132,7 @@ options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WS_KERNEL_FG=WSCOL_GREEN
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
-options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 # see dev/wscons/wskbdmap_mfii.h for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"

@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.92 2011/12/18 05:49:28 dholland Exp $
+#	$NetBSD: TX3922,v 1.92.2.1 2012/06/12 17:47:56 riz Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -281,7 +281,7 @@ options 	WS_KERNEL_BG=WSCOL_BLUE
 # compatibility to other console drivers
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
-options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 
 # PCMCIA bus support
