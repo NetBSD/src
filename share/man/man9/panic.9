@@ -1,4 +1,4 @@
-.\"     $NetBSD: panic.9,v 1.20 2011/09/29 20:55:49 christos Exp $
+.\"     $NetBSD: panic.9,v 1.21 2012/06/12 21:06:43 jdf Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .Os
 .Sh NAME
 .Nm panic
-.Nd Bring down system on fatal error
+.Nd bring down system on fatal error
 .Sh SYNOPSIS
 .In sys/types.h
 .In sys/systm.h
@@ -91,8 +91,8 @@ the system is rebooted immediately without synchronizing any filesystems.
 .Fn panic
 is meant to be used in situations where something unexpected has happened
 and it is difficult to recover the system to a stable state, or in
-situations where proceeding might make the things worse, leading to
-data corruption/loss.
+situations where proceeding might make things worse, leading to data
+corruption and/or loss.
 It is not meant to be used in scenarios where the system could easily
 ignore and/or isolate the condition/subsystem and proceed.
 .Pp
@@ -102,7 +102,7 @@ calls in the kernel to improve stability.
 .Sh RETURN VALUES
 The
 .Fn panic
-function does not return.
+function never returns.
 .Sh SEE ALSO
 .Xr sysctl 3 ,
 .Xr ddb 4 ,
