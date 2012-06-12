@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.52.4.2 2009/08/14 21:25:34 snj Exp $	*/
+/*	$NetBSD: trap.c,v 1.52.4.2.2.1 2012/06/12 20:44:07 riz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.52.4.2 2009/08/14 21:25:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.52.4.2.2.1 2012/06/12 20:44:07 riz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -124,6 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.52.4.2 2009/08/14 21:25:34 snj Exp $");
 #endif
 
 void trap(struct trapframe *);
+void trap_return_fault_return(struct trapframe *) __dead;
 
 const char *trap_type[] = {
 	"privileged instruction fault",		/*  0 T_PRIVINFLT */
@@ -178,16 +179,11 @@ trap(struct trapframe *frame)
 	struct proc *p;
 	int type = (int)frame->tf_trapno;
 	struct pcb *pcb;
-	extern char fusuintrfailure[], kcopy_fault[],
-		    resume_iret[];
+	extern char fusuintrfailure[], kcopy_fault[];
 #if defined(COMPAT_10) || defined(COMPAT_IBCS2)
 	extern char IDTVEC(oosyscall)[];
 #endif
-#if 0
-	extern char resume_pop_ds[], resume_pop_es[];
-#endif
 	struct trapframe *vframe;
-	void *resume;
 	void *onfault;
 	int error;
 	uint64_t cr2;
@@ -274,50 +270,78 @@ copyfault:
 
 		/*
 		 * Check for failure during return to user mode.
+		 * This can happen loading invalid values into the segment
+		 * registers, or during the 'iret' itself.
 		 *
-		 * XXXfvdl check for rex prefix?
-		 *
-		 * We do this by looking at the instruction we faulted on.  The
-		 * specific instructions we recognize only happen when
+		 * We do this by looking at the instruction we faulted on.
+		 * The specific instructions we recognize only happen when
 		 * returning from a trap, syscall, or interrupt.
-		 *
-		 * XXX
-		 * The heuristic used here will currently fail for the case of
-		 * one of the 2 pop instructions faulting when returning from a
-		 * a fast interrupt.  This should not be possible.  It can be
-		 * fixed by rearranging the trap frame so that the stack format
-		 * at this point is the same as on exit from a `slow'
-		 * interrupt.
 		 */
-		switch (*(u_char *)frame->tf_rip) {
-		case 0xcf:	/* iret */
-			vframe = (void *)((uint64_t)&frame->tf_rsp - 44);
-			resume = resume_iret;
+
+kernelfault:
+#ifdef XEN
+		/*
+		 * XXX: there has to be an equivalent 'problem'
+		 * but I (dsl) don't know exactly what happens!
+		 * For now panic the kernel.
+		 */
+		goto we_re_toast;
+#else
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGSEGV;
+		ksi.ksi_code = SEGV_ACCERR;
+		ksi.ksi_trap = type;
+
+		/* Get %rsp value before fault - there may be a pad word
+		 * below the trap frame. */
+		vframe = (void *)frame->tf_rsp;
+		switch (*(uint16_t *)frame->tf_rip) {
+		case 0xcf48:	/* iretq */
+			/*
+			 * The 'iretq' instruction faulted, wo we have the
+			 * 'user' registers saved after the kernel
+			 * %rip:%cs:%fl:%rsp:%ss of the iret, and below that
+			 * the user %rip:%cs:%fl:%rsp:%ss the 'iret' was
+			 * processing.
+			 * We must copy the user register back over the
+			 * kernel fault frame to generate a normal stack
+			 * frame (eg for sending a SIGSEGV).
+			 */
+			vframe = (void *)((char *)vframe
+			    - offsetof(struct trapframe, tf_rip));
+			memmove(vframe, frame,
+			    offsetof(struct trapframe, tf_rip));
+			/* Set the faulting address to the user %eip */
+			ksi.ksi_addr = (void *)vframe->tf_rip;
 			break;
-/*
- * XXXfvdl these are illegal in long mode (not in compat mode, though)
- * and we do not take back the descriptors from the signal context anyway,
- * but may do so later for USER_LDT, in which case we need to intercept
- * other instructions (movl %eax, %Xs).
- */
-#if 0
-		case 0x1f:	/* popl %ds */
-			vframe = (void *)((uint64_t)&frame->tf_rsp - 4);
-			resume = resume_pop_ds;
+		case 0xac8e:	/* mov 0x98(%rsp),%gs (8e ac 24 98 00 00 00) */
+		case 0xa48e:	/* mov 0xa0(%rsp),%fs (8e a4 24 a0 00 00 00) */
+		case 0x848e:	/* mov 0xa8(%rsp),%es (8e 84 24 a8 00 00 00) */
+		case 0x9c8e:	/* mov 0xb0(%rsp),%ds (8e 9c 24 b0 00 00 00) */
+			/*
+			 * We faulted loading one if the user segment registers.
+			 * The stack frame containing the user registers is
+			 * still valid and pointed to by tf_rsp.
+			 * Maybe we should check the iretq follows.
+			 */
+			if (KERNELMODE(vframe->tf_cs, vframe->tf_eflags))
+				goto we_re_toast;
+			/* There is no valid address for the fault */
 			break;
-		case 0x07:	/* popl %es */
-			vframe = (void *)((uint64_t)&frame->tf_rsp - 0);
-			resume = resume_pop_es;
-			break;
-#endif
+
 		default:
 			goto we_re_toast;
 		}
-		if (KERNELMODE(vframe->tf_cs, vframe->tf_rflags))
-			goto we_re_toast;
 
-		frame->tf_rip = (uint64_t)resume;
-		return;
+		/* XXX: worry about on-stack trampolines for nested
+		 * handlers?? */
+		/* Save outer frame for any signal return */
+		l->l_md.md_regs = vframe;
+		(*p->p_emul->e_trapsignal)(l, &ksi);
+		/* Return to user by reloading the user frame */
+		trap_return_fault_return(vframe);
+		/* NOTREACHED */
+#endif
 
 	case T_PROTFLT|T_USER:		/* protection fault */
 	case T_TSSFLT|T_USER:
@@ -570,7 +594,7 @@ faultcommon:
 				goto copyfault;
 			printf("uvm_fault(%p, 0x%lx, %d) -> %x\n",
 			    map, va, ftype, error);
-			goto we_re_toast;
+			goto kernelfault;
 		}
 		if (error == ENOMEM) {
 			ksi.ksi_signo = SIGKILL;
