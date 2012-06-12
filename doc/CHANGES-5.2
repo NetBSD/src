@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.171 2012/06/05 19:55:45 bouyer Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.172 2012/06/12 20:45:09 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -6441,4 +6441,14 @@ dist/bind/lib/dns/rdataslab.c				patch
 	3331.  [security]      dns_rdataslab_fromrdataset could produce bad
 			       rdataslabs. [RT #29644]
 	 [christos, ticket #1767]
+
+sys/arch/amd64/amd64/trap.c			1.71 via patch
+sys/arch/amd64/amd64/vector.S			1.41 via patch
+sys/arch/amd64/include/frameasm.h		patch
+
+ 	Fix issues when amd64 manages to trap during 'return to user'.  ie on
+	the 'iret' or while loading segment registers.
+	Also detects any fault loading %gs and re-instates the kernel gs_base
+	value before entering the trap handler.
+	[spz, ticket #1772]
 
