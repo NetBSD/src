@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.102 2012/06/05 20:02:04 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.103 2012/06/12 23:22:46 riz Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -1384,4 +1384,11 @@ dist/bind/lib/dns/rdataslab.c				patch
 	3331.  [security]      dns_rdataslab_fromrdataset could produce bad
 			       rdataslabs. [RT #29644]
 	[christos, ticket #1447]
+
+sys/arch/amd64/amd64/machdep.c			1.184 via patch
+sys/arch/amd64/amd64/netbsd32_machdep.c		1.77 via patch
+
+	If the user process provided a bogus signal handler address, kill it
+	now instead of trying to jump to the bogus address.
+	[spz, ticket #1450]
 
