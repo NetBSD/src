@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.124 2012/06/12 19:31:50 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.125 2012/06/12 19:45:25 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -5484,4 +5484,37 @@ xsrc/external/mit/xf86-video-intel/dist/src/i830.h	1.3
 	Make xf86-video-intel driver work on Atom N455 + GMA3150 graphics
 	chipset.
 	[tsutsui, ticket #319]
+
+sys/arch/powerpc/pic/intr.c			1.21-1.22
+
+	Call the correct softint handlers.
+	[macallan, ticket #320]
+
+sys/arch/powerpc/oea/ofwoea_machdep.c		1.29
+
+	Make drivers that need PCI I/O access work again on 
+	Grackle/Heathrow-based Macs.
+	[macallan, ticket #321]
+
+sys/dev/pci/machfb.c				1.75
+
+	Don't enable IO access - we don't use it and at least on some
+	macppc machines the IO BAR contains garbage.
+	[macallan, ticket #322]
+
+sys/dev/iscsi/iscsi_rcv.c			1.2
+sys/dev/iscsi/iscsi_send.c			1.2
+
+	Prevent large writes to iSCSI devices from freezing the system.
+	[mhitch, ticket #323]
+
+lib/libc/citrus/citrus_mapper.c			1.10
+
+	Fix memory leak in an error path.  PR#46560.
+	[martin, ticket #324]
+
+sys/dev/ic/seeq8005.c				1.48
+
+	Disable TX/RX interrupts during shutdown.  PR#46576.
+	[christos, ticket #325]
 
