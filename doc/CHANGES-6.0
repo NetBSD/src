@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.120 2012/06/11 23:22:42 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.121 2012/06/12 17:50:58 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -5360,4 +5360,76 @@ sys/kern/uipc_usrreq.c				1.137
 	Disallow passing kqueue descriptors via SCM_RIGHT auxiliary
 	socket messages. PR#46463.
 	[martin, ticket #304]
+
+sys/sys/sysctl.h				patch
+
+	Define CTLTYPE_LONG in preparation for additional pullups.
+	[dsl, ticket #305]
+
+sys/dev/acpi/asus_acpi.c			1.24
+sys/dev/bluetooth/bcsp.c			1.21
+sys/kern/vfs_bio.c				1.237-1.238
+sys/miscfs/syncfs/sync_subr.c			1.48
+
+	Fix mismatches between data type and flags. PR#46536.
+	[dsl, ticket #306]
+
+sys/kern/vfs_bio.c				1.239
+
+	Fix panic on sparc64 introduced in ticket #306.
+	[dsl, ticket #307]
+
+lib/libkvm/kvm_proc.c				1.89
+sys/kern/kern_proc.c				1.184
+
+	Measure kinfo_proc2::p_vm_vsize in pages, as it was always documented.
+	Makes it consistent with p_vm_msize.
+	[martin, ticket #310]
+
+share/man/man4/wscons.4				1.31 via patch
+sys/arch/amd64/conf/GENERIC			1.356
+sys/arch/amd64/conf/XEN3_DOM0			1.84
+sys/arch/atari/conf/MILAN.in			1.26
+sys/arch/bebox/conf/GENERIC			1.131
+sys/arch/bebox/conf/INSTALL			1.54
+sys/arch/cats/conf/GENERIC			1.140
+sys/arch/cats/conf/INSTALL			1.82
+sys/arch/evbarm/conf/ARMADILLO9			1.35
+sys/arch/evbarm/conf/BEAGLEBOARD		1.27
+sys/arch/evbarm/conf/MMNET_GENERIC		1.6
+sys/arch/evbarm/conf/MPCSA_GENERIC		1.29
+sys/arch/evbarm/conf/TS7200			1.49
+sys/arch/evbppc/conf/EXPLORA451			1.48
+sys/arch/evbppc/conf/VIRTEX_DFC			1.17
+sys/arch/evbppc/conf/VIRTEX_GSRD1		1.15
+sys/arch/evbppc/conf/VIRTEX_GSRD2		1.16
+sys/arch/hp700/conf/GENERIC			1.115
+sys/arch/hpcmips/conf/GENERIC			1.216
+sys/arch/hpcmips/conf/MPC303			1.60
+sys/arch/hpcmips/conf/TX3912			1.79
+sys/arch/hpcmips/conf/TX3922			1.93
+sys/arch/hpcmips/conf/VR41XX			1.55
+sys/arch/hpcsh/conf/GENERIC			1.97
+sys/arch/i386/conf/ALL				1.339
+sys/arch/i386/conf/GENERIC			1.1074
+sys/arch/i386/conf/GENERIC_TINY			1.132
+sys/arch/i386/conf/INSTALL_FLOPPY		1.16
+sys/arch/i386/conf/INSTALL_TINY			1.135
+sys/arch/i386/conf/XEN3_DOM0			1.67
+sys/arch/netwinder/conf/GENERIC			1.112
+sys/arch/next68k/conf/GENERIC			1.127
+sys/arch/next68k/conf/SLAB			1.46
+sys/arch/prep/conf/GENERIC			1.163
+sys/arch/shark/conf/GENERIC			1.101
+sys/arch/shark/conf/INSTALL			1.50
+sys/arch/sparc/conf/KRUPS			1.59
+sys/arch/sparc/conf/TADPOLE3GX			1.56
+sys/arch/sparc64/conf/GENERIC			1.151
+sys/arch/vax/conf/GENERIC			1.181
+sys/arch/zaurus/conf/GENERIC			1.54
+
+	Mention wsconscfg(8) needs WSDISPLAY_COMPAT_USL in manpage.
+	Update comments in kernel configs.  Add WSDISPLAY_COMPAT_USL to
+	vax GENERIC.
+	[abs, ticket #311]
 
