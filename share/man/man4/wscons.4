@@ -1,4 +1,4 @@
-.\" $NetBSD: wscons.4,v 1.29 2011/03/06 17:39:05 wiz Exp $
+.\" $NetBSD: wscons.4,v 1.29.6.1 2012/06/12 17:48:03 riz Exp $
 .\"
 .\" Copyright (c) 1999, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 4, 2005
+.Dd June 5, 2012
 .Dt WSCONS 4
 .Os
 .Sh NAME
@@ -185,7 +185,7 @@ or if no emulation type was passed to the
 utility.
 .Ss Compatibility options
 these options allow X servers and other programs using low-level
-console driver functions which were written specifically for other
+console driver functions usually written specifically for other
 console drivers to run on
 .Nx
 systems.
@@ -194,6 +194,10 @@ The options are in particular:
 .It Cd WSDISPLAY_COMPAT_USL
 Support the protocol for switches between multiple virtual screens on
 one display as used by most PC-UNIX variants.
+This is used by the
+.Nx
+.Xr wsconscfg 8
+utility.
 .It Cd WSDISPLAY_COMPAT_RAWKBD
 Allows to get raw XT keyboard scancodes from PC keyboards as needed
 by i386 X servers.

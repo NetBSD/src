@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.215 2011/12/18 05:49:28 dholland Exp $
+# $NetBSD: GENERIC,v 1.215.2.1 2012/06/12 17:47:55 riz Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.215 $"
+#ident 		"GENERIC-$Revision: 1.215.2.1 $"
 
 maxusers	16
 
@@ -156,7 +156,7 @@ options 	FONT_VT220L8x10
 # compatibility to other console drivers
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
-options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 #
 # Hpckbd will set key board layout appropriately. You can use option

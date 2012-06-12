@@ -1,4 +1,4 @@
-#	$NetBSD: VIRTEX_GSRD2,v 1.15 2011/12/18 05:49:27 dholland Exp $
+#	$NetBSD: VIRTEX_GSRD2,v 1.15.2.1 2012/06/12 17:48:00 riz Exp $
 #
 # VIRTEX_GSRD2
 #
@@ -140,7 +140,7 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 options 	WSEMUL_VT100
 options 	WSEMUL_DEFAULT_FG=WSCOL_BLACK
 options 	WSEMUL_DEFAULT_BG=WSCOL_LIGHT_WHITE
-options 	WSDISPLAY_COMPAT_USL 	# VT handling
+options 	WSDISPLAY_COMPAT_USL 	# wsconscfg VT handling
 #options 	WSDISPLAY_COMPAT_RAWKBD
 #options 	WSDISPLAY_DEFAULTSCREENS=4
 options 	FONT_VT220L8x16
