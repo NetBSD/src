@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.173 2012/06/12 20:49:17 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.174 2012/06/12 23:18:43 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -6457,4 +6457,11 @@ sys/arch/xen/xenbus/xenbus_probe.c		1.36-1.37
 	Sort vif and vbd device IDs numerically so that attach order does
 	not depend on the order they are passed in through xenstore.
 	[sborrill, ticket #1768]
+
+sys/arch/amd64/amd64/machdep.c			1.184 via patch
+sys/arch/amd64/amd64/netbsd32_machdep.c		1.77 via patch
+
+	If the user process provided a bogus signal handler address, kill it
+	now instead of trying to jump to the bogus address.
+	[spz, ticket #1773]
 
