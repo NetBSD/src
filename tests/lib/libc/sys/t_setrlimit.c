@@ -1,4 +1,4 @@
-/* $NetBSD: t_setrlimit.c,v 1.3 2012/03/11 23:26:22 njoly Exp $ */
+/* $NetBSD: t_setrlimit.c,v 1.4 2012/06/12 23:56:19 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_setrlimit.c,v 1.3 2012/03/11 23:26:22 njoly Exp $");
+__RCSID("$NetBSD: t_setrlimit.c,v 1.4 2012/06/12 23:56:19 christos Exp $");
 
 #include <sys/resource.h>
 #include <sys/mman.h>
@@ -39,10 +39,13 @@ __RCSID("$NetBSD: t_setrlimit.c,v 1.3 2012/03/11 23:26:22 njoly Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <lwp.h>
 #include <signal.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ucontext.h>
 #include <unistd.h>
 
 static void		 sighandler(int);
@@ -435,6 +438,43 @@ ATF_TC_BODY(setrlimit_nproc, tc)
 		atf_tc_fail("RLIMIT_NPROC not enforced");
 }
 
+ATF_TC(setrlimit_nthr);
+ATF_TC_HEAD(setrlimit_nthr, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test setrlimit(2), RLIMIT_NTHR");
+	atf_tc_set_md_var(tc, "require.user", "unprivileged");
+}
+
+static void
+func(lwpid_t *id)
+{
+	printf("thread %d\n", *id);
+	fflush(stdout);
+	_lwp_exit();
+}
+
+ATF_TC_BODY(setrlimit_nthr, tc)
+{
+	struct rlimit res;
+	lwpid_t lwpid;
+	ucontext_t c;
+
+	/*
+	 * Set RLIMIT_NTHR to zero and try to create a thread.
+	 */
+	res.rlim_cur = 0;
+	res.rlim_max = 0;
+	ATF_REQUIRE(setrlimit(RLIMIT_NTHR, &res) == 0);
+	ATF_REQUIRE(getcontext(&c) == 0);
+	c.uc_link = NULL;
+	sigemptyset(&c.uc_sigmask);
+	c.uc_stack.ss_flags = 0;
+	c.uc_stack.ss_size = 4096;
+	ATF_REQUIRE((c.uc_stack.ss_sp = malloc(c.uc_stack.ss_size)) != NULL);
+	makecontext(&c, func, 1, &lwpid);
+	ATF_CHECK_ERRNO(EAGAIN, _lwp_create(&c, 0, &lwpid) == -1);
+}
+
 ATF_TC(setrlimit_perm);
 ATF_TC_HEAD(setrlimit_perm, tc)
 {
@@ -476,6 +516,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, setrlimit_nofile_2);
 	ATF_TP_ADD_TC(tp, setrlimit_nproc);
 	ATF_TP_ADD_TC(tp, setrlimit_perm);
+	ATF_TP_ADD_TC(tp, setrlimit_nthr);
 
 	return atf_no_error();
 }
