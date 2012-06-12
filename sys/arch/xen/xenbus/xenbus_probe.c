@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.35 2011/09/22 23:02:35 jym Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.35.8.1 2012/06/12 18:30:50 riz Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.35 2011/09/22 23:02:35 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.35.8.1 2012/06/12 18:30:50 riz Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -321,7 +321,8 @@ static int
 xenbus_probe_device_type(const char *path, const char *type,
     int (*create)(struct xenbus_device *))
 {
-	int err, i, msize;
+	int err, i, pos, msize;
+	int *lookup = NULL;
 	unsigned long state;
 	char **dir;
 	unsigned int dir_n = 0;
@@ -335,8 +336,62 @@ xenbus_probe_device_type(const char *path, const char *type,
 	if (err)
 		return err;
 
-	for (i = 0; i < dir_n; i++) {
+	/* Only sort frontend devices i.e. create == NULL*/
+	if (dir_n > 1 && create == NULL) {
+		int minp;
+		unsigned long minv;
+		unsigned long *id;
+
+		lookup = malloc(sizeof(int) * dir_n, M_DEVBUF,
+		    M_WAITOK | M_ZERO);
+		if (lookup == NULL)
+			panic("can't malloc lookup");
+
+		id = malloc(sizeof(unsigned long) * dir_n, M_DEVBUF,
+		    M_WAITOK | M_ZERO);
+		if (id == NULL)
+			panic("can't malloc id");
+
+		/* Convert string values to numeric; skip invalid */
+		for (i = 0; i < dir_n; i++) {
+			/*
+			 * Add one to differentiate numerical zero from invalid
+			 * string. Has no effect on sort order.
+			 */
+			id[i] = strtoul(dir[i], &ep, 10) + 1;
+			if (dir[i][0] == '\0' || *ep != '\0')
+				id[i] = 0;
+		}
+		
+		/* Build lookup table in ascending order */
+		for (pos = 0; pos < dir_n; ) {
+			minv = UINT32_MAX;
+			minp = -1;
+			for (i = 0; i < dir_n; i++) {
+				if (id[i] < minv && id[i] > 0) {
+					minv = id[i];
+					minp = i;
+				}
+			}
+			if (minp >= 0) {
+				lookup[pos++] = minp;
+				id[minp] = 0;
+			}
+			else
+				break;
+		}
+		
+		free(id, M_DEVBUF);
+		/* Adjust in case we had to skip non-numeric entries */
+		dir_n = pos;
+	}
+
+	for (pos = 0; pos < dir_n; pos++) {
 		err = 0;
+		if (lookup)
+			i = lookup[pos];
+		else
+			i = pos;
 		/*
 		 * add size of path to size of xenbus_device. xenbus_device
 		 * already has room for one char in xbusd_path.
@@ -413,6 +468,9 @@ xenbus_probe_device_type(const char *path, const char *type,
 		watch_otherend(xbusd);
 	}
 	free(dir, M_DEVBUF);
+	if (lookup)
+		free(lookup, M_DEVBUF);
+	
 	return err;
 }
 
