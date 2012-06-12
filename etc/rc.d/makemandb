@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makemandb,v 1.1 2012/02/07 19:13:30 joerg Exp $
+# $NetBSD: makemandb,v 1.2 2012/06/12 02:25:29 isaki Exp $
 #
 
 # PROVIDE: makemandb
@@ -10,14 +10,17 @@
 $_rc_subr_loaded . /etc/rc.subr
 
 name="makemandb"
+rcvar=$name
 required_files="/etc/man.conf /usr/sbin/makemandb"
 start_cmd="makemandb_start"
 stop_cmd=":"
 
 makemandb_start()
 {
-	# Initiate update build in the background
-	nice -n 5 /usr/sbin/makemandb -q > /dev/null 2>&1 &
+	if checkyesno $rcvar; then
+		# Initiate update build in the background
+		nice -n 5 /usr/sbin/makemandb -q > /dev/null 2>&1 &
+	fi
 }
 
 load_rc_config $name
