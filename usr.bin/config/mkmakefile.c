@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.13 2009/04/11 12:41:10 lukem Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.13.8.1 2012/06/12 19:23:34 riz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -512,6 +512,13 @@ emitload(FILE *fp)
 	fputs(".MAIN: all\nall:", fp);
 	TAILQ_FOREACH(cf, &allcf, cf_next) {
 		fprintf(fp, " %s", cf->cf_name);
+		/*
+		 * If we generate multiple configs inside the same build directory
+		 * with a parallel build, strange things may happen, so sequentialize
+		 * them.
+		 */
+		if (cf != TAILQ_LAST(&allcf,conftq))
+			fprintf(fp, " .WAIT");
 	}
 	fputs("\n\n", fp);
 	TAILQ_FOREACH(cf, &allcf, cf_next) {
