@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.47 2011/09/23 01:57:32 manu Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.47.8.1 2012/06/12 17:13:58 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.47 2011/09/23 01:57:32 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.47.8.1 2012/06/12 17:13:58 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,28 +317,28 @@ sysctl_vfs_syncfs_setup(struct sysctllog **clog)
 
 	sysctl_createv(clog, 0, &rnode, &cnode,
 			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			CTLTYPE_INT, "delay",
+			CTLTYPE_QUAD, "delay",
 			SYSCTL_DESCR("max time to delay syncing data"),
 			NULL, 0, &syncdelay, 0,
 			CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &rnode, &cnode,
 			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			CTLTYPE_INT, "filedelay",
+			CTLTYPE_QUAD, "filedelay",
 			SYSCTL_DESCR("time to delay syncing files"),
 			NULL, 0, &filedelay, 0,
 			CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &rnode, &cnode,
 			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			CTLTYPE_INT, "dirdelay",
+			CTLTYPE_QUAD, "dirdelay",
 			SYSCTL_DESCR("time to delay syncing directories"),
 			NULL, 0, &dirdelay, 0,
 			CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &rnode, &cnode,
 			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			CTLTYPE_INT, "metadelay",
+			CTLTYPE_QUAD, "metadelay",
 			SYSCTL_DESCR("time to delay syncing metadata"),
 			NULL, 0, &metadelay, 0,
 			CTL_CREATE, CTL_EOL);
