@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.12 2008/04/21 15:15:33 cegger Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.12.12.1 2012/06/12 20:43:47 riz Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -54,16 +54,22 @@
 	movq	TF_RBX(%rsp),%rbx	; \
 	movq	TF_RAX(%rsp),%rax
 
-#define	INTRENTRY \
+
+#define	INTRENTRY_L(kernel_trap, usertrap) \
 	subq	$TF_REGSIZE,%rsp	; \
-	testq	$SEL_UPL,TF_CS(%rsp)	; \
-	je	98f			; \
+	INTR_SAVE_GPRS			; \
+	testb	$SEL_UPL,TF_CS(%rsp)	; \
+	je	kernel_trap		; \
+usertrap				; \
 	swapgs				; \
 	movw	%gs,TF_GS(%rsp)		; \
 	movw	%fs,TF_FS(%rsp)		; \
 	movw	%es,TF_ES(%rsp)		; \
-	movw	%ds,TF_DS(%rsp)		; \
-98: 	INTR_SAVE_GPRS
+	movw	%ds,TF_DS(%rsp)	
+
+#define	INTRENTRY \
+	INTRENTRY_L(98f,)		; \
+98:
 
 #ifndef XEN
 #define INTRFASTEXIT \
@@ -71,11 +77,11 @@
 	testq	$SEL_UPL,TF_CS(%rsp)	/* Interrupted %cs */ ; \
 	je	99f			; \
 	cli				; \
-	swapgs				; \
-	movw	TF_GS(%rsp),%gs		; \
 	movw	TF_FS(%rsp),%fs		; \
 	movw	TF_ES(%rsp),%es		; \
 	movw	TF_DS(%rsp),%ds		; \
+	swapgs				; \
+	movw	TF_GS(%rsp),%gs		; /* can fault */ \
 99:	addq	$TF_REGSIZE+16,%rsp	/* + T_xxx and error code */ ; \
 	iretq
 
