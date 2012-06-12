@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.53 2006/11/16 21:24:07 christos Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.53.2.1 2012/06/12 14:27:39 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.53 2006/11/16 21:24:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.53.2.1 2012/06/12 14:27:39 sborrill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -170,15 +170,21 @@ mii_phy_setmedia(struct mii_softc *sc)
 		bmcr |= BMCR_LOOP;
 
 	PHY_WRITE(sc, MII_ANAR, anar);
-	PHY_WRITE(sc, MII_BMCR, bmcr);
 	if (sc->mii_flags & MIIF_HAVE_GTCR)
 		PHY_WRITE(sc, MII_100T2CR, gtcr);
+	if (IFM_SUBTYPE(ife->ifm_media) == IFM_1000_T) {
+		mii_phy_auto(sc, 0);
+	} else {
+		PHY_WRITE(sc, MII_BMCR, bmcr);
+	}
 }
 
 int
 mii_phy_auto(struct mii_softc *sc, int waitfor)
 {
 	int i;
+	struct mii_data *mii = sc->mii_pdata;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 
 	if ((sc->mii_flags & MIIF_DOINGAUTO) == 0) {
 		/*
@@ -212,6 +218,16 @@ mii_phy_auto(struct mii_softc *sc, int waitfor)
 				     (EXTSR_1000THDX|EXTSR_1000TFDX)))
 					anar |= ANAR_X_PAUSE_ASYM;
 			}
+
+			/*
+			 *for 1000-base-T, autonegotiation mus be enabled, but 
+			 *if we're not set to auto, only advertise
+			 *1000-base-T with the link partner.
+			 */
+			if (IFM_SUBTYPE(ife->ifm_media) == IFM_1000_T) {
+				anar &= ~(ANAR_T4|ANAR_TX_FD|ANAR_TX|ANAR_10_FD|ANAR_10);
+			}
+				
 			PHY_WRITE(sc, MII_ANAR, anar);
 			if (sc->mii_flags & MIIF_HAVE_GTCR) {
 				uint16_t gtcr = 0;
@@ -294,7 +310,8 @@ mii_phy_tick(struct mii_softc *sc)
 	 * status so we can generate an announcement if the status
 	 * changes.
 	 */
-	if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
+	if ((IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) &&
+	(IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T))
 		return (0);
 
 	/* Read the status register twice; BMSR_LINK is latch-low. */
