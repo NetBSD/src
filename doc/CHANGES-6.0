@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.123 2012/06/12 19:20:37 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.124 2012/06/12 19:31:50 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -5470,4 +5470,18 @@ distrib/utils/sysinst/mbr.c			1.91
 	Fix sysinst MBR editor regression caused by a part of sysinst updates
 	in ticket #247.
 	[tsutsui, ticket #317]
+
+usr.bin/config/defs.h				1.44
+usr.bin/config/mkmakefile.c			1.15
+
+	When building several kernel variants within the same build
+	directory, wait for each config to complete before going on
+	with the next.
+	[martin, ticket #318]
+
+xsrc/external/mit/xf86-video-intel/dist/src/i830.h	1.3
+
+	Make xf86-video-intel driver work on Atom N455 + GMA3150 graphics
+	chipset.
+	[tsutsui, ticket #319]
 
