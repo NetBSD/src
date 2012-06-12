@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.77 2012/06/12 20:44:47 riz Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.78 2012/06/12 23:19:01 riz Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -3062,4 +3062,11 @@ sys/arch/amd64/include/frameasm.h		patch
 	Also detects any fault loading %gs and re-instates the kernel gs_base
 	value before entering the trap handler.
 	[spz, ticket #1772]
+
+sys/arch/amd64/amd64/machdep.c			1.184 via patch
+sys/arch/amd64/amd64/netbsd32_machdep.c		1.77 via patch
+
+	If the user process provided a bogus signal handler address, kill it
+	now instead of trying to jump to the bogus address.
+	[spz, ticket #1773]
 
