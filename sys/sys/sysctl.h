@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.199 2012/01/27 19:48:41 para Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.199.2.1 2012/06/12 17:06:38 riz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -93,6 +93,12 @@ struct ctlname {
 #define	CTLTYPE_QUAD	4	/* name describes a 64-bit number */
 #define	CTLTYPE_STRUCT	5	/* name describes a structure */
 #define	CTLTYPE_BOOL	6	/* name describes a bool */
+
+#ifdef _LP64
+#define	CTLTYPE_LONG	CTLTYPE_QUAD
+#else
+#define	CTLTYPE_LONG	CTLTYPE_INT
+#endif
 
 /*
  * Flags that apply to each node, governing access and other features
