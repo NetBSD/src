@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.138 2011/12/02 15:21:15 christos Exp $ */
+/*	$NetBSD: fdisk.c,v 1.138.2.1 2012/06/12 19:11:50 riz Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.138 2011/12/02 15:21:15 christos Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.138.2.1 2012/06/12 19:11:50 riz Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -86,17 +86,12 @@ __RCSID("$NetBSD: fdisk.c,v 1.138 2011/12/02 15:21:15 christos Exp $");
 #endif
 #endif /* HAVE_NBTOOL_CONFIG_H */
 
+#ifndef	DEFAULT_BOOTDIR
 #define	DEFAULT_BOOTDIR		"/usr/mdec"
+#endif
 
 #define	LE_MBR_MAGIC		htole16(MBR_MAGIC)
 #define	LE_MBR_BS_MAGIC		htole16(MBR_BS_MAGIC)
-
-#if defined(__i386__) || defined(__x86_64__)
-#if !HAVE_NBTOOL_CONFIG_H
-#include <machine/cpu.h>
-#endif /* !HAVE_NBTOOL_CONFIG_H */
-#define BOOTSEL
-#endif
 
 #ifdef BOOTSEL
 
@@ -248,8 +243,8 @@ static struct mbr_sector bootcode[8192 / sizeof (struct mbr_sector)];
 static int bootsize;		/* actual size of bootcode */
 static int boot_installed;	/* 1 if we've copied code into the mbr */
 
-#if (defined(__i386__) || defined(__x86_64__)) && !HAVE_NBTOOL_CONFIG_H
-#define USE_DISKLIST
+#if defined(USE_DISKLIST)
+#include <machine/cpu.h>
 static struct disklist *dl;
 #endif
 
