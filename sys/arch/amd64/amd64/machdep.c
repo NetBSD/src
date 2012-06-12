@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44.2.3 2007/04/20 20:31:25 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.44.2.3.6.1 2012/06/12 23:21:42 riz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44.2.3 2007/04/20 20:31:25 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44.2.3.6.1 2012/06/12 23:21:42 riz Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -522,6 +522,16 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+
+	if ((vaddr_t)catcher >= VM_MAXUSER_ADDRESS) {
+		/* 
+		 * process has given an invalid address for the
+		 * handler. Stop it, but do not do it before so
+		 * we can return the right info to userland (or in core dump)
+		 */
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
 }
 
 void 
