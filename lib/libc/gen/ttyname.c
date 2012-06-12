@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyname.c,v 1.25 2012/06/03 21:42:46 joerg Exp $	*/
+/*	$NetBSD: ttyname.c,v 1.26 2012/06/12 18:17:04 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ttyname.c	8.2 (Berkeley) 1/27/94";
 #else
-__RCSID("$NetBSD: ttyname.c,v 1.25 2012/06/03 21:42:46 joerg Exp $");
+__RCSID("$NetBSD: ttyname.c,v 1.26 2012/06/12 18:17:04 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: ttyname.c,v 1.25 2012/06/03 21:42:46 joerg Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <limits.h>
+#include <paths.h>
 #include <string.h>
 #include <stdlib.h>
 #include <termios.h>
@@ -79,6 +80,10 @@ ttyname_r(int fd, char *buf, size_t len)
 	if (fstat(fd, &sb))
 		return errno;
 
+	if (strlcpy(buf, _PATH_DEV, len) >= len)
+		return ERANGE;
+	buf += strlen(_PATH_DEV);
+	len -= strlen(_PATH_DEV);
 	return devname_r(sb.st_rdev, sb.st_mode & S_IFMT, buf, len);
 }
 
