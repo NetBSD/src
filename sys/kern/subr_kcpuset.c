@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kcpuset.c,v 1.4.2.1 2012/05/09 03:22:54 riz Exp $	*/
+/*	$NetBSD: subr_kcpuset.c,v 1.4.2.2 2012/06/12 19:00:25 riz Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kcpuset.c,v 1.4.2.1 2012/05/09 03:22:54 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kcpuset.c,v 1.4.2.2 2012/06/12 19:00:25 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -299,6 +299,15 @@ kcpuset_copyout(kcpuset_t *kcp, cpuset_t *ucp, size_t len)
 		return EINVAL;
 	}
 	return copyout(kcp, ucp, len);
+}
+
+void
+kcpuset_copybits(const kcpuset_t *kcp, void *bitfield, size_t len)
+{
+	size_t rlen = MIN(kc_bitsize, len);
+
+	KASSERT(kcp != NULL);
+	memcpy(bitfield, kcp->bits, rlen);
 }
 
 /*
