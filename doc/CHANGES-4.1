@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.241 2012/06/12 14:27:59 sborrill Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.242 2012/06/12 23:23:52 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -4652,4 +4652,11 @@ sys/dev/mii/mii_physubr.c				1.73 via patch
 	media 1000baseT connections with ifconfig(8) rather than only
 	when media auto is specified. Fixes PR kern/20700.
 	[buhrow, ticket #1448]
+
+sys/arch/amd64/amd64/machdep.c			1.184 via patch
+sys/arch/amd64/amd64/netbsd32_machdep.c		1.77 via patch
+
+	If the user process provided a bogus signal handler address, kill it
+	now instead of trying to jump to the bogus address.
+	[spz, ticket #1450]
 
