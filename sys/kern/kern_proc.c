@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.181 2012/02/11 23:16:17 martin Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.181.2.1 2012/06/12 17:18:22 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.181 2012/02/11 23:16:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.181.2.1 2012/06/12 17:18:22 riz Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -2277,7 +2277,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 		ki->p_vm_tsize = vm->vm_tsize;
 		ki->p_vm_dsize = vm->vm_dsize;
 		ki->p_vm_ssize = vm->vm_ssize;
-		ki->p_vm_vsize = vm->vm_map.size;
+		ki->p_vm_vsize = atop(vm->vm_map.size);
 		/*
 		 * Since the stack is initially mapped mostly with
 		 * PROT_NONE and grown as needed, adjust the "mapped size"
