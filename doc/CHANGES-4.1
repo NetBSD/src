@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.240 2012/06/05 20:02:32 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.241 2012/06/12 14:27:59 sborrill Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -4645,4 +4645,11 @@ dist/bind/lib/dns/rdataslab.c				patch
 	3331.  [security]      dns_rdataslab_fromrdataset could produce bad
 			       rdataslabs. [RT #29644]
 	[christos, ticket #1447]
+
+sys/dev/mii/mii_physubr.c				1.73 via patch
+
+	Make 1000baseT connections work even when the user specifies
+	media 1000baseT connections with ifconfig(8) rather than only
+	when media auto is specified. Fixes PR kern/20700.
+	[buhrow, ticket #1448]
 
