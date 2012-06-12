@@ -1,4 +1,4 @@
-/*	$NetBSD: stuirda.c,v 1.14 2012/03/06 03:35:29 mrg Exp $	*/
+/*	$NetBSD: stuirda.c,v 1.15 2012/06/12 20:25:58 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.14 2012/03/06 03:35:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.15 2012/06/12 20:25:58 joerg Exp $");
 
 #include <sys/param.h>
 
@@ -220,7 +220,7 @@ stuirda_fwload(struct uirda_softc *sc) {
 	if (rc) {
 		printf("%s: Cannot switch to f/w d/l mode, error %d\n",
 			device_xname(sc->sc_dev), rc);
-		goto giveup4;
+		goto giveup3;
 	}
 
 	delay(100000);
