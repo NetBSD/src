@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.172 2012/06/12 20:45:09 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.173 2012/06/12 20:49:17 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -6451,4 +6451,10 @@ sys/arch/amd64/include/frameasm.h		patch
 	Also detects any fault loading %gs and re-instates the kernel gs_base
 	value before entering the trap handler.
 	[spz, ticket #1772]
+
+sys/arch/xen/xenbus/xenbus_probe.c		1.36-1.37
+
+	Sort vif and vbd device IDs numerically so that attach order does
+	not depend on the order they are passed in through xenstore.
+	[sborrill, ticket #1768]
 
