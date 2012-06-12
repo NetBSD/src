@@ -1,4 +1,4 @@
-/*	$NetBSD: sig.c,v 1.2 2011/01/10 17:14:38 dyoung Exp $	*/
+/*	$NetBSD: sig.c,v 1.3 2012/06/12 19:03:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sig.c,v 1.2 2011/01/10 17:14:38 dyoung Exp $");
+__RCSID("$NetBSD: sig.c,v 1.3 2012/06/12 19:03:26 christos Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -159,6 +159,13 @@ sig_check(void)
 		}
 	}
 	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
+}
+
+PUBLIC sig_t
+sig_current(int signo)
+{
+	assert(signo > 0 && signo < NSIG);
+	return sigarray[signo];
 }
 
 PUBLIC sig_t
