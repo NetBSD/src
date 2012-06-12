@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.28.6.1 2008/11/25 18:24:31 snj Exp $	*/
+/*	$NetBSD: vector.S,v 1.28.6.1.2.1 2012/06/12 20:43:59 riz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -98,16 +98,16 @@
 
 /*****************************************************************************/
 
-#ifndef	XEN
-#define PRE_TRAP
-#define	TRAP(a)		pushq $(a) ; jmp _C_LABEL(alltraps)
-#define	ZTRAP(a)	pushq $0 ; TRAP(a)
-#else
+#ifdef	XEN
 #define	PRE_TRAP	movq (%rsp),%rcx ; movq 8(%rsp),%r11 ; addq $0x10,%rsp 
-#define	POST_TRAP(a)	pushq $(a) ; jmp _C_LABEL(alltraps)
-#define	TRAP(a)		PRE_TRAP ; POST_TRAP(a)
-#define ZTRAP(a)	PRE_TRAP ; pushq $0 ; POST_TRAP(a)
+#else
+#define	PRE_TRAP
 #endif
+
+#define	TRAP_NJ(a)	PRE_TRAP ; pushq $(a)
+#define	ZTRAP_NJ(a)	PRE_TRAP ; pushq $0 ; pushq $(a)
+#define	TRAP(a)		TRAP_NJ(a) ; jmp _C_LABEL(alltraps)
+#define	ZTRAP(a)	ZTRAP_NJ(a) ; jmp _C_LABEL(alltraps)
 
 #define	BPTTRAP(a)	ZTRAP(a)
 
@@ -177,12 +177,52 @@ IDTVEC(trap09)
 	ZTRAP(T_FPOPFLT)
 IDTVEC(trap0a)
 	TRAP(T_TSSFLT)
-IDTVEC(trap0b)
+
+IDTVEC(trap0b)		/* #NP() Segment not present */
+#ifdef	XEN
 	TRAP(T_SEGNPFLT)
-IDTVEC(trap0c)
+#else
+	TRAP_NJ(T_SEGNPFLT)
+	jmp	check_swapgs
+#endif
+IDTVEC(trap0c)		/* #SS() Stack exception */
+#ifdef	XEN
 	TRAP(T_STKFLT)
-IDTVEC(trap0d)
+#else
+	TRAP_NJ(T_STKFLT)
+	jmp	check_swapgs
+#endif
+
+IDTVEC(trap0d)		/* #GP() General protection */
+#ifdef	XEN
 	TRAP(T_PROTFLT)
+#else
+	TRAP_NJ(T_PROTFLT)
+
+/* We need to worry about traps before iret after the swapgs.
+ * Might be loading %gs or the iret itself. */
+check_swapgs:
+	INTRENTRY_L(3f,1:)
+2:	sti
+	jmp	calltrap
+3:
+	/* Trap in kernel mode. */
+	/* If faulting instruction is 'iret' or mov to %gs
+	 * we may need to do a 'swapgs'. */
+	movq	TF_RIP(%rsp),%rax
+	movq	TF_RSP(%rsp),%rbx	/* Must read %rsp, may be a pad word */
+	cmpl	$0x9824ac8e,(%rax)	/* Fault is mov %gs,0x98(%rsp) ? */
+	jne	4f
+	addw	$7+7,%rax		/* Advance %rip to iret */
+	addq	$TF_REGSIZE+8+8,%rbx	/* %rsp adjust before iret */
+4:	cmpw	$0xcf48,(%rax)		/* Faulting instruction is iretq ? */
+	jne	2b			/* normal fault in kernel */
+
+	testb	$SEL_UPL,8(%rbx)	/* Check %cs of outer iret frame */
+	je	2b			/* if iret was to user ... */
+	jmp	1b			/* ... must restore kernel %gs */
+#endif
+
 IDTVEC(trap0e)
 	TRAP(T_PAGEFLT)
 IDTVEC(intrspurious)
@@ -255,25 +295,20 @@ IDTVEC(exceptions)
 	.quad	_C_LABEL(Xtrap1e), _C_LABEL(Xtrap1f)
 
 /*
- * If an error is detected during trap, syscall, or interrupt exit, trap() will
- * change %eip to point to one of these labels.  We clean up the stack, if
- * necessary, and resume as if we were handling a general protection fault.
- * This will cause the process to get a SIGBUS.
- *
- * XXXfvdl currently unused, as pop %ds and pop %es are illegal in long
- * mode. However, if the x86-64 port is going to support USER_LDT, we
- * may need something like this after all.
+ * trap() calls here when it detects a fault in INTRFASTEXIT (loading the
+ * segment registers or during the iret itself).
+ * The address of the (possibly reconstructed) user trap frame is
+ * passed as an argument.
+ * Typically the code will have raised a SIGSEGV which will be actioned
+ * by the code below.
  */
-NENTRY(resume_iret)
-	ZTRAP(T_PROTFLT)
-#if 0
-NENTRY(resume_pop_ds)
-	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
-	movl	%eax,%es
-NENTRY(resume_pop_es)
-	movl	$T_PROTFLT,TF_TRAPNO(%rsp)
-	jmp	calltrap
-#endif
+_C_LABEL(trap_return_fault_return):	.globl	trap_return_fault_return
+	mov	%rdi,%rsp		/* frame for user return */
+#ifdef DIAGNOSTIC
+	/* We can't recover the saved %rbx, so suppress warning */
+	movl	CPUVAR(ILEVEL),%ebx
+#endif /* DIAGNOSTIC */
+	jmp	.Lalltraps_checkusr
 
 /*
  * All traps go through here. Call the generic trap handler, and
