@@ -1,4 +1,4 @@
-/*	$NetBSD: sig.h,v 1.1 2009/04/10 13:08:25 christos Exp $	*/
+/*	$NetBSD: sig.h,v 1.2 2012/06/12 19:03:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@ void sig_release(void);		/* XXX: should this be named sig_relse()? */
 void sig_check(void);
 void sig_setup(void);
 sig_t sig_signal(int, sig_t);
+sig_t sig_current(int);
 
 #endif /* __SIG_H__ */
 

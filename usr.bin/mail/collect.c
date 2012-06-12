@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.45 2012/04/29 23:50:22 christos Exp $	*/
+/*	$NetBSD: collect.c,v 1.46 2012/06/12 19:03:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: collect.c,v 1.45 2012/04/29 23:50:22 christos Exp $");
+__RCSID("$NetBSD: collect.c,v 1.46 2012/06/12 19:03:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -355,11 +355,11 @@ coll_stop(int signo)
 PUBLIC FILE *
 collect(struct header *hp, int printheaders)
 {
-	volatile sig_t old_sigint;
-	volatile sig_t old_sighup;
-	volatile sig_t old_sigtstp;
-	volatile sig_t old_sigttin;
-	volatile sig_t old_sigttou;
+	sig_t volatile old_sigint = sig_current(SIGINT);
+	sig_t volatile old_sighup = sig_current(SIGHUP);
+	sig_t volatile old_sigtstp = sig_current(SIGTSTP);
+	sig_t volatile old_sigttin = sig_current(SIGTTIN);
+	sig_t volatile old_sigttou = sig_current(SIGTTOU);
 	FILE *fbuf;
 	int lc, cc;
 	int c, fd, t;
