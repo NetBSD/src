@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.122 2012/06/12 18:31:30 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.123 2012/06/12 19:20:37 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -5443,4 +5443,31 @@ sys/arch/xen/xenbus/xenbus_probe.c		1.36-1.37
 	Sort vif and vbd device IDs numerically so that attach order does
 	not depend on the order they are passed in through xenstore.
 	[sborrill, ticket #313]
+
+sys/arch/xen/x86/cpu.c				1.92
+sys/arch/xen/x86/x86_xpmap.c			1.44
+sys/kern/subr_kcpuset.c				1.6
+sys/sys/kcpuset.h				1.6
+
+	Fix infrequent Xen crashes and avoid incorrect ncpu at boot.
+	[rmind, ticket #314]
+
+sbin/fdisk/Makefile				1.42
+sbin/fdisk/fdisk.c				1.141-1.142
+tools/fdisk/Makefile				1.5,1.7
+
+	Fix default bootcode behavior of the tools.
+	[tsutsui, ticket #315]
+
+xsrc/external/mit/xf86-video-intel/dist/src/i830_render.c 1.2
+
+	Avoid a crash that can happen when starting Firefox on old
+	i830/855GM machines.
+	[tsutsui, ticket #316]
+
+distrib/utils/sysinst/mbr.c			1.91
+
+	Fix sysinst MBR editor regression caused by a part of sysinst updates
+	in ticket #247.
+	[tsutsui, ticket #317]
 
