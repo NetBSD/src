@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.121 2012/06/12 17:50:58 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.122 2012/06/12 18:31:30 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -5432,4 +5432,15 @@ sys/arch/zaurus/conf/GENERIC			1.54
 	Update comments in kernel configs.  Add WSDISPLAY_COMPAT_USL to
 	vax GENERIC.
 	[abs, ticket #311]
+
+sys/net/bpf.h					1.59
+
+	Add {__BEGIN,__END}_DECLS so including in C++ works properly.
+	[abs, ticket #312]
+
+sys/arch/xen/xenbus/xenbus_probe.c		1.36-1.37
+
+	Sort vif and vbd device IDs numerically so that attach order does
+	not depend on the order they are passed in through xenstore.
+	[sborrill, ticket #313]
 
