@@ -1,4 +1,4 @@
-#	$NetBSD: VIRTEX_DFC,v 1.16 2011/12/18 05:49:27 dholland Exp $
+#	$NetBSD: VIRTEX_DFC,v 1.16.2.1 2012/06/12 17:48:00 riz Exp $
 #
 # VIRTEX_DFC
 #
@@ -141,7 +141,7 @@ options 	IPFILTER_COMPAT # Compat for IP-Filter
 options 	WSEMUL_VT100
 options 	WSEMUL_DEFAULT_FG=WSCOL_BLACK
 options 	WSEMUL_DEFAULT_BG=WSCOL_LIGHT_WHITE
-options 	WSDISPLAY_COMPAT_USL 	# VT handling
+options 	WSDISPLAY_COMPAT_USL 	# wsconscfg VT handling
 #options 	WSDISPLAY_COMPAT_RAWKBD
 #options 	WSDISPLAY_DEFAULTSCREENS=4
 options 	FONT_VT220L8x16

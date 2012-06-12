@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.95 2011/12/18 05:49:28 dholland Exp $
+# $NetBSD: GENERIC,v 1.95.2.1 2012/06/12 17:48:03 riz Exp $
 #
 # GENERIC machine description file
 #
@@ -192,7 +192,7 @@ options 	WS_KERNEL_BG=WSCOL_BLUE
 # compatibility to other console drivers
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
-options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 
 options 	FONT_VT220L8x10			# the console font

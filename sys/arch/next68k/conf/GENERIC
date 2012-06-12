@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.125 2011/12/18 05:49:30 dholland Exp $
+# $NetBSD: GENERIC,v 1.125.2.1 2012/06/12 17:48:00 riz Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/next68k/conf/std.next68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.125 $"
+#ident 		"GENERIC-$Revision: 1.125.2.1 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
@@ -178,7 +178,7 @@ options 	RCONS_16BPP		# necessary for color nextdisplay
 #options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
-options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD	# can get raw scancodes
 # see dev/wskbdmap_next.h for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"

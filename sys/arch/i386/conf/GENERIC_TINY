@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.130 2011/11/22 21:25:20 tls Exp $
+#	$NetBSD: GENERIC_TINY,v 1.130.4.1 2012/06/12 17:47:52 riz Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -177,7 +177,7 @@ options 	WS_KERNEL_FG=WSCOL_GREEN
 # compatibility to other console drivers
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
-options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 # see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)" # for pckbd driver

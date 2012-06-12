@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.60.2.3 2012/04/23 16:31:36 riz Exp $
+#	$NetBSD: XEN3_DOM0,v 1.60.2.4 2012/06/12 17:47:51 riz Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -196,7 +196,7 @@ options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WS_KERNEL_FG=WSCOL_GREEN
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
-options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	WSDISPLAY_DEFAULTSCREENS=4
 options 	WSDISPLAY_SCROLLSUPPORT

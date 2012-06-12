@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.53 2011/12/18 05:49:25 dholland Exp $
+#	$NetBSD: INSTALL,v 1.53.2.1 2012/06/12 17:48:01 riz Exp $
 #
 # First try for BeBox config file
 #
@@ -85,7 +85,7 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WS_DEFAULT_FG=WSCOL_LIGHT_WHITE
 # compatibility to other console drivers
-options 	WSDISPLAY_COMPAT_USL	# VT handling
+options 	WSDISPLAY_COMPAT_USL	# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD	# can get raw scancodes
 
 config		netbsd	root on ? type ffs

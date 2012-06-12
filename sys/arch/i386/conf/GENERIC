@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1066.2.1 2012/04/23 16:31:35 riz Exp $
+# $NetBSD: GENERIC,v 1.1066.2.2 2012/06/12 17:47:51 riz Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1066.2.1 $"
+#ident 		"GENERIC-$Revision: 1.1066.2.2 $"
 
 maxusers	64		# estimated number of users
 
@@ -268,7 +268,7 @@ options 	WSDISPLAY_CUSTOM_BORDER	# custom border colors via wsconsctl(8)
 # compatibility to other console drivers
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
-options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 #options 	WSKBD_EVENT_AUTOREPEAT		# auto repeat in event mode
 #options 	WSKBD_USONLY			# strip off non-US keymaps
@@ -1226,6 +1226,7 @@ otus*	at uhub? port ?		# Atheros AR9001U
 ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
 rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
 upgt*	at uhub? port ?		# Intersil PrismGT
+urtwn*	at uhub? port ?		# Realtek RTL8188CU/RTL8192CU 802.11b/g/n
 zyd*	at uhub? port ?		# Zydas ZD1211
 
 # Prolific PL2301/PL2302 host-to-host adapter

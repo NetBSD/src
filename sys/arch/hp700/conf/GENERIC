@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.111 2012/02/04 16:29:14 skrll Exp $
+# $NetBSD: GENERIC,v 1.111.2.1 2012/06/12 17:48:05 riz Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.111 $"
+#ident 		"GENERIC-$Revision: 1.111.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -189,7 +189,7 @@ options 	WSDISPLAY_CUSTOM_BORDER	# border customization from wsconsctl(8)
 # compatibility to other console drivers
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
-options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 # see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
