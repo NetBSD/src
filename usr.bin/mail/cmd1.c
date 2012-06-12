@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd1.c,v 1.32 2012/04/29 23:50:22 christos Exp $	*/
+/*	$NetBSD: cmd1.c,v 1.33 2012/06/12 19:03:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd1.c,v 1.32 2012/04/29 23:50:22 christos Exp $");
+__RCSID("$NetBSD: cmd1.c,v 1.33 2012/06/12 19:03:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -448,7 +448,7 @@ pipecmd(void *v)
 {
 	char *cmd;
 	FILE *volatile obuf;		/* void longjmp clobbering */
-	sig_t volatile oldsigpipe;	/* XXX - is volatile needed? */
+	sig_t volatile oldsigpipe = sig_current(SIGPIPE);
 
 	cmd = v;
 	if (dot == NULL) {
