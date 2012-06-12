@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.236 2012/02/01 23:43:49 para Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.236.2.1 2012/06/12 17:13:56 riz Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.236 2012/02/01 23:43:49 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.236.2.1 2012/06/12 17:13:56 riz Exp $");
 
 #include "opt_bufcache.h"
 
@@ -1730,39 +1730,41 @@ sysctl_dobuf(SYSCTLFN_ARGS)
 static int
 sysctl_bufvm_update(SYSCTLFN_ARGS)
 {
-	int t, error, rv;
+	int error, rv;
 	struct sysctlnode node;
+	union u_int_long { unsigned int i; unsigned long l; } t;
 
+	/* Take a copy of the supplied node and its data */
 	node = *rnode;
 	node.sysctl_data = &t;
-	t = *(int *)rnode->sysctl_data;
+	t = *(union u_int_long *)rnode->sysctl_data;
+
+	/* Update the copy */
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return (error);
 
-	if (t < 0)
-		return EINVAL;
 	if (rnode->sysctl_data == &bufcache) {
-		if (t > 100)
+		if (t.i > 100)
 			return (EINVAL);
-		bufcache = t;
+		bufcache = t.i;
 		buf_setwm();
 	} else if (rnode->sysctl_data == &bufmem_lowater) {
-		if (bufmem_hiwater - t < 16)
+		if (bufmem_hiwater - t.l < 16)
 			return (EINVAL);
-		bufmem_lowater = t;
+		bufmem_lowater = t.l;
 	} else if (rnode->sysctl_data == &bufmem_hiwater) {
-		if (t - bufmem_lowater < 16)
+		if (t.l - bufmem_lowater < 16)
 			return (EINVAL);
-		bufmem_hiwater = t;
+		bufmem_hiwater = t.l;
 	} else
 		return (EINVAL);
 
 	/* Drain until below new high water mark */
 	sysctl_unlock();
 	mutex_enter(&bufcache_lock);
-	while ((t = bufmem - bufmem_hiwater) >= 0) {
-		rv = buf_drain(t / (2 * 1024));
+	while (bufmem > bufmem_hiwater) {
+		rv = buf_drain((bufmem - bufmem_hiwater) / (2 * 1024));
 		if (rv <= 0)
 			break;
 	}
@@ -1809,21 +1811,21 @@ sysctl_vm_buf_setup(void)
 		       CTL_VM, CTL_CREATE, CTL_EOL);
 	sysctl_createv(&vfsbio_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
-		       CTLTYPE_INT, "bufmem",
+		       CTLTYPE_LONG, "bufmem",
 		       SYSCTL_DESCR("Amount of kernel memory used by buffer "
 				    "cache"),
 		       NULL, 0, &bufmem, 0,
 		       CTL_VM, CTL_CREATE, CTL_EOL);
 	sysctl_createv(&vfsbio_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "bufmem_lowater",
+		       CTLTYPE_LONG, "bufmem_lowater",
 		       SYSCTL_DESCR("Minimum amount of kernel memory to "
 				    "reserve for buffer cache"),
 		       sysctl_bufvm_update, 0, &bufmem_lowater, 0,
 		       CTL_VM, CTL_CREATE, CTL_EOL);
 	sysctl_createv(&vfsbio_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "bufmem_hiwater",
+		       CTLTYPE_LONG, "bufmem_hiwater",
 		       SYSCTL_DESCR("Maximum amount of kernel memory to use "
 				    "for buffer cache"),
 		       sysctl_bufvm_update, 0, &bufmem_hiwater, 0,

@@ -1,4 +1,4 @@
-/* $NetBSD: asus_acpi.c,v 1.23 2012/01/21 18:13:56 jmcneill Exp $ */
+/* $NetBSD: asus_acpi.c,v 1.23.2.1 2012/06/12 17:13:57 riz Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008, 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.23 2012/01/21 18:13:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.23.2.1 2012/06/12 17:13:57 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -355,7 +355,7 @@ asus_sysctl_setup(struct asus_softc *sc)
 		goto sysctl_err;
 	node_mib = node->sysctl_num;
 	err = sysctl_createv(&sc->sc_log, 0, NULL, &node_ncfv,
-	    CTLFLAG_READONLY, CTLTYPE_INT, "ncfv",
+	    CTLFLAG_READONLY, CTLTYPE_QUAD, "ncfv",
 	    SYSCTL_DESCR("Number of CPU frequency/voltage modes"),
 	    NULL, 0, &sc->sc_cfvnum, 0,
 	    CTL_HW, node_mib, CTL_CREATE, CTL_EOL);
@@ -365,7 +365,7 @@ asus_sysctl_setup(struct asus_softc *sc)
 	err = sysctl_createv(&sc->sc_log, 0, NULL, &node_cfv,
 	    CTLFLAG_READWRITE, CTLTYPE_INT, "cfv",
 	    SYSCTL_DESCR("Current CPU frequency/voltage mode"),
-	    asus_sysctl_verify, 0, sc, 0,
+	    asus_sysctl_verify, 0, (void *)sc, 0,
 	    CTL_HW, node_mib, CTL_CREATE, CTL_EOL);
 	if (err)
 		goto sysctl_err;
