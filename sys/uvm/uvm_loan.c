@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.81.2.16 2012/04/17 00:08:59 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.81.2.17 2012/06/12 17:12:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.81.2.16 2012/04/17 00:08:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.81.2.17 2012/06/12 17:12:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.81.2.16 2012/04/17 00:08:59 yamt Exp 
 
 #include <uvm/uvm.h>
 
-int vm_loan_read_thresh = MAXPHYS;
+int vm_loan_read_thresh = -1;
 
 /*
  * "loaned" pages are pages which are (read-only, copy-on-write) loaned
@@ -1303,7 +1303,7 @@ uvm_loanobj(struct uvm_object *uobj, struct uio *uio, int advice)
 	size_t len;
 	int i, error = 0;
 
-	if (vm_loan_read_thresh > 0 && uio->uio_resid < vm_loan_read_thresh) {
+	if (vm_loan_read_thresh < 0 || uio->uio_resid < vm_loan_read_thresh) {
 		return ENOSYS;
 	}
 
