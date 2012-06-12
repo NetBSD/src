@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.46 2012/02/02 19:43:03 tls Exp $ */
+/* $NetBSD: seeq8005.c,v 1.46.2.1 2012/06/12 19:44:46 riz Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.46 2012/02/02 19:43:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.46.2.1 2012/06/12 19:44:46 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -476,7 +476,7 @@ ea_stop(struct ifnet *ifp, int disable)
 	ea_stoprx(sc);
 
 	/* Disable rx and tx interrupts */
-	sc->sc_command &= (SEEQ_CMD_RX_INTEN | SEEQ_CMD_TX_INTEN);
+	sc->sc_command &= ~(SEEQ_CMD_RX_INTEN | SEEQ_CMD_TX_INTEN);
 
 	/* Clear any pending interrupts */
 	SEEQ_WRITE16(sc, iot, ioh, SEEQ_COMMAND,
@@ -492,7 +492,7 @@ ea_stop(struct ifnet *ifp, int disable)
 	}
 
 	/* Cancel any watchdog timer */
-       	sc->sc_ethercom.ec_if.if_timer = 0;
+	sc->sc_ethercom.ec_if.if_timer = 0;
 }
 
 
@@ -832,7 +832,7 @@ ea_init(struct ifnet *ifp)
 	SEEQ_WRITE16(sc, iot, ioh, SEEQ_COMMAND,
 			  sc->sc_command | SEEQ_CMD_RX_ON);
 
-	/* TX_ON gets set by ea_txpacket when there's something to transmit. */
+	/* TX_ON gets set by eatxpacket when there's something to transmit. */
 
 
 	/* Set flags appropriately. */
@@ -887,7 +887,7 @@ ea_start(struct ifnet *ifp)
  * Called at splnet()
  */
 
-void
+static void
 eatxpacket(struct seeq8005_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
@@ -980,7 +980,7 @@ ea_writembuf(struct seeq8005_softc *sc, struct mbuf *m0, int bufstart)
 	hdr[1] = nextpacket & 0xff;
 	hdr[2] = SEEQ_PKTCMD_TX | SEEQ_PKTCMD_DATA_FOLLOWS |
 		SEEQ_TXCMD_XMIT_SUCCESS_INT | SEEQ_TXCMD_COLLISION_INT;
-	hdr[3] = 0; /* Status byte -- will be update by hardware. */
+	hdr[3] = 0; /* Status byte -- will be updated by hardware. */
 	ea_writebuf(sc, hdr, 0x0000, 4);
 
 	return len;
@@ -1111,7 +1111,7 @@ ea_txint(struct seeq8005_softc *sc)
 	}
 }
 
-void
+static void
 ea_rxint(struct seeq8005_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1160,7 +1160,7 @@ ea_rxint(struct seeq8005_softc *sc)
 		}
 
 		/* Get packet length */
-       		len = (ptr - addr) - 4;
+		len = (ptr - addr) - 4;
 
 		if (len < 0)
 			len += sc->sc_rx_bufsize;
@@ -1238,7 +1238,7 @@ ea_read(struct seeq8005_softc *sc, int addr, int len)
 
 	/* Pull packet off interface. */
 	m = ea_get(sc, addr, len, ifp);
-	if (m == 0)
+	if (m == NULL)
 		return;
 
 	/*
@@ -1267,20 +1267,20 @@ ea_get(struct seeq8005_softc *sc, int addr, int totlen, struct ifnet *ifp)
         epkt = cp + totlen;
 
         MGETHDR(m, M_DONTWAIT, MT_DATA);
-        if (m == 0)
-                return 0;
+        if (m == NULL)
+                return NULL;
         m->m_pkthdr.rcvif = ifp;
         m->m_pkthdr.len = totlen;
         m->m_len = MHLEN;
-        top = 0;
+        top = NULL;
         mp = &top;
 
         while (totlen > 0) {
                 if (top) {
                         MGET(m, M_DONTWAIT, MT_DATA);
-                        if (m == 0) {
+                        if (m == NULL) {
                                 m_freem(top);
-                                return 0;
+                                return NULL;
                         }
                         m->m_len = MLEN;
                 }
@@ -1296,13 +1296,13 @@ ea_get(struct seeq8005_softc *sc, int addr, int totlen, struct ifnet *ifp)
                          * Place initial small packet/header at end of mbuf.
                          */
                         if (len < m->m_len) {
-                                if (top == 0 && len + max_linkhdr <= m->m_len)
+                                if (top == NULL && len + max_linkhdr <= m->m_len)
                                         m->m_data += max_linkhdr;
                                 m->m_len = len;
                         } else
                                 len = m->m_len;
                 }
-		if (top == 0) {
+		if (top == NULL) {
 			/* Make sure the payload is aligned */
 			char *newdata = (char *)
 			    ALIGN((char*)m->m_data + 
@@ -1485,4 +1485,4 @@ ea_watchdog(struct ifnet *ifp)
 	ifp->if_timer = 0;
 }
 
-/* End of if_ea.c */
+/* End of seeq8005.c */
