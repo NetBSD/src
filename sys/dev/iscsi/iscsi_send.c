@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.1 2011/10/23 21:15:02 agc Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.1.8.1 2012/06/12 19:41:25 riz Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -1345,6 +1345,7 @@ send_command(ccb_t *ccb, ccb_disp_t disp, bool waitok, bool immed)
 		if (/*CONSTCOND*/ISCSI_TROTTLING_ENABLED &&
 		    /*CONSTCOND*/ISCSI_SERVER_TRUSTED &&
 		    !sn_a_le_b(sess->CmdSN, sess->MaxCmdSN)) {
+			ccb->disp = disp;
 			TAILQ_INSERT_TAIL(&sess->ccbs_throttled, ccb, chain);
 			splx(s);
 			PDEBOUT(("Throttling S - CmdSN = %d, MaxCmdSN = %d\n",
@@ -1363,6 +1364,7 @@ send_command(ccb_t *ccb, ccb_disp_t disp, bool waitok, bool immed)
 		while (/*CONSTCOND*/ISCSI_TROTTLING_ENABLED &&
 		       /*CONSTCOND*/ISCSI_SERVER_TRUSTED &&
 		       !sn_a_le_b(sess->CmdSN, sess->MaxCmdSN)) {
+			ccb->disp = disp;
 			ccb->flags |= CCBF_WAITING;
 			TAILQ_INSERT_TAIL(&sess->ccbs_throttled, ccb, chain);
 			PDEBOUT(("Throttling W - CmdSN = %d, MaxCmdSN = %d\n",
