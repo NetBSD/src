@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mapper.c,v 1.9 2011/11/19 18:43:40 tnozaki Exp $	*/
+/*	$NetBSD: citrus_mapper.c,v 1.9.2.1 2012/06/12 19:42:53 riz Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_mapper.c,v 1.9 2011/11/19 18:43:40 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_mapper.c,v 1.9.2.1 2012/06/12 19:42:53 riz Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -102,6 +102,7 @@ _citrus_mapper_create_area(
 	}
 	ma->ma_dir = strdup(area);
 	if (ma->ma_dir == NULL) {
+		free(ma);
 		ret = errno;
 		goto quit;
 	}
