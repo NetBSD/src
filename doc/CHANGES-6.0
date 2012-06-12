@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.125 2012/06/12 19:45:25 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.126 2012/06/12 23:16:18 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -5517,4 +5517,11 @@ sys/dev/ic/seeq8005.c				1.48
 
 	Disable TX/RX interrupts during shutdown.  PR#46576.
 	[christos, ticket #325]
+
+sys/arch/amd64/amd64/machdep.c			1.184 via patch
+sys/arch/amd64/amd64/netbsd32_machdep.c		1.77 via patch
+
+	If the user process provided a bogus signal handler address, kill it
+	now instead of trying to jump to the bogus address.
+	[spz, ticket #337]
 
