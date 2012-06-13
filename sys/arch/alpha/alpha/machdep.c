@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.339 2012/05/21 14:15:16 martin Exp $ */
+/* $NetBSD: machdep.c,v 1.340 2012/06/13 17:13:41 njoly Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.339 2012/05/21 14:15:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.340 2012/06/13 17:13:41 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1550,17 +1550,20 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTL_MACHDEP, CPU_ROOT_DEVICE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "unaligned_print", NULL,
+		       CTLTYPE_INT, "unaligned_print",
+		       SYSCTL_DESCR("Warn about unaligned accesses"),
 		       NULL, 0, &alpha_unaligned_print, 0,
 		       CTL_MACHDEP, CPU_UNALIGNED_PRINT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "unaligned_fix", NULL,
+		       CTLTYPE_INT, "unaligned_fix",
+		       SYSCTL_DESCR("Fix up unaligned accesses"),
 		       NULL, 0, &alpha_unaligned_fix, 0,
 		       CTL_MACHDEP, CPU_UNALIGNED_FIX, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "unaligned_sigbus", NULL,
+		       CTLTYPE_INT, "unaligned_sigbus",
+		       SYSCTL_DESCR("Do SIGBUS for fixed unaligned accesses"),
 		       NULL, 0, &alpha_unaligned_sigbus, 0,
 		       CTL_MACHDEP, CPU_UNALIGNED_SIGBUS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
