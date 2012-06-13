@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.126 2012/06/12 23:16:18 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.127 2012/06/13 19:21:02 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -5524,4 +5524,29 @@ sys/arch/amd64/amd64/netbsd32_machdep.c		1.77 via patch
 	If the user process provided a bogus signal handler address, kill it
 	now instead of trying to jump to the bogus address.
 	[spz, ticket #337]
+
+tests/lib/libcurses/director/Makefile		1.6
+
+	Spell NetBSD correctly.
+	[joerg, ticket #327]
+
+usr.sbin/fssconfig/fssconfig.8			1.8
+
+	File system snapshots are no longer experimental.
+	[hannken, ticket #329]
+
+sys/netinet/in.c				1.143
+
+	Fix a pointer bug in SIOCGLIFADDR processing.
+	[gdt, ticket #330]
+
+sys/dev/audio.c					1.261
+
+	Fix locking issue.
+	[mrg, ticket #331]
+
+sys/dev/pci/eso.c				1.60
+
+	Fix locking issue.  PR#46451.
+	[mrg, ticket #332]
 
