@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.16 2011/02/17 07:52:10 jruoho Exp $
+#	$NetBSD: Makefile,v 1.17 2012/06/13 23:41:09 riz Exp $
 
-SUBDIR+= apache2 atheros bsd intel-fw-eula intel-fw-public gpl2 gpl3 historical
-SUBDIR+= ibm-public public-domain cddl mit
+SUBDIR+= apache2 atheros bsd cddl gpl2 gpl3 historical intel-fw-eula
+SUBDIR+= intel-fw-public ibm-public mit public-domain
 
 .include <bsd.subdir.mk>
