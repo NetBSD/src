@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.127 2012/06/13 19:21:02 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.128 2012/06/13 19:45:04 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -5549,4 +5549,67 @@ sys/dev/pci/eso.c				1.60
 
 	Fix locking issue.  PR#46451.
 	[mrg, ticket #332]
+
+doc/3RDPARTY					1.940 via patch
+doc/CHANGES					1.1708 via patch
+external/ibm-public/postfix/dist/HISTORY	patch
+external/ibm-public/postfix/dist/RELEASE_NOTES	patch
+external/ibm-public/postfix/dist/README_FILES/RELEASE_NOTES patch
+external/ibm-public/postfix/dist/README_FILES/TLS_README patch
+external/ibm-public/postfix/dist/html/TLS_README.html patch
+external/ibm-public/postfix/dist/html/lmtp.8.html patch
+external/ibm-public/postfix/dist/html/postconf.5.html patch
+external/ibm-public/postfix/dist/html/smtp.8.html patch
+external/ibm-public/postfix/dist/html/smtpd.8.html patch
+external/ibm-public/postfix/dist/man/man5/postconf.5 patch
+external/ibm-public/postfix/dist/man/man8/smtp.8 patch
+external/ibm-public/postfix/dist/man/man8/smtpd.8 patch
+external/ibm-public/postfix/dist/proto/TLS_README.html patch
+external/ibm-public/postfix/dist/proto/postconf.proto patch
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.c patch
+external/ibm-public/postfix/dist/src/dnsblog/dnsblog.c patch
+external/ibm-public/postfix/dist/src/global/mail_params.h patch
+external/ibm-public/postfix/dist/src/global/mail_version.h patch
+external/ibm-public/postfix/dist/src/local/Makefile.in patch
+external/ibm-public/postfix/dist/src/postlog/postlog.c patch
+external/ibm-public/postfix/dist/src/postqueue/Makefile.in patch
+external/ibm-public/postfix/dist/src/postqueue/postqueue.c patch
+external/ibm-public/postfix/dist/src/smtp/smtp.c patch
+external/ibm-public/postfix/dist/src/smtpd/smtpd.c patch
+external/ibm-public/postfix/dist/src/tls/tls.h	patch
+external/ibm-public/postfix/dist/src/tls/tls_client.c patch
+external/ibm-public/postfix/dist/src/tls/tls_misc.c patch
+external/ibm-public/postfix/dist/src/tls/tls_server.c patch
+external/ibm-public/postfix/dist/src/util/events.c patch
+external/ibm-public/postfix/dist/src/xsasl/xsasl_cyrus.h patch
+external/ibm-public/postfix/dist/src/xsasl/xsasl_cyrus_client.c patch
+external/ibm-public/postfix/dist/src/xsasl/xsasl_cyrus_server.c patch
+
+	Update Postfix to version 2.8.11.
+	[tron, ticket #333]
+
+sys/external/bsd/drm/dist/bsd-core/drm_pciids.h	1.8
+sys/external/bsd/drm/dist/shared-core/drm_pciids.txt 1.3
+sys/external/bsd/drm/dist/shared-core/i915_drv.h 1.5
+sys/external/bsd/drm/dist/shared-core/i915_reg.h 1.2
+
+	Make i915drm work on Atom N4xx/D410/D510 + GMA3150 integrated
+	graphic devices.
+	[tsutsui, ticket #334]
+
+sys/arch/powerpc/booke/e500_intr.c		1.17
+
+	Compute softintr mask correctly on PPC BookE.
+	[matt, ticket #338]
+
+sys/arch/powerpc/booke/spe_subr.S		1.3
+
+	Fix SPE loading typo. PR#45731.
+	[matt, ticket #339]
+
+sys/arch/powerpc/include/types.h		1.47
+sys/arch/powerpc/include/userret.h		1.24
+
+	Add __HAVE_RAS support to PowerPC.
+	[matt, ticket #340]
 
