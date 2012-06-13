@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_client.c,v 1.4 2011/03/02 19:56:39 tron Exp $	*/
+/*	$NetBSD: tls_client.c,v 1.4.6.1 2012/06/13 19:29:04 riz Exp $	*/
 
 /*++
 /* NAME
@@ -786,6 +786,12 @@ TLS_SESS_STATE *tls_client_start(const TLS_CLIENT_START_PROPS *props)
     vstring_sprintf_append(myserverid, "&c=%s", cipher_list);
 
     /*
+     * Finally, salt the session key with the OpenSSL library version,
+     * (run-time, rather than compile-time, just in case that matters).
+     */
+    vstring_sprintf_append(myserverid, "&l=%ld", (long) SSLeay());
+
+    /*
      * Allocate a new TLScontext for the new connection and get an SSL
      * structure. Add the location of TLScontext to the SSL to later retrieve
      * the information inside the tls_verify_certificate_callback().
@@ -817,6 +823,8 @@ TLS_SESS_STATE *tls_client_start(const TLS_CLIENT_START_PROPS *props)
     if (protomask != 0)
 	SSL_set_options(TLScontext->con,
 		   ((protomask & TLS_PROTOCOL_TLSv1) ? SSL_OP_NO_TLSv1 : 0L)
+	     | ((protomask & TLS_PROTOCOL_TLSv1_1) ? SSL_OP_NO_TLSv1_1 : 0L)
+	     | ((protomask & TLS_PROTOCOL_TLSv1_2) ? SSL_OP_NO_TLSv1_2 : 0L)
 		 | ((protomask & TLS_PROTOCOL_SSLv3) ? SSL_OP_NO_SSLv3 : 0L)
 	       | ((protomask & TLS_PROTOCOL_SSLv2) ? SSL_OP_NO_SSLv2 : 0L));
 

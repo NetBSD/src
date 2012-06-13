@@ -1,4 +1,4 @@
-/*	$NetBSD: postqueue.c,v 1.1.1.2 2010/06/17 18:06:59 tron Exp $	*/
+/*	$NetBSD: postqueue.c,v 1.1.1.2.8.1 2012/06/13 19:29:03 riz Exp $	*/
 
 /*++
 /* NAME
@@ -188,6 +188,7 @@
 #include <safe.h>
 #include <connect.h>
 #include <valid_hostname.h>
+#include <events.h>
 
 /* Global library. */
 
@@ -353,6 +354,7 @@ static void flush_queue(void)
     if (mail_flush_maildrop() < 0)
 	msg_fatal_status(EX_UNAVAILABLE,
 			 "Cannot flush mail queue - mail system is down");
+    event_drain(2);
 }
 
 /* flush_site - flush mail for site */

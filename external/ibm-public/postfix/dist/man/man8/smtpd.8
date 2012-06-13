@@ -1,4 +1,4 @@
-.\"	$NetBSD: smtpd.8,v 1.1.1.3 2011/03/02 19:31:55 tron Exp $
+.\"	$NetBSD: smtpd.8,v 1.1.1.3.6.1 2012/06/13 19:29:00 riz Exp $
 .\"
 .TH SMTPD 8 
 .ad
@@ -391,7 +391,7 @@ use with mandatory TLS encryption.
 .IP "\fBsmtpd_tls_mandatory_exclude_ciphers (empty)\fR"
 Additional list of ciphers or cipher types to exclude from the
 SMTP server cipher list at mandatory TLS security levels.
-.IP "\fBsmtpd_tls_mandatory_protocols (SSLv3, TLSv1)\fR"
+.IP "\fBsmtpd_tls_mandatory_protocols (!SSLv2)\fR"
 The SSL/TLS protocols accepted by the Postfix SMTP server with
 mandatory TLS encryption.
 .IP "\fBsmtpd_tls_received_header (no)\fR"

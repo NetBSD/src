@@ -11,6 +11,43 @@ instead, a new snapshot is released.
 The mail_release_date configuration parameter (format: yyyymmdd)
 specifies the release date of a stable release or snapshot release.
 
+Major changes with Postfix 2.8.10
+---------------------------------
+
+This release adds support to turn off the TLSv1.1 and TLSv1.2
+protocols.  Introduced with OpenSSL version 1.0.1, these are known
+to cause inter-operability problems with for example hotmail.
+
+The radical workaround is to temporarily turn off problematic
+protocols globally:
+
+/etc/postfix/main.cf:
+    smtp_tls_protocols = !SSLv2, !TLSv1.1, !TLSv1.2
+    smtp_tls_mandatory_protocols = !SSLv2, !TLSv1.1, !TLSv1.2
+
+    smtpd_tls_protocols = !SSLv2, !TLSv1.1, !TLSv1.2
+    smtpd_tls_mandatory_protocols = !SSLv2, !TLSv1.1, !TLSv1.2
+
+However, it may be better to temporarily turn off problematic
+protocols for broken sites only:
+
+/etc/postfix/main.cf:
+    smtp_tls_policy_maps = hash:/etc/postfix/tls_policy
+
+/etc/postfix/tls_policy:
+    example.com         may protocols=!SSLv2:!TLSv1.1:!TLSv1.2
+
+Important:
+
+- Note the use of ":" instead of comma or space. Also, note that
+  there is NO space around the "=" in "protocols=".
+
+- The smtp_tls_policy_maps lookup key must match the "next-hop"
+  destination that is given to the Postfix SMTP client. If you 
+  override the next-hop destination with transport_maps, relayhost,
+  sender_dependent_relayhost_maps, or otherwise, you need to specify
+  the same destination for the smtp_tls_policy_maps lookup key.
+
 Incompatible changes with Postfix 2.8.2
 ---------------------------------------
 
