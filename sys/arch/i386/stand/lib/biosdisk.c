@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.40 2012/01/16 18:47:57 christos Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.41 2012/06/13 18:34:20 perseant Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -316,7 +316,9 @@ read_gpt(struct biosdisk *d)
 	gptsector[0] = GPT_HDR_BLKNO;
 	if (set_geometry(&d->ll, &ed) == 0 && d->ll.flags & BIOSDISK_INT13EXT) {
 		gptsector[1] = ed.totsec - 1;
-		d->ll.secsize = ed.sbytes;
+		/* Sanity check values returned from BIOS */
+		if (ed.sbytes >= 512 && (ed.sbytes & (ed.sbytes - 1)) == 0)
+			d->ll.secsize = ed.sbytes;
 	} else {
 #ifdef DISK_DEBUG
 		printf("Unable to determine extended disk geometry - "
