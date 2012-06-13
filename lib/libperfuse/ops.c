@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.55 2012/05/28 02:13:32 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.56 2012/06/13 01:45:56 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -1868,6 +1868,7 @@ perfuse_node_setattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 	 */
 	if (!(fsi->valid & (FUSE_FATTR_SIZE|FUSE_FATTR_ATIME|FUSE_FATTR_MTIME|
 			    FUSE_FATTR_MODE|FUSE_FATTR_UID|FUSE_FATTR_GID))) {
+		ps->ps_destroy_msg(pm);
 		error = 0;
 		goto out;
 	}
