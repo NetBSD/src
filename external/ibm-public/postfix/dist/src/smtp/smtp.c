@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp.c,v 1.4 2011/03/02 19:56:39 tron Exp $	*/
+/*	$NetBSD: smtp.c,v 1.4.6.1 2012/06/13 19:29:03 riz Exp $	*/
 
 /*++
 /* NAME
@@ -350,7 +350,7 @@
 /*	Optional lookup tables with the Postfix SMTP client TLS security
 /*	policy by next-hop destination; when a non-empty value is specified,
 /*	this overrides the obsolete smtp_tls_per_site parameter.
-/* .IP "\fBsmtp_tls_mandatory_protocols (SSLv3, TLSv1)\fR"
+/* .IP "\fBsmtp_tls_mandatory_protocols (!SSLv2)\fR"
 /*	List of SSL/TLS protocols that the Postfix SMTP client will use with
 /*	mandatory TLS encryption.
 /* .IP "\fBsmtp_tls_scert_verifydepth (9)\fR"

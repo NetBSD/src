@@ -590,6 +590,7 @@ unknown.o: ../../include/argv.h
 unknown.o: ../../include/attr.h
 unknown.o: ../../include/been_here.h
 unknown.o: ../../include/bounce.h
+unknown.o: ../../include/defer.h
 unknown.o: ../../include/deliver_pass.h
 unknown.o: ../../include/deliver_request.h
 unknown.o: ../../include/delivered_hdr.h
