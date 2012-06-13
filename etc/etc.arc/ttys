@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ttys,v 1.7 2008/10/07 10:00:01 abs Exp $
+#	$NetBSD: ttys,v 1.8 2012/06/13 20:49:12 martin Exp $
 #
 # name	getty				type	status		comments
 
@@ -11,10 +11,10 @@ console	"/usr/libexec/getty std.9600"	vt220 on secure
 constty	"/usr/libexec/getty std.9600"	vt220 off secure
 
 # Workstation console
-ttyE0	"/usr/libexec/getty std.9600"	vt220 off secure
-ttyE1	"/usr/libexec/getty std.9600"	vt220 off secure
-ttyE2	"/usr/libexec/getty std.9600"	vt220 off secure
-ttyE3	"/usr/libexec/getty std.9600"	vt220 off secure
+ttyE0	"/usr/libexec/getty std.9600"	wsvt25 off secure
+ttyE1	"/usr/libexec/getty std.9600"	wsvt25 off secure
+ttyE2	"/usr/libexec/getty std.9600"	wsvt25 off secure
+ttyE3	"/usr/libexec/getty std.9600"	wsvt25 off secure
 
 # NS16550 ("com") serial ports
 tty00	"/usr/libexec/getty std.9600"	unknown off secure
