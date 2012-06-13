@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.55 2012/01/29 22:55:40 rmind Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.56 2012/06/13 23:00:05 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.55 2012/01/29 22:55:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.56 2012/06/13 23:00:05 joerg Exp $");
 
 #include "opt_cpu_ucode.h"
 
@@ -207,8 +207,7 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 	mutex_enter(&cpu_lock);
 	switch (cmd) {
 	case IOC_CPU_SETSTATE:
-		if (error == 0)
-			cs = data;
+		cs = data;
 		error = kauth_authorize_system(l->l_cred,
 		    KAUTH_SYSTEM_CPU, KAUTH_REQ_SYSTEM_CPU_SETSTATE, cs, NULL,
 		    NULL);
@@ -219,13 +218,12 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 			error = ESRCH;
 			break;
 		}
-		error = cpu_setintr(ci, cs->cs_intr);
+		cpu_setintr(ci, cs->cs_intr);
 		error = cpu_setstate(ci, cs->cs_online);
 		break;
 
 	case IOC_CPU_GETSTATE:
-		if (error == 0)
-			cs = data;
+		cs = data;
 		id = cs->cs_id;
 		memset(cs, 0, sizeof(*cs));
 		cs->cs_id = id;
