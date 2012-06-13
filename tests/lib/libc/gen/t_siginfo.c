@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.17 2012/04/23 15:07:56 martin Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.18 2012/06/13 11:45:17 njoly Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,6 +31,7 @@
 
 #include <sys/inttypes.h>
 #include <sys/resource.h>
+#include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/ucontext.h>
 #include <sys/wait.h>
@@ -441,7 +442,20 @@ ATF_TC_HEAD(sigbus_adraln, tc)
 
 ATF_TC_BODY(sigbus_adraln, tc)
 {
+	const char *arch = atf_config_get("atf_arch");
 	struct sigaction sa;
+
+	if (strcmp(arch, "alpha") == 0) {
+		int rv, val;
+		size_t len = sizeof(val);
+		rv = sysctlbyname("machdep.unaligned_sigbus", &val, &len,
+			NULL, 0);
+		ATF_REQUIRE(rv == 0);
+		if (val == 0)
+			atf_tc_skip("SIGBUS signal not enabled for"
+				    " unaligned accesses");
+
+	}
 
 	sa.sa_flags = SA_SIGINFO;
 	sa.sa_sigaction = sigbus_action;
@@ -458,8 +472,7 @@ ATF_TC_BODY(sigbus_adraln, tc)
 	addr = calloc(2, sizeof(int));
 	ATF_REQUIRE(addr != NULL);
 
-	if (strcmp(atf_config_get("atf_arch"), "i386") == 0 ||
-	    strcmp(atf_config_get("atf_arch"), "x86_64") == 0) {
+	if (strcmp(arch, "i386") == 0 || strcmp(arch, "x86_64") == 0) {
 		if (system("cpuctl identify 0 | grep -q QEMU") == 0) {
 			atf_tc_expect_fail("QEMU fails to trap unaligned "
 			    "accesses");
