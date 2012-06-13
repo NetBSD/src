@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.c,v 1.17.2.2 2012/02/17 08:16:55 yamt Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.17.2.3 2012/06/13 14:18:49 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011,2012 YAMAMOTO Takashi,
@@ -56,6 +56,11 @@
  *  - the best case: about RADIX_TREE_PTR_PER_NODE items per intermediate node.
  *  - the worst case: RADIX_TREE_MAX_HEIGHT intermediate nodes per item.
  *
+ * The height of tree is dynamic.  It's smaller if only small index values are
+ * used.  As an extreme case, if only index 0 is used, the corresponding value
+ * is directly stored in the root of the tree (struct radix_tree) without
+ * allocating any intermediate nodes.
+ *
  * Gang lookup:
  *
  * This implementation provides a way to scan many nodes quickly via
@@ -75,7 +80,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.17.2.2 2012/02/17 08:16:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.17.2.3 2012/06/13 14:18:49 yamt Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
@@ -85,7 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.17.2.2 2012/02/17 08:16:55 yamt Exp 
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.17.2.2 2012/02/17 08:16:55 yamt Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.17.2.3 2012/06/13 14:18:49 yamt Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
