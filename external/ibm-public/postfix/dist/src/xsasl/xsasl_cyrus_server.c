@@ -1,4 +1,4 @@
-/*	$NetBSD: xsasl_cyrus_server.c,v 1.1.1.1 2009/06/23 10:09:02 tron Exp $	*/
+/*	$NetBSD: xsasl_cyrus_server.c,v 1.1.1.1.12.1 2012/06/13 19:29:06 riz Exp $	*/
 
 /*++
 /* NAME
@@ -172,7 +172,7 @@ static const char *xsasl_cyrus_server_get_username(XSASL_SERVER *);
 #define NO_CALLBACK_CONTEXT	0
 
 static sasl_callback_t callbacks[] = {
-    {SASL_CB_LOG, &xsasl_cyrus_log, NO_CALLBACK_CONTEXT},
+    {SASL_CB_LOG, (XSASL_CYRUS_CB) &xsasl_cyrus_log, NO_CALLBACK_CONTEXT},
     {SASL_CB_LIST_END, 0, 0}
 };
 

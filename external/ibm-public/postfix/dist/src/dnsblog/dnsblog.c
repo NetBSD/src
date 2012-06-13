@@ -1,4 +1,4 @@
-/*	$NetBSD: dnsblog.c,v 1.1.1.2 2011/03/23 19:07:34 tron Exp $	*/
+/*	$NetBSD: dnsblog.c,v 1.1.1.2.6.1 2012/06/13 19:29:02 riz Exp $	*/
 
 /*++
 /* NAME
@@ -259,6 +259,7 @@ static void post_jail_init(char *unused_name, char **unused_argv)
     query = vstring_alloc(100);
     why = vstring_alloc(100);
     result = vstring_alloc(100);
+    var_use_limit = 0;
 }
 
 MAIL_VERSION_STAMP_DECLARE;
@@ -277,9 +278,9 @@ int     main(int argc, char **argv)
      */
     MAIL_VERSION_STAMP_ALLOCATE;
 
-    multi_server_main(argc, argv, dnsblog_service,
-		      MAIL_SERVER_TIME_TABLE, time_table,
-		      MAIL_SERVER_POST_INIT, post_jail_init,
-		      MAIL_SERVER_UNLIMITED,
-		      0);
+    single_server_main(argc, argv, dnsblog_service,
+		       MAIL_SERVER_TIME_TABLE, time_table,
+		       MAIL_SERVER_POST_INIT, post_jail_init,
+		       MAIL_SERVER_UNLIMITED,
+		       0);
 }

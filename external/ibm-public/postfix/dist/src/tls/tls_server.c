@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_server.c,v 1.4 2011/03/02 19:56:39 tron Exp $	*/
+/*	$NetBSD: tls_server.c,v 1.4.6.1 2012/06/13 19:29:05 riz Exp $	*/
 
 /*++
 /* NAME
@@ -183,9 +183,10 @@ static SSL_SESSION *get_server_session_cb(SSL *ssl, unsigned char *session_id,
 
 #define GEN_CACHE_ID(buf, id, len, service) \
     do { \
-	buf = vstring_alloc(2 * (len) + 1 + strlen(service) + 3); \
+	buf = vstring_alloc(2 * (len + strlen(service))); \
 	hex_encode(buf, (char *) (id), (len)); \
     	vstring_sprintf_append(buf, "&s=%s", (service)); \
+    	vstring_sprintf_append(buf, "&l=%ld", (long) SSLeay()); \
     } while (0)
 
 
@@ -399,6 +400,8 @@ TLS_APPL_STATE *tls_server_init(const TLS_SERVER_INIT_PROPS *props)
     if (protomask != 0)
 	SSL_CTX_set_options(server_ctx,
 		   ((protomask & TLS_PROTOCOL_TLSv1) ? SSL_OP_NO_TLSv1 : 0L)
+	     | ((protomask & TLS_PROTOCOL_TLSv1_1) ? SSL_OP_NO_TLSv1_1 : 0L)
+	     | ((protomask & TLS_PROTOCOL_TLSv1_2) ? SSL_OP_NO_TLSv1_2 : 0L)
 		 | ((protomask & TLS_PROTOCOL_SSLv3) ? SSL_OP_NO_SSLv3 : 0L)
 	       | ((protomask & TLS_PROTOCOL_SSLv2) ? SSL_OP_NO_SSLv2 : 0L));
 

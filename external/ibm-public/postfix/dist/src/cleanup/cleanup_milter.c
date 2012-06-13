@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_milter.c,v 1.1.1.5 2011/07/31 10:02:32 tron Exp $	*/
+/*	$NetBSD: cleanup_milter.c,v 1.1.1.5.4.1 2012/06/13 19:29:01 riz Exp $	*/
 
 /*++
 /* NAME
@@ -842,8 +842,7 @@ static off_t cleanup_find_header_start(CLEANUP_STATE *state, ssize_t index,
 	     /* Reset the saved PTR record and update last_type. */ ;
 	else if ((header_label == 0
 		  || (strncasecmp(header_label, STR(buf), len) == 0
-		      && (IS_SPACE_TAB(STR(buf)[len])
-			  || STR(buf)[len] == ':')))
+		      && (strlen(header_label) == len)))
 		 && --index == 0) {
 	    /* If we have a saved PTR record, it points to start of header. */
 	    break;
