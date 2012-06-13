@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2012/06/13 18:51:35 martin Exp $
+#	$NetBSD: Makefile,v 1.12 2012/06/13 19:44:14 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -9,6 +9,7 @@ DEFAULTVT=vt05
 DEFAULTVT=	# defined empty
 .endif
 
+UUDECODE_FILES=	NetBSD-flag.png
 CPPSCRIPTS=	Xresources Xreset Xservers.ws Xsession Xstartup xdm-config 
 
 CPPSCRIPTFLAGS_Xresources=	-DXPM -DBITMAPDIR=${X11INCDIR}/X11/pixmaps \
