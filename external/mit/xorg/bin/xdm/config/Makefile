@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2010/11/29 09:34:40 skrll Exp $
+#	$NetBSD: Makefile,v 1.11 2012/06/13 18:51:35 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -33,11 +33,15 @@ CONFIGFILES=		GiveConsole TakeConsole \
 			Xaccess Xservers.fs Xsession Xsetup_0 Xwilling \
 			${CPPSCRIPTS} 
 FILES=			xorg-bw.xpm xorg.xpm \
-			NetBSD-bw.xpm NetBSD-inv.xpm NetBSD.xpm
+			NetBSD-bw.xpm NetBSD-inv.xpm NetBSD.xpm	\
+			NetBSD-flag.png NetBSD-flag1.xpm NetBSD-flag2.xpm
 FILESDIR=		${XDMDIR}
 FILESDIR_xorg.xpm=	${X11INCDIR}/X11/pixmaps
 FILESDIR_xorg-bw.xpm=	${X11INCDIR}/X11/pixmaps
 FILESDIR_NetBSD.xpm=	${X11INCDIR}/X11/pixmaps
+FILESDIR_NetBSD-flag.png=	${X11INCDIR}/X11/pixmaps
+FILESDIR_NetBSD-flag1.xpm=	${X11INCDIR}/X11/pixmaps
+FILESDIR_NetBSD-flag2.xpm=	${X11INCDIR}/X11/pixmaps
 FILESDIR_NetBSD-bw.xpm=	${X11INCDIR}/X11/pixmaps
 FILESDIR_NetBSD-inv.xpm=${X11INCDIR}/X11/pixmaps
 FILESMODE_GiveConsole=	${BINMODE}
