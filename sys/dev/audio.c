@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.257.2.3 2012/05/07 03:03:18 riz Exp $	*/
+/*	$NetBSD: audio.c,v 1.257.2.4 2012/06/13 19:14:17 riz Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.257.2.3 2012/05/07 03:03:18 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.257.2.4 2012/06/13 19:14:17 riz Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1991,7 +1991,7 @@ void
 audio_clear(struct audio_softc *sc)
 {
 
-	KASSERT(mutex_owned(sc->sc_lock));
+	KASSERT(mutex_owned(sc->sc_intr_lock));
 
 	if (sc->sc_rbus) {
 		cv_broadcast(&sc->sc_rchan);
@@ -2387,8 +2387,8 @@ audio_ioctl(struct audio_softc *sc, u_long cmd, void *addr, int flag,
 		DPRINTF(("AUDIO_FLUSH\n"));
 		rbus = sc->sc_rbus;
 		pbus = sc->sc_pbus;
-		audio_clear(sc);
 		mutex_enter(sc->sc_intr_lock);
+		audio_clear(sc);
 		error = audio_initbufs(sc);
 		if (error) {
 			mutex_exit(sc->sc_intr_lock);
