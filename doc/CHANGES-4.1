@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.242 2012/06/12 23:23:52 riz Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.243 2012/06/13 15:56:47 sborrill Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -4636,17 +4636,17 @@ crypto/dist/openssl/ssl/d1_enc.c		patch
 	Address CVE-2012-2333.
 	[drochner, ticket #1446]
 
-dist/bind/CHANGES					patch
-dist/bind/version					patch
-dist/bind/lib/dns/rdata.c				patch
-dist/bind/lib/dns/rdataslab.c				patch
+dist/bind/CHANGES				patch
+dist/bind/version				patch
+dist/bind/lib/dns/rdata.c			patch
+dist/bind/lib/dns/rdataslab.c			patch
 	
 	Update bind to 9.4-ESV-R4-P2:
 	3331.  [security]      dns_rdataslab_fromrdataset could produce bad
 			       rdataslabs. [RT #29644]
 	[christos, ticket #1447]
 
-sys/dev/mii/mii_physubr.c				1.73 via patch
+sys/dev/mii/mii_physubr.c			1.73 via patch
 
 	Make 1000baseT connections work even when the user specifies
 	media 1000baseT connections with ifconfig(8) rather than only
@@ -4659,4 +4659,11 @@ sys/arch/amd64/amd64/netbsd32_machdep.c		1.77 via patch
 	If the user process provided a bogus signal handler address, kill it
 	now instead of trying to jump to the bogus address.
 	[spz, ticket #1450]
+
+sys/dev/pci/if_bge.c				1.194 via patch
+
+	Instruct hardware to perform checksumming over the entire packet
+	not just over the payload and notify upper layers appropriately.
+	Fixes PR kern/40018.
+	[buhrow, ticket #1449]
 
