@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.105.4.5 2012/02/24 17:58:44 sborrill Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.105.4.6 2012/06/13 14:00:49 sborrill Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.105.4.5 2012/02/24 17:58:44 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.105.4.6 2012/06/13 14:00:49 sborrill Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -296,9 +296,8 @@ rf_ReconstructFailedDiskBasic(RF_Raid_t *raidPtr, RF_RowCol_t col)
 		c_label->column = col;
 		c_label->clean = RF_RAID_DIRTY;
 		c_label->status = rf_ds_optimal;
-		c_label->partitionSize = raidPtr->Disks[scol].partitionSize;
-		c_label->partitionSizeHi =
-		   raidPtr->Disks[scol].partitionSize >> 32;
+		rf_component_label_set_partitionsize(c_label,
+		    raidPtr->Disks[scol].partitionSize);
 
 		/* We've just done a rebuild based on all the other
 		   disks, so at this point the parity is known to be
