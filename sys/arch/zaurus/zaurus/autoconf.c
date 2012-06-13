@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 2011/05/05 08:46:12 nonaka Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11 2012/06/13 20:04:30 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2011/05/05 08:46:12 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2012/06/13 20:04:30 mlelstv Exp $");
 
 #include "opt_md.h"
 
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2011/05/05 08:46:12 nonaka Exp $")
 #include <machine/bootinfo.h>
 #include <machine/config_hook.h>
 
-static void handle_wedges(device_t dv, int par);
 static int is_valid_disk(device_t dv);
 static int match_bootdisk(device_t dv, struct btinfo_bootdisk *bid);
 static void findroot(void);
@@ -67,17 +66,6 @@ cpu_configure(void)
 
 	/* Configuration is finished, turn on interrupts. */
 	spl0();
-}
-
-static void
-handle_wedges(device_t dv, int par)
-{
-
-	if (config_handle_wedges(dv, par) == 0)
-		return;
-
-	booted_device = dv;
-	booted_partition = par;
 }
 
 static int
@@ -168,7 +156,8 @@ findroot(void)
 
 			if (strncmp(cd->cf_name, biv->devname, len) == 0 &&
 			    biv->devname[len] - '0' == cd->cf_unit) {
-				handle_wedges(dv, biv->devname[len + 1] - 'a');
+				booted_device = dv;
+				booted_partition = biv->devname[len + 1] - 'a';
 				break;
 			}
 		}
@@ -205,7 +194,8 @@ findroot(void)
 				    device_xname(dv));
 				continue;
 			}
-			handle_wedges(dv, bid->partition);
+			booted_device = dv;
+			booted_partition = bid->partition;
 		}
 		deviter_release(&di);
 
