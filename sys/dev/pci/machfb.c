@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.76 2012/06/14 00:15:07 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.77 2012/06/14 00:21:55 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.76 2012/06/14 00:15:07 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.77 2012/06/14 00:21:55 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -773,6 +773,11 @@ mach64_attach(device_t parent, device_t self, void *aux)
 		 * until someone actually allocates a screen for us
 		 */
 		mach64_modeswitch(sc, sc->sc_my_mode);
+		if (mach64_console_screen.scr_ri.ri_rows == 0) {
+			/* do some minimal setup to avoid weirdnesses later */
+			vcons_init_screen(&sc->vd, &mach64_console_screen, 1,
+			    &defattr);
+		}
 	}
 		
 	aa.console = sc->sc_console;
