@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.77 2012/06/14 00:21:55 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.78 2012/06/14 00:56:37 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.77 2012/06/14 00:21:55 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.78 2012/06/14 00:56:37 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -745,13 +745,8 @@ mach64_attach(device_t parent, device_t self, void *aux)
 
 	wsfont_init();
 	
-	sc->sc_bg = WS_DEFAULT_BG;
 	vcons_init(&sc->vd, sc, &mach64_defaultscreen, &sc->sc_accessops);
 	sc->vd.init_screen = mach64_init_screen;
-
-	mach64_init_lut(sc);
-	mach64_clearscreen(sc);
-	machfb_blank(sc, 0);	/* unblank the screen */
 
 	if (sc->sc_console) {
 
@@ -766,7 +761,6 @@ mach64_attach(device_t parent, device_t self, void *aux)
 		mach64_defaultscreen.ncols = ri->ri_cols;
 
 		wsdisplay_cnattach(&mach64_defaultscreen, ri, 0, 0, defattr);	
-		vcons_replay_msgbuf(&mach64_console_screen);
 	} else {
 		/*
 		 * since we're not the console we can postpone the rest
@@ -779,6 +773,14 @@ mach64_attach(device_t parent, device_t self, void *aux)
 			    &defattr);
 		}
 	}
+	sc->sc_bg = mach64_console_screen.scr_ri.ri_devcmap[WS_DEFAULT_BG];
+	mach64_clearscreen(sc);
+	mach64_init_lut(sc);
+
+	if (sc->sc_console)
+		vcons_replay_msgbuf(&mach64_console_screen);
+
+	machfb_blank(sc, 0);	/* unblank the screen */
 		
 	aa.console = sc->sc_console;
 	aa.scrdata = &mach64_screenlist;
@@ -813,6 +815,8 @@ mach64_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	ri->ri_height = sc->sc_my_mode->vdisplay;
 	ri->ri_stride = ri->ri_width;
 	ri->ri_flg = RI_CENTER;
+	if (ri->ri_depth == 8)
+		ri->ri_flg |= RI_8BIT_IS_RGB/* | RI_ENABLE_ALPHA*/;
 	set_address(ri, sc->sc_aperture);
 
 #ifdef VCONS_DRAW_INTR
@@ -1305,12 +1309,14 @@ mach64_set_pll(struct mach64_softc *sc, int clock)
 static void
 mach64_init_lut(struct mach64_softc *sc)
 {
+	uint8_t cmap[768];
 	int i, idx;
 
+	rasops_get_cmap(&mach64_console_screen.scr_ri, cmap, sizeof(cmap));
 	idx = 0;
 	for (i = 0; i < 256; i++) {
-		mach64_putpalreg(sc, i, rasops_cmap[idx], rasops_cmap[idx + 1], 
-		    rasops_cmap[idx + 2]);
+		mach64_putpalreg(sc, i, cmap[idx], cmap[idx + 1],
+		    cmap[idx + 2]);
 		idx += 3;
 	}
 }
@@ -1537,7 +1543,7 @@ mach64_erasecols(void *cookie, int row, int startcol, int ncols, long fillattr)
 		height = ri->ri_font->fontheight;
 		rasops_unpack_attr(fillattr, &fg, &bg, &ul);
 
-		mach64_rectfill(sc, x, y, width, height, bg);
+		mach64_rectfill(sc, x, y, width, height, ri->ri_devcmap[bg]);
 	}
 }
 
@@ -1574,7 +1580,7 @@ mach64_eraserows(void *cookie, int row, int nrows, long fillattr)
 		height = ri->ri_font->fontheight * nrows;
 		rasops_unpack_attr(fillattr, &fg, &bg, &ul);
 
-		mach64_rectfill(sc, x, y, width, height, bg);
+		mach64_rectfill(sc, x, y, width, height, ri->ri_devcmap[bg]);
 	}
 }
 
