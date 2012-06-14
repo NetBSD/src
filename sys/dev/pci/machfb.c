@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.75 2012/05/08 02:25:25 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.76 2012/06/14 00:15:07 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.75 2012/05/08 02:25:25 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.76 2012/06/14 00:15:07 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -533,7 +533,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	printf(prop_dictionary_externalize(device_properties(self)));
 #endif
 	
-	/* enable memory and disable IO access */
+	/* enable memory access */
 	screg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
 	if ((screg & enables) != enables) {
 		screg |= enables;
@@ -550,7 +550,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 		sc->sc_bars[bar].vb_busaddr = pci_conf_read(sc->sc_pc,
 		    sc->sc_pcitag, reg) & 0xfffffff0;
 	}
-	printf("%s: aperture size %08x\n", device_xname(sc->sc_dev), 
+	aprint_debug_dev(sc->sc_dev, "aperture size %08x\n",
 	    (uint32_t)sc->sc_apersize);
 
 	sc->sc_rom.vb_type = PCI_MAPREG_TYPE_ROM;	
@@ -637,8 +637,10 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	else
 		sc->memtype = regr(sc, CONFIG_STAT0) & 0x07;
 
-	/* XXX is there any way to calculate reference frequency from
-	   known values? */
+	/*
+	 * XXX is there any way to calculate reference frequency from
+	 * known values?
+	 */
 	if ((mach64_chip_id == PCI_PRODUCT_ATI_RAGE_XL_PCI) ||
 	    ((mach64_chip_id >= PCI_PRODUCT_ATI_RAGE_LT_PRO_PCI) &&
 	    (mach64_chip_id <= PCI_PRODUCT_ATI_RAGE_LT_PRO))) {
@@ -648,14 +650,14 @@ mach64_attach(device_t parent, device_t self, void *aux)
 		sc->ref_freq = 14318;
 
 	reg = regr(sc, CLOCK_CNTL);
-	printf("CLOCK_CNTL: %08x\n", reg);
+	aprint_debug("CLOCK_CNTL: %08x\n", reg);
 	sc->sc_clock = reg & 3;
-	printf("using clock %d\n", sc->sc_clock);
+	aprint_debug("using clock %d\n", sc->sc_clock);
 
 	sc->ref_div = regrb_pll(sc, PLL_REF_DIV);
-	printf("ref_div: %d\n", sc->ref_div);
+	aprint_debug("ref_div: %d\n", sc->ref_div);
 	sc->mclk_fb_div = regrb_pll(sc, MCLK_FB_DIV);
-	printf("mclk_fb_div: %d\n", sc->mclk_fb_div);
+	aprint_debug("mclk_fb_div: %d\n", sc->mclk_fb_div);
 	sc->mem_freq = (2 * sc->ref_freq * sc->mclk_fb_div) /
 	    (sc->ref_div * 2);
 	sc->mclk_post_div = (sc->mclk_fb_div * 2 * sc->ref_freq) /
@@ -688,9 +690,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_console = mach64_is_console(sc);
-#ifdef DIAGNOSTIC
-	aprint_normal("gen_cntl: %08x\n", regr(sc, CRTC_GEN_CNTL));
-#endif
+	aprint_debug("gen_cntl: %08x\n", regr(sc, CRTC_GEN_CNTL));
 #if defined(__sparc__) || defined(__powerpc__)
 	if (sc->sc_console) {
 		if (mode != NULL) {
@@ -772,7 +772,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 		 * since we're not the console we can postpone the rest
 		 * until someone actually allocates a screen for us
 		 */
-		mach64_modeswitch(sc, sc->sc_my_mode);		 
+		mach64_modeswitch(sc, sc->sc_my_mode);
 	}
 		
 	aa.console = sc->sc_console;
@@ -998,7 +998,7 @@ mach64_set_crtcregs(struct mach64_softc *sc, struct mach64_crtcregs *crtc)
 
 	if (sc->has_dsp)
 		mach64_set_dsp(sc);
-#if 1
+
 	regw(sc, CRTC_H_TOTAL_DISP, crtc->h_total_disp);
 	regw(sc, CRTC_H_SYNC_STRT_WID, crtc->h_sync_strt_wid);
 	regw(sc, CRTC_V_TOTAL_DISP, crtc->v_total_disp);
@@ -1014,7 +1014,6 @@ mach64_set_crtcregs(struct mach64_softc *sc, struct mach64_crtcregs *crtc)
 	    CRTC_CSYNC_EN |
 #endif
 	    CRTC_EXT_DISP_EN | CRTC_EXT_EN);
-#endif
 }
 
 static int
@@ -1252,7 +1251,7 @@ mach64_set_pll(struct mach64_softc *sc, int clock)
 	printf("q = %d\n", q);
 #endif
 	if (q > 25500) {
-		printf("Warning: q > 25500\n");
+		aprint_error_dev(sc->sc_dev, "Warning: q > 25500\n");
 		q = 25500;
 		sc->vclk_post_div = 1;
 		sc->log2_vclk_post_div = 0;
@@ -1269,15 +1268,16 @@ mach64_set_pll(struct mach64_softc *sc, int clock)
 		sc->vclk_post_div = 8;
 		sc->log2_vclk_post_div = 3;
 	} else {
-		printf("Warning: q < 1600\n");
+		aprint_error_dev(sc->sc_dev, "Warning: q < 1600\n");
 		sc->vclk_post_div = 8;
 		sc->log2_vclk_post_div = 3;
 	}
 	sc->vclk_fb_div = q * sc->vclk_post_div / 100;
-	printf("post_div: %d log2_post_div: %d mclk_div: %d\n", sc->vclk_post_div, sc->log2_vclk_post_div, sc->mclk_fb_div);
+	aprint_debug("post_div: %d log2_post_div: %d mclk_div: %d\n",
+	    sc->vclk_post_div, sc->log2_vclk_post_div, sc->mclk_fb_div);
 
 	vclk_ctl = regrb_pll(sc, PLL_VCLK_CNTL);
-	printf("vclk_ctl: %02x\n", vclk_ctl);
+	aprint_debug("vclk_ctl: %02x\n", vclk_ctl);
 	vclk_ctl |= PLL_VCLK_RESET;
 	regwb_pll(sc, PLL_VCLK_CNTL, vclk_ctl);
 	
@@ -1709,7 +1709,6 @@ mach64_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		/* XXX is this the right type to return? */
 		*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;	
 		return 0;
 
