@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.94 2012/03/06 02:49:03 mrg Exp $	*/
+/*	$NetBSD: usb.h,v 1.95 2012/06/14 05:14:41 blymn Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -481,6 +481,8 @@ typedef struct {
 #define	 UISUBCLASS_CAPI_CONTROLMODEL		5
 #define	 UISUBCLASS_ETHERNET_NETWORKING_CONTROL_MODEL 6
 #define	 UISUBCLASS_ATM_NETWORKING_CONTROL_MODEL 7
+#define	  UIPROTO_CDC_NOCLASS			0 /* no class specific
+						     protocol required */
 #define   UIPROTO_CDC_AT			1
 
 #define UICLASS_HID		0x03
