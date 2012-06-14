@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.443 2012/06/10 17:05:18 mlelstv Exp $	*/
+/*	$NetBSD: init_main.c,v 1.444 2012/06/14 20:18:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.443 2012/06/10 17:05:18 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.444 2012/06/14 20:18:16 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -852,6 +852,10 @@ rootconf_handle_wedges(void)
 		 * the disklabel.
 		 */
 		vp = opendisk(booted_device);
+
+		if (vp == NULL)
+			return;
+
 		error = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, NOCRED);
 		VOP_CLOSE(vp, FREAD, NOCRED);
 		vput(vp);
