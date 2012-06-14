@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.356 2012/06/05 08:44:07 abs Exp $
+# $NetBSD: GENERIC,v 1.357 2012/06/14 04:23:48 riz Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.356 $"
+#ident 		"GENERIC-$Revision: 1.357 $"
 
 maxusers	64		# estimated number of users
 
@@ -966,6 +966,7 @@ otus*	at uhub? port ?		# Atheros AR9001U
 ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
 rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
 run*	at uhub? port ?		# Ralink Technology RT(2[78]|30)00 802.11a/b/g/n
+urtw*	at uhub? port ?		# Realtek RTL8187/RTL8187B 802.11b/g
 urtwn*	at uhub? port ?		# Realtek RTL8188CU/RTL8192CU 802.11b/g/n
 zyd*	at uhub? port ?		# Zydas ZD1211
 
