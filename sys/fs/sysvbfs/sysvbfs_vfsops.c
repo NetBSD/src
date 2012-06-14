@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.40 2012/06/13 22:56:50 joerg Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.41 2012/06/14 01:08:22 agc Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.40 2012/06/13 22:56:50 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.41 2012/06/14 01:08:22 agc Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -277,8 +277,8 @@ sysvbfs_statvfs(struct mount *mp, struct statvfs *f)
 	f->f_bfree = free_block;
 	f->f_bavail = f->f_bfree;
 	f->f_bresvd = 0;
-	f->f_files = bfs->n_inode;
-	f->f_ffree = bfs->max_inode - f->f_files;
+	f->f_files = bfs->max_inode;
+	f->f_ffree = bfs->max_inode - bfs->n_inode;
 	f->f_favail = f->f_ffree;
 	f->f_fresvd = 0;
 	copy_statvfs_info(f, mp);
