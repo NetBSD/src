@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.4 2012/06/01 12:38:25 nonaka Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.5 2012/06/14 04:14:36 riz Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.4 2012/06/01 12:38:25 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.5 2012/06/14 04:14:36 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -2600,10 +2600,10 @@ urtwn_load_firmware(struct urtwn_softc *sc)
 	/* Read firmware image from the filesystem. */
 	if ((sc->chip & (URTWN_CHIP_UMC_A_CUT | URTWN_CHIP_92C)) ==
 	    URTWN_CHIP_UMC_A_CUT)
-		name = "urtwn-rtl8192cfwU";
+		name = "rtl8192cfwU.bin";
 	else
-		name = "urtwn-rtl8192cfwT";
-	if ((error = firmware_open("urtwn", name, &fwh)) != 0) {
+		name = "rtl8192cfw.bin";
+	if ((error = firmware_open("if_urtwn", name, &fwh)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "failed loadfirmware of file %s (error %d)\n", name, error);
 		return (error);
