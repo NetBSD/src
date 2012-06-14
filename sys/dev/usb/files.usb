@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.120 2012/02/13 14:36:39 wiz Exp $
+#	$NetBSD: files.usb,v 1.120.2.1 2012/06/14 09:48:47 sborrill Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -410,3 +410,8 @@ file	dev/usb/uyurex.c		uyurex
 device	urndis: arp, ether, ifnet
 attach	urndis at usbifif
 file	dev/usb/if_urndis.c		urndis
+
+# Realtek RTL8188CU/RTL8192CU
+device	urtwn: ether, ifnet, arp, wlan, firmload
+attach	urtwn at usbdevif
+file	dev/usb/if_urtwn.c              urtwn

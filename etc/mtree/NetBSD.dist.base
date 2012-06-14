@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.97 2012/02/14 14:03:35 wiz Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.97.2.1 2012/06/14 09:48:46 sborrill Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -71,6 +71,7 @@
 ./libdata/firmware/ral
 ./libdata/firmware/rum
 ./libdata/firmware/upgt
+./libdata/firmware/urtwn
 ./libdata/firmware/zyd
 ./libexec
 ./libexec/dhcpcd-hooks
