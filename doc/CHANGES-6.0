@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.128 2012/06/13 19:45:04 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.129 2012/06/14 09:51:26 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -5612,4 +5612,27 @@ sys/arch/powerpc/include/userret.h		1.24
 
 	Add __HAVE_RAS support to PowerPC.
 	[matt, ticket #340]
+
+distrib/sets/lists/base/mi			1.989
+distrib/sets/lists/man/mi			1.1385
+etc/mtree/NetBSD.dist.base			1.99
+share/man/man4/Makefile				1.583
+share/man/man4/urtwn.4				1.1
+share/man/man4/usb.4				1.97
+sys/arch/amd64/conf/GENERIC			1.351
+sys/arch/i386/conf/GENERIC			1.1068
+sys/dev/usb/files.usb				1.121
+sys/dev/usb/if_urtwn.c				1.1-1.4
+sys/dev/usb/if_urtwn_data.h			1.1
+sys/dev/usb/if_urtwnreg.h			1.1
+sys/dev/usb/if_urtwnvar.h			1.1
+sys/dev/usb/usbdevices.config			1.13
+sys/dev/usb/usbdevs				1.621 via patch
+sys/dev/usb/usbdevs.h				regen
+sys/dev/usb/usbdevs_data.h			regen
+sys/modules/if_urtwn/Makefile			1.1
+sys/modules/if_urtwn/if_urtwn.ioconf		1.1
+
+	Add support for urtwn(4) wireless. Ported from OpenBSD
+	[riz, ticket #326]
 
