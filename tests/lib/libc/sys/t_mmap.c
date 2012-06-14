@@ -1,4 +1,4 @@
-/* $NetBSD: t_mmap.c,v 1.6 2012/06/01 15:59:21 martin Exp $ */
+/* $NetBSD: t_mmap.c,v 1.7 2012/06/14 17:47:58 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mmap.c,v 1.6 2012/06/01 15:59:21 martin Exp $");
+__RCSID("$NetBSD: t_mmap.c,v 1.7 2012/06/14 17:47:58 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -170,8 +170,7 @@ ATF_TC_BODY(mmap_block, tc)
 	size_t len;
 	int fd = -1;
 
-	atf_tc_expect_signal(SIGSEGV, "mmap of block devices does not work "
-	    "(PR kern/38889)");
+	atf_tc_skip("The test case causes a panic (PR kern/38889, kern/46592)");
 
 	ATF_REQUIRE(sysctl(mib, miblen, NULL, &len, NULL, 0) == 0);
 	drives = malloc(len);
