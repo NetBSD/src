@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep_common.h,v 1.8 2011/08/28 06:04:17 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep_common.h,v 1.9 2012/06/15 13:58:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -51,6 +51,13 @@
  * the read and write routines, but this would cause extra overhead.
  *
  * Mode 2 is historical and deprecated by the Revision 2.0 specification.
+ *
+ *
+ * Mode 1 tag:
+ *	 31              24           16 15     11 10  8
+ *	+---------------------------------------------------------------+
+ *	|1|      0      |      BUS      |   DEV   |FUNC |       0       |
+ *	+---------------------------------------------------------------+
  */
 union x86_pci_tag_u {
 	uint32_t mode1;
