@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.31 2011/12/02 12:31:53 yamt Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.32 2012/06/15 13:51:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.31 2011/12/02 12:31:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.32 2012/06/15 13:51:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
@@ -199,7 +199,9 @@ turnstile_exit(wchan_t obj)
  *
  *	Lend our priority to lwps on the blocking chain.
  *
- *
+ *	If the current owner of the lock (l->l_wchan, set by sleepq_enqueue)
+ *	has a priority lower than ours (lwp_eprio(l)), lend our priority to
+ *	him to avoid priority inversions.
  */
 
 static void
@@ -225,29 +227,37 @@ turnstile_lendpri(lwp_t *cur)
 		if (l->l_wchan == NULL)
 			break;
 
+		/*
+		 * Ask syncobj the owner of the lock.
+		 */
 		owner = (*l->l_syncobj->sobj_owner)(l->l_wchan);
 		if (owner == NULL)
 			break;
 
-		/* The owner may have changed as we have dropped the tc lock */
+		/*
+		 * The owner may have changed as we have dropped the tc lock.
+		 */
 		if (cur == owner) {
 			/*
-			 * we own the lock: stop here, sleepq_block()
-			 * should wake up immediatly
+			 * We own the lock: stop here, sleepq_block()
+			 * should wake up immediatly.
 			 */
 			break;
 		}
-		if (l->l_mutex != owner->l_mutex)
-			dolock = true;
-		else
-			dolock = false;
+		/*
+		 * Acquire owner->l_mutex if we don't have it yet.
+		 * Because we already have another LWP lock (l->l_mutex) held,
+		 * we need to play a try lock dance to avoid deadlock.
+		 */
+		dolock = l->l_mutex != owner->l_mutex;
 		if (l == owner || (dolock && !lwp_trylock(owner))) {
 			/*
-			 * restart from curlwp.
+			 * The owner was changed behind us or trylock failed.
+			 * Restart from curlwp.
+			 *
 			 * Note that there may be a livelock here:
-			 * the owner may try grabing cur's lock (which is
-			 * the tc lock) while we're trying to grab
-			 * the owner's lock.
+			 * the owner may try grabing cur's lock (which is the
+			 * tc lock) while we're trying to grab the owner's lock.
 			 */
 			lwp_unlock(l);
 			l = cur;
@@ -255,11 +265,20 @@ turnstile_lendpri(lwp_t *cur)
 			prio = lwp_eprio(l);
 			continue;
 		}
+		/*
+		 * If the owner's priority is already higher than ours,
+		 * there's nothing to do anymore.
+		 */
 		if (prio <= lwp_eprio(owner)) {
 			if (dolock)
 				lwp_unlock(owner);
 			break;
 		}
+		/*
+		 * Lend our priority to the 'owner' LWP.
+		 *
+		 * Update lenders info for turnstile_unlendpri.
+		 */
 		ts = l->l_ts;
 		KASSERT(ts->ts_inheritor == owner || ts->ts_inheritor == NULL);
 		if (ts->ts_inheritor == NULL) {
@@ -273,6 +292,7 @@ turnstile_lendpri(lwp_t *cur)
 		}
 		if (dolock)
 			lwp_unlock(l);
+		LOCKDEBUG_BARRIER(owner->l_mutex, 1);
 		l = owner;
 	}
 	LOCKDEBUG_BARRIER(l->l_mutex, 1);
