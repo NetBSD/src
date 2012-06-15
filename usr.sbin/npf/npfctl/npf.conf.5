@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.11 2012/05/30 22:00:44 wiz Exp $
+.\"    $NetBSD: npf.conf.5,v 1.12 2012/06/15 23:24:08 rmind Exp $
 .\"
 .\" Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 27, 2012
+.Dd June 14, 2012
 .Dt NPF.CONF 5
 .Os
 .Sh NAME
@@ -132,7 +132,7 @@ There are two types of storage: "tree" (red-black tree is used) and
 .\" -----
 .Sh GRAMMAR
 .Bd -literal
-line		= ( def | table | nat | group | rproc )
+line		= ( def | table | map | group | rproc )
 
 def		= ( \*[Lt]name\*[Gt] "=" "{ a, b, ... }" | "\*[Lt]text\*[Gt]" | "$\*[Lt]interface\*[Gt]" )
 iface		= ( \*[Lt]interface\*[Gt] | def )
@@ -140,9 +140,9 @@ iface		= ( \*[Lt]interface\*[Gt] | def )
 table		= "table" \*[Lt]tid\*[Gt] "type" ( "hash" | "tree" )
 		  ( "dynamic" | "file" \*[Lt]path\*[Gt] )
 
-nat		= "nat" iface filt-opts "->" \*[Lt]addr\*[Gt]
-binat		= "binat" iface filt-opts "->" \*[Lt]addr\*[Gt]
-rdr		= "rdr" iface filt-opts "->" \*[Lt]addr\*[Gt] port-opts
+map-di		= ( "->" | "<-" | "<->" )
+map-type	= ( "static" | "dynamic" )
+map		= "map" iface maptype \*[Lt]seg1\*[Gt] mapdi \*[Lt]seg2\*[Gt] [ "pass" filt-opts ]
 
 rproc		= "procedure" \*[Lt]name\*[Gt] procs
 procs		= "{" op1 \*[Lt]newline\*[Gt], op2 \*[Lt]newline\*[Gt], ... "}"
@@ -179,13 +179,15 @@ default configuration file
 $ext_if = "wm0"
 $int_if = "wm1"
 
-$services_tcp = { http, https, smtp, domain, 6000 }
-$services_udp = { domain, ntp, 6000 }
-
 table <1> type hash file "/etc/npf_blacklist"
 table <2> type tree dynamic
 
-nat $ext_if from 192.168.0.0/24 to any -> $ext_if
+$services_tcp = { http, https, smtp, domain, 6000, 9022 }
+$services_udp = { domain, ntp, 6000 }
+$localnet = { 10.1.1.0/24 }
+
+map $ext_if dynamic 10.1.1.0/24 -> $ext_if
+map $ext_if dynamic 10.1.1.2 port 22 <- $ext_if 9022
 
 procedure "log" {
 	log: npflog0
@@ -196,9 +198,9 @@ procedure "rid" {
 }
 
 group (name "external", interface $ext_if) {
-	block in final from \*[Lt]1\*[Gt]
 	pass stateful out final from $ext_if apply "rid"
 
+	block in final from \*[Lt]1\*[Gt]
 	pass in final family inet proto tcp to $ext_if port ssh apply "log"
 	pass in final proto tcp to $ext_if port $services_tcp
 	pass in final proto udp to $ext_if port $services_udp
