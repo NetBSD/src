@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.177 2012/04/20 22:23:24 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.178 2012/06/15 13:53:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.177 2012/04/20 22:23:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.178 2012/06/15 13:53:40 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1014,7 +1014,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 void
 pmap_emap_enter(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
-	pt_entry_t *pte, opte, npte;
+	pt_entry_t *pte, npte;
 
 	KASSERT((prot & ~VM_PROT_ALL) == 0);
 	pte = (va < VM_MIN_KERNEL_ADDRESS) ? vtopte(va) : kvtopte(va);
@@ -1028,7 +1028,7 @@ pmap_emap_enter(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	npte = pmap_pa2pte(pa);
 	npte |= protection_codes[prot] | PG_k | PG_V;
-	opte = pmap_pte_testset(pte, npte);
+	pmap_pte_set(pte, npte);
 }
 
 /*
@@ -1061,12 +1061,12 @@ pmap_emap_sync(bool canload)
 void
 pmap_emap_remove(vaddr_t sva, vsize_t len)
 {
-	pt_entry_t *pte, xpte;
+	pt_entry_t *pte;
 	vaddr_t va, eva = sva + len;
 
 	for (va = sva; va < eva; va += PAGE_SIZE) {
 		pte = (va < VM_MIN_KERNEL_ADDRESS) ? vtopte(va) : kvtopte(va);
-		xpte |= pmap_pte_testset(pte, 0);
+		pmap_pte_set(pte, 0);
 	}
 }
 
