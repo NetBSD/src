@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.59 2011/06/12 03:35:42 rmind Exp $	*/
+/*	$NetBSD: vector.S,v 1.60 2012/06/15 14:23:46 yamt Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.59 2011/06/12 03:35:42 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.60 2012/06/15 14:23:46 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -282,7 +282,7 @@ IDTVEC(intr_ ## name ## num)						;\
 	pushl	$T_ASTFLT		/* trap # for doing ASTs */	;\
 	INTRENTRY							;\
 	movl	CPUVAR(ISOURCES) + (num) * 4, %ebp			;\
-	mask(num)		/* mask it in hardware */		;\
+	mask(num)			/* mask it in hardware */	;\
 	early_ack(num)			/* and allow other intrs */	;\
 	testl	%ebp,%ebp						;\
 	jz	9f			/* stray */			;\
