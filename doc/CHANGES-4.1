@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.243 2012/06/13 15:56:47 sborrill Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.244 2012/06/15 09:04:49 sborrill Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -4666,4 +4666,12 @@ sys/dev/pci/if_bge.c				1.194 via patch
 	not just over the payload and notify upper layers appropriately.
 	Fixes PR kern/40018.
 	[buhrow, ticket #1449]
+
+bin/rm/rm.c					1.52
+
+	Rectify race condition in rm -P processing by checking that the
+	file we opened is the one we expected to get. Also use O_NOFOLLOW
+	to help avoid even opening devices, which sometimes produce side
+	effects.
+	[dholland, ticket #1451]
 
