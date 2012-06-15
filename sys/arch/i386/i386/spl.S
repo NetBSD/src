@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.36 2011/03/18 15:18:16 joerg Exp $	*/
+/*	$NetBSD: spl.S,v 1.37 2012/06/15 14:09:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.36 2011/03/18 15:18:16 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.37 2012/06/15 14:09:26 yamt Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ddb.h"
@@ -73,7 +73,7 @@ END(splraise)
  * void spllower(int s);
  *
  * spllower() for i486 and Pentium.  Must be the same size as
- * i686_spllower().  This must use pushf/cli/popf as it is used
+ * cx8_spllower().  This must use pushf/cli/popf as it is used
  * early in boot where interrupts are disabled via eflags/IE.
  */
 ENTRY(spllower)
