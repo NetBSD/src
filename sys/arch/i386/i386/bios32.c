@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.28 2009/11/17 23:45:39 dyoung Exp $	*/
+/*	$NetBSD: bios32.c,v 1.29 2012/06/15 23:01:16 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.28 2009/11/17 23:45:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.29 2012/06/15 23:01:16 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,8 +175,8 @@ bios32_init(void)
 		if (p[0] != '_' && p[1] != 'D' && p[2] != 'M' &&
 		    p[3] != 'I' && p[4] != '_')
 			continue;
-		for (chksum = 0, i = 0xf; i--; chksum += p[i]);
-			;
+		for (chksum = 0, i = 0xf; i--;)
+			chksum += p[i];
 		if (chksum != 0)
 			continue;
 
