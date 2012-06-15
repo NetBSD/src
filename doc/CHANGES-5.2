@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.175 2012/06/13 14:01:22 sborrill Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.176 2012/06/15 09:09:05 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -6465,14 +6465,22 @@ sys/arch/amd64/amd64/netbsd32_machdep.c		1.77 via patch
 	now instead of trying to jump to the bogus address.
 	[spz, ticket #1773]
 
-sbin/raidctl/raidctl.c					1.52
-sys/dev/raidframe/raidframevar.h			1.15
-sys/dev/raidframe/rf_copyback.c				1.45
-sys/dev/raidframe/rf_disks.c				1.78
-sys/dev/raidframe/rf_netbsdkintf.c			1.282,1.284
-sys/dev/raidframe/rf_reconstruct.c			1.111
+sbin/raidctl/raidctl.c				1.52
+sys/dev/raidframe/raidframevar.h		1.15
+sys/dev/raidframe/rf_copyback.c			1.45
+sys/dev/raidframe/rf_disks.c			1.78
+sys/dev/raidframe/rf_netbsdkintf.c		1.282,1.284
+sys/dev/raidframe/rf_reconstruct.c		1.111
 
 	Fix garbage values in partitionSizeHi with RAID array > 2TB. Stops the check
 	against rf_component_label_partitionsize() failing and stopping auto-configure.
 	[mrg, ticket #1774]
+
+bin/rm/rm.c					1.52
+
+	Rectify race condition in rm -P processing by checking that the
+	file we opened is the one we expected to get. Also use O_NOFOLLOW
+	to help avoid even opening devices, which sometimes produce side
+	effects.
+	[dholland, ticket #1775]
 
