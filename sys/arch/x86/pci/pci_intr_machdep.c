@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.23 2011/08/29 22:41:52 dyoung Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.24 2012/06/15 14:02:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.23 2011/08/29 22:41:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.24 2012/06/15 14:02:41 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -140,10 +140,13 @@ pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	}
 
 #if NIOAPIC > 0 || NACPICA > 0
+	KASSERT(rawpin >= PCI_INTERRUPT_PIN_A);
+	KASSERT(rawpin <= PCI_INTERRUPT_PIN_D);
 	pci_decompose_tag(pc, pa->pa_tag, &bus, &dev, &func);
 	if (mp_busses != NULL) {
-		if (intr_find_mpmapping(bus, (dev<<2)|(rawpin-1), ihp) == 0) {
-			if ((*ihp & 0xff) == 0)
+		if (intr_find_mpmapping(bus,
+		    (dev << 2) | (rawpin - PCI_INTERRUPT_PIN_A), ihp) == 0) {
+			if (APIC_IRQ_LEGACY_IRQ(*ihp) == 0)
 				*ihp |= line;
 			return 0;
 		}
