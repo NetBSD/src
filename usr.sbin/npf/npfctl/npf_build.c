@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.6 2012/02/26 21:50:05 christos Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.7 2012/06/15 23:24:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.6 2012/02/26 21:50:05 christos Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.7 2012/06/15 23:24:08 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -90,10 +90,11 @@ npfctl_table_exists_p(const char *id)
 	return npf_table_exists_p(npf_conf, atoi(id));
 }
 
-static in_port_t *
+static in_port_t
 npfctl_get_singleport(const npfvar_t *vp)
 {
 	port_range_t *pr;
+	in_port_t *port;
 
 	if (npfvar_get_count(vp) > 1) {
 		yyerror("multiple ports are not valid");
@@ -102,7 +103,8 @@ npfctl_get_singleport(const npfvar_t *vp)
 	if (pr->pr_start != pr->pr_end) {
 		yyerror("port range is not valid");
 	}
-	return &pr->pr_start;
+	port = &pr->pr_start;
+	return *port;
 }
 
 static fam_addr_mask_t *
@@ -247,13 +249,15 @@ static bool
 npfctl_build_ncode(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
     const filt_opts_t *fopts, bool invert)
 {
+	const addr_port_t *apfrom = &fopts->fo_from;
+	const addr_port_t *apto = &fopts->fo_to;
 	nc_ctx_t *nc;
 	void *code;
 	size_t len;
 
 	if (family == AF_UNSPEC && op->op_proto == -1 &&
-	    op->op_opts == NULL && !fopts->fo_from && !fopts->fo_to &&
-	    !fopts->fo_from_port_range && !fopts->fo_to_port_range)
+	    op->op_opts == NULL && !apfrom->ap_netaddr && !apto->ap_netaddr &&
+	    !apfrom->ap_portrange && !apto->ap_portrange)
 		return false;
 
 	int srcflag = NC_MATCH_SRC;
@@ -267,19 +271,19 @@ npfctl_build_ncode(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
 	nc = npfctl_ncgen_create();
 
 	/* Build IP address blocks. */
-	npfctl_build_vars(nc, family, fopts->fo_from, srcflag);
-	npfctl_build_vars(nc, family, fopts->fo_to, dstflag);
+	npfctl_build_vars(nc, family, apfrom->ap_netaddr, srcflag);
+	npfctl_build_vars(nc, family, apto->ap_netaddr, dstflag);
 
 	/* Build layer 4 protocol blocks. */
 	int pflag = npfctl_build_proto(nc, op);
 
 	/* Build port-range blocks. */
-	if (fopts->fo_from_port_range) {
-		npfctl_build_vars(nc, family, fopts->fo_from_port_range,
+	if (apfrom->ap_portrange) {
+		npfctl_build_vars(nc, family, apfrom->ap_portrange,
 		    srcflag | pflag);
 	}
-	if (fopts->fo_to_port_range) {
-		npfctl_build_vars(nc, family, fopts->fo_to_port_range,
+	if (apto->ap_portrange) {
+		npfctl_build_vars(nc, family, apto->ap_portrange,
 		    dstflag | pflag);
 	}
 
@@ -289,7 +293,7 @@ npfctl_build_ncode(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
 	code = npfctl_ncgen_complete(nc, &len);
 	if (npf_debug) {
 		extern int yylineno;
-		printf("RULE AT LINE %d\n", yylineno - 1);
+		printf("RULE AT LINE %d\n", yylineno);
 		npfctl_ncgen_print(code, len);
 	}
 	if (npf_rule_setcode(rl, NPF_CODE_NCODE, code, len) == -1) {
@@ -430,64 +434,100 @@ npfctl_build_rule(int attr, u_int if_idx, sa_family_t family,
  * given filter options.
  */
 void
-npfctl_build_nat(int type, u_int if_idx, const filt_opts_t *fopts,
-    npfvar_t *var1, npfvar_t *var2)
+npfctl_build_nat(int sd, int type, u_int if_idx, const addr_port_t *ap1,
+    const addr_port_t *ap2, const filt_opts_t *fopts)
 {
-	opt_proto_t op = { .op_proto = -1, .op_opts = NULL };
+	const opt_proto_t op = { .op_proto = -1, .op_opts = NULL };
+	fam_addr_mask_t *am1, *am2;
+	filt_opts_t imfopts;
+	sa_family_t family;
 	nl_nat_t *nat;
-	fam_addr_mask_t *ai;
 
-	assert(type != 0 && if_idx != 0);
-	assert(fopts != NULL && var1 != NULL);
+	if (sd == NPFCTL_NAT_STATIC) {
+		yyerror("static NAT is not yet supported");
+	}
+	assert(sd == NPFCTL_NAT_DYNAMIC);
+	assert(if_idx != 0);
 
-	ai = npfctl_get_singlefam(var1);
-	assert(ai != NULL);
-	if (ai->fam_family != AF_INET) {
-		yyerror("IPv6 NAT is not supported");
+	family = AF_INET;
+
+	if (type & NPF_NATIN) {
+		if (!ap1->ap_netaddr) {
+			yyerror("inbound network segment is not specified");
+		}
+		am1 = npfctl_get_singlefam(ap1->ap_netaddr);
+		if (am1->fam_family != AF_INET) {
+			yyerror("IPv6 NAT is not supported");
+		}
+		assert(am1 != NULL);
+	}
+
+	if (type & NPF_NATOUT) {
+		if (!ap2->ap_netaddr) {
+			yyerror("outbound network segment is not specified");
+		}
+		am2 = npfctl_get_singlefam(ap2->ap_netaddr);
+		if (am2->fam_family != family) {
+			yyerror("IPv6 NAT is not supported");
+		}
+		assert(am2 != NULL);
+	}
+
+	/*
+	 * If filter criteria is not specified explicitly, apply implicit
+	 * filtering according to the given network segements.
+	 */
+	if (!fopts) {
+		memset(&imfopts, 0, sizeof(filt_opts_t));
+		if (type & NPF_NATOUT) {
+			memcpy(&imfopts.fo_from, ap1, sizeof(addr_port_t));
+		}
+		if (type & NPF_NATIN) {
+			memcpy(&imfopts.fo_to, ap2, sizeof(addr_port_t));
+		}
+		fopts = &imfopts;
 	}
 
 	switch (type) {
-	case NPFCTL_RDR: {
+	case NPF_NATIN: {
 		/*
 		 * Redirection: an inbound NAT with a specific port.
 		 */
-		in_port_t *port = npfctl_get_singleport(var2);
+		if (!ap1->ap_portrange) {
+			yyerror("inbound port is not specified");
+		}
+		in_port_t port = npfctl_get_singleport(ap1->ap_portrange);
 		nat = npf_nat_create(NPF_NATIN, NPF_NAT_PORTS,
-		    if_idx, &ai->fam_addr, ai->fam_family, *port);
+		    if_idx, &am1->fam_addr, am1->fam_family, port);
 		break;
 	}
-	case NPFCTL_BINAT: {
+	case (NPF_NATIN | NPF_NATOUT): {
 		/*
 		 * Bi-directional NAT: a combination of inbound NAT and
 		 * outbound NAT policies.  Note that the translation address
 		 * is local IP and filter criteria is inverted accordingly.
 		 */
-		fam_addr_mask_t *tai = npfctl_get_singlefam(var2);
-		assert(tai != NULL);
-		if (ai->fam_family != AF_INET) {
-			yyerror("IPv6 NAT is not supported");
-		}
 		nat = npf_nat_create(NPF_NATIN, 0, if_idx,
-		    &tai->fam_addr, tai->fam_family, 0);
-		npfctl_build_ncode(nat, AF_INET, &op, fopts, true);
+		    &am1->fam_addr, am1->fam_family, 0);
+		npfctl_build_ncode(nat, family, &op, fopts, true);
 		npf_nat_insert(npf_conf, nat, NPF_PRI_NEXT);
 		/* FALLTHROUGH */
 	}
-	case NPFCTL_NAT: {
+	case NPF_NATOUT: {
 		/*
 		 * Traditional NAPT: an outbound NAT policy with port.
-		 * If this is another hald for bi-directional NAT, then
+		 * If this is another half for bi-directional NAT, then
 		 * no port translation with mapping.
 		 */
-		nat = npf_nat_create(NPF_NATOUT, type == NPFCTL_NAT ?
+		nat = npf_nat_create(NPF_NATOUT, type == NPF_NATOUT ?
 		    (NPF_NAT_PORTS | NPF_NAT_PORTMAP) : 0,
-		    if_idx, &ai->fam_addr, ai->fam_family, 0);
+		    if_idx, &am2->fam_addr, am2->fam_family, 0);
 		break;
 	}
 	default:
 		assert(false);
 	}
-	npfctl_build_ncode(nat, AF_INET, &op, fopts, false);
+	npfctl_build_ncode(nat, family, &op, fopts, false);
 	npf_nat_insert(npf_conf, nat, NPF_PRI_NEXT);
 }
 
