@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.52.4.3 2012/06/12 20:43:47 riz Exp $	*/
+/*	$NetBSD: trap.c,v 1.52.4.4 2012/06/15 09:20:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.52.4.3 2012/06/12 20:43:47 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.52.4.4 2012/06/15 09:20:00 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -183,7 +183,9 @@ trap(struct trapframe *frame)
 #if defined(COMPAT_10) || defined(COMPAT_IBCS2)
 	extern char IDTVEC(oosyscall)[];
 #endif
+#ifndef XEN
 	struct trapframe *vframe;
+#endif
 	void *onfault;
 	int error;
 	uint64_t cr2;
