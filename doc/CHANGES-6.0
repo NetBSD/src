@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.131 2012/06/15 08:54:01 sborrill Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.132 2012/06/15 10:00:29 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -5656,4 +5656,12 @@ tests/lib/libc/sys/t_mmap.c			1.7
 	Disable the mmap_block test again. It is only by accident that
 	it doesn't panic when mmaping /dev/wd0d. PR kern/46592
 	[bouyer, ticket #345]
+
+bin/rm/rm.c					1.52
+
+	Rectify race condition in rm -P processing by checking that the
+	file we opened is the one we expected to get. Also use O_NOFOLLOW
+	to help avoid even opening devices, which sometimes produce side
+	effects.
+	[dholland, ticket #346]
 
