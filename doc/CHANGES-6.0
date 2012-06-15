@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.130 2012/06/15 08:49:59 sborrill Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.131 2012/06/15 08:54:01 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -5650,4 +5650,10 @@ sys/arch/amd64/conf/GENERIC			1.1075 via patch
 	Add urtw(4) driver for Realtek RTL8187/RTL8187B 802.11b/g USB
 	wireless adapter. From OpenBSD.
 	[riz, ticket #343]
+
+tests/lib/libc/sys/t_mmap.c			1.7
+
+	Disable the mmap_block test again. It is only by accident that
+	it doesn't panic when mmaping /dev/wd0d. PR kern/46592
+	[bouyer, ticket #345]
 
