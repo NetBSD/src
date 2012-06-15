@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.56 2010/11/02 20:49:47 skrll Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.57 2012/06/15 19:20:44 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.56 2010/11/02 20:49:47 skrll Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.57 2012/06/15 19:20:44 joerg Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -103,7 +103,7 @@ pthread_cond_destroy(pthread_cond_t *cond)
 	return 0;
 }
 
-inline int
+int
 pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 		       const struct timespec *abstime)
 {
