@@ -1,4 +1,4 @@
-/* $NetBSD: rm.c,v 1.51 2012/01/21 16:38:41 christos Exp $ */
+/* $NetBSD: rm.c,v 1.51.2.1 2012/06/15 10:00:05 sborrill Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993, 1994, 2003
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.51 2012/01/21 16:38:41 christos Exp $");
+__RCSID("$NetBSD: rm.c,v 1.51.2.1 2012/06/15 10:00:05 sborrill Exp $");
 #endif
 #endif /* not lint */
 
@@ -380,7 +380,7 @@ rm_file(char **argv)
 static int
 rm_overwrite(char *file, struct stat *sbp)
 {
-	struct stat sb;
+	struct stat sb, sb2;
 	int fd, randint;
 	char randchar;
 
@@ -394,8 +394,18 @@ rm_overwrite(char *file, struct stat *sbp)
 		return 0;
 
 	/* flags to try to defeat hidden caching by forcing seeks */
-	if ((fd = open(file, O_RDWR|O_SYNC|O_RSYNC, 0)) == -1)
+	if ((fd = open(file, O_RDWR|O_SYNC|O_RSYNC|O_NOFOLLOW, 0)) == -1)
 		goto err;
+
+	if (fstat(fd, &sb2)) {
+		goto err;
+	}
+
+	if (sb2.st_dev != sbp->st_dev || sb2.st_ino != sbp->st_ino ||
+	    !S_ISREG(sb2.st_mode)) {
+		errno = EPERM;
+		goto err;
+	}
 
 #define RAND_BYTES	1
 #define THIS_BYTE	0
