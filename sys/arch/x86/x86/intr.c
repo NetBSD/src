@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.73 2012/06/12 17:26:29 yamt Exp $	*/
+/*	$NetBSD: intr.c,v 1.74 2012/06/15 13:57:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.73 2012/06/12 17:26:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.74 2012/06/15 13:57:59 yamt Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -360,9 +360,7 @@ intr_find_pcibridge(int bus, pcitag_t *pci_bridge_tag,
 
 #if NIOAPIC > 0 || NACPICA > 0
 /*
- * 'pin' argument is (dev << 2) | pin0
- * where dev is PCI device number (0-255) and
- * pin0 is PCI interrupt pin number (0-3)
+ * 'pin' argument pci bus_pin encoding of a device/pin combination.
  */
 int
 intr_find_mpmapping(int bus, int pin, int *handle)
