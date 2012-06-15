@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.129 2012/06/14 09:51:26 sborrill Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.130 2012/06/15 08:49:59 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -5635,4 +5635,19 @@ sys/modules/if_urtwn/if_urtwn.ioconf		1.1
 
 	Add support for urtwn(4) wireless. Ported from OpenBSD
 	[riz, ticket #326]
+
+sys/dev/usb/files.usb				1.122
+sys/dev/usb/if_urtw.c				1.1
+sys/dev/usb/if_urtwreg.h			1.1
+sys/dev/usb/usbdevs				1.617
+share/man/man4/Makefile				1.586
+share/man/man4/urtw.4				1.1
+distrib/sets/lists/man/mi			1.1393
+sys/dev/usb/usbdevs				1.617
+sys/arch/i386/conf/GENERIC			1.357
+sys/arch/amd64/conf/GENERIC			1.1075 via patch
+
+	Add urtw(4) driver for Realtek RTL8187/RTL8187B 802.11b/g USB
+	wireless adapter. From OpenBSD.
+	[riz, ticket #343]
 
