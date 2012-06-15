@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_data.c,v 1.12 2012/05/30 21:30:07 rmind Exp $	*/
+/*	$NetBSD: npf_data.c,v 1.13 2012/06/15 23:24:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.12 2012/05/30 21:30:07 rmind Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.13 2012/06/15 23:24:08 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h>
@@ -474,7 +474,7 @@ npfctl_icmpcode(uint8_t type, const char *code)
 }
 
 npfvar_t *
-npfctl_parse_icmp(uint8_t type, uint8_t code)
+npfctl_parse_icmp(int type, int code)
 {
 	npfvar_t *vp = npfvar_create(".icmp");
 

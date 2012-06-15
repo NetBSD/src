@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ncode.h,v 1.7 2012/04/14 19:01:21 rmind Exp $	*/
+/*	$NetBSD: npf_ncode.h,v 1.8 2012/06/15 23:24:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -143,9 +143,9 @@ int	npf_ncode_validate(const void *, size_t, int *);
 # define	NPF_OPERAND_PORT_RANGE		14
 
 static const struct npf_instruction {
-	const char *name;
-	uint8_t op[4];
-} npf_instructions[256] = {
+	const char *	name;
+	uint8_t		op[4];
+} npf_instructions[] = {
 	[NPF_OPCODE_RET] = {
 		.name = "ret",
 		.op = {
@@ -247,7 +247,8 @@ static const struct npf_instruction {
 			[1] = NPF_OPERAND_REGISTER,
 		},
 	},
-	[NPF_OPCODE_DIV] = { .name = "div",
+	[NPF_OPCODE_DIV] = {
+		.name = "div",
 		.op = {
 			[0] = NPF_OPERAND_VALUE,
 			[1] = NPF_OPERAND_REGISTER,

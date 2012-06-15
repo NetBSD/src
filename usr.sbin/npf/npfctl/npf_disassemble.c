@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_disassemble.c,v 1.4 2012/05/30 21:30:07 rmind Exp $	*/
+/*	$NetBSD: npf_disassemble.c,v 1.5 2012/06/15 23:24:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_disassemble.c,v 1.4 2012/05/30 21:30:07 rmind Exp $");
+__RCSID("$NetBSD: npf_disassemble.c,v 1.5 2012/06/15 23:24:08 rmind Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <assert.h>
 #include <err.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -60,55 +61,63 @@ enum {
 };
 
 struct nc_inf {
-	npfvar_t *	nci_vlist[NPF_SHOW_COUNT];
-	bool		nci_srcdst;
+	FILE *			ni_fp;
+	const uint32_t *	ni_buf;
+	size_t			ni_left;
+	const uint32_t *	ni_ipc;
+	const uint32_t *	ni_pc;
+
+	/* Jump target array, its size and current index. */
+	const uint32_t **	ni_targs;
+	size_t			ni_targsize;
+	size_t			ni_targidx;
+
+	/* Other meta-data. */
+	npfvar_t *		ni_vlist[NPF_SHOW_COUNT];
+	int			ni_proto;
+	bool			ni_srcdst;
 };
 
-#define ADVANCE(n, rv) \
-	do { \
-		if (len < sizeof(*pc) * (n)) { \
-			warnx("ran out of bytes"); \
-			return rv; \
-		} \
-		pc += (n); \
-		len -= sizeof(*pc) * (n); \
-	} while (/*CONSTCOND*/0)
-
 static size_t
-npfctl_ncode_get_target(const uint32_t *pc, const uint32_t **t, size_t l)
+npfctl_ncode_get_target(const nc_inf_t *ni, const uint32_t *pc)
 {
-	for (size_t i = 0; i < l; i++)
-		if (t[i] == pc)
+	for (size_t i = 0; i < ni->ni_targidx; i++) {
+		if (ni->ni_targs[i] == pc)
 			return i;
-	return ~0;
+	}
+	return (size_t)-1;
 }
 
 static size_t
-npfctl_ncode_add_target(const uint32_t *pc, const uint32_t ***t, size_t *l,
-    size_t *m)
+npfctl_ncode_add_target(nc_inf_t *ni, const uint32_t *pc)
 {
-	size_t q = npfctl_ncode_get_target(pc, *t, *l);
+	size_t i = npfctl_ncode_get_target(ni, pc);
 
-	if (q != (size_t)~0)
-		return q;
-
-	if (*l <= *m) {
-		*m += 10;
-		*t = xrealloc(*t, *m * sizeof(**t));
+	/* If found, just return the index. */
+	if (i != (size_t)-1) {
+		return i;
 	}
-	q = *l;
-	(*t)[(*l)++] = pc;
-	return q;
+
+	/* Grow array, if needed, and add a new target. */
+	if (ni->ni_targidx == ni->ni_targsize) {
+		ni->ni_targsize += 16;
+		ni->ni_targs = xrealloc(ni->ni_targs,
+		    ni->ni_targsize * sizeof(uint32_t));
+	}
+	assert(ni->ni_targidx < ni->ni_targsize);
+	i = ni->ni_targidx++;
+	ni->ni_targs[i] = pc;
+	return i;
 }
 
 static void
-npfctl_ncode_add_vp(char *buf, nc_inf_t *nci, unsigned idx)
+npfctl_ncode_add_vp(nc_inf_t *ni, char *buf, unsigned idx)
 {
-	npfvar_t *vl = nci->nci_vlist[idx];
+	npfvar_t *vl = ni->ni_vlist[idx];
 
 	if (vl == NULL) {
 		vl = npfvar_create(".list");
-		nci->nci_vlist[idx] = vl;
+		ni->ni_vlist[idx] = vl;
 	}
 	npfvar_t *vp = npfvar_create(".string");
 	npfvar_add_element(vp, NPFVAR_STRING, buf, strlen(buf) + 1);
@@ -116,56 +125,52 @@ npfctl_ncode_add_vp(char *buf, nc_inf_t *nci, unsigned idx)
 }
 
 static const char *
-npfctl_ncode_operand(char *buf, size_t bufsiz, uint8_t op, const uint32_t *st,
-    const uint32_t *ipc, const uint32_t **pcv, size_t *lenv,
-    const uint32_t ***t, size_t *l, size_t *m, nc_inf_t *nci)
+npfctl_ncode_operand(nc_inf_t *ni, char *buf, size_t bufsiz, uint8_t operand)
 {
-	const uint32_t *pc = *pcv;
-	size_t len = *lenv;
+	const uint32_t op = *ni->ni_pc;
 	struct sockaddr_storage ss;
+	unsigned advance;
 
-	switch (op) {
+	/* Advance by one is a default for most cases. */
+	advance = 1;
+
+	switch (operand) {
 	case NPF_OPERAND_NONE:
 		abort();
 
 	case NPF_OPERAND_REGISTER:
-		if (*pc & ~0x3) {
+		if (op & ~0x3) {
 			warnx("invalid register operand 0x%x at offset %td",
-			    *pc, pc - st);
+			    op, ni->ni_pc - ni->ni_buf);
 			return NULL;
 		}
-		snprintf(buf, bufsiz, "R%d", *pc);
-		ADVANCE(1, NULL);
+		snprintf(buf, bufsiz, "R%d", op);
 		break;
 
 	case NPF_OPERAND_KEY:
-		snprintf(buf, bufsiz, "key=<0x%x>", *pc);
-		ADVANCE(1, NULL);
+		snprintf(buf, bufsiz, "key=<0x%x>", op);
 		break;
 
 	case NPF_OPERAND_VALUE:
-		snprintf(buf, bufsiz, "value=<0x%x>", *pc);
-		ADVANCE(1, NULL);
+		snprintf(buf, bufsiz, "value=<0x%x>", op);
 		break;
 
 	case NPF_OPERAND_SD:
-		if (*pc & ~0x1) {
+		if (op & ~0x1) {
 			warnx("invalid src/dst operand 0x%x at offset %td",
-			    *pc, pc - st);
+			    op, ni->ni_pc - ni->ni_buf);
 			return NULL;
 		}
-		bool srcdst = (*pc == NPF_OPERAND_SD_SRC);
-		if (nci) {
-			nci->nci_srcdst = srcdst;
+		bool srcdst = (op == NPF_OPERAND_SD_SRC);
+		if (ni) {
+			ni->ni_srcdst = srcdst;
 		}
 		snprintf(buf, bufsiz, "%s", srcdst ? "SRC" : "DST");
-		ADVANCE(1, NULL);
 		break;
 
 	case NPF_OPERAND_REL_ADDRESS:
-		snprintf(buf, bufsiz, "+%zu",
-		    npfctl_ncode_add_target(ipc + *pc, t, l, m));
-		ADVANCE(1, NULL);
+		snprintf(buf, bufsiz, "L%zu",
+		    npfctl_ncode_add_target(ni, ni->ni_ipc + op));
 		break;
 
 	case NPF_OPERAND_NET_ADDRESS4: {
@@ -173,13 +178,13 @@ npfctl_ncode_operand(char *buf, size_t bufsiz, uint8_t op, const uint32_t *st,
 		sin->sin_len = sizeof(*sin);
 		sin->sin_family = AF_INET;
 		sin->sin_port = 0;
-		memcpy(&sin->sin_addr, pc, sizeof(sin->sin_addr));
+		memcpy(&sin->sin_addr, ni->ni_pc, sizeof(sin->sin_addr));
 		sockaddr_snprintf(buf, bufsiz, "%a", (struct sockaddr *)sin);
-		if (nci) {
-			npfctl_ncode_add_vp(buf, nci, nci->nci_srcdst ?
+		if (ni) {
+			npfctl_ncode_add_vp(ni, buf, ni->ni_srcdst ?
 			    NPF_SHOW_SRCADDR : NPF_SHOW_DSTADDR);
 		}
-		ADVANCE(sizeof(sin->sin_addr) / sizeof(*pc), NULL);
+		advance = sizeof(sin->sin_addr) / sizeof(op);
 		break;
 	}
 	case NPF_OPERAND_NET_ADDRESS6: {
@@ -187,139 +192,172 @@ npfctl_ncode_operand(char *buf, size_t bufsiz, uint8_t op, const uint32_t *st,
 		sin6->sin6_len = sizeof(*sin6);
 		sin6->sin6_family = AF_INET6;
 		sin6->sin6_port = 0;
-		memcpy(&sin6->sin6_addr, pc, sizeof(sin6->sin6_addr));
+		memcpy(&sin6->sin6_addr, ni->ni_pc, sizeof(sin6->sin6_addr));
 		sockaddr_snprintf(buf, bufsiz, "%a", (struct sockaddr *)sin6);
-		if (nci) {
-			npfctl_ncode_add_vp(buf, nci, nci->nci_srcdst ?
+		if (ni) {
+			npfctl_ncode_add_vp(ni, buf, ni->ni_srcdst ?
 			    NPF_SHOW_SRCADDR : NPF_SHOW_DSTADDR);
 		}
-		ADVANCE(sizeof(sin6->sin6_addr) / sizeof(*pc), NULL);
+		advance = sizeof(sin6->sin6_addr) / sizeof(op);
 		break;
 	}
 	case NPF_OPERAND_ETHER_TYPE:
-		snprintf(buf, bufsiz, "ether=0x%x", *pc);
-		ADVANCE(1, NULL);
+		snprintf(buf, bufsiz, "ether=0x%x", op);
 		break;
 
 	case NPF_OPERAND_SUBNET: {
-		snprintf(buf, bufsiz, "/%d", *pc);
-		if (nci) {
-			npfctl_ncode_add_vp(buf, nci, nci->nci_srcdst ?
+		snprintf(buf, bufsiz, "/%d", op);
+		if (ni) {
+			npfctl_ncode_add_vp(ni, buf, ni->ni_srcdst ?
 			    NPF_SHOW_SRCADDR : NPF_SHOW_DSTADDR);
 		}
-		ADVANCE(1, NULL);
 		break;
 	}
 	case NPF_OPERAND_LENGTH:
-		snprintf(buf, bufsiz, "length=%d", *pc);
-		ADVANCE(1, NULL);
+		snprintf(buf, bufsiz, "length=%d", op);
 		break;
 
 	case NPF_OPERAND_TABLE_ID:
-		if (nci) {
-			snprintf(buf, bufsiz, "<%d>", *pc);
-			npfctl_ncode_add_vp(buf, nci, nci->nci_srcdst ?
+		if (ni) {
+			snprintf(buf, bufsiz, "<%d>", op);
+			npfctl_ncode_add_vp(ni, buf, ni->ni_srcdst ?
 			    NPF_SHOW_SRCADDR : NPF_SHOW_DSTADDR);
 		}
-		snprintf(buf, bufsiz, "id=%d", *pc);
-		ADVANCE(1, NULL);
+		snprintf(buf, bufsiz, "id=%d", op);
 		break;
 
-	case NPF_OPERAND_ICMP4_TYPE_CODE:
-		if (*pc & ~0xffff) {
+	case NPF_OPERAND_ICMP4_TYPE_CODE: {
+		uint8_t type = (op & 31) ? op >> 8 : 0;
+		uint8_t code = (op & 30) ? op & 0xff : 0;
+
+		if (op & ~0xc000ffff) {
 			warnx("invalid icmp/type operand 0x%x at offset %td",
-			    *pc, pc - st);
+			    op, ni->ni_pc - ni->ni_buf);
 			return NULL;
 		}
-		snprintf(buf, bufsiz, "type=%d, code=%d", *pc >> 8, *pc & 0xff);
-		if (nci) {
-			npfctl_ncode_add_vp(buf, nci, NPF_SHOW_ICMP);
+		snprintf(buf, bufsiz, "type=%d, code=%d", type, code);
+		if (ni) {
+			ni->ni_proto |= NC_MATCH_ICMP;
+			if (type || code) {
+				snprintf(buf, bufsiz,
+				    "icmp-type %d code %d", type, code);
+				npfctl_ncode_add_vp(ni, buf, NPF_SHOW_ICMP);
+			}
 		}
-		ADVANCE(1, NULL);
 		break;
-
-	case NPF_OPERAND_TCP_FLAGS_MASK:
-		if (*pc & ~0xffff) {
+	}
+	case NPF_OPERAND_TCP_FLAGS_MASK: {
+		uint8_t tf = op >> 8, tf_mask = op & 0xff;
+		if (op & ~0xffff) {
 			warnx("invalid flags/mask operand 0x%x at offset %td",
-			    *pc, pc - st);
+			    op, ni->ni_pc - ni->ni_buf);
 			return NULL;
 		}
-		snprintf(buf, bufsiz, "type=%d, code=%d", *pc >> 8, *pc & 0xff);
-		if (nci) {
-			npfctl_ncode_add_vp(buf, nci, NPF_SHOW_TCPF);
+		snprintf(buf, bufsiz, "flags=0x%x, mask=%0xx", tf, tf_mask);
+		if (ni) {
+			ni->ni_proto |= NC_MATCH_TCP;
+			npfctl_ncode_add_vp(ni, buf, NPF_SHOW_TCPF);
 		}
-		ADVANCE(1, NULL);
 		break;
-
+	}
 	case NPF_OPERAND_PORT_RANGE: {
-		in_port_t p1 = ntohs(*pc >> 16), p2 = ntohs(*pc & 0xffff);
+		in_port_t p1 = ntohs(op >> 16), p2 = ntohs(op & 0xffff);
 
 		if (p1 == p2) {
 			snprintf(buf, bufsiz, "%d", p1);
 		} else {
 			snprintf(buf, bufsiz, "%d-%d", p1, p2);
 		}
-		if (nci) {
-			npfctl_ncode_add_vp(buf, nci, nci->nci_srcdst ?
+		if (ni) {
+			npfctl_ncode_add_vp(ni, buf, ni->ni_srcdst ?
 			    NPF_SHOW_SRCPORT : NPF_SHOW_DSTPORT);
 		}
-		ADVANCE(1, NULL);
 		break;
 	}
 	default:
-		warnx("invalid operand %d at offset %td", op, pc - st);
+		warnx("invalid operand %d at offset %td",
+		    operand, ni->ni_pc - ni->ni_buf);
 		return NULL;
 	}
 
-	*pcv = pc;
-	*lenv = len;
+	if (ni->ni_left < sizeof(op) * advance) {
+		warnx("ran out of bytes");
+		return NULL;
+	}
+	ni->ni_pc += advance;
+	ni->ni_left -= sizeof(op) * advance;
 	return buf;
 }
 
-int
-npfctl_ncode_disassemble(FILE *fp, const void *v, size_t len, nc_inf_t *nci)
+nc_inf_t *
+npfctl_ncode_disinf(FILE *fp)
 {
-	const uint32_t *ipc, *pc = v;
-	const uint32_t *st = v;
-	const struct npf_instruction *ni;
-	char buf[256];
-	const uint32_t **targ;
-	size_t tlen, mlen, target;
+	nc_inf_t *ni = zalloc(sizeof(nc_inf_t));
+
+	memset(ni, 0, sizeof(nc_inf_t));
+	ni->ni_fp = fp;
+	return ni;
+}
+
+int
+npfctl_ncode_disassemble(nc_inf_t *ni, const void *v, size_t len)
+{
+	FILE *fp = ni->ni_fp;
 	int error = -1;
 
-	targ = NULL;
-	mlen = tlen = 0;
-	while (len) {
-		/* Get the opcode */
-		if (*pc & ~0xff) {
-			warnx("invalid opcode 0x%x at offset (%td)", *pc,
-			    pc - st);
+	ni->ni_buf = v;
+	ni->ni_left = len;
+	ni->ni_pc = v;
+
+	while (ni->ni_left) {
+		const struct npf_instruction *insn;
+		const uint32_t opcode = *ni->ni_pc;
+		size_t target;
+
+		/* Get the opcode. */
+		if (opcode & ~0xff) {
+			warnx("invalid opcode 0x%x at offset (%td)",
+			    opcode, ni->ni_pc - ni->ni_buf);
 			goto out;
 		}
-		ni = &npf_instructions[*pc];
-		if (ni->name == NULL) {
-			warnx("invalid opcode 0x%x at offset (%td)", *pc,
-			    pc - st);
+		insn = &npf_instructions[opcode];
+		if (insn->name == NULL) {
+			warnx("invalid opcode 0x%x at offset (%td)",
+			    opcode, ni->ni_pc - ni->ni_buf);
 			goto out;
 		}
 
-		ipc = pc;
-		target = npfctl_ncode_get_target(pc, targ, tlen);
+		/*
+		 * Lookup target array and prefix with the label,
+		 * if this opcode is a jump target.
+		 */
+		ni->ni_ipc = ni->ni_pc;
+		target = npfctl_ncode_get_target(ni, ni->ni_pc);
 		if (fp) {
-			if (target != (size_t)~0)
-				fprintf(fp, "%zu:", target);
-			fprintf(fp, "\t%s", ni->name);
+			if (target != (size_t)-1) {
+				fprintf(fp, "L%zu:", target);
+			}
+			fprintf(fp, "\t%s", insn->name);
 		}
-		ADVANCE(1, -1);
+		if (ni->ni_left < sizeof(opcode)) {
+			warnx("ran out of bytes");
+			return -1;
+		}
+		ni->ni_left -= sizeof(opcode);
+		ni->ni_pc++;
 
-		for (size_t i = 0; i < __arraycount(ni->op); i++) {
+		for (size_t i = 0; i < __arraycount(insn->op); i++) {
+			const uint8_t o = insn->op[i];
 			const char *op;
-			if (ni->op[i] == NPF_OPERAND_NONE)
+			char buf[256];
+
+			if (o == NPF_OPERAND_NONE) {
 				break;
-			op = npfctl_ncode_operand(buf, sizeof(buf), ni->op[i],
-			    st, ipc, &pc, &len, &targ, &tlen, &mlen, nci);
-			if (op == NULL)
+			}
+			op = npfctl_ncode_operand(ni, buf, sizeof(buf), o);
+			if (op == NULL) {
 				goto out;
+			}
 			if (fp) {
 				fprintf(fp, "%s%s", i == 0 ? " " : ", ", op);
 			}
@@ -330,7 +368,7 @@ npfctl_ncode_disassemble(FILE *fp, const void *v, size_t len, nc_inf_t *nci)
 	}
 	error = 0;
 out:
-	free(targ);
+	free(ni->ni_targs);
 	return error;
 }
 
@@ -342,7 +380,7 @@ npfctl_show_fromto(const char *name, npfvar_t *vl, bool showany)
 
 	if (count == 0) {
 		if (showany) {
-			printf("%s all ", name);
+			printf("%s any ", name);
 		}
 		return;
 	}
@@ -355,21 +393,47 @@ npfctl_show_fromto(const char *name, npfvar_t *vl, bool showany)
 	npfvar_destroy(vl);
 }
 
-static void
+static bool
 npfctl_show_ncode(const void *nc, size_t len)
 {
-	nc_inf_t nci;
+	nc_inf_t *ni = npfctl_ncode_disinf(NULL);
+	npfvar_t *vl;
+	bool any;
 
-	memset(&nci, 0, sizeof(nc_inf_t));
-
-	if (npfctl_ncode_disassemble(NULL, nc, len, (void *)&nci) == 0) {
-		npfctl_show_fromto("from", nci.nci_vlist[NPF_SHOW_SRCADDR], true);
-		npfctl_show_fromto("port", nci.nci_vlist[NPF_SHOW_SRCPORT], false);
-		npfctl_show_fromto("to", nci.nci_vlist[NPF_SHOW_DSTADDR], true);
-		npfctl_show_fromto("port", nci.nci_vlist[NPF_SHOW_DSTPORT], false);
-	} else {
+	if (npfctl_ncode_disassemble(ni, nc, len) != 0) {
 		printf("<< ncode >> ");
+		return true;
 	}
+
+	switch (ni->ni_proto) {
+	case NC_MATCH_TCP:
+		printf("proto tcp ");
+		break;
+	case NC_MATCH_ICMP:
+		printf("proto icmp ");
+		if ((vl = ni->ni_vlist[NPF_SHOW_ICMP]) != NULL) {
+			printf("%s ", npfvar_expand_string(vl));
+			npfvar_destroy(vl);
+		}
+		break;
+	default:
+		break;
+	}
+
+	any = false;
+	if (ni->ni_vlist[NPF_SHOW_SRCADDR] || ni->ni_vlist[NPF_SHOW_SRCPORT]) {
+		npfctl_show_fromto("from", ni->ni_vlist[NPF_SHOW_SRCADDR], true);
+		npfctl_show_fromto("port", ni->ni_vlist[NPF_SHOW_SRCPORT], false);
+		any = true;
+	}
+	if (ni->ni_vlist[NPF_SHOW_DSTADDR] || ni->ni_vlist[NPF_SHOW_DSTPORT]) {
+		npfctl_show_fromto("to", ni->ni_vlist[NPF_SHOW_DSTADDR], true);
+		npfctl_show_fromto("port", ni->ni_vlist[NPF_SHOW_DSTPORT], false);
+		any = true;
+	}
+
+	free(ni);
+	return any;
 }
 
 #define	NPF_RSTICMP		(NPF_RULE_RETRST | NPF_RULE_RETICMP)
@@ -414,7 +478,7 @@ npfctl_show_rule(nl_rule_t *nrl, unsigned nlevel)
 		const char *rname = rg.rg_name;
 
 		if (ingroup) {
-			puts("}");
+			printf("}\n\n");
 		}
 		ingroup = true;
 		if (rg.rg_attr & NPF_RULE_DEFAULT) {
@@ -450,12 +514,9 @@ npfctl_show_rule(nl_rule_t *nrl, unsigned nlevel)
 	}
 
 	nc = _npf_rule_ncode(nrl, &nclen);
-	if (nc) {
-		npfctl_show_ncode(nc, nclen);
-	} else {
+	if (!nc || npfctl_show_ncode(nc, nclen)) {
 		printf("all ");
 	}
-	/* apply <rproc> */
 
 	if ((rproc = _npf_rule_rproc(nrl)) != NULL) {
 		printf("apply \"%s\"", rproc);

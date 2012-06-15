@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_scan.l,v 1.2 2012/05/30 21:30:07 rmind Exp $	*/
+/*	$NetBSD: npf_scan.l,v 1.3 2012/06/15 23:24:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -53,14 +53,16 @@ table			return TABLE;
 type			return TYPE;
 hash			return HASH;
 tree			return TREE;
+static			return TSTATIC;
 dynamic			return TDYNAMIC;
 file			return TFILE;
-nat			return NAT;
-binat			return BINAT;
-"->"			return ARROW;
+map			return MAP;
+"<->"			return ARROWBOTH;
+"<-"			return ARROWLEFT;
+"->"			return ARROWRIGHT;
 "-"			return MINUS;
-rdr			return RDR;
 procedure		return PROCEDURE;
+\\\n			yylineno++; yycolumn = 0;
 \n			yylineno++; yycolumn = 0; return SEPLINE;
 ;			return SEPLINE;
 name			return NAME;

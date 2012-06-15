@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.11 2012/05/30 21:30:07 rmind Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.12 2012/06/15 23:24:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.11 2012/05/30 21:30:07 rmind Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.12 2012/06/15 23:24:08 rmind Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -338,14 +338,14 @@ main(int argc, char **argv)
 	cmd = argv[1];
 
 	if (strcmp(cmd, "debug") == 0) {
-		const char *cfg = argc > 2 ? argv[2] : "npf.conf";
+		const char *cfg = argc > 2 ? argv[2] : "/tmp/npf.conf";
 		npfctl_config_init(true);
 		npfctl_parsecfg(cfg);
 		npfctl_config_send(0);
 		return EXIT_SUCCESS;
 	}
 
-	/* Find and call the subroutine */
+	/* Find and call the subroutine. */
 	for (int n = 0; operations[n].cmd != NULL; n++) {
 		if (strcmp(cmd, operations[n].cmd) != 0)
 			continue;
