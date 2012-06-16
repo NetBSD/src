@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.185 2012/06/16 16:42:26 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.186 2012/06/16 20:47:04 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.185 2012/06/16 16:42:26 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.186 2012/06/16 20:47:04 dsl Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -331,6 +331,8 @@ int dump_seg_count_range(paddr_t, paddr_t);
 int dumpsys_seg(paddr_t, paddr_t);
 
 void	init_x86_64(paddr_t);
+
+static int valid_user_selector(struct lwp *, uint64_t);
 
 /*
  * Machine-dependent startup code
@@ -2093,28 +2095,28 @@ cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
 		return EINVAL;
 
 	if (__predict_false(pmap->pm_ldt != NULL)) {
-		error = valid_user_selector(l, gr[_REG_ES], NULL, 0);
+		error = valid_user_selector(l, gr[_REG_ES]);
 		if (error != 0)
 			return error;
 
-		error = valid_user_selector(l, gr[_REG_FS], NULL, 0);
+		error = valid_user_selector(l, gr[_REG_FS]);
 		if (error != 0)
 			return error;
 
-		error = valid_user_selector(l, gr[_REG_GS], NULL, 0);
+		error = valid_user_selector(l, gr[_REG_GS]);
 		if (error != 0)
 			return error;
 
 		if ((gr[_REG_DS] & 0xffff) == 0)
 			return EINVAL;
-		error = valid_user_selector(l, gr[_REG_DS], NULL, 0);
+		error = valid_user_selector(l, gr[_REG_DS]);
 		if (error != 0)
 			return error;
 
 #ifndef XEN
 		if ((gr[_REG_SS] & 0xffff) == 0)
 			return EINVAL;
-		error = valid_user_selector(l, gr[_REG_SS], NULL, 0);
+		error = valid_user_selector(l, gr[_REG_SS]);
 		if (error != 0)
 			return error;
 #endif
@@ -2169,9 +2171,8 @@ cpu_initclocks(void)
 	(*initclock_func)();
 }
 
-int
-memseg_baseaddr(struct lwp *l, uint64_t seg, char *ldtp, int llen,
-		uint64_t *addr)
+static int
+valid_user_selector(struct lwp *l, uint64_t seg)
 {
 	int off, len;
 	char *dt;
@@ -2182,18 +2183,12 @@ memseg_baseaddr(struct lwp *l, uint64_t seg, char *ldtp, int llen,
 
 	seg &= 0xffff;
 
-	if (seg == 0) {
-		if (addr != NULL)
-			*addr = 0;
+	if (seg == 0)
 		return 0;
-	}
 
 	off = (seg & 0xfff8);
 	if (seg & SEL_LDT) {
-		if (ldtp != NULL) {
-			dt = ldtp;
-			len = llen;
-		} else if (pmap->pm_ldt != NULL) {
+		if (pmap->pm_ldt != NULL) {
 			len = pmap->pm_ldt_len; /* XXX broken */
 			dt = (char *)pmap->pm_ldt;
 		} else {
@@ -2220,18 +2215,7 @@ memseg_baseaddr(struct lwp *l, uint64_t seg, char *ldtp, int llen,
 	if (base >= VM_MAXUSER_ADDRESS)
 		return EINVAL;
 
-	if (addr == NULL)
-		return 0;
-
-	*addr = base;
-
 	return 0;
-}
-
-int
-valid_user_selector(struct lwp *l, uint64_t seg, char *ldtp, int len)
-{
-	return memseg_baseaddr(l, seg, ldtp, len, NULL);
 }
 
 int
