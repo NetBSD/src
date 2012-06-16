@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.184 2012/06/12 22:16:05 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.185 2012/06/16 16:42:26 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.184 2012/06/12 22:16:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.185 2012/06/16 16:42:26 joerg Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -2206,6 +2206,7 @@ memseg_baseaddr(struct lwp *l, uint64_t seg, char *ldtp, int llen,
 	} else {
 		if (seg != GUDATA_SEL || seg != GUDATA32_SEL)
 			return EINVAL;
+		__builtin_unreachable();
 	}
 
 	sdp = (struct mem_segment_descriptor *)(dt + off);
