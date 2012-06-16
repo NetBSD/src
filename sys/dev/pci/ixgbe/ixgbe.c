@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe.c,v 1.51 2011/04/25 23:34:21 jfv Exp $*/
-/*$NetBSD: ixgbe.c,v 1.3 2012/06/02 21:36:45 dsl Exp $*/
+/*$NetBSD: ixgbe.c,v 1.4 2012/06/16 19:54:01 dsl Exp $*/
 
 #include "opt_inet.h"
 
@@ -5468,14 +5468,14 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 		if (sysctl_createv(log, 0, &rnode, &cnode,
 		    CTLFLAG_READONLY, CTLTYPE_INT,
 		    "txd_head", SYSCTL_DESCR("Transmit Descriptor Head"),
-		    ixgbe_sysctl_tdh_handler, 0, txr,
+		    ixgbe_sysctl_tdh_handler, 0, (void *)txr,
 		    0, CTL_CREATE, CTL_EOL) != 0)
 			break;
 
 		if (sysctl_createv(log, 0, &rnode, &cnode,
 		    CTLFLAG_READONLY, CTLTYPE_INT,
 		    "txd_tail", SYSCTL_DESCR("Transmit Descriptor Tail"),
-		    ixgbe_sysctl_tdt_handler, 0, txr,
+		    ixgbe_sysctl_tdt_handler, 0, (void *)txr,
 		    0, CTL_CREATE, CTL_EOL) != 0)
 			break;
 
@@ -5494,7 +5494,7 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 		    CTLFLAG_READONLY,
 		    CTLTYPE_INT,
 		    "rxd_head", SYSCTL_DESCR("Receive Descriptor Head"),
-		    ixgbe_sysctl_rdh_handler, 0, rxr, 0,
+		    ixgbe_sysctl_rdh_handler, 0, (void *)rxr, 0,
 		    CTL_CREATE, CTL_EOL) != 0)
 			break;
 
@@ -5502,7 +5502,7 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 		    CTLFLAG_READONLY,
 		    CTLTYPE_INT,
 		    "rxd_tail", SYSCTL_DESCR("Receive Descriptor Tail"),
-		    ixgbe_sysctl_rdt_handler, 0, rxr, 0,
+		    ixgbe_sysctl_rdt_handler, 0, (void *)rxr, 0,
 		    CTL_CREATE, CTL_EOL) != 0)
 			break;
 
