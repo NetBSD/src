@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.50 2012/04/20 22:23:24 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.51 2012/06/16 17:30:18 chs Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -360,7 +360,7 @@ struct timeval;
 
 extern int biosbasemem;
 extern int biosextmem;
-extern int cpu;
+extern int cputype;
 extern int cpuid_level;
 extern int cpu_class;
 extern char cpu_brand_string[];
