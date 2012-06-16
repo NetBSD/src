@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_debug.c,v 1.4 2011/08/31 21:57:16 christos Exp $	*/
+/*	$NetBSD: dtrace_debug.c,v 1.5 2012/06/16 17:31:47 chs Exp $	*/
 
 /*-
  * Copyright (C) 2008 John Birrell <jb@freebsd.org>.
@@ -94,17 +94,17 @@ static char dtrace_debug_bufr[DTRACE_DEBUG_BUFR_SIZE];
 static volatile u_long	dtrace_debug_flag[MAXCPUS];
 
 static void
-dtrace_debug_lock(int xcpu)
+dtrace_debug_lock(int cpu)
 {
-	while (dtrace_cmpset_long(&dtrace_debug_flag[xcpu], 0, 1) == 0)
+	while (dtrace_cmpset_long(&dtrace_debug_flag[cpu], 0, 1) == 0)
 		/* Loop until the lock is obtained. */
 		;
 }
 
 static void
-dtrace_debug_unlock(int xcpu)
+dtrace_debug_unlock(int cpu)
 {
-	dtrace_debug_flag[xcpu] = 0;
+	dtrace_debug_flag[cpu] = 0;
 }
 
 static void

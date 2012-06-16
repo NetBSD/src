@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt.c,v 1.10 2011/10/19 10:55:50 yamt Exp $	*/
+/*	$NetBSD: fbt.c,v 1.11 2012/06/16 17:31:47 chs Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -182,7 +182,7 @@ fbt_doubletrap(void)
 static int
 fbt_invop(uintptr_t addr, uintptr_t *stack, uintptr_t rval)
 {
-	solaris_cpu_t *xcpu = &solaris_cpu[cpu_number()];
+	solaris_cpu_t *cpu = &solaris_cpu[cpu_number()];
 	uintptr_t stack0, stack1, stack2, stack3, stack4;
 	fbt_probe_t *fbt = fbt_probetab[FBT_ADDR2NDX(addr)];
 
@@ -199,7 +199,7 @@ fbt_invop(uintptr_t addr, uintptr_t *stack, uintptr_t rval)
 				 * disabled.
 				 */
 				DTRACE_CPUFLAG_SET(CPU_DTRACE_NOFAULT);
-				xcpu->cpu_dtrace_caller = stack[i++];
+				cpu->cpu_dtrace_caller = stack[i++];
 				stack0 = stack[i++];
 				stack1 = stack[i++];
 				stack2 = stack[i++];
@@ -211,7 +211,7 @@ fbt_invop(uintptr_t addr, uintptr_t *stack, uintptr_t rval)
 				dtrace_probe(fbt->fbtp_id, stack0, stack1,
 				    stack2, stack3, stack4);
 
-				xcpu->cpu_dtrace_caller = 0;
+				cpu->cpu_dtrace_caller = 0;
 			} else {
 #ifdef __amd64__
 				/*
@@ -221,14 +221,14 @@ fbt_invop(uintptr_t addr, uintptr_t *stack, uintptr_t rval)
 				 * action is correct.
 				 */
 				DTRACE_CPUFLAG_SET(CPU_DTRACE_NOFAULT);
-				xcpu->cpu_dtrace_caller = stack[0];
+				cpu->cpu_dtrace_caller = stack[0];
 				DTRACE_CPUFLAG_CLEAR(CPU_DTRACE_NOFAULT |
 				    CPU_DTRACE_BADADDR);
 #endif
 
 				dtrace_probe(fbt->fbtp_id, fbt->fbtp_roffset,
 				    rval, 0, 0, 0);
-				xcpu->cpu_dtrace_caller = 0;
+				cpu->cpu_dtrace_caller = 0;
 			}
 
 			return (fbt->fbtp_rval);
