@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.8 2012/06/16 01:31:33 christos Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.9 2012/06/16 01:34:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.8 2012/06/16 01:31:33 christos Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.9 2012/06/16 01:34:10 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -438,8 +438,6 @@ npfctl_build_nat(int sd, int type, u_int if_idx, const addr_port_t *ap1,
     const addr_port_t *ap2, const filt_opts_t *fopts)
 {
 	const opt_proto_t op = { .op_proto = -1, .op_opts = NULL };
-/*###441 [cc] error: 'am1' may be used uninitialized in this function%%%*/
-/*###441 [cc] error: 'am2' may be used uninitialized in this function%%%*/
 	fam_addr_mask_t *am1, *am2;
 	filt_opts_t imfopts;
 	sa_family_t family;
