@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.31 2012/04/30 00:08:03 christos Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.32 2012/06/16 17:30:19 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.31 2012/04/30 00:08:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.32 2012/06/16 17:30:19 chs Exp $");
 
 #include "opt_xen.h"
 
@@ -613,8 +613,8 @@ cpu_probe(struct cpu_info *ci)
 	uint32_t miscbytes;
 	uint32_t brand[12];
 
-	cpu_vendor = i386_nocpuid_cpus[cpu << 1];
-	cpu_class = i386_nocpuid_cpus[(cpu << 1) + 1];
+	cpu_vendor = i386_nocpuid_cpus[cputype << 1];
+	cpu_class = i386_nocpuid_cpus[(cputype << 1) + 1];
 
 	if (cpuid_level < 0)
 		return;
@@ -767,7 +767,7 @@ cpu_identify(struct cpu_info *ci)
 	if (cpu_class == CPUCLASS_386) {
 		panic("NetBSD requires an 80486DX or later processor");
 	}
-	if (cpu == CPU_486DLC) {
+	if (cputype == CPU_486DLC) {
 		aprint_error("WARNING: BUGGY CYRIX CACHE\n");
 	}
 
