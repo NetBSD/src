@@ -1,15 +1,17 @@
-#	$NetBSD: Makefile,v 1.9 2012/05/29 19:31:52 joerg Exp $
+#	$NetBSD: Makefile,v 1.10 2012/06/16 17:01:03 joerg Exp $
 
 .include <bsd.init.mk>
 
 .PATH:	${CLANG_SRCDIR}/lib/Headers
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
-INCS=	avx2intrin.h \
+INCS=	ammintrin.h \
+	avx2intrin.h \
 	avxintrin.h \
 	bmi2intrin.h \
 	bmiintrin.h \
 	emmintrin.h \
+	fmaintrin.h \
 	fma4intrin.h \
 	immintrin.h \
 	lzcntintrin.h \
@@ -23,11 +25,12 @@ INCS=	avx2intrin.h \
 	tmmintrin.h \
 	wmmintrin.h \
 	x86intrin.h \
-	xmmintrin.h
+	xmmintrin.h \
+	xopintrin.h
 .elif ${MACHINE_ARCH} == "powerpc"
 INCS=	altivec.h
 .endif
-INCSDIR=	/usr/include/clang-3.0
+INCSDIR=	/usr/include/clang-3.2
 
 HEADER=	\
   float.h \
