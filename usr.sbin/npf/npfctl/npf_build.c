@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.7 2012/06/15 23:24:08 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.8 2012/06/16 01:31:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.7 2012/06/15 23:24:08 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.8 2012/06/16 01:31:33 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -438,6 +438,8 @@ npfctl_build_nat(int sd, int type, u_int if_idx, const addr_port_t *ap1,
     const addr_port_t *ap2, const filt_opts_t *fopts)
 {
 	const opt_proto_t op = { .op_proto = -1, .op_opts = NULL };
+/*###441 [cc] error: 'am1' may be used uninitialized in this function%%%*/
+/*###441 [cc] error: 'am2' may be used uninitialized in this function%%%*/
 	fam_addr_mask_t *am1, *am2;
 	filt_opts_t imfopts;
 	sa_family_t family;
@@ -460,7 +462,8 @@ npfctl_build_nat(int sd, int type, u_int if_idx, const addr_port_t *ap1,
 			yyerror("IPv6 NAT is not supported");
 		}
 		assert(am1 != NULL);
-	}
+	} else
+		am1 = NULL;
 
 	if (type & NPF_NATOUT) {
 		if (!ap2->ap_netaddr) {
@@ -471,7 +474,8 @@ npfctl_build_nat(int sd, int type, u_int if_idx, const addr_port_t *ap1,
 			yyerror("IPv6 NAT is not supported");
 		}
 		assert(am2 != NULL);
-	}
+	} else
+		am2 = NULL;
 
 	/*
 	 * If filter criteria is not specified explicitly, apply implicit
@@ -489,7 +493,8 @@ npfctl_build_nat(int sd, int type, u_int if_idx, const addr_port_t *ap1,
 	}
 
 	switch (type) {
-	case NPF_NATIN: {
+	case NPF_NATIN:
+		assert(am1 != NULL);
 		/*
 		 * Redirection: an inbound NAT with a specific port.
 		 */
@@ -500,8 +505,9 @@ npfctl_build_nat(int sd, int type, u_int if_idx, const addr_port_t *ap1,
 		nat = npf_nat_create(NPF_NATIN, NPF_NAT_PORTS,
 		    if_idx, &am1->fam_addr, am1->fam_family, port);
 		break;
-	}
-	case (NPF_NATIN | NPF_NATOUT): {
+
+	case (NPF_NATIN | NPF_NATOUT):
+		assert(am1 != NULL);
 		/*
 		 * Bi-directional NAT: a combination of inbound NAT and
 		 * outbound NAT policies.  Note that the translation address
@@ -512,8 +518,9 @@ npfctl_build_nat(int sd, int type, u_int if_idx, const addr_port_t *ap1,
 		npfctl_build_ncode(nat, family, &op, fopts, true);
 		npf_nat_insert(npf_conf, nat, NPF_PRI_NEXT);
 		/* FALLTHROUGH */
-	}
-	case NPF_NATOUT: {
+
+	case NPF_NATOUT:
+		assert(am2 != NULL);
 		/*
 		 * Traditional NAPT: an outbound NAT policy with port.
 		 * If this is another half for bi-directional NAT, then
@@ -523,7 +530,7 @@ npfctl_build_nat(int sd, int type, u_int if_idx, const addr_port_t *ap1,
 		    (NPF_NAT_PORTS | NPF_NAT_PORTMAP) : 0,
 		    if_idx, &am2->fam_addr, am2->fam_family, 0);
 		break;
-	}
+
 	default:
 		assert(false);
 	}
