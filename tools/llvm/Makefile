@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2012/05/31 18:52:16 joerg Exp $
+#	$NetBSD: Makefile,v 1.14 2012/06/16 17:01:04 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -22,7 +22,7 @@ config/config.status: ${LLVM_SRCDIR}/configure
 	cd config && ${LLVM_SRCDIR}/configure CC=${HOST_CC:Q} --prefix=/usr \
 	    --enable-targets=x86,powerpc,sparc,arm,mips \
 	    --host=${MACHINE_GNU_PLATFORM} \
-	    --with-c-include-dirs=/usr/include/clang-3.0:/usr/include \
+	    --with-c-include-dirs=/usr/include/clang-3.2:/usr/include \
 	    --with-clang-srcdir=${CLANG_SRCDIR} \
 	    --enable-optimized llvm_cv_gnu_make_command=${MAKE}
 # --disable-assertions

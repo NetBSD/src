@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2012/01/11 23:24:48 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2012/06/16 17:01:04 joerg Exp $
 
 LIB=	LLVMPowerPCCodeGen
 
@@ -8,6 +8,7 @@ LIB=	LLVMPowerPCCodeGen
 
 SRCS+=	PPCAsmPrinter.cpp \
 	PPCBranchSelector.cpp \
+	PPCCTRLoops.cpp \
 	PPCCodeEmitter.cpp \
 	PPCHazardRecognizers.cpp \
 	PPCInstrInfo.cpp \

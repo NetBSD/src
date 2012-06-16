@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.35 2012/05/29 19:31:52 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.36 2012/06/16 17:01:03 joerg Exp $
 
 .if !defined(LLVM_TOPLEVEL_MK)
 LLVM_TOPLEVEL_MK=
 
 .include <bsd.own.mk>
 
-LLVM_REVISION=	156412
-CLANG_REVISION=	156412
+LLVM_REVISION=	158533
+CLANG_REVISION=	158533
 
 LLVM_SRCDIR:=	${.PARSEDIR}/dist/llvm
 CLANG_SRCDIR:=	${.PARSEDIR}/dist/clang
@@ -33,7 +33,7 @@ CPPFLAGS+=	-I${LLVM_INCLUDE_OBJDIR} -I${LLVM_INCLUDE_CONFIG} \
 		-I${CLANG_INCLUDE_CONFIG}
 
 # ./configure --enable-targets=x86,powerpc,sparc,arm,mips \
-#    --with-c-include-dirs=/usr/include/clang-3.0:/usr/include \
+#    --with-c-include-dirs=/usr/include/clang-3.2:/usr/include \
 #    --disable-timestamps --prefix=/usr --sysconfdir=/etc/llvm \
 #    --disable-threads
 

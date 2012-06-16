@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2012/05/29 19:31:52 joerg Exp $
+#	$NetBSD: Makefile,v 1.13 2012/06/16 17:01:03 joerg Exp $
 
 PROG_CXX=	llvm-tblgen
 NOMAN=		yes
@@ -26,7 +26,6 @@ SRCS=	AsmMatcherEmitter.cpp \
 	EDEmitter.cpp \
 	FastISelEmitter.cpp \
 	FixedLenDecoderEmitter.cpp \
-	FixedLenDecoderEmitter.h \
 	InstrInfoEmitter.cpp \
 	IntrinsicEmitter.cpp \
 	PseudoLoweringEmitter.cpp \

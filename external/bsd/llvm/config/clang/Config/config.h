@@ -14,7 +14,7 @@
 #define GCC_INSTALL_PREFIX ""
 
 /* Directories clang will search for headers */
-#define C_INCLUDE_DIRS "/usr/include/clang-3.0:/usr/include"
+#define C_INCLUDE_DIRS "/usr/include/clang-3.2:/usr/include"
 
 /* Default <path> to all compiler invocations for --sysroot=<path>. */
 #define DEFAULT_SYSROOT ""
