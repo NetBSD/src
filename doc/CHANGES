@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1709 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1710 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -34,9 +34,6 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	dhcpcd(8): Import dhcpcd-5.5.5 [roy 20120323]
 	ipf: upgrade to 5.1.1 with new build framework, no module and
 		test support yet [christos 20120323]
-	kernel: Add urtwn(4), a driver for Realtek RTL8188CU/RTL8192CU USB IEEE
-		802.11b/g/n wireless network devices, ported from OpenBSD.
-		[nonaka 20120325]
 	pcc: upgrade to 1.1.0.DEVEL 20120325 [plunky 20120325]
 	openresolv(8): Import openresolv-3.5.1 [roy 20120327]
 	dhcpcd(8): Import dhcpcd-5.5.6 [roy 20120328]
