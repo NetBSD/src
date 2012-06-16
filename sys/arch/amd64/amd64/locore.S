@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.68 2012/04/19 18:00:34 jym Exp $	*/
+/*	$NetBSD: locore.S,v 1.69 2012/06/16 17:30:19 chs Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -236,9 +236,9 @@ _C_LABEL(lapic_isr):
 	.globl	_C_LABEL(bootinfo),_C_LABEL(atdevbase)
 	.globl	_C_LABEL(PDPpaddr)
 	.globl	_C_LABEL(biosbasemem),_C_LABEL(biosextmem)
-	.globl	_C_LABEL(gdtstore),_C_LABEL(cpu)
+	.globl	_C_LABEL(gdtstore),_C_LABEL(cputype)
 
-_C_LABEL(cpu):		.long	0	# are we 386, 386sx, or 486,
+_C_LABEL(cputype):	.long	0	# are we 386, 386sx, or 486,
 					#   or Pentium, or..
 _C_LABEL(cpu_id):	.long	0	# saved from `cpuid' instruction
 _C_LABEL(cpuid_level):	.long	-1	# max. level accepted by 'cpuid'
