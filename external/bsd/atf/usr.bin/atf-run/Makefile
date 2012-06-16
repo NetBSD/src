@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2011/03/31 16:45:45 jmmv Exp $
+# $NetBSD: Makefile,v 1.11 2012/06/16 17:02:33 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -19,6 +19,8 @@ CPPFLAGS+=	-I${SRCDIR}
 CPPFLAGS+=	-I${.CURDIR}/../../lib/libatf-c
 LDADD+=		-latf-c++ -latf-c
 DPADD+=		${LIBATF_CXX} ${LIBATF_C}
+
+CWARNFLAGS.clang+=	-Wno-error=unused-private-field
 
 COPTS.atf-run.cpp+=	-Wno-stack-protector
 
