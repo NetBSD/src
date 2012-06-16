@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.106 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.107 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -11166,3 +11166,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	re(4): Add support for RTL8168E-VL. [nonaka 20120302]
 	amdtemp(4): Add support for Family 12h. [nonaka 20120302]
 	postfix(1): Add support for SQLite tables. [tron 20120304]
+	kernel: Add urtwn(4), a driver for Realtek RTL8188CU/RTL8192CU USB IEEE
+		802.11b/g/n wireless network devices, ported from OpenBSD.
+		[nonaka 20120325]
