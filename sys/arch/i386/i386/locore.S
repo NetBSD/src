@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.99 2012/04/19 18:07:05 jym Exp $	*/
+/*	$NetBSD: locore.S,v 1.100 2012/06/16 17:30:19 chs Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -129,7 +129,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.99 2012/04/19 18:07:05 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.100 2012/06/16 17:30:19 chs Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -196,7 +196,7 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.99 2012/04/19 18:07:05 jym Exp $");
  */
 	.data
 
-	.globl	_C_LABEL(cpu)
+	.globl	_C_LABEL(cputype)
 	.globl	_C_LABEL(cpuid_level)
 	.globl	_C_LABEL(esym)
 	.globl	_C_LABEL(eblob)
@@ -229,7 +229,7 @@ _C_LABEL(lapic_tpr):
 	.long 0
 #endif
 
-_C_LABEL(cpu):		.long	0	# are we 80486, Pentium, or..
+_C_LABEL(cputype):	.long	0	# are we 80486, Pentium, or..
 _C_LABEL(cpuid_level):	.long	0
 _C_LABEL(atdevbase):	.long	0	# location of start of iomem in virtual
 _C_LABEL(lwp0uarea):	.long	0
@@ -346,11 +346,11 @@ isnx586:
 	 * Don't try cpuid, as Nx586s reportedly don't support the
 	 * PSL_ID bit.
 	 */
-	movl	$CPU_NX586,RELOC(cpu)
+	movl	$CPU_NX586,RELOC(cputype)
 	jmp	2f
 
 is386:
-	movl	$CPU_386,RELOC(cpu)
+	movl	$CPU_386,RELOC(cputype)
 	jmp	2f
 
 try486:	/* Try to toggle identification flag; does not exist on early 486s. */
@@ -369,7 +369,7 @@ try486:	/* Try to toggle identification flag; does not exist on early 486s. */
 
 	testl	%eax,%eax
 	jnz	try586
-is486:	movl	$CPU_486,RELOC(cpu)
+is486:	movl	$CPU_486,RELOC(cputype)
 	/*
 	 * Check Cyrix CPU
 	 * Cyrix CPUs do not change the undefined flags following
@@ -387,7 +387,7 @@ is486:	movl	$CPU_486,RELOC(cpu)
 	popfl
 	jmp 2f
 trycyrix486:
-	movl	$CPU_6x86,RELOC(cpu) 	# set CPU type
+	movl	$CPU_6x86,RELOC(cputype)	# set CPU type
 	/*
 	 * Check for Cyrix 486 CPU by seeing if the flags change during a
 	 * divide. This is documented in the Cx486SLC/e SMM Programmer's
@@ -405,7 +405,7 @@ trycyrix486:
 	xorl	%ecx,%eax		# are the flags different?
 	testl	$0x8d5,%eax		# only check C|PF|AF|Z|N|V
 	jne	2f			# yes; must be Cyrix 6x86 CPU
-	movl	$CPU_486DLC,RELOC(cpu) 	# set CPU type
+	movl	$CPU_486DLC,RELOC(cputype) 	# set CPU type
 
 #ifndef CYRIX_CACHE_WORKS
 	/* Disable caching of the ISA hole only. */
