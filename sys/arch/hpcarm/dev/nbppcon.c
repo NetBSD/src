@@ -1,4 +1,4 @@
-/*	$NetBSD: nbppcon.c,v 1.1 2011/08/06 03:53:40 kiyohara Exp $ */
+/*	$NetBSD: nbppcon.c,v 1.2 2012/06/16 05:58:03 kiyohara Exp $ */
 /*
  * Copyright (c) 2011 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nbppcon.c,v 1.1 2011/08/06 03:53:40 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nbppcon.c,v 1.2 2012/06/16 05:58:03 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -102,7 +102,7 @@ nbppcon_attach(device_t parent, device_t self, void *aux)
 	rv = seeprom_bootstrap_read(sc->sc_tag, NVRAM_ADDR, 0x00, 128,
 	    buf, sizeof(buf));
 	if (rv == 0)
-		aprint_normal_dev(self, "NETBOOK PRO Rev.%c",
+		aprint_normal_dev(self, "NETBOOK PRO Rev.%c\n",
 		    buf[NVRAM_DATA_REV] - '0' + '@');
 	else
 		aprint_error_dev(self, "NVRAM read failed\n");
