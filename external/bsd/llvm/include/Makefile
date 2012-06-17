@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2012/06/16 17:01:03 joerg Exp $
+#	$NetBSD: Makefile,v 1.11 2012/06/17 07:40:26 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -30,7 +30,7 @@ INCS=	ammintrin.h \
 .elif ${MACHINE_ARCH} == "powerpc"
 INCS=	altivec.h
 .endif
-INCSDIR=	/usr/include/clang-3.2
+INCSDIR=	/usr/include/clang-${CLANG_VERSION}
 
 HEADER=	\
   float.h \
@@ -100,6 +100,64 @@ CLANG_TABLEGEN_OUTPUT.CC1AsOptions.td= \
 	clang/Driver/CC1AsOptions.inc|-gen-opt-parser-defs
 
 .include "${.PARSEDIR}/../tablegen.mk"
+
+DPSRCS+=	clang/Basic/Version.inc
+CLEANFILES+=	clang/Basic/Version.inc
+
+clang/Basic/Version.inc: ${LLVM_TOPLEVEL}/Makefile.inc
+	mkdir -p ${.TARGET:H}
+	printf '#define CLANG_VERSION ${CLANG_VERSION}\n' > ${.TARGET}.tmp
+	printf '#define CLANG_VERSION_MAJOR ${CLANG_VERSION:C,\.[0-9]*,,}\n' >> ${.TARGET}.tmp
+	printf '#define CLANG_VERSION_MINOR ${CLANG_VERSION:C,[0-9]*\.,,}\n' >> ${.TARGET}.tmp
+	mv ${.TARGET}.tmp ${.TARGET}
+
+.ifndef HOST_BUILD
+
+DPSRCS+=	llvm/Config/config.h llvm/Config/llvm-config.h
+CLEANFILES+=	llvm/Config/config.h llvm/Config/llvm-config.h
+
+llvm/Config/config.h: ${LLVM_TOPLEVEL}/Makefile.inc ${LLVM_TOPLEVEL}/config/llvm/Config/config.h.in
+	mkdir -p ${.TARGET:H}
+	${TOOL_SED} -e /LLVM_DEFAULT_TARGET_TRIPLE/d -e /LLVM_NATIVE_/d \
+	    -e /LLVM_VERSION_/d -e /PACKAGE_VERSION/d \
+	    -e /\#endif/d \
+	    < ${LLVM_TOPLEVEL}/config/llvm/Config/config.h.in \
+	    > ${.TARGET}.tmp
+	printf '#define LLVM_DEFAULT_TARGET_TRIPLE "${MACHINE_GNU_PLATFORM}"\n' >> ${.TARGET}.tmp
+	printf '#define PACKAGE_VERSION "${LLVM_VERSION} (trunk ${LLVM_REVISION})"\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_VERSION_MAJOR ${LLVM_VERSION:C,\.[0-9]*,,}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_VERSION_MINOR ${LLVM_VERSION:C,[0-9]*\.,,}\n' >> ${.TARGET}.tmp
+	printf '#endif\n' >> ${.TARGET}.tmp
+	mv ${.TARGET}.tmp ${.TARGET}
+
+llvm/Config/llvm-config.h: ${LLVM_TOPLEVEL}/Makefile.inc ${LLVM_TOPLEVEL}/config/llvm/Config/llvm-config.h.in
+	mkdir -p ${.TARGET:H}
+	${TOOL_SED} -e /LLVM_DEFAULT_TARGET_TRIPLE/d -e /LLVM_NATIVE_/d \
+	    -e /LLVM_VERSION_/d -e /PACKAGE_VERSION/d \
+	    -e /\#endif/d \
+	    < ${LLVM_TOPLEVEL}/config/llvm/Config/llvm-config.h.in \
+	    > ${.TARGET}.tmp
+	printf '#define LLVM_DEFAULT_TARGET_TRIPLE "${MACHINE_GNU_PLATFORM}"\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_VERSION_MAJOR ${LLVM_VERSION:C,\.[0-9]*,,}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_VERSION_MINOR ${LLVM_VERSION:C,[0-9]*\.,,}\n' >> ${.TARGET}.tmp
+	printf '#endif\n' >> ${.TARGET}.tmp
+	mv ${.TARGET}.tmp ${.TARGET}
+
+run-configure:
+	[ ! -d tmp ] || rm -r tmp
+	mkdir -p tmp
+	cd tmp && ${LLVM_SRCDIR}/configure ${LLVM_CONFIGURE_ARGS} \
+	    CC=${CC:Q} CFLAGS=${CFLAGS:N-Werror:Q} CXX=${CXX:Q} CXXFLAGS=${CXXFLAGS:N-Werror:Q} \
+	    CPPFLAGS=${CPPFLAGS:Q} LDFLAGS=${LDFLAGS:Q} LD=${LD:Q} LIBS=-lm \
+	    ac_cv_func_mmap_fixed_mapped=yes ac_cv_func_mmap_file=yes llvm_cv_c_printf_a=yes
+	cp -r tmp/include/llvm/* ${LLVM_INCLUDE_CONFIG}/llvm/
+	mv ${LLVM_INCLUDE_CONFIG}/llvm/Config/config.h \
+	   ${LLVM_INCLUDE_CONFIG}/llvm/Config/config.h.in
+	mv ${LLVM_INCLUDE_CONFIG}/llvm/Config/llvm-config.h \
+	   ${LLVM_INCLUDE_CONFIG}/llvm/Config/llvm-config.h.in
+	cp -r tmp/tools/clang/include/clang/* ${CLANG_INCLUDE_CONFIG}/clang/
+	rm -r tmp
+.endif
 
 depend dependall all: ${DPSRCS}
 

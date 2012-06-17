@@ -1,12 +1,16 @@
-#	$NetBSD: Makefile.inc,v 1.36 2012/06/16 17:01:03 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.37 2012/06/17 07:40:25 joerg Exp $
 
 .if !defined(LLVM_TOPLEVEL_MK)
 LLVM_TOPLEVEL_MK=
 
 .include <bsd.own.mk>
 
-LLVM_REVISION=	158533
-CLANG_REVISION=	158533
+COMMON_REVISION=	158533
+LLVM_REVISION=		${COMMON_REVISION}
+CLANG_REVISION=		${COMMON_REVISION}
+
+LLVM_VERSION=		3.2
+CLANG_VERSION=		3.2
 
 LLVM_SRCDIR:=	${.PARSEDIR}/dist/llvm
 CLANG_SRCDIR:=	${.PARSEDIR}/dist/clang
@@ -27,14 +31,16 @@ HOST_CXXFLAGS+=	-O2 -g
 LLVM_INCLUDE_CONFIG=	${LLVM_TOPLEVEL}/config
 CLANG_INCLUDE_CONFIG=	${LLVM_TOPLEVEL}/config
 LLVM_INCLUDE_OBJDIR!=	cd ${LLVM_TOPLEVEL}/include && ${PRINTOBJDIR}
-CPPFLAGS+= -DLLVM_DEFAULT_TARGET_TRIPLE="\"${MACHINE_GNU_PLATFORM}\""
 .endif
 CPPFLAGS+=	-I${LLVM_INCLUDE_OBJDIR} -I${LLVM_INCLUDE_CONFIG} \
 		-I${CLANG_INCLUDE_CONFIG}
 
-# ./configure --enable-targets=x86,powerpc,sparc,arm,mips \
-#    --with-c-include-dirs=/usr/include/clang-3.2:/usr/include \
-#    --disable-timestamps --prefix=/usr --sysconfdir=/etc/llvm \
-#    --disable-threads
+LLVM_CONFIGURE_ARGS=	\
+	--enable-targets=x86,powerpc,sparc,arm,mips \
+	--with-c-include-dirs=/usr/include/clang-${CLANG_VERSION}:/usr/include \
+	--disable-timestamps --prefix=/usr --sysconfdir=/etc/llvm \
+	--with-clang-srcdir=${CLANG_SRCDIR} \
+	--host=${MACHINE_GNU_PLATFORM} \
+	llvm_cv_gnu_make_command=${MAKE}
 
 .endif
