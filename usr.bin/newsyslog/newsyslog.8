@@ -1,4 +1,4 @@
-.\"	$NetBSD: newsyslog.8,v 1.36 2007/12/21 19:45:33 snj Exp $
+.\"	$NetBSD: newsyslog.8,v 1.37 2012/06/17 03:52:32 christos Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .\"
 .\" from FreeBSD: newsyslog.8,v 1.14.2.1 1999/02/25 18:38:33 wollman Exp
 .\"
-.Dd December 21, 2007
+.Dd June 16, 2012
 .Dt NEWSYSLOG 8
 .Os
 .Sh NAME
@@ -333,6 +333,10 @@ should not be compressed.
 .It Sy j
 Archived log files should be compressed with
 .Xr bzip2 1
+to save space.
+.It Sy x
+Archived log files should be compressed with
+.Xr xz 1
 to save space.
 .It Sy z
 Archived log files should be compressed with

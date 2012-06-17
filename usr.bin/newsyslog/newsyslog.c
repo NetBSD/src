@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.59 2009/08/21 08:20:19 manu Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.60 2012/06/17 03:52:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.59 2009/08/21 08:20:19 manu Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.60 2012/06/17 03:52:32 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -121,6 +121,7 @@ static struct compressor compress[] =
 	{NULL, "", "", ""}, /* 0th compressor is "no compression" */
 	{"/usr/bin/gzip", "-f", ".gz", "Z"},
 	{"/usr/bin/bzip2", "-9f", ".bz2", "J"},
+	{"/usr/bin/xz", "-f", ".xz", "X"},
 };
 
 #define _PATH_NEWSYSLOGCONF	"/etc/newsyslog.conf"
@@ -377,7 +378,7 @@ parse_cfgline(struct conf_entry *log, FILE *fd, size_t *_lineno)
 		case 'P':
 			log->flags |= CE_PLAIN0;
 			break;
-		case 'J': case 'Z':
+		case 'J': case 'X': case 'Z':
 			for (ziptype = __arraycount(compress); --ziptype; ) {
 				if (*compress[ziptype].flag == qq)
 				    break;
