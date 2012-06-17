@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/12/11 14:58:50 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2012/06/17 07:40:26 joerg Exp $
 
 LIB=	clangBasic
 
@@ -23,7 +23,8 @@ SRCS+=	Builtins.cpp \
 	Version.cpp \
 	VersionTuple.cpp
 
-CPPFLAGS.version.cpp=	-DSVN_REVISON=\"${CLANG_REVISION}\"
+CPPFLAGS.Version.cpp=	-DSVN_REVISION=\"${CLANG_REVISION}\" \
+			-DLLVM_REVISION=\"${LLVM_REVISION}\"
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>
