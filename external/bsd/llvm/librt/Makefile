@@ -1,8 +1,9 @@
-# $NetBSD: Makefile,v 1.1 2012/06/17 16:51:31 joerg Exp $
+# $NetBSD: Makefile,v 1.2 2012/06/17 18:48:46 joerg Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=	\
+SUBDIR+= \
+	libclang_asan \
 	libcompiler_rt
 
 .include <bsd.subdir.mk>
