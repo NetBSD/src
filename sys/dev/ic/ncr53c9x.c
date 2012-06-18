@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.144 2012/03/10 20:54:20 mrg Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.145 2012/06/18 21:23:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.144 2012/03/10 20:54:20 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.145 2012/06/18 21:23:56 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -735,6 +735,7 @@ ncr53c9x_select(struct ncr53c9x_softc *sc, struct ncr53c9x_ecb *ecb)
 		} else {
 			ncr53c9x_wrfifo(sc, (uint8_t *)&ecb->cmd.cmd,
 			    ecb->clen);
+			sc->sc_cmdlen = 0;
 			NCRCMD(sc, NCRCMD_SELNATN);
 		}
 		return;
@@ -804,6 +805,7 @@ ncr53c9x_select(struct ncr53c9x_softc *sc, struct ncr53c9x_ecb *ecb)
 	 */
 
 	/* Now get the command into the FIFO */
+	sc->sc_cmdlen = 0;
 	ncr53c9x_wrfifo(sc, cmd, clen);
 
 	/* And get the targets attention */
@@ -2054,6 +2056,7 @@ ncr53c9x_msgout(struct ncr53c9x_softc *sc)
 		 */
 		ncr53c9x_flushfifo(sc);
 		ncr53c9x_wrfifo(sc, sc->sc_omp, sc->sc_omlen);
+		sc->sc_cmdlen = 0;
 		NCRCMD(sc, NCRCMD_TRANS);
 	} else {
 		/* (re)send the message */
@@ -2759,6 +2762,7 @@ msgin:
 		} else {
 			ncr53c9x_wrfifo(sc, (uint8_t *)&ecb->cmd.cmd,
 			    ecb->clen);
+			sc->sc_cmdlen = 0;
 			NCRCMD(sc, NCRCMD_TRANS);
 		}
 		sc->sc_prevphase = COMMAND_PHASE;
