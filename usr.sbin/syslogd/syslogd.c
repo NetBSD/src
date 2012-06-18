@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.109 2012/06/06 00:33:45 christos Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.110 2012/06/18 19:17:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.109 2012/06/06 00:33:45 christos Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.110 2012/06/18 19:17:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -3608,7 +3608,7 @@ cfline(size_t linenum, const char *line, struct filed *f, const char *prog,
     const char *host)
 {
 	struct addrinfo hints, *res;
-	int    error, i, pri, syncfile, flags;
+	int    error, i, pri, syncfile;
 	const char   *p, *q;
 	char *bp;
 	char   buf[MAXLINE];
@@ -3822,20 +3822,20 @@ cfline(size_t linenum, const char *line, struct filed *f, const char *prog,
 			f->f_flags |= FFLAG_SIGN;
 #endif /* !DISABLE_SIGN */
 		(void)strlcpy(f->f_un.f_fname, p, sizeof(f->f_un.f_fname));
-		if (isatty(f->f_file)) {
-			f->f_type = F_TTY;
-			if (strcmp(p, ctty) == 0)
-				f->f_type = F_CONSOLE;
-			flags = O_NDELAY;
-		} else {
-			f->f_type = F_FILE;
-			flags = 0;
-		}
-		if ((f->f_file = open(p, O_WRONLY|O_APPEND|flags, 0)) < 0) {
+		if ((f->f_file = open(p, O_WRONLY|O_APPEND, 0)) < 0) {
 			f->f_type = F_UNUSED;
 			logerror("%s", p);
 			break;
 		}
+		if (isatty(f->f_file)) {
+			f->f_type = F_TTY;
+			if (strcmp(p, ctty) == 0)
+				f->f_type = F_CONSOLE;
+			if (fcntl(f->f_file, F_SETFL, O_NONBLOCK) == -1)
+				logerror("Warning: cannot change tty fd for"
+				    " `%s' to non-blocking.", p);
+		} else
+			f->f_type = F_FILE;
 		if (syncfile)
 			f->f_flags |= FFLAG_SYNC;
 		break;
