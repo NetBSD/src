@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe.c,v 1.51 2011/04/25 23:34:21 jfv Exp $*/
-/*$NetBSD: ixgbe.c,v 1.4 2012/06/16 19:54:01 dsl Exp $*/
+/*$NetBSD: ixgbe.c,v 1.5 2012/06/18 06:21:11 dsl Exp $*/
 
 #include "opt_inet.h"
 
@@ -5461,8 +5461,8 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 		if (sysctl_createv(log, 0, &rnode, &cnode,
 		    CTLFLAG_READONLY, CTLTYPE_INT,
 		    "interrupt_rate", SYSCTL_DESCR("Interrupt Rate"),
-		    ixgbe_sysctl_interrupt_rate_handler, 0, &adapter->queues[i],
-		    0, CTL_CREATE, CTL_EOL) != 0)
+		    ixgbe_sysctl_interrupt_rate_handler, 0,
+		    (void *)&adapter->queues[i], 0, CTL_CREATE, CTL_EOL) != 0)
 			break;
 
 		if (sysctl_createv(log, 0, &rnode, &cnode,
