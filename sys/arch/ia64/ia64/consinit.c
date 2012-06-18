@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.1 2009/07/20 04:41:36 kiyohara Exp $	*/
+/*	$NetBSD: consinit.c,v 1.2 2012/06/18 01:40:55 kiyohara Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.1 2009/07/20 04:41:36 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.2 2012/06/18 01:40:55 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -67,7 +67,7 @@ struct consdev constab[] = {
 
 
 void
-consinit()
+consinit(void)
 {
 
 	cninit();
