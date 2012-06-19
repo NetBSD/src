@@ -1,4 +1,4 @@
-/*	$NetBSD: arithmetic.c,v 1.26 2011/08/31 16:24:55 plunky Exp $	*/
+/*	$NetBSD: arithmetic.c,v 1.27 2012/06/19 05:46:08 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)arithmetic.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: arithmetic.c,v 1.26 2011/08/31 16:24:55 plunky Exp $");
+__RCSID("$NetBSD: arithmetic.c,v 1.27 2012/06/19 05:46:08 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -155,8 +155,7 @@ main(int argc, char **argv)
 
 /* Handle interrupt character.  Print score and exit. */
 static void
-intr(dummy)
-	int dummy __unused;
+intr(int dummy __unused)
 {
 	showstats(1);
 	exit(0);
@@ -164,8 +163,7 @@ intr(dummy)
 
 /* Print score.  Original `arithmetic' had a delay after printing it. */
 static void
-showstats(bool_sigint)
-	int bool_sigint;
+showstats(int bool_sigint)
 {
 	if (nright + nwrong > 0) {
 		(void)printf("\n\nRights %d; Wrongs %d; Score %d%%",
@@ -190,7 +188,7 @@ showstats(bool_sigint)
  * more likely to appear in subsequent problems.
  */
 static int
-problem()
+problem(void)
 {
 	char *p;
 	time_t start, finish;
@@ -303,8 +301,7 @@ static struct penalty {
  * forget about the penalty (how likely is this, anyway?).
  */
 static void
-penalise(value, op, operand)
-	int value, op, operand;
+penalise(int value, int op, int operand)
 {
 	struct penalty *p;
 
@@ -324,8 +321,7 @@ penalise(value, op, operand)
  * we find the corresponding value and return that, decreasing its penalty.
  */
 static int
-getrandom(maxval, op, operand)
-	int maxval, op, operand;
+getrandom(int maxval, int op, int operand)
 {
 	int value;
 	struct penalty **pp, *p;
@@ -369,8 +365,7 @@ getrandom(maxval, op, operand)
 
 /* Return an index for the character op, which is one of [+-x/]. */
 static int
-opnum(op)
-	int op;
+opnum(int op)
 {
 	char *p;
 
@@ -382,7 +377,7 @@ opnum(op)
 
 /* Print usage message and quit. */
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "Usage: %s [-o +-x/] [-r range]\n",
 		getprogname());
