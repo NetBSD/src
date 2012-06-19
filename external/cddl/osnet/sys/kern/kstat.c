@@ -1,4 +1,4 @@
-/*	$NetBSD: kstat.c,v 1.1 2009/08/07 20:57:57 haad Exp $	*/
+/*	$NetBSD: kstat.c,v 1.2 2012/06/19 21:25:26 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ kstat_install(kstat_t *ks)
 		KASSERT(ksent->data_type == KSTAT_DATA_UINT64);
 		sysctl_createv(&ks->ks_clog, 0, &ks->ks_node, NULL,
 			CTLFLAG_PERMANENT | CTLFLAG_READONLY,
-			CTLTYPE_INT, ksent->name, NULL,
+			CTLTYPE_QUAD, ksent->name, NULL,
 			NULL, 0, &ksent->value.ui64, 0,
 			CTL_CREATE, CTL_EOL);
 	}
