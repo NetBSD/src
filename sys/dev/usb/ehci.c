@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.190 2012/06/10 06:15:53 mrg Exp $ */
+/*	$NetBSD: ehci.c,v 1.191 2012/06/19 07:15:41 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.190 2012/06/10 06:15:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.191 2012/06/19 07:15:41 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1638,7 +1638,7 @@ ehci_open(usbd_pipe_handle pipe)
 		/*
 		 * When directly attached FS/LS device while doing embedded
 		 * transaction translations and we are the hub, set the hub
-		 * adddress to 0 (us).
+		 * address to 0 (us).
 		 */
 		if (!(sc->sc_flags & EHCIF_ETTF)
 		    || (dev->myhsport->parent->address != sc->sc_addr)) {
@@ -1697,7 +1697,7 @@ ehci_open(usbd_pipe_handle pipe)
 	/*
 	 * For interrupt transfer, nak throttling must be disabled, but for
 	 * the other transfer type, nak throttling should be enabled from the
-	 * veiwpoint that avoids the memory thrashing.
+	 * viewpoint that avoids the memory thrashing.
 	 */
 	naks = (xfertype == UE_INTERRUPT) ? 0
 	    : ((speed == EHCI_QH_SPEED_HIGH) ? 4 : 0);
