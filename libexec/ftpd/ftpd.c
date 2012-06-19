@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.197 2011/09/16 16:13:17 plunky Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.198 2012/06/19 06:06:34 dholland Exp $	*/
 
 /*
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.197 2011/09/16 16:13:17 plunky Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.198 2012/06/19 06:06:34 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -2938,7 +2938,7 @@ statxfer(void)
  * by setting transflag to 0. (c.f., "ABOR").
  */
 static int
-handleoobcmd()
+handleoobcmd(void)
 {
 	char *cp;
 	int ret;

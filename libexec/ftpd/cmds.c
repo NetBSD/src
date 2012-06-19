@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.30 2009/03/15 07:48:36 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.31 2012/06/19 06:06:34 dholland Exp $	*/
 
 /*
  * Copyright (c) 1999-2009 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.30 2009/03/15 07:48:36 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.31 2012/06/19 06:06:34 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -845,9 +845,7 @@ replydirname(const char *name, const char *message)
 }
 
 static void
-discover_path(last_path, new_path) 
-	char *last_path;
-	const char *new_path;
+discover_path(char *last_path, const char *new_path) 
 {
 	char tp[MAXPATHLEN + 1] = "";
 	char tq[MAXPATHLEN + 1] = "";
