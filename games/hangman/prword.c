@@ -1,4 +1,4 @@
-/*	$NetBSD: prword.c,v 1.5 2003/08/07 09:37:22 agc Exp $	*/
+/*	$NetBSD: prword.c,v 1.6 2012/06/19 05:45:00 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)prword.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: prword.c,v 1.5 2003/08/07 09:37:22 agc Exp $");
+__RCSID("$NetBSD: prword.c,v 1.6 2012/06/19 05:45:00 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: prword.c,v 1.5 2003/08/07 09:37:22 agc Exp $");
  *	Print out the current state of the word
  */
 void
-prword()
+prword(void)
 {
 	move(KNOWNY, KNOWNX + sizeof "Word: ");
 	addstr(Known);
