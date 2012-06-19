@@ -1,4 +1,4 @@
-/*	$NetBSD: movem.c,v 1.8 2011/08/16 11:19:41 christos Exp $	*/
+/*	$NetBSD: movem.c,v 1.9 2012/06/19 05:30:43 dholland Exp $	*/
 
 /*
  * movem.c (move monster)		Larn is copyrighted 1986 by Noah Morgan.
@@ -12,7 +12,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: movem.c,v 1.8 2011/08/16 11:19:41 christos Exp $");
+__RCSID("$NetBSD: movem.c,v 1.9 2012/06/19 05:30:43 dholland Exp $");
 #endif				/* not lint */
 
 #include "header.h"
@@ -32,7 +32,7 @@ static void movsphere(void);
 static short    w1[9], w1x[9], w1y[9];
 static int      tmp1, tmp2, tmp3, tmp4, distance;
 void
-movemonst()
+movemonst(void)
 {
 	int    i, j;
 	if (c[TIMESTOP])
@@ -132,8 +132,7 @@ movemonst()
  */
 static int      tmpitem, xl, xh, yl, yh;
 static void
-movemt(i, j)
-	int             i, j;
+movemt(int i, int j)
 {
 	int    k, m, z, tmp, xtmp, ytmp, monst;
 	switch (monst = mitem[i][j]) {	/* for half speed monsters */
@@ -274,8 +273,7 @@ out:		if (tmp < distance)	/* did find connectivity */
  * in (xd,yd).
  */
 static void
-mmove(aa, bb, cc, dd)
-	int             aa, bb, cc, dd;
+mmove(int aa, int bb, int cc, int dd)
 {
 	int    tmp, i, flag;
 	const char *who = NULL;
@@ -405,7 +403,7 @@ mmove(aa, bb, cc, dd)
 #define SPHMAX 20		/* maximum number of spheres movsphere can
 				 * handle */
 static void
-movsphere()
+movsphere(void)
 {
 	int    x, y, dir, len;
 	struct sphere *sp, *sp2;

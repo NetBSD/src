@@ -1,9 +1,9 @@
-/*	$NetBSD: help.c,v 1.8 2009/08/12 08:04:05 dholland Exp $	*/
+/*	$NetBSD: help.c,v 1.9 2012/06/19 05:30:43 dholland Exp $	*/
 
 /* help.c		Larn is copyrighted 1986 by Noah Morgan. */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: help.c,v 1.8 2009/08/12 08:04:05 dholland Exp $");
+__RCSID("$NetBSD: help.c,v 1.9 2012/06/19 05:30:43 dholland Exp $");
 #endif /* not lint */
 
 #include <unistd.h>
@@ -24,7 +24,7 @@ static int openhelp(void);
  *	pages of help text (23 lines per page)
  */
 void
-help()
+help(void)
 {
 	int    i, j;
 #ifndef VT100
@@ -73,7 +73,7 @@ help()
  *	function to display the welcome message and background
  */
 void
-welcome()
+welcome(void)
 {
 	int    i;
 #ifndef VT100
@@ -100,7 +100,7 @@ welcome()
  *	function to say press return to continue and reset scroll when done
  */
 static void
-retcont()
+retcont(void)
 {
 	cursor(1, 24);
 	lprcat("Press ");
