@@ -1,4 +1,4 @@
-/*	$NetBSD: rent.c,v 1.8 2008/02/24 01:57:34 dholland Exp $	*/
+/*	$NetBSD: rent.c,v 1.9 2012/06/19 05:35:32 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rent.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: rent.c,v 1.8 2008/02/24 01:57:34 dholland Exp $");
+__RCSID("$NetBSD: rent.c,v 1.9 2012/06/19 05:35:32 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -44,8 +44,7 @@ __RCSID("$NetBSD: rent.c,v 1.8 2008/02/24 01:57:34 dholland Exp $");
  *	This routine has the player pay rent
  */
 void
-rent(sqp)
-	SQUARE *sqp;
+rent(SQUARE *sqp)
 {
 	int rnt = 0;
 	PROP *pp;
