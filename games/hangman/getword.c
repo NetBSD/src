@@ -1,4 +1,4 @@
-/*	$NetBSD: getword.c,v 1.9 2004/11/05 21:30:32 dsl Exp $	*/
+/*	$NetBSD: getword.c,v 1.10 2012/06/19 05:45:00 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getword.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: getword.c,v 1.9 2004/11/05 21:30:32 dsl Exp $");
+__RCSID("$NetBSD: getword.c,v 1.10 2012/06/19 05:45:00 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: getword.c,v 1.9 2004/11/05 21:30:32 dsl Exp $");
  *	Get a valid word out of the dictionary file
  */
 void
-getword()
+getword(void)
 {
 	FILE *inf;
 	char *wp, *gp;
