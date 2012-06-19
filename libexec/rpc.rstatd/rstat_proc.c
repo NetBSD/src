@@ -1,4 +1,4 @@
-/*	$NetBSD: rstat_proc.c,v 1.46 2011/09/16 16:13:17 plunky Exp $	*/
+/*	$NetBSD: rstat_proc.c,v 1.47 2012/06/19 06:09:36 dholland Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";
 static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rstat_proc.c,v 1.46 2011/09/16 16:13:17 plunky Exp $");
+__RCSID("$NetBSD: rstat_proc.c,v 1.47 2012/06/19 06:09:36 dholland Exp $");
 #endif
 #endif
 
@@ -131,7 +131,7 @@ static int stat_is_init = 0;
 #endif
 
 void
-stat_init()
+stat_init(void)
 {
 	stat_is_init = 1;
 	setup();
@@ -306,7 +306,7 @@ updatestat(int dummy)
 }
 
 void
-setup_kd_once()
+setup_kd_once(void)
 {
         char errbuf[_POSIX2_LINE_MAX];
         kfd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, errbuf);
@@ -317,7 +317,7 @@ setup_kd_once()
 }
 
 void
-setup()
+setup(void)
 {
 	struct ifnet ifnet;
 	long off;
@@ -361,7 +361,7 @@ setup()
  * returns true if have a disk
  */
 int
-havedisk()
+havedisk(void)
 {
 	return ndrive != 0;
 }
