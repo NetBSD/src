@@ -1,10 +1,10 @@
-/* $NetBSD: create.c,v 1.11 2008/02/03 19:29:50 dholland Exp $	 */
+/* $NetBSD: create.c,v 1.12 2012/06/19 05:30:43 dholland Exp $	 */
 
 /* create.c		Larn is copyrighted 1986 by Noah Morgan. */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: create.c,v 1.11 2008/02/03 19:29:50 dholland Exp $");
+__RCSID("$NetBSD: create.c,v 1.12 2012/06/19 05:30:43 dholland Exp $");
 #endif				/* not lint */
 
 #include "header.h"
@@ -29,7 +29,7 @@ static void checkgen(void);
 	this is called at the beginning of a game and at no other time
  */
 void
-makeplayer()
+makeplayer(void)
 {
 	int i;
 	scbr();
@@ -72,8 +72,7 @@ makeplayer()
 	Note that it is here we remove genocided monsters from the present level.
  */
 void
-newcavelevel(x)
-	int             x;
+newcavelevel(int x)
 {
 	int             i, j;
 	if (beenhere[level])
@@ -116,8 +115,7 @@ newcavelevel(x)
 static int      mx, mxl, mxh, my, myl, myh, tmp2;
 
 static void
-makemaze(k)
-	int             k;
+makemaze(int k)
 {
 	int             i, j, tmp;
 	int             z;
@@ -177,8 +175,7 @@ makemaze(k)
 	function to eat away a filled in maze
  */
 void
-eat(xx, yy)
-	int             xx, yy;
+eat(int xx, int yy)
 {
 	int             dir, try;
 	dir = rnd(4);
@@ -241,8 +238,7 @@ eat(xx, yy)
  *		-	random object
  */
 static int
-cannedlevel(k)
-	int             k;
+cannedlevel(int k)
 {
 	char           *row;
 	int             i, j;
@@ -318,8 +314,7 @@ cannedlevel(k)
 	level V3 has potion of cure dianthroritis and demon prince
  */
 static void
-treasureroom(lv)
-	int             lv;
+treasureroom(int lv)
 {
 	int             tx, ty, xsize, ysize;
 
@@ -341,8 +336,7 @@ treasureroom(lv)
  *	the coordinate given is that of the upper left corner of the room
  */
 static void
-troom(lv, xsize, ysize, tx, ty, glyph)
-	int             lv, xsize, ysize, tx, ty, glyph;
+troom(int lv, int xsize, int ysize, int tx, int ty, int glyph)
 {
 	int             i, j;
 	int             tp1, tp2;
@@ -399,8 +393,7 @@ troom(lv, xsize, ysize, tx, ty, glyph)
 	subroutine to create the objects in the maze for the given level
  */
 static void
-makeobject(j)
-	int             j;
+makeobject(int j)
 {
 	int             i;
 	if (j == 0) {
@@ -493,11 +486,13 @@ makeobject(j)
  */
 
 static void
-fillmroom(n, what, arg)
-	int             n, arg;
-	char            what;
+fillmroom(int n, int what_i, int arg)
 {
 	int             i;
+	char            what;
+
+	/* truncate to char width (just in case it matters) */
+	what = (char)what_i;
 	for (i = 0; i < n; i++)
 		fillroom(what, arg);
 }
@@ -514,11 +509,13 @@ froom(int n, int theitem, int arg)
  *	uses a random walk
  */
 static void
-fillroom(what, arg)
-	int             arg;
-	char            what;
+fillroom(int what_i, int arg)
 {
 	int             x, y;
+	char            what;
+
+	/* truncate to char width (just in case it matters) */
+	what = (char)what_i;
 
 #ifdef EXTRA
 	c[FILLROOM]++;
@@ -552,8 +549,7 @@ fillroom(what, arg)
 	monsters
  */
 int
-fillmonst(what)
-	int            what;
+fillmonst(int what)
 {
 	int             x, y, trys;
 	for (trys = 5; trys > 0; --trys) {	/* max # of creation attempts */
@@ -575,8 +571,7 @@ fillmonst(what)
 	if sethp(1) then wipe out old monsters else leave them there
  */
 static void
-sethp(flg)
-	int             flg;
+sethp(int flg)
 {
 	int             i, j;
 	if (flg)

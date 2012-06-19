@@ -1,10 +1,10 @@
-/*	$NetBSD: object.c,v 1.15 2009/08/12 08:04:05 dholland Exp $	*/
+/*	$NetBSD: object.c,v 1.16 2012/06/19 05:30:43 dholland Exp $	*/
 
 /* object.c		Larn is copyrighted 1986 by Noah Morgan. */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: object.c,v 1.15 2009/08/12 08:04:05 dholland Exp $");
+__RCSID("$NetBSD: object.c,v 1.16 2012/06/19 05:30:43 dholland Exp $");
 #endif				/* not lint */
 #include "header.h"
 #include "extern.h"
@@ -31,7 +31,7 @@ static void ohome(void);
 	if an object was found.
  */
 void
-lookforobject()
+lookforobject(void)
 {
 	int    i, j;
 	if (c[TIMESTOP])
@@ -554,8 +554,7 @@ finditem(int theitem)
 	if dir > 0 the up else down
  */
 static void
-ostairs(dir)
-	int             dir;
+ostairs(int dir)
 {
 	int    k;
 	lprcat("\nDo you (s) stay here  ");
@@ -620,8 +619,7 @@ ostairs(dir)
 	subroutine to handle a teleport trap +/- 1 level maximum
  */
 void
-oteleport(err)
-	int             err;
+oteleport(int err)
 {
 	int    tmp;
 	if (err)
@@ -657,8 +655,7 @@ oteleport(err)
 	function to process a potion
  */
 static void
-opotion(pot)
-	int             pot;
+opotion(int pot)
 {
 	lprcat("\nDo you (d) drink it, (t) take it");
 	iopts();
@@ -687,8 +684,7 @@ opotion(pot)
 	function to drink a potion
  */
 void
-quaffpotion(pot)
-	int             pot;
+quaffpotion(int pot)
 {
 	int    i, j, k;
 	if (pot < 0 || pot >= MAXPOTION)
@@ -866,8 +862,7 @@ quaffpotion(pot)
 	function to process a magic scroll
  */
 static void
-oscroll(typ)
-	int             typ;
+oscroll(int typ)
 {
 	lprcat("\nDo you ");
 	if (c[BLINDCOUNT] == 0)
@@ -927,8 +922,7 @@ static u_char time_change[] = {
  *	function to adjust time when time warping and taking courses in school
  */
 void
-adjusttime(tim)
-	long   tim;
+adjusttime(long tim)
 {
 	int    j;
 	for (j = 0; j < 26; j++)/* adjust time related parameters */
@@ -942,8 +936,7 @@ adjusttime(tim)
 	function to read a scroll
  */
 void
-read_scroll(typ)
-	int             typ;
+read_scroll(int typ)
 {
 	int    i, j;
 	if (typ < 0 || typ >= MAXSCROLL)
@@ -1098,12 +1091,12 @@ read_scroll(typ)
 
 
 static void
-oorb()
+oorb(void)
 {
 }
 
 static void
-opit()
+opit(void)
 {
 	int    i;
 	if (rnd(101) < 81) {
@@ -1132,7 +1125,7 @@ opit()
 }
 
 static void
-obottomless()
+obottomless(void)
 {
 	lprcat("\nYou fell into a bottomless pit!");
 	beep();
@@ -1141,8 +1134,7 @@ obottomless()
 }
 
 static void
-oelevator(dir)
-	int             dir;
+oelevator(int dir)
 {
 #ifdef lint
 	int             x;
@@ -1152,17 +1144,17 @@ oelevator(dir)
 }
 
 static void
-ostatue()
+ostatue(void)
 {
 }
 
 static void
-omirror()
+omirror(void)
 {
 }
 
 static void
-obook()
+obook(void)
 {
 	lprcat("\nDo you ");
 	if (c[BLINDCOUNT] == 0)
@@ -1196,8 +1188,7 @@ obook()
 	function to read a book
  */
 void
-readbook(lev)
-	int    lev;
+readbook(int lev)
 {
 	int    i, tmp;
 	if (lev <= 3)
@@ -1252,8 +1243,7 @@ ocookie(void)
  * 100* the argument
  */
 static void
-ogold(arg)
-	int             arg;
+ogold(int arg)
 {
 	long   i;
 	i = iarg[playerx][playery];
@@ -1270,7 +1260,7 @@ ogold(arg)
 }
 
 static void
-ohome()
+ohome(void)
 {
 	int    i;
 	nosignal = 1;		/* disable signals */
@@ -1334,13 +1324,13 @@ ohome()
 
 /* routine to save program space	 */
 void
-iopts()
+iopts(void)
 {
 	lprcat(", or (i) ignore it? ");
 }
 
 void
-ignore()
+ignore(void)
 {
 	lprcat("ignore\n");
 }

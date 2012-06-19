@@ -1,10 +1,10 @@
-/*	$NetBSD: signal.c,v 1.8 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: signal.c,v 1.9 2012/06/19 05:30:44 dholland Exp $	*/
 
 /* "Larn is copyrighted 1986 by Noah Morgan.\n" */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: signal.c,v 1.8 2004/01/27 20:30:30 jsm Exp $");
+__RCSID("$NetBSD: signal.c,v 1.9 2012/06/19 05:30:44 dholland Exp $");
 #endif	/* not lint */
 
 #include <signal.h>
@@ -23,7 +23,7 @@ static void sigpanic(int);
 #define BIT(a) (1<<((a)-1))
 
 static void
-s2choose()
+s2choose(void)
 {				/* text to be displayed if ^C during intro
 				 * screen */
 	cursor(1, 24);
@@ -36,8 +36,7 @@ s2choose()
 }
 
 static void
-cntlc(n)
-	int n;
+cntlc(int n)
 {				/* what to do for a ^C */
 	if (nosignal)
 		return;		/* don't do anything if inhibited */
@@ -57,8 +56,7 @@ cntlc(n)
  *	subroutine to save the game if a hangup signal
  */
 static void
-sgam(n)
-	int n;
+sgam(int n)
 {
 	savegame(savefilename);
 	wizard = 1;
@@ -67,8 +65,7 @@ sgam(n)
 
 #ifdef SIGTSTP
 static void
-tstop(n)
-	int n;
+tstop(int n)
 {				/* control Y	 */
 	if (nosignal)
 		return;		/* nothing if inhibited */
@@ -100,7 +97,7 @@ tstop(n)
  *	subroutine to issue the needed signal traps  called from main()
  */
 void
-sigsetup()
+sigsetup(void)
 {
 	signal(SIGQUIT, cntlc);
 	signal(SIGINT, cntlc);
@@ -126,8 +123,7 @@ sigsetup()
  *	routine to process a fatal error signal
  */
 static void
-sigpanic(sig)
-	int             sig;
+sigpanic(int sig)
 {
 	char            buf[128];
 	signal(sig, SIG_DFL);

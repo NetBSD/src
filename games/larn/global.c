@@ -1,4 +1,4 @@
-/*	$NetBSD: global.c,v 1.13 2012/02/18 06:57:23 matt Exp $	*/
+/*	$NetBSD: global.c,v 1.14 2012/06/19 05:30:43 dholland Exp $	*/
 
 /*
  * global.c 		Larn is copyrighted 1986 by Noah Morgan.
@@ -21,7 +21,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: global.c,v 1.13 2012/02/18 06:57:23 matt Exp $");
+__RCSID("$NetBSD: global.c,v 1.14 2012/06/19 05:30:43 dholland Exp $");
 #endif /* not lint */
 
 #include <string.h>
@@ -42,7 +42,7 @@ extern const char *password;
 	uses c[EXPERIENCE]  c[LEVEL]
  */
 void
-raiselevel()
+raiselevel(void)
 {
 	if (c[LEVEL] < MAXPLEVEL)
 		raiseexperience((long) (skill[c[LEVEL]] - c[EXPERIENCE]));
@@ -54,7 +54,7 @@ raiselevel()
 	subroutine to lower the players character level by one
  */
 void
-loselevel()
+loselevel(void)
 {
 	if (c[LEVEL] > 1)
 		loseexperience((long) (c[EXPERIENCE] - skill[c[LEVEL] - 1] + 1));
@@ -66,8 +66,7 @@ loselevel()
 	subroutine to increase experience points
  */
 void
-raiseexperience(x)
-	long   x;
+raiseexperience(long x)
 {
 	int    i, tmp;
 	i = c[LEVEL];
@@ -94,8 +93,7 @@ raiseexperience(x)
 	subroutine to lose experience points
  */
 void
-loseexperience(x)
-	long   x;
+loseexperience(long x)
 {
 	int    i, tmp;
 	i = c[LEVEL];
@@ -127,8 +125,7 @@ loseexperience(x)
 	warning -- will kill player if hp goes to zero
  */
 void
-losehp(x)
-	int    x;
+losehp(int x)
 {
 	if ((c[HP] -= x) <= 0) {
 		beep();
@@ -139,8 +136,7 @@ losehp(x)
 }
 
 void
-losemhp(x)
-	int    x;
+losemhp(int x)
 {
 	c[HP] -= x;
 	if (c[HP] < 1)
@@ -157,16 +153,14 @@ losemhp(x)
 	subroutine to gain maximum hit points
  */
 void
-raisehp(x)
-	int    x;
+raisehp(int x)
 {
 	if ((c[HP] += x) > c[HPMAX])
 		c[HP] = c[HPMAX];
 }
 
 void
-raisemhp(x)
-	int    x;
+raisemhp(int x)
 {
 	c[HPMAX] += x;
 	c[HP] += x;
@@ -178,8 +172,7 @@ raisemhp(x)
 	subroutine to gain maximum spells
  */
 void
-raisemspells(x)
-	int    x;
+raisemspells(int x)
 {
 	c[SPELLMAX] += x;
 	c[SPELLS] += x;
@@ -191,8 +184,7 @@ raisemspells(x)
 	subroutine to lose maximum spells
  */
 void
-losemspells(x)
-	int    x;
+losemspells(int x)
 {
 	if ((c[SPELLMAX] -= x) < 0)
 		c[SPELLMAX] = 0;
@@ -208,8 +200,7 @@ losemspells(x)
 		for the given cave level
  */
 int
-makemonst(lev)
-	int    lev;
+makemonst(int lev)
 {
 	int    tmp, x;
 	if (lev < 1)
@@ -235,7 +226,7 @@ makemonst(lev)
 	function to be sure player is not in a wall
  */
 void
-positionplayer()
+positionplayer(void)
 {
 	int             try;
 	try = 2;
@@ -255,7 +246,7 @@ positionplayer()
 	recalc()	function to recalculate the armor class of the player
  */
 void
-recalc()
+recalc(void)
 {
 	int    i, j, k;
 	c[AC] = c[MOREDEFENSES];
@@ -381,7 +372,7 @@ recalc()
 	subroutine to ask if the player really wants to quit
  */
 void
-quit()
+quit(void)
 {
 	int    i;
 	cursors();
@@ -414,7 +405,7 @@ quit()
 	function to ask --more-- then the user must enter a space
  */
 void
-more()
+more(void)
 {
 	lprcat("\n  --- press ");
 	standout("space");
@@ -496,8 +487,7 @@ take(int theitem, int arg)
 	returns 1 if something there already else 0
  */
 int
-drop_object(k)
-	int             k;
+drop_object(int k)
 {
 	int             theitem;
 	if ((k < 0) || (k > 25))
@@ -538,7 +528,7 @@ drop_object(k)
 	function to enchant armor player is currently wearing
  */
 void
-enchantarmor()
+enchantarmor(void)
 {
 	int    tmp;
 	if (c[WEAR] < 0) {
@@ -568,7 +558,7 @@ enchantarmor()
 	function to enchant a weapon presently being wielded
  */
 void
-enchweapon()
+enchweapon(void)
 {
 	int    tmp;
 	if (c[WIELD] < 0) {
@@ -596,7 +586,7 @@ enchweapon()
 	returns 1 if pockets are full, else 0
  */
 int
-pocketfull()
+pocketfull(void)
 {
 	int    i, limit;
 	if ((limit = 15 + (c[LEVEL] >> 1)) > 26)
@@ -611,7 +601,7 @@ pocketfull()
 	function to return 1 if a monster is next to the player else returns 0
  */
 int
-nearbymonst()
+nearbymonst(void)
 {
 	int    tmp, tmp2;
 	for (tmp = playerx - 1; tmp < playerx + 2; tmp++)
@@ -626,7 +616,7 @@ nearbymonst()
 	returns 1 if steals something else returns 0
  */
 int
-stealsomething()
+stealsomething(void)
 {
 	int    i, j;
 	j = 100;
@@ -651,7 +641,7 @@ stealsomething()
 	function to return 1 is player carrys nothing else return 0
  */
 int
-emptyhanded()
+emptyhanded(void)
 {
 	int    i;
 	for (i = 0; i < 26; i++)
@@ -667,7 +657,7 @@ emptyhanded()
 	function to create a gem on a square near the player
  */
 void
-creategem()
+creategem(void)
 {
 	int    i, j;
 	switch (rnd(4)) {
@@ -755,7 +745,7 @@ adjustcvalues(int theitem, int arg)
  */
 static char     gpwbuf[33];
 int
-getpassword()
+getpassword(void)
 {
 	int    i, j;
 	char  *gpwp;
@@ -781,7 +771,7 @@ getpassword()
 	returns y or n
  */
 int
-getyn()
+getyn(void)
 {
 	int    i;
 	i = 0;
@@ -795,7 +785,7 @@ getyn()
 	returns the number of pounds the player is carrying
  */
 int
-packweight()
+packweight(void)
 {
 	int    i, j, k;
 	k = c[GOLD] / 1000;
@@ -858,15 +848,13 @@ packweight()
 #ifndef MACRORND
 /* macros to generate random numbers   1<=rnd(N)<=N   0<=rund(N)<=N-1 */
 int
-rnd(x)
-	int             x;
+rnd(int x)
 {
 	return ((((randx = randx * 1103515245 + 12345) >> 7) % (x)) + 1);
 }
 
 int
-rund(x)
-	int             x;
+rund(int x)
 {
 	return ((((randx = randx * 1103515245 + 12345) >> 7) % (x)));
 }

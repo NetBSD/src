@@ -1,9 +1,9 @@
-/*	$NetBSD: tok.c,v 1.10 2008/02/04 01:07:01 dholland Exp $	*/
+/*	$NetBSD: tok.c,v 1.11 2012/06/19 05:30:44 dholland Exp $	*/
 
 /* tok.c		Larn is copyrighted 1986 by Noah Morgan. */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tok.c,v 1.10 2008/02/04 01:07:01 dholland Exp $");
+__RCSID("$NetBSD: tok.c,v 1.11 2012/06/19 05:30:44 dholland Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -35,7 +35,7 @@ static u_char     usermpoint = 0;	/* the user monster pointer */
 	lexical analyzer for larn
  */
 int
-yylex()
+yylex(void)
 {
 	char            cc;
 	int             ic;
@@ -111,7 +111,7 @@ yylex()
  *	flushall()		Function to flush all type-ahead in the input buffer
  */
 void
-flushall()
+flushall(void)
 {
 	char            cc;
 	int             ic;
@@ -132,8 +132,7 @@ flushall()
 	enter with hard= -1 for default hardness, else any desired hardness
  */
 void
-sethard(hard)
-	int             hard;
+sethard(int hard)
 {
 	int    j, k, i;
 	struct monst *mp;
@@ -167,7 +166,7 @@ sethard(hard)
 	function to read and process the larn options file
  */
 void
-readopts()
+readopts(void)
 {
 	const char  *i;
 	int    j, k;

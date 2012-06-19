@@ -1,4 +1,4 @@
-/*	$NetBSD: trade.c,v 1.15 2008/02/24 01:57:34 dholland Exp $	*/
+/*	$NetBSD: trade.c,v 1.16 2012/06/19 05:35:32 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)trade.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: trade.c,v 1.15 2008/02/24 01:57:34 dholland Exp $");
+__RCSID("$NetBSD: trade.c,v 1.16 2012/06/19 05:35:32 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ static void do_trade(void);
 static void move_em(TRADE *, TRADE *);
 
 void
-trade()
+trade(void)
 {
 	int tradee, i;
 
@@ -102,8 +102,7 @@ over:
  * player, and puts in the structure given.
  */
 static void
-get_list(struct_no, play_no)
-	int struct_no, play_no;
+get_list(int struct_no, int play_no)
 {
 	int sn, pn;
 	PLAY *pp;
@@ -155,8 +154,7 @@ once_more:
  *	This routine sets up the list of tradable property.
  */
 static int
-set_list(the_list)
-	OWN *the_list;
+set_list(OWN *the_list)
 {
 	int i;
 	OWN *op;
@@ -174,7 +172,7 @@ set_list(the_list)
  *	This routine summates the trade.
  */
 static void
-summate()
+summate(void)
 {
 	bool some;
 	int i;
@@ -205,7 +203,7 @@ summate()
  *	This routine actually executes the trade.
  */
 static void
-do_trade()
+do_trade(void)
 {
 	move_em(&trades[0], &trades[1]);
 	move_em(&trades[1], &trades[0]);
@@ -215,8 +213,7 @@ do_trade()
  *	This routine does a switch from one player to another
  */
 static void
-move_em(from, to)
-	TRADE *from, *to;
+move_em(TRADE *from, TRADE *to)
 {
 	PLAY *pl_fr, *pl_to;
 	OWN *op;
@@ -240,7 +237,7 @@ move_em(from, to)
  *	This routine lets a player resign
  */
 void
-resign()
+resign(void)
 {
 	int i, new_own;
 	OWN *op;
