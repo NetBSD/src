@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.63 2010/01/17 22:52:00 wiz Exp $	*/
+/*	$NetBSD: fortune.c,v 1.64 2012/06/19 05:46:08 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.63 2010/01/17 22:52:00 wiz Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.64 2012/06/19 05:46:08 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -1061,8 +1061,7 @@ open_fp(FILEDESC *fp)
  *	Open up the dat file if we need to.
  */
 static void
-open_dat(fp)
-	FILEDESC	*fp;
+open_dat(FILEDESC *fp)
 {
 	if (fp->datfd < 0 && (fp->datfd = open(fp->datfile, O_RDONLY)) < 0)
 		err(1, "Cannot open `%s'", fp->datfile);

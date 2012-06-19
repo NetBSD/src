@@ -1,4 +1,4 @@
-/*	$NetBSD: command1.c,v 1.4 2009/08/12 05:20:38 dholland Exp $	*/
+/*	$NetBSD: command1.c,v 1.5 2012/06/19 05:46:08 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)com1.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: command1.c,v 1.4 2009/08/12 05:20:38 dholland Exp $");
+__RCSID("$NetBSD: command1.c,v 1.5 2012/06/19 05:46:08 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -96,7 +96,7 @@ convert(int tothis)
 }
 
 void
-news()
+news(void)
 {
 	int     n;
 	int     hurt;
