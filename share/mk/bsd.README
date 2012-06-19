@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.295 2012/05/25 10:48:48 wiz Exp $
+#	$NetBSD: bsd.README,v 1.296 2012/06/19 06:20:13 plunky Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1770,11 +1770,12 @@ NOGCCERROR	If defined, prevents passing certain ${CFLAGS} to GCC
 NOCLANGERROR	If defined and clang is used as C compiler, -Werror is not
 		passed to it.
 
-WARNS		Crank up GCC warning options; the distinct levels are:
+WARNS		Crank up compiler warning options; the distinct levels are:
 			WARNS=1
 			WARNS=2
 			WARNS=3
 			WARNS=4
+			WARNS=5
 
 =-=-=-=-=   bsd.x11.mk   =-=-=-=-=
 
