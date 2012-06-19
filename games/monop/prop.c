@@ -1,4 +1,4 @@
-/*	$NetBSD: prop.c,v 1.19 2008/02/24 05:53:33 dholland Exp $	*/
+/*	$NetBSD: prop.c,v 1.20 2012/06/19 05:35:32 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)prop.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: prop.c,v 1.19 2008/02/24 05:53:33 dholland Exp $");
+__RCSID("$NetBSD: prop.c,v 1.20 2012/06/19 05:35:32 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,9 +49,7 @@ static int value(SQUARE *);
  * appropriate flags.
  */
 void
-buy(playernum, sqrp)
-	int playernum;
-	SQUARE *sqrp;
+buy(int playernum, SQUARE *sqrp)
 {
 	trading = FALSE;
 	sqrp->owner = playernum;
@@ -62,10 +60,7 @@ buy(playernum, sqrp)
  *	This routine adds an item to the list.
  */
 void
-add_list(plr, head, op_sqr)
-	int plr;
-	OWN **head;
-	int op_sqr;
+add_list(int plr, OWN **head, int op_sqr)
 {
 	int val;
 	OWN *tp, *last_tp;
@@ -133,8 +128,7 @@ del_list(int plr, OWN **head, short op_sqr)
  * given square.
  */
 static int
-value(sqp)
-	SQUARE *sqp;
+value(SQUARE *sqp)
 {
 	int sqr;
 
@@ -160,7 +154,7 @@ value(sqp)
  * This routine accepts bids for the current piece of property.
  */
 void
-bid()
+bid(void)
 {
 	static bool in[MAX_PL];
 	int i, num_in, cur_max;
@@ -214,8 +208,7 @@ bid()
  * of given player.
  */
 int
-prop_worth(plp)
-	PLAY *plp;
+prop_worth(PLAY *plp)
 {
 	OWN *op;
 	int worth;

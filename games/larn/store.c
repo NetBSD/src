@@ -1,4 +1,4 @@
-/*	$NetBSD: store.c,v 1.15 2009/08/12 08:04:05 dholland Exp $	 */
+/*	$NetBSD: store.c,v 1.16 2012/06/19 05:30:44 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char     sccsid[] = "@(#)store.c	5.4 (Berkeley) 5/13/91";
 #else
-__RCSID("$NetBSD: store.c,v 1.15 2009/08/12 08:04:05 dholland Exp $");
+__RCSID("$NetBSD: store.c,v 1.16 2012/06/19 05:30:44 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -210,7 +210,7 @@ dnd_hed(void)
 }
 
 static void
-handsfull()
+handsfull(void)
 {
 	lprcat("\nYou can't carry anything more!");
 	lflush();
@@ -218,7 +218,7 @@ handsfull()
 }
 
 static void
-outofstock()
+outofstock(void)
 {
 	lprcat("\nSorry, but we are out of that item.");
 	lflush();
@@ -226,7 +226,7 @@ outofstock()
 }
 
 static void 
-nogold()
+nogold(void)
 {
 	lprcat("\nYou don't have enough gold to pay for that!");
 	lflush();
@@ -234,7 +234,7 @@ nogold()
 }
 
 void
-dndstore()
+dndstore(void)
 {
 	int    i;
 	dnditm = 0;
@@ -320,8 +320,7 @@ dndstore()
 	to print the item list;  used in dndstore() enter with the index into itm
  */
 static void
-dnditem(i)
-	int    i;
+dnditem(int i)
 {
 	int    j, k;
 	if (i >= MAXITM)
@@ -390,7 +389,7 @@ sch_hed(void)
 }
 
 void
-oschool()
+oschool(void)
 {
 	int    i;
 	long            time_used;
@@ -515,12 +514,12 @@ oschool()
 int             lasttime = 0;	/* last time he was in bank */
 
 void
-obank()
+obank(void)
 {
 	banktitle("    Welcome to the First National Bank of Larn.");
 }
 void
-obank2()
+obank2(void)
 {
 	banktitle("Welcome to the 5th level branch office of the First National Bank of Larn.");
 }
@@ -560,7 +559,7 @@ banktitle(const char *str)
  *	function to put interest on your bank account
  */
 void
-ointerest()
+ointerest(void)
 {
 	int    i;
 	if (c[BANKACCOUNT] < 0)
@@ -579,7 +578,7 @@ static short    gemorder[26] = {0};	/* the reference to screen location
 					 * for each */
 static long     gemvalue[26] = {0};	/* the appraisal of the gems */
 void
-obanksub()
+obanksub(void)
 {
 	long   amt;
 	int    i, k;
@@ -746,7 +745,7 @@ appraise(int gemstone)
 	function for the trading post
  */
 static void
-otradhead()
+otradhead(void)
 {
 	clear();
 	lprcat("Welcome to the Larn Trading Post.  We buy items that explorers no longer find\n");
@@ -757,7 +756,7 @@ otradhead()
 }
 
 void
-otradepost()
+otradepost(void)
 {
 	int    i, j, value, isub, izarg;
 	dnditm = dndcount = 0;
@@ -853,7 +852,7 @@ cnsitm(void)
  *	for the Larn Revenue Service
  */
 void
-olrs()
+olrs(void)
 {
 	int    i, first;
 	long   amt;

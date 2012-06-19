@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.12 2008/02/24 03:56:49 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.13 2012/06/19 05:35:32 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.12 2008/02/24 03:56:49 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.13 2012/06/19 05:35:32 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,7 +48,7 @@ static void printmorg(const SQUARE *);
  *	This routine prints out the current board
  */
 void
-printboard()
+printboard(void)
 {
 	int i;
 
@@ -64,7 +64,7 @@ printboard()
  *	This routine lists where each player is.
  */
 void
-where()
+where(void)
 {
 	int i;
 
@@ -160,8 +160,7 @@ printsq(int sqn, bool eoln)
  *	This routine prints out the mortgage flag.
  */
 static void
-printmorg(sqp)
-	const SQUARE *sqp;
+printmorg(const SQUARE *sqp)
 {
 	if (sqp->desc->morg)
 		printf(" * ");
@@ -173,8 +172,7 @@ printmorg(sqp)
  *	This routine lists the holdings of the player given
  */
 void
-printhold(pl)
-	int pl;
+printhold(int pl)
 {
 	OWN *op;
 	PLAY *pp;
