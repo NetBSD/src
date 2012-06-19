@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.3 2012/06/09 06:19:58 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.4 2012/06/19 14:19:46 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -1113,7 +1113,7 @@ send_login(connection_t *conn)
 		return conn->terminating;
 	}
 
-	if ((rc = assemble_login_parameters(conn, ccb, pdu)) >= 0) {
+	if ((rc = assemble_login_parameters(conn, ccb, pdu)) <= 0) {
 		init_login_pdu(conn, pdu, !rc);
 		setup_tx_uio(pdu, pdu->temp_data_len, pdu->temp_data, FALSE);
 		send_pdu(ccb, pdu, CCBDISP_WAIT, PDUDISP_FREE);
