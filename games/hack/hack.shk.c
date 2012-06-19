@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.shk.c,v 1.13 2011/08/07 06:03:45 dholland Exp $	*/
+/*	$NetBSD: hack.shk.c,v 1.14 2012/06/19 05:46:08 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.shk.c,v 1.13 2011/08/07 06:03:45 dholland Exp $");
+__RCSID("$NetBSD: hack.shk.c,v 1.14 2012/06/19 05:46:08 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -1103,8 +1103,7 @@ notonl_ok:
 
 /* He is digging in the shop. */
 void
-shopdig(fall)
-	int             fall;
+shopdig(int fall)
 {
 	if (!fall) {
 		if (u.utraptype == TT_PIT)
