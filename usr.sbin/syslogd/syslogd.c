@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.111 2012/06/19 13:44:35 christos Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.112 2012/06/20 01:39:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.111 2012/06/19 13:44:35 christos Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.112 2012/06/20 01:39:34 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -2422,7 +2422,7 @@ fprintlog(struct filed *f, struct buf_msg *passedbuffer, struct buf_queue *qentr
 			 */
 			if ((e == EIO || e == EBADF) && f->f_type != F_FILE) {
 				f->f_file = open(f->f_un.f_fname,
-				    O_WRONLY|O_APPEND|O_NDELAY|O_NONBLOCK, 0);
+				    O_WRONLY|O_APPEND|O_NONBLOCK, 0);
 				if (f->f_file < 0) {
 					f->f_type = F_UNUSED;
 					logerror("%s", f->f_un.f_fname);
@@ -3822,7 +3822,7 @@ cfline(size_t linenum, const char *line, struct filed *f, const char *prog,
 			f->f_flags |= FFLAG_SIGN;
 #endif /* !DISABLE_SIGN */
 		(void)strlcpy(f->f_un.f_fname, p, sizeof(f->f_un.f_fname));
-		if ((f->f_file = open(p, O_WRONLY|O_APPEND|O_NDELAY, 0)) < 0) {
+		if ((f->f_file = open(p, O_WRONLY|O_APPEND, 0)) < 0) {
 			f->f_type = F_UNUSED;
 			logerror("%s", p);
 			break;
