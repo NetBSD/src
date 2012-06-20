@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.10 2008/09/26 23:51:04 matt Exp $	*/
+/*	$NetBSD: tyname.c,v 1.11 2012/06/20 18:50:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.10 2008/09/26 23:51:04 matt Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.11 2012/06/20 18:50:11 christos Exp $");
 #endif
 
 #include <limits.h>
@@ -96,6 +96,8 @@ tyname(char *buf, size_t bufsiz, type_t *tp)
 	char lbuf[64];
 	char cv[20];
 
+	if (tp == NULL)
+		return "(null)";
 	if ((t = tp->t_tspec) == INT && tp->t_isenum)
 		t = ENUM;
 
