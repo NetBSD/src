@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsic_driverif.c,v 1.2 2011/10/30 18:40:06 christos Exp $	*/
+/*	$NetBSD: iscsic_driverif.c,v 1.3 2012/06/20 08:11:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -305,9 +305,13 @@ dump_data(const char *title, const void *buffer, size_t len)
 		}
 		printf(" '");
 		for (i = 0; i < nelem; i++) {
+			if (i >= len)
+				break;
 			printf("%c", isprint(bp[i]) ? bp[i] : ' ');
 		}
 		printf("'\n");
+		if (len < 16)
+			break;
 		len -= 16;
 		bp += 16;
 	}
