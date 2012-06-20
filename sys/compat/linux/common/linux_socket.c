@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.113 2012/03/15 16:17:48 bouyer Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.114 2012/06/20 15:03:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.113 2012/03/15 16:17:48 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.114 2012/06/20 15:03:18 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -619,7 +619,7 @@ linux_sys_sendmsg(struct lwp *l, const struct linux_sys_sendmsg_args *uap, regis
 		msg.msg_control = ctl_mbuf;
 		msg.msg_flags |= MSG_CONTROLMBUF;
 
-		ktrkuser("msgcontrol", mtod(ctl_mbuf, void *),
+		ktrkuser("mbcontrol", mtod(ctl_mbuf, void *),
 		    msg.msg_controllen);
 	}
 
@@ -1495,7 +1495,7 @@ linux_get_sa(struct lwp *l, int s, struct mbuf **mp,
 		goto bad;
 	}
 
-	ktrkuser("linux sockaddr", kosa, salen);
+	ktrkuser("linux/sockaddr", kosa, salen);
 
 	bdom = linux_to_bsd_domain(kosa->sa_family);
 	if (bdom == -1) {
@@ -1557,7 +1557,7 @@ linux_get_sa(struct lwp *l, int s, struct mbuf **mp,
 	sa->sa_family = bdom;
 	sa->sa_len = salen;
 	m->m_len = salen;
-	ktrkuser("new sockaddr", kosa, salen);
+	ktrkuser("mbsoname", kosa, salen);
 
 #ifdef DEBUG_LINUX
 	DPRINTF(("family %d, len = %d [ ", sa->sa_family, sa->sa_len));
