@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.c,v 1.27 2012/06/09 19:22:47 wiz Exp $	*/
+/*	$NetBSD: cut.c,v 1.28 2012/06/20 17:53:39 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)cut.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: cut.c,v 1.27 2012/06/09 19:22:47 wiz Exp $");
+__RCSID("$NetBSD: cut.c,v 1.28 2012/06/20 17:53:39 wiz Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -83,7 +83,7 @@ main(int argc, char *argv[])
 
 	dchar = '\t';			/* default delimiter is \t */
 
-	/* Since we don't support multi-byte characters, the -c and -b 
+	/* Since we don't support multi-byte characters, the -c and -b
 	   options are equivalent, and the -n option is meaningless. */
 	while ((ch = getopt(argc, argv, "b:c:d:f:sn")) != -1)
 		switch(ch) {
@@ -287,12 +287,12 @@ usage(void)
 {
 	(void)fprintf(stderr, "usage:\tcut -b list [-n] [file ...]\n"
 	    "\tcut -c list [file ...]\n"
-	    "\tcut -f list [-d delim] [-s] [file ...]\n");
+	    "\tcut -f list [-d string] [-s] [file ...]\n");
 	exit(1);
 }
 
 /* make b_put(): */
-#define CUT_BYTE 1 
+#define CUT_BYTE 1
 #include "x_cut.c"
 #undef CUT_BYTE
 
