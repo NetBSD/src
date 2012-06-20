@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.c,v 1.39 2008/07/03 14:07:09 njoly Exp $	*/
+/*	$NetBSD: linux_socketcall.c,v 1.40 2012/06/20 15:03:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.39 2008/07/03 14:07:09 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.40 2012/06/20 15:03:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -89,24 +89,26 @@ static const struct {
 	const char *name;
 	int argsize;
 } linux_socketcall[LINUX_MAX_SOCKETCALL+1] = {
-	{"invalid",	-1},						/* 0 */
-	{"socket",	sizeof(struct linux_sys_socket_args)},		/* 1 */
-	{"bind",	sizeof(struct linux_sys_bind_args)},		/* 2 */
-	{"connect",	sizeof(struct linux_sys_connect_args)},		/* 3 */
-	{"listen",	sizeof(struct linux_sys_listen_args)},		/* 4 */
-	{"accept",	sizeof(struct linux_sys_accept_args)},		/* 5 */
-	{"getsockname",	sizeof(struct linux_sys_getsockname_args)},	/* 6 */
-	{"getpeername",	sizeof(struct linux_sys_getpeername_args)},	/* 7 */
-	{"socketpair",	sizeof(struct linux_sys_socketpair_args)},	/* 8 */
-	{"send",	sizeof(struct linux_sys_send_args)},		/* 9 */
-	{"recv",	sizeof(struct linux_sys_recv_args)},		/* 10 */
-	{"sendto",	sizeof(struct linux_sys_sendto_args)},		/* 11 */
-	{"recvfrom",	sizeof(struct linux_sys_recvfrom_args)},	/* 12 */
-	{"shutdown",	sizeof(struct linux_sys_shutdown_args)},	/* 13 */
-	{"setsockopt",	sizeof(struct linux_sys_setsockopt_args)},	/* 14 */
-	{"getsockopt",	sizeof(struct linux_sys_getsockopt_args)},	/* 15 */
-	{"sendmsg",	sizeof(struct linux_sys_sendmsg_args)},		/* 16 */
-	{"recvmsg",	sizeof(struct linux_sys_recvmsg_args)},		/* 17 */
+#define L(a) "linux/" ## a
+	{L("invalid"),	-1},						/* 0 */
+	{L("socket"),	sizeof(struct linux_sys_socket_args)},		/* 1 */
+	{L("bind"),	sizeof(struct linux_sys_bind_args)},		/* 2 */
+	{L("connect"),	sizeof(struct linux_sys_connect_args)},		/* 3 */
+	{L("listen"),	sizeof(struct linux_sys_listen_args)},		/* 4 */
+	{L("accept"),	sizeof(struct linux_sys_accept_args)},		/* 5 */
+	{L("getsockname)",sizeof(struct linux_sys_getsockname_args)},	/* 6 */
+	{L("getpeername)",sizeof(struct linux_sys_getpeername_args)},	/* 7 */
+	{L("socketpair"),sizeof(struct linux_sys_socketpair_args)},	/* 8 */
+	{L("send"),	sizeof(struct linux_sys_send_args)},		/* 9 */
+	{L("recv"),	sizeof(struct linux_sys_recv_args)},		/* 10 */
+	{L("sendto"),	sizeof(struct linux_sys_sendto_args)},		/* 11 */
+	{L("recvfrom"),	sizeof(struct linux_sys_recvfrom_args)},	/* 12 */
+	{L("shutdown"),	sizeof(struct linux_sys_shutdown_args)},	/* 13 */
+	{L("setsockopt"),sizeof(struct linux_sys_setsockopt_args)},	/* 14 */
+	{L("getsockopt"),sizeof(struct linux_sys_getsockopt_args)},	/* 15 */
+	{L("sendmsg"),	sizeof(struct linux_sys_sendmsg_args)},		/* 16 */
+	{L("recvmsg"),	sizeof(struct linux_sys_recvmsg_args)},		/* 17 */
+#undef L
 };
 
 /*
