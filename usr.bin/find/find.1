@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.72 2012/03/22 07:58:18 wiz Exp $
+.\"	$NetBSD: find.1,v 1.73 2012/06/20 17:55:06 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)find.1	8.7 (Berkeley) 5/9/95
 .\"
-.Dd September 24, 2011
+.Dd June 17, 2012
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -271,20 +271,20 @@ was executed.
 .Pp
 If the list of arguments is terminated by a semicolon
 .Pq Dq Ic \&; ,
-then the
+then
 .Ar utility
 is invoked once per pathname.
 If
 the string
 .Dq Ic {}
-appears anywhere in the utility name or the arguments
+appears one or more times in the utility name or arguments,
 then it is replaced by the pathname of the current file
 (but it need not appear, in which case the pathname
-will not be passed to the
+will not be passed to
 .Ar utility ) .
 The semicolon-terminated form of the
 .Ic -exec
-primary returns true if and only if the
+primary returns true if and only if
 .Ar utility
 exits with a zero exit status.
 Note that the semicolon will have to be escaped on the shell command line
@@ -299,7 +299,8 @@ will be invoked once per set, similar to
 .Xr xargs 1 .
 In this case the parameter
 .Dq Ic {}
-must appear as the last item in the argument list, just before the
+must appear, and must appear as the last item in the argument list,
+just before the
 .Dq Ic \&+
 parameter.
 Each set is limited to no more than 5,000 pathnames,
@@ -311,7 +312,7 @@ The plus-terminated form of the
 primary always returns true.
 If the plus-terminated form of the
 .Ic -exec
-primary results in any invocation of the
+primary results in any invocation of
 .Ar utility
 exiting with non-zero exit status, then
 .Nm
@@ -498,7 +499,9 @@ variant of the
 .Ic -exec
 primary, with the exception that
 .Nm
-requests user affirmation for the execution of the utility by printing
+requests user affirmation for the execution of
+.Ar utility
+by printing
 a message to the terminal and reading a response.
 If the response is other than
 .Dq y ,
