@@ -1,4 +1,4 @@
-.\"	$NetBSD: cut.1,v 1.17 2012/06/09 19:23:14 wiz Exp $
+.\"	$NetBSD: cut.1,v 1.18 2012/06/20 17:53:19 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)cut.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd June 9, 2012
+.Dd June 12, 2012
 .Dt CUT 1
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@
 .Op Ar
 .Nm
 .Fl f Ar list
-.Op Fl d Ar delim
+.Op Fl d Ar string
 .Op Fl s
 .Op Ar
 .Sh DESCRIPTION
@@ -92,11 +92,9 @@ input line.
 The options are as follows:
 .Bl -tag -width Fl
 .It Fl b Ar list
-The
 .Ar list
 specifies byte positions.
 .It Fl c Ar list
-The
 .Ar list
 specifies character positions.
 .It Fl d Ar string
@@ -107,7 +105,6 @@ The default is the
 .Aq TAB
 character.
 .It Fl f Ar list
-The
 .Ar list
 specifies fields, separated by the field delimiter character.
 The selected fields are output,
@@ -115,12 +112,11 @@ separated by the field delimiter character.
 .It Fl n
 Do not split multi-byte characters.
 .It Fl s
-Suppresses lines with no field delimiter characters.
+Suppress lines with no field delimiter characters.
 Unless specified, lines with no delimiters are passed through unmodified.
 .El
 .Sh EXIT STATUS
-.Nm
-exits 0 on success, 1 if an error occurred.
+.Ex -std
 .Sh SEE ALSO
 .Xr paste 1
 .Sh STANDARDS
