@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.52 2012/06/21 21:13:07 christos Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.53 2012/06/21 23:29:23 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.52 2012/06/21 21:13:07 christos Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.53 2012/06/21 23:29:23 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -183,7 +183,7 @@ loop:
 		}
 		n = readlink(resolved, wbuf[idx], sizeof(wbuf[0]) - 1);
 		if (n < 0)
-			return (NULL);
+			goto out;
 		if (n == 0) {
 			errno = ENOENT;
 			goto out;
