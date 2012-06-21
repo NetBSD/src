@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.141 2012/03/22 20:34:38 drochner Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.142 2012/06/21 10:31:45 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.141 2012/03/22 20:34:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.142 2012/06/21 10:31:45 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -806,8 +806,9 @@ in_pcblookup_port(struct inpcbtable *table, struct in_addr laddr,
 {
 	struct inpcbhead *head;
 	struct inpcb_hdr *inph;
-	struct inpcb *inp, *match = 0;
-	int matchwild = 3, wildcard;
+	struct inpcb *match = NULL;
+	int matchwild = 3;
+	int wildcard;
 	u_int16_t lport = lport_arg;
 
 	if (vp)
@@ -815,12 +816,23 @@ in_pcblookup_port(struct inpcbtable *table, struct in_addr laddr,
 
 	head = INPCBHASH_PORT(table, lport);
 	LIST_FOREACH(inph, head, inph_lhash) {
-		inp = (struct inpcb *)inph;
+		struct inpcb * const inp = (struct inpcb *)inph;
+
 		if (inp->inp_af != AF_INET)
 			continue;
-
 		if (inp->inp_lport != lport)
 			continue;
+		/*
+		 * check if inp's faddr and laddr match with ours.
+		 * our faddr is considered null.
+		 * count the number of wildcard matches. (0 - 2)
+		 *
+		 *	null	null	match
+		 *	A	null	wildcard match
+		 *	null	B	wildcard match
+		 *	A	B	non match
+		 *	A	A	match
+		 */
 		wildcard = 0;
 		if (!in_nullhost(inp->inp_faddr))
 			wildcard++;
@@ -837,6 +849,9 @@ in_pcblookup_port(struct inpcbtable *table, struct in_addr laddr,
 		}
 		if (wildcard && !lookup_wildcard)
 			continue;
+		/*
+		 * prefer an address with less wildcards.
+		 */
 		if (wildcard < matchwild) {
 			match = inp;
 			matchwild = wildcard;
