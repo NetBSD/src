@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.99 2012/06/03 21:42:46 joerg Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.100 2012/06/21 21:13:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -192,7 +192,7 @@ char	*mktemp(char *)
 
 int	 setkey(const char *);
 
-char	*realpath(const char *, char *);
+char	*realpath(const char * __restrict, char * __restrict);
 
 int	 ttyslot(void);
 
