@@ -1,4 +1,4 @@
-/*	$NetBSD: rfc6056.c,v 1.7 2012/06/21 10:30:47 yamt Exp $	*/
+/*	$NetBSD: rfc6056.c,v 1.8 2012/06/21 10:35:28 yamt Exp $	*/
 
 /*
  * Copyright 2011 Vlad Balan
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfc6056.c,v 1.7 2012/06/21 10:30:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfc6056.c,v 1.8 2012/06/21 10:35:28 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -359,47 +359,35 @@ check_suitable_port(uint16_t port, struct inpcb_hdr *inp_hdr, kauth_cred_t cred)
 
 /* This is the default BSD algorithm, as described in RFC 6056 */
 static int
-algo_bsd(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
-kauth_cred_t cred)
+algo_bsd(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr, kauth_cred_t cred)
 {
-	uint16_t count, num_ephemeral;
+	uint16_t count;
 	uint16_t mymin, mymax, lastport;
 	uint16_t *next_ephemeral;
 	int error;
 
 	DPRINTF("%s called\n", __func__);
-
 	error = pcb_getports(inp_hdr, &lastport, &mymin, &mymax,
 	    &next_ephemeral, algo);
 	if (error)
 		return error;
-
-	/* Ephemeral port selection function */
-	num_ephemeral = mymax - mymin + 1;
-
-	if (*next_ephemeral == 0)
-		*next_ephemeral = mymax;
-
-	count = num_ephemeral;
+	count = mymax - mymin + 1;
 	do {
 		uint16_t myport = *next_ephemeral;
-		if (*next_ephemeral <= mymin)
-			*next_ephemeral = mymax;
-		else
-			(*next_ephemeral)--;
 
+		if (myport < mymin || mymax < myport)
+			myport = mymax;
+		*next_ephemeral = myport - 1;
 		if (check_suitable_port(myport, inp_hdr, cred)) {
 			*port = myport;
 			DPRINTF("%s returning port %d\n", __func__, *port);
 			return 0;
 		}
 		count--;
-
 	} while (count > 0);
 
-	DPRINTF("%s returning EINVAL\n", __func__);
-
-	return EINVAL;
+	DPRINTF("%s returning EAGAIN\n", __func__);
+	return EAGAIN;
 }
 
 /*
@@ -816,19 +804,18 @@ rfc6056_randport(uint16_t *port, struct inpcb_hdr *inp_hdr, kauth_cred_t cred)
 
 	DPRINTF("%s rfc6056algo = %d\n", __func__, algo);
 
-
 	error = (*algos[algo].func)(algo, &lport, inp_hdr, cred);
-	if (error == 0)
+	if (error == 0) {
 		*port = lport;
-	else {
+	} else if (error != EAGAIN) {
 		uint16_t lastport, mymin, mymax, *pnext_ephemeral;
+
 		error = pcb_getports(inp_hdr, &lastport, &mymin,
 		    &mymax, &pnext_ephemeral, algo);
 		if (error)
 			return error;
 		*port = lastport - 1;
 	}
-
 	return error;
 }
 
