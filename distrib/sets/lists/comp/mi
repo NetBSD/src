@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1763 2012/06/06 00:23:08 christos Exp $
+#	$NetBSD: mi,v 1.1764 2012/06/21 04:29:26 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -279,6 +279,7 @@
 ./usr/include/dev/eisa/eisadevs_data.h		comp-obsolete		obsolete
 ./usr/include/dev/eisa/eisareg.h		comp-obsolete		obsolete
 ./usr/include/dev/eisa/eisavar.h		comp-obsolete		obsolete
+./usr/include/dev/filemon/filemon.h		comp-c-include
 ./usr/include/dev/fssvar.h			comp-c-include
 ./usr/include/dev/hpc/hpcfbio.h			comp-c-include
 ./usr/include/dev/i2c/i2c_bus.h			comp-obsolete		obsolete
