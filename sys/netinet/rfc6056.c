@@ -1,4 +1,4 @@
-/*	$NetBSD: rfc6056.c,v 1.6 2012/04/13 15:38:04 yamt Exp $	*/
+/*	$NetBSD: rfc6056.c,v 1.7 2012/06/21 10:30:47 yamt Exp $	*/
 
 /*
  * Copyright 2011 Vlad Balan
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfc6056.c,v 1.6 2012/04/13 15:38:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfc6056.c,v 1.7 2012/06/21 10:30:47 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -143,13 +143,13 @@ static int
 pcb_getports(struct inpcb_hdr *inp_hdr, uint16_t *lastport,
     uint16_t *mymin, uint16_t *mymax, uint16_t **pnext_ephemeral, int algo)
 {
+	struct inpcbtable * const table = inp_hdr->inph_table;
 	struct socket *so;
 	int rfc6056_proto;
 	int rfc6056_af;
 	int rfc6056_range;
 
 	so = inp_hdr->inph_socket;
-
 	switch (so->so_type) {
 	case SOCK_DGRAM: /* UDP or DCCP */
 		rfc6056_proto = RFC6056_UDP;
@@ -165,10 +165,8 @@ pcb_getports(struct inpcb_hdr *inp_hdr, uint16_t *lastport,
 #ifdef INET
 	case AF_INET: {
 		struct inpcb *inp = (struct inpcb *)(void *)inp_hdr;
-		struct inpcbtable *table = inp->inp_table;
 
 		rfc6056_af = RFC6056_IPV4;
-
 		if (inp->inp_flags & INP_LOWPORT) {
 			*mymin = lowportmin;
 			*mymax = lowportmax;
@@ -186,10 +184,8 @@ pcb_getports(struct inpcb_hdr *inp_hdr, uint16_t *lastport,
 #ifdef INET6
 	case AF_INET6: {
 		struct in6pcb *in6p = (struct in6pcb *)(void *)inp_hdr;
-		struct inpcbtable *table = in6p->in6p_table;
 
 		rfc6056_af = RFC6056_IPV6;
-
 		if (in6p->in6p_flags & IN6P_LOWPORT) {
 			*mymin = ip6_lowportmin;
 			*mymax = ip6_lowportmax;
@@ -233,10 +229,9 @@ pcb_getports(struct inpcb_hdr *inp_hdr, uint16_t *lastport,
  * shamelessly copied from in_pcb.c.
  */
 static bool
-check_suitable_port(uint16_t port, struct inpcb_hdr *inp_hdr,
-kauth_cred_t cred)
+check_suitable_port(uint16_t port, struct inpcb_hdr *inp_hdr, kauth_cred_t cred)
 {
-	struct inpcbtable *table;
+	struct inpcbtable * const table = inp_hdr->inph_table;
 #ifdef INET
 	vestigial_inpcb_t vestigial;
 #endif
@@ -248,28 +243,14 @@ kauth_cred_t cred)
 
 	DPRINTF("%s called for argument %d\n", __func__, port);
 
-
 	switch (inp_hdr->inph_af) {
 #ifdef INET
 	case AF_INET: { /* IPv4 */
 		struct inpcb *inp = (struct inpcb *)(void *)inp_hdr;
 		struct inpcb *pcb;
 		struct sockaddr_in sin;
-		enum kauth_network_req req;
-
-		if (inp->inp_flags & INP_LOWPORT) {
-#ifndef IPNOPRIVPORTS
-			req = KAUTH_REQ_NETWORK_BIND_PRIVPORT;
-#else
-			req = KAUTH_REQ_NETWORK_BIND_PORT;
-#endif
-		} else
-			req = KAUTH_REQ_NETWORK_BIND_PORT;
-
-		table = inp->inp_table;
 
 		sin.sin_addr = inp->inp_laddr;
-
 		pcb = in_pcblookup_port(table, sin.sin_addr, htons(port), 1,
 		    &vestigial);
 
@@ -278,6 +259,18 @@ kauth_cred_t cred)
 		    __func__, pcb, vestigial.valid);
 
 		if ((!pcb) && (!vestigial.valid)) {
+			enum kauth_network_req req;
+
+			/* We have a free port. Check with the secmodel. */
+			if (inp->inp_flags & INP_LOWPORT) {
+#ifndef IPNOPRIVPORTS
+				req = KAUTH_REQ_NETWORK_BIND_PRIVPORT;
+#else
+				req = KAUTH_REQ_NETWORK_BIND_PORT;
+#endif
+			} else
+				req = KAUTH_REQ_NETWORK_BIND_PORT;
+
 			sin.sin_port = port;
 			error = kauth_authorize_network(cred,
 			    KAUTH_NETWORK_BIND,
@@ -296,20 +289,8 @@ kauth_cred_t cred)
 #ifdef INET6
 	case AF_INET6: { /* IPv6 */
 		struct in6pcb *in6p = (struct in6pcb *)(void *)inp_hdr;
-		table = in6p->in6p_table;
 		struct sockaddr_in6 sin6;
-		enum kauth_network_req req;
 		void *t;
-
-		if (in6p->in6p_flags & IN6P_LOWPORT) {
-#ifndef IPNOPRIVPORTS
-			req = KAUTH_REQ_NETWORK_BIND_PRIVPORT;
-#else
-			req = KAUTH_REQ_NETWORK_BIND_PORT;
-#endif
-		} else {
-			req = KAUTH_REQ_NETWORK_BIND_PORT;
-		}
 
 		sin6.sin6_addr = in6p->in6p_laddr;
 		so = in6p->in6p_socket;
@@ -341,8 +322,20 @@ kauth_cred_t cred)
 				return false;
 			}
 		}
-		if (t == 0) {
+		if (t == NULL) {
+			enum kauth_network_req req;
+
 			/* We have a free port. Check with the secmodel. */
+			if (in6p->in6p_flags & IN6P_LOWPORT) {
+#ifndef IPNOPRIVPORTS
+				req = KAUTH_REQ_NETWORK_BIND_PRIVPORT;
+#else
+				req = KAUTH_REQ_NETWORK_BIND_PORT;
+#endif
+			} else {
+				req = KAUTH_REQ_NETWORK_BIND_PORT;
+			}
+
 			sin6.sin6_port = port;
 			error = kauth_authorize_network(cred,
 			    KAUTH_NETWORK_BIND, req, so, &sin6, NULL);
@@ -720,7 +713,6 @@ static int
 algo_randinc(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
     kauth_cred_t cred)
 {
-
 	static const uint16_t N = 500;	/* Determines the trade-off */
 	uint16_t count, num_ephemeral;
 	uint16_t mymin, mymax, lastport;
@@ -861,6 +853,7 @@ rfc6056_algo_name_select(const char *name, int *algo)
 int
 rfc6056_algo_index_select(struct inpcb_hdr *inp, int algo)
 {
+
 	DPRINTF("%s called with algo %d for pcb %p\n", __func__, algo, inp );
 
 	if ((algo < 0 || algo >= NALGOS) &&
@@ -918,6 +911,7 @@ sysctl_rfc6056_helper(SYSCTLFN_ARGS, int *algo)
 int
 sysctl_rfc6056_selected(SYSCTLFN_ARGS)
 {
+
 	return sysctl_rfc6056_helper(SYSCTLFN_CALL(rnode), &inet4_rfc6056algo);
 }
 
@@ -925,6 +919,7 @@ sysctl_rfc6056_selected(SYSCTLFN_ARGS)
 int
 sysctl_rfc6056_selected6(SYSCTLFN_ARGS)
 {
+
 	return sysctl_rfc6056_helper(SYSCTLFN_CALL(rnode), &inet6_rfc6056algo);
 }
 #endif
