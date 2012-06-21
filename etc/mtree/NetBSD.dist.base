@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.102 2012/06/16 17:01:03 joerg Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.103 2012/06/21 04:30:04 pgoyette Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -102,6 +102,7 @@
 ./usr/include/dev/dec
 ./usr/include/dev/dmover
 ./usr/include/dev/dtv
+./usr/include/dev/filemon
 ./usr/include/dev/hpc
 ./usr/include/dev/i2c
 ./usr/include/dev/i2o
