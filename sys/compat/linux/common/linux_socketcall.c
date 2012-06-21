@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.c,v 1.40 2012/06/20 15:03:18 christos Exp $	*/
+/*	$NetBSD: linux_socketcall.c,v 1.41 2012/06/21 17:55:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.40 2012/06/20 15:03:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.41 2012/06/21 17:55:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -89,7 +89,7 @@ static const struct {
 	const char *name;
 	int argsize;
 } linux_socketcall[LINUX_MAX_SOCKETCALL+1] = {
-#define L(a) "linux/" ## a
+#define L(a) "linux/" a
 	{L("invalid"),	-1},						/* 0 */
 	{L("socket"),	sizeof(struct linux_sys_socket_args)},		/* 1 */
 	{L("bind"),	sizeof(struct linux_sys_bind_args)},		/* 2 */
