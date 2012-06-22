@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_session.c,v 1.12 2012/03/11 18:27:59 rmind Exp $	*/
+/*	$NetBSD: npf_session.c,v 1.13 2012/06/22 13:43:17 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.12 2012/03/11 18:27:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.13 2012/06/22 13:43:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -483,6 +483,7 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
 		atomic_inc_uint(&se->s_refcnt);
 	} else {
 		/* Silently block invalid packets. */
+		npf_stats_inc(NPF_STAT_INVALID_STATE);
 		*error = ENETUNREACH;
 		se = NULL;
 	}
