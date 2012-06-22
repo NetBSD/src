@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.698 2012/06/17 22:59:48 uwe Exp $
+#	$NetBSD: bsd.own.mk,v 1.699 2012/06/22 20:32:35 abs Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -47,8 +47,14 @@ NEED_OWN_INSTALL_TARGET?=	yes
 TOOLCHAIN_MISSING?=	no
 
 #
-# Everyone uses GCC4.5
+# Platforms still using GCC 4.1
+#
+.if ${MACHINE_CPU}  == "vax"
+HAVE_GCC?=    4
+.else
+# Otherwise, default to GCC4.5
 HAVE_GCC?=    45
+.endif
 
 .if \
     ${MACHINE_ARCH} == "i386" || \

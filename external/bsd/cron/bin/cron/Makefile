@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2012/04/04 10:59:44 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2012/06/22 20:32:34 abs Exp $
 
 BINDIR=	/usr/sbin
 PROG=	cron
@@ -8,6 +8,6 @@ CPPFLAGS+=-I${.CURDIR} -DLOGIN_CAP
 LDADD+=-lutil
 MAN=	cron.8
 
-CWARNFLAGS+=	-Wno-string-plus-int
+CWARNFLAGS.clang+=	-Wno-string-plus-int
 
 .include <bsd.prog.mk>
