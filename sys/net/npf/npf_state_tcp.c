@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_state_tcp.c,v 1.6 2012/06/05 22:46:54 rmind Exp $	*/
+/*	$NetBSD: npf_state_tcp.c,v 1.7 2012/06/22 13:43:17 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.6 2012/06/05 22:46:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.7 2012/06/22 13:43:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -440,6 +440,10 @@ npf_tcp_inwindow(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst,
 	return true;
 }
 
+/*
+ * npf_state_tcp: inspect TCP segment, determine whether it belongs to
+ * the connection and track its state.
+ */
 bool
 npf_state_tcp(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst, int di)
 {
@@ -447,7 +451,7 @@ npf_state_tcp(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst, int di)
 	const int tcpfl = th->th_flags, state = nst->nst_state;
 	int nstate;
 
-	KASSERT(mutex_owned(&nst->nst_lock));
+	KASSERT(nst->nst_state == 0 || mutex_owned(&nst->nst_lock));
 
 	/* Look for a transition to a new state. */
 	if (__predict_true((tcpfl & TH_RST) == 0)) {
