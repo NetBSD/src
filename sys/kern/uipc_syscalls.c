@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.154 2012/01/25 16:56:13 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.155 2012/06/22 18:26:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.154 2012/01/25 16:56:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.155 2012/06/22 18:26:35 christos Exp $");
 
 #include "opt_pipe.h"
 
@@ -529,14 +529,13 @@ sys_sendmsg(struct lwp *l, const struct sys_sendmsg_args *uap, register_t *retva
 	return do_sys_sendmsg(l, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
 }
 
-int
-do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
-		register_t *retsize)
+static int
+do_sys_sendmsg_so(struct lwp *l, int s, struct socket *so, file_t *fp,
+    struct msghdr *mp, int flags, register_t *retsize)
 {
+
 	struct iovec	aiov[UIO_SMALLIOV], *iov = aiov, *tiov, *ktriov = NULL;
 	struct mbuf	*to, *control;
-	struct socket	*so;
-	file_t		*fp;
 	struct uio	auio;
 	size_t		len, iovsz;
 	int		i, error;
@@ -610,9 +609,6 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 		memcpy(ktriov, auio.uio_iov, iovsz);
 	}
 
-	if ((error = fd_getsock1(s, &so, &fp)) != 0)
-		goto bad;
-
 	if (mp->msg_name)
 		MCLAIM(to, so->so_mowner);
 	if (mp->msg_control)
@@ -622,8 +618,6 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 	error = (*so->so_send)(so, to, &auio, NULL, control, flags, l);
 	/* Protocol is responsible for freeing 'control' */
 	control = NULL;
-
-	fd_putfile(s);
 
 	if (error) {
 		if (auio.uio_resid != len && (error == ERESTART ||
@@ -653,6 +647,21 @@ bad:
 		m_freem(control);
 
 	return (error);
+}
+
+int
+do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
+    register_t *retsize)
+{
+	int		error;
+	struct socket	*so;
+	file_t		*fp;
+
+	if ((error = fd_getsock1(s, &so, &fp)) != 0)
+		return error;
+	error = do_sys_sendmsg_so(l, s, so, fp, mp, flags, retsize);
+	fd_putfile(s);
+	return error;
 }
 
 int
@@ -727,6 +736,68 @@ sys_recvmsg(struct lwp *l, const struct sys_recvmsg_args *uap, register_t *retva
 	}
 
 	return (error);
+}
+
+int
+sys_sendmmsg(struct lwp *l, const struct sys_sendmmsg_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int)			s;
+		syscallarg(struct mmsghdr *)	mmsg;
+		syscallarg(unsigned int)	vlen;
+		syscallarg(unsigned int)	flags;
+	} */
+	struct mmsghdr mmsg;
+	struct socket *so;
+	file_t *fp;
+	struct msghdr *msg = &mmsg.msg_hdr;
+	int error, s;
+	unsigned int vlen, flags, dg;
+
+	s = SCARG(uap, s);
+	if ((error = fd_getsock1(s, &so, &fp)) != 0)
+		return error;
+
+	vlen = SCARG(uap, vlen);
+	if (vlen > 1024)
+		vlen = 1024;
+
+	flags = (SCARG(uap, flags) & MSG_USERFLAGS) | MSG_IOVUSRSPACE;
+
+	for (dg = 0; dg < vlen;) {
+		error = copyin(SCARG(uap, mmsg) + dg, &mmsg, sizeof(mmsg));
+		if (error)
+			break;
+
+		msg->msg_flags = flags;
+
+		error = do_sys_sendmsg_so(l, s, so, fp, msg, flags, retval);
+		if (error)
+			break;
+
+		ktrkuser("msghdr", msg, sizeof *msg);
+		mmsg.msg_len = *retval;
+		error = copyout(&mmsg, SCARG(uap, mmsg) + dg, sizeof(mmsg));
+		if (error)
+			break;
+		dg++;
+
+	}
+
+	*retval = dg;
+	if (error)
+		so->so_error = error;
+
+	fd_putfile(s);
+
+	/*
+	 * If we succeeded at least once, return 0, hopefully so->so_error
+	 * will catch it next time.
+	 */
+	if (dg)
+		return 0;
+	return error;
 }
 
 /*
@@ -822,12 +893,11 @@ copyout_msg_control(struct lwp *l, struct msghdr *mp, struct mbuf *control)
 	return error;
 }
 
-int
-do_sys_recvmsg(struct lwp *l, int s, struct msghdr *mp, struct mbuf **from,
-    struct mbuf **control, register_t *retsize)
+static int
+do_sys_recvmsg_so(struct lwp *l, int s, struct socket *so, struct msghdr *mp,
+    struct mbuf **from, struct mbuf **control, register_t *retsize)
 {
 	struct iovec	aiov[UIO_SMALLIOV], *iov = aiov, *tiov, *ktriov;
-	struct socket	*so;
 	struct uio	auio;
 	size_t		len, iovsz;
 	int		i, error;
@@ -837,9 +907,6 @@ do_sys_recvmsg(struct lwp *l, int s, struct msghdr *mp, struct mbuf **from,
 	*from = NULL;
 	if (control != NULL)
 		*control = NULL;
-
-	if ((error = fd_getsock(s, &so)) != 0)
-		return (error);
 
 	iovsz = mp->msg_iovlen * sizeof(struct iovec);
 
@@ -913,10 +980,129 @@ do_sys_recvmsg(struct lwp *l, int s, struct msghdr *mp, struct mbuf **from,
  out:
 	if (iov != aiov)
 		kmem_free(iov, iovsz);
-	fd_putfile(s);
 	return (error);
 }
 
+
+int
+do_sys_recvmsg(struct lwp *l, int s, struct msghdr *mp, struct mbuf **from,
+    struct mbuf **control, register_t *retsize)
+{
+	int error;
+	struct socket *so;
+
+	if ((error = fd_getsock(s, &so)) != 0)
+		return error;
+	error = do_sys_recvmsg_so(l, s, so, mp, from, control, retsize);
+	fd_putfile(s);
+	return error;
+}
+
+int
+sys_recvmmsg(struct lwp *l, const struct sys_recvmmsg_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int)			s;
+		syscallarg(struct mmsghdr *)	mmsg;
+		syscallarg(unsigned int)	vlen;
+		syscallarg(unsigned int)	flags;
+		syscallarg(struct timespec *)	timeout;
+	} */
+	struct mmsghdr mmsg;
+	struct socket *so;
+	struct msghdr *msg = &mmsg.msg_hdr;
+	int error, s;
+	struct mbuf *from, *control;
+	struct timespec ts, now;
+	unsigned int vlen, flags, dg;
+
+	if (SCARG(uap, timeout)) {
+		if ((error = copyin(SCARG(uap, timeout), &ts, sizeof(ts))) != 0)
+			return error;
+		getnanotime(&now);
+		timespecadd(&now, &ts, &ts);
+	}
+
+	s = SCARG(uap, s);
+	if ((error = fd_getsock(s, &so)) != 0)
+		return error;
+
+	vlen = SCARG(uap, vlen);
+	if (vlen > 1024)
+		vlen = 1024;
+
+	from = NULL;
+	flags = (SCARG(uap, flags) & MSG_USERFLAGS) | MSG_IOVUSRSPACE;
+
+	for (dg = 0; dg < vlen;) {
+		error = copyin(SCARG(uap, mmsg) + dg, &mmsg, sizeof(mmsg));
+		if (error)
+			break;
+
+		msg->msg_flags = flags & ~MSG_WAITFORONE;
+
+		if (from != NULL) {
+			m_free(from);
+			from = NULL;
+		}
+
+		error = do_sys_recvmsg_so(l, s, so, msg, &from,
+		    msg->msg_control != NULL ? &control : NULL, retval);
+		if (error)
+			break;
+
+		if (msg->msg_control != NULL)
+			error = copyout_msg_control(l, msg, control);
+		if (error)
+			break;
+
+		error = copyout_sockname(msg->msg_name, &msg->msg_namelen, 0,
+		    from);
+		if (error)
+			break;
+
+		ktrkuser("msghdr", msg, sizeof *msg);
+		mmsg.msg_len = *retval;
+
+		error = copyout(&mmsg, SCARG(uap, mmsg) + dg, sizeof(mmsg));
+		if (error)
+			break;
+
+		dg++;
+		if (msg->msg_flags & MSG_OOB)
+			break;
+
+		if (SCARG(uap, timeout)) {
+			getnanotime(&now);
+			timespecsub(&now, &ts, &now);
+			if (now.tv_sec > 0)
+				break;
+		}
+
+		if (flags & MSG_WAITFORONE)
+			flags |= MSG_DONTWAIT;
+
+	}
+
+	if (from != NULL)
+		m_free(from);
+
+	*retval = dg;
+	if (error)
+		so->so_error = error;
+
+	fd_putfile(s);
+
+	/*
+	 * If we succeeded at least once, return 0, hopefully so->so_error
+	 * will catch it next time.
+	 */
+	if (dg)
+		return 0;
+
+	return error;
+}
 
 /* ARGSUSED */
 int
